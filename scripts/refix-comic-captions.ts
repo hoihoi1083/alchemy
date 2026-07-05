@@ -1,0 +1,35 @@
+import path from "path";
+import { existsSync } from "fs";
+import { readFile, writeFile } from "fs/promises";
+import sharp from "sharp";
+import { COMIC_SLIDES, W, H } from "../lib/compositor/comic-journey/content";
+import { finalizeSlide } from "../lib/compositor/comic-journey/render";
+
+/** Re-draw caption bars on existing finals (no fal) when _raw is missing. */
+async function main() {
+  const outDir =
+    process.argv[2] ||
+    path.join(process.env.HOME || "", "Desktop", "comic-journey-carousel");
+
+  for (const slide of COMIC_SLIDES) {
+    const rawPath = path.join(outDir, "_raw", `${slide.name}.png`);
+    const finalPath = path.join(outDir, `${slide.name}.png`);
+    let base: Buffer;
+    if (existsSync(rawPath)) {
+      base = await readFile(rawPath);
+    } else if (existsSync(finalPath)) {
+      base = await sharp(finalPath).resize(W, H, { fit: "cover" }).png().toBuffer();
+    } else {
+      console.error(`Missing ${finalPath}`);
+      process.exit(1);
+    }
+    const out = await finalizeSlide(base, slide.captions);
+    await writeFile(finalPath, out);
+    console.log("Fixed", finalPath);
+  }
+}
+
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

@@ -1,0 +1,257 @@
+export const JUSTONEAPI_SEARCH_TIMEOUT_MS = 90_000;
+
+export function justOneApiToken(): string | null {
+  const token = process.env.JUSTONEAPI_TOKEN?.trim();
+  if (!token || token === "your_justoneapi_token_here") return null;
+  return token;
+}
+
+export function justOneApiBaseUrl(): string {
+  const custom = process.env.JUSTONEAPI_BASE_URL?.trim();
+  if (custom) return custom.replace(/\/$/, "");
+  return "https://api.justoneapi.com";
+}
+
+export function hasJustOneApiConfigured(): boolean {
+  return justOneApiToken() !== null;
+}
+
+export function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+export function pickString(...values: unknown[]): string {
+  for (const v of values) {
+    if (typeof v === "string" && v.trim()) return v.trim();
+    if (typeof v === "number" && Number.isFinite(v)) return String(v);
+  }
+  return "";
+}
+
+export function pickNumber(...values: unknown[]): number | undefined {
+  for (const v of values) {
+    const n = typeof v === "number" ? v : typeof v === "string" ? Number(v) : NaN;
+    if (Number.isFinite(n) && n >= 0) return Math.round(n);
+  }
+  return undefined;
+}
+
+export function pickImageUrl(...values: unknown[]): string | undefined {
+  for (const v of values) {
+    if (typeof v === "string" && v.startsWith("http")) return v;
+    const rec = asRecord(v);
+    if (rec) {
+      const urlList = rec.url_list ?? rec.urlList;
+      if (Array.isArray(urlList)) {
+        for (const entry of urlList) {
+          const fromList = pickString(entry);
+          if (fromList.startsWith("http")) return fromList;
+        }
+      }
+      const nested = pickString(
+        rec.url_size_large,
+        rec.url_default,
+        rec.url,
+        rec.urlDefault,
+        rec.origin,
+        rec.display_url,
+        rec.displayUrl,
+        rec.cover,
+        rec.thumbnail_url,
+        rec.thumbnailUrl,
+        rec.image_url,
+        rec.imageUrl,
+        rec.src,
+        rec.uri,
+        rec.picture,
+        rec.full_picture,
+        rec.thumbnail,
+      );
+      if (nested.startsWith("http")) return nested;
+
+      const fromMedia = pickImageUrl(
+        asRecord(rec.media)?.image,
+        asRecord(rec.media)?.photo,
+        asRecord(rec.media)?.thumbnail,
+        asRecord(rec.image)?.src,
+        rec.photo,
+      );
+      if (fromMedia) return fromMedia;
+    }
+  }
+  return undefined;
+}
+
+/** Collect unique image URLs from a list of platform media objects. */
+export function pickImageUrlsFromList(...values: unknown[]): string[] {
+  const urls: string[] = [];
+  const seen = new Set<string>();
+
+  function add(url: string | undefined) {
+    if (!url || !url.startsWith("http") || seen.has(url)) return;
+    seen.add(url);
+    urls.push(url);
+  }
+
+  for (const v of values) {
+    if (Array.isArray(v)) {
+      for (const item of v) {
+        add(pickImageUrl(item));
+      }
+      continue;
+    }
+    const rec = asRecord(v);
+    if (rec) {
+      const nested = asRecord(rec.node) ?? rec;
+      add(pickImageUrl(nested));
+      const subattachments = asRecord(nested.subattachments)?.data;
+      if (Array.isArray(subattachments)) {
+        for (const item of subattachments) add(pickImageUrl(item));
+      }
+      const subItems = nested.carousel_media ?? nested.children ?? nested.items;
+      if (Array.isArray(subItems)) {
+        for (const item of subItems) add(pickImageUrl(item));
+      }
+      const media = asRecord(nested.media);
+      if (media) add(pickImageUrl(media.image, media.photo, media.thumbnail));
+    } else {
+      add(pickImageUrl(v));
+    }
+  }
+
+  return urls;
+}
+
+function looksLikeVideoUrl(url: string): boolean {
+  const lower = url.toLowerCase();
+  if (lower.includes("m3u8")) return false;
+  return (
+    lower.includes(".mp4") ||
+    lower.includes("/stream/") ||
+    lower.includes("video") ||
+    lower.includes("tiktokv") ||
+    lower.includes("mime_type=video")
+  );
+}
+
+export function pickVideoUrl(...values: unknown[]): string | undefined {
+  for (const v of values) {
+    if (Array.isArray(v)) {
+      for (const item of v) {
+        const fromList = pickVideoUrl(item);
+        if (fromList) return fromList;
+      }
+      continue;
+    }
+    if (typeof v === "string" && v.startsWith("http") && looksLikeVideoUrl(v)) return v;
+    const rec = asRecord(v);
+    if (rec) {
+      const nested = pickVideoUrl(
+        rec.play_addr,
+        rec.playAddr,
+        rec.download_addr,
+        rec.downloadAddr,
+        rec.video_url,
+        rec.videoUrl,
+        rec.play_url,
+        rec.playUrl,
+      );
+      if (nested) return nested;
+
+      const urlList = rec.url_list ?? rec.urlList;
+      if (Array.isArray(urlList)) {
+        for (const entry of urlList) {
+          const fromList = pickString(entry);
+          if (fromList.startsWith("http") && looksLikeVideoUrl(fromList)) return fromList;
+        }
+      }
+    }
+  }
+  return undefined;
+}
+
+export function flattenSearchItems(payload: unknown): unknown[] {
+  const root = asRecord(payload);
+  if (!root) return Array.isArray(payload) ? payload : [];
+
+  const data = asRecord(root.data) ?? root;
+  const nested = asRecord(data.data);
+
+  const lists: unknown[] = [
+    data.items,
+    data.notes,
+    data.note_list,
+    data.noteList,
+    data.list,
+    data.results,
+    data.result,
+    data.posts,
+    data.reels,
+    data.videos,
+    data.medias,
+    data.media,
+    data.aweme_list,
+    data.awemeList,
+    data.search_item_list,
+    data.searchItemList,
+    nested?.items,
+    nested?.list,
+    nested?.results,
+  ];
+
+  for (const list of lists) {
+    if (Array.isArray(list) && list.length > 0) return list;
+  }
+
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(payload)) return payload;
+  return [];
+}
+
+export async function fetchJustOneApi(
+  path: string,
+  params: Record<string, string>,
+  label: string,
+): Promise<Record<string, unknown>> {
+  const token = justOneApiToken();
+  if (!token) throw new Error("JUSTONEAPI_TOKEN is not configured.");
+
+  const query = new URLSearchParams({ token, ...params });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), JUSTONEAPI_SEARCH_TIMEOUT_MS);
+
+  try {
+    const res = await fetch(`${justOneApiBaseUrl()}${path}?${query}`, {
+      signal: controller.signal,
+      cache: "no-store",
+    });
+    const raw = await res.text();
+    let body: Record<string, unknown>;
+    try {
+      body = JSON.parse(raw) as Record<string, unknown>;
+    } catch {
+      throw new Error(`${label} returned invalid JSON (${res.status}).`);
+    }
+
+    const code = String(body.code ?? "");
+    if (!res.ok || (code && code !== "0")) {
+      const message = String(body.message ?? `${label} failed (${res.status}, code ${code}).`);
+      if (code === "600") {
+        throw new Error(`NO PERMISSION — enable this API in your Just One API dashboard (code 600).`);
+      }
+      if (code === "601") {
+        throw new Error(`INSUFFICIENT BALANCE — top up your Just One API account (code 601).`);
+      }
+      if (code === "602") {
+        throw new Error(`TOKEN BUDGET EXCEEDED — raise token limit in Just One API dashboard (code 602).`);
+      }
+      throw new Error(message);
+    }
+
+    return body;
+  } finally {
+    clearTimeout(timer);
+  }
+}

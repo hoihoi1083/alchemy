@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI 營銷工作室 — 產品評估報告</title>
+  <style>
+    @page { margin: 18mm 16mm; size: A4; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "PingFang TC", "Heiti TC", "Microsoft JhengHei", sans-serif;
+      font-size: 10.5pt;
+      line-height: 1.6;
+      color: #1a1a1a;
+      margin: 0;
+      padding: 0;
+    }
+    h1 { font-size: 22pt; margin: 0 0 6px; color: #0d3d2e; page-break-after: avoid; }
+    h2 { font-size: 14pt; margin: 22px 0 8px; color: #0d5c44; border-bottom: 2px solid #d4ebe3; padding-bottom: 4px; page-break-after: avoid; }
+    h3 { font-size: 11.5pt; margin: 14px 0 6px; color: #1a5c45; page-break-after: avoid; }
+    p { margin: 0 0 8px; }
+    .meta { font-size: 9.5pt; color: #555; margin-bottom: 20px; }
+    table { width: 100%; border-collapse: collapse; margin: 8px 0 14px; font-size: 9.5pt; page-break-inside: avoid; }
+    th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; vertical-align: top; }
+    th { background: #e8f5f0; font-weight: 600; }
+    tr:nth-child(even) td { background: #f9f9f9; }
+    ul, ol { margin: 6px 0 12px; padding-left: 20px; }
+    li { margin-bottom: 4px; }
+    .callout {
+      background: #f0f9f5;
+      border-left: 4px solid #0d8c5a;
+      padding: 10px 12px;
+      margin: 10px 0 14px;
+      font-size: 10pt;
+    }
+    .warning {
+      background: #fff8e6;
+      border-left: 4px solid #c9a227;
+      padding: 10px 12px;
+      margin: 10px 0 14px;
+    }
+    .tag { display: inline-block; background: #e0f0ea; padding: 2px 8px; border-radius: 4px; font-size: 9pt; margin: 2px 4px 2px 0; }
+    code { font-family: Menlo, Monaco, monospace; font-size: 8.5pt; }
+    .flow { font-family: Menlo, "PingFang TC", monospace; font-size: 8.5pt; background: #f4f4f4; padding: 12px; white-space: pre-wrap; margin: 8px 0 14px; border-radius: 4px; }
+    .page-break { page-break-before: always; }
+    .toc { font-size: 10pt; }
+    .toc li { margin-bottom: 6px; }
+    footer { margin-top: 24px; font-size: 8.5pt; color: #777; border-top: 1px solid #ddd; padding-top: 8px; }
+  </style>
+</head>
+<body>
+
+<h1>AI 營銷工作室</h1>
+<p class="meta"><strong>產品功能評估與改進路線圖</strong><br />
+專案路徑：~/Desktop/ai-marketing-studio · 文件日期：2026 年 6 月<br />
+目的：功能檢視、流程說明、Campaign Kit 願景、多參考素材策略、市場定位與行銷話術。</p>
+
+<div class="callout">
+<strong>執行摘要。</strong>技術底層（fal.ai 的 Nano Banana + Seedance 2.0）已相當穩健（約 8/10）。產品體驗仍偏向「分開做圖、分開做片」，未達「一次過出齊一套廣告素材」（新手成功率約 5/10）。影片參考運鏡與部分圖片路徑在輸入、模式或 prompt 唔夾時會令人失望。最高槓桿方向係 <strong>通用 Campaign Kit（一個概念，一套素材）</strong>：概念 + 產品（+ 可選參考）→ 多項行銷成品，再配合結構化後製編輯——唔係追求「一鍵 100% 完美」。
+</div>
+
+<h2>目錄</h2>
+<ol class="toc">
+  <li>專案現有功能</li>
+  <li>現時用戶流程</li>
+  <li>點解圖片／影片未達高期望</li>
+  <li>願景：概念 + 產品 → 一套行銷素材</li>
+  <li>單張上傳 vs 多張參考（Seedance 限制）</li>
+  <li>通用產品（唔止水晶）</li>
+  <li>市場比較與你的優勢</li>
+  <li>對外可講嘅功能與話術</li>
+  <li>建議開發優先次序</li>
+  <li>生成後編輯（期望落差）</li>
+  <li>高品質測試清單</li>
+  <li>評分總表</li>
+</ol>
+
+<h2>1. 專案現有功能</h2>
+
+<table>
+  <tr><th>層級</th><th>功能</th><th>現況質素</th></tr>
+  <tr><td>設定</td><td>模板、視覺風格、標題／副標／產品名、輸出目標（只要圖／只要片／圖+片）</td><td>結構清晰</td></tr>
+  <tr><td>圖片 — AI</td><td>Nano Banana：AI 宣傳圖 或 跟參考圖概念（產品 + 參考廣告圖）</td><td>參考概念模式可以好靚；純宣傳圖有時似「輕微修圖」</td></tr>
+  <tr><td>圖片 — 合成器</td><td>紙片版面：繁體字原字放上圖、產品貼紙（Sharp/SVG）</td><td>固定版面強；同全 AI 場景係另一條路</td></tr>
+  <tr><td>影片</td><td>Seedance 2.0：圖生影片、跟參考片、多角度（額外 2–3 張產品相）</td><td>跟 Reels 參考片仍易失望；模式用錯會完全唔跟片</td></tr>
+  <tr><td>完成</td><td>加 BGM、下載 MP4/PNG</td><td>基本 OK</td></tr>
+  <tr><td>未做</td><td>Campaign Kit、AI 助手、專案儲存、應用內編輯器、輪播批量</td><td>見 ROADMAP 第 3–5 階段</td></tr>
+</table>
+
+<p><strong>技術棧（程式已確認）：</strong></p>
+<ul>
+  <li>圖片：<code>fal-ai/nano-banana/edit</code>、<code>fal-ai/nano-banana-pro/edit</code>、<code>fal-ai/nano-banana</code></li>
+  <li>影片：<code>bytedance/seedance-2.0/image-to-video</code>、<code>reference-to-video</code>（含 fast 版本）</li>
+  <li>後製（字幕／配音）：<code>app/api/postprocess</code> — 第 4 階段接入精靈</li>
+</ul>
+
+<p><strong>Seedance 2.0 與 Dreamina：</strong>CapCut／Dreamina 上叫 Dreamina Seedance 2.0；你透過 fal 用的是同一 ByteDance 系列嘅 <strong>API 版</strong>（<code>bytedance/seedance-2.0/...</code>），唔係 CapCut 介面入面嗰個，但模型同源。</p>
+
+<h2>2. 現時用戶流程</h2>
+
+<div class="flow">【設定】模板、文案、風格
+    ↓
+【圖片步驟】
+    ├─ AI 宣傳圖      → 1 張產品相 → 1 張 AI 圖
+    ├─ 跟參考圖概念   → 產品 + 1 張參考廣告圖 → 1 張 AI 圖
+    └─ 固定紙片版面   → 合成器（字準、版面固定）
+    ↓
+【影片步驟】（圖+片 或 只要片）
+    ├─ 圖片變影片     → 1 張關鍵圖 → 約 8 秒動態（參考 MP4 會被忽略）
+    ├─ 跟參考片概念   → 產品 + 1 條參考 MP4 → Seedance 參考生影片
+    └─ 多角度         → 產品 + 2–3 張角度相
+    ↓
+【完成】下載（影片附 BGM）</div>
+
+<h3>點解感覺「一張圖一張圖、一條片一條片」</h3>
+<ul>
+  <li>圖片模式、影片模式、設定要分開揀，冇一個 <strong>活動簡報（campaign brief）</strong> 統籌全部輸出。</li>
+  <li>「圖+片」預設係：做好圖 → 用嗰張圖做片；上傳咗參考 MP4 但模式係「圖片變影片」時，參考片 <strong>完全唔會送入模型</strong>。</li>
+  <li>冇「一套素材」：冇 5–6 張輪播、冇 caption 包、冇「故事帖 + Reels + 主圖」一齊出。</li>
+  <li>用戶心想：<em>我俾咗概念、產品、參考 — 俾一套廣告我。</em><br />
+      程式心想：<em>先 call 圖 API，再 call 片 API。</em></li>
+</ul>
+
+<div class="page-break"></div>
+
+<h2>3. 點解圖片／影片未達高期望</h2>
+
+<table>
+  <tr><th>問題</th><th>後果</th></tr>
+  <tr><td>影片路徑用錯</td><td>揀「圖片變影片」→ 上傳嘅 MP4 被忽略 → 變成關鍵圖慢推鏡</td></tr>
+  <tr><td>@Image1 用錯</td><td>用 AI 宣傳圖（平面廣告）而唔係<strong>原始產品相</strong> → 模型跟唔到參考片嘅手、運鏡</td></tr>
+  <tr><td>產品同參考唔夾</td><td>參考片：穿珠、紫水晶；產品：太陽石 macro → 出完全不同類型鏡頭</td></tr>
+  <tr><td>參考片超過 15 秒／比例唔同</td><td>Seedance 只食首段約 15 秒；強制 9:16 vs 參考片 4:5</td></tr>
+  <tr><td>設定同 prompt 打架</td><td>模板「Slow Push In」覆蓋「跟 @Video1」（近期程式已部分修正）</td></tr>
+  <tr><td>只出單一資產</td><td>真實 SMB 廣告通常係多圖 + 一條片 + 文案</td></tr>
+  <tr><td>生成後難改</td><td>Done 步只得下載／重生成，未有事後改字、微調圖</td></tr>
+</table>
+
+<div class="warning">
+<strong>Seedance 參考生影片唔係逐格複製。</strong>官方建議寫法：<em>@Image1 跟住 @Video1 嘅動作／運鏡</em>。要產品相、剪短參考片、模式正確先似。唔會複製 IG 介面、人樣、商標字樣。
+</div>
+
+<h3>圖片：幾時做得好</h3>
+<p><strong>跟參考圖概念</strong>（產品 + 參考廣告圖 + 標題副標）可以出乾淨嘅客人好評風格 — 跟概念重新排版，唔係照抄像素。<strong>純 AI 宣傳圖</strong>有時似原相輕修。</p>
+
+<h2>4. 願景：概念 + 產品 → 一套行銷素材（Campaign Kit）</h2>
+
+<div class="callout">
+<strong>「一個概念，一套素材」</strong>（適用<strong>任何實物商品</strong>，唔止水晶）<br /><br />
+<strong>輸入：</strong>產品相片（可多張）· 概念（一段話或預設）· 可選參考圖／參考片 · 繁體文案<br />
+<strong>輸出：</strong>主圖 · 輪播 5–6 張 · Reels MP4 · caption／hashtag · 可選 SRT · ZIP 打包
+</div>
+
+<table>
+  <tr><th>成品</th><th>用咩 AI／工具</th><th>備註</th></tr>
+  <tr><td>主圖 9:16</td><td>Nano Banana Pro（跟參考圖概念）</td><td>IG 主 post</td></tr>
+  <tr><td>輪播 5–6 張</td><td>LLM 分鏡 + 每張用 NB／合成器／Ideogram</td><td>唔好一次 prompt 出 6 張 — 要規劃再批量</td></tr>
+  <tr><td>Reels 8–12 秒</td><td>Seedance 參考片 或 圖生影片</td><td>最好一張 slide 或參考運鏡</td></tr>
+  <tr><td>Clean MP4</td><td>現有流程 + ffmpeg BGM</td><td>俾 CapCut 後製</td></tr>
+  <tr><td>文案</td><td>OpenAI（第 3 階段助手）</td><td>繁體</td></tr>
+</table>
+
+<div class="flow">概念 + 產品 + 參考
+    → 規劃器（LLM／規則）：模板、模式、每張 slide 簡報
+    → 批量生成（可平行）
+    → 預覽格：接受／只重做其中一項
+    → 匯出 ZIP + CapCut 檢查清單</div>
+
+<p>呢個先係<strong>市場差異化</strong>：編排一整套 campaign，而唔係多一個單圖 API。</p>
+
+<h2>5. 單張上傳 vs 多張參考</h2>
+
+<h3>Seedance 2.0（fal）上限</h3>
+<table>
+  <tr><th>輸入</th><th>上限</th><th>Prompt 標籤</th></tr>
+  <tr><td>圖片</td><td>最多 9 張</td><td>@Image1 … @Image9（產品、角度）</td></tr>
+  <tr><td>影片</td><td>最多 3 條，合計 2–15 秒</td><td>@Video1 …（運鏡、剪輯、手部動作）</td></tr>
+  <tr><td>音訊</td><td>最多 3 個，合計 ≤15 秒</td><td>@Audio1（可選節奏）</td></tr>
+</table>
+
+<h3>幾時多張會更好</h3>
+<ul>
+  <li>同一產品 <strong>2–4 個角度</strong>（正面、上手、微距）→ 影片身份更穩。</li>
+  <li>@Image2 做風格板，@Image1 做產品。</li>
+  <li>App 已有「更多產品角度」（API 支援多張 <code>images</code>）。</li>
+</ul>
+
+<h3>幾時多張反而差</h3>
+<ul>
+  <li>參考互相矛盾（塗鴉 ref + 大理石靜物 + 唔同貨）。</li>
+  <li>螢幕錄影含 IG 按鈕。</li>
+  <li>參考片超 15 秒未喺 CapCut 剪短。</li>
+</ul>
+
+<h3>介面 vs API</h3>
+<table>
+  <tr><th>欄位</th><th>精靈 UI</th><th>API 能力</th></tr>
+  <tr><td>產品相</td><td>1 張</td><td>1+（多角度 2–3 張）</td></tr>
+  <tr><td>參考廣告圖</td><td>1 張</td><td>1 張（風格）</td></tr>
+  <tr><td>參考 MP4</td><td>1 條</td><td>1–3 條（≤15 秒合計）</td></tr>
+</table>
+<p><strong>建議：</strong>v1 先 1 產品 + 1 參考圖 + 1 條剪短參考片；v2 再做標籤相簿（產品×4、運鏡參考、風格參考）。</p>
+
+<div class="page-break"></div>
+
+<h2>6. 通用產品（唔止水晶）</h2>
+
+<table>
+  <tr><th>而家（偏窄）</th><th>目標（通用）</th></tr>
+  <tr><td>水晶 Reels 工具</td><td>SMB 社交廣告素材工作室 — 美妝、飲品、服飾、電子、手作都適用</td></tr>
+  <tr><td>crystal-promo 模板</td><td>按<strong>活動類型</strong>：新品／優惠／客人好評／教學／節日</td></tr>
+  <tr><td>例子集中水晶</td><td>Prompt 由用戶<strong>概念</strong> + 產品名驅動</td></tr>
+</table>
+<p>預設視覺風格用 <span class="tag">產品展示</span>。水晶只係其中一個 template pack。</p>
+
+<h2>7. 市場比較</h2>
+
+<table>
+  <tr><th></th><th>Canva／CapCut</th><th>一般 AI 影片</th><th>廣告 AI</th><th>你（目標）</th></tr>
+  <tr><td>易用</td><td>★★★★★</td><td>★★★</td><td>★★★★</td><td>★★★→★★★★</td></tr>
+  <tr><td>圖→片</td><td>手動</td><td>★★★★</td><td>★★★★</td><td>★★★（引擎 OK）</td></tr>
+  <tr><td>跟參考片運鏡</td><td>手動剪</td><td>★★</td><td>★★★</td><td>★★–★★★（要守規）</td></tr>
+  <tr><td>港／繁體本地廣告</td><td>有模板</td><td>多數英文</td><td>部分國內</td><td>★★★★★ 利基</td></tr>
+  <tr><td>一個 brief 出齊 kit</td><td>手動</td><td>少</td><td>★★★★</td><td>★★★★★（做好就贏）</td></tr>
+  <tr><td>Clean MP4 俾剪片軟件</td><td>是</td><td>有時</td><td>有時</td><td>★★★★★</td></tr>
+</table>
+
+<div class="callout">
+<strong>唔好同：</strong>「邊個 AI 片最勁」比較。<br />
+<strong>要同：</strong>「小店 10 分鐘出齊 IG 素材」— 概念入、一套出、CapCut 收尾。
+</div>
+
+<h2>8. 對外可講嘅功能與話術</h2>
+<p>揀 2–3 句長期用：</p>
+<ol>
+  <li><strong>一個概念，一套素材</strong> — 產品 + 參考廣告 → 宣傳圖 + Reels + 文案（路線圖中）</li>
+  <li><strong>跟參考片概念，唔係亂 generate</strong> — 跟運鏡同版面，換你嘅貨</li>
+  <li><strong>出 Clean MP4，喺 CapCut 加字幕</strong> — 唔迫你用 AI 字幕</li>
+  <li><strong>為小店而設</strong> — 客人好評、新品、限時優惠（模板包）</li>
+  <li><strong>AI 起稿，你執字執片</strong> — 改文案再出圖 + 專業工具後製</li>
+</ol>
+<p><strong>避免承諾：</strong>「參考片 100% 一模一樣」或「只適合水晶」。</p>
+
+<h2>9. 建議開發優先次序</h2>
+
+<h3>約 4 週內（建立信任 + Kit MVP）</h3>
+<table>
+  <tr><th>次序</th><th>工作</th><th>原因</th></tr>
+  <tr><td>1</td><td>Campaign Kit 模式 — 概念 + 產品 + 參考 → 統籌圖+片</td><td>解決「分開做」</td></tr>
+  <tr><td>2</td><td>規劃器預設 — 有參考片 → R2V + 原始產品相；有參考圖 → 跟參考圖概念</td><td>減少用錯路徑</td></tr>
+  <tr><td>3</td><td>生成後顯示 Seedance 路徑（reference-to-video vs image-to-video）</td><td>建立信任</td></tr>
+  <tr><td>4</td><td>參考片剪短指引（CapCut 8–12 秒）</td><td>15 秒 API 限制</td></tr>
+  <tr><td>5</td><td>Adjust 步驟：改標題副標 → 重新合成／AI 微調圖</td><td>期望落差</td></tr>
+  <tr><td>6</td><td>官網 3 個完整案例</td><td>管理期望</td></tr>
+</table>
+
+<h3>4–10 週（差異化）</h3>
+<ul>
+  <li>第 3 階段：AI 助手 — 概念 → 分鏡 + 模式</li>
+  <li>輪播批量：5–6 張（LLM 規劃 + 每張揀 NB／合成器）</li>
+  <li>產品相簿 3–4 張 → Seedance @Image1–3</li>
+  <li>第 4 階段：精靈內後製（SRT、軟字幕）</li>
+  <li>第 5 階段：儲存專案、重新開啟</li>
+  <li>ZIP：slides + MP4 + caption.txt</li>
+</ul>
+
+<h3>更後（SaaS）</h3>
+<p>登入、點數、Stripe、條款 — ROADMAP 第 6–7 階段。內嵌完整 Canva 級編輯器只喺有付費需求先做。</p>
+
+<h2>10. 生成後編輯（期望落差）</h2>
+
+<p>AI 第一次唔會 100% 啱。適合本專案嘅分層：</p>
+
+<table>
+  <tr><th>層級</th><th>做咩</th><th>等於內置 Canva？</th></tr>
+  <tr><td>1</td><td>改繁體文案 → 重新合成／對上一張圖做 AI 微調</td><td>結構化再出圖</td></tr>
+  <tr><td>2</td><td>合成器模板輕量編輯（移文字、貼紙）</td><td>部分</td></tr>
+  <tr><td>3</td><td>片：裁剪、BGM、SRT；運鏡要改 → 重生或 CapCut</td><td>冇時間軸編輯</td></tr>
+  <tr><td>4</td><td>ZIP + CapCut／Canva 教學</td><td>夥伴工作流</td></tr>
+  <tr><td>5</td><td>完整內嵌 Canva</td><td>唔建議 MVP 做</td></tr>
+</table>
+
+<div class="callout">
+<strong>定位：</strong>AI 起稿 → 用 CapCut／Canva 執最後 10%。賣「AI 起稿，你執字執片」，唔賣「一鍵完美」。
+</div>
+
+<h3>輪播 5–6 張可組合嘅 AI</h3>
+<ul>
+  <li><strong>LLM</strong> — 6 格分鏡 + 每格繁體文案</li>
+  <li><strong>Nano Banana Pro</strong> — 產品 + 參考廣告圖</li>
+  <li><strong>合成器</strong> — 字一定要準嘅格</li>
+  <li><strong>Ideogram</strong>（可選）— 大字海報格</li>
+  <li><strong>Seedance 2.0</strong> — 揀最好一張做 Reels 或跟參考片</li>
+</ul>
+
+<h2>11. 高品質測試清單</h2>
+<ol>
+  <li>輸出目標：圖+片 或 Campaign Kit（做好之後）</li>
+  <li>影片 @Image1 用<strong>原始產品相</strong>（2–3 張更好），唔好用 AI 宣傳圖做片嘅產品參考</li>
+  <li>參考廣告圖 → 跟參考圖概念</li>
+  <li>參考 MP4 喺 CapCut 剪成 8–12 秒精華 → 跟參考片概念</li>
+  <li>720p、10–12 秒、fast 關閉（參考片模式）</li>
+  <li>生成後睇提示：應有 <code>reference-to-video · 1 ref video</code></li>
+  <li>唔啱就改輸入或等 Adjust 功能再出</li>
+</ol>
+
+<h2>12. 評分總表</h2>
+<table>
+  <tr><th>維度</th><th>分數</th><th>備註</th></tr>
+  <tr><td>技術流水線</td><td>8/10</td><td>fal 整合穩</td></tr>
+  <tr><td>對外 UI/UX</td><td>6/10</td><td>精靈改善中</td></tr>
+  <tr><td>新手成功率</td><td>5/10</td><td>要 Kit + 助手 + 事後編輯</td></tr>
+  <tr><td>競爭差異化</td><td>6/10</td><td>做好 Campaign Kit 可升</td></tr>
+  <tr><td>SMB 行銷適配（通用）</td><td>8/10</td><td>真機會</td></tr>
+  <tr><td>現有技術棧可達成度</td><td>9/10</td><td>唔使換模型商</td></tr>
+</table>
+
+<footer>
+AI 營銷工作室 — 內部策略文件（繁體中文版）。相關檔案：docs/ROADMAP.md、docs/PRODUCT_EVALUATION.md、AGENTS.md。<br />
+為 Michael Ng 製作 · 桌面版方便離線閱讀。
+</footer>
+
+</body>
+</html>

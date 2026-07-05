@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #0a0f1a;
+  --surface: #111827;
+  --border: #1e3a5f;
+  --accent: #38bdf8;
+  --accent-dim: #0c4a6e;
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+}
+
+body {
+  color: #0f172a;
+  background: #f8fafc;
+  min-height: 100vh;
+}
+
+.studio-light input,
+.studio-light textarea {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+.studio-light input::placeholder,
+.studio-light textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+.studio-light [class*="bg-slate-900/40"],
+.studio-light [class*="bg-slate-950/20"],
+.studio-light [class*="bg-slate-950/25"],
+.studio-light [class*="bg-slate-950/30"],
+.studio-light [class*="bg-slate-950/40"],
+.studio-light [class*="bg-slate-950/50"] {
+  background: #ffffff !important;
+}
+
+.studio-light [class*="border-slate-800"],
+.studio-light [class*="border-slate-700"],
+.studio-light [class*="border-slate-600"] {
+  border-color: #d1d5db !important;
+}
+
+.studio-light [class*="text-white"] {
+  color: #0f172a !important;
+}
+
+.studio-light [class*="text-slate-300"],
+.studio-light [class*="text-slate-400"] {
+  color: #475569 !important;
+}

@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI Marketing Studio — Product Evaluation</title>
+  <style>
+    @page { margin: 18mm 16mm; size: A4; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "PingFang TC", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-size: 10.5pt;
+      line-height: 1.55;
+      color: #1a1a1a;
+      max-width: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    h1 { font-size: 22pt; margin: 0 0 6px; color: #0d3d2e; page-break-after: avoid; }
+    h2 { font-size: 14pt; margin: 22px 0 8px; color: #0d5c44; border-bottom: 2px solid #d4ebe3; padding-bottom: 4px; page-break-after: avoid; }
+    h3 { font-size: 11.5pt; margin: 14px 0 6px; color: #1a5c45; page-break-after: avoid; }
+    p { margin: 0 0 8px; }
+    .meta { font-size: 9.5pt; color: #555; margin-bottom: 20px; }
+    table { width: 100%; border-collapse: collapse; margin: 8px 0 14px; font-size: 9.5pt; page-break-inside: avoid; }
+    th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; vertical-align: top; }
+    th { background: #e8f5f0; font-weight: 600; }
+    tr:nth-child(even) td { background: #f9f9f9; }
+    ul, ol { margin: 6px 0 12px; padding-left: 20px; }
+    li { margin-bottom: 4px; }
+    .callout {
+      background: #f0f9f5;
+      border-left: 4px solid #0d8c5a;
+      padding: 10px 12px;
+      margin: 10px 0 14px;
+      font-size: 10pt;
+    }
+    .warning {
+      background: #fff8e6;
+      border-left: 4px solid #c9a227;
+      padding: 10px 12px;
+      margin: 10px 0 14px;
+    }
+    .tag { display: inline-block; background: #e0f0ea; padding: 2px 8px; border-radius: 4px; font-size: 9pt; margin: 2px 4px 2px 0; }
+    pre, code { font-family: Menlo, Monaco, monospace; font-size: 8.5pt; }
+    .flow { font-family: Menlo, monospace; font-size: 8.5pt; background: #f4f4f4; padding: 12px; white-space: pre-wrap; margin: 8px 0 14px; border-radius: 4px; }
+    .page-break { page-break-before: always; }
+    .toc { font-size: 10pt; }
+    .toc li { margin-bottom: 6px; }
+    footer { margin-top: 24px; font-size: 8.5pt; color: #777; border-top: 1px solid #ddd; padding-top: 8px; }
+  </style>
+</head>
+<body>
+
+<h1>AI Marketing Studio</h1>
+<p class="meta"><strong>Product evaluation &amp; improvement roadmap</strong><br />
+Project path: ~/Desktop/ai-marketing-studio · Document date: June 2026<br />
+Purpose: Function review, process map, campaign-kit vision, multi-reference strategy, market positioning.</p>
+
+<div class="callout">
+<strong>Executive summary.</strong> The technical pipeline (Nano Banana + Seedance 2.0 via fal.ai) is strong (~8/10). The product experience still sells separate steps (image, then video) instead of one campaign outcome (~5/10 beginner success). Video reference matching and some image paths under-deliver when inputs, modes, or prompts misalign. The highest-leverage direction is <strong>universal Campaign Kit</strong>: concept + product (+ optional references) → a set of marketing assets, with structured re-edit—not “100% perfect AI in one click.”
+</div>
+
+<h2>Table of contents</h2>
+<ol class="toc">
+  <li>What the project does today</li>
+  <li>Current user process (as built)</li>
+  <li>Why image &amp; video disappoint high expectations</li>
+  <li>Vision: concept + product → marketing kit</li>
+  <li>One upload vs many references (Seedance limits)</li>
+  <li>Universal product (not crystal-only)</li>
+  <li>Market comparison &amp; your advantage</li>
+  <li>Marketing messages you can use</li>
+  <li>Recommended build order</li>
+  <li>Post-generation editing (expectation gap)</li>
+</ol>
+
+<h2>1. What the project does today</h2>
+
+<table>
+  <tr><th>Layer</th><th>Function</th><th>Quality today</th></tr>
+  <tr><td>Setup</td><td>Template, visual style, 標題/副標/產品名, workflow goal (image / video / combined)</td><td>Good structure</td></tr>
+  <tr><td>Image — AI</td><td>Nano Banana: promo-ai OR reference-concept (product + reference ad image)</td><td>Mixed; reference-concept can excel; promo-only often looks like light retouch</td></tr>
+  <tr><td>Image — compositor</td><td>Paper-sticker layout: exact 繁體 text, product sticker (Sharp/SVG)</td><td>Strong for fixed layouts; different product than full AI scene</td></tr>
+  <tr><td>Video</td><td>Seedance 2.0: image-to-video, reference-to-video, multi-angle (2–3 extra photos)</td><td>Weak vs “clone my Reels”; path/mode bugs hurt trust</td></tr>
+  <tr><td>Finish</td><td>BGM overlay, download MP4/PNG</td><td>OK</td></tr>
+  <tr><td>Not yet</td><td>Campaign kit, assistant, projects, in-app editor, carousel batch</td><td>On ROADMAP Phases 3–5</td></tr>
+</table>
+
+<p><strong>Stack (confirmed in code):</strong></p>
+<ul>
+  <li>Images: <code>fal-ai/nano-banana/edit</code>, <code>fal-ai/nano-banana-pro/edit</code>, <code>fal-ai/nano-banana</code></li>
+  <li>Video: <code>bytedance/seedance-2.0/image-to-video</code>, <code>reference-to-video</code> (+ fast variants)</li>
+  <li>Post-process (subs/dub): pipeline in <code>app/api/postprocess</code> — Phase 4 to surface in wizard</li>
+</ul>
+
+<h2>2. Current user process (as built)</h2>
+
+<div class="flow">SETUP (template, copy, style)
+    ↓
+IMAGE STEP
+    ├─ promo-ai        → 1 product photo → 1 AI image
+    ├─ reference-concept → product + 1 reference IMAGE → 1 AI image
+    └─ paper-layout    → compositor (exact text)
+    ↓
+VIDEO STEP (if combined / video-only)
+    ├─ image-to-video  → 1 keyframe → ~8s motion (reference MP4 IGNORED)
+    ├─ reference-concept → 1 product + 1 reference MP4 → Seedance R2V
+    └─ multi-angle     → product + 2–3 angle photos
+    ↓
+DONE → download (+ BGM on video)</div>
+
+<h3>Why it feels “image by image, video by video”</h3>
+<ul>
+  <li>Three separate creative choices; no single <strong>campaign brief</strong> drives all outputs.</li>
+  <li>Combined flow defaults to image → video from <em>that</em> still; reference MP4 easy to upload but skipped if mode is wrong.</li>
+  <li>No one-click <strong>kit</strong>: no 5–6 carousel, no caption pack, no “story + reel + still” bundle.</li>
+  <li>User mental model: <em>I gave concept + product + reference — give me a campaign.</em><br />
+      App mental model: <em>Run image API, then video API.</em></li>
+</ul>
+
+<div class="page-break"></div>
+
+<h2>3. Why image &amp; video disappoint high expectations</h2>
+
+<table>
+  <tr><th>Issue</th><th>Effect</th></tr>
+  <tr><td>Wrong video path</td><td>「圖片變影片」 ignores uploaded MP4 → generic slow push-in on still</td></tr>
+  <tr><td>Wrong @Image1</td><td>Marketing still (flat lay + text) sent instead of raw product photo → model ignores hands/motion from @Video1</td></tr>
+  <tr><td>Product vs reference mismatch</td><td>Ref: hands + purple beads; product: sunstone macro → model picks easier shot</td></tr>
+  <tr><td>Reference &gt; 15s / aspect</td><td>Seedance uses ~first 15s only; forced 9:16 vs ~4:5 ref</td></tr>
+  <tr><td>Prompt / settings fought ref</td><td>Template “Slow Push In” + motion strength overrode “match @Video1” (partially fixed in app)</td></tr>
+  <tr><td>Single asset mindset</td><td>One image, one clip — not how strong SMB campaigns are built</td></tr>
+  <tr><td>No QA / edit loop</td><td>One shot; no “adjust copy and re-render” on Done step yet</td></tr>
+</table>
+
+<div class="warning">
+<strong>Seedance reference-to-video is not pixel-clone.</strong> Official pattern (fal / ByteDance): <em>@Image1 performs the movement from @Video1</em>. Works when product photo, trimmed ref video, and mode align. Does not copy IG UI, faces, or logos.
+</div>
+
+<h3>Image: when it works well</h3>
+<p><strong>Reference-concept</strong> (product + reference ad image + 標題/副標) can produce clean 客人好評–style stills — new layout inspired by ref, not pixel copy. <strong>Promo-ai</strong> alone often returns something that looks like the upload with a light enhance.</p>
+
+<h2>4. Vision: concept + product → marketing kit</h2>
+
+<p><strong>North star (universal, any product category):</strong></p>
+
+<div class="callout">
+<strong>「一個概念，一套素材」Campaign Kit</strong><br />
+Inputs: product photo(s) · concept (one paragraph or preset) · optional reference image/video · 繁體 copy.<br />
+Outputs: hero still · carousel slides (5–6) · Reel MP4 · caption/hashtags · optional SRT · ZIP export.
+</div>
+
+<table>
+  <tr><th>Asset</th><th>Tool</th><th>Notes</th></tr>
+  <tr><td>Hero still 9:16</td><td>Nano Banana Pro (reference-concept)</td><td>Main IG post</td></tr>
+  <tr><td>Carousel 5–6 slides</td><td>LLM storyboard + NB / compositor / Ideogram per slide</td><td>Not one NB call — planned batch</td></tr>
+  <tr><td>Reel 8–12s</td><td>Seedance R2V or I2V</td><td>From best slide or motion ref</td></tr>
+  <tr><td>Clean MP4</td><td>Existing + ffmpeg BGM</td><td>CapCut-friendly</td></tr>
+  <tr><td>Caption</td><td>OpenAI (Phase 3 assistant)</td><td>繁體</td></tr>
+</table>
+
+<div class="flow">Concept + product + refs
+    → Planner (LLM / rules): template, modes, slide briefs
+    → Generate kit (parallel jobs)
+    → Preview grid: accept / regenerate one asset
+    → Export ZIP + CapCut checklist</div>
+
+<p>This is your <strong>market differentiation</strong>: campaign orchestration, not another single-image API.</p>
+
+<h2>5. One upload vs more images &amp; references</h2>
+
+<h3>Seedance 2.0 (fal) limits</h3>
+<table>
+  <tr><th>Input</th><th>Limit</th><th>Prompt tags</th></tr>
+  <tr><td>Images</td><td>Up to 9</td><td>@Image1 … @Image9 — product identity, angles</td></tr>
+  <tr><td>Videos</td><td>Up to 3, combined 2–15 seconds</td><td>@Video1 … — motion, editing, hands</td></tr>
+  <tr><td>Audio</td><td>Up to 3, combined ≤15s</td><td>@Audio1 — rhythm (optional)</td></tr>
+</table>
+
+<h3>When more helps</h3>
+<ul>
+  <li>Same product, <strong>2–4 angles</strong> (front, on wrist, macro) → better identity in motion.</li>
+  <li>Style board as @Image2 while @Image1 = product.</li>
+  <li>Multi-angle mode in app (API already accepts multiple <code>images</code>).</li>
+</ul>
+
+<h3>When more hurts</h3>
+<ul>
+  <li>Contradictory refs (doodle ref + marble still + different products).</li>
+  <li>Screen recordings with IG UI.</li>
+  <li>Ref video &gt; 15s without trimming in CapCut.</li>
+</ul>
+
+<h3>UI today vs API</h3>
+<table>
+  <tr><th>Slot</th><th>Wizard UI</th><th>API capability</th></tr>
+  <tr><td>Product photo</td><td>1</td><td>1+ (multi-angle: 2–3 extra)</td></tr>
+  <tr><td>Reference ad image</td><td>1</td><td>1 (style)</td></tr>
+  <tr><td>Reference MP4</td><td>1</td><td>1–3 (≤15s total)</td></tr>
+</table>
+<p><strong>Recommendation:</strong> v1 kit = 1 product + 1 ref image + 1 trimmed ref video. v2 = labeled gallery (產品 ×4, 運鏡參考, 風格參考).</p>
+
+<div class="page-break"></div>
+
+<h2>6. Universal product (not crystal-only)</h2>
+
+<table>
+  <tr><th>Today (narrow)</th><th>Target (universal)</th></tr>
+  <tr><td>水晶 Reels 工具</td><td>SMB 社交廣告素材工作室 — 任意實物產品</td></tr>
+  <tr><td>crystal-promo template</td><td>Campaign types: 新品 / 優惠 / 客人好評 / 教學 / 節日</td></tr>
+  <tr><td>Examples in 水晶</td><td>Prompts from user <strong>concept</strong> + product name</td></tr>
+</table>
+
+<p>Default visual style should stay <span class="tag">product</span>. Crystal = one template pack, not the product definition.</p>
+
+<h2>7. Market comparison</h2>
+
+<table>
+  <tr><th></th><th>Canva / CapCut</th><th>Generic AI video</th><th>Ad AI (Creatify-style)</th><th>You (target)</th></tr>
+  <tr><td>Ease</td><td>★★★★★</td><td>★★★</td><td>★★★★</td><td>★★★→★★★★</td></tr>
+  <tr><td>Image→video</td><td>Manual</td><td>★★★★</td><td>★★★★</td><td>★★★ (engine OK)</td></tr>
+  <tr><td>Ref motion match</td><td>Manual</td><td>★★</td><td>★★★</td><td>★★–★★★ with guardrails</td></tr>
+  <tr><td>HK 繁體 / local ads</td><td>Templates</td><td>EN-first</td><td>Some CN</td><td>★★★★★ niche</td></tr>
+  <tr><td>Full kit from one brief</td><td>Manual</td><td>Rare</td><td>★★★★</td><td>★★★★★ if built</td></tr>
+  <tr><td>Clean MP4 for editor</td><td>Yes</td><td>Sometimes</td><td>Sometimes</td><td>★★★★★</td></tr>
+</table>
+
+<div class="callout">
+<strong>Do not compete on:</strong> “best AI video model.”<br />
+<strong>Compete on:</strong> 香港／華語 SMB — 10 分鐘出齊一套 Reels 素材 — concept in, kit out, CapCut-ready.
+</div>
+
+<h2>8. Marketing messages (use 2–3 consistently)</h2>
+<ol>
+  <li><strong>一個概念，一套素材</strong> — 產品相 + 參考廣告 → 宣傳圖 + Reels + 文案（roadmap）</li>
+  <li><strong>跟參考片概念，唔係亂 generate</strong> — 跟運鏡同版面，換你嘅貨</li>
+  <li><strong>出 Clean MP4，喺 CapCut 加字幕</strong> — 唔迫你用 AI 字幕</li>
+  <li><strong>為小店而設</strong> — 客人好評、新品、優惠（template packs）</li>
+  <li><strong>AI 起稿，你執字執片</strong> — 改文案再出圖 + 專業工具後製</li>
+</ol>
+<p><strong>Avoid claiming:</strong> “100% same as reference video” or “only for crystal.”</p>
+
+<h2>9. Recommended build order</h2>
+
+<h3>Now → ~4 weeks (trust + kit MVP)</h3>
+<table>
+  <tr><th>#</th><th>Work</th><th>Why</th></tr>
+  <tr><td>1</td><td>Campaign Kit mode — concept + product + refs → orchestrated image + video</td><td>Ends image/video silos</td></tr>
+  <tr><td>2</td><td>Planner defaults — ref video → R2V + raw product photo; ref image → reference-concept</td><td>Stops wrong path</td></tr>
+  <tr><td>3</td><td>Show Seedance path after gen (reference-to-video vs image-to-video)</td><td>Trust</td></tr>
+  <tr><td>4</td><td>Ref trim guidance (8–12s in CapCut)</td><td>15s API limit</td></tr>
+  <tr><td>5</td><td>Adjust step: edit 標題/副標 → re-compose or AI tweak image</td><td>Expectation gap</td></tr>
+  <tr><td>6</td><td>3 example campaigns on landing</td><td>Set expectations</td></tr>
+</table>
+
+<h3>4–10 weeks (differentiation)</h3>
+<ul>
+  <li>Phase 3: AI assistant — concept → storyboard + modes</li>
+  <li>Carousel batch: 5–6 slides (LLM plan + NB / compositor per slide)</li>
+  <li>Product gallery (3–4 photos) → @Image1–@Image3 for Seedance</li>
+  <li>Phase 4: post-process in wizard (SRT, soft subs)</li>
+  <li>Phase 5: save/reopen projects</li>
+  <li>Export ZIP: slides + MP4 + caption.txt</li>
+</ul>
+
+<h3>Later (SaaS)</h3>
+<p>Auth, credits, Stripe, legal — ROADMAP Phases 6–7. Light template editor (Polotno/Fabric) or Canva partner only if paid demand.</p>
+
+<h2>10. Post-generation editing</h2>
+
+<p>AI will not be 100% right first time. Layers that fit this project:</p>
+
+<table>
+  <tr><th>Tier</th><th>What</th><th>Canva inside?</th></tr>
+  <tr><td>1</td><td>Edit 繁體 copy → re-compose / AI tweak on last PNG</td><td>No — structured re-edit</td></tr>
+  <tr><td>2</td><td>Light slot editor on compositor templates (move text, sticker)</td><td>Partial</td></tr>
+  <tr><td>3</td><td>Video: trim, BGM, SRT; motion fix = re-gen or CapCut</td><td>No timeline in-app</td></tr>
+  <tr><td>4</td><td>Export ZIP + CapCut / Canva checklist</td><td>Partner workflow</td></tr>
+  <tr><td>5</td><td>Full embedded Canva</td><td>Not MVP — months of work</td></tr>
+</table>
+
+<div class="callout">
+<strong>Positioning:</strong> AI drafts the campaign → user polishes in CapCut/Canva. Market: 「AI 起稿，你執字執片」— not 「一鍵完美」.
+</div>
+
+<h3>Multi-AI for carousel (5–6 posts)</h3>
+<ul>
+  <li><strong>LLM</strong> — slide storyboard + 繁體 per slide</li>
+  <li><strong>Nano Banana Pro</strong> — product + reference ad per slide</li>
+  <li><strong>Compositor</strong> — exact text slides</li>
+  <li><strong>Ideogram</strong> (optional) — text-heavy promo</li>
+  <li><strong>Seedance 2.0</strong> — one Reel from best slide or ref video</li>
+</ul>
+
+<h2>11. High-expectation recipe (testing checklist)</h2>
+<ol>
+  <li>Workflow: combined or Campaign Kit (when built)</li>
+  <li>Raw product photos (2–3), not only AI marketing still for video @Image1</li>
+  <li>Reference image: ad layout you like → 跟參考圖概念</li>
+  <li>Reference video: 8–12s trimmed clip → 跟參考片概念</li>
+  <li>720p, 10–12s, fast off for reference video</li>
+  <li>After generate: confirm note says <code>reference-to-video · 1 ref video</code></li>
+  <li>If wrong: use Adjust (when built) or regenerate with fixed inputs</li>
+</ol>
+
+<h2>12. Scorecard (from PRODUCT_EVALUATION.md)</h2>
+<table>
+  <tr><th>Dimension</th><th>Score</th><th>Note</th></tr>
+  <tr><td>Technical pipeline</td><td>8/10</td><td>Solid fal integration</td></tr>
+  <tr><td>UI/UX for public</td><td>6/10</td><td>Wizard improving</td></tr>
+  <tr><td>Beginner success rate</td><td>5/10</td><td>Needs kit + assistant + edit loop</td></tr>
+  <tr><td>Competition differentiation</td><td>6/10</td><td>Rises with Campaign Kit</td></tr>
+  <tr><td>SMB marketing fit (universal)</td><td>8/10</td><td>Real opportunity</td></tr>
+  <tr><td>Achievability (current stack)</td><td>9/10</td><td>No vendor swap required</td></tr>
+</table>
+
+<footer>
+AI Marketing Studio — internal strategy document. Related files: docs/ROADMAP.md, docs/PRODUCT_EVALUATION.md, AGENTS.md.<br />
+Generated for Michael Ng · Desktop copy for offline reading.
+</footer>
+
+</body>
+</html>
