@@ -8,19 +8,45 @@ import { ArtStylePicker } from "@/components/ArtStylePicker";
 import { TemplateSlotChecklist } from "@/components/TemplateSlotChecklist";
 import { AdvancedPromptPanel } from "@/components/AdvancedPromptPanel";
 import { isSlotRequired, templateHasSlot } from "@/lib/template-slots";
-import { VIDEO_DURATIONS, type VideoDuration } from "@/lib/video-settings";
-import { isBrandVideoStyle, isCreativeVideoStyle, isBrandVisualStyle, isStoryboardVideoStyle, isAiPlannedVideoStyle, visualStylePromptHint } from "@/lib/visual-styles";
+import { VIDEO_DURATIONS, type VideoDuration, type VideoSettings } from "@/lib/video-settings";
+import { isBrandVideoStyle, isCreativeVideoStyle, isBrandVisualStyle, isStoryboardVideoStyle, isUgcPresenterStyle, isAiPlannedVideoStyle, visualStylePromptHint } from "@/lib/visual-styles";
 import { UploadZone } from "@/components/UploadZone";
+import { ReferenceUploadZone } from "@/components/ReferenceUploadZone";
 import { ContentResearchPanel } from "@/components/content-research/ContentResearchPanel";
 import { CINEMATIC_SCENE_COUNTS, type CinematicSceneCount } from "@/lib/cinematic-scene-config";
 import type { UserReferenceBrief } from "@/lib/user-reference-brief";
+import { BrandKitPanel } from "@/components/studio/BrandKitPanel";
+import { ShipItPanel } from "@/components/studio/ShipItPanel";
 import { WizardErrorBanner } from "@/components/studio/WizardErrorBanner";
+import { VideoOutputSourceCard } from "@/components/studio/VideoOutputSourceCard";
+import { isContentResearchStyleExtra } from "@/lib/content-research-promote";
 
 export function SetupStep() {
-  const { advancedSection, analyzeBrand, applyClosestMatchRecipe, applyCinematicStitchRecipe, applyPrimaryPath, applyPrimaryPathConcept, applyPrimaryPathConceptVideo, applyPrimaryPathVideoOnly, applyPromptRebuild, applyQuickTest8sRecipe, artStyleId, brandAnalyzeBusy, brandAnalyzeNote, brandSocialHint, brandWebsiteUrl, business, cinematicSceneCount, conceptIdea, continueSetupLabel, creativeVideoBrief, error, formatCinematicCopy, goNextFromSetup, headline, imageCreativeMode, imagePrompt, lockedCampaignMode, m, offer, onCinematicSceneCountChange, onImageInputModeChange, onProductPhotoSelected, onImageCreativeModeChange, onReferenceAdFile, onVideoCreativeModeChange, onWorkflowModeChange, planAiVideoPrompt, product, productPhoto, promotionMode, promptExtra, promptMarket, selectVisualStyle, setArtStyleId, setBrandSocialHint, setBrandWebsiteUrl, setBusiness, setCampaignTheme, setConceptIdea, setConceptImageVisionNote, setCreativeVideoBrief, setError, setExtraKitPhotos, setHeadline, setImageAspectRatio, setImageCreativeMode, setImageOutputMode, setImagePrompt, setImageRefPhoto, setOffer, setProduct, setPromptExtra, setPromptMarket, setReferenceCarouselSlideCount, setShowAdvancedSetup, setShowAdvancedSetupPrompts, setStoryboardBrief, setSubjectFraming, setSubline, setUserReferenceBrief, setUseOriginalImage, setVideoPrompt, setVideoSettings, showAdvancedSetup, showAdvancedSetupPrompts, storyboardBrief, subjectFraming, subline, templateId, templateSlotStatus, uploadPreviewUrl, usesCompositor, usesReferenceConceptForImage, videoCreativeMode, videoPrompt, videoSettings, visualStyleId, workflowMode } = useWizard();
+  const { advancedSection, analyzeBrand, applyClosestMatchRecipe, applyCinematicStitchRecipe, applyPrimaryPath, applyPrimaryPathConcept, applyPrimaryPathConceptVideo, applyPrimaryPathVideoOnly, applyPromptRebuild, applyQuickTest8sRecipe, artStyleId, brandAnalyzeBusy, brandAnalyzeNote, brandSocialHint, brandWebsiteUrl, business, cinematicSceneCount, conceptIdea, continueSetupLabel, effectivePromoteName, setupNextDisabled, setupNextDisabledReason, creativeVideoBrief, error, formatCinematicCopy, goNextFromSetup, headline, imageCreativeMode, imagePrompt, isConceptStoryboardOutput, isContentResearchVideoPath, isStoryboardOutput, lockedCampaignMode, m, offer, onCinematicSceneCountChange, onImageInputModeChange, onProductPhotoSelected, onImageCreativeModeChange, onReferenceAdFile, onVideoCreativeModeChange, onWorkflowModeChange, planAiVideoPrompt, product, productPhoto, promotionMode, promptExtra, promptMarket, referenceAd, referenceIsVideo, referencePreviewUrl, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, runShipItPipeline, selectVisualStyle, setArtStyleId, setBrandKit, setBrandSocialHint, setBrandWebsiteUrl, setBusiness, setCampaignTheme, setConceptIdea, setConceptImageVisionNote, setCreativeVideoBrief, setError, setExtraKitPhotos, setHeadline, setImageAspectRatio, setImageCreativeMode, setImageOutputMode, setImagePrompt, setImageRefPhoto, setOffer, setProduct, setPromptExtra, setPromptMarket, setReferenceCarouselSlideCount, setContentResearchApplyRef, setShipItMode, setShowAdvancedSetup, setShowAdvancedSetupPrompts, setStoryboardBrief, setSubjectFraming, setSubline, setUserReferenceBrief, setUseOriginalImage, setVideoPrompt, setVideoSettings, shipItEligible, shipItVisionBlocked, shipItMode, shipItPipelineBusy, showAdvancedSetup, showAdvancedSetupPrompts, storyboardBrief, subjectFraming, subline, templateId, templateSlotStatus, uploadPreviewUrl, usesCompositor, usesReferenceConceptForImage, videoCreativeMode, videoPrompt, videoSettings, visualStyleId, workflowMode } = useWizard();
   const isConcept = promotionMode === "concept";
+  const isConceptImageOnly = isConcept && workflowMode === "image-only";
   const isConceptVideoOnly = isConcept && workflowMode === "video-only";
+  const hidePrimaryPathsForResearch =
+    isContentResearchStyleExtra(promptExtra) &&
+    (workflowMode === "image-only" || workflowMode === "video-only");
+  const hidePrimaryPaths =
+    isConceptImageOnly ||
+    isConceptVideoOnly ||
+    (hidePrimaryPathsForResearch && !isConcept);
+  const showResearchPathsHint = hidePrimaryPathsForResearch && !isConcept;
   const isVideoOnlyPhysical = !isConcept && workflowMode === "video-only";
+  const isVideoWorkflow = workflowMode === "video-only" || workflowMode === "combined";
+  const setupReferenceVideoOnStep1 =
+    isVideoWorkflow && !usesCompositor && !shipItMode;
+
+  function handleSetupReferenceVideo(file: File | null) {
+    if (file) {
+      onVideoCreativeModeChange("reference-concept");
+      onImageCreativeModeChange("reference-concept");
+      if (isConcept) onImageInputModeChange("reference");
+    }
+    onReferenceAdFile(file);
+  }
   const pathsTitle = isConceptVideoOnly
     ? m.wizard.conceptVideoPathsTitle
     : isConcept
@@ -45,10 +71,11 @@ export function SetupStep() {
   const [conceptPlanBusy, setConceptPlanBusy] = useState(false);
   const [conceptPlanNote, setConceptPlanNote] = useState<string | null>(null);
   const [contentResearchNote, setContentResearchNote] = useState<string | null>(null);
+  const [contentResearchOpen, setContentResearchOpen] = useState(true);
   const [recipeApplyNote, setRecipeApplyNote] = useState<string | null>(null);
   const defaultResearchTopic = isConcept
-    ? conceptIdea.trim() || business.trim() || product.trim() || headline.trim()
-    : product.trim() || business.trim() || headline.trim() || conceptIdea.trim();
+    ? conceptIdea.trim() || business.trim() || ""
+    : business.trim() || "";
   function applyConceptWizard(
     draft?: {
       audience?: string;
@@ -79,7 +106,7 @@ export function SetupStep() {
     if (nextSubline) setSubline(nextSubline);
     if (nextOffer) setOffer(nextOffer);
     if (conceptExtra) {
-      setPromptExtra((prev) => [prev.trim(), conceptExtra].filter(Boolean).join(" | "));
+      setPromptExtra((prev: string) => [prev.trim(), conceptExtra].filter(Boolean).join(" | "));
     }
     const conceptBrief = [
       conceptIdea.trim(),
@@ -204,7 +231,32 @@ export function SetupStep() {
 
   <WorkflowModePicker value={workflowMode} onChange={onWorkflowModeChange} />
 
-  <details className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
+  <ShipItPanel
+    shipItMode={shipItMode}
+    onShipItModeChange={setShipItMode}
+    eligible={shipItEligible && !shipItVisionBlocked}
+    busy={shipItPipelineBusy}
+    onRun={() => void runShipItPipeline()}
+    showRunButton={workflowMode === "combined"}
+    labels={{
+      modeOn: m.wizard.shipItModeOn,
+      modeOff: m.wizard.shipItModeOff,
+      modeHint: m.wizard.shipItModeHint,
+      showExpert: m.wizard.shipItShowExpert,
+      runBtn: m.wizard.shipItRunBtn,
+      running: m.wizard.shipItRunning,
+      unsupported: m.wizard.shipItUnsupported,
+      runHint: m.wizard.shipItRunHint,
+    }}
+  />
+
+  {workflowMode !== "image-only" && <VideoOutputSourceCard variant="setup" />}
+
+  <details
+    open={contentResearchOpen}
+    onToggle={(e) => setContentResearchOpen(e.currentTarget.open)}
+    className="rounded-xl border border-slate-200 bg-slate-50/80 p-3"
+  >
     <summary className="cursor-pointer text-sm font-medium text-slate-800">
       {m.wizard.contentResearchSectionTitle}
     </summary>
@@ -214,6 +266,7 @@ export function SetupStep() {
     defaultTopic={defaultResearchTopic}
     promoteProduct={product}
     onPromoteProductChange={setProduct}
+    syncTopicFromProduct={false}
     promotionMode={promotionMode}
     market={promptMarket}
     workflowMode={workflowMode}
@@ -234,12 +287,24 @@ export function SetupStep() {
       onImageInputModeChange,
       setExtraKitPhotos,
       setReferenceCarouselSlideCount,
+      setContentResearchApplyRef,
+      setCinematicSceneCount: onCinematicSceneCountChange,
       onVideoCreativeModeChange,
       onReferenceAdFile,
+      setError,
     }}
-    onApplied={() => {
-      setContentResearchNote(m.studioAssistant.actionApplied);
-      setError(null);
+    onApplied={(angle, plan, result) => {
+      setContentResearchNote(result?.message ?? m.studioAssistant.actionApplied);
+      if (result?.refs.videoAttached) {
+        setError(null);
+      }
+      setConceptAudience("");
+      setConceptPain("");
+      setConceptPromise("");
+      setConceptProof("");
+      setConceptCta("");
+      setConceptVisualMetaphor("");
+      setConceptPlanNote(null);
     }}
   />
     </div>
@@ -248,6 +313,149 @@ export function SetupStep() {
     <p className="text-xs text-emerald-800">{contentResearchNote}</p>
   )}
 
+  {isContentResearchVideoPath && (
+    <div
+      id="research-reel-setup"
+      className="space-y-3 rounded-xl border border-violet-200 bg-violet-50/80 px-4 py-3 text-xs text-violet-950"
+    >
+      <div>
+        <p className="font-semibold text-violet-900">
+          {isConcept ? m.wizard.researchReelSetupTitleConcept : m.wizard.researchReelSetupTitle}
+        </p>
+        <p className="mt-1 leading-relaxed text-violet-800">
+          {isConcept ? m.wizard.researchReelSetupIntroConcept : m.wizard.researchReelSetupIntro}
+        </p>
+      </div>
+      <ul className="space-y-1.5">
+        <li className="flex items-start gap-2">
+          <span aria-hidden>{isContentResearchStyleExtra(promptExtra) ? "✓" : "○"}</span>
+          <span>{m.wizard.researchReelStatusPost}</span>
+        </li>
+        <li className="flex items-start gap-2">
+          <span aria-hidden>{referenceAd && referenceIsVideo ? "✓" : "○"}</span>
+          <span>
+            {referenceAd && referenceIsVideo
+              ? m.wizard.researchReelStatusMp4
+              : m.wizard.researchReelMp4Missing}
+          </span>
+        </li>
+        <li className="flex items-start gap-2">
+          <span aria-hidden>
+            {researchReelAnalyzeBusy ? "…" : researchReelAnalysis || videoPrompt.trim() ? "✓" : "○"}
+          </span>
+          <span>
+            {researchReelAnalyzeBusy
+              ? m.wizard.researchReelAnalyzing
+              : researchReelAnalyzeNote || researchReelAnalysis?.productionNotesZh || "—"}
+          </span>
+        </li>
+        {isConcept ? (
+          <li className="flex items-start gap-2">
+            <span aria-hidden>{headline.trim() || conceptIdea.trim() ? "✓" : "○"}</span>
+            <span>
+              {headline.trim() || conceptIdea.trim()
+                ? m.wizard.researchReelStatusConceptCopy
+                : m.wizard.researchReelStatusConceptCopyMissing}
+            </span>
+          </li>
+        ) : (
+          <li className="flex items-start gap-2">
+            <span aria-hidden>{productPhoto ? "✓" : "○"}</span>
+            <span>
+              {productPhoto
+                ? m.wizard.researchReelStatusProductPhoto
+                : m.wizard.researchReelStatusProductPhotoOptional}
+            </span>
+          </li>
+        )}
+      </ul>
+      <div className={`grid gap-3 ${isConcept ? "" : "sm:grid-cols-2"}`}>
+        {!isConcept && (
+        <div
+          className="rounded-xl border border-violet-200 bg-white/90 p-3"
+          data-coach-id="coach-product-photo"
+        >
+          <UploadZone
+            label={m.wizard.uploadLabel}
+            hint={m.wizard.researchReelUploadProductHint}
+            cta={m.wizard.uploadCta}
+            changeLabel={m.wizard.uploadChange}
+            previewUrl={uploadPreviewUrl}
+            fileName={productPhoto?.name ?? null}
+            onFile={onProductPhotoSelected}
+          />
+        </div>
+        )}
+        <div className="rounded-xl border border-violet-200 bg-white/90 p-3">
+          <ReferenceUploadZone
+            label={m.wizard.referenceLabel}
+            hint={m.wizard.researchReelUploadMp4Hint}
+            cta={m.wizard.referenceCta}
+            changeLabel={m.wizard.referenceChange}
+            previewUrl={referencePreviewUrl}
+            isVideo={referenceIsVideo}
+            fileName={referenceAd?.name ?? null}
+            onFile={handleSetupReferenceVideo}
+          />
+        </div>
+      </div>
+      {referencePreviewUrl && referenceIsVideo ? (
+        <video
+          src={referencePreviewUrl}
+          className="max-h-40 w-full rounded-lg border border-violet-200 object-contain"
+          muted
+          playsInline
+          controls
+        />
+      ) : null}
+    </div>
+  )}
+
+  {setupReferenceVideoOnStep1 && !isContentResearchVideoPath && (
+    <div
+      id="setup-reference-video"
+      className="space-y-3 rounded-xl border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-xs text-emerald-950"
+    >
+      <div>
+        <p className="font-semibold text-emerald-900">{m.wizard.setupReferenceVideoTitle}</p>
+        <p className="mt-1 leading-relaxed text-emerald-800">{m.wizard.setupReferenceVideoIntro}</p>
+      </div>
+      <div className="rounded-xl border border-emerald-200 bg-white/90 p-3">
+        <ReferenceUploadZone
+          label={m.wizard.referenceLabel}
+          hint={m.wizard.setupReferenceVideoHint}
+          cta={m.wizard.referenceCta}
+          changeLabel={m.wizard.referenceChange}
+          previewUrl={referencePreviewUrl}
+          isVideo={referenceIsVideo}
+          fileName={referenceAd?.name ?? null}
+          onFile={handleSetupReferenceVideo}
+        />
+      </div>
+      {referenceAd && referenceIsVideo && (researchReelAnalyzeBusy || researchReelAnalyzeNote) ? (
+        <p className="rounded-lg bg-purple-950/10 px-3 py-2 text-purple-900">
+          {researchReelAnalyzeBusy ? m.wizard.researchReelAnalyzing : researchReelAnalyzeNote}
+        </p>
+      ) : referenceAd && referenceIsVideo && !effectivePromoteName ? (
+        <p className="rounded-lg bg-amber-100 px-3 py-2 text-amber-950">
+          {m.wizard.setupReferenceVideoWaitingCopy}
+        </p>
+      ) : null}
+      {!referenceAd || !referenceIsVideo ? (
+        <p className="text-emerald-800/90">{m.wizard.setupReferenceVideoSkipNote}</p>
+      ) : !isStoryboardOutput ? (
+        <p className="text-emerald-800/90">{m.wizard.setupReferenceVideoNonStoryboardHint}</p>
+      ) : null}
+    </div>
+  )}
+
+  {hidePrimaryPaths ? (
+    showResearchPathsHint ? (
+      <p className="rounded-xl border border-emerald-200 bg-emerald-50/80 px-3 py-2 text-xs text-emerald-900">
+        {m.wizard.primaryPathsHiddenResearchHint}
+      </p>
+    ) : null
+  ) : (
   <div className="rounded-2xl border border-cyan-200 bg-linear-to-br from-cyan-50 via-white to-indigo-50 p-4">
     <p className="text-sm font-semibold text-slate-900">{pathsTitle}</p>
     <p className="mt-1 text-xs text-slate-600">{pathsHint}</p>
@@ -443,6 +651,19 @@ export function SetupStep() {
         </button>
         <button
           type="button"
+          onClick={() => applyPrimaryPath("ugc-presenter")}
+          className={`rounded-xl border px-3 py-3 text-left ${
+            visualStyleId === "ugc-presenter"
+              ? "border-rose-400 bg-rose-50"
+              : "border-slate-200 bg-white"
+          }`}
+        >
+          <p className="text-sm font-semibold text-slate-900">{m.wizard.pathUgcPresenterTitle}</p>
+          <p className="mt-1 text-xs text-slate-600">{m.wizard.pathUgcPresenterDesc}</p>
+        </button>
+        {workflowMode !== "image-only" && (
+        <button
+          type="button"
           onClick={() => applyPrimaryPath("storyboard")}
           className={`rounded-xl border px-3 py-3 text-left ${
             visualStyleId === "storyboard-video"
@@ -453,6 +674,7 @@ export function SetupStep() {
           <p className="text-sm font-semibold text-slate-900">{m.wizard.pathStoryboardTitle}</p>
           <p className="mt-1 text-xs text-slate-600">{m.wizard.pathStoryboardDesc}</p>
         </button>
+        )}
       </div>
     )}
     {isConcept && (
@@ -547,6 +769,7 @@ export function SetupStep() {
       </p>
     )}
   </div>
+  )}
 
   {isConcept && (
     <div className="space-y-3 rounded-xl border border-indigo-200 bg-indigo-50/70 px-4 py-3">
@@ -697,10 +920,12 @@ export function SetupStep() {
       {brandAnalyzeNote && (
         <p className="text-xs text-violet-100/90">{brandAnalyzeNote}</p>
       )}
+      <BrandKitPanel onChange={setBrandKit} />
       </div>
     </details>
   )}
 
+  {!shipItMode && (
   <details
     className="rounded-xl border border-slate-200 bg-white p-3"
     open={showAdvancedSetup}
@@ -721,6 +946,16 @@ export function SetupStep() {
       )}
     </div>
   </details>
+  )}
+
+  {!usesCompositor && isUgcPresenterStyle(visualStyleId) && (
+    <div className="space-y-2 rounded-xl border border-rose-900/50 bg-rose-950/25 px-4 py-3">
+      <p className="text-sm font-semibold text-rose-50">
+        {m.wizard.visualStyles["ugc-presenter"].title}
+      </p>
+      <p className="text-xs text-rose-100/90">{m.wizard.ugcPresenter.setupIntro}</p>
+    </div>
+  )}
 
   {!usesCompositor && isStoryboardVideoStyle(visualStyleId) && (
     <div className="space-y-3 rounded-xl border border-teal-900/50 bg-teal-950/25 px-4 py-3">
@@ -749,7 +984,7 @@ export function SetupStep() {
               key={d}
               type="button"
               onClick={() =>
-                setVideoSettings((prev) => ({ ...prev, duration: d as VideoDuration }))
+                setVideoSettings((prev: VideoSettings) => ({ ...prev, duration: d as VideoDuration }))
               }
               className={`rounded-full px-4 py-2 text-sm font-medium ${
                 videoSettings.duration === d
@@ -816,7 +1051,7 @@ export function SetupStep() {
     visualStylePromptHint(visualStyleId) && (
     <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
       <span className="font-medium text-slate-800">{m.wizard.styleAutoAppliedLabel}</span>{" "}
-      {m.wizard.visualStyleHints[visualStyleId]}
+      {m.wizard.visualStyleHints[visualStyleId as keyof typeof m.wizard.visualStyleHints]}
     </p>
   )}
 
@@ -827,7 +1062,7 @@ export function SetupStep() {
     value={promptExtra}
     onChange={(e) => setPromptExtra(e.target.value)}
     placeholder={
-      m.wizard.requirementsPlaceholders[visualStyleId] ??
+      m.wizard.requirementsPlaceholders[visualStyleId as keyof typeof m.wizard.requirementsPlaceholders] ??
       m.wizard.requirementsPlaceholder
     }
     rows={2}
@@ -842,12 +1077,17 @@ export function SetupStep() {
 
   {templateHasSlot(templateId, "product") && (
     <>
-      <label className="block text-sm font-medium text-slate-700">{m.wizard.productLabel}</label>
+      <label className="block text-sm font-medium text-slate-700">
+        {promotionMode === "physical" && !usesCompositor
+          ? m.wizard.productLabelRequired
+          : m.wizard.productLabel}
+      </label>
       <input
         data-coach-id="coach-product-name"
         value={product}
         onChange={(e) => setProduct(e.target.value)}
         placeholder={m.wizard.productPlaceholder}
+        required={promotionMode === "physical" && !usesCompositor}
         className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-500"
       />
     </>
@@ -935,10 +1175,17 @@ export function SetupStep() {
   <TemplateSlotChecklist
     templateId={templateId}
     filled={templateSlotStatus()}
-    deferredSlotIds={["productPhoto", "styleRef", "referenceVideo"]}
+    optionalSlotIds={isConceptStoryboardOutput ? ["productPhoto"] : undefined}
+    deferredSlotIds={
+      setupReferenceVideoOnStep1
+        ? isContentResearchVideoPath
+          ? ["styleRef"]
+          : ["productPhoto", "styleRef"]
+        : ["productPhoto", "styleRef", "referenceVideo"]
+    }
   />
 
-  {!usesCompositor && (
+  {!usesCompositor && !shipItMode && (
     <details
       className="rounded-xl border border-slate-200 bg-white p-3"
       open={showAdvancedSetupPrompts}
@@ -968,11 +1215,17 @@ export function SetupStep() {
 
   {error && <WizardErrorBanner message={error} variant="light" />}
 
+  {setupNextDisabled && setupNextDisabledReason && (
+    <p className="text-center text-xs text-amber-700">{setupNextDisabledReason}</p>
+  )}
+
   <button
     type="button"
     data-coach-id="coach-continue-setup"
     onClick={goNextFromSetup}
-    className="hidden w-full rounded-2xl bg-linear-to-r from-cyan-500 via-emerald-500 to-teal-500 py-3.5 text-base font-semibold text-white shadow-[0_0_30px_rgba(16,185,129,0.35)] transition hover:scale-[1.01] md:block"
+    disabled={setupNextDisabled}
+    title={setupNextDisabledReason ?? undefined}
+    className="hidden w-full rounded-2xl bg-linear-to-r from-cyan-500 via-emerald-500 to-teal-500 py-3.5 text-base font-semibold text-white shadow-[0_0_30px_rgba(16,185,129,0.35)] transition hover:scale-[1.01] disabled:opacity-40 md:block"
   >
     {continueSetupLabel}
   </button>

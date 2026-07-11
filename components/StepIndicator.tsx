@@ -6,11 +6,13 @@ import { stepsForMode, type WorkflowMode, type WorkflowStepKey } from "@/lib/wor
 type Props = {
   mode: WorkflowMode;
   currentKey: WorkflowStepKey;
+  storyboardKeyframes?: boolean;
+  theme?: "light" | "dark";
 };
 
-export function StepIndicator({ mode, currentKey }: Props) {
+export function StepIndicator({ mode, currentKey, storyboardKeyframes, theme = "light" }: Props) {
   const { m } = useLocale();
-  const keys = stepsForMode(mode);
+  const keys = stepsForMode(mode, { storyboardKeyframes });
   const current = keys.indexOf(currentKey) + 1;
 
   const labelFor = (key: WorkflowStepKey) => {
@@ -26,6 +28,13 @@ export function StepIndicator({ mode, currentKey }: Props) {
     }
   };
 
+  const isDark = theme === "dark";
+  const inactiveCircle = isDark ? "bg-slate-700 text-slate-300" : "bg-slate-200 text-slate-500";
+  const doneCircle = isDark ? "bg-emerald-900/60 text-emerald-200" : "bg-emerald-100 text-emerald-700";
+  const labelActive = isDark ? "text-emerald-100" : "text-slate-900";
+  const labelMuted = isDark ? "text-slate-400" : "text-slate-500";
+  const arrowColor = isDark ? "text-slate-500" : "text-slate-400";
+
   return (
     <ol className="mb-8 flex flex-wrap items-center justify-center gap-1.5 sm:gap-3">
       {keys.map((key, i) => {
@@ -40,18 +49,18 @@ export function StepIndicator({ mode, currentKey }: Props) {
                 active
                   ? "bg-emerald-500 text-white shadow-lg shadow-emerald-900/40"
                   : done
-                    ? "bg-emerald-100 text-emerald-700"
-                    : "bg-slate-200 text-slate-500"
+                    ? doneCircle
+                    : inactiveCircle
               }`}
             >
               {done ? "✓" : n}
             </span>
             <span
-              className={`text-xs font-medium sm:text-sm ${active ? "text-slate-900" : "text-slate-500"}`}
+              className={`text-xs font-medium sm:text-sm ${active ? labelActive : labelMuted}`}
             >
               {label}
             </span>
-            {n < keys.length && <span className="hidden text-slate-400 sm:inline">→</span>}
+            {n < keys.length && <span className={`hidden sm:inline ${arrowColor}`}>→</span>}
           </li>
         );
       })}

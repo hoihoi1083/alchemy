@@ -1,4 +1,17 @@
+import type { CarouselReferenceVision } from "@/lib/carousel-reference-vision";
 import type { ConceptImageVision } from "@/lib/concept-image-vision";
+
+/** Per-slide layout/style from multi-image carousel vision (reference slide order). */
+export type CarouselSlideReferenceBrief = {
+  index: number;
+  sceneSummary: string;
+  layoutStyle: string;
+  colorPalette: string;
+  typographyStyle: string;
+  mood: string;
+  composition: string;
+  stagingPose: string;
+};
 
 /** Structured brief from user uploads + text — flows through plan → image → video. */
 export type UserReferenceBrief = {
@@ -15,6 +28,9 @@ export type UserReferenceBrief = {
   userConceptIdea?: string;
   userHeadline?: string;
   userSubline?: string;
+  /** Populated when vision analyzed multiple reference carousel frames. */
+  carouselSlides?: CarouselSlideReferenceBrief[];
+  carouselSlideCount?: number;
 };
 
 export const USER_REFERENCE_MARKER = "USER REFERENCE (match content + style)";
@@ -26,10 +42,71 @@ const STYLE_ONLY_TAIL =
   "Match topic lane and visual style family ONLY — each carousel slide must use a distinct layout; never clone the reference poster structure or duplicate the same hero graphic.";
 
 const LAYOUT_TRANSFER_TAIL =
-  "Borrow IMAGE 1 design grammar (layout rhythm, component types, typography hierarchy, staging pose type) — show IMAGE 2 product as hero, all readable copy from user brief. Do NOT copy reference subjects, logos, watermarks, original selling lines, or Chinese character forms from IMAGE 1. Background and lighting may adapt to suit IMAGE 2.";
+  "Borrow IMAGE 1 design grammar (layout rhythm, component types, typography hierarchy, staging pose type) — show IMAGE 2 product as hero, all readable copy from user brief. IMAGE 1 is another company's post — do NOT copy its logos, wordmarks, store names, sponsor marks, @handles, watermarks, or original selling lines. Background and lighting may adapt to suit IMAGE 2.";
 
 const CLONE_TAIL =
   "Generate in the same content lane and visual style family as this reference — do not genericize into unrelated stock marketing.";
+
+export function briefFromCarouselVision(
+  vision: CarouselReferenceVision,
+  userInputs?: { conceptIdea?: string; headline?: string; subline?: string },
+): UserReferenceBrief {
+  const slideSummaries = vision.slides
+    .map((s) => s.sceneSummary)
+    .filter(Boolean)
+    .join("; ");
+  return {
+    topic: vision.seriesSummary,
+    contentSummary: vision.seriesSummary,
+    visibleText: "",
+    subjects: slideSummaries
+      ? `Reference carousel subjects (DO NOT reproduce): ${slideSummaries}`
+      : "",
+    contentType: vision.contentType || "social-carousel",
+    layoutStyle: vision.sharedLayoutFamily,
+    colorPalette: vision.sharedColorPalette,
+    typographyStyle: vision.sharedTypography,
+    mood: vision.sharedMood,
+    motionHints: "",
+    userConceptIdea: userInputs?.conceptIdea?.trim() || undefined,
+    userHeadline: userInputs?.headline?.trim() || undefined,
+    userSubline: userInputs?.subline?.trim() || undefined,
+    carouselSlideCount: vision.slides.length,
+    carouselSlides: vision.slides.map((s) => ({
+      index: s.index,
+      sceneSummary: s.sceneSummary,
+      layoutStyle: s.layoutStyle,
+      colorPalette: s.colorPalette || vision.sharedColorPalette,
+      typographyStyle: s.typographyStyle || vision.sharedTypography,
+      mood: s.mood || vision.sharedMood,
+      composition:
+        s.compositionHint ||
+        [s.layoutStyle, s.stagingPose].filter(Boolean).join(" — ") ||
+        s.sceneSummary,
+      stagingPose: s.stagingPose,
+    })),
+  };
+}
+
+/** Planner block: per-slide reference layout hints from carousel vision. */
+export function carouselSlidesPlannerBlock(
+  slides: CarouselSlideReferenceBrief[] | undefined,
+): string {
+  if (!slides?.length) return "";
+  const lines = slides.map((s) => {
+    const parts = [
+      `Slide ${s.index}`,
+      s.composition || s.layoutStyle,
+      s.stagingPose ? `staging: ${s.stagingPose}` : "",
+      s.mood ? `mood: ${s.mood}` : "",
+    ].filter(Boolean);
+    return parts.join(" — ");
+  });
+  return [
+    `Reference carousel has ${slides.length} analyzed slides — match shared visual DNA and map output slide N to reference slide N layout/staging.`,
+    ...lines,
+  ].join("\n");
+}
 
 export function briefFromConceptVision(
   vision: ConceptImageVision,
@@ -131,6 +208,12 @@ export function userReferencePromptBlock(brief: UserReferenceBrief): string {
   if (brief.typographyStyle) parts.push(`Typography: ${brief.typographyStyle}`);
   if (brief.mood) parts.push(`Mood: ${brief.mood}`);
   if (brief.motionHints) parts.push(`Motion: ${brief.motionHints}`);
+  if (brief.carouselSlides?.length) {
+    parts.push(
+      `Reference carousel (${brief.carouselSlides.length} slides analyzed): match shared palette, typography, mood, and per-slide layout rhythm below.`,
+    );
+    parts.push(carouselSlidesPlannerBlock(brief.carouselSlides).replace(/\n/g, " | "));
+  }
   parts.push(CLONE_TAIL);
   return parts.join(" ");
 }
@@ -167,6 +250,11 @@ export function userReferenceLayoutTransferPromptBlock(
   if (brief.typographyStyle) parts.push(`Reference typography: ${brief.typographyStyle}`);
   if (brief.contentType) parts.push(`Reference format: ${brief.contentType}`);
   if (brief.mood) parts.push(`Reference mood: ${brief.mood}`);
+  if (brief.carouselSlides?.length) {
+    parts.push(
+      `Reference carousel (${brief.carouselSlides.length} slides): output slide N should mirror reference slide N layout/staging — ${carouselSlidesPlannerBlock(brief.carouselSlides).replace(/\n/g, " | ")}`,
+    );
+  }
   if (brief.subjects) {
     parts.push(`Reference subjects (DO NOT reproduce): ${brief.subjects}`);
   }
@@ -216,6 +304,9 @@ export function userReferenceStyleOnlyPromptBlock(brief: UserReferenceBrief): st
   if (brief.colorPalette) parts.push(`Colors: ${brief.colorPalette}`);
   if (brief.typographyStyle) parts.push(`Typography: ${brief.typographyStyle}`);
   if (brief.mood) parts.push(`Mood: ${brief.mood}`);
+  if (brief.carouselSlides?.length) {
+    parts.push(carouselSlidesPlannerBlock(brief.carouselSlides).replace(/\n/g, " | "));
+  }
   parts.push(STYLE_ONLY_TAIL);
   parts.push(
     "Avoid real celebrity likenesses — use original characters representing similar roles.",
@@ -247,6 +338,10 @@ export function toStyleOnlyReferenceExtra(fullExtra: string): string {
 
 export function isStyleOnlyReferenceExtra(extra: string | undefined): boolean {
   return Boolean(extra?.includes(USER_REFERENCE_STYLE_ONLY_MARKER));
+}
+
+export function isLayoutTransferReferenceExtra(extra: string | undefined): boolean {
+  return Boolean(extra?.includes(USER_REFERENCE_LAYOUT_TRANSFER_MARKER));
 }
 
 export function mergeUserReferenceBrief(

@@ -9,7 +9,7 @@ export {
   postAnalyzeBrand,
   postCampaign,
   postCompose,
-  postExportEditPack,
+  postBurnImageText,
   postGenerateImage,
   postGenerateImageJson,
   postGenerateVideo,

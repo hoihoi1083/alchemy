@@ -126,6 +126,45 @@ export async function getMediaDurationSeconds(filePath: string): Promise<number>
   return n;
 }
 
+/** Sample JPEG stills along a reel timeline for vision analysis. */
+export async function extractVideoFrames(
+  inputVideo: string,
+  outputDir: string,
+  options?: { maxFrames?: number; minFrames?: number; maxDurationSec?: number },
+): Promise<{ paths: string[]; timesSec: number[] }> {
+  const maxFrames = options?.maxFrames ?? 6;
+  const minFrames = options?.minFrames ?? 3;
+  const fullDuration = await getMediaDurationSeconds(inputVideo);
+  const duration =
+    options?.maxDurationSec != null
+      ? Math.min(fullDuration, options.maxDurationSec)
+      : fullDuration;
+  const frameCount = Math.min(maxFrames, Math.max(minFrames, Math.round(duration / 2)));
+  const paths: string[] = [];
+  const timesSec: number[] = [];
+
+  for (let i = 0; i < frameCount; i++) {
+    const t = (duration * (i + 1)) / (frameCount + 1);
+    const out = path.join(outputDir, `frame-${String(i + 1).padStart(2, "0")}.jpg`);
+    await run("ffmpeg", [
+      "-y",
+      "-ss",
+      String(t),
+      "-i",
+      inputVideo,
+      "-frames:v",
+      "1",
+      "-q:v",
+      "2",
+      out,
+    ]);
+    paths.push(out);
+    timesSec.push(t);
+  }
+
+  return { paths, timesSec };
+}
+
 export async function getVideoDimensions(
   filePath: string,
 ): Promise<{ width: number; height: number }> {
@@ -255,9 +294,12 @@ export async function addBackgroundMusic(
   musicPath: string,
   outputVideo: string,
   volume = 0.28,
+  /** When true, drop any Seedance/reference speech before adding BGM only. */
+  replaceExistingAudio = false,
 ): Promise<void> {
   const duration = await getMediaDurationSeconds(inputVideo);
-  const hasAudio = await videoHasAudioStream(inputVideo);
+  const hasAudio =
+    !replaceExistingAudio && (await videoHasAudioStream(inputVideo));
   const dur = duration.toFixed(3);
 
   if (hasAudio) {

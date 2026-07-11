@@ -36,6 +36,10 @@ export function ProPageClient() {
           </div>
         </div>
 
+        <p className="mb-4 rounded-xl border border-amber-900/50 bg-amber-950/30 px-4 py-3 text-xs text-amber-100/90 md:hidden">
+          {m.pro.mobileDesktopOnly}
+        </p>
+
         <p className="mb-4 rounded-xl border border-amber-900/50 bg-amber-950/30 px-4 py-3 text-xs text-amber-100/90">
           {m.pro.costHint}
         </p>

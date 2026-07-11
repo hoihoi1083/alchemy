@@ -20,6 +20,7 @@ export type StudioCoachMode =
   | "concept-brand"
   | "concept-service"
   | "concept-creative-video"
+  | "concept-storyboard"
   | "captions"
   | "pro-canvas";
 
@@ -33,6 +34,9 @@ export function detectStudioCoachMode(snapshot: StudioAssistantSnapshot): Studio
   }
   if (snapshot.visualStyleId === "website-launch" && snapshot.workflowMode === "image-only") {
     return "concept-website-image";
+  }
+  if (isStoryboardVideoStyle(snapshot.visualStyleId)) {
+    return "concept-storyboard";
   }
   if (isConceptCinematicStyle(snapshot.visualStyleId)) {
     return snapshot.cinematicSceneCount > 1 ? "concept-cinematic-stitch" : "concept-8s-reel";
@@ -92,6 +96,15 @@ export function storyboardSetupSequence(): CoachTaskKind[] {
   ];
 }
 
+export function conceptStoryboardSetupSequence(snapshot: StudioAssistantSnapshot): CoachTaskKind[] {
+  const seq: CoachTaskKind[] = [];
+  if (!snapshot.conceptIdea.trim() && !snapshot.headline.trim()) {
+    seq.push("fill-concept");
+  }
+  seq.push("continue-setup");
+  return seq;
+}
+
 export function physicalImagePostSetupSequence(): CoachTaskKind[] {
   return [
     "fill-product-name",
@@ -139,6 +152,8 @@ export function setupSequenceForMode(
     case "concept-service":
     case "concept-creative-video":
       return conceptSetupSequence(snapshot);
+    case "concept-storyboard":
+      return conceptStoryboardSetupSequence(snapshot);
     default:
       return [];
   }

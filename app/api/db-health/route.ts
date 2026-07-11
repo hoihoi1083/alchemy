@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { ensureIndexes } from "@/lib/mongodb";
+import { isMongoReady, mongoRequiredErrorMessage } from "@/lib/mongodb-production";
 
 export const runtime = "nodejs";
 
@@ -16,8 +17,11 @@ function indexesOnce(): Promise<void> {
 }
 
 export async function GET() {
-  if (!process.env.MONGODB_URI) {
-    return NextResponse.json({ ok: false, error: "MONGODB_URI is not set" }, { status: 503 });
+  if (!isMongoReady()) {
+    return NextResponse.json(
+      { ok: false, error: mongoRequiredErrorMessage() },
+      { status: 503 },
+    );
   }
 
   try {

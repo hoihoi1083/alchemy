@@ -4,6 +4,8 @@ import type {
   ContentResearchPost,
 } from "@/lib/content-research-types";
 import { formatLabelForAngleFormat, inferFormatFromPost } from "@/lib/content-research-infer";
+import { angleCanSupplyReferenceMp4 } from "@/lib/content-research-video-ready";
+import { finalizeXhsAngle, finalizeXhsPost, angleHasReferenceCover } from "@/lib/research-cover-url";
 
 export const RESEARCH_ANGLES_PER_PAGE = 3;
 export const RESEARCH_POSTS_FETCH_LIMIT = 12;
@@ -11,7 +13,9 @@ export const RESEARCH_LIVE_ANGLE_COUNT = 9;
 
 export function exploreIdFromUrl(url: string): string | null {
   const m = url.match(/\/explore\/([a-f0-9]+)/i);
-  return m?.[1]?.toLowerCase() ?? null;
+  if (m?.[1]) return m[1].toLowerCase();
+  const discovery = url.match(/\/discovery\/item\/([a-f0-9]+)/i)?.[1];
+  return discovery?.toLowerCase() ?? null;
 }
 
 function urlsMatch(a: string, b: string): boolean {
@@ -44,18 +48,21 @@ export function enrichAngleWithPost(
   angle: ContentAngleCandidate,
   post: ContentResearchPost,
 ): ContentAngleCandidate {
-  return {
+  const normalized =
+    post.platform === "xiaohongshu" ? finalizeXhsPost(post) : post;
+  return finalizeXhsAngle({
     ...angle,
-    sourceUrl: angle.sourceUrl || post.url,
-    sourceTitle: angle.sourceTitle || post.title,
-    sourceCoverImageUrl: post.coverImageUrl,
-    sourceImageUrls: post.imageUrls ?? (post.coverImageUrl ? [post.coverImageUrl] : undefined),
-    sourceVideoUrl: post.videoUrl,
-    sourceAuthor: post.author,
-    sourceLikes: post.likes,
-    sourceCollects: post.collects,
-    sourceComments: post.comments,
-  };
+    sourceUrl: angle.sourceUrl || normalized.url,
+    sourceTitle: angle.sourceTitle || normalized.title,
+    sourceCoverImageUrl: normalized.coverImageUrl,
+    sourceImageUrls:
+      normalized.imageUrls ?? (normalized.coverImageUrl ? [normalized.coverImageUrl] : undefined),
+    sourceVideoUrl: normalized.videoUrl,
+    sourceAuthor: normalized.author,
+    sourceLikes: normalized.likes,
+    sourceCollects: normalized.collects,
+    sourceComments: normalized.comments,
+  });
 }
 
 export function attachSourcePostsToPlan(plan: ContentResearchPlan): ContentResearchPlan {
@@ -76,27 +83,29 @@ export function attachSourcePostsToPlan(plan: ContentResearchPlan): ContentResea
     if (used.has(post.id)) continue;
     const inferredFormat = inferFormatFromPost(post);
     const imageCount = post.imageUrls?.length ?? (post.coverImageUrl ? 1 : 0);
-    liteAngles.push({
-      id: `post-${post.id}`,
-      title: post.title,
-      hook: post.snippet.slice(0, 100) || post.title,
-      scriptOutline: "",
-      format: inferredFormat,
-      formatLabel: formatLabelForAngleFormat(inferredFormat, imageCount),
-      whyItWorks: "High-engagement post on this platform — reuse the hook structure for your product.",
-      bulletPoints: [],
-      cta: "",
-      score: 40,
-      sourceUrl: post.url,
-      sourceTitle: post.title,
-      sourceCoverImageUrl: post.coverImageUrl,
-      sourceImageUrls: post.imageUrls ?? (post.coverImageUrl ? [post.coverImageUrl] : undefined),
-      sourceVideoUrl: post.videoUrl,
-      sourceAuthor: post.author,
-      sourceLikes: post.likes,
-      sourceCollects: post.collects,
-      sourceComments: post.comments,
-    });
+    liteAngles.push(
+      finalizeXhsAngle({
+        id: `post-${post.id}`,
+        title: post.title,
+        hook: post.snippet.slice(0, 100) || post.title,
+        scriptOutline: "",
+        format: inferredFormat,
+        formatLabel: formatLabelForAngleFormat(inferredFormat, imageCount),
+        whyItWorks: "High-engagement post on this platform — reuse the hook structure for your product.",
+        bulletPoints: [],
+        cta: "",
+        score: 40,
+        sourceUrl: post.url,
+        sourceTitle: post.title,
+        sourceCoverImageUrl: post.coverImageUrl,
+        sourceImageUrls: post.imageUrls ?? (post.coverImageUrl ? [post.coverImageUrl] : undefined),
+        sourceVideoUrl: post.videoUrl,
+        sourceAuthor: post.author,
+        sourceLikes: post.likes,
+        sourceCollects: post.collects,
+        sourceComments: post.comments,
+      }),
+    );
   }
 
   const allDisplay = [...enrichedCandidates, ...liteAngles];
@@ -109,4 +118,26 @@ export function attachSourcePostsToPlan(plan: ContentResearchPlan): ContentResea
 
 export function sortedDisplayAngles(plan: ContentResearchPlan): ContentAngleCandidate[] {
   return [...plan.candidates].sort((a, b) => b.score - a.score);
+}
+
+/** Prefer angles whose reference post has a loadable cover URL. */
+export function displayResearchAngles(
+  plan: ContentResearchPlan,
+  options?: { videoOnly?: boolean },
+): {
+  angles: ContentAngleCandidate[];
+  hiddenWithoutCover: number;
+} {
+  const all = sortedDisplayAngles(plan);
+  if (options?.videoOnly) {
+    const videoReady = all.filter((a) => angleCanSupplyReferenceMp4(a, plan.platform));
+    if (videoReady.length > 0) {
+      return { angles: videoReady, hiddenWithoutCover: all.length - videoReady.length };
+    }
+  }
+  const withCover = all.filter(angleHasReferenceCover);
+  if (withCover.length > 0) {
+    return { angles: withCover, hiddenWithoutCover: all.length - withCover.length };
+  }
+  return { angles: all, hiddenWithoutCover: 0 };
 }

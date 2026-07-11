@@ -446,11 +446,20 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
     }
   }, [input, loading, messages, locale, snapshot, sa.errorNetwork, sa.signInToChat, needsSignIn]);
 
+  const wizardStepKey = wizard?.stepKey;
+  const studioMobileBarVisible =
+    surface === "studio" &&
+    (wizardStepKey === "setup" || wizardStepKey === "image" || wizardStepKey === "video");
+
+  const launcherBottom = studioMobileBarVisible
+    ? "max(calc(4.75rem + env(safe-area-inset-bottom)), 5.5rem)"
+    : "max(1.25rem, env(safe-area-inset-bottom))";
+
   return (
     <div
       className="pointer-events-none fixed z-[100] flex flex-col items-end gap-3"
       style={{
-        bottom: "max(1.25rem, env(safe-area-inset-bottom))",
+        bottom: launcherBottom,
         right: "max(1rem, env(safe-area-inset-right))",
       }}
     >
@@ -556,6 +565,7 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
                           setCampaignTheme: wizard.setCampaignTheme,
                           selectVisualStyle: wizard.selectVisualStyle,
                           onWorkflowModeChange: wizard.onWorkflowModeChange,
+                          setContentResearchApplyRef: wizard.setContentResearchApplyRef,
                         }
                       : undefined
                   }
@@ -653,7 +663,7 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
         aria-expanded={open}
         aria-label={sa.openLauncher}
       >
-        <span className="relative h-[100px] w-[100px] shrink-0 overflow-hidden rounded-2xl sm:h-[140px] sm:w-[140px]">
+        <span className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl sm:h-[100px] sm:w-[100px] md:h-[140px] md:w-[140px]">
           <Image
             src={LAUNCHER_IMAGE_SRC}
             alt="alchemy.ai logo"

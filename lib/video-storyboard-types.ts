@@ -9,6 +9,8 @@ export type StoryboardScenePlan = {
   endSec: number;
   /** Short description for the user (Traditional Chinese if HK/TW market). */
   sceneDescriptionZh: string;
+  /** Consumer-facing on-image copy for this scene (繁中) — not production labels. */
+  onImageCopyZh?: string;
   /** English still-image prompt for Nano Banana (product from IMAGE 1). */
   imagePrompt: string;
 };
@@ -30,6 +32,7 @@ export type StoryboardSceneResult = {
   startSec: number;
   endSec: number;
   sceneDescriptionZh: string;
+  onImageCopyZh?: string;
   imageUrl: string;
   /** Original per-scene image prompt used for scene regeneration. */
   imagePrompt?: string;

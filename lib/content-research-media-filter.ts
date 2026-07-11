@@ -9,14 +9,47 @@ export function mediaFilterFromWorkflowMode(
   return undefined;
 }
 
+export function postIsVideoPost(post: ContentResearchPost): boolean {
+  return post.mediaType === "video" || Boolean(post.videoUrl);
+}
+
+export function postHasImageMedia(post: ContentResearchPost): boolean {
+  return Boolean(post.coverImageUrl || post.imageUrls?.length);
+}
+
 export function postMatchesMediaFilter(
   post: ContentResearchPost,
   filter: ContentResearchMediaFilter,
 ): boolean {
-  const isVideo = post.mediaType === "video" || Boolean(post.videoUrl);
+  const isVideo = postIsVideoPost(post);
   if (filter === "video") return isVideo;
   if (isVideo) return false;
-  return Boolean(post.coverImageUrl || post.imageUrls?.length);
+  return postHasImageMedia(post);
+}
+
+/** User-facing reason when a pinned post does not match the current workflow filter. */
+export function mediaFilterMismatchMessage(
+  post: ContentResearchPost,
+  filter: ContentResearchMediaFilter,
+): string {
+  const isVideo = postIsVideoPost(post);
+  const hasImages = postHasImageMedia(post);
+
+  if (filter === "video") {
+    return isVideo
+      ? ""
+      : "This post has no video — switch workflow to Image, or pick a reel link.";
+  }
+
+  if (isVideo) {
+    return "This post is a video — switch workflow to Video, or pick an image/carousel link.";
+  }
+
+  if (!hasImages) {
+    return "Could not load images from this post (platform API returned incomplete data). Wait a moment and try again, or paste the full xiaohongshu.com/explore/… link copied from the app.";
+  }
+
+  return "This post does not match the current workflow.";
 }
 
 export function filterPostsByMedia(

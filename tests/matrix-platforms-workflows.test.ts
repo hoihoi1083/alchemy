@@ -22,6 +22,14 @@ describe("platform × workflow UX logic", () => {
       if (mode === "combined") {
         assert.deepEqual(steps, ["setup", "image", "video", "done"]);
       }
+      if (mode === "video-only") {
+        assert.deepEqual(stepsForMode("video-only", { storyboardKeyframes: true }), [
+          "setup",
+          "image",
+          "video",
+          "done",
+        ]);
+      }
     }
   });
 

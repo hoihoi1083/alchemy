@@ -17,7 +17,7 @@ function contentType(fileName: string): string {
 }
 
 export async function GET(
-  _request: Request,
+  request: Request,
   context: { params: Promise<{ jobId: string; file: string }> },
 ) {
   const { userId } = await auth();
@@ -37,12 +37,16 @@ export async function GET(
 
   try {
     const data = await fs.readFile(fullPath);
+    const requestedName = new URL(request.url).searchParams.get("filename")?.trim();
+    const disposition = requestedName
+      ? `attachment; filename="${requestedName.replace(/[^\w.\- \u4e00-\u9fff]+/g, "-")}"`
+      : `inline; filename="${file}"`;
     return new NextResponse(data, {
       status: 200,
       headers: {
         "Content-Type": contentType(file),
         "Cache-Control": "no-store",
-        "Content-Disposition": `inline; filename="${file}"`,
+        "Content-Disposition": disposition,
       },
     });
   } catch {

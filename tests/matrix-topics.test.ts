@@ -48,7 +48,7 @@ describe("topic matrix — promote vs search across categories", () => {
         assert.ok(handoff.conceptIdea?.includes(scenario.product));
       }
       assert.ok(handoff.promptExtra?.includes(scenario.product));
-      assert.ok(handoff.promptExtra?.includes("Do NOT copy reference subject matter"));
+      assert.ok(handoff.promptExtra?.includes("MATCH reference visual style"));
       assert.ok(!handoff.headline?.includes(scenario.referenceTopic));
     });
   }

@@ -2,8 +2,9 @@ import type { ImageCreativeMode } from "@/lib/creative-workflow";
 import type { ImageOutputMode } from "@/lib/image-output-mode";
 import { isPromotionMode, type PromotionMode } from "@/lib/promotion-mode";
 import type { ReferenceImageMode } from "@/lib/prompt-variables";
-import { isConceptCinematicStyle, type VisualStyleId } from "@/lib/visual-styles";
+import { isConceptCinematicStyle, isStoryboardVideoStyle, type VisualStyleId } from "@/lib/visual-styles";
 import type { WorkflowMode } from "@/lib/workflow-mode";
+import type { CarouselSlideReferenceBrief } from "@/lib/user-reference-brief";
 import {
   type UserReferenceBrief,
   userReferenceLayoutTransferPromptBlock,
@@ -183,6 +184,15 @@ function pickStrategyKind(input: ResolveReferenceStrategyInput): ReferenceStrate
     return input.hasProductPhoto ? "product-clone" : "style-only";
   }
 
+  if (isStoryboardVideoStyle(input.visualStyleId)) {
+    if (input.hasReferenceUpload && input.hasProductPhoto) return "layout-transfer";
+    if (input.imageCreativeMode === "reference-concept" && input.hasReferenceUpload) {
+      return input.hasProductPhoto ? "layout-transfer" : "style-only";
+    }
+    if (input.hasReferenceUpload || input.hasReferenceBrief) return "style-only";
+    return input.hasProductPhoto ? "product-clone" : "none";
+  }
+
   return "style-only";
 }
 
@@ -219,6 +229,27 @@ export function parseReferenceBriefJson(raw: string | null | undefined): UserRef
       userConceptIdea: parsed.userConceptIdea?.trim() || undefined,
       userHeadline: parsed.userHeadline?.trim() || undefined,
       userSubline: parsed.userSubline?.trim() || undefined,
+      carouselSlideCount:
+        typeof parsed.carouselSlideCount === "number" && parsed.carouselSlideCount > 0
+          ? parsed.carouselSlideCount
+          : undefined,
+      carouselSlides: Array.isArray(parsed.carouselSlides)
+        ? parsed.carouselSlides
+            .map((raw, i) => {
+              const s = raw as Partial<CarouselSlideReferenceBrief>;
+              return {
+                index: Math.max(1, Number(s.index) || i + 1),
+                sceneSummary: String(s.sceneSummary ?? "").trim(),
+                layoutStyle: String(s.layoutStyle ?? "").trim(),
+                colorPalette: String(s.colorPalette ?? "").trim(),
+                typographyStyle: String(s.typographyStyle ?? "").trim(),
+                mood: String(s.mood ?? "").trim(),
+                composition: String(s.composition ?? "").trim(),
+                stagingPose: String(s.stagingPose ?? "").trim(),
+              };
+            })
+            .filter((s) => s.layoutStyle || s.composition || s.sceneSummary)
+        : undefined,
     };
   } catch {
     return null;

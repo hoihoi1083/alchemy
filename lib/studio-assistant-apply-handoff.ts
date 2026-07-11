@@ -30,6 +30,9 @@ export async function applyStudioAssistantHandoff(
   if (handoff.campaignTheme) wizard.setCampaignTheme(handoff.campaignTheme);
   if (handoff.workflowMode) wizard.onWorkflowModeChange(handoff.workflowMode);
   if (handoff.visualStyleId) wizard.selectVisualStyle(handoff.visualStyleId);
+  if (handoff.contentResearchApplyRef && wizard.setContentResearchApplyRef) {
+    wizard.setContentResearchApplyRef(handoff.contentResearchApplyRef);
+  }
 
   if (handoff.referencePlatform) {
     const imageUrls =

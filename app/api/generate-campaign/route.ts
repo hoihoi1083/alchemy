@@ -4,6 +4,8 @@ import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import type { BrandProfile } from "@/lib/brand-profile";
 import type { CampaignPlan } from "@/lib/campaign-types";
 import { planCampaign } from "@/lib/campaign-plan";
+import { parseBrandKit } from "@/lib/brand-kit";
+import { uploadBrandKitLogoToFal } from "@/lib/brand-kit-fal";
 import { defaultEditEndpoint, defaultTextEndpoint } from "@/lib/image-endpoints";
 import {
   parseStrategyFromFormData,
@@ -19,6 +21,7 @@ import {
 import type { VisualStyleId } from "@/lib/visual-styles";
 import { requiresBrandProfileForImages } from "@/lib/visual-styles";
 import { artStyleSystemPrompt, resolveArtStyleId } from "@/lib/art-style";
+import { archiveCampaignSlidesToPipeline } from "@/lib/pipeline/archive-image";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -111,6 +114,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid brand profile data." }, { status: 400 });
     }
   }
+  const brandKitRaw = (formData.get("brand_kit") as string | null)?.trim() || "";
+  let brandKit = null;
+  if (brandKitRaw) {
+    try {
+      brandKit = parseBrandKit(JSON.parse(brandKitRaw));
+    } catch {
+      return NextResponse.json({ error: "Invalid brand kit data." }, { status: 400 });
+    }
+  }
 
   if (
     promotionMode !== "concept" &&
@@ -177,6 +189,12 @@ export async function POST(request: Request) {
       brandProfile,
       promotionMode,
       hasReferenceLayout: strategy.useDualImage,
+      referenceStrategyKind:
+        strategy.kind === "layout-transfer"
+          ? "layout-transfer"
+          : strategy.kind === "style-only"
+            ? "style-only"
+            : "none",
       promptExtra,
     });
   } catch (e: unknown) {
@@ -191,17 +209,24 @@ export async function POST(request: Request) {
   }
 
   try {
-    let imageUrlsForFal: string[] | null = null;
+    let baseImageUrlsForFal: string[] | null = null;
     if (strategy.sendPixelsToFal) {
-      imageUrlsForFal = [];
+      baseImageUrlsForFal = [];
       if (strategy.useDualImage && dualImage) {
-        if (hasStyle) imageUrlsForFal.push(await fal.storage.upload(styleRef as File));
-        if (hasProduct) imageUrlsForFal.push(await fal.storage.upload(reference as File));
+        if (hasStyle) baseImageUrlsForFal.push(await fal.storage.upload(styleRef as File));
+        if (hasProduct) baseImageUrlsForFal.push(await fal.storage.upload(reference as File));
       } else if (hasProduct) {
-        imageUrlsForFal.push(await fal.storage.upload(reference as File));
+        baseImageUrlsForFal.push(await fal.storage.upload(reference as File));
       } else if (hasStyle) {
-        imageUrlsForFal.push(await fal.storage.upload(styleRef as File));
+        baseImageUrlsForFal.push(await fal.storage.upload(styleRef as File));
       }
+    }
+
+    let brandLogoFalUrl: string | null = null;
+    try {
+      brandLogoFalUrl = await uploadBrandKitLogoToFal(brandKit);
+    } catch {
+      brandLogoFalUrl = null;
     }
 
     const slides: Array<{
@@ -214,6 +239,11 @@ export async function POST(request: Request) {
 
     for (let i = 0; i < plan.slides.length; i++) {
       const slide = plan.slides[i];
+      const imageUrlsForFal = baseImageUrlsForFal ? [...baseImageUrlsForFal] : null;
+      if (imageUrlsForFal && brandLogoFalUrl) imageUrlsForFal.push(brandLogoFalUrl);
+      const brandLogoImageIndex =
+        brandLogoFalUrl && imageUrlsForFal ? imageUrlsForFal.length : null;
+
       const prompt = buildCampaignSlideImagePrompt(
         vars,
         slide,
@@ -222,10 +252,13 @@ export async function POST(request: Request) {
         brandProfile,
         i,
         plan.slides.length,
-        hasProduct,
+        hasProduct || hasStyle,
         {
           visualStyleId: visualStyle,
           referenceConcept: strategy.useReferenceConceptPrompts,
+          referenceImageMode: strategy.referenceImageMode,
+          brandKit,
+          brandLogoImageIndex,
         },
       );
 
@@ -259,16 +292,23 @@ export async function POST(request: Request) {
       });
     }
 
-    const imageUrls = slides.map((s) => s.imageUrl);
+    const falUrls = slides.map((s) => s.imageUrl);
+    const archivedUrls = await archiveCampaignSlidesToPipeline(request, falUrls);
+    const archivedSlides = slides.map((slide, index) => ({
+      ...slide,
+      imageUrl: archivedUrls[index] ?? slide.imageUrl,
+    }));
+
+    const imageUrls = archivedSlides.map((s) => s.imageUrl);
     await trackUsage(auth.user.userId, "campaign");
     return NextResponse.json({
       plan,
-      slides,
+      slides: archivedSlides,
       imageUrl: imageUrls[0],
       imageUrls,
       endpoint,
       mode: "campaign",
-      slideCount: slides.length,
+      slideCount: archivedSlides.length,
     });
   } catch (e: unknown) {
     return NextResponse.json({ error: formatFalError(e) }, { status: 502 });

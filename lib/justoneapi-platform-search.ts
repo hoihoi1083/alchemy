@@ -3,6 +3,11 @@ import { RESEARCH_POSTS_FETCH_LIMIT } from "@/lib/content-research-enrich";
 import { filterPostsByMedia, platformMediaMismatch } from "@/lib/content-research-media-filter";
 import type { PromptMarket } from "@/lib/prompt-variables";
 import {
+  finalizeXhsPost,
+  preferFetchableXhsCover,
+  xhsCoverUrlLooksFetchable,
+} from "@/lib/research-cover-url";
+import {
   asRecord,
   fetchJustOneApi,
   flattenSearchItems,
@@ -12,6 +17,43 @@ import {
   pickString,
   pickVideoUrl,
 } from "@/lib/justoneapi-client";
+
+/** XHS 图文/carousel vs video — avoid false video when API embeds stream metadata on image notes. */
+export function inferXhsMediaType(
+  noteType: string,
+  shareType: string | undefined,
+  imageCount: number,
+  videoUrl: string | undefined,
+): "image" | "video" {
+  if (imageCount >= 2) return "image";
+  const t = `${noteType} ${shareType ?? ""}`.toLowerCase();
+  if (t.includes("normal") || t.includes("image") || t.includes("图")) return "image";
+  // Search listings for video notes often ship only a cover frame (no stream URL yet).
+  if (t.includes("video") || shareType === "video") return "video";
+  if (videoUrl && imageCount < 2) return "video";
+  if (imageCount >= 1) return "image";
+  return videoUrl ? "video" : "image";
+}
+
+function xhsImagesListFromNote(note: Record<string, unknown>, item: Record<string, unknown>) {
+  const imageInfo = asRecord(note.image_info) ?? asRecord(note.imageInfo);
+  const carousel = note.carousel_list ?? note.carouselList ?? note.carousel_media;
+  return (
+    (Array.isArray(note.images_list) ? note.images_list : undefined) ??
+    (Array.isArray(note.image_list) ? note.image_list : undefined) ??
+    (Array.isArray(note.images) ? note.images : undefined) ??
+    (Array.isArray(imageInfo?.images_list) ? imageInfo.images_list : undefined) ??
+    (Array.isArray(imageInfo?.images) ? imageInfo.images : undefined) ??
+    (Array.isArray(note.carousel_list) ? note.carousel_list : undefined) ??
+    (Array.isArray(carousel) ? carousel : undefined) ??
+    (Array.isArray(asRecord(item.note_card)?.images_list)
+      ? asRecord(item.note_card)!.images_list
+      : undefined) ??
+    (Array.isArray(asRecord(item.noteCard)?.images_list)
+      ? asRecord(item.noteCard)!.images_list
+      : undefined)
+  );
+}
 
 function tiktokRegionForMarket(market?: PromptMarket): string {
   switch (market) {
@@ -74,15 +116,7 @@ function mapXhsItem(raw: unknown, index: number): ContentResearchPost | null {
     note.nickname,
   );
 
-  const imagesList = Array.isArray(note.images_list)
-    ? note.images_list
-    : Array.isArray(note.image_list)
-      ? note.image_list
-      : Array.isArray(note.images)
-        ? note.images
-        : Array.isArray(noteCard.images_list)
-          ? noteCard.images_list
-          : undefined;
+  const imagesList = xhsImagesListFromNote(note, item);
   const coverIndex =
     typeof note.cover_image_index === "number" && note.cover_image_index >= 0
       ? note.cover_image_index
@@ -99,31 +133,42 @@ function mapXhsItem(raw: unknown, index: number): ContentResearchPost | null {
   );
   const imageUrls = pickImageUrlsFromList(imagesList);
   if (!imageUrls.length && coverImageUrl) imageUrls.push(coverImageUrl);
+  const sortedImageUrls = [...imageUrls].sort((a, b) => {
+    const aOk = xhsCoverUrlLooksFetchable(a) ? 0 : 1;
+    const bOk = xhsCoverUrlLooksFetchable(b) ? 0 : 1;
+    return aOk - bOk;
+  });
+  const bestCover = preferFetchableXhsCover(...sortedImageUrls, coverImageUrl);
   const videoUrl = pickVideoUrl(
     note.video,
     noteCard.video,
+    note.video_info_v2,
+    note.video_info,
+    noteCard.video_info_v2,
+    noteCard.video_info,
     asRecord(note.video)?.consumer,
     asRecord(note.video)?.media,
     note.native_video,
     noteCard.native_video,
   );
-  const noteType = pickString(note.type, noteCard.type, note.note_type).toLowerCase();
-  const mediaType: ContentResearchPost["mediaType"] =
-    videoUrl || noteType.includes("video") ? "video" : "image";
+  const noteType = pickString(note.type, noteCard.type, note.note_type, item.share_type, item.shareType);
+  const shareType = pickString(item.share_type, item.shareType);
+  const mediaType = inferXhsMediaType(noteType, shareType, imageUrls.length, videoUrl);
+  const effectiveVideoUrl = mediaType === "image" ? undefined : videoUrl;
   const url =
     pickString(note.url, noteCard.url, item.url, item.link) ||
     noteUrlFromId(noteId, xsecToken);
 
-  if (!title && !desc && !url) return null;
+  if (!title && !desc && !url && imageUrls.length === 0 && !effectiveVideoUrl) return null;
 
   return {
     id: noteId || `xhs-${index + 1}`,
     title: title || desc.slice(0, 60) || `筆記 ${index + 1}`,
     url,
     snippet: desc.slice(0, 400),
-    coverImageUrl: imageUrls[0] ?? coverImageUrl,
-    imageUrls: imageUrls.length ? imageUrls : undefined,
-    videoUrl,
+    coverImageUrl: bestCover,
+    imageUrls: sortedImageUrls.length ? sortedImageUrls : undefined,
+    videoUrl: effectiveVideoUrl,
     mediaType,
     author: author || undefined,
     likes: pickNumber(
@@ -384,6 +429,131 @@ function mapItems(
   return filterPostsByMedia(mapped, mediaFilter).slice(0, limit);
 }
 
+/** Unwrap get-note-detail/v5|v7 JSON into a single note object. */
+export function extractXhsNoteFromDetailResponse(
+  body: Record<string, unknown>,
+): Record<string, unknown> | null {
+  const rawData = body.data;
+
+  // v7 often returns data: [{ note_list: [{ id, title, images_list, ... }] }]
+  if (Array.isArray(rawData)) {
+    for (const entry of rawData) {
+      const block = asRecord(entry);
+      if (!block) continue;
+      const noteList = block.note_list ?? block.noteList;
+      if (Array.isArray(noteList)) {
+        for (const item of noteList) {
+          const note = asRecord(item);
+          if (note && (note.id || note.note_id || note.title || note.desc)) return note;
+        }
+      }
+      if (block.id || block.note_id || block.title || block.desc) return block;
+    }
+    return null;
+  }
+
+  const data = asRecord(rawData);
+  if (!data || Object.keys(data).length === 0) return null;
+
+  const noteList = data.note_list ?? data.noteList;
+  if (Array.isArray(noteList) && noteList.length > 0) {
+    const note = asRecord(noteList[0]);
+    if (note) return note;
+  }
+
+  return (
+    asRecord(data.note) ??
+    asRecord(data.note_detail) ??
+    asRecord(data.noteDetail) ??
+    asRecord(data.item) ??
+    data
+  );
+}
+
+export { preferFetchableXhsCover, xhsCoverUrlLooksFetchable } from "@/lib/research-cover-url";
+
+const XHS_COVER_HYDRATE_PATHS = [
+  "/api/xiaohongshu/get-note-detail/v1",
+  "/api/xiaohongshu/get-note-detail/v4",
+  "/api/xiaohongshu/get-note-detail/v2",
+  "/api/xiaohongshu/get-note-detail/v5",
+  "/api/xiaohongshu/get-note-detail/v7",
+] as const;
+
+async function upgradeXhsPostCover(post: ContentResearchPost): Promise<ContentResearchPost> {
+  const noteId = post.id?.trim();
+  if (!noteId || noteId.startsWith("xhs-")) return post;
+
+  const detailParams: Record<string, string> = { noteId };
+  if (post.url) detailParams.noteUrl = post.url;
+
+  for (const path of XHS_COVER_HYDRATE_PATHS) {
+    try {
+      const body = await fetchJustOneApi(path, detailParams, "XHS cover hydrate");
+      const note = extractXhsNoteFromDetailResponse(asRecord(body) ?? {});
+      if (!note) continue;
+      const refreshed = mapRawPlatformPost(
+        "xiaohongshu",
+        { note, note_id: noteId, url: post.url },
+        0,
+      );
+      const cover = preferFetchableXhsCover(
+        refreshed?.coverImageUrl,
+        ...(refreshed?.imageUrls ?? []),
+      );
+      if (cover && xhsCoverUrlLooksFetchable(cover)) {
+        return finalizeXhsPost({
+          ...post,
+          coverImageUrl: cover,
+          imageUrls: refreshed?.imageUrls ?? post.imageUrls ?? [cover],
+        });
+      }
+    } catch {
+      continue;
+    }
+  }
+  return post;
+}
+
+async function hydrateXhsPostCovers(posts: ContentResearchPost[]): Promise<ContentResearchPost[]> {
+  const out = [...posts];
+  const targets = posts
+    .map((p, i) => ({ p, i }))
+    .filter(
+      ({ p }) =>
+        p.platform === "xiaohongshu" &&
+        (p.imageUrls?.length || p.coverImageUrl) &&
+        !xhsCoverUrlLooksFetchable(p.coverImageUrl),
+    );
+
+  const concurrency = 4;
+  for (let start = 0; start < targets.length; start += concurrency) {
+    const batch = targets.slice(start, start + concurrency);
+    const upgraded = await Promise.all(batch.map(({ p }) => upgradeXhsPostCover(p)));
+    batch.forEach(({ i }, j) => {
+      out[i] = upgraded[j]!;
+    });
+  }
+  return out.map((p) => (p.platform === "xiaohongshu" ? finalizeXhsPost(p) : p));
+}
+
+/** Map a single search/detail API item to a research post card. */
+export function mapRawPlatformPost(
+  platform: ContentPlatform,
+  raw: unknown,
+  index = 0,
+): ContentResearchPost | null {
+  const mapper =
+    platform === "xiaohongshu"
+      ? mapXhsItem
+      : platform === "instagram"
+        ? mapInstagramItem
+        : platform === "tiktok"
+          ? mapTiktokItem
+          : mapFacebookItem;
+  return mapper(raw, index);
+}
+
 function hashtagFromKeyword(keyword: string): string {
   return keyword.trim().replace(/^#/, "").replace(/\s+/g, "").slice(0, 80);
 }
@@ -452,7 +622,7 @@ export async function searchPlatformPostsByKeyword(
   }
 
   const items = flattenSearchItems(body);
-  const posts = mapItems(platform, items, limit, mediaFilter);
+  let posts = mapItems(platform, items, limit, mediaFilter);
 
   if (posts.length < 1) {
     const label =
@@ -466,6 +636,10 @@ export async function searchPlatformPostsByKeyword(
         ? `${platform} search returned no ${label} posts for this keyword. Try a broader keyword or another platform.`
         : `${platform} search returned no posts for this keyword.`,
     );
+  }
+
+  if (platform === "xiaohongshu") {
+    posts = await hydrateXhsPostCovers(posts);
   }
 
   return {

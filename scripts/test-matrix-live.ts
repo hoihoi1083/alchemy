@@ -79,7 +79,7 @@ async function runScenario(s: (typeof TOPIC_SCENARIOS)[0]): Promise<Row> {
       handoff.promptExtra &&
         isContentResearchStyleExtra(handoff.promptExtra) &&
         handoff.promptExtra.includes(s.product) &&
-        handoff.promptExtra.includes("Do NOT copy reference subject matter"),
+        handoff.promptExtra.includes("MATCH reference visual style"),
     );
     const headlineOk =
       Boolean(handoff.headline) &&
@@ -110,6 +110,13 @@ async function runScenario(s: (typeof TOPIC_SCENARIOS)[0]): Promise<Row> {
 
 async function main() {
   loadEnvLocal();
+  if (!process.env.JUSTONE_ALLOW_LIVE?.trim()) {
+    console.error(
+      "Refusing live matrix: this runs 14 paid Just One searches (3 with --quick).\n" +
+        "Set JUSTONE_ALLOW_LIVE=1 in the environment to continue.",
+    );
+    process.exit(1);
+  }
   if (!process.env.DEEPSEEK_API_KEY?.trim()) {
     throw new Error("DEEPSEEK_API_KEY required");
   }

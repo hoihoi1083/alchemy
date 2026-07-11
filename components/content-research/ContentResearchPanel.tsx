@@ -7,6 +7,8 @@ import {
   buildContentAngleHandoff,
   type ContentAngleWizardApi,
 } from "@/lib/content-research-apply";
+import type { ResearchRefAttachResult } from "@/lib/content-research-apply-refs";
+import { enrichAngleVideoFromPlan } from "@/lib/content-research-angle-video";
 import {
   CONTENT_PLATFORMS,
   type ContentAngleCandidate,
@@ -14,7 +16,7 @@ import {
   type ContentResearchPlan,
 } from "@/lib/content-research-types";
 import { ResearchAngleCards } from "@/components/content-research/ResearchAngleCards";
-import { sortedDisplayAngles } from "@/lib/content-research-enrich";
+import { displayResearchAngles } from "@/lib/content-research-enrich";
 import {
   mediaFilterFromWorkflowMode,
   platformMediaMismatch,
@@ -38,8 +40,14 @@ type ContentResearchPanelProps = {
   /** Syncs with Step 1 workflow picker — image-only / video-only filter research results. */
   workflowMode?: WorkflowMode;
   wizard?: ContentAngleWizardApi;
-  onApplied?: (angle: ContentAngleCandidate, plan: ContentResearchPlan) => void;
+  onApplied?: (
+    angle: ContentAngleCandidate,
+    plan: ContentResearchPlan,
+    result?: { message: string; warning?: string; refs: ResearchRefAttachResult },
+  ) => void;
   compact?: boolean;
+  /** When false, search keyword stays independent from product name (physical promos). */
+  syncTopicFromProduct?: boolean;
   /** When set, picking an angle navigates to studio with handoff. */
   navigateOnApply?: (path: string) => void;
 };
@@ -55,18 +63,21 @@ export function ContentResearchPanel({
   onApplied,
   compact,
   navigateOnApply,
+  syncTopicFromProduct = true,
 }: ContentResearchPanelProps) {
   const { m } = useLocale();
   const cr = m.contentResearch;
   const [promotionMode, setPromotionMode] = useState<PromotionMode>(initialPromotionMode);
   const [platform, setPlatform] = useState<ContentPlatform>("xiaohongshu");
   const [topic, setTopic] = useState(defaultTopic);
+  const [postUrl, setPostUrl] = useState("");
   const [promoteProduct, setPromoteProduct] = useState(promoteProductProp);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
   const [plan, setPlan] = useState<ContentResearchPlan | null>(null);
+  const [applyingAngleId, setApplyingAngleId] = useState<string | null>(null);
   const mediaFilter = mediaFilterFromWorkflowMode(workflowMode);
   const platformMismatch = platformMediaMismatch(platform, mediaFilter);
 
@@ -81,6 +92,11 @@ export function ContentResearchPanel({
   useEffect(() => {
     setPromoteProduct(promoteProductProp);
   }, [promoteProductProp]);
+
+  useEffect(() => {
+    if (!syncTopicFromProduct) return;
+    if (promoteProductProp.trim()) setTopic(promoteProductProp);
+  }, [promoteProductProp, syncTopicFromProduct]);
 
   function updatePromoteProduct(value: string) {
     setPromoteProduct(value);
@@ -127,35 +143,141 @@ export function ContentResearchPanel({
     }
   }
 
-  async function pickAngle(angle: ContentAngleCandidate) {
-    if (!plan) return;
-    if (wizard) {
-      await applyContentAngleToWizard(
-        angle,
-        plan,
-        promotionMode,
-        wizard,
-        promoteProduct.trim() || undefined,
-      );
-      onApplied?.(angle, plan);
-      setNote(
-        angle.sourceVideoUrl
-          ? cr.appliedWithVideoReference
-          : (angle.sourceImageUrls?.length ?? 0) > 1
-            ? cr.appliedWithCarouselReference
-            : angle.sourceCoverImageUrl
-              ? cr.appliedWithReference
-              : cr.applied,
-      );
+  async function runDirectPost() {
+    const trimmedUrl = postUrl.trim();
+    if (!trimmedUrl) {
+      setError(cr.postUrlRequired);
       return;
     }
-    if (navigateOnApply) {
-      writeStudioAssistantHandoff(
-        buildContentAngleHandoff(angle, plan, promotionMode, promoteProduct.trim() || undefined),
-      );
-      markAssistantReopenAfterNavigate();
-      navigateOnApply(studioHref(promotionMode));
+    if (promotionMode === "physical" && !promoteProduct.trim()) {
+      setError(cr.promoteProductRequired);
+      return;
     }
+    if (platformMismatch) {
+      setError(cr.tiktokImageWarning);
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    setNote(null);
+    setWarning(null);
+    setPlan(null);
+    try {
+      const res = await fetch("/api/research-direct-post", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          postUrl: trimmedUrl,
+          topic: topic.trim() || promoteProduct.trim() || undefined,
+          product: promoteProduct.trim() || undefined,
+          platform,
+          market,
+          promotionMode,
+          mediaFilter,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? cr.directPostFailed);
+      setPlan(data.plan as ContentResearchPlan);
+      setNote(String(data.sourceNote ?? ""));
+      setWarning(data.researchWarning ? String(data.researchWarning) : null);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : cr.directPostFailed);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function pickAngle(angle: ContentAngleCandidate) {
+    if (!plan || applyingAngleId) return;
+    if (promotionMode === "physical" && !promoteProduct.trim()) {
+      setError(cr.promoteProductRequired);
+      scrollToApplyFeedback();
+      return;
+    }
+    const angleToApply = enrichAngleVideoFromPlan(angle, plan);
+    setApplyingAngleId(angle.id);
+    setError(null);
+    setWarning(null);
+    setNote(null);
+    try {
+      if (wizard) {
+        const { refs } = await applyContentAngleToWizard(
+          angleToApply,
+          plan,
+          promotionMode,
+          wizard,
+          promoteProduct.trim() || undefined,
+          undefined,
+          workflowMode,
+        );
+
+        let message: string = cr.applied;
+        let warningMsg: string | undefined;
+
+        if (refs.videoRequested && refs.videoAttached) {
+          message = cr.appliedWithVideoAttached;
+        } else if (refs.videoRequested && !refs.videoAttached) {
+          warningMsg =
+            refs.videoError === "download_failed"
+              ? cr.videoDownloadFailed
+              : refs.videoError === "resolve_failed"
+                ? cr.videoResolveFailed
+                : cr.videoUrlMissing;
+          message = cr.appliedCoverOnlyVideoFailed;
+          wizard.setError?.(warningMsg);
+        } else if (!refs.coverAttached && !refs.videoAttached) {
+          warningMsg = cr.appliedReferenceImageFailed;
+          message = cr.appliedCopyOnlyNoImage;
+          wizard.setError?.(warningMsg);
+        } else {
+          wizard.setError?.(null);
+          message =
+            refs.coverAttached && (angle.sourceImageUrls?.length ?? 0) > 1
+              ? cr.appliedWithCarouselReference
+              : refs.coverAttached
+                ? cr.appliedWithReference
+                : cr.applied;
+        }
+
+        setNote(message);
+        setWarning(warningMsg ?? null);
+        onApplied?.(angleToApply, plan, { message, warning: warningMsg, refs });
+        scrollToApplyFeedback();
+        return;
+      }
+      if (navigateOnApply) {
+        writeStudioAssistantHandoff(
+          buildContentAngleHandoff(
+            angleToApply,
+            plan,
+            promotionMode,
+            promoteProduct.trim() || undefined,
+            workflowMode,
+          ),
+        );
+        markAssistantReopenAfterNavigate();
+        navigateOnApply(studioHref(promotionMode));
+      }
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : cr.failed;
+      setError(message);
+      wizard?.setError?.(message);
+      scrollToApplyFeedback();
+    } finally {
+      setApplyingAngleId(null);
+    }
+  }
+
+  function scrollToApplyFeedback() {
+    requestAnimationFrame(() => {
+      document
+        .getElementById("content-research-apply-result")
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      document
+        .getElementById("research-reel-setup")
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
   }
 
   return (
@@ -205,11 +327,14 @@ export function ContentResearchPanel({
 
       {promotionMode === "physical" && (
         <>
-          <label className="block text-xs font-medium text-emerald-900">{cr.promoteProductLabel}</label>
+          <label className="block text-xs font-medium text-emerald-900">
+            {cr.promoteProductLabel} *
+          </label>
           <input
             value={promoteProduct}
             onChange={(e) => updatePromoteProduct(e.target.value)}
             placeholder={cr.promoteProductPlaceholder}
+            required
             className="w-full rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm text-slate-900"
           />
           <p className="text-[11px] leading-relaxed text-emerald-900/80">{cr.promoteProductHint}</p>
@@ -253,13 +378,35 @@ export function ContentResearchPanel({
         {busy ? cr.busy : cr.researchBtn}
       </button>
 
+      <div className="rounded-lg border border-dashed border-emerald-300/80 bg-white/60 px-3 py-3">
+        <p className="text-xs font-semibold text-emerald-950">{cr.directPostTitle}</p>
+        <p className="mt-1 text-[11px] leading-relaxed text-emerald-900/75">{cr.directPostHint}</p>
+        <label className="mt-2 block text-xs font-medium text-emerald-900">{cr.directPostUrlLabel}</label>
+        <input
+          value={postUrl}
+          onChange={(e) => setPostUrl(e.target.value)}
+          placeholder={cr.directPostUrlPlaceholder}
+          className="mt-1 w-full rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm text-slate-900"
+        />
+        <button
+          type="button"
+          onClick={() => void runDirectPost()}
+          disabled={
+            busy ||
+            Boolean(platformMismatch) ||
+            !postUrl.trim() ||
+            (promotionMode === "physical" && !promoteProduct.trim())
+          }
+          className="mt-2 w-full rounded-lg border border-emerald-600 bg-white px-4 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-50 disabled:opacity-50"
+        >
+          {busy ? cr.busy : cr.directPostBtn}
+        </button>
+        {promotionMode === "physical" && !promoteProduct.trim() && (
+          <p className="mt-1.5 text-[11px] text-amber-800">{cr.promoteProductRequired}</p>
+        )}
+      </div>
+
       {error && <p className="text-xs text-red-700">{error}</p>}
-      {warning && !error && (
-        <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-950">
-          {warning}
-        </p>
-      )}
-      {note && !error && <p className="text-xs text-emerald-900/90">{note}</p>}
 
       {plan && (
         <div className="space-y-2">
@@ -290,27 +437,51 @@ export function ContentResearchPanel({
           )}
           <p className="text-xs font-semibold text-slate-800">{cr.topPicksTitle}</p>
           {plan.posts && plan.posts.length > 0 && plan.searchProvider === "justoneapi" ? (
-            <ResearchAngleCards
-              key={`${plan.topic}-${plan.platform}`}
-              angles={sortedDisplayAngles(plan)}
-              platform={plan.platform}
-              onPick={pickAngle}
-              labels={{
-                scoreLabel: cr.scoreLabel,
-                inspiredBy: cr.inspiredBy,
-                yourAngle: cr.yourAngle,
-                useAngle: cr.useAngle,
-                openNote: cr.openNote,
-                likes: cr.likes,
-                collects: cr.collects,
-                noCover: cr.noCover,
-                prevPage: cr.prevPage,
-                nextPage: cr.nextPage,
-                pageOf: cr.pageOf,
-                totalAngles: cr.totalAngles,
-                carouselSlides: cr.carouselSlides,
-              }}
-            />
+            <>
+              {(() => {
+                const { angles, hiddenWithoutCover } = displayResearchAngles(plan, {
+                  videoOnly: workflowMode === "video-only",
+                });
+                return (
+                  <>
+                    {hiddenWithoutCover > 0 && (
+                      <p className="text-[11px] text-slate-500">
+                        {cr.researchHiddenNoCover.replace("{count}", String(hiddenWithoutCover))}
+                      </p>
+                    )}
+                    <ResearchAngleCards
+                      key={`${plan.topic}-${plan.platform}`}
+                      angles={angles}
+                      platform={plan.platform}
+                      videoOnly={workflowMode === "video-only"}
+                      applyingAngleId={applyingAngleId}
+                      pickDisabled={promotionMode === "physical" && !promoteProduct.trim()}
+                      pickDisabledHint={cr.promoteProductRequired}
+                      onPick={pickAngle}
+                      labels={{
+                        scoreLabel: cr.scoreLabel,
+                        inspiredBy: cr.inspiredBy,
+                        yourAngle: cr.yourAngle,
+                        useAngle: cr.useAngle,
+                        applyingAngle: cr.applyingAngle,
+                        openNote: cr.openNote,
+                        likes: cr.likes,
+                        collects: cr.collects,
+                        noCover: cr.noCover,
+                        prevPage: cr.prevPage,
+                        nextPage: cr.nextPage,
+                        pageOf: cr.pageOf,
+                        totalAngles: cr.totalAngles,
+                        carouselSlides: cr.carouselSlides,
+                        videoReadyUrl: cr.videoReadyUrl,
+                        videoReadyResolve: cr.videoReadyResolve,
+                        videoReadyMissing: cr.videoReadyMissing,
+                      }}
+                    />
+                  </>
+                );
+              })()}
+            </>
           ) : (
             <div className={`grid gap-2 ${compact ? "" : "sm:grid-cols-1"}`}>
               {plan.topPicks.map((angle, i) => (
@@ -350,15 +521,38 @@ export function ContentResearchPanel({
                   )}
                   <button
                     type="button"
-                    onClick={() => pickAngle(angle)}
-                    className="mt-3 w-full rounded-lg bg-violet-600 px-3 py-2 text-xs font-semibold text-white hover:bg-violet-500"
+                    onClick={() => void pickAngle(angle)}
+                    disabled={Boolean(applyingAngleId)}
+                    className="mt-3 w-full rounded-lg bg-violet-600 px-3 py-2 text-xs font-semibold text-white hover:bg-violet-500 disabled:opacity-50"
                   >
-                    {cr.useAngle}
+                    {applyingAngleId === angle.id ? cr.applyingAngle : cr.useAngle}
                   </button>
                 </div>
               ))}
             </div>
           )}
+          <div id="content-research-apply-result" className="space-y-2">
+            {applyingAngleId && (
+              <p className="rounded-lg border border-violet-300 bg-violet-50 px-3 py-2 text-sm font-medium text-violet-900">
+                {cr.applyingAngle}
+              </p>
+            )}
+            {error && (
+              <p className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-900">
+                {error}
+              </p>
+            )}
+            {warning && !error && (
+              <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm leading-relaxed text-amber-950">
+                {warning}
+              </p>
+            )}
+            {note && !error && (
+              <p className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-900">
+                {note}
+              </p>
+            )}
+          </div>
           {plan.posts && plan.posts.length > 0 && plan.searchProvider === "justoneapi" && (
             <details className="text-xs text-slate-600">
               <summary className="cursor-pointer font-medium text-slate-700">

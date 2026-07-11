@@ -10,6 +10,11 @@ import {
 import { escapeXml } from "@/lib/compositor/paper-sticker/svg";
 import type { CaptionLine } from "@/lib/ad-pack-types";
 import {
+  resolveCaptionBurnStyle,
+  resolveLineCaptionStyle,
+  type CaptionBurnStyle,
+} from "@/lib/caption-burn-styles";
+import {
   getMediaDurationSeconds,
   getVideoDimensions,
   videoHasAudioStream,
@@ -68,14 +73,26 @@ async function renderCaptionOverlayPng(
   width: number,
   height: number,
   caption: CaptionLine,
+  style: CaptionBurnStyle,
 ): Promise<Buffer> {
+  const preset = resolveCaptionBurnStyle(style);
   const chunks = caption.text
     .split(/\n/)
     .map((line) => sanitizeCompositorText(line))
     .filter(Boolean);
-  const fontSize = Math.max(28, Math.round(width * 0.052));
+  const fontSize = Math.max(
+    28,
+    Math.round(width * 0.052 * (preset.fontSizeScale ?? 1)),
+  );
   const lineHeight = Math.round(fontSize * 1.35);
-  const stroke = Math.max(3, Math.round(fontSize * 0.12));
+  const stroke = Math.max(
+    2,
+    Math.round(fontSize * 0.12 * (preset.strokeWidthScale ?? 1)),
+  );
+  const fill = preset.fill ?? "white";
+  const strokeColor = preset.stroke ?? "black";
+  const fontFamily = preset.fontFamily ?? "NotoBody";
+  const fontWeight = preset.fontWeight ?? 700;
 
   const textNodes = chunks
     .map((chunk, lineIndex) => {
@@ -87,7 +104,7 @@ async function renderCaptionOverlayPng(
         height,
         lineHeight,
       );
-      return `<text x="${x}" y="${y}" text-anchor="${anchor}" dominant-baseline="middle" font-family="NotoBody" font-size="${fontSize}" font-weight="700" fill="white" stroke="black" stroke-width="${stroke}" paint-order="stroke">${escapeXml(chunk)}</text>`;
+      return `<text x="${x}" y="${y}" text-anchor="${anchor}" dominant-baseline="middle" font-family="${fontFamily}" font-size="${fontSize}" font-weight="${fontWeight}" fill="${fill}" stroke="${strokeColor}" stroke-width="${stroke}" paint-order="stroke">${escapeXml(chunk)}</text>`;
     })
     .join("");
 
@@ -105,6 +122,7 @@ export async function burnCaptionsOverlay(
   captionLines: CaptionLine[],
   outputVideo: string,
   workDir: string,
+  style: CaptionBurnStyle = resolveCaptionBurnStyle("classic"),
 ): Promise<void> {
   ensureCompositorFonts();
   const duration = await getMediaDurationSeconds(inputVideo);
@@ -117,8 +135,9 @@ export async function burnCaptionsOverlay(
 
   for (let i = 0; i < captionLines.length; i++) {
     const cap = captionLines[i];
+    const lineStyle = resolveLineCaptionStyle(cap.stylePreset, style);
     const pngPath = path.join(workDir, `caption_overlay_${i}.png`);
-    const png = await renderCaptionOverlayPng(width, height, cap);
+    const png = await renderCaptionOverlayPng(width, height, cap, lineStyle);
     await fs.writeFile(pngPath, png);
     overlayPaths.push(pngPath);
 

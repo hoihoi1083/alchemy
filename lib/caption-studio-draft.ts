@@ -32,8 +32,25 @@ export function clearCaptionHandoff(): void {
   sessionStorage.removeItem(CAPTION_HANDOFF_KEY);
 }
 
+/** Prefer same-origin pipeline paths so caption burn can resolve local job files. */
+export function normalizeCaptionHandoffVideoUrl(url: string): string {
+  const trimmed = url.trim();
+  const marker = "/api/pipeline-files/";
+  const idx = trimmed.indexOf(marker);
+  if (idx >= 0) {
+    return trimmed.slice(idx);
+  }
+  return trimmed;
+}
+
 export function writeCaptionHandoff(handoff: CaptionHandoff): void {
-  sessionStorage.setItem(CAPTION_HANDOFF_KEY, JSON.stringify(handoff));
+  sessionStorage.setItem(
+    CAPTION_HANDOFF_KEY,
+    JSON.stringify({
+      ...handoff,
+      videoUrl: normalizeCaptionHandoffVideoUrl(handoff.videoUrl),
+    }),
+  );
 }
 
 export function writeCaptionDraft(sourceKey: string, captionLines: CaptionLine[]): void {

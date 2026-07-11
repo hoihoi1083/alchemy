@@ -1,6 +1,7 @@
-"use client";
-
 import { useState } from "react";
+import type { ImagePostflight } from "@/lib/image-postflight";
+import type { ImageVisionReview } from "@/lib/image-vision-gate";
+import type { ImageUploadWarning } from "@/lib/image-upload-quality";
 import type { BgmTrackId } from "@/lib/bgm/tracks";
 import type { BrandProfile } from "@/lib/brand-profile";
 import type { ProductVideoPlan } from "@/lib/product-video-types";
@@ -21,7 +22,9 @@ import {
   DEFAULT_IMAGE_OUTPUT_MODE,
   type ImageOutputMode,
 } from "@/lib/image-output-mode";
-import type { ImageUploadWarning } from "@/lib/image-upload-quality";
+import type { ImageTextMode } from "@/lib/image-text-mode";
+import type { BrandKit } from "@/lib/brand-kit";
+import { DEFAULT_BRAND_KIT, loadBrandKitFromStorage } from "@/lib/brand-kit";
 import type { PromptMarket, SubjectFraming } from "@/lib/prompts";
 import type { ReferenceClipId } from "@/lib/reference-clips";
 import type { TemplateId } from "@/lib/templates";
@@ -42,6 +45,7 @@ import {
   type VisualStyleId,
 } from "@/lib/visual-styles";
 import { DEFAULT_ART_STYLE, type ArtStyleId } from "@/lib/art-style";
+import type { ResearchReelAnalysis } from "@/lib/reel-analysis-types";
 import type { WorkflowMode, WorkflowStepKey } from "@/lib/workflow-mode";
 import type {
   MusicMood,
@@ -56,8 +60,11 @@ import type {
   VoicePreviewTrack,
 } from "@/lib/ad-pack-types";
 import type { UserReferenceBrief } from "@/lib/user-reference-brief";
+import type { ContentResearchApplyRef } from "@/lib/content-research-apply";
 
 export type MusicSource = "library" | "ai";
+
+export type PresenterSourceMode = "custom-keyframe" | "stock-avatar";
 
 export type StoryboardDurationPreset = "4" | "6" | "8" | "10" | "12";
 
@@ -70,7 +77,7 @@ export type CampaignSlide = {
 };
 
 export type ImageJobMeta = {
-  kind: "storyboard" | "cinematic-reel" | "campaign" | "image";
+  kind: "storyboard" | "cinematic-reel" | "campaign" | "teaching-carousel" | "image";
   startedAt: number;
   sceneCount: number;
 };
@@ -162,11 +169,27 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn") {
   const [campaignSlides, setCampaignSlides] = useState<CampaignSlide[]>([]);
   const [uploadQualityWarning, setUploadQualityWarning] = useState<ImageUploadWarning | null>(null);
   const [useOriginalImage, setUseOriginalImage] = useState(false);
+  const [shipItMode, setShipItMode] = useState(true);
+  const [shipItPipelineBusy, setShipItPipelineBusy] = useState(false);
+  const [imagePostflight, setImagePostflight] = useState<ImagePostflight | null>(null);
+  const [imagePostflightBusy, setImagePostflightBusy] = useState(false);
+  const [imageVisionReview, setImageVisionReview] = useState<ImageVisionReview | null>(null);
+  const [imageVisionReviewBusy, setImageVisionReviewBusy] = useState(false);
+  const [imageQualityChecklist, setImageQualityChecklist] = useState({
+    productReadable: false,
+    textLegible: false,
+  });
 
   const [referenceAd, setReferenceAd] = useState<File | null>(null);
   const [referencePreviewUrl, setReferencePreviewUrl] = useState<string | null>(null);
   const [referenceIsVideo, setReferenceIsVideo] = useState(false);
   const [refVideoDurationSec, setRefVideoDurationSec] = useState<number | null>(null);
+  const [referenceVideoFalUrl, setReferenceVideoFalUrl] = useState<string | null>(null);
+  const [researchReelAnalysis, setResearchReelAnalysis] = useState<ResearchReelAnalysis | null>(
+    null,
+  );
+  const [researchReelAnalyzeBusy, setResearchReelAnalyzeBusy] = useState(false);
+  const [researchReelAnalyzeNote, setResearchReelAnalyzeNote] = useState<string | null>(null);
 
   const [imageBusy, setImageBusy] = useState(false);
   const [videoBusy, setVideoBusy] = useState(false);
@@ -183,10 +206,14 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn") {
   const [extraKitPhotos, setExtraKitPhotos] = useState<File[]>([]);
   const [extraKitPreviewUrls, setExtraKitPreviewUrls] = useState<string[]>([]);
   const [referenceCarouselSlideCount, setReferenceCarouselSlideCount] = useState(4);
+  const [contentResearchApplyRef, setContentResearchApplyRef] =
+    useState<ContentResearchApplyRef | null>(null);
   const [productVideoPlan, setProductVideoPlan] = useState<ProductVideoPlan | null>(null);
   const [planProductVideoBusy, setPlanProductVideoBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  /** Video without burned captions — used when opening /captions from Done. */
+  const [captionHandoffVideoUrl, setCaptionHandoffVideoUrl] = useState<string | null>(null);
   const [videoNote, setVideoNote] = useState<string | undefined>();
   const [bgmNote, setBgmNote] = useState<string | undefined>();
   const [quickFixCredits, setQuickFixCredits] = useState(0);
@@ -195,6 +222,17 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn") {
   const [quickFixLogoPlacement, setQuickFixLogoPlacement] = useState<
     "bottom-right" | "bottom-left" | "top-right" | "top-left" | "center" | "replace"
   >("bottom-right");
+  const [imagePreOverlayUrl, setImagePreOverlayUrl] = useState<string | null>(null);
+  const [imageTextMode, setImageTextMode] = useState<ImageTextMode>("integrated");
+  const [presenterSourceMode, setPresenterSourceMode] =
+    useState<PresenterSourceMode>("custom-keyframe");
+  const [presenterAvatarId, setPresenterAvatarId] = useState(
+    "Annie Office Sitting Front",
+  );
+  const [selectedAdPackHookIndex, setSelectedAdPackHookIndex] = useState(0);
+  const [brandKit, setBrandKit] = useState<BrandKit>(() =>
+    typeof window !== "undefined" ? loadBrandKitFromStorage() : DEFAULT_BRAND_KIT,
+  );
 
   const [adPackPlan, setAdPackPlan] = useState<AdPackPlan | null>(null);
   const [adPackPlanBusy, setAdPackPlanBusy] = useState(false);
@@ -350,6 +388,20 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn") {
     setUploadQualityWarning,
     useOriginalImage,
     setUseOriginalImage,
+    shipItMode,
+    setShipItMode,
+    shipItPipelineBusy,
+    setShipItPipelineBusy,
+    imagePostflight,
+    setImagePostflight,
+    imagePostflightBusy,
+    setImagePostflightBusy,
+    imageVisionReview,
+    setImageVisionReview,
+    imageVisionReviewBusy,
+    setImageVisionReviewBusy,
+    imageQualityChecklist,
+    setImageQualityChecklist,
     referenceAd,
     setReferenceAd,
     referencePreviewUrl,
@@ -358,6 +410,14 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn") {
     setReferenceIsVideo,
     refVideoDurationSec,
     setRefVideoDurationSec,
+    referenceVideoFalUrl,
+    setReferenceVideoFalUrl,
+    researchReelAnalysis,
+    setResearchReelAnalysis,
+    researchReelAnalyzeBusy,
+    setResearchReelAnalyzeBusy,
+    researchReelAnalyzeNote,
+    setResearchReelAnalyzeNote,
     imageBusy,
     setImageBusy,
     videoBusy,
@@ -388,6 +448,8 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn") {
     setExtraKitPreviewUrls,
     referenceCarouselSlideCount,
     setReferenceCarouselSlideCount,
+    contentResearchApplyRef,
+    setContentResearchApplyRef,
     productVideoPlan,
     setProductVideoPlan,
     planProductVideoBusy,
@@ -396,6 +458,8 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn") {
     setError,
     videoUrl,
     setVideoUrl,
+    captionHandoffVideoUrl,
+    setCaptionHandoffVideoUrl,
     videoNote,
     setVideoNote,
     bgmNote,
@@ -408,6 +472,18 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn") {
     setQuickFixLogoPreviewUrl,
     quickFixLogoPlacement,
     setQuickFixLogoPlacement,
+    imagePreOverlayUrl,
+    setImagePreOverlayUrl,
+    imageTextMode,
+    setImageTextMode,
+    presenterSourceMode,
+    setPresenterSourceMode,
+    presenterAvatarId,
+    setPresenterAvatarId,
+    selectedAdPackHookIndex,
+    setSelectedAdPackHookIndex,
+    brandKit,
+    setBrandKit,
     adPackPlan,
     setAdPackPlan,
     adPackPlanBusy,

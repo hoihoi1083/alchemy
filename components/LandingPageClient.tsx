@@ -55,16 +55,16 @@ export function LandingPageClient() {
                 {m.landing.howItWorks}
               </a>
               <Link
-                href="/captions/visual"
-                className="rounded-full border border-cyan-400 bg-cyan-50 px-6 py-3 text-sm font-medium text-cyan-900"
-              >
-                {m.landing.visualCaptionsLink}
-              </Link>
-              <Link
                 href="/captions"
                 className="rounded-full border border-violet-300 px-6 py-3 text-sm font-medium text-violet-800"
               >
                 {m.landing.captionsLink}
+              </Link>
+              <Link
+                href="/edit-image"
+                className="rounded-full border border-cyan-300 px-6 py-3 text-sm font-medium text-cyan-900"
+              >
+                {m.landing.imageCanvasLink}
               </Link>
             </div>
           </div>

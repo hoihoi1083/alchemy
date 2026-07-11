@@ -1,4 +1,5 @@
 import type {
+  ContentAngleCandidate,
   ContentAngleFormat,
   ContentPlatform,
   ContentResearchPost,
@@ -12,6 +13,7 @@ import type { ImageAspectRatio } from "@/lib/image-aspect-ratio";
 import type { ImageOutputMode } from "@/lib/image-output-mode";
 import type { VisualStyleId } from "@/lib/visual-styles";
 import type { WorkflowMode } from "@/lib/workflow-mode";
+import { resolveReelResearchRouting } from "@/lib/content-research-reel-routing";
 
 const MODEL_WEAR_RE =
   /穿搭|上身|試穿|ootd|outfit|model.?wear|try.?on|wearable|styling look|搭配/i;
@@ -52,12 +54,41 @@ function isEduCarouselPost(post: ContentResearchPost): boolean {
 }
 
 export function inferFormatFromPost(post: ContentResearchPost): ContentAngleFormat {
-  if (post.mediaType === "video" || post.videoUrl) return "reel";
   const count = imageCountOf(post);
   if (isModelWearPost(post)) return "model-wear";
+  // Multi-image edu carousels stay carousels even when the scraper also exposes a videoUrl.
   if (count >= 3 || (count >= 2 && isEduCarouselPost(post))) return "teaching-carousel";
+  if (post.mediaType === "video" || post.videoUrl) return "reel";
   if (count === 2 && post.platform === "facebook") return "campaign";
   return "single-image";
+}
+
+/** Formats chosen by research cards should not be overridden by post inference. */
+const PINNED_ANGLE_FORMATS = new Set<ContentAngleFormat>([
+  "teaching-carousel",
+  "campaign",
+  "model-wear",
+  "single-image",
+  "reel",
+]);
+
+export function resolveFormatForAngleApply(
+  angle: Pick<
+    ContentAngleCandidate,
+    "format" | "id" | "sourceVideoUrl" | "sourceImageUrls" | "sourceCoverImageUrl"
+  >,
+  inferred: InferredPostWizard | null,
+): ContentAngleFormat {
+  if (PINNED_ANGLE_FORMATS.has(angle.format)) return angle.format;
+
+  const imageCount =
+    angle.sourceImageUrls?.length ?? (angle.sourceCoverImageUrl ? 1 : 0);
+  const usePostInference =
+    Boolean(inferred) &&
+    ((imageCount >= 2 || Boolean(angle.sourceVideoUrl)) || angle.id.startsWith("post-"));
+
+  if (usePostInference && inferred) return inferred.format;
+  return angle.format;
 }
 
 export function inferWizardFromPost(
@@ -77,9 +108,9 @@ export function inferWizardFromPost(
 
   switch (format) {
     case "reel":
-      workflowMode = "video-only";
       imageOutputMode = "single";
-      visualStyleId = promotionMode === "concept" ? "concept-cinematic" : "storyboard-video";
+      workflowMode = promotionMode === "physical" ? "combined" : "video-only";
+      visualStyleId = resolveReelResearchRouting(promotionMode, workflowMode).visualStyleId;
       formatLabel = "Reel / short video";
       break;
     case "teaching-carousel":
@@ -155,5 +186,17 @@ export function isImageCarouselAngle(
     format === "teaching-carousel" ||
     format === "campaign" ||
     imageCount >= 2
+  );
+}
+
+/** Reel / video posts: attach reference MP4 for reference-to-video (not carousel stills). */
+export function wantsResearchVideoReference(
+  format: ContentAngleFormat,
+  imageCount: number,
+  sourceVideoUrl?: string,
+): boolean {
+  return (
+    !isImageCarouselAngle(format, imageCount) &&
+    (Boolean(sourceVideoUrl?.trim()) || format === "reel")
   );
 }

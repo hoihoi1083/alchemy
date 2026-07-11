@@ -10,6 +10,9 @@ for (const line of readFileSync(".env.local", "utf8").split("\n")) {
 const platforms: ContentPlatform[] = ["xiaohongshu", "instagram", "tiktok", "facebook"];
 
 async function main() {
+  console.warn(
+    "[justoneapi] debug-platform-search bills 4 API calls (XHS + IG + TikTok + Facebook).",
+  );
   for (const platform of platforms) {
     try {
       const { posts, endpoint } = await searchPlatformPostsByKeyword(platform, "crystal bracelet", {

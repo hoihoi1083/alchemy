@@ -2,6 +2,7 @@ import { ApiError, fal } from "@fal-ai/client";
 import { NextResponse } from "next/server";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import type { BrandProfile } from "@/lib/brand-profile";
+import { parseBrandKit } from "@/lib/brand-kit";
 import {
   buildPromptVariables,
   buildWizardImagePrompt,
@@ -16,6 +17,12 @@ import {
   isSameImageAsset,
   type LogoPlacement,
 } from "@/lib/image-refine-prompt";
+import {
+  IMAGE_REGION_REFINE_SYSTEM_PROMPT,
+  buildRegionRefinePrompt,
+  parseImageEditRegions,
+} from "@/lib/image-edit-region";
+import { archiveCampaignSlidesToPipeline, archiveRemoteImageToPipeline } from "@/lib/pipeline/archive-image";
 import { IMAGE_CANVAS_COMPOSE_SYSTEM_PROMPT } from "@/lib/pro-canvas-compose";
 import type { VisualStyleId } from "@/lib/visual-styles";
 import type { PromotionMode } from "@/lib/promotion-mode";
@@ -122,7 +129,17 @@ function parseLogoPlacement(raw: string | null | undefined): LogoPlacement {
   return "bottom-right";
 }
 
-async function runRefineEdit(opts: {
+async function archiveOutputUrls(request: Request, urls: string[]): Promise<string[]> {
+  if (!urls.length) return urls;
+  if (urls.length === 1) {
+    return [await archiveRemoteImageToPipeline(request, urls[0], "generated.png")];
+  }
+  return archiveCampaignSlidesToPipeline(request, urls);
+}
+
+async function runRefineEdit(
+  request: Request,
+  opts: {
   endpoint: string;
   prompt: string;
   aspectRatio: string;
@@ -170,9 +187,10 @@ async function runRefineEdit(opts: {
   }
 
   await trackUsage(opts.userId, "image");
+  const archived = await archiveOutputUrls(request, outUrls);
   return NextResponse.json({
-    imageUrl: outUrls[0],
-    imageUrls: outUrls,
+    imageUrl: archived[0],
+    imageUrls: archived,
     requestId: result.requestId,
     endpoint: opts.endpoint,
     mode: "refine",
@@ -235,7 +253,7 @@ export async function POST(request: Request) {
       try {
         const logoUrl = await fal.storage.upload(logoFile as File);
         const prompt = buildLogoRefinePrompt({ placement, userNote });
-        return await runRefineEdit({
+        return await runRefineEdit(request, {
           endpoint,
           prompt,
           aspectRatio,
@@ -244,6 +262,63 @@ export async function POST(request: Request) {
           systemPrompt: IMAGE_LOGO_REFINE_SYSTEM_PROMPT,
           userId: auth.user.userId,
           refineSources: [sourceUrl, logoUrl],
+        });
+      } catch (e: unknown) {
+        return NextResponse.json({ error: formatFalError(e) }, { status: 502 });
+      }
+    }
+
+    if (multipartMode === "refine-regions") {
+      const sourceUrl = (formData.get("source_image_url") as string | null)?.trim() || "";
+      const regionsRaw = formData.get("regions");
+      let regions = parseImageEditRegions(null);
+      if (typeof regionsRaw === "string") {
+        try {
+          regions = parseImageEditRegions(JSON.parse(regionsRaw));
+        } catch {
+          regions = [];
+        }
+      }
+      const hintFile = formData.get("region_hint_image");
+      const hasHint = hintFile instanceof File && hintFile.size > 0;
+      const endpoint = (formData.get("endpoint") as string | null)?.trim() || defaultEditEndpoint();
+      const aspectRatio = aspectRatioForApi(
+        (formData.get("aspect_ratio") as string | null)?.trim() || "auto",
+      );
+      const numImages = parseNumImages((formData.get("num_images") as string | null)?.trim() ?? "1");
+
+      if (!sourceUrl.startsWith("http")) {
+        return NextResponse.json({ error: "Generate an AI image first, then select areas to fix." }, { status: 400 });
+      }
+      if (!regions.length) {
+        return NextResponse.json(
+          { error: "Draw at least one area and describe what to change inside it." },
+          { status: 400 },
+        );
+      }
+      if (!endpoint.includes("/edit")) {
+        return NextResponse.json(
+          { error: "Regional refine requires an edit endpoint (e.g. nano-banana-2/edit)." },
+          { status: 400 },
+        );
+      }
+
+      try {
+        const imageUrls = [sourceUrl];
+        if (hasHint) {
+          const hintUrl = await fal.storage.upload(hintFile as File);
+          imageUrls.push(hintUrl);
+        }
+        const prompt = buildRegionRefinePrompt(regions, hasHint);
+        return await runRefineEdit(request, {
+          endpoint,
+          prompt,
+          aspectRatio,
+          numImages,
+          imageUrls,
+          systemPrompt: IMAGE_REGION_REFINE_SYSTEM_PROMPT,
+          userId: auth.user.userId,
+          refineSources: [sourceUrl],
         });
       } catch (e: unknown) {
         return NextResponse.json({ error: formatFalError(e) }, { status: 502 });
@@ -281,6 +356,9 @@ export async function POST(request: Request) {
     const strategyBlock = brief ? referenceStrategyPromptBlock(brief, strategy) : "";
     const promptExtra = [promptExtraRaw, strategyBlock].filter(Boolean).join(" | ");
     const artStyleId = resolveArtStyleId((formData.get("art_style") as string | null)?.trim());
+    const imageTextModeRaw = (formData.get("image_text_mode") as string | null)?.trim();
+    const imageTextMode =
+      imageTextModeRaw === "textless" ? ("textless" as const) : ("integrated" as const);
     const headline = (formData.get("headline") as string | null)?.trim() || "";
     const subline = (formData.get("subline") as string | null)?.trim() || "";
     const offer = (formData.get("offer") as string | null)?.trim() || "";
@@ -318,6 +396,7 @@ export async function POST(request: Request) {
       framing: subjectFraming,
       extra: promptExtra,
       artStyle: artStyleId,
+      imageTextMode,
     });
 
     const visualStyle = (formData.get("visual_style") as string | null)?.trim() || "product";
@@ -339,6 +418,8 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Invalid brand profile data." }, { status: 400 });
       }
     }
+    const brandKitRaw = (formData.get("brand_kit") as string | null)?.trim() || "";
+    const brandKit = brandKitRaw ? parseBrandKit(JSON.parse(brandKitRaw)) : null;
     const promptMode = resolveImagePromptMode(
       visualStyle,
       useReferenceConcept ? "reference-concept" : creativeMode,
@@ -359,6 +440,7 @@ export async function POST(request: Request) {
       promptMode,
       brandProfile,
       visualStyle as VisualStyleId,
+      brandKit,
     );
     const finalPrompt = clientPrompt || builtPrompt;
 
@@ -393,15 +475,16 @@ export async function POST(request: Request) {
       }
 
       await trackUsage(auth.user.userId, "image");
+      const archived = await archiveOutputUrls(request, outUrls);
       return NextResponse.json({
-        imageUrl: outUrls[0],
-        imageUrls: outUrls,
+        imageUrl: archived[0],
+        imageUrls: archived,
         requestId: result.requestId,
         endpoint,
         mode: "edit",
         creativeMode: useReferenceConcept ? "reference-concept" : "promo-ai",
         imageCount: imageUrls.length,
-        variantCount: outUrls.length,
+        variantCount: archived.length,
       });
     } catch (e: unknown) {
       return NextResponse.json({ error: formatFalError(e) }, { status: 502 });
@@ -450,7 +533,7 @@ export async function POST(request: Request) {
       const systemPrompt = isCompose
         ? IMAGE_CANVAS_COMPOSE_SYSTEM_PROMPT
         : IMAGE_REFINE_SYSTEM_PROMPT;
-      return await runRefineEdit({
+      return await runRefineEdit(request, {
         endpoint,
         prompt,
         aspectRatio,
@@ -479,13 +562,14 @@ export async function POST(request: Request) {
     }
 
     await trackUsage(auth.user.userId, "image");
+    const archived = await archiveOutputUrls(request, outUrls);
     return NextResponse.json({
-      imageUrl: outUrls[0],
-      imageUrls: outUrls,
+      imageUrl: archived[0],
+      imageUrls: archived,
       requestId: result.requestId,
       endpoint,
       mode: "text",
-      variantCount: outUrls.length,
+      variantCount: archived.length,
     });
   } catch (e: unknown) {
     return NextResponse.json({ error: formatFalError(e) }, { status: 502 });

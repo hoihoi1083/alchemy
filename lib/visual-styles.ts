@@ -18,6 +18,7 @@ export type VisualStyleId =
   | "concept-cinematic"
   | "storyboard-video"
   | "model-wear"
+  | "ugc-presenter"
   | "paper-layout"
   | "service-promo"
   | "pricing-offer"
@@ -37,6 +38,10 @@ export function isCreativeVideoStyle(id: VisualStyleId): boolean {
 
 export function isStoryboardVideoStyle(id: VisualStyleId): boolean {
   return id === "storyboard-video";
+}
+
+export function isUgcPresenterStyle(id: VisualStyleId): boolean {
+  return id === "ugc-presenter";
 }
 
 export function isConceptCinematicStyle(id: VisualStyleId): boolean {
@@ -68,6 +73,7 @@ const IMAGE_FIRST_VISUAL_STYLE_IDS = new Set<VisualStyleId>([
   "brand-fit",
   "brand-campaign",
   "model-wear",
+  "ugc-presenter",
   "service-promo",
   "pricing-offer",
   "website-launch",
@@ -79,9 +85,8 @@ const VIDEO_FIRST_VISUAL_STYLE_IDS = new Set<VisualStyleId>([
   "creative-video",
 ]);
 
-/** Combined workflow only — multi-scene or cinematic keyframe → video. */
+/** Combined workflow only — cinematic keyframe → video stitch. */
 const COMBINED_ONLY_VISUAL_STYLE_IDS = new Set<VisualStyleId>([
-  "storyboard-video",
   "concept-cinematic",
 ]);
 
@@ -152,6 +157,14 @@ export const VISUAL_STYLES: VisualStyleDef[] = [
     usesCompositor: false,
     promptHint:
       "Photorealistic lifestyle model wearing or using the product — premium editorial ad look, category-appropriate pose (wrist, demo, feet, etc.).",
+  },
+  {
+    id: "ugc-presenter",
+    icon: "🎙️",
+    templateId: "ugc-presenter-reel",
+    usesCompositor: false,
+    promptHint:
+      "UGC talking-head digital presenter: photoreal keyframe with product on wrist/hand, then HeyGen lip-sync to your ad-pack script (~$0.10/s).",
   },
   {
     id: "info-poster",

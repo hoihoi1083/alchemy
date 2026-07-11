@@ -1,0 +1,29 @@
+name: Nightly pipeline smoke
+
+on:
+  schedule:
+    - cron: "0 17 * * *"
+  workflow_dispatch:
+
+jobs:
+  pipeline-smoke-full:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Full pipeline smoke (incl. T2V)
+        run: npm run test:pipeline:full
+        env:
+          FAL_KEY: ${{ secrets.FAL_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          SMOKE_T2V: "1"

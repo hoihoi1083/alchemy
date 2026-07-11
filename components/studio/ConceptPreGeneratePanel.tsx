@@ -2,7 +2,7 @@
 
 import { useWizard } from "@/components/studio/WizardContext";
 import { CINEMATIC_REEL_VIDEO_CREATIVITY } from "@/lib/cinematic-motion-prompt";
-import { cameraForMotion } from "@/lib/video-settings";
+import { cameraForMotion, type VideoSettings } from "@/lib/video-settings";
 
 /** Beginner checklist before 「生成完整 Reel」 — no need to learn every setting. */
 export function ConceptPreGeneratePanel() {
@@ -10,9 +10,9 @@ export function ConceptPreGeneratePanel() {
   const { m } = w;
 
   const motionLabel =
-    m.wizard.videoMotionStyles[w.videoSettings.motionStyle] ?? w.videoSettings.motionStyle;
+    m.wizard.videoMotionStyles[w.videoSettings.motionStyle as keyof typeof m.wizard.videoMotionStyles] ?? w.videoSettings.motionStyle;
   const creativityLabel =
-    m.wizard.videoCreativityLevels[w.videoSettings.creativity] ?? w.videoSettings.creativity;
+    m.wizard.videoCreativityLevels[w.videoSettings.creativity as keyof typeof m.wizard.videoCreativityLevels] ?? w.videoSettings.creativity;
 
   function scrollToAdPack() {
     if (!w.adPackPlan) {
@@ -24,7 +24,7 @@ export function ConceptPreGeneratePanel() {
   }
 
   function applyStableMotion() {
-    w.setVideoSettings((prev) => ({
+    w.setVideoSettings((prev: VideoSettings) => ({
       ...prev,
       motionStyle: "static-glow",
       creativity: "subtle",
@@ -33,7 +33,7 @@ export function ConceptPreGeneratePanel() {
   }
 
   function applyCinematicMotion() {
-    w.setVideoSettings((prev) => ({
+    w.setVideoSettings((prev: VideoSettings) => ({
       ...prev,
       motionStyle: "gentle-orbit",
       creativity: CINEMATIC_REEL_VIDEO_CREATIVITY,
@@ -51,8 +51,15 @@ export function ConceptPreGeneratePanel() {
       <ul className="space-y-1.5 text-xs text-cyan-100/90">
         <li>
           <span className="text-cyan-300/80">{m.wizard.preGenerate.keyframeLabel}: </span>
-          {w.hasFinalImage || w.cinematicScenes.length > 0
-            ? m.wizard.preGenerate.keyframeReady
+          {w.hasFinalImage ||
+          w.cinematicScenes.length > 0 ||
+          w.conceptReferenceR2vReady ||
+          (w.isStoryboardOutput && w.storyboardScenes.length > 0)
+            ? w.conceptReferenceR2vReady
+              ? m.wizard.preGenerate.keyframeConceptRefReady
+              : w.isStoryboardOutput && w.storyboardScenes.length > 0
+                ? m.wizard.preGenerate.keyframeConceptStoryboardReady
+              : m.wizard.preGenerate.keyframeReady
             : m.wizard.preGenerate.keyframeMissing}
         </li>
         <li>

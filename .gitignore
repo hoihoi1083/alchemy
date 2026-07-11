@@ -4,6 +4,9 @@
 .env
 .env*.local
 .pipeline-jobs/
+playwright-report/
+test-results/
+playwright/.clerk/
 .DS_Store
 *.pem
 npm-debug.log*

@@ -13,6 +13,7 @@ export type TemplateId =
   | "creative-video"
   | "storyboard-video"
   | "model-wear-reel"
+  | "ugc-presenter-reel"
   | "testimonial"
   | "service-promo"
   | "pricing-offer"
@@ -238,6 +239,27 @@ export const TEMPLATES: MarketingTemplate[] = [
       "Very subtle motion on lifestyle {{product}} ad, locked camera, photorealistic, minimal movement, no morphing",
     negativePrompt:
       "plastic skin, distorted face, extra fingers, morphing, cartoon, on-screen text, watermark, speech, voiceover, chaotic motion, blurry, low quality",
+  },
+  {
+    id: "ugc-presenter-reel",
+    name: "UGC digital presenter",
+    description: "Product photo → talking-head keyframe → HeyGen Avatar IV lip-sync reel.",
+    icon: "🎙️",
+    aspectRatio: "9:16",
+    duration: "6",
+    fast: false,
+    resolution: "720p",
+    motionStrength: 0,
+    camera: "Static Locked Shot",
+    avoidOnScreenText: true,
+    generateAudio: false,
+    imagePromptTemplate:
+      "Photorealistic UGC talking-head ad, presenter showing {{product}}, cozy home office, 9:16",
+    imageEditPromptTemplate:
+      "Photorealistic vertical UGC talking-head ad. Presenter in home office showing {{product}} on wrist or in hand, face visible, 9:16",
+    videoPromptTemplate: "",
+    negativePrompt:
+      "distorted hands, extra fingers, plastic skin, cartoon, on-screen text, watermark, blurry face, low quality",
   },
   {
     id: "storyboard-video",

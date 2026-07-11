@@ -71,11 +71,30 @@ You should see:
 
 | Step | Approx. cost |
 |------|----------------|
-| Just One API search (any platform) | ~¥0.01–0.05 per search (check dashboard) |
+| Just One API search (any platform) | Per-endpoint price in dashboard (小紅書 search often ~¥0.08–0.12/call) |
 | DeepSeek synthesis | ~$0.001–0.01 per run |
 | Tavily fallback (if used) | ~3 credits (~$0.02–0.05) |
 
-One research click ≈ **one** platform API search + **one** LLM call.
+One **UI** research click ≈ **one** platform API search + **one** LLM call.
+
+### Hidden dev / test usage (uses the same token)
+
+These scripts also bill Just One when `JUSTONEAPI_TOKEN` is in `.env.local`:
+
+| Command | Just One calls |
+|---------|----------------|
+| `npm test` | **0** (no live search) |
+| `npm test -- --live` | **14** (all topic matrix scenarios) |
+| `npm test -- --live --quick` | **3** |
+| `npm run test:integration:live` | **1** |
+| `npx tsx scripts/test-matrix-live.ts` | **14** (needs `JUSTONE_ALLOW_LIVE=1`) |
+| `npx tsx scripts/debug-platform-search.ts` | **4** (all platforms) |
+| `npx tsx scripts/debug-xhs-*.ts` | **1+** each |
+| Pick video angle (no MP4 in search) | **+1** detail API per pick |
+
+Server logs now print `[justoneapi] billed …` for every successful call while `npm run dev` is running.
+
+At ~¥0.10/search, **$5 (~¥36) ≈ 350 UI searches** — if balance vanished after only a few clicks, check the dashboard usage log and whether a **live matrix** or **debug script** was run during setup.
 
 ---
 

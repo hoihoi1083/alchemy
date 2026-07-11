@@ -20,7 +20,8 @@ function replyFormatRule(locale: Locale): string {
     "4. STEP-BY-STEP: ONLY Step 1 — must match 【Coach】 block (path + task id).",
     "   - physical product / storyboard / brand-fit / website-launch / image-only / video-only / captions / pro — each has different required fields",
     "   - URL field empty → paste in 品牌網站 first; never analyze brand before that",
-    "   - storyboard: product name + storyboard brief + photo + scene images",
+    "   - storyboard (physical): product name + storyboard brief + photo + scene images",
+    "   - storyboard (concept / content research reel): concept or headline + reference reel → scene stills → video; no product photo required",
     "   - brand-fit: analyze brand BEFORE generate image",
     "   - In studio: no landing-only links (setup-website-reel, open-*-studio)",
     "5. Max ONE action link. Copy EXACTLY — never invent IDs:",
@@ -57,8 +58,8 @@ export function getStudioAssistantFacts(locale: Locale): string {
 
 四、常見視覺風格（擇要）
 - product / model-wear：實體商品圖。
-- storyboard-video：多場景產品故事板 → 拼接影片。
-- concept-cinematic：概念電影感 Reel（關鍵幀 → Seedance 8 秒）；單場景或 3 場景拼接。
+- storyboard-video：多場景故事板 → 拼接影片。實體：產品名 + 相 + 簡述；概念／內容研究 Reel：概念或 headline + 參考片節奏 → 場景圖（唔使產品相）。
+- concept-cinematic：概念電影感 Reel（關鍵幀 → Seedance 8 秒）；單場景或 3 場景拼接（非內容研究 Reel 預設）。
 - creative-video / brand-video：概念或品牌文字成片。
 - website-launch：網站／App 上線 **靜態** mockup 圖（image-only，非影片 UI 克隆）。
 - brand-fit / brand-campaign：需先「分析品牌」網站或社交。
@@ -95,11 +96,11 @@ export function getStudioAssistantFacts(locale: Locale): string {
 
 3) Steps: setup → image? → video? → done. Also /pro canvas and /captions for burn-in subtitles on any MP4.
 
-4) Key visual styles: product, storyboard-video, concept-cinematic (cinematic keyframe → 8s Seedance), creative-video, brand-video, website-launch (static launch mockup image only), brand-fit (needs analyze brand).
+4) Key visual styles: product, storyboard-video (physical product OR concept/content-research reel → scene stills → video), concept-cinematic (cinematic keyframe → 8s Seedance), creative-video, brand-video, website-launch (static launch mockup image only), brand-fit (needs analyze brand).
 
 5) Website promos: pasting a URL does nothing until user clicks Analyze brand. concept-cinematic shows a mood scene — NOT real site UI; put features in captions/voiceover. Multi-scene stitch or screen record + /captions for feature tours.
 
-6) Physical: upload product photo; storyboard or AI video assistant paths.
+6) Physical: upload product photo; storyboard or AI video assistant paths. Concept storyboard from content research uses reference reel analysis — not direct R2V.
 
 7) Analyze concept / Analyze brand buttons in Setup — vision note is text-only for cinematic keyframes.
 

@@ -30,6 +30,25 @@ export function pickString(...values: unknown[]): string {
   return "";
 }
 
+/** Prefer signed CDN URLs (XHS rednotecdn) when a platform returns multiple mirrors. */
+export function pickBestImageUrlFromList(urlList: unknown[]): string | undefined {
+  const candidates: string[] = [];
+  for (const entry of urlList) {
+    const fromList = pickString(entry);
+    if (fromList.startsWith("http")) candidates.push(fromList);
+  }
+  if (!candidates.length) return undefined;
+  const signed = (u: string) =>
+    u.includes("rednotecdn.com") || u.includes("sign=") || u.includes("x-signature");
+  const browserOk = (u: string) => !/\/format\/heif|\/format\/heic/i.test(u);
+  return (
+    candidates.find((u) => signed(u) && browserOk(u)) ??
+    candidates.find(browserOk) ??
+    candidates.find(signed) ??
+    candidates[0]
+  );
+}
+
 export function pickNumber(...values: unknown[]): number | undefined {
   for (const v of values) {
     const n = typeof v === "number" ? v : typeof v === "string" ? Number(v) : NaN;
@@ -45,13 +64,13 @@ export function pickImageUrl(...values: unknown[]): string | undefined {
     if (rec) {
       const urlList = rec.url_list ?? rec.urlList;
       if (Array.isArray(urlList)) {
-        for (const entry of urlList) {
-          const fromList = pickString(entry);
-          if (fromList.startsWith("http")) return fromList;
-        }
+        const fromList = pickBestImageUrlFromList(urlList);
+        if (fromList) return fromList;
       }
       const nested = pickString(
         rec.url_size_large,
+        rec.urlSizeLarge,
+        rec.original,
         rec.url_default,
         rec.url,
         rec.urlDefault,
@@ -136,6 +155,20 @@ function looksLikeVideoUrl(url: string): boolean {
   );
 }
 
+function pickVideoFromStreamObject(streamLike: Record<string, unknown>): string | undefined {
+  const stream = asRecord(streamLike.stream) ?? streamLike;
+  for (const codec of ["h264", "h265", "av1", "h266"]) {
+    const variants = stream[codec];
+    if (!Array.isArray(variants)) continue;
+    for (const variant of variants) {
+      const row = asRecord(variant);
+      const fromStream = pickVideoUrl(row?.master_url, row?.masterUrl, row?.backup_urls, row?.backupUrls);
+      if (fromStream) return fromStream;
+    }
+  }
+  return undefined;
+}
+
 export function pickVideoUrl(...values: unknown[]): string | undefined {
   for (const v of values) {
     if (Array.isArray(v)) {
@@ -148,6 +181,15 @@ export function pickVideoUrl(...values: unknown[]): string | undefined {
     if (typeof v === "string" && v.startsWith("http") && looksLikeVideoUrl(v)) return v;
     const rec = asRecord(v);
     if (rec) {
+      const fromCodecs = pickVideoFromStreamObject(rec);
+      if (fromCodecs) return fromCodecs;
+
+      const media = asRecord(rec.media);
+      if (media) {
+        const fromMedia = pickVideoUrl(media.stream, media.play_url, media.playUrl);
+        if (fromMedia) return fromMedia;
+      }
+
       const nested = pickVideoUrl(
         rec.play_addr,
         rec.playAddr,
@@ -157,6 +199,10 @@ export function pickVideoUrl(...values: unknown[]): string | undefined {
         rec.videoUrl,
         rec.play_url,
         rec.playUrl,
+        rec.master_url,
+        rec.masterUrl,
+        rec.backup_urls,
+        rec.backupUrls,
       );
       if (nested) return nested;
 
@@ -210,7 +256,30 @@ export function flattenSearchItems(payload: unknown): unknown[] {
   return [];
 }
 
-export async function fetchJustOneApi(
+function logJustOneApiBillableCall(
+  path: string,
+  label: string,
+  params: Record<string, string>,
+  requestId?: string,
+): void {
+  const topic = params.keyword?.trim() || params.hashtag?.trim();
+  const topicBit = topic ? ` keyword="${topic.slice(0, 40)}"` : "";
+  const rid = requestId ? ` requestId=${requestId}` : "";
+  console.warn(`[justoneapi] billed ${path} (${label})${topicBit}${rid}`);
+}
+
+const JUSTONEAPI_RETRYABLE =
+  /collect failed|send request again|timeout|timed out|econnreset|econnrefused|503|502|429|temporarily unavailable|rate limit/i;
+
+function isJustOneRetryableError(message: string): boolean {
+  return JUSTONEAPI_RETRYABLE.test(message);
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function fetchJustOneApiOnce(
   path: string,
   params: Record<string, string>,
   label: string,
@@ -250,8 +319,39 @@ export async function fetchJustOneApi(
       throw new Error(message);
     }
 
+    logJustOneApiBillableCall(path, label, params, pickString(body.requestId) || undefined);
+
     return body;
   } finally {
     clearTimeout(timer);
   }
+}
+
+export async function fetchJustOneApi(
+  path: string,
+  params: Record<string, string>,
+  label: string,
+): Promise<Record<string, unknown>> {
+  const maxAttempts = 3;
+  let lastError: Error | undefined;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      return await fetchJustOneApiOnce(path, params, label);
+    } catch (e) {
+      lastError = e instanceof Error ? e : new Error(String(e));
+      const retryable =
+        lastError.name === "AbortError" || isJustOneRetryableError(lastError.message);
+      if (attempt < maxAttempts - 1 && retryable) {
+        console.warn(
+          `[justoneapi] ${label} attempt ${attempt + 1}/${maxAttempts} failed, retrying: ${lastError.message}`,
+        );
+        await sleep(900 * (attempt + 1));
+        continue;
+      }
+      throw lastError;
+    }
+  }
+
+  throw lastError ?? new Error(`${label} failed.`);
 }

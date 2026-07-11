@@ -145,6 +145,16 @@ export const TEMPLATE_CONFIG: Record<TemplateId, AdTemplateConfig> = {
       { id: "productPhoto", onSetup: false, required: true },
     ],
   },
+  "ugc-presenter-reel": {
+    defaultImageInputMode: "product-ad",
+    slots: [
+      { id: "product", onSetup: true, required: true },
+      { id: "headline", onSetup: true, required: false },
+      { id: "subline", onSetup: true, required: false },
+      { id: "business", onSetup: true, required: false },
+      { id: "productPhoto", onSetup: false, required: true },
+    ],
+  },
   testimonial: {
     defaultImageInputMode: "product-ad",
     slots: [

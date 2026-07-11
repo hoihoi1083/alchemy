@@ -3,10 +3,11 @@ import { brandProfilePromptBlock } from "@/lib/brand-profile";
 import { callDeepSeekChat } from "@/lib/deepseek-client";
 import { parseLlmJsonObject } from "@/lib/parse-llm-json";
 import type { PromptMarket } from "@/lib/prompt-variables";
-import type { AdPackPlan, CaptionLine } from "@/lib/ad-pack-types";
+import type { AdPackHookVariant, AdPackPlan, CaptionLine } from "@/lib/ad-pack-types";
 import type { MusicMood } from "@/lib/ad-pack-preferences";
 import { musicMoodHint, maxVoiceoverChars } from "@/lib/ad-pack-preferences";
 import type { StoryboardScenePlan } from "@/lib/video-storyboard-types";
+import { layoutHookSplitCaptions } from "@/lib/ad-pack-hook-captions";
 
 function localeHint(market: PromptMarket): string {
   if (market === "hk" || market === "tw") {
@@ -18,46 +19,121 @@ function localeHint(market: PromptMarket): string {
   return "Write caption text in English. Keep lines short for mobile Reels.";
 }
 
-function normalizeCaptionLine(raw: Partial<CaptionLine>, i: number, durationSec: number): CaptionLine {
-  const startSec = Math.max(0, Number(raw.startSec) || 0);
-  const endSec = Math.min(durationSec, Math.max(startSec + 0.5, Number(raw.endSec) || startSec + 2));
+function trimVoiceover(script: string, durationSec: number): string {
+  const maxChars = maxVoiceoverChars(durationSec, "hk");
+  if (script.length <= maxChars) return script;
+  return script.slice(0, maxChars).replace(/[，,；;、]$/, "");
+}
+
+function normalizeHookVariant(
+  raw: Partial<AdPackHookVariant>,
+  durationSec: number,
+  index: number,
+): AdPackHookVariant {
+  let voiceoverScript = String(raw.voiceoverScript ?? "").trim();
+  const hookScript =
+    String(raw.hookScript ?? "").trim() ||
+    (Array.isArray(raw.captionLines) ? String(raw.captionLines[0]?.text ?? "").trim() : "") ||
+    `Hook ${index + 1}`;
+
+  if (!voiceoverScript && Array.isArray(raw.captionLines)) {
+    voiceoverScript = raw.captionLines
+      .map((line) => String(line.text ?? "").trim())
+      .filter(Boolean)
+      .join("，");
+  }
+  voiceoverScript = trimVoiceover(voiceoverScript, durationSec);
+
+  const captionLines = layoutHookSplitCaptions(hookScript, voiceoverScript, durationSec);
+
   return {
-    startSec,
-    endSec,
-    text: String(raw.text ?? "").trim() || `Line ${i + 1}`,
-    position:
-      raw.position === "top" ||
-      raw.position === "center" ||
-      raw.position === "bottom" ||
-      raw.position === "top-left" ||
-      raw.position === "top-right" ||
-      raw.position === "bottom-left" ||
-      raw.position === "bottom-right"
-        ? raw.position
-        : "bottom",
+    hookScript,
+    voiceoverScript,
+    captionLines,
+  };
+}
+
+function buildHookVariants(parsed: Partial<AdPackPlan>, durationSec: number): AdPackHookVariant[] {
+  const fromArray = (Array.isArray(parsed.hookVariants) ? parsed.hookVariants : [])
+    .map((variant, i) => normalizeHookVariant(variant, durationSec, i))
+    .filter((variant) => variant.hookScript.trim());
+
+  if (fromArray.length >= 3) {
+    return fromArray.slice(0, 3);
+  }
+
+  const legacy = normalizeHookVariant(
+    {
+      hookScript: parsed.hookScript,
+      voiceoverScript: parsed.voiceoverScript,
+      captionLines: parsed.captionLines,
+    },
+    durationSec,
+    0,
+  );
+
+  if (fromArray.length === 0) {
+    return [legacy];
+  }
+
+  return fromArray;
+}
+
+function inferAdPackDurationSec(plan: AdPackPlan): number {
+  const fromCaptions = plan.captionLines.map((line) => line.endSec);
+  const fromVariants = (plan.hookVariants ?? []).flatMap((variant) =>
+    variant.captionLines.map((line) => line.endSec),
+  );
+  return Math.min(60, Math.max(4, ...fromCaptions, ...fromVariants, plan.music?.durationSec ?? 10));
+}
+
+export function ensureAdPackHookVariants(plan: AdPackPlan): AdPackPlan {
+  const durationSec = inferAdPackDurationSec(plan);
+
+  if (plan.hookVariants?.length) {
+    const hookVariants = plan.hookVariants.map((variant) => ({
+      ...variant,
+      captionLines: layoutHookSplitCaptions(
+        variant.hookScript,
+        variant.voiceoverScript,
+        durationSec,
+      ),
+    }));
+    const active =
+      hookVariants.find(
+        (variant) =>
+          variant.hookScript === plan.hookScript &&
+          variant.voiceoverScript === plan.voiceoverScript,
+      ) ?? hookVariants[0];
+    return {
+      ...plan,
+      hookVariants,
+      hookScript: active.hookScript,
+      voiceoverScript: active.voiceoverScript,
+      captionLines: active.captionLines,
+    };
+  }
+
+  const legacy: AdPackHookVariant = {
+    hookScript: plan.hookScript,
+    voiceoverScript: plan.voiceoverScript,
+    captionLines: layoutHookSplitCaptions(plan.hookScript, plan.voiceoverScript, durationSec),
+  };
+  return {
+    ...plan,
+    hookScript: legacy.hookScript,
+    voiceoverScript: legacy.voiceoverScript,
+    captionLines: legacy.captionLines,
+    hookVariants: [legacy],
   };
 }
 
 export function normalizeAdPackPlan(parsed: Partial<AdPackPlan>, durationSec: number): AdPackPlan {
-  const captionLines = (Array.isArray(parsed.captionLines) ? parsed.captionLines : [])
-    .slice(0, 8)
-    .map((line, i) => normalizeCaptionLine(line, i, durationSec));
-
-  if (captionLines.length === 0) {
-    captionLines.push({ startSec: 0, endSec: Math.min(3, durationSec), text: "Your ad hook" });
-  }
-
-  let voiceoverScript = String(parsed.voiceoverScript ?? "").trim();
-  if (!voiceoverScript) {
-    voiceoverScript = captionLines
-      .map((line) => line.text.trim())
-      .filter(Boolean)
-      .join("，");
-  }
-  const maxChars = maxVoiceoverChars(durationSec, "hk");
-  if (voiceoverScript.length > maxChars) {
-    voiceoverScript = voiceoverScript.slice(0, maxChars).replace(/[，,；;、]$/, "");
-  }
+  const hookVariants = buildHookVariants(parsed, durationSec);
+  const active = hookVariants[0] ?? normalizeHookVariant({}, durationSec, 0);
+  const captionLines = active.captionLines;
+  const voiceoverScript = active.voiceoverScript;
+  const hookScript = active.hookScript;
 
   const musicRaw = parsed.music ?? {};
   const promptEn = String(
@@ -68,9 +144,10 @@ export function normalizeAdPackPlan(parsed: Partial<AdPackPlan>, durationSec: nu
   }
 
   return {
-    hookScript: String(parsed.hookScript ?? "").trim(),
+    hookScript,
     voiceoverScript,
     captionLines,
+    hookVariants,
     music: {
       styleLabel: String((musicRaw as { styleLabel?: string }).styleLabel ?? "Custom").trim() || "Custom",
       promptEn,
@@ -152,9 +229,20 @@ export async function planAdPack(input: {
           "",
           "Return JSON:",
           JSON.stringify({
-            hookScript: "short hook for the ad",
-            voiceoverScript: "optional spoken-style script (not burned into video by default)",
-            captionLines: [{ startSec: 0, endSec: 3, text: "caption line" }],
+            hookVariants: [
+              {
+                hookScript: "short hook angle 1",
+                voiceoverScript: "spoken script for angle 1",
+              },
+              {
+                hookScript: "short hook angle 2",
+                voiceoverScript: "spoken script for angle 2",
+              },
+              {
+                hookScript: "short hook angle 3",
+                voiceoverScript: "spoken script for angle 3",
+              },
+            ],
             music: {
               styleLabel: "Custom",
               promptEn: "Soft ambient instrumental, gentle piano, 92 BPM, no vocals, IG reel background",
@@ -165,9 +253,9 @@ export async function planAdPack(input: {
           }),
           "",
           "Rules:",
-          `- captionLines: 2-5 lines covering 0-${durationSec}s, no overlap, endSec <= ${durationSec}`,
-          "- Captions are burned AFTER video — do NOT assume Seedance renders text.",
-          `- voiceoverScript: spoken narration; MUST fit ${durationSec}s (~${maxVoiceoverChars(durationSec, "hk")} Chinese chars or ~${maxVoiceoverChars(durationSec, "en")} English words). Short punchy ad copy only.`,
+          "- hookVariants: EXACTLY 3 distinct marketing angles for the same product (different hooks, not paraphrases).",
+          "- Each variant: hookScript (short punchy hook, 1 line) + voiceoverScript (product line, 1 line). UI burns hook top-center and voiceover bottom-center.",
+          `- voiceoverScript per variant: spoken narration; MUST fit ${durationSec}s (~${maxVoiceoverChars(durationSec, "hk")} Chinese chars or ~${maxVoiceoverChars(durationSec, "en")} English words). Short punchy ad copy only.`,
           "- music.styleLabel: short user-facing label (e.g. Upbeat pop, Premium minimal).",
           "- music.promptEn: 20-200 words, instrumental ad BGM only.",
         ].join("\n"),

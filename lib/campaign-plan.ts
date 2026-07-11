@@ -4,6 +4,14 @@ import type { CampaignPlan, CampaignSlidePlan } from "@/lib/campaign-types";
 import { CAMPAIGN_SLIDE_COUNT } from "@/lib/campaign-types";
 import { callDeepSeekChat } from "@/lib/deepseek-client";
 import { parseLlmJsonObject } from "@/lib/parse-llm-json";
+import { isContentResearchStyleExtra } from "@/lib/content-research-promote";
+import {
+  USER_REFERENCE_MARKER,
+  isInfographicLikeBrief,
+  isLayoutTransferReferenceExtra,
+  isPhotographicReferenceBrief,
+  isStyleOnlyReferenceExtra,
+} from "@/lib/user-reference-brief";
 import { getVisualStyle, type VisualStyleId } from "@/lib/visual-styles";
 
 function emptyCampaignPlan(): CampaignPlan {
@@ -73,6 +81,7 @@ function applyCampaignFallbacks(
     campaignTheme: string;
     brandProfile?: BrandProfile | null;
     hasReferenceLayout?: boolean;
+    hasStyleReference?: boolean;
   },
 ): CampaignPlan {
   const seedHeadline =
@@ -116,11 +125,17 @@ function applyCampaignFallbacks(
           : i === 1
             ? "Selling-points slide — same IMAGE 1 design language with bullet / feature copy layout"
             : "Offer slide — same IMAGE 1 design language with CTA / offer badge area"
-        : i === 0
-          ? "Hero slide — IMAGE 1 content centered and dominant, brand-matched lighting"
-          : i === 1
-            ? "Selling-points slide — same IMAGE 1 hero with bullet copy layout"
-            : "Offer slide — same IMAGE 1 hero with CTA / offer badge";
+        : input.hasStyleReference
+          ? i === 0
+            ? "Hero slide — match reference palette/typography; new cover layout with main hook headline"
+            : i === 1
+              ? "Selling-points slide — same reference visual family; distinct bullet/feature layout (not same grid as hero)"
+              : "Offer slide — same reference visual family; CTA / recap band with distinct composition"
+          : i === 0
+            ? "Hero slide — IMAGE 1 content centered and dominant, brand-matched lighting"
+            : i === 1
+              ? "Selling-points slide — same IMAGE 1 hero with bullet copy layout"
+              : "Offer slide — same IMAGE 1 hero with CTA / offer badge";
     }
     return next;
   });
@@ -147,12 +162,66 @@ function buildPlanPrompt(input: {
   brandProfile?: BrandProfile | null;
   promotionMode?: "physical" | "concept";
   hasReferenceLayout?: boolean;
+  hasStyleReference?: boolean;
+  referenceStrategyKind?: "layout-transfer" | "style-only" | "none";
   promptExtra?: string;
 }): string {
   const style = getVisualStyle(input.visualStyleId);
   const brandBlock = input.brandProfile?.businessName
     ? brandProfilePromptBlock(input.brandProfile)
     : "";
+  const contentResearchRef = isContentResearchStyleExtra(input.promptExtra);
+  const layoutTransferRef =
+    input.hasReferenceLayout ||
+    input.referenceStrategyKind === "layout-transfer" ||
+    isLayoutTransferReferenceExtra(input.promptExtra);
+  const hasUserReference = Boolean(
+    contentResearchRef ||
+      input.promptExtra?.includes(USER_REFERENCE_MARKER) ||
+      isStyleOnlyReferenceExtra(input.promptExtra) ||
+      layoutTransferRef,
+  );
+  const styleOnlyRef =
+    !layoutTransferRef &&
+    (input.hasStyleReference ||
+      contentResearchRef ||
+      (input.promotionMode === "concept" && hasUserReference));
+  const photoStyleRef =
+    styleOnlyRef && isPhotographicReferenceBrief(input.promptExtra ?? "");
+  const infographicRef = hasUserReference && isInfographicLikeBrief(input.promptExtra ?? "");
+
+  const referenceRules = layoutTransferRef
+    ? [
+        "- LAYOUT TRANSFER (reference ad + user product photo): mirror IMAGE 1 design grammar on every slide — same layout family as the reference.",
+        "- visualDna MUST match reference: layout grid type, color palette, typography hierarchy from USER REFERENCE.",
+        "- Each slide = one campaign role (hero / selling points / offer) filled with USER copy — do NOT invent unrelated editorial layouts.",
+        "- All on-image copy about the user's product only — never reuse reference poster wording.",
+      ]
+    : photoStyleRef
+      ? [
+          "- User reference is PHOTOGRAPHIC — match soft natural light, real product textures, integrated Chinese typography.",
+          "- visualDna: photorealistic lifestyle product photography like USER REFERENCE.",
+          "- Each slide.composition: photo-led with distinct layout per slide — NO cartoon icons or flat clipart badges.",
+        ]
+      : styleOnlyRef
+        ? contentResearchRef
+          ? [
+              "- Content research reference: borrow VISUAL STYLE only — promote the user's product on every slide.",
+              "- visualDna: color palette, typography mood, icon/photo style from reference — each slide gets a DIFFERENT layout.",
+              "- Never copy reference topic (星座/时政/其他品牌) — user headline/subline only.",
+            ]
+          : [
+              "- User uploaded a STYLE reference — match palette, typography mood, and infographic/edu aesthetic from USER REFERENCE.",
+              "- visualDna MUST mirror reference: layout grid type, color palette, typography treatment from USER REFERENCE block.",
+              "- Each slide = distinct campaign layout (hero / bullets / CTA) in the same visual family — do NOT paste the same reference grid on every card.",
+              "- Spread user headline/subline across slides — never copy reference on-image Chinese text.",
+            ]
+        : input.promotionMode === "concept" && hasUserReference && infographicRef
+          ? [
+              "- User uploaded a reference infographic. Plan slides with the SAME visual style family and edu/info lane.",
+              "- visualDna MUST mirror reference palette, typography, and component shapes from USER REFERENCE.",
+            ]
+          : [];
 
   return [
     "Plan a 3-image social ad CAMPAIGN for a small business. Return a single JSON object only.",
@@ -171,13 +240,16 @@ function buildPlanPrompt(input: {
     "- NEVER invent specific prices (HK$, ¥), discount %, or fake promotions unless Offer field is filled",
     input.hasReferenceLayout
       ? "- User uploaded a REFERENCE AD (IMAGE 1) + product photo (IMAGE 2): plan compositions that follow IMAGE 1 layout family (typography hierarchy, graphic components, product staging pose). All on-image copy must come from user fields — never reuse reference poster wording."
-      : "- composition: per-slide layout note — must keep IMAGE 1 subject visible, never invent unrelated products/scenes",
+      : styleOnlyRef || layoutTransferRef
+        ? "- composition: per-slide layout note — follow USER REFERENCE visual family; distinct layout per slide."
+        : "- composition: per-slide layout note — coordinated series with consistent art direction",
+    ...referenceRules,
     "- HK/TW market: ALL Chinese copy in Traditional Chinese (繁體) — never Simplified (简体), even if reference material uses 简体",
     "- CN market: Simplified Chinese (简体) only",
-    input.promotionMode === "concept"
+    input.promotionMode === "concept" && !styleOnlyRef && !infographicRef
       ? "- CONCEPT campaign: editorial IG series with cinematic lifestyle or product-in-scene photos — NOT white infographic posters or classroom edu slides."
       : "",
-    input.promotionMode === "concept"
+    input.promotionMode === "concept" && !styleOnlyRef
       ? "- visualDna: bold integrated typography, color-graded photography, HK agency mood — each slide uses a DIFFERENT layout."
       : "",
     input.promotionMode === "concept"
@@ -209,6 +281,7 @@ type PlanInput = {
   brandProfile?: BrandProfile | null;
   promotionMode?: "physical" | "concept";
   hasReferenceLayout?: boolean;
+  referenceStrategyKind?: "layout-transfer" | "style-only" | "none";
   promptExtra?: string;
 };
 
@@ -239,6 +312,8 @@ export async function planCampaign(input: PlanInput): Promise<CampaignPlan> {
           visualStyleId: input.visualStyleId,
           promotionMode: input.promotionMode,
           hasReferenceLayout: input.hasReferenceLayout,
+          hasStyleReference: input.referenceStrategyKind === "style-only",
+          referenceStrategyKind: input.referenceStrategyKind,
           promptExtra: input.promptExtra?.trim() || "",
           ...fb,
         }),
@@ -260,6 +335,7 @@ export async function planCampaign(input: PlanInput): Promise<CampaignPlan> {
   const plan = applyCampaignFallbacks(basePlan, {
     ...fb,
     hasReferenceLayout: input.hasReferenceLayout,
+    hasStyleReference: input.referenceStrategyKind === "style-only",
   });
 
   if (!plan.slides.every((s) => s.headline.trim())) {

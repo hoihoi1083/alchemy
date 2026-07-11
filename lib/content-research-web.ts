@@ -163,6 +163,11 @@ export async function fetchPlatformWebResearch(
       return await fetchJustOneApiResearch(topic, platform, market, mediaFilter);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
+      if (mediaFilter === "video") {
+        throw new Error(
+          `影片搜尋暫時失敗（${msg}）。請再搜尋一次 — 影片模式必須用平台 API 取得 MP4，唔可以用網頁後備搜尋。`,
+        );
+      }
       if (!webSearchApiKey()) throw e;
       console.warn(`[content-research] Just One API (${platform}) failed, falling back to Tavily:`, msg);
       const tavily = await fetchTavilyResearch(topic, platform);
@@ -171,6 +176,11 @@ export async function fetchPlatformWebResearch(
         fallbackWarning: formatJustOneApiFallbackWarning(platform, msg),
       };
     }
+  }
+  if (mediaFilter === "video") {
+    throw new Error(
+      "影片模式需要設定 JUSTONEAPI_TOKEN — 網頁搜尋無法下載參考 MP4。",
+    );
   }
   return fetchTavilyResearch(topic, platform);
 }

@@ -16,6 +16,7 @@ const testFiles = readdirSync(testDir)
 
 const args = process.argv.slice(2);
 const live = args.includes("--live");
+const justoneMp4 = args.includes("--justone-mp4");
 const generate = args.includes("--generate");
 const liveQuick = args.includes("--quick");
 
@@ -37,7 +38,25 @@ ok =
   ok;
 ok = run("npx", ["tsx", "scripts/test-integration-env.ts"], "Integration env checklist") && ok;
 
+if (justoneMp4) {
+  if (!process.env.JUSTONE_ALLOW_LIVE?.trim()) {
+    console.error(
+      "\n✗ Just One MP4 probe skipped: set JUSTONE_ALLOW_LIVE=1\n" +
+        "  Example: JUSTONE_ALLOW_LIVE=1 npm test -- --justone-mp4\n",
+    );
+    process.exit(1);
+  }
+  ok = run("npx", ["tsx", "scripts/test-justone-mp4-pipeline.ts"], "Just One MP4 pipeline (live)") && ok;
+}
+
 if (live) {
+  if (!process.env.JUSTONE_ALLOW_LIVE?.trim()) {
+    console.error(
+      "\n✗ Live matrix skipped: set JUSTONE_ALLOW_LIVE=1 to run 14 paid Just One searches.\n" +
+        "  Example: JUSTONE_ALLOW_LIVE=1 npm test -- --live\n",
+    );
+    process.exit(1);
+  }
   const liveArgs = ["tsx", "scripts/test-matrix-live.ts"];
   if (liveQuick) liveArgs.push("--quick");
   ok = run("npx", liveArgs, liveQuick ? "Live matrix (quick)" : "Live matrix (all topics)") && ok;
@@ -55,5 +74,6 @@ console.log(`
   Unit/matrix files: ${totalUnit}
   Assistant cases:   24
   Live matrix:       ${live ? (liveQuick ? "3 scenarios" : "14 scenarios") : "skipped (npm test -- --live)"}
+  Just One MP4:      ${justoneMp4 ? "live probe" : "skipped (npm test -- --justone-mp4)"}
   FAL generate:      ${generate ? "2 images" : "skipped (npm test -- --generate)"}
 `);

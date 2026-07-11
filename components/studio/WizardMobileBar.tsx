@@ -5,6 +5,8 @@ import type { WorkflowStepKey } from "@/lib/workflow-mode";
 type WizardMobileBarProps = {
   stepKey: WorkflowStepKey;
   continueSetupLabel: string;
+  setupNextDisabled?: boolean;
+  setupNextDisabledReason?: string | null;
   imageFinishLabel: string;
   backLabel: string;
   generateVideoLabel: string;
@@ -24,6 +26,8 @@ type WizardMobileBarProps = {
 export function WizardMobileBar({
   stepKey,
   continueSetupLabel,
+  setupNextDisabled = false,
+  setupNextDisabledReason,
   imageFinishLabel,
   backLabel,
   generateVideoLabel,
@@ -42,16 +46,23 @@ export function WizardMobileBar({
   if (stepKey !== "setup" && stepKey !== "image" && stepKey !== "video") return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-800 bg-slate-950/90 p-3 backdrop-blur md:hidden">
+    <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-800 bg-slate-950/90 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur md:hidden">
       {stepKey === "setup" && (
-        <button
-          type="button"
-          data-coach-id="coach-continue-setup"
-          onClick={onSetupNext}
-          className="w-full rounded-xl bg-linear-to-r from-cyan-500 via-emerald-500 to-teal-500 py-3 text-sm font-semibold text-white shadow-[0_0_22px_rgba(16,185,129,0.35)]"
-        >
-          {continueSetupLabel}
-        </button>
+        <>
+          {setupNextDisabled && setupNextDisabledReason && (
+            <p className="mb-2 text-center text-xs text-amber-200/90">{setupNextDisabledReason}</p>
+          )}
+          <button
+            type="button"
+            data-coach-id="coach-continue-setup"
+            onClick={onSetupNext}
+            disabled={setupNextDisabled}
+            title={setupNextDisabledReason ?? undefined}
+            className="w-full rounded-xl bg-linear-to-r from-cyan-500 via-emerald-500 to-teal-500 py-3 text-sm font-semibold text-white shadow-[0_0_22px_rgba(16,185,129,0.35)] disabled:opacity-40"
+          >
+            {continueSetupLabel}
+          </button>
+        </>
       )}
       {stepKey === "image" && (
         <>

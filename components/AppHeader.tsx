@@ -15,7 +15,7 @@ export function AppHeader(props: {
   const isConcept = props.promotionMode === "concept";
 
   return (
-    <header className="mb-8 rounded-3xl border border-white/40 bg-white/70 px-4 py-6 text-center shadow-sm backdrop-blur">
+    <header className="mb-6 rounded-3xl border border-white/40 bg-white/70 px-3 py-4 text-center shadow-sm backdrop-blur sm:mb-8 sm:px-4 sm:py-6">
       <div className="mb-4 flex items-center justify-center gap-2">
         <LanguageToggle variant="light" />
         <AuthNav />
@@ -51,7 +51,7 @@ export function AppHeader(props: {
         <p className="text-sm font-semibold tracking-wide text-slate-700">alchemy.ai</p>
       </div>
       <p className="text-sm font-medium tracking-wide text-emerald-600">{m.header.badge}</p>
-      <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
+      <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
         {m.header.title}
       </h1>
       <p className="mx-auto mt-3 max-w-md text-[15px] leading-relaxed text-slate-600">

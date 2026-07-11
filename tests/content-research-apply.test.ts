@@ -29,18 +29,101 @@ describe("content-research-apply handoff", () => {
     assert.ok(!handoff.promptExtra?.includes("Slide1:"));
   });
 
-  it("video reel handoff sets video workflow and reference MP4", () => {
-    const plan = { ...xhsPlan, topic: "水晶手串" };
-    const handoff = buildContentAngleHandoff(reelAngle, plan, "physical", PROMOTE_PRODUCT);
+  it("concept reel video-only handoff uses direct R2V (product style)", () => {
+    const handoff = buildContentAngleHandoff(reelAngle, xhsPlan, "concept", undefined, "video-only");
     assert.equal(handoff.workflowMode, "video-only");
-    assert.equal(handoff.referencePostVideoUrl, reelAngle.sourceVideoUrl);
-    assert.equal(handoff.product, PROMOTE_PRODUCT);
-    assert.ok(handoff.promptExtra?.includes("Do NOT copy reference subject matter"));
+    assert.equal(handoff.visualStyleId, "product");
+    assert.equal(handoff.product, undefined);
+    assert.ok(handoff.conceptIdea);
   });
 
-  it("without promote product falls back to search topic", () => {
+  it("concept reel combined handoff uses storyboard under image-to-video", () => {
+    const handoff = buildContentAngleHandoff(reelAngle, xhsPlan, "concept", undefined, "combined");
+    assert.equal(handoff.workflowMode, "combined");
+    assert.equal(handoff.visualStyleId, "storyboard-video");
+    assert.equal(handoff.referencePostVideoUrl, reelAngle.sourceVideoUrl);
+    assert.ok(handoff.conceptIdea);
+  });
+
+  it("physical reel combined handoff uses storyboard under image-to-video", () => {
+    const plan = { ...xhsPlan, topic: "水晶手串" };
+    const handoff = buildContentAngleHandoff(
+      reelAngle,
+      plan,
+      "physical",
+      PROMOTE_PRODUCT,
+      "combined",
+    );
+    assert.equal(handoff.workflowMode, "combined");
+    assert.equal(handoff.visualStyleId, "storyboard-video");
+    assert.equal(handoff.referencePostVideoUrl, reelAngle.sourceVideoUrl);
+    assert.equal(handoff.product, PROMOTE_PRODUCT);
+  });
+
+  it("physical reel video-only handoff uses direct R2V path", () => {
+    const plan = { ...xhsPlan, topic: "水晶手串" };
+    const handoff = buildContentAngleHandoff(
+      reelAngle,
+      plan,
+      "physical",
+      PROMOTE_PRODUCT,
+      "video-only",
+    );
+    assert.equal(handoff.workflowMode, "video-only");
+    assert.equal(handoff.visualStyleId, "product");
+    assert.equal(handoff.referencePostVideoUrl, reelAngle.sourceVideoUrl);
+    assert.equal(handoff.product, PROMOTE_PRODUCT);
+    assert.ok(handoff.promptExtra?.includes("MATCH reference visual style"));
+  });
+
+  it("reference-sourced angle without product leaves product empty and does not promote reference topic", () => {
+    const pinnedAngle = { ...zodiacCarouselAngle, id: "pinned-note-1" };
+    const handoff = buildContentAngleHandoff(pinnedAngle, xhsPlan, "physical");
+    assert.equal(handoff.product, undefined);
+    assert.equal(handoff.headline, "");
+    assert.ok(handoff.promptExtra?.includes("MATCH reference visual style"));
+    assert.ok(!handoff.promptExtra?.includes("All copy and visuals must promote: 水晶手串"));
+    assert.ok(handoff.promptExtra?.includes("NEVER the reference post title"));
+  });
+
+  it("search post without promote product falls back to search topic", () => {
     const handoff = buildContentAngleHandoff(zodiacCarouselAngle, xhsPlan, "physical");
     assert.equal(handoff.product, SEARCH_TOPIC);
+  });
+
+  it("reference-sourced with user product promotes product not reference title", () => {
+    const obsidianPlan = {
+      ...xhsPlan,
+      topic: "",
+      candidates: [
+        {
+          ...zodiacCarouselAngle,
+          id: "pinned-note-1",
+          sourceTitle: "一篇看懂黑曜石｜种类颜色、真假、产地怎么分",
+        },
+      ],
+    };
+    const angle = obsidianPlan.candidates[0]!;
+    const handoff = buildContentAngleHandoff(angle, obsidianPlan, "physical", PROMOTE_PRODUCT);
+    assert.equal(handoff.product, PROMOTE_PRODUCT);
+    assert.ok(handoff.promptExtra?.includes(`All copy and visuals must promote: ${PROMOTE_PRODUCT}`));
+    assert.ok(!handoff.promptExtra?.includes("All copy and visuals must promote: 一篇看懂黑曜石"));
+  });
+
+  it("concept handoff uses angle hook and per-angle conceptIdea", () => {
+    const koreaAngle = {
+      ...zodiacCarouselAngle,
+      title: "2026最新韓國行程避雷指南",
+      hook: "2026年韓國最新規定！這些坑千萬別踩。",
+      bulletPoints: ["2026年簽證新變化", "推薦支付方式"],
+    };
+    const plan = { ...xhsPlan, topic: "5天韓國旅行行程" };
+    const handoff = buildContentAngleHandoff(koreaAngle, plan, "concept");
+    assert.equal(handoff.headline, "2026年韓國最新規定！這些坑千萬別踩。");
+    assert.ok(handoff.subline?.includes("2026年簽證新變化"));
+    assert.ok(handoff.conceptIdea?.includes("5天韓國旅行行程"));
+    assert.ok(!handoff.headline?.includes("必看攻略"));
+    assert.equal(handoff.product, undefined);
   });
 
   it("campaign theme is product-centric when angle format is campaign", () => {
@@ -61,5 +144,23 @@ describe("content-research-apply handoff", () => {
     );
     assert.equal(handoff.campaignTheme, `${PROMOTE_PRODUCT} series`);
     assert.equal(handoff.imageOutputMode, "campaign");
+  });
+
+  it("teaching-carousel with stray videoUrl stays image-only under combined picker", () => {
+    const carouselWithVideo = {
+      ...zodiacCarouselAngle,
+      sourceVideoUrl: "https://example.com/stray.mp4",
+    };
+    const handoff = buildContentAngleHandoff(
+      carouselWithVideo,
+      xhsPlan,
+      "concept",
+      undefined,
+      "combined",
+    );
+    assert.equal(handoff.imageOutputMode, "teaching-carousel");
+    assert.equal(handoff.workflowMode, "image-only");
+    assert.equal(handoff.visualStyleId, "info-poster");
+    assert.equal(handoff.referencePostVideoUrl, undefined);
   });
 });

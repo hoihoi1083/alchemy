@@ -8,6 +8,7 @@ import {
 } from "@/lib/content-research-web";
 import {
   attachSourcePostsToPlan,
+  RESEARCH_ANGLES_PER_PAGE,
   RESEARCH_LIVE_ANGLE_COUNT,
   RESEARCH_POSTS_FETCH_LIMIT,
 } from "@/lib/content-research-enrich";
@@ -144,7 +145,12 @@ function normalizePlan(
         ? topPicksFromIds.slice(0, 3)
         : [...candidates].sort((a, b) => b.score - a.score).slice(0, 3);
 
-  if (topPicks.length < 3 && input.researchMode === "live-web") {
+  // Live search can backfill from raw platform posts in attachSourcePostsToPlan — defer min check.
+  const canBackfillFromPosts =
+    input.researchMode === "live-web" &&
+    (input.posts?.length ?? 0) >= RESEARCH_ANGLES_PER_PAGE;
+
+  if (topPicks.length < 3 && input.researchMode === "live-web" && !canBackfillFromPosts) {
     throw new Error(
       "Could not extract enough content angles from web results. Try a different keyword.",
     );
@@ -174,7 +180,7 @@ function mediaFilterPromptLine(filter?: ContentResearchMediaFilter): string {
   return "";
 }
 
-function applyMediaFilterToPlan(
+export function applyMediaFilterToPlan(
   plan: ContentResearchPlan,
   filter?: ContentResearchMediaFilter,
 ): ContentResearchPlan {
@@ -187,8 +193,47 @@ function applyMediaFilterToPlan(
     ...plan,
     mediaFilter: filter,
     candidates,
-    topPicks: topPicks.length >= 1 ? topPicks : candidates.slice(0, 3),
+    topPicks: topPicks.length >= 1 ? topPicks : candidates.slice(0, RESEARCH_ANGLES_PER_PAGE),
   };
+}
+
+function ensureMinLiveAngles(plan: ContentResearchPlan): ContentResearchPlan {
+  if (plan.topPicks.length >= RESEARCH_ANGLES_PER_PAGE) return plan;
+
+  const sorted = [...plan.candidates].sort((a, b) => b.score - a.score);
+  const topPicks = sorted.slice(0, RESEARCH_ANGLES_PER_PAGE);
+  if (topPicks.length < RESEARCH_ANGLES_PER_PAGE) {
+    throw new Error(
+      plan.mediaFilter === "video"
+        ? "小紅書有影片結果，但湊唔夠 3 個可用角度。試較闊關鍵字，或直接用貼文連結搜尋。"
+        : "Could not extract enough content angles from web results. Try a different keyword.",
+    );
+  }
+
+  return { ...plan, topPicks };
+}
+
+export function finalizeLiveResearchPlan(
+  parsed: Partial<ContentResearchPlan>,
+  normalizeInput: {
+    topic: string;
+    platform: ContentPlatform;
+    researchMode: ContentResearchPlan["researchMode"];
+    searchProvider?: ContentResearchPlan["searchProvider"];
+    sources?: ContentResearchSource[];
+    posts?: ContentResearchPost[];
+  },
+  options?: { mediaFilter?: ContentResearchMediaFilter; fallbackWarning?: string },
+): ContentResearchPlan {
+  return ensureMinLiveAngles(
+    applyMediaFilterToPlan(
+      attachSourcePostsToPlan({
+        ...normalizePlan(parsed, normalizeInput),
+        researchWarning: options?.fallbackWarning,
+      }),
+      options?.mediaFilter,
+    ),
+  );
 }
 
 function buildPlaybookPrompt(input: {
@@ -391,19 +436,17 @@ async function planContentResearchLive(input: {
         bundle.posts && bundle.posts.length > 0 ? RESEARCH_LIVE_ANGLE_COUNT : 6,
     }),
   );
-  return applyMediaFilterToPlan(
-    attachSourcePostsToPlan({
-      ...normalizePlan(parsed, {
-        topic: input.topic,
-        platform: input.platform,
-        researchMode: "live-web",
-        searchProvider: bundle.provider,
-        sources,
-        posts: bundle.posts,
-      }),
-      researchWarning: bundle.fallbackWarning,
-    }),
-    input.mediaFilter,
+  return finalizeLiveResearchPlan(
+    parsed,
+    {
+      topic: input.topic,
+      platform: input.platform,
+      researchMode: "live-web",
+      searchProvider: bundle.provider,
+      sources,
+      posts: bundle.posts,
+    },
+    { mediaFilter: input.mediaFilter, fallbackWarning: bundle.fallbackWarning },
   );
 }
 

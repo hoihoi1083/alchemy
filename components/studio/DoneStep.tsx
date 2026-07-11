@@ -5,29 +5,28 @@ import { useRouter } from "next/navigation";
 import { useWizard } from "@/components/studio/WizardContext";
 import { QuickFixImagePanel } from "@/components/studio/QuickFixImagePanel";
 import { writeCaptionHandoff } from "@/lib/caption-studio-draft";
+import { writeImageCanvasHandoff } from "@/lib/image-canvas-handoff";
+import { downloadMediaUrl, downloadMediaUrls } from "@/lib/download-media";
 import { isFalCdnUrl } from "@/lib/pipeline/safe-url";
 
-async function downloadVideoBlob(url: string, filename: string) {
-  const res = await fetch(url, { credentials: "include", cache: "no-store" });
-  if (!res.ok) throw new Error(`Download failed (${res.status})`);
-  const blob = await res.blob();
-  const objectUrl = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = objectUrl;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(objectUrl);
+function safeFilenamePart(input: string): string {
+  return input
+    .trim()
+    .replace(/[^\w\u4e00-\u9fff-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40) || "slide";
 }
 
 export function DoneStep() {
   const router = useRouter();
   const {
     bgmNote,
+    captionHandoffVideoUrl,
     captionLines,
-    downloadEditPack,
     finalImageSrc,
     headline,
     imageGenKey,
+    listExportableSlides,
     m,
     product,
     quickFixCredits,
@@ -39,6 +38,7 @@ export function DoneStep() {
   } = useWizard();
   const [downloadBusy, setDownloadBusy] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
+  const slides = listExportableSlides();
 
   if (workflowMode === "image-only" && finalImageSrc) {
     return (
@@ -50,28 +50,137 @@ export function DoneStep() {
           </h2>
           <p className="mt-2 text-[15px] leading-relaxed text-slate-300">{m.wizard.imageDoneHint}</p>
         </div>
-        <img
-          src={`${finalImageSrc}${finalImageSrc.includes("?") ? "&" : "?"}v=${imageGenKey}`}
-          alt=""
-          className="w-full rounded-2xl border border-slate-800 object-contain"
-        />
-        <a
-          href={finalImageSrc}
-          download="marketing-image.png"
-          target="_blank"
-          rel="noreferrer"
-          className="block rounded-xl bg-emerald-600 py-3 text-center text-sm font-semibold text-white"
-        >
-          {m.wizard.downloadImage}
-        </a>
-        <button
-          type="button"
-          onClick={() => void downloadEditPack("image")}
-          className="w-full rounded-xl border border-cyan-300 bg-cyan-50 py-2.5 text-sm font-medium text-cyan-700"
-        >
-          {m.wizard.downloadEditPack}
-        </button>
+
+        {slides.length > 1 ? (
+          <div className="space-y-3">
+            <p className="text-xs font-medium text-emerald-200">{m.wizard.doneAllSlidesTitle}</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {slides.map((slide) => (
+                <div
+                  key={`${slide.url}-${slide.index}`}
+                  className="rounded-xl border border-slate-700 bg-slate-900/50 p-3"
+                >
+                  <img
+                    src={`${slide.url}${slide.url.includes("?") ? "&" : "?"}v=${imageGenKey}-${slide.index}`}
+                    alt=""
+                    className="w-full rounded-lg border border-slate-800 object-contain"
+                  />
+                  <p className="mt-2 text-xs font-medium text-slate-200">{slide.label}</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      disabled={downloadBusy}
+                      onClick={async () => {
+                        setDownloadError(null);
+                        setDownloadBusy(true);
+                        try {
+                          await downloadMediaUrl(
+                            slide.url,
+                            `slide-${slide.index + 1}-${safeFilenamePart(slide.label)}.png`,
+                          );
+                        } catch (e: unknown) {
+                          setDownloadError(
+                            e instanceof Error ? e.message : m.imageCanvas.downloadFailed,
+                          );
+                        } finally {
+                          setDownloadBusy(false);
+                        }
+                      }}
+                      className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
+                    >
+                      {downloadBusy ? m.imageCanvas.downloading : m.wizard.downloadSlide}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        writeImageCanvasHandoff({
+                          imageUrl: slide.url,
+                          label: slide.label,
+                        });
+                        router.push("/edit-image");
+                      }}
+                      className="rounded-lg border border-cyan-600 px-3 py-1.5 text-xs text-cyan-100"
+                    >
+                      {m.imageCanvas.openFromDone}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {slides.length > 1 && (
+              <button
+                type="button"
+                disabled={downloadBusy}
+                onClick={async () => {
+                  setDownloadError(null);
+                  setDownloadBusy(true);
+                  try {
+                    await downloadMediaUrls(
+                      slides.map((slide) => ({
+                        url: slide.url,
+                        filename: `slide-${slide.index + 1}-${safeFilenamePart(slide.label)}.png`,
+                      })),
+                    );
+                  } catch (e: unknown) {
+                    setDownloadError(
+                      e instanceof Error ? e.message : m.imageCanvas.downloadFailed,
+                    );
+                  } finally {
+                    setDownloadBusy(false);
+                  }
+                }}
+                className="w-full rounded-xl border border-emerald-600 px-4 py-2.5 text-sm font-medium text-emerald-100 disabled:opacity-50"
+              >
+                {downloadBusy ? m.imageCanvas.downloading : m.wizard.downloadAllSlides}
+              </button>
+            )}
+          </div>
+        ) : (
+          <>
+            <img
+              src={`${finalImageSrc}${finalImageSrc.includes("?") ? "&" : "?"}v=${imageGenKey}`}
+              alt=""
+              className="w-full rounded-2xl border border-slate-800 object-contain"
+            />
+            <button
+              type="button"
+              disabled={downloadBusy}
+              onClick={async () => {
+                setDownloadError(null);
+                setDownloadBusy(true);
+                try {
+                  await downloadMediaUrl(finalImageSrc, "marketing-image.png");
+                } catch (e: unknown) {
+                  setDownloadError(e instanceof Error ? e.message : m.imageCanvas.downloadFailed);
+                } finally {
+                  setDownloadBusy(false);
+                }
+              }}
+              className="block w-full rounded-xl bg-emerald-600 py-3 text-center text-sm font-semibold text-white disabled:opacity-50"
+            >
+              {downloadBusy ? m.imageCanvas.downloading : m.wizard.downloadImage}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                writeImageCanvasHandoff({
+                  imageUrl: finalImageSrc,
+                  label: headline?.trim() || product?.trim() || undefined,
+                });
+                router.push("/edit-image");
+              }}
+              className="w-full rounded-xl border border-cyan-500/60 bg-cyan-950/40 py-3 text-center text-sm font-medium text-cyan-100"
+            >
+              {m.imageCanvas.openFromDone}
+            </button>
+            <p className="text-center text-xs text-slate-500">{m.imageCanvas.doneHint}</p>
+          </>
+        )}
+
         <QuickFixImagePanel variant="dark" />
+        {downloadError && (
+          <p className="rounded-lg bg-red-950/40 px-3 py-2 text-xs text-red-200">{downloadError}</p>
+        )}
         <button
           type="button"
           onClick={resetProject}
@@ -119,7 +228,7 @@ export function DoneStep() {
               setDownloadError(null);
               setDownloadBusy(true);
               try {
-                await downloadVideoBlob(videoUrl, "marketing-reel.mp4");
+                await downloadMediaUrl(videoUrl, "marketing-reel.mp4");
               } catch (e: unknown) {
                 setDownloadError(e instanceof Error ? e.message : m.errors.videoFailed);
               } finally {
@@ -135,7 +244,7 @@ export function DoneStep() {
             onClick={() => {
               if (!videoUrl) return;
               writeCaptionHandoff({
-                videoUrl,
+                videoUrl: captionHandoffVideoUrl ?? videoUrl,
                 captionLines,
                 label: headline?.trim() || product?.trim() || undefined,
               });
@@ -150,13 +259,6 @@ export function DoneStep() {
         {downloadError && (
           <p className="text-center text-xs text-red-300">{downloadError}</p>
         )}
-        <button
-          type="button"
-          onClick={() => void downloadEditPack("video")}
-          className="w-full rounded-xl border border-cyan-300 bg-cyan-50 py-2.5 text-sm font-medium text-cyan-700"
-        >
-          {m.wizard.downloadEditPack}
-        </button>
         <div className="rounded-xl border border-slate-700 bg-slate-900/40 p-4">
           <p className="text-sm font-semibold text-white">{m.wizard.quickFixTitle}</p>
           <p className="mt-1 text-xs text-slate-400">{m.wizard.quickFixVideoHint}</p>

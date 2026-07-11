@@ -86,7 +86,7 @@ export function appendPrimaryActionIfMissing(
     intent?: import("@/lib/studio-assistant-intent").StudioAssistantIntent;
   },
 ): string {
-  let out = stripInvalidActionLinks(text, opts.snapshot);
+  const out = stripInvalidActionLinks(text, opts.snapshot);
   if (replyHasValidActionLink(out)) return out;
 
   const task = getNextStudioCoachTask(opts.snapshot, {

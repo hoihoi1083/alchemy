@@ -124,4 +124,6 @@ export type ContentAngleWizardPatch = {
   workflowMode?: WorkflowMode;
   imageAspectRatio?: ImageAspectRatio;
   campaignTheme?: string;
+  /** Format after resolveFormatForAngleApply (may differ from angle.format when post inference overrides). */
+  resolvedFormat?: ContentAngleFormat;
 };

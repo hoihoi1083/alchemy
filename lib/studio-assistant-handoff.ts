@@ -47,6 +47,8 @@ export type StudioAssistantHandoff = {
   referencePostUrl?: string;
   referencePostTitle?: string;
   referencePlatform?: "xiaohongshu" | "instagram" | "tiktok" | "facebook";
+  /** Keeps style-only research prompt in sync when user edits product/headline in Setup. */
+  contentResearchApplyRef?: import("@/lib/content-research-apply").ContentResearchApplyRef;
 };
 
 export function writeStudioAssistantHandoff(handoff: StudioAssistantHandoff): void {

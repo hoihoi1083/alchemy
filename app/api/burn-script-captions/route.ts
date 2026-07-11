@@ -11,6 +11,7 @@ import {
 import { burnCaptionsOverlay } from "@/lib/pipeline/caption-overlay-burn";
 import { burnCaptionsDrawtext } from "@/lib/pipeline/caption-burn";
 import { parseCaptionLinesInput } from "@/lib/pipeline/caption-lines";
+import { parseCaptionBurnStyleJson } from "@/lib/caption-burn-styles";
 import { jobDir } from "@/lib/pipeline/paths";
 import { buildSrt } from "@/lib/pipeline/srt";
 import { materializeMediaInput, pipelineFileUrl } from "@/lib/pipeline/local-input";
@@ -29,7 +30,12 @@ function parseCaptionLines(raw: unknown, durationSec = 60) {
 
 async function burnCaptionsJob(
   request: Request,
-  input: { videoUrl?: string; videoFile?: File; captionLines: CaptionLine[] },
+  input: {
+    videoUrl?: string;
+    videoFile?: File;
+    captionLines: CaptionLine[];
+    captionStyle?: unknown;
+  },
 ) {
   const jobId = crypto.randomUUID();
   const dir = jobDir(jobId);
@@ -64,11 +70,13 @@ async function burnCaptionsJob(
 
   await fs.writeFile(srtPath, buildSrt(segments), "utf8");
 
+  const captionStyle = parseCaptionBurnStyleJson(input.captionStyle);
+
   let burnMethod: "overlay" | "drawtext" | "subtitles" | "soft" = "overlay";
   let softSubtitles = false;
 
   try {
-    await burnCaptionsOverlay(inputPath, captionLines, outputPath, dir);
+    await burnCaptionsOverlay(inputPath, captionLines, outputPath, dir, captionStyle);
   } catch (overlayError) {
     try {
       await burnCaptionsDrawtext(inputPath, captionLines, outputPath);
@@ -121,15 +129,25 @@ export async function POST(request: Request) {
           { status: 400 },
         );
       }
+      const styleRaw = formData.get("caption_style");
+      let captionStyle: unknown;
+      if (typeof styleRaw === "string" && styleRaw.trim()) {
+        try {
+          captionStyle = JSON.parse(styleRaw);
+        } catch {
+          captionStyle = styleRaw.trim();
+        }
+      }
       const result = await burnCaptionsJob(request, {
         videoFile: file,
         videoUrl,
         captionLines: lines,
+        captionStyle,
       });
       return NextResponse.json(result);
     }
 
-    let body: { video_url?: string; caption_lines?: CaptionLine[] };
+    let body: { video_url?: string; caption_lines?: CaptionLine[]; caption_style?: unknown };
     try {
       body = await request.json();
     } catch {
@@ -146,7 +164,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "caption_lines is required." }, { status: 400 });
     }
 
-    const result = await burnCaptionsJob(request, { videoUrl, captionLines: lines });
+    const result = await burnCaptionsJob(request, {
+      videoUrl,
+      captionLines: lines,
+      captionStyle: body.caption_style,
+    });
     return NextResponse.json(result);
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Caption burn failed.";

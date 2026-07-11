@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAppUser } from "@/lib/require-app-user";
-import { isMongoConfigured } from "@/lib/mongodb";
+import { isMongoReady, mongoRequiredErrorMessage } from "@/lib/mongodb-production";
 import { createProject, listProjectsForUser } from "@/lib/db/projects";
 import type { ProjectSnapshot } from "@/lib/project-snapshot";
 import { EMPTY_PROJECT_SNAPSHOT } from "@/lib/project-snapshot";
@@ -11,8 +11,8 @@ export const runtime = "nodejs";
 export async function GET() {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
-  if (!isMongoConfigured()) {
-    return NextResponse.json({ error: "MONGODB_URI is not set" }, { status: 503 });
+  if (!isMongoReady()) {
+    return NextResponse.json({ error: mongoRequiredErrorMessage() }, { status: 503 });
   }
 
   const projects = await listProjectsForUser(auth.user.userId);
@@ -33,8 +33,8 @@ export async function GET() {
 export async function POST(request: Request) {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
-  if (!isMongoConfigured()) {
-    return NextResponse.json({ error: "MONGODB_URI is not set" }, { status: 503 });
+  if (!isMongoReady()) {
+    return NextResponse.json({ error: mongoRequiredErrorMessage() }, { status: 503 });
   }
 
   let body: { name?: string; snapshot?: ProjectSnapshot; promotionMode?: string } | null = null;

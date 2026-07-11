@@ -204,9 +204,15 @@ function nextSetupTask(
     if (physical) return physical;
   }
 
-  if (isStoryboardVideoStyle(style)) {
+  if (isStoryboardVideoStyle(style) && isPhysical) {
     if (!snapshot.product.trim()) return "fill-product-name";
     if (!snapshot.storyboardBrief.trim()) return "fill-storyboard-brief";
+  }
+
+  if (isStoryboardVideoStyle(style) && isConcept) {
+    if (!snapshot.conceptIdea.trim() && !snapshot.headline.trim()) {
+      return "fill-concept";
+    }
   }
 
   if (isConcept) {
@@ -399,7 +405,9 @@ export function pathLabel(snapshot: StudioAssistantSnapshot, isZh: boolean): str
   const { visualStyleId: id, workflowMode: wf, promotionMode: pm } = snapshot;
   const stitch = isCinematicStitch(snapshot);
   if (isZh) {
-    if (id === "storyboard-video") return "實體產品 · 分鏡 storyboard";
+    if (id === "storyboard-video") {
+      return pm === "concept" ? "概念 · 分鏡 storyboard" : "實體產品 · 分鏡 storyboard";
+    }
     if (stitch) return `概念 · 電影感拼接 ${snapshot.cinematicSceneCount}×8秒`;
     if (isCinematicSingle(snapshot)) return "概念 · 8秒電影感 Reel";
     if (id === "website-launch" && wf === "image-only") return "概念 · 網站上線靜態圖";
@@ -407,7 +415,9 @@ export function pathLabel(snapshot: StudioAssistantSnapshot, isZh: boolean): str
     if (wf === "video-only") return `概念/實體 · 只出片 (${id})`;
     return `${pm === "concept" ? "概念" : "實體"} · 圖→片 (${id})`;
   }
-  if (id === "storyboard-video") return "Physical · storyboard video";
+  if (id === "storyboard-video") {
+    return pm === "concept" ? "Concept · storyboard video" : "Physical · storyboard video";
+  }
   if (stitch) return `Concept · cinematic stitch ${snapshot.cinematicSceneCount}×8s`;
   if (isCinematicSingle(snapshot)) return "Concept · 8s cinematic Reel";
   if (id === "website-launch" && wf === "image-only") return "Concept · website launch still";

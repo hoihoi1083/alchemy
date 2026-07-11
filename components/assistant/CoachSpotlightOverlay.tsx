@@ -126,7 +126,7 @@ export function CoachSpotlightOverlay() {
       <button
         type="button"
         onClick={dismiss}
-        className="pointer-events-auto fixed bottom-6 left-1/2 z-[103] -translate-x-1/2 rounded-full border border-violet-300 bg-violet-950/90 px-4 py-2 text-xs font-medium text-violet-100 shadow-lg hover:bg-violet-900"
+        className="pointer-events-auto fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] left-1/2 z-[103] -translate-x-1/2 rounded-full border border-violet-300 bg-violet-950/90 px-4 py-2.5 text-xs font-medium text-violet-100 shadow-lg hover:bg-violet-900 md:bottom-6"
       >
         {m.studioAssistant.spotlightDismiss}
       </button>

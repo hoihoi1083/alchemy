@@ -2,10 +2,10 @@ import type { ContentPlatform } from "@/lib/content-research-types";
 import {
   asRecord,
   fetchJustOneApi,
-  pickString,
   pickVideoUrl,
 } from "@/lib/justoneapi-client";
 import { exploreIdFromUrl } from "@/lib/content-research-enrich";
+import { fetchXhsNoteDetailForVideo } from "@/lib/xhs-note-detail";
 
 function xhsNoteId(postId: string, postUrl?: string): string | null {
   const fromUrl = postUrl ? exploreIdFromUrl(postUrl) : null;
@@ -31,14 +31,7 @@ export async function resolvePostVideoUrl(
     case "xiaohongshu": {
       const noteId = xhsNoteId(postId, postUrl);
       if (!noteId) return undefined;
-      const body = await fetchJustOneApi(
-        "/api/xiaohongshu/get-note-detail/v5",
-        { noteId },
-        "XHS note detail for video",
-      );
-      const data = asRecord(body.data) ?? body;
-      const note = asRecord(data.note) ?? data;
-      return pickVideoUrl(note?.video, note?.native_video, note?.video_info);
+      return fetchXhsNoteDetailForVideo(noteId, postUrl, "XHS note detail for video");
     }
     case "instagram": {
       const code = igShortcode(postId, postUrl);

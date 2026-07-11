@@ -12,12 +12,14 @@ import {
 import { DEFAULT_TEACHING_CAROUSEL_SLIDE_COUNT, MAX_TEACHING_CAROUSEL_SLIDE_COUNT } from "@/lib/teaching-carousel-types";
 import { planTeachingCarousel } from "@/lib/teaching-carousel-plan";
 import { isPromotionMode } from "@/lib/promotion-mode";
+import { parseBrandKit } from "@/lib/brand-kit";
 import {
   parseStrategyFromFormData,
   referenceStrategyPromptBlock,
 } from "@/lib/reference-strategy";
 import type { VisualStyleId } from "@/lib/visual-styles";
 import { artStyleSystemPrompt, resolveArtStyleId } from "@/lib/art-style";
+import { archiveCampaignSlidesToPipeline } from "@/lib/pipeline/archive-image";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -90,6 +92,15 @@ export async function POST(request: Request) {
   const aspectRatio = aspectRatioForApi(
     (formData.get("aspect_ratio") as string | null)?.trim() || "4:5",
   );
+  const brandKitRaw = (formData.get("brand_kit") as string | null)?.trim() || "";
+  let brandKit = null;
+  if (brandKitRaw) {
+    try {
+      brandKit = parseBrandKit(JSON.parse(brandKitRaw));
+    } catch {
+      return NextResponse.json({ error: "Invalid brand kit data." }, { status: 400 });
+    }
+  }
   const reference = formData.get("reference_image");
   const styleRef = formData.get("style_reference_image");
   const hasProduct = reference instanceof File && reference.size > 0;
@@ -101,7 +112,9 @@ export async function POST(request: Request) {
     .filter((f): f is File => f instanceof File && f.size > 0);
   const carouselExtra =
     carouselRefs.length > 0
-      ? `Reference carousel has ${1 + carouselRefs.length} slides in order — match palette, typography rhythm, and pacing (style-only; distinct layout per output slide).`
+      ? strategy.kind === "layout-transfer"
+        ? `Reference carousel has ${1 + carouselRefs.length} slides in order — mirror palette, typography rhythm, and layout grid family from reference; each output slide maps to one reference panel/row where possible.`
+        : `Reference carousel has ${1 + carouselRefs.length} slides in order — match palette, typography rhythm, and pacing (style-only; distinct layout per output slide).`
       : "";
   const promptExtra = [promptExtraRaw, strategyBlock, carouselExtra].filter(Boolean).join(" | ");
   const referenceImageMode = strategy.referenceImageMode;
@@ -127,6 +140,9 @@ export async function POST(request: Request) {
       offer,
       promptExtra,
       slideCount,
+      referenceStrategyKind:
+        strategy.kind === "layout-transfer" ? "layout-transfer" : strategy.kind === "style-only" ? "style-only" : "none",
+      carouselSlides: brief?.carouselSlides,
     });
     const vars = buildPromptVariables({
       product,
@@ -167,6 +183,7 @@ export async function POST(request: Request) {
     }> = [];
 
     for (const slide of plan.slides) {
+      const carouselSlideRef = brief?.carouselSlides?.[slide.index - 1];
       const prompt = buildTeachingCarouselSlideImagePrompt(
         vars,
         plan,
@@ -178,6 +195,8 @@ export async function POST(request: Request) {
         {
           visualStyleId: visualStyle,
           referenceConcept: strategy.useReferenceConceptPrompts,
+          carouselSlideRef,
+          brandKit,
         },
       );
 
@@ -209,15 +228,22 @@ export async function POST(request: Request) {
       });
     }
 
+    const falUrls = slides.map((s) => s.imageUrl);
+    const archivedUrls = await archiveCampaignSlidesToPipeline(request, falUrls);
+    const archivedSlides = slides.map((slide, index) => ({
+      ...slide,
+      imageUrl: archivedUrls[index] ?? slide.imageUrl,
+    }));
+
     await trackUsage(auth.user.userId, "campaign");
     return NextResponse.json({
       plan,
-      slides,
-      imageUrl: slides[0]?.imageUrl,
-      imageUrls: slides.map((s) => s.imageUrl),
+      slides: archivedSlides,
+      imageUrl: archivedSlides[0]?.imageUrl,
+      imageUrls: archivedSlides.map((s) => s.imageUrl),
       endpoint,
       mode: "teaching-carousel",
-      slideCount: slides.length,
+      slideCount: archivedSlides.length,
       artStyle: artStyleId,
       referenceMode: referenceImageMode,
       referenceStrategy: strategy.kind,

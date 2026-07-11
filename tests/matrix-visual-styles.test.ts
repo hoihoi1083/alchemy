@@ -35,11 +35,13 @@ describe("visual styles × promotion × workflow matrix", () => {
   }
 
   it("physical-only styles hidden in concept mode", () => {
-    const physicalOnly: VisualStyleId[] = ["product", "model-wear", "storyboard-video"];
+    const physicalOnly: VisualStyleId[] = ["product", "model-wear"];
     for (const id of physicalOnly) {
       assert.equal(visualStyleAllowedForPromotion(id, "concept"), false);
       assert.equal(visualStyleAllowedForPromotion(id, "physical"), true);
     }
+    assert.equal(visualStyleAllowedForPromotion("storyboard-video", "concept"), true);
+    assert.equal(visualStyleAllowedForPromotion("storyboard-video", "physical"), true);
   });
 
   it("concept-only styles hidden in physical mode", () => {
@@ -55,12 +57,12 @@ describe("visual styles × promotion × workflow matrix", () => {
     }
   });
 
-  it("combined-only styles require combined workflow", () => {
-    for (const id of ["storyboard-video", "concept-cinematic"] as VisualStyleId[]) {
-      assert.equal(isVisualStyleAllowedForWorkflow(id, "image-only"), false);
-      assert.equal(isVisualStyleAllowedForWorkflow(id, "video-only"), false);
-      assert.equal(isVisualStyleAllowedForWorkflow(id, "combined"), true);
-    }
+  it("concept-cinematic requires combined workflow; storyboard works in video-only", () => {
+    assert.equal(isVisualStyleAllowedForWorkflow("concept-cinematic", "image-only"), false);
+    assert.equal(isVisualStyleAllowedForWorkflow("concept-cinematic", "video-only"), false);
+    assert.equal(isVisualStyleAllowedForWorkflow("concept-cinematic", "combined"), true);
+    assert.equal(isVisualStyleAllowedForWorkflow("storyboard-video", "video-only"), true);
+    assert.equal(isVisualStyleAllowedForWorkflow("storyboard-video", "combined"), true);
   });
 
   it("concept text-only image styles", () => {

@@ -4,6 +4,7 @@ import {
   angleMatchesMediaFilter,
   filterPostsByMedia,
   mediaFilterFromWorkflowMode,
+  mediaFilterMismatchMessage,
   platformMediaMismatch,
   postMatchesMediaFilter,
 } from "../lib/content-research-media-filter";
@@ -47,6 +48,20 @@ describe("content-research-media-filter", () => {
     assert.equal(postMatchesMediaFilter(imagePost, "image"), true);
     assert.equal(postMatchesMediaFilter(videoPost, "image"), false);
     assert.equal(postMatchesMediaFilter(videoPost, "video"), true);
+  });
+
+  it("mediaFilterMismatchMessage does not call image-only posts video when images missing", () => {
+    const sparseImage: ContentResearchPost = {
+      id: "3",
+      title: "partial",
+      url: "https://xhs.com/3",
+      snippet: "",
+      mediaType: "image",
+      platform: "xiaohongshu",
+    };
+    const msg = mediaFilterMismatchMessage(sparseImage, "image");
+    assert.ok(!msg.includes("This post is a video"));
+    assert.ok(msg.includes("Could not load images"));
   });
 
   it("tiktok blocked for image-only research", () => {

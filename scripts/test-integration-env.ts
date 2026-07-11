@@ -4,7 +4,6 @@
  * Live: npx tsx scripts/test-integration-env.ts --live
  */
 import { readFileSync, existsSync } from "fs";
-import { fetchPlatformWebResearch } from "../lib/content-research-web";
 import { planContentResearch } from "../lib/content-research-plan";
 
 function loadEnvLocal() {
@@ -60,8 +59,7 @@ async function main() {
   console.log("\n=== Live research smoke (category + product) ===\n");
   const topic = "水晶手串";
   const product = "马达加斯加粉水晶手链";
-  const bundle = await fetchPlatformWebResearch(topic, "xiaohongshu");
-  console.log("Search provider:", bundle.provider, "| results:", bundle.results.length);
+  console.log("(1 Just One search + 1 DeepSeek call)\n");
 
   const plan = await planContentResearch({
     topic,

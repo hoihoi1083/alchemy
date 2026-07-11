@@ -3,6 +3,8 @@
 import { CaptionLineEditor } from "@/components/captions/CaptionLineEditor";
 import { useWizard } from "@/components/studio/WizardContext";
 import { MUSIC_MOODS, VOICEOVER_LOCALES, type MusicMood } from "@/lib/ad-pack-preferences";
+import type { AdPackPlan, AiMusicTrack, CaptionLine, VoicePreviewTrack } from "@/lib/ad-pack-types";
+import type { StoryboardSceneResult } from "@/lib/video-storyboard-types";
 
 export function AdPackReviewPanel() {
   const w = useWizard();
@@ -57,16 +59,44 @@ export function AdPackReviewPanel() {
             {m.wizard.adPack.burnCaptions}
           </label>
         </div>
-        {w.adPackPlan?.hookScript && (
-          <p className="text-xs text-slate-400">
-            <span className="font-medium text-slate-300">{m.wizard.adPack.hookLabel}: </span>
-            {w.adPackPlan.hookScript}
-          </p>
+        {w.adPackPlan?.hookVariants && w.adPackPlan.hookVariants.length > 1 ? (
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-slate-300">{m.wizard.adPack.hookPickerLabel}</p>
+            <p className="text-[11px] text-slate-500">{m.wizard.adPack.hookPickerHint}</p>
+            <div className="space-y-2">
+              {w.adPackPlan.hookVariants.map((variant, index) => (
+                <button
+                  key={`hook-${index}`}
+                  type="button"
+                  onClick={() => w.applyAdPackHookVariant(index)}
+                  className={`w-full rounded-lg border px-3 py-2 text-left text-xs transition ${
+                    w.selectedAdPackHookIndex === index
+                      ? "border-violet-400 bg-violet-950/50 text-violet-50"
+                      : "border-slate-700 bg-slate-900/60 text-slate-200 hover:border-slate-600"
+                  }`}
+                >
+                  <span className="block font-semibold">
+                    {m.wizard.adPack.hookOptionLabel.replace("{n}", String(index + 1))}
+                    {": "}
+                    {variant.hookScript}
+                  </span>
+                  <span className="mt-1 block line-clamp-2 text-slate-400">{variant.voiceoverScript}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          w.adPackPlan?.hookScript && (
+            <p className="text-xs text-slate-400">
+              <span className="font-medium text-slate-300">{m.wizard.adPack.hookLabel}: </span>
+              {w.adPackPlan.hookScript}
+            </p>
+          )
         )}
         <textarea
           value={w.adPackPlan?.voiceoverScript ?? ""}
           onChange={(e) =>
-            w.setAdPackPlan((prev) =>
+            w.setAdPackPlan((prev: AdPackPlan | null) =>
               prev ? { ...prev, voiceoverScript: e.target.value } : prev,
             )
           }
@@ -81,12 +111,12 @@ export function AdPackReviewPanel() {
           <button
             type="button"
             onClick={() =>
-              w.setAdPackPlan((prev) =>
+              w.setAdPackPlan((prev: AdPackPlan | null) =>
                 prev
                   ? {
                       ...prev,
                       voiceoverScript: w.captionLines
-                        .map((line) => line.text.trim())
+                        .map((line: CaptionLine) => line.text.trim())
                         .filter(Boolean)
                         .join("，"),
                     }
@@ -138,7 +168,7 @@ export function AdPackReviewPanel() {
                   w.voicePreviewBusy ||
                   !(
                     w.adPackPlan?.voiceoverScript?.trim() ||
-                    w.captionLines.some((l) => l.text.trim())
+                    w.captionLines.some((l: CaptionLine) => l.text.trim())
                   )
                 }
                 onClick={() => void w.generateVoicePreviews()}
@@ -148,7 +178,7 @@ export function AdPackReviewPanel() {
               </button>
               {w.voicePreviewTracks.length > 0 && (
                 <div className="space-y-2">
-                  {w.voicePreviewTracks.map((track) => {
+                  {w.voicePreviewTracks.map((track: VoicePreviewTrack) => {
                     const presetKey = track.presetId as keyof typeof m.wizard.adPack.voicePresets;
                     const presetLabel =
                       m.wizard.adPack.voicePresets[presetKey] ?? track.label;
@@ -181,7 +211,7 @@ export function AdPackReviewPanel() {
           )}
         </div>
         <div className="space-y-2">
-          {w.captionLines.map((line, index) => (
+          {w.captionLines.map((line: CaptionLine, index: number) => (
             <CaptionLineEditor
               key={`cap-${index}`}
               line={line}
@@ -211,7 +241,7 @@ export function AdPackReviewPanel() {
           <h4 className="text-xs font-semibold uppercase tracking-wide text-teal-200">
             {m.wizard.adPack.timelineSection}
           </h4>
-          {w.storyboardScenes.map((scene, index) => (
+          {w.storyboardScenes.map((scene: StoryboardSceneResult, index: number) => (
             <div key={scene.imageIndex} className="grid gap-2 sm:grid-cols-[1fr_auto_auto] sm:items-center">
               <p className="text-xs text-teal-100">
                 {m.wizard.adPack.sceneLabel.replace("{n}", String(scene.imageIndex))}{" "}
@@ -329,7 +359,7 @@ export function AdPackReviewPanel() {
             </button>
             {w.aiMusicTracks.length > 0 && (
               <div className="space-y-2">
-                {w.aiMusicTracks.map((track) => (
+                {w.aiMusicTracks.map((track: AiMusicTrack) => (
                   <div
                     key={track.id}
                     className={`flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2 ${

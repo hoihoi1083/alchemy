@@ -12,6 +12,7 @@ import {
   getNextStudioCoachTask,
   pathLabel,
 } from "@/lib/studio-assistant-coach-profile";
+import { isStoryboardVideoStyle } from "@/lib/visual-styles";
 
 export type { CoachTaskKind } from "@/lib/studio-assistant-coach-profile";
 export { getNextStudioCoachTask, pathLabel } from "@/lib/studio-assistant-coach-profile";
@@ -386,9 +387,13 @@ export function buildCoachReply(
 
     case "fill-storyboard-brief":
       return step(
-        en
-          ? "Step 1 — fill Storyboard brief in Setup (scene beats, mood, product angles). Reply next."
-          : "第一步 — 填 **分鏡簡述**（場景節奏、產品角度）。回覆 下一步。",
+        snapshot.promotionMode === "concept"
+          ? en
+            ? "Step 1 — optional: fill Storyboard brief in Setup (scene beats, mood). Research reels can skip this. Reply next."
+            : "第一步 — 可選：填 **分鏡簡述**（場景節奏、氛圍）。內容研究 Reel 可跳過。回覆 下一步。"
+          : en
+            ? "Step 1 — fill Storyboard brief in Setup (scene beats, mood, product angles). Reply next."
+            : "第一步 — 填 **分鏡簡述**（場景節奏、產品角度）。回覆 下一步。",
       );
 
     case "fill-creative-video-brief":
@@ -463,9 +468,13 @@ export function buildCoachReply(
 
     case "continue-setup":
       return step(
-        en
-          ? "Step 1 — Setup fields look ready. Click Continue at the bottom. Reply next on the next step."
-          : "第一步 — Setup 欄位齊，按底部 **「繼續」**。到下一步回覆 下一步。",
+        snapshot.promotionMode === "concept" && isStoryboardVideoStyle(snapshot.visualStyleId)
+          ? en
+            ? "Step 1 — Setup looks ready. Click Continue (analyzes reference reel if attached, then scene stills). Reply next on Image."
+            : "第一步 — Setup 齊，按底部 **「繼續」**（有參考 Reel 會先分析，再出場景圖）。到出圖步回覆 下一步。"
+          : en
+            ? "Step 1 — Setup fields look ready. Click Continue at the bottom. Reply next on the next step."
+            : "第一步 — Setup 欄位齊，按底部 **「繼續」**。到下一步回覆 下一步。",
       );
 
     case "analyze-brand-before-image":
@@ -495,9 +504,13 @@ export function buildCoachReply(
 
     case "generate-storyboard-scenes":
       return step(
-        en
-          ? "Step 1 — click Generate storyboard scene images (AI plans beats from product + brief). Reply next."
-          : "第一步 — 按 **「生成分鏡場景圖」**。回覆 下一步。",
+        snapshot.promotionMode === "concept"
+          ? en
+            ? "Step 1 — click Generate storyboard scene images (from concept/headline + reference reel beats). No product photo required. Reply next."
+            : "第一步 — 按 **「生成分鏡場景圖」**（概念／headline + 參考 Reel 節奏；唔使產品相）。回覆 下一步。"
+          : en
+            ? "Step 1 — click Generate storyboard scene images (AI plans beats from product + brief). Reply next."
+            : "第一步 — 按 **「生成分鏡場景圖」**。回覆 下一步。",
       );
 
     case "generate-image":
@@ -610,8 +623,12 @@ export function formatCoachChecklistForPrompt(
       ? "- brand-fit／brand-campaign 出圖前必須已分析品牌"
       : "- brand-fit/campaign: analyze brand before image generate",
     isZh
-      ? "- storyboard：產品名 + 分鏡簡述 + 產品相 + 場景圖"
-      : "- storyboard: product name + brief + photo + scene stills",
+      ? snapshot.promotionMode === "concept" && isStoryboardVideoStyle(snapshot.visualStyleId)
+        ? "- concept storyboard：概念／headline + 參考 Reel → 場景圖 → 分鏡片（唔使產品相）"
+        : "- storyboard：產品名 + 分鏡簡述 + 產品相 + 場景圖"
+      : snapshot.promotionMode === "concept" && isStoryboardVideoStyle(snapshot.visualStyleId)
+        ? "- concept storyboard: concept/headline + reference reel → scene stills → stitched video (no product photo)"
+        : "- storyboard: product name + brief + photo + scene stills",
     isZh
       ? "- image-only 完成於出圖；video-only 跳過出圖步"
       : "- image-only finishes at image; video-only skips image step",

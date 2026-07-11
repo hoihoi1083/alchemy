@@ -1,19 +1,41 @@
 const TEXT_REMOVAL_RE =
-  /remove|erase|delete|clear|text|logo|caption|watermark|字|標題|文字|商標/i;
+  /\b(?:remove|erase|delete|clear)\b|去掉|移除|刪除|清除|去除/i;
+
+const TEXT_TOPIC_RE =
+  /text|logo|caption|watermark|headline|title|copy|wording|字|標題|文字|商標|文案|字體|字型/i;
+
+const TEXT_EDIT_RE =
+  /\b(?:change|update|replace|edit|modify|make|bigger|larger|smaller|bold|bolder|font|typography|size)\b|改|換|放大|縮小|加粗|變大|變小/i;
+
+function wantsTextRemoval(note: string): boolean {
+  return TEXT_REMOVAL_RE.test(note) && TEXT_TOPIC_RE.test(note);
+}
+
+function wantsTextEdit(note: string): boolean {
+  return TEXT_TOPIC_RE.test(note) && TEXT_EDIT_RE.test(note) && !wantsTextRemoval(note);
+}
 
 /** Targeted edit prompt for nano-banana-2/edit (plain language, not @Image1 tags). */
 export function buildImageRefinePrompt(userNote: string): string {
   const note = userNote.trim();
   const parts = [note, "Edit the attached image in place."];
-  if (TEXT_REMOVAL_RE.test(note)) {
+  if (wantsTextRemoval(note)) {
     parts.push(
       "Remove all requested on-image text, logos, and captions.",
       "Repaint those areas so they blend with the surrounding art — no blank boxes or smudges.",
+      "Keep the same layout, product, colors, and framing.",
+    );
+  } else if (wantsTextEdit(note)) {
+    parts.push(
+      "Update only the on-image typography exactly as described.",
+      "Apply the requested wording, size, weight, color, and style for headline or caption text.",
+      "Keep the product, layout, background, and framing the same unless the note requires otherwise.",
+    );
+  } else {
+    parts.push(
+      "Keep the same layout, product, colors, and framing unless the change above requires otherwise.",
     );
   }
-  parts.push(
-    "Keep the same layout, product, colors, and framing unless the change above requires otherwise.",
-  );
   return parts.join(" ");
 }
 
@@ -59,6 +81,7 @@ export const IMAGE_REFINE_SYSTEM_PROMPT = [
   "You are a precise image editor.",
   "Apply only the requested change to the attached image.",
   "When removing text or logos, repaint those regions to match the surrounding illustration.",
+  "When changing on-image text, update typography and wording exactly as requested.",
 ].join(" ");
 
 export function normalizeImageSourceUrl(url: string): string {

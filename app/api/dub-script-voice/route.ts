@@ -27,43 +27,19 @@ export const maxDuration = 120;
 
 const LOCALES = new Set<VoiceoverLocale>(["hk", "en", "cn"]);
 
-export async function POST(request: Request) {
-  const auth = await requireAppUser();
-  if (!auth.ok) return auth.response;
-
-  let body: {
-    video_url?: string;
+async function dubVoiceJob(
+  request: Request,
+  input: {
+    videoUrl?: string;
+    videoFile?: File;
     script?: string;
-    locale?: string;
-    target_duration_sec?: number;
-    speech_url?: string;
-    voice_preset?: string;
-  };
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
-  }
-
-  const videoUrl = body.video_url?.trim();
-  const script = body.script?.trim();
-  const speechUrl = body.speech_url?.trim();
-  const locale = (body.locale?.trim() || "hk") as VoiceoverLocale;
-  const rawPreset = body.voice_preset?.trim() ?? "";
-  const voicePreset: VoicePresetId | undefined = isVoicePresetId(rawPreset)
-    ? rawPreset
-    : undefined;
-
-  if (!videoUrl) {
-    return NextResponse.json({ error: "video_url is required." }, { status: 400 });
-  }
-  if (!speechUrl && !script) {
-    return NextResponse.json({ error: "script or speech_url is required." }, { status: 400 });
-  }
-  if (!LOCALES.has(locale)) {
-    return NextResponse.json({ error: "Invalid locale." }, { status: 400 });
-  }
-
+    locale: VoiceoverLocale;
+    targetDurationSec?: number;
+    speechUrl?: string;
+    voicePreset?: VoicePresetId;
+    trackUsageUserId?: string;
+  },
+) {
   const jobId = crypto.randomUUID();
   const dir = jobDir(jobId);
   await fs.mkdir(dir, { recursive: true });
@@ -76,51 +52,157 @@ export async function POST(request: Request) {
   const narrationWav = path.join(dir, "narration-fit.wav");
   const outputPath = path.join(dir, "with-voice.mp4");
 
-  const { voice, xmlLang } = azureVoiceForLocale(locale);
+  const { voice, xmlLang } = azureVoiceForLocale(input.locale);
+
+  await ensureFfmpeg();
+  if (input.videoFile && input.videoFile.size > 0) {
+    const buffer = Buffer.from(await input.videoFile.arrayBuffer());
+    await fs.writeFile(inputPath, buffer);
+  } else if (input.videoUrl?.trim()) {
+    await materializeMediaInput(input.videoUrl.trim(), inputPath);
+  } else {
+    throw new Error("video_url or video_file is required.");
+  }
+
+  const videoDuration =
+    typeof input.targetDurationSec === "number" && input.targetDurationSec > 0
+      ? input.targetDurationSec
+      : await getMediaDurationSeconds(inputPath);
+
+  let ttsVoice = voice;
+  let ttsProvider = resolveTtsProvider();
+
+  if (input.speechUrl) {
+    await materializeMediaInput(input.speechUrl, narrationSrc);
+    ttsVoice = input.voicePreset ? `preview:${input.voicePreset}` : "preview:selected";
+  } else if (input.script?.trim()) {
+    const tts = await synthesizeSpeechToFile({
+      text: input.script.trim(),
+      voice,
+      xmlLang,
+      locale: input.locale,
+      outputPath: narrationSrc,
+      voicePresetId: input.voicePreset,
+    });
+    ttsVoice = tts.voice;
+    ttsProvider = tts.provider;
+  } else {
+    throw new Error("script or speech_url is required.");
+  }
+
+  await fitAudioToDuration(narrationSrc, narrationWav, videoDuration);
+  await mixNarrationOverVideo(inputPath, narrationWav, outputPath);
+  await assertVideoHasAudio(outputPath, "Voiceover mix");
+
+  if (!input.speechUrl && input.trackUsageUserId) {
+    await trackUsage(input.trackUsageUserId, "voiceover");
+  }
+
+  return {
+    videoUrl: pipelineFileUrl(request, jobId, "with-voice.mp4"),
+    jobId,
+    locale: input.locale,
+    voice: ttsVoice,
+    provider: ttsProvider,
+    videoDurationSec: videoDuration,
+    usedPreviewSpeech: Boolean(input.speechUrl),
+  };
+}
+
+export async function POST(request: Request) {
+  const auth = await requireAppUser();
+  if (!auth.ok) return auth.response;
+
+  const contentType = request.headers.get("content-type") ?? "";
 
   try {
-    await ensureFfmpeg();
-    await materializeMediaInput(videoUrl, inputPath);
-    const videoDuration =
-      typeof body.target_duration_sec === "number" && body.target_duration_sec > 0
-        ? body.target_duration_sec
-        : await getMediaDurationSeconds(inputPath);
+    if (contentType.includes("multipart/form-data")) {
+      const formData = await request.formData();
+      const videoFile = formData.get("video_file");
+      const videoUrl = (formData.get("video_url") as string | null)?.trim();
+      const script = (formData.get("script") as string | null)?.trim();
+      const speechUrl = (formData.get("speech_url") as string | null)?.trim();
+      const locale = ((formData.get("locale") as string | null)?.trim() || "hk") as VoiceoverLocale;
+      const rawPreset = (formData.get("voice_preset") as string | null)?.trim() ?? "";
+      const voicePreset: VoicePresetId | undefined = isVoicePresetId(rawPreset)
+        ? rawPreset
+        : undefined;
+      const targetRaw = formData.get("target_duration_sec");
+      const targetDurationSec =
+        typeof targetRaw === "string" && targetRaw.trim()
+          ? Number(targetRaw)
+          : undefined;
 
-    let ttsVoice = voice;
-    let ttsProvider = resolveTtsProvider();
+      if (!LOCALES.has(locale)) {
+        return NextResponse.json({ error: "Invalid locale." }, { status: 400 });
+      }
+      const file = videoFile instanceof File && videoFile.size > 0 ? videoFile : undefined;
+      if (!file && !videoUrl) {
+        return NextResponse.json(
+          { error: "video_file or video_url is required." },
+          { status: 400 },
+        );
+      }
+      if (!speechUrl && !script) {
+        return NextResponse.json({ error: "script or speech_url is required." }, { status: 400 });
+      }
 
-    if (speechUrl) {
-      await materializeMediaInput(speechUrl, narrationSrc);
-      ttsVoice = voicePreset ? `preview:${voicePreset}` : "preview:selected";
-    } else {
-      const tts = await synthesizeSpeechToFile({
-        text: script!,
-        voice,
-        xmlLang,
+      const result = await dubVoiceJob(request, {
+        videoFile: file,
+        videoUrl,
+        script,
         locale,
-        outputPath: narrationSrc,
-        voicePresetId: voicePreset,
+        targetDurationSec,
+        speechUrl,
+        voicePreset,
+        trackUsageUserId: speechUrl ? undefined : auth.user.userId,
       });
-      ttsVoice = tts.voice;
-      ttsProvider = tts.provider;
+      return NextResponse.json(result);
     }
 
-    await fitAudioToDuration(narrationSrc, narrationWav, videoDuration);
-    await mixNarrationOverVideo(inputPath, narrationWav, outputPath);
-    await assertVideoHasAudio(outputPath, "Voiceover mix");
-
-    if (!speechUrl) {
-      await trackUsage(auth.user.userId, "voiceover");
+    let body: {
+      video_url?: string;
+      script?: string;
+      locale?: string;
+      target_duration_sec?: number;
+      speech_url?: string;
+      voice_preset?: string;
+    };
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
     }
-    return NextResponse.json({
-      videoUrl: pipelineFileUrl(request, jobId, "with-voice.mp4"),
-      jobId,
+
+    const videoUrl = body.video_url?.trim();
+    const script = body.script?.trim();
+    const speechUrl = body.speech_url?.trim();
+    const locale = (body.locale?.trim() || "hk") as VoiceoverLocale;
+    const rawPreset = body.voice_preset?.trim() ?? "";
+    const voicePreset: VoicePresetId | undefined = isVoicePresetId(rawPreset)
+      ? rawPreset
+      : undefined;
+
+    if (!videoUrl) {
+      return NextResponse.json({ error: "video_url is required." }, { status: 400 });
+    }
+    if (!speechUrl && !script) {
+      return NextResponse.json({ error: "script or speech_url is required." }, { status: 400 });
+    }
+    if (!LOCALES.has(locale)) {
+      return NextResponse.json({ error: "Invalid locale." }, { status: 400 });
+    }
+
+    const result = await dubVoiceJob(request, {
+      videoUrl,
+      script,
       locale,
-      voice: ttsVoice,
-      provider: ttsProvider,
-      videoDurationSec: videoDuration,
-      usedPreviewSpeech: Boolean(speechUrl),
+      targetDurationSec: body.target_duration_sec,
+      speechUrl,
+      voicePreset,
+      trackUsageUserId: speechUrl ? undefined : auth.user.userId,
     });
+    return NextResponse.json(result);
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Voice dub failed.";
     const status =

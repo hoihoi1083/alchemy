@@ -14,13 +14,21 @@ import { ImageOutputModePicker } from "@/components/ImageOutputModePicker";
 import { ImageAspectRatioPicker } from "@/components/ImageAspectRatioPicker";
 import { SubjectFramingPicker } from "@/components/SubjectFramingPicker";
 import { WizardErrorBanner } from "@/components/studio/WizardErrorBanner";
+import { VideoOutputSourceCard } from "@/components/studio/VideoOutputSourceCard";
 import { JobProgressBar } from "@/components/studio/JobProgressBar";
+import { ImageTextModePicker } from "@/components/studio/ImageTextModePicker";
 import { QuickFixImagePanel } from "@/components/studio/QuickFixImagePanel";
+import { ImagePostflightPanel } from "@/components/studio/ImagePostflightPanel";
+import { ImagePostGenChecklist } from "@/components/studio/ImagePostGenChecklist";
+import { ShipItPanel } from "@/components/studio/ShipItPanel";
 import { isBrandVideoStyle, isCreativeVideoStyle, isBrandVisualStyle, isStoryboardVideoStyle, isAiPlannedVideoStyle } from "@/lib/visual-styles";
 import { CINEMATIC_SCENE_COUNTS, type CinematicSceneCount } from "@/lib/cinematic-scene-config";
+import type { CampaignSlide } from "@/hooks/useWizardState";
+import type { CinematicSceneResult } from "@/lib/cinematic-reel-types";
+import type { StoryboardSceneResult } from "@/lib/video-storyboard-types";
 
 export function ImageStep() {
-  const { applyPromptRebuild, campaignPlan, campaignSlideLabel, campaignSlides, campaignTheme, canGenerateImage, cinematicReelPlan, cinematicSceneCount, cinematicScenes, effectiveImageMode, effectiveImageOutputMode, error, finishImageStep, formatCinematicCopy, generateImage, goBackFromImage, headline, imageAspectRatio, imageBusy, imageCreativeMode, imageFinishLabel, imageGenKey, imageInputMode, imageNextDisabled, imagePreflight, imageProgressInfo, imagePrompt, imageRefPhoto, imageRefPreviewUrl, imageStepHint, imageUrl, imageVariantUrls, isCampaignOutput, isCinematicStitchOutput, isConceptCinematicSingleOutput, isStoryboardOutput, lastImageEndpoint, lockedCampaignMode, m, needsProductUpload, onCinematicSceneCountChange, onImageCreativeModeChange, onImageInputModeChange, onProductPhotoSelected, product, productPhoto, promotionMode, promptExtra, promptMarket, referenceAnalyzeBusy, referenceAnalyzeNote, referenceStrategy, regenerateStoryboardSceneWithAi, reorderStoryboardScene, replaceStoryboardSceneImage, selectVisualStyle, selectedVariantIndex, setCampaignPlan, setCampaignSlides, setCampaignTheme, setImageAspectRatio, setImageGenKey, setImageOutputMode, setImagePrompt, setImageRefPhoto, setImageUrl, setImageVariantUrls, setPromptExtra, setPromptMarket, setSelectedVariantIndex, setShowAdvancedImage, setStoryboardSceneCount, setSubjectFraming, setVideoPrompt, showAdvancedImage, storyboardPlan, storyboardSceneCount, storyboardSceneRegenerateBusy, storyboardSceneReplaceBusy, storyboardScenes, storyboardTrimDuration, subjectFraming, templateId, templateSlotStatus, trimStoryboardDurations, uploadPreviewUrl, uploadQualityMessage, uploadQualityWarning, useOriginalAsKeyframe, useOriginalImage, userReferenceBrief, usesCompositor, videoPrompt, visualStyle, visualStyleId, workflowMode } = useWizard();
+  const { applyPromptRebuild, campaignPlan, campaignSlideLabel, campaignSlides, campaignTheme, canGenerateImage, cinematicReelPlan, cinematicSceneCount, cinematicScenes, effectiveImageMode, effectiveImageOutputMode, error, finishImageStep, formatCinematicCopy, generateImage, goBackFromImage, headline, imageAspectRatio, imageBusy, imageCreativeMode, imageFinishLabel, imageGenKey, imageGenerateDisabledReason, imageInputMode, imageNextDisabled, imagePostflight, imagePostflightBusy, imagePreflight, imageProgressInfo, imagePrompt, imageQualityChecklist, imageRefPhoto, imageRefPreviewUrl, imageStepHint, imageTextMode, imageUrl, imageVariantUrls, imageVisionReview, imageVisionReviewBusy, isCampaignOutput, isCinematicStitchOutput, isConceptCinematicSingleOutput, isConceptStoryboardOutput, isStoryboardOutput, lastImageEndpoint, lockedCampaignMode, m, needsProductUpload, onCinematicSceneCountChange, onImageCreativeModeChange, onImageInputModeChange, onProductPhotoSelected, product, productPhoto, promotionMode, promptExtra, promptMarket, referenceAd, referenceAnalyzeBusy, referenceAnalyzeNote, referenceIsVideo, referenceStrategy, regenerateStoryboardSceneWithAi, reorderStoryboardScene, replaceStoryboardSceneImage, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, runShipItPipeline, selectVisualStyle, selectedVariantIndex, setCampaignPlan, setCampaignSlides, setCampaignTheme, setImageAspectRatio, setImageGenKey, setImageOutputMode, setImagePrompt, setImageRefPhoto, setImageQualityChecklist, setImageTextMode, setImageUrl, setImageVariantUrls, setPromptExtra, setPromptMarket, setSelectedVariantIndex, setShipItMode, setShowAdvancedImage, setStoryboardSceneCount, setSubjectFraming, setVideoPrompt, shipItEligible, shipItMode, shipItPipelineBusy, shipItVisionBlocked, showAdvancedImage, storyboardPlan, storyboardSceneCount, storyboardSceneRegenerateBusy, storyboardSceneReplaceBusy, storyboardScenes, storyboardTrimDuration, subjectFraming, templateId, templateSlotStatus, trimStoryboardDurations, uploadPreviewUrl, uploadQualityMessage, uploadQualityWarning, useOriginalAsKeyframe, useOriginalImage, userReferenceBrief, useReferenceVideo, usesCompositor, videoPrompt, visualStyle, visualStyleId, workflowMode } = useWizard();
   const isConcept = promotionMode === "concept";
   const isConceptSocialImage =
     isConcept &&
@@ -41,17 +49,40 @@ export function ImageStep() {
     </p>
   </div>
 
+  {workflowMode !== "image-only" && <VideoOutputSourceCard variant="image" />}
+
   <TemplateSlotChecklist
     templateId={templateId}
     filled={templateSlotStatus()}
     optionalSlotIds={
       isCinematicStitchOutput || isConceptCinematicSingleOutput
         ? ["productPhoto", "product", "business", "referenceVideo", "headline", "subline", "offer"]
-        : undefined
+        : isConceptStoryboardOutput
+          ? ["productPhoto"]
+          : undefined
     }
   />
 
-  {!usesCompositor && !isStoryboardOutput && !isCinematicStitchOutput && !isConceptCinematicSingleOutput ? (
+  <ShipItPanel
+    shipItMode={shipItMode}
+    onShipItModeChange={setShipItMode}
+    eligible={shipItEligible && !shipItVisionBlocked && !imageVisionReviewBusy}
+    busy={shipItPipelineBusy || imageBusy}
+    onRun={() => void runShipItPipeline()}
+    showRunButton={workflowMode === "combined"}
+    labels={{
+      modeOn: m.wizard.shipItModeOn,
+      modeOff: m.wizard.shipItModeOff,
+      modeHint: m.wizard.shipItModeHint,
+      showExpert: m.wizard.shipItShowExpert,
+      runBtn: m.wizard.shipItRunBtn,
+      running: m.wizard.shipItRunning,
+      unsupported: m.wizard.shipItUnsupported,
+      runHint: m.wizard.shipItRunHint,
+    }}
+  />
+
+  {!usesCompositor && !isStoryboardOutput && !isCinematicStitchOutput && !isConceptCinematicSingleOutput && !shipItMode ? (
     <ImageCreativeModePicker
       value={imageCreativeMode}
       onChange={onImageCreativeModeChange}
@@ -71,7 +102,7 @@ export function ImageStep() {
     </div>
   )}
 
-  {!usesCompositor && templateId === "custom" ? (
+  {!usesCompositor && templateId === "custom" && !shipItMode ? (
     <ImageInputModePicker value={imageInputMode} onChange={onImageInputModeChange} />
   ) : null}
 
@@ -96,14 +127,58 @@ export function ImageStep() {
     </>
   )}
 
-  {(imageRefPhoto || referenceAnalyzeBusy) && (
+  {(imageRefPhoto ||
+    referenceAnalyzeBusy ||
+    userReferenceBrief ||
+    (useReferenceVideo && referenceAd)) && (
     <ReferenceBriefPanel
       m={m}
       brief={userReferenceBrief}
       strategy={referenceStrategy}
-      busy={referenceAnalyzeBusy}
-      note={referenceAnalyzeNote}
+      busy={referenceAnalyzeBusy || researchReelAnalyzeBusy}
+      note={
+        researchReelAnalyzeNote ||
+        referenceAnalyzeNote ||
+        (useReferenceVideo && referenceAd && !researchReelAnalysis && !researchReelAnalyzeBusy
+          ? m.wizard.setupReferenceVideoAnalyzeRequired
+          : null)
+      }
     />
+  )}
+
+  {useReferenceVideo && referenceAd && referenceIsVideo && !isStoryboardOutput && workflowMode === "combined" && (
+    <div className="rounded-xl border border-amber-500/50 bg-amber-950/30 px-4 py-3 text-xs text-amber-100">
+      <p className="font-semibold text-amber-50">{m.wizard.imageStepReferenceReelNeedStoryboardTitle}</p>
+      <p className="mt-2 text-amber-100/90">{m.wizard.imageStepReferenceReelNeedStoryboardHint}</p>
+      <button
+        type="button"
+        onClick={() => selectVisualStyle("storyboard-video")}
+        className="mt-3 rounded-lg bg-amber-600 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-500"
+      >
+        {m.wizard.imageStepReferenceReelSwitchStoryboardBtn}
+      </button>
+    </div>
+  )}
+
+  {useReferenceVideo && referenceAd && referenceIsVideo && (
+    <div className="rounded-xl border border-violet-500/40 bg-violet-950/25 px-4 py-3 text-xs text-violet-100">
+      <p className="font-semibold text-violet-50">{m.wizard.imageStepReferenceReelTitle}</p>
+      {researchReelAnalysis?.visualDirection ? (
+        <p className="mt-2 text-violet-200/90">
+          <span className="font-medium text-violet-100">{m.wizard.imageStepReferenceReelStyle}:</span>{" "}
+          {researchReelAnalysis.visualDirection}
+        </p>
+      ) : researchReelAnalyzeBusy ? (
+        <p className="mt-2 text-violet-200/90">{m.wizard.researchReelAnalyzing}</p>
+      ) : (
+        <p className="mt-2 text-violet-200/90">{m.wizard.setupReferenceVideoAnalyzeRequired}</p>
+      )}
+      {isStoryboardOutput ? (
+        <p className="mt-2 text-violet-200/70">{m.wizard.imageStepReferenceReelStoryboardHint}</p>
+      ) : (
+        <p className="mt-2 text-violet-200/70">{m.wizard.setupReferenceVideoNonStoryboardHint}</p>
+      )}
+    </div>
   )}
 
   {!usesCompositor && effectiveImageMode === "describe" && (
@@ -172,7 +247,7 @@ export function ImageStep() {
   )}
 
 
-  {!usesCompositor && effectiveImageMode !== "describe" && (
+  {!usesCompositor && effectiveImageMode !== "describe" && !shipItMode && (
     <details
       className="rounded-xl border border-slate-800 bg-slate-950/40 p-3"
       open={showAdvancedImage}
@@ -198,7 +273,7 @@ export function ImageStep() {
     </details>
   )}
 
-  {showFramingPicker && (
+  {showFramingPicker && !shipItMode && (
     <SubjectFramingPicker
       value={subjectFraming}
       onChange={setSubjectFraming}
@@ -206,7 +281,7 @@ export function ImageStep() {
     />
   )}
 
-  {!usesCompositor && !isStoryboardOutput && (
+  {!usesCompositor && !isStoryboardOutput && !shipItMode && (
     <ImageAspectRatioPicker
       value={imageAspectRatio}
       onChange={(ratio) => {
@@ -265,7 +340,7 @@ export function ImageStep() {
     </div>
   )}
 
-  {!usesCompositor && !isStoryboardOutput && !isCinematicStitchOutput && !isConceptCinematicSingleOutput && effectiveImageMode !== "describe" && (
+  {!usesCompositor && !isStoryboardOutput && !isCinematicStitchOutput && !isConceptCinematicSingleOutput && effectiveImageMode !== "describe" && !shipItMode && (
     <div data-coach-id="coach-image-output-mode">
     <ImageOutputModePicker
       value={effectiveImageOutputMode}
@@ -338,11 +413,23 @@ export function ImageStep() {
 
   {error && <WizardErrorBanner message={error} variant="dark" />}
 
+  {!usesCompositor && !isStoryboardOutput && !shipItMode && (
+    <ImageTextModePicker
+      value={imageTextMode}
+      disabled={imageBusy}
+      onChange={setImageTextMode}
+    />
+  )}
+
   <div className="flex flex-wrap gap-2">
+    {imageGenerateDisabledReason && !imageBusy && !canGenerateImage() && (
+      <p className="w-full text-xs text-amber-200/90">{imageGenerateDisabledReason}</p>
+    )}
     <button
       type="button"
       data-coach-id="coach-generate-image"
       disabled={imageBusy || !canGenerateImage()}
+      title={imageGenerateDisabledReason ?? undefined}
       onClick={generateImage}
       className="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
     >
@@ -426,7 +513,7 @@ export function ImageStep() {
         <p className="mb-3 text-xs text-teal-200/80">{storyboardPlan.productionNotes}</p>
       )}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {storyboardScenes.map((scene, i) => (
+        {storyboardScenes.map((scene: StoryboardSceneResult, i: number) => (
           <div
             key={`${scene.imageUrl}-${i}`}
             className="rounded-xl border border-slate-700 bg-slate-900/40 p-2"
@@ -445,12 +532,12 @@ export function ImageStep() {
             <span className="mt-1 block text-center text-[10px] text-slate-400 line-clamp-2">
               {scene.sceneDescriptionZh || scene.role}
             </span>
-            <div className="mt-2 flex flex-wrap justify-center gap-1">
+            <div className="mt-2 flex flex-wrap justify-center gap-1.5">
               <button
                 type="button"
                 disabled={i === 0}
                 onClick={() => reorderStoryboardScene(i, i - 1)}
-                className="rounded-md border border-slate-600 px-2 py-1 text-[10px] text-slate-200 disabled:opacity-40"
+                className="min-h-10 rounded-md border border-slate-600 px-3 py-2 text-xs text-slate-200 disabled:opacity-40"
               >
                 {m.wizard.storyboardMoveUpBtn}
               </button>
@@ -458,11 +545,11 @@ export function ImageStep() {
                 type="button"
                 disabled={i === storyboardScenes.length - 1}
                 onClick={() => reorderStoryboardScene(i, i + 1)}
-                className="rounded-md border border-slate-600 px-2 py-1 text-[10px] text-slate-200 disabled:opacity-40"
+                className="min-h-10 rounded-md border border-slate-600 px-3 py-2 text-xs text-slate-200 disabled:opacity-40"
               >
                 {m.wizard.storyboardMoveDownBtn}
               </button>
-              <label className="cursor-pointer rounded-md border border-slate-600 px-2 py-1 text-[10px] text-slate-200">
+              <label className="flex min-h-10 cursor-pointer items-center rounded-md border border-slate-600 px-3 py-2 text-xs text-slate-200">
                 {storyboardSceneReplaceBusy === i
                   ? m.wizard.storyboardReplacingImage
                   : m.wizard.storyboardReplaceImageBtn}
@@ -479,7 +566,7 @@ export function ImageStep() {
                 type="button"
                 disabled={storyboardSceneRegenerateBusy !== null}
                 onClick={() => regenerateStoryboardSceneWithAi(i)}
-                className="rounded-md border border-amber-500/70 bg-amber-950/30 px-2 py-1 text-[10px] text-amber-200 disabled:opacity-40"
+                className="min-h-10 rounded-md border border-amber-500/70 bg-amber-950/30 px-3 py-2 text-xs text-amber-200 disabled:opacity-40"
               >
                 {storyboardSceneRegenerateBusy === i
                   ? m.wizard.storyboardRegeneratingImage
@@ -508,7 +595,7 @@ export function ImageStep() {
         </p>
       )}
       <div className="grid gap-3 sm:grid-cols-3">
-        {cinematicScenes.map((scene) => (
+        {cinematicScenes.map((scene: CinematicSceneResult) => (
           <div
             key={`${scene.imageUrl}-${scene.sceneIndex}`}
             className="rounded-xl border border-slate-700 bg-slate-900/40 p-2"
@@ -544,14 +631,14 @@ export function ImageStep() {
         {m.wizard.pickCampaignSlideLabel}
       </p>
       <div className="grid gap-3 sm:grid-cols-3">
-        {campaignSlides.map((slide, i) => (
+        {campaignSlides.map((slide: CampaignSlide, i: number) => (
           <button
             key={`${slide.imageUrl}-${i}`}
             type="button"
             onClick={() => {
               setSelectedVariantIndex(i);
               setImageUrl(slide.imageUrl);
-              setImageGenKey((k) => k + 1);
+              setImageGenKey((k: number) => k + 1);
             }}
             className={`rounded-xl border p-2 text-left transition ${
               selectedVariantIndex === i
@@ -590,14 +677,14 @@ export function ImageStep() {
     <div className="rounded-2xl border border-emerald-700/50 bg-emerald-950/25 p-4">
       <p className="mb-3 text-xs font-medium text-emerald-200">{m.wizard.pickVariantLabel}</p>
       <div className="grid grid-cols-2 gap-3">
-        {imageVariantUrls.map((url, i) => (
+        {imageVariantUrls.map((url: string, i: number) => (
           <button
             key={`${url}-${i}`}
             type="button"
             onClick={() => {
               setSelectedVariantIndex(i);
               setImageUrl(url);
-              setImageGenKey((k) => k + 1);
+              setImageGenKey((k: number) => k + 1);
             }}
             className={`rounded-xl border p-2 text-left transition ${
               selectedVariantIndex === i
@@ -639,7 +726,56 @@ export function ImageStep() {
     </div>
   )}
 
+  {imagePostflight && imageUrl && !useOriginalImage && !isStoryboardOutput && (
+    <ImagePostflightPanel
+      postflight={imagePostflight}
+      visionReview={imageVisionReview}
+      busy={imagePostflightBusy}
+      visionBusy={imageVisionReviewBusy}
+      labels={{
+        title: m.wizard.imagePostflightTitle,
+        resolution: m.wizard.imagePostflightResolution,
+        aspect: m.wizard.imagePostflightAspect,
+        safeForVideo: m.wizard.imagePostflightSafeForVideo,
+        notSafeForVideo: m.wizard.imagePostflightNotSafeForVideo,
+        lowResolution: m.wizard.imagePostflightLowRes,
+        verySmall: m.wizard.imagePostflightVerySmall,
+        analyzing: m.wizard.imagePostflightAnalyzing,
+        visionTitle: m.wizard.imageVisionReviewTitle,
+        visionAnalyzing: m.wizard.imageVisionReviewAnalyzing,
+        visionScore: m.wizard.imageVisionReviewScore,
+        visionSummary: m.wizard.imageVisionReviewSummary,
+        visionIssues: m.wizard.imageVisionReviewIssues,
+        visionPass: m.wizard.imageVisionReviewPass,
+      }}
+    />
+  )}
+
   {imageUrl && !useOriginalImage && !isStoryboardOutput && !usesCompositor && (
+    <ImagePostGenChecklist
+      value={imageQualityChecklist}
+      onChange={setImageQualityChecklist}
+      onRegenerate={() => void generateImage()}
+      regenerateBusy={imageBusy}
+      labels={{
+        title: m.wizard.imagePostGenChecklistTitle,
+        hint: m.wizard.imagePostGenChecklistHint,
+        productReadable: m.wizard.imagePostGenProductReadable,
+        textLegible: m.wizard.imagePostGenTextLegible,
+        regenerateBtn: m.wizard.imagePostGenRegenerateBtn,
+        regenerating: m.wizard.imagePostGenRegenerating,
+        allChecked: m.wizard.imagePostGenAllChecked,
+      }}
+    />
+  )}
+
+  {imageUrl && !useOriginalImage && !isStoryboardOutput && !usesCompositor && imageTextMode === "textless" && (
+    <p className="rounded-xl border border-cyan-900/50 bg-cyan-950/30 px-4 py-3 text-xs text-cyan-100">
+      {m.wizard.imageTextlessPostHint}
+    </p>
+  )}
+
+  {imageUrl && !useOriginalImage && !isStoryboardOutput && (
     <QuickFixImagePanel variant="dark" />
   )}
 

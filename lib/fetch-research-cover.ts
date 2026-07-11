@@ -28,11 +28,14 @@ export async function fetchResearchCoverAsFile(
 ): Promise<File | null> {
   try {
     const proxy = `/api/research-post-image?url=${encodeURIComponent(coverUrl)}&platform=${platform}`;
-    const res = await fetch(proxy);
+    const res = await fetch(proxy, { credentials: "include", cache: "no-store" });
     if (!res.ok) return null;
     const blob = await res.blob();
-    if (!blob.size) return null;
-    const type = blob.type && blob.type.startsWith("image/") ? blob.type : "image/jpeg";
+    if (blob.size < 64) return null;
+    const type =
+      blob.type && blob.type.startsWith("image/") && !/heif|heic/i.test(blob.type)
+        ? blob.type
+        : "image/jpeg";
     return new File([blob], filename, { type });
   } catch {
     return null;

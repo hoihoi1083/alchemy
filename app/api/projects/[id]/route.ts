@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAppUser } from "@/lib/require-app-user";
-import { isMongoConfigured } from "@/lib/mongodb";
+import { isMongoReady, mongoRequiredErrorMessage } from "@/lib/mongodb-production";
 import { deleteProject, getProjectForUser, updateProject } from "@/lib/db/projects";
 import type { ProjectSnapshot } from "@/lib/project-snapshot";
 
@@ -11,8 +11,8 @@ type RouteContext = { params: Promise<{ id: string }> };
 export async function GET(_request: Request, context: RouteContext) {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
-  if (!isMongoConfigured()) {
-    return NextResponse.json({ error: "MONGODB_URI is not set" }, { status: 503 });
+  if (!isMongoReady()) {
+    return NextResponse.json({ error: mongoRequiredErrorMessage() }, { status: 503 });
   }
 
   const { id } = await context.params;
@@ -35,8 +35,8 @@ export async function GET(_request: Request, context: RouteContext) {
 export async function PATCH(request: Request, context: RouteContext) {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
-  if (!isMongoConfigured()) {
-    return NextResponse.json({ error: "MONGODB_URI is not set" }, { status: 503 });
+  if (!isMongoReady()) {
+    return NextResponse.json({ error: mongoRequiredErrorMessage() }, { status: 503 });
   }
 
   const { id } = await context.params;
@@ -72,8 +72,8 @@ export async function PATCH(request: Request, context: RouteContext) {
 export async function DELETE(_request: Request, context: RouteContext) {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
-  if (!isMongoConfigured()) {
-    return NextResponse.json({ error: "MONGODB_URI is not set" }, { status: 503 });
+  if (!isMongoReady()) {
+    return NextResponse.json({ error: mongoRequiredErrorMessage() }, { status: 503 });
   }
 
   const { id } = await context.params;

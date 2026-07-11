@@ -60,32 +60,46 @@ export async function generateMusicOptions(
       }))
       .filter((t) => t.audioUrl);
 
-    if (tracks.length >= 2) return tracks;
-  } catch {
-    // fall through to Minimax
+    if (tracks.length >= 1) return tracks;
+  } catch (soniloError) {
+    console.warn(
+      "[generateMusicOptions] sonilo failed:",
+      soniloError instanceof Error ? soniloError.message : soniloError,
+    );
   }
 
+  let minimaxError: unknown;
   const tracks: GeneratedMusicTrack[] = [];
   for (const variation of VARIATIONS) {
-    const result = await fal.subscribe("fal-ai/minimax-music/v2.6", {
-      input: {
-        prompt: `${basePrompt}${variation.suffix}`.slice(0, 2000),
-        is_instrumental: true,
-      },
-      logs: false,
-    });
-    const audioUrl = extractAudioUrl(result.data);
-    if (audioUrl) {
-      tracks.push({
-        id: `minimax-${variation.label.toLowerCase()}`,
-        label: variation.label,
-        audioUrl,
+    try {
+      const result = await fal.subscribe("fal-ai/minimax-music/v2.6", {
+        input: {
+          prompt: `${basePrompt}${variation.suffix}`.slice(0, 2000),
+          is_instrumental: true,
+        },
+        logs: false,
       });
+      const audioUrl = extractAudioUrl(result.data);
+      if (audioUrl) {
+        tracks.push({
+          id: `minimax-${variation.label.toLowerCase()}`,
+          label: variation.label,
+          audioUrl,
+        });
+      }
+    } catch (e) {
+      minimaxError = e;
+      console.warn(
+        `[generateMusicOptions] minimax ${variation.label} failed:`,
+        e instanceof Error ? e.message : e,
+      );
     }
   }
 
   if (tracks.length === 0) {
-    throw new Error("Music generation returned no audio tracks.");
+    const detail =
+      minimaxError instanceof Error ? minimaxError.message : "All music providers failed.";
+    throw new Error(`Music generation failed: ${detail}`);
   }
 
   return tracks;

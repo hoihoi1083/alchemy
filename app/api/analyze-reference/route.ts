@@ -1,5 +1,6 @@
 import { fal } from "@fal-ai/client";
 import { NextResponse } from "next/server";
+import { analyzeCarouselReferenceImages } from "@/lib/carousel-reference-vision";
 import { requireAppUser } from "@/lib/require-app-user";
 import { analyzeConceptReferenceImage } from "@/lib/concept-image-vision";
 import type { ImageCreativeMode } from "@/lib/creative-workflow";
@@ -8,15 +9,17 @@ import { isPromotionMode } from "@/lib/promotion-mode";
 import { resolveReferenceStrategy } from "@/lib/reference-strategy";
 import type { VisualStyleId } from "@/lib/visual-styles";
 import {
+  briefFromCarouselVision,
   briefFromConceptVision,
   briefFromUserTextOnly,
   mergeUserReferenceBrief,
   overrideBriefForContentResearch,
 } from "@/lib/user-reference-brief";
+import { normalizeReferenceImageFile } from "@/lib/xhs-image-browser";
 import { isContentResearchStyleExtra } from "@/lib/content-research-promote";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 export async function POST(request: Request) {
   const auth = await requireAppUser();
@@ -57,18 +60,46 @@ export async function POST(request: Request) {
   const imageCreativeMode = (String(formData.get("image_creative_mode") ?? "promo-ai").trim() ||
     "promo-ai") as ImageCreativeMode;
   const hasProductPhoto = String(formData.get("has_product_photo") ?? "") === "1";
+  const carouselRefs = formData
+    .getAll("carousel_reference_images")
+    .filter((f): f is File => f instanceof File && f.size > 0)
+    .slice(0, 5);
 
   try {
-    const imageUrl = await fal.storage.upload(ref);
-    const vision = await analyzeConceptReferenceImage({
-      imageUrl,
-      conceptIdea: conceptIdea || undefined,
-    });
+    const userInputs = { conceptIdea, headline, subline };
     const fromText = briefFromUserTextOnly({ conceptIdea, headline, subline, promptExtra });
-    let brief = mergeUserReferenceBrief(
-      briefFromConceptVision(vision, { conceptIdea, headline, subline }),
-      fromText,
-    );
+
+    let brief;
+    let vision: unknown;
+
+    if (carouselRefs.length > 0) {
+      const files = [ref as File, ...carouselRefs];
+      const imageUrls = await Promise.all(
+        files.map(async (f) => fal.storage.upload(await normalizeReferenceImageFile(f))),
+      );
+      const carouselVision = await analyzeCarouselReferenceImages({
+        imageUrls,
+        conceptIdea: conceptIdea || undefined,
+      });
+      vision = carouselVision;
+      brief = mergeUserReferenceBrief(
+        briefFromCarouselVision(carouselVision, userInputs),
+        fromText,
+      );
+    } else {
+      const normalized = await normalizeReferenceImageFile(ref as File);
+      const imageUrl = await fal.storage.upload(normalized);
+      const singleVision = await analyzeConceptReferenceImage({
+        imageUrl,
+        conceptIdea: conceptIdea || undefined,
+      });
+      vision = singleVision;
+      brief = mergeUserReferenceBrief(
+        briefFromConceptVision(singleVision, userInputs),
+        fromText,
+      );
+    }
+
     if (isContentResearchStyleExtra(promptExtra)) {
       brief = overrideBriefForContentResearch(brief, {
         product: product || headline,
@@ -88,7 +119,12 @@ export async function POST(request: Request) {
       hasReferenceBrief: true,
     });
 
-    return NextResponse.json({ brief, strategy, vision });
+    return NextResponse.json({
+      brief,
+      strategy,
+      vision,
+      carouselSlideCount: brief.carouselSlideCount ?? 1,
+    });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Reference analysis failed.";
     return NextResponse.json({ error: message }, { status: 502 });

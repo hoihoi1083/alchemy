@@ -2,6 +2,8 @@ import { promises as fs } from "fs";
 import path from "path";
 import { jobDir, isValidJobId } from "@/lib/pipeline/paths";
 import { assertSafeRemoteMediaUrl } from "@/lib/pipeline/safe-url";
+import { BATCH_EXPORT_SIZES } from "@/lib/batch-export-sizes";
+import { STUDIO_SLIDE_FILES } from "@/lib/pipeline/studio-slide-files";
 
 export const PIPELINE_FILES = new Set([
   "input.mp4",
@@ -14,6 +16,12 @@ export const PIPELINE_FILES = new Set([
   "with-voice.mp4",
   "composed.png",
   "composed.mp4",
+  "generated.png",
+  "image-text-overlay.png",
+  "image-canvas-overlay.png",
+  "inpaint-result.png",
+  "erase-result.png",
+  "trimmed.mp4",
   "captions.srt",
   "narration.mp3",
   "narration-fit.wav",
@@ -21,6 +29,8 @@ export const PIPELINE_FILES = new Set([
   "preview-voice-0.mp3",
   "preview-voice-1.mp3",
   "preview-voice-2.mp3",
+  ...STUDIO_SLIDE_FILES,
+  ...BATCH_EXPORT_SIZES.map((s) => s.filename),
 ]);
 
 function pipelinePathname(url: string): string | null {

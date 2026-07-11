@@ -43,6 +43,13 @@ import { burnVisualCaptionsOverlay } from "../lib/pipeline/visual-caption-burn";
 import { newVisualCaptionClip } from "../lib/visual-caption-types";
 import { planTeachingCarousel } from "../lib/teaching-carousel-plan";
 import { planVideoStoryboard } from "../lib/video-storyboard-plan";
+import type { VideoStoryboardPlan } from "../lib/video-storyboard-types";
+import {
+  buildPromptVariables,
+  buildPromoImagePrompt,
+  buildStoryboardSceneImagePrompt,
+} from "../lib/prompt-variables";
+import { TEXTLESS_IMAGE_GUARD } from "../lib/image-text-mode";
 import { bgmFilePath } from "../lib/bgm/tracks";
 import { writeSmokeReport, type StepRow } from "./lib/pipeline-smoke-report";
 import {
@@ -68,6 +75,8 @@ const SKIP_VIDEO = process.env.SMOKE_SKIP_VIDEO === "1";
 const SKIP_TTS = process.env.SMOKE_SKIP_TTS === "1";
 const SKIP_REVIEW = process.env.SMOKE_SKIP_REVIEW === "1";
 const ENABLE_T2V = process.env.SMOKE_T2V === "1";
+const ENABLE_N_VIDEO = process.env.SMOKE_N_VIDEO === "1";
+const ENABLE_INPAINT = process.env.SMOKE_INPAINT === "1";
 const STRICT_REVIEW = process.env.SMOKE_STRICT_REVIEW === "1";
 
 const COST = {
@@ -102,6 +111,10 @@ const state = {
   editImagePath: "",
   dualEditPath: "",
   carouselSlide1Path: "",
+  storyboardPlan: null as VideoStoryboardPlan | null,
+  storyboardScene1Path: "",
+  inpaintResultPath: "",
+  nVideoPaths: [] as string[],
   textImageUrl: "",
   i2vVideoPath: "",
   t2vVideoPath: "",
@@ -278,7 +291,7 @@ async function main() {
   console.log("=== Pipeline smoke (reviewable) ===");
   console.log(`Output: ${outDir}`);
   console.log(
-    `Flags: SKIP_FAL=${SKIP_FAL} T2V=${ENABLE_T2V} SKIP_REVIEW=${SKIP_REVIEW} STRICT=${STRICT_REVIEW}\n`,
+    `Flags: SKIP_FAL=${SKIP_FAL} T2V=${ENABLE_T2V} N_VIDEO=${ENABLE_N_VIDEO} INPAINT=${ENABLE_INPAINT} SKIP_REVIEW=${SKIP_REVIEW} STRICT=${STRICT_REVIEW}\n`,
   );
 
   await step("env", "Env keys present", "free", 0, async () => {
@@ -430,6 +443,7 @@ async function main() {
       sceneCountTarget: "4",
       market: "hk",
     });
+    state.storyboardPlan = plan;
     await savePlannerJson("planner-storyboard", "Storyboard plan", plan);
     return `${plan.scenes.length} scenes`;
   });
@@ -621,6 +635,143 @@ async function main() {
   );
 
   await step(
+    "ship-it-textless-prompt",
+    "Ship-it textless prompt guard",
+    "free",
+    0,
+    async () => {
+      const vars = buildPromptVariables({
+        product: SMOKE_SCENARIO.product,
+        headline: SMOKE_SCENARIO.headline,
+        market: "hk",
+        framing: "product-only",
+        imageTextMode: "textless",
+      });
+      const prompt = buildPromoImagePrompt(vars, null, null);
+      if (!prompt.includes(TEXTLESS_IMAGE_GUARD)) {
+        throw new Error("Textless guard missing from ship-it prompt");
+      }
+      return "textless guard ok";
+    },
+  );
+
+  await step(
+    "storyboard-scene-1",
+    "Storyboard scene 1 still",
+    "fal",
+    COST.editImage,
+    async () => {
+      if (!state.storyboardPlan?.scenes[0]) throw new Error("Need storyboard plan");
+      const scene = state.storyboardPlan.scenes[0];
+      const vars = buildPromptVariables({
+        product: SMOKE_SCENARIO.product,
+        headline: SMOKE_SCENARIO.headline,
+        market: "hk",
+        framing: "product-only",
+      });
+      const prompt = buildStoryboardSceneImagePrompt(scene, state.storyboardPlan, vars, {
+        visualStyleId: "storyboard-video",
+      });
+      const productFile = new File([readFileSync(state.productPng)], "product.png", {
+        type: "image/png",
+      });
+      const imageUrl = await fal.storage.upload(productFile);
+      const result = await fal.subscribe(defaultEditEndpoint(), {
+        input: {
+          prompt,
+          image_urls: [imageUrl],
+          aspect_ratio: "9:16",
+          num_images: 1,
+          resolution: "1K",
+          limit_generations: true,
+        },
+        logs: false,
+      });
+      const url = extractImageUrl(result.data);
+      if (!url) throw new Error("No storyboard scene URL");
+      state.storyboardScene1Path = await persistDownload(url, "02d-storyboard-scene-1.png");
+      registerArtifact({
+        id: "storyboard-scene-1",
+        label: "Storyboard scene 1",
+        kind: "image",
+        file: relArtifact(state.storyboardScene1Path),
+        expectation: "Product hero in vertical storyboard still, no garbled text.",
+        reviewId: "storyboard-scene-1",
+      });
+      return assertFile(state.storyboardScene1Path, 1000);
+    },
+    { skipIf: SKIP_FAL || !falKey || MINIMAL, skipReason: MINIMAL ? "SMOKE_MINIMAL" : "SMOKE_SKIP_FAL" },
+  );
+
+  await step(
+    "inpaint-smoke",
+    "Inpaint masked zone",
+    "fal",
+    COST.editImage,
+    async () => {
+      const sourcePath = state.editImagePath || state.textImagePath;
+      if (!sourcePath) throw new Error("Need source image for inpaint");
+      const meta = await sharp(sourcePath).metadata();
+      const w = meta.width ?? 512;
+      const h = meta.height ?? 512;
+      const mask = await sharp({
+        create: {
+          width: w,
+          height: h,
+          channels: 3,
+          background: { r: 0, g: 0, b: 0 },
+        },
+      })
+        .composite([
+          {
+            input: await sharp({
+              create: {
+                width: Math.round(w * 0.3),
+                height: Math.round(h * 0.15),
+                channels: 3,
+                background: { r: 255, g: 255, b: 255 },
+              },
+            })
+              .png()
+              .toBuffer(),
+            left: Math.round(w * 0.1),
+            top: Math.round(h * 0.1),
+          },
+        ])
+        .png()
+        .toBuffer();
+      const sourceFile = new File([readFileSync(sourcePath)], "source.png", { type: "image/png" });
+      const maskFile = new File([new Uint8Array(mask)], "mask.png", { type: "image/png" });
+      const sourceUrl = await fal.storage.upload(sourceFile);
+      const maskUrl = await fal.storage.upload(maskFile);
+      const result = await fal.subscribe("fal-ai/flux-pro/v1/fill", {
+        input: {
+          prompt: "Clean soft gradient background in masked area only. Keep product unchanged.",
+          image_url: sourceUrl,
+          mask_url: maskUrl,
+        },
+        logs: false,
+      });
+      const url = extractImageUrl(result.data);
+      if (!url) throw new Error("No inpaint URL");
+      state.inpaintResultPath = await persistDownload(url, "02e-inpaint.png");
+      registerArtifact({
+        id: "inpaint-smoke",
+        label: "Inpaint smoke",
+        kind: "image",
+        file: relArtifact(state.inpaintResultPath),
+        expectation: "Masked zone repainted; product outside mask preserved.",
+        reviewId: "inpaint-smoke",
+      });
+      return assertFile(state.inpaintResultPath, 1000);
+    },
+    {
+      skipIf: SKIP_FAL || !falKey || !ENABLE_INPAINT,
+      skipReason: ENABLE_INPAINT ? "SMOKE_SKIP_FAL" : "set SMOKE_INPAINT=1",
+    },
+  );
+
+  await step(
     "video-i2v",
     "Image→video (480p, 4s, fast)",
     "fal",
@@ -656,6 +807,40 @@ async function main() {
       return `${assertFile(state.i2vVideoPath, 1000)} · ${dur.toFixed(1)}s`;
     },
     { skipIf: SKIP_FAL || !falKey || SKIP_VIDEO, skipReason: "video skipped" },
+  );
+
+  await step(
+    "video-n-variants",
+    "Parallel N-video variants (2× i2v)",
+    "fal",
+    COST.i2v480p4s * 2,
+    async () => {
+      if (!state.textImageUrl) throw new Error("Need text image");
+      const urls = await Promise.all(
+        [0, 1].map(async (i) => {
+          const result = await fal.subscribe("bytedance/seedance-2.0/fast/image-to-video", {
+            input: {
+              prompt: `${SMOKE_SCENARIO.i2vPrompt} Variant ${i + 1}.`,
+              image_url: state.textImageUrl,
+              resolution: "480p",
+              duration: 4,
+              aspect_ratio: "9:16",
+              generate_audio: false,
+            },
+            logs: false,
+          });
+          const url = extractVideoUrl(result.data);
+          if (!url) throw new Error(`No video URL for variant ${i + 1}`);
+          return persistDownload(url, `03b-n-video-${i + 1}.mp4`);
+        }),
+      );
+      state.nVideoPaths = urls;
+      return `${urls.length} variants`;
+    },
+    {
+      skipIf: SKIP_FAL || !falKey || SKIP_VIDEO || !ENABLE_N_VIDEO,
+      skipReason: ENABLE_N_VIDEO ? "video skipped" : "set SMOKE_N_VIDEO=1",
+    },
   );
 
   await step(

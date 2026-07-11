@@ -117,9 +117,9 @@ export async function postAnalyzeBrand(body: {
   return apiPostJson("/api/analyze-brand", body);
 }
 
-export async function postExportEditPack(payload: unknown): Promise<{
-  content: string;
-  filename: string;
-}> {
-  return apiPostJson("/api/export-edit-pack", payload);
+export async function postBurnImageText(body: {
+  image_url: string;
+  layers: import("@/lib/image-text-overlay-types").ImageTextLayer[];
+}): Promise<{ imageUrl: string }> {
+  return apiPostJson("/api/burn-image-text", body);
 }

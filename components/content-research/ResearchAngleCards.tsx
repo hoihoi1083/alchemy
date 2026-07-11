@@ -3,11 +3,8 @@
 import { useMemo, useState } from "react";
 import type { ContentAngleCandidate, ContentPlatform } from "@/lib/content-research-types";
 import { RESEARCH_ANGLES_PER_PAGE } from "@/lib/content-research-enrich";
-
-function proxiedCoverUrl(url: string | undefined, platform: ContentPlatform): string | undefined {
-  if (!url) return undefined;
-  return `/api/research-post-image?url=${encodeURIComponent(url)}&platform=${platform}`;
-}
+import { videoReadyKind } from "@/lib/content-research-video-ready";
+import { ResearchCoverThumb } from "@/components/content-research/ResearchCoverThumb";
 
 function formatCount(n: number | undefined): string | undefined {
   if (n == null) return undefined;
@@ -19,12 +16,17 @@ function formatCount(n: number | undefined): string | undefined {
 type ResearchAngleCardsProps = {
   angles: ContentAngleCandidate[];
   platform: ContentPlatform;
+  videoOnly?: boolean;
+  applyingAngleId?: string | null;
+  pickDisabled?: boolean;
+  pickDisabledHint?: string;
   onPick: (angle: ContentAngleCandidate) => void;
   labels: {
     scoreLabel: string;
     inspiredBy: string;
     yourAngle: string;
     useAngle: string;
+    applyingAngle: string;
     openNote: string;
     likes: string;
     collects: string;
@@ -34,12 +36,19 @@ type ResearchAngleCardsProps = {
     pageOf: (page: number, total: number) => string;
     totalAngles: (total: number) => string;
     carouselSlides: (count: number) => string;
+    videoReadyUrl: string;
+    videoReadyResolve: string;
+    videoReadyMissing: string;
   };
 };
 
 export function ResearchAngleCards({
   angles,
   platform,
+  videoOnly,
+  applyingAngleId,
+  pickDisabled,
+  pickDisabledHint,
   onPick,
   labels,
 }: ResearchAngleCardsProps) {
@@ -59,10 +68,10 @@ export function ResearchAngleCards({
       <div className="grid gap-3">
         {pageAngles.map((angle, i) => {
           const rank = safePage * RESEARCH_ANGLES_PER_PAGE + i + 1;
-          const cover = proxiedCoverUrl(angle.sourceCoverImageUrl, platform);
           const slideCount = angle.sourceImageUrls?.length ?? 0;
           const collects = formatCount(angle.sourceCollects);
           const likes = formatCount(angle.sourceLikes);
+          const videoReady = videoOnly ? videoReadyKind(angle, platform) : null;
 
           return (
             <div
@@ -76,26 +85,33 @@ export function ResearchAngleCards({
                   rel="noopener noreferrer"
                   className="flex gap-3 border-b border-slate-100 bg-slate-50/80 p-3 transition hover:bg-slate-50"
                 >
-                  <div className="relative h-24 w-20 shrink-0 overflow-hidden rounded-lg bg-slate-200">
-                    {cover ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={cover}
-                        alt=""
-                        className="h-full w-full object-cover"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center px-1 text-center text-[9px] text-slate-400">
-                        {labels.noCover}
-                      </div>
-                    )}
-                    {slideCount > 1 && (
-                      <span className="absolute bottom-1 right-1 rounded bg-black/70 px-1 py-0.5 text-[9px] font-medium text-white">
-                        {labels.carouselSlides(slideCount)}
-                      </span>
-                    )}
-                  </div>
+                  <ResearchCoverThumb
+                    platform={platform}
+                    sourceCoverImageUrl={angle.sourceCoverImageUrl}
+                    sourceImageUrls={angle.sourceImageUrls}
+                    noCoverLabel={labels.noCover}
+                    slideCount={slideCount}
+                    slideCountLabel={labels.carouselSlides}
+                    badges={
+                      <>
+                        {videoReady === "has_url" && (
+                          <span className="absolute left-1 top-1 rounded bg-emerald-700 px-1 py-0.5 text-[9px] font-medium text-white">
+                            {labels.videoReadyUrl}
+                          </span>
+                        )}
+                        {videoReady === "can_resolve" && (
+                          <span className="absolute left-1 top-1 rounded bg-sky-700 px-1 py-0.5 text-[9px] font-medium text-white">
+                            {labels.videoReadyResolve}
+                          </span>
+                        )}
+                        {videoReady === "missing" && (
+                          <span className="absolute left-1 top-1 rounded bg-amber-700 px-1 py-0.5 text-[9px] font-medium text-white">
+                            {labels.videoReadyMissing}
+                          </span>
+                        )}
+                      </>
+                    }
+                  />
                   <div className="min-w-0 flex-1">
                     <p className="text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
                       {labels.inspiredBy}
@@ -150,10 +166,14 @@ export function ResearchAngleCards({
                 <button
                   type="button"
                   onClick={() => onPick(angle)}
-                  className="mt-3 w-full rounded-lg bg-violet-600 px-3 py-2 text-xs font-semibold text-white hover:bg-violet-500"
+                  disabled={Boolean(applyingAngleId) || pickDisabled}
+                  className="mt-3 w-full rounded-lg bg-violet-600 px-3 py-2 text-xs font-semibold text-white hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {labels.useAngle}
+                  {applyingAngleId === angle.id ? labels.applyingAngle : labels.useAngle}
                 </button>
+                {pickDisabled && pickDisabledHint && (
+                  <p className="mt-1.5 text-[11px] text-amber-800">{pickDisabledHint}</p>
+                )}
               </div>
             </div>
           );

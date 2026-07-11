@@ -10,16 +10,40 @@ import { TemplateSlotChecklist } from "@/components/TemplateSlotChecklist";
 import { AdvancedPromptPanel } from "@/components/AdvancedPromptPanel";
 import { AdPackReviewPanel } from "@/components/studio/AdPackReviewPanel";
 import { ConceptPreGeneratePanel } from "@/components/studio/ConceptPreGeneratePanel";
+import { PresenterAvatarPicker } from "@/components/studio/PresenterAvatarPicker";
 import { WizardErrorBanner } from "@/components/studio/WizardErrorBanner";
+import { VideoOutputSourceCard } from "@/components/studio/VideoOutputSourceCard";
 import { isBrandVideoStyle, isCreativeVideoStyle, isStoryboardVideoStyle } from "@/lib/visual-styles";
+import { isVideoOutputPathLocked, resolveVideoOutputPresentation } from "@/lib/video-output-presentation";
 import { analyzeProductImageFile } from "@/lib/image-upload-quality";
+import type { CinematicSceneResult } from "@/lib/cinematic-reel-types";
+import type { StoryboardSceneResult } from "@/lib/video-storyboard-types";
 
 export function VideoStep() {
-  const { applyPromptRebuild, bgmOptions, bgmTrack, brandProfile, cinematicScenes, cinematicSceneCount, cinematicStitchReady, creativeVideoBrief, endFramePhoto, endFramePreviewUrl, endFrameUrl, error, extraAnglePhotos, extraKitPhotos, extraKitPreviewUrls, formatCinematicCopy, generateVideo, goBackFromVideo, hasFinalImage, headline, imagePrompt, imageUrl, isCinematicStitchOutput, isConceptCinematicSingleOutput, isStoryboardOutput, keyframePreview, loadReferenceClip, m, onReferenceAdFile, onVideoCreativeModeChange, packagingPhoto, packagingPreviewUrl, planAiVideoPrompt, planProductVideo, planProductVideoBusy, planVideoPromptBusy, productPhoto, productVideoPlan, promotionMode, promptExtra, promptMarket, referenceAd, referenceClipLoading, referenceIsVideo, referencePreviewUrl, selectedReferenceClipId, setBgmTrack, setConceptImageVisionNote, setEndFramePhoto, setEndFrameUrl, setError, setExtraAnglePhotos, setExtraKitPhotos, setPackagingPhoto, setImagePrompt, setImageUrl, setProductPhoto, setPromptExtra, setPromptMarket, setShowAdvancedVideo, setSubjectFraming, setUploadQualityWarning, setUseOriginalImage, setVideoPrompt, setVideoSettings, showAdvancedVideo, showVideoReferenceSection, storyboardScenes, subjectFraming, templateId, templateSlotStatus, uploadPreviewUrl, useReferenceVideo, usesCompositor, usesConceptTextVideo, usesProductAssistant, videoBusy, videoCreativeMode, videoGenerateDisabled, videoPhase, videoPreflight, videoProgressInfo, videoPrompt, videoPromptPlanNote, videoSettings, videoStepHint, visualStyleId, workflowMode } = useWizard();
+  const { applyPromptRebuild, bgmOptions, bgmTrack, brandProfile, cinematicScenes, cinematicSceneCount, cinematicStitchReady, conceptReferenceR2vReady, directReferenceR2vReady, creativeVideoBrief, endFramePhoto, endFramePreviewUrl, endFrameUrl, error, extraAnglePhotos, extraKitPhotos, extraKitPreviewUrls, formatCinematicCopy, generateVideo, goBackFromVideo, hasFinalImage, headline, imagePrompt, imageUrl, isCinematicStitchOutput, isConceptCinematicSingleOutput, isStoryboardOutput, isUgcPresenterOutput, keyframePreview, loadReferenceClip, m, onReferenceAdFile, onVideoCreativeModeChange, packagingPhoto, packagingPreviewUrl, planAiVideoPrompt, planProductVideo, planProductVideoBusy, planVideoPromptBusy, presenterAvatarId, presenterSourceMode, productPhoto, productVideoPlan, promotionMode, promptExtra, promptMarket, referenceAd, referenceClipLoading, referenceIsVideo, referencePreviewUrl, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, selectedReferenceClipId, setBgmTrack, setConceptImageVisionNote, setEndFramePhoto, setEndFrameUrl, setError, setExtraAnglePhotos, setExtraKitPhotos, setPackagingPhoto, setImagePrompt, setImageUrl, setPresenterAvatarId, setPresenterSourceMode, setProductPhoto, setPromptExtra, setPromptMarket, setShowAdvancedVideo, setSubjectFraming, setUploadQualityWarning, setUseOriginalImage, setVideoPrompt, setVideoSettings, shipItMode, showAdvancedVideo, showVideoReferenceSection, storyboardScenes, subjectFraming, templateId, templateSlotStatus, uploadPreviewUrl, useReferenceVideo, usesCompositor, usesConceptTextVideo, usesProductAssistant, videoBusy, videoCreativeMode, videoGenerateDisabled, videoGenerateDisabledReason, videoPhase, videoPreflight, videoProgressInfo, videoPrompt, videoPromptPlanNote, videoSettings, videoStepHint, visualStyleId, workflowMode } = useWizard();
   const isConcept = promotionMode === "concept";
   const showCinematicStitch = isCinematicStitchOutput || cinematicStitchReady;
   const showConceptCinematicSingle =
     isConceptCinematicSingleOutput && cinematicScenes.length > 0;
+  const videoOutputId = resolveVideoOutputPresentation({
+    workflowMode,
+    usesCompositor,
+    isStoryboardOutput,
+    isUgcPresenterOutput,
+    shouldCinematicStitch: showCinematicStitch,
+    isConceptCinematicSingleOutput,
+    usesProductAssistant,
+    conceptTextVideoReady: usesConceptTextVideo && Boolean(videoPrompt.trim()),
+    videoCreativeMode,
+    useReferenceVideo,
+    hasReferenceAd: Boolean(referenceAd),
+  });
+  const hideVideoModePicker =
+    Boolean(videoOutputId && isVideoOutputPathLocked(videoOutputId)) ||
+    showCinematicStitch ||
+    isConceptCinematicSingleOutput;
+  const showReferenceR2vOutputSettings =
+    !usesCompositor && useReferenceVideo && !isStoryboardOutput;
   return (
 <section className="space-y-6 rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-xl shadow-slate-900/40 backdrop-blur">
   <div className="h-1 w-full animate-pulse rounded-full bg-linear-to-r from-violet-500 via-cyan-400 to-teal-400" />
@@ -31,6 +55,18 @@ export function VideoStep() {
       {usesCompositor ? m.wizard.compositorVideoHint : videoStepHint}
     </p>
   </div>
+
+  <VideoOutputSourceCard variant="video" />
+
+  {isUgcPresenterOutput && (
+    <PresenterAvatarPicker
+      mode={presenterSourceMode}
+      avatarId={presenterAvatarId}
+      disabled={videoBusy}
+      onModeChange={setPresenterSourceMode}
+      onAvatarChange={setPresenterAvatarId}
+    />
+  )}
 
   {isConcept && workflowMode === "video-only" && (
     <p className="rounded-xl border border-cyan-900/50 bg-cyan-950/30 px-4 py-3 text-xs text-cyan-100">
@@ -84,10 +120,10 @@ export function VideoStep() {
       </p>
       <div
         className={`mt-3 grid gap-2 ${
-          cinematicScenes.length <= 3 ? "grid-cols-3" : "grid-cols-3 sm:grid-cols-6"
+          cinematicScenes.length <= 3 ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-2 sm:grid-cols-3 md:grid-cols-6"
         }`}
       >
-        {cinematicScenes.map((scene) => (
+        {cinematicScenes.map((scene: CinematicSceneResult) => (
           <div key={scene.sceneIndex} className="rounded-lg border border-slate-700 bg-slate-900/50 p-1">
             <img src={scene.imageUrl} alt="" className="aspect-[9/16] w-full rounded object-cover" />
             <p className="mt-1 text-center text-[10px] text-slate-300">
@@ -131,7 +167,7 @@ export function VideoStep() {
   )}
 
   {/* Reference ad MP4 — only when template includes this slot */}
-  {!usesCompositor && !isStoryboardOutput && !showCinematicStitch && !isConceptCinematicSingleOutput && !(isConcept && workflowMode === "video-only") && (
+  {!usesCompositor && !hideVideoModePicker && !(isConcept && workflowMode === "video-only") && !shipItMode && (
     <VideoCreativeModePicker
       goal={workflowMode}
       promotionMode={promotionMode}
@@ -226,7 +262,7 @@ export function VideoStep() {
         />
         {extraKitPhotos.length > 0 && (
           <div className="flex flex-wrap gap-2 pt-1">
-            {extraKitPreviewUrls.map((url) => (
+            {extraKitPreviewUrls.map((url: string) => (
               <img
                 key={url}
                 src={url}
@@ -248,7 +284,7 @@ export function VideoStep() {
       {productVideoPlan && (
         <div className="rounded-lg border border-cyan-800/50 bg-slate-950/40 px-3 py-3 text-xs text-cyan-100/90">
           <p className="font-semibold text-cyan-50">{productVideoPlan.productSummary}</p>
-          {productVideoPlan.imageRoles.map((role) => (
+          {productVideoPlan.imageRoles.map((role: { imageIndex: number; role: string }) => (
             <p key={role.imageIndex} className="mt-1">
               <span className="font-medium text-cyan-200">@Image{role.imageIndex}</span>{" "}
               {role.role}
@@ -262,7 +298,9 @@ export function VideoStep() {
     </div>
   )}
 
-  {!usesCompositor && <VideoSettingsPanel value={videoSettings} onChange={setVideoSettings} />}
+  {!usesCompositor && !shipItMode && !showReferenceR2vOutputSettings && (
+    <VideoSettingsPanel value={videoSettings} onChange={setVideoSettings} />
+  )}
 
   {!usesCompositor && !isStoryboardOutput && !showCinematicStitch && !isConceptCinematicSingleOutput && !usesProductAssistant && !usesConceptTextVideo && (
     <div className="rounded-xl border border-sky-900/50 bg-sky-950/30 px-4 py-3 text-sm text-sky-100">
@@ -382,6 +420,17 @@ export function VideoStep() {
         <p className="rounded-lg bg-emerald-900/40 px-3 py-2 text-xs text-emerald-200">
           {m.wizard.referenceModeActive}
         </p>
+        {(researchReelAnalyzeBusy || researchReelAnalyzeNote) && (
+          <p className="rounded-lg bg-purple-950/40 px-3 py-2 text-xs text-purple-100">
+            {researchReelAnalyzeBusy ? m.wizard.researchReelAnalyzing : researchReelAnalyzeNote}
+          </p>
+        )}
+        {workflowMode === "video-only" && useReferenceVideo && (
+          <p className="text-xs text-slate-400">{m.wizard.referenceR2vDurationHint}</p>
+        )}
+        {researchReelAnalysis?.productionNotesZh ? (
+          <p className="text-xs text-slate-400">{researchReelAnalysis.productionNotesZh}</p>
+        ) : null}
         {workflowMode === "video-only" && (imageUrl || productPhoto) && (
           <p className="rounded-lg border border-amber-900/40 bg-amber-950/30 px-3 py-2 text-xs text-amber-100">
             {m.wizard.videoRefProductMismatch}
@@ -453,7 +502,7 @@ export function VideoStep() {
       <div className="space-y-3">
         <p className="text-xs text-teal-200/90">{m.wizard.storyboardAllScenesHint}</p>
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          {storyboardScenes.map((scene) => (
+          {storyboardScenes.map((scene: StoryboardSceneResult) => (
             <div
               key={scene.imageUrl}
               className="rounded-lg border border-teal-900/40 bg-teal-950/20 p-2"
@@ -532,6 +581,10 @@ export function VideoStep() {
           </button>
         )}
       </div>
+    ) : directReferenceR2vReady ? (
+      <p className="rounded-lg border border-emerald-900/40 bg-emerald-950/30 px-3 py-2 text-xs text-emerald-100">
+        {m.wizard.conceptVideoRefKeyframeReady}
+      </p>
     ) : (
       <p className="rounded-lg bg-amber-950/40 px-3 py-2 text-xs text-amber-200">
         {m.wizard.needKeyframeGoBack}
@@ -568,7 +621,7 @@ export function VideoStep() {
     </div>
   )}
 
-  {usesProductAssistant && videoPrompt.trim() && (
+  {usesProductAssistant && productVideoPlan && videoPrompt.trim() && (
     <div className="space-y-2 rounded-xl border border-cyan-900/50 bg-cyan-950/25 p-4">
       <p className="text-sm font-semibold text-cyan-50">{m.wizard.productVideoPlanLabel}</p>
       <p className="text-xs text-cyan-200/80">{m.wizard.productVideoPlanHint}</p>
@@ -594,7 +647,7 @@ export function VideoStep() {
     </div>
   )}
 
-  {!usesCompositor && (
+  {!usesCompositor && !shipItMode && (
   <details
     className="rounded-xl border border-slate-800 bg-slate-950/40 p-3"
     open={isStoryboardOutput ? true : showAdvancedVideo}
@@ -620,11 +673,20 @@ export function VideoStep() {
   </details>
   )}
 
+  {showReferenceR2vOutputSettings && !videoBusy && (
+    <VideoSettingsPanel
+      compact
+      variant="dark"
+      value={videoSettings}
+      onChange={setVideoSettings}
+    />
+  )}
+
   {videoPreflight && !videoBusy && (
     <div className="rounded-xl border border-sky-900/50 bg-sky-950/25 px-4 py-3 text-xs text-sky-100">
       <p className="font-semibold text-sky-50">{m.wizard.videoPreflightTitle}</p>
       <ul className="mt-2 list-disc space-y-1 pl-4">
-        {videoPreflight.lines.map((line) => (
+        {videoPreflight.lines.map((line: string) => (
           <li key={line}>{line}</li>
         ))}
       </ul>
@@ -667,7 +729,11 @@ export function VideoStep() {
     </div>
   )}
 
-  <div className="hidden gap-3 md:flex">
+  <div className="hidden flex-col gap-2 md:flex">
+    {videoGenerateDisabled && !videoBusy && videoGenerateDisabledReason && (
+      <p className="text-center text-xs text-amber-200/90">{videoGenerateDisabledReason}</p>
+    )}
+    <div className="flex gap-3">
     <button
       type="button"
       disabled={videoBusy}
@@ -680,7 +746,8 @@ export function VideoStep() {
       type="button"
       data-coach-id="coach-generate-video"
       disabled={videoGenerateDisabled}
-      onClick={generateVideo}
+      title={videoGenerateDisabledReason ?? undefined}
+      onClick={() => void generateVideo()}
       className="flex-1 rounded-2xl bg-linear-to-r from-cyan-500 via-emerald-500 to-teal-500 py-3.5 text-base font-semibold text-white shadow-[0_0_28px_rgba(16,185,129,0.35)] disabled:opacity-40"
     >
       {videoBusy
@@ -695,11 +762,14 @@ export function VideoStep() {
               ? m.wizard.conceptCinematicSingleGenerateVideoBtn
             : m.wizard.generateVideoBtn}
     </button>
+    </div>
   </div>
-  {!videoBusy && usesProductAssistant && productPhoto && !productVideoPlan && (
-    <p className="text-center text-xs text-amber-200/90">{m.wizard.productVideoAnalyzeFirstHint}</p>
+  {!videoBusy && usesProductAssistant && !productVideoPlan && (
+    <p className="text-center text-xs text-amber-200/90">
+      {productPhoto ? m.wizard.productVideoAnalyzeFirstHint : m.wizard.productVideoUploadFirstHint}
+    </p>
   )}
-  {!videoBusy && !hasFinalImage && !usesProductAssistant && !usesConceptTextVideo && (
+  {!videoBusy && !hasFinalImage && !usesProductAssistant && !usesConceptTextVideo && !directReferenceR2vReady && (
     <p className="text-center text-xs text-amber-200/90">
       {isConcept && productPhoto
         ? m.wizard.conceptVideoKeyframeFromSetup

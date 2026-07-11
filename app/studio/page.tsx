@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AppHeader } from "@/components/AppHeader";
 import { StudioWizard } from "@/components/StudioWizard";
+import { useLocale } from "@/components/LocaleProvider";
 import {
   isPromotionMode,
   readStoredPromotionMode,
@@ -11,6 +12,16 @@ import {
   type PromotionMode,
 } from "@/lib/promotion-mode";
 import { isTemplateId, TEMPLATE_PREF_KEY } from "@/lib/template-pref";
+
+function StudioLoading() {
+  const { m } = useLocale();
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-center gap-2 bg-slate-50 px-6 text-center">
+      <p className="text-sm font-medium text-slate-700">{m.studio.loadingTitle}</p>
+      <p className="max-w-sm text-xs text-slate-500">{m.studio.loadingHint}</p>
+    </main>
+  );
+}
 
 function StudioPageContent() {
   const router = useRouter();
@@ -47,11 +58,7 @@ function StudioPageContent() {
   }, [searchParams, router]);
 
   if (!promotionMode) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-50 text-sm text-slate-500">
-        …
-      </main>
-    );
+    return <StudioLoading />;
   }
 
   return (
@@ -68,12 +75,16 @@ function StudioPageContent() {
           promotionMode={promotionMode}
           onToggleTheme={() => setTheme((t) => (t === "light" ? "dark" : "light"))}
         />
-        <StudioWizard promotionMode={promotionMode} />
+        <StudioWizard promotionMode={promotionMode} theme={theme} />
       </div>
     </main>
   );
 }
 
 export default function StudioPage() {
-  return <StudioPageContent />;
+  return (
+    <Suspense fallback={<StudioLoading />}>
+      <StudioPageContent />
+    </Suspense>
+  );
 }

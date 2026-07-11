@@ -1,12 +1,24 @@
-import { fal, ApiError } from "@fal-ai/client";
+import { fal, ApiError, ValidationError } from "@fal-ai/client";
 import { NextResponse } from "next/server";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import {
   isSeedanceSensitiveError,
   softenSeedancePromptForModeration,
 } from "@/lib/seedance-moderation";
+import { mirrorImageUrlToFalStorage } from "@/lib/fal-mirror-media";
 
 function formatFalError(e: unknown): string {
+  if (e instanceof ValidationError) {
+    const fieldMsgs = e.fieldErrors
+      .map((f) => {
+        const loc = f.loc?.length ? f.loc.join(".") : "body";
+        return `${loc}: ${f.msg}`;
+      })
+      .filter(Boolean);
+    const bits = fieldMsgs.length ? fieldMsgs : [e.message];
+    if (e.requestId) bits.push(`fal request: ${e.requestId}`);
+    return bits.join(" — ");
+  }
   if (e instanceof ApiError) {
     const bits: string[] = [e.message];
     const body = e.body as Record<string, unknown> | undefined;
@@ -117,6 +129,11 @@ function parseDuration(v: string): "auto" | number {
   return n;
 }
 
+/** Seedance OpenAPI expects duration enum strings ("4"…"15"), not integers. */
+function durationForFal(duration: "auto" | number): string {
+  return duration === "auto" ? "auto" : String(duration);
+}
+
 function hasReferenceTag(prompt: string, kind: "Image" | "Video" | "Audio", index: number): boolean {
   return new RegExp(`@\\s*${kind}\\s*${index}\\b`, "i").test(prompt);
 }
@@ -190,7 +207,13 @@ export async function POST(request: Request) {
   try {
     formData = await request.formData();
   } catch {
-    return NextResponse.json({ error: "Invalid form data" }, { status: 400 });
+    return NextResponse.json(
+      {
+        error:
+          "Reference video upload too large. Re-pick the post from research (auto-trims to 15s) or upload a shorter clip.",
+      },
+      { status: 413 },
+    );
   }
 
   const mode = (formData.get("mode") as string) as Mode;
@@ -250,22 +273,7 @@ export async function POST(request: Request) {
       avoidOnScreenText,
     }),
     resolution,
-    duration: duration as
-      | "auto"
-      | 2
-      | 3
-      | 4
-      | 5
-      | 6
-      | 7
-      | 8
-      | 9
-      | 10
-      | 11
-      | 12
-      | 13
-      | 14
-      | 15,
+    duration: durationForFal(duration),
     aspect_ratio: aspectRatio as
       | "auto"
       | "21:9"
@@ -311,13 +319,17 @@ export async function POST(request: Request) {
         );
       }
       const imageUrl =
-        start && start.size > 0 ? await fal.storage.upload(start) : startUrl!;
+        start && start.size > 0
+          ? await fal.storage.upload(start)
+          : await mirrorImageUrlToFalStorage(startUrl!);
       const end = formData.get("image_end") as File | null;
       const endDirectUrl = (formData.get("image_end_url") as string | null)?.trim();
       const endUrl =
         end && end.size > 0
           ? await fal.storage.upload(end)
-          : endDirectUrl || undefined;
+          : endDirectUrl
+            ? await mirrorImageUrlToFalStorage(endDirectUrl)
+            : undefined;
 
       const imageInput = {
         ...common,
@@ -389,6 +401,12 @@ export async function POST(request: Request) {
       .split(/[\n,]+/)
       .map((u) => u.trim())
       .filter(Boolean);
+    const directVideoUrls =
+      (formData.get("reference_video_urls") as string | null)
+        ?.trim()
+        .split(/[\n,]+/)
+        .map((u) => u.trim())
+        .filter(Boolean) ?? [];
     const uploadedImageUrls =
       nonEmptyImages.length > 0
         ? await Promise.all(nonEmptyImages.map((f) => fal.storage.upload(f)))
@@ -399,10 +417,12 @@ export async function POST(request: Request) {
       ...(imageRefUrl ? [imageRefUrl] : []),
     ];
     const imageUrlsFinal = image_urls.length > 0 ? image_urls : undefined;
-    const video_urls =
+    const uploadedVideoUrls =
       nonEmptyVideos.length > 0
         ? await Promise.all(nonEmptyVideos.map((f) => fal.storage.upload(f)))
-        : undefined;
+        : [];
+    const video_urls = [...directVideoUrls, ...uploadedVideoUrls];
+    const videoUrlsFinal = video_urls.length > 0 ? video_urls : undefined;
     const audio_urls =
       nonEmptyAudios.length > 0
         ? await Promise.all(nonEmptyAudios.map((f) => fal.storage.upload(f)))
@@ -410,7 +430,7 @@ export async function POST(request: Request) {
 
     const hasRefs =
       (imageUrlsFinal?.length ?? 0) > 0 ||
-      (video_urls?.length ?? 0) > 0 ||
+      (videoUrlsFinal?.length ?? 0) > 0 ||
       (audio_urls?.length ?? 0) > 0;
 
     if (!hasRefs) {
@@ -424,7 +444,7 @@ export async function POST(request: Request) {
     }
 
     const imageCount = imageUrlsFinal?.length ?? 0;
-    const videoCount = video_urls?.length ?? 0;
+    const videoCount = videoUrlsFinal?.length ?? 0;
     const audioCount = audio_urls?.length ?? 0;
     const { prompt: taggedPrompt, added: addedTags } = ensureReferenceTags(
       common.prompt,
@@ -437,7 +457,7 @@ export async function POST(request: Request) {
       ...common,
       prompt: taggedPrompt,
       ...(imageUrlsFinal?.length ? { image_urls: imageUrlsFinal } : {}),
-      ...(video_urls?.length ? { video_urls } : {}),
+      ...(videoUrlsFinal?.length ? { video_urls: videoUrlsFinal } : {}),
       ...(audio_urls?.length ? { audio_urls } : {}),
     };
     const { result, usedDurationFallback } = await subscribeWithDurationFallback(
@@ -466,7 +486,7 @@ export async function POST(request: Request) {
       requestId: result.requestId,
       generationMode: "reference-to-video",
       endpoint: endpointFor("reference", fast, formData),
-      referenceVideoCount: nonEmptyVideos.length,
+      referenceVideoCount: videoUrlsFinal?.length ?? nonEmptyVideos.length,
       referenceImageCount: imageUrlsFinal?.length ?? 0,
       ...(addedTags.length
         ? { note: [...notes, `Auto-added tags: ${addedTags.join(", ")}`].join(" ") }
@@ -475,7 +495,11 @@ export async function POST(request: Request) {
           : {}),
     });
   } catch (e: unknown) {
-    console.error("[api/generate]", e);
+    if (e instanceof ValidationError) {
+      console.error("[api/generate] validation", JSON.stringify(e.fieldErrors));
+    } else {
+      console.error("[api/generate]", e);
+    }
     const message = formatFalError(e);
     if (isSeedanceSensitiveError(message)) {
       return NextResponse.json(

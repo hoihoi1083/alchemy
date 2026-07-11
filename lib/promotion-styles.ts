@@ -12,7 +12,7 @@ export const PHYSICAL_ONLY_VISUAL_STYLE_IDS = new Set<VisualStyleId>([
   "product",
   "dark-premium",
   "model-wear",
-  "storyboard-video",
+  "ugc-presenter",
 ]);
 
 /** Service / website / plan styles — hidden in physical promotion mode. */
@@ -32,6 +32,7 @@ export const SHARED_VISUAL_STYLE_IDS = new Set<VisualStyleId>([
   "brand-video",
   "creative-video",
   "paper-layout",
+  "storyboard-video",
 ]);
 
 export function isConceptOnlyVisualStyle(id: VisualStyleId): boolean {
@@ -63,7 +64,7 @@ export function conceptPrimaryVisualStyleIds(): VisualStyleId[] {
 }
 
 export function physicalPrimaryVisualStyleIds(): VisualStyleId[] {
-  return ["product", "model-wear", "storyboard-video"];
+  return ["product", "model-wear", "ugc-presenter", "storyboard-video"];
 }
 
 /** Concept styles that can generate from copy alone (no upload). */

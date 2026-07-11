@@ -11,7 +11,7 @@ import type { PromotionMode } from "@/lib/promotion-mode";
 import type { PromptMarket } from "@/lib/prompt-variables";
 import type { VisualStyleId } from "@/lib/visual-styles";
 import { isContentResearchStyleExtra } from "@/lib/content-research-promote";
-import { USER_REFERENCE_MARKER, isInfographicLikeBrief, isPhotographicReferenceBrief, isStyleOnlyReferenceExtra } from "@/lib/user-reference-brief";
+import { USER_REFERENCE_MARKER, isInfographicLikeBrief, isPhotographicReferenceBrief, isStyleOnlyReferenceExtra, isLayoutTransferReferenceExtra, carouselSlidesPlannerBlock, type CarouselSlideReferenceBrief } from "@/lib/user-reference-brief";
 
 type PlanInput = {
   visualStyleId: VisualStyleId;
@@ -25,6 +25,10 @@ type PlanInput = {
   offer?: string;
   promptExtra?: string;
   slideCount?: number;
+  /** When layout-transfer (reference ad + product photo), mirror reference layout like single-image mode. */
+  referenceStrategyKind?: "layout-transfer" | "style-only" | "none";
+  /** Per-slide layout DNA from multi-image carousel vision. */
+  carouselSlides?: CarouselSlideReferenceBrief[];
 };
 
 function defaultVisualDna(input: PlanInput): string {
@@ -99,6 +103,37 @@ function fallbackSlides(input: PlanInput, count: number): TeachingCarouselSlide[
   return slides;
 }
 
+function applyCarouselCompositions(
+  plan: TeachingCarouselPlan,
+  carouselSlides?: CarouselSlideReferenceBrief[],
+): TeachingCarouselPlan {
+  if (!carouselSlides?.length) return plan;
+  const sharedDna = [
+    plan.visualDna,
+    carouselSlides[0]?.colorPalette ? `Palette: ${carouselSlides[0].colorPalette}` : "",
+    carouselSlides[0]?.typographyStyle ? `Type: ${carouselSlides[0].typographyStyle}` : "",
+    carouselSlides[0]?.mood ? `Mood: ${carouselSlides[0].mood}` : "",
+  ]
+    .filter(Boolean)
+    .join(". ");
+  return {
+    ...plan,
+    visualDna: sharedDna || plan.visualDna,
+    slides: plan.slides.map((s, i) => {
+      const ref = carouselSlides[i];
+      if (!ref) return s;
+      return {
+        ...s,
+        composition:
+          ref.composition ||
+          [ref.layoutStyle, ref.stagingPose].filter(Boolean).join(" — ") ||
+          String(s.composition ?? "").trim() ||
+          s.composition,
+      };
+    }),
+  };
+}
+
 function normalizePlan(parsed: Partial<TeachingCarouselPlan>, input: PlanInput): TeachingCarouselPlan {
   const targetCount = Math.min(
     6,
@@ -124,11 +159,12 @@ function normalizePlan(parsed: Partial<TeachingCarouselPlan>, input: PlanInput):
   while (slides.length < targetCount) {
     slides.push(fallback[slides.length]);
   }
-  return {
+  const base = {
     theme: String(parsed.theme ?? "").trim() || (input.headline?.trim() || input.product?.trim() || "教學主題"),
     visualDna: String(parsed.visualDna ?? "").trim() || defaultVisualDna(input),
     slides,
   };
+  return applyCarouselCompositions(base, input.carouselSlides);
 }
 
 function buildPlanPrompt(input: PlanInput): string {
@@ -145,19 +181,43 @@ function buildPlanPrompt(input: PlanInput): string {
     input.product,
   );
   const contentResearchRef = isContentResearchStyleExtra(input.promptExtra);
+  const layoutTransferRef =
+    input.referenceStrategyKind === "layout-transfer" ||
+    isLayoutTransferReferenceExtra(input.promptExtra);
+  const hasCarouselVision = Boolean(input.carouselSlides?.length);
   const hasUserReference = Boolean(
     contentResearchRef ||
       input.promptExtra?.includes(USER_REFERENCE_MARKER) ||
-      isStyleOnlyReferenceExtra(input.promptExtra),
+      isStyleOnlyReferenceExtra(input.promptExtra) ||
+      layoutTransferRef ||
+      hasCarouselVision,
   );
   const styleOnlyRef =
-    contentResearchRef ||
-    (input.promotionMode === "concept" && hasUserReference);
+    !layoutTransferRef &&
+    (contentResearchRef || (input.promotionMode === "concept" && hasUserReference));
   const photoStyleRef =
     styleOnlyRef && isPhotographicReferenceBrief(input.promptExtra ?? "");
   const infographicRef = hasUserReference && isInfographicLikeBrief(input.promptExtra ?? "");
+  const carouselVisionRules = hasCarouselVision
+    ? [
+        `- Reference carousel vision analyzed ${input.carouselSlides!.length} slides — map output slide N to reference slide N layout/staging.`,
+        carouselSlidesPlannerBlock(input.carouselSlides),
+        "- visualDna MUST describe the SHARED reference look (palette, typography, mood, photography style) across all slides.",
+        "- Each slide.composition MUST follow the matching reference slide layout — do NOT invent generic edu card layouts.",
+      ]
+    : [];
   const conceptRules =
-    photoStyleRef
+    layoutTransferRef
+      ? [
+          "- LAYOUT TRANSFER (reference ad + user product photo): mirror IMAGE 1 design grammar on every slide — same layout family as the reference (numbered list rows, grid panels, icon bands, cover structure).",
+          "- visualDna MUST match reference: layout grid type, color palette, typography hierarchy, component shapes from USER REFERENCE.",
+          "- Each slide = one panel/row/section of the reference layout template filled with the USER'S product and copy — do NOT invent unrelated editorial card layouts.",
+          "- Cover slide uses reference cover structure; middle slides follow reference list/grid rhythm; final slide uses reference recap/CTA band style.",
+          "- All on-image copy about the user's product only — never zodiac/星座/其他品牌 or wording from the reference post.",
+          "- Do NOT copy reference logos, watermarks, or exact Chinese characters from the reference.",
+          ...carouselVisionRules,
+        ]
+      : photoStyleRef
       ? [
           "- User reference is PHOTOGRAPHIC (product/lifestyle shot) — match soft natural light, low saturation, real crystal/product textures.",
           "- visualDna: photorealistic lifestyle product photography like USER REFERENCE — linen/fabric, soft shadows, elegant integrated Chinese typography.",
@@ -173,6 +233,7 @@ function buildPlanPrompt(input: PlanInput): string {
             "- Every slide.composition MUST describe a unique layout (cover hero vs detail vs tips vs recap).",
             "- All on-image copy must be about the user's product — never copy reference topic (星座/时政/其他品牌).",
             "- Do NOT paste reference on-image text or reference script bullets.",
+            ...carouselVisionRules,
           ]
         : [
             "- User uploaded a reference for TOPIC + VISUAL STYLE only — NOT to clone pixel-for-pixel.",
@@ -204,7 +265,9 @@ function buildPlanPrompt(input: PlanInput): string {
             ]
           : [];
   return [
-    styleOnlyRef
+    layoutTransferRef
+      ? "Create a teaching/info carousel — LAYOUT TRANSFER from reference ad: same design grammar and grid/list structure as IMAGE 1, user's product and copy on every slide."
+      : styleOnlyRef
       ? contentResearchRef
         ? "Create a teaching/info carousel — match reference visual style and slide pacing, promote the user's product (NOT the reference post topic), distinct layout on every slide."
         : "Create a teaching/info carousel — same topic and visual style family as the reference, but a DISTINCT layout on every slide."

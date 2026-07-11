@@ -13,7 +13,7 @@ function CaptionsPageContent() {
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,#0f172a_0%,#111827_45%,#020617_100%)] text-slate-100">
-      <div className="mx-auto max-w-3xl px-4 py-8 pb-24 sm:px-6">
+      <div className="mx-auto w-full max-w-[1800px] px-4 py-8 pb-24 sm:px-6 lg:px-8">
         <header className="mb-8 rounded-3xl border border-white/10 bg-slate-950/60 px-4 py-6 text-center shadow-sm backdrop-blur">
           <div className="mb-4 flex items-center justify-center gap-2">
             <LanguageToggle variant="dark" />
