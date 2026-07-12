@@ -32,7 +32,7 @@ import type { WorkflowMode } from "@/lib/workflow-mode";
 type ContentResearchPanelProps = {
   /** Category keyword for finding viral posts (e.g. 水晶手串). */
   defaultTopic?: string;
-  /** Actual product/SKU to promote — hooks and copy must be about this. */
+  /** Fixed promote target — physical SKU or the user's conceptIdea. Copy must be about this. */
   promoteProduct?: string;
   onPromoteProductChange?: (value: string) => void;
   promotionMode: PromotionMode;

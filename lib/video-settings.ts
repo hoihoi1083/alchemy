@@ -100,6 +100,22 @@ export function videoSettingsForWorkflow(
 }
 
 /** Merge user panel choices with template defaults (aspect ratio, avoid text, etc.). */
+/** Seconds sent to reel analyze / Seedance (auto → fallback). */
+export function resolveWizardOutputDurationSec(
+  settings: Pick<VideoSettings, "duration">,
+  fallback = 8,
+): number {
+  if (settings.duration === "auto" || Number(settings.duration) > 15) {
+    return fallback;
+  }
+  const n = Number(settings.duration);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+export function isExplicitVideoDuration(duration: VideoDuration): boolean {
+  return duration !== "auto";
+}
+
 export function resolveVideoGenerationOpts(
   templateId: TemplateId,
   settings: VideoSettings,

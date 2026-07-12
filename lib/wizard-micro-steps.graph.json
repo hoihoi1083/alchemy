@@ -1,0 +1,730 @@
+{
+  "version": "0.5.0",
+  "description": "Wizard v2 micro-step graphs. UI-only; maps to useWizardState + useStudioWizard handlers.",
+  "rules": {
+    "formatPickerSkipWhen": "imageOutputMode already set by applyContentAngleToWizard",
+    "copyEditSkipWhen": "intakePath === 'direct' && all copy fields empty",
+    "copyEditNeverSkipWhen": "intakePath === 'research'",
+    "referenceAnalyzeRequiredWhen": "isContentResearchImagePath(promptExtra, workflowMode) && imageRefPhoto",
+    "brandKit": {
+      "location": "copy.edit section — 品牌設定",
+      "required": false,
+      "onEveryCopyEdit": true,
+      "collapsedByDefault": true,
+      "expandedWhen": "isBrandVisualStyle(visualStyleId)",
+      "persistOnMount": "loadBrandKitFromStorage + GET /api/brand-kit",
+      "persistOnSave": "PUT /api/brand-kit + saveBrandKitToStorage"
+    },
+    "brandWebsite": {
+      "step": "asset.brand_website",
+      "requiredWhen": "requiresBrandProfileForImages(visualStyleId) || isBrandVideoStyle(visualStyleId)",
+      "separateFromBrandKit": true
+    },
+    "conceptResearch": {
+      "identityStep": "identity.concept",
+      "identityLabel": "概念助手（非實體產品）",
+      "promoteTarget": "wizardPromoteName({ promotionMode: 'concept', conceptIdea, headline, product })",
+      "conceptIdeaIsAnchor": true,
+      "researchIsStyleOnly": true,
+      "copyEditNeverSkipOnResearch": true,
+      "path4EqualsPath2PlusConceptAssistant": true,
+      "fixRequired": {
+        "section": "9.5",
+        "files": [
+          "components/studio/SetupStep.tsx",
+          "components/content-research/ContentResearchPanel.tsx",
+          "lib/content-research-apply.ts",
+          "lib/content-research-promote.ts"
+        ],
+        "bug": "promoteProduct={product} ignores conceptIdea — reference hook leaks into headline"
+      }
+    }
+  },
+  "microStepIds": [
+    "entry.start",
+    "route.output_goal",
+    "route.subject",
+    "route.intake",
+    "route.video_subpath",
+    "route.cinematic_mode",
+    "cinematic.scene_count",
+    "identity.product_name",
+    "identity.concept",
+    "copy.edit",
+    "copy.storyboard_brief",
+    "copy.creative_brief",
+    "copy.image_prompt",
+    "research.platform",
+    "research.pick_angle",
+    "wait.research_apply",
+    "wait.reference_analyze",
+    "wait.reel_download",
+    "wait.reel_analyze",
+    "wait.brand_analyze",
+    "wait.concept_plan",
+    "asset.reference_image",
+    "asset.reference_video",
+    "asset.product_photo",
+    "asset.extra_kit",
+    "asset.brand_website",
+    "image.output_format",
+    "image.options",
+    "image.generate",
+    "wait.image_generate",
+    "image.review",
+    "image.storyboard_scenes",
+    "wait.storyboard_generate",
+    "video.mode",
+    "video.settings",
+    "video.product_plan",
+    "video.ai_prompt",
+    "video.ugc_pack",
+    "video.bgm",
+    "video.generate",
+    "wait.video_generate",
+    "shortcut.ship_it",
+    "done.export"
+  ],
+  "outputFormatChoices": ["single", "ab", "campaign", "teaching-carousel"],
+  "paths": {
+    "product_image_research": {
+      "id": "product_image_research",
+      "label": "Product / Image / Research",
+      "priority": "P1",
+      "context": {
+        "workflowMode": "image-only",
+        "promotionMode": "physical",
+        "intakePath": "research"
+      },
+      "steps": [
+        { "id": "entry.start" },
+        { "id": "route.output_goal", "set": { "workflowMode": "image-only" } },
+        { "id": "route.subject", "set": { "promotionMode": "physical" } },
+        { "id": "identity.product_name", "required": ["product"] },
+        { "id": "route.intake", "set": { "intakePath": "research" } },
+        { "id": "research.platform" },
+        { "id": "research.pick_angle", "handler": "applyContentAngleToWizard" },
+        { "id": "wait.research_apply" },
+        {
+          "id": "wait.reference_analyze",
+          "required": true,
+          "gate": "evaluateProceedToImageGate",
+          "skipWhen": "!imageRefPhoto"
+        },
+        {
+          "id": "copy.edit",
+          "label": "內容與生成設定",
+          "prefillFrom": "research",
+          "skippable": false,
+          "sections": ["copy", "brandKit", "referenceBrief", "advancedPrompt"],
+          "brandKit": { "required": false, "collapsedByDefault": true }
+        },
+        {
+          "id": "asset.brand_website",
+          "when": "requiresBrandProfileForImages(visualStyleId)",
+          "required": true
+        },
+        {
+          "id": "image.output_format",
+          "choices": ["single", "ab", "campaign", "teaching-carousel"],
+          "skipWhen": "anglePresetOutputMode"
+        },
+        { "id": "asset.product_photo", "required": true },
+        { "id": "image.options", "skippable": true },
+        { "id": "image.generate", "handler": "generateImage" },
+        { "id": "wait.image_generate", "while": "imageBusy" },
+        {
+          "id": "image.review",
+          "when": "imageOutputMode === 'ab' || imageVisionReview"
+        },
+        { "id": "done.export", "legacyStepKey": "done" }
+      ]
+    },
+    "product_image_direct": {
+      "id": "product_image_direct",
+      "label": "Product / Image / Direct",
+      "priority": "MVP",
+      "context": {
+        "workflowMode": "image-only",
+        "promotionMode": "physical",
+        "intakePath": "direct"
+      },
+      "steps": [
+        { "id": "entry.start" },
+        { "id": "route.output_goal", "set": { "workflowMode": "image-only" } },
+        { "id": "route.subject", "set": { "promotionMode": "physical" } },
+        { "id": "identity.product_name", "required": ["product"] },
+        { "id": "route.intake", "set": { "intakePath": "direct" } },
+        {
+          "id": "asset.reference_image",
+          "skippable": true,
+          "onUpload": { "imageCreativeMode": "reference-concept" }
+        },
+        {
+          "id": "wait.reference_analyze",
+          "when": "referenceAnalyzeBusy",
+          "skipWhen": "!imageRefPhoto"
+        },
+        {
+          "id": "copy.edit",
+          "label": "內容與生成設定",
+          "skippable": true,
+          "skipWhen": "allCopyEmpty",
+          "sections": ["copy", "brandKit", "advancedPrompt"],
+          "brandKit": { "required": false, "collapsedByDefault": true }
+        },
+        {
+          "id": "image.output_format",
+          "choices": ["single", "ab", "campaign", "teaching-carousel"],
+          "default": "ab"
+        },
+        { "id": "asset.product_photo", "required": true },
+        { "id": "image.options", "skippable": true },
+        { "id": "image.generate", "handler": "generateImage" },
+        { "id": "wait.image_generate", "while": "imageBusy" },
+        { "id": "image.review", "when": "imageOutputMode === 'ab'" },
+        { "id": "done.export", "legacyStepKey": "done" }
+      ]
+    },
+    "concept_image_research": {
+      "id": "concept_image_research",
+      "label": "Concept / Image / Research",
+      "priority": "P1",
+      "context": {
+        "workflowMode": "image-only",
+        "promotionMode": "concept",
+        "intakePath": "research"
+      },
+      "steps": [
+        { "id": "entry.start" },
+        { "id": "route.output_goal", "set": { "workflowMode": "image-only" } },
+        { "id": "route.subject", "set": { "promotionMode": "concept" } },
+        {
+          "id": "identity.concept",
+          "label": "概念助手（非實體產品）",
+          "required": ["conceptIdea"],
+          "optionalHandler": "planConcept",
+          "note": "Fixed anchor before research; pass conceptIdea as promote target (§9.5)"
+        },
+        { "id": "route.intake", "set": { "intakePath": "research" } },
+        {
+          "id": "research.platform",
+          "promoteTarget": "wizardPromoteName(concept)"
+        },
+        { "id": "research.pick_angle", "handler": "applyContentAngleToWizard" },
+        { "id": "wait.research_apply" },
+        {
+          "id": "wait.reference_analyze",
+          "required": true,
+          "skipWhen": "!imageRefPhoto"
+        },
+        {
+          "id": "copy.edit",
+          "label": "內容與生成設定",
+          "prefillFrom": "research",
+          "skippable": false,
+          "sections": ["copy", "brandKit", "referenceBrief", "advancedPrompt"],
+          "brandKit": { "required": false, "collapsedByDefault": true }
+        },
+        { "id": "asset.reference_image", "skippable": true },
+        { "id": "asset.product_photo", "skippable": true },
+        {
+          "id": "asset.brand_website",
+          "when": "requiresBrandProfileForImages(visualStyleId)",
+          "required": true
+        },
+        {
+          "id": "image.output_format",
+          "choices": ["single", "ab", "campaign", "teaching-carousel"],
+          "skipWhen": "anglePresetOutputMode"
+        },
+        { "id": "image.options", "skippable": true },
+        { "id": "image.generate", "handler": "generateImage" },
+        { "id": "wait.image_generate", "while": "imageBusy" },
+        { "id": "image.review" },
+        { "id": "done.export", "legacyStepKey": "done" }
+      ]
+    },
+    "concept_image_direct": {
+      "id": "concept_image_direct",
+      "label": "Concept / Image / Direct",
+      "description": "Path 2 structure + 概念助手 — NOT Path 3 minus research",
+      "priority": "P1",
+      "basedOn": "product_image_direct",
+      "context": {
+        "workflowMode": "image-only",
+        "promotionMode": "concept",
+        "intakePath": "direct"
+      },
+      "steps": [
+        { "id": "entry.start" },
+        { "id": "route.output_goal", "set": { "workflowMode": "image-only" } },
+        { "id": "route.subject", "set": { "promotionMode": "concept" } },
+        {
+          "id": "identity.concept",
+          "label": "概念助手（非實體產品）",
+          "required": ["conceptIdea"]
+        },
+        { "id": "route.intake", "set": { "intakePath": "direct" } },
+        { "id": "asset.reference_image", "skippable": true },
+        { "id": "wait.reference_analyze", "skipWhen": "!imageRefPhoto" },
+        {
+          "id": "copy.edit",
+          "label": "內容與生成設定",
+          "skippable": true,
+          "sections": ["copy", "brandKit", "advancedPrompt"],
+          "brandKit": { "required": false, "collapsedByDefault": true }
+        },
+        {
+          "id": "asset.brand_website",
+          "when": "isBrandVisualStyle(visualStyleId)",
+          "required": true
+        },
+        {
+          "id": "image.output_format",
+          "choices": ["single", "ab", "campaign", "teaching-carousel"]
+        },
+        { "id": "asset.product_photo", "skippable": true },
+        { "id": "image.options", "skippable": true },
+        { "id": "image.generate", "handler": "generateImage" },
+        { "id": "wait.image_generate", "while": "imageBusy" },
+        { "id": "image.review" },
+        { "id": "done.export", "legacyStepKey": "done" }
+      ]
+    },
+    "product_video_research_reel": {
+      "id": "product_video_research_reel",
+      "label": "Product / Video / Research reel",
+      "priority": "P1",
+      "context": {
+        "promotionMode": "physical",
+        "intakePath": "research"
+      },
+      "variants": [
+        {
+          "when": { "workflowMode": "combined" },
+          "setAfterAngle": { "visualStyleId": "storyboard-video" },
+          "stepsSuffix": ["image.storyboard_scenes", "wait.storyboard_generate"]
+        },
+        {
+          "when": { "workflowMode": "video-only" },
+          "setAfterAngle": { "visualStyleId": "product" },
+          "stepsSuffix": []
+        }
+      ],
+      "steps": [
+        { "id": "entry.start" },
+        { "id": "route.output_goal", "required": true },
+        { "id": "route.subject", "set": { "promotionMode": "physical" } },
+        { "id": "identity.product_name", "required": ["product"] },
+        { "id": "route.intake", "set": { "intakePath": "research" } },
+        { "id": "research.platform", "skippable": true },
+        {
+          "id": "research.pick_angle",
+          "handler": "applyContentAngleToWizard",
+          "expectFormat": "reel",
+          "skippable": true,
+          "skipWhen": "referenceAd && referenceIsVideo"
+        },
+        { "id": "wait.research_apply", "skipWhen": "!contentResearchApplyRef" },
+        {
+          "id": "asset.reference_video",
+          "label": "參考短片",
+          "required": true,
+          "alwaysVisible": true,
+          "accepts": ["searchDownload", "manualUpload"]
+        },
+        {
+          "id": "wait.reel_download",
+          "when": "research.pick_angle && !referenceAd",
+          "while": "researchReelDownloadBusy",
+          "onFailure": {
+            "actions": ["research.pick_angle", "asset.reference_video"],
+            "messageKey": "contentResearch.videoDownloadFailed"
+          }
+        },
+        { "id": "wait.reel_analyze", "while": "researchReelAnalyzeBusy", "required": true },
+        {
+          "id": "copy.edit",
+          "label": "內容與生成設定",
+          "prefillFrom": "research",
+          "skippable": false,
+          "sections": ["copy", "brandKit", "advancedPrompt"],
+          "brandKit": { "required": false, "collapsedByDefault": true }
+        },
+        {
+          "id": "asset.brand_website",
+          "when": "isBrandVideoStyle(visualStyleId)",
+          "required": true
+        },
+        { "id": "asset.product_photo", "required": true },
+        {
+          "id": "copy.storyboard_brief",
+          "when": "visualStyleId === 'storyboard-video'"
+        },
+        { "id": "IMAGE_STORYBOARD_BRANCH" },
+        { "id": "video.settings", "skippable": true },
+        { "id": "video.generate", "handler": "generateVideo", "legacyStepKey": "video" },
+        { "id": "wait.video_generate", "while": "videoBusy" },
+        { "id": "done.export", "legacyStepKey": "done" }
+      ]
+    },
+    "product_video_direct": {
+      "id": "product_video_direct",
+      "label": "Product / Video / Direct",
+      "priority": "P1",
+      "context": {
+        "workflowMode": "video-only",
+        "promotionMode": "physical",
+        "intakePath": "direct"
+      },
+      "steps": [
+        { "id": "entry.start" },
+        { "id": "route.output_goal", "set": { "workflowMode": "video-only" } },
+        { "id": "route.subject", "set": { "promotionMode": "physical" } },
+        { "id": "identity.product_name", "required": ["product"] },
+        { "id": "route.intake", "set": { "intakePath": "direct" } },
+        {
+          "id": "route.video_subpath",
+          "choices": [
+            { "id": "product_promo", "set": { "visualStyleId": "product", "videoCreativeMode": "product-promo" } },
+            { "id": "reference_reel", "set": { "videoCreativeMode": "reference-concept" } },
+            { "id": "product_assistant", "set": { "videoCreativeMode": "product-assistant" } },
+            { "id": "ugc_presenter", "set": { "visualStyleId": "ugc-presenter" } }
+          ]
+        },
+        { "id": "asset.reference_video", "when": "videoSubpath === 'reference_reel'", "required": true },
+        { "id": "wait.reel_analyze", "when": "referenceIsVideo" },
+        {
+          "id": "copy.edit",
+          "label": "內容與生成設定",
+          "sections": ["copy", "brandKit", "advancedPrompt"],
+          "brandKit": { "required": false, "collapsedByDefault": true }
+        },
+        {
+          "id": "asset.brand_website",
+          "when": "isBrandVideoStyle(visualStyleId)",
+          "required": true
+        },
+        {
+          "id": "copy.storyboard_brief",
+          "when": "visualStyleId === 'storyboard-video'"
+        },
+        { "id": "asset.product_photo", "required": true },
+        { "id": "asset.extra_kit", "when": "videoCreativeMode === 'product-assistant'", "skippable": true },
+        { "id": "image.storyboard_scenes", "when": "visualStyleId === 'storyboard-video'" },
+        { "id": "wait.storyboard_generate", "when": "visualStyleId === 'storyboard-video'" },
+        { "id": "video.product_plan", "when": "videoCreativeMode === 'product-assistant'" },
+        { "id": "video.ugc_pack", "when": "visualStyleId === 'ugc-presenter'" },
+        { "id": "video.settings", "skippable": true },
+        { "id": "video.generate", "handler": "generateVideo" },
+        { "id": "wait.video_generate", "while": "videoBusy" },
+        { "id": "done.export" }
+      ]
+    },
+    "product_combined": {
+      "id": "product_combined",
+      "label": "Product / Image → Video (combined)",
+      "priority": "P1",
+      "context": {
+        "workflowMode": "combined",
+        "promotionMode": "physical"
+      },
+      "steps": [
+        { "id": "entry.start" },
+        { "id": "route.output_goal", "set": { "workflowMode": "combined" } },
+        { "id": "route.subject", "set": { "promotionMode": "physical" } },
+        { "id": "identity.product_name", "required": ["product"] },
+        { "id": "route.intake" },
+        { "id": "MERGE_product_image_subpath" },
+        { "id": "image.review", "handler": "finishImageStep", "legacyStepKey": "image" },
+        {
+          "id": "shortcut.ship_it",
+          "when": "shipItEligible",
+          "skippable": true,
+          "handler": "runShipIt",
+          "after": "image.review"
+        },
+        {
+          "id": "video.settings",
+          "set": { "videoCreativeMode": "image-to-video" }
+        },
+        { "id": "video.generate", "handler": "generateVideo", "legacyStepKey": "video" },
+        { "id": "wait.video_generate", "while": "videoBusy" },
+        { "id": "done.export" }
+      ],
+      "merge": {
+        "research": "product_image_research",
+        "direct": "product_image_direct",
+        "stopBefore": "done.export"
+      }
+    },
+    "concept_video_research_reel": {
+      "id": "concept_video_research_reel",
+      "label": "Concept / Video / Research reel",
+      "description": "Path 8 — Path 5 + 概念助手; §9.5; 手動上傳 MP4 always visible",
+      "priority": "P1",
+      "pathNumber": 8,
+      "basedOn": "product_video_research_reel",
+      "context": {
+        "promotionMode": "concept",
+        "intakePath": "research"
+      },
+      "variants": [
+        {
+          "when": { "workflowMode": "combined" },
+          "setAfterAngle": { "visualStyleId": "storyboard-video" },
+          "stepsSuffix": ["image.storyboard_scenes", "wait.storyboard_generate"]
+        },
+        {
+          "when": { "workflowMode": "video-only" },
+          "setAfterAngle": { "visualStyleId": "product" },
+          "stepsSuffix": []
+        }
+      ],
+      "steps": [
+        { "id": "entry.start" },
+        { "id": "route.output_goal", "required": true },
+        { "id": "route.subject", "set": { "promotionMode": "concept" } },
+        {
+          "id": "identity.concept",
+          "label": "概念助手（非實體產品）",
+          "required": ["conceptIdea"]
+        },
+        { "id": "route.intake", "set": { "intakePath": "research" } },
+        {
+          "id": "research.platform",
+          "promoteTarget": "wizardPromoteName({ promotionMode: 'concept', conceptIdea, headline, product })",
+          "skippable": true
+        },
+        {
+          "id": "research.pick_angle",
+          "handler": "applyContentAngleToWizard",
+          "expectFormat": "reel",
+          "skippable": true,
+          "skipWhen": "referenceAd && referenceIsVideo"
+        },
+        { "id": "wait.research_apply", "skipWhen": "!contentResearchApplyRef" },
+        {
+          "id": "asset.reference_video",
+          "label": "參考短片",
+          "required": true,
+          "alwaysVisible": true,
+          "accepts": ["searchDownload", "manualUpload"]
+        },
+        {
+          "id": "wait.reel_download",
+          "when": "research.pick_angle && !referenceAd",
+          "while": "researchReelDownloadBusy",
+          "onFailure": {
+            "actions": ["research.pick_angle", "asset.reference_video"],
+            "messageKey": "contentResearch.videoDownloadFailed"
+          }
+        },
+        { "id": "wait.reel_analyze", "while": "researchReelAnalyzeBusy", "required": true },
+        {
+          "id": "copy.edit",
+          "label": "內容與生成設定",
+          "prefillFrom": "research",
+          "skippable": false,
+          "sections": ["copy", "brandKit", "advancedPrompt"],
+          "brandKit": { "required": false, "collapsedByDefault": true }
+        },
+        {
+          "id": "asset.brand_website",
+          "when": "isBrandVideoStyle(visualStyleId)",
+          "required": true
+        },
+        { "id": "asset.reference_image", "skippable": true },
+        { "id": "asset.product_photo", "skippable": true, "required": false },
+        {
+          "id": "copy.storyboard_brief",
+          "when": "visualStyleId === 'storyboard-video'"
+        },
+        { "id": "IMAGE_STORYBOARD_BRANCH" },
+        { "id": "video.settings", "skippable": true },
+        { "id": "video.generate", "handler": "generateVideo", "legacyStepKey": "video" },
+        { "id": "wait.video_generate", "while": "videoBusy" },
+        { "id": "done.export", "legacyStepKey": "done" }
+      ]
+    },
+    "concept_video_direct": {
+      "id": "concept_video_direct",
+      "label": "Concept / Video / Direct",
+      "description": "Path 9 — Path 6 + 概念助手; creative / brand / reference reel only",
+      "priority": "P1",
+      "pathNumber": 9,
+      "basedOn": "product_video_direct",
+      "context": {
+        "workflowMode": "video-only",
+        "promotionMode": "concept",
+        "intakePath": "direct"
+      },
+      "steps": [
+        { "id": "entry.start" },
+        { "id": "route.output_goal", "set": { "workflowMode": "video-only" } },
+        { "id": "route.subject", "set": { "promotionMode": "concept" } },
+        {
+          "id": "identity.concept",
+          "label": "概念助手（非實體產品）",
+          "required": ["conceptIdea"]
+        },
+        { "id": "route.intake", "set": { "intakePath": "direct" } },
+        {
+          "id": "route.video_subpath",
+          "choices": [
+            { "id": "creative_video", "set": { "visualStyleId": "creative-video" } },
+            { "id": "brand_video", "set": { "visualStyleId": "brand-video" } },
+            { "id": "reference_reel", "set": { "videoCreativeMode": "reference-concept" } }
+          ]
+        },
+        { "id": "asset.reference_image", "skippable": true },
+        { "id": "asset.reference_video", "when": "videoSubpath === 'reference_reel'", "required": true },
+        { "id": "wait.reel_analyze", "when": "referenceIsVideo" },
+        {
+          "id": "copy.edit",
+          "label": "內容與生成設定",
+          "skippable": true,
+          "sections": ["copy", "brandKit", "advancedPrompt"],
+          "brandKit": { "required": false, "collapsedByDefault": true }
+        },
+        {
+          "id": "copy.creative_brief",
+          "when": "visualStyleId === 'creative-video'",
+          "required": true
+        },
+        {
+          "id": "asset.brand_website",
+          "when": "isBrandVideoStyle(visualStyleId)",
+          "required": true
+        },
+        { "id": "asset.product_photo", "skippable": true, "required": false },
+        {
+          "id": "video.ai_prompt",
+          "when": "visualStyleId === 'creative-video'",
+          "handler": "planAiVideoPrompt"
+        },
+        { "id": "video.settings", "skippable": true },
+        { "id": "video.generate", "handler": "generateVideo" },
+        { "id": "wait.video_generate", "while": "videoBusy" },
+        { "id": "done.export" }
+      ]
+    },
+    "concept_combined_cinematic": {
+      "id": "concept_combined_cinematic",
+      "label": "Concept / Combined / Cinematic",
+      "description": "Path 10 — concept-cinematic direct; NOT Path 8 reel storyboard or Path 11 animate keyframe",
+      "priority": "P1",
+      "pathNumber": 10,
+      "context": {
+        "workflowMode": "combined",
+        "promotionMode": "concept",
+        "intakePath": "direct",
+        "visualStyleId": "concept-cinematic"
+      },
+      "steps": [
+        { "id": "entry.start" },
+        { "id": "route.output_goal", "set": { "workflowMode": "combined" } },
+        { "id": "route.subject", "set": { "promotionMode": "concept" } },
+        {
+          "id": "identity.concept",
+          "label": "概念助手（非實體產品）",
+          "required": ["conceptIdea"]
+        },
+        { "id": "route.intake", "set": { "intakePath": "direct" } },
+        {
+          "id": "route.cinematic_mode",
+          "choices": [
+            { "id": "single", "set": { "cinematicSceneCount": 1, "cinematicStitchReel": false } },
+            { "id": "stitch", "set": { "cinematicStitchReel": true } }
+          ]
+        },
+        {
+          "id": "cinematic.scene_count",
+          "when": "cinematicStitchReel",
+          "choices": [1, 2, 3, 4, 5, 6]
+        },
+        { "id": "asset.reference_image", "skippable": true },
+        { "id": "wait.concept_plan", "optionalHandler": "planConcept", "skippable": true },
+        {
+          "id": "copy.edit",
+          "label": "內容與生成設定",
+          "skippable": true,
+          "sections": ["copy", "brandKit", "advancedPrompt"]
+        },
+        { "id": "copy.creative_brief", "required": true },
+        { "id": "image.storyboard_scenes", "when": "cinematicSceneCount > 1 || cinematicStitchReel" },
+        { "id": "wait.storyboard_generate", "when": "cinematicSceneCount > 1 || cinematicStitchReel" },
+        { "id": "video.settings" },
+        { "id": "video.ai_prompt", "handler": "planAiVideoPrompt" },
+        { "id": "video.bgm", "skippable": true },
+        { "id": "video.generate", "handler": "generateVideo" },
+        { "id": "wait.video_generate", "while": "videoBusy" },
+        { "id": "done.export" }
+      ]
+    },
+    "concept_combined": {
+      "id": "concept_combined",
+      "label": "Concept / Combined / Animate keyframe",
+      "description": "Path 11 — Path 7 + 概念助手; merge Path 3/4 poster trunk + image-to-video; NOT storyboard",
+      "priority": "P2",
+      "pathNumber": 11,
+      "context": {
+        "workflowMode": "combined",
+        "promotionMode": "concept"
+      },
+      "steps": [
+        { "id": "entry.start" },
+        { "id": "route.output_goal", "set": { "workflowMode": "combined" } },
+        { "id": "route.subject", "set": { "promotionMode": "concept" } },
+        {
+          "id": "identity.concept",
+          "label": "概念助手（非實體產品）",
+          "required": ["conceptIdea"]
+        },
+        { "id": "route.intake" },
+        { "id": "MERGE_concept_image_subpath" },
+        { "id": "image.review", "handler": "finishImageStep", "legacyStepKey": "image" },
+        {
+          "id": "video.settings",
+          "set": { "videoCreativeMode": "image-to-video" }
+        },
+        { "id": "video.generate", "handler": "generateVideo", "legacyStepKey": "video" },
+        { "id": "wait.video_generate", "while": "videoBusy" },
+        { "id": "done.export" }
+      ],
+      "merge": {
+        "research": "concept_image_research",
+        "direct": "concept_image_direct",
+        "stopBefore": "done.export"
+      },
+      "shipItEligible": false
+    }
+  },
+  "pathIndex": [
+    { "number": 1, "id": "product_image_research" },
+    { "number": 2, "id": "product_image_direct", "mvp": true },
+    { "number": 3, "id": "concept_image_research" },
+    { "number": 4, "id": "concept_image_direct" },
+    { "number": 5, "id": "product_video_research_reel" },
+    { "number": 6, "id": "product_video_direct" },
+    { "number": 7, "id": "product_combined" },
+    { "number": 8, "id": "concept_video_research_reel" },
+    { "number": 9, "id": "concept_video_direct" },
+    { "number": 10, "id": "concept_combined_cinematic" },
+    { "number": 11, "id": "concept_combined" }
+  ],
+  "ancillaryOverlays": {
+    "ugc_presenter": { "appliesTo": ["product_video_direct"], "steps": ["video.ugc_pack"] },
+    "product_video_assistant": { "appliesTo": ["product_video_direct"], "steps": ["video.product_plan", "asset.extra_kit"] },
+    "storyboard_explainer": { "appliesTo": ["product_video_research_reel", "product_video_direct", "concept_video_research_reel"], "before": "image.storyboard_scenes" },
+    "template_prefill": { "appliesTo": "all", "when": "url.template" },
+    "model_wear_angle": { "appliesTo": ["product_image_research", "concept_image_research"], "skipStep": "image.output_format" }
+  },
+  "gateFunctions": {
+    "setupToImage": "evaluateProceedToImageGate",
+    "imageGenerate": "canGenerateImage",
+    "imageToVideo": "finishImageStep",
+    "videoGenerate": "useStudioWizard.videoGenerateDisabledReason"
+  }
+}

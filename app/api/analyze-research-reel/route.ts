@@ -4,9 +4,13 @@ import { requireAppUser } from "@/lib/require-app-user";
 import { analyzeResearchReelFromVideo } from "@/lib/reel-video-analysis";
 import { researchReelAnalysisPromptBlock } from "@/lib/reel-analysis-types";
 import { planVideoStoryboardFromReelAnalysis } from "@/lib/video-storyboard-plan";
-import type { PromptMarket } from "@/lib/prompt-variables";
+import type { PromptMarket, SubjectFraming } from "@/lib/prompt-variables";
 import { isPromotionMode } from "@/lib/promotion-mode";
 import { wizardPromoteName } from "@/lib/wizard-promote-name";
+import { resolveArtStyleId } from "@/lib/art-style";
+import type { StoryboardSceneCount } from "@/lib/ad-pack-preferences";
+import { STORYBOARD_SCENE_COUNTS } from "@/lib/ad-pack-preferences";
+import type { ReferenceStrategyKind } from "@/lib/reference-strategy";
 
 export const runtime = "nodejs";
 export const maxDuration = 180;
@@ -41,7 +45,18 @@ export async function POST(request: Request) {
   const headline = String(formData.get("headline") ?? "").trim();
   const subline = String(formData.get("subline") ?? "").trim();
   const offer = String(formData.get("offer") ?? "").trim();
+  const business = String(formData.get("business") ?? "").trim();
   const promptExtra = String(formData.get("prompt_extra") ?? "").trim();
+  const artStyleId = resolveArtStyleId(String(formData.get("art_style") ?? "").trim());
+  const subjectFraming = (String(formData.get("subject_framing") ?? "auto").trim() ||
+    "auto") as SubjectFraming;
+  const referenceStrategyKind = String(formData.get("reference_strategy_kind") ?? "").trim() as
+    | ReferenceStrategyKind
+    | "";
+  const sceneCountRaw = String(formData.get("scene_count") ?? "auto").trim();
+  const sceneCountTarget = (STORYBOARD_SCENE_COUNTS as readonly string[]).includes(sceneCountRaw)
+    ? (sceneCountRaw as StoryboardSceneCount)
+    : "auto";
   const product = wizardPromoteName({
     promotionMode,
     product: String(formData.get("product_name") ?? "").trim(),
@@ -89,6 +104,7 @@ export async function POST(request: Request) {
       ? await planVideoStoryboardFromReelAnalysis({
           analysis: result.analysis,
           product,
+          business,
           headline,
           subline,
           offer,
@@ -96,6 +112,16 @@ export async function POST(request: Request) {
           durationSec: outputDurationSec,
           market: promptMarket,
           promotionMode,
+          artStyleId,
+          framing: subjectFraming,
+          referenceStrategyKind:
+            referenceStrategyKind === "layout-transfer" ||
+            referenceStrategyKind === "style-only" ||
+            referenceStrategyKind === "product-clone" ||
+            referenceStrategyKind === "mood-only"
+              ? referenceStrategyKind
+              : undefined,
+          sceneCountTarget,
         })
       : undefined;
 

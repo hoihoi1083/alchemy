@@ -677,6 +677,7 @@ export function VideoStep() {
     <VideoSettingsPanel
       compact
       variant="dark"
+      hideAutoDuration
       value={videoSettings}
       onChange={setVideoSettings}
     />

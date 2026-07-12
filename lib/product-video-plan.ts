@@ -1,7 +1,14 @@
+import {
+  appendArtStyleSeedanceHintIfNeeded,
+  artStylePlannerHint,
+  resolveArtStyleId,
+  type ArtStyleId,
+} from "@/lib/art-style";
 import { callDeepSeekChat } from "@/lib/deepseek-client";
 import { parseLlmJsonObject } from "@/lib/parse-llm-json";
 import type { PromptMarket, SubjectFraming } from "@/lib/prompt-variables";
 import { VIDEO_BGM_HINT } from "@/lib/templates";
+import { videoDurationPlannerBlock } from "@/lib/video-duration-planner";
 import type {
   ProductVideoPlan,
   ProductVideoVisionProfile,
@@ -11,6 +18,7 @@ function finishSeedancePrompt(
   prompt: string,
   imageCount: number,
   durationSec: number,
+  artStyleId: ArtStyleId = "realistic",
 ): string {
   const p = prompt.trim();
   const needsBgm = !p.includes("instrumental");
@@ -26,8 +34,12 @@ function finishSeedancePrompt(
   if (imageCount > 1 || hasSlideshowLanguage) {
     out = `${out} Avoid slideshow structure: no rigid per-image hard-cut timeline, no static hold longer than 1 second. Keep one coherent product-commercial flow with smooth camera motion, motivated transitions, parallax depth, rack focus, and micro-actions (water ripple, hand interaction, light sweep). Use uploaded images as identity references while preserving the exact same product design and proportions.`;
   }
-  out = `${out} Total clip length around ${durationSec}s with continuous motion energy and clean commercial realism.`;
-  return out;
+  const lookNote =
+    artStyleId === "realistic"
+      ? "clean commercial realism"
+      : "preserve the stylized illustrated look from reference images";
+  out = `${out} Total clip length around ${durationSec}s with continuous motion energy and ${lookNote}.`;
+  return appendArtStyleSeedanceHintIfNeeded(out, artStyleId);
 }
 
 function normalizePlan(
@@ -35,6 +47,7 @@ function normalizePlan(
   vision: ProductVideoVisionProfile,
   imageCount: number,
   durationSec: number,
+  artStyleId: ArtStyleId,
 ): ProductVideoPlan {
   const seedancePrompt = String(parsed.seedancePrompt ?? "").trim();
   if (!seedancePrompt) {
@@ -55,7 +68,7 @@ function normalizePlan(
     colors: vision.colors,
     situation: String(parsed.situation ?? "").trim() || vision.situation,
     imageRoles: vision.imageRoles,
-    seedancePrompt: finishSeedancePrompt(seedancePrompt, imageCount, durationSec),
+    seedancePrompt: finishSeedancePrompt(seedancePrompt, imageCount, durationSec, artStyleId),
     motionSummaryZh: String(parsed.motionSummaryZh ?? "").trim(),
     productionNotes: String(parsed.productionNotes ?? "").trim(),
   };
@@ -72,8 +85,11 @@ function buildPlanPrompt(input: {
   market: PromptMarket;
   framing: SubjectFraming;
   styleHint: string;
+  artStyleId: ArtStyleId;
 }): string {
   const imageCount = input.vision.imageRoles.length;
+  const artStyleId = input.artStyleId;
+  const stylized = artStyleId !== "realistic";
   const rolesBlock = input.vision.imageRoles
     .map(
       (r) =>
@@ -82,7 +98,9 @@ function buildPlanPrompt(input: {
     .join("\n");
 
   return [
-    "Write a Seedance reference-to-video prompt for a photorealistic product Reel.",
+    stylized
+      ? "Write a Seedance reference-to-video prompt for a stylized product Reel."
+      : "Write a Seedance reference-to-video prompt for a photorealistic product Reel.",
     "Return ONE JSON object only — no markdown fences.",
     "",
     'Required JSON: {"productSummary":"","category":"","situation":"","seedancePrompt":"","motionSummaryZh":"","productionNotes":""}',
@@ -100,7 +118,9 @@ function buildPlanPrompt(input: {
     rolesBlock,
     "",
     "seedancePrompt rules (English, for Seedance API):",
-    `- Opening: photorealistic 9:16 commercial for this ${input.vision.category}.`,
+    stylized
+      ? `- Opening: 9:16 commercial for this ${input.vision.category}. ${artStylePlannerHint(artStyleId)}`
+      : `- Opening: photorealistic 9:16 commercial for this ${input.vision.category}.`,
     `- Reference exactly ${imageCount} images as @Image1 … @Image${imageCount}.`,
     imageCount === 1
       ? "- Single-image mode: subtle commercial motion on @Image1 — slow push-in or gentle light shimmer, locked product identity."
@@ -119,8 +139,7 @@ function buildPlanPrompt(input: {
     "",
     "motionSummaryZh: one line for the user (繁體中文 if HK/TW market).",
     "productionNotes: brief note on what to expect from one Seedance clip (繁體中文 or English).",
-    "",
-    `Target duration: ~${input.durationSec} seconds.`,
+    ...videoDurationPlannerBlock(input.durationSec),
     input.styleHint ? `Visual mood hint: ${input.styleHint}` : "",
     input.product ? `Product name: ${input.product}` : "",
     input.business ? `Business: ${input.business}` : "",
@@ -143,6 +162,7 @@ export type PlanProductVideoInput = {
   market?: PromptMarket;
   framing?: SubjectFraming;
   styleHint?: string;
+  artStyleId?: ArtStyleId | string;
 };
 
 export async function planProductVideoFromVision(
@@ -152,6 +172,7 @@ export async function planProductVideoFromVision(
     15,
     Math.max(4, Number(input.durationSec) || 8),
   );
+  const artStyleId = resolveArtStyleId(input.artStyleId);
   const imageCount = input.vision.imageRoles.length;
 
   const outputText = await callDeepSeekChat(
@@ -174,6 +195,7 @@ export async function planProductVideoFromVision(
           market: input.market || "hk",
           framing: input.framing || "auto",
           styleHint: input.styleHint?.trim() || "",
+          artStyleId,
         }),
       },
     ],
@@ -185,5 +207,6 @@ export async function planProductVideoFromVision(
     input.vision,
     imageCount,
     durationSec,
+    artStyleId,
   );
 }

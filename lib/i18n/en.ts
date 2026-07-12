@@ -710,6 +710,12 @@ export const en = {
       "Your product photo — each storyboard scene still is generated from it with reference pacing",
     researchReelUploadMp4Hint:
       "Search auto-download or upload your own MP4/MOV — either works; we analyze style and pacing the same way",
+    researchReelPickDurationFirst:
+      "Pick an output duration above (not Auto) before reference analysis — the reel plan and Seedance billing use this length.",
+    researchReelReanalyzeForDuration: "Duration changed — re-analyzing reference reel…",
+    researchReelStatusOutputDuration: "Output duration selected (for analyze & billing)",
+    researchReelStatusOutputDurationMissing:
+      "Pick output duration (4–12s) first — reference can be long; your billable length is what you choose here",
     setupReferenceVideoTitle: "Reference reel (optional)",
     setupReferenceVideoIntro:
       "Upload a reference ad MP4 on Step 1 to analyze style and edit rhythm before scene generation. Skip if you prefer product photo + AI assistant or text-only video with no reference.",
@@ -1002,6 +1008,9 @@ export const en = {
     videoReferenceOutputSettingsTitle: "Output length & quality",
     videoReferenceOutputSettingsHint:
       "Reference reel sets motion and pacing — pick how long and sharp the generated clip should be.",
+    videoSetupOutputSettingsTitle: "Output length & quality (affects cost)",
+    videoSetupOutputSettingsHint:
+      "fal.ai bills by Seedance duration and resolution — pick these before uploading or analyzing a reference reel. The reference MP4 can be much longer; your output length here is what you pay for (AI compresses the reference into a complete short ad).",
     videoSettingsResolution: "Resolution",
     videoSettingsDuration: "Duration",
     videoSettingsMotion: "Camera / motion",
@@ -1229,6 +1238,7 @@ export const en = {
     planVideoPromptBtn: "AI write video prompt",
     planVideoPromptBusy: "DeepSeek writing video prompt…",
     planVideoPromptReady: "Video prompt filled below — review before generating",
+    planVideoPromptDurationRefresh: "Output length changed — DeepSeek is rewriting the video prompt for the new duration…",
     productVideoKitTitle: "Product photo kit",
     productVideoKitHint:
       "Upload hero product (required), packaging, or extra angles — AI vision reads all photos, then DeepSeek writes a situational Seedance prompt.",

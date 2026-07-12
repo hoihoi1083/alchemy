@@ -100,8 +100,8 @@ function structureHookSuffix(format: ContentAngleFormat): string {
 }
 
 /**
- * Headline/subline for wizard — prefer product-specific copy; reference post topic is not copied.
- * Concept mode uses the planner's rewritten hook/bullets for the picked angle.
+ * Headline/subline for wizard — prefer promote-target-specific copy; reference post topic is not copied.
+ * In concept mode an explicit concept anchor is always retained, even when it equals the search topic.
  */
 export function copyFieldsFromAngle(
   angle: ContentAngleCandidate,
@@ -115,9 +115,9 @@ export function copyFieldsFromAngle(
   const referenceSourced = options?.referenceSourced ?? isReferenceSourcedAngle(angle);
 
   if (promotionMode === "concept") {
-    if (product && product !== search) {
+    if (product) {
       return {
-        headline: product,
+        headline: `${product}｜${structureHookSuffix(angle.format)}`,
         subline: structureSublineFromAngle(angle, product),
         offer: sanitizeOfferFromAngle(angle, product),
       };
@@ -215,7 +215,7 @@ export function contentResearchPromoteTarget(
   if (promotionMode === "physical") {
     return product;
   }
-  return product || fields.headline.trim() || fields.conceptIdea.trim() || fields.searchTopic.trim();
+  return product || fields.conceptIdea.trim() || fields.headline.trim() || fields.searchTopic.trim();
 }
 
 /** Rebuild style-only research block when user edits product/headline after applying a reference post. */

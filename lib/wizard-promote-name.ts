@@ -1,6 +1,6 @@
 import type { PromotionMode } from "@/lib/promotion-mode";
 
-/** What the user is promoting — product SKU (physical) or topic/headline (concept). */
+/** What the user is promoting — product SKU (physical) or the user's fixed concept anchor. */
 export function wizardPromoteName(input: {
   promotionMode: PromotionMode;
   product?: string;
@@ -11,7 +11,7 @@ export function wizardPromoteName(input: {
   const headline = input.headline?.trim() ?? "";
   const conceptIdea = input.conceptIdea?.trim() ?? "";
   if (input.promotionMode === "concept") {
-    return headline || conceptIdea || product;
+    return conceptIdea || headline || product;
   }
   return product;
 }

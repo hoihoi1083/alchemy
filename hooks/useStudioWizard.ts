@@ -77,6 +77,8 @@ import {
   cameraForMotion,
   defaultMotionStyleForTemplate,
   resolveVideoGenerationOpts,
+  resolveWizardOutputDurationSec,
+  isExplicitVideoDuration,
   VIDEO_DURATIONS,
   videoSettingsForWorkflow,
   type VideoDuration,
@@ -180,7 +182,7 @@ import {
 import type { WorkflowMode, WorkflowStepKey } from "@/lib/workflow-mode";
 import type { CampaignSlide } from "@/hooks/useWizardState";
 import type { AdPackPlan, AiMusicTrack, CaptionLine, VoicePreviewTrack } from "@/lib/ad-pack-types";
-import { DEFAULT_ART_STYLE } from "@/lib/art-style";
+import { appendArtStyleSeedanceHintIfNeeded, DEFAULT_ART_STYLE } from "@/lib/art-style";
 import { isFalCdnUrl, isPipelineFileUrl } from "@/lib/pipeline/safe-url";
 import type { PromotionMode } from "@/lib/promotion-mode";
 import {
@@ -461,8 +463,15 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     promotionMode === "concept" && isContentResearchReelVideo;
   const isConceptStoryboardOutput = promotionMode === "concept" && isStoryboardOutput;
   /** Any uploaded reference MP4 in reference-concept mode (research or manual). */
+  const referenceReelNeedsExplicitDuration =
+    useReferenceVideo &&
+    Boolean(referenceAd && referenceIsVideo) &&
+    !isExplicitVideoDuration(videoSettings.duration);
+  const reelAnalyzeOutputDurationSec = resolveWizardOutputDurationSec(videoSettings);
   const shouldAnalyzeReferenceVideo =
-    useReferenceVideo && Boolean(referenceAd && effectivePromoteName);
+    useReferenceVideo &&
+    Boolean(referenceAd && effectivePromoteName) &&
+    isExplicitVideoDuration(videoSettings.duration);
   const referenceVideoAnalyzeIncludesStoryboard = isStoryboardOutput;
   const isVideoWorkflow = workflowMode === "video-only" || workflowMode === "combined";
   const isImageWorkflow = workflowMode === "image-only" || workflowMode === "combined";
@@ -732,7 +741,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         fd.set("headline", headline.trim());
         fd.set("subline", subline.trim());
         fd.set("product", product.trim());
-        fd.set("prompt_extra", promptExtra.trim());
+        fd.set("prompt_extra", effectivePromptExtra());
         for (const f of extraKitPhotos.slice(0, 5)) {
           fd.append("carousel_reference_images", f);
         }
@@ -774,6 +783,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     subline,
     product,
     promptExtra,
+    effectivePromptExtra,
     m.wizard.referenceBriefAnalyzed,
     m.wizard.referenceCarouselBriefAnalyzed,
     m.wizard.referenceBriefAnalyzeFailed,
@@ -783,6 +793,12 @@ export function useStudioWizard(promotionMode: PromotionMode) {
   ]);
 
   const researchReelAnalyzeKeyRef = useRef<string | null>(null);
+  const aiVideoPromptDurationRef = useRef<string | null>(null);
+
+  const seedancePromptForGenerate = useCallback(
+    (prompt: string) => appendArtStyleSeedanceHintIfNeeded(prompt, artStyleId),
+    [artStyleId],
+  );
 
   async function applyReelStyleReferenceFrame(url: string): Promise<void> {
     try {
@@ -823,13 +839,15 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         fd.set("headline", headline.trim());
         fd.set("subline", subline.trim());
         fd.set("offer", offer.trim());
-        fd.set("prompt_extra", promptExtra.trim());
+        fd.set("business", business.trim());
+        fd.set("prompt_extra", effectivePromptExtra());
         fd.set("prompt_market", promptMarket);
-        const outDur =
-          videoSettings.duration === "auto" || Number(videoSettings.duration) > 15
-            ? 8
-            : Number(videoSettings.duration);
-        if (Number.isFinite(outDur)) fd.set("output_duration_sec", String(outDur));
+        fd.set("art_style", artStyleId);
+        fd.set("subject_framing", subjectFraming);
+        fd.set("reference_strategy_kind", referenceStrategy.kind);
+        fd.set("scene_count", storyboardSceneCount);
+        const outDur = resolveWizardOutputDurationSec(videoSettings);
+        fd.set("output_duration_sec", String(outDur));
         if (!referenceVideoAnalyzeIncludesStoryboard) {
           fd.set("plan_storyboard", "false");
         }
@@ -890,12 +908,17 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     [
       promotionMode,
       product,
+      business,
       headline,
       conceptIdea,
       subline,
       offer,
-      promptExtra,
+      effectivePromptExtra,
       promptMarket,
+      artStyleId,
+      subjectFraming,
+      referenceStrategy.kind,
+      storyboardSceneCount,
       m.errors.researchReelAnalyzeFailed,
       m.wizard.researchReelAnalyzed,
       m.wizard.referenceVideoAnalyzed,
@@ -913,7 +936,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       referenceVideoAnalyzeIncludesStoryboard,
       setReferenceVideoFalUrl,
       setRefVideoDurationSec,
-      videoSettings.duration,
+      videoSettings,
     ],
   );
 
@@ -930,20 +953,33 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     researchReelAnalyzeKeyRef.current = null;
   }, [referenceAdIdentity, setResearchReelAnalysis, setResearchReelAnalyzeNote, setStoryboardPlan, setStoryboardScenes]);
 
+  const reelAnalyzeCacheKey = referenceAd
+    ? `${referenceAdIdentity}:${effectivePromoteName}:${referenceVideoAnalyzeIncludesStoryboard ? "sb" : "r2v"}:${reelAnalyzeOutputDurationSec}`
+    : null;
+
   useEffect(() => {
-    if (!shouldAnalyzeReferenceVideo || !referenceAd) return;
-    const key = `${referenceAdIdentity}:${effectivePromoteName}:${referenceVideoAnalyzeIncludesStoryboard ? "sb" : "r2v"}`;
-    if (researchReelAnalyzeKeyRef.current === key) return;
+    if (!shouldAnalyzeReferenceVideo || !referenceAd || !reelAnalyzeCacheKey) return;
+    const prevKey = researchReelAnalyzeKeyRef.current;
+    if (prevKey === reelAnalyzeCacheKey) return;
+    if (prevKey && prevKey !== reelAnalyzeCacheKey) {
+      setResearchReelAnalysis(null);
+      setStoryboardPlan(null);
+      setStoryboardScenes([]);
+      setResearchReelAnalyzeNote(m.wizard.researchReelReanalyzeForDuration);
+    }
     void analyzeResearchReel(referenceAd).then((ok) => {
-      if (ok) researchReelAnalyzeKeyRef.current = key;
+      if (ok) researchReelAnalyzeKeyRef.current = reelAnalyzeCacheKey;
     });
   }, [
     shouldAnalyzeReferenceVideo,
     referenceAd,
-    referenceAdIdentity,
-    effectivePromoteName,
-    referenceVideoAnalyzeIncludesStoryboard,
+    reelAnalyzeCacheKey,
     analyzeResearchReel,
+    m.wizard.researchReelReanalyzeForDuration,
+    setResearchReelAnalysis,
+    setResearchReelAnalyzeNote,
+    setStoryboardPlan,
+    setStoryboardScenes,
   ]);
 
   useEffect(() => {
@@ -1054,7 +1090,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     setPlanVideoPromptBusy(true);
     setError(null);
     try {
-      const vOpts = resolveVideoGenerationOpts(templateId, videoSettings);
+      const outputDurationSec = resolveWizardOutputDurationSec(videoSettings);
       const useCreativePlanner =
         isCreativeVideoStyle(visualStyleId) ||
         (promotionMode === "concept" && isBrandVideoStyle(visualStyleId));
@@ -1070,7 +1106,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
           brandProfile: brandProfile ?? undefined,
           creativeBrief:
             creativeVideoBrief.trim() ||
-            [headline.trim(), subline.trim(), offer.trim(), promptExtra.trim()]
+            [headline.trim(), subline.trim(), offer.trim(), conceptIdea.trim()]
               .filter(Boolean)
               .join(" | "),
           product: product.trim(),
@@ -1078,13 +1114,16 @@ export function useStudioWizard(promotionMode: PromotionMode) {
           headline: headline.trim(),
           subline: subline.trim(),
           offer: offer.trim(),
-          duration: vOpts.duration,
+          duration: String(outputDurationSec),
           hasReferenceVideo: useReferenceVideo,
           textToVideo: conceptTextPlan,
           promotionMode,
           hasKeyframe: Boolean(productPhoto || imageUrl),
           imageVisionNote: conceptImageVisionNote.trim() || undefined,
           conceptIdea: conceptIdea.trim() || undefined,
+          artStyleId,
+          subjectFraming,
+          promptExtra: effectivePromptExtra(),
         }),
       });
       const data = await res.json();
@@ -1100,6 +1139,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         .join(" — ");
       setVideoPromptPlanNote(note);
       setShowAdvancedVideo(true);
+      aiVideoPromptDurationRef.current = String(outputDurationSec);
       const suggested = String(data.suggestedHeadline ?? "").trim();
       if (suggested && !headline.trim()) setHeadline(suggested);
     } catch (e: unknown) {
@@ -1125,8 +1165,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     videoCreativeMode,
     productPhoto,
     imageUrl,
-    conceptImageVisionNote,
     conceptIdea,
+    artStyleId,
+    subjectFraming,
+    effectivePromptExtra,
     m.errors.brandAnalyzeRequired,
     m.errors.creativeBriefRequired,
     m.errors.planVideoPromptFailed,
@@ -1161,7 +1203,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       fd.set("headline", headline.trim());
       fd.set("subline", subline.trim());
       fd.set("offer", offer.trim());
-      fd.set("duration", vOpts.duration);
+      fd.set("duration", String(resolveWizardOutputDurationSec(videoSettings)));
       fd.set("prompt_market", promptMarket);
       fd.set("subject_framing", subjectFraming);
       fd.set("prompt_extra", effectivePromptExtra());
@@ -1214,7 +1256,13 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     if (researchReelAnalysis?.seedancePrompt?.trim()) return;
     if (directReferenceR2vReady) return;
     if (useReferenceVideo && isContentResearchStyle) return;
-    if (isAiPlannedVideoStyle(visualStyleId) && videoPromptPlanNote && videoPrompt.trim()) {
+    const plannedDuration = String(resolveWizardOutputDurationSec(videoSettings));
+    if (
+      isAiPlannedVideoStyle(visualStyleId) &&
+      videoPrompt.trim() &&
+      aiVideoPromptDurationRef.current === plannedDuration &&
+      videoPromptPlanNote
+    ) {
       return;
     }
     if (!isAiPlannedVideoStyle(visualStyleId) && videoPrompt.trim()) return;
@@ -1227,6 +1275,14 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       !headline.trim()
     ) {
       return;
+    }
+    if (
+      isAiPlannedVideoStyle(visualStyleId) &&
+      videoPrompt.trim() &&
+      aiVideoPromptDurationRef.current &&
+      aiVideoPromptDurationRef.current !== plannedDuration
+    ) {
+      setVideoPromptPlanNote(m.wizard.planVideoPromptDurationRefresh);
     }
     void planAiVideoPrompt();
   }, [
@@ -1249,6 +1305,11 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     directReferenceR2vReady,
     useReferenceVideo,
     isContentResearchStyle,
+    videoSettings.duration,
+    videoSettings.resolution,
+    artStyleId,
+    subjectFraming,
+    m.wizard.planVideoPromptDurationRefresh,
   ]);
 
   async function analyzeBrand(override?: { websiteUrl?: string }) {
@@ -2195,6 +2256,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         );
         return;
       }
+      if (!isExplicitVideoDuration(videoSettings.duration)) {
+        setError(m.wizard.researchReelPickDurationFirst);
+        return;
+      }
       if (researchReelAnalyzeBusy) {
         setError(m.wizard.researchReelAnalyzing);
         return;
@@ -2226,6 +2291,18 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     }
     if (productPhoto && promotionMode === "concept") {
       setUseOriginalImage(true);
+    }
+    if (
+      workflowMode === "video-only" &&
+      !isStoryboardOutput &&
+      promotionMode === "concept" &&
+      !effectivePromoteName &&
+      videoCreativeMode === "product-promo" &&
+      !isCreativeVideoStyle(visualStyleId) &&
+      !isBrandVideoStyle(visualStyleId)
+    ) {
+      setError(m.errors.needHeadline);
+      return;
     }
     if (workflowMode === "video-only") {
       // Storyboard needs scene stills from step 2 before Seedance.
@@ -2893,7 +2970,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       try {
         const creativeBrief =
           creativeVideoBrief.trim() ||
-          [headline.trim(), subline.trim(), offer.trim(), conceptIdea.trim(), promptExtra.trim()]
+          [headline.trim(), subline.trim(), offer.trim(), conceptIdea.trim()]
             .filter(Boolean)
             .join(" | ");
         const planRes = await fetch("/api/plan-cinematic-reel", {
@@ -3354,13 +3431,15 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     fd.set("mode", "reference");
     fd.set(
       "prompt",
-      buildResearchR2vPrompt({
-        researchAnalysis: researchReelAnalysis,
-        videoPrompt,
-        fallbackPrompt:
-          buildReferenceVideoPrompt(getPromptVars(), templateId) +
-          " Follow @Video1 shot structure and timing as closely as the model allows. Do not apply a generic slow push-in unless @Video1 uses it.",
-      }),
+      seedancePromptForGenerate(
+        buildResearchR2vPrompt({
+          researchAnalysis: researchReelAnalysis,
+          videoPrompt,
+          fallbackPrompt:
+            buildReferenceVideoPrompt(getPromptVars(), templateId) +
+            " Follow @Video1 shot structure and timing as closely as the model allows. Do not apply a generic slow push-in unless @Video1 uses it.",
+        }),
+      ),
     );
     fd.set("reference_video_urls", refFalUrl);
     const refSec = refVideoDurationSec;
@@ -3466,7 +3545,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 
     const fd = new FormData();
     fd.set("mode", "reference");
-    fd.set("prompt", prompt);
+    fd.set("prompt", seedancePromptForGenerate(prompt));
     fd.set("resolution", vOpts.resolution);
     fd.set("duration", storyboardTrimDuration);
     fd.set("aspect_ratio", vOpts.aspectRatio);
@@ -3655,7 +3734,14 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 
     const fd = new FormData();
     fd.set("mode", "reference");
-    fd.set("prompt", prompt);
+    fd.set(
+      "prompt",
+      seedancePromptForGenerate(
+        productVideoPlan?.seedancePrompt?.trim() ||
+          videoPrompt.trim() ||
+          "",
+      ),
+    );
     fd.set("resolution", vOpts.resolution);
     fd.set("duration", vOpts.duration);
     fd.set("aspect_ratio", vOpts.aspectRatio);
@@ -3694,7 +3780,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     fd.set("mode", "reference");
     fd.set(
       "prompt",
-      videoPrompt.trim() || buildMultiAngleVideoPrompt(pv, videoPromptOpts(), templateId),
+      seedancePromptForGenerate(
+        videoPrompt.trim() || buildMultiAngleVideoPrompt(pv, videoPromptOpts(), templateId),
+      ),
     );
     if (referenceAd && referenceIsVideo) fd.append("videos", referenceAd);
     if (productPhoto) fd.append("images", productPhoto);
@@ -3731,7 +3819,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     const vOpts = resolveVideoGenerationOpts(templateId, videoSettings);
     const fd = new FormData();
     fd.set("mode", "text");
-    fd.set("prompt", videoPrompt.trim());
+    fd.set("prompt", seedancePromptForGenerate(videoPrompt.trim()));
     fd.set("resolution", vOpts.resolution);
     fd.set("duration", vOpts.duration);
     fd.set("aspect_ratio", vOpts.aspectRatio);
@@ -3771,9 +3859,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       throw new Error(m.errors.creativeVideoPromptRequired);
     }
     const defaultPrompt = buildWizardVideoPrompt(templateId, pv, promptOpts);
+    const rawPrompt = videoPrompt.trim() || (plannedOnly ? "" : defaultPrompt);
     const fd = new FormData();
     fd.set("mode", "image");
-    fd.set("prompt", videoPrompt.trim() || (plannedOnly ? "" : defaultPrompt));
+    fd.set("prompt", seedancePromptForGenerate(rawPrompt));
     fd.set("resolution", vOpts.resolution);
     fd.set("duration", vOpts.duration);
     fd.set("aspect_ratio", vOpts.aspectRatio);
@@ -4505,10 +4594,16 @@ export function useStudioWizard(promotionMode: PromotionMode) {
           isStoryboardOutput,
         })
       : null;
-  const setupNextDisabled = Boolean(setupImageGateReason);
-  const setupNextDisabledReason = setupImageGateReason
-    ? resolveSetupImageGateMessage(setupImageGateReason)
-    : null;
+  const setupReferenceDurationGateReason =
+    stepKey === "setup" && referenceReelNeedsExplicitDuration
+      ? ("need_output_duration" as const)
+      : null;
+  const setupNextDisabled = Boolean(setupImageGateReason || setupReferenceDurationGateReason);
+  const setupNextDisabledReason = setupReferenceDurationGateReason
+    ? m.wizard.researchReelPickDurationFirst
+    : setupImageGateReason
+      ? resolveSetupImageGateMessage(setupImageGateReason)
+      : null;
   const imageGenerateDisabledReason = imageGenerateBlockReason();
 
   const imageFinishLabel =

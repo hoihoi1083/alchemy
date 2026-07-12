@@ -1,9 +1,50 @@
+import {
+  appendArtStyleSeedanceHintIfNeeded,
+  artStylePlannerHint,
+  DEFAULT_ART_STYLE,
+  resolveArtStyleId,
+  type ArtStyleId,
+} from "@/lib/art-style";
 import type { BrandProfile } from "@/lib/brand-profile";
 import { brandProfilePromptBlock } from "@/lib/brand-profile";
 import { callDeepSeekChat } from "@/lib/deepseek-client";
 import { parseLlmJsonObject } from "@/lib/parse-llm-json";
 import { softenSeedancePromptForModeration, seedanceModerationPlannerRules } from "@/lib/seedance-moderation";
+import { subjectFramingVideoHint, type SubjectFraming } from "@/lib/prompt-variables";
 import { VIDEO_BGM_HINT } from "@/lib/templates";
+import {
+  resolvePlannerDurationSec,
+  videoDurationPlannerBlock,
+} from "@/lib/video-duration-planner";
+
+export type VideoPlannerStyleContext = {
+  artStyleId?: ArtStyleId | string;
+  subjectFraming?: SubjectFraming | string;
+  promptExtra?: string;
+};
+
+/** Shared style/framing/campaign lines for all Seedance video planners. */
+export function videoPlannerContextBlock(input: VideoPlannerStyleContext): string[] {
+  const artStyleId = resolveArtStyleId(input.artStyleId);
+  const lines: string[] = [];
+  const artHint = artStylePlannerHint(artStyleId);
+  if (artHint) lines.push(artHint);
+  if (artStyleId !== "realistic") {
+    lines.push(
+      "The user's keyframe/stills use this illustrated or stylized medium — videoPrompt MUST preserve it; do NOT default to photorealistic live-action.",
+    );
+  }
+  const framing = (input.subjectFraming?.trim() || "auto") as SubjectFraming;
+  const framingHint = subjectFramingVideoHint(framing);
+  if (framingHint) lines.push(`Framing preference: ${framingHint}`);
+  const extra = input.promptExtra?.trim();
+  if (extra) {
+    lines.push(
+      `Campaign / style notes (reference = style and motion grammar when present — do NOT let unrelated topic override locked aesthetic): ${extra}`,
+    );
+  }
+  return lines;
+}
 
 export type VideoPromptPlan = {
   videoPrompt: string;
@@ -37,15 +78,18 @@ function normalizeVideoPromptPlan(parsed: Partial<VideoPromptPlan>): VideoPrompt
   };
 }
 
-function finishVideoPrompt(videoPrompt: string): string {
+function finishVideoPrompt(
+  videoPrompt: string,
+  artStyleId: ArtStyleId = DEFAULT_ART_STYLE,
+): string {
   const softened = softenSeedancePromptForModeration(videoPrompt);
+  let out = softened;
   if (!softened.includes("no on-screen") && !softened.includes("No on-screen")) {
-    return `${softened} No on-screen text, subtitles, logos, or watermarks.${VIDEO_BGM_HINT}`;
+    out = `${softened} No on-screen text, subtitles, logos, or watermarks.${VIDEO_BGM_HINT}`;
+  } else if (!softened.includes("instrumental")) {
+    out = `${softened}${VIDEO_BGM_HINT}`;
   }
-  if (!softened.includes("instrumental")) {
-    return `${softened}${VIDEO_BGM_HINT}`;
-  }
-  return softened;
+  return appendArtStyleSeedanceHintIfNeeded(out, artStyleId);
 }
 
 function buildBrandPlanPrompt(input: {
@@ -55,8 +99,9 @@ function buildBrandPlanPrompt(input: {
   headline: string;
   subline: string;
   offer: string;
-  duration: string;
+  durationSec: number;
   hasReferenceVideo: boolean;
+  styleContext: VideoPlannerStyleContext;
 }): string {
   return [
     "Write a Seedance image-to-video prompt for a small-business social Reel ad.",
@@ -69,23 +114,24 @@ function buildBrandPlanPrompt(input: {
     "- Match brand mood, colors, and product category from brand DNA below.",
     "- The user's product photo will be @Image1 — keep same product identity, do not morph item.",
     "- NO on-screen text, subtitles, logos, watermarks, speech, or lyrics.",
-    "- 6–10 second commercial reel feel, smooth and stable (not chaotic).",
+    `- Smooth commercial reel pacing sized for ${input.durationSec}s total.`,
     input.hasReferenceVideo
-      ? "- User will also attach a reference MP4 — mention matching @Video1 pacing if natural, but product stays @Image1."
+      ? "- User will also attach a reference MP4 — match @Video1 pacing rhythm but compress/adapt to the OUTPUT length below; product stays @Image1."
       : "- Single keyframe image-to-video — animate the hero product/scene subtly.",
     "- Do NOT describe static poster layout or typography — this is VIDEO motion.",
     "",
     "- motionSummary: one line for the user in Traditional Chinese if HK/TW brand, else English.",
     "- suggestedHeadline: optional hook line for the ad (match brand tone).",
     "- productionNotes: empty string unless multi-step advice is needed.",
+    ...videoDurationPlannerBlock(input.durationSec),
     "",
-    `Target duration hint: ${input.duration} seconds.`,
     input.product ? `Product: ${input.product}` : "",
     input.business ? `Business: ${input.business}` : "",
     input.headline ? `User headline: ${input.headline}` : "",
     input.subline ? `Selling points: ${input.subline}` : "",
     input.offer ? `Offer: ${input.offer}` : "",
     brandProfilePromptBlock(input.brandProfile),
+    ...videoPlannerContextBlock(input.styleContext),
   ]
     .filter(Boolean)
     .join("\n");
@@ -98,13 +144,14 @@ function buildCreativePlanPrompt(input: {
   headline: string;
   subline: string;
   offer: string;
-  duration: string;
+  durationSec: number;
   hasReferenceVideo: boolean;
   textToVideo?: boolean;
   promotionMode?: "physical" | "concept";
   hasKeyframe?: boolean;
   imageVisionNote?: string;
   conceptIdea?: string;
+  styleContext: VideoPlannerStyleContext;
 }): string {
   const isConcept = input.promotionMode === "concept";
   const textToVideo = Boolean(input.textToVideo);
@@ -117,9 +164,9 @@ function buildCreativePlanPrompt(input: {
     '{"videoPrompt":"","motionSummary":"","suggestedHeadline":"","productionNotes":""}',
     "",
     "IMPORTANT LIMITS (honest):",
-    "- Seedance makes ONE short clip (~4–15s), not a full movie.",
+    `- Seedance makes ONE short clip (~${input.durationSec}s output), not a full movie.`,
     "- Complex multi-scene stories (e.g. fight many people THEN drink) cannot fit in one clip.",
-    "- Pick the strongest SINGLE visual beat that fits the duration.",
+    `- Pick the strongest SINGLE visual beat that fits ${input.durationSec} seconds.`,
     textToVideo
       ? "- TEXT-TO-VIDEO mode: NO product photo, NO @Image1. Describe the full scene, subjects, environment, lighting, and camera motion in the prompt."
       : input.hasKeyframe
@@ -142,11 +189,12 @@ function buildCreativePlanPrompt(input: {
     isConcept && rawIdea
       ? `- User's original idea (must shape the scene): ${rawIdea}`
       : "",
-    "- If user will attach @Video1, align pacing with the reference; otherwise one coherent motion beat.",
+    "- If user will attach @Video1, align pacing with the reference but compress the story arc into the OUTPUT length below.",
     "- Avoid identifiable celebrity faces; silhouettes, back view, or symbolic figures are OK for PSAs.",
     "- NO on-screen text, subtitles, logos, watermarks, speech, or lyrics.",
     "",
     ...seedanceModerationPlannerRules().map((line) => `- ${line}`),
+    ...videoDurationPlannerBlock(input.durationSec),
     "",
     "productionNotes (Traditional Chinese for HK/TW users, else English):",
     "- If the brief has MULTIPLE story beats, explain which single beat this clip covers and practical next steps (CapCut, reference MP4, or keyframe upload).",
@@ -154,7 +202,6 @@ function buildCreativePlanPrompt(input: {
     "- motionSummary: one line what this clip will feel like.",
     "- suggestedHeadline: optional ad hook matching the creative idea.",
     "",
-    `Target duration: ${input.duration} seconds.`,
     `Generation: ${textToVideo ? "text-to-video (no keyframe)" : input.hasKeyframe ? "image-to-video (user keyframe @Image1)" : "image-to-video (keyframe provided)"}`,
     `Creative brief: ${input.creativeBrief}`,
     input.imageVisionNote ? `Reference image vision (must respect): ${input.imageVisionNote}` : "",
@@ -168,6 +215,7 @@ function buildCreativePlanPrompt(input: {
       : textToVideo
         ? "User will NOT attach a reference MP4 — pure text-to-video from this prompt."
         : "User will NOT attach a reference MP4 — single keyframe image-to-video.",
+    ...videoPlannerContextBlock(input.styleContext),
   ]
     .filter(Boolean)
     .join("\n");
@@ -182,7 +230,17 @@ export async function planVideoPrompt(input: {
   offer?: string;
   duration?: string;
   hasReferenceVideo?: boolean;
+  artStyleId?: ArtStyleId | string;
+  subjectFraming?: SubjectFraming | string;
+  promptExtra?: string;
 }): Promise<VideoPromptPlan> {
+  const durationSec = resolvePlannerDurationSec(input.duration);
+  const artStyleId = resolveArtStyleId(input.artStyleId);
+  const styleContext: VideoPlannerStyleContext = {
+    artStyleId,
+    subjectFraming: input.subjectFraming,
+    promptExtra: input.promptExtra,
+  };
   const outputText = await callDeepSeekChat(
     [
       {
@@ -199,8 +257,9 @@ export async function planVideoPrompt(input: {
           headline: input.headline?.trim() || "",
           subline: input.subline?.trim() || "",
           offer: input.offer?.trim() || "",
-          duration: input.duration?.trim() || "6",
+          durationSec,
           hasReferenceVideo: Boolean(input.hasReferenceVideo),
+          styleContext,
         }),
       },
     ],
@@ -210,7 +269,7 @@ export async function planVideoPrompt(input: {
   const plan = normalizeVideoPromptPlan(
     parseLlmJsonObject<Partial<VideoPromptPlan>>(outputText, "Video prompt plan"),
   );
-  plan.videoPrompt = finishVideoPrompt(plan.videoPrompt);
+  plan.videoPrompt = finishVideoPrompt(plan.videoPrompt, artStyleId);
   return plan;
 }
 
@@ -228,10 +287,20 @@ export async function planCreativeVideoPrompt(input: {
   hasKeyframe?: boolean;
   imageVisionNote?: string;
   conceptIdea?: string;
+  artStyleId?: ArtStyleId | string;
+  subjectFraming?: SubjectFraming | string;
+  promptExtra?: string;
 }): Promise<VideoPromptPlan> {
   const brief = input.creativeBrief?.trim() || "";
   if (!brief) throw new Error("Describe your creative video idea first.");
 
+  const durationSec = resolvePlannerDurationSec(input.duration);
+  const artStyleId = resolveArtStyleId(input.artStyleId);
+  const styleContext: VideoPlannerStyleContext = {
+    artStyleId,
+    subjectFraming: input.subjectFraming,
+    promptExtra: input.promptExtra,
+  };
   const outputText = await callDeepSeekChat(
     [
       {
@@ -248,13 +317,14 @@ export async function planCreativeVideoPrompt(input: {
           headline: input.headline?.trim() || "",
           subline: input.subline?.trim() || "",
           offer: input.offer?.trim() || "",
-          duration: input.duration?.trim() || "6",
+          durationSec,
           hasReferenceVideo: Boolean(input.hasReferenceVideo),
           textToVideo: Boolean(input.textToVideo),
           promotionMode: input.promotionMode,
           hasKeyframe: Boolean(input.hasKeyframe),
           imageVisionNote: input.imageVisionNote?.trim() || "",
           conceptIdea: input.conceptIdea?.trim() || "",
+          styleContext,
         }),
       },
     ],
@@ -264,7 +334,7 @@ export async function planCreativeVideoPrompt(input: {
   const plan = normalizeVideoPromptPlan(
     parseLlmJsonObject<Partial<VideoPromptPlan>>(outputText, "Creative video plan"),
   );
-  plan.videoPrompt = finishVideoPrompt(plan.videoPrompt);
+  plan.videoPrompt = finishVideoPrompt(plan.videoPrompt, artStyleId);
   return plan;
 }
 
@@ -274,8 +344,9 @@ function buildProductPlanPrompt(input: {
   headline: string;
   subline: string;
   offer: string;
-  duration: string;
+  durationSec: number;
   hasReferenceVideo: boolean;
+  styleContext: VideoPlannerStyleContext;
 }): string {
   return [
     "Write a Seedance image-to-video prompt for a product social Reel.",
@@ -287,22 +358,23 @@ function buildProductPlanPrompt(input: {
     "- The user's product still is @Image1; preserve product identity and materials.",
     "- Focus on camera, motion rhythm, lighting transitions, and product interaction.",
     "- No on-screen text, subtitles, logos, watermarks, speech, or lyrics.",
-    "- Keep outcomes realistic and stable for a short ad clip.",
+    `- Keep outcomes realistic and stable for a ${input.durationSec}s ad clip.`,
     input.hasReferenceVideo
-      ? "- User may attach @Video1. Match pacing/energy while keeping product anchored to @Image1."
+      ? "- User may attach @Video1. Match pacing/energy while compressing to OUTPUT length below; product anchored to @Image1."
       : "- Single keyframe image-to-video mode. Keep one coherent motion beat.",
     "",
     "- motionSummary: one line for users.",
     "- suggestedHeadline: optional short hook line.",
     "- productionNotes: keep empty unless practical editing guidance helps.",
     localeLineFromHints(input),
+    ...videoDurationPlannerBlock(input.durationSec),
     "",
-    `Target duration: ${input.duration} seconds.`,
     input.product ? `Product: ${input.product}` : "",
     input.business ? `Business: ${input.business}` : "",
     input.headline ? `Headline hint: ${input.headline}` : "",
     input.subline ? `Subline hint: ${input.subline}` : "",
     input.offer ? `Offer hint: ${input.offer}` : "",
+    ...videoPlannerContextBlock(input.styleContext),
   ]
     .filter(Boolean)
     .join("\n");
@@ -316,7 +388,17 @@ export async function planProductVideoPrompt(input: {
   offer?: string;
   duration?: string;
   hasReferenceVideo?: boolean;
+  artStyleId?: ArtStyleId | string;
+  subjectFraming?: SubjectFraming | string;
+  promptExtra?: string;
 }): Promise<VideoPromptPlan> {
+  const durationSec = resolvePlannerDurationSec(input.duration);
+  const artStyleId = resolveArtStyleId(input.artStyleId);
+  const styleContext: VideoPlannerStyleContext = {
+    artStyleId,
+    subjectFraming: input.subjectFraming,
+    promptExtra: input.promptExtra,
+  };
   const outputText = await callDeepSeekChat(
     [
       {
@@ -332,8 +414,9 @@ export async function planProductVideoPrompt(input: {
           headline: input.headline?.trim() || "",
           subline: input.subline?.trim() || "",
           offer: input.offer?.trim() || "",
-          duration: input.duration?.trim() || "6",
+          durationSec,
           hasReferenceVideo: Boolean(input.hasReferenceVideo),
+          styleContext,
         }),
       },
     ],
@@ -343,6 +426,6 @@ export async function planProductVideoPrompt(input: {
   const plan = normalizeVideoPromptPlan(
     parseLlmJsonObject<Partial<VideoPromptPlan>>(outputText, "Product video plan"),
   );
-  plan.videoPrompt = finishVideoPrompt(plan.videoPrompt);
+  plan.videoPrompt = finishVideoPrompt(plan.videoPrompt, artStyleId);
   return plan;
 }

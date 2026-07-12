@@ -35,7 +35,7 @@ describe("content-research-promote", () => {
     assert.ok(copy.offer.includes(PROMOTE_PRODUCT));
   });
 
-  it("copyFieldsFromAngle in concept mode uses angle hook not search-topic template", () => {
+  it("copyFieldsFromAngle in concept mode keeps the user's concept as the copy anchor", () => {
     const koreaAngle = {
       ...zodiacCarouselAngle,
       id: "angle-korea",
@@ -47,11 +47,10 @@ describe("content-research-promote", () => {
     const copy = copyFieldsFromAngle(koreaAngle, "5天韓國旅行行程", "5天韓國旅行行程", {
       promotionMode: "concept",
     });
-    assert.equal(copy.headline, "2026年韓國最新規定！這些坑千萬別踩。");
-    assert.ok(copy.subline.includes("2026年簽證新變化"));
-    assert.ok(!copy.headline.includes("必看攻略"));
-    assert.ok(!copy.subline.includes("選購要點"));
-    assert.ok(!copy.subline.includes("保養貼士"));
+    assert.equal(copy.headline, "5天韓國旅行行程｜必看攻略");
+    assert.ok(copy.subline.includes("5天韓國旅行行程"));
+    assert.ok(!copy.headline.includes("韓國最新規定"));
+    assert.ok(!copy.subline.includes("簽證新變化"));
   });
 
   it("stripContentResearchStyleExtra removes old style blocks when picking a new angle", () => {

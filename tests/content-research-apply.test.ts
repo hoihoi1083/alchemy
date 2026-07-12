@@ -126,6 +126,44 @@ describe("content-research-apply handoff", () => {
     assert.equal(handoff.product, undefined);
   });
 
+  it("concept handoff keeps the user's promote target and never copies a reference hook", () => {
+    const referenceAngle = {
+      ...zodiacCarouselAngle,
+      id: "pinned-world-cup",
+      title: "世界杯互動帖",
+      hook: "留下你支持的4支球隊",
+      sourceTitle: "世界杯四強競猜",
+    };
+    const plan = { ...xhsPlan, topic: "世界杯" };
+    const conceptIdea = "餐廳世界杯訂位推广";
+    const handoff = buildContentAngleHandoff(
+      referenceAngle,
+      plan,
+      "concept",
+      conceptIdea,
+    );
+
+    assert.equal(handoff.conceptIdea, conceptIdea);
+    assert.ok(handoff.headline?.includes("餐廳"));
+    assert.ok(handoff.headline?.includes("訂位"));
+    assert.ok(!handoff.headline?.includes("留下你支持的4支球隊"));
+    assert.ok(!handoff.headline?.includes("世界杯四強競猜"));
+  });
+
+  it("concept pinned reference without promote target does not leak search topic into conceptIdea", () => {
+    const referenceAngle = {
+      ...zodiacCarouselAngle,
+      id: "pinned-world-cup",
+      title: "世界杯互動帖",
+      hook: "留下你支持的4支球隊",
+      sourceTitle: "世界杯四強競猜",
+    };
+    const plan = { ...xhsPlan, topic: "世界杯" };
+    const handoff = buildContentAngleHandoff(referenceAngle, plan, "concept");
+    assert.equal(handoff.conceptIdea, "");
+    assert.ok(!handoff.promptExtra?.includes("All copy and visuals must promote: 世界杯"));
+  });
+
   it("campaign theme is product-centric when angle format is campaign", () => {
     const campaignAngle = {
       ...zodiacCarouselAngle,

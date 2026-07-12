@@ -120,9 +120,10 @@ function wizardPatchForAngle(
   userWorkflowMode?: WorkflowMode,
 ): ContentAngleWizardPatch & { carouselSlideCount?: number; referenceNote?: string } {
   const pinnedReference = isReferenceSourcedAngle(angle);
+  const explicitPromoteTarget = promoteProduct?.trim() || "";
   const productName = pinnedReference
-    ? promoteProduct?.trim() || ""
-    : promoteProduct?.trim() || plan.topic.trim();
+    ? explicitPromoteTarget
+    : explicitPromoteTarget || plan.topic.trim();
   const post = postFromAngle(angle, plan);
   const imageCount = angle.sourceImageUrls?.length ?? (angle.sourceCoverImageUrl ? 1 : 0);
   const inferred = post ? inferWizardFromPost(post, promotionMode) : null;
@@ -136,16 +137,24 @@ function wizardPatchForAngle(
   const format = resolveFormatForAngleApply(angle, inferred);
   const formatFields = patchFromAngleFormat(format, promotionMode, imageCount, userWorkflowMode);
 
-  const copy = copyFieldsFromAngle(angle, productName, plan.topic, {
+  const copyTarget = promotionMode === "concept" ? explicitPromoteTarget : productName;
+  const copy = copyFieldsFromAngle(angle, copyTarget, plan.topic, {
     promotionMode,
     referenceSourced: pinnedReference,
   });
-  const promoteTarget = contentResearchPromoteTarget(promotionMode, {
-    product: productName,
+  const promoteTargetRaw = contentResearchPromoteTarget(promotionMode, {
+    product: promotionMode === "physical" ? copyTarget : "",
     headline: copy.headline,
-    conceptIdea: "",
+    conceptIdea: explicitPromoteTarget,
     searchTopic: plan.topic,
   });
+  const promoteTarget =
+    promotionMode === "concept" &&
+    pinnedReference &&
+    !explicitPromoteTarget &&
+    promoteTargetRaw.trim() === plan.topic.trim()
+      ? ""
+      : promoteTargetRaw;
   const promptExtra = styleReferencePromptBlock(
     angle,
     plan,
@@ -154,19 +163,18 @@ function wizardPatchForAngle(
   );
 
   const conceptTopic = productName || plan.topic.trim();
+  const conceptIdeaPatch =
+    promotionMode === "concept"
+      ? explicitPromoteTarget || (pinnedReference ? "" : conceptTopic)
+      : productName
+        ? `${productName} — ${plan.platformLabel} style (from research)`
+        : "";
 
   return {
     headline: copy.headline,
     subline: copy.subline,
     offer: copy.offer,
-    conceptIdea:
-      promotionMode === "concept"
-        ? conceptTopic
-          ? `${conceptTopic} — ${plan.platformLabel} style (from research)`
-          : ""
-        : productName
-          ? `${productName} — ${plan.platformLabel} style (from research)`
-          : "",
+    conceptIdea: conceptIdeaPatch,
     product: promotionMode === "physical" ? productName : "",
     promptExtra,
     imageOutputMode: formatFields.imageOutputMode,
@@ -301,7 +309,13 @@ export async function applyContentAngleToWizard(
   wizard.setHeadline(patch.headline);
   wizard.setSubline(patch.subline);
   if (patch.offer) wizard.setOffer(patch.offer);
-  wizard.setConceptIdea(patch.conceptIdea);
+  if (promotionMode === "concept") {
+    if (patch.conceptIdea.trim()) {
+      wizard.setConceptIdea(patch.conceptIdea);
+    }
+  } else {
+    wizard.setConceptIdea(patch.conceptIdea);
+  }
   if (patch.product) wizard.setProduct(patch.product);
   wizard.setPromptExtra((prev) => {
     const withoutPriorResearch = stripContentResearchStyleExtra(prev);

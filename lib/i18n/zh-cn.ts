@@ -680,6 +680,12 @@ export const zhCn = {
     researchReelUploadProductHint: "你的产品照 — 每格分镜场景图会用它配合参考节奏生成",
     researchReelUploadMp4Hint:
       "搜索自动下载或上传你自己的 MP4/MOV — 两种都可以；分析画面风格与剪辑节奏相同",
+    researchReelPickDurationFirst:
+      "请先在上方选输出片长（不要留「自动」），参考片分析与 Seedance 出片才会按这个长度规划。",
+    researchReelReanalyzeForDuration: "片长已改 — 重新分析参考片…",
+    researchReelStatusOutputDuration: "输出片长已选（分析与计费用）",
+    researchReelStatusOutputDurationMissing:
+      "请先选输出片长（4–12 秒）— 参考片可以很长，出片长度以此处为准",
     setupReferenceVideoTitle: "参考短片（选填）",
     setupReferenceVideoIntro:
       "在第 1 步上传参考广告 MP4，出场景图前会先分析风格与节奏。不用参考片也可以生成（产品助手或纯文案视频）。",
@@ -966,6 +972,9 @@ export const zhCn = {
     videoReferenceOutputSettingsTitle: "输出片长与画质",
     videoReferenceOutputSettingsHint:
       "参考短片已决定节奏与动态——请选择生成影片的片长与清晰度。",
+    videoSetupOutputSettingsTitle: "输出片长与画质（影响收费）",
+    videoSetupOutputSettingsHint:
+      "fal.ai 按 Seedance 片长与分辨率计费 — 请在上传参考片／分析前先选。参考 MP4 可以很长；实际出片以此处的片长为准（AI 会将参考节奏压缩成完整短片）。",
     videoSettingsResolution: "解像度",
     videoSettingsDuration: "片长",
     videoSettingsMotion: "镜头 / 动态",
@@ -1181,6 +1190,7 @@ export const zhCn = {
     planVideoPromptBtn: "AI 写影片 Prompt",
     planVideoPromptBusy: "DeepSeek 写紧影片 prompt…",
     planVideoPromptReady: "已填入下方视频 Prompt — 请检查后再生成",
+    planVideoPromptDurationRefresh: "片长已改 — DeepSeek 按新片长重写视频 prompt…",
     productVideoKitTitle: "产品照片套装",
     productVideoKitHint:
       "上传主产品（必填）、包装或额外角度 — AI 视觉读全部图，DeepSeek 再写 Seedance 情境 prompt。",

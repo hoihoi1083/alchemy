@@ -8,6 +8,7 @@ import {
   type ProductVideoKitSlot,
 } from "@/lib/product-video-types";
 import { mergePromptExtra, type VisualStyleId } from "@/lib/visual-styles";
+import { artStylePlannerHint, resolveArtStyleId } from "@/lib/art-style";
 import { analyzeProductImagesWithVision } from "@/lib/vision-analyze";
 
 export const runtime = "nodejs";
@@ -102,7 +103,13 @@ export async function POST(request: Request) {
   const durationSec = parseDurationSec(
     (formData.get("duration") as string | null)?.trim() || "8",
   );
-  const styleHint = mergePromptExtra(visualStyle, promptExtra);
+  const artStyleId = resolveArtStyleId((formData.get("art_style") as string | null)?.trim());
+  const styleHint = [
+    mergePromptExtra(visualStyle, promptExtra),
+    artStyleId !== "realistic" ? artStylePlannerHint(artStyleId) : "",
+  ]
+    .filter(Boolean)
+    .join(". ");
 
   try {
     const imageUrls = await Promise.all(files.map((f) => fal.storage.upload(f)));
@@ -124,6 +131,7 @@ export async function POST(request: Request) {
       market: promptMarket,
       framing: subjectFraming,
       styleHint,
+      artStyleId,
     });
 
     return NextResponse.json({

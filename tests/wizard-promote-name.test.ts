@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 import { wizardPromoteName } from "../lib/wizard-promote-name";
 
 describe("wizardPromoteName", () => {
-  it("concept mode prefers headline over search topic", () => {
+  it("concept mode preserves conceptIdea over a generated headline", () => {
     assert.equal(
       wizardPromoteName({
         promotionMode: "concept",
@@ -11,7 +11,7 @@ describe("wizardPromoteName", () => {
         headline: "2026年韓國最新規定！",
         conceptIdea: "5天韓國旅行行程 — 小紅書 style",
       }),
-      "2026年韓國最新規定！",
+      "5天韓國旅行行程 — 小紅書 style",
     );
   });
 

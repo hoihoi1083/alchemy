@@ -4,6 +4,8 @@ import {
   planProductVideoPrompt,
   planVideoPrompt,
 } from "@/lib/video-prompt-plan";
+import { resolveArtStyleId, type ArtStyleId } from "@/lib/art-style";
+import type { SubjectFraming } from "@/lib/prompt-variables";
 import { NextResponse } from "next/server";
 import { requireAppUser } from "@/lib/require-app-user";
 
@@ -30,6 +32,9 @@ export async function POST(request: Request) {
     hasKeyframe?: boolean;
     imageVisionNote?: string;
     conceptIdea?: string;
+    artStyleId?: ArtStyleId | string;
+    subjectFraming?: SubjectFraming | string;
+    promptExtra?: string;
   };
   try {
     body = await request.json();
@@ -49,6 +54,9 @@ export async function POST(request: Request) {
     offer: body.offer,
     duration: body.duration,
     hasReferenceVideo: body.hasReferenceVideo,
+    artStyleId: resolveArtStyleId(body.artStyleId),
+    subjectFraming: body.subjectFraming,
+    promptExtra: body.promptExtra,
   };
 
   try {

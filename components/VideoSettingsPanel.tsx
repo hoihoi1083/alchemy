@@ -14,6 +14,10 @@ type Props = {
   onChange: (next: VideoSettings) => void;
   /** Reference R2V: only resolution, duration, fast (motion/creativity ignored by API). */
   compact?: boolean;
+  /** Setup step — billing-forward title; hides compact hint (caller shows setup hint). */
+  setup?: boolean;
+  /** Reference-reel paths: require explicit seconds before analyze (hide auto). */
+  hideAutoDuration?: boolean;
   variant?: "light" | "dark";
 };
 
@@ -29,17 +33,25 @@ export function VideoSettingsPanel({
   value,
   onChange,
   compact = false,
+  setup = false,
+  hideAutoDuration = false,
   variant = "light",
 }: Props) {
   const { m } = useLocale();
   const dark = variant === "dark";
+  const compactMode = compact || setup;
+  const durationOptions = hideAutoDuration
+    ? VIDEO_DURATIONS.filter((d) => d !== "auto")
+    : VIDEO_DURATIONS;
 
   return (
     <div
       className={
         dark
           ? "space-y-4 rounded-2xl border border-slate-700 bg-slate-900/60 p-4"
-          : "space-y-4 rounded-2xl border border-slate-200 bg-white p-4"
+          : setup
+            ? "space-y-4"
+            : "space-y-4 rounded-2xl border border-slate-200 bg-white p-4"
       }
     >
       <h3
@@ -47,9 +59,13 @@ export function VideoSettingsPanel({
           dark ? "text-sm font-semibold text-slate-100" : "text-sm font-semibold text-slate-900"
         }
       >
-        {compact ? m.wizard.videoReferenceOutputSettingsTitle : m.wizard.videoSettingsTitle}
+        {setup
+          ? m.wizard.videoSetupOutputSettingsTitle
+          : compact
+            ? m.wizard.videoReferenceOutputSettingsTitle
+            : m.wizard.videoSettingsTitle}
       </h3>
-      {compact && (
+      {compact && !setup && (
         <p className="text-xs text-slate-400">{m.wizard.videoReferenceOutputSettingsHint}</p>
       )}
 
@@ -84,7 +100,7 @@ export function VideoSettingsPanel({
           {m.wizard.videoSettingsDuration}
         </p>
         <div className="flex flex-wrap gap-2">
-          {VIDEO_DURATIONS.map((d) => (
+          {durationOptions.map((d) => (
             <button
               key={d}
               type="button"
@@ -97,7 +113,7 @@ export function VideoSettingsPanel({
         </div>
       </div>
 
-      {!compact && (
+      {!compactMode && (
         <>
       <div>
         <p className="mb-2 text-xs font-medium text-slate-600">{m.wizard.videoSettingsCreativity}</p>

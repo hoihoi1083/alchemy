@@ -131,6 +131,10 @@ const FRAMING_VIDEO: Record<SubjectFraming, string> = {
   "no-people": "Product-only motion, no human subjects",
 };
 
+export function subjectFramingVideoHint(framing: SubjectFraming): string {
+  return FRAMING_VIDEO[framing] ?? "";
+}
+
 const FRAMING_NEGATIVE: Record<SubjectFraming, string> = {
   auto: "",
   "product-only": "person, human, face, hands, body, model portrait",

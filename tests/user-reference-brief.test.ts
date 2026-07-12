@@ -47,6 +47,6 @@ describe("user-reference-brief content research override", () => {
     const block = userReferenceStyleOnlyPromptBlock(overridden);
     assert.ok(block.includes(PROMOTE_PRODUCT));
     assert.ok(!block.includes("水瓶座幸運色"));
-    assert.ok(promptExtra.includes("Do NOT copy reference subject matter"));
+    assert.ok(promptExtra.includes("Do NOT copy: reference post title"));
   });
 });

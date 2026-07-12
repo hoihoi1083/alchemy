@@ -200,6 +200,21 @@ export function artStyleSeedanceHint(id: ArtStyleId | undefined): string {
   return id && id !== "realistic" ? hint : getArtStyle("realistic").seedanceHint;
 }
 
+/** Append stylized motion guard when DeepSeek plan omitted art-style hint. */
+export function appendArtStyleSeedanceHintIfNeeded(
+  prompt: string,
+  artStyleId: ArtStyleId | undefined,
+): string {
+  const id = resolveArtStyleId(artStyleId);
+  const hint = artStyleSeedanceHint(id);
+  if (!hint || id === "realistic") return prompt.trim();
+  const p = prompt.trim();
+  if (!p) return hint;
+  const key = hint.slice(0, 28).toLowerCase();
+  if (p.toLowerCase().includes(key)) return p;
+  return `${p} ${hint}`;
+}
+
 /** Wrap cinematic scene imagePrompt with style guard (Nano Banana). */
 export function guardCinematicImagePrompt(
   prompt: string,
