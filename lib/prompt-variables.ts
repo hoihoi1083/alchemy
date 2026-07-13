@@ -13,6 +13,7 @@ import type { PromotionMode } from "@/lib/promotion-mode";
 import type { WorkflowMode } from "@/lib/workflow-mode";
 import {
   isInfographicLikeBrief,
+  isLayoutTransferReferenceExtra,
   isPhotographicReferenceBrief,
   isStyleOnlyReferenceExtra,
   type CarouselSlideReferenceBrief,
@@ -286,6 +287,14 @@ export function buildImageEditPrompt(
   );
 }
 
+function userFacingAdCopyLines(vars: PromptVariables): string[] {
+  const lines: string[] = [];
+  if (vars.headline?.trim()) lines.push(vars.headline.trim());
+  if (vars.subline?.trim()) lines.push(vars.subline.trim());
+  if (vars.offer?.trim()) lines.push(vars.offer.trim());
+  return lines;
+}
+
 function promoAdCopyLines(vars: PromptVariables): string[] {
   const lines: string[] = [];
   if (vars.headline?.trim()) lines.push(vars.headline.trim());
@@ -317,7 +326,7 @@ function copyLocaleForVars(vars: PromptVariables, extraSamples: string[] = []): 
 }
 
 function promoTypographyHint(vars: PromptVariables, copyFromReference?: boolean): string {
-  const lines = promoAdCopyLines(vars);
+  const lines = copyFromReference ? userFacingAdCopyLines(vars) : promoAdCopyLines(vars);
   const locale = copyLocaleForVars(vars, lines);
   const langHint = typographyHintForLocale(locale, lines);
   const refNote = copyFromReference
@@ -331,6 +340,9 @@ function promoTypographyHint(vars: PromptVariables, copyFromReference?: boolean)
       ? " Use only the provided Offer text for any promotion badge — do not invent extra prices or discounts."
       : noInventedPricing;
     return `${langHint} Integrate these marketing lines into the poster as readable ad copy — bold main headline, supporting sublines${hasOffer ? ", optional offer badge" : ""}, optional brand footer.${offerNote}${refNote}`;
+  }
+  if (copyFromReference) {
+    return `${langHint} User provided no on-image copy — keep text minimal: product hero only, matching IMAGE 1 layout and typography zones without inventing 攻略/edu headlines, bullet lists, or offer badges.${noInventedPricing}${refNote}`;
   }
   const product = vars.product?.trim() || "the product";
   return `${langHint} Add short boutique ad headlines suited to ${product} — hook plus supporting line, woven into the layout.${noInventedPricing}${refNote}`;
@@ -830,10 +842,16 @@ export function buildWizardImagePrompt(
   brandProfile?: BrandProfile | null,
   visualStyleId?: VisualStyleId,
   brandKit?: BrandKit | null,
+  promptOptions?: { structuredReferenceBrief?: boolean; aspectRatio?: string },
 ): string {
   if (mode === "reference-concept") {
     const shopHint = visualStyleId ? getVisualStyle(visualStyleId).promptHint : "";
-    return buildReferenceConceptImagePrompt(vars, { shopStyleHint: shopHint, brandProfile });
+    return buildReferenceConceptImagePrompt(vars, {
+      shopStyleHint: shopHint,
+      brandProfile,
+      structuredReferenceBrief: promptOptions?.structuredReferenceBrief,
+      aspectRatio: promptOptions?.aspectRatio,
+    });
   }
   if (mode === "info-poster") return buildInfoPosterImagePrompt(vars);
   if (mode === "model-wear") return buildModelWearImagePrompt(vars);
@@ -1036,12 +1054,18 @@ export function buildPromoImagePrompt(
 /** Nano Banana: reference ad → new image keeping design language, adapting venue/lighting to product/shop. */
 export function buildReferenceConceptImagePrompt(
   vars: PromptVariables,
-  options?: { shopStyleHint?: string; brandProfile?: BrandProfile | null },
+  options?: {
+    shopStyleHint?: string;
+    brandProfile?: BrandProfile | null;
+    /** When analyze-reference brief is in vars.extra — skip LAYER A/B/C essay. */
+    structuredReferenceBrief?: boolean;
+    aspectRatio?: string;
+  },
 ): string {
   const product = vars.product?.trim() || "the product";
-  const brief = joinParts(
+  const aspect = options?.aspectRatio?.trim() || "9:16";
+  const campaignCopy = joinParts(
     vars.business ? `Brand: ${vars.business}` : undefined,
-    vars.product ? `Product: ${vars.product}` : undefined,
     vars.headline ? `Headline: ${vars.headline}` : undefined,
     vars.subline ? `Subline: ${vars.subline}` : undefined,
     vars.offer ? `Offer: ${vars.offer}` : undefined,
@@ -1060,16 +1084,39 @@ export function buildReferenceConceptImagePrompt(
       : "",
     vars.business ? `Shop: ${vars.business}.` : "",
   );
+  const structuredBrief =
+    options?.structuredReferenceBrief ??
+    (isLayoutTransferReferenceExtra(vars.extra) || isStyleOnlyReferenceExtra(vars.extra));
+
+  if (structuredBrief) {
+    return joinParts(
+      artStyleMandatoryLead(vars.artStyle),
+      `Two images. Create ONE new ${aspect} marketing still for ${product}.`,
+      `IMAGE 1 = layout/style reference. IMAGE 2 = product hero — always show IMAGE 2's item, never IMAGE 1's product.`,
+      `Keep IMAGE 1 layout rhythm, graphic component types, typography hierarchy, and staging pose type. Adapt background and lighting to suit IMAGE 2. IMAGE 2 shows ${product} — do not copy IMAGE 1 logos, wordmarks, or selling lines.`,
+      shopBlock,
+      campaignCopy ? `Campaign copy (all on-image text): ${campaignCopy}.` : "",
+      artStyleImageClause(vars.artStyle),
+      copyHint,
+      marketChineseScriptBlock(vars.market),
+      MARKET_HINTS[vars.market],
+      framingHint,
+      artStyleAvoidTail(vars.artStyle),
+      vars.extra,
+      `${aspect} social ad still, sharp focus, no watermark.`,
+    );
+  }
+
   return joinParts(
     artStyleMandatoryLead(vars.artStyle),
-    `Two images. Create ONE new 9:16 marketing still for ${product}.`,
+    `Two images. Create ONE new ${aspect} marketing still for ${product}.`,
     `HOW TO USE IMAGE 1 (reference ad) — three layers:`,
     `LAYER A — KEEP (design language): layout structure, composition rhythm, graphic component types (badges, frames, accent shapes, hand-drawn or elegant decoration style), typography hierarchy style, and product staging pose (hand / wrist / flat lay / circle hero). A viewer should recognize the same ad design family as IMAGE 1.`,
     `LAYER B — ADAPT (venue and light): background, venue, surface, and lighting should suit IMAGE 2's product colors and the shop/campaign mood — they may differ from IMAGE 1. Do not clone IMAGE 1's exact location or lighting if it clashes with the new product; make the environment feel native to this product and shop.`,
     `LAYER C — REPLACE (content): use IMAGE 2's exact product (colors, materials, shape). All readable headlines and body copy must come from the campaign brief below — never reuse IMAGE 1 product names, selling lines, zodiac/星座 hooks, or Chinese characters from IMAGE 1. IMAGE 1 belongs to another company — do not copy its logos, wordmarks, store names, sponsor marks, @handles, or watermarks. Never render English planning notes or carousel-structure meta-text on the image.`,
     `IMAGE 2 = the real product hero. Always show IMAGE 2's item — never the product from IMAGE 1. If the campaign product name disagrees with IMAGE 2, trust IMAGE 2 pixels for product category, shape, and materials.`,
     shopBlock,
-    brief ? `Campaign copy (all on-image text): ${brief}.` : "",
+    campaignCopy ? `Campaign copy (all on-image text): ${campaignCopy}.` : "",
     artStyleImageClause(vars.artStyle),
     copyHint,
     marketChineseScriptBlock(vars.market),
@@ -1077,7 +1124,7 @@ export function buildReferenceConceptImagePrompt(
     framingHint,
     artStyleAvoidTail(vars.artStyle),
     vars.extra,
-    "9:16 vertical social ad still, sharp focus, no watermark.",
+    `${aspect} vertical social ad still, sharp focus, no watermark.`,
   );
 }
 

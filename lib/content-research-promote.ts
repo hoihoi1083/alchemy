@@ -35,6 +35,47 @@ export function isReferenceSourcedAngle(angle: ContentAngleCandidate): boolean {
   return angle.id.startsWith("pinned-");
 }
 
+/** Research pick from a real platform post (cover / carousel attached). */
+function isResearchPostAngle(angle: ContentAngleCandidate): boolean {
+  return (
+    isReferenceSourcedAngle(angle) ||
+    angle.id.startsWith("post-") ||
+    Boolean(angle.sourceUrl?.trim()) ||
+    referenceAngleImageCount(angle) > 0
+  );
+}
+
+export function referenceAngleImageCount(angle: ContentAngleCandidate): number {
+  return angle.sourceImageUrls?.length ?? (angle.sourceCoverImageUrl ? 1 : 0);
+}
+
+/** Product still / handheld reference posts — not edu-carousel cover copy. */
+const PRODUCT_SHOT_EDU_RE =
+  /教程|攻略|避雷|干货|tips|how to|guide|checklist|步驟|步骤|懶人包|懒人包/i;
+
+export function isProductShotReferenceAngle(angle: ContentAngleCandidate): boolean {
+  const count = referenceAngleImageCount(angle);
+  if (count === 0 || count > 3) return false;
+  if (angle.format === "reel" || angle.format === "model-wear") return false;
+  const blob = [
+    angle.sourceTitle,
+    angle.hook,
+    angle.title,
+    angle.bulletPoints.join(" "),
+    angle.scriptOutline,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  if (count >= 3 && PRODUCT_SHOT_EDU_RE.test(blob)) return false;
+  if (count <= 3 && !PRODUCT_SHOT_EDU_RE.test(blob)) return true;
+  return isSingleImageReferenceAngle(angle);
+}
+
+/** Single-image pinned reference posts should not get multi-slide 攻略 copy. */
+export function isSingleImageReferenceAngle(angle: ContentAngleCandidate): boolean {
+  return isReferenceSourcedAngle(angle) && referenceAngleImageCount(angle) <= 1;
+}
+
 /** User-facing copy fields derived from an angle + the product they actually sell. */
 export function promoteProductName(
   promoteProduct: string | undefined,
@@ -99,6 +140,68 @@ function structureHookSuffix(format: ContentAngleFormat): string {
   }
 }
 
+const REFERENCE_TOPIC_LEAK =
+  /水瓶座|白羊座|金牛座|双子座|巨蟹座|狮子座|处女座|天秤座|天蝎座|射手座|摩羯座|双鱼座|星座/i;
+
+/** Block raw reference-post engagement / topic from becoming on-image copy. */
+function isUnsafePromotedCopy(
+  text: string,
+  angle: ContentAngleCandidate,
+  product: string,
+): boolean {
+  const t = text.trim();
+  if (!t) return true;
+  if (REFERENCE_TOPIC_CTA.test(t)) return true;
+  const source = angle.sourceTitle?.trim();
+  if (source && t === source) return true;
+  if (product && !t.includes(product) && REFERENCE_TOPIC_LEAK.test(t)) return true;
+  if (product && !t.includes(product) && REFERENCE_TOPIC_LEAK.test(angle.sourceTitle ?? "")) {
+    return true;
+  }
+  if (product && !t.includes(product) && REFERENCE_TOPIC_LEAK.test(t)) return true;
+  return false;
+}
+
+/**
+ * Use planner "為你改寫" fields (angle.title / hook / bullets) when safe.
+ * Reference layout comes from analyze — these are user-editable on-image copy.
+ */
+function promotedRewriteCopyFromAngle(
+  angle: ContentAngleCandidate,
+  product: string,
+): { headline: string; subline: string; offer: string } {
+  const source = angle.sourceTitle?.trim() ?? "";
+  const title = angle.title?.trim() ?? "";
+  const hook = angle.hook?.trim() ?? "";
+
+  let headline = "";
+  if (title && !isUnsafePromotedCopy(title, angle, product) && title !== source) {
+    headline = title;
+  } else if (product && !isProductShotReferenceAngle(angle)) {
+    headline = `${product}｜${structureHookSuffix(angle.format)}`;
+  }
+
+  let subline = "";
+  if (hook && !isUnsafePromotedCopy(hook, angle, product) && hook !== source) {
+    subline = hook;
+  } else {
+    const bullets = angle.bulletPoints
+      .map((b) => b.trim())
+      .filter((b) => b && !isUnsafePromotedCopy(b, angle, product));
+    if (bullets.length) {
+      subline = bullets.slice(0, 4).join(" · ");
+    } else if (product && !isProductShotReferenceAngle(angle)) {
+      subline = structureSublineFromAngle(angle, product);
+    }
+  }
+
+  return {
+    headline,
+    subline,
+    offer: product ? sanitizeOfferFromAngle(angle, product) : "",
+  };
+}
+
 /**
  * Headline/subline for wizard — prefer promote-target-specific copy; reference post topic is not copied.
  * In concept mode an explicit concept anchor is always retained, even when it equals the search topic.
@@ -116,6 +219,9 @@ export function copyFieldsFromAngle(
 
   if (promotionMode === "concept") {
     if (product) {
+      if (isResearchPostAngle(angle)) {
+        return promotedRewriteCopyFromAngle(angle, product);
+      }
       return {
         headline: `${product}｜${structureHookSuffix(angle.format)}`,
         subline: structureSublineFromAngle(angle, product),
@@ -156,6 +262,10 @@ export function copyFieldsFromAngle(
       subline,
       offer: angle.cta,
     };
+  }
+
+  if (isResearchPostAngle(angle)) {
+    return promotedRewriteCopyFromAngle(angle, product);
   }
 
   const headline = `${product}｜${structureHookSuffix(angle.format)}`;

@@ -40,7 +40,7 @@ export function storePromotionMode(mode: PromotionMode): void {
 }
 
 export function studioHref(mode: PromotionMode, template?: string): string {
-  const params = new URLSearchParams({ mode });
+  const params = new URLSearchParams({ mode, fresh: "1" });
   if (template?.trim()) params.set("template", template.trim());
   return `/studio?${params.toString()}`;
 }

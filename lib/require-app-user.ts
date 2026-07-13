@@ -21,8 +21,12 @@ export async function requireAppUser(): Promise<RequireAppUserResult> {
   }
 
   if (isMongoConfigured()) {
-    const clerkUser = await currentUser();
+    // Profile enrichment is best-effort. currentUser() hits Clerk's backend API
+    // (unlike auth(), which only reads the local JWT) and can fail transiently
+    // under bursty parallel requests. A failure here must not break an already
+    // authenticated request, so keep the whole block inside try/catch.
     try {
+      const clerkUser = await currentUser();
       await ensureUser({
         clerkId: userId,
         email: clerkUser?.emailAddresses[0]?.emailAddress ?? null,
@@ -30,7 +34,11 @@ export async function requireAppUser(): Promise<RequireAppUserResult> {
         imageUrl: clerkUser?.imageUrl ?? null,
       });
     } catch (err) {
-      console.error("[requireAppUser] MongoDB sync failed:", err);
+      const message = err instanceof Error ? err.message : String(err);
+      // Clerk currentUser() can fail transiently under parallel requests — auth still valid.
+      if (process.env.NODE_ENV === "development") {
+        console.warn("[requireAppUser] user sync skipped (non-fatal):", message);
+      }
     }
   }
 

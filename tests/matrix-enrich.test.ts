@@ -14,7 +14,12 @@ describe("research enrich + display angles", () => {
       title: "水瓶座水晶",
       url: "https://www.xiaohongshu.com/explore/aaa111",
       snippet: "星座水晶攻略",
-      imageUrls: ["a", "b", "c", "d"],
+      imageUrls: [
+        "https://example.com/a.jpg",
+        "https://example.com/b.jpg",
+        "https://example.com/c.jpg",
+        "https://example.com/d.jpg",
+      ],
       platform: "xiaohongshu",
       likes: 5000,
     },
@@ -23,7 +28,7 @@ describe("research enrich + display angles", () => {
       title: "洗鼻器测评",
       url: "https://www.xiaohongshu.com/explore/bbb222",
       snippet: "儿童洗鼻",
-      coverImageUrl: "c.jpg",
+      coverImageUrl: "https://example.com/c.jpg",
       platform: "xiaohongshu",
     },
   ];

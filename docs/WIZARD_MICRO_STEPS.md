@@ -1211,6 +1211,243 @@ When `NEXT_PUBLIC_WIZARD_V2=1` ships, this playbook maps to:
 | Video | `video.generate` / `wait.video_generate` (stitch) |
 | Finish | `done.export` |
 
+### 12.6 Complete path — all user inputs (Path 10, classic `/studio` today)
+
+**Target output:** ~32–40s stitched pre-roll (4–5 × 8s cinematic clips) + **post composite** for phone UI.
+
+**Example product:** OfferToday-style HR / recruitment SaaS app.
+
+---
+
+#### Step 0 — Entry
+
+| User action | State set | Required |
+|-------------|-----------|----------|
+| Open `/studio` or Start from landing | — | — |
+
+---
+
+#### Step 1 — Setup: output & subject
+
+| # | UI (today) | User picks / enters | State field | Example (OfferToday) | Required |
+|---|------------|---------------------|-------------|-------------------|----------|
+| 1.1 | **Workflow** | 圖片+影片 **Both** | `workflowMode` | `combined` | ✓ |
+| 1.2 | **Promotion mode** | **概念 Concept** | `promotionMode` | `concept` | ✓ |
+| 1.3 | Primary path shortcut (optional) | **電影感 Cinematic** (combined + concept) | `visualStyleId` | `concept-cinematic` | ✓ (or pick manually) |
+| 1.4 | Scene count | **4** or **5** scenes (32s or 40s total) | `cinematicSceneCount` | `5` → 40s stitch | ✓ for multi-scene |
+
+*Do **not** pick: 平台研究 (research), 參考短片 MP4, Ship-it, storyboard-video, product-assistant.*
+
+---
+
+#### Step 2 — Setup: 概念助手 (`identity.concept`)
+
+| # | Field | State | Example (OfferToday) | Required | → AI |
+|---|-------|-------|-------------------|----------|------|
+| 2.1 | **概念 idea** | `conceptIdea` | `OfferToday — AI 招聘 App，幫 HR 精準配對理想人才` | ✓ (anchor) | DeepSeek cinematic plan, copy, promote name |
+| 2.2 | Audience (optional) | `conceptAudience` | `香港中小企 HR、招聘經理` | — | `/api/plan-concept` |
+| 2.3 | Pain (optional) | `conceptPain` | `履歷太多、篩選慢、錯配` | — | plan-concept |
+| 2.4 | Promise (optional) | `conceptPromise` | `AI 秒級配對合適人選` | — | plan-concept → may fill `headline` |
+| 2.5 | Proof (optional) | `conceptProof` | `已服務 500+ 企業` | — | plan-concept |
+| 2.6 | CTA (optional) | `conceptCta` | `免費試用 / 立即下載` | — | plan-concept → may fill `offer` |
+| 2.7 | Visual metaphor (optional) | `conceptVisualMetaphor` | `由文件風暴 → 手機一則通知解決` | — | plan-concept |
+| 2.8 | **AI 分析概念** button (optional) | fills above + `headline`, `subline`, `offer`, `conceptImageVisionNote` | — | — | Gemini vision if ref image uploaded |
+
+**Gate:** At least one of `conceptIdea`, `headline`, `creativeVideoBrief` before cinematic generate.
+
+---
+
+#### Step 3 — Setup: 內容與生成設定 (`copy.edit`)
+
+| # | Field | State | Example (OfferToday) | Required | → AI |
+|---|-------|-------|-------------------|----------|------|
+| 3.1 | **主標題 / Hook** | `headline` | `AI精準配對理想人才` | Recommended | Cinematic plan, ad pack, captions |
+| 3.2 | **副標 / 賣點** | `subline` | `履歷海淹沒你？一則通知配對合適人選` | Optional | All planners |
+| 3.3 | **Business / 品牌名** | `business` | `OfferToday` | Optional | Planners, brand kit |
+| 3.4 | **Offer / CTA** | `offer` | `免費試用 · 立即下載` | Optional | Planners, ad pack |
+| 3.5 | **市場** | `promptMarket` | `hk` / `tw` / `cn` | Default `hk` | Copy tone, ad pack |
+| 3.6 | **品牌設定** (collapsible) | `brandKit` | logo, `#0066FF`, fonts | Optional | Nano Banana stills |
+| 3.7 | **進階 prompt** (collapsible) | `promptExtra` | Extra art direction | Optional | Merged into `effectivePromptExtra()` |
+
+**Skip rule (direct):** Whole screen skippable if empty — but for this ad, fill at least headline + creative brief.
+
+---
+
+#### Step 4 — Setup: 創意簡介 (`copy.creative_brief`)
+
+| # | Field | State | Example (OfferToday) | Required | → AI |
+|---|-------|-------|-------------------|----------|------|
+| 4.1 | **Creative video brief** | `creativeVideoBrief` | See **story script** below | ✓ strongly recommended | `/api/plan-cinematic-reel` (DeepSeek) |
+
+**Suggested story script (paste into creative brief):**
+
+```text
+Beat 1 — Stress: Fast hands typing on keyboard, HR overwhelmed.
+Beat 2 — Chaos: Office worker at desk, papers flying in slow-motion metaphor.
+Beat 3 — Pain: Close-up tired HR manager, blue office light, no celebrity likeness.
+Beat 4 — Product: Smartphone on desk, lock screen glow (NO readable UI text — blank screen for post composite).
+Beat 5 — Demo: Hand holding phone, candidate profile cards (textless screen — UI added in CapCut).
+Beat 6 — Payoff: Young professional in bright café, smiling at phone, relief mood.
+Tone: Premium SaaS TVC, photorealistic, cool blues → warm café ending.
+Do NOT use famous faces or real brand logos on phone.
+```
+
+---
+
+#### Step 5 — Setup: visual & video settings
+
+| # | UI | State | OfferToday pick | Required | → AI |
+|---|-----|-------|-----------------|----------|------|
+| 5.1 | **畫面風格** | `artStyleId` | `realistic` (寫實) | Default OK | Nano Banana + cinematic guard + Seedance hint |
+| 5.2 | **影片時長** (Setup panel) | `videoSettings.duration` | `8` per clip (cinematic fixed at 8s/clip) | ✓ | Stitch billing; each Seedance clip |
+| 5.3 | **Resolution** | `videoSettings.resolution` | `720p` or `1080p` | Default OK | fal billing |
+| 5.4 | **Fast mode** | `videoSettings.fast` | On for drafts / Off for final | Optional | endpoint |
+| 5.5 | **Aspect ratio** (image) | `imageAspectRatio` | `16:9` (YouTube pre-roll) or `9:16` (Reels) | Default OK | Scene stills |
+| 5.6 | **Image text mode** | `imageTextMode` | `textless` | ✓ for phone beats | Avoid garbled UI in AI |
+| 5.7 | **Subject framing** | `subjectFraming` | `hands-only` for typing-heavy; or `auto` | Optional | Nano Banana + planners *(one global setting today)* |
+
+---
+
+#### Step 6 — Setup: optional assets
+
+| # | Asset | State | OfferToday | Required | → AI |
+|---|-------|-------|------------|----------|------|
+| 6.1 | **Reference image** (mood / layout) | `imageRefPhoto`, `imageCreativeMode: reference-concept` | App screenshot **blurred** or mood board only | Optional | `/api/analyze-reference` → `userReferenceBrief`; plan-concept vision |
+| 6.2 | **Product photo** | `productPhoto` | Usually **none** (SaaS, not physical SKU) | ✗ Path 10 | — |
+| 6.3 | **Reference MP4** | `referenceAd` | **None** on Path 10 | ✗ | — |
+| 6.4 | **Brand website analyze** | `brandWebsiteUrl` → `brandProfile` | Only if you switch to brand-video style | ✗ Path 10 | — |
+
+**Continue Setup** → goes to **Image step** (combined always hits image before video).
+
+---
+
+#### Step 7 — Image step: generate cinematic scene stills
+
+| # | User action | Handler | What happens |
+|---|-------------|---------|--------------|
+| 7.1 | Click **Generate image** | `generateImage()` | Detects `visualStyleId === concept-cinematic` |
+| 7.2 | Auto plan | `POST /api/plan-cinematic-reel` | DeepSeek → `cinematicReelPlan` (scenes, `imagePrompt`, `videoMotionPrompt` per scene) |
+| 7.3 | Auto render | `POST /api/generate-cinematic-scenes` | Nano Banana → `cinematicScenes[]` with `imageUrl` each |
+| 7.4 | Wait | `imageBusy`, `imageJobMeta.kind === cinematic-reel` | 4–5 stills appear in variant picker |
+
+**Inputs sent to plan (from your Setup fields):**
+
+| API body field | Source state |
+|----------------|--------------|
+| `creativeBrief` | `creativeVideoBrief` OR join(`headline`, `subline`, `offer`, `conceptIdea`) |
+| `conceptIdea` (via brief) | `conceptIdea` |
+| `headline`, `subline`, `offer`, `business` | copy.edit |
+| `promptExtra` | `effectivePromptExtra()` |
+| `promptMarket` | `promptMarket` |
+| `artStyleId` | `artStyleId` |
+| `sceneCount` | `cinematicSceneCount` |
+| `referenceImageNote` | `conceptImageVisionNote` (if plan-concept ran) |
+
+**Review on Image step:**
+
+| # | User action | State |
+|---|-------------|-------|
+| 7.5 | Pick / review each scene still | `selectedVariantIndex`, `cinematicScenes[]` |
+| 7.6 | Regenerate single scene (if UI supports) | re-run generate for one beat |
+| 7.7 | Continue to Video | `setStepKey("video")` |
+
+**Beat → scene mapping (5 scenes example):**
+
+| Scene # | Plan role | Still content | Text in AI image? |
+|---------|-----------|---------------|------------------|
+| 1 | hook / stress | Hands + keyboard | No |
+| 2 | chaos | Papers flying | No |
+| 3 | pain | HR close-up (generic face) | No |
+| 4 | product-hero | Phone on desk | **No — composite UI later** |
+| 5 | payoff | Café + phone | **No — composite UI later** |
+
+*If you need 6 beats (incl. separate demo shot), set `cinematicSceneCount: 6`.*
+
+---
+
+#### Step 8 — Video step: motion + ad pack + generate
+
+| # | UI section | State / action | OfferToday | Required |
+|---|------------|----------------|------------|----------|
+| 8.1 | Scene preview | `cinematicScenes[]` | Review 5 stills | ✓ |
+| 8.2 | **Video settings** (full panel) | `videoSettings` | creativity, motion (if shown) | Optional |
+| 8.3 | **Ad pack** (concept path) | `voiceoverEnabled`, `captionBurnEnabled`, `musicSource` | VO script zh-HK; AI BGM `cinematic` mood | Optional |
+| 8.4 | **BGM track** | `bgmTrack`, `musicMood` | Upbeat → premium | Optional |
+| 8.5 | **Generate video** | `generateVideo()` → `makeCinematicStitchVideo()` | Stitches 5 × ~8s Seedance clips | ✓ |
+
+**Per-scene Seedance inputs:**
+
+| Source | Used for |
+|--------|----------|
+| `cinematicScenes[i].imageUrl` | `@Image` / start frame per clip |
+| `cinematicScenes[i].videoMotionPrompt` | Seedance motion prompt (from DeepSeek plan) |
+| `artStyleId` | Stylized motion guard on prompt |
+| 8s per clip | `CINEMATIC_CLIP_SEC` |
+
+**Optional ad pack AI (`/api/plan-ad-pack`):** uses `headline`, `subline`, `offer`, `business`, `conceptIdea`, `videoPrompt`, `effectivePromptExtra()`, scene list → VO script + caption lines + music prompt.
+
+---
+
+#### Step 9 — Done: export + post-production (outside wizard)
+
+| # | Task | Tool | Notes |
+|---|------|------|-------|
+| 9.1 | Download stitched MP4 | Done step | Base video ~40s |
+| 9.2 | Design phone UI | Figma / Sketch | Notification, candidate cards, OfferToday logo |
+| 9.3 | Composite UI on phone screens | CapCut / AE / DaVinci | Beats 4–5 (and on-screen 標題 if needed) |
+| 9.4 | Add supers | CapCut | e.g. `AI精準配對理想人才` if not in AI |
+| 9.5 | Mix VO + BGM | CapCut or wizard dub | If ad pack generated |
+| 9.6 | Export 16:9 + 9:16 cuts | CapCut | YouTube pre-roll + Reels |
+
+---
+
+#### Path 10 — input checklist (printable)
+
+```
+□ workflowMode: combined
+□ promotionMode: concept
+□ visualStyleId: concept-cinematic
+□ cinematicSceneCount: 4 | 5 | 6
+□ conceptIdea: (your app — fixed anchor)
+□ headline / subline / offer / business
+□ creativeVideoBrief: 6-beat story script
+□ artStyleId: realistic
+□ imageTextMode: textless
+□ imageAspectRatio: 16:9 or 9:16
+□ promptMarket: hk
+□ videoSettings: resolution + fast
+□ brandKit: optional
+□ imageRefPhoto: optional mood only
+□ Generate cinematic scenes → review stills
+□ Generate stitch video
+□ Post: composite app UI on phone beats
+```
+
+---
+
+### 12.7 Complete path — Path 8 alternative (reference SaaS pre-roll MP4)
+
+Use when you have a **similar ~30s HR/SaaS ad MP4** and want to **match its pacing**.
+
+| Step | Micro-step | User inputs | State fields | Required |
+|------|------------|-------------|--------------|----------|
+| 1 | Output | 影片 or 圖片+影片 | `workflowMode` | ✓ |
+| 2 | Subject | 概念 | `promotionMode: concept` | ✓ |
+| 3 | Concept | 概念 idea + optional plan-concept | `conceptIdea`, headline, … | ✓ |
+| 4 | Intake | 平台研究 **or** 直接 + **upload MP4** | research optional; `referenceAd` (video) | ✓ MP4 |
+| 5 | Video settings | Duration **before** analyze | `videoSettings.duration` e.g. `8` or `15` | ✓ explicit |
+| 6 | Wait | Reel analyze | `researchReelAnalysis`, `storyboardPlan` | auto |
+| 7 | Copy edit | Fix copy for **your app** | `headline`, `subline`, `offer` | ✓ if research |
+| 8 | Art style | 寫實 | `artStyleId` | Optional |
+| 9 | Ref image | Concept ref (optional) | `imageRefPhoto` | Optional |
+| 10 | Image | Generate **storyboard scene stills** | `storyboardScenes[]` | ✓ combined |
+| 11 | Video | Storyboard multi-image R2V | `videoPrompt` from plan | ✓ |
+| 12 | Done | Export + UI composite | — | Post |
+
+**Inputs sent to reel analyze:** `effectivePromoteName`, `conceptIdea`, headline, subline, offer, business, `effectivePromptExtra()`, `artStyleId`, `subjectFraming`, `output_duration_sec`, optional `scene_count`.
+
+**Rule:** Reference MP4 = **style + pacing only**; `conceptIdea` = **your app topic** (§9.5).
+
 ---
 
 *Last updated: v0.5 — 2026-07-12*

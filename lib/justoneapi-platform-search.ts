@@ -473,12 +473,15 @@ export function extractXhsNoteFromDetailResponse(
 export { preferFetchableXhsCover, xhsCoverUrlLooksFetchable } from "@/lib/research-cover-url";
 
 const XHS_COVER_HYDRATE_PATHS = [
-  "/api/xiaohongshu/get-note-detail/v1",
-  "/api/xiaohongshu/get-note-detail/v4",
-  "/api/xiaohongshu/get-note-detail/v2",
-  "/api/xiaohongshu/get-note-detail/v5",
   "/api/xiaohongshu/get-note-detail/v7",
+  "/api/xiaohongshu/get-note-detail/v5",
 ] as const;
+
+const MAX_XHS_COVER_HYDRATE = 3;
+
+function postEngagementScore(post: ContentResearchPost): number {
+  return (post.collects ?? 0) * 2 + (post.likes ?? 0) + (post.comments ?? 0);
+}
 
 async function upgradeXhsPostCover(post: ContentResearchPost): Promise<ContentResearchPost> {
   const noteId = post.id?.trim();
@@ -489,7 +492,7 @@ async function upgradeXhsPostCover(post: ContentResearchPost): Promise<ContentRe
 
   for (const path of XHS_COVER_HYDRATE_PATHS) {
     try {
-      const body = await fetchJustOneApi(path, detailParams, "XHS cover hydrate");
+      const body = await fetchJustOneApi(path, detailParams, "XHS cover hydrate", { maxAttempts: 1 });
       const note = extractXhsNoteFromDetailResponse(asRecord(body) ?? {});
       if (!note) continue;
       const refreshed = mapRawPlatformPost(
@@ -524,9 +527,11 @@ async function hydrateXhsPostCovers(posts: ContentResearchPost[]): Promise<Conte
         p.platform === "xiaohongshu" &&
         (p.imageUrls?.length || p.coverImageUrl) &&
         !xhsCoverUrlLooksFetchable(p.coverImageUrl),
-    );
+    )
+    .sort((a, b) => postEngagementScore(b.p) - postEngagementScore(a.p))
+    .slice(0, MAX_XHS_COVER_HYDRATE);
 
-  const concurrency = 4;
+  const concurrency = 2;
   for (let start = 0; start < targets.length; start += concurrency) {
     const batch = targets.slice(start, start + concurrency);
     const upgraded = await Promise.all(batch.map(({ p }) => upgradeXhsPostCover(p)));

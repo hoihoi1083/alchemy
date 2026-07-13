@@ -117,6 +117,7 @@ import type { ImageTextLayer } from "@/lib/image-text-overlay-types";
 import {
   isContentResearchStyleExtra,
   refreshContentResearchPromptExtra,
+  stripContentResearchStyleExtra,
 } from "@/lib/content-research-promote";
 import { buildResearchR2vPrompt } from "@/lib/research-r2v-prompt";
 import { wizardPromoteName } from "@/lib/wizard-promote-name";
@@ -127,7 +128,6 @@ import {
 import { layoutHookSplitCaptions } from "@/lib/ad-pack-hook-captions";
 import {
   researchReelAnalysisPromptBlock,
-  RESEARCH_REEL_ANALYSIS_MARKER,
   type ResearchReelAnalysis,
 } from "@/lib/reel-analysis-types";
 import {
@@ -142,9 +142,10 @@ import {
   type UserReferenceBrief,
 } from "@/lib/user-reference-brief";
 import {
-  referenceStrategyPromptBlock,
+  mergeReferencePromptExtra,
   resolveReferenceStrategy,
 } from "@/lib/reference-strategy";
+import { referenceAnalyzeTriggerKey } from "@/lib/reference-analyze-trigger";
 import { saveBrandKitToStorage } from "@/lib/brand-kit";
 import {
   effectiveBrandHeadline,
@@ -556,28 +557,29 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       promotionMode,
       { product, headline, conceptIdea },
     );
-    const base = usesReferenceConceptForImage
+    const mergedBase = usesReferenceConceptForImage
       ? researchRefreshed.trim()
       : mergePromptExtra(visualStyleId, researchRefreshed);
-    const strategyBlock = userReferenceBrief
-      ? referenceStrategyPromptBlock(userReferenceBrief, referenceStrategy)
-      : "";
-    const legacyRef = conceptImageVisionNote.trim();
-    const ref = strategyBlock || legacyRef;
+    const base = mergeReferencePromptExtra(
+      mergedBase,
+      userReferenceBrief,
+      referenceStrategy,
+    );
     const reelBlock = researchReelAnalysis
       ? researchReelAnalysisPromptBlock(researchReelAnalysis)
       : "";
+    const legacyRef =
+      !userReferenceBrief && conceptImageVisionNote.trim() ? conceptImageVisionNote.trim() : "";
     if (
-      !ref ||
-      base.includes(USER_REFERENCE_MARKER) ||
-      base.includes(USER_REFERENCE_STYLE_ONLY_MARKER) ||
-      base.includes(USER_REFERENCE_LAYOUT_TRANSFER_MARKER) ||
-      base.includes(RESEARCH_REEL_ANALYSIS_MARKER) ||
-      isContentResearchStyleExtra(base)
+      legacyRef &&
+      !base.includes(USER_REFERENCE_MARKER) &&
+      !base.includes(USER_REFERENCE_STYLE_ONLY_MARKER) &&
+      !base.includes(USER_REFERENCE_LAYOUT_TRANSFER_MARKER) &&
+      !isContentResearchStyleExtra(base)
     ) {
-      return [base, reelBlock].filter(Boolean).join(" | ");
+      return [base, legacyRef, reelBlock].filter(Boolean).join(" | ");
     }
-    return [base, ref, reelBlock].filter(Boolean).join(" | ");
+    return [base, reelBlock].filter(Boolean).join(" | ");
   }, [
     visualStyleId,
     promptExtra,
@@ -719,17 +721,85 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     return () => URL.revokeObjectURL(url);
   }, [imageRefPhoto]);
 
+  const referenceAnalyzeKey = useMemo(
+    () =>
+      referenceAnalyzeTriggerKey({
+        cover: imageRefPhoto,
+        extras: extraKitPhotos,
+        promotionMode,
+        imageOutputMode: effectiveImageOutputMode,
+        visualStyleId,
+        imageCreativeMode,
+        hasProductPhoto: Boolean(productPhoto),
+        researchAngleId: contentResearchApplyRef?.angle?.id,
+      }),
+    [
+      imageRefPhoto,
+      extraKitPhotos,
+      promotionMode,
+      effectiveImageOutputMode,
+      visualStyleId,
+      imageCreativeMode,
+      productPhoto,
+      contentResearchApplyRef?.angle?.id,
+    ],
+  );
+
+  const referenceAnalyzeContextRef = useRef({
+    conceptIdea,
+    headline,
+    subline,
+    product,
+    promptExtra,
+    contentResearchApplyRef,
+    promotionMode,
+  });
+  referenceAnalyzeContextRef.current = {
+    conceptIdea,
+    headline,
+    subline,
+    product,
+    promptExtra,
+    contentResearchApplyRef,
+    promotionMode,
+  };
+
+  const lastCompletedReferenceAnalyzeKeyRef = useRef<string | null>(null);
+  const referenceAnalyzeInFlightKeyRef = useRef<string | null>(null);
+
   useEffect(() => {
-    if (!imageRefPhoto) {
+    if (!referenceAnalyzeKey) {
+      lastCompletedReferenceAnalyzeKeyRef.current = null;
+      referenceAnalyzeInFlightKeyRef.current = null;
       setUserReferenceBrief(null);
       setReferenceAnalyzeNote(null);
       return;
     }
+    if (lastCompletedReferenceAnalyzeKeyRef.current === referenceAnalyzeKey) {
+      return;
+    }
+    if (referenceAnalyzeInFlightKeyRef.current === referenceAnalyzeKey) {
+      return;
+    }
+    referenceAnalyzeInFlightKeyRef.current = referenceAnalyzeKey;
+
     let cancelled = false;
     const run = async () => {
+      if (!imageRefPhoto) return;
       setReferenceAnalyzeBusy(true);
       setReferenceAnalyzeNote(null);
       try {
+        const ctx = referenceAnalyzeContextRef.current;
+        const promptForAnalyze = refreshContentResearchPromptExtra(
+          ctx.promptExtra,
+          ctx.contentResearchApplyRef,
+          ctx.promotionMode,
+          {
+            product: ctx.product,
+            headline: ctx.headline,
+            conceptIdea: ctx.conceptIdea,
+          },
+        );
         const fd = new FormData();
         fd.set("reference_image", imageRefPhoto);
         fd.set("promotion_mode", promotionMode);
@@ -737,11 +807,11 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         fd.set("visual_style", visualStyleId);
         fd.set("image_creative_mode", imageCreativeMode);
         fd.set("has_product_photo", productPhoto ? "1" : "0");
-        fd.set("conceptIdea", conceptIdea.trim());
-        fd.set("headline", headline.trim());
-        fd.set("subline", subline.trim());
-        fd.set("product", product.trim());
-        fd.set("prompt_extra", effectivePromptExtra());
+        fd.set("conceptIdea", ctx.conceptIdea.trim());
+        fd.set("headline", ctx.headline.trim());
+        fd.set("subline", ctx.subline.trim());
+        fd.set("product", ctx.product.trim());
+        fd.set("prompt_extra", promptForAnalyze);
         for (const f of extraKitPhotos.slice(0, 5)) {
           fd.append("carousel_reference_images", f);
         }
@@ -749,7 +819,11 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error ?? "Reference analysis failed.");
         if (cancelled) return;
-        setUserReferenceBrief(data.brief as UserReferenceBrief);
+        if (referenceAnalyzeInFlightKeyRef.current !== referenceAnalyzeKey) return;
+        lastCompletedReferenceAnalyzeKeyRef.current = referenceAnalyzeKey;
+        const brief = data.brief as UserReferenceBrief;
+        setUserReferenceBrief(brief);
+        setPromptExtra((prev) => stripContentResearchStyleExtra(prev));
         const slideCount = Number(data.carouselSlideCount) || 1;
         setReferenceAnalyzeNote(
           slideCount > 1
@@ -757,20 +831,27 @@ export function useStudioWizard(promotionMode: PromotionMode) {
             : m.wizard.referenceBriefAnalyzed,
         );
       } catch (e: unknown) {
-        if (!cancelled) {
+        if (!cancelled && referenceAnalyzeInFlightKeyRef.current === referenceAnalyzeKey) {
           setReferenceAnalyzeNote(
             e instanceof Error ? e.message : m.wizard.referenceBriefAnalyzeFailed,
           );
         }
       } finally {
+        if (referenceAnalyzeInFlightKeyRef.current === referenceAnalyzeKey) {
+          referenceAnalyzeInFlightKeyRef.current = null;
+        }
         if (!cancelled) setReferenceAnalyzeBusy(false);
       }
     };
     void run();
     return () => {
       cancelled = true;
+      if (referenceAnalyzeInFlightKeyRef.current === referenceAnalyzeKey) {
+        referenceAnalyzeInFlightKeyRef.current = null;
+      }
     };
   }, [
+    referenceAnalyzeKey,
     imageRefPhoto,
     extraKitPhotos,
     promotionMode,
@@ -778,12 +859,6 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     visualStyleId,
     imageCreativeMode,
     productPhoto,
-    conceptIdea,
-    headline,
-    subline,
-    product,
-    promptExtra,
-    effectivePromptExtra,
     m.wizard.referenceBriefAnalyzed,
     m.wizard.referenceCarouselBriefAnalyzed,
     m.wizard.referenceBriefAnalyzeFailed,
@@ -1765,8 +1840,18 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- refresh when output URL or target aspect changes
   }, [imageUrl, effectiveImageAspectRatio, workflowMode, useOriginalImage, isStoryboardOutput, isCinematicStitchOutput]);
 
+  function normalizeGeneratedImageUrl(raw: string | undefined | null): string | null {
+    const u = raw?.trim() ?? "";
+    if (!u) return null;
+    if (u.startsWith("http")) return u;
+    if (u.startsWith("/api/pipeline-files/")) return u;
+    return null;
+  }
+
   function applyGeneratedImages(urls: string[], endpoint?: string): string | null {
-    const list = urls.filter((u) => u.startsWith("http"));
+    const list = urls
+      .map((u) => normalizeGeneratedImageUrl(u))
+      .filter((u): u is string => Boolean(u));
     if (!list.length) return null;
     setCampaignPlan(null);
     setCampaignSlides([]);
@@ -3272,7 +3357,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? m.errors.polishFailed);
       const urls = (data.imageUrls as string[] | undefined) ?? [data.imageUrl as string];
-      if (!urls.some((u) => u?.startsWith("http"))) {
+      if (!urls.some((u) => normalizeGeneratedImageUrl(u))) {
         throw new Error(m.errors.imageGenNoUrl);
       }
       return applyGeneratedImages(urls, data.endpoint as string | undefined);

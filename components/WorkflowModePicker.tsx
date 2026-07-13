@@ -4,7 +4,7 @@ import { useLocale } from "@/components/LocaleProvider";
 import type { WorkflowMode } from "@/lib/workflow-mode";
 
 type Props = {
-  value: WorkflowMode;
+  value: WorkflowMode | null;
   onChange: (mode: WorkflowMode) => void;
 };
 

@@ -45,6 +45,8 @@ export const TEMPLATE_CONFIG: Record<TemplateId, AdTemplateConfig> = {
     defaultImageInputMode: "product-ad",
     slots: [
       { id: "product", onSetup: true, required: false },
+      { id: "headline", onSetup: true, required: false },
+      { id: "subline", onSetup: true, required: false },
       { id: "productPhoto", onSetup: false, required: true },
       { id: "referenceVideo", onSetup: false, required: false },
     ],
@@ -54,6 +56,7 @@ export const TEMPLATE_CONFIG: Record<TemplateId, AdTemplateConfig> = {
     slots: [
       { id: "product", onSetup: true, required: false },
       { id: "headline", onSetup: true, required: false },
+      { id: "subline", onSetup: true, required: false },
       { id: "productPhoto", onSetup: false, required: true },
       { id: "styleRef", onSetup: false, required: false },
       { id: "referenceVideo", onSetup: false, required: false },

@@ -5,11 +5,40 @@ import type { ReferenceImageMode } from "@/lib/prompt-variables";
 import { isConceptCinematicStyle, isStoryboardVideoStyle, type VisualStyleId } from "@/lib/visual-styles";
 import type { WorkflowMode } from "@/lib/workflow-mode";
 import type { CarouselSlideReferenceBrief } from "@/lib/user-reference-brief";
+import { stripContentResearchStyleExtra } from "@/lib/content-research-promote";
 import {
+  USER_REFERENCE_LAYOUT_TRANSFER_MARKER,
+  USER_REFERENCE_MARKER,
+  USER_REFERENCE_STYLE_ONLY_MARKER,
   type UserReferenceBrief,
   userReferenceLayoutTransferPromptBlock,
   userReferenceStyleOnlyPromptBlock,
 } from "@/lib/user-reference-brief";
+
+export function promptExtraHasUserReferenceMarker(extra: string): boolean {
+  return (
+    extra.includes(USER_REFERENCE_MARKER) ||
+    extra.includes(USER_REFERENCE_STYLE_ONLY_MARKER) ||
+    extra.includes(USER_REFERENCE_LAYOUT_TRANSFER_MARKER)
+  );
+}
+
+/** One strategy block + no duplicate research style when analyze-reference brief exists. */
+export function mergeReferencePromptExtra(
+  rawExtra: string,
+  brief: UserReferenceBrief | null | undefined,
+  strategy: ReferenceStrategy,
+): string {
+  let extra = rawExtra.trim();
+  const strategyBlock = brief ? referenceStrategyPromptBlock(brief, strategy) : "";
+  if (brief) {
+    extra = stripContentResearchStyleExtra(extra);
+  }
+  if (strategyBlock && !promptExtraHasUserReferenceMarker(extra)) {
+    extra = [extra, strategyBlock].filter(Boolean).join(" | ");
+  }
+  return extra;
+}
 
 /** How reference pixels + brief flow into generation. */
 export type ReferenceStrategyKind =

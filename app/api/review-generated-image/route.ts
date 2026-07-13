@@ -6,6 +6,7 @@ import {
   wizardImageMustAvoid,
   type ImageVisionReview,
 } from "@/lib/image-vision-gate";
+import { falVisionImageUrl } from "@/lib/pipeline/fal-vision-image-url";
 import { reviewPipelineOutput } from "@/lib/pipeline-smoke-review";
 import { isImageTextMode } from "@/lib/image-text-mode";
 
@@ -44,8 +45,9 @@ export async function POST(req: Request) {
   const imageTextMode = isImageTextMode(textModeRaw) ? textModeRaw : "integrated";
 
   try {
+    const visionUrl = await falVisionImageUrl(req, imageUrl);
     const review = await reviewPipelineOutput({
-      imageUrl,
+      imageUrl: visionUrl,
       mediaKind: "image",
       label: "wizard-generated-image",
       product,

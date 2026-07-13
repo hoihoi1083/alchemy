@@ -177,6 +177,9 @@ export function isPhotographicReferenceBrief(
   const contentType = typeof brief === "object" ? brief.contentType : "";
   const text = typeof brief === "string" ? brief : userReferencePromptBlock(brief!);
   const blob = `${contentType} ${text}`.toLowerCase();
+  if (/handheld|product-focused|in hand|on wrist|product shot/i.test(blob)) {
+    return true;
+  }
   if (/lifestyle-photo|product-ad|product photo|photograph|photography|flat lay/i.test(blob)) {
     return true;
   }
@@ -374,8 +377,8 @@ export function overrideBriefForContentResearch(
     brief.userHeadline?.trim() ||
     "";
   if (!product) return brief;
-  const headline = userInputs.headline?.trim() || brief.userHeadline;
-  const subline = userInputs.subline?.trim() || brief.userSubline;
+  const headline = userInputs.headline?.trim();
+  const subline = userInputs.subline?.trim();
   return {
     ...brief,
     topic: product,
@@ -388,7 +391,7 @@ export function overrideBriefForContentResearch(
       ? `Reference subjects (DO NOT reproduce): ${brief.subjects}`
       : "",
     userConceptIdea: userInputs.conceptIdea?.trim() || brief.userConceptIdea,
-    userHeadline: headline,
-    userSubline: subline,
+    userHeadline: headline || undefined,
+    userSubline: subline || undefined,
   };
 }

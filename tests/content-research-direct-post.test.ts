@@ -53,7 +53,8 @@ describe("direct post plan", () => {
     const plan = buildPinnedPlan(post);
     assert.equal(plan.candidates[0]?.score, 100);
     assert.equal(plan.candidates[0]?.format, "teaching-carousel");
-    assert.equal(plan.candidates[0]?.sourceImageUrls?.length, 8);
+    // finalizeXhsAngle merges cover + carousel slides (8 + 1)
+    assert.equal(plan.candidates[0]?.sourceImageUrls?.length, 9);
     assert.equal(plan.topPicks[0]?.id, plan.candidates[0]?.id);
   });
 });

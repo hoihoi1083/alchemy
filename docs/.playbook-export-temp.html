@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<title>OfferToday-Style SaaS Pre-Roll Playbook</title>
+<style>
+@page { margin: 16mm 14mm; size: A4; }
+body {
+  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", -apple-system, sans-serif;
+  font-size: 10.5pt;
+  line-height: 1.5;
+  color: #0f172a;
+  max-width: 100%;
+}
+h1 {
+  font-size: 20pt;
+  border-bottom: 3px solid #2563eb;
+  padding-bottom: 8px;
+  margin-top: 0;
+  page-break-after: avoid;
+}
+h2 {
+  font-size: 14pt;
+  color: #1d4ed8;
+  margin-top: 22px;
+  page-break-after: avoid;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 4px;
+}
+h3 { font-size: 12pt; color: #334155; page-break-after: avoid; }
+h4 { font-size: 10.5pt; color: #475569; page-break-after: avoid; }
+p { margin: 8px 0; }
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 10px 0 14px;
+  font-size: 8.5pt;
+  page-break-inside: avoid;
+}
+th, td {
+  border: 1px solid #cbd5e1;
+  padding: 5px 6px;
+  text-align: left;
+  vertical-align: top;
+  word-break: break-word;
+}
+th {
+  background: #eff6ff;
+  font-weight: 600;
+  color: #1e3a8a;
+}
+tr:nth-child(even) td { background: #f8fafc; }
+code {
+  background: #f1f5f9;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 8.5pt;
+  font-family: Menlo, Monaco, monospace;
+}
+pre {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #2563eb;
+  padding: 10px 12px;
+  overflow-x: auto;
+  font-size: 8.5pt;
+  line-height: 1.45;
+  page-break-inside: avoid;
+  white-space: pre-wrap;
+}
+pre code { background: none; padding: 0; }
+hr { border: none; border-top: 1px solid #e2e8f0; margin: 20px 0; }
+ul { margin: 6px 0; padding-left: 20px; }
+li { margin: 3px 0; }
+strong { color: #0f172a; }
+</style>
+</head>
+<body>
+<h1>OfferToday-Style SaaS Pre-Roll Playbook</h1>
+<p><strong>Alchemy Studio <code>/studio</code> wizard — Path 10 (primary) &amp; Path 8 (alternative)</strong></p>
+<p>*Target: ~30s YouTube pre-roll for HR / recruitment SaaS (e.g. OfferToday — “AI精準配對理想人才”)*</p>
+<p><strong>Last updated:</strong> 2026-07-12 · Spec v0.5</p>
+<hr/>
+<h2>1. Reference ad structure</h2>
+<table><thead><tr>
+<th>#</th>
+<th>Beat</th>
+<th>Visual</th>
+<th>Role</th>
+</tr></thead><tbody>
+<tr>
+<td>1</td>
+<td>Hands typing fast</td>
+<td>B-roll stress</td>
+<td>Problem hook</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Office worker, papers flying</td>
+<td>Chaos metaphor</td>
+<td>Problem</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Close-up tired HR worker</td>
+<td>Emotional beat</td>
+<td>Problem</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Phone on desk — lock-screen notification</td>
+<td>Product hero</td>
+<td>Solution reveal</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Hand holding phone — candidate cards / AI match UI</td>
+<td>Product demo</td>
+<td>Solution</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Young professional in café using app</td>
+<td>Lifestyle payoff</td>
+<td>CTA mood</td>
+</tr>
+</tbody></table>
+<p><strong>Recommended path:</strong> <strong>Path 10 — Concept / Combined / Cinematic stitch</strong></p>
+<p>Multi-beat story, generic professionals (not celebrities), service/concept promo, ~8s × 4–6 scenes → stitch ≈ 30–48s.</p>
+<table><thead><tr>
+<th>Goal</th>
+<th>Path</th>
+<th>When</th>
+</tr></thead><tbody>
+<tr>
+<td>Build from scratch (no reference MP4)</td>
+<td><strong>Path 10</strong></td>
+<td>Default for this ad type</td>
+</tr>
+<tr>
+<td>Match pacing of existing SaaS ad MP4</td>
+<td><strong>Path 8</strong></td>
+<td>You have a similar pre-roll to upload</td>
+</tr>
+<tr>
+<td>Single 8–12s hero clip only</td>
+<td>Path 9</td>
+<td>Quick test, one beat</td>
+</tr>
+</tbody></table>
+<hr/>
+<h2>2. Critical rules</h2>
+<table><thead><tr>
+<th>Rule</th>
+<th>Detail</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>AI generates</strong></td>
+<td>People, environment, blank/blurred phone</td>
+</tr>
+<tr>
+<td><strong>You composite in post</strong></td>
+<td>App UI, notifications, candidate cards, logos, readable text</td>
+</tr>
+<tr>
+<td><strong>Reference = style only</strong></td>
+<td>Reference MP4/image = pacing &amp; look; your <code>conceptIdea</code> = content topic</td>
+</tr>
+<tr>
+<td><strong>No celebrities</strong></td>
+<td>Generic faces only — model filters + product policy</td>
+</tr>
+<tr>
+<td><strong>Textless phone beats</strong></td>
+<td>Set <code>imageTextMode: textless</code> — Seedance cannot do readable UI</td>
+</tr>
+</tbody></table>
+<hr/>
+<h2>3. Path 10 — micro-step map</h2>
+<pre><code>Start
+└── 圖片+影片 [combined]                    → workflowMode: combined
+    └── 概念 [concept]                      → promotionMode: concept
+        └── 概念助手 [required]             → conceptIdea + optional fields
+            └── 直接創作                       → direct intake
+                └── 內容與生成設定             → headline / subline / offer / business
+                    └── 創意簡介             → creativeVideoBrief (6-beat script)
+                    └── 電影感 4–6 scenes      → cinematicSceneCount
+                    └── 畫面風格 寫實          → artStyleId: realistic
+                    └── 影片設定 8s × N        → videoSettings
+                        └── 生成電影感場景圖    → Image step: plan + generate stills
+                            └── 影片 stitch     → Video step: Seedance × N → one MP4
+                                └── 完成匯出      → Done → CapCut UI composite</code></pre>
+<hr/>
+<h2>4. Beat → scene → AI wiring</h2>
+<table><thead><tr>
+<th>Beat</th>
+<th>Scene role</th>
+<th>Image (Nano Banana)</th>
+<th>Video (Seedance)</th>
+<th>User input weight</th>
+</tr></thead><tbody>
+<tr>
+<td>1 Typing</td>
+<td>hook / stress</td>
+<td>Hands on keyboard, office bokeh, textless</td>
+<td>Subtle motion, shallow DOF</td>
+<td><code>creativeVideoBrief</code> + <code>subjectFraming: hands-only</code></td>
+</tr>
+<tr>
+<td>2 Papers</td>
+<td>chaos</td>
+<td>Woman at desk, papers mid-air</td>
+<td>Dynamic ambient motion</td>
+<td>Concept metaphor in brief</td>
+</tr>
+<tr>
+<td>3 Close-up</td>
+<td>pain</td>
+<td>Generic HR worker, tired expression</td>
+<td>Slow push-in</td>
+<td>Avoid celebrity names</td>
+</tr>
+<tr>
+<td>4 Phone desk</td>
+<td>product-hero</td>
+<td>Phone on notebook, blank/blurred screen</td>
+<td>Slow push-in on device</td>
+<td><strong>Composite UI in post</strong></td>
+</tr>
+<tr>
+<td>5 App UI</td>
+<td>demo</td>
+<td>Hand + phone, textless screen</td>
+<td>Minimal motion</td>
+<td>Figma mock → overlay</td>
+</tr>
+<tr>
+<td>6 Café</td>
+<td>payoff</td>
+<td>Young professional in café</td>
+<td>Gentle lifestyle motion</td>
+<td><code>conceptIdea</code> anchors message</td>
+</tr>
+</tbody></table>
+<hr/>
+<h2>5. Complete path — all user inputs (Path 10)</h2>
+<p><strong>Target output:</strong> ~32–40s stitched pre-roll (4–5 × 8s clips) + post composite for phone UI.</p>
+<h3>Step 0 — Entry</h3>
+<table><thead><tr>
+<th>User action</th>
+<th>Required</th>
+</tr></thead><tbody>
+<tr>
+<td>Open <code>/studio</code> or Start from landing</td>
+<td>—</td>
+</tr>
+</tbody></table>
+<h3>Step 1 — Setup: output &amp; subject</h3>
+<table><thead><tr>
+<th>#</th>
+<th>UI</th>
+<th>User picks</th>
+<th>State field</th>
+<th>OfferToday example</th>
+<th>Req</th>
+</tr></thead><tbody>
+<tr>
+<td>1.1</td>
+<td>Workflow</td>
+<td>圖片+影片 Both</td>
+<td><code>workflowMode</code></td>
+<td><code>combined</code></td>
+<td>✓</td>
+</tr>
+<tr>
+<td>1.2</td>
+<td>Promotion mode</td>
+<td>概念 Concept</td>
+<td><code>promotionMode</code></td>
+<td><code>concept</code></td>
+<td>✓</td>
+</tr>
+<tr>
+<td>1.3</td>
+<td>Path shortcut</td>
+<td>電影感 Cinematic</td>
+<td><code>visualStyleId</code></td>
+<td><code>concept-cinematic</code></td>
+<td>✓</td>
+</tr>
+<tr>
+<td>1.4</td>
+<td>Scene count</td>
+<td>4 or 5 scenes</td>
+<td><code>cinematicSceneCount</code></td>
+<td><code>5</code> → 40s</td>
+<td>✓</td>
+</tr>
+</tbody></table>
+<p><strong>Do not pick:</strong> 平台研究, 參考短片 MP4, Ship-it, storyboard-video, product-assistant.</p>
+<h3>Step 2 — 概念助手</h3>
+<table><thead><tr>
+<th>#</th>
+<th>Field</th>
+<th>State</th>
+<th>OfferToday example</th>
+<th>Req</th>
+<th>→ AI</th>
+</tr></thead><tbody>
+<tr>
+<td>2.1</td>
+<td>Concept idea</td>
+<td><code>conceptIdea</code></td>
+<td>OfferToday — AI 招聘 App，幫 HR 精準配對理想人才</td>
+<td>✓</td>
+<td>Cinematic plan, copy</td>
+</tr>
+<tr>
+<td>2.2</td>
+<td>Audience</td>
+<td><code>conceptAudience</code></td>
+<td>香港中小企 HR、招聘經理</td>
+<td>—</td>
+<td>plan-concept</td>
+</tr>
+<tr>
+<td>2.3</td>
+<td>Pain</td>
+<td><code>conceptPain</code></td>
+<td>履歷太多、篩選慢、錯配</td>
+<td>—</td>
+<td>plan-concept</td>
+</tr>
+<tr>
+<td>2.4</td>
+<td>Promise</td>
+<td><code>conceptPromise</code></td>
+<td>AI 秒級配對合適人選</td>
+<td>—</td>
+<td>plan-concept</td>
+</tr>
+<tr>
+<td>2.5</td>
+<td>Proof</td>
+<td><code>conceptProof</code></td>
+<td>已服務 500+ 企業</td>
+<td>—</td>
+<td>plan-concept</td>
+</tr>
+<tr>
+<td>2.6</td>
+<td>CTA</td>
+<td><code>conceptCta</code></td>
+<td>免費試用 / 立即下載</td>
+<td>—</td>
+<td>plan-concept</td>
+</tr>
+<tr>
+<td>2.7</td>
+<td>Visual metaphor</td>
+<td><code>conceptVisualMetaphor</code></td>
+<td>由文件風暴 → 手機一則通知解決</td>
+<td>—</td>
+<td>plan-concept</td>
+</tr>
+<tr>
+<td>2.8</td>
+<td>AI 分析概念 (optional)</td>
+<td>fills headline, subline, offer</td>
+<td>—</td>
+<td>—</td>
+<td>Gemini vision</td>
+</tr>
+</tbody></table>
+<p><strong>Gate:</strong> At least one of <code>conceptIdea</code>, <code>headline</code>, <code>creativeVideoBrief</code> before generate.</p>
+<h3>Step 3 — 內容與生成設定</h3>
+<table><thead><tr>
+<th>#</th>
+<th>Field</th>
+<th>State</th>
+<th>OfferToday example</th>
+<th>Req</th>
+<th>→ AI</th>
+</tr></thead><tbody>
+<tr>
+<td>3.1</td>
+<td>Headline / Hook</td>
+<td><code>headline</code></td>
+<td>AI精準配對理想人才</td>
+<td>Rec</td>
+<td>Planners, ad pack</td>
+</tr>
+<tr>
+<td>3.2</td>
+<td>Subline</td>
+<td><code>subline</code></td>
+<td>履歷海淹沒你？一則通知配對合適人選</td>
+<td>—</td>
+<td>Planners</td>
+</tr>
+<tr>
+<td>3.3</td>
+<td>Business</td>
+<td><code>business</code></td>
+<td>OfferToday</td>
+<td>—</td>
+<td>Brand, planners</td>
+</tr>
+<tr>
+<td>3.4</td>
+<td>Offer / CTA</td>
+<td><code>offer</code></td>
+<td>免費試用 · 立即下載</td>
+<td>—</td>
+<td>Ad pack</td>
+</tr>
+<tr>
+<td>3.5</td>
+<td>Market</td>
+<td><code>promptMarket</code></td>
+<td>hk / tw / cn</td>
+<td>Def hk</td>
+<td>Copy tone</td>
+</tr>
+<tr>
+<td>3.6</td>
+<td>Brand kit</td>
+<td><code>brandKit</code></td>
+<td>logo, #0066FF</td>
+<td>—</td>
+<td>Nano Banana</td>
+</tr>
+<tr>
+<td>3.7</td>
+<td>Advanced prompt</td>
+<td><code>promptExtra</code></td>
+<td>Extra art direction</td>
+<td>—</td>
+<td>effectivePromptExtra()</td>
+</tr>
+</tbody></table>
+<h3>Step 4 — 創意簡介</h3>
+<table><thead><tr>
+<th>#</th>
+<th>Field</th>
+<th>State</th>
+<th>Req</th>
+<th>→ AI</th>
+</tr></thead><tbody>
+<tr>
+<td>4.1</td>
+<td>Creative video brief</td>
+<td><code>creativeVideoBrief</code></td>
+<td>✓</td>
+<td><code>/api/plan-cinematic-reel</code></td>
+</tr>
+</tbody></table>
+<p><strong>Paste this story script:</strong></p>
+<pre><code>Beat 1 — Stress: Fast hands typing on keyboard, HR overwhelmed.
+Beat 2 — Chaos: Office worker at desk, papers flying in slow-motion metaphor.
+Beat 3 — Pain: Close-up tired HR manager, blue office light, no celebrity likeness.
+Beat 4 — Product: Smartphone on desk, lock screen glow (NO readable UI — blank for post composite).
+Beat 5 — Demo: Hand holding phone, candidate profile cards (textless — UI in CapCut).
+Beat 6 — Payoff: Young professional in bright café, smiling at phone, relief mood.
+Tone: Premium SaaS TVC, photorealistic, cool blues → warm café ending.
+Do NOT use famous faces or real brand logos on phone.</code></pre>
+<h3>Step 5 — Visual &amp; video settings</h3>
+<table><thead><tr>
+<th>#</th>
+<th>UI</th>
+<th>State</th>
+<th>OfferToday pick</th>
+<th>Req</th>
+<th>→ AI</th>
+</tr></thead><tbody>
+<tr>
+<td>5.1</td>
+<td>畫面風格</td>
+<td><code>artStyleId</code></td>
+<td>realistic</td>
+<td>Def</td>
+<td>Nano Banana + Seedance</td>
+</tr>
+<tr>
+<td>5.2</td>
+<td>影片時長</td>
+<td><code>videoSettings.duration</code></td>
+<td>8 per clip</td>
+<td>✓</td>
+<td>Each Seedance clip</td>
+</tr>
+<tr>
+<td>5.3</td>
+<td>Resolution</td>
+<td><code>videoSettings.resolution</code></td>
+<td>720p / 1080p</td>
+<td>Def</td>
+<td>fal billing</td>
+</tr>
+<tr>
+<td>5.4</td>
+<td>Fast mode</td>
+<td><code>videoSettings.fast</code></td>
+<td>On draft / Off final</td>
+<td>—</td>
+<td>endpoint</td>
+</tr>
+<tr>
+<td>5.5</td>
+<td>Aspect ratio</td>
+<td><code>imageAspectRatio</code></td>
+<td>16:9 or 9:16</td>
+<td>Def</td>
+<td>Scene stills</td>
+</tr>
+<tr>
+<td>5.6</td>
+<td>Image text mode</td>
+<td><code>imageTextMode</code></td>
+<td>textless</td>
+<td>✓</td>
+<td>Avoid garbled UI</td>
+</tr>
+<tr>
+<td>5.7</td>
+<td>Subject framing</td>
+<td><code>subjectFraming</code></td>
+<td>hands-only or auto</td>
+<td>—</td>
+<td>Planners</td>
+</tr>
+</tbody></table>
+<h3>Step 6 — Optional assets</h3>
+<table><thead><tr>
+<th>#</th>
+<th>Asset</th>
+<th>State</th>
+<th>OfferToday</th>
+<th>Req</th>
+</tr></thead><tbody>
+<tr>
+<td>6.1</td>
+<td>Reference image</td>
+<td><code>imageRefPhoto</code></td>
+<td>Blurred screenshot / mood board</td>
+<td>—</td>
+</tr>
+<tr>
+<td>6.2</td>
+<td>Product photo</td>
+<td><code>productPhoto</code></td>
+<td>None (SaaS)</td>
+<td>✗</td>
+</tr>
+<tr>
+<td>6.3</td>
+<td>Reference MP4</td>
+<td><code>referenceAd</code></td>
+<td>None on Path 10</td>
+<td>✗</td>
+</tr>
+<tr>
+<td>6.4</td>
+<td>Brand website</td>
+<td><code>brandWebsiteUrl</code></td>
+<td>Not for Path 10</td>
+<td>✗</td>
+</tr>
+</tbody></table>
+<p><strong>Continue Setup</strong> → Image step.</p>
+<h3>Step 7 — Image step: cinematic scene stills</h3>
+<table><thead><tr>
+<th>#</th>
+<th>Action</th>
+<th>What happens</th>
+</tr></thead><tbody>
+<tr>
+<td>7.1</td>
+<td>Generate image</td>
+<td>Detects <code>concept-cinematic</code></td>
+</tr>
+<tr>
+<td>7.2</td>
+<td>Auto plan</td>
+<td><code>POST /api/plan-cinematic-reel</code> → DeepSeek scene plan</td>
+</tr>
+<tr>
+<td>7.3</td>
+<td>Auto render</td>
+<td><code>POST /api/generate-cinematic-scenes</code> → Nano Banana stills</td>
+</tr>
+<tr>
+<td>7.4</td>
+<td>Wait</td>
+<td>4–5 stills in variant picker</td>
+</tr>
+</tbody></table>
+<p><strong>API inputs from Setup:</strong></p>
+<table><thead><tr>
+<th>API field</th>
+<th>Source state</th>
+</tr></thead><tbody>
+<tr>
+<td><code>creativeBrief</code></td>
+<td><code>creativeVideoBrief</code> OR join headline, subline, offer, conceptIdea</td>
+</tr>
+<tr>
+<td><code>headline</code>, <code>subline</code>, <code>offer</code>, <code>business</code></td>
+<td>copy.edit</td>
+</tr>
+<tr>
+<td><code>promptExtra</code></td>
+<td>effectivePromptExtra()</td>
+</tr>
+<tr>
+<td><code>promptMarket</code></td>
+<td>promptMarket</td>
+</tr>
+<tr>
+<td><code>artStyleId</code></td>
+<td>artStyleId</td>
+</tr>
+<tr>
+<td><code>sceneCount</code></td>
+<td>cinematicSceneCount</td>
+</tr>
+<tr>
+<td><code>referenceImageNote</code></td>
+<td>conceptImageVisionNote</td>
+</tr>
+</tbody></table>
+<p><strong>5-scene mapping:</strong></p>
+<table><thead><tr>
+<th>Scene</th>
+<th>Role</th>
+<th>Still content</th>
+<th>Text in AI?</th>
+</tr></thead><tbody>
+<tr>
+<td>1</td>
+<td>hook</td>
+<td>Hands + keyboard</td>
+<td>No</td>
+</tr>
+<tr>
+<td>2</td>
+<td>chaos</td>
+<td>Papers flying</td>
+<td>No</td>
+</tr>
+<tr>
+<td>3</td>
+<td>pain</td>
+<td>HR close-up</td>
+<td>No</td>
+</tr>
+<tr>
+<td>4</td>
+<td>product</td>
+<td>Phone on desk</td>
+<td>No — composite later</td>
+</tr>
+<tr>
+<td>5</td>
+<td>payoff</td>
+<td>Café + phone</td>
+<td>No — composite later</td>
+</tr>
+</tbody></table>
+<h3>Step 8 — Video step: stitch + ad pack</h3>
+<table><thead><tr>
+<th>#</th>
+<th>UI</th>
+<th>State / action</th>
+<th>OfferToday</th>
+<th>Req</th>
+</tr></thead><tbody>
+<tr>
+<td>8.1</td>
+<td>Scene preview</td>
+<td><code>cinematicScenes[]</code></td>
+<td>Review 5 stills</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>8.2</td>
+<td>Video settings</td>
+<td><code>videoSettings</code></td>
+<td>creativity, motion</td>
+<td>—</td>
+</tr>
+<tr>
+<td>8.3</td>
+<td>Ad pack</td>
+<td>VO, captions, music</td>
+<td>zh-HK VO, cinematic BGM</td>
+<td>—</td>
+</tr>
+<tr>
+<td>8.4</td>
+<td>BGM</td>
+<td><code>bgmTrack</code>, <code>musicMood</code></td>
+<td>Upbeat → premium</td>
+<td>—</td>
+</tr>
+<tr>
+<td>8.5</td>
+<td>Generate video</td>
+<td>makeCinematicStitchVideo()</td>
+<td>5 × ~8s Seedance</td>
+<td>✓</td>
+</tr>
+</tbody></table>
+<p><strong>Per-scene Seedance:</strong> <code>imageUrl</code> + <code>videoMotionPrompt</code> + <code>artStyleId</code> + 8s per clip.</p>
+<h3>Step 9 — Done + post-production</h3>
+<table><thead><tr>
+<th>#</th>
+<th>Task</th>
+<th>Tool</th>
+</tr></thead><tbody>
+<tr>
+<td>9.1</td>
+<td>Download stitched MP4</td>
+<td>Done step (~40s)</td>
+</tr>
+<tr>
+<td>9.2</td>
+<td>Design phone UI</td>
+<td>Figma / Sketch</td>
+</tr>
+<tr>
+<td>9.3</td>
+<td>Composite UI on phone</td>
+<td>CapCut / AE / DaVinci</td>
+</tr>
+<tr>
+<td>9.4</td>
+<td>Add supers</td>
+<td>CapCut — e.g. AI精準配對理想人才</td>
+</tr>
+<tr>
+<td>9.5</td>
+<td>Mix VO + BGM</td>
+<td>CapCut or wizard dub</td>
+</tr>
+<tr>
+<td>9.6</td>
+<td>Export 16:9 + 9:16</td>
+<td>YouTube pre-roll + Reels</td>
+</tr>
+</tbody></table>
+<hr/>
+<h2>6. Printable checklist (Path 10)</h2>
+<pre><code>□ workflowMode: combined
+□ promotionMode: concept
+□ visualStyleId: concept-cinematic
+□ cinematicSceneCount: 4 | 5 | 6
+□ conceptIdea: (your app — fixed anchor)
+□ headline / subline / offer / business
+□ creativeVideoBrief: 6-beat story script
+□ artStyleId: realistic
+□ imageTextMode: textless
+□ imageAspectRatio: 16:9 or 9:16
+□ promptMarket: hk
+□ videoSettings: resolution + fast
+□ brandKit: optional
+□ imageRefPhoto: optional mood only
+□ Generate cinematic scenes → review stills
+□ Generate stitch video
+□ Post: composite app UI on phone beats</code></pre>
+<hr/>
+<h2>7. Path 8 alternative (reference SaaS MP4)</h2>
+<p>Use when you have a <strong>similar ~30s HR/SaaS ad MP4</strong> and want to <strong>match its pacing</strong>.</p>
+<pre><code>概念 → 概念助手 → 平台研究 (optional) → 上傳參考 MP4 [required]
+  → video.settings (duration first)
+  → wait.reel_analyze
+  → copy.edit (fix copy for YOUR app)
+  → 分鏡場景圖 → wait.storyboard_generate
+  → 影片 (multi-image R2V) → done → UI composite</code></pre>
+<table><thead><tr>
+<th>Step</th>
+<th>User inputs</th>
+<th>State fields</th>
+<th>Req</th>
+</tr></thead><tbody>
+<tr>
+<td>1</td>
+<td>Output: 影片 or 圖片+影片</td>
+<td><code>workflowMode</code></td>
+<td>✓</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Subject: 概念</td>
+<td><code>promotionMode: concept</code></td>
+<td>✓</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Concept idea + plan-concept</td>
+<td><code>conceptIdea</code>, headline, …</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Upload MP4</td>
+<td><code>referenceAd</code></td>
+<td>✓</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Duration before analyze</td>
+<td><code>videoSettings.duration</code></td>
+<td>✓</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Reel analyze (auto)</td>
+<td><code>storyboardPlan</code></td>
+<td>auto</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Fix copy for your app</td>
+<td>headline, subline, offer</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Art style</td>
+<td><code>artStyleId</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Ref image (optional)</td>
+<td><code>imageRefPhoto</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Storyboard stills</td>
+<td><code>storyboardScenes[]</code></td>
+<td>✓</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Multi-image R2V</td>
+<td><code>videoPrompt</code></td>
+<td>✓</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Export + UI composite</td>
+<td>—</td>
+<td>Post</td>
+</tr>
+</tbody></table>
+<p><strong>Reel analyze inputs:</strong> effectivePromoteName, conceptIdea, headline, subline, offer, business, effectivePromptExtra(), artStyleId, subjectFraming, output_duration_sec, scene_count.</p>
+<hr/>
+<h2>8. Capability matrix</h2>
+<table><thead><tr>
+<th>Capability</th>
+<th>Supported?</th>
+</tr></thead><tbody>
+<tr>
+<td>Multi-scene 30s arc</td>
+<td>✓ Path 10 or Path 8</td>
+</tr>
+<tr>
+<td>Generic professional faces</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Famous celebrity faces</td>
+<td>✗</td>
+</tr>
+<tr>
+<td>Legible app UI in pure AI video</td>
+<td>✗ — composite in post</td>
+</tr>
+<tr>
+<td>VO + captions + BGM</td>
+<td>✓ Video step ad pack</td>
+</tr>
+<tr>
+<td>Hands-only B-roll</td>
+<td>✓ subjectFraming</td>
+</tr>
+</tbody></table>
+<hr/>
+<h2>9. v2 micro-step IDs (upcoming UI)</h2>
+<p>When <code>NEXT_PUBLIC_WIZARD_V2=1</code> ships:</p>
+<table><thead><tr>
+<th>Phase</th>
+<th>MicroStepIds</th>
+</tr></thead><tbody>
+<tr>
+<td>Setup</td>
+<td>route.output_goal → route.subject → identity.concept → copy.edit → copy.creative_brief → video.settings → image.art_style</td>
+</tr>
+<tr>
+<td>Scenes</td>
+<td>image.generate / wait.image_generate</td>
+</tr>
+<tr>
+<td>Video</td>
+<td>video.generate / wait.video_generate</td>
+</tr>
+<tr>
+<td>Finish</td>
+<td>done.export</td>
+</tr>
+</tbody></table>
+<hr/>
+<p>*Alchemy Studio — experimental fork. Full spec: <code>docs/WIZARD_MICRO_STEPS.md</code> §12.*</p>
+</body>
+</html>

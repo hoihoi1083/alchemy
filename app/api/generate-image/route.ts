@@ -29,8 +29,8 @@ import type { PromotionMode } from "@/lib/promotion-mode";
 import type { WorkflowMode } from "@/lib/workflow-mode";
 import { isPromotionMode } from "@/lib/promotion-mode";
 import {
+  mergeReferencePromptExtra,
   parseStrategyFromFormData,
-  referenceStrategyPromptBlock,
 } from "@/lib/reference-strategy";
 import { resolveArtStyleId, artStyleSystemPrompt } from "@/lib/art-style";
 
@@ -353,8 +353,7 @@ export async function POST(request: Request) {
       "auto") as SubjectFraming;
     const promptExtraRaw = (formData.get("prompt_extra") as string | null)?.trim() || "";
     const { strategy, brief } = parseStrategyFromFormData(formData);
-    const strategyBlock = brief ? referenceStrategyPromptBlock(brief, strategy) : "";
-    const promptExtra = [promptExtraRaw, strategyBlock].filter(Boolean).join(" | ");
+    const promptExtra = mergeReferencePromptExtra(promptExtraRaw, brief, strategy);
     const artStyleId = resolveArtStyleId((formData.get("art_style") as string | null)?.trim());
     const imageTextModeRaw = (formData.get("image_text_mode") as string | null)?.trim();
     const imageTextMode =
@@ -364,9 +363,8 @@ export async function POST(request: Request) {
     const offer = (formData.get("offer") as string | null)?.trim() || "";
     const clientPrompt = (formData.get("prompt") as string | null)?.trim() || "";
 
-    const aspectRatio = aspectRatioForApi(
-      (formData.get("aspect_ratio") as string | null)?.trim() || "9:16",
-    );
+    const aspectRatioRaw = (formData.get("aspect_ratio") as string | null)?.trim() || "9:16";
+    const aspectRatio = aspectRatioForApi(aspectRatioRaw);
     const numImages = parseNumImages((formData.get("num_images") as string | null)?.trim() ?? "1");
 
     const useReferenceConcept = strategy.useReferenceConceptPrompts;
@@ -441,6 +439,7 @@ export async function POST(request: Request) {
       brandProfile,
       visualStyle as VisualStyleId,
       brandKit,
+      { structuredReferenceBrief: Boolean(brief), aspectRatio: aspectRatioRaw },
     );
     const finalPrompt = clientPrompt || builtPrompt;
 

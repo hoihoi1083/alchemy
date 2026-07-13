@@ -72,7 +72,9 @@ describe("content research video pick flow", () => {
 
     assert.equal(refs.videoAttached, true);
     assert.ok(calls.includes("video:2048"));
-    assert.ok(calls.includes("workflow"));
+    assert.ok(calls.includes("videoMode"));
     assert.ok(calls.includes("style"));
+    // Reel angles keep the user's workflow — onWorkflowModeChange is skipped intentionally
+    assert.ok(!calls.includes("workflow"));
   });
 });

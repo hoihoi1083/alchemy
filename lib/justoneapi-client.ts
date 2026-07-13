@@ -269,7 +269,57 @@ function logJustOneApiBillableCall(
 }
 
 const JUSTONEAPI_RETRYABLE =
-  /collect failed|send request again|timeout|timed out|econnreset|econnrefused|503|502|429|temporarily unavailable|rate limit/i;
+  /collect failed|send request again|timeout|timed out|econnreset|econnrefused|503|502|429|temporarily unavailable|rate limit|invalid json|gateway|empty response/i;
+
+const XHS_SEARCH_NOTE_PATH = "/api/xiaohongshu/search-note/v2";
+/** Min gap between separate user searches (not between retries of one search). */
+const XHS_SEARCH_MIN_GAP_MS = 3_000;
+const JUSTONEAPI_SEARCH_CACHE_TTL_MS = 5 * 60 * 1000;
+
+const JUSTONEAPI_SEARCH_CACHE_PATHS = new Set([
+  XHS_SEARCH_NOTE_PATH,
+  "/api/instagram/search-hashtag-posts/v1",
+  "/api/instagram/search-reels/v1",
+  "/api/tiktok/search-post/v1",
+  "/api/facebook/search-post/v1",
+]);
+
+const searchResponseCache = new Map<
+  string,
+  { expiresAt: number; body: Record<string, unknown> }
+>();
+
+let lastXhsSearchSuccessAt = 0;
+
+function searchCacheKey(path: string, params: Record<string, string>): string {
+  return `${path}?${new URLSearchParams(params).toString()}`;
+}
+
+function readSearchCache(path: string, params: Record<string, string>): Record<string, unknown> | null {
+  if (!JUSTONEAPI_SEARCH_CACHE_PATHS.has(path)) return null;
+  const hit = searchResponseCache.get(searchCacheKey(path, params));
+  if (!hit || hit.expiresAt <= Date.now()) {
+    if (hit) searchResponseCache.delete(searchCacheKey(path, params));
+    return null;
+  }
+  return hit.body;
+}
+
+function writeSearchCache(path: string, params: Record<string, string>, body: Record<string, unknown>): void {
+  if (!JUSTONEAPI_SEARCH_CACHE_PATHS.has(path)) return;
+  searchResponseCache.set(searchCacheKey(path, params), {
+    expiresAt: Date.now() + JUSTONEAPI_SEARCH_CACHE_TTL_MS,
+    body,
+  });
+}
+
+async function waitForXhsSearchCooldown(): Promise<void> {
+  const waitMs = lastXhsSearchSuccessAt + XHS_SEARCH_MIN_GAP_MS - Date.now();
+  if (waitMs > 0) {
+    console.warn(`[justoneapi] XHS search spacing ${Math.ceil(waitMs / 1000)}s before next request…`);
+    await sleep(waitMs);
+  }
+}
 
 function isJustOneRetryableError(message: string): boolean {
   return JUSTONEAPI_RETRYABLE.test(message);
@@ -284,6 +334,12 @@ async function fetchJustOneApiOnce(
   params: Record<string, string>,
   label: string,
 ): Promise<Record<string, unknown>> {
+  const cached = readSearchCache(path, params);
+  if (cached) {
+    console.warn(`[justoneapi] cache hit ${path} (${label})`);
+    return cached;
+  }
+
   const token = justOneApiToken();
   if (!token) throw new Error("JUSTONEAPI_TOKEN is not configured.");
 
@@ -297,11 +353,17 @@ async function fetchJustOneApiOnce(
       cache: "no-store",
     });
     const raw = await res.text();
+    if (!raw.trim()) {
+      throw new Error(`${label} returned empty response (HTTP ${res.status}).`);
+    }
+
     let body: Record<string, unknown>;
     try {
       body = JSON.parse(raw) as Record<string, unknown>;
     } catch {
-      throw new Error(`${label} returned invalid JSON (${res.status}).`);
+      throw new Error(
+        `${label} returned invalid JSON (HTTP ${res.status}) — Just One API gateway may be temporarily down.`,
+      );
     }
 
     const code = String(body.code ?? "");
@@ -320,33 +382,49 @@ async function fetchJustOneApiOnce(
     }
 
     logJustOneApiBillableCall(path, label, params, pickString(body.requestId) || undefined);
-
+    writeSearchCache(path, params, body);
     return body;
   } finally {
     clearTimeout(timer);
   }
 }
 
+export type FetchJustOneApiOptions = {
+  /** Default 3. Use 1 for cheap follow-up calls (e.g. cover hydrate). */
+  maxAttempts?: number;
+};
+
 export async function fetchJustOneApi(
   path: string,
   params: Record<string, string>,
   label: string,
+  options?: FetchJustOneApiOptions,
 ): Promise<Record<string, unknown>> {
-  const maxAttempts = 3;
+  const isXhsSearch = path === XHS_SEARCH_NOTE_PATH;
+  const maxAttempts = options?.maxAttempts ?? (isXhsSearch ? 4 : 3);
   let lastError: Error | undefined;
+
+  if (isXhsSearch) {
+    await waitForXhsSearchCooldown();
+  }
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
-      return await fetchJustOneApiOnce(path, params, label);
+      const result = await fetchJustOneApiOnce(path, params, label);
+      if (isXhsSearch) {
+        lastXhsSearchSuccessAt = Date.now();
+      }
+      return result;
     } catch (e) {
       lastError = e instanceof Error ? e : new Error(String(e));
       const retryable =
         lastError.name === "AbortError" || isJustOneRetryableError(lastError.message);
       if (attempt < maxAttempts - 1 && retryable) {
+        const delayMs = 1500 * 2 ** attempt;
         console.warn(
-          `[justoneapi] ${label} attempt ${attempt + 1}/${maxAttempts} failed, retrying: ${lastError.message}`,
+          `[justoneapi] ${label} attempt ${attempt + 1}/${maxAttempts} failed, retrying in ${delayMs}ms: ${lastError.message}`,
         );
-        await sleep(900 * (attempt + 1));
+        await sleep(delayMs);
         continue;
       }
       throw lastError;

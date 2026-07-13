@@ -133,10 +133,7 @@
         { "id": "image.options", "skippable": true },
         { "id": "image.generate", "handler": "generateImage" },
         { "id": "wait.image_generate", "while": "imageBusy" },
-        {
-          "id": "image.review",
-          "when": "imageOutputMode === 'ab' || imageVisionReview"
-        },
+        { "id": "image.review" },
         { "id": "done.export", "legacyStepKey": "done" }
       ]
     },
@@ -162,7 +159,6 @@
         },
         {
           "id": "wait.reference_analyze",
-          "when": "referenceAnalyzeBusy",
           "skipWhen": "!imageRefPhoto"
         },
         {
@@ -182,7 +178,7 @@
         { "id": "image.options", "skippable": true },
         { "id": "image.generate", "handler": "generateImage" },
         { "id": "wait.image_generate", "while": "imageBusy" },
-        { "id": "image.review", "when": "imageOutputMode === 'ab'" },
+        { "id": "image.review" },
         { "id": "done.export", "legacyStepKey": "done" }
       ]
     },
@@ -412,6 +408,7 @@
         },
         { "id": "asset.product_photo", "required": true },
         { "id": "asset.extra_kit", "when": "videoCreativeMode === 'product-assistant'", "skippable": true },
+        { "id": "video.ai_prompt", "when": "videoSubpath === 'product_promo'" },
         { "id": "image.storyboard_scenes", "when": "visualStyleId === 'storyboard-video'" },
         { "id": "wait.storyboard_generate", "when": "visualStyleId === 'storyboard-video'" },
         { "id": "video.product_plan", "when": "videoCreativeMode === 'product-assistant'" },

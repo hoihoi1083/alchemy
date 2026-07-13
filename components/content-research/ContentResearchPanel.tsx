@@ -29,6 +29,9 @@ import type { PromptMarket } from "@/lib/prompt-variables";
 import type { PromotionMode } from "@/lib/promotion-mode";
 import type { WorkflowMode } from "@/lib/workflow-mode";
 
+const LAST_RESEARCH_AT_KEY = "alchemy:last-research-at";
+const RESEARCH_CLIENT_COOLDOWN_MS = 3_000;
+
 type ContentResearchPanelProps = {
   /** Category keyword for finding viral posts (e.g. 水晶手串). */
   defaultTopic?: string;
@@ -113,6 +116,12 @@ export function ContentResearchPanel({
       setError(cr.tiktokImageWarning);
       return;
     }
+    const lastAt = Number(sessionStorage.getItem(LAST_RESEARCH_AT_KEY) ?? 0);
+    const waitMs = lastAt + RESEARCH_CLIENT_COOLDOWN_MS - Date.now();
+    if (waitMs > 0) {
+      setError(cr.searchCooldown.replace("{seconds}", String(Math.ceil(waitMs / 1000))));
+      return;
+    }
     setBusy(true);
     setError(null);
     setNote(null);
@@ -136,6 +145,7 @@ export function ContentResearchPanel({
       setPlan(data.plan as ContentResearchPlan);
       setNote(String(data.sourceNote ?? ""));
       setWarning(data.researchWarning ? String(data.researchWarning) : null);
+      sessionStorage.setItem(LAST_RESEARCH_AT_KEY, String(Date.now()));
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : cr.failed);
     } finally {

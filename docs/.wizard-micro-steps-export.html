@@ -1,0 +1,3114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Wizard v2 — Micro-step funnel spec</title>
+<style>
+@page { margin: 14mm 12mm; size: A4; }
+body {
+  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", -apple-system, sans-serif;
+  font-size: 9.5pt;
+  line-height: 1.45;
+  color: #0f172a;
+}
+h1 {
+  font-size: 18pt;
+  border-bottom: 3px solid #7c3aed;
+  padding-bottom: 6px;
+  margin-top: 0;
+  page-break-after: avoid;
+}
+h2 {
+  font-size: 13pt;
+  color: #6d28d9;
+  margin-top: 18px;
+  page-break-after: avoid;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 3px;
+}
+h3 { font-size: 11pt; color: #334155; page-break-after: avoid; }
+h4 { font-size: 10pt; color: #475569; page-break-after: avoid; }
+h5, h6 { font-size: 9.5pt; color: #64748b; page-break-after: avoid; }
+p { margin: 6px 0; }
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 8px 0 12px;
+  font-size: 7.5pt;
+  page-break-inside: avoid;
+}
+th, td {
+  border: 1px solid #cbd5e1;
+  padding: 4px 5px;
+  text-align: left;
+  vertical-align: top;
+  word-break: break-word;
+}
+th {
+  background: #f5f3ff;
+  font-weight: 600;
+  color: #5b21b6;
+}
+tr:nth-child(even) td { background: #fafafa; }
+code {
+  background: #f1f5f9;
+  padding: 1px 3px;
+  border-radius: 3px;
+  font-size: 7.5pt;
+  font-family: Menlo, Monaco, monospace;
+}
+pre {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #7c3aed;
+  padding: 8px 10px;
+  font-size: 7.5pt;
+  line-height: 1.4;
+  page-break-inside: avoid;
+  white-space: pre-wrap;
+}
+pre code { background: none; padding: 0; }
+blockquote {
+  border-left: 4px solid #a78bfa;
+  margin: 8px 0;
+  padding: 6px 12px;
+  background: #faf5ff;
+  color: #4c1d95;
+}
+hr { border: none; border-top: 1px solid #e2e8f0; margin: 16px 0; }
+ul, ol { margin: 4px 0; padding-left: 18px; }
+li { margin: 2px 0; }
+strong { color: #0f172a; }
+</style>
+</head>
+<body>
+<h1>Wizard v2 — Micro-step funnel spec</h1>
+<p><strong>Status:</strong> v0.5 — full path catalog (Paths 1–11) incl. concept/video + concept/combined  </p>
+<p><strong>Scope:</strong> Frontend-only refactor. <strong>Minimal backend touch</strong> only for concept research promote-target fix (see §9.5).  </p>
+<p><strong>Goal:</strong> Replace the monolithic Setup step with one-decision-per-screen funnels that write the same <code>useWizardState</code> fields and call existing <code>useStudioWizard</code> handlers.</p>
+<hr/>
+<h2>1. Principles</h2>
+<table><thead><tr>
+<th>Rule</th>
+<th>Detail</th>
+</tr></thead><tbody>
+<tr>
+<td>Single source of truth</td>
+<td>Keep <code>hooks/useWizardState.ts</code> unchanged; micro-steps only set fields + call existing handlers</td>
+</tr>
+<tr>
+<td>Reuse gates</td>
+<td><code>evaluateProceedToImageGate</code>, <code>canGenerateImage</code>, <code>goNextFromSetup</code> logic, <code>finishImageStep</code>, video generate checks — split into per-screen validators, do not reimplement business rules</td>
+</tr>
+<tr>
+<td>Reuse panels</td>
+<td>Extract existing UI from <code>SetupStep</code>, <code>ImageStep</code>, <code>VideoStep</code> into screen components; no duplicate API calls</td>
+</tr>
+<tr>
+<td>Dynamic step count</td>
+<td>Progress bar shows <strong>current index / estimated total</strong>; total changes when branches differ (e.g. storyboard inserts scene-stills step)</td>
+</tr>
+<tr>
+<td>Explicit wait screens</td>
+<td>Any async op gets its own screen or full-screen overlay: <code>referenceAnalyzeBusy</code>, <code>researchReelAnalyzeBusy</code>, <code>imageBusy</code>, <code>videoBusy</code> phases</td>
+</tr>
+<tr>
+<td>Escape hatch</td>
+<td><code>?wizard=classic</code> or “Advanced studio” link restores current 4-step wizard</td>
+</tr>
+<tr>
+<td>Feature flag</td>
+<td><code>NEXT_PUBLIC_WIZARD_V2=1</code> or URL <code>?wizard=v2</code> until parity</td>
+</tr>
+<tr>
+<td>Brand kit persistence</td>
+<td>On funnel mount: load <code>brandKit</code> from localStorage + <code>/api/brand-kit</code>; apply silently if user skips UI</td>
+</tr>
+</tbody></table>
+<hr/>
+<h2>2. Branch axes (decisions that route the graph)</h2>
+<p>These are the <strong>user-visible</strong> choices. Each maps to existing state:</p>
+<table><thead><tr>
+<th>Axis</th>
+<th>User label (zh / en)</th>
+<th>State field(s)</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>A. Output goal</strong></td>
+<td>圖片 / 影片 / 圖片+影片</td>
+<td><code>workflowMode</code>: <code>image-only</code> \</td>
+<td><code>video-only</code> \</td>
+<td><code>combined</code></td>
+</tr>
+<tr>
+<td><strong>B. Subject</strong></td>
+<td>產品 / 概念</td>
+<td><code>promotionMode</code>: <code>physical</code> \</td>
+<td><code>concept</code></td>
+</tr>
+<tr>
+<td><strong>C. Intake path</strong></td>
+<td>平台研究 / 直接創作</td>
+<td>Branch flag <code>intakePath</code>: <code>research</code> \</td>
+<td><code>direct</code> (UI-only; research sets <code>promptExtra</code> marker via <code>applyContentAngleToWizard</code>)</td>
+</tr>
+<tr>
+<td><strong>D. Image output format</strong></td>
+<td>單張 / A/B / Campaign 套圖 / 教學輪播 (<strong>四選一</strong>)</td>
+<td><code>imageOutputMode</code>: <code>single</code> \</td>
+<td><code>ab</code> \</td>
+<td><code>campaign</code> \</td>
+<td><code>teaching-carousel</code></td>
+</tr>
+<tr>
+<td><strong>E. Reference (direct)</strong></td>
+<td>參考圖 / 參考片 / 無</td>
+<td><code>imageRefPhoto</code>, <code>referenceAd</code> + <code>referenceIsVideo</code>, <code>imageCreativeMode</code>, <code>videoCreativeMode</code></td>
+</tr>
+<tr>
+<td><strong>F. Visual style</strong></td>
+<td>Usually <strong>inferred</strong>, not asked</td>
+<td><code>visualStyleId</code> — set by path defaults or research angle format</td>
+</tr>
+<tr>
+<td><strong>G. Ship-it shortcut</strong></td>
+<td>一鍵出片 (optional)</td>
+<td><code>shipItMode</code> — only when eligible (see §8)</td>
+</tr>
+</tbody></table>
+<h3>Format picker skip rule</h3>
+<p>Skip <code>image.output_format</code> when research angle already set <code>imageOutputMode</code> (e.g. teaching-carousel from a carousel post, campaign from a series angle, model-wear). Show a <strong>read-only summary</strong> (“已選：教學輪播”) with option to change.</p>
+<h3>Brand kit vs brand website (do not merge)</h3>
+<table><thead><tr>
+<th></th>
+<th><strong>Brand Kit</strong> (<code>brandKit</code>)</th>
+<th><strong>Brand website</strong> (<code>brandProfile</code>)</th>
+</tr></thead><tbody>
+<tr>
+<td>What</td>
+<td>Logo, colors, fonts, tagline</td>
+<td>AI analyze from URL</td>
+</tr>
+<tr>
+<td>UI location</td>
+<td><strong>Inside <code>copy.edit</code></strong> → collapsible <strong>品牌設定</strong> (optional)</td>
+<td>Separate step <code>asset.brand_website</code> when style requires</td>
+</tr>
+<tr>
+<td>Required?</td>
+<td><strong>Never required</strong> — <code>DEFAULT_BRAND_KIT</code> works</td>
+<td><strong>Required</strong> for <code>brand-fit</code> / <code>brand-campaign</code> / <code>brand-video</code> (physical)</td>
+</tr>
+<tr>
+<td>Every path?</td>
+<td><strong>Yes</strong> — same slot on every <code>copy.edit</code> screen</td>
+<td><strong>Only</strong> brand-style paths</td>
+</tr>
+<tr>
+<td>Persistence</td>
+<td>Account-level (localStorage + MongoDB) + optional <strong>Settings</strong> link</td>
+<td>Per-session analyze result</td>
+</tr>
+</tbody></table>
+<p><strong>Rule:</strong> Every path that includes <code>copy.edit</code> (內容與生成設定) <strong>must</strong> show the optional <strong>品牌設定</strong> section — collapsed by default on Path 2; expanded-by-default when <code>isBrandVisualStyle(visualStyleId)</code>.</p>
+<h3>Concept identity vs research (Path 3 &amp; 4)</h3>
+<p><strong><code>identity.concept</code> = 概念助手（非實體產品）</strong> — not a generic title field. Includes:</p>
+<table><thead><tr>
+<th>UI</th>
+<th>State</th>
+<th>Required?</th>
+</tr></thead><tbody>
+<tr>
+<td>概念 idea textarea</td>
+<td><code>conceptIdea</code></td>
+<td>✓ Path 3 &amp; 4</td>
+</tr>
+<tr>
+<td>Audience / pain / promise / CTA / metaphor</td>
+<td>local → <code>/api/plan-concept</code></td>
+<td>Optional</td>
+</tr>
+<tr>
+<td>AI 分析 button</td>
+<td>fills <code>headline</code>, <code>subline</code>, <code>offer</code></td>
+<td>Optional</td>
+</tr>
+<tr>
+<td>主標題</td>
+<td><code>headline</code></td>
+<td>Partial (gates)</td>
+</tr>
+</tbody></table>
+<p><strong>Path 4 is NOT “Path 3 minus research”.</strong> Path 4 = <strong>Path 2 structure + 概念助手</strong> (direct intake, optional user ref upload).</p>
+<h4>Data layers after research (Path 3) — what each field is for</h4>
+<p>When the user picks a reference post on Path 3, <strong>only style flows from the post</strong>. Topic and copy stay anchored on the user’s concept.</p>
+<table><thead><tr>
+<th>Layer</th>
+<th>Source</th>
+<th>Must NOT</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Topic / concept</strong></td>
+<td>User’s <code>conceptIdea</code> from <strong>概念助手</strong> — <strong>fixed anchor</strong></td>
+<td>Be overwritten by reference post title, hook, or engagement bait</td>
+</tr>
+<tr>
+<td><strong>Search / post</strong></td>
+<td>Reference <strong>style only</strong> (layout, pacing, visual mood, format)</td>
+<td>Become the headline, subline, or concept topic</td>
+</tr>
+<tr>
+<td><strong>Headline / subline</strong></td>
+<td>Rewritten <strong>for your concept</strong>, using reference <strong>format</strong></td>
+<td>Paste raw reference hook (e.g. 「留下你支持的4支球隊」 from a 世界杯 post)</td>
+</tr>
+<tr>
+<td><strong>promptExtra</strong></td>
+<td>Style-only block via <code>styleReferencePromptBlock()</code></td>
+<td>Copy reference subject matter <em>(already mostly correct today)</em></td>
+</tr>
+</tbody></table>
+<p><strong>User review screen:</strong> <code>copy.edit</code> (<strong>內容與生成設定</strong>) is where the user fixes anything that still looks wrong after research apply — e.g. a World Cup headline that leaked from a style reference post while the concept was 餐廳訂位.</p>
+<h4>v2 implementation rule — concept research promote target (§9.5)</h4>
+<p><strong>Required before Path 3 ships.</strong> Small wiring change; same APIs.</p>
+<ol>
+<li><strong>Research promote target:</strong> Pass <code>conceptIdea</code> (or <code>wizardPromoteName({ promotionMode: 'concept', conceptIdea, headline, product })</code>) into <code>ContentResearchPanel</code> as the promote target — <strong>not</strong> bare <code>product</code> (empty on concept paths).</li>
+<li><strong>On angle apply:</strong> If the user already has <code>conceptIdea</code>, <strong>do not replace it</strong> with the reference hook/title. Rewrite <code>headline</code> / <code>subline</code> for the promote target + angle <strong>format</strong> only.</li>
+</ol>
+<p><strong>Bug today:</strong> <code>SetupStep.tsx</code> passes <code>promoteProduct={product}</code> only. Angle apply can paste the reference hook into <code>headline</code> while <code>promptExtra</code> correctly says “do NOT copy reference topic”. Full fix spec: <strong>§9.5</strong>.</p>
+<hr/>
+<h2>3. <code>MicroStepId</code> catalog</h2>
+<p>Every screen in the v2 funnel. IDs are stable for routing, analytics, and i18n keys (<code>m.microWizard.{id}</code>).</p>
+<h3>3.1 Entry &amp; routing</h3>
+<table><thead><tr>
+<th>ID</th>
+<th>Screen</th>
+<th>Required to continue</th>
+<th>State / handler</th>
+</tr></thead><tbody>
+<tr>
+<td><code>entry.start</code></td>
+<td>Landing CTA → Start</td>
+<td>—</td>
+<td>Navigate to funnel</td>
+</tr>
+<tr>
+<td><code>route.output_goal</code></td>
+<td>Pick Image / Video / Both</td>
+<td>✓</td>
+<td><code>setWorkflowMode</code></td>
+</tr>
+<tr>
+<td><code>route.subject</code></td>
+<td>Pick Product / Concept</td>
+<td>✓</td>
+<td><code>promotionMode</code> (prop)</td>
+</tr>
+<tr>
+<td><code>route.intake</code></td>
+<td>Research vs Direct</td>
+<td>✓</td>
+<td><code>intakePath</code> (local)</td>
+</tr>
+</tbody></table>
+<h3>3.2 Identity &amp; copy</h3>
+<table><thead><tr>
+<th>ID</th>
+<th>Screen</th>
+<th>Required</th>
+<th>State</th>
+</tr></thead><tbody>
+<tr>
+<td><code>identity.product_name</code></td>
+<td>Product name</td>
+<td>✓ if physical</td>
+<td><code>product</code></td>
+</tr>
+<tr>
+<td><code>identity.concept</code></td>
+<td><strong>概念助手（非實體產品）</strong> — <code>conceptIdea</code> + optional plan-concept + <code>headline</code></td>
+<td>✓ concept paths</td>
+<td><code>conceptIdea</code>, <code>headline</code>, plan-concept fields</td>
+</tr>
+<tr>
+<td><code>copy.edit</code></td>
+<td><strong>內容與生成設定</strong> — see below</td>
+<td>Partial (see gates)</td>
+<td><code>headline</code>, <code>subline</code>, <code>business</code>, <code>offer</code>, <code>promptExtra</code>, <code>brandKit</code></td>
+</tr>
+<tr>
+<td><code>copy.storyboard_brief</code></td>
+<td>Storyboard / reel brief</td>
+<td>✓ if <code>storyboard-video</code></td>
+<td><code>storyboardBrief</code></td>
+</tr>
+<tr>
+<td><code>copy.creative_brief</code></td>
+<td>Creative video brief</td>
+<td>✓ if <code>creative-video</code> (physical video)</td>
+<td><code>creativeVideoBrief</code></td>
+</tr>
+</tbody></table>
+<h4><code>copy.edit</code> — 內容與生成設定 (unified pre-generate screen)</h4>
+<p>One screen before image generate where the user reviews and edits everything that affects output:</p>
+<table><thead><tr>
+<th>Section</th>
+<th>Fields</th>
+<th>Required?</th>
+<th>Pre-filled from research?</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>User copy</strong></td>
+<td>Hook / <code>headline</code>, <code>subline</code>, <code>offer</code>, <code>business</code></td>
+<td>Partial (gates)</td>
+<td>✓ Pre-filled — must be rewritten for <strong>user’s product/concept</strong>, never reference topic. <strong>Path 3:</strong> user must review here even when auto-copy is wrong (§9.5).</td>
+</tr>
+<tr>
+<td><strong>品牌設定</strong> (collapsible)</td>
+<td>Logo, <code>primaryColor</code>, <code>secondaryColor</code>, <code>accentColor</code>, <code>fontPreset</code>, <code>tagline</code> via <code>BrandKitPanel</code></td>
+<td><strong>Optional always</strong></td>
+<td>✓ Loaded from saved account kit on mount</td>
+</tr>
+<tr>
+<td><strong>Reference brief</strong> (read-only)</td>
+<td>Layout, colors, borrow/replace strategy from <code>/api/analyze-reference</code></td>
+<td>—</td>
+<td>✓ After <code>wait.reference_analyze</code></td>
+</tr>
+<tr>
+<td><strong>Advanced prompt</strong> (collapsible)</td>
+<td>Simplified view of <code>promptExtra</code> (style-only block)</td>
+<td>Optional</td>
+<td>✓ From <code>styleReferencePromptBlock()</code></td>
+</tr>
+</tbody></table>
+<p><strong>品牌設定 UX:</strong> Collapsed by default on product/direct paths. Auto-expanded when <code>isBrandVisualStyle(visualStyleId)</code>. Footer link: “在設定中管理品牌” → account brand settings. On Continue, persist via <code>PUT /api/brand-kit</code> (same as today).</p>
+<p><strong>Skip rules:</strong> Direct path — user may skip entire screen if all copy empty (brand kit still applied from saved defaults). Research path — <strong>never skip</strong> screen (pre-filled but always editable before generate); brand kit section remains optional to expand.</p>
+<p><strong>Not on this screen:</strong> Brand <strong>website</strong> URL analyze — that stays on separate <code>asset.brand_website</code> when the visual style requires <code>brandProfile</code>.</p>
+<h3>3.3 Research</h3>
+<table><thead><tr>
+<th>ID</th>
+<th>Screen</th>
+<th>Required</th>
+<th>State / handler</th>
+</tr></thead><tbody>
+<tr>
+<td><code>research.platform</code></td>
+<td>平台內容研究 — search</td>
+<td>✓ if intake=research</td>
+<td>Reuse <code>ContentResearchPanel</code>; <strong>promote target</strong> = <code>product</code> (physical) or <code>conceptIdea</code> / <code>effectivePromoteName</code> (concept)</td>
+</tr>
+<tr>
+<td><code>research.pick_angle</code></td>
+<td>Select angle / post</td>
+<td>✓</td>
+<td><code>applyContentAngleToWizard</code> → patches output mode, style, refs, copy</td>
+</tr>
+<tr>
+<td><code>wait.research_apply</code></td>
+<td>Applying angle…</td>
+<td>auto</td>
+<td>Brief transition after pick</td>
+</tr>
+<tr>
+<td><code>wait.reference_analyze</code></td>
+<td>Analyzing reference image…</td>
+<td><strong>✓ on research image path</strong></td>
+<td><code>referenceAnalyzeBusy</code> — gate blocks until done</td>
+</tr>
+</tbody></table>
+<h3>3.4 References &amp; assets</h3>
+<table><thead><tr>
+<th>ID</th>
+<th>Screen</th>
+<th>Required</th>
+<th>State</th>
+</tr></thead><tbody>
+<tr>
+<td><code>asset.reference_image</code></td>
+<td>Optional reference image (direct only)</td>
+<td>Optional</td>
+<td><code>imageRefPhoto</code>, <code>imageCreativeMode: reference-concept</code></td>
+</tr>
+<tr>
+<td><code>asset.reference_video</code></td>
+<td>Reference MP4 (direct video / reel)</td>
+<td>✓ on R2V &amp; storyboard direct paths</td>
+<td><code>referenceAd</code>, <code>referenceIsVideo</code></td>
+</tr>
+<tr>
+<td><code>asset.product_photo</code></td>
+<td>Product photo</td>
+<td>✓ most physical image/video</td>
+<td><code>productPhoto</code></td>
+</tr>
+<tr>
+<td><code>asset.extra_kit</code></td>
+<td>Packaging / extra angles</td>
+<td>Optional</td>
+<td><code>packagingPhoto</code>, <code>extraKitPhotos</code></td>
+</tr>
+<tr>
+<td><code>asset.brand_website</code></td>
+<td>Brand <strong>website</strong> URL analyze (not Brand Kit)</td>
+<td>✓ if brand-fit / brand-campaign / brand-video (physical)</td>
+<td><code>brandProfile</code> via <code>/api/analyze-brand</code>; may merge colors into <code>brandKit</code> via <code>mergeBrandProfileIntoKit</code></td>
+</tr>
+</tbody></table>
+<p><strong>Research image path:</strong> Reference cover is attached automatically from the picked post — not a separate upload step. Analysis is <strong>required</strong> (<code>evaluateProceedToImageGate</code>: <code>need_reference_image</code>, <code>reference_analyzing</code>).</p>
+<h3>3.5 Image output</h3>
+<table><thead><tr>
+<th>ID</th>
+<th>Screen</th>
+<th>Required</th>
+<th>State</th>
+</tr></thead><tbody>
+<tr>
+<td><code>image.output_format</code></td>
+<td><strong>四選一:</strong> 單張 / A/B / Campaign / 教學輪播</td>
+<td>✓ unless preset by research</td>
+<td><code>imageOutputMode</code>, may set <code>visualStyleId</code></td>
+</tr>
+<tr>
+<td><code>image.art_style</code></td>
+<td><strong>畫面風格</strong> — 寫實 / 2D動漫 / 3D / 漫畫 / 水彩</td>
+<td>Optional (default <code>realistic</code>)</td>
+<td><code>artStyleId</code> — <strong>shown on every path</strong> (Setup + Image step); controls Nano Banana keyframes / posters / storyboard stills / cinematic frames. Seedance preserves the look. Hidden only for compositor (<code>paper-layout</code>).</td>
+</tr>
+<tr>
+<td><code>image.options</code></td>
+<td>Aspect ratio, text mode, campaign theme</td>
+<td>Defaults OK (merge into generate on mobile)</td>
+<td><code>imageAspectRatio</code>, <code>imageTextMode</code>, <code>campaignTheme</code></td>
+</tr>
+<tr>
+<td><code>image.generate</code></td>
+<td>Generate + progress</td>
+<td>—</td>
+<td><code>generateImage()</code></td>
+</tr>
+<tr>
+<td><code>wait.image_generate</code></td>
+<td>Generating…</td>
+<td>auto</td>
+<td><code>imageBusy</code>, <code>imageJobMeta</code></td>
+</tr>
+<tr>
+<td><code>image.review</code></td>
+<td>Variant pick, vision gate, postflight</td>
+<td>✓ if A/B or vision issues</td>
+<td>existing Image step post-gen UI</td>
+</tr>
+<tr>
+<td><code>image.storyboard_scenes</code></td>
+<td>Scene stills editor</td>
+<td>✓ before video (storyboard)</td>
+<td><code>storyboardScenes</code>, regenerate per scene</td>
+</tr>
+<tr>
+<td><code>wait.storyboard_generate</code></td>
+<td>Generating scenes…</td>
+<td>auto</td>
+<td><code>imageJobMeta.kind === storyboard</code></td>
+</tr>
+</tbody></table>
+<h3>3.6 Video output</h3>
+<table><thead><tr>
+<th>ID</th>
+<th>Screen</th>
+<th>Required</th>
+<th>State</th>
+</tr></thead><tbody>
+<tr>
+<td><code>video.mode</code></td>
+<td>I2V / product promo / R2V / UGC</td>
+<td>Usually inferred</td>
+<td><code>videoCreativeMode</code></td>
+</tr>
+<tr>
+<td><code>video.settings</code></td>
+<td>Duration, resolution, creativity, fast</td>
+<td>Defaults OK; <strong>Setup shows resolution + duration + fast for all video/combined paths</strong> (billing)</td>
+<td><code>videoSettings</code> — full motion panel also on Video step</td>
+</tr>
+<tr>
+<td><code>video.product_plan</code></td>
+<td>Product assistant plan</td>
+<td>✓ if product-assistant</td>
+<td><code>planProductVideo</code> → <code>productVideoPlan</code></td>
+</tr>
+<tr>
+<td><code>video.ai_prompt</code></td>
+<td>AI-planned prompt review</td>
+<td>✓ if brand-video / creative-video</td>
+<td><code>planAiVideoPrompt</code> → <code>videoPrompt</code></td>
+</tr>
+<tr>
+<td><code>video.ugc_pack</code></td>
+<td>Avatar, voiceover, captions</td>
+<td>✓ if ugc-presenter</td>
+<td>ad pack fields</td>
+</tr>
+<tr>
+<td><code>video.bgm</code></td>
+<td>Background music</td>
+<td>Optional</td>
+<td><code>bgmTrack</code></td>
+</tr>
+<tr>
+<td><code>video.generate</code></td>
+<td>Generate + progress</td>
+<td>—</td>
+<td><code>generateVideo()</code></td>
+</tr>
+<tr>
+<td><code>wait.video_generate</code></td>
+<td>Generating…</td>
+<td>auto</td>
+<td><code>videoBusy</code>, <code>videoPhase</code></td>
+</tr>
+<tr>
+<td><code>wait.reel_analyze</code></td>
+<td>Analyzing reference reel…</td>
+<td>auto</td>
+<td><code>researchReelAnalyzeBusy</code> — <strong>after</strong> explicit <code>video.settings</code> duration; <strong>re-runs</strong> when duration changes</td>
+</tr>
+</tbody></table>
+<h3>3.7 Finish</h3>
+<table><thead><tr>
+<th>ID</th>
+<th>Screen</th>
+<th>Required</th>
+<th>State</th>
+</tr></thead><tbody>
+<tr>
+<td><code>done.export</code></td>
+<td>Download, captions handoff, reset</td>
+<td>—</td>
+<td><code>DoneStep</code></td>
+</tr>
+<tr>
+<td><code>shortcut.ship_it</code></td>
+<td>One-click image→video</td>
+<td>Optional — <strong>after image review</strong></td>
+<td><code>runShipIt()</code> when <code>shipItEligible</code></td>
+</tr>
+</tbody></table>
+<hr/>
+<h2>4. Gate mapping (reuse existing logic)</h2>
+<p>Micro-step <strong>Continue</strong> buttons must call the same checks the monolith uses today.</p>
+<h3>4.1 Setup → image (split across early screens)</h3>
+<p>Source: <code>lib/wizard-setup-gate.ts</code> + <code>goNextFromSetup()</code> in <code>hooks/useStudioWizard.ts</code></p>
+<table><thead><tr>
+<th>Gate reason</th>
+<th>Block at micro-step</th>
+</tr></thead><tbody>
+<tr>
+<td><code>need_product_name</code></td>
+<td><code>identity.product_name</code></td>
+</tr>
+<tr>
+<td><code>need_headline</code></td>
+<td><code>identity.concept</code> or <code>copy.edit</code></td>
+</tr>
+<tr>
+<td><code>need_reference_image</code></td>
+<td><code>wait.reference_analyze</code> / research pick (cover must attach)</td>
+</tr>
+<tr>
+<td><code>reference_analyzing</code></td>
+<td><code>wait.reference_analyze</code></td>
+</tr>
+<tr>
+<td>Brand analyze required</td>
+<td><code>asset.brand_website</code></td>
+</tr>
+<tr>
+<td>Creative brief required</td>
+<td><code>copy.creative_brief</code></td>
+</tr>
+<tr>
+<td>Research reel MP4 missing</td>
+<td><code>research.pick_angle</code> or <code>asset.reference_video</code></td>
+</tr>
+<tr>
+<td>Reel analyzing / analyze required</td>
+<td><code>wait.reel_analyze</code></td>
+</tr>
+<tr>
+<td>Reference reel: output duration not explicit (<code>auto</code>)</td>
+<td><code>video.settings</code> — block analyze &amp; Continue</td>
+</tr>
+</tbody></table>
+<h3>4.2 Image generate</h3>
+<p>Source: <code>canGenerateImage()</code> + <code>imageGenerateBlockReason()</code></p>
+<table><thead><tr>
+<th>Condition</th>
+<th>Block at</th>
+</tr></thead><tbody>
+<tr>
+<td>No product photo (physical default)</td>
+<td><code>asset.product_photo</code></td>
+</tr>
+<tr>
+<td>Storyboard physical: name + photo</td>
+<td><code>identity.product_name</code>, <code>asset.product_photo</code></td>
+</tr>
+<tr>
+<td>Reference-concept: ref + product photo</td>
+<td><code>asset.reference_image</code>, <code>asset.product_photo</code></td>
+</tr>
+<tr>
+<td>info-poster / brand: headline</td>
+<td><code>copy.edit</code></td>
+</tr>
+<tr>
+<td>Brand profile (physical brand styles)</td>
+<td><code>asset.brand_website</code></td>
+</tr>
+</tbody></table>
+<h3>4.3 Image → video</h3>
+<p>Source: <code>finishImageStep()</code></p>
+<table><thead><tr>
+<th>Condition</th>
+<th>Block at</th>
+</tr></thead><tbody>
+<tr>
+<td>Combined needs generated image</td>
+<td><code>image.review</code> or <code>image.generate</code></td>
+</tr>
+<tr>
+<td>Storyboard needs scenes</td>
+<td><code>image.storyboard_scenes</code></td>
+</tr>
+<tr>
+<td>Cinematic needs N scenes</td>
+<td><code>image.storyboard_scenes</code> (cinematic variant)</td>
+</tr>
+</tbody></table>
+<h3>4.4 Video generate</h3>
+<p>Reuse existing video-step disabled reason from <code>useStudioWizard</code> (storyboard scenes, UGC pack, brand prompt, reference video, etc.).</p>
+<hr/>
+<h2>5. Style inference (user does not pick “visual style” in v2 default)</h2>
+<table><thead><tr>
+<th>Path</th>
+<th>Default <code>visualStyleId</code></th>
+</tr></thead><tbody>
+<tr>
+<td>Product + image + direct + single/A/B</td>
+<td><code>product</code></td>
+</tr>
+<tr>
+<td>Product + image + research → single-image angle</td>
+<td><code>product</code> or angle patch</td>
+</tr>
+<tr>
+<td>Product + image + research → campaign angle</td>
+<td><code>brand-campaign</code> or <code>product</code></td>
+</tr>
+<tr>
+<td>Product + image + research → teaching angle</td>
+<td><code>product</code> + <code>teaching-carousel</code></td>
+</tr>
+<tr>
+<td>Product + image + research → model-wear</td>
+<td><code>model-wear</code></td>
+</tr>
+<tr>
+<td>Concept + image + direct</td>
+<td><code>brand-fit</code></td>
+</tr>
+<tr>
+<td>Product + video + direct</td>
+<td><code>product</code></td>
+</tr>
+<tr>
+<td>Product + video + research reel + combined</td>
+<td><code>storyboard-video</code></td>
+</tr>
+<tr>
+<td>Product + video + research reel + video-only</td>
+<td><code>product</code> (R2V)</td>
+</tr>
+<tr>
+<td>Concept + video + direct</td>
+<td><code>creative-video</code> or <code>brand-video</code></td>
+</tr>
+<tr>
+<td>Concept + video + research reel + combined</td>
+<td><code>storyboard-video</code></td>
+</tr>
+<tr>
+<td>Concept + video + research reel + video-only</td>
+<td><code>product</code> (direct R2V)</td>
+</tr>
+<tr>
+<td>Concept + combined + cinematic</td>
+<td><code>concept-cinematic</code></td>
+</tr>
+<tr>
+<td>Concept + combined + image trunk (Path 11)</td>
+<td>Path 3/4 style + <code>image-to-video</code></td>
+</tr>
+<tr>
+<td>Product + Both + animate keyframe (Path 7)</td>
+<td><code>product</code> + <code>image-to-video</code></td>
+</tr>
+</tbody></table>
+<p>Research angles use <code>lib/content-research-apply.ts</code> → <code>patchFromAngleFormat()</code> (unchanged).</p>
+<h3>Path index (all 11 reference paths)</h3>
+<table><thead><tr>
+<th>#</th>
+<th>Path</th>
+<th>Output</th>
+<th>Subject</th>
+<th>Intake</th>
+<th>Priority</th>
+</tr></thead><tbody>
+<tr>
+<td>1</td>
+<td>Product / Image / Research</td>
+<td>Image</td>
+<td>Product</td>
+<td>Research</td>
+<td>P1</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Product / Image / Direct</td>
+<td>Image</td>
+<td>Product</td>
+<td>Direct</td>
+<td><strong>MVP</strong></td>
+</tr>
+<tr>
+<td>3</td>
+<td>Concept / Image / Research</td>
+<td>Image</td>
+<td>Concept</td>
+<td>Research</td>
+<td>P1</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Concept / Image / Direct</td>
+<td>Image</td>
+<td>Concept</td>
+<td>Direct</td>
+<td>P1</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Product / Video / Research reel</td>
+<td>Video / Both</td>
+<td>Product</td>
+<td>Research</td>
+<td>P1</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Product / Video / Direct</td>
+<td>Video</td>
+<td>Product</td>
+<td>Direct</td>
+<td>P1</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Product / Combined / Animate keyframe</td>
+<td>Both</td>
+<td>Product</td>
+<td>Research or Direct (image)</td>
+<td>P1</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Concept / Video / Research reel</td>
+<td>Video / Both</td>
+<td>Concept</td>
+<td>Research</td>
+<td>P1</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Concept / Video / Direct</td>
+<td>Video</td>
+<td>Concept</td>
+<td>Direct</td>
+<td>P1</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Concept / Combined / Cinematic</td>
+<td>Both</td>
+<td>Concept</td>
+<td>Direct</td>
+<td>P1</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Concept / Combined / Animate keyframe</td>
+<td>Both</td>
+<td>Concept</td>
+<td>Research or Direct (image)</td>
+<td>P2</td>
+</tr>
+</tbody></table>
+<h3>Path comparison — image paths (2 / 3 / 4)</h3>
+<table><thead><tr>
+<th>Step</th>
+<th>Path 2 Product / Direct</th>
+<th>Path 3 Concept / Research</th>
+<th>Path 4 Concept / Direct</th>
+</tr></thead><tbody>
+<tr>
+<td>Identity</td>
+<td>產品名稱 [required]</td>
+<td><strong>概念助手</strong> [required]</td>
+<td><strong>概念助手</strong> [required]</td>
+</tr>
+<tr>
+<td>Intake</td>
+<td>直接創作</td>
+<td>平台研究</td>
+<td>直接創作</td>
+</tr>
+<tr>
+<td>Reference</td>
+<td>User upload (optional)</td>
+<td>From post cover + analyze [required]</td>
+<td>User upload (optional) — <strong>like Path 2</strong></td>
+</tr>
+<tr>
+<td>內容與生成設定</td>
+<td>Optional skip whole screen</td>
+<td><strong>Never skip</strong> — review copy</td>
+<td>Optional skip — <strong>like Path 2</strong></td>
+</tr>
+<tr>
+<td>Product photo</td>
+<td>Required</td>
+<td>Optional</td>
+<td>Optional</td>
+</tr>
+<tr>
+<td>Topic leak risk</td>
+<td>Low</td>
+<td><strong>High if §9.5 not fixed</strong></td>
+<td>Low</td>
+</tr>
+</tbody></table>
+<h3>Path comparison — video paths (5 / 6 vs 8 / 9)</h3>
+<table><thead><tr>
+<th>Step</th>
+<th>Path 5 Product / Research reel</th>
+<th>Path 8 Concept / Research reel</th>
+<th>Path 6 Product / Direct</th>
+<th>Path 9 Concept / Direct</th>
+</tr></thead><tbody>
+<tr>
+<td>Identity</td>
+<td>產品名稱 [required]</td>
+<td><strong>概念助手</strong> [required]</td>
+<td>產品名稱 [required]</td>
+<td><strong>概念助手</strong> [required]</td>
+</tr>
+<tr>
+<td>Research promote target</td>
+<td><code>product</code></td>
+<td><code>conceptIdea</code> / <code>effectivePromoteName</code></td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Product photo</td>
+<td>Required (storyboard physical)</td>
+<td><strong>Optional</strong> (text-only / R2V ok)</td>
+<td>Required</td>
+<td><strong>Optional</strong></td>
+</tr>
+<tr>
+<td>Reference MP4</td>
+<td>Download or <strong>手動上傳</strong> [always open]</td>
+<td>Same as Path 5</td>
+<td>User upload (ref reel subpath)</td>
+<td>Same</td>
+</tr>
+<tr>
+<td>Research post pick</td>
+<td>Optional if user uploads MP4</td>
+<td>Same</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Promote / gate name</td>
+<td><code>product</code></td>
+<td><code>effectivePromoteName</code> / <code>conceptIdea</code></td>
+<td>—</td>
+<td><code>conceptIdea</code></td>
+</tr>
+<tr>
+<td>Storyboard scenes</td>
+<td>If <strong>Both</strong> → <code>storyboard-video</code></td>
+<td>Same</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>內容與生成設定</td>
+<td>Never skip (if research applied)</td>
+<td>Never skip when research applied; fix headline for <strong>your concept</strong> (§9.5)</td>
+<td>Optional</td>
+<td>Optional</td>
+</tr>
+<tr>
+<td>Subpaths</td>
+<td>promo / reel / assistant / UGC</td>
+<td>—</td>
+<td>—</td>
+<td>creative / brand / reference reel only</td>
+</tr>
+<tr>
+<td>Extra screens</td>
+<td><code>video.product_plan</code>, <code>video.ugc_pack</code></td>
+<td>§9.5; optional concept ref image</td>
+<td><code>copy.creative_brief</code>, <code>video.ai_prompt</code></td>
+<td><code>copy.creative_brief</code>, <code>video.ai_prompt</code></td>
+</tr>
+</tbody></table>
+<h3>Path comparison — combined paths (7 vs 10 vs 11) — product vs concept</h3>
+<table><thead><tr>
+<th></th>
+<th>Path 7 Product / Animate keyframe</th>
+<th>Path 8 Concept / Reel + <strong>combined</strong></th>
+<th>Path 10 Concept / Cinematic</th>
+<th>Path 11 Concept / Animate keyframe</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Mirrors</strong></td>
+<td>—</td>
+<td>Path <strong>5</strong> combined branch</td>
+<td>Unique (no product equivalent)</td>
+<td>Path <strong>7</strong> for concept</td>
+</tr>
+<tr>
+<td><strong>Image step</strong></td>
+<td>Path 1/2 <strong>poster</strong></td>
+<td><strong>Storyboard scene stills</strong> (reel-driven)</td>
+<td><strong>Cinematic keyframes</strong> (concept-driven)</td>
+<td>Path 3/4 <strong>poster</strong></td>
+</tr>
+<tr>
+<td><strong>Video style</strong></td>
+<td><code>image-to-video</code></td>
+<td><code>storyboard-video</code></td>
+<td><code>concept-cinematic</code></td>
+<td><code>image-to-video</code></td>
+</tr>
+<tr>
+<td><strong>Needs reel MP4?</strong></td>
+<td>No</td>
+<td>Yes (download or upload)</td>
+<td>No</td>
+<td>No</td>
+</tr>
+<tr>
+<td><strong>Ship-it</strong></td>
+<td>✓</td>
+<td>✗</td>
+<td>✗</td>
+<td>✗</td>
+</tr>
+<tr>
+<td><strong>Identity</strong></td>
+<td><code>product</code></td>
+<td><code>conceptIdea</code> anchor (§9.5)</td>
+<td><code>conceptIdea</code></td>
+<td><code>conceptIdea</code></td>
+</tr>
+</tbody></table>
+<h3>Concept path mirror map (product ↔ concept)</h3>
+<table><thead><tr>
+<th>Product</th>
+<th>Concept</th>
+<th>Rule</th>
+</tr></thead><tbody>
+<tr>
+<td>Path 1 Image / Research</td>
+<td><strong>Path 3</strong></td>
+<td>+ 概念助手; promote target = <code>conceptIdea</code>; §9.5</td>
+</tr>
+<tr>
+<td>Path 2 Image / Direct</td>
+<td><strong>Path 4</strong></td>
+<td>Path 2 + 概念助手 — <strong>not</strong> Path 3 minus research</td>
+</tr>
+<tr>
+<td>Path 5 Video / Research reel</td>
+<td><strong>Path 8</strong></td>
+<td>Path 5 + 概念助手; optional product photo; same MP4 rules</td>
+</tr>
+<tr>
+<td>Path 6 Video / Direct</td>
+<td><strong>Path 9</strong></td>
+<td>Path 6 + 概念助手; no assistant/UGC subpaths</td>
+</tr>
+<tr>
+<td>Path 7 Combined / Animate keyframe</td>
+<td><strong>Path 11</strong></td>
+<td>Path 7 + 概念助手; Path 3/4 trunk; no Ship-it</td>
+</tr>
+<tr>
+<td>—</td>
+<td><strong>Path 10</strong></td>
+<td>Concept-only cinematic stitch — no product mirror</td>
+</tr>
+</tbody></table>
+<hr/>
+<h2>6. Eleven reference path graphs</h2>
+<p>Machine-readable copy: [<code>lib/wizard-micro-steps.graph.json</code>](../lib/wizard-micro-steps.graph.json)</p>
+<h3>Path 1 — Product / Image / Research</h3>
+<pre><code>entry.start
+  → route.output_goal          [image-only]
+  → route.subject              [physical]
+  → identity.product_name      [product required]
+  → route.intake               [research]
+  → research.platform
+  → research.pick_angle        → applyContentAngleToWizard
+  → wait.research_apply
+  → wait.reference_analyze     [required — post cover + gate]
+  → copy.edit                  [內容與生成設定; 品牌設定 optional inside; do not skip]
+  → asset.brand_website        [only if brand-fit / brand-campaign — required]
+  → image.output_format        [skip if angle preset format; else 四選一]
+  → asset.product_photo        [required]
+  → image.options              [optional; skippable with defaults]
+  → image.generate
+  → wait.image_generate
+  → image.review               [required if ab]
+  → done.export</code></pre>
+<h3>Path 2 — Product / Image / Direct (MVP)</h3>
+<pre><code>entry.start
+  → route.output_goal          [image-only]
+  → route.subject              [physical]
+  → identity.product_name
+  → route.intake               [direct]
+  → asset.reference_image      [optional; skip allowed]
+  → wait.reference_analyze     [only if ref uploaded]
+  → copy.edit                  [optional skip screen; 品牌設定 always available inside, optional]
+  → image.output_format        [四選一: single | ab | campaign | teaching-carousel]
+  → asset.product_photo        [required]
+  → image.options
+  → image.generate
+  → wait.image_generate
+  → image.review
+  → done.export</code></pre>
+<p><strong>Default:</strong> <code>imageCreativeMode: promo-ai</code> if no ref; <code>reference-concept</code> if ref uploaded. Default format: <code>ab</code> for physical image-only.</p>
+<h3>Path 3 — Concept / Image / Research</h3>
+<pre><code>entry.start
+  → route.output_goal          [image-only]
+  → route.subject              [concept]
+  → identity.concept           [概念助手 — conceptIdea required; fixed anchor]
+  → route.intake               [research]
+  → research.platform          [promote target = conceptIdea, NOT empty product]
+  → research.pick_angle        → applyContentAngleToWizard (style only → copy rewrite)
+  → wait.research_apply
+  → wait.reference_analyze     [required when cover attached]
+  → copy.edit                  [內容與生成設定 — review/fix headline; never skip]
+  → asset.brand_website        [required if brand-fit / brand-campaign and no profile]
+  → asset.reference_image      [optional if not from angle]
+  → asset.product_photo        [optional — text-only styles allowed]
+  → image.output_format        [skip if preset; else 四選一]
+  → image.options
+  → image.generate
+  → wait.image_generate
+  → image.review
+  → done.export</code></pre>
+<p><strong>Order rule:</strong> 概念助手 <strong>before</strong> research so the user’s topic is the anchor. Research borrows <strong>style</strong>; copy fields are rewritten for that topic in <code>copy.edit</code>.</p>
+<h3>Path 4 — Concept / Image / Direct</h3>
+<p><strong>Not</strong> Path 3 without research. <strong>Path 2 + 概念助手.</strong></p>
+<pre><code>entry.start
+  → route.output_goal          [image-only]
+  → route.subject              [concept]
+  → identity.concept           [概念助手 — conceptIdea required]
+  → route.intake               [direct]
+  → asset.reference_image      [optional; skip allowed — like Path 2]
+  → wait.reference_analyze     [only if ref uploaded]
+  → copy.edit                  [optional skip screen; 品牌設定 inside]
+  → asset.brand_website        [required if brand style]
+  → asset.product_photo        [optional]
+  → image.output_format        [四選一]
+  → image.options
+  → image.generate
+  → wait.image_generate
+  → image.review
+  → done.export</code></pre>
+<p><strong>No</strong> <code>research.platform</code>, <strong>no</strong> auto cover from post, <strong>no</strong> forced reference analyze unless user uploads a ref.</p>
+<h3>Path 5 — Product / Video / Research reel</h3>
+<p><strong>Reel path needs a reference MP4 before analyze + generate.</strong> User can get it two ways — <strong>both always available on the same screen</strong>:</p>
+<ol>
+<li><strong>平台研究</strong> — pick a reel post → auto-download MP4  </li>
+<li><strong>手動上傳參考短片</strong> — always open (not failure-only); user may skip research entirely if they already have an MP4  </li>
+</ol>
+<p>Blocking rule: <strong>MP4 must exist</strong> (downloaded or uploaded) → then <strong>analyze</strong> → then continue. Research post pick is <strong>optional</strong> when user uploads their own file.</p>
+<pre><code>entry.start
+  → route.output_goal          [video-only | combined]
+  → route.subject              [physical]
+  → identity.product_name
+  → route.intake               [research]
+  → research.platform          [optional browse — user may skip if uploading MP4]
+  → research.pick_angle        [optional — triggers MP4 download when user picks a reel post]
+  → wait.research_apply        [when angle picked — copy + style block]
+  → video.settings             [duration + resolution + fast — REQUIRED explicit duration before analyze]
+  → asset.reference_video      [參考短片 — ALWAYS visible; required before analyze]
+      ├── path A: MP4 auto-downloaded from picked post → wait.reel_download
+      ├── path B: user uploads MP4 directly (no post needed)
+      └── path C: download failed → user uploads OR picks another post
+  → wait.reel_analyze          [required — uses output_duration_sec; auto re-run if duration changes]
+  → copy.edit                  [內容與生成設定; never skip if research applied; else fill manually]
+  → asset.brand_website        [if brand-video — required]
+  → asset.product_photo        [required for storyboard physical]
+  → copy.storyboard_brief      [if combined → storyboard-video]
+  → image.storyboard_scenes    [ONLY if storyboard-video — combined path]
+  → wait.storyboard_generate
+  → video.settings_motion      [creativity / motion — Video step; duration already locked on Setup]
+  → video.generate
+  → wait.video_generate
+  → done.export</code></pre>
+<h4>Path 5 — blocking waits (cannot Continue until done)</h4>
+<table><thead><tr>
+<th>Step</th>
+<th>What happens</th>
+<th>If it fails</th>
+</tr></thead><tbody>
+<tr>
+<td><code>wait.reel_download</code></td>
+<td>Only when user <strong>picked a post</strong> — proxy fetch MP4</td>
+<td>Show error; user uploads MP4 <strong>or</strong> picks another post — upload zone stays open</td>
+</tr>
+<tr>
+<td><code>wait.reel_analyze</code></td>
+<td>Runs when MP4 + product name ready (download <strong>or</strong> upload)</td>
+<td>Blocks video generate until <code>researchReelAnalysis</code> or <code>videoPrompt</code> filled</td>
+</tr>
+</tbody></table>
+<p><strong>UI (v2):</strong> Show <strong>參考短片</strong> upload on Path 5 <strong>from the start</strong>, alongside platform research — same panel as classic <code>research-reel-setup</code> (<code>researchReelUploadMp4Hint</code>: 搜尋自動下載 <strong>或</strong> 上傳你自己嘅 MP4，<strong>兩種都得</strong>). Do <strong>not</strong> hide upload behind download failure.</p>
+<h4>Path 5 ↔ Path 6 crossover</h4>
+<table><thead><tr>
+<th>Situation</th>
+<th>What user does</th>
+<th>Effective mode</th>
+</tr></thead><tbody>
+<tr>
+<td>Pick post + MP4 downloads</td>
+<td>Path 5</td>
+<td><code>reference-concept</code> + reel from search</td>
+</tr>
+<tr>
+<td><strong>Can't find a good post</strong> — upload MP4 instead</td>
+<td>Stay on Path 5; skip <code>pick_angle</code></td>
+<td>Same analyze + generate as Path 6 reference reel</td>
+</tr>
+<tr>
+<td>Pick post but <strong>download failed</strong></td>
+<td>Upload MP4 or pick another post</td>
+<td>Path 5; upload always available</td>
+</tr>
+<tr>
+<td>Skip research intake entirely</td>
+<td>Switch to Direct → Path 6 <code>reference_reel</code></td>
+<td>Path 6</td>
+</tr>
+</tbody></table>
+<p><strong>Rule for v2:</strong> <strong>手動上傳</strong> is a <strong>permanent option</strong> on Path 5, not only a failure recovery button.</p>
+<p><strong>Note:</strong> <code>video-only</code> + reel research → <code>visualStyleId: product</code> (R2V). <code>combined</code> + reel → <code>storyboard-video</code> (scene stills required).</p>
+<h3>Path 6 — Product / Video / Direct</h3>
+<p><strong>No platform research.</strong> User picks one of four <strong>video subpaths</strong> up front.</p>
+<pre><code>entry.start
+  → route.output_goal          [video-only]
+  → route.subject              [physical]
+  → identity.product_name
+  → route.intake               [direct]
+  → route.video_subpath        [required — pick ONE]
+  → … (subpath-specific steps below)
+  → video.generate
+  → wait.video_generate
+  → done.export</code></pre>
+<h4>Path 6 subpaths — what each means</h4>
+<table><thead><tr>
+<th>Subpath</th>
+<th><code>videoCreativeMode</code> / style</th>
+<th>What it does</th>
+<th>Reference MP4?</th>
+<th>Extra step</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Product promo</strong> 產品推廣短片</td>
+<td><code>product-promo</code> + <code>visualStyleId: product</code></td>
+<td>Animate <strong>one product photo</strong> (or keyframe) with smooth <strong>commercial motion</strong> — like a product hero shot coming to life</td>
+<td>Optional (not required)</td>
+<td><code>video.ai_prompt</code> — Plan AI video prompt</td>
+</tr>
+<tr>
+<td><strong>Reference reel</strong> 跟參考片</td>
+<td><code>reference-concept</code></td>
+<td><strong>Your product + reference MP4</strong> → match reference <strong>pacing / edit / motion</strong> (not a clone of reference topic)</td>
+<td><strong>Required</strong> — user uploads</td>
+<td><code>wait.reel_analyze</code> [required]</td>
+</tr>
+<tr>
+<td><strong>Product assistant</strong> AI 影片助手</td>
+<td><code>product-assistant</code></td>
+<td>Upload <strong>product + packaging + multiple angle photos</strong> → vision analyzes <strong>all photos</strong> → AI writes situational Seedance scene plan</td>
+<td>No</td>
+<td><code>video.product_plan</code> — Analyze photos &amp; plan video</td>
+</tr>
+<tr>
+<td><strong>UGC presenter</strong></td>
+<td><code>ugc-presenter</code></td>
+<td>Digital presenter holds/talks about product — UGC-style talking head</td>
+<td>No</td>
+<td><code>video.ugc_pack</code></td>
+</tr>
+</tbody></table>
+<h4>Product promo vs Product assistant (plain language)</h4>
+<table><thead><tr>
+<th></th>
+<th><strong>Product promo</strong></th>
+<th><strong>Product assistant</strong></th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Best for</strong></td>
+<td>“I have <strong>one good product shot</strong> — make it move”</td>
+<td>“I have <strong>several pack/angle shots</strong> — AI figure out the reel”</td>
+</tr>
+<tr>
+<td><strong>Photos</strong></td>
+<td>Usually 1 product photo</td>
+<td>Product photo + optional extra kit / angle photos</td>
+</tr>
+<tr>
+<td><strong>AI step</strong></td>
+<td><code>planAiVideoPrompt</code> — writes Seedance motion text from copy + photo</td>
+<td><code>planProductVideo</code> — vision reads <strong>all</strong> uploads, outputs structured <code>productVideoPlan</code></td>
+</tr>
+<tr>
+<td><strong>Motion style</strong></td>
+<td>Generic smooth product commercial</td>
+<td>Situational / lifestyle scenes inferred from packaging &amp; angles</td>
+</tr>
+<tr>
+<td><strong>Reference video</strong></td>
+<td>Not needed</td>
+<td>Not needed</td>
+</tr>
+</tbody></table>
+<p><strong>Neither</strong> is “platform research”. Both are <strong>direct</strong> paths when you already know your product and don’t need to browse viral posts for style.</p>
+<pre><code>  → route.video_subpath
+      ├── product_promo      → copy.edit → product photo → video.ai_prompt → video.settings → generate
+      ├── reference_reel     → upload MP4 → wait.reel_analyze → copy.edit/storyboard → product photo → generate
+      ├── product_assistant  → product photo + extra_kit → video.product_plan → video.settings → generate
+      └── ugc_presenter      → product photo → video.ugc_pack → generate</code></pre>
+<h3>Path comparison — combined modes (Path 5 vs Path 7 — read this)</h3>
+<p><strong>「圖片+影片 / combined」has TWO different product flows.</strong> Do not assume one Path 7 covers all combined.</p>
+<table><thead><tr>
+<th></th>
+<th><strong>Combined + 分鏡 (storyboard-reel)</strong></th>
+<th><strong>Combined + 單圖動態 (animate-keyframe)</strong></th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Spec path</strong></td>
+<td><strong>Path 5</strong> (reel research, combined branch) or <strong>Path 6</strong> storyboard subpath</td>
+<td><strong>Path 7</strong></td>
+</tr>
+<tr>
+<td><strong>Images mean</strong></td>
+<td><strong>Storyboard scene stills</strong> — multiple frames (@Image1, @Image2…) matching reel pacing</td>
+<td><strong>One hero poster</strong> — single PNG from normal image generate</td>
+</tr>
+<tr>
+<td><strong>How images are made</strong></td>
+<td><code>image.storyboard_scenes</code> — <strong>not</strong> Path 1/2 format picker</td>
+<td>Path <strong>1 trunk</strong> (research image) or Path <strong>2 trunk</strong> (direct image)</td>
+</tr>
+<tr>
+<td><strong>Video step</strong></td>
+<td>Stitch scenes → one reel (<code>storyboard-video</code>)</td>
+<td>Animate that one image (<code>image-to-video</code>, Ship-it)</td>
+</tr>
+<tr>
+<td><strong>Needs reference MP4?</strong></td>
+<td>Usually yes (Path 5) or user upload (Path 6 reel)</td>
+<td>No (optional ref MP4 for motion only)</td>
+</tr>
+</tbody></table>
+<p><strong>Path 1 trunk / Path 2 trunk</strong> (used only on <strong>Path 7</strong>): shorthand for “run the <strong>image-only</strong> funnel first, then append video”:</p>
+<table><thead><tr>
+<th>Trunk</th>
+<th>Means</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Path 1 trunk</strong></td>
+<td>Path 1 steps through <code>image.review</code> — product + <strong>platform research (image posts)</strong> + generate poster</td>
+</tr>
+<tr>
+<td><strong>Path 2 trunk</strong></td>
+<td>Path 2 steps through <code>image.review</code> — product + <strong>direct</strong> + optional ref upload + generate poster</td>
+</tr>
+</tbody></table>
+<p>Neither trunk is storyboard. <strong>If combined should use storyboard scene images, that is Path 5 (or Path 6 storyboard), not Path 7.</strong></p>
+<h3>Path 7 — Product / Combined / Animate keyframe (NOT storyboard)</h3>
+<p><strong>Path 7 = 「先要相片，再要影片」的 單圖動態 分支</strong> — one marketing still, then Seedance animates it. Ship-it lives here.</p>
+<pre><code>entry.start
+  → route.output_goal          [combined — 圖片+影片]
+  → route.subject              [physical]
+  → identity.product_name
+  → route.intake               [research | direct]
+  → MERGE Path 1 trunk OR Path 2 trunk   ← image poster only; NOT storyboard scenes
+  → image.review               [single / A/B pick — not scene grid]
+  → shortcut.ship_it           [optional — after image review]
+  → video.settings             [image-to-video]
+  → video.generate
+  → wait.video_generate
+  → done.export</code></pre>
+<p><strong>Not on Path 7:</strong> <code>image.storyboard_scenes</code>, reel MP4 analyze, multi-scene stitch — those are <strong>Path 5 combined</strong> or <strong>Path 6 storyboard</strong>.</p>
+<p><strong>Ship-it eligible when:</strong> physical + combined + <code>image-to-video</code> + not storyboard/campaign/ugc/cinematic/concept + has product photo or name.</p>
+<h3>Path 8 — Concept / Video / Research reel</h3>
+<p><strong>Path 5 + 概念助手.</strong> Same MP4 pipeline as Path 5; concept-specific gates and copy rules (§9.5).</p>
+<p><strong>Reel MP4:</strong> download from post <strong>or</strong> <strong>手動上傳</strong> (always visible). Research post pick <strong>optional</strong> when user uploads. <strong>Blocking:</strong> MP4 ready → analyze → continue.</p>
+<p><strong>Routing:</strong> <strong>Both</strong> → <code>storyboard-video</code> (分鏡場景圖); <strong>Video only</strong> → direct R2V (<code>visualStyleId: product</code>).</p>
+<pre><code>entry.start
+  → route.output_goal          [video-only | combined]
+  → route.subject              [concept]
+  → identity.concept           [概念助手 — conceptIdea required; fixed anchor BEFORE research]
+  → route.intake               [research]
+  → research.platform          [optional browse; promote target = conceptIdea §9.5]
+  → research.pick_angle        [optional — reel post; style-only apply, never paste reference hook]
+  → wait.research_apply        [when angle picked]
+  → asset.reference_video      [參考短片 — ALWAYS visible; required before analyze]
+      ├── auto-download from post → wait.reel_download
+      ├── manual upload (skip research post)
+      └── download failed → upload or pick another post
+  → wait.reel_analyze          [required — blocks until done; uses effectivePromoteName]
+  → copy.edit                  [never skip when research applied — fix headline for YOUR concept]
+  → asset.brand_website        [if brand-video]
+  → asset.reference_image      [optional concept ref still / plan-concept vision]
+  → asset.product_photo        [optional — text-only storyboard ok]
+  → copy.storyboard_brief      [if combined → storyboard-video ONLY]
+  → image.storyboard_scenes    [combined only — NOT Path 11 poster]
+  → wait.storyboard_generate
+  → video.settings
+  → video.generate
+  → wait.video_generate
+  → done.export</code></pre>
+<h4>Path 8 — vs Path 5 (only differences)</h4>
+<table><thead><tr>
+<th></th>
+<th>Path 5</th>
+<th>Path 8</th>
+</tr></thead><tbody>
+<tr>
+<td>Identity</td>
+<td><code>product</code></td>
+<td><strong>概念助手</strong> + <code>conceptIdea</code> anchor</td>
+</tr>
+<tr>
+<td>Promote target</td>
+<td><code>product</code></td>
+<td><code>conceptIdea</code> / <code>effectivePromoteName</code></td>
+</tr>
+<tr>
+<td>Product photo</td>
+<td>Required (physical storyboard)</td>
+<td><strong>Optional</strong></td>
+</tr>
+<tr>
+<td>Copy apply</td>
+<td>Product hooks</td>
+<td><strong>Rewrite for concept</strong> — §9.5</td>
+</tr>
+<tr>
+<td>Data layers</td>
+<td>Product topic</td>
+<td>User concept fixed; post = style only</td>
+</tr>
+</tbody></table>
+<h4>Path 8 ↔ Path 9 crossover</h4>
+<p>Same pattern as Path 5 ↔ Path 6: can't find reel post → <strong>手動上傳</strong> on Path 8; or switch to Path 9 <strong>reference reel</strong> subpath.</p>
+<h3>Path 9 — Concept / Video / Direct</h3>
+<p><strong>Path 6 + 概念助手.</strong> <strong>Not</strong> Path 8 minus research (parallel to Path 4 ≠ Path 3 minus research).</p>
+<pre><code>entry.start
+  → route.output_goal          [video-only]
+  → route.subject              [concept]
+  → identity.concept           [概念助手 — conceptIdea required]
+  → route.intake               [direct]
+  → route.video_subpath        [required — concept only; pick ONE]
+  → … (subpath steps below)
+  → video.generate
+  → wait.video_generate
+  → done.export</code></pre>
+<h4>Path 9 subpaths — concept equivalents of Path 6</h4>
+<table><thead><tr>
+<th>Subpath</th>
+<th>Mirrors Path 6</th>
+<th>What it does</th>
+<th>Reference MP4?</th>
+<th>Key extra step</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>Creative video</strong> 創意影片</td>
+<td>~Product promo</td>
+<td>Concept brief + optional ref <strong>image</strong> → AI writes Seedance prompt</td>
+<td>No</td>
+<td><code>copy.creative_brief</code>, <code>video.ai_prompt</code></td>
+</tr>
+<tr>
+<td><strong>Brand video</strong> 品牌影片</td>
+<td>Brand video subpath</td>
+<td>Brand-fit motion for concept</td>
+<td>No</td>
+<td><code>asset.brand_website</code> if brand style</td>
+</tr>
+<tr>
+<td><strong>Reference reel</strong> 跟參考片</td>
+<td>Reference reel</td>
+<td>User's concept + <strong>uploaded MP4</strong> → match pacing (not clone topic)</td>
+<td><strong>Required</strong> upload</td>
+<td><code>wait.reel_analyze</code> [blocking]</td>
+</tr>
+</tbody></table>
+<p><strong>Excluded (product-only):</strong> <code>product-assistant</code>, <code>ugc-presenter</code>.</p>
+<p><strong>Optional on all subpaths:</strong> <code>asset.reference_image</code> (concept ref still for <code>/api/plan-concept</code> vision).</p>
+<pre><code>  → route.video_subpath
+      ├── creative_video   → copy.edit (optional skip) → creative_brief → ref image (optional) → video.ai_prompt → generate
+      ├── brand_video      → brand_website (if brand) → copy.edit → video.ai_prompt → generate
+      └── reference_reel   → upload MP4 [required] → wait.reel_analyze → copy.edit → ref image (optional) → generate</code></pre>
+<h3>Path 10 — Concept / Combined / Cinematic</h3>
+<p><strong>Concept-only.</strong> <strong>Not</strong> Path 8 combined and <strong>not</strong> Path 11. Primary 「圖片+影片」 path when user wants <strong>cinematic stitch</strong>, not reel research or single-poster animate.</p>
+<table><thead><tr>
+<th></th>
+<th>Path 8 combined</th>
+<th>Path 10</th>
+<th>Path 11</th>
+</tr></thead><tbody>
+<tr>
+<td>Intake</td>
+<td>Platform reel research</td>
+<td><strong>Direct</strong> only</td>
+<td>Path 3/4 image trunk</td>
+</tr>
+<tr>
+<td>Reference</td>
+<td>Reel MP4 + analyze</td>
+<td>Optional concept ref <strong>image</strong> only</td>
+<td>Optional image research ref</td>
+</tr>
+<tr>
+<td>Images</td>
+<td>Storyboard scenes from <strong>reel pacing</strong></td>
+<td><strong>Cinematic keyframes</strong> from concept plan</td>
+<td>One <strong>poster</strong></td>
+</tr>
+<tr>
+<td>Style</td>
+<td><code>storyboard-video</code></td>
+<td><code>concept-cinematic</code></td>
+<td><code>image-to-video</code></td>
+</tr>
+</tbody></table>
+<pre><code>entry.start
+  → route.output_goal          [combined — required]
+  → route.subject              [concept]
+  → identity.concept           [概念助手 — conceptIdea required]
+  → route.intake               [direct]
+  → route.cinematic_mode       [single 8s | multi-scene stitch]
+  → cinematic.scene_count      [1–6 if stitch]
+  → asset.reference_image      [optional → plan-concept vision]
+  → wait.concept_plan          [optional — AI 分析]
+  → copy.edit                  [optional skip if brief filled]
+  → copy.creative_brief        [required]
+  → image.storyboard_scenes    [cinematic keyframes — stitch/multi]
+  → wait.storyboard_generate
+  → video.settings
+  → video.ai_prompt
+  → video.bgm                  [optional recipes]
+  → video.generate
+  → wait.video_generate
+  → done.export</code></pre>
+<p><strong>No</strong> platform research, <strong>no</strong> reel MP4, <strong>no</strong> Ship-it. Recipes: closest-match stitch, quick-test 8s.</p>
+<h3>Path 11 — Concept / Combined / Animate keyframe (NOT storyboard)</h3>
+<p><strong>Path 7 + 概念助手.</strong> One concept <strong>poster</strong> (Path 3 or 4 trunk), then animate — <strong>not</strong> storyboard scene grid.</p>
+<p><strong>Path 3 trunk / Path 4 trunk:</strong> same meaning as Path 1/2 trunk but for concept (§9.5 on research trunk).</p>
+<pre><code>entry.start
+  → route.output_goal          [combined]
+  → route.subject              [concept]
+  → identity.concept           [概念助手 — conceptIdea required]
+  → route.intake               [research | direct]
+  → MERGE Path 3 trunk OR Path 4 trunk   ← concept poster; NOT storyboard scenes
+  → image.review               [single / A/B / campaign / carousel pick]
+  → video.settings             [image-to-video]
+  → video.generate             [no Ship-it — concept excluded]
+  → wait.video_generate
+  → done.export</code></pre>
+<p><strong>Not on Path 11:</strong> <code>image.storyboard_scenes</code>, reel MP4, cinematic stitch — those are <strong>Path 8 combined</strong> or <strong>Path 10</strong>.</p>
+<p><strong>If user wants concept + Both + storyboard scene images → Path 8 (combined branch), not Path 11.</strong></p>
+<hr/>
+<h2>6b. Tree diagrams</h2>
+<p>Legend: <strong>[required]</strong> = must fill before Continue · <strong>(optional)</strong> = can skip · <strong>{wait}</strong> = loading screen · <strong>⟨branch⟩</strong> = user picks sub-path · <strong>四選一</strong> = pick exactly one output format</p>
+<h3>Master entry (all paths)</h3>
+<pre><code>Start (Landing)
+└── route.output_goal
+    ├── 圖片 Image          → workflowMode: image-only
+    ├── 影片 Video          → workflowMode: video-only
+    └── 圖片+影片 Both      → workflowMode: combined
+        └── route.subject
+            ├── 產品 Product    → promotionMode: physical  → Paths 1–2, 5–7
+            └── 概念 Concept    → promotionMode: concept   → Paths 3–4, 8–11
+                └── route.intake
+                    ├── 平台研究 Research   ← default highlight for Product/Image
+                    └── 直接創作 Direct
+                        └── … (paths below)</code></pre>
+<p><strong>Quick route map</strong></p>
+<table><thead><tr>
+<th>If user picks…</th>
+<th>Then path #</th>
+</tr></thead><tbody>
+<tr>
+<td>Product + Image + Research</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Product + Image + Direct</td>
+<td>2 (MVP)</td>
+</tr>
+<tr>
+<td>Concept + Image + Research</td>
+<td>3</td>
+</tr>
+<tr>
+<td>Concept + Image + Direct</td>
+<td>4</td>
+</tr>
+<tr>
+<td>Product + Video/Both + Research reel</td>
+<td>5</td>
+</tr>
+<tr>
+<td>Product + Video + Direct</td>
+<td>6</td>
+</tr>
+<tr>
+<td>Product + Both + (image trunk)</td>
+<td>7</td>
+</tr>
+<tr>
+<td>Concept + Video/Both + Research reel</td>
+<td>8</td>
+</tr>
+<tr>
+<td>Concept + Video + Direct</td>
+<td>9</td>
+</tr>
+<tr>
+<td>Concept + Both + Cinematic stitch</td>
+<td>10</td>
+</tr>
+<tr>
+<td>Concept + Both + reel storyboard (research)</td>
+<td>8 (combined branch)</td>
+</tr>
+<tr>
+<td>Concept + Both + animate keyframe (poster)</td>
+<td>11</td>
+</tr>
+</tbody></table>
+<h3>Path 1 — Product / Image / Research</h3>
+<pre><code>Start
+└── 圖片 [required]
+    └── 產品 [required]
+        └── 產品名稱 [required]
+            └── 平台研究 [required]
+                └── 平台內容研究 — 搜尋
+                    └── 選擇角度/貼文 [required]
+                        └── {wait: 套用角度}
+                            └── {wait: 分析參考圖} [required]
+                                └── 內容與生成設定 [required, pre-filled]
+                                    ├── 文案
+                                    ├── 品牌設定 (optional, collapsed)
+                                    └── 進階 prompt (optional)
+                                    └── 品牌網站分析 [required if brand-fit / brand-campaign]
+                                    └── 輸出格式 [skip if angle preset; else 四選一]
+                                        ├── 單張 / A/B / Campaign 套圖 / 教學輪播
+                                            └── 產品照片 [required]
+                                                └── 圖片選項 (optional)
+                                                    └── 生成 → {wait} → 檢視 → 完成匯出</code></pre>
+<h3>Path 2 — Product / Image / Direct (MVP)</h3>
+<pre><code>Start
+└── 圖片 → 產品 → 產品名稱 [required]
+    └── 直接創作
+        └── 參考圖 (optional)
+            └── {wait: 分析參考圖} (only if uploaded)
+                └── 內容與生成設定 (optional skip whole screen)
+                    ├── 文案 (optional)
+                    ├── 品牌設定 (optional, collapsed)
+                    └── 進階 prompt (optional)
+                    └── 輸出格式 [required, 四選一]
+                        └── 產品照片 [required]
+                            └── 生成 → {wait} → 檢視 → 完成匯出</code></pre>
+<h3>Path 3 — Concept / Image / Research</h3>
+<pre><code>Start
+└── 圖片 → 概念
+    └── 概念助手 [required]              ← identity.concept; topic anchor
+        └── 平台研究 → 搜尋 → 選角度 [required]
+            └── {wait: 套用} → {wait: 分析參考圖} [required if cover]
+                └── 內容與生成設定 [required — fix bad headlines here]
+                    ├── 文案 (for YOUR concept, not post topic)
+                    ├── 品牌設定 (optional)
+                    └── 進階 prompt (style block)
+                    └── 品牌網站分析 [if brand style]
+                    └── 參考圖 (optional) → 主圖 (optional)
+                        └── 輸出格式 [skip if preset; else 四選一]
+                            └── 生成 → {wait} → 檢視 → 完成匯出</code></pre>
+<h3>Path 4 — Concept / Image / Direct</h3>
+<pre><code>Start
+└── 圖片 → 概念
+    └── 概念助手 [required]              ← same as Path 3
+        └── 直接創作                       ← like Path 2
+            └── 參考圖 (optional)
+                └── {wait: 分析參考圖} (if uploaded)
+                    └── 內容與生成設定 (optional skip)
+                        ├── 文案 (optional)
+                        ├── 品牌設定 (optional)
+                        └── 進階 prompt (optional)
+                        └── 輸出格式 [required, 四選一]
+                            └── 主圖 (optional) → 品牌網站 (if brand)
+                                └── 生成 → {wait} → 檢視 → 完成匯出</code></pre>
+<h3>Path 5 — Product / Video / Research reel</h3>
+<pre><code>Start
+└── ⟨影片 or 圖片+影片⟩ → 產品 → 產品名稱 [required]
+    └── 平台研究（可選）+ 參考短片 [always open — 手動上傳 MP4]
+        ├── 揀 Reel 帖 → {wait: 下載 MP4}（若揀帖）
+        └── OR 直接手動上傳參考短片（搵唔到啱帖就用呢個）
+            └── 參考 MP4 就緒 [required — 下載或上傳]
+                └── {wait: 分析 Reel} [required]
+                    └── 內容與生成設定 [required if research applied]
+                        └── 產品照片 [required]
+                            ├── [combined] 分鏡簡介 → 場景圖 → {wait} → 影片 → {wait} → 完成
+                            └── [video-only] 影片設定 → 生成 R2V → {wait} → 完成</code></pre>
+<h3>Path 6 — Product / Video / Direct</h3>
+<pre><code>Start
+└── 影片 → 產品 → 產品名稱 [required] → 直接創作
+    └── 影片子路徑 ⟨branch⟩ [required — 四選一]
+        ├── 產品推廣 Product promo
+        │     → 內容與生成設定 → 產品照 [required] → AI 規劃 prompt → 影片 → 完成
+        │     (一張產品圖 + 商業感動態；唔需要參考片)
+        ├── 跟參考片 Reference reel  ← 同 Path 5 手動上傳 MP4 後續步驟
+        │     → 上傳 MP4 [required] → {wait: 分析 Reel} [required] → 產品照 → 影片 → 完成
+        ├── AI 影片助手 Product assistant
+        │     → 產品照 + 包裝/多角度 [required] → {wait: 分析相片規劃} → 影片 → 完成
+        │     (多圖 vision 規劃場景；唔需要參考片)
+        └── UGC 主播 → 產品照 → UGC 設定 → 影片 → 完成</code></pre>
+<h3>Path 7 — Product / Combined / Animate keyframe (單圖動態)</h3>
+<p><strong>NOT storyboard.</strong> For 分鏡 scene images → see <strong>Path 5 combined</strong> or <strong>Path 6 storyboard</strong>.</p>
+<pre><code>Start
+└── 圖片+影片 [combined]
+    └── 產品 → 產品名稱 [required]
+        └── ⟨研究⟩ Path 1 主幹（image research poster）
+            OR ⟨直接⟩ Path 2 主幹（direct poster）
+            └── 一張宣傳圖完成 [required] — 唔係分鏡場景格
+                └── 影片設定 (image-to-video)
+                    └── (optional) Ship-it 一鍵出片
+                        └── 生成 → {wait} → 完成匯出</code></pre>
+<h3>Path 8 — Concept / Video / Research reel</h3>
+<pre><code>Start
+└── ⟨影片 or 圖片+影片⟩ → 概念
+    └── 概念助手 [required — conceptIdea anchor, §9.5]
+        └── 平台研究（可選）+ 參考短片 [always open]
+            └── 參考 MP4 就緒 [required]
+                └── {wait: 分析 Reel} [required — effectivePromoteName]
+                    └── 內容與生成設定 [required if research — fix copy for YOUR concept]
+                        └── 概念 ref 圖 (optional)
+                            ├── [combined] 分鏡場景圖 → {wait} → 影片 → 完成  ← storyboard, NOT Path 11
+                            └── [video-only] R2V → 完成</code></pre>
+<h3>Path 9 — Concept / Video / Direct</h3>
+<pre><code>Start
+└── 影片 → 概念
+    └── 概念助手 [required] → 直接創作
+        └── 影片子路徑 [四選一 concept only]
+            ├── 創意影片 Creative → 創意簡介 → AI prompt → 完成
+            ├── 品牌影片 Brand → 品牌網站 (if brand) → 完成
+            └── 跟參考片 Reference → 上傳 MP4 [required] → {wait: 分析} → 完成
+        └── 參考圖 (optional)
+        (no product-assistant · no UGC)</code></pre>
+<h3>Path 10 — Concept / Combined / Cinematic</h3>
+<pre><code>Start
+└── 圖片+影片 → 概念
+    └── 概念助手 [required] → 直接創作（唔做平台 reel 研究）
+        └── 電影感 ⟨single 8s | stitch 2–6⟩
+            └── (optional) AI 分析概念
+                └── 電影感場景圖 → {wait} → 影片規劃 → BGM (optional) → 完成
+        (NOT Path 8 reel storyboard · NOT Path 11 poster animate)</code></pre>
+<h3>Path 11 — Concept / Combined / Animate keyframe</h3>
+<pre><code>Start
+└── 圖片+影片 → 概念
+    └── 概念助手 [required]
+        └── ⟨研究⟩ Path 3 主幹  OR  ⟨直接⟩ Path 4 主幹
+            └── 一張概念宣傳圖完成 [required — 唔係分鏡格]
+                └── image-to-video → 完成
+                (no Ship-it · no reel MP4)
+        (for reel storyboard → Path 8 combined, not here)</code></pre>
+<h3>Step count cheat sheet</h3>
+<table><thead><tr>
+<th>Path</th>
+<th>Typical steps (excl. waits)</th>
+</tr></thead><tbody>
+<tr>
+<td>1 Product/Image/Research</td>
+<td>~12</td>
+</tr>
+<tr>
+<td>2 Product/Image/Direct</td>
+<td>~10 (MVP)</td>
+</tr>
+<tr>
+<td>3 Concept/Image/Research</td>
+<td>~13</td>
+</tr>
+<tr>
+<td>4 Concept/Image/Direct</td>
+<td>~11</td>
+</tr>
+<tr>
+<td>5 Product/Video/Research</td>
+<td>~11–14</td>
+</tr>
+<tr>
+<td>6 Product/Video/Direct</td>
+<td>~10–13</td>
+</tr>
+<tr>
+<td>7 Product/Combined</td>
+<td>Path 1 or 2 + ~3</td>
+</tr>
+<tr>
+<td>8 Concept/Video/Research</td>
+<td>~11–14</td>
+</tr>
+<tr>
+<td>9 Concept/Video/Direct</td>
+<td>~9–12</td>
+</tr>
+<tr>
+<td>10 Concept/Cinematic</td>
+<td>~10–15</td>
+</tr>
+<tr>
+<td>11 Concept/Combined/Animate keyframe</td>
+<td>Path 3 or 4 + ~2</td>
+</tr>
+</tbody></table>
+<hr/>
+<h2>7. Ancillary paths &amp; parity checklist</h2>
+<p>These are <strong>sub-branches or overlays</strong> on the main paths above — not separate top-level funnels.</p>
+<table><thead><tr>
+<th>Item</th>
+<th>Applies to</th>
+<th>Extra steps</th>
+<th>Priority</th>
+</tr></thead><tbody>
+<tr>
+<td>UGC presenter</td>
+<td>Path 6 only (product)</td>
+<td><code>video.ugc_pack</code> before generate</td>
+<td>P2</td>
+</tr>
+<tr>
+<td>Product video assistant</td>
+<td>Path 6 only</td>
+<td><code>video.product_plan</code>, <code>asset.extra_kit</code></td>
+<td>P2</td>
+</tr>
+<tr>
+<td>Brand website analyze</td>
+<td>Paths 1, 3, 5, 6, 8, 9 when brand style</td>
+<td><code>asset.brand_website</code></td>
+<td>P1</td>
+</tr>
+<tr>
+<td>Model-wear (research angle)</td>
+<td>Paths 1, 3</td>
+<td>Skip format picker; <code>model-wear</code> style</td>
+<td>P1</td>
+</tr>
+<tr>
+<td>Template from landing</td>
+<td>All</td>
+<td>Pre-fill after <code>route.subject</code> if <code>?template=</code></td>
+<td>P1</td>
+</tr>
+<tr>
+<td>Storyboard explainer</td>
+<td>Paths 5, 6, 8</td>
+<td>Short 分鏡模式 screen before scene generation</td>
+<td>P1</td>
+</tr>
+<tr>
+<td>Cinematic recipes</td>
+<td>Path 10</td>
+<td>closest-match stitch, quick-test 8s</td>
+<td>P1</td>
+</tr>
+<tr>
+<td>Image describe mode</td>
+<td>Custom template</td>
+<td>Extra <code>copy.image_prompt</code> screen</td>
+<td>P3</td>
+</tr>
+<tr>
+<td>Post-gen quick-fix / inpaint</td>
+<td><code>image.review</code></td>
+<td>Sub-steps under review</td>
+<td>P3</td>
+</tr>
+</tbody></table>
+<hr/>
+<h2>8. Wait screens &amp; blocking states</h2>
+<table><thead><tr>
+<th>Wait ID</th>
+<th>Trigger</th>
+<th>UI copy key</th>
+<th>Blocks</th>
+</tr></thead><tbody>
+<tr>
+<td><code>wait.reference_analyze</code></td>
+<td>Ref image from upload or research cover</td>
+<td><code>wizard.referenceBriefAnalyzingWait</code></td>
+<td>Continue, generate</td>
+</tr>
+<tr>
+<td><code>wait.reel_download</code></td>
+<td>After research angle apply — proxy fetch MP4</td>
+<td><code>wizard.researchReelMp4Missing</code> / <code>contentResearch.videoDownloadFailed</code></td>
+<td>Continue, reel analyze, video generate</td>
+</tr>
+<tr>
+<td><code>wait.reel_analyze</code></td>
+<td>Ref MP4 from download <strong>or</strong> manual upload</td>
+<td><code>wizard.researchReelAnalyzing</code></td>
+<td>Continue, video generate</td>
+</tr>
+<tr>
+<td><code>wait.research_apply</code></td>
+<td>Angle selected</td>
+<td>—</td>
+<td>&lt;300ms transition</td>
+</tr>
+<tr>
+<td><code>wait.image_generate</code></td>
+<td><code>generateImage()</code></td>
+<td>Progress from <code>imageJobMeta</code></td>
+<td>All navigation</td>
+</tr>
+<tr>
+<td><code>wait.storyboard_generate</code></td>
+<td>Storyboard scene batch</td>
+<td>Scene count progress</td>
+<td>Continue to video</td>
+</tr>
+<tr>
+<td><code>wait.video_generate</code></td>
+<td><code>generateVideo()</code></td>
+<td><code>videoPhase</code> chain</td>
+<td>All navigation</td>
+</tr>
+<tr>
+<td><code>wait.brand_analyze</code></td>
+<td>Brand URL submit</td>
+<td>—</td>
+<td>Continue if brand required</td>
+</tr>
+<tr>
+<td><code>wait.concept_plan</code></td>
+<td><code>/api/plan-concept</code></td>
+<td>—</td>
+<td>Optional enrich on concept screen</td>
+</tr>
+</tbody></table>
+<hr/>
+<h2>9. Implementation plan</h2>
+<h3>9.1 New files</h3>
+<table><thead><tr>
+<th>File</th>
+<th>Purpose</th>
+</tr></thead><tbody>
+<tr>
+<td><code>lib/wizard-micro-steps.types.ts</code></td>
+<td><code>MicroStepId</code>, <code>IntakePath</code>, graph types</td>
+</tr>
+<tr>
+<td><code>lib/wizard-micro-steps.graph.json</code></td>
+<td>Path definitions (this spec §6)</td>
+</tr>
+<tr>
+<td><code>lib/wizard-micro-steps.ts</code></td>
+<td><code>resolveMicroSteps(ctx) → MicroStepId[]</code>, <code>canProceed(step, state)</code></td>
+</tr>
+<tr>
+<td><code>hooks/useWizardMicroStep.ts</code></td>
+<td>Current index, next/back, sync to <code>stepKey</code> when entering image/video/done</td>
+</tr>
+<tr>
+<td><code>components/wizard/micro/MicroWizardShell.tsx</code></td>
+<td>Layout, progress, back/continue</td>
+</tr>
+<tr>
+<td><code>components/wizard/micro/screens/*.tsx</code></td>
+<td>One file per screen group</td>
+</tr>
+</tbody></table>
+<h3>9.2 Routing integration</h3>
+<pre><code>/studio?wizard=v2&amp;mode=physical
+/start → /studio/wizard (new route) OR query flag on existing /studio</code></pre>
+<p>On mount:</p>
+<ol>
+<li>Read partial choices from URL or session (<code>wizardV2Draft</code>)</li>
+<li><code>resolveMicroSteps()</code> returns ordered IDs from current context</li>
+<li>On final pre-generate step, ensure legacy <code>stepKey</code> is set (<code>image</code> / <code>video</code> / <code>done</code>) before calling existing handlers</li>
+</ol>
+<h3>9.3 Phased delivery</h3>
+<table><thead><tr>
+<th>Phase</th>
+<th>Deliverable</th>
+</tr></thead><tbody>
+<tr>
+<td><strong>0</strong></td>
+<td>Spec v0.5 + JSON graph (Paths 1–11) ✓</td>
+</tr>
+<tr>
+<td><strong>1</strong></td>
+<td>Shell + Path 2 (Product/Image/Direct) — MVP</td>
+</tr>
+<tr>
+<td><strong>2</strong></td>
+<td>Paths 1, 3, 4 (research + concept image) + §9.5 fix ✓</td>
+</tr>
+<tr>
+<td><strong>3</strong></td>
+<td>Paths 5, 6, 7 (product video + combined)</td>
+</tr>
+<tr>
+<td><strong>4</strong></td>
+<td>Paths 8, 9, 10 (concept video + cinematic)</td>
+</tr>
+<tr>
+<td><strong>5</strong></td>
+<td>Path 11 + ancillary §7 + template prefill</td>
+</tr>
+<tr>
+<td><strong>6</strong></td>
+<td>Default v2 on <code>/start</code>; classic via flag</td>
+</tr>
+</tbody></table>
+<h3>9.4 Known codebase fixes (during v2)</h3>
+<table><thead><tr>
+<th>Issue</th>
+<th>Fix</th>
+</tr></thead><tbody>
+<tr>
+<td><code>ImageOutputModePicker</code> ignores <code>includeTeachingCarousel</code></td>
+<td>Wire prop in component</td>
+</tr>
+<tr>
+<td>Concept research promote target</td>
+<td>See §9.5 ✓ (implemented)</td>
+</tr>
+</tbody></table>
+<h3>9.5 Fix — concept research must not paste reference topic (required for Path 3)</h3>
+<p><strong>Problem (today):</strong> Picking a research post can fill <code>headline</code> with the reference hook (e.g. 世界杯四强) while <code>promptExtra</code> correctly says “do NOT copy reference topic”. Root cause: <code>ContentResearchPanel</code> gets <code>promoteProduct={product}</code> only; concept users set <code>conceptIdea</code>, not <code>product</code>.</p>
+<p><strong>v2 wiring (UI):</strong></p>
+<ol>
+<li>Pass promote target into research:</li>
+</ol>
+<p>   - Physical → <code>product</code></p>
+<p>   - Concept → <code>wizardPromoteName({ promotionMode: 'concept', conceptIdea, headline, product })</code></p>
+<ol>
+<li>Sync research search <code>topic</code> from <code>conceptIdea</code> when concept path (optional default, user can still search broader).</li>
+</ol>
+<p><strong>Apply-angle behavior (<code>applyContentAngleToWizard</code> / <code>copyFieldsFromAngle</code>):</strong></p>
+<table><thead><tr>
+<th>If user already has…</th>
+<th>Then on angle apply…</th>
+</tr></thead><tbody>
+<tr>
+<td><code>conceptIdea</code> set</td>
+<td><strong>Keep</strong> <code>conceptIdea</code> as anchor; do <strong>not</strong> overwrite with <code>${topic} — 小紅書 style</code> unless empty</td>
+</tr>
+<tr>
+<td>Promote target</td>
+<td>Use <code>conceptIdea</code> in <code>copyFieldsFromAngle</code> as <code>promoteProduct</code></td>
+</tr>
+<tr>
+<td><code>headline</code> / <code>subline</code></td>
+<td>Rewrite for promote target + angle <strong>format</strong>; <strong>never</strong> paste raw <code>angle.hook</code> when it matches reference engagement/topic</td>
+</tr>
+<tr>
+<td><code>promptExtra</code></td>
+<td>Keep style-only block (unchanged)</td>
+</tr>
+</tbody></table>
+<p><strong>Files to touch (minimal):</strong></p>
+<table><thead><tr>
+<th>File</th>
+<th>Change</th>
+</tr></thead><tbody>
+<tr>
+<td><code>components/studio/SetupStep.tsx</code> (or v2 <code>ContentResearchScreen</code>)</td>
+<td><code>promoteProduct={effectivePromoteName}</code> or concept-aware prop</td>
+</tr>
+<tr>
+<td><code>components/content-research/ContentResearchPanel.tsx</code></td>
+<td>Accept <code>promoteConcept</code> / use effective promote name for concept</td>
+</tr>
+<tr>
+<td><code>lib/content-research-apply.ts</code></td>
+<td>When <code>conceptIdea</code> pre-set, preserve anchor; headline from <code>copyFieldsFromAngle(promoteTarget, …)</code></td>
+</tr>
+<tr>
+<td><code>lib/content-research-promote.ts</code></td>
+<td>Guard: if <code>promoteProduct === conceptIdea</code>, never return reference hook as headline</td>
+</tr>
+</tbody></table>
+<p><strong>Acceptance test:</strong> Concept idea = “餐廳世界杯訂位推广” → pick 世界杯 reference post → <code>headline</code> mentions 餐廳/訂位, <strong>not</strong> “留下你支持的4支球隊”; <code>promptExtra</code> still contains style reference URL.</p>
+<p><strong>User safety net:</strong> <code>copy.edit</code> always shown on Path 3 so user can edit before generate even if auto-copy is imperfect.</p>
+<hr/>
+<h2>10. Decisions locked (v0.5)</h2>
+<table><thead><tr>
+<th>#</th>
+<th>Decision</th>
+</tr></thead><tbody>
+<tr>
+<td>1</td>
+<td>Show <strong>Image / Video / Both</strong> at top; <strong>Both</strong> primary for Product; <strong>Both</strong> required for Concept cinematic (Path 10)</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>四選一</strong> format picker for Product and Concept image paths; <strong>skip picker</strong> when research preset <code>imageOutputMode</code></td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Research</strong> default-highlight for Product/Image intake</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>Skip</strong> <code>copy.edit</code> screen on direct only; <strong>never skip</strong> on research (Paths 1, 3, 5, 8)</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Add short <strong>分鏡模式</strong> explainer before storyboard scene generation (Paths 5, 6, 8)</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>Ship-it</strong> offered <strong>after image review</strong> on Path 7 only — <strong>never</strong> for concept (Paths 10, 11)</td>
+</tr>
+<tr>
+<td>7</td>
+<td><strong>Advanced studio</strong> link on entry + footer (not every screen)</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Mobile: merge <code>image.options</code> into generate screen with smart defaults</td>
+</tr>
+<tr>
+<td>9</td>
+<td><strong>Brand Kit:</strong> optional on <strong>all</strong> paths — inside <code>copy.edit</code> → <strong>品牌設定</strong> (collapsed by default); auto-load from account</td>
+</tr>
+<tr>
+<td>10</td>
+<td><strong>Brand website:</strong> separate <code>asset.brand_website</code> step — <strong>required</strong> only for brand-fit / brand-campaign / brand-video</td>
+</tr>
+<tr>
+<td>11</td>
+<td><strong>No standalone Brand Kit step</strong> — never a mandatory funnel step; Settings link for account-level edits</td>
+</tr>
+<tr>
+<td>12</td>
+<td><strong><code>identity.concept</code> = 概念助手</strong> — required on all concept paths <strong>before</strong> research or direct ref</td>
+</tr>
+<tr>
+<td>13</td>
+<td><strong>Path 4 = Path 2 + 概念助手</strong>; <strong>Path 9 = Path 6 + 概念助手</strong> (not minus research)</td>
+</tr>
+<tr>
+<td>14</td>
+<td><strong>Concept research anchor:</strong> <code>conceptIdea</code> is fixed promote target; research is style-only; §9.5 shipped</td>
+</tr>
+<tr>
+<td>15</td>
+<td><strong>Path 8 = Path 5 + 概念助手</strong>; optional product photo; §9.5; 手動上傳 MP4 always open</td>
+</tr>
+<tr>
+<td>16</td>
+<td><strong>Path 9 = Path 6 + 概念助手</strong> — not Path 8 minus research</td>
+</tr>
+<tr>
+<td>17</td>
+<td><strong>Path 10 = concept-cinematic</strong> — direct only; not Path 8/11</td>
+</tr>
+<tr>
+<td>18</td>
+<td><strong>Path 11 = Path 7 + 概念助手</strong> — Path 3/4 poster trunk + image-to-video; not storyboard</td>
+</tr>
+<tr>
+<td>19</td>
+<td><strong>Path 5/8 reel:</strong> MP4 + analyze blocking; <strong>手動上傳 always visible</strong></td>
+</tr>
+<tr>
+<td>20</td>
+<td><strong>Concept combined split:</strong> Path 8 combined = reel storyboard; Path 10 = cinematic; Path 11 = animate keyframe</td>
+</tr>
+<tr>
+<td>21</td>
+<td><strong><code>image.art_style</code> (畫面風格):</strong> visible on <strong>every path</strong> in Setup (+ Image step when generating); default <code>realistic</code>; hidden only for compositor</td>
+</tr>
+<tr>
+<td>22</td>
+<td><strong><code>video.settings</code> on Setup:</strong> resolution + duration + fast on <strong>all video/combined paths</strong> before reference analyze (billing); motion/creativity remain on Video step</td>
+</tr>
+<tr>
+<td>23</td>
+<td><strong>Reference reel analyze:</strong> explicit duration <strong>before</strong> <code>wait.reel_analyze</code>; changing duration <strong>re-runs</strong> analyze with new <code>output_duration_sec</code></td>
+</tr>
+<tr>
+<td>24</td>
+<td><strong>DeepSeek video planners</strong> (<code>plan-video-prompt</code>, reel analyze, product assistant) inject mandatory <strong>OUTPUT LENGTH</strong> pacing for chosen seconds; AI prompt <strong>re-plans</strong> when duration changes on Video step</td>
+</tr>
+</tbody></table>
+<hr/>
+<h2>11. Success criteria</h2>
+<ul>
+<li>[ ] Path 2 end-to-end without opening classic Setup</li>
+<li>[ ] All gates produce same errors as today for equivalent state</li>
+<li>[ ] No new API routes or FormData fields</li>
+<li>[ ] E2E: one test per reference path (<strong>11</strong>)</li>
+<li>[ ] Classic wizard still works with <code>?wizard=classic</code></li>
+</ul>
+<hr/>
+<h2>12. Example playbook — SaaS app pre-roll (~30s, OfferToday-style)</h2>
+<p><strong>Reference ad structure</strong> (YouTube pre-roll for HR/recruitment app — “AI精準配對理想人才”):</p>
+<table><thead><tr>
+<th>#</th>
+<th>Beat</th>
+<th>Visual</th>
+<th>Role</th>
+</tr></thead><tbody>
+<tr>
+<td>1</td>
+<td>Hands typing fast</td>
+<td>B-roll stress</td>
+<td>Problem hook</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Office worker, papers flying</td>
+<td>Chaos metaphor</td>
+<td>Problem</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Close-up tired HR worker</td>
+<td>Emotional beat</td>
+<td>Problem</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Phone on desk — lock-screen notification</td>
+<td>Product hero</td>
+<td>Solution reveal</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Hand holding phone — candidate cards / AI match UI</td>
+<td>Product demo</td>
+<td>Solution</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Young professional in café using app</td>
+<td>Lifestyle payoff</td>
+<td>CTA mood</td>
+</tr>
+</tbody></table>
+<p><strong>Recommended wizard path:</strong> <strong>Path 10 — Concept / Combined / Cinematic stitch</strong>  </p>
+<p><strong>Why:</strong> Multi-beat story, generic professionals (not celebrities), service/concept promo, ~8s × 4–6 scenes → stitch ≈ 30s.</p>
+<p><strong>Alternative paths:</strong></p>
+<table><thead><tr>
+<th>Goal</th>
+<th>Path</th>
+<th>When</th>
+</tr></thead><tbody>
+<tr>
+<td>Match pacing of an existing SaaS ad MP4</td>
+<td><strong>Path 8</strong> (concept + research reel + storyboard)</td>
+<td>You have a reference pre-roll to upload</td>
+</tr>
+<tr>
+<td>Single 8–12s hero clip only</td>
+<td><strong>Path 9</strong> → Creative video</td>
+<td>Quick test, one beat</td>
+</tr>
+<tr>
+<td>Product-led if app has physical merch</td>
+<td>Path 7</td>
+<td>Not typical for pure SaaS</td>
+</tr>
+</tbody></table>
+<h3>12.1 Path 10 micro-step map (primary)</h3>
+<pre><code>Start
+└── 圖片+影片 [combined]                    → route.output_goal
+    └── 概念 [concept]                      → route.subject
+        └── 概念助手 [required]             → identity.concept
+            conceptIdea: &quot;AI recruitment app — match ideal candidates in minutes&quot;
+            └── 直接創作                       → route.intake direct
+                └── 內容與生成設定             → copy.edit
+                    headline / subline / offer / business
+                    品牌設定 (optional)
+                    └── 創意簡介 (optional)    → copy.creative_brief
+                        &quot;HR chaos → app notification → happy hire&quot;
+                    └── 電影感 4–6 scenes      → cinematic scene count
+                    └── 畫面風格 寫實          → image.art_style (realistic)
+                    └── 影片設定 8s × N        → video.settings (duration 8, resolution, fast)
+                        └── 生成電影感場景圖    → image.generate (cinematic-reel)
+                            → wait.image_generate
+                            Scene plan (DeepSeek) → one still per beat:
+                              A typing hands (subject_framing: hands-only)
+                              B office papers chaos
+                              C tired worker close-up (generic, not celebrity)
+                              D phone on desk hero (textless — no UI text in AI)
+                              E café user with phone (lifestyle)
+                            └── 影片規劃 + stitch   → video (cinematic-stitch)
+                                → wait.video_generate
+                                └── 完成匯出          → done.export
+                                    Post: composite app UI onto phone screens (CapCut/Figma)
+                                    Optional: ad pack VO + BGM on Video step</code></pre>
+<h3>12.2 Beat → scene → AI wiring</h3>
+<table><thead><tr>
+<th>Beat</th>
+<th><code>cinematicScenes[]</code> role</th>
+<th>Image (Nano Banana)</th>
+<th>Video (Seedance)</th>
+<th>User input weight</th>
+</tr></thead><tbody>
+<tr>
+<td>1 Typing</td>
+<td><code>hook</code> / <code>stress</code></td>
+<td>Hands on keyboard, office bokeh, <strong>textless</strong></td>
+<td>Subtle motion, shallow DOF</td>
+<td><code>creativeVideoBrief</code> + <code>subjectFraming: hands-only</code></td>
+</tr>
+<tr>
+<td>2 Papers</td>
+<td><code>chaos</code></td>
+<td>Woman at desk, papers mid-air, cinematic</td>
+<td>Dynamic ambient motion</td>
+<td>Concept metaphor in brief</td>
+</tr>
+<tr>
+<td>3 Close-up</td>
+<td><code>pain</code></td>
+<td>Generic HR worker, tired expression, <strong>original character</strong></td>
+<td>Slow push-in</td>
+<td>Avoid celebrity names in prompt</td>
+</tr>
+<tr>
+<td>4 Phone desk</td>
+<td><code>product-hero</code></td>
+<td>Phone on notebook, lock screen <strong>blank or blurred</strong></td>
+<td>Slow push-in on device</td>
+<td><strong>Composite real UI in post</strong> — AI poor at readable UI</td>
+</tr>
+<tr>
+<td>5 App UI</td>
+<td><code>demo</code></td>
+<td>Same phone angle, textless screen</td>
+<td>Minimal motion</td>
+<td>Figma mock → overlay (not Seedance text)</td>
+</tr>
+<tr>
+<td>6 Café</td>
+<td><code>payoff</code></td>
+<td>Young professional in café, phone in hand</td>
+<td>Gentle lifestyle motion</td>
+<td><code>conceptIdea</code> anchors message</td>
+</tr>
+</tbody></table>
+<p><strong>Critical rule:</strong> Phone notifications, candidate names, salaries, and app branding → <strong>design mockup + composite</strong>. Wizard generates <strong>environment + device + people</strong>; UI layer is post (or image canvas burn).</p>
+<h3>12.3 Path 8 alternative (reference reel storyboard)</h3>
+<p>Use when you have a <strong>similar SaaS pre-roll MP4</strong> to match edit rhythm:</p>
+<pre><code>概念 → 概念助手 → 平台研究 (optional) → 上傳參考 MP4 [required]
+  → video.settings (pick duration first)
+  → wait.reel_analyze
+  → copy.edit (fix copy for YOUR app, not ref topic)
+  → 分鏡場景圖 → wait.storyboard_generate
+  → 影片 (multi-image R2V) → done</code></pre>
+<p>Reference = <strong>style + pacing</strong>; <code>conceptIdea</code> = your app topic (§9.5).</p>
+<h3>12.4 What we do / don’t do for this ad type</h3>
+<table><thead><tr>
+<th>Capability</th>
+<th>Supported?</th>
+</tr></thead><tbody>
+<tr>
+<td>Multi-scene 30s arc</td>
+<td>✓ Path 10 stitch or Path 8 storyboard</td>
+</tr>
+<tr>
+<td>Generic professional faces</td>
+<td>✓ Realistic / creative planners</td>
+</tr>
+<tr>
+<td>Famous celebrity faces</td>
+<td>✗ Model + product policy</td>
+</tr>
+<tr>
+<td>Legible app UI in pure AI video</td>
+<td>✗ Composite in post</td>
+</tr>
+<tr>
+<td>VO + captions + BGM</td>
+<td>✓ Video step ad pack (concept-heavy paths)</td>
+</tr>
+<tr>
+<td>Hands-only B-roll</td>
+<td>✓ <code>subjectFraming</code></td>
+</tr>
+</tbody></table>
+<h3>12.5 v2 micro-step IDs (for upcoming UI refactor)</h3>
+<p>When <code>NEXT_PUBLIC_WIZARD_V2=1</code> ships, this playbook maps to:</p>
+<table><thead><tr>
+<th>Phase</th>
+<th>MicroStepIds</th>
+</tr></thead><tbody>
+<tr>
+<td>Setup</td>
+<td><code>route.output_goal</code> → <code>route.subject</code> → <code>identity.concept</code> → <code>copy.edit</code> → <code>copy.creative_brief</code> → <code>video.settings</code> → <code>image.art_style</code></td>
+</tr>
+<tr>
+<td>Scenes</td>
+<td><code>image.generate</code> / <code>wait.image_generate</code> (cinematic)</td>
+</tr>
+<tr>
+<td>Video</td>
+<td><code>video.generate</code> / <code>wait.video_generate</code> (stitch)</td>
+</tr>
+<tr>
+<td>Finish</td>
+<td><code>done.export</code></td>
+</tr>
+</tbody></table>
+<h3>12.6 Complete path — all user inputs (Path 10, classic <code>/studio</code> today)</h3>
+<p><strong>Target output:</strong> ~32–40s stitched pre-roll (4–5 × 8s cinematic clips) + <strong>post composite</strong> for phone UI.</p>
+<p><strong>Example product:</strong> OfferToday-style HR / recruitment SaaS app.</p>
+<hr/>
+<h4>Step 0 — Entry</h4>
+<table><thead><tr>
+<th>User action</th>
+<th>State set</th>
+<th>Required</th>
+</tr></thead><tbody>
+<tr>
+<td>Open <code>/studio</code> or Start from landing</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody></table>
+<hr/>
+<h4>Step 1 — Setup: output &amp; subject</h4>
+<table><thead><tr>
+<th>#</th>
+<th>UI (today)</th>
+<th>User picks / enters</th>
+<th>State field</th>
+<th>Example (OfferToday)</th>
+<th>Required</th>
+</tr></thead><tbody>
+<tr>
+<td>1.1</td>
+<td><strong>Workflow</strong></td>
+<td>圖片+影片 <strong>Both</strong></td>
+<td><code>workflowMode</code></td>
+<td><code>combined</code></td>
+<td>✓</td>
+</tr>
+<tr>
+<td>1.2</td>
+<td><strong>Promotion mode</strong></td>
+<td><strong>概念 Concept</strong></td>
+<td><code>promotionMode</code></td>
+<td><code>concept</code></td>
+<td>✓</td>
+</tr>
+<tr>
+<td>1.3</td>
+<td>Primary path shortcut (optional)</td>
+<td><strong>電影感 Cinematic</strong> (combined + concept)</td>
+<td><code>visualStyleId</code></td>
+<td><code>concept-cinematic</code></td>
+<td>✓ (or pick manually)</td>
+</tr>
+<tr>
+<td>1.4</td>
+<td>Scene count</td>
+<td><strong>4</strong> or <strong>5</strong> scenes (32s or 40s total)</td>
+<td><code>cinematicSceneCount</code></td>
+<td><code>5</code> → 40s stitch</td>
+<td>✓ for multi-scene</td>
+</tr>
+</tbody></table>
+<p><em>Do <strong>not</strong> pick: 平台研究 (research), 參考短片 MP4, Ship-it, storyboard-video, product-assistant.</em></p>
+<hr/>
+<h4>Step 2 — Setup: 概念助手 (<code>identity.concept</code>)</h4>
+<table><thead><tr>
+<th>#</th>
+<th>Field</th>
+<th>State</th>
+<th>Example (OfferToday)</th>
+<th>Required</th>
+<th>→ AI</th>
+</tr></thead><tbody>
+<tr>
+<td>2.1</td>
+<td><strong>概念 idea</strong></td>
+<td><code>conceptIdea</code></td>
+<td><code>OfferToday — AI 招聘 App，幫 HR 精準配對理想人才</code></td>
+<td>✓ (anchor)</td>
+<td>DeepSeek cinematic plan, copy, promote name</td>
+</tr>
+<tr>
+<td>2.2</td>
+<td>Audience (optional)</td>
+<td><code>conceptAudience</code></td>
+<td><code>香港中小企 HR、招聘經理</code></td>
+<td>—</td>
+<td><code>/api/plan-concept</code></td>
+</tr>
+<tr>
+<td>2.3</td>
+<td>Pain (optional)</td>
+<td><code>conceptPain</code></td>
+<td><code>履歷太多、篩選慢、錯配</code></td>
+<td>—</td>
+<td>plan-concept</td>
+</tr>
+<tr>
+<td>2.4</td>
+<td>Promise (optional)</td>
+<td><code>conceptPromise</code></td>
+<td><code>AI 秒級配對合適人選</code></td>
+<td>—</td>
+<td>plan-concept → may fill <code>headline</code></td>
+</tr>
+<tr>
+<td>2.5</td>
+<td>Proof (optional)</td>
+<td><code>conceptProof</code></td>
+<td><code>已服務 500+ 企業</code></td>
+<td>—</td>
+<td>plan-concept</td>
+</tr>
+<tr>
+<td>2.6</td>
+<td>CTA (optional)</td>
+<td><code>conceptCta</code></td>
+<td><code>免費試用 / 立即下載</code></td>
+<td>—</td>
+<td>plan-concept → may fill <code>offer</code></td>
+</tr>
+<tr>
+<td>2.7</td>
+<td>Visual metaphor (optional)</td>
+<td><code>conceptVisualMetaphor</code></td>
+<td><code>由文件風暴 → 手機一則通知解決</code></td>
+<td>—</td>
+<td>plan-concept</td>
+</tr>
+<tr>
+<td>2.8</td>
+<td><strong>AI 分析概念</strong> button (optional)</td>
+<td>fills above + <code>headline</code>, <code>subline</code>, <code>offer</code>, <code>conceptImageVisionNote</code></td>
+<td>—</td>
+<td>—</td>
+<td>Gemini vision if ref image uploaded</td>
+</tr>
+</tbody></table>
+<p><strong>Gate:</strong> At least one of <code>conceptIdea</code>, <code>headline</code>, <code>creativeVideoBrief</code> before cinematic generate.</p>
+<hr/>
+<h4>Step 3 — Setup: 內容與生成設定 (<code>copy.edit</code>)</h4>
+<table><thead><tr>
+<th>#</th>
+<th>Field</th>
+<th>State</th>
+<th>Example (OfferToday)</th>
+<th>Required</th>
+<th>→ AI</th>
+</tr></thead><tbody>
+<tr>
+<td>3.1</td>
+<td><strong>主標題 / Hook</strong></td>
+<td><code>headline</code></td>
+<td><code>AI精準配對理想人才</code></td>
+<td>Recommended</td>
+<td>Cinematic plan, ad pack, captions</td>
+</tr>
+<tr>
+<td>3.2</td>
+<td><strong>副標 / 賣點</strong></td>
+<td><code>subline</code></td>
+<td><code>履歷海淹沒你？一則通知配對合適人選</code></td>
+<td>Optional</td>
+<td>All planners</td>
+</tr>
+<tr>
+<td>3.3</td>
+<td><strong>Business / 品牌名</strong></td>
+<td><code>business</code></td>
+<td><code>OfferToday</code></td>
+<td>Optional</td>
+<td>Planners, brand kit</td>
+</tr>
+<tr>
+<td>3.4</td>
+<td><strong>Offer / CTA</strong></td>
+<td><code>offer</code></td>
+<td><code>免費試用 · 立即下載</code></td>
+<td>Optional</td>
+<td>Planners, ad pack</td>
+</tr>
+<tr>
+<td>3.5</td>
+<td><strong>市場</strong></td>
+<td><code>promptMarket</code></td>
+<td><code>hk</code> / <code>tw</code> / <code>cn</code></td>
+<td>Default <code>hk</code></td>
+<td>Copy tone, ad pack</td>
+</tr>
+<tr>
+<td>3.6</td>
+<td><strong>品牌設定</strong> (collapsible)</td>
+<td><code>brandKit</code></td>
+<td>logo, <code>#0066FF</code>, fonts</td>
+<td>Optional</td>
+<td>Nano Banana stills</td>
+</tr>
+<tr>
+<td>3.7</td>
+<td><strong>進階 prompt</strong> (collapsible)</td>
+<td><code>promptExtra</code></td>
+<td>Extra art direction</td>
+<td>Optional</td>
+<td>Merged into <code>effectivePromptExtra()</code></td>
+</tr>
+</tbody></table>
+<p><strong>Skip rule (direct):</strong> Whole screen skippable if empty — but for this ad, fill at least headline + creative brief.</p>
+<hr/>
+<h4>Step 4 — Setup: 創意簡介 (<code>copy.creative_brief</code>)</h4>
+<table><thead><tr>
+<th>#</th>
+<th>Field</th>
+<th>State</th>
+<th>Example (OfferToday)</th>
+<th>Required</th>
+<th>→ AI</th>
+</tr></thead><tbody>
+<tr>
+<td>4.1</td>
+<td><strong>Creative video brief</strong></td>
+<td><code>creativeVideoBrief</code></td>
+<td>See <strong>story script</strong> below</td>
+<td>✓ strongly recommended</td>
+<td><code>/api/plan-cinematic-reel</code> (DeepSeek)</td>
+</tr>
+</tbody></table>
+<p><strong>Suggested story script (paste into creative brief):</strong></p>
+<pre><code>Beat 1 — Stress: Fast hands typing on keyboard, HR overwhelmed.
+Beat 2 — Chaos: Office worker at desk, papers flying in slow-motion metaphor.
+Beat 3 — Pain: Close-up tired HR manager, blue office light, no celebrity likeness.
+Beat 4 — Product: Smartphone on desk, lock screen glow (NO readable UI text — blank screen for post composite).
+Beat 5 — Demo: Hand holding phone, candidate profile cards (textless screen — UI added in CapCut).
+Beat 6 — Payoff: Young professional in bright café, smiling at phone, relief mood.
+Tone: Premium SaaS TVC, photorealistic, cool blues → warm café ending.
+Do NOT use famous faces or real brand logos on phone.</code></pre>
+<hr/>
+<h4>Step 5 — Setup: visual &amp; video settings</h4>
+<table><thead><tr>
+<th>#</th>
+<th>UI</th>
+<th>State</th>
+<th>OfferToday pick</th>
+<th>Required</th>
+<th>→ AI</th>
+</tr></thead><tbody>
+<tr>
+<td>5.1</td>
+<td><strong>畫面風格</strong></td>
+<td><code>artStyleId</code></td>
+<td><code>realistic</code> (寫實)</td>
+<td>Default OK</td>
+<td>Nano Banana + cinematic guard + Seedance hint</td>
+</tr>
+<tr>
+<td>5.2</td>
+<td><strong>影片時長</strong> (Setup panel)</td>
+<td><code>videoSettings.duration</code></td>
+<td><code>8</code> per clip (cinematic fixed at 8s/clip)</td>
+<td>✓</td>
+<td>Stitch billing; each Seedance clip</td>
+</tr>
+<tr>
+<td>5.3</td>
+<td><strong>Resolution</strong></td>
+<td><code>videoSettings.resolution</code></td>
+<td><code>720p</code> or <code>1080p</code></td>
+<td>Default OK</td>
+<td>fal billing</td>
+</tr>
+<tr>
+<td>5.4</td>
+<td><strong>Fast mode</strong></td>
+<td><code>videoSettings.fast</code></td>
+<td>On for drafts / Off for final</td>
+<td>Optional</td>
+<td>endpoint</td>
+</tr>
+<tr>
+<td>5.5</td>
+<td><strong>Aspect ratio</strong> (image)</td>
+<td><code>imageAspectRatio</code></td>
+<td><code>16:9</code> (YouTube pre-roll) or <code>9:16</code> (Reels)</td>
+<td>Default OK</td>
+<td>Scene stills</td>
+</tr>
+<tr>
+<td>5.6</td>
+<td><strong>Image text mode</strong></td>
+<td><code>imageTextMode</code></td>
+<td><code>textless</code></td>
+<td>✓ for phone beats</td>
+<td>Avoid garbled UI in AI</td>
+</tr>
+<tr>
+<td>5.7</td>
+<td><strong>Subject framing</strong></td>
+<td><code>subjectFraming</code></td>
+<td><code>hands-only</code> for typing-heavy; or <code>auto</code></td>
+<td>Optional</td>
+<td>Nano Banana + planners <em>(one global setting today)</em></td>
+</tr>
+</tbody></table>
+<hr/>
+<h4>Step 6 — Setup: optional assets</h4>
+<table><thead><tr>
+<th>#</th>
+<th>Asset</th>
+<th>State</th>
+<th>OfferToday</th>
+<th>Required</th>
+<th>→ AI</th>
+</tr></thead><tbody>
+<tr>
+<td>6.1</td>
+<td><strong>Reference image</strong> (mood / layout)</td>
+<td><code>imageRefPhoto</code>, <code>imageCreativeMode: reference-concept</code></td>
+<td>App screenshot <strong>blurred</strong> or mood board only</td>
+<td>Optional</td>
+<td><code>/api/analyze-reference</code> → <code>userReferenceBrief</code>; plan-concept vision</td>
+</tr>
+<tr>
+<td>6.2</td>
+<td><strong>Product photo</strong></td>
+<td><code>productPhoto</code></td>
+<td>Usually <strong>none</strong> (SaaS, not physical SKU)</td>
+<td>✗ Path 10</td>
+<td>—</td>
+</tr>
+<tr>
+<td>6.3</td>
+<td><strong>Reference MP4</strong></td>
+<td><code>referenceAd</code></td>
+<td><strong>None</strong> on Path 10</td>
+<td>✗</td>
+<td>—</td>
+</tr>
+<tr>
+<td>6.4</td>
+<td><strong>Brand website analyze</strong></td>
+<td><code>brandWebsiteUrl</code> → <code>brandProfile</code></td>
+<td>Only if you switch to brand-video style</td>
+<td>✗ Path 10</td>
+<td>—</td>
+</tr>
+</tbody></table>
+<p><strong>Continue Setup</strong> → goes to <strong>Image step</strong> (combined always hits image before video).</p>
+<hr/>
+<h4>Step 7 — Image step: generate cinematic scene stills</h4>
+<table><thead><tr>
+<th>#</th>
+<th>User action</th>
+<th>Handler</th>
+<th>What happens</th>
+</tr></thead><tbody>
+<tr>
+<td>7.1</td>
+<td>Click <strong>Generate image</strong></td>
+<td><code>generateImage()</code></td>
+<td>Detects <code>visualStyleId === concept-cinematic</code></td>
+</tr>
+<tr>
+<td>7.2</td>
+<td>Auto plan</td>
+<td><code>POST /api/plan-cinematic-reel</code></td>
+<td>DeepSeek → <code>cinematicReelPlan</code> (scenes, <code>imagePrompt</code>, <code>videoMotionPrompt</code> per scene)</td>
+</tr>
+<tr>
+<td>7.3</td>
+<td>Auto render</td>
+<td><code>POST /api/generate-cinematic-scenes</code></td>
+<td>Nano Banana → <code>cinematicScenes[]</code> with <code>imageUrl</code> each</td>
+</tr>
+<tr>
+<td>7.4</td>
+<td>Wait</td>
+<td><code>imageBusy</code>, <code>imageJobMeta.kind === cinematic-reel</code></td>
+<td>4–5 stills appear in variant picker</td>
+</tr>
+</tbody></table>
+<p><strong>Inputs sent to plan (from your Setup fields):</strong></p>
+<table><thead><tr>
+<th>API body field</th>
+<th>Source state</th>
+</tr></thead><tbody>
+<tr>
+<td><code>creativeBrief</code></td>
+<td><code>creativeVideoBrief</code> OR join(<code>headline</code>, <code>subline</code>, <code>offer</code>, <code>conceptIdea</code>)</td>
+</tr>
+<tr>
+<td><code>conceptIdea</code> (via brief)</td>
+<td><code>conceptIdea</code></td>
+</tr>
+<tr>
+<td><code>headline</code>, <code>subline</code>, <code>offer</code>, <code>business</code></td>
+<td>copy.edit</td>
+</tr>
+<tr>
+<td><code>promptExtra</code></td>
+<td><code>effectivePromptExtra()</code></td>
+</tr>
+<tr>
+<td><code>promptMarket</code></td>
+<td><code>promptMarket</code></td>
+</tr>
+<tr>
+<td><code>artStyleId</code></td>
+<td><code>artStyleId</code></td>
+</tr>
+<tr>
+<td><code>sceneCount</code></td>
+<td><code>cinematicSceneCount</code></td>
+</tr>
+<tr>
+<td><code>referenceImageNote</code></td>
+<td><code>conceptImageVisionNote</code> (if plan-concept ran)</td>
+</tr>
+</tbody></table>
+<p><strong>Review on Image step:</strong></p>
+<table><thead><tr>
+<th>#</th>
+<th>User action</th>
+<th>State</th>
+</tr></thead><tbody>
+<tr>
+<td>7.5</td>
+<td>Pick / review each scene still</td>
+<td><code>selectedVariantIndex</code>, <code>cinematicScenes[]</code></td>
+</tr>
+<tr>
+<td>7.6</td>
+<td>Regenerate single scene (if UI supports)</td>
+<td>re-run generate for one beat</td>
+</tr>
+<tr>
+<td>7.7</td>
+<td>Continue to Video</td>
+<td><code>setStepKey(&quot;video&quot;)</code></td>
+</tr>
+</tbody></table>
+<p><strong>Beat → scene mapping (5 scenes example):</strong></p>
+<table><thead><tr>
+<th>Scene #</th>
+<th>Plan role</th>
+<th>Still content</th>
+<th>Text in AI image?</th>
+</tr></thead><tbody>
+<tr>
+<td>1</td>
+<td>hook / stress</td>
+<td>Hands + keyboard</td>
+<td>No</td>
+</tr>
+<tr>
+<td>2</td>
+<td>chaos</td>
+<td>Papers flying</td>
+<td>No</td>
+</tr>
+<tr>
+<td>3</td>
+<td>pain</td>
+<td>HR close-up (generic face)</td>
+<td>No</td>
+</tr>
+<tr>
+<td>4</td>
+<td>product-hero</td>
+<td>Phone on desk</td>
+<td><strong>No — composite UI later</strong></td>
+</tr>
+<tr>
+<td>5</td>
+<td>payoff</td>
+<td>Café + phone</td>
+<td><strong>No — composite UI later</strong></td>
+</tr>
+</tbody></table>
+<p><em>If you need 6 beats (incl. separate demo shot), set <code>cinematicSceneCount: 6</code>.</em></p>
+<hr/>
+<h4>Step 8 — Video step: motion + ad pack + generate</h4>
+<table><thead><tr>
+<th>#</th>
+<th>UI section</th>
+<th>State / action</th>
+<th>OfferToday</th>
+<th>Required</th>
+</tr></thead><tbody>
+<tr>
+<td>8.1</td>
+<td>Scene preview</td>
+<td><code>cinematicScenes[]</code></td>
+<td>Review 5 stills</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>8.2</td>
+<td><strong>Video settings</strong> (full panel)</td>
+<td><code>videoSettings</code></td>
+<td>creativity, motion (if shown)</td>
+<td>Optional</td>
+</tr>
+<tr>
+<td>8.3</td>
+<td><strong>Ad pack</strong> (concept path)</td>
+<td><code>voiceoverEnabled</code>, <code>captionBurnEnabled</code>, <code>musicSource</code></td>
+<td>VO script zh-HK; AI BGM <code>cinematic</code> mood</td>
+<td>Optional</td>
+</tr>
+<tr>
+<td>8.4</td>
+<td><strong>BGM track</strong></td>
+<td><code>bgmTrack</code>, <code>musicMood</code></td>
+<td>Upbeat → premium</td>
+<td>Optional</td>
+</tr>
+<tr>
+<td>8.5</td>
+<td><strong>Generate video</strong></td>
+<td><code>generateVideo()</code> → <code>makeCinematicStitchVideo()</code></td>
+<td>Stitches 5 × ~8s Seedance clips</td>
+<td>✓</td>
+</tr>
+</tbody></table>
+<p><strong>Per-scene Seedance inputs:</strong></p>
+<table><thead><tr>
+<th>Source</th>
+<th>Used for</th>
+</tr></thead><tbody>
+<tr>
+<td><code>cinematicScenes[i].imageUrl</code></td>
+<td><code>@Image</code> / start frame per clip</td>
+</tr>
+<tr>
+<td><code>cinematicScenes[i].videoMotionPrompt</code></td>
+<td>Seedance motion prompt (from DeepSeek plan)</td>
+</tr>
+<tr>
+<td><code>artStyleId</code></td>
+<td>Stylized motion guard on prompt</td>
+</tr>
+<tr>
+<td>8s per clip</td>
+<td><code>CINEMATIC_CLIP_SEC</code></td>
+</tr>
+</tbody></table>
+<p><strong>Optional ad pack AI (<code>/api/plan-ad-pack</code>):</strong> uses <code>headline</code>, <code>subline</code>, <code>offer</code>, <code>business</code>, <code>conceptIdea</code>, <code>videoPrompt</code>, <code>effectivePromptExtra()</code>, scene list → VO script + caption lines + music prompt.</p>
+<hr/>
+<h4>Step 9 — Done: export + post-production (outside wizard)</h4>
+<table><thead><tr>
+<th>#</th>
+<th>Task</th>
+<th>Tool</th>
+<th>Notes</th>
+</tr></thead><tbody>
+<tr>
+<td>9.1</td>
+<td>Download stitched MP4</td>
+<td>Done step</td>
+<td>Base video ~40s</td>
+</tr>
+<tr>
+<td>9.2</td>
+<td>Design phone UI</td>
+<td>Figma / Sketch</td>
+<td>Notification, candidate cards, OfferToday logo</td>
+</tr>
+<tr>
+<td>9.3</td>
+<td>Composite UI on phone screens</td>
+<td>CapCut / AE / DaVinci</td>
+<td>Beats 4–5 (and on-screen 標題 if needed)</td>
+</tr>
+<tr>
+<td>9.4</td>
+<td>Add supers</td>
+<td>CapCut</td>
+<td>e.g. <code>AI精準配對理想人才</code> if not in AI</td>
+</tr>
+<tr>
+<td>9.5</td>
+<td>Mix VO + BGM</td>
+<td>CapCut or wizard dub</td>
+<td>If ad pack generated</td>
+</tr>
+<tr>
+<td>9.6</td>
+<td>Export 16:9 + 9:16 cuts</td>
+<td>CapCut</td>
+<td>YouTube pre-roll + Reels</td>
+</tr>
+</tbody></table>
+<hr/>
+<h4>Path 10 — input checklist (printable)</h4>
+<pre><code>□ workflowMode: combined
+□ promotionMode: concept
+□ visualStyleId: concept-cinematic
+□ cinematicSceneCount: 4 | 5 | 6
+□ conceptIdea: (your app — fixed anchor)
+□ headline / subline / offer / business
+□ creativeVideoBrief: 6-beat story script
+□ artStyleId: realistic
+□ imageTextMode: textless
+□ imageAspectRatio: 16:9 or 9:16
+□ promptMarket: hk
+□ videoSettings: resolution + fast
+□ brandKit: optional
+□ imageRefPhoto: optional mood only
+□ Generate cinematic scenes → review stills
+□ Generate stitch video
+□ Post: composite app UI on phone beats</code></pre>
+<hr/>
+<h3>12.7 Complete path — Path 8 alternative (reference SaaS pre-roll MP4)</h3>
+<p>Use when you have a <strong>similar ~30s HR/SaaS ad MP4</strong> and want to <strong>match its pacing</strong>.</p>
+<table><thead><tr>
+<th>Step</th>
+<th>Micro-step</th>
+<th>User inputs</th>
+<th>State fields</th>
+<th>Required</th>
+</tr></thead><tbody>
+<tr>
+<td>1</td>
+<td>Output</td>
+<td>影片 or 圖片+影片</td>
+<td><code>workflowMode</code></td>
+<td>✓</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Subject</td>
+<td>概念</td>
+<td><code>promotionMode: concept</code></td>
+<td>✓</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Concept</td>
+<td>概念 idea + optional plan-concept</td>
+<td><code>conceptIdea</code>, headline, …</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Intake</td>
+<td>平台研究 <strong>or</strong> 直接 + <strong>upload MP4</strong></td>
+<td>research optional; <code>referenceAd</code> (video)</td>
+<td>✓ MP4</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Video settings</td>
+<td>Duration <strong>before</strong> analyze</td>
+<td><code>videoSettings.duration</code> e.g. <code>8</code> or <code>15</code></td>
+<td>✓ explicit</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Wait</td>
+<td>Reel analyze</td>
+<td><code>researchReelAnalysis</code>, <code>storyboardPlan</code></td>
+<td>auto</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Copy edit</td>
+<td>Fix copy for <strong>your app</strong></td>
+<td><code>headline</code>, <code>subline</code>, <code>offer</code></td>
+<td>✓ if research</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Art style</td>
+<td>寫實</td>
+<td><code>artStyleId</code></td>
+<td>Optional</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Ref image</td>
+<td>Concept ref (optional)</td>
+<td><code>imageRefPhoto</code></td>
+<td>Optional</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Image</td>
+<td>Generate <strong>storyboard scene stills</strong></td>
+<td><code>storyboardScenes[]</code></td>
+<td>✓ combined</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Video</td>
+<td>Storyboard multi-image R2V</td>
+<td><code>videoPrompt</code> from plan</td>
+<td>✓</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Done</td>
+<td>Export + UI composite</td>
+<td>—</td>
+<td>Post</td>
+</tr>
+</tbody></table>
+<p><strong>Inputs sent to reel analyze:</strong> <code>effectivePromoteName</code>, <code>conceptIdea</code>, headline, subline, offer, business, <code>effectivePromptExtra()</code>, <code>artStyleId</code>, <code>subjectFraming</code>, <code>output_duration_sec</code>, optional <code>scene_count</code>.</p>
+<p><strong>Rule:</strong> Reference MP4 = <strong>style + pacing only</strong>; <code>conceptIdea</code> = <strong>your app topic</strong> (§9.5).</p>
+<hr/>
+<p><em>Last updated: v0.5 — 2026-07-12</em></p>
+</body>
+</html>

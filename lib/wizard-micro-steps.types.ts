@@ -15,15 +15,24 @@ export type VideoSubpath =
   | "product_promo"
   | "reference_reel"
   | "product_assistant"
-  | "ugc_presenter";
+  | "ugc_presenter"
+  | "storyboard_video"
+  | "creative_video"
+  | "brand_video";
 
-/** Stable screen IDs for analytics, routing, and i18n. */
+/** Concept combined: cinematic stitch vs animate keyframe */
+export type CombinedStyle = "cinematic" | "animate";
+
 export type MicroStepId =
   | "entry.start"
   | "route.output_goal"
   | "route.subject"
   | "route.intake"
+  | "route.primary_style"
   | "route.video_subpath"
+  | "route.combined_style"
+  | "route.cinematic_mode"
+  | "cinematic.scene_count"
   | "identity.product_name"
   | "identity.concept"
   | "copy.edit"
@@ -34,6 +43,7 @@ export type MicroStepId =
   | "research.pick_angle"
   | "wait.research_apply"
   | "wait.reference_analyze"
+  | "wait.reel_download"
   | "wait.reel_analyze"
   | "wait.brand_analyze"
   | "wait.concept_plan"
@@ -43,6 +53,7 @@ export type MicroStepId =
   | "asset.extra_kit"
   | "asset.brand_website"
   | "image.output_format"
+  | "image.art_style"
   | "image.options"
   | "image.generate"
   | "wait.image_generate"
@@ -66,6 +77,7 @@ export type MicroWizardContext = {
   promotionMode?: PromotionMode;
   intakePath?: IntakePath;
   videoSubpath?: VideoSubpath;
+  combinedStyle?: CombinedStyle;
   imageOutputMode?: ImageOutputMode;
   /** Landing template id when entering from /start?template= */
   templateId?: string | null;
@@ -91,7 +103,11 @@ export type MicroWizardPathId =
   | "concept_image_direct"
   | "product_video_research_reel"
   | "product_video_direct"
-  | "product_combined";
+  | "product_combined"
+  | "concept_video_research_reel"
+  | "concept_video_direct"
+  | "concept_combined_cinematic"
+  | "concept_combined";
 
 export const WIZARD_V2_QUERY_FLAG = "wizard";
 export const WIZARD_V2_VALUE = "v2";
@@ -99,7 +115,7 @@ export const WIZARD_CLASSIC_VALUE = "classic";
 
 export function isWizardV2Enabled(searchParams: URLSearchParams): boolean {
   const flag = searchParams.get(WIZARD_V2_QUERY_FLAG);
-  if (flag === WIZARD_V2_VALUE) return true;
   if (flag === WIZARD_CLASSIC_VALUE) return false;
-  return process.env.NEXT_PUBLIC_WIZARD_V2 === "1";
+  if (flag === WIZARD_V2_VALUE) return true;
+  return process.env.NEXT_PUBLIC_WIZARD_V2 !== "0";
 }

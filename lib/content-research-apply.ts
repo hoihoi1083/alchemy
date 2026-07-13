@@ -8,7 +8,9 @@ import type {
 import {
   copyFieldsFromAngle,
   contentResearchPromoteTarget,
+  isProductShotReferenceAngle,
   isReferenceSourcedAngle,
+  isSingleImageReferenceAngle,
   stripContentResearchStyleExtra,
   styleReferencePromptBlock,
 } from "@/lib/content-research-promote";
@@ -135,7 +137,13 @@ function wizardPatchForAngle(
       angle.id.startsWith("post-"));
 
   const format = resolveFormatForAngleApply(angle, inferred);
-  const formatFields = patchFromAngleFormat(format, promotionMode, imageCount, userWorkflowMode);
+  const effectiveFormat =
+    isProductShotReferenceAngle(angle) && format === "teaching-carousel"
+      ? "single-image"
+      : isSingleImageReferenceAngle(angle)
+        ? "single-image"
+        : format;
+  const formatFields = patchFromAngleFormat(effectiveFormat, promotionMode, imageCount, userWorkflowMode);
 
   const copyTarget = promotionMode === "concept" ? explicitPromoteTarget : productName;
   const copy = copyFieldsFromAngle(angle, copyTarget, plan.topic, {
@@ -155,20 +163,24 @@ function wizardPatchForAngle(
     promoteTargetRaw.trim() === plan.topic.trim()
       ? ""
       : promoteTargetRaw;
-  const promptExtra = styleReferencePromptBlock(
-    angle,
-    plan,
-    promoteTarget,
-    usePostInference ? inferred?.referenceNote : undefined,
-  );
+  const promptExtra = isProductShotReferenceAngle(angle)
+    ? ""
+    : styleReferencePromptBlock(
+        angle,
+        plan,
+        promoteTarget,
+        usePostInference ? inferred?.referenceNote : undefined,
+      );
 
   const conceptTopic = productName || plan.topic.trim();
   const conceptIdeaPatch =
     promotionMode === "concept"
       ? explicitPromoteTarget || (pinnedReference ? "" : conceptTopic)
-      : productName
-        ? `${productName} — ${plan.platformLabel} style (from research)`
-        : "";
+      : isProductShotReferenceAngle(angle)
+        ? ""
+        : productName
+          ? `${productName} — ${plan.platformLabel} style (from research)`
+          : "";
 
   return {
     headline: copy.headline,
@@ -197,7 +209,7 @@ function wizardPatchForAngle(
           )
         : inferred?.carouselSlideCount,
     referenceNote: inferred?.referenceNote,
-    resolvedFormat: format,
+    resolvedFormat: effectiveFormat,
   };
 }
 
