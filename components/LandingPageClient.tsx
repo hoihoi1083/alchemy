@@ -24,6 +24,12 @@ export function LandingPageClient() {
           </div>
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <LanguageToggle variant="light" />
+            <Link
+              href="/pricing"
+              className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              {m.pricing.pricingLink}
+            </Link>
             <AuthNav />
             <Link
               href="/start"
@@ -54,6 +60,12 @@ export function LandingPageClient() {
               >
                 {m.landing.howItWorks}
               </a>
+              <Link
+                href="/pricing"
+                className="rounded-full border border-indigo-300 px-6 py-3 text-sm font-medium text-indigo-800"
+              >
+                {m.pricing.pricingLink}
+              </Link>
               <Link
                 href="/captions"
                 className="rounded-full border border-violet-300 px-6 py-3 text-sm font-medium text-violet-800"

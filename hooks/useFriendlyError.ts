@@ -13,6 +13,7 @@ export function useFriendlyError(m: Messages) {
         missingFalKey: m.errors.serviceUnavailable,
         missingDeepSeek: m.errors.planningUnavailable,
         deepSeekBalanceEmpty: m.errors.deepSeekBalanceEmpty,
+        insufficientTokens: m.errors.insufficientTokens,
         seedanceSensitive: m.errors.seedanceSensitive,
         timeout: m.errors.timeout,
       }),

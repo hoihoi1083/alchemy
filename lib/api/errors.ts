@@ -6,6 +6,7 @@ export type ErrorFallbacks = {
   missingFalKey?: string;
   missingDeepSeek?: string;
   deepSeekBalanceEmpty?: string;
+  insufficientTokens?: string;
   timeout?: string;
   seedanceSensitive?: string;
 };
@@ -14,6 +15,7 @@ const TECHNICAL_PATTERNS: Array<{ test: RegExp; key: keyof ErrorFallbacks }> = [
   { test: /\.env(\.local)?/i, key: "default" },
   { test: /FAL_KEY|fal\.ai/i, key: "missingFalKey" },
   { test: /insufficient balance|balance is empty|top up at platform\.deepseek/i, key: "deepSeekBalanceEmpty" },
+  { test: /not enough tokens|insufficient_tokens/i, key: "insufficientTokens" },
   { test: /DEEPSEEK_API_KEY|deepseek/i, key: "missingDeepSeek" },
   { test: /ECONNREFUSED|ENOTFOUND|fetch failed|network/i, key: "network" },
   { test: /timeout|timed out|ETIMEDOUT/i, key: "timeout" },
@@ -30,6 +32,18 @@ function pickFallback(
 
 /** Map raw API / thrown errors to safe, localized copy. */
 export function mapApiError(raw: unknown, fallbacks: ErrorFallbacks): string {
+  if (raw instanceof ApiClientError && raw.status === 402) {
+    return pickFallback("insufficientTokens", fallbacks);
+  }
+  if (
+    raw &&
+    typeof raw === "object" &&
+    "code" in raw &&
+    (raw as { code?: unknown }).code === "INSUFFICIENT_TOKENS"
+  ) {
+    return pickFallback("insufficientTokens", fallbacks);
+  }
+
   const msg =
     raw instanceof Error
       ? raw.message

@@ -1,11 +1,12 @@
 import { ApiError, fal } from "@fal-ai/client";
 import { NextResponse } from "next/server";
+import { requireTokens, settleTokens } from "@/lib/billing/charge";
+import { TOKEN_COST } from "@/lib/billing/token-costs";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import type { BrandProfile } from "@/lib/brand-profile";
 import type { CampaignPlan } from "@/lib/campaign-types";
 import { planCampaign } from "@/lib/campaign-plan";
 import { parseBrandKit } from "@/lib/brand-kit";
-import { uploadBrandKitLogoToFal } from "@/lib/brand-kit-fal";
 import { defaultEditEndpoint, defaultTextEndpoint } from "@/lib/image-endpoints";
 import {
   parseStrategyFromFormData,
@@ -19,7 +20,6 @@ import {
   type SubjectFraming,
 } from "@/lib/prompt-variables";
 import type { VisualStyleId } from "@/lib/visual-styles";
-import { requiresBrandProfileForImages } from "@/lib/visual-styles";
 import { artStyleSystemPrompt, resolveArtStyleId } from "@/lib/art-style";
 import { archiveCampaignSlidesToPipeline } from "@/lib/pipeline/archive-image";
 
@@ -124,17 +124,6 @@ export async function POST(request: Request) {
     }
   }
 
-  if (
-    promotionMode !== "concept" &&
-    requiresBrandProfileForImages(visualStyle) &&
-    !brandProfile?.businessName
-  ) {
-    return NextResponse.json(
-      { error: "Analyze the brand first (website or social hint)." },
-      { status: 400 },
-    );
-  }
-
   const productName = (formData.get("product_name") as string | null)?.trim() || "";
   const business = (formData.get("business") as string | null)?.trim() || "";
   const headline = (formData.get("headline") as string | null)?.trim() || "";
@@ -175,6 +164,10 @@ export async function POST(request: Request) {
     useReferenceConcept ? "reference-concept" : "promo-ai",
     { promotionMode, workflowMode: "image-only" },
   );
+
+  const tokenCost = TOKEN_COST.campaign;
+  const tokenGate = await requireTokens(auth.user.userId, tokenCost);
+  if (tokenGate) return tokenGate;
 
   let plan: CampaignPlan;
   try {
@@ -222,13 +215,6 @@ export async function POST(request: Request) {
       }
     }
 
-    let brandLogoFalUrl: string | null = null;
-    try {
-      brandLogoFalUrl = await uploadBrandKitLogoToFal(brandKit);
-    } catch {
-      brandLogoFalUrl = null;
-    }
-
     const slides: Array<{
       role: string;
       title: string;
@@ -240,9 +226,6 @@ export async function POST(request: Request) {
     for (let i = 0; i < plan.slides.length; i++) {
       const slide = plan.slides[i];
       const imageUrlsForFal = baseImageUrlsForFal ? [...baseImageUrlsForFal] : null;
-      if (imageUrlsForFal && brandLogoFalUrl) imageUrlsForFal.push(brandLogoFalUrl);
-      const brandLogoImageIndex =
-        brandLogoFalUrl && imageUrlsForFal ? imageUrlsForFal.length : null;
 
       const prompt = buildCampaignSlideImagePrompt(
         vars,
@@ -258,7 +241,6 @@ export async function POST(request: Request) {
           referenceConcept: strategy.useReferenceConceptPrompts,
           referenceImageMode: strategy.referenceImageMode,
           brandKit,
-          brandLogoImageIndex,
         },
       );
 
@@ -301,6 +283,10 @@ export async function POST(request: Request) {
 
     const imageUrls = archivedSlides.map((s) => s.imageUrl);
     await trackUsage(auth.user.userId, "campaign");
+    const balanceAfter = await settleTokens(auth.user.userId, tokenCost, {
+      kind: "campaign",
+      slideCount: archivedSlides.length,
+    });
     return NextResponse.json({
       plan,
       slides: archivedSlides,
@@ -309,6 +295,8 @@ export async function POST(request: Request) {
       endpoint,
       mode: "campaign",
       slideCount: archivedSlides.length,
+      tokensCharged: tokenCost,
+      creditBalance: balanceAfter,
     });
   } catch (e: unknown) {
     return NextResponse.json({ error: formatFalError(e) }, { status: 502 });

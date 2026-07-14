@@ -10,6 +10,9 @@ import type { WorkflowMode } from "@/lib/workflow-mode";
 /** How the user enters the funnel after picking subject. */
 export type IntakePath = "research" | "direct";
 
+/** Concept/image: mutually exclusive starting point — AI brief or platform research. */
+export type ConceptSource = "assistant" | "research";
+
 /** Direct video sub-path (product + video-only). UI-only routing. */
 export type VideoSubpath =
   | "product_promo"
@@ -28,6 +31,7 @@ export type MicroStepId =
   | "route.output_goal"
   | "route.subject"
   | "route.intake"
+  | "route.concept_source"
   | "route.primary_style"
   | "route.video_subpath"
   | "route.combined_style"
@@ -35,6 +39,7 @@ export type MicroStepId =
   | "cinematic.scene_count"
   | "identity.product_name"
   | "identity.concept"
+  | "identity.concept_topic"
   | "copy.edit"
   | "copy.storyboard_brief"
   | "copy.creative_brief"
@@ -75,6 +80,8 @@ export type MicroStepId =
 export type MicroWizardContext = {
   workflowMode?: WorkflowMode;
   promotionMode?: PromotionMode;
+  /** Concept image/combined: assistant brief OR platform research — not both. */
+  conceptSource?: ConceptSource;
   intakePath?: IntakePath;
   videoSubpath?: VideoSubpath;
   combinedStyle?: CombinedStyle;

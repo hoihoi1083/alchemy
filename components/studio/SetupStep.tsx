@@ -914,19 +914,11 @@ export function SetupStep() {
       open={isBrandVisualStyle(visualStyleId)}
     >
       <summary className="cursor-pointer text-sm font-semibold text-violet-50">
-        {isBrandVisualStyle(visualStyleId)
-          ? m.wizard.brandFitTitleRequired
-          : m.wizard.brandFitTitle}
+        {m.wizard.brandFitTitle}
       </summary>
       <div className="mt-3 space-y-3">
       <p className="text-xs text-violet-200/90">
-        {isBrandVisualStyle(visualStyleId)
-          ? lockedCampaignMode
-            ? m.wizard.brandCampaignIntro
-            : isBrandVideoStyle(visualStyleId)
-              ? m.wizard.brandVideoIntro
-              : m.wizard.brandFitIntro
-          : m.wizard.brandAnalyzeOptionalIntro}
+        {m.wizard.brandAnalyzeOptionalIntro}
       </p>
       <label className="block text-xs font-medium text-violet-100">
         {m.wizard.brandWebsiteLabel}
@@ -1229,7 +1221,9 @@ export function SetupStep() {
     </details>
   )}
 
-  {error && <WizardErrorBanner message={error} variant="light" />}
+  {error && (
+    <WizardErrorBanner message={error} variant="light" onDismiss={() => setError(null)} />
+  )}
 
   {setupNextDisabled && setupNextDisabledReason && (
     <p className="text-center text-xs text-amber-700">{setupNextDisabledReason}</p>

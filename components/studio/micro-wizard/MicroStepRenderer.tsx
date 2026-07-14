@@ -15,6 +15,7 @@ import { CINEMATIC_SCENE_COUNTS, type CinematicSceneCount } from "@/lib/cinemati
 import type { PromotionMode } from "@/lib/promotion-mode";
 import { VideoCreativeModePicker } from "@/components/VideoCreativeModePicker";
 import type { WorkflowMode } from "@/lib/workflow-mode";
+import type { ConceptSource } from "@/lib/concept-source-state";
 import type { IntakePath, MicroStepId } from "@/lib/wizard-micro-steps.types";
 import type { WizardMicroStepValue } from "@/hooks/useWizardMicroStep";
 import { ShipItPanel } from "@/components/studio/ShipItPanel";
@@ -252,6 +253,26 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
         </ScreenShell>
       );
 
+    case "route.concept_source":
+      return (
+        <ScreenShell title={mw.conceptSourceTitle} hint={mw.conceptSourceHint}>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <ChoiceCard
+              active={(micro.pendingConceptSource ?? micro.ctx.conceptSource) === "assistant"}
+              title={mw.conceptSourceAssistantTitle}
+              description={mw.conceptSourceAssistantDesc}
+              onClick={() => micro.setConceptSource("assistant" as ConceptSource)}
+            />
+            <ChoiceCard
+              active={(micro.pendingConceptSource ?? micro.ctx.conceptSource) === "research"}
+              title={mw.conceptSourceResearchTitle}
+              description={mw.conceptSourceResearchDesc}
+              onClick={() => micro.setConceptSource("research" as ConceptSource)}
+            />
+          </div>
+        </ScreenShell>
+      );
+
     case "route.intake":
       return (
         <ScreenShell title={mw.intakeTitle} hint={mw.intakeHint}>
@@ -292,6 +313,21 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
       return (
         <ScreenShell title={mw.conceptTitle} hint={mw.conceptHint}>
           <ConceptWizardPanel showHeadlineField />
+        </ScreenShell>
+      );
+
+    case "identity.concept_topic":
+      return (
+        <ScreenShell title={mw.conceptTopicTitle} hint={mw.conceptTopicHint}>
+          <label className="block space-y-1">
+            <span className="text-sm font-medium text-slate-700">{mw.conceptTopicLabel}</span>
+            <input
+              value={wizard.conceptIdea}
+              onChange={(e) => wizard.setConceptIdea(e.target.value)}
+              placeholder={mw.conceptTopicPlaceholder}
+              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
+            />
+          </label>
         </ScreenShell>
       );
 
@@ -469,7 +505,7 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
 
     case "asset.brand_website":
       return (
-        <ScreenShell title={m.wizard.brandFitTitleRequired} hint={m.wizard.brandFitIntro}>
+        <ScreenShell title={m.wizard.brandFitTitle}>
           <BrandWebsitePanel />
         </ScreenShell>
       );

@@ -13,6 +13,7 @@ import {
   visualStyleForTemplate,
 } from "@/lib/template-pref";
 import { useFriendlyError } from "@/hooks/useFriendlyError";
+import { notifyCreditBalance, readCreditBalanceFromResponse } from "@/lib/credits-client";
 import {
   useWizardState,
   type StoryboardDurationPreset,
@@ -818,6 +819,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         const res = await fetch("/api/analyze-reference", { method: "POST", body: fd });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error ?? "Reference analysis failed.");
+        notifyCreditBalance(readCreditBalanceFromResponse(data));
         if (cancelled) return;
         if (referenceAnalyzeInFlightKeyRef.current !== referenceAnalyzeKey) return;
         lastCompletedReferenceAnalyzeKeyRef.current = referenceAnalyzeKey;
@@ -1144,14 +1146,6 @@ export function useStudioWizard(promotionMode: PromotionMode) {
   ]);
 
   const planAiVideoPrompt = useCallback(async () => {
-    if (
-      isBrandVideoStyle(visualStyleId) &&
-      promotionMode !== "concept" &&
-      !brandProfile?.businessName
-    ) {
-      setError(m.errors.brandAnalyzeRequired);
-      return;
-    }
     if (isCreativeVideoStyle(visualStyleId) && !creativeVideoBrief.trim() && !headline.trim()) {
       setError(m.errors.creativeBriefRequired);
       return;
@@ -1203,6 +1197,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? m.errors.planVideoPromptFailed);
+      notifyCreditBalance(readCreditBalanceFromResponse(data));
       setVideoPrompt(String(data.videoPrompt ?? ""));
       const note = [
         data.sourceNote as string | undefined,
@@ -1244,7 +1239,6 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     artStyleId,
     subjectFraming,
     effectivePromptExtra,
-    m.errors.brandAnalyzeRequired,
     m.errors.creativeBriefRequired,
     m.errors.planVideoPromptFailed,
     m.wizard.planVideoPromptReady,
@@ -1341,9 +1335,6 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       return;
     }
     if (!isAiPlannedVideoStyle(visualStyleId) && videoPrompt.trim()) return;
-    if (isBrandVideoStyle(visualStyleId) && !brandProfile?.businessName && promotionMode !== "concept") {
-      return;
-    }
     if (
       isCreativeVideoStyle(visualStyleId) &&
       !creativeVideoBrief.trim() &&
@@ -1411,6 +1402,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? m.errors.brandAnalyzeFailed);
+      notifyCreditBalance(readCreditBalanceFromResponse(data));
       const profile = data.profile as BrandProfile;
       setBrandProfile(profile);
       let mergedKit = brandKit;
@@ -2051,6 +2043,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       const res = await fetch("/api/generate-image", { method: "POST", body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? m.errors.storyboardFailed);
+      notifyCreditBalance(readCreditBalanceFromResponse(data));
       const nextUrl = (data.imageUrl as string | undefined) ?? "";
       if (!nextUrl.startsWith("http")) throw new Error(m.errors.imageGenNoUrl);
 
@@ -2278,15 +2271,6 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     setError(null);
     if (isSlotRequired(templateId, "headline") && !headline.trim()) {
       setError(m.errors.needHeadline);
-      return;
-    }
-    if (
-      isBrandVideoStyle(visualStyleId) &&
-      isVideoWorkflow &&
-      promotionMode !== "concept" &&
-      !brandProfile?.businessName
-    ) {
-      setError(m.errors.brandAnalyzeRequired);
       return;
     }
     if (
@@ -2559,6 +2543,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? m.errors.refineFailed);
+      notifyCreditBalance(readCreditBalanceFromResponse(data));
       if (!data.imageUrl?.startsWith("http")) throw new Error(m.errors.imageGenNoUrl);
       applyRefinedImage(
         data.imageUrl,
@@ -2670,6 +2655,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       const res = await fetch("/api/inpaint-image", { method: "POST", body: fd, credentials: "include" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? m.errors.refineFailed);
+      notifyCreditBalance(readCreditBalanceFromResponse(data));
       await applyRefinedImage(data.imageUrl as string);
     } catch (e: unknown) {
       setError(friendlyError(e, m.errors.refineFailed));
@@ -2698,6 +2684,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       const res = await fetch("/api/inpaint-image", { method: "POST", body: fd, credentials: "include" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? m.errors.refineFailed);
+      notifyCreditBalance(readCreditBalanceFromResponse(data));
       await applyRefinedImage(data.imageUrl as string);
     } catch (e: unknown) {
       setError(friendlyError(e, m.errors.refineFailed));
@@ -2838,7 +2825,6 @@ export function useStudioWizard(promotionMode: PromotionMode) {
   }
 
   function canGenerateImage(): boolean {
-    const requiresBrandProfile = isBrandVisualStyle(visualStyleId) && promotionMode !== "concept";
     if (usesCompositor) return Boolean(productPhoto && headline.trim());
     if (isStoryboardOutput) {
       if (isConceptStoryboardOutput) {
@@ -2861,7 +2847,6 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         if (!business.trim()) return false;
       }
       if (conceptStyleRequiresHeadline(visualStyleId) && !headline.trim()) return false;
-      if (requiresBrandProfile && !brandProfile?.businessName) return false;
       if (imageCreativeMode === "reference-concept") {
         if (!imageRefPhoto) return false;
         if (productPhoto) return true;
@@ -2876,11 +2861,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       return Boolean(productPhoto && headline.trim());
     }
     if (isBrandVisualStyle(visualStyleId)) {
-      return Boolean(
-        productPhoto &&
-          headline.trim() &&
-          (promotionMode === "concept" || brandProfile?.businessName),
-      );
+      return Boolean(productPhoto && headline.trim());
     }
     if (imageCreativeMode === "reference-concept") {
       return Boolean(productPhoto && imageRefPhoto);
@@ -2899,6 +2880,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? m.errors.polishFailed);
+    notifyCreditBalance(readCreditBalanceFromResponse(data));
     return data.imageUrl as string;
   }
 
@@ -2909,6 +2891,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
+    notifyCreditBalance(readCreditBalanceFromResponse(data));
     if (data.bgmAdded) setBgmNote(m.wizard.bgmNote);
     else if (!data.bgmAdded) setBgmNote(m.wizard.bgmFallbackNote);
     return data.videoUrl as string;
@@ -2949,10 +2932,6 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       return null;
     }
     if (isBrandVisualStyle(visualStyleId)) {
-      if (promotionMode !== "concept" && !brandProfile?.businessName) {
-        setError(m.errors.brandAnalyzeRequired);
-        return null;
-      }
       if (!headline.trim()) {
         setError(m.errors.needHeadline);
         return null;
@@ -3148,6 +3127,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         const res = await fetch("/api/generate-campaign", { method: "POST", body: fd });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error ?? m.errors.campaignFailed);
+        notifyCreditBalance(readCreditBalanceFromResponse(data));
         applyGeneratedCampaign(
           data.slides as Array<{
             role: string;
@@ -3205,6 +3185,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         const res = await fetch("/api/generate-teaching-carousel", { method: "POST", body: fd });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error ?? m.errors.campaignFailed);
+        notifyCreditBalance(readCreditBalanceFromResponse(data));
         applyGeneratedCampaign(
           data.slides as Array<{
             role: string;
@@ -3244,6 +3225,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error ?? m.errors.polishFailed);
+        notifyCreditBalance(readCreditBalanceFromResponse(data));
         const urls = (data.imageUrls as string[] | undefined) ?? [data.imageUrl as string];
         return applyGeneratedImages(urls, data.endpoint as string | undefined);
       } catch (e: unknown) {
@@ -3271,6 +3253,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         }),
         brandProfile,
         visualStyleId,
+        brandKit,
       );
       const prompt = imagePrompt.trim() || builtPrompt;
       if (!prompt.trim()) {
@@ -3280,18 +3263,33 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       setImageJobMeta({ kind: "image", startedAt: Date.now(), sceneCount: 1 });
       setImageBusy(true);
       try {
-        const res = await fetch("/api/generate-image", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            prompt,
-            endpoint: TEXT_ENDPOINT,
-            aspect_ratio: effectiveImageAspectRatio,
-            num_images: effectiveImageOutputMode === "ab" ? 2 : 1,
-          }),
-        });
+        const fd = new FormData();
+        fd.set("visual_style", visualStyleId);
+        fd.set("art_style", artStyleId);
+        if (brandProfile) {
+          fd.set("brand_profile", JSON.stringify(brandProfile));
+        }
+        fd.set("brand_kit", JSON.stringify(brandKit));
+        fd.set("business", business.trim());
+        fd.set("headline", headline.trim());
+        fd.set("subline", subline.trim());
+        fd.set("offer", offer.trim());
+        fd.set("prompt_market", promptMarket);
+        fd.set("subject_framing", subjectFraming);
+        fd.set("prompt_extra", effectivePromptExtra());
+        fd.set("workflow_mode", workflowMode);
+        fd.set("promotion_mode", promotionMode);
+        fd.set("image_text_mode", imageTextMode);
+        fd.set("aspect_ratio", effectiveImageAspectRatio);
+        fd.set("prompt", prompt);
+        fd.set("endpoint", referenceStrategy.sendPixelsToFal ? EDIT_ENDPOINT : TEXT_ENDPOINT);
+        fd.set("num_images", effectiveImageOutputMode === "ab" ? "2" : "1");
+        // No product/style pixels — logo is not auto-added; user adds it later.
+
+        const res = await fetch("/api/generate-image", { method: "POST", body: fd });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error ?? m.errors.polishFailed);
+        notifyCreditBalance(readCreditBalanceFromResponse(data));
         const urls = (data.imageUrls as string[] | undefined) ?? [data.imageUrl as string];
         return applyGeneratedImages(urls, data.endpoint as string | undefined);
       } catch (e: unknown) {
@@ -3356,13 +3354,14 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       const res = await fetch("/api/generate-image", { method: "POST", body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? m.errors.polishFailed);
+      notifyCreditBalance(readCreditBalanceFromResponse(data));
       const urls = (data.imageUrls as string[] | undefined) ?? [data.imageUrl as string];
       if (!urls.some((u) => normalizeGeneratedImageUrl(u))) {
         throw new Error(m.errors.imageGenNoUrl);
       }
       return applyGeneratedImages(urls, data.endpoint as string | undefined);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : m.errors.polishFailed);
+      setError(friendlyError(e, m.errors.polishFailed));
       return null;
     } finally {
       setImageBusy(false);
@@ -3549,6 +3548,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     const res = await fetch("/api/generate", { method: "POST", body: fd });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
+    notifyCreditBalance(readCreditBalanceFromResponse(data));
     const pathNote = data.generationMode
       ? `${m.wizard.videoGenPathLabel}: ${data.generationMode}${data.endpoint ? ` · ${data.endpoint}` : ""}${typeof data.referenceVideoCount === "number" ? ` · ${data.referenceVideoCount} ref video` : ""}`
       : "";
@@ -3617,6 +3617,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     const res = await fetch("/api/generate-image", { method: "POST", body: fd });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? m.errors.polishFailed);
+    notifyCreditBalance(readCreditBalanceFromResponse(data));
     const url = data.imageUrl as string;
     setEndFrameUrl(url);
     return url;
@@ -3648,6 +3649,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     const res = await fetch("/api/generate", { method: "POST", body: fd });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
+    notifyCreditBalance(readCreditBalanceFromResponse(data));
     const pathNote = data.generationMode
       ? `${m.wizard.videoGenPathLabel}: ${data.generationMode}${data.endpoint ? ` · ${data.endpoint}` : ""}${typeof data.referenceImageCount === "number" ? ` · ${data.referenceImageCount} images` : ""}`
       : "";
@@ -3707,6 +3709,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     const res = await fetch("/api/generate-digital-presenter", { method: "POST", body: fd });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? m.errors.ugcPresenterFailed);
+    notifyCreditBalance(readCreditBalanceFromResponse(data));
     setVideoNote(
       [
         m.wizard.ugcPresenter.videoPreflight,
@@ -3771,6 +3774,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     const res = await fetch("/api/generate", { method: "POST", body: fd });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
+    notifyCreditBalance(readCreditBalanceFromResponse(data));
     return data.videoUrl as string;
   }
 
@@ -3796,6 +3800,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
+    notifyCreditBalance(readCreditBalanceFromResponse(data));
     setVideoNote(
       [
         formatCinematicCopy(m.wizard.cinematicStitchVideoPreflight),
@@ -3842,6 +3847,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     const res = await fetch("/api/generate", { method: "POST", body: fd });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
+    notifyCreditBalance(readCreditBalanceFromResponse(data));
     const pathNote = data.generationMode
       ? `${m.wizard.videoGenPathLabel}: ${data.generationMode}${data.endpoint ? ` · ${data.endpoint}` : ""}${typeof data.referenceImageCount === "number" ? ` · ${data.referenceImageCount} images` : ""}`
       : "";
@@ -3886,6 +3892,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     const res = await fetch("/api/generate", { method: "POST", body: fd });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
+    notifyCreditBalance(readCreditBalanceFromResponse(data));
     const pathNote = data.generationMode
       ? `${m.wizard.videoGenPathLabel}: ${data.generationMode}`
       : "";
@@ -3918,6 +3925,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     const res = await fetch("/api/generate", { method: "POST", body: fd });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
+    notifyCreditBalance(readCreditBalanceFromResponse(data));
     const pathNote = data.generationMode
       ? `${m.wizard.videoGenPathLabel}: ${data.generationMode}${data.endpoint ? ` · ${data.endpoint}` : ""}`
       : "";
@@ -3968,6 +3976,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     const res = await fetch("/api/generate", { method: "POST", body: fd });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
+    notifyCreditBalance(readCreditBalanceFromResponse(data));
     const pathNote = data.generationMode
       ? `${m.wizard.videoGenPathLabel}: ${data.generationMode}${data.endpoint ? ` · ${data.endpoint}` : ""}`
       : "";
@@ -4052,6 +4061,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? m.errors.adPackPlanFailed);
+    notifyCreditBalance(readCreditBalanceFromResponse(data));
     return data.plan as AdPackPlan;
   }
 
@@ -4090,6 +4100,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error ?? m.errors.musicGenerateFailed);
+        notifyCreditBalance(readCreditBalanceFromResponse(data));
         const tracks = data.tracks ?? [];
         setAiMusicTracks(tracks);
         const firstId = tracks[0]?.id ?? null;
@@ -4143,6 +4154,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? m.errors.voiceoverFailed);
+      notifyCreditBalance(readCreditBalanceFromResponse(data));
       const tracks = (data.tracks ?? []) as VoicePreviewTrack[];
       setVoicePreviewTracks(tracks);
       setSelectedVoicePreviewId(tracks[0]?.id ?? null);
@@ -4182,6 +4194,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? m.errors.musicGenerateFailed);
+      notifyCreditBalance(readCreditBalanceFromResponse(data));
       setAiMusicTracks(data.tracks ?? []);
       setSelectedAiMusicId(data.tracks?.[0]?.id ?? null);
       setMusicSource("ai");
@@ -4271,6 +4284,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? m.errors.voiceoverFailed);
+    notifyCreditBalance(readCreditBalanceFromResponse(data));
     setVideoNote((prev: string | undefined) =>
       [prev, m.wizard.adPack.voiceoverAppliedNote].filter(Boolean).join(" · "),
     );
@@ -4295,6 +4309,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
+    notifyCreditBalance(readCreditBalanceFromResponse(data));
     setVideoNote((prev: string | undefined) =>
       [
         prev,

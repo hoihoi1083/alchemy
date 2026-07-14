@@ -1,8 +1,14 @@
 import { ApiError, fal } from "@fal-ai/client";
 import { NextResponse } from "next/server";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
+import {
+  imageTokenCostFromRequest,
+  requireTokens,
+  settleTokens,
+} from "@/lib/billing/charge";
 import type { BrandProfile } from "@/lib/brand-profile";
 import { parseBrandKit } from "@/lib/brand-kit";
+import { archiveImageWithLogoFile } from "@/lib/brand-logo-composite";
 import {
   buildPromptVariables,
   buildWizardImagePrompt,
@@ -91,12 +97,14 @@ function banana2Input(
 ): Record<string, unknown> {
   const input: Record<string, unknown> = {
     prompt,
-    image_urls: imageUrls,
     aspect_ratio: aspectRatio,
     num_images: numImages,
     resolution: "1K" as const,
     limit_generations: opts?.limitGenerations ?? true,
   };
+  if (imageUrls.length > 0) {
+    input.image_urls = imageUrls;
+  }
   if (opts?.systemPrompt?.trim()) {
     input.system_prompt = opts.systemPrompt.trim();
   }
@@ -148,6 +156,7 @@ async function runRefineEdit(
   systemPrompt: string;
   userId: string;
   refineSources: string[];
+  tokenCost?: number;
 }): Promise<NextResponse> {
   const hostedUrls = await Promise.all(opts.imageUrls.map((url) => mirrorImageToFalStorage(url)));
   const result = await fal.subscribe(opts.endpoint, {
@@ -186,7 +195,9 @@ async function runRefineEdit(
     );
   }
 
+  const cost = opts.tokenCost ?? imageTokenCostFromRequest({ multipartMode: "refine" });
   await trackUsage(opts.userId, "image");
+  const balanceAfter = await settleTokens(opts.userId, cost, { kind: "image", mode: "refine" });
   const archived = await archiveOutputUrls(request, outUrls);
   return NextResponse.json({
     imageUrl: archived[0],
@@ -195,6 +206,8 @@ async function runRefineEdit(
     endpoint: opts.endpoint,
     mode: "refine",
     variantCount: outUrls.length,
+    tokensCharged: cost,
+    creditBalance: balanceAfter,
   });
 }
 
@@ -231,11 +244,6 @@ export async function POST(request: Request) {
         (formData.get("logo_placement") as string | null) ?? undefined,
       );
       const userNote = (formData.get("user_note") as string | null)?.trim() || "";
-      const endpoint = (formData.get("endpoint") as string | null)?.trim() || defaultEditEndpoint();
-      const aspectRatio = aspectRatioForApi(
-        (formData.get("aspect_ratio") as string | null)?.trim() || "auto",
-      );
-      const numImages = parseNumImages((formData.get("num_images") as string | null)?.trim() ?? "1");
 
       if (!sourceUrl.startsWith("http")) {
         return NextResponse.json({ error: "Generate an AI image first, then add a logo." }, { status: 400 });
@@ -243,12 +251,42 @@ export async function POST(request: Request) {
       if (!hasLogo) {
         return NextResponse.json({ error: "Upload a logo image (PNG with transparency works best)." }, { status: 400 });
       }
+
+      // Pixel stamp preserves PNG alpha. AI compositing fills transparent holes with black.
+      // "replace" still needs the edit model to remove an existing mark first.
+      if (placement !== "replace") {
+        try {
+          const logoBuffer = Buffer.from(await (logoFile as File).arrayBuffer());
+          const archived = await archiveImageWithLogoFile(request, sourceUrl, logoBuffer, placement);
+          // Deterministic PNG stamp — no fal AI cost.
+          return NextResponse.json({
+            imageUrl: archived,
+            imageUrls: [archived],
+            mode: "refine-logo",
+            logoStamped: true,
+            variantCount: 1,
+            tokensCharged: 0,
+          });
+        } catch (e: unknown) {
+          return NextResponse.json({ error: formatFalError(e) }, { status: 502 });
+        }
+      }
+
+      const endpoint = (formData.get("endpoint") as string | null)?.trim() || defaultEditEndpoint();
+      const aspectRatio = aspectRatioForApi(
+        (formData.get("aspect_ratio") as string | null)?.trim() || "auto",
+      );
+      const numImages = parseNumImages((formData.get("num_images") as string | null)?.trim() ?? "1");
       if (!endpoint.includes("/edit")) {
         return NextResponse.json(
           { error: "Logo refine requires an edit endpoint (e.g. nano-banana-2/edit)." },
           { status: 400 },
         );
       }
+
+      const refineLogoCost = imageTokenCostFromRequest({ multipartMode: "refine-logo", numImages });
+      const refineLogoGate = await requireTokens(auth.user.userId, refineLogoCost);
+      if (refineLogoGate) return refineLogoGate;
 
       try {
         const logoUrl = await fal.storage.upload(logoFile as File);
@@ -262,6 +300,7 @@ export async function POST(request: Request) {
           systemPrompt: IMAGE_LOGO_REFINE_SYSTEM_PROMPT,
           userId: auth.user.userId,
           refineSources: [sourceUrl, logoUrl],
+          tokenCost: refineLogoCost,
         });
       } catch (e: unknown) {
         return NextResponse.json({ error: formatFalError(e) }, { status: 502 });
@@ -303,6 +342,10 @@ export async function POST(request: Request) {
         );
       }
 
+      const regionCost = imageTokenCostFromRequest({ multipartMode: "refine-regions", numImages });
+      const regionGate = await requireTokens(auth.user.userId, regionCost);
+      if (regionGate) return regionGate;
+
       try {
         const imageUrls = [sourceUrl];
         if (hasHint) {
@@ -319,6 +362,7 @@ export async function POST(request: Request) {
           systemPrompt: IMAGE_REGION_REFINE_SYSTEM_PROMPT,
           userId: auth.user.userId,
           refineSources: [sourceUrl],
+          tokenCost: regionCost,
         });
       } catch (e: unknown) {
         return NextResponse.json({ error: formatFalError(e) }, { status: 502 });
@@ -333,7 +377,19 @@ export async function POST(request: Request) {
     const hasProduct = reference instanceof File && reference.size > 0;
     const hasStyle = styleRef instanceof File && styleRef.size > 0;
 
-    if (!hasProduct && !hasStyle) {
+    const brandKitRawEarly = (formData.get("brand_kit") as string | null)?.trim() || "";
+    let brandKitEarly = null as ReturnType<typeof parseBrandKit> | null;
+    if (brandKitRawEarly) {
+      try {
+        brandKitEarly = parseBrandKit(JSON.parse(brandKitRawEarly));
+      } catch {
+        return NextResponse.json({ error: "Invalid brand kit data." }, { status: 400 });
+      }
+    }
+    const promotionModeRawEarly = (formData.get("promotion_mode") as string | null)?.trim() || "";
+    const isConceptMode = isPromotionMode(promotionModeRawEarly) && promotionModeRawEarly === "concept";
+
+    if (!hasProduct && !hasStyle && !isConceptMode) {
       return NextResponse.json(
         {
           error:
@@ -417,31 +473,21 @@ export async function POST(request: Request) {
       }
     }
     const brandKitRaw = (formData.get("brand_kit") as string | null)?.trim() || "";
-    const brandKit = brandKitRaw ? parseBrandKit(JSON.parse(brandKitRaw)) : null;
+    const brandKit = brandKitEarly ?? (brandKitRaw ? parseBrandKit(JSON.parse(brandKitRaw)) : null);
+
     const promptMode = resolveImagePromptMode(
       visualStyle,
       useReferenceConcept ? "reference-concept" : creativeMode,
       { promotionMode, workflowMode },
     );
-    if (
-      (promptMode === "brand-fit" || visualStyle === "brand-campaign") &&
-      !brandProfile?.businessName &&
-      promotionMode !== "concept"
-    ) {
-      return NextResponse.json(
-        { error: "Analyze the brand first (website or social hint)." },
-        { status: 400 },
-      );
-    }
-    const builtPrompt = buildWizardImagePrompt(
-      vars,
-      promptMode,
-      brandProfile,
-      visualStyle as VisualStyleId,
-      brandKit,
-      { structuredReferenceBrief: Boolean(brief), aspectRatio: aspectRatioRaw },
-    );
-    const finalPrompt = clientPrompt || builtPrompt;
+
+    const imageOutputMode = (formData.get("image_output_mode") as string | null)?.trim() || "";
+    const tokenCost = imageTokenCostFromRequest({
+      numImages,
+      imageOutputMode,
+    });
+    const tokenGate = await requireTokens(auth.user.userId, tokenCost);
+    if (tokenGate) return tokenGate;
 
     try {
       const imageUrls: string[] = [];
@@ -455,6 +501,19 @@ export async function POST(request: Request) {
           imageUrls.push(await fal.storage.upload(styleRef as File));
         }
       }
+
+      const builtPrompt = buildWizardImagePrompt(
+        vars,
+        promptMode,
+        brandProfile,
+        visualStyle as VisualStyleId,
+        brandKit,
+        {
+          structuredReferenceBrief: Boolean(brief),
+          aspectRatio: aspectRatioRaw,
+        },
+      );
+      const finalPrompt = clientPrompt || builtPrompt;
 
       const result = await fal.subscribe(endpoint, {
         input: banana2Input(finalPrompt, imageUrls, aspectRatio, numImages, {
@@ -474,6 +533,12 @@ export async function POST(request: Request) {
       }
 
       await trackUsage(auth.user.userId, "image");
+      const balanceAfter = await settleTokens(auth.user.userId, tokenCost, {
+        kind: "image",
+        mode: "generate",
+        numImages,
+        imageOutputMode,
+      });
       const archived = await archiveOutputUrls(request, outUrls);
       return NextResponse.json({
         imageUrl: archived[0],
@@ -484,6 +549,8 @@ export async function POST(request: Request) {
         creativeMode: useReferenceConcept ? "reference-concept" : "promo-ai",
         imageCount: imageUrls.length,
         variantCount: archived.length,
+        tokensCharged: tokenCost,
+        creditBalance: balanceAfter,
       });
     } catch (e: unknown) {
       return NextResponse.json({ error: formatFalError(e) }, { status: 502 });
@@ -527,6 +594,10 @@ export async function POST(request: Request) {
     );
   }
 
+  const jsonCost = imageTokenCostFromRequest({ numImages });
+  const jsonGate = await requireTokens(auth.user.userId, jsonCost);
+  if (jsonGate) return jsonGate;
+
   try {
     if (imageUrls.length > 0) {
       const systemPrompt = isCompose
@@ -541,6 +612,7 @@ export async function POST(request: Request) {
         systemPrompt,
         userId: auth.user.userId,
         refineSources: imageUrls,
+        tokenCost: jsonCost,
       });
     }
 
@@ -561,6 +633,10 @@ export async function POST(request: Request) {
     }
 
     await trackUsage(auth.user.userId, "image");
+    const balanceAfter = await settleTokens(auth.user.userId, jsonCost, {
+      kind: "image",
+      mode: "text",
+    });
     const archived = await archiveOutputUrls(request, outUrls);
     return NextResponse.json({
       imageUrl: archived[0],
@@ -569,6 +645,8 @@ export async function POST(request: Request) {
       endpoint,
       mode: "text",
       variantCount: archived.length,
+      tokensCharged: jsonCost,
+      creditBalance: balanceAfter,
     });
   } catch (e: unknown) {
     return NextResponse.json({ error: formatFalError(e) }, { status: 502 });

@@ -246,9 +246,7 @@ export function SetupCopyEditPanel({ showAdvancedWorkflow = true }: Props) {
         onToggle={(e) => setBrandKitOpen(e.currentTarget.open)}
       >
         <summary className="cursor-pointer text-sm font-medium text-slate-800">
-          {isBrandVisualStyle(visualStyleId)
-            ? m.wizard.brandFitTitleRequired
-            : m.wizard.brandFitTitle}
+          {m.wizard.brandFitTitle}
         </summary>
         <div className="mt-3">
           <BrandKitPanel onChange={setBrandKit} />

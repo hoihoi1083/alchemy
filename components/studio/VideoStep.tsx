@@ -13,15 +13,22 @@ import { ConceptPreGeneratePanel } from "@/components/studio/ConceptPreGenerateP
 import { PresenterAvatarPicker } from "@/components/studio/PresenterAvatarPicker";
 import { WizardErrorBanner } from "@/components/studio/WizardErrorBanner";
 import { VideoOutputSourceCard } from "@/components/studio/VideoOutputSourceCard";
+import { estimateVideoTokens } from "@/lib/billing/token-costs";
 import { isBrandVideoStyle, isCreativeVideoStyle, isStoryboardVideoStyle } from "@/lib/visual-styles";
 import { isVideoOutputPathLocked, resolveVideoOutputPresentation } from "@/lib/video-output-presentation";
 import { analyzeProductImageFile } from "@/lib/image-upload-quality";
+import { resolveWizardOutputDurationSec } from "@/lib/video-settings";
 import type { CinematicSceneResult } from "@/lib/cinematic-reel-types";
 import type { StoryboardSceneResult } from "@/lib/video-storyboard-types";
 
 export function VideoStep() {
   const { applyPromptRebuild, bgmOptions, bgmTrack, brandProfile, cinematicScenes, cinematicSceneCount, cinematicStitchReady, conceptReferenceR2vReady, directReferenceR2vReady, creativeVideoBrief, endFramePhoto, endFramePreviewUrl, endFrameUrl, error, extraAnglePhotos, extraKitPhotos, extraKitPreviewUrls, formatCinematicCopy, generateVideo, goBackFromVideo, hasFinalImage, headline, imagePrompt, imageUrl, isCinematicStitchOutput, isConceptCinematicSingleOutput, isStoryboardOutput, isUgcPresenterOutput, keyframePreview, loadReferenceClip, m, onReferenceAdFile, onVideoCreativeModeChange, packagingPhoto, packagingPreviewUrl, planAiVideoPrompt, planProductVideo, planProductVideoBusy, planVideoPromptBusy, presenterAvatarId, presenterSourceMode, productPhoto, productVideoPlan, promotionMode, promptExtra, promptMarket, referenceAd, referenceClipLoading, referenceIsVideo, referencePreviewUrl, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, selectedReferenceClipId, setBgmTrack, setConceptImageVisionNote, setEndFramePhoto, setEndFrameUrl, setError, setExtraAnglePhotos, setExtraKitPhotos, setPackagingPhoto, setImagePrompt, setImageUrl, setPresenterAvatarId, setPresenterSourceMode, setProductPhoto, setPromptExtra, setPromptMarket, setShowAdvancedVideo, setSubjectFraming, setUploadQualityWarning, setUseOriginalImage, setVideoPrompt, setVideoSettings, shipItMode, showAdvancedVideo, showVideoReferenceSection, storyboardScenes, subjectFraming, templateId, templateSlotStatus, uploadPreviewUrl, useReferenceVideo, usesCompositor, usesConceptTextVideo, usesProductAssistant, videoBusy, videoCreativeMode, videoGenerateDisabled, videoGenerateDisabledReason, videoPhase, videoPreflight, videoProgressInfo, videoPrompt, videoPromptPlanNote, videoSettings, videoStepHint, visualStyleId, workflowMode } = useWizard();
   const isConcept = promotionMode === "concept";
+  const videoTokenCost = estimateVideoTokens({
+    resolution: videoSettings.resolution,
+    fast: videoSettings.fast,
+    duration: resolveWizardOutputDurationSec(videoSettings),
+  });
   const showCinematicStitch = isCinematicStitchOutput || cinematicStitchReady;
   const showConceptCinematicSingle =
     isConceptCinematicSingleOutput && cinematicScenes.length > 0;
@@ -328,9 +335,6 @@ export function VideoStep() {
         onClick={planAiVideoPrompt}
         disabled={
           planVideoPromptBusy ||
-          (isBrandVideoStyle(visualStyleId) &&
-            promotionMode !== "concept" &&
-            !brandProfile?.businessName) ||
           (isCreativeVideoStyle(visualStyleId) &&
             !creativeVideoBrief.trim() &&
             !headline.trim())
@@ -341,9 +345,6 @@ export function VideoStep() {
       </button>
       {videoPromptPlanNote && (
         <p className="text-xs text-violet-100/90">{videoPromptPlanNote}</p>
-      )}
-      {isBrandVideoStyle(visualStyleId) && !brandProfile?.businessName && (
-        <p className="text-xs text-amber-200/90">{m.errors.brandAnalyzeRequired}</p>
       )}
       {isCreativeVideoStyle(visualStyleId) && !creativeVideoBrief.trim() && !headline.trim() && (
         <p className="text-xs text-amber-200/90">{m.errors.creativeBriefRequired}</p>
@@ -695,7 +696,9 @@ export function VideoStep() {
     </div>
   )}
 
-  {error && <WizardErrorBanner message={error} variant="dark" />}
+  {error && (
+    <WizardErrorBanner message={error} variant="dark" onDismiss={() => setError(null)} />
+  )}
 
   {videoBusy && (
     <div className="rounded-xl border border-slate-800 bg-slate-950/50 py-8 text-center">
@@ -733,6 +736,11 @@ export function VideoStep() {
   <div className="hidden flex-col gap-2 md:flex">
     {videoGenerateDisabled && !videoBusy && videoGenerateDisabledReason && (
       <p className="text-center text-xs text-amber-200/90">{videoGenerateDisabledReason}</p>
+    )}
+    {!videoBusy && !videoGenerateDisabled && (
+      <p className="text-center text-xs text-slate-400">
+        {m.wizard.tokenCostHint.replace("{n}", String(videoTokenCost))}
+      </p>
     )}
     <div className="flex gap-3">
     <button

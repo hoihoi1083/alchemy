@@ -40,5 +40,6 @@ export async function ensureIndexes(): Promise<void> {
   await db.collection("projects").createIndex({ clerkId: 1, updatedAt: -1 });
   await db.collection("brand_kits").createIndex({ clerkId: 1 }, { unique: true });
   await db.collection("usage_events").createIndex({ clerkId: 1, createdAt: -1 });
+  await db.collection("credit_transactions").createIndex({ clerkId: 1, createdAt: -1 });
   await db.collection("connection_tests").createIndex({ createdAt: -1 });
 }

@@ -119,7 +119,11 @@ export function MicroWizard({ promotionMode }: Props) {
       {currentId ? <MicroStepRenderer micro={micro} stepId={currentId} /> : null}
 
       {wizard.error ? (
-        <WizardErrorBanner message={wizard.error} variant="light" />
+        <WizardErrorBanner
+          message={wizard.error}
+          variant="light"
+          onDismiss={() => wizard.setError(null)}
+        />
       ) : null}
 
       {readyHint ? (

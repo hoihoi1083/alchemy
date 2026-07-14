@@ -1,9 +1,10 @@
 import type { ObjectId } from "mongodb";
+import type { UserPlan } from "@/lib/billing/plans";
 import type { ProjectSnapshot } from "@/lib/project-snapshot";
 import type { TemplateId } from "@/lib/templates";
 import type { PromotionMode } from "@/lib/promotion-mode";
 
-export type UserPlan = "free" | "pro" | "payg";
+export type { UserPlan };
 
 export type DbUser = {
   _id?: ObjectId;
@@ -12,8 +13,14 @@ export type DbUser = {
   name: string | null;
   imageUrl: string | null;
   region: "hk" | "cn";
+  /** Studio tokens (1,000 ≈ USD 3.30 COGS). */
   creditBalance: number;
   plan: UserPlan;
+  /** Set once when Free signup grant is applied. */
+  signupGrantAt?: Date | null;
+  stripeCustomerId?: string | null;
+  stripeSubscriptionId?: string | null;
+  planRenewsAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -36,6 +43,6 @@ export type DbProject = {
 export type DbUsageEvent = {
   _id?: ObjectId;
   clerkId: string;
-  kind: "image" | "video" | "plan" | "campaign" | "storyboard";
+  kind: "image" | "video" | "plan" | "campaign" | "storyboard" | "music" | "voiceover";
   createdAt: Date;
 };

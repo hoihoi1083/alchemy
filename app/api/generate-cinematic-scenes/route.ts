@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { defaultTextEndpoint } from "@/lib/image-endpoints";
 import type { CinematicReelPlan } from "@/lib/cinematic-reel-types";
 import type { CinematicSceneResult } from "@/lib/cinematic-reel-types";
+import { requireTokens, settleTokens } from "@/lib/billing/charge";
+import { estimateImageTokens } from "@/lib/billing/token-costs";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import { artStyleAvoidTail, artStyleSystemPrompt, resolveArtStyleId } from "@/lib/art-style";
 import { SERVER_ERRORS } from "@/lib/api/server-errors";
@@ -64,6 +66,13 @@ export async function POST(request: Request) {
   const endpoint = body.endpoint?.trim() || defaultTextEndpoint();
   const artStyleId = resolveArtStyleId(body.art_style);
 
+  const tokenCost = estimateImageTokens({
+    mode: "storyboard",
+    sceneCount: plan.scenes.length,
+  });
+  const tokenGate = await requireTokens(auth.user.userId, tokenCost);
+  if (tokenGate) return tokenGate;
+
   try {
     const scenes: CinematicSceneResult[] = [];
     for (const scene of plan.scenes) {
@@ -96,6 +105,10 @@ export async function POST(request: Request) {
     }
 
     await trackUsage(auth.user.userId, "storyboard");
+    const balanceAfter = await settleTokens(auth.user.userId, tokenCost, {
+      kind: "cinematic_scenes",
+      sceneCount: scenes.length,
+    });
     return NextResponse.json({
       plan,
       scenes,
@@ -104,6 +117,8 @@ export async function POST(request: Request) {
       endpoint,
       mode: "cinematic-reel",
       sceneCount: scenes.length,
+      tokensCharged: tokenCost,
+      creditBalance: balanceAfter,
     });
   } catch (e: unknown) {
     return NextResponse.json({ error: formatFalError(e) }, { status: 502 });

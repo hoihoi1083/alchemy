@@ -17,17 +17,18 @@
     },
     "brandWebsite": {
       "step": "asset.brand_website",
-      "requiredWhen": "requiresBrandProfileForImages(visualStyleId) || isBrandVideoStyle(visualStyleId)",
+      "requiredWhen": false,
       "separateFromBrandKit": true
     },
     "conceptResearch": {
-      "identityStep": "identity.concept",
-      "identityLabel": "概念助手（非實體產品）",
+      "identityStep": "identity.concept_topic",
+      "identityLabel": "研究主題（非實體產品）",
       "promoteTarget": "wizardPromoteName({ promotionMode: 'concept', conceptIdea, headline, product })",
       "conceptIdeaIsAnchor": true,
       "researchIsStyleOnly": true,
       "copyEditNeverSkipOnResearch": true,
-      "path4EqualsPath2PlusConceptAssistant": true,
+      "mutuallyExclusiveWithConceptAssistant": true,
+      "conceptSourceStep": "route.concept_source",
       "fixRequired": {
         "section": "9.5",
         "files": [
@@ -45,11 +46,13 @@
     "route.output_goal",
     "route.subject",
     "route.intake",
+    "route.concept_source",
     "route.video_subpath",
     "route.cinematic_mode",
     "cinematic.scene_count",
     "identity.product_name",
     "identity.concept",
+    "identity.concept_topic",
     "copy.edit",
     "copy.storyboard_brief",
     "copy.creative_brief",
@@ -196,13 +199,11 @@
         { "id": "route.output_goal", "set": { "workflowMode": "image-only" } },
         { "id": "route.subject", "set": { "promotionMode": "concept" } },
         {
-          "id": "identity.concept",
-          "label": "概念助手（非實體產品）",
+          "id": "identity.concept_topic",
+          "label": "研究主題（非實體產品）",
           "required": ["conceptIdea"],
-          "optionalHandler": "planConcept",
-          "note": "Fixed anchor before research; pass conceptIdea as promote target (§9.5)"
+          "note": "Lightweight topic anchor for research — no concept assistant"
         },
-        { "id": "route.intake", "set": { "intakePath": "research" } },
         {
           "id": "research.platform",
           "promoteTarget": "wizardPromoteName(concept)"
@@ -261,7 +262,6 @@
           "label": "概念助手（非實體產品）",
           "required": ["conceptIdea"]
         },
-        { "id": "route.intake", "set": { "intakePath": "direct" } },
         { "id": "asset.reference_image", "skippable": true },
         { "id": "wait.reference_analyze", "skipWhen": "!imageRefPhoto" },
         {
@@ -674,12 +674,7 @@
         { "id": "entry.start" },
         { "id": "route.output_goal", "set": { "workflowMode": "combined" } },
         { "id": "route.subject", "set": { "promotionMode": "concept" } },
-        {
-          "id": "identity.concept",
-          "label": "概念助手（非實體產品）",
-          "required": ["conceptIdea"]
-        },
-        { "id": "route.intake" },
+        { "id": "route.concept_source" },
         { "id": "MERGE_concept_image_subpath" },
         { "id": "image.review", "handler": "finishImageStep", "legacyStepKey": "image" },
         {

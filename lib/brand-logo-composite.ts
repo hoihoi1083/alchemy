@@ -1,0 +1,166 @@
+import { promises as fs } from "fs";
+import path from "path";
+import sharp from "sharp";
+import type { BrandKit } from "@/lib/brand-kit";
+import type { LogoPlacement } from "@/lib/image-refine-prompt";
+import {
+  archiveCampaignSlidesToPipeline,
+  archiveRemoteImageToPipeline,
+} from "@/lib/pipeline/archive-image";
+import { jobDir } from "@/lib/pipeline/paths";
+import { pipelineFileUrl } from "@/lib/pipeline/local-input";
+import { studioSlideFileName } from "@/lib/pipeline/studio-slide-files";
+
+/** Logo width as a fraction of the shorter image side. */
+const LOGO_SIZE_RATIO = 0.14;
+const MARGIN_RATIO = 0.04;
+
+export async function loadBrandLogoBuffer(
+  logoSource: string | null | undefined,
+): Promise<Buffer | null> {
+  const src = logoSource?.trim();
+  if (!src) return null;
+  if (src.startsWith("data:")) {
+    const base64 = src.split(",")[1];
+    if (!base64) return null;
+    return Buffer.from(base64, "base64");
+  }
+  if (src.startsWith("http://") || src.startsWith("https://")) {
+    const res = await fetch(src, { cache: "no-store" });
+    if (!res.ok) throw new Error("Failed to load brand logo.");
+    return Buffer.from(await res.arrayBuffer());
+  }
+  return null;
+}
+
+export async function loadBrandKitLogoBuffer(
+  kit: BrandKit | null | undefined,
+): Promise<Buffer | null> {
+  return loadBrandLogoBuffer(kit?.logoUrl);
+}
+
+/**
+ * Deterministically stamp a PNG logo (preserving alpha) onto an ad image.
+ * AI edit models treat transparent pixels as black — never use them for logo alpha.
+ */
+export async function compositeBrandLogoOntoImage(
+  inputImage: string | Buffer,
+  logoBuffer: Buffer,
+  placement: LogoPlacement = "bottom-right",
+): Promise<Buffer> {
+  const base = sharp(inputImage);
+  const meta = await base.metadata();
+  const width = meta.width ?? 1080;
+  const height = meta.height ?? 1920;
+  const shortSide = Math.min(width, height);
+  const maxLogo = Math.max(48, Math.round(shortSide * LOGO_SIZE_RATIO));
+  const margin = Math.max(12, Math.round(shortSide * MARGIN_RATIO));
+
+  const logoMeta = await sharp(logoBuffer).metadata();
+  const naturalW = logoMeta.width ?? maxLogo;
+  const naturalH = logoMeta.height ?? maxLogo;
+  const scale = Math.min(maxLogo / naturalW, maxLogo / naturalH, 1);
+  const logoW = Math.max(8, Math.round(naturalW * scale));
+  const logoH = Math.max(8, Math.round(naturalH * scale));
+
+  const resized = await sharp(logoBuffer)
+    .ensureAlpha()
+    .resize(logoW, logoH, { fit: "inside", withoutEnlargement: false })
+    .png()
+    .toBuffer();
+
+  let left = margin;
+  let top = margin;
+  if (placement === "bottom-right" || placement === "replace") {
+    left = width - logoW - margin;
+    top = height - logoH - margin;
+  } else if (placement === "bottom-left") {
+    left = margin;
+    top = height - logoH - margin;
+  } else if (placement === "top-right") {
+    left = width - logoW - margin;
+    top = margin;
+  } else if (placement === "top-left") {
+    left = margin;
+    top = margin;
+  } else if (placement === "center") {
+    left = Math.round((width - logoW) / 2);
+    top = Math.round((height - logoH) / 2);
+  }
+
+  return base
+    .composite([{ input: resized, left: Math.max(0, left), top: Math.max(0, top) }])
+    .png()
+    .toBuffer();
+}
+
+async function fetchImageBuffer(url: string): Promise<Buffer> {
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) throw new Error(`Could not fetch image for logo stamp (${res.status}).`);
+  return Buffer.from(await res.arrayBuffer());
+}
+
+/** Stamp brand-kit logo onto remote image URLs, then archive to pipeline storage. */
+export async function archiveImagesWithBrandLogo(
+  request: Request,
+  remoteUrls: string[],
+  brandKit: BrandKit | null | undefined,
+  opts?: { placement?: LogoPlacement; fileName?: string },
+): Promise<{ urls: string[]; logoStamped: boolean }> {
+  const logoBuffer = await loadBrandKitLogoBuffer(brandKit);
+  if (!logoBuffer || !remoteUrls.length) {
+    if (!remoteUrls.length) return { urls: [], logoStamped: false };
+    if (remoteUrls.length === 1) {
+      return {
+        urls: [
+          await archiveRemoteImageToPipeline(
+            request,
+            remoteUrls[0],
+            opts?.fileName ?? "generated.png",
+          ),
+        ],
+        logoStamped: false,
+      };
+    }
+    return {
+      urls: await archiveCampaignSlidesToPipeline(request, remoteUrls),
+      logoStamped: false,
+    };
+  }
+
+  const placement = opts?.placement ?? "bottom-right";
+  const jobId = crypto.randomUUID();
+  const dir = jobDir(jobId);
+  await fs.mkdir(dir, { recursive: true });
+  const urls: string[] = [];
+
+  for (let i = 0; i < remoteUrls.length; i++) {
+    const remote = remoteUrls[i];
+    if (!remote?.startsWith("http")) continue;
+    const raw = await fetchImageBuffer(remote);
+    const stamped = await compositeBrandLogoOntoImage(raw, logoBuffer, placement);
+    const fileName =
+      remoteUrls.length === 1 ? (opts?.fileName ?? "generated.png") : studioSlideFileName(i);
+    await fs.writeFile(path.join(dir, fileName), stamped);
+    urls.push(pipelineFileUrl(request, jobId, fileName));
+  }
+
+  return { urls, logoStamped: true };
+}
+
+/** Stamp an uploaded logo file onto a generated image (Quick Fix). */
+export async function archiveImageWithLogoFile(
+  request: Request,
+  sourceUrl: string,
+  logoBuffer: Buffer,
+  placement: LogoPlacement,
+): Promise<string> {
+  const raw = await fetchImageBuffer(sourceUrl);
+  const stamped = await compositeBrandLogoOntoImage(raw, logoBuffer, placement);
+  const jobId = crypto.randomUUID();
+  const dir = jobDir(jobId);
+  await fs.mkdir(dir, { recursive: true });
+  const fileName = "generated.png";
+  await fs.writeFile(path.join(dir, fileName), stamped);
+  return pipelineFileUrl(request, jobId, fileName);
+}

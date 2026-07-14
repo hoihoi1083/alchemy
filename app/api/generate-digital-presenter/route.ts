@@ -12,6 +12,8 @@ import {
 import { materializeMediaInput } from "@/lib/pipeline/local-input";
 import { synthesizeSpeechToFile } from "@/lib/pipeline/tts";
 import { mirrorImageUrlToFalStorage } from "@/lib/fal-mirror-media";
+import { requireTokens, settleTokens } from "@/lib/billing/charge";
+import { estimateVideoTokens, TOKEN_COST } from "@/lib/billing/token-costs";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import {
   HEYGEN_AVATAR_IV_ENDPOINT,
@@ -145,6 +147,13 @@ export async function POST(request: Request) {
     );
   }
 
+  const willSynthesizeVoice = !speechUrl;
+  const tokenCost =
+    estimateVideoTokens({ resolution, fast: false, duration: 8 }) +
+    (willSynthesizeVoice ? TOKEN_COST.voiceover : 0);
+  const tokenGate = await requireTokens(auth.user.userId, tokenCost);
+  if (tokenGate) return tokenGate;
+
   fal.config({ credentials: key });
 
   try {
@@ -177,12 +186,20 @@ export async function POST(request: Request) {
       if (!videoUrl) throw new Error("HeyGen response missing video URL.");
       await trackUsage(auth.user.userId, "video");
       if (!usedPreview) await trackUsage(auth.user.userId, "voiceover");
+      const balanceAfter = await settleTokens(auth.user.userId, tokenCost, {
+        kind: "digital_presenter",
+        mode: "stock-avatar",
+        resolution,
+        synthesizedVoice: willSynthesizeVoice,
+      });
       return NextResponse.json({
         videoUrl,
         requestId: result.requestId,
         generationMode: "digital-presenter-stock",
         endpoint: HEYGEN_DIGITAL_TWIN_ENDPOINT,
         note: `HeyGen stock presenter — ${avatar.id}. Lip-sync baked in.`,
+        tokensCharged: tokenCost,
+        creditBalance: balanceAfter,
       });
     }
 
@@ -225,6 +242,12 @@ export async function POST(request: Request) {
     if (!usedPreview) {
       await trackUsage(auth.user.userId, "voiceover");
     }
+    const balanceAfter = await settleTokens(auth.user.userId, tokenCost, {
+      kind: "digital_presenter",
+      mode: "custom-keyframe",
+      resolution,
+      synthesizedVoice: willSynthesizeVoice,
+    });
 
     return NextResponse.json({
       videoUrl,
@@ -232,6 +255,8 @@ export async function POST(request: Request) {
       generationMode: "digital-presenter",
       endpoint: HEYGEN_AVATAR_IV_ENDPOINT,
       note: "HeyGen Avatar IV — lip-sync is baked into this clip (not Seedance).",
+      tokensCharged: tokenCost,
+      creditBalance: balanceAfter,
     });
   } catch (e: unknown) {
     if (e instanceof ValidationError) {

@@ -1,5 +1,10 @@
 import { fal, ApiError, ValidationError } from "@fal-ai/client";
 import { NextResponse } from "next/server";
+import {
+  requireTokens,
+  settleTokens,
+  videoTokenCostFromRequest,
+} from "@/lib/billing/charge";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import {
   isSeedanceSensitiveError,
@@ -253,6 +258,9 @@ export async function POST(request: Request) {
   }
 
   const duration = parseDuration((formData.get("duration") as string) || "auto");
+  const tokenCost = videoTokenCostFromRequest({ resolution, fast, duration });
+  const tokenGate = await requireTokens(auth.user.userId, tokenCost);
+  if (tokenGate) return tokenGate;
 
   const referenceMatch = mode === "reference";
   const refDurationSec = Number(
@@ -297,12 +305,21 @@ export async function POST(request: Request) {
         throw new Error("Model response missing video URL.");
       }
       await trackUsage(auth.user.userId, "video");
+      const balanceAfter = await settleTokens(auth.user.userId, tokenCost, {
+        kind: "video",
+        mode: "text",
+        resolution,
+        fast,
+        duration,
+      });
       return NextResponse.json({
         videoUrl,
         seed: result.data.seed,
         requestId: result.requestId,
         generationMode: "text-to-video",
         endpoint: endpointFor("text", fast, formData),
+        tokensCharged: tokenCost,
+        creditBalance: balanceAfter,
         ...(usedDurationFallback
           ? { note: "Requested 2-3s is unsupported by this model; generated at 4s instead." }
           : {}),
@@ -345,12 +362,21 @@ export async function POST(request: Request) {
         throw new Error("Model response missing video URL.");
       }
       await trackUsage(auth.user.userId, "video");
+      const balanceAfter = await settleTokens(auth.user.userId, tokenCost, {
+        kind: "video",
+        mode: "image",
+        resolution,
+        fast,
+        duration,
+      });
       return NextResponse.json({
         videoUrl,
         seed: result.data.seed,
         requestId: result.requestId,
         generationMode: "image-to-video",
         endpoint: endpointFor("image", fast, formData),
+        tokensCharged: tokenCost,
+        creditBalance: balanceAfter,
         ...(usedDurationFallback
           ? { note: "Requested 2-3s is unsupported by this model; generated at 4s instead. Reference MP4 was NOT used." }
           : { note: "Reference MP4 was NOT used — image-to-video only animates your keyframe." }),
@@ -480,6 +506,13 @@ export async function POST(request: Request) {
     }
 
     await trackUsage(auth.user.userId, "video");
+    const balanceAfter = await settleTokens(auth.user.userId, tokenCost, {
+      kind: "video",
+      mode: "reference",
+      resolution,
+      fast,
+      duration,
+    });
     return NextResponse.json({
       videoUrl,
       seed: result.data.seed,
@@ -488,6 +521,8 @@ export async function POST(request: Request) {
       endpoint: endpointFor("reference", fast, formData),
       referenceVideoCount: videoUrlsFinal?.length ?? nonEmptyVideos.length,
       referenceImageCount: imageUrlsFinal?.length ?? 0,
+      tokensCharged: tokenCost,
+      creditBalance: balanceAfter,
       ...(addedTags.length
         ? { note: [...notes, `Auto-added tags: ${addedTags.join(", ")}`].join(" ") }
         : notes.length

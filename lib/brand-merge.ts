@@ -50,22 +50,17 @@ export function brandKitPromptBlock(kit: BrandKit): string {
     kit.tagline.trim() ? `Brand tagline for typography tone: "${kit.tagline.trim()}".` : "",
     `Brand palette — primary ${kit.primaryColor}, secondary ${kit.secondaryColor}, accent ${kit.accentColor}. Use for backgrounds, highlights, and on-image text color harmony.`,
     `Typography mood: ${fontLabel}.`,
-    kit.logoUrl
-      ? "Client brand logo is provided as a separate attached image — composite ONLY that logo. Never copy any logo, wordmark, or company name visible in the style reference."
-      : "No client logo attached — output must have no company logo or wordmark. Do not copy branding from the reference post and do not invent a fake brand mark.",
+    // Never ask the model to draw marks — it invents flasks, "logo" text, CTA chips.
+    // Users add the real PNG themselves via Quick fix / canvas after generate.
+    "No corner badges, seals, app icons, watermarks, peeled-sticker corners, or placeholder labels. Never render English meta words such as CTA, logo, brand, or watermark.",
   ]
     .filter(Boolean)
     .join(" ");
 }
 
-/** When brand logo is attached as the last image in image_urls. */
-export function brandKitLogoImagePromptBlock(logoImageIndex: number): string {
-  return [
-    `BRAND LOGO — IMAGE ${logoImageIndex} is the client's official brand logo (use exactly as provided).`,
-    "Place it cleanly in the top-right or bottom-right corner at a modest size — do not cover the headline or hero.",
-    "The style reference post belongs to another company — NEVER copy its logo, wordmark, store name, app icon, @handle, sponsor badge, or watermark.",
-    "Only IMAGE " + logoImageIndex + " may appear as branded identity on the output.",
-  ].join(" ");
+/** @deprecated Logo is user-applied via Quick fix / canvas — do not AI-composite. */
+export function brandKitLogoImagePromptBlock(_logoImageIndex: number): string {
+  return "No corner badges, seals, watermarks, or placeholder labels. Never render English meta words such as CTA, logo, brand, or watermark.";
 }
 
 /**
@@ -78,7 +73,7 @@ export function thirdPartyBrandGuardBlock(): string {
     "Never copy ANY of their branded identity into the output: logos, wordmarks, store/company names, product packaging brands, app icons, @handles, sponsor tags, QR codes, or watermarks visible in IMAGE 1.",
     "The reference publisher is unknown — treat every on-image brand element in IMAGE 1 as forbidden, not just famous platforms.",
     "Only the user's campaign copy and (when provided) their brand kit / brand profile may appear as branded identity.",
-    "If no client logo is attached, leave the output free of company logos — borrow palette, typography mood, and layout rhythm only.",
+    "If no client mark is attached later, leave the output free of company seals — borrow palette, typography mood, and layout rhythm only.",
   ].join(" ");
 }
 

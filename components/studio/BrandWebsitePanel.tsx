@@ -2,10 +2,6 @@
 
 import { useLocale } from "@/components/LocaleProvider";
 import { useWizard } from "@/components/studio/WizardContext";
-import {
-  isBrandVideoStyle,
-  isBrandVisualStyle,
-} from "@/lib/visual-styles";
 
 export function BrandWebsitePanel() {
   const { m } = useLocale();
@@ -16,19 +12,11 @@ export function BrandWebsitePanel() {
     brandAnalyzeNote,
     brandSocialHint,
     brandWebsiteUrl,
-    lockedCampaignMode,
     setBrandSocialHint,
     setBrandWebsiteUrl,
-    visualStyleId,
   } = wizard;
 
-  const intro = isBrandVisualStyle(visualStyleId)
-    ? lockedCampaignMode
-      ? m.wizard.brandCampaignIntro
-      : isBrandVideoStyle(visualStyleId)
-        ? m.wizard.brandVideoIntro
-        : m.wizard.brandFitIntro
-    : m.wizard.brandAnalyzeOptionalIntro;
+  const intro = m.wizard.brandAnalyzeOptionalIntro;
 
   return (
     <div className="space-y-3">
@@ -55,7 +43,7 @@ export function BrandWebsitePanel() {
       <button
         type="button"
         data-coach-id="coach-analyze-brand"
-        disabled={brandAnalyzeBusy || !brandWebsiteUrl.trim()}
+        disabled={brandAnalyzeBusy || (!brandWebsiteUrl.trim() && !brandSocialHint.trim())}
         onClick={() => void analyzeBrand()}
         className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
       >

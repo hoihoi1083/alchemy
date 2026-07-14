@@ -8,6 +8,7 @@ import type { PromotionMode } from "@/lib/promotion-mode";
 import type { VisualStyleId } from "@/lib/visual-styles";
 import type { WorkflowMode } from "@/lib/workflow-mode";
 import type {
+  ConceptSource,
   IntakePath,
   MicroStepId,
   MicroWizardContext,
@@ -74,6 +75,7 @@ const ROUTING_SKIP = new Set([
   "route.output_goal",
   "route.subject",
   "route.intake",
+  "route.concept_source",
 ]);
 
 const ROUTING_PREFIX_IDS = new Set<MicroStepId>([
@@ -84,7 +86,9 @@ const ROUTING_PREFIX_IDS = new Set<MicroStepId>([
   "cinematic.scene_count",
   "identity.product_name",
   "identity.concept",
+  "identity.concept_topic",
   "route.intake",
+  "route.concept_source",
   "route.video_subpath",
 ]);
 
@@ -133,6 +137,25 @@ function allCopyEmpty(state: WizardMicroStepState): boolean {
     state.offer.trim() ||
     state.business.trim()
   );
+}
+
+/** Concept image / combined-animate: pick 概念助手 OR 平台研究 — not both. */
+export function needsConceptSourceSplit(
+  ctx: MicroWizardContext,
+  state: Pick<WizardMicroStepState, "visualStyleId">,
+): boolean {
+  if (ctx.promotionMode !== "concept") return false;
+  if (ctx.workflowMode === "image-only") return true;
+  if (ctx.workflowMode === "combined") {
+    const cinematic =
+      ctx.combinedStyle === "cinematic" || state.visualStyleId === "concept-cinematic";
+    return !cinematic && ctx.combinedStyle === "animate";
+  }
+  return false;
+}
+
+export function intakePathForConceptSource(source: ConceptSource): IntakePath {
+  return source === "assistant" ? "direct" : "research";
 }
 
 function evalSkipWhen(
@@ -282,10 +305,14 @@ function filterGraphSteps(
     if (ROUTING_SKIP.has(id)) continue;
     if (
       ctx.intakePath &&
-      (id === "identity.product_name" || id === "identity.concept")
+      (id === "identity.product_name" ||
+        id === "identity.concept" ||
+        id === "identity.concept_topic")
     ) {
       continue;
     }
+    if (ctx.conceptSource === "research" && id === "identity.concept") continue;
+    if (ctx.conceptSource === "assistant" && id === "identity.concept_topic") continue;
     if (ctx.videoSubpath && id === "route.video_subpath") continue;
     if (evalSkipWhen(step.skipWhen, state, ctx)) continue;
     if (!evalWhen(step.when, state, ctx)) continue;
@@ -422,7 +449,17 @@ export function resolveMicroSteps(
     }
   }
 
-  if (!ctx.intakePath) {
+  const conceptSplit = needsConceptSourceSplit(ctx, state);
+
+  if (conceptSplit) {
+    if (!ctx.conceptSource) {
+      return wrapSteps([...ids, "route.concept_source"], ctx);
+    }
+    if (!ctx.intakePath) {
+      ids.push(ctx.conceptSource === "assistant" ? "identity.concept" : "identity.concept_topic");
+      return wrapSteps(ids, ctx);
+    }
+  } else if (!ctx.intakePath) {
     if (ctx.promotionMode === "physical") {
       ids.push("identity.product_name");
     } else {
@@ -525,9 +562,11 @@ export function canProceedMicroStep(
     return "pick_cinematic_mode";
   }
   if (id === "route.intake" && !ctx.intakePath) return "pick_intake";
+  if (id === "route.concept_source" && !ctx.conceptSource) return "pick_concept_source";
   if (id === "route.video_subpath" && !ctx.videoSubpath) return "pick_video_subpath";
   if (id === "identity.product_name" && !state.product.trim()) return "need_product_name";
   if (id === "identity.concept" && !state.conceptIdea.trim()) return "need_concept";
+  if (id === "identity.concept_topic" && !state.conceptIdea.trim()) return "need_concept_topic";
   if (id === "asset.product_photo" && ctx.promotionMode === "physical" && !state.productPhoto) {
     return "need_product_photo";
   }
@@ -537,9 +576,7 @@ export function canProceedMicroStep(
   if (id === "asset.reference_video" && !state.referenceAd) {
     return "need_reference_video";
   }
-  if (id === "asset.brand_website" && !state.brandProfile && !state.brandWebsiteUrl.trim()) {
-    return "need_brand_website";
-  }
+  // asset.brand_website is optional — many SMB users have no website.
   if (id === "wait.research_apply" || id === "wait.reference_analyze") {
     if (state.referenceAnalyzeBusy) return "reference_analyzing";
     if (

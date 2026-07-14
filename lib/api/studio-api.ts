@@ -1,4 +1,8 @@
 import { ApiClientError } from "@/lib/api/errors";
+import {
+  notifyCreditBalance,
+  readCreditBalanceFromResponse,
+} from "@/lib/credits-client";
 
 async function parseJsonResponse(res: Response): Promise<unknown> {
   try {
@@ -16,6 +20,10 @@ function extractErrorMessage(data: unknown, status: number): string {
   return status >= 500 ? "Server error" : "Request failed";
 }
 
+function syncCreditsFromBody(data: unknown): void {
+  notifyCreditBalance(readCreditBalanceFromResponse(data));
+}
+
 export async function apiPostJson<T>(
   path: string,
   body: unknown,
@@ -31,6 +39,7 @@ export async function apiPostJson<T>(
   if (!res.ok) {
     throw new ApiClientError(extractErrorMessage(data, res.status), res.status, data);
   }
+  syncCreditsFromBody(data);
   return data as T;
 }
 
@@ -40,6 +49,7 @@ export async function apiPostForm<T>(path: string, fd: FormData): Promise<T> {
   if (!res.ok) {
     throw new ApiClientError(extractErrorMessage(data, res.status), res.status, data);
   }
+  syncCreditsFromBody(data);
   return data as T;
 }
 

@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { requireTokens, settleTokens } from "@/lib/billing/charge";
+import { TOKEN_COST } from "@/lib/billing/token-costs";
 import { generateMusicOptions } from "@/lib/music-generation";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import { SERVER_ERRORS } from "@/lib/api/server-errors";
@@ -22,10 +24,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "promptEn is required." }, { status: 400 });
   }
 
+  const tokenCost = TOKEN_COST.music;
+  const tokenGate = await requireTokens(auth.user.userId, tokenCost);
+  if (tokenGate) return tokenGate;
+
   try {
     const tracks = await generateMusicOptions(promptEn, body.durationSec ?? 10);
     await trackUsage(auth.user.userId, "music");
-    return NextResponse.json({ tracks });
+    const balanceAfter = await settleTokens(auth.user.userId, tokenCost, {
+      kind: "music",
+    });
+    return NextResponse.json({
+      tracks,
+      tokensCharged: tokenCost,
+      creditBalance: balanceAfter,
+    });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Music generation failed.";
     return NextResponse.json({ error: message }, { status: 502 });

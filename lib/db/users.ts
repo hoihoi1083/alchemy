@@ -1,3 +1,5 @@
+import { normalizeUserPlan } from "@/lib/billing/plans";
+import { ensureSignupGrant } from "@/lib/billing/ledger";
 import { getDb } from "@/lib/mongodb";
 import type { DbUser } from "@/lib/db/types";
 
@@ -35,7 +37,20 @@ export async function ensureUser(input: {
     throw new Error("Failed to upsert user");
   }
 
-  return result;
+  const plan = normalizeUserPlan(result.plan);
+  if (result.plan !== plan) {
+    await db.collection<DbUser>("users").updateOne(
+      { clerkId: input.clerkId },
+      { $set: { plan, updatedAt: now } },
+    );
+  }
+
+  // One-time Free pack (ledger row written inside ensureSignupGrant).
+  await ensureSignupGrant(input.clerkId);
+
+  const fresh = await db.collection<DbUser>("users").findOne({ clerkId: input.clerkId });
+  if (!fresh) throw new Error("Failed to load user after signup grant");
+  return { ...fresh, plan: normalizeUserPlan(fresh.plan) };
 }
 
 export async function recordUsage(

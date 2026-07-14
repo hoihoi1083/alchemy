@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { requireTokens, settleTokens } from "@/lib/billing/charge";
+import { TOKEN_COST } from "@/lib/billing/token-costs";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import {
   VOICEOVER_LOCALES,
@@ -34,6 +36,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid locale." }, { status: 400 });
   }
 
+  const tokenCost = TOKEN_COST.voiceover;
+  const tokenGate = await requireTokens(auth.user.userId, tokenCost);
+  if (tokenGate) return tokenGate;
+
   const jobId = crypto.randomUUID();
   const dir = jobDir(jobId);
 
@@ -52,10 +58,18 @@ export async function POST(request: Request) {
         { status: 502 },
       );
     }
-    if (tracks.length) {
-      await trackUsage(auth.user.userId, "voiceover");
-    }
-    return NextResponse.json({ tracks, errors, jobId });
+    await trackUsage(auth.user.userId, "voiceover");
+    const balanceAfter = await settleTokens(auth.user.userId, tokenCost, {
+      kind: "voiceover",
+      locale,
+    });
+    return NextResponse.json({
+      tracks,
+      errors,
+      jobId,
+      tokensCharged: tokenCost,
+      creditBalance: balanceAfter,
+    });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Voice preview failed.";
     const status =

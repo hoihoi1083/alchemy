@@ -59,8 +59,18 @@ function baseState(overrides: Partial<WizardMicroStepState> = {}): WizardMicroSt
 const PATH_CONTEXTS: Record<MicroWizardPathId, MicroWizardContext> = {
   product_image_research: { promotionMode: "physical", workflowMode: "image-only", intakePath: "research" },
   product_image_direct: { promotionMode: "physical", workflowMode: "image-only", intakePath: "direct" },
-  concept_image_research: { promotionMode: "concept", workflowMode: "image-only", intakePath: "research" },
-  concept_image_direct: { promotionMode: "concept", workflowMode: "image-only", intakePath: "direct" },
+  concept_image_research: {
+    promotionMode: "concept",
+    workflowMode: "image-only",
+    intakePath: "research",
+    conceptSource: "research",
+  },
+  concept_image_direct: {
+    promotionMode: "concept",
+    workflowMode: "image-only",
+    intakePath: "direct",
+    conceptSource: "assistant",
+  },
   product_video_research_reel: { promotionMode: "physical", workflowMode: "video-only", intakePath: "research" },
   product_video_direct: {
     promotionMode: "physical",
@@ -86,6 +96,7 @@ const PATH_CONTEXTS: Record<MicroWizardPathId, MicroWizardContext> = {
     promotionMode: "concept",
     workflowMode: "combined",
     intakePath: "direct",
+    conceptSource: "assistant",
     combinedStyle: "animate",
   },
 };
@@ -273,5 +284,76 @@ describe("wizard v2 parity audit", () => {
       }),
       null,
     );
+  });
+
+  it("concept image entry shows concept source before identity", () => {
+    const steps = resolveMicroSteps(
+      { promotionMode: "concept", workflowMode: "image-only" },
+      baseState({ promotionMode: "concept", workflowMode: "image-only" }),
+    );
+    assert.deepEqual(steps.map((s) => s.id), ["route.concept_source"]);
+  });
+
+  it("concept assistant path skips platform research steps", () => {
+    const ctx: MicroWizardContext = {
+      promotionMode: "concept",
+      workflowMode: "image-only",
+      intakePath: "direct",
+      conceptSource: "assistant",
+    };
+    const steps = resolveMicroSteps(ctx, baseState({ promotionMode: "concept" }));
+    const ids = steps.map((s) => s.id);
+    assert.ok(!ids.includes("research.platform"));
+    assert.ok(!ids.includes("research.pick_angle"));
+    assert.ok(!ids.includes("identity.concept_topic"));
+  });
+
+  it("concept research path skips full concept assistant screen", () => {
+    const ctx: MicroWizardContext = {
+      promotionMode: "concept",
+      workflowMode: "image-only",
+      intakePath: "research",
+      conceptSource: "research",
+    };
+    const steps = resolveMicroSteps(
+      ctx,
+      baseState({ promotionMode: "concept", promptExtra: "STYLE_REFERENCE_ONLY" }),
+    );
+    const ids = steps.map((s) => s.id);
+    assert.ok(!ids.includes("identity.concept"));
+    assert.ok(ids.includes("research.platform"));
+    assert.ok(ids.includes("research.pick_angle"));
+  });
+
+  it("concept research copy.edit is not skippable", () => {
+    const ctx: MicroWizardContext = {
+      promotionMode: "concept",
+      workflowMode: "image-only",
+      intakePath: "research",
+      conceptSource: "research",
+    };
+    const steps = resolveMicroSteps(
+      ctx,
+      baseState({ promotionMode: "concept", promptExtra: "STYLE_REFERENCE_ONLY" }),
+    );
+    const copyEdit = steps.find((s) => s.id === "copy.edit");
+    assert.ok(copyEdit);
+    assert.equal(copyEdit?.skippable, false);
+  });
+
+  it("concept routing shows assistant identity after source pick", () => {
+    const steps = resolveMicroSteps(
+      { promotionMode: "concept", workflowMode: "image-only", conceptSource: "assistant" },
+      baseState({ promotionMode: "concept" }),
+    );
+    assert.deepEqual(steps.map((s) => s.id), ["identity.concept"]);
+  });
+
+  it("concept routing shows topic identity after research source pick", () => {
+    const steps = resolveMicroSteps(
+      { promotionMode: "concept", workflowMode: "image-only", conceptSource: "research" },
+      baseState({ promotionMode: "concept" }),
+    );
+    assert.deepEqual(steps.map((s) => s.id), ["identity.concept_topic"]);
   });
 });

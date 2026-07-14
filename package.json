@@ -28,6 +28,7 @@
     "test:conversation": "npx tsx scripts/test-studio-assistant-conversation.ts",
     "test": "tsx scripts/test-all.ts",
     "test:unit": "tsx --test tests/*.test.ts",
+    "test:billing": "tsx scripts/test-billing-safety.ts",
     "test:live": "tsx scripts/test-all.ts --live",
     "test:live:quick": "tsx scripts/test-all.ts --live --quick",
     "test:generate": "tsx scripts/test-generate-pipeline-smoke.ts",

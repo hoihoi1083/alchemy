@@ -1,5 +1,7 @@
 import { ApiError, fal } from "@fal-ai/client";
 import { NextResponse } from "next/server";
+import { requireTokens, settleTokens } from "@/lib/billing/charge";
+import { TOKEN_COST } from "@/lib/billing/token-costs";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import { defaultEditEndpoint, defaultTextEndpoint } from "@/lib/image-endpoints";
 import {
@@ -127,6 +129,10 @@ export async function POST(request: Request) {
   );
   const systemPrompt = artStyleSystemPrompt(artStyleId);
 
+  const tokenCost = TOKEN_COST.teaching_carousel;
+  const tokenGate = await requireTokens(auth.user.userId, tokenCost);
+  if (tokenGate) return tokenGate;
+
   try {
     const plan = await planTeachingCarousel({
       visualStyleId: visualStyle,
@@ -236,6 +242,10 @@ export async function POST(request: Request) {
     }));
 
     await trackUsage(auth.user.userId, "campaign");
+    const balanceAfter = await settleTokens(auth.user.userId, tokenCost, {
+      kind: "teaching_carousel",
+      slideCount: archivedSlides.length,
+    });
     return NextResponse.json({
       plan,
       slides: archivedSlides,
@@ -247,6 +257,8 @@ export async function POST(request: Request) {
       artStyle: artStyleId,
       referenceMode: referenceImageMode,
       referenceStrategy: strategy.kind,
+      tokensCharged: tokenCost,
+      creditBalance: balanceAfter,
     });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : formatFalError(e);

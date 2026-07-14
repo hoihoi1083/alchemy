@@ -85,17 +85,14 @@ export async function POST(request: Request) {
 
     if (mode === "brand") {
       const profile = body.brandProfile;
-      if (!profile?.businessName) {
-        return NextResponse.json(
-          { error: "Analyze the brand first (website or social hint)." },
-          { status: 400 },
-        );
+      if (profile?.businessName) {
+        const plan = await planVideoPrompt({ brandProfile: profile, ...shared });
+        return NextResponse.json({
+          ...plan,
+          sourceNote: "Seedance video prompt from brand analysis (DeepSeek)",
+        });
       }
-      const plan = await planVideoPrompt({ brandProfile: profile, ...shared });
-      return NextResponse.json({
-        ...plan,
-        sourceNote: "Seedance video prompt from brand analysis (DeepSeek)",
-      });
+      // No brand analysis — fall through to product-context planner.
     }
 
     const plan = await planProductVideoPrompt(shared);

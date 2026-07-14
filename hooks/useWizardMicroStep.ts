@@ -4,9 +4,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { StudioWizardValue } from "@/hooks/useStudioWizard";
 import type { PromotionMode } from "@/lib/promotion-mode";
+import type { ConceptSource } from "@/lib/concept-source-state";
+import {
+  clearConceptAssistantState,
+  clearConceptResearchState,
+} from "@/lib/concept-source-state";
 import {
   canProceedMicroStep,
   defaultMicroContext,
+  intakePathForConceptSource,
   isWaitMicroStep,
   microStepLegacyKey,
   resolveMicroSteps,
@@ -103,6 +109,7 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
   const [stepIndex, setStepIndex] = useState(0);
   const [finishedSetup, setFinishedSetup] = useState(false);
   const [pendingIntakePath, setPendingIntakePath] = useState<IntakePath | undefined>();
+  const [pendingConceptSource, setPendingConceptSource] = useState<ConceptSource | undefined>();
   const [pendingVideoSubpath, setPendingVideoSubpath] = useState<VideoSubpath | undefined>();
   const autoAdvancedRef = useRef<string | null>(null);
 
@@ -154,12 +161,16 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
       const intakePath = pendingIntakePath ?? ctx.intakePath;
       return intakePath ? { ...ctx, intakePath } : ctx;
     }
+    if (currentId === "route.concept_source") {
+      const conceptSource = pendingConceptSource ?? ctx.conceptSource;
+      return conceptSource ? { ...ctx, conceptSource } : ctx;
+    }
     if (currentId === "route.video_subpath") {
       const videoSubpath = pendingVideoSubpath ?? ctx.videoSubpath;
       return videoSubpath ? { ...ctx, videoSubpath } : ctx;
     }
     return ctx;
-  }, [ctx, currentId, pendingIntakePath, pendingVideoSubpath]);
+  }, [ctx, currentId, pendingConceptSource, pendingIntakePath, pendingVideoSubpath]);
 
   const blockReason = currentId ? canProceedMicroStep(currentId, proceedCtx, state) : null;
 
@@ -238,6 +249,50 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
       return;
     }
 
+    if (currentId === "route.concept_source") {
+      const conceptSource = pendingConceptSource ?? ctx.conceptSource;
+      if (!conceptSource) return;
+      const wizardApi = {
+        setImageRefPhoto: wizard.setImageRefPhoto,
+        setImageCreativeMode: wizard.setImageCreativeMode,
+        setExtraKitPhotos: wizard.setExtraKitPhotos,
+        setContentResearchApplyRef: wizard.setContentResearchApplyRef,
+        setUserReferenceBrief: wizard.setUserReferenceBrief,
+        setPromptExtra: wizard.setPromptExtra,
+        setCreativeVideoBrief: wizard.setCreativeVideoBrief,
+        setHeadline: wizard.setHeadline,
+        setSubline: wizard.setSubline,
+        setOffer: wizard.setOffer,
+        onReferenceAdFile: wizard.onReferenceAdFile,
+      };
+      if (conceptSource === "assistant") clearConceptResearchState(wizardApi);
+      else clearConceptAssistantState(wizardApi);
+      patchContext({ conceptSource });
+      setPendingConceptSource(undefined);
+      autoAdvancedRef.current = null;
+      setStepIndex(stepIndex + 1);
+      return;
+    }
+
+    if (currentId === "identity.concept" && ctx.conceptSource === "assistant") {
+      const intakePath = intakePathForConceptSource("assistant");
+      patchContext({ intakePath });
+      wizard.setImageCreativeMode(wizard.imageRefPhoto ? "reference-concept" : "promo-ai");
+      const nextSteps = resolveMicroSteps({ ...ctx, intakePath, conceptSource: "assistant" }, state);
+      autoAdvancedRef.current = null;
+      setStepIndex(resumeStepIndex(nextSteps));
+      return;
+    }
+
+    if (currentId === "identity.concept_topic") {
+      const intakePath = intakePathForConceptSource("research");
+      patchContext({ intakePath, conceptSource: "research" });
+      const nextSteps = resolveMicroSteps({ ...ctx, intakePath, conceptSource: "research" }, state);
+      autoAdvancedRef.current = null;
+      setStepIndex(resumeStepIndex(nextSteps));
+      return;
+    }
+
     if (currentId === "route.video_subpath") {
       const videoSubpath = pendingVideoSubpath ?? ctx.videoSubpath;
       if (!videoSubpath) return;
@@ -295,6 +350,10 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
 
   const setIntakePath = useCallback((path: IntakePath) => {
     setPendingIntakePath(path);
+  }, []);
+
+  const setConceptSource = useCallback((source: ConceptSource) => {
+    setPendingConceptSource(source);
   }, []);
 
   const setCombinedStyle = useCallback(
@@ -386,10 +445,12 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     skipStep,
     goClassic,
     setIntakePath,
+    setConceptSource,
     setCombinedStyle,
     setVideoSubpath,
     setSubjectMode,
     pendingIntakePath,
+    pendingConceptSource,
     pendingVideoSubpath,
     isSkippable: Boolean(currentStep?.skippable),
     finishedSetup,

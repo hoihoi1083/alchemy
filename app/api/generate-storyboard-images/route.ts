@@ -1,5 +1,7 @@
 import { ApiError, fal } from "@fal-ai/client";
 import { NextResponse } from "next/server";
+import { requireTokens, settleTokens } from "@/lib/billing/charge";
+import { estimateImageTokens } from "@/lib/billing/token-costs";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import type { BrandProfile } from "@/lib/brand-profile";
 import { parseBrandKit } from "@/lib/brand-kit";
@@ -250,6 +252,13 @@ export async function POST(request: Request) {
     /* marker-only path: plan should already be pinned client-side */
   }
 
+  const tokenCost = estimateImageTokens({
+    mode: "storyboard",
+    sceneCount: plan.scenes.length,
+  });
+  const tokenGate = await requireTokens(auth.user.userId, tokenCost);
+  if (tokenGate) return tokenGate;
+
   try {
     let imageUrlsForFal: string[] | null = null;
     const storyboardStyleRef =
@@ -320,6 +329,10 @@ export async function POST(request: Request) {
 
     const imageUrls = scenes.map((s) => s.imageUrl);
     await trackUsage(auth.user.userId, "storyboard");
+    const balanceAfter = await settleTokens(auth.user.userId, tokenCost, {
+      kind: "storyboard",
+      sceneCount: scenes.length,
+    });
     return NextResponse.json({
       plan,
       scenes,
@@ -330,6 +343,8 @@ export async function POST(request: Request) {
       mode: "storyboard",
       sceneCount: scenes.length,
       referenceStrategy: strategy.kind,
+      tokensCharged: tokenCost,
+      creditBalance: balanceAfter,
     });
   } catch (e: unknown) {
     return NextResponse.json({ error: formatFalError(e) }, { status: 502 });
