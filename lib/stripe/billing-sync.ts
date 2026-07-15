@@ -1,0 +1,168 @@
+import {
+  PLAN_DEFINITIONS,
+  TOP_UP_TOKENS,
+  normalizeUserPlan,
+  type UserPlan,
+} from "@/lib/billing/plans";
+import { grantTokens } from "@/lib/billing/ledger";
+import type { DbUser } from "@/lib/db/types";
+import { getDb, isMongoConfigured } from "@/lib/mongodb";
+import type { PaidPlan } from "@/lib/stripe/prices";
+
+/**
+ * Idempotent credit: claim a lock on `ref`, then grant once.
+ * Returns { granted, balanceAfter }.
+ */
+export async function grantTokensOnce(
+  clerkId: string,
+  amount: number,
+  reason: "subscription_grant" | "topup",
+  ref: string,
+  meta?: Record<string, unknown>,
+): Promise<{ granted: boolean; balanceAfter: number | null }> {
+  if (!isMongoConfigured() || amount <= 0 || !ref) {
+    return { granted: false, balanceAfter: null };
+  }
+  const db = await getDb();
+  type BillingLock = {
+    _id: string;
+    clerkId: string;
+    reason: string;
+    createdAt: Date;
+  };
+  // returnDocument:"before" + upsert → null means we just claimed the lock.
+  const prior = await db.collection<BillingLock>("billing_event_locks").findOneAndUpdate(
+    { _id: ref },
+    {
+      $setOnInsert: {
+        clerkId,
+        reason,
+        createdAt: new Date(),
+      },
+    },
+    { upsert: true, returnDocument: "before" },
+  );
+  // Driver returns the doc before update; null/undefined ⇒ first claim.
+  if (prior) {
+    const existing = await db.collection("credit_transactions").findOne({ ref });
+    return { granted: false, balanceAfter: (existing?.balanceAfter as number) ?? null };
+  }
+
+  const balanceAfter = await grantTokens(clerkId, amount, reason, { ref, meta });
+  return { granted: balanceAfter != null, balanceAfter };
+}
+
+export async function setUserSubscription(opts: {
+  clerkId: string;
+  plan: PaidPlan;
+  stripeCustomerId?: string | null;
+  stripeSubscriptionId?: string | null;
+  planRenewsAt?: Date | null;
+}): Promise<void> {
+  if (!isMongoConfigured()) return;
+  const db = await getDb();
+  const now = new Date();
+  const $set: Partial<DbUser> & { updatedAt: Date } = {
+    plan: opts.plan,
+    updatedAt: now,
+  };
+  if (opts.stripeCustomerId !== undefined) $set.stripeCustomerId = opts.stripeCustomerId;
+  if (opts.stripeSubscriptionId !== undefined) {
+    $set.stripeSubscriptionId = opts.stripeSubscriptionId;
+  }
+  if (opts.planRenewsAt !== undefined) $set.planRenewsAt = opts.planRenewsAt;
+
+  await db.collection<DbUser>("users").updateOne(
+    { clerkId: opts.clerkId },
+    {
+      $set,
+      $setOnInsert: {
+        clerkId: opts.clerkId,
+        email: null,
+        name: null,
+        imageUrl: null,
+        region: process.env.REGION === "cn" ? "cn" : "hk",
+        creditBalance: 0,
+        createdAt: now,
+      },
+    },
+    { upsert: true },
+  );
+}
+
+export async function clearPaidSubscription(clerkId: string): Promise<void> {
+  if (!isMongoConfigured()) return;
+  const db = await getDb();
+  await db.collection<DbUser>("users").updateOne(
+    { clerkId },
+    {
+      $set: {
+        plan: "free" satisfies UserPlan,
+        stripeSubscriptionId: null,
+        planRenewsAt: null,
+        updatedAt: new Date(),
+      },
+    },
+  );
+}
+
+export async function findClerkIdByStripeCustomer(
+  customerId: string,
+): Promise<string | null> {
+  if (!isMongoConfigured() || !customerId) return null;
+  const db = await getDb();
+  const user = await db.collection<DbUser>("users").findOne({ stripeCustomerId: customerId });
+  return user?.clerkId ?? null;
+}
+
+export function tokensForPaidPlan(plan: PaidPlan): number {
+  return PLAN_DEFINITIONS[plan].monthlyTokens;
+}
+
+export async function applySubscriptionGrant(opts: {
+  clerkId: string;
+  plan: PaidPlan;
+  ref: string;
+  stripeCustomerId?: string | null;
+  stripeSubscriptionId?: string | null;
+  planRenewsAt?: Date | null;
+  meta?: Record<string, unknown>;
+}): Promise<{ granted: boolean; balanceAfter: number | null }> {
+  await setUserSubscription({
+    clerkId: opts.clerkId,
+    plan: opts.plan,
+    stripeCustomerId: opts.stripeCustomerId,
+    stripeSubscriptionId: opts.stripeSubscriptionId,
+    planRenewsAt: opts.planRenewsAt,
+  });
+  return grantTokensOnce(
+    opts.clerkId,
+    tokensForPaidPlan(opts.plan),
+    "subscription_grant",
+    opts.ref,
+    { plan: opts.plan, ...opts.meta },
+  );
+}
+
+export async function applyTopUpGrant(opts: {
+  clerkId: string;
+  ref: string;
+  stripeCustomerId?: string | null;
+  meta?: Record<string, unknown>;
+}): Promise<{ granted: boolean; balanceAfter: number | null }> {
+  if (!isMongoConfigured()) return { granted: false, balanceAfter: null };
+  const db = await getDb();
+  if (opts.stripeCustomerId) {
+    await db.collection<DbUser>("users").updateOne(
+      { clerkId: opts.clerkId },
+      { $set: { stripeCustomerId: opts.stripeCustomerId, updatedAt: new Date() } },
+    );
+  }
+  const user = await db.collection<DbUser>("users").findOne({ clerkId: opts.clerkId });
+  const plan = normalizeUserPlan(user?.plan);
+  if (!PLAN_DEFINITIONS[plan].canTopUp) {
+    console.warn("[stripe] top-up refused — user not on paid plan", opts.clerkId, plan);
+    return { granted: false, balanceAfter: user?.creditBalance ?? null };
+  }
+  return grantTokensOnce(opts.clerkId, TOP_UP_TOKENS, "topup", opts.ref, opts.meta);
+}

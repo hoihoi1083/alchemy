@@ -24,3 +24,5 @@ captions.srt
 
 # Compositor fonts — run: npm run setup:compositor
 /public/compositor/fonts/*.ttf
+.vercel
+.env*

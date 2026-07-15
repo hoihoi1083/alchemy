@@ -14,6 +14,36 @@ export const zhCn = {
     signIn: "登录",
     tokensBalance: "{n} tokens",
     tokensBalanceTitle: "你的 token 余额 — 查看方案与加购",
+    accountMenu: "账户与账单",
+  },
+  account: {
+    title: "账户与账单",
+    subtitle: "查看计划、token 余额和账单记录。需要时可在 Stripe 管理信用卡和发票。",
+    loading: "加载账户中…",
+    loadError: "无法加载账户。",
+    planLabel: "当前计划",
+    balanceLabel: "Token 余额",
+    tokensUnit: "tokens",
+    renewsLabel: "下次续费",
+    manageBilling: "管理账单",
+    portalRedirecting: "正在打开 Stripe…",
+    portalError: "无法打开账单页面。",
+    portalNeedSubscribe: "请先订阅，才能管理信用卡、取消和查看 Stripe 发票。",
+    viewPlans: "查看方案与加购",
+    historyTitle: "收据与 token 记录",
+    historySubtitle:
+      "包括订阅发放、加购和生成扣费。Stripe 订阅发票也可在「管理账单」查看。",
+    historyEmpty: "暂时没有交易记录。",
+    balanceAfter: "结余",
+    invoiceRef: "发票",
+    reasons: {
+      signup_grant: "免费注册 token",
+      subscription_grant: "订阅 token",
+      topup: "Token 加购",
+      consume: "生成扣费",
+      refund: "退款",
+      admin_adjust: "调整",
+    },
   },
   studio: {
     loadingTitle: "正在加载 studio…",
@@ -160,6 +190,12 @@ export const zhCn = {
     topUpPrice: "$10",
     topUpTokens: "1,000 token",
     topUpNote: "任何付费计划订阅后可用",
+    buyTopUp: "购买 token",
+    manageBilling: "管理账单",
+    checkoutRedirecting: "正在前往 Stripe…",
+    checkoutSuccess: "付款成功。Token 几秒内到账 — 如未更新请刷新。",
+    checkoutCanceled: "已取消结账，未收费。",
+    checkoutError: "无法开始结账。请重试，或联系支持。",
     tokenTitle: "Token 怎么计",
     tokenSubtitle: "Token 是工作室货币。每次生成前会显示所需 token。",
     tokenItems: [
@@ -196,7 +232,7 @@ export const zhCn = {
       },
     ],
     footnote:
-      "价格以美元计。视频分辨率和片长会影响 token。Stripe 结账和账户账单页面即将推出。",
+      "价格以美元计。视频分辨率和片长会影响 token。通过 Stripe 付款。可随时在「管理账单」取消或更改计划。",
     plans: {
       free: {
         name: "免费",

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { PricingPageClient } from "@/components/PricingPageClient";
 import type { Metadata } from "next";
 
@@ -8,5 +9,9 @@ export const metadata: Metadata = {
 };
 
 export default function PricingPage() {
-  return <PricingPageClient />;
+  return (
+    <Suspense fallback={<main className="min-h-screen bg-white" />}>
+      <PricingPageClient />
+    </Suspense>
+  );
 }

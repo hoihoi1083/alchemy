@@ -11,6 +11,7 @@ export type CreditReason =
   | "admin_adjust";
 
 export type CreditTransaction = {
+  _id?: import("mongodb").ObjectId;
   clerkId: string;
   delta: number;
   reason: CreditReason;

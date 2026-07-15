@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useAuth } from "@clerk/nextjs";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { AuthNav } from "@/components/AuthNav";
 import { LanguageToggle } from "@/components/LanguageToggle";
@@ -29,9 +31,62 @@ function SectionGap() {
 export function PricingPageClient() {
   const { m } = useLocale();
   const p = m.pricing;
+  const { isSignedIn, isLoaded } = useAuth();
+  const searchParams = useSearchParams();
   const [interval, setInterval] = useState<BillingInterval>("monthly");
   const [selectedPlan, setSelectedPlan] = useState<"free" | PaidPlanKey>("pro");
+  const [busy, setBusy] = useState<string | null>(null);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const paidPlans: PaidPlanKey[] = ["standard", "pro", "master"];
+
+  const checkoutStatus = searchParams.get("checkout");
+
+  async function startCheckout(body: Record<string, string>) {
+    setCheckoutError(null);
+    if (!isLoaded) return;
+    if (!isSignedIn) {
+      const returnTo = `/pricing?plan=${body.plan ?? "pro"}&interval=${body.interval ?? interval}`;
+      window.location.href = `/sign-in?redirect_url=${encodeURIComponent(returnTo)}`;
+      return;
+    }
+    const key = body.kind === "topup" ? "topup" : `${body.plan}-${body.interval}`;
+    setBusy(key);
+    try {
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = (await res.json()) as { url?: string; error?: string };
+      if (!res.ok || !data.url) {
+        throw new Error(data.error ?? p.checkoutError);
+      }
+      window.location.href = data.url;
+    } catch (e) {
+      setCheckoutError(e instanceof Error ? e.message : p.checkoutError);
+      setBusy(null);
+    }
+  }
+
+  async function openPortal() {
+    setCheckoutError(null);
+    if (!isSignedIn) {
+      window.location.href = `/sign-in?redirect_url=${encodeURIComponent("/pricing")}`;
+      return;
+    }
+    setBusy("portal");
+    try {
+      const res = await fetch("/api/stripe/portal", { method: "POST" });
+      const data = (await res.json()) as { url?: string; error?: string };
+      if (!res.ok || !data.url) {
+        throw new Error(data.error ?? p.checkoutError);
+      }
+      window.location.href = data.url;
+    } catch (e) {
+      setCheckoutError(e instanceof Error ? e.message : p.checkoutError);
+      setBusy(null);
+    }
+  }
 
   return (
     <main className="min-h-screen bg-white text-slate-900">
@@ -62,6 +117,22 @@ export function PricingPageClient() {
       </header>
 
       <div className="mx-auto max-w-6xl px-6">
+        {checkoutStatus === "success" ? (
+          <div className="mb-8 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-900">
+            {p.checkoutSuccess}
+          </div>
+        ) : null}
+        {checkoutStatus === "cancel" ? (
+          <div className="mb-8 rounded-xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm text-slate-700">
+            {p.checkoutCanceled}
+          </div>
+        ) : null}
+        {checkoutError ? (
+          <div className="mb-8 rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-800">
+            {checkoutError}
+          </div>
+        ) : null}
+
         {/* 2. Hero — 按創作量選計劃 */}
         <section
           className="rounded-2xl border border-slate-200 bg-linear-to-br from-indigo-50 via-white to-cyan-50 text-center"
@@ -99,6 +170,24 @@ export function PricingPageClient() {
               </span>
             </button>
           </div>
+          {isSignedIn ? (
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+              <Link
+                href="/account"
+                className="text-sm font-medium text-indigo-700 underline-offset-2 hover:underline"
+              >
+                {m.auth.accountMenu}
+              </Link>
+              <button
+                type="button"
+                onClick={() => void openPortal()}
+                disabled={busy === "portal"}
+                className="text-sm font-medium text-slate-600 underline-offset-2 hover:underline disabled:opacity-60"
+              >
+                {busy === "portal" ? p.checkoutRedirecting : p.manageBilling}
+              </button>
+            </div>
+          ) : null}
         </section>
 
         <SectionGap />
@@ -119,6 +208,7 @@ export function PricingPageClient() {
             />
             {paidPlans.map((key) => {
               const plan = p.plans[key];
+              const busyKey = `${key}-${interval}`;
               return (
                 <PlanCard
                   key={key}
@@ -133,8 +223,15 @@ export function PricingPageClient() {
                   saveLabel={interval === "monthly" ? plan.monthlySave : plan.yearlySave}
                   tokens={`${plan.tokens} ${p.tokensPerMonth}`}
                   features={plan.features.slice(1)}
-                  cta={p.subscribe}
-                  ctaHref={`/sign-up?plan=${key}`}
+                  cta={busy === busyKey ? p.checkoutRedirecting : p.subscribe}
+                  ctaDisabled={busy != null}
+                  onCtaClick={() =>
+                    void startCheckout({
+                      kind: "subscription",
+                      plan: key,
+                      interval,
+                    })
+                  }
                   badge={key === "pro" ? p.mostPopular : undefined}
                 />
               );
@@ -203,6 +300,14 @@ export function PricingPageClient() {
             <div className="shrink-0 text-left sm:text-right">
               <p className="text-3xl font-semibold tracking-tight text-slate-900">{p.topUpPrice}</p>
               <p className="mt-1 text-sm text-slate-600">{p.topUpTokens}</p>
+              <button
+                type="button"
+                onClick={() => void startCheckout({ kind: "topup" })}
+                disabled={busy != null}
+                className="mt-4 inline-flex rounded-full bg-slate-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-60"
+              >
+                {busy === "topup" ? p.checkoutRedirecting : p.buyTopUp}
+              </button>
             </div>
           </div>
         </div>
@@ -288,7 +393,9 @@ type PlanCardProps = {
   tokens?: string;
   features: readonly string[];
   cta: string;
-  ctaHref: string;
+  ctaHref?: string;
+  onCtaClick?: () => void;
+  ctaDisabled?: boolean;
   badge?: string;
 };
 
@@ -307,8 +414,16 @@ function PlanCard({
   features,
   cta,
   ctaHref,
+  onCtaClick,
+  ctaDisabled,
   badge,
 }: PlanCardProps) {
+  const ctaClass = `mt-8 block w-full rounded-full py-3 text-center text-sm font-medium transition ${
+    selected
+      ? "bg-indigo-600 text-white hover:bg-indigo-700"
+      : "border border-slate-300 bg-white text-slate-800 hover:bg-slate-50"
+  } disabled:opacity-60`;
+
   return (
     <div
       role="button"
@@ -372,17 +487,23 @@ function PlanCard({
         ))}
       </ul>
 
-      <Link
-        href={ctaHref}
-        onClick={(e) => e.stopPropagation()}
-        className={`mt-8 block rounded-full py-3 text-center text-sm font-medium transition ${
-          selected
-            ? "bg-indigo-600 text-white hover:bg-indigo-700"
-            : "border border-slate-300 bg-white text-slate-800 hover:bg-slate-50"
-        }`}
-      >
-        {cta}
-      </Link>
+      {onCtaClick ? (
+        <button
+          type="button"
+          disabled={ctaDisabled}
+          onClick={(e) => {
+            e.stopPropagation();
+            onCtaClick();
+          }}
+          className={ctaClass}
+        >
+          {cta}
+        </button>
+      ) : (
+        <Link href={ctaHref ?? "/sign-up"} onClick={(e) => e.stopPropagation()} className={ctaClass}>
+          {cta}
+        </Link>
+      )}
     </div>
   );
 }

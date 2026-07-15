@@ -14,6 +14,36 @@ export const en = {
     signIn: "Sign in",
     tokensBalance: "{n} tokens",
     tokensBalanceTitle: "Your token balance — view plans & top-ups",
+    accountMenu: "Account & billing",
+  },
+  account: {
+    title: "Account & billing",
+    subtitle: "Your plan, token balance, and credit history. Manage card and invoices in Stripe when needed.",
+    loading: "Loading account…",
+    loadError: "Could not load account.",
+    planLabel: "Current plan",
+    balanceLabel: "Token balance",
+    tokensUnit: "tokens",
+    renewsLabel: "Renews",
+    manageBilling: "Manage billing",
+    portalRedirecting: "Opening Stripe…",
+    portalError: "Could not open billing portal.",
+    portalNeedSubscribe: "Subscribe first to manage card, cancel, and Stripe invoices.",
+    viewPlans: "View plans & top-ups",
+    historyTitle: "Receipts & token history",
+    historySubtitle:
+      "Every subscription grant, top-up, and generation spend. Stripe subscription invoices also appear under Manage billing.",
+    historyEmpty: "No transactions yet.",
+    balanceAfter: "Balance",
+    invoiceRef: "Invoice",
+    reasons: {
+      signup_grant: "Free signup tokens",
+      subscription_grant: "Subscription tokens",
+      topup: "Token top-up",
+      consume: "Generation spend",
+      refund: "Refund",
+      admin_adjust: "Adjustment",
+    },
   },
   studio: {
     loadingTitle: "Loading your studio…",
@@ -168,6 +198,12 @@ export const en = {
     topUpPrice: "$10",
     topUpTokens: "1,000 tokens",
     topUpNote: "Available after any paid subscription",
+    buyTopUp: "Buy tokens",
+    manageBilling: "Manage billing",
+    checkoutRedirecting: "Redirecting to Stripe…",
+    checkoutSuccess: "Payment received. Tokens will appear in your balance within a few seconds — refresh if needed.",
+    checkoutCanceled: "Checkout canceled. No charge was made.",
+    checkoutError: "Could not start checkout. Try again or contact support.",
     tokenTitle: "How tokens work",
     tokenSubtitle: "Tokens are your studio currency. Each generation shows the cost before you run.",
     tokenItems: [
@@ -204,7 +240,7 @@ export const en = {
       },
     ],
     footnote:
-      "Prices in USD. Video resolution and duration affect token cost. Stripe checkout and account billing dashboard coming soon.",
+      "Prices in USD. Video resolution and duration affect token cost. Paid via Stripe. Cancel or change plans anytime from Manage billing.",
     plans: {
       free: {
         name: "Free",

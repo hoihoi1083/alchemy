@@ -14,6 +14,36 @@ export const zh = {
     signIn: "登入",
     tokensBalance: "{n} tokens",
     tokensBalanceTitle: "你的 token 餘額 — 查看方案與加購",
+    accountMenu: "帳戶與帳單",
+  },
+  account: {
+    title: "帳戶與帳單",
+    subtitle: "查看計劃、token 餘額同帳單紀錄。需要時可喺 Stripe 管理信用卡同發票。",
+    loading: "載入帳戶中…",
+    loadError: "無法載入帳戶。",
+    planLabel: "目前計劃",
+    balanceLabel: "Token 餘額",
+    tokensUnit: "tokens",
+    renewsLabel: "下次續費",
+    manageBilling: "管理帳單",
+    portalRedirecting: "正開啟 Stripe…",
+    portalError: "無法開啟帳單頁面。",
+    portalNeedSubscribe: "請先訂閱，先可以管理信用卡、取消同查看 Stripe 發票。",
+    viewPlans: "查看方案與加購",
+    historyTitle: "收據與 token 紀錄",
+    historySubtitle:
+      "包括訂閱發放、加購同生成扣費。Stripe 訂閱發票亦可喺「管理帳單」查看。",
+    historyEmpty: "暫時未有交易紀錄。",
+    balanceAfter: "結餘",
+    invoiceRef: "發票",
+    reasons: {
+      signup_grant: "免費註冊 token",
+      subscription_grant: "訂閱 token",
+      topup: "Token 加購",
+      consume: "生成扣費",
+      refund: "退款",
+      admin_adjust: "調整",
+    },
   },
   studio: {
     loadingTitle: "正在載入 studio…",
@@ -160,6 +190,12 @@ export const zh = {
     topUpPrice: "$10",
     topUpTokens: "1,000 token",
     topUpNote: "任何付費計劃訂閱後可用",
+    buyTopUp: "購買 token",
+    manageBilling: "管理帳單",
+    checkoutRedirecting: "正前往 Stripe…",
+    checkoutSuccess: "付款成功。Token 幾秒內會入帳 — 如未更新請重新整理。",
+    checkoutCanceled: "已取消結帳，未有收費。",
+    checkoutError: "無法開始結帳。請再試，或聯絡支援。",
     tokenTitle: "Token 點樣計",
     tokenSubtitle: "Token 係工作室貨幣。每次生成前會顯示所需 token。",
     tokenItems: [
@@ -196,7 +232,7 @@ export const zh = {
       },
     ],
     footnote:
-      "價格以美元計。影片解像度同片長會影響 token。Stripe 結帳同帳戶帳單頁面即將推出。",
+      "價格以美元計。影片解像度同片長會影響 token。經 Stripe 付款。可隨時喺「管理帳單」取消或更改計劃。",
     plans: {
       free: {
         name: "免費",
