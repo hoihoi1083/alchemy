@@ -2,16 +2,11 @@ import { setupClerkTestingToken } from "@clerk/testing/playwright";
 import { test, expect, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import path from "node:path";
+import { hasClerkE2eAuth } from "./clerk-env";
 
 const LOCALE_KEY = "ams-locale";
 const FIXTURE_PNG = path.join(process.cwd(), "tests/fixtures/smoke/product.png");
 const MOCK_IMAGE_URL = "https://example.com/e2e-mock-product.png";
-
-const hasE2eAuth = Boolean(
-  process.env.CLERK_SECRET_KEY?.trim() &&
-    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.trim() &&
-    process.env.E2E_CLERK_USER_ID?.trim(),
-);
 
 async function clerkSignInToken(userId: string): Promise<string> {
   const res = await fetch("https://api.clerk.com/v1/sign_in_tokens", {
@@ -48,7 +43,7 @@ async function signInE2eUser(page: Page) {
 test.describe("Studio image generate preflight", () => {
   test.beforeEach(() => {
     test.skip(
-      !hasE2eAuth,
+      !hasClerkE2eAuth(),
       "Set E2E_CLERK_USER_ID + Clerk keys (run npm run setup:secrets)",
     );
   });

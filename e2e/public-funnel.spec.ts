@@ -1,16 +1,24 @@
 import { test, expect } from "@playwright/test";
 
+const LOCALE_KEY = "ams-locale";
+
 test.describe("Public entry funnel", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript((key) => {
+      localStorage.setItem(key, "en");
+    }, LOCALE_KEY);
+  });
+
   test("landing loads and primary CTA targets /start", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByText("alchemy.ai").first()).toBeVisible();
-    const startLink = page.getByRole("link", { name: /Start Creating|Open Studio/i }).first();
+    const startLink = page.getByRole("link", { name: "Start Creating" });
     await expect(startLink).toHaveAttribute("href", "/start");
   });
 
   test("how it works scrolls on landing (#how)", async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("link", { name: /How It Works/i }).click();
+    await page.locator('a[href="#how"]').first().click();
     await expect(page).toHaveURL(/#how$/);
     await expect(page.locator("#how")).toBeVisible();
   });
