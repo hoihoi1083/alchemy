@@ -42,7 +42,8 @@ test.describe("Public entry funnel", () => {
   });
 
   test("protected /start redirects unauthenticated users to sign-in", async ({ page }) => {
-    await page.goto("/start");
-    await expect(page).toHaveURL(/sign-in/);
+    await page.goto("/start", { waitUntil: "domcontentloaded" });
+    // Clerk may briefly land on /start?__clerk_handshake=… before the sign-in redirect.
+    await expect(page).toHaveURL(/sign-in/, { timeout: 30_000 });
   });
 });

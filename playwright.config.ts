@@ -13,7 +13,10 @@ function loadEnvLocal() {
 
 loadEnvLocal();
 
-const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000";
+// Prefer 127.0.0.1 over localhost — on some CI runners `localhost` resolves to
+// ::1 first and the readiness probe can hang for the full webServer timeout.
+const port = Number(process.env.PORT ?? 3000);
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? `http://127.0.0.1:${port}`;
 const isCi = Boolean(process.env.CI);
 
 export default defineConfig({
@@ -44,6 +47,8 @@ export default defineConfig({
     command: isCi ? "npm run start" : "npm run dev",
     url: baseURL,
     reuseExistingServer: !isCi,
-    timeout: 120_000,
+    timeout: 180_000,
+    stdout: "pipe",
+    stderr: "pipe",
   },
 });
