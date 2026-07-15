@@ -265,7 +265,8 @@ describe("applyContentAngleToWizard reel reference", () => {
   });
 
   it("carousel angle does not attach reference video", async () => {
-    let referenceAd: File | null = mockVideoFile();
+    const unusedVideo = mockVideoFile();
+    let lastReferenceAd: File | null | undefined;
 
     await applyContentAngleToWizard(
       zodiacCarouselAngle,
@@ -284,17 +285,22 @@ describe("applyContentAngleToWizard reel reference", () => {
         setImageCreativeMode: () => {},
         setImageRefPhoto: () => {},
         onVideoCreativeModeChange: () => assert.fail("carousel should not set video mode"),
-        onReferenceAdFile: () => assert.fail("carousel should not attach video"),
+        // Clearing a previous reel (null) is correct; attaching a File is not.
+        onReferenceAdFile: (file) => {
+          lastReferenceAd = file;
+          if (file != null) assert.fail("carousel should not attach video");
+        },
       },
       PROMOTE_PRODUCT,
       {
         fetchResearchImagesAsFiles: async (urls) => urls.map((_, i) => mockImageFile(`s${i}.jpg`)),
-        fetchResearchVideoAsFile: async () => referenceAd,
+        fetchResearchVideoAsFile: async () => unusedVideo,
         resolveResearchPostVideo: async () => "https://should-not-resolve.mp4",
       },
     );
 
-    assert.ok(referenceAd);
+    assert.equal(lastReferenceAd, null);
+    assert.ok(unusedVideo);
   });
 });
 

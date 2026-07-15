@@ -148,17 +148,28 @@ function isUnsafePromotedCopy(
   text: string,
   angle: ContentAngleCandidate,
   product: string,
+  searchTopic = "",
+  opts?: { requireProductMention?: boolean },
 ): boolean {
   const t = text.trim();
   if (!t) return true;
   if (REFERENCE_TOPIC_CTA.test(t)) return true;
   const source = angle.sourceTitle?.trim();
   if (source && t === source) return true;
-  if (product && !t.includes(product) && REFERENCE_TOPIC_LEAK.test(t)) return true;
-  if (product && !t.includes(product) && REFERENCE_TOPIC_LEAK.test(angle.sourceTitle ?? "")) {
-    return true;
+
+  if (product && !t.includes(product)) {
+    // Edu / viral carousels: never keep lines that omit the promote target.
+    if (opts?.requireProductMention !== false) return true;
+    // Product-shot stills: allow planner mood lines, but still block topic leaks.
+    const search = searchTopic.trim();
+    if (search.length >= 2 && t.includes(search)) return true;
+    if (REFERENCE_TOPIC_LEAK.test(t) || REFERENCE_TOPIC_LEAK.test(angle.sourceTitle ?? "")) {
+      return true;
+    }
   }
-  if (product && !t.includes(product) && REFERENCE_TOPIC_LEAK.test(t)) return true;
+
+  // Even with the product named, block classic zodiac/viral topic leakage.
+  if (REFERENCE_TOPIC_LEAK.test(t)) return true;
   return false;
 }
 
@@ -169,25 +180,29 @@ function isUnsafePromotedCopy(
 function promotedRewriteCopyFromAngle(
   angle: ContentAngleCandidate,
   product: string,
+  searchTopic = "",
 ): { headline: string; subline: string; offer: string } {
   const source = angle.sourceTitle?.trim() ?? "";
   const title = angle.title?.trim() ?? "";
   const hook = angle.hook?.trim() ?? "";
+  const requireProductMention = !isProductShotReferenceAngle(angle);
+  const unsafe = (text: string) =>
+    isUnsafePromotedCopy(text, angle, product, searchTopic, { requireProductMention });
 
   let headline = "";
-  if (title && !isUnsafePromotedCopy(title, angle, product) && title !== source) {
+  if (title && !unsafe(title) && title !== source) {
     headline = title;
   } else if (product && !isProductShotReferenceAngle(angle)) {
     headline = `${product}｜${structureHookSuffix(angle.format)}`;
   }
 
   let subline = "";
-  if (hook && !isUnsafePromotedCopy(hook, angle, product) && hook !== source) {
+  if (hook && !unsafe(hook) && hook !== source) {
     subline = hook;
   } else {
     const bullets = angle.bulletPoints
       .map((b) => b.trim())
-      .filter((b) => b && !isUnsafePromotedCopy(b, angle, product));
+      .filter((b) => b && !unsafe(b));
     if (bullets.length) {
       subline = bullets.slice(0, 4).join(" · ");
     } else if (product && !isProductShotReferenceAngle(angle)) {
@@ -220,7 +235,7 @@ export function copyFieldsFromAngle(
   if (promotionMode === "concept") {
     if (product) {
       if (isResearchPostAngle(angle)) {
-        return promotedRewriteCopyFromAngle(angle, product);
+        return promotedRewriteCopyFromAngle(angle, product, search);
       }
       return {
         headline: `${product}｜${structureHookSuffix(angle.format)}`,
@@ -265,7 +280,7 @@ export function copyFieldsFromAngle(
   }
 
   if (isResearchPostAngle(angle)) {
-    return promotedRewriteCopyFromAngle(angle, product);
+    return promotedRewriteCopyFromAngle(angle, product, search);
   }
 
   const headline = `${product}｜${structureHookSuffix(angle.format)}`;
