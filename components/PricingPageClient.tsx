@@ -90,7 +90,7 @@ export function PricingPageClient() {
   }
 
   return (
-    <main className="min-h-screen bg-white text-slate-900">
+    <main className="flex min-h-dvh flex-col bg-white text-slate-900">
       {/* 1. Navbar */}
       <header className="mx-auto max-w-6xl px-6" style={{ paddingTop: 40, paddingBottom: 48 }}>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
