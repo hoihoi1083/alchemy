@@ -27,6 +27,13 @@ export async function getAssetForUser(
   });
 }
 
+/** Internal lookup by id (unguessable ObjectId) for pipeline rematerialization. */
+export async function getAssetById(assetId: string): Promise<WithId<DbAsset> | null> {
+  if (!ObjectId.isValid(assetId)) return null;
+  const db = await getDb();
+  return db.collection<DbAsset>("assets").findOne({ _id: new ObjectId(assetId) });
+}
+
 export async function findAssetBySource(
   clerkId: string,
   sourceUrl: string,

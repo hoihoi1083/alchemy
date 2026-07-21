@@ -58,7 +58,13 @@ export function PricingPageClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      const data = (await res.json()) as { url?: string; error?: string };
+      const raw = await res.text();
+      let data: { url?: string; error?: string } = {};
+      try {
+        data = raw ? (JSON.parse(raw) as { url?: string; error?: string }) : {};
+      } catch {
+        throw new Error(raw?.slice(0, 200) || p.checkoutError);
+      }
       if (!res.ok || !data.url) {
         throw new Error(data.error ?? p.checkoutError);
       }
@@ -78,7 +84,13 @@ export function PricingPageClient() {
     setBusy("portal");
     try {
       const res = await fetch("/api/stripe/portal", { method: "POST" });
-      const data = (await res.json()) as { url?: string; error?: string };
+      const raw = await res.text();
+      let data: { url?: string; error?: string } = {};
+      try {
+        data = raw ? (JSON.parse(raw) as { url?: string; error?: string }) : {};
+      } catch {
+        throw new Error(raw?.slice(0, 200) || p.checkoutError);
+      }
       if (!res.ok || !data.url) {
         throw new Error(data.error ?? p.checkoutError);
       }

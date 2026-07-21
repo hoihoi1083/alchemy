@@ -6,9 +6,16 @@ export function isStripeConfigured(): boolean {
   return Boolean(process.env.STRIPE_SECRET_KEY?.trim());
 }
 
-/** Vercel production must use live Stripe keys — never ship sk_test_ to real users. */
+/**
+ * Optional hard gate for real launch.
+ * Set STRIPE_REQUIRE_LIVE_IN_PROD=1 on Vercel Production when you are ready
+ * to accept only sk_live_ / pk_live_ keys. Default (unset) = old behaviour:
+ * test keys work on Production too.
+ */
 export function assertStripeLiveInProduction(): void {
   if (process.env.VERCEL_ENV !== "production") return;
+  if (process.env.STRIPE_REQUIRE_LIVE_IN_PROD?.trim() !== "1") return;
+
   const key = process.env.STRIPE_SECRET_KEY?.trim() || "";
   if (!key) return;
   if (!key.startsWith("sk_live_")) {

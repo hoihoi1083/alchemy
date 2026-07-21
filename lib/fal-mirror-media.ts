@@ -3,6 +3,7 @@ import path from "path";
 import { fal } from "@fal-ai/client";
 import { resolvePipelineFileUrl } from "@/lib/pipeline/local-input";
 import { assertSafeRemoteMediaUrl, isFalCdnUrl } from "@/lib/pipeline/safe-url";
+import { isLibraryAssetUrl, readLibraryAssetMedia } from "@/lib/storage/durable-media";
 
 function contentTypeForPath(filePath: string): string {
   const ext = path.extname(filePath).toLowerCase();
@@ -30,6 +31,16 @@ export async function mirrorImageUrlToFalStorage(url: string): Promise<string> {
       path.basename(localPath) || "source.png",
       { type },
     );
+    return fal.storage.upload(file);
+  }
+
+  if (isLibraryAssetUrl(trimmed)) {
+    const media = await readLibraryAssetMedia(trimmed);
+    if (!media) {
+      throw new Error("Library media not found or storage unavailable.");
+    }
+    const type = media.contentType.split(";")[0]?.trim() || "image/png";
+    const file = new File([new Uint8Array(media.bytes)], "source.png", { type });
     return fal.storage.upload(file);
   }
 

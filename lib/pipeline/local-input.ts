@@ -60,11 +60,23 @@ export function resolvePipelineFileUrl(url: string): string | null {
   return path.join(jobDir(jobId), file);
 }
 
-/** Download remote media or copy a local pipeline job file into destPath. */
+/** Download remote media or copy a local pipeline / library asset into destPath. */
 export async function materializeMediaInput(url: string, destPath: string): Promise<void> {
   const localPath = resolvePipelineFileUrl(url);
   if (localPath) {
     await fs.copyFile(localPath, destPath);
+    return;
+  }
+
+  const { isLibraryAssetUrl, readLibraryAssetMedia } = await import(
+    "@/lib/storage/durable-media"
+  );
+  if (isLibraryAssetUrl(url)) {
+    const media = await readLibraryAssetMedia(url);
+    if (!media) {
+      throw new Error("Library media not found or storage unavailable.");
+    }
+    await fs.writeFile(destPath, media.bytes);
     return;
   }
 

@@ -1,5 +1,7 @@
 import type { AssetKind } from "@/lib/db/types";
+import { isMongoConfigured } from "@/lib/mongodb";
 import { persistUserAsset } from "@/lib/storage/persist-asset";
+import { isR2Configured } from "@/lib/storage/r2";
 
 /** Client-facing durable URL for a private R2 asset (re-signs on each request). */
 export function libraryAssetUrl(assetId: string, inline = true): string {
@@ -86,4 +88,27 @@ export async function persistAndDurablizeMany(input: {
     );
   }
   return out;
+}
+
+/**
+ * Read bytes for a durable `/api/library/download/:id` URL from R2.
+ * Used by pipeline/ffmpeg/fal mirror so relative library URLs work after persist.
+ */
+export async function readLibraryAssetMedia(
+  url: string,
+): Promise<{ bytes: Buffer; contentType: string } | null> {
+  const id = libraryAssetIdFromUrl(url);
+  if (!id) return null;
+  if (!isMongoConfigured() || !isR2Configured()) return null;
+
+  const { getAssetById } = await import("@/lib/db/assets");
+  const { getR2ObjectBytes } = await import("@/lib/storage/r2");
+  const asset = await getAssetById(id);
+  if (!asset?.r2Key) return null;
+  const obj = await getR2ObjectBytes(asset.r2Key);
+  if (!obj) return null;
+  return {
+    bytes: Buffer.from(obj.body),
+    contentType: obj.contentType || asset.contentType || "application/octet-stream",
+  };
 }
