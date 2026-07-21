@@ -1,6 +1,6 @@
 import { ApiError, fal } from "@fal-ai/client";
 import { NextResponse } from "next/server";
-import { requireTokens, settleTokens } from "@/lib/billing/charge";
+import { chargeTokens, refundTokens } from "@/lib/billing/charge";
 import { clampImageResolution } from "@/lib/billing/entitlements";
 import { getUserPlan } from "@/lib/billing/get-user-plan";
 import { estimateImageTokens } from "@/lib/billing/token-costs";
@@ -260,8 +260,12 @@ export async function POST(request: Request) {
     mode: "storyboard",
     sceneCount: plan.scenes.length,
   });
-  const tokenGate = await requireTokens(auth.user.userId, tokenCost);
-  if (tokenGate) return tokenGate;
+  const charged = await chargeTokens(auth.user.userId, tokenCost, {
+    kind: "storyboard",
+    sceneCount: plan.scenes.length,
+  });
+  if ("error" in charged) return charged.error;
+  const balanceAfter = charged.balanceAfter;
   const { resolution: imageResolution } = clampImageResolution(
     await getUserPlan(auth.user.userId),
   );
@@ -348,10 +352,6 @@ export async function POST(request: Request) {
     }));
     const imageUrls = durableScenes.map((s) => s.imageUrl);
     await trackUsage(auth.user.userId, "storyboard");
-    const balanceAfter = await settleTokens(auth.user.userId, tokenCost, {
-      kind: "storyboard",
-      sceneCount: durableScenes.length,
-    });
     return NextResponse.json({
       plan,
       scenes: durableScenes,
@@ -366,6 +366,10 @@ export async function POST(request: Request) {
       creditBalance: balanceAfter,
     });
   } catch (e: unknown) {
+    await refundTokens(auth.user.userId, tokenCost, {
+      kind: "storyboard",
+      reason: "generation_failed",
+    });
     return NextResponse.json({ error: formatFalError(e) }, { status: 502 });
   }
 }

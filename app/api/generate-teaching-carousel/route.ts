@@ -1,6 +1,6 @@
 import { ApiError, fal } from "@fal-ai/client";
 import { NextResponse } from "next/server";
-import { requireTokens, settleTokens } from "@/lib/billing/charge";
+import { chargeTokens, refundTokens } from "@/lib/billing/charge";
 import { clampImageResolution } from "@/lib/billing/entitlements";
 import { getUserPlan } from "@/lib/billing/get-user-plan";
 import { TOKEN_COST } from "@/lib/billing/token-costs";
@@ -134,12 +134,11 @@ export async function POST(request: Request) {
   const systemPrompt = artStyleSystemPrompt(artStyleId);
 
   const tokenCost = TOKEN_COST.teaching_carousel;
-  const tokenGate = await requireTokens(auth.user.userId, tokenCost);
-  if (tokenGate) return tokenGate;
   const { resolution: imageResolution } = clampImageResolution(
     await getUserPlan(auth.user.userId),
   );
 
+  let chargedBalance: number | null | undefined;
   try {
     const plan = await planTeachingCarousel({
       visualStyleId: visualStyle,
@@ -157,6 +156,14 @@ export async function POST(request: Request) {
         strategy.kind === "layout-transfer" ? "layout-transfer" : strategy.kind === "style-only" ? "style-only" : "none",
       carouselSlides: brief?.carouselSlides,
     });
+
+    const charged = await chargeTokens(auth.user.userId, tokenCost, {
+      kind: "teaching_carousel",
+    });
+    if ("error" in charged) return charged.error;
+    chargedBalance = charged.balanceAfter;
+    const balanceAfter = charged.balanceAfter;
+
     const vars = buildPromptVariables({
       product,
       business,
@@ -256,10 +263,6 @@ export async function POST(request: Request) {
     }));
 
     await trackUsage(auth.user.userId, "campaign");
-    const balanceAfter = await settleTokens(auth.user.userId, tokenCost, {
-      kind: "teaching_carousel",
-      slideCount: archivedSlides.length,
-    });
     return NextResponse.json({
       plan,
       slides: archivedSlides,
@@ -275,6 +278,12 @@ export async function POST(request: Request) {
       creditBalance: balanceAfter,
     });
   } catch (e: unknown) {
+    if (chargedBalance !== undefined) {
+      await refundTokens(auth.user.userId, tokenCost, {
+        kind: "teaching_carousel",
+        reason: "generation_failed",
+      });
+    }
     const message = e instanceof Error ? e.message : formatFalError(e);
     const status =
       message.includes("DEEPSEEK_API_KEY") || message.includes("DeepSeek API") || message.includes("balance")

@@ -21,6 +21,9 @@ import {
 import { jobDir } from "@/lib/pipeline/paths";
 import { resolveTtsProvider, synthesizeSpeechToFile } from "@/lib/pipeline/tts";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
+import { chargeTokens, refundTokens } from "@/lib/billing/charge";
+import { TOKEN_COST } from "@/lib/billing/token-costs";
+import { libraryAssetUrl } from "@/lib/storage/durable-media";
 import { persistUserAsset } from "@/lib/storage/persist-asset";
 
 export const runtime = "nodejs";
@@ -100,21 +103,25 @@ async function dubVoiceJob(
     await trackUsage(input.trackUsageUserId, "voiceover");
   }
 
-  const videoUrl = pipelineFileUrl(request, jobId, "with-voice.mp4");
+  const videoUrlPipeline = pipelineFileUrl(request, jobId, "with-voice.mp4");
+  let videoUrl = videoUrlPipeline;
+  let assetId: string | undefined;
 
-  // Mirror the voiced video into durable storage (local pipeline files are
-  // ephemeral in production). Best-effort — never blocks the response.
   if (input.persistUserId) {
     try {
       const bytes = await fs.readFile(outputPath);
-      await persistUserAsset({
+      const asset = await persistUserAsset({
         clerkId: input.persistUserId,
         kind: "voiceover",
-        sourceUrl: videoUrl,
+        sourceUrl: videoUrlPipeline,
         name: "Voiceover video",
         bytes,
         contentType: "video/mp4",
       });
+      if (asset) {
+        assetId = String(asset._id);
+        videoUrl = libraryAssetUrl(assetId);
+      }
     } catch {
       /* durable mirroring is best-effort */
     }
@@ -122,6 +129,7 @@ async function dubVoiceJob(
 
   return {
     videoUrl,
+    assetId,
     jobId,
     locale: input.locale,
     voice: ttsVoice,
@@ -134,6 +142,11 @@ async function dubVoiceJob(
 export async function POST(request: Request) {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
+
+  const tokenCost = TOKEN_COST.voiceover;
+  const charged = await chargeTokens(auth.user.userId, tokenCost, { kind: "voiceover_dub" });
+  if ("error" in charged) return charged.error;
+  const balanceAfter = charged.balanceAfter;
 
   const contentType = request.headers.get("content-type") ?? "";
 
@@ -156,16 +169,28 @@ export async function POST(request: Request) {
           : undefined;
 
       if (!LOCALES.has(locale)) {
+        await refundTokens(auth.user.userId, tokenCost, {
+          kind: "voiceover_dub",
+          reason: "validation",
+        });
         return NextResponse.json({ error: "Invalid locale." }, { status: 400 });
       }
       const file = videoFile instanceof File && videoFile.size > 0 ? videoFile : undefined;
       if (!file && !videoUrl) {
+        await refundTokens(auth.user.userId, tokenCost, {
+          kind: "voiceover_dub",
+          reason: "validation",
+        });
         return NextResponse.json(
           { error: "video_file or video_url is required." },
           { status: 400 },
         );
       }
       if (!speechUrl && !script) {
+        await refundTokens(auth.user.userId, tokenCost, {
+          kind: "voiceover_dub",
+          reason: "validation",
+        });
         return NextResponse.json({ error: "script or speech_url is required." }, { status: 400 });
       }
 
@@ -180,7 +205,11 @@ export async function POST(request: Request) {
         trackUsageUserId: speechUrl ? undefined : auth.user.userId,
         persistUserId: auth.user.userId,
       });
-      return NextResponse.json(result);
+      return NextResponse.json({
+        ...result,
+        tokensCharged: tokenCost,
+        creditBalance: balanceAfter,
+      });
     }
 
     let body: {
@@ -194,6 +223,10 @@ export async function POST(request: Request) {
     try {
       body = await request.json();
     } catch {
+      await refundTokens(auth.user.userId, tokenCost, {
+        kind: "voiceover_dub",
+        reason: "validation",
+      });
       return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
     }
 
@@ -207,12 +240,24 @@ export async function POST(request: Request) {
       : undefined;
 
     if (!videoUrl) {
+      await refundTokens(auth.user.userId, tokenCost, {
+        kind: "voiceover_dub",
+        reason: "validation",
+      });
       return NextResponse.json({ error: "video_url is required." }, { status: 400 });
     }
     if (!speechUrl && !script) {
+      await refundTokens(auth.user.userId, tokenCost, {
+        kind: "voiceover_dub",
+        reason: "validation",
+      });
       return NextResponse.json({ error: "script or speech_url is required." }, { status: 400 });
     }
     if (!LOCALES.has(locale)) {
+      await refundTokens(auth.user.userId, tokenCost, {
+        kind: "voiceover_dub",
+        reason: "validation",
+      });
       return NextResponse.json({ error: "Invalid locale." }, { status: 400 });
     }
 
@@ -226,11 +271,20 @@ export async function POST(request: Request) {
       trackUsageUserId: speechUrl ? undefined : auth.user.userId,
       persistUserId: auth.user.userId,
     });
-    return NextResponse.json(result);
+    return NextResponse.json({
+      ...result,
+      tokensCharged: tokenCost,
+      creditBalance: balanceAfter,
+    });
   } catch (e: unknown) {
+    await refundTokens(auth.user.userId, tokenCost, {
+      kind: "voiceover_dub",
+      reason: "generation_failed",
+    });
     const message = e instanceof Error ? e.message : "Voice dub failed.";
     const status =
       message.includes("AZURE_SPEECH") || message.includes("FAL_KEY") ? 503 : 502;
     return NextResponse.json({ error: message }, { status });
   }
 }
+

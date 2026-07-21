@@ -90,8 +90,8 @@ export async function consumeTokens(
     clerkId,
     delta: -cost,
     reason: "consume",
-    ref: opts?.ref,
-    meta: opts?.meta,
+    ...(opts?.ref ? { ref: opts.ref } : {}),
+    ...(opts?.meta ? { meta: opts.meta } : {}),
     balanceAfter,
     createdAt: new Date(),
   });
@@ -124,8 +124,8 @@ export async function grantTokens(
     clerkId,
     delta: amount,
     reason,
-    ref: opts?.ref,
-    meta: opts?.meta,
+    ...(opts?.ref ? { ref: opts.ref } : {}),
+    ...(opts?.meta ? { meta: opts.meta } : {}),
     balanceAfter,
     createdAt: new Date(),
   });

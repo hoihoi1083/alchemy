@@ -1,5 +1,6 @@
-import { normalizeUserPlan } from "@/lib/billing/plans";
+import { FREE_SIGNUP_GRANT_TOKENS, normalizeUserPlan } from "@/lib/billing/plans";
 import { ensureSignupGrant } from "@/lib/billing/ledger";
+import { sendWelcomeEmail } from "@/lib/email/lifecycle";
 import { getDb } from "@/lib/mongodb";
 import type { DbUser } from "@/lib/db/types";
 
@@ -46,7 +47,13 @@ export async function ensureUser(input: {
   }
 
   // One-time Free pack (ledger row written inside ensureSignupGrant).
-  await ensureSignupGrant(input.clerkId);
+  const signupBalance = await ensureSignupGrant(input.clerkId);
+  if (signupBalance != null && input.email) {
+    await sendWelcomeEmail({
+      to: input.email,
+      tokensGranted: FREE_SIGNUP_GRANT_TOKENS,
+    });
+  }
 
   const fresh = await db.collection<DbUser>("users").findOne({ clerkId: input.clerkId });
   if (!fresh) throw new Error("Failed to load user after signup grant");

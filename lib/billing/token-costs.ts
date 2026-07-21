@@ -21,6 +21,7 @@ export const TOKEN_COST = {
   storyboard_batch: 80, // typical 4 scenes
   music: 30, // ~$0.10
   voiceover: 5, // ~$0.015
+  bgm: 5, // local ffmpeg mix — small operator cost
   plan: 5, // LLM plan / brief ~$0.01–0.02
 } as const;
 

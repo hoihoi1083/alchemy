@@ -1,19 +1,27 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
+import {
+  PLAN_DEFINITIONS,
+  TOP_UP_PRICE_USD,
+  TOP_UP_TOKENS,
+  normalizeUserPlan,
+} from "@/lib/billing/plans";
+import { sendSubscriptionEndedEmail } from "@/lib/email/lifecycle";
 import { sendPurchaseConfirmationEmail } from "@/lib/email/purchase-confirmation";
 import { resolvePurchaseEmail } from "@/lib/email/resolve-user-email";
+import type { DbUser } from "@/lib/db/types";
 import {
   applySubscriptionGrant,
   applyTopUpGrant,
   clearPaidSubscription,
   findClerkIdByStripeCustomer,
+  grantTokensOnce,
   setUserSubscription,
   tokensForPaidPlan,
 } from "@/lib/stripe/billing-sync";
 import { getStripe, isStripeConfigured } from "@/lib/stripe/client";
 import { isPaidPlan, planFromPriceId, type PaidPlan } from "@/lib/stripe/prices";
-import { TOP_UP_PRICE_USD, TOP_UP_TOKENS } from "@/lib/billing/plans";
-import { isMongoConfigured } from "@/lib/mongodb";
+import { getDb, isMongoConfigured } from "@/lib/mongodb";
 
 export const runtime = "nodejs";
 
@@ -41,6 +49,16 @@ async function resolveClerkId(opts: {
   if (opts.clientReferenceId) return opts.clientReferenceId;
   if (opts.customer) return findClerkIdByStripeCustomer(opts.customer);
   return null;
+}
+
+async function notifySubscriptionEnded(
+  clerkId: string,
+  reason: "canceled" | "unpaid",
+  stripeEmail?: string | null,
+): Promise<void> {
+  const to = await resolvePurchaseEmail({ clerkId, stripeEmail });
+  if (!to) return;
+  await sendSubscriptionEndedEmail({ to, reason });
 }
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
@@ -172,6 +190,41 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
   }
 }
 
+async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
+  const cust = customerId(invoice.customer);
+  const subRef = invoice.parent?.subscription_details?.subscription;
+  const subId = subscriptionId(subRef ?? null);
+
+  let clerkId: string | null = null;
+  if (subId) {
+    try {
+      const sub = await getStripe().subscriptions.retrieve(subId);
+      clerkId = sub.metadata?.clerkId ?? null;
+    } catch (err) {
+      console.error("[stripe] invoice.payment_failed retrieve sub failed", invoice.id, err);
+    }
+  }
+  if (!clerkId) {
+    clerkId = await resolveClerkId({
+      metadataClerkId: invoice.metadata?.clerkId,
+      customer: cust,
+    });
+  }
+  if (!clerkId) {
+    console.error("[stripe] invoice.payment_failed missing clerkId", invoice.id);
+    return;
+  }
+
+  // Do not clear plan here — subscription.updated unpaid handles entitlement drop.
+  const to = await resolvePurchaseEmail({
+    clerkId,
+    stripeEmail: invoice.customer_email,
+  });
+  if (to) {
+    await sendSubscriptionEndedEmail({ to, reason: "payment_failed" });
+  }
+}
+
 async function handleSubscriptionUpdated(sub: Stripe.Subscription) {
   const clerkId =
     sub.metadata?.clerkId ??
@@ -187,6 +240,10 @@ async function handleSubscriptionUpdated(sub: Stripe.Subscription) {
     sub.status === "incomplete_expired";
   if (ended) {
     await clearPaidSubscription(clerkId);
+    await notifySubscriptionEnded(
+      clerkId,
+      sub.status === "unpaid" ? "unpaid" : "canceled",
+    );
     return;
   }
 
@@ -197,7 +254,18 @@ async function handleSubscriptionUpdated(sub: Stripe.Subscription) {
     (planMeta && isPaidPlan(planMeta) ? planMeta : null) ?? fromPrice?.plan ?? null;
   if (!plan) return;
 
+  // Mid-cycle upgrade: credit the token delta once per period when plan tokens increase.
+  let oldPlanTokens = 0;
+  if (isMongoConfigured()) {
+    const db = await getDb();
+    const user = await db.collection<DbUser>("users").findOne({ clerkId });
+    const oldPlan = normalizeUserPlan(user?.plan);
+    oldPlanTokens = PLAN_DEFINITIONS[oldPlan].monthlyTokens;
+  }
+
   const periodEnd = sub.items.data[0]?.current_period_end ?? null;
+  const periodStart = sub.items.data[0]?.current_period_start ?? null;
+
   await setUserSubscription({
     clerkId,
     plan,
@@ -205,6 +273,31 @@ async function handleSubscriptionUpdated(sub: Stripe.Subscription) {
     stripeSubscriptionId: sub.id,
     planRenewsAt: periodEnd ? new Date(periodEnd * 1000) : null,
   });
+
+  const newPlanTokens = tokensForPaidPlan(plan);
+  if (newPlanTokens > oldPlanTokens && periodStart != null) {
+    const delta = newPlanTokens - oldPlanTokens;
+    const result = await grantTokensOnce(
+      clerkId,
+      delta,
+      "subscription_grant",
+      `upgrade_${sub.id}_${plan}_${periodStart}`,
+      { plan, upgrade: true, oldPlanTokens, newPlanTokens },
+    );
+    if (result.granted) {
+      const to = await resolvePurchaseEmail({ clerkId });
+      if (to) {
+        await sendPurchaseConfirmationEmail({
+          to,
+          kind: "subscription",
+          plan,
+          tokensGranted: delta,
+          balanceAfter: result.balanceAfter,
+          renewsAt: periodEnd ? new Date(periodEnd * 1000) : null,
+        });
+      }
+    }
+  }
 }
 
 async function handleSubscriptionDeleted(sub: Stripe.Subscription) {
@@ -213,6 +306,7 @@ async function handleSubscriptionDeleted(sub: Stripe.Subscription) {
     (await findClerkIdByStripeCustomer(customerId(sub.customer) ?? ""));
   if (!clerkId) return;
   await clearPaidSubscription(clerkId);
+  await notifySubscriptionEnded(clerkId, "canceled");
 }
 
 export async function POST(request: Request) {
@@ -251,6 +345,9 @@ export async function POST(request: Request) {
         break;
       case "invoice.paid":
         await handleInvoicePaid(event.data.object as Stripe.Invoice);
+        break;
+      case "invoice.payment_failed":
+        await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
         break;
       case "customer.subscription.updated":
         await handleSubscriptionUpdated(event.data.object as Stripe.Subscription);

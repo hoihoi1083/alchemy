@@ -12,6 +12,7 @@ import {
   TOKEN_COST,
 } from "@/lib/billing/token-costs";
 import { isMongoConfigured } from "@/lib/mongodb";
+import { isProductionEnv } from "@/lib/mongodb-production";
 
 export { resolveVideoBillingResolution, estimateVideoTokens };
 
@@ -22,31 +23,51 @@ export function billingErrorResponse(err: unknown): NextResponse | null {
   return null;
 }
 
+function billingDbUnavailableResponse(): NextResponse {
+  return NextResponse.json(
+    { error: "Billing database is required. Set MONGODB_URI before charging tokens." },
+    { status: 503 },
+  );
+}
+
 /**
  * Soft pre-check only (does not lock balance). Prefer `chargeTokens` before
  * expensive fal calls so concurrent tabs cannot double-spend.
  */
 export async function requireTokens(clerkId: string, cost: number): Promise<NextResponse | null> {
+  if (cost <= 0) return null;
+  if (!isMongoConfigured()) {
+    if (isProductionEnv()) return billingDbUnavailableResponse();
+    return null;
+  }
   try {
     await assertCanAfford(clerkId, cost);
     return null;
   } catch (err) {
-    return billingErrorResponse(err) ?? NextResponse.json({ error: "Billing check failed" }, { status: 500 });
+    return (
+      billingErrorResponse(err) ??
+      NextResponse.json({ error: "Billing check failed" }, { status: 500 })
+    );
   }
 }
 
 /**
  * Deduct tokens BEFORE calling fal. Atomic — concurrent requests cannot both
  * pass. On fal failure, call `refundTokens` so the user is not charged.
- *
- * Returns either `{ error: NextResponse }` (402/500) or `{ balanceAfter }`.
  */
 export async function chargeTokens(
   clerkId: string,
   cost: number,
   meta: Record<string, unknown>,
 ): Promise<{ error: NextResponse } | { balanceAfter: number | null }> {
-  if (!isMongoConfigured() || cost <= 0) {
+  if (cost <= 0) {
+    return { balanceAfter: null };
+  }
+  // Production must never silently skip billing when Mongo is unset.
+  if (!isMongoConfigured()) {
+    if (isProductionEnv()) {
+      return { error: billingDbUnavailableResponse() };
+    }
     return { balanceAfter: null };
   }
   try {
@@ -84,7 +105,6 @@ export async function refundTokens(
 
 /**
  * @deprecated Prefer chargeTokens (upfront) + refundTokens on failure.
- * Kept for any leftover callers during migration.
  */
 export async function settleTokens(
   clerkId: string,

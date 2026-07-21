@@ -281,7 +281,15 @@ export async function sendPurchaseConfirmationEmail(
     return { sent: false, skipped: "missing_recipient" };
   }
   if (!isEmailConfigured()) {
-    console.warn("[email] RESEND_API_KEY not set — skipping purchase confirmation");
+    const isProd =
+      process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production";
+    if (isProd) {
+      console.error(
+        "[email] CRITICAL: RESEND_API_KEY not configured — purchase/lifecycle emails skipped",
+      );
+    } else {
+      console.warn("[email] RESEND_API_KEY not set — skipping purchase confirmation");
+    }
     return { sent: false, skipped: "not_configured" };
   }
 
@@ -306,13 +314,13 @@ export async function sendPurchaseConfirmationEmail(
       ],
     });
     if (error) {
-      console.error("[email] purchase confirmation failed:", error);
+      console.error("[email] CRITICAL: send failed", error);
       return { sent: false, error: error.message };
     }
     return { sent: true, id: data?.id };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error("[email] purchase confirmation error:", message);
+    console.error("[email] CRITICAL: send failed", message);
     return { sent: false, error: message };
   }
 }

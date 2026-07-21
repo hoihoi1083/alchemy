@@ -181,6 +181,9 @@ export function LibraryPageClient() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<
+    { type: "project" | "asset"; id: string } | null
+  >(null);
 
   const load = useCallback(async () => {
     setError(null);
@@ -236,32 +239,25 @@ export function LibraryPageClient() {
     window.location.href = "/studio";
   }
 
-  async function removeProject(projectId: string) {
-    if (!window.confirm(L.deleteConfirm)) return;
-    setDeletingId(projectId);
+  async function confirmPendingDelete() {
+    if (!pendingDelete) return;
+    const { type, id } = pendingDelete;
+    setPendingDelete(null);
+    setDeletingId(id);
     setError(null);
     try {
-      const res = await fetch(`/api/projects/${projectId}`, { method: "DELETE" });
-      if (!res.ok) throw new Error(L.loadError);
-      setProjects((prev) => prev.filter((p) => p.id !== projectId));
-      if (window.localStorage.getItem(ACTIVE_PROJECT_KEY) === projectId) {
-        window.localStorage.removeItem(ACTIVE_PROJECT_KEY);
+      if (type === "project") {
+        const res = await fetch(`/api/projects/${id}`, { method: "DELETE" });
+        if (!res.ok) throw new Error(L.loadError);
+        setProjects((prev) => prev.filter((p) => p.id !== id));
+        if (window.localStorage.getItem(ACTIVE_PROJECT_KEY) === id) {
+          window.localStorage.removeItem(ACTIVE_PROJECT_KEY);
+        }
+      } else {
+        const res = await fetch(`/api/library/download/${id}`, { method: "DELETE" });
+        if (!res.ok) throw new Error(L.loadError);
+        setAssets((prev) => prev.filter((a) => a.id !== id));
       }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : L.loadError);
-    } finally {
-      setDeletingId(null);
-    }
-  }
-
-  async function removeAsset(assetId: string) {
-    if (!window.confirm(L.deleteConfirm)) return;
-    setDeletingId(assetId);
-    setError(null);
-    try {
-      const res = await fetch(`/api/library/download/${assetId}`, { method: "DELETE" });
-      if (!res.ok) throw new Error(L.loadError);
-      setAssets((prev) => prev.filter((a) => a.id !== assetId));
     } catch (e) {
       setError(e instanceof Error ? e.message : L.loadError);
     } finally {
@@ -371,7 +367,7 @@ export function LibraryPageClient() {
                             <button
                               type="button"
                               disabled={deletingId === a.id}
-                              onClick={() => void removeAsset(a.id)}
+                              onClick={() => setPendingDelete({ type: "asset", id: a.id })}
                               className="rounded-full border border-red-200 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
                             >
                               {deletingId === a.id ? L.deleting : L.delete}
@@ -490,7 +486,7 @@ export function LibraryPageClient() {
                       <button
                         type="button"
                         disabled={deletingId === p.id}
-                        onClick={() => void removeProject(p.id)}
+                        onClick={() => setPendingDelete({ type: "project", id: p.id })}
                         className="rounded-full border border-red-200 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
                       >
                         {deletingId === p.id ? L.deleting : L.delete}
@@ -506,6 +502,37 @@ export function LibraryPageClient() {
           </>
         )}
       </div>
+
+      {pendingDelete ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="library-delete-title"
+        >
+          <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-lg">
+            <p id="library-delete-title" className="text-sm text-slate-800">
+              {L.deleteConfirm}
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setPendingDelete(null)}
+                className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void confirmPendingDelete()}
+                className="rounded-full bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }

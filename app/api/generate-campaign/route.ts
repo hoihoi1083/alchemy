@@ -1,6 +1,6 @@
 import { ApiError, fal } from "@fal-ai/client";
 import { NextResponse } from "next/server";
-import { requireTokens, settleTokens } from "@/lib/billing/charge";
+import { chargeTokens, refundTokens } from "@/lib/billing/charge";
 import { clampImageResolution } from "@/lib/billing/entitlements";
 import { getUserPlan } from "@/lib/billing/get-user-plan";
 import { TOKEN_COST } from "@/lib/billing/token-costs";
@@ -170,8 +170,6 @@ export async function POST(request: Request) {
   );
 
   const tokenCost = TOKEN_COST.campaign;
-  const tokenGate = await requireTokens(auth.user.userId, tokenCost);
-  if (tokenGate) return tokenGate;
   const { resolution: imageResolution } = clampImageResolution(
     await getUserPlan(auth.user.userId),
   );
@@ -207,6 +205,10 @@ export async function POST(request: Request) {
         : 400;
     return NextResponse.json({ error: message }, { status });
   }
+
+  const charged = await chargeTokens(auth.user.userId, tokenCost, { kind: "campaign" });
+  if ("error" in charged) return charged.error;
+  const balanceAfter = charged.balanceAfter;
 
   try {
     let baseImageUrlsForFal: string[] | null = null;
@@ -297,10 +299,6 @@ export async function POST(request: Request) {
 
     const imageUrls = archivedSlides.map((s) => s.imageUrl);
     await trackUsage(auth.user.userId, "campaign");
-    const balanceAfter = await settleTokens(auth.user.userId, tokenCost, {
-      kind: "campaign",
-      slideCount: archivedSlides.length,
-    });
     return NextResponse.json({
       plan,
       slides: archivedSlides,
@@ -313,6 +311,10 @@ export async function POST(request: Request) {
       creditBalance: balanceAfter,
     });
   } catch (e: unknown) {
+    await refundTokens(auth.user.userId, tokenCost, {
+      kind: "campaign",
+      reason: "generation_failed",
+    });
     return NextResponse.json({ error: formatFalError(e) }, { status: 502 });
   }
 }

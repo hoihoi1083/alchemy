@@ -105,6 +105,8 @@ export const zhCn = {
     errorBackStart: "返回模式选择",
     mongoRequiredTitle: "无法自动保存项目",
     mongoRequiredBody: "服务器未配置 MONGODB_URI。连接 MongoDB 前，你的工作不会自动保存。",
+    mongoRequiredBodyConnected:
+      "已配置 MongoDB，但健康检查失败。请修复索引／连接后重新部署。详情：",
     saveSaving: "保存中…",
     saveSaved: "已保存 ✓",
     saveError: "保存失败",

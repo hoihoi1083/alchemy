@@ -108,6 +108,8 @@ export const en = {
     mongoRequiredTitle: "Project save unavailable",
     mongoRequiredBody:
       "MONGODB_URI is not configured on this server. Your work will not autosave until MongoDB is connected.",
+    mongoRequiredBodyConnected:
+      "MongoDB is configured, but the health check failed. Redeploy after fixing indexes/connection. Detail:",
     saveSaving: "Saving…",
     saveSaved: "Saved ✓",
     saveError: "Save failed",

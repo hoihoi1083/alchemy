@@ -12,7 +12,7 @@ import {
 import { materializeMediaInput } from "@/lib/pipeline/local-input";
 import { synthesizeSpeechToFile } from "@/lib/pipeline/tts";
 import { mirrorImageUrlToFalStorage } from "@/lib/fal-mirror-media";
-import { requireTokens, settleTokens } from "@/lib/billing/charge";
+import { chargeTokens, refundTokens } from "@/lib/billing/charge";
 import { clampVideoResolution } from "@/lib/billing/entitlements";
 import { getUserPlan } from "@/lib/billing/get-user-plan";
 import { estimateVideoTokens, TOKEN_COST } from "@/lib/billing/token-costs";
@@ -157,8 +157,13 @@ export async function POST(request: Request) {
   const tokenCost =
     estimateVideoTokens({ resolution, fast: false, duration: 8 }) +
     (willSynthesizeVoice ? TOKEN_COST.voiceover : 0);
-  const tokenGate = await requireTokens(auth.user.userId, tokenCost);
-  if (tokenGate) return tokenGate;
+  const charged = await chargeTokens(auth.user.userId, tokenCost, {
+    kind: "digital_presenter",
+    resolution,
+    synthesizedVoice: willSynthesizeVoice,
+  });
+  if ("error" in charged) return charged.error;
+  const balanceAfter = charged.balanceAfter;
 
   fal.config({ credentials: key });
 
@@ -173,6 +178,10 @@ export async function POST(request: Request) {
     if (presenterMode === "stock-avatar") {
       const avatar = findHeygenAvatar(stockAvatarId);
       if (!avatar) {
+        await refundTokens(auth.user.userId, tokenCost, {
+          kind: "digital_presenter",
+          reason: "validation",
+        });
         return NextResponse.json({ error: "Pick a stock presenter avatar." }, { status: 400 });
       }
       const heygenAspect =
@@ -192,12 +201,6 @@ export async function POST(request: Request) {
       if (!videoUrl) throw new Error("HeyGen response missing video URL.");
       await trackUsage(auth.user.userId, "video");
       if (!usedPreview) await trackUsage(auth.user.userId, "voiceover");
-      const balanceAfter = await settleTokens(auth.user.userId, tokenCost, {
-        kind: "digital_presenter",
-        mode: "stock-avatar",
-        resolution,
-        synthesizedVoice: willSynthesizeVoice,
-      });
       const durableVideoUrl = await persistAndDurablize({
         clerkId: auth.user.userId,
         kind: "video",
@@ -221,6 +224,10 @@ export async function POST(request: Request) {
       imageUrl = await fal.storage.upload(imageFile);
     }
     if (!imageUrl) {
+      await refundTokens(auth.user.userId, tokenCost, {
+        kind: "digital_presenter",
+        reason: "validation",
+      });
       return NextResponse.json(
         { error: "Presenter keyframe image is required (generate in Step 2 first)." },
         { status: 400 },
@@ -255,12 +262,6 @@ export async function POST(request: Request) {
     if (!usedPreview) {
       await trackUsage(auth.user.userId, "voiceover");
     }
-    const balanceAfter = await settleTokens(auth.user.userId, tokenCost, {
-      kind: "digital_presenter",
-      mode: "custom-keyframe",
-      resolution,
-      synthesizedVoice: willSynthesizeVoice,
-    });
 
     const durableVideoUrl = await persistAndDurablize({
       clerkId: auth.user.userId,
@@ -280,6 +281,10 @@ export async function POST(request: Request) {
       creditBalance: balanceAfter,
     });
   } catch (e: unknown) {
+    await refundTokens(auth.user.userId, tokenCost, {
+      kind: "digital_presenter",
+      reason: "generation_failed",
+    });
     if (e instanceof ValidationError) {
       console.error("[api/generate-digital-presenter] validation", JSON.stringify(e.fieldErrors));
     } else {

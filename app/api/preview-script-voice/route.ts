@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireTokens, settleTokens } from "@/lib/billing/charge";
+import { chargeTokens, refundTokens } from "@/lib/billing/charge";
 import { TOKEN_COST } from "@/lib/billing/token-costs";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import {
@@ -37,8 +37,12 @@ export async function POST(request: Request) {
   }
 
   const tokenCost = TOKEN_COST.voiceover;
-  const tokenGate = await requireTokens(auth.user.userId, tokenCost);
-  if (tokenGate) return tokenGate;
+  const charged = await chargeTokens(auth.user.userId, tokenCost, {
+    kind: "voiceover",
+    locale,
+  });
+  if ("error" in charged) return charged.error;
+  const balanceAfter = charged.balanceAfter;
 
   const jobId = crypto.randomUUID();
   const dir = jobDir(jobId);
@@ -52,6 +56,10 @@ export async function POST(request: Request) {
       pipelineUrl: (file) => pipelineFileUrl(request, jobId, file),
     });
     if (!tracks.length) {
+      await refundTokens(auth.user.userId, tokenCost, {
+        kind: "voiceover",
+        reason: "no_tracks",
+      });
       const detail = errors.map((e) => `${e.presetId}: ${e.message}`).join("; ");
       return NextResponse.json(
         { error: detail || "Voice preview failed for all presets." },
@@ -59,10 +67,6 @@ export async function POST(request: Request) {
       );
     }
     await trackUsage(auth.user.userId, "voiceover");
-    const balanceAfter = await settleTokens(auth.user.userId, tokenCost, {
-      kind: "voiceover",
-      locale,
-    });
     return NextResponse.json({
       tracks,
       errors,
@@ -71,6 +75,10 @@ export async function POST(request: Request) {
       creditBalance: balanceAfter,
     });
   } catch (e: unknown) {
+    await refundTokens(auth.user.userId, tokenCost, {
+      kind: "voiceover",
+      reason: "generation_failed",
+    });
     const message = e instanceof Error ? e.message : "Voice preview failed.";
     const status =
       message.includes("FAL_KEY") || message.includes("AZURE_SPEECH") ? 503 : 502;

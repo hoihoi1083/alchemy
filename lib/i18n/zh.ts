@@ -105,6 +105,8 @@ export const zh = {
     errorBackStart: "返回模式選擇",
     mongoRequiredTitle: "無法自動儲存專案",
     mongoRequiredBody: "伺服器未設定 MONGODB_URI。連接 MongoDB 前，你的工作不會自動儲存。",
+    mongoRequiredBodyConnected:
+      "已設定 MongoDB，但健康檢查失敗。請修復索引／連線後重新部署。詳情：",
     saveSaving: "儲存中…",
     saveSaved: "已儲存 ✓",
     saveError: "儲存失敗",

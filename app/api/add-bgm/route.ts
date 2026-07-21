@@ -1,6 +1,8 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { NextResponse } from "next/server";
+import { chargeTokens, refundTokens } from "@/lib/billing/charge";
+import { TOKEN_COST } from "@/lib/billing/token-costs";
 import { requireAppUser } from "@/lib/require-app-user";
 import { bgmFilePath, bgmMixVolume, DEFAULT_BGM_TRACK, type BgmTrackId } from "@/lib/bgm/tracks";
 import {
@@ -10,6 +12,7 @@ import {
 } from "@/lib/pipeline/ffmpeg";
 import { jobDir } from "@/lib/pipeline/paths";
 import { materializeMediaInput, pipelineFileUrl } from "@/lib/pipeline/local-input";
+import { libraryAssetUrl } from "@/lib/storage/durable-media";
 import { persistUserAsset } from "@/lib/storage/persist-asset";
 
 export const runtime = "nodejs";
@@ -77,21 +80,25 @@ async function mixBgmJob(
   );
   await assertVideoHasAudio(outputPath, "BGM mix");
 
-  const videoUrl = pipelineFileUrl(request, jobId, "with-bgm.mp4");
+  const pipelineUrl = pipelineFileUrl(request, jobId, "with-bgm.mp4");
+  let videoUrl = pipelineUrl;
+  let assetId: string | undefined;
 
-  // Mirror the BGM-mixed video into durable storage (pipeline files are
-  // ephemeral in production). Best-effort — never blocks the response.
   if (input.persistUserId) {
     try {
       const bytes = await fs.readFile(outputPath);
-      await persistUserAsset({
+      const asset = await persistUserAsset({
         clerkId: input.persistUserId,
         kind: "video",
-        sourceUrl: videoUrl,
+        sourceUrl: pipelineUrl,
         name: "Video with music",
         bytes,
         contentType: "video/mp4",
       });
+      if (asset) {
+        assetId = String(asset._id);
+        videoUrl = libraryAssetUrl(assetId);
+      }
     } catch {
       /* durable mirroring is best-effort */
     }
@@ -99,6 +106,7 @@ async function mixBgmJob(
 
   return {
     videoUrl,
+    assetId,
     jobId,
     track: input.musicUrl ? "ai" : input.track,
     source: input.musicUrl ? "ai" : "library",
@@ -109,6 +117,11 @@ async function mixBgmJob(
 export async function POST(request: Request) {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
+
+  const tokenCost = TOKEN_COST.bgm;
+  const charged = await chargeTokens(auth.user.userId, tokenCost, { kind: "bgm" });
+  if ("error" in charged) return charged.error;
+  const balanceAfter = charged.balanceAfter;
 
   const contentType = request.headers.get("content-type") ?? "";
 
@@ -123,6 +136,7 @@ export async function POST(request: Request) {
       const replaceSourceAudio = formData.get("replace_source_audio") === "true";
       const file = videoFile instanceof File && videoFile.size > 0 ? videoFile : undefined;
       if (!file && !videoUrl) {
+        await refundTokens(auth.user.userId, tokenCost, { kind: "bgm", reason: "validation" });
         return NextResponse.json(
           { error: "video_file or video_url is required." },
           { status: 400 },
@@ -136,7 +150,11 @@ export async function POST(request: Request) {
         replaceSourceAudio,
         persistUserId: auth.user.userId,
       });
-      return NextResponse.json(result);
+      return NextResponse.json({
+        ...result,
+        tokensCharged: tokenCost,
+        creditBalance: balanceAfter,
+      });
     }
 
     let body: {
@@ -148,11 +166,13 @@ export async function POST(request: Request) {
     try {
       body = await request.json();
     } catch {
+      await refundTokens(auth.user.userId, tokenCost, { kind: "bgm", reason: "validation" });
       return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
     }
 
     const videoUrl = body?.video_url?.trim();
     if (!videoUrl) {
+      await refundTokens(auth.user.userId, tokenCost, { kind: "bgm", reason: "validation" });
       return NextResponse.json({ error: "video_url is required." }, { status: 400 });
     }
 
@@ -163,10 +183,19 @@ export async function POST(request: Request) {
       replaceSourceAudio: body?.replace_source_audio === true,
       persistUserId: auth.user.userId,
     });
-    return NextResponse.json(result);
+    return NextResponse.json({
+      ...result,
+      tokensCharged: tokenCost,
+      creditBalance: balanceAfter,
+    });
   } catch (e: unknown) {
+    await refundTokens(auth.user.userId, tokenCost, {
+      kind: "bgm",
+      reason: "generation_failed",
+    });
     const message = e instanceof Error ? e.message : "Failed to add background music.";
-    const code = e && typeof e === "object" && "code" in e ? String((e as { code: string }).code) : undefined;
+    const code =
+      e && typeof e === "object" && "code" in e ? String((e as { code: string }).code) : undefined;
     const status = code === "BGM_FILES_MISSING" ? 503 : 502;
     return NextResponse.json({ error: message, ...(code ? { code } : {}) }, { status });
   }

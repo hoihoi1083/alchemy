@@ -4,6 +4,7 @@ import { TOKEN_COST } from "@/lib/billing/token-costs";
 import { generateMusicOptions } from "@/lib/music-generation";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import { persistUserAsset } from "@/lib/storage/persist-asset";
+import { libraryAssetUrl } from "@/lib/storage/durable-media";
 import { SERVER_ERRORS } from "@/lib/api/server-errors";
 
 export const runtime = "nodejs";
@@ -45,7 +46,9 @@ export async function POST(request: Request) {
           name: `AI music ${t.label}`,
           prompt: promptEn,
         });
-        return asset ? { ...t, assetId: String(asset._id) } : t;
+        if (!asset) return t;
+        const assetId = String(asset._id);
+        return { ...t, assetId, audioUrl: libraryAssetUrl(assetId) };
       }),
     );
 
