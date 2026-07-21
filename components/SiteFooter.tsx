@@ -52,7 +52,7 @@ export function SiteFooter() {
 
   return (
     <footer
-      className="site-footer mt-auto w-full pt-16"
+      className="site-footer w-full shrink-0 pt-16"
       style={{
         background: "#0B1120",
         color: "#ffffff",

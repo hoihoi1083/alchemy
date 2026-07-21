@@ -90,9 +90,10 @@ export function PricingPageClient() {
   }
 
   return (
-    <main className="flex min-h-dvh flex-col bg-white text-slate-900">
+    <main className="flex min-h-screen flex-col bg-white text-slate-900 supports-[min-height:100dvh]:min-h-dvh">
+      <div className="flex flex-1 flex-col">
       {/* 1. Navbar */}
-      <header className="mx-auto max-w-6xl px-6" style={{ paddingTop: 40, paddingBottom: 48 }}>
+      <header className="mx-auto w-full max-w-6xl px-6" style={{ paddingTop: 40, paddingBottom: 48 }}>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <Link href="/" className="flex items-center gap-3">
             <img src="/alchemy-logo.png" alt="alchemy.ai logo" className="h-10 w-10 rounded-xl object-contain" />
@@ -376,6 +377,7 @@ export function PricingPageClient() {
           </Link>
         </div>
       </section>
+      </div>
       <SiteFooter />
     </main>
   );

@@ -10,10 +10,15 @@
   --muted: #94a3b8;
 }
 
+html {
+  height: 100%;
+}
+
 body {
   color: #0f172a;
-  background: #f8fafc;
-  min-height: 100vh;
+  background: #ffffff;
+  min-height: 100%;
+  min-height: 100dvh;
   overflow-x: hidden;
 }
 
