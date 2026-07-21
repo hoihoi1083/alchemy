@@ -72,5 +72,25 @@ export function WizardErrorBanner({
       ? "rounded-xl border border-red-900/60 bg-red-950/40 px-4 py-3 text-sm text-red-200"
       : "rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800";
 
-  return <div className={classes}>{message}</div>;
+  const notCharged = message.includes(m.errors.tokensNotCharged);
+  const primary = notCharged
+    ? message.replace(m.errors.tokensNotCharged, "").trim()
+    : message;
+
+  return (
+    <div className={classes} role="alert">
+      <p>{primary}</p>
+      {notCharged ? (
+        <p
+          className={
+            variant === "dark"
+              ? "mt-1.5 text-xs font-medium text-emerald-300/90"
+              : "mt-1.5 text-xs font-medium text-emerald-800"
+          }
+        >
+          {m.errors.tokensNotCharged}
+        </p>
+      ) : null}
+    </div>
+  );
 }

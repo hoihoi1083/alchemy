@@ -3,6 +3,7 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import type { ReactNode } from "react";
 import { LocaleProvider, useLocale } from "@/components/LocaleProvider";
+import { MixpanelProvider } from "@/components/MixpanelProvider";
 import { SyncUserOnAuth } from "@/components/SyncUserOnAuth";
 import { clerkLocalizationFor } from "@/lib/clerk-localization";
 
@@ -12,6 +13,7 @@ function ClerkWithLocale({ children }: { children: ReactNode }) {
   return (
     <ClerkProvider localization={clerkLocalizationFor(locale)} key={locale}>
       <SyncUserOnAuth />
+      <MixpanelProvider />
       {children}
     </ClerkProvider>
   );

@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { AuthNav } from "@/components/AuthNav";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { StudioAssistantWidget } from "@/components/assistant/StudioAssistantWidget";
 import { CoachSpotlightOverlay } from "@/components/assistant/CoachSpotlightOverlay";
 import { useLocale } from "@/components/LocaleProvider";
+import { FREE_SIGNUP_GRANT_TOKENS } from "@/lib/billing/plans";
 import { isTemplateId } from "@/lib/template-pref";
 import { studioHref, type PromotionMode } from "@/lib/promotion-mode";
 
@@ -17,6 +18,12 @@ function StartPageBody() {
   const templateRaw = searchParams.get("template");
   const templateId = isTemplateId(templateRaw) ? templateRaw : null;
   const templateCopy = templateId ? m.templates[templateId] : null;
+  const isWelcome = searchParams.get("welcome") === "1";
+  const [showWelcome, setShowWelcome] = useState(isWelcome);
+
+  useEffect(() => {
+    setShowWelcome(isWelcome);
+  }, [isWelcome]);
 
   const cards: Array<{
     mode: PromotionMode;
@@ -61,6 +68,25 @@ function StartPageBody() {
 
         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{m.start.title}</h1>
         <p className="mt-3 text-base text-slate-600">{m.start.subtitle}</p>
+
+        {showWelcome ? (
+          <div className="mt-6 flex items-start justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950">
+            <div>
+              <p className="font-semibold">{m.start.welcomeTitle}</p>
+              <p className="mt-1 text-emerald-900/90">
+                {m.start.welcomeBody.replace("{n}", String(FREE_SIGNUP_GRANT_TOKENS))}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowWelcome(false)}
+              className="shrink-0 text-lg leading-none text-emerald-800/70 hover:text-emerald-950"
+              aria-label="Dismiss"
+            >
+              ×
+            </button>
+          </div>
+        ) : null}
 
         {templateId && templateCopy && (
           <div className="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950">

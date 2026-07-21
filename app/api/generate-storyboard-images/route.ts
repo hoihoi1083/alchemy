@@ -1,11 +1,14 @@
 import { ApiError, fal } from "@fal-ai/client";
 import { NextResponse } from "next/server";
 import { requireTokens, settleTokens } from "@/lib/billing/charge";
+import { clampImageResolution } from "@/lib/billing/entitlements";
+import { getUserPlan } from "@/lib/billing/get-user-plan";
 import { estimateImageTokens } from "@/lib/billing/token-costs";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import type { BrandProfile } from "@/lib/brand-profile";
 import { parseBrandKit } from "@/lib/brand-kit";
-import { defaultEditEndpoint, defaultTextEndpoint } from "@/lib/image-endpoints";
+import { defaultEditEndpoint, defaultTextEndpoint, sanitizeImageEndpoint } from "@/lib/image-endpoints";
+import { persistAndDurablizeMany } from "@/lib/storage/durable-media";
 import {
   buildPromptVariables,
   buildStoryboardSceneImagePrompt,
@@ -177,11 +180,12 @@ export async function POST(request: Request) {
   const aspectRatio = aspectRatioForApi(
     (formData.get("aspect_ratio") as string | null)?.trim() || "9:16",
   );
-  const endpoint =
-    (formData.get("endpoint") as string | null)?.trim() ||
-    (conceptTextOnlyStoryboard || (!strategy.sendPixelsToFal && !hasStyle)
+  const endpoint = sanitizeImageEndpoint(
+    formData.get("endpoint") as string | null,
+    conceptTextOnlyStoryboard || (!strategy.sendPixelsToFal && !hasStyle)
       ? defaultTextEndpoint()
-      : defaultEditEndpoint());
+      : defaultEditEndpoint(),
+  );
   const artStyleId = resolveArtStyleId((formData.get("art_style") as string | null)?.trim());
   const styleHint = mergePromptExtra(visualStyle, promptExtra);
 
@@ -258,6 +262,9 @@ export async function POST(request: Request) {
   });
   const tokenGate = await requireTokens(auth.user.userId, tokenCost);
   if (tokenGate) return tokenGate;
+  const { resolution: imageResolution } = clampImageResolution(
+    await getUserPlan(auth.user.userId),
+  );
 
   try {
     let imageUrlsForFal: string[] | null = null;
@@ -298,7 +305,7 @@ export async function POST(request: Request) {
           ...(imageUrlsForFal?.length ? { image_urls: imageUrlsForFal } : {}),
           aspect_ratio: aspectRatio,
           num_images: 1,
-          resolution: "1K" as const,
+          resolution: imageResolution,
           limit_generations: true,
           ...(artStyleSystemPrompt(artStyleId)
             ? { system_prompt: artStyleSystemPrompt(artStyleId) }
@@ -327,15 +334,27 @@ export async function POST(request: Request) {
       });
     }
 
-    const imageUrls = scenes.map((s) => s.imageUrl);
+    const falUrls = scenes.map((s) => s.imageUrl);
+    const durableUrls = await persistAndDurablizeMany({
+      clerkId: auth.user.userId,
+      kind: "image",
+      sourceUrls: falUrls,
+      fallbackUrls: falUrls,
+      prompt: "storyboard",
+    });
+    const durableScenes = scenes.map((scene, index) => ({
+      ...scene,
+      imageUrl: durableUrls[index] ?? scene.imageUrl,
+    }));
+    const imageUrls = durableScenes.map((s) => s.imageUrl);
     await trackUsage(auth.user.userId, "storyboard");
     const balanceAfter = await settleTokens(auth.user.userId, tokenCost, {
       kind: "storyboard",
-      sceneCount: scenes.length,
+      sceneCount: durableScenes.length,
     });
     return NextResponse.json({
       plan,
-      scenes,
+      scenes: durableScenes,
       seedancePrompt: plan.seedancePrompt,
       imageUrl: imageUrls[0],
       imageUrls,

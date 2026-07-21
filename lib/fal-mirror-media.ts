@@ -2,7 +2,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import { fal } from "@fal-ai/client";
 import { resolvePipelineFileUrl } from "@/lib/pipeline/local-input";
-import { isFalCdnUrl } from "@/lib/pipeline/safe-url";
+import { assertSafeRemoteMediaUrl, isFalCdnUrl } from "@/lib/pipeline/safe-url";
 
 function contentTypeForPath(filePath: string): string {
   const ext = path.extname(filePath).toLowerCase();
@@ -33,6 +33,9 @@ export async function mirrorImageUrlToFalStorage(url: string): Promise<string> {
     return fal.storage.upload(file);
   }
 
+  // Remote URL: validate against SSRF (blocks private/internal hosts and
+  // non-allowlisted domains) before fetching a user-supplied URL.
+  assertSafeRemoteMediaUrl(trimmed);
   const res = await fetch(trimmed, { cache: "no-store" });
   if (!res.ok) {
     throw new Error(`Could not fetch source image for fal (${res.status}).`);

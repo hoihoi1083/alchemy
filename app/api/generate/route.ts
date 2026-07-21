@@ -1,16 +1,20 @@
 import { fal, ApiError, ValidationError } from "@fal-ai/client";
 import { NextResponse } from "next/server";
 import {
-  requireTokens,
-  settleTokens,
+  chargeTokens,
+  refundTokens,
   videoTokenCostFromRequest,
 } from "@/lib/billing/charge";
+import { clampVideoResolution } from "@/lib/billing/entitlements";
+import { getUserPlan } from "@/lib/billing/get-user-plan";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import {
   isSeedanceSensitiveError,
   softenSeedancePromptForModeration,
 } from "@/lib/seedance-moderation";
 import { mirrorImageUrlToFalStorage } from "@/lib/fal-mirror-media";
+import { sanitizeVideoEndpoint } from "@/lib/image-endpoints";
+import { persistAndDurablize } from "@/lib/storage/durable-media";
 
 function formatFalError(e: unknown): string {
   if (e instanceof ValidationError) {
@@ -73,9 +77,11 @@ function defaultEndpointFor(mode: Mode, fast: boolean): string {
 }
 
 function endpointFor(mode: Mode, fast: boolean, formData: FormData): string {
-  const direct = (formData.get(`endpoint_${mode}`) as string | null)?.trim();
-  if (direct) return direct;
-  return defaultEndpointFor(mode, fast);
+  const fallback = defaultEndpointFor(mode, fast);
+  return sanitizeVideoEndpoint(
+    formData.get(`endpoint_${mode}`) as string | null,
+    fallback,
+  );
 }
 
 function extractVideoUrl(resultData: unknown): string | undefined {
@@ -228,7 +234,7 @@ export async function POST(request: Request) {
   const resolutionBase = (formData.get("resolution") as string) || "720p";
   const resolutionOverride =
     (formData.get("resolution_override") as string | null)?.trim() || "";
-  const resolution = resolutionOverride || resolutionBase;
+  const requestedResolution = resolutionOverride || resolutionBase;
   const aspectRatio = (formData.get("aspect_ratio") as string) || "auto";
   const generateAudio = formData.get("generate_audio") !== "false";
   const negativePrompt =
@@ -258,9 +264,18 @@ export async function POST(request: Request) {
   }
 
   const duration = parseDuration((formData.get("duration") as string) || "auto");
+  const plan = await getUserPlan(auth.user.userId);
+  const { resolution } = clampVideoResolution(plan, requestedResolution);
   const tokenCost = videoTokenCostFromRequest({ resolution, fast, duration });
-  const tokenGate = await requireTokens(auth.user.userId, tokenCost);
-  if (tokenGate) return tokenGate;
+  const charged = await chargeTokens(auth.user.userId, tokenCost, {
+    kind: "video",
+    mode,
+    resolution,
+    fast,
+    duration,
+  });
+  if ("error" in charged) return charged.error;
+  const balanceAfter = charged.balanceAfter;
 
   const referenceMatch = mode === "reference";
   const refDurationSec = Number(
@@ -305,15 +320,15 @@ export async function POST(request: Request) {
         throw new Error("Model response missing video URL.");
       }
       await trackUsage(auth.user.userId, "video");
-      const balanceAfter = await settleTokens(auth.user.userId, tokenCost, {
+      const durableVideoUrl = await persistAndDurablize({
+        clerkId: auth.user.userId,
         kind: "video",
-        mode: "text",
-        resolution,
-        fast,
-        duration,
+        sourceUrl: videoUrl,
+        fallbackUrl: videoUrl,
+        prompt: common.prompt.slice(0, 500),
       });
       return NextResponse.json({
-        videoUrl,
+        videoUrl: durableVideoUrl,
         seed: result.data.seed,
         requestId: result.requestId,
         generationMode: "text-to-video",
@@ -362,15 +377,15 @@ export async function POST(request: Request) {
         throw new Error("Model response missing video URL.");
       }
       await trackUsage(auth.user.userId, "video");
-      const balanceAfter = await settleTokens(auth.user.userId, tokenCost, {
+      const durableVideoUrl = await persistAndDurablize({
+        clerkId: auth.user.userId,
         kind: "video",
-        mode: "image",
-        resolution,
-        fast,
-        duration,
+        sourceUrl: videoUrl,
+        fallbackUrl: videoUrl,
+        prompt: common.prompt.slice(0, 500),
       });
       return NextResponse.json({
-        videoUrl,
+        videoUrl: durableVideoUrl,
         seed: result.data.seed,
         requestId: result.requestId,
         generationMode: "image-to-video",
@@ -506,15 +521,15 @@ export async function POST(request: Request) {
     }
 
     await trackUsage(auth.user.userId, "video");
-    const balanceAfter = await settleTokens(auth.user.userId, tokenCost, {
+    const durableVideoUrl = await persistAndDurablize({
+      clerkId: auth.user.userId,
       kind: "video",
-      mode: "reference",
-      resolution,
-      fast,
-      duration,
+      sourceUrl: videoUrl,
+      fallbackUrl: videoUrl,
+      prompt: common.prompt.slice(0, 500),
     });
     return NextResponse.json({
-      videoUrl,
+      videoUrl: durableVideoUrl,
       seed: result.data.seed,
       requestId: result.requestId,
       generationMode: "reference-to-video",
@@ -530,6 +545,11 @@ export async function POST(request: Request) {
           : {}),
     });
   } catch (e: unknown) {
+    await refundTokens(auth.user.userId, tokenCost, {
+      kind: "video",
+      mode,
+      reason: "generation_failed",
+    });
     if (e instanceof ValidationError) {
       console.error("[api/generate] validation", JSON.stringify(e.fieldErrors));
     } else {

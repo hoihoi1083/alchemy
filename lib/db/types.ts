@@ -46,3 +46,23 @@ export type DbUsageEvent = {
   kind: "image" | "video" | "plan" | "campaign" | "storyboard" | "music" | "voiceover";
   createdAt: Date;
 };
+
+export type AssetKind = "image" | "video" | "audio" | "voiceover";
+
+/** Durable copy of a generated output stored in Cloudflare R2. */
+export type DbAsset = {
+  _id?: ObjectId;
+  clerkId: string;
+  projectId?: string | null;
+  kind: AssetKind;
+  /** Original fal/CDN URL the bytes were mirrored from (dedupe key). */
+  sourceUrl: string;
+  /** Object key inside the R2 bucket. */
+  r2Key: string;
+  contentType: string;
+  /** Optional human label / prompt for display. */
+  name?: string | null;
+  prompt?: string | null;
+  sizeBytes?: number | null;
+  createdAt: Date;
+};

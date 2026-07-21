@@ -205,6 +205,12 @@ export function AccountPageClient() {
                 >
                   {a.viewPlans}
                 </Link>
+                <Link
+                  href="/library"
+                  className="rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium text-slate-800 hover:bg-slate-50"
+                >
+                  {m.auth.libraryMenu}
+                </Link>
               </div>
               {!user?.stripeCustomerId ? (
                 <p className="mt-3 text-xs text-slate-500">{a.portalNeedSubscribe}</p>

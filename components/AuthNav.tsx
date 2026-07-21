@@ -20,6 +20,14 @@ function AccountMenuIcon() {
   );
 }
 
+function LibraryMenuIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden className="size-4">
+      <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+    </svg>
+  );
+}
+
 function AuthNavBody() {
   const { isSignedIn, isLoaded } = useAuth();
   const { m } = useLocale();
@@ -83,6 +91,11 @@ function AuthNavBody() {
         )}
         <UserButton>
           <UserButton.MenuItems>
+            <UserButton.Link
+              label={m.auth.libraryMenu}
+              labelIcon={<LibraryMenuIcon />}
+              href="/library"
+            />
             <UserButton.Link
               label={m.auth.accountMenu}
               labelIcon={<AccountMenuIcon />}

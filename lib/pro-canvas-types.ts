@@ -34,7 +34,7 @@ export type VideoNodeData = CanvasNodeBase & {
   prompt: string;
   camera: string;
   duration: string;
-  resolution: "480p" | "720p";
+  resolution: "480p" | "720p" | "1080p";
   fast: boolean;
   videoUrl?: string;
 };
@@ -85,7 +85,7 @@ export type TextVideoNodeData = CanvasNodeBase & {
   kind: "textVideo";
   prompt: string;
   duration: string;
-  resolution: "480p" | "720p";
+  resolution: "480p" | "720p" | "1080p";
   fast: boolean;
   videoUrl?: string;
 };

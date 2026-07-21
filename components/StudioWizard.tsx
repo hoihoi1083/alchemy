@@ -12,6 +12,7 @@ import { WizardMobileBar } from "@/components/studio/WizardMobileBar";
 import { StudioAssistantWidget } from "@/components/assistant/StudioAssistantWidget";
 import { CoachSpotlightOverlay } from "@/components/assistant/CoachSpotlightOverlay";
 import { MongoRequiredBanner } from "@/components/MongoRequiredBanner";
+import { SaveStatusBadge } from "@/components/studio/SaveStatusBadge";
 import { WizardProvider, useWizard } from "@/components/studio/WizardContext";
 import { isWizardV2Enabled } from "@/lib/wizard-micro-steps.types";
 import type { PromotionMode } from "@/lib/promotion-mode";
@@ -51,7 +52,10 @@ function StudioWizardContent({
 
   return (
     <div className="space-y-6 pb-24 md:pb-0">
-      <MongoRequiredBanner />
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <MongoRequiredBanner />
+        <SaveStatusBadge theme={theme} />
+      </div>
 
       {!showMicroSetup ? (
         <StepIndicator

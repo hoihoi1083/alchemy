@@ -125,7 +125,7 @@ export async function runCanvasVideoNode(opts: {
   prompt: string;
   camera: string;
   duration: string;
-  resolution: "480p" | "720p";
+  resolution: "480p" | "720p" | "1080p";
   fast: boolean;
 }): Promise<string> {
   const prompt = opts.prompt.trim();
@@ -158,7 +158,7 @@ export async function runCanvasVideoNode(opts: {
 export async function runCanvasTextVideoNode(opts: {
   prompt: string;
   duration: string;
-  resolution: "480p" | "720p";
+  resolution: "480p" | "720p" | "1080p";
   fast: boolean;
 }): Promise<string> {
   return runCanvasVideoNode({

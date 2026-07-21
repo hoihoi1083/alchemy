@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import { requireTokens, settleTokens } from "@/lib/billing/charge";
+import { chargeTokens, refundTokens } from "@/lib/billing/charge";
 import { TOKEN_COST } from "@/lib/billing/token-costs";
 import { generateMusicOptions } from "@/lib/music-generation";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
+import { persistUserAsset } from "@/lib/storage/persist-asset";
 import { SERVER_ERRORS } from "@/lib/api/server-errors";
 
 export const runtime = "nodejs";
@@ -25,21 +26,39 @@ export async function POST(request: Request) {
   }
 
   const tokenCost = TOKEN_COST.music;
-  const tokenGate = await requireTokens(auth.user.userId, tokenCost);
-  if (tokenGate) return tokenGate;
+  const charged = await chargeTokens(auth.user.userId, tokenCost, { kind: "music" });
+  if ("error" in charged) return charged.error;
+  const balanceAfter = charged.balanceAfter;
 
   try {
     const tracks = await generateMusicOptions(promptEn, body.durationSec ?? 10);
     await trackUsage(auth.user.userId, "music");
-    const balanceAfter = await settleTokens(auth.user.userId, tokenCost, {
-      kind: "music",
-    });
+
+    // Mirror generated tracks into durable storage so they stay in the library.
+    const persisted = await Promise.all(
+      tracks.map(async (t) => {
+        if (!t.audioUrl) return t;
+        const asset = await persistUserAsset({
+          clerkId: auth.user.userId,
+          kind: "audio",
+          sourceUrl: t.audioUrl,
+          name: `AI music ${t.label}`,
+          prompt: promptEn,
+        });
+        return asset ? { ...t, assetId: String(asset._id) } : t;
+      }),
+    );
+
     return NextResponse.json({
-      tracks,
+      tracks: persisted,
       tokensCharged: tokenCost,
       creditBalance: balanceAfter,
     });
   } catch (e: unknown) {
+    await refundTokens(auth.user.userId, tokenCost, {
+      kind: "music",
+      reason: "generation_failed",
+    });
     const message = e instanceof Error ? e.message : "Music generation failed.";
     return NextResponse.json({ error: message }, { status: 502 });
   }

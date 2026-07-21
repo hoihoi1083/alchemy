@@ -15,7 +15,7 @@ export async function GET() {
     return NextResponse.json({ error: mongoRequiredErrorMessage() }, { status: 503 });
   }
 
-  const projects = await listProjectsForUser(auth.user.userId);
+  const projects = await listProjectsForUser(auth.user.userId, 50);
   return NextResponse.json({
     projects: projects.map((p) => ({
       id: String(p._id),

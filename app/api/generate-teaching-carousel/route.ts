@@ -1,9 +1,12 @@
 import { ApiError, fal } from "@fal-ai/client";
 import { NextResponse } from "next/server";
 import { requireTokens, settleTokens } from "@/lib/billing/charge";
+import { clampImageResolution } from "@/lib/billing/entitlements";
+import { getUserPlan } from "@/lib/billing/get-user-plan";
 import { TOKEN_COST } from "@/lib/billing/token-costs";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
-import { defaultEditEndpoint, defaultTextEndpoint } from "@/lib/image-endpoints";
+import { defaultEditEndpoint, defaultTextEndpoint, sanitizeImageEndpoint } from "@/lib/image-endpoints";
+import { persistAndDurablizeMany } from "@/lib/storage/durable-media";
 import {
   buildPromptVariables,
   buildTeachingCarouselSlideImagePrompt,
@@ -120,9 +123,10 @@ export async function POST(request: Request) {
       : "";
   const promptExtra = [promptExtraRaw, strategyBlock, carouselExtra].filter(Boolean).join(" | ");
   const referenceImageMode = strategy.referenceImageMode;
-  const endpoint =
-    (formData.get("endpoint") as string | null)?.trim() ||
-    (strategy.sendPixelsToFal ? defaultEditEndpoint() : defaultTextEndpoint());
+  const endpoint = sanitizeImageEndpoint(
+    formData.get("endpoint") as string | null,
+    strategy.sendPixelsToFal ? defaultEditEndpoint() : defaultTextEndpoint(),
+  );
   const slideCount = Math.min(
     MAX_TEACHING_CAROUSEL_SLIDE_COUNT,
     Math.max(DEFAULT_TEACHING_CAROUSEL_SLIDE_COUNT, Number(formData.get("slide_count") || DEFAULT_TEACHING_CAROUSEL_SLIDE_COUNT)),
@@ -132,6 +136,9 @@ export async function POST(request: Request) {
   const tokenCost = TOKEN_COST.teaching_carousel;
   const tokenGate = await requireTokens(auth.user.userId, tokenCost);
   if (tokenGate) return tokenGate;
+  const { resolution: imageResolution } = clampImageResolution(
+    await getUserPlan(auth.user.userId),
+  );
 
   try {
     const plan = await planTeachingCarousel({
@@ -212,7 +219,7 @@ export async function POST(request: Request) {
           ...(imageUrlsForFal?.length ? { image_urls: imageUrlsForFal } : {}),
           aspect_ratio: aspectRatio,
           num_images: 1,
-          resolution: "1K" as const,
+          resolution: imageResolution,
           limit_generations: true,
           ...(systemPrompt ? { system_prompt: systemPrompt } : {}),
         },
@@ -236,9 +243,16 @@ export async function POST(request: Request) {
 
     const falUrls = slides.map((s) => s.imageUrl);
     const archivedUrls = await archiveCampaignSlidesToPipeline(request, falUrls);
+    const durableUrls = await persistAndDurablizeMany({
+      clerkId: auth.user.userId,
+      kind: "image",
+      sourceUrls: falUrls,
+      fallbackUrls: archivedUrls.length === falUrls.length ? archivedUrls : falUrls,
+      prompt: "teaching-carousel",
+    });
     const archivedSlides = slides.map((slide, index) => ({
       ...slide,
-      imageUrl: archivedUrls[index] ?? slide.imageUrl,
+      imageUrl: durableUrls[index] ?? archivedUrls[index] ?? slide.imageUrl,
     }));
 
     await trackUsage(auth.user.userId, "campaign");

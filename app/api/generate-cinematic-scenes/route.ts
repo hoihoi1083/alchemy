@@ -1,9 +1,12 @@
 import { ApiError, fal } from "@fal-ai/client";
 import { NextResponse } from "next/server";
-import { defaultTextEndpoint } from "@/lib/image-endpoints";
+import { defaultTextEndpoint, sanitizeImageEndpoint } from "@/lib/image-endpoints";
+import { persistAndDurablizeMany } from "@/lib/storage/durable-media";
 import type { CinematicReelPlan } from "@/lib/cinematic-reel-types";
 import type { CinematicSceneResult } from "@/lib/cinematic-reel-types";
-import { requireTokens, settleTokens } from "@/lib/billing/charge";
+import { chargeTokens, refundTokens } from "@/lib/billing/charge";
+import { clampImageResolution } from "@/lib/billing/entitlements";
+import { getUserPlan } from "@/lib/billing/get-user-plan";
 import { estimateImageTokens } from "@/lib/billing/token-costs";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import { artStyleAvoidTail, artStyleSystemPrompt, resolveArtStyleId } from "@/lib/art-style";
@@ -63,15 +66,23 @@ export async function POST(request: Request) {
   }
 
   const aspectRatio = body.aspect_ratio?.trim() || "9:16";
-  const endpoint = body.endpoint?.trim() || defaultTextEndpoint();
+  const endpoint = sanitizeImageEndpoint(body.endpoint, defaultTextEndpoint());
   const artStyleId = resolveArtStyleId(body.art_style);
 
   const tokenCost = estimateImageTokens({
     mode: "storyboard",
     sceneCount: plan.scenes.length,
   });
-  const tokenGate = await requireTokens(auth.user.userId, tokenCost);
-  if (tokenGate) return tokenGate;
+  const charged = await chargeTokens(auth.user.userId, tokenCost, {
+    kind: "cinematic_scenes",
+    sceneCount: plan.scenes.length,
+  });
+  if ("error" in charged) return charged.error;
+  const balanceAfter = charged.balanceAfter;
+
+  const { resolution: imageResolution } = clampImageResolution(
+    await getUserPlan(auth.user.userId),
+  );
 
   try {
     const scenes: CinematicSceneResult[] = [];
@@ -88,7 +99,7 @@ export async function POST(request: Request) {
           prompt,
           aspect_ratio: aspectRatio,
           num_images: 1,
-          resolution: "1K" as const,
+          resolution: imageResolution,
           limit_generations: true,
           ...(systemPrompt ? { system_prompt: systemPrompt } : {}),
         },
@@ -96,6 +107,10 @@ export async function POST(request: Request) {
       });
       const outUrls = extractImageUrls(result.data);
       if (!outUrls[0]) {
+        await refundTokens(auth.user.userId, tokenCost, {
+          kind: "cinematic_scenes",
+          reason: "no_image",
+        });
         return NextResponse.json(
           { error: `Image URL missing for scene ${scene.sceneIndex}.`, raw: result.data },
           { status: 502 },
@@ -104,23 +119,36 @@ export async function POST(request: Request) {
       scenes.push({ ...scene, imageUrl: outUrls[0] });
     }
 
-    await trackUsage(auth.user.userId, "storyboard");
-    const balanceAfter = await settleTokens(auth.user.userId, tokenCost, {
-      kind: "cinematic_scenes",
-      sceneCount: scenes.length,
+    const falUrls = scenes.map((s) => s.imageUrl);
+    const durableUrls = await persistAndDurablizeMany({
+      clerkId: auth.user.userId,
+      kind: "image",
+      sourceUrls: falUrls,
+      fallbackUrls: falUrls,
+      prompt: "cinematic-reel",
     });
+    const durableScenes = scenes.map((scene, index) => ({
+      ...scene,
+      imageUrl: durableUrls[index] ?? scene.imageUrl,
+    }));
+
+    await trackUsage(auth.user.userId, "storyboard");
     return NextResponse.json({
       plan,
-      scenes,
-      imageUrl: scenes[0]?.imageUrl,
-      imageUrls: scenes.map((s) => s.imageUrl),
+      scenes: durableScenes,
+      imageUrl: durableScenes[0]?.imageUrl,
+      imageUrls: durableScenes.map((s) => s.imageUrl),
       endpoint,
       mode: "cinematic-reel",
-      sceneCount: scenes.length,
+      sceneCount: durableScenes.length,
       tokensCharged: tokenCost,
       creditBalance: balanceAfter,
     });
   } catch (e: unknown) {
+    await refundTokens(auth.user.userId, tokenCost, {
+      kind: "cinematic_scenes",
+      reason: "generation_failed",
+    });
     return NextResponse.json({ error: formatFalError(e) }, { status: 502 });
   }
 }

@@ -3,7 +3,7 @@ import { motionStrengthForCreativity } from "@/lib/video-creativity";
 import type { TemplateId } from "@/lib/templates";
 import { getTemplate } from "@/lib/templates";
 
-export type VideoResolution = "480p" | "720p";
+export type VideoResolution = "480p" | "720p" | "1080p";
 export type VideoDuration = "4" | "6" | "8" | "10" | "12" | "auto";
 
 export type VideoMotionStyle =
@@ -22,7 +22,7 @@ export type VideoSettings = {
   fast: boolean;
 };
 
-export const VIDEO_RESOLUTIONS: VideoResolution[] = ["480p", "720p"];
+export const VIDEO_RESOLUTIONS: VideoResolution[] = ["480p", "720p", "1080p"];
 export const VIDEO_DURATIONS: VideoDuration[] = ["4", "6", "8", "10", "12", "auto"];
 export const VIDEO_MOTION_STYLES: VideoMotionStyle[] = [
   "slow-push",

@@ -1,13 +1,16 @@
 import { ApiError, fal } from "@fal-ai/client";
 import { NextResponse } from "next/server";
 import { requireTokens, settleTokens } from "@/lib/billing/charge";
+import { clampImageResolution } from "@/lib/billing/entitlements";
+import { getUserPlan } from "@/lib/billing/get-user-plan";
 import { TOKEN_COST } from "@/lib/billing/token-costs";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import type { BrandProfile } from "@/lib/brand-profile";
 import type { CampaignPlan } from "@/lib/campaign-types";
 import { planCampaign } from "@/lib/campaign-plan";
 import { parseBrandKit } from "@/lib/brand-kit";
-import { defaultEditEndpoint, defaultTextEndpoint } from "@/lib/image-endpoints";
+import { defaultEditEndpoint, defaultTextEndpoint, sanitizeImageEndpoint } from "@/lib/image-endpoints";
+import { persistAndDurablizeMany } from "@/lib/storage/durable-media";
 import {
   parseStrategyFromFormData,
   referenceStrategyPromptBlock,
@@ -140,9 +143,10 @@ export async function POST(request: Request) {
   const aspectRatio = aspectRatioForApi(
     (formData.get("aspect_ratio") as string | null)?.trim() || "9:16",
   );
-  const endpoint =
-    (formData.get("endpoint") as string | null)?.trim() ||
-    (strategy.sendPixelsToFal ? defaultEditEndpoint() : defaultTextEndpoint());
+  const endpoint = sanitizeImageEndpoint(
+    formData.get("endpoint") as string | null,
+    strategy.sendPixelsToFal ? defaultEditEndpoint() : defaultTextEndpoint(),
+  );
 
   const artStyleId = resolveArtStyleId((formData.get("art_style") as string | null)?.trim());
   const systemPrompt = artStyleSystemPrompt(artStyleId);
@@ -168,6 +172,9 @@ export async function POST(request: Request) {
   const tokenCost = TOKEN_COST.campaign;
   const tokenGate = await requireTokens(auth.user.userId, tokenCost);
   if (tokenGate) return tokenGate;
+  const { resolution: imageResolution } = clampImageResolution(
+    await getUserPlan(auth.user.userId),
+  );
 
   let plan: CampaignPlan;
   try {
@@ -250,7 +257,7 @@ export async function POST(request: Request) {
           ...(imageUrlsForFal?.length ? { image_urls: imageUrlsForFal } : {}),
           aspect_ratio: aspectRatio,
           num_images: 1,
-          resolution: "1K" as const,
+          resolution: imageResolution,
           limit_generations: true,
           ...(systemPrompt ? { system_prompt: systemPrompt } : {}),
         },
@@ -276,9 +283,16 @@ export async function POST(request: Request) {
 
     const falUrls = slides.map((s) => s.imageUrl);
     const archivedUrls = await archiveCampaignSlidesToPipeline(request, falUrls);
+    const durableUrls = await persistAndDurablizeMany({
+      clerkId: auth.user.userId,
+      kind: "image",
+      sourceUrls: falUrls,
+      fallbackUrls: archivedUrls.length === falUrls.length ? archivedUrls : falUrls,
+      prompt: productName.slice(0, 200) || "campaign",
+    });
     const archivedSlides = slides.map((slide, index) => ({
       ...slide,
-      imageUrl: archivedUrls[index] ?? slide.imageUrl,
+      imageUrl: durableUrls[index] ?? archivedUrls[index] ?? slide.imageUrl,
     }));
 
     const imageUrls = archivedSlides.map((s) => s.imageUrl);

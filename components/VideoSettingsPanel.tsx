@@ -1,11 +1,18 @@
 "use client";
 
+import Link from "next/link";
+import { useEffect } from "react";
 import { useLocale } from "@/components/LocaleProvider";
+import { useUserPlanEntitlements } from "@/hooks/useUserPlanEntitlements";
+import {
+  videoResolutionsForPlan,
+  type VideoResolutionCap,
+} from "@/lib/billing/entitlements";
 import { VIDEO_CREATIVITY_LEVELS } from "@/lib/video-creativity";
 import {
   VIDEO_DURATIONS,
   VIDEO_MOTION_STYLES,
-  VIDEO_RESOLUTIONS,
+  type VideoResolution,
   type VideoSettings,
 } from "@/lib/video-settings";
 
@@ -29,6 +36,10 @@ function pillClass(active: boolean, dark: boolean) {
       : "border border-slate-300 text-slate-600";
 }
 
+function asVideoResolution(r: VideoResolutionCap): VideoResolution {
+  return r;
+}
+
 export function VideoSettingsPanel({
   value,
   onChange,
@@ -38,11 +49,21 @@ export function VideoSettingsPanel({
   variant = "light",
 }: Props) {
   const { m } = useLocale();
+  const { plan, maxVideoResolution } = useUserPlanEntitlements();
   const dark = variant === "dark";
   const compactMode = compact || setup;
   const durationOptions = hideAutoDuration
     ? VIDEO_DURATIONS.filter((d) => d !== "auto")
     : VIDEO_DURATIONS;
+  const allowedResolutions = videoResolutionsForPlan(plan).map(asVideoResolution);
+  const showUpgradeHint = maxVideoResolution !== "1080p";
+
+  useEffect(() => {
+    if (!allowedResolutions.includes(value.resolution)) {
+      onChange({ ...value, resolution: asVideoResolution(maxVideoResolution) });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- clamp only when plan/selection drifts
+  }, [maxVideoResolution, value.resolution]);
 
   return (
     <div
@@ -78,7 +99,7 @@ export function VideoSettingsPanel({
           {m.wizard.videoSettingsResolution}
         </p>
         <div className="flex flex-wrap gap-2">
-          {VIDEO_RESOLUTIONS.map((r) => (
+          {allowedResolutions.map((r) => (
             <button
               key={r}
               type="button"
@@ -89,6 +110,21 @@ export function VideoSettingsPanel({
             </button>
           ))}
         </div>
+        {showUpgradeHint ? (
+          <p className={dark ? "mt-2 text-xs text-slate-400" : "mt-2 text-xs text-slate-500"}>
+            {m.wizard.videoResolutionPlanHint.replace("{max}", maxVideoResolution)}{" "}
+            <Link
+              href="/pricing"
+              className={
+                dark
+                  ? "font-medium text-emerald-400 underline-offset-2 hover:underline"
+                  : "font-medium text-emerald-700 underline-offset-2 hover:underline"
+              }
+            >
+              {m.wizard.videoResolutionUpgradeLink}
+            </Link>
+          </p>
+        ) : null}
       </div>
 
       <div>

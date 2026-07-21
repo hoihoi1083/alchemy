@@ -5,7 +5,7 @@ import { AuthNav } from "@/components/AuthNav";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { StudioAssistantWidget } from "@/components/assistant/StudioAssistantWidget";
 import { CoachSpotlightOverlay } from "@/components/assistant/CoachSpotlightOverlay";
-import { TemplateGallery } from "@/components/TemplateGallery";
+import { SiteFooter } from "@/components/SiteFooter";
 import { useLocale } from "@/components/LocaleProvider";
 
 export function LandingPageClient() {
@@ -96,8 +96,6 @@ export function LandingPageClient() {
         </div>
       </section>
 
-      <TemplateGallery />
-
       <section id="how" className="border-t border-slate-200 bg-slate-50">
         <div className="mx-auto max-w-6xl px-6 py-14">
           <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
@@ -122,6 +120,7 @@ export function LandingPageClient() {
       </section>
       <CoachSpotlightOverlay />
       <StudioAssistantWidget surface="landing" />
+      <SiteFooter />
     </main>
   );
 }

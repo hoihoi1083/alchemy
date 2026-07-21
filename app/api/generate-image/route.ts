@@ -3,9 +3,11 @@ import { NextResponse } from "next/server";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import {
   imageTokenCostFromRequest,
-  requireTokens,
-  settleTokens,
+  chargeTokens,
+  refundTokens,
 } from "@/lib/billing/charge";
+import { clampImageResolution } from "@/lib/billing/entitlements";
+import { getUserPlan } from "@/lib/billing/get-user-plan";
 import type { BrandProfile } from "@/lib/brand-profile";
 import { parseBrandKit } from "@/lib/brand-kit";
 import { archiveImageWithLogoFile } from "@/lib/brand-logo-composite";
@@ -15,7 +17,9 @@ import {
   resolveImagePromptMode,
 } from "@/lib/prompt-variables";
 import type { PromptMarket, SubjectFraming } from "@/lib/prompt-variables";
-import { defaultEditEndpoint, defaultTextEndpoint } from "@/lib/image-endpoints";
+import { defaultEditEndpoint, defaultTextEndpoint, sanitizeImageEndpoint } from "@/lib/image-endpoints";
+import { mirrorImageUrlToFalStorage } from "@/lib/fal-mirror-media";
+import { persistAndDurablize, persistAndDurablizeMany } from "@/lib/storage/durable-media";
 import {
   IMAGE_LOGO_REFINE_SYSTEM_PROMPT,
   IMAGE_REFINE_SYSTEM_PROMPT,
@@ -93,13 +97,17 @@ function banana2Input(
   imageUrls: string[],
   aspectRatio: string,
   numImages: number,
-  opts?: { limitGenerations?: boolean; systemPrompt?: string },
+  opts?: {
+    limitGenerations?: boolean;
+    systemPrompt?: string;
+    resolution?: "1K" | "2K" | "4K";
+  },
 ): Record<string, unknown> {
   const input: Record<string, unknown> = {
     prompt,
     aspect_ratio: aspectRatio,
     num_images: numImages,
-    resolution: "1K" as const,
+    resolution: opts?.resolution ?? "1K",
     limit_generations: opts?.limitGenerations ?? true,
   };
   if (imageUrls.length > 0) {
@@ -112,14 +120,10 @@ function banana2Input(
 }
 
 async function mirrorImageToFalStorage(url: string): Promise<string> {
-  const res = await fetch(url, { cache: "no-store" });
-  if (!res.ok) {
-    throw new Error(`Could not fetch source image for refine (${res.status}).`);
-  }
-  const contentType = res.headers.get("content-type")?.split(";")[0]?.trim() || "image/png";
-  const bytes = await res.arrayBuffer();
-  const file = new File([bytes], "refine-source.png", { type: contentType });
-  return fal.storage.upload(file);
+  // Delegate to the shared mirror, which returns fal-CDN URLs as-is, reads
+  // local pipeline files from disk, and SSRF-guards any other remote URL
+  // before fetching it.
+  return mirrorImageUrlToFalStorage(url);
 }
 
 function parseLogoPlacement(raw: string | null | undefined): LogoPlacement {
@@ -157,58 +161,79 @@ async function runRefineEdit(
   userId: string;
   refineSources: string[];
   tokenCost?: number;
+  resolution?: "1K" | "2K" | "4K";
 }): Promise<NextResponse> {
-  const hostedUrls = await Promise.all(opts.imageUrls.map((url) => mirrorImageToFalStorage(url)));
-  const result = await fal.subscribe(opts.endpoint, {
-    input: {
-      ...banana2Input(opts.prompt, hostedUrls, opts.aspectRatio, opts.numImages, {
-        limitGenerations: false,
-        systemPrompt: opts.systemPrompt,
-      }),
-      seed: Math.floor(Math.random() * 2_147_483_647),
-    },
-    logs: true,
-  });
-  const outUrls = extractImageUrls(result.data);
-  if (!outUrls.length) {
-    return NextResponse.json(
-      {
-        error:
-          "Image URL missing in model response. Check endpoint and schema on fal.ai model page.",
-        raw: result.data,
-      },
-      { status: 502 },
-    );
-  }
-
-  const allSources = [...opts.refineSources, ...hostedUrls];
-  if (
-    allSources.length > 0 &&
-    outUrls.every((out) => allSources.some((src) => isSameImageAsset(src, out)))
-  ) {
-    return NextResponse.json(
-      {
-        error:
-          "The model returned the same image. Try a more specific fix note (e.g. “remove the logo in the top-right corner”).",
-      },
-      { status: 502 },
-    );
-  }
-
   const cost = opts.tokenCost ?? imageTokenCostFromRequest({ multipartMode: "refine" });
-  await trackUsage(opts.userId, "image");
-  const balanceAfter = await settleTokens(opts.userId, cost, { kind: "image", mode: "refine" });
-  const archived = await archiveOutputUrls(request, outUrls);
-  return NextResponse.json({
-    imageUrl: archived[0],
-    imageUrls: archived,
-    requestId: result.requestId,
-    endpoint: opts.endpoint,
-    mode: "refine",
-    variantCount: outUrls.length,
-    tokensCharged: cost,
-    creditBalance: balanceAfter,
-  });
+  const charged = await chargeTokens(opts.userId, cost, { kind: "image", mode: "refine" });
+  if ("error" in charged) return charged.error;
+  const balanceAfter = charged.balanceAfter;
+
+  try {
+    const plan = await getUserPlan(opts.userId);
+    const { resolution: imageResolution } = clampImageResolution(plan, opts.resolution ?? null);
+    const hostedUrls = await Promise.all(opts.imageUrls.map((url) => mirrorImageToFalStorage(url)));
+    const result = await fal.subscribe(opts.endpoint, {
+      input: {
+        ...banana2Input(opts.prompt, hostedUrls, opts.aspectRatio, opts.numImages, {
+          limitGenerations: false,
+          systemPrompt: opts.systemPrompt,
+          resolution: imageResolution,
+        }),
+        seed: Math.floor(Math.random() * 2_147_483_647),
+      },
+      logs: true,
+    });
+    const outUrls = extractImageUrls(result.data);
+    if (!outUrls.length) {
+      await refundTokens(opts.userId, cost, { kind: "image", mode: "refine", reason: "no_image" });
+      return NextResponse.json(
+        {
+          error:
+            "Image URL missing in model response. Check endpoint and schema on fal.ai model page.",
+          raw: result.data,
+        },
+        { status: 502 },
+      );
+    }
+
+    const allSources = [...opts.refineSources, ...hostedUrls];
+    if (
+      allSources.length > 0 &&
+      outUrls.every((out) => allSources.some((src) => isSameImageAsset(src, out)))
+    ) {
+      await refundTokens(opts.userId, cost, { kind: "image", mode: "refine", reason: "unchanged" });
+      return NextResponse.json(
+        {
+          error:
+            "The model returned the same image. Try a more specific fix note (e.g. “remove the logo in the top-right corner”).",
+        },
+        { status: 502 },
+      );
+    }
+
+    await trackUsage(opts.userId, "image");
+    const archived = await archiveOutputUrls(request, outUrls);
+    const durable = await persistAndDurablizeMany({
+      clerkId: opts.userId,
+      kind: "image",
+      sourceUrls: outUrls,
+      fallbackUrls: archived,
+      prompt: opts.prompt.slice(0, 500),
+    });
+    return NextResponse.json({
+      imageUrl: durable[0],
+      imageUrls: durable,
+      requestId: result.requestId,
+      endpoint: opts.endpoint,
+      mode: "refine",
+      variantCount: outUrls.length,
+      tokensCharged: cost,
+      creditBalance: balanceAfter,
+    });
+  } catch (e: unknown) {
+    await refundTokens(opts.userId, cost, { kind: "image", mode: "refine", reason: "generation_failed" });
+    return NextResponse.json({ error: formatFalError(e) }, { status: 502 });
+  }
 }
 
 export async function POST(request: Request) {
@@ -258,10 +283,19 @@ export async function POST(request: Request) {
         try {
           const logoBuffer = Buffer.from(await (logoFile as File).arrayBuffer());
           const archived = await archiveImageWithLogoFile(request, sourceUrl, logoBuffer, placement);
+          const durable = await persistAndDurablize({
+            clerkId: auth.user.userId,
+            kind: "image",
+            sourceUrl: archived.startsWith("http")
+              ? archived
+              : new URL(archived, request.url).toString(),
+            fallbackUrl: archived,
+            name: "logo-stamp",
+          });
           // Deterministic PNG stamp — no fal AI cost.
           return NextResponse.json({
-            imageUrl: archived,
-            imageUrls: [archived],
+            imageUrl: durable,
+            imageUrls: [durable],
             mode: "refine-logo",
             logoStamped: true,
             variantCount: 1,
@@ -272,7 +306,10 @@ export async function POST(request: Request) {
         }
       }
 
-      const endpoint = (formData.get("endpoint") as string | null)?.trim() || defaultEditEndpoint();
+      const endpoint = sanitizeImageEndpoint(
+        formData.get("endpoint") as string | null,
+        defaultEditEndpoint(),
+      );
       const aspectRatio = aspectRatioForApi(
         (formData.get("aspect_ratio") as string | null)?.trim() || "auto",
       );
@@ -285,8 +322,6 @@ export async function POST(request: Request) {
       }
 
       const refineLogoCost = imageTokenCostFromRequest({ multipartMode: "refine-logo", numImages });
-      const refineLogoGate = await requireTokens(auth.user.userId, refineLogoCost);
-      if (refineLogoGate) return refineLogoGate;
 
       try {
         const logoUrl = await fal.storage.upload(logoFile as File);
@@ -320,7 +355,10 @@ export async function POST(request: Request) {
       }
       const hintFile = formData.get("region_hint_image");
       const hasHint = hintFile instanceof File && hintFile.size > 0;
-      const endpoint = (formData.get("endpoint") as string | null)?.trim() || defaultEditEndpoint();
+      const endpoint = sanitizeImageEndpoint(
+        formData.get("endpoint") as string | null,
+        defaultEditEndpoint(),
+      );
       const aspectRatio = aspectRatioForApi(
         (formData.get("aspect_ratio") as string | null)?.trim() || "auto",
       );
@@ -343,8 +381,6 @@ export async function POST(request: Request) {
       }
 
       const regionCost = imageTokenCostFromRequest({ multipartMode: "refine-regions", numImages });
-      const regionGate = await requireTokens(auth.user.userId, regionCost);
-      if (regionGate) return regionGate;
 
       try {
         const imageUrls = [sourceUrl];
@@ -436,9 +472,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const endpoint =
-      (formData.get("endpoint") as string | null)?.trim() ||
-      (strategy.sendPixelsToFal ? defaultEditEndpoint() : defaultTextEndpoint());
+    const endpoint = sanitizeImageEndpoint(
+      formData.get("endpoint") as string | null,
+      strategy.sendPixelsToFal ? defaultEditEndpoint() : defaultTextEndpoint(),
+    );
 
     const vars = buildPromptVariables({
       product: productName,
@@ -486,8 +523,18 @@ export async function POST(request: Request) {
       numImages,
       imageOutputMode,
     });
-    const tokenGate = await requireTokens(auth.user.userId, tokenCost);
-    if (tokenGate) return tokenGate;
+    const charged = await chargeTokens(auth.user.userId, tokenCost, {
+      kind: "image",
+      mode: "generate",
+      numImages,
+      imageOutputMode,
+    });
+    if ("error" in charged) return charged.error;
+    const balanceAfter = charged.balanceAfter;
+
+    const plan = await getUserPlan(auth.user.userId);
+    const requestedImageRes = (formData.get("resolution") as string | null)?.trim() || null;
+    const { resolution: imageResolution } = clampImageResolution(plan, requestedImageRes);
 
     try {
       const imageUrls: string[] = [];
@@ -518,11 +565,17 @@ export async function POST(request: Request) {
       const result = await fal.subscribe(endpoint, {
         input: banana2Input(finalPrompt, imageUrls, aspectRatio, numImages, {
           systemPrompt: artStyleSystemPrompt(artStyleId),
+          resolution: imageResolution,
         }),
         logs: true,
       });
       const outUrls = extractImageUrls(result.data);
       if (!outUrls.length) {
+        await refundTokens(auth.user.userId, tokenCost, {
+          kind: "image",
+          mode: "generate",
+          reason: "no_image",
+        });
         return NextResponse.json(
           {
             error: "Image URL missing in model response.",
@@ -533,26 +586,32 @@ export async function POST(request: Request) {
       }
 
       await trackUsage(auth.user.userId, "image");
-      const balanceAfter = await settleTokens(auth.user.userId, tokenCost, {
-        kind: "image",
-        mode: "generate",
-        numImages,
-        imageOutputMode,
-      });
       const archived = await archiveOutputUrls(request, outUrls);
+      const durable = await persistAndDurablizeMany({
+        clerkId: auth.user.userId,
+        kind: "image",
+        sourceUrls: outUrls,
+        fallbackUrls: archived,
+        prompt: finalPrompt.slice(0, 500),
+      });
       return NextResponse.json({
-        imageUrl: archived[0],
-        imageUrls: archived,
+        imageUrl: durable[0],
+        imageUrls: durable,
         requestId: result.requestId,
         endpoint,
         mode: "edit",
         creativeMode: useReferenceConcept ? "reference-concept" : "promo-ai",
         imageCount: imageUrls.length,
-        variantCount: archived.length,
+        variantCount: durable.length,
         tokensCharged: tokenCost,
         creditBalance: balanceAfter,
       });
     } catch (e: unknown) {
+      await refundTokens(auth.user.userId, tokenCost, {
+        kind: "image",
+        mode: "generate",
+        reason: "generation_failed",
+      });
       return NextResponse.json({ error: formatFalError(e) }, { status: 502 });
     }
   }
@@ -568,7 +627,7 @@ export async function POST(request: Request) {
       }
     | null;
   const prompt = body?.prompt?.trim() || "";
-  const endpoint = body?.endpoint?.trim() || defaultTextEndpoint();
+  const endpoint = sanitizeImageEndpoint(body?.endpoint, defaultTextEndpoint());
   const apiMode = body?.mode?.trim();
   const isCompose = apiMode === "compose";
   const isRefine = apiMode === "refine" || (!isCompose && (body?.image_urls?.length ?? 0) > 0);
@@ -595,33 +654,43 @@ export async function POST(request: Request) {
   }
 
   const jsonCost = imageTokenCostFromRequest({ numImages });
-  const jsonGate = await requireTokens(auth.user.userId, jsonCost);
-  if (jsonGate) return jsonGate;
+
+  if (imageUrls.length > 0) {
+    const systemPrompt = isCompose
+      ? IMAGE_CANVAS_COMPOSE_SYSTEM_PROMPT
+      : IMAGE_REFINE_SYSTEM_PROMPT;
+    return await runRefineEdit(request, {
+      endpoint,
+      prompt,
+      aspectRatio,
+      numImages,
+      imageUrls,
+      systemPrompt,
+      userId: auth.user.userId,
+      refineSources: imageUrls,
+      tokenCost: jsonCost,
+    });
+  }
+
+  const charged = await chargeTokens(auth.user.userId, jsonCost, {
+    kind: "image",
+    mode: "text",
+  });
+  if ("error" in charged) return charged.error;
+  const balanceAfter = charged.balanceAfter;
 
   try {
-    if (imageUrls.length > 0) {
-      const systemPrompt = isCompose
-        ? IMAGE_CANVAS_COMPOSE_SYSTEM_PROMPT
-        : IMAGE_REFINE_SYSTEM_PROMPT;
-      return await runRefineEdit(request, {
-        endpoint,
-        prompt,
-        aspectRatio,
-        numImages,
-        imageUrls,
-        systemPrompt,
-        userId: auth.user.userId,
-        refineSources: imageUrls,
-        tokenCost: jsonCost,
-      });
-    }
-
     const result = await fal.subscribe(endpoint, {
       input: { prompt, aspect_ratio: aspectRatio, num_images: numImages },
       logs: true,
     });
     const outUrls = extractImageUrls(result.data);
     if (!outUrls.length) {
+      await refundTokens(auth.user.userId, jsonCost, {
+        kind: "image",
+        mode: "text",
+        reason: "no_image",
+      });
       return NextResponse.json(
         {
           error:
@@ -633,22 +702,30 @@ export async function POST(request: Request) {
     }
 
     await trackUsage(auth.user.userId, "image");
-    const balanceAfter = await settleTokens(auth.user.userId, jsonCost, {
-      kind: "image",
-      mode: "text",
-    });
     const archived = await archiveOutputUrls(request, outUrls);
+    const durable = await persistAndDurablizeMany({
+      clerkId: auth.user.userId,
+      kind: "image",
+      sourceUrls: outUrls,
+      fallbackUrls: archived,
+      prompt: prompt.slice(0, 500),
+    });
     return NextResponse.json({
-      imageUrl: archived[0],
-      imageUrls: archived,
+      imageUrl: durable[0],
+      imageUrls: durable,
       requestId: result.requestId,
       endpoint,
       mode: "text",
-      variantCount: archived.length,
+      variantCount: durable.length,
       tokensCharged: jsonCost,
       creditBalance: balanceAfter,
     });
   } catch (e: unknown) {
+    await refundTokens(auth.user.userId, jsonCost, {
+      kind: "image",
+      mode: "text",
+      reason: "generation_failed",
+    });
     return NextResponse.json({ error: formatFalError(e) }, { status: 502 });
   }
 }

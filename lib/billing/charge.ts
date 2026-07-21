@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import {
   assertCanAfford,
   consumeTokens,
+  grantTokens,
   insufficientTokensResponse,
   InsufficientTokensError,
 } from "@/lib/billing/ledger";
@@ -21,6 +22,10 @@ export function billingErrorResponse(err: unknown): NextResponse | null {
   return null;
 }
 
+/**
+ * Soft pre-check only (does not lock balance). Prefer `chargeTokens` before
+ * expensive fal calls so concurrent tabs cannot double-spend.
+ */
 export async function requireTokens(clerkId: string, cost: number): Promise<NextResponse | null> {
   try {
     await assertCanAfford(clerkId, cost);
@@ -30,6 +35,57 @@ export async function requireTokens(clerkId: string, cost: number): Promise<Next
   }
 }
 
+/**
+ * Deduct tokens BEFORE calling fal. Atomic — concurrent requests cannot both
+ * pass. On fal failure, call `refundTokens` so the user is not charged.
+ *
+ * Returns either `{ error: NextResponse }` (402/500) or `{ balanceAfter }`.
+ */
+export async function chargeTokens(
+  clerkId: string,
+  cost: number,
+  meta: Record<string, unknown>,
+): Promise<{ error: NextResponse } | { balanceAfter: number | null }> {
+  if (!isMongoConfigured() || cost <= 0) {
+    return { balanceAfter: null };
+  }
+  try {
+    const balanceAfter = await consumeTokens(clerkId, cost, {
+      meta: { ...meta, phase: "charge" },
+    });
+    return { balanceAfter };
+  } catch (err) {
+    return {
+      error:
+        billingErrorResponse(err) ??
+        NextResponse.json({ error: "Billing charge failed" }, { status: 500 }),
+    };
+  }
+}
+
+/**
+ * Refund tokens after a failed generation that was already charged.
+ * Best-effort — never throws to the caller.
+ */
+export async function refundTokens(
+  clerkId: string,
+  cost: number,
+  meta: Record<string, unknown>,
+): Promise<number | null> {
+  if (!isMongoConfigured() || cost <= 0) return null;
+  try {
+    return await grantTokens(clerkId, cost, "refund", {
+      meta: { ...meta, phase: "refund" },
+    });
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * @deprecated Prefer chargeTokens (upfront) + refundTokens on failure.
+ * Kept for any leftover callers during migration.
+ */
 export async function settleTokens(
   clerkId: string,
   cost: number,

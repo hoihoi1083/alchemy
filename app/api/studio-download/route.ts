@@ -1,10 +1,17 @@
 import { promises as fs } from "fs";
 import { NextResponse } from "next/server";
+import { getAssetForUser } from "@/lib/db/assets";
 import { archiveRemoteImageToPipeline } from "@/lib/pipeline/archive-image";
 import { PIPELINE_FILES } from "@/lib/pipeline/local-input";
 import { jobDir, isValidJobId } from "@/lib/pipeline/paths";
 import { assertSafeRemoteMediaUrl, isFalCdnUrl, isPipelineFileUrl } from "@/lib/pipeline/safe-url";
 import { requireAppUser } from "@/lib/require-app-user";
+import {
+  isLibraryAssetUrl,
+  libraryAssetIdFromUrl,
+} from "@/lib/storage/durable-media";
+import { persistUserAsset } from "@/lib/storage/persist-asset";
+import { getR2ObjectBytes } from "@/lib/storage/r2";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -51,6 +58,23 @@ async function readPipelineBytes(raw: string): Promise<{ data: Buffer; contentTy
   }
 }
 
+async function readLibraryBytes(
+  clerkId: string,
+  raw: string,
+): Promise<{ data: Buffer; contentType: string } | null> {
+  const id = libraryAssetIdFromUrl(raw);
+  if (!id) return null;
+  const asset = await getAssetForUser(clerkId, id);
+  if (!asset) return null;
+  try {
+    const obj = await getR2ObjectBytes(asset.r2Key);
+    if (!obj) return null;
+    return { data: Buffer.from(obj.body), contentType: obj.contentType || asset.contentType };
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(request: Request) {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
@@ -72,21 +96,57 @@ export async function POST(request: Request) {
     imageUrl = new URL(imageUrl, request.url).toString();
   }
 
-  let bytes = await readPipelineBytes(imageUrl);
+  // Prefer durable R2 assets (works across serverless instances).
+  let bytes = await readLibraryBytes(auth.user.userId, imageUrl);
+
+  if (!bytes) {
+    bytes = await readPipelineBytes(imageUrl);
+  }
 
   if (!bytes && isFalCdnUrl(imageUrl)) {
     try {
-      const archived = await archiveRemoteImageToPipeline(request, imageUrl, "generated.png");
-      bytes = await readPipelineBytes(archived);
-      if (bytes) imageUrl = archived;
+      // Stream from fal, and mirror to R2 so future downloads don't need the CDN.
+      const safe = assertSafeRemoteMediaUrl(imageUrl);
+      const upstream = await fetch(safe.toString(), { cache: "no-store" });
+      if (!upstream.ok) {
+        return NextResponse.json({ error: "Media fetch failed." }, { status: 502 });
+      }
+      const buffer = Buffer.from(await upstream.arrayBuffer());
+      if (buffer.byteLength < 64) {
+        return NextResponse.json({ error: "Empty media file." }, { status: 502 });
+      }
+      const contentType =
+        upstream.headers.get("content-type")?.split(";")[0]?.trim() ||
+        contentTypeForFile(filename);
+      bytes = { data: buffer, contentType };
+      void persistUserAsset({
+        clerkId: auth.user.userId,
+        kind: contentType.includes("mp4") || contentType.includes("webm") ? "video" : "image",
+        sourceUrl: imageUrl,
+        bytes: buffer,
+        contentType,
+      });
+      // Best-effort local archive for same-instance re-downloads.
+      try {
+        await archiveRemoteImageToPipeline(request, imageUrl, "generated.png");
+      } catch {
+        /* ignore */
+      }
     } catch (e: unknown) {
-      const message = e instanceof Error ? e.message : "Archive failed.";
+      const message = e instanceof Error ? e.message : "Download failed.";
       return NextResponse.json({ error: message }, { status: 502 });
     }
   }
 
   if (!bytes && isPipelineFileUrl(imageUrl)) {
-    return NextResponse.json({ error: "Image file not found — regenerate and try again." }, { status: 404 });
+    return NextResponse.json(
+      { error: "File not found on this server — open it from My library or regenerate." },
+      { status: 404 },
+    );
+  }
+
+  if (!bytes && isLibraryAssetUrl(imageUrl)) {
+    return NextResponse.json({ error: "Asset not found." }, { status: 404 });
   }
 
   if (!bytes) {
@@ -104,6 +164,13 @@ export async function POST(request: Request) {
         data: buffer,
         contentType: upstream.headers.get("content-type") ?? contentTypeForFile(filename),
       };
+      void persistUserAsset({
+        clerkId: auth.user.userId,
+        kind: "image",
+        sourceUrl: imageUrl,
+        bytes: buffer,
+        contentType: bytes.contentType,
+      });
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "Download failed.";
       return NextResponse.json({ error: message }, { status: 400 });

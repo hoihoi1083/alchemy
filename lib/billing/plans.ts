@@ -28,6 +28,8 @@ export type PlanDefinition = {
   monthlyPriceUsd: number | null;
   yearlyPriceUsd: number | null;
   maxVideoResolution: "480p" | "720p" | "1080p";
+  /** Nano Banana output resolution cap (aligned with /pricing). */
+  maxImageResolution: "1K" | "2K" | "4K";
   proCanvas: boolean;
   /** Paid subscribers can buy $10 / 1,000 token packs. */
   canTopUp: boolean;
@@ -51,6 +53,7 @@ export const PLAN_DEFINITIONS: Record<UserPlan, PlanDefinition> = {
     monthlyPriceUsd: 0,
     yearlyPriceUsd: null,
     maxVideoResolution: "480p",
+    maxImageResolution: "1K",
     proCanvas: false,
     canTopUp: false,
   },
@@ -62,6 +65,7 @@ export const PLAN_DEFINITIONS: Record<UserPlan, PlanDefinition> = {
     monthlyPriceUsd: 19.99,
     yearlyPriceUsd: 14.99,
     maxVideoResolution: "720p",
+    maxImageResolution: "1K",
     proCanvas: false,
     canTopUp: true,
   },
@@ -73,6 +77,7 @@ export const PLAN_DEFINITIONS: Record<UserPlan, PlanDefinition> = {
     monthlyPriceUsd: 49.99,
     yearlyPriceUsd: 39.99,
     maxVideoResolution: "1080p",
+    maxImageResolution: "2K",
     proCanvas: false,
     canTopUp: true,
   },
@@ -84,6 +89,7 @@ export const PLAN_DEFINITIONS: Record<UserPlan, PlanDefinition> = {
     monthlyPriceUsd: 99.99,
     yearlyPriceUsd: 79.0,
     maxVideoResolution: "1080p",
+    maxImageResolution: "4K",
     proCanvas: true,
     canTopUp: true,
   },
@@ -95,6 +101,7 @@ export const PLAN_DEFINITIONS: Record<UserPlan, PlanDefinition> = {
     monthlyPriceUsd: null,
     yearlyPriceUsd: null,
     maxVideoResolution: "1080p",
+    maxImageResolution: "4K",
     proCanvas: true,
     canTopUp: true,
   },

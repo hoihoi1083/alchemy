@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { AuthNav } from "@/components/AuthNav";
 import { LanguageToggle } from "@/components/LanguageToggle";
+import { SiteFooter } from "@/components/SiteFooter";
 import { useLocale } from "@/components/LocaleProvider";
 
 type BillingInterval = "monthly" | "yearly";
@@ -375,6 +376,7 @@ export function PricingPageClient() {
           </Link>
         </div>
       </section>
+      <SiteFooter />
     </main>
   );
 }

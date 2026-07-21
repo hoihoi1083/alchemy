@@ -9,7 +9,7 @@ export function SignUpPageClient() {
       <div className="mb-6">
         <LanguageToggle variant="light" />
       </div>
-      <SignUp />
+      <SignUp fallbackRedirectUrl="/start?welcome=1" forceRedirectUrl="/start?welcome=1" />
     </main>
   );
 }

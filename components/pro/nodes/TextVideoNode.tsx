@@ -1,12 +1,24 @@
 "use client";
 
 import { Handle, Position, type NodeProps } from "@xyflow/react";
+import { useEffect } from "react";
 import { useProCanvasActions } from "@/components/pro/ProCanvasActions";
 import { MentionInput } from "@/components/pro/MentionInput";
+import { useUserPlanEntitlements } from "@/hooks/useUserPlanEntitlements";
+import { videoResolutionsForPlan } from "@/lib/billing/entitlements";
 import type { TextVideoNodeData } from "@/lib/pro-canvas-types";
 
 export function TextVideoNode({ id, data }: NodeProps & { data: TextVideoNodeData }) {
   const { runTextVideoNode, updateNodeData, nodes } = useProCanvasActions();
+  const { plan, maxVideoResolution } = useUserPlanEntitlements();
+  const allowedResolutions = videoResolutionsForPlan(plan);
+
+  useEffect(() => {
+    const allowed = videoResolutionsForPlan(plan);
+    if (!allowed.includes(data.resolution)) {
+      updateNodeData(id, { resolution: maxVideoResolution });
+    }
+  }, [plan, data.resolution, id, maxVideoResolution, updateNodeData]);
 
   return (
     <div className="w-72 rounded-xl border border-slate-600 bg-slate-900 p-3 shadow-lg">
@@ -34,14 +46,23 @@ export function TextVideoNode({ id, data }: NodeProps & { data: TextVideoNodeDat
           ))}
         </select>
         <select
-          value={data.resolution}
+          value={
+            allowedResolutions.includes(data.resolution)
+              ? data.resolution
+              : maxVideoResolution
+          }
           onChange={(e) =>
-            updateNodeData(id, { resolution: e.target.value as "480p" | "720p" })
+            updateNodeData(id, {
+              resolution: e.target.value as TextVideoNodeData["resolution"],
+            })
           }
           className="rounded-lg border border-slate-600 bg-slate-950 px-2 py-1 text-xs text-white"
         >
-          <option value="480p">480p</option>
-          <option value="720p">720p</option>
+          {allowedResolutions.map((r) => (
+            <option key={r} value={r}>
+              {r}
+            </option>
+          ))}
         </select>
       </div>
       <label className="mt-2 flex items-center gap-2 text-[10px] text-slate-400">

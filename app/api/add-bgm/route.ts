@@ -10,6 +10,7 @@ import {
 } from "@/lib/pipeline/ffmpeg";
 import { jobDir } from "@/lib/pipeline/paths";
 import { materializeMediaInput, pipelineFileUrl } from "@/lib/pipeline/local-input";
+import { persistUserAsset } from "@/lib/storage/persist-asset";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -24,6 +25,7 @@ async function mixBgmJob(
     track: BgmTrackId;
     musicUrl?: string;
     replaceSourceAudio: boolean;
+    persistUserId?: string;
   },
 ) {
   const jobId = crypto.randomUUID();
@@ -75,8 +77,28 @@ async function mixBgmJob(
   );
   await assertVideoHasAudio(outputPath, "BGM mix");
 
+  const videoUrl = pipelineFileUrl(request, jobId, "with-bgm.mp4");
+
+  // Mirror the BGM-mixed video into durable storage (pipeline files are
+  // ephemeral in production). Best-effort — never blocks the response.
+  if (input.persistUserId) {
+    try {
+      const bytes = await fs.readFile(outputPath);
+      await persistUserAsset({
+        clerkId: input.persistUserId,
+        kind: "video",
+        sourceUrl: videoUrl,
+        name: "Video with music",
+        bytes,
+        contentType: "video/mp4",
+      });
+    } catch {
+      /* durable mirroring is best-effort */
+    }
+  }
+
   return {
-    videoUrl: pipelineFileUrl(request, jobId, "with-bgm.mp4"),
+    videoUrl,
     jobId,
     track: input.musicUrl ? "ai" : input.track,
     source: input.musicUrl ? "ai" : "library",
@@ -112,6 +134,7 @@ export async function POST(request: Request) {
         track,
         musicUrl,
         replaceSourceAudio,
+        persistUserId: auth.user.userId,
       });
       return NextResponse.json(result);
     }
@@ -138,6 +161,7 @@ export async function POST(request: Request) {
       track: (body?.track?.trim() || DEFAULT_BGM_TRACK) as BgmTrackId,
       musicUrl: body?.music_url?.trim(),
       replaceSourceAudio: body?.replace_source_audio === true,
+      persistUserId: auth.user.userId,
     });
     return NextResponse.json(result);
   } catch (e: unknown) {

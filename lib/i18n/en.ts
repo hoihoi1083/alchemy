@@ -15,6 +15,7 @@ export const en = {
     tokensBalance: "{n} tokens",
     tokensBalanceTitle: "Your token balance — view plans & top-ups",
     accountMenu: "Account & billing",
+    libraryMenu: "My library",
   },
   account: {
     title: "Account & billing",
@@ -45,6 +46,57 @@ export const en = {
       admin_adjust: "Adjustment",
     },
   },
+  library: {
+    title: "My library",
+    subtitle:
+      "Your saved generations and studio projects — previews and downloads use permanent copies when available.",
+    loading: "Loading library…",
+    loadError: "Could not load your library.",
+    empty: "No projects yet. Create something in the studio and it will show up here.",
+    emptyCta: "Open studio",
+    openStudio: "Continue in studio",
+    downloadImage: "Download image",
+    downloadVideo: "Download video",
+    openMedia: "Open",
+    delete: "Delete",
+    deleteConfirm: "Delete this project? This cannot be undone.",
+    deleting: "Deleting…",
+    noMedia: "No saved media yet",
+    linkExpiredHint:
+      "Older projects may still use expired fal links — use Saved files below, or regenerate. New outputs are stored permanently.",
+    updatedLabel: "Updated",
+    imageBadge: "Image",
+    videoBadge: "Video",
+    accountLink: "Account & billing",
+    savedFilesTitle: "Saved files",
+    savedFilesSubtitle:
+      "Permanent copies of your generated images, videos, and audio — stored on our servers, always re-downloadable.",
+    savedFilesEmpty: "No saved files yet. New generations are copied here automatically.",
+    projectsTitle: "Projects",
+    audioBadge: "Audio",
+    voiceoverBadge: "Voiceover",
+    download: "Download",
+  },
+  footer: {
+    tagline:
+      "Turn a product photo into scroll-stopping social ads — image, video, and music in minutes.",
+    productTitle: "Product",
+    studio: "Open studio",
+    pricing: "Pricing & tokens",
+    how: "How it works",
+    proCanvas: "Pro canvas",
+    accountTitle: "Account",
+    library: "My library",
+    account: "Account & billing",
+    companyTitle: "Company",
+    contact: "Contact",
+    privacy: "Privacy policy",
+    terms: "Terms of service",
+    refund: "Refund policy",
+    followUs: "Follow us",
+    paymentsNote: "Secure payments via Stripe",
+    rights: "All rights reserved.",
+  },
   studio: {
     loadingTitle: "Loading your studio…",
     loadingHint: "Restoring your promotion mode and wizard layout.",
@@ -56,6 +108,9 @@ export const en = {
     mongoRequiredTitle: "Project save unavailable",
     mongoRequiredBody:
       "MONGODB_URI is not configured on this server. Your work will not autosave until MongoDB is connected.",
+    saveSaving: "Saving…",
+    saveSaved: "Saved ✓",
+    saveError: "Save failed",
   },
   start: {
     title: "What are you promoting?",
@@ -71,6 +126,9 @@ export const en = {
     templateBanner: "Template: {name} — physical product mode",
     templateBannerHint: "Choose Physical product below to open the wizard with this layout.",
     templateContinuePhysical: "Continue with this template",
+    welcomeTitle: "Welcome — you’re in!",
+    welcomeBody:
+      "You’ve received {n} free tokens to start creating. Pick a path below and make your first ad.",
   },
   header: {
     badge: "Easy mode · IG / FB reels · BGM included",
@@ -1202,6 +1260,8 @@ export const en = {
     videoSetupOutputSettingsHint:
       "fal.ai bills by Seedance duration and resolution — pick these before uploading or analyzing a reference reel. The reference MP4 can be much longer; your output length here is what you pay for (AI compresses the reference into a complete short ad).",
     videoSettingsResolution: "Resolution",
+    videoResolutionPlanHint: "Your plan includes up to {max}.",
+    videoResolutionUpgradeLink: "Upgrade for higher resolution",
     videoSettingsDuration: "Duration",
     videoSettingsMotion: "Camera / motion",
     videoSettingsCreativity: "Motion energy",
@@ -1753,6 +1813,7 @@ export const en = {
     insufficientTokensTitle: "Out of tokens",
     insufficientTokensCta: "View plans & top up",
     insufficientTokensDismiss: "Close",
+    tokensNotCharged: "You weren’t charged for this attempt.",
     timeout: "The request took too long. Please try again.",
     seedanceSensitive:
       "Seedance blocked this clip (violence/combat filter). Use calmer wording: no weapons, opponents, or standoffs — figures at rest, peaceful pause. A combat-looking reference image can also trigger this.",

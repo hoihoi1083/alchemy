@@ -21,6 +21,7 @@ import {
 import { jobDir } from "@/lib/pipeline/paths";
 import { resolveTtsProvider, synthesizeSpeechToFile } from "@/lib/pipeline/tts";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
+import { persistUserAsset } from "@/lib/storage/persist-asset";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -38,6 +39,7 @@ async function dubVoiceJob(
     speechUrl?: string;
     voicePreset?: VoicePresetId;
     trackUsageUserId?: string;
+    persistUserId?: string;
   },
 ) {
   const jobId = crypto.randomUUID();
@@ -98,8 +100,28 @@ async function dubVoiceJob(
     await trackUsage(input.trackUsageUserId, "voiceover");
   }
 
+  const videoUrl = pipelineFileUrl(request, jobId, "with-voice.mp4");
+
+  // Mirror the voiced video into durable storage (local pipeline files are
+  // ephemeral in production). Best-effort — never blocks the response.
+  if (input.persistUserId) {
+    try {
+      const bytes = await fs.readFile(outputPath);
+      await persistUserAsset({
+        clerkId: input.persistUserId,
+        kind: "voiceover",
+        sourceUrl: videoUrl,
+        name: "Voiceover video",
+        bytes,
+        contentType: "video/mp4",
+      });
+    } catch {
+      /* durable mirroring is best-effort */
+    }
+  }
+
   return {
-    videoUrl: pipelineFileUrl(request, jobId, "with-voice.mp4"),
+    videoUrl,
     jobId,
     locale: input.locale,
     voice: ttsVoice,
@@ -156,6 +178,7 @@ export async function POST(request: Request) {
         speechUrl,
         voicePreset,
         trackUsageUserId: speechUrl ? undefined : auth.user.userId,
+        persistUserId: auth.user.userId,
       });
       return NextResponse.json(result);
     }
@@ -201,6 +224,7 @@ export async function POST(request: Request) {
       speechUrl,
       voicePreset,
       trackUsageUserId: speechUrl ? undefined : auth.user.userId,
+      persistUserId: auth.user.userId,
     });
     return NextResponse.json(result);
   } catch (e: unknown) {

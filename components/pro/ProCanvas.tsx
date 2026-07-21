@@ -77,6 +77,12 @@ const nodeTypes = {
 
 let nodeCounter = 0;
 
+function withNotChargedNote(message: string, note: string): string {
+  if (/not enough tokens|insufficient_tokens|token 不足/i.test(message)) return message;
+  if (message.includes(note)) return message;
+  return `${message} ${note}`;
+}
+
 function defaultNodeData(kind: ProCanvasNodeKind, label: string): ProCanvasNodeData {
   switch (kind) {
     case "upload":
@@ -204,12 +210,15 @@ function ProCanvasBoard() {
       } catch (e: unknown) {
         updateNodeData(nodeId, {
           busy: false,
-          error: e instanceof Error ? e.message : "Image failed",
+          error: withNotChargedNote(
+            e instanceof Error ? e.message : "Image failed",
+            m.errors.tokensNotCharged,
+          ),
         });
         throw e;
       }
     },
-    [collectImageInputs, getNode, getNodes, updateNodeData],
+    [collectImageInputs, getNode, getNodes, m.errors.tokensNotCharged, updateNodeData],
   );
 
   const runCameraNode = useCallback(
@@ -229,12 +238,15 @@ function ProCanvasBoard() {
       } catch (e: unknown) {
         updateNodeData(nodeId, {
           busy: false,
-          error: e instanceof Error ? e.message : "Camera failed",
+          error: withNotChargedNote(
+            e instanceof Error ? e.message : "Camera failed",
+            m.errors.tokensNotCharged,
+          ),
         });
         throw e;
       }
     },
-    [getEdges, getNode, getNodes, updateNodeData],
+    [getEdges, getNode, getNodes, m.errors.tokensNotCharged, updateNodeData],
   );
 
   const runVideoNode = useCallback(
@@ -261,12 +273,15 @@ function ProCanvasBoard() {
       } catch (e: unknown) {
         updateNodeData(nodeId, {
           busy: false,
-          error: e instanceof Error ? e.message : "Video failed",
+          error: withNotChargedNote(
+            e instanceof Error ? e.message : "Video failed",
+            m.errors.tokensNotCharged,
+          ),
         });
         throw e;
       }
     },
-    [getEdges, getNode, getNodes, mergeUpstreamText, updateNodeData],
+    [getEdges, getNode, getNodes, mergeUpstreamText, m.errors.tokensNotCharged, updateNodeData],
   );
 
   const runTextVideoNode = useCallback(
@@ -288,12 +303,15 @@ function ProCanvasBoard() {
       } catch (e: unknown) {
         updateNodeData(nodeId, {
           busy: false,
-          error: e instanceof Error ? e.message : "Text-to-video failed",
+          error: withNotChargedNote(
+            e instanceof Error ? e.message : "Text-to-video failed",
+            m.errors.tokensNotCharged,
+          ),
         });
         throw e;
       }
     },
-    [getNode, mergeUpstreamText, updateNodeData],
+    [getNode, mergeUpstreamText, m.errors.tokensNotCharged, updateNodeData],
   );
 
   const runScriptNode = useCallback(
@@ -310,12 +328,15 @@ function ProCanvasBoard() {
       } catch (e: unknown) {
         updateNodeData(nodeId, {
           busy: false,
-          error: e instanceof Error ? e.message : "Script failed",
+          error: withNotChargedNote(
+            e instanceof Error ? e.message : "Script failed",
+            m.errors.tokensNotCharged,
+          ),
         });
         throw e;
       }
     },
-    [getNode, mergeUpstreamText, updateNodeData],
+    [getNode, mergeUpstreamText, m.errors.tokensNotCharged, updateNodeData],
   );
 
   const runAudioNode = useCallback(

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { LanguageToggle } from "@/components/LanguageToggle";
+import { SiteFooter } from "@/components/SiteFooter";
 import { useLocale } from "@/components/LocaleProvider";
 
 export function HowPageClient() {
@@ -119,6 +120,7 @@ export function HowPageClient() {
           </Link>
         </div>
       </section>
+      <SiteFooter />
     </main>
   );
 }

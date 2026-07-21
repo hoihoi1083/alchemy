@@ -13,8 +13,11 @@ import { materializeMediaInput } from "@/lib/pipeline/local-input";
 import { synthesizeSpeechToFile } from "@/lib/pipeline/tts";
 import { mirrorImageUrlToFalStorage } from "@/lib/fal-mirror-media";
 import { requireTokens, settleTokens } from "@/lib/billing/charge";
+import { clampVideoResolution } from "@/lib/billing/entitlements";
+import { getUserPlan } from "@/lib/billing/get-user-plan";
 import { estimateVideoTokens, TOKEN_COST } from "@/lib/billing/token-costs";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
+import { persistAndDurablize } from "@/lib/storage/durable-media";
 import {
   HEYGEN_AVATAR_IV_ENDPOINT,
   type UgcPresenterTalkingStyle,
@@ -126,7 +129,8 @@ export async function POST(request: Request) {
     : undefined;
   const talkingStyle = ((formData.get("talking_style") as string | null)?.trim() ||
     "expressive") as UgcPresenterTalkingStyle;
-  const resolution = (formData.get("resolution") as string | null)?.trim() || "720p";
+  const requestedResolution =
+    (formData.get("resolution") as string | null)?.trim() || "720p";
   const aspectRatio = (formData.get("aspect_ratio") as string | null)?.trim() || "9:16";
   const productName = (formData.get("product_name") as string | null)?.trim() || "";
   const motionHint = (formData.get("motion_hint") as string | null)?.trim();
@@ -147,6 +151,8 @@ export async function POST(request: Request) {
     );
   }
 
+  const plan = await getUserPlan(auth.user.userId);
+  const { resolution } = clampVideoResolution(plan, requestedResolution);
   const willSynthesizeVoice = !speechUrl;
   const tokenCost =
     estimateVideoTokens({ resolution, fast: false, duration: 8 }) +
@@ -192,8 +198,15 @@ export async function POST(request: Request) {
         resolution,
         synthesizedVoice: willSynthesizeVoice,
       });
+      const durableVideoUrl = await persistAndDurablize({
+        clerkId: auth.user.userId,
+        kind: "video",
+        sourceUrl: videoUrl,
+        fallbackUrl: videoUrl,
+        name: "digital-presenter",
+      });
       return NextResponse.json({
-        videoUrl,
+        videoUrl: durableVideoUrl,
         requestId: result.requestId,
         generationMode: "digital-presenter-stock",
         endpoint: HEYGEN_DIGITAL_TWIN_ENDPOINT,
@@ -249,8 +262,16 @@ export async function POST(request: Request) {
       synthesizedVoice: willSynthesizeVoice,
     });
 
+    const durableVideoUrl = await persistAndDurablize({
+      clerkId: auth.user.userId,
+      kind: "video",
+      sourceUrl: videoUrl,
+      fallbackUrl: videoUrl,
+      name: "digital-presenter",
+    });
+
     return NextResponse.json({
-      videoUrl,
+      videoUrl: durableVideoUrl,
       requestId: result.requestId,
       generationMode: "digital-presenter",
       endpoint: HEYGEN_AVATAR_IV_ENDPOINT,

@@ -1,14 +1,18 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
+import { sendPurchaseConfirmationEmail } from "@/lib/email/purchase-confirmation";
+import { resolvePurchaseEmail } from "@/lib/email/resolve-user-email";
 import {
   applySubscriptionGrant,
   applyTopUpGrant,
   clearPaidSubscription,
   findClerkIdByStripeCustomer,
   setUserSubscription,
+  tokensForPaidPlan,
 } from "@/lib/stripe/billing-sync";
 import { getStripe, isStripeConfigured } from "@/lib/stripe/client";
 import { isPaidPlan, planFromPriceId, type PaidPlan } from "@/lib/stripe/prices";
+import { TOP_UP_PRICE_USD, TOP_UP_TOKENS } from "@/lib/billing/plans";
 import { isMongoConfigured } from "@/lib/mongodb";
 
 export const runtime = "nodejs";
@@ -55,12 +59,30 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 
   if (kind === "topup" || session.mode === "payment") {
     if (session.payment_status !== "paid") return;
-    await applyTopUpGrant({
+    const result = await applyTopUpGrant({
       clerkId,
       ref: `checkout_${session.id}`,
       stripeCustomerId: cust,
       meta: { sessionId: session.id },
     });
+    if (result.granted) {
+      const to = await resolvePurchaseEmail({
+        clerkId,
+        stripeEmail: session.customer_details?.email ?? session.customer_email,
+      });
+      if (to) {
+        await sendPurchaseConfirmationEmail({
+          to,
+          kind: "topup",
+          tokensGranted: TOP_UP_TOKENS,
+          balanceAfter: result.balanceAfter,
+          amountLabel: `$${TOP_UP_PRICE_USD.toFixed(2)}`,
+          purchasedAt: session.created
+            ? new Date(session.created * 1000)
+            : new Date(),
+        });
+      }
+    }
     return;
   }
 
@@ -113,7 +135,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
     return;
   }
 
-  await applySubscriptionGrant({
+  const result = await applySubscriptionGrant({
     clerkId,
     plan,
     ref: `invoice_${invoice.id}`,
@@ -125,6 +147,29 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
       billingReason: invoice.billing_reason,
     },
   });
+
+  // Email on first successful grant for this invoice only (idempotent).
+  if (result.granted) {
+    const to = await resolvePurchaseEmail({
+      clerkId,
+      stripeEmail: invoice.customer_email,
+    });
+    if (to) {
+      const amountPaid =
+        typeof invoice.amount_paid === "number"
+          ? `$${(invoice.amount_paid / 100).toFixed(2)}`
+          : null;
+      await sendPurchaseConfirmationEmail({
+        to,
+        kind: "subscription",
+        plan,
+        tokensGranted: tokensForPaidPlan(plan),
+        balanceAfter: result.balanceAfter,
+        renewsAt,
+        amountLabel: amountPaid,
+      });
+    }
+  }
 }
 
 async function handleSubscriptionUpdated(sub: Stripe.Subscription) {
@@ -133,7 +178,14 @@ async function handleSubscriptionUpdated(sub: Stripe.Subscription) {
     (await findClerkIdByStripeCustomer(customerId(sub.customer) ?? ""));
   if (!clerkId) return;
 
-  if (sub.status === "canceled" || sub.status === "unpaid") {
+  // Keep paid entitlements while the subscription is still in a paid period.
+  // Portal "cancel" usually sets cancel_at_period_end=true with status still active/trialing.
+  // Only drop to free when Stripe says the subscription has actually ended.
+  const ended =
+    sub.status === "canceled" ||
+    sub.status === "unpaid" ||
+    sub.status === "incomplete_expired";
+  if (ended) {
     await clearPaidSubscription(clerkId);
     return;
   }

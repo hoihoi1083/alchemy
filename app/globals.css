@@ -48,6 +48,31 @@ body {
   color: #0f172a !important;
 }
 
+/* Marketing footer: force white — never inherit (page uses text-slate-900). */
+footer.site-footer {
+  color: #ffffff !important;
+}
+footer.site-footer,
+footer.site-footer *:not(img):not(svg):not(svg *) {
+  color: #ffffff !important;
+}
+footer.site-footer a:hover,
+footer.site-footer a:focus {
+  color: #ffffff !important;
+  opacity: 0.85;
+}
+footer.site-footer .site-footer-brand,
+footer.site-footer .site-footer-brand text {
+  fill: #ffffff !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+/* Don't dim the logo wordmark on hover */
+footer.site-footer a.site-footer-logo:hover,
+footer.site-footer a.site-footer-logo:focus {
+  opacity: 1;
+}
+
 .studio-light [class*="text-slate-300"],
 .studio-light [class*="text-slate-400"] {
   color: #475569 !important;

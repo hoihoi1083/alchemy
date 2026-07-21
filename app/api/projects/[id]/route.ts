@@ -3,6 +3,7 @@ import { requireAppUser } from "@/lib/require-app-user";
 import { isMongoReady, mongoRequiredErrorMessage } from "@/lib/mongodb-production";
 import { deleteProject, getProjectForUser, updateProject } from "@/lib/db/projects";
 import type { ProjectSnapshot } from "@/lib/project-snapshot";
+import { mirrorProjectMedia } from "@/lib/storage/mirror-project-media";
 
 export const runtime = "nodejs";
 
@@ -60,6 +61,15 @@ export async function PATCH(request: Request, context: RouteContext) {
   });
   if (!project) {
     return NextResponse.json({ error: "Project not found." }, { status: 404 });
+  }
+
+  // Mirror any new fal/CDN media into durable R2 storage (best-effort, idempotent).
+  if (body.snapshot) {
+    try {
+      await mirrorProjectMedia(auth.user.userId, id, body.snapshot);
+    } catch {
+      /* durable mirroring is best-effort — never block the save */
+    }
   }
 
   return NextResponse.json({

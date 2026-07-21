@@ -7,10 +7,20 @@ import type { PromotionMode } from "@/lib/promotion-mode";
 
 const WizardContext = createContext<StudioWizardValue | null>(null);
 
-function WizardAutosave({ promotionMode }: { promotionMode: PromotionMode }) {
+type SaveStatus = "idle" | "saving" | "saved" | "error";
+
+const AutosaveContext = createContext<{ saveStatus: SaveStatus }>({ saveStatus: "idle" });
+
+function WizardAutosaveBridge({
+  promotionMode,
+  children,
+}: {
+  promotionMode: PromotionMode;
+  children: ReactNode;
+}) {
   const wizard = useWizard();
-  useProjectAutosave(wizard, promotionMode);
-  return null;
+  const { saveStatus } = useProjectAutosave(wizard, promotionMode);
+  return <AutosaveContext.Provider value={{ saveStatus }}>{children}</AutosaveContext.Provider>;
 }
 
 export function WizardProvider({
@@ -23,8 +33,7 @@ export function WizardProvider({
   const value = useStudioWizard(promotionMode);
   return (
     <WizardContext.Provider value={value}>
-      <WizardAutosave promotionMode={promotionMode} />
-      {children}
+      <WizardAutosaveBridge promotionMode={promotionMode}>{children}</WizardAutosaveBridge>
     </WizardContext.Provider>
   );
 }
@@ -39,4 +48,8 @@ export function useWizard(): StudioWizardValue {
 
 export function useOptionalWizard(): StudioWizardValue | null {
   return useContext(WizardContext);
+}
+
+export function useSaveStatus(): SaveStatus {
+  return useContext(AutosaveContext).saveStatus;
 }
