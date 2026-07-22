@@ -1,6 +1,8 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { NextResponse } from "next/server";
+import type { CaptionLine } from "@/lib/ad-pack-types";
+import { captionSpeakText } from "@/lib/ad-pack-types";
 import {
   azureVoiceForLocale,
   isVoicePresetId,
@@ -10,9 +12,10 @@ import {
 import {
   assertVideoHasAudio,
   ensureFfmpeg,
-  fitAudioToDuration,
   getMediaDurationSeconds,
   mixNarrationOverVideo,
+  mixTimedNarrationClips,
+  placeNarrationNaturalSpeed,
 } from "@/lib/pipeline/ffmpeg";
 import {
   materializeMediaInput,
@@ -27,9 +30,47 @@ import { libraryAssetUrl } from "@/lib/storage/durable-media";
 import { persistUserAsset } from "@/lib/storage/persist-asset";
 
 export const runtime = "nodejs";
-export const maxDuration = 120;
+export const maxDuration = 180;
 
 const LOCALES = new Set<VoiceoverLocale>(["hk", "en", "cn"]);
+
+function parseCaptionLines(raw: unknown): CaptionLine[] {
+  let parsed = raw;
+  if (typeof raw === "string" && raw.trim()) {
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return [];
+    }
+  }
+  if (!Array.isArray(parsed)) return [];
+  return parsed
+    .map((row) => {
+      if (!row || typeof row !== "object") return null;
+      const text = String((row as { text?: unknown }).text ?? "").trim();
+      if (!text) return null;
+      const startRaw =
+        (row as { startSec?: unknown; start_sec?: unknown }).startSec ??
+        (row as { start_sec?: unknown }).start_sec;
+      const endRaw =
+        (row as { endSec?: unknown; end_sec?: unknown }).endSec ??
+        (row as { end_sec?: unknown }).end_sec;
+      const startSec = Math.max(0, Number(startRaw) || 0);
+      const endSec = Math.max(startSec + 0.2, Number(endRaw) || startSec + 2);
+      const spokenRaw = String(
+        (row as { spokenText?: unknown; spoken_text?: unknown }).spokenText ??
+          (row as { spoken_text?: unknown }).spoken_text ??
+          "",
+      ).trim();
+      return {
+        startSec,
+        endSec,
+        text,
+        ...(spokenRaw ? { spokenText: spokenRaw } : {}),
+      } satisfies CaptionLine;
+    })
+    .filter(Boolean) as CaptionLine[];
+}
 
 async function dubVoiceJob(
   request: Request,
@@ -39,6 +80,9 @@ async function dubVoiceJob(
     script?: string;
     locale: VoiceoverLocale;
     targetDurationSec?: number;
+    speechStartSec?: number;
+    /** Per-caption TTS at natural speed, placed at each startSec. */
+    captionLines?: CaptionLine[];
     speechUrl?: string;
     voicePreset?: VoicePresetId;
     trackUsageUserId?: string;
@@ -50,12 +94,9 @@ async function dubVoiceJob(
   await fs.mkdir(dir, { recursive: true });
 
   const inputPath = path.join(dir, "input.mp4");
-  const narrationSrc = path.join(
-    dir,
-    resolveTtsProvider() === "fal" ? "narration.mp3" : "narration.wav",
-  );
   const narrationWav = path.join(dir, "narration-fit.wav");
   const outputPath = path.join(dir, "with-voice.mp4");
+  const ext = resolveTtsProvider() === "fal" ? "mp3" : "wav";
 
   const { voice, xmlLang } = azureVoiceForLocale(input.locale);
 
@@ -69,33 +110,81 @@ async function dubVoiceJob(
     throw new Error("video_url or video_file is required.");
   }
 
+  const probedDuration = await getMediaDurationSeconds(inputPath);
   const videoDuration =
     typeof input.targetDurationSec === "number" && input.targetDurationSec > 0
       ? input.targetDurationSec
-      : await getMediaDurationSeconds(inputPath);
+      : probedDuration;
 
+  const timedLines = (input.captionLines ?? []).filter((l) => l.text.trim());
   let ttsVoice = voice;
   let ttsProvider = resolveTtsProvider();
+  let clipCount = 1;
 
-  if (input.speechUrl) {
-    await materializeMediaInput(input.speechUrl, narrationSrc);
-    ttsVoice = input.voicePreset ? `preview:${input.voicePreset}` : "preview:selected";
-  } else if (input.script?.trim()) {
-    const tts = await synthesizeSpeechToFile({
-      text: input.script.trim(),
-      voice,
-      xmlLang,
-      locale: input.locale,
-      outputPath: narrationSrc,
-      voicePresetId: input.voicePreset,
-    });
-    ttsVoice = tts.voice;
-    ttsProvider = tts.provider;
+  if (timedLines.length >= 2) {
+    // One natural-speed clip per caption — speak spokenText when present.
+    console.info(
+      `[dub-script-voice] per-caption TTS: ${timedLines.length} lines @ ${timedLines
+        .map((l) => l.startSec.toFixed(1))
+        .join(", ")}s`,
+    );
+    const clips: { path: string; startSec: number; endSec?: number }[] = [];
+    for (let i = 0; i < timedLines.length; i++) {
+      const line = timedLines[i];
+      const outPath = path.join(dir, `narration-line-${i}.${ext}`);
+      const speak = captionSpeakText(line);
+      const tts = await synthesizeSpeechToFile({
+        text: speak,
+        voice,
+        xmlLang,
+        locale: input.locale,
+        outputPath: outPath,
+        voicePresetId: input.voicePreset,
+      });
+      ttsVoice = tts.voice;
+      ttsProvider = tts.provider;
+      clips.push({ path: outPath, startSec: line.startSec, endSec: line.endSec });
+    }
+    clipCount = clips.length;
+    await mixTimedNarrationClips(clips, narrationWav, videoDuration);
   } else {
-    throw new Error("script or speech_url is required.");
+    const narrationSrc = path.join(dir, `narration.${ext}`);
+    const speechStartSec =
+      timedLines.length === 1
+        ? timedLines[0].startSec
+        : typeof input.speechStartSec === "number" && input.speechStartSec > 0
+          ? input.speechStartSec
+          : 0;
+
+    if (input.speechUrl && timedLines.length < 2) {
+      await materializeMediaInput(input.speechUrl, narrationSrc);
+      ttsVoice = input.voicePreset ? `preview:${input.voicePreset}` : "preview:selected";
+    } else {
+      const text =
+        (timedLines[0] ? captionSpeakText(timedLines[0]) : "") ||
+        input.script?.trim() ||
+        "";
+      if (!text) throw new Error("script, speech_url, or caption_lines required.");
+      const tts = await synthesizeSpeechToFile({
+        text,
+        voice,
+        xmlLang,
+        locale: input.locale,
+        outputPath: narrationSrc,
+        voicePresetId: input.voicePreset,
+      });
+      ttsVoice = tts.voice;
+      ttsProvider = tts.provider;
+    }
+
+    await placeNarrationNaturalSpeed(
+      narrationSrc,
+      narrationWav,
+      videoDuration,
+      speechStartSec,
+    );
   }
 
-  await fitAudioToDuration(narrationSrc, narrationWav, videoDuration);
   await mixNarrationOverVideo(inputPath, narrationWav, outputPath);
   await assertVideoHasAudio(outputPath, "Voiceover mix");
 
@@ -135,7 +224,9 @@ async function dubVoiceJob(
     voice: ttsVoice,
     provider: ttsProvider,
     videoDurationSec: videoDuration,
-    usedPreviewSpeech: Boolean(input.speechUrl),
+    clipCount,
+    usedPreviewSpeech: Boolean(input.speechUrl) && timedLines.length < 2,
+    perCaption: timedLines.length >= 2,
   };
 }
 
@@ -143,16 +234,45 @@ export async function POST(request: Request) {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
 
-  const tokenCost = TOKEN_COST.voiceover;
-  const charged = await chargeTokens(auth.user.userId, tokenCost, { kind: "voiceover_dub" });
+  const contentType = request.headers.get("content-type") ?? "";
+
+  // Peek caption count for billing (multipart needs form parse first).
+  let captionLineCount = 0;
+  let formData: FormData | null = null;
+  let jsonBody: {
+    video_url?: string;
+    script?: string;
+    locale?: string;
+    target_duration_sec?: number;
+    speech_start_sec?: number;
+    speech_url?: string;
+    voice_preset?: string;
+    caption_lines?: unknown;
+  } | null = null;
+
+  if (contentType.includes("multipart/form-data")) {
+    formData = await request.formData();
+    captionLineCount = parseCaptionLines(formData.get("caption_lines")).length;
+  } else {
+    try {
+      jsonBody = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
+    }
+    captionLineCount = parseCaptionLines(jsonBody?.caption_lines).length;
+  }
+
+  const tokenCost =
+    TOKEN_COST.voiceover * Math.max(1, captionLineCount >= 2 ? captionLineCount : 1);
+  const charged = await chargeTokens(auth.user.userId, tokenCost, {
+    kind: "voiceover_dub",
+    captionLines: captionLineCount,
+  });
   if ("error" in charged) return charged.error;
   const balanceAfter = charged.balanceAfter;
 
-  const contentType = request.headers.get("content-type") ?? "";
-
   try {
-    if (contentType.includes("multipart/form-data")) {
-      const formData = await request.formData();
+    if (formData) {
       const videoFile = formData.get("video_file");
       const videoUrl = (formData.get("video_url") as string | null)?.trim();
       const script = (formData.get("script") as string | null)?.trim();
@@ -167,6 +287,12 @@ export async function POST(request: Request) {
         typeof targetRaw === "string" && targetRaw.trim()
           ? Number(targetRaw)
           : undefined;
+      const startRaw = formData.get("speech_start_sec");
+      const speechStartSec =
+        typeof startRaw === "string" && startRaw.trim()
+          ? Number(startRaw)
+          : undefined;
+      const captionLines = parseCaptionLines(formData.get("caption_lines"));
 
       if (!LOCALES.has(locale)) {
         await refundTokens(auth.user.userId, tokenCost, {
@@ -186,12 +312,15 @@ export async function POST(request: Request) {
           { status: 400 },
         );
       }
-      if (!speechUrl && !script) {
+      if (!speechUrl && !script && captionLines.length === 0) {
         await refundTokens(auth.user.userId, tokenCost, {
           kind: "voiceover_dub",
           reason: "validation",
         });
-        return NextResponse.json({ error: "script or speech_url is required." }, { status: 400 });
+        return NextResponse.json(
+          { error: "script, speech_url, or caption_lines is required." },
+          { status: 400 },
+        );
       }
 
       const result = await dubVoiceJob(request, {
@@ -200,9 +329,12 @@ export async function POST(request: Request) {
         script,
         locale,
         targetDurationSec,
+        speechStartSec,
+        captionLines,
         speechUrl,
         voicePreset,
-        trackUsageUserId: speechUrl ? undefined : auth.user.userId,
+        trackUsageUserId:
+          speechUrl && captionLines.length < 2 ? undefined : auth.user.userId,
         persistUserId: auth.user.userId,
       });
       return NextResponse.json({
@@ -212,24 +344,7 @@ export async function POST(request: Request) {
       });
     }
 
-    let body: {
-      video_url?: string;
-      script?: string;
-      locale?: string;
-      target_duration_sec?: number;
-      speech_url?: string;
-      voice_preset?: string;
-    };
-    try {
-      body = await request.json();
-    } catch {
-      await refundTokens(auth.user.userId, tokenCost, {
-        kind: "voiceover_dub",
-        reason: "validation",
-      });
-      return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
-    }
-
+    const body = jsonBody!;
     const videoUrl = body.video_url?.trim();
     const script = body.script?.trim();
     const speechUrl = body.speech_url?.trim();
@@ -238,6 +353,7 @@ export async function POST(request: Request) {
     const voicePreset: VoicePresetId | undefined = isVoicePresetId(rawPreset)
       ? rawPreset
       : undefined;
+    const captionLines = parseCaptionLines(body.caption_lines);
 
     if (!videoUrl) {
       await refundTokens(auth.user.userId, tokenCost, {
@@ -246,12 +362,15 @@ export async function POST(request: Request) {
       });
       return NextResponse.json({ error: "video_url is required." }, { status: 400 });
     }
-    if (!speechUrl && !script) {
+    if (!speechUrl && !script && captionLines.length === 0) {
       await refundTokens(auth.user.userId, tokenCost, {
         kind: "voiceover_dub",
         reason: "validation",
       });
-      return NextResponse.json({ error: "script or speech_url is required." }, { status: 400 });
+      return NextResponse.json(
+        { error: "script, speech_url, or caption_lines is required." },
+        { status: 400 },
+      );
     }
     if (!LOCALES.has(locale)) {
       await refundTokens(auth.user.userId, tokenCost, {
@@ -266,9 +385,12 @@ export async function POST(request: Request) {
       script,
       locale,
       targetDurationSec: body.target_duration_sec,
+      speechStartSec: body.speech_start_sec,
+      captionLines,
       speechUrl,
       voicePreset,
-      trackUsageUserId: speechUrl ? undefined : auth.user.userId,
+      trackUsageUserId:
+        speechUrl && captionLines.length < 2 ? undefined : auth.user.userId,
       persistUserId: auth.user.userId,
     });
     return NextResponse.json({
@@ -281,10 +403,7 @@ export async function POST(request: Request) {
       kind: "voiceover_dub",
       reason: "generation_failed",
     });
-    const message = e instanceof Error ? e.message : "Voice dub failed.";
-    const status =
-      message.includes("AZURE_SPEECH") || message.includes("FAL_KEY") ? 503 : 502;
-    return NextResponse.json({ error: message }, { status });
+    const message = e instanceof Error ? e.message : "Voiceover dub failed.";
+    return NextResponse.json({ error: message }, { status: 502 });
   }
 }
-

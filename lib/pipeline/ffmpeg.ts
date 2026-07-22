@@ -219,6 +219,137 @@ export async function convertAudioToWav(inputAudio: string, outputWav: string): 
   ]);
 }
 
+/**
+ * Place narration at natural speed: silence before `startOffsetSec`, then speech,
+ * then pad/trim to `videoDurationSec`. Never time-stretches (no atempo).
+ * If `maxSpeakSec` is set, trim speech so it cannot run past that length (avoids
+ * overlapping the next caption clip).
+ */
+export async function placeNarrationNaturalSpeed(
+  inputAudio: string,
+  outputWav: string,
+  videoDurationSec: number,
+  startOffsetSec = 0,
+  maxSpeakSec?: number,
+): Promise<void> {
+  const videoDur = Math.max(0.5, videoDurationSec);
+  const delaySec = Math.max(0, Math.min(startOffsetSec, videoDur - 0.05));
+  const delayMs = Math.round(delaySec * 1000);
+  const speakCap =
+    typeof maxSpeakSec === "number" && maxSpeakSec > 0.15
+      ? Math.max(0.15, maxSpeakSec)
+      : null;
+  const fade = speakCap ? Math.min(0.08, speakCap * 0.15) : 0;
+  const filters = [
+    // Normalize decode quirks from 32 kHz TTS mp3 before delay/pad.
+    "aformat=sample_rates=44100:channel_layouts=mono",
+    speakCap
+      ? `atrim=0:${speakCap.toFixed(3)},asetpts=PTS-STARTPTS,afade=t=out:st=${(speakCap - fade).toFixed(3)}:d=${fade.toFixed(3)}`
+      : null,
+    delayMs > 0 ? `adelay=${delayMs}|${delayMs}` : null,
+    `apad=whole_dur=${videoDur.toFixed(3)}`,
+    `atrim=0:${videoDur.toFixed(3)}`,
+    "asetpts=PTS-STARTPTS",
+  ]
+    .filter(Boolean)
+    .join(",");
+
+  await run("ffmpeg", [
+    "-y",
+    "-i",
+    inputAudio,
+    "-af",
+    filters,
+    "-ac",
+    "1",
+    "-ar",
+    "44100",
+    "-c:a",
+    "pcm_s16le",
+    outputWav,
+  ]);
+}
+
+/**
+ * Mix several natural-speed clips onto one timeline (each starts at startSec).
+ * Clips are trimmed so they do not overlap the next caption start (prevents
+ * doubled/garbled voice when TTS is longer than the caption window).
+ */
+export async function mixTimedNarrationClips(
+  clips: { path: string; startSec: number; endSec?: number }[],
+  outputWav: string,
+  videoDurationSec: number,
+): Promise<void> {
+  if (!clips.length) throw new Error("At least one narration clip is required.");
+  const videoDur = Math.max(0.5, videoDurationSec);
+  const ordered = [...clips].sort((a, b) => a.startSec - b.startSec);
+
+  if (ordered.length === 1) {
+    const maxSpeak =
+      typeof ordered[0].endSec === "number"
+        ? Math.max(0.2, ordered[0].endSec - ordered[0].startSec)
+        : undefined;
+    await placeNarrationNaturalSpeed(
+      ordered[0].path,
+      outputWav,
+      videoDur,
+      ordered[0].startSec,
+      maxSpeak,
+    );
+    return;
+  }
+
+  const dir = path.dirname(outputWav);
+  const base = path.basename(outputWav, path.extname(outputWav));
+  const placed: string[] = [];
+  for (let i = 0; i < ordered.length; i++) {
+    const clip = ordered[i];
+    const nextStart = ordered[i + 1]?.startSec ?? videoDur;
+    const windowEnd =
+      typeof clip.endSec === "number" && clip.endSec > clip.startSec
+        ? clip.endSec
+        : nextStart;
+    // Leave a tiny gap before the next line so voices never stack.
+    const maxSpeak = Math.max(
+      0.2,
+      Math.min(windowEnd, nextStart - 0.05) - clip.startSec,
+    );
+    const partPath = path.join(dir, `${base}-part${i}.wav`);
+    await placeNarrationNaturalSpeed(
+      clip.path,
+      partPath,
+      videoDur,
+      clip.startSec,
+      maxSpeak,
+    );
+    placed.push(partPath);
+  }
+
+  const inputs: string[] = [];
+  for (const p of placed) {
+    inputs.push("-i", p);
+  }
+  const labels = placed.map((_, i) => `[${i}:a]`).join("");
+  // normalize=1 keeps summed peaks from distorting when any residual overlap remains.
+  const filter = `${labels}amix=inputs=${placed.length}:duration=first:dropout_transition=0:normalize=1,asetpts=PTS-STARTPTS[aout]`;
+
+  await run("ffmpeg", [
+    "-y",
+    ...inputs,
+    "-filter_complex",
+    filter,
+    "-map",
+    "[aout]",
+    "-ac",
+    "1",
+    "-ar",
+    "44100",
+    "-c:a",
+    "pcm_s16le",
+    outputWav,
+  ]);
+}
+
 /** Speed up or pad narration so it fits the video duration. */
 export async function fitAudioToDuration(
   inputAudio: string,
@@ -375,7 +506,7 @@ export async function mixNarrationOverVideo(
       "-i",
       narrationWav,
       "-filter_complex",
-      `[0:a]volume=${bgmVolume}[bgm];[1:a]apad=whole_dur=${dur},atrim=0:${dur},asetpts=PTS-STARTPTS[narr];[bgm][narr]amix=inputs=2:duration=first:dropout_transition=2[aout]`,
+      `[0:a]volume=${bgmVolume}[bgm];[1:a]volume=1.4,apad=whole_dur=${dur},atrim=0:${dur},asetpts=PTS-STARTPTS[narr];[bgm][narr]amix=inputs=2:duration=first:dropout_transition=2:normalize=0,alimiter=limit=0.92:level=false[aout]`,
       "-map",
       "0:v:0",
       "-map",

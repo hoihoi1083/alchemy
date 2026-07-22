@@ -25,6 +25,8 @@ export function CaptionLineEditor(props: {
   positionOptions: Record<CaptionPosition, string>;
   multilineHint: string;
   removeLabel: string;
+  spokenLabel?: string;
+  spokenPlaceholder?: string;
   styleLabel?: string;
   styleOptions?: { id: CaptionStylePresetId; label: string }[];
   defaultStylePreset?: CaptionStylePresetId;
@@ -109,6 +111,20 @@ export function CaptionLineEditor(props: {
         className="w-full rounded border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-white"
         placeholder={`Line ${props.index + 1}`}
       />
+      <label className="block text-[10px] text-violet-200/80">
+        {props.spokenLabel ?? "Spoken (TTS)"}
+        <textarea
+          value={props.line.spokenText ?? ""}
+          onChange={(e) =>
+            props.onChange({
+              spokenText: e.target.value.trim() ? e.target.value : undefined,
+            })
+          }
+          rows={2}
+          className="mt-1 w-full rounded border border-violet-800/50 bg-slate-950 px-2 py-1 text-xs text-violet-50"
+          placeholder={props.spokenPlaceholder ?? "Longer line for voice — optional"}
+        />
+      </label>
       <p className="text-[10px] text-slate-500">{props.multilineHint}</p>
     </div>
   );

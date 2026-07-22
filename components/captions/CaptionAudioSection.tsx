@@ -40,10 +40,25 @@ type Props = {
   onGenerateVoicePreviews: () => void;
   onApplyVoiceover: () => void;
   onFillVoiceFromCaptions?: () => void;
+  onSyncCaptionsFromVoice?: () => void;
+  onPlanCaptionVoice?: () => void;
+  planCaptionVoiceBusy?: boolean;
+  onExpandSpokenCaptions?: () => void;
+  expandSpokenBusy?: boolean;
+  /** Caption lines with text — used for per-caption mix button label. */
+  captionLineCount?: number;
   audioNote: string | null;
+  audioError?: string | null;
   labels: {
     title: string;
     hint: string;
+    planSection?: string;
+    planHint?: string;
+    planTopicLabel?: string;
+    planTopicPlaceholder?: string;
+    planCaptionVoice?: string;
+    planningCaptionVoice?: string;
+    planNeedTopic?: string;
     musicSection: string;
     musicMoodLabel: string;
     musicMoods: Record<MusicMood, string>;
@@ -69,11 +84,16 @@ type Props = {
     speakVoiceover: string;
     voicePlaceholder: string;
     applyVoice: string;
+    applyVoicePerCaption?: string;
     applyingVoice: string;
     localeHk: string;
     localeCn: string;
     localeEn: string;
     fillVoiceFromCaptions: string;
+    syncCaptionsFromVoice?: string;
+    syncCaptionsNeedScript?: string;
+    expandSpokenCaptions?: string;
+    expandingSpokenCaptions?: string;
   };
 };
 
@@ -110,11 +130,24 @@ export function CaptionAudioSection({
   onGenerateVoicePreviews,
   onApplyVoiceover,
   onFillVoiceFromCaptions,
+  onSyncCaptionsFromVoice,
+  onPlanCaptionVoice,
+  planCaptionVoiceBusy = false,
+  onExpandSpokenCaptions,
+  expandSpokenBusy = false,
+  captionLineCount = 0,
   audioNote,
+  audioError = null,
   labels: t,
 }: Props) {
-  const busy = audioBusy || captionBusy;
+  const busy = audioBusy || captionBusy || planCaptionVoiceBusy || expandSpokenBusy;
   const selectedLibrary = bgmOptions.find((o) => o.id === bgmTrack);
+  const mixLabel =
+    !audioBusy && captionLineCount >= 2 && t.applyVoicePerCaption
+      ? t.applyVoicePerCaption.replace("{n}", String(captionLineCount))
+      : audioBusy
+        ? t.applyingVoice
+        : t.applyVoice;
 
   return (
     <section className="space-y-4 rounded-3xl border border-slate-800 bg-slate-950/70 p-4 shadow-xl xl:sticky xl:top-4 xl:max-h-[calc(100vh-5rem)] xl:overflow-y-auto">
@@ -122,6 +155,62 @@ export function CaptionAudioSection({
         <h2 className="text-lg font-semibold text-white">{t.title}</h2>
         <p className="mt-1 text-xs text-slate-400">{t.hint}</p>
       </div>
+
+      {onPlanCaptionVoice && t.planCaptionVoice && (
+        <div className="space-y-3 rounded-xl border border-cyan-800/50 bg-cyan-950/25 p-3">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-cyan-200">
+            {t.planSection ?? t.planCaptionVoice}
+          </h3>
+          {t.planHint && <p className="text-[10px] text-cyan-100/70">{t.planHint}</p>}
+          <div className="flex flex-wrap gap-1.5">
+            {(
+              [
+                ["hk", t.localeHk],
+                ["cn", t.localeCn],
+                ["en", t.localeEn],
+              ] as const
+            ).map(([loc, label]) => (
+              <button
+                key={`plan-loc-${loc}`}
+                type="button"
+                disabled={disabled || busy}
+                onClick={() => onVoiceoverLocaleChange(loc)}
+                className={`rounded-full px-2.5 py-1 text-[11px] ${
+                  voiceoverLocale === loc
+                    ? "bg-cyan-600 text-white"
+                    : "border border-slate-600 text-slate-300"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <div>
+            <label className="text-[11px] font-medium text-cyan-100/90">
+              {t.planTopicLabel ?? t.musicTopicLabel}
+            </label>
+            <input
+              type="text"
+              value={musicTopic}
+              disabled={disabled || busy}
+              onChange={(e) => onMusicTopicChange(e.target.value)}
+              placeholder={t.planTopicPlaceholder ?? t.musicTopicPlaceholder}
+              className="mt-1.5 w-full rounded-lg border border-cyan-800/60 bg-slate-900 px-3 py-2 text-sm text-white placeholder:text-slate-500"
+            />
+          </div>
+          <button
+            type="button"
+            disabled={disabled || busy || !musicTopic.trim()}
+            onClick={onPlanCaptionVoice}
+            title={!musicTopic.trim() ? t.planNeedTopic : undefined}
+            className="w-full rounded-full bg-cyan-700 py-2 text-xs font-medium text-white hover:bg-cyan-600 disabled:opacity-50"
+          >
+            {planCaptionVoiceBusy
+              ? (t.planningCaptionVoice ?? t.planCaptionVoice)
+              : t.planCaptionVoice}
+          </button>
+        </div>
+      )}
 
       <div className="space-y-3 rounded-xl border border-emerald-900/40 bg-emerald-950/20 p-3">
         <h3 className="text-xs font-semibold uppercase tracking-wide text-emerald-200">
@@ -321,16 +410,48 @@ export function CaptionAudioSection({
               rows={3}
               className="w-full rounded-lg border border-slate-700 bg-slate-900 px-2 py-1.5 text-xs text-white"
             />
-            {onFillVoiceFromCaptions && (
-              <button
-                type="button"
-                disabled={disabled || busy}
-                onClick={onFillVoiceFromCaptions}
-                className="text-[11px] font-medium text-cyan-300 underline underline-offset-2"
-              >
-                {t.fillVoiceFromCaptions}
-              </button>
-            )}
+            <div className="flex flex-wrap items-center gap-2">
+              {onFillVoiceFromCaptions && (
+                <button
+                  type="button"
+                  disabled={disabled || busy}
+                  onClick={onFillVoiceFromCaptions}
+                  className="text-[11px] font-medium text-cyan-300 underline underline-offset-2"
+                >
+                  {t.fillVoiceFromCaptions}
+                </button>
+              )}
+              {onSyncCaptionsFromVoice && t.syncCaptionsFromVoice && (
+                <button
+                  type="button"
+                  disabled={disabled || busy || !voiceoverScript.trim()}
+                  onClick={onSyncCaptionsFromVoice}
+                  title={
+                    !voiceoverScript.trim() ? t.syncCaptionsNeedScript : undefined
+                  }
+                  className="rounded-full border border-cyan-500/50 px-3 py-1.5 text-[11px] font-medium text-cyan-100 hover:bg-cyan-950/40 disabled:opacity-50"
+                >
+                  {t.syncCaptionsFromVoice}
+                </button>
+              )}
+              {onExpandSpokenCaptions && t.expandSpokenCaptions && (
+                <button
+                  type="button"
+                  disabled={disabled || busy || captionLineCount < 1}
+                  onClick={onExpandSpokenCaptions}
+                  className="rounded-full border border-fuchsia-500/50 px-3 py-1.5 text-[11px] font-medium text-fuchsia-100 hover:bg-fuchsia-950/40 disabled:opacity-50"
+                >
+                  {expandSpokenBusy
+                    ? (t.expandingSpokenCaptions ?? t.expandSpokenCaptions)
+                    : t.expandSpokenCaptions}
+                </button>
+              )}
+            </div>
+            {!voiceoverScript.trim() &&
+              voiceoverEnabled &&
+              t.syncCaptionsNeedScript && (
+                <p className="text-[10px] text-amber-200/80">{t.syncCaptionsNeedScript}</p>
+              )}
             <div className="space-y-2 rounded-lg border border-violet-800/50 bg-violet-950/30 p-2">
               <p className="text-[11px] font-medium text-violet-200">{t.voiceSection}</p>
               <p className="text-[10px] text-violet-200/70">{t.voicePreviewHint}</p>
@@ -378,12 +499,13 @@ export function CaptionAudioSection({
               onClick={onApplyVoiceover}
               className="w-full rounded-full bg-violet-700 py-2 text-xs font-medium text-white hover:bg-violet-600 disabled:opacity-50"
             >
-              {audioBusy ? t.applyingVoice : t.applyVoice}
+              {mixLabel}
             </button>
           </>
         )}
       </div>
 
+      {audioError && <p className="text-xs text-red-300">{audioError}</p>}
       {audioNote && <p className="text-xs text-emerald-300">{audioNote}</p>}
     </section>
   );

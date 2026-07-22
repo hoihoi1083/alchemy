@@ -10,11 +10,22 @@ export type CaptionPosition =
 export type CaptionLine = {
   startSec: number;
   endSec: number;
+  /** Short on-screen caption (burned into video). */
   text: string;
+  /**
+   * Longer spoken line for TTS in this window.
+   * When unset, mix/preview fall back to `text`.
+   */
+  spokenText?: string;
   position?: CaptionPosition;
   /** Per-line burned subtitle style; falls back to studio default when unset. */
   stylePreset?: string;
 };
+
+/** Text used for TTS — prefers longer spokenText when present. */
+export function captionSpeakText(line: Pick<CaptionLine, "text" | "spokenText">): string {
+  return (line.spokenText ?? line.text).trim();
+}
 
 export type AdPackMusicPlan = {
   styleLabel: string;

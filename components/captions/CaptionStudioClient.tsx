@@ -17,6 +17,7 @@ import type {
   CaptionLine,
   VoicePreviewTrack,
 } from "@/lib/ad-pack-types";
+import { captionSpeakText } from "@/lib/ad-pack-types";
 import { DEFAULT_BGM_TRACK, type BgmTrackId } from "@/lib/bgm/tracks";
 import {
   CAPTION_STYLE_PRESETS,
@@ -30,7 +31,14 @@ import {
   readCaptionHandoff,
   writeCaptionDraft,
 } from "@/lib/caption-studio-draft";
-import { toRelativePipelineUrl, withCacheBust } from "@/lib/caption-studio-url";
+import { toRelativePipelineUrl, withCacheBust, toBeatAnalysisUrl } from "@/lib/caption-studio-url";
+import {
+  captionLinesFromVoiceScript,
+  captionVoiceStartSec,
+  probeAudioDurationSec,
+  splitCaptionLinesOverDuration,
+} from "@/lib/caption-voice-timing";
+import { alignCaptionsToBeats } from "@/lib/beat-detect";
 import { resolveCaptionStudioMusicPrompt } from "@/lib/caption-music-prompt";
 import { isPipelineFileUrl } from "@/lib/pipeline/safe-url";
 
@@ -95,6 +103,8 @@ export function CaptionStudioClient() {
   const [videoTrimOut, setVideoTrimOut] = useState(8);
   const [beatMarkers, setBeatMarkers] = useState<number[]>([]);
   const [snapToBeats, setSnapToBeats] = useState(true);
+  const [beatStatus, setBeatStatus] = useState<string | null>(null);
+  const [beatBusy, setBeatBusy] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
@@ -113,6 +123,8 @@ export function CaptionStudioClient() {
   const [voicePreviewTracks, setVoicePreviewTracks] = useState<VoicePreviewTrack[]>([]);
   const [selectedVoicePreviewId, setSelectedVoicePreviewId] = useState<string | null>(null);
   const [voicePreviewBusy, setVoicePreviewBusy] = useState(false);
+  const [planCaptionVoiceBusy, setPlanCaptionVoiceBusy] = useState(false);
+  const [expandSpokenBusy, setExpandSpokenBusy] = useState(false);
   const [audioBusy, setAudioBusy] = useState(false);
   const [audioNote, setAudioNote] = useState<string | null>(null);
   const [defaultStylePreset, setDefaultStylePreset] =
@@ -243,20 +255,59 @@ export function CaptionStudioClient() {
   }, [sourceKey, captionLines]);
 
   useEffect(() => {
-    const url = processedVideoUrl || playbackUrl;
-    if (!url?.startsWith("http")) return;
+    const raw = processedVideoUrl || sourceUrl || playbackUrl;
+    const analyzable = toBeatAnalysisUrl(raw);
+    if (!analyzable) {
+      setBeatMarkers([]);
+      setBeatStatus(t.beatStatusUnavailable);
+      return;
+    }
+
+    let cancelled = false;
+    setBeatBusy(true);
+    setBeatStatus(t.beatStatusAnalyzing);
     void fetch("/api/analyze-beats", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ video_url: url }),
+      body: JSON.stringify({ video_url: analyzable }),
     })
       .then((r) => r.json())
       .then((data) => {
-        if (Array.isArray(data.beats)) setBeatMarkers(data.beats as number[]);
+        if (cancelled) return;
+        if (Array.isArray(data.beats) && data.beats.length > 0) {
+          setBeatMarkers(data.beats as number[]);
+          setBeatStatus(
+            t.beatStatusReady.replace("{n}", String(data.beats.length)),
+          );
+        } else {
+          setBeatMarkers([]);
+          setBeatStatus(t.beatStatusEmpty);
+        }
       })
-      .catch(() => {});
-  }, [processedVideoUrl, playbackUrl]);
+      .catch(() => {
+        if (cancelled) return;
+        setBeatMarkers([]);
+        setBeatStatus(t.beatStatusEmpty);
+      })
+      .finally(() => {
+        if (!cancelled) setBeatBusy(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [processedVideoUrl, sourceUrl, playbackUrl, t.beatStatusAnalyzing, t.beatStatusEmpty, t.beatStatusReady, t.beatStatusUnavailable]);
+
+  function alignCaptionsToDetectedBeats() {
+    if (!beatMarkers.length) {
+      setError(t.beatAlignNeedBeats);
+      return;
+    }
+    setCaptionLines((prev) => alignCaptionsToBeats(prev, beatMarkers, videoDuration));
+    setNote(t.beatAlignDone.replace("{n}", String(beatMarkers.length)));
+    setError(null);
+  }
 
   useEffect(() => {
     return () => {
@@ -319,17 +370,25 @@ export function CaptionStudioClient() {
   }
 
   function splitEvenly() {
-    const filled = captionLines.filter((l) => l.text.trim());
-    const lines = filled.length > 0 ? filled : [{ startSec: 0, endSec: videoDuration, text: "" }];
-    const slice = videoDuration / lines.length;
-    setCaptionLines(
-      lines.map((line, i) => ({
-        ...line,
-        startSec: Number((i * slice).toFixed(1)),
-        endSec: Number(Math.min(videoDuration, (i + 1) * slice).toFixed(1)),
-        stylePreset: line.stylePreset ?? defaultStylePreset,
-      })),
-    );
+    setCaptionLines((prev) => splitCaptionLinesOverDuration(prev, videoDuration));
+  }
+
+  async function fitCaptionsToVoice() {
+    const selected =
+      voicePreviewTracks.find((tr) => tr.id === selectedVoicePreviewId) ??
+      voicePreviewTracks[0];
+    if (!selected?.audioUrl) {
+      setError(t.fitCaptionsNeedVoice);
+      return;
+    }
+    const voiceSec = await probeAudioDurationSec(selected.audioUrl);
+    if (voiceSec < 0.5) {
+      setError(t.fitCaptionsNeedVoice);
+      return;
+    }
+    setCaptionLines((prev) => splitCaptionLinesOverDuration(prev, voiceSec));
+    setAudioNote(t.fitCaptionsToVoiceDone.replace("{sec}", voiceSec.toFixed(1)));
+    setError(null);
   }
 
   async function generateAiMusicTracks() {
@@ -366,8 +425,8 @@ export function CaptionStudioClient() {
     }
   }
 
-  async function generateVoicePreviews() {
-    const script = voiceoverScript.trim();
+  async function generateVoicePreviews(scriptOverride?: string) {
+    const script = (scriptOverride ?? voiceoverScript).trim();
     if (!script) return;
     setVoicePreviewBusy(true);
     setError(null);
@@ -388,6 +447,31 @@ export function CaptionStudioClient() {
     } finally {
       setVoicePreviewBusy(false);
     }
+  }
+
+  function syncCaptionsFromVoiceScript() {
+    const script = voiceoverScript.trim();
+    if (!script) {
+      setError(t.syncCaptionsNeedScript);
+      setAudioNote(null);
+      return;
+    }
+    const lines = captionLinesFromVoiceScript(script, videoDuration, {
+      stylePreset: defaultStylePreset,
+    });
+    if (!lines.length) {
+      setError(t.syncCaptionsNeedScript);
+      return;
+    }
+    setCaptionLines(lines);
+    setSelectedCaptionIndex(0);
+    setVoiceoverEnabled(true);
+    setError(null);
+    setAudioNote(
+      t.syncCaptionsFromVoiceDone
+        .replace("{n}", String(lines.length))
+        .replace("{sec}", videoDuration.toFixed(1)),
+    );
   }
 
   async function applyBgm() {
@@ -444,8 +528,17 @@ export function CaptionStudioClient() {
 
   async function applyVoiceover() {
     const script = voiceoverScript.trim();
+    const timedCaptionLines = captionLines.filter((l) => l.text.trim());
     const selectedPreview = voicePreviewTracks.find((tr) => tr.id === selectedVoicePreviewId);
-    if (!script && !selectedPreview) return;
+    // Need 2+ timed caption lines — otherwise we'd only reuse the single preview clip.
+    if (timedCaptionLines.length < 2) {
+      setError(t.audioVoiceNeedCaptionLines.replace("{n}", String(timedCaptionLines.length)));
+      return;
+    }
+    if (!script && !selectedPreview) {
+      setError(t.audioVoiceNeedPreviewOrScript);
+      return;
+    }
     const input = workingVideoInput();
     if (!input.file && !input.url) {
       setError(t.needVideo);
@@ -458,28 +551,32 @@ export function CaptionStudioClient() {
 
     try {
       let res: Response;
+      const speechStartSec = captionVoiceStartSec(captionLines);
+      const captionPayload = timedCaptionLines.map((l) => ({
+        text: l.text.trim(),
+        startSec: l.startSec,
+        endSec: l.endSec,
+        ...(l.spokenText?.trim() ? { spokenText: l.spokenText.trim() } : {}),
+      }));
+      // Never send speech_url for multi-caption — preview is voice pick only.
       const voiceBody: Record<string, unknown> = {
         locale: voiceoverLocale,
         target_duration_sec: videoDuration,
+        speech_start_sec: speechStartSec,
+        caption_lines: captionPayload,
       };
-      if (selectedPreview) {
-        voiceBody.speech_url = selectedPreview.audioUrl;
-        voiceBody.voice_preset = selectedPreview.presetId;
-      } else {
-        voiceBody.script = script;
-      }
+      if (selectedPreview) voiceBody.voice_preset = selectedPreview.presetId;
+      else if (script) voiceBody.script = script;
 
       if (input.file) {
         const fields: Record<string, string> = {
           locale: voiceoverLocale,
           target_duration_sec: String(videoDuration),
+          speech_start_sec: String(speechStartSec),
+          caption_lines: JSON.stringify(captionPayload),
         };
-        if (selectedPreview) {
-          fields.speech_url = selectedPreview.audioUrl;
-          fields.voice_preset = selectedPreview.presetId;
-        } else {
-          fields.script = script;
-        }
+        if (selectedPreview) fields.voice_preset = selectedPreview.presetId;
+        else if (script) fields.script = script;
         res = await postVideoMultipart("/api/dub-script-voice", input.file, fields);
       } else {
         res = await postVideoJson("/api/dub-script-voice", input.url!, voiceBody);
@@ -488,7 +585,23 @@ export function CaptionStudioClient() {
       if (!res.ok) throw new Error(data.error ?? t.burnFailed);
       await commitProcessedVideo(data.videoUrl as string);
       previewVideoRef.current?.load();
-      setAudioNote(t.audioVoiceDone);
+      const clipCount = Number(data.clipCount) || timedCaptionLines.length;
+      if (data.perCaption && clipCount >= 2) {
+        setAudioNote(t.audioVoiceDonePerCaption.replace("{n}", String(clipCount)));
+      } else {
+        // Server fell back somehow — surface that clearly.
+        setError(
+          t.audioVoiceSingleClipFallback.replace(
+            "{n}",
+            String(timedCaptionLines.length),
+          ),
+        );
+        setAudioNote(
+          speechStartSec > 0.05
+            ? t.audioVoiceDoneAtCaption.replace("{sec}", speechStartSec.toFixed(1))
+            : t.audioVoiceDone,
+        );
+      }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : t.burnFailed);
     } finally {
@@ -498,10 +611,151 @@ export function CaptionStudioClient() {
 
   function fillVoiceFromCaptions() {
     const text = captionLines
-      .map((l) => l.text.trim())
+      .map((l) => captionSpeakText(l))
       .filter(Boolean)
       .join("，");
     if (text) setVoiceoverScript(text);
+  }
+
+  async function expandSpokenToFitCaptions() {
+    const lines = captionLines.filter((l) => l.text.trim());
+    if (!lines.length) {
+      setError(t.expandCaptionVoiceNeedLines);
+      return;
+    }
+    setExpandSpokenBusy(true);
+    setError(null);
+    setAudioNote(null);
+    try {
+      const res = await fetch("/api/expand-spoken-captions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          caption_lines: lines.map((l) => ({
+            text: l.text.trim(),
+            startSec: l.startSec,
+            endSec: l.endSec,
+            ...(l.spokenText?.trim() ? { spokenText: l.spokenText.trim() } : {}),
+          })),
+          locale: voiceoverLocale,
+          product: musicTopic.trim() || undefined,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(
+          typeof data.error === "string" ? data.error : t.expandCaptionVoiceFailed,
+        );
+      }
+      const next = (data.captionLines ?? []) as CaptionLine[];
+      if (!next.length) throw new Error(t.expandCaptionVoiceFailed);
+
+      setCaptionLines((prev) => {
+        let ni = 0;
+        return prev.map((line) => {
+          if (!line.text.trim()) return line;
+          const got = next[ni++];
+          const spoken = String(got?.spokenText ?? "").trim();
+          return spoken ? { ...line, spokenText: spoken } : line;
+        });
+      });
+
+      const script =
+        typeof data.voiceoverScript === "string" && data.voiceoverScript.trim()
+          ? data.voiceoverScript.trim()
+          : next.map((l) => captionSpeakText(l)).filter(Boolean).join("，");
+      if (script) {
+        setVoiceoverScript(script);
+        setVoiceoverEnabled(true);
+        await generateVoicePreviews(script);
+      }
+      const n = Number(data.lineCount) || next.length;
+      setAudioNote(
+        t.expandCaptionVoiceDone
+          .replace("{n}", String(n))
+          .replace("{sec}", videoDuration.toFixed(1)),
+      );
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : t.expandCaptionVoiceFailed);
+      setAudioNote(null);
+    } finally {
+      setExpandSpokenBusy(false);
+    }
+  }
+
+  async function planCaptionsAndVoiceFromTopic() {
+    const topic = musicTopic.trim();
+    if (!topic) {
+      setError(t.planCaptionVoiceNeedTopic);
+      return;
+    }
+    if (!sourceKind) {
+      setError(t.needVideo);
+      return;
+    }
+
+    setPlanCaptionVoiceBusy(true);
+    setError(null);
+    setAudioNote(null);
+    try {
+      const res = await fetch("/api/plan-caption-voice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          topic,
+          locale: voiceoverLocale,
+          video_duration_sec: videoDuration,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(
+          typeof data.error === "string" ? data.error : t.planCaptionVoiceFailed,
+        );
+      }
+      const lines = (data.captionLines ?? []) as CaptionLine[];
+      if (!lines.length) throw new Error(t.planCaptionVoiceFailed);
+
+      setCaptionLines(
+        lines.map((line, i) => {
+          const text = String(line.text ?? "").trim();
+          const spoken = String(line.spokenText ?? "").trim();
+          return {
+            startSec: Math.max(0, Number(line.startSec) || 0),
+            endSec: Math.max(
+              Number(line.startSec) || 0,
+              Number(line.endSec) || (Number(line.startSec) || 0) + 2,
+            ),
+            text,
+            ...(spoken ? { spokenText: spoken } : {}),
+            position: line.position ?? (i % 2 === 0 ? "bottom" : "top"),
+            stylePreset: line.stylePreset ?? defaultStylePreset,
+          };
+        }),
+      );
+      const script =
+        typeof data.voiceoverScript === "string" && data.voiceoverScript.trim()
+          ? data.voiceoverScript.trim()
+          : lines.map((l) => captionSpeakText(l)).filter(Boolean).join("，");
+      if (script) setVoiceoverScript(script);
+      setVoiceoverEnabled(true);
+      setVoicePreviewTracks([]);
+      setSelectedVoicePreviewId(null);
+      setSelectedCaptionIndex(0);
+      const n = Number(data.lineCount) || lines.length;
+      setAudioNote(
+        t.planCaptionVoiceDone
+          .replace("{n}", String(n))
+          .replace("{sec}", videoDuration.toFixed(1)),
+      );
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : t.planCaptionVoiceFailed);
+      setAudioNote(null);
+    } finally {
+      setPlanCaptionVoiceBusy(false);
+    }
   }
 
   async function applyCaptions() {
@@ -651,6 +905,10 @@ export function CaptionStudioClient() {
         </div>
       )}
 
+      {hasWorkspace && error && (
+        <p className="rounded-lg bg-red-950/50 px-3 py-2 text-sm text-red-200">{error}</p>
+      )}
+
       {hasWorkspace && (
         <div className="grid gap-5 xl:grid-cols-[minmax(300px,1fr)_minmax(280px,400px)_minmax(300px,1fr)] xl:items-start">
           <CaptionAudioSection
@@ -686,10 +944,24 @@ export function CaptionStudioClient() {
             onGenerateVoicePreviews={() => void generateVoicePreviews()}
             onApplyVoiceover={() => void applyVoiceover()}
             onFillVoiceFromCaptions={fillVoiceFromCaptions}
+            onSyncCaptionsFromVoice={syncCaptionsFromVoiceScript}
+            onPlanCaptionVoice={() => void planCaptionsAndVoiceFromTopic()}
+            planCaptionVoiceBusy={planCaptionVoiceBusy}
+            onExpandSpokenCaptions={() => void expandSpokenToFitCaptions()}
+            expandSpokenBusy={expandSpokenBusy}
+            captionLineCount={captionLines.filter((l) => l.text.trim()).length}
             audioNote={audioNote}
+            audioError={error}
             labels={{
               title: t.audioTitle,
               hint: t.audioHint,
+              planSection: t.planCaptionVoiceSection,
+              planHint: t.planCaptionVoiceHint,
+              planTopicLabel: t.planCaptionVoiceTopicLabel,
+              planTopicPlaceholder: t.planCaptionVoiceTopicPlaceholder,
+              planCaptionVoice: t.planCaptionVoice,
+              planningCaptionVoice: t.planningCaptionVoice,
+              planNeedTopic: t.planCaptionVoiceNeedTopic,
               musicSection: ad.musicSection,
               musicMoodLabel: ad.musicMoodLabel,
               musicMoods: ad.musicMoods,
@@ -708,18 +980,23 @@ export function CaptionStudioClient() {
               applyingBgm: t.audioApplyingBgm,
               libraryPreviewLabel: t.libraryBgmPreviewLabel,
               voiceSection: ad.voiceSection,
-              voicePreviewHint: ad.voicePreviewHint,
+              voicePreviewHint: t.audioVoicePerCaptionHint,
               generateVoice: ad.generateVoice,
               generatingVoice: ad.generatingVoice,
               voicePresets: ad.voicePresets,
               speakVoiceover: t.audioSpeakVoiceover,
               voicePlaceholder: t.audioVoicePlaceholder,
               applyVoice: t.audioApplyVoice,
+              applyVoicePerCaption: t.audioApplyVoicePerCaption,
               applyingVoice: t.audioApplyingVoice,
               localeHk: t.audioLocaleHk,
               localeCn: t.audioLocaleCn,
               localeEn: t.audioLocaleEn,
               fillVoiceFromCaptions: t.fillVoiceFromCaptions,
+              syncCaptionsFromVoice: t.syncCaptionsFromVoice,
+              syncCaptionsNeedScript: t.syncCaptionsNeedScript,
+              expandSpokenCaptions: t.expandCaptionVoice,
+              expandingSpokenCaptions: t.expandingCaptionVoice,
             }}
           />
 
@@ -768,14 +1045,24 @@ export function CaptionStudioClient() {
                 <h2 className="text-lg font-semibold text-violet-50">{t.linesTitle}</h2>
                 <p className="mt-1 text-xs text-violet-200/80">{t.linesHintPerLineStyle}</p>
               </div>
-              <button
-                type="button"
-                disabled={!sourceKind}
-                onClick={splitEvenly}
-                className="rounded-full border border-violet-400/50 px-3 py-1.5 text-xs font-medium text-violet-100 hover:bg-violet-900/40 disabled:opacity-50"
-              >
-                {t.splitEvenly}
-              </button>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={!sourceKind || voicePreviewTracks.length === 0}
+                  onClick={() => void fitCaptionsToVoice()}
+                  className="rounded-full border border-cyan-400/50 px-3 py-1.5 text-xs font-medium text-cyan-100 hover:bg-cyan-900/40 disabled:opacity-50"
+                >
+                  {t.fitCaptionsToVoice}
+                </button>
+                <button
+                  type="button"
+                  disabled={!sourceKind}
+                  onClick={splitEvenly}
+                  className="rounded-full border border-violet-400/50 px-3 py-1.5 text-xs font-medium text-violet-100 hover:bg-violet-900/40 disabled:opacity-50"
+                >
+                  {t.splitEvenly}
+                </button>
+              </div>
             </div>
 
             <div>
@@ -808,6 +1095,7 @@ export function CaptionStudioClient() {
               videoTrimOut={videoTrimOut}
               beatMarkers={beatMarkers}
               snapToBeats={snapToBeats}
+              beatStatus={beatBusy ? t.beatStatusAnalyzing : beatStatus}
               onSelect={setSelectedCaptionIndex}
               onUpdate={updateCaptionLine}
               onVideoTrimChange={(trimIn, trimOut) => {
@@ -815,6 +1103,7 @@ export function CaptionStudioClient() {
                 setVideoTrimOut(trimOut);
               }}
               onSnapToggle={setSnapToBeats}
+              onAlignToBeats={alignCaptionsToDetectedBeats}
               labels={{
                 title: t.timelineTitle,
                 hint: t.timelineL2Hint,
@@ -826,6 +1115,7 @@ export function CaptionStudioClient() {
                 snapBeats: t.snapBeats,
                 trimVideoIn: t.trimVideoIn,
                 trimVideoOut: t.trimVideoOut,
+                alignToBeats: t.alignToBeats,
               }}
             />
 
@@ -840,6 +1130,8 @@ export function CaptionStudioClient() {
                   positionOptions={t.positionOptions}
                   multilineHint={t.multilineHint}
                   removeLabel={t.removeLine}
+                  spokenLabel={t.spokenLineLabel}
+                  spokenPlaceholder={t.spokenLinePlaceholder}
                   styleLabel={t.lineStyleLabel}
                   styleOptions={styleOptions}
                   defaultStylePreset={defaultStylePreset}
@@ -879,7 +1171,7 @@ export function CaptionStudioClient() {
         </div>
       )}
 
-      {error && (
+      {!hasWorkspace && error && (
         <p className="rounded-lg bg-red-950/50 px-3 py-2 text-sm text-red-200">{error}</p>
       )}
       {note && (

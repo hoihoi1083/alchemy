@@ -3,9 +3,9 @@ import { promises as fs } from "fs";
 import path from "path";
 import os from "os";
 import { requireAppUser } from "@/lib/require-app-user";
-import { ensureFfmpeg, extractAudioWav, downloadToFile } from "@/lib/pipeline/ffmpeg";
+import { ensureFfmpeg, extractAudioWav } from "@/lib/pipeline/ffmpeg";
+import { materializeMediaInput } from "@/lib/pipeline/local-input";
 import { detectBeatTimes } from "@/lib/beat-detect";
-import { assertSafeRemoteMediaUrl } from "@/lib/pipeline/safe-url";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -33,19 +33,19 @@ export async function POST(req: Request) {
   const body = (await req.json()) as { video_url?: string; bgm_url?: string };
   const videoUrl = body.video_url?.trim();
   const bgmUrl = body.bgm_url?.trim();
+  const sourceUrl = bgmUrl || videoUrl;
 
-  if (!videoUrl?.startsWith("http") && !bgmUrl?.startsWith("http")) {
+  if (!sourceUrl) {
     return NextResponse.json({ error: "Provide video_url or bgm_url." }, { status: 400 });
   }
 
   const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "alchemy-beats-"));
   try {
     await ensureFfmpeg();
-    const sourceUrl = bgmUrl || videoUrl!;
-    assertSafeRemoteMediaUrl(sourceUrl);
     const mediaPath = path.join(tmpDir, "media.mp4");
     const wavPath = path.join(tmpDir, "audio.wav");
-    await downloadToFile(sourceUrl, mediaPath);
+    // Supports pipeline-files, library assets, and allowlisted remote HTTPS.
+    await materializeMediaInput(sourceUrl, mediaPath);
     await extractAudioWav(mediaPath, wavPath);
     const { samples, sampleRate } = await readWavPcm(wavPath);
     const durationSec = samples.length / sampleRate;

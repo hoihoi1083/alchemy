@@ -61,3 +61,21 @@ export function snapToNearestBeat(sec: number, beats: number[], maxDelta = 0.2):
   }
   return bestDist <= maxDelta ? best : sec;
 }
+
+/** Snap each caption start to nearest beat; keep each line's duration. */
+export function alignCaptionsToBeats<T extends { startSec: number; endSec: number }>(
+  lines: T[],
+  beats: number[],
+  durationSec: number,
+  maxDelta = 0.85,
+): T[] {
+  if (!beats.length || !lines.length) return lines;
+  const videoDur = Math.max(0.5, durationSec);
+  return lines.map((line) => {
+    const dur = Math.max(0.2, line.endSec - line.startSec);
+    const start = Math.max(0, snapToNearestBeat(line.startSec, beats, maxDelta));
+    const end = Math.min(videoDur, Math.max(start + 0.2, start + dur));
+    return { ...line, startSec: start, endSec: end };
+  });
+}
+
