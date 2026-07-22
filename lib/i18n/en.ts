@@ -1829,6 +1829,8 @@ export const en = {
   errors: {
     polishFailed: "Could not enhance your photo. Try again or turn on fast mode.",
     videoFailed: "Video creation failed. Please try again.",
+    requestTooLarge:
+      "Request too large for the server (often too many / too big scene images). Try fewer scenes or regenerate stills, then generate video again.",
     network: "Network error. Check your internet connection and try again.",
     serviceUnavailable:
       "Image and video generation is temporarily unavailable. Please try again later.",

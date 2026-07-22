@@ -43,6 +43,7 @@ export function useFriendlyError(m: Messages) {
         insufficientTokens: m.errors.insufficientTokens,
         seedanceSensitive: m.errors.seedanceSensitive,
         falContentPolicy: m.errors.falContentPolicy,
+        requestTooLarge: m.errors.requestTooLarge,
         timeout: m.errors.timeout,
       });
       if (mapped === m.errors.insufficientTokens) return mapped;

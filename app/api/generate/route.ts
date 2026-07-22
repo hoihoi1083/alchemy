@@ -460,10 +460,18 @@ export async function POST(request: Request) {
       nonEmptyImages.length > 0
         ? await Promise.all(nonEmptyImages.map((f) => fal.storage.upload(f)))
         : [];
+    // Prefer URL refs (library/pipeline/CDN) — client should not re-upload multi-MB scene PNGs
+    // (Vercel request body limit ≈ 4.5MB → "Request Entity Too Large").
+    const mirroredDirectUrls = directRefUrls?.length
+      ? await Promise.all(directRefUrls.map((u) => mirrorImageUrlToFalStorage(u)))
+      : [];
+    const mirroredImageRef = imageRefUrl
+      ? await mirrorImageUrlToFalStorage(imageRefUrl)
+      : undefined;
     const image_urls = [
-      ...(directRefUrls ?? []),
+      ...mirroredDirectUrls,
       ...uploadedImageUrls,
-      ...(imageRefUrl ? [imageRefUrl] : []),
+      ...(mirroredImageRef ? [mirroredImageRef] : []),
     ];
     const imageUrlsFinal = image_urls.length > 0 ? image_urls : undefined;
     const uploadedVideoUrls =

@@ -3665,6 +3665,69 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     }
   }
 
+  /** Same-origin relative paths so the server can materialize library/pipeline assets. */
+  function toGenerateReferenceUrl(url: string): string {
+    const trimmed = url.trim();
+    if (!trimmed) return "";
+    if (trimmed.startsWith("blob:")) return trimmed;
+    try {
+      if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+        const parsed = new URL(trimmed);
+        if (typeof window !== "undefined" && parsed.origin === window.location.origin) {
+          return `${parsed.pathname}${parsed.search}`;
+        }
+      }
+    } catch {
+      /* keep as-is */
+    }
+    return trimmed;
+  }
+
+  async function appendStoryboardImageRefs(
+    fd: FormData,
+    scenes: Array<{ imageUrl: string }>,
+  ): Promise<number> {
+    const urls: string[] = [];
+    let fileCount = 0;
+    for (const scene of scenes) {
+      const raw = scene.imageUrl?.trim();
+      if (!raw) continue;
+      if (raw.startsWith("blob:")) {
+        const file = await fileFromImageUrl(raw);
+        if (file) {
+          fd.append("images", file);
+          fileCount += 1;
+        }
+        continue;
+      }
+      const ref = toGenerateReferenceUrl(raw);
+      if (ref) urls.push(ref);
+    }
+    if (urls.length) fd.set("reference_image_urls", urls.join("\n"));
+    return urls.length + fileCount;
+  }
+
+  async function readGenerateJson(res: Response): Promise<Record<string, unknown>> {
+    const text = await res.text();
+    if (!text.trim()) return {};
+    try {
+      return JSON.parse(text) as Record<string, unknown>;
+    } catch {
+      if (
+        res.status === 413 ||
+        /request entity too large|payload too large|entity too large/i.test(text)
+      ) {
+        return {
+          error: m.errors.requestTooLarge,
+          code: "REQUEST_TOO_LARGE",
+        };
+      }
+      return {
+        error: text.slice(0, 160) || m.errors.videoFailed,
+      };
+    }
+  }
+
   async function ensureEndFrameUrl(): Promise<string | null> {
     if (endFrameUrl) return endFrameUrl;
     if (endFramePhoto || !videoSettings.autoSecondFrame) return null;
@@ -3732,13 +3795,11 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     fd.set("avoid_on_screen_text", vOpts.avoidOnScreenText ? "true" : "false");
     fd.set("fast", vOpts.fast ? "true" : "false");
 
-    for (const scene of orderedScenes) {
-      const file = await fileFromImageUrl(scene.imageUrl);
-      if (file) fd.append("images", file);
-    }
+    const refCount = await appendStoryboardImageRefs(fd, orderedScenes);
+    if (refCount < 1) throw new Error(m.errors.needKeyframe);
 
     const res = await fetch("/api/generate", { method: "POST", body: fd });
-    const data = await res.json();
+    const data = await readGenerateJson(res);
     if (res.ok) {
       notifyCreditBalance(readCreditBalanceFromResponse(data));
       const usedKling =
@@ -3797,7 +3858,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       return makeKlingStoryboardFallback(orderedScenes, prompt);
     }
 
-    throw new Error(data.error ?? m.errors.videoFailed);
+    throw new Error(
+      (typeof data.error === "string" ? data.error : null) ?? m.errors.videoFailed,
+    );
   }
 
   async function makeKlingStoryboardFallback(
@@ -3819,14 +3882,12 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         })),
       ),
     );
-    for (const scene of scenes) {
-      const file = await fileFromImageUrl(scene.imageUrl);
-      if (file) fd.append("images", file);
-    }
+    const refCount = await appendStoryboardImageRefs(fd, scenes);
+    if (refCount < 1) throw new Error(m.errors.needKeyframe);
 
     const res = await fetch("/api/generate-kling-storyboard", { method: "POST", body: fd });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error ?? m.errors.klingStoryboardFailed);
+    const data = await readGenerateJson(res);
+    if (!res.ok) throw new Error((typeof data.error === "string" ? data.error : null) ?? m.errors.klingStoryboardFailed);
     notifyCreditBalance(readCreditBalanceFromResponse(data));
     const clipDurations = Array.isArray(data.clipDurations)
       ? (data.clipDurations as number[])

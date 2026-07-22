@@ -1771,6 +1771,8 @@ export const zhCn = {
   errors: {
     polishFailed: "无法美化照片，请重试或开启快速模式。",
     videoFailed: "视频制作失败，请重试。",
+    requestTooLarge:
+      "请求太大（通常是场景图太多或太大）。请减少场景或重新生成静帧，再试生成视频。",
     network: "网络错误，请检查网络后重试。",
     serviceUnavailable: "图片/视频生成暂时不可用，请稍后再试。",
     planningUnavailable: "AI 规划暂时不可用，请稍后再试。",

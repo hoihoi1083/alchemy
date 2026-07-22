@@ -5,10 +5,24 @@ import {
 } from "@/lib/credits-client";
 
 async function parseJsonResponse(res: Response): Promise<unknown> {
+  const text = await res.text();
+  if (!text.trim()) return {};
   try {
-    return await res.json();
+    return JSON.parse(text) as unknown;
   } catch {
-    return {};
+    if (
+      res.status === 413 ||
+      /request entity too large|payload too large|entity too large/i.test(text)
+    ) {
+      return {
+        error:
+          "Upload too large for this server. Use shorter clips or fewer/smaller images, then try again.",
+        code: "REQUEST_TOO_LARGE",
+      };
+    }
+    return {
+      error: text.slice(0, 160) || (res.status >= 500 ? "Server error" : "Request failed"),
+    };
   }
 }
 

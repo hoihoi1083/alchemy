@@ -10,6 +10,7 @@ export type ErrorFallbacks = {
   timeout?: string;
   seedanceSensitive?: string;
   falContentPolicy?: string;
+  requestTooLarge?: string;
 };
 
 const TECHNICAL_PATTERNS: Array<{ test: RegExp; key: keyof ErrorFallbacks }> = [
@@ -20,6 +21,10 @@ const TECHNICAL_PATTERNS: Array<{ test: RegExp; key: keyof ErrorFallbacks }> = [
   { test: /DEEPSEEK_API_KEY|deepseek/i, key: "missingDeepSeek" },
   { test: /ECONNREFUSED|ENOTFOUND|fetch failed|network/i, key: "network" },
   { test: /timeout|timed out|ETIMEDOUT/i, key: "timeout" },
+  {
+    test: /request entity too large|payload too large|entity too large|REQUEST_TOO_LARGE|Unexpected token 'R'/i,
+    key: "requestTooLarge",
+  },
   { test: /sensitive content/i, key: "seedanceSensitive" },
   {
     test:
@@ -41,8 +46,12 @@ export function mapApiError(raw: unknown, fallbacks: ErrorFallbacks): string {
   if (raw instanceof ApiClientError && raw.status === 402) {
     return pickFallback("insufficientTokens", fallbacks);
   }
+  if (raw instanceof ApiClientError && raw.status === 413) {
+    return pickFallback("requestTooLarge", fallbacks);
+  }
   if (raw instanceof ApiClientError && raw.body && typeof raw.body === "object") {
     const code = (raw.body as { code?: unknown }).code;
+    if (code === "REQUEST_TOO_LARGE") return pickFallback("requestTooLarge", fallbacks);
     if (code === "FAL_CONTENT_POLICY") return pickFallback("falContentPolicy", fallbacks);
     if (code === "SEEDANCE_SENSITIVE_CONTENT") return pickFallback("seedanceSensitive", fallbacks);
   }

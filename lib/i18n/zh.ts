@@ -1770,6 +1770,8 @@ export const zh = {
   errors: {
     polishFailed: "無法美化相片，請再試或開啟快速模式。",
     videoFailed: "影片製作失敗，請再試。",
+    requestTooLarge:
+      "請求太大（通常係場景圖太多或太大）。請減少場景或重新生成靜幀，再試生成影片。",
     network: "網絡錯誤，請檢查網絡後再試。",
     serviceUnavailable: "圖片／影片生成暫時不可用，請稍後再試。",
     planningUnavailable: "AI 規劃暫時不可用，請稍後再試。",
