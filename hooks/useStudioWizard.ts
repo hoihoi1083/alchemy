@@ -3778,92 +3778,20 @@ export function useStudioWizard(promotionMode: PromotionMode) {
   }
 
   async function makeStoryboardVideo(): Promise<string> {
-    const vOpts = resolveVideoGenerationOpts(templateId, videoSettings);
     const prompt =
       videoPrompt.trim() || storyboardPlan?.seedancePrompt?.trim() || "";
     if (!prompt) throw new Error(m.errors.storyboardVideoPromptRequired);
 
     const orderedScenes = normalizeStoryboardIndices(storyboardScenes);
-    const fd = new FormData();
-    fd.set("mode", "reference");
-    fd.set("prompt", seedancePromptForGenerate(prompt));
-    fd.set("resolution", vOpts.resolution);
-    fd.set("duration", storyboardTrimDuration);
-    fd.set("aspect_ratio", vOpts.aspectRatio);
-    fd.set("generate_audio", "false");
-    fd.set("negative_prompt", negativePrompt);
-    fd.set("avoid_on_screen_text", vOpts.avoidOnScreenText ? "true" : "false");
-    fd.set("fast", vOpts.fast ? "true" : "false");
+    if (orderedScenes.length < 1) throw new Error(m.errors.needKeyframe);
 
-    const refCount = await appendStoryboardImageRefs(fd, orderedScenes);
-    if (refCount < 1) throw new Error(m.errors.needKeyframe);
-
-    const res = await fetch("/api/generate", { method: "POST", body: fd });
-    const data = await readGenerateJson(res);
-    if (res.ok) {
-      notifyCreditBalance(readCreditBalanceFromResponse(data));
-      const usedKling =
-        data.generationMode === "kling-storyboard-fallback" ||
-        Boolean(data.seedanceBlockedCode);
-      const pathNote = data.generationMode
-        ? `${m.wizard.videoGenPathLabel}: ${data.generationMode}${data.endpoint ? ` · ${data.endpoint}` : ""}${typeof data.referenceImageCount === "number" ? ` · ${data.referenceImageCount} images` : ""}${typeof data.clipCount === "number" ? ` · ${m.wizard.klingStoryboardClipCount.replace("{n}", String(data.clipCount))}` : ""}`
-        : "";
-      const clipDurations = Array.isArray(data.clipDurations)
-        ? (data.clipDurations as number[])
-        : undefined;
-      const videoDurationSec = clipDurations?.length
-        ? clipDurations.reduce((a, b) => a + Number(b), 0)
-        : Number(storyboardTrimDuration) || undefined;
-      if (videoDurationSec && videoDurationSec > 0) {
-        lastStoryboardVideoDurationSecRef.current = videoDurationSec;
-      }
-      const storyboardCaps = captionLinesFromStoryboardScenes(orderedScenes, {
-        videoDurationSec,
-      });
-      if (storyboardCaps.length) {
-        setCaptionLines(storyboardCaps);
-        setCaptionBurnEnabled(true);
-      }
-      setVideoNote(
-        [
-          usedKling ? m.wizard.klingStoryboardFallbackNote : m.wizard.storyboardVideoPreflight,
-          `${m.wizard.storyboardTrimDurationLabel}: ${storyboardTrimDuration}s`,
-          pathNote,
-          storyboardCaps.length ? m.wizard.storyboardCaptionsAutoNote : "",
-          data.note as string | undefined,
-        ]
-          .filter(Boolean)
-          .join(" · "),
-      );
-      return data.videoUrl as string;
-    }
-
-    // Client-side belt: if server did not auto-switch, retry Kling explicitly.
-    const errBlob = [
-      data.code,
-      data.error,
-      data.hint,
-      typeof data === "object" ? JSON.stringify(data) : "",
-    ]
-      .filter(Boolean)
-      .join(" ");
-    const policyBlocked =
-      data.code === "FAL_CONTENT_POLICY" ||
-      /likenesses of real people|private information|content_policy|partner_validation_failed/i.test(
-        errBlob,
-      );
-    if (policyBlocked && orderedScenes.length > 0 && !data.klingFallbackFailed) {
-      console.info("[storyboard] Seedance blocked — client Kling fallback", data.code);
-      setVideoNote(m.wizard.klingStoryboardFallbackNote);
-      return makeKlingStoryboardFallback(orderedScenes, prompt);
-    }
-
-    throw new Error(
-      (typeof data.error === "string" ? data.error : null) ?? m.errors.videoFailed,
-    );
+    // Kling-first: Seedance R2V often blocks people likenesses, then Kling still runs —
+    // that double wait exceeds the gateway timeout ("請求逾時"). Skip Seedance for
+    // multi-scene storyboard and animate+stitch with Kling directly.
+    return makeKlingStoryboardVideo(orderedScenes, prompt);
   }
 
-  async function makeKlingStoryboardFallback(
+  async function makeKlingStoryboardVideo(
     scenes: StoryboardSceneResult[],
     _seedancePrompt: string,
   ): Promise<string> {
@@ -3887,7 +3815,11 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 
     const res = await fetch("/api/generate-kling-storyboard", { method: "POST", body: fd });
     const data = await readGenerateJson(res);
-    if (!res.ok) throw new Error((typeof data.error === "string" ? data.error : null) ?? m.errors.klingStoryboardFailed);
+    if (!res.ok) {
+      throw new Error(
+        (typeof data.error === "string" ? data.error : null) ?? m.errors.klingStoryboardFailed,
+      );
+    }
     notifyCreditBalance(readCreditBalanceFromResponse(data));
     const clipDurations = Array.isArray(data.clipDurations)
       ? (data.clipDurations as number[])
@@ -5256,8 +5188,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       ].filter(Boolean),
       costLine: autoSecondFrame
         ? m.wizard.videoPreflightDoubleCall
-        : isStoryboardOutput
-          ? `${m.wizard.videoPreflightSingleCall} · ${storyboardScenes.length} scene images + DeepSeek`
+        :         isStoryboardOutput
+          ? `${m.wizard.klingStoryboardFallbackNote} · ${storyboardScenes.length} scene images`
           : isCinematicStitchOutput
             ? formatCinematicCopy(m.wizard.cinematicStitchVideoCost)
             : isAiPlannedVideoStyle(visualStyleId)

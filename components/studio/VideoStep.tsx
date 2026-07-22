@@ -13,7 +13,8 @@ import { ConceptPreGeneratePanel } from "@/components/studio/ConceptPreGenerateP
 import { PresenterAvatarPicker } from "@/components/studio/PresenterAvatarPicker";
 import { WizardErrorBanner } from "@/components/studio/WizardErrorBanner";
 import { VideoOutputSourceCard } from "@/components/studio/VideoOutputSourceCard";
-import { estimateVideoTokens } from "@/lib/billing/token-costs";
+import { estimateKlingStoryboardTokens, estimateVideoTokens } from "@/lib/billing/token-costs";
+import { klingClipDurationForStoryboard } from "@/lib/kling-storyboard-fallback";
 import { isBrandVideoStyle, isCreativeVideoStyle, isStoryboardVideoStyle } from "@/lib/visual-styles";
 import { isVideoOutputPathLocked, resolveVideoOutputPresentation } from "@/lib/video-output-presentation";
 import { analyzeProductImageFile } from "@/lib/image-upload-quality";
@@ -22,13 +23,21 @@ import type { CinematicSceneResult } from "@/lib/cinematic-reel-types";
 import type { StoryboardSceneResult } from "@/lib/video-storyboard-types";
 
 export function VideoStep() {
-  const { applyPromptRebuild, bgmOptions, bgmTrack, brandProfile, cinematicScenes, cinematicSceneCount, cinematicStitchReady, conceptReferenceR2vReady, directReferenceR2vReady, creativeVideoBrief, endFramePhoto, endFramePreviewUrl, endFrameUrl, error, extraAnglePhotos, extraKitPhotos, extraKitPreviewUrls, formatCinematicCopy, generateVideo, goBackFromVideo, hasFinalImage, headline, imagePrompt, imageUrl, isCinematicStitchOutput, isConceptCinematicSingleOutput, isStoryboardOutput, isUgcPresenterOutput, keyframePreview, loadReferenceClip, m, onReferenceAdFile, onVideoCreativeModeChange, packagingPhoto, packagingPreviewUrl, planAiVideoPrompt, planProductVideo, planProductVideoBusy, planVideoPromptBusy, presenterAvatarId, presenterSourceMode, productPhoto, productVideoPlan, promotionMode, promptExtra, promptMarket, referenceAd, referenceClipLoading, referenceIsVideo, referencePreviewUrl, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, selectedReferenceClipId, setBgmTrack, setConceptImageVisionNote, setEndFramePhoto, setEndFrameUrl, setError, setExtraAnglePhotos, setExtraKitPhotos, setPackagingPhoto, setImagePrompt, setImageUrl, setPresenterAvatarId, setPresenterSourceMode, setProductPhoto, setPromptExtra, setPromptMarket, setShowAdvancedVideo, setSubjectFraming, setUploadQualityWarning, setUseOriginalImage, setVideoPrompt, setVideoSettings, shipItMode, showAdvancedVideo, showVideoReferenceSection, storyboardScenes, subjectFraming, templateId, templateSlotStatus, uploadPreviewUrl, useReferenceVideo, usesCompositor, usesConceptTextVideo, usesProductAssistant, videoBusy, videoCreativeMode, videoGenerateDisabled, videoGenerateDisabledReason, videoPhase, videoPreflight, videoProgressInfo, videoPrompt, videoPromptPlanNote, videoSettings, videoStepHint, visualStyleId, workflowMode } = useWizard();
+  const { applyPromptRebuild, bgmOptions, bgmTrack, brandProfile, cinematicScenes, cinematicSceneCount, cinematicStitchReady, conceptReferenceR2vReady, directReferenceR2vReady, creativeVideoBrief, endFramePhoto, endFramePreviewUrl, endFrameUrl, error, extraAnglePhotos, extraKitPhotos, extraKitPreviewUrls, formatCinematicCopy, generateVideo, goBackFromVideo, hasFinalImage, headline, imagePrompt, imageUrl, isCinematicStitchOutput, isConceptCinematicSingleOutput, isStoryboardOutput, isUgcPresenterOutput, keyframePreview, loadReferenceClip, m, onReferenceAdFile, onVideoCreativeModeChange, packagingPhoto, packagingPreviewUrl, planAiVideoPrompt, planProductVideo, planProductVideoBusy, planVideoPromptBusy, presenterAvatarId, presenterSourceMode, productPhoto, productVideoPlan, promotionMode, promptExtra, promptMarket, referenceAd, referenceClipLoading, referenceIsVideo, referencePreviewUrl, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, selectedReferenceClipId, setBgmTrack, setConceptImageVisionNote, setEndFramePhoto, setEndFrameUrl, setError, setExtraAnglePhotos, setExtraKitPhotos, setPackagingPhoto, setImagePrompt, setImageUrl, setPresenterAvatarId, setPresenterSourceMode, setProductPhoto, setPromptExtra, setPromptMarket, setShowAdvancedVideo, setSubjectFraming, setUploadQualityWarning, setUseOriginalImage, setVideoPrompt, setVideoSettings, shipItMode, showAdvancedVideo, showVideoReferenceSection, storyboardScenes, storyboardTrimDuration, subjectFraming, templateId, templateSlotStatus, uploadPreviewUrl, useReferenceVideo, usesCompositor, usesConceptTextVideo, usesProductAssistant, videoBusy, videoCreativeMode, videoGenerateDisabled, videoGenerateDisabledReason, videoPhase, videoPreflight, videoProgressInfo, videoPrompt, videoPromptPlanNote, videoSettings, videoStepHint, visualStyleId, workflowMode } = useWizard();
   const isConcept = promotionMode === "concept";
-  const videoTokenCost = estimateVideoTokens({
-    resolution: videoSettings.resolution,
-    fast: videoSettings.fast,
-    duration: resolveWizardOutputDurationSec(videoSettings),
-  });
+  const outputDurationSec = resolveWizardOutputDurationSec(videoSettings);
+  const storyboardSceneCount = Math.max(1, storyboardScenes.length || 4);
+  const storyboardClipSec = klingClipDurationForStoryboard(
+    storyboardSceneCount,
+    Number(storyboardTrimDuration) || outputDurationSec || 8,
+  );
+  const videoTokenCost = isStoryboardOutput
+    ? estimateKlingStoryboardTokens(storyboardSceneCount, storyboardClipSec)
+    : estimateVideoTokens({
+        resolution: videoSettings.resolution,
+        fast: videoSettings.fast,
+        duration: outputDurationSec,
+      });
   const showCinematicStitch = isCinematicStitchOutput || cinematicStitchReady;
   const showConceptCinematicSingle =
     isConceptCinematicSingleOutput && cinematicScenes.length > 0;

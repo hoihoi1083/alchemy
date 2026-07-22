@@ -728,10 +728,10 @@ export const zh = {
     storyboardPlanCopyLabel: "畫面字（選填）",
     storyboardSceneLabel: "場景",
     storyboardVideoIntro:
-      "已規劃分鏡同場景圖。生成影片時會用 reference-to-video 模式，一次出完整故事片。",
-    storyboardVideoPreflight: "模式：多分鏡 reference-to-video（@Image1…@ImageN）",
+      "已規劃分鏡同場景圖。生成影片會用 Kling 逐格圖生影片再拼接（唔再先等 Seedance）。",
+    storyboardVideoPreflight: "模式：Kling 逐場景圖生影片 + 拼接（跳過 Seedance R2V）",
     klingStoryboardFallbackNote:
-      "Seedance 回 422 → 已改用 Kling 圖生影片（保留你嘅場景圖）",
+      "Kling 分鏡路徑 — 每格靜幀 → 短片再拼接（避開 Seedance 真人政策同超時）",
     klingStoryboardClipCount: "Kling 片段 × {n}",
     storyboardDurationLabel: "目標片長",
     storyboardDurationHint: "會影響分鏡場景數量。改咗片長請重新生成場景圖。",

@@ -750,10 +750,10 @@ export const en = {
     storyboardPlanCopyLabel: "On-image copy (optional)",
     storyboardSceneLabel: "Scene",
     storyboardVideoIntro:
-      "Storyboard and scene images are ready. Video uses reference-to-video with all scenes in one clip.",
-    storyboardVideoPreflight: "Mode: multi-image reference-to-video (@Image1…@ImageN)",
+      "Storyboard and scene images are ready. Video animates each still with Kling, then stitches one clip.",
+    storyboardVideoPreflight: "Mode: Kling per-scene image-to-video + stitch (skips Seedance R2V)",
     klingStoryboardFallbackNote:
-      "Seedance returned 422 → switched to Kling image-to-video (keeps your stills)",
+      "Kling storyboard path — each scene still → short clip, then stitch (avoids Seedance people-policy wait)",
     klingStoryboardClipCount: "Kling clips × {n}",
     storyboardDurationLabel: "Target duration",
     storyboardDurationHint: "Affects how many scenes are planned. Regenerate scene images if you change this.",
