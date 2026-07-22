@@ -8,6 +8,7 @@ import { brandKitHasPromptContent, brandKitPromptBlock } from "@/lib/brand-merge
 import { buildInpaintFillPrompt, isEraseIntent } from "@/lib/inpaint-erase";
 import { jobDir } from "@/lib/pipeline/paths";
 import { materializeMediaInput, pipelineFileUrl } from "@/lib/pipeline/local-input";
+import { persistAndDurablize } from "@/lib/storage/durable-media";
 
 export const runtime = "nodejs";
 export const maxDuration = 180;
@@ -17,7 +18,11 @@ const ERASE_ENDPOINT = "fal-ai/flux-pro/v1/erase";
 
 function isUsableImageUrl(url: string | undefined): boolean {
   const u = url?.trim() ?? "";
-  return u.startsWith("http") || u.startsWith("/api/pipeline-files/");
+  return (
+    u.startsWith("http") ||
+    u.startsWith("/api/pipeline-files/") ||
+    u.startsWith("/api/library/download/")
+  );
 }
 
 function formatFalError(e: unknown): string {
@@ -121,7 +126,17 @@ export async function POST(req: Request) {
     const buffer = Buffer.from(await res.arrayBuffer());
     const outName = useErase ? "erase-result.png" : "inpaint-result.png";
     await fs.writeFile(path.join(dir, outName), buffer);
-    const imageUrl = pipelineFileUrl(req, jobId, outName);
+    const pipelineUrl = pipelineFileUrl(req, jobId, outName);
+    // Durable R2 URL — pipeline /tmp files vanish across Vercel instances.
+    const imageUrl = await persistAndDurablize({
+      clerkId: auth.user.userId,
+      kind: "image",
+      sourceUrl: outUrl,
+      fallbackUrl: pipelineUrl,
+      bytes: buffer,
+      contentType: "image/png",
+      name: useErase ? "erase-result" : "inpaint-result",
+    });
 
     await trackUsage(auth.user.userId, "image");
     return NextResponse.json({

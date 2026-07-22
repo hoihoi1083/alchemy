@@ -910,7 +910,9 @@ export function CaptionStudioClient() {
       )}
 
       {hasWorkspace && (
-        <div className="grid gap-5 xl:grid-cols-[minmax(300px,1fr)_minmax(280px,400px)_minmax(300px,1fr)] xl:items-start">
+        <div className="grid gap-5 pb-24 xl:grid-cols-[minmax(300px,1fr)_minmax(280px,400px)_minmax(300px,1fr)] xl:items-start xl:pb-0">
+          {/* Mobile: preview first. Desktop xl: audio | preview | lines (order restored). */}
+          <div className="order-2 xl:order-1 xl:min-w-0">
           <CaptionAudioSection
             disabled={!sourceKind}
             audioBusy={audioBusy}
@@ -999,8 +1001,9 @@ export function CaptionStudioClient() {
               expandingSpokenCaptions: t.expandingCaptionVoice,
             }}
           />
+          </div>
 
-          <section className="space-y-3 rounded-3xl border border-slate-800 bg-slate-950/70 p-4 xl:sticky xl:top-4">
+          <section className="order-1 space-y-3 rounded-3xl border border-slate-800 bg-slate-950/70 p-3 sm:p-4 xl:order-2 xl:sticky xl:top-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-lg font-semibold text-white">{t.previewTitle}</h2>
               {processedVideoUrl && (
@@ -1019,7 +1022,7 @@ export function CaptionStudioClient() {
               src={workspaceVideoSrc}
               controls
               playsInline
-              className="mx-auto aspect-[9/16] w-full max-h-[min(72vh,720px)] rounded-2xl border border-slate-800 bg-black object-contain"
+              className="mx-auto aspect-9/16 w-full max-h-[min(48vh,420px)] rounded-2xl border border-slate-800 bg-black object-contain xl:max-h-[min(72vh,720px)]"
               onLoadedMetadata={(e) => {
                 const dur = e.currentTarget.duration;
                 if (Number.isFinite(dur) && dur > 0) {
@@ -1039,11 +1042,11 @@ export function CaptionStudioClient() {
             )}
           </section>
 
-          <section className="space-y-3 rounded-3xl border border-violet-500/30 bg-violet-950/20 p-4 xl:sticky xl:top-4 xl:max-h-[calc(100vh-5rem)] xl:overflow-y-auto">
+          <section className="order-3 space-y-3 rounded-3xl border border-violet-500/30 bg-violet-950/20 p-3 sm:p-4 xl:sticky xl:top-4 xl:max-h-[calc(100vh-5rem)] xl:overflow-y-auto">
             <div className="flex flex-wrap items-start justify-between gap-2">
-              <div>
+              <div className="min-w-0 flex-1">
                 <h2 className="text-lg font-semibold text-violet-50">{t.linesTitle}</h2>
-                <p className="mt-1 text-xs text-violet-200/80">{t.linesHintPerLineStyle}</p>
+                <p className="mt-1 hidden text-xs text-violet-200/80 sm:block">{t.linesHintPerLineStyle}</p>
               </div>
               <div className="flex flex-wrap gap-2">
                 <button
@@ -1163,11 +1166,45 @@ export function CaptionStudioClient() {
               type="button"
               disabled={busy || audioBusy || !sourceKind}
               onClick={() => void applyCaptions()}
-              className="w-full rounded-2xl bg-linear-to-r from-violet-500 to-fuchsia-500 py-3 text-sm font-semibold text-white disabled:opacity-40"
+              className="hidden w-full rounded-2xl bg-linear-to-r from-violet-500 to-fuchsia-500 py-3 text-sm font-semibold text-white disabled:opacity-40 xl:block"
             >
               {busy ? t.applying : t.applyBtn}
             </button>
           </section>
+        </div>
+      )}
+
+      {hasWorkspace && (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-800 bg-slate-950/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur xl:hidden">
+          <div className="mx-auto flex max-w-lg gap-2">
+            <button
+              type="button"
+              disabled={
+                audioBusy ||
+                busy ||
+                (!voiceoverScript.trim() && !selectedVoicePreviewId)
+              }
+              onClick={() => void applyVoiceover()}
+              className="min-w-0 flex-1 rounded-full bg-violet-700 py-2.5 text-xs font-semibold text-white hover:bg-violet-600 disabled:opacity-40"
+            >
+              {audioBusy
+                ? t.audioApplyingVoice
+                : captionLines.filter((l) => l.text.trim()).length >= 2
+                  ? t.audioApplyVoicePerCaption.replace(
+                      "{n}",
+                      String(captionLines.filter((l) => l.text.trim()).length),
+                    )
+                  : t.audioApplyVoice}
+            </button>
+            <button
+              type="button"
+              disabled={busy || audioBusy || !sourceKind}
+              onClick={() => void applyCaptions()}
+              className="min-w-0 flex-1 rounded-full bg-linear-to-r from-violet-500 to-fuchsia-500 py-2.5 text-xs font-semibold text-white disabled:opacity-40"
+            >
+              {busy ? t.applying : t.applyBtn}
+            </button>
+          </div>
         </div>
       )}
 

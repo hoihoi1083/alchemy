@@ -12,7 +12,7 @@ import {
 import { drawRegionsOnMaskCanvas } from "@/lib/regions-to-inpaint-mask";
 import { CanvasHistoryNav } from "@/components/studio/CanvasHistoryNav";
 
-const STAGE_WIDTH = 400;
+const DEFAULT_STAGE_WIDTH = 400;
 const BRUSH_SIZE = 24;
 
 type MaskMode = "brush" | "box";
@@ -120,6 +120,7 @@ export function ImageInpaintMaskEditor({
   imageHistory,
 }: ImageInpaintMaskEditorProps) {
   const bgImage = useHtmlImage(imageUrl);
+  const [stageWidth, setStageWidth] = useState(DEFAULT_STAGE_WIDTH);
   const [stageHeight, setStageHeight] = useState(640);
   const [mode, setMode] = useState<MaskMode>("box");
   const [lines, setLines] = useState<number[][]>([]);
@@ -133,11 +134,25 @@ export function ImageInpaintMaskEditor({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const stageRef = useRef<Konva.Stage>(null);
+  const stageBoxRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = stageBoxRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const apply = () => {
+      const w = Math.max(280, Math.min(720, Math.floor(el.clientWidth)));
+      setStageWidth(w);
+    };
+    apply();
+    const ro = new ResizeObserver(apply);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!bgImage?.naturalWidth) return;
-    setStageHeight(Math.round(STAGE_WIDTH * (bgImage.naturalHeight / bgImage.naturalWidth)));
-  }, [bgImage]);
+    setStageHeight(Math.round(stageWidth * (bgImage.naturalHeight / bgImage.naturalWidth)));
+  }, [bgImage, stageWidth]);
 
   useEffect(() => {
     if (initialPrompt) setPrompt(initialPrompt);
@@ -196,7 +211,7 @@ export function ImageInpaintMaskEditor({
       drawRegionsOnMaskCanvas(ctx, allBoxes, w, h);
     }
 
-    const scaleX = w / STAGE_WIDTH;
+    const scaleX = w / stageWidth;
     const scaleY = h / stageHeight;
     ctx.strokeStyle = "white";
     ctx.lineCap = "round";
@@ -246,7 +261,7 @@ export function ImageInpaintMaskEditor({
 
   const draftBox =
     boxDrag && boxDrag.x1 !== boxDrag.x0 && boxDrag.y1 !== boxDrag.y0
-      ? boxFromDrag(boxDrag.x0, boxDrag.y0, boxDrag.x1, boxDrag.y1, STAGE_WIDTH, stageHeight)
+      ? boxFromDrag(boxDrag.x0, boxDrag.y0, boxDrag.x1, boxDrag.y1, stageWidth, stageHeight)
       : null;
 
   const modeBrushLabel = labels.modeBrush ?? "Brush";
@@ -356,7 +371,7 @@ export function ImageInpaintMaskEditor({
         </div>
       )}
 
-      <div className="relative overflow-hidden rounded-lg border border-violet-700 bg-black">
+      <div ref={stageBoxRef} className="relative w-full overflow-hidden rounded-lg border border-violet-700 bg-black">
         {imageHistory && (
           <CanvasHistoryNav
             disabled={disabled || busy}
@@ -375,14 +390,14 @@ export function ImageInpaintMaskEditor({
         {bgImage && (
           <Stage
             ref={stageRef}
-            width={STAGE_WIDTH}
+            width={stageWidth}
             height={stageHeight}
             onPointerDown={(e) => {
               if (disabled || busy) return;
               const pos = e.target.getStage()?.getPointerPosition();
               if (!pos) return;
               if (mode === "box") {
-                const hit = [...boxes].reverse().find((b) => pointInBox(pos.x, pos.y, b, STAGE_WIDTH, stageHeight));
+                const hit = [...boxes].reverse().find((b) => pointInBox(pos.x, pos.y, b, stageWidth, stageHeight));
                 if (hit) {
                   setSelectedBoxId(hit.id);
                   return;
@@ -415,7 +430,7 @@ export function ImageInpaintMaskEditor({
                   boxDrag.y0,
                   boxDrag.x1,
                   boxDrag.y1,
-                  STAGE_WIDTH,
+                  stageWidth,
                   stageHeight,
                 );
                 if (next.wPct >= 2 && next.hPct >= 2) {
@@ -431,15 +446,15 @@ export function ImageInpaintMaskEditor({
             }}
           >
             <Layer>
-              <KonvaImage image={bgImage} width={STAGE_WIDTH} height={stageHeight} listening={false} />
+              <KonvaImage image={bgImage} width={stageWidth} height={stageHeight} listening={false} />
               {boxes.map((box) => {
                 const selected = selectedBoxId === box.id;
                 return (
                   <Rect
                     key={box.id}
-                    x={(box.xPct / 100) * STAGE_WIDTH}
+                    x={(box.xPct / 100) * stageWidth}
                     y={(box.yPct / 100) * stageHeight}
-                    width={(box.wPct / 100) * STAGE_WIDTH}
+                    width={(box.wPct / 100) * stageWidth}
                     height={(box.hPct / 100) * stageHeight}
                     stroke={selected ? "#34d399" : "#fbbf24"}
                     strokeWidth={selected ? 3 : 2}
@@ -451,9 +466,9 @@ export function ImageInpaintMaskEditor({
               })}
               {draftBox && (
                 <Rect
-                  x={(draftBox.xPct / 100) * STAGE_WIDTH}
+                  x={(draftBox.xPct / 100) * stageWidth}
                   y={(draftBox.yPct / 100) * stageHeight}
-                  width={(draftBox.wPct / 100) * STAGE_WIDTH}
+                  width={(draftBox.wPct / 100) * stageWidth}
                   height={(draftBox.hPct / 100) * stageHeight}
                   stroke="#a78bfa"
                   strokeWidth={2}
@@ -461,7 +476,7 @@ export function ImageInpaintMaskEditor({
                   listening={false}
                 />
               )}
-              <Rect width={STAGE_WIDTH} height={stageHeight} fill="transparent" />
+              <Rect width={stageWidth} height={stageHeight} fill="transparent" />
               {lines.map((pts, i) => (
                 <Line
                   key={`stroke-${i}`}

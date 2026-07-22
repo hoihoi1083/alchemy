@@ -172,14 +172,14 @@ export function CaptionTimelineL2({
             />
             <button
               type="button"
-              className="absolute top-0 bottom-0 -ml-1 w-2 cursor-ew-resize rounded bg-cyan-400"
+              className="absolute top-0 bottom-0 -ml-1.5 w-3 cursor-ew-resize touch-manipulation rounded bg-cyan-400 xl:w-2 xl:-ml-1"
               style={{ left: pct(videoTrimIn) }}
               onPointerDown={(e) => startDrag("video-in", -1, e)}
               aria-label={labels.trimVideoIn}
             />
             <button
               type="button"
-              className="absolute top-0 bottom-0 -ml-1 w-2 cursor-ew-resize rounded bg-cyan-400"
+              className="absolute top-0 bottom-0 -ml-1.5 w-3 cursor-ew-resize touch-manipulation rounded bg-cyan-400 xl:w-2 xl:-ml-1"
               style={{ left: pct(videoTrimOut) }}
               onPointerDown={(e) => startDrag("video-out", -1, e)}
               aria-label={labels.trimVideoOut}
@@ -239,7 +239,7 @@ export function CaptionTimelineL2({
                 >
                   <button
                     type="button"
-                    className="absolute bottom-0 left-0 top-0 w-1.5 cursor-ew-resize bg-white/20"
+                    className="absolute bottom-0 left-0 top-0 w-2.5 cursor-ew-resize touch-manipulation bg-white/20 xl:w-1.5"
                     onPointerDown={(e) => {
                       onSelect(index);
                       startDrag("caption-start", index, e, line);
@@ -247,7 +247,7 @@ export function CaptionTimelineL2({
                   />
                   <button
                     type="button"
-                    className="absolute inset-0 px-2 text-left"
+                    className="absolute inset-0 px-2 text-left touch-manipulation"
                     onPointerDown={(e) => {
                       onSelect(index);
                       startDrag("caption-move", index, e, line);
@@ -257,7 +257,7 @@ export function CaptionTimelineL2({
                   </button>
                   <button
                     type="button"
-                    className="absolute bottom-0 right-0 top-0 w-1.5 cursor-ew-resize bg-white/20"
+                    className="absolute bottom-0 right-0 top-0 w-2.5 cursor-ew-resize touch-manipulation bg-white/20 xl:w-1.5"
                     onPointerDown={(e) => {
                       onSelect(index);
                       startDrag("caption-end", index, e, line);

@@ -15,6 +15,7 @@ import {
 } from "@/lib/image-canvas-handoff";
 import { downloadMediaUrl } from "@/lib/download-media";
 import { withCacheBust } from "@/lib/caption-studio-url";
+import { isLibraryAssetUrl } from "@/lib/storage/library-asset-url";
 import { readImageCanvasDraft, writeImageCanvasDraft } from "@/lib/image-canvas-studio-draft";
 import { isPipelineFileUrl } from "@/lib/pipeline/safe-url";
 
@@ -57,6 +58,35 @@ function pipelineAbsoluteUrl(relative: string): string {
   if (relative.startsWith("http")) return relative;
   if (typeof window === "undefined") return relative;
   return `${window.location.origin}${relative.startsWith("/") ? "" : "/"}${relative}`;
+}
+
+/** Same-origin preview URL — library assets need inline=1 to stream bytes (not 302). */
+function previewFetchUrl(url: string): string {
+  let next = withCacheBust(url);
+  if (isLibraryAssetUrl(next) && !next.includes("inline=1")) {
+    next += `${next.includes("?") ? "&" : "?"}inline=1`;
+  }
+  return next;
+}
+
+async function fetchPreviewBlob(url: string): Promise<Blob> {
+  const res = await fetch(previewFetchUrl(url), {
+    credentials: "include",
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    let detail = "";
+    try {
+      const data = (await res.json()) as { error?: string };
+      if (data.error) detail = ` — ${data.error}`;
+    } catch {
+      /* not json */
+    }
+    throw new Error(`${res.status}${detail}`);
+  }
+  const blob = await res.blob();
+  if (blob.size < 512) throw new Error("empty");
+  return blob;
 }
 
 async function burnImageLayers(input: {
@@ -234,17 +264,18 @@ export function ImageCanvasStudioClient() {
 
   async function commitProcessedImage(pipelineUrl: string) {
     const rel = normalizeImageCanvasHandoffUrl(pipelineUrl);
-    const res = await fetch(withCacheBust(rel), { credentials: "include", cache: "no-store" });
-    if (!res.ok) throw new Error(t.previewLoadFailed);
-    const blob = await res.blob();
-    if (blob.size < 512) throw new Error(t.previewLoadFailed);
-    const blobUrl = URL.createObjectURL(blob);
-    setProcessedImageUrl(rel);
-    setResultPreviewUrl((prev) => {
-      if (prev?.startsWith("blob:")) URL.revokeObjectURL(prev);
-      return blobUrl;
-    });
-    setResultReloadKey((k) => k + 1);
+    try {
+      const blob = await fetchPreviewBlob(rel);
+      const blobUrl = URL.createObjectURL(blob);
+      setProcessedImageUrl(rel);
+      setResultPreviewUrl((prev) => {
+        if (prev?.startsWith("blob:")) URL.revokeObjectURL(prev);
+        return blobUrl;
+      });
+      setResultReloadKey((k) => k + 1);
+    } catch {
+      throw new Error(t.previewLoadFailed);
+    }
   }
 
   function onFileSelected(file: File | null) {
@@ -280,13 +311,13 @@ export function ImageCanvasStudioClient() {
       if (!res.ok) throw new Error(data.error ?? w.quickFixInpaintNeedMask);
 
       const cleaned = normalizeImageCanvasHandoffUrl(data.imageUrl!);
-      const previewRes = await fetch(withCacheBust(cleaned), {
-        credentials: "include",
-        cache: "no-store",
-      });
-      if (!previewRes.ok) throw new Error(t.previewLoadFailed);
-      const blob = await previewRes.blob();
-      const blobUrl = URL.createObjectURL(blob);
+      let blobUrl: string;
+      try {
+        const blob = await fetchPreviewBlob(cleaned);
+        blobUrl = URL.createObjectURL(blob);
+      } catch {
+        throw new Error(t.previewLoadFailed);
+      }
       setCleanFrames((prev) => {
         const trimmed = prev.slice(0, cleanFrameIndex + 1);
         return [...trimmed, { pipelineUrl: cleaned, displayUrl: blobUrl }];

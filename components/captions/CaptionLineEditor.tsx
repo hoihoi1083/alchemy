@@ -2,7 +2,6 @@
 
 import type { CaptionLine, CaptionPosition } from "@/lib/ad-pack-types";
 import {
-  CAPTION_STYLE_PRESET_IDS,
   CAPTION_STYLE_PRESETS,
   type CaptionStylePresetId,
 } from "@/lib/caption-burn-styles";
@@ -16,6 +15,31 @@ export const CAPTION_POSITIONS: CaptionPosition[] = [
   "bottom-left",
   "bottom-right",
 ];
+
+function SpokenFields(props: {
+  line: CaptionLine;
+  spokenLabel: string;
+  spokenPlaceholder: string;
+  onChange: (patch: Partial<CaptionLine>) => void;
+  className?: string;
+}) {
+  return (
+    <label className={props.className ?? "block text-[10px] text-violet-200/80"}>
+      {props.spokenLabel}
+      <textarea
+        value={props.line.spokenText ?? ""}
+        onChange={(e) =>
+          props.onChange({
+            spokenText: e.target.value.trim() ? e.target.value : undefined,
+          })
+        }
+        rows={2}
+        className="mt-1 w-full rounded border border-violet-800/50 bg-slate-950 px-2 py-1 text-xs text-violet-50"
+        placeholder={props.spokenPlaceholder}
+      />
+    </label>
+  );
+}
 
 export function CaptionLineEditor(props: {
   line: CaptionLine;
@@ -38,6 +62,10 @@ export function CaptionLineEditor(props: {
     props.line.stylePreset && props.line.stylePreset in CAPTION_STYLE_PRESETS
       ? (props.line.stylePreset as CaptionStylePresetId)
       : props.defaultStylePreset ?? "classic";
+  const spokenLabel = props.spokenLabel ?? "Spoken (TTS)";
+  const spokenPlaceholder =
+    props.spokenPlaceholder ?? "Longer line for voice — optional";
+  const hasSpoken = Boolean(props.line.spokenText?.trim());
 
   return (
     <div className="space-y-2 rounded-lg border border-slate-800 bg-slate-900/60 p-2">
@@ -49,7 +77,7 @@ export function CaptionLineEditor(props: {
             step={0.5}
             value={props.line.startSec}
             onChange={(e) => props.onChange({ startSec: Number(e.target.value) })}
-            className="w-12 rounded border border-slate-700 bg-slate-950 px-1 py-0.5 text-xs text-white"
+            className="w-14 rounded border border-slate-700 bg-slate-950 px-1 py-1 text-xs text-white sm:w-12 sm:py-0.5"
             aria-label={`${props.timingLabel} start`}
           />
           <span className="self-center">–</span>
@@ -59,7 +87,7 @@ export function CaptionLineEditor(props: {
             step={0.5}
             value={props.line.endSec}
             onChange={(e) => props.onChange({ endSec: Number(e.target.value) })}
-            className="w-12 rounded border border-slate-700 bg-slate-950 px-1 py-0.5 text-xs text-white"
+            className="w-14 rounded border border-slate-700 bg-slate-950 px-1 py-1 text-xs text-white sm:w-12 sm:py-0.5"
             aria-label={`${props.timingLabel} end`}
           />
         </div>
@@ -68,7 +96,7 @@ export function CaptionLineEditor(props: {
           <select
             value={props.line.position ?? "bottom"}
             onChange={(e) => props.onChange({ position: e.target.value as CaptionPosition })}
-            className="rounded border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-white"
+            className="min-h-8 rounded border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-white sm:min-h-0"
           >
             {CAPTION_POSITIONS.map((pos) => (
               <option key={pos} value={pos}>
@@ -85,7 +113,7 @@ export function CaptionLineEditor(props: {
               onChange={(e) =>
                 props.onChange({ stylePreset: e.target.value as CaptionStylePresetId })
               }
-              className="max-w-[8.5rem] rounded border border-slate-700 bg-slate-950 px-1 py-1 text-xs text-white"
+              className="max-w-34 min-h-8 rounded border border-slate-700 bg-slate-950 px-1 py-1 text-xs text-white sm:min-h-0"
             >
               {props.styleOptions.map((opt) => (
                 <option key={opt.id} value={opt.id}>
@@ -98,7 +126,7 @@ export function CaptionLineEditor(props: {
         <button
           type="button"
           onClick={props.onRemove}
-          className="ml-auto text-[11px] text-rose-300 hover:text-rose-200"
+          className="ml-auto min-h-8 min-w-8 text-[11px] text-rose-300 hover:text-rose-200"
           aria-label={props.removeLabel}
         >
           ×
@@ -111,21 +139,30 @@ export function CaptionLineEditor(props: {
         className="w-full rounded border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-white"
         placeholder={`Line ${props.index + 1}`}
       />
-      <label className="block text-[10px] text-violet-200/80">
-        {props.spokenLabel ?? "Spoken (TTS)"}
-        <textarea
-          value={props.line.spokenText ?? ""}
-          onChange={(e) =>
-            props.onChange({
-              spokenText: e.target.value.trim() ? e.target.value : undefined,
-            })
-          }
-          rows={2}
-          className="mt-1 w-full rounded border border-violet-800/50 bg-slate-950 px-2 py-1 text-xs text-violet-50"
-          placeholder={props.spokenPlaceholder ?? "Longer line for voice — optional"}
+
+      {/* Mobile: collapsible spoken field. Desktop: always open (no layout change). */}
+      <details className="xl:hidden">
+        <summary className="cursor-pointer select-none text-[10px] font-medium text-violet-200/90">
+          {spokenLabel}
+          {hasSpoken ? " ✓" : ""}
+        </summary>
+        <SpokenFields
+          line={props.line}
+          spokenLabel=""
+          spokenPlaceholder={spokenPlaceholder}
+          onChange={props.onChange}
+          className="mt-1 block text-[10px] text-violet-200/80"
         />
-      </label>
-      <p className="text-[10px] text-slate-500">{props.multilineHint}</p>
+      </details>
+      <SpokenFields
+        line={props.line}
+        spokenLabel={spokenLabel}
+        spokenPlaceholder={spokenPlaceholder}
+        onChange={props.onChange}
+        className="hidden text-[10px] text-violet-200/80 xl:block"
+      />
+
+      <p className="hidden text-[10px] text-slate-500 sm:block">{props.multilineHint}</p>
     </div>
   );
 }

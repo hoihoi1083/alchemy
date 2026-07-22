@@ -6,13 +6,18 @@ import { burnImageCanvasOverlay } from "@/lib/image-text-overlay-burn";
 import { parseImageCanvasLayers } from "@/lib/image-canvas-layers";
 import { jobDir } from "@/lib/pipeline/paths";
 import { materializeMediaInput, pipelineFileUrl } from "@/lib/pipeline/local-input";
+import { persistAndDurablize } from "@/lib/storage/durable-media";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
 function isUsableImageUrl(url: string | undefined): boolean {
   const u = url?.trim() ?? "";
-  return u.startsWith("http") || u.startsWith("/api/pipeline-files/");
+  return (
+    u.startsWith("http") ||
+    u.startsWith("/api/pipeline-files/") ||
+    u.startsWith("/api/library/download/")
+  );
 }
 
 function layersHaveContent(layers: ReturnType<typeof parseImageCanvasLayers>): boolean {
@@ -20,6 +25,32 @@ function layersHaveContent(layers: ReturnType<typeof parseImageCanvasLayers>): b
     if (layer.kind === "text") return layer.text.trim().length > 0;
     if (layer.kind === "logo") return layer.url.trim().length > 0;
     return true;
+  });
+}
+
+async function burnAndPersist(input: {
+  clerkId: string;
+  request: Request;
+  jobId: string;
+  inputPath: string;
+  outputPath: string;
+  layers: ReturnType<typeof parseImageCanvasLayers>;
+}): Promise<string> {
+  const output = await burnImageCanvasOverlay(input.inputPath, input.layers);
+  await fs.writeFile(input.outputPath, output);
+  const pipelineUrl = pipelineFileUrl(
+    input.request,
+    input.jobId,
+    "image-text-overlay.png",
+  );
+  return persistAndDurablize({
+    clerkId: input.clerkId,
+    kind: "image",
+    sourceUrl: `burn://${input.jobId}/image-text-overlay.png`,
+    fallbackUrl: pipelineUrl,
+    bytes: output,
+    contentType: "image/png",
+    name: "image-text-overlay",
   });
 }
 
@@ -41,7 +72,10 @@ export async function POST(request: Request) {
       );
 
       if (!layersHaveContent(layers)) {
-        return NextResponse.json({ error: "Add at least one text, shape, or logo layer." }, { status: 400 });
+        return NextResponse.json(
+          { error: "Add at least one text, shape, or logo layer." },
+          { status: 400 },
+        );
       }
 
       const jobId = crypto.randomUUID();
@@ -55,14 +89,23 @@ export async function POST(request: Request) {
       } else if (isUsableImageUrl(imageUrl)) {
         await materializeMediaInput(imageUrl!, inputPath);
       } else {
-        return NextResponse.json({ error: "image_file or image_url is required." }, { status: 400 });
+        return NextResponse.json(
+          { error: "image_file or image_url is required." },
+          { status: 400 },
+        );
       }
 
-      const output = await burnImageCanvasOverlay(inputPath, layers);
-      await fs.writeFile(outputPath, output);
+      const durableUrl = await burnAndPersist({
+        clerkId: auth.user.userId,
+        request,
+        jobId,
+        inputPath,
+        outputPath,
+        layers,
+      });
 
       return NextResponse.json({
-        imageUrl: pipelineFileUrl(request, jobId, "image-text-overlay.png"),
+        imageUrl: durableUrl,
         jobId,
       });
     }
@@ -91,11 +134,18 @@ export async function POST(request: Request) {
     const inputPath = path.join(dir, "input.png");
     const outputPath = path.join(dir, "image-text-overlay.png");
     await materializeMediaInput(resolvedImageUrl, inputPath);
-    const output = await burnImageCanvasOverlay(inputPath, layers);
-    await fs.writeFile(outputPath, output);
+
+    const durableUrl = await burnAndPersist({
+      clerkId: auth.user.userId,
+      request,
+      jobId,
+      inputPath,
+      outputPath,
+      layers,
+    });
 
     return NextResponse.json({
-      imageUrl: pipelineFileUrl(request, jobId, "image-text-overlay.png"),
+      imageUrl: durableUrl,
       jobId,
     });
   } catch (e: unknown) {

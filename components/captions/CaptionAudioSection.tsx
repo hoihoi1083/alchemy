@@ -150,10 +150,10 @@ export function CaptionAudioSection({
         : t.applyVoice;
 
   return (
-    <section className="space-y-4 rounded-3xl border border-slate-800 bg-slate-950/70 p-4 shadow-xl xl:sticky xl:top-4 xl:max-h-[calc(100vh-5rem)] xl:overflow-y-auto">
+    <section className="space-y-4 rounded-3xl border border-slate-800 bg-slate-950/70 p-3 shadow-xl sm:p-4 xl:sticky xl:top-4 xl:max-h-[calc(100vh-5rem)] xl:overflow-y-auto">
       <div>
         <h2 className="text-lg font-semibold text-white">{t.title}</h2>
-        <p className="mt-1 text-xs text-slate-400">{t.hint}</p>
+        <p className="mt-1 hidden text-xs text-slate-400 sm:block">{t.hint}</p>
       </div>
 
       {onPlanCaptionVoice && t.planCaptionVoice && (
@@ -497,7 +497,7 @@ export function CaptionAudioSection({
                 (!voiceoverScript.trim() && !selectedVoicePreviewId)
               }
               onClick={onApplyVoiceover}
-              className="w-full rounded-full bg-violet-700 py-2 text-xs font-medium text-white hover:bg-violet-600 disabled:opacity-50"
+              className="hidden w-full rounded-full bg-violet-700 py-2 text-xs font-medium text-white hover:bg-violet-600 disabled:opacity-50 xl:block"
             >
               {mixLabel}
             </button>
