@@ -177,43 +177,45 @@ export async function runKlingStoryboardFallback(opts: {
   const dir = jobDir(jobId);
   await fs.mkdir(dir, { recursive: true });
 
-  const clipUrls: string[] = [];
-  for (let i = 0; i < imageUrls.length; i++) {
-    const duration = clipDurations[i] ?? 5;
-    const meta = scenesMeta[i];
-    const prompt =
-      imageUrls.length === 1 && motionPrompt
-        ? [
-            motionPrompt.slice(0, 800),
-            "Keep the same people, product, and layout as the input image.",
-            "Subtle camera move only — no morphing faces, no new text, no watermark.",
-          ].join(" ")
-        : klingSceneMotionPrompt({
-            sceneIndex: i + 1,
-            sceneCount: imageUrls.length,
-            sceneDescription: meta?.sceneDescriptionZh,
-            imagePrompt: meta?.imagePrompt || motionPrompt.slice(0, 200),
-            theme,
-          });
+  // Run Kling I2V in parallel — sequential 4× clips often approaches Hobby's 300s limit.
+  const clipUrls = await Promise.all(
+    imageUrls.map(async (imageUrl, i) => {
+      const duration = clipDurations[i] ?? 5;
+      const meta = scenesMeta[i];
+      const prompt =
+        imageUrls.length === 1 && motionPrompt
+          ? [
+              motionPrompt.slice(0, 800),
+              "Keep the same people, product, and layout as the input image.",
+              "Subtle camera move only — no morphing faces, no new text, no watermark.",
+            ].join(" ")
+          : klingSceneMotionPrompt({
+              sceneIndex: i + 1,
+              sceneCount: imageUrls.length,
+              sceneDescription: meta?.sceneDescriptionZh,
+              imagePrompt: meta?.imagePrompt || motionPrompt.slice(0, 200),
+              theme,
+            });
 
-    const result = await fal.subscribe(KLING_ENDPOINT, {
-      input: {
-        prompt,
-        image_url: imageUrls[i],
-        duration: (duration === 10 ? "10" : "5") as "5" | "10",
-        negative_prompt:
-          "blur, distort, low quality, watermark, morphing face, extra limbs, readable new text",
-        cfg_scale: 0.5,
-      },
-      logs: true,
-    });
+      const result = await fal.subscribe(KLING_ENDPOINT, {
+        input: {
+          prompt,
+          image_url: imageUrl,
+          duration: (duration === 10 ? "10" : "5") as "5" | "10",
+          negative_prompt:
+            "blur, distort, low quality, watermark, morphing face, extra limbs, readable new text",
+          cfg_scale: 0.5,
+        },
+        logs: true,
+      });
 
-    const url = extractVideoUrl(result.data);
-    if (!url) {
-      throw new Error(`Kling returned no video for scene ${i + 1}.`);
-    }
-    clipUrls.push(url);
-  }
+      const url = extractVideoUrl(result.data);
+      if (!url) {
+        throw new Error(`Kling returned no video for scene ${i + 1}.`);
+      }
+      return url;
+    }),
+  );
 
   let finalUrl: string;
   let localBytes: Buffer | undefined;
@@ -221,12 +223,13 @@ export async function runKlingStoryboardFallback(opts: {
     finalUrl = clipUrls[0];
   } else {
     await ensureFfmpeg();
-    const clipPaths: string[] = [];
-    for (let i = 0; i < clipUrls.length; i++) {
-      const clipPath = path.join(dir, `kling-${i}.mp4`);
-      await materializeMediaInput(clipUrls[i], clipPath);
-      clipPaths.push(clipPath);
-    }
+    const clipPaths = await Promise.all(
+      clipUrls.map(async (clipUrl, i) => {
+        const clipPath = path.join(dir, `kling-${i}.mp4`);
+        await materializeMediaInput(clipUrl, clipPath);
+        return clipPath;
+      }),
+    );
     const outputPath = path.join(dir, "final.mp4");
     await concatVideos(clipPaths, outputPath);
     localBytes = await fs.readFile(outputPath);
@@ -250,6 +253,6 @@ export async function runKlingStoryboardFallback(opts: {
     endpoint: KLING_ENDPOINT,
     generationMode: "kling-storyboard-fallback",
     note:
-      "Seedance returned 422 — used Kling 2.5 Turbo Pro image-to-video fallback.",
+      "Kling 2.5 Turbo Pro image-to-video (parallel clips) + stitch.",
   };
 }
