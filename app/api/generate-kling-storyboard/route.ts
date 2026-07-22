@@ -2,6 +2,7 @@ import { fal } from "@fal-ai/client";
 import { NextResponse } from "next/server";
 import { chargeTokens, refundTokens } from "@/lib/billing/charge";
 import {
+  collectKlingFallbackImageUrls,
   formatKlingFalError,
   klingStoryboardTokenCost,
   resolveKlingClipDurations,
@@ -16,6 +17,9 @@ export const maxDuration = 300;
 /**
  * Seedance face-policy fallback: animate each storyboard still with Kling I2V, then stitch.
  * Charged at Kling COGS-aligned tokens (cheaper than Seedance R2V for multi-scene).
+ *
+ * Accepts either multipart `images` files or `reference_image_urls` (preferred — avoids
+ * Vercel 413 when re-uploading multi-MB scene PNGs).
  */
 export async function POST(request: Request) {
   const auth = await requireAppUser();
@@ -37,14 +41,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid form data." }, { status: 400 });
   }
 
-  const imageFiles = (formData.getAll("images") as File[]).filter((f) => f && f.size > 0);
-  if (!imageFiles.length) {
+  let imageUrls: string[];
+  try {
+    imageUrls = await collectKlingFallbackImageUrls(formData);
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : "Failed to read storyboard images.";
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
+
+  if (!imageUrls.length) {
     return NextResponse.json(
       { error: "Upload at least one storyboard scene image." },
       { status: 400 },
     );
   }
-  if (imageFiles.length > 9) {
+  if (imageUrls.length > 9) {
     return NextResponse.json({ error: "At most 9 storyboard scenes." }, { status: 400 });
   }
 
@@ -64,7 +75,7 @@ export async function POST(request: Request) {
   }
 
   const clipDurations = resolveKlingClipDurations(
-    imageFiles.length,
+    imageUrls.length,
     totalDurationSec,
     scenesMeta,
   );
@@ -72,7 +83,7 @@ export async function POST(request: Request) {
 
   const charged = await chargeTokens(auth.user.userId, tokenCost, {
     kind: "kling_storyboard_fallback",
-    sceneCount: imageFiles.length,
+    sceneCount: imageUrls.length,
     clipDurations,
   });
   if ("error" in charged) return charged.error;
@@ -82,7 +93,7 @@ export async function POST(request: Request) {
     const result = await runKlingStoryboardFallback({
       request,
       clerkId: auth.user.userId,
-      imageFiles,
+      imageUrls,
       theme,
       totalDurationSec,
       scenesMeta,
