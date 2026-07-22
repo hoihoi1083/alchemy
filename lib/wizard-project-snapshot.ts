@@ -2,10 +2,20 @@ import type { StudioWizardValue } from "@/hooks/useStudioWizard";
 import type { PromotionMode } from "@/lib/promotion-mode";
 import type { ProjectSnapshot } from "@/lib/project-snapshot";
 import { EMPTY_PROJECT_SNAPSHOT } from "@/lib/project-snapshot";
+import { isLibraryAssetUrl } from "@/lib/storage/library-asset-url";
 
-function httpUrlOnly(url: string | null | undefined): string | null {
+/**
+ * Keep URLs that survive a page reload. Drop blob:/data: and ephemeral
+ * /api/pipeline-files/ (Vercel /tmp). Keep absolute http(s) and durable
+ * /api/library/download/:id (relative — what persistAndDurablize returns).
+ */
+function persistableMediaUrl(url: string | null | undefined): string | null {
   if (!url?.trim()) return null;
-  if (url.startsWith("http://") || url.startsWith("https://")) return url.trim();
+  const u = url.trim();
+  if (u.startsWith("blob:") || u.startsWith("data:")) return null;
+  if (u.startsWith("/api/pipeline-files/")) return null;
+  if (isLibraryAssetUrl(u) || u.startsWith("/api/library/download/")) return u;
+  if (u.startsWith("http://") || u.startsWith("https://")) return u;
   return null;
 }
 
@@ -63,18 +73,18 @@ export function snapshotFromWizard(
       selectedResearchAngleId: null,
     },
     media: {
-      imageUrl: httpUrlOnly(wizard.imageUrl),
+      imageUrl: persistableMediaUrl(wizard.imageUrl),
       imageVariantUrls: wizard.imageVariantUrls
-        .map((u) => httpUrlOnly(u))
+        .map((u) => persistableMediaUrl(u))
         .filter((u): u is string => Boolean(u)),
-      videoUrl: httpUrlOnly(wizard.videoUrl),
-      uploadPreviewUrl: httpUrlOnly(wizard.uploadPreviewUrl),
-      imageRefPreviewUrl: httpUrlOnly(wizard.imageRefPreviewUrl),
+      videoUrl: persistableMediaUrl(wizard.videoUrl),
+      uploadPreviewUrl: persistableMediaUrl(wizard.uploadPreviewUrl),
+      imageRefPreviewUrl: persistableMediaUrl(wizard.imageRefPreviewUrl),
       campaignSlideUrls: (wizard.campaignSlides ?? [])
-        .map((s) => httpUrlOnly(s.imageUrl))
+        .map((s) => persistableMediaUrl(s.imageUrl))
         .filter((u): u is string => Boolean(u)),
       storyboardSceneUrls: (wizard.storyboardScenes ?? [])
-        .map((s) => httpUrlOnly(s.imageUrl))
+        .map((s) => persistableMediaUrl(s.imageUrl))
         .filter((u): u is string => Boolean(u)),
       carouselSlideUrls: [],
     },
