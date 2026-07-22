@@ -128,6 +128,7 @@ import {
   type SetupImageGateReason,
 } from "@/lib/wizard-setup-gate";
 import { layoutHookSplitCaptions } from "@/lib/ad-pack-hook-captions";
+import { captionLinesFromStoryboardScenes } from "@/lib/storyboard-captions";
 import {
   researchReelAnalysisPromptBlock,
   type ResearchReelAnalysis,
@@ -340,6 +341,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
   } = state;
 
   const promotionInitRef = useRef(false);
+  const lastStoryboardVideoDurationSecRef = useRef<number | null>(null);
   const imageUrlRef = useRef<string | null>(imageUrl);
   useEffect(() => {
     imageUrlRef.current = imageUrl;
@@ -3635,11 +3637,14 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
     notifyCreditBalance(readCreditBalanceFromResponse(data));
+    const usedKling =
+      data.generationMode === "kling-storyboard-fallback" ||
+      Boolean(data.seedanceBlockedCode);
     const pathNote = data.generationMode
       ? `${m.wizard.videoGenPathLabel}: ${data.generationMode}${data.endpoint ? ` · ${data.endpoint}` : ""}${typeof data.referenceVideoCount === "number" ? ` · ${data.referenceVideoCount} ref video` : ""}`
       : "";
     const notes = [
-      m.wizard.referenceModeNote,
+      usedKling ? m.wizard.klingStoryboardFallbackNote : m.wizard.referenceModeNote,
       pathNote,
       workflowMode !== "combined" && !productPhoto && imageUrl
         ? m.wizard.videoRefUseProductPhoto
@@ -3715,6 +3720,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       videoPrompt.trim() || storyboardPlan?.seedancePrompt?.trim() || "";
     if (!prompt) throw new Error(m.errors.storyboardVideoPromptRequired);
 
+    const orderedScenes = normalizeStoryboardIndices(storyboardScenes);
     const fd = new FormData();
     fd.set("mode", "reference");
     fd.set("prompt", seedancePromptForGenerate(prompt));
@@ -3726,7 +3732,6 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     fd.set("avoid_on_screen_text", vOpts.avoidOnScreenText ? "true" : "false");
     fd.set("fast", vOpts.fast ? "true" : "false");
 
-    const orderedScenes = normalizeStoryboardIndices(storyboardScenes);
     for (const scene of orderedScenes) {
       const file = await fileFromImageUrl(scene.imageUrl);
       if (file) fd.append("images", file);
@@ -3734,16 +3739,120 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 
     const res = await fetch("/api/generate", { method: "POST", body: fd });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
+    if (res.ok) {
+      notifyCreditBalance(readCreditBalanceFromResponse(data));
+      const usedKling =
+        data.generationMode === "kling-storyboard-fallback" ||
+        Boolean(data.seedanceBlockedCode);
+      const pathNote = data.generationMode
+        ? `${m.wizard.videoGenPathLabel}: ${data.generationMode}${data.endpoint ? ` · ${data.endpoint}` : ""}${typeof data.referenceImageCount === "number" ? ` · ${data.referenceImageCount} images` : ""}${typeof data.clipCount === "number" ? ` · ${m.wizard.klingStoryboardClipCount.replace("{n}", String(data.clipCount))}` : ""}`
+        : "";
+      const clipDurations = Array.isArray(data.clipDurations)
+        ? (data.clipDurations as number[])
+        : undefined;
+      const videoDurationSec = clipDurations?.length
+        ? clipDurations.reduce((a, b) => a + Number(b), 0)
+        : Number(storyboardTrimDuration) || undefined;
+      if (videoDurationSec && videoDurationSec > 0) {
+        lastStoryboardVideoDurationSecRef.current = videoDurationSec;
+      }
+      const storyboardCaps = captionLinesFromStoryboardScenes(orderedScenes, {
+        videoDurationSec,
+      });
+      if (storyboardCaps.length) {
+        setCaptionLines(storyboardCaps);
+        setCaptionBurnEnabled(true);
+      }
+      setVideoNote(
+        [
+          usedKling ? m.wizard.klingStoryboardFallbackNote : m.wizard.storyboardVideoPreflight,
+          `${m.wizard.storyboardTrimDurationLabel}: ${storyboardTrimDuration}s`,
+          pathNote,
+          storyboardCaps.length ? m.wizard.storyboardCaptionsAutoNote : "",
+          data.note as string | undefined,
+        ]
+          .filter(Boolean)
+          .join(" · "),
+      );
+      return data.videoUrl as string;
+    }
+
+    // Client-side belt: if server did not auto-switch, retry Kling explicitly.
+    const errBlob = [
+      data.code,
+      data.error,
+      data.hint,
+      typeof data === "object" ? JSON.stringify(data) : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+    const policyBlocked =
+      data.code === "FAL_CONTENT_POLICY" ||
+      /likenesses of real people|private information|content_policy|partner_validation_failed/i.test(
+        errBlob,
+      );
+    if (policyBlocked && orderedScenes.length > 0 && !data.klingFallbackFailed) {
+      console.info("[storyboard] Seedance blocked — client Kling fallback", data.code);
+      setVideoNote(m.wizard.klingStoryboardFallbackNote);
+      return makeKlingStoryboardFallback(orderedScenes, prompt);
+    }
+
+    throw new Error(data.error ?? m.errors.videoFailed);
+  }
+
+  async function makeKlingStoryboardFallback(
+    scenes: StoryboardSceneResult[],
+    _seedancePrompt: string,
+  ): Promise<string> {
+    setVideoPhase("video");
+    const fd = new FormData();
+    fd.set("theme", storyboardPlan?.theme?.trim() || headline.trim() || product.trim());
+    fd.set("total_duration_sec", storyboardTrimDuration);
+    fd.set(
+      "scenes_meta",
+      JSON.stringify(
+        scenes.map((s) => ({
+          startSec: s.startSec,
+          endSec: s.endSec,
+          sceneDescriptionZh: s.sceneDescriptionZh,
+          imagePrompt: s.imagePrompt,
+        })),
+      ),
+    );
+    for (const scene of scenes) {
+      const file = await fileFromImageUrl(scene.imageUrl);
+      if (file) fd.append("images", file);
+    }
+
+    const res = await fetch("/api/generate-kling-storyboard", { method: "POST", body: fd });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error ?? m.errors.klingStoryboardFailed);
     notifyCreditBalance(readCreditBalanceFromResponse(data));
-    const pathNote = data.generationMode
-      ? `${m.wizard.videoGenPathLabel}: ${data.generationMode}${data.endpoint ? ` · ${data.endpoint}` : ""}${typeof data.referenceImageCount === "number" ? ` · ${data.referenceImageCount} images` : ""}`
-      : "";
+    const clipDurations = Array.isArray(data.clipDurations)
+      ? (data.clipDurations as number[])
+      : undefined;
+    const videoDurationSec = clipDurations?.length
+      ? clipDurations.reduce((a, b) => a + Number(b), 0)
+      : Number(storyboardTrimDuration) || undefined;
+    if (videoDurationSec && videoDurationSec > 0) {
+      lastStoryboardVideoDurationSecRef.current = videoDurationSec;
+    }
+    const storyboardCaps = captionLinesFromStoryboardScenes(scenes, { videoDurationSec });
+    if (storyboardCaps.length) {
+      setCaptionLines(storyboardCaps);
+      setCaptionBurnEnabled(true);
+    }
     setVideoNote(
       [
-        m.wizard.storyboardVideoPreflight,
+        m.wizard.klingStoryboardFallbackNote,
         `${m.wizard.storyboardTrimDurationLabel}: ${storyboardTrimDuration}s`,
-        pathNote,
+        data.generationMode && data.endpoint
+          ? `${m.wizard.videoGenPathLabel}: ${data.generationMode} · ${data.endpoint}`
+          : "",
+        typeof data.clipCount === "number"
+          ? m.wizard.klingStoryboardClipCount.replace("{n}", String(data.clipCount))
+          : "",
+        storyboardCaps.length ? m.wizard.storyboardCaptionsAutoNote : "",
         data.note as string | undefined,
       ]
         .filter(Boolean)
@@ -3939,7 +4048,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       : "";
     setVideoNote(
       [
-        m.wizard.productVideoAssistantPreflight,
+        data.generationMode === "kling-storyboard-fallback" || data.seedanceBlockedCode
+          ? m.wizard.klingStoryboardFallbackNote
+          : m.wizard.productVideoAssistantPreflight,
         productVideoPlan?.motionSummaryZh,
         pathNote,
         data.note as string | undefined,
@@ -3983,7 +4094,14 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       ? `${m.wizard.videoGenPathLabel}: ${data.generationMode}`
       : "";
     setVideoNote(
-      [pathNote, m.wizard.videoRichMotionNote, data.note as string | undefined]
+      [
+        data.generationMode === "kling-storyboard-fallback" || data.seedanceBlockedCode
+          ? m.wizard.klingStoryboardFallbackNote
+          : null,
+        pathNote,
+        m.wizard.videoRichMotionNote,
+        data.note as string | undefined,
+      ]
         .filter(Boolean)
         .join(" · "),
     );
@@ -4063,10 +4181,14 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
     notifyCreditBalance(readCreditBalanceFromResponse(data));
+    const usedKling =
+      data.generationMode === "kling-storyboard-fallback" ||
+      Boolean(data.seedanceBlockedCode);
     const pathNote = data.generationMode
       ? `${m.wizard.videoGenPathLabel}: ${data.generationMode}${data.endpoint ? ` · ${data.endpoint}` : ""}`
       : "";
     const notes = [
+      usedKling ? m.wizard.klingStoryboardFallbackNote : null,
       pathNote,
       dualFrame ? m.wizard.videoRichMotionNote : undefined,
       data.note as string | undefined,
@@ -4442,6 +4564,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
   async function burnScriptCaptionsIfEnabled(
     videoUrlIn: string,
     captionsOverride?: CaptionLine[],
+    opts?: { force?: boolean },
   ): Promise<string> {
     let caps = captionsOverride ?? captionLines;
     const hook = adPackPlan?.hookScript?.trim();
@@ -4449,7 +4572,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     if (hook && body && hook !== body) {
       caps = layoutHookSplitCaptions(hook, body, resolveWizardVideoDurationSec());
     }
-    if (!captionBurnEnabled || caps.length === 0) return videoUrlIn;
+    if ((!captionBurnEnabled && !opts?.force) || caps.length === 0) return videoUrlIn;
     const res = await fetch("/api/burn-script-captions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -4683,7 +4806,31 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         }
         // Clean silent video by default — BGM / voiceover / captions are added later in /captions
         // so users can change music without re-generating Seedance.
-        if (captionBurnEnabled && (socialPack?.captions.length ?? captionLines.length) > 0) {
+        // Storyboard: always burn scene onImageCopyZh as captions (stills are textless).
+        if (isStoryboardOutput) {
+          const videoDurationSec =
+            lastStoryboardVideoDurationSecRef.current ??
+            (Number(storyboardTrimDuration) || undefined);
+          const caps = captionLinesFromStoryboardScenes(storyboardScenes, {
+            videoDurationSec: videoDurationSec || undefined,
+          });
+          if (caps.length > 0) {
+            setCaptionLines(caps);
+            setCaptionBurnEnabled(true);
+            setVideoPhase("captions");
+            const urlBeforeCaptionBurn = url;
+            try {
+              url = await burnScriptCaptionsIfEnabled(url, caps, { force: true });
+            } catch {
+              setVideoNote((prev: string | undefined) =>
+                [prev, m.wizard.adPack.captionBurnSkippedNote].filter(Boolean).join(" · "),
+              );
+            }
+            setCaptionHandoffVideoUrl(urlBeforeCaptionBurn);
+          } else {
+            setCaptionHandoffVideoUrl(url);
+          }
+        } else if (captionBurnEnabled && (socialPack?.captions.length ?? captionLines.length) > 0) {
           setVideoPhase("captions");
           const urlBeforeCaptionBurn = url;
           try {
@@ -4700,7 +4847,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       } else {
         setCaptionHandoffVideoUrl(url);
       }
-      const wantsProcessed = !isUgcPresenterOutput && captionBurnEnabled;
+      const wantsProcessed = !isUgcPresenterOutput && (captionBurnEnabled || isStoryboardOutput);
       if (wantsProcessed && (isFalCdnUrl(url) || !isPipelineFileUrl(url))) {
         throw new Error(m.errors.postProcessIncomplete);
       }

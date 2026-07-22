@@ -55,6 +55,49 @@ export function isFalContentPolicyError(message: string): boolean {
   );
 }
 
+/** Also inspect ValidationError fieldErrors / body (fal often puts the real reason there). */
+export function isFalContentPolicyThrowable(e: unknown, formattedMessage?: string): boolean {
+  if (formattedMessage && isFalContentPolicyError(formattedMessage)) return true;
+  if (e instanceof Error && isFalContentPolicyError(e.message)) return true;
+  try {
+    if (e && typeof e === "object") {
+      const blob = JSON.stringify(
+        "fieldErrors" in e
+          ? (e as { fieldErrors: unknown }).fieldErrors
+          : "body" in e
+            ? (e as { body: unknown }).body
+            : e,
+      );
+      if (blob && isFalContentPolicyError(blob)) return true;
+    }
+  } catch {
+    /* ignore */
+  }
+  return false;
+}
+
+/**
+ * Seedance reference-to-video often rejects photoreal faces.
+ * Bake into storyboard planning + still prompts so concept stills can become video.
+ */
+export const SEEDANCE_SAFE_STILL_RULES = [
+  "SEEDANCE VIDEO SAFETY (mandatory — stills will be fed to Seedance reference-to-video):",
+  "NO photorealistic human faces, celebrity likenesses, or identifiable people.",
+  "Prefer: product/UI/dashboard mockups, icons, charts, hands-only (wrists/hands, face out of frame), back-of-head/silhouette, abstract graphics, illustrated/3D characters (not photo-real faces).",
+  "Office/lifestyle scenes: show screens, desks, devices — not a clear face looking at camera.",
+] as const;
+
+export function seedanceSafeStillPromptClause(): string {
+  return [
+    "SEEDANCE-SAFE STILL: no photorealistic faces or identifiable people.",
+    "Hands-only / product / UI / silhouette / illustrated characters OK — face never clear.",
+  ].join(" ");
+}
+
+export function seedanceSafePlannerRules(): string[] {
+  return [...SEEDANCE_SAFE_STILL_RULES];
+}
+
 export function seedanceModerationPlannerRules(): string[] {
   return [
     "SEEDANCE MODERATION (critical): videoPrompt must pass fal safety filters.",

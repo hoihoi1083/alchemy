@@ -10,3 +10,9 @@ export function toRelativePipelineUrl(url: string): string {
 export function isPipelineVideoUrl(url: string | null | undefined): boolean {
   return Boolean(url?.includes("/api/pipeline-files/"));
 }
+
+/** Append cache-buster without breaking URLs that already have `?inline=1`. */
+export function withCacheBust(url: string): string {
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}v=${Date.now()}`;
+}

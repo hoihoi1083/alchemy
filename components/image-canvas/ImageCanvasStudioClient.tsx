@@ -14,6 +14,7 @@ import {
   readImageCanvasHandoff,
 } from "@/lib/image-canvas-handoff";
 import { downloadMediaUrl } from "@/lib/download-media";
+import { withCacheBust } from "@/lib/caption-studio-url";
 import { readImageCanvasDraft, writeImageCanvasDraft } from "@/lib/image-canvas-studio-draft";
 import { isPipelineFileUrl } from "@/lib/pipeline/safe-url";
 
@@ -233,7 +234,7 @@ export function ImageCanvasStudioClient() {
 
   async function commitProcessedImage(pipelineUrl: string) {
     const rel = normalizeImageCanvasHandoffUrl(pipelineUrl);
-    const res = await fetch(`${rel}?v=${Date.now()}`, { credentials: "include", cache: "no-store" });
+    const res = await fetch(withCacheBust(rel), { credentials: "include", cache: "no-store" });
     if (!res.ok) throw new Error(t.previewLoadFailed);
     const blob = await res.blob();
     if (blob.size < 512) throw new Error(t.previewLoadFailed);
@@ -279,7 +280,7 @@ export function ImageCanvasStudioClient() {
       if (!res.ok) throw new Error(data.error ?? w.quickFixInpaintNeedMask);
 
       const cleaned = normalizeImageCanvasHandoffUrl(data.imageUrl!);
-      const previewRes = await fetch(`${cleaned}?v=${Date.now()}`, {
+      const previewRes = await fetch(withCacheBust(cleaned), {
         credentials: "include",
         cache: "no-store",
       });

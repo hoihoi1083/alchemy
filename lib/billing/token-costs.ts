@@ -33,6 +33,32 @@ export const VIDEO_TOKENS_PER_SEC = {
   "1080p": 210, // fal $0.682/s → 8s ≈ 1680
 } as const;
 
+/**
+ * Kling 2.5 Turbo Pro I2V (fal): $0.35 for 5s, +$0.07/extra sec.
+ * Used as Seedance face-policy fallback for storyboard scenes.
+ */
+export const KLING_TURBO_PRO = {
+  endpoint: "fal-ai/kling-video/v2.5-turbo/pro/image-to-video",
+  tokens5s: 110, // $0.35 / $0.0033
+  tokensPerExtraSec: 22, // $0.07 / $0.0033
+} as const;
+
+export type KlingClipDuration = 5 | 10;
+
+export function klingClipTokens(durationSec: KlingClipDuration): number {
+  if (durationSec <= 5) return KLING_TURBO_PRO.tokens5s;
+  return KLING_TURBO_PRO.tokens5s + KLING_TURBO_PRO.tokensPerExtraSec * (durationSec - 5);
+}
+
+/** Tokens to animate N storyboard stills with Kling (then stitch). */
+export function estimateKlingStoryboardTokens(
+  sceneCount: number,
+  clipSec: KlingClipDuration = 5,
+): number {
+  const n = Math.max(1, Math.min(9, Math.round(sceneCount)));
+  return klingClipTokens(clipSec) * n;
+}
+
 export type VideoBillingResolution = keyof typeof VIDEO_TOKENS_PER_SEC;
 
 export function videoTokenCost(

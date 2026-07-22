@@ -730,9 +730,14 @@ export const zhCn = {
     storyboardVideoIntro:
       "已规划分镜同场景图。生成影片时会用 reference-to-video 模式，一次出完整故事片。",
     storyboardVideoPreflight: "模式：多分镜 reference-to-video（@Image1…@ImageN）",
+    klingStoryboardFallbackNote:
+      "Seedance 回 422 → 已改用 Kling 图生影片（保留你的场景图）",
+    klingStoryboardClipCount: "Kling 片段 × {n}",
     storyboardDurationLabel: "目标片长",
     storyboardDurationHint: "会影响分镜场景数量。改咗片长请重新生成场景图。",
-    storyboardAllScenesHint: "以下全部场景图会一齐送入 Seedance（唔使拣版本 A/B）。",
+    storyboardAllScenesHint:
+      "场景图会出无字版本（方便做片）。画面字会在出片后自动烧录做字幕。",
+    storyboardCaptionsAutoNote: "已自动烧录分镜文案做字幕",
     storyboardAllScenesImageHint: "全部场景会用于影片 — 唔使喺下面拣「版本」。",
     storyboardTrimDurationLabel: "片长裁剪预设",
     storyboardSceneCountLabel: "场景数量",
@@ -1780,7 +1785,8 @@ export const zhCn = {
     seedanceSensitive:
       "Seedance 拒绝这条片（暴力/打斗过滤）。请用较温和字眼：不要 weapons、opponent、standoff — 改为 figures at rest、peaceful pause。参考图像打斗也会触发。",
     falContentPolicy:
-      "Seedance 拒绝这次媒体（人物/隐私过滤）。请试产品特写（不出脸、不出手），或不用有人手/人脸的参考 Reel。失败尝试通常会退款。",
+      "Seedance 拒绝这次媒体（人物/隐私过滤）。我们可以改用 Kling 逐场动画再拼接——如果自动切换失败，请再点生成影片。",
+    klingStoryboardFailed: "Kling 分镜备援失败，请再试或改用无脸场景图。",
     needPhoto: "请先上传产品照片。",
     needReferenceImage: "请先上传参考图。",
     needHeadline: "请输入此模板需要的主标题。",
@@ -2239,6 +2245,8 @@ export const zhCn = {
     videoSubpathHint: "推广片、参考短片，或 UGC 数字人口播。",
     refVideoTitle: "参考短片（MP4）",
     refVideoHint: "有 reel／短片先上传；图文研究帖可跳过（用参考图 + 分镜即可）。",
+    refVideoTitleOptional: "参考短片（选填）",
+    refVideoHintOptional: "图文帖不用上传 MP4 — 会自动跳过。有 reel 再上传会跟节奏排分镜。",
     extraKitTitle: "产品照片套装",
     extraKitHint: "AI 视频助手可选：包装和角度图。",
     bgmTitle: "背景音乐",

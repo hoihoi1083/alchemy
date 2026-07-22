@@ -410,10 +410,30 @@ describe("wizard v2 parity audit", () => {
     const steps = resolveMicroSteps(ctx, state);
     const ids = steps.map((s) => s.id);
     assert.ok(!ids.includes("wait.reel_analyze"));
-    // Image-only research on 圖+片: skip the MP4 step entirely.
+    // Image-only research: skip the MP4 step entirely.
     assert.ok(!ids.includes("asset.reference_video"));
     assert.ok(ids.includes("image.storyboard_scenes"));
     assert.equal(canProceedMicroStep("asset.reference_video", ctx, state), null);
+  });
+
+  it("skips MP4 step when referenceIsVideo flag is stuck true without a file", () => {
+    const ctx: MicroWizardContext = {
+      promotionMode: "physical",
+      workflowMode: "combined",
+      intakePath: "research",
+    };
+    const ids = resolveMicroSteps(
+      ctx,
+      baseState({
+        visualStyleId: "storyboard-video",
+        workflowMode: "combined",
+        referenceAd: null,
+        referenceIsVideo: true, // stale flag — no file
+        promptExtra: "STYLE_REFERENCE_ONLY",
+      }),
+    ).map((s) => s.id);
+    assert.ok(!ids.includes("asset.reference_video"));
+    assert.ok(ids.includes("image.storyboard_scenes"));
   });
 
   it("product combined + research routes to research reel with storyboard inject", () => {

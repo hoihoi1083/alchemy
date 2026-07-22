@@ -30,7 +30,7 @@ import {
   readCaptionHandoff,
   writeCaptionDraft,
 } from "@/lib/caption-studio-draft";
-import { toRelativePipelineUrl } from "@/lib/caption-studio-url";
+import { toRelativePipelineUrl, withCacheBust } from "@/lib/caption-studio-url";
 import { resolveCaptionStudioMusicPrompt } from "@/lib/caption-music-prompt";
 import { isPipelineFileUrl } from "@/lib/pipeline/safe-url";
 
@@ -146,7 +146,7 @@ export function CaptionStudioClient() {
 
   async function materializePlaybackBlob(pipelineUrl: string): Promise<string> {
     const rel = toRelativePipelineUrl(pipelineUrl);
-    const res = await fetch(`${rel}?v=${Date.now()}`, {
+    const res = await fetch(withCacheBust(rel), {
       credentials: "include",
       cache: "no-store",
     });

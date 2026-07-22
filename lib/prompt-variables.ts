@@ -1281,6 +1281,8 @@ export function buildStoryboardSceneImagePrompt(
     conceptTextOnly?: boolean;
     storyboardStyleRef?: boolean;
     dualProductAndStyle?: boolean;
+    /** Stills stay textless; onImageCopyZh is burned as captions after video. */
+    textless?: boolean;
     visualStyleId?: VisualStyleId;
     brandProfile?: BrandProfile | null;
     brandKit?: BrandKit | null;
@@ -1297,6 +1299,7 @@ export function buildStoryboardSceneImagePrompt(
   const conceptTextOnly = Boolean(options?.conceptTextOnly);
   const storyboardStyleRef = Boolean(options?.storyboardStyleRef);
   const dualProductAndStyle = Boolean(options?.dualProductAndStyle);
+  const textless = options?.textless !== false; // default ON for video-safe stills
   const sceneVars: PromptVariables = {
     ...vars,
     extra: [vars.extra, scene.imagePrompt].filter(Boolean).join(" | "),
@@ -1304,7 +1307,9 @@ export function buildStoryboardSceneImagePrompt(
   const shopHint = options?.visualStyleId
     ? getVisualStyle(options.visualStyleId).promptHint
     : "";
-  const sceneCopy = scene.onImageCopyZh?.trim();
+  const sceneCopy = textless ? undefined : scene.onImageCopyZh?.trim();
+  const textlessRule =
+    "TEXTLESS STILL (mandatory): no readable text, no Chinese/Latin characters, no numbers as copy, no captions, no logos-as-text, no watermarks. Typography space may stay blank — copy is added later as burned captions.";
   const imageBriefVars: PromptVariables = sceneCopy
     ? {
         ...sceneVars,
@@ -1336,7 +1341,8 @@ export function buildStoryboardSceneImagePrompt(
         FRAMING_IMAGE[sceneVars.framing],
         sceneCopy
           ? "Integrate ON-IMAGE COPY text with reference typography style — consumer words only."
-          : "9:16 vertical social ad still with readable campaign copy from brief — no watermark, no social UI.",
+          : textlessRule,
+        "9:16 vertical social ad still — no watermark, no social UI.",
       ),
     );
   }
@@ -1350,8 +1356,8 @@ export function buildStoryboardSceneImagePrompt(
         `Scene role: ${scene.role}.`,
         scene.imagePrompt ? `Scene action: ${scene.imagePrompt}.` : "",
         imageStoryboardStyleRefBlock(plan, dualProductAndStyle),
-        sceneCopy ? `ON-IMAGE COPY (this scene only): ${sceneCopy}` : "",
-        promoTypographyHint(sceneVars, true),
+        sceneCopy ? `ON-IMAGE COPY (this scene only): ${sceneCopy}` : textlessRule,
+        sceneCopy ? promoTypographyHint(sceneVars, true) : "",
         artStyleImageClause(vars.artStyle),
         artStyleAvoidTail(vars.artStyle),
         "Subject upright, head at top of frame — never rotate 90°.",
@@ -1371,7 +1377,7 @@ export function buildStoryboardSceneImagePrompt(
         plan.theme ? `Story theme: ${plan.theme}.` : "",
         `Scene role: ${scene.role}.`,
         scene.imagePrompt,
-        sceneCopy ? `ON-IMAGE COPY (this scene only): ${sceneCopy}` : "",
+        sceneCopy ? `ON-IMAGE COPY (this scene only): ${sceneCopy}` : textlessRule,
         "Cinematic concept short — match reference reel pacing and visual style family; user topic for content only.",
         brandLogoImageIndex != null
           ? "No third-party logos, watermarks, or social UI. 9:16 vertical."
@@ -1402,7 +1408,8 @@ export function buildStoryboardSceneImagePrompt(
       FRAMING_IMAGE[vars.framing],
       vars.extra,
       brandPromptExtras(options?.brandProfile, brandKit),
-      "9:16 vertical, no readable text, no watermark, no social UI.",
+      textlessRule,
+      "9:16 vertical, no watermark, no social UI.",
     ),
   );
 }

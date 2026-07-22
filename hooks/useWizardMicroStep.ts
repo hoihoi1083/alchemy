@@ -505,6 +505,21 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     [patchContext, router, searchParams],
   );
 
+  // Stale sessions can still land on MP4 step after image research — never trap the user.
+  useEffect(() => {
+    if (currentId !== "asset.reference_video") return;
+    if (wizard.referenceIsVideo && wizard.referenceAd) return;
+    // No real reel: auto-skip so 圖文研究 cannot get stuck on「請上傳參考 MP4」.
+    const key = `auto-skip-ref-video-${stepIndex}`;
+    if (autoAdvancedRef.current === key) return;
+    autoAdvancedRef.current = key;
+    const t = window.setTimeout(() => {
+      autoAdvancedRef.current = null;
+      skipStep();
+    }, 50);
+    return () => window.clearTimeout(t);
+  }, [currentId, skipStep, stepIndex, wizard.referenceAd, wizard.referenceIsVideo]);
+
   useEffect(() => {
     if (currentId === "wait.reel_download" && wizard.referenceAd && !blockReason) {
       goNext();

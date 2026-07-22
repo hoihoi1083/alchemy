@@ -104,7 +104,41 @@ describe("reference-style-transfer", () => {
     );
     assert.match(prompt, /REFERENCE STYLE TRANSFER/i);
     assert.match(prompt, /3D cartoon meme ad energy/);
-    assert.match(prompt, /韓國精選/);
+    assert.match(prompt, /TEXTLESS STILL/i);
+    assert.doesNotMatch(prompt, /ON-IMAGE COPY/);
     assert.match(prompt, /do NOT default to generic photorealistic/i);
+  });
+
+  it("storyboard style-ref can still bake copy when textless is false", () => {
+    const prompt = buildStoryboardSceneImagePrompt(
+      {
+        imageIndex: 1,
+        role: "hook",
+        startSec: 0,
+        endSec: 2,
+        sceneDescriptionZh: "開場",
+        onImageCopyZh: "韓國精選",
+        imagePrompt: "center hero with bold text overlay",
+      },
+      {
+        title: "t",
+        theme: "韓國手作",
+        visualDirection: "3D cartoon meme ad energy",
+        totalDurationSec: 8,
+        scenes: [],
+        seedancePrompt: "",
+        productionNotes: "",
+      },
+      {
+        product: "韓國精選",
+        headline: "韓國精選手打",
+        market: "hk",
+        framing: "auto",
+        extra: "",
+      },
+      { storyboardStyleRef: true, textless: false },
+    );
+    assert.match(prompt, /韓國精選/);
+    assert.match(prompt, /ON-IMAGE COPY/);
   });
 });

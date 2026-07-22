@@ -175,9 +175,9 @@ function evalSkipWhen(
   }
   if (expr === "!referenceAd") return !state.referenceAd;
   if (expr === "!referenceIsVideo") return !state.referenceIsVideo;
-  // 圖+片 research with image posts: no MP4 step — style images + DeepSeek storyboard.
+  // Skip MP4 picker unless a real video file is attached (not a stuck boolean flag).
   if (expr === "combinedNoReel") {
-    return ctx.workflowMode === "combined" && !state.referenceIsVideo;
+    return !(state.referenceAd && state.referenceIsVideo);
   }
   if (expr === "anglePresetOutputMode") {
     // Only model-wear locks format; research ref / style extra must not hide the picker.
@@ -645,11 +645,10 @@ export function canProceedMicroStep(
   if (id === "copy.creative_brief" && !state.creativeVideoBrief.trim()) {
     return "need_creative_brief";
   }
-  if (id === "asset.reference_video" && !state.referenceAd) {
-    // 圖+片: image research posts never need MP4 (style images → DeepSeek scenes).
-    if (ctx.workflowMode === "combined" || state.workflowMode === "combined") return null;
-    if (ctx.intakePath === "research" && Boolean(state.imageRefPhoto)) return null;
-    return "need_reference_video";
+  if (id === "asset.reference_video") {
+    // Never hard-block. Image research posts have no reel; combined storyboard
+    // uses style images. Manual MP4 is optional enrichment only.
+    return null;
   }
   // asset.brand_website is optional — many SMB users have no website.
   if (id === "wait.research_apply" || id === "wait.reference_analyze") {

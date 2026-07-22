@@ -307,6 +307,7 @@ export async function POST(request: Request) {
         conceptTextOnly: conceptTextOnlyStoryboard,
         storyboardStyleRef: storyboardStyleRef || dualProductAndStyle,
         dualProductAndStyle,
+        textless: true,
         visualStyleId: visualStyle,
         brandProfile,
         brandKit,

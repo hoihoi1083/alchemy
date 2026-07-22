@@ -752,9 +752,14 @@ export const en = {
     storyboardVideoIntro:
       "Storyboard and scene images are ready. Video uses reference-to-video with all scenes in one clip.",
     storyboardVideoPreflight: "Mode: multi-image reference-to-video (@Image1…@ImageN)",
+    klingStoryboardFallbackNote:
+      "Seedance returned 422 → switched to Kling image-to-video (keeps your stills)",
+    klingStoryboardClipCount: "Kling clips × {n}",
     storyboardDurationLabel: "Target duration",
     storyboardDurationHint: "Affects how many scenes are planned. Regenerate scene images if you change this.",
-    storyboardAllScenesHint: "All scene images below are sent to Seedance together — no A/B pick needed.",
+    storyboardAllScenesHint:
+      "Stills are textless for clean video. Scene copy burns in as captions after generate.",
+    storyboardCaptionsAutoNote: "Auto-burned scene copy as captions",
     storyboardAllScenesImageHint: "Every scene is used in the video — do not pick a “version” below.",
     storyboardTrimDurationLabel: "Trim duration preset",
     storyboardSceneCountLabel: "Scene count",
@@ -1840,7 +1845,8 @@ export const en = {
     seedanceSensitive:
       "Seedance blocked this clip (violence/combat filter). Use calmer wording: no weapons, opponents, or standoffs — figures at rest, peaceful pause. A combat-looking reference image can also trigger this.",
     falContentPolicy:
-      "Seedance blocked this media (people / private-info filter). Try a product-only photo (no faces or hands), or generate without a reference reel that shows people. You weren’t charged for a failed attempt once refunded.",
+      "Seedance blocked this media (people / private-info filter). We can retry with Kling per-scene animation + stitch—if auto-switch fails, tap Generate video again.",
+    klingStoryboardFailed: "Kling storyboard fallback failed. Try again or use stills without faces.",
     needPhoto: "Please upload a product photo first.",
     needReferenceImage: "Please upload a reference image first.",
     needHeadline: "Please enter a headline for this template.",
@@ -2308,6 +2314,9 @@ export const en = {
     videoSubpathHint: "Promo clip, reference reel, or UGC digital presenter.",
     refVideoTitle: "Reference video (MP4)",
     refVideoHint: "Upload a reel if you have one; skip for image posts (style images + storyboard are enough).",
+    refVideoTitleOptional: "Reference video (optional)",
+    refVideoHintOptional:
+      "Image posts don't need an MP4 — this step auto-skips. Upload a reel only if you want rhythm matching.",
     extraKitTitle: "Product photo kit",
     extraKitHint: "Optional packaging and angle photos for AI video assistant.",
     bgmTitle: "Background music",

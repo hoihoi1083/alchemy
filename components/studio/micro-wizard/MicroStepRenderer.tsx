@@ -505,8 +505,9 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
       );
 
     case "asset.reference_video":
+      // Image research / combined storyboard: this step auto-skips when no MP4.
       return (
-        <ReferenceVideoStep wizard={wizard} m={m} mw={mw} />
+        <ReferenceVideoStep wizard={wizard} m={m} mw={mw} optional />
       );
 
     case "asset.brand_website":
@@ -950,12 +951,16 @@ function ReferenceVideoStep({
   wizard,
   m,
   mw,
+  optional = false,
 }: {
   wizard: ReturnType<typeof useWizard>;
   m: ReturnType<typeof useLocale>["m"];
   mw: ReturnType<typeof useLocale>["m"]["microWizard"];
+  optional?: boolean;
 }) {
   const outputDurationExplicit = wizard.videoSettings.duration !== "auto";
+  const title = optional ? mw.refVideoTitleOptional : mw.refVideoTitle;
+  const hint = optional ? mw.refVideoHintOptional : mw.refVideoHint;
 
   function handleReferenceVideo(file: File | null) {
     if (file) {
@@ -968,14 +973,14 @@ function ReferenceVideoStep({
 
   if (wizard.isContentResearchVideoPath) {
     return (
-      <ScreenShell title={mw.refVideoTitle} hint={mw.refVideoHint}>
+      <ScreenShell title={title} hint={hint}>
         <ResearchReelSetupPanel onReferenceVideo={handleReferenceVideo} />
       </ScreenShell>
     );
   }
 
   return (
-    <ScreenShell title={mw.refVideoTitle} hint={mw.refVideoHint}>
+    <ScreenShell title={title} hint={hint}>
       <div className="space-y-3 rounded-xl border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-xs text-emerald-950">
         <div>
           <p className="font-semibold text-emerald-900">{m.wizard.setupReferenceVideoTitle}</p>

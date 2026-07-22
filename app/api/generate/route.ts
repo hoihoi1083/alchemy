@@ -9,12 +9,19 @@ import { clampVideoResolution } from "@/lib/billing/entitlements";
 import { getUserPlan } from "@/lib/billing/get-user-plan";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import {
-  isFalContentPolicyError,
+  isFalContentPolicyThrowable,
   isSeedanceSensitiveError,
   softenSeedancePromptForModeration,
 } from "@/lib/seedance-moderation";
 import { mirrorImageUrlToFalStorage } from "@/lib/fal-mirror-media";
 import { sanitizeVideoEndpoint } from "@/lib/image-endpoints";
+import {
+  collectKlingFallbackImageUrls,
+  formatKlingFalError,
+  klingStoryboardTokenCost,
+  resolveKlingClipDurations,
+  runKlingStoryboardFallback,
+} from "@/lib/kling-storyboard-run";
 import { persistAndDurablize } from "@/lib/storage/durable-media";
 
 function formatFalError(e: unknown): string {
@@ -557,6 +564,85 @@ export async function POST(request: Request) {
       console.error("[api/generate]", e);
     }
     const message = formatFalError(e);
+
+    const seedance422Block =
+      isFalContentPolicyThrowable(e, message) ||
+      isSeedanceSensitiveError(message) ||
+      (e instanceof ValidationError &&
+        e.status === 422 &&
+        !isDurationValidationError(e));
+
+    // Any Seedance 422 (content/sensitive/validation) with stills → try Kling I2V.
+    if (seedance422Block && mode !== "text") {
+      const imageUrls = await collectKlingFallbackImageUrls(formData);
+      if (imageUrls.length >= 1) {
+        const totalDurationSec =
+          typeof duration === "number" && duration > 0 ? duration : 8;
+        const clipDurations = resolveKlingClipDurations(
+          imageUrls.length,
+          totalDurationSec,
+          [],
+        );
+        const klingCost = klingStoryboardTokenCost(clipDurations);
+        const klingCharged = await chargeTokens(auth.user.userId, klingCost, {
+          kind: "kling_storyboard_fallback",
+          sceneCount: imageUrls.length,
+          clipDurations,
+          via: "generate_auto",
+          seedanceMode: mode,
+        });
+        if (!("error" in klingCharged)) {
+          try {
+            console.info(
+              `[api/generate] Seedance 422 → Kling fallback (${imageUrls.length} image(s), mode=${mode})`,
+            );
+            const kling = await runKlingStoryboardFallback({
+              request,
+              clerkId: auth.user.userId,
+              imageUrls,
+              theme: promptRaw.slice(0, 120),
+              motionPrompt: promptRaw,
+              totalDurationSec,
+            });
+            await trackUsage(auth.user.userId, "video");
+            return NextResponse.json({
+              videoUrl: kling.videoUrl,
+              generationMode: kling.generationMode,
+              endpoint: kling.endpoint,
+              clipCount: kling.clipCount,
+              clipDurations: kling.clipDurations,
+              referenceImageCount: imageUrls.length,
+              tokensCharged: klingCost,
+              creditBalance: klingCharged.balanceAfter,
+              note: kling.note,
+              seedanceBlockedCode: isSeedanceSensitiveError(message)
+                ? "SEEDANCE_SENSITIVE_CONTENT"
+                : "FAL_CONTENT_POLICY",
+            });
+          } catch (klingErr: unknown) {
+            console.error("[api/generate] Kling fallback failed", klingErr);
+            await refundTokens(auth.user.userId, klingCost, {
+              kind: "kling_storyboard_fallback",
+              reason: "generation_failed",
+              via: "generate_auto",
+            });
+            return NextResponse.json(
+              {
+                error: formatKlingFalError(klingErr),
+                code: isSeedanceSensitiveError(message)
+                  ? "SEEDANCE_SENSITIVE_CONTENT"
+                  : "FAL_CONTENT_POLICY",
+                klingFallbackFailed: true,
+                hint:
+                  "Seedance returned 422 and Kling fallback also failed. Try again or use a different still.",
+              },
+              { status: 422 },
+            );
+          }
+        }
+      }
+    }
+
     if (isSeedanceSensitiveError(message)) {
       return NextResponse.json(
         {
@@ -568,7 +654,7 @@ export async function POST(request: Request) {
         { status: 422 },
       );
     }
-    if (isFalContentPolicyError(message)) {
+    if (isFalContentPolicyThrowable(e, message)) {
       return NextResponse.json(
         {
           error: message,
