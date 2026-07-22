@@ -145,6 +145,7 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn") {
     null,
   );
   const [planVideoPromptBusy, setPlanVideoPromptBusy] = useState(false);
+  const [planStoryboardBusy, setPlanStoryboardBusy] = useState(false);
   const [videoPromptPlanNote, setVideoPromptPlanNote] = useState<string | null>(null);
   const [imagePrompt, setImagePrompt] = useState("");
   const [videoPrompt, setVideoPrompt] = useState("");
@@ -238,7 +239,7 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn") {
   const [adPackPlanBusy, setAdPackPlanBusy] = useState(false);
   const [adPackReviewOpen, setAdPackReviewOpen] = useState(false);
   const [captionLines, setCaptionLines] = useState<CaptionLine[]>([]);
-  const [captionBurnEnabled, setCaptionBurnEnabled] = useState(true);
+  const [captionBurnEnabled, setCaptionBurnEnabled] = useState(false);
   const [musicSource, setMusicSource] = useState<MusicSource>("library");
   const [aiMusicTracks, setAiMusicTracks] = useState<AiMusicTrack[]>([]);
   const [selectedAiMusicId, setSelectedAiMusicId] = useState<string | null>(null);
@@ -348,6 +349,8 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn") {
     setStoryboardSceneRegenerateBusy,
     planVideoPromptBusy,
     setPlanVideoPromptBusy,
+    planStoryboardBusy,
+    setPlanStoryboardBusy,
     videoPromptPlanNote,
     setVideoPromptPlanNote,
     imagePrompt,

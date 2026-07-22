@@ -276,18 +276,26 @@ export async function POST(request: Request) {
       (strategy.kind === "style-only" || hasReelAnalysis) &&
       hasStyle &&
       !conceptTextOnlyStoryboard;
+    // Always prefer product identity when the user uploaded a product photo.
+    // Research style refs alone caused scene stills to clone the viral post's product.
+    const dualProductAndStyle = hasProduct && hasStyle && !conceptTextOnlyStoryboard;
     if (
-      (strategy.sendPixelsToFal || storyboardStyleRef) &&
+      (strategy.sendPixelsToFal || storyboardStyleRef || hasProduct) &&
       !conceptTextOnlyStoryboard
     ) {
       imageUrlsForFal = [];
       if (strategy.useDualImage && dualImage && hasStyle && hasProduct) {
+        // Layout transfer: IMAGE 1 = style/layout, IMAGE 2 = product
         imageUrlsForFal.push(await fal.storage.upload(styleRef as File));
+        imageUrlsForFal.push(await fal.storage.upload(reference as File));
+      } else if (dualProductAndStyle) {
+        // Style mood from research + exact product identity
+        imageUrlsForFal.push(await fal.storage.upload(styleRef as File));
+        imageUrlsForFal.push(await fal.storage.upload(reference as File));
+      } else if (hasProduct) {
         imageUrlsForFal.push(await fal.storage.upload(reference as File));
       } else if (hasStyle) {
         imageUrlsForFal.push(await fal.storage.upload(styleRef as File));
-      } else if (hasProduct) {
-        imageUrlsForFal.push(await fal.storage.upload(reference as File));
       }
     }
 
@@ -297,7 +305,8 @@ export async function POST(request: Request) {
       const prompt = buildStoryboardSceneImagePrompt(scene, plan, vars, {
         referenceConcept: strategy.useReferenceConceptPrompts && !conceptTextOnlyStoryboard,
         conceptTextOnly: conceptTextOnlyStoryboard,
-        storyboardStyleRef,
+        storyboardStyleRef: storyboardStyleRef || dualProductAndStyle,
+        dualProductAndStyle,
         visualStyleId: visualStyle,
         brandProfile,
         brandKit,

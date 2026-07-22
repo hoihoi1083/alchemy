@@ -79,10 +79,12 @@ function wizardStateSnapshot(wizard: StudioWizardValue): WizardMicroStepState {
     referenceAnalyzeBusy: wizard.referenceAnalyzeBusy,
     brandAnalyzeBusy: wizard.brandAnalyzeBusy,
     researchReelAnalyzeBusy: wizard.researchReelAnalyzeBusy,
+    researchReelDownloadBusy: wizard.referenceClipLoading,
     referenceClipLoading: wizard.referenceClipLoading,
     imageBusy: wizard.imageBusy,
     videoBusy: wizard.videoBusy,
     imageUrl: wizard.imageUrl,
+    videoUrl: wizard.videoUrl,
     promptExtra: wizard.promptExtra,
     shipItEligible: wizard.shipItEligible,
     hasGeneratedImage: Boolean(wizard.imageUrl || wizard.cinematicScenes.length > 0),
@@ -124,6 +126,41 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
   useEffect(() => {
     storeContext(ctx);
   }, [ctx]);
+
+  // Keep wizard.workflowMode in sync with micro ctx. After refresh, ctx restores from
+  // sessionStorage (e.g. combined) while wizard defaults to image-only.
+  // Use setWorkflowMode only — onWorkflowModeChange() resets stepKey to setup.
+  // When syncing TO combined, also lock storyboard style (mode-only sync left 單圖動態).
+  const wizardWorkflowMode = wizard.workflowMode;
+  const setWizardWorkflowMode = wizard.setWorkflowMode;
+  useEffect(() => {
+    if (!ctx.workflowMode) return;
+    if (wizardWorkflowMode !== ctx.workflowMode) {
+      setWizardWorkflowMode(ctx.workflowMode);
+    }
+    if (ctx.workflowMode !== "combined") return;
+    if (wizard.isUgcPresenterOutput || wizard.visualStyleId === "concept-cinematic") return;
+    if (wizard.visualStyleId !== "storyboard-video") {
+      wizard.selectVisualStyle("storyboard-video");
+    }
+    if (wizard.imageOutputMode !== "single") {
+      wizard.setImageOutputMode("single");
+    }
+    if (wizard.shipItMode) {
+      wizard.setShipItMode(false);
+    }
+  }, [
+    ctx.workflowMode,
+    wizardWorkflowMode,
+    setWizardWorkflowMode,
+    wizard.isUgcPresenterOutput,
+    wizard.visualStyleId,
+    wizard.imageOutputMode,
+    wizard.shipItMode,
+    wizard.selectVisualStyle,
+    wizard.setImageOutputMode,
+    wizard.setShipItMode,
+  ]);
 
   useEffect(() => {
     setCtx((prev) => ({
@@ -187,19 +224,44 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
 
   const handoffLegacy = useCallback(
     (key: "image" | "video" | "done") => {
+      // Storyboard / combined research must not hand off while wizard is still image-only.
+      // Do not call onWorkflowModeChange — it resets stepKey to setup.
+      if (
+        (key === "image" || key === "video") &&
+        (ctx.workflowMode === "combined" || ctx.workflowMode === "video-only") &&
+        wizard.workflowMode === "image-only"
+      ) {
+        wizard.setWorkflowMode(ctx.workflowMode);
+      }
+      // 圖+片 → always storyboard style before ImageStep (except UGC / cinematic).
+      if (
+        key === "image" &&
+        (ctx.workflowMode === "combined" || wizard.workflowMode === "combined") &&
+        !wizard.isUgcPresenterOutput &&
+        wizard.visualStyleId !== "concept-cinematic"
+      ) {
+        if (wizard.visualStyleId !== "storyboard-video") {
+          wizard.selectVisualStyle("storyboard-video");
+        }
+        if (wizard.imageOutputMode !== "single") {
+          wizard.setImageOutputMode("single");
+        }
+      }
       setFinishedSetup(true);
       wizard.setStepKey(key);
     },
-    [wizard],
+    [ctx.workflowMode, wizard],
   );
 
   useEffect(() => {
     if (!currentId) return;
-    const legacy = microStepLegacyKey(currentId);
+    const legacy = microStepLegacyKey(currentId, {
+      visualStyleId: wizard.visualStyleId,
+    });
     if (legacy === "image" || legacy === "video" || legacy === "done") {
       handoffLegacy(legacy);
     }
-  }, [currentId, handoffLegacy]);
+  }, [currentId, handoffLegacy, wizard.visualStyleId]);
 
   const goNext = useCallback(() => {
     if (!currentId || blockReason) return;
@@ -224,6 +286,14 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
       return;
     }
 
+    // Never advance micro past storyboard_scenes into wait.storyboard_generate —
+    // that wait auto-skips only AFTER scenes exist. Hand off to ImageStep so the
+    // user can generate the scene grid (product/concept × direct/research).
+    if (currentId === "image.storyboard_scenes") {
+      handoffLegacy("image");
+      return;
+    }
+
     if (currentId === "video.generate") {
       void wizard.generateVideo();
       autoAdvancedRef.current = null;
@@ -243,7 +313,26 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
       if (intakePath === "direct") {
         wizard.setImageCreativeMode(wizard.imageRefPhoto ? "reference-concept" : "promo-ai");
       }
-      const nextSteps = resolveMicroSteps({ ...ctx, intakePath }, state);
+      // 圖+片 + 研究 → always storyboard reel (multi-scene stills).
+      if (
+        intakePath === "research" &&
+        (ctx.workflowMode === "combined" || wizard.workflowMode === "combined") &&
+        !wizard.isUgcPresenterOutput &&
+        wizard.visualStyleId !== "concept-cinematic"
+      ) {
+        wizard.selectVisualStyle("storyboard-video");
+      }
+      const nextState = {
+        ...state,
+        visualStyleId:
+          intakePath === "research" &&
+          (ctx.workflowMode === "combined" || wizard.workflowMode === "combined") &&
+          !wizard.isUgcPresenterOutput &&
+          wizard.visualStyleId !== "concept-cinematic"
+            ? ("storyboard-video" as const)
+            : state.visualStyleId,
+      };
+      const nextSteps = resolveMicroSteps({ ...ctx, intakePath }, nextState);
       autoAdvancedRef.current = null;
       setStepIndex(resumeStepIndex(nextSteps));
       return;
@@ -278,7 +367,23 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
       const intakePath = intakePathForConceptSource("assistant");
       patchContext({ intakePath });
       wizard.setImageCreativeMode(wizard.imageRefPhoto ? "reference-concept" : "promo-ai");
-      const nextSteps = resolveMicroSteps({ ...ctx, intakePath, conceptSource: "assistant" }, state);
+      if (
+        (ctx.workflowMode === "combined" || wizard.workflowMode === "combined") &&
+        ctx.combinedStyle === "animate" &&
+        !wizard.isUgcPresenterOutput
+      ) {
+        wizard.selectVisualStyle("storyboard-video");
+      }
+      const nextState = {
+        ...state,
+        visualStyleId:
+          (ctx.workflowMode === "combined" || wizard.workflowMode === "combined") &&
+          ctx.combinedStyle === "animate" &&
+          !wizard.isUgcPresenterOutput
+            ? ("storyboard-video" as const)
+            : state.visualStyleId,
+      };
+      const nextSteps = resolveMicroSteps({ ...ctx, intakePath, conceptSource: "assistant" }, nextState);
       autoAdvancedRef.current = null;
       setStepIndex(resumeStepIndex(nextSteps));
       return;
@@ -287,7 +392,24 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     if (currentId === "identity.concept_topic") {
       const intakePath = intakePathForConceptSource("research");
       patchContext({ intakePath, conceptSource: "research" });
-      const nextSteps = resolveMicroSteps({ ...ctx, intakePath, conceptSource: "research" }, state);
+      if (
+        (ctx.workflowMode === "combined" || wizard.workflowMode === "combined") &&
+        ctx.combinedStyle !== "cinematic" &&
+        wizard.visualStyleId !== "concept-cinematic" &&
+        !wizard.isUgcPresenterOutput
+      ) {
+        wizard.selectVisualStyle("storyboard-video");
+      }
+      const nextState = {
+        ...state,
+        visualStyleId:
+          (ctx.workflowMode === "combined" || wizard.workflowMode === "combined") &&
+          ctx.combinedStyle !== "cinematic" &&
+          state.visualStyleId !== "concept-cinematic"
+            ? ("storyboard-video" as const)
+            : state.visualStyleId,
+      };
+      const nextSteps = resolveMicroSteps({ ...ctx, intakePath, conceptSource: "research" }, nextState);
       autoAdvancedRef.current = null;
       setStepIndex(resumeStepIndex(nextSteps));
       return;
@@ -357,8 +479,15 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
   }, []);
 
   const setCombinedStyle = useCallback(
-    (style: CombinedStyle) => patchContext({ combinedStyle: style }),
-    [patchContext],
+    (style: CombinedStyle) => {
+      patchContext({ combinedStyle: style });
+      // Animate branch = storyboard reel; cinematic keeps concept-cinematic via recipe.
+      if (style === "animate" && !wizard.isUgcPresenterOutput) {
+        wizard.selectVisualStyle("storyboard-video");
+        wizard.setImageOutputMode("single");
+      }
+    },
+    [patchContext, wizard],
   );
 
   const setVideoSubpath = useCallback((subpath: VideoSubpath) => {
@@ -421,6 +550,57 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     autoAdvancedRef.current = key;
     goNext();
   }, [blockReason, currentId, goNext, stepIndex, wizard.imageBusy, wizard.imageUrl]);
+
+  useEffect(() => {
+    if (currentId !== "wait.storyboard_generate" || blockReason) return;
+    if (wizard.imageBusy) return;
+    if (!wizard.imageUrl && wizard.cinematicScenes.length === 0 && wizard.storyboardScenes.length === 0) {
+      return;
+    }
+    const key = `wait.storyboard_generate-${stepIndex}`;
+    if (autoAdvancedRef.current === key) return;
+    autoAdvancedRef.current = key;
+    goNext();
+  }, [
+    blockReason,
+    currentId,
+    goNext,
+    stepIndex,
+    wizard.cinematicScenes.length,
+    wizard.imageBusy,
+    wizard.imageUrl,
+    wizard.storyboardScenes.length,
+  ]);
+
+  useEffect(() => {
+    if (currentId !== "wait.video_generate") return;
+    if (wizard.videoBusy) return;
+    if (!wizard.videoUrl) {
+      // Failed or cancelled — return to generate step so the user can retry.
+      if (wizard.error) {
+        const genIdx = steps.findIndex((s) => s.id === "video.generate");
+        if (genIdx >= 0 && stepIndex !== genIdx) {
+          autoAdvancedRef.current = null;
+          setStepIndex(genIdx);
+        }
+      }
+      return;
+    }
+    if (blockReason) return;
+    const key = `wait.video_generate-${stepIndex}-${wizard.videoUrl}`;
+    if (autoAdvancedRef.current === key) return;
+    autoAdvancedRef.current = key;
+    goNext();
+  }, [
+    blockReason,
+    currentId,
+    goNext,
+    stepIndex,
+    steps,
+    wizard.error,
+    wizard.videoBusy,
+    wizard.videoUrl,
+  ]);
 
   useEffect(() => {
     if (!currentId || blockReason || !isWaitMicroStep(currentId)) return;

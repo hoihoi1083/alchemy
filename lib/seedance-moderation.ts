@@ -49,6 +49,12 @@ export function isSeedanceSensitiveError(message: string): boolean {
   return /sensitive content/i.test(message);
 }
 
+export function isFalContentPolicyError(message: string): boolean {
+  return /content_policy_violation|likenesses of real people|private information that cannot be processed|partner_validation_failed/i.test(
+    message,
+  );
+}
+
 export function seedanceModerationPlannerRules(): string[] {
   return [
     "SEEDANCE MODERATION (critical): videoPrompt must pass fal safety filters.",

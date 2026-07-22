@@ -15,19 +15,19 @@ export const BGM_TRACKS: BgmTrackMeta[] = [
   {
     id: "calm",
     file: "calm.mp3",
-    mixVolume: 0.62,
+    mixVolume: 1.15,
     character: "soft ambient pad, slow",
   },
   {
     id: "upbeat",
     file: "upbeat.mp3",
-    mixVolume: 0.68,
+    mixVolume: 1.2,
     character: "energetic pulse, brighter",
   },
   {
     id: "warm",
     file: "warm.mp3",
-    mixVolume: 0.64,
+    mixVolume: 1.15,
     character: "warm mid-tone lifestyle",
   },
 ];

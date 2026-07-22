@@ -9,6 +9,7 @@ import { clampVideoResolution } from "@/lib/billing/entitlements";
 import { getUserPlan } from "@/lib/billing/get-user-plan";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import {
+  isFalContentPolicyError,
   isSeedanceSensitiveError,
   softenSeedancePromptForModeration,
 } from "@/lib/seedance-moderation";
@@ -563,6 +564,17 @@ export async function POST(request: Request) {
           code: "SEEDANCE_SENSITIVE_CONTENT",
           hint:
             "Seedance blocked this clip (violence/combat framing). Try a calmer prompt: no weapons, opponents, or standoffs — figures at rest, peaceful pause, arms at sides. A combat-looking reference image can also trigger this.",
+        },
+        { status: 422 },
+      );
+    }
+    if (isFalContentPolicyError(message)) {
+      return NextResponse.json(
+        {
+          error: message,
+          code: "FAL_CONTENT_POLICY",
+          hint:
+            "Seedance blocked people / private-info in the input. Use a product-only photo (no faces or hands), or generate without a reference reel that shows people.",
         },
         { status: 422 },
       );

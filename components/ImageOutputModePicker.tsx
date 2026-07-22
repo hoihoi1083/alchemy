@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useMemo } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 import type { ImageOutputMode } from "@/lib/image-output-mode";
 
@@ -7,6 +8,12 @@ type Props = {
   value: ImageOutputMode;
   onChange: (mode: ImageOutputMode) => void;
   lockedCampaign?: boolean;
+  /**
+   * Combined / video keyframe flow: only single + A/B.
+   * Campaign & teaching carousel are image-pack deliverables, not Seedance keyframes.
+   */
+  forVideoKeyframe?: boolean;
+  /** When false (and not forVideoKeyframe), hide teaching carousel. Default true for image-only. */
   includeTeachingCarousel?: boolean;
 };
 
@@ -14,18 +21,36 @@ export function ImageOutputModePicker({
   value,
   onChange,
   lockedCampaign,
-  includeTeachingCarousel,
+  forVideoKeyframe = false,
+  includeTeachingCarousel = true,
 }: Props) {
   const { m } = useLocale();
-  const options: ImageOutputMode[] = lockedCampaign
-    ? ["campaign"]
-    : ["single", "ab", "campaign", "teaching-carousel"];
+  const options: ImageOutputMode[] = useMemo(() => {
+    if (lockedCampaign) return ["campaign"];
+    if (forVideoKeyframe) return ["single", "ab"];
+    if (includeTeachingCarousel) return ["single", "ab", "campaign", "teaching-carousel"];
+    return ["single", "ab", "campaign"];
+  }, [forVideoKeyframe, includeTeachingCarousel, lockedCampaign]);
+
+  useEffect(() => {
+    if (!options.includes(value)) {
+      onChange(options[0] ?? "single");
+    }
+  }, [onChange, options, value]);
 
   return (
     <div className="space-y-2">
-      <p className="text-sm font-medium text-slate-700">{m.wizard.imageOutputModeLabel}</p>
-      <p className="text-xs text-slate-500">{m.wizard.imageOutputModeHint}</p>
-      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+      <p className="text-sm font-medium text-slate-700">
+        {forVideoKeyframe ? m.wizard.imageKeyframeModeLabel : m.wizard.imageOutputModeLabel}
+      </p>
+      <p className="text-xs text-slate-500">
+        {forVideoKeyframe ? m.wizard.imageKeyframeModeHint : m.wizard.imageOutputModeHint}
+      </p>
+      <div
+        className={`grid gap-2 sm:grid-cols-2 ${
+          options.length > 2 ? "lg:grid-cols-4" : ""
+        }`}
+      >
         {options.map((mode) => {
           const copy = m.wizard.imageOutputModes[mode];
           return (

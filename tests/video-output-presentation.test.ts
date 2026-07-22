@@ -41,7 +41,26 @@ describe("resolveVideoOutputPresentation", () => {
     );
   });
 
-  it("combined default is animate keyframe", () => {
+  it("combined + storyboard resolves to storyboard-reel not animate-keyframe", () => {
+    assert.equal(
+      resolveVideoOutputPresentation({
+        workflowMode: "combined",
+        usesCompositor: false,
+        isStoryboardOutput: true,
+        isUgcPresenterOutput: false,
+        shouldCinematicStitch: false,
+        isConceptCinematicSingleOutput: false,
+        usesProductAssistant: false,
+        conceptTextVideoReady: false,
+        videoCreativeMode: "image-to-video",
+        useReferenceVideo: false,
+        hasReferenceAd: false,
+      }),
+      "storyboard-reel",
+    );
+  });
+
+  it("combined without storyboard flag is animate keyframe", () => {
     assert.equal(
       resolveVideoOutputPresentation({
         ...base,

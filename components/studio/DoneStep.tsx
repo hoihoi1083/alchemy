@@ -32,6 +32,7 @@ export function DoneStep() {
     quickFixCredits,
     quickFixVideo,
     resetProject,
+    setStepKey,
     videoNote,
     videoUrl,
     workflowMode,
@@ -302,6 +303,36 @@ export function DoneStep() {
             </button>
           </div>
         </div>
+        <button
+          type="button"
+          onClick={resetProject}
+          className="w-full rounded-xl border border-slate-700 py-2.5 text-sm text-slate-400"
+        >
+          {m.wizard.newProject}
+        </button>
+      </section>
+    );
+  }
+
+  if (workflowMode !== "image-only" && !videoUrl) {
+    return (
+      <section className="space-y-5 rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-xl shadow-slate-900/40 backdrop-blur">
+        <div className="h-1 w-full rounded-full bg-linear-to-r from-amber-400 via-orange-400 to-rose-400" />
+        <div>
+          <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+            {m.wizard.videoDoneEmptyTitle}
+          </h2>
+          <p className="mt-2 text-[15px] leading-relaxed text-slate-300">
+            {m.wizard.videoDoneEmptyHint}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setStepKey("video")}
+          className="w-full rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white"
+        >
+          {m.wizard.videoDoneEmptyBack}
+        </button>
         <button
           type="button"
           onClick={resetProject}

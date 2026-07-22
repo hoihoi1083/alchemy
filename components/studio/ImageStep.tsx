@@ -30,7 +30,7 @@ import type { CinematicSceneResult } from "@/lib/cinematic-reel-types";
 import type { StoryboardSceneResult } from "@/lib/video-storyboard-types";
 
 export function ImageStep() {
-  const { applyPromptRebuild, artStyleId, campaignPlan, campaignSlideLabel, campaignSlides, campaignTheme, canGenerateImage, cinematicReelPlan, cinematicSceneCount, cinematicScenes, effectiveImageMode, effectiveImageOutputMode, error, finishImageStep, formatCinematicCopy, generateImage, goBackFromImage, headline, imageAspectRatio, imageBusy, imageCreativeMode, imageFinishLabel, imageGenKey, imageGenerateDisabledReason, imageInputMode, imageNextDisabled, imagePostflight, imagePostflightBusy, imagePreflight, imageProgressInfo, imagePrompt, imageQualityChecklist, imageRefPhoto, imageRefPreviewUrl, imageStepHint, imageTextMode, imageUrl, imageVariantUrls, imageVisionReview, imageVisionReviewBusy, isCampaignOutput, isCinematicStitchOutput, isConceptCinematicSingleOutput, isConceptStoryboardOutput, isStoryboardOutput, lastImageEndpoint, lockedCampaignMode, m, needsProductUpload, onCinematicSceneCountChange, onImageCreativeModeChange, onImageInputModeChange, onProductPhotoSelected, product, productPhoto, promotionMode, promptExtra, promptMarket, referenceAd, referenceAnalyzeBusy, referenceAnalyzeNote, referenceIsVideo, referenceStrategy, regenerateStoryboardSceneWithAi, reorderStoryboardScene, replaceStoryboardSceneImage, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, runShipItPipeline, selectVisualStyle, selectedVariantIndex, setArtStyleId, setCampaignPlan, setCampaignSlides, setCampaignTheme, setImageAspectRatio, setImageGenKey, setImageOutputMode, setImagePrompt, setImageRefPhoto, setImageQualityChecklist, setImageTextMode, setImageUrl, setImageVariantUrls, setPromptExtra, setPromptMarket, setError, setSelectedVariantIndex, setShipItMode, setShowAdvancedImage, setStoryboardSceneCount, setSubjectFraming, setVideoPrompt, shipItEligible, shipItMode, shipItPipelineBusy, shipItVisionBlocked, showAdvancedImage, storyboardPlan, storyboardSceneCount, storyboardSceneRegenerateBusy, storyboardSceneReplaceBusy, storyboardScenes, storyboardTrimDuration, subjectFraming, templateId, templateSlotStatus, trimStoryboardDurations, uploadPreviewUrl, uploadQualityMessage, uploadQualityWarning, useOriginalAsKeyframe, useOriginalImage, userReferenceBrief, useReferenceVideo, usesCompositor, videoPrompt, visualStyle, visualStyleId, workflowMode } = useWizard();
+  const { applyPromptRebuild, artStyleId, campaignPlan, campaignSlideLabel, campaignSlides, campaignTheme, canGenerateImage, cinematicReelPlan, cinematicSceneCount, cinematicScenes, effectiveImageMode, effectiveImageOutputMode, error, finishImageStep, formatCinematicCopy, generateImage, goBackFromImage, headline, imageAspectRatio, imageBusy, imageCreativeMode, imageFinishLabel, imageGenKey, imageGenerateDisabledReason, imageInputMode, imageNextDisabled, imagePostflight, imagePostflightBusy, imagePreflight, imageProgressInfo, imagePrompt, imageQualityChecklist, imageRefPhoto, imageRefPreviewUrl, imageStepHint, imageTextMode, imageUrl, imageVariantUrls, imageVisionReview, imageVisionReviewBusy, isCampaignOutput, isCinematicStitchOutput, isConceptCinematicSingleOutput, isConceptStoryboardOutput, isStoryboardOutput, lastImageEndpoint, lockedCampaignMode, m, needsProductUpload, onCinematicSceneCountChange, onImageCreativeModeChange, onImageInputModeChange, onProductPhotoSelected, planStoryboard, planStoryboardBusy, product, productPhoto, promotionMode, promptExtra, promptMarket, referenceAd, referenceAnalyzeBusy, referenceAnalyzeNote, referenceIsVideo, referenceStrategy, regenerateStoryboardSceneWithAi, reorderStoryboardScene, replaceStoryboardSceneImage, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, runShipItPipeline, selectVisualStyle, selectedVariantIndex, setArtStyleId, setCampaignPlan, setCampaignSlides, setCampaignTheme, setImageAspectRatio, setImageGenKey, setImageOutputMode, setImagePrompt, setImageRefPhoto, setImageQualityChecklist, setImageTextMode, setImageUrl, setImageVariantUrls, setPromptExtra, setPromptMarket, setError, setSelectedVariantIndex, setShipItMode, setShowAdvancedImage, setStoryboardBrief, setStoryboardPlan, setStoryboardSceneCount, setSubjectFraming, setVideoPrompt, shipItEligible, shipItMode, shipItPipelineBusy, shipItVisionBlocked, showAdvancedImage, storyboardBrief, storyboardPlan, storyboardSceneCount, storyboardSceneRegenerateBusy, storyboardSceneReplaceBusy, storyboardScenes, storyboardTrimDuration, subjectFraming, templateId, templateSlotStatus, trimStoryboardDurations, updateStoryboardPlanScene, uploadPreviewUrl, uploadQualityMessage, uploadQualityWarning, useOriginalAsKeyframe, useOriginalImage, userReferenceBrief, useReferenceVideo, usesCompositor, videoPrompt, visualStyle, visualStyleId, workflowMode } = useWizard();
   const isConcept = promotionMode === "concept";
   const imageTokenCost = estimateImageTokens({
     mode: isStoryboardOutput || isCinematicStitchOutput
@@ -78,6 +78,7 @@ export function ImageStep() {
     }
   />
 
+  {shipItEligible ? (
   <ShipItPanel
     shipItMode={shipItMode}
     onShipItModeChange={setShipItMode}
@@ -96,6 +97,7 @@ export function ImageStep() {
       runHint: m.wizard.shipItRunHint,
     }}
   />
+  ) : null}
 
   {!usesCompositor && !isStoryboardOutput && !isCinematicStitchOutput && !isConceptCinematicSingleOutput && !shipItMode ? (
     <ImageCreativeModePicker
@@ -423,6 +425,78 @@ export function ImageStep() {
         </label>
       </div>
       <p className="mt-2 text-[10px] text-teal-200/80">{m.wizard.storyboardSceneCountHint}</p>
+
+      <label className="mt-3 block text-xs font-medium text-teal-100">
+        {m.wizard.storyboardBriefLabel}
+        <textarea
+          value={storyboardBrief}
+          onChange={(e) => setStoryboardBrief(e.target.value)}
+          placeholder={m.wizard.storyboardBriefPlaceholder}
+          rows={3}
+          className="mt-1 w-full rounded-xl border border-teal-800/60 bg-slate-950/60 px-3 py-2 text-sm text-teal-50"
+        />
+      </label>
+
+      <p className="mt-3 text-xs text-teal-200/90">{m.wizard.storyboardPlanReviewHint}</p>
+      <button
+        type="button"
+        disabled={planStoryboardBusy || imageBusy}
+        onClick={() => void planStoryboard()}
+        className="mt-2 rounded-full bg-teal-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
+      >
+        {planStoryboardBusy
+          ? m.wizard.storyboardPlanBusy
+          : storyboardPlan
+            ? m.wizard.storyboardPlanReplanBtn
+            : m.wizard.storyboardPlanBtn}
+      </button>
+
+      {storyboardPlan ? (
+        <div className="mt-4 space-y-3 rounded-xl border border-teal-800/40 bg-slate-950/50 p-3">
+          <label className="block text-xs font-medium text-teal-100">
+            {m.wizard.storyboardPlanThemeLabel}
+            <input
+              value={storyboardPlan.theme}
+              onChange={(e) =>
+                setStoryboardPlan({ ...storyboardPlan, theme: e.target.value })
+              }
+              className="mt-1 w-full rounded-lg border border-teal-800/60 bg-slate-900 px-2 py-1.5 text-sm text-teal-50"
+            />
+          </label>
+          {storyboardPlan.scenes.map((scene, i) => (
+            <div
+              key={`plan-scene-${scene.imageIndex}`}
+              className="rounded-lg border border-teal-900/50 bg-teal-950/30 p-2.5"
+            >
+              <p className="text-xs font-semibold text-teal-100">
+                {m.wizard.storyboardSceneLabel} {scene.imageIndex} · {scene.startSec}–{scene.endSec}s
+                {scene.role ? ` · ${scene.role}` : ""}
+              </p>
+              <label className="mt-1.5 block text-[11px] text-teal-200/80">
+                {m.wizard.storyboardPlanSceneDescLabel}
+                <textarea
+                  value={scene.sceneDescriptionZh}
+                  onChange={(e) =>
+                    updateStoryboardPlanScene(i, { sceneDescriptionZh: e.target.value })
+                  }
+                  rows={2}
+                  className="mt-0.5 w-full rounded-lg border border-teal-800/50 bg-slate-950/70 px-2 py-1.5 text-xs text-teal-50"
+                />
+              </label>
+              <label className="mt-1.5 block text-[11px] text-teal-200/80">
+                {m.wizard.storyboardPlanCopyLabel}
+                <input
+                  value={scene.onImageCopyZh ?? ""}
+                  onChange={(e) =>
+                    updateStoryboardPlanScene(i, { onImageCopyZh: e.target.value })
+                  }
+                  className="mt-0.5 w-full rounded-lg border border-teal-800/50 bg-slate-950/70 px-2 py-1.5 text-xs text-teal-50"
+                />
+              </label>
+            </div>
+          ))}
+        </div>
+      ) : null}
     </div>
   )}
 

@@ -325,21 +325,26 @@
         { "id": "wait.research_apply", "skipWhen": "!contentResearchApplyRef" },
         {
           "id": "asset.reference_video",
-          "label": "參考短片",
-          "required": true,
+          "label": "參考短片（有 reel 先用；圖文帖可跳過）",
+          "required": false,
           "alwaysVisible": true,
-          "accepts": ["searchDownload", "manualUpload"]
+          "accepts": ["searchDownload", "manualUpload"],
+          "skipWhen": "combinedNoReel"
         },
         {
           "id": "wait.reel_download",
-          "when": "research.pick_angle && !referenceAd",
+          "when": "researchReelDownloadBusy",
           "while": "researchReelDownloadBusy",
           "onFailure": {
             "actions": ["research.pick_angle", "asset.reference_video"],
             "messageKey": "contentResearch.videoDownloadFailed"
           }
         },
-        { "id": "wait.reel_analyze", "while": "researchReelAnalyzeBusy", "required": true },
+        {
+          "id": "wait.reel_analyze",
+          "while": "researchReelAnalyzeBusy",
+          "skipWhen": "!referenceIsVideo"
+        },
         {
           "id": "copy.edit",
           "label": "內容與生成設定",
@@ -385,7 +390,6 @@
           "choices": [
             { "id": "product_promo", "set": { "visualStyleId": "product", "videoCreativeMode": "product-promo" } },
             { "id": "reference_reel", "set": { "videoCreativeMode": "reference-concept" } },
-            { "id": "product_assistant", "set": { "videoCreativeMode": "product-assistant" } },
             { "id": "ugc_presenter", "set": { "visualStyleId": "ugc-presenter" } }
           ]
         },
@@ -411,21 +415,44 @@
         { "id": "video.ai_prompt", "when": "videoSubpath === 'product_promo'" },
         { "id": "image.storyboard_scenes", "when": "visualStyleId === 'storyboard-video'" },
         { "id": "wait.storyboard_generate", "when": "visualStyleId === 'storyboard-video'" },
+        {
+          "id": "image.generate",
+          "when": "visualStyleId === 'ugc-presenter'",
+          "handler": "generateImage"
+        },
+        {
+          "id": "wait.image_generate",
+          "when": "visualStyleId === 'ugc-presenter'",
+          "while": "imageBusy"
+        },
+        { "id": "image.review", "when": "visualStyleId === 'ugc-presenter'" },
         { "id": "video.product_plan", "when": "videoCreativeMode === 'product-assistant'" },
         { "id": "video.ugc_pack", "when": "visualStyleId === 'ugc-presenter'" },
         { "id": "video.settings", "skippable": true },
-        { "id": "video.generate", "handler": "generateVideo" },
-        { "id": "wait.video_generate", "while": "videoBusy" },
-        { "id": "done.export" }
+        {
+          "id": "video.generate",
+          "handler": "generateVideo",
+          "legacyStepKey": "video",
+          "when": "visualStyleId === 'ugc-presenter'"
+        },
+        {
+          "id": "video.generate",
+          "handler": "generateVideo",
+          "when": "visualStyleId !== 'ugc-presenter'"
+        },
+        { "id": "wait.video_generate", "while": "videoBusy", "when": "visualStyleId !== 'ugc-presenter'" },
+        { "id": "done.export", "when": "visualStyleId !== 'ugc-presenter'" }
       ]
     },
     "product_combined": {
       "id": "product_combined",
-      "label": "Product / Image → Video (combined)",
+      "label": "Product / Image → Video (storyboard)",
+      "description": "Path 7 — 圖+片 always storyboard scene stills → Seedance stitch. UGC is the only non-storyboard combined exception.",
       "priority": "P1",
       "context": {
         "workflowMode": "combined",
-        "promotionMode": "physical"
+        "promotionMode": "physical",
+        "visualStyleId": "storyboard-video"
       },
       "steps": [
         { "id": "entry.start" },
@@ -433,28 +460,56 @@
         { "id": "route.subject", "set": { "promotionMode": "physical" } },
         { "id": "identity.product_name", "required": ["product"] },
         { "id": "route.intake" },
-        { "id": "MERGE_product_image_subpath" },
-        { "id": "image.review", "handler": "finishImageStep", "legacyStepKey": "image" },
         {
-          "id": "shortcut.ship_it",
-          "when": "shipItEligible",
+          "id": "copy.edit",
+          "label": "內容與生成設定",
+          "sections": ["copy", "brandKit", "advancedPrompt"],
+          "brandKit": { "required": false, "collapsedByDefault": true }
+        },
+        { "id": "asset.product_photo", "required": true },
+        {
+          "id": "asset.reference_image",
           "skippable": true,
-          "handler": "runShipIt",
-          "after": "image.review"
+          "label": "參考圖（選填）"
         },
         {
-          "id": "video.settings",
-          "set": { "videoCreativeMode": "image-to-video" }
+          "id": "wait.reference_analyze",
+          "skipWhen": "!imageRefPhoto"
         },
+        {
+          "id": "copy.storyboard_brief",
+          "when": "visualStyleId !== 'ugc-presenter'"
+        },
+        {
+          "id": "image.storyboard_scenes",
+          "when": "visualStyleId !== 'ugc-presenter'",
+          "legacyStepKey": "image"
+        },
+        {
+          "id": "wait.storyboard_generate",
+          "when": "visualStyleId !== 'ugc-presenter'"
+        },
+        {
+          "id": "image.generate",
+          "when": "visualStyleId === 'ugc-presenter'",
+          "handler": "generateImage"
+        },
+        {
+          "id": "wait.image_generate",
+          "when": "visualStyleId === 'ugc-presenter'",
+          "while": "imageBusy"
+        },
+        { "id": "image.review", "when": "visualStyleId === 'ugc-presenter'" },
+        { "id": "video.ugc_pack", "when": "visualStyleId === 'ugc-presenter'" },
+        { "id": "video.settings", "skippable": true },
         { "id": "video.generate", "handler": "generateVideo", "legacyStepKey": "video" },
-        { "id": "wait.video_generate", "while": "videoBusy" },
-        { "id": "done.export" }
-      ],
-      "merge": {
-        "research": "product_image_research",
-        "direct": "product_image_direct",
-        "stopBefore": "done.export"
-      }
+        {
+          "id": "wait.video_generate",
+          "while": "videoBusy",
+          "when": "visualStyleId !== 'ugc-presenter'"
+        },
+        { "id": "done.export", "when": "visualStyleId !== 'ugc-presenter'" }
+      ]
     },
     "concept_video_research_reel": {
       "id": "concept_video_research_reel",
@@ -504,21 +559,26 @@
         { "id": "wait.research_apply", "skipWhen": "!contentResearchApplyRef" },
         {
           "id": "asset.reference_video",
-          "label": "參考短片",
-          "required": true,
+          "label": "參考短片（有 reel 先用；圖文帖可跳過）",
+          "required": false,
           "alwaysVisible": true,
-          "accepts": ["searchDownload", "manualUpload"]
+          "accepts": ["searchDownload", "manualUpload"],
+          "skipWhen": "combinedNoReel"
         },
         {
           "id": "wait.reel_download",
-          "when": "research.pick_angle && !referenceAd",
+          "when": "researchReelDownloadBusy",
           "while": "researchReelDownloadBusy",
           "onFailure": {
             "actions": ["research.pick_angle", "asset.reference_video"],
             "messageKey": "contentResearch.videoDownloadFailed"
           }
         },
-        { "id": "wait.reel_analyze", "while": "researchReelAnalyzeBusy", "required": true },
+        {
+          "id": "wait.reel_analyze",
+          "while": "researchReelAnalyzeBusy",
+          "skipWhen": "!referenceIsVideo"
+        },
         {
           "id": "copy.edit",
           "label": "內容與生成設定",
@@ -650,8 +710,12 @@
           "sections": ["copy", "brandKit", "advancedPrompt"]
         },
         { "id": "copy.creative_brief", "required": true },
-        { "id": "image.storyboard_scenes", "when": "cinematicSceneCount > 1 || cinematicStitchReel" },
-        { "id": "wait.storyboard_generate", "when": "cinematicSceneCount > 1 || cinematicStitchReel" },
+        {
+          "id": "image.storyboard_scenes",
+          "legacyStepKey": "image",
+          "label": "Cinematic keyframe(s) — single or stitch"
+        },
+        { "id": "wait.storyboard_generate" },
         { "id": "video.settings" },
         { "id": "video.ai_prompt", "handler": "planAiVideoPrompt" },
         { "id": "video.bgm", "skippable": true },
@@ -662,34 +726,39 @@
     },
     "concept_combined": {
       "id": "concept_combined",
-      "label": "Concept / Combined / Animate keyframe",
-      "description": "Path 11 — Path 7 + 概念助手; merge Path 3/4 poster trunk + image-to-video; NOT storyboard",
+      "label": "Concept / Combined / Storyboard",
+      "description": "Path 11 — 圖+片 animate branch is storyboard (not single-poster image-to-video). Cinematic stays Path 10.",
       "priority": "P2",
       "pathNumber": 11,
       "context": {
         "workflowMode": "combined",
-        "promotionMode": "concept"
+        "promotionMode": "concept",
+        "visualStyleId": "storyboard-video"
       },
       "steps": [
         { "id": "entry.start" },
         { "id": "route.output_goal", "set": { "workflowMode": "combined" } },
         { "id": "route.subject", "set": { "promotionMode": "concept" } },
         { "id": "route.concept_source" },
-        { "id": "MERGE_concept_image_subpath" },
-        { "id": "image.review", "handler": "finishImageStep", "legacyStepKey": "image" },
+        { "id": "identity.concept", "required": ["conceptIdea"] },
         {
-          "id": "video.settings",
-          "set": { "videoCreativeMode": "image-to-video" }
+          "id": "copy.edit",
+          "label": "內容與生成設定",
+          "skippable": true,
+          "sections": ["copy", "brandKit", "advancedPrompt"],
+          "brandKit": { "required": false, "collapsedByDefault": true }
         },
+        { "id": "asset.product_photo", "skippable": true, "required": false },
+        { "id": "asset.reference_image", "skippable": true },
+        { "id": "wait.reference_analyze", "skipWhen": "!imageRefPhoto" },
+        { "id": "copy.storyboard_brief" },
+        { "id": "image.storyboard_scenes", "legacyStepKey": "image" },
+        { "id": "wait.storyboard_generate" },
+        { "id": "video.settings", "skippable": true },
         { "id": "video.generate", "handler": "generateVideo", "legacyStepKey": "video" },
         { "id": "wait.video_generate", "while": "videoBusy" },
         { "id": "done.export" }
       ],
-      "merge": {
-        "research": "concept_image_research",
-        "direct": "concept_image_direct",
-        "stopBefore": "done.export"
-      },
       "shipItEligible": false
     }
   },

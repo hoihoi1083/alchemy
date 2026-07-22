@@ -21,6 +21,7 @@ import {
   isBrandVideoStyle,
   isBrandVisualStyle,
   isStoryboardVideoStyle,
+  isUgcPresenterStyle,
   requiresBrandProfileForImages,
 } from "@/lib/visual-styles";
 
@@ -59,10 +60,12 @@ export type WizardMicroStepState = {
   referenceAnalyzeBusy: boolean;
   brandAnalyzeBusy: boolean;
   researchReelAnalyzeBusy: boolean;
+  researchReelDownloadBusy: boolean;
   referenceClipLoading: boolean;
   imageBusy: boolean;
   videoBusy: boolean;
   imageUrl: string | null;
+  videoUrl: string | null;
   promptExtra: string;
   shipItEligible: boolean;
   hasGeneratedImage: boolean;
@@ -121,8 +124,8 @@ const WAIT_AUTO_ADVANCE = new Set<MicroStepId>([
   "wait.reel_analyze",
   "wait.brand_analyze",
   "wait.concept_plan",
-  "wait.storyboard_generate",
-  "wait.video_generate",
+  // wait.image_generate / wait.video_generate / wait.storyboard_generate:
+  // advance only when the job succeeds (see useWizardMicroStep dedicated effects).
 ]);
 
 /** Graph uses single quotes; resolver historically used double — normalize before match. */
@@ -169,6 +172,12 @@ function evalSkipWhen(
   if (expr === "!contentResearchApplyRef") return !isContentResearchStyleExtra(state.promptExtra);
   if (expr === "referenceAd && referenceIsVideo") {
     return Boolean(state.referenceAd && state.referenceIsVideo);
+  }
+  if (expr === "!referenceAd") return !state.referenceAd;
+  if (expr === "!referenceIsVideo") return !state.referenceIsVideo;
+  // 圖+片 research with image posts: no MP4 step — style images + DeepSeek storyboard.
+  if (expr === "combinedNoReel") {
+    return ctx.workflowMode === "combined" && !state.referenceIsVideo;
   }
   if (expr === "anglePresetOutputMode") {
     // Only model-wear locks format; research ref / style extra must not hide the picker.
@@ -217,10 +226,16 @@ function evalWhen(
   if (norm === 'visualStyleId === "ugc-presenter"') {
     return state.visualStyleId === "ugc-presenter";
   }
+  if (norm === 'visualStyleId !== "ugc-presenter"') {
+    return state.visualStyleId !== "ugc-presenter";
+  }
   if (norm === "referenceIsVideo") return state.referenceIsVideo;
   if (norm === "shipItEligible") return state.shipItEligible;
   if (norm === "research.pick_angle && !referenceAd") {
     return isContentResearchStyleExtra(state.promptExtra) && !state.referenceAd;
+  }
+  if (norm === "researchReelDownloadBusy") {
+    return state.researchReelDownloadBusy || state.referenceClipLoading;
   }
   return true;
 }
@@ -232,6 +247,17 @@ export function resolvePathId(
   const { workflowMode, promotionMode, intakePath } = ctx;
   if (!workflowMode || !promotionMode || !intakePath) return null;
 
+  // UGC from video subpath must stay on product_video_direct (image keyframe + HeyGen),
+  // even when wizard state flips to combined for the talking-head pipeline.
+  if (
+    promotionMode === "physical" &&
+    intakePath === "direct" &&
+    (ctx.videoSubpath === "ugc_presenter" ||
+      (isUgcPresenterStyle(state.visualStyleId) && workflowMode === "video-only"))
+  ) {
+    return "product_video_direct";
+  }
+
   if (promotionMode === "concept" && workflowMode === "combined") {
     if (
       state.visualStyleId === "concept-cinematic" ||
@@ -239,20 +265,16 @@ export function resolvePathId(
     ) {
       return "concept_combined_cinematic";
     }
-    if (
-      intakePath === "research" &&
-      isStoryboardVideoStyle(state.visualStyleId)
-    ) {
+    // Combined + research always uses the reel storyboard path (not animate poster).
+    if (intakePath === "research") {
       return "concept_video_research_reel";
     }
     return "concept_combined";
   }
 
   if (promotionMode === "physical" && workflowMode === "combined") {
-    if (
-      intakePath === "research" &&
-      isStoryboardVideoStyle(state.visualStyleId)
-    ) {
+    // Combined + research always storyboard reel path (force style at intake).
+    if (intakePath === "research") {
       return "product_video_research_reel";
     }
     return "product_combined";
@@ -363,17 +385,34 @@ function injectReelStoryboardBranch(
   state: WizardMicroStepState,
 ): MicroStepId[] {
   if (ctx.workflowMode !== "combined") return ids;
-  if (!isStoryboardVideoStyle(state.visualStyleId)) return ids;
+  // Combined reel is always multi-scene stills (UGC / cinematic use other paths).
+  if (isUgcPresenterStyle(state.visualStyleId)) return ids;
+  if (state.visualStyleId === "concept-cinematic") return ids;
   if (ids.includes("image.storyboard_scenes")) return ids;
 
-  const insertAt =
-    ids.indexOf("copy.storyboard_brief") >= 0
-      ? ids.indexOf("copy.storyboard_brief") + 1
-      : ids.findIndex((id) => id === "video.settings" || id === "video.generate");
-  if (insertAt < 0) return ids;
+  // Drop a misplaced brief so we can re-insert the full block after setup.
+  const base: MicroStepId[] = ids.filter((id) => id !== "copy.storyboard_brief");
 
-  const next = [...ids];
-  next.splice(insertAt, 0, "image.storyboard_scenes", "wait.storyboard_generate");
+  // After research/setup — never before reference reel / product photo.
+  // Do NOT use early `video.settings` (reorderReelVideoSettings moves it up).
+  const setupAnchors = [
+    base.indexOf("asset.product_photo"),
+    base.indexOf("copy.edit"),
+    base.indexOf("wait.reel_analyze"),
+    base.indexOf("asset.reference_video"),
+  ].filter((i) => i >= 0);
+  let insertAt = setupAnchors.length
+    ? Math.max(...setupAnchors) + 1
+    : base.indexOf("video.generate");
+  if (insertAt < 0) insertAt = base.length;
+
+  const next = [...base];
+  const storyboardBlock: MicroStepId[] = [
+    "copy.storyboard_brief",
+    "image.storyboard_scenes",
+    "wait.storyboard_generate",
+  ];
+  next.splice(insertAt, 0, ...storyboardBlock);
   return dedupeSteps(next);
 }
 
@@ -388,7 +427,9 @@ function reorderReelVideoSettings(ids: MicroStepId[]): MicroStepId[] {
   return dedupeSteps(next);
 }
 
-function injectArtStyle(ids: MicroStepId[]): MicroStepId[] {
+function injectArtStyle(ids: MicroStepId[], state?: WizardMicroStepState): MicroStepId[] {
+  // UGC talking-head keyframes are photoreal-only — no art-style picker.
+  if (state && isUgcPresenterStyle(state.visualStyleId)) return ids;
   if (!ids.some((id) => id.startsWith("image."))) return ids;
   if (ids.includes("image.art_style")) return ids;
   // image.options already includes art style — skip duplicate step.
@@ -469,26 +510,46 @@ export function resolveMicroSteps(
     return wrapSteps(ids, ctx);
   }
 
+  // Video-only + direct must pick a style (promo / UGC / …) before the full path resolves.
+  // Otherwise resumeStepIndex skips route.video_subpath (it's a routing prefix) and UGC never appears.
+  if (ctx.workflowMode === "video-only" && ctx.intakePath === "direct" && !ctx.videoSubpath) {
+    return wrapSteps(["route.video_subpath"], ctx);
+  }
+
   const pathId = resolvePathId(ctx, state);
   if (!pathId) {
-    if (ctx.workflowMode === "video-only" && ctx.intakePath === "direct" && !ctx.videoSubpath) {
-      return wrapSteps(["route.video_subpath"], ctx);
-    }
     ids.push("route.intake");
     return wrapSteps(ids, ctx);
   }
 
-  if (pathId === "product_combined" || pathId === "concept_combined") {
-    return wrapSteps(injectArtStyle(expandMergedPath(pathId, ctx, state)), ctx);
+  // 圖+片 (except UGC / cinematic): always evaluate steps as storyboard-video so
+  // DeepSeek scene planning + scene confirm never disappear after restore/HMR.
+  let resolveState = state;
+  if (
+    ctx.workflowMode === "combined" &&
+    !isUgcPresenterStyle(state.visualStyleId) &&
+    state.visualStyleId !== "concept-cinematic" &&
+    (pathId === "product_combined" ||
+      pathId === "concept_combined" ||
+      REEL_PATHS.has(pathId))
+  ) {
+    resolveState = { ...state, visualStyleId: "storyboard-video" };
   }
 
-  let pathSteps = filterGraphSteps(graphStepsForPath(pathId), state, ctx);
+  if (pathId === "product_combined" || pathId === "concept_combined") {
+    const path = graph.paths[pathId];
+    if (path && "merge" in path && path.merge) {
+      return wrapSteps(injectArtStyle(expandMergedPath(pathId, ctx, resolveState), resolveState), ctx);
+    }
+  }
+
+  let pathSteps = filterGraphSteps(graphStepsForPath(pathId), resolveState, ctx);
   if (REEL_PATHS.has(pathId)) {
     pathSteps = reorderReelVideoSettings(pathSteps);
-    pathSteps = injectReelStoryboardBranch(pathSteps, ctx, state);
+    pathSteps = injectReelStoryboardBranch(pathSteps, ctx, resolveState);
   }
-  pathSteps = injectArtStyle(pathSteps);
-  pathSteps = injectPrimaryStyle(pathSteps, pathId, state);
+  pathSteps = injectArtStyle(pathSteps, resolveState);
+  pathSteps = injectPrimaryStyle(pathSteps, pathId, resolveState);
 
   return wrapSteps(pathSteps, ctx);
 }
@@ -508,6 +569,10 @@ function injectPrimaryStyle(
 function isStepSkippable(id: MicroStepId, ctx?: MicroWizardContext): boolean {
   if (id === "copy.edit" && ctx?.intakePath === "research") return false;
   if (id === "research.pick_angle" && ctx?.workflowMode === "image-only") return false;
+  // Physical combined/video needs a product photo — don't offer Skip (Next is already gated).
+  if (id === "asset.product_photo" && ctx?.promotionMode === "physical") return false;
+  // 圖+片 research: MP4 only when a real reel exists — image posts use style refs instead.
+  if (id === "asset.reference_video" && ctx?.workflowMode === "combined") return true;
   return (
     SKIPPABLE_DEFAULT.has(id) ||
     (id === "research.pick_angle" && ctx?.workflowMode !== "image-only")
@@ -524,9 +589,16 @@ function wrapSteps(ids: MicroStepId[], ctx?: MicroWizardContext): ResolvedMicroS
   }));
 }
 
-export function microStepLegacyKey(id: MicroStepId): "setup" | "image" | "video" | "done" | null {
+export function microStepLegacyKey(
+  id: MicroStepId,
+  state?: Pick<WizardMicroStepState, "visualStyleId">,
+): "setup" | "image" | "video" | "done" | null {
   // image.review stays in micro-wizard (ImageResultPanel); only storyboard needs full ImageStep.
   if (id === "image.storyboard_scenes") return "image";
+  // UGC: hand off to classic VideoStep for PresenterAvatarPicker + HeyGen generate.
+  if (id === "video.generate" && state && isUgcPresenterStyle(state.visualStyleId)) {
+    return "video";
+  }
   if (id === "done.export") return "done";
   return null;
 }
@@ -574,6 +646,9 @@ export function canProceedMicroStep(
     return "need_creative_brief";
   }
   if (id === "asset.reference_video" && !state.referenceAd) {
+    // 圖+片: image research posts never need MP4 (style images → DeepSeek scenes).
+    if (ctx.workflowMode === "combined" || state.workflowMode === "combined") return null;
+    if (ctx.intakePath === "research" && Boolean(state.imageRefPhoto)) return null;
     return "need_reference_video";
   }
   // asset.brand_website is optional — many SMB users have no website.
@@ -607,8 +682,10 @@ export function canProceedMicroStep(
     return "need_duration_before_reel";
   }
   if (id === "wait.image_generate" && state.imageBusy) return "image_busy";
+  if (id === "wait.storyboard_generate" && state.imageBusy) return "image_busy";
   if (id === "image.review" && !state.imageUrl && !state.imageBusy) return "image_not_ready";
   if (id === "wait.video_generate" && state.videoBusy) return "video_busy";
+  if (id === "wait.video_generate" && !state.videoUrl) return "video_not_ready";
   if (
     id === "copy.edit" &&
     ctx.intakePath === "research" &&

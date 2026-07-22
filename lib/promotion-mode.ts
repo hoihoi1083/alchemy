@@ -22,6 +22,11 @@ export function defaultVisualStyleForWorkflow(
   if (workflowMode === "video-only") {
     return mode === "concept" ? "creative-video" : "product";
   }
+  // 圖+片 always starts as storyboard reel (multi-scene stills → video).
+  // UGC / cinematic are set explicitly by those pickers.
+  if (workflowMode === "combined") {
+    return "storyboard-video";
+  }
   if (mode === "concept" && workflowMode === "image-only") {
     return "brand-fit";
   }

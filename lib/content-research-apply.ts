@@ -143,7 +143,19 @@ function wizardPatchForAngle(
       : isSingleImageReferenceAngle(angle)
         ? "single-image"
         : format;
-  const formatFields = patchFromAngleFormat(effectiveFormat, promotionMode, imageCount, userWorkflowMode);
+
+  // 圖+片 research: stay on storyboard (never teaching-carousel / image-only).
+  // Keep the post's real format for refs — image posts → style images; only real
+  // video URLs load an MP4. Do NOT pretend every post is a reel (no fake MP4).
+  const combinedLocksStoryboard = userWorkflowMode === "combined";
+  const formatFields = patchFromAngleFormat(
+    combinedLocksStoryboard ? "reel" : effectiveFormat,
+    promotionMode,
+    imageCount,
+    userWorkflowMode,
+  );
+  // For attaching refs, use the real post format (not the locked "reel" style).
+  const resolvedFormat = combinedLocksStoryboard ? effectiveFormat : effectiveFormat;
 
   const copyTarget = promotionMode === "concept" ? explicitPromoteTarget : productName;
   const copy = copyFieldsFromAngle(angle, copyTarget, plan.topic, {
@@ -189,17 +201,26 @@ function wizardPatchForAngle(
     conceptIdea: conceptIdeaPatch,
     product: promotionMode === "physical" ? productName : "",
     promptExtra,
-    imageOutputMode: formatFields.imageOutputMode,
-    visualStyleId: formatFields.visualStyleId ?? inferred?.visualStyleId,
-    workflowMode:
-      format === "reel" ? userWorkflowMode : formatFields.workflowMode ?? inferred?.workflowMode,
-    imageAspectRatio: inferred?.imageAspectRatio ?? aspectForPlatform(plan.platform),
+    imageOutputMode: combinedLocksStoryboard ? "single" : formatFields.imageOutputMode,
+    visualStyleId: combinedLocksStoryboard
+      ? "storyboard-video"
+      : (formatFields.visualStyleId ?? inferred?.visualStyleId),
+    workflowMode: combinedLocksStoryboard
+      ? "combined"
+      : effectiveFormat === "reel"
+        ? userWorkflowMode
+        : formatFields.workflowMode ?? inferred?.workflowMode,
+    imageAspectRatio: combinedLocksStoryboard
+      ? "9:16"
+      : (inferred?.imageAspectRatio ?? aspectForPlatform(plan.platform)),
     campaignTheme:
-      angle.format === "campaign" || format === "campaign"
+      !combinedLocksStoryboard &&
+      (angle.format === "campaign" || format === "campaign")
         ? `${productName} series`
         : undefined,
-    carouselSlideCount:
-      format === "teaching-carousel"
+    carouselSlideCount: combinedLocksStoryboard
+      ? undefined
+      : format === "teaching-carousel"
         ? Math.min(
             MAX_TEACHING_CAROUSEL_SLIDE_COUNT,
             Math.max(
@@ -209,7 +230,7 @@ function wizardPatchForAngle(
           )
         : inferred?.carouselSlideCount,
     referenceNote: inferred?.referenceNote,
-    resolvedFormat: effectiveFormat,
+    resolvedFormat,
   };
 }
 
@@ -334,17 +355,26 @@ export async function applyContentAngleToWizard(
     return [withoutPriorResearch.trim(), patch.promptExtra].filter(Boolean).join(" | ");
   });
   if (patch.workflowMode && wizard.onWorkflowModeChange && patch.resolvedFormat !== "reel") {
-    wizard.onWorkflowModeChange(patch.workflowMode);
+    // Never demote 圖+片 research into image-only / teaching-carousel.
+    if (userWorkflowMode !== "combined") {
+      wizard.onWorkflowModeChange(patch.workflowMode);
+    }
   }
-  wizard.setImageOutputMode(patch.imageOutputMode);
-  if (patch.imageAspectRatio && wizard.setImageAspectRatio) {
-    wizard.setImageAspectRatio(patch.imageAspectRatio);
-  }
-  if (patch.campaignTheme && wizard.setCampaignTheme) {
-    wizard.setCampaignTheme(patch.campaignTheme);
-  }
-  if (patch.visualStyleId && wizard.selectVisualStyle) {
-    wizard.selectVisualStyle(patch.visualStyleId);
+  if (userWorkflowMode === "combined") {
+    wizard.setImageOutputMode("single");
+    wizard.selectVisualStyle?.("storyboard-video");
+    wizard.setImageAspectRatio?.("9:16");
+  } else {
+    wizard.setImageOutputMode(patch.imageOutputMode);
+    if (patch.imageAspectRatio && wizard.setImageAspectRatio) {
+      wizard.setImageAspectRatio(patch.imageAspectRatio);
+    }
+    if (patch.campaignTheme && wizard.setCampaignTheme) {
+      wizard.setCampaignTheme(patch.campaignTheme);
+    }
+    if (patch.visualStyleId && wizard.selectVisualStyle) {
+      wizard.selectVisualStyle(patch.visualStyleId);
+    }
   }
   if (patch.carouselSlideCount && wizard.setReferenceCarouselSlideCount) {
     wizard.setReferenceCarouselSlideCount(patch.carouselSlideCount);

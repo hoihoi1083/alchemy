@@ -1244,7 +1244,21 @@ export function buildImageToVideoPrompt(
 }
 
 /** Storyboard scene: IMAGE 1 style shell + user topic content (reference topic may differ). */
-function imageStoryboardStyleRefBlock(plan: VideoStoryboardPlan): string {
+function imageStoryboardStyleRefBlock(
+  plan: VideoStoryboardPlan,
+  dualProductAndStyle?: boolean,
+): string {
+  if (dualProductAndStyle) {
+    return joinParts(
+      "DUAL REFERENCE — IMAGE 1 = style/layout mood from research; IMAGE 2 = the user's EXACT product photo",
+      "Keep IMAGE 1's composition grammar, color mood, and social-ad energy.",
+      "Replace every product in the frame with IMAGE 2's exact item — same beads, colors, materials, charms, clasp. Do NOT invent a different bracelet or copy IMAGE 1's product.",
+      REFERENCE_TOPIC_GUARD_LINE,
+      "Adapt beat layout rhythm for this scene — same design family as IMAGE 1, hero product from IMAGE 2 only.",
+      plan.visualDirection ? `Locked series aesthetic: ${plan.visualDirection}.` : "",
+      thirdPartyBrandGuardBlock(),
+    );
+  }
   return joinParts(
     "REFERENCE STYLE TRANSFER — IMAGE 1 is the reference ad/reel frame",
     REFERENCE_STYLE_MATCH_LINE,
@@ -1257,7 +1271,7 @@ function imageStoryboardStyleRefBlock(plan: VideoStoryboardPlan): string {
   );
 }
 
-/** Nano Banana still for one storyboard scene (product from IMAGE 1). */
+/** Nano Banana still for one storyboard scene (product from IMAGE 1, or IMAGE 2 when dual). */
 export function buildStoryboardSceneImagePrompt(
   scene: StoryboardScenePlan,
   plan: VideoStoryboardPlan,
@@ -1266,6 +1280,7 @@ export function buildStoryboardSceneImagePrompt(
     referenceConcept?: boolean;
     conceptTextOnly?: boolean;
     storyboardStyleRef?: boolean;
+    dualProductAndStyle?: boolean;
     visualStyleId?: VisualStyleId;
     brandProfile?: BrandProfile | null;
     brandKit?: BrandKit | null;
@@ -1281,6 +1296,7 @@ export function buildStoryboardSceneImagePrompt(
   const referenceConcept = Boolean(options?.referenceConcept);
   const conceptTextOnly = Boolean(options?.conceptTextOnly);
   const storyboardStyleRef = Boolean(options?.storyboardStyleRef);
+  const dualProductAndStyle = Boolean(options?.dualProductAndStyle);
   const sceneVars: PromptVariables = {
     ...vars,
     extra: [vars.extra, scene.imagePrompt].filter(Boolean).join(" | "),
@@ -1333,7 +1349,7 @@ export function buildStoryboardSceneImagePrompt(
         plan.visualDirection ? `Series look (from reference reel): ${plan.visualDirection}.` : "",
         `Scene role: ${scene.role}.`,
         scene.imagePrompt ? `Scene action: ${scene.imagePrompt}.` : "",
-        imageStoryboardStyleRefBlock(plan),
+        imageStoryboardStyleRefBlock(plan, dualProductAndStyle),
         sceneCopy ? `ON-IMAGE COPY (this scene only): ${sceneCopy}` : "",
         promoTypographyHint(sceneVars, true),
         artStyleImageClause(vars.artStyle),

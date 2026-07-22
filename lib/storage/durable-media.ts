@@ -2,32 +2,17 @@ import type { AssetKind } from "@/lib/db/types";
 import { isMongoConfigured } from "@/lib/mongodb";
 import { persistUserAsset } from "@/lib/storage/persist-asset";
 import { isR2Configured } from "@/lib/storage/r2";
+import {
+  isLibraryAssetUrl,
+  libraryAssetIdFromUrl,
+  libraryAssetUrl,
+} from "@/lib/storage/library-asset-url";
 
-/** Client-facing durable URL for a private R2 asset (re-signs on each request). */
-export function libraryAssetUrl(assetId: string, inline = true): string {
-  const base = `/api/library/download/${assetId}`;
-  return inline ? `${base}?inline=1` : base;
-}
-
-export function isLibraryAssetUrl(url: string | null | undefined): boolean {
-  if (!url) return false;
-  try {
-    const path = url.startsWith("http") ? new URL(url).pathname : url.split("?")[0];
-    return /^\/api\/library\/download\/[a-f0-9]{24}$/i.test(path);
-  } catch {
-    return false;
-  }
-}
-
-export function libraryAssetIdFromUrl(url: string): string | null {
-  try {
-    const path = url.startsWith("http") ? new URL(url).pathname : url.split("?")[0];
-    const m = path.match(/^\/api\/library\/download\/([a-f0-9]{24})$/i);
-    return m?.[1] ?? null;
-  } catch {
-    return null;
-  }
-}
+export {
+  isLibraryAssetUrl,
+  libraryAssetIdFromUrl,
+  libraryAssetUrl,
+} from "@/lib/storage/library-asset-url";
 
 /**
  * Mirror a fal/CDN (or local bytes) output to R2 and return a durable library URL

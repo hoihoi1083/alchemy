@@ -6,6 +6,8 @@ export function mediaFilterFromWorkflowMode(
 ): ContentResearchMediaFilter | undefined {
   if (mode === "image-only") return "image";
   if (mode === "video-only") return "video";
+  // 圖+片 research: XHS etc. are often image posts — show both.
+  // Real MP4 is optional; image posts feed copy + style into storyboard.
   return undefined;
 }
 

@@ -196,9 +196,24 @@ describe("content-research-apply handoff", () => {
       undefined,
       "combined",
     );
-    assert.equal(handoff.imageOutputMode, "teaching-carousel");
-    assert.equal(handoff.workflowMode, "image-only");
-    assert.equal(handoff.visualStyleId, "info-poster");
+    // 圖+片 locks storyboard — not teaching-carousel; image carousel stays image refs (no forced reel).
+    assert.equal(handoff.imageOutputMode, "single");
+    assert.equal(handoff.workflowMode, "combined");
+    assert.equal(handoff.visualStyleId, "storyboard-video");
+  });
+
+  it("combined physical research angle forces storyboard not teaching-carousel", () => {
+    const handoff = buildContentAngleHandoff(
+      zodiacCarouselAngle,
+      xhsPlan,
+      "physical",
+      PROMOTE_PRODUCT,
+      "combined",
+    );
+    assert.equal(handoff.workflowMode, "combined");
+    assert.equal(handoff.visualStyleId, "storyboard-video");
+    assert.equal(handoff.imageOutputMode, "single");
+    // Image carousel must not invent a reference MP4 URL.
     assert.equal(handoff.referencePostVideoUrl, undefined);
   });
 });

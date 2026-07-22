@@ -58,7 +58,7 @@ function snap(surface: Surface = "landing"): StudioAssistantSnapshot {
     usesCompositor: false,
     error: null,
     voiceoverEnabled: true,
-    captionBurnEnabled: true,
+    captionBurnEnabled: false,
   };
 }
 

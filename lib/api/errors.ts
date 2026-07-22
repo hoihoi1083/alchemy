@@ -9,6 +9,7 @@ export type ErrorFallbacks = {
   insufficientTokens?: string;
   timeout?: string;
   seedanceSensitive?: string;
+  falContentPolicy?: string;
 };
 
 const TECHNICAL_PATTERNS: Array<{ test: RegExp; key: keyof ErrorFallbacks }> = [
@@ -20,6 +21,11 @@ const TECHNICAL_PATTERNS: Array<{ test: RegExp; key: keyof ErrorFallbacks }> = [
   { test: /ECONNREFUSED|ENOTFOUND|fetch failed|network/i, key: "network" },
   { test: /timeout|timed out|ETIMEDOUT/i, key: "timeout" },
   { test: /sensitive content/i, key: "seedanceSensitive" },
+  {
+    test:
+      /content_policy_violation|likenesses of real people|private information that cannot be processed|partner_validation_failed/i,
+    key: "falContentPolicy",
+  },
 ];
 
 function pickFallback(
@@ -34,6 +40,11 @@ function pickFallback(
 export function mapApiError(raw: unknown, fallbacks: ErrorFallbacks): string {
   if (raw instanceof ApiClientError && raw.status === 402) {
     return pickFallback("insufficientTokens", fallbacks);
+  }
+  if (raw instanceof ApiClientError && raw.body && typeof raw.body === "object") {
+    const code = (raw.body as { code?: unknown }).code;
+    if (code === "FAL_CONTENT_POLICY") return pickFallback("falContentPolicy", fallbacks);
+    if (code === "SEEDANCE_SENSITIVE_CONTENT") return pickFallback("seedanceSensitive", fallbacks);
   }
   if (
     raw &&

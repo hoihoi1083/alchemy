@@ -82,7 +82,9 @@ export function ResearchReelSetupPanel({ onReferenceVideo }: Props) {
           <span>
             {referenceAd && referenceIsVideo
               ? m.wizard.researchReelStatusMp4
-              : m.wizard.researchReelMp4Missing}
+              : wizard.workflowMode === "combined"
+                ? m.wizard.researchReelMp4OptionalCombined
+                : m.wizard.researchReelMp4Missing}
           </span>
         </li>
         <li className="flex items-start gap-2">

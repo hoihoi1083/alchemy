@@ -25,6 +25,7 @@ function isBillableAttemptFallback(m: Messages, fallback: string): boolean {
     m.errors.serviceUnavailable,
     m.errors.timeout,
     m.errors.seedanceSensitive,
+    m.errors.falContentPolicy,
     m.errors.network,
   ]);
   return billable.has(fallback);
@@ -41,6 +42,7 @@ export function useFriendlyError(m: Messages) {
         deepSeekBalanceEmpty: m.errors.deepSeekBalanceEmpty,
         insufficientTokens: m.errors.insufficientTokens,
         seedanceSensitive: m.errors.seedanceSensitive,
+        falContentPolicy: m.errors.falContentPolicy,
         timeout: m.errors.timeout,
       });
       if (mapped === m.errors.insufficientTokens) return mapped;

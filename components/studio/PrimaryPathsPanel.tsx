@@ -155,41 +155,66 @@ export function PrimaryPathsPanel({ variant, showCinematicExtras = false }: Prop
             description={m.wizard.visualStyles["creative-video"].description}
             onClick={() => applyPrimaryPathVideoOnly("creative")}
           />
-        </div>
-      ) : (
-        <div className="mt-3 grid gap-2 sm:grid-cols-2" data-coach-id="coach-visual-style-paths">
-          <PathButton
-            active={visualStyleId === "product" && imageCreativeMode !== "reference-concept"}
-            title={m.wizard.pathQuickTitle}
-            description={m.wizard.pathQuickDesc}
-            onClick={() => applyPrimaryPath("quick")}
-          />
-          <PathButton
-            active={imageCreativeMode === "reference-concept"}
-            title={m.wizard.pathReferenceTitle}
-            description={m.wizard.pathReferenceDesc}
-            onClick={() => applyPrimaryPath("reference")}
-          />
-          <PathButton
-            active={visualStyleId === "model-wear"}
-            title={m.wizard.pathModelTitle}
-            description={m.wizard.pathModelDesc}
-            onClick={() => applyPrimaryPath("model")}
-          />
           <PathButton
             active={visualStyleId === "ugc-presenter"}
             title={m.wizard.pathUgcPresenterTitle}
             description={m.wizard.pathUgcPresenterDesc}
-            onClick={() => applyPrimaryPath("ugc-presenter")}
+            onClick={() => applyPrimaryPathVideoOnly("ugc-presenter")}
           />
-          {workflowMode !== "image-only" ? (
-            <PathButton
-              active={visualStyleId === "storyboard-video"}
-              title={m.wizard.pathStoryboardTitle}
-              description={m.wizard.pathStoryboardDesc}
-              onClick={() => applyPrimaryPath("storyboard")}
-            />
-          ) : null}
+        </div>
+      ) : (
+        <div className="mt-3 grid gap-2 sm:grid-cols-2" data-coach-id="coach-visual-style-paths">
+          {workflowMode === "combined" ? (
+            <>
+              <PathButton
+                active={visualStyleId === "storyboard-video"}
+                title={m.wizard.pathStoryboardTitle}
+                description={m.wizard.pathStoryboardDesc}
+                onClick={() => applyPrimaryPath("storyboard")}
+              />
+              <PathButton
+                active={visualStyleId === "ugc-presenter"}
+                title={m.wizard.pathUgcPresenterTitle}
+                description={m.wizard.pathUgcPresenterDesc}
+                onClick={() => applyPrimaryPath("ugc-presenter")}
+              />
+            </>
+          ) : (
+            <>
+              <PathButton
+                active={visualStyleId === "product" && imageCreativeMode !== "reference-concept"}
+                title={m.wizard.pathQuickTitle}
+                description={m.wizard.pathQuickDesc}
+                onClick={() => applyPrimaryPath("quick")}
+              />
+              <PathButton
+                active={imageCreativeMode === "reference-concept"}
+                title={m.wizard.pathReferenceTitle}
+                description={m.wizard.pathReferenceDesc}
+                onClick={() => applyPrimaryPath("reference")}
+              />
+              <PathButton
+                active={visualStyleId === "model-wear"}
+                title={m.wizard.pathModelTitle}
+                description={m.wizard.pathModelDesc}
+                onClick={() => applyPrimaryPath("model")}
+              />
+              <PathButton
+                active={visualStyleId === "ugc-presenter"}
+                title={m.wizard.pathUgcPresenterTitle}
+                description={m.wizard.pathUgcPresenterDesc}
+                onClick={() => applyPrimaryPath("ugc-presenter")}
+              />
+              {workflowMode !== "image-only" ? (
+                <PathButton
+                  active={visualStyleId === "storyboard-video"}
+                  title={m.wizard.pathStoryboardTitle}
+                  description={m.wizard.pathStoryboardDesc}
+                  onClick={() => applyPrimaryPath("storyboard")}
+                />
+              ) : null}
+            </>
+          )}
         </div>
       )}
 

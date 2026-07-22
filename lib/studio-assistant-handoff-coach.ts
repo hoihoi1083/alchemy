@@ -42,8 +42,8 @@ function handoffToSnapshot(handoff: StudioAssistantHandoff): StudioAssistantSnap
     storyboardBrief: "",
     usesCompositor: false,
     error: null,
-    voiceoverEnabled: true,
-    captionBurnEnabled: true,
+    voiceoverEnabled: false,
+    captionBurnEnabled: false,
     imageOutputMode: handoff.imageOutputMode,
     imageCreativeMode:
       handoff.recipe === "reference-ad-layout" ? "reference-concept" : undefined,

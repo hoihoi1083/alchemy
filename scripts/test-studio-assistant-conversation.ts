@@ -38,7 +38,7 @@ function snap(
     usesCompositor: false,
     error: null,
     voiceoverEnabled: true,
-    captionBurnEnabled: true,
+    captionBurnEnabled: false,
     imageOutputMode: "single",
     coachAck: [],
     ...partial,

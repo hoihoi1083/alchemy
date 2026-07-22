@@ -26,6 +26,8 @@ import { ImageResultPanel } from "@/components/studio/micro-wizard/ImageResultPa
 import { VideoOutputSourceCard } from "@/components/studio/VideoOutputSourceCard";
 import { PrimaryPathsPanel } from "@/components/studio/PrimaryPathsPanel";
 import { SetupCopyEditPanel } from "@/components/studio/SetupCopyEditPanel";
+import { PresenterAvatarPicker } from "@/components/studio/PresenterAvatarPicker";
+import { AdPackReviewPanel } from "@/components/studio/AdPackReviewPanel";
 import { ReferenceAnalyzeWaitPanel, referenceAnalyzeReady } from "@/components/studio/micro-wizard/ReferenceAnalyzeWaitPanel";
 import { ResearchReelSetupPanel } from "@/components/studio/ResearchReelSetupPanel";
 import { BrandWebsitePanel } from "@/components/studio/BrandWebsitePanel";
@@ -157,8 +159,7 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
               description={mw.combinedAnimateDesc}
               onClick={() => {
                 micro.setCombinedStyle("animate");
-                wizard.selectVisualStyle("product");
-                wizard.onVideoCreativeModeChange("image-to-video");
+                wizard.selectVisualStyle("storyboard-video");
               }}
             />
           </div>
@@ -204,7 +205,7 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
                 <ChoiceCard
                   active={(micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) === "product_promo"}
                   title={m.wizard.pathQuickTitle}
-                  description={m.wizard.pathQuickDesc}
+                  description={m.wizard.pathQuickVideoDesc}
                   onClick={() => {
                     micro.setVideoSubpath("product_promo");
                     wizard.applyPrimaryPathVideoOnly("creative");
@@ -212,20 +213,11 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
                 />
                 <ChoiceCard
                   active={(micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) === "reference_reel"}
-                  title={m.wizard.pathReferenceTitle}
-                  description={m.wizard.pathReferenceDesc}
+                  title={m.wizard.pathReferenceVideoTitle}
+                  description={m.wizard.pathReferenceVideoDesc}
                   onClick={() => {
                     micro.setVideoSubpath("reference_reel");
                     wizard.onVideoCreativeModeChange("reference-concept");
-                  }}
-                />
-                <ChoiceCard
-                  active={(micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) === "product_assistant"}
-                  title={m.wizard.videoCreativeModes["product-assistant"].title}
-                  description={m.wizard.videoCreativeModes["product-assistant"].description}
-                  onClick={() => {
-                    micro.setVideoSubpath("product_assistant");
-                    wizard.applyPrimaryPathVideoOnly("assistant");
                   }}
                 />
                 <ChoiceCard
@@ -234,17 +226,8 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
                   description={m.wizard.pathUgcPresenterDesc}
                   onClick={() => {
                     micro.setVideoSubpath("ugc_presenter");
-                    wizard.onWorkflowModeChange("video-only");
-                    wizard.selectVisualStyle("ugc-presenter");
-                  }}
-                />
-                <ChoiceCard
-                  active={(micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) === "storyboard_video"}
-                  title={m.wizard.pathStoryboardTitle}
-                  description={m.wizard.pathStoryboardDesc}
-                  onClick={() => {
-                    micro.setVideoSubpath("storyboard_video");
-                    wizard.applyPrimaryPathVideoOnly("storyboard");
+                    micro.patchContext({ videoSubpath: "ugc_presenter" });
+                    wizard.applyPrimaryPathVideoOnly("ugc-presenter");
                   }}
                 />
               </>
@@ -333,12 +316,23 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
 
     case "research.platform":
       return (
-        <ContentResearchStep wizard={wizard} m={m} mw={mw} />
+        <ContentResearchStep
+          wizard={wizard}
+          m={m}
+          mw={mw}
+          workflowMode={micro.ctx.workflowMode ?? wizard.workflowMode}
+        />
       );
 
     case "research.pick_angle":
       return (
-        <ContentResearchStep wizard={wizard} m={m} mw={mw} pickAngle />
+        <ContentResearchStep
+          wizard={wizard}
+          m={m}
+          mw={mw}
+          pickAngle
+          workflowMode={micro.ctx.workflowMode ?? wizard.workflowMode}
+        />
       );
 
     case "wait.reference_analyze":
@@ -418,12 +412,24 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
 
     case "image.output_format":
       return (
-        <ScreenShell title={m.wizard.imageOutputModeLabel} hint={m.wizard.imageOutputModeHint}>
+        <ScreenShell
+          title={
+            wizard.workflowMode === "combined"
+              ? m.wizard.imageKeyframeModeLabel
+              : m.wizard.imageOutputModeLabel
+          }
+          hint={
+            wizard.workflowMode === "combined"
+              ? m.wizard.imageKeyframeModeHint
+              : m.wizard.imageOutputModeHint
+          }
+        >
           <ImageOutputModePicker
             value={wizard.imageOutputMode}
             onChange={wizard.setImageOutputMode}
             lockedCampaign={wizard.lockedCampaignMode}
-            includeTeachingCarousel
+            forVideoKeyframe={wizard.workflowMode === "combined"}
+            includeTeachingCarousel={wizard.workflowMode === "image-only"}
           />
         </ScreenShell>
       );
@@ -583,6 +589,17 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
       return (
         <ScreenShell title={m.wizard.pathUgcPresenterTitle} hint={m.wizard.ugcPresenter.setupIntro}>
           <p className="text-sm text-slate-600">{m.wizard.ugcPresenter.needAdPackHint}</p>
+          <div className="space-y-4 rounded-2xl bg-slate-950 p-3">
+            <PresenterAvatarPicker
+              mode={wizard.presenterSourceMode}
+              avatarId={wizard.presenterAvatarId}
+              disabled={wizard.videoBusy}
+              onModeChange={wizard.setPresenterSourceMode}
+              onAvatarChange={wizard.setPresenterAvatarId}
+            />
+            <AdPackReviewPanel />
+          </div>
+          <p className="text-xs text-slate-500">{m.wizard.ugcPresenter.videoStepIntro}</p>
         </ScreenShell>
       );
 
@@ -640,6 +657,35 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
           </ScreenShell>
         );
       }
+      if (wizard.isUgcPresenterOutput) {
+        return (
+          <ScreenShell
+            title={m.wizard.pathUgcPresenterTitle}
+            hint={m.wizard.ugcPresenter.imageStepIntro}
+          >
+            <p className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+              {m.wizard.ugcPresenter.imagePreflight}
+            </p>
+            {wizard.headline.trim() || wizard.subline.trim() ? (
+              <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm">
+                {wizard.headline.trim() ? (
+                  <p>
+                    <span className="font-medium text-slate-700">{m.wizard.headlineLabel}:</span>{" "}
+                    {wizard.headline.trim()}
+                  </p>
+                ) : null}
+                {wizard.subline.trim() ? (
+                  <p className="mt-1">
+                    <span className="font-medium text-slate-700">{m.wizard.sublineLabel}:</span>{" "}
+                    {wizard.subline.trim()}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+            <p className="text-sm text-slate-600">{mw.generateImageFooterHint}</p>
+          </ScreenShell>
+        );
+      }
       return (
         <ScreenShell title={mw.generateImageTitle} hint={mw.generateImageFooterHint}>
           {!wizard.isStoryboardOutput && !wizard.cinematicStitchReel ? (
@@ -648,7 +694,8 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
                 value={wizard.imageOutputMode}
                 onChange={wizard.setImageOutputMode}
                 lockedCampaign={wizard.lockedCampaignMode}
-                includeTeachingCarousel
+                forVideoKeyframe={wizard.workflowMode === "combined"}
+                includeTeachingCarousel={wizard.workflowMode === "image-only"}
               />
             </div>
           ) : null}
@@ -661,13 +708,14 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
                 </p>
               ) : null}
               {wizard.subline.trim() ? (
-                <p className={wizard.headline.trim() ? "mt-1" : ""}>
+                <p className="mt-1">
                   <span className="font-medium text-slate-700">{m.wizard.sublineLabel}:</span>{" "}
                   {wizard.subline.trim()}
                 </p>
               ) : null}
             </div>
           ) : null}
+          <p className="text-sm text-slate-600">{mw.generateImageFooterHint}</p>
         </ScreenShell>
       );
 
@@ -688,17 +736,11 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
     case "video.generate":
       return (
         <ScreenShell title={mw.generateVideoTitle} hint={mw.generateVideoHint}>
-          <button
-            type="button"
-            disabled={wizard.videoBusy || Boolean(wizard.videoGenerateDisabledReason)}
-            onClick={() => void wizard.generateVideo()}
-            className="rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
-          >
-            {wizard.videoBusy ? mw.generatingVideo : m.wizard.generateVideoBtn}
-          </button>
           {wizard.videoGenerateDisabledReason ? (
             <p className="text-sm text-amber-800">{wizard.videoGenerateDisabledReason}</p>
-          ) : null}
+          ) : (
+            <p className="text-sm text-slate-600">{mw.generateVideoFooterHint}</p>
+          )}
         </ScreenShell>
       );
 
@@ -757,10 +799,25 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
         />
       );
 
-    case "wait.video_generate":
+    case "wait.video_generate": {
+      const phaseMessage =
+        wizard.videoPhase === "second-frame"
+          ? m.wizard.phaseSecondFrame
+          : wizard.videoPhase === "bgm"
+            ? m.wizard.phaseBgm
+            : wizard.videoPhase === "voiceover"
+              ? m.wizard.phaseVoiceover
+              : wizard.videoPhase === "captions"
+                ? m.wizard.phaseCaptions
+                : m.wizard.phaseVideo;
       return (
-        <WaitScreen busy={wizard.videoBusy} message={wizard.videoPhase ?? mw.generatingVideo} />
+        <WaitScreen
+          busy={wizard.videoBusy}
+          message={wizard.videoBusy ? phaseMessage : mw.generatingVideo}
+          progress={wizard.videoProgressInfo}
+        />
       );
+    }
 
     default:
       return (
@@ -822,11 +879,13 @@ function ContentResearchStep({
   m,
   mw,
   pickAngle = false,
+  workflowMode,
 }: {
   wizard: ReturnType<typeof useWizard>;
   m: ReturnType<typeof useLocale>["m"];
   mw: ReturnType<typeof useLocale>["m"]["microWizard"];
   pickAngle?: boolean;
+  workflowMode: ReturnType<typeof useWizard>["workflowMode"];
 }) {
   const [contentResearchNote, setContentResearchNote] = useState<string | null>(null);
   const isConcept = wizard.promotionMode === "concept";
@@ -849,7 +908,7 @@ function ContentResearchStep({
         syncTopicFromProduct={false}
         promotionMode={wizard.promotionMode}
         market={wizard.promptMarket}
-        workflowMode={wizard.workflowMode}
+        workflowMode={workflowMode}
         wizard={{
           setHeadline: wizard.setHeadline,
           setSubline: wizard.setSubline,

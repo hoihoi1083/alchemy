@@ -240,6 +240,7 @@ export function SetupStep() {
 
   <WorkflowModePicker value={workflowMode} onChange={onWorkflowModeChange} />
 
+  {shipItEligible ? (
   <ShipItPanel
     shipItMode={shipItMode}
     onShipItModeChange={setShipItMode}
@@ -258,6 +259,7 @@ export function SetupStep() {
       runHint: m.wizard.shipItRunHint,
     }}
   />
+  ) : null}
 
   {workflowMode !== "image-only" && <VideoOutputSourceCard variant="setup" />}
 
@@ -648,6 +650,45 @@ export function SetupStep() {
           <p className="mt-1 text-xs text-slate-600">
             {m.wizard.visualStyles["creative-video"].description}
           </p>
+        </button>
+        <button
+          type="button"
+          onClick={() => applyPrimaryPathVideoOnly("ugc-presenter")}
+          className={`rounded-xl border px-3 py-3 text-left ${
+            visualStyleId === "ugc-presenter"
+              ? "border-rose-400 bg-rose-50"
+              : "border-slate-200 bg-white"
+          }`}
+        >
+          <p className="text-sm font-semibold text-slate-900">{m.wizard.pathUgcPresenterTitle}</p>
+          <p className="mt-1 text-xs text-slate-600">{m.wizard.pathUgcPresenterDesc}</p>
+        </button>
+      </div>
+    ) : workflowMode === "combined" && !isConcept ? (
+      <div className="mt-3 grid gap-2 sm:grid-cols-2" data-coach-id="coach-visual-style-paths">
+        <button
+          type="button"
+          onClick={() => applyPrimaryPath("storyboard")}
+          className={`rounded-xl border px-3 py-3 text-left ${
+            visualStyleId === "storyboard-video"
+              ? "border-emerald-400 bg-emerald-50"
+              : "border-slate-200 bg-white"
+          }`}
+        >
+          <p className="text-sm font-semibold text-slate-900">{m.wizard.pathStoryboardTitle}</p>
+          <p className="mt-1 text-xs text-slate-600">{m.wizard.pathStoryboardDesc}</p>
+        </button>
+        <button
+          type="button"
+          onClick={() => applyPrimaryPath("ugc-presenter")}
+          className={`rounded-xl border px-3 py-3 text-left ${
+            visualStyleId === "ugc-presenter"
+              ? "border-rose-400 bg-rose-50"
+              : "border-slate-200 bg-white"
+          }`}
+        >
+          <p className="text-sm font-semibold text-slate-900">{m.wizard.pathUgcPresenterTitle}</p>
+          <p className="mt-1 text-xs text-slate-600">{m.wizard.pathUgcPresenterDesc}</p>
         </button>
       </div>
     ) : (
