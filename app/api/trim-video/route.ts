@@ -6,6 +6,7 @@ import { ensureFfmpeg, getMediaDurationSeconds } from "@/lib/pipeline/ffmpeg";
 import { trimVideoFile } from "@/lib/pipeline/video-trim";
 import { jobDir } from "@/lib/pipeline/paths";
 import { materializeMediaInput, pipelineFileUrl } from "@/lib/pipeline/local-input";
+import { persistAndDurablize } from "@/lib/storage/durable-media";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -44,7 +45,17 @@ export async function POST(req: Request) {
 
     await trimVideoFile(inputPath, outputPath, startSec, Math.min(endSec, fullDuration));
     const trimmedDuration = await getMediaDurationSeconds(outputPath);
-    const videoOutUrl = pipelineFileUrl(req, jobId, "trimmed.mp4");
+    const pipelineUrl = pipelineFileUrl(req, jobId, "trimmed.mp4");
+    const bytes = await fs.readFile(outputPath);
+    const videoOutUrl = await persistAndDurablize({
+      clerkId: auth.user.userId,
+      kind: "video",
+      sourceUrl: `trim://${jobId}/trimmed.mp4`,
+      fallbackUrl: pipelineUrl,
+      bytes,
+      contentType: "video/mp4",
+      name: "trimmed-video",
+    });
 
     return NextResponse.json({
       videoUrl: videoOutUrl,

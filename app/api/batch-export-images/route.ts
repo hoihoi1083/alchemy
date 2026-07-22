@@ -6,6 +6,7 @@ import { requireAppUser } from "@/lib/require-app-user";
 import { BATCH_EXPORT_SIZES } from "@/lib/batch-export-sizes";
 import { jobDir } from "@/lib/pipeline/paths";
 import { materializeMediaInput, pipelineFileUrl } from "@/lib/pipeline/local-input";
+import { persistAndDurablize } from "@/lib/storage/durable-media";
 
 export const runtime = "nodejs";
 export const maxDuration = 90;
@@ -45,11 +46,22 @@ export async function POST(request: Request) {
         .resize(size.width, size.height, { fit: "cover", position: "centre" })
         .png()
         .toFile(outPath);
+      const pipelineUrl = pipelineFileUrl(request, jobId, size.filename);
+      const bytes = await fs.readFile(outPath);
+      const durableUrl = await persistAndDurablize({
+        clerkId: auth.user.userId,
+        kind: "image",
+        sourceUrl: `batch-export://${jobId}/${size.filename}`,
+        fallbackUrl: pipelineUrl,
+        bytes,
+        contentType: "image/png",
+        name: `batch-export-${size.id}`,
+      });
       exports.push({
         id: size.id,
         width: size.width,
         height: size.height,
-        imageUrl: pipelineFileUrl(request, jobId, size.filename),
+        imageUrl: durableUrl,
       });
     }
 

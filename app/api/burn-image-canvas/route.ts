@@ -6,9 +6,36 @@ import { parseImageCanvasLayers } from "@/lib/image-canvas-layers";
 import { burnImageCanvasOverlay } from "@/lib/image-text-overlay-burn";
 import { jobDir } from "@/lib/pipeline/paths";
 import { materializeMediaInput, pipelineFileUrl } from "@/lib/pipeline/local-input";
+import { persistAndDurablize } from "@/lib/storage/durable-media";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
+
+async function burnAndPersist(input: {
+  clerkId: string;
+  request: Request;
+  jobId: string;
+  inputPath: string;
+  outputPath: string;
+  layers: ReturnType<typeof parseImageCanvasLayers>;
+}): Promise<string> {
+  const output = await burnImageCanvasOverlay(input.inputPath, input.layers);
+  await fs.writeFile(input.outputPath, output);
+  const pipelineUrl = pipelineFileUrl(
+    input.request,
+    input.jobId,
+    "image-canvas-overlay.png",
+  );
+  return persistAndDurablize({
+    clerkId: input.clerkId,
+    kind: "image",
+    sourceUrl: `burn-canvas://${input.jobId}/image-canvas-overlay.png`,
+    fallbackUrl: pipelineUrl,
+    bytes: output,
+    contentType: "image/png",
+    name: "image-canvas-overlay",
+  });
+}
 
 export async function POST(request: Request) {
   const auth = await requireAppUser();
@@ -41,16 +68,21 @@ export async function POST(request: Request) {
       } else {
         return NextResponse.json({ error: "image_file or image_url is required." }, { status: 400 });
       }
-      const output = await burnImageCanvasOverlay(inputPath, layers);
-      await fs.writeFile(outputPath, output);
+      const durableUrl = await burnAndPersist({
+        clerkId: auth.user.userId,
+        request,
+        jobId,
+        inputPath,
+        outputPath,
+        layers,
+      });
       return NextResponse.json({
-        imageUrl: pipelineFileUrl(request, jobId, "image-canvas-overlay.png"),
+        imageUrl: durableUrl,
         jobId,
       });
     }
 
-    let body: { image_url?: string; layers?: unknown };
-    body = await request.json();
+    const body: { image_url?: string; layers?: unknown } = await request.json();
     const imageUrl = body.image_url?.trim();
     const layers = parseImageCanvasLayers(body.layers);
     if (!imageUrl?.startsWith("http")) {
@@ -65,10 +97,16 @@ export async function POST(request: Request) {
     const inputPath = path.join(dir, "input.png");
     const outputPath = path.join(dir, "image-canvas-overlay.png");
     await materializeMediaInput(imageUrl, inputPath);
-    const output = await burnImageCanvasOverlay(inputPath, layers);
-    await fs.writeFile(outputPath, output);
+    const durableUrl = await burnAndPersist({
+      clerkId: auth.user.userId,
+      request,
+      jobId,
+      inputPath,
+      outputPath,
+      layers,
+    });
     return NextResponse.json({
-      imageUrl: pipelineFileUrl(request, jobId, "image-canvas-overlay.png"),
+      imageUrl: durableUrl,
       jobId,
     });
   } catch (e: unknown) {

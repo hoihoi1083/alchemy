@@ -15,14 +15,11 @@ import { parseCaptionBurnStyleJson } from "@/lib/caption-burn-styles";
 import { jobDir } from "@/lib/pipeline/paths";
 import { buildSrt } from "@/lib/pipeline/srt";
 import { materializeMediaInput, pipelineFileUrl } from "@/lib/pipeline/local-input";
+import { persistAndDurablize } from "@/lib/storage/durable-media";
 import type { CaptionLine } from "@/lib/ad-pack-types";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
-
-function pipelineFileUrlFromRequest(request: Request, jobId: string, file: string): string {
-  return pipelineFileUrl(request, jobId, file);
-}
 
 function parseCaptionLines(raw: unknown, durationSec = 60) {
   return parseCaptionLinesInput(raw, durationSec);
@@ -31,6 +28,7 @@ function parseCaptionLines(raw: unknown, durationSec = 60) {
 async function burnCaptionsJob(
   request: Request,
   input: {
+    clerkId: string;
     videoUrl?: string;
     videoFile?: File;
     captionLines: CaptionLine[];
@@ -98,10 +96,22 @@ async function burnCaptionsJob(
     }
   }
 
+  const pipelineUrl = pipelineFileUrl(request, jobId, "subtitled.mp4");
+  const bytes = await fs.readFile(outputPath);
+  const videoUrl = await persistAndDurablize({
+    clerkId: input.clerkId,
+    kind: "video",
+    sourceUrl: `burn-captions://${jobId}/subtitled.mp4`,
+    fallbackUrl: pipelineUrl,
+    bytes,
+    contentType: "video/mp4",
+    name: "burned-captions",
+  });
+
   return {
-    videoUrl: pipelineFileUrlFromRequest(request, jobId, "subtitled.mp4"),
+    videoUrl,
     jobId,
-    srtUrl: pipelineFileUrlFromRequest(request, jobId, "captions.srt"),
+    srtUrl: pipelineFileUrl(request, jobId, "captions.srt"),
     softSubtitles,
     burnMethod,
   };
@@ -139,6 +149,7 @@ export async function POST(request: Request) {
         }
       }
       const result = await burnCaptionsJob(request, {
+        clerkId: auth.user.userId,
         videoFile: file,
         videoUrl,
         captionLines: lines,
@@ -165,6 +176,7 @@ export async function POST(request: Request) {
     }
 
     const result = await burnCaptionsJob(request, {
+      clerkId: auth.user.userId,
       videoUrl,
       captionLines: lines,
       captionStyle: body.caption_style,

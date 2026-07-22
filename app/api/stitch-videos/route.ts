@@ -5,6 +5,7 @@ import { ensureFfmpeg, concatVideos } from "@/lib/pipeline/ffmpeg";
 import { materializeMediaInput, pipelineFileUrl } from "@/lib/pipeline/local-input";
 import { jobDir } from "@/lib/pipeline/paths";
 import { requireAppUser } from "@/lib/require-app-user";
+import { persistAndDurablize } from "@/lib/storage/durable-media";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -33,6 +34,7 @@ export async function POST(request: Request) {
   await fs.mkdir(dir, { recursive: true });
 
   const clipPaths: string[] = [];
+  let outputPath = "";
   try {
     await ensureFfmpeg();
     for (let i = 0; i < videoUrls.length; i++) {
@@ -40,15 +42,27 @@ export async function POST(request: Request) {
       await materializeMediaInput(videoUrls[i], clipPath);
       clipPaths.push(clipPath);
     }
-    const outputPath = path.join(dir, "final.mp4");
+    outputPath = path.join(dir, "final.mp4");
     await concatVideos(clipPaths, outputPath);
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Video stitch failed.";
     return NextResponse.json({ error: message }, { status: 502 });
   }
 
+  const pipelineUrl = pipelineFileUrl(request, jobId, "final.mp4");
+  const bytes = await fs.readFile(outputPath);
+  const videoUrl = await persistAndDurablize({
+    clerkId: auth.user.userId,
+    kind: "video",
+    sourceUrl: `stitch://${jobId}/final.mp4`,
+    fallbackUrl: pipelineUrl,
+    bytes,
+    contentType: "video/mp4",
+    name: "stitched-video",
+  });
+
   return NextResponse.json({
-    videoUrl: pipelineFileUrl(request, jobId, "final.mp4"),
+    videoUrl,
     jobId,
     clipCount: videoUrls.length,
   });

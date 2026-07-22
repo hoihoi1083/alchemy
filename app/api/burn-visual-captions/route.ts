@@ -7,6 +7,7 @@ import { parseVisualCaptionClips } from "@/lib/pipeline/visual-caption-clips";
 import { burnVisualCaptionsOverlay } from "@/lib/pipeline/visual-caption-burn";
 import { jobDir } from "@/lib/pipeline/paths";
 import { materializeMediaInput, pipelineFileUrl } from "@/lib/pipeline/local-input";
+import { persistAndDurablize } from "@/lib/storage/durable-media";
 import type { VisualCaptionClip } from "@/lib/visual-caption-types";
 
 export const runtime = "nodejs";
@@ -14,7 +15,12 @@ export const maxDuration = 120;
 
 async function burnVisualJob(
   request: Request,
-  input: { videoUrl?: string; videoFile?: File; clips: VisualCaptionClip[] },
+  input: {
+    clerkId: string;
+    videoUrl?: string;
+    videoFile?: File;
+    clips: VisualCaptionClip[];
+  },
 ) {
   const jobId = crypto.randomUUID();
   const dir = jobDir(jobId);
@@ -42,8 +48,20 @@ async function burnVisualJob(
 
   await burnVisualCaptionsOverlay(inputPath, clips, outputPath, dir);
 
+  const pipelineUrl = pipelineFileUrl(request, jobId, "visual-subtitled.mp4");
+  const bytes = await fs.readFile(outputPath);
+  const videoUrl = await persistAndDurablize({
+    clerkId: input.clerkId,
+    kind: "video",
+    sourceUrl: `burn-visual://${jobId}/visual-subtitled.mp4`,
+    fallbackUrl: pipelineUrl,
+    bytes,
+    contentType: "video/mp4",
+    name: "visual-captions",
+  });
+
   return {
-    videoUrl: pipelineFileUrl(request, jobId, "visual-subtitled.mp4"),
+    videoUrl,
     jobId,
     burnMethod: "visual-overlay" as const,
   };
@@ -71,7 +89,12 @@ export async function POST(request: Request) {
           { status: 400 },
         );
       }
-      const result = await burnVisualJob(request, { videoFile: file, videoUrl, clips });
+      const result = await burnVisualJob(request, {
+        clerkId: auth.user.userId,
+        videoFile: file,
+        videoUrl,
+        clips,
+      });
       return NextResponse.json(result);
     }
 
@@ -92,7 +115,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "clips is required." }, { status: 400 });
     }
 
-    const result = await burnVisualJob(request, { videoUrl, clips });
+    const result = await burnVisualJob(request, {
+      clerkId: auth.user.userId,
+      videoUrl,
+      clips,
+    });
     return NextResponse.json(result);
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Visual caption burn failed.";

@@ -16,6 +16,7 @@ import {
   ensureFfmpeg,
 } from "@/lib/pipeline/ffmpeg";
 import { jobDir } from "@/lib/pipeline/paths";
+import { persistAndDurablize } from "@/lib/storage/durable-media";
 import type { TemplateId } from "@/lib/templates";
 
 export const runtime = "nodejs";
@@ -87,9 +88,19 @@ export async function POST(request: Request) {
       const png = await renderPaperStickerImage(input);
       const outPath = path.join(dir, "composed.png");
       await fs.writeFile(outPath, png);
+      const pipelineUrl = pipelineFileUrl(jobId, "composed.png");
+      const imageUrl = await persistAndDurablize({
+        clerkId: auth.user.userId,
+        kind: "image",
+        sourceUrl: `compose://${jobId}/composed.png`,
+        fallbackUrl: pipelineUrl,
+        bytes: png,
+        contentType: "image/png",
+        name: "composed-image",
+      });
       return NextResponse.json({
         jobId,
-        imageUrl: pipelineFileUrl(jobId, "composed.png"),
+        imageUrl,
         mode: "compositor",
       });
     }
@@ -123,9 +134,22 @@ export async function POST(request: Request) {
       }
     }
 
+    const finalPath = path.join(dir, finalFile);
+    const pipelineUrl = pipelineFileUrl(jobId, finalFile);
+    const bytes = await fs.readFile(finalPath);
+    const videoUrl = await persistAndDurablize({
+      clerkId: auth.user.userId,
+      kind: "video",
+      sourceUrl: `compose://${jobId}/${finalFile}`,
+      fallbackUrl: pipelineUrl,
+      bytes,
+      contentType: "video/mp4",
+      name: "composed-video",
+    });
+
     return NextResponse.json({
       jobId,
-      videoUrl: pipelineFileUrl(jobId, finalFile),
+      videoUrl,
       mode: "compositor",
       bgmAdded,
       durationSec: VIDEO.durationSec,
