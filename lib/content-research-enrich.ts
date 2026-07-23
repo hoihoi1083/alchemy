@@ -30,9 +30,13 @@ function findPostForAngle(
   posts: ContentResearchPost[],
   used: Set<string>,
 ): ContentResearchPost | undefined {
+  // Prefer an unused post that matches the cited source URL — so 3 rewritten
+  // angles that all cite the same Facebook/viral post don't all show one thumb.
   if (angle.sourceUrl) {
-    const matched = posts.find((p) => urlsMatch(p.url, angle.sourceUrl!));
-    if (matched) return matched;
+    const matchedUnused = posts.find(
+      (p) => !used.has(p.id) && urlsMatch(p.url, angle.sourceUrl!),
+    );
+    if (matchedUnused) return matchedUnused;
   }
   if (angle.sourceTitle) {
     const title = angle.sourceTitle.toLowerCase();
@@ -41,7 +45,14 @@ function findPostForAngle(
     );
     if (matched) return matched;
   }
-  return posts.find((p) => !used.has(p.id));
+  // Next unused post (different cover). Only fall back to a already-used match
+  // when every post is already claimed — better a shared thumb than none.
+  const unused = posts.find((p) => !used.has(p.id));
+  if (unused) return unused;
+  if (angle.sourceUrl) {
+    return posts.find((p) => urlsMatch(p.url, angle.sourceUrl!));
+  }
+  return undefined;
 }
 
 export function enrichAngleWithPost(

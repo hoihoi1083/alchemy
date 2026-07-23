@@ -109,7 +109,11 @@ export function VisualCaptionStudioClient() {
       else if (previewUrl) fd.set("video_url", previewUrl);
       fd.set("clips", JSON.stringify(lines));
 
-      const res = await fetch("/api/burn-visual-captions", { method: "POST", body: fd });
+      const res = await fetch("/api/burn-visual-captions", {
+        method: "POST",
+        body: fd,
+        credentials: "include",
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? t.exportFailed);
 

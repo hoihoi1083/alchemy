@@ -3063,50 +3063,93 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       });
       setImageBusy(true);
       try {
-        const fd = new FormData();
-        fd.set("visual_style", visualStyleId);
-        fd.set("art_style", artStyleId);
-        fd.set("promotion_mode", promotionMode);
-        if (brandProfile) fd.set("brand_profile", JSON.stringify(brandProfile));
-        fd.set("brand_kit", JSON.stringify(brandKit));
-        fd.set(
-          "product_name",
-          isConceptStoryboardOutput ? effectivePromoteName : product.trim(),
+        const buildStoryboardFd = (planForGen: VideoStoryboardPlan | null, sceneIndexes?: number[]) => {
+          const fd = new FormData();
+          fd.set("visual_style", visualStyleId);
+          fd.set("art_style", artStyleId);
+          fd.set("promotion_mode", promotionMode);
+          if (brandProfile) fd.set("brand_profile", JSON.stringify(brandProfile));
+          fd.set("brand_kit", JSON.stringify(brandKit));
+          fd.set(
+            "product_name",
+            isConceptStoryboardOutput ? effectivePromoteName : product.trim(),
+          );
+          if (conceptIdea.trim()) fd.set("concept_idea", conceptIdea.trim());
+          fd.set("business", business.trim());
+          fd.set("headline", headline.trim());
+          fd.set("subline", subline.trim());
+          fd.set("offer", offer.trim());
+          fd.set("storyboard_brief", storyboardBrief.trim());
+          fd.set("duration", storyboardTrimDuration);
+          fd.set("scene_count", storyboardSceneCount);
+          fd.set("prompt_market", promptMarket);
+          fd.set("subject_framing", subjectFraming);
+          fd.set("prompt_extra", effectivePromptExtra());
+          fd.set("aspect_ratio", effectiveImageAspectRatio);
+          fd.set(
+            "endpoint",
+            isConceptStoryboardOutput && !productPhoto && !imageRefPhoto
+              ? TEXT_ENDPOINT
+              : referenceStrategy.sendPixelsToFal || (referenceStrategy.kind === "style-only" && imageRefPhoto)
+                ? EDIT_ENDPOINT
+                : TEXT_ENDPOINT,
+          );
+          if (planForGen) {
+            fd.set("storyboard_plan", JSON.stringify(planForGen));
+          }
+          if (researchReelAnalysis) {
+            fd.set("research_reel_analysis", JSON.stringify(researchReelAnalysis));
+          }
+          if (sceneIndexes?.length) {
+            fd.set("scene_indexes", sceneIndexes.join(","));
+          }
+          attachReferenceToForm(fd);
+          return fd;
+        };
+
+        // Nano Banana often takes 2–3 min/scene; Vercel caps ~300–800s — generate in batches of 2.
+        const STORYBOARD_BATCH_SIZE = 2;
+        let planForGen = storyboardPlan;
+
+        const firstIndexes = planForGen
+          ? planForGen.scenes.slice(0, STORYBOARD_BATCH_SIZE).map((s) => s.imageIndex)
+          : [1, 2];
+        const first = await postStoryboardImages(buildStoryboardFd(planForGen, firstIndexes));
+        planForGen = first.plan;
+        const mergedScenes: StoryboardSceneResult[] = [...first.scenes];
+        setStoryboardPlan(planForGen);
+        setStoryboardScenes(
+          [...mergedScenes].sort((a, b) => a.imageIndex - b.imageIndex),
         );
-        if (conceptIdea.trim()) fd.set("concept_idea", conceptIdea.trim());
-        fd.set("business", business.trim());
-        fd.set("headline", headline.trim());
-        fd.set("subline", subline.trim());
-        fd.set("offer", offer.trim());
-        fd.set("storyboard_brief", storyboardBrief.trim());
-        fd.set("duration", storyboardTrimDuration);
-        fd.set("scene_count", storyboardSceneCount);
-        fd.set("prompt_market", promptMarket);
-        fd.set("subject_framing", subjectFraming);
-        fd.set("prompt_extra", effectivePromptExtra());
-        fd.set("aspect_ratio", effectiveImageAspectRatio);
-        fd.set(
-          "endpoint",
-          isConceptStoryboardOutput && !productPhoto && !imageRefPhoto
-            ? TEXT_ENDPOINT
-            : referenceStrategy.sendPixelsToFal || (referenceStrategy.kind === "style-only" && imageRefPhoto)
-              ? EDIT_ENDPOINT
-              : TEXT_ENDPOINT,
-        );
-        // Prefer the user-reviewed plan (DeepSeek outline they can edit before generate).
-        if (storyboardPlan) {
-          fd.set("storyboard_plan", JSON.stringify(storyboardPlan));
+        setImageJobMeta({
+          kind: "storyboard",
+          startedAt: Date.now(),
+          sceneCount: planForGen.scenes.length,
+        });
+
+        const remaining = planForGen.scenes
+          .map((s) => s.imageIndex)
+          .filter((idx) => !mergedScenes.some((s) => s.imageIndex === idx));
+
+        let seedancePrompt = first.seedancePrompt;
+        let endpoint = first.endpoint;
+        for (let i = 0; i < remaining.length; i += STORYBOARD_BATCH_SIZE) {
+          const batch = remaining.slice(i, i + STORYBOARD_BATCH_SIZE);
+          const data = await postStoryboardImages(buildStoryboardFd(planForGen, batch));
+          planForGen = data.plan;
+          seedancePrompt = data.seedancePrompt;
+          endpoint = data.endpoint;
+          mergedScenes.push(...data.scenes);
+          setStoryboardScenes(
+            [...mergedScenes].sort((a, b) => a.imageIndex - b.imageIndex),
+          );
         }
-        if (researchReelAnalysis) {
-          fd.set("research_reel_analysis", JSON.stringify(researchReelAnalysis));
-        }
-        attachReferenceToForm(fd);
-        const data = await postStoryboardImages(fd);
+
         applyGeneratedStoryboard(
-          data.scenes,
-          data.plan,
-          data.seedancePrompt,
-          data.endpoint,
+          [...mergedScenes].sort((a, b) => a.imageIndex - b.imageIndex),
+          planForGen,
+          seedancePrompt,
+          endpoint,
         );
       } catch (e: unknown) {
         setError(friendlyError(e, m.errors.storyboardFailed));

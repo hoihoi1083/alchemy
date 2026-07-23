@@ -305,6 +305,7 @@ function buildLiveWebPrompt(input: {
     "",
     "Rules:",
     `- candidates: exactly ${angleCount} distinct angles grounded in snippets (one per post when possible)`,
+    "- Prefer a DIFFERENT sourceUrl for each candidate when multiple posts are available — do not cite the same viral post for every angle",
     "- topPickIds: ids of best 3 candidates (for legacy; include all candidates anyway)",
     "- Keep every string under 120 chars; use simple punctuation — no raw double-quotes inside JSON strings",
     "- bullets: one pipe-separated string, NOT a JSON array",

@@ -29,9 +29,14 @@ import { wizardPromoteName } from "@/lib/wizard-promote-name";
 import { RESEARCH_REEL_ANALYSIS_MARKER } from "@/lib/reel-analysis-types";
 import type { ResearchReelAnalysis } from "@/lib/reel-analysis-types";
 import { pinStoryboardPlanToReelAnalysis } from "@/lib/reel-reference-brief";
+import { mapPool } from "@/lib/async-pool";
 
 export const runtime = "nodejs";
-export const maxDuration = 300;
+/** Multi-scene Nano Banana can take 2–3 min each; batches stay under this via client chunking. */
+export const maxDuration = 800;
+
+const STORYBOARD_FAL_CONCURRENCY = 2;
+const STORYBOARD_CLIENT_BATCH_HINT = 2;
 
 function extractImageUrls(resultData: unknown): string[] {
   if (!resultData || typeof resultData !== "object") return [];
@@ -256,13 +261,30 @@ export async function POST(request: Request) {
     /* marker-only path: plan should already be pinned client-side */
   }
 
+  const sceneIndexRaw = (formData.get("scene_indexes") as string | null)?.trim() || "";
+  let scenesToGenerate = plan.scenes;
+  if (sceneIndexRaw) {
+    const wanted = new Set(
+      sceneIndexRaw
+        .split(/[,\s]+/)
+        .map((s) => Number(s.trim()))
+        .filter((n) => Number.isFinite(n) && n >= 1),
+    );
+    if (wanted.size > 0) {
+      scenesToGenerate = plan.scenes.filter((s) => wanted.has(s.imageIndex));
+    }
+  }
+  if (!scenesToGenerate.length) {
+    return NextResponse.json({ error: "No storyboard scenes to generate." }, { status: 400 });
+  }
+
   const tokenCost = estimateImageTokens({
     mode: "storyboard",
-    sceneCount: plan.scenes.length,
+    sceneCount: scenesToGenerate.length,
   });
   const charged = await chargeTokens(auth.user.userId, tokenCost, {
     kind: "storyboard",
-    sceneCount: plan.scenes.length,
+    sceneCount: scenesToGenerate.length,
   });
   if ("error" in charged) return charged.error;
   const balanceAfter = charged.balanceAfter;
@@ -299,8 +321,10 @@ export async function POST(request: Request) {
       }
     }
 
-    const scenes = await Promise.all(
-      plan.scenes.map(async (scene) => {
+    const scenes = await mapPool(
+      scenesToGenerate,
+      STORYBOARD_FAL_CONCURRENCY,
+      async (scene) => {
         const prompt = buildStoryboardSceneImagePrompt(scene, plan, vars, {
           referenceConcept: strategy.useReferenceConceptPrompts && !conceptTextOnlyStoryboard,
           conceptTextOnly: conceptTextOnlyStoryboard,
@@ -342,7 +366,7 @@ export async function POST(request: Request) {
           imageUrl: outUrls[0],
           imagePrompt: scene.imagePrompt,
         };
-      }),
+      },
     );
 
     const falUrls = scenes.map((s) => s.imageUrl);
@@ -368,6 +392,8 @@ export async function POST(request: Request) {
       endpoint,
       mode: "storyboard",
       sceneCount: scenes.length,
+      totalPlanScenes: plan.scenes.length,
+      batchHint: STORYBOARD_CLIENT_BATCH_HINT,
       referenceStrategy: strategy.kind,
       tokensCharged: tokenCost,
       creditBalance: balanceAfter,

@@ -56,4 +56,62 @@ describe("research enrich + display angles", () => {
     assert.ok(lite);
     assert.ok(sortedDisplayAngles(enriched)[0].score >= sortedDisplayAngles(enriched).at(-1)!.score);
   });
+
+  it("does not reuse the same Facebook cover for every rewritten angle", () => {
+    const fbPosts: ContentResearchPost[] = [
+      {
+        id: "fb1",
+        title: "多寶手串",
+        url: "https://www.facebook.com/posts/111",
+        snippet: "收藏",
+        coverImageUrl: "https://example.com/fb1.jpg",
+        author: "Yanle Lee",
+        platform: "facebook",
+      },
+      {
+        id: "fb2",
+        title: "手串真偽",
+        url: "https://www.facebook.com/posts/222",
+        snippet: "辨別",
+        coverImageUrl: "https://example.com/fb2.jpg",
+        author: "Other",
+        platform: "facebook",
+      },
+      {
+        id: "fb3",
+        title: "材質比較",
+        url: "https://www.facebook.com/posts/333",
+        snippet: "材質",
+        coverImageUrl: "https://example.com/fb3.jpg",
+        author: "Other2",
+        platform: "facebook",
+      },
+    ];
+    // Planner often cites the same viral post for all 3 rewritten directions.
+    const sharedUrl = fbPosts[0].url;
+    const angles = [92, 89, 88].map((score, i) =>
+      makeAngle("teaching-carousel", {
+        id: `a${i + 1}`,
+        sourceUrl: sharedUrl,
+        sourceTitle: fbPosts[0].title,
+        score,
+      }),
+    );
+    const plan: ContentResearchPlan = {
+      platform: "facebook",
+      platformLabel: "Facebook",
+      topic: "手串",
+      summary: "",
+      researchMode: "live-web",
+      posts: fbPosts,
+      candidates: angles,
+      topPicks: angles,
+    };
+    const enriched = attachSourcePostsToPlan(plan);
+    const covers = enriched.topPicks.map((a) => a.sourceCoverImageUrl);
+    assert.equal(new Set(covers).size, 3);
+    assert.ok(covers.includes("https://example.com/fb1.jpg"));
+    assert.ok(covers.includes("https://example.com/fb2.jpg"));
+    assert.ok(covers.includes("https://example.com/fb3.jpg"));
+  });
 });

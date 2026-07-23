@@ -11,6 +11,15 @@ import { persistAndDurablize } from "@/lib/storage/durable-media";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
+function isUsableImageUrl(url: string | undefined): boolean {
+  const u = url?.trim() ?? "";
+  return (
+    u.startsWith("http") ||
+    u.startsWith("/api/pipeline-files/") ||
+    u.startsWith("/api/library/download/")
+  );
+}
+
 async function burnAndPersist(input: {
   clerkId: string;
   request: Request;
@@ -63,8 +72,8 @@ export async function POST(request: Request) {
       const outputPath = path.join(dir, "image-canvas-overlay.png");
       if (imageFile instanceof File && imageFile.size > 0) {
         await fs.writeFile(inputPath, Buffer.from(await imageFile.arrayBuffer()));
-      } else if (imageUrl?.startsWith("http")) {
-        await materializeMediaInput(imageUrl, inputPath);
+      } else if (isUsableImageUrl(imageUrl)) {
+        await materializeMediaInput(imageUrl!, inputPath);
       } else {
         return NextResponse.json({ error: "image_file or image_url is required." }, { status: 400 });
       }
@@ -82,10 +91,15 @@ export async function POST(request: Request) {
       });
     }
 
-    const body: { image_url?: string; layers?: unknown } = await request.json();
+    let body: { image_url?: string; layers?: unknown };
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
+    }
     const imageUrl = body.image_url?.trim();
     const layers = parseImageCanvasLayers(body.layers);
-    if (!imageUrl?.startsWith("http")) {
+    if (!isUsableImageUrl(imageUrl)) {
       return NextResponse.json({ error: "image_url is required." }, { status: 400 });
     }
     if (!layers.length) {
@@ -96,7 +110,7 @@ export async function POST(request: Request) {
     await fs.mkdir(dir, { recursive: true });
     const inputPath = path.join(dir, "input.png");
     const outputPath = path.join(dir, "image-canvas-overlay.png");
-    await materializeMediaInput(imageUrl, inputPath);
+    await materializeMediaInput(imageUrl!, inputPath);
     const durableUrl = await burnAndPersist({
       clerkId: auth.user.userId,
       request,
