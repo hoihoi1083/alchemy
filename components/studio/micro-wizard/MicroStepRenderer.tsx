@@ -93,15 +93,6 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
                 micro.patchContext({ workflowMode: "combined" });
               }}
             />
-            <ChoiceCard
-              active={wizard.visualStyleId === "concept-cinematic" && wizard.cinematicStitchReel}
-              title={m.wizard.conceptCinematicStitchTitle}
-              description={m.wizard.conceptCinematicStitchDesc}
-              onClick={() => {
-                wizard.applyCinematicStitchRecipe();
-                micro.patchContext({ workflowMode: "combined" });
-              }}
-            />
           </div>
         </ScreenShell>
       );
@@ -141,20 +132,15 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
       );
 
     case "route.combined_style":
+      // Legacy step: cinematic multi-scene stitch is hidden; only storyboard remains.
       return (
         <ScreenShell title={mw.combinedStyleTitle} hint={mw.combinedStyleHint}>
           <div className="grid gap-2 sm:grid-cols-2">
             <ChoiceCard
-              active={micro.ctx.combinedStyle === "cinematic"}
-              title={m.wizard.conceptCinematicStitchTitle}
-              description={m.wizard.conceptCinematicStitchDesc}
-              onClick={() => {
-                micro.setCombinedStyle("cinematic");
-                wizard.applyCinematicStitchRecipe();
-              }}
-            />
-            <ChoiceCard
-              active={micro.ctx.combinedStyle === "animate"}
+              active={
+                micro.ctx.combinedStyle === "animate" ||
+                wizard.visualStyleId === "storyboard-video"
+              }
               title={mw.combinedAnimateTitle}
               description={mw.combinedAnimateDesc}
               onClick={() => {

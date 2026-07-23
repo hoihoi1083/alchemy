@@ -476,12 +476,10 @@ export function resolveMicroSteps(
   }
 
   if (ctx.promotionMode === "concept" && ctx.workflowMode === "combined") {
+    // Image+video defaults to storyboard; cinematic multi-scene stitch is hidden from the picker.
     const cinematic =
       ctx.combinedStyle === "cinematic" ||
       state.visualStyleId === "concept-cinematic";
-    if (!ctx.combinedStyle && !cinematic) {
-      return wrapSteps(["route.combined_style"], ctx);
-    }
     if (cinematic && state.visualStyleId !== "concept-cinematic") {
       ids.push("route.cinematic_mode");
     }

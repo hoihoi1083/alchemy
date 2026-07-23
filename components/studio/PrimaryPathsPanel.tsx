@@ -3,14 +3,13 @@
 import { useState } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 import { useWizard } from "@/components/studio/WizardContext";
-import { CINEMATIC_SCENE_COUNTS, type CinematicSceneCount } from "@/lib/cinematic-scene-config";
 import { isContentResearchStyleExtra } from "@/lib/content-research-promote";
 
 type Variant = "physical-image" | "concept-image" | "physical-video" | "concept-video";
 
 type Props = {
   variant: Variant;
-  /** Show cinematic stitch + recipe shortcuts (concept combined cinematic) */
+  /** Show cinematic single + recipe shortcuts (concept combined cinematic) */
   showCinematicExtras?: boolean;
 };
 
@@ -19,16 +18,13 @@ export function PrimaryPathsPanel({ variant, showCinematicExtras = false }: Prop
   const wizard = useWizard();
   const {
     applyClosestMatchRecipe,
-    applyCinematicStitchRecipe,
     applyPrimaryPath,
     applyPrimaryPathConcept,
     applyPrimaryPathConceptVideo,
     applyPrimaryPathVideoOnly,
     applyQuickTest8sRecipe,
     cinematicSceneCount,
-    formatCinematicCopy,
     imageCreativeMode,
-    onCinematicSceneCountChange,
     promptExtra,
     promotionMode,
     videoCreativeMode,
@@ -230,40 +226,7 @@ export function PrimaryPathsPanel({ variant, showCinematicExtras = false }: Prop
               description={m.wizard.conceptCinematicSingleDesc}
               onClick={() => applyPrimaryPathConceptVideo("cinematic")}
             />
-            <PathButton
-              compact
-              active={visualStyleId === "concept-cinematic" && cinematicSceneCount > 1}
-              title={m.wizard.conceptCinematicStitchTitle}
-              description={m.wizard.conceptCinematicStitchDesc}
-              onClick={applyCinematicStitchRecipe}
-            />
           </div>
-          {visualStyleId === "concept-cinematic" ? (
-            <div className="mt-3 rounded-lg border border-fuchsia-200 bg-white/80 p-2">
-              <label className="flex flex-wrap items-center gap-2 text-xs text-fuchsia-950">
-                <span className="font-semibold">{m.wizard.cinematicSceneCountLabel}</span>
-                <select
-                  value={cinematicSceneCount}
-                  onChange={(e) =>
-                    onCinematicSceneCountChange(Number(e.target.value) as CinematicSceneCount)
-                  }
-                  className="rounded-md border border-fuchsia-300 bg-white px-2 py-1 text-xs text-fuchsia-950"
-                >
-                  {CINEMATIC_SCENE_COUNTS.map((n) => (
-                    <option key={n} value={n}>
-                      {n === 1
-                        ? m.wizard.conceptCinematicSingleTitle
-                        : formatCinematicCopy(m.wizard.cinematicSceneCountOption, n)}
-                    </option>
-                  ))}
-                </select>
-                <span className="text-fuchsia-800">
-                  {formatCinematicCopy(m.wizard.cinematicSceneCountTotalHint)}
-                </span>
-              </label>
-              <p className="mt-1 text-[11px] text-fuchsia-800">{m.wizard.cinematicSceneCountHint}</p>
-            </div>
-          ) : null}
           <div className="mt-3 rounded-lg border border-cyan-200 bg-cyan-50/80 p-2">
             <p className="text-xs font-semibold text-cyan-900">{m.wizard.closestMatchRecipeTitle}</p>
             <p className="mt-1 text-xs text-cyan-800">{m.wizard.closestMatchRecipeHint}</p>

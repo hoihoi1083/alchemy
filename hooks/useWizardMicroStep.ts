@@ -303,6 +303,13 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
 
     if (currentId === "route.output_goal" && ctx.workflowMode) {
       wizard.onWorkflowModeChange(ctx.workflowMode);
+      // Image+video: skip cinematic stitch picker — default to storyboard animate path.
+      if (ctx.workflowMode === "combined" && ctx.combinedStyle !== "cinematic") {
+        patchContext({ combinedStyle: "animate" });
+        if (!wizard.isUgcPresenterOutput && wizard.visualStyleId !== "concept-cinematic") {
+          wizard.selectVisualStyle("storyboard-video");
+        }
+      }
     }
 
     if (currentId === "route.intake") {
@@ -369,7 +376,7 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
       wizard.setImageCreativeMode(wizard.imageRefPhoto ? "reference-concept" : "promo-ai");
       if (
         (ctx.workflowMode === "combined" || wizard.workflowMode === "combined") &&
-        ctx.combinedStyle === "animate" &&
+        ctx.combinedStyle !== "cinematic" &&
         !wizard.isUgcPresenterOutput
       ) {
         wizard.selectVisualStyle("storyboard-video");
@@ -378,7 +385,7 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
         ...state,
         visualStyleId:
           (ctx.workflowMode === "combined" || wizard.workflowMode === "combined") &&
-          ctx.combinedStyle === "animate" &&
+          ctx.combinedStyle !== "cinematic" &&
           !wizard.isUgcPresenterOutput
             ? ("storyboard-video" as const)
             : state.visualStyleId,
@@ -435,7 +442,7 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
 
     autoAdvancedRef.current = null;
     setStepIndex(nextIndex);
-  }, [blockReason, ctx, currentId, handoffLegacy, state, stepIndex, steps.length, wizard]);
+  }, [blockReason, ctx, currentId, handoffLegacy, patchContext, state, stepIndex, steps.length, wizard]);
 
   const goBack = useCallback(() => {
     autoAdvancedRef.current = null;

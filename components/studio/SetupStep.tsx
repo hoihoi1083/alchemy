@@ -12,7 +12,6 @@ import { isBrandVideoStyle, isCreativeVideoStyle, isBrandVisualStyle, isStoryboa
 import { UploadZone } from "@/components/UploadZone";
 import { ReferenceUploadZone } from "@/components/ReferenceUploadZone";
 import { ContentResearchPanel } from "@/components/content-research/ContentResearchPanel";
-import { CINEMATIC_SCENE_COUNTS, type CinematicSceneCount } from "@/lib/cinematic-scene-config";
 import type { UserReferenceBrief } from "@/lib/user-reference-brief";
 import { BrandKitPanel } from "@/components/studio/BrandKitPanel";
 import { VideoSettingsPanel } from "@/components/VideoSettingsPanel";
@@ -22,7 +21,7 @@ import { VideoOutputSourceCard } from "@/components/studio/VideoOutputSourceCard
 import { isContentResearchStyleExtra } from "@/lib/content-research-promote";
 
 export function SetupStep() {
-  const { advancedSection, analyzeBrand, applyClosestMatchRecipe, applyCinematicStitchRecipe, applyPrimaryPath, applyPrimaryPathConcept, applyPrimaryPathConceptVideo, applyPrimaryPathVideoOnly, applyPromptRebuild, applyQuickTest8sRecipe, artStyleId, brandAnalyzeBusy, brandAnalyzeNote, brandSocialHint, brandWebsiteUrl, business, cinematicSceneCount, conceptIdea, continueSetupLabel, effectivePromoteName, effectivePromptExtra, setupNextDisabled, setupNextDisabledReason, creativeVideoBrief, error, formatCinematicCopy, goNextFromSetup, headline, imageCreativeMode, imagePrompt, isConceptStoryboardOutput, isContentResearchVideoPath, isStoryboardOutput, lockedCampaignMode, m, offer, onCinematicSceneCountChange, onImageInputModeChange, onProductPhotoSelected, onImageCreativeModeChange, onReferenceAdFile, onVideoCreativeModeChange, onWorkflowModeChange, planAiVideoPrompt, product, productPhoto, promotionMode, promptExtra, promptMarket, referenceAd, referenceIsVideo, referencePreviewUrl, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, runShipItPipeline, selectVisualStyle, setArtStyleId, setBrandKit, setBrandSocialHint, setBrandWebsiteUrl, setBusiness, setCampaignTheme, setConceptIdea, setConceptImageVisionNote, setCreativeVideoBrief, setError, setExtraKitPhotos, setHeadline, setImageAspectRatio, setImageCreativeMode, setImageOutputMode, setImagePrompt, setImageRefPhoto, setOffer, setProduct, setPromptExtra, setPromptMarket, setReferenceCarouselSlideCount, setContentResearchApplyRef, setShipItMode, setShowAdvancedSetup, setShowAdvancedSetupPrompts, setStoryboardBrief, setSubjectFraming, setSubline, setUserReferenceBrief, setUseOriginalImage, setVideoPrompt, setVideoSettings, shipItEligible, shipItVisionBlocked, shipItMode, shipItPipelineBusy, showAdvancedSetup, showAdvancedSetupPrompts, storyboardBrief, subjectFraming, subline, templateId, templateSlotStatus, uploadPreviewUrl, usesCompositor, usesReferenceConceptForImage, videoCreativeMode, videoPrompt, videoSettings, visualStyleId, workflowMode } = useWizard();
+  const { advancedSection, analyzeBrand, applyClosestMatchRecipe, applyPrimaryPath, applyPrimaryPathConcept, applyPrimaryPathConceptVideo, applyPrimaryPathVideoOnly, applyPromptRebuild, applyQuickTest8sRecipe, artStyleId, brandAnalyzeBusy, brandAnalyzeNote, brandSocialHint, brandWebsiteUrl, business, cinematicSceneCount, conceptIdea, continueSetupLabel, effectivePromoteName, effectivePromptExtra, setupNextDisabled, setupNextDisabledReason, creativeVideoBrief, error, goNextFromSetup, headline, imageCreativeMode, imagePrompt, isConceptStoryboardOutput, isContentResearchVideoPath, isStoryboardOutput, lockedCampaignMode, m, offer, onCinematicSceneCountChange, onImageInputModeChange, onProductPhotoSelected, onImageCreativeModeChange, onReferenceAdFile, onVideoCreativeModeChange, onWorkflowModeChange, planAiVideoPrompt, product, productPhoto, promotionMode, promptExtra, promptMarket, referenceAd, referenceIsVideo, referencePreviewUrl, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, runShipItPipeline, selectVisualStyle, setArtStyleId, setBrandKit, setBrandSocialHint, setBrandWebsiteUrl, setBusiness, setCampaignTheme, setConceptIdea, setConceptImageVisionNote, setCreativeVideoBrief, setError, setExtraKitPhotos, setHeadline, setImageAspectRatio, setImageCreativeMode, setImageOutputMode, setImagePrompt, setImageRefPhoto, setOffer, setProduct, setPromptExtra, setPromptMarket, setReferenceCarouselSlideCount, setContentResearchApplyRef, setShipItMode, setShowAdvancedSetup, setShowAdvancedSetupPrompts, setStoryboardBrief, setSubjectFraming, setSubline, setUserReferenceBrief, setUseOriginalImage, setVideoPrompt, setVideoSettings, shipItEligible, shipItVisionBlocked, shipItMode, shipItPipelineBusy, showAdvancedSetup, showAdvancedSetupPrompts, storyboardBrief, subjectFraming, subline, templateId, templateSlotStatus, uploadPreviewUrl, usesCompositor, usesReferenceConceptForImage, videoCreativeMode, videoPrompt, videoSettings, visualStyleId, workflowMode } = useWizard();
   const isConcept = promotionMode === "concept";
   const isConceptImageOnly = isConcept && workflowMode === "image-only";
   const isConceptVideoOnly = isConcept && workflowMode === "video-only";
@@ -774,45 +773,7 @@ export function SetupStep() {
             <p className="font-semibold text-fuchsia-950">{m.wizard.conceptCinematicSingleTitle}</p>
             <p className="mt-0.5 text-fuchsia-800">{m.wizard.conceptCinematicSingleDesc}</p>
           </button>
-          <button
-            type="button"
-            onClick={applyCinematicStitchRecipe}
-            className={`rounded-lg border px-3 py-2 text-left text-xs ${
-              visualStyleId === "concept-cinematic" && cinematicSceneCount > 1
-                ? "border-fuchsia-400 bg-white"
-                : "border-fuchsia-200 bg-white/90"
-            }`}
-          >
-            <p className="font-semibold text-fuchsia-950">{m.wizard.conceptCinematicStitchTitle}</p>
-            <p className="mt-0.5 text-fuchsia-800">{m.wizard.conceptCinematicStitchDesc}</p>
-          </button>
         </div>
-        {visualStyleId === "concept-cinematic" && (
-          <div className="mt-3 rounded-lg border border-fuchsia-200 bg-white/80 p-2">
-            <label className="flex flex-wrap items-center gap-2 text-xs text-fuchsia-950">
-              <span className="font-semibold">{m.wizard.cinematicSceneCountLabel}</span>
-              <select
-                value={cinematicSceneCount}
-                onChange={(e) =>
-                  onCinematicSceneCountChange(Number(e.target.value) as CinematicSceneCount)
-                }
-                className="rounded-md border border-fuchsia-300 bg-white px-2 py-1 text-xs text-fuchsia-950"
-              >
-                {CINEMATIC_SCENE_COUNTS.map((n) => (
-                  <option key={n} value={n}>
-                    {n === 1
-                      ? m.wizard.conceptCinematicSingleTitle
-                      : formatCinematicCopy(m.wizard.cinematicSceneCountOption, n)}
-                  </option>
-                ))}
-              </select>
-              <span className="text-fuchsia-800">
-                {formatCinematicCopy(m.wizard.cinematicSceneCountTotalHint)}
-              </span>
-            </label>
-            <p className="mt-1 text-[11px] text-fuchsia-800">{m.wizard.cinematicSceneCountHint}</p>
-          </div>
-        )}
         <div className="mt-3 rounded-lg border border-cyan-200 bg-cyan-50/80 p-2">
           <p className="text-xs font-semibold text-cyan-900">{m.wizard.closestMatchRecipeTitle}</p>
           <p className="mt-1 text-xs text-cyan-800">{m.wizard.closestMatchRecipeHint}</p>
