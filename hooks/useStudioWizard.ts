@@ -3301,8 +3301,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
             num_images: effectiveImageOutputMode === "ab" ? 2 : 1,
           }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? m.errors.polishFailed);
+        const data = await readGenerateJson(res);
+        if (!res.ok) throw new Error((data.error as string) ?? m.errors.polishFailed);
         notifyCreditBalance(readCreditBalanceFromResponse(data));
         const urls = (data.imageUrls as string[] | undefined) ?? [data.imageUrl as string];
         return applyGeneratedImages(urls, data.endpoint as string | undefined);
