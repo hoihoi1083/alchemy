@@ -33,6 +33,9 @@ const FFMPEG_TRACE = [
   "./node_modules/ffprobe-static/bin/linux/x64/**",
 ];
 
+/** Caption overlay burn needs CJK fonts (gitignored TTFs downloaded at build). */
+const COMPOSITOR_FONT_TRACE = ["./public/compositor/fonts/**/*"];
+
 const FFMPEG_API_ROUTES = [
   "/api/add-bgm",
   "/api/analyze-beats",
@@ -49,15 +52,32 @@ const FFMPEG_API_ROUTES = [
   "/api/trim-video",
 ] as const;
 
+const FONT_API_ROUTES = [
+  "/api/burn-script-captions",
+  "/api/burn-visual-captions",
+  "/api/burn-image-text",
+  "/api/burn-image-canvas",
+  "/api/compose",
+] as const;
+
 const nextConfig: NextConfig = {
   outputFileTracingRoot: path.join(__dirname),
   transpilePackages: ["konva", "react-konva"],
   poweredByHeader: false,
   // Keep static binaries outside the webpack bundle so Vercel can spawn them.
   serverExternalPackages: ["ffmpeg-static", "ffprobe-static"],
-  outputFileTracingIncludes: Object.fromEntries(
-    FFMPEG_API_ROUTES.map((route) => [route, FFMPEG_TRACE]),
-  ),
+  outputFileTracingIncludes: {
+    ...Object.fromEntries(FFMPEG_API_ROUTES.map((route) => [route, FFMPEG_TRACE])),
+    ...Object.fromEntries(
+      FONT_API_ROUTES.map((route) => [
+        route,
+        [
+          ...(FFMPEG_API_ROUTES as readonly string[]).includes(route) ? FFMPEG_TRACE : [],
+          ...COMPOSITOR_FONT_TRACE,
+        ],
+      ]),
+    ),
+  },
   experimental: {
     serverActions: {
       bodySizeLimit: "100mb",

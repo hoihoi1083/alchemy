@@ -440,8 +440,34 @@ export function CaptionStudioClient() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? m.errors.voiceoverFailed);
       const tracks = (data.tracks ?? []) as VoicePreviewTrack[];
-      setVoicePreviewTracks(tracks);
-      setSelectedVoicePreviewId(tracks[0]?.id ?? null);
+      // Library audio needs cookies; materialize to blob so <audio> always plays.
+      const playable: VoicePreviewTrack[] = [];
+      for (const track of tracks) {
+        const url = track.audioUrl?.trim();
+        if (!url) continue;
+        if (url.startsWith("/api/library/") || url.includes("/api/library/download/")) {
+          try {
+            const audioRes = await fetch(withCacheBust(url), {
+              credentials: "include",
+              cache: "no-store",
+            });
+            if (!audioRes.ok) throw new Error(`audio ${audioRes.status}`);
+            const blob = await audioRes.blob();
+            playable.push({ ...track, audioUrl: URL.createObjectURL(blob) });
+            continue;
+          } catch {
+            /* fall through to raw URL */
+          }
+        }
+        playable.push(track);
+      }
+      setVoicePreviewTracks((prev) => {
+        for (const t of prev) {
+          if (t.audioUrl?.startsWith("blob:")) URL.revokeObjectURL(t.audioUrl);
+        }
+        return playable;
+      });
+      setSelectedVoicePreviewId(playable[0]?.id ?? null);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : m.errors.voiceoverFailed);
     } finally {

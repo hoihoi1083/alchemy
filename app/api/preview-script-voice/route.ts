@@ -1,3 +1,5 @@
+import { promises as fs } from "fs";
+import path from "path";
 import { NextResponse } from "next/server";
 import { chargeTokens, refundTokens } from "@/lib/billing/charge";
 import { TOKEN_COST } from "@/lib/billing/token-costs";
@@ -9,6 +11,8 @@ import {
 import { jobDir } from "@/lib/pipeline/paths";
 import { pipelineFileUrl } from "@/lib/pipeline/local-input";
 import { ensureJobDir, generateVoicePreviewTracks } from "@/lib/voice-preview";
+import { persistAndDurablize } from "@/lib/storage/durable-media";
+import type { VoicePreviewTrack } from "@/lib/ad-pack-types";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -66,9 +70,33 @@ export async function POST(request: Request) {
         { status: 502 },
       );
     }
+
+    // Pipeline /tmp URLs 404 on the next Vercel instance — persist MP3s to R2.
+    const durableTracks: VoicePreviewTrack[] = [];
+    for (const track of tracks) {
+      const fileName = path.basename(new URL(track.audioUrl, "http://local").pathname);
+      const filePath = path.join(dir, fileName);
+      let audioUrl = track.audioUrl;
+      try {
+        const bytes = await fs.readFile(filePath);
+        audioUrl = await persistAndDurablize({
+          clerkId: auth.user.userId,
+          kind: "audio",
+          sourceUrl: `voice-preview://${jobId}/${fileName}`,
+          fallbackUrl: track.audioUrl,
+          bytes,
+          contentType: "audio/mpeg",
+          name: `voice-preview-${track.presetId}`,
+        });
+      } catch {
+        /* keep pipeline fallback */
+      }
+      durableTracks.push({ ...track, audioUrl });
+    }
+
     await trackUsage(auth.user.userId, "voiceover");
     return NextResponse.json({
-      tracks,
+      tracks: durableTracks,
       errors,
       jobId,
       tokensCharged: tokenCost,

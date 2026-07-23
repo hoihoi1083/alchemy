@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "dev:clean": "rm -rf .next && next dev",
-    "build": "next build",
+    "build": "npm run setup:compositor && next build",
     "start": "next start",
     "lint": "next lint",
     "setup:bgm": "bash scripts/setup-bgm.sh",

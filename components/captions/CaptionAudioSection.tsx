@@ -484,7 +484,13 @@ export function CaptionAudioSection({
                         {selectedVoicePreviewId === track.id ? t.selected : t.selectTrack}
                       </button>
                     </div>
-                    <audio src={track.audioUrl} controls className="mt-1 h-7 w-full" />
+                    <audio
+                      src={track.audioUrl}
+                      controls
+                      preload="metadata"
+                      crossOrigin="use-credentials"
+                      className="mt-1 h-7 w-full"
+                    />
                   </div>
                 );
               })}
