@@ -105,10 +105,10 @@ export type PromptVariables = {
 };
 
 const MARKET_HINTS: Record<PromptMarket, string> = {
-  hk: "Hong Kong local boutique aesthetic, modern Asian urban lifestyle, premium but approachable",
-  tw: "Taiwan lifestyle aesthetic, soft natural tones, friendly local brand feel",
-  cn: "Mainland China e-commerce product style, bright clean commercial look, popular on Douyin/Xiaohongshu",
-  en: "International English-market commercial style, clean minimal western retail look",
+  hk: "Hong Kong local boutique aesthetic, modern Asian urban lifestyle, premium but approachable. All on-image marketing copy in Traditional Chinese (繁體中文).",
+  tw: "Taiwan lifestyle aesthetic, soft natural tones, friendly local brand feel. All on-image marketing copy in Traditional Chinese (繁體中文).",
+  cn: "Mainland China e-commerce product style, bright clean commercial look, popular on Douyin/Xiaohongshu. All on-image marketing copy in Simplified Chinese (简体中文).",
+  en: "International English-market commercial style, clean minimal western retail look. All on-image marketing copy in English only.",
 };
 
 const FRAMING_IMAGE: Record<SubjectFraming, string> = {
@@ -369,10 +369,12 @@ export function buildInfoPosterImagePrompt(vars: PromptVariables): string {
   const bulletText = bullets.length
     ? `Supporting bullets (max ${bullets.length}, keep short): ${bullets.join(" · ")}.`
     : "Add 2–3 very short supporting bullets derived from the product category.";
-  const isEn = vars.market === "en";
-  const langHint = isEn
-    ? "Use clean modern English typography with clear hierarchy."
-    : "Use clean modern Traditional Chinese typography (繁體中文) — spell every character accurately.";
+  const langHint =
+    vars.market === "en"
+      ? "Use clean modern English typography with clear hierarchy."
+      : vars.market === "cn"
+        ? "Use clean modern Simplified Chinese typography (简体中文) — spell every character accurately."
+        : "Use clean modern Traditional Chinese typography (繁體中文) — spell every character accurately.";
 
   return joinParts(
     `Create a premium vertical INFO POSTER for ${product} — NOT a generic AI collage, NOT a dark moody ad.`,

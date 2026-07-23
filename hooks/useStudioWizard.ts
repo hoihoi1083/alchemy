@@ -21,6 +21,10 @@ import {
 import { useWizardProgress } from "@/hooks/useWizardProgress";
 import { apiGetBlob } from "@/lib/api/studio-api";
 import {
+  promptMarketFromLocale,
+  voiceoverLocaleFromUiLocale,
+} from "@/lib/copy-locale";
+import {
   postAddBgm,
   postAnalyzeBrand,
   postCampaign,
@@ -1610,7 +1614,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       selectVisualStyle("ugc-presenter");
       setImageOutputMode("single");
       setVoiceoverEnabled(true);
-      setVoiceoverLocale("hk");
+      setVoiceoverLocale(voiceoverLocaleFromUiLocale(locale));
       setVideoSettings((prev: VideoSettings) => ({
         ...prev,
         duration: "6",
@@ -1690,22 +1694,20 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 
   function applyClosestMatchRecipe() {
     applyConceptCinematicWorkflow(true);
-    setPromptMarket("hk");
     setMusicMood("cinematic");
     setMusicSource("library");
     setVoiceoverEnabled(false);
-    setVoiceoverLocale("hk");
+    setVoiceoverLocale(voiceoverLocaleFromUiLocale(locale));
     setCaptionBurnEnabled(false);
   }
 
   function applyQuickTest8sRecipe() {
     applyConceptCinematicWorkflow(false);
     setUseOriginalImage(false);
-    setPromptMarket("hk");
     setMusicMood("cinematic");
     setMusicSource("library");
     setVoiceoverEnabled(false);
-    setVoiceoverLocale("hk");
+    setVoiceoverLocale(voiceoverLocaleFromUiLocale(locale));
     setCaptionBurnEnabled(false);
     setVideoSettings((prev: VideoSettings) => ({
       ...prev,
@@ -4938,7 +4940,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     setReferenceAd(null);
     setError(null);
     setBgmTrack("calm");
-    setPromptMarket(locale === "en" ? "en" : locale === "zh-cn" ? "cn" : "hk");
+    setPromptMarket(promptMarketFromLocale(locale));
     setSubjectFraming("auto");
     setPromptExtra("");
     setArtStyleId(DEFAULT_ART_STYLE);

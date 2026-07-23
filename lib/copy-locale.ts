@@ -1,4 +1,19 @@
 import type { PromptMarket } from "@/lib/prompt-variables";
+import type { VoiceoverLocale } from "@/lib/ad-pack-preferences";
+import type { Locale } from "@/lib/i18n";
+
+/** Map website UI language → AI output market (and voice locale). */
+export function promptMarketFromLocale(locale: Locale): PromptMarket {
+  if (locale === "en") return "en";
+  if (locale === "zh-cn") return "cn";
+  return "hk";
+}
+
+export function voiceoverLocaleFromUiLocale(locale: Locale): VoiceoverLocale {
+  if (locale === "en") return "en";
+  if (locale === "zh-cn") return "cn";
+  return "hk";
+}
 
 /** Language for on-image copy — separate from market visual style. */
 export type CopyLocale = "en" | "zh-hant" | "zh-hans";
@@ -29,14 +44,18 @@ export function inferCopyLocale(
   return "zh-hant";
 }
 
-/** Prompt market selects Chinese script — overrides reference-image 简体. */
+/**
+ * Prompt market selects on-image script.
+ * UI locale drives market (en → English, zh-cn → 简体, zh → 繁體).
+ */
 export function resolveCopyLocale(
   market: PromptMarket,
-  ...samples: (string | undefined)[]
+  ..._samples: (string | undefined)[]
 ): CopyLocale {
+  if (market === "en") return "en";
   if (market === "cn") return "zh-hans";
   if (market === "hk" || market === "tw") return "zh-hant";
-  return inferCopyLocale(market, ...samples);
+  return inferCopyLocale(market, ..._samples);
 }
 
 export function marketChineseScriptBlock(market: PromptMarket): string {

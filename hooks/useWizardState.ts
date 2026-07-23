@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ImagePostflight } from "@/lib/image-postflight";
 import type { ImageVisionReview } from "@/lib/image-vision-gate";
 import type { ImageUploadWarning } from "@/lib/image-upload-quality";
@@ -26,6 +26,10 @@ import type { ImageTextMode } from "@/lib/image-text-mode";
 import type { BrandKit } from "@/lib/brand-kit";
 import { DEFAULT_BRAND_KIT, loadBrandKitFromStorage } from "@/lib/brand-kit";
 import type { PromptMarket, SubjectFraming } from "@/lib/prompts";
+import {
+  promptMarketFromLocale,
+  voiceoverLocaleFromUiLocale,
+} from "@/lib/copy-locale";
 import type { ReferenceClipId } from "@/lib/reference-clips";
 import type { TemplateId } from "@/lib/templates";
 import {
@@ -111,7 +115,7 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn") {
   const [imageInputMode, setImageInputMode] = useState<ImageInputMode>(DEFAULT_IMAGE_INPUT_MODE);
 
   const [promptMarket, setPromptMarket] = useState<PromptMarket>(() =>
-    locale === "en" ? "en" : locale === "zh-cn" ? "cn" : "hk",
+    promptMarketFromLocale(locale),
   );
   const [subjectFraming, setSubjectFraming] = useState<SubjectFraming>("auto");
   const [promptExtra, setPromptExtra] = useState("");
@@ -139,7 +143,15 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn") {
     useState<StoryboardSceneCount>("auto");
   const [musicMood, setMusicMood] = useState<MusicMood>("auto");
   const [voiceoverEnabled, setVoiceoverEnabled] = useState(false);
-  const [voiceoverLocale, setVoiceoverLocale] = useState<VoiceoverLocale>("hk");
+  const [voiceoverLocale, setVoiceoverLocale] = useState<VoiceoverLocale>(() =>
+    voiceoverLocaleFromUiLocale(locale),
+  );
+
+  // Website language toggle drives AI output language (and voice locale).
+  useEffect(() => {
+    setPromptMarket(promptMarketFromLocale(locale));
+    setVoiceoverLocale(voiceoverLocaleFromUiLocale(locale));
+  }, [locale]);
   const [storyboardSceneReplaceBusy, setStoryboardSceneReplaceBusy] = useState<number | null>(null);
   const [storyboardSceneRegenerateBusy, setStoryboardSceneRegenerateBusy] = useState<number | null>(
     null,

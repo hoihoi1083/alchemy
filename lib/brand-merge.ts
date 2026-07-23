@@ -1,5 +1,4 @@
 import type { BrandKit } from "@/lib/brand-kit";
-import { DEFAULT_BRAND_KIT } from "@/lib/brand-kit";
 import type { BrandProfile } from "@/lib/brand-profile";
 import { newImageCanvasTextLayer, type ImageCanvasLayer } from "@/lib/image-canvas-layers";
 
@@ -10,13 +9,10 @@ export function extractHexColors(text: string): string[] {
 
 export function brandKitHasPromptContent(kit: BrandKit | null | undefined): boolean {
   if (!kit) return false;
-  return Boolean(
-    kit.tagline.trim() ||
-      kit.logoUrl ||
-      kit.primaryColor !== DEFAULT_BRAND_KIT.primaryColor ||
-      kit.secondaryColor !== DEFAULT_BRAND_KIT.secondaryColor ||
-      kit.accentColor !== DEFAULT_BRAND_KIT.accentColor,
-  );
+  // Logo alone must NOT force Brand Kit into AI image prompts — palette defaults
+  // (green / near-black / amber) otherwise get painted as literal color bars.
+  // Kit colors stay for canvas / compositor; AI freely designs the full image.
+  return Boolean(kit.tagline.trim());
 }
 
 export function mergeBrandProfileIntoKit(profile: BrandProfile, kit: BrandKit): BrandKit {
@@ -40,16 +36,10 @@ export function effectiveBrandHeadline(
 }
 
 export function brandKitPromptBlock(kit: BrandKit): string {
-  const fontLabel =
-    kit.fontPreset === "pingfang"
-      ? "PingFang / Chinese-friendly sans"
-      : kit.fontPreset === "inter"
-        ? "Inter / modern international sans"
-        : "Noto Sans / clean multilingual sans";
+  // Do not inject primary/secondary/accent hex into AI image prompts — models
+  // often paint them as literal green/black/yellow bars. Palette is canvas-only.
   return [
     kit.tagline.trim() ? `Brand tagline for typography tone: "${kit.tagline.trim()}".` : "",
-    `Brand palette — primary ${kit.primaryColor}, secondary ${kit.secondaryColor}, accent ${kit.accentColor}. Use for backgrounds, highlights, and on-image text color harmony.`,
-    `Typography mood: ${fontLabel}.`,
     // Never ask the model to draw marks — it invents flasks, "logo" text, CTA chips.
     // Users add the real PNG themselves via Quick fix / canvas after generate.
     "No corner badges, seals, app icons, watermarks, peeled-sticker corners, or placeholder labels. Never render English meta words such as CTA, logo, brand, or watermark.",
