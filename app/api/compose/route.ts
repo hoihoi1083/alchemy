@@ -161,7 +161,7 @@ export async function POST(request: Request) {
     }
     if (message.includes("ffmpeg")) {
       return NextResponse.json(
-        { error: "ffmpeg not found. Install with: brew install ffmpeg" },
+        { error: "Video processing unavailable (ffmpeg). Please retry shortly." },
         { status: 503 },
       );
     }

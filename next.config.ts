@@ -29,6 +29,14 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: path.join(__dirname),
   transpilePackages: ["konva", "react-konva"],
   poweredByHeader: false,
+  // Keep static binaries outside the webpack bundle so Vercel can spawn them.
+  serverExternalPackages: ["ffmpeg-static", "ffprobe-static"],
+  outputFileTracingIncludes: {
+    "/api/**/*": [
+      "./node_modules/ffmpeg-static/**/*",
+      "./node_modules/ffprobe-static/**/*",
+    ],
+  },
   experimental: {
     serverActions: {
       bodySizeLimit: "100mb",

@@ -1,7 +1,10 @@
 import { spawn } from "child_process";
 import { promises as fs } from "fs";
 import path from "path";
+import { getFfmpegPath, getFfprobePath } from "@/lib/pipeline/ffmpeg-bins";
 import { assertSafeRemoteMediaUrl } from "@/lib/pipeline/safe-url";
+
+export { getFfmpegPath, getFfprobePath } from "@/lib/pipeline/ffmpeg-bins";
 
 function run(cmd: string, args: string[]): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -26,13 +29,21 @@ function run(cmd: string, args: string[]): Promise<void> {
   });
 }
 
+function runFfmpeg(args: string[]): Promise<void> {
+  return run(getFfmpegPath(), args);
+}
+
+function runFfprobe(args: string[]): Promise<void> {
+  return run(getFfprobePath(), args);
+}
+
 export async function ensureFfmpeg(): Promise<void> {
   try {
-    await run("ffmpeg", ["-version"]);
-    await run("ffprobe", ["-version"]);
+    await runFfmpeg(["-version"]);
+    await runFfprobe(["-version"]);
   } catch {
     throw new Error(
-      "ffmpeg/ffprobe not found. Install with `brew install ffmpeg` and retry.",
+      "ffmpeg/ffprobe not available on this server. Check that ffmpeg-static and ffprobe-static are installed.",
     );
   }
 }
@@ -51,7 +62,7 @@ export async function extractAudioWav(
   inputVideo: string,
   outputWav: string,
 ): Promise<void> {
-  await run("ffmpeg", [
+  await runFfmpeg([
     "-y",
     "-i",
     inputVideo,
@@ -71,7 +82,7 @@ export async function mergeAudioIntoVideo(
   inputAudio: string,
   outputVideo: string,
 ): Promise<void> {
-  await run("ffmpeg", [
+  await runFfmpeg([
     "-y",
     "-i",
     inputVideo,
@@ -110,7 +121,7 @@ function runCapture(cmd: string, args: string[]): Promise<string> {
 }
 
 export async function getMediaDurationSeconds(filePath: string): Promise<number> {
-  const out = await runCapture("ffprobe", [
+  const out = await runCapture(getFfprobePath(), [
     "-v",
     "error",
     "-show_entries",
@@ -146,7 +157,7 @@ export async function extractVideoFrames(
   for (let i = 0; i < frameCount; i++) {
     const t = (duration * (i + 1)) / (frameCount + 1);
     const out = path.join(outputDir, `frame-${String(i + 1).padStart(2, "0")}.jpg`);
-    await run("ffmpeg", [
+    await runFfmpeg([
       "-y",
       "-ss",
       String(t),
@@ -168,7 +179,7 @@ export async function extractVideoFrames(
 export async function getVideoDimensions(
   filePath: string,
 ): Promise<{ width: number; height: number }> {
-  const out = await runCapture("ffprobe", [
+  const out = await runCapture(getFfprobePath(), [
     "-v",
     "error",
     "-select_streams",
@@ -189,7 +200,7 @@ export async function getVideoDimensions(
 }
 
 export async function videoHasAudioStream(filePath: string): Promise<boolean> {
-  const out = await runCapture("ffprobe", [
+  const out = await runCapture(getFfprobePath(), [
     "-v",
     "error",
     "-select_streams",
@@ -205,7 +216,7 @@ export async function videoHasAudioStream(filePath: string): Promise<boolean> {
 
 /** Convert any audio file to mono WAV for mixing. */
 export async function convertAudioToWav(inputAudio: string, outputWav: string): Promise<void> {
-  await run("ffmpeg", [
+  await runFfmpeg([
     "-y",
     "-i",
     inputAudio,
@@ -254,7 +265,7 @@ export async function placeNarrationNaturalSpeed(
     .filter(Boolean)
     .join(",");
 
-  await run("ffmpeg", [
+  await runFfmpeg([
     "-y",
     "-i",
     inputAudio,
@@ -333,7 +344,7 @@ export async function mixTimedNarrationClips(
   // normalize=1 keeps summed peaks from distorting when any residual overlap remains.
   const filter = `${labels}amix=inputs=${placed.length}:duration=first:dropout_transition=0:normalize=1,asetpts=PTS-STARTPTS[aout]`;
 
-  await run("ffmpeg", [
+  await runFfmpeg([
     "-y",
     ...inputs,
     "-filter_complex",
@@ -376,7 +387,7 @@ export async function fitAudioToDuration(
       speed /= 0.5;
     }
     filters.push(`atempo=${speed.toFixed(4)}`);
-    await run("ffmpeg", [
+    await runFfmpeg([
       "-y",
       "-i",
       inputAudio,
@@ -395,7 +406,7 @@ export async function fitAudioToDuration(
     return;
   }
 
-  await run("ffmpeg", [
+  await runFfmpeg([
     "-y",
     "-i",
     inputAudio,
@@ -434,7 +445,7 @@ export async function addBackgroundMusic(
   const dur = duration.toFixed(3);
 
   if (hasAudio) {
-    await run("ffmpeg", [
+    await runFfmpeg([
       "-y",
       "-i",
       inputVideo,
@@ -461,7 +472,7 @@ export async function addBackgroundMusic(
     return;
   }
 
-  await run("ffmpeg", [
+  await runFfmpeg([
     "-y",
     "-i",
     inputVideo,
@@ -499,7 +510,7 @@ export async function mixNarrationOverVideo(
   const dur = duration.toFixed(3);
 
   if (hasAudio) {
-    await run("ffmpeg", [
+    await runFfmpeg([
       "-y",
       "-i",
       inputVideo,
@@ -524,7 +535,7 @@ export async function mixNarrationOverVideo(
     return;
   }
 
-  await run("ffmpeg", [
+  await runFfmpeg([
     "-y",
     "-i",
     inputVideo,
@@ -574,7 +585,7 @@ export async function burnSubtitles(
   inputSrt: string,
   outputVideo: string,
 ): Promise<void> {
-  await run("ffmpeg", [
+  await runFfmpeg([
     "-y",
     "-i",
     inputVideo,
@@ -591,7 +602,7 @@ export async function attachSoftSubtitleTrack(
   inputSrt: string,
   outputVideo: string,
 ): Promise<void> {
-  await run("ffmpeg", [
+  await runFfmpeg([
     "-y",
     "-i",
     inputVideo,
@@ -628,7 +639,7 @@ export async function concatVideos(inputPaths: string[], outputVideo: string): P
     .join("\n");
   await fs.writeFile(listPath, listBody);
 
-  await run("ffmpeg", [
+  await runFfmpeg([
     "-y",
     "-f",
     "concat",
@@ -657,7 +668,7 @@ export async function encodeImageSequence(
   durationSec: number,
 ): Promise<void> {
   const pattern = path.join(framesDir, "frame_%04d.png");
-  await run("ffmpeg", [
+  await runFfmpeg([
     "-y",
     "-framerate",
     String(fps),

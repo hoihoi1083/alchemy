@@ -1,7 +1,7 @@
 import { spawn } from "child_process";
 import { compositorFontPath, ensureCompositorFonts } from "@/lib/compositor/fonts";
 import type { CaptionLine } from "@/lib/ad-pack-types";
-import { getMediaDurationSeconds } from "@/lib/pipeline/ffmpeg";
+import { getFfmpegPath, getMediaDurationSeconds } from "@/lib/pipeline/ffmpeg";
 
 function run(cmd: string, args: string[]): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -118,7 +118,7 @@ export async function burnCaptionsDrawtext(
     throw new Error("No caption lines to burn.");
   }
 
-  await run("ffmpeg", [
+  await run(getFfmpegPath(), [
     "-y",
     "-i",
     inputVideo,

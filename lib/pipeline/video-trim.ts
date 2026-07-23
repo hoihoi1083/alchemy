@@ -1,7 +1,7 @@
 import { spawn } from "child_process";
 import { promises as fs } from "fs";
 import path from "path";
-import { ensureFfmpeg } from "@/lib/pipeline/ffmpeg";
+import { ensureFfmpeg, getFfmpegPath } from "@/lib/pipeline/ffmpeg";
 
 function run(cmd: string, args: string[]): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -28,7 +28,7 @@ export async function trimVideoFile(
   const start = Math.max(0, startSec);
   const duration = Math.max(0.1, endSec - start);
   await fs.mkdir(path.dirname(outputPath), { recursive: true });
-  await run("ffmpeg", [
+  await run(getFfmpegPath(), [
     "-y",
     "-ss",
     String(start),

@@ -15,6 +15,7 @@ import {
   type CaptionBurnStyle,
 } from "@/lib/caption-burn-styles";
 import {
+  getFfmpegPath,
   getMediaDurationSeconds,
   getVideoDimensions,
   videoHasAudioStream,
@@ -167,5 +168,5 @@ export async function burnCaptionsOverlay(
     outputVideo,
   );
 
-  await run("ffmpeg", args);
+  await run(getFfmpegPath(), args);
 }

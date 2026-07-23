@@ -1,7 +1,7 @@
 import { mkdtemp, readFile, rm, writeFile } from "fs/promises";
 import path from "path";
 import { tmpdir } from "os";
-import { ensureFfmpeg, getMediaDurationSeconds } from "@/lib/pipeline/ffmpeg";
+import { ensureFfmpeg, getFfmpegPath, getMediaDurationSeconds } from "@/lib/pipeline/ffmpeg";
 
 export const SEEDANCE_MAX_REFERENCE_SEC = 15;
 const DIGEST_SEGMENT_COUNT = 5;
@@ -124,7 +124,7 @@ async function extractVideoSegment(
       "+faststart",
       output,
     ];
-    const child = spawn("ffmpeg", args, { stdio: ["ignore", "pipe", "pipe"] });
+    const child = spawn(getFfmpegPath(), args, { stdio: ["ignore", "pipe", "pipe"] });
     let stderr = "";
     child.stderr.on("data", (c: Buffer) => {
       stderr += c.toString();
@@ -168,7 +168,7 @@ async function concatVideoSegments(segmentPaths: string[], output: string): Prom
       "+faststart",
       output,
     ];
-    const child = spawn("ffmpeg", args, { stdio: ["ignore", "pipe", "pipe"] });
+    const child = spawn(getFfmpegPath(), args, { stdio: ["ignore", "pipe", "pipe"] });
     let stderr = "";
     child.stderr.on("data", (c: Buffer) => {
       stderr += c.toString();

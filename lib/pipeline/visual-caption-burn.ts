@@ -10,6 +10,7 @@ import {
 import { escapeXml } from "@/lib/compositor/paper-sticker/svg";
 import type { VisualCaptionClip } from "@/lib/visual-caption-types";
 import {
+  getFfmpegPath,
   getMediaDurationSeconds,
   getVideoDimensions,
   videoHasAudioStream,
@@ -110,5 +111,5 @@ export async function burnVisualCaptionsOverlay(
     outputVideo,
   );
 
-  await run("ffmpeg", args);
+  await run(getFfmpegPath(), args);
 }
