@@ -25,18 +25,39 @@ const securityHeaders = [
   { key: "X-DNS-Prefetch-Control", value: "on" },
 ];
 
+/** Only linux bins + only routes that spawn ffmpeg (avoids 250MB+ deploy blowups). */
+const FFMPEG_TRACE = [
+  "./node_modules/ffmpeg-static/**/*",
+  "./node_modules/ffprobe-static/index.js",
+  "./node_modules/ffprobe-static/package.json",
+  "./node_modules/ffprobe-static/bin/linux/x64/**",
+];
+
+const FFMPEG_API_ROUTES = [
+  "/api/add-bgm",
+  "/api/analyze-beats",
+  "/api/analyze-research-reel",
+  "/api/burn-script-captions",
+  "/api/burn-visual-captions",
+  "/api/compose",
+  "/api/dub-script-voice",
+  "/api/generate-kling-storyboard",
+  "/api/postprocess",
+  "/api/prepare-reference-video",
+  "/api/preview-script-voice",
+  "/api/stitch-videos",
+  "/api/trim-video",
+] as const;
+
 const nextConfig: NextConfig = {
   outputFileTracingRoot: path.join(__dirname),
   transpilePackages: ["konva", "react-konva"],
   poweredByHeader: false,
   // Keep static binaries outside the webpack bundle so Vercel can spawn them.
   serverExternalPackages: ["ffmpeg-static", "ffprobe-static"],
-  outputFileTracingIncludes: {
-    "/api/**/*": [
-      "./node_modules/ffmpeg-static/**/*",
-      "./node_modules/ffprobe-static/**/*",
-    ],
-  },
+  outputFileTracingIncludes: Object.fromEntries(
+    FFMPEG_API_ROUTES.map((route) => [route, FFMPEG_TRACE]),
+  ),
   experimental: {
     serverActions: {
       bodySizeLimit: "100mb",
