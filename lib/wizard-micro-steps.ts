@@ -142,7 +142,7 @@ function allCopyEmpty(state: WizardMicroStepState): boolean {
   );
 }
 
-/** Concept image / combined-animate: pick 概念助手 OR 平台研究 — not both. */
+/** Concept image / combined storyboard: pick 概念助手 OR 平台研究 — not both. */
 export function needsConceptSourceSplit(
   ctx: MicroWizardContext,
   state: Pick<WizardMicroStepState, "visualStyleId">,
@@ -150,9 +150,10 @@ export function needsConceptSourceSplit(
   if (ctx.promotionMode !== "concept") return false;
   if (ctx.workflowMode === "image-only") return true;
   if (ctx.workflowMode === "combined") {
+    // Image+video storyboard path (default). Cinematic stitch / single cinematic skip this split.
     const cinematic =
       ctx.combinedStyle === "cinematic" || state.visualStyleId === "concept-cinematic";
-    return !cinematic && ctx.combinedStyle === "animate";
+    return !cinematic;
   }
   return false;
 }

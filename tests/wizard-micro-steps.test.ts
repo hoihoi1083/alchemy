@@ -568,15 +568,15 @@ describe("wizard v2 parity audit", () => {
     }
   });
 
-  it("concept combined skips cinematic stitch picker and defaults to storyboard", () => {
+  it("concept combined skips cinematic stitch picker and shows research vs assistant", () => {
     const ctx: MicroWizardContext = {
       promotionMode: "concept",
       workflowMode: "combined",
     };
-    const state = baseState({ workflowMode: "combined" });
+    const state = baseState({ workflowMode: "combined", visualStyleId: "storyboard-video" });
     const ids = resolveMicroSteps(ctx, state).map((s) => s.id);
     assert.ok(!ids.includes("route.combined_style"));
-    assert.ok(ids.includes("route.subject") || ids.includes("identity.concept") || ids.includes("route.intake") || ids.includes("route.concept_source"));
+    assert.deepEqual(ids, ["route.concept_source"]);
   });
 
   it("concept combined cinematic single hands off to image step", () => {
