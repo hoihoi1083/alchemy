@@ -1823,7 +1823,7 @@ export const zhCn = {
     voiceoverFailed: "口播合成失败。请检查 FAL_KEY 或关闭口播。",
     ugcPresenterFailed: "数字人视频生成失败。请检查 FAL_KEY 后重试。",
     postProcessIncomplete:
-      "后制未完成 — 最终影片仍是 Seedance 原片（无 BGM/口播）。请重新生成；如持续失败请检查 ffmpeg 和 BGM 设定。",
+      "后制未完成 — 最终仍是未处理的 CDN 原片（未成功写入图库）。请重新生成；如持续失败请检查 ffmpeg／字幕烧录。",
     bgmFilesMissing:
       "背景音乐文件缺失。请用 AI 音乐，或运行 npm run setup:bgm 安装音乐库。",
     planConceptFailed: "概念分析失败，请重试。",

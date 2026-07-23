@@ -4840,8 +4840,15 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       } else {
         setCaptionHandoffVideoUrl(url);
       }
+      // Storyboard/caption burn used to rewrite to /api/pipeline-files/…; durable outputs
+      // are now /api/library/download/…. Only a leftover fal CDN URL means burn/stitch never stuck.
       const wantsProcessed = !isUgcPresenterOutput && (captionBurnEnabled || isStoryboardOutput);
-      if (wantsProcessed && (isFalCdnUrl(url) || !isPipelineFileUrl(url))) {
+      if (
+        wantsProcessed &&
+        isFalCdnUrl(url) &&
+        !isLibraryAssetUrl(url) &&
+        !isPipelineFileUrl(url)
+      ) {
         throw new Error(m.errors.postProcessIncomplete);
       }
       setVideoUrl(url);

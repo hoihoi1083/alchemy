@@ -1822,7 +1822,7 @@ export const zh = {
     voiceoverFailed: "口播合成失敗。請檢查 FAL_KEY 或關閉口播。",
     ugcPresenterFailed: "數字人影片生成失敗。請檢查 FAL_KEY 後再試。",
     postProcessIncomplete:
-      "後製未完成 — 最終影片仍係 Seedance 原片（冇 BGM／口播）。請重新生成；如持續失敗請檢查 ffmpeg 同 BGM 設定。",
+      "後製未完成 — 最終仍係未處理嘅 CDN 原片（未成功寫入本機／圖庫）。請重新生成；如持續失敗請檢查 ffmpeg／字幕燒錄。",
     bgmFilesMissing:
       "背景音樂檔案缺失。請用 AI 音樂，或執行 npm run setup:bgm 安裝音樂庫。",
     planConceptFailed: "概念分析失敗，請再試。",

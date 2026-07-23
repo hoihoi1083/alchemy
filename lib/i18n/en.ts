@@ -1884,7 +1884,7 @@ export const en = {
     voiceoverFailed: "Voiceover dub failed. Check FAL_KEY or disable spoken voiceover.",
     ugcPresenterFailed: "Digital presenter video failed. Check FAL_KEY and try again.",
     postProcessIncomplete:
-      "Post-process incomplete — final file is still the raw Seedance clip (no BGM/voice). Regenerate; check ffmpeg and BGM setup if it persists.",
+      "Post-process incomplete — final file is still a raw CDN clip (not saved to library). Regenerate; check ffmpeg / caption burn if it persists.",
     bgmFilesMissing:
       "Background music files missing. Use AI music or run npm run setup:bgm.",
     planConceptFailed: "Concept analysis failed. Please try again.",
