@@ -139,6 +139,9 @@ export async function signR2PutUrl(
     { expiresIn: expiresInSec },
   );
 }
+
+/** Short-lived signed GET URL for a private object. */
+export async function signR2GetUrl(
   key: string,
   expiresInSec = 3600,
   options?: { downloadFilename?: string; contentType?: string },
