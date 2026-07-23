@@ -794,7 +794,7 @@ export const en = {
       needAdPackHint: "Open Ad pack on this step — plan script (and preview voice) before generating.",
     },
     primaryPathsTitle: "Primary creation paths",
-    primaryPathsHint: "Start with one of these 3 paths. More styles are under Advanced.",
+    primaryPathsHint: "Start with one of these 2 paths. More styles are under Advanced.",
     videoPathsTitle: "Video creation paths",
     videoPathsHint: "Pick how to make your Reel — AI Video Assistant is recommended (upload a product photo kit).",
     videoAssistantStepHint:
@@ -2299,7 +2299,7 @@ export const en = {
     intakeDirectTitle: "Direct create",
     intakeDirectDesc: "Skip research — optional reference upload only.",
     primaryStyleTitle: "Pick a creative direction",
-    primaryStyleHint: "Same shortcuts as classic setup — quick product shot, reference match, model wear, UGC, etc.",
+    primaryStyleHint: "Pick Quick Ad or Model Wear/Use. UGC and reference layout live under video or Advanced.",
     productNameTitle: "Product name",
     productNameHint: "What are you selling? This anchors headlines and prompts.",
     conceptTitle: "Concept assistant",

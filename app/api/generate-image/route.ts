@@ -43,6 +43,11 @@ import {
   parseStrategyFromFormData,
 } from "@/lib/reference-strategy";
 import { resolveArtStyleId, artStyleSystemPrompt } from "@/lib/art-style";
+import {
+  planSingleImageAd,
+  shouldPlanSingleImageAd,
+  type SingleImagePlan,
+} from "@/lib/single-image-plan";
 
 export const runtime = "nodejs";
 export const maxDuration = 180;
@@ -519,6 +524,28 @@ export async function POST(request: Request) {
     );
 
     const imageOutputMode = (formData.get("image_output_mode") as string | null)?.trim() || "";
+    let singleImagePlan: SingleImagePlan | null = null;
+    // Never override specialized client prompts (end-frame, storyboard scene regen, advanced paste).
+    const wantSinglePlan =
+      !clientPrompt &&
+      (!imageOutputMode || imageOutputMode === "single" || imageOutputMode === "ab") &&
+      shouldPlanSingleImageAd(promptMode, imageTextMode);
+    if (wantSinglePlan) {
+      singleImagePlan = await planSingleImageAd({
+        visualStyleId: visualStyle as VisualStyleId,
+        promotionMode,
+        artStyleId,
+        promptMarket,
+        product: productName,
+        business,
+        headline,
+        subline,
+        offer,
+        promptExtra,
+        hasProductPhoto: hasProduct,
+      });
+    }
+
     const tokenCost = imageTokenCostFromRequest({
       numImages,
       imageOutputMode,
@@ -558,9 +585,11 @@ export async function POST(request: Request) {
         {
           structuredReferenceBrief: Boolean(brief),
           aspectRatio: aspectRatioRaw,
+          singleImagePlan,
         },
       );
-      const finalPrompt = clientPrompt || builtPrompt;
+      // Prefer server-built prompt when we ran the single-still planner (teaching-quality DNA).
+      const finalPrompt = singleImagePlan ? builtPrompt : clientPrompt || builtPrompt;
 
       const result = await fal.subscribe(endpoint, {
         input: banana2Input(finalPrompt, imageUrls, aspectRatio, numImages, {

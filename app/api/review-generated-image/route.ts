@@ -34,7 +34,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  const imageUrl = String(body.image_url ?? "").trim();
+  const imageUrlRaw = String(body.image_url ?? "").trim();
+  if (!imageUrlRaw) {
+    return NextResponse.json({ error: "image_url is required." }, { status: 400 });
+  }
+  const imageUrl = imageUrlRaw.startsWith("http")
+    ? imageUrlRaw
+    : imageUrlRaw.startsWith("/")
+      ? new URL(imageUrlRaw, req.url).href
+      : "";
   if (!imageUrl.startsWith("http")) {
     return NextResponse.json({ error: "image_url is required." }, { status: 400 });
   }

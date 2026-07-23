@@ -91,7 +91,7 @@ export async function POST(request: Request) {
   const offer = (formData.get("offer") as string | null)?.trim() || "";
   const promptExtraRaw = (formData.get("prompt_extra") as string | null)?.trim() || "";
   const promptMarket = ((formData.get("prompt_market") as string | null)?.trim() ||
-    "hk") as PromptMarket;
+    "en") as PromptMarket;
   const subjectFraming = ((formData.get("subject_framing") as string | null)?.trim() ||
     "auto") as SubjectFraming;
   const aspectRatio = aspectRatioForApi(

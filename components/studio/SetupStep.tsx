@@ -706,18 +706,6 @@ export function SetupStep() {
         </button>
         <button
           type="button"
-          onClick={() => applyPrimaryPath("reference")}
-          className={`rounded-xl border px-3 py-3 text-left ${
-            imageCreativeMode === "reference-concept"
-              ? "border-indigo-400 bg-indigo-50"
-              : "border-slate-200 bg-white"
-          }`}
-        >
-          <p className="text-sm font-semibold text-slate-900">{m.wizard.pathReferenceTitle}</p>
-          <p className="mt-1 text-xs text-slate-600">{m.wizard.pathReferenceDesc}</p>
-        </button>
-        <button
-          type="button"
           onClick={() => applyPrimaryPath("model")}
           className={`rounded-xl border px-3 py-3 text-left ${
             visualStyleId === "model-wear"
@@ -728,31 +716,45 @@ export function SetupStep() {
           <p className="text-sm font-semibold text-slate-900">{m.wizard.pathModelTitle}</p>
           <p className="mt-1 text-xs text-slate-600">{m.wizard.pathModelDesc}</p>
         </button>
-        <button
-          type="button"
-          onClick={() => applyPrimaryPath("ugc-presenter")}
-          className={`rounded-xl border px-3 py-3 text-left ${
-            visualStyleId === "ugc-presenter"
-              ? "border-rose-400 bg-rose-50"
-              : "border-slate-200 bg-white"
-          }`}
-        >
-          <p className="text-sm font-semibold text-slate-900">{m.wizard.pathUgcPresenterTitle}</p>
-          <p className="mt-1 text-xs text-slate-600">{m.wizard.pathUgcPresenterDesc}</p>
-        </button>
         {workflowMode !== "image-only" && (
-        <button
-          type="button"
-          onClick={() => applyPrimaryPath("storyboard")}
-          className={`rounded-xl border px-3 py-3 text-left ${
-            visualStyleId === "storyboard-video"
-              ? "border-emerald-400 bg-emerald-50"
-              : "border-slate-200 bg-white"
-          }`}
-        >
-          <p className="text-sm font-semibold text-slate-900">{m.wizard.pathStoryboardTitle}</p>
-          <p className="mt-1 text-xs text-slate-600">{m.wizard.pathStoryboardDesc}</p>
-        </button>
+          <>
+            <button
+              type="button"
+              onClick={() => applyPrimaryPath("reference")}
+              className={`rounded-xl border px-3 py-3 text-left ${
+                imageCreativeMode === "reference-concept"
+                  ? "border-indigo-400 bg-indigo-50"
+                  : "border-slate-200 bg-white"
+              }`}
+            >
+              <p className="text-sm font-semibold text-slate-900">{m.wizard.pathReferenceTitle}</p>
+              <p className="mt-1 text-xs text-slate-600">{m.wizard.pathReferenceDesc}</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => applyPrimaryPath("ugc-presenter")}
+              className={`rounded-xl border px-3 py-3 text-left ${
+                visualStyleId === "ugc-presenter"
+                  ? "border-rose-400 bg-rose-50"
+                  : "border-slate-200 bg-white"
+              }`}
+            >
+              <p className="text-sm font-semibold text-slate-900">{m.wizard.pathUgcPresenterTitle}</p>
+              <p className="mt-1 text-xs text-slate-600">{m.wizard.pathUgcPresenterDesc}</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => applyPrimaryPath("storyboard")}
+              className={`rounded-xl border px-3 py-3 text-left ${
+                visualStyleId === "storyboard-video"
+                  ? "border-emerald-400 bg-emerald-50"
+                  : "border-slate-200 bg-white"
+              }`}
+            >
+              <p className="text-sm font-semibold text-slate-900">{m.wizard.pathStoryboardTitle}</p>
+              <p className="mt-1 text-xs text-slate-600">{m.wizard.pathStoryboardDesc}</p>
+            </button>
+          </>
         )}
       </div>
     )}

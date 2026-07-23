@@ -770,13 +770,13 @@ export const zh = {
       needAdPackHint: "請先開啟廣告包 — 規劃講稿（同預聽聲線）再生成。",
     },
     primaryPathsTitle: "主要創作路徑",
-    primaryPathsHint: "先揀以下 3 條主路徑；其他風格放喺進階。",
+    primaryPathsHint: "先揀以下 2 條主路徑；其他風格放喺進階。",
     videoPathsTitle: "影片主路徑",
     videoPathsHint: "揀點樣整 Reel；推薦用 AI 影片助手（上傳產品相片套裝）。",
     videoAssistantStepHint:
       "已選 AI 影片助手 — 按「繼續」到步驟 3 上傳產品、包裝同角度相片，AI 會分析並寫 Seedance prompt。",
     primaryPathsShortcutNote:
-      "呢三個係快捷入口；進階入面一樣可以揀返同一風格，而且選項更多。",
+      "呢兩個係快捷入口；進階入面一樣可以揀返同一風格，而且選項更多。",
     primaryPathsHiddenResearchHint:
       "已透過內容研究設定參考排版同出圖模式 — 可直接填產品相片同文案，然後繼續。",
     pathQuickTitle: "快速廣告",
@@ -2228,7 +2228,7 @@ export const zh = {
     intakeDirectTitle: "直接創作",
     intakeDirectDesc: "跳過研究 — 可選上傳參考圖。",
     primaryStyleTitle: "選擇創作方向",
-    primaryStyleHint: "與經典設定相同 — 快速產品圖、參考匹配、模特穿搭、UGC 等。",
+    primaryStyleHint: "先揀快速廣告或模特兒佩戴／使用。UGC 同參考排版屬影片或其他進階路徑。",
     productNameTitle: "產品名稱",
     productNameHint: "賣緊乜？會用作標題同 prompt 錨點。",
     conceptTitle: "概念助手",

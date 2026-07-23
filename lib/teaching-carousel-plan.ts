@@ -6,7 +6,7 @@ import type {
 } from "@/lib/teaching-carousel-types";
 import { DEFAULT_TEACHING_CAROUSEL_SLIDE_COUNT } from "@/lib/teaching-carousel-types";
 import { artStylePlannerHint, resolveArtStyleId, type ArtStyleId } from "@/lib/art-style";
-import { resolveCopyLocale, plannerCopyLanguageRule } from "@/lib/copy-locale";
+import { resolveCopyLocale, plannerCopyLanguageRule, rewriteCopyToScript, coerceCopyScript } from "@/lib/copy-locale";
 import type { PromotionMode } from "@/lib/promotion-mode";
 import type { PromptMarket } from "@/lib/prompt-variables";
 import type { VisualStyleId } from "@/lib/visual-styles";
@@ -49,13 +49,51 @@ function defaultVisualDna(input: PlanInput): string {
 }
 
 function fallbackSlides(input: PlanInput, count: number): TeachingCarouselSlide[] {
-  const h = input.headline?.trim() || input.product?.trim() || "主題重點";
+  const copyLocale = resolveCopyLocale(
+    input.promptMarket ?? "hk",
+    input.headline,
+    input.subline,
+    input.product,
+  );
+  const h = coerceCopyScript(
+    input.headline?.trim() ||
+      input.product?.trim() ||
+      (copyLocale === "zh-hans" ? "主题重点" : copyLocale === "en" ? "Key topic" : "主題重點"),
+    copyLocale,
+  );
   const lines = (input.subline || "")
     .split(/\||\n/)
     .map((s) => s.trim())
-    .filter(Boolean);
+    .filter(Boolean)
+    .map((s) => coerceCopyScript(s, copyLocale));
   const stylized = resolveArtStyleId(input.artStyleId) !== "realistic";
   const photoRef = isPhotographicReferenceBrief(input.promptExtra ?? "");
+  const pointBody =
+    copyLocale === "zh-hans"
+      ? "补充说明重点，保持一两句"
+      : copyLocale === "en"
+        ? "Add one short supporting point"
+        : "補充說明重點，保持一句到兩句";
+  const takeawayMid =
+    copyLocale === "zh-hans"
+      ? "短句总结，方便记住"
+      : copyLocale === "en"
+        ? "Short takeaway to remember"
+        : "短句總結，方便記住重點";
+  const takeawayEnd =
+    input.offer?.trim() ||
+    (copyLocale === "zh-hans"
+      ? "收藏起来，慢慢对照"
+      : copyLocale === "en"
+        ? "Save this for later"
+        : "收藏起來，慢慢對照");
+  const coverBody =
+    input.subline?.trim() ||
+    (copyLocale === "zh-hans"
+      ? "用几个角度拆解主题重点"
+      : copyLocale === "en"
+        ? "Break the topic into a few clear angles"
+        : "用幾個角度拆解主題重點");
   const slides: TeachingCarouselSlide[] = [];
   for (let i = 0; i < count; i++) {
     const role: TeachingCarouselSlide["role"] =
@@ -64,14 +102,8 @@ function fallbackSlides(input: PlanInput, count: number): TeachingCarouselSlide[
       index: i + 1,
       role,
       title: i === 0 ? h : `${i}. ${lines[i - 1] || h}`,
-      body:
-        i === 0
-          ? input.subline?.trim() || "用幾個角度拆解主題重點"
-          : lines[i - 1] || "補充說明重點，保持一句到兩句",
-      takeaway:
-        i === count - 1
-          ? input.offer?.trim() || "收藏起來，慢慢對照"
-          : "短句總結，方便記住重點",
+      body: i === 0 ? coverBody : lines[i - 1] || pointBody,
+      takeaway: i === count - 1 ? takeawayEnd : takeawayMid,
       composition:
         role === "cover"
           ? input.promotionMode === "concept"
@@ -318,8 +350,8 @@ export async function planTeachingCarousel(input: PlanInput): Promise<TeachingCa
           copyLocale === "en"
             ? "You plan educational social carousel content in English. Output strict JSON only."
             : copyLocale === "zh-hans"
-              ? "You plan educational social carousel content in Simplified Chinese. Output strict JSON only."
-              : "You plan educational social carousel content in Traditional Chinese for HK/TW audiences. Output strict JSON only.",
+              ? "You plan educational social carousel content in Simplified Chinese (简体) ONLY — never Traditional 繁體. Output strict JSON only."
+              : "You plan educational social carousel content in Traditional Chinese (繁體) ONLY — never Simplified 简体. Output strict JSON only.",
       },
       { role: "user", content: buildPlanPrompt(input) },
     ],
@@ -329,6 +361,25 @@ export async function planTeachingCarousel(input: PlanInput): Promise<TeachingCa
     output,
     "Teaching carousel plan",
   );
-  return normalizePlan(parsed, input);
+  const plan = normalizePlan(parsed, input);
+  if (copyLocale === "en") return plan;
+
+  const flat: Record<string, string> = { theme: plan.theme };
+  for (const slide of plan.slides) {
+    flat[`s${slide.index}_title`] = slide.title;
+    flat[`s${slide.index}_body`] = slide.body;
+    flat[`s${slide.index}_takeaway`] = slide.takeaway;
+  }
+  const rewritten = await rewriteCopyToScript(flat, copyLocale);
+  return {
+    ...plan,
+    theme: rewritten.theme || plan.theme,
+    slides: plan.slides.map((slide) => ({
+      ...slide,
+      title: rewritten[`s${slide.index}_title`] || slide.title,
+      body: rewritten[`s${slide.index}_body`] || slide.body,
+      takeaway: rewritten[`s${slide.index}_takeaway`] || slide.takeaway,
+    })),
+  };
 }
 

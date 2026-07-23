@@ -1609,6 +1609,23 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       setImageCreativeMode("reference-concept");
       return;
     }
+    if (path === "quick") {
+      // Image ads stay in the current image workflow — do not force combined/storyboard.
+      if (workflowMode === "video-only") setWorkflowMode("image-only");
+      selectVisualStyle("product");
+      setImageCreativeMode("promo-ai");
+      return;
+    }
+    if (path === "model") {
+      if (workflowMode === "video-only") setWorkflowMode("image-only");
+      selectVisualStyle("model-wear");
+      setImageCreativeMode("promo-ai");
+      // Avoid catalog framing killing the model in the prompt.
+      setSubjectFraming((prev) =>
+        prev === "product-only" || prev === "no-people" ? "auto" : prev,
+      );
+      return;
+    }
     setWorkflowMode("combined");
     if (path === "ugc-presenter") {
       selectVisualStyle("ugc-presenter");
@@ -1776,12 +1793,18 @@ export function useStudioWizard(promotionMode: PromotionMode) {
   async function refreshImageVisionReview(url: string): Promise<ImageVisionReview | null> {
     setImageVisionReviewBusy(true);
     try {
+      const absoluteUrl =
+        url.startsWith("http") || typeof window === "undefined"
+          ? url
+          : url.startsWith("/")
+            ? `${window.location.origin}${url}`
+            : url;
       const res = await fetch("/api/review-generated-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          image_url: url,
+          image_url: absoluteUrl,
           product: product.trim(),
           headline: effectiveBrandHeadline(headline, brandKit, brandProfile),
           image_text_mode: imageTextMode,
@@ -3325,18 +3348,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       effectiveImageMode !== "reference";
 
     if (useConceptTextOnly) {
-      const builtPrompt = buildWizardImagePrompt(
-        getPromptVars(),
-        resolveImagePromptMode(visualStyleId, imageCreativeMode, {
-          promotionMode,
-          workflowMode,
-        }),
-        brandProfile,
-        visualStyleId,
-        brandKit,
-      );
-      const prompt = imagePrompt.trim() || builtPrompt;
-      if (!prompt.trim()) {
+      if (!headline.trim() && !effectivePromoteName && !business.trim()) {
         setError(m.errors.needHeadline);
         return null;
       }
@@ -3350,6 +3362,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
           fd.set("brand_profile", JSON.stringify(brandProfile));
         }
         fd.set("brand_kit", JSON.stringify(brandKit));
+        fd.set("product_name", effectivePromoteName || business.trim());
         fd.set("business", business.trim());
         fd.set("headline", headline.trim());
         fd.set("subline", subline.trim());
@@ -3361,9 +3374,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         fd.set("promotion_mode", promotionMode);
         fd.set("image_text_mode", imageTextMode);
         fd.set("aspect_ratio", effectiveImageAspectRatio);
-        fd.set("prompt", prompt);
+        // Let the server run the single-still planner + build the fal prompt.
         fd.set("endpoint", referenceStrategy.sendPixelsToFal ? EDIT_ENDPOINT : TEXT_ENDPOINT);
         fd.set("num_images", effectiveImageOutputMode === "ab" ? "2" : "1");
+        fd.set("image_output_mode", effectiveImageOutputMode);
         // No product/style pixels — logo is not auto-added; user adds it later.
 
         const res = await fetch("/api/generate-image", { method: "POST", body: fd });
@@ -3416,6 +3430,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         fd.set("brand_profile", JSON.stringify(brandProfile));
       }
       fd.set("brand_kit", JSON.stringify(brandKit));
+      fd.set(
+        "product_name",
+        promotionMode === "concept" ? effectivePromoteName || product.trim() : product.trim(),
+      );
       fd.set("business", business.trim());
       fd.set("headline", headline.trim());
       fd.set("subline", subline.trim());
@@ -3429,6 +3447,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       fd.set("aspect_ratio", effectiveImageAspectRatio);
       fd.set("endpoint", referenceStrategy.sendPixelsToFal ? EDIT_ENDPOINT : TEXT_ENDPOINT);
       fd.set("num_images", effectiveImageOutputMode === "ab" ? "2" : "1");
+      fd.set("image_output_mode", effectiveImageOutputMode);
       attachReferenceToForm(fd);
 
       const res = await fetch("/api/generate-image", { method: "POST", body: fd });

@@ -19,7 +19,7 @@ export function inferProductSceneCategory(product: string): ProductSceneCategory
   ) {
     return "wearable";
   }
-  if (/護膚|skincare|cream|serum|面膜|化妝|beauty|lipstick/.test(p)) return "beauty";
+  if (/護膚|护肤|skincare|cream|serum|精华|精華|面膜|化妝|化妆|beauty|lipstick|精华素|精華素/.test(p)) return "beauty";
   return "generic";
 }
 
@@ -112,8 +112,9 @@ export function buildModelWearPresentationHint(
       );
     case "beauty":
       return joinModelWearLines(
-        "Photorealistic model in a soft vanity or skincare lifestyle scene with the EXACT product from IMAGE 1 visible in hand or on skin.",
-        "Editorial beauty ad lighting, natural skin, premium but realistic.",
+        "Photorealistic beauty model MUST appear in frame — face and hands visible — holding or applying the EXACT product from IMAGE 1 (dropper near face/skin or bottle in hand).",
+        "Vanity / bathroom / soft lifestyle set around the person — NOT a product-only bottle on a table.",
+        "Editorial beauty ad lighting, natural skin, premium but realistic. Do NOT output a catalog still life without a person.",
       );
     default:
       return joinModelWearLines(

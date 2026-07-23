@@ -107,8 +107,8 @@ export type PromptVariables = {
 const MARKET_HINTS: Record<PromptMarket, string> = {
   hk: "Hong Kong local boutique aesthetic, modern Asian urban lifestyle, premium but approachable. All on-image marketing copy in Traditional Chinese (繁體中文).",
   tw: "Taiwan lifestyle aesthetic, soft natural tones, friendly local brand feel. All on-image marketing copy in Traditional Chinese (繁體中文).",
-  cn: "Mainland China e-commerce product style, bright clean commercial look, popular on Douyin/Xiaohongshu. All on-image marketing copy in Simplified Chinese (简体中文).",
-  en: "International English-market commercial style, clean minimal western retail look. All on-image marketing copy in English only.",
+  cn: "Mainland China Xiaohongshu/Douyin social creative — designed editorial feed post with atmosphere and props, not a blank catalog cutout. All on-image marketing copy in Simplified Chinese (简体中文) ONLY — never Traditional 繁體.",
+  en: "International English-market commercial style, clean premium western retail look with intentional art direction. All on-image marketing copy in English only.",
 };
 
 const FRAMING_IMAGE: Record<SubjectFraming, string> = {
@@ -239,10 +239,11 @@ function imageReferenceAnchorBlock(vars: PromptVariables): string {
   return joinParts(
     "CRITICAL — IMAGE 1 IS MANDATORY",
     `IMAGE 1 is the user's uploaded reference for "${label}". The output MUST clearly show recognizable content from IMAGE 1 as the hero subject.`,
-    "Do NOT replace IMAGE 1 with an unrelated stock scene, lifestyle flat lay, or a different product category.",
-    "If IMAGE 1 is a graphic, poster, or app/UI screenshot: keep the same visual content and layout as the hero — polish lighting and integrate campaign copy; do not swap in unrelated products or props.",
-    "If IMAGE 1 is a physical product photo: preserve the exact item — colors, materials, shape, packaging.",
-    "Brand or campaign art direction may only change background mood, color grade, and typography — never the subject from IMAGE 1.",
+    "Do NOT replace IMAGE 1 with an unrelated stock scene or a different product category.",
+    "If IMAGE 1 is a graphic, poster, or app/UI screenshot: keep the same visual content and layout as the hero — polish lighting and integrate campaign copy; do not swap in unrelated products.",
+    "If IMAGE 1 is a physical product photo: preserve the exact item — colors, materials, shape, packaging, label details.",
+    "You MUST redesign the SETTING around IMAGE 1 — build surfaces, props, soft shadows, depth of field, and atmosphere. Do NOT keep a blank seamless white/cream studio backdrop from the upload.",
+    "Never change the product identity from IMAGE 1 — only the environment, lighting, and typography around it.",
   );
 }
 
@@ -384,12 +385,12 @@ export function buildInfoPosterImagePrompt(vars: PromptVariables): string {
     `3) Copy simplification: ONE main headline theme only; short bullets; generous whitespace — never cram all text into one block.`,
     `4) Single topic: this image covers one theme — "${headline}". Other points stay as small bullets only.`,
     bulletText,
-    `5) Category visualization: subtle props/colors that match the category on a clean white backdrop (beauty = minimal botanical accent; jewelry = soft pedestal; food = fresh ingredient hint).`,
-    `6) Premium white style: bright white or soft off-white studio background, soft natural light, editorial e-commerce info graphic like premium IG carousel edu content.`,
-    `7) Quality check: avoid obvious AI poster tells — no overcrowded text, no Canva-style frames, no neon gradients, no watermark, no social UI.`,
+    `5) Category visualization: styled scene with category-fitting props and texture (beauty = stone/linen + soft botanical; jewelry = velvet/pedestal + warm specular; food = fresh ingredient flat-lay) — NOT empty seamless white.`,
+    `6) Premium editorial style: soft natural light, airy negative space, designed IG/XHS info-post energy — richer than a catalog cutout, cleaner than a crowded Canva flyer.`,
+    `7) Quality check: avoid obvious AI poster tells — no overcrowded text, no Canva-style frames, no neon gradients, no watermark, no social UI, no blank product-only beauty shot.`,
     imageReferenceAnchorBlock(vars),
     `Remove outdated marketing text from IMAGE 1 only where new slide copy replaces it.`,
-    `Layout: product hero ~35% of frame, headline prominent, 2–4 bullet lines with airy negative space, professional IG info-post composition.`,
+    `Layout: product hero ~35–45% of frame in a styled setting, headline prominent, 2–4 short support lines with airy hierarchy — professional IG info-post, not a plain bottle on white.`,
     langHint,
     vars.business ? `Brand footer: ${vars.business}.` : "",
     vars.offer ? `Optional offer badge: ${vars.offer}.` : "",
@@ -402,6 +403,7 @@ export function buildInfoPosterImagePrompt(vars: PromptVariables): string {
 
 import type { CampaignSlidePlan } from "@/lib/campaign-types";
 import { getVisualStyle, type VisualStyleId } from "@/lib/visual-styles";
+import type { SingleImagePlan } from "@/lib/single-image-plan";
 
 export type ImagePromptMode =
   | "promo-ai"
@@ -455,10 +457,10 @@ function conceptSocialPreferAvoid(
   }
   return {
     avoid:
-      "white infographic template, edu-carousel flyer, Canva 3-block layout, stacked bullet list, stock handshake, generic AI poster collage, plain white background, repeating the same CTA line multiple times",
+      "white infographic template, edu-carousel flyer, Canva 3-block layout, stacked bullet list, stock handshake, generic AI poster collage, plain white seamless catalog backdrop, empty cream studio sweep, repeating the same CTA line multiple times",
     prefer: stylized
-      ? "consistent illustrated palette, one strong visual metaphor, medium-appropriate lettering"
-      : "cinematic color grade, vibrant or moody palette, HK/IG agency aesthetic, one strong visual metaphor, generous negative space",
+      ? "consistent illustrated palette, layered scene with props, one strong visual metaphor, medium-appropriate lettering"
+      : "cinematic color grade, lifestyle set design with props and depth, HK/IG agency aesthetic, one strong visual metaphor, layered typography — never a lone product on blank white",
   };
 }
 
@@ -470,12 +472,15 @@ export function buildConceptSocialImagePrompt(
     supportLine?: string;
     ctaLine?: string;
     referenceImageMode?: ReferenceImageMode;
+    singleImagePlan?: SingleImagePlan | null;
   },
 ): string {
+  const plan = slideOpts?.singleImagePlan;
   const name = vars.business?.trim() || vars.product?.trim() || "the concept";
-  const hook = slideOpts?.mainLine?.trim() || vars.headline?.trim() || name;
-  const support = slideOpts?.supportLine?.trim() ?? vars.subline?.trim();
-  const cta = slideOpts?.ctaLine?.trim() ?? vars.offer?.trim();
+  const hook =
+    plan?.title?.trim() || slideOpts?.mainLine?.trim() || vars.headline?.trim() || name;
+  const support = plan?.body?.trim() || slideOpts?.supportLine?.trim() || vars.subline?.trim();
+  const cta = plan?.takeaway?.trim() || slideOpts?.ctaLine?.trim() || vars.offer?.trim();
   const direction = vars.extra?.trim();
   const locale = copyLocaleForVars(
     vars,
@@ -493,7 +498,15 @@ export function buildConceptSocialImagePrompt(
   const { prefer, avoid } = conceptSocialPreferAvoid(direction, stylized, refMode);
   return joinParts(
     artStyleMandatoryLead(vars.artStyle),
-    `Create a scroll-stopping vertical SOCIAL MEDIA POST for ${name} — Instagram/Facebook feed creative.`,
+    plan
+      ? joinParts(
+          `SINGLE SOCIAL AD — role: ${plan.role}.`,
+          plan.theme ? `Theme: ${plan.theme}.` : "",
+          `Art direction (visual DNA): ${plan.visualDna}.`,
+          `Layout: ${plan.composition}.`,
+          `Create a scroll-stopping vertical SOCIAL MEDIA POST for ${name}.`,
+        )
+      : `Create a scroll-stopping vertical SOCIAL MEDIA POST for ${name} — Instagram/Facebook feed creative.`,
     direction ? `Creative direction: ${direction}.` : "",
     stylized ? artStylePlannerHint(vars.artStyle) : "",
     `Main hook line on image: "${hook}".`,
@@ -511,6 +524,8 @@ export function buildConceptSocialImagePrompt(
     langHint,
     `Do NOT invent prices, HK$, or discount % unless offer is in the brief.`,
     MARKET_HINTS[vars.market],
+    marketChineseScriptBlock(vars.market),
+    carouselSlideAvoidClause(vars.framing, vars.artStyle ?? DEFAULT_ART_STYLE),
     artStyleAvoidTail(vars.artStyle),
     "9:16 vertical social post, no watermark, no platform UI chrome, no corner badges or placeholder labels.",
   );
@@ -630,6 +645,12 @@ export function buildTeachingCarouselSlideImagePrompt(
           brandProfile,
           referenceImageMode,
         ),
+        marketChineseScriptBlock(vars.market),
+        typographyHintForLocale(copyLocaleForVars(vars, [slide.title, slide.body, slide.takeaway]), [
+          slide.title,
+          slide.body,
+          slide.takeaway,
+        ]),
         brandPromptExtras(brandProfile, brandKit),
       ),
     );
@@ -745,13 +766,17 @@ export function buildModelWearImagePrompt(vars: PromptVariables): string {
   const product = vars.product?.trim() || "the product";
   const theme = joinParts(vars.headline, vars.subline, vars.offer);
   const stylized = vars.artStyle && vars.artStyle !== "realistic";
+  // Model-wear path must not collapse to product-only when framing was left on catalog defaults.
+  const framing =
+    vars.framing === "product-only" || vars.framing === "no-people" ? "auto" : vars.framing;
   return joinParts(
     artStyleMandatoryLead(vars.artStyle),
     imageReferenceAnchorBlock(vars),
+    "MANDATORY: this is a MODEL WEAR/USE ad — a real person must appear using or holding the product. Not a product-only catalog shot.",
     stylized
       ? `Create a vertical LIFESTYLE ADVERTISEMENT illustration for ${product}.`
       : `Create a photorealistic vertical LIFESTYLE ADVERTISEMENT for ${product}.`,
-    buildModelWearPresentationHint(product, vars.framing),
+    buildModelWearPresentationHint(product, framing),
     `Keep the exact product from IMAGE 1 — same item, colors, materials, charm details. Do NOT replace with a different product.`,
     vars.business ? `Brand mood: ${vars.business}.` : "",
     theme ? `Ad copy theme (integrate as subtle vertical sidebar typography if appropriate): ${theme}.` : promoTypographyHint(vars),
@@ -761,6 +786,7 @@ export function buildModelWearImagePrompt(vars: PromptVariables): string {
       : "Stylized character design consistent with the chosen art direction.",
     `Do NOT invent prices, HK$, or discount % unless offer is in the brief.`,
     MARKET_HINTS[vars.market],
+    marketChineseScriptBlock(vars.market),
     artStyleAvoidTail(vars.artStyle),
     vars.extra,
     "9:16 vertical, no watermark, no social UI chrome.",
@@ -863,9 +889,11 @@ export function buildWizardImagePrompt(
     structuredReferenceBrief?: boolean;
     aspectRatio?: string;
     brandLogoImageIndex?: number | null;
+    singleImagePlan?: SingleImagePlan | null;
   },
 ): string {
   const brandLogoImageIndex = promptOptions?.brandLogoImageIndex ?? null;
+  const plan = promptOptions?.singleImagePlan ?? null;
   const withLogo = (prompt: string) =>
     brandLogoImageIndex != null
       ? joinParts(prompt, brandKitLogoImagePromptBlock(brandLogoImageIndex))
@@ -874,36 +902,105 @@ export function buildWizardImagePrompt(
   if (mode === "reference-concept") {
     const shopHint = visualStyleId ? getVisualStyle(visualStyleId).promptHint : "";
     return withLogo(
-      buildReferenceConceptImagePrompt(vars, {
-        shopStyleHint: shopHint,
-        brandProfile,
-        structuredReferenceBrief: promptOptions?.structuredReferenceBrief,
-        aspectRatio: promptOptions?.aspectRatio,
-      }),
+      joinParts(
+        buildReferenceConceptImagePrompt(vars, {
+          shopStyleHint: shopHint,
+          brandProfile,
+          structuredReferenceBrief: promptOptions?.structuredReferenceBrief,
+          aspectRatio: promptOptions?.aspectRatio,
+        }),
+        plan ? singlePlanBlock(plan) : "",
+        carouselSlideAvoidClause(vars.framing, vars.artStyle ?? DEFAULT_ART_STYLE),
+      ),
     );
   }
-  if (mode === "info-poster") return withLogo(buildInfoPosterImagePrompt(vars));
-  if (mode === "model-wear") return withLogo(buildModelWearImagePrompt(vars));
+  if (mode === "info-poster") {
+    return withLogo(joinParts(buildInfoPosterImagePrompt(vars), plan ? singlePlanBlock(plan) : "", carouselSlideAvoidClause(vars.framing, vars.artStyle ?? DEFAULT_ART_STYLE)));
+  }
+  if (mode === "model-wear") {
+    return withLogo(
+      joinParts(
+        buildModelWearImagePrompt(vars),
+        // Keep model-wear free of poster/catalog anti-rules that can push product-only stills.
+        artStyleAvoidTail(vars.artStyle ?? DEFAULT_ART_STYLE),
+        "Avoid: product-only catalog cutout, empty table still life with no person, plain bottle hero with no hands/face.",
+      ),
+    );
+  }
   if (mode === "ugc-presenter") return withLogo(buildUgcPresenterImagePrompt(vars));
-  if (mode === "service-promo") return withLogo(buildServicePromoImagePrompt(vars));
-  if (mode === "pricing-offer") return withLogo(buildPricingOfferImagePrompt(vars));
-  if (mode === "website-launch") return withLogo(buildWebsiteLaunchImagePrompt(vars));
-  if (mode === "concept-cinematic") return withLogo(buildConceptCinematicImagePrompt(vars));
+  if (mode === "service-promo") {
+    return withLogo(
+      joinParts(
+        buildServicePromoImagePrompt(vars),
+        plan ? singlePlanBlock(plan) : "",
+        carouselSlideAvoidClause(vars.framing, vars.artStyle ?? DEFAULT_ART_STYLE),
+      ),
+    );
+  }
+  if (mode === "pricing-offer") {
+    return withLogo(
+      joinParts(
+        buildPricingOfferImagePrompt(vars),
+        plan ? singlePlanBlock(plan) : "",
+        carouselSlideAvoidClause(vars.framing, vars.artStyle ?? DEFAULT_ART_STYLE),
+      ),
+    );
+  }
+  if (mode === "website-launch") {
+    return withLogo(
+      joinParts(
+        buildWebsiteLaunchImagePrompt(vars),
+        plan ? singlePlanBlock(plan) : "",
+        carouselSlideAvoidClause(vars.framing, vars.artStyle ?? DEFAULT_ART_STYLE),
+      ),
+    );
+  }
+  if (mode === "concept-cinematic") {
+    return withLogo(
+      joinParts(
+        buildConceptCinematicImagePrompt(vars),
+        plan ? singlePlanBlock(plan) : "",
+        carouselSlideAvoidClause(vars.framing, vars.artStyle ?? DEFAULT_ART_STYLE),
+      ),
+    );
+  }
   if (mode === "concept-social") {
     return withLogo(
-      joinParts(buildConceptSocialImagePrompt(vars, brandProfile), brandPromptExtras(null, brandKit)),
+      joinParts(
+        buildConceptSocialImagePrompt(vars, brandProfile, { singleImagePlan: plan }),
+        brandPromptExtras(null, brandKit),
+      ),
     );
   }
   if (mode === "brand-fit" && brandProfile?.businessName) {
     return withLogo(
-      joinParts(buildBrandFitImagePrompt(vars, brandProfile), brandPromptExtras(null, brandKit)),
+      joinParts(
+        buildBrandFitImagePrompt(vars, brandProfile),
+        plan ? singlePlanBlock(plan) : "",
+        brandPromptExtras(null, brandKit),
+        carouselSlideAvoidClause(vars.framing, vars.artStyle ?? DEFAULT_ART_STYLE),
+      ),
     );
   }
   const styleHint =
     visualStyleId && getVisualStyle(visualStyleId).promptHint ?
       `Visual style direction: ${getVisualStyle(visualStyleId).promptHint}`
     : "";
-  return withLogo(joinParts(buildPromoImagePrompt(vars, brandProfile, brandKit), styleHint));
+  return withLogo(
+    joinParts(buildPromoImagePrompt(vars, brandProfile, brandKit, plan), styleHint),
+  );
+}
+
+function singlePlanBlock(plan: SingleImagePlan): string {
+  return joinParts(
+    `SINGLE SOCIAL AD — role: ${plan.role}.`,
+    plan.theme ? `Theme: ${plan.theme}.` : "",
+    `Art direction (visual DNA): ${plan.visualDna}.`,
+    `Layout: ${plan.composition}.`,
+    plan.title ? `Main hook on image: "${plan.title}".` : "",
+    plan.body ? `Supporting line: ${plan.body}.` : "",
+    plan.takeaway ? `Closing line: ${plan.takeaway}.` : "",
+  );
 }
 
 function shouldUseConceptSocialPrompt(
@@ -1034,9 +1131,12 @@ export function buildPromoImagePrompt(
   vars: PromptVariables,
   brandProfile?: BrandProfile | null,
   brandKit?: BrandKit | null,
+  plan?: SingleImagePlan | null,
 ): string {
   const product = vars.product?.trim() || "the product";
-  const theme = joinParts(vars.headline, vars.subline, vars.offer);
+  const theme = plan
+    ? joinParts(plan.title, plan.body, plan.takeaway)
+    : joinParts(vars.headline, vars.subline, vars.offer);
   const stylized = vars.artStyle && vars.artStyle !== "realistic";
   if (vars.imageTextMode === "textless") {
     return joinParts(
@@ -1061,25 +1161,42 @@ export function buildPromoImagePrompt(
   return joinParts(
     artStyleMandatoryLead(vars.artStyle),
     imageReferenceAnchorBlock(vars),
+    plan ? singlePlanBlock(plan) : "",
     stylized
       ? `Create a brand-new vertical social media ILLUSTRATION/ad for ${product} — entire composition in the chosen art medium.`
       : `Create a brand-new vertical social media advertisement for ${product}.`,
     brandPromptExtras(brandProfile, brandKit),
     vars.business ? `Brand / shop: ${vars.business}.` : "",
-    theme ? `Campaign message: ${theme}.` : "",
+    !plan && theme ? `Campaign message: ${theme}.` : "",
     `Remove outdated marketing text from IMAGE 1 where new copy replaces it.`,
-    stylized ? artStylePlannerHint(vars.artStyle) : promoArtDirectionHint(vars),
+    stylized
+      ? artStylePlannerHint(vars.artStyle)
+      : plan
+        ? ""
+        : promoArtDirectionHint(vars),
     stylized
       ? `Design a complete illustrated social ad: stylized hero scene, props, color palette, AND marketing typography rendered in the same art medium.`
       : `Design a complete social ad: product hero, intentional scene, lighting, props, color grade, AND integrated marketing typography.`,
     artStyleImageClause(vars.artStyle),
-    promoTypographyHint(vars),
+    promoTypographyHint(
+      plan
+        ? {
+            ...vars,
+            headline: plan.title || vars.headline,
+            subline: plan.body || vars.subline,
+            offer: plan.takeaway || vars.offer,
+          }
+        : vars,
+    ),
     stylized
       ? `The result must be a finished illustrated ad with readable copy — NOT photorealistic photography.`
-      : `The result must be a finished social ad with readable copy — not a plain product-only beauty shot.`,
+      : `The result must be a finished social ad with readable copy — magazine/lifestyle energy with props and depth, NOT a plain product-only beauty shot on seamless white.`,
+    `ANTI-CATALOG: forbid empty white/cream sweep, centered bottle with only soft shadow, sparse two-line type on blank void. Prefer intentional set design (surfaces, props, rim light, shallow DOF) plus layered typography.`,
     `Do NOT paste the product onto a generic template frame. No watermarks, @handles, corner badges, seals, or placeholder labels. Never render English meta words such as CTA, logo, brand, or watermark.`,
     MARKET_HINTS[vars.market],
+    marketChineseScriptBlock(vars.market),
     FRAMING_IMAGE[vars.framing],
+    carouselSlideAvoidClause(vars.framing, vars.artStyle ?? DEFAULT_ART_STYLE),
     artStyleAvoidTail(vars.artStyle),
     vars.extra,
     "Single 9:16 marketing still.",
