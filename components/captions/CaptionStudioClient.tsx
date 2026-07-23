@@ -69,17 +69,56 @@ async function postVideoJson(
   });
 }
 
-async function postVideoMultipart(
-  endpoint: string,
-  file: File,
-  fields: Record<string, string>,
-) {
-  const fd = new FormData();
-  fd.set("video_file", file);
-  for (const [key, value] of Object.entries(fields)) {
-    fd.set(key, value);
+async function readApiJson(res: Response): Promise<Record<string, unknown>> {
+  const text = await res.text();
+  if (!text.trim()) return {};
+  try {
+    return JSON.parse(text) as Record<string, unknown>;
+  } catch {
+    if (
+      res.status === 413 ||
+      /request entity too large|payload too large|entity too large/i.test(text)
+    ) {
+      return {
+        error:
+          "Video too large for the server upload limit. Uploading via direct storage and retrying should fix this — refresh if you still see this.",
+        code: "REQUEST_TOO_LARGE",
+      };
+    }
+    return { error: text.slice(0, 160) || "Request failed." };
   }
-  return fetch(endpoint, { method: "POST", credentials: "include", body: fd });
+}
+
+/** Upload a local File straight to R2 (presigned PUT) — avoids Vercel 413. */
+async function uploadVideoFileToLibrary(file: File): Promise<string> {
+  const presignRes = await fetch("/api/library/presign-upload", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({
+      kind: "video",
+      contentType: file.type || "video/mp4",
+      name: file.name || "caption-studio-upload",
+      sizeBytes: file.size,
+    }),
+  });
+  const presign = await readApiJson(presignRes);
+  if (!presignRes.ok || typeof presign.uploadUrl !== "string" || typeof presign.downloadUrl !== "string") {
+    throw new Error(
+      typeof presign.error === "string" ? presign.error : "Upload prep failed.",
+    );
+  }
+  const putRes = await fetch(presign.uploadUrl, {
+    method: "PUT",
+    headers: { "Content-Type": file.type || "video/mp4" },
+    body: file,
+  });
+  if (!putRes.ok) {
+    throw new Error(
+      `Direct upload failed (${putRes.status}). If this persists, allow PUT CORS on the R2 bucket for this site.`,
+    );
+  }
+  return presign.downloadUrl;
 }
 
 export function CaptionStudioClient() {
@@ -195,6 +234,20 @@ export function CaptionStudioClient() {
     if (sourceKind === "file" && sourceFile) return { file: sourceFile, url: null };
     if (sourceUrl) return { file: null, url: sourceUrl };
     return { file: null, url: null };
+  }
+
+  /** Prefer URL APIs — local Files are uploaded to R2 first (Vercel body limit ~4.5MB). */
+  async function resolveWorkingVideoUrl(): Promise<string> {
+    const input = workingVideoInput();
+    if (input.url) return input.url;
+    if (!input.file) throw new Error(t.needVideo);
+    const downloadUrl = await uploadVideoFileToLibrary(input.file);
+    const rel = toRelativePipelineUrl(downloadUrl);
+    setProcessedVideoUrl(rel);
+    setSourceUrl(rel);
+    setSourceKind("url");
+    setSourceFile(null);
+    return rel;
   }
 
   const loadSource = useCallback(
@@ -501,8 +554,7 @@ export function CaptionStudioClient() {
   }
 
   async function applyBgm() {
-    const input = workingVideoInput();
-    if (!input.file && !input.url) {
+    if (!workingVideoInput().file && !workingVideoInput().url) {
       setError(t.needVideo);
       return;
     }
@@ -522,26 +574,16 @@ export function CaptionStudioClient() {
         }
       }
 
-      let res: Response;
-      if (input.file) {
-        const fields: Record<string, string> = { replace_source_audio: "true" };
-        if (musicSource === "ai" && selectedAi?.audioUrl) {
-          fields.music_url = selectedAi.audioUrl;
-        } else {
-          fields.track = bgmTrack;
-        }
-        res = await postVideoMultipart("/api/add-bgm", input.file, fields);
+      const videoUrl = await resolveWorkingVideoUrl();
+      const body: Record<string, unknown> = { replace_source_audio: true };
+      if (musicSource === "ai" && selectedAi?.audioUrl) {
+        body.music_url = selectedAi.audioUrl;
       } else {
-        const body: Record<string, unknown> = { replace_source_audio: true };
-        if (musicSource === "ai" && selectedAi?.audioUrl) {
-          body.music_url = selectedAi.audioUrl;
-        } else {
-          body.track = bgmTrack;
-        }
-        res = await postVideoJson("/api/add-bgm", input.url!, body);
+        body.track = bgmTrack;
       }
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? t.burnFailed);
+      const res = await postVideoJson("/api/add-bgm", videoUrl, body);
+      const data = await readApiJson(res);
+      if (!res.ok) throw new Error((data.error as string) ?? t.burnFailed);
       await commitProcessedVideo(data.videoUrl as string);
       previewVideoRef.current?.load();
       setAudioNote(t.audioBgmDone);
@@ -565,8 +607,7 @@ export function CaptionStudioClient() {
       setError(t.audioVoiceNeedPreviewOrScript);
       return;
     }
-    const input = workingVideoInput();
-    if (!input.file && !input.url) {
+    if (!workingVideoInput().file && !workingVideoInput().url) {
       setError(t.needVideo);
       return;
     }
@@ -576,7 +617,6 @@ export function CaptionStudioClient() {
     setAudioNote(null);
 
     try {
-      let res: Response;
       const speechStartSec = captionVoiceStartSec(captionLines);
       const captionPayload = timedCaptionLines.map((l) => ({
         text: l.text.trim(),
@@ -594,21 +634,10 @@ export function CaptionStudioClient() {
       if (selectedPreview) voiceBody.voice_preset = selectedPreview.presetId;
       else if (script) voiceBody.script = script;
 
-      if (input.file) {
-        const fields: Record<string, string> = {
-          locale: voiceoverLocale,
-          target_duration_sec: String(videoDuration),
-          speech_start_sec: String(speechStartSec),
-          caption_lines: JSON.stringify(captionPayload),
-        };
-        if (selectedPreview) fields.voice_preset = selectedPreview.presetId;
-        else if (script) fields.script = script;
-        res = await postVideoMultipart("/api/dub-script-voice", input.file, fields);
-      } else {
-        res = await postVideoJson("/api/dub-script-voice", input.url!, voiceBody);
-      }
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? t.burnFailed);
+      const videoUrl = await resolveWorkingVideoUrl();
+      const res = await postVideoJson("/api/dub-script-voice", videoUrl, voiceBody);
+      const data = await readApiJson(res);
+      if (!res.ok) throw new Error((data.error as string) ?? t.burnFailed);
       await commitProcessedVideo(data.videoUrl as string);
       previewVideoRef.current?.load();
       const clipCount = Number(data.clipCount) || timedCaptionLines.length;
@@ -786,7 +815,7 @@ export function CaptionStudioClient() {
 
   async function applyCaptions() {
     const lines = captionLines.filter((l) => l.text.trim());
-    if (!sourceKind || (!sourceFile && !sourceUrl)) {
+    if (!sourceKind || (!sourceFile && !sourceUrl && !processedVideoUrl)) {
       setError(t.needVideo);
       return;
     }
@@ -802,42 +831,29 @@ export function CaptionStudioClient() {
     const captionStyle = { preset: defaultStylePreset };
 
     try {
-      let input = workingVideoInput();
+      let videoUrl = await resolveWorkingVideoUrl();
       const needsTrim = videoTrimIn > 0.05 || videoTrimOut < videoDuration - 0.05;
-      if (needsTrim && (input.url || input.file)) {
+      if (needsTrim) {
         const trimFd = new FormData();
-        if (input.file) trimFd.set("video_file", input.file);
-        else if (input.url) trimFd.set("video_url", input.url);
+        trimFd.set("video_url", videoUrl);
         trimFd.set("trim_in_sec", String(videoTrimIn));
         trimFd.set("trim_out_sec", String(videoTrimOut));
-        const trimRes = await fetch("/api/trim-video", { method: "POST", credentials: "include", body: trimFd });
-        const trimData = await trimRes.json();
-        if (!trimRes.ok) throw new Error(trimData.error ?? t.trimFailed);
-        input = { file: null, url: trimData.videoUrl as string };
-      }
-
-      let res: Response;
-      if (input.file) {
-        const fd = new FormData();
-        fd.set("video_file", input.file);
-        fd.set("caption_lines", JSON.stringify(lines));
-        fd.set("caption_style", JSON.stringify(captionStyle));
-        res = await fetch("/api/burn-script-captions", {
+        const trimRes = await fetch("/api/trim-video", {
           method: "POST",
           credentials: "include",
-          body: fd,
+          body: trimFd,
         });
-      } else if (input.url) {
-        res = await postVideoJson("/api/burn-script-captions", input.url, {
-          caption_lines: lines,
-          caption_style: captionStyle,
-        });
-      } else {
-        throw new Error(t.needVideo);
+        const trimData = await readApiJson(trimRes);
+        if (!trimRes.ok) throw new Error((trimData.error as string) ?? t.trimFailed);
+        videoUrl = trimData.videoUrl as string;
       }
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? t.burnFailed);
+      const res = await postVideoJson("/api/burn-script-captions", videoUrl, {
+        caption_lines: lines,
+        caption_style: captionStyle,
+      });
+      const data = await readApiJson(res);
+      if (!res.ok) throw new Error((data.error as string) ?? t.burnFailed);
 
       await commitProcessedVideo(data.videoUrl as string);
       previewVideoRef.current?.load();

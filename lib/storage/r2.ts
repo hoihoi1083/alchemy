@@ -120,8 +120,25 @@ export async function mirrorRemoteToR2(
   return putR2Object(key, buf, contentType);
 }
 
-/** Short-lived signed GET URL for a private object. */
-export async function signR2GetUrl(
+/** Short-lived signed PUT URL for browser → R2 uploads (bypasses Vercel body limit). */
+export async function signR2PutUrl(
+  key: string,
+  contentType: string,
+  expiresInSec = 600,
+): Promise<string> {
+  const config = getR2Config();
+  if (!config) throw new Error("R2 is not configured.");
+  const client = getClient(config);
+  return getSignedUrl(
+    client,
+    new PutObjectCommand({
+      Bucket: config.bucket,
+      Key: key,
+      ContentType: contentType,
+    }),
+    { expiresIn: expiresInSec },
+  );
+}
   key: string,
   expiresInSec = 3600,
   options?: { downloadFilename?: string; contentType?: string },
