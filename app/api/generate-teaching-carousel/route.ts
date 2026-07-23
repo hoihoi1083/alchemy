@@ -194,59 +194,51 @@ export async function POST(request: Request) {
       }
     }
 
-    const slides: Array<{
-      role: string;
-      title: string;
-      headline: string;
-      subline: string;
-      imageUrl: string;
-    }> = [];
-
-    for (const slide of plan.slides) {
-      const carouselSlideRef = brief?.carouselSlides?.[slide.index - 1];
-      const prompt = buildTeachingCarouselSlideImagePrompt(
-        vars,
-        plan,
-        slide,
-        plan.slides.length,
-        promptMode,
-        null,
-        referenceImageMode,
-        {
-          visualStyleId: visualStyle,
-          referenceConcept: strategy.useReferenceConceptPrompts,
-          carouselSlideRef,
-          brandKit,
-        },
-      );
-
-      const result = await fal.subscribe(endpoint, {
-        input: {
-          prompt,
-          ...(imageUrlsForFal?.length ? { image_urls: imageUrlsForFal } : {}),
-          aspect_ratio: aspectRatio,
-          num_images: 1,
-          resolution: imageResolution,
-          limit_generations: true,
-          ...(systemPrompt ? { system_prompt: systemPrompt } : {}),
-        },
-        logs: true,
-      });
-      const outUrls = extractImageUrls(result.data);
-      if (!outUrls[0]) {
-        return NextResponse.json(
-          { error: `Image URL missing for slide ${slide.index}.`, raw: result.data },
-          { status: 502 },
+    const slideResults = await Promise.all(
+      plan.slides.map(async (slide) => {
+        const carouselSlideRef = brief?.carouselSlides?.[slide.index - 1];
+        const prompt = buildTeachingCarouselSlideImagePrompt(
+          vars,
+          plan,
+          slide,
+          plan.slides.length,
+          promptMode,
+          null,
+          referenceImageMode,
+          {
+            visualStyleId: visualStyle,
+            referenceConcept: strategy.useReferenceConceptPrompts,
+            carouselSlideRef,
+            brandKit,
+          },
         );
-      }
-      slides.push({
-        role: slide.role,
-        title: slide.title,
-        headline: slide.title,
-        subline: slide.body,
-        imageUrl: outUrls[0],
-      });
-    }
+
+        const result = await fal.subscribe(endpoint, {
+          input: {
+            prompt,
+            ...(imageUrlsForFal?.length ? { image_urls: imageUrlsForFal } : {}),
+            aspect_ratio: aspectRatio,
+            num_images: 1,
+            resolution: imageResolution,
+            limit_generations: true,
+            ...(systemPrompt ? { system_prompt: systemPrompt } : {}),
+          },
+          logs: true,
+        });
+        const outUrls = extractImageUrls(result.data);
+        if (!outUrls[0]) {
+          throw new Error(`Image URL missing for slide ${slide.index}.`);
+        }
+        return {
+          role: slide.role,
+          title: slide.title,
+          headline: slide.title,
+          subline: slide.body,
+          imageUrl: outUrls[0],
+        };
+      }),
+    );
+    const slides = slideResults;
 
     const falUrls = slides.map((s) => s.imageUrl);
     const archivedUrls = await archiveCampaignSlidesToPipeline(request, falUrls);

@@ -3203,8 +3203,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
           referenceStrategy.sendPixelsToFal ? EDIT_ENDPOINT : TEXT_ENDPOINT,
         );
         const res = await fetch("/api/generate-campaign", { method: "POST", body: fd });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? m.errors.campaignFailed);
+        const data = await readGenerateJson(res);
+        if (!res.ok) throw new Error((data.error as string) ?? m.errors.campaignFailed);
         notifyCreditBalance(readCreditBalanceFromResponse(data));
         applyGeneratedCampaign(
           data.slides as Array<{
@@ -3261,8 +3261,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
           referenceStrategy.sendPixelsToFal ? EDIT_ENDPOINT : TEXT_ENDPOINT,
         );
         const res = await fetch("/api/generate-teaching-carousel", { method: "POST", body: fd });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? m.errors.campaignFailed);
+        const data = await readGenerateJson(res);
+        if (!res.ok) throw new Error((data.error as string) ?? m.errors.campaignFailed);
         notifyCreditBalance(readCreditBalanceFromResponse(data));
         applyGeneratedCampaign(
           data.slides as Array<{
@@ -3722,8 +3722,21 @@ export function useStudioWizard(promotionMode: PromotionMode) {
           code: "REQUEST_TOO_LARGE",
         };
       }
+      if (
+        res.status === 504 ||
+        res.status === 524 ||
+        /function.?invocation.?timeout|an error occurred|took too long|gateway timeout/i.test(
+          text,
+        )
+      ) {
+        return {
+          error: m.errors.timeout,
+          code: "TIMEOUT",
+        };
+      }
       return {
-        error: text.slice(0, 160) || m.errors.videoFailed,
+        error: text.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 160) ||
+          m.errors.videoFailed,
       };
     }
   }
