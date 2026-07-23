@@ -85,39 +85,33 @@ export async function POST(request: Request) {
   );
 
   try {
-    const scenes: CinematicSceneResult[] = [];
-    for (const scene of plan.scenes) {
-      const prompt = [
-        scene.imagePrompt.trim(),
-        artStyleAvoidTail(artStyleId),
-      ]
-        .filter(Boolean)
-        .join("\n\n");
-      const systemPrompt = artStyleSystemPrompt(artStyleId);
-      const result = await fal.subscribe(endpoint, {
-        input: {
-          prompt,
-          aspect_ratio: aspectRatio,
-          num_images: 1,
-          resolution: imageResolution,
-          limit_generations: true,
-          ...(systemPrompt ? { system_prompt: systemPrompt } : {}),
-        },
-        logs: true,
-      });
-      const outUrls = extractImageUrls(result.data);
-      if (!outUrls[0]) {
-        await refundTokens(auth.user.userId, tokenCost, {
-          kind: "cinematic_scenes",
-          reason: "no_image",
+    const scenes = await Promise.all(
+      plan.scenes.map(async (scene) => {
+        const prompt = [
+          scene.imagePrompt.trim(),
+          artStyleAvoidTail(artStyleId),
+        ]
+          .filter(Boolean)
+          .join("\n\n");
+        const systemPrompt = artStyleSystemPrompt(artStyleId);
+        const result = await fal.subscribe(endpoint, {
+          input: {
+            prompt,
+            aspect_ratio: aspectRatio,
+            num_images: 1,
+            resolution: imageResolution,
+            limit_generations: true,
+            ...(systemPrompt ? { system_prompt: systemPrompt } : {}),
+          },
+          logs: true,
         });
-        return NextResponse.json(
-          { error: `Image URL missing for scene ${scene.sceneIndex}.`, raw: result.data },
-          { status: 502 },
-        );
-      }
-      scenes.push({ ...scene, imageUrl: outUrls[0] });
-    }
+        const outUrls = extractImageUrls(result.data);
+        if (!outUrls[0]) {
+          throw new Error(`Image URL missing for scene ${scene.sceneIndex}.`);
+        }
+        return { ...scene, imageUrl: outUrls[0] };
+      }),
+    );
 
     const falUrls = scenes.map((s) => s.imageUrl);
     const durableUrls = await persistAndDurablizeMany({

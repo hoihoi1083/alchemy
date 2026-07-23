@@ -3132,8 +3132,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
             sceneCount: cinematicSceneTarget,
           }),
         });
-        const planData = await planRes.json();
-        if (!planRes.ok) throw new Error(planData.error ?? m.errors.storyboardFailed);
+        const planData = await readGenerateJson(planRes);
+        if (!planRes.ok) throw new Error((planData.error as string) ?? m.errors.storyboardFailed);
         const plan = planData.plan;
         setCinematicReelPlan(plan);
 
@@ -3146,8 +3146,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
             art_style: artStyleId,
           }),
         });
-        const genData = await genRes.json();
-        if (!genRes.ok) throw new Error(genData.error ?? m.errors.storyboardFailed);
+        const genData = await readGenerateJson(genRes);
+        if (!genRes.ok) throw new Error((genData.error as string) ?? m.errors.storyboardFailed);
         const scenes = genData.scenes as CinematicSceneResult[];
         setCinematicScenes(scenes);
         setImageUrl(scenes[0]?.imageUrl ?? null);
@@ -3365,8 +3365,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         // No product/style pixels — logo is not auto-added; user adds it later.
 
         const res = await fetch("/api/generate-image", { method: "POST", body: fd });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? m.errors.polishFailed);
+        const data = await readGenerateJson(res);
+        if (!res.ok) throw new Error((data.error as string) ?? m.errors.polishFailed);
         notifyCreditBalance(readCreditBalanceFromResponse(data));
         const urls = (data.imageUrls as string[] | undefined) ?? [data.imageUrl as string];
         return applyGeneratedImages(urls, data.endpoint as string | undefined);
@@ -3430,8 +3430,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       attachReferenceToForm(fd);
 
       const res = await fetch("/api/generate-image", { method: "POST", body: fd });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? m.errors.polishFailed);
+      const data = await readGenerateJson(res);
+      if (!res.ok) throw new Error((data.error as string) ?? m.errors.polishFailed);
       notifyCreditBalance(readCreditBalanceFromResponse(data));
       const urls = (data.imageUrls as string[] | undefined) ?? [data.imageUrl as string];
       if (!urls.some((u) => normalizeGeneratedImageUrl(u))) {

@@ -20,8 +20,22 @@ async function parseJsonResponse(res: Response): Promise<unknown> {
         code: "REQUEST_TOO_LARGE",
       };
     }
+    if (
+      res.status === 504 ||
+      res.status === 524 ||
+      /function.?invocation.?timeout|an error occurred|took too long|gateway timeout/i.test(
+        text,
+      )
+    ) {
+      return {
+        error: "The request took too long. Please try again.",
+        code: "TIMEOUT",
+      };
+    }
     return {
-      error: text.slice(0, 160) || (res.status >= 500 ? "Server error" : "Request failed"),
+      error:
+        text.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 160) ||
+        (res.status >= 500 ? "Server error" : "Request failed"),
     };
   }
 }

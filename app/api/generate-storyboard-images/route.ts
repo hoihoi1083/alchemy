@@ -299,54 +299,51 @@ export async function POST(request: Request) {
       }
     }
 
-    const scenes: StoryboardSceneResult[] = [];
+    const scenes = await Promise.all(
+      plan.scenes.map(async (scene) => {
+        const prompt = buildStoryboardSceneImagePrompt(scene, plan, vars, {
+          referenceConcept: strategy.useReferenceConceptPrompts && !conceptTextOnlyStoryboard,
+          conceptTextOnly: conceptTextOnlyStoryboard,
+          storyboardStyleRef: storyboardStyleRef || dualProductAndStyle,
+          dualProductAndStyle,
+          textless: true,
+          visualStyleId: visualStyle,
+          brandProfile,
+          brandKit,
+        });
 
-    for (const scene of plan.scenes) {
-      const prompt = buildStoryboardSceneImagePrompt(scene, plan, vars, {
-        referenceConcept: strategy.useReferenceConceptPrompts && !conceptTextOnlyStoryboard,
-        conceptTextOnly: conceptTextOnlyStoryboard,
-        storyboardStyleRef: storyboardStyleRef || dualProductAndStyle,
-        dualProductAndStyle,
-        textless: true,
-        visualStyleId: visualStyle,
-        brandProfile,
-        brandKit,
-      });
+        const result = await fal.subscribe(endpoint, {
+          input: {
+            prompt,
+            ...(imageUrlsForFal?.length ? { image_urls: imageUrlsForFal } : {}),
+            aspect_ratio: aspectRatio,
+            num_images: 1,
+            resolution: imageResolution,
+            limit_generations: true,
+            ...(artStyleSystemPrompt(artStyleId)
+              ? { system_prompt: artStyleSystemPrompt(artStyleId) }
+              : {}),
+          },
+          logs: true,
+        });
 
-      const result = await fal.subscribe(endpoint, {
-        input: {
-          prompt,
-          ...(imageUrlsForFal?.length ? { image_urls: imageUrlsForFal } : {}),
-          aspect_ratio: aspectRatio,
-          num_images: 1,
-          resolution: imageResolution,
-          limit_generations: true,
-          ...(artStyleSystemPrompt(artStyleId)
-            ? { system_prompt: artStyleSystemPrompt(artStyleId) }
-            : {}),
-        },
-        logs: true,
-      });
+        const outUrls = extractImageUrls(result.data);
+        if (!outUrls[0]) {
+          throw new Error(`Image URL missing for scene ${scene.imageIndex}.`);
+        }
 
-      const outUrls = extractImageUrls(result.data);
-      if (!outUrls[0]) {
-        return NextResponse.json(
-          { error: `Image URL missing for scene ${scene.imageIndex}.`, raw: result.data },
-          { status: 502 },
-        );
-      }
-
-      scenes.push({
-        imageIndex: scene.imageIndex,
-        role: scene.role,
-        startSec: scene.startSec,
-        endSec: scene.endSec,
-        sceneDescriptionZh: scene.sceneDescriptionZh,
-        onImageCopyZh: scene.onImageCopyZh,
-        imageUrl: outUrls[0],
-        imagePrompt: scene.imagePrompt,
-      });
-    }
+        return {
+          imageIndex: scene.imageIndex,
+          role: scene.role,
+          startSec: scene.startSec,
+          endSec: scene.endSec,
+          sceneDescriptionZh: scene.sceneDescriptionZh,
+          onImageCopyZh: scene.onImageCopyZh,
+          imageUrl: outUrls[0],
+          imagePrompt: scene.imagePrompt,
+        };
+      }),
+    );
 
     const falUrls = scenes.map((s) => s.imageUrl);
     const durableUrls = await persistAndDurablizeMany({
