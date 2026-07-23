@@ -71,7 +71,7 @@ import {
   CINEMATIC_REEL_VIDEO_CREATIVITY,
   extractReferenceMotionNote,
 } from "@/lib/cinematic-motion-prompt";
-import type { CinematicSceneResult } from "@/lib/cinematic-reel-types";
+import type { CinematicReelPlan, CinematicSceneResult } from "@/lib/cinematic-reel-types";
 import { createPromptSnapshot, savePromptSnapshot } from "@/lib/prompt-snapshots";
 import {
   DEFAULT_VIDEO_SETTINGS,
@@ -3134,7 +3134,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         });
         const planData = await readGenerateJson(planRes);
         if (!planRes.ok) throw new Error((planData.error as string) ?? m.errors.storyboardFailed);
-        const plan = planData.plan;
+        const plan = planData.plan as CinematicReelPlan;
         setCinematicReelPlan(plan);
 
         const genRes = await fetch("/api/generate-cinematic-scenes", {
