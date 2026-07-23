@@ -32,8 +32,8 @@ import { pinStoryboardPlanToReelAnalysis } from "@/lib/reel-reference-brief";
 import { mapPool } from "@/lib/async-pool";
 
 export const runtime = "nodejs";
-/** Multi-scene Nano Banana can take 2–3 min each; batches stay under this via client chunking. */
-export const maxDuration = 800;
+/** Multi-scene Nano Banana can take 2–3 min each; client batches keep each request under this. */
+export const maxDuration = 300;
 
 const STORYBOARD_FAL_CONCURRENCY = 2;
 const STORYBOARD_CLIENT_BATCH_HINT = 2;
