@@ -422,17 +422,55 @@ export function coerceFieldsToScript(
   return next;
 }
 
+/** True when text is likely the wrong script for the UI locale (EN↔中文 leak). */
+export function copyNeedsLocaleRewrite(text: string, locale: CopyLocale): boolean {
+  const t = text.trim();
+  if (!t) return false;
+  if (locale === "en") return /[\u4e00-\u9fff]/.test(t);
+  return textLooksLatin(t);
+}
+
 /**
- * Ask the model to rewrite planned Chinese copy into a single script.
- * Used after teaching/single planners so fal does not paint mixed 简繁 titles.
+ * Ask the model to rewrite planned copy into a single script matching UI locale.
+ * Used after teaching/single/research planners so fal does not paint mixed languages.
  */
 export async function rewriteCopyToScript(
   fields: Record<string, string>,
   locale: CopyLocale,
 ): Promise<Record<string, string>> {
-  if (locale === "en") return fields;
   const entries = Object.entries(fields).filter(([, v]) => v.trim());
   if (!entries.length) return fields;
+
+  if (locale === "en") {
+    const needs = entries.some(([, v]) => copyNeedsLocaleRewrite(v, "en"));
+    if (!needs) return fields;
+    if (!deepSeekApiKey()) return fields;
+    try {
+      const output = await callDeepSeekChat(
+        [
+          {
+            role: "system",
+            content:
+              "Rewrite JSON string values into English only. Keep keys identical. Output strict JSON only. Keep brand names. Do not leave Chinese characters.",
+          },
+          {
+            role: "user",
+            content: JSON.stringify(Object.fromEntries(entries)),
+          },
+        ],
+        { temperature: 0.1, max_tokens: 900, jsonObject: true },
+      );
+      const parsed = parseLlmJsonObject<Record<string, string>>(output, "Script rewrite");
+      const next: Record<string, string> = { ...fields };
+      for (const [k, v] of Object.entries(parsed)) {
+        if (typeof v === "string" && v.trim() && k in next) next[k] = v.trim();
+      }
+      return next;
+    } catch {
+      return fields;
+    }
+  }
+
   let next = coerceFieldsToScript(fields, locale);
   if (!deepSeekApiKey()) return next;
   const target =
@@ -442,7 +480,7 @@ export async function rewriteCopyToScript(
       [
         {
           role: "system",
-          content: `Rewrite JSON string values into ${target} only. Keep keys identical. Output strict JSON only. Do not translate English brand names. Do not mix 简繁.`,
+          content: `Rewrite JSON string values into ${target} only. Keep keys identical. Output strict JSON only. Do not translate English brand names. Do not mix 简繁 or leave English marketing sentences.`,
         },
         {
           role: "user",

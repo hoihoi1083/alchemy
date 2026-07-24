@@ -21,7 +21,10 @@ import type { WizardMicroStepValue } from "@/hooks/useWizardMicroStep";
 import { ShipItPanel } from "@/components/studio/ShipItPanel";
 import { ConceptWizardPanel } from "@/components/studio/ConceptWizardPanel";
 import { ConceptPreGeneratePanel } from "@/components/studio/ConceptPreGeneratePanel";
-import { JobProgressBar } from "@/components/studio/JobProgressBar";
+import {
+  GenerationWaitPlaceholder,
+  waitAspectFromString,
+} from "@/components/studio/GenerationWaitPlaceholder";
 import { ImageResultPanel } from "@/components/studio/micro-wizard/ImageResultPanel";
 import { VideoOutputSourceCard } from "@/components/studio/VideoOutputSourceCard";
 import { PrimaryPathsPanel } from "@/components/studio/PrimaryPathsPanel";
@@ -417,6 +420,25 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
             forVideoKeyframe={wizard.workflowMode === "combined"}
             includeTeachingCarousel={wizard.workflowMode === "image-only"}
           />
+          {wizard.imageOutputMode === "teaching-carousel" ? (
+            <label className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-700">
+              <span className="font-medium">{m.wizard.teachingCarouselSlideCountLabel}</span>
+              <select
+                value={wizard.referenceCarouselSlideCount}
+                onChange={(e) => wizard.setReferenceCarouselSlideCount(Number(e.target.value))}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm"
+              >
+                {[4, 5, 6].map((n) => (
+                  <option key={n} value={n}>
+                    {m.wizard.teachingCarouselSlideCountOption.replace("{count}", String(n))}
+                  </option>
+                ))}
+              </select>
+              <span className="w-full text-xs text-slate-500">
+                {m.wizard.teachingCarouselSlideCountHint}
+              </span>
+            </label>
+          ) : null}
         </ScreenShell>
       );
 
@@ -707,6 +729,9 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
       );
 
     case "image.review":
+      if (wizard.imageBusy) {
+        return <ImageResultPanel generatingLabel={mw.generatingImage} />;
+      }
       return (
         <ScreenShell title={mw.imageReviewTitle} hint={mw.imageReviewHint}>
           <ImageResultPanel generatingLabel={mw.generatingImage} />
@@ -763,6 +788,8 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
           busy={wizard.imageBusy}
           message={wizard.imageProgressInfo?.label ?? mw.generatingImage}
           progress={wizard.imageProgressInfo}
+          aspectRatio={wizard.imageAspectRatio}
+          previewUrl={wizard.imageRefPreviewUrl || wizard.uploadPreviewUrl || null}
         />
       );
 
@@ -783,6 +810,8 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
           busy={wizard.imageBusy}
           message={wizard.imageProgressInfo?.label ?? mw.generatingImage}
           progress={wizard.imageProgressInfo}
+          aspectRatio={wizard.imageAspectRatio}
+          previewUrl={wizard.imageRefPreviewUrl || wizard.uploadPreviewUrl || null}
         />
       );
 
@@ -802,6 +831,14 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
           busy={wizard.videoBusy}
           message={wizard.videoBusy ? phaseMessage : mw.generatingVideo}
           progress={wizard.videoProgressInfo}
+          aspectRatio={wizard.imageAspectRatio}
+          previewUrl={
+            wizard.keyframePreview ||
+            wizard.imageUrl ||
+            wizard.uploadPreviewUrl ||
+            wizard.referencePreviewUrl ||
+            null
+          }
         />
       );
     }
@@ -1018,20 +1055,41 @@ function WaitScreen({
   busy,
   message,
   progress,
+  aspectRatio,
+  previewUrl,
 }: {
   busy: boolean;
   message: string;
   progress?: { label?: string; pct?: number; eta?: string } | null;
+  aspectRatio?: string;
+  previewUrl?: string | null;
 }) {
+  const { m } = useLocale();
+  // Dark wait card is the only container — do not wrap in white ScreenShell
+  // (that duplicated “规划教学轮播…” as an outer title).
+  if (!busy) {
+    return (
+      <ScreenShell title={message} hint={message}>
+        <p className="text-sm text-slate-600">{message}</p>
+      </ScreenShell>
+    );
+  }
   return (
-    <ScreenShell title={message} hint={busy ? undefined : message}>
-      {progress ? <JobProgressBar info={progress as Parameters<typeof JobProgressBar>[0]["info"]} busyLabel={message} /> : null}
-      {busy ? (
-        <div className="flex items-center gap-2 text-sm text-slate-600">
-          <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-cyan-500 border-t-transparent" />
-          {message}
-        </div>
-      ) : null}
-    </ScreenShell>
+    <GenerationWaitPlaceholder
+      message={message}
+      hint={m.wizard.generationWaitHint}
+      progress={
+        progress && typeof progress.pct === "number"
+          ? {
+              label: progress.label,
+              pct: progress.pct,
+              eta: progress.eta ?? "",
+            }
+          : null
+      }
+      aspectRatio={waitAspectFromString(aspectRatio)}
+      previewUrl={previewUrl}
+      compact
+    />
   );
 }

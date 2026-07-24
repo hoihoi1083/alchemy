@@ -65,8 +65,8 @@ export async function synthesizeSpeechToFileFal(args: {
 
   const endpoint = falTtsEndpoint();
   const { voiceId, speed } =
-    args.voiceId && args.speed !== undefined
-      ? { voiceId: args.voiceId, speed: args.speed }
+    args.voiceId
+      ? { voiceId: args.voiceId, speed: args.speed ?? 1 }
       : args.voicePresetId
         ? falVoiceForPreset(args.voicePresetId)
         : falVoiceForLocale(args.locale);

@@ -88,6 +88,28 @@ describe("content-research-promote", () => {
     assert.equal(copy.subline, "");
   });
 
+  it("styleReferencePromptBlock requires UI copy language", () => {
+    const block = styleReferencePromptBlock(
+      zodiacCarouselAngle,
+      xhsPlan,
+      PROMOTE_PRODUCT,
+      undefined,
+      "cn",
+    );
+    assert.ok(block.includes("Simplified Chinese"));
+    assert.ok(block.includes("never mix English and Chinese"));
+    assert.ok(block.includes("user's UI language only"));
+  });
+
+  it("copyFieldsFromAngle uses English fallbacks for en market", () => {
+    const copy = copyFieldsFromAngle(zodiacCarouselAngle, "Obsidian Bracelet", SEARCH_TOPIC, {
+      market: "en",
+    });
+    assert.ok(copy.headline.includes("Obsidian Bracelet"));
+    assert.ok(/must-read|promo|guide/i.test(copy.headline) || copy.headline.includes("Obsidian"));
+    assert.ok(!/選購|必看/.test(copy.subline + copy.headline));
+  });
+
   it("refreshContentResearchPromptExtra swaps promote target when user edits product", () => {
     const obsidianAngle = {
       ...zodiacCarouselAngle,

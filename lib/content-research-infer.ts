@@ -7,6 +7,7 @@ import type {
 import {
   DEFAULT_TEACHING_CAROUSEL_SLIDE_COUNT,
   MAX_TEACHING_CAROUSEL_SLIDE_COUNT,
+  MIN_TEACHING_CAROUSEL_SLIDE_COUNT,
 } from "@/lib/teaching-carousel-types";
 import type { ImageCreativeMode } from "@/lib/creative-workflow";
 import type { ImageAspectRatio } from "@/lib/image-aspect-ratio";
@@ -120,7 +121,10 @@ export function inferWizardFromPost(
       formatLabel = count > 1 ? `Carousel · ${count} slides` : "Teaching carousel";
       carouselSlideCount = Math.min(
         MAX_TEACHING_CAROUSEL_SLIDE_COUNT,
-        Math.max(DEFAULT_TEACHING_CAROUSEL_SLIDE_COUNT, count || DEFAULT_TEACHING_CAROUSEL_SLIDE_COUNT),
+        Math.max(
+          MIN_TEACHING_CAROUSEL_SLIDE_COUNT,
+          count || DEFAULT_TEACHING_CAROUSEL_SLIDE_COUNT,
+        ),
       );
       referenceNote =
         count > 1

@@ -1,5 +1,12 @@
 import { callDeepSeekChat } from "@/lib/deepseek-client";
-import { resolveCopyLocale, plannerCopyLanguageRule } from "@/lib/copy-locale";
+import {
+  resolveCopyLocale,
+  plannerCopyLanguageRule,
+  rewriteCopyToScript,
+  coerceCopyScript,
+  copyNeedsLocaleRewrite,
+  type CopyLocale,
+} from "@/lib/copy-locale";
 import {
   fetchPlatformWebResearch,
   formatPostsForPrompt,
@@ -103,6 +110,7 @@ function normalizePlan(
     searchProvider?: ContentResearchPlan["searchProvider"];
     sources?: ContentResearchSource[];
     posts?: ContentResearchPost[];
+    market?: PromptMarket;
   },
 ): ContentResearchPlan {
   const candidates = (Array.isArray(parsed.candidates) ? parsed.candidates : [])
@@ -165,6 +173,7 @@ function normalizePlan(
     searchProvider: input.searchProvider,
     sources: input.sources,
     posts: input.posts,
+    market: input.market,
     candidates,
     topPicks,
   };
@@ -213,6 +222,82 @@ function ensureMinLiveAngles(plan: ContentResearchPlan): ContentResearchPlan {
   return { ...plan, topPicks };
 }
 
+
+function mapAngleCopyFields(
+  angle: ContentAngleCandidate,
+  prefix: string,
+  fields: Record<string, string>,
+): void {
+  fields[`${prefix}.title`] = angle.title;
+  fields[`${prefix}.hook`] = angle.hook;
+  fields[`${prefix}.scriptOutline`] = angle.scriptOutline;
+  fields[`${prefix}.cta`] = angle.cta;
+  fields[`${prefix}.whyItWorks`] = angle.whyItWorks;
+  fields[`${prefix}.formatLabel`] = angle.formatLabel;
+  angle.bulletPoints.forEach((b, i) => {
+    fields[`${prefix}.bullet.${i}`] = b;
+  });
+}
+
+function applyMappedCopyFields(
+  angle: ContentAngleCandidate,
+  prefix: string,
+  fields: Record<string, string>,
+  locale: CopyLocale,
+): ContentAngleCandidate {
+  const bullets = angle.bulletPoints.map((b, i) => {
+    const key = `${prefix}.bullet.${i}`;
+    return coerceCopyScript(fields[key] ?? b, locale);
+  });
+  return {
+    ...angle,
+    title: coerceCopyScript(fields[`${prefix}.title`] ?? angle.title, locale),
+    hook: coerceCopyScript(fields[`${prefix}.hook`] ?? angle.hook, locale),
+    scriptOutline: coerceCopyScript(
+      fields[`${prefix}.scriptOutline`] ?? angle.scriptOutline,
+      locale,
+    ),
+    cta: coerceCopyScript(fields[`${prefix}.cta`] ?? angle.cta, locale),
+    whyItWorks: coerceCopyScript(fields[`${prefix}.whyItWorks`] ?? angle.whyItWorks, locale),
+    formatLabel: coerceCopyScript(
+      fields[`${prefix}.formatLabel`] ?? angle.formatLabel,
+      locale,
+    ),
+    bulletPoints: bullets,
+  };
+}
+
+/** Align planner angle copy to UI market (EN / 简 / 繁) after live/playbook research. */
+export async function alignResearchPlanCopy(
+  plan: ContentResearchPlan,
+  market: PromptMarket,
+): Promise<ContentResearchPlan> {
+  const locale = resolveCopyLocale(market);
+  const fields: Record<string, string> = {};
+  if (plan.summary.trim()) fields.summary = plan.summary;
+  plan.candidates.forEach((c, i) => mapAngleCopyFields(c, `c${i}`, fields));
+  plan.topPicks.forEach((c, i) => mapAngleCopyFields(c, `t${i}`, fields));
+
+  const needs = Object.values(fields).some((v) => copyNeedsLocaleRewrite(v, locale));
+
+  const rewritten =
+    needs && Object.keys(fields).length
+      ? await rewriteCopyToScript(fields, locale)
+      : fields;
+
+  return {
+    ...plan,
+    market,
+    summary: coerceCopyScript(rewritten.summary ?? plan.summary, locale),
+    candidates: plan.candidates.map((c, i) =>
+      applyMappedCopyFields(c, `c${i}`, rewritten, locale),
+    ),
+    topPicks: plan.topPicks.map((c, i) =>
+      applyMappedCopyFields(c, `t${i}`, rewritten, locale),
+    ),
+  };
+}
+
 export function finalizeLiveResearchPlan(
   parsed: Partial<ContentResearchPlan>,
   normalizeInput: {
@@ -222,6 +307,7 @@ export function finalizeLiveResearchPlan(
     searchProvider?: ContentResearchPlan["searchProvider"];
     sources?: ContentResearchSource[];
     posts?: ContentResearchPost[];
+    market?: PromptMarket;
   },
   options?: { mediaFilter?: ContentResearchMediaFilter; fallbackWarning?: string },
 ): ContentResearchPlan {
@@ -263,6 +349,8 @@ function buildPlaybookPrompt(input: {
     "- topPicks: best 3 from candidates (copy full objects, highest score)",
     "- format: teaching-carousel | single-image | campaign | reel | model-wear",
     `- Copy language: ${plannerCopyLanguageRule(copyLocale)}`,
+    "- NEVER paste Facebook/Instagram English titles into Chinese markets (or Chinese titles into English) — translate and adapt title/hook/bullets/cta to Copy language",
+    "- sourceTitle may keep the original post language for citation; title/hook/bullets/cta/scriptOutline MUST follow Copy language only — no EN+中文 mix",
     `- Platform playbook: ${platformPlaybook(input.platform)}`,
     input.promotionMode === "physical"
       ? "- User sells a PHYSICAL product — prefer model-wear, product hero angles when relevant."
@@ -315,6 +403,8 @@ function buildLiveWebPrompt(input: {
     "- Do NOT invent viral claims without snippet evidence",
     "- format: teaching-carousel | single-image | campaign | reel | model-wear",
     `- Copy language: ${plannerCopyLanguageRule(copyLocale)}`,
+    "- NEVER paste Facebook/Instagram English titles into Chinese markets (or Chinese titles into English) — translate and adapt title/hook/bullets/cta to Copy language",
+    "- sourceTitle may keep the original post language for citation; title/hook/bullets/cta/scriptOutline MUST follow Copy language only — no EN+中文 mix",
     `- Platform: ${PLATFORM_LABELS[input.platform]}`,
     ...researchProductPromptLines(input.topic, input.product),
     input.business ? `Business: ${input.business}` : "",
@@ -387,14 +477,16 @@ async function planContentResearchPlaybook(input: {
     "You output strict JSON for social content angle research.",
     buildPlaybookPrompt(input),
   );
-  return applyMediaFilterToPlan(
+  const plan = applyMediaFilterToPlan(
     normalizePlan(parsed, {
       topic: input.topic,
       platform: input.platform,
       researchMode: "playbook",
+      market: input.market,
     }),
     input.mediaFilter,
   );
+  return alignResearchPlanCopy(plan, input.market);
 }
 
 async function planContentResearchLive(input: {
@@ -437,7 +529,7 @@ async function planContentResearchLive(input: {
         bundle.posts && bundle.posts.length > 0 ? RESEARCH_LIVE_ANGLE_COUNT : 6,
     }),
   );
-  return finalizeLiveResearchPlan(
+  const plan = finalizeLiveResearchPlan(
     parsed,
     {
       topic: input.topic,
@@ -446,9 +538,11 @@ async function planContentResearchLive(input: {
       searchProvider: bundle.provider,
       sources,
       posts: bundle.posts,
+      market: input.market,
     },
     { mediaFilter: input.mediaFilter, fallbackWarning: bundle.fallbackWarning },
   );
+  return alignResearchPlanCopy(plan, input.market);
 }
 
 export async function planContentResearch(input: {

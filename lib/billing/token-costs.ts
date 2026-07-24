@@ -3,9 +3,9 @@
  *
  * Anchor: 1,000 tokens ≈ USD 3.30 COGS → ≈ USD 0.0033 / token.
  * Derived from fal pass-through (Nano Banana ~$0.08/1K image;
- * Seedance Fast ~$0.21–0.24/s at 480p–720p) then rounded for UI.
+ * Seedance pixel formula / published $/s; HeyGen Avatar ~$0.10/s) then rounded for UI.
  *
- * Free grant (1,000) covers 1× image + 1× 8s 480p video (545) with ~455 buffer.
+ * Free grant (1,000) covers 1× image + 1× 8s 480p video with buffer.
  */
 import { TOKEN_COGS_USD_PER_1000 } from "@/lib/billing/plans";
 
@@ -16,22 +16,51 @@ export const TOKEN_COST = {
   image: 25, // ~$0.08
   image_ab: 50, // 2 images
   campaign: 90, // 3 slides + plan ~$0.30
-  teaching_carousel: 120, // 4 slides + plan ~$0.40
-  storyboard_scene: 20, // ~$0.06
-  storyboard_batch: 80, // typical 4 scenes
+  teaching_carousel: 120, // ~4 slides + plan; prefer estimateTeachingCarouselTokens(n)
+  storyboard_scene: 26, // ~$0.086 — covers Nano Banana 1K ($0.08) + thin buffer
+  storyboard_batch: 104, // typical 4 scenes
   music: 30, // ~$0.10
   voiceover: 5, // ~$0.015
   bgm: 5, // local ffmpeg mix — small operator cost
   plan: 5, // LLM plan / brief ~$0.01–0.02
 } as const;
 
-/** Tokens per second of video. */
+/**
+ * Tokens per second of Seedance video.
+ * 480p aligned to fal pixel formula (~$0.134/s → ~41 tok/s).
+ * 720p/1080p track published fal $/s.
+ */
 export const VIDEO_TOKENS_PER_SEC = {
-  "480p": 65, // ~$0.212/s → 8s ≈ $1.70 → 520 tokens
+  "480p": 42, // ~$0.139/s → 8s ≈ 336
   "720p_fast": 75, // fal Fast $0.2419/s → 8s ≈ 600
   "720p": 95, // fal Standard $0.3034/s → 8s ≈ 760
   "1080p": 210, // fal $0.682/s → 8s ≈ 1680
 } as const;
+
+/**
+ * HeyGen Avatar IV / V on fal — $0.10 per output video second.
+ * $0.10 / $0.0033 ≈ 30.3 → 30 tokens/sec.
+ */
+export const HEYGEN_TOKENS_PER_SEC = 30;
+export const HEYGEN_MIN_BILL_SEC = 4;
+export const HEYGEN_MAX_BILL_SEC = 60;
+
+export function estimateHeygenPresenterTokens(durationSec: number): number {
+  const sec = Math.max(
+    HEYGEN_MIN_BILL_SEC,
+    Math.min(HEYGEN_MAX_BILL_SEC, Math.ceil(durationSec)),
+  );
+  return HEYGEN_TOKENS_PER_SEC * sec;
+}
+
+/** Rough spoken length before TTS — used for affordability pre-check. */
+export function estimateSpeechDurationSec(script: string, locale: "hk" | "en" | "cn"): number {
+  const t = script.trim();
+  if (!t) return 8;
+  const cjkHeavy = locale !== "en" || /[\u4e00-\u9fff]/.test(t);
+  const charsPerSec = cjkHeavy ? 4.5 : 14;
+  return Math.max(HEYGEN_MIN_BILL_SEC, Math.min(HEYGEN_MAX_BILL_SEC, Math.ceil(t.length / charsPerSec)));
+}
 
 /**
  * Kling 2.5 Turbo Pro I2V (fal): $0.35 for 5s, +$0.07/extra sec.
@@ -93,11 +122,17 @@ export function estimateVideoTokens(opts: {
 /** Free pack promise: 1 image + 1× 8s 480p (+ buffer for plan/refine). */
 export const FREE_PACK = {
   image: TOKEN_COST.image, // 25
-  video8s480p: VIDEO_TOKENS_PER_SEC["480p"] * 8, // 520
-  total: TOKEN_COST.image + VIDEO_TOKENS_PER_SEC["480p"] * 8, // 545
+  video8s480p: VIDEO_TOKENS_PER_SEC["480p"] * 8, // 336
+  total: TOKEN_COST.image + VIDEO_TOKENS_PER_SEC["480p"] * 8, // 361
   grant: 1000,
-  buffer: 1000 - (TOKEN_COST.image + VIDEO_TOKENS_PER_SEC["480p"] * 8), // 455
+  buffer: 1000 - (TOKEN_COST.image + VIDEO_TOKENS_PER_SEC["480p"] * 8), // 639
 } as const;
+
+export function estimateTeachingCarouselTokens(slideCount: number): number {
+  const n = Math.min(6, Math.max(4, Math.round(slideCount) || 5));
+  // plan + one Nano Banana 1K per slide
+  return TOKEN_COST.plan + TOKEN_COST.image * n;
+}
 
 export function estimateImageTokens(opts: {
   numImages?: number;
@@ -107,7 +142,9 @@ export function estimateImageTokens(opts: {
   const mode = opts.mode ?? "single";
   if (mode === "ab" || (opts.numImages ?? 1) >= 2) return TOKEN_COST.image_ab;
   if (mode === "campaign") return TOKEN_COST.campaign;
-  if (mode === "teaching_carousel") return TOKEN_COST.teaching_carousel;
+  if (mode === "teaching_carousel") {
+    return estimateTeachingCarouselTokens(opts.sceneCount ?? 5);
+  }
   if (mode === "storyboard") {
     const n = Math.max(1, opts.sceneCount ?? 4);
     return TOKEN_COST.storyboard_scene * n;

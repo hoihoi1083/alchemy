@@ -11,6 +11,12 @@ import { estimateImageTokens } from "@/lib/billing/token-costs";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import { artStyleAvoidTail, artStyleSystemPrompt, resolveArtStyleId } from "@/lib/art-style";
 import { SERVER_ERRORS } from "@/lib/api/server-errors";
+import { parseBrandKit } from "@/lib/brand-kit";
+import {
+  archiveCinematicStillsWithBrandLogo,
+  CINEMATIC_LOGO_PLACEMENT,
+} from "@/lib/brand-logo-composite";
+import type { LogoPlacement } from "@/lib/image-refine-prompt";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -40,6 +46,22 @@ function formatFalError(e: unknown): string {
   return "Cinematic scene image generation failed";
 }
 
+const PLACEMENTS: LogoPlacement[] = [
+  "bottom-right",
+  "bottom-left",
+  "top-right",
+  "top-left",
+  "center",
+  "replace",
+];
+
+function parsePlacement(raw: unknown): LogoPlacement {
+  if (typeof raw === "string" && (PLACEMENTS as string[]).includes(raw)) {
+    return raw as LogoPlacement;
+  }
+  return CINEMATIC_LOGO_PLACEMENT;
+}
+
 export async function POST(request: Request) {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
@@ -53,7 +75,14 @@ export async function POST(request: Request) {
   }
   fal.config({ credentials: key });
 
-  let body: { plan?: CinematicReelPlan; aspect_ratio?: string; endpoint?: string; art_style?: string };
+  let body: {
+    plan?: CinematicReelPlan;
+    aspect_ratio?: string;
+    endpoint?: string;
+    art_style?: string;
+    brand_kit?: unknown;
+    logo_placement?: string;
+  };
   try {
     body = await request.json();
   } catch {
@@ -68,6 +97,8 @@ export async function POST(request: Request) {
   const aspectRatio = body.aspect_ratio?.trim() || "9:16";
   const endpoint = sanitizeImageEndpoint(body.endpoint, defaultTextEndpoint());
   const artStyleId = resolveArtStyleId(body.art_style);
+  const brandKit = parseBrandKit(body.brand_kit);
+  const logoPlacement = parsePlacement(body.logo_placement);
 
   const tokenCost = estimateImageTokens({
     mode: "storyboard",
@@ -87,10 +118,7 @@ export async function POST(request: Request) {
   try {
     const scenes = await Promise.all(
       plan.scenes.map(async (scene) => {
-        const prompt = [
-          scene.imagePrompt.trim(),
-          artStyleAvoidTail(artStyleId),
-        ]
+        const prompt = [scene.imagePrompt.trim(), artStyleAvoidTail(artStyleId)]
           .filter(Boolean)
           .join("\n\n");
         const systemPrompt = artStyleSystemPrompt(artStyleId);
@@ -121,9 +149,25 @@ export async function POST(request: Request) {
       fallbackUrls: falUrls,
       prompt: "cinematic-reel",
     });
-    const durableScenes = scenes.map((scene, index) => ({
+    let finalUrls = durableUrls.map((u, i) => u ?? falUrls[i]!);
+
+    let logoStamped = false;
+    if (brandKit.logoUrl) {
+      const stamped = await archiveCinematicStillsWithBrandLogo(
+        request,
+        finalUrls,
+        brandKit,
+        logoPlacement,
+      );
+      if (stamped.logoStamped && stamped.urls.length === finalUrls.length) {
+        finalUrls = stamped.urls;
+        logoStamped = true;
+      }
+    }
+
+    const durableScenes: CinematicSceneResult[] = scenes.map((scene, index) => ({
       ...scene,
-      imageUrl: durableUrls[index] ?? scene.imageUrl,
+      imageUrl: finalUrls[index] ?? scene.imageUrl,
     }));
 
     await trackUsage(auth.user.userId, "storyboard");
@@ -137,6 +181,8 @@ export async function POST(request: Request) {
       sceneCount: durableScenes.length,
       tokensCharged: tokenCost,
       creditBalance: balanceAfter,
+      logoStamped,
+      logoPlacement: logoStamped ? logoPlacement : undefined,
     });
   } catch (e: unknown) {
     await refundTokens(auth.user.userId, tokenCost, {

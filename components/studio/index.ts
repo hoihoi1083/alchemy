@@ -3,6 +3,7 @@
  * Step JSX still lives in StudioWizard.tsx; extract further as needed.
  */
 export { JobProgressBar } from "./JobProgressBar";
+export { GenerationWaitPlaceholder } from "./GenerationWaitPlaceholder";
 export { WizardErrorBanner } from "./WizardErrorBanner";
 export { WizardMobileBar } from "./WizardMobileBar";
 export { WizardProvider, useWizard } from "./WizardContext";

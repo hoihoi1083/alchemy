@@ -8,6 +8,7 @@ import {
   sanitizeCompositorText,
 } from "@/lib/compositor/fonts";
 import { escapeXml } from "@/lib/compositor/paper-sticker/svg";
+import { planCaptionBurnText } from "@/lib/image-canvas-text-layout";
 import type { VisualCaptionClip } from "@/lib/visual-caption-types";
 import {
   getFfmpegPath,
@@ -36,20 +37,25 @@ async function renderClipOverlayPng(
   height: number,
   clip: VisualCaptionClip,
 ): Promise<Buffer> {
-  const lines = clip.text
-    .split(/\n/)
-    .map((line) => sanitizeCompositorText(line))
-    .filter(Boolean);
-  const fontSize = Math.max(24, Math.round(width * 0.048));
-  const lineHeight = Math.round(fontSize * 1.35);
+  const plan = planCaptionBurnText(clip.text, width, height, {
+    fontSizeScale: 0.048 / 0.052,
+    position: "center",
+  });
+  const lines = plan.lines.map((line) => sanitizeCompositorText(line));
+  const { fontSize, lineHeight } = plan;
   const stroke = Math.max(3, Math.round(fontSize * 0.12));
   const cx = Math.round((clip.xPct / 100) * width);
-  const baseY = Math.round((clip.yPct / 100) * height);
-  const startY = baseY - ((lines.length - 1) * lineHeight) / 2;
+  const blockSpan = (Math.max(1, lines.length) - 1) * lineHeight;
+  const halfGlyph = fontSize * 0.55;
+  const minCenterY = Math.round(height * 0.08) + halfGlyph;
+  const maxCenterY = height - Math.round(height * 0.08) - halfGlyph;
+  let baseY = Math.round((clip.yPct / 100) * height);
+  let firstLineY = baseY - blockSpan / 2;
+  firstLineY = Math.max(minCenterY, Math.min(firstLineY, maxCenterY - blockSpan));
 
   const textNodes = lines
     .map((line, i) => {
-      const y = Math.round(startY + i * lineHeight);
+      const y = Math.round(firstLineY + i * lineHeight);
       return `<text x="${cx}" y="${y}" text-anchor="middle" dominant-baseline="middle" font-family="NotoBody" font-size="${fontSize}" font-weight="700" fill="white" stroke="black" stroke-width="${stroke}" paint-order="stroke">${escapeXml(line)}</text>`;
     })
     .join("");

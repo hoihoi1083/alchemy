@@ -24,8 +24,8 @@ describe("billing token economics", () => {
     assert.equal(FREE_PACK.image, TOKEN_COST.image);
     assert.equal(FREE_PACK.video8s480p, videoTokenCost("480p", 8));
     assert.ok(FREE_PACK.total <= FREE_PACK.grant);
-    assert.equal(FREE_PACK.total, 545);
-    assert.equal(FREE_PACK.buffer, 455);
+    assert.equal(FREE_PACK.total, 361);
+    assert.equal(FREE_PACK.buffer, 639);
   });
 
   it("Standard monthly promo keeps ~50% margin on full token burn", () => {

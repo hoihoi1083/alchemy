@@ -36,10 +36,11 @@ describe("plan entitlements", () => {
 
   it("defaults image resolution to plan max and clamps above", () => {
     assert.equal(clampImageResolution("free").resolution, "1K");
-    assert.equal(clampImageResolution("pro").resolution, "2K");
-    assert.equal(clampImageResolution("master").resolution, "4K");
+    assert.equal(clampImageResolution("pro").resolution, "1K");
+    assert.equal(clampImageResolution("master").resolution, "2K");
     assert.equal(clampImageResolution("standard", "4K").resolution, "1K");
-    assert.equal(clampImageResolution("pro", "4K").resolution, "2K");
+    assert.equal(clampImageResolution("pro", "2K").resolution, "1K");
+    assert.equal(clampImageResolution("master", "4K").resolution, "2K");
   });
 
   it("gates Pro canvas to master/custom only", () => {
@@ -56,8 +57,9 @@ describe("plan entitlements", () => {
     assert.equal(PLAN_DEFINITIONS.standard.maxVideoResolution, "720p");
     assert.equal(PLAN_DEFINITIONS.pro.maxVideoResolution, "1080p");
     assert.equal(PLAN_DEFINITIONS.free.maxImageResolution, "1K");
-    assert.equal(PLAN_DEFINITIONS.pro.maxImageResolution, "2K");
-    assert.equal(PLAN_DEFINITIONS.master.maxImageResolution, "4K");
+    assert.equal(PLAN_DEFINITIONS.standard.maxImageResolution, "1K");
+    assert.equal(PLAN_DEFINITIONS.pro.maxImageResolution, "1K");
+    assert.equal(PLAN_DEFINITIONS.master.maxImageResolution, "2K");
   });
 
   it("parses video resolution aliases", () => {

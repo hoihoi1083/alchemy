@@ -94,8 +94,82 @@ export function seedanceSafeStillPromptClause(): string {
   ].join(" ");
 }
 
+/** Concept beauty/spa stills: people OK mid-shot; Seedance/Kling often accept soft faces. */
+export function conceptServiceStillSafetyClause(): string {
+  return [
+    "Service still safety: mid-shot commercial framing preferred.",
+    "People (guest/therapist) OK — avoid extreme face fill-frame or skin-macro close-ups that trip content filters.",
+  ].join(" ");
+}
+
 export function seedanceSafePlannerRules(): string[] {
   return [...SEEDANCE_SAFE_STILL_RULES];
+}
+
+/**
+ * Soften still prompts that commonly trip Nano Banana content policy.
+ * Spa / beauty services ARE allowed — avoid extreme skin/mask close-ups, not people entirely.
+ */
+export function softenStoryboardStillPromptForModeration(prompt: string): string {
+  let out = prompt.trim();
+  const replacements: Array<[RegExp, string]> = [
+    [/close-?up of (?:a |the )?(?:calm )?face[^.!]*/gi, "tasteful mid-shot of spa guest (face soft, not fill-frame)"],
+    [/close-?up (?:of )?(?:the )?face[^.!]*/gi, "mid-shot spa atmosphere, face not filling the frame"],
+    [/steam rising (?:around|on|from) (?:the )?face/gi, "soft steam rising from a ceramic spa bowl beside the guest"],
+    [/massage on temples/gi, "therapist hands gently near towel-wrapped guest (mid-shot)"],
+    [/hands applying gentle massage on temples/gi, "therapist adjusting a warm spa towel (mid-shot, faces soft)"],
+    [/bare skin extreme/gi, "tasteful spa skincare mood"],
+    // Treatment-bed facial: keep PEOPLE, drop extreme mask-on-skin close-up language
+    [/client lying on (?:a |the )?treatment bed with (?:a )?facial mask[^.|]*/gi,
+      "mid-shot: therapist applying a facial treatment to a guest reclining on the spa bed in a robe — calm commercial beauty ad, soft light, faces visible but not extreme close-up"],
+    [/person lying on (?:a |the )?treatment bed with (?:a )?facial mask[^.|]*/gi,
+      "mid-shot spa facial treatment in progress — guest and therapist, tasteful framing"],
+    [/client lying on (?:a |the )?treatment bed[^.|]*/gi,
+      "guest reclining on spa treatment bed in a robe, mid-shot with therapist nearby"],
+    [/lying on (?:a |the )?(?:treatment )?bed with (?:a )?facial mask[^.|]*/gi,
+      "spa facial treatment mid-shot with guest and therapist"],
+    [/esthetician applying (?:a )?serum[^.|]*/gi,
+      "therapist applying serum during a facial — mid-shot, commercial beauty ad"],
+    [/aesthetician applying (?:a )?serum[^.|]*/gi,
+      "therapist applying serum during a facial — mid-shot, commercial beauty ad"],
+    [/esthetician applying (?:a )?facial mask[^.|]*/gi,
+      "therapist applying a facial treatment — mid-shot of guest and therapist"],
+    [/治療師為客人敷面膜[^.|]*/gi, "therapist applying facial treatment to guest, mid-shot"],
+    [/客人放鬆閉眼/gi, "guest relaxing with eyes gently closed"],
+    [/visible discount sign/gi, "small wooden price card on the table"],
+    [/\bnatural skin\b/gi, "natural materials and soft light"],
+  ];
+  for (const [pattern, replacement] of replacements) {
+    out = out.replace(pattern, replacement);
+  }
+  return out;
+}
+
+/** Ultra-safe still when a spa/beauty scene still trips fal after softening — room + props only. */
+export function spaSafeStillFallbackPrompt(vars: {
+  theme?: string;
+  role?: string;
+  marketHint?: string;
+}): string {
+  const theme = vars.theme?.trim() || "premium facial spa";
+  return [
+    `Photorealistic 9:16 spa marketing still for ${theme}.`,
+    vars.role ? `Beat: ${vars.role}.` : "",
+    "Show a serene spa treatment in progress OR empty spa room: white towels, wood tray, plants, soft daylight.",
+    "If people appear: mid-shot only, tasteful commercial beauty ad — no extreme face/skin fill-frame.",
+    "Cinematic commercial photography, warm wood tones, shallow depth of field.",
+    "ZERO readable text, logos, or watermarks.",
+    vars.marketHint ?? "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+export function looksLikeSpaOrBeautyBrief(...samples: (string | undefined)[]): boolean {
+  const joined = samples.filter(Boolean).join("\n").toLowerCase();
+  return /spa|facial|skincare|esthetician|aesthetician|massage|treatment bed|serum|towel|rejuvenat/i.test(
+    joined,
+  );
 }
 
 export function seedanceModerationPlannerRules(): string[] {

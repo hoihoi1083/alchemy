@@ -13,7 +13,18 @@ import { studioSlideFileName } from "@/lib/pipeline/studio-slide-files";
 
 /** Logo width as a fraction of the shorter image side. */
 const LOGO_SIZE_RATIO = 0.14;
+/** Slightly smaller for tall 9:16 cinematic stills so captions stay clear. */
+const CINEMATIC_LOGO_SIZE_RATIO = 0.11;
 const MARGIN_RATIO = 0.04;
+
+/** Default corner for cinematic stills — top keeps lower third free for burned captions. */
+export const CINEMATIC_LOGO_PLACEMENT: LogoPlacement = "top-right";
+
+export type CompositeLogoOpts = {
+  placement?: LogoPlacement;
+  /** Override size as fraction of short side (default 0.14, cinematic ~0.11). */
+  sizeRatio?: number;
+};
 
 export async function loadBrandLogoBuffer(
   logoSource: string | null | undefined,
@@ -47,13 +58,15 @@ export async function compositeBrandLogoOntoImage(
   inputImage: string | Buffer,
   logoBuffer: Buffer,
   placement: LogoPlacement = "bottom-right",
+  opts?: { sizeRatio?: number },
 ): Promise<Buffer> {
   const base = sharp(inputImage);
   const meta = await base.metadata();
   const width = meta.width ?? 1080;
   const height = meta.height ?? 1920;
   const shortSide = Math.min(width, height);
-  const maxLogo = Math.max(48, Math.round(shortSide * LOGO_SIZE_RATIO));
+  const sizeRatio = opts?.sizeRatio ?? LOGO_SIZE_RATIO;
+  const maxLogo = Math.max(48, Math.round(shortSide * sizeRatio));
   const margin = Math.max(12, Math.round(shortSide * MARGIN_RATIO));
 
   const logoMeta = await sharp(logoBuffer).metadata();
@@ -95,6 +108,11 @@ export async function compositeBrandLogoOntoImage(
 }
 
 async function fetchImageBuffer(url: string): Promise<Buffer> {
+  if (url.startsWith("data:")) {
+    const base64 = url.split(",")[1];
+    if (!base64) throw new Error("Invalid data URL for logo stamp.");
+    return Buffer.from(base64, "base64");
+  }
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) throw new Error(`Could not fetch image for logo stamp (${res.status}).`);
   return Buffer.from(await res.arrayBuffer());
@@ -105,7 +123,7 @@ export async function archiveImagesWithBrandLogo(
   request: Request,
   remoteUrls: string[],
   brandKit: BrandKit | null | undefined,
-  opts?: { placement?: LogoPlacement; fileName?: string },
+  opts?: { placement?: LogoPlacement; fileName?: string; sizeRatio?: number },
 ): Promise<{ urls: string[]; logoStamped: boolean }> {
   const logoBuffer = await loadBrandKitLogoBuffer(brandKit);
   if (!logoBuffer || !remoteUrls.length) {
@@ -136,9 +154,11 @@ export async function archiveImagesWithBrandLogo(
 
   for (let i = 0; i < remoteUrls.length; i++) {
     const remote = remoteUrls[i];
-    if (!remote?.startsWith("http")) continue;
+    if (!remote?.startsWith("http") && !remote?.startsWith("data:")) continue;
     const raw = await fetchImageBuffer(remote);
-    const stamped = await compositeBrandLogoOntoImage(raw, logoBuffer, placement);
+    const stamped = await compositeBrandLogoOntoImage(raw, logoBuffer, placement, {
+      sizeRatio: opts?.sizeRatio,
+    });
     const fileName =
       remoteUrls.length === 1 ? (opts?.fileName ?? "generated.png") : studioSlideFileName(i);
     await fs.writeFile(path.join(dir, fileName), stamped);
@@ -146,6 +166,19 @@ export async function archiveImagesWithBrandLogo(
   }
 
   return { urls, logoStamped: true };
+}
+
+/** Cinematic stills: same corner + size on every scene for brand consistency. */
+export async function archiveCinematicStillsWithBrandLogo(
+  request: Request,
+  remoteUrls: string[],
+  brandKit: BrandKit | null | undefined,
+  placement: LogoPlacement = CINEMATIC_LOGO_PLACEMENT,
+): Promise<{ urls: string[]; logoStamped: boolean }> {
+  return archiveImagesWithBrandLogo(request, remoteUrls, brandKit, {
+    placement,
+    sizeRatio: CINEMATIC_LOGO_SIZE_RATIO,
+  });
 }
 
 /** Stamp an uploaded logo file onto a generated image (Quick Fix). */

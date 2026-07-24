@@ -84,6 +84,12 @@ export function LandingPageClient() {
                   >
                     {m.landing.imageCanvasLink}
                   </Link>
+                  <Link
+                    href="/ugc"
+                    className="rounded-full border border-rose-300 px-6 py-3 text-sm font-medium text-rose-900"
+                  >
+                    {m.landing.ugcLink}
+                  </Link>
                 </div>
               </div>
 

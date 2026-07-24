@@ -2,6 +2,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import { spawn } from "child_process";
 import sharp from "sharp";
+import { planCaptionBurnText } from "@/lib/image-canvas-text-layout";
 import {
   compositorFontFaceCss,
   ensureCompositorFonts,
@@ -36,37 +37,20 @@ function run(cmd: string, args: string[]): Promise<void> {
   });
 }
 
-function layoutText(
+function layoutX(
   position: CaptionLine["position"],
-  lineIndex: number,
-  lineCount: number,
   width: number,
-  height: number,
-  lineHeight: number,
-): { x: number; y: number; anchor: "start" | "middle" | "end" } {
-  const stack = lineIndex * lineHeight;
-  const centerStack = (lineIndex - (lineCount - 1) / 2) * lineHeight;
+): { x: number; anchor: "start" | "middle" | "end" } {
   const marginX = Math.round(width * 0.06);
-  const topY = Math.round(height * 0.12) + stack;
-  const bottomY = Math.round(height * 0.9) - (lineCount - 1 - lineIndex) * lineHeight;
-  const centerY = Math.round(height / 2 + centerStack);
-
   switch (position ?? "bottom") {
-    case "top":
-      return { x: Math.round(width / 2), y: topY, anchor: "middle" };
-    case "center":
-      return { x: Math.round(width / 2), y: centerY, anchor: "middle" };
     case "top-left":
-      return { x: marginX, y: topY, anchor: "start" };
-    case "top-right":
-      return { x: width - marginX, y: topY, anchor: "end" };
     case "bottom-left":
-      return { x: marginX, y: bottomY, anchor: "start" };
+      return { x: marginX, anchor: "start" };
+    case "top-right":
     case "bottom-right":
-      return { x: width - marginX, y: bottomY, anchor: "end" };
-    case "bottom":
+      return { x: width - marginX, anchor: "end" };
     default:
-      return { x: Math.round(width / 2), y: bottomY, anchor: "middle" };
+      return { x: Math.round(width / 2), anchor: "middle" };
   }
 }
 
@@ -77,15 +61,12 @@ async function renderCaptionOverlayPng(
   style: CaptionBurnStyle,
 ): Promise<Buffer> {
   const preset = resolveCaptionBurnStyle(style);
-  const chunks = caption.text
-    .split(/\n/)
-    .map((line) => sanitizeCompositorText(line))
-    .filter(Boolean);
-  const fontSize = Math.max(
-    28,
-    Math.round(width * 0.052 * (preset.fontSizeScale ?? 1)),
-  );
-  const lineHeight = Math.round(fontSize * 1.35);
+  const plan = planCaptionBurnText(caption.text, width, height, {
+    fontSizeScale: preset.fontSizeScale ?? 1,
+    position: caption.position,
+  });
+  const chunks = plan.lines.map((line) => sanitizeCompositorText(line));
+  const fontSize = plan.fontSize;
   const stroke = Math.max(
     2,
     Math.round(fontSize * 0.12 * (preset.strokeWidthScale ?? 1)),
@@ -94,17 +75,11 @@ async function renderCaptionOverlayPng(
   const strokeColor = preset.stroke ?? "black";
   const fontFamily = preset.fontFamily ?? "NotoBody";
   const fontWeight = preset.fontWeight ?? 700;
+  const { x, anchor } = layoutX(caption.position, width);
 
   const textNodes = chunks
     .map((chunk, lineIndex) => {
-      const { x, y, anchor } = layoutText(
-        caption.position,
-        lineIndex,
-        chunks.length,
-        width,
-        height,
-        lineHeight,
-      );
+      const y = plan.lineYs[lineIndex] ?? plan.lineYs[plan.lineYs.length - 1] ?? Math.round(height * 0.9);
       return `<text x="${x}" y="${y}" text-anchor="${anchor}" dominant-baseline="middle" font-family="${fontFamily}" font-size="${fontSize}" font-weight="${fontWeight}" fill="${fill}" stroke="${strokeColor}" stroke-width="${stroke}" paint-order="stroke">${escapeXml(chunk)}</text>`;
     })
     .join("");

@@ -4,7 +4,11 @@ import type {
   TeachingCarouselPlan,
   TeachingCarouselSlide,
 } from "@/lib/teaching-carousel-types";
-import { DEFAULT_TEACHING_CAROUSEL_SLIDE_COUNT } from "@/lib/teaching-carousel-types";
+import {
+  DEFAULT_TEACHING_CAROUSEL_SLIDE_COUNT,
+  MAX_TEACHING_CAROUSEL_SLIDE_COUNT,
+  MIN_TEACHING_CAROUSEL_SLIDE_COUNT,
+} from "@/lib/teaching-carousel-types";
 import { artStylePlannerHint, resolveArtStyleId, type ArtStyleId } from "@/lib/art-style";
 import { resolveCopyLocale, plannerCopyLanguageRule, rewriteCopyToScript, coerceCopyScript } from "@/lib/copy-locale";
 import type { PromotionMode } from "@/lib/promotion-mode";
@@ -168,8 +172,8 @@ function applyCarouselCompositions(
 
 function normalizePlan(parsed: Partial<TeachingCarouselPlan>, input: PlanInput): TeachingCarouselPlan {
   const targetCount = Math.min(
-    6,
-    Math.max(4, Number(input.slideCount) || DEFAULT_TEACHING_CAROUSEL_SLIDE_COUNT),
+    MAX_TEACHING_CAROUSEL_SLIDE_COUNT,
+    Math.max(MIN_TEACHING_CAROUSEL_SLIDE_COUNT, Number(input.slideCount) || DEFAULT_TEACHING_CAROUSEL_SLIDE_COUNT),
   );
   const fallback = fallbackSlides(input, targetCount);
   const rawSlides = Array.isArray(parsed.slides) ? parsed.slides : [];
@@ -201,8 +205,8 @@ function normalizePlan(parsed: Partial<TeachingCarouselPlan>, input: PlanInput):
 
 function buildPlanPrompt(input: PlanInput): string {
   const slideCount = Math.min(
-    6,
-    Math.max(4, Number(input.slideCount) || DEFAULT_TEACHING_CAROUSEL_SLIDE_COUNT),
+    MAX_TEACHING_CAROUSEL_SLIDE_COUNT,
+    Math.max(MIN_TEACHING_CAROUSEL_SLIDE_COUNT, Number(input.slideCount) || DEFAULT_TEACHING_CAROUSEL_SLIDE_COUNT),
   );
   const artStyleId = resolveArtStyleId(input.artStyleId);
   const stylized = artStyleId !== "realistic";
@@ -289,6 +293,8 @@ function buildPlanPrompt(input: PlanInput): string {
               : "- visualDna: moody/color-graded photography, stylized display typography — avoid plain system font on white boxes.",
             "- Each slide = ONE main idea with a distinct composition (cover / tip / recap) — no repeated layout template.",
             "- Copy is short; body/takeaway must not repeat the title verbatim.",
+            "- composition must NOT invent English UI chips/labels (Image, Video, Copy, Copywriting) or an outer matte/letterbox frame around the slide.",
+            "- Prefer full-bleed scene metaphors; do not plan 'poster card floating on blank canvas' layouts.",
           ]
         : stylized
           ? [

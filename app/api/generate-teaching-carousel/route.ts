@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { chargeTokens, refundTokens } from "@/lib/billing/charge";
 import { clampImageResolution } from "@/lib/billing/entitlements";
 import { getUserPlan } from "@/lib/billing/get-user-plan";
-import { TOKEN_COST } from "@/lib/billing/token-costs";
+import { estimateTeachingCarouselTokens } from "@/lib/billing/token-costs";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import { defaultEditEndpoint, defaultTextEndpoint, sanitizeImageEndpoint } from "@/lib/image-endpoints";
 import { persistAndDurablizeMany } from "@/lib/storage/durable-media";
@@ -14,7 +14,11 @@ import {
   type PromptMarket,
   type SubjectFraming,
 } from "@/lib/prompt-variables";
-import { DEFAULT_TEACHING_CAROUSEL_SLIDE_COUNT, MAX_TEACHING_CAROUSEL_SLIDE_COUNT } from "@/lib/teaching-carousel-types";
+import {
+  DEFAULT_TEACHING_CAROUSEL_SLIDE_COUNT,
+  MAX_TEACHING_CAROUSEL_SLIDE_COUNT,
+  MIN_TEACHING_CAROUSEL_SLIDE_COUNT,
+} from "@/lib/teaching-carousel-types";
 import { planTeachingCarousel } from "@/lib/teaching-carousel-plan";
 import { isPromotionMode } from "@/lib/promotion-mode";
 import { parseBrandKit } from "@/lib/brand-kit";
@@ -129,11 +133,14 @@ export async function POST(request: Request) {
   );
   const slideCount = Math.min(
     MAX_TEACHING_CAROUSEL_SLIDE_COUNT,
-    Math.max(DEFAULT_TEACHING_CAROUSEL_SLIDE_COUNT, Number(formData.get("slide_count") || DEFAULT_TEACHING_CAROUSEL_SLIDE_COUNT)),
+    Math.max(
+      MIN_TEACHING_CAROUSEL_SLIDE_COUNT,
+      Number(formData.get("slide_count") || DEFAULT_TEACHING_CAROUSEL_SLIDE_COUNT),
+    ),
   );
   const systemPrompt = artStyleSystemPrompt(artStyleId);
 
-  const tokenCost = TOKEN_COST.teaching_carousel;
+  const tokenCost = estimateTeachingCarouselTokens(slideCount);
   const { resolution: imageResolution } = clampImageResolution(
     await getUserPlan(auth.user.userId),
   );

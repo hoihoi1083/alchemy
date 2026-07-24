@@ -110,16 +110,16 @@ describe("billing safety — never overcharge", () => {
 
   it("concurrent settles cannot overdraw (second loses)", () => {
     const w = new MemoryWallet();
-    w.seed({ clerkId: "u1", creditBalance: 520, plan: "free" });
+    w.seed({ clerkId: "u1", creditBalance: 336, plan: "free" });
 
-    w.require("u1", 520);
-    w.require("u1", 520); // soft check both pass (same as production race window)
+    w.require("u1", 336);
+    w.require("u1", 336); // soft check both pass (same as production race window)
 
-    const first = w.settle("u1", 520);
+    const first = w.settle("u1", 336);
     assert.equal(first, 0);
-    assert.throws(() => w.settle("u1", 520), InsufficientTokensError);
+    assert.throws(() => w.settle("u1", 336), InsufficientTokensError);
     assert.equal(w.balance("u1"), 0);
-    assert.equal(w.totalConsumed("u1"), 520);
+    assert.equal(w.totalConsumed("u1"), 336);
   });
 
   it("missing user cannot be charged as a silent free pass", () => {
@@ -137,8 +137,8 @@ describe("billing safety — never overcharge", () => {
     assert.equal(TOKEN_COST.teaching_carousel, 120);
     assert.equal(TOKEN_COST.music, 30);
     assert.equal(TOKEN_COST.voiceover, 5);
-    assert.equal(estimateImageTokens({ mode: "storyboard", sceneCount: 4 }), 80);
-    assert.equal(estimateVideoTokens({ resolution: "480p", fast: false, duration: 8 }), 520);
+    assert.equal(estimateImageTokens({ mode: "storyboard", sceneCount: 4 }), 104);
+    assert.equal(estimateVideoTokens({ resolution: "480p", fast: false, duration: 8 }), 336);
     assert.equal(
       videoTokenCostFromRequest({ resolution: "720p", fast: true, duration: "auto" }),
       600,
@@ -193,7 +193,7 @@ describe("billing safety — never overcharge", () => {
     assert.ok(!jobs.some((j) => !j.ok && w.totalConsumed("u1") === expected + j.cost));
     assert.equal(
       expected,
-      25 + 50 + 90 + 120 + 80 + 520 + 30 + 5,
+      25 + 50 + 90 + 120 + 104 + 336 + 30 + 5,
     );
   });
 });
@@ -224,7 +224,7 @@ describe("billing safety — API route contract audit", () => {
     assert.deepEqual(offenders, [], `settle without require:\n${offenders.join("\n")}`);
   });
 
-  it("paid generate routes return tokensCharged when they settle", () => {
+  it("paid generate routes return tokensCharged when they charge", () => {
     const mustHave = [
       "app/api/generate-image/route.ts",
       "app/api/generate/route.ts",
@@ -238,10 +238,19 @@ describe("billing safety — API route contract audit", () => {
     ];
     for (const rel of mustHave) {
       const src = readFileSync(join(process.cwd(), rel), "utf8");
-      assert.match(src, /requireTokens/, `${rel} missing requireTokens`);
-      assert.match(src, /settleTokens/, `${rel} missing settleTokens`);
+      assert.match(
+        src,
+        /chargeTokens|requireTokens/,
+        `${rel} missing chargeTokens/requireTokens`,
+      );
       assert.match(src, /tokensCharged/, `${rel} missing tokensCharged in response`);
     }
+    const presenter = readFileSync(
+      join(process.cwd(), "app/api/generate-digital-presenter/route.ts"),
+      "utf8",
+    );
+    assert.match(presenter, /estimateHeygenPresenterTokens/);
+    assert.match(presenter, /billedDurationSec/);
   });
 
   it("sharp logo stamp path documents zero charge (tokensCharged: 0)", () => {

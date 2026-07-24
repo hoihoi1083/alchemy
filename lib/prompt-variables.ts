@@ -39,6 +39,8 @@ import type {
 } from "@/lib/video-storyboard-types";
 import {
   REFERENCE_CONTENT_REPLACE_LINE,
+  REFERENCE_CONTENT_REPLACE_TEXTLESS_LINE,
+  REFERENCE_ERASE_TEXT_LINE,
   REFERENCE_STYLE_MATCH_LINE,
   REFERENCE_TOPIC_GUARD_LINE,
 } from "@/lib/reference-style-transfer";
@@ -61,6 +63,11 @@ import {
   resolveCopyLocale,
   type CopyLocale,
 } from "@/lib/copy-locale";
+import {
+  seedanceSafeStillPromptClause,
+  conceptServiceStillSafetyClause,
+  softenStoryboardStillPromptForModeration,
+} from "@/lib/seedance-moderation";
 
 export type VideoPromptOpts = {
   creativity?: VideoCreativity;
@@ -457,10 +464,10 @@ function conceptSocialPreferAvoid(
   }
   return {
     avoid:
-      "white infographic template, edu-carousel flyer, Canva 3-block layout, stacked bullet list, stock handshake, generic AI poster collage, plain white seamless catalog backdrop, empty cream studio sweep, repeating the same CTA line multiple times",
+      "white infographic template, edu-carousel flyer, Canva 3-block layout, stacked bullet list, stock handshake, generic AI poster collage, plain white seamless catalog backdrop, empty cream studio sweep, outer matte/letterbox frame, poster card floating on a blank canvas, repeating the same headline or CTA line multiple times, English UI chips labeled Image/Video/Copy/Copywriting",
     prefer: stylized
-      ? "consistent illustrated palette, layered scene with props, one strong visual metaphor, medium-appropriate lettering"
-      : "cinematic color grade, lifestyle set design with props and depth, HK/IG agency aesthetic, one strong visual metaphor, layered typography — never a lone product on blank white",
+      ? "consistent illustrated palette, layered scene with props, one strong visual metaphor, medium-appropriate lettering, full-bleed edge-to-edge"
+      : "cinematic color grade, lifestyle set design with props and depth, HK/IG agency aesthetic, one strong visual metaphor, layered typography full-bleed — never a lone product on blank white, never a framed card on a larger empty background",
   };
 }
 
@@ -473,9 +480,12 @@ export function buildConceptSocialImagePrompt(
     ctaLine?: string;
     referenceImageMode?: ReferenceImageMode;
     singleImagePlan?: SingleImagePlan | null;
+    /** Carousel slide — stronger once-only copy + full-bleed rules. */
+    carouselSlide?: boolean;
   },
 ): string {
   const plan = slideOpts?.singleImagePlan;
+  const carousel = Boolean(slideOpts?.carouselSlide);
   const name = vars.business?.trim() || vars.product?.trim() || "the concept";
   const hook =
     plan?.title?.trim() || slideOpts?.mainLine?.trim() || vars.headline?.trim() || name;
@@ -504,20 +514,31 @@ export function buildConceptSocialImagePrompt(
           plan.theme ? `Theme: ${plan.theme}.` : "",
           `Art direction (visual DNA): ${plan.visualDna}.`,
           `Layout: ${plan.composition}.`,
-          `Create a scroll-stopping vertical SOCIAL MEDIA POST for ${name}.`,
+          carousel
+            ? `Create one full-bleed 9:16 carousel slide for ${name} — edge-to-edge art, not a card on a blank canvas.`
+            : `Create a scroll-stopping vertical SOCIAL MEDIA POST for ${name}.`,
         )
-      : `Create a scroll-stopping vertical SOCIAL MEDIA POST for ${name} — Instagram/Facebook feed creative.`,
+      : carousel
+        ? `Create one full-bleed 9:16 carousel slide for ${name} — edge-to-edge Instagram/Facebook creative, not a framed card on a blank background.`
+        : `Create a scroll-stopping vertical SOCIAL MEDIA POST for ${name} — Instagram/Facebook feed creative.`,
     direction ? `Creative direction: ${direction}.` : "",
     stylized ? artStylePlannerHint(vars.artStyle) : "",
-    `Main hook line on image: "${hook}".`,
-    support ? `Supporting line (smaller, woven into layout): ${support}.` : "",
-    cta && cta !== hook ? `Closing action line on image (once only, not repeated): ${cta}.` : "",
+    `Main hook line on image (paint EXACTLY ONCE): "${hook}".`,
+    support
+      ? `Supporting line (smaller, paint EXACTLY ONCE in the same text stack): ${support}.`
+      : "",
+    cta && cta !== hook
+      ? `Closing action line on image (once only, not repeated): ${cta}.`
+      : "",
+    "COPY RULE: place all on-image copy in ONE upright text block (left OR right third). Letters must read left-to-right horizontally — never rotate type 90°, never vertical/sideways lettering, never stack one character per line.",
+    "Do NOT paint the same headline twice. No top+bottom twin titles, no second masthead, no repeating the hook in a different color/weight.",
+    "Do NOT render English meta/UI chips or labels such as Image, Video, Copy, Copywriting, Copywring, CTA, Logo, Brand, Watermark.",
     brandProfile?.businessName ? brandProfilePromptBlock(brandProfile) : "",
     FRAMING_IMAGE[vars.framing],
     artStyleConceptHeroHint(vars.artStyle),
     stylized
       ? "TYPE: headline and copy drawn/rendered IN the same art medium — integrated illustration typography, not a plain text box on white."
-      : "TYPE: headline overlaid on image with gradient scrim, split panel, or magazine-cover energy — integrated, not a text box on plain white.",
+      : "TYPE: one headline + optional support + optional CTA in a single scrim/overlay stack — editorial, not a white text box. Prefer a clean single-band layout over magazine dual mastheads.",
     "AVOID: " + avoid + ".",
     "PREFER: " + prefer + ".",
     artStyleImageClause(vars.artStyle),
@@ -527,12 +548,12 @@ export function buildConceptSocialImagePrompt(
     marketChineseScriptBlock(vars.market),
     carouselSlideAvoidClause(vars.framing, vars.artStyle ?? DEFAULT_ART_STYLE),
     artStyleAvoidTail(vars.artStyle),
-    "9:16 vertical social post, no watermark, no platform UI chrome, no corner badges or placeholder labels.",
+    "full-bleed edge-to-edge slide matching the requested aspect ratio — no watermark, no platform UI chrome, no outer matte/letterbox, no corner badges or placeholder labels.",
   );
 }
 
 const CAROUSEL_ANTI_POSTER_NEGATIVE =
-  "white infographic, edu slide, classroom poster, bullet list template, Canva layout, powerpoint slide, plain white background box, duplicated headline text, watermark";
+  "white infographic, edu slide, classroom poster, bullet list template, Canva layout, powerpoint slide, plain white background box, outer matte frame, letterbox border, poster card on blank canvas, duplicated headline text, twin masthead titles, top and bottom same headline, rotated text, sideways typography, vertical lettering, 90-degree rotated words, stacked single characters, English UI chips Image/Video/Copy/Copywriting, watermark";
 
 export function buildCarouselImageNegativePrompt(
   framing: SubjectFraming,
@@ -590,6 +611,7 @@ export function buildConceptSocialCarouselSlidePrompt(
       supportLine: supportLine && supportLine !== mainLine ? supportLine : "",
       ctaLine: ctaLine && ctaLine !== mainLine ? ctaLine : "",
       referenceImageMode,
+      carouselSlide: true,
     }),
   );
 }
@@ -700,9 +722,17 @@ export function buildTeachingCarouselSlideImagePrompt(
       `Theme: ${plan.theme}.`,
       `Shared visual DNA: ${plan.visualDna}.`,
       `Slide role: ${slide.role}.`,
-      `Headline on image: ${slide.title}.`,
-      slide.body && slide.body !== slide.title ? `Supporting line: ${slide.body}.` : "",
-      slide.takeaway && slide.takeaway !== slide.title ? `Closing line: ${slide.takeaway}.` : "",
+      `Headline on image (paint EXACTLY ONCE): ${slide.title}.`,
+      slide.body && slide.body !== slide.title
+        ? `Supporting line (paint EXACTLY ONCE): ${slide.body}.`
+        : "",
+      slide.takeaway &&
+        slide.takeaway !== slide.title &&
+        slide.takeaway !== slide.body
+        ? `Closing line (once only): ${slide.takeaway}.`
+        : "",
+      "COPY RULE: one upright horizontal text block only — never duplicate headline/body; never rotate type 90° or stack letters vertically.",
+      "No English meta/UI chips (Image, Video, Copy, Copywriting). No outer matte/letterbox frame.",
       slide.composition ? `Layout: ${slide.composition}.` : "",
       artStyleImageClause(vars.artStyle),
       FRAMING_IMAGE[vars.framing],
@@ -717,17 +747,19 @@ export function buildTeachingCarouselSlideImagePrompt(
       carouselSlideAvoidClause(vars.framing, vars.artStyle ?? DEFAULT_ART_STYLE),
       referenceImageMode === "style-only" ? vars.extra : undefined,
       brandPromptExtras(brandProfile, brandKit),
+      "full-bleed edge-to-edge — not a framed card on a blank canvas.",
     ),
   );
 }
 
 /** Cinematic concept keyframe — scene only, no poster typography (for Seedance). */
 export function buildConceptCinematicImagePrompt(vars: PromptVariables): string {
-  const scene =
+  const scene = softenStoryboardStillPromptForModeration(
     vars.extra?.trim() ||
-    joinParts(vars.headline, vars.subline) ||
-    vars.product?.trim() ||
-    "cinematic social reel hook scene";
+      joinParts(vars.headline, vars.subline) ||
+      vars.product?.trim() ||
+      "cinematic social reel hook scene",
+  );
   return joinParts(
     artStyleImageClause(vars.artStyle),
     "Cinematic FILM STILL for a vertical social reel — like a movie frame, NOT a marketing poster.",
@@ -736,6 +768,7 @@ export function buildConceptCinematicImagePrompt(vars: PromptVariables): string 
     "NO white infographic background, NO headline text block at top, NO bullet list layout, NO Canva-style ad template, NO flyer composition.",
     "NO on-screen text, NO logos, NO watermarks, NO typography overlays — copy is added later in video post-production.",
     "Original characters only, no celebrity likenesses.",
+    "Prefer mid-shots of rooms, hands, products, towels, and silhouettes — never photoreal face fill-frame, never client lying on a bed with facial mask / serum-on-skin (fal content filters).",
     MARKET_HINTS[vars.market],
     FRAMING_IMAGE[vars.framing],
     "Single 9:16 vertical cinematic still.",
@@ -890,10 +923,13 @@ export function buildWizardImagePrompt(
     aspectRatio?: string;
     brandLogoImageIndex?: number | null;
     singleImagePlan?: SingleImagePlan | null;
+    /** When false, skip IMAGE 1 mandatory blocks (concept / text-only). Default true for product promo. */
+    hasReferenceImage?: boolean;
   },
 ): string {
   const brandLogoImageIndex = promptOptions?.brandLogoImageIndex ?? null;
   const plan = promptOptions?.singleImagePlan ?? null;
+  const hasReferenceImage = promptOptions?.hasReferenceImage !== false;
   const withLogo = (prompt: string) =>
     brandLogoImageIndex != null
       ? joinParts(prompt, brandKitLogoImagePromptBlock(brandLogoImageIndex))
@@ -987,7 +1023,10 @@ export function buildWizardImagePrompt(
       `Visual style direction: ${getVisualStyle(visualStyleId).promptHint}`
     : "";
   return withLogo(
-    joinParts(buildPromoImagePrompt(vars, brandProfile, brandKit, plan), styleHint),
+    joinParts(
+      buildPromoImagePrompt(vars, brandProfile, brandKit, plan, { hasReferenceImage }),
+      styleHint,
+    ),
   );
 }
 
@@ -1014,12 +1053,28 @@ function shouldUseConceptSocialPrompt(
   return true;
 }
 
+/** Concept video/storyboard must never fall through to product promo (IMAGE 1 mandatory). */
+function shouldUseConceptCinematicPrompt(
+  visualStyleId: string,
+  context?: ImagePromptContext,
+): boolean {
+  if (context?.promotionMode !== "concept") return false;
+  if (visualStyleId === "concept-cinematic") return true;
+  if (visualStyleId === "storyboard-video") return true;
+  // Combined / video-only concept workflows: cinematic stills, not product-edit promos.
+  if (context?.workflowMode === "combined" || context?.workflowMode === "video-only") {
+    return true;
+  }
+  return false;
+}
+
 export function resolveImagePromptMode(
   visualStyleId: string,
   creativeMode: string,
   context?: ImagePromptContext,
 ): ImagePromptMode {
   if (creativeMode === "reference-concept") return "reference-concept";
+  if (shouldUseConceptCinematicPrompt(visualStyleId, context)) return "concept-cinematic";
   if (visualStyleId === "concept-cinematic") return "concept-cinematic";
   if (shouldUseConceptSocialPrompt(visualStyleId, context)) return "concept-social";
   if (visualStyleId === "info-poster") return "info-poster";
@@ -1132,16 +1187,22 @@ export function buildPromoImagePrompt(
   brandProfile?: BrandProfile | null,
   brandKit?: BrandKit | null,
   plan?: SingleImagePlan | null,
+  options?: { hasReferenceImage?: boolean },
 ): string {
   const product = vars.product?.trim() || "the product";
   const theme = plan
     ? joinParts(plan.title, plan.body, plan.takeaway)
     : joinParts(vars.headline, vars.subline, vars.offer);
   const stylized = vars.artStyle && vars.artStyle !== "realistic";
+  const hasReferenceImage = options?.hasReferenceImage !== false;
+  const refBlock = hasReferenceImage ? imageReferenceAnchorBlock(vars) : "";
+  const eraseRefText = hasReferenceImage
+    ? "Remove outdated marketing text from IMAGE 1 where new copy replaces it."
+    : "Text-to-image: invent a fitting hero subject and set from the campaign brief — no uploaded IMAGE 1.";
   if (vars.imageTextMode === "textless") {
     return joinParts(
       artStyleMandatoryLead(vars.artStyle),
-      imageReferenceAnchorBlock(vars),
+      refBlock,
       stylized
         ? `Create a brand-new vertical social media ILLUSTRATION scene for ${product} — art medium only, no readable text.`
         : `Create a brand-new vertical social media product scene for ${product}.`,
@@ -1160,7 +1221,7 @@ export function buildPromoImagePrompt(
   }
   return joinParts(
     artStyleMandatoryLead(vars.artStyle),
-    imageReferenceAnchorBlock(vars),
+    refBlock,
     plan ? singlePlanBlock(plan) : "",
     stylized
       ? `Create a brand-new vertical social media ILLUSTRATION/ad for ${product} — entire composition in the chosen art medium.`
@@ -1168,7 +1229,7 @@ export function buildPromoImagePrompt(
     brandPromptExtras(brandProfile, brandKit),
     vars.business ? `Brand / shop: ${vars.business}.` : "",
     !plan && theme ? `Campaign message: ${theme}.` : "",
-    `Remove outdated marketing text from IMAGE 1 where new copy replaces it.`,
+    eraseRefText,
     stylized
       ? artStylePlannerHint(vars.artStyle)
       : plan
@@ -1366,13 +1427,20 @@ export function buildImageToVideoPrompt(
 function imageStoryboardStyleRefBlock(
   plan: VideoStoryboardPlan,
   dualProductAndStyle?: boolean,
+  textless?: boolean,
 ): string {
+  const contentReplace = textless
+    ? REFERENCE_CONTENT_REPLACE_TEXTLESS_LINE
+    : REFERENCE_CONTENT_REPLACE_LINE;
+  const eraseText = textless ? REFERENCE_ERASE_TEXT_LINE : "";
   if (dualProductAndStyle) {
     return joinParts(
       "DUAL REFERENCE — IMAGE 1 = style/layout mood from research; IMAGE 2 = the user's EXACT product photo",
       "Keep IMAGE 1's composition grammar, color mood, and social-ad energy.",
       "Replace every product in the frame with IMAGE 2's exact item — same beads, colors, materials, charms, clasp. Do NOT invent a different bracelet or copy IMAGE 1's product.",
+      contentReplace,
       REFERENCE_TOPIC_GUARD_LINE,
+      eraseText,
       "Adapt beat layout rhythm for this scene — same design family as IMAGE 1, hero product from IMAGE 2 only.",
       plan.visualDirection ? `Locked series aesthetic: ${plan.visualDirection}.` : "",
       thirdPartyBrandGuardBlock(),
@@ -1381,13 +1449,28 @@ function imageStoryboardStyleRefBlock(
   return joinParts(
     "REFERENCE STYLE TRANSFER — IMAGE 1 is the reference ad/reel frame",
     REFERENCE_STYLE_MATCH_LINE,
-    REFERENCE_CONTENT_REPLACE_LINE,
+    contentReplace,
     REFERENCE_TOPIC_GUARD_LINE,
+    eraseText,
     "Adapt the reference beat layout rhythm for this scene — same composition grammar family as IMAGE 1, not a generic stock layout.",
     "If IMAGE 1 is illustrated/3D/meme/cartoon, do NOT default to generic photorealistic lifestyle photography.",
     plan.visualDirection ? `Locked series aesthetic: ${plan.visualDirection}.` : "",
     thirdPartyBrandGuardBlock(),
   );
+}
+
+/** Drop planner lines that ask Nano Banana to paint text when stills must stay video-safe. */
+function sanitizeStoryboardImagePromptForTextless(imagePrompt: string | undefined): string {
+  const raw = imagePrompt?.trim() ?? "";
+  if (!raw) return "";
+  return raw
+    .replace(
+      /\b(with|add|include|overlay|render|bake|paint|show)\b[^.]{0,40}\b(text|typography|caption|headline|copy|字|文案|標題)[^.]*\.?/gi,
+      "",
+    )
+    .replace(/\bon[- ]?image copy\b[^.]*\.?/gi, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
 }
 
 /** Nano Banana still for one storyboard scene (product from IMAGE 1, or IMAGE 2 when dual). */
@@ -1406,6 +1489,8 @@ export function buildStoryboardSceneImagePrompt(
     brandProfile?: BrandProfile | null;
     brandKit?: BrandKit | null;
     brandLogoImageIndex?: number | null;
+    /** Product/physical path with an uploaded product photo. */
+    hasProductImage?: boolean;
   },
 ): string {
   const brandKit = options?.brandKit;
@@ -1418,17 +1503,26 @@ export function buildStoryboardSceneImagePrompt(
   const conceptTextOnly = Boolean(options?.conceptTextOnly);
   const storyboardStyleRef = Boolean(options?.storyboardStyleRef);
   const dualProductAndStyle = Boolean(options?.dualProductAndStyle);
+  // Default: product storyboard assumes IMAGE 1 unless explicitly concept text-only.
+  const hasProductImage = options?.hasProductImage ?? !conceptTextOnly;
   const textless = options?.textless !== false; // default ON for video-safe stills
+  const sceneImagePrompt = softenStoryboardStillPromptForModeration(
+    textless
+      ? sanitizeStoryboardImagePromptForTextless(scene.imagePrompt)
+      : scene.imagePrompt?.trim() || "",
+  );
   const sceneVars: PromptVariables = {
     ...vars,
-    extra: [vars.extra, scene.imagePrompt].filter(Boolean).join(" | "),
+    extra: softenStoryboardStillPromptForModeration(
+      [vars.extra, sceneImagePrompt].filter(Boolean).join(" | "),
+    ),
   };
   const shopHint = options?.visualStyleId
     ? getVisualStyle(options.visualStyleId).promptHint
     : "";
   const sceneCopy = textless ? undefined : scene.onImageCopyZh?.trim();
   const textlessRule =
-    "TEXTLESS STILL (mandatory): no readable text, no Chinese/Latin characters, no numbers as copy, no captions, no logos-as-text, no watermarks. Typography space may stay blank — copy is added later as burned captions.";
+    "TEXTLESS STILL (mandatory for video): ZERO readable text — no Chinese, no Latin, no digits-as-copy, no captions, no title bars, no watermarks. If IMAGE 1 has text, REMOVE it completely. Leave blank space where type would go — captions are burned AFTER Kling/Seedance.";
   const imageBriefVars: PromptVariables = sceneCopy
     ? {
         ...sceneVars,
@@ -1436,7 +1530,7 @@ export function buildStoryboardSceneImagePrompt(
         extra: joinParts(
           `ON-IMAGE COPY (this scene only): ${sceneCopy}`,
           "Do NOT render production labels (開場亮點, 行動呼籲, 中段, arrows →) or the full-video subline.",
-          scene.imagePrompt,
+          sceneImagePrompt,
         ),
       }
     : sceneVars;
@@ -1448,7 +1542,7 @@ export function buildStoryboardSceneImagePrompt(
         plan.visualDirection ? `Series look: ${plan.visualDirection}.` : "",
         plan.theme ? `Story theme: ${plan.theme}.` : "",
         `Scene role: ${scene.role}.`,
-        scene.imagePrompt ? `Scene action: ${scene.imagePrompt}.` : "",
+        sceneImagePrompt ? `Scene action: ${sceneImagePrompt}.` : "",
         "Keep the SAME ad layout shell as IMAGE 1 on every scene — only scene copy and micro-angle change inside that design family.",
         "Keep IMAGE 1 ad design language; IMAGE 2 product as hero in this scene.",
         buildReferenceConceptImagePrompt(imageBriefVars, {
@@ -1460,7 +1554,7 @@ export function buildStoryboardSceneImagePrompt(
         FRAMING_IMAGE[sceneVars.framing],
         sceneCopy
           ? "Integrate ON-IMAGE COPY text with reference typography style — consumer words only."
-          : textlessRule,
+          : joinParts(textlessRule, REFERENCE_ERASE_TEXT_LINE),
         "9:16 vertical social ad still — no watermark, no social UI.",
       ),
     );
@@ -1473,8 +1567,9 @@ export function buildStoryboardSceneImagePrompt(
         plan.theme ? `User story theme (content lane): ${plan.theme}.` : "",
         plan.visualDirection ? `Series look (from reference reel): ${plan.visualDirection}.` : "",
         `Scene role: ${scene.role}.`,
-        scene.imagePrompt ? `Scene action: ${scene.imagePrompt}.` : "",
-        imageStoryboardStyleRefBlock(plan, dualProductAndStyle),
+        sceneImagePrompt ? `Scene action: ${sceneImagePrompt}.` : "",
+        imageStoryboardStyleRefBlock(plan, dualProductAndStyle, textless),
+        !hasProductImage ? conceptServiceStillSafetyClause() : "",
         sceneCopy ? `ON-IMAGE COPY (this scene only): ${sceneCopy}` : textlessRule,
         sceneCopy ? promoTypographyHint(sceneVars, true) : "",
         artStyleImageClause(vars.artStyle),
@@ -1482,7 +1577,7 @@ export function buildStoryboardSceneImagePrompt(
         "Subject upright, head at top of frame — never rotate 90°.",
         MARKET_HINTS[sceneVars.market],
         FRAMING_IMAGE[sceneVars.framing],
-        vars.extra,
+        sceneVars.extra,
         "9:16 vertical, no watermark, no social UI.",
       ),
     );
@@ -1495,9 +1590,10 @@ export function buildStoryboardSceneImagePrompt(
         plan.visualDirection ? `Series look: ${plan.visualDirection}.` : "",
         plan.theme ? `Story theme: ${plan.theme}.` : "",
         `Scene role: ${scene.role}.`,
-        scene.imagePrompt,
+        sceneImagePrompt,
         sceneCopy ? `ON-IMAGE COPY (this scene only): ${sceneCopy}` : textlessRule,
         "Cinematic concept short — match reference reel pacing and visual style family; user topic for content only.",
+        conceptServiceStillSafetyClause(),
         brandLogoImageIndex != null
           ? "No third-party logos, watermarks, or social UI. 9:16 vertical."
           : "No logos, watermarks, or social UI. 9:16 vertical.",
@@ -1506,7 +1602,25 @@ export function buildStoryboardSceneImagePrompt(
         "Subject upright, head at top of frame — never rotate 90°.",
         MARKET_HINTS[sceneVars.market],
         FRAMING_IMAGE[sceneVars.framing],
-        vars.extra,
+        sceneVars.extra,
+      ),
+    );
+  }
+  if (!hasProductImage) {
+    return withLogo(
+      joinParts(
+        artStyleMandatoryLead(vars.artStyle),
+        `Storyboard still ${scene.imageIndex}/${plan.scenes.length} for a concept short.`,
+        plan.visualDirection ? `Series look: ${plan.visualDirection}.` : "",
+        plan.theme ? `Story theme: ${plan.theme}.` : "",
+        `Scene role: ${scene.role}.`,
+        sceneImagePrompt,
+        sceneCopy ? `ON-IMAGE COPY (this scene only): ${sceneCopy}` : textlessRule,
+        conceptServiceStillSafetyClause(),
+        "9:16 vertical cinematic still — no logos, watermarks, or social UI.",
+        artStyleImageClause(vars.artStyle),
+        MARKET_HINTS[sceneVars.market],
+        sceneVars.extra,
       ),
     );
   }
@@ -1517,7 +1631,7 @@ export function buildStoryboardSceneImagePrompt(
       plan.visualDirection ? `Series look: ${plan.visualDirection}.` : "",
       plan.theme ? `Story theme: ${plan.theme}.` : "",
       `Scene role: ${scene.role}.`,
-      scene.imagePrompt,
+      sceneImagePrompt,
       imageReferenceAnchorBlock(vars),
       "Keep the exact product from IMAGE 1 — same item, colors, materials, and shape. Do not swap for a different product category.",
       artStyleImageClause(vars.artStyle),
@@ -1525,7 +1639,7 @@ export function buildStoryboardSceneImagePrompt(
       "Subject upright, head at top of frame, correct vertical orientation — never rotate person or product 90°.",
       MARKET_HINTS[vars.market],
       FRAMING_IMAGE[vars.framing],
-      vars.extra,
+      sceneVars.extra,
       brandPromptExtras(options?.brandProfile, brandKit),
       textlessRule,
       "9:16 vertical, no watermark, no social UI.",

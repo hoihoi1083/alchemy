@@ -11,11 +11,16 @@ import {
 } from "@/lib/ad-pack-preferences";
 import { materializeMediaInput } from "@/lib/pipeline/local-input";
 import { synthesizeSpeechToFile } from "@/lib/pipeline/tts";
+import { getMediaDurationSeconds } from "@/lib/pipeline/ffmpeg";
 import { mirrorImageUrlToFalStorage } from "@/lib/fal-mirror-media";
 import { chargeTokens, refundTokens } from "@/lib/billing/charge";
 import { clampVideoResolution } from "@/lib/billing/entitlements";
 import { getUserPlan } from "@/lib/billing/get-user-plan";
-import { estimateVideoTokens, TOKEN_COST } from "@/lib/billing/token-costs";
+import {
+  estimateHeygenPresenterTokens,
+  estimateSpeechDurationSec,
+  TOKEN_COST,
+} from "@/lib/billing/token-costs";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import { persistAndDurablize } from "@/lib/storage/durable-media";
 import {
@@ -25,8 +30,12 @@ import {
 } from "@/lib/ugc-presenter";
 import {
   findHeygenAvatar,
+  heygenAvatarVoice,
   HEYGEN_DIGITAL_TWIN_ENDPOINT,
 } from "@/lib/heygen-avatars";
+import { assertCanAfford, InsufficientTokensError, insufficientTokensResponse } from "@/lib/billing/ledger";
+import { isMongoConfigured } from "@/lib/mongodb";
+import { isProductionEnv } from "@/lib/mongodb-production";
 
 export type PresenterSourceMode = "custom-keyframe" | "stock-avatar";
 
@@ -41,7 +50,11 @@ function formatFalError(e: unknown): string {
     const fieldMsgs = e.fieldErrors
       .map((f) => {
         const loc = f.loc?.length ? f.loc.join(".") : "body";
-        return `${loc}: ${f.msg}`;
+        const msg = String(f.msg ?? "");
+        if (/does not support Avatar IV/i.test(msg) || /does not support Avatar V/i.test(msg)) {
+          return "This stock presenter isn’t supported for video generation. Pick another from the list, or use 我嘅關鍵幀圖 with a product photo.";
+        }
+        return `${loc}: ${msg}`;
       })
       .filter(Boolean);
     const bits = fieldMsgs.length ? fieldMsgs : [e.message];
@@ -72,28 +85,38 @@ async function resolveAudioUrl(input: {
   script?: string;
   locale: VoiceoverLocale;
   voicePreset?: VoicePresetId;
-}): Promise<{ audioUrl: string; usedPreview: boolean }> {
+  falVoiceId?: string;
+  falVoiceSpeed?: number;
+}): Promise<{ audioUrl: string; usedPreview: boolean; durationSec: number }> {
   const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "ugc-presenter-audio-"));
   try {
+    let local: string;
+    let usedPreview: boolean;
     if (input.speechUrl?.trim()) {
-      const local = path.join(tmpDir, "preview.mp3");
+      local = path.join(tmpDir, "preview.mp3");
       await materializeMediaInput(input.speechUrl.trim(), local);
-      return { audioUrl: await uploadAudioForFal(local), usedPreview: true };
+      usedPreview = true;
+    } else {
+      if (!input.script?.trim()) {
+        throw new Error("script or speech_url is required for the presenter voice.");
+      }
+      const { voice, xmlLang } = azureVoiceForLocale(input.locale);
+      local = path.join(tmpDir, "narration.mp3");
+      await synthesizeSpeechToFile({
+        text: input.script.trim(),
+        voice,
+        xmlLang,
+        locale: input.locale,
+        outputPath: local,
+        voicePresetId: input.voicePreset,
+        falVoiceId: input.falVoiceId,
+        falVoiceSpeed: input.falVoiceSpeed,
+      });
+      usedPreview = false;
     }
-    if (!input.script?.trim()) {
-      throw new Error("script or speech_url is required for the presenter voice.");
-    }
-    const { voice, xmlLang } = azureVoiceForLocale(input.locale);
-    const local = path.join(tmpDir, "narration.mp3");
-    await synthesizeSpeechToFile({
-      text: input.script.trim(),
-      voice,
-      xmlLang,
-      locale: input.locale,
-      outputPath: local,
-      voicePresetId: input.voicePreset,
-    });
-    return { audioUrl: await uploadAudioForFal(local), usedPreview: false };
+    const durationSec = await getMediaDurationSeconds(local);
+    const audioUrl = await uploadAudioForFal(local);
+    return { audioUrl, usedPreview, durationSec };
   } finally {
     await fs.rm(tmpDir, { recursive: true, force: true });
   }
@@ -137,6 +160,18 @@ export async function POST(request: Request) {
   const presenterMode = ((formData.get("presenter_mode") as string | null)?.trim() ||
     "custom-keyframe") as PresenterSourceMode;
   const stockAvatarId = (formData.get("stock_avatar_id") as string | null)?.trim() || "";
+  const falVoiceIdRaw = (formData.get("fal_voice_id") as string | null)?.trim() || "";
+  const falVoiceSpeedRaw = (formData.get("fal_voice_speed") as string | null)?.trim() || "";
+  const falVoiceSpeedParsed = Number(falVoiceSpeedRaw);
+  const avatarVoice =
+    presenterMode === "stock-avatar" && stockAvatarId
+      ? heygenAvatarVoice(stockAvatarId, locale)
+      : null;
+  const falVoiceId = falVoiceIdRaw || avatarVoice?.voiceId || "";
+  const falVoiceSpeed =
+    Number.isFinite(falVoiceSpeedParsed) && falVoiceSpeedParsed > 0
+      ? falVoiceSpeedParsed
+      : avatarVoice?.speed;
 
   if (!LOCALES.has(locale)) {
     return NextResponse.json({ error: "Invalid locale." }, { status: 400 });
@@ -154,26 +189,56 @@ export async function POST(request: Request) {
   const plan = await getUserPlan(auth.user.userId);
   const { resolution } = clampVideoResolution(plan, requestedResolution);
   const willSynthesizeVoice = !speechUrl;
-  const tokenCost =
-    estimateVideoTokens({ resolution, fast: false, duration: 8 }) +
+  const preflightSec = speechUrl
+    ? 12
+    : estimateSpeechDurationSec(script || "", locale);
+  const preflightCost =
+    estimateHeygenPresenterTokens(preflightSec) +
     (willSynthesizeVoice ? TOKEN_COST.voiceover : 0);
-  const charged = await chargeTokens(auth.user.userId, tokenCost, {
-    kind: "digital_presenter",
-    resolution,
-    synthesizedVoice: willSynthesizeVoice,
-  });
-  if ("error" in charged) return charged.error;
-  const balanceAfter = charged.balanceAfter;
+
+  if (isMongoConfigured()) {
+    try {
+      await assertCanAfford(auth.user.userId, preflightCost);
+    } catch (err) {
+      if (err instanceof InsufficientTokensError) {
+        return NextResponse.json(insufficientTokensResponse(err), { status: 402 });
+      }
+      throw err;
+    }
+  } else if (isProductionEnv()) {
+    return NextResponse.json(
+      { error: "Billing database is required. Set MONGODB_URI before charging tokens." },
+      { status: 503 },
+    );
+  }
 
   fal.config({ credentials: key });
 
+  let tokenCost = 0;
+  let balanceAfter: number | null = null;
+
   try {
-    const { audioUrl, usedPreview } = await resolveAudioUrl({
+    const { audioUrl, usedPreview, durationSec } = await resolveAudioUrl({
       speechUrl,
       script,
       locale,
       voicePreset,
+      falVoiceId: falVoiceId || undefined,
+      falVoiceSpeed,
     });
+
+    tokenCost =
+      estimateHeygenPresenterTokens(durationSec) +
+      (willSynthesizeVoice && !usedPreview ? TOKEN_COST.voiceover : 0);
+    const charged = await chargeTokens(auth.user.userId, tokenCost, {
+      kind: "digital_presenter",
+      vendor: "heygen",
+      resolution,
+      durationSec: Math.ceil(durationSec),
+      synthesizedVoice: willSynthesizeVoice && !usedPreview,
+    });
+    if ("error" in charged) return charged.error;
+    balanceAfter = charged.balanceAfter;
 
     if (presenterMode === "stock-avatar") {
       const avatar = findHeygenAvatar(stockAvatarId);
@@ -188,11 +253,14 @@ export async function POST(request: Request) {
         aspectRatio === "16:9" || aspectRatio === "1:1" ? aspectRatio : "9:16";
       const result = await fal.subscribe(HEYGEN_DIGITAL_TWIN_ENDPOINT, {
         input: {
-          character: { avatar: avatar.id as never },
-          voice: script ? { prompt: script } : {},
+          // Avatar V digital twin — named look must be Avatar V-eligible.
+          avatar: avatar.id,
           audio_url: audioUrl,
-          resolution: resolution as "360p" | "480p" | "540p" | "720p" | "1080p",
+          resolution: (resolution === "1080p" || resolution === "720p" ? resolution : "720p") as
+            | "720p"
+            | "1080p",
           aspect_ratio: heygenAspect,
+          fit: "cover",
         },
         logs: true,
       });
@@ -213,8 +281,9 @@ export async function POST(request: Request) {
         requestId: result.requestId,
         generationMode: "digital-presenter-stock",
         endpoint: HEYGEN_DIGITAL_TWIN_ENDPOINT,
-        note: `HeyGen stock presenter — ${avatar.id}. Lip-sync baked in.`,
+        note: `HeyGen Avatar V stock presenter — ${avatar.id}. Lip-sync baked in.`,
         tokensCharged: tokenCost,
+        billedDurationSec: Math.ceil(durationSec),
         creditBalance: balanceAfter,
       });
     }
@@ -278,13 +347,16 @@ export async function POST(request: Request) {
       endpoint: HEYGEN_AVATAR_IV_ENDPOINT,
       note: "HeyGen Avatar IV — lip-sync is baked into this clip (not Seedance).",
       tokensCharged: tokenCost,
+      billedDurationSec: Math.ceil(durationSec),
       creditBalance: balanceAfter,
     });
   } catch (e: unknown) {
-    await refundTokens(auth.user.userId, tokenCost, {
-      kind: "digital_presenter",
-      reason: "generation_failed",
-    });
+    if (tokenCost > 0) {
+      await refundTokens(auth.user.userId, tokenCost, {
+        kind: "digital_presenter",
+        reason: "generation_failed",
+      });
+    }
     if (e instanceof ValidationError) {
       console.error("[api/generate-digital-presenter] validation", JSON.stringify(e.fieldErrors));
     } else {

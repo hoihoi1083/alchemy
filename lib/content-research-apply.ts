@@ -33,6 +33,7 @@ import { resolveReelResearchRouting } from "@/lib/content-research-reel-routing"
 import {
   DEFAULT_TEACHING_CAROUSEL_SLIDE_COUNT,
   MAX_TEACHING_CAROUSEL_SLIDE_COUNT,
+  MIN_TEACHING_CAROUSEL_SLIDE_COUNT,
 } from "@/lib/teaching-carousel-types";
 
 function postFromAngle(
@@ -158,9 +159,11 @@ function wizardPatchForAngle(
   const resolvedFormat = combinedLocksStoryboard ? effectiveFormat : effectiveFormat;
 
   const copyTarget = promotionMode === "concept" ? explicitPromoteTarget : productName;
+  const market = plan.market;
   const copy = copyFieldsFromAngle(angle, copyTarget, plan.topic, {
     promotionMode,
     referenceSourced: pinnedReference,
+    market,
   });
   const promoteTargetRaw = contentResearchPromoteTarget(promotionMode, {
     product: promotionMode === "physical" ? copyTarget : "",
@@ -182,6 +185,7 @@ function wizardPatchForAngle(
         plan,
         promoteTarget,
         usePostInference ? inferred?.referenceNote : undefined,
+        market,
       );
 
   const conceptTopic = productName || plan.topic.trim();
@@ -224,7 +228,7 @@ function wizardPatchForAngle(
         ? Math.min(
             MAX_TEACHING_CAROUSEL_SLIDE_COUNT,
             Math.max(
-              DEFAULT_TEACHING_CAROUSEL_SLIDE_COUNT,
+              MIN_TEACHING_CAROUSEL_SLIDE_COUNT,
               imageCount || DEFAULT_TEACHING_CAROUSEL_SLIDE_COUNT,
             ),
           )
@@ -284,6 +288,7 @@ export function buildContentAngleHandoff(
             platform: plan.platform,
             platformLabel: plan.platformLabel,
             topic: plan.topic,
+            market: plan.market,
           },
         }
       : undefined,
@@ -321,7 +326,7 @@ export type ContentAngleApplyResult = {
 
 export type ContentResearchApplyRef = {
   angle: ContentAngleCandidate;
-  plan: Pick<ContentResearchPlan, "platform" | "platformLabel" | "topic">;
+  plan: Pick<ContentResearchPlan, "platform" | "platformLabel" | "topic" | "market">;
 };
 
 export async function applyContentAngleToWizard(

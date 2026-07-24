@@ -27,7 +27,45 @@ export async function generateVoicePreviewTracks(args: {
   locale: VoiceoverLocale;
   jobDir: string;
   pipelineUrl: (file: string) => string;
+  /** When set, synthesize only this MiniMax voice (stock avatar pairing). */
+  falVoiceId?: string;
+  falVoiceSpeed?: number;
+  falVoiceLabel?: string;
 }): Promise<VoicePreviewResult> {
+  if (args.falVoiceId) {
+    const fileName = PREVIEW_FILES[0];
+    const outputPath = path.join(args.jobDir, fileName);
+    const { voice, xmlLang } = azureVoiceForLocale(args.locale);
+    try {
+      await synthesizeSpeechToFile({
+        text: args.script,
+        voice,
+        xmlLang,
+        locale: args.locale,
+        outputPath,
+        falVoiceId: args.falVoiceId,
+        falVoiceSpeed: args.falVoiceSpeed,
+      });
+      return {
+        tracks: [
+          {
+            id: "avatar-voice",
+            presetId: "hk-female-pro",
+            label: args.falVoiceLabel || "avatar-voice",
+            audioUrl: args.pipelineUrl(fileName),
+          },
+        ],
+        errors: [],
+      };
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Voice preview failed.";
+      return {
+        tracks: [],
+        errors: [{ presetId: "hk-female-pro", message }],
+      };
+    }
+  }
+
   const presets = voicePresetsForLocale(args.locale).slice(0, PREVIEW_FILES.length);
   const tracks: VoicePreviewTrack[] = [];
   const errors: VoicePreviewError[] = [];

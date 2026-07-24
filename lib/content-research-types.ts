@@ -97,6 +97,8 @@ export type ContentResearchPlan = {
   researchWarning?: string;
   /** image = carousel/stills only; video = reels/clips only */
   mediaFilter?: ContentResearchMediaFilter;
+  /** UI market used when the plan was generated — drives copy script on apply. */
+  market?: PromptMarket;
   candidates: ContentAngleCandidate[];
   topPicks: ContentAngleCandidate[];
 };

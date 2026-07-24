@@ -123,6 +123,16 @@ export function defaultVoicePresetForLocale(locale: VoiceoverLocale): VoicePrese
   return list[0] ?? "en-female";
 }
 
+/** Prefer a voice that matches presenter gender within the locale. */
+export function defaultVoicePresetForLocaleAndGender(
+  locale: VoiceoverLocale,
+  gender: "female" | "male",
+): VoicePresetId {
+  const list = voicePresetsForLocale(locale);
+  const matched = list.find((id) => id.includes(`-${gender}`));
+  return matched ?? list[0] ?? (gender === "male" ? "en-male" : "en-female");
+}
+
 /** MiniMax voice IDs on fal — tuned for ad voiceover. */
 export function falVoiceForLocale(locale: VoiceoverLocale): {
   voiceId: string;

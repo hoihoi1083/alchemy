@@ -1,4 +1,4 @@
-import { ApiError, fal } from "@fal-ai/client";
+import { fal } from "@fal-ai/client";
 import { NextResponse } from "next/server";
 import { chargeTokens, refundTokens } from "@/lib/billing/charge";
 import { clampImageResolution } from "@/lib/billing/entitlements";
@@ -30,6 +30,13 @@ import { RESEARCH_REEL_ANALYSIS_MARKER } from "@/lib/reel-analysis-types";
 import type { ResearchReelAnalysis } from "@/lib/reel-analysis-types";
 import { pinStoryboardPlanToReelAnalysis } from "@/lib/reel-reference-brief";
 import { mapPool } from "@/lib/async-pool";
+import { formatFalGenerationError } from "@/lib/fal-errors";
+import {
+  isFalContentPolicyThrowable,
+  looksLikeSpaOrBeautyBrief,
+  softenStoryboardStillPromptForModeration,
+  spaSafeStillFallbackPrompt,
+} from "@/lib/seedance-moderation";
 
 export const runtime = "nodejs";
 /** Multi-scene Nano Banana can take 2–3 min each; client batches keep each request under this. */
@@ -54,13 +61,7 @@ function extractImageUrls(resultData: unknown): string[] {
 }
 
 function formatFalError(e: unknown): string {
-  if (e instanceof ApiError) {
-    return `${e.message}${e.requestId ? ` (fal request: ${e.requestId})` : ""}`;
-  }
-  if (e && typeof e === "object" && "message" in e) {
-    return String((e as { message: unknown }).message);
-  }
-  return "Storyboard image generation failed";
+  return formatFalGenerationError(e, "Storyboard image generation failed");
 }
 
 function aspectRatioForApi(ratio: string): string {
@@ -185,9 +186,23 @@ export async function POST(request: Request) {
   const aspectRatio = aspectRatioForApi(
     (formData.get("aspect_ratio") as string | null)?.trim() || "9:16",
   );
+  const spaBeautyBrief = looksLikeSpaOrBeautyBrief(
+    productName,
+    headline,
+    conceptIdea,
+    subline,
+    offer,
+    storyboardBrief,
+    promptExtraRaw,
+  );
+  // Spa/beauty concept: style-ref face photos often trip fal input filters — use text-to-image.
+  const forceConceptTextOnly =
+    conceptStoryboardNoProduct && spaBeautyBrief && !hasProduct;
   const endpoint = sanitizeImageEndpoint(
     formData.get("endpoint") as string | null,
-    conceptTextOnlyStoryboard || (!strategy.sendPixelsToFal && !hasStyle)
+    conceptTextOnlyStoryboard ||
+      forceConceptTextOnly ||
+      (!strategy.sendPixelsToFal && !hasStyle)
       ? defaultTextEndpoint()
       : defaultEditEndpoint(),
   );
@@ -202,7 +217,7 @@ export async function POST(request: Request) {
     offer,
     market: promptMarket,
     framing: subjectFraming,
-    extra: promptExtra,
+    extra: softenStoryboardStillPromptForModeration(promptExtra),
     artStyle: artStyleId,
   });
 
@@ -233,6 +248,7 @@ export async function POST(request: Request) {
         brandProfile,
         artStyleId,
         referenceStrategyKind: strategy.kind,
+        conceptMode: conceptStoryboardNoProduct,
       });
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "Storyboard planning failed.";
@@ -297,13 +313,15 @@ export async function POST(request: Request) {
     const storyboardStyleRef =
       (strategy.kind === "style-only" || hasReelAnalysis) &&
       hasStyle &&
-      !conceptTextOnlyStoryboard;
+      !conceptTextOnlyStoryboard &&
+      !forceConceptTextOnly;
     // Always prefer product identity when the user uploaded a product photo.
     // Research style refs alone caused scene stills to clone the viral post's product.
     const dualProductAndStyle = hasProduct && hasStyle && !conceptTextOnlyStoryboard;
     if (
       (strategy.sendPixelsToFal || storyboardStyleRef || hasProduct) &&
-      !conceptTextOnlyStoryboard
+      !conceptTextOnlyStoryboard &&
+      !forceConceptTextOnly
     ) {
       imageUrlsForFal = [];
       if (strategy.useDualImage && dualImage && hasStyle && hasProduct) {
@@ -326,30 +344,54 @@ export async function POST(request: Request) {
       STORYBOARD_FAL_CONCURRENCY,
       async (scene) => {
         const prompt = buildStoryboardSceneImagePrompt(scene, plan, vars, {
-          referenceConcept: strategy.useReferenceConceptPrompts && !conceptTextOnlyStoryboard,
-          conceptTextOnly: conceptTextOnlyStoryboard,
+          referenceConcept:
+            strategy.useReferenceConceptPrompts &&
+            !conceptTextOnlyStoryboard &&
+            !forceConceptTextOnly,
+          conceptTextOnly: conceptTextOnlyStoryboard || forceConceptTextOnly,
           storyboardStyleRef: storyboardStyleRef || dualProductAndStyle,
           dualProductAndStyle,
           textless: true,
           visualStyleId: visualStyle,
           brandProfile,
           brandKit,
+          hasProductImage: hasProduct,
         });
 
-        const result = await fal.subscribe(endpoint, {
-          input: {
-            prompt,
-            ...(imageUrlsForFal?.length ? { image_urls: imageUrlsForFal } : {}),
-            aspect_ratio: aspectRatio,
-            num_images: 1,
-            resolution: imageResolution,
-            limit_generations: true,
-            ...(artStyleSystemPrompt(artStyleId)
-              ? { system_prompt: artStyleSystemPrompt(artStyleId) }
-              : {}),
-          },
-          logs: true,
-        });
+        const subscribe = async (inputPrompt: string, withImages: boolean) =>
+          fal.subscribe(endpoint, {
+            input: {
+              prompt: inputPrompt,
+              ...(withImages && imageUrlsForFal?.length
+                ? { image_urls: imageUrlsForFal }
+                : {}),
+              aspect_ratio: aspectRatio,
+              num_images: 1,
+              resolution: imageResolution,
+              limit_generations: true,
+              ...(artStyleSystemPrompt(artStyleId)
+                ? { system_prompt: artStyleSystemPrompt(artStyleId) }
+                : {}),
+            },
+            logs: true,
+          });
+
+        let result;
+        try {
+          result = await subscribe(prompt, Boolean(imageUrlsForFal?.length));
+        } catch (firstErr) {
+          if (!isFalContentPolicyThrowable(firstErr)) throw firstErr;
+          const safePrompt = spaSafeStillFallbackPrompt({
+            theme: plan.theme || productName || headline,
+            role: scene.role,
+            marketHint:
+              promptMarket === "en"
+                ? "International English-market commercial spa aesthetic."
+                : "",
+          });
+          // Retry once: text-only + ultra-safe spa room (no people / faces).
+          result = await subscribe(safePrompt, false);
+        }
 
         const outUrls = extractImageUrls(result.data);
         if (!outUrls[0]) {

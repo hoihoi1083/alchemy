@@ -565,6 +565,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       contentResearchApplyRef,
       promotionMode,
       { product, headline, conceptIdea },
+      promptMarket,
     );
     const mergedBase = usesReferenceConceptForImage
       ? researchRefreshed.trim()
@@ -602,6 +603,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     userReferenceBrief,
     researchReelAnalysis,
     referenceStrategy,
+    promptMarket,
   ]);
 
   const getPromptVars = useCallback(
@@ -808,6 +810,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
             headline: ctx.headline,
             conceptIdea: ctx.conceptIdea,
           },
+          promptMarket,
         );
         const fd = new FormData();
         fd.set("reference_image", imageRefPhoto);
@@ -875,6 +878,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     setUserReferenceBrief,
     setReferenceAnalyzeBusy,
     setReferenceAnalyzeNote,
+    promptMarket,
   ]);
 
   const researchReelAnalyzeKeyRef = useRef<string | null>(null);
@@ -2088,7 +2092,23 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     const fallbackPrompt =
       storyboardPlan?.scenes.find((p: { role: string; imagePrompt?: string }) => p.role === scene.role)?.imagePrompt ??
       storyboardPlan?.scenes[sceneIndex]?.imagePrompt;
-    const prompt = (scene.imagePrompt || fallbackPrompt || "").trim();
+    const desc = scene.sceneDescriptionZh?.trim() || "";
+    const wantsFacialPeople =
+      /敷面膜|facial|mask|treatment|護理|按摩|客人|therapist|esthetician/i.test(
+        `${desc} ${scene.imagePrompt ?? ""} ${fallbackPrompt ?? ""}`,
+      );
+    const basePrompt = (scene.imagePrompt || fallbackPrompt || "").trim();
+    const prompt = wantsFacialPeople
+      ? [
+          basePrompt ||
+            "Mid-shot commercial spa facial treatment: therapist applying treatment to a guest reclining on the spa bed.",
+          "Show BOTH people tastefully — guest and therapist. Soft natural light, 9:16.",
+          "Faces may be visible but NOT extreme close-up / skin fill-frame. No readable text.",
+          desc ? `Scene note: ${desc}` : "",
+        ]
+          .filter(Boolean)
+          .join(" ")
+      : basePrompt;
     if (!prompt) {
       setError(m.errors.storyboardFailed);
       return;
@@ -3212,6 +3232,12 @@ export function useStudioWizard(promotionMode: PromotionMode) {
             plan,
             aspect_ratio: effectiveImageAspectRatio,
             art_style: artStyleId,
+            brand_kit: brandKit,
+            // Top-right by default so burned captions at bottom stay clear.
+            logo_placement:
+              quickFixLogoPlacement === "bottom-right" || quickFixLogoPlacement === "bottom-left"
+                ? "top-right"
+                : quickFixLogoPlacement,
           }),
         });
         const genData = await readGenerateJson(genRes);
@@ -4043,18 +4069,52 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     return data.videoUrl as string;
   }
 
+  async function stampBrandLogoOnCinematicScenes(
+    scenes: CinematicSceneResult[],
+  ): Promise<CinematicSceneResult[]> {
+    if (!brandKit?.logoUrl || scenes.length === 0) return scenes;
+    const placement =
+      quickFixLogoPlacement === "bottom-right" || quickFixLogoPlacement === "bottom-left"
+        ? "top-right"
+        : quickFixLogoPlacement;
+    const res = await fetch("/api/stamp-brand-logo", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        image_urls: scenes.map((s) => s.imageUrl),
+        brand_kit: brandKit,
+        placement,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error((data.error as string) ?? "Logo stamp failed.");
+    if (!data.logoStamped || !Array.isArray(data.urls) || data.urls.length !== scenes.length) {
+      return scenes;
+    }
+    const next = scenes.map((scene, i) => ({
+      ...scene,
+      imageUrl: (data.urls as string[])[i] ?? scene.imageUrl,
+    }));
+    setCinematicScenes(next);
+    setImageUrl(next[0]?.imageUrl ?? null);
+    setImageVariantUrls(next.map((s) => s.imageUrl));
+    return next;
+  }
+
   async function makeCinematicStitchVideo(): Promise<string> {
     if (cinematicScenes.length < cinematicSceneCount) {
       throw new Error(m.errors.storyboardVideoPromptRequired);
     }
+    // Stamp user brand logo on stills right before video (idempotent if already stamped at gen).
+    const scenesForVideo = await stampBrandLogoOnCinematicScenes(cinematicScenes);
     const clipUrls: string[] = [];
-    for (const scene of cinematicScenes) {
+    for (const scene of scenesForVideo) {
       clipUrls.push(
         await makeCinematicClipFromImage(
           scene.imageUrl,
           scene.videoMotionPrompt,
           scene.sceneIndex,
-          cinematicScenes.length,
+          scenesForVideo.length,
         ),
       );
     }
@@ -4070,6 +4130,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       [
         formatCinematicCopy(m.wizard.cinematicStitchVideoPreflight),
         `${m.wizard.cinematicStitchClipCount}: ${clipUrls.length}`,
+        brandKit?.logoUrl ? m.wizard.cinematicLogoStampNote : null,
         m.wizard.cinematicStitchFfmpegNote,
         data.note as string | undefined,
       ]
@@ -4836,14 +4897,16 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         case "cinematic-stitch":
           url = await makeCinematicStitchVideo();
           break;
-        case "concept-cinematic-single":
+        case "concept-cinematic-single": {
+          const stamped = await stampBrandLogoOnCinematicScenes(cinematicScenes);
           url = await makeCinematicClipFromImage(
-            cinematicScenes[0].imageUrl,
-            cinematicScenes[0].videoMotionPrompt,
-            cinematicScenes[0].sceneIndex,
-            cinematicScenes.length,
+            stamped[0].imageUrl,
+            stamped[0].videoMotionPrompt,
+            stamped[0].sceneIndex,
+            stamped.length,
           );
           break;
+        }
         case "product-assistant":
           url = await makeProductAssistantVideo();
           break;
@@ -5205,7 +5268,12 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         lines.push(m.wizard.imagePreflightCampaignReference);
       }
     } else if (isTeachingCarouselOutput) {
-      lines.push(m.wizard.imagePreflightTeachingCarousel);
+      lines.push(
+        m.wizard.imagePreflightTeachingCarousel.replace(
+          "{count}",
+          String(referenceCarouselSlideCount),
+        ),
+      );
     } else if (effectiveImageOutputMode === "ab") {
       lines.push(m.wizard.imagePreflightAB);
     } else {

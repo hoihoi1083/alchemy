@@ -4,7 +4,10 @@ import { useLocale } from "@/components/LocaleProvider";
 import { useWizard } from "@/components/studio/WizardContext";
 import { GeneratedImageResultsView } from "@/components/studio/GeneratedImageResultsView";
 import { ImagePostflightPanel } from "@/components/studio/ImagePostflightPanel";
-import { JobProgressBar } from "@/components/studio/JobProgressBar";
+import {
+  GenerationWaitPlaceholder,
+  waitAspectFromString,
+} from "@/components/studio/GenerationWaitPlaceholder";
 import { resolveGeneratedImageResultView } from "@/lib/generated-image-result-view";
 
 type Props = {
@@ -19,18 +22,14 @@ export function ImageResultPanel({ generatingLabel, allowRegenerate = false }: P
 
   if (wizard.imageBusy) {
     return (
-      <div className="space-y-3">
-        {wizard.imageProgressInfo ? (
-          <JobProgressBar
-            info={wizard.imageProgressInfo}
-            busyLabel={wizard.imageProgressInfo.label ?? generatingLabel}
-          />
-        ) : null}
-        <div className="flex items-center gap-2 text-sm text-slate-600">
-          <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-cyan-500 border-t-transparent" />
-          {generatingLabel}
-        </div>
-      </div>
+      <GenerationWaitPlaceholder
+        message={wizard.imageProgressInfo?.label ?? generatingLabel}
+        hint={m.wizard.generationWaitHint}
+        progress={wizard.imageProgressInfo}
+        aspectRatio={waitAspectFromString(wizard.imageAspectRatio)}
+        previewUrl={wizard.imageRefPreviewUrl || wizard.uploadPreviewUrl || null}
+        compact
+      />
     );
   }
 

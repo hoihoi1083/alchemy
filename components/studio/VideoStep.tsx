@@ -13,6 +13,10 @@ import { ConceptPreGeneratePanel } from "@/components/studio/ConceptPreGenerateP
 import { PresenterAvatarPicker } from "@/components/studio/PresenterAvatarPicker";
 import { WizardErrorBanner } from "@/components/studio/WizardErrorBanner";
 import { VideoOutputSourceCard } from "@/components/studio/VideoOutputSourceCard";
+import {
+  GenerationWaitPlaceholder,
+  waitAspectFromString,
+} from "@/components/studio/GenerationWaitPlaceholder";
 import { estimateKlingStoryboardTokens, estimateVideoTokens } from "@/lib/billing/token-costs";
 import { klingClipDurationForStoryboard } from "@/lib/kling-storyboard-fallback";
 import { isBrandVideoStyle, isCreativeVideoStyle, isStoryboardVideoStyle } from "@/lib/visual-styles";
@@ -23,7 +27,7 @@ import type { CinematicSceneResult } from "@/lib/cinematic-reel-types";
 import type { StoryboardSceneResult } from "@/lib/video-storyboard-types";
 
 export function VideoStep() {
-  const { applyPromptRebuild, bgmOptions, bgmTrack, brandProfile, cinematicScenes, cinematicSceneCount, cinematicStitchReady, conceptReferenceR2vReady, directReferenceR2vReady, creativeVideoBrief, endFramePhoto, endFramePreviewUrl, endFrameUrl, error, extraAnglePhotos, extraKitPhotos, extraKitPreviewUrls, formatCinematicCopy, generateVideo, goBackFromVideo, hasFinalImage, headline, imagePrompt, imageUrl, isCinematicStitchOutput, isConceptCinematicSingleOutput, isStoryboardOutput, isUgcPresenterOutput, keyframePreview, loadReferenceClip, m, onReferenceAdFile, onVideoCreativeModeChange, packagingPhoto, packagingPreviewUrl, planAiVideoPrompt, planProductVideo, planProductVideoBusy, planVideoPromptBusy, presenterAvatarId, presenterSourceMode, productPhoto, productVideoPlan, promotionMode, promptExtra, promptMarket, referenceAd, referenceClipLoading, referenceIsVideo, referencePreviewUrl, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, selectedReferenceClipId, setBgmTrack, setConceptImageVisionNote, setEndFramePhoto, setEndFrameUrl, setError, setExtraAnglePhotos, setExtraKitPhotos, setPackagingPhoto, setImagePrompt, setImageUrl, setPresenterAvatarId, setPresenterSourceMode, setProductPhoto, setPromptExtra, setPromptMarket, setShowAdvancedVideo, setSubjectFraming, setUploadQualityWarning, setUseOriginalImage, setVideoPrompt, setVideoSettings, shipItMode, showAdvancedVideo, showVideoReferenceSection, storyboardScenes, storyboardTrimDuration, subjectFraming, templateId, templateSlotStatus, uploadPreviewUrl, useReferenceVideo, usesCompositor, usesConceptTextVideo, usesProductAssistant, videoBusy, videoCreativeMode, videoGenerateDisabled, videoGenerateDisabledReason, videoPhase, videoPreflight, videoProgressInfo, videoPrompt, videoPromptPlanNote, videoSettings, videoStepHint, visualStyleId, workflowMode } = useWizard();
+  const { applyPromptRebuild, bgmOptions, bgmTrack, brandProfile, cinematicScenes, cinematicSceneCount, cinematicStitchReady, conceptReferenceR2vReady, directReferenceR2vReady, creativeVideoBrief, endFramePhoto, endFramePreviewUrl, endFrameUrl, error, extraAnglePhotos, extraKitPhotos, extraKitPreviewUrls, formatCinematicCopy, generateVideo, goBackFromVideo, hasFinalImage, headline, imageAspectRatio, imagePrompt, imageUrl, isCinematicStitchOutput, isConceptCinematicSingleOutput, isStoryboardOutput, isUgcPresenterOutput, keyframePreview, loadReferenceClip, m, onReferenceAdFile, onVideoCreativeModeChange, packagingPhoto, packagingPreviewUrl, planAiVideoPrompt, planProductVideo, planProductVideoBusy, planVideoPromptBusy, presenterAvatarId, presenterSourceMode, productPhoto, productVideoPlan, promotionMode, promptExtra, promptMarket, referenceAd, referenceClipLoading, referenceIsVideo, referencePreviewUrl, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, selectedReferenceClipId, setBgmTrack, setConceptImageVisionNote, setEndFramePhoto, setEndFrameUrl, setError, setExtraAnglePhotos, setExtraKitPhotos, setPackagingPhoto, setImagePrompt, setImageUrl, setPresenterAvatarId, setPresenterSourceMode, setProductPhoto, setPromptExtra, setPromptMarket, setShowAdvancedVideo, setSubjectFraming, setUploadQualityWarning, setUseOriginalImage, setVideoPrompt, setVideoSettings, shipItMode, showAdvancedVideo, showVideoReferenceSection, storyboardScenes, storyboardTrimDuration, subjectFraming, templateId, templateSlotStatus, uploadPreviewUrl, useReferenceVideo, usesCompositor, usesConceptTextVideo, usesProductAssistant, videoBusy, videoCreativeMode, videoGenerateDisabled, videoGenerateDisabledReason, videoPhase, videoPreflight, videoProgressInfo, videoPrompt, videoPromptPlanNote, videoSettings, videoStepHint, visualStyleId, workflowMode } = useWizard();
   const isConcept = promotionMode === "concept";
   const outputDurationSec = resolveWizardOutputDurationSec(videoSettings);
   const storyboardSceneCount = Math.max(1, storyboardScenes.length || 4);
@@ -710,36 +714,25 @@ export function VideoStep() {
   )}
 
   {videoBusy && (
-    <div className="rounded-xl border border-slate-800 bg-slate-950/50 py-8 text-center">
-      <span className="inline-block size-10 animate-spin rounded-full border-4 border-slate-700 border-t-emerald-400" />
-      <p className="mt-3 text-sm text-emerald-300">
-        {usesCompositor
+    <GenerationWaitPlaceholder
+      message={
+        usesCompositor
           ? m.wizard.compositorPhaseRender
           : videoPhase === "second-frame"
             ? m.wizard.phaseSecondFrame
             : videoPhase === "bgm"
-            ? m.wizard.phaseBgm
-            : videoPhase === "voiceover"
-              ? m.wizard.phaseVoiceover
-            : videoPhase === "captions"
-              ? m.wizard.phaseCaptions
-              : m.wizard.phaseVideo}
-      </p>
-      {videoProgressInfo && (
-        <div className="mx-auto mt-4 max-w-sm px-4">
-          <div className="mb-1 flex items-center justify-between text-[11px] text-emerald-200/90">
-            <span>{videoProgressInfo.pct}%</span>
-            <span>{videoProgressInfo.eta}</span>
-          </div>
-          <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800">
-            <div
-              className="h-full rounded-full bg-emerald-400 transition-all duration-700"
-              style={{ width: `${videoProgressInfo.pct}%` }}
-            />
-          </div>
-        </div>
-      )}
-    </div>
+              ? m.wizard.phaseBgm
+              : videoPhase === "voiceover"
+                ? m.wizard.phaseVoiceover
+                : videoPhase === "captions"
+                  ? m.wizard.phaseCaptions
+                  : m.wizard.phaseVideo
+      }
+      hint={m.wizard.generationWaitHint}
+      progress={videoProgressInfo}
+      aspectRatio={waitAspectFromString(imageAspectRatio)}
+      previewUrl={keyframePreview || imageUrl || uploadPreviewUrl || referencePreviewUrl || null}
+    />
   )}
 
   <div className="hidden flex-col gap-2 md:flex">

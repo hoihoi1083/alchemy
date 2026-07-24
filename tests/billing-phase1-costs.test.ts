@@ -26,14 +26,14 @@ describe("billing Phase 1 action costs", () => {
   });
 
   it("prices storyboard / cinematic by scene count", () => {
-    assert.equal(estimateImageTokens({ mode: "storyboard", sceneCount: 4 }), 80);
-    assert.equal(estimateImageTokens({ mode: "storyboard", sceneCount: 3 }), 60);
+    assert.equal(estimateImageTokens({ mode: "storyboard", sceneCount: 4 }), 104);
+    assert.equal(estimateImageTokens({ mode: "storyboard", sceneCount: 3 }), 78);
   });
 
   it("prices video from resolution + duration", () => {
     assert.equal(
       videoTokenCostFromRequest({ resolution: "480p", fast: true, duration: 8 }),
-      520,
+      336,
     );
     assert.equal(
       estimateVideoTokens({ resolution: "720p", fast: true, duration: 8 }),

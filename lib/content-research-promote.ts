@@ -3,7 +3,15 @@ import type {
   ContentAngleFormat,
   ContentResearchPlan,
 } from "@/lib/content-research-types";
+import {
+  coerceCopyScript,
+  marketChineseScriptBlock,
+  plannerCopyLanguageRule,
+  resolveCopyLocale,
+  type CopyLocale,
+} from "@/lib/copy-locale";
 import type { PromotionMode } from "@/lib/promotion-mode";
+import type { PromptMarket } from "@/lib/prompt-variables";
 import {
   REFERENCE_CONTENT_REPLACE_LINE,
   REFERENCE_STYLE_MATCH_LINE,
@@ -90,7 +98,40 @@ export function promoteProductName(
 function structureSublineFromAngle(
   angle: ContentAngleCandidate,
   product: string,
+  locale: CopyLocale,
 ): string {
+  if (locale === "en") {
+    switch (angle.format) {
+      case "teaching-carousel":
+        return `Buying tips · benefits · care guide — all about ${product}`;
+      case "reel":
+        return angle.bulletPoints.length >= 2
+          ? angle.bulletPoints.slice(0, 4).join(" · ")
+          : `${product} highlights · natural energy · DM to learn more`;
+      case "campaign":
+        return `Hero shot · benefits · offer CTA — all about ${product}`;
+      case "model-wear":
+        return `${product} styling demo — match reference rhythm, not reference topic`;
+      default:
+        return `Promote ${product} with the reference layout — never the reference topic`;
+    }
+  }
+  if (locale === "zh-hans") {
+    switch (angle.format) {
+      case "teaching-carousel":
+        return `选购要点｜功效介绍｜保养贴士 — 全部关于${product}`;
+      case "reel":
+        return angle.bulletPoints.length >= 2
+          ? angle.bulletPoints.slice(0, 4).join(" · ")
+          : `${product}精选手作 · 天然能量 · 私信了解`;
+      case "campaign":
+        return `主图推介｜卖点拆解｜优惠行动 — 全部关于${product}`;
+      case "model-wear":
+        return `${product}穿搭示范 — 跟参考节奏，不跟参考话题`;
+      default:
+        return `用参考排版推介${product} — 不复制参考主题`;
+    }
+  }
   switch (angle.format) {
     case "teaching-carousel":
       return `選購要點｜功效介紹｜保養貼士 — 全部關於${product}`;
@@ -110,7 +151,11 @@ function structureSublineFromAngle(
 const REFERENCE_TOPIC_CTA =
   /星座|留言你的|留言領取|你是.{0,4}座嗎|雙擊|點讚|關注我|follow\s+for/i;
 
-function sanitizeOfferFromAngle(angle: ContentAngleCandidate, product: string): string {
+function sanitizeOfferFromAngle(
+  angle: ContentAngleCandidate,
+  product: string,
+  locale: CopyLocale,
+): string {
   const cta = angle.cta?.trim() || "";
   const hook = angle.hook?.trim() || "";
   const title = angle.sourceTitle?.trim() || "";
@@ -121,11 +166,41 @@ function sanitizeOfferFromAngle(angle: ContentAngleCandidate, product: string): 
     REFERENCE_TOPIC_CTA.test(title) ||
     (/留言|評論|comment/i.test(cta) && !cta.includes(product));
   if (looksLikeReferenceEngagement) {
+    if (locale === "en") return `Learn about ${product}`;
+    if (locale === "zh-hans") return `了解${product}`;
     return `了解${product}`;
   }
   return cta;
 }
-function structureHookSuffix(format: ContentAngleFormat): string {
+function structureHookSuffix(format: ContentAngleFormat, locale: CopyLocale): string {
+  if (locale === "en") {
+    switch (format) {
+      case "teaching-carousel":
+        return "must-read guide";
+      case "campaign":
+        return "series promo";
+      case "reel":
+        return "short video";
+      case "model-wear":
+        return "styling demo";
+      default:
+        return "promo";
+    }
+  }
+  if (locale === "zh-hans") {
+    switch (format) {
+      case "teaching-carousel":
+        return "必看攻略";
+      case "campaign":
+        return "系列推介";
+      case "reel":
+        return "短片";
+      case "model-wear":
+        return "穿搭示范";
+      default:
+        return "推介";
+    }
+  }
   switch (format) {
     case "teaching-carousel":
       return "必看攻略";
@@ -138,6 +213,17 @@ function structureHookSuffix(format: ContentAngleFormat): string {
     default:
       return "推介";
   }
+}
+
+function alignWizardCopyFields(
+  copy: { headline: string; subline: string; offer: string },
+  locale: CopyLocale,
+): { headline: string; subline: string; offer: string } {
+  return {
+    headline: coerceCopyScript(copy.headline, locale),
+    subline: coerceCopyScript(copy.subline, locale),
+    offer: coerceCopyScript(copy.offer, locale),
+  };
 }
 
 const REFERENCE_TOPIC_LEAK =
@@ -181,6 +267,7 @@ function promotedRewriteCopyFromAngle(
   angle: ContentAngleCandidate,
   product: string,
   searchTopic = "",
+  locale: CopyLocale = "zh-hant",
 ): { headline: string; subline: string; offer: string } {
   const source = angle.sourceTitle?.trim() ?? "";
   const title = angle.title?.trim() ?? "";
@@ -193,7 +280,7 @@ function promotedRewriteCopyFromAngle(
   if (title && !unsafe(title) && title !== source) {
     headline = title;
   } else if (product && !isProductShotReferenceAngle(angle)) {
-    headline = `${product}｜${structureHookSuffix(angle.format)}`;
+    headline = `${product}｜${structureHookSuffix(angle.format, locale)}`;
   }
 
   let subline = "";
@@ -206,14 +293,14 @@ function promotedRewriteCopyFromAngle(
     if (bullets.length) {
       subline = bullets.slice(0, 4).join(" · ");
     } else if (product && !isProductShotReferenceAngle(angle)) {
-      subline = structureSublineFromAngle(angle, product);
+      subline = structureSublineFromAngle(angle, product, locale);
     }
   }
 
   return {
     headline,
     subline,
-    offer: product ? sanitizeOfferFromAngle(angle, product) : "",
+    offer: product ? sanitizeOfferFromAngle(angle, product, locale) : "",
   };
 }
 
@@ -225,43 +312,51 @@ export function copyFieldsFromAngle(
   angle: ContentAngleCandidate,
   promoteProduct: string,
   searchTopic: string,
-  options?: { promotionMode?: PromotionMode; referenceSourced?: boolean },
+  options?: {
+    promotionMode?: PromotionMode;
+    referenceSourced?: boolean;
+    market?: PromptMarket;
+  },
 ): { headline: string; subline: string; offer: string } {
   const product = promoteProduct.trim();
   const search = searchTopic.trim();
   const promotionMode = options?.promotionMode ?? "physical";
   const referenceSourced = options?.referenceSourced ?? isReferenceSourcedAngle(angle);
+  const market = options?.market;
+  const locale = resolveCopyLocale(market ?? "hk");
+  const finish = (copy: { headline: string; subline: string; offer: string }) =>
+    market ? alignWizardCopyFields(copy, locale) : copy;
 
   if (promotionMode === "concept") {
     if (product) {
       if (isResearchPostAngle(angle)) {
-        return promotedRewriteCopyFromAngle(angle, product, search);
+        return finish(promotedRewriteCopyFromAngle(angle, product, search, locale));
       }
-      return {
-        headline: `${product}｜${structureHookSuffix(angle.format)}`,
-        subline: structureSublineFromAngle(angle, product),
-        offer: sanitizeOfferFromAngle(angle, product),
-      };
+      return finish({
+        headline: `${product}｜${structureHookSuffix(angle.format, locale)}`,
+        subline: structureSublineFromAngle(angle, product, locale),
+        offer: sanitizeOfferFromAngle(angle, product, locale),
+      });
     }
     if (referenceSourced && !search) {
       return { headline: "", subline: "", offer: "" };
     }
     if (referenceSourced && search) {
-      return {
+      return finish({
         headline: search,
-        subline: structureSublineFromAngle(angle, search),
-        offer: sanitizeOfferFromAngle(angle, search),
-      };
+        subline: structureSublineFromAngle(angle, search, locale),
+        offer: sanitizeOfferFromAngle(angle, search, locale),
+      });
     }
     const hook = angle.hook.trim() || angle.title.trim();
     const subline = angle.bulletPoints.length
       ? angle.bulletPoints.join(" · ")
       : angle.scriptOutline.trim();
-    return {
+    return finish({
       headline: hook || search,
       subline,
-      offer: sanitizeOfferFromAngle(angle, search),
-    };
+      offer: sanitizeOfferFromAngle(angle, search, locale),
+    });
   }
 
   if (!product) {
@@ -272,24 +367,24 @@ export function copyFieldsFromAngle(
     const subline = angle.bulletPoints.length
       ? angle.bulletPoints.join(" | ")
       : angle.scriptOutline.trim();
-    return {
+    return finish({
       headline: hook || search,
       subline,
       offer: angle.cta,
-    };
+    });
   }
 
   if (isResearchPostAngle(angle)) {
-    return promotedRewriteCopyFromAngle(angle, product, search);
+    return finish(promotedRewriteCopyFromAngle(angle, product, search, locale));
   }
 
-  const headline = `${product}｜${structureHookSuffix(angle.format)}`;
+  const headline = `${product}｜${structureHookSuffix(angle.format, locale)}`;
 
-  return {
+  return finish({
     headline,
-    subline: structureSublineFromAngle(angle, product),
-    offer: sanitizeOfferFromAngle(angle, product),
-  };
+    subline: structureSublineFromAngle(angle, product, locale),
+    offer: sanitizeOfferFromAngle(angle, product, locale),
+  });
 }
 
 /**
@@ -300,6 +395,7 @@ export function styleReferencePromptBlock(
   plan: ContentResearchPlan,
   promoteTarget: string,
   referenceNote?: string,
+  market?: PromptMarket,
 ): string {
   const imageCount =
     angle.sourceImageUrls?.length ?? (angle.sourceCoverImageUrl ? 1 : 0);
@@ -310,6 +406,8 @@ export function styleReferencePromptBlock(
     searchTopic && searchTopic !== refTitle && searchTopic !== target
       ? searchTopic
       : "";
+  const copyLocale = resolveCopyLocale(market ?? plan.market ?? "hk");
+  const scriptBlock = marketChineseScriptBlock(market ?? plan.market ?? "hk");
 
   const promoteLine = target
     ? `All copy and visuals must promote: ${target}`
@@ -323,6 +421,12 @@ export function styleReferencePromptBlock(
     REFERENCE_STYLE_MATCH_LINE,
     REFERENCE_CONTENT_REPLACE_LINE,
     `${REFERENCE_TOPIC_GUARD_LINE}, zodiac/星座/時事/其他品牌 hooks`,
+    `On-image / caption language: ${plannerCopyLanguageRule(copyLocale)}`,
+    scriptBlock ||
+      (copyLocale === "en"
+        ? "All on-image marketing copy in English only — never Chinese characters from IMAGE 1 or reference titles."
+        : ""),
+    "If IMAGE 1 has text in another language, erase it and write user campaign copy in the language above — never mix English and Chinese on the same still.",
     categoryTopic ? `User search category (content lane only): ${categoryTopic}` : "",
     promoteLine,
     referenceNote,
@@ -346,9 +450,13 @@ export function contentResearchPromoteTarget(
 /** Rebuild style-only research block when user edits product/headline after applying a reference post. */
 export function refreshContentResearchPromptExtra(
   prevExtra: string,
-  ref: { angle: ContentAngleCandidate; plan: Pick<ContentResearchPlan, "platformLabel" | "topic"> } | null,
+  ref: {
+    angle: ContentAngleCandidate;
+    plan: Pick<ContentResearchPlan, "platformLabel" | "topic" | "market">;
+  } | null,
   promotionMode: PromotionMode,
   fields: { product: string; headline: string; conceptIdea: string },
+  market?: PromptMarket,
 ): string {
   if (!ref || !isContentResearchStyleExtra(prevExtra)) return prevExtra;
   const stripped = stripContentResearchStyleExtra(prevExtra);
@@ -358,7 +466,14 @@ export function refreshContentResearchPromptExtra(
     conceptIdea: fields.conceptIdea,
     searchTopic: ref.plan.topic,
   });
-  const newBlock = styleReferencePromptBlock(ref.angle, ref.plan as ContentResearchPlan, promoteTarget);
+  const effectiveMarket = market ?? ref.plan.market;
+  const newBlock = styleReferencePromptBlock(
+    ref.angle,
+    ref.plan as ContentResearchPlan,
+    promoteTarget,
+    undefined,
+    effectiveMarket,
+  );
   return [stripped.trim(), newBlock].filter(Boolean).join(" | ");
 }
 

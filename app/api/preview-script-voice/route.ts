@@ -23,7 +23,13 @@ export async function POST(request: Request) {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
 
-  let body: { script?: string; locale?: string };
+  let body: {
+    script?: string;
+    locale?: string;
+    fal_voice_id?: string;
+    fal_voice_speed?: number;
+    fal_voice_label?: string;
+  };
   try {
     body = await request.json();
   } catch {
@@ -58,6 +64,9 @@ export async function POST(request: Request) {
       locale,
       jobDir: dir,
       pipelineUrl: (file) => pipelineFileUrl(request, jobId, file),
+      falVoiceId: body.fal_voice_id?.trim() || undefined,
+      falVoiceSpeed: body.fal_voice_speed,
+      falVoiceLabel: body.fal_voice_label?.trim() || undefined,
     });
     if (!tracks.length) {
       await refundTokens(auth.user.userId, tokenCost, {

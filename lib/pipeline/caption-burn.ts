@@ -1,7 +1,8 @@
 import { spawn } from "child_process";
 import { compositorFontPath, ensureCompositorFonts } from "@/lib/compositor/fonts";
 import type { CaptionLine } from "@/lib/ad-pack-types";
-import { getFfmpegPath, getMediaDurationSeconds } from "@/lib/pipeline/ffmpeg";
+import { planCaptionBurnText } from "@/lib/image-canvas-text-layout";
+import { getFfmpegPath, getMediaDurationSeconds, getVideoDimensions } from "@/lib/pipeline/ffmpeg";
 
 function run(cmd: string, args: string[]): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -30,29 +31,16 @@ function escapeDrawtextFontPath(fontPath: string): string {
   return fontPath.replace(/\\/g, "/").replace(/:/g, "\\:").replace(/'/g, "\\'");
 }
 
-function positionCoords(
-  position: CaptionLine["position"],
-  lineIndex: number,
-  lineCount: number,
-): { x: string; y: string } {
-  const stack = lineIndex * 52;
-  const centerStack = (lineIndex - (lineCount - 1) / 2) * 52;
+function positionX(position: CaptionLine["position"]): string {
   switch (position ?? "bottom") {
-    case "top":
-      return { x: "(w-text_w)/2", y: String(96 + stack) };
-    case "center":
-      return { x: "(w-text_w)/2", y: `(h-text_h)/2+${Math.round(centerStack)}` };
     case "top-left":
-      return { x: "w*0.06", y: String(96 + stack) };
-    case "top-right":
-      return { x: "w*0.94-text_w", y: String(96 + stack) };
     case "bottom-left":
-      return { x: "w*0.06", y: `h*0.90-text_h-${stack}` };
+      return "w*0.06";
+    case "top-right":
     case "bottom-right":
-      return { x: "w*0.94-text_w", y: `h*0.90-text_h-${stack}` };
-    case "bottom":
+      return "w*0.94-text_w";
     default:
-      return { x: "(w-text_w)/2", y: `h*0.90-text_h-${stack}` };
+      return "(w-text_w)/2";
   }
 }
 
@@ -62,21 +50,21 @@ function drawtextFilter(
   position: CaptionLine["position"],
   startSec: number,
   endSec: number,
-  lineIndex: number,
-  lineCount: number,
+  yPx: number,
+  fontSize: number,
 ): string {
-  const { x, y } = positionCoords(position, lineIndex, lineCount);
   const escaped = escapeDrawtextText(text);
   const enable = `between(t\\,${startSec.toFixed(2)}\\,${endSec.toFixed(2)})`;
+  // yPx is glyph center; drawtext uses top of text box ≈ center - text_h/2
   return [
     `drawtext=fontfile='${fontfile}'`,
     `text='${escaped}'`,
-    "fontsize=44",
+    `fontsize=${fontSize}`,
     "fontcolor=white",
     "borderw=4",
     "bordercolor=black@0.85",
-    `x=${x}`,
-    `y=${y}`,
+    `x=${positionX(position)}`,
+    `y=${yPx}-text_h/2`,
     `enable='${enable}'`,
   ].join(":");
 }
@@ -90,16 +78,16 @@ export async function burnCaptionsDrawtext(
   ensureCompositorFonts();
   const fontfile = escapeDrawtextFontPath(compositorFontPath("body"));
   const duration = await getMediaDurationSeconds(inputVideo);
+  const { width, height } = await getVideoDimensions(inputVideo);
 
   const filters: string[] = [];
   for (const cap of captionLines) {
     const startSec = Math.max(0, cap.startSec);
     const endSec = Math.min(duration, Math.max(startSec + 0.2, cap.endSec));
-    const chunks = cap.text
-      .split(/\n/)
-      .map((line) => line.trim())
-      .filter(Boolean);
-    chunks.forEach((chunk, lineIndex) => {
+    const plan = planCaptionBurnText(cap.text, width, height, {
+      position: cap.position,
+    });
+    plan.lines.forEach((chunk, lineIndex) => {
       filters.push(
         drawtextFilter(
           fontfile,
@@ -107,8 +95,8 @@ export async function burnCaptionsDrawtext(
           cap.position,
           startSec,
           endSec,
-          lineIndex,
-          chunks.length,
+          plan.lineYs[lineIndex] ?? plan.lineYs[0] ?? Math.round(height * 0.9),
+          plan.fontSize,
         ),
       );
     });

@@ -1,6 +1,13 @@
 import type { BrandProfile } from "@/lib/brand-profile";
 import { brandProfilePromptBlock } from "@/lib/brand-profile";
 import { callDeepSeekChat } from "@/lib/deepseek-client";
+import {
+  coerceCopyScript,
+  plannerCopyLanguageRule,
+  resolveCopyLocale,
+  rewriteCopyToScript,
+} from "@/lib/copy-locale";
+import type { PromptMarket } from "@/lib/prompt-variables";
 import { isContentResearchStyleExtra } from "@/lib/content-research-promote";
 import { isLayoutTransferReferenceExtra } from "@/lib/user-reference-brief";
 import type { ReferenceStrategyKind } from "@/lib/reference-strategy";
@@ -21,6 +28,7 @@ import {
   MAX_STORYBOARD_SCENES,
   MIN_STORYBOARD_SCENES,
 } from "@/lib/video-storyboard-types";
+import { seedanceSafePlannerRules, softenStoryboardStillPromptForModeration } from "@/lib/seedance-moderation";
 
 function sceneCountForDuration(durationSec: number): { min: number; max: number } {
   if (durationSec <= 6) return { min: 3, max: 5 };
@@ -47,7 +55,7 @@ function normalizeScene(raw: Partial<StoryboardScenePlan>, fallbackIndex: number
     endSec: Math.max(1, Number(raw.endSec) || 1),
     sceneDescriptionZh: String(raw.sceneDescriptionZh ?? raw.role ?? "").trim(),
     onImageCopyZh: String(raw.onImageCopyZh ?? "").trim() || undefined,
-    imagePrompt: String(raw.imagePrompt ?? "").trim(),
+    imagePrompt: softenStoryboardStillPromptForModeration(String(raw.imagePrompt ?? "").trim()),
   };
 }
 
@@ -168,6 +176,7 @@ function buildPlanPrompt(input: {
   promptExtra?: string;
   artStyleId?: ArtStyleId;
   referenceStrategyKind?: ReferenceStrategyKind;
+  conceptMode?: boolean;
 }): string {
   const category = inferProductSceneCategory(input.product);
   const { min, max } = sceneCountForDuration(input.durationSec);
@@ -181,10 +190,64 @@ function buildPlanPrompt(input: {
 
   const artStyleId = resolveArtStyleId(input.artStyleId);
   const artHint = artStylePlannerHint(artStyleId);
+  const conceptMode = Boolean(input.conceptMode);
   const layoutTransferRef =
-    input.referenceStrategyKind === "layout-transfer" ||
-    isLayoutTransferReferenceExtra(input.promptExtra);
+    !conceptMode &&
+    (input.referenceStrategyKind === "layout-transfer" ||
+      isLayoutTransferReferenceExtra(input.promptExtra));
   const contentResearchRef = isContentResearchStyleExtra(input.promptExtra);
+
+  if (conceptMode) {
+    return [
+      `Plan a ${artStyleId === "realistic" ? "photorealistic" : "stylized"} CONCEPT VIDEO STORYBOARD (service / idea short — product photo optional).`,
+      "Return ONE JSON object only — no markdown fences.",
+      "",
+      "Required JSON shape:",
+      '{"title":"","theme":"","visualDirection":"","totalDurationSec":0,"scenes":[{"imageIndex":1,"role":"","startSec":0,"endSec":2,"sceneDescriptionZh":"","onImageCopyZh":"","imagePrompt":""}],"seedancePrompt":"","productionNotes":""}',
+      "",
+      "CONCEPT ADAPTATION:",
+      `- Campaign topic: ${input.product}.`,
+      "- Scenes show the SERVICE / EXPERIENCE / IDEA — atmosphere, hands, tools, room, silhouette — not a SKU product catalog.",
+      "- If the user brief asks for extreme face close-ups or mask-on-skin macros: use tasteful MID-SHOTS of guest + therapist instead (faces OK soft/partial).",
+      "- Spa facial demo scenes MAY show people (guest + therapist) — do not plan empty rooms for 'treatment in progress' beats.",
+      "",
+      ...seedanceSafePlannerRules().map((line) =>
+        line.includes("NO photorealistic human faces")
+          ? "Prefer tasteful mid-shots; avoid extreme photoreal face fill-frame / skin macros that fail content filters. Soft faces OK for spa beauty ads."
+          : line,
+      ),
+      "",
+      sceneCountLine,
+      "- Each scene gets ONE still (imageIndex 1…N in timeline order).",
+      "- imagePrompt: English text-to-image still for Nano Banana — 9:16, cinematic concept, NO readable text/captions on the still.",
+      `- onImageCopyZh (burned caption after video) AND sceneDescriptionZh (UI note): ${plannerCopyLanguageRule(resolveCopyLocale((input.market as PromptMarket) || "hk"))}`,
+      "- onImageCopyZh: short consumer caption for THIS scene only.",
+      "- sceneDescriptionZh: one line for the user UI — same language as onImageCopyZh.",
+      "",
+      "seedancePrompt (English, for Seedance API):",
+      `- Opening line: 9:16 concept short for this campaign (~${input.durationSec}s).`,
+      "- One block per scene: Scene N [start-end s]: hard cut — @ImageK … static or very subtle motion only.",
+      "- Each @ImageK must match scenes[K-1].imageIndex exactly.",
+      "- Prefer locked/static camera, hard cuts, minimal morphing.",
+      "- NO on-screen text, prices, or discounts unless user brief includes them.",
+      input.offer
+        ? `- User offer (may appear in CTA scene only): ${input.offer}`
+        : "- User did NOT provide pricing — do NOT invent prices or discount % in prompts.",
+      "",
+      "productionNotes: brief user note — what to expect.",
+      "",
+      `Target duration: ${input.durationSec} seconds.`,
+      artHint,
+      input.styleHint ? `Visual mood hint: ${input.styleHint}` : "",
+      input.promptExtra ? `Style / reference notes: ${input.promptExtra}` : "",
+      input.storyboardBrief ? `User story request: ${input.storyboardBrief}` : "",
+      input.headline ? `Headline: ${input.headline}` : "",
+      input.subline ? `Selling points: ${input.subline}` : "",
+      brandBlock,
+    ]
+      .filter(Boolean)
+      .join("\n");
+  }
 
   const layoutTransferRules = layoutTransferRef
     ? [
@@ -232,10 +295,11 @@ function buildPlanPrompt(input: {
     sceneCountLine,
     "- Each scene gets ONE still (imageIndex 1…N in timeline order).",
     layoutTransferRef
-      ? "- imagePrompt: English, dual-image edit — keep IMAGE 1 layout shell, IMAGE 2 product hero, 9:16, subject upright, on-image copy from onImageCopyZh only."
-      : "- imagePrompt: English, for Nano Banana edit from user's product photo — 9:16 still matching the art direction, subject upright (head at top), correct vertical orientation, no readable text unless onImageCopyZh is set.",
-    "- onImageCopyZh: consumer-facing ad copy for THIS scene only (繁體中文 for HK/TW). Short headline + optional subline or CTA. NEVER use production labels: 開場亮點, 行動呼籲, 中段, arrows (→), or storyboard role names.",
-    "- sceneDescriptionZh: one line for the user (繁體中文 if HK/TW) — internal note, not burned on image.",
+      ? "- imagePrompt: English, dual-image edit — keep IMAGE 1 layout shell, IMAGE 2 product hero, 9:16, subject upright. NEVER ask for readable text/captions on the still (captions burn after video)."
+      : "- imagePrompt: English, for Nano Banana edit from user's product photo — 9:16 still matching the art direction, subject upright (head at top), correct vertical orientation. NEVER describe on-image text, titles, or captions (stills are textless for Kling).",
+    `- onImageCopyZh (burned caption) AND sceneDescriptionZh (UI note): ${plannerCopyLanguageRule(resolveCopyLocale((input.market as PromptMarket) || "hk"))}`,
+    "- onImageCopyZh: consumer-facing caption text for THIS scene only (burned AFTER video). Short headline + optional subline or CTA. NEVER use production labels: 開場亮點, 行動呼籲, 中段, arrows (→), or storyboard role names.",
+    "- sceneDescriptionZh: one line for the user UI — same language as onImageCopyZh.",
     "",
     "seedancePrompt (English, for Seedance API):",
     `- Opening line: 9:16 commercial for THIS product category in the chosen art direction.`,
@@ -285,6 +349,8 @@ export type PlanStoryboardInput = {
   sceneCountTarget?: StoryboardSceneCount;
   artStyleId?: ArtStyleId;
   referenceStrategyKind?: ReferenceStrategyKind;
+  /** Concept / service short — no product photo required; different planner rules. */
+  conceptMode?: boolean;
 };
 
 /** @internal Exported for unit tests — storyboard planner prompt text. */
@@ -316,15 +382,19 @@ export async function planVideoStoryboard(
 
   const artStyleId = resolveArtStyleId(input.artStyleId);
   const stylized = artStyleId !== "realistic";
+  const conceptMode = Boolean(input.conceptMode);
   const layoutTransfer =
-    input.referenceStrategyKind === "layout-transfer" ||
-    isLayoutTransferReferenceExtra(input.promptExtra);
+    !conceptMode &&
+    (input.referenceStrategyKind === "layout-transfer" ||
+      isLayoutTransferReferenceExtra(input.promptExtra));
 
   const outputText = await callDeepSeekChat(
     [
       {
         role: "system",
-        content: layoutTransfer
+        content: conceptMode
+          ? "You are a concept/service video storyboard director for SMB Reels. Output valid JSON only. Prefer hands, rooms, props, and silhouettes — avoid extreme photoreal face close-ups that fail content filters."
+          : layoutTransfer
           ? "You are a layout-transfer video storyboard director for HK/TW/CN SMB Reels. Output valid JSON only. Every scene still must share the same ad design grammar as the user's reference — not a generic product photo reel."
           : stylized
           ? "You are a stylized product video storyboard director for HK/TW/CN SMB Reels. Output valid JSON only. Match the user's art direction in every scene still."
@@ -348,6 +418,7 @@ export async function planVideoStoryboard(
           promptExtra: input.promptExtra?.trim() || "",
           artStyleId,
           referenceStrategyKind: input.referenceStrategyKind,
+          conceptMode,
         }),
       },
     ],
@@ -360,7 +431,33 @@ export async function planVideoStoryboard(
     input.sceneCountTarget,
   );
 
-  return plan;
+  return alignStoryboardPlanCopyLanguage(plan, (input.market as PromptMarket) || "hk");
+}
+
+async function alignStoryboardPlanCopyLanguage(
+  plan: VideoStoryboardPlan,
+  market: PromptMarket,
+): Promise<VideoStoryboardPlan> {
+  const locale = resolveCopyLocale(market);
+  const fields: Record<string, string> = {};
+  plan.scenes.forEach((s, i) => {
+    if (s.onImageCopyZh?.trim()) fields[`s${i}.copy`] = s.onImageCopyZh;
+    if (s.sceneDescriptionZh?.trim()) fields[`s${i}.desc`] = s.sceneDescriptionZh;
+  });
+  if (!Object.keys(fields).length) return plan;
+  const rewritten = await rewriteCopyToScript(fields, locale);
+  return {
+    ...plan,
+    scenes: plan.scenes.map((s, i) => ({
+      ...s,
+      onImageCopyZh:
+        coerceCopyScript(rewritten[`s${i}.copy`] ?? s.onImageCopyZh ?? "", locale).trim() ||
+        s.onImageCopyZh,
+      sceneDescriptionZh:
+        coerceCopyScript(rewritten[`s${i}.desc`] ?? s.sceneDescriptionZh ?? "", locale).trim() ||
+        s.sceneDescriptionZh,
+    })),
+  };
 }
 
 function buildReelStoryboardPlanPrompt(input: {
@@ -436,8 +533,8 @@ function buildReelStoryboardPlanPrompt(input: {
     sceneCountLine,
     "- Each scene = ONE still (imageIndex 1…N).",
     ...layoutRules,
-    "- sceneDescriptionZh: one line 繁體中文 for HK/TW user (internal).",
-    "- onImageCopyZh: consumer ad copy for THIS scene (繁中). Real headline/CTA only — NEVER 開場亮點, 行動呼籲, → arrows, or role names.",
+    "- sceneDescriptionZh: one line for the user UI — same language as onImageCopyZh.",
+    `- onImageCopyZh: consumer ad copy for THIS scene. ${plannerCopyLanguageRule(resolveCopyLocale((input.market as PromptMarket) || "hk"))} Real headline/CTA only — NEVER 開場亮點, 行動呼籲, → arrows, or role names.`,
     "",
     "seedancePrompt (English):",
     seedanceLead,

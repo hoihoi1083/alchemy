@@ -1,5 +1,5 @@
 import { attachSourcePostsToPlan } from "@/lib/content-research-enrich";
-import { applyMediaFilterToPlan } from "@/lib/content-research-plan";
+import { alignResearchPlanCopy, applyMediaFilterToPlan } from "@/lib/content-research-plan";
 import { fetchResearchPostByUrl } from "@/lib/fetch-research-post-by-url";
 import {
   formatLabelForAngleFormat,
@@ -70,6 +70,7 @@ export async function planContentResearchFromDirectPost(input: {
   const topic = input.topic?.trim() || input.product?.trim() || "";
 
   const pinned = pinnedAngleFromPost(post, topic, input.product);
+  const market = input.market ?? "hk";
   const basePlan: ContentResearchPlan = {
     platform: post.platform,
     platformLabel: PLATFORM_LABELS[post.platform],
@@ -79,6 +80,7 @@ export async function planContentResearchFromDirectPost(input: {
     searchProvider: "justoneapi",
     posts: [post],
     mediaFilter: input.mediaFilter,
+    market,
     candidates: [pinned],
     topPicks: [pinned],
   };
@@ -89,5 +91,8 @@ export async function planContentResearchFromDirectPost(input: {
     enriched.researchWarning = `Link host suggests ${platformFromUrl}; loaded as ${post.platform}.`;
   }
 
-  return applyMediaFilterToPlan(enriched, input.mediaFilter);
+  return alignResearchPlanCopy(
+    applyMediaFilterToPlan(enriched, input.mediaFilter),
+    market,
+  );
 }

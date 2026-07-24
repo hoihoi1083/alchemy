@@ -218,7 +218,7 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn") {
   const [packagingPreviewUrl, setPackagingPreviewUrl] = useState<string | null>(null);
   const [extraKitPhotos, setExtraKitPhotos] = useState<File[]>([]);
   const [extraKitPreviewUrls, setExtraKitPreviewUrls] = useState<string[]>([]);
-  const [referenceCarouselSlideCount, setReferenceCarouselSlideCount] = useState(4);
+  const [referenceCarouselSlideCount, setReferenceCarouselSlideCount] = useState(5);
   const [contentResearchApplyRef, setContentResearchApplyRef] =
     useState<ContentResearchApplyRef | null>(null);
   const [productVideoPlan, setProductVideoPlan] = useState<ProductVideoPlan | null>(null);

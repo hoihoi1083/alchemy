@@ -1,4 +1,5 @@
-import { ApiError, fal } from "@fal-ai/client";
+import { fal } from "@fal-ai/client";
+import { formatFalGenerationError } from "@/lib/fal-errors";
 import { NextResponse } from "next/server";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import {
@@ -72,13 +73,7 @@ function extractImageUrls(resultData: unknown): string[] {
 }
 
 function formatFalError(e: unknown): string {
-  if (e instanceof ApiError) {
-    return `${e.message}${e.requestId ? ` (fal request: ${e.requestId})` : ""}`;
-  }
-  if (e && typeof e === "object" && "message" in e) {
-    return String((e as { message: unknown }).message);
-  }
-  return "Image generation failed";
+  return formatFalGenerationError(e, "Image generation failed");
 }
 
 function aspectRatioForApi(ratio: string): string {
@@ -586,10 +581,17 @@ export async function POST(request: Request) {
           structuredReferenceBrief: Boolean(brief),
           aspectRatio: aspectRatioRaw,
           singleImagePlan,
+          hasReferenceImage: hasProduct || hasStyle,
         },
       );
       // Prefer server-built prompt when we ran the single-still planner (teaching-quality DNA).
-      const finalPrompt = singleImagePlan ? builtPrompt : clientPrompt || builtPrompt;
+      // Honor explicit client prompts (e.g. storyboard scene regenerate) — do not replace with
+      // a generic concept-cinematic rebuild that drops the scene action.
+      const finalPrompt = singleImagePlan
+        ? builtPrompt
+        : clientPrompt
+          ? clientPrompt
+          : builtPrompt;
 
       const result = await fal.subscribe(endpoint, {
         input: banana2Input(finalPrompt, imageUrls, aspectRatio, numImages, {

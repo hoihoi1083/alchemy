@@ -25,6 +25,8 @@ export async function synthesizeSpeechToFile(args: {
   locale: VoiceoverLocale;
   outputPath: string;
   voicePresetId?: VoicePresetId;
+  falVoiceId?: string;
+  falVoiceSpeed?: number;
 }): Promise<{ provider: TtsProvider; voice: string }> {
   const provider = resolveTtsProvider();
   if (provider === "fal") {
@@ -33,6 +35,8 @@ export async function synthesizeSpeechToFile(args: {
       locale: args.locale,
       outputPath: args.outputPath,
       voicePresetId: args.voicePresetId,
+      voiceId: args.falVoiceId,
+      speed: args.falVoiceSpeed,
     });
     return { provider, voice };
   }
