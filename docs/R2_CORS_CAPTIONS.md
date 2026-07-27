@@ -24,5 +24,6 @@ In Cloudflare Dashboard → R2 → your bucket → Settings → CORS policy:
 After saving, hard-refresh `/captions` and retry Burn / Mix voiceover.
 
 If CORS is still missing, the app falls back to same-origin
-`POST /api/library/upload` (works well on localhost; large files on Vercel
-still prefer direct R2 PUT).
+`POST /api/library/upload` **only for files ≤ ~4MB** (Vercel body limit).
+Larger files must use direct R2 PUT or **Choose from library** on `/captions`
+and `/edit-image`.

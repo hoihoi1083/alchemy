@@ -41,6 +41,8 @@ import {
 import { alignCaptionsToBeats } from "@/lib/beat-detect";
 import { resolveCaptionStudioMusicPrompt } from "@/lib/caption-music-prompt";
 import { isPipelineFileUrl } from "@/lib/pipeline/safe-url";
+import { isSafeForServerUpload } from "@/lib/upload-limits";
+import { LibraryAssetPicker } from "@/components/LibraryAssetPicker";
 
 type SourceKind = "file" | "url";
 
@@ -81,7 +83,7 @@ async function readApiJson(res: Response): Promise<Record<string, unknown>> {
     ) {
       return {
         error:
-          "Video too large for the server upload limit. Uploading via direct storage and retrying should fix this — refresh if you still see this.",
+          "Video too large for the server upload path (~4.5MB). Use Choose from library, or enable R2 CORS for direct uploads.",
         code: "REQUEST_TOO_LARGE",
       };
     }
@@ -89,8 +91,16 @@ async function readApiJson(res: Response): Promise<Record<string, unknown>> {
   }
 }
 
-/** Upload a local File — prefer direct R2 PUT; fall back to same-origin server upload when CORS blocks. */
-async function uploadVideoFileToLibrary(file: File): Promise<string> {
+type UploadCopy = {
+  uploadNeedCorsOrLibrary: string;
+  uploadFailed: string;
+};
+
+/** Upload a local File — prefer direct R2 PUT; small-file server fallback only. */
+async function uploadVideoFileToLibrary(
+  file: File,
+  copy: UploadCopy,
+): Promise<string> {
   const presignRes = await fetch("/api/library/presign-upload", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -109,6 +119,7 @@ async function uploadVideoFileToLibrary(file: File): Promise<string> {
     );
   }
 
+  let putFailedCorsOrNetwork = false;
   try {
     const putRes = await fetch(presign.uploadUrl, {
       method: "PUT",
@@ -116,14 +127,18 @@ async function uploadVideoFileToLibrary(file: File): Promise<string> {
       body: file,
     });
     if (putRes.ok) return presign.downloadUrl as string;
-    // Non-OK response (not CORS) — try server fallback below.
     console.warn("[captions] R2 PUT status", putRes.status);
   } catch (e: unknown) {
-    // Browser CORS / network → TypeError: Failed to fetch
+    putFailedCorsOrNetwork = true;
     console.warn(
-      "[captions] R2 PUT failed, falling back to server upload:",
+      "[captions] R2 PUT failed:",
       e instanceof Error ? e.message : e,
     );
+  }
+
+  // Large files cannot go through Vercel — tell user to fix CORS or use Library.
+  if (!isSafeForServerUpload(file.size)) {
+    throw new Error(copy.uploadNeedCorsOrLibrary);
   }
 
   const fd = new FormData();
@@ -136,11 +151,12 @@ async function uploadVideoFileToLibrary(file: File): Promise<string> {
   });
   const proxy = await readApiJson(proxyRes);
   if (!proxyRes.ok || typeof proxy.downloadUrl !== "string") {
-    const hint =
-      typeof proxy.error === "string"
-        ? proxy.error
-        : "Video upload failed. If you see Failed to fetch, add PUT CORS on the R2 bucket for this site (localhost + alchemyailab.com).";
-    throw new Error(hint);
+    if (putFailedCorsOrNetwork || proxy.code === "REQUEST_TOO_LARGE") {
+      throw new Error(copy.uploadNeedCorsOrLibrary);
+    }
+    throw new Error(
+      typeof proxy.error === "string" ? proxy.error : copy.uploadFailed,
+    );
   }
   return proxy.downloadUrl;
 }
@@ -192,6 +208,7 @@ export function CaptionStudioClient() {
   const [audioNote, setAudioNote] = useState<string | null>(null);
   const [defaultStylePreset, setDefaultStylePreset] =
     useState<CaptionStylePresetId>("classic");
+  const [libraryPickerOpen, setLibraryPickerOpen] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const previewVideoRef = useRef<HTMLVideoElement>(null);
@@ -265,7 +282,10 @@ export function CaptionStudioClient() {
     const input = workingVideoInput();
     if (input.url) return input.url;
     if (!input.file) throw new Error(t.needVideo);
-    const downloadUrl = await uploadVideoFileToLibrary(input.file);
+    const downloadUrl = await uploadVideoFileToLibrary(input.file, {
+      uploadNeedCorsOrLibrary: t.uploadNeedCorsOrLibrary,
+      uploadFailed: t.uploadFailed,
+    });
     const rel = toRelativePipelineUrl(downloadUrl);
     setProcessedVideoUrl(rel);
     setSourceUrl(rel);
@@ -978,6 +998,13 @@ export function CaptionStudioClient() {
               >
                 {t.chooseFile}
               </button>
+              <button
+                type="button"
+                onClick={() => setLibraryPickerOpen(true)}
+                className="rounded-full border border-slate-600 px-6 py-2.5 text-sm font-medium text-slate-200 hover:bg-slate-900"
+              >
+                {t.chooseFromLibrary}
+              </button>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -988,6 +1015,7 @@ export function CaptionStudioClient() {
               {sourceLabel && (
                 <span className="text-xs text-slate-400">{sourceLabel}</span>
               )}
+              <p className="max-w-sm text-[11px] text-slate-500">{t.largeFileHint}</p>
             </div>
             {sourceUrl && isPipelineFileUrl(sourceUrl) && (
               <p className="mt-3 text-xs text-emerald-300">{t.pipelineSourceNote}</p>
@@ -995,13 +1023,20 @@ export function CaptionStudioClient() {
           </section>
         </div>
       ) : (
-        <div className="flex justify-center">
+        <div className="flex flex-wrap items-center justify-center gap-4">
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
             className="text-xs text-slate-400 underline underline-offset-2 hover:text-slate-300"
           >
             {t.changeVideo}
+          </button>
+          <button
+            type="button"
+            onClick={() => setLibraryPickerOpen(true)}
+            className="text-xs text-violet-300 underline underline-offset-2 hover:text-violet-200"
+          >
+            {t.chooseFromLibrary}
           </button>
           <input
             ref={fileInputRef}
@@ -1372,6 +1407,28 @@ export function CaptionStudioClient() {
           {t.studioLink}
         </Link>
       </p>
+
+      <LibraryAssetPicker
+        open={libraryPickerOpen}
+        kinds={["video"]}
+        onClose={() => setLibraryPickerOpen(false)}
+        onPick={(asset) => {
+          setLibraryPickerOpen(false);
+          loadSource("url", {
+            url: asset.downloadUrl,
+            label: asset.name?.trim() || t.sourceFromLibrary,
+          });
+        }}
+        labels={{
+          title: t.libraryPickerTitle,
+          loading: t.libraryPickerLoading,
+          empty: t.libraryPickerEmpty,
+          loadError: t.libraryPickerLoadError,
+          cancel: t.libraryPickerCancel,
+          useThis: t.libraryPickerUse,
+          close: t.libraryPickerClose,
+        }}
+      />
     </div>
   );
 }

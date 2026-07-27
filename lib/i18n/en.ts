@@ -76,6 +76,8 @@ export const en = {
     audioBadge: "Audio",
     voiceoverBadge: "Voiceover",
     download: "Download",
+    editCaptions: "Edit captions",
+    editImage: "Edit image",
   },
   footer: {
     tagline:
@@ -1996,10 +1998,25 @@ export const en = {
     subtitle:
       "Upload any reel MP4 — add BGM, spoken voiceover, and burned captions. Same post-production as the wizard, without re-generating video.",
     uploadTitle: "Video source",
-    uploadHint: "Upload a file from your computer, or open from the studio done screen.",
+    uploadHint:
+      "Upload a file, pick from My library (best for large MP4s already generated), or open from the studio done screen.",
     chooseFile: "Choose video file",
+    chooseFromLibrary: "Choose from library",
     changeVideo: "Change video file",
     sourceFromStudio: "From studio",
+    sourceFromLibrary: "From library",
+    largeFileHint:
+      "Large files need direct cloud upload (R2 CORS) or Choose from library — the server path caps ~4.5MB.",
+    uploadNeedCorsOrLibrary:
+      "This video is too large for the server upload path. Pick it from My library (if already saved), or ask an admin to enable R2 PUT CORS for this site, then retry the file upload.",
+    uploadFailed: "Video upload failed.",
+    libraryPickerTitle: "Choose a library video",
+    libraryPickerLoading: "Loading library…",
+    libraryPickerEmpty: "No saved videos yet. Generate one in the studio first.",
+    libraryPickerLoadError: "Could not load library videos.",
+    libraryPickerCancel: "Cancel",
+    libraryPickerUse: "Use this",
+    libraryPickerClose: "Close",
     pipelineSourceNote: "Using your processed studio video — captions burn on the server.",
     previewTitle: "Preview",
     showOriginal: "Show original (no captions)",
@@ -2147,10 +2164,20 @@ export const en = {
     subtitle:
       "Upload any PNG or JPG — drag headlines, shapes, and brand logo onto your image. Same Konva editor as the wizard, without generating a new AI image.",
     uploadTitle: "Image source",
-    uploadHint: "Upload from your computer, or open from the studio after generating an image.",
+    uploadHint:
+      "Upload from your computer, pick from My library, or open from the studio after generating an image.",
     chooseFile: "Choose image file",
+    chooseFromLibrary: "Choose from library",
     changeImage: "Change image file",
     sourceFromStudio: "From studio",
+    sourceFromLibrary: "From library",
+    libraryPickerTitle: "Choose a library image",
+    libraryPickerLoading: "Loading library…",
+    libraryPickerEmpty: "No saved images yet. Generate one in the studio first.",
+    libraryPickerLoadError: "Could not load library images.",
+    libraryPickerCancel: "Cancel",
+    libraryPickerUse: "Use this",
+    libraryPickerClose: "Close",
     pipelineSourceNote: "Using your studio image — layers burn on the server.",
     editorTitle: "Canvas editor",
     applyBtn: "Burn layers onto image",

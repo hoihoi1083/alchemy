@@ -369,8 +369,9 @@ export async function mixTimedNarrationClips(
     inputs.push("-i", p);
   }
   const labels = placed.map((_, i) => `[${i}:a]`).join("");
-  // normalize=1 keeps summed peaks from distorting when any residual overlap remains.
-  const filter = `${labels}amix=inputs=${placed.length}:duration=first:dropout_transition=0:normalize=1,asetpts=PTS-STARTPTS[aout]`;
+  // normalize=0: clips are non-overlapping by design. normalize=1 divides by N
+  // inputs (mostly silence) and makes speech ~N× quieter (e.g. 6 clips → very quiet).
+  const filter = `${labels}amix=inputs=${placed.length}:duration=first:dropout_transition=0:normalize=0,asetpts=PTS-STARTPTS[aout]`;
 
   await runFfmpeg([
     "-y",
@@ -531,11 +532,16 @@ export async function mixNarrationOverVideo(
   inputVideo: string,
   narrationWav: string,
   outputVideo: string,
-  bgmVolume = 0.22,
+  /** Existing video/BGM level (lower = more duck under voice). */
+  bgmVolume = 0.14,
+  /** Voice gain after TTS (1.4 was often too quiet under BGM). */
+  narrationVolume = 2.1,
 ): Promise<void> {
   const duration = await getMediaDurationSeconds(inputVideo);
   const hasAudio = await videoHasAudioStream(inputVideo);
   const dur = duration.toFixed(3);
+  const narrVol = Math.max(0.5, narrationVolume).toFixed(2);
+  const bgmVol = Math.max(0.02, Math.min(1, bgmVolume)).toFixed(2);
 
   if (hasAudio) {
     await runFfmpeg([
@@ -545,7 +551,7 @@ export async function mixNarrationOverVideo(
       "-i",
       narrationWav,
       "-filter_complex",
-      `[0:a]volume=${bgmVolume}[bgm];[1:a]volume=1.4,apad=whole_dur=${dur},atrim=0:${dur},asetpts=PTS-STARTPTS[narr];[bgm][narr]amix=inputs=2:duration=first:dropout_transition=2:normalize=0,alimiter=limit=0.92:level=false[aout]`,
+      `[0:a]volume=${bgmVol}[bgm];[1:a]volume=${narrVol},apad=whole_dur=${dur},atrim=0:${dur},asetpts=PTS-STARTPTS[narr];[bgm][narr]amix=inputs=2:duration=first:dropout_transition=2:normalize=0,alimiter=limit=0.95:level=false[aout]`,
       "-map",
       "0:v:0",
       "-map",
@@ -570,7 +576,7 @@ export async function mixNarrationOverVideo(
     "-i",
     narrationWav,
     "-filter_complex",
-    `[1:a]atrim=0:${dur},asetpts=PTS-STARTPTS[aout]`,
+    `[1:a]volume=${narrVol},apad=whole_dur=${dur},atrim=0:${dur},asetpts=PTS-STARTPTS[aout]`,
     "-map",
     "0:v:0",
     "-map",

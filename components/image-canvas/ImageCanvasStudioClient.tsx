@@ -18,6 +18,7 @@ import { withCacheBust } from "@/lib/caption-studio-url";
 import { isLibraryAssetUrl } from "@/lib/storage/library-asset-url";
 import { readImageCanvasDraft, writeImageCanvasDraft } from "@/lib/image-canvas-studio-draft";
 import { isPipelineFileUrl } from "@/lib/pipeline/safe-url";
+import { LibraryAssetPicker } from "@/components/LibraryAssetPicker";
 
 const ImageInpaintMaskEditor = dynamic(
   () => import("@/components/studio/ImageInpaintMaskEditor").then((m) => m.ImageInpaintMaskEditor),
@@ -146,6 +147,7 @@ export function ImageCanvasStudioClient() {
   const [brandKit] = useState(() =>
     typeof window !== "undefined" ? loadBrandKitFromStorage() : DEFAULT_BRAND_KIT,
   );
+  const [libraryPickerOpen, setLibraryPickerOpen] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -523,6 +525,13 @@ export function ImageCanvasStudioClient() {
               >
                 {t.chooseFile}
               </button>
+              <button
+                type="button"
+                onClick={() => setLibraryPickerOpen(true)}
+                className="rounded-full border border-slate-600 px-6 py-2.5 text-sm font-medium text-slate-200 hover:bg-slate-900"
+              >
+                {t.chooseFromLibrary}
+              </button>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -579,13 +588,22 @@ export function ImageCanvasStudioClient() {
           </nav>
 
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="text-xs text-slate-400 underline underline-offset-2 hover:text-slate-300"
-            >
-              {t.changeImage}
-            </button>
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="text-xs text-slate-400 underline underline-offset-2 hover:text-slate-300"
+              >
+                {t.changeImage}
+              </button>
+              <button
+                type="button"
+                onClick={() => setLibraryPickerOpen(true)}
+                className="text-xs text-cyan-300 underline underline-offset-2 hover:text-cyan-200"
+              >
+                {t.chooseFromLibrary}
+              </button>
+            </div>
             <span className="text-xs text-slate-500">{sourceLabel}</span>
             <input
               ref={fileInputRef}
@@ -756,6 +774,29 @@ export function ImageCanvasStudioClient() {
           {error}
         </p>
       )}
+
+      <LibraryAssetPicker
+        open={libraryPickerOpen}
+        kinds={["image"]}
+        onClose={() => setLibraryPickerOpen(false)}
+        onPick={(asset) => {
+          setLibraryPickerOpen(false);
+          loadSource("url", {
+            url: asset.downloadUrl,
+            label: asset.name?.trim() || t.sourceFromLibrary,
+          });
+          setStep("clean");
+        }}
+        labels={{
+          title: t.libraryPickerTitle,
+          loading: t.libraryPickerLoading,
+          empty: t.libraryPickerEmpty,
+          loadError: t.libraryPickerLoadError,
+          cancel: t.libraryPickerCancel,
+          useThis: t.libraryPickerUse,
+          close: t.libraryPickerClose,
+        }}
+      />
     </div>
   );
 }

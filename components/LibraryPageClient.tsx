@@ -350,6 +350,22 @@ export function LibraryPageClient() {
                             </p>
                           </div>
                           <div className="mt-auto flex flex-wrap gap-2">
+                            {(a.kind === "video" || a.kind === "voiceover") && (
+                              <Link
+                                href={`/captions?video=${encodeURIComponent(a.downloadUrl)}`}
+                                className="rounded-full bg-violet-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-violet-500"
+                              >
+                                {L.editCaptions}
+                              </Link>
+                            )}
+                            {a.kind === "image" && (
+                              <Link
+                                href={`/edit-image?image=${encodeURIComponent(a.downloadUrl)}`}
+                                className="rounded-full bg-cyan-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-cyan-500"
+                              >
+                                {L.editImage}
+                              </Link>
+                            )}
                             <a
                               href={a.downloadUrl}
                               className="rounded-full bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800"
@@ -455,6 +471,22 @@ export function LibraryPageClient() {
                       >
                         {L.openStudio}
                       </button>
+                      {hasVideo && downloadVideoUrl ? (
+                        <Link
+                          href={`/captions?video=${encodeURIComponent(downloadVideoUrl)}`}
+                          className="rounded-full bg-violet-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-violet-500"
+                        >
+                          {L.editCaptions}
+                        </Link>
+                      ) : null}
+                      {hasImage && downloadImageUrl ? (
+                        <Link
+                          href={`/edit-image?image=${encodeURIComponent(downloadImageUrl)}`}
+                          className="rounded-full bg-cyan-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-cyan-500"
+                        >
+                          {L.editImage}
+                        </Link>
+                      ) : null}
                       {hasImage && downloadImageUrl ? (
                         <button
                           type="button"

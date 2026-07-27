@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          "Upload body too large for this server path. Fix R2 bucket CORS for direct uploads, then retry.",
+          "Upload body too large for this server path (~4.5MB on Vercel). Enable R2 bucket CORS for direct uploads, or pick the file from My library.",
         code: "REQUEST_TOO_LARGE",
       },
       { status: 413 },
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
   if (file.size > MAX_BYTES) {
     return NextResponse.json(
       {
-        error: `File too large (${Math.round(file.size / 1024 / 1024)}MB). Max ${MAX_BYTES / 1024 / 1024}MB via server upload — enable R2 CORS for larger direct uploads.`,
+        error: `File too large (${Math.round(file.size / 1024 / 1024)}MB). Server upload max is ${MAX_BYTES / 1024 / 1024}MB — enable R2 CORS for larger direct uploads, or use Choose from library.`,
         code: "FILE_TOO_LARGE",
       },
       { status: 413 },
