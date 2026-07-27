@@ -61,13 +61,41 @@ function pipelineAbsoluteUrl(relative: string): string {
   return `${window.location.origin}${relative.startsWith("/") ? "" : "/"}${relative}`;
 }
 
-/** Same-origin preview URL — library assets need inline=1 to stream bytes (not 302). */
+/** Strip query so burn/inpaint APIs get a stable library id path. */
+function libraryPipelineUrl(url: string): string {
+  if (!isLibraryAssetUrl(url)) return url;
+  return url.split("?")[0] ?? url;
+}
+
+/**
+ * Same-origin preview URL — library assets need inline=1 to stream bytes (not 302 to R2).
+ * Konva/HTMLImage with crossOrigin=anonymous does not send cookies, so auth-gated
+ * `/api/...` URLs must be fetched with credentials and shown as blob: URLs.
+ */
 function previewFetchUrl(url: string): string {
   let next = withCacheBust(url);
   if (isLibraryAssetUrl(next) && !next.includes("inline=1")) {
     next += `${next.includes("?") ? "&" : "?"}inline=1`;
   }
   return next;
+}
+
+function needsCredentialedPreview(url: string): boolean {
+  const path = url.startsWith("http")
+    ? (() => {
+        try {
+          return new URL(url).pathname;
+        } catch {
+          return url;
+        }
+      })()
+    : url.split("?")[0] ?? url;
+  return (
+    isLibraryAssetUrl(url) ||
+    isPipelineFileUrl(url) ||
+    path.startsWith("/api/library/download/") ||
+    path.startsWith("/api/pipeline-files/")
+  );
 }
 
 async function fetchPreviewBlob(url: string): Promise<Blob> {
@@ -150,6 +178,7 @@ export function ImageCanvasStudioClient() {
   const [libraryPickerOpen, setLibraryPickerOpen] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const previewLoadGenRef = useRef(0);
 
   const sourceKey = sourceFile
     ? `file:${sourceFile.name}:${sourceFile.size}`
@@ -161,7 +190,8 @@ export function ImageCanvasStudioClient() {
     step === "clean" && cleanFrames[cleanFrameIndex]
       ? cleanFrames[cleanFrameIndex]!.displayUrl
       : (localPreviewUrl ?? "");
-  const hasWorkspace = Boolean(localPreviewUrl && sourceKind);
+  // Keep workspace visible while credentialed library/pipeline previews hydrate into blob URLs.
+  const hasWorkspace = Boolean(sourceKind && (localPreviewUrl || busy));
 
   const stepLabels: Record<EditStep, string> = {
     upload: t.stepUpload,
@@ -196,25 +226,50 @@ export function ImageCanvasStudioClient() {
         setOriginalSourceUrl(null);
       } else if (kind === "url" && opts.url) {
         setOriginalSourceFile(null);
-        setOriginalSourceUrl(normalizeImageCanvasHandoffUrl(opts.url));
+        setOriginalSourceUrl(libraryPipelineUrl(normalizeImageCanvasHandoffUrl(opts.url)));
       }
 
       if (kind === "file" && opts.file) {
+        previewLoadGenRef.current += 1;
         const blobUrl = URL.createObjectURL(opts.file);
         setSourceFile(opts.file);
         setSourceUrl(null);
         setSourceLabel(opts.label ?? opts.file.name);
         setLocalPreviewUrl(blobUrl);
         setCleanFrames([{ pipelineUrl: null, displayUrl: blobUrl }]);
+        setCleanFrameIndex(0);
       } else if (kind === "url" && opts.url) {
         setSourceFile(null);
-        const rel = normalizeImageCanvasHandoffUrl(opts.url);
+        const rel = libraryPipelineUrl(normalizeImageCanvasHandoffUrl(opts.url));
         setSourceUrl(rel);
         setSourceLabel(opts.label ?? t.sourceFromStudio);
-        setLocalPreviewUrl(rel);
-        setCleanFrames([{ pipelineUrl: rel, displayUrl: rel }]);
+        setCleanFrameIndex(0);
+
+        if (needsCredentialedPreview(rel)) {
+          const gen = ++previewLoadGenRef.current;
+          setLocalPreviewUrl(null);
+          setCleanFrames([]);
+          setBusy(true);
+          void (async () => {
+            try {
+              const blob = await fetchPreviewBlob(rel);
+              if (gen !== previewLoadGenRef.current) return;
+              const blobUrl = URL.createObjectURL(blob);
+              setLocalPreviewUrl(blobUrl);
+              setCleanFrames([{ pipelineUrl: rel, displayUrl: blobUrl }]);
+            } catch {
+              if (gen !== previewLoadGenRef.current) return;
+              setError(t.previewLoadFailed);
+            } finally {
+              if (gen === previewLoadGenRef.current) setBusy(false);
+            }
+          })();
+        } else {
+          previewLoadGenRef.current += 1;
+          setLocalPreviewUrl(rel);
+          setCleanFrames([{ pipelineUrl: rel, displayUrl: rel }]);
+        }
       }
-      setCleanFrameIndex(0);
 
       const key =
         kind === "file" && opts.file
@@ -340,7 +395,10 @@ export function ImageCanvasStudioClient() {
       setSourceKind("url");
       setSourceFile(null);
       setSourceUrl(frame.pipelineUrl);
-      setLocalPreviewUrl(frame.pipelineUrl);
+      // Prefer blob displayUrl — Konva cannot load auth-gated /api URLs with crossOrigin=anonymous.
+      setLocalPreviewUrl(frame.displayUrl || frame.pipelineUrl);
+    } else if (frame?.displayUrl) {
+      setLocalPreviewUrl(frame.displayUrl);
     }
     setVisitedSteps((prev) => new Set([...prev, "design"]));
     setStep("design");
@@ -398,7 +456,27 @@ export function ImageCanvasStudioClient() {
         return URL.createObjectURL(sourceFile);
       });
     } else if (sourceUrl) {
-      setLocalPreviewUrl(sourceUrl);
+      if (needsCredentialedPreview(sourceUrl)) {
+        const gen = ++previewLoadGenRef.current;
+        setBusy(true);
+        void (async () => {
+          try {
+            const blob = await fetchPreviewBlob(sourceUrl);
+            if (gen !== previewLoadGenRef.current) return;
+            setLocalPreviewUrl((prev) => {
+              if (prev?.startsWith("blob:")) URL.revokeObjectURL(prev);
+              return URL.createObjectURL(blob);
+            });
+          } catch {
+            if (gen !== previewLoadGenRef.current) return;
+            setError(t.previewLoadFailed);
+          } finally {
+            if (gen === previewLoadGenRef.current) setBusy(false);
+          }
+        })();
+      } else {
+        setLocalPreviewUrl(sourceUrl);
+      }
     }
   }
 
@@ -435,11 +513,34 @@ export function ImageCanvasStudioClient() {
       setLocalPreviewUrl(blobUrl);
       setCleanFrames([{ pipelineUrl: null, displayUrl: blobUrl }]);
     } else if (originalSourceUrl) {
+      const rel = libraryPipelineUrl(originalSourceUrl);
       setSourceKind("url");
       setSourceFile(null);
-      setSourceUrl(originalSourceUrl);
-      setLocalPreviewUrl(originalSourceUrl);
-      setCleanFrames([{ pipelineUrl: originalSourceUrl, displayUrl: originalSourceUrl }]);
+      setSourceUrl(rel);
+      if (needsCredentialedPreview(rel)) {
+        const gen = ++previewLoadGenRef.current;
+        setLocalPreviewUrl(null);
+        setCleanFrames([]);
+        setBusy(true);
+        void (async () => {
+          try {
+            const blob = await fetchPreviewBlob(rel);
+            if (gen !== previewLoadGenRef.current) return;
+            const blobUrl = URL.createObjectURL(blob);
+            setLocalPreviewUrl(blobUrl);
+            setCleanFrames([{ pipelineUrl: rel, displayUrl: blobUrl }]);
+          } catch {
+            if (gen !== previewLoadGenRef.current) return;
+            setError(t.previewLoadFailed);
+          } finally {
+            if (gen === previewLoadGenRef.current) setBusy(false);
+          }
+        })();
+      } else {
+        previewLoadGenRef.current += 1;
+        setLocalPreviewUrl(rel);
+        setCleanFrames([{ pipelineUrl: rel, displayUrl: rel }]);
+      }
     }
     setCleanFrameIndex(0);
     setStep("clean");

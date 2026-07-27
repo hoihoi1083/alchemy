@@ -1,5 +1,5 @@
 import { readFileSync } from "fs";
-import type { Font } from "opentype.js";
+import type { Font, PathCommand } from "opentype.js";
 import * as opentypeNs from "opentype.js";
 import {
   compositorFontPath,
@@ -59,25 +59,65 @@ function glyphOrThrow(font: Font, ch: string, roleHint: string) {
   return glyph;
 }
 
+function fmtPathNum(n: number, digits = 2): string {
+  if (!Number.isFinite(n)) {
+    throw new Error(`Non-finite path coordinate: ${n}`);
+  }
+  const v = Number(n.toFixed(digits));
+  return Object.is(v, -0) ? "0" : String(v);
+}
+
+/**
+ * Serialize glyph outlines as absolute SVG path data.
+ * Do NOT use opentype `Path.toPathData(digits)` — it can emit `NaN` for some
+ * glyphs (notably "5" at certain x offsets). Sharp/librsvg then stops parsing
+ * the rest of a combined `d`, so captions appear truncated mid-string.
+ */
+export function pathCommandsToD(commands: PathCommand[], digits = 2): string {
+  let d = "";
+  for (const c of commands) {
+    switch (c.type) {
+      case "M":
+        d += `M${fmtPathNum(c.x, digits)} ${fmtPathNum(c.y, digits)}`;
+        break;
+      case "L":
+        d += `L${fmtPathNum(c.x, digits)} ${fmtPathNum(c.y, digits)}`;
+        break;
+      case "Q":
+        d += `Q${fmtPathNum(c.x1, digits)} ${fmtPathNum(c.y1, digits)} ${fmtPathNum(c.x, digits)} ${fmtPathNum(c.y, digits)}`;
+        break;
+      case "C":
+        d += `C${fmtPathNum(c.x1, digits)} ${fmtPathNum(c.y1, digits)} ${fmtPathNum(c.x2, digits)} ${fmtPathNum(c.y2, digits)} ${fmtPathNum(c.x, digits)} ${fmtPathNum(c.y, digits)}`;
+        break;
+      case "Z":
+        d += "Z";
+        break;
+      default:
+        break;
+    }
+  }
+  return d;
+}
+
 /** Layout one line with per-character font (Latin vs CJK). */
 function layoutLine(
   text: string,
   fontSize: number,
   baselineY: number,
   bold: boolean,
-): { d: string; width: number } {
+): { pathDs: string[]; width: number } {
   let x = 0;
-  const parts: string[] = [];
+  const pathDs: string[] = [];
   for (const ch of text) {
     const font = fontForChar(ch, bold);
     const glyph = glyphOrThrow(font, ch, isCjkChar(ch) ? "NotoSansTC" : "NotoSans");
     const scale = fontSize / font.unitsPerEm;
     const path = glyph.getPath(x, baselineY, fontSize);
-    const d = path.toPathData(2);
-    if (d && d !== "M0 0Z") parts.push(d);
+    const d = pathCommandsToD(path.commands);
+    if (d && d !== "M0 0Z" && !d.includes("NaN")) pathDs.push(d);
     x += (glyph.advanceWidth ?? 0) * scale;
   }
-  return { d: parts.join(" "), width: x };
+  return { pathDs, width: x };
 }
 
 export type BurnTextSvgPathOpts = {
@@ -108,21 +148,27 @@ export function burnTextSvgPaths(opts: BurnTextSvgPathOpts): string {
     opts.strokeWidth ?? Math.max(2, Math.round(opts.fontSize * 0.12));
   const bold = Boolean(opts.bold);
   const baselineBias = textNeedsCjkFonts(sample) ? 0.32 : 0.35;
+  const strokeAttr =
+    strokeWidth > 0 && stroke && stroke !== "transparent"
+      ? ` stroke="${stroke}" stroke-width="${strokeWidth}" paint-order="stroke" stroke-linejoin="round"`
+      : "";
 
   return opts.lines
     .map((line, i) => {
       const y = opts.lineYs[i] ?? opts.lineYs[opts.lineYs.length - 1] ?? 0;
       const baselineY = y + opts.fontSize * baselineBias;
-      const { d, width } = layoutLine(line, opts.fontSize, baselineY, bold);
-      if (!d.trim()) return "";
+      const { pathDs, width } = layoutLine(line, opts.fontSize, baselineY, bold);
+      if (!pathDs.length) return "";
       let dx = opts.x;
       if (opts.anchor === "middle") dx = opts.x - width / 2;
       else if (opts.anchor === "end") dx = opts.x - width;
-      const strokeAttr =
-        strokeWidth > 0 && stroke && stroke !== "transparent"
-          ? ` stroke="${stroke}" stroke-width="${strokeWidth}" paint-order="stroke" stroke-linejoin="round"`
-          : "";
-      return `<path transform="translate(${dx.toFixed(2)} 0)" d="${d}" fill="${fill}"${strokeAttr}/>`;
+      // One <path> per glyph so a single bad outline cannot truncate the line.
+      return pathDs
+        .map(
+          (d) =>
+            `<path transform="translate(${dx.toFixed(2)} 0)" d="${d}" fill="${fill}"${strokeAttr}/>`,
+        )
+        .join("\n");
     })
     .filter(Boolean)
     .join("\n");

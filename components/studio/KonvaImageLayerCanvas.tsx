@@ -127,10 +127,22 @@ type KonvaImageLayerCanvasProps = {
 function useHtmlImage(src: string) {
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   useEffect(() => {
+    if (!src) {
+      setImage(null);
+      return;
+    }
     const img = new window.Image();
-    img.crossOrigin = "anonymous";
+    // blob:/data: are same-origin; crossOrigin can break load in some browsers.
+    if (!src.startsWith("blob:") && !src.startsWith("data:")) {
+      img.crossOrigin = "anonymous";
+    }
     img.onload = () => setImage(img);
+    img.onerror = () => setImage(null);
     img.src = src;
+    return () => {
+      img.onload = null;
+      img.onerror = null;
+    };
   }, [src]);
   return image;
 }
@@ -332,12 +344,26 @@ export function KonvaImageLayerCanvas({
     }
   }, [selectedId, layers, stageHeight]);
 
+  function clampPct(n: number, min = 0, max = 100) {
+    return Math.min(max, Math.max(min, n));
+  }
+
   function pctFromNode(x: number, y: number, w: number, h: number) {
     return {
-      xPct: Math.min(98, Math.max(2, ((x + w / 2) / STAGE_WIDTH) * 100)),
-      yPct: Math.min(98, Math.max(2, ((y + h / 2) / stageHeight) * 100)),
-      wPct: Math.min(90, Math.max(4, (w / STAGE_WIDTH) * 100)),
-      hPct: Math.min(90, Math.max(4, (h / stageHeight) * 100)),
+      xPct: clampPct(((x + w / 2) / STAGE_WIDTH) * 100),
+      yPct: clampPct(((y + h / 2) / stageHeight) * 100),
+      wPct: Math.min(95, Math.max(4, (w / STAGE_WIDTH) * 100)),
+      hPct: Math.min(95, Math.max(4, (h / stageHeight) * 100)),
+    };
+  }
+
+  /** Group.width()/height() are unreliable after drag — use layout box size. */
+  function textDragCenterPct(layer: ImageCanvasTextLayer, node: Konva.Node) {
+    const { height } = textMetrics(layer);
+    const w = ((layer.wPct ?? 70) / 100) * STAGE_WIDTH;
+    return {
+      xPct: clampPct(((node.x() + w / 2) / STAGE_WIDTH) * 100),
+      yPct: clampPct(((node.y() + height / 2) / stageHeight) * 100),
     };
   }
 
@@ -348,26 +374,38 @@ export function KonvaImageLayerCanvas({
       layer?.kind === "shape" &&
       (layer.shape === "circle" || layer.shape === "check-badge")
     ) {
-      updateLayer(id, {
-        xPct: Math.min(98, Math.max(2, (node.x() / STAGE_WIDTH) * 100)),
-        yPct: Math.min(98, Math.max(2, (node.y() / stageHeight) * 100)),
-      }, true);
+      updateLayer(
+        id,
+        {
+          xPct: clampPct((node.x() / STAGE_WIDTH) * 100),
+          yPct: clampPct((node.y() / stageHeight) * 100),
+        },
+        true,
+      );
       return;
     }
-    if (layer?.kind === "text" || layer?.kind === "logo") {
-      const w = node.width() * node.scaleX();
-      const h = node.height() * node.scaleY();
-      updateLayer(id, {
-        xPct: Math.min(98, Math.max(2, ((node.x() + w / 2) / STAGE_WIDTH) * 100)),
-        yPct: Math.min(98, Math.max(2, ((node.y() + h / 2) / stageHeight) * 100)),
-        ...(layer.kind === "logo" ? { wPct: Math.min(90, Math.max(4, (w / STAGE_WIDTH) * 100)), hPct: Math.min(90, Math.max(4, (h / stageHeight) * 100)) } : {}),
-      }, true);
+    if (layer?.kind === "text") {
+      updateLayer(id, textDragCenterPct(layer, node), true);
       return;
     }
-    const w = node.width() * node.scaleX();
-    const h = node.height() * node.scaleY();
-    const patch = pctFromNode(node.x(), node.y(), w, h);
-    updateLayer(id, patch, true);
+    if (layer?.kind === "logo") {
+      const w = Math.max(8, node.width() * node.scaleX());
+      const h = Math.max(8, node.height() * node.scaleY());
+      updateLayer(
+        id,
+        {
+          xPct: clampPct(((node.x() + w / 2) / STAGE_WIDTH) * 100),
+          yPct: clampPct(((node.y() + h / 2) / stageHeight) * 100),
+          wPct: Math.min(95, Math.max(4, (w / STAGE_WIDTH) * 100)),
+          hPct: Math.min(95, Math.max(4, (h / stageHeight) * 100)),
+        },
+        true,
+      );
+      return;
+    }
+    const w = Math.max(8, node.width() * node.scaleX());
+    const h = Math.max(8, node.height() * node.scaleY());
+    updateLayer(id, pctFromNode(node.x(), node.y(), w, h), true);
   }
 
   function onTransformEnd(id: string, e: Konva.KonvaEventObject<Event>) {
@@ -387,22 +425,34 @@ export function KonvaImageLayerCanvas({
       node.width(w);
       node.height(h);
     }
-    if (layer?.kind === "text" || layer?.kind === "logo") {
-      updateLayer(id, {
-        xPct: Math.min(98, Math.max(2, ((node.x() + w / 2) / STAGE_WIDTH) * 100)),
-        yPct: Math.min(98, Math.max(2, ((node.y() + h / 2) / stageHeight) * 100)),
-        ...(layer.kind === "logo"
-          ? { wPct: Math.min(90, Math.max(4, (w / STAGE_WIDTH) * 100)), hPct: Math.min(90, Math.max(4, (h / stageHeight) * 100)) }
-          : layer.kind === "text"
-            ? { wPct: Math.min(90, Math.max(8, (w / STAGE_WIDTH) * 100)) }
-            : {}),
-      }, true);
+    if (layer?.kind === "text") {
+      updateLayer(
+        id,
+        {
+          xPct: clampPct(((node.x() + w / 2) / STAGE_WIDTH) * 100),
+          yPct: clampPct(((node.y() + h / 2) / stageHeight) * 100),
+          wPct: Math.min(95, Math.max(8, (w / STAGE_WIDTH) * 100)),
+        },
+        true,
+      );
+      return;
+    }
+    if (layer?.kind === "logo") {
+      updateLayer(
+        id,
+        {
+          xPct: clampPct(((node.x() + w / 2) / STAGE_WIDTH) * 100),
+          yPct: clampPct(((node.y() + h / 2) / stageHeight) * 100),
+          wPct: Math.min(95, Math.max(4, (w / STAGE_WIDTH) * 100)),
+          hPct: Math.min(95, Math.max(4, (h / stageHeight) * 100)),
+        },
+        true,
+      );
       return;
     }
     w = node.width();
     h = node.height();
-    const patch = pctFromNode(node.x(), node.y(), w, h);
-    updateLayer(id, patch, true);
+    updateLayer(id, pctFromNode(node.x(), node.y(), w, h), true);
   }
 
   function addShape(shape: ImageShapeKind) {
@@ -507,9 +557,21 @@ export function KonvaImageLayerCanvas({
         y={y}
         width={w}
         height={height}
+        dragBoundFunc={(pos) => ({
+          x: Math.min(STAGE_WIDTH - 8, Math.max(8 - w, pos.x)),
+          y: Math.min(stageHeight - 8, Math.max(8 - height, pos.y)),
+        })}
         onDragEnd={onDragEnd}
         onTransformEnd={onTransformEnd}
       >
+        {/* Full box hit target — Text glyphs alone are hard to grab. */}
+        <Rect
+          x={0}
+          y={0}
+          width={w}
+          height={Math.max(height, fontSize * 1.2)}
+          fill="rgba(0,0,0,0.001)"
+        />
         <Text
           x={0}
           y={0}
@@ -526,6 +588,7 @@ export function KonvaImageLayerCanvas({
           verticalAlign="middle"
           wrap="word"
           lineHeight={1.35}
+          listening={false}
         />
       </Group>
     );

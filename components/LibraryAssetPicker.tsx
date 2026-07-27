@@ -11,6 +11,12 @@ export type LibraryPickerAsset = {
   createdAt: string;
 };
 
+/** Ensure inline streaming once — previewUrl already includes ?inline=1 from the assets API. */
+function mediaPreviewSrc(url: string): string {
+  if (url.includes("inline=1")) return url;
+  return `${url}${url.includes("?") ? "&" : "?"}inline=1`;
+}
+
 type LibraryAssetPickerProps = {
   open: boolean;
   kinds: Array<"image" | "video" | "audio" | "voiceover">;
@@ -119,7 +125,7 @@ export function LibraryAssetPicker({
                     <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-slate-800">
                       {isVideo ? (
                         <video
-                          src={`${asset.previewUrl}${asset.previewUrl.includes("?") ? "&" : "?"}inline=1`}
+                          src={mediaPreviewSrc(asset.previewUrl)}
                           muted
                           playsInline
                           preload="metadata"
@@ -128,7 +134,7 @@ export function LibraryAssetPicker({
                       ) : (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
-                          src={`${asset.previewUrl}${asset.previewUrl.includes("?") ? "&" : "?"}inline=1`}
+                          src={mediaPreviewSrc(asset.previewUrl)}
                           alt=""
                           className="h-full w-full object-cover"
                         />
