@@ -89,7 +89,7 @@ async function readApiJson(res: Response): Promise<Record<string, unknown>> {
   }
 }
 
-/** Upload a local File straight to R2 (presigned PUT) — avoids Vercel 413. */
+/** Upload a local File — prefer direct R2 PUT; fall back to same-origin server upload when CORS blocks. */
 async function uploadVideoFileToLibrary(file: File): Promise<string> {
   const presignRes = await fetch("/api/library/presign-upload", {
     method: "POST",
@@ -108,17 +108,41 @@ async function uploadVideoFileToLibrary(file: File): Promise<string> {
       typeof presign.error === "string" ? presign.error : "Upload prep failed.",
     );
   }
-  const putRes = await fetch(presign.uploadUrl, {
-    method: "PUT",
-    headers: { "Content-Type": file.type || "video/mp4" },
-    body: file,
-  });
-  if (!putRes.ok) {
-    throw new Error(
-      `Direct upload failed (${putRes.status}). If this persists, allow PUT CORS on the R2 bucket for this site.`,
+
+  try {
+    const putRes = await fetch(presign.uploadUrl, {
+      method: "PUT",
+      headers: { "Content-Type": file.type || "video/mp4" },
+      body: file,
+    });
+    if (putRes.ok) return presign.downloadUrl as string;
+    // Non-OK response (not CORS) — try server fallback below.
+    console.warn("[captions] R2 PUT status", putRes.status);
+  } catch (e: unknown) {
+    // Browser CORS / network → TypeError: Failed to fetch
+    console.warn(
+      "[captions] R2 PUT failed, falling back to server upload:",
+      e instanceof Error ? e.message : e,
     );
   }
-  return presign.downloadUrl;
+
+  const fd = new FormData();
+  fd.set("file", file);
+  fd.set("kind", "video");
+  const proxyRes = await fetch("/api/library/upload", {
+    method: "POST",
+    credentials: "include",
+    body: fd,
+  });
+  const proxy = await readApiJson(proxyRes);
+  if (!proxyRes.ok || typeof proxy.downloadUrl !== "string") {
+    const hint =
+      typeof proxy.error === "string"
+        ? proxy.error
+        : "Video upload failed. If you see Failed to fetch, add PUT CORS on the R2 bucket for this site (localhost + alchemyailab.com).";
+    throw new Error(hint);
+  }
+  return proxy.downloadUrl;
 }
 
 export function CaptionStudioClient() {
@@ -548,8 +572,8 @@ export function CaptionStudioClient() {
     setError(null);
     setAudioNote(
       t.syncCaptionsFromVoiceDone
-        .replace("{n}", String(lines.length))
-        .replace("{sec}", videoDuration.toFixed(1)),
+        .replaceAll("{n}", String(lines.length))
+        .replaceAll("{sec}", videoDuration.toFixed(1)),
     );
   }
 
@@ -728,8 +752,8 @@ export function CaptionStudioClient() {
       const n = Number(data.lineCount) || next.length;
       setAudioNote(
         t.expandCaptionVoiceDone
-          .replace("{n}", String(n))
-          .replace("{sec}", videoDuration.toFixed(1)),
+          .replaceAll("{n}", String(n))
+          .replaceAll("{sec}", videoDuration.toFixed(1)),
       );
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : t.expandCaptionVoiceFailed);
@@ -802,8 +826,8 @@ export function CaptionStudioClient() {
       const n = Number(data.lineCount) || lines.length;
       setAudioNote(
         t.planCaptionVoiceDone
-          .replace("{n}", String(n))
-          .replace("{sec}", videoDuration.toFixed(1)),
+          .replaceAll("{n}", String(n))
+          .replaceAll("{sec}", videoDuration.toFixed(1)),
       );
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : t.planCaptionVoiceFailed);
