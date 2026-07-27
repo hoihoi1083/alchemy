@@ -84,7 +84,6 @@ const nextConfig: NextConfig = {
     },
     // Caption studio can upload large MP4s via /api/library/upload when R2 CORS fails.
     middlewareClientMaxBodySize: "100mb",
-    proxyClientMaxBodySize: "100mb",
   },
   async headers() {
     return [
