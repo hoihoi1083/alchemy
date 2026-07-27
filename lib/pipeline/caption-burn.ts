@@ -1,8 +1,25 @@
 import { spawn } from "child_process";
-import { compositorFontPath, ensureCompositorFonts } from "@/lib/compositor/fonts";
+import {
+  compositorFontPath,
+  ensureCompositorFonts,
+  textNeedsCjkFonts,
+} from "@/lib/compositor/fonts";
 import type { CaptionLine } from "@/lib/ad-pack-types";
 import { planCaptionBurnText } from "@/lib/image-canvas-text-layout";
-import { getFfmpegPath, getMediaDurationSeconds, getVideoDimensions } from "@/lib/pipeline/ffmpeg";
+import {
+  getFfmpegPath,
+  getMediaDurationSeconds,
+  getVideoDimensions,
+  videoHasAudioStream,
+} from "@/lib/pipeline/ffmpeg";
+
+/** Sharp SVG @font-face works on macOS but often paints Latin tofu on Linux (Vercel). */
+export function preferDrawtextCaptionBurn(): boolean {
+  const forced = process.env.CAPTION_BURN_DRAWTEXT?.trim();
+  if (forced === "1") return true;
+  if (forced === "0") return false;
+  return process.platform === "linux";
+}
 
 function run(cmd: string, args: string[]): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -44,6 +61,11 @@ function positionX(position: CaptionLine["position"]): string {
   }
 }
 
+function drawtextFontForText(text: string): string {
+  const role = textNeedsCjkFonts(text) ? "body" : "latinBold";
+  return escapeDrawtextFontPath(compositorFontPath(role));
+}
+
 function drawtextFilter(
   fontfile: string,
   text: string,
@@ -76,14 +98,8 @@ export async function burnCaptionsDrawtext(
   outputVideo: string,
 ): Promise<void> {
   ensureCompositorFonts();
-  // Prefer static Latin for drawtext fallback — more reliable English on Linux than variable CJK.
-  let fontfile: string;
-  try {
-    fontfile = escapeDrawtextFontPath(compositorFontPath("latinBold"));
-  } catch {
-    fontfile = escapeDrawtextFontPath(compositorFontPath("body"));
-  }
   const duration = await getMediaDurationSeconds(inputVideo);
+  const hasAudio = await videoHasAudioStream(inputVideo);
   const { width, height } = await getVideoDimensions(inputVideo);
 
   const filters: string[] = [];
@@ -96,7 +112,7 @@ export async function burnCaptionsDrawtext(
     plan.lines.forEach((chunk, lineIndex) => {
       filters.push(
         drawtextFilter(
-          fontfile,
+          drawtextFontForText(chunk),
           chunk,
           cap.position,
           startSec,
@@ -112,20 +128,25 @@ export async function burnCaptionsDrawtext(
     throw new Error("No caption lines to burn.");
   }
 
-  await run(getFfmpegPath(), [
+  const args = [
     "-y",
     "-i",
     inputVideo,
     "-vf",
     filters.join(","),
+    "-map",
+    "0:v:0",
     "-c:v",
     "libx264",
     "-pix_fmt",
     "yuv420p",
     "-movflags",
     "+faststart",
-    "-c:a",
-    "copy",
-    outputVideo,
-  ]);
+  ];
+  if (hasAudio) {
+    args.push("-map", "0:a:0", "-c:a", "copy");
+  }
+  args.push(outputVideo);
+
+  await run(getFfmpegPath(), args);
 }

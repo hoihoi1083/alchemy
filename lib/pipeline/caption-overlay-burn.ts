@@ -98,6 +98,36 @@ async function renderCaptionOverlayPng(
   return sharp(Buffer.from(svg)).png().toBuffer();
 }
 
+/**
+ * Reject overlay PNGs that painted .notdef tofu / empty glyphs.
+ * Sharp+SVG can "succeed" on Linux while Latin still renders as blank boxes.
+ */
+async function assertOverlayHasInk(png: Buffer, text: string): Promise<void> {
+  const sample = text.replace(/\s+/g, "");
+  if (sample.length < 2) return;
+  const { data, info } = await sharp(png)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  let ink = 0;
+  for (let i = 0; i < data.length; i += 4) {
+    const a = data[i + 3] ?? 0;
+    if (a < 40) continue;
+    const r = data[i] ?? 0;
+    const g = data[i + 1] ?? 0;
+    const b = data[i + 2] ?? 0;
+    // Readable caption ink (white/yellow fill or dark stroke).
+    if (r + g + b > 520 || (r < 40 && g < 40 && b < 40)) ink += 1;
+  }
+  // ~8 opaque pixels per glyph is a floor; tofu boxes are often near-empty.
+  const minInk = Math.max(80, sample.length * 8);
+  if (ink < minInk) {
+    throw new Error(
+      `Caption overlay looks empty/tofu for "${sample.slice(0, 40)}" (inkPixels=${ink}, need≥${minInk}). Prefer drawtext.`,
+    );
+  }
+}
+
 /** Burn captions via transparent PNG overlays — works without ffmpeg drawtext/libass. */
 export async function burnCaptionsOverlay(
   inputVideo: string,
@@ -120,6 +150,8 @@ export async function burnCaptionsOverlay(
     const lineStyle = resolveLineCaptionStyle(cap.stylePreset, style);
     const pngPath = path.join(workDir, `caption_overlay_${i}.png`);
     const png = await renderCaptionOverlayPng(width, height, cap, lineStyle);
+    // Always validate Latin; CJK tofu is rarer but cheap to catch too.
+    await assertOverlayHasInk(png, sanitizeCompositorText(cap.text));
     await fs.writeFile(pngPath, png);
     overlayPaths.push(pngPath);
 

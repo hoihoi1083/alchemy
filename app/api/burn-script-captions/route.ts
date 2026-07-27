@@ -9,7 +9,10 @@ import {
   getMediaDurationSeconds,
 } from "@/lib/pipeline/ffmpeg";
 import { burnCaptionsOverlay } from "@/lib/pipeline/caption-overlay-burn";
-import { burnCaptionsDrawtext } from "@/lib/pipeline/caption-burn";
+import {
+  burnCaptionsDrawtext,
+  preferDrawtextCaptionBurn,
+} from "@/lib/pipeline/caption-burn";
 import { parseCaptionLinesInput } from "@/lib/pipeline/caption-lines";
 import { parseCaptionBurnStyleJson } from "@/lib/caption-burn-styles";
 import { jobDir } from "@/lib/pipeline/paths";
@@ -70,30 +73,64 @@ async function burnCaptionsJob(
 
   const captionStyle = parseCaptionBurnStyleJson(input.captionStyle);
 
-  let burnMethod: "overlay" | "drawtext" | "subtitles" | "soft" = "overlay";
+  let burnMethod: "overlay" | "drawtext" | "subtitles" | "soft" = preferDrawtextCaptionBurn()
+    ? "drawtext"
+    : "overlay";
   let softSubtitles = false;
 
-  try {
+  const tryOverlay = async () => {
     await burnCaptionsOverlay(inputPath, captionLines, outputPath, dir, captionStyle);
-  } catch (overlayError) {
+    burnMethod = "overlay";
+  };
+  const tryDrawtext = async () => {
+    await burnCaptionsDrawtext(inputPath, captionLines, outputPath);
+    burnMethod = "drawtext";
+  };
+  const trySubtitles = async () => {
+    await burnSubtitles(inputPath, srtPath, outputPath);
+    burnMethod = "subtitles";
+  };
+  const trySoft = async () => {
+    await attachSoftSubtitleTrack(inputPath, srtPath, outputPath);
+    burnMethod = "soft";
+    softSubtitles = true;
+  };
+
+  // Vercel/Linux: drawtext first (bundled TTF). Overlay often "succeeds" with Latin tofu.
+  // macOS: overlay first (styles), then drawtext. Soft CC is last resort only.
+  const primary = preferDrawtextCaptionBurn()
+    ? [tryDrawtext, tryOverlay]
+    : [tryOverlay, tryDrawtext];
+  const errors: string[] = [];
+
+  let burned = false;
+  for (const attempt of primary) {
     try {
-      await burnCaptionsDrawtext(inputPath, captionLines, outputPath);
-      burnMethod = "drawtext";
-    } catch (drawtextError) {
-      try {
-        await burnSubtitles(inputPath, srtPath, outputPath);
-        burnMethod = "subtitles";
-      } catch {
-        await attachSoftSubtitleTrack(inputPath, srtPath, outputPath);
-        burnMethod = "soft";
-        softSubtitles = true;
-        const overlayMsg =
-          overlayError instanceof Error ? overlayError.message : "overlay failed";
-        const drawtextMsg =
-          drawtextError instanceof Error ? drawtextError.message : "drawtext failed";
-        console.warn("[burn-script-captions] overlay fallback:", overlayMsg, drawtextMsg);
-      }
+      await attempt();
+      burned = true;
+      break;
+    } catch (error) {
+      errors.push(error instanceof Error ? error.message : String(error));
     }
+  }
+  if (!burned) {
+    try {
+      await trySubtitles();
+      burned = true;
+    } catch (subtitleError) {
+      errors.push(
+        subtitleError instanceof Error ? subtitleError.message : String(subtitleError),
+      );
+      await trySoft();
+      console.warn("[burn-script-captions] burn fallback:", errors.join(" | "));
+    }
+  }
+
+  if (burnMethod === "soft") {
+    console.warn(
+      "[burn-script-captions] soft subtitles only — HTML5 player will not show captions",
+      errors,
+    );
   }
 
   const pipelineUrl = pipelineFileUrl(request, jobId, "subtitled.mp4");
