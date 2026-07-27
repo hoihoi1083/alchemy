@@ -1,36 +1,24 @@
 import { ApiError, fal } from "@fal-ai/client";
 import { promises as fs } from "fs";
 import path from "path";
-import {
-  estimateKlingStoryboardTokens,
-  KLING_TURBO_PRO,
-  type KlingClipDuration,
-} from "@/lib/billing/token-costs";
+import { KLING_TURBO_PRO, type KlingClipDuration } from "@/lib/billing/token-costs";
 import { mirrorImageUrlToFalStorage } from "@/lib/fal-mirror-media";
 import {
-  klingClipDurationForScene,
-  klingClipDurationForStoryboard,
   klingSceneMotionPrompt,
+  klingStoryboardTokenCost,
+  resolveKlingClipDurations,
   KLING_TEXTLESS_NEGATIVE,
+  type KlingSceneMeta,
 } from "@/lib/kling-storyboard-fallback";
 import { concatVideos, ensureFfmpeg } from "@/lib/pipeline/ffmpeg";
 import { materializeMediaInput, pipelineFileUrl } from "@/lib/pipeline/local-input";
 import { jobDir } from "@/lib/pipeline/paths";
 import { persistAndDurablize } from "@/lib/storage/durable-media";
 
-const KLING_ENDPOINT = KLING_TURBO_PRO.endpoint;
+export type { KlingSceneMeta };
+export { klingStoryboardTokenCost, resolveKlingClipDurations };
 
-export type KlingSceneMeta = {
-  startSec?: number;
-  endSec?: number;
-  sceneDescriptionZh?: string;
-  imagePrompt?: string;
-  role?: string;
-  /** User opted into Brand kit logo on storyboard stills. */
-  useBrandLogo?: boolean;
-  /** @deprecated alias of useBrandLogo */
-  endWithBrandLogo?: boolean;
-};
+const KLING_ENDPOINT = KLING_TURBO_PRO.endpoint;
 
 export function formatKlingFalError(e: unknown): string {
   if (e instanceof ApiError) {
@@ -47,32 +35,6 @@ function extractVideoUrl(data: unknown): string | null {
   const video = (data as { video?: { url?: unknown } }).video;
   if (video && typeof video.url === "string" && video.url) return video.url;
   return null;
-}
-
-export function resolveKlingClipDurations(
-  sceneCount: number,
-  totalDurationSec: number,
-  scenesMeta: KlingSceneMeta[],
-): KlingClipDuration[] {
-  const defaultClip = klingClipDurationForStoryboard(sceneCount, totalDurationSec);
-  return Array.from({ length: sceneCount }, (_, i) => {
-    const meta = scenesMeta[i];
-    if (
-      meta &&
-      typeof meta.startSec === "number" &&
-      typeof meta.endSec === "number"
-    ) {
-      return klingClipDurationForScene(meta.startSec, meta.endSec);
-    }
-    return defaultClip;
-  });
-}
-
-export function klingStoryboardTokenCost(clipDurations: KlingClipDuration[]): number {
-  return clipDurations.reduce(
-    (sum, d) => sum + estimateKlingStoryboardTokens(1, d),
-    0,
-  );
 }
 
 /**

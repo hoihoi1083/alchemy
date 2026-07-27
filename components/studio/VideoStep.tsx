@@ -18,8 +18,11 @@ import {
   waitAspectFromString,
 } from "@/components/studio/GenerationWaitPlaceholder";
 import { estimateKlingStoryboardTokens, estimateVideoTokens } from "@/lib/billing/token-costs";
-import { klingClipDurationForStoryboard } from "@/lib/kling-storyboard-fallback";
-import { klingStoryboardTokenCost, resolveKlingClipDurations } from "@/lib/kling-storyboard-run";
+import {
+  klingClipDurationForStoryboard,
+  klingStoryboardTokenCost,
+  resolveKlingClipDurations,
+} from "@/lib/kling-storyboard-fallback";
 import { isBrandVideoStyle, isCreativeVideoStyle, isStoryboardVideoStyle } from "@/lib/visual-styles";
 import { isVideoOutputPathLocked, resolveVideoOutputPresentation } from "@/lib/video-output-presentation";
 import { analyzeProductImageFile } from "@/lib/image-upload-quality";

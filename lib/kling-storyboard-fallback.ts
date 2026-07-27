@@ -23,6 +23,45 @@ export function klingClipDurationForStoryboard(
   return per > 5.5 ? 10 : 5;
 }
 
+/** Lightweight scene timing meta for client + server token estimates (no Node deps). */
+export type KlingSceneMeta = {
+  startSec?: number;
+  endSec?: number;
+  sceneDescriptionZh?: string;
+  imagePrompt?: string;
+  role?: string;
+  /** User opted into Brand kit logo on storyboard stills. */
+  useBrandLogo?: boolean;
+  /** @deprecated alias of useBrandLogo */
+  endWithBrandLogo?: boolean;
+};
+
+export function resolveKlingClipDurations(
+  sceneCount: number,
+  totalDurationSec: number,
+  scenesMeta: KlingSceneMeta[],
+): KlingClipDuration[] {
+  const defaultClip = klingClipDurationForStoryboard(sceneCount, totalDurationSec);
+  return Array.from({ length: sceneCount }, (_, i) => {
+    const meta = scenesMeta[i];
+    if (
+      meta &&
+      typeof meta.startSec === "number" &&
+      typeof meta.endSec === "number"
+    ) {
+      return klingClipDurationForScene(meta.startSec, meta.endSec);
+    }
+    return defaultClip;
+  });
+}
+
+export function klingStoryboardTokenCost(clipDurations: KlingClipDuration[]): number {
+  return clipDurations.reduce(
+    (sum, d) => sum + estimateKlingStoryboardTokens(1, d),
+    0,
+  );
+}
+
 /** English-only camera language for I2V — never pass Chinese captions (Kling invents glyphs). */
 const KLING_MOTION_BY_ROLE: Array<{ re: RegExp; motion: string }> = [
   {

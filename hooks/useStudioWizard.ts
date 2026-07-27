@@ -5459,7 +5459,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
             ? m.wizard.videoPreflightSingleCall
             : m.wizard.videoPreflightSingleCall,
         isStoryboardOutput || isAiPlannedVideoStyle(visualStyleId)
-          ? m.wizard.videoPreflightDeepSeek
+          ? m.wizard.videoPreflightAI
           : "",
       ].filter(Boolean),
       costLine: autoSecondFrame
@@ -5469,7 +5469,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
           : isCinematicStitchOutput
             ? formatCinematicCopy(m.wizard.cinematicStitchVideoCost)
             : isAiPlannedVideoStyle(visualStyleId)
-              ? `${m.wizard.videoPreflightSingleCall} ${m.wizard.videoPreflightDeepSeek}`
+              ? `${m.wizard.videoPreflightSingleCall} ${m.wizard.videoPreflightAI}`
               : m.wizard.videoPreflightSingleCall,
     };
   })();

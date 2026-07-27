@@ -1,0 +1,7 @@
+tmp
+.git
+.pipeline-jobs
+playwright-report
+test-results
+*.pem
+.env*.local
