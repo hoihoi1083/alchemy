@@ -13,10 +13,10 @@ describe("caption burn method preference", () => {
     else process.env.CAPTION_BURN_DRAWTEXT = prev;
   });
 
-  it("defaults to drawtext only on linux", () => {
+  it("defaults to overlay (path-based Latin) unless forced", () => {
     const prev = process.env.CAPTION_BURN_DRAWTEXT;
     delete process.env.CAPTION_BURN_DRAWTEXT;
-    assert.equal(preferDrawtextCaptionBurn(), process.platform === "linux");
+    assert.equal(preferDrawtextCaptionBurn(), false);
     if (prev !== undefined) process.env.CAPTION_BURN_DRAWTEXT = prev;
   });
 });

@@ -8,7 +8,9 @@ import {
   compositorFontFaceCss,
   ensureCompositorFonts,
   sanitizeCompositorText,
+  textNeedsCjkFonts,
 } from "@/lib/compositor/fonts";
+import { latinCaptionSvgPaths } from "@/lib/compositor/latin-text-paths";
 import { escapeXml } from "@/lib/compositor/paper-sticker/svg";
 import type { CaptionLine } from "@/lib/ad-pack-types";
 import {
@@ -77,22 +79,43 @@ async function renderCaptionOverlayPng(
   const fontWeight = preset.fontWeight ?? 700;
   const bold = fontWeight >= 600;
   const rawText = chunks.join("\n");
-  // Latin-first stack; English-only burns embed only static Noto Sans (not 12MB CJK).
-  const fontFamily = captionBurnFontFamily(preset.fontFamily ?? "NotoBody", bold, {
-    text: rawText,
-  });
   const { x, anchor } = layoutX(caption.position, width);
 
-  const textNodes = chunks
-    .map((chunk, lineIndex) => {
-      const y = plan.lineYs[lineIndex] ?? plan.lineYs[plan.lineYs.length - 1] ?? Math.round(height * 0.9);
-      return `<text x="${x}" y="${y}" text-anchor="${anchor}" dominant-baseline="middle" font-family="${fontFamily}" font-size="${fontSize}" font-weight="${fontWeight}" fill="${fill}" stroke="${strokeColor}" stroke-width="${stroke}" paint-order="stroke">${escapeXml(chunk)}</text>`;
-    })
-    .join("");
+  // English/Latin: outline glyphs via opentype — no Linux @font-face tofu.
+  // CJK: keep embedded font-face (works on Vercel for Chinese).
+  let body: string;
+  let defs = "";
+  if (!textNeedsCjkFonts(rawText)) {
+    body = latinCaptionSvgPaths({
+      lines: chunks,
+      lineYs: plan.lineYs,
+      x,
+      anchor,
+      fontSize,
+      bold,
+      fill,
+      stroke: strokeColor,
+      strokeWidth: stroke,
+    });
+  } else {
+    const fontFamily = captionBurnFontFamily(preset.fontFamily ?? "NotoBody", bold, {
+      text: rawText,
+    });
+    defs = `<defs>${compositorFontFaceCss(rawText)}</defs>`;
+    body = chunks
+      .map((chunk, lineIndex) => {
+        const y =
+          plan.lineYs[lineIndex] ??
+          plan.lineYs[plan.lineYs.length - 1] ??
+          Math.round(height * 0.9);
+        return `<text x="${x}" y="${y}" text-anchor="${anchor}" dominant-baseline="middle" font-family="${fontFamily}" font-size="${fontSize}" font-weight="${fontWeight}" fill="${fill}" stroke="${strokeColor}" stroke-width="${stroke}" paint-order="stroke">${escapeXml(chunk)}</text>`;
+      })
+      .join("");
+  }
 
   const svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-    <defs>${compositorFontFaceCss(rawText)}</defs>
-    ${textNodes}
+    ${defs}
+    ${body}
   </svg>`;
 
   return sharp(Buffer.from(svg)).png().toBuffer();

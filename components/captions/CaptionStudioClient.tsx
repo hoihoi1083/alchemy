@@ -940,7 +940,7 @@ export function CaptionStudioClient() {
         setNote(t.softTrackNote);
         setError(t.softTrackError);
       } else if (data.burnMethod === "overlay" || data.burnMethod === "drawtext") {
-        setNote(t.appliedNote);
+        setNote(`${t.appliedNote} (${String(data.burnMethod)})`);
       } else {
         setNote(t.appliedLegacyNote);
       }

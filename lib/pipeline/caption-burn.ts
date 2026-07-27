@@ -13,12 +13,14 @@ import {
   videoHasAudioStream,
 } from "@/lib/pipeline/ffmpeg";
 
-/** Sharp SVG @font-face works on macOS but often paints Latin tofu on Linux (Vercel). */
+/** Prefer ffmpeg drawtext when forced; otherwise overlay (Latin uses glyph paths). */
 export function preferDrawtextCaptionBurn(): boolean {
   const forced = process.env.CAPTION_BURN_DRAWTEXT?.trim();
   if (forced === "1") return true;
   if (forced === "0") return false;
-  return process.platform === "linux";
+  // Default: overlay. English is rendered as opentype SVG paths (Linux-safe).
+  // Drawtext remains a fallback if overlay throws.
+  return false;
 }
 
 function run(cmd: string, args: string[]): Promise<void> {
