@@ -1,11 +1,6 @@
 import sharp from "sharp";
-import {
-  captionBurnFontFamily,
-  compositorFontFaceCss,
-  ensureCompositorFonts,
-  sanitizeCompositorText,
-} from "@/lib/compositor/fonts";
-import { escapeXml } from "@/lib/compositor/paper-sticker/svg";
+import { ensureCompositorFonts, sanitizeCompositorText } from "@/lib/compositor/fonts";
+import { burnTextSvgPaths } from "@/lib/compositor/latin-text-paths";
 import {
   resolveCaptionBurnStyle,
   resolveLineCaptionStyle,
@@ -32,17 +27,11 @@ async function renderLayerTextNodes(
     0,
     Math.round(fontSize * 0.12 * (style.strokeWidthScale ?? 1)),
   );
-  const hasStroke = strokeColor && strokeColor !== "transparent" && strokeW > 0;
+  const hasStroke = Boolean(strokeColor && strokeColor !== "transparent" && strokeW > 0);
   const preferred =
     style.fontFamily === "NotoDisplay" || layer.fontFamily === "NotoDisplay"
-      ? "NotoDisplay"
-      : "NotoBody";
-  const fontFamily =
-    layer.fontFamily && layer.fontFamily !== "NotoBody" && layer.fontFamily !== "NotoDisplay"
-      ? layer.fontFamily
-      : captionBurnFontFamily(preferred, (style.fontWeight ?? 700) >= 600, {
-          text: layer.text,
-        });
+      ? ("headline" as const)
+      : ("body" as const);
   const align = layer.align ?? "center";
   const boxW = Math.round(((layer.wPct ?? 70) / 100) * width);
   const anchorX = Math.round((layer.xPct / 100) * width);
@@ -59,16 +48,20 @@ async function renderLayerTextNodes(
 
   const blockHeight = textBoxHeightPx(lines.length, fontSize);
   const startY = anchorY - blockHeight / 2 + lineHeight / 2;
+  const lineYs = lines.map((_, index) => Math.round(startY + index * lineHeight));
 
-  return lines
-    .map((line, index) => {
-      const y = Math.round(startY + index * lineHeight);
-      const strokeAttr = hasStroke
-        ? ` stroke="${strokeColor}" stroke-width="${strokeW}" paint-order="stroke"`
-        : "";
-      return `<text x="${textX}" y="${y}" text-anchor="${textAnchor}" dominant-baseline="middle" font-family="${fontFamily}" font-size="${fontSize}" font-weight="${style.fontWeight ?? 700}" fill="${fill}"${strokeAttr}>${escapeXml(line)}</text>`;
-    })
-    .join("");
+  return burnTextSvgPaths({
+    lines,
+    lineYs,
+    x: textX,
+    anchor: textAnchor,
+    fontSize,
+    bold: (style.fontWeight ?? 700) >= 600,
+    preferred,
+    fill,
+    stroke: hasStroke ? strokeColor : "transparent",
+    strokeWidth: hasStroke ? strokeW : 0,
+  });
 }
 
 function shapeBounds(width: number, height: number, layer: ImageShapeLayer) {
@@ -91,7 +84,10 @@ function renderShapeNodes(width: number, height: number, layer: ImageShapeLayer)
 
   if (layer.shape === "check-badge") {
     const r = Math.max(w, h) / 2;
-    return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" /><text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="middle" font-family="NotoBody" font-size="${Math.round(r * 1.1)}" font-weight="700" fill="${stroke}">✓</text>`;
+    // Vector check — no font dependency (Linux tofu-safe).
+    const s = r * 0.55;
+    const check = `M${cx - s * 0.55} ${cy} L${cx - s * 0.1} ${cy + s * 0.45} L${cx + s * 0.6} ${cy - s * 0.4}`;
+    return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" /><path d="${check}" fill="none" stroke="${stroke}" stroke-width="${Math.max(2, Math.round(r * 0.18))}" stroke-linecap="round" stroke-linejoin="round"/>`;
   }
 
   if (layer.shape === "line" || layer.shape === "arrow") {
@@ -130,10 +126,6 @@ async function renderCanvasOverlayPng(
   layers: ImageCanvasLayer[],
 ): Promise<Buffer> {
   const nodes: string[] = [];
-  const textBlob = layers
-    .filter((l): l is Extract<ImageCanvasLayer, { kind: "text" }> => l.kind === "text")
-    .map((l) => l.text)
-    .join("\n");
   for (const layer of layers) {
     if (layer.kind === "shape") {
       nodes.push(renderShapeNodes(width, height, layer));
@@ -143,11 +135,45 @@ async function renderCanvasOverlayPng(
   }
 
   const svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-    <defs>${compositorFontFaceCss(textBlob)}</defs>
     ${nodes.join("")}
   </svg>`;
 
-  return sharp(Buffer.from(svg)).png().toBuffer();
+  const png = await sharp(Buffer.from(svg)).png().toBuffer();
+  const textLayers = layers.filter(
+    (l): l is Extract<ImageCanvasLayer, { kind: "text" }> => l.kind === "text",
+  );
+  if (textLayers.length > 0) {
+    await assertOverlayHasInk(
+      png,
+      textLayers.map((l) => l.text).join(""),
+    );
+  }
+  return png;
+}
+
+/** Reject empty / tofu overlays so image burn never "succeeds" with boxes. */
+async function assertOverlayHasInk(png: Buffer, text: string): Promise<void> {
+  const sample = text.replace(/\s+/g, "");
+  if (sample.length < 1) return;
+  const { data } = await sharp(png)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  let ink = 0;
+  for (let i = 0; i < data.length; i += 4) {
+    const a = data[i + 3] ?? 0;
+    if (a < 40) continue;
+    const r = data[i] ?? 0;
+    const g = data[i + 1] ?? 0;
+    const b = data[i + 2] ?? 0;
+    if (r + g + b > 520 || (r < 40 && g < 40 && b < 40)) ink += 1;
+  }
+  const minInk = Math.max(60, sample.length * 6);
+  if (ink < minInk) {
+    throw new Error(
+      `Image text overlay looks empty/tofu for "${sample.slice(0, 40)}" (inkPixels=${ink}, need≥${minInk}).`,
+    );
+  }
 }
 
 async function loadLogoBuffer(url: string): Promise<Buffer> {
