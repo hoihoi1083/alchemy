@@ -76,8 +76,11 @@ async function renderCaptionOverlayPng(
   const strokeColor = preset.stroke ?? "black";
   const fontWeight = preset.fontWeight ?? 700;
   const bold = fontWeight >= 600;
-  // Stack CJK + static Latin so English never renders as tofu on Linux/Vercel.
-  const fontFamily = captionBurnFontFamily(preset.fontFamily ?? "NotoBody", bold);
+  const rawText = chunks.join("\n");
+  // Latin-first stack; English-only burns embed only static Noto Sans (not 12MB CJK).
+  const fontFamily = captionBurnFontFamily(preset.fontFamily ?? "NotoBody", bold, {
+    text: rawText,
+  });
   const { x, anchor } = layoutX(caption.position, width);
 
   const textNodes = chunks
@@ -88,7 +91,7 @@ async function renderCaptionOverlayPng(
     .join("");
 
   const svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-    <defs>${compositorFontFaceCss()}</defs>
+    <defs>${compositorFontFaceCss(rawText)}</defs>
     ${textNodes}
   </svg>`;
 

@@ -5,7 +5,7 @@ const FONT_DIR = path.join(process.cwd(), "public", "compositor", "fonts");
 
 /**
  * Roles used by compositor + caption burn.
- * - headline / display: brush display face
+ * - headline / display: brush display face (CJK calligraphy)
  * - body: CJK body (TC)
  * - latin / latinBold: static Noto Sans for English (Linux Sharp-safe)
  */
@@ -50,18 +50,43 @@ export function ensureCompositorFonts(): void {
   }
 }
 
-let cachedFontFaceCss: string | null = null;
+/** True when text needs CJK glyphs (not coverable by Noto Sans Latin alone). */
+export function textNeedsCjkFonts(text: string): boolean {
+  return /[\u3000-\u303f\u3040-\u30ff\u3400-\u9fff\uf900-\ufaff]/u.test(text);
+}
 
-/** Embed TTFs/OTFs as data URIs so librsvg/Pango does not depend on system fontconfig. */
-export function compositorFontFaceCss(): string {
-  if (cachedFontFaceCss) return cachedFontFaceCss;
+let cachedAllFontFaceCss: string | null = null;
+let cachedLatinFontFaceCss: string | null = null;
+
+function latinFontFaceCss(): string {
+  if (cachedLatinFontFaceCss) return cachedLatinFontFaceCss;
+  ensureCompositorFonts();
+  const latinUri = fontDataUri(compositorFontPath("latin"));
+  const latinBoldUri = fontDataUri(compositorFontPath("latinBold"));
+  // English-only: embed ONLY static Latin (≈1MB). Do not alias CJK names to
+  // duplicated base64 blobs — captionBurnFontFamily already prefers NotoLatin*.
+  cachedLatinFontFaceCss = `
+      @font-face {
+        font-family: 'NotoLatin';
+        src: url('${latinUri}') format('truetype');
+        font-weight: 400;
+      }
+      @font-face {
+        font-family: 'NotoLatinBold';
+        src: url('${latinBoldUri}') format('truetype');
+        font-weight: 700;
+      }`;
+  return cachedLatinFontFaceCss;
+}
+
+function allFontFaceCss(): string {
+  if (cachedAllFontFaceCss) return cachedAllFontFaceCss;
   ensureCompositorFonts();
   const headlineUri = fontDataUri(compositorFontPath("headline"));
   const bodyUri = fontDataUri(compositorFontPath("body"));
   const latinUri = fontDataUri(compositorFontPath("latin"));
   const latinBoldUri = fontDataUri(compositorFontPath("latinBold"));
-  // NotoDisplay is referenced by caption presets but was never embedded — alias it.
-  cachedFontFaceCss = `
+  cachedAllFontFaceCss = `
       @font-face {
         font-family: 'MaShanHeadline';
         src: url('${headlineUri}') format('truetype');
@@ -84,25 +109,45 @@ export function compositorFontFaceCss(): string {
         src: url('${latinBoldUri}') format('truetype');
         font-weight: 700;
       }`;
-  return cachedFontFaceCss;
+  return cachedAllFontFaceCss;
 }
 
 /**
- * Font stack for burned captions. Always include Latin so English never tofu
- * when CJK body/variable fonts fail on Linux.
+ * Embed TTFs/OTFs as data URIs so librsvg/Pango does not depend on system fontconfig.
+ * Pass caption text when possible — English-only burns skip the ~12MB CJK embed
+ * (which often fails / tofu on Vercel Linux).
+ */
+export function compositorFontFaceCss(textForScriptDetect?: string): string {
+  if (textForScriptDetect != null && !textNeedsCjkFonts(textForScriptDetect)) {
+    return latinFontFaceCss();
+  }
+  return allFontFaceCss();
+}
+
+/**
+ * Font stack for burned captions.
+ * Latin first so English never hits CJK .notdef tofu on Linux when the CJK face
+ * "covers" Latin codepoints but draws empty boxes.
  */
 export function captionBurnFontFamily(
   preferred: "NotoBody" | "NotoDisplay" | undefined,
   bold = false,
+  opts?: { text?: string },
 ): string {
-  if (preferred === "NotoDisplay") {
+  const needsCjk = opts?.text ? textNeedsCjkFonts(opts.text) : true;
+  const latin = bold ? "NotoLatinBold, NotoLatin" : "NotoLatin, NotoLatinBold";
+
+  if (!needsCjk) {
+    // English-only: only NotoLatin* are embedded in CSS.
     return bold
-      ? "NotoDisplay, MaShanHeadline, NotoLatinBold, NotoBody, sans-serif"
-      : "NotoDisplay, MaShanHeadline, NotoLatin, NotoBody, sans-serif";
+      ? "NotoLatinBold, NotoLatin, sans-serif"
+      : "NotoLatin, NotoLatinBold, sans-serif";
   }
-  return bold
-    ? "NotoBody, NotoLatinBold, NotoLatin, sans-serif"
-    : "NotoBody, NotoLatin, sans-serif";
+
+  if (preferred === "NotoDisplay") {
+    return `${latin}, NotoDisplay, MaShanHeadline, NotoBody, sans-serif`;
+  }
+  return `${latin}, NotoBody, sans-serif`;
 }
 
 function fontDataUri(filePath: string): string {

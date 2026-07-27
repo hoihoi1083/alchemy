@@ -40,7 +40,9 @@ async function renderLayerTextNodes(
   const fontFamily =
     layer.fontFamily && layer.fontFamily !== "NotoBody" && layer.fontFamily !== "NotoDisplay"
       ? layer.fontFamily
-      : captionBurnFontFamily(preferred, (style.fontWeight ?? 700) >= 600);
+      : captionBurnFontFamily(preferred, (style.fontWeight ?? 700) >= 600, {
+          text: layer.text,
+        });
   const align = layer.align ?? "center";
   const boxW = Math.round(((layer.wPct ?? 70) / 100) * width);
   const anchorX = Math.round((layer.xPct / 100) * width);
@@ -128,6 +130,10 @@ async function renderCanvasOverlayPng(
   layers: ImageCanvasLayer[],
 ): Promise<Buffer> {
   const nodes: string[] = [];
+  const textBlob = layers
+    .filter((l): l is Extract<ImageCanvasLayer, { kind: "text" }> => l.kind === "text")
+    .map((l) => l.text)
+    .join("\n");
   for (const layer of layers) {
     if (layer.kind === "shape") {
       nodes.push(renderShapeNodes(width, height, layer));
@@ -137,7 +143,7 @@ async function renderCanvasOverlayPng(
   }
 
   const svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-    <defs>${compositorFontFaceCss()}</defs>
+    <defs>${compositorFontFaceCss(textBlob)}</defs>
     ${nodes.join("")}
   </svg>`;
 
