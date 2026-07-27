@@ -4,6 +4,7 @@ import { spawn } from "child_process";
 import sharp from "sharp";
 import { planCaptionBurnText } from "@/lib/image-canvas-text-layout";
 import {
+  captionBurnFontFamily,
   compositorFontFaceCss,
   ensureCompositorFonts,
   sanitizeCompositorText,
@@ -73,8 +74,10 @@ async function renderCaptionOverlayPng(
   );
   const fill = preset.fill ?? "white";
   const strokeColor = preset.stroke ?? "black";
-  const fontFamily = preset.fontFamily ?? "NotoBody";
   const fontWeight = preset.fontWeight ?? 700;
+  const bold = fontWeight >= 600;
+  // Stack CJK + static Latin so English never renders as tofu on Linux/Vercel.
+  const fontFamily = captionBurnFontFamily(preset.fontFamily ?? "NotoBody", bold);
   const { x, anchor } = layoutX(caption.position, width);
 
   const textNodes = chunks

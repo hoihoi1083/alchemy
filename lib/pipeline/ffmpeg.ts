@@ -232,9 +232,9 @@ export async function convertAudioToWav(inputAudio: string, outputWav: string): 
 
 /**
  * Place narration at natural speed: silence before `startOffsetSec`, then speech,
- * then pad/trim to `videoDurationSec`. Never time-stretches (no atempo).
- * If `maxSpeakSec` is set, trim speech so it cannot run past that length (avoids
- * overlapping the next caption clip).
+ * then pad/trim to `videoDurationSec`.
+ * If speech is longer than `maxSpeakSec`, mildly speed up (≤ MAX_NARRATION_ATEMPO)
+ * before hard-trimming — avoids mid-sentence cuts when TTS overshoots the window.
  */
 export async function placeNarrationNaturalSpeed(
   inputAudio: string,
@@ -246,14 +246,40 @@ export async function placeNarrationNaturalSpeed(
   const videoDur = Math.max(0.5, videoDurationSec);
   const delaySec = Math.max(0, Math.min(startOffsetSec, videoDur - 0.05));
   const delayMs = Math.round(delaySec * 1000);
-  const speakCap =
+
+  let speakCap =
     typeof maxSpeakSec === "number" && maxSpeakSec > 0.15
       ? Math.max(0.15, maxSpeakSec)
       : null;
+
+  let atempo: number | null = null;
+  if (speakCap) {
+    try {
+      const speechDur = await getMediaDurationSeconds(inputAudio);
+      if (speechDur > speakCap + 0.08) {
+        // Import lazily-safe constant inline to avoid circular deps in tests.
+        const MAX_ATEMPO = 1.18;
+        const needed = speechDur / speakCap;
+        if (needed <= MAX_ATEMPO) {
+          atempo = Math.min(MAX_ATEMPO, Math.max(1.01, Number(needed.toFixed(3))));
+          // After mild speed-up, keep full (sped) speech without hard cut.
+          speakCap = null;
+        } else {
+          atempo = MAX_ATEMPO;
+          // Still slightly over after max speed-up — trim the remainder.
+          speakCap = Math.max(0.15, speechDur / MAX_ATEMPO);
+        }
+      }
+    } catch {
+      /* probe failed — fall through to trim-only */
+    }
+  }
+
   const fade = speakCap ? Math.min(0.08, speakCap * 0.15) : 0;
   const filters = [
     // Normalize decode quirks from 32 kHz TTS mp3 before delay/pad.
     "aformat=sample_rates=44100:channel_layouts=mono",
+    atempo ? `atempo=${atempo.toFixed(3)}` : null,
     speakCap
       ? `atrim=0:${speakCap.toFixed(3)},asetpts=PTS-STARTPTS,afade=t=out:st=${(speakCap - fade).toFixed(3)}:d=${fade.toFixed(3)}`
       : null,
@@ -283,8 +309,8 @@ export async function placeNarrationNaturalSpeed(
 
 /**
  * Mix several natural-speed clips onto one timeline (each starts at startSec).
- * Clips are trimmed so they do not overlap the next caption start (prevents
- * doubled/garbled voice when TTS is longer than the caption window).
+ * Clips are fitted (mild atempo then trim) so they do not overlap the next caption.
+ * The last clip may run until video end so final words are not clipped early.
  */
 export async function mixTimedNarrationClips(
   clips: { path: string; startSec: number; endSec?: number }[],
@@ -298,14 +324,14 @@ export async function mixTimedNarrationClips(
   if (ordered.length === 1) {
     const maxSpeak =
       typeof ordered[0].endSec === "number"
-        ? Math.max(0.2, ordered[0].endSec - ordered[0].startSec)
-        : undefined;
+        ? Math.max(0.2, Math.min(videoDur, ordered[0].endSec) - ordered[0].startSec)
+        : videoDur - ordered[0].startSec;
     await placeNarrationNaturalSpeed(
       ordered[0].path,
       outputWav,
       videoDur,
       ordered[0].startSec,
-      maxSpeak,
+      Math.max(0.2, maxSpeak),
     );
     return;
   }
@@ -315,16 +341,18 @@ export async function mixTimedNarrationClips(
   const placed: string[] = [];
   for (let i = 0; i < ordered.length; i++) {
     const clip = ordered[i];
+    const isLast = i === ordered.length - 1;
     const nextStart = ordered[i + 1]?.startSec ?? videoDur;
     const windowEnd =
       typeof clip.endSec === "number" && clip.endSec > clip.startSec
         ? clip.endSec
         : nextStart;
-    // Leave a tiny gap before the next line so voices never stack.
-    const maxSpeak = Math.max(
-      0.2,
-      Math.min(windowEnd, nextStart - 0.05) - clip.startSec,
-    );
+    // Last line: allow speech through video end (minus tiny pad).
+    // Earlier lines: leave a tiny gap before the next line so voices never stack.
+    const hardEnd = isLast
+      ? videoDur - 0.02
+      : Math.min(windowEnd, nextStart - 0.05);
+    const maxSpeak = Math.max(0.2, hardEnd - clip.startSec);
     const partPath = path.join(dir, `${base}-part${i}.wav`);
     await placeNarrationNaturalSpeed(
       clip.path,

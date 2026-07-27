@@ -4790,7 +4790,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         : isCinematicStitchOutput || cinematicScenes.length > 1
           ? cinematicScenes.length * CINEMATIC_CLIP_SEC
           : isStoryboardOutput
-            ? Number(storyboardTrimDuration) || 8
+            ? lastStoryboardVideoDurationSecRef.current ||
+              Number(storyboardTrimDuration) ||
+              8
             : videoSettings.duration === "auto"
               ? 10
               : Number(videoSettings.duration) || 10;

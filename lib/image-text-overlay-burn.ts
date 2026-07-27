@@ -1,5 +1,6 @@
 import sharp from "sharp";
 import {
+  captionBurnFontFamily,
   compositorFontFaceCss,
   ensureCompositorFonts,
   sanitizeCompositorText,
@@ -32,7 +33,14 @@ async function renderLayerTextNodes(
     Math.round(fontSize * 0.12 * (style.strokeWidthScale ?? 1)),
   );
   const hasStroke = strokeColor && strokeColor !== "transparent" && strokeW > 0;
-  const fontFamily = layer.fontFamily ?? style.fontFamily ?? "NotoBody";
+  const preferred =
+    style.fontFamily === "NotoDisplay" || layer.fontFamily === "NotoDisplay"
+      ? "NotoDisplay"
+      : "NotoBody";
+  const fontFamily =
+    layer.fontFamily && layer.fontFamily !== "NotoBody" && layer.fontFamily !== "NotoDisplay"
+      ? layer.fontFamily
+      : captionBurnFontFamily(preferred, (style.fontWeight ?? 700) >= 600);
   const align = layer.align ?? "center";
   const boxW = Math.round(((layer.wPct ?? 70) / 100) * width);
   const anchorX = Math.round((layer.xPct / 100) * width);

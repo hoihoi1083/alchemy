@@ -3,6 +3,7 @@ import { parseLlmJsonObject } from "@/lib/parse-llm-json";
 import type { CaptionLine } from "@/lib/ad-pack-types";
 import { captionSpeakText } from "@/lib/ad-pack-types";
 import type { VoiceoverLocale } from "@/lib/ad-pack-preferences";
+import { spokenCharBudget } from "@/lib/speech-timing";
 
 function localeHint(locale: VoiceoverLocale): string {
   if (locale === "hk") {
@@ -12,23 +13,6 @@ function localeHint(locale: VoiceoverLocale): string {
     return "Write spokenText in Simplified Chinese (简体中文), natural Mandarin narration.";
   }
   return "Write spokenText in natural English narration.";
-}
-
-function spokenCharBudget(
-  durationSec: number,
-  locale: VoiceoverLocale,
-): { targetChars: number; maxChars: number } {
-  const dur = Math.max(0.8, durationSec);
-  const perSec = locale === "en" ? 13 : 5.6;
-  const targetChars = Math.max(
-    locale === "en" ? 22 : 14,
-    Math.round(dur * perSec * 0.88),
-  );
-  const maxChars = Math.max(
-    targetChars + (locale === "en" ? 10 : 5),
-    Math.round(dur * perSec),
-  );
-  return { targetChars, maxChars };
 }
 
 function clampLineText(text: string, maxChars: number): string {
@@ -80,7 +64,7 @@ export async function expandSpokenForCaptions(
     'Return JSON only: { "lines": [ { "index": 0, "spokenText": "..." }, ... ] }.',
     "Rules:",
     `- Exactly ${windows.length} items, matching each index.`,
-    "- spokenText expands the same idea as text so TTS nearly fills durationSec (about targetChars; never exceed maxChars).",
+    "- spokenText expands the same idea as text (about targetChars; never exceed maxChars). Prefer slightly SHORTER than durationSec so natural TTS fits without cutting words.",
     "- Keep meaning faithful; no new products; no hashtags/emoji.",
     localeHint(input.locale),
   ].join("\n");

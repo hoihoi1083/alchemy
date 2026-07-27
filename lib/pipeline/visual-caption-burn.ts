@@ -3,6 +3,7 @@ import path from "path";
 import { spawn } from "child_process";
 import sharp from "sharp";
 import {
+  captionBurnFontFamily,
   compositorFontFaceCss,
   ensureCompositorFonts,
   sanitizeCompositorText,
@@ -56,7 +57,7 @@ async function renderClipOverlayPng(
   const textNodes = lines
     .map((line, i) => {
       const y = Math.round(firstLineY + i * lineHeight);
-      return `<text x="${cx}" y="${y}" text-anchor="middle" dominant-baseline="middle" font-family="NotoBody" font-size="${fontSize}" font-weight="700" fill="white" stroke="black" stroke-width="${stroke}" paint-order="stroke">${escapeXml(line)}</text>`;
+      return `<text x="${cx}" y="${y}" text-anchor="middle" dominant-baseline="middle" font-family="${captionBurnFontFamily("NotoBody", true)}" font-size="${fontSize}" font-weight="700" fill="white" stroke="black" stroke-width="${stroke}" paint-order="stroke">${escapeXml(line)}</text>`;
     })
     .join("");
 

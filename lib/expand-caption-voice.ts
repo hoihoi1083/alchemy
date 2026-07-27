@@ -3,6 +3,7 @@ import { parseLlmJsonObject } from "@/lib/parse-llm-json";
 import type { CaptionLine } from "@/lib/ad-pack-types";
 import type { VoiceoverLocale } from "@/lib/ad-pack-preferences";
 import { defaultCaptionLineCount } from "@/lib/plan-caption-voice";
+import { spokenCharBudget } from "@/lib/speech-timing";
 
 function localeHint(locale: VoiceoverLocale): string {
   if (locale === "hk") {
@@ -14,25 +15,8 @@ function localeHint(locale: VoiceoverLocale): string {
   return "Write spoken lines in natural English ad narration.";
 }
 
-function charsPerSec(locale: VoiceoverLocale): number {
-  return locale === "en" ? 13 : 5.6;
-}
-
-function windowCharBudget(
-  durationSec: number,
-  locale: VoiceoverLocale,
-): { targetChars: number; maxChars: number } {
-  const dur = Math.max(0.8, durationSec);
-  const perSec = charsPerSec(locale);
-  const targetChars = Math.max(
-    locale === "en" ? 18 : 11,
-    Math.round(dur * perSec * 0.82),
-  );
-  const maxChars = Math.max(
-    targetChars + (locale === "en" ? 8 : 4),
-    Math.round(dur * perSec * 0.95),
-  );
-  return { targetChars, maxChars };
+function windowCharBudget(durationSec: number, locale: VoiceoverLocale) {
+  return spokenCharBudget(durationSec, locale);
 }
 
 function buildEvenWindows(

@@ -76,7 +76,13 @@ export async function burnCaptionsDrawtext(
   outputVideo: string,
 ): Promise<void> {
   ensureCompositorFonts();
-  const fontfile = escapeDrawtextFontPath(compositorFontPath("body"));
+  // Prefer static Latin for drawtext fallback — more reliable English on Linux than variable CJK.
+  let fontfile: string;
+  try {
+    fontfile = escapeDrawtextFontPath(compositorFontPath("latinBold"));
+  } catch {
+    fontfile = escapeDrawtextFontPath(compositorFontPath("body"));
+  }
   const duration = await getMediaDurationSeconds(inputVideo);
   const { width, height } = await getVideoDimensions(inputVideo);
 

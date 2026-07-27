@@ -3,6 +3,7 @@ import { parseLlmJsonObject } from "@/lib/parse-llm-json";
 import type { CaptionLine } from "@/lib/ad-pack-types";
 import { captionSpeakText } from "@/lib/ad-pack-types";
 import type { VoiceoverLocale } from "@/lib/ad-pack-preferences";
+import { spokenCharBudget } from "@/lib/speech-timing";
 
 function localeHint(locale: VoiceoverLocale): string {
   if (locale === "hk") {
@@ -28,24 +29,6 @@ export function defaultCaptionLineCount(videoDurationSec: number): number {
 function screenCharBudget(locale: VoiceoverLocale): { targetChars: number; maxChars: number } {
   if (locale === "en") return { targetChars: 28, maxChars: 40 };
   return { targetChars: 8, maxChars: 12 };
-}
-
-/** Spoken TTS budget — fill most of the caption window. */
-function spokenCharBudget(
-  durationSec: number,
-  locale: VoiceoverLocale,
-): { targetChars: number; maxChars: number } {
-  const dur = Math.max(0.8, durationSec);
-  const perSec = locale === "en" ? 13 : 5.6;
-  const targetChars = Math.max(
-    locale === "en" ? 22 : 14,
-    Math.round(dur * perSec * 0.88),
-  );
-  const maxChars = Math.max(
-    targetChars + (locale === "en" ? 10 : 5),
-    Math.round(dur * perSec),
-  );
-  return { targetChars, maxChars };
 }
 
 function buildEvenWindows(
@@ -118,7 +101,7 @@ export async function planCaptionVoice(
     "Rules:",
     `- Exactly ${windows.length} items in lines, matching each input index.`,
     "- text: short slogan for the screen (about screenTargetChars; never exceed screenMaxChars).",
-    "- spokenText: fuller spoken sentence for the same idea (about spokenTargetChars; never exceed spokenMaxChars) so TTS nearly fills durationSec.",
+    "- spokenText: fuller spoken sentence for the same idea (about spokenTargetChars; never exceed spokenMaxChars). Prefer slightly SHORTER than durationSec so natural TTS fits without cutting words.",
     "- spokenText must expand the same meaning as text — do not change the selling point.",
     "- Cover hook → benefit → ease → CTA across the lines.",
     "- No hashtags, no emoji, no stage directions.",
