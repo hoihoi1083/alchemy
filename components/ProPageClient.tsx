@@ -13,14 +13,14 @@ export function ProPageClient() {
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,#0f172a_0%,#020617_55%,#000_100%)] text-slate-100">
       <div className="mx-auto max-w-7xl px-4 py-6">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-3 hover:opacity-90">
             <img src={PRODUCT_LOGO_SRC} alt={PRODUCT_LOGO_ALT} className="h-8 w-8 rounded-lg object-contain" />
             <div>
               <p className="text-xs font-medium text-slate-400">{PRODUCT_NAME}</p>
               <h1 className="text-lg font-semibold">{m.pro.title}</h1>
               <p className="text-xs text-slate-400">{m.pro.subtitle}</p>
             </div>
-          </div>
+          </Link>
           <div className="flex items-center gap-3">
             <LanguageToggle variant="dark" />
             <Link

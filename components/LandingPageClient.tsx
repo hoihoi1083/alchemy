@@ -20,14 +20,14 @@ export function LandingPageClient() {
         <div className="flex flex-1 flex-col">
           <section className="mx-auto w-full max-w-6xl px-6 py-16">
             <div className="mb-10 flex flex-col gap-4 sm:mb-14 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-3">
+              <Link href="/" className="flex items-center gap-3 hover:opacity-90">
                 <img
                   src={PRODUCT_LOGO_SRC}
                   alt={PRODUCT_LOGO_ALT}
                   className="h-10 w-10 rounded-xl object-contain"
                 />
                 <p className="text-lg font-semibold tracking-tight">{PRODUCT_NAME}</p>
-              </div>
+              </Link>
               <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                 <LanguageToggle variant="light" />
                 <Link

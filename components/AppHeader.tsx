@@ -44,12 +44,14 @@ export function AppHeader(props: {
         </Link>
       </div>
       <div className="mb-4 flex items-center justify-center gap-3">
-        <img
-          src={PRODUCT_LOGO_SRC}
-          alt={PRODUCT_LOGO_ALT}
-          className="h-10 w-10 bg-transparent object-contain"
-        />
-        <p className="text-sm font-semibold tracking-wide text-slate-700">{PRODUCT_NAME}</p>
+        <Link href="/" className="flex items-center gap-3 hover:opacity-90">
+          <img
+            src={PRODUCT_LOGO_SRC}
+            alt={PRODUCT_LOGO_ALT}
+            className="h-10 w-10 bg-transparent object-contain"
+          />
+          <p className="text-sm font-semibold tracking-wide text-slate-700">{PRODUCT_NAME}</p>
+        </Link>
       </div>
       <p className="text-sm font-medium tracking-wide text-emerald-600">{m.header.badge}</p>
       <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
