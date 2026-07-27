@@ -114,6 +114,7 @@ import {
 } from "@/lib/template-slots";
 import { getTemplate, type TemplateId } from "@/lib/templates";
 import { BANANA2_EDIT_ENDPOINT, BANANA2_TEXT_ENDPOINT } from "@/lib/image-endpoints";
+import { loadBrandKitFromStorage } from "@/lib/brand-kit";
 import { buildImageRefinePrompt, normalizeImageSourceUrl, type LogoPlacement } from "@/lib/image-refine-prompt";
 import { isLibraryAssetUrl } from "@/lib/storage/library-asset-url";
 import type { ImageEditRegion } from "@/lib/image-edit-region";
@@ -346,6 +347,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 
   const promotionInitRef = useRef(false);
   const lastStoryboardVideoDurationSecRef = useRef<number | null>(null);
+  /** Mode B: Nano Banana already integrated brand logo into cinematic stills. */
+  const cinematicLogoIntegratedRef = useRef(false);
   const imageUrlRef = useRef<string | null>(imageUrl);
   useEffect(() => {
     imageUrlRef.current = imageUrl;
@@ -935,6 +938,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         fd.set("subject_framing", subjectFraming);
         fd.set("reference_strategy_kind", referenceStrategy.kind);
         fd.set("scene_count", storyboardSceneCount);
+        fd.set("brand_kit", JSON.stringify(brandKit));
         const outDur = resolveWizardOutputDurationSec(videoSettings);
         fd.set("output_duration_sec", String(outDur));
         if (!referenceVideoAnalyzeIncludesStoryboard) {
@@ -1008,6 +1012,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       subjectFraming,
       referenceStrategy.kind,
       storyboardSceneCount,
+      brandKit,
       m.errors.researchReelAnalyzeFailed,
       m.wizard.researchReelAnalyzed,
       m.wizard.referenceVideoAnalyzed,
@@ -1494,6 +1499,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       setCinematicStitchReel(false);
       setCinematicReelPlan(null);
       setCinematicScenes([]);
+      cinematicLogoIntegratedRef.current = false;
     }
     setVideoSettings((prev: VideoSettings) => ({
       ...prev,
@@ -1674,6 +1680,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     setCinematicStitchReel(stitch);
     setCinematicReelPlan(null);
     setCinematicScenes([]);
+    cinematicLogoIntegratedRef.current = false;
     selectVisualStyle("concept-cinematic");
     setVideoSettings((prev: VideoSettings) => ({
       ...videoSettingsForWorkflow("combined", "creative-video"),
@@ -1709,6 +1716,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     setCinematicStitchReel(count > 1);
     setCinematicReelPlan(null);
     setCinematicScenes([]);
+    cinematicLogoIntegratedRef.current = false;
     setAdPackPlan(null);
     setCaptionLines([]);
   }
@@ -2082,6 +2090,58 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     }
   }
 
+  /** One-click: stamp Brand kit logo centered onto a still (no AI redraw). */
+  async function stampStoryboardSceneLogo(sceneIndex: number) {
+    if (sceneIndex < 0 || sceneIndex >= storyboardScenes.length) return;
+    const freshKit = loadBrandKitFromStorage();
+    const kit = freshKit.logoUrl ? freshKit : brandKit;
+    if (!kit.logoUrl?.trim()) {
+      setError(m.errors.brandLogoRequired);
+      return;
+    }
+    const scene = storyboardScenes[sceneIndex];
+    if (!scene?.imageUrl?.trim()) {
+      setError(m.errors.needKeyframe);
+      return;
+    }
+    setStoryboardSceneRegenerateBusy(sceneIndex);
+    setError(null);
+    try {
+      if (kit !== brandKit) setBrandKit(kit);
+      const res = await fetch("/api/stamp-brand-logo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          image_urls: [scene.imageUrl],
+          brand_kit: { ...kit, useBrandLogo: true },
+          placement:
+            sceneIndex === storyboardScenes.length - 1 ? "center" : "top-right",
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error((data.error as string) ?? "Logo stamp failed.");
+      const nextUrl = normalizeGeneratedImageUrl(
+        Array.isArray(data.urls) ? String(data.urls[0] ?? "") : "",
+      );
+      if (!data.logoStamped || !nextUrl) {
+        throw new Error(
+          typeof data.note === "string" && data.note
+            ? data.note
+            : "Logo stamp did not apply — check Brand kit logo upload.",
+        );
+      }
+      setStoryboardScenes((prev: StoryboardSceneResult[]) =>
+        prev.map((s, i) => (i === sceneIndex ? { ...s, imageUrl: nextUrl } : s)),
+      );
+      if (sceneIndex === 0) setImageUrl(nextUrl);
+      setImageGenKey((k: number) => k + 1);
+    } catch (e: unknown) {
+      setError(friendlyError(e, m.errors.storyboardFailed));
+    } finally {
+      setStoryboardSceneRegenerateBusy(null);
+    }
+  }
+
   async function regenerateStoryboardSceneWithAi(sceneIndex: number) {
     if (sceneIndex < 0 || sceneIndex >= storyboardScenes.length) return;
     if (!productPhoto && !isConceptStoryboardOutput) {
@@ -2089,30 +2149,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       return;
     }
     const scene = storyboardScenes[sceneIndex];
-    const fallbackPrompt =
-      storyboardPlan?.scenes.find((p: { role: string; imagePrompt?: string }) => p.role === scene.role)?.imagePrompt ??
-      storyboardPlan?.scenes[sceneIndex]?.imagePrompt;
-    const desc = scene.sceneDescriptionZh?.trim() || "";
-    const wantsFacialPeople =
-      /敷面膜|facial|mask|treatment|護理|按摩|客人|therapist|esthetician/i.test(
-        `${desc} ${scene.imagePrompt ?? ""} ${fallbackPrompt ?? ""}`,
-      );
-    const basePrompt = (scene.imagePrompt || fallbackPrompt || "").trim();
-    const prompt = wantsFacialPeople
-      ? [
-          basePrompt ||
-            "Mid-shot commercial spa facial treatment: therapist applying treatment to a guest reclining on the spa bed.",
-          "Show BOTH people tastefully — guest and therapist. Soft natural light, 9:16.",
-          "Faces may be visible but NOT extreme close-up / skin fill-frame. No readable text.",
-          desc ? `Scene note: ${desc}` : "",
-        ]
-          .filter(Boolean)
-          .join(" ")
-      : basePrompt;
-    if (!prompt) {
-      setError(m.errors.storyboardFailed);
-      return;
-    }
+    if (!scene) return;
     const confirmMessage = m.wizard.storyboardRegenerateConfirm.replace(
       "{scene}",
       String(scene.imageIndex),
@@ -2122,10 +2159,40 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     setStoryboardSceneRegenerateBusy(sceneIndex);
     setError(null);
     try {
+      const freshKit = loadBrandKitFromStorage();
+      const kitForGen = freshKit.logoUrl ? freshKit : brandKit;
+      if (kitForGen !== brandKit && kitForGen.logoUrl) {
+        setBrandKit(kitForGen);
+      }
+
+      const planForGen: VideoStoryboardPlan =
+        storyboardPlan ??
+        ({
+          title: "",
+          theme: headline.trim() || product.trim(),
+          visualDirection: "",
+          totalDurationSec: Number(storyboardTrimDuration) || 8,
+          scenes: storyboardScenes.map((s) => ({
+            imageIndex: s.imageIndex,
+            role: s.role,
+            startSec: s.startSec,
+            endSec: s.endSec,
+            sceneDescriptionZh: s.sceneDescriptionZh,
+            onImageCopyZh: s.onImageCopyZh,
+            imagePrompt:
+              s.imagePrompt?.trim() ||
+              "Textless commercial still, 9:16, no readable text or logos.",
+          })),
+          seedancePrompt: videoPrompt.trim(),
+          productionNotes: "",
+        } satisfies VideoStoryboardPlan);
+
       const fd = new FormData();
       fd.set("visual_style", visualStyleId);
       fd.set("art_style", artStyleId);
       fd.set("promotion_mode", promotionMode);
+      if (brandProfile) fd.set("brand_profile", JSON.stringify(brandProfile));
+      fd.set("brand_kit", JSON.stringify(kitForGen));
       fd.set(
         "product_name",
         isConceptStoryboardOutput ? effectivePromoteName : product.trim(),
@@ -2135,35 +2202,42 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       fd.set("headline", headline.trim());
       fd.set("subline", subline.trim());
       fd.set("offer", offer.trim());
+      fd.set("storyboard_brief", storyboardBrief.trim());
+      fd.set("duration", storyboardTrimDuration);
+      fd.set("scene_count", storyboardSceneCount);
       fd.set("prompt_market", promptMarket);
       fd.set("subject_framing", subjectFraming);
       fd.set("prompt_extra", effectivePromptExtra());
-      fd.set("workflow_mode", workflowMode);
-      fd.set("aspect_ratio", tpl.aspectRatio);
-      fd.set(
-        "endpoint",
-        isConceptStoryboardOutput && !productPhoto
-          ? TEXT_ENDPOINT
-          : referenceStrategy.sendPixelsToFal
-            ? EDIT_ENDPOINT
-            : TEXT_ENDPOINT,
-      );
-      fd.set("num_images", "1");
-      fd.set("prompt", prompt);
+      fd.set("aspect_ratio", effectiveImageAspectRatio);
+      const needsEdit =
+        (referenceStrategy.sendPixelsToFal && Boolean(productPhoto?.size)) ||
+        (Boolean(imageRefPhoto?.size) &&
+          (referenceStrategy.kind === "style-only" ||
+            referenceStrategy.kind === "mood-only" ||
+            referenceStrategy.kind === "layout-transfer"));
+      fd.set("endpoint", needsEdit ? EDIT_ENDPOINT : TEXT_ENDPOINT);
+      fd.set("storyboard_plan", JSON.stringify(planForGen));
+      fd.set("scene_indexes", String(scene.imageIndex));
+      if (researchReelAnalysis) {
+        fd.set("research_reel_analysis", JSON.stringify(researchReelAnalysis));
+      }
       attachReferenceToForm(fd);
 
-      const res = await fetch("/api/generate-image", { method: "POST", body: fd });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? m.errors.storyboardFailed);
+      const data = await postStoryboardImages(fd);
       notifyCreditBalance(readCreditBalanceFromResponse(data));
-      const nextUrl = normalizeGeneratedImageUrl(
-        (data.imageUrl as string | undefined) ?? "",
-      );
+      const next = data.scenes?.[0];
+      const nextUrl = normalizeGeneratedImageUrl(next?.imageUrl ?? "");
       if (!nextUrl) throw new Error(m.errors.imageGenNoUrl);
 
       setStoryboardScenes((prev: StoryboardSceneResult[]) =>
         prev.map((s, i) =>
-          i === sceneIndex ? { ...s, imageUrl: nextUrl, imagePrompt: prompt } : s,
+          i === sceneIndex
+            ? {
+                ...s,
+                imageUrl: nextUrl,
+                imagePrompt: next?.imagePrompt ?? s.imagePrompt,
+              }
+            : s,
         ),
       );
       if (sceneIndex === 0) setImageUrl(nextUrl);
@@ -2351,6 +2425,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       if (!researchReelAnalysis && !storyboardPlan && !videoPrompt.trim()) {
         return m.wizard.setupReferenceVideoAnalyzeRequired;
       }
+    }
+    if (isConceptStoryboardOutput && !effectivePromoteName) {
+      return m.errors.needHeadline;
     }
     if (
       imageCreativeMode === "reference-concept" &&
@@ -2950,9 +3027,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     if (usesCompositor) return Boolean(productPhoto && headline.trim());
     if (isStoryboardOutput) {
       if (isConceptStoryboardOutput) {
-        return Boolean(
-          effectivePromoteName && (storyboardPlan || storyboardBrief.trim() || headline.trim()),
-        );
+        // Align with generateImage(): conceptIdea / headline / product is enough.
+        // Story brief + DeepSeek plan are optional (API plans on the fly). Requiring
+        // headline||plan||brief blocked research flows that only set conceptIdea.
+        return Boolean(effectivePromoteName);
       }
       return Boolean(productPhoto && product.trim());
     }
@@ -3083,13 +3161,20 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       });
       setImageBusy(true);
       try {
+        // Landing / another tab may have updated the kit — prefer freshest logo before Mode B.
+        const freshKit = loadBrandKitFromStorage();
+        const kitForGen = freshKit.logoUrl ? freshKit : brandKit;
+        if (kitForGen !== brandKit && kitForGen.logoUrl) {
+          setBrandKit(kitForGen);
+        }
+
         const buildStoryboardFd = (planForGen: VideoStoryboardPlan | null, sceneIndexes?: number[]) => {
           const fd = new FormData();
           fd.set("visual_style", visualStyleId);
           fd.set("art_style", artStyleId);
           fd.set("promotion_mode", promotionMode);
           if (brandProfile) fd.set("brand_profile", JSON.stringify(brandProfile));
-          fd.set("brand_kit", JSON.stringify(brandKit));
+          fd.set("brand_kit", JSON.stringify(kitForGen));
           fd.set(
             "product_name",
             isConceptStoryboardOutput ? effectivePromoteName : product.trim(),
@@ -3106,14 +3191,14 @@ export function useStudioWizard(promotionMode: PromotionMode) {
           fd.set("subject_framing", subjectFraming);
           fd.set("prompt_extra", effectivePromptExtra());
           fd.set("aspect_ratio", effectiveImageAspectRatio);
-          fd.set(
-            "endpoint",
-            isConceptStoryboardOutput && !productPhoto && !imageRefPhoto
-              ? TEXT_ENDPOINT
-              : referenceStrategy.sendPixelsToFal || (referenceStrategy.kind === "style-only" && imageRefPhoto)
-                ? EDIT_ENDPOINT
-                : TEXT_ENDPOINT,
-          );
+          // Sharp logo stamp is post-gen — only need /edit when product/style refs are sent.
+          const needsEdit =
+            (referenceStrategy.sendPixelsToFal && Boolean(productPhoto?.size)) ||
+            (Boolean(imageRefPhoto?.size) &&
+              (referenceStrategy.kind === "style-only" ||
+                referenceStrategy.kind === "mood-only" ||
+                referenceStrategy.kind === "layout-transfer"));
+          fd.set("endpoint", needsEdit ? EDIT_ENDPOINT : TEXT_ENDPOINT);
           if (planForGen) {
             fd.set("storyboard_plan", JSON.stringify(planForGen));
           }
@@ -3243,6 +3328,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         const genData = await readGenerateJson(genRes);
         if (!genRes.ok) throw new Error((genData.error as string) ?? m.errors.storyboardFailed);
         const scenes = genData.scenes as CinematicSceneResult[];
+        cinematicLogoIntegratedRef.current = Boolean(genData.logoIntegrated);
         setCinematicScenes(scenes);
         setImageUrl(scenes[0]?.imageUrl ?? null);
         setImageVariantUrls(scenes.map((s) => s.imageUrl));
@@ -3899,6 +3985,11 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     _seedancePrompt: string,
   ): Promise<string> {
     setVideoPhase("video");
+    const freshKit = loadBrandKitFromStorage();
+    const kitForVideo = freshKit.logoUrl || freshKit.useBrandLogo ? freshKit : brandKit;
+    if (kitForVideo !== brandKit) setBrandKit(kitForVideo);
+    const logoOn = Boolean(kitForVideo?.useBrandLogo && kitForVideo?.logoUrl);
+
     const fd = new FormData();
     fd.set("theme", storyboardPlan?.theme?.trim() || headline.trim() || product.trim());
     fd.set("total_duration_sec", storyboardTrimDuration);
@@ -3910,11 +4001,23 @@ export function useStudioWizard(promotionMode: PromotionMode) {
           endSec: s.endSec,
           sceneDescriptionZh: s.sceneDescriptionZh,
           imagePrompt: s.imagePrompt,
+          role: s.role,
+          endWithBrandLogo: logoOn,
+          useBrandLogo: logoOn,
         })),
       ),
     );
     const refCount = await appendStoryboardImageRefs(fd, scenes);
     if (refCount < 1) throw new Error(m.errors.needKeyframe);
+    if (refCount !== scenes.length) {
+      throw new Error(
+        (m.errors.storyboardSceneImagesMissing ??
+          "Could not load all storyboard scene images ({got}/{expected}). Re-generate the missing still, then try video again.")
+          .replace("{got}", String(refCount))
+          .replace("{expected}", String(scenes.length)),
+      );
+    }
+    fd.set("expected_scene_count", String(scenes.length));
 
     const res = await fetch("/api/generate-kling-storyboard", { method: "POST", body: fd });
     const data = await readGenerateJson(res);
@@ -4039,15 +4142,22 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       motionStyle,
     });
     const motionStrength = cinematicMotionStrength(motionStyle, creativity);
-    const fullPrompt = buildCinematicClipMotionPrompt({
-      sceneMotionPrompt: motionPrompt,
-      creativity,
-      camera: vOpts.camera,
-      motionStyle,
-      sceneIndex,
-      totalScenes,
-      referenceMotionNote: extractReferenceMotionNote(effectivePromptExtra()),
-    });
+    const fullPrompt = [
+      buildCinematicClipMotionPrompt({
+        sceneMotionPrompt: motionPrompt,
+        creativity,
+        camera: vOpts.camera,
+        motionStyle,
+        sceneIndex,
+        totalScenes,
+        referenceMotionNote: extractReferenceMotionNote(effectivePromptExtra()),
+      }),
+      brandKit?.logoUrl
+        ? "Preserve any brand logo already in the input still — exact geometry, no redraw, no new text."
+        : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
     const fd = new FormData();
     fd.set("mode", "image");
     fd.set("prompt", fullPrompt);
@@ -4072,7 +4182,12 @@ export function useStudioWizard(promotionMode: PromotionMode) {
   async function stampBrandLogoOnCinematicScenes(
     scenes: CinematicSceneResult[],
   ): Promise<CinematicSceneResult[]> {
-    if (!brandKit?.logoUrl || scenes.length === 0) return scenes;
+    // Mode B already baked the logo into stills via Nano Banana — skip sharp corner stamp.
+    if (cinematicLogoIntegratedRef.current) return scenes;
+    const freshKit = loadBrandKitFromStorage();
+    const kit = freshKit.logoUrl ? freshKit : brandKit;
+    if (!kit?.useBrandLogo || !kit?.logoUrl || scenes.length === 0) return scenes;
+    if (kit !== brandKit) setBrandKit(kit);
     const placement =
       quickFixLogoPlacement === "bottom-right" || quickFixLogoPlacement === "bottom-left"
         ? "top-right"
@@ -4082,7 +4197,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         image_urls: scenes.map((s) => s.imageUrl),
-        brand_kit: brandKit,
+        brand_kit: kit,
         placement,
       }),
     });
@@ -4105,7 +4220,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     if (cinematicScenes.length < cinematicSceneCount) {
       throw new Error(m.errors.storyboardVideoPromptRequired);
     }
-    // Stamp user brand logo on stills right before video (idempotent if already stamped at gen).
+    // Sharp stamp only if Mode B did not already integrate the logo.
     const scenesForVideo = await stampBrandLogoOnCinematicScenes(cinematicScenes);
     const clipUrls: string[] = [];
     for (const scene of scenesForVideo) {
@@ -4130,7 +4245,11 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       [
         formatCinematicCopy(m.wizard.cinematicStitchVideoPreflight),
         `${m.wizard.cinematicStitchClipCount}: ${clipUrls.length}`,
-        brandKit?.logoUrl ? m.wizard.cinematicLogoStampNote : null,
+        brandKit?.logoUrl
+          ? cinematicLogoIntegratedRef.current
+            ? m.wizard.cinematicLogoModeBNote
+            : m.wizard.cinematicLogoStampNote
+          : null,
         m.wizard.cinematicStitchFfmpegNote,
         data.note as string | undefined,
       ]
@@ -4607,11 +4726,16 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     setPlanStoryboardBusy(true);
     setError(null);
     try {
+      const freshKit = loadBrandKitFromStorage();
+      const kitForPlan = freshKit.logoUrl || freshKit.useBrandLogo ? freshKit : brandKit;
+      if (kitForPlan !== brandKit) setBrandKit(kitForPlan);
+
       const fd = new FormData();
       fd.set("visual_style", visualStyleId);
       fd.set("art_style", artStyleId);
       fd.set("promotion_mode", promotionMode);
       if (brandProfile) fd.set("brand_profile", JSON.stringify(brandProfile));
+      fd.set("brand_kit", JSON.stringify(kitForPlan));
       fd.set(
         "product_name",
         isConceptStoryboardOutput ? effectivePromoteName : product.trim(),
@@ -5616,6 +5740,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     referenceIsVideo,
     referencePreviewUrl,
     regenerateStoryboardSceneWithAi,
+    stampStoryboardSceneLogo,
     reorderStoryboardScene,
     replaceStoryboardSceneImage,
     resetProject,

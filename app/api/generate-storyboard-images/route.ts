@@ -3,11 +3,29 @@ import { NextResponse } from "next/server";
 import { chargeTokens, refundTokens } from "@/lib/billing/charge";
 import { clampImageResolution } from "@/lib/billing/entitlements";
 import { getUserPlan } from "@/lib/billing/get-user-plan";
-import { estimateImageTokens } from "@/lib/billing/token-costs";
+import { estimateImageTokens, TOKEN_COST } from "@/lib/billing/token-costs";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import type { BrandProfile } from "@/lib/brand-profile";
 import { parseBrandKit } from "@/lib/brand-kit";
-import { defaultEditEndpoint, defaultTextEndpoint, sanitizeImageEndpoint } from "@/lib/image-endpoints";
+import { uploadBrandKitLogoToFal } from "@/lib/brand-kit-fal";
+import {
+  archiveImagesWithBrandLogo,
+  CINEMATIC_LOGO_PLACEMENT,
+  CINEMATIC_LOGO_SIZE_RATIO,
+  END_CARD_LOGO_SIZE_RATIO,
+} from "@/lib/brand-logo-composite";
+import {
+  defaultEditEndpoint,
+  defaultTextEndpoint,
+  resolveEditEndpointWhenNeeded,
+} from "@/lib/image-endpoints";
+import {
+  buildStoryboardEndCardLogoModeAPrompt,
+  buildStoryboardEndCardStillPrompt,
+  buildStoryboardLogoModeAPrompt,
+  IMAGE_LOGO_REFINE_SYSTEM_PROMPT,
+} from "@/lib/image-refine-prompt";
+import { isStoryboardBrandLogoScene } from "@/lib/storyboard-brand-logo-scene";
 import { persistAndDurablizeMany } from "@/lib/storage/durable-media";
 import {
   buildPromptVariables,
@@ -198,14 +216,10 @@ export async function POST(request: Request) {
   // Spa/beauty concept: style-ref face photos often trip fal input filters — use text-to-image.
   const forceConceptTextOnly =
     conceptStoryboardNoProduct && spaBeautyBrief && !hasProduct;
-  const endpoint = sanitizeImageEndpoint(
-    formData.get("endpoint") as string | null,
-    conceptTextOnlyStoryboard ||
-      forceConceptTextOnly ||
-      (!strategy.sendPixelsToFal && !hasStyle)
-      ? defaultTextEndpoint()
-      : defaultEditEndpoint(),
-  );
+  // Endpoint resolved after we know whether pixels will actually be uploaded (below).
+  // Client often sends /edit whenever a research style File exists in React state; if that
+  // File is missing/empty on the server, honoring /edit with no image_urls → fal 422
+  // "At least one image URL is required".
   const artStyleId = resolveArtStyleId((formData.get("art_style") as string | null)?.trim());
   const styleHint = mergePromptExtra(visualStyle, promptExtra);
 
@@ -249,6 +263,7 @@ export async function POST(request: Request) {
         artStyleId,
         referenceStrategyKind: strategy.kind,
         conceptMode: conceptStoryboardNoProduct,
+        useBrandLogo: Boolean(brandKit?.useBrandLogo && brandKit?.logoUrl?.trim()),
       });
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "Storyboard planning failed.";
@@ -294,19 +309,30 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No storyboard scenes to generate." }, { status: 400 });
   }
 
+  const brandLogoFalUrl = brandKit?.logoUrl?.trim()
+    ? await uploadBrandKitLogoToFal(brandKit).catch(() => null)
+    : null;
+  // Opt-in: Mode A = textless still + Nano Banana logo edit (2× image COGS). Sharp stamp = fallback.
+  const useBrandLogo = Boolean(brandKit?.useBrandLogo && brandKit?.logoUrl?.trim());
+  const useLogoModeA = Boolean(useBrandLogo && brandLogoFalUrl);
+  const passesPerScene = useLogoModeA ? 2 : 1;
   const tokenCost = estimateImageTokens({
     mode: "storyboard",
     sceneCount: scenesToGenerate.length,
+    passesPerScene,
   });
   const charged = await chargeTokens(auth.user.userId, tokenCost, {
     kind: "storyboard",
     sceneCount: scenesToGenerate.length,
+    logoMode: useLogoModeA ? "mode-a" : useBrandLogo ? "stamp-fallback" : "none",
+    passesPerScene,
   });
   if ("error" in charged) return charged.error;
   const balanceAfter = charged.balanceAfter;
   const { resolution: imageResolution } = clampImageResolution(
     await getUserPlan(auth.user.userId),
   );
+  const logoEditEndpoint = defaultEditEndpoint();
 
   try {
     let imageUrlsForFal: string[] | null = null;
@@ -337,32 +363,50 @@ export async function POST(request: Request) {
       } else if (hasStyle) {
         imageUrlsForFal.push(await fal.storage.upload(styleRef as File));
       }
+      if (!imageUrlsForFal.length) imageUrlsForFal = null;
     }
+
+    const hasImageUrls = Boolean(imageUrlsForFal?.length);
+    const endpoint = resolveEditEndpointWhenNeeded(
+      formData.get("endpoint") as string | null,
+      hasImageUrls && !forceConceptTextOnly && !conceptTextOnlyStoryboard,
+    );
+    const textEndpoint = defaultTextEndpoint();
 
     const scenes = await mapPool(
       scenesToGenerate,
       STORYBOARD_FAL_CONCURRENCY,
       async (scene) => {
-        const prompt = buildStoryboardSceneImagePrompt(scene, plan, vars, {
-          referenceConcept:
-            strategy.useReferenceConceptPrompts &&
-            !conceptTextOnlyStoryboard &&
-            !forceConceptTextOnly,
-          conceptTextOnly: conceptTextOnlyStoryboard || forceConceptTextOnly,
-          storyboardStyleRef: storyboardStyleRef || dualProductAndStyle,
-          dualProductAndStyle,
-          textless: true,
-          visualStyleId: visualStyle,
-          brandProfile,
-          brandKit,
-          hasProductImage: hasProduct,
+        const endCard = isStoryboardBrandLogoScene(scene, plan.scenes.length, {
+          useBrandLogo,
         });
+        // Pass 1: textless still. Last scene = empty center when logo opted in.
+        const prompt = endCard
+          ? buildStoryboardEndCardStillPrompt(plan.theme || headline || productName)
+          : buildStoryboardSceneImagePrompt(scene, plan, vars, {
+              referenceConcept:
+                strategy.useReferenceConceptPrompts &&
+                !conceptTextOnlyStoryboard &&
+                !forceConceptTextOnly,
+              conceptTextOnly: conceptTextOnlyStoryboard || forceConceptTextOnly,
+              storyboardStyleRef: storyboardStyleRef || dualProductAndStyle,
+              dualProductAndStyle,
+              textless: true,
+              visualStyleId: visualStyle,
+              brandProfile,
+              brandKit,
+              brandLogoImageIndex: null,
+              hasProductImage: hasProduct,
+            });
 
-        const subscribe = async (inputPrompt: string, withImages: boolean) =>
-          fal.subscribe(endpoint, {
+        const subscribe = async (inputPrompt: string, withImages: boolean) => {
+          const useImages = withImages && hasImageUrls;
+          // /edit requires image_urls — never call it without pixels (end card / policy fallback).
+          const callEndpoint = useImages ? endpoint : textEndpoint;
+          return fal.subscribe(callEndpoint, {
             input: {
               prompt: inputPrompt,
-              ...(withImages && imageUrlsForFal?.length
+              ...(useImages && imageUrlsForFal?.length
                 ? { image_urls: imageUrlsForFal }
                 : {}),
               aspect_ratio: aspectRatio,
@@ -375,27 +419,104 @@ export async function POST(request: Request) {
             },
             logs: true,
           });
+        };
 
         let result;
         try {
-          result = await subscribe(prompt, Boolean(imageUrlsForFal?.length));
+          // End cards: text-only backdrop (no product refs) so center stays clear.
+          result = await subscribe(prompt, endCard ? false : hasImageUrls);
         } catch (firstErr) {
           if (!isFalContentPolicyThrowable(firstErr)) throw firstErr;
-          const safePrompt = spaSafeStillFallbackPrompt({
-            theme: plan.theme || productName || headline,
-            role: scene.role,
-            marketHint:
-              promptMarket === "en"
-                ? "International English-market commercial spa aesthetic."
-                : "",
-          });
-          // Retry once: text-only + ultra-safe spa room (no people / faces).
+          const safePrompt = endCard
+            ? buildStoryboardEndCardStillPrompt(plan.theme || productName)
+            : spaSafeStillFallbackPrompt({
+                theme: plan.theme || productName || headline,
+                role: scene.role,
+                marketHint:
+                  promptMarket === "en"
+                    ? "International English-market commercial spa aesthetic."
+                    : "",
+              });
           result = await subscribe(safePrompt, false);
         }
 
-        const outUrls = extractImageUrls(result.data);
-        if (!outUrls[0]) {
+        let stillUrl = extractImageUrls(result.data)[0];
+        if (!stillUrl) {
           throw new Error(`Image URL missing for scene ${scene.imageIndex}.`);
+        }
+
+        if (useBrandLogo && brandKit?.logoUrl?.trim()) {
+          let logoIntegrated = false;
+          // Mode A (preferred): second fal image job composites Brand kit logo.
+          if (brandLogoFalUrl) {
+            try {
+              const logoPass = await fal.subscribe(logoEditEndpoint, {
+                input: {
+                  prompt: endCard
+                    ? buildStoryboardEndCardLogoModeAPrompt()
+                    : buildStoryboardLogoModeAPrompt(),
+                  image_urls: [stillUrl, brandLogoFalUrl],
+                  aspect_ratio: aspectRatio,
+                  num_images: 1,
+                  resolution: imageResolution,
+                  limit_generations: true,
+                  system_prompt: IMAGE_LOGO_REFINE_SYSTEM_PROMPT,
+                },
+                logs: true,
+              });
+              const logoUrl = extractImageUrls(logoPass.data)[0];
+              if (logoUrl) {
+                stillUrl = logoUrl;
+                logoIntegrated = true;
+              }
+            } catch (logoErr) {
+              console.error(
+                `[generate-storyboard-images] Mode A logo pass failed scene ${scene.imageIndex}`,
+                logoErr,
+              );
+            }
+          }
+          // Fallback: exact PNG sharp stamp if Mode A unavailable/failed.
+          if (!logoIntegrated) {
+            try {
+              const stamped = await archiveImagesWithBrandLogo(
+                request,
+                [stillUrl],
+                brandKit,
+                endCard
+                  ? {
+                      placement: "center",
+                      fileName: "generated.png",
+                      sizeRatio: END_CARD_LOGO_SIZE_RATIO,
+                    }
+                  : {
+                      placement: CINEMATIC_LOGO_PLACEMENT,
+                      fileName: "generated.png",
+                      sizeRatio: CINEMATIC_LOGO_SIZE_RATIO,
+                    },
+              );
+              if (stamped.logoStamped && stamped.urls[0]) {
+                stillUrl = stamped.urls[0];
+              }
+            } catch (stampErr) {
+              console.error(
+                `[generate-storyboard-images] Logo stamp fallback failed scene ${scene.imageIndex}`,
+                stampErr,
+              );
+            }
+          }
+          return {
+            imageIndex: scene.imageIndex,
+            role: scene.role,
+            startSec: scene.startSec,
+            endSec: scene.endSec,
+            sceneDescriptionZh: scene.sceneDescriptionZh,
+            onImageCopyZh: scene.onImageCopyZh,
+            imageUrl: stillUrl,
+            imagePrompt: scene.imagePrompt,
+            /** True only when the 2nd fal (logo edit) job succeeded — used for surcharge refund. */
+            modeALogoApplied: logoIntegrated,
+          };
         }
 
         return {
@@ -405,11 +526,28 @@ export async function POST(request: Request) {
           endSec: scene.endSec,
           sceneDescriptionZh: scene.sceneDescriptionZh,
           onImageCopyZh: scene.onImageCopyZh,
-          imageUrl: outUrls[0],
+          imageUrl: stillUrl,
           imagePrompt: scene.imagePrompt,
+          modeALogoApplied: false,
         };
       },
     );
+
+    let tokensCharged = tokenCost;
+    let balanceForClient = balanceAfter;
+    if (useLogoModeA) {
+      const modeAMisses = scenes.filter((s) => !s.modeALogoApplied).length;
+      if (modeAMisses > 0) {
+        const refundAmount = TOKEN_COST.storyboard_scene * modeAMisses;
+        const afterRefund = await refundTokens(auth.user.userId, refundAmount, {
+          kind: "storyboard",
+          reason: "mode_a_unused_pass",
+          modeAMisses,
+        });
+        tokensCharged = Math.max(0, tokenCost - refundAmount);
+        if (typeof afterRefund === "number") balanceForClient = afterRefund;
+      }
+    }
 
     const falUrls = scenes.map((s) => s.imageUrl);
     const durableUrls = await persistAndDurablizeMany({
@@ -417,11 +555,17 @@ export async function POST(request: Request) {
       kind: "image",
       sourceUrls: falUrls,
       fallbackUrls: falUrls,
-      prompt: "storyboard",
+      prompt: useLogoModeA ? "storyboard-mode-a" : useBrandLogo ? "storyboard-logo-stamp" : "storyboard",
     });
     const durableScenes = scenes.map((scene, index) => ({
-      ...scene,
+      imageIndex: scene.imageIndex,
+      role: scene.role,
+      startSec: scene.startSec,
+      endSec: scene.endSec,
+      sceneDescriptionZh: scene.sceneDescriptionZh,
+      onImageCopyZh: scene.onImageCopyZh,
       imageUrl: durableUrls[index] ?? scene.imageUrl,
+      imagePrompt: scene.imagePrompt,
     }));
     const imageUrls = durableScenes.map((s) => s.imageUrl);
     await trackUsage(auth.user.userId, "storyboard");
@@ -431,14 +575,16 @@ export async function POST(request: Request) {
       seedancePrompt: plan.seedancePrompt,
       imageUrl: imageUrls[0],
       imageUrls,
-      endpoint,
+      endpoint: useLogoModeA ? `${endpoint}+${logoEditEndpoint}` : endpoint,
       mode: "storyboard",
       sceneCount: scenes.length,
       totalPlanScenes: plan.scenes.length,
       batchHint: STORYBOARD_CLIENT_BATCH_HINT,
       referenceStrategy: strategy.kind,
-      tokensCharged: tokenCost,
-      creditBalance: balanceAfter,
+      tokensCharged,
+      creditBalance: balanceForClient,
+      logoMode: useLogoModeA ? "mode-a" : useBrandLogo ? "stamp-fallback" : "none",
+      logoIntegrated: useBrandLogo,
     });
   } catch (e: unknown) {
     await refundTokens(auth.user.userId, tokenCost, {

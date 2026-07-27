@@ -138,6 +138,10 @@ describe("billing safety — never overcharge", () => {
     assert.equal(TOKEN_COST.music, 30);
     assert.equal(TOKEN_COST.voiceover, 5);
     assert.equal(estimateImageTokens({ mode: "storyboard", sceneCount: 4 }), 104);
+    assert.equal(
+      estimateImageTokens({ mode: "storyboard", sceneCount: 4, passesPerScene: 2 }),
+      208,
+    );
     assert.equal(estimateVideoTokens({ resolution: "480p", fast: false, duration: 8 }), 336);
     assert.equal(
       videoTokenCostFromRequest({ resolution: "720p", fast: true, duration: "auto" }),

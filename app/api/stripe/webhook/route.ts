@@ -1,18 +1,12 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
-import {
-  PLAN_DEFINITIONS,
-  TOP_UP_PRICE_USD,
-  TOP_UP_TOKENS,
-  normalizeUserPlan,
-} from "@/lib/billing/plans";
+import { PLAN_DEFINITIONS, normalizeUserPlan } from "@/lib/billing/plans";
 import { sendSubscriptionEndedEmail } from "@/lib/email/lifecycle";
 import { sendPurchaseConfirmationEmail } from "@/lib/email/purchase-confirmation";
 import { resolvePurchaseEmail } from "@/lib/email/resolve-user-email";
 import type { DbUser } from "@/lib/db/types";
 import {
   applySubscriptionGrant,
-  applyTopUpGrant,
   clearPaidSubscription,
   findClerkIdByStripeCustomer,
   grantTokensOnce,
@@ -20,6 +14,10 @@ import {
   tokensForPaidPlan,
 } from "@/lib/stripe/billing-sync";
 import { getStripe, isStripeConfigured } from "@/lib/stripe/client";
+import {
+  fulfillCheckoutSession,
+  resolveCheckoutClerkId,
+} from "@/lib/stripe/fulfill-checkout";
 import { isPaidPlan, planFromPriceId, type PaidPlan } from "@/lib/stripe/prices";
 import { getDb, isMongoConfigured } from "@/lib/mongodb";
 
@@ -40,17 +38,6 @@ function subscriptionId(
   return value.id;
 }
 
-async function resolveClerkId(opts: {
-  metadataClerkId?: string | null;
-  clientReferenceId?: string | null;
-  customer?: string | null;
-}): Promise<string | null> {
-  if (opts.metadataClerkId) return opts.metadataClerkId;
-  if (opts.clientReferenceId) return opts.clientReferenceId;
-  if (opts.customer) return findClerkIdByStripeCustomer(opts.customer);
-  return null;
-}
-
 async function notifySubscriptionEnded(
   clerkId: string,
   reason: "canceled" | "unpaid",
@@ -62,61 +49,7 @@ async function notifySubscriptionEnded(
 }
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
-  const clerkId = await resolveClerkId({
-    metadataClerkId: session.metadata?.clerkId,
-    clientReferenceId: session.client_reference_id,
-    customer: customerId(session.customer),
-  });
-  if (!clerkId) {
-    console.error("[stripe] checkout.session.completed missing clerkId", session.id);
-    return;
-  }
-
-  const kind = session.metadata?.kind ?? (session.mode === "payment" ? "topup" : "subscription");
-  const cust = customerId(session.customer);
-
-  if (kind === "topup" || session.mode === "payment") {
-    if (session.payment_status !== "paid") return;
-    const result = await applyTopUpGrant({
-      clerkId,
-      ref: `checkout_${session.id}`,
-      stripeCustomerId: cust,
-      meta: { sessionId: session.id },
-    });
-    if (result.granted) {
-      const to = await resolvePurchaseEmail({
-        clerkId,
-        stripeEmail: session.customer_details?.email ?? session.customer_email,
-      });
-      if (to) {
-        await sendPurchaseConfirmationEmail({
-          to,
-          kind: "topup",
-          tokensGranted: TOP_UP_TOKENS,
-          balanceAfter: result.balanceAfter,
-          amountLabel: `$${TOP_UP_PRICE_USD.toFixed(2)}`,
-          purchasedAt: session.created
-            ? new Date(session.created * 1000)
-            : new Date(),
-        });
-      }
-    }
-    return;
-  }
-
-  // Subscription: sync plan/ids here; token grant happens on invoice.paid (idempotent).
-  const planMeta = session.metadata?.plan;
-  const plan: PaidPlan | null = planMeta && isPaidPlan(planMeta) ? planMeta : null;
-  if (!plan) {
-    console.error("[stripe] checkout missing plan metadata", session.id);
-    return;
-  }
-  await setUserSubscription({
-    clerkId,
-    plan,
-    stripeCustomerId: cust,
-    stripeSubscriptionId: subscriptionId(session.subscription),
-  });
+  await fulfillCheckoutSession(session);
 }
 
 async function handleInvoicePaid(invoice: Stripe.Invoice) {
@@ -143,7 +76,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
   }
 
   if (!clerkId) {
-    clerkId = await resolveClerkId({
+    clerkId = await resolveCheckoutClerkId({
       metadataClerkId: invoice.metadata?.clerkId,
       customer: cust,
     });
@@ -205,7 +138,7 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
     }
   }
   if (!clerkId) {
-    clerkId = await resolveClerkId({
+    clerkId = await resolveCheckoutClerkId({
       metadataClerkId: invoice.metadata?.clerkId,
       customer: cust,
     });

@@ -59,6 +59,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "At most 9 storyboard scenes." }, { status: 400 });
   }
 
+  const expectedRaw = (formData.get("expected_scene_count") as string | null)?.trim();
+  const expectedCount = expectedRaw ? Number(expectedRaw) : 0;
+  if (
+    Number.isFinite(expectedCount) &&
+    expectedCount > 0 &&
+    imageUrls.length < expectedCount
+  ) {
+    return NextResponse.json(
+      {
+        error: `Only ${imageUrls.length} of ${expectedCount} scene images could be loaded for video. Re-generate the missing still (often the last scene URL expired), then try again.`,
+      },
+      { status: 400 },
+    );
+  }
+
   const theme = (formData.get("theme") as string | null)?.trim() || "";
   const totalDurationRaw = (formData.get("total_duration_sec") as string | null)?.trim();
   const totalDurationSec = totalDurationRaw ? Number(totalDurationRaw) || 8 : 8;

@@ -1465,10 +1465,12 @@ function sanitizeStoryboardImagePromptForTextless(imagePrompt: string | undefine
   if (!raw) return "";
   return raw
     .replace(
-      /\b(with|add|include|overlay|render|bake|paint|show)\b[^.]{0,40}\b(text|typography|caption|headline|copy|字|文案|標題)[^.]*\.?/gi,
+      /\b(with|add|include|overlay|render|bake|paint|show)\b[^.]{0,40}\b(text|typography|caption|headline|copy|logo|字|文案|標題|標語)[^.]*\.?/gi,
       "",
     )
     .replace(/\bon[- ]?image copy\b[^.]*\.?/gi, "")
+    .replace(/\b(CTA|call to action|slogan|tagline|watermark)\b[^.]*\.?/gi, "")
+    .replace(/[\u4e00-\u9fff]{2,}[^.|，。；]*[.。]?/g, "")
     .replace(/\s{2,}/g, " ")
     .trim();
 }
@@ -1522,7 +1524,9 @@ export function buildStoryboardSceneImagePrompt(
     : "";
   const sceneCopy = textless ? undefined : scene.onImageCopyZh?.trim();
   const textlessRule =
-    "TEXTLESS STILL (mandatory for video): ZERO readable text — no Chinese, no Latin, no digits-as-copy, no captions, no title bars, no watermarks. If IMAGE 1 has text, REMOVE it completely. Leave blank space where type would go — captions are burned AFTER Kling/Seedance.";
+    brandLogoImageIndex != null
+      ? `TEXTLESS STILL (mandatory for video): ZERO readable marketing copy — no Chinese/Latin captions, title bars, or watermarks. Exception: integrate the client's brand logo from IMAGE ${brandLogoImageIndex} exactly as provided. Leave blank space for burned captions AFTER Kling/Seedance.`
+      : "TEXTLESS STILL (mandatory for video): ZERO readable text — no Chinese, no Latin, no digits-as-copy, no captions, no title bars, no watermarks, no fake UI labels. Phone/laptop/tablet screens must show soft blank or abstract UI chrome only — never invent gibberish Chinese/English on screens. If IMAGE 1 has text, REMOVE it completely. Leave blank space where type would go — captions are burned AFTER Kling/Seedance.";
   const imageBriefVars: PromptVariables = sceneCopy
     ? {
         ...sceneVars,
@@ -1617,7 +1621,9 @@ export function buildStoryboardSceneImagePrompt(
         sceneImagePrompt,
         sceneCopy ? `ON-IMAGE COPY (this scene only): ${sceneCopy}` : textlessRule,
         conceptServiceStillSafetyClause(),
-        "9:16 vertical cinematic still — no logos, watermarks, or social UI.",
+        brandLogoImageIndex != null
+          ? "9:16 vertical cinematic still — no third-party logos, watermarks, or social UI."
+          : "9:16 vertical cinematic still — no logos, watermarks, or social UI.",
         artStyleImageClause(vars.artStyle),
         MARKET_HINTS[sceneVars.market],
         sceneVars.extra,

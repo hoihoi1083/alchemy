@@ -9,6 +9,7 @@ import { parseStrategyFromFormData } from "@/lib/reference-strategy";
 import { isPromotionMode } from "@/lib/promotion-mode";
 import { wizardPromoteName } from "@/lib/wizard-promote-name";
 import type { BrandProfile } from "@/lib/brand-profile";
+import { parseBrandKit } from "@/lib/brand-kit";
 
 export const runtime = "nodejs";
 export const maxDuration = 90;
@@ -82,6 +83,17 @@ export async function POST(request: Request) {
     }
   }
 
+  let useBrandLogo = false;
+  const brandKitRaw = (formData.get("brand_kit") as string | null)?.trim() || "";
+  if (brandKitRaw) {
+    try {
+      const kit = parseBrandKit(JSON.parse(brandKitRaw));
+      useBrandLogo = Boolean(kit.useBrandLogo && kit.logoUrl?.trim());
+    } catch {
+      /* ignore */
+    }
+  }
+
   try {
     const plan = await planVideoStoryboard({
       product: productName,
@@ -99,6 +111,8 @@ export async function POST(request: Request) {
       brandProfile,
       artStyleId,
       referenceStrategyKind: strategy.kind,
+      useBrandLogo,
+      conceptMode: promotionMode === "concept",
     });
     return NextResponse.json({ plan, seedancePrompt: plan.seedancePrompt });
   } catch (e: unknown) {

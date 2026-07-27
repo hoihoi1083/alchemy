@@ -6,6 +6,7 @@ import { LanguageToggle } from "@/components/LanguageToggle";
 import { StudioAssistantWidget } from "@/components/assistant/StudioAssistantWidget";
 import { CoachSpotlightOverlay } from "@/components/assistant/CoachSpotlightOverlay";
 import { SiteFooter } from "@/components/SiteFooter";
+import { BrandKitPanel } from "@/components/studio/BrandKitPanel";
 import { useLocale } from "@/components/LocaleProvider";
 
 export function LandingPageClient() {
@@ -67,12 +68,6 @@ export function LandingPageClient() {
                     {m.landing.howItWorks}
                   </a>
                   <Link
-                    href="/pricing"
-                    className="rounded-full border border-indigo-300 px-6 py-3 text-sm font-medium text-indigo-800"
-                  >
-                    {m.pricing.pricingLink}
-                  </Link>
-                  <Link
                     href="/captions"
                     className="rounded-full border border-violet-300 px-6 py-3 text-sm font-medium text-violet-800"
                   >
@@ -83,12 +78,6 @@ export function LandingPageClient() {
                     className="rounded-full border border-cyan-300 px-6 py-3 text-sm font-medium text-cyan-900"
                   >
                     {m.landing.imageCanvasLink}
-                  </Link>
-                  <Link
-                    href="/ugc"
-                    className="rounded-full border border-rose-300 px-6 py-3 text-sm font-medium text-rose-900"
-                  >
-                    {m.landing.ugcLink}
                   </Link>
                 </div>
               </div>
@@ -105,6 +94,28 @@ export function LandingPageClient() {
                   ))}
                 </div>
               </div>
+            </div>
+          </section>
+
+          <section id="brand-kit" className="border-t border-slate-200 bg-white">
+            <div className="mx-auto grid max-w-6xl gap-8 px-6 py-14 lg:grid-cols-2 lg:items-start">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                  {m.landing.brandKitBadge}
+                </p>
+                <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+                  {m.landing.brandKitTitle}
+                </h2>
+                <p className="mt-3 max-w-lg text-sm text-slate-600">{m.landing.brandKitBody}</p>
+                <p className="mt-3 max-w-lg text-sm text-slate-500">{m.landing.brandKitLogoTip}</p>
+                <Link
+                  href="/start"
+                  className="mt-6 inline-flex rounded-full bg-slate-900 px-5 py-2.5 text-sm font-medium text-white"
+                >
+                  {m.landing.brandKitCta}
+                </Link>
+              </div>
+              <BrandKitPanel variant="light" />
             </div>
           </section>
 

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useAuth } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AuthNav } from "@/components/AuthNav";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -38,9 +38,56 @@ export function PricingPageClient() {
   const [selectedPlan, setSelectedPlan] = useState<"free" | PaidPlanKey>("pro");
   const [busy, setBusy] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [confirmNote, setConfirmNote] = useState<string | null>(null);
+  const confirmStarted = useRef(false);
   const paidPlans: PaidPlanKey[] = ["standard", "pro", "master"];
 
   const checkoutStatus = searchParams.get("checkout");
+  const checkoutSessionId = searchParams.get("session_id");
+
+  // Credit tokens when returning from Stripe — works even if webhooks never hit localhost.
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn) return;
+    if (checkoutStatus !== "success") return;
+    if (confirmStarted.current) return;
+    confirmStarted.current = true;
+
+    void (async () => {
+      try {
+        const res = await fetch("/api/stripe/confirm-checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(
+            checkoutSessionId ? { sessionId: checkoutSessionId } : {},
+          ),
+        });
+        const data = (await res.json()) as {
+          error?: string;
+          tokensGranted?: number;
+          creditBalance?: number;
+        };
+        if (!res.ok) {
+          setConfirmNote(data.error ?? p.checkoutError);
+          return;
+        }
+        const granted = typeof data.tokensGranted === "number" ? data.tokensGranted : 0;
+        const bal = typeof data.creditBalance === "number" ? data.creditBalance : null;
+        if (granted > 0) {
+          setConfirmNote(
+            bal != null
+              ? `${p.checkoutSuccess} (+${granted} · balance ${bal})`
+              : p.checkoutSuccess,
+          );
+        } else {
+          setConfirmNote(
+            bal != null ? `${p.checkoutSuccess} (balance ${bal})` : p.checkoutSuccess,
+          );
+        }
+      } catch {
+        setConfirmNote(p.checkoutSuccess);
+      }
+    })();
+  }, [isLoaded, isSignedIn, checkoutStatus, checkoutSessionId, p.checkoutError, p.checkoutSuccess]);
 
   async function startCheckout(body: Record<string, string>) {
     setCheckoutError(null);
@@ -133,7 +180,7 @@ export function PricingPageClient() {
       <div className="mx-auto max-w-6xl px-6">
         {checkoutStatus === "success" ? (
           <div className="mb-8 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-900">
-            {p.checkoutSuccess}
+            {confirmNote ?? p.checkoutSuccess}
           </div>
         ) : null}
         {checkoutStatus === "cancel" ? (

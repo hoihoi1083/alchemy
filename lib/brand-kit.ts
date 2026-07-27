@@ -7,6 +7,12 @@ export type BrandKit = {
   accentColor: string;
   fontPreset: "noto" | "pingfang" | "inter";
   tagline: string;
+  /**
+   * When true and a logo is set: stamp Brand kit logo onto every storyboard still.
+   * Last scene = centered hero; earlier scenes = corner badge.
+   * Default false — no logo unless the user opts in.
+   */
+  useBrandLogo: boolean;
   updatedAt: string;
 };
 
@@ -20,6 +26,7 @@ export const DEFAULT_BRAND_KIT: BrandKit = {
   accentColor: "#f59e0b",
   fontPreset: "noto",
   tagline: "",
+  useBrandLogo: false,
   updatedAt: new Date(0).toISOString(),
 };
 
@@ -27,6 +34,8 @@ export function parseBrandKit(raw: unknown): BrandKit {
   if (!raw || typeof raw !== "object") return { ...DEFAULT_BRAND_KIT };
   const row = raw as Record<string, unknown>;
   const font = row.fontPreset;
+  // Accept legacy endWithBrandLogo from older kits.
+  const useBrandLogo = row.useBrandLogo === true || row.endWithBrandLogo === true;
   return {
     logoUrl: typeof row.logoUrl === "string" ? row.logoUrl : null,
     logoPipelinePath: typeof row.logoPipelinePath === "string" ? row.logoPipelinePath : null,
@@ -36,6 +45,7 @@ export function parseBrandKit(raw: unknown): BrandKit {
     accentColor: typeof row.accentColor === "string" ? row.accentColor : DEFAULT_BRAND_KIT.accentColor,
     fontPreset: font === "pingfang" || font === "inter" ? font : "noto",
     tagline: typeof row.tagline === "string" ? row.tagline : "",
+    useBrandLogo,
     updatedAt: typeof row.updatedAt === "string" ? row.updatedAt : new Date().toISOString(),
   };
 }

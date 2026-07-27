@@ -189,7 +189,7 @@ async function runRefineEdit(
       return NextResponse.json(
         {
           error:
-            "Image URL missing in model response. Check endpoint and schema on fal.ai model page.",
+            "Image URL missing in model response. Please try again.",
           raw: result.data,
         },
         { status: 502 },
@@ -725,7 +725,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error:
-            "Image URL missing in model response. Check endpoint and schema on fal.ai model page.",
+            "Image URL missing in model response. Please try again.",
           raw: result.data,
         },
         { status: 502 },

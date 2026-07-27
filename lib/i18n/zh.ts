@@ -155,6 +155,14 @@ export const zh = {
     captionsLink: "為任何影片加字幕、BGM 同口播",
     imageCanvasLink: "為任何圖片加字同 Logo",
     ugcLink: "試 UGC 數字人口播",
+    brandKitLink: "設定品牌套件",
+    brandKitBadge: "創作前準備",
+    brandKitTitle: "上傳一次 Logo，之後每條 Reel 都用得着",
+    brandKitBody:
+      "建議上傳透明底 PNG。工作室生成分鏡／電影感靜幀時會用到你嘅品牌 Logo。",
+    brandKitLogoTip:
+      "提示：接近正方形、Logo 佔畫面大部分、約 512–1024px — 唔好細到只佔一角嘅大空白圖。",
+    brandKitCta: "繼續去工作室",
     visualCaptionsLink: "視覺字幕實驗室（Beta）",
     templatesBadge: "模板",
     templatesTitle: "由營銷模板開始",
@@ -164,7 +172,7 @@ export const zh = {
     templateOutputVideo: "影片 Reel",
     howInlineIntro: "由產品到 Reels，三步完成。",
     howReadMore: "完整指南 →",
-    demoItems: ["產品相輸入", "風格 + Prompt 引導", "故事分鏡場景", "Seedance 影片輸出"],
+    demoItems: ["產品相輸入", "風格 + Prompt 引導", "故事分鏡場景", "影片生成 影片輸出"],
     steps: [
       {
         no: "01",
@@ -179,7 +187,7 @@ export const zh = {
       {
         no: "03",
         title: "輸出最終影片",
-        body: "用引導 prompt + Seedance 生成最終 Reels。",
+        body: "用引導 prompt + 影片生成 生成最終 Reels。",
       },
     ],
     quickStart: {
@@ -264,7 +272,7 @@ export const zh = {
       },
       {
         title: "對應真實 AI 用量",
-        body: "費用反映 fal.ai 圖片/影片同規劃 API — 唔係虛擬點數。",
+        body: "費用反映 系統 圖片/影片同規劃 API — 唔係虛擬點數。",
       },
       {
         title: "加購唔使升級",
@@ -405,52 +413,52 @@ export const zh = {
     videoOutputTypes: {
       "storyboard-reel": {
         title: "分鏡短片",
-        pipeline: "第 2 步：場景圖（可預覽）→ 第 3 步：Seedance 拼接成一條片（硬切）",
+        pipeline: "第 2 步：場景圖（可預覽）→ 第 3 步：影片生成 拼接成一條片（硬切）",
         pipelineImageStep: "在下方生成場景圖 — 每格對應影片 @Image1、@Image2…",
         pipelineReady: "已準備 {count} 格場景圖 → 第 3 步合成",
         confidence: "想先預覽再出片時最穩陣 — 內容研究短片、多節奏廣告",
       },
       "animate-keyframe": {
         title: "單圖動態",
-        pipeline: "一張關鍵圖（第 2 步或上傳）→ Seedance 加流暢動態 — 單場景、無硬切",
+        pipeline: "一張關鍵圖（第 2 步或上傳）→ 影片生成 加流暢動態 — 單場景、無硬切",
         pipelineImageStep: "下方圖片會成為影片關鍵幀",
         pipelineReady: "關鍵圖已準備 → 第 3 步動畫化",
         confidence: "一張產品相或廣告圖快速出 6–8 秒 — 推／拉／環繞",
       },
       "reference-motion": {
         title: "跟參考片節奏",
-        pipeline: "參考 MP4 定節奏（@Video1）→ Seedance 生成節奏相近的新片",
+        pipeline: "參考 MP4 定節奏（@Video1）→ 影片生成 生成節奏相近的新片",
         pipelineImageStep: "Setup 已分析參考片 — 可選產品／關鍵圖作 @Image1",
         pipelineReady: "參考片已分析 → 可生成",
         confidence: "跟 viral 節奏 — 預覽少過分鏡；一次生成",
       },
       "text-reel": {
         title: "純文案短片",
-        pipeline: "概念文案 → Seedance 文字出片 — 唔使關鍵圖",
+        pipeline: "概念文案 → 影片生成 文字出片 — 唔使關鍵圖",
         pipelineImageStep: "跳過圖片步驟 — 用 Setup 文案",
         pipelineReady: "Prompt 已準備 → 生成影片",
         confidence: "概念／品牌文案、唔需要 hero 圖",
       },
       "product-assistant": {
         title: "AI 產品影片",
-        pipeline: "上傳產品＋多角度 → AI 規劃情境 → Seedance 短片",
+        pipeline: "上傳產品＋多角度 → AI 規劃情境 → 影片生成 短片",
         pipelineImageStep: "請先在影片步驟上傳產品套圖",
         pipelineReady: "套圖已分析 → 生成情境片",
         confidence: "實體產品、多張相時最啱",
       },
       "cinematic-reel": {
         title: "電影感短片",
-        pipeline: "氛圍關鍵幀 → 每段 8 秒 Seedance（多段會拼接）",
+        pipeline: "氛圍關鍵幀 → 每段 8 秒 影片生成（多段會拼接）",
         pipelineImageStep: "在下方生成電影感關鍵幀",
         pipelineReady: "關鍵幀已準備 → 第 3 步動態",
         confidence: "概念氛圍場景 — 賣點放字幕／配音",
       },
       "digital-presenter": {
         title: "UGC 數字人口播",
-        pipeline: "產品關鍵幀 → HeyGen Avatar IV 對嘴講稿（約 $0.10/秒）",
+        pipeline: "產品關鍵幀 → digital presenter 對嘴講稿（約 $0.10/秒）",
         pipelineImageStep: "在下方生成口播關鍵幀（產品喺手腕／手上）",
         pipelineReady: "關鍵幀已準備 → 第 3 步數字人對嘴",
-        confidence: "手鍊／飾品帶貨片 — 唔係 Seedance 單圖動態",
+        confidence: "手鍊／飾品帶貨片 — 唔係 影片生成 單圖動態",
       },
     },
     visualStyleLabel: "畫面風格",
@@ -458,13 +466,13 @@ export const zh = {
     visualStyleHintVideoOnly:
       "只整影片：隱藏資訊海報、品牌出圖、Campaign 套圖（專為有相無圖嘅流程）",
     visualStyleHintCombined:
-      "相片＋影片：先出圖再做片。「故事分鏡片」= DeepSeek 規劃多場景 → 多圖 → 一條 Seedance 片。",
+      "相片＋影片：先出圖再做片。「故事分鏡片」= AI 規劃多場景 → 多圖 → 一條 影片生成 片。",
     styleModeLabel: "風格集合",
     styleModeSimple: "顯示精簡（推薦）",
     styleModeAll: "顯示全部風格",
     artStyleLabel: "畫面風格（關鍵圖）",
     artStyleHint:
-      "控制 Nano Banana 關鍵圖外觀 — Seedance 只負責動態。選漫畫／水彩／3D 時，成張圖（包括文字）都會用該風格；含大量文案的 product ad 建議用「概念 cinematic」或寫實。",
+      "控制 AI 出圖 關鍵圖外觀 — 影片生成 只負責動態。選漫畫／水彩／3D 時，成張圖（包括文字）都會用該風格；含大量文案的 product ad 建議用「概念 cinematic」或寫實。",
     artStyles: {
       realistic: {
         title: "寫實相片",
@@ -519,11 +527,11 @@ export const zh = {
       },
       "brand-video": {
         title: "品牌影片分析",
-        description: "分析官網 / 社交 → DeepSeek 寫 Seedance 影片 prompt",
+        description: "分析官網 / 社交 → AI 寫 影片生成 影片 prompt",
       },
       "creative-video": {
         title: "創意影片 Prompt",
-        description: "用中文描述你想拍嘅 Reel → AI 寫 Seedance 運鏡 prompt",
+        description: "用中文描述你想拍嘅 Reel → AI 寫 影片生成 運鏡 prompt",
       },
       "concept-cinematic": {
         title: "概念電影感短片",
@@ -531,11 +539,11 @@ export const zh = {
       },
       "storyboard-video": {
         title: "故事分鏡片",
-        description: "DeepSeek 按產品寫分鏡 → Nano Banana 出多張場景圖 → Seedance 一條片（@Image 分鏡）",
+        description: "AI 按產品寫分鏡 → AI 出圖 出多張場景圖 → 影片生成 一條片（@Image 分鏡）",
       },
       "ugc-presenter": {
         title: "UGC 數字人口播",
-        description: "產品關鍵幀 → HeyGen 對嘴講稿（似 viral 帶貨短片）",
+        description: "產品關鍵幀 → digital presenter 對嘴講稿（似 viral 帶貨短片）",
       },
       "paper-layout": {
         title: "固定紙片版面（舊式）",
@@ -567,25 +575,25 @@ export const zh = {
       "creative-video": "",
       "concept-cinematic": "概念電影感風格：戲劇光影、景深、情緒節奏，避免畫面內文字。",
       "storyboard-video":
-        "似真商業片：DeepSeek 按你件貨類型規劃場景（手鏈、洗鼻器、護膚等），唔會固定手鏈模板",
+        "似真商業片：AI 按你件貨類型規劃場景（手鏈、洗鼻器、護膚等），唔會固定手鏈模板",
       "ugc-presenter":
-        "UGC 口播關鍵幀 + HeyGen 對嘴 — 適合手鏈／飾品帶貨片",
+        "UGC 口播關鍵幀 + digital presenter 對嘴 — 適合手鏈／飾品帶貨片",
       "paper-layout": "",
       "service-promo": "服務推廣 — 以排版同信任感為主，唔係產品 hero",
       "pricing-offer": "方案／優惠卡 — 清晰 CTA；價錢只用你填嘅 offer",
       "website-launch": "上線推廣 — App／網站 mockup；logo／截圖可選",
     },
     brandVideoIntro:
-      "貼官網或 IG @handle。DeepSeek 會分析品牌，再為 Seedance 寫專用影片 prompt（運鏡、氛圍）。上傳產品相片後生成 Reels。",
+      "貼官網或 IG @handle。AI 會分析品牌，再為 影片生成 寫專用影片 prompt（運鏡、氛圍）。上傳產品相片後生成 Reels。",
     modelWearIntro:
       "上傳產品相，AI 會生成似真模特兒佩戴或使用產品嘅 9:16 廣告圖。手鏈／手串會上手；洗鼻器等會示範用法。進階可揀「主體取景」控制露臉或只手。",
     creativeVideoIntro:
-      "用中文描述你想拍嘅短片（例如：功夫對打後飲能量飲品）。DeepSeek 會寫 Seedance 運鏡 prompt，並提示點樣用參考片 / 雙畫面做到完整故事。只需影片步驟 — 上傳產品相片或關鍵圖即可。",
+      "用中文描述你想拍嘅短片（例如：功夫對打後飲能量飲品）。AI 會寫 影片生成 運鏡 prompt，並提示點樣用參考片 / 雙畫面做到完整故事。只需影片步驟 — 上傳產品相片或關鍵圖即可。",
     creativeBriefLabel: "創意影片描述（必填）",
     creativeBriefPlaceholder:
       "例如：開場一人對五人功夫對峙，打贏後拿起能量飲品喝一口 — 電影感、節奏快",
     brandCampaignIntro:
-      "分析完品牌後，會用 DeepSeek 規劃 3 張串連 post，再逐張生成 — 同一品牌 DNA，唔同 message。",
+      "分析完品牌後，會用 AI 規劃 3 張串連 post，再逐張生成 — 同一品牌 DNA，唔同 message。",
     brandFitTitle: "品牌風格分析（選填）",
     brandFitTitleRequired: "品牌風格分析（選填）",
     brandFitIntro:
@@ -633,7 +641,7 @@ export const zh = {
     campaignThemeLabel: "Campaign 主題（選填）",
     campaignThemePlaceholder: "例如：開張優惠三連 post、新品功效系列…",
     imageOutputModeLabel: "出圖數量",
-    imageOutputModeHint: "Campaign 會出 3 張概念串連嘅圖（約 3× API 成本 + DeepSeek 規劃）",
+    imageOutputModeHint: "Campaign 會出 3 張概念串連嘅圖（約 3× API 成本 + AI 規劃）",
     imageKeyframeModeLabel: "關鍵幀數量",
     imageKeyframeModeHint:
       "圖→片只需 1 張關鍵幀做動態（可選 A/B 揀一張）。唔係故事分鏡；Campaign／教學輪播請用「只要圖」。",
@@ -713,27 +721,27 @@ export const zh = {
     storyboardBriefPlaceholder:
       "例如：似真拍攝、柔和光線；洗鼻器示範用法；唔要價錢；可以露手唔露樣…",
     storyboardIntro:
-      "DeepSeek 會按產品類型規劃分鏡（幾個場景、每張圖拍咩），再自動寫 Seedance @Image 分鏡 prompt — 唔係固定手鏈模板。",
+      "AI 會按產品類型規劃分鏡（幾個場景、每張圖拍咩），再自動寫 影片生成 @Image 分鏡 prompt — 唔係固定手鏈模板。",
     storyboardGenerating: "規劃分鏡並生成場景圖中…（約 2–5 分鐘，視場景數量）",
-    storyboardProgressPlanning: "DeepSeek 規劃分鏡中…",
+    storyboardProgressPlanning: "AI 規劃分鏡中…",
     storyboardProgressRendering: "生成場景圖 {current}/{total}…",
     progressEta: "預計尚餘 ~{seconds} 秒",
     storyboardPlanLabel: "分鏡大綱",
     storyboardPlanReviewHint:
-      "先用 DeepSeek 出分鏡大綱，改到啱再生成場景圖。唔啱嘅場景描述／畫面字可以直接改。",
-    storyboardPlanBtn: "生成分鏡大綱（DeepSeek）",
-    storyboardPlanBusy: "DeepSeek 規劃中…",
+      "先用 AI 出分鏡大綱，改到啱再生成場景圖。唔啱嘅場景描述／畫面字可以直接改。",
+    storyboardPlanBtn: "生成分鏡大綱",
+    storyboardPlanBusy: "AI 規劃中…",
     storyboardPlanReplanBtn: "重新規劃大綱",
     storyboardPlanThemeLabel: "故事主題",
     storyboardPlanSceneDescLabel: "場景描述",
     storyboardPlanCopyLabel: "畫面字（選填）",
     storyboardSceneLabel: "場景",
     storyboardVideoIntro:
-      "已規劃分鏡同場景圖。生成影片會用 Kling 逐格圖生影片再拼接（唔再先等 Seedance）。",
-    storyboardVideoPreflight: "模式：Kling 逐場景圖生影片 + 拼接（跳過 Seedance R2V）",
+      "已規劃分鏡同場景圖。生成影片會用 逐格圖生影片再拼接（唔再先等 影片生成）。",
+    storyboardVideoPreflight: "模式：逐場景圖生影片 + 拼接（跳過 reference video）",
     klingStoryboardFallbackNote:
-      "Kling 分鏡路徑 — 每格靜幀 → 短片再拼接（避開 Seedance 真人政策同超時）",
-    klingStoryboardClipCount: "Kling 片段 × {n}",
+      "分鏡影片 — 每格靜幀變成短片，再拼接成完整片",
+    klingStoryboardClipCount: "片段 × {n}",
     storyboardDurationLabel: "目標片長",
     storyboardDurationHint: "會影響分鏡場景數量。改咗片長請重新生成場景圖。",
     storyboardAllScenesHint:
@@ -743,29 +751,35 @@ export const zh = {
     storyboardTrimDurationLabel: "片長裁剪預設",
     storyboardSceneCountLabel: "場景數量",
     storyboardSceneCountAuto: "自動",
-    storyboardSceneCountHint: "片長會同步去步驟 3 影片設定。場景數量控制 DeepSeek 規劃幾張圖。",
+    storyboardSceneCountHint: "片長會同步去步驟 3 影片設定。場景數量控制 AI 規劃幾張圖。",
     storyboardEditorHint: "迷你編輯器：可調場景順序、逐張替換，再喺 app 內重生影片。",
     storyboardMoveUpBtn: "上移",
     storyboardMoveDownBtn: "下移",
     storyboardReplaceImageBtn: "替換相片",
     storyboardRegenerateAiBtn: "AI 重新生成",
-    storyboardRegenerateAiCostHint: "會額外用 1 次出圖（需收費）。",
+    storyboardRegenerateAiCostHint: "按新場景出圖收費（開啟品牌 Logo 時為 2 倍 Token）。",
+    storyboardStampLogoBtn: "印上品牌 Logo",
+    storyboardStampingLogo: "印 Logo 中…",
+    storyboardStampLogoHint:
+      "最後一幕：置中印上 Brand kit Logo（唔經 AI、唔收費）。",
+    storyboardStampLogoCornerHint:
+      "角標印上 Brand kit Logo（唔經 AI、唔收費）。",
     storyboardReplacingImage: "替換中…",
     storyboardRegeneratingImage: "生成中…",
     storyboardRegenerateConfirm: "即刻用 AI 重新生成場景 {scene}？呢次會新增模型調用並再次收費。",
     storyboardKeyframeSectionTitle: "分鏡參考圖（@Image1…@ImageN）",
-    storyboardPromptLabel: "Seedance 分鏡 Prompt",
-    storyboardPromptHint: "DeepSeek 已為每個場景標記 @Image1、@Image2… 檢查後再生成影片。",
+    storyboardPromptLabel: "影片生成 分鏡 Prompt",
+    storyboardPromptHint: "AI 已為每個場景標記 @Image1、@Image2… 檢查後再生成影片。",
     storyboardPromptEditLabel: "編輯分鏡 Prompt（進階）",
     ugcPresenter: {
       setupIntro:
-        "第 2 步：Nano Banana 出對嘴關鍵幀（產品喺手）。第 3 步：HeyGen Avatar IV 對你嘅廣告包講稿（約 $0.10/秒）。請先規劃廣告包同預聽聲線。",
+        "第 2 步：AI 出圖 出對嘴關鍵幀（產品喺手）。第 3 步：digital presenter 對你嘅廣告包講稿（約 $0.10/秒）。請先規劃廣告包同預聽聲線。",
       imageStepIntro:
-        "生成 UGC 口播關鍵幀 — 面清晰、產品喺手腕／手上。用呢張圖做 HeyGen 動畫（唔係 Seedance）。",
+        "生成 UGC 口播關鍵幀 — 面清晰、產品喺手腕／手上。用呢張圖做 digital presenter 動畫（唔係 影片生成）。",
       videoStepIntro:
         "開啟廣告包 → 規劃講稿 → 預聽聲線 → 生成影片。對嘴已燒入片內。",
-      imagePreflight: "模式：HeyGen 口播關鍵幀（對嘴、手持產品）",
-      videoPreflight: "模式：HeyGen Avatar IV 對嘴（唔係 Seedance）",
+      imagePreflight: "模式：digital presenter 口播關鍵幀（對嘴、手持產品）",
+      videoPreflight: "模式：digital presenter 對嘴（唔係 影片生成）",
       voiceBakedInNote: "口播已對嘴燒入影片 — 唔會再配音覆蓋。",
       needScript: "需要廣告包口播講稿先可以生成數字人影片。",
       needAdPackHint: "請先開啟廣告包 — 規劃講稿（同預聽聲線）再生成。",
@@ -775,20 +789,20 @@ export const zh = {
     videoPathsTitle: "影片主路徑",
     videoPathsHint: "揀點樣整 Reel；推薦用 AI 影片助手（上傳產品相片套裝）。",
     videoAssistantStepHint:
-      "已選 AI 影片助手 — 按「繼續」到步驟 3 上傳產品、包裝同角度相片，AI 會分析並寫 Seedance prompt。",
+      "已選 AI 影片助手 — 按「繼續」到步驟 3 上傳產品、包裝同角度相片，AI 會分析並寫 影片生成 prompt。",
     primaryPathsShortcutNote:
       "呢兩個係快捷入口；進階入面一樣可以揀返同一風格，而且選項更多。",
     primaryPathsHiddenResearchHint:
       "已透過內容研究設定參考排版同出圖模式 — 可直接填產品相片同文案，然後繼續。",
     pathQuickTitle: "快速廣告",
     pathQuickDesc: "大部分產品可用，快速出圖/出片。",
-    pathQuickVideoDesc: "一張產品相 + AI 寫 Seedance 運鏡 prompt → 短宣傳片。",
+    pathQuickVideoDesc: "一張產品相 + AI 寫 影片生成 運鏡 prompt → 短宣傳片。",
     pathModelTitle: "模特兒佩戴／使用",
     pathModelDesc: "模特兒風格快捷入口（進階都可以揀到同一款）。",
     pathStoryboardTitle: "故事分鏡片",
-    pathStoryboardDesc: "DeepSeek 規劃多場景故事再出片。",
+    pathStoryboardDesc: "AI 規劃多場景故事再出片。",
     pathUgcPresenterTitle: "UGC 數字人口播",
-    pathUgcPresenterDesc: "對嘴講稿帶貨片（關鍵幀 + HeyGen）。",
+    pathUgcPresenterDesc: "對嘴講稿帶貨片（關鍵幀 + digital presenter）。",
     pathReferenceTitle: "參考排版廣告",
     pathReferenceDesc: "上傳參考廣告圖 — 保留排版，換成你嘅產品同文案。",
     pathReferenceVideoTitle: "跟參考短片",
@@ -802,7 +816,7 @@ export const zh = {
       "同一套概念會用嚟做影片，唔使上傳產品相。揀風格、套用欄位，再繼續去影片步驟。",
     closestMatchRecipeTitle: "最接近範例配方（電影感社交片）",
     closestMatchRecipeHint:
-      "圖片→影片流程：3 張 AI 關鍵幀 + 3 段 Seedance 片段拼接（約 24 秒）。先出無聲片 — 完成後再加 BGM 同字幕。",
+      "圖片→影片流程：3 張 AI 關鍵幀 + 3 段 影片生成 片段拼接（約 24 秒）。先出無聲片 — 完成後再加 BGM 同字幕。",
     closestMatchRecipeApply: "套用最接近配方",
     closestMatchRecipeApplied: "已套用最接近配方",
     quickTest8sRecipeTitle: "8 秒測試配方（慳成本）",
@@ -812,14 +826,14 @@ export const zh = {
     quickTest8sRecipeApplied: "已套用 8 秒測試配方",
     conceptCinematicPathsTitle: "概念電影感 Reel（圖片→影片）",
     conceptCinematicPathsHint:
-      "先生成靜態關鍵幀，再用 Seedance 做動態。 viral 電影感 Reel 質素最好 — 唔建議純文字出片。",
+      "先生成靜態關鍵幀，再用 影片生成 做動態。 viral 電影感 Reel 質素最好 — 唔建議純文字出片。",
     conceptCinematicSingleTitle: "單場景（約 8 秒）",
     conceptCinematicSingleDesc: "一張關鍵幀 + 一段短片 — 快速電影感 hook。",
     conceptCinematicSingleImageStepIntro:
       "8 秒電影感模式：撳「生成電影感關鍵幀」會自動規劃 1 個場景 + 1 張關鍵幀（唔需要產品相片）。",
     conceptCinematicSingleOutputTitle: "出圖：1 張電影感關鍵幀",
     conceptCinematicSingleOutputDesc:
-      "會用 DeepSeek 規劃場景同 Seedance 動態 prompt，再生成 1 張 9:16 關鍵幀。",
+      "會用 AI 規劃場景同 影片生成 動態 prompt，再生成 1 張 9:16 關鍵幀。",
     conceptCinematicSingleNoPosterHint:
       "⚠️ 關鍵幀係電影感場景（酒吧、人物、氣氛）— 唔係產品海報。文案會喺之後用字幕／口播加入，唔會燒入圖片。",
     conceptSocialImageStepIntro:
@@ -833,16 +847,16 @@ export const zh = {
     conceptCinematicSingleGenerateBtn: "生成電影感關鍵幀",
     conceptCinematicSingleGenerating: "規劃場景並生成關鍵幀中…",
     imagePreflightConceptCinematicSingle:
-      "8 秒電影感：DeepSeek 規劃 1 個場景 + 1 張關鍵幀。",
+      "8 秒電影感：AI 規劃 1 個場景 + 1 張關鍵幀。",
     imagePreflightConceptSocial:
       "概念社交帖：醒目 IG/FB 創意圖，hook 同 CTA 融入版面 — 唔係白底資訊圖海報。",
     conceptCinematicSingleVideoStepIntro:
-      "8 秒 Reel：撳「生成完整 Reel」會做 1 段 Seedance（無聲片 — 完成後再加 BGM／字幕）。",
+      "8 秒 Reel：撳「生成完整 Reel」會做 1 段 影片生成（無聲片 — 完成後再加 BGM／字幕）。",
     conceptCinematicSingleGenerateVideoBtn: "生成完整 Reel（8 秒）",
     conceptCinematicSingleSceneReady: "已準備關鍵幀 — 0–8 秒",
     conceptCinematicSingleRecipeSteps: [
       "1) Setup 填好概念，Step 2 撳「生成電影感關鍵幀」。",
-      "2) Step 3 撳「生成完整 Reel」— 出無聲 Seedance 片。",
+      "2) Step 3 撳「生成完整 Reel」— 出無聲 影片生成 片。",
       "3) 完成後可下載，或去字幕同音頻工作室加 BGM 同字。",
     ],
     conceptCinematicStitchTitle: "多場景拼接",
@@ -851,34 +865,36 @@ export const zh = {
     cinematicSceneCountOption: "{count} 場景（約 {totalSec} 秒）",
     cinematicSceneCountTotalHint: "≈ {totalSec} 秒總長",
     cinematicSceneCountHint:
-      "DeepSeek 會按場景數量規劃腳本節拍。每段 8 秒；場景越多節奏越快，成本越高。",
+      "AI 會按場景數量規劃腳本節拍。每段 8 秒；場景越多節奏越快，成本越高。",
     imagePreflightCinematicStitch:
-      "電影感拼接：DeepSeek 規劃 {count} 個場景，再生成 {count} 張關鍵幀（約 {count} 倍圖片成本）。",
+      "電影感拼接：AI 規劃 {count} 個場景，再生成 {count} 張關鍵幀（約 {count} 倍圖片成本）。",
     cinematicReelPlanLabel: "Reel 主題",
     cinematicStitchImageStepIntro:
       "{count} 場景拼接：撳一次會自動規劃並生成 {count} 張關鍵幀（約 {totalSec} 秒 Reel）。唔需要產品相片。",
     cinematicStitchOutputTitle: "出圖：{count} 張場景圖",
     cinematicStitchOutputDesc:
-      "DeepSeek 會為每個場景寫一個節拍。生成前可改場景數量 — 每場景一張圖 + 一段 Seedance。",
+      "AI 會為每個場景寫一個節拍。生成前可改場景數量 — 每場景一張圖 + 一段 影片生成。",
     cinematicStitchGenerateBtn: "生成 {count} 張關鍵幀",
     cinematicStitchGenerating: "規劃場景並生成關鍵幀中…",
-    cinematicStitchImageHint: "繼續去影片 — 會生成 {count} 段 Seedance 短片並自動拼接。",
-    cinematicStitchVideoPreflight: "{count} 場景電影感拼接：{count} 次圖生影片 + ffmpeg 拼接",
-    cinematicStitchFfmpegNote: "拼接由 ffmpeg 完成（Seedance 只負責每段 8 秒動態）",
+    cinematicStitchImageHint: "繼續去影片 — 會生成 {count} 段 影片生成 短片並自動拼接。",
+    cinematicStitchVideoPreflight: "{count} 場景電影感拼接：{count} 次圖生影片 + 本地拼接",
+    cinematicStitchFfmpegNote: "拼接喺本地完成（每段 8 秒動態分開生成）",
     cinematicLogoStampNote: "已喺出片前將品牌 logo 印喺靜幀（每場景同一位置同大小）。",
+    cinematicLogoModeBNote:
+      "勾選「場景使用品牌 Logo」時，每張靜幀會印上 Brand kit Logo（角標；最後一幕置中）。",
     cinematicLogoStampHint:
-      "喺 Brand kit 上傳你嘅 logo — 出片前會印喺每張電影靜幀（預設右上、約 11% 闊），每個場景同一位置。",
+      "喺 Brand kit 上傳 logo，再勾選「場景使用品牌 Logo」。重新生成靜幀先會套用。",
     cinematicStitchWorkflowOrder:
-      "生成順序：{count} 段 Seedance → ffmpeg 拼接。BGM 同字幕可喺完成後加。腳本／音樂可選用廣告包或字幕工作室。",
+      "生成順序：{count} 段 影片生成 → 本地拼接。BGM 同字幕可喺完成後加。腳本／音樂可選用廣告包或字幕工作室。",
     cinematicStitchVideoCost: "{count} 次影片生成 + 拼接（成本高過單段）",
     cinematicStitchClipCount: "已拼接片段",
     cinematicStitchRecipeSteps: [
       "1) Setup 填好概念、揀場景數量，Step 2 生成關鍵幀。",
-      "2) Step 3 直接撳「生成完整 Reel」— Seedance + 拼接（無聲）。",
+      "2) Step 3 直接撳「生成完整 Reel」— 影片生成 + 拼接（無聲）。",
       "3) 完成後下載無聲 MP4，或開啟字幕同音頻工作室。",
     ],
     cinematicStitchVideoStepIntro:
-      "{count} 場景拼接：撳「生成完整 Reel」會自動做 {count} 段 Seedance + 拼接（BGM／字幕之後可選）。",
+      "{count} 場景拼接：撳「生成完整 Reel」會自動做 {count} 段 影片生成 + 拼接（BGM／字幕之後可選）。",
     cinematicStitchGenerateVideoBtn: "生成完整 Reel（{count} 段拼接）",
     cinematicStitchScenesReady: "已準備 {ready}/{count} 張場景圖 — 會用晒 {count} 張做拼接",
     conceptVideoSameBriefHint:
@@ -886,7 +902,7 @@ export const zh = {
     conceptVideoImageLabel: "影片參考圖（可選）",
     conceptVideoImageHint: "海報、插圖或相片 — AI 會讀圖並規劃點樣加入影片動態。",
     conceptVideoImageOrderHint:
-      "有自己嘅圖：請先喺呢度上傳，再撳 AI 分析概念，DeepSeek 先會知道畫面有咩。",
+      "有自己嘅圖：請先喺呢度上傳，再撳 AI 分析概念，AI 先會知道畫面有咩。",
     conceptWizardTitle: "概念助手（非實體產品）",
     conceptWizardHint: "填呢 6 格，然後一鍵帶入主標題／副標／優惠同 prompt 方向。",
     conceptIdeaPlaceholder: "先用一句講你想推廣嘅概念（例如：世界盃睇波夜訂位推廣）。",
@@ -897,7 +913,7 @@ export const zh = {
     conceptCtaPlaceholder: "優惠 + 行動：而家想佢哋做咩？",
     conceptVisualMetaphorPlaceholder: "視覺隱喻：畫面應該出現咩場景／象徵？",
     conceptAnalyzeBtn: "AI 分析概念",
-    conceptAnalyzeBusy: "DeepSeek 分析概念中…",
+    conceptAnalyzeBusy: "AI 分析概念中…",
     conceptAnalyzeReady: "概念草稿已填入，請檢查後套用到欄位。",
     conceptApplyBtn: "套用到欄位",
     conceptApplyHint: "會將承諾→主標題，痛點+證據→副標，CTA→優惠，受眾+隱喻→額外要求。",
@@ -922,18 +938,18 @@ export const zh = {
     referenceCarouselBriefAnalyzed:
       "參考輪播已分析（{count} 張）— 規劃同生成會跟每張參考圖嘅排版同共享風格。",
     researchReelAnalyzed:
-      "參考短片已分析 — 畫面風格同剪接節奏跟參考片；內容用你嘅主題同文案。已用片內畫面取代搜尋縮圖做風格參考。第 2 步出場景圖，第 3 步 Seedance 合成。",
+      "參考短片已分析 — 畫面風格同剪接節奏跟參考片；內容用你嘅主題同文案。已用片內畫面取代搜尋縮圖做風格參考。第 2 步出場景圖，第 3 步 影片生成 合成。",
     referenceVideoAnalyzed:
-      "參考短片已分析 — 已按鏡頭節奏寫好 Seedance 提示；生成時會用精華蒙太奇 + 你嘅產品照。",
+      "參考短片已分析 — 已按鏡頭節奏寫好 影片生成 提示；生成時會用精華蒙太奇 + 你嘅產品照。",
     referenceVideoAnalyzing: "正在分析你上傳嘅參考短片…",
     researchReelAnalyzing: "正在分析參考短片並排分鏡…",
     researchReelAnalyzeFirstHint: "等參考短片分鏡分析完成，或上傳產品相片後再繼續。",
     referenceR2vDurationHint:
-      "長片會自動做 15 秒精華蒙太奇（開場＋中段＋結尾）俾 Seedance；分析會睇成條片。輸出 6 秒係完整小廣告節奏，唔係淨係抄頭 15 秒。",
+      "長片會自動做 15 秒精華蒙太奇（開場＋中段＋結尾）俾 影片生成；分析會睇成條片。輸出 6 秒係完整小廣告節奏，唔係淨係抄頭 15 秒。",
     researchReelSetupTitle: "參考短片 → 分鏡短片",
     researchReelSetupTitleConcept: "參考短片 → 分鏡概念短片",
     researchReelSetupIntro:
-      "揀咗熱門短片之後：下載參考 MP4 → DeepSeek 分析鏡頭節奏并排分鏡 → 上傳產品照 → 第 2 步 Nano Banana 出場景圖 → 第 3 步 Seedance 合成同款節奏短片。",
+      "揀咗熱門短片之後：下載參考 MP4 → AI 分析鏡頭節奏并排分鏡 → 上傳產品照 → 第 2 步 AI 出圖 出場景圖 → 第 3 步 影片生成 合成同款節奏短片。",
     researchReelSetupIntroConcept:
       "揀咗熱門短片之後：下載參考 MP4 → 分析畫面風格同剪接節奏 → 第 2 步用參考封面＋你嘅文案出場景圖（風格跟參考、內容跟你）→ 第 3 步合成。參考話題同你嘅主題可以完全唔同。",
     researchReelStatusPost: "已揀參考帖",
@@ -941,7 +957,7 @@ export const zh = {
     researchReelMp4Missing:
       "參考 MP4 未就緒 — 等搜尋自動下載、喺下面上傳你自己嘅 MP4，或再搜尋揀帖。",
     researchReelMp4OptionalCombined:
-      "圖文帖唔使 MP4（選填）— 會用參考圖風格 + DeepSeek 分鏡出片。",
+      "圖文帖唔使 MP4（選填）— 會用參考圖風格 + AI 分鏡出片。",
     researchReelStatusProductPhoto: "產品相片已上傳",
     researchReelStatusProductPhotoOptional: "產品相片（可在此上傳，或到第 2 步再上傳）",
     researchReelStatusConceptCopy: "主標題／概念文案已填入",
@@ -950,7 +966,7 @@ export const zh = {
     researchReelUploadMp4Hint:
       "搜尋自動下載或上傳你自己嘅 MP4/MOV — 兩種都得；分析畫面風格同剪接節奏一樣",
     researchReelPickDurationFirst:
-      "請先喺上方揀輸出片長（唔好留「自動」），參考片分析同 Seedance 出片先會按呢個長度規劃。",
+      "請先喺上方揀輸出片長（唔好留「自動」），參考片分析同 影片生成 出片先會按呢個長度規劃。",
     researchReelReanalyzeForDuration: "片長已改 — 重新分析參考片…",
     researchReelStatusOutputDuration: "輸出片長已揀（分析同計費用）",
     researchReelStatusOutputDurationMissing: "請先揀輸出片長（4–12 秒）— 參考片可以好長，出片長度以呢度為準",
@@ -972,7 +988,7 @@ export const zh = {
       "喺下面生成場景圖 — 每格跟參考片視覺風格；內容用你嘅主標題文案。",
     imageStepReferenceReelNeedStoryboardTitle: "參考短片要用分鏡模式",
     imageStepReferenceReelNeedStoryboardHint:
-      "你已上傳參考 MP4，但第 2 步仍係單張出圖模式。請切換去「故事分鏡片」，Nano Banana 才會按參考分析出多格場景圖。",
+      "你已上傳參考 MP4，但第 2 步仍係單張出圖模式。請切換去「故事分鏡片」，AI 出圖 才會按參考分析出多格場景圖。",
     imageStepReferenceReelSwitchStoryboardBtn: "切換去故事分鏡片",
     continueToSimilarVideo: "繼續 → 生成同款短片",
     referenceBriefAnalyzeFailed: "參考圖分析失敗，你仍然可以生成。",
@@ -1010,7 +1026,7 @@ export const zh = {
     teachingCarouselSlideCountOption: "{count} 張",
     teachingCarouselSlideCountHint:
       "Week 1「不用寫 Prompt」建議 5 張（封面 → 3 步 → CTA）。最多 6 張。",
-    imagePreflightStoryboard: "分鏡模式：多張場景圖 + DeepSeek 規劃。",
+    imagePreflightStoryboard: "分鏡模式：多張場景圖 + AI 規劃。",
     conceptResearchReelStoryboardImageStepIntro:
       "生成影片前先預覽每格場景圖 — 可揀長度同場景數。用主標題／概念文案驅動畫面（唔使產品相）。",
     conceptResearchReelStoryboardImagePreflight:
@@ -1129,7 +1145,7 @@ export const zh = {
     downloadSlide: "下載 PNG",
     presenterPicker: {
       title: "數碼主播",
-      hint: "用第二步關鍵幀面孔，或揀 HeyGen 庫存主播（唔使產品相）。",
+      hint: "用第二步關鍵幀面孔，或揀 digital presenter 庫存主播（唔使產品相）。",
       customKeyframe: "我嘅關鍵幀圖",
       stockAvatar: "庫存主播",
     },
@@ -1145,9 +1161,15 @@ export const zh = {
     },
     brandKit: {
       title: "品牌套件",
-      hint: "顏色同標語會引導 AI 畫面風格。Logo 請喺出圖後自己加（快速小修或畫布）。",
+      hint: "上傳一次 Logo。勾選下面「場景使用品牌 Logo」先會印落每張靜幀。",
       uploadLogo: "上傳 Logo",
       changeLogo: "更換 Logo",
+      endWithLogoLabel: "場景使用品牌 Logo",
+      endWithLogoHint:
+        "勾選＝AI 出圖 每張靜幀加 Logo（2 次出圖；最後一幕置中）。唔勾＝唔印 Logo。",
+      useLogoLabel: "場景使用品牌 Logo",
+      useLogoHint:
+        "勾選＝每張靜幀加你嘅 Logo（2 倍出圖 Token；最後一幕置中）。唔勾＝唔印 Logo。",
       primaryColor: "主色",
       secondaryColor: "副色",
       accentColor: "強調色",
@@ -1188,7 +1210,7 @@ export const zh = {
     referenceConceptOverridesStyle:
       "參考圖模式：設計跟參考廣告；場地、光線、背景配合產品同畫面風格（例如暗黑精品只影響光線氛圍）。進階可揀「只出手」若參考圖係上手佩戴。",
     referenceConceptStyleOnlyHint:
-      "已上傳風格參考 — 會把參考圖送俾 Nano Banana，跟參考片嘅視覺風格同排版語法；主標／副標同場景內容用你自己嘅主題（可以同參考片完全唔同）。",
+      "已上傳風格參考 — 會把參考圖送俾 AI 出圖，跟參考片嘅視覺風格同排版語法；主標／副標同場景內容用你自己嘅主題（可以同參考片完全唔同）。",
     referenceOptionalCopyHint:
       "參考圖負責排版同風格。主標、副標會用研究「為你改寫」預填，你可隨時修改；留空則生成簡潔產品圖。",
     imageRefAutoModeNote:
@@ -1206,7 +1228,7 @@ export const zh = {
       "概念模式：你嘅訊息（例如叫人唔好打架、一個打十個比喻）會變成影片 brief。揀「概念影片」→ 規劃 AI prompt → 生成；唔使上傳產品相。",
     conceptVideoPromptSectionTitle: "AI 影片 prompt（來自概念）",
     conceptVideoPromptSectionHint:
-      "唔使關鍵圖 — Seedance 會由文字出片。請先喺上面按「規劃 AI 影片 prompt」。",
+      "唔使關鍵圖 — 影片生成 會由文字出片。請先喺上面按「規劃 AI 影片 prompt」。",
     conceptVideoPromptPending:
       "請先按上面「規劃 AI 影片 prompt」— Concept Wizard 嘅內容會變成運鏡 brief。",
     conceptVideoReferenceModeTitle: "跟參考片模式",
@@ -1221,7 +1243,7 @@ export const zh = {
     cinematicRecipeTitle: "概念電影感配方（推薦流程）",
     cinematicRecipeSteps: [
       "1) Step 2 生成電影感關鍵幀（或上傳參考圖）。",
-      "2) 影片步驟按「AI 規劃影片 Prompt」寫 Seedance 運鏡文案。",
+      "2) 影片步驟按「AI 規劃影片 Prompt」寫 影片生成 運鏡文案。",
       "3) 按「規劃腳本與音樂」，揀一首 AI 音樂。",
       "4) 生成影片 — 圖片→影片，可加口播同燒錄字幕。",
     ],
@@ -1229,7 +1251,7 @@ export const zh = {
     videoCreativeModes: {
       "product-assistant": {
         title: "AI 影片助手",
-        description: "上傳產品 + 包裝 + 角度 → AI 分析相片 → 寫 Seedance 情境 prompt",
+        description: "上傳產品 + 包裝 + 角度 → AI 分析相片 → 寫 影片生成 情境 prompt",
       },
       "product-promo": {
         title: "產品宣傳片",
@@ -1250,7 +1272,7 @@ export const zh = {
       "參考短片已決定節奏與動態——請選擇生成影片的片長與清晰度。",
     videoSetupOutputSettingsTitle: "輸出片長與畫質（影響收費）",
     videoSetupOutputSettingsHint:
-      "fal.ai 按 Seedance 片長同解像度計費 — 請喺上傳參考片／分析前先揀。參考 MP4 可以好長；實際出片以呢度嘅片長為準（AI 會將參考節奏壓縮成完整短片）。",
+      "Token 按影片片長同解像度計費 — 請喺上傳參考片／分析前先揀。參考 MP4 可以好長；實際出片以呢度嘅片長為準（AI 會將參考節奏壓縮成完整短片）。",
     videoSettingsResolution: "解像度",
     videoResolutionPlanHint: "你目前方案最高 {max}。",
     videoResolutionUpgradeLink: "升級以解鎖更高解像度",
@@ -1264,7 +1286,7 @@ export const zh = {
     },
     videoAutoSecondFrame: "自動整第二個畫面（一張相 → 影片更有變化）",
     videoAutoSecondFrameHint:
-      "AI 會生成另一個角度（例如上手佩戴）作為結尾畫面，Seedance 由頭行到尾 — 唔係淨係 zoom。",
+      "AI 會生成另一個角度（例如上手佩戴）作為結尾畫面，影片生成 由頭行到尾 — 唔係淨係 zoom。",
     extraAnglesLabel: "更多產品角度（選填）",
     extraAnglesHint: "同一款貨 2–3 張相 — 多角度動態，比單張 zoom 更靚",
     extraAnglesCta: "加入角度相片",
@@ -1289,7 +1311,7 @@ export const zh = {
     },
     preGenerate: {
       title: "生成前檢查（唔使識晒所有設定）",
-      hint: "DeepSeek 已根據你嘅概念填好 — 檢查下面 3 項，再撳「生成完整 Reel」。",
+      hint: "AI 已根據你嘅概念填好 — 檢查下面 3 項，再撳「生成完整 Reel」。",
       keyframeLabel: "關鍵圖",
       keyframeReady: "已準備",
       keyframeMissing: "請先喺步驟 2 生成關鍵圖",
@@ -1314,11 +1336,11 @@ export const zh = {
     setupHints: {
       "image-only": "下一步：用文字描述、一張參考圖、或產品相+風格參考圖來整相片。",
       "video-only": "下一步：上傳產品靜態圖（@Image1），可選參考廣告 MP4 跟運鏡（@Video1）。",
-      combined: "下一步：先 AI 整圖，再 Seedance 做片 — 影片步驟可上傳參考 MP4。",
+      combined: "下一步：先 AI 整圖，再 影片生成 做片 — 影片步驟可上傳參考 MP4。",
     },
     setupCallouts: {
       "image-only": "只整相片 — 冇影片步驟。下一步揀點樣生成圖片。",
-      "video-only": "只整影片 — Seedance + BGM。下一步上傳產品相同可選參考廣告 MP4。",
+      "video-only": "只整影片 — 影片生成 + BGM。下一步上傳產品相同可選參考廣告 MP4。",
       combined: "完整廣告 — 先生成/美化相片，再做動態。參考 MP4 跟返之前嘅運鏡功能。",
     },
     imageInputLabel: "你想點樣整張圖？",
@@ -1351,7 +1373,7 @@ export const zh = {
     mobileVideoNeedPrompt: "請先規劃或填寫影片 prompt。",
     mobileVideoNeedPlan: "請先用 AI 規劃影片（產品助手）。",
     mobileVideoBlocked: "請先完成上面步驟再出片。",
-    step2Title: "步驟 2 — 宣傳圖（Nano Banana 2）",
+    step2Title: "步驟 2 — 宣傳圖（AI 出圖）",
     step2Hint: "上傳產品相。AI 為你生成新廣告圖；若揀咗參考概念，會跟參考圖重新設計（唔照抄）。",
     step2Hints: {
       "image-only": "下面揀一種方式，生成後下載 — 唔會做影片。",
@@ -1361,19 +1383,19 @@ export const zh = {
     imageModelLabel: "相片 AI 模型",
     imageModels: {
       "nano-banana-2-edit": {
-        label: "Nano Banana 2 Edit（預設）",
+        label: "AI 出圖 Edit（預設）",
         hint: "上傳產品相 → AI 設計新廣告圖，保留你件貨",
       },
       "nano-banana-edit": {
-        label: "Nano Banana Edit（舊版）",
+        label: "AI 出圖 Edit（舊版）",
         hint: "上傳產品相 → AI 美化，保留你件貨",
       },
       "nano-banana": {
-        label: "Nano Banana — 純文字",
+        label: "AI 出圖 — 純文字",
         hint: "唔使上傳 — 靠步驟 1 產品名 + prompt",
       },
       "nano-banana-pro-edit": {
-        label: "Nano Banana Pro Edit（進階）",
+        label: "AI 出圖 Pro Edit（進階）",
         hint: "高質美化 — 需要上傳產品相",
       },
     },
@@ -1396,7 +1418,7 @@ export const zh = {
     imageRefCta: "選擇參考圖",
     imageRefChange: "更換參考圖",
     videoKeyframeLabel: "關鍵圖（影片起點）",
-    videoKeyframeHint: "Seedance 會將呢張圖變成動態（你嘅相或 AI 生成圖）",
+    videoKeyframeHint: "影片生成 會將呢張圖變成動態（你嘅相或 AI 生成圖）",
     downloadImage: "下載相片",
     imageDoneTitle: "相片已完成",
     imageDoneHint: "下載圖片。需要影片可另外揀「只整影片」或「相片+影片」。",
@@ -1410,13 +1432,13 @@ export const zh = {
     imageReadyHint: "滿意呢張圖？繼續製作影片。",
     imageReadyHintCombined: "呢張圖會做影片 @Image1 — 滿意就繼續。",
     combinedVideoKeyframeCallout:
-      "步驟 2 已生成嘅宣傳圖會做 Seedance @Image1（圖片變影片）。要跟參考片運鏡，請改揀「跟參考片概念」。",
+      "步驟 2 已生成嘅宣傳圖會做 影片生成 @Image1（圖片變影片）。要跟參考片運鏡，請改揀「跟參考片概念」。",
     combinedCreativeImageHint:
       "請先喺呢步生成一張符合你創意簡介嘅宣傳圖 — 影片步驟會用呢張圖做動態起點。",
     combinedRefKeyframeNote:
-      "跟參考片模式：建議用原始產品相做 @Image1（唔好用宣傳圖），Seedance 先易跟 @Video1 運鏡。",
+      "跟參考片模式：建議用原始產品相做 @Image1（唔好用宣傳圖），影片生成 先易跟 @Video1 運鏡。",
     step3Title: "步驟 3 — 影片（AI 動態）",
-    step3Hint: "Seedance 將相片變成影片。可上傳參考廣告 MP4 跟運鏡（@Image1 + @Video1）。",
+    step3Hint: "影片生成 將相片變成影片。可上傳參考廣告 MP4 跟運鏡（@Image1 + @Video1）。",
     step3Hints: {
       "video-only":
         "預設：AI 影片助手 — 上傳產品（+ 包裝／角度）→ 分析 → 生成。亦可切換產品宣傳片或跟參考 MP4。",
@@ -1446,16 +1468,16 @@ export const zh = {
     referenceModeActive:
       "已偵測參考影片 — AI 會用上面關鍵圖做 @Image1，跟 @Video1 嘅運鏡同風格。",
     referenceVideoTooLong:
-      "參考片約 {seconds} 秒 — Seedance 只會用首段 2–15 秒。請喺 CapCut 剪一段 8–12 秒精華再上傳，效果先會似。",
+      "參考片約 {seconds} 秒 — 影片生成 只會用首段 2–15 秒。請喺 CapCut 剪一段 8–12 秒精華再上傳，效果先會似。",
     referenceVideoTips:
       "跟參考片貼士：① 剪短至 8–12 秒（唔好成條 30 秒 Reels）② 產品相要同參考片同一類貨 ③ 避免螢幕錄影（IG 按鈕會入鏡）④ 揀「跟參考片概念」+ 720p。",
     videoRefAutoModeNote:
       "已偵測參考 MP4 — 會用「跟參考片概念」生成（唔會再用圖片變影片忽略參考片）。",
     videoRefProductMismatch:
-      "參考片係穿珠/上手動態 — 請用「產品相片」做 @Image1（唔好用已生成宣傳圖），Seedance 先會跟到手同運鏡。",
+      "參考片係穿珠/上手動態 — 請用「產品相片」做 @Image1（唔好用已生成宣傳圖），影片生成 先會跟到手同運鏡。",
     videoRefUseProductPhoto:
       "提示：今次用 AI 宣傳圖做產品參考 — 建議改用上傳嘅原始產品相，先易跟參考片動態。",
-    videoGenPathLabel: "Seedance 路徑",
+    videoGenPathLabel: "影片生成 路徑",
     videoRefIgnoredOnImageMode:
       "你上傳咗參考 MP4，但今次係「產品動態」模式 — 參考片唔會用。要跟運鏡請改揀「跟參考片概念」。",
     videoPreflightTitle: "生成前檢查",
@@ -1469,16 +1491,16 @@ export const zh = {
     videoPreflightStyle: "畫面風格：{style}",
     videoPreflightSecondFrame:
       "會額外 call 1 次出圖 API 自動做第二幀（約多 1× 圖片費用）— 慳錢請關閉「自動整第二個畫面」",
-    videoPreflightSingleCall: "預計：1 次 Seedance + 本地 BGM（無額外出圖）",
-    videoPreflightDoubleCall: "預計：1 次出圖 + 1 次 Seedance + BGM",
-    videoPreflightDeepSeek: "＋1 次 DeepSeek 寫影片 prompt（品牌影片分析）",
+    videoPreflightSingleCall: "預計：1 次 影片生成 + 本地 BGM（無額外出圖）",
+    videoPreflightDoubleCall: "預計：1 次出圖 + 1 次 影片生成 + BGM",
+    videoPreflightAI: "＋1 次 AI 寫影片 prompt（品牌影片分析）",
     planVideoPromptBtn: "AI 寫影片 Prompt",
-    planVideoPromptBusy: "DeepSeek 寫緊影片 prompt…",
+    planVideoPromptBusy: "AI 寫緊影片 prompt…",
     planVideoPromptReady: "已填入下方影片 Prompt — 請檢查後再生成",
-    planVideoPromptDurationRefresh: "片長已改 — DeepSeek 按新片長重寫影片 prompt…",
+    planVideoPromptDurationRefresh: "片長已改 — AI 按新片長重寫影片 prompt…",
     productVideoKitTitle: "產品相片套裝",
     productVideoKitHint:
-      "上傳主產品（必填）、包裝或額外角度 — AI 視覺讀全部相，DeepSeek 再寫 Seedance 情境 prompt。",
+      "上傳主產品（必填）、包裝或額外角度 — AI 視覺讀全部相，AI 再寫 影片生成 情境 prompt。",
     productVideoHeroLabel: "主產品（@Image1）",
     productVideoHeroHint: "主要產品相 — 必填",
     productVideoPackagingLabel: "包裝／盒（選填）",
@@ -1486,11 +1508,11 @@ export const zh = {
     productVideoExtraLabel: "額外角度（選填）",
     productVideoExtraHint: "最多 2 張 — 特寫、背面、使用情境",
     planProductVideoBtn: "分析相片並規劃影片",
-    planProductVideoBusy: "AI 分析相片中，寫緊 Seedance prompt…",
+    planProductVideoBusy: "AI 分析相片中，寫緊 影片生成 prompt…",
     planProductVideoReady: "影片方案已準備 — 請檢查下方 prompt 再生成",
     productVideoSituationLabel: "建議場景",
-    productVideoPlanLabel: "Seedance prompt（AI 助手）",
-    productVideoPlanHint: "已分析你上傳嘅相；DeepSeek 寫好動態同場景。可喺進階修改。",
+    productVideoPlanLabel: "影片生成 prompt（AI 助手）",
+    productVideoPlanHint: "已分析你上傳嘅相；AI 寫好動態同場景。可喺進階修改。",
     productVideoAssistantPreflight: "模式：AI 影片助手 — 多圖 reference-to-video",
     productVideoAnalyzeFirstHint: "上傳主產品 → 撳「分析相片並規劃影片」→ 再生成。",
     productVideoUploadFirstHint: "請先上傳主產品相片，再撳「分析相片並規劃影片」。",
@@ -1638,7 +1660,7 @@ export const zh = {
       captionsSoftTrackNote: "字幕已加入為字幕軌 — 播放器開 CC 先會見到。",
       captionBurnSkippedNote: "字幕燒錄失敗 — 已顯示加咗 BGM 嘅影片，你仍可下載。",
       voiceoverAppliedNote: "已混入口播旁白。",
-      voiceoverSkippedNote: "口播失敗 — 保留 BGM 版本。請檢查 FAL_KEY。",
+      voiceoverSkippedNote: "口播失敗 — 保留 BGM 版本。請檢查 service credentials。",
       needVoiceoverScript: "請先填口播文案或字幕行。",
     },
     adStyleLabel: "你想做邊種廣告？",
@@ -1692,7 +1714,7 @@ export const zh = {
     compositorImageHint: "上傳產品相。我哋會裁成圓形貼紙，同紙片筆記同你嘅文字合成。",
     compositorImageBtn: "合成廣告圖",
     compositorRegenerateImageBtn: "重新合成",
-    compositorVideoHint: "輸出 6 秒 Reels：慢 zoom、紙片浮動、閃光 + BGM。唔用 Seedance AI 影片。",
+    compositorVideoHint: "輸出 6 秒 Reels：慢 zoom、紙片浮動、閃光 + BGM。唔用 影片生成 AI 影片。",
     compositorVideoBtn: "合成 Reels 影片",
     compositorPhaseRender: "渲染畫面中…",
     templateSlots: {
@@ -1737,19 +1759,19 @@ export const zh = {
     },
     "brand-video": {
       name: "品牌影片分析",
-      description: "DeepSeek 寫 Seedance 影片 prompt",
+      description: "AI 寫 影片生成 影片 prompt",
     },
     "creative-video": {
       name: "創意影片 Prompt",
-      description: "描述創意 → DeepSeek 寫 Seedance prompt",
+      description: "描述創意 → AI 寫 影片生成 prompt",
     },
     "storyboard-video": {
       name: "故事分鏡片",
-      description: "DeepSeek 分鏡 → 多張場景圖 → Seedance 一條片",
+      description: "AI 分鏡 → 多張場景圖 → 影片生成 一條片",
     },
     "ugc-presenter-reel": {
       name: "UGC 數字人口播",
-      description: "口播關鍵幀 → HeyGen 對嘴",
+      description: "口播關鍵幀 → digital presenter 對嘴",
     },
     "model-wear-reel": {
       name: "模特兒佩戴／使用",
@@ -1785,7 +1807,7 @@ export const zh = {
     serviceUnavailable: "圖片／影片生成暫時不可用，請稍後再試。",
     planningUnavailable: "AI 規劃暫時不可用，請稍後再試。",
     deepSeekBalanceEmpty:
-      "DeepSeek 帳戶餘額已用完，請到 platform.deepseek.com 充值後再試。",
+      "AI 帳戶餘額已用完，請到 platform.deepseek.com 充值後再試。",
     insufficientTokens: "Token 不足，無法生成。請到 Pricing 升級或加購後再試。",
     insufficientTokensTitle: "Token 已用完",
     insufficientTokensCta: "查看方案與加購",
@@ -1793,10 +1815,10 @@ export const zh = {
     tokensNotCharged: "今次嘗試冇扣 Token。",
     timeout: "請求逾時，請再試。",
     seedanceSensitive:
-      "Seedance 拒絕呢條片（暴力／打鬥過濾）。請用較溫和字眼：唔好 weapons、opponent、standoff — 改為 figures at rest、peaceful pause。參考圖似打鬥都會觸發。",
+      "影片生成 拒絕呢條片（暴力／打鬥過濾）。請用較溫和字眼：唔好 weapons、opponent、standoff — 改為 figures at rest、peaceful pause。參考圖似打鬥都會觸發。",
     falContentPolicy:
-      "Seedance 拒絕呢次媒體（人物／私隱過濾）。我哋可以改用 Kling 逐場動畫再拼接——如果自動切換失敗，請再撳生成影片。",
-    klingStoryboardFailed: "Kling 分鏡備援失敗，請再試或改用無臉場景圖。",
+      "影片生成 拒絕呢次媒體（人物／私隱過濾）。我哋可以改用 逐場動畫再拼接——如果自動切換失敗，請再撳生成影片。",
+    klingStoryboardFailed: "分鏡備援失敗，請再試或改用無臉場景圖。",
     needPhoto: "請先上傳產品相片。",
     needReferenceImage: "請先上傳參考圖。",
     needHeadline: "請輸入呢個模板需要嘅主標題。",
@@ -1816,6 +1838,9 @@ export const zh = {
     brandAnalyzeFailed: "品牌分析失敗，請檢查網址後再試。",
     campaignFailed: "Campaign 套圖失敗，請再試。",
     storyboardFailed: "故事分鏡生成失敗，請再試。",
+    storyboardSceneImagesMissing:
+      "無法載入全部場景圖（{got}/{expected}）。請重新生成缺嘅靜幀，再試影片。",
+    brandLogoRequired: "請先喺 Brand kit 上傳 Logo。",
     storyboardVideoPromptRequired: "請先喺步驟 2 生成分鏡場景圖。",
     cinematicStitchNeedScenes: "請先喺步驟 2 生成 {count} 張場景關鍵幀，再繼續去影片。",
     needProductName: "故事分鏡需要填產品名稱。",
@@ -1828,10 +1853,10 @@ export const zh = {
     planProductVideoFailed: "產品影片規劃失敗，請檢查相片再試。",
     adPackPlanFailed: "廣告包規劃失敗，請再試。",
     musicGenerateFailed: "AI 音樂生成失敗，請再試或揀音樂庫。",
-    voiceoverFailed: "口播合成失敗。請檢查 FAL_KEY 或關閉口播。",
-    ugcPresenterFailed: "數字人影片生成失敗。請檢查 FAL_KEY 後再試。",
+    voiceoverFailed: "口播合成失敗。請檢查 service credentials 或關閉口播。",
+    ugcPresenterFailed: "數字人影片生成失敗。請檢查 service credentials 後再試。",
     postProcessIncomplete:
-      "後製未完成 — 最終仍係未處理嘅 CDN 原片（未成功寫入本機／圖庫）。請重新生成；如持續失敗請檢查 ffmpeg／字幕燒錄。",
+      "後製未完成 — 最終仍係未處理嘅 CDN 原片（未成功寫入本機／圖庫）。請重新生成；如持續失敗請檢查拼接／字幕燒錄。",
     bgmFilesMissing:
       "背景音樂檔案缺失。請用 AI 音樂，或執行 npm run setup:bgm 安裝音樂庫。",
     planConceptFailed: "概念分析失敗，請再試。",
@@ -1840,11 +1865,11 @@ export const zh = {
     conceptVideoPlanRequired:
       "AI 正在規劃影片 prompt，請等幾秒；若仍未出現，撳「AI 寫影片 Prompt」。",
     needProductVideoPlan: "請先撳「分析相片並規劃影片」。",
-    researchReelAnalyzeFailed: "參考短片分析失敗 — 請確認已安裝 ffmpeg，或重新揀帖。",
+    researchReelAnalyzeFailed: "參考短片分析失敗 — 請稍後再試，或重新揀帖。",
     brandAnalyzeRequired: "請先按「分析品牌」。",
   },
   ugcStudio: {
-    badge: "獨立工具 · HeyGen 對嘴",
+    badge: "獨立工具 · digital presenter 對嘴",
     title: "UGC 數字人口播",
     subtitle:
       "寫一段短口播、揀數字人主播，即刻生成 TikTok 風格對嘴短片。可選：上傳產品相做自訂關鍵幀。",
@@ -1852,7 +1877,7 @@ export const zh = {
     setupHint:
       "要畫面見到你嘅產品：上傳產品相 → 生成關鍵幀 → 生成影片。庫存主播只對嘴講稿，畫面唔會出現你嘅產品。",
     productHowHint:
-      "兩個模式 — 我嘅關鍵幀圖：用你嘅產品相生成手持／手腕口播靜態圖，再交俾 HeyGen 對嘴。庫存主播：通用數字人，產品名只會喺講稿講出嚟，唔會顯示你嘅真產品。",
+      "兩個模式 — 我嘅關鍵幀圖：用你嘅產品相生成手持／手腕口播靜態圖，再交俾 digital presenter 對嘴。庫存主播：通用數字人，產品名只會喺講稿講出嚟，唔會顯示你嘅真產品。",
     productLabel: "產品名稱",
     productPlaceholder: "例如：水晶手串、便攜電源…",
     photoLabel: "產品相（畫面要見到產品先要上傳）",
@@ -1860,11 +1885,11 @@ export const zh = {
     scriptLabel: "口播講稿（約 10 秒）",
     scriptPlaceholder: "控制喺約 10 秒內 — 一句 hook + 一個賣點 + CTA。",
     scriptHint: "10 秒 UGC 建議 1–3 句短句。AI 稿可以再改。",
-    planScript: "AI 寫講稿（DeepSeek）",
+    planScript: "AI 寫講稿（AI）",
     planningScript: "寫講稿中…",
-    planScriptHint: "用 DeepSeek 根據產品名草稿約 10 秒口播。生成後可以再改。",
+    planScriptHint: "用 AI 根據產品名草稿約 10 秒口播。生成後可以再改。",
     scriptReady: "AI 講稿已好 — 可改再預聽聲線。",
-    scriptFailed: "AI 講稿失敗。請檢查 DeepSeek API key。",
+    scriptFailed: "AI 講稿失敗。請檢查 AI API key。",
     localeHk: "粵語/繁中",
     localeCn: "普通话",
     localeEn: "English",
@@ -1889,7 +1914,7 @@ export const zh = {
     previewEmpty: "生成後 UGC 短片會顯示喺呢度。",
     waitHint: "稍等 — 對嘴短片正在呢個畫面入面生成。",
     download: "下載 MP4",
-    costHint: "會扣 token（聲線 + HeyGen 影片，約 30 token/秒音訊 ≈ $0.10/秒）。需要登入。",
+    costHint: "會扣 token（聲線 + digital presenter 影片，約 30 token/秒音訊 ≈ $0.10/秒）。需要登入。",
     needScript: "請先填口播講稿。",
     needProduct: "請先填產品名稱。",
     needPhoto: "自訂關鍵幀請先上傳產品相。",
@@ -1946,7 +1971,7 @@ export const zh = {
     previewLoadFailed: "燒錄成功但預覽載入失敗 — 請試下載。",
     softTrackNote: "字幕已加入為字幕軌 — 播放器開 CC 先會見到。",
     softTrackError:
-      "畫面燒錄失敗 — 只加咗 CC 字幕軌。請重新整理再試（新版會用 overlay 燒錄）；或安裝完整 ffmpeg。",
+      "畫面燒錄失敗 — 只加咗 CC 字幕軌。請重新整理再試（新版會用 overlay 燒錄）；或稍後再試。",
     downloadBtn: "下載加字幕 MP4",
     downloading: "下載中…",
     downloadFailed: "下載失敗。",
@@ -1971,7 +1996,7 @@ export const zh = {
     planCaptionVoice: "AI 規劃字幕 + 口播",
     planningCaptionVoice: "AI 規劃中…",
     planCaptionVoiceNeedTopic: "請先喺上面輸入產品/主題。",
-    planCaptionVoiceFailed: "AI 規劃失敗。請檢查 DeepSeek API key。",
+    planCaptionVoiceFailed: "AI 規劃失敗。請檢查 AI API key。",
     planCaptionVoiceDone:
       "已規劃 {n} 句短字幕 + 加長口播（約 {sec}s）— 下一步：預聽 → 混入口播（{n} 段）。",
     audioBgmLabel: "音樂曲目",
@@ -2006,7 +2031,7 @@ export const zh = {
     expandingCaptionVoice: "加長口播中…",
     expandCaptionVoiceNeedLines:
       "請先喺右邊填好短字幕，再撳加長口播填滿每段時段。",
-    expandCaptionVoiceFailed: "加長口播失敗。請檢查 DeepSeek API key。",
+    expandCaptionVoiceFailed: "加長口播失敗。請檢查 AI API key。",
     expandCaptionVoiceDone:
       "已為 {n} 段字幕加長口播（約 {sec}s），並更新預聽 — 下一步：混入口播（{n} 段）。",
     spokenLineLabel: "口播（TTS）— 可以長過畫面字",
@@ -2109,7 +2134,7 @@ export const zh = {
     cleanPromptPlaceholder: "進階：描述要替換成咩（擦除可留空）",
     cleanEraseBtn: "擦除圈選區域",
     cleanFillBtn: "按描述替換",
-    cleanCostNote: "每次擦除消耗 1 次圖片生成額度（fal.ai FLUX Erase）。",
+    cleanCostNote: "每次擦除消耗 1 次圖片生成額度（系統 FLUX Erase）。",
     cleanPreviewTitle: "擦除結果預覽",
     cleanAcceptBtn: "使用此圖，繼續加字",
     cleanRetryBtn: "唔滿意，再試",
@@ -2282,9 +2307,9 @@ export const zh = {
     generateVideoHint: "確認上面設定後，生成 Reels。",
     generateVideoFooterHint: "準備好就撳下方「生成影片」。",
     videoModeTitle: "影片創作模式",
-    videoModeHint: "Seedance 點樣用你嘅關鍵幀或參考片？",
+    videoModeHint: "影片生成 點樣用你嘅關鍵幀或參考片？",
     imagePromptTitle: "圖片潤色 prompt",
-    imagePromptHint: "生成前可選填 — 俾 Nano Banana 嘅額外指示。",
+    imagePromptHint: "生成前可選填 — 俾 AI 出圖 嘅額外指示。",
     cinematicModeTitle: "概念電影感模式",
     cinematicModeHint: "單場 8 秒快速試片。",
     sceneCountTitle: "幾個場景？",
@@ -2378,7 +2403,7 @@ export const zh = {
     title: "Pro 智能畫布",
     subtitle: "Lumina 式節點畫布：新增節點、用 @ 引用素材、逐步或一次運行。",
     costHint:
-      "Pro 使用 fal.ai 按次收費（唔係 Lumina 訂閱價）。每次運行會消耗你 FAL_KEY 嘅 API 額度。",
+      "Pro 使用 系統 按次收費（唔係 Lumina 訂閱價）。每次運行會消耗你 service credentials 嘅 API 額度。",
     mobileDesktopOnly:
       "Pro 畫布適合桌面使用 — 手機請用橫屏平板或電腦；日常出片可用 /studio 嚮導（支援手機）。",
     steps: [

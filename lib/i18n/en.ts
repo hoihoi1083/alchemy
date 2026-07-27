@@ -159,6 +159,14 @@ export const en = {
     captionsLink: "Caption, BGM & voice for any video",
     imageCanvasLink: "Add text & logo to any image",
     ugcLink: "Try UGC talking presenter",
+    brandKitLink: "Set up brand kit",
+    brandKitBadge: "Before you create",
+    brandKitTitle: "Save your logo once. Use it on every reel.",
+    brandKitBody:
+      "Upload a clean PNG logo (transparent background works best). Studio uses it when generating storyboard and cinematic stills.",
+    brandKitLogoTip:
+      "Tip: square-ish PNG, logo filling most of the canvas, about 512–1024px — avoid tiny marks on huge empty backgrounds.",
+    brandKitCta: "Continue to studio",
     visualCaptionsLink: "Visual subtitle lab (beta)",
     templatesBadge: "Templates",
     templatesTitle: "Start from a marketing template",
@@ -173,7 +181,7 @@ export const en = {
       "Product photo input",
       "Style + prompt guidance",
       "Storyboard scenes",
-      "Seedance video output",
+      "video output",
     ],
     steps: [
       {
@@ -189,7 +197,7 @@ export const en = {
       {
         no: "03",
         title: "Refine to final video",
-        body: "Use guided prompt + Seedance for final reel.",
+        body: "Use guided prompt + video generation for final reel.",
       },
     ],
     quickStart: {
@@ -274,7 +282,7 @@ export const en = {
       },
       {
         title: "Tied to real AI usage",
-        body: "Costs reflect fal.ai image/video runs plus planning — not arbitrary credits.",
+        body: "Costs reflect Token billing image/video runs plus planning — not arbitrary credits.",
       },
       {
         title: "Top up without upgrading",
@@ -415,7 +423,7 @@ export const en = {
     videoOutputTypes: {
       "storyboard-reel": {
         title: "Storyboard reel",
-        pipeline: "Step 2: scene stills (preview each) → Step 3: one stitched Seedance clip with hard cuts",
+        pipeline: "Step 2: scene stills (preview each) → Step 3: one stitched video generation clip with hard cuts",
         pipelineImageStep:
           "Generate scene stills below — each becomes @Image1, @Image2… in your video",
         pipelineReady: "{count} scene stills ready → Step 3 stitches them into one reel",
@@ -425,45 +433,45 @@ export const en = {
       "animate-keyframe": {
         title: "Animate one image",
         pipeline:
-          "One keyframe (Step 2 image or upload) → Seedance adds smooth motion — single scene, no cuts",
+          "One keyframe (Step 2 image or upload) → video generation adds smooth motion — single scene, no cuts",
         pipelineImageStep: "Your image below becomes the video keyframe",
         pipelineReady: "Keyframe ready → Step 3 animates this still",
         confidence: "Fast for one product photo or ad still — simple zoom / pan / orbit",
       },
       "reference-motion": {
         title: "Match reference video motion",
-        pipeline: "Your clip sets pacing (@Video1) → Seedance generates a new ad with similar motion",
+        pipeline: "Your clip sets pacing (@Video1) → video generation generates a new ad with similar motion",
         pipelineImageStep: "Reference MP4 analyzed on Setup — optional product/keyframe as @Image1",
         pipelineReady: "Reference analyzed → generate when ready",
         confidence: "Copies viral pacing — less preview than storyboard; one video call",
       },
       "text-reel": {
         title: "Text-only reel",
-        pipeline: "Concept copy → Seedance text-to-video — no keyframe upload",
+        pipeline: "Concept copy → video generation text-to-video — no keyframe upload",
         pipelineImageStep: "No image step — video from your brief on Setup",
         pipelineReady: "Prompt ready → generate video",
         confidence: "For concept / brand copy when you do not need a hero still",
       },
       "product-assistant": {
         title: "AI product video",
-        pipeline: "Upload product + angles → AI plans situational motion → Seedance reel",
+        pipeline: "Upload product + angles → AI plans situational motion → video generation reel",
         pipelineImageStep: "Upload kit photos on the video step first",
         pipelineReady: "Kit analyzed → generate situational reel",
         confidence: "Best for physical product with multiple photos",
       },
       "cinematic-reel": {
         title: "Cinematic reel",
-        pipeline: "Mood keyframe(s) → 8s Seedance clip per scene (stitch if multi-scene)",
+        pipeline: "Mood keyframe(s) → 8s video generation clip per scene (stitch if multi-scene)",
         pipelineImageStep: "Generate cinematic keyframe(s) below",
         pipelineReady: "Keyframe(s) ready → Step 3 motion",
         confidence: "Concept mood scenes — copy in captions/voiceover, not on-screen UI",
       },
       "digital-presenter": {
         title: "UGC digital presenter",
-        pipeline: "Product keyframe → HeyGen Avatar IV lip-sync to your ad-pack script (~$0.10/s)",
+        pipeline: "Product keyframe → digital presenter lip-sync to your ad-pack script (~$0.10/s)",
         pipelineImageStep: "Generate talking-head keyframe with product on wrist/hand below",
         pipelineReady: "Keyframe ready → Step 3 animates presenter with your script",
-        confidence: "Best for bracelet/UGC-style talking ads — not Seedance motion",
+        confidence: "Best for bracelet/UGC-style talking ads — not video generation motion",
       },
     },
     visualStyleLabel: "Visual style",
@@ -471,13 +479,13 @@ export const en = {
     visualStyleHintVideoOnly:
       "Video-only: hides info poster, brand image, and campaign styles (for when you already have a still).",
     visualStyleHintCombined:
-      "Image + video: still then motion. “Storyboard reel” = DeepSeek plans scenes → multiple images → one Seedance clip.",
+      "Image + video: still then motion. “Storyboard reel” = AI plans scenes → multiple images → one video generation clip.",
     styleModeLabel: "Style set",
     styleModeSimple: "Show fewer (recommended)",
     styleModeAll: "Show all styles",
     artStyleLabel: "Art direction (keyframes)",
     artStyleHint:
-      "Controls Nano Banana keyframe look — Seedance only adds motion. For manga/watercolor/3D, the whole frame (including text) uses that medium; text-heavy product ads work best with concept cinematic or realistic.",
+      "Controls AI image keyframe look — video generation only adds motion. For manga/watercolor/3D, the whole frame (including text) uses that medium; text-heavy product ads work best with concept cinematic or realistic.",
     artStyles: {
       realistic: {
         title: "Realistic photo",
@@ -532,11 +540,11 @@ export const en = {
       },
       "brand-video": {
         title: "Brand video analysis",
-        description: "Analyze site / social → DeepSeek writes Seedance video prompt",
+        description: "Analyze site / social → AI writes video prompt",
       },
       "creative-video": {
         title: "Creative video prompt",
-        description: "Describe your Reel idea → AI writes Seedance motion prompt",
+        description: "Describe your Reel idea → AI writes video generation motion prompt",
       },
       "concept-cinematic": {
         title: "Concept cinematic reel",
@@ -545,12 +553,12 @@ export const en = {
       "storyboard-video": {
         title: "Storyboard reel",
         description:
-          "DeepSeek story per product → Nano Banana scene stills → one Seedance @Image video",
+          "AI story per product → AI image scene stills → one video generation @Image video",
       },
       "ugc-presenter": {
         title: "UGC digital presenter",
         description:
-          "Product keyframe → HeyGen talking-head lip-sync (like viral UGC product demos)",
+          "Product keyframe → digital presenter talking-head lip-sync (like viral UGC product demos)",
       },
       "paper-layout": {
         title: "Fixed paper layout (legacy)",
@@ -584,9 +592,9 @@ export const en = {
       "concept-cinematic":
         "Cinematic concept video look — dramatic light, depth, emotional pacing, no on-screen text.",
       "storyboard-video":
-        "Photorealistic multi-scene reel — DeepSeek adapts scenes to your product category, not a fixed template",
+        "Photorealistic multi-scene reel — AI adapts scenes to your product category, not a fixed template",
       "ugc-presenter":
-        "UGC talking-head keyframe + HeyGen lip-sync — best for bracelet/jewelry demo reels like viral 數字人 ads",
+        "UGC talking-head keyframe + digital presenter lip-sync — best for bracelet/jewelry demo reels like viral 數字人 ads",
       "paper-layout": "",
       "service-promo":
         "Service marketing — typography-led trust design, not a product hero shot",
@@ -594,16 +602,16 @@ export const en = {
       "website-launch": "Launch promo — app or website mockup mood; logo/screenshot optional",
     },
     brandVideoIntro:
-      "Paste your site or IG @handle. DeepSeek analyzes the brand, then writes a Seedance video prompt (motion + mood). Upload a product photo to generate the Reel.",
+      "Paste your site or IG @handle. AI analyzes the brand, then writes a video prompt (motion + mood). Upload a product photo to generate the Reel.",
     modelWearIntro:
       "Upload a product photo — AI generates a photorealistic 9:16 lifestyle ad with a model wearing or using the product. Bracelets go on wrist; devices show real use. Use Advanced framing to control face vs hands-only.",
     creativeVideoIntro:
-      "Describe your short video in plain language (e.g. kung fu fight then drink the product). DeepSeek writes the Seedance prompt and notes how to use reference MP4 or dual frames for a full story. Video step only — upload a product photo or keyframe.",
+      "Describe your short video in plain language (e.g. kung fu fight then drink the product). AI writes the video generation prompt and notes how to use reference MP4 or dual frames for a full story. Video step only — upload a product photo or keyframe.",
     creativeBriefLabel: "Creative video brief (required)",
     creativeBriefPlaceholder:
       "e.g. Hero faces five opponents in kung fu, wins, then drinks the energy drink — cinematic, fast pace",
     brandCampaignIntro:
-      "After brand analysis, DeepSeek plans 3 linked posts, then generates each — same brand DNA, different message per slide.",
+      "After brand analysis, AI plans 3 linked posts, then generates each — same brand DNA, different message per slide.",
     brandFitTitle: "Brand style analysis (optional)",
     brandFitTitleRequired: "Brand style analysis (optional)",
     brandFitIntro:
@@ -655,7 +663,7 @@ export const en = {
     campaignThemeLabel: "Campaign theme (optional)",
     campaignThemePlaceholder: "e.g. grand opening 3-post series, new product benefits…",
     imageOutputModeLabel: "How many images?",
-    imageOutputModeHint: "Campaign generates 3 linked posts (~3× image API cost + DeepSeek planning)",
+    imageOutputModeHint: "Campaign generates 3 linked posts (~3× image API cost + AI planning)",
     imageKeyframeModeLabel: "Keyframe count",
     imageKeyframeModeHint:
       "Image→video only needs 1 keyframe to animate (optional A/B pick). Not storyboard — use Image-only for Campaign / teaching carousel.",
@@ -697,7 +705,7 @@ export const en = {
     imagePostflightTitle: "Quality check — your generated image",
     imagePostflightResolution: "{width}×{height} pixels (1K generation)",
     imagePostflightAspect: "Aspect: {ratio}",
-    imagePostflightSafeForVideo: "Ready for video — 9:16 and sharp enough for Seedance",
+    imagePostflightSafeForVideo: "Ready for video — 9:16 and sharp enough for video generation",
     imagePostflightNotSafeForVideo: "May need tweaks before video — check aspect ratio or resolution",
     imagePostflightLowRes: "Low resolution — product detail may be soft",
     imagePostflightVerySmall: "Very small image — regenerate recommended",
@@ -735,27 +743,27 @@ export const en = {
     storyboardBriefPlaceholder:
       "e.g. photorealistic, soft light; show nasal washer in use; no prices; hands OK, no face…",
     storyboardIntro:
-      "DeepSeek plans scenes for your product category (jewelry, devices, skincare, etc.) and writes a Seedance @Image storyboard prompt — not a fixed bracelet template.",
+      "AI plans scenes for your product category (jewelry, devices, skincare, etc.) and writes a video generation @Image storyboard prompt — not a fixed bracelet template.",
     storyboardGenerating: "Planning storyboard and generating scene images… (~2–5 min)",
-    storyboardProgressPlanning: "Planning storyboard with DeepSeek…",
+    storyboardProgressPlanning: "Planning storyboard with AI…",
     storyboardProgressRendering: "Generating scene images {current}/{total}…",
     progressEta: "ETA ~{seconds}s",
     storyboardPlanLabel: "Storyboard plan",
     storyboardPlanReviewHint:
-      "Generate a DeepSeek outline first, edit any odd scenes, then create the stills.",
-    storyboardPlanBtn: "Generate storyboard outline (DeepSeek)",
-    storyboardPlanBusy: "DeepSeek is planning…",
+      "Generate a AI outline first, edit any odd scenes, then create the stills.",
+    storyboardPlanBtn: "Generate storyboard outline",
+    storyboardPlanBusy: "AI is planning…",
     storyboardPlanReplanBtn: "Re-plan outline",
     storyboardPlanThemeLabel: "Story theme",
     storyboardPlanSceneDescLabel: "Scene description",
     storyboardPlanCopyLabel: "On-image copy (optional)",
     storyboardSceneLabel: "Scene",
     storyboardVideoIntro:
-      "Storyboard and scene images are ready. Video animates each still with Kling, then stitches one clip.",
-    storyboardVideoPreflight: "Mode: Kling per-scene image-to-video + stitch (skips Seedance R2V)",
+      "Storyboard and scene images are ready. Video animates each still, then stitches one clip.",
+    storyboardVideoPreflight: "Mode: per-scene image-to-video + stitch",
     klingStoryboardFallbackNote:
-      "Kling storyboard path — each scene still → short clip, then stitch (avoids Seedance people-policy wait)",
-    klingStoryboardClipCount: "Kling clips × {n}",
+      "Storyboard video — each scene still becomes a short clip, then we stitch them together",
+    klingStoryboardClipCount: "clips × {n}",
     storyboardDurationLabel: "Target duration",
     storyboardDurationHint: "Affects how many scenes are planned. Regenerate scene images if you change this.",
     storyboardAllScenesHint:
@@ -766,30 +774,36 @@ export const en = {
     storyboardSceneCountLabel: "Scene count",
     storyboardSceneCountAuto: "Auto",
     storyboardSceneCountHint:
-      "Duration sets video length (synced to Step 3). Scene count controls how many stills DeepSeek plans.",
+      "Duration sets video length (synced to Step 3). Scene count controls how many stills AI plans.",
     storyboardEditorHint: "Mini editor: reorder scenes, replace one image, then regenerate video in-app.",
     storyboardMoveUpBtn: "Move up",
     storyboardMoveDownBtn: "Move down",
     storyboardReplaceImageBtn: "Replace image",
     storyboardRegenerateAiBtn: "Regenerate with AI",
-    storyboardRegenerateAiCostHint: "Uses 1 extra image run (charged).",
+    storyboardRegenerateAiCostHint: "Charged as a new scene image run (2× tokens if brand logo is on).",
+    storyboardStampLogoBtn: "Stamp brand logo",
+    storyboardStampingLogo: "Stamping logo…",
+    storyboardStampLogoHint:
+      "Last scene: centers your Brand kit logo (no AI redraw, no charge).",
+    storyboardStampLogoCornerHint:
+      "Stamps your Brand kit logo as a corner badge (no AI redraw, no charge).",
     storyboardReplacingImage: "Replacing…",
     storyboardRegeneratingImage: "Regenerating…",
     storyboardRegenerateConfirm:
       "Regenerate Scene {scene} with AI now? This makes a new model call and charges again.",
     storyboardKeyframeSectionTitle: "Storyboard refs (@Image1…@ImageN)",
-    storyboardPromptLabel: "Seedance storyboard prompt",
-    storyboardPromptHint: "DeepSeek tagged each scene as @Image1, @Image2… Review before generating video.",
+    storyboardPromptLabel: "video generation storyboard prompt",
+    storyboardPromptHint: "AI tagged each scene as @Image1, @Image2… Review before generating video.",
     storyboardPromptEditLabel: "Edit storyboard prompt (advanced)",
     ugcPresenter: {
       setupIntro:
-        "Step 2: Nano Banana builds a talking-head keyframe with your product. Step 3: HeyGen Avatar IV lip-syncs your ad-pack script (~$0.10/s). Plan ad pack + preview voice before generating video.",
+        "Step 2: AI image builds a talking-head keyframe with your product. Step 3: digital presenter lip-syncs your ad-pack script (~$0.10/s). Plan ad pack + preview voice before generating video.",
       imageStepIntro:
-        "Generate a UGC presenter keyframe — face visible, product on wrist/hand. This still is animated with HeyGen (not Seedance).",
+        "Generate a UGC presenter keyframe — face visible, product on wrist/hand. This still is animated with digital presenter (not video generation).",
       videoStepIntro:
         "Open Ad pack → plan script → preview voice → Generate video. Lip-sync is baked into the clip.",
-      imagePreflight: "Mode: UGC keyframe for HeyGen Avatar IV (talking-head, product in hand)",
-      videoPreflight: "Mode: HeyGen Avatar IV lip-sync (not Seedance)",
+      imagePreflight: "Mode: UGC keyframe for digital presenter (talking-head, product in hand)",
+      videoPreflight: "Mode: digital presenter lip-sync (not video generation)",
       voiceBakedInNote: "Presenter voice is lip-synced in the video — no separate dub step.",
       needScript: "Ad pack voiceover script is required for the digital presenter.",
       needAdPackHint: "Open Ad pack on this step — plan script (and preview voice) before generating.",
@@ -799,20 +813,20 @@ export const en = {
     videoPathsTitle: "Video creation paths",
     videoPathsHint: "Pick how to make your Reel — AI Video Assistant is recommended (upload a product photo kit).",
     videoAssistantStepHint:
-      "AI Video Assistant selected — continue to Step 3 to upload product, packaging, and angle photos; AI will analyze and write the Seedance prompt.",
+      "AI Video Assistant selected — continue to Step 3 to upload product, packaging, and angle photos; AI will analyze and write the video generation prompt.",
     primaryPathsShortcutNote:
       "These are quick shortcuts. In Advanced you can still pick the same style with more options.",
     primaryPathsHiddenResearchHint:
       "Content research already set your reference layout and output mode — add your product photo and copy, then continue.",
     pathQuickTitle: "Quick Ad",
     pathQuickDesc: "Fast image/video ad for most products.",
-    pathQuickVideoDesc: "One product photo + AI Seedance motion prompt → short promo clip.",
+    pathQuickVideoDesc: "One product photo + AI video generation motion prompt → short promo clip.",
     pathModelTitle: "Model Wear/Use",
     pathModelDesc: "Shortcut to model-wear style (also available in Advanced).",
     pathStoryboardTitle: "Storyboard Reel",
-    pathStoryboardDesc: "DeepSeek plans multi-scene story and video.",
+    pathStoryboardDesc: "AI plans multi-scene story and video.",
     pathUgcPresenterTitle: "UGC digital presenter",
-    pathUgcPresenterDesc: "Talking-head lip-sync promo (keyframe + HeyGen).",
+    pathUgcPresenterDesc: "Talking-head lip-sync promo (keyframe + digital presenter).",
     pathReferenceTitle: "Reference layout",
     pathReferenceDesc: "Upload a reference ad — keep layout, swap in your product and copy.",
     pathReferenceVideoTitle: "Follow reference reel",
@@ -826,24 +840,24 @@ export const en = {
       "Same concept brief powers the video — no product photo required. Pick a style, apply fields, then continue to video.",
     closestMatchRecipeTitle: "Closest-match recipe (cinematic social style)",
     closestMatchRecipeHint:
-      "Image → video workflow: 3 AI keyframes, 3 Seedance clips stitched (~24s). Clean silent video — add BGM and captions on Done.",
+      "Image → video workflow: 3 AI keyframes, 3 video generation clips stitched (~24s). Clean silent video — add BGM and captions on Done.",
     closestMatchRecipeApply: "Apply closest-match recipe",
     closestMatchRecipeApplied: "Closest-match recipe applied",
     quickTest8sRecipeTitle: "8s test recipe (lower cost)",
     quickTest8sRecipeHint:
-      "Single keyframe + one 8s Seedance clip (480p fast). Clean silent video — add BGM and captions on Done. ~1/3 the cost of the 24s stitch.",
+      "Single keyframe + one 8s video generation clip (480p fast). Clean silent video — add BGM and captions on Done. ~1/3 the cost of the 24s stitch.",
     quickTest8sRecipeApply: "Apply 8s test recipe",
     quickTest8sRecipeApplied: "8s test recipe applied",
     conceptCinematicPathsTitle: "Concept cinematic reel (image → video)",
     conceptCinematicPathsHint:
-      "Generate a still keyframe first, then animate with Seedance. Best quality for viral cinematic Reels — not pure text-to-video.",
+      "Generate a still keyframe first, then animate with video generation. Best quality for viral cinematic Reels — not pure text-to-video.",
     conceptCinematicSingleTitle: "Single scene (~8s)",
     conceptCinematicSingleDesc: "One keyframe + one clip — quick cinematic hook.",
     conceptCinematicSingleImageStepIntro:
       "8s cinematic mode: click “Generate cinematic keyframe” to plan 1 scene + 1 keyframe (no product photo).",
     conceptCinematicSingleOutputTitle: "Output: 1 cinematic keyframe",
     conceptCinematicSingleOutputDesc:
-      "DeepSeek plans the scene and Seedance motion prompt, then generates one 9:16 keyframe.",
+      "AI plans the scene and video generation motion prompt, then generates one 9:16 keyframe.",
     conceptCinematicSingleNoPosterHint:
       "⚠️ Keyframe = cinematic scene (bar, people, mood) — NOT a product poster. Copy is added later via captions/voiceover, not baked into the image.",
     conceptSocialImageStepIntro:
@@ -857,16 +871,16 @@ export const en = {
     conceptCinematicSingleGenerateBtn: "Generate cinematic keyframe",
     conceptCinematicSingleGenerating: "Planning scene and generating keyframe…",
     imagePreflightConceptCinematicSingle:
-      "8s cinematic: DeepSeek plans 1 scene + 1 keyframe.",
+      "8s cinematic: AI plans 1 scene + 1 keyframe.",
     imagePreflightConceptSocial:
       "Concept social post: bold IG/FB creative with hook and CTA in the layout — not a white infographic poster.",
     conceptCinematicSingleVideoStepIntro:
-      "8s reel: click “Generate full reel” for 1 Seedance clip (clean silent video — add BGM/captions on Done).",
+      "8s reel: click “Generate full reel” for 1 video generation clip (clean silent video — add BGM/captions on Done).",
     conceptCinematicSingleGenerateVideoBtn: "Generate full reel (8s)",
     conceptCinematicSingleSceneReady: "Keyframe ready — 0–8s",
     conceptCinematicSingleRecipeSteps: [
       "1) Fill concept in Setup, Step 2 click “Generate cinematic keyframe”.",
-      "2) Step 3 click “Generate full reel” — clean silent Seedance clip.",
+      "2) Step 3 click “Generate full reel” — clean silent video generation clip.",
       "3) On Done: download, or open caption & audio studio for BGM and wording.",
     ],
     conceptCinematicStitchTitle: "Multi-scene stitch",
@@ -875,36 +889,38 @@ export const en = {
     cinematicSceneCountOption: "{count} scenes (~{totalSec}s)",
     cinematicSceneCountTotalHint: "≈ {totalSec}s total",
     cinematicSceneCountHint:
-      "DeepSeek plans one script beat per scene. Each clip is 8s; more scenes = faster pacing and higher cost.",
+      "AI plans one script beat per scene. Each clip is 8s; more scenes = faster pacing and higher cost.",
     imagePreflightCinematicStitch:
-      "Cinematic stitch: DeepSeek plans {count} scenes, then {count} keyframe images (~{count}× image cost).",
+      "Cinematic stitch: AI plans {count} scenes, then {count} keyframe images (~{count}× image cost).",
     cinematicReelPlanLabel: "Reel theme",
     cinematicStitchImageStepIntro:
       "{count}-scene stitch: one click plans and generates {count} keyframes (~{totalSec}s reel). No product photo needed.",
     cinematicStitchOutputTitle: "Output: {count} keyframes",
     cinematicStitchOutputDesc:
-      "DeepSeek writes one beat per scene. Change scene count above before generating — each scene gets its own still + Seedance clip.",
+      "AI writes one beat per scene. Change scene count above before generating — each scene gets its own still + video generation clip.",
     cinematicStitchGenerateBtn: "Generate {count} keyframes",
     cinematicStitchGenerating: "Planning scenes and generating keyframes…",
     cinematicStitchImageHint:
-      "Continue to video — we will generate {count} Seedance clips and stitch them into one reel.",
-    cinematicStitchVideoPreflight: "{count}-scene cinematic stitch: {count} image-to-video clips + ffmpeg concat",
-    cinematicStitchFfmpegNote: "Stitching is done by ffmpeg (Seedance only animates each 8s clip)",
+      "Continue to video — we will generate {count} video generation clips and stitch them into one reel.",
+    cinematicStitchVideoPreflight: "{count}-scene cinematic stitch: {count} image-to-video clips + local stitch",
+    cinematicStitchFfmpegNote: "Stitching is done by local stitch (each clip is animated separately)",
     cinematicLogoStampNote:
       "Brand logo stamped on stills before video (same corner/size on every scene).",
+    cinematicLogoModeBNote:
+      "When “Use brand logo on scenes” is on, every still gets your Brand kit logo (corner; last scene centered).",
     cinematicLogoStampHint:
-      "Upload your logo in Brand kit — we stamp it on every cinematic still (top-right by default, ~11% width) before video so it survives motion. Same corner on all scenes.",
+      "Upload your logo in Brand kit, then turn on “Use brand logo on scenes”. Regenerate stills to apply.",
     cinematicStitchWorkflowOrder:
-      "Order: {count} Seedance clips → ffmpeg stitch. Add BGM and captions later on Done. Script/music auto-plan is optional in Ad pack / caption studio.",
+      "Order: {count} video generation clips → local stitch. Add BGM and captions later on Done. Script/music auto-plan is optional in Ad pack / caption studio.",
     cinematicStitchVideoCost: "{count} video generations + stitch (higher cost than single clip)",
     cinematicStitchClipCount: "Clips stitched",
     cinematicStitchRecipeSteps: [
       "1) Fill concept on Setup, pick scene count, generate keyframes on Step 2.",
-      "2) On Step 3 click Generate full reel — Seedance clips + stitch (silent).",
+      "2) On Step 3 click Generate full reel — video generation clips + stitch (silent).",
       "3) On Done: download clean MP4, or open caption & audio studio.",
     ],
     cinematicStitchVideoStepIntro:
-      "{count}-scene stitch: Generate full reel runs {count} Seedance clips + stitch (BGM/captions optional after).",
+      "{count}-scene stitch: Generate full reel runs {count} video generation clips + stitch (BGM/captions optional after).",
     cinematicStitchGenerateVideoBtn: "Generate full reel ({count}-scene stitch)",
     cinematicStitchScenesReady: "{ready}/{count} scene keyframes ready — all {count} will be stitched",
     conceptVideoSameBriefHint:
@@ -913,7 +929,7 @@ export const en = {
     conceptVideoImageHint:
       "Your poster, illustration, or photo — AI will read it and plan how to animate it.",
     conceptVideoImageOrderHint:
-      "If you have your own image: upload here first, then run AI concept analysis so DeepSeek knows what is in the frame.",
+      "If you have your own image: upload here first, then run AI concept analysis so AI knows what is in the frame.",
     conceptWizardTitle: "Concept Wizard (for non-physical offers)",
     conceptWizardHint:
       "Fill these 6 blocks, then auto-apply to headline/subline/offer and prompt direction.",
@@ -927,7 +943,7 @@ export const en = {
     conceptVisualMetaphorPlaceholder:
       "Visual metaphor: what scene or symbolic visual should appear?",
     conceptAnalyzeBtn: "AI analyze concept",
-    conceptAnalyzeBusy: "DeepSeek analyzing concept…",
+    conceptAnalyzeBusy: "AI analyzing concept…",
     conceptAnalyzeReady: "Concept draft filled. Review and apply to fields.",
     conceptApplyBtn: "Apply concept to fields",
     conceptApplyHint:
@@ -953,18 +969,18 @@ export const en = {
     referenceCarouselBriefAnalyzed:
       "Reference carousel analyzed ({count} slides) — planner and generation will match per-slide layout and shared style.",
     researchReelAnalyzed:
-      "Reference reel analyzed — visual style and edit rhythm follow the reference; content uses your topic and copy. A frame from the video replaced the search thumbnail as the style reference. Step 2: scene stills. Step 3: Seedance stitch.",
+      "Reference reel analyzed — visual style and edit rhythm follow the reference; content uses your topic and copy. A frame from the video replaced the search thumbnail as the style reference. Step 2: scene stills. Step 3: video generation stitch.",
     referenceVideoAnalyzed:
-      "Reference video analyzed — Seedance prompt written from your clip. Generation uses digest montage + your product photo.",
+      "Reference video analyzed — video generation prompt written from your clip. Generation uses digest montage + your product photo.",
     referenceVideoAnalyzing: "Analyzing your reference video…",
     researchReelAnalyzing: "Analyzing reference reel and planning storyboard…",
     researchReelAnalyzeFirstHint: "Wait for reel storyboard analysis, or upload a product photo first.",
     referenceR2vDurationHint:
-      "Long reels become a 15s digest montage (hook + middle + close) for Seedance; analysis scans the full video. Your 6s output is a complete mini-ad arc, not just the opening 15s.",
+      "Long reels become a 15s digest montage (hook + middle + close) for video generation; analysis scans the full video. Your 6s output is a complete mini-ad arc, not just the opening 15s.",
     researchReelSetupTitle: "Reference reel → storyboard video",
     researchReelSetupTitleConcept: "Reference reel → storyboard short",
     researchReelSetupIntro:
-      "After picking a trending reel: download MP4 → DeepSeek analyzes shots and plans storyboard → upload product photo → Step 2 Nano Banana scene stills → Step 3 Seedance video.",
+      "After picking a trending reel: download MP4 → AI analyzes shots and plans storyboard → upload product photo → Step 2 AI image scene stills → Step 3 video.",
     researchReelSetupIntroConcept:
       "After picking a trending reel: download MP4 → analyze visual style and edit rhythm → Step 2 scene stills from reference cover + your copy (style from reference, content yours) → Step 3 stitch. Reference topic and your topic can be totally unrelated.",
     researchReelStatusPost: "Reference post selected",
@@ -972,7 +988,7 @@ export const en = {
     researchReelMp4Missing:
       "Reference MP4 missing — wait for search download, upload your own MP4 below, or search again.",
     researchReelMp4OptionalCombined:
-      "Image posts don't need MP4 (optional) — style images + DeepSeek storyboard are enough.",
+      "Image posts don't need MP4 (optional) — style images + AI storyboard are enough.",
     researchReelStatusProductPhoto: "Product photo uploaded",
     researchReelStatusProductPhotoOptional:
       "Product photo (upload here, or on Step 2)",
@@ -983,7 +999,7 @@ export const en = {
     researchReelUploadMp4Hint:
       "Search auto-download or upload your own MP4/MOV — either works; we analyze style and pacing the same way",
     researchReelPickDurationFirst:
-      "Pick an output duration above (not Auto) before reference analysis — the reel plan and Seedance billing use this length.",
+      "Pick an output duration above (not Auto) before reference analysis — the reel plan and video generation billing use this length.",
     researchReelReanalyzeForDuration: "Duration changed — re-analyzing reference reel…",
     researchReelStatusOutputDuration: "Output duration selected (for analyze & billing)",
     researchReelStatusOutputDurationMissing:
@@ -1006,7 +1022,7 @@ export const en = {
       "Generate scene stills below — each beat follows this reference look; your headline drives the content.",
     imageStepReferenceReelNeedStoryboardTitle: "Reference reel needs Storyboard mode",
     imageStepReferenceReelNeedStoryboardHint:
-      "You uploaded a reference MP4 but Step 2 is still on single-image mode. Switch to Storyboard video so Nano Banana generates multiple scene stills from the reference analysis.",
+      "You uploaded a reference MP4 but Step 2 is still on single-image mode. Switch to Storyboard video so AI image generates multiple scene stills from the reference analysis.",
     imageStepReferenceReelSwitchStoryboardBtn: "Switch to Storyboard video",
     continueToSimilarVideo: "Continue → generate similar reel",
     referenceBriefAnalyzeFailed: "Could not analyze reference. You can still generate.",
@@ -1044,7 +1060,7 @@ export const en = {
     teachingCarouselSlideCountOption: "{count} slides",
     teachingCarouselSlideCountHint:
       "Week 1 “No Prompt” post needs 5 (cover → 3 steps → CTA). Max 6.",
-    imagePreflightStoryboard: "Storyboard mode: multiple scene images + DeepSeek planning.",
+    imagePreflightStoryboard: "Storyboard mode: multiple scene images + AI planning.",
     conceptResearchReelStoryboardImageStepIntro:
       "Preview every scene still before video — pick duration and scene count, then generate. Your headline/concept copy drives each frame (no product photo required).",
     conceptResearchReelStoryboardImagePreflight:
@@ -1168,7 +1184,7 @@ export const en = {
     downloadSlide: "Download PNG",
     presenterPicker: {
       title: "Digital presenter",
-      hint: "Use your Step 2 keyframe face, or pick a stock HeyGen avatar (no product photo required).",
+      hint: "Use your Step 2 keyframe face, or pick a stock digital presenter avatar (no product photo required).",
       customKeyframe: "My keyframe image",
       stockAvatar: "Stock avatar",
     },
@@ -1184,9 +1200,15 @@ export const en = {
     },
     brandKit: {
       title: "Brand kit",
-      hint: "Colors and tagline guide AI art direction. Add your logo yourself after generate (Quick fix or image canvas).",
+      hint: "Save your logo once. Turn on “Use brand logo on scenes” to stamp it on every still.",
       uploadLogo: "Upload logo",
       changeLogo: "Change logo",
+      endWithLogoLabel: "Use brand logo on scenes",
+      endWithLogoHint:
+        "On = we add your logo to every still (2 image passes; last scene centered). Off = no logo.",
+      useLogoLabel: "Use brand logo on scenes",
+      useLogoHint:
+        "On = add your logo to every still (2× image tokens; last scene centered). Off = no logo.",
       primaryColor: "Primary",
       secondaryColor: "Secondary",
       accentColor: "Accent",
@@ -1227,7 +1249,7 @@ export const en = {
     referenceConceptOverridesStyle:
       "Reference mode: design follows the reference ad; venue, lighting, and background fit your product and visual style (e.g. dark premium affects mood only). Pick “hands only” if the reference shows hands.",
     referenceConceptStyleOnlyHint:
-      "Style reference uploaded — the image is sent to Nano Banana to match the reference visual style and layout grammar; headlines and scene content use YOUR topic (can be totally unrelated to the reference).",
+      "Style reference uploaded — the image is sent to AI image to match the reference visual style and layout grammar; headlines and scene content use YOUR topic (can be totally unrelated to the reference).",
     referenceOptionalCopyHint:
       "Reference sets layout and style. Headline and subline are prefilled from research rewrites — edit anytime; leave blank for a minimal product still.",
     imageRefAutoModeNote:
@@ -1246,7 +1268,7 @@ export const en = {
       "Concept mode: your anti-fight / PSA / service message becomes the video brief. Use “Concept video”, run AI prompt planning, then generate — skip product uploads.",
     conceptVideoPromptSectionTitle: "AI video prompt (from your concept)",
     conceptVideoPromptSectionHint:
-      "No keyframe needed — Seedance generates from text. Run “Plan AI video prompt” above first.",
+      "No keyframe needed — video generation generates from text. Run “Plan AI video prompt” above first.",
     conceptVideoPromptPending:
       "Run “Plan AI video prompt” above — your Concept Wizard copy will become the motion brief.",
     conceptVideoReferenceModeTitle: "Reference clip mode",
@@ -1261,7 +1283,7 @@ export const en = {
     cinematicRecipeTitle: "Concept cinematic recipe (recommended flow)",
     cinematicRecipeSteps: [
       "1) On Step 2, generate a cinematic keyframe (or upload a reference still).",
-      "2) On Video, click Plan AI video prompt for Seedance motion text.",
+      "2) On Video, click Plan AI video prompt for video generation motion text.",
       "3) Click Plan script & music, then pick one AI music track.",
       "4) Generate video — image → video with optional voice + subtitle burn.",
     ],
@@ -1269,7 +1291,7 @@ export const en = {
     videoCreativeModes: {
       "product-assistant": {
         title: "AI video assistant",
-        description: "Upload product + packaging + angles → AI analyzes photos → situational Seedance reel",
+        description: "Upload product + packaging + angles → AI analyzes photos → situational video generation reel",
       },
       "product-promo": {
         title: "Product promo video",
@@ -1290,7 +1312,7 @@ export const en = {
       "Reference reel sets motion and pacing — pick how long and sharp the generated clip should be.",
     videoSetupOutputSettingsTitle: "Output length & quality (affects cost)",
     videoSetupOutputSettingsHint:
-      "fal.ai bills by Seedance duration and resolution — pick these before uploading or analyzing a reference reel. The reference MP4 can be much longer; your output length here is what you pay for (AI compresses the reference into a complete short ad).",
+      "Tokens are based on video duration and resolution — pick these before uploading or analyzing a reference reel. The reference MP4 can be much longer; your output length here is what you pay for (AI compresses the reference into a complete short ad).",
     videoSettingsResolution: "Resolution",
     videoResolutionPlanHint: "Your plan includes up to {max}.",
     videoResolutionUpgradeLink: "Upgrade for higher resolution",
@@ -1304,7 +1326,7 @@ export const en = {
     },
     videoAutoSecondFrame: "Auto-create a second scene (one upload → richer video)",
     videoAutoSecondFrameHint:
-      "AI makes an alternate angle (e.g. on wrist) as the end frame so Seedance can move between two looks — not just zoom.",
+      "AI makes an alternate angle (e.g. on wrist) as the end frame so video generation can move between two looks — not just zoom.",
     extraAnglesLabel: "Extra product angles (optional)",
     extraAnglesHint: "2–3 photos of the same item — more dynamic motion via multi-angle mode",
     extraAnglesCta: "Add angle photos",
@@ -1330,7 +1352,7 @@ export const en = {
     },
     preGenerate: {
       title: "Before you generate (no need to learn every setting)",
-      hint: "DeepSeek filled the idea — check these 3 things, then tap Generate full Reel.",
+      hint: "AI filled the idea — check these 3 things, then tap Generate full Reel.",
       keyframeLabel: "Keyframe",
       keyframeReady: "Ready",
       keyframeMissing: "Generate keyframe in Step 2 first",
@@ -1358,11 +1380,11 @@ export const en = {
       "video-only":
         "Next: upload your product still (for @Image1), then optionally a reference ad MP4 to copy motion (@Video1).",
       combined:
-        "Next: AI image from your product, then Seedance video — reference ad MP4 optional on the video step.",
+        "Next: AI image from your product, then video — reference ad MP4 optional on the video step.",
     },
     setupCallouts: {
       "image-only": "Image workflow — no video step. Choose how to create the photo on the next screen.",
-      "video-only": "Video workflow — Seedance + BGM. Upload product photo + reference ad MP4 on the next screen.",
+      "video-only": "Video workflow — video generation + BGM. Upload product photo + reference ad MP4 on the next screen.",
       combined: "Full ad — generate/polish image first, then animate it. Reference MP4 copies motion like before.",
     },
     imageInputLabel: "How do you want to create the image?",
@@ -1397,7 +1419,7 @@ export const en = {
     mobileVideoNeedPrompt: "Plan or fill the video prompt before generating.",
     mobileVideoNeedPlan: "Run AI video planning first (product assistant).",
     mobileVideoBlocked: "Complete the steps above before generating video.",
-    step2Title: "Step 2 — Promotional image (Nano Banana 2)",
+    step2Title: "Step 2 — Promotional image",
     step2Hint:
       "Upload your product photo. AI generates a new ad image — or applies a reference concept if you chose that mode.",
     step2Hints: {
@@ -1408,19 +1430,19 @@ export const en = {
     imageModelLabel: "Image AI model",
     imageModels: {
       "nano-banana-2-edit": {
-        label: "Nano Banana 2 Edit (default)",
+        label: "AI image Edit (default)",
         hint: "Upload product photo → AI designs a new ad, keeps your item",
       },
       "nano-banana-edit": {
-        label: "Nano Banana Edit (legacy)",
+        label: "AI image Edit (legacy)",
         hint: "Upload product photo → AI polishes it, keeps your item",
       },
       "nano-banana": {
-        label: "Nano Banana — text only",
+        label: "AI image — text only",
         hint: "No upload needed — describe product in Step 1 name + prompt",
       },
       "nano-banana-pro-edit": {
-        label: "Nano Banana Pro Edit (advanced)",
+        label: "AI image Pro Edit (advanced)",
         hint: "Higher quality edit — needs product photo upload",
       },
     },
@@ -1445,7 +1467,7 @@ export const en = {
     imageRefCta: "Choose reference image",
     imageRefChange: "Change reference",
     videoKeyframeLabel: "Keyframe image",
-    videoKeyframeHint: "The still image Seedance will animate (your photo or a generated image)",
+    videoKeyframeHint: "The still image video generation will animate (your photo or a generated image)",
     downloadImage: "Download image",
     imageDoneTitle: "Your image is ready",
     imageDoneHint: "Download the PNG. You can start a video workflow separately if needed.",
@@ -1459,14 +1481,14 @@ export const en = {
     imageReadyHint: "Happy with this image? Continue to make the video.",
     imageReadyHintCombined: "This image becomes @Image1 for video — continue when you’re happy.",
     combinedVideoKeyframeCallout:
-      "Your Step 2 promo still is Seedance @Image1 (image-to-video). To copy reference motion, switch to “Inspired by reference video”.",
+      "Your Step 2 promo still is video generation @Image1 (image-to-video). To copy reference motion, switch to “Inspired by reference video”.",
     combinedCreativeImageHint:
       "Generate a promo still here that matches your creative brief — the video step animates this image.",
     combinedRefKeyframeNote:
-      "Reference mode: use your raw product photo as @Image1 (not the ad still) so Seedance can match @Video1 motion.",
+      "Reference mode: use your raw product photo as @Image1 (not the ad still) so video generation can match @Video1 motion.",
     step3Title: "Step 3 — Video (AI motion)",
     step3Hint:
-      "Seedance animates your image. Optional: upload a reference ad MP4 to copy its motion (@Image1 + @Video1).",
+      "video generation animates your image. Optional: upload a reference ad MP4 to copy its motion (@Image1 + @Video1).",
     step3Hints: {
       "video-only":
         "Default: AI video assistant — upload product (+ packaging / angles), analyze, then generate. Or switch to product promo / reference MP4.",
@@ -1498,16 +1520,16 @@ export const en = {
     referenceModeActive:
       "Reference video detected — AI uses your keyframe as @Image1 and matches @Video1 motion.",
     referenceVideoTooLong:
-      "Reference is ~{seconds}s — Seedance only uses the first 2–15s. Trim an 8–12s highlight in CapCut before upload for a closer match.",
+      "Reference is ~{seconds}s — video generation only uses the first 2–15s. Trim an 8–12s highlight in CapCut before upload for a closer match.",
     referenceVideoTips:
       "Reference tips: ① Trim to 8–12s (not a full 30s reel) ② Product photo must match the item in the ad ③ Avoid screen recordings (IG buttons) ④ Use “Inspired by reference video” + 720p.",
     videoRefAutoModeNote:
       "Reference MP4 detected — using “Inspired by reference video” (not image-to-video, which ignores your clip).",
     videoRefProductMismatch:
-      "Reference shows hands/stringing — use your raw product photo as @Image1 (not the generated ad still) so Seedance can match motion.",
+      "Reference shows hands/stringing — use your raw product photo as @Image1 (not the generated ad still) so video generation can match motion.",
     videoRefUseProductPhoto:
       "Tip: using the AI ad still as @Image1 — upload the raw product photo instead for better motion match.",
-    videoGenPathLabel: "Seedance path",
+    videoGenPathLabel: "video generation path",
     videoRefIgnoredOnImageMode:
       "Reference MP4 uploaded but mode is “Product motion” — it will be ignored. Switch to “Inspired by reference video” to match the clip.",
     videoPreflightTitle: "Pre-flight check",
@@ -1521,16 +1543,16 @@ export const en = {
     videoPreflightStyle: "Visual style: {style}",
     videoPreflightSecondFrame:
       "Will call image API once for an auto second frame (~extra image cost) — turn off “Auto-create a second scene” to save",
-    videoPreflightSingleCall: "Expected: 1× Seedance + local BGM (no extra image)",
-    videoPreflightDoubleCall: "Expected: 1× image + 1× Seedance + BGM",
-    videoPreflightDeepSeek: "+1× DeepSeek video prompt (brand video analysis)",
+    videoPreflightSingleCall: "Expected: 1× video + local BGM (no extra image)",
+    videoPreflightDoubleCall: "Expected: 1× image + 1× video + BGM",
+    videoPreflightAI: "+1× AI video prompt (brand video analysis)",
     planVideoPromptBtn: "AI write video prompt",
-    planVideoPromptBusy: "DeepSeek writing video prompt…",
+    planVideoPromptBusy: "AI writing video prompt…",
     planVideoPromptReady: "Video prompt filled below — review before generating",
-    planVideoPromptDurationRefresh: "Output length changed — DeepSeek is rewriting the video prompt for the new duration…",
+    planVideoPromptDurationRefresh: "Output length changed — AI is rewriting the video prompt for the new duration…",
     productVideoKitTitle: "Product photo kit",
     productVideoKitHint:
-      "Upload hero product (required), packaging, or extra angles — AI vision reads all photos, then DeepSeek writes a situational Seedance prompt.",
+      "Upload hero product (required), packaging, or extra angles — AI vision reads all photos, then AI writes a situational video generation prompt.",
     productVideoHeroLabel: "Hero product (@Image1)",
     productVideoHeroHint: "Main product shot — required",
     productVideoPackagingLabel: "Packaging / box (optional)",
@@ -1538,11 +1560,11 @@ export const en = {
     productVideoExtraLabel: "Extra angles (optional)",
     productVideoExtraHint: "Up to 2 more photos — detail, back, in-use context",
     planProductVideoBtn: "Analyze photos & plan video",
-    planProductVideoBusy: "AI analyzing photos & writing Seedance prompt…",
+    planProductVideoBusy: "AI analyzing photos & writing video generation prompt…",
     planProductVideoReady: "Video plan ready — review prompt below, then generate",
     productVideoSituationLabel: "Suggested setting",
-    productVideoPlanLabel: "Seedance prompt (from AI assistant)",
-    productVideoPlanHint: "Vision analyzed your uploads; DeepSeek wrote motion + scene plan. Edit in advanced if needed.",
+    productVideoPlanLabel: "video generation prompt (from AI assistant)",
+    productVideoPlanHint: "Vision analyzed your uploads; AI wrote motion + scene plan. Edit in advanced if needed.",
     productVideoAssistantPreflight: "Mode: AI video assistant — multi-image reference-to-video",
     productVideoAnalyzeFirstHint: "Upload hero product, tap Analyze photos & plan video, then generate.",
     productVideoUploadFirstHint: "Upload a hero product photo first, then tap Analyze photos & plan video.",
@@ -1695,7 +1717,7 @@ export const en = {
         "Captions added as a subtitle track (toggle CC in your player if not visible).",
       captionBurnSkippedNote: "Caption burn failed — showing video with BGM only. You can still download it.",
       voiceoverAppliedNote: "Spoken voiceover mixed over BGM.",
-      voiceoverSkippedNote: "Voiceover failed — video kept with BGM only. Check FAL_KEY.",
+      voiceoverSkippedNote: "Voiceover failed — video kept with BGM only. Check service credentials.",
       needVoiceoverScript: "Add a voiceover script or caption lines first.",
     },
     adStyleLabel: "What kind of ad?",
@@ -1752,7 +1774,7 @@ export const en = {
     compositorImageBtn: "Build ad image",
     compositorRegenerateImageBtn: "Rebuild image",
     compositorVideoHint:
-      "Builds a 6-second reel: slow zoom, paper float, sparkle twinkle, plus BGM. No Seedance AI video.",
+      "Builds a 6-second reel: slow zoom, paper float, sparkle twinkle, plus BGM. No video generation AI video.",
     compositorVideoBtn: "Build reel video",
     compositorPhaseRender: "Rendering frames…",
     templateSlots: {
@@ -1797,19 +1819,19 @@ export const en = {
     },
     "brand-video": {
       name: "Brand video analysis",
-      description: "DeepSeek writes Seedance video prompt",
+      description: "AI writes video prompt",
     },
     "creative-video": {
       name: "Creative video prompt",
-      description: "Describe idea → DeepSeek writes Seedance prompt",
+      description: "Describe idea → AI writes video generation prompt",
     },
     "storyboard-video": {
       name: "Storyboard reel",
-      description: "DeepSeek storyboard → scene images → one Seedance clip",
+      description: "AI storyboard → scene images → one video generation clip",
     },
     "ugc-presenter-reel": {
       name: "UGC digital presenter",
-      description: "Talking-head keyframe → HeyGen Avatar IV lip-sync",
+      description: "Talking-head keyframe → digital presenter lip-sync",
     },
     "model-wear-reel": {
       name: "Model lifestyle wear",
@@ -1846,7 +1868,7 @@ export const en = {
       "Image and video generation is temporarily unavailable. Please try again later.",
     planningUnavailable: "AI planning is temporarily unavailable. Please try again later.",
     deepSeekBalanceEmpty:
-      "DeepSeek account balance is empty. Top up at platform.deepseek.com, then try again.",
+      "AI account balance is empty. Top up at platform.deepseek.com, then try again.",
     insufficientTokens:
       "Not enough tokens for this generation. Open Pricing to upgrade or top up, then try again.",
     insufficientTokensTitle: "Out of tokens",
@@ -1855,10 +1877,10 @@ export const en = {
     tokensNotCharged: "You weren’t charged for this attempt.",
     timeout: "The request took too long. Please try again.",
     seedanceSensitive:
-      "Seedance blocked this clip (violence/combat filter). Use calmer wording: no weapons, opponents, or standoffs — figures at rest, peaceful pause. A combat-looking reference image can also trigger this.",
+      "video generation blocked this clip (violence/combat filter). Use calmer wording: no weapons, opponents, or standoffs — figures at rest, peaceful pause. A combat-looking reference image can also trigger this.",
     falContentPolicy:
-      "Seedance blocked this media (people / private-info filter). We can retry with Kling per-scene animation + stitch—if auto-switch fails, tap Generate video again.",
-    klingStoryboardFailed: "Kling storyboard fallback failed. Try again or use stills without faces.",
+      "video generation blocked this media (people / private-info filter). We can retry with per-scene animation + stitch—if auto-switch fails, tap Generate video again.",
+    klingStoryboardFailed: "storyboard fallback failed. Try again or use stills without faces.",
     needPhoto: "Please upload a product photo first.",
     needReferenceImage: "Please upload a reference image first.",
     needHeadline: "Please enter a headline for this template.",
@@ -1878,6 +1900,9 @@ export const en = {
     brandAnalyzeFailed: "Brand analysis failed — check the URL and try again.",
     campaignFailed: "Campaign generation failed. Please try again.",
     storyboardFailed: "Storyboard generation failed. Please try again.",
+    storyboardSceneImagesMissing:
+      "Could not load all storyboard scene images ({got}/{expected}). Re-generate the missing still, then try video again.",
+    brandLogoRequired: "Upload a logo in Brand kit first.",
     storyboardVideoPromptRequired: "Generate storyboard scene images in Step 2 first.",
     cinematicStitchNeedScenes: "Generate {count} scene keyframes in Step 2 before continuing to video.",
     needProductName: "Product name is required for storyboard planning.",
@@ -1891,10 +1916,10 @@ export const en = {
     planProductVideoFailed: "Product video planning failed. Check photos and try again.",
     adPackPlanFailed: "Ad pack planning failed. Try again.",
     musicGenerateFailed: "AI music generation failed. Try again or pick library music.",
-    voiceoverFailed: "Voiceover dub failed. Check FAL_KEY or disable spoken voiceover.",
-    ugcPresenterFailed: "Digital presenter video failed. Check FAL_KEY and try again.",
+    voiceoverFailed: "Voiceover dub failed. Check service credentials or disable spoken voiceover.",
+    ugcPresenterFailed: "Digital presenter video failed. Check service credentials and try again.",
     postProcessIncomplete:
-      "Post-process incomplete — final file is still a raw CDN clip (not saved to library). Regenerate; check ffmpeg / caption burn if it persists.",
+      "Post-process incomplete — final file is still a raw CDN clip (not saved to library). Regenerate; check stitching / caption burn if it persists.",
     bgmFilesMissing:
       "Background music files missing. Use AI music or run npm run setup:bgm.",
     planConceptFailed: "Concept analysis failed. Please try again.",
@@ -1903,11 +1928,11 @@ export const en = {
     conceptVideoPlanRequired:
       "AI is planning the video prompt — wait a few seconds, or tap “AI write video prompt”.",
     needProductVideoPlan: "Tap Analyze photos & plan video first.",
-    researchReelAnalyzeFailed: "Reference reel analysis failed — install ffmpeg or pick another post.",
+    researchReelAnalyzeFailed: "Reference reel analysis failed — try again or pick another post.",
     brandAnalyzeRequired: "Tap Analyze brand first.",
   },
   ugcStudio: {
-    badge: "Standalone tool · HeyGen lip-sync",
+    badge: "Standalone tool · digital presenter lip-sync",
     title: "UGC talking presenter",
     subtitle:
       "Type a short product intro, pick a digital presenter, and generate a TikTok-style talking-head clip. Optional: upload your product photo for a custom keyframe.",
@@ -1915,7 +1940,7 @@ export const en = {
     setupHint:
       "To show YOUR product on screen: upload photo → generate keyframe → generate video. Stock avatar only lip-syncs the script (no product in frame).",
     productHowHint:
-      "Two modes — Custom keyframe: your product photo becomes a talking-head still with product in hand/wrist, then HeyGen animates it. Stock avatar: generic presenter only; product name is spoken in the script, not shown as your real item.",
+      "Two modes — Custom keyframe: your product photo becomes a talking-head still with product in hand/wrist, then digital presenter animates it. Stock avatar: generic presenter only; product name is spoken in the script, not shown as your real item.",
     productLabel: "Product name",
     productPlaceholder: "e.g. crystal bracelet, portable power station…",
     photoLabel: "Product photo (for on-screen product)",
@@ -1923,11 +1948,11 @@ export const en = {
     scriptLabel: "Spoken script (~10s)",
     scriptPlaceholder: "Keep it under ~10 seconds — one hook + one benefit + CTA.",
     scriptHint: "For ~10s UGC, aim for 1–3 short sentences. Edit AI script before generate.",
-    planScript: "AI write script (DeepSeek)",
+    planScript: "AI write script (AI)",
     planningScript: "Writing script…",
-    planScriptHint: "Uses DeepSeek to draft a ~10s spoken intro from your product name. Edit freely after.",
+    planScriptHint: "Uses AI to draft a ~10s spoken intro from your product name. Edit freely after.",
     scriptReady: "AI script ready — edit if needed, then preview voice.",
-    scriptFailed: "AI script planning failed. Check DeepSeek API key.",
+    scriptFailed: "AI script planning failed. Check AI API key.",
     localeHk: "粵語/繁中",
     localeCn: "普通话",
     localeEn: "English",
@@ -1952,7 +1977,7 @@ export const en = {
     previewEmpty: "Your UGC clip will appear here after generate.",
     waitHint: "Hang tight — lip-sync video is rendering in this frame.",
     download: "Download MP4",
-    costHint: "Uses tokens for voice (if synthesized) + HeyGen video (~30 tokens/sec of audio ≈ $0.10/s). Sign in required.",
+    costHint: "Uses tokens for voice (if synthesized) + digital presenter video (~30 tokens/sec of audio ≈ $0.10/s). Sign in required.",
     needScript: "Enter a spoken script first.",
     needProduct: "Enter a product name first.",
     needPhoto: "Upload a product photo for custom keyframe.",
@@ -2009,7 +2034,7 @@ export const en = {
     previewLoadFailed: "Caption burn succeeded but preview failed to load — try Download.",
     softTrackNote: "Captions added as a subtitle track — turn on CC in the player if you do not see them.",
     softTrackError:
-      "Visible burn failed — only a CC track was added. Install ffmpeg with freetype/libass, or retry (overlay mode should work after refresh).",
+      "Visible burn failed — only a CC track was added. Retry after refresh, or (overlay mode should work after refresh).",
     downloadBtn: "Download captioned MP4",
     downloading: "Downloading…",
     downloadFailed: "Download failed.",
@@ -2034,7 +2059,7 @@ export const en = {
     planCaptionVoice: "AI plan captions + voice",
     planningCaptionVoice: "Planning with AI…",
     planCaptionVoiceNeedTopic: "Enter a product/topic above first.",
-    planCaptionVoiceFailed: "AI caption/voice plan failed. Check DeepSeek API key.",
+    planCaptionVoiceFailed: "AI caption/voice plan failed. Check AI API key.",
     planCaptionVoiceDone:
       "Planned {n} short captions + longer spoken lines for ~{sec}s — next: voice preview → Mix ({n} clips).",
     audioBgmLabel: "Music track",
@@ -2070,7 +2095,7 @@ export const en = {
     expandingCaptionVoice: "Lengthening spoken lines…",
     expandCaptionVoiceNeedLines:
       "Add short caption text on the right timeline first, then lengthen spoken lines to fill each window.",
-    expandCaptionVoiceFailed: "Could not lengthen spoken lines. Check DeepSeek API key.",
+    expandCaptionVoiceFailed: "Could not lengthen spoken lines. Check AI API key.",
     expandCaptionVoiceDone:
       "Filled spoken lines for {n} caption windows (~{sec}s) and refreshed voice preview — next: Mix ({n} clips).",
     spokenLineLabel: "Spoken (TTS) — can be longer than on-screen",
@@ -2173,7 +2198,7 @@ export const en = {
     cleanPromptPlaceholder: "Advanced: describe replacement content (leave empty for erase)",
     cleanEraseBtn: "Erase selected area",
     cleanFillBtn: "Replace with prompt",
-    cleanCostNote: "Each erase uses 1 image generation credit (fal.ai FLUX Erase).",
+    cleanCostNote: "Each erase uses 1 image generation credit (Token billing FLUX Erase).",
     cleanPreviewTitle: "Erase preview",
     cleanAcceptBtn: "Use this image → add text",
     cleanRetryBtn: "Not good — try again",
@@ -2354,9 +2379,9 @@ export const en = {
     generateVideoHint: "Review settings above, then generate your reel.",
     generateVideoFooterHint: "When ready, tap Generate video below.",
     videoModeTitle: "Video creation mode",
-    videoModeHint: "How should Seedance use your keyframe or reference?",
+    videoModeHint: "How should video generation use your keyframe or reference?",
     imagePromptTitle: "Image polish prompt",
-    imagePromptHint: "Optional extra instructions for Nano Banana before generating.",
+    imagePromptHint: "Optional extra instructions for AI image before generating.",
     cinematicModeTitle: "Concept cinematic style",
     cinematicModeHint: "Single 8s clip for quick tests.",
     sceneCountTitle: "How many scenes?",
@@ -2452,7 +2477,7 @@ export const en = {
     subtitle:
       "Lumina-style node canvas: add nodes, wire refs with @, run each step or Run all.",
     costHint:
-      "Pro uses fal.ai at pay-per-use rates (not Lumina subscription pricing). Each run costs API credits on your FAL_KEY.",
+      "Pro uses Token billing at pay-per-use rates (not Lumina subscription pricing). Each run costs API credits on your service credentials.",
     mobileDesktopOnly:
       "Pro canvas is built for desktop — use a tablet in landscape or a computer for the best experience. The guided wizard at /studio works on phones.",
     steps: [

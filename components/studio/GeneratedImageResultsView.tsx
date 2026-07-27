@@ -216,6 +216,18 @@ export function GeneratedImageResultsView({
                         ? m.wizard.storyboardRegeneratingImage
                         : m.wizard.storyboardRegenerateAiBtn}
                     </button>
+                    {wizard.brandKit?.logoUrl ? (
+                      <button
+                        type="button"
+                        disabled={wizard.storyboardSceneRegenerateBusy !== null}
+                        onClick={() => void wizard.stampStoryboardSceneLogo(i)}
+                        className="min-h-10 rounded-md border border-emerald-500/70 bg-emerald-950/40 px-3 py-2 text-xs text-emerald-200 disabled:opacity-40"
+                      >
+                        {wizard.storyboardSceneRegenerateBusy === i
+                          ? m.wizard.storyboardStampingLogo
+                          : m.wizard.storyboardStampLogoBtn}
+                      </button>
+                    ) : null}
                   </div>
                 ) : null}
               </div>

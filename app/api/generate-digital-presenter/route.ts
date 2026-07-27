@@ -129,7 +129,7 @@ export async function POST(request: Request) {
   const key = process.env.FAL_KEY?.trim();
   if (!key) {
     return NextResponse.json(
-      { error: "FAL_KEY is not configured on the server." },
+      { error: "Video generation is temporarily unavailable. Please try again later." },
       { status: 503 },
     );
   }
@@ -266,7 +266,7 @@ export async function POST(request: Request) {
       });
       const data = result.data as { video?: { url?: string } };
       const videoUrl = data.video?.url;
-      if (!videoUrl) throw new Error("HeyGen response missing video URL.");
+      if (!videoUrl) throw new Error("Presenter response missing video URL.");
       await trackUsage(auth.user.userId, "video");
       if (!usedPreview) await trackUsage(auth.user.userId, "voiceover");
       const durableVideoUrl = await persistAndDurablize({
@@ -281,7 +281,7 @@ export async function POST(request: Request) {
         requestId: result.requestId,
         generationMode: "digital-presenter-stock",
         endpoint: HEYGEN_DIGITAL_TWIN_ENDPOINT,
-        note: `HeyGen Avatar V stock presenter — ${avatar.id}. Lip-sync baked in.`,
+        note: `Digital presenter (stock) — ${avatar.id}. Lip-sync baked in.`,
         tokensCharged: tokenCost,
         billedDurationSec: Math.ceil(durationSec),
         creditBalance: balanceAfter,
@@ -324,7 +324,7 @@ export async function POST(request: Request) {
     const data = result.data as { video?: { url?: string } };
     const videoUrl = data.video?.url;
     if (!videoUrl) {
-      throw new Error("HeyGen response missing video URL.");
+      throw new Error("Presenter response missing video URL.");
     }
 
     await trackUsage(auth.user.userId, "video");
@@ -345,7 +345,7 @@ export async function POST(request: Request) {
       requestId: result.requestId,
       generationMode: "digital-presenter",
       endpoint: HEYGEN_AVATAR_IV_ENDPOINT,
-      note: "HeyGen Avatar IV — lip-sync is baked into this clip (not Seedance).",
+      note: "Digital presenter — lip-sync is baked into this clip.",
       tokensCharged: tokenCost,
       billedDurationSec: Math.ceil(durationSec),
       creditBalance: balanceAfter,

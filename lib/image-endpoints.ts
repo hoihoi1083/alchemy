@@ -46,6 +46,21 @@ export function sanitizeImageEndpoint(
   return fallback;
 }
 
+/** Prefer edit when we must pass image_urls (e.g. Mode B brand logo). */
+export function resolveEditEndpointWhenNeeded(
+  raw: string | null | undefined,
+  needsImageUrls: boolean,
+): string {
+  if (needsImageUrls) {
+    const preferred = defaultEditEndpoint();
+    const sanitized = sanitizeImageEndpoint(raw, preferred);
+    // Client often sends text-to-image; that path ignores logo refs — force edit.
+    if (!sanitized.includes("/edit")) return preferred;
+    return sanitized;
+  }
+  return sanitizeImageEndpoint(raw, defaultTextEndpoint());
+}
+
 /** Seedance video endpoints we intentionally support. */
 const ALLOWED_VIDEO_ENDPOINTS = new Set<string>([
   "bytedance/seedance-2.0/text-to-video",

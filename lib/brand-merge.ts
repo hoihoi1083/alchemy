@@ -48,9 +48,28 @@ export function brandKitPromptBlock(kit: BrandKit): string {
     .join(" ");
 }
 
-/** @deprecated Logo is user-applied via Quick fix / canvas — do not AI-composite. */
-export function brandKitLogoImagePromptBlock(_logoImageIndex: number): string {
-  return "No corner badges, seals, watermarks, or placeholder labels. Never render English meta words such as CTA, logo, brand, or watermark.";
+/**
+ * Mode B: brand-kit logo is passed as IMAGE N on the first Nano Banana call.
+ * Ask the model to integrate that exact mark (not invent a new wordmark).
+ */
+export function brandKitLogoImagePromptBlock(logoImageIndex: number): string {
+  const n = Math.max(1, Math.floor(logoImageIndex));
+  return [
+    `BRAND LOGO (IMAGE ${n}): the attached file is the client's REAL logo PNG — use ONLY this file as branding.`,
+    `Composite IMAGE ${n} into the still with natural placement (packaging, signage, end-card mark, or subtle badge).`,
+    "Keep IMAGE N geometry, colors, and letterforms pixel-faithful — never redraw, morph, or invent alternate letters.",
+    "CRITICAL: do NOT invent a different logo from the product name, business name, headline, or CTA in the brief (e.g. do not invent an alchemy.ai mark if IMAGE N is a different file).",
+    "Do not add other logos, watermarks, social UI, or readable marketing copy beyond this brand mark.",
+    "Never render English meta words such as CTA, logo, brand, or watermark as on-image labels.",
+  ].join(" ");
+}
+
+/** Kling / Seedance: still already contains the real logo — preserve pixels. */
+export function brandLogoPreserveInVideoPrompt(): string {
+  return [
+    "If a brand logo is already visible in the input still, preserve it exactly — same shape, colors, and letterforms.",
+    "Do not invent new logos, redraw the mark, or add watermarks / readable text.",
+  ].join(" ");
 }
 
 /**

@@ -438,7 +438,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error:
-            "If you attach audio, Seedance requires at least one reference image or video.",
+            "If you attach audio, video generation requires at least one reference image or video.",
         },
         { status: 400 },
       );
@@ -532,7 +532,7 @@ export async function POST(request: Request) {
     }
     if (refTooLong) {
       notes.push(
-        `Reference is ~${Math.round(refDurationSec)}s — Seedance only uses 2–15s (usually the opening). Trim a 8–12s clip in CapCut for closer motion match.`,
+        `Reference is ~${Math.round(refDurationSec)}s — video generation only uses 2–15s (usually the opening). Trim an 8–12s clip in CapCut for closer motion match.`,
       );
     }
 
@@ -642,7 +642,7 @@ export async function POST(request: Request) {
                   : "FAL_CONTENT_POLICY",
                 klingFallbackFailed: true,
                 hint:
-                  "Seedance returned 422 and Kling fallback also failed. Try again or use a different still.",
+                  "Video generation failed. Try again or use a different still.",
               },
               { status: 422 },
             );
@@ -657,7 +657,7 @@ export async function POST(request: Request) {
           error: message,
           code: "SEEDANCE_SENSITIVE_CONTENT",
           hint:
-            "Seedance blocked this clip (violence/combat framing). Try a calmer prompt: no weapons, opponents, or standoffs — figures at rest, peaceful pause, arms at sides. A combat-looking reference image can also trigger this.",
+            "This clip was blocked by a safety filter (violence/combat framing). Try a calmer prompt: no weapons, opponents, or standoffs — figures at rest, peaceful pause, arms at sides. A combat-looking reference image can also trigger this.",
         },
         { status: 422 },
       );
@@ -668,7 +668,7 @@ export async function POST(request: Request) {
           error: message,
           code: "FAL_CONTENT_POLICY",
           hint:
-            "Seedance blocked people / private-info in the input. Use a product-only photo (no faces or hands), or generate without a reference reel that shows people.",
+            "People / private-info filter blocked this input. Use a product-only photo (no faces or hands), or generate without a reference reel that shows people.",
         },
         { status: 422 },
       );

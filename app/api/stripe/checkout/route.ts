@@ -70,7 +70,7 @@ export async function POST(request: Request) {
       const session = await stripe.checkout.sessions.create({
         mode: "payment",
         line_items: [{ price, quantity: 1 }],
-        success_url: `${base}/pricing?checkout=success&kind=topup`,
+        success_url: `${base}/pricing?checkout=success&kind=topup&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${base}/pricing?checkout=cancel`,
         client_reference_id: clerkId,
         customer: user.stripeCustomerId,
@@ -111,7 +111,7 @@ export async function POST(request: Request) {
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       line_items: [{ price, quantity: 1 }],
-      success_url: `${base}/pricing?checkout=success&plan=${plan}`,
+      success_url: `${base}/pricing?checkout=success&plan=${plan}&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${base}/pricing?checkout=cancel`,
       client_reference_id: clerkId,
       customer: user?.stripeCustomerId || undefined,

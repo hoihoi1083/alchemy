@@ -19,6 +19,7 @@ import {
 } from "@/components/studio/GenerationWaitPlaceholder";
 import { estimateKlingStoryboardTokens, estimateVideoTokens } from "@/lib/billing/token-costs";
 import { klingClipDurationForStoryboard } from "@/lib/kling-storyboard-fallback";
+import { klingStoryboardTokenCost, resolveKlingClipDurations } from "@/lib/kling-storyboard-run";
 import { isBrandVideoStyle, isCreativeVideoStyle, isStoryboardVideoStyle } from "@/lib/visual-styles";
 import { isVideoOutputPathLocked, resolveVideoOutputPresentation } from "@/lib/video-output-presentation";
 import { analyzeProductImageFile } from "@/lib/image-upload-quality";
@@ -31,12 +32,16 @@ export function VideoStep() {
   const isConcept = promotionMode === "concept";
   const outputDurationSec = resolveWizardOutputDurationSec(videoSettings);
   const storyboardSceneCount = Math.max(1, storyboardScenes.length || 4);
-  const storyboardClipSec = klingClipDurationForStoryboard(
-    storyboardSceneCount,
-    Number(storyboardTrimDuration) || outputDurationSec || 8,
-  );
+  const storyboardTotalSec = Number(storyboardTrimDuration) || outputDurationSec || 8;
   const videoTokenCost = isStoryboardOutput
-    ? estimateKlingStoryboardTokens(storyboardSceneCount, storyboardClipSec)
+    ? storyboardScenes.length > 0
+      ? klingStoryboardTokenCost(
+          resolveKlingClipDurations(storyboardScenes.length, storyboardTotalSec, storyboardScenes),
+        )
+      : estimateKlingStoryboardTokens(
+          storyboardSceneCount,
+          klingClipDurationForStoryboard(storyboardSceneCount, storyboardTotalSec),
+        )
     : estimateVideoTokens({
         resolution: videoSettings.resolution,
         fast: videoSettings.fast,

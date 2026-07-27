@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import {
   archiveCinematicStillsWithBrandLogo,
+  archiveImagesWithBrandLogo,
   CINEMATIC_LOGO_PLACEMENT,
+  END_CARD_LOGO_SIZE_RATIO,
 } from "@/lib/brand-logo-composite";
 import { parseBrandKit } from "@/lib/brand-kit";
 import type { LogoPlacement } from "@/lib/image-refine-prompt";
@@ -28,8 +30,8 @@ function parsePlacement(raw: unknown): LogoPlacement {
 }
 
 /**
- * Deterministically stamp the caller's brand-kit logo onto cinematic (or other) stills.
- * Same corner + size on every URL — not AI placement.
+ * Deterministically stamp the caller's brand-kit logo onto stills.
+ * Center placement = end-card hero size; corners = cinematic badge size.
  */
 export async function POST(request: Request) {
   const auth = await requireAppUser();
@@ -64,12 +66,19 @@ export async function POST(request: Request) {
 
   try {
     const placement = parsePlacement(body.placement);
-    const stamped = await archiveCinematicStillsWithBrandLogo(
-      request,
-      urls,
-      brandKit,
-      placement,
-    );
+    const stamped =
+      placement === "center"
+        ? await archiveImagesWithBrandLogo(request, urls, brandKit, {
+            placement: "center",
+            sizeRatio: END_CARD_LOGO_SIZE_RATIO,
+            fileName: "generated.png",
+          })
+        : await archiveCinematicStillsWithBrandLogo(
+            request,
+            urls,
+            brandKit,
+            placement,
+          );
     return NextResponse.json({
       urls: stamped.urls.length === urls.length ? stamped.urls : urls,
       logoStamped: stamped.logoStamped,

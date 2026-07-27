@@ -65,8 +65,8 @@ export async function POST(request: Request) {
     const sourceNote =
       plan.researchMode === "live-web"
         ? plan.searchProvider === "justoneapi"
-          ? `${plan.platformLabel} 貼文搜尋 (Just One API) — ${plan.posts?.length ?? 0} posts · ${plan.candidates.length} directions${filterNote} · DeepSeek synthesis`
-          : `Live web research (${plan.searchProvider}) — ${plan.sources?.length ?? 0} sources${filterNote} · DeepSeek synthesis`
+          ? `${plan.platformLabel} 貼文搜尋 (live search) — ${plan.posts?.length ?? 0} posts · ${plan.candidates.length} directions${filterNote} · AI synthesis`
+          : `Live web research (${plan.searchProvider}) — ${plan.sources?.length ?? 0} sources${filterNote} · AI synthesis`
         : "AI playbook suggestions (no web search)";
     return NextResponse.json({
       plan,

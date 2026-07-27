@@ -33,8 +33,19 @@ import type { CinematicSceneResult } from "@/lib/cinematic-reel-types";
 import type { StoryboardSceneResult } from "@/lib/video-storyboard-types";
 
 export function ImageStep() {
-  const { applyPromptRebuild, artStyleId, campaignPlan, campaignSlideLabel, campaignSlides, campaignTheme, canGenerateImage, cinematicReelPlan, cinematicSceneCount, cinematicScenes, effectiveImageMode, effectiveImageOutputMode, error, finishImageStep, formatCinematicCopy, generateImage, goBackFromImage, headline, imageAspectRatio, imageBusy, imageCreativeMode, imageFinishLabel, imageGenKey, imageGenerateDisabledReason, imageInputMode, imageNextDisabled, imagePostflight, imagePostflightBusy, imagePreflight, imageProgressInfo, imagePrompt, imageQualityChecklist, imageRefPhoto, imageRefPreviewUrl, imageStepHint, imageTextMode, imageUrl, imageVariantUrls, imageVisionReview, imageVisionReviewBusy, isCampaignOutput, isCinematicStitchOutput, isConceptCinematicSingleOutput, isConceptStoryboardOutput, isStoryboardOutput, lastImageEndpoint, lockedCampaignMode, m, needsProductUpload, onCinematicSceneCountChange, onImageCreativeModeChange, onImageInputModeChange, onProductPhotoSelected, planStoryboard, planStoryboardBusy, product, productPhoto, promotionMode, promptExtra, promptMarket, referenceAd, referenceAnalyzeBusy, referenceAnalyzeNote, referenceCarouselSlideCount, referenceIsVideo, referenceStrategy, regenerateStoryboardSceneWithAi, reorderStoryboardScene, replaceStoryboardSceneImage, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, runShipItPipeline, selectVisualStyle, selectedVariantIndex, setArtStyleId, setCampaignPlan, setCampaignSlides, setCampaignTheme, setImageAspectRatio, setImageGenKey, setImageOutputMode, setImagePrompt, setImageRefPhoto, setImageQualityChecklist, setImageTextMode, setImageUrl, setImageVariantUrls, setPromptExtra, setPromptMarket, setError, setReferenceCarouselSlideCount, setSelectedVariantIndex, setShipItMode, setShowAdvancedImage, setStoryboardBrief, setStoryboardPlan, setStoryboardSceneCount, setSubjectFraming, setVideoPrompt, shipItEligible, shipItMode, shipItPipelineBusy, shipItVisionBlocked, showAdvancedImage, storyboardBrief, storyboardPlan, storyboardSceneCount, storyboardSceneRegenerateBusy, storyboardSceneReplaceBusy, storyboardScenes, storyboardTrimDuration, subjectFraming, templateId, templateSlotStatus, trimStoryboardDurations, updateStoryboardPlanScene, uploadPreviewUrl, uploadQualityMessage, uploadQualityWarning, useOriginalAsKeyframe, useOriginalImage, userReferenceBrief, useReferenceVideo, usesCompositor, videoPrompt, visualStyle, visualStyleId, workflowMode } = useWizard();
+  const { applyPromptRebuild, artStyleId, campaignPlan, campaignSlideLabel, campaignSlides, campaignTheme, canGenerateImage, cinematicReelPlan, cinematicSceneCount, cinematicScenes, effectiveImageMode, effectiveImageOutputMode, error, finishImageStep, formatCinematicCopy, generateImage, goBackFromImage, headline, imageAspectRatio, imageBusy, imageCreativeMode, imageFinishLabel, imageGenKey, imageGenerateDisabledReason, imageInputMode, imageNextDisabled, imagePostflight, imagePostflightBusy, imagePreflight, imageProgressInfo, imagePrompt, imageQualityChecklist, imageRefPhoto, imageRefPreviewUrl, imageStepHint, imageTextMode, imageUrl, imageVariantUrls, imageVisionReview, imageVisionReviewBusy, isCampaignOutput, isCinematicStitchOutput, isConceptCinematicSingleOutput, isConceptStoryboardOutput, isStoryboardOutput, lastImageEndpoint, lockedCampaignMode, m, needsProductUpload, onCinematicSceneCountChange, onImageCreativeModeChange, onImageInputModeChange, onProductPhotoSelected, planStoryboard, planStoryboardBusy, product, productPhoto, promotionMode, promptExtra, promptMarket, referenceAd, referenceAnalyzeBusy, referenceAnalyzeNote, referenceCarouselSlideCount, referenceIsVideo, referenceStrategy, regenerateStoryboardSceneWithAi, stampStoryboardSceneLogo, brandKit, reorderStoryboardScene, replaceStoryboardSceneImage, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, runShipItPipeline, selectVisualStyle, selectedVariantIndex, setArtStyleId, setCampaignPlan, setCampaignSlides, setCampaignTheme, setImageAspectRatio, setImageGenKey, setImageOutputMode, setImagePrompt, setImageRefPhoto, setImageQualityChecklist, setImageTextMode, setImageUrl, setImageVariantUrls, setPromptExtra, setPromptMarket, setError, setReferenceCarouselSlideCount, setSelectedVariantIndex, setShipItMode, setShowAdvancedImage, setStoryboardBrief, setStoryboardPlan, setStoryboardSceneCount, setSubjectFraming, setVideoPrompt, shipItEligible, shipItMode, shipItPipelineBusy, shipItVisionBlocked, showAdvancedImage, storyboardBrief, storyboardPlan, storyboardSceneCount, storyboardSceneRegenerateBusy, storyboardSceneReplaceBusy, storyboardScenes, storyboardTrimDuration, subjectFraming, templateId, templateSlotStatus, trimStoryboardDurations, updateStoryboardPlanScene, uploadPreviewUrl, uploadQualityMessage, uploadQualityWarning, useOriginalAsKeyframe, useOriginalImage, userReferenceBrief, useReferenceVideo, usesCompositor, videoPrompt, visualStyle, visualStyleId, workflowMode } = useWizard();
   const isConcept = promotionMode === "concept";
+  const storyboardSceneEstimate = (() => {
+    if (storyboardPlan?.scenes?.length) return storyboardPlan.scenes.length;
+    if (storyboardScenes.length) return storyboardScenes.length;
+    if (storyboardSceneCount !== "auto") return Number(storyboardSceneCount) || 4;
+    const duration = Number(storyboardTrimDuration) || 8;
+    if (duration <= 6) return 4;
+    if (duration <= 10) return 5;
+    return 6;
+  })();
+  const logoModeAPasses =
+    isStoryboardOutput && Boolean(brandKit?.useBrandLogo && brandKit?.logoUrl?.trim()) ? 2 : 1;
   const imageTokenCost = estimateImageTokens({
     mode: isStoryboardOutput || isCinematicStitchOutput
       ? "storyboard"
@@ -46,7 +57,12 @@ export function ImageStep() {
             ? "teaching_carousel"
             : "single",
     numImages: effectiveImageOutputMode === "ab" ? 2 : 1,
-    sceneCount: Number(isCinematicStitchOutput ? cinematicSceneCount : storyboardSceneCount) || 4,
+    sceneCount: isCinematicStitchOutput
+      ? Number(cinematicSceneCount) || 4
+      : isStoryboardOutput
+        ? storyboardSceneEstimate
+        : Number(storyboardSceneCount) || 4,
+    passesPerScene: logoModeAPasses,
   });
   const isConceptSocialImage =
     isConcept &&
@@ -700,10 +716,29 @@ export function ImageStep() {
                   ? m.wizard.storyboardRegeneratingImage
                   : m.wizard.storyboardRegenerateAiBtn}
               </button>
+              {brandKit?.logoUrl ? (
+                <button
+                  type="button"
+                  disabled={storyboardSceneRegenerateBusy !== null}
+                  onClick={() => stampStoryboardSceneLogo(i)}
+                  className="min-h-10 rounded-md border border-emerald-500/70 bg-emerald-950/40 px-3 py-2 text-xs text-emerald-200 disabled:opacity-40"
+                >
+                  {storyboardSceneRegenerateBusy === i
+                    ? m.wizard.storyboardStampingLogo
+                    : m.wizard.storyboardStampLogoBtn}
+                </button>
+              ) : null}
             </div>
             <p className="mt-1 text-center text-[10px] text-amber-300/90">
               {m.wizard.storyboardRegenerateAiCostHint}
             </p>
+            {brandKit?.logoUrl ? (
+              <p className="mt-1 text-center text-[10px] text-emerald-300/90">
+                {i === storyboardScenes.length - 1
+                  ? m.wizard.storyboardStampLogoHint
+                  : m.wizard.storyboardStampLogoCornerHint}
+              </p>
+            ) : null}
           </div>
         ))}
       </div>

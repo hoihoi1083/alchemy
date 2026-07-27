@@ -34,7 +34,7 @@ export async function callDeepSeekChat(
       Accept: "application/json",
     },
     body: JSON.stringify({
-      model: options.model || process.env.DEEPSEEK_MODEL?.trim() || "deepseek-chat",
+      model: options.model || process.env.DEEPSEEK_MODEL?.trim() || "deepseek-v4-flash",
       messages,
       temperature: options.temperature ?? 0.4,
       max_tokens: options.max_tokens ?? 1200,
@@ -49,7 +49,7 @@ export async function callDeepSeekChat(
   if (!res.ok) {
     if (res.status === 402 || raw.includes("Insufficient Balance")) {
       throw new Error(
-        "DeepSeek API: account balance is empty. Top up at platform.deepseek.com (same key as Harmoniq).",
+        "AI planning is temporarily unavailable. Please try again later.",
       );
     }
     throw new Error(`DeepSeek API error (${res.status}): ${raw.slice(0, 300)}`);

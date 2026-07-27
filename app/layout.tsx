@@ -4,8 +4,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "alchemy.ai",
-  description:
-    "Product ad and video studio — Nano Banana + Seedance",
+  description: "Product ad and video studio — create images and short videos for marketing.",
 };
 
 export const viewport: Viewport = {

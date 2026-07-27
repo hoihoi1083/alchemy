@@ -11,6 +11,7 @@ import {
   klingClipDurationForScene,
   klingClipDurationForStoryboard,
   klingSceneMotionPrompt,
+  KLING_TEXTLESS_NEGATIVE,
 } from "@/lib/kling-storyboard-fallback";
 import { concatVideos, ensureFfmpeg } from "@/lib/pipeline/ffmpeg";
 import { materializeMediaInput, pipelineFileUrl } from "@/lib/pipeline/local-input";
@@ -24,16 +25,21 @@ export type KlingSceneMeta = {
   endSec?: number;
   sceneDescriptionZh?: string;
   imagePrompt?: string;
+  role?: string;
+  /** User opted into Brand kit logo on storyboard stills. */
+  useBrandLogo?: boolean;
+  /** @deprecated alias of useBrandLogo */
+  endWithBrandLogo?: boolean;
 };
 
 export function formatKlingFalError(e: unknown): string {
   if (e instanceof ApiError) {
-    return `${e.message}${e.requestId ? ` (fal request: ${e.requestId})` : ""}`;
+    return `${e.message}${e.requestId ? ` (request: ${e.requestId})` : ""}`;
   }
   if (e && typeof e === "object" && "message" in e) {
     return String((e as { message: unknown }).message);
   }
-  return "Kling fallback failed";
+  return "Storyboard video generation failed";
 }
 
 function extractVideoUrl(data: unknown): string | null {
@@ -156,10 +162,10 @@ export async function runKlingStoryboardFallback(opts: {
     imageUrls = await Promise.all(files.map((f) => fal.storage.upload(f)));
   }
   if (!imageUrls.length) {
-    throw new Error("Kling fallback needs at least one image.");
+    throw new Error("Storyboard video needs at least one scene image.");
   }
   if (imageUrls.length > 9) {
-    throw new Error("At most 9 images for Kling fallback.");
+    throw new Error("At most 9 storyboard scenes.");
   }
 
   const totalDurationSec =
@@ -185,16 +191,21 @@ export async function runKlingStoryboardFallback(opts: {
       const prompt =
         imageUrls.length === 1 && motionPrompt
           ? [
-              motionPrompt.slice(0, 800),
-              "Keep the same people, product, and layout as the input image.",
-              "Subtle camera move only — no morphing faces, no new text, no watermark.",
+              "Animate this exact still with confident commercial camera motion and light movement.",
+              motionPrompt.slice(0, 400),
+              "Preserve layout, product, logo, and blank UI. Do not invent any readable text or Chinese glyphs.",
+              "If any accidental gibberish text appears, keep it heavily out-of-focus and unreadable.",
             ].join(" ")
           : klingSceneMotionPrompt({
               sceneIndex: i + 1,
               sceneCount: imageUrls.length,
-              sceneDescription: meta?.sceneDescriptionZh,
-              imagePrompt: meta?.imagePrompt || motionPrompt.slice(0, 200),
+              // Do NOT pass Chinese sceneDescription as motion — Kling fills screens with gibberish.
+              sceneDescription: undefined,
+              imagePrompt: meta?.imagePrompt?.slice(0, 120),
+              role: meta?.role,
               theme,
+              endWithBrandLogo: Boolean(meta?.useBrandLogo ?? meta?.endWithBrandLogo),
+              useBrandLogo: Boolean(meta?.useBrandLogo ?? meta?.endWithBrandLogo),
             });
 
       const result = await fal.subscribe(KLING_ENDPOINT, {
@@ -202,16 +213,16 @@ export async function runKlingStoryboardFallback(opts: {
           prompt,
           image_url: imageUrl,
           duration: (duration === 10 ? "10" : "5") as "5" | "10",
-          negative_prompt:
-            "blur, distort, low quality, watermark, morphing face, extra limbs, readable new text",
-          cfg_scale: 0.5,
+          negative_prompt: KLING_TEXTLESS_NEGATIVE,
+          // Slightly higher guidance so camera/motion instructions stick.
+          cfg_scale: 0.6,
         },
         logs: true,
       });
 
       const url = extractVideoUrl(result.data);
       if (!url) {
-        throw new Error(`Kling returned no video for scene ${i + 1}.`);
+        throw new Error(`No video returned for scene ${i + 1}.`);
       }
       return url;
     }),
@@ -253,6 +264,6 @@ export async function runKlingStoryboardFallback(opts: {
     endpoint: KLING_ENDPOINT,
     generationMode: "kling-storyboard-fallback",
     note:
-      "Kling 2.5 Turbo Pro image-to-video (parallel clips) + stitch.",
+      "Per-scene image-to-video (parallel clips) + stitch.",
   };
 }

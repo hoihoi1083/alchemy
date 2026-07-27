@@ -14,8 +14,11 @@ import { studioSlideFileName } from "@/lib/pipeline/studio-slide-files";
 /** Logo width as a fraction of the shorter image side. */
 const LOGO_SIZE_RATIO = 0.14;
 /** Slightly smaller for tall 9:16 cinematic stills so captions stay clear. */
-const CINEMATIC_LOGO_SIZE_RATIO = 0.11;
+export const CINEMATIC_LOGO_SIZE_RATIO = 0.11;
 const MARGIN_RATIO = 0.04;
+
+/** Hero end-card logo size as fraction of short side (centered). */
+export const END_CARD_LOGO_SIZE_RATIO = 0.32;
 
 /** Default corner for cinematic stills — top keeps lower third free for burned captions. */
 export const CINEMATIC_LOGO_PLACEMENT: LogoPlacement = "top-right";

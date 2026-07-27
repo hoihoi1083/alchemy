@@ -41,7 +41,6 @@ export function SiteFooter() {
 
   const navLinks = [
     { label: f.studio, href: "/start" },
-    { label: f.pricing, href: "/pricing" },
     { label: f.how, href: "/how" },
     { label: f.library, href: "/library" },
     { label: f.contact, href: `mailto:${CONTACT_EMAIL}`, external: true },

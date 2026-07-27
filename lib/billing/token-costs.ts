@@ -138,6 +138,8 @@ export function estimateImageTokens(opts: {
   numImages?: number;
   mode?: "single" | "ab" | "campaign" | "teaching_carousel" | "storyboard";
   sceneCount?: number;
+  /** Mode A logo edit = 2 fal image calls per scene. */
+  passesPerScene?: number;
 }): number {
   const mode = opts.mode ?? "single";
   if (mode === "ab" || (opts.numImages ?? 1) >= 2) return TOKEN_COST.image_ab;
@@ -147,7 +149,8 @@ export function estimateImageTokens(opts: {
   }
   if (mode === "storyboard") {
     const n = Math.max(1, opts.sceneCount ?? 4);
-    return TOKEN_COST.storyboard_scene * n;
+    const passes = Math.max(1, opts.passesPerScene ?? 1);
+    return TOKEN_COST.storyboard_scene * n * passes;
   }
   return TOKEN_COST.image;
 }

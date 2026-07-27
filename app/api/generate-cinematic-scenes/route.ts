@@ -1,6 +1,8 @@
 import { ApiError, fal } from "@fal-ai/client";
 import { NextResponse } from "next/server";
-import { defaultTextEndpoint, sanitizeImageEndpoint } from "@/lib/image-endpoints";
+import {
+  resolveEditEndpointWhenNeeded,
+} from "@/lib/image-endpoints";
 import { persistAndDurablizeMany } from "@/lib/storage/durable-media";
 import type { CinematicReelPlan } from "@/lib/cinematic-reel-types";
 import type { CinematicSceneResult } from "@/lib/cinematic-reel-types";
@@ -12,11 +14,8 @@ import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import { artStyleAvoidTail, artStyleSystemPrompt, resolveArtStyleId } from "@/lib/art-style";
 import { SERVER_ERRORS } from "@/lib/api/server-errors";
 import { parseBrandKit } from "@/lib/brand-kit";
-import {
-  archiveCinematicStillsWithBrandLogo,
-  CINEMATIC_LOGO_PLACEMENT,
-} from "@/lib/brand-logo-composite";
-import type { LogoPlacement } from "@/lib/image-refine-prompt";
+import { uploadBrandKitLogoToFal } from "@/lib/brand-kit-fal";
+import { brandKitLogoImagePromptBlock } from "@/lib/brand-merge";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -44,22 +43,6 @@ function formatFalError(e: unknown): string {
     return String((e as { message: unknown }).message);
   }
   return "Cinematic scene image generation failed";
-}
-
-const PLACEMENTS: LogoPlacement[] = [
-  "bottom-right",
-  "bottom-left",
-  "top-right",
-  "top-left",
-  "center",
-  "replace",
-];
-
-function parsePlacement(raw: unknown): LogoPlacement {
-  if (typeof raw === "string" && (PLACEMENTS as string[]).includes(raw)) {
-    return raw as LogoPlacement;
-  }
-  return CINEMATIC_LOGO_PLACEMENT;
 }
 
 export async function POST(request: Request) {
@@ -95,10 +78,13 @@ export async function POST(request: Request) {
   }
 
   const aspectRatio = body.aspect_ratio?.trim() || "9:16";
-  const endpoint = sanitizeImageEndpoint(body.endpoint, defaultTextEndpoint());
   const artStyleId = resolveArtStyleId(body.art_style);
   const brandKit = parseBrandKit(body.brand_kit);
-  const logoPlacement = parsePlacement(body.logo_placement);
+  const brandLogoFalUrl = brandKit.logoUrl?.trim()
+    ? await uploadBrandKitLogoToFal(brandKit).catch(() => null)
+    : null;
+  const useBrandLogoModeB = Boolean(brandLogoFalUrl && brandKit.useBrandLogo);
+  const endpoint = resolveEditEndpointWhenNeeded(body.endpoint, useBrandLogoModeB);
 
   const tokenCost = estimateImageTokens({
     mode: "storyboard",
@@ -118,7 +104,12 @@ export async function POST(request: Request) {
   try {
     const scenes = await Promise.all(
       plan.scenes.map(async (scene) => {
-        const prompt = [scene.imagePrompt.trim(), artStyleAvoidTail(artStyleId)]
+        const prompt = [
+          scene.imagePrompt.trim(),
+          artStyleAvoidTail(artStyleId),
+          useBrandLogoModeB ? brandKitLogoImagePromptBlock(1) : "",
+          "TEXTLESS cinematic still: no marketing captions or watermarks.",
+        ]
           .filter(Boolean)
           .join("\n\n");
         const systemPrompt = artStyleSystemPrompt(artStyleId);
@@ -129,6 +120,9 @@ export async function POST(request: Request) {
             num_images: 1,
             resolution: imageResolution,
             limit_generations: true,
+            ...(useBrandLogoModeB && brandLogoFalUrl
+              ? { image_urls: [brandLogoFalUrl] }
+              : {}),
             ...(systemPrompt ? { system_prompt: systemPrompt } : {}),
           },
           logs: true,
@@ -149,21 +143,7 @@ export async function POST(request: Request) {
       fallbackUrls: falUrls,
       prompt: "cinematic-reel",
     });
-    let finalUrls = durableUrls.map((u, i) => u ?? falUrls[i]!);
-
-    let logoStamped = false;
-    if (brandKit.logoUrl) {
-      const stamped = await archiveCinematicStillsWithBrandLogo(
-        request,
-        finalUrls,
-        brandKit,
-        logoPlacement,
-      );
-      if (stamped.logoStamped && stamped.urls.length === finalUrls.length) {
-        finalUrls = stamped.urls;
-        logoStamped = true;
-      }
-    }
+    const finalUrls = durableUrls.map((u, i) => u ?? falUrls[i]!);
 
     const durableScenes: CinematicSceneResult[] = scenes.map((scene, index) => ({
       ...scene,
@@ -181,8 +161,10 @@ export async function POST(request: Request) {
       sceneCount: durableScenes.length,
       tokensCharged: tokenCost,
       creditBalance: balanceAfter,
-      logoStamped,
-      logoPlacement: logoStamped ? logoPlacement : undefined,
+      /** Mode B: logo baked by Nano Banana on first gen (no sharp corner stamp). */
+      logoMode: useBrandLogoModeB ? "nano-banana" : "none",
+      logoIntegrated: useBrandLogoModeB,
+      logoStamped: false,
     });
   } catch (e: unknown) {
     await refundTokens(auth.user.userId, tokenCost, {

@@ -118,9 +118,9 @@ export async function analyzeBrandFromSources(input: {
   if (websiteUrl) {
     const fetched = await fetchWebsiteText(websiteUrl);
     siteText = fetched.text;
-    sourceNote = `Analyzed website: ${fetched.url} (DeepSeek)`;
+    sourceNote = `Analyzed website: ${fetched.url}`;
   } else {
-    sourceNote = "Analyzed from social profile hint only (DeepSeek).";
+    sourceNote = "Analyzed from social profile hint only.";
   }
 
   const outputText = await callDeepSeekChat([

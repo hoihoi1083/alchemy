@@ -4,7 +4,67 @@ import { USER_REFERENCE_LAYOUT_TRANSFER_MARKER } from "../lib/user-reference-bri
 import {
   buildReelStoryboardPlanPromptForTest,
   buildStoryboardPlanPromptForTest,
+  parseVideoStoryboardPlan,
 } from "../lib/video-storyboard-plan";
+
+describe("parseVideoStoryboardPlan scene/prompt sync", () => {
+  it("pads missing @ImageN refs when scene_count forces more scenes", () => {
+    const plan = parseVideoStoryboardPlan(
+      {
+        title: "Demo",
+        theme: "alchemy",
+        visualDirection: "clean",
+        totalDurationSec: 8,
+        scenes: [
+          {
+            imageIndex: 1,
+            role: "hook",
+            startSec: 0,
+            endSec: 2,
+            sceneDescriptionZh: "开场",
+            onImageCopyZh: "不用写 Prompt",
+            imagePrompt: "gradient upload icon still",
+          },
+          {
+            imageIndex: 2,
+            role: "demo",
+            startSec: 2,
+            endSec: 4,
+            sceneDescriptionZh: "上传",
+            onImageCopyZh: "上传产品图",
+            imagePrompt: "phone upload still",
+          },
+          {
+            imageIndex: 3,
+            role: "edit",
+            startSec: 4,
+            endSec: 6,
+            sceneDescriptionZh: "编辑",
+            onImageCopyZh: "自动生成可编辑 Prompt",
+            imagePrompt: "laptop edit still",
+          },
+          {
+            imageIndex: 4,
+            role: "cta",
+            startSec: 6,
+            endSec: 8,
+            sceneDescriptionZh: "结尾",
+            onImageCopyZh: "试试 alchemy.ai",
+            imagePrompt: "end card still",
+          },
+        ],
+        seedancePrompt:
+          "Scene 1 [0-2s]: hard cut — @Image1 hook. Scene 2 [2-4s]: hard cut — @Image2 demo. Scene 3 [4-6s]: hard cut — @Image3 edit. Scene 4 [6-8s]: hard cut — @Image4 cta.",
+        productionNotes: "",
+      },
+      8,
+      "6",
+    );
+    assert.equal(plan.scenes.length, 6);
+    assert.match(plan.seedancePrompt, /@Image5/i);
+    assert.match(plan.seedancePrompt, /@Image6/i);
+  });
+});
 
 describe("video-storyboard-plan reel analysis", () => {
   it("reel storyboard prompt maps reference shots to scenes", () => {

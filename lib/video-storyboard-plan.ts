@@ -103,6 +103,27 @@ function enforceSceneCount(
   }));
 }
 
+function ensureSeedancePromptCoversScenes(
+  seedancePrompt: string,
+  scenes: StoryboardScenePlan[],
+): string {
+  let prompt = seedancePrompt.trim();
+  if (!prompt) return prompt;
+
+  for (let i = 1; i <= scenes.length; i++) {
+    if (new RegExp(`@\\s*Image\\s*${i}\\b`, "i").test(prompt)) continue;
+    const scene = scenes[i - 1];
+    const start = Number.isFinite(scene.startSec) ? scene.startSec : i - 1;
+    const end = Number.isFinite(scene.endSec) ? scene.endSec : i;
+    const action =
+      scene.sceneDescriptionZh?.trim() ||
+      scene.role?.trim() ||
+      `scene ${i} still`;
+    prompt = `${prompt}\nScene ${i} [${start}-${end}s]: hard cut — @Image${i} ${action}, static or subtle motion only.`;
+  }
+  return prompt;
+}
+
 function normalizeStoryboardPlan(
   parsed: Partial<VideoStoryboardPlan>,
   durationSec: number,
@@ -135,10 +156,13 @@ function normalizeStoryboardPlan(
     }
   }
 
-  const seedancePrompt = String(parsed.seedancePrompt ?? "").trim();
+  let seedancePrompt = String(parsed.seedancePrompt ?? "").trim();
   if (!seedancePrompt) {
-    throw new Error("DeepSeek returned an empty Seedance prompt.");
+    throw new Error("AI planning returned an empty video prompt.");
   }
+  // Scene count can be padded/trimmed after planning — keep @ImageN refs in sync
+  // instead of 400'ing the whole generate (user saw "@Image6" with tokens not charged).
+  seedancePrompt = ensureSeedancePromptCoversScenes(seedancePrompt, scenes);
 
   for (let i = 1; i <= scenes.length; i++) {
     if (!new RegExp(`@\\s*Image\\s*${i}\\b`, "i").test(seedancePrompt)) {
@@ -160,6 +184,21 @@ function normalizeStoryboardPlan(
   };
 }
 
+function endCardLogoPlannerRules(useBrandLogo?: boolean): string[] {
+  if (useBrandLogo) {
+    return [
+      "BRAND LOGO (user opted in — real logo stamped after stills):",
+      "- Do NOT invent logos or wordmarks in any imagePrompt — the Brand kit PNG is stamped later.",
+      "- LAST scene: empty-center commercial end-card backdrop (soft gradient/bokeh), NO logo/text in imagePrompt.",
+      "- LAST sceneDescriptionZh: brand end card / 品牌片尾 only.",
+      "- Middle scenes: normal product/story beats; leave a little clear margin top-right for a small logo badge.",
+    ];
+  }
+  return [
+    "BRAND LOGO: user did NOT opt in. Never invent brand logos, wordmarks, or Alchemy.ai marks in imagePrompt or sceneDescriptionZh. Stills stay textless.",
+  ];
+}
+
 function buildPlanPrompt(input: {
   product: string;
   business: string;
@@ -177,6 +216,7 @@ function buildPlanPrompt(input: {
   artStyleId?: ArtStyleId;
   referenceStrategyKind?: ReferenceStrategyKind;
   conceptMode?: boolean;
+  useBrandLogo?: boolean;
 }): string {
   const category = inferProductSceneCategory(input.product);
   const { min, max } = sceneCountForDuration(input.durationSec);
@@ -223,6 +263,8 @@ function buildPlanPrompt(input: {
       `- onImageCopyZh (burned caption after video) AND sceneDescriptionZh (UI note): ${plannerCopyLanguageRule(resolveCopyLocale((input.market as PromptMarket) || "hk"))}`,
       "- onImageCopyZh: short consumer caption for THIS scene only.",
       "- sceneDescriptionZh: one line for the user UI — same language as onImageCopyZh.",
+      "",
+      ...endCardLogoPlannerRules(input.useBrandLogo),
       "",
       "seedancePrompt (English, for Seedance API):",
       `- Opening line: 9:16 concept short for this campaign (~${input.durationSec}s).`,
@@ -296,10 +338,14 @@ function buildPlanPrompt(input: {
     "- Each scene gets ONE still (imageIndex 1…N in timeline order).",
     layoutTransferRef
       ? "- imagePrompt: English, dual-image edit — keep IMAGE 1 layout shell, IMAGE 2 product hero, 9:16, subject upright. NEVER ask for readable text/captions on the still (captions burn after video)."
-      : "- imagePrompt: English, for Nano Banana edit from user's product photo — 9:16 still matching the art direction, subject upright (head at top), correct vertical orientation. NEVER describe on-image text, titles, or captions (stills are textless for Kling).",
+      : "- imagePrompt: English, for Nano Banana edit from user's product photo — 9:16 still matching the art direction, subject upright (head at top), correct vertical orientation. NEVER describe on-image text, titles, captions, logos, or slogans (stills are textless for Kling; captions burn after video).",
     `- onImageCopyZh (burned caption) AND sceneDescriptionZh (UI note): ${plannerCopyLanguageRule(resolveCopyLocale((input.market as PromptMarket) || "hk"))}`,
     "- onImageCopyZh: consumer-facing caption text for THIS scene only (burned AFTER video). Short headline + optional subline or CTA. NEVER use production labels: 開場亮點, 行動呼籲, 中段, arrows (→), or storyboard role names.",
     "- sceneDescriptionZh: one line for the user UI — same language as onImageCopyZh.",
+    "- Phone/laptop/tablet scenes: describe blank or abstract UI chrome only — never ask Nano Banana to invent readable Chinese/English on screens (it becomes gibberish).",
+    "- Do NOT put marketing headlines (e.g. 不用写 Prompt) into imagePrompt — those belong only in onImageCopyZh for caption burn.",
+    "",
+    ...endCardLogoPlannerRules(input.useBrandLogo),
     "",
     "seedancePrompt (English, for Seedance API):",
     `- Opening line: 9:16 commercial for THIS product category in the chosen art direction.`,
@@ -351,6 +397,8 @@ export type PlanStoryboardInput = {
   referenceStrategyKind?: ReferenceStrategyKind;
   /** Concept / service short — no product photo required; different planner rules. */
   conceptMode?: boolean;
+  /** User opted into Brand kit logo stamps on storyboard stills. */
+  useBrandLogo?: boolean;
 };
 
 /** @internal Exported for unit tests — storyboard planner prompt text. */
@@ -419,6 +467,7 @@ export async function planVideoStoryboard(
           artStyleId,
           referenceStrategyKind: input.referenceStrategyKind,
           conceptMode,
+          useBrandLogo: input.useBrandLogo,
         }),
       },
     ],
@@ -475,6 +524,7 @@ function buildReelStoryboardPlanPrompt(input: {
   layoutTransfer: boolean;
   artStyleId: ArtStyleId;
   conceptMode?: boolean;
+  useBrandLogo?: boolean;
 }): string {
   const category = inferProductSceneCategory(input.product);
   const { min, max } = sceneCountForDuration(input.durationSec);
@@ -536,6 +586,8 @@ function buildReelStoryboardPlanPrompt(input: {
     "- sceneDescriptionZh: one line for the user UI — same language as onImageCopyZh.",
     `- onImageCopyZh: consumer ad copy for THIS scene. ${plannerCopyLanguageRule(resolveCopyLocale((input.market as PromptMarket) || "hk"))} Real headline/CTA only — NEVER 開場亮點, 行動呼籲, → arrows, or role names.`,
     "",
+    ...endCardLogoPlannerRules(input.useBrandLogo),
+    "",
     "seedancePrompt (English):",
     seedanceLead,
     "- One block per scene: Scene N [start-end s]: hard cut — @ImageK … static or subtle motion.",
@@ -577,6 +629,7 @@ export type PlanReelStoryboardInput = {
   artStyleId?: ArtStyleId;
   referenceStrategyKind?: ReferenceStrategyKind;
   promotionMode?: "physical" | "concept";
+  useBrandLogo?: boolean;
 };
 
 /** @internal Exported for unit tests. */
@@ -628,6 +681,7 @@ export async function planVideoStoryboardFromReelAnalysis(
           layoutTransfer,
           artStyleId,
           conceptMode,
+          useBrandLogo: input.useBrandLogo,
         }),
       },
     ],

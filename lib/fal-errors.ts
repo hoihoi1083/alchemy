@@ -30,14 +30,14 @@ function falDetailSnippet(e: ApiError<unknown> | ValidationError): string {
   return "";
 }
 
-/** User-facing fal error — prefer content-policy guidance over bare "Unprocessable Entity". */
+/** User-facing generation error — prefer content-policy guidance over bare "Unprocessable Entity". */
 export function formatFalGenerationError(e: unknown, fallback = "Generation failed"): string {
   if (e instanceof ApiError || e instanceof ValidationError) {
     const detail = falDetailSnippet(e);
-    const requestSuffix = e.requestId ? ` (fal request: ${e.requestId})` : "";
+    const requestSuffix = e.requestId ? ` (request: ${e.requestId})` : "";
     if (isFalContentPolicyThrowable(e, `${e.message} ${detail}`)) {
       return (
-        "fal blocked this scene (content safety). Spa/beauty ads are allowed — avoid faces, treatment-bed body shots, and skin close-ups; use room, towels, products, hands instead." +
+        "This scene was blocked by a content safety filter. Spa/beauty ads are allowed — avoid faces, treatment-bed body shots, and skin close-ups; use room, towels, products, hands instead." +
         requestSuffix
       );
     }

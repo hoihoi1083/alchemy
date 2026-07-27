@@ -71,6 +71,47 @@ export function buildLogoRefinePrompt(opts: {
   return parts.join(" ");
 }
 
+/**
+ * Mode A: second-pass logo composite after a textless still exists.
+ * Natural placement — not a forced corner sticker.
+ */
+export function buildStoryboardLogoModeAPrompt(): string {
+  return [
+    "Two images. IMAGE 1 = the finished storyboard still. IMAGE 2 = the client's real brand logo PNG.",
+    "Composite IMAGE 2 onto IMAGE 1 with natural brand presence (subtle badge, packaging mark, or clean corner — you choose what fits the frame).",
+    "Keep IMAGE 2 geometry, colors, and letterforms exact — never redraw or invent alternate letters.",
+    "Do not add other logos, watermarks, slogans, or readable marketing copy.",
+    "Do not invent gibberish text on phone/laptop screens — leave UI chrome blank if present.",
+    "Keep IMAGE 1 composition, product, people, and lighting unchanged except for the logo placement.",
+  ].join(" ");
+}
+
+/**
+ * End-card Mode A: brand logo is the centered hero (not a corner sticker).
+ */
+export function buildStoryboardEndCardLogoModeAPrompt(): string {
+  return [
+    "Two images. IMAGE 1 = a clean end-card backdrop. IMAGE 2 = the client's real brand logo PNG — this is the HERO.",
+    "Place IMAGE 2 large and perfectly CENTERED as the main subject of the frame (~28–36% of the short side).",
+    "Keep IMAGE 2 geometry, colors, and letterforms exact — never redraw, morph, or invent an alternate mark.",
+    "Do not invent a second logo, glowing fake wordmark, slogan line, Chinese/Latin copy, or watermark.",
+    "Keep a soft premium backdrop; leave lower third fairly clear for burned captions later.",
+    "IMAGE 2 is the only brand identity allowed on this still.",
+  ].join(" ");
+}
+
+/** First-pass still for end cards — empty center reserved for the real logo stamp/edit. */
+export function buildStoryboardEndCardStillPrompt(theme?: string): string {
+  const mood = theme?.trim() || "premium social brand";
+  return [
+    "9:16 vertical brand END CARD still for a social ad.",
+    `Soft premium gradient backdrop (${mood} mood) — calm, uncluttered, cinematic.`,
+    "Leave the CENTER of the frame empty and clear — a logo will be placed there next.",
+    "NO product bottle, NO people, NO phone/laptop UI, NO readable text, NO fake logos, NO slogans, NO watermarks.",
+    "Empty commercial end-card backdrop only.",
+  ].join(" ");
+}
+
 export const IMAGE_LOGO_REFINE_SYSTEM_PROMPT = [
   "You are a precise image editor for social ads.",
   "IMAGE 1 is the ad; IMAGE 2 is a logo file to composite onto the ad.",

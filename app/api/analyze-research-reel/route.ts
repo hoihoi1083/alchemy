@@ -11,6 +11,7 @@ import { resolveArtStyleId } from "@/lib/art-style";
 import type { StoryboardSceneCount } from "@/lib/ad-pack-preferences";
 import { STORYBOARD_SCENE_COUNTS } from "@/lib/ad-pack-preferences";
 import type { ReferenceStrategyKind } from "@/lib/reference-strategy";
+import { parseBrandKit } from "@/lib/brand-kit";
 
 export const runtime = "nodejs";
 export const maxDuration = 180;
@@ -122,6 +123,16 @@ export async function POST(request: Request) {
               ? referenceStrategyKind
               : undefined,
           sceneCountTarget,
+          useBrandLogo: (() => {
+            const brandKitRaw = (formData.get("brand_kit") as string | null)?.trim() || "";
+            if (!brandKitRaw) return false;
+            try {
+              const kit = parseBrandKit(JSON.parse(brandKitRaw));
+              return Boolean(kit.useBrandLogo && kit.logoUrl?.trim());
+            } catch {
+              return false;
+            }
+          })(),
         })
       : undefined;
 
