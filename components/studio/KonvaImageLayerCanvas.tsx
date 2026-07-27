@@ -357,13 +357,22 @@ export function KonvaImageLayerCanvas({
     };
   }
 
-  /** Group.width()/height() are unreliable after drag — use layout box size. */
-  function textDragCenterPct(layer: ImageCanvasTextLayer, node: Konva.Node) {
+  /** Map Group top-left back to layer xPct/yPct — xPct is the align anchor, not always box center. */
+  function textAnchorFromGroup(
+    layer: ImageCanvasTextLayer,
+    node: Konva.Node,
+    boxW?: number,
+    boxH?: number,
+  ) {
     const { height } = textMetrics(layer);
-    const w = ((layer.wPct ?? 70) / 100) * STAGE_WIDTH;
+    const w = boxW ?? ((layer.wPct ?? 70) / 100) * STAGE_WIDTH;
+    const h = boxH ?? height;
+    const align = layer.align ?? "center";
+    const anchorX =
+      align === "left" ? node.x() : align === "right" ? node.x() + w : node.x() + w / 2;
     return {
-      xPct: clampPct(((node.x() + w / 2) / STAGE_WIDTH) * 100),
-      yPct: clampPct(((node.y() + height / 2) / stageHeight) * 100),
+      xPct: clampPct((anchorX / STAGE_WIDTH) * 100),
+      yPct: clampPct(((node.y() + h / 2) / stageHeight) * 100),
     };
   }
 
@@ -385,7 +394,7 @@ export function KonvaImageLayerCanvas({
       return;
     }
     if (layer?.kind === "text") {
-      updateLayer(id, textDragCenterPct(layer, node), true);
+      updateLayer(id, textAnchorFromGroup(layer, node), true);
       return;
     }
     if (layer?.kind === "logo") {
@@ -429,8 +438,7 @@ export function KonvaImageLayerCanvas({
       updateLayer(
         id,
         {
-          xPct: clampPct(((node.x() + w / 2) / STAGE_WIDTH) * 100),
-          yPct: clampPct(((node.y() + h / 2) / stageHeight) * 100),
+          ...textAnchorFromGroup(layer, node, w, h),
           wPct: Math.min(95, Math.max(8, (w / STAGE_WIDTH) * 100)),
         },
         true,
@@ -917,7 +925,22 @@ export function KonvaImageLayerCanvas({
                 key={align}
                 type="button"
                 disabled={disabled || busy}
-                onClick={() => updateLayer(selected.id, { align }, true)}
+                onClick={() => {
+                  if (selected.kind !== "text") return;
+                  const prev = selected.align ?? "center";
+                  if (prev === align) return;
+                  const w = ((selected.wPct ?? 70) / 100) * STAGE_WIDTH;
+                  const anchorX = (selected.xPct / 100) * STAGE_WIDTH;
+                  const left =
+                    prev === "left" ? anchorX : prev === "right" ? anchorX - w : anchorX - w / 2;
+                  const nextAnchor =
+                    align === "left" ? left : align === "right" ? left + w : left + w / 2;
+                  updateLayer(
+                    selected.id,
+                    { align, xPct: clampPct((nextAnchor / STAGE_WIDTH) * 100) },
+                    true,
+                  );
+                }}
                 className={`rounded border px-2 py-1 text-xs ${
                   (selected.align ?? "center") === align
                     ? "border-cyan-500 text-cyan-200"
