@@ -65,7 +65,7 @@ const nextConfig: NextConfig = {
   transpilePackages: ["konva", "react-konva"],
   poweredByHeader: false,
   // Keep static binaries outside the webpack bundle so Vercel can spawn them.
-  serverExternalPackages: ["ffmpeg-static", "ffprobe-static"],
+  serverExternalPackages: ["ffmpeg-static", "ffprobe-static", "opentype.js"],
   outputFileTracingIncludes: {
     ...Object.fromEntries(FFMPEG_API_ROUTES.map((route) => [route, FFMPEG_TRACE])),
     ...Object.fromEntries(

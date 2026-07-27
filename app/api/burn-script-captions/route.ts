@@ -3,8 +3,6 @@ import path from "path";
 import { NextResponse } from "next/server";
 import { requireAppUser } from "@/lib/require-app-user";
 import {
-  attachSoftSubtitleTrack,
-  burnSubtitles,
   ensureFfmpeg,
   getMediaDurationSeconds,
 } from "@/lib/pipeline/ffmpeg";
@@ -73,10 +71,9 @@ async function burnCaptionsJob(
 
   const captionStyle = parseCaptionBurnStyleJson(input.captionStyle);
 
-  let burnMethod: "overlay" | "drawtext" | "subtitles" | "soft" = preferDrawtextCaptionBurn()
+  let burnMethod: "overlay" | "drawtext" = preferDrawtextCaptionBurn()
     ? "drawtext"
     : "overlay";
-  let softSubtitles = false;
 
   const tryOverlay = async () => {
     await burnCaptionsOverlay(inputPath, captionLines, outputPath, dir, captionStyle);
@@ -86,18 +83,8 @@ async function burnCaptionsJob(
     await burnCaptionsDrawtext(inputPath, captionLines, outputPath);
     burnMethod = "drawtext";
   };
-  const trySubtitles = async () => {
-    await burnSubtitles(inputPath, srtPath, outputPath);
-    burnMethod = "subtitles";
-  };
-  const trySoft = async () => {
-    await attachSoftSubtitleTrack(inputPath, srtPath, outputPath);
-    burnMethod = "soft";
-    softSubtitles = true;
-  };
 
-  // Vercel/Linux: drawtext first (bundled TTF). Overlay often "succeeds" with Latin tofu.
-  // macOS: overlay first (styles), then drawtext. Soft CC is last resort only.
+  // Prefer path-based overlay (Latin glyph outlines). Drawtext is fallback.
   const primary = preferDrawtextCaptionBurn()
     ? [tryDrawtext, tryOverlay]
     : [tryOverlay, tryDrawtext];
@@ -113,23 +100,12 @@ async function burnCaptionsJob(
       errors.push(error instanceof Error ? error.message : String(error));
     }
   }
+  // Never silently fall back to libass/soft CC — that is the "legacy subtitle
+  // renderer" path that garbles English on Vercel. Surface the real error.
   if (!burned) {
-    try {
-      await trySubtitles();
-      burned = true;
-    } catch (subtitleError) {
-      errors.push(
-        subtitleError instanceof Error ? subtitleError.message : String(subtitleError),
-      );
-      await trySoft();
-      console.warn("[burn-script-captions] burn fallback:", errors.join(" | "));
-    }
-  }
-
-  if (softSubtitles) {
-    console.warn(
-      "[burn-script-captions] soft subtitles only — HTML5 player will not show captions",
-      errors,
+    console.error("[burn-script-captions] overlay+drawtext failed:", errors.join(" | "));
+    throw new Error(
+      `Caption burn failed on server (overlay/drawtext). ${errors.slice(0, 2).join(" · ").slice(0, 500)}`,
     );
   }
 
@@ -149,7 +125,7 @@ async function burnCaptionsJob(
     videoUrl,
     jobId,
     srtUrl: pipelineFileUrl(request, jobId, "captions.srt"),
-    softSubtitles,
+    softSubtitles: false,
     burnMethod,
   };
 }

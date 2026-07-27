@@ -1,13 +1,20 @@
 import { readFileSync } from "fs";
-import opentype from "opentype.js";
+import type { Font } from "opentype.js";
+import * as opentypeNs from "opentype.js";
 import { compositorFontPath, ensureCompositorFonts } from "@/lib/compositor/fonts";
 
-type CachedFont = opentype.Font;
+/**
+ * Vercel/webpack: default import of opentype.js breaks
+ * ("does not contain a default export"). Resolve parse from namespace/CJS.
+ */
+const opentype = (
+  (opentypeNs as { default?: typeof opentypeNs }).default ?? opentypeNs
+) as typeof import("opentype.js");
 
-let latinRegular: CachedFont | null = null;
-let latinBold: CachedFont | null = null;
+let latinRegular: Font | null = null;
+let latinBold: Font | null = null;
 
-function loadFont(role: "latin" | "latinBold"): CachedFont {
+function loadFont(role: "latin" | "latinBold"): Font {
   ensureCompositorFonts();
   const file = compositorFontPath(role);
   const buf = readFileSync(file);
@@ -20,7 +27,7 @@ function loadFont(role: "latin" | "latinBold"): CachedFont {
   return font;
 }
 
-function getLatinFont(bold: boolean): CachedFont {
+function getLatinFont(bold: boolean): Font {
   if (bold) {
     if (!latinBold) latinBold = loadFont("latinBold");
     return latinBold;
@@ -31,7 +38,7 @@ function getLatinFont(bold: boolean): CachedFont {
 
 /** Advance + path without OpenType feature lookups (Noto breaks opentype.js ccmp). */
 function layoutLatinLine(
-  font: CachedFont,
+  font: Font,
   text: string,
   fontSize: number,
   baselineY: number,
