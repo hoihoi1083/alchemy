@@ -1934,13 +1934,13 @@ export const zhCn = {
     badge: "独立工具 · 无需重新生成视频",
     title: "字幕与音频工作室",
     subtitle:
-      "上传任意 Reels MP4 — 添加 BGM、口播配音并烧录字幕。与向导后期相同，无需重新生成视频。",
+      "从作品库选 Reels — 添加 BGM、口播配音并烧录字幕。与向导后期相同，无需重新生成视频。",
     uploadTitle: "视频来源",
     uploadHint:
-      "上传文件、从作品库选（大 MP4／已生成片最稳），或从 studio 完成页打开。",
+      "从作品库选片（studio 生成会自动保存），或从 studio 完成页打开字幕工作室。",
     chooseFile: "选择视频文件",
     chooseFromLibrary: "从作品库选择",
-    changeVideo: "更换视频",
+    changeVideo: "更换视频（作品库）",
     sourceFromStudio: "来自 studio",
     sourceFromLibrary: "来自作品库",
     largeFileHint:

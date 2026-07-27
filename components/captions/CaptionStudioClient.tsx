@@ -210,7 +210,6 @@ export function CaptionStudioClient() {
     useState<CaptionStylePresetId>("classic");
   const [libraryPickerOpen, setLibraryPickerOpen] = useState(false);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const previewVideoRef = useRef<HTMLVideoElement>(null);
 
   const sourceKey = sourceFile
@@ -439,15 +438,6 @@ export function CaptionStudioClient() {
       if (playbackUrl?.startsWith("blob:")) URL.revokeObjectURL(playbackUrl);
     };
   }, [localPreviewUrl, playbackUrl]);
-
-  function onFileSelected(file: File | null) {
-    if (!file) return;
-    if (!file.type.startsWith("video/")) {
-      setError(t.invalidVideoType);
-      return;
-    }
-    loadSource("file", { file });
-  }
 
   function updateCaptionLine(index: number, patch: Partial<CaptionLine>) {
     setCaptionLines((prev) =>
@@ -993,29 +983,14 @@ export function CaptionStudioClient() {
             <div className="mt-6 flex flex-col items-center gap-3">
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="rounded-full bg-violet-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-violet-500"
-              >
-                {t.chooseFile}
-              </button>
-              <button
-                type="button"
                 onClick={() => setLibraryPickerOpen(true)}
-                className="rounded-full border border-slate-600 px-6 py-2.5 text-sm font-medium text-slate-200 hover:bg-slate-900"
+                className="rounded-full bg-violet-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-violet-500"
               >
                 {t.chooseFromLibrary}
               </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="video/mp4,video/webm,video/quicktime,video/*"
-                className="hidden"
-                onChange={(e) => onFileSelected(e.target.files?.[0] ?? null)}
-              />
               {sourceLabel && (
                 <span className="text-xs text-slate-400">{sourceLabel}</span>
               )}
-              <p className="max-w-sm text-[11px] text-slate-500">{t.largeFileHint}</p>
             </div>
             {sourceUrl && isPipelineFileUrl(sourceUrl) && (
               <p className="mt-3 text-xs text-emerald-300">{t.pipelineSourceNote}</p>
@@ -1026,25 +1001,11 @@ export function CaptionStudioClient() {
         <div className="flex flex-wrap items-center justify-center gap-4">
           <button
             type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="text-xs text-slate-400 underline underline-offset-2 hover:text-slate-300"
-          >
-            {t.changeVideo}
-          </button>
-          <button
-            type="button"
             onClick={() => setLibraryPickerOpen(true)}
             className="text-xs text-violet-300 underline underline-offset-2 hover:text-violet-200"
           >
-            {t.chooseFromLibrary}
+            {t.changeVideo}
           </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="video/mp4,video/webm,video/quicktime,video/*"
-            className="hidden"
-            onChange={(e) => onFileSelected(e.target.files?.[0] ?? null)}
-          />
         </div>
       )}
 

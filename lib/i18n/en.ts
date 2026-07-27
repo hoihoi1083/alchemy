@@ -1996,13 +1996,13 @@ export const en = {
     badge: "Standalone tool · no re-generation",
     title: "Caption & audio studio",
     subtitle:
-      "Upload any reel MP4 — add BGM, spoken voiceover, and burned captions. Same post-production as the wizard, without re-generating video.",
+      "Pick a library reel — add BGM, spoken voiceover, and burned captions. Same post-production as the wizard, without re-generating video.",
     uploadTitle: "Video source",
     uploadHint:
-      "Upload a file, pick from My library (best for large MP4s already generated), or open from the studio done screen.",
+      "Choose a video from My library (studio outputs are saved there), or open Caption studio from the studio done screen.",
     chooseFile: "Choose video file",
     chooseFromLibrary: "Choose from library",
-    changeVideo: "Change video file",
+    changeVideo: "Change video (library)",
     sourceFromStudio: "From studio",
     sourceFromLibrary: "From library",
     largeFileHint:

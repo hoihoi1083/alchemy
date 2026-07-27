@@ -1933,13 +1933,13 @@ export const zh = {
     badge: "獨立工具 · 唔使重新生成影片",
     title: "字幕同音頻工作室",
     subtitle:
-      "上傳任何 Reels MP4 — 加 BGM、口播配音同燒錄字幕。同 wizard 後期一樣，唔使重新生成影片。",
+      "從作品庫揀 Reels — 加 BGM、口播配音同燒錄字幕。同 wizard 後期一樣，唔使重新生成影片。",
     uploadTitle: "影片來源",
     uploadHint:
-      "上傳檔案、從作品庫揀（大 MP4／已生成片最穩），或由 studio 完成頁開啟。",
+      "從作品庫揀片（studio 生成會自動存入），或由 studio 完成頁開啟字幕工作室。",
     chooseFile: "選擇影片檔案",
     chooseFromLibrary: "從作品庫選擇",
-    changeVideo: "更換影片",
+    changeVideo: "更換影片（作品庫）",
     sourceFromStudio: "來自 studio",
     sourceFromLibrary: "來自作品庫",
     largeFileHint:
