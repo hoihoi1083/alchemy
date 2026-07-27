@@ -17,13 +17,15 @@ export function spokenCharBudget(
 ): { targetChars: number; maxChars: number } {
   const dur = Math.max(0.8, durationSec);
   const perSec = speechCharsPerSec(locale);
+  // Scale with window length — fixed floors (e.g. 16 EN chars) blew past 2s slots
+  // and produced ~26s TTS for a 20s / 8s reel.
   const targetChars = Math.max(
-    locale === "en" ? 16 : 10,
-    Math.round(dur * perSec * 0.72),
+    locale === "en" ? 8 : 5,
+    Math.round(dur * perSec * 0.68),
   );
   const maxChars = Math.max(
-    targetChars + (locale === "en" ? 6 : 3),
-    Math.round(dur * perSec * 0.85),
+    targetChars + (locale === "en" ? 4 : 2),
+    Math.round(dur * perSec * 0.8),
   );
   return { targetChars, maxChars };
 }

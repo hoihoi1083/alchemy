@@ -40,6 +40,7 @@
     "test:integration:live": "tsx scripts/test-integration-env.ts --live",
     "test:justone-mp4": "tsx scripts/test-justone-mp4-pipeline.ts",
     "test:assistant": "npx tsx scripts/test-studio-assistant-coach.ts && npx tsx scripts/test-studio-assistant-routing-matrix.ts && npx tsx scripts/test-studio-assistant-conversation.ts",
+    "test:captions": "tsx scripts/test-caption-studio-smoke.ts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "setup:secrets": "tsx scripts/setup-prod-secrets.ts",
