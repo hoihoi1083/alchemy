@@ -8,6 +8,7 @@ import { AuthNav } from "@/components/AuthNav";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { SiteFooter } from "@/components/SiteFooter";
 import { useLocale } from "@/components/LocaleProvider";
+import { PRODUCT_LOGO_ALT, PRODUCT_LOGO_SRC, PRODUCT_NAME, PRODUCT_SUPPORT_EMAIL } from "@/lib/brand";
 
 type BillingInterval = "monthly" | "yearly";
 type PaidPlanKey = "standard" | "pro" | "master";
@@ -155,8 +156,8 @@ export function PricingPageClient() {
       <header className="mx-auto w-full max-w-6xl px-6" style={{ paddingTop: 40, paddingBottom: 48 }}>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <Link href="/" className="flex items-center gap-3">
-            <img src="/alchemy-logo.png" alt="alchemy.ai logo" className="h-10 w-10 rounded-xl object-contain" />
-            <p className="text-lg font-semibold tracking-tight">alchemy.ai</p>
+            <img src={PRODUCT_LOGO_SRC} alt={PRODUCT_LOGO_ALT} className="h-10 w-10 rounded-xl object-contain" />
+            <p className="text-lg font-semibold tracking-tight">{PRODUCT_NAME}</p>
           </Link>
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <LanguageToggle variant="light" />
@@ -320,7 +321,7 @@ export function PricingPageClient() {
             </ul>
           </div>
           <a
-            href="mailto:hello@alchemy.ai?subject=Custom%20plan"
+            href={`mailto:${PRODUCT_SUPPORT_EMAIL}?subject=Custom%20plan`}
             className="mt-10 inline-flex shrink-0 justify-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-medium text-slate-800 hover:bg-slate-100 sm:mt-0"
           >
             {p.contactSales}

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { SiteFooter } from "@/components/SiteFooter";
 import { useLocale } from "@/components/LocaleProvider";
+import { PRODUCT_LOGO_ALT, PRODUCT_LOGO_SRC, PRODUCT_NAME } from "@/lib/brand";
 
 export function HowPageClient() {
   const { m } = useLocale();
@@ -14,8 +15,8 @@ export function HowPageClient() {
       <section className="mx-auto w-full max-w-6xl px-6 py-16">
         <div className="mb-12 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src="/alchemy-logo.png" alt="alchemy.ai logo" className="h-10 w-10 object-contain" />
-            <p className="text-lg font-semibold tracking-tight">alchemy.ai</p>
+            <img src={PRODUCT_LOGO_SRC} alt={PRODUCT_LOGO_ALT} className="h-10 w-10 object-contain" />
+            <p className="text-lg font-semibold tracking-tight">{PRODUCT_NAME}</p>
           </div>
           <div className="flex items-center gap-3">
             <LanguageToggle variant="light" />

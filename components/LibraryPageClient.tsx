@@ -7,6 +7,7 @@ import { AuthNav } from "@/components/AuthNav";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { useLocale } from "@/components/LocaleProvider";
 import { downloadMediaUrl } from "@/lib/download-media";
+import { PRODUCT_LOGO_ALT, PRODUCT_LOGO_SRC, PRODUCT_NAME } from "@/lib/brand";
 
 const ACTIVE_PROJECT_KEY = "alchemy-active-project-id";
 
@@ -278,11 +279,11 @@ export function LibraryPageClient() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <Link href="/" className="flex items-center gap-3">
             <img
-              src="/alchemy-logo.png"
-              alt="alchemy.ai logo"
+              src={PRODUCT_LOGO_SRC}
+              alt={PRODUCT_LOGO_ALT}
               className="h-10 w-10 rounded-xl object-contain"
             />
-            <p className="text-lg font-semibold tracking-tight">alchemy.ai</p>
+            <p className="text-lg font-semibold tracking-tight">{PRODUCT_NAME}</p>
           </Link>
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <LanguageToggle variant="light" />

@@ -3,7 +3,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "alchemy.ai",
+  title: "Alchemy AI Lab",
   description: "Product ad and video studio — create images and short videos for marketing.",
 };
 

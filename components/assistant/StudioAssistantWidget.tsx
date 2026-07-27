@@ -666,7 +666,7 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
         <span className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl sm:h-[100px] sm:w-[100px] md:h-[140px] md:w-[140px]">
           <Image
             src={LAUNCHER_IMAGE_SRC}
-            alt="alchemy.ai logo"
+            alt="Alchemy AI Lab logo"
             width={200}
             height={200}
             className="h-full w-full rounded-2xl object-contain drop-shadow-lg"

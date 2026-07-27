@@ -8,7 +8,7 @@ export function isEmailConfigured(): boolean {
 
 /** Display name + address for transactional mail. Override with EMAIL_FROM. */
 export function emailFromAddress(): string {
-  return process.env.EMAIL_FROM?.trim() || "Alchemy Billing <billing@alchemyailab.com>";
+  return process.env.EMAIL_FROM?.trim() || "Alchemy AI Lab <billing@alchemyailab.com>";
 }
 
 export function getResend(): Resend {

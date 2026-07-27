@@ -240,8 +240,8 @@ async function runLocale(locale: VoiceoverLocale, cleanVideo: string, durationSe
     async () => {
       const topic =
         locale === "en"
-          ? "Alchemy AI studio — create product ads and reels in minutes"
-          : "Alchemy AI 工作室 — 一鍵製作產品廣告短片";
+          ? "Alchemy AI Lab — create product ads and reels in minutes"
+          : "Alchemy AI Lab 工作室 — 一鍵製作產品廣告短片";
       const planned = await planCaptionVoice({
         topic,
         locale,

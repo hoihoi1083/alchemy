@@ -161,12 +161,9 @@ async function assertOverlayHasInk(png: Buffer, text: string): Promise<void> {
     .toBuffer({ resolveWithObject: true });
   let ink = 0;
   for (let i = 0; i < data.length; i += 4) {
+    // Any opaque pixel counts — fill may be green/yellow/pink, not only white.
     const a = data[i + 3] ?? 0;
-    if (a < 40) continue;
-    const r = data[i] ?? 0;
-    const g = data[i + 1] ?? 0;
-    const b = data[i + 2] ?? 0;
-    if (r + g + b > 520 || (r < 40 && g < 40 && b < 40)) ink += 1;
+    if (a >= 40) ink += 1;
   }
   const minInk = Math.max(60, sample.length * 6);
   if (ink < minInk) {

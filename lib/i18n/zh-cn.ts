@@ -2,7 +2,7 @@ import type { TemplateId } from "@/lib/templates";
 
 export const zhCn = {
   meta: {
-    title: "alchemy.ai",
+    title: "Alchemy AI Lab",
     description: "上传产品照片，制作带背景音乐的广告短视频",
   },
   lang: {
@@ -132,7 +132,7 @@ export const zhCn = {
   },
   header: {
     badge: "简易模式 · Reels · 稍后加 BGM",
-    title: "alchemy.ai studio",
+    title: "Alchemy AI Lab studio",
     subtitle: "上传产品图 · 选风格 · 出 Reels",
     subtitleConcept: "品牌文案 · 选风格 · 出 feed 图和 Reels",
     promotionPhysical: "实体产品",

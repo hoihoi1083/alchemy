@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useLocale } from "@/components/LocaleProvider";
+import { PRODUCT_LOGO_SRC, PRODUCT_NAME, PRODUCT_SUPPORT_EMAIL } from "@/lib/brand";
 
-const CONTACT_EMAIL = "support@alchemyailab.com";
+const CONTACT_EMAIL = PRODUCT_SUPPORT_EMAIL;
 
 const SOCIALS: { label: string; href: string; src: string }[] = [
   {
@@ -69,26 +70,26 @@ export function SiteFooter() {
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/alchemy-logo.png"
+                src={PRODUCT_LOGO_SRC}
                 alt=""
                 className="h-14 w-14 rounded-2xl object-contain sm:h-16 sm:w-16"
               />
               {/* SVG fill can't be overridden by page text-color CSS */}
               <svg
                 className="site-footer-brand h-8 w-auto sm:h-10"
-                viewBox="0 0 168 36"
+                viewBox="0 0 280 36"
                 role="img"
-                aria-label="alchemy.ai"
+                aria-label={PRODUCT_NAME}
               >
                 <text
                   x="0"
                   y="28"
                   fill="#ffffff"
-                  fontSize="28"
+                  fontSize="24"
                   fontWeight="600"
                   fontFamily="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
                 >
-                  alchemy.ai
+                  {PRODUCT_NAME}
                 </text>
               </svg>
             </Link>
@@ -149,7 +150,7 @@ export function SiteFooter() {
           style={{ borderTop: "1px solid rgba(255,255,255,0.15)" }}
         >
           <p className="text-xs sm:text-sm" style={{ color: "#ffffff" }}>
-            © {year} alchemy.ai. {f.rights}
+            © {year} {PRODUCT_NAME}. {f.rights}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
             {PAYMENTS.map((p) => (

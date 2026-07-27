@@ -11,6 +11,7 @@ import { useLocale } from "@/components/LocaleProvider";
 import { FREE_SIGNUP_GRANT_TOKENS } from "@/lib/billing/plans";
 import { isTemplateId } from "@/lib/template-pref";
 import { studioHref, type PromotionMode } from "@/lib/promotion-mode";
+import { PRODUCT_LOGO_ALT, PRODUCT_LOGO_SRC, PRODUCT_NAME } from "@/lib/brand";
 
 function StartPageBody() {
   const { m } = useLocale();
@@ -54,11 +55,11 @@ function StartPageBody() {
         <div className="mb-10 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
             <img
-              src="/alchemy-logo.png"
-              alt="alchemy.ai logo"
+              src={PRODUCT_LOGO_SRC}
+              alt={PRODUCT_LOGO_ALT}
               className="h-9 w-9 rounded-xl object-contain"
             />
-            <span className="text-base font-semibold">alchemy.ai</span>
+            <span className="text-base font-semibold">{PRODUCT_NAME}</span>
           </Link>
           <div className="flex items-center gap-3">
             <LanguageToggle variant="light" />

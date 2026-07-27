@@ -2,7 +2,7 @@ import type { TemplateId } from "@/lib/templates";
 
 export const en = {
   meta: {
-    title: "alchemy.ai",
+    title: "Alchemy AI Lab",
     description: "Make social ads from your product photo — add BGM and captions when you want",
   },
   lang: {
@@ -136,7 +136,7 @@ export const en = {
   },
   header: {
     badge: "Easy mode · IG / FB reels · add music later",
-    title: "alchemy.ai studio",
+    title: "Alchemy AI Lab studio",
     subtitle: "Upload product · pick a style · get Reels",
     subtitleConcept: "Brand copy · pick a style · get feed posts & reels",
     promotionPhysical: "Physical product",

@@ -195,7 +195,7 @@ function endCardLogoPlannerRules(useBrandLogo?: boolean): string[] {
     ];
   }
   return [
-    "BRAND LOGO: user did NOT opt in. Never invent brand logos, wordmarks, or Alchemy.ai marks in imagePrompt or sceneDescriptionZh. Stills stay textless.",
+    "BRAND LOGO: user did NOT opt in. Never invent brand logos, wordmarks, or Alchemy AI Lab marks in imagePrompt or sceneDescriptionZh. Stills stay textless.",
   ];
 }
 

@@ -5,6 +5,7 @@ import { AuthNav } from "@/components/AuthNav";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { useLocale } from "@/components/LocaleProvider";
 import type { PromotionMode } from "@/lib/promotion-mode";
+import { PRODUCT_LOGO_ALT, PRODUCT_LOGO_SRC, PRODUCT_NAME } from "@/lib/brand";
 
 export function AppHeader(props: {
   theme: "light" | "dark";
@@ -44,11 +45,11 @@ export function AppHeader(props: {
       </div>
       <div className="mb-4 flex items-center justify-center gap-3">
         <img
-          src="/alchemy-logo.png"
-          alt="alchemy.ai logo"
+          src={PRODUCT_LOGO_SRC}
+          alt={PRODUCT_LOGO_ALT}
           className="h-10 w-10 bg-transparent object-contain"
         />
-        <p className="text-sm font-semibold tracking-wide text-slate-700">alchemy.ai</p>
+        <p className="text-sm font-semibold tracking-wide text-slate-700">{PRODUCT_NAME}</p>
       </div>
       <p className="text-sm font-medium tracking-wide text-emerald-600">{m.header.badge}</p>
       <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900 sm:text-4xl">

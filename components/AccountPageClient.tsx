@@ -9,6 +9,7 @@ import { useLocale } from "@/components/LocaleProvider";
 import type { CreditReason } from "@/lib/billing/ledger";
 import type { UserPlan } from "@/lib/billing/plans";
 import { CREDITS_EVENT } from "@/lib/credits-client";
+import { PRODUCT_LOGO_ALT, PRODUCT_LOGO_SRC, PRODUCT_NAME } from "@/lib/brand";
 
 type MeUser = {
   creditBalance?: number | null;
@@ -136,8 +137,8 @@ export function AccountPageClient() {
       <header className="mx-auto max-w-3xl px-6" style={{ paddingTop: 40, paddingBottom: 32 }}>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <Link href="/" className="flex items-center gap-3">
-            <img src="/alchemy-logo.png" alt="alchemy.ai logo" className="h-10 w-10 rounded-xl object-contain" />
-            <p className="text-lg font-semibold tracking-tight">alchemy.ai</p>
+            <img src={PRODUCT_LOGO_SRC} alt={PRODUCT_LOGO_ALT} className="h-10 w-10 rounded-xl object-contain" />
+            <p className="text-lg font-semibold tracking-tight">{PRODUCT_NAME}</p>
           </Link>
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <LanguageToggle variant="light" />

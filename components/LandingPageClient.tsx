@@ -8,6 +8,7 @@ import { CoachSpotlightOverlay } from "@/components/assistant/CoachSpotlightOver
 import { SiteFooter } from "@/components/SiteFooter";
 import { BrandKitPanel } from "@/components/studio/BrandKitPanel";
 import { useLocale } from "@/components/LocaleProvider";
+import { PRODUCT_LOGO_ALT, PRODUCT_LOGO_SRC, PRODUCT_NAME } from "@/lib/brand";
 
 export function LandingPageClient() {
   const { m } = useLocale();
@@ -21,11 +22,11 @@ export function LandingPageClient() {
             <div className="mb-10 flex flex-col gap-4 sm:mb-14 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3">
                 <img
-                  src="/alchemy-logo.png"
-                  alt="alchemy.ai logo"
+                  src={PRODUCT_LOGO_SRC}
+                  alt={PRODUCT_LOGO_ALT}
                   className="h-10 w-10 rounded-xl object-contain"
                 />
-                <p className="text-lg font-semibold tracking-tight">alchemy.ai</p>
+                <p className="text-lg font-semibold tracking-tight">{PRODUCT_NAME}</p>
               </div>
               <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                 <LanguageToggle variant="light" />

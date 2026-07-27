@@ -21,7 +21,7 @@ describe("purchase confirmation email", () => {
     assert.match(html, /support@alchemyailab\.com/);
     assert.match(html, /Open account/);
     assert.match(html, /Purchase receipt/);
-    assert.match(html, /alchemy\.ai/);
+    assert.match(html, /Alchemy AI Lab/);
     assert.match(html, /cid:alchemy-logo/);
   });
 

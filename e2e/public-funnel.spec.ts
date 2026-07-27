@@ -11,7 +11,7 @@ test.describe("Public entry funnel", () => {
 
   test("landing loads and primary CTA targets /start", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText("alchemy.ai").first()).toBeVisible();
+    await expect(page.getByText("Alchemy AI Lab").first()).toBeVisible();
     const startLink = page.getByRole("link", { name: "Start Creating" });
     await expect(startLink).toHaveAttribute("href", "/start");
   });

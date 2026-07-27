@@ -49,7 +49,7 @@ describe("parseVideoStoryboardPlan scene/prompt sync", () => {
             startSec: 6,
             endSec: 8,
             sceneDescriptionZh: "结尾",
-            onImageCopyZh: "试试 alchemy.ai",
+            onImageCopyZh: "试试 Alchemy AI Lab",
             imagePrompt: "end card still",
           },
         ],

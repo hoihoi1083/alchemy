@@ -92,12 +92,12 @@ function simpleHtml(opts: {
                 <tr>
                   <td style="vertical-align:middle;padding-right:12px;">
                     <a href="${siteUrl}" style="text-decoration:none;">
-                      <img src="cid:${EMAIL_LOGO_CONTENT_ID}" alt="alchemy.ai" width="40" height="40" style="display:block;width:40px;height:40px;border:0;border-radius:10px;" />
+                      <img src="cid:${EMAIL_LOGO_CONTENT_ID}" alt="Alchemy AI Lab" width="40" height="40" style="display:block;width:40px;height:40px;border:0;border-radius:10px;" />
                     </a>
                   </td>
                   <td style="vertical-align:middle;">
                     <p style="margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;font-weight:700;letter-spacing:-0.02em;">
-                      <a href="${siteUrl}" style="color:#18181b;text-decoration:none;">alchemy.ai</a>
+                      <a href="${siteUrl}" style="color:#18181b;text-decoration:none;">Alchemy AI Lab</a>
                     </p>
                   </td>
                 </tr>

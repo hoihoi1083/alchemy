@@ -58,7 +58,7 @@ export function brandKitLogoImagePromptBlock(logoImageIndex: number): string {
     `BRAND LOGO (IMAGE ${n}): the attached file is the client's REAL logo PNG — use ONLY this file as branding.`,
     `Composite IMAGE ${n} into the still with natural placement (packaging, signage, end-card mark, or subtle badge).`,
     "Keep IMAGE N geometry, colors, and letterforms pixel-faithful — never redraw, morph, or invent alternate letters.",
-    "CRITICAL: do NOT invent a different logo from the product name, business name, headline, or CTA in the brief (e.g. do not invent an alchemy.ai mark if IMAGE N is a different file).",
+    "CRITICAL: do NOT invent a different logo from the product name, business name, headline, or CTA in the brief (e.g. do not invent an Alchemy AI Lab mark if IMAGE N is a different file).",
     "Do not add other logos, watermarks, social UI, or readable marketing copy beyond this brand mark.",
     "Never render English meta words such as CTA, logo, brand, or watermark as on-image labels.",
   ].join(" ");

@@ -22,7 +22,7 @@ export async function GET(request: Request) {
   if (searchParams.get("test") === "1") {
     const inserted = await db.collection("connection_tests").insertOne({
       clerkId: auth.user.userId,
-      message: "alchemy.ai database test",
+      message: "Alchemy AI Lab database test",
       source: "GET /api/me?test=1",
       createdAt: new Date(),
     });
