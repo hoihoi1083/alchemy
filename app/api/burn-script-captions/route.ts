@@ -126,7 +126,7 @@ async function burnCaptionsJob(
     }
   }
 
-  if (burnMethod === "soft") {
+  if (softSubtitles) {
     console.warn(
       "[burn-script-captions] soft subtitles only — HTML5 player will not show captions",
       errors,

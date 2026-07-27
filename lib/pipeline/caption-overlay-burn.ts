@@ -105,7 +105,7 @@ async function renderCaptionOverlayPng(
 async function assertOverlayHasInk(png: Buffer, text: string): Promise<void> {
   const sample = text.replace(/\s+/g, "");
   if (sample.length < 2) return;
-  const { data, info } = await sharp(png)
+  const { data } = await sharp(png)
     .ensureAlpha()
     .raw()
     .toBuffer({ resolveWithObject: true });
