@@ -5,6 +5,9 @@ const isPublicRoute = createRouteMatcher([
   "/",
   "/how(.*)",
   "/pricing(.*)",
+  "/privacy(.*)",
+  "/terms(.*)",
+  "/refund(.*)",
   "/sign-in(.*)",
   "/sign-up(.*)",
   // Stripe webhooks have no Clerk session — verified via stripe-signature.
