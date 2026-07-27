@@ -3,7 +3,12 @@
  * Creates a throwaway user, exercises grant/consume/block, then deletes it.
  *
  * Requires MONGODB_URI. Does not call fal or Stripe.
+ * Run: npx tsx scripts/billing-live-probe.ts
  */
+import { config as loadEnv } from "dotenv";
+loadEnv({ path: ".env.local" });
+loadEnv();
+
 import {
   assertCanAfford,
   consumeTokens,

@@ -7,21 +7,7 @@ import { PRODUCT_LOGO_SRC, PRODUCT_NAME, PRODUCT_SUPPORT_EMAIL } from "@/lib/bra
 const CONTACT_EMAIL = PRODUCT_SUPPORT_EMAIL;
 
 const SOCIALS: { label: string; href: string; src: string }[] = [
-  {
-    label: "Facebook",
-    href: "https://www.facebook.com/",
-    src: "/images/footer/Facebook.png",
-  },
-  {
-    label: "Instagram",
-    href: "https://www.instagram.com/",
-    src: "/images/footer/Instagram.png",
-  },
-  {
-    label: "Threads",
-    href: "https://www.threads.com/",
-    src: "/images/footer/Threads.png",
-  },
+  // Add real Alchemy profile URLs before re-enabling footer social icons.
 ];
 
 const PAYMENTS: { alt: string; src: string }[] = [

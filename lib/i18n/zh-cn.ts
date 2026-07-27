@@ -1690,7 +1690,7 @@ export const zhCn = {
     referenceClipLibraryLabel: "内置运镜 sample",
     referenceClipLibraryHint: "按一下用作 @Video1 — 或者下面自己 upload MP4。",
     referenceClipsMissing:
-      "内置运镜 sample 未安装（public/references/*.mp4）。请直接喺下面上传你嘅参考 MP4。",
+      "可选内置运镜 sample 未安装。用研究片或下面自己 upload 参考 MP4 即可（这才是主路径）。",
     videoGenerateDisabledHint: "请先喺「关键图」上传产品相，或返回步骤 2 生成／确认图片。",
     referenceClips: {
       "product-push-in": "慢推近",

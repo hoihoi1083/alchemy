@@ -1746,7 +1746,7 @@ export const en = {
     referenceClipLibraryLabel: "Sample motion clips (built-in)",
     referenceClipLibraryHint: "Tap one to use as @Video1 — or upload your own MP4 below.",
     referenceClipsMissing:
-      "Built-in motion samples are not installed (public/references/*.mp4). Upload your own reference MP4 below.",
+      "Optional built-in motion samples are not installed. Use a research reel or upload your own reference MP4 below — that is the main path.",
     videoGenerateDisabledHint:
       "Upload a product photo in the keyframe section, or go back to Step 2 to generate or confirm your image.",
     referenceClips: {

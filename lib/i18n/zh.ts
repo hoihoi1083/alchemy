@@ -1689,7 +1689,7 @@ export const zh = {
     referenceClipLibraryLabel: "內置運鏡 sample",
     referenceClipLibraryHint: "按一下用作 @Video1 — 或者下面自己 upload MP4。",
     referenceClipsMissing:
-      "內置運鏡 sample 未安裝（public/references/*.mp4）。請直接喺下面上傳你嘅參考 MP4。",
+      "可選內置運鏡 sample 未安裝。用研究片或下面自己 upload 參考 MP4 即可（呢個先係主路徑）。",
     videoGenerateDisabledHint: "請先喺「關鍵圖」上傳產品相，或返回步驟 2 生成／確認圖片。",
     referenceClips: {
       "product-push-in": "慢推近",

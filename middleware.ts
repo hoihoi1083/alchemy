@@ -10,11 +10,27 @@ const isPublicRoute = createRouteMatcher([
   "/refund(.*)",
   "/sign-in(.*)",
   "/sign-up(.*)",
+  "/robots.txt",
+  "/sitemap.xml",
+  "/opengraph-image(.*)",
+  "/twitter-image(.*)",
   // Stripe webhooks have no Clerk session — verified via stripe-signature.
   "/api/stripe/webhook(.*)",
 ]);
 
+/** Beta/orphan surfaces — hidden unless NEXT_PUBLIC_ENABLE_BETA_SURFACES=1 */
+const isHiddenBetaRoute = createRouteMatcher(["/captions/visual(.*)", "/ugc(.*)"]);
+
+function betaSurfacesEnabled(): boolean {
+  return process.env.NEXT_PUBLIC_ENABLE_BETA_SURFACES?.trim() === "1";
+}
+
 export default clerkMiddleware(async (auth, req) => {
+  if (isHiddenBetaRoute(req) && !betaSurfacesEnabled()) {
+    const target = req.nextUrl.pathname.startsWith("/ugc") ? "/studio" : "/captions";
+    return NextResponse.redirect(new URL(target, req.url));
+  }
+
   if (isPublicRoute(req)) return;
 
   const { userId } = await auth();

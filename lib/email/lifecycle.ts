@@ -1,3 +1,4 @@
+import { PRODUCT_SUPPORT_EMAIL } from "@/lib/brand";
 import { EMAIL_LOGO_CONTENT_ID, getEmailLogoAttachment } from "@/lib/email/logo-attachment";
 import { emailAppBaseUrl } from "@/lib/email/purchase-confirmation";
 import { emailFromAddress, getResend, isEmailConfigured } from "@/lib/email/resend";
@@ -40,7 +41,7 @@ async function sendSimpleEmail(opts: {
     const { data, error } = await resend.emails.send({
       from: emailFromAddress(),
       to: [to],
-      replyTo: "support@alchemyailab.com",
+      replyTo: PRODUCT_SUPPORT_EMAIL,
       subject: opts.subject,
       html: opts.html,
       text: opts.text,
@@ -72,7 +73,7 @@ function simpleHtml(opts: {
   ctaUrl: string;
 }): string {
   const siteUrl = emailAppBaseUrl();
-  const support = "support@alchemyailab.com";
+  const support = PRODUCT_SUPPORT_EMAIL;
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -140,7 +141,7 @@ export async function sendWelcomeEmail(opts: {
     `We've added ${tokens} free tokens to your account so you can start creating.`,
     "",
     `Open studio: ${siteUrl}/studio`,
-    "Questions? Write support@alchemyailab.com.",
+    `Questions? Write ${PRODUCT_SUPPORT_EMAIL}.`,
   ].join("\n");
   const html = simpleHtml({
     title: "Welcome to Alchemy",
@@ -197,7 +198,7 @@ export async function sendSubscriptionEndedEmail(opts: {
     bodyText,
     "",
     `Manage account: ${accountUrl}`,
-    "Questions? Write support@alchemyailab.com.",
+    `Questions? Write ${PRODUCT_SUPPORT_EMAIL}.`,
   ].join("\n");
   const html = simpleHtml({
     title,

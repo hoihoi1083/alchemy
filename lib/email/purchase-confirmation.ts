@@ -1,3 +1,4 @@
+import { PRODUCT_SUPPORT_EMAIL } from "@/lib/brand";
 import { PLAN_DEFINITIONS, TOP_UP_PRICE_USD, type UserPlan } from "@/lib/billing/plans";
 import type { PaidPlan } from "@/lib/stripe/prices";
 import { EMAIL_LOGO_CONTENT_ID, getEmailLogoAttachment } from "@/lib/email/logo-attachment";
@@ -168,7 +169,7 @@ export function buildPurchaseConfirmationContent(input: PurchaseEmailInput): {
 } {
   const siteUrl = emailAppBaseUrl();
   const accountUrl = `${siteUrl}/account`;
-  const support = "support@alchemyailab.com";
+  const support = PRODUCT_SUPPORT_EMAIL;
   const logoContentId = EMAIL_LOGO_CONTENT_ID;
 
   if (input.kind === "topup") {
@@ -300,7 +301,7 @@ export async function sendPurchaseConfirmationEmail(
     const { data, error } = await resend.emails.send({
       from: emailFromAddress(),
       to: [to],
-      replyTo: "support@alchemyailab.com",
+      replyTo: PRODUCT_SUPPORT_EMAIL,
       subject,
       html,
       text,

@@ -1,90 +1,101 @@
-# Build roadmap — one step at a time
+# Build roadmap — Alchemy AI Lab (`alchemy-studio`)
 
 Check off items as you complete them. Tell AI in a new chat: *"Continue Phase X from docs/ROADMAP.md"*.
 
----
-
-## Phase 1 — Guided MVP ✅ (scaffold done)
-
-- [x] New project `~/Desktop/ai-marketing-studio`
-- [x] Copy API routes + pipeline from `seadance-video`
-- [x] 4-step wizard UI (template → image → video → download)
-- [x] 4 marketing templates in `lib/templates.ts`
-- [x] Save evaluation + `AGENTS.md` for future AI chats
-- [ ] Copy `.env.local` from `seadance-video` and run `npm install && npm run dev`
-- [ ] Test full flow with your FAL_KEY
-- [ ] Fix any bugs from first real generation
+**Status (2026-07):** Auth, token billing (Stripe), library (Mongo + R2), captions, edit-image, Pro canvas, legal pages, and transactional email are **shipped**. Remaining work is polish, ops, and launch.
 
 ---
 
-## Phase 2 — Polish guided experience
+## Phase 1 — Guided MVP ✅
 
-- [x] Simplified ad style picker (4 beginner styles, ~80–90% hints)
+- [x] Wizard UI (template → image → video → download)
+- [x] Marketing templates + micro-wizard paths
+- [x] fal image/video pipeline (Nano Banana / Seedance)
+- [x] Brand: Alchemy AI Lab (`lib/brand.ts`)
+
+---
+
+## Phase 2 — Polish guided experience (partial)
+
+- [x] Simplified ad style picker
 - [x] Built-in reference clip library structure (`public/references/`)
-- [ ] Add 2–3 MP4 reference clips to `public/references/`
+- [ ] Add 2–3 MP4 reference clips to `public/references/` *(optional — research/upload is the main path)*
 - [ ] Better error messages (map fal errors to plain English / 中文)
 - [ ] Loading progress + estimated time on video step
-- [ ] “Regenerate image” / “Regenerate video” without losing template
-- [ ] Require image OR upload before video (clearer validation)
-- [ ] 2–3 more compositor templates (dark luxury card, flash sale, tips card)
 - [ ] Template preview thumbnails (static examples)
+- [ ] Wire or remove unused `TemplateGallery.tsx` on landing
 
 ---
 
-## Phase 3 — AI assistant
+## Phase 3 — AI assistant ✅ (core)
 
-- [ ] `/api/assistant` — OpenAI with system prompt + current step
-- [ ] Sidebar chat on wizard pages
-- [ ] Assistant can set: template, product text, prompts
-- [ ] “Explain this error” button when generation fails
-- [ ] Optional: Cantonese / English UI strings
+- [x] `/api/assistant` + sidebar coach on wizard
+- [x] Assistant can set template / product text / prompts
+- [x] Locale strings (EN / 繁中 / 简中)
+- [ ] Stronger “explain this error” on every generation failure
 
 ---
 
-## Phase 4 — Move Pro features from old app
+## Phase 4 — Pro + post-gen tools ✅ (core)
 
-- [ ] Post-process page in new app (subs: none / soft / burn)
-- [ ] Collapsible “Advanced” panel (reference mode, endpoints)
-- [ ] Cost presets (Free / Hybrid / Pro)
+- [x] `/pro` node canvas (upload → image → video)
+- [x] `/captions` burn / soft captions (R2 for large uploads)
+- [x] `/edit-image` Konva canvas + library handoff
+- [x] Hide `/captions/visual` + `/ugc` unless `NEXT_PUBLIC_ENABLE_BETA_SURFACES=1`
+- [ ] Fix Pro `costHint` copy (tokens only — not “API credits on credentials”)
 - [ ] Link or merge — decide if `seadance-video` is retired
 
 ---
 
-## Phase 5 — Projects & history
+## Phase 5 — Projects & history ✅ (core)
 
-- [ ] Save job to `.pipeline-jobs` or DB with name + date
-- [ ] “My projects” list — reopen image/video URLs
+- [x] Mongo projects + assets library
+- [x] Durable media via R2 (`persistAndDurablize`)
+- [x] Done → captions / edit-image handoffs
+- [ ] Ensure every save prefers R2 URLs (no silent fal-only fallback in prod)
 - [ ] Duplicate project as new template run
 
 ---
 
-## Phase 6 — Public beta (business)
+## Phase 6 — Public beta / SaaS ✅ (core) — ops remaining
 
-- [ ] Auth (Clerk / NextAuth)
-- [ ] Credits or subscription (Stripe)
-- [ ] Per-user rate limits + cost cap
-- [ ] Terms, privacy, content policy
-- [ ] Landing page + pricing
-- [ ] Verify fal.ai commercial / resale terms
+- [x] Auth (Clerk)
+- [x] Credits / subscription + top-ups (Stripe webhook + portal)
+- [x] Terms, privacy, refund pages (EN / 繁中 / 简中)
+- [x] Landing + pricing
+- [x] Welcome / purchase / subscription-ended email (Resend → Reply-To `support@alchemyailab.com`)
+- [ ] Per-user rate limits + cost cap *(deferred by choice)*
+- [ ] Confirm fal.ai commercial / resale terms with counsel
+- [ ] Cookie consent if required for your region
+- [ ] Self-serve account / data deletion (beyond mailto)
 
 ---
 
-## Phase 7 — Marketing launch
+## Phase 7 — Marketing launch (in progress)
 
-- [ ] 5 example videos for landing page
-- [ ] FB/IG ad to WhatsApp or waitlist
+- [ ] 5 example videos for landing page (durable assets, not fal CDN)
+- [x] `robots.txt` + sitemap + Open Graph / Twitter images
+- [x] Content-Security-Policy header
+- [ ] Mixpanel + Sentry DSN on production
+- [ ] Public `/api/health` (uptime; not Clerk-gated)
+- [ ] FB/IG ad / waitlist or soft launch
 - [ ] Onboard 10–20 SMB beta users
 - [ ] Iterate from feedback
 
 ---
 
+## Ops checklist (before calling “production ready”)
+
+| Item | Why |
+|------|-----|
+| Mongo + R2 live | Library URLs must not be fal-CDN-only (those expire) |
+| Stripe live prices + webhook | Grants tokens after pay |
+| Resend + verified From | Signup / checkout emails actually send |
+| `NEXT_PUBLIC_APP_URL` | Correct links in email + Stripe redirects |
+| Smoke: signup email, paid email, old asset still plays | Proves email + durability |
+
+---
+
 ## What stays in `seadance-video`
 
-Until Phase 4 is done, use the **old app** for:
-
-- Reference-to-video mode
-- Custom fal endpoints
-- Full post-process + Azure Cantonese dub
-- All experimental settings
-
-Do **not** delete `seadance-video` — it is your production tool.
+Use the **old app** only for experimental / power-user work not yet mirrored here. Do **not** delete it unless you explicitly retire it.
