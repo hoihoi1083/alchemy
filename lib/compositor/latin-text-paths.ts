@@ -34,25 +34,44 @@ function loadFont(role: CompositorFontRole): Font {
   return font;
 }
 
-function pickFontRole(text: string, bold: boolean, preferred?: "body" | "headline"): CompositorFontRole {
-  if (textNeedsCjkFonts(text)) {
-    return preferred === "headline" ? "headline" : "body";
-  }
-  return bold ? "latinBold" : "latin";
+function isCjkChar(ch: string): boolean {
+  return textNeedsCjkFonts(ch);
 }
 
-/** Advance + path without OpenType feature lookups (Noto breaks opentype.js ccmp). */
+/** Pick a font that actually has this codepoint (never silent .notdef tofu). */
+function fontForChar(ch: string, bold: boolean): Font {
+  if (/\s/.test(ch)) return loadFont(bold ? "latinBold" : "latin");
+  if (isCjkChar(ch)) {
+    // Always NotoSansTC for CJK — MaShanZheng (headline) misses many marketing glyphs.
+    return loadFont("body");
+  }
+  return loadFont(bold ? "latinBold" : "latin");
+}
+
+function glyphOrThrow(font: Font, ch: string, roleHint: string) {
+  const glyph = font.charToGlyph(ch);
+  // .notdef is index 0 — hollow boxes on burn.
+  if (ch.trim() && (glyph.index === 0 || glyph.name === ".notdef")) {
+    throw new Error(
+      `Missing glyph for "${ch}" in ${roleHint} font — cannot burn text (would show tofu).`,
+    );
+  }
+  return glyph;
+}
+
+/** Layout one line with per-character font (Latin vs CJK). */
 function layoutLine(
-  font: Font,
   text: string,
   fontSize: number,
   baselineY: number,
+  bold: boolean,
 ): { d: string; width: number } {
-  const scale = fontSize / font.unitsPerEm;
   let x = 0;
   const parts: string[] = [];
   for (const ch of text) {
-    const glyph = font.charToGlyph(ch);
+    const font = fontForChar(ch, bold);
+    const glyph = glyphOrThrow(font, ch, isCjkChar(ch) ? "NotoSansTC" : "NotoSans");
+    const scale = fontSize / font.unitsPerEm;
     const path = glyph.getPath(x, baselineY, fontSize);
     const d = path.toPathData(2);
     if (d && d !== "M0 0Z") parts.push(d);
@@ -68,7 +87,7 @@ export type BurnTextSvgPathOpts = {
   anchor: "start" | "middle" | "end";
   fontSize: number;
   bold?: boolean;
-  /** Prefer calligraphy for CJK display lines. */
+  /** Ignored for glyph burn — CJK always body; Latin always Noto Sans. */
   preferred?: "body" | "headline";
   fill?: string;
   stroke?: string;
@@ -81,19 +100,20 @@ export type BurnTextSvgPathOpts = {
  */
 export function burnTextSvgPaths(opts: BurnTextSvgPathOpts): string {
   const sample = opts.lines.join("\n");
-  const font = loadFont(pickFontRole(sample, Boolean(opts.bold), opts.preferred));
-  const fill = opts.fill ?? "white";
+  let fill = opts.fill ?? "white";
+  // Transparent-fill display styles would only stroke .notdef boxes — treat as white.
+  if (!fill || fill === "transparent" || fill === "none") fill = "white";
   const stroke = opts.stroke ?? "black";
   const strokeWidth =
     opts.strokeWidth ?? Math.max(2, Math.round(opts.fontSize * 0.12));
-  // CJK glyphs are denser; alphabetic baseline offset differs slightly.
+  const bold = Boolean(opts.bold);
   const baselineBias = textNeedsCjkFonts(sample) ? 0.32 : 0.35;
 
   return opts.lines
     .map((line, i) => {
       const y = opts.lineYs[i] ?? opts.lineYs[opts.lineYs.length - 1] ?? 0;
       const baselineY = y + opts.fontSize * baselineBias;
-      const { d, width } = layoutLine(font, line, opts.fontSize, baselineY);
+      const { d, width } = layoutLine(line, opts.fontSize, baselineY, bold);
       if (!d.trim()) return "";
       let dx = opts.x;
       if (opts.anchor === "middle") dx = opts.x - width / 2;
