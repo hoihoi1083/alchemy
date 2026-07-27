@@ -3,22 +3,23 @@ import { parseLlmJsonObject } from "@/lib/parse-llm-json";
 import type { CaptionLine } from "@/lib/ad-pack-types";
 import { captionSpeakText } from "@/lib/ad-pack-types";
 import type { VoiceoverLocale } from "@/lib/ad-pack-preferences";
+import { joinVoiceoverScript, pickSpokenText } from "@/lib/clamp-line-text";
 import { spokenCharBudget } from "@/lib/speech-timing";
 
 function localeHint(locale: VoiceoverLocale): string {
   if (locale === "hk") {
-    return "Write spokenText in Traditional Chinese (繁體中文), natural Cantonese-friendly narration.";
+    return [
+      "Write spokenText in Traditional Chinese (繁體中文), natural Cantonese-friendly narration.",
+      "必須完整句子；裝唔落就直接複製 text，唔好寫「你可以節省大量的」呢類半句。",
+    ].join(" ");
   }
   if (locale === "cn") {
-    return "Write spokenText in Simplified Chinese (简体中文), natural Mandarin narration.";
+    return [
+      "Write spokenText in Simplified Chinese (简体中文), natural Mandarin narration.",
+      "必须是完整句子；装不下就直接复制 text，不要写「你可以节省大量的」这类半句。",
+    ].join(" ");
   }
-  return "Write spokenText in natural English narration.";
-}
-
-function clampLineText(text: string, maxChars: number): string {
-  const t = text.trim();
-  if (t.length <= maxChars) return t;
-  return t.slice(0, maxChars).replace(/[，,；;、.。！!？?\s]+$/u, "");
+  return "Write spokenText in natural English narration. Complete phrases only; copy text if a longer line will not fit.";
 }
 
 export type ExpandSpokenCaptionsInput = {
@@ -60,11 +61,12 @@ export async function expandSpokenForCaptions(
   const product = input.product?.trim() || "";
   const system = [
     "You write longer spoken voiceover lines for existing short on-screen captions.",
-    "Do NOT change the short on-screen slogan wording in the output text field — only expand spokenText.",
+    "Do NOT change the short on-screen slogan — only propose spokenText.",
     'Return JSON only: { "lines": [ { "index": 0, "spokenText": "..." }, ... ] }.',
     "Rules:",
     `- Exactly ${windows.length} items, matching each index.`,
-    "- spokenText expands the same idea as text (about targetChars; never exceed maxChars). Prefer slightly SHORTER than durationSec so natural TTS fits without cutting words.",
+    "- spokenText must be a COMPLETE phrase that fits in maxChars with room to spare. If you cannot expand fully, copy text exactly.",
+    "- Never return cut-off lines (EN: ends with of/and/with; ZH: ends with 的／和／可以).",
     "- Keep meaning faithful; no new products; no hashtags/emoji.",
     localeHint(input.locale),
   ].join("\n");
@@ -97,18 +99,20 @@ export async function expandSpokenForCaptions(
 
   const captionLines: CaptionLine[] = source.map((line, i) => {
     const w = windows[i];
-    const spoken = clampLineText(byIndex.get(i) ?? line.text.trim(), w.maxChars);
+    const onScreen = line.text.trim();
+    const spokenBudget = Math.max(w.maxChars, onScreen.length);
+    const spoken = pickSpokenText(onScreen, byIndex.get(i), spokenBudget);
     return {
       ...line,
-      text: line.text.trim(),
+      text: onScreen,
       spokenText: spoken,
     };
   });
 
-  const voiceoverScript = captionLines
-    .map((l) => captionSpeakText(l))
-    .filter(Boolean)
-    .join("，");
+  const voiceoverScript = joinVoiceoverScript(
+    captionLines.map((l) => captionSpeakText(l)),
+    input.locale,
+  );
 
   return {
     captionLines,

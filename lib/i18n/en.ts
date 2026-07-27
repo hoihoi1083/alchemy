@@ -2061,7 +2061,7 @@ export const en = {
     planCaptionVoiceNeedTopic: "Enter a product/topic above first.",
     planCaptionVoiceFailed: "AI caption/voice plan failed. Check AI API key.",
     planCaptionVoiceDone:
-      "Planned {n} short captions + longer spoken lines for ~{sec}s — next: voice preview → Mix ({n} clips).",
+      "Planned {n} caption lines for ~{sec}s — next: voice preview → Mix ({n} clips). Spoken matches on-screen unless a full longer line fits.",
     audioBgmLabel: "Music track",
     audioApplyBgm: "Add BGM",
     audioApplyingBgm: "Adding BGM…",
@@ -2079,7 +2079,7 @@ export const en = {
     audioVoiceDonePerCaption:
       "Mixed {n} caption windows as separate natural-speed clips (uses Spoken text when set; no stretch).",
     audioVoicePerCaptionHint:
-      "Keep on-screen captions short. Lengthen Spoken (TTS) per line — or use “Lengthen spoken to fit windows” — then preview → Mix. Continuous preview can be shorter than the video; Mix places each spoken line in its caption window.",
+      "Keep on-screen captions short. Lengthen Spoken (TTS) per line — or use “Lengthen spoken to fit windows” — then preview → Mix. Female/male previews often differ in length (same script, different speaking rates — e.g. 19s vs 13s). That is normal. Pick one voice; Mix places each line into its caption window on the full video timeline.",
     audioVoiceNeedCaptionLines:
       "Need at least 2 caption lines with text on the timeline (you have {n}). Sync from the voice script, or edit lines on the right — then mix.",
     audioVoiceNeedPreviewOrScript: "Generate a voice preview (or fill the script) to pick a voice first.",

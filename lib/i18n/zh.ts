@@ -1998,7 +1998,7 @@ export const zh = {
     planCaptionVoiceNeedTopic: "請先喺上面輸入產品/主題。",
     planCaptionVoiceFailed: "AI 規劃失敗。請檢查 AI API key。",
     planCaptionVoiceDone:
-      "已規劃 {n} 句短字幕 + 加長口播（約 {sec}s）— 下一步：預聽 → 混入口播（{n} 段）。",
+      "已規劃 {n} 句字幕（約 {sec}s）— 下一步：預聽 → 混入口播（{n} 段）。口播預設同畫面字幕一樣；只有完整長句裝得落先會加長。",
     audioBgmLabel: "音樂曲目",
     audioApplyBgm: "加 BGM",
     audioApplyingBgm: "加緊 BGM…",
@@ -2015,7 +2015,7 @@ export const zh = {
     audioVoiceDonePerCaption:
       "已用自然語速按字幕時段混入 {n} 段口播（有「口播」欄就讀口播；唔拉長唔壓縮）。",
     audioVoicePerCaptionHint:
-      "畫面字幕保持短句。口播可以加長填滿每段時段 — 或撳「加長口播配合時段」— 再預聽 → 混入。連續預聽可以短過片長；混入會按每段口播放落對應時段。",
+      "畫面字幕保持短句。口播可以加長填滿每段時段 — 或撳「加長口播配合時段」— 再預聽 → 混入。男女聲預聽時長可以差好遠（同一稿、講速唔同，例如 19s vs 13s），屬正常。揀一把聲；混入先會按每段字幕時段擺好。",
     audioVoiceNeedCaptionLines:
       "字幕時間軸至少要有 2 句有文字嘅字幕（而家只有 {n} 句）。請由口播稿同步，或喺右邊改字幕，再混入。",
     audioVoiceNeedPreviewOrScript: "請先生成口播預聽（或填口播稿）揀一把聲。",

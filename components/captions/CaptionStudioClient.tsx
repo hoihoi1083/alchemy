@@ -334,7 +334,11 @@ export function CaptionStudioClient() {
   useEffect(() => {
     const raw = processedVideoUrl || sourceUrl || playbackUrl;
     const analyzable = toBeatAnalysisUrl(raw);
-    if (!analyzable) {
+    const selectedAi = aiMusicTracks.find((tr) => tr.id === selectedAiMusicId);
+    const bgmAnalyzable =
+      musicSource === "ai" ? toBeatAnalysisUrl(selectedAi?.audioUrl) : null;
+
+    if (!analyzable && !bgmAnalyzable) {
       setBeatMarkers([]);
       setBeatStatus(t.beatStatusUnavailable);
       return;
@@ -343,23 +347,35 @@ export function CaptionStudioClient() {
     let cancelled = false;
     setBeatBusy(true);
     setBeatStatus(t.beatStatusAnalyzing);
+    const body: { video_url?: string; bgm_url?: string } = {};
+    // Prefer BGM when present — silent AI videos have no beat energy.
+    if (bgmAnalyzable) body.bgm_url = bgmAnalyzable;
+    else if (analyzable) body.video_url = analyzable;
+
     void fetch("/api/analyze-beats", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ video_url: analyzable }),
+      body: JSON.stringify(body),
     })
-      .then((r) => r.json())
-      .then((data) => {
+      .then(async (r) => {
+        const data = await r.json().catch(() => ({}));
+        return { ok: r.ok, data };
+      })
+      .then(({ ok, data }) => {
         if (cancelled) return;
         if (Array.isArray(data.beats) && data.beats.length > 0) {
           setBeatMarkers(data.beats as number[]);
           setBeatStatus(
-            t.beatStatusReady.replace("{n}", String(data.beats.length)),
+            t.beatStatusReady.replaceAll("{n}", String(data.beats.length)),
           );
         } else {
           setBeatMarkers([]);
-          setBeatStatus(t.beatStatusEmpty);
+          setBeatStatus(
+            !ok && typeof data.error === "string"
+              ? data.error
+              : t.beatStatusEmpty,
+          );
         }
       })
       .catch(() => {
@@ -374,7 +390,18 @@ export function CaptionStudioClient() {
     return () => {
       cancelled = true;
     };
-  }, [processedVideoUrl, sourceUrl, playbackUrl, t.beatStatusAnalyzing, t.beatStatusEmpty, t.beatStatusReady, t.beatStatusUnavailable]);
+  }, [
+    processedVideoUrl,
+    sourceUrl,
+    playbackUrl,
+    musicSource,
+    selectedAiMusicId,
+    aiMusicTracks,
+    t.beatStatusAnalyzing,
+    t.beatStatusEmpty,
+    t.beatStatusReady,
+    t.beatStatusUnavailable,
+  ]);
 
   function alignCaptionsToDetectedBeats() {
     if (!beatMarkers.length) {
@@ -689,10 +716,11 @@ export function CaptionStudioClient() {
   }
 
   function fillVoiceFromCaptions() {
+    const sep = voiceoverLocale === "en" ? " · " : "，";
     const text = captionLines
       .map((l) => captionSpeakText(l))
       .filter(Boolean)
-      .join("，");
+      .join(sep);
     if (text) setVoiceoverScript(text);
   }
 
@@ -743,7 +771,10 @@ export function CaptionStudioClient() {
       const script =
         typeof data.voiceoverScript === "string" && data.voiceoverScript.trim()
           ? data.voiceoverScript.trim()
-          : next.map((l) => captionSpeakText(l)).filter(Boolean).join("，");
+          : next
+              .map((l) => captionSpeakText(l))
+              .filter(Boolean)
+              .join(voiceoverLocale === "en" ? " · " : "，");
       if (script) {
         setVoiceoverScript(script);
         setVoiceoverEnabled(true);
@@ -817,7 +848,10 @@ export function CaptionStudioClient() {
       const script =
         typeof data.voiceoverScript === "string" && data.voiceoverScript.trim()
           ? data.voiceoverScript.trim()
-          : lines.map((l) => captionSpeakText(l)).filter(Boolean).join("，");
+          : lines
+              .map((l) => captionSpeakText(l))
+              .filter(Boolean)
+              .join(voiceoverLocale === "en" ? " · " : "，");
       if (script) setVoiceoverScript(script);
       setVoiceoverEnabled(true);
       setVoicePreviewTracks([]);
@@ -922,7 +956,15 @@ export function CaptionStudioClient() {
   const workspaceVideoSrc = displayVideoSrc ?? "";
 
   return (
-    <div className="space-y-6">
+    <div
+      className={`space-y-6 ${
+        hasWorkspace
+          ? finalDownloadUrl
+            ? "pb-40 xl:pb-6"
+            : "pb-28 xl:pb-6"
+          : ""
+      }`}
+    >
       {!hasWorkspace ? (
         <div className="flex min-h-[min(56vh,520px)] items-center justify-center px-2 py-8">
           <section className="w-full max-w-md rounded-3xl border border-slate-800 bg-slate-950/70 p-8 text-center shadow-xl">
@@ -1242,34 +1284,55 @@ export function CaptionStudioClient() {
 
       {hasWorkspace && (
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-800 bg-slate-950/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur xl:hidden">
-          <div className="mx-auto flex max-w-lg gap-2">
-            <button
-              type="button"
-              disabled={
-                audioBusy ||
-                busy ||
-                (!voiceoverScript.trim() && !selectedVoicePreviewId)
-              }
-              onClick={() => void applyVoiceover()}
-              className="min-w-0 flex-1 rounded-full bg-violet-700 py-2.5 text-xs font-semibold text-white hover:bg-violet-600 disabled:opacity-40"
-            >
-              {audioBusy
-                ? t.audioApplyingVoice
-                : captionLines.filter((l) => l.text.trim()).length >= 2
-                  ? t.audioApplyVoicePerCaption.replace(
-                      "{n}",
-                      String(captionLines.filter((l) => l.text.trim()).length),
-                    )
-                  : t.audioApplyVoice}
-            </button>
-            <button
-              type="button"
-              disabled={busy || audioBusy || !sourceKind}
-              onClick={() => void applyCaptions()}
-              className="min-w-0 flex-1 rounded-full bg-linear-to-r from-violet-500 to-fuchsia-500 py-2.5 text-xs font-semibold text-white disabled:opacity-40"
-            >
-              {busy ? t.applying : t.applyBtn}
-            </button>
+          <div className="mx-auto flex max-w-lg flex-col gap-2">
+            <div className="flex gap-2">
+              <button
+                type="button"
+                disabled={
+                  audioBusy ||
+                  busy ||
+                  (!voiceoverScript.trim() && !selectedVoicePreviewId)
+                }
+                onClick={() => void applyVoiceover()}
+                className="min-w-0 flex-1 rounded-full bg-violet-700 py-2.5 text-xs font-semibold text-white hover:bg-violet-600 disabled:opacity-40"
+              >
+                {audioBusy
+                  ? t.audioApplyingVoice
+                  : captionLines.filter((l) => l.text.trim()).length >= 2
+                    ? t.audioApplyVoicePerCaption.replace(
+                        "{n}",
+                        String(captionLines.filter((l) => l.text.trim()).length),
+                      )
+                    : t.audioApplyVoice}
+              </button>
+              <button
+                type="button"
+                disabled={busy || audioBusy || !sourceKind}
+                onClick={() => void applyCaptions()}
+                className="min-w-0 flex-1 rounded-full bg-linear-to-r from-violet-500 to-fuchsia-500 py-2.5 text-xs font-semibold text-white disabled:opacity-40"
+              >
+                {busy ? t.applying : t.applyBtn}
+              </button>
+            </div>
+            {finalDownloadUrl ? (
+              <button
+                type="button"
+                disabled={downloadBusy}
+                onClick={async () => {
+                  setDownloadBusy(true);
+                  try {
+                    await downloadVideoBlob(finalDownloadUrl, "captioned-reel.mp4");
+                  } catch (e: unknown) {
+                    setError(e instanceof Error ? e.message : t.downloadFailed);
+                  } finally {
+                    setDownloadBusy(false);
+                  }
+                }}
+                className="w-full rounded-full border border-slate-600 py-2 text-xs font-medium text-slate-200 disabled:opacity-40"
+              >
+                {downloadBusy ? t.downloading : t.downloadBtn}
+              </button>
+            ) : null}
           </div>
         </div>
       )}
@@ -1282,7 +1345,7 @@ export function CaptionStudioClient() {
       )}
 
       {finalDownloadUrl && (
-        <div className="flex justify-center">
+        <div className="hidden justify-center xl:flex">
           <button
             type="button"
             disabled={downloadBusy}

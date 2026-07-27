@@ -3,7 +3,12 @@ import { promises as fs } from "fs";
 import path from "path";
 import os from "os";
 import { requireAppUser } from "@/lib/require-app-user";
-import { ensureFfmpeg, extractAudioWav } from "@/lib/pipeline/ffmpeg";
+import {
+  ensureFfmpeg,
+  extractAudioWav,
+  getMediaDurationSeconds,
+  videoHasAudioStream,
+} from "@/lib/pipeline/ffmpeg";
 import { materializeMediaInput } from "@/lib/pipeline/local-input";
 import { detectBeatTimes } from "@/lib/beat-detect";
 
@@ -46,6 +51,19 @@ export async function POST(req: Request) {
     const wavPath = path.join(tmpDir, "audio.wav");
     // Supports pipeline-files, library assets, and allowlisted remote HTTPS.
     await materializeMediaInput(sourceUrl, mediaPath);
+
+    // Silent Seedance / caption-only videos have no audio — return empty beats
+    // (200) instead of ffmpeg 502 so the UI can prompt “add BGM”.
+    if (!(await videoHasAudioStream(mediaPath))) {
+      const durationSec = await getMediaDurationSeconds(mediaPath).catch(() => 0);
+      return NextResponse.json({
+        beats: [],
+        durationSec,
+        bpmEstimate: 120,
+        reason: "no_audio",
+      });
+    }
+
     await extractAudioWav(mediaPath, wavPath);
     const { samples, sampleRate } = await readWavPcm(wavPath);
     const durationSec = samples.length / sampleRate;
@@ -56,10 +74,9 @@ export async function POST(req: Request) {
         : 120;
     return NextResponse.json({ beats, durationSec, bpmEstimate });
   } catch (e: unknown) {
-    return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Beat analysis failed" },
-      { status: 502 },
-    );
+    const message = e instanceof Error ? e.message : "Beat analysis failed";
+    console.error("[analyze-beats]", message);
+    return NextResponse.json({ error: message }, { status: 502 });
   } finally {
     await fs.rm(tmpDir, { recursive: true, force: true }).catch(() => {});
   }

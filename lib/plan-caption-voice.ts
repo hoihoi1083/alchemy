@@ -3,16 +3,25 @@ import { parseLlmJsonObject } from "@/lib/parse-llm-json";
 import type { CaptionLine } from "@/lib/ad-pack-types";
 import { captionSpeakText } from "@/lib/ad-pack-types";
 import type { VoiceoverLocale } from "@/lib/ad-pack-preferences";
+import { clampLineText, joinVoiceoverScript, pickSpokenText } from "@/lib/clamp-line-text";
 import { spokenCharBudget } from "@/lib/speech-timing";
 
 function localeHint(locale: VoiceoverLocale): string {
   if (locale === "hk") {
-    return "Write in Traditional Chinese (繁體中文), natural Cantonese-friendly Hong Kong ad copy.";
+    return [
+      "Write in Traditional Chinese (繁體中文), natural Cantonese-friendly Hong Kong ad copy.",
+      "每一句必須係完整意思，唔可以斷喺「的／同／同埋／可以／一鍵」中間。",
+      "口播通常直接用畫面字幕；只有完整長句裝得落 spokenMaxChars 先寫長過字幕。",
+    ].join(" ");
   }
   if (locale === "cn") {
-    return "Write in Simplified Chinese (简体中文), natural Mandarin ad copy.";
+    return [
+      "Write in Simplified Chinese (简体中文), natural Mandarin ad copy.",
+      "每一句必须是完整意思，不可以断在「的／和／可以／一键」中间。",
+      "口播通常直接用画面字幕；只有完整长句装得进 spokenMaxChars 才写得比字幕长。",
+    ].join(" ");
   }
-  return "Write in natural English ad copy.";
+  return "Write in natural English ad copy. Every line must be a complete phrase — never end on of/and/with/to.";
 }
 
 /** Prefer 4–6 lines from video length (about one beat every ~3–5s). */
@@ -58,12 +67,6 @@ function buildEvenWindows(
   });
 }
 
-function clampLineText(text: string, maxChars: number): string {
-  const t = text.trim();
-  if (t.length <= maxChars) return t;
-  return t.slice(0, maxChars).replace(/[，,；;、.。！!？?\s]+$/u, "");
-}
-
 export type PlanCaptionVoiceInput = {
   topic: string;
   locale: VoiceoverLocale;
@@ -96,13 +99,13 @@ export async function planCaptionVoice(
 
   const system = [
     "You plan timed captions for a short social video.",
-    "Each line has SHORT on-screen text and LONGER spoken text for TTS.",
+    "Each line has on-screen text and optional spoken text for TTS.",
     'Return JSON only: { "lines": [ { "index": 0, "text": "...", "spokenText": "..." }, ... ] }.',
     "Rules:",
     `- Exactly ${windows.length} items in lines, matching each input index.`,
-    "- text: short slogan for the screen (about screenTargetChars; never exceed screenMaxChars).",
-    "- spokenText: fuller spoken sentence for the same idea (about spokenTargetChars; never exceed spokenMaxChars). Prefer slightly SHORTER than durationSec so natural TTS fits without cutting words.",
-    "- spokenText must expand the same meaning as text — do not change the selling point.",
+    "- text: short COMPLETE slogan for the screen (about screenTargetChars; never exceed screenMaxChars). Full readable phrase only.",
+    "- spokenText: normally copy text exactly. Only write a longer line if a COMPLETE sentence fits in spokenMaxChars with no truncation. If it will not fit completely, set spokenText = text.",
+    "- Never invent half-phrases (EN: \"You can save hours of\"; ZH: \"你可以節省大量的\" / \"你可以节省大量的\").",
     "- Cover hook → benefit → ease → CTA across the lines.",
     "- No hashtags, no emoji, no stage directions.",
     "- Stay faithful to the user's topic.",
@@ -145,10 +148,8 @@ export async function planCaptionVoice(
         : topic.slice(0, Math.min(12, w.screenMaxChars));
     const got = byIndex.get(i);
     const text = clampLineText(got?.text ?? fallback, w.screenMaxChars);
-    const spokenText = clampLineText(
-      got?.spokenText ?? text,
-      w.spokenMaxChars,
-    );
+    const spokenBudget = Math.max(w.spokenMaxChars, text.length);
+    const spokenText = pickSpokenText(text, got?.spokenText, spokenBudget);
     return {
       startSec: w.startSec,
       endSec: w.endSec,
@@ -158,10 +159,10 @@ export async function planCaptionVoice(
     };
   });
 
-  const voiceoverScript = captionLines
-    .map((l) => captionSpeakText(l))
-    .filter(Boolean)
-    .join("，");
+  const voiceoverScript = joinVoiceoverScript(
+    captionLines.map((l) => captionSpeakText(l)),
+    input.locale,
+  );
 
   return {
     captionLines,

@@ -2,6 +2,7 @@ import { callDeepSeekChat } from "@/lib/deepseek-client";
 import { parseLlmJsonObject } from "@/lib/parse-llm-json";
 import type { CaptionLine } from "@/lib/ad-pack-types";
 import type { VoiceoverLocale } from "@/lib/ad-pack-preferences";
+import { clampLineText } from "@/lib/clamp-line-text";
 import { defaultCaptionLineCount } from "@/lib/plan-caption-voice";
 import { spokenCharBudget } from "@/lib/speech-timing";
 
@@ -39,12 +40,6 @@ function buildEvenWindows(
       ...windowCharBudget(durationSec, locale),
     };
   });
-}
-
-function clampLineText(text: string, maxChars: number): string {
-  const t = text.trim();
-  if (t.length <= maxChars) return t;
-  return t.slice(0, maxChars).replace(/[，,；;、.。！!？?\s]+$/u, "");
 }
 
 function splitSourcePhrases(texts: string[]): string[] {
