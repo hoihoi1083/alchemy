@@ -2123,6 +2123,7 @@ export const zhCn = {
     previewEmptyHint: "添加文字或形状后，点击「将图层烧录到图片」。",
     previewResultHint: "显示烧录后结果 — 换图可重新开始。",
     previewLoadFailed: "烧录成功但预览加载失败 — 请试下载。",
+    previewLoading: "加载图片中…",
     showOriginal: "清除结果预览",
     downloadBtn: "下载 PNG",
     downloading: "下载中…",
@@ -2172,6 +2173,11 @@ export const zhCn = {
     studioLink: "打开 Studio",
     openFromDone: "为图片加字和 Logo",
     doneHint: "用已生成的宣传图打开画布 — 添加标题和品牌 Logo。",
+    editAnotherHint:
+      "每次「编辑」会开新标签页，此结果页会保留 — 改完一张再回来改下一张。",
+    backToResults: "返回工作室结果",
+    backToLibrary: "返回作品库",
+    editAnotherFromLibrary: "从作品库再选一张编辑",
   },
   visualCaptions: {
     badge: "Beta · 拖放定位",

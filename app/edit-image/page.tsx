@@ -41,8 +41,14 @@ function EditImagePageContent() {
             <Link href="/" className="mr-3 text-slate-400 underline hover:text-slate-300">
               {m.header.homeLink}
             </Link>
-            <Link href="/captions" className="mr-3 text-violet-400 underline hover:text-violet-300">
-              {m.landing.captionsLink}
+            <Link href="/library" className="mr-3 text-cyan-400 underline hover:text-cyan-300">
+              {m.footer.library}
+            </Link>
+            <Link
+              href="/studio?resumeDone=1"
+              className="mr-3 text-emerald-400 underline hover:text-emerald-300"
+            >
+              {t.backToResults}
             </Link>
             <Link href="/start" className="text-emerald-400 underline hover:text-emerald-300">
               {m.landing.openStudio}

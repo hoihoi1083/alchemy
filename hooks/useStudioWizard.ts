@@ -8,6 +8,9 @@ import {
   readStudioAssistantHandoff,
 } from "@/lib/studio-assistant-handoff";
 import {
+  readStudioDoneResume,
+} from "@/lib/studio-done-resume";
+import {
   isTemplateId,
   TEMPLATE_PREF_KEY,
   visualStyleForTemplate,
@@ -5534,7 +5537,50 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         setProduct("");
       }
     }
+
+    // Return from /edit-image: restore Done slides if ?resumeDone=1
+    try {
+      const wantResume =
+        new URLSearchParams(window.location.search).get("resumeDone") === "1";
+      if (wantResume) {
+        const pack = readStudioDoneResume();
+        if (pack?.slides?.length) {
+          const urls = pack.slides.map((s) => s.url).filter(Boolean);
+          setWorkflowMode(pack.workflowMode === "image-only" ? "image-only" : pack.workflowMode);
+          setHeadline(pack.headline || "");
+          setProduct(pack.product || "");
+          setImageVariantUrls(urls);
+          setImageUrl(pack.finalImageSrc || urls[0] || null);
+          setSelectedVariantIndex(0);
+          setImageGenKey(pack.imageGenKey || Date.now());
+          setCampaignSlides([]);
+          setStepKey("done");
+          // Drop query param so refresh doesn't re-apply oddly; keep pack for more edits.
+          const url = new URL(window.location.href);
+          url.searchParams.delete("resumeDone");
+          window.history.replaceState({}, "", url.pathname + url.search);
+        }
+      }
+    } catch {
+      /* ignore */
+    }
   }, []);
+
+  function restoreDoneFromResume(): boolean {
+    const pack = readStudioDoneResume();
+    if (!pack?.slides?.length) return false;
+    const urls = pack.slides.map((s) => s.url).filter(Boolean);
+    setWorkflowMode(pack.workflowMode === "image-only" ? "image-only" : pack.workflowMode);
+    setHeadline(pack.headline || "");
+    setProduct(pack.product || "");
+    setImageVariantUrls(urls);
+    setImageUrl(pack.finalImageSrc || urls[0] || null);
+    setSelectedVariantIndex(0);
+    setImageGenKey(pack.imageGenKey || Date.now());
+    setCampaignSlides([]);
+    setStepKey("done");
+    return true;
+  }
 
   return {
     addBgm,
@@ -5746,6 +5792,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     reorderStoryboardScene,
     replaceStoryboardSceneImage,
     resetProject,
+    restoreDoneFromResume,
     runShipItPipeline,
     shipItEligible,
     shipItVisionBlocked,

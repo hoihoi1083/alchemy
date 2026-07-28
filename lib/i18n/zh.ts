@@ -2122,6 +2122,7 @@ export const zh = {
     previewEmptyHint: "加文字或形狀後，按「將圖層燒錄到圖片」。",
     previewResultHint: "顯示燒錄後結果 — 換圖可重新開始。",
     previewLoadFailed: "燒錄成功但預覽載入失敗 — 請試下載。",
+    previewLoading: "載入圖片中…",
     showOriginal: "清除結果預覽",
     downloadBtn: "下載 PNG",
     downloading: "下載中…",
@@ -2171,6 +2172,11 @@ export const zh = {
     studioLink: "開啟 Studio",
     openFromDone: "為圖片加字同 Logo",
     doneHint: "用已生成嘅宣傳圖開啟畫布 — 加標題同品牌 Logo。",
+    editAnotherHint:
+      "每次「編輯」會開新分頁，呢個結果頁會留住 — 改完一張再返嚟改下一張。",
+    backToResults: "返回工作室結果",
+    backToLibrary: "返回作品庫",
+    editAnotherFromLibrary: "從作品庫再選一張編輯",
   },
   visualCaptions: {
     badge: "Beta · 拖放定位",

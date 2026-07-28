@@ -176,9 +176,20 @@ export function ImageCanvasStudioClient() {
     typeof window !== "undefined" ? loadBrandKitFromStorage() : DEFAULT_BRAND_KIT,
   );
   const [libraryPickerOpen, setLibraryPickerOpen] = useState(false);
+  const [returnTo, setReturnTo] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const previewLoadGenRef = useRef(0);
+  const localPreviewUrlRef = useRef<string | null>(null);
+  const resultPreviewUrlRef = useRef<string | null>(null);
+  const bootstrappedFromQueryRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    localPreviewUrlRef.current = localPreviewUrl;
+  }, [localPreviewUrl]);
+  useEffect(() => {
+    resultPreviewUrlRef.current = resultPreviewUrl;
+  }, [resultPreviewUrl]);
 
   const sourceKey = sourceFile
     ? `file:${sourceFile.name}:${sourceFile.size}`
@@ -191,7 +202,7 @@ export function ImageCanvasStudioClient() {
       ? cleanFrames[cleanFrameIndex]!.displayUrl
       : (localPreviewUrl ?? "");
   // Keep workspace visible while credentialed library/pipeline previews hydrate into blob URLs.
-  const hasWorkspace = Boolean(sourceKind && (localPreviewUrl || busy));
+  const hasWorkspace = Boolean(sourceKind && (localPreviewUrl || busy || sourceUrl || sourceFile));
 
   const stepLabels: Record<EditStep, string> = {
     upload: t.stepUpload,
@@ -202,8 +213,10 @@ export function ImageCanvasStudioClient() {
 
   const loadSource = useCallback(
     (kind: SourceKind, opts: { file?: File; url?: string; label?: string; layers?: ImageCanvasLayer[] }) => {
-      if (localPreviewUrl?.startsWith("blob:")) URL.revokeObjectURL(localPreviewUrl);
-      if (resultPreviewUrl?.startsWith("blob:")) URL.revokeObjectURL(resultPreviewUrl);
+      const prevLocal = localPreviewUrlRef.current;
+      const prevResult = resultPreviewUrlRef.current;
+      if (prevLocal?.startsWith("blob:")) URL.revokeObjectURL(prevLocal);
+      if (prevResult?.startsWith("blob:")) URL.revokeObjectURL(prevResult);
       setCleanFrames((prev) => {
         revokeBlobUrls(prev.map((f) => f.displayUrl));
         return [];
@@ -257,9 +270,13 @@ export function ImageCanvasStudioClient() {
               const blobUrl = URL.createObjectURL(blob);
               setLocalPreviewUrl(blobUrl);
               setCleanFrames([{ pipelineUrl: rel, displayUrl: blobUrl }]);
-            } catch {
+              setError(null);
+            } catch (e: unknown) {
               if (gen !== previewLoadGenRef.current) return;
-              setError(t.previewLoadFailed);
+              const detail = e instanceof Error ? e.message : "";
+              setError(detail ? `${t.previewLoadFailed} (${detail})` : t.previewLoadFailed);
+              setLocalPreviewUrl(null);
+              setCleanFrames([]);
             } finally {
               if (gen === previewLoadGenRef.current) setBusy(false);
             }
@@ -289,21 +306,29 @@ export function ImageCanvasStudioClient() {
         });
       setInitialLayers(seeded.length ? seeded : []);
     },
-    [brandKit, localPreviewUrl, resultPreviewUrl, t.sourceFromStudio],
+    [brandKit, t.previewLoadFailed, t.sourceFromStudio],
   );
 
   useEffect(() => {
     const handoff = readImageCanvasHandoff();
     const imageParam = searchParams.get("image")?.trim();
+    const returnParam = searchParams.get("returnTo")?.trim();
     const url = handoff?.imageUrl ?? imageParam ?? null;
-    if (url) {
-      loadSource("url", {
-        url,
-        label: handoff?.label,
-        layers: handoff?.initialLayers,
-      });
-      clearImageCanvasHandoff();
-    }
+    const nextReturn = handoff?.returnTo?.trim() || returnParam || null;
+    if (nextReturn) setReturnTo(nextReturn);
+
+    if (!url) return;
+    // Bootstrap once per distinct URL. Do not re-run just because loadSource changed —
+    // that cancelled in-flight library blob fetches and left a blank canvas.
+    const bootKey = libraryPipelineUrl(normalizeImageCanvasHandoffUrl(url));
+    if (bootstrappedFromQueryRef.current === bootKey) return;
+    bootstrappedFromQueryRef.current = bootKey;
+    loadSource("url", {
+      url,
+      label: handoff?.label,
+      layers: handoff?.initialLayers,
+    });
+    clearImageCanvasHandoff();
   }, [searchParams, loadSource]);
 
   useEffect(() => {
@@ -613,6 +638,42 @@ export function ImageCanvasStudioClient() {
 
   return (
     <div className="space-y-6">
+      {(returnTo || hasWorkspace) && (
+        <div className="flex flex-wrap items-center justify-center gap-3 rounded-2xl border border-cyan-500/20 bg-slate-950/50 px-4 py-3 text-xs">
+          {returnTo?.includes("/studio") ? (
+            <Link
+              href={returnTo}
+              className="rounded-full bg-cyan-600 px-4 py-2 font-medium text-white hover:bg-cyan-500"
+            >
+              {t.backToResults}
+            </Link>
+          ) : null}
+          {returnTo?.includes("/library") ? (
+            <Link
+              href="/library"
+              className="rounded-full bg-cyan-600 px-4 py-2 font-medium text-white hover:bg-cyan-500"
+            >
+              {t.backToLibrary}
+            </Link>
+          ) : null}
+          {!returnTo?.includes("/library") ? (
+            <Link
+              href="/library"
+              className="rounded-full border border-slate-600 px-4 py-2 font-medium text-slate-200 hover:bg-slate-900"
+            >
+              {t.backToLibrary}
+            </Link>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => setLibraryPickerOpen(true)}
+            className="rounded-full border border-cyan-600/60 px-4 py-2 font-medium text-cyan-100 hover:bg-cyan-950/40"
+          >
+            {t.editAnotherFromLibrary}
+          </button>
+        </div>
+      )}
+
       {!hasWorkspace ? (
         <div className="flex min-h-[min(56vh,520px)] items-center justify-center px-2 py-8">
           <section className="w-full max-w-md rounded-3xl border border-slate-800 bg-slate-950/70 p-8 text-center shadow-xl">
@@ -725,6 +786,15 @@ export function ImageCanvasStudioClient() {
               <p className="mt-1 text-xs text-slate-400">{t.cleanHint}</p>
               <p className="mt-1 text-[10px] text-amber-300/90">{t.cleanCostNote}</p>
               <div className="mt-4">
+                {busy && !editorImageUrl ? (
+                  <p className="rounded-xl border border-slate-700 bg-slate-900/60 px-4 py-16 text-center text-sm text-slate-400">
+                    {t.previewLoading}
+                  </p>
+                ) : !editorImageUrl ? (
+                  <p className="rounded-xl border border-amber-800/50 bg-amber-950/30 px-4 py-10 text-center text-sm text-amber-100">
+                    {error ?? t.previewLoadFailed}
+                  </p>
+                ) : (
                 <ImageInpaintMaskEditor
                   key={`inpaint-${inpaintEditorKey}-${editorImageUrl}`}
                   imageUrl={editorImageUrl}
@@ -761,12 +831,16 @@ export function ImageCanvasStudioClient() {
                     onNext: cleanFrameNext,
                     prevLabel: t.canvasPrev,
                     nextLabel: t.canvasNext,
-                    versionLabel: t.canvasVersion(cleanFrameIndex + 1, cleanFrames.length),
+                    versionLabel: t.canvasVersion(
+                      Math.min(cleanFrameIndex + 1, Math.max(cleanFrames.length, 1)),
+                      cleanFrames.length,
+                    ),
                     recoverLabel: t.recoverOriginal,
                     onRecover: recoverOriginalImage,
                     canRecover: cleanFrameIndex > 0 || cleanFrames.length > 1,
                   }}
                 />
+                )}
               </div>
               {cleanFrames.length > 1 && (
                 <div className="mt-4 flex flex-wrap gap-2">
@@ -882,6 +956,7 @@ export function ImageCanvasStudioClient() {
         onClose={() => setLibraryPickerOpen(false)}
         onPick={(asset) => {
           setLibraryPickerOpen(false);
+          setReturnTo((prev) => prev ?? "/library");
           loadSource("url", {
             url: asset.downloadUrl,
             label: asset.name?.trim() || t.sourceFromLibrary,

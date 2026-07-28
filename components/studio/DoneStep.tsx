@@ -6,8 +6,10 @@ import { useWizard } from "@/components/studio/WizardContext";
 import { QuickFixImagePanel } from "@/components/studio/QuickFixImagePanel";
 import { writeCaptionHandoff } from "@/lib/caption-studio-draft";
 import { writeImageCanvasHandoff } from "@/lib/image-canvas-handoff";
+import { writeStudioDoneResume } from "@/lib/studio-done-resume";
 import { downloadMediaUrl, downloadMediaUrls } from "@/lib/download-media";
 import { isFalCdnUrl } from "@/lib/pipeline/safe-url";
+import { readStoredPromotionMode } from "@/lib/promotion-mode";
 
 function safeFilenamePart(input: string): string {
   return input
@@ -15,6 +17,38 @@ function safeFilenamePart(input: string): string {
     .replace(/[^\w\u4e00-\u9fff-]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 40) || "slide";
+}
+
+function openEditImageForSlide(opts: {
+  imageUrl: string;
+  label?: string;
+  slides: Array<{ index: number; label: string; url: string }>;
+  finalImageSrc: string | null;
+  headline: string;
+  product: string;
+  imageGenKey: number;
+  workflowMode: "image-only" | "combined" | "video-only";
+  routerPush: (href: string) => void;
+}) {
+  const promotionMode = readStoredPromotionMode() ?? "physical";
+  writeStudioDoneResume({
+    promotionMode,
+    workflowMode: opts.workflowMode,
+    slides: opts.slides,
+    finalImageSrc: opts.finalImageSrc,
+    headline: opts.headline,
+    product: opts.product,
+    imageGenKey: opts.imageGenKey,
+  });
+  writeImageCanvasHandoff({
+    imageUrl: opts.imageUrl,
+    label: opts.label,
+    returnTo: "/studio?resumeDone=1",
+  });
+  const opened = window.open("/edit-image", "_blank", "noopener,noreferrer");
+  if (!opened) {
+    opts.routerPush("/edit-image");
+  }
 }
 
 export function DoneStep() {
@@ -50,6 +84,9 @@ export function DoneStep() {
             {m.wizard.imageDoneTitle}
           </h2>
           <p className="mt-2 text-[15px] leading-relaxed text-slate-300">{m.wizard.imageDoneHint}</p>
+          {slides.length > 1 ? (
+            <p className="mt-2 text-xs text-cyan-200/90">{m.imageCanvas.editAnotherHint}</p>
+          ) : null}
         </div>
 
         {slides.length > 1 ? (
@@ -61,6 +98,7 @@ export function DoneStep() {
                   key={`${slide.url}-${slide.index}`}
                   className="rounded-xl border border-slate-700 bg-slate-900/50 p-3"
                 >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={`${slide.url}${slide.url.includes("?") ? "&" : "?"}v=${imageGenKey}-${slide.index}`}
                     alt=""
@@ -93,13 +131,19 @@ export function DoneStep() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => {
-                        writeImageCanvasHandoff({
+                      onClick={() =>
+                        openEditImageForSlide({
                           imageUrl: slide.url,
                           label: slide.label,
-                        });
-                        router.push("/edit-image");
-                      }}
+                          slides,
+                          finalImageSrc,
+                          headline: headline ?? "",
+                          product: product ?? "",
+                          imageGenKey,
+                          workflowMode,
+                          routerPush: (href) => router.push(href),
+                        })
+                      }
                       className="rounded-lg border border-cyan-600 px-3 py-1.5 text-xs text-cyan-100"
                     >
                       {m.imageCanvas.openFromDone}
@@ -138,6 +182,7 @@ export function DoneStep() {
           </div>
         ) : (
           <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={`${finalImageSrc}${finalImageSrc.includes("?") ? "&" : "?"}v=${imageGenKey}`}
               alt=""
@@ -163,13 +208,19 @@ export function DoneStep() {
             </button>
             <button
               type="button"
-              onClick={() => {
-                writeImageCanvasHandoff({
+              onClick={() =>
+                openEditImageForSlide({
                   imageUrl: finalImageSrc,
                   label: headline?.trim() || product?.trim() || undefined,
-                });
-                router.push("/edit-image");
-              }}
+                  slides,
+                  finalImageSrc,
+                  headline: headline ?? "",
+                  product: product ?? "",
+                  imageGenKey,
+                  workflowMode,
+                  routerPush: (href) => router.push(href),
+                })
+              }
               className="w-full rounded-xl border border-cyan-500/60 bg-cyan-950/40 py-3 text-center text-sm font-medium text-cyan-100"
             >
               {m.imageCanvas.openFromDone}

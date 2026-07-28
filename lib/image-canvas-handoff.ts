@@ -6,6 +6,8 @@ export type ImageCanvasHandoff = {
   imageUrl: string;
   label?: string;
   initialLayers?: ImageCanvasLayer[];
+  /** Where to send the user after editing (e.g. /studio?resumeDone=1 or /library). */
+  returnTo?: string;
 };
 
 /** Prefer same-origin pipeline paths for server burn. */

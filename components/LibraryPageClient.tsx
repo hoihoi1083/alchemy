@@ -361,7 +361,9 @@ export function LibraryPageClient() {
                             )}
                             {a.kind === "image" && (
                               <Link
-                                href={`/edit-image?image=${encodeURIComponent(a.downloadUrl)}`}
+                                href={`/edit-image?image=${encodeURIComponent(a.downloadUrl)}&returnTo=${encodeURIComponent("/library")}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 className="rounded-full bg-cyan-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-cyan-500"
                               >
                                 {L.editImage}
@@ -482,7 +484,9 @@ export function LibraryPageClient() {
                       ) : null}
                       {hasImage && downloadImageUrl ? (
                         <Link
-                          href={`/edit-image?image=${encodeURIComponent(downloadImageUrl)}`}
+                          href={`/edit-image?image=${encodeURIComponent(downloadImageUrl)}&returnTo=${encodeURIComponent("/library")}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className="rounded-full bg-cyan-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-cyan-500"
                         >
                           {L.editImage}

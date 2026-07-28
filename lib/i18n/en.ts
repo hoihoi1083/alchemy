@@ -2187,6 +2187,7 @@ export const en = {
     previewEmptyHint: "Add text or shapes, then click Burn layers onto image.",
     previewResultHint: "Showing burned result — change image to start over.",
     previewLoadFailed: "Burn succeeded but preview failed — try Download.",
+    previewLoading: "Loading image…",
     showOriginal: "Clear result preview",
     downloadBtn: "Download PNG",
     downloading: "Downloading…",
@@ -2237,6 +2238,11 @@ export const en = {
     studioLink: "Open studio",
     openFromDone: "Edit text & logo on image",
     doneHint: "Opens image canvas with your generated still — add headlines and brand logo.",
+    editAnotherHint:
+      "Each “Edit” opens in a new tab so this results page stays open — finish one slide, then edit the next here.",
+    backToResults: "Back to studio results",
+    backToLibrary: "Back to library",
+    editAnotherFromLibrary: "Edit another from library",
   },
   visualCaptions: {
     badge: "Beta · drag & drop",
