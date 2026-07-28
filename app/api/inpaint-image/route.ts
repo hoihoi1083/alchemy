@@ -5,7 +5,11 @@ import { fal } from "@fal-ai/client";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import { parseBrandKit } from "@/lib/brand-kit";
 import { brandKitHasPromptContent, brandKitPromptBlock } from "@/lib/brand-merge";
-import { buildInpaintFillPrompt, isEraseIntent } from "@/lib/inpaint-erase";
+import {
+  buildInpaintErasePrompt,
+  buildInpaintFillPrompt,
+  isEraseIntent,
+} from "@/lib/inpaint-erase";
 import { jobDir } from "@/lib/pipeline/paths";
 import { materializeMediaInput, pipelineFileUrl } from "@/lib/pipeline/local-input";
 import { persistAndDurablize } from "@/lib/storage/durable-media";
@@ -14,7 +18,6 @@ export const runtime = "nodejs";
 export const maxDuration = 180;
 
 const FILL_ENDPOINT = "fal-ai/flux-pro/v1/fill";
-const ERASE_ENDPOINT = "fal-ai/flux-pro/v1/erase";
 
 function isUsableImageUrl(url: string | undefined): boolean {
   const u = url?.trim() ?? "";
@@ -47,11 +50,15 @@ export async function POST(req: Request) {
   const maskFile = formData.get("mask_image");
   const brandKitRaw = (formData.get("brand_kit") as string | null)?.trim() || "";
 
+  // Erase = local heal via FILL (mask-only). FLUX Erase often deletes the whole
+  // object under the brush (e.g. entire floating card), which feels wrong vs phone editors.
   const useErase =
     modeField === "erase" || (modeField !== "fill" && (!rawPrompt || isEraseIntent(rawPrompt)));
 
   let fillPrompt = rawPrompt;
-  if (!useErase) {
+  if (useErase) {
+    fillPrompt = buildInpaintErasePrompt();
+  } else {
     if (brandKitRaw) {
       try {
         const brandKit = parseBrandKit(JSON.parse(brandKitRaw));
@@ -97,25 +104,15 @@ export async function POST(req: Request) {
   try {
     const maskUrl = await fal.storage.upload(maskFile);
 
-    const result = useErase
-      ? await fal.subscribe(ERASE_ENDPOINT, {
-          input: {
-            image_url: falImageUrl,
-            mask_url: maskUrl,
-            dilate_pixels: 16,
-            output_format: "png",
-          },
-          logs: true,
-        })
-      : await fal.subscribe(FILL_ENDPOINT, {
-          input: {
-            prompt: fillPrompt,
-            image_url: falImageUrl,
-            mask_url: maskUrl,
-            output_format: "png",
-          },
-          logs: true,
-        });
+    const result = await fal.subscribe(FILL_ENDPOINT, {
+      input: {
+        prompt: fillPrompt,
+        image_url: falImageUrl,
+        mask_url: maskUrl,
+        output_format: "png",
+      },
+      logs: true,
+    });
 
     const data = result.data as { images?: Array<{ url?: string }> };
     const outUrl = data.images?.[0]?.url;
@@ -141,10 +138,10 @@ export async function POST(req: Request) {
     await trackUsage(auth.user.userId, "image");
     return NextResponse.json({
       imageUrl,
-      endpoint: useErase ? ERASE_ENDPOINT : FILL_ENDPOINT,
+      endpoint: FILL_ENDPOINT,
       mode: useErase ? "erase" : "fill",
       note: useErase
-        ? "FLUX Erase — masked text/objects removed; background reconstructed."
+        ? "Local heal — only masked pixels were regenerated; surrounding content kept."
         : "FLUX Fill — only masked pixels were regenerated.",
     });
   } catch (e: unknown) {

@@ -1,17 +1,29 @@
 import type { ImageEditRegion } from "@/lib/image-edit-region";
 
+/**
+ * Draw white erase/fill regions. Inset boxes slightly so the exported mask matches
+ * what users see inside the highlight (stroke sits on the outer edge of the box).
+ */
 export function drawRegionsOnMaskCanvas(
   ctx: CanvasRenderingContext2D,
   regions: ImageEditRegion[],
   imageWidth: number,
   imageHeight: number,
+  opts?: { insetPx?: number },
 ): void {
+  const inset = Math.max(0, opts?.insetPx ?? 1);
   ctx.fillStyle = "white";
   for (const region of regions) {
-    const x = (region.xPct / 100) * imageWidth;
-    const y = (region.yPct / 100) * imageHeight;
-    const w = (region.wPct / 100) * imageWidth;
-    const h = (region.hPct / 100) * imageHeight;
+    let x = (region.xPct / 100) * imageWidth;
+    let y = (region.yPct / 100) * imageHeight;
+    let w = (region.wPct / 100) * imageWidth;
+    let h = (region.hPct / 100) * imageHeight;
+    if (inset > 0 && w > inset * 2 && h > inset * 2) {
+      x += inset;
+      y += inset;
+      w -= inset * 2;
+      h -= inset * 2;
+    }
     ctx.fillRect(x, y, w, h);
   }
 }

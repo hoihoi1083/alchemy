@@ -10,7 +10,7 @@ import {
   MIN_TEACHING_CAROUSEL_SLIDE_COUNT,
 } from "@/lib/teaching-carousel-types";
 import { artStylePlannerHint, resolveArtStyleId, type ArtStyleId } from "@/lib/art-style";
-import { resolveCopyLocale, plannerCopyLanguageRule, rewriteCopyToScript, coerceCopyScript } from "@/lib/copy-locale";
+import { resolveCopyLocale, plannerCopyLanguageRule, rewriteCopyToScript, coerceCopyScript, integratedTypographyPhrase } from "@/lib/copy-locale";
 import type { PromotionMode } from "@/lib/promotion-mode";
 import type { PromptMarket } from "@/lib/prompt-variables";
 import type { VisualStyleId } from "@/lib/visual-styles";
@@ -37,6 +37,14 @@ type PlanInput = {
 
 function defaultVisualDna(input: PlanInput): string {
   const stylized = resolveArtStyleId(input.artStyleId) !== "realistic";
+  const copyLocale = resolveCopyLocale(
+    input.promptMarket ?? "hk",
+    input.headline,
+    input.subline,
+    input.product,
+    input.promptExtra,
+  );
+  const typePhrase = integratedTypographyPhrase(copyLocale);
   if (stylized) {
     return `${artStylePlannerHint(resolveArtStyleId(input.artStyleId))} Consistent illustrated palette and lettering across all slides — NOT photorealistic photography.`;
   }
@@ -44,7 +52,7 @@ function defaultVisualDna(input: PlanInput): string {
     input.promotionMode === "concept" &&
     isPhotographicReferenceBrief(input.promptExtra ?? "")
   ) {
-    return "Photorealistic lifestyle product photography — soft natural light, low saturation, linen/fabric textures, elegant integrated Chinese typography — NOT cartoon icons or flat infographic clipart";
+    return `Photorealistic lifestyle product photography — soft natural light, low saturation, linen/fabric textures, ${typePhrase} — NOT cartoon icons or flat infographic clipart`;
   }
   if (input.promotionMode === "concept") {
     return "Editorial IG carousel, cinematic lifestyle or product-in-scene photography, bold integrated typography — NOT classroom slide deck or white infographic";
@@ -256,7 +264,7 @@ function buildPlanPrompt(input: PlanInput): string {
       : photoStyleRef
       ? [
           "- User reference is PHOTOGRAPHIC (product/lifestyle shot) — match soft natural light, low saturation, real crystal/product textures.",
-          "- visualDna: photorealistic lifestyle product photography like USER REFERENCE — linen/fabric, soft shadows, elegant integrated Chinese typography.",
+          `- visualDna: photorealistic lifestyle product photography like USER REFERENCE — linen/fabric, soft shadows, ${integratedTypographyPhrase(copyLocale)}.`,
           "- Each slide.composition: photo-led (flat lay, bracelets on fabric, subtle florals) — NO cartoon icons, NO flat line-art pictograms, NO illustrated UI chips or clipart badges.",
           "- Do NOT plan icon rows, stat panels with drawn icons, or gift-guide clipart — photography is the hero on every slide.",
           "- Spread the topic across slides with fresh copy from the user brief — rephrase, do not paste reference text.",

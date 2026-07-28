@@ -13,7 +13,9 @@ import { drawRegionsOnMaskCanvas } from "@/lib/regions-to-inpaint-mask";
 import { CanvasHistoryNav } from "@/components/studio/CanvasHistoryNav";
 
 const DEFAULT_STAGE_WIDTH = 400;
-const BRUSH_SIZE = 24;
+/** Thin brush so erase stays close to the stroke (phone-editor style). */
+const BRUSH_SIZE = 10;
+const STAGE_VIEWPORT_MAX_VH = 70;
 
 type MaskMode = "brush" | "box";
 
@@ -146,6 +148,18 @@ export function ImageInpaintMaskEditor({
   const [error, setError] = useState<string | null>(null);
   const stageRef = useRef<Konva.Stage>(null);
   const stageBoxRef = useRef<HTMLDivElement>(null);
+  const stageViewportRef = useRef<HTMLDivElement>(null);
+  const pageScrollLockRef = useRef<number | null>(null);
+
+  /** Tall Konva canvases steal focus and scroll the page to the stage top — lock scroll. */
+  function lockPageScroll() {
+    pageScrollLockRef.current = window.scrollY;
+    requestAnimationFrame(() => {
+      if (pageScrollLockRef.current != null) {
+        window.scrollTo({ top: pageScrollLockRef.current, left: window.scrollX });
+      }
+    });
+  }
 
   useEffect(() => {
     const el = stageBoxRef.current;
@@ -219,7 +233,9 @@ export function ImageInpaintMaskEditor({
       ...boxes.map((b) => ({ ...b, instruction: "" })),
     ];
     if (allBoxes.length) {
-      drawRegionsOnMaskCanvas(ctx, allBoxes, w, h);
+      // Small inset so stroke outline isn't treated as erase area.
+      const insetPx = Math.max(1, Math.round(Math.min(w, h) * 0.002));
+      drawRegionsOnMaskCanvas(ctx, allBoxes, w, h, { insetPx });
     }
 
     const scaleX = w / stageWidth;
@@ -245,6 +261,8 @@ export function ImageInpaintMaskEditor({
       setError(labels.promptPlaceholder);
       return;
     }
+    const pageY = window.scrollY;
+    const viewportY = stageViewportRef.current?.scrollTop ?? 0;
     setBusy(true);
     setError(null);
     try {
@@ -260,6 +278,10 @@ export function ImageInpaintMaskEditor({
       setError(e instanceof Error ? e.message : "Inpaint failed");
     } finally {
       setBusy(false);
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: pageY, left: window.scrollX });
+        if (stageViewportRef.current) stageViewportRef.current.scrollTop = viewportY;
+      });
     }
   }
 
@@ -398,109 +420,123 @@ export function ImageInpaintMaskEditor({
             canRecover={imageHistory.canRecover}
           />
         )}
-        {bgImage && (
-          <Stage
-            ref={stageRef}
-            width={stageWidth}
-            height={stageHeight}
-            onPointerDown={(e) => {
-              if (disabled || busy) return;
-              const pos = e.target.getStage()?.getPointerPosition();
-              if (!pos) return;
-              if (mode === "box") {
-                const hit = [...boxes].reverse().find((b) => pointInBox(pos.x, pos.y, b, stageWidth, stageHeight));
-                if (hit) {
-                  setSelectedBoxId(hit.id);
+        {/* Fixed-height viewport: tall posters scroll inside here so clicks don't yank the page to the top. */}
+        <div
+          ref={stageViewportRef}
+          className="overflow-auto overscroll-contain"
+          style={{ maxHeight: `${STAGE_VIEWPORT_MAX_VH}vh` }}
+        >
+          {bgImage && (
+            <Stage
+              ref={stageRef}
+              width={stageWidth}
+              height={stageHeight}
+              style={{ touchAction: "none" }}
+              onPointerDown={(e) => {
+                if (disabled || busy) return;
+                // Prevent canvas focus from scrolling the document to the stage top.
+                e.evt.preventDefault();
+                lockPageScroll();
+                const pos = e.target.getStage()?.getPointerPosition();
+                if (!pos) return;
+                if (mode === "box") {
+                  const hit = [...boxes]
+                    .reverse()
+                    .find((b) => pointInBox(pos.x, pos.y, b, stageWidth, stageHeight));
+                  if (hit) {
+                    setSelectedBoxId(hit.id);
+                    return;
+                  }
+                  setSelectedBoxId(null);
+                  setBoxDrag({ x0: pos.x, y0: pos.y, x1: pos.x, y1: pos.y });
                   return;
                 }
-                setSelectedBoxId(null);
-                setBoxDrag({ x0: pos.x, y0: pos.y, x1: pos.x, y1: pos.y });
-                return;
-              }
-              setDrawing(true);
-              setLines((prev) => [...prev, [pos.x, pos.y]]);
-            }}
-            onPointerMove={(e) => {
-              const pos = e.target.getStage()?.getPointerPosition();
-              if (!pos) return;
-              if (mode === "box" && boxDrag) {
-                setBoxDrag((d) => (d ? { ...d, x1: pos.x, y1: pos.y } : null));
-                return;
-              }
-              if (!drawing || disabled || busy) return;
-              setLines((prev) => {
-                const last = prev[prev.length - 1];
-                if (!last) return prev;
-                return [...prev.slice(0, -1), [...last, pos.x, pos.y]];
-              });
-            }}
-            onPointerUp={() => {
-              if (mode === "box" && boxDrag) {
-                const next = boxFromDrag(
-                  boxDrag.x0,
-                  boxDrag.y0,
-                  boxDrag.x1,
-                  boxDrag.y1,
-                  stageWidth,
-                  stageHeight,
-                );
-                if (next.wPct >= 2 && next.hPct >= 2) {
-                  setBoxes((prev) => {
-                    if (prev.length >= MAX_IMAGE_EDIT_REGIONS) return prev;
-                    return [...prev, newImageEditRegion({ ...next, instruction: "" })];
-                  });
+                setDrawing(true);
+                setLines((prev) => [...prev, [pos.x, pos.y]]);
+              }}
+              onPointerMove={(e) => {
+                const pos = e.target.getStage()?.getPointerPosition();
+                if (!pos) return;
+                if (mode === "box" && boxDrag) {
+                  setBoxDrag((d) => (d ? { ...d, x1: pos.x, y1: pos.y } : null));
+                  return;
                 }
-                setBoxDrag(null);
-                return;
-              }
-              setDrawing(false);
-            }}
-          >
-            <Layer>
-              <KonvaImage image={bgImage} width={stageWidth} height={stageHeight} listening={false} />
-              {boxes.map((box) => {
-                const selected = selectedBoxId === box.id;
-                return (
+                if (!drawing || disabled || busy) return;
+                setLines((prev) => {
+                  const last = prev[prev.length - 1];
+                  if (!last) return prev;
+                  return [...prev.slice(0, -1), [...last, pos.x, pos.y]];
+                });
+              }}
+              onPointerUp={() => {
+                pageScrollLockRef.current = null;
+                if (mode === "box" && boxDrag) {
+                  const next = boxFromDrag(
+                    boxDrag.x0,
+                    boxDrag.y0,
+                    boxDrag.x1,
+                    boxDrag.y1,
+                    stageWidth,
+                    stageHeight,
+                  );
+                  if (next.wPct >= 2 && next.hPct >= 2) {
+                    setBoxes((prev) => {
+                      if (prev.length >= MAX_IMAGE_EDIT_REGIONS) return prev;
+                      return [...prev, newImageEditRegion({ ...next, instruction: "" })];
+                    });
+                  }
+                  setBoxDrag(null);
+                  return;
+                }
+                setDrawing(false);
+              }}
+            >
+              <Layer>
+                <KonvaImage image={bgImage} width={stageWidth} height={stageHeight} listening={false} />
+                {boxes.map((box) => {
+                  const selected = selectedBoxId === box.id;
+                  return (
+                    <Rect
+                      key={box.id}
+                      x={(box.xPct / 100) * stageWidth}
+                      y={(box.yPct / 100) * stageHeight}
+                      width={(box.wPct / 100) * stageWidth}
+                      height={(box.hPct / 100) * stageHeight}
+                      stroke={selected ? "#34d399" : "#fbbf24"}
+                      strokeWidth={selected ? 3 : 2}
+                      dash={selected ? undefined : [6, 4]}
+                      fill={selected ? "rgba(52,211,153,0.25)" : "rgba(255,255,255,0.2)"}
+                      listening={false}
+                    />
+                  );
+                })}
+                {draftBox && (
                   <Rect
-                    key={box.id}
-                    x={(box.xPct / 100) * stageWidth}
-                    y={(box.yPct / 100) * stageHeight}
-                    width={(box.wPct / 100) * stageWidth}
-                    height={(box.hPct / 100) * stageHeight}
-                    stroke={selected ? "#34d399" : "#fbbf24"}
-                    strokeWidth={selected ? 3 : 2}
-                    dash={selected ? undefined : [6, 4]}
-                    fill={selected ? "rgba(52,211,153,0.25)" : "rgba(255,255,255,0.2)"}
+                    x={(draftBox.xPct / 100) * stageWidth}
+                    y={(draftBox.yPct / 100) * stageHeight}
+                    width={(draftBox.wPct / 100) * stageWidth}
+                    height={(draftBox.hPct / 100) * stageHeight}
+                    stroke="#a78bfa"
+                    strokeWidth={2}
+                    fill="rgba(167,139,250,0.25)"
                     listening={false}
                   />
-                );
-              })}
-              {draftBox && (
-                <Rect
-                  x={(draftBox.xPct / 100) * stageWidth}
-                  y={(draftBox.yPct / 100) * stageHeight}
-                  width={(draftBox.wPct / 100) * stageWidth}
-                  height={(draftBox.hPct / 100) * stageHeight}
-                  stroke="#a78bfa"
-                  strokeWidth={2}
-                  fill="rgba(167,139,250,0.25)"
-                  listening={false}
-                />
-              )}
-              <Rect width={stageWidth} height={stageHeight} fill="transparent" />
-              {lines.map((pts, i) => (
-                <Line
-                  key={`stroke-${i}`}
-                  points={pts}
-                  stroke="rgba(255,255,255,0.55)"
-                  strokeWidth={BRUSH_SIZE}
-                  lineCap="round"
-                  lineJoin="round"
-                />
-              ))}
-            </Layer>
-          </Stage>
-        )}
+                )}
+                <Rect width={stageWidth} height={stageHeight} fill="transparent" />
+                {lines.map((pts, i) => (
+                  <Line
+                    key={`stroke-${i}`}
+                    points={pts}
+                    stroke="rgba(255,255,255,0.55)"
+                    strokeWidth={BRUSH_SIZE}
+                    lineCap="round"
+                    lineJoin="round"
+                  />
+                ))}
+              </Layer>
+            </Stage>
+          )}
+        </div>
       </div>
 
       {(labels.presetRemoveText || labels.presetRemoveLogo || labels.presetSeamless) && (

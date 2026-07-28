@@ -61,6 +61,7 @@ import {
   typographyHintForLocale,
   marketChineseScriptBlock,
   resolveCopyLocale,
+  integratedTypographyPhrase,
   type CopyLocale,
 } from "@/lib/copy-locale";
 import {
@@ -435,15 +436,17 @@ function conceptSocialPreferAvoid(
   direction: string | undefined,
   stylized: boolean,
   referenceImageMode: ReferenceImageMode = "none",
+  copyLocale: CopyLocale = "zh-hant",
 ): { prefer: string; avoid: string } {
   const styleOnly =
     referenceImageMode === "style-only" || isStyleOnlyReferenceExtra(direction);
+  const typePhrase = integratedTypographyPhrase(copyLocale);
   if (styleOnly && direction && isPhotographicReferenceBrief(direction)) {
     return {
       avoid:
         "cartoon icons, flat line-art pictograms, illustrated UI chips, clipart badges, emoji stickers, 3D glossy icons, stock handshake, watermark",
       prefer:
-        "Photorealistic lifestyle product photography like IMAGE 1 — soft natural light, low saturation, real crystal beads on linen/fabric, elegant integrated Chinese typography; new photo-led layout every slide.",
+        `Photorealistic lifestyle product photography like IMAGE 1 — soft natural light, low saturation, real crystal beads on linen/fabric, ${typePhrase}; new photo-led layout every slide.`,
     };
   }
   if (styleOnly && direction && isInfographicLikeBrief(direction)) {
@@ -505,7 +508,7 @@ export function buildConceptSocialImagePrompt(
 
   const stylized = Boolean(vars.artStyle && vars.artStyle !== "realistic");
   const refMode = slideOpts?.referenceImageMode ?? "none";
-  const { prefer, avoid } = conceptSocialPreferAvoid(direction, stylized, refMode);
+  const { prefer, avoid } = conceptSocialPreferAvoid(direction, stylized, refMode, locale);
   return joinParts(
     artStyleMandatoryLead(vars.artStyle),
     plan
@@ -741,7 +744,7 @@ export function buildTeachingCarouselSlideImagePrompt(
       stylized
         ? "Illustrated social carousel — typography and icons drawn in the same art medium, NOT photorealistic photography."
         : referenceImageMode === "style-only" && isPhotographicReferenceBrief(vars.extra)
-          ? "Photorealistic lifestyle product carousel — soft natural light, real product textures, integrated Chinese typography — NO cartoon icons or flat line-art badges."
+          ? `Photorealistic lifestyle product carousel — soft natural light, real product textures, ${integratedTypographyPhrase(locale)} — NO cartoon icons or flat line-art badges.`
           : "Editorial social carousel — integrated typography, not a plain white edu poster.",
       typographyHintForLocale(locale, slideLines),
       carouselSlideAvoidClause(vars.framing, vars.artStyle ?? DEFAULT_ART_STYLE),

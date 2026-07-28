@@ -4,6 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useWizard } from "@/components/studio/WizardContext";
 import { QuickFixImagePanel } from "@/components/studio/QuickFixImagePanel";
+import {
+  GenerationWaitPlaceholder,
+  waitAspectFromString,
+} from "@/components/studio/GenerationWaitPlaceholder";
 import { writeCaptionHandoff } from "@/lib/caption-studio-draft";
 import { writeImageCanvasHandoff } from "@/lib/image-canvas-handoff";
 import { writeStudioDoneResume } from "@/lib/studio-done-resume";
@@ -55,11 +59,18 @@ export function DoneStep() {
   const router = useRouter();
   const {
     bgmNote,
+    canGenerateImage,
     captionHandoffVideoUrl,
     captionLines,
     finalImageSrc,
+    generateImage,
     headline,
+    imageAspectRatio,
+    imageBusy,
+    imageGenerateDisabledReason,
     imageGenKey,
+    imageProgressInfo,
+    imageRefPreviewUrl,
     listExportableSlides,
     m,
     product,
@@ -67,6 +78,7 @@ export function DoneStep() {
     quickFixVideo,
     resetProject,
     setStepKey,
+    uploadPreviewUrl,
     videoNote,
     videoUrl,
     workflowMode,
@@ -89,7 +101,17 @@ export function DoneStep() {
           ) : null}
         </div>
 
-        {slides.length > 1 ? (
+        {imageBusy ? (
+          <GenerationWaitPlaceholder
+            message={imageProgressInfo?.label ?? m.wizard.imageGenerating}
+            hint={m.wizard.generationWaitHint}
+            progress={imageProgressInfo}
+            aspectRatio={waitAspectFromString(imageAspectRatio)}
+            previewUrl={imageRefPreviewUrl || uploadPreviewUrl || finalImageSrc || null}
+          />
+        ) : null}
+
+        {!imageBusy && slides.length > 1 ? (
           <div className="space-y-3">
             <p className="text-xs font-medium text-emerald-200">{m.wizard.doneAllSlidesTitle}</p>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -152,35 +174,35 @@ export function DoneStep() {
                 </div>
               ))}
             </div>
-            {slides.length > 1 && (
-              <button
-                type="button"
-                disabled={downloadBusy}
-                onClick={async () => {
-                  setDownloadError(null);
-                  setDownloadBusy(true);
-                  try {
-                    await downloadMediaUrls(
-                      slides.map((slide) => ({
-                        url: slide.url,
-                        filename: `slide-${slide.index + 1}-${safeFilenamePart(slide.label)}.png`,
-                      })),
-                    );
-                  } catch (e: unknown) {
-                    setDownloadError(
-                      e instanceof Error ? e.message : m.imageCanvas.downloadFailed,
-                    );
-                  } finally {
-                    setDownloadBusy(false);
-                  }
-                }}
-                className="w-full rounded-xl border border-emerald-600 px-4 py-2.5 text-sm font-medium text-emerald-100 disabled:opacity-50"
-              >
-                {downloadBusy ? m.imageCanvas.downloading : m.wizard.downloadAllSlides}
-              </button>
-            )}
+            <button
+              type="button"
+              disabled={downloadBusy}
+              onClick={async () => {
+                setDownloadError(null);
+                setDownloadBusy(true);
+                try {
+                  await downloadMediaUrls(
+                    slides.map((slide) => ({
+                      url: slide.url,
+                      filename: `slide-${slide.index + 1}-${safeFilenamePart(slide.label)}.png`,
+                    })),
+                  );
+                } catch (e: unknown) {
+                  setDownloadError(
+                    e instanceof Error ? e.message : m.imageCanvas.downloadFailed,
+                  );
+                } finally {
+                  setDownloadBusy(false);
+                }
+              }}
+              className="w-full rounded-xl border border-emerald-600 px-4 py-2.5 text-sm font-medium text-emerald-100 disabled:opacity-50"
+            >
+              {downloadBusy ? m.imageCanvas.downloading : m.wizard.downloadAllSlides}
+            </button>
           </div>
-        ) : (
+        ) : null}
+
+        {!imageBusy && slides.length <= 1 ? (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -227,9 +249,26 @@ export function DoneStep() {
             </button>
             <p className="text-center text-xs text-slate-500">{m.imageCanvas.doneHint}</p>
           </>
-        )}
+        ) : null}
 
-        <QuickFixImagePanel variant="dark" />
+        {!imageBusy ? (
+          <div className="space-y-2">
+            {imageGenerateDisabledReason && !canGenerateImage() ? (
+              <p className="text-xs text-amber-200/90">{imageGenerateDisabledReason}</p>
+            ) : null}
+            <button
+              type="button"
+              disabled={imageBusy || !canGenerateImage()}
+              title={imageGenerateDisabledReason ?? undefined}
+              onClick={() => void generateImage()}
+              className="w-full rounded-xl border border-slate-600 px-4 py-2.5 text-sm font-medium text-slate-200 disabled:opacity-50"
+            >
+              {m.wizard.regenerateImageBtn}
+            </button>
+          </div>
+        ) : null}
+
+        {!imageBusy ? <QuickFixImagePanel variant="dark" /> : null}
         {downloadError && (
           <p className="rounded-lg bg-red-950/40 px-3 py-2 text-xs text-red-200">{downloadError}</p>
         )}

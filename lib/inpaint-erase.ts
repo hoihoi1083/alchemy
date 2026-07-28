@@ -7,15 +7,27 @@ export function isEraseIntent(prompt: string): boolean {
   );
 }
 
+/**
+ * Local heal prompt — only regenerate masked pixels (phone-editor style).
+ * Prefer this over FLUX Erase, which often removes the whole semantic object
+ * the mask touches (e.g. an entire floating UI card).
+ */
+export function buildInpaintErasePrompt(): string {
+  return [
+    "Local heal only inside the mask.",
+    "Seamless continuation of the immediately surrounding pixels.",
+    "Do not change, move, or remove any unmasked content.",
+    "Do not erase neighboring text, UI cards, logos, or people outside the mask.",
+    "Match adjacent colors, texture, and lighting exactly.",
+    "No new text, letters, logos, or invented objects inside the mask.",
+  ].join(" ");
+}
+
 /** Strong fill prompt when user wants replacement (not erase). */
 export function buildInpaintFillPrompt(userPrompt: string): string {
   const p = userPrompt.trim();
   if (isEraseIntent(p)) {
-    return [
-      "Seamless continuation of the surrounding background.",
-      "Plain clean infographic panel, no text, no letters, no words, no typography.",
-      "Match adjacent colors and layout exactly.",
-    ].join(" ");
+    return buildInpaintErasePrompt();
   }
   return p;
 }

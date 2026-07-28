@@ -883,9 +883,9 @@ export const zhCn = {
     cinematicStitchFfmpegNote: "拼接在本地完成（每段 8 秒动态分开生成）",
     cinematicLogoStampNote: "已在出片前将品牌 logo 印在静帧（每场景同一位置和大小）。",
     cinematicLogoModeBNote:
-      "勾选「场景使用品牌 Logo」时，每张静帧会印上 Brand kit Logo（角标；最后一幕居中）。",
+      "勾选「视频静帧使用品牌 Logo」时，每张视频关键帧会印上 Brand kit Logo（角标；最后一幕居中）。",
     cinematicLogoStampHint:
-      "在 Brand kit 上传 logo，再勾选「场景使用品牌 Logo」。重新生成静帧才会套用。",
+      "在 Brand kit 上传 logo，再勾选「视频静帧使用品牌 Logo」。重新生成视频静帧才会套用。图片请用「编辑图片」加 Logo。",
     cinematicStitchWorkflowOrder:
       "生成顺序：{count} 段 影片生成 → 本地拼接。BGM 和字幕可在完成后添加。脚本／音乐可选广告包或字幕工作室。",
     cinematicStitchVideoCost: "{count} 次视频生成 + 拼接（成本高于单段）",
@@ -1164,15 +1164,15 @@ export const zhCn = {
     },
     brandKit: {
       title: "品牌套件",
-      hint: "上传一次 Logo。勾选下面「场景使用品牌 Logo」才会印到每张静帧。",
+      hint: "上传一次 Logo。视频：勾选下面「视频静帧使用品牌 Logo」。图片：随时在「编辑图片」里加 Logo，位置自由。",
       uploadLogo: "上传 Logo",
       changeLogo: "更换 Logo",
-      endWithLogoLabel: "场景使用品牌 Logo",
+      endWithLogoLabel: "视频静帧使用品牌 Logo",
       endWithLogoHint:
-        "勾选＝AI 出圖 每张静帧加 Logo（2 次出图；最后一幕居中）。不勾＝不印 Logo。",
-      useLogoLabel: "场景使用品牌 Logo",
+        "仅用于视频 — 给每张视频关键帧/静帧加 Logo（2 倍出图 Token；最后一幕居中）。图片请到「编辑图片」随时加 Logo。",
+      useLogoLabel: "视频静帧使用品牌 Logo",
       useLogoHint:
-        "勾选＝每张静帧加你的 Logo（2 倍出图 Token；最后一幕居中）。不勾＝不印 Logo。",
+        "仅用于视频 — 给每张视频关键帧/静帧加你的 Logo（2 倍出图 Token；最后一幕居中）。图片请到「编辑图片」随时、任意位置加 Logo。",
       primaryColor: "主色",
       secondaryColor: "副色",
       accentColor: "强调色",
@@ -2146,9 +2146,9 @@ export const zhCn = {
     stepSkipClean: "跳过 — 无需清理",
     cleanTitle: "擦除不要的部分（可选）",
     cleanHint:
-      "用方框圈住要删除的文字，按「擦除圈选区域」— 使用 FLUX Erase 专用擦除（不是填色）。只有圈住的部分会改，其余保持不变。",
-    cleanBoxHint: "为每段文字拖拽方框 — 可画多个方框后一次擦除",
-    cleanMultiRegionHint: "可圈选多个区域（最多 5 个），按一次「擦除」会同时处理全部。",
+      "只圈选要删的像素（像手机修图的局部修复）。只有高亮区域会重生，旁边的卡片/文字会保留。",
+    cleanBoxHint: "为每段文字拖紧贴的方框 — 可画多个后一次擦除",
+    cleanMultiRegionHint: "可圈选最多 5 个区域。擦除只修复圈选内，不会整块组件一起删掉。",
     cleanRegionCount: (n: number) => `已选 ${n} 个擦除区域`,
     cleanRemoveRegion: "区域",
     cleanDeleteSelected: "删除已选区域",
@@ -2162,7 +2162,7 @@ export const zhCn = {
     cleanPromptPlaceholder: "进阶：描述要替换成什么（擦除可留空）",
     cleanEraseBtn: "擦除圈选区域",
     cleanFillBtn: "按描述替换",
-    cleanCostNote: "每次擦除消耗 1 次图片生成额度（系統 FLUX Erase）。",
+    cleanCostNote: "每次擦除消耗 1 次图片生成额度（局部修复 / FLUX Fill）。",
     cleanPreviewTitle: "擦除结果预览",
     cleanAcceptBtn: "使用此图，继续加字",
     cleanRetryBtn: "不满意，再试",

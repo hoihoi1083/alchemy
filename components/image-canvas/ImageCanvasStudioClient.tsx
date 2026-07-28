@@ -371,6 +371,7 @@ export function ImageCanvasStudioClient() {
 
   async function applyInpaint(maskBlob: Blob, prompt: string, mode: "erase" | "fill" = "erase") {
     const frame = cleanFrames[cleanFrameIndex];
+    const pageY = window.scrollY;
     setBusy(true);
     setError(null);
     try {
@@ -411,6 +412,9 @@ export function ImageCanvasStudioClient() {
       setError(e instanceof Error ? e.message : w.quickFixRefining);
     } finally {
       setBusy(false);
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: pageY, left: window.scrollX });
+      });
     }
   }
 

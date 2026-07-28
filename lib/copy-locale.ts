@@ -76,6 +76,13 @@ export function copyLocaleLabel(locale: CopyLocale): string {
   return "Traditional Chinese (繁體中文)";
 }
 
+/** Short phrase for visualDna / art-direction lines (locale-aware — never force Chinese on EN). */
+export function integratedTypographyPhrase(locale: CopyLocale): string {
+  if (locale === "en") return "elegant integrated English typography";
+  if (locale === "zh-hans") return "elegant integrated Simplified Chinese typography";
+  return "elegant integrated Chinese typography";
+}
+
 /** Typography + verbatim copy guard for Nano Banana (no negative_prompt). */
 export function typographyHintForLocale(
   locale: CopyLocale,

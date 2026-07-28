@@ -199,7 +199,7 @@ function buildPlanPrompt(input: {
       ]
     : photoStyleRef
       ? [
-          "- User reference is PHOTOGRAPHIC — match soft natural light, real product textures, integrated Chinese typography.",
+          "- User reference is PHOTOGRAPHIC — match soft natural light, real product textures, integrated on-image typography matching the copy language.",
           "- visualDna: photorealistic lifestyle product photography like USER REFERENCE.",
           "- Each slide.composition: photo-led with distinct layout per slide — NO cartoon icons or flat clipart badges.",
         ]

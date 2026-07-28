@@ -11,6 +11,7 @@ describe("inpaint-erase", () => {
 
   it("builds safe fill prompt for erase-like input", () => {
     const p = buildInpaintFillPrompt("把字消除");
-    assert.match(p, /no text/i);
+    assert.match(p, /Local heal only inside the mask/i);
+    assert.match(p, /unmasked content/i);
   });
 });

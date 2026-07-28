@@ -909,9 +909,9 @@ export const en = {
     cinematicLogoStampNote:
       "Brand logo stamped on stills before video (same corner/size on every scene).",
     cinematicLogoModeBNote:
-      "When “Use brand logo on scenes” is on, every still gets your Brand kit logo (corner; last scene centered).",
+      "When “Use brand logo on video stills” is on, each video keyframe gets your Brand kit logo (corner; last scene centered).",
     cinematicLogoStampHint:
-      "Upload your logo in Brand kit, then turn on “Use brand logo on scenes”. Regenerate stills to apply.",
+      "Upload your logo in Brand kit, then turn on “Use brand logo on video stills”. Regenerate video stills to apply. For images, use Edit image instead.",
     cinematicStitchWorkflowOrder:
       "Order: {count} video generation clips → local stitch. Add BGM and captions later on Done. Script/music auto-plan is optional in Ad pack / caption studio.",
     cinematicStitchVideoCost: "{count} video generations + stitch (higher cost than single clip)",
@@ -1202,15 +1202,15 @@ export const en = {
     },
     brandKit: {
       title: "Brand kit",
-      hint: "Save your logo once. Turn on “Use brand logo on scenes” to stamp it on every still.",
+      hint: "Save your logo once. For video: turn on “Use brand logo on video stills” below. For images: add the logo anytime in Edit image.",
       uploadLogo: "Upload logo",
       changeLogo: "Change logo",
-      endWithLogoLabel: "Use brand logo on scenes",
+      endWithLogoLabel: "Use brand logo on video stills",
       endWithLogoHint:
-        "On = we add your logo to every still (2 image passes; last scene centered). Off = no logo.",
-      useLogoLabel: "Use brand logo on scenes",
+        "Video only — stamps your logo onto each video keyframe/still (2× image tokens; last scene centered). For images, add logo anytime in Edit image instead.",
+      useLogoLabel: "Use brand logo on video stills",
       useLogoHint:
-        "On = add your logo to every still (2× image tokens; last scene centered). Off = no logo.",
+        "Video only — stamps your logo onto each video keyframe/still (2× image tokens; last scene centered). For images, add logo anytime anywhere in Edit image.",
       primaryColor: "Primary",
       secondaryColor: "Secondary",
       accentColor: "Accent",
@@ -2210,9 +2210,10 @@ export const en = {
     stepSkipClean: "Skip — no cleanup needed",
     cleanTitle: "Erase unwanted areas (optional)",
     cleanHint:
-      "Draw a box around text to remove, then click Erase selected area — uses FLUX Erase (dedicated removal, not fill). Only the highlighted region changes.",
-    cleanBoxHint: "Drag a box around each text block — draw multiple boxes before erasing",
-    cleanMultiRegionHint: "You can highlight several areas (up to 5 boxes). All selected regions are erased in one click.",
+      "Paint or box only the pixels you want gone — like a phone heal brush. Only that highlight is regenerated; nearby cards/text stay.",
+    cleanBoxHint: "Drag a tight box around each text block — draw multiple boxes, erase once",
+    cleanMultiRegionHint:
+      "You can highlight several areas (up to 5). Erase heals only inside your highlight — not the whole object.",
     cleanRegionCount: (n: number) => `${n} area${n === 1 ? "" : "s"} selected for erase`,
     cleanRemoveRegion: "Area",
     cleanDeleteSelected: "Delete selected area",
@@ -2226,7 +2227,7 @@ export const en = {
     cleanPromptPlaceholder: "Advanced: describe replacement content (leave empty for erase)",
     cleanEraseBtn: "Erase selected area",
     cleanFillBtn: "Replace with prompt",
-    cleanCostNote: "Each erase uses 1 image generation credit (Token billing FLUX Erase).",
+    cleanCostNote: "Each erase uses 1 image generation credit (local heal / FLUX Fill).",
     cleanPreviewTitle: "Erase preview",
     cleanAcceptBtn: "Use this image → add text",
     cleanRetryBtn: "Not good — try again",
