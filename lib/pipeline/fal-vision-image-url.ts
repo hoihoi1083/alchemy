@@ -2,6 +2,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import { fal } from "@fal-ai/client";
 import { pipelineFileUrl, resolvePipelineFileUrl } from "@/lib/pipeline/local-input";
+import { isLibraryAssetUrl, readLibraryAssetMedia } from "@/lib/storage/durable-media";
 
 function isLocalOrPipelineUrl(url: string): boolean {
   const trimmed = url.trim();
@@ -14,12 +15,40 @@ function isLocalOrPipelineUrl(url: string): boolean {
   }
 }
 
-/** Fal vision cannot fetch localhost — upload pipeline/local images to fal storage first. */
+async function uploadBytesToFal(
+  bytes: ArrayBuffer | Buffer | Uint8Array,
+  contentType: string,
+  filename = "vision-review.png",
+): Promise<string> {
+  const type = contentType.split(";")[0]?.trim() || "image/png";
+  const buf = Buffer.from(bytes instanceof ArrayBuffer ? new Uint8Array(bytes) : bytes);
+  return fal.storage.upload(new File([buf], filename, { type }));
+}
+
+/**
+ * Fal / Google vision fetch image_urls from the public internet.
+ * They cannot use auth-only `/api/library/download/:id` (returns JSON error text)
+ * or localhost pipeline URLs — re-host those on fal.storage first.
+ */
 export async function falVisionImageUrl(
   request: Request,
   imageUrl: string,
 ): Promise<string> {
   const trimmed = imageUrl.trim();
+
+  // Durable library assets are private (Clerk). Read R2 server-side → fal CDN.
+  if (isLibraryAssetUrl(trimmed)) {
+    const media = await readLibraryAssetMedia(trimmed);
+    if (!media) {
+      throw new Error("Could not read library image for vision review.");
+    }
+    const ext =
+      media.contentType.includes("jpeg") || media.contentType.includes("jpg") ? ".jpg"
+      : media.contentType.includes("webp") ? ".webp"
+      : ".png";
+    return uploadBytesToFal(media.bytes, media.contentType, `vision-library${ext}`);
+  }
+
   if (!isLocalOrPipelineUrl(trimmed)) return trimmed;
 
   const localPath = resolvePipelineFileUrl(trimmed);
@@ -30,7 +59,7 @@ export async function falVisionImageUrl(
       ext === ".jpg" || ext === ".jpeg" ? "image/jpeg"
       : ext === ".webp" ? "image/webp"
       : "image/png";
-    return fal.storage.upload(new File([bytes], `vision${ext || ".png"}`, { type }));
+    return uploadBytesToFal(bytes, type, `vision${ext || ".png"}`);
   }
 
   const absolute = trimmed.startsWith("/")
@@ -46,5 +75,5 @@ export async function falVisionImageUrl(
   }
   const contentType = res.headers.get("content-type")?.split(";")[0]?.trim() || "image/png";
   const bytes = await res.arrayBuffer();
-  return fal.storage.upload(new File([bytes], "vision-review.png", { type: contentType }));
+  return uploadBytesToFal(bytes, contentType);
 }
