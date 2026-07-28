@@ -1,52 +1,38 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 
-type Tab = "all" | "product" | "video" | "service";
+type Tab = "all" | "product" | "instagram" | "facebook" | "xhs" | "video" | "service";
 
-const SHOWCASE = [
-  {
-    id: "skincare",
-    tab: "product" as const,
-    src: "/images/landing/landing-canvas-skincare.png",
-  },
-  {
-    id: "sunscreen",
-    tab: "product" as const,
-    src: "/images/landing/landing-tpl-sunscreen.png",
-  },
-  {
-    id: "coffee",
-    tab: "product" as const,
-    src: "/images/landing/landing-result-coffee.png",
-  },
-  {
-    id: "service",
-    tab: "service" as const,
-    src: "/images/landing/landing-tpl-service.png",
-  },
-  {
-    id: "ref",
-    tab: "video" as const,
-    src: "/images/landing/landing-ref-coffee.png",
-  },
-  {
-    id: "hero",
-    tab: "video" as const,
-    src: "/images/landing/landing-hero-product.png",
-  },
+const SHOWCASE: Array<{
+  id: string;
+  tab: Tab;
+  src: string;
+  titleKey: "tplCardSkincare" | "tplCardSunscreen" | "tplCardCoffee" | "tplCardService" | "tplCardReel" | "tplCardHero";
+  captionKey: "tplCapIg" | "tplCapFb" | "tplCapReel" | "tplCapService" | "tplCapProduct";
+}> = [
+  { id: "skincare", tab: "product", src: "/images/landing/landing-canvas-skincare.png", titleKey: "tplCardSkincare", captionKey: "tplCapIg" },
+  { id: "sunscreen", tab: "instagram", src: "/images/landing/landing-tpl-sunscreen.png", titleKey: "tplCardSunscreen", captionKey: "tplCapIg" },
+  { id: "coffee", tab: "facebook", src: "/images/landing/landing-result-coffee.png", titleKey: "tplCardCoffee", captionKey: "tplCapFb" },
+  { id: "service", tab: "service", src: "/images/landing/landing-tpl-service.png", titleKey: "tplCardService", captionKey: "tplCapService" },
+  { id: "ref", tab: "video", src: "/images/landing/landing-ref-coffee.png", titleKey: "tplCardReel", captionKey: "tplCapReel" },
+  { id: "hero", tab: "xhs", src: "/images/landing/landing-hero-product.png", titleKey: "tplCardHero", captionKey: "tplCapProduct" },
 ];
 
 export function LandingTemplatesShowcase() {
   const { m } = useLocale();
   const L = m.landing;
   const [tab, setTab] = useState<Tab>("all");
+  const scroller = useRef<HTMLDivElement>(null);
 
   const tabs: { id: Tab; label: string }[] = [
     { id: "all", label: L.tplTabAll },
     { id: "product", label: L.tplTabProduct },
+    { id: "instagram", label: L.tplTabInstagram },
+    { id: "facebook", label: L.tplTabFacebook },
+    { id: "xhs", label: L.tplTabXhs },
     { id: "video", label: L.tplTabVideo },
     { id: "service", label: L.tplTabService },
   ];
@@ -54,18 +40,15 @@ export function LandingTemplatesShowcase() {
   const cards = SHOWCASE.filter((c) => tab === "all" || c.tab === tab);
 
   return (
-    <section id="templates" className="border-t border-slate-100 bg-white">
+    <section id="templates" className="bg-white">
       <div className="mx-auto max-w-6xl px-6 py-16">
-        <div className="max-w-2xl">
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900">
-            {L.tplTitleBefore}
-            <span className="text-sky-600">{L.tplTitleHighlight}</span>
-            {L.tplTitleAfter}
-          </h2>
-          <p className="mt-3 text-sm text-slate-600 sm:text-base">{L.tplSubtitle}</p>
-        </div>
+        <h2 className="text-center text-3xl font-bold tracking-tight text-slate-900">
+          {L.tplTitleBefore}
+          <span className="text-violet-600">{L.tplTitleHighlight}</span>
+          {L.tplTitleAfter}
+        </h2>
 
-        <div className="mt-8 flex flex-wrap gap-2">
+        <div className="mt-8 flex flex-wrap justify-center gap-2">
           {tabs.map((t) => (
             <button
               key={t.id}
@@ -82,30 +65,34 @@ export function LandingTemplatesShowcase() {
           ))}
         </div>
 
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {cards.map((card) => (
-            <Link
-              key={card.id}
-              href="/start"
-              className="group overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 shadow-sm transition hover:border-violet-300 hover:shadow-md"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={card.src}
-                alt=""
-                className="aspect-[4/5] w-full object-cover transition duration-300 group-hover:scale-[1.02]"
-              />
-            </Link>
-          ))}
-        </div>
-
-        <div className="mt-10 text-center">
-          <Link
-            href="/start"
-            className="inline-flex rounded-full bg-violet-600 px-6 py-3 text-sm font-semibold text-white hover:bg-violet-500"
+        <div className="relative mt-8">
+          <div
+            ref={scroller}
+            className="flex gap-4 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
-            {L.ctaPrimary}
-          </Link>
+            {cards.map((card) => (
+              <Link
+                key={card.id}
+                href="/start"
+                className="w-[200px] shrink-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-violet-300 hover:shadow-md sm:w-[220px]"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={card.src} alt="" className="aspect-[4/5] w-full object-cover" />
+                <div className="px-3 py-3">
+                  <p className="text-sm font-semibold text-slate-900">{L[card.titleKey]}</p>
+                  <p className="mt-0.5 text-xs text-slate-500">{L[card.captionKey]}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+          <button
+            type="button"
+            aria-label="Scroll templates"
+            onClick={() => scroller.current?.scrollBy({ left: 240, behavior: "smooth" })}
+            className="absolute -right-1 top-1/3 hidden h-10 w-10 items-center justify-center rounded-full border border-violet-200 bg-white text-violet-600 shadow-md sm:flex"
+          >
+            →
+          </button>
         </div>
       </div>
     </section>

@@ -281,7 +281,82 @@ export const zh = {
       { q: "一定要上傳參考影片？", a: "唔一定。參考 MP4 係選填。" },
       { q: "係咪全部都要先分鏡？", a: "唔係。只要影片可直接出片；先圖後片先走分鏡靜幀。" },
     ],
+    builtFor: [
+      "Marketers",
+      "Brands & agencies",
+      "Small businesses",
+      "E-commerce",
+      "Creators",
+    ],
+    builtForLabel: "適合",
+
+    canvasFeatureItems: [
+      { title: "Remove Elements", body: "Delete unwanted objects easily" },
+      { title: "Add Text", body: "Perfect headlines, CTAs and copy" },
+      { title: "Add Logo", body: "Keep your creative on brand" },
+      { title: "Add Diagram", body: "Explain benefits, pricing or steps" },
+      { title: "Export Sizes", body: "IG, FB, 小红书, TikTok & more" },
+    ],
+
+    canvasMockTitle: "Untitled Design",
+
+    canvasSidebar: ["Templates", "Elements", "Tools", "Fonts", "BrandKit"],
+
+    heroSidebar: ["Upload", "Style", "Layout", "Tone", "BrandKit"],
+    navResources: "資源",
+
+    planBlurbCustom: "For enterprise volume",
+
+    planBlurbFree: "Try the guided Studio workflow",
+
+    planBlurbMaster: "For agencies & teams",
+
+    planBlurbPro: "For brands & freelancers",
+
+    planBlurbStandard: "For early businesses",
+
+    planFeaturesCustom: ["Custom token volume", "Custom limits", "Dedicated support"],
+
+    planFeaturesFree: ["Guided image & video paths", "1,000 signup tokens", "Library downloads"],
+
+    planFeaturesMaster: ["16,000 tokens / month", "Pro canvas", "Priority support", "2K images"],
+
+    planFeaturesPro: ["8,000 tokens / month", "1080p video", "Priority generation", "High-res exports"],
+
+    planFeaturesStandard: ["3,000 tokens / month", "720p video", "Token top-ups"],
+    pricingSaveBadge: "慳高達 50%",
+    tokenCostVideoDraft: "短片（約 8 秒）",
+    tokenCostVoice: "口播",
+    topUpBody: "訂閱後可隨時加購。",
+    topUpCustom: "自訂 tokens",
+    topUpTitle: "需要更多 Tokens？",
+
+    tplCapFb: "Facebook Ad",
+
+    tplCapIg: "Instagram Post",
+
+    tplCapProduct: "Product Ad",
+
+    tplCapReel: "Reels / Video",
+
+    tplCapService: "Service Business",
+
+    tplCardCoffee: "Cold Brew",
+
+    tplCardHero: "Product Hero",
+
+    tplCardReel: "Reels Storyboard",
+
+    tplCardService: "Service Promo",
+
+    tplCardSkincare: "Skincare Ad",
+
+    tplCardSunscreen: "Sale Promo",
+    tplTabFacebook: "Facebook Ads",
+    tplTabInstagram: "Instagram",
+    tplTabXhs: "小紅書",
   },
+
   pricing: {
     badge: "簡單 token 定價",
     title: "按創作量選計劃",

@@ -1,41 +1,50 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
 import { useLocale } from "@/components/LocaleProvider";
+
+const SCENARIO_IMGS = [
+  "/images/landing/landing-tpl-sunscreen.png",
+  "/images/landing/landing-canvas-skincare.png",
+  "/images/landing/landing-result-coffee.png",
+  "/images/landing/landing-hero-product.png",
+  "/images/landing/landing-ref-coffee.png",
+  "/images/landing/landing-tpl-service.png",
+];
 
 export function LandingScenarios() {
   const { m } = useLocale();
   const L = m.landing;
-  const [open, setOpen] = useState<number | null>(0);
 
   return (
-    <section id="use-cases" className="bg-white">
+    <section id="use-cases" className="bg-slate-50">
       <div className="mx-auto max-w-6xl px-6 py-16">
-        <h2 className="text-3xl font-bold tracking-tight text-slate-900">{L.scenariosTitle}</h2>
-        <p className="mt-3 max-w-2xl text-sm text-slate-600 sm:text-base">{L.scenariosSubtitle}</p>
+        <h2 className="text-center text-3xl font-bold tracking-tight text-slate-900">
+          {L.scenariosTitle}
+        </h2>
 
-        <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {L.scenarios.map((s, i) => {
-            const isOpen = open === i;
-            return (
-              <button
-                key={s.title}
-                type="button"
-                onClick={() => setOpen(isOpen ? null : i)}
-                className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left transition hover:border-violet-300"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-semibold text-slate-900">{s.title}</p>
-                    {isOpen ? (
-                      <p className="mt-2 text-sm leading-relaxed text-slate-600">{s.body}</p>
-                    ) : null}
-                  </div>
-                  <span className="text-violet-600">{isOpen ? "−" : "+"}</span>
-                </div>
-              </button>
-            );
-          })}
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {L.scenarios.map((s, i) => (
+            <Link
+              key={s.title}
+              href="/start"
+              className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-violet-300 hover:shadow-md"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={SCENARIO_IMGS[i % SCENARIO_IMGS.length]}
+                alt=""
+                className="aspect-[16/10] w-full object-cover"
+              />
+              <div className="p-4">
+                <p className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                  {s.title}
+                  <span className="text-violet-500">→</span>
+                </p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-500">{s.body}</p>
+              </div>
+            </Link>
+          ))}
         </div>
       </div>
     </section>

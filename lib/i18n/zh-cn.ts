@@ -281,7 +281,82 @@ export const zhCn = {
       { q: "一定要上传参考影片？", a: "唔一定。参考 MP4 係選填。" },
       { q: "係咪全部都要先分镜？", a: "唔係。只要视频可直接出片；先圖後片先走分镜静帧。" },
     ],
+    builtFor: [
+      "Marketers",
+      "Brands & agencies",
+      "Small businesses",
+      "E-commerce",
+      "Creators",
+    ],
+    builtForLabel: "适合",
+
+    canvasFeatureItems: [
+      { title: "Remove Elements", body: "Delete unwanted objects easily" },
+      { title: "Add Text", body: "Perfect headlines, CTAs and copy" },
+      { title: "Add Logo", body: "Keep your creative on brand" },
+      { title: "Add Diagram", body: "Explain benefits, pricing or steps" },
+      { title: "Export Sizes", body: "IG, FB, 小红书, TikTok & more" },
+    ],
+
+    canvasMockTitle: "Untitled Design",
+
+    canvasSidebar: ["Templates", "Elements", "Tools", "Fonts", "BrandKit"],
+
+    heroSidebar: ["Upload", "Style", "Layout", "Tone", "BrandKit"],
+    navResources: "资源",
+
+    planBlurbCustom: "For enterprise volume",
+
+    planBlurbFree: "Try the guided Studio workflow",
+
+    planBlurbMaster: "For agencies & teams",
+
+    planBlurbPro: "For brands & freelancers",
+
+    planBlurbStandard: "For early businesses",
+
+    planFeaturesCustom: ["Custom token volume", "Custom limits", "Dedicated support"],
+
+    planFeaturesFree: ["Guided image & video paths", "1,000 signup tokens", "Library downloads"],
+
+    planFeaturesMaster: ["16,000 tokens / month", "Pro canvas", "Priority support", "2K images"],
+
+    planFeaturesPro: ["8,000 tokens / month", "1080p video", "Priority generation", "High-res exports"],
+
+    planFeaturesStandard: ["3,000 tokens / month", "720p video", "Token top-ups"],
+    pricingSaveBadge: "省高达 50%",
+    tokenCostVideoDraft: "短片（约 8 秒）",
+    tokenCostVoice: "口播",
+    topUpBody: "订阅后可随时加购。",
+    topUpCustom: "自定义 tokens",
+    topUpTitle: "需要更多 Tokens？",
+
+    tplCapFb: "Facebook Ad",
+
+    tplCapIg: "Instagram Post",
+
+    tplCapProduct: "Product Ad",
+
+    tplCapReel: "Reels / Video",
+
+    tplCapService: "Service Business",
+
+    tplCardCoffee: "Cold Brew",
+
+    tplCardHero: "Product Hero",
+
+    tplCardReel: "Reels Storyboard",
+
+    tplCardService: "Service Promo",
+
+    tplCardSkincare: "Skincare Ad",
+
+    tplCardSunscreen: "Sale Promo",
+    tplTabFacebook: "Facebook Ads",
+    tplTabInstagram: "Instagram",
+    tplTabXhs: "小红书",
   },
+
   pricing: {
     badge: "简单 token 定价",
     title: "按创作量选计划",
