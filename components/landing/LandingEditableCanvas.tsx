@@ -25,7 +25,7 @@ export function LandingEditableCanvas() {
 		>
 			<div className="mx-auto w-full max-w-[1440px] overflow-hidden rounded-[1.75rem] bg-[#0B1020] text-white shadow-[0_28px_70px_-24px_rgba(91,33,182,0.65)] ring-1 ring-violet-400/35">
 				<div className="landing-canvas-grid grid gap-8 px-6 py-10 md:items-center md:gap-10 md:px-10 md:py-12">
-					<Reveal distance={56} scaleFrom={0.92} className="min-w-0">
+					<Reveal distance={56} scaleFrom={0.94} className="min-w-0">
 						<div className="landing-story-card overflow-hidden rounded-2xl border border-white/15 bg-white text-slate-900 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.45)]">
 							<div className="flex items-center justify-between border-b border-slate-100 px-3 py-2 text-[11px] text-slate-500">
 								<span>{L.canvasMockTitle}</span>

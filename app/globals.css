@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* Force landing utilities that Next/Tailwind-dev sometimes drops from the CSS graph. */
-@source inline("max-w-[240px] max-w-[300px] max-w-[340px] max-w-[860px] max-w-[1120px] h-[170px] md:h-[190px] md:max-w-[340px] lg:py-20 py-20");
+@source inline("max-w-[240px] max-w-[300px] max-w-[340px] max-w-[500px] max-w-[560px] max-w-[860px] max-w-[1120px] h-[170px] md:h-[190px] md:max-w-[340px] lg:max-w-[560px] lg:py-20 py-20");
 
 :root {
   --bg: #0a0f1a;

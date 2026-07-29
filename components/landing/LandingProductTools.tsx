@@ -59,7 +59,7 @@ export function LandingProductTools() {
 							<Reveal
 								delayMs={i * 90}
 								distance={40}
-								scaleFrom={0.94}
+								scaleFrom={1.94}
 								className="h-full"
 							>
 								<Link

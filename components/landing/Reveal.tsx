@@ -18,7 +18,7 @@ type RevealProps = {
   delayMs?: number;
   /** Upward travel distance in px. */
   distance?: number;
-  /** Starting scale (1 = none). */
+  /** Starting scale before reveal. Use ~1.94 for big visuals, ~1.44 medium, ~0.94 subtle. */
   scaleFrom?: number;
   className?: string;
   /** Once visible, stay revealed (default true). */

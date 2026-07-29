@@ -24,7 +24,7 @@ export function LandingTransformSection() {
 				<Reveal
 					distance={48}
 					scaleFrom={1.94}
-					className="mx-auto w-full min-w-0 max-w-[500px] md:mx-0 lg:max-w-[560px]"
+					className="landing-transform-mock mx-auto w-full min-w-0 md:mx-0"
 				>
 					{/* eslint-disable-next-line @next/next/no-img-element */}
 					<img

@@ -112,7 +112,7 @@ export function LandingTemplatesShowcase() {
           </div>
         </Reveal>
 
-        <Reveal delayMs={140} distance={40} scaleFrom={0.96}>
+        <Reveal delayMs={140} distance={40} scaleFrom={1.44}>
           <div className="relative mt-8">
             <div
               ref={scroller}

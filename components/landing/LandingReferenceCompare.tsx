@@ -29,7 +29,7 @@ export function LandingReferenceCompare() {
         </Reveal>
 
         {/* One Reveal for the whole row — per-item Reveal broke flex centering */}
-        <Reveal delayMs={100} distance={36} scaleFrom={0.96}>
+        <Reveal delayMs={100} distance={36} scaleFrom={1.44}>
           <div className="mx-auto mt-8 flex w-full max-w-lg flex-col items-center justify-center gap-4 sm:mt-9 sm:w-fit sm:max-w-full sm:flex-row sm:gap-8 md:gap-10">
             <CompareCard
               label={L.refCardLabel}

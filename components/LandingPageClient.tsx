@@ -75,6 +75,12 @@ const LANDING_LAYOUT_CSS = `
   background: linear-gradient(to top, rgba(6, 4, 15, 0.85), transparent) !important;
 }
 
+/* Transform mock — fill left column (bigger look); pinned so local/prod match */
+.landing-transform-mock {
+  max-width: none !important;
+  width: 100% !important;
+}
+
 /* Mobile hero type/CTAs — clearer over bright scene; desktop keeps Tailwind classes */
 @media (max-width: 639px) {
   /* Keep copy higher so CTAs don't sit on the mascot face */

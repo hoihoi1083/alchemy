@@ -40,7 +40,7 @@ export function LandingHowItWorks() {
 								<Reveal
 									delayMs={i * 110}
 									distance={52}
-									scaleFrom={0.9}
+									scaleFrom={1.44}
 									className="h-full"
 								>
 									<div className="relative flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-4 pt-5 shadow-sm">
@@ -71,7 +71,7 @@ export function LandingHowItWorks() {
 									<Reveal
 										delayMs={i * 110 + 180}
 										distance={0}
-										scaleFrom={1.65}
+										scaleFrom={1.44}
 										className="flex"
 									>
 										<span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-violet-100 text-lg font-semibold leading-none text-violet-600 shadow-sm ring-2 ring-white">
