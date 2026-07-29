@@ -56,7 +56,7 @@ export function LandingNav() {
           {!isSignedIn ? (
             <Link
               href="/start"
-              className="landing-try-free hidden rounded-full bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500 sm:inline-flex"
+              className="landing-cta-shine landing-try-free hidden rounded-full bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500 sm:inline-flex"
             >
               {L.tryFree}
             </Link>

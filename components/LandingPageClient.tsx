@@ -148,6 +148,40 @@ const LANDING_LAYOUT_CSS = `
 .landing-hero-copy {
   animation: landing-hero-in 0.95s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
+
+/* Primary CTA shine sweep */
+.landing-cta-shine {
+  position: relative;
+  overflow: hidden;
+}
+.landing-cta-shine::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-120%) skewX(-18deg);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.28),
+    transparent
+  );
+  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.landing-cta-shine:hover::after {
+  transform: translateX(120%) skewX(-18deg);
+}
+
+/* Story cards — gentle lift + glow (canvas mock) */
+.landing-story-card {
+  transition:
+    transform 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.landing-story-card:hover {
+  transform: translate3d(0, -4px, 0);
+  box-shadow: 0 22px 40px -18px rgba(15, 23, 42, 0.35);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .landing-arrow-pulse,
   .landing-hero-copy {
@@ -155,6 +189,13 @@ const LANDING_LAYOUT_CSS = `
   }
   .landing-arrow-pulse {
     opacity: 1 !important;
+    transform: none !important;
+  }
+  .landing-cta-shine::after,
+  .landing-story-card {
+    transition: none !important;
+  }
+  .landing-story-card:hover {
     transform: none !important;
   }
 }

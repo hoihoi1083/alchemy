@@ -37,11 +37,11 @@ export function LandingFinalCta() {
                 {L.finalBody}
               </p>
               <div className="mt-4 flex flex-wrap gap-2.5">
-                <Link
-                  href="/start"
-                  className="rounded-full px-5 py-2.5 text-sm font-semibold shadow"
-                  style={{ background: "#ffffff", color: "#6d28d9" }}
-                >
+              <Link
+                href="/start"
+                className="landing-cta-shine rounded-full px-5 py-2.5 text-sm font-semibold shadow"
+                style={{ background: "#ffffff", color: "#6d28d9" }}
+              >
                   {L.ctaPrimary}
                 </Link>
                 <a

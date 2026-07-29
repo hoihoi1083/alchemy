@@ -122,7 +122,7 @@ export function LandingTemplatesShowcase() {
                 <Link
                   key={card.id}
                   href="/start"
-                  className="w-[140px] shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:border-violet-300 hover:shadow-md sm:w-[152px]"
+                  className="w-[140px] shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 hover:border-violet-300 hover:shadow-lg sm:w-[152px]"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={card.src} alt="" className="aspect-[3/4] w-full object-cover" />

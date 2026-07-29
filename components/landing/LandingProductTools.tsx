@@ -57,7 +57,7 @@ export function LandingProductTools() {
               <Reveal delayMs={i * 90} distance={40} scaleFrom={0.94} className="h-full">
                 <Link
                   href={tool.href}
-                  className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white text-center shadow-sm transition hover:-translate-y-0.5 hover:border-violet-300 hover:shadow-md hover:shadow-violet-100/60"
+                  className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white text-center shadow-sm transition duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 hover:border-violet-300 hover:shadow-lg hover:shadow-violet-100/70"
                 >
                   <div className="relative aspect-square overflow-hidden bg-[#0B1020]">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
