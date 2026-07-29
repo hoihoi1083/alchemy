@@ -82,3 +82,39 @@ footer.site-footer a.site-footer-logo:focus {
 .studio-light [class*="text-slate-400"] {
   color: #475569 !important;
 }
+
+/* Landing page horizontal layouts — explicit so MBA 13"+ never falls back to stacked */
+@media (min-width: 768px) {
+  .landing-hero-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .landing-how-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .landing-ref-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  }
+  .landing-canvas-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .landing-cta-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+@media (min-width: 1024px) {
+  .landing-why-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+  .landing-scenarios-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+  .landing-pricing-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+  .landing-tokens-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+  .landing-nav-links {
+    display: flex !important;
+  }
+}

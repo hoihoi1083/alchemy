@@ -45,6 +45,29 @@ export function PricingPageClient() {
 
   const checkoutStatus = searchParams.get("checkout");
   const checkoutSessionId = searchParams.get("session_id");
+  const planParam = searchParams.get("plan");
+  const intervalParam = searchParams.get("interval");
+  const autoCheckoutStarted = useRef(false);
+
+  // From landing / sign-in redirect: /pricing?plan=pro&interval=monthly&checkout=1
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn) return;
+    if (checkoutStatus === "success" || checkoutStatus === "cancel") return;
+    if (searchParams.get("checkout") !== "1") return;
+    if (!planParam || !paidPlans.includes(planParam as PaidPlanKey)) return;
+    if (autoCheckoutStarted.current) return;
+    autoCheckoutStarted.current = true;
+    const nextInterval =
+      intervalParam === "yearly" || intervalParam === "monthly" ? intervalParam : interval;
+    setInterval(nextInterval);
+    setSelectedPlan(planParam as PaidPlanKey);
+    void startCheckout({
+      kind: "subscription",
+      plan: planParam,
+      interval: nextInterval,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on signed-in deep link
+  }, [isLoaded, isSignedIn, checkoutStatus, planParam, intervalParam]);
 
   // Credit tokens when returning from Stripe — works even if webhooks never hit localhost.
   useEffect(() => {
@@ -94,7 +117,7 @@ export function PricingPageClient() {
     setCheckoutError(null);
     if (!isLoaded) return;
     if (!isSignedIn) {
-      const returnTo = `/pricing?plan=${body.plan ?? "pro"}&interval=${body.interval ?? interval}`;
+      const returnTo = `/pricing?plan=${body.plan ?? "pro"}&interval=${body.interval ?? interval}&checkout=1`;
       window.location.href = `/sign-in?redirect_url=${encodeURIComponent(returnTo)}`;
       return;
     }

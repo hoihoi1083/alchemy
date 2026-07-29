@@ -82,6 +82,7 @@ export const zhCn = {
   footer: {
     tagline: "上传产品照片，几分钟生成吸睛社交广告 — 图片、视频、配乐一次完成。",
     productTitle: "产品",
+    legalTitle: "法律信息",
     studio: "开始制作",
     pricing: "方案与 tokens",
     how: "使用方式",
@@ -166,12 +167,37 @@ export const zhCn = {
     navPricing: "收费",
     heroTrust: ["不用空白 prompt", "参考风格不抄内容", "可编辑画布", "支持 9:16 / 4:5 / 1:1"],
     heroImageAlt: "产品相和 AI 风格分析",
+    heroMascotAlt: "Alchemy 可爱烧瓶伙伴（护目镜）— 移动鼠标就会看不同方向",
+    heroBeforeLabel: "之前",
+    heroAfterLabel: "之后",
     heroPanelTitle: "AI 风格分析",
     heroPanelBars: [
       { label: "颜色", value: "92%", pct: 92 },
       { label: "排版", value: "88%", pct: 88 },
       { label: "语气", value: "85%", pct: 85 },
     ],
+    transformBadge: "产品变身",
+    transformTitleBefore: "从一张普通产品照，变成 ",
+    transformTitleHighlight: "工作室级",
+    transformTitleAfter: " 广告图。",
+    transformBody:
+      "上传一张产品照。Alchemy 分析颜色、排版和语气，再帮你重塑场景与光影，做出吸睛又可编辑的广告素材。",
+    transformPoints: [
+      {
+        title: "保留你真正的产品",
+        body: "改场景和光感，不会乱改瓶身、标签与品牌细节。",
+      },
+      {
+        title: "对齐你想要的风格",
+        body: "AI 为颜色、排版、语气打分，输出更有方向，不是乱撞。",
+      },
+      {
+        title: "几分钟就出广告位",
+        body: "做出适合 IG、Facebook、TikTok、小红书的静帧，再在画布微调。",
+      },
+    ],
+    transformCta: "帮我变产品图",
+    transformHint: "不用空白 prompt，从你的产品照开始。",
     howTitle: "运作方式",
     howSubtitle: "由参考到成品，四个引导步骤。",
     howSteps: [
@@ -189,7 +215,7 @@ export const zhCn = {
     canvasTitle: "完全可编辑画布",
     canvasBody: "生成结果唔會锁死。可以清元素、加文字和 Logo，再导出你要的尺寸。",
     canvasFeatures: ["清元素", "加文字", "加 Logo", "导出尺寸"],
-    canvasOverlayText: "BRIGHTEN YOUR SKIN",
+    canvasOverlayText: "亮白你的肌肤",
     canvasImageAlt: "可编辑护肤广告",
     canvasCta: "打开图片编辑",
     tplTitleBefore: "即用模板，覆盖每个",
@@ -282,25 +308,25 @@ export const zhCn = {
       { q: "係咪全部都要先分镜？", a: "唔係。只要视频可直接出片；先圖後片先走分镜静帧。" },
     ],
     builtFor: [
-      "Marketers",
-      "Brands & agencies",
-      "Small businesses",
-      "E-commerce",
-      "Creators",
+      "市场营销",
+      "品牌与代理",
+      "中小企业",
+      "电商",
+      "创作者",
     ],
     builtForLabel: "适合",
 
     canvasFeatureItems: [
-      { title: "Remove Elements", body: "Delete unwanted objects easily" },
-      { title: "Add Text", body: "Perfect headlines, CTAs and copy" },
-      { title: "Add Logo", body: "Keep your creative on brand" },
-      { title: "Add Diagram", body: "Explain benefits, pricing or steps" },
-      { title: "Export Sizes", body: "IG, FB, 小红书, TikTok & more" },
+      { title: "清除元素", body: "轻松删除不需要的对象" },
+      { title: "添加文字", body: "完美标题、CTA 与文案" },
+      { title: "添加 Logo", body: "保持品牌一致" },
+      { title: "添加图表", body: "讲解卖点、价格或步骤" },
+      { title: "导出尺寸", body: "IG、FB、小红书、TikTok 等" },
     ],
 
-    canvasMockTitle: "Untitled Design",
+    canvasMockTitle: "未命名设计",
 
-    canvasSidebar: ["Templates", "Elements", "Tools", "Fonts", "BrandKit"],
+    canvasSidebar: ["模板", "元素", "工具", "字体", "品牌"],
 
     heroSidebar: ["Upload", "Style", "Layout", "Tone", "BrandKit"],
     navResources: "资源",
@@ -331,27 +357,17 @@ export const zhCn = {
     topUpCustom: "自定义 tokens",
     topUpTitle: "需要更多 Tokens？",
 
-    tplCapFb: "Facebook Ad",
-
-    tplCapIg: "Instagram Post",
-
-    tplCapProduct: "Product Ad",
-
-    tplCapReel: "Reels / Video",
-
-    tplCapService: "Service Business",
-
-    tplCardCoffee: "Cold Brew",
-
-    tplCardHero: "Product Hero",
-
-    tplCardReel: "Reels Storyboard",
-
-    tplCardService: "Service Promo",
-
-    tplCardSkincare: "Skincare Ad",
-
-    tplCardSunscreen: "Sale Promo",
+    tplCapFb: "Facebook 广告",
+    tplCapIg: "Instagram 帖子",
+    tplCapProduct: "产品广告",
+    tplCapReel: "Reels / 视频",
+    tplCapService: "服务业",
+    tplCardCoffee: "冷萃咖啡",
+    tplCardHero: "产品主视觉",
+    tplCardReel: "Reels 分镜",
+    tplCardService: "服务推广",
+    tplCardSkincare: "护肤广告",
+    tplCardSunscreen: "促销优惠",
     tplTabFacebook: "Facebook Ads",
     tplTabInstagram: "Instagram",
     tplTabXhs: "小红书",

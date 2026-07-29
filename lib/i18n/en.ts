@@ -83,6 +83,7 @@ export const en = {
     tagline:
       "Turn a product photo into scroll-stopping social ads — image, video, and music in minutes.",
     productTitle: "Product",
+    legalTitle: "Legal",
     studio: "Open studio",
     pricing: "Pricing & tokens",
     how: "How it works",
@@ -185,12 +186,37 @@ export const en = {
     ],
     heroSidebar: ["Upload", "Style", "Layout", "Tone", "BrandKit"],
     heroImageAlt: "Product photo with AI style analysis",
+    heroMascotAlt: "Alchemy cute flask companion with goggles — move your cursor to look around",
+    heroBeforeLabel: "Before",
+    heroAfterLabel: "After",
     heroPanelTitle: "AI style analysis",
     heroPanelBars: [
       { label: "Color", value: "92%", pct: 92 },
       { label: "Layout", value: "88%", pct: 88 },
       { label: "Tone", value: "85%", pct: 85 },
     ],
+    transformBadge: "Product transform",
+    transformTitleBefore: "From a plain product shot to a ",
+    transformTitleHighlight: "studio-ready",
+    transformTitleAfter: " creative.",
+    transformBody:
+      "Upload one product photo. Alchemy reads color, layout, and tone — then restyles it into lifestyle ads you can edit and export for every platform.",
+    transformPoints: [
+      {
+        title: "Keep your real product",
+        body: "We restyle the scene and lighting — your bottle, label, and brand stay true.",
+      },
+      {
+        title: "Match the look you want",
+        body: "AI scores color, layout, and tone so every output feels intentional, not random.",
+      },
+      {
+        title: "Ready for ads in minutes",
+        body: "Generate scroll-stopping stills for IG, Facebook, TikTok, and 小红书 — then tweak on canvas.",
+      },
+    ],
+    transformCta: "Transform my product",
+    transformHint: "No blank prompt. Start from your photo.",
     howTitle: "How it works",
     howSubtitle: "From reference to final creative in 4 simple steps.",
     howSteps: [

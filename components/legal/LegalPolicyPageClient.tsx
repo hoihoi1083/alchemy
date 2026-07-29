@@ -1,11 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { AuthNav } from "@/components/AuthNav";
-import { LanguageToggle } from "@/components/LanguageToggle";
-import { SiteFooter } from "@/components/SiteFooter";
+import { LandingNav } from "@/components/landing/LandingNav";
+import { LandingFooter } from "@/components/landing/LandingFooter";
 import { useLocale } from "@/components/LocaleProvider";
-import { PRODUCT_LOGO_ALT, PRODUCT_LOGO_SRC, PRODUCT_NAME } from "@/lib/brand";
 import { getLegalDocument, type LegalKind } from "@/lib/legal";
 
 export function LegalPolicyPageClient({ kind }: { kind: LegalKind }) {
@@ -20,33 +18,20 @@ export function LegalPolicyPageClient({ kind }: { kind: LegalKind }) {
   ];
 
   return (
-    <main className="flex min-h-screen flex-col bg-white text-slate-900 supports-[min-height:100dvh]:min-h-dvh">
-      <div className="flex flex-1 flex-col">
-        <section className="mx-auto w-full max-w-3xl px-6 py-12 sm:py-16">
-          <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <Link href="/" className="flex items-center gap-3 hover:opacity-90">
-              <img
-                src={PRODUCT_LOGO_SRC}
-                alt={PRODUCT_LOGO_ALT}
-                className="h-10 w-10 rounded-xl object-contain"
-              />
-              <p className="text-lg font-semibold tracking-tight">{PRODUCT_NAME}</p>
-            </Link>
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              <LanguageToggle variant="light" />
-              <AuthNav />
-            </div>
-          </div>
+    <main className="flex min-h-screen flex-col overflow-x-clip bg-white text-slate-900 supports-[min-height:100dvh]:min-h-dvh">
+      <LandingNav />
 
-          <nav className="mb-8 flex flex-wrap gap-2 text-xs">
+      <div className="flex-1 bg-gradient-to-b from-violet-50/40 via-white to-white">
+        <article className="mx-auto w-full max-w-3xl px-5 py-10 sm:px-6 sm:py-14 md:px-8 md:py-16">
+          <nav className="mb-8 flex flex-wrap gap-2" aria-label="Legal">
             {siblings.map((s) => (
               <Link
                 key={s.href}
                 href={s.href}
-                className={`rounded-full border px-3 py-1.5 font-medium ${
+                className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition sm:text-sm ${
                   s.kind === kind
-                    ? "border-slate-900 bg-slate-900 text-white"
-                    : "border-slate-300 text-slate-700 hover:bg-slate-50"
+                    ? "bg-violet-600 text-white shadow-sm shadow-violet-600/20"
+                    : "border border-slate-200 bg-white text-slate-600 hover:border-violet-300 hover:text-violet-700"
                 }`}
               >
                 {s.label}
@@ -54,12 +39,19 @@ export function LegalPolicyPageClient({ kind }: { kind: LegalKind }) {
             ))}
           </nav>
 
-          <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">{doc.title}</h1>
-          <p className="mt-2 text-sm text-slate-500">
-            {doc.lastUpdatedLabel}: {doc.lastUpdated}
-          </p>
+          <header className="border-b border-slate-100 pb-8">
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-violet-600">
+              {f.legalTitle}
+            </p>
+            <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl md:text-4xl">
+              {doc.title}
+            </h1>
+            <p className="mt-3 text-sm text-slate-500">
+              {doc.lastUpdatedLabel}: {doc.lastUpdated}
+            </p>
+          </header>
 
-          <div className="mt-8 space-y-4 text-[15px] leading-relaxed text-slate-700">
+          <div className="mt-8 space-y-4 text-[15px] leading-relaxed text-slate-600">
             {doc.intro.map((p) => (
               <p key={p.slice(0, 48)}>{p}</p>
             ))}
@@ -67,11 +59,11 @@ export function LegalPolicyPageClient({ kind }: { kind: LegalKind }) {
 
           <div className="mt-10 space-y-8">
             {doc.sections.map((section) => (
-              <section key={section.heading}>
-                <h2 className="text-lg font-semibold tracking-tight text-slate-900">
+              <section key={section.heading} className="scroll-mt-24">
+                <h2 className="text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">
                   {section.heading}
                 </h2>
-                <div className="mt-3 space-y-3 text-[15px] leading-relaxed text-slate-700">
+                <div className="mt-3 space-y-3 text-[15px] leading-relaxed text-slate-600">
                   {section.paragraphs.map((p) => (
                     <p key={`${section.heading}-${p.slice(0, 40)}`}>{p}</p>
                   ))}
@@ -80,14 +72,15 @@ export function LegalPolicyPageClient({ kind }: { kind: LegalKind }) {
             ))}
           </div>
 
-          <p className="mt-12 text-sm text-slate-500">
-            <Link href="/" className="underline hover:text-slate-800">
-              {m.header.homeLink}
+          <p className="mt-12 border-t border-slate-100 pt-8 text-sm text-slate-500">
+            <Link href="/" className="font-medium text-violet-700 hover:text-violet-500">
+              ← {m.header.homeLink}
             </Link>
           </p>
-        </section>
+        </article>
       </div>
-      <SiteFooter />
+
+      <LandingFooter />
     </main>
   );
 }

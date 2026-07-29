@@ -10,15 +10,57 @@ const SHOWCASE: Array<{
   id: string;
   tab: Tab;
   src: string;
-  titleKey: "tplCardSkincare" | "tplCardSunscreen" | "tplCardCoffee" | "tplCardService" | "tplCardReel" | "tplCardHero";
+  titleKey:
+    | "tplCardSkincare"
+    | "tplCardSunscreen"
+    | "tplCardCoffee"
+    | "tplCardService"
+    | "tplCardReel"
+    | "tplCardHero";
   captionKey: "tplCapIg" | "tplCapFb" | "tplCapReel" | "tplCapService" | "tplCapProduct";
 }> = [
-  { id: "skincare", tab: "product", src: "/images/landing/landing-canvas-skincare.png", titleKey: "tplCardSkincare", captionKey: "tplCapIg" },
-  { id: "sunscreen", tab: "instagram", src: "/images/landing/landing-tpl-sunscreen.png", titleKey: "tplCardSunscreen", captionKey: "tplCapIg" },
-  { id: "coffee", tab: "facebook", src: "/images/landing/landing-result-coffee.png", titleKey: "tplCardCoffee", captionKey: "tplCapFb" },
-  { id: "service", tab: "service", src: "/images/landing/landing-tpl-service.png", titleKey: "tplCardService", captionKey: "tplCapService" },
-  { id: "ref", tab: "video", src: "/images/landing/landing-ref-coffee.png", titleKey: "tplCardReel", captionKey: "tplCapReel" },
-  { id: "hero", tab: "xhs", src: "/images/landing/landing-hero-product.png", titleKey: "tplCardHero", captionKey: "tplCapProduct" },
+  {
+    id: "skincare",
+    tab: "product",
+    src: "/images/landing/landing-canvas-skincare.png",
+    titleKey: "tplCardSkincare",
+    captionKey: "tplCapIg",
+  },
+  {
+    id: "sunscreen",
+    tab: "instagram",
+    src: "/images/landing/landing-tpl-sunscreen.png",
+    titleKey: "tplCardSunscreen",
+    captionKey: "tplCapIg",
+  },
+  {
+    id: "coffee",
+    tab: "facebook",
+    src: "/images/landing/landing-result-coffee.png",
+    titleKey: "tplCardCoffee",
+    captionKey: "tplCapFb",
+  },
+  {
+    id: "service",
+    tab: "service",
+    src: "/images/landing/landing-tpl-service.png",
+    titleKey: "tplCardService",
+    captionKey: "tplCapService",
+  },
+  {
+    id: "ref",
+    tab: "video",
+    src: "/images/landing/landing-ref-coffee.png",
+    titleKey: "tplCardReel",
+    captionKey: "tplCapReel",
+  },
+  {
+    id: "hero",
+    tab: "xhs",
+    src: "/images/landing/landing-hero-product.png",
+    titleKey: "tplCardHero",
+    captionKey: "tplCapProduct",
+  },
 ];
 
 export function LandingTemplatesShowcase() {
@@ -40,21 +82,21 @@ export function LandingTemplatesShowcase() {
   const cards = SHOWCASE.filter((c) => tab === "all" || c.tab === tab);
 
   return (
-    <section id="templates" className="bg-white">
-      <div className="mx-auto max-w-6xl px-6 py-16">
-        <h2 className="text-center text-3xl font-bold tracking-tight text-slate-900">
+    <section id="templates" className="w-full bg-white">
+      <div className="mx-auto w-full max-w-[1440px] px-5 py-12 md:px-8 md:py-14">
+        <h2 className="text-center text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
           {L.tplTitleBefore}
           <span className="text-violet-600">{L.tplTitleHighlight}</span>
           {L.tplTitleAfter}
         </h2>
 
-        <div className="mt-8 flex flex-wrap justify-center gap-2">
+        <div className="mt-6 flex flex-wrap justify-center gap-2">
           {tabs.map((t) => (
             <button
               key={t.id}
               type="button"
               onClick={() => setTab(t.id)}
-              className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
+              className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition md:text-sm ${
                 tab === t.id
                   ? "bg-violet-600 text-white"
                   : "border border-slate-200 bg-white text-slate-600 hover:border-violet-300"
@@ -68,28 +110,35 @@ export function LandingTemplatesShowcase() {
         <div className="relative mt-8">
           <div
             ref={scroller}
-            className="flex gap-4 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="flex gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
             {cards.map((card) => (
               <Link
                 key={card.id}
                 href="/start"
-                className="w-[200px] shrink-0 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-violet-300 hover:shadow-md sm:w-[220px]"
+                className="w-[140px] shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:border-violet-300 hover:shadow-md sm:w-[152px]"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={card.src} alt="" className="aspect-[4/5] w-full object-cover" />
-                <div className="px-3 py-3">
-                  <p className="text-sm font-semibold text-slate-900">{L[card.titleKey]}</p>
-                  <p className="mt-0.5 text-xs text-slate-500">{L[card.captionKey]}</p>
+                <img src={card.src} alt="" className="aspect-[3/4] w-full object-cover" />
+                <div className="px-2.5 py-2">
+                  <p className="truncate text-xs font-semibold text-slate-900">{L[card.titleKey]}</p>
+                  <p className="mt-0.5 truncate text-[10px] leading-snug text-slate-500">
+                    {L[card.captionKey]}
+                  </p>
                 </div>
               </Link>
             ))}
           </div>
+          {/* Mobile swipe hint — desktop uses the arrow button */}
+          <div
+            className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white to-transparent md:hidden"
+            aria-hidden
+          />
           <button
             type="button"
             aria-label="Scroll templates"
-            onClick={() => scroller.current?.scrollBy({ left: 240, behavior: "smooth" })}
-            className="absolute -right-1 top-1/3 hidden h-10 w-10 items-center justify-center rounded-full border border-violet-200 bg-white text-violet-600 shadow-md sm:flex"
+            onClick={() => scroller.current?.scrollBy({ left: 180, behavior: "smooth" })}
+            className="absolute -right-1 top-[40%] hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-violet-200 bg-white text-violet-600 shadow-md md:flex"
           >
             →
           </button>

@@ -3,29 +3,49 @@
 import Link from "next/link";
 import { useLocale } from "@/components/LocaleProvider";
 
-const CTA_VISUAL = "/images/landing/landing-hero-product.png";
+const BOTTLE = "/images/landing/landing-cta-bottle.png?v=2";
+const SCENE = "/images/landing/landing-hero-after.png?v=2";
 
 export function LandingFinalCta() {
   const { m } = useLocale();
   const L = m.landing;
 
   return (
-    <section className="bg-white px-4 py-10 sm:px-6">
-      <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[2rem] bg-gradient-to-r from-indigo-500 via-violet-600 to-purple-700 text-white shadow-2xl">
-        <div className="relative grid items-center gap-8 px-8 py-12 lg:grid-cols-2 lg:px-12 lg:py-14">
-          <div>
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">{L.finalTitle}</h2>
-            <p className="mt-4 max-w-md text-sm text-violet-100 sm:text-base">{L.finalBody}</p>
-            <div className="mt-8 flex flex-wrap gap-3">
+    <section className="w-full overflow-hidden bg-white px-5 py-6 md:px-8 md:py-8">
+      <div
+        className="relative mx-auto w-full max-w-[1440px] overflow-hidden rounded-[1.5rem] shadow-xl"
+        style={{
+          background: "linear-gradient(90deg, #6366f1 0%, #7c3aed 45%, #2563eb 100%)",
+          color: "#ffffff",
+          boxShadow: "0 20px 40px -12px rgba(124, 58, 237, 0.35)",
+        }}
+      >
+        <div className="landing-cta-grid relative grid items-center gap-4 px-6 py-5 md:gap-6 md:px-10 md:py-6">
+          <div className="min-w-0 py-1">
+            <h2
+              className="text-2xl font-bold tracking-tight md:text-3xl"
+              style={{ color: "#ffffff" }}
+            >
+              {L.finalTitle}
+            </h2>
+            <p
+              className="mt-2 max-w-md text-sm leading-relaxed"
+              style={{ color: "rgba(237, 233, 254, 0.95)" }}
+            >
+              {L.finalBody}
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2.5">
               <Link
                 href="/start"
-                className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-violet-700 shadow hover:bg-violet-50"
+                className="rounded-full px-5 py-2.5 text-sm font-semibold shadow"
+                style={{ background: "#ffffff", color: "#6d28d9" }}
               >
                 {L.ctaPrimary}
               </Link>
               <a
                 href="#how"
-                className="inline-flex items-center gap-2 rounded-full border border-white/70 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10"
+                className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold"
+                style={{ border: "1px solid rgba(255,255,255,0.7)", color: "#ffffff" }}
               >
                 <span>▶</span>
                 {L.ctaSecondary}
@@ -33,12 +53,31 @@ export function LandingFinalCta() {
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-3xl border border-white/25 bg-white/15 p-2 shadow-2xl backdrop-blur">
+          {/* Product peeks out of frame, but stays clipped inside the purple card */}
+          <div className="relative mx-auto h-[170px] w-full max-w-[300px] overflow-hidden md:h-[190px] md:max-w-[340px] md:justify-self-end">
+            <div
+              className="absolute inset-x-5 bottom-2 top-7 overflow-hidden rounded-xl shadow-lg md:inset-x-6 md:top-8"
+              style={{
+                border: "1px solid rgba(255,255,255,0.35)",
+                background: "rgba(255,255,255,0.14)",
+              }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={SCENE}
+                alt=""
+                className="h-full w-full object-cover object-center opacity-90"
+              />
+            </div>
+
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={CTA_VISUAL}
+              src={BOTTLE}
               alt=""
-              className="aspect-[16/10] w-full rounded-2xl object-cover"
+              className="pointer-events-none absolute bottom-0 right-2 z-10 h-[165px] w-auto max-w-[45%] object-contain md:right-3 md:h-[185px]"
+              style={{
+                filter: "drop-shadow(0 14px 22px rgba(15, 23, 42, 0.35))",
+              }}
             />
           </div>
         </div>

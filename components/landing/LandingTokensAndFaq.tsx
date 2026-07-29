@@ -5,12 +5,24 @@ import Link from "next/link";
 import { useLocale } from "@/components/LocaleProvider";
 import { TOKEN_COST, estimateVideoTokens } from "@/lib/billing/token-costs";
 import { TOP_UP_PRICE_USD, TOP_UP_TOKENS } from "@/lib/billing/plans";
+import { Reveal } from "@/components/landing/Reveal";
+
+/** Icons aligned 1:1 with real TOKEN_COST / estimateVideoTokens rows below. */
+const TOKEN_ICONS = [
+  "/images/landing/token-icon-plan.png?v=3",
+  "/images/landing/token-icon-image.png?v=3",
+  "/images/landing/token-icon-storyboard.png?v=3",
+  "/images/landing/token-icon-music.png?v=3",
+  "/images/landing/token-icon-video.png?v=3",
+  "/images/landing/token-icon-voice.png?v=3",
+] as const;
 
 export function LandingTokensAndFaq() {
   const { m } = useLocale();
   const L = m.landing;
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
+  // Same billing math as studio video step: 8s Seedance 480p.
   const video8s = estimateVideoTokens({
     duration: 8,
     resolution: "480p",
@@ -18,36 +30,42 @@ export function LandingTokensAndFaq() {
   });
 
   const costs = [
-    { label: L.tokenCostPlan, value: TOKEN_COST.plan },
-    { label: L.tokenCostImage, value: TOKEN_COST.image },
-    { label: L.tokenCostStoryboard, value: TOKEN_COST.storyboard_batch },
-    { label: L.tokenCostMusic, value: TOKEN_COST.music },
-    { label: L.tokenCostVideoDraft, value: video8s },
-    { label: L.tokenCostVoice, value: TOKEN_COST.voiceover },
+    { label: L.tokenCostPlan, value: TOKEN_COST.plan, icon: TOKEN_ICONS[0] },
+    { label: L.tokenCostImage, value: TOKEN_COST.image, icon: TOKEN_ICONS[1] },
+    { label: L.tokenCostStoryboard, value: TOKEN_COST.storyboard_batch, icon: TOKEN_ICONS[2] },
+    { label: L.tokenCostMusic, value: TOKEN_COST.music, icon: TOKEN_ICONS[3] },
+    { label: L.tokenCostVideoDraft, value: video8s, icon: TOKEN_ICONS[4] },
+    { label: L.tokenCostVoice, value: TOKEN_COST.voiceover, icon: TOKEN_ICONS[5] },
   ];
 
   return (
-    <section id="resources" className="bg-slate-50">
-      <div className="mx-auto max-w-6xl px-6 py-16">
+    <section id="resources" className="w-full bg-slate-50">
+      <div className="mx-auto w-full max-w-[1440px] px-5 py-12 md:px-8 md:py-14">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900">{L.tokensTitle}</h2>
-          <p className="mt-3 text-sm text-slate-600">{L.tokensBody}</p>
+          <Reveal>
+            <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl md:text-4xl">
+              {L.tokensTitle}
+            </h2>
+            <p className="mt-3 text-sm text-slate-600 md:text-base">{L.tokensBody}</p>
+          </Reveal>
         </div>
 
-        <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-          {costs.map((c) => (
-            <div
-              key={c.label}
-              className="rounded-2xl border border-violet-100 bg-white p-4 text-center shadow-sm"
-            >
-              <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
-                ◆
-              </div>
-              <p className="text-xs font-medium text-slate-700">{c.label}</p>
+        <div className="landing-tokens-grid mt-8 grid grid-cols-2 gap-3">
+          {costs.map((c, i) => (
+            <Reveal key={c.label} delayMs={i * 90} distance={44} scaleFrom={0.94}>
+              <div className="rounded-2xl border border-violet-100 bg-white p-4 text-center shadow-sm">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={c.icon}
+                alt=""
+                className="mx-auto mb-2 aspect-square h-12 w-12 object-contain object-center sm:h-14 sm:w-14"
+              />
+              <p className="text-xs font-medium text-slate-700 md:text-[13px]">{c.label}</p>
               <p className="mt-2 text-sm font-bold text-violet-700">
                 {c.value} {L.tokensUnit}
               </p>
-            </div>
+              </div>
+            </Reveal>
           ))}
         </div>
         <p className="mt-4 text-center text-xs text-slate-500">{L.tokensVideoNote}</p>
