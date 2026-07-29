@@ -7,6 +7,12 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 import { CREDITS_EVENT } from "@/lib/credits-client";
 
+/**
+ * Survive ClerkProvider remounts on language switch (`key={locale}` in AppProviders).
+ * Without this, balance resets to null and the token pill vanishes until /api/me returns.
+ */
+let cachedCreditBalance: number | null = null;
+
 function AccountMenuIcon() {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden className="size-4">
@@ -33,7 +39,7 @@ function AuthNavBody() {
   const { m } = useLocale();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [balance, setBalance] = useState<number | null>(null);
+  const [balance, setBalance] = useState<number | null>(() => cachedCreditBalance);
 
   const redirectUrl = useMemo(() => {
     const query = searchParams.toString();
@@ -42,7 +48,10 @@ function AuthNavBody() {
   }, [pathname, searchParams]);
 
   useEffect(() => {
+    if (!isLoaded) return;
+
     if (!isSignedIn) {
+      cachedCreditBalance = null;
       setBalance(null);
       return;
     }
@@ -56,7 +65,9 @@ function AuthNavBody() {
         };
         if (cancelled) return;
         const bal = data.user?.creditBalance;
-        setBalance(typeof bal === "number" ? bal : 0);
+        const next = typeof bal === "number" ? bal : 0;
+        cachedCreditBalance = next;
+        setBalance(next);
       })
       .catch(() => {
         /* ignore — balance is optional chrome */
@@ -64,31 +75,43 @@ function AuthNavBody() {
 
     const onCredits = (event: Event) => {
       const bal = (event as CustomEvent<{ balance?: number }>).detail?.balance;
-      if (typeof bal === "number") setBalance(bal);
+      if (typeof bal === "number") {
+        cachedCreditBalance = bal;
+        setBalance(bal);
+      }
     };
     window.addEventListener(CREDITS_EVENT, onCredits);
     return () => {
       cancelled = true;
       window.removeEventListener(CREDITS_EVENT, onCredits);
     };
-  }, [isSignedIn]);
+  }, [isLoaded, isSignedIn]);
+
+  const balancePill =
+    typeof balance === "number" ? (
+      <Link
+        href="/account"
+        className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+        title={m.auth.tokensBalanceTitle}
+      >
+        {m.auth.tokensBalance.replace("{n}", balance.toLocaleString())}
+      </Link>
+    ) : null;
 
   if (!isLoaded) {
-    return <div className="h-9 w-20" aria-hidden />;
+    // Keep token pill visible while Clerk remounts after a language switch.
+    return (
+      <div className="flex items-center gap-2.5">
+        {balancePill}
+        <div className="h-8 w-8 rounded-full bg-slate-200/80" aria-hidden />
+      </div>
+    );
   }
 
   if (isSignedIn) {
     return (
       <div className="flex items-center gap-2.5">
-        {typeof balance === "number" && (
-          <Link
-            href="/account"
-            className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
-            title={m.auth.tokensBalanceTitle}
-          >
-            {m.auth.tokensBalance.replace("{n}", balance.toLocaleString())}
-          </Link>
-        )}
+        {balancePill}
         <UserButton>
           <UserButton.MenuItems>
             <UserButton.Link

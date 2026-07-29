@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useLocale } from "@/components/LocaleProvider";
+import { PRODUCT_LOGO_SRC } from "@/lib/brand";
 import {
   DEFAULT_BRAND_KIT,
   loadBrandKitFromStorage,
@@ -12,8 +13,8 @@ import {
 type BrandKitPanelProps = {
   disabled?: boolean;
   onChange?: (kit: BrandKit) => void;
-  /** Studio uses dark emerald; landing uses light slate. */
-  variant?: "studio" | "light";
+  /** studio = emerald wizard; light = slate; landing = violet marketing chrome */
+  variant?: "studio" | "light" | "landing";
 };
 
 export function BrandKitPanel({
@@ -27,7 +28,8 @@ export function BrandKitPanel({
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
-  const light = variant === "light";
+  const light = variant === "light" || variant === "landing";
+  const landing = variant === "landing";
 
   useEffect(() => {
     const local = loadBrandKitFromStorage();
@@ -87,41 +89,76 @@ export function BrandKitPanel({
     reader.readAsDataURL(file);
   }
 
-  const shell = light
-    ? "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
-    : "rounded-xl border border-emerald-800/50 bg-emerald-950/20 p-4";
-  const titleCls = light
-    ? "text-sm font-semibold text-slate-900"
-    : "text-sm font-semibold text-emerald-100";
-  const hintCls = light
-    ? "mt-1 text-xs text-slate-600"
-    : "mt-1 text-xs text-emerald-200/70";
-  const labelCls = light
-    ? "text-xs text-slate-600"
-    : "text-xs text-emerald-200/80";
-  const btnSecondary = light
-    ? "rounded-full border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-800 hover:bg-slate-50 disabled:opacity-40"
-    : "rounded border border-emerald-700 px-3 py-1.5 text-xs text-emerald-100 disabled:opacity-40";
-  const logoPreview = light
-    ? "h-12 w-12 rounded-lg border border-slate-200 object-contain bg-slate-50 p-1"
-    : "h-10 w-10 rounded border border-emerald-800 object-contain bg-white/10 p-0.5";
-  const colorInput = light
-    ? "mt-1 block h-9 w-full cursor-pointer rounded-lg border border-slate-200"
-    : "mt-1 block h-9 w-full cursor-pointer rounded border border-emerald-800";
-  const textInput = light
-    ? "mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900"
-    : "mt-1 w-full rounded border border-emerald-800 bg-slate-950 px-2 py-1.5 text-sm text-white";
-  const saveBtn = light
-    ? "mt-4 rounded-full bg-slate-900 px-5 py-2.5 text-sm font-medium text-white disabled:opacity-40"
-    : "mt-3 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40";
-  const noteCls = light ? "mt-2 text-xs text-slate-600" : "mt-2 text-xs text-emerald-300/90";
+  const shell = landing
+    ? "rounded-xl border border-violet-100/90 bg-white p-3.5 shadow-md shadow-violet-100/50 sm:p-4"
+    : light
+      ? "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+      : "rounded-xl border border-emerald-800/50 bg-emerald-950/20 p-4";
+  const titleCls = landing
+    ? "text-sm font-semibold tracking-tight text-slate-900"
+    : light
+      ? "text-sm font-semibold text-slate-900"
+      : "text-sm font-semibold text-emerald-100";
+  const hintCls = landing
+    ? "mt-0.5 text-[11px] leading-snug text-slate-500"
+    : light
+      ? "mt-1 text-xs text-slate-600"
+      : "mt-1 text-xs text-emerald-200/70";
+  const labelCls = landing
+    ? "text-[11px] font-medium text-slate-600"
+    : light
+      ? "text-xs text-slate-600"
+      : "text-xs text-emerald-200/80";
+  const btnSecondary = landing
+    ? "rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-[11px] font-semibold text-violet-800 hover:bg-violet-100 disabled:opacity-40"
+    : light
+      ? "rounded-full border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-800 hover:bg-slate-50 disabled:opacity-40"
+      : "rounded border border-emerald-700 px-3 py-1.5 text-xs text-emerald-100 disabled:opacity-40";
+  const logoPreview = landing
+    ? "h-9 w-9 shrink-0 rounded-lg border border-violet-100 object-contain bg-violet-50/80 p-1"
+    : light
+      ? "h-12 w-12 rounded-lg border border-slate-200 object-contain bg-slate-50 p-1"
+      : "h-10 w-10 rounded border border-emerald-800 object-contain bg-white/10 p-0.5";
+  const colorInput = landing
+    ? "mt-1 block h-7 w-full cursor-pointer overflow-hidden rounded-md border border-violet-100 bg-white"
+    : light
+      ? "mt-1 block h-9 w-full cursor-pointer rounded-lg border border-slate-200"
+      : "mt-1 block h-9 w-full cursor-pointer rounded border border-emerald-800";
+  const textInput = landing
+    ? "mt-1 w-full rounded-lg border border-violet-100 bg-white px-2.5 py-1.5 text-[13px] text-slate-900 placeholder:text-slate-400 outline-none ring-violet-400/30 focus:ring-2"
+    : light
+      ? "mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900"
+      : "mt-1 w-full rounded border border-emerald-800 bg-slate-950 px-2 py-1.5 text-sm text-white";
+  const saveBtn = landing
+    ? "mt-3 w-full rounded-full bg-violet-600 px-4 py-2 text-[13px] font-semibold text-white shadow-sm shadow-violet-600/20 hover:bg-violet-500 disabled:opacity-40"
+    : light
+      ? "mt-4 rounded-full bg-slate-900 px-5 py-2.5 text-sm font-medium text-white disabled:opacity-40"
+      : "mt-3 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40";
+  const noteCls = landing
+    ? "mt-1.5 text-center text-[11px] text-violet-700"
+    : light
+      ? "mt-2 text-xs text-slate-600"
+      : "mt-2 text-xs text-emerald-300/90";
+  const checkCls = landing
+    ? "h-3.5 w-3.5 shrink-0 rounded border-violet-300 text-violet-600 focus:ring-violet-500"
+    : "mt-0.5";
+
+  const previewSrc = kit.logoUrl || (landing ? PRODUCT_LOGO_SRC : null);
 
   return (
     <div className={shell}>
-      <p className={titleCls}>{w.title}</p>
-      <p className={hintCls}>{w.hint}</p>
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className={titleCls}>{w.title}</p>
+          {!landing ? <p className={hintCls}>{w.hint}</p> : null}
+        </div>
+        {previewSrc ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={previewSrc} alt="" className={logoPreview} />
+        ) : null}
+      </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-3">
+      <div className={`flex flex-wrap items-center gap-2 ${landing ? "mt-2.5" : "mt-4"}`}>
         <input
           ref={logoInputRef}
           type="file"
@@ -140,28 +177,43 @@ export function BrandKitPanel({
         >
           {kit.logoUrl ? w.changeLogo : w.uploadLogo}
         </button>
-        {kit.logoUrl ? <img src={kit.logoUrl} alt="" className={logoPreview} /> : null}
+        {!landing && kit.logoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={kit.logoUrl} alt="" className={logoPreview} />
+        ) : null}
+        {landing && kit.logoUrl ? (
+          <label className={`inline-flex max-w-full cursor-pointer items-center gap-1.5 ${labelCls}`}>
+            <input
+              type="checkbox"
+              disabled={disabled}
+              checked={kit.useBrandLogo}
+              onChange={(e) => patch({ useBrandLogo: e.target.checked })}
+              className={checkCls}
+            />
+            <span className="truncate font-medium text-slate-700">{w.useLogoLabel}</span>
+          </label>
+        ) : null}
       </div>
 
-      {kit.logoUrl ? (
-        <label
-          className={`mt-3 flex cursor-pointer items-start gap-2 ${labelCls}`}
-        >
+      {!landing && kit.logoUrl ? (
+        <label className={`mt-3 flex cursor-pointer items-start gap-2 ${labelCls}`}>
           <input
             type="checkbox"
             disabled={disabled}
             checked={kit.useBrandLogo}
             onChange={(e) => patch({ useBrandLogo: e.target.checked })}
-            className="mt-0.5"
+            className={checkCls}
           />
           <span>
-            <span className="block font-medium">{w.useLogoLabel}</span>
+            <span className={`block font-semibold ${light ? "text-slate-800" : "text-emerald-50"}`}>
+              {w.useLogoLabel}
+            </span>
             <span className={hintCls}>{w.useLogoHint}</span>
           </span>
         </label>
       ) : null}
 
-      <div className="mt-3 grid gap-2 sm:grid-cols-3">
+      <div className={`grid sm:grid-cols-3 ${landing ? "mt-2.5 gap-2" : "mt-4 gap-3"}`}>
         <label className={labelCls}>
           {w.primaryColor}
           <input
@@ -194,7 +246,7 @@ export function BrandKitPanel({
         </label>
       </div>
 
-      <label className={`mt-3 block ${labelCls}`}>
+      <label className={`block ${landing ? "mt-2.5" : "mt-4"} ${labelCls}`}>
         {w.tagline}
         <input
           type="text"

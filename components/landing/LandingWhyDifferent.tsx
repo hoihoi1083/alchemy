@@ -17,7 +17,7 @@ export function LandingWhyDifferent() {
   const L = m.landing;
 
   return (
-    <section className="w-full bg-white">
+    <section id="why" className="w-full bg-white">
       <div className="mx-auto w-full max-w-[1440px] px-5 py-12 md:px-8 md:py-14">
         <Reveal>
           <h2 className="text-center text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl md:text-4xl">

@@ -15,6 +15,7 @@ const PAYMENTS: { alt: string; src: string }[] = [
 export function LandingFooter() {
   const { m } = useLocale();
   const f = m.footer;
+  const L = m.landing;
   const year = new Date().getFullYear();
 
   const productLinks = [
@@ -22,6 +23,8 @@ export function LandingFooter() {
     { label: f.how, href: "/#how" },
     { label: f.pricing, href: "/#pricing" },
     { label: f.library, href: "/library" },
+    { label: L.brandKitLink, href: "/#brand-kit" },
+    { label: L.proCanvasLink, href: "/pro" },
   ];
 
   const legalLinks = [

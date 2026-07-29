@@ -15,7 +15,8 @@ import { LandingPricingTeaser } from "@/components/landing/LandingPricingTeaser"
 import { LandingTokensAndFaq } from "@/components/landing/LandingTokensAndFaq";
 import { LandingFinalCta } from "@/components/landing/LandingFinalCta";
 import { LandingFooter } from "@/components/landing/LandingFooter";
-import { Reveal } from "@/components/landing/Reveal";
+import { LandingBrandKit } from "@/components/landing/LandingBrandKit";
+import { LandingProductTools } from "@/components/landing/LandingProductTools";
 
 /**
  * Explicit breakpoints so layouts stay correct even when Tailwind HMR misses utilities.
@@ -66,6 +67,7 @@ const LANDING_LAYOUT_CSS = `
 @media (min-width: 768px) {
   .landing-hero-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; }
   .landing-transform-grid { grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr) !important; }
+  .landing-brand-kit-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; }
   .landing-canvas-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; }
   .landing-cta-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; }
   .landing-why-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
@@ -159,8 +161,8 @@ const LANDING_LAYOUT_CSS = `
 `;
 
 
-/** Flip to true to restore sections between How-it-works and the footer. */
-const SHOW_LANDING_BELOW_HOW = false;
+/** Mid-landing sections (transform → final CTA). Keep true for full landing. */
+const SHOW_LANDING_BELOW_HOW = true;
 
 export function LandingPageClient() {
   return (
@@ -172,25 +174,18 @@ export function LandingPageClient() {
         <LandingHowItWorks />
         {SHOW_LANDING_BELOW_HOW ? (
           <>
-            <Reveal>
-              <LandingTransformSection />
-            </Reveal>
-            <Reveal>
-              <LandingReferenceCompare />
-            </Reveal>
-            <Reveal>
-              <LandingEditableCanvas />
-            </Reveal>
-            <Reveal>
-              <LandingTemplatesShowcase />
-            </Reveal>
+            {/* Sections own their Reveal stagger — avoid wrapping whole blocks twice */}
+            <LandingBrandKit />
+            <LandingTransformSection />
+            <LandingReferenceCompare />
+            <LandingEditableCanvas />
+            <LandingTemplatesShowcase />
             <LandingWhyDifferent />
             <LandingScenarios />
             <LandingPricingTeaser />
             <LandingTokensAndFaq />
-            <Reveal distance={48} scaleFrom={0.94}>
-              <LandingFinalCta />
-            </Reveal>
+            <LandingProductTools />
+            <LandingFinalCta />
           </>
         ) : null}
         <LandingFooter />

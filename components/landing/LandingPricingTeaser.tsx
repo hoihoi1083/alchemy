@@ -21,6 +21,8 @@ export function LandingPricingTeaser() {
   const [interval, setInterval] = useState<Interval>("monthly");
   const [busy, setBusy] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  /** Which card gets the purple border + solid CTA; defaults to Pro when not hovering. */
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   async function startCheckout(plan: PaidPlan) {
     setCheckoutError(null);
@@ -159,7 +161,10 @@ export function LandingPricingTeaser() {
           </div>
         ) : null}
 
-        <div className="landing-pricing-grid mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:gap-4">
+        <div
+          className="landing-pricing-grid mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:gap-4"
+          onMouseLeave={() => setHoveredId(null)}
+        >
           {cards.map((card, i) => {
             const busyKey =
               card.id === "standard" || card.id === "pro" || card.id === "master"
@@ -167,12 +172,16 @@ export function LandingPricingTeaser() {
                 : null;
             const isBusy = busyKey != null && busy === busyKey;
             const ctaLabel = isBusy ? P.checkoutRedirecting : card.cta;
+            const isActive = hoveredId === card.id || (hoveredId === null && card.popular);
 
             return (
               <Reveal key={card.id} delayMs={i * 90} distance={44} scaleFrom={0.94} className="h-full">
               <div
-                className={`flex h-full min-h-[320px] min-w-0 flex-col rounded-2xl border bg-white p-5 shadow-sm ${
-                  card.popular ? "border-violet-400 ring-2 ring-violet-200" : "border-slate-200"
+                onMouseEnter={() => setHoveredId(card.id)}
+                className={`flex h-full min-h-[320px] min-w-0 flex-col rounded-2xl border bg-white p-5 shadow-sm transition duration-200 ${
+                  isActive
+                    ? "border-violet-400 ring-2 ring-violet-200"
+                    : "border-slate-200 ring-0"
                 }`}
               >
                 {card.popular ? (
@@ -219,14 +228,22 @@ export function LandingPricingTeaser() {
                 {card.id === "free" ? (
                   <Link
                     href="/start"
-                    className="mt-5 block rounded-full border border-violet-300 px-3 py-2.5 text-center text-xs font-semibold text-violet-700 hover:bg-violet-50"
+                    className={`mt-5 block rounded-full px-3 py-2.5 text-center text-xs font-semibold transition ${
+                      isActive
+                        ? "bg-violet-600 text-white hover:bg-violet-500"
+                        : "border border-violet-300 text-violet-700 hover:bg-violet-50"
+                    }`}
                   >
                     {ctaLabel}
                   </Link>
                 ) : card.id === "custom" ? (
                   <a
                     href={`mailto:${PRODUCT_SUPPORT_EMAIL}?subject=Custom%20plan`}
-                    className="mt-5 block rounded-full border border-violet-300 px-3 py-2.5 text-center text-xs font-semibold text-violet-700 hover:bg-violet-50"
+                    className={`mt-5 block rounded-full px-3 py-2.5 text-center text-xs font-semibold transition ${
+                      isActive
+                        ? "bg-violet-600 text-white hover:bg-violet-500"
+                        : "border border-violet-300 text-violet-700 hover:bg-violet-50"
+                    }`}
                   >
                     {ctaLabel}
                   </a>
@@ -235,8 +252,8 @@ export function LandingPricingTeaser() {
                     type="button"
                     disabled={busy != null}
                     onClick={() => void startCheckout(card.id)}
-                    className={`mt-5 block w-full rounded-full px-3 py-2.5 text-center text-xs font-semibold disabled:opacity-60 ${
-                      card.popular
+                    className={`mt-5 block w-full rounded-full px-3 py-2.5 text-center text-xs font-semibold transition disabled:opacity-60 ${
+                      isActive
                         ? "bg-violet-600 text-white hover:bg-violet-500"
                         : "border border-violet-300 text-violet-700 hover:bg-violet-50"
                     }`}

@@ -8,14 +8,16 @@ import { LanguageToggle } from "@/components/LanguageToggle";
 import { useLocale } from "@/components/LocaleProvider";
 import { PRODUCT_LOGO_ALT, PRODUCT_LOGO_SRC, PRODUCT_NAME } from "@/lib/brand";
 
-/** Home-section anchors — always route via `/` so they work from /privacy etc. */
+/** Section anchors + product tool routes (via `/` for legal pages). */
 const NAV = [
   { href: "/#product", key: "navProduct" as const },
-  { href: "/#templates", key: "navTemplates" as const },
   { href: "/#how", key: "navHow" as const },
-  { href: "/#use-cases", key: "navUseCases" as const },
+  { href: "/#brand-kit", key: "navBrandKit" as const },
+  { href: "/#templates", key: "navTemplates" as const },
   { href: "/#pricing", key: "navPricing" as const },
-  { href: "/#resources", key: "navResources" as const },
+  { href: "/edit-image", key: "navEditImage" as const },
+  { href: "/captions", key: "navCaptions" as const },
+  { href: "/pro", key: "navPro" as const },
 ];
 
 /** Full-bleed bar; nav sits next to logo (no bottom rule). */
@@ -31,15 +33,17 @@ export function LandingNav() {
         <Link href="/" className="flex shrink-0 items-center gap-2.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={PRODUCT_LOGO_SRC} alt={PRODUCT_LOGO_ALT} className="h-8 w-8 rounded-lg object-contain" />
-          <span className="whitespace-nowrap text-sm font-semibold text-slate-900">{PRODUCT_NAME}</span>
+          <span className="whitespace-nowrap text-base font-semibold tracking-tight text-slate-900 sm:text-[17px]">
+            {PRODUCT_NAME}
+          </span>
         </Link>
 
-        <nav className="landing-nav-links hidden min-w-0 items-center gap-3 lg:flex lg:gap-4">
+        <nav className="landing-nav-links hidden min-w-0 items-center gap-2.5 xl:gap-3.5 lg:flex">
           {NAV.map((item) => (
             <Link
               key={item.key}
               href={item.href}
-              className="whitespace-nowrap text-[13px] font-medium text-slate-600 hover:text-violet-700"
+              className="whitespace-nowrap text-[12px] font-medium text-slate-600 hover:text-violet-700 xl:text-[13px]"
             >
               {L[item.key]}
             </Link>
