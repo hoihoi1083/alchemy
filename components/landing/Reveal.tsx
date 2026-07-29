@@ -73,7 +73,7 @@ export function Reveal({
     return () => io.disconnect();
   }, [once, reduceMotion]);
 
-  const style: CSSProperties = reduceMotion
+  const style: CSSProperties | undefined = reduceMotion
     ? undefined
     : {
         opacity: visible ? 1 : 0,
@@ -86,7 +86,7 @@ export function Reveal({
           `transform 0.9s cubic-bezier(0.16,1,0.3,1) ${delayMs}ms`,
           `filter 0.75s cubic-bezier(0.16,1,0.3,1) ${delayMs}ms`,
         ].join(", "),
-        willChange: visible ? undefined : "opacity, transform, filter",
+        ...(visible ? {} : { willChange: "opacity, transform, filter" }),
       };
 
   return (
