@@ -27,6 +27,28 @@ const LANDING_LAYOUT_CSS = `
 .landing-nav-menu-btn { display: inline-flex !important; }
 .landing-how-arrow { display: none !important; }
 
+/* Product tools — mobile 1-col, sm 2-col, lg 4-col */
+.landing-tools-grid {
+  max-width: 1120px !important;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 1rem !important;
+}
+@media (min-width: 640px) {
+  .landing-tools-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 1.25rem !important;
+  }
+}
+@media (min-width: 1024px) {
+  .landing-tools-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 4rem !important;
+  }
+}
+
 /* Cyber hero — responsive height, crop, scrims */
 .landing-hero-cyber {
   min-height: min(70vh, 640px) !important;
@@ -37,18 +59,95 @@ const LANDING_LAYOUT_CSS = `
 .landing-hero-video {
   object-position: 72% 42% !important;
 }
+/* Mid-strength on mobile — readable copy, scene still visible; stronger from md+ */
 .landing-hero-scrim-x {
   background: linear-gradient(
     90deg,
-    #06040f 0%,
-    rgba(6, 4, 15, 0.92) 38%,
-    rgba(6, 4, 15, 0.55) 62%,
-    rgba(6, 4, 15, 0.15) 100%
+    rgba(6, 4, 15, 0.78) 0%,
+    rgba(6, 4, 15, 0.58) 34%,
+    rgba(6, 4, 15, 0.28) 58%,
+    rgba(6, 4, 15, 0.08) 82%,
+    transparent 100%
   ) !important;
 }
 .landing-hero-scrim-y {
-  height: 7rem !important;
-  background: linear-gradient(to top, #06040f, transparent) !important;
+  height: 6rem !important;
+  background: linear-gradient(to top, rgba(6, 4, 15, 0.85), transparent) !important;
+}
+
+/* Mobile hero type/CTAs — clearer over bright scene; desktop keeps Tailwind classes */
+@media (max-width: 639px) {
+  /* Keep copy higher so CTAs don't sit on the mascot face */
+  .landing-hero-inner {
+    align-items: flex-start !important;
+    padding-top: 1.25rem !important;
+    padding-bottom: 1.75rem !important;
+  }
+  /* Mid crop — mascot visible beside copy, not clipped on the right edge */
+  .landing-hero-video {
+    object-position: 58% 34% !important;
+    transform: scale(1.08) !important;
+    transform-origin: 50% 40% !important;
+  }
+  .landing-hero-badge {
+    font-size: 11px !important;
+    padding: 0.35rem 0.85rem !important;
+  }
+  .landing-hero-title {
+    font-size: 1.85rem !important;
+    line-height: 1.15 !important;
+    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.55) !important;
+  }
+  .landing-hero-title-hl {
+    color: #e9d5ff !important; /* violet-200 */
+  }
+  .landing-hero-subtitle {
+    color: #f8fafc !important; /* slate-50 */
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.5) !important;
+  }
+  .landing-hero-ctas {
+    gap: 0.5rem !important;
+    margin-top: 1rem !important;
+    align-items: flex-start !important;
+  }
+  .landing-hero-cta-primary,
+  .landing-hero-cta-secondary {
+    width: auto !important;
+    max-width: 100% !important;
+    padding: 0.5rem 0.95rem !important;
+    font-size: 0.8125rem !important;
+    line-height: 1.25 !important;
+  }
+  .landing-hero-cta-primary {
+    background: #7c3aed !important; /* violet-600 — punchier */
+    box-shadow: 0 6px 18px rgba(91, 33, 182, 0.4) !important;
+  }
+  .landing-hero-cta-secondary {
+    border-color: rgba(255, 255, 255, 0.55) !important;
+    background: rgba(6, 4, 15, 0.45) !important;
+    color: #fff !important;
+  }
+  .landing-hero-trust {
+    margin-top: 0.85rem !important;
+  }
+  .landing-hero-trust li {
+    font-size: 12px !important;
+    color: #f5f3ff !important;
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.45) !important;
+  }
+  .landing-hero-built-label {
+    color: #cbd5e1 !important; /* slate-300 */
+    font-size: 11px !important;
+    margin-top: 0.75rem !important;
+  }
+  .landing-hero-chip {
+    font-size: 11px !important;
+    color: #f1f5f9 !important;
+    border-color: rgba(255, 255, 255, 0.35) !important;
+    background: rgba(6, 4, 15, 0.4) !important;
+  }
 }
 
 @media (min-width: 640px) {
@@ -66,8 +165,14 @@ const LANDING_LAYOUT_CSS = `
 /* Tablet / small laptop */
 @media (min-width: 768px) {
   .landing-hero-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; }
-  .landing-transform-grid { grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr) !important; }
-  .landing-brand-kit-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; }
+  .landing-transform-grid {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) !important;
+    column-gap: 1.5rem !important;
+  }
+  .landing-brand-kit-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) !important;
+    column-gap: 1.5rem !important;
+  }
   .landing-canvas-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; }
   .landing-cta-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; }
   .landing-why-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
@@ -84,6 +189,10 @@ const LANDING_LAYOUT_CSS = `
       rgba(6, 4, 15, 0.45) 55%,
       transparent 78%
     ) !important;
+  }
+  .landing-hero-scrim-y {
+    height: 7rem !important;
+    background: linear-gradient(to top, #06040f, transparent) !important;
   }
 }
 
@@ -105,12 +214,9 @@ const LANDING_LAYOUT_CSS = `
   .landing-hero-video { object-position: 58% 50% !important; }
 }
 
-/* Wide desktop — pricing can fit all 5 plans in one row */
-@media (min-width: 1280px) {
-  .landing-pricing-grid { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; }
-}
-
+/* Wide desktop — pricing 5-up + taller hero */
 @media (min-width: 1440px) {
+  .landing-pricing-grid { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; }
   .landing-hero-cyber,
   .landing-hero-inner { min-height: min(84vh, 860px) !important; }
   .landing-hero-video { object-position: center 50% !important; }
@@ -201,38 +307,37 @@ const LANDING_LAYOUT_CSS = `
 }
 `;
 
-
 /** Mid-landing sections (transform → final CTA). Keep true for full landing. */
 const SHOW_LANDING_BELOW_HOW = true;
 
 export function LandingPageClient() {
-  return (
-    <>
-      <style dangerouslySetInnerHTML={{ __html: LANDING_LAYOUT_CSS }} />
-      <main className="flex min-h-screen flex-col overflow-x-clip bg-white text-slate-900 supports-[min-height:100dvh]:min-h-dvh">
-        <LandingNav />
-        <LandingHero />
-        <LandingHowItWorks />
-        {SHOW_LANDING_BELOW_HOW ? (
-          <>
-            {/* Sections own their Reveal stagger — avoid wrapping whole blocks twice */}
-            <LandingBrandKit />
-            <LandingTransformSection />
-            <LandingReferenceCompare />
-            <LandingEditableCanvas />
-            <LandingTemplatesShowcase />
-            <LandingWhyDifferent />
-            <LandingScenarios />
-            <LandingPricingTeaser />
-            <LandingTokensAndFaq />
-            <LandingProductTools />
-            <LandingFinalCta />
-          </>
-        ) : null}
-        <LandingFooter />
-      </main>
-      <CoachSpotlightOverlay />
-      <StudioAssistantWidget surface="landing" />
-    </>
-  );
+	return (
+		<>
+			<style dangerouslySetInnerHTML={{ __html: LANDING_LAYOUT_CSS }} />
+			<main className="flex min-h-screen flex-col overflow-x-clip bg-white text-slate-900 supports-[min-height:100dvh]:min-h-dvh">
+				<LandingNav />
+				<LandingHero />
+				<LandingHowItWorks />
+				{SHOW_LANDING_BELOW_HOW ? (
+					<>
+						{/* Sections own their Reveal stagger — avoid wrapping whole blocks twice */}
+						<LandingBrandKit />
+						<LandingTransformSection />
+						<LandingReferenceCompare />
+						<LandingEditableCanvas />
+						<LandingTemplatesShowcase />
+						<LandingWhyDifferent />
+						<LandingScenarios />
+						<LandingPricingTeaser />
+						<LandingTokensAndFaq />
+						<LandingProductTools />
+						<LandingFinalCta />
+					</>
+				) : null}
+				<LandingFooter />
+			</main>
+			<CoachSpotlightOverlay />
+			<StudioAssistantWidget surface="landing" />
+		</>
+	);
 }

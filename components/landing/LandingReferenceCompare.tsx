@@ -30,7 +30,7 @@ export function LandingReferenceCompare() {
 
         {/* One Reveal for the whole row — per-item Reveal broke flex centering */}
         <Reveal delayMs={100} distance={36} scaleFrom={0.96}>
-          <div className="mx-auto mt-8 flex w-fit max-w-full items-center justify-center gap-6 sm:mt-9 sm:gap-8 md:gap-10">
+          <div className="mx-auto mt-8 flex w-full max-w-lg flex-col items-center justify-center gap-4 sm:mt-9 sm:w-fit sm:max-w-full sm:flex-row sm:gap-8 md:gap-10">
             <CompareCard
               label={L.refCardLabel}
               labelClassName="bg-slate-900"
@@ -39,7 +39,7 @@ export function LandingReferenceCompare() {
             />
 
             <div
-              className="mt-[7px] flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-600 text-sm text-white shadow-md shadow-violet-600/35"
+              className="flex h-9 w-9 shrink-0 rotate-90 items-center justify-center rounded-full bg-violet-600 text-sm text-white shadow-md shadow-violet-600/35 sm:mt-[7px] sm:rotate-0"
               aria-hidden
             >
               <span className="landing-arrow-pulse inline-block leading-none">→</span>
@@ -71,7 +71,7 @@ function CompareCard({
 }) {
   return (
     <figure
-      className="relative m-0 w-[min(450px,calc((100vw-8rem)/2))] shrink-0 sm:w-[450px]"
+      className="relative m-0 w-full max-w-[340px] shrink-0 sm:w-[min(450px,calc((100vw-8rem)/2))] sm:max-w-[450px]"
       style={{ maxWidth: IMG_W }}
     >
       <div className="relative pt-3.5">

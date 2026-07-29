@@ -29,11 +29,15 @@ export function LandingNav() {
 
   return (
     <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md">
-      <div className="mx-auto flex w-full max-w-[1440px] items-center gap-4 px-4 py-3 sm:px-6 md:px-8">
-        <Link href="/" className="flex shrink-0 items-center gap-2.5">
+      <div className="mx-auto flex w-full max-w-[1440px] items-center gap-2 px-3 py-2.5 sm:gap-3 sm:px-6 sm:py-3 md:px-8">
+        <Link href="/" className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-2.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={PRODUCT_LOGO_SRC} alt={PRODUCT_LOGO_ALT} className="h-8 w-8 rounded-lg object-contain" />
-          <span className="whitespace-nowrap text-base font-semibold tracking-tight text-slate-900 sm:text-[17px]">
+          <img
+            src={PRODUCT_LOGO_SRC}
+            alt={PRODUCT_LOGO_ALT}
+            className="h-8 w-8 shrink-0 rounded-lg object-contain"
+          />
+          <span className="hidden whitespace-nowrap text-base font-semibold tracking-tight text-slate-900 sm:inline sm:text-[17px]">
             {PRODUCT_NAME}
           </span>
         </Link>
@@ -50,9 +54,12 @@ export function LandingNav() {
           ))}
         </nav>
 
-        <div className="ml-auto flex shrink-0 items-center gap-2">
-          <LanguageToggle variant="light" />
-          <AuthNav />
+        <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
+          {/* Full language toggle from sm+; mobile uses drawer */}
+          <div className="hidden sm:block">
+            <LanguageToggle variant="light" />
+          </div>
+          <AuthNav compact />
           {!isSignedIn ? (
             <Link
               href="/start"
@@ -75,6 +82,9 @@ export function LandingNav() {
 
       {open ? (
         <div className="landing-nav-mobile border-t border-slate-100 bg-white px-4 py-3 lg:hidden">
+          <div className="mb-3 flex justify-center sm:hidden">
+            <LanguageToggle variant="light" />
+          </div>
           <nav className="flex flex-col gap-1">
             {NAV.map((item) => (
               <Link

@@ -5,14 +5,18 @@ import type { Locale } from "@/lib/i18n";
 
 type ToggleProps = {
   variant?: "dark" | "light";
+  /** Tighter padding for cramped toolbars */
+  size?: "default" | "compact";
 };
 
-export function LanguageToggle({ variant = "dark" }: ToggleProps) {
+export function LanguageToggle({ variant = "dark", size = "default" }: ToggleProps) {
   const { locale, setLocale, m } = useLocale();
 
   function pick(next: Locale) {
     setLocale(next);
   }
+
+  const pad = size === "compact" ? "px-2 py-1" : "px-3 py-1.5";
 
   return (
     <div
@@ -29,7 +33,7 @@ export function LanguageToggle({ variant = "dark" }: ToggleProps) {
           key={code}
           type="button"
           onClick={() => pick(code)}
-          className={`rounded-full px-3 py-1.5 transition ${
+          className={`rounded-full ${pad} transition ${
             locale === code
               ? "bg-emerald-600 text-white"
               : variant === "light"

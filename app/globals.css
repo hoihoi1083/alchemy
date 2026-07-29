@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Force landing utilities that Next/Tailwind-dev sometimes drops from the CSS graph. */
+@source inline("max-w-[240px] max-w-[300px] max-w-[340px] max-w-[860px] max-w-[1120px] h-[170px] md:h-[190px] md:max-w-[340px] lg:py-20 py-20");
+
 :root {
   --bg: #0a0f1a;
   --surface: #111827;
@@ -81,6 +84,11 @@ footer.site-footer a.site-footer-logo:focus {
 .studio-light [class*="text-slate-300"],
 .studio-light [class*="text-slate-400"] {
   color: #475569 !important;
+}
+
+/* Product tools — keep tiles large; don't rely on arbitrary Tailwind max-w scanning */
+.landing-tools-grid {
+  max-width: 1120px;
 }
 
 /* Landing page horizontal layouts — explicit so MBA 13"+ never falls back to stacked */

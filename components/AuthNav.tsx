@@ -34,7 +34,7 @@ function LibraryMenuIcon() {
   );
 }
 
-function AuthNavBody() {
+function AuthNavBody({ compact = false }: { compact?: boolean }) {
   const { isSignedIn, isLoaded } = useAuth();
   const { m } = useLocale();
   const pathname = usePathname();
@@ -134,7 +134,11 @@ function AuthNavBody() {
     <SignInButton mode="modal" forceRedirectUrl={redirectUrl}>
       <button
         type="button"
-        className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+        className={
+          compact
+            ? "rounded-full border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 sm:px-4 sm:py-2 sm:text-sm"
+            : "rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+        }
       >
         {m.auth.signIn}
       </button>
@@ -142,10 +146,10 @@ function AuthNavBody() {
   );
 }
 
-export function AuthNav() {
+export function AuthNav({ compact = false }: { compact?: boolean } = {}) {
   return (
-    <Suspense fallback={<div className="h-9 w-20" aria-hidden />}>
-      <AuthNavBody />
+    <Suspense fallback={<div className="h-9 w-16 sm:w-20" aria-hidden />}>
+      <AuthNavBody compact={compact} />
     </Suspense>
   );
 }
