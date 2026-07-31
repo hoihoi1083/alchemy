@@ -298,7 +298,7 @@ function buildPlanPrompt(input: {
         "- visualDirection MUST describe reference layout grid, palette, and typography bands from the USER REFERENCE block — not a generic natural-light product reel.",
         "- Do NOT plan a stock product-photography sequence (macro → wrist → flat lay) unless IMAGE 1 is clearly that style.",
         "- Scene 1 = opening hook in reference cover layout; middle scenes = same template shell with new copy/angle; final scene = CTA/recap band matching reference style.",
-        "- imagePrompt per scene: English still for Nano Banana dual-image edit — same LAYER A layout shell as IMAGE 1, IMAGE 2 product as hero, scene-specific action within that shell.",
+        "- imagePrompt per scene: English still for Nano Banana dual-image edit — IMAGE 1 = product hero, IMAGE 2 = layout shell; keep IMAGE 2 LAYER A layout, IMAGE 1 product as hero, scene-specific action within that shell.",
         "- All on-image copy promotes the user's product only — never zodiac/星座 hooks or wording from the reference post.",
       ]
     : [];
@@ -307,7 +307,7 @@ function buildPlanPrompt(input: {
     ? [
         "PRODUCT ADAPTATION (layout-transfer):",
         `- Product category from name and IMAGE 2 (guess: ${category}).`,
-        "- Match how IMAGE 1 stages the hero (hands, wrist, flat lay, centered hero) — swap in IMAGE 2 product.",
+        "- Match how IMAGE 2 stages the hero (hands, wrist, flat lay, centered hero) — swap in IMAGE 1 product.",
         "- Scene variety comes from copy and subtle angle changes inside the SAME ad template, not unrelated compositions.",
       ]
     : [
@@ -337,7 +337,7 @@ function buildPlanPrompt(input: {
     sceneCountLine,
     "- Each scene gets ONE still (imageIndex 1…N in timeline order).",
     layoutTransferRef
-      ? "- imagePrompt: English, dual-image edit — keep IMAGE 1 layout shell, IMAGE 2 product hero, 9:16, subject upright. NEVER ask for readable text/captions on the still (captions burn after video)."
+      ? "- imagePrompt: English, dual-image edit — IMAGE 1 product hero, keep IMAGE 2 layout shell, 9:16, subject upright. NEVER ask for readable text/captions on the still (captions burn after video)."
       : "- imagePrompt: English, for Nano Banana edit from user's product photo — 9:16 still matching the art direction, subject upright (head at top), correct vertical orientation. NEVER describe on-image text, titles, captions, logos, or slogans (stills are textless for Kling; captions burn after video).",
     `- onImageCopyZh (burned caption) AND sceneDescriptionZh (UI note): ${plannerCopyLanguageRule(resolveCopyLocale((input.market as PromptMarket) || "hk"))}`,
     "- onImageCopyZh: consumer-facing caption text for THIS scene only (burned AFTER video). Short headline + optional subline or CTA. NEVER use production labels: 開場亮點, 行動呼籲, 中段, arrows (→), or storyboard role names.",
@@ -542,8 +542,8 @@ function buildReelStoryboardPlanPrompt(input: {
 
   const layoutRules = input.layoutTransfer
     ? [
-        "LAYOUT TRANSFER: user's cover still is IMAGE 1 layout shell; product photo is IMAGE 2.",
-        "- Each scene imagePrompt: dual-image edit — keep IMAGE 1 ad layout family, swap IMAGE 2 product as hero.",
+        "LAYOUT TRANSFER: IMAGE 1 = user product hero; IMAGE 2 = style/layout shell from research cover.",
+        "- Each scene imagePrompt: dual-image edit — keep IMAGE 1 product identity; borrow IMAGE 2 ad layout family.",
       ]
     : input.conceptMode
       ? [

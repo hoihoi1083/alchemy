@@ -17,15 +17,6 @@ export function LandingBrandKit() {
 			id="brand-kit"
 			className="relative w-full overflow-hidden bg-slate-50"
 		>
-			<div
-				className="pointer-events-none absolute -right-24 top-10 h-72 w-72 rounded-full bg-violet-200/35 blur-3xl"
-				aria-hidden
-			/>
-			<div
-				className="pointer-events-none absolute -left-16 bottom-0 h-56 w-56 rounded-full bg-fuchsia-100/40 blur-3xl"
-				aria-hidden
-			/>
-
 			<div className="landing-brand-kit-grid relative mx-auto grid w-full max-w-[1440px] grid-cols-1 items-center gap-6 px-5 py-12 md:gap-8 md:px-8 md:py-16">
 				<Reveal distance={48} className="w-full min-w-0 max-w-xl">
 					<span className="inline-flex rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-violet-700">

@@ -9,7 +9,11 @@ import { UploadZone } from "@/components/UploadZone";
  * Reference image preview + analyzed brief — same slot as classic ImageStep
  * (`coach-style-reference` + ReferenceBriefPanel).
  */
-export function SetupReferenceSection() {
+export function SetupReferenceSection({
+  uploadVariant = "dark",
+}: {
+  uploadVariant?: "dark" | "violet";
+} = {}) {
   const { m } = useLocale();
   const wizard = useWizard();
   const {
@@ -66,6 +70,7 @@ export function SetupReferenceSection() {
               previewUrl={imageRefPreviewUrl}
               fileName={imageRefPhoto?.name ?? null}
               onFile={setImageRefPhoto}
+              variant={uploadVariant}
             />
           </div>
           {carouselExtra > 0 && !userReferenceBrief ? (

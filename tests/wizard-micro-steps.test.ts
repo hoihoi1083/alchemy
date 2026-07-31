@@ -51,6 +51,7 @@ function baseState(overrides: Partial<WizardMicroStepState> = {}): WizardMicroSt
     imageUrl: null,
     videoUrl: null,
     promptExtra: "",
+    contentResearchApplied: false,
     shipItEligible: false,
     hasGeneratedImage: false,
     userReferenceBrief: null,
@@ -160,19 +161,7 @@ describe("wizard v2 parity audit", () => {
     assert.equal(steps[resumeStepIndex(steps)]?.id, "route.primary_style");
   });
 
-  it("research copy.edit is not skippable", () => {
-    const ctx: MicroWizardContext = {
-      promotionMode: "physical",
-      workflowMode: "image-only",
-      intakePath: "research",
-    };
-    const steps = resolveMicroSteps(ctx, baseState({ promptExtra: "STYLE_REFERENCE_ONLY" }));
-    const copyEdit = steps.find((s) => s.id === "copy.edit");
-    assert.ok(copyEdit);
-    assert.equal(copyEdit?.skippable, false);
-  });
-
-  it("keeps image.output_format on research path when reference photo attached", () => {
+  it("product image research fuses post-intake into setup.pre_generate", () => {
     const ctx: MicroWizardContext = {
       promotionMode: "physical",
       workflowMode: "image-only",
@@ -182,31 +171,40 @@ describe("wizard v2 parity audit", () => {
       ctx,
       baseState({
         promptExtra: "STYLE_REFERENCE_ONLY",
-        imageOutputMode: "teaching-carousel",
         imageRefPhoto: {} as File,
+        contentResearchApplied: true,
       }),
     );
-    assert.ok(steps.some((s) => s.id === "image.output_format"));
+    const ids = steps.map((s) => s.id);
+    assert.ok(ids.includes("setup.pre_generate"));
+    assert.ok(ids.includes("route.intake"));
+    assert.ok(ids.includes("identity.product_name"));
+    assert.equal(ids[ids.indexOf("setup.pre_generate") - 1], "route.intake");
+    assert.ok(!ids.includes("wait.reference_analyze"));
+    assert.ok(!ids.includes("copy.edit"));
+    assert.ok(!ids.includes("image.output_format"));
+    assert.ok(!ids.includes("asset.product_photo"));
+    assert.ok(!ids.includes("image.options"));
+    assert.ok(!ids.includes("image.generate"));
+    assert.ok(ids.includes("wait.image_generate"));
+    assert.ok(ids.includes("image.review"));
+    const pre = steps.find((s) => s.id === "setup.pre_generate");
+    assert.equal(pre?.skippable, false);
   });
 
-  it("skips image.output_format only for model-wear style", () => {
+  it("product image direct still uses discrete post-intake steps", () => {
     const ctx: MicroWizardContext = {
       promotionMode: "physical",
       workflowMode: "image-only",
-      intakePath: "research",
+      intakePath: "direct",
     };
-    const steps = resolveMicroSteps(
-      ctx,
-      baseState({
-        visualStyleId: "model-wear",
-        promptExtra: "STYLE_REFERENCE_ONLY",
-        imageRefPhoto: {} as File,
-      }),
-    );
-    assert.ok(!steps.some((s) => s.id === "image.output_format"));
+    const steps = resolveMicroSteps(ctx, baseState());
+    const ids = steps.map((s) => s.id);
+    assert.ok(!ids.includes("setup.pre_generate"));
+    assert.ok(ids.includes("copy.edit") || ids.includes("image.output_format"));
   });
 
-  it("does not inject duplicate image.art_style when image.options exists", () => {
+  it("does not inject image.art_style when setup.pre_generate fuses options", () => {
     const ctx: MicroWizardContext = {
       promotionMode: "physical",
       workflowMode: "image-only",
@@ -216,8 +214,27 @@ describe("wizard v2 parity audit", () => {
       ctx,
       baseState({ promptExtra: "STYLE_REFERENCE_ONLY", imageRefPhoto: {} as File }),
     );
-    assert.ok(steps.some((s) => s.id === "image.options"));
+    assert.ok(steps.some((s) => s.id === "setup.pre_generate"));
     assert.ok(!steps.some((s) => s.id === "image.art_style"));
+  });
+
+  it("skips image.output_format only for model-wear on concept research", () => {
+    const ctx: MicroWizardContext = {
+      promotionMode: "concept",
+      workflowMode: "image-only",
+      intakePath: "research",
+      conceptSource: "research",
+    };
+    const steps = resolveMicroSteps(
+      ctx,
+      baseState({
+        promotionMode: "concept",
+        visualStyleId: "model-wear",
+        promptExtra: "STYLE_REFERENCE_ONLY",
+        imageRefPhoto: {} as File,
+      }),
+    );
+    assert.ok(!steps.some((s) => s.id === "image.output_format"));
   });
 
   it("path 5 video-only does not include storyboard brief", () => {
@@ -342,7 +359,7 @@ describe("wizard v2 parity audit", () => {
       intakePath: "direct",
     };
     const steps = resolveMicroSteps(ctx, baseState({ workflowMode: "video-only" }));
-    assert.deepEqual(steps.map((s) => s.id), ["route.video_subpath"]);
+    assert.deepEqual(steps.map((s) => s.id), ["route.output_goal", "route.video_subpath"]);
     assert.equal(resumeStepIndex(steps), 0);
   });
 
@@ -568,7 +585,7 @@ describe("wizard v2 parity audit", () => {
     }
   });
 
-  it("concept combined skips cinematic stitch picker and shows research vs assistant", () => {
+  it("concept combined skips cinematic stitch picker and shows topic then intake fuse", () => {
     const ctx: MicroWizardContext = {
       promotionMode: "concept",
       workflowMode: "combined",
@@ -576,7 +593,8 @@ describe("wizard v2 parity audit", () => {
     const state = baseState({ workflowMode: "combined", visualStyleId: "storyboard-video" });
     const ids = resolveMicroSteps(ctx, state).map((s) => s.id);
     assert.ok(!ids.includes("route.combined_style"));
-    assert.deepEqual(ids, ["route.concept_source"]);
+    assert.ok(!ids.includes("route.concept_source"));
+    assert.deepEqual(ids, ["route.output_goal", "identity.concept_topic", "route.intake"]);
   });
 
   it("concept combined cinematic single hands off to image step", () => {
@@ -615,6 +633,76 @@ describe("wizard v2 parity audit", () => {
     assert.equal(photo?.skippable, false);
   });
 
+  it("product image research keeps intake behind pre-generate for Back", () => {
+    const ctx: MicroWizardContext = {
+      promotionMode: "physical",
+      workflowMode: "image-only",
+      intakePath: "research",
+    };
+    const steps = resolveMicroSteps(
+      ctx,
+      baseState({
+        promptExtra: "STYLE_REFERENCE_ONLY",
+        contentResearchApplied: true,
+        imageRefPhoto: {} as File,
+      }),
+    );
+    const ids = steps.map((s) => s.id);
+    assert.deepEqual(ids.slice(0, 4), [
+      "route.output_goal",
+      "identity.product_name",
+      "route.intake",
+      "setup.pre_generate",
+    ]);
+    assert.equal(steps[resumeStepIndex(steps)]?.id, "setup.pre_generate");
+    assert.equal(ids[ids.indexOf("setup.pre_generate") - 1], "route.intake");
+  });
+
+  it("blocks setup.pre_generate until product photo and analyze ready", () => {
+    const ctx: MicroWizardContext = {
+      promotionMode: "physical",
+      workflowMode: "image-only",
+      intakePath: "research",
+    };
+    assert.equal(
+      canProceedMicroStep(
+        "setup.pre_generate",
+        ctx,
+        baseState({
+          imageRefPhoto: {} as File,
+          productPhoto: null,
+          userReferenceBrief: null,
+          referenceAnalyzeNote: null,
+        }),
+      ),
+      "reference_analyzing",
+    );
+    assert.equal(
+      canProceedMicroStep(
+        "setup.pre_generate",
+        ctx,
+        baseState({
+          imageRefPhoto: {} as File,
+          productPhoto: null,
+          userReferenceBrief: { summary: "ok" },
+        }),
+      ),
+      "need_product_photo",
+    );
+    assert.equal(
+      canProceedMicroStep(
+        "setup.pre_generate",
+        ctx,
+        baseState({
+          imageRefPhoto: {} as File,
+          productPhoto: {} as File,
+          userReferenceBrief: { summary: "ok" },
+        }),
+      ),
+      null,
+    );
+  });
+
   it("blocks wait.reference_analyze until brief or note", () => {
     const ctx: MicroWizardContext = {
       promotionMode: "physical",
@@ -632,12 +720,17 @@ describe("wizard v2 parity audit", () => {
     );
   });
 
-  it("concept image entry shows concept source before identity", () => {
+  it("concept image entry shows concept topic then intake fuse", () => {
     const steps = resolveMicroSteps(
       { promotionMode: "concept", workflowMode: "image-only" },
       baseState({ promotionMode: "concept", workflowMode: "image-only" }),
     );
-    assert.deepEqual(steps.map((s) => s.id), ["route.concept_source"]);
+    assert.ok(!steps.some((s) => s.id === "route.concept_source"));
+    assert.deepEqual(steps.map((s) => s.id), [
+      "route.output_goal",
+      "identity.concept_topic",
+      "route.intake",
+    ]);
   });
 
   it("concept assistant path skips platform research steps", () => {
@@ -667,8 +760,31 @@ describe("wizard v2 parity audit", () => {
     );
     const ids = steps.map((s) => s.id);
     assert.ok(!ids.includes("identity.concept"));
-    assert.ok(ids.includes("research.platform"));
-    assert.ok(ids.includes("research.pick_angle"));
+    // Research already happens on route.intake fuse — no legacy research screens.
+    assert.ok(!ids.includes("research.platform"));
+    assert.ok(!ids.includes("research.pick_angle"));
+    assert.ok(!ids.includes("wait.research_apply"));
+  });
+
+  it("product image research skips duplicate research screens after intake", () => {
+    const ctx: MicroWizardContext = {
+      promotionMode: "physical",
+      workflowMode: "image-only",
+      intakePath: "research",
+    };
+    const steps = resolveMicroSteps(
+      ctx,
+      baseState({
+        promptExtra: "STYLE_REFERENCE_ONLY\nlayout",
+        contentResearchApplied: true,
+        imageRefPhoto: {} as File,
+      }),
+    );
+    const ids = steps.map((s) => s.id);
+    assert.ok(!ids.includes("research.platform"));
+    assert.ok(!ids.includes("research.pick_angle"));
+    assert.ok(!ids.includes("wait.research_apply"));
+    assert.ok(ids.includes("setup.pre_generate"));
   });
 
   it("concept research copy.edit is not skippable", () => {
@@ -687,19 +803,92 @@ describe("wizard v2 parity audit", () => {
     assert.equal(copyEdit?.skippable, false);
   });
 
-  it("concept routing shows assistant identity after source pick", () => {
+  it("concept routing after topic still needs intake fuse until path picked", () => {
     const steps = resolveMicroSteps(
-      { promotionMode: "concept", workflowMode: "image-only", conceptSource: "assistant" },
-      baseState({ promotionMode: "concept" }),
+      { promotionMode: "concept", workflowMode: "image-only" },
+      baseState({ promotionMode: "concept", conceptIdea: "loan offer" }),
     );
-    assert.deepEqual(steps.map((s) => s.id), ["identity.concept"]);
+    assert.deepEqual(steps.map((s) => s.id), [
+      "route.output_goal",
+      "identity.concept_topic",
+      "route.intake",
+    ]);
   });
 
-  it("concept routing shows topic identity after research source pick", () => {
+  it("physical entry shows product name then intake fuse", () => {
     const steps = resolveMicroSteps(
-      { promotionMode: "concept", workflowMode: "image-only", conceptSource: "research" },
-      baseState({ promotionMode: "concept" }),
+      { promotionMode: "physical", workflowMode: "image-only" },
+      baseState({ promotionMode: "physical", workflowMode: "image-only" }),
     );
-    assert.deepEqual(steps.map((s) => s.id), ["identity.concept_topic"]);
+    assert.deepEqual(steps.map((s) => s.id), [
+      "route.output_goal",
+      "identity.product_name",
+      "route.intake",
+    ]);
+  });
+
+  it("physical intake blocks continue until research applied or direct chosen", () => {
+    const physical = { promotionMode: "physical" as const, workflowMode: "image-only" as const };
+    assert.equal(
+      canProceedMicroStep("route.intake", physical, baseState(physical)),
+      "pick_intake",
+    );
+    assert.equal(
+      canProceedMicroStep(
+        "route.intake",
+        { ...physical, intakePath: "direct" },
+        baseState(physical),
+      ),
+      null,
+    );
+    assert.equal(
+      canProceedMicroStep(
+        "route.intake",
+        { ...physical, intakePath: "research" },
+        baseState(physical),
+      ),
+      "complete_research",
+    );
+    assert.equal(
+      canProceedMicroStep(
+        "route.intake",
+        { ...physical, intakePath: "research" },
+        baseState({
+          ...physical,
+          promptExtra:
+            "Style reference (小紅書). MATCH reference visual style: layout — Do NOT copy reference subject matter.",
+        }),
+      ),
+      null,
+    );
+    assert.equal(
+      canProceedMicroStep(
+        "route.intake",
+        { ...physical, intakePath: "research" },
+        baseState({ ...physical, imageRefPhoto: {} as File }),
+      ),
+      null,
+    );
+    assert.equal(
+      canProceedMicroStep(
+        "route.intake",
+        { ...physical, intakePath: "research" },
+        baseState({ ...physical, contentResearchApplied: true }),
+      ),
+      null,
+    );
+  });
+
+  it("concept intake only requires a path tab (assistant rules differ)", () => {
+    const concept = {
+      promotionMode: "concept" as const,
+      workflowMode: "image-only" as const,
+      conceptSource: "research" as const,
+      intakePath: "research" as const,
+    };
+    assert.equal(
+      canProceedMicroStep("route.intake", concept, baseState({ promotionMode: "concept" })),
+      null,
+    );
   });
 });

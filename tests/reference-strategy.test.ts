@@ -77,18 +77,17 @@ describe("reference-strategy for content research flows", () => {
     assert.ok(s.kind === "style-only" || s.kind === "mood-only");
   });
 
-  it("campaign + style ref only → style-only (concept)", () => {
+  it("campaign + product + style ref → dual layout-transfer", () => {
     const s = resolveReferenceStrategy({
-      promotionMode: "concept",
+      promotionMode: "physical",
       imageOutputMode: "campaign",
       visualStyleId: "product",
       imageCreativeMode: "reference-concept",
       hasReferenceUpload: true,
-      hasProductPhoto: false,
+      hasProductPhoto: true,
       hasReferenceBrief: true,
     });
-    assert.equal(s.kind, "style-only");
-    assert.equal(s.referenceImageMode, "style-only");
-    assert.equal(s.sendPixelsToFal, true);
+    assert.equal(s.kind, "layout-transfer");
+    assert.equal(s.useDualImage, true);
   });
 });

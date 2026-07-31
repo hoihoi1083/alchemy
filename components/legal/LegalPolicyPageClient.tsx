@@ -21,7 +21,7 @@ export function LegalPolicyPageClient({ kind }: { kind: LegalKind }) {
     <main className="flex min-h-screen flex-col overflow-x-clip bg-white text-slate-900 supports-[min-height:100dvh]:min-h-dvh">
       <LandingNav />
 
-      <div className="flex-1 bg-gradient-to-b from-violet-50/40 via-white to-white">
+      <div className="flex-1 bg-white">
         <article className="mx-auto w-full max-w-3xl px-5 py-10 sm:px-6 sm:py-14 md:px-8 md:py-16">
           <nav className="mb-8 flex flex-wrap gap-2" aria-label="Legal">
             {siblings.map((s) => (

@@ -663,7 +663,7 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
         aria-expanded={open}
         aria-label={sa.openLauncher}
       >
-        <span className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl sm:h-[100px] sm:w-[100px] md:h-[140px] md:w-[140px]">
+        <span className="relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl sm:h-16 sm:w-16 md:h-[88px] md:w-[88px] lg:h-[112px] lg:w-[112px]">
           <Image
             src={LAUNCHER_IMAGE_SRC}
             alt="Alchemy AI Lab logo"

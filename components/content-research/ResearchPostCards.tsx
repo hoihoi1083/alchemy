@@ -47,7 +47,7 @@ export function ResearchPostCards({ posts, labels }: ResearchPostCardsProps) {
                 coverImageUrl={post.coverImageUrl}
                 imageUrls={post.imageUrls}
                 noCoverLabel={labels.noCover}
-                className="relative h-20 w-16 shrink-0 overflow-hidden rounded-md bg-slate-100"
+                className="h-20 w-16"
               />
               <div className="min-w-0 flex-1">
                 <p className="line-clamp-2 text-xs font-semibold text-slate-900 group-hover:text-emerald-800">

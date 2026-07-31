@@ -23,6 +23,11 @@ import { LandingProductTools } from "@/components/landing/LandingProductTools";
  * Mobile-first → tablet → MBA 13" (~1280) → desktop.
  */
 const LANDING_LAYOUT_CSS = `
+/* Page canvas — always pure white (no lavender wash) */
+.landing-page {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
 /* —— Mobile defaults —— */
 .landing-nav-menu-btn { display: inline-flex !important; }
 .landing-how-arrow { display: none !important; }
@@ -320,7 +325,7 @@ export function LandingPageClient() {
 	return (
 		<>
 			<style dangerouslySetInnerHTML={{ __html: LANDING_LAYOUT_CSS }} />
-			<main className="flex min-h-screen flex-col overflow-x-clip bg-white text-slate-900 supports-[min-height:100dvh]:min-h-dvh">
+			<main className="landing-page flex min-h-screen flex-col overflow-x-clip bg-white text-slate-900 supports-[min-height:100dvh]:min-h-dvh">
 				<LandingNav />
 				<LandingHero />
 				<LandingHowItWorks />

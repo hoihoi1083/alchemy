@@ -253,12 +253,12 @@ function buildPlanPrompt(input: PlanInput): string {
   const conceptRules =
     layoutTransferRef
       ? [
-          "- LAYOUT TRANSFER (reference ad + user product photo): mirror IMAGE 1 design grammar on every slide — same layout family as the reference (numbered list rows, grid panels, icon bands, cover structure).",
-          "- visualDna MUST match reference: layout grid type, color palette, typography hierarchy, component shapes from USER REFERENCE.",
-          "- Each slide = one panel/row/section of the reference layout template filled with the USER'S product and copy — do NOT invent unrelated editorial card layouts.",
+          "- LAYOUT TRANSFER: IMAGE 1 = user product hero; IMAGE 2 = style/layout reference. Mirror IMAGE 2 design grammar on every slide — same layout family as the reference (numbered list rows, grid panels, icon bands, cover structure).",
+          "- visualDna MUST match IMAGE 2 reference: layout grid type, color palette, typography hierarchy, component shapes — hero subject always IMAGE 1.",
+          "- Each slide = one panel/row/section of the IMAGE 2 layout template filled with IMAGE 1 product and user copy — do NOT invent unrelated editorial card layouts.",
           "- Cover slide uses reference cover structure; middle slides follow reference list/grid rhythm; final slide uses reference recap/CTA band style.",
           "- All on-image copy about the user's product only — never zodiac/星座/其他品牌 or wording from the reference post.",
-          "- Do NOT copy reference logos, watermarks, or exact Chinese characters from the reference.",
+          "- Do NOT copy reference logos, watermarks, or exact Chinese characters from IMAGE 2.",
           ...carouselVisionRules,
         ]
       : photoStyleRef
@@ -312,7 +312,7 @@ function buildPlanPrompt(input: PlanInput): string {
           : [];
   return [
     layoutTransferRef
-      ? "Create a teaching/info carousel — LAYOUT TRANSFER from reference ad: same design grammar and grid/list structure as IMAGE 1, user's product and copy on every slide."
+      ? "Create a teaching/info carousel — LAYOUT TRANSFER: IMAGE 1 product hero + IMAGE 2 reference design grammar/grid; user's product and copy on every slide."
       : styleOnlyRef
       ? contentResearchRef
         ? "Create a teaching/info carousel — match reference visual style and slide pacing, promote the user's product (NOT the reference post topic), distinct layout on every slide."

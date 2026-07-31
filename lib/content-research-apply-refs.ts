@@ -65,8 +65,12 @@ export async function applyResearchPostReferences(
       }
       wizard.setImageRefPhoto(files[0]);
       coverAttached = true;
-      if (files.length > 1 && wizard.setExtraKitPhotos) {
-        wizard.setExtraKitPhotos(files.slice(1));
+      // Research extras must NOT fill「其他角度」(extraKitPhotos). That slot is only for
+      // optional alternate angles of the user's own product. Dumping research carousel
+      // frames there made fal treat the research product as product identity.
+      // Keep research as style_reference (imageRefPhoto) only; clear any prior research dump.
+      if (wizard.setExtraKitPhotos) {
+        wizard.setExtraKitPhotos([]);
       }
     }
   }

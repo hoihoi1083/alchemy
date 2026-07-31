@@ -1,6 +1,10 @@
 import { fal } from "@fal-ai/client";
 import { formatFalGenerationError } from "@/lib/fal-errors";
 import { NextResponse } from "next/server";
+import {
+  buildFalLayoutTransferImageUrls,
+  dualProductIdentityHint,
+} from "@/lib/fal-dual-reference-urls";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import {
   imageTokenCostFromRequest,
@@ -412,6 +416,10 @@ export async function POST(request: Request) {
     const styleRef = formData.get("style_reference_image");
     const hasProduct = reference instanceof File && reference.size > 0;
     const hasStyle = styleRef instanceof File && styleRef.size > 0;
+    const productAngleFiles = formData
+      .getAll("product_angle_images")
+      .filter((f): f is File => f instanceof File && f.size > 0)
+      .slice(0, 4);
 
     const brandKitRawEarly = (formData.get("brand_kit") as string | null)?.trim() || "";
     let brandKitEarly = null as ReturnType<typeof parseBrandKit> | null;
@@ -562,14 +570,30 @@ export async function POST(request: Request) {
       const imageUrls: string[] = [];
       if (strategy.sendPixelsToFal) {
         if (useReferenceConcept && dualImage) {
-          if (hasStyle) imageUrls.push(await fal.storage.upload(styleRef as File));
-          if (hasProduct) imageUrls.push(await fal.storage.upload(reference as File));
+          imageUrls.push(
+            ...(await buildFalLayoutTransferImageUrls({
+              upload: (f) => fal.storage.upload(f),
+              styleRef: hasStyle ? (styleRef as File) : null,
+              productRef: hasProduct ? (reference as File) : null,
+              productAngles: hasProduct ? productAngleFiles : [],
+            })),
+          );
         } else if (hasProduct) {
           imageUrls.push(await fal.storage.upload(reference as File));
+          for (const angle of productAngleFiles) {
+            imageUrls.push(await fal.storage.upload(angle));
+          }
         } else if (hasStyle) {
           imageUrls.push(await fal.storage.upload(styleRef as File));
         }
       }
+
+      const angleHint =
+        useReferenceConcept && dualImage && hasProduct && hasStyle
+          ? dualProductIdentityHint(productAngleFiles.length > 0)
+          : hasProduct && productAngleFiles.length > 0
+            ? dualProductIdentityHint(true)
+            : "";
 
       const builtPrompt = buildWizardImagePrompt(
         vars,
@@ -587,11 +611,12 @@ export async function POST(request: Request) {
       // Prefer server-built prompt when we ran the single-still planner (teaching-quality DNA).
       // Honor explicit client prompts (e.g. storyboard scene regenerate) — do not replace with
       // a generic concept-cinematic rebuild that drops the scene action.
-      const finalPrompt = singleImagePlan
-        ? builtPrompt
-        : clientPrompt
-          ? clientPrompt
-          : builtPrompt;
+      const finalPrompt = [
+        singleImagePlan ? builtPrompt : clientPrompt ? clientPrompt : builtPrompt,
+        angleHint,
+      ]
+        .filter(Boolean)
+        .join(" ");
 
       const result = await fal.subscribe(endpoint, {
         input: banana2Input(finalPrompt, imageUrls, aspectRatio, numImages, {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import type { ContentPlatform } from "@/lib/content-research-types";
 import { researchCoverCandidates } from "@/lib/research-cover-url";
 
@@ -18,9 +18,12 @@ type ResearchCoverThumbProps = {
   slideCount?: number;
   slideCountLabel?: (count: number) => string;
   badges?: ReactNode;
+  /** Explicit size classes required, e.g. "h-24 w-20". */
   className?: string;
+  style?: CSSProperties;
 };
 
+/** Compact post cover with a fixed box — never expands to full card width. */
 export function ResearchCoverThumb({
   platform,
   sourceCoverImageUrl,
@@ -31,7 +34,8 @@ export function ResearchCoverThumb({
   slideCount = 0,
   slideCountLabel,
   badges,
-  className = "relative h-24 w-20 shrink-0 overflow-hidden rounded-lg bg-slate-200",
+  className = "h-24 w-20",
+  style,
 }: ResearchCoverThumbProps) {
   const candidates = researchCoverCandidates({
     sourceCoverImageUrl: sourceCoverImageUrl ?? coverImageUrl,
@@ -50,24 +54,27 @@ export function ResearchCoverThumb({
   const exhausted = !proxied || index >= candidates.length;
 
   return (
-    <div className={className}>
+    <div
+      className={`relative box-border shrink-0 overflow-hidden rounded-lg bg-slate-200 ${className}`}
+      style={style}
+    >
       {!exhausted ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           key={proxied}
           src={proxied}
           alt=""
-          className="h-full w-full object-cover"
+          className="block h-full w-full object-cover"
           loading="lazy"
           onError={() => setIndex((i) => i + 1)}
         />
       ) : (
-        <div className="flex h-full items-center justify-center px-1 text-center text-[9px] text-slate-400">
+        <div className="flex h-full w-full items-center justify-center px-1 text-center text-[9px] text-slate-400">
           {noCoverLabel}
         </div>
       )}
       {slideCount > 1 && slideCountLabel && (
-        <span className="absolute bottom-1 right-1 rounded bg-black/70 px-1 py-0.5 text-[9px] font-medium text-white">
+        <span className="absolute bottom-1 right-1 z-10 rounded bg-black/70 px-1 py-0.5 text-[9px] font-medium text-white">
           {slideCountLabel(slideCount)}
         </span>
       )}

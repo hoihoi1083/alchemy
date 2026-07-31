@@ -34,7 +34,7 @@ export function TemplateSlotChecklist({
           const deferredLater = deferred.has(slot.id) && !ok;
           return (
             <li key={slot.id} className="flex items-center gap-2 text-xs text-slate-600">
-              <span className={ok ? "text-emerald-600" : required ? "text-amber-600" : "text-slate-400"}>
+              <span className={ok ? "text-violet-600" : required ? "text-amber-600" : "text-slate-400"}>
                 {ok ? "✓" : required ? "!" : "○"}
               </span>
               {m.wizard.templateSlots[slot.id]}

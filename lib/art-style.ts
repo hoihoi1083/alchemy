@@ -19,6 +19,8 @@ export const DEFAULT_ART_STYLE: ArtStyleId = "realistic";
 export type ArtStyleDef = {
   id: ArtStyleId;
   icon: string;
+  /** Square preview thumbnail for style pickers. */
+  previewSrc: string;
   /** Core look clause for Nano Banana image prompts. */
   imageClause: string;
   /** Storyboard series opener. */
@@ -39,6 +41,7 @@ const ART_STYLES: Record<ArtStyleId, ArtStyleDef> = {
   realistic: {
     id: "realistic",
     icon: "📷",
+    previewSrc: "/images/studio/art-styles/realistic.png",
     imageClause: "Photorealistic commercial photography, natural skin and materials, realistic lighting.",
     storyboardLead: "photorealistic product video",
     cinematicGuard:
@@ -54,6 +57,7 @@ const ART_STYLES: Record<ArtStyleId, ArtStyleDef> = {
   "anime-2d": {
     id: "anime-2d",
     icon: "🎌",
+    previewSrc: "/images/studio/art-styles/anime-2d.png",
     imageClause:
       "Japanese anime style, 2D cel-shaded illustration, clean linework, vibrant colors, consistent character design, anime background art.",
     storyboardLead: "anime-style 2D cel-shaded illustrated product video",
@@ -70,6 +74,7 @@ const ART_STYLES: Record<ArtStyleId, ArtStyleDef> = {
   "cartoon-3d": {
     id: "cartoon-3d",
     icon: "🧸",
+    previewSrc: "/images/studio/art-styles/cartoon-3d.png",
     imageClause:
       "3D animated Pixar-style render, soft global illumination, stylized friendly proportions, smooth surfaces, cinematic 3D cartoon look.",
     storyboardLead: "3D animated Pixar-style product video",
@@ -86,6 +91,7 @@ const ART_STYLES: Record<ArtStyleId, ArtStyleDef> = {
   "comic-webtoon": {
     id: "comic-webtoon",
     icon: "💬",
+    previewSrc: "/images/studio/art-styles/comic-webtoon.png",
     imageClause:
       "Korean webtoon / comic book style, bold clean outlines, flat cel shading, expressive characters, feed-friendly illustration.",
     storyboardLead: "webtoon / comic-style illustrated product video",
@@ -102,6 +108,7 @@ const ART_STYLES: Record<ArtStyleId, ArtStyleDef> = {
   watercolor: {
     id: "watercolor",
     icon: "🎨",
+    previewSrc: "/images/studio/art-styles/watercolor.png",
     imageClause:
       "Soft watercolor illustration, visible paper grain, wet-on-wet color bleeds, delicate linework, painterly soft edges, artistic hand-painted feel.",
     storyboardLead: "watercolor illustrated product video",

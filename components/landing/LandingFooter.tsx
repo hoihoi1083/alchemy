@@ -21,7 +21,7 @@ export function LandingFooter() {
   const productLinks = [
     { label: f.studio, href: "/start" },
     { label: f.how, href: "/#how" },
-    { label: f.pricing, href: "/#pricing" },
+    { label: f.pricing, href: "/pricing" },
     { label: f.library, href: "/library" },
     { label: L.brandKitLink, href: "/#brand-kit" },
     { label: L.proCanvasLink, href: "/pro" },

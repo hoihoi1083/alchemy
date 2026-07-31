@@ -30,7 +30,7 @@ export function LandingTransformSection() {
 					<img
 						src={mockSrc}
 						alt={L.heroImageAlt}
-						className="h-auto w-full rounded-xl shadow-lg shadow-violet-200/40"
+						className="h-auto w-full rounded-xl shadow-lg shadow-slate-200/60"
 					/>
 				</Reveal>
 

@@ -698,7 +698,7 @@ export function buildTeachingCarouselSlideImagePrompt(
       `Slide role: ${slide.role}.`,
       slide.composition ? `Layout note: ${slide.composition}.` : "",
       refBlock,
-      "LAYOUT TRANSFER: replicate IMAGE 1 ad design grammar on this slide — same grid/list/panel structure, component types, and typography hierarchy as the reference; swap in IMAGE 2 product and user brief copy only.",
+      "LAYOUT TRANSFER: IMAGE 1 = user product hero; IMAGE 2 = style reference. Replicate IMAGE 2 ad design grammar on this slide — same grid/list/panel structure, component types, and typography hierarchy; swap in IMAGE 1 product and user brief copy only.",
     );
     return withLogo(
       joinParts(
@@ -1137,7 +1137,7 @@ export function buildCampaignSlideImagePrompt(
       : "",
     `Shared series styling (colors, typography, mood — same on every slide): ${plan.visualDna}.`,
     referenceConcept
-      ? "Keep IMAGE 1 ad design language on every slide — vary headline, layout role, and slide copy only; IMAGE 2 product must appear on every slide."
+      ? "Keep IMAGE 2 ad design language on every slide — vary headline, layout role, and slide copy only; IMAGE 1 product must appear on every slide."
       : referenceImageMode === "style-only"
         ? "Match IMAGE 1 palette, typography mood, and infographic/edu aesthetic on every slide — distinct layout role and copy per slide; never copy reference on-image text."
         : referenceImageMode === "clone"
@@ -1289,7 +1289,7 @@ export function buildReferenceConceptImagePrompt(
   const copyHint = promoTypographyHint(vars, true);
   const framingHint =
     vars.framing === "auto"
-      ? "Keep the same product interaction type as IMAGE 1 (in hand, on wrist, flat lay, circle hero, on pedestal). Use natural hands with IMAGE 2's product when IMAGE 1 shows hands — face out of frame."
+      ? "Staging: adapt IMAGE 2's pose type (hand / wrist / flat lay / pedestal) but the held/shown item must be IMAGE 1's exact product — never IMAGE 2's item. Face out of frame when hands appear."
       : FRAMING_IMAGE[vars.framing];
   const shopBlock = joinParts(
     options?.brandProfile?.businessName
@@ -1308,8 +1308,9 @@ export function buildReferenceConceptImagePrompt(
     return joinParts(
       artStyleMandatoryLead(vars.artStyle),
       `Two images. Create ONE new ${aspect} marketing still for ${product}.`,
-      `IMAGE 1 = layout/style reference. IMAGE 2 = product hero — always show IMAGE 2's item, never IMAGE 1's product.`,
-      `Keep IMAGE 1 layout rhythm, graphic component types, typography hierarchy, and staging pose type. Adapt background and lighting to suit IMAGE 2. IMAGE 2 shows ${product} — do not copy IMAGE 1 logos, wordmarks, or selling lines.`,
+      `IMAGE 1 = user's product hero (mascot/SKU to keep exactly). IMAGE 2 = layout/style reference only — never show IMAGE 2's product as the hero.`,
+      `Transform IMAGE 1 into an ad that borrows IMAGE 2's layout rhythm, graphic component types, typography hierarchy, and staging pose type. Adapt background and lighting to suit IMAGE 1. Do not copy IMAGE 2 logos, wordmarks, or selling lines.`,
+      `CRITICAL: The hero subject must be recognizable as IMAGE 1 (same character/product). If IMAGE 1 is a 3D mascot/character, keep that mascot — do not replace it with jewelry, bottles, or other items from IMAGE 2.`,
       shopBlock,
       campaignCopy ? `Campaign copy (all on-image text): ${campaignCopy}.` : "",
       artStyleImageClause(vars.artStyle),
@@ -1326,11 +1327,13 @@ export function buildReferenceConceptImagePrompt(
   return joinParts(
     artStyleMandatoryLead(vars.artStyle),
     `Two images. Create ONE new ${aspect} marketing still for ${product}.`,
-    `HOW TO USE IMAGE 1 (reference ad) — three layers:`,
-    `LAYER A — KEEP (design language): layout structure, composition rhythm, graphic component types (badges, frames, accent shapes, hand-drawn or elegant decoration style), typography hierarchy style, and product staging pose (hand / wrist / flat lay / circle hero). A viewer should recognize the same ad design family as IMAGE 1.`,
-    `LAYER B — ADAPT (venue and light): background, venue, surface, and lighting should suit IMAGE 2's product colors and the shop/campaign mood — they may differ from IMAGE 1. Do not clone IMAGE 1's exact location or lighting if it clashes with the new product; make the environment feel native to this product and shop.`,
-    `LAYER C — REPLACE (content): use IMAGE 2's exact product (colors, materials, shape). All readable headlines and body copy must come from the campaign brief below — never reuse IMAGE 1 product names, selling lines, zodiac/星座 hooks, or Chinese characters from IMAGE 1. IMAGE 1 belongs to another company — do not copy its logos, wordmarks, store names, sponsor marks, @handles, or watermarks. Never render English planning notes or carousel-structure meta-text on the image.`,
-    `IMAGE 2 = the real product hero. Always show IMAGE 2's item — never the product from IMAGE 1. If the campaign product name disagrees with IMAGE 2, trust IMAGE 2 pixels for product category, shape, and materials.`,
+    `HOW TO USE THE TWO IMAGES:`,
+    `IMAGE 1 = the user's real product/mascot photo — this is the ONLY allowed hero subject. Preserve exact identity (shape, materials, character design).`,
+    `IMAGE 2 = reference ad for layout/style ONLY — borrow design grammar; REPLACE IMAGE 2's product with IMAGE 1.`,
+    `LAYER A — KEEP from IMAGE 2 (design language): layout structure, composition rhythm, graphic component types (badges, frames, accent shapes), typography hierarchy style, and staging pose type (hand / wrist / flat lay / circle hero).`,
+    `LAYER B — ADAPT (venue and light): background, venue, surface, and lighting should suit IMAGE 1's product colors and the shop/campaign mood.`,
+    `LAYER C — REPLACE (content): hero must be IMAGE 1's exact item. All readable copy from the campaign brief below — never reuse IMAGE 2 product names, selling lines, or on-image text. Do not copy IMAGE 2 logos, wordmarks, store names, @handles, or watermarks.`,
+    `If the campaign product name disagrees with IMAGE 1 pixels, trust IMAGE 1 for product category, shape, and materials.`,
     shopBlock,
     campaignCopy ? `Campaign copy (all on-image text): ${campaignCopy}.` : "",
     artStyleImageClause(vars.artStyle),
@@ -1438,13 +1441,13 @@ function imageStoryboardStyleRefBlock(
   const eraseText = textless ? REFERENCE_ERASE_TEXT_LINE : "";
   if (dualProductAndStyle) {
     return joinParts(
-      "DUAL REFERENCE — IMAGE 1 = style/layout mood from research; IMAGE 2 = the user's EXACT product photo",
-      "Keep IMAGE 1's composition grammar, color mood, and social-ad energy.",
-      "Replace every product in the frame with IMAGE 2's exact item — same beads, colors, materials, charms, clasp. Do NOT invent a different bracelet or copy IMAGE 1's product.",
+      "DUAL REFERENCE — IMAGE 1 = the user's EXACT product photo; IMAGE 2 = style/layout mood from research",
+      "Keep IMAGE 2's composition grammar, color mood, and social-ad energy.",
+      "Hero subject must be IMAGE 1's exact item — do NOT copy IMAGE 2's product, jewelry, or props.",
       contentReplace,
       REFERENCE_TOPIC_GUARD_LINE,
       eraseText,
-      "Adapt beat layout rhythm for this scene — same design family as IMAGE 1, hero product from IMAGE 2 only.",
+      "Adapt beat layout rhythm for this scene — same design family as IMAGE 2, hero product from IMAGE 1 only.",
       plan.visualDirection ? `Locked series aesthetic: ${plan.visualDirection}.` : "",
       thirdPartyBrandGuardBlock(),
     );
@@ -1551,7 +1554,7 @@ export function buildStoryboardSceneImagePrompt(
         `Scene role: ${scene.role}.`,
         sceneImagePrompt ? `Scene action: ${sceneImagePrompt}.` : "",
         "Keep the SAME ad layout shell as IMAGE 1 on every scene — only scene copy and micro-angle change inside that design family.",
-        "Keep IMAGE 1 ad design language; IMAGE 2 product as hero in this scene.",
+        "Keep IMAGE 2 ad design language; IMAGE 1 product as hero in this scene.",
         buildReferenceConceptImagePrompt(imageBriefVars, {
           shopStyleHint: shopHint,
           brandProfile: options?.brandProfile ?? undefined,

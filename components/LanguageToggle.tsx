@@ -35,7 +35,7 @@ export function LanguageToggle({ variant = "dark", size = "default" }: TogglePro
           onClick={() => pick(code)}
           className={`rounded-full ${pad} transition ${
             locale === code
-              ? "bg-emerald-600 text-white"
+              ? "bg-violet-600 text-white"
               : variant === "light"
                 ? "text-slate-500 hover:text-slate-800"
                 : "text-slate-400 hover:text-slate-200"

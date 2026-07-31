@@ -67,6 +67,8 @@ export type WizardMicroStepState = {
   imageUrl: string | null;
   videoUrl: string | null;
   promptExtra: string;
+  /** True after user applies a research angle / reference post on the intake step. */
+  contentResearchApplied: boolean;
   shipItEligible: boolean;
   hasGeneratedImage: boolean;
   userReferenceBrief: unknown;
@@ -334,6 +336,17 @@ function filterGraphSteps(
     ) {
       continue;
     }
+    // Research UI is completed on the intake fuse (route.intake) — skip legacy
+    // research.platform / pick_angle / wait.research_apply so Continue doesn't
+    // drop users onto a duplicate research screen.
+    if (
+      ctx.intakePath === "research" &&
+      (id === "research.platform" ||
+        id === "research.pick_angle" ||
+        id === "wait.research_apply")
+    ) {
+      continue;
+    }
     if (ctx.conceptSource === "research" && id === "identity.concept") continue;
     if (ctx.conceptSource === "assistant" && id === "identity.concept_topic") continue;
     if (ctx.videoSubpath && id === "route.video_subpath") continue;
@@ -431,6 +444,8 @@ function reorderReelVideoSettings(ids: MicroStepId[]): MicroStepId[] {
 function injectArtStyle(ids: MicroStepId[], state?: WizardMicroStepState): MicroStepId[] {
   // UGC talking-head keyframes are photoreal-only — no art-style picker.
   if (state && isUgcPresenterStyle(state.visualStyleId)) return ids;
+  // Fused pre-generate already includes art style / options / generate.
+  if (ids.includes("setup.pre_generate")) return ids;
   if (!ids.some((id) => id.startsWith("image."))) return ids;
   if (ids.includes("image.art_style")) return ids;
   // image.options already includes art style — skip duplicate step.
@@ -471,9 +486,13 @@ export function resolveMicroSteps(
     return wrapSteps(["route.output_goal"], ctx);
   }
 
+  /** Keep creation-path on screen after pick until user taps Continue. */
+  const finish = (next: MicroStepId[]) =>
+    wrapSteps(next[0] === "route.output_goal" ? next : ["route.output_goal", ...next], ctx);
+
   if (!ctx.promotionMode) {
     ids.push("route.subject");
-    return wrapSteps(ids, ctx);
+    return finish(ids);
   }
 
   if (ctx.promotionMode === "concept" && ctx.workflowMode === "combined") {
@@ -491,34 +510,32 @@ export function resolveMicroSteps(
 
   const conceptSplit = needsConceptSourceSplit(ctx, state);
 
-  if (conceptSplit) {
-    if (!ctx.conceptSource) {
-      return wrapSteps([...ids, "route.concept_source"], ctx);
-    }
-    if (!ctx.intakePath) {
-      ids.push(ctx.conceptSource === "assistant" ? "identity.concept" : "identity.concept_topic");
-      return wrapSteps(ids, ctx);
-    }
-  } else if (!ctx.intakePath) {
-    if (ctx.promotionMode === "physical") {
-      ids.push("identity.product_name");
+  // Name page → fused Research | Direct (or Assistant) tabs. Concept source is
+  // chosen on route.intake (no standalone route.concept_source ChoiceCards).
+  if (!ctx.intakePath) {
+    if (conceptSplit || ctx.promotionMode === "concept") {
+      if (conceptSplit) {
+        ids.push("identity.concept_topic");
+      } else {
+        ids.push("identity.concept");
+      }
     } else {
-      ids.push("identity.concept");
+      ids.push("identity.product_name");
     }
     ids.push("route.intake");
-    return wrapSteps(ids, ctx);
+    return finish(ids);
   }
 
   // Video-only + direct must pick a style (promo / UGC / …) before the full path resolves.
   // Otherwise resumeStepIndex skips route.video_subpath (it's a routing prefix) and UGC never appears.
   if (ctx.workflowMode === "video-only" && ctx.intakePath === "direct" && !ctx.videoSubpath) {
-    return wrapSteps(["route.video_subpath"], ctx);
+    return finish(["route.video_subpath"]);
   }
 
   const pathId = resolvePathId(ctx, state);
   if (!pathId) {
     ids.push("route.intake");
-    return wrapSteps(ids, ctx);
+    return finish(ids);
   }
 
   // 圖+片 (except UGC / cinematic): always evaluate steps as storyboard-video so
@@ -538,7 +555,13 @@ export function resolveMicroSteps(
   if (pathId === "product_combined" || pathId === "concept_combined") {
     const path = graph.paths[pathId];
     if (path && "merge" in path && path.merge) {
-      return wrapSteps(injectArtStyle(expandMergedPath(pathId, ctx, resolveState), resolveState), ctx);
+      return finish(
+        injectIntakeHistory(
+          injectArtStyle(expandMergedPath(pathId, ctx, resolveState), resolveState),
+          ctx,
+          resolveState,
+        ),
+      );
     }
   }
 
@@ -549,8 +572,36 @@ export function resolveMicroSteps(
   }
   pathSteps = injectArtStyle(pathSteps, resolveState);
   pathSteps = injectPrimaryStyle(pathSteps, pathId, resolveState);
+  pathSteps = injectIntakeHistory(pathSteps, ctx, resolveState);
 
-  return wrapSteps(pathSteps, ctx);
+  return finish(pathSteps);
+}
+
+/** Keep product-name + intake in the resolved list after path commit so Back works. */
+function injectIntakeHistory(
+  ids: MicroStepId[],
+  ctx: MicroWizardContext,
+  state: WizardMicroStepState,
+): MicroStepId[] {
+  if (!ctx.intakePath) return ids;
+  if (ids.includes("route.intake")) return ids;
+
+  const head: MicroStepId[] = [];
+  if (ctx.promotionMode === "physical") {
+    head.push("identity.product_name");
+  } else if (ctx.promotionMode === "concept") {
+    // Assistant uses identity.concept; research uses concept_topic.
+    // Prefer conceptSource once chosen — don't re-open topic on assistant paths.
+    if (ctx.conceptSource === "assistant") {
+      head.push("identity.concept");
+    } else if (ctx.conceptSource === "research" || needsConceptSourceSplit(ctx, state)) {
+      head.push("identity.concept_topic");
+    } else {
+      head.push("identity.concept");
+    }
+  }
+  head.push("route.intake");
+  return [...head, ...ids];
 }
 
 /** Direct image paths need explicit visual style pick (classic SetupStep primary paths). */
@@ -632,7 +683,22 @@ export function canProceedMicroStep(
   if (id === "route.cinematic_mode" && state.visualStyleId !== "concept-cinematic") {
     return "pick_cinematic_mode";
   }
-  if (id === "route.intake" && !ctx.intakePath) return "pick_intake";
+  if (id === "route.intake") {
+    if (!ctx.intakePath) return "pick_intake";
+    // Physical product: Research tab alone is not enough — must apply a direction first.
+    // Concept uses Research | Assistant with different completion rules.
+    // Unlock when style prompt is set, cover was attached, or apply-ref was written
+    // (product-shot angles may clear promptExtra but still attach the reference).
+    if (
+      ctx.promotionMode === "physical" &&
+      ctx.intakePath === "research" &&
+      !isContentResearchStyleExtra(state.promptExtra) &&
+      !state.imageRefPhoto &&
+      !state.contentResearchApplied
+    ) {
+      return "complete_research";
+    }
+  }
   if (id === "route.concept_source" && !ctx.conceptSource) return "pick_concept_source";
   if (id === "route.video_subpath" && !ctx.videoSubpath) return "pick_video_subpath";
   if (id === "identity.product_name" && !state.product.trim()) return "need_product_name";
@@ -640,6 +706,26 @@ export function canProceedMicroStep(
   if (id === "identity.concept_topic" && !state.conceptIdea.trim()) return "need_concept_topic";
   if (id === "asset.product_photo" && ctx.promotionMode === "physical" && !state.productPhoto) {
     return "need_product_photo";
+  }
+  if (id === "setup.pre_generate") {
+    if (state.referenceAnalyzeBusy) return "reference_analyzing";
+    if (
+      state.imageRefPhoto &&
+      !state.userReferenceBrief &&
+      !state.referenceAnalyzeNote
+    ) {
+      return "reference_analyzing";
+    }
+    if (ctx.promotionMode === "physical" && !state.productPhoto) {
+      return "need_product_photo";
+    }
+    if (
+      !state.imageRefPhoto &&
+      !state.headline.trim() &&
+      !state.product.trim()
+    ) {
+      return "need_headline";
+    }
   }
   if (id === "copy.creative_brief" && !state.creativeVideoBrief.trim()) {
     return "need_creative_brief";

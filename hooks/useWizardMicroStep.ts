@@ -86,6 +86,7 @@ function wizardStateSnapshot(wizard: StudioWizardValue): WizardMicroStepState {
     imageUrl: wizard.imageUrl,
     videoUrl: wizard.videoUrl,
     promptExtra: wizard.promptExtra,
+    contentResearchApplied: Boolean(wizard.contentResearchApplyRef),
     shipItEligible: wizard.shipItEligible,
     hasGeneratedImage: Boolean(wizard.imageUrl || wizard.cinematicScenes.length > 0),
     userReferenceBrief: wizard.userReferenceBrief,
@@ -179,6 +180,11 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
       wizard.referenceAnalyzeBusy,
       wizard.imageUrl,
       wizard.imageBusy,
+      wizard.promptExtra,
+      wizard.contentResearchApplyRef,
+      wizard.product,
+      wizard.headline,
+      wizard.subline,
     ],
   );
 
@@ -195,12 +201,26 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
 
   const proceedCtx = useMemo((): MicroWizardContext => {
     if (currentId === "route.intake") {
-      const intakePath = pendingIntakePath ?? ctx.intakePath;
-      return intakePath ? { ...ctx, intakePath } : ctx;
+      const conceptSource = pendingConceptSource ?? ctx.conceptSource;
+      const intakeFromConcept = conceptSource
+        ? intakePathForConceptSource(conceptSource)
+        : undefined;
+      const intakePath = pendingIntakePath ?? ctx.intakePath ?? intakeFromConcept;
+      if (!intakePath) return ctx;
+      return {
+        ...ctx,
+        intakePath,
+        ...(conceptSource ? { conceptSource } : {}),
+      };
     }
     if (currentId === "route.concept_source") {
       const conceptSource = pendingConceptSource ?? ctx.conceptSource;
-      return conceptSource ? { ...ctx, conceptSource } : ctx;
+      if (!conceptSource) return ctx;
+      return {
+        ...ctx,
+        conceptSource,
+        intakePath: intakePathForConceptSource(conceptSource),
+      };
     }
     if (currentId === "route.video_subpath") {
       const videoSubpath = pendingVideoSubpath ?? ctx.videoSubpath;
@@ -265,6 +285,12 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
 
   const goNext = useCallback(() => {
     if (!currentId || blockReason) return;
+    if (
+      (currentId === "setup.pre_generate" || currentId === "image.generate") &&
+      wizard.imageGenerateDisabledReason
+    ) {
+      return;
+    }
 
     if (currentId === "shortcut.ship_it") {
       void wizard.runShipItPipeline();
@@ -279,7 +305,7 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
       void wizard.planAiVideoPrompt();
     }
 
-    if (currentId === "image.generate") {
+    if (currentId === "image.generate" || currentId === "setup.pre_generate") {
       void wizard.generateImage();
       autoAdvancedRef.current = null;
       setStepIndex((i) => i + 1);
@@ -313,9 +339,36 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     }
 
     if (currentId === "route.intake") {
-      const intakePath = pendingIntakePath ?? ctx.intakePath;
+      const conceptSource = pendingConceptSource ?? ctx.conceptSource;
+      const intakePath =
+        pendingIntakePath ??
+        ctx.intakePath ??
+        (conceptSource ? intakePathForConceptSource(conceptSource) : undefined);
       if (!intakePath) return;
-      patchContext({ intakePath });
+
+      const wizardApi = {
+        setImageRefPhoto: wizard.setImageRefPhoto,
+        setImageCreativeMode: wizard.setImageCreativeMode,
+        setExtraKitPhotos: wizard.setExtraKitPhotos,
+        setContentResearchApplyRef: wizard.setContentResearchApplyRef,
+        setUserReferenceBrief: wizard.setUserReferenceBrief,
+        setPromptExtra: wizard.setPromptExtra,
+        setCreativeVideoBrief: wizard.setCreativeVideoBrief,
+        setHeadline: wizard.setHeadline,
+        setSubline: wizard.setSubline,
+        setOffer: wizard.setOffer,
+        onReferenceAdFile: wizard.onReferenceAdFile,
+      };
+
+      let nextCtx: MicroWizardContext = { ...ctx, intakePath };
+      if (wizard.promotionMode === "concept" && conceptSource) {
+        if (conceptSource === "assistant") clearConceptResearchState(wizardApi);
+        else clearConceptAssistantState(wizardApi);
+        nextCtx = { ...nextCtx, conceptSource };
+        setPendingConceptSource(undefined);
+      }
+
+      patchContext(nextCtx);
       setPendingIntakePath(undefined);
       if (intakePath === "direct") {
         wizard.setImageCreativeMode(wizard.imageRefPhoto ? "reference-concept" : "promo-ai");
@@ -339,7 +392,7 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
             ? ("storyboard-video" as const)
             : state.visualStyleId,
       };
-      const nextSteps = resolveMicroSteps({ ...ctx, intakePath }, nextState);
+      const nextSteps = resolveMicroSteps(nextCtx, nextState);
       autoAdvancedRef.current = null;
       setStepIndex(resumeStepIndex(nextSteps));
       return;
@@ -363,10 +416,26 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
       };
       if (conceptSource === "assistant") clearConceptResearchState(wizardApi);
       else clearConceptAssistantState(wizardApi);
-      patchContext({ conceptSource });
+      const intakePath = intakePathForConceptSource(conceptSource);
+      patchContext({ conceptSource, intakePath });
       setPendingConceptSource(undefined);
+      setPendingIntakePath(undefined);
+      if (intakePath === "direct") {
+        wizard.setImageCreativeMode(wizard.imageRefPhoto ? "reference-concept" : "promo-ai");
+      }
+      const nextState = {
+        ...state,
+        visualStyleId:
+          intakePath === "research" &&
+          (ctx.workflowMode === "combined" || wizard.workflowMode === "combined") &&
+          !wizard.isUgcPresenterOutput &&
+          wizard.visualStyleId !== "concept-cinematic"
+            ? ("storyboard-video" as const)
+            : state.visualStyleId,
+      };
+      const nextSteps = resolveMicroSteps({ ...ctx, conceptSource, intakePath }, nextState);
       autoAdvancedRef.current = null;
-      setStepIndex(stepIndex + 1);
+      setStepIndex(resumeStepIndex(nextSteps));
       return;
     }
 
@@ -396,31 +465,7 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
       return;
     }
 
-    if (currentId === "identity.concept_topic") {
-      const intakePath = intakePathForConceptSource("research");
-      patchContext({ intakePath, conceptSource: "research" });
-      if (
-        (ctx.workflowMode === "combined" || wizard.workflowMode === "combined") &&
-        ctx.combinedStyle !== "cinematic" &&
-        wizard.visualStyleId !== "concept-cinematic" &&
-        !wizard.isUgcPresenterOutput
-      ) {
-        wizard.selectVisualStyle("storyboard-video");
-      }
-      const nextState = {
-        ...state,
-        visualStyleId:
-          (ctx.workflowMode === "combined" || wizard.workflowMode === "combined") &&
-          ctx.combinedStyle !== "cinematic" &&
-          state.visualStyleId !== "concept-cinematic"
-            ? ("storyboard-video" as const)
-            : state.visualStyleId,
-      };
-      const nextSteps = resolveMicroSteps({ ...ctx, intakePath, conceptSource: "research" }, nextState);
-      autoAdvancedRef.current = null;
-      setStepIndex(resumeStepIndex(nextSteps));
-      return;
-    }
+    // Concept topic is only the name page before fused intake tabs — do not lock research path here.
 
     if (currentId === "route.video_subpath") {
       const videoSubpath = pendingVideoSubpath ?? ctx.videoSubpath;
@@ -442,7 +487,20 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
 
     autoAdvancedRef.current = null;
     setStepIndex(nextIndex);
-  }, [blockReason, ctx, currentId, handoffLegacy, patchContext, state, stepIndex, steps.length, wizard]);
+  }, [
+    blockReason,
+    ctx,
+    currentId,
+    handoffLegacy,
+    patchContext,
+    pendingConceptSource,
+    pendingIntakePath,
+    pendingVideoSubpath,
+    state,
+    stepIndex,
+    steps.length,
+    wizard,
+  ]);
 
   const goBack = useCallback(() => {
     autoAdvancedRef.current = null;
@@ -468,8 +526,20 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
         return;
       }
     }
+
+    // Review → generate setup (skip wait.*) so auto-advance does not bounce forward.
+    if (currentId === "image.review") {
+      const genIdx = steps.findIndex(
+        (s) => s.id === "setup.pre_generate" || s.id === "image.generate",
+      );
+      if (genIdx >= 0) {
+        setStepIndex(genIdx);
+        return;
+      }
+    }
+
     if (stepIndex > 0) setStepIndex((i) => i - 1);
-  }, [finishedSetup, stepIndex, steps, wizard]);
+  }, [currentId, finishedSetup, stepIndex, steps, wizard]);
 
   const skipStep = useCallback(() => {
     autoAdvancedRef.current = null;

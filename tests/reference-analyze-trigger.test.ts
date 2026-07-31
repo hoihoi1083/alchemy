@@ -22,7 +22,7 @@ describe("reference analyze trigger", () => {
     );
   });
 
-  it("changes when cover or carousel extras change", () => {
+  it("ignores product-kit extras — only cover triggers re-analyze", () => {
     const cover = new File(["a"], "cover.jpg", { type: "image/jpeg" });
     const extra = new File(["b"], "slide-2.jpg", { type: "image/jpeg" });
     const base = {
@@ -37,6 +37,6 @@ describe("reference analyze trigger", () => {
     };
     const k1 = referenceAnalyzeTriggerKey(base);
     const k2 = referenceAnalyzeTriggerKey({ ...base, extras: [extra] });
-    assert.notEqual(k1, k2);
+    assert.equal(k1, k2);
   });
 });

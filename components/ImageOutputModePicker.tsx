@@ -15,6 +15,8 @@ type Props = {
   forVideoKeyframe?: boolean;
   /** When false (and not forVideoKeyframe), hide teaching carousel. Default true for image-only. */
   includeTeachingCarousel?: boolean;
+  /** Studio fuse pages use violet selected state. */
+  accent?: "emerald" | "violet";
 };
 
 export function ImageOutputModePicker({
@@ -23,6 +25,7 @@ export function ImageOutputModePicker({
   lockedCampaign,
   forVideoKeyframe = false,
   includeTeachingCarousel = true,
+  accent = "emerald",
 }: Props) {
   const { m } = useLocale();
   const options: ImageOutputMode[] = useMemo(() => {
@@ -37,6 +40,11 @@ export function ImageOutputModePicker({
       onChange(options[0] ?? "single");
     }
   }, [onChange, options, value]);
+
+  const selectedClass =
+    accent === "violet"
+      ? "border-violet-400 bg-violet-50"
+      : "border-emerald-400 bg-emerald-50";
 
   return (
     <div className="space-y-2">
@@ -61,7 +69,7 @@ export function ImageOutputModePicker({
               disabled={lockedCampaign && mode !== "campaign"}
               className={`rounded-xl border p-3 text-left transition ${
                 value === mode
-                  ? "border-emerald-400 bg-emerald-50"
+                  ? selectedClass
                   : "border-slate-200 bg-white hover:border-slate-300"
               } ${lockedCampaign ? "cursor-default" : ""}`}
             >

@@ -42,7 +42,7 @@ const STYLE_ONLY_TAIL =
   "Match topic lane and visual style family ONLY — each carousel slide must use a distinct layout; never clone the reference poster structure or duplicate the same hero graphic.";
 
 const LAYOUT_TRANSFER_TAIL =
-  "Borrow IMAGE 1 design grammar (layout rhythm, component types, typography hierarchy, staging pose type) — show IMAGE 2 product as hero, all readable copy from user brief. IMAGE 1 is another company's post — do NOT copy its logos, wordmarks, store names, sponsor marks, @handles, watermarks, or original selling lines. Background and lighting may adapt to suit IMAGE 2.";
+  "IMAGE 1 = user product hero (keep exactly). IMAGE 2 = style/layout reference only — borrow IMAGE 2 design grammar (layout rhythm, component types, typography hierarchy, staging pose type); never show IMAGE 2's product as hero. All readable copy from user brief. IMAGE 2 is another company's post — do NOT copy its logos, wordmarks, store names, sponsor marks, @handles, watermarks, or original selling lines. Background and lighting may adapt to suit IMAGE 1.";
 
 const CLONE_TAIL =
   "Generate in the same content lane and visual style family as this reference — do not genericize into unrelated stock marketing.";

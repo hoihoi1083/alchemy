@@ -121,10 +121,10 @@ function applyCampaignFallbacks(
     if (!next.composition) {
       next.composition = input.hasReferenceLayout
         ? i === 0
-          ? "Hero slide — mirror IMAGE 1 ad layout rhythm; IMAGE 2 product as hero subject"
+          ? "Hero slide — IMAGE 1 user product as hero; mirror IMAGE 2 ad layout rhythm"
           : i === 1
-            ? "Selling-points slide — same IMAGE 1 design language with bullet / feature copy layout"
-            : "Offer slide — same IMAGE 1 design language with CTA / offer badge area"
+            ? "Selling-points slide — IMAGE 1 product + IMAGE 2 design language with bullet / feature copy layout"
+            : "Offer slide — IMAGE 1 product + IMAGE 2 design language with CTA / offer badge area"
         : input.hasStyleReference
           ? i === 0
             ? "Hero slide — match reference palette/typography; new cover layout with main hook headline"
@@ -192,7 +192,7 @@ function buildPlanPrompt(input: {
 
   const referenceRules = layoutTransferRef
     ? [
-        "- LAYOUT TRANSFER (reference ad + user product photo): mirror IMAGE 1 design grammar on every slide — same layout family as the reference.",
+        "- LAYOUT TRANSFER (user product photo + reference ad): IMAGE 1 = product hero; IMAGE 2 = style. Mirror IMAGE 2 design grammar on every slide — same layout family as the reference.",
         "- visualDna MUST match reference: layout grid type, color palette, typography hierarchy from USER REFERENCE.",
         "- Each slide = one campaign role (hero / selling points / offer) filled with USER copy — do NOT invent unrelated editorial layouts.",
         "- All on-image copy about the user's product only — never reuse reference poster wording.",
@@ -239,7 +239,7 @@ function buildPlanPrompt(input: {
     "- slides[2] offer: CTA / shop now mood — use ONLY user Offer text if provided",
     "- NEVER invent specific prices (HK$, ¥), discount %, or fake promotions unless Offer field is filled",
     input.hasReferenceLayout
-      ? "- User uploaded a REFERENCE AD (IMAGE 1) + product photo (IMAGE 2): plan compositions that follow IMAGE 1 layout family (typography hierarchy, graphic components, product staging pose). All on-image copy must come from user fields — never reuse reference poster wording."
+      ? "- User uploaded product photo (IMAGE 1) + REFERENCE AD (IMAGE 2): plan compositions that follow IMAGE 2 layout family (typography hierarchy, graphic components, product staging pose) while IMAGE 1 product stays the hero. All on-image copy must come from user fields — never reuse reference poster wording."
       : styleOnlyRef || layoutTransferRef
         ? "- composition: per-slide layout note — follow USER REFERENCE visual family; distinct layout per slide."
         : "- composition: per-slide layout note — coordinated series with consistent art direction",

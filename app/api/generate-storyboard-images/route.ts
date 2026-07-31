@@ -351,13 +351,13 @@ export async function POST(request: Request) {
     ) {
       imageUrlsForFal = [];
       if (strategy.useDualImage && dualImage && hasStyle && hasProduct) {
-        // Layout transfer: IMAGE 1 = style/layout, IMAGE 2 = product
-        imageUrlsForFal.push(await fal.storage.upload(styleRef as File));
+        // Layout transfer: IMAGE 1 = product identity, IMAGE 2 = style (edit models prioritize first image)
         imageUrlsForFal.push(await fal.storage.upload(reference as File));
+        imageUrlsForFal.push(await fal.storage.upload(styleRef as File));
       } else if (dualProductAndStyle) {
-        // Style mood from research + exact product identity
-        imageUrlsForFal.push(await fal.storage.upload(styleRef as File));
+        // Exact product identity first, then research style mood
         imageUrlsForFal.push(await fal.storage.upload(reference as File));
+        imageUrlsForFal.push(await fal.storage.upload(styleRef as File));
       } else if (hasProduct) {
         imageUrlsForFal.push(await fal.storage.upload(reference as File));
       } else if (hasStyle) {

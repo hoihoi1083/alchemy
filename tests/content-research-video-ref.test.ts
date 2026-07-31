@@ -214,6 +214,42 @@ describe("applyResearchPostReferences video handoff", () => {
     assert.deepEqual(modes, ["reference-concept"]);
     assert.equal(referenceAttached, false);
   });
+
+  it("keeps research cover as style ref and does not dump carousel into extraKit", async () => {
+    const extras: File[][] = [];
+    let styleRef: File | null = null;
+
+    await applyResearchPostReferences(
+      {
+        platform: "xiaohongshu",
+        promotionMode: "physical",
+        loadVideo: false,
+        imageUrls: [
+          "https://example.com/cover.jpg",
+          "https://example.com/slide-2.jpg",
+          "https://example.com/slide-3.jpg",
+        ],
+      },
+      {
+        setImageCreativeMode: () => {},
+        setImageRefPhoto: (file) => {
+          styleRef = file;
+        },
+        setExtraKitPhotos: (files) => extras.push(files),
+        onVideoCreativeModeChange: () => {},
+        onReferenceAdFile: () => {},
+      },
+      {
+        fetchResearchImagesAsFiles: async (urls) =>
+          urls.map((_, i) => mockImageFile(`research-${i}.jpg`)),
+        fetchResearchVideoAsFile: async () => null,
+        resolveResearchPostVideo: async () => null,
+      },
+    );
+
+    assert.equal(styleRef?.name, "research-0.jpg");
+    assert.deepEqual(extras, [[]]);
+  });
 });
 
 describe("applyContentAngleToWizard reel reference", () => {

@@ -14,9 +14,14 @@ import { SetupReferenceSection } from "@/components/studio/SetupReferenceSection
 type Props = {
   /** Micro-wizard: show expert visual style override */
   showAdvancedWorkflow?: boolean;
+  /** When reference + brief are shown above (fused pre-generate). */
+  omitReference?: boolean;
 };
 
-export function SetupCopyEditPanel({ showAdvancedWorkflow = true }: Props) {
+export function SetupCopyEditPanel({
+  showAdvancedWorkflow = true,
+  omitReference = false,
+}: Props) {
   const { m } = useLocale();
   const wizard = useWizard();
   const {
@@ -101,9 +106,9 @@ export function SetupCopyEditPanel({ showAdvancedWorkflow = true }: Props) {
         </p>
       ) : null}
 
-      <SetupReferenceSection />
+      {!omitReference ? <SetupReferenceSection /> : null}
 
-      {imageRefPhoto ? (
+      {!omitReference && imageRefPhoto ? (
         <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
           {m.wizard.referenceOptionalCopyHint}
         </p>

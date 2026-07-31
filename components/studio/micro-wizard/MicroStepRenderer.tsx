@@ -25,8 +25,12 @@ import {
   GenerationWaitPlaceholder,
   waitAspectFromString,
 } from "@/components/studio/GenerationWaitPlaceholder";
+import { ImageGenerateWaitPanel } from "@/components/studio/ImageGenerateWaitPanel";
 import { ImageResultPanel } from "@/components/studio/micro-wizard/ImageResultPanel";
 import { VideoOutputSourceCard } from "@/components/studio/VideoOutputSourceCard";
+import { ProductNameStep } from "@/components/studio/ProductNameStep";
+import { IntakeFuseStep, intakeTabFromPending } from "@/components/studio/IntakeFuseStep";
+import { PreGenerateSetupPanel } from "@/components/studio/PreGenerateSetupPanel";
 import { PrimaryPathsPanel } from "@/components/studio/PrimaryPathsPanel";
 import { SetupCopyEditPanel } from "@/components/studio/SetupCopyEditPanel";
 import { PresenterAvatarPicker } from "@/components/studio/PresenterAvatarPicker";
@@ -49,18 +53,19 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
   switch (stepId) {
     case "route.output_goal":
       return (
-        <ScreenShell title={mw.outputGoalTitle} hint={mw.outputGoalHint}>
+        <div className="space-y-4">
           <WorkflowModePicker
             value={micro.ctx.workflowMode ?? null}
             onChange={(mode: WorkflowMode) => {
               micro.patchContext({ workflowMode: mode });
               wizard.onWorkflowModeChange(mode);
             }}
+            showPhaseStepper
           />
           {micro.ctx.workflowMode && micro.ctx.workflowMode !== "image-only" ? (
             <VideoOutputSourceCard variant="setup" />
           ) : null}
-        </ScreenShell>
+        </div>
       );
 
     case "route.subject":
@@ -226,59 +231,65 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
       );
 
     case "route.concept_source":
+      // Legacy: concept source is chosen on fused route.intake tabs.
       return (
-        <ScreenShell title={mw.conceptSourceTitle} hint={mw.conceptSourceHint}>
-          <div className="grid gap-2 sm:grid-cols-2">
-            <ChoiceCard
-              active={(micro.pendingConceptSource ?? micro.ctx.conceptSource) === "assistant"}
-              title={mw.conceptSourceAssistantTitle}
-              description={mw.conceptSourceAssistantDesc}
-              onClick={() => micro.setConceptSource("assistant" as ConceptSource)}
-            />
-            <ChoiceCard
-              active={(micro.pendingConceptSource ?? micro.ctx.conceptSource) === "research"}
-              title={mw.conceptSourceResearchTitle}
-              description={mw.conceptSourceResearchDesc}
-              onClick={() => micro.setConceptSource("research" as ConceptSource)}
-            />
-          </div>
-        </ScreenShell>
+        <IntakeFuseStep
+          isConcept
+          workflowMode={micro.ctx.workflowMode ?? wizard.workflowMode}
+          activeTab={intakeTabFromPending({
+            isConcept: true,
+            pendingIntakePath: micro.pendingIntakePath,
+            intakePath: micro.ctx.intakePath,
+            pendingConceptSource: micro.pendingConceptSource,
+            conceptSource: micro.ctx.conceptSource,
+          })}
+          onSelectResearch={() => {
+            micro.setConceptSource("research" as ConceptSource);
+            micro.setIntakePath("research" as IntakePath);
+          }}
+          onSelectDirect={() => {
+            micro.setConceptSource("assistant" as ConceptSource);
+            micro.setIntakePath("direct" as IntakePath);
+          }}
+        />
       );
 
-    case "route.intake":
+    case "route.intake": {
+      const isConcept = wizard.promotionMode === "concept";
       return (
-        <ScreenShell title={mw.intakeTitle} hint={mw.intakeHint}>
-          <div className="grid gap-2 sm:grid-cols-2">
-            <ChoiceCard
-              active={(micro.pendingIntakePath ?? micro.ctx.intakePath) === "research"}
-              title={mw.intakeResearchTitle}
-              description={mw.intakeResearchDesc}
-              onClick={() => micro.setIntakePath("research" as IntakePath)}
-            />
-            <ChoiceCard
-              active={(micro.pendingIntakePath ?? micro.ctx.intakePath) === "direct"}
-              title={mw.intakeDirectTitle}
-              description={mw.intakeDirectDesc}
-              onClick={() => micro.setIntakePath("direct" as IntakePath)}
-            />
-          </div>
-        </ScreenShell>
+        <IntakeFuseStep
+          isConcept={isConcept}
+          workflowMode={micro.ctx.workflowMode ?? wizard.workflowMode}
+          activeTab={intakeTabFromPending({
+            isConcept,
+            pendingIntakePath: micro.pendingIntakePath,
+            intakePath: micro.ctx.intakePath,
+            pendingConceptSource: micro.pendingConceptSource,
+            conceptSource: micro.ctx.conceptSource,
+          })}
+          onSelectResearch={() => {
+            if (isConcept) {
+              micro.setConceptSource("research" as ConceptSource);
+            }
+            micro.setIntakePath("research" as IntakePath);
+          }}
+          onSelectDirect={() => {
+            if (isConcept) {
+              micro.setConceptSource("assistant" as ConceptSource);
+            }
+            micro.setIntakePath("direct" as IntakePath);
+          }}
+        />
       );
+    }
 
     case "identity.product_name":
       return (
-        <ScreenShell title={mw.productNameTitle} hint={mw.productNameHint}>
-          <label className="block space-y-1">
-            <span className="text-sm font-medium text-slate-700">{m.wizard.productLabel}</span>
-            <input
-              data-coach-id="coach-product"
-              value={wizard.product}
-              onChange={(e) => wizard.setProduct(e.target.value)}
-              placeholder={m.wizard.productPlaceholder}
-              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
-            />
-          </label>
-        </ScreenShell>
+        <ProductNameStep
+          value={wizard.product}
+          onChange={(next) => wizard.setProduct(next)}
+          showPhaseStepper
+        />
       );
 
     case "identity.concept":
@@ -290,17 +301,12 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
 
     case "identity.concept_topic":
       return (
-        <ScreenShell title={mw.conceptTopicTitle} hint={mw.conceptTopicHint}>
-          <label className="block space-y-1">
-            <span className="text-sm font-medium text-slate-700">{mw.conceptTopicLabel}</span>
-            <input
-              value={wizard.conceptIdea}
-              onChange={(e) => wizard.setConceptIdea(e.target.value)}
-              placeholder={mw.conceptTopicPlaceholder}
-              className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
-            />
-          </label>
-        </ScreenShell>
+        <ProductNameStep
+          variant="concept"
+          value={wizard.conceptIdea}
+          onChange={(next) => wizard.setConceptIdea(next)}
+          showPhaseStepper
+        />
       );
 
     case "research.platform":
@@ -364,6 +370,17 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
             }}
           />
         </ScreenShell>
+      );
+
+    case "setup.pre_generate":
+      return (
+        <PreGenerateSetupPanel
+          onGenerate={micro.goNext}
+          generateDisabled={
+            Boolean(micro.blockReason) || Boolean(wizard.imageGenerateDisabledReason)
+          }
+          generateLabel={m.wizard.generateImageBtn}
+        />
       );
 
     case "copy.edit":
@@ -729,14 +746,8 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
       );
 
     case "image.review":
-      if (wizard.imageBusy) {
-        return <ImageResultPanel generatingLabel={mw.generatingImage} />;
-      }
-      return (
-        <ScreenShell title={mw.imageReviewTitle} hint={mw.imageReviewHint}>
-          <ImageResultPanel generatingLabel={mw.generatingImage} />
-        </ScreenShell>
-      );
+      // Wait + review both use violet chrome (ImageGenerateWaitPanel / ImageReviewGallery).
+      return <ImageResultPanel generatingLabel={mw.generatingImage} />;
 
     case "image.storyboard_scenes":
       return (
@@ -786,10 +797,12 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
       return (
         <WaitScreen
           busy={wizard.imageBusy}
+          title={mw.generateImageTitle}
           message={wizard.imageProgressInfo?.label ?? mw.generatingImage}
           progress={wizard.imageProgressInfo}
           aspectRatio={wizard.imageAspectRatio}
           previewUrl={wizard.imageRefPreviewUrl || wizard.uploadPreviewUrl || null}
+          purpleChrome
         />
       );
 
@@ -808,10 +821,12 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
       return (
         <WaitScreen
           busy={wizard.imageBusy}
+          title={mw.generateImageTitle}
           message={wizard.imageProgressInfo?.label ?? mw.generatingImage}
           progress={wizard.imageProgressInfo}
           aspectRatio={wizard.imageAspectRatio}
           previewUrl={wizard.imageRefPreviewUrl || wizard.uploadPreviewUrl || null}
+          purpleChrome
         />
       );
 
@@ -1054,42 +1069,66 @@ function ReferenceVideoStep({
 function WaitScreen({
   busy,
   message,
+  title,
   progress,
   aspectRatio,
   previewUrl,
+  purpleChrome = false,
 }: {
   busy: boolean;
   message: string;
+  /** Outer step title — matches other ScreenShell steps. Defaults to message. */
+  title?: string;
   progress?: { label?: string; pct?: number; eta?: string } | null;
   aspectRatio?: string;
   previewUrl?: string | null;
+  /** Use violet step chrome (image generate waits). */
+  purpleChrome?: boolean;
 }) {
   const { m } = useLocale();
-  // Dark wait card is the only container — do not wrap in white ScreenShell
-  // (that duplicated “规划教学轮播…” as an outer title).
+  const shellTitle = title ?? message;
+  if (purpleChrome && busy) {
+    return (
+      <ImageGenerateWaitPanel
+        message={message}
+        progress={
+          progress && typeof progress.pct === "number"
+            ? {
+                label: progress.label,
+                pct: progress.pct,
+                eta: progress.eta ?? "",
+              }
+            : null
+        }
+        aspectRatio={aspectRatio}
+        previewUrl={previewUrl}
+      />
+    );
+  }
   if (!busy) {
     return (
-      <ScreenShell title={message} hint={message}>
+      <ScreenShell title={shellTitle} hint={message}>
         <p className="text-sm text-slate-600">{message}</p>
       </ScreenShell>
     );
   }
   return (
-    <GenerationWaitPlaceholder
-      message={message}
-      hint={m.wizard.generationWaitHint}
-      progress={
-        progress && typeof progress.pct === "number"
-          ? {
-              label: progress.label,
-              pct: progress.pct,
-              eta: progress.eta ?? "",
-            }
-          : null
-      }
-      aspectRatio={waitAspectFromString(aspectRatio)}
-      previewUrl={previewUrl}
-      compact
-    />
+    <ScreenShell title={shellTitle} hint={m.wizard.generationWaitHint}>
+      <GenerationWaitPlaceholder
+        message={message}
+        progress={
+          progress && typeof progress.pct === "number"
+            ? {
+                label: progress.label,
+                pct: progress.pct,
+                eta: progress.eta ?? "",
+              }
+            : null
+        }
+        aspectRatio={waitAspectFromString(aspectRatio)}
+        previewUrl={previewUrl}
+        compact
+      />
+    </ScreenShell>
   );
 }

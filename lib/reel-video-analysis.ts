@@ -1,4 +1,5 @@
 import { fal } from "@fal-ai/client";
+import { runBagelUnderstand } from "@/lib/bagel-understand";
 import { callDeepSeekChat } from "@/lib/deepseek-client";
 import { parseLlmJsonObject } from "@/lib/parse-llm-json";
 import type { PromptMarket } from "@/lib/prompt-variables";
@@ -15,8 +16,6 @@ import { mkdtemp, readFile, rm, writeFile } from "fs/promises";
 import path from "path";
 import { tmpdir } from "os";
 
-const VISION_ENDPOINT = "fal-ai/any-llm/vision";
-const VISION_MODEL = "google/gemini-2.5-flash-lite";
 const MAX_FRAMES = 6;
 const MIN_FRAMES = 3;
 
@@ -29,17 +28,6 @@ type FrameVisionRow = {
   subjects: string;
   visibleText: string;
 };
-
-function extractVisionText(data: unknown): string {
-  if (!data || typeof data !== "object") return "";
-  const d = data as Record<string, unknown>;
-  if (typeof d.output === "string") return d.output.trim();
-  if (typeof d.text === "string") return d.text.trim();
-  const choices = d.choices as Array<{ message?: { content?: string } }> | undefined;
-  const content = choices?.[0]?.message?.content;
-  if (typeof content === "string") return content.trim();
-  return "";
-}
 
 type RawFrameVisionRow = Partial<FrameVisionRow> & {
   summary?: string;
@@ -62,36 +50,36 @@ function normalizeFrameRow(
   };
 }
 
+async function visionAnalyzeOneFrame(
+  imageUrl: string,
+  index: number,
+  frameCount: number,
+  timeSec: number,
+): Promise<FrameVisionRow> {
+  const raw = await runBagelUnderstand({
+    imageUrl,
+    prompt: [
+      `This is frame ${index} of ${frameCount} chronological frames from one social-media reel.`,
+      "Output valid JSON only — no markdown fences, no thinking notes.",
+      "Return JSON:",
+      '{"sceneSummary":"","layoutStyle":"","motionHint":"","subjects":"","visibleText":""}',
+      "motionHint = how this shot moves or cuts (static, pan, zoom, hand motion, etc.).",
+      "visibleText = legible on-screen text if any (original language); empty string if none.",
+      "Do not invent text that is not visible.",
+    ].join("\n"),
+  });
+  const parsed = parseLlmJsonObject<RawFrameVisionRow>(raw, `Reel frame ${index} vision`);
+  return normalizeFrameRow(parsed, index, timeSec);
+}
+
 async function visionAnalyzeReelFrames(
   frameUrls: string[],
   timesSec: number[],
 ): Promise<FrameVisionRow[]> {
-  const result = await fal.subscribe(VISION_ENDPOINT, {
-    input: {
-      model: VISION_MODEL,
-      image_urls: frameUrls,
-      system_prompt:
-        "You analyze social-media reel frames in timeline order. Output valid JSON only.",
-      prompt: [
-        `These ${frameUrls.length} images are frames extracted in chronological order from one reference reel.`,
-        "For EACH frame, describe composition, implied camera motion, and subjects.",
-        "Return JSON: {\"frames\":[{\"index\":1,\"sceneSummary\":\"\",\"layoutStyle\":\"\",\"motionHint\":\"\",\"subjects\":\"\",\"visibleText\":\"\"}]}",
-        "index must match frame order 1…N. motionHint = how this shot moves or cuts (static, pan, zoom, hand motion, etc.).",
-        "visibleText = legible on-screen text if any (original language); empty string if none.",
-        "Do not invent text that is not visible.",
-      ].join("\n"),
-    },
-    logs: false,
-  });
-
-  const text = extractVisionText(result.data);
-  const parsed = parseLlmJsonObject<{ frames?: RawFrameVisionRow[] }>(
-    text,
-    "Reel frame vision",
-  );
-  const rows = Array.isArray(parsed.frames) ? parsed.frames : [];
-  return frameUrls.map((_, i) =>
-    normalizeFrameRow(rows[i] ?? {}, i + 1, timesSec[i] ?? 0),
+  return Promise.all(
+    frameUrls.map((url, i) =>
+      visionAnalyzeOneFrame(url, i + 1, frameUrls.length, timesSec[i] ?? 0),
+    ),
   );
 }
 

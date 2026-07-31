@@ -5,6 +5,10 @@ import { clampImageResolution } from "@/lib/billing/entitlements";
 import { getUserPlan } from "@/lib/billing/get-user-plan";
 import { TOKEN_COST } from "@/lib/billing/token-costs";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
+import {
+  buildFalLayoutTransferImageUrls,
+  dualProductIdentityHint,
+} from "@/lib/fal-dual-reference-urls";
 import type { BrandProfile } from "@/lib/brand-profile";
 import type { CampaignPlan } from "@/lib/campaign-types";
 import { planCampaign } from "@/lib/campaign-plan";
@@ -88,6 +92,10 @@ export async function POST(request: Request) {
   const styleRef = formData.get("style_reference_image");
   const hasProduct = reference instanceof File && reference.size > 0;
   const hasStyle = styleRef instanceof File && styleRef.size > 0;
+  const productAngleFiles = formData
+    .getAll("product_angle_images")
+    .filter((f): f is File => f instanceof File && f.size > 0)
+    .slice(0, 4);
   const creativeMode =
     (formData.get("image_creative_mode") as string | null)?.trim() || "promo-ai";
   const { strategy, brief } = parseStrategyFromFormData(formData);
@@ -213,37 +221,56 @@ export async function POST(request: Request) {
   try {
     let baseImageUrlsForFal: string[] | null = null;
     if (strategy.sendPixelsToFal) {
-      baseImageUrlsForFal = [];
       if (strategy.useDualImage && dualImage) {
-        if (hasStyle) baseImageUrlsForFal.push(await fal.storage.upload(styleRef as File));
-        if (hasProduct) baseImageUrlsForFal.push(await fal.storage.upload(reference as File));
-      } else if (hasProduct) {
-        baseImageUrlsForFal.push(await fal.storage.upload(reference as File));
-      } else if (hasStyle) {
-        baseImageUrlsForFal.push(await fal.storage.upload(styleRef as File));
+        baseImageUrlsForFal = await buildFalLayoutTransferImageUrls({
+          upload: (f) => fal.storage.upload(f),
+          styleRef: hasStyle ? (styleRef as File) : null,
+          productRef: hasProduct ? (reference as File) : null,
+          productAngles: hasProduct ? productAngleFiles : [],
+        });
+      } else {
+        baseImageUrlsForFal = [];
+        if (hasProduct) {
+          baseImageUrlsForFal.push(await fal.storage.upload(reference as File));
+          for (const angle of productAngleFiles) {
+            baseImageUrlsForFal.push(await fal.storage.upload(angle));
+          }
+        } else if (hasStyle) {
+          baseImageUrlsForFal.push(await fal.storage.upload(styleRef as File));
+        }
       }
     }
+
+    const dualHint =
+      strategy.useDualImage && dualImage && hasProduct && hasStyle
+        ? dualProductIdentityHint(productAngleFiles.length > 0)
+        : "";
 
     const slides = await Promise.all(
       plan.slides.map(async (slide, i) => {
         const imageUrlsForFal = baseImageUrlsForFal ? [...baseImageUrlsForFal] : null;
 
-        const prompt = buildCampaignSlideImagePrompt(
-          vars,
-          slide,
-          plan,
-          promptMode,
-          brandProfile,
-          i,
-          plan.slides.length,
-          hasProduct || hasStyle,
-          {
-            visualStyleId: visualStyle,
-            referenceConcept: strategy.useReferenceConceptPrompts,
-            referenceImageMode: strategy.referenceImageMode,
-            brandKit,
-          },
-        );
+        const prompt = [
+          buildCampaignSlideImagePrompt(
+            vars,
+            slide,
+            plan,
+            promptMode,
+            brandProfile,
+            i,
+            plan.slides.length,
+            hasProduct || hasStyle,
+            {
+              visualStyleId: visualStyle,
+              referenceConcept: strategy.useReferenceConceptPrompts,
+              referenceImageMode: strategy.referenceImageMode,
+              brandKit,
+            },
+          ),
+          dualHint,
+        ]
+          .filter(Boolean)
+          .join("\n");
 
         const result = await fal.subscribe(endpoint, {
           input: {

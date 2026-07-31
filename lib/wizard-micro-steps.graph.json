@@ -109,32 +109,20 @@
         { "id": "research.pick_angle", "handler": "applyContentAngleToWizard" },
         { "id": "wait.research_apply" },
         {
-          "id": "wait.reference_analyze",
-          "required": true,
-          "gate": "evaluateProceedToImageGate",
-          "skipWhen": "!imageRefPhoto"
-        },
-        {
-          "id": "copy.edit",
-          "label": "內容與生成設定",
-          "prefillFrom": "research",
+          "id": "setup.pre_generate",
+          "label": "Pre-generate setup",
+          "handler": "generateImage",
           "skippable": false,
-          "sections": ["copy", "brandKit", "referenceBrief", "advancedPrompt"],
-          "brandKit": { "required": false, "collapsedByDefault": true }
+          "fuses": [
+            "wait.reference_analyze",
+            "copy.edit",
+            "asset.brand_website",
+            "image.output_format",
+            "asset.product_photo",
+            "image.options",
+            "image.generate"
+          ]
         },
-        {
-          "id": "asset.brand_website",
-          "when": "requiresBrandProfileForImages(visualStyleId)",
-          "required": true
-        },
-        {
-          "id": "image.output_format",
-          "choices": ["single", "ab", "campaign", "teaching-carousel"],
-          "skipWhen": "anglePresetOutputMode"
-        },
-        { "id": "asset.product_photo", "required": true },
-        { "id": "image.options", "skippable": true },
-        { "id": "image.generate", "handler": "generateImage" },
         { "id": "wait.image_generate", "while": "imageBusy" },
         { "id": "image.review" },
         { "id": "done.export", "legacyStepKey": "done" }

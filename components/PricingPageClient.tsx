@@ -4,31 +4,32 @@ import Link from "next/link";
 import { useAuth } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { AuthNav } from "@/components/AuthNav";
-import { LanguageToggle } from "@/components/LanguageToggle";
-import { SiteFooter } from "@/components/SiteFooter";
+import { LandingFooter } from "@/components/landing/LandingFooter";
+import { LandingNav } from "@/components/landing/LandingNav";
+import { Reveal } from "@/components/landing/Reveal";
 import { useLocale } from "@/components/LocaleProvider";
-import { PRODUCT_LOGO_ALT, PRODUCT_LOGO_SRC, PRODUCT_NAME, PRODUCT_SUPPORT_EMAIL } from "@/lib/brand";
+import { PLAN_DEFINITIONS } from "@/lib/billing/plans";
+import { PRODUCT_SUPPORT_EMAIL } from "@/lib/brand";
 
 type BillingInterval = "monthly" | "yearly";
 type PaidPlanKey = "standard" | "pro" | "master";
 
-function CheckIcon() {
-  return (
-    <svg className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
-      <path
-        fillRule="evenodd"
-        d="M16.704 5.29a1 1 0 010 1.42l-7.25 7.25a1 1 0 01-1.42 0l-3.25-3.25a1 1 0 111.42-1.42l2.54 2.54 6.54-6.54a1 1 0 011.42 0z"
-        clipRule="evenodd"
-      />
-    </svg>
-  );
+const PRICING_LAYOUT_CSS = `
+.pricing-page-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
 }
-
-/** Vertical spacer between major page blocks */
-function SectionGap() {
-  return <div style={{ height: 48 }} aria-hidden />;
+@media (min-width: 640px) {
+  .pricing-page-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+@media (min-width: 768px) {
+  .pricing-page-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+}
+@media (min-width: 1100px) {
+  .pricing-page-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+}
+`;
 
 export function PricingPageClient() {
   const { m } = useLocale();
@@ -36,10 +37,10 @@ export function PricingPageClient() {
   const { isSignedIn, isLoaded } = useAuth();
   const searchParams = useSearchParams();
   const [interval, setInterval] = useState<BillingInterval>("monthly");
-  const [selectedPlan, setSelectedPlan] = useState<"free" | PaidPlanKey>("pro");
   const [busy, setBusy] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [confirmNote, setConfirmNote] = useState<string | null>(null);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
   const confirmStarted = useRef(false);
   const paidPlans: PaidPlanKey[] = ["standard", "pro", "master"];
 
@@ -49,7 +50,6 @@ export function PricingPageClient() {
   const intervalParam = searchParams.get("interval");
   const autoCheckoutStarted = useRef(false);
 
-  // From landing / sign-in redirect: /pricing?plan=pro&interval=monthly&checkout=1
   useEffect(() => {
     if (!isLoaded || !isSignedIn) return;
     if (checkoutStatus === "success" || checkoutStatus === "cancel") return;
@@ -60,7 +60,6 @@ export function PricingPageClient() {
     const nextInterval =
       intervalParam === "yearly" || intervalParam === "monthly" ? intervalParam : interval;
     setInterval(nextInterval);
-    setSelectedPlan(planParam as PaidPlanKey);
     void startCheckout({
       kind: "subscription",
       plan: planParam,
@@ -69,7 +68,6 @@ export function PricingPageClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on signed-in deep link
   }, [isLoaded, isSignedIn, checkoutStatus, planParam, intervalParam]);
 
-  // Credit tokens when returning from Stripe — works even if webhooks never hit localhost.
   useEffect(() => {
     if (!isLoaded || !isSignedIn) return;
     if (checkoutStatus !== "success") return;
@@ -172,425 +170,466 @@ export function PricingPageClient() {
     }
   }
 
+  const cards = [
+    {
+      id: "free" as const,
+      name: p.plans.free.name,
+      blurb: p.plans.free.description,
+      priceLabel: p.freeForever,
+      tokensLabel: `${PLAN_DEFINITIONS.free.monthlyTokens.toLocaleString()} ${p.tokensPerMonth}`,
+      features: p.plans.free.features.slice(1),
+      cta: p.getStarted,
+      popular: false,
+    },
+    {
+      id: "standard" as const,
+      name: p.plans.standard.name,
+      blurb: p.plans.standard.description,
+      priceLabel: interval === "monthly" ? p.plans.standard.monthlyPrice : p.plans.standard.yearlyPrice,
+      listPrice: p.plans.standard.listPrice,
+      saveLabel: interval === "monthly" ? p.plans.standard.monthlySave : p.plans.standard.yearlySave,
+      tokensLabel: `${p.plans.standard.tokens} ${p.tokensPerMonth}`,
+      features: p.plans.standard.features.slice(1),
+      cta: p.subscribe,
+      popular: false,
+    },
+    {
+      id: "pro" as const,
+      name: p.plans.pro.name,
+      blurb: p.plans.pro.description,
+      priceLabel: interval === "monthly" ? p.plans.pro.monthlyPrice : p.plans.pro.yearlyPrice,
+      listPrice: p.plans.pro.listPrice,
+      saveLabel: interval === "monthly" ? p.plans.pro.monthlySave : p.plans.pro.yearlySave,
+      tokensLabel: `${p.plans.pro.tokens} ${p.tokensPerMonth}`,
+      features: p.plans.pro.features.slice(1),
+      cta: p.subscribe,
+      popular: true,
+    },
+    {
+      id: "master" as const,
+      name: p.plans.master.name,
+      blurb: p.plans.master.description,
+      priceLabel: interval === "monthly" ? p.plans.master.monthlyPrice : p.plans.master.yearlyPrice,
+      listPrice: p.plans.master.listPrice,
+      saveLabel: interval === "monthly" ? p.plans.master.monthlySave : p.plans.master.yearlySave,
+      tokensLabel: `${p.plans.master.tokens} ${p.tokensPerMonth}`,
+      features: p.plans.master.features.slice(1),
+      cta: p.subscribe,
+      popular: false,
+    },
+    {
+      id: "custom" as const,
+      name: p.plans.custom.name,
+      blurb: p.plans.custom.description,
+      priceLabel: p.contactSales,
+      tokensLabel: null as string | null,
+      features: p.plans.custom.features,
+      cta: p.contactSales,
+      popular: false,
+    },
+    {
+      id: "topup" as const,
+      name: p.topUpTitle,
+      blurb: p.topUpSubtitle,
+      priceLabel: p.topUpPrice,
+      tokensLabel: p.topUpTokens,
+      features: [p.topUpNote],
+      cta: p.buyTopUp,
+      popular: false,
+    },
+  ];
+
   return (
     <main className="flex min-h-screen flex-col bg-white text-slate-900 supports-[min-height:100dvh]:min-h-dvh">
+      <style dangerouslySetInnerHTML={{ __html: PRICING_LAYOUT_CSS }} />
+      <LandingNav />
+
       <div className="flex flex-1 flex-col">
-      {/* 1. Navbar */}
-      <header className="mx-auto w-full max-w-6xl px-6" style={{ paddingTop: 40, paddingBottom: 48 }}>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <img src={PRODUCT_LOGO_SRC} alt={PRODUCT_LOGO_ALT} className="h-10 w-10 rounded-xl object-contain" />
-            <p className="text-lg font-semibold tracking-tight">{PRODUCT_NAME}</p>
-          </Link>
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <LanguageToggle variant="light" />
-            <Link
-              href="/how"
-              className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-            >
-              {m.landing.howItWorks}
-            </Link>
-            <AuthNav />
-            <Link
-              href="/start"
-              className="rounded-full bg-slate-900 px-5 py-2 text-sm font-medium text-white"
-            >
-              {m.landing.openStudio}
-            </Link>
-          </div>
-        </div>
-      </header>
+        {/* Plans — landing-style header + cards */}
+        <section className="w-full bg-white">
+          <div className="mx-auto w-full max-w-[1440px] px-5 py-8 md:px-8 md:py-10">
+            {checkoutStatus === "success" ? (
+              <div className="mb-5 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-900">
+                {confirmNote ?? p.checkoutSuccess}
+              </div>
+            ) : null}
+            {checkoutStatus === "cancel" ? (
+              <div className="mb-5 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                {p.checkoutCanceled}
+              </div>
+            ) : null}
+            {checkoutError ? (
+              <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                {checkoutError}
+              </div>
+            ) : null}
 
-      <div className="mx-auto max-w-6xl px-6">
-        {checkoutStatus === "success" ? (
-          <div className="mb-8 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-900">
-            {confirmNote ?? p.checkoutSuccess}
-          </div>
-        ) : null}
-        {checkoutStatus === "cancel" ? (
-          <div className="mb-8 rounded-xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm text-slate-700">
-            {p.checkoutCanceled}
-          </div>
-        ) : null}
-        {checkoutError ? (
-          <div className="mb-8 rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-800">
-            {checkoutError}
-          </div>
-        ) : null}
+            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+              <Reveal>
+                <div className="max-w-xl">
+                  <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+                    {p.title}
+                  </h1>
+                  <p className="mt-2 text-sm text-slate-600">{p.subtitle}</p>
+                  {isSignedIn ? (
+                    <div className="mt-3 flex flex-wrap items-center gap-3">
+                      <Link
+                        href="/account"
+                        className="text-sm font-medium text-violet-700 underline-offset-2 hover:underline"
+                      >
+                        {m.auth.accountMenu}
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => void openPortal()}
+                        disabled={busy === "portal"}
+                        className="text-sm font-medium text-slate-600 underline-offset-2 hover:underline disabled:opacity-60"
+                      >
+                        {busy === "portal" ? p.checkoutRedirecting : p.manageBilling}
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              </Reveal>
 
-        {/* 2. Hero — 按創作量選計劃 */}
-        <section
-          className="rounded-2xl border border-slate-200 bg-linear-to-br from-indigo-50 via-white to-cyan-50 text-center"
-          style={{ padding: "64px 40px" }}
-        >
-          <p className="mb-5 inline-flex rounded-full bg-white px-3 py-1 text-xs font-medium text-indigo-700 shadow-sm">
-            {p.badge}
-          </p>
-          <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">{p.title}</h1>
-          <p className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-slate-600">{p.subtitle}</p>
-          <div className="mt-10 inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white p-1 shadow-sm">
-            <button
-              type="button"
-              onClick={() => setInterval("monthly")}
-              className={`rounded-full px-5 py-2 text-sm font-medium transition ${
-                interval === "monthly" ? "bg-slate-900 text-white" : "text-slate-600 hover:text-slate-900"
-              }`}
+              <Reveal delayMs={80} distance={28} scaleFrom={0.96}>
+                <div className="inline-flex max-w-full flex-wrap items-center gap-1 self-start rounded-full border border-slate-200 bg-slate-50 p-1">
+                  <button
+                    type="button"
+                    onClick={() => setInterval("monthly")}
+                    className={`rounded-full px-3.5 py-1.5 text-sm font-medium ${
+                      interval === "monthly" ? "bg-violet-600 text-white" : "text-slate-600"
+                    }`}
+                  >
+                    {p.monthly}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setInterval("yearly")}
+                    className={`rounded-full px-3.5 py-1.5 text-sm font-medium ${
+                      interval === "yearly" ? "bg-violet-600 text-white" : "text-slate-600"
+                    }`}
+                  >
+                    {p.yearly}
+                  </button>
+                  <span className="mr-1.5 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-700">
+                    {p.yearlyBadge}
+                  </span>
+                </div>
+              </Reveal>
+            </div>
+
+            <div
+              className="pricing-page-grid mt-8"
+              onMouseLeave={() => setHoveredId(null)}
             >
-              {p.monthly}
-            </button>
-            <button
-              type="button"
-              onClick={() => setInterval("yearly")}
-              className={`flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition ${
-                interval === "yearly" ? "bg-slate-900 text-white" : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              {p.yearly}
-              <span
-                className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
-                  interval === "yearly" ? "bg-emerald-500 text-white" : "bg-emerald-100 text-emerald-800"
-                }`}
+              {cards.map((card, i) => {
+                const busyKey =
+                  card.id === "standard" || card.id === "pro" || card.id === "master"
+                    ? `${card.id}-${interval}`
+                    : card.id === "topup"
+                      ? "topup"
+                      : null;
+                const isBusy = busyKey != null && busy === busyKey;
+                const ctaLabel = isBusy ? p.checkoutRedirecting : card.cta;
+                const isActive = hoveredId === card.id || (hoveredId === null && card.popular);
+                const isTopup = card.id === "topup";
+
+                return (
+                  <Reveal
+                    key={card.id}
+                    delayMs={i * 90}
+                    distance={44}
+                    scaleFrom={0.94}
+                    className="h-full"
+                  >
+                    <div
+                      onMouseEnter={() => setHoveredId(card.id)}
+                      className={`flex h-full min-h-[300px] min-w-0 flex-col rounded-2xl border bg-white p-5 shadow-sm transition duration-200 ${
+                        isActive
+                          ? "border-violet-400 ring-2 ring-violet-200"
+                          : isTopup
+                            ? "border-violet-200"
+                            : "border-slate-200 ring-0"
+                      }`}
+                    >
+                      {card.popular ? (
+                        <p className="mb-2 inline-flex self-start rounded-full bg-violet-600 px-2.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">
+                          {p.mostPopular}
+                        </p>
+                      ) : (
+                        <div className="mb-2 h-5" />
+                      )}
+                      <h2
+                        className={`text-base font-semibold ${
+                          isTopup ? "text-violet-700" : "text-slate-900"
+                        }`}
+                      >
+                        {card.name}
+                      </h2>
+                      <p className="mt-1 text-[11px] text-slate-500">{card.blurb}</p>
+
+                      <div className="mt-4">
+                        {"listPrice" in card && card.listPrice && interval === "monthly" ? (
+                          <p className="text-[11px] text-slate-400 line-through">{card.listPrice}</p>
+                        ) : null}
+                        <p
+                          className={`text-2xl font-bold ${
+                            isTopup ? "text-violet-800" : "text-slate-900"
+                          }`}
+                        >
+                          {card.priceLabel}
+                          {card.id !== "free" && card.id !== "custom" && card.id !== "topup" ? (
+                            <span className="text-xs font-medium text-slate-500">{p.perMonth}</span>
+                          ) : null}
+                        </p>
+                        {"saveLabel" in card && card.saveLabel ? (
+                          <p className="mt-0.5 text-[10px] font-medium text-violet-600">
+                            {card.saveLabel}
+                          </p>
+                        ) : null}
+                        {interval === "yearly" &&
+                        card.id !== "free" &&
+                        card.id !== "custom" &&
+                        card.id !== "topup" ? (
+                          <p className="mt-0.5 text-[10px] text-slate-400">{p.billedYearly}</p>
+                        ) : null}
+                      </div>
+
+                      {card.tokensLabel ? (
+                        <p className="mt-2 text-xs font-medium text-violet-700">{card.tokensLabel}</p>
+                      ) : null}
+
+                      <ul className="mt-4 flex-1 space-y-2">
+                        {card.features.map((f) => (
+                          <li
+                            key={f}
+                            className="flex gap-1.5 text-[11px] leading-snug text-slate-600"
+                          >
+                            <span className="shrink-0 text-violet-600">✓</span>
+                            {f}
+                          </li>
+                        ))}
+                      </ul>
+
+                      {card.id === "free" ? (
+                        <Link
+                          href="/start"
+                          className={`mt-5 block rounded-full px-3 py-2.5 text-center text-xs font-semibold transition ${
+                            isActive
+                              ? "bg-violet-600 text-white hover:bg-violet-500"
+                              : "border border-violet-300 text-violet-700 hover:bg-violet-50"
+                          }`}
+                        >
+                          {ctaLabel}
+                        </Link>
+                      ) : card.id === "custom" ? (
+                        <a
+                          href={`mailto:${PRODUCT_SUPPORT_EMAIL}?subject=Custom%20plan`}
+                          className={`mt-5 block rounded-full px-3 py-2.5 text-center text-xs font-semibold transition ${
+                            isActive
+                              ? "bg-violet-600 text-white hover:bg-violet-500"
+                              : "border border-violet-300 text-violet-700 hover:bg-violet-50"
+                          }`}
+                        >
+                          {ctaLabel}
+                        </a>
+                      ) : card.id === "topup" ? (
+                        <button
+                          type="button"
+                          disabled={busy != null}
+                          onClick={() => void startCheckout({ kind: "topup" })}
+                          className={`mt-5 block w-full rounded-full px-3 py-2.5 text-center text-xs font-semibold transition disabled:opacity-60 ${
+                            isActive
+                              ? "bg-violet-600 text-white hover:bg-violet-500"
+                              : "border border-violet-300 text-violet-700 hover:bg-violet-50"
+                          }`}
+                        >
+                          {ctaLabel}
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled={busy != null}
+                          onClick={() =>
+                            void startCheckout({
+                              kind: "subscription",
+                              plan: card.id,
+                              interval,
+                            })
+                          }
+                          className={`mt-5 block w-full rounded-full px-3 py-2.5 text-center text-xs font-semibold transition disabled:opacity-60 ${
+                            isActive
+                              ? "bg-violet-600 text-white hover:bg-violet-500"
+                              : "border border-violet-300 text-violet-700 hover:bg-violet-50"
+                          }`}
+                        >
+                          {ctaLabel}
+                        </button>
+                      )}
+                    </div>
+                  </Reveal>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        {/* Token how-to — compact cards, landing-style */}
+        <section className="border-t border-slate-100 bg-slate-50/60">
+          <div className="mx-auto w-full max-w-5xl px-5 py-10 md:px-8 md:py-12">
+            <Reveal>
+              <div className="mx-auto max-w-xl text-center">
+                <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+                  {p.tokenTitle}
+                </h2>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">{p.tokenSubtitle}</p>
+              </div>
+            </Reveal>
+
+            <ol className="mt-8 grid gap-3 sm:grid-cols-3 sm:gap-4">
+              {p.tokenItems.map((item, index) => (
+                <Reveal key={item.title} delayMs={index * 90} distance={36} scaleFrom={0.94}>
+                  <li className="flex h-full flex-col rounded-2xl border border-violet-100 bg-white p-5 shadow-sm">
+                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-violet-100 text-[12px] font-bold tabular-nums text-violet-700">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <h3 className="mt-3 text-[15px] font-semibold leading-snug text-slate-900">
+                      {item.title}
+                    </h3>
+                    <p className="mt-2 flex-1 text-[13px] leading-relaxed text-slate-600">
+                      {item.body}
+                    </p>
+                  </li>
+                </Reveal>
+              ))}
+            </ol>
+          </div>
+        </section>
+
+        {/* Compare — match Token section title; constrained table width */}
+        <section className="border-t border-slate-100 bg-white">
+          <div className="mx-auto w-full max-w-5xl px-5 py-10 md:px-8 md:py-12">
+            <Reveal>
+              <div className="mx-auto max-w-xl text-center">
+                <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+                  {p.compareTitle}
+                </h2>
+              </div>
+            </Reveal>
+            <Reveal delayMs={80} distance={28} scaleFrom={0.98}>
+              <div
+                className="mx-auto mt-6 overflow-x-auto rounded-2xl border border-violet-100 bg-white shadow-sm"
+                style={{ maxWidth: "50rem" }}
               >
-                {p.yearlyBadge}
-              </span>
-            </button>
+                <table className="w-full min-w-[480px] table-fixed text-left text-sm">
+                  <colgroup>
+                    <col className="w-[26%]" />
+                    <col className="w-[18.5%]" />
+                    <col className="w-[18.5%]" />
+                    <col className="w-[18.5%]" />
+                    <col className="w-[18.5%]" />
+                  </colgroup>
+                  <thead>
+                    <tr className="border-b border-violet-100 bg-violet-50/80">
+                      <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-4">
+                        {p.compareFeature}
+                      </th>
+                      <th className="px-2 py-3 text-center text-sm font-semibold text-slate-700">
+                        {p.plans.free.name}
+                      </th>
+                      <th className="px-2 py-3 text-center text-sm font-semibold text-slate-700">
+                        {p.plans.standard.name}
+                      </th>
+                      <th className="bg-violet-100/70 px-2 py-3 text-center text-sm font-semibold text-violet-800">
+                        {p.plans.pro.name}
+                      </th>
+                      <th className="px-2 py-3 text-center text-sm font-semibold text-slate-700">
+                        {p.plans.master.name}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {p.comparisonRows.map((row, i) => (
+                      <tr
+                        key={row.feature}
+                        className={`border-b border-slate-100 last:border-0 ${
+                          i % 2 === 0 ? "bg-white" : "bg-slate-50/40"
+                        }`}
+                      >
+                        <td className="px-3 py-3 text-sm font-medium leading-snug text-slate-800 sm:px-4">
+                          {row.feature}
+                        </td>
+                        <td className="px-2 py-3 text-center text-sm text-slate-600">{row.free}</td>
+                        <td className="px-2 py-3 text-center text-sm text-slate-600">{row.standard}</td>
+                        <td className="bg-violet-50/50 px-2 py-3 text-center text-sm font-medium text-violet-900">
+                          {row.pro}
+                        </td>
+                        <td className="px-2 py-3 text-center text-sm text-slate-600">{row.master}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Reveal>
           </div>
-          {isSignedIn ? (
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+        </section>
+
+        {/* FAQ */}
+        <section className="border-t border-violet-100 bg-gradient-to-b from-violet-50/70 to-white">
+          <div className="mx-auto w-full max-w-3xl px-5 py-10 md:px-8 md:py-12">
+            <Reveal>
+              <div className="text-center">
+                <h2 className="text-2xl font-bold tracking-tight text-violet-900">{p.faqTitle}</h2>
+                <div className="mx-auto mt-3 h-1 w-12 rounded-full bg-violet-500" aria-hidden />
+              </div>
+            </Reveal>
+            <div className="mt-6 space-y-3">
+              {p.faq.map((item, i) => (
+                <Reveal key={item.q} delayMs={i * 60} distance={28} scaleFrom={0.98}>
+                  <details className="group rounded-2xl border border-violet-200/80 bg-white p-4 shadow-sm open:border-violet-400 open:bg-violet-50/60 open:shadow-md open:shadow-violet-100/60">
+                    <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-semibold text-slate-900 marker:content-none [&::-webkit-details-marker]:hidden">
+                      <span className="min-w-0 text-sm sm:text-[15px]">{item.q}</span>
+                      <span
+                        className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-bold leading-none text-violet-700 transition group-open:rotate-45 group-open:bg-violet-600 group-open:text-white"
+                        style={{ width: 28, height: 28 }}
+                        aria-hidden
+                      >
+                        +
+                      </span>
+                    </summary>
+                    <p className="mt-3 border-t border-violet-100 pt-3 text-sm leading-relaxed text-slate-600">
+                      {item.body}
+                    </p>
+                  </details>
+                </Reveal>
+              ))}
+            </div>
+            <p className="mt-8 text-center text-xs leading-relaxed text-violet-800/70">{p.footnote}</p>
+          </div>
+        </section>
+
+        <section className="mx-auto w-full max-w-[1440px] px-5 py-10 md:px-8">
+          <Reveal>
+            <div className="flex flex-wrap items-center justify-center gap-3">
               <Link
-                href="/account"
-                className="text-sm font-medium text-indigo-700 underline-offset-2 hover:underline"
+                href="/start"
+                className="rounded-full bg-violet-600 px-6 py-3 text-sm font-semibold text-white hover:bg-violet-500"
               >
-                {m.auth.accountMenu}
+                {m.landing.startCreating}
               </Link>
-              <button
-                type="button"
-                onClick={() => void openPortal()}
-                disabled={busy === "portal"}
-                className="text-sm font-medium text-slate-600 underline-offset-2 hover:underline disabled:opacity-60"
+              <Link
+                href="/"
+                className="rounded-full border border-violet-300 px-6 py-3 text-sm font-medium text-violet-800 hover:bg-violet-50"
               >
-                {busy === "portal" ? p.checkoutRedirecting : p.manageBilling}
-              </button>
+                {m.header.homeLink}
+              </Link>
             </div>
-          ) : null}
-        </section>
-
-        <SectionGap />
-
-        {/* 3. Pricing cards */}
-        <section>
-          <div className="grid lg:grid-cols-4 lg:items-stretch" style={{ gap: 48 }}>
-            <PlanCard
-              selected={selectedPlan === "free"}
-              onSelect={() => setSelectedPlan("free")}
-              name={p.plans.free.name}
-              description={p.plans.free.description}
-              price={p.freeForever}
-              priceNote={p.plans.free.features[0]}
-              features={p.plans.free.features.slice(1)}
-              cta={p.getStarted}
-              ctaHref="/sign-up"
-            />
-            {paidPlans.map((key) => {
-              const plan = p.plans[key];
-              const busyKey = `${key}-${interval}`;
-              return (
-                <PlanCard
-                  key={key}
-                  selected={selectedPlan === key}
-                  onSelect={() => setSelectedPlan(key)}
-                  name={plan.name}
-                  description={plan.description}
-                  listPrice={plan.listPrice}
-                  price={interval === "monthly" ? plan.monthlyPrice : plan.yearlyPrice}
-                  perMonth={p.perMonth}
-                  yearlyNote={interval === "yearly" ? p.billedYearly : undefined}
-                  saveLabel={interval === "monthly" ? plan.monthlySave : plan.yearlySave}
-                  tokens={`${plan.tokens} ${p.tokensPerMonth}`}
-                  features={plan.features.slice(1)}
-                  cta={busy === busyKey ? p.checkoutRedirecting : p.subscribe}
-                  ctaDisabled={busy != null}
-                  onCtaClick={() =>
-                    void startCheckout({
-                      kind: "subscription",
-                      plan: key,
-                      interval,
-                    })
-                  }
-                  badge={key === "pro" ? p.mostPopular : undefined}
-                />
-              );
-            })}
-          </div>
-        </section>
-
-        <SectionGap />
-
-        {/* 4. Custom */}
-        <section
-          className="rounded-2xl border border-slate-200 bg-slate-50 sm:flex sm:items-center sm:justify-between sm:gap-10"
-          style={{ padding: 48 }}
-        >
-          <div>
-            <h2 className="text-xl font-semibold">{p.plans.custom.name}</h2>
-            <p className="mt-2 text-sm text-slate-600">{p.plans.custom.description}</p>
-            <ul className="mt-8 grid gap-3 sm:grid-cols-2">
-              {p.plans.custom.features.map((f) => (
-                <li key={f} className="flex items-start gap-2 text-sm text-slate-700">
-                  <CheckIcon />
-                  {f}
-                </li>
-              ))}
-            </ul>
-          </div>
-          <a
-            href={`mailto:${PRODUCT_SUPPORT_EMAIL}?subject=Custom%20plan`}
-            className="mt-10 inline-flex shrink-0 justify-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-medium text-slate-800 hover:bg-slate-100 sm:mt-0"
-          >
-            {p.contactSales}
-          </a>
+          </Reveal>
         </section>
       </div>
 
-      <SectionGap />
-
-      {/* 5. Token 點樣計 */}
-      <section className="border-t border-slate-200 bg-slate-50">
-        <div className="mx-auto max-w-6xl px-6" style={{ paddingTop: 64, paddingBottom: 64 }}>
-          <div className="max-w-2xl">
-            <h2 className="text-2xl font-semibold tracking-tight text-slate-900">{p.tokenTitle}</h2>
-            <p className="mt-3 text-base leading-relaxed text-slate-600">{p.tokenSubtitle}</p>
-          </div>
-
-          <ol className="mt-12 grid gap-10 sm:grid-cols-3 sm:gap-12">
-            {p.tokenItems.map((item, index) => (
-              <li key={item.title} className="relative">
-                <span className="text-sm font-semibold tabular-nums text-indigo-600">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                <h3 className="mt-3 text-base font-semibold text-slate-900">{item.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600">{item.body}</p>
-              </li>
-            ))}
-          </ol>
-
-          <div
-            className="mt-14 flex flex-col items-stretch justify-between gap-6 border-t border-slate-200 pt-10 sm:flex-row sm:items-center"
-          >
-            <div className="min-w-0 flex-1">
-              <h3 className="text-lg font-semibold text-slate-900">{p.topUpTitle}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600">{p.topUpSubtitle}</p>
-              <p className="mt-1 text-xs text-slate-500">{p.topUpNote}</p>
-            </div>
-            <div className="shrink-0 text-left sm:text-right">
-              <p className="text-3xl font-semibold tracking-tight text-slate-900">{p.topUpPrice}</p>
-              <p className="mt-1 text-sm text-slate-600">{p.topUpTokens}</p>
-              <button
-                type="button"
-                onClick={() => void startCheckout({ kind: "topup" })}
-                disabled={busy != null}
-                className="mt-4 inline-flex rounded-full bg-slate-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-60"
-              >
-                {busy === "topup" ? p.checkoutRedirecting : p.buyTopUp}
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 6. 計劃比較 */}
-      <section className="mx-auto max-w-6xl px-6" style={{ paddingTop: 48, paddingBottom: 48 }}>
-        <h2 className="text-2xl font-semibold tracking-tight">{p.compareTitle}</h2>
-        <div className="mt-12 overflow-x-auto rounded-xl border border-slate-200">
-          <table className="w-full min-w-[640px] text-left text-sm">
-            <thead>
-              <tr className="border-b border-slate-200 bg-slate-50">
-                <th className="px-5 py-4 font-semibold text-slate-700">{p.compareFeature}</th>
-                <th className="px-5 py-4 font-semibold text-slate-700">{p.plans.free.name}</th>
-                <th className="px-5 py-4 font-semibold text-slate-700">{p.plans.standard.name}</th>
-                <th className="px-5 py-4 font-semibold text-indigo-700">{p.plans.pro.name}</th>
-                <th className="px-5 py-4 font-semibold text-slate-700">{p.plans.master.name}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {p.comparisonRows.map((row, i) => (
-                <tr key={row.feature} className={i % 2 === 0 ? "bg-white" : "bg-slate-50/50"}>
-                  <td className="px-5 py-4 font-medium text-slate-800">{row.feature}</td>
-                  <td className="px-5 py-4 text-slate-600">{row.free}</td>
-                  <td className="px-5 py-4 text-slate-600">{row.standard}</td>
-                  <td className="px-5 py-4 font-medium text-indigo-900">{row.pro}</td>
-                  <td className="px-5 py-4 text-slate-600">{row.master}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {/* 7. FAQ */}
-      <section className="border-t border-slate-200 bg-slate-50">
-        <div className="mx-auto max-w-3xl px-6" style={{ paddingTop: 48, paddingBottom: 48 }}>
-          <h2 className="text-2xl font-semibold tracking-tight">{p.faqTitle}</h2>
-          <div className="mt-12 space-y-5">
-            {p.faq.map((item) => (
-              <details key={item.q} className="rounded-xl border border-slate-200 bg-white p-6">
-                <summary className="cursor-pointer font-medium text-slate-900">{item.q}</summary>
-                <p className="mt-4 text-sm leading-relaxed text-slate-600">{item.body}</p>
-              </details>
-            ))}
-          </div>
-          <p className="mt-14 text-center text-xs text-slate-500">{p.footnote}</p>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="mx-auto max-w-6xl px-6" style={{ paddingTop: 80, paddingBottom: 80 }}>
-        <div className="flex flex-wrap items-center justify-center gap-4">
-          <Link
-            href="/start"
-            className="rounded-full bg-slate-900 px-6 py-3 text-sm font-medium text-white"
-          >
-            {m.landing.startCreating}
-          </Link>
-          <Link
-            href="/"
-            className="rounded-full border border-slate-300 px-6 py-3 text-sm font-medium text-slate-700"
-          >
-            {m.header.homeLink}
-          </Link>
-        </div>
-      </section>
-      </div>
-      <SiteFooter />
+      <LandingFooter />
     </main>
-  );
-}
-
-type PlanCardProps = {
-  selected: boolean;
-  onSelect: () => void;
-  name: string;
-  description: string;
-  price: string;
-  listPrice?: string;
-  perMonth?: string;
-  yearlyNote?: string;
-  saveLabel?: string;
-  priceNote?: string;
-  tokens?: string;
-  features: readonly string[];
-  cta: string;
-  ctaHref?: string;
-  onCtaClick?: () => void;
-  ctaDisabled?: boolean;
-  badge?: string;
-};
-
-function PlanCard({
-  selected,
-  onSelect,
-  name,
-  description,
-  price,
-  listPrice,
-  perMonth,
-  yearlyNote,
-  saveLabel,
-  priceNote,
-  tokens,
-  features,
-  cta,
-  ctaHref,
-  onCtaClick,
-  ctaDisabled,
-  badge,
-}: PlanCardProps) {
-  const ctaClass = `mt-8 block w-full rounded-full py-3 text-center text-sm font-medium transition ${
-    selected
-      ? "bg-indigo-600 text-white hover:bg-indigo-700"
-      : "border border-slate-300 bg-white text-slate-800 hover:bg-slate-50"
-  } disabled:opacity-60`;
-
-  return (
-    <div
-      role="button"
-      tabIndex={0}
-      aria-pressed={selected}
-      aria-label={name}
-      onClick={onSelect}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onSelect();
-        }
-      }}
-      className={`flex h-full cursor-pointer flex-col rounded-2xl border p-8 transition ${
-        selected
-          ? "border-indigo-400 bg-linear-to-b from-indigo-50 to-white shadow-lg shadow-indigo-100/50 ring-2 ring-indigo-300"
-          : "border-slate-200 bg-white hover:border-slate-300"
-      }`}
-    >
-      {/* Reserve badge height on every card — empty when no badge */}
-      <div className="mb-4 flex h-7 shrink-0 items-center justify-center">
-        {badge ? (
-          <span className="inline-flex rounded-full bg-indigo-600 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">
-            {badge}
-          </span>
-        ) : null}
-      </div>
-
-      <div className="min-h-[4.5rem]">
-        <h2 className="text-lg font-semibold text-slate-900">{name}</h2>
-        <p className="mt-2 text-sm text-slate-600">{description}</p>
-      </div>
-
-      <div className="mt-6 min-h-[7.5rem]">
-        {listPrice ? (
-          <p className="text-sm text-slate-400 line-through">{listPrice}</p>
-        ) : (
-          <div className="h-5" aria-hidden />
-        )}
-        <div className="flex items-baseline gap-1">
-          <span className="text-3xl font-semibold tracking-tight text-slate-900">{price}</span>
-          {perMonth ? <span className="text-sm text-slate-500">{perMonth}</span> : null}
-        </div>
-        {saveLabel ? (
-          <p className="mt-2 text-xs font-medium text-emerald-700">{saveLabel}</p>
-        ) : (
-          <div className="mt-2 h-4" aria-hidden />
-        )}
-        {yearlyNote ? <p className="mt-1 text-xs text-slate-500">{yearlyNote}</p> : null}
-        <p className={`mt-4 text-sm font-medium ${selected ? "text-indigo-800" : "text-slate-700"}`}>
-          {tokens ?? priceNote}
-        </p>
-      </div>
-
-      <ul className="mt-6 flex-1 space-y-3.5">
-        {features.map((f) => (
-          <li key={f} className="flex items-start gap-2 text-sm text-slate-700">
-            <CheckIcon />
-            {f}
-          </li>
-        ))}
-      </ul>
-
-      {onCtaClick ? (
-        <button
-          type="button"
-          disabled={ctaDisabled}
-          onClick={(e) => {
-            e.stopPropagation();
-            onCtaClick();
-          }}
-          className={ctaClass}
-        >
-          {cta}
-        </button>
-      ) : (
-        <Link href={ctaHref ?? "/sign-up"} onClick={(e) => e.stopPropagation()} className={ctaClass}>
-          {cta}
-        </Link>
-      )}
-    </div>
   );
 }

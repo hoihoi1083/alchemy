@@ -71,36 +71,56 @@ export async function POST(request: Request) {
 
     let brief;
     let vision: unknown;
+    let analyzeWarning: string | undefined;
 
-    if (carouselRefs.length > 0) {
-      const files = [ref as File, ...carouselRefs];
-      const imageUrls = await Promise.all(
-        files.map(async (f) => fal.storage.upload(await normalizeReferenceImageFile(f))),
-      );
-      const carouselVision = await analyzeCarouselReferenceImages({
-        imageUrls,
-        conceptIdea: conceptIdea || undefined,
-      });
-      vision = carouselVision;
-      brief = mergeUserReferenceBrief(
-        briefFromCarouselVision(carouselVision, userInputs),
-        fromText,
-      );
-    } else {
-      const normalized = await normalizeReferenceImageFile(ref as File);
-      const imageUrl = await fal.storage.upload(normalized);
-      const singleVision = await analyzeConceptReferenceImage({
-        imageUrl,
-        conceptIdea: conceptIdea || undefined,
-      });
-      vision = singleVision;
-      brief = mergeUserReferenceBrief(
-        briefFromConceptVision(singleVision, userInputs),
-        fromText,
-      );
+    try {
+      if (carouselRefs.length > 0) {
+        const files = [ref as File, ...carouselRefs];
+        const imageUrls = await Promise.all(
+          files.map(async (f) => fal.storage.upload(await normalizeReferenceImageFile(f))),
+        );
+        const carouselVision = await analyzeCarouselReferenceImages({
+          imageUrls,
+          conceptIdea: conceptIdea || undefined,
+        });
+        vision = carouselVision;
+        brief = mergeUserReferenceBrief(
+          briefFromCarouselVision(carouselVision, userInputs),
+          fromText,
+        );
+      } else {
+        const normalized = await normalizeReferenceImageFile(ref as File);
+        const imageUrl = await fal.storage.upload(normalized);
+        const singleVision = await analyzeConceptReferenceImage({
+          imageUrl,
+          conceptIdea: conceptIdea || undefined,
+        });
+        vision = singleVision;
+        brief = mergeUserReferenceBrief(
+          briefFromConceptVision(singleVision, userInputs),
+          fromText,
+        );
+      }
+    } catch (visionErr: unknown) {
+      // Soft fallback — keep dual generate usable (style pixels + research promptExtra)
+      // even when Florence/DeepSeek vision structuring fails.
+      analyzeWarning =
+        visionErr instanceof Error ? visionErr.message : "Reference vision failed.";
+      brief =
+        fromText ??
+        briefFromUserTextOnly({
+          conceptIdea: conceptIdea || product || headline,
+          headline,
+          subline,
+          promptExtra,
+        });
+      if (!brief) {
+        throw visionErr;
+      }
+      vision = null;
     }
 
-    if (isContentResearchStyleExtra(promptExtra)) {
+    if (isContentResearchStyleExtra(promptExtra) && brief) {
       brief = overrideBriefForContentResearch(brief, {
         product: product || headline,
         headline,
@@ -123,7 +143,8 @@ export async function POST(request: Request) {
       brief,
       strategy,
       vision,
-      carouselSlideCount: brief.carouselSlideCount ?? 1,
+      carouselSlideCount: brief?.carouselSlideCount ?? 1,
+      ...(analyzeWarning ? { warning: analyzeWarning } : {}),
     });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Reference analysis failed.";

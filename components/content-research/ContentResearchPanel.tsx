@@ -16,6 +16,7 @@ import {
   type ContentResearchPlan,
 } from "@/lib/content-research-types";
 import { ResearchAngleCards } from "@/components/content-research/ResearchAngleCards";
+import { ResearchPlatformLogo } from "@/components/content-research/ResearchPlatformLogo";
 import { displayResearchAngles } from "@/lib/content-research-enrich";
 import {
   mediaFilterFromWorkflowMode,
@@ -51,6 +52,12 @@ type ContentResearchPanelProps = {
   compact?: boolean;
   /** When false, search keyword stays independent from product name (physical promos). */
   syncTopicFromProduct?: boolean;
+  /** Hide physical/concept mode toggle (mode already fixed by studio entry). */
+  hidePromotionModeToggle?: boolean;
+  /** Hide promote-product field when name was collected on the previous step. */
+  hidePromoteProduct?: boolean;
+  /** Violet chrome for fuse intake (matches purple wizard steps). */
+  tone?: "default" | "violet";
   /** When set, picking an angle navigates to studio with handoff. */
   navigateOnApply?: (path: string) => void;
 };
@@ -67,9 +74,13 @@ export function ContentResearchPanel({
   compact,
   navigateOnApply,
   syncTopicFromProduct = true,
+  hidePromotionModeToggle = false,
+  hidePromoteProduct = false,
+  tone = "default",
 }: ContentResearchPanelProps) {
   const { m } = useLocale();
   const cr = m.contentResearch;
+  const violet = tone === "violet";
   const [promotionMode, setPromotionMode] = useState<PromotionMode>(initialPromotionMode);
   const [platform, setPlatform] = useState<ContentPlatform>("xiaohongshu");
   const [topic, setTopic] = useState(defaultTopic);
@@ -81,6 +92,7 @@ export function ContentResearchPanel({
   const [warning, setWarning] = useState<string | null>(null);
   const [plan, setPlan] = useState<ContentResearchPlan | null>(null);
   const [applyingAngleId, setApplyingAngleId] = useState<string | null>(null);
+  const [selectedAngleId, setSelectedAngleId] = useState<string | null>(null);
   const mediaFilter = mediaFilterFromWorkflowMode(workflowMode);
   const platformMismatch = platformMediaMismatch(platform, mediaFilter);
 
@@ -127,6 +139,7 @@ export function ContentResearchPanel({
     setNote(null);
     setWarning(null);
     setPlan(null);
+    setSelectedAngleId(null);
     try {
       const res = await fetch("/api/research-content-angles", {
         method: "POST",
@@ -252,6 +265,7 @@ export function ContentResearchPanel({
 
         setNote(message);
         setWarning(warningMsg ?? null);
+        setSelectedAngleId(angleToApply.id);
         onApplied?.(angleToApply, plan, { message, warning: warningMsg, refs });
         scrollToApplyFeedback();
         return;
@@ -294,78 +308,123 @@ export function ContentResearchPanel({
     <div
       className={
         compact
-          ? "space-y-3"
-          : "space-y-3 rounded-xl border border-emerald-200 bg-emerald-50/60 px-4 py-3"
+          ? violet
+            ? "flex flex-col gap-3.5"
+            : "space-y-3.5"
+          : violet
+            ? "flex flex-col gap-3.5 rounded-xl border border-violet-100 bg-violet-50/40 px-4 py-3"
+            : "space-y-3 rounded-xl border border-emerald-200 bg-emerald-50/60 px-4 py-3"
       }
     >
       {!compact && (
-        <p className="text-sm font-semibold text-emerald-950">{cr.title}</p>
+        <p className={`text-sm font-semibold ${violet ? "text-violet-950" : "text-emerald-950"}`}>
+          {cr.title}
+        </p>
       )}
 
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => setPromotionMode("physical")}
-          className={`rounded-full px-3 py-1 text-xs font-medium ${
-            promotionMode === "physical"
-              ? "bg-emerald-700 text-white"
-              : "border border-emerald-300 bg-white text-emerald-900"
-          }`}
-        >
-          {cr.physical}
-        </button>
-        <button
-          type="button"
-          onClick={() => setPromotionMode("concept")}
-          className={`rounded-full px-3 py-1 text-xs font-medium ${
-            promotionMode === "concept"
-              ? "bg-emerald-700 text-white"
-              : "border border-emerald-300 bg-white text-emerald-900"
-          }`}
-        >
-          {cr.concept}
-        </button>
-      </div>
-
-      <label className="block text-xs font-medium text-emerald-900">{cr.searchKeywordLabel}</label>
-      <input
-        value={topic}
-        onChange={(e) => setTopic(e.target.value)}
-        placeholder={cr.searchKeywordPlaceholder}
-        className="w-full rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm text-slate-900"
-      />
-
-      {promotionMode === "physical" && (
-        <>
-          <label className="block text-xs font-medium text-emerald-900">
-            {cr.promoteProductLabel} *
-          </label>
-          <input
-            value={promoteProduct}
-            onChange={(e) => updatePromoteProduct(e.target.value)}
-            placeholder={cr.promoteProductPlaceholder}
-            required
-            className="w-full rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm text-slate-900"
-          />
-          <p className="text-[11px] leading-relaxed text-emerald-900/80">{cr.promoteProductHint}</p>
-        </>
-      )}
-
-      <div className="flex flex-wrap gap-2">
-        {CONTENT_PLATFORMS.map((p) => (
+      {!hidePromotionModeToggle && (
+        <div className="flex flex-wrap gap-2">
           <button
-            key={p}
             type="button"
-            onClick={() => setPlatform(p)}
-            className={`rounded-full px-3 py-1.5 text-xs font-medium ${
-              platform === p
-                ? "bg-slate-900 text-white"
-                : "border border-slate-200 bg-white text-slate-700"
+            onClick={() => setPromotionMode("physical")}
+            className={`rounded-full px-3 py-1 text-xs font-medium ${
+              promotionMode === "physical"
+                ? violet
+                  ? "bg-violet-600 text-white"
+                  : "bg-emerald-700 text-white"
+                : violet
+                  ? "border border-violet-200 bg-white text-violet-900"
+                  : "border border-emerald-300 bg-white text-emerald-900"
             }`}
           >
-            {cr.platforms[p]}
+            {cr.physical}
           </button>
-        ))}
+          <button
+            type="button"
+            onClick={() => setPromotionMode("concept")}
+            className={`rounded-full px-3 py-1 text-xs font-medium ${
+              promotionMode === "concept"
+                ? violet
+                  ? "bg-violet-600 text-white"
+                  : "bg-emerald-700 text-white"
+                : violet
+                  ? "border border-violet-200 bg-white text-violet-900"
+                  : "border border-emerald-300 bg-white text-emerald-900"
+            }`}
+          >
+            {cr.concept}
+          </button>
+        </div>
+      )}
+
+      {/* 1. Platforms */}
+      <div>
+        <div className="mb-2.5">
+          <p className={`text-sm font-bold ${violet ? "text-slate-900" : "text-emerald-900"}`}>
+            {cr.platformsLabel}
+          </p>
+          {violet ? (
+            <p className="mt-0.5 text-[12px] leading-relaxed text-slate-500">{cr.platformsHint}</p>
+          ) : null}
+        </div>
+        <div className={violet ? "grid grid-cols-2 gap-2.5" : "flex flex-wrap gap-2"}>
+          {CONTENT_PLATFORMS.map((p) => {
+            const on = platform === p;
+            if (violet) {
+              return (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setPlatform(p)}
+                  aria-pressed={on}
+                  className={`flex min-h-[3.25rem] min-w-0 items-center gap-2.5 rounded-xl border px-3.5 py-3 text-left transition ${
+                    on
+                      ? "border-violet-600 bg-violet-50 shadow-[0_0_0_1px_rgba(124,58,237,0.12)]"
+                      : "border-slate-200/90 bg-white hover:border-slate-300"
+                  }`}
+                >
+                  <ResearchPlatformLogo platform={p} className="h-7 w-7 shrink-0" />
+                  <span
+                    className={`min-w-0 flex-1 truncate text-[13px] font-semibold leading-snug ${
+                      on ? "text-violet-700" : "text-slate-800"
+                    }`}
+                  >
+                    {cr.platforms[p]}
+                  </span>
+                  <span
+                    className={`flex h-5 w-5 shrink-0 items-center justify-center border ${
+                      on
+                        ? "rounded-full border-violet-600 bg-violet-600 text-white"
+                        : "rounded-md border-slate-300 bg-white"
+                    }`}
+                    aria-hidden
+                  >
+                    {on ? (
+                      <svg viewBox="0 0 12 12" className="h-3 w-3" fill="currentColor">
+                        <path d="M4.7 8.6 2.4 6.3l.9-.9 1.4 1.4 3.3-3.4.9.9-4.2 4.3Z" />
+                      </svg>
+                    ) : null}
+                  </span>
+                </button>
+              );
+            }
+            return (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setPlatform(p)}
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium ${
+                  on
+                    ? "bg-slate-900 text-white"
+                    : "border border-slate-200 bg-white text-slate-700"
+                }`}
+              >
+                <ResearchPlatformLogo platform={p} className="h-4 w-4" />
+                {cr.platforms[p]}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <p className="text-[11px] text-slate-600">
@@ -375,50 +434,51 @@ export function ContentResearchPanel({
             ? cr.researchMediaVideo
             : cr.researchMediaBoth}
       </p>
-      {platformMismatch && (
+      {platformMismatch ? (
         <p className="text-[11px] text-amber-800">{cr.tiktokImageWarning}</p>
-      )}
+      ) : null}
 
-      <button
-        type="button"
-        onClick={() => void runResearch()}
-        disabled={busy || Boolean(platformMismatch)}
-        className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600 disabled:opacity-50"
-      >
-        {busy ? cr.busy : cr.researchBtn}
-      </button>
+      {/* 2. Keyword */}
+      <label className={`block text-xs font-medium ${violet ? "text-slate-700" : "text-emerald-900"}`}>
+        {cr.searchKeywordLabel}
+      </label>
+      <input
+        value={topic}
+        onChange={(e) => setTopic(e.target.value)}
+        placeholder={cr.searchKeywordPlaceholder}
+        className={`w-full rounded-xl border bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/15 ${
+          violet ? "border-slate-200" : "border-emerald-200"
+        }`}
+      />
 
-      <div className="rounded-lg border border-dashed border-emerald-300/80 bg-white/60 px-3 py-3">
-        <p className="text-xs font-semibold text-emerald-950">{cr.directPostTitle}</p>
-        <p className="mt-1 text-[11px] leading-relaxed text-emerald-900/75">{cr.directPostHint}</p>
-        <label className="mt-2 block text-xs font-medium text-emerald-900">{cr.directPostUrlLabel}</label>
-        <input
-          value={postUrl}
-          onChange={(e) => setPostUrl(e.target.value)}
-          placeholder={cr.directPostUrlPlaceholder}
-          className="mt-1 w-full rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm text-slate-900"
-        />
-        <button
-          type="button"
-          onClick={() => void runDirectPost()}
-          disabled={
-            busy ||
-            Boolean(platformMismatch) ||
-            !postUrl.trim() ||
-            (promotionMode === "physical" && !promoteProduct.trim())
-          }
-          className="mt-2 w-full rounded-lg border border-emerald-600 bg-white px-4 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-50 disabled:opacity-50"
-        >
-          {busy ? cr.busy : cr.directPostBtn}
-        </button>
-        {promotionMode === "physical" && !promoteProduct.trim() && (
-          <p className="mt-1.5 text-[11px] text-amber-800">{cr.promoteProductRequired}</p>
-        )}
-      </div>
+      {promotionMode === "physical" && !hidePromoteProduct ? (
+        <div className="space-y-1.5">
+          <label className={`block text-xs font-medium ${violet ? "text-slate-700" : "text-emerald-900"}`}>
+            {cr.promoteProductLabel} *
+          </label>
+          <input
+            value={promoteProduct}
+            onChange={(e) => updatePromoteProduct(e.target.value)}
+            placeholder={cr.promoteProductPlaceholder}
+            required
+            className={`w-full rounded-xl border bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/15 ${
+              violet ? "border-slate-200" : "border-emerald-200"
+            }`}
+          />
+          <p className={`text-[11px] leading-relaxed ${violet ? "text-slate-500" : "text-emerald-900/80"}`}>
+            {cr.promoteProductHint}
+          </p>
+        </div>
+      ) : null}
+      {promotionMode === "physical" && hidePromoteProduct && promoteProduct.trim() ? (
+        <p className="rounded-xl border border-violet-100 bg-violet-50 px-3 py-2.5 text-xs text-violet-900">
+          <span className="font-semibold">{cr.promoteProductLabel}: </span>
+          {promoteProduct.trim()}
+        </p>
+      ) : null}
 
-      {error && <p className="text-xs text-red-700">{error}</p>}
-
-      {plan && (
+      {/* 3. Results — under keyword, above research button */}
+      {plan ? (
         <div className="space-y-2">
           <p
             className={`inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${
@@ -445,7 +505,9 @@ export function ContentResearchPanel({
               }}
             />
           )}
-          <p className="text-xs font-semibold text-slate-800">{cr.topPicksTitle}</p>
+          <p className={`text-xs font-semibold text-slate-800 ${violet ? "sr-only" : ""}`}>
+            {cr.topPicksTitle}
+          </p>
           {plan.posts && plan.posts.length > 0 && plan.searchProvider === "justoneapi" ? (
             <>
               {(() => {
@@ -465,9 +527,11 @@ export function ContentResearchPanel({
                       platform={plan.platform}
                       videoOnly={workflowMode === "video-only"}
                       applyingAngleId={applyingAngleId}
+                      selectedAngleId={selectedAngleId}
                       pickDisabled={promotionMode === "physical" && !promoteProduct.trim()}
                       pickDisabledHint={cr.promoteProductRequired}
                       onPick={pickAngle}
+                      variant={violet ? "recommendation" : "classic"}
                       labels={{
                         scoreLabel: cr.scoreLabel,
                         inspiredBy: cr.inspiredBy,
@@ -486,6 +550,15 @@ export function ContentResearchPanel({
                         videoReadyUrl: cr.videoReadyUrl,
                         videoReadyResolve: cr.videoReadyResolve,
                         videoReadyMissing: cr.videoReadyMissing,
+                        resultTitle: cr.resultTitle,
+                        resultSubtitle: cr.resultSubtitle,
+                        styleSummaryLabel: cr.styleSummaryLabel,
+                        toneLabel: cr.toneLabel,
+                        layoutNotesLabel: cr.layoutNotesLabel,
+                        viewMoreExamples: cr.viewMoreExamples,
+                        sourcePlatformsLabel: cr.sourcePlatformsLabel,
+                        morePlatforms: cr.morePlatforms,
+                        selectedLabel: cr.selectedLabel,
                       }}
                     />
                   </>
@@ -497,7 +570,11 @@ export function ContentResearchPanel({
               {plan.topPicks.map((angle, i) => (
                 <div
                   key={angle.id}
-                  className="rounded-lg border border-emerald-200 bg-white p-3 shadow-sm"
+                  className={`rounded-lg border bg-white p-3 shadow-sm ${
+                    selectedAngleId === angle.id
+                      ? "border-violet-600 ring-2 ring-violet-500/20"
+                      : "border-emerald-200"
+                  }`}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <p className="text-xs font-bold text-emerald-800">
@@ -509,9 +586,7 @@ export function ContentResearchPanel({
                   </div>
                   <p className="mt-1 text-sm font-semibold text-slate-900">{angle.title}</p>
                   <p className="mt-1 text-xs font-medium text-violet-800">{angle.hook}</p>
-                  <p className="mt-2 text-[11px] leading-relaxed text-slate-600">
-                    {angle.whyItWorks}
-                  </p>
+                  <p className="mt-2 text-[11px] leading-relaxed text-slate-600">{angle.whyItWorks}</p>
                   {angle.bulletPoints.length > 0 && (
                     <ul className="mt-2 list-inside list-disc text-[11px] text-slate-600">
                       {angle.bulletPoints.map((b) => (
@@ -535,93 +610,126 @@ export function ContentResearchPanel({
                     disabled={Boolean(applyingAngleId)}
                     className="mt-3 w-full rounded-lg bg-violet-600 px-3 py-2 text-xs font-semibold text-white hover:bg-violet-500 disabled:opacity-50"
                   >
-                    {applyingAngleId === angle.id ? cr.applyingAngle : cr.useAngle}
+                    {applyingAngleId === angle.id
+                      ? cr.applyingAngle
+                      : selectedAngleId === angle.id
+                        ? cr.selectedLabel
+                        : cr.useAngle}
                   </button>
                 </div>
               ))}
             </div>
           )}
-          <div id="content-research-apply-result" className="space-y-2">
-            {applyingAngleId && (
-              <p className="rounded-lg border border-violet-300 bg-violet-50 px-3 py-2 text-sm font-medium text-violet-900">
-                {cr.applyingAngle}
-              </p>
-            )}
-            {error && (
-              <p className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-900">
-                {error}
-              </p>
-            )}
-            {warning && !error && (
-              <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm leading-relaxed text-amber-950">
-                {warning}
-              </p>
-            )}
-            {note && !error && (
-              <p className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-900">
-                {note}
-              </p>
-            )}
-          </div>
-          {plan.posts && plan.posts.length > 0 && plan.searchProvider === "justoneapi" && (
-            <details className="text-xs text-slate-600">
-              <summary className="cursor-pointer font-medium text-slate-700">
-                {cr.allPostsTitle} ({plan.posts.length})
-              </summary>
-              <div className="mt-2">
-                <ResearchPostCards
-                  posts={plan.posts}
-                  labels={{
-                    postsTitle: cr.postsTitle,
-                    likes: cr.likes,
-                    collects: cr.collects,
-                    comments: cr.comments,
-                    openNote: cr.openNote,
-                    noCover: cr.noCover,
-                  }}
-                />
-              </div>
-            </details>
-          )}
-          <details className="text-xs text-slate-600">
-            <summary className="cursor-pointer font-medium text-slate-700">
-              {cr.allAnglesTitle} ({plan.candidates.length})
-            </summary>
-            <ul className="mt-2 space-y-1">
-              {plan.candidates.map((angle) => (
-                <li key={angle.id} className="flex flex-wrap items-baseline gap-x-2">
-                  <span className="font-medium text-slate-800">{angle.title}</span>
-                  <span className="text-slate-500">— {angle.hook}</span>
-                </li>
-              ))}
-            </ul>
-          </details>
-          {plan.sources && plan.sources.length > 0 && (
-            <details className="text-xs text-slate-600">
-              <summary className="cursor-pointer font-medium text-slate-700">
-                {cr.sourcesTitle} ({plan.sources.length})
-              </summary>
-              <ul className="mt-2 space-y-2">
-                {plan.sources.slice(0, 8).map((s) => (
-                  <li key={s.url}>
-                    <a
-                      href={s.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-medium text-sky-700 underline"
-                    >
-                      {s.title || s.url}
-                    </a>
-                    {s.snippet && (
-                      <p className="mt-0.5 line-clamp-2 text-[10px] text-slate-500">{s.snippet}</p>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </details>
+          {(note || warning || applyingAngleId) && (
+            <div id="content-research-apply-result" className="space-y-2">
+              {applyingAngleId ? (
+                <p className="rounded-lg border border-violet-300 bg-violet-50 px-3 py-2 text-sm font-medium text-violet-900">
+                  {cr.applyingAngle}
+                </p>
+              ) : null}
+              {warning && !error ? (
+                <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm leading-relaxed text-amber-950">
+                  {warning}
+                </p>
+              ) : null}
+              {note && !error ? (
+                <p className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-900">
+                  {note}
+                </p>
+              ) : null}
+            </div>
           )}
         </div>
-      )}
+      ) : null}
+
+      {/* 4. Research button — under keyword/results */}
+      <button
+        type="button"
+        onClick={() => void runResearch()}
+        disabled={busy || Boolean(platformMismatch)}
+        className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-white disabled:opacity-50 ${
+          violet
+            ? "w-full bg-violet-600 hover:bg-violet-700"
+            : "w-full bg-emerald-700 hover:bg-emerald-600 sm:w-auto"
+        }`}
+      >
+        {violet ? (
+          <svg
+            viewBox="0 0 24 24"
+            className="h-5 w-5 shrink-0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
+            <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z" />
+            <path d="M20 3v4" />
+            <path d="M22 5h-4" />
+            <path d="M4 17v2" />
+            <path d="M5 18H3" />
+          </svg>
+        ) : null}
+        {busy ? cr.busy : cr.researchBtn}
+      </button>
+
+      {error ? <p className="text-xs text-red-700">{error}</p> : null}
+
+      {/* 5. Paste reference link */}
+      <div
+        className={`rounded-xl border border-dashed px-3 py-3 ${
+          violet
+            ? "border-violet-200 bg-violet-50/50"
+            : "border-emerald-300/80 bg-white/60"
+        }`}
+      >
+        <p className={`text-xs font-semibold ${violet ? "text-violet-950" : "text-emerald-950"}`}>
+          {cr.directPostTitle}
+        </p>
+        <p
+          className={`mt-1 text-[11px] leading-relaxed ${
+            violet ? "text-slate-600" : "text-emerald-900/75"
+          }`}
+        >
+          {cr.directPostHint}
+        </p>
+        <label
+          className={`mt-2 block text-xs font-medium ${
+            violet ? "text-slate-700" : "text-emerald-900"
+          }`}
+        >
+          {cr.directPostUrlLabel}
+        </label>
+        <input
+          value={postUrl}
+          onChange={(e) => setPostUrl(e.target.value)}
+          placeholder={cr.directPostUrlPlaceholder}
+          className={`mt-1 w-full rounded-xl border bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/15 ${
+            violet ? "border-slate-200" : "border-emerald-200"
+          }`}
+        />
+        <button
+          type="button"
+          onClick={() => void runDirectPost()}
+          disabled={
+            busy ||
+            Boolean(platformMismatch) ||
+            !postUrl.trim() ||
+            (promotionMode === "physical" && !promoteProduct.trim())
+          }
+          className={`mt-2 w-full rounded-xl border bg-white px-4 py-2.5 text-sm font-semibold disabled:opacity-50 ${
+            violet
+              ? "border-violet-300 text-violet-800 hover:bg-violet-50"
+              : "border-emerald-600 text-emerald-800 hover:bg-emerald-50"
+          }`}
+        >
+          {busy ? cr.busy : cr.directPostBtn}
+        </button>
+        {promotionMode === "physical" && !promoteProduct.trim() && (
+          <p className="mt-1.5 text-[11px] text-amber-800">{cr.promoteProductRequired}</p>
+        )}
+      </div>
     </div>
   );
 }

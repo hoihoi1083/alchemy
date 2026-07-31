@@ -5,6 +5,10 @@ import { clampImageResolution } from "@/lib/billing/entitlements";
 import { getUserPlan } from "@/lib/billing/get-user-plan";
 import { estimateTeachingCarouselTokens } from "@/lib/billing/token-costs";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
+import {
+  buildFalLayoutTransferImageUrls,
+  dualProductIdentityHint,
+} from "@/lib/fal-dual-reference-urls";
 import { defaultEditEndpoint, defaultTextEndpoint, sanitizeImageEndpoint } from "@/lib/image-endpoints";
 import { persistAndDurablizeMany } from "@/lib/storage/durable-media";
 import {
@@ -116,13 +120,19 @@ export async function POST(request: Request) {
   const hasStyle = styleRef instanceof File && styleRef.size > 0;
   const { strategy, brief } = parseStrategyFromFormData(formData);
   const strategyBlock = brief ? referenceStrategyPromptBlock(brief, strategy) : "";
+  // Do not treat product_angle_images as research carousel panels — kit is user product detail only.
   const carouselRefs = formData
     .getAll("carousel_reference_images")
-    .filter((f): f is File => f instanceof File && f.size > 0);
+    .filter((f): f is File => f instanceof File && f.size > 0)
+    .slice(0, 5);
+  const productAngleFiles = formData
+    .getAll("product_angle_images")
+    .filter((f): f is File => f instanceof File && f.size > 0)
+    .slice(0, 4);
   const carouselExtra =
     carouselRefs.length > 0
       ? strategy.kind === "layout-transfer"
-        ? `Reference carousel has ${1 + carouselRefs.length} slides in order — mirror palette, typography rhythm, and layout grid family from reference; each output slide maps to one reference panel/row where possible.`
+        ? `Reference carousel has ${1 + carouselRefs.length} slides in order — mirror palette, typography rhythm, and layout grid family from IMAGE 2 style reference; each output slide maps to one reference panel/row where possible. IMAGE 1 remains the user product hero on every slide.`
         : `Reference carousel has ${1 + carouselRefs.length} slides in order — match palette, typography rhythm, and pacing (style-only; distinct layout per output slide).`
       : "";
   const promptExtra = [promptExtraRaw, strategyBlock, carouselExtra].filter(Boolean).join(" | ");
@@ -190,35 +200,55 @@ export async function POST(request: Request) {
 
     let imageUrlsForFal: string[] | null = null;
     if (strategy.sendPixelsToFal) {
-      imageUrlsForFal = [];
       if (strategy.useDualImage && hasStyle && hasProduct) {
-        imageUrlsForFal.push(await fal.storage.upload(styleRef as File));
-        imageUrlsForFal.push(await fal.storage.upload(reference as File));
-      } else if (hasProduct) {
-        imageUrlsForFal.push(await fal.storage.upload(reference as File));
-      } else if (hasStyle) {
-        imageUrlsForFal.push(await fal.storage.upload(styleRef as File));
+        imageUrlsForFal = await buildFalLayoutTransferImageUrls({
+          upload: (f) => fal.storage.upload(f),
+          styleRef: styleRef as File,
+          productRef: reference as File,
+          productAngles: productAngleFiles,
+        });
+      } else {
+        imageUrlsForFal = [];
+        if (hasProduct) {
+          imageUrlsForFal.push(await fal.storage.upload(reference as File));
+          for (const angle of productAngleFiles) {
+            imageUrlsForFal.push(await fal.storage.upload(angle));
+          }
+        } else if (hasStyle) {
+          imageUrlsForFal.push(await fal.storage.upload(styleRef as File));
+        }
+        if (!imageUrlsForFal.length) imageUrlsForFal = null;
       }
     }
+
+    const dualHint =
+      strategy.useDualImage && hasStyle && hasProduct
+        ? dualProductIdentityHint(productAngleFiles.length > 0)
+        : "";
 
     const slideResults = await Promise.all(
       plan.slides.map(async (slide) => {
         const carouselSlideRef = brief?.carouselSlides?.[slide.index - 1];
-        const prompt = buildTeachingCarouselSlideImagePrompt(
-          vars,
-          plan,
-          slide,
-          plan.slides.length,
-          promptMode,
-          null,
-          referenceImageMode,
-          {
-            visualStyleId: visualStyle,
-            referenceConcept: strategy.useReferenceConceptPrompts,
-            carouselSlideRef,
-            brandKit,
-          },
-        );
+        const prompt = [
+          buildTeachingCarouselSlideImagePrompt(
+            vars,
+            plan,
+            slide,
+            plan.slides.length,
+            promptMode,
+            null,
+            referenceImageMode,
+            {
+              visualStyleId: visualStyle,
+              referenceConcept: strategy.useReferenceConceptPrompts,
+              carouselSlideRef,
+              brandKit,
+            },
+          ),
+          dualHint,
+        ]
+          .filter(Boolean)
+          .join("\n");
 
         const result = await fal.subscribe(endpoint, {
           input: {

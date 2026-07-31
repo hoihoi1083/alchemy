@@ -535,6 +535,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 
   const attachReferenceToForm = useCallback(
     (fd: FormData) => {
+      // Both research cover and manual style upload land in imageRefPhoto.
+      // Generate maps: reference_image (主圖) = IMAGE1 product; style_reference = IMAGE2 look.
+      // Order matters: nano-banana/edit prioritizes the first image as the hero subject.
       const useConceptRef =
         imageCreativeMode === "reference-concept" ||
         Boolean(imageRefPhoto && productPhoto);
@@ -553,12 +556,16 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       if (imageRefPhoto) {
         fd.set("style_reference_image", imageRefPhoto);
       }
+      for (const f of extraKitPhotos.slice(0, 4)) {
+        fd.append("product_angle_images", f);
+      }
       appendReferenceFormFields(fd);
     },
     [
       imageCreativeMode,
       imageRefPhoto,
       productPhoto,
+      extraKitPhotos,
       effectiveImageMode,
       referenceStrategy.sendPixelsToFal,
       appendReferenceFormFields,
@@ -830,9 +837,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         fd.set("subline", ctx.subline.trim());
         fd.set("product", ctx.product.trim());
         fd.set("prompt_extra", promptForAnalyze);
-        for (const f of extraKitPhotos.slice(0, 5)) {
-          fd.append("carousel_reference_images", f);
-        }
+        // Do NOT send extraKitPhotos as carousel_reference_images.
+        // Kit slots are optional product angles, not research style slides — sending
+        // them forced N sequential Bagel calls and polluted carousel vision.
         const res = await fetch("/api/analyze-reference", { method: "POST", body: fd });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error ?? "Reference analysis failed.");
@@ -872,7 +879,6 @@ export function useStudioWizard(promotionMode: PromotionMode) {
   }, [
     referenceAnalyzeKey,
     imageRefPhoto,
-    extraKitPhotos,
     promotionMode,
     effectiveImageOutputMode,
     visualStyleId,
@@ -1590,6 +1596,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     }
     if (mode === "video-only") {
       setVideoSettings(videoSettingsForWorkflow("video-only", templateId));
+      // Don't keep combined's storyboard lock — video-only defaults to animate-one-photo.
+      selectVisualStyle(defaultVisualStyleForWorkflow(promotionMode, mode));
+      return;
     }
     if (mode === "combined") {
       setVideoSettings(videoSettingsForWorkflow("combined", templateId));
@@ -3432,9 +3441,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         fd.set("promotion_mode", promotionMode);
         fd.set("aspect_ratio", effectiveImageAspectRatio);
         fd.set("slide_count", String(referenceCarouselSlideCount));
-        for (const f of extraKitPhotos.slice(0, 5)) {
-          fd.append("carousel_reference_images", f);
-        }
+        // Product kit angles go via attachReferenceToForm → product_angle_images only.
+        // Do not send them as carousel_reference_images (that confuses slide-count prompts).
         if (productPhoto) {
           fd.set("reference_image", productPhoto);
         }

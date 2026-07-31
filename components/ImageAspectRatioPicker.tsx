@@ -10,11 +10,19 @@ type Props = {
   value: ImageAspectRatio;
   onChange: (ratio: ImageAspectRatio) => void;
   variant?: "light" | "dark";
+  /** Selected accent; violet for studio fuse pages. */
+  accent?: "emerald" | "violet";
 };
 
-export function ImageAspectRatioPicker({ value, onChange, variant = "dark" }: Props) {
+export function ImageAspectRatioPicker({
+  value,
+  onChange,
+  variant = "dark",
+  accent = "emerald",
+}: Props) {
   const { m } = useLocale();
   const isDark = variant === "dark";
+  const violet = accent === "violet";
 
   return (
     <div className="space-y-2">
@@ -36,8 +44,12 @@ export function ImageAspectRatioPicker({ value, onChange, variant = "dark" }: Pr
               className={`rounded-xl border p-3 text-left transition ${
                 selected
                   ? isDark
-                    ? "border-emerald-500 bg-emerald-950/40"
-                    : "border-emerald-400 bg-emerald-50"
+                    ? violet
+                      ? "border-violet-500 bg-violet-950/40"
+                      : "border-emerald-500 bg-emerald-950/40"
+                    : violet
+                      ? "border-violet-400 bg-violet-50"
+                      : "border-emerald-400 bg-emerald-50"
                   : isDark
                     ? "border-slate-700 bg-slate-900/50 hover:border-slate-600"
                     : "border-slate-200 bg-white hover:border-slate-300"

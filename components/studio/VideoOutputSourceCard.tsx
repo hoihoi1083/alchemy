@@ -50,14 +50,23 @@ export function VideoOutputSourceCard({ variant, className = "" }: Props) {
 
   const copy = m.wizard.videoOutputTypes[presentationId];
   const locked = isVideoOutputPathLocked(presentationId);
+  const videoOnly = w.workflowMode === "video-only";
   const sceneCount =
     presentationId === "storyboard-reel" ? w.storyboardScenes.length : 0;
+  const pipelineVideoOnly =
+    "pipelineVideoOnly" in copy ? copy.pipelineVideoOnly : undefined;
+  const confidenceVideoOnly =
+    "confidenceVideoOnly" in copy ? copy.confidenceVideoOnly : undefined;
   const pipeline =
     presentationId === "storyboard-reel" && sceneCount > 0
       ? copy.pipelineReady.replace("{count}", String(sceneCount))
       : variant === "image" && presentationId === "storyboard-reel"
         ? copy.pipelineImageStep
-        : copy.pipeline;
+        : videoOnly && pipelineVideoOnly
+          ? pipelineVideoOnly
+          : copy.pipeline;
+  const confidence =
+    videoOnly && confidenceVideoOnly ? confidenceVideoOnly : copy.confidence;
 
   const tone =
     presentationId === "storyboard-reel"
@@ -93,7 +102,7 @@ export function VideoOutputSourceCard({ variant, className = "" }: Props) {
             {pipeline}
           </p>
           <p className={`text-[11px] leading-relaxed ${variant === "setup" ? "text-violet-700" : "opacity-75"}`}>
-            {copy.confidence}
+            {confidence}
           </p>
           {locked && variant !== "setup" && (
             <p className="text-[10px] opacity-60">{m.wizard.videoOutputPathLockedHint}</p>

@@ -40,6 +40,7 @@ export type MicroStepId =
   | "identity.product_name"
   | "identity.concept"
   | "identity.concept_topic"
+  | "setup.pre_generate"
   | "copy.edit"
   | "copy.storyboard_brief"
   | "copy.creative_brief"

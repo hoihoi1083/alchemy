@@ -1,15 +1,11 @@
-/** Stable identity for uploaded reference files — avoids re-analyze on unrelated wizard state churn. */
+/** Stable identity for uploaded reference cover — product kit extras are not analyzed. */
 export function referenceFilesFingerprint(
   cover: File | null,
-  extras: File[],
+  _extras: File[] = [],
 ): string | null {
   if (!cover) return null;
-  const coverKey = `${cover.name}:${cover.size}:${cover.lastModified}`;
-  const extraKeys = extras
-    .slice(0, 5)
-    .map((f) => `${f.name}:${f.size}:${f.lastModified}`)
-    .join(",");
-  return extraKeys ? `${coverKey}|${extraKeys}` : coverKey;
+  // Product-angle kit must not re-trigger style analyze.
+  return `${cover.name}:${cover.size}:${cover.lastModified}`;
 }
 
 export function referenceAnalyzeTriggerKey(input: {

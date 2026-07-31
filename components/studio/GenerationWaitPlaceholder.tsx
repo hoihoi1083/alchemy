@@ -17,7 +17,62 @@ type GenerationWaitPlaceholderProps = {
 
 const BEAT_HZ = 4;
 const BEAT_CYCLE = 8;
-const CARD_H = 240;
+
+const WAIT_FRAME_CSS = `
+.gen-wait-frame {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  background: #1a1528;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  height: 200px;
+}
+.gen-wait-frame--compact { height: 190px; }
+.gen-wait-logo {
+  height: 3rem;
+  width: 3rem;
+  object-fit: contain;
+  mix-blend-mode: screen;
+  filter: drop-shadow(0 0 14px rgba(192, 132, 252, 0.5));
+}
+.gen-wait-msg {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: #f5f3ff;
+  padding: 0 0.25rem;
+}
+.gen-wait-hint {
+  margin-top: 0.25rem;
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.35;
+  color: #94a3b8;
+  padding: 0 0.25rem;
+}
+.gen-wait-fade {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  background: linear-gradient(to top, #1a1528, rgba(26, 21, 40, 0.9), transparent);
+  padding: 2.5rem 0.85rem 0.85rem;
+}
+@media (min-width: 640px) {
+  .gen-wait-frame { height: 240px; border-radius: 1rem; }
+  .gen-wait-frame--compact { height: 220px; }
+  .gen-wait-logo { height: 3.5rem; width: 3.5rem; }
+  .gen-wait-msg { font-size: 14px; }
+  .gen-wait-fade { padding: 3rem 1rem 1rem; }
+}
+@media (min-width: 1024px) {
+  .gen-wait-frame { height: 300px; border-radius: 1.15rem; }
+  .gen-wait-frame--compact { height: 280px; }
+  .gen-wait-logo { height: 4rem; width: 4rem; }
+}
+`;
 
 const STAR_RGB: ReadonlyArray<readonly [number, number, number]> = [
   [216, 180, 254],
@@ -52,12 +107,14 @@ function spawnStar(preferOuter = true): Star {
 
 /**
  * Full-width dark wait card: centered logo + fine dots + status at bottom.
+ * Height scales with viewport (phone → laptop).
  */
 export function GenerationWaitPlaceholder({
   message,
   hint,
   previewUrl,
   className = "",
+  compact = false,
 }: GenerationWaitPlaceholderProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const frameRef = useRef<HTMLDivElement | null>(null);
@@ -75,19 +132,19 @@ export function GenerationWaitPlaceholder({
     let stars: Star[] = [];
     let lastT = 0;
     let w = 0;
-    let h = CARD_H;
+    let h = 200;
 
     const rebuild = () => {
       const rect = frame.getBoundingClientRect();
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       w = Math.max(1, Math.floor(rect.width));
-      h = CARD_H;
+      h = Math.max(1, Math.floor(rect.height));
       canvas.width = Math.floor(w * dpr);
       canvas.height = Math.floor(h * dpr);
       canvas.style.width = `${w}px`;
       canvas.style.height = `${h}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const count = Math.min(90, Math.max(40, Math.floor(w / 10)));
+      const count = Math.min(90, Math.max(36, Math.floor(w / 10)));
       stars = Array.from({ length: count }, () => spawnStar(Math.random() > 0.2));
     };
 
@@ -103,10 +160,8 @@ export function GenerationWaitPlaceholder({
       ctx.fillStyle = "#1a1528";
       ctx.fillRect(0, 0, w, h);
 
-      // True center of the card (logo sits here)
       const cx = w * 0.5;
       const cy = h * 0.5;
-      // Reach both side edges on a full-width card (elliptical field)
       const maxRX = w * 0.52;
       const maxRY = h * 0.46;
 
@@ -159,9 +214,10 @@ export function GenerationWaitPlaceholder({
   return (
     <div
       ref={frameRef}
-      className={`relative w-full overflow-hidden rounded-2xl border border-violet-800/50 bg-[#1a1528] shadow-lg shadow-violet-950/30 ${className}`}
-      style={{ height: CARD_H }}
+      className={`gen-wait-frame${compact ? " gen-wait-frame--compact" : ""} ${className}`.trim()}
     >
+      <style dangerouslySetInnerHTML={{ __html: WAIT_FRAME_CSS }} />
+
       {previewUrl ? (
         <img
           src={previewUrl}
@@ -172,20 +228,13 @@ export function GenerationWaitPlaceholder({
 
       <canvas ref={canvasRef} className="absolute inset-0 block h-full w-full" aria-hidden />
 
-      {/* Logo dead-center of the full-width card */}
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-        <img
-          src="/alchemy-logo.png"
-          alt=""
-          className="h-16 w-16 object-contain mix-blend-screen drop-shadow-[0_0_14px_rgba(192,132,252,0.5)]"
-        />
+        <img src="/alchemy-logo.png" alt="" className="gen-wait-logo" />
       </div>
 
-      <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-[#1a1528] via-[#1a1528]/90 to-transparent px-4 pb-4 pt-12">
-        <p className="text-center text-sm font-medium leading-snug text-violet-50">{message}</p>
-        {hint ? (
-          <p className="mt-1 text-center text-xs leading-snug text-slate-400">{hint}</p>
-        ) : null}
+      <div className="gen-wait-fade">
+        <p className="gen-wait-msg">{message}</p>
+        {hint ? <p className="gen-wait-hint">{hint}</p> : null}
       </div>
     </div>
   );

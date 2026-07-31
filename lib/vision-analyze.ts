@@ -1,12 +1,9 @@
-import { fal } from "@fal-ai/client";
+import { runBagelUnderstand } from "@/lib/bagel-understand";
 import { parseLlmJsonObject } from "@/lib/parse-llm-json";
 import type {
   ProductVideoKitSlot,
   ProductVideoVisionProfile,
 } from "@/lib/product-video-types";
-
-const VISION_ENDPOINT = "fal-ai/any-llm/vision";
-const VISION_MODEL = "google/gemini-2.5-flash-lite";
 
 const SLOT_LABELS: Record<ProductVideoKitSlot, string> = {
   hero: "Hero product (main item for the ad)",
@@ -15,52 +12,60 @@ const SLOT_LABELS: Record<ProductVideoKitSlot, string> = {
   extra2: "Second extra angle or context shot",
 };
 
-function buildVisionPrompt(
-  slots: Array<{ slot: ProductVideoKitSlot; index: number }>,
-  productName: string,
-): string {
-  const imageLines = slots
-    .map((s) => `IMAGE ${s.index} (${SLOT_LABELS[s.slot]})`)
-    .join("\n");
+type HeroVisionJson = {
+  productSummary?: string;
+  category?: string;
+  materials?: unknown[];
+  colors?: unknown[];
+  situation?: string;
+  role?: string;
+  visualDescription?: string;
+};
 
+type SlotVisionJson = {
+  role?: string;
+  visualDescription?: string;
+};
+
+function buildHeroPrompt(productName: string): string {
   return [
-    "Analyze these product marketing photos for a short Seedance reference-to-video Reel.",
-    "Return ONE JSON object only — no markdown fences.",
+    "Analyze this HERO product marketing photo for a short Seedance reference-to-video Reel.",
+    "Output valid JSON only — no markdown fences, no thinking notes.",
     "",
     "Required JSON shape:",
-    '{"productSummary":"","category":"","materials":[],"colors":[],"situation":"","imageRoles":[{"imageIndex":1,"slot":"hero","role":"","visualDescription":""}]}',
+    '{"productSummary":"","category":"","materials":[],"colors":[],"situation":"","role":"","visualDescription":""}',
     "",
     "Rules:",
     "- productSummary: one English sentence describing what is being sold",
     "- category: e.g. personal-care device, jewelry, food, skincare, electronics",
-    "- materials: visible materials/finishes (plastic, glass, metal…)",
+    "- materials: visible materials/finishes",
     "- colors: dominant colors",
-    "- situation: best realistic setting/mood for a 9:16 social ad (lighting, room, time of day)",
-    "- imageRoles: one entry per image below, imageIndex 1…N in order",
-    "- slot must be exactly: hero | packaging | extra1 | extra2",
+    "- situation: best realistic setting/mood for a 9:16 social ad",
     "- role: short English label for Seedance (@ImageK role)",
-    "- visualDescription: concrete details visible in that photo",
-    "- Do NOT invent text, prices, or brand names not visible in photos",
-    "",
+    "- visualDescription: concrete details visible in this photo",
+    "- Do NOT invent text, prices, or brand names not visible",
     productName ? `User product name hint: ${productName}` : "",
-    "",
-    "Images in order:",
-    imageLines,
   ]
     .filter(Boolean)
     .join("\n");
 }
 
-function extractVisionText(data: unknown): string {
-  if (!data || typeof data !== "object") return "";
-  const d = data as Record<string, unknown>;
-  if (typeof d.output === "string") return d.output.trim();
-  if (typeof d.text === "string") return d.text.trim();
-  if (typeof d.response === "string") return d.response.trim();
-  const choices = d.choices as Array<{ message?: { content?: string } }> | undefined;
-  const content = choices?.[0]?.message?.content;
-  if (typeof content === "string") return content.trim();
-  return "";
+function buildSlotPrompt(slot: ProductVideoKitSlot, productName: string): string {
+  return [
+    `Analyze this product marketing photo (${SLOT_LABELS[slot]}).`,
+    "Output valid JSON only — no markdown fences, no thinking notes.",
+    "",
+    "Required JSON shape:",
+    '{"role":"","visualDescription":""}',
+    "",
+    "Rules:",
+    "- role: short English label for Seedance (@ImageK role)",
+    "- visualDescription: concrete details visible in this photo",
+    "- Do NOT invent text, prices, or brand names not visible",
+    productName ? `User product name hint: ${productName}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 export async function analyzeProductImagesWithVision(input: {
@@ -75,66 +80,54 @@ export async function analyzeProductImagesWithVision(input: {
     throw new Error("Image count must match slot labels.");
   }
 
-  const indexed = input.slots.map((slot, i) => ({
-    slot,
-    index: i + 1,
-  }));
-
-  const result = await fal.subscribe(VISION_ENDPOINT, {
-    input: {
-      model: VISION_MODEL,
-      prompt: buildVisionPrompt(indexed, input.productName?.trim() || ""),
-      image_urls: input.imageUrls,
-      system_prompt:
-        "You are a product marketing visual analyst. Output valid JSON only. Adapt to the actual product category in the photos.",
-    },
-    logs: false,
+  const productName = input.productName?.trim() || "";
+  const heroRaw = await runBagelUnderstand({
+    imageUrl: input.imageUrls[0],
+    prompt: buildHeroPrompt(productName),
   });
+  const hero = parseLlmJsonObject<HeroVisionJson>(heroRaw, "Product hero vision");
 
-  const raw = extractVisionText(result.data);
-  if (!raw) {
-    throw new Error("Vision model returned an empty analysis.");
-  }
-
-  const parsed = parseLlmJsonObject<Partial<ProductVideoVisionProfile>>(
-    raw,
-    "Product vision analysis",
+  const restRoles = await Promise.all(
+    input.imageUrls.slice(1).map(async (url, i) => {
+      const slot = input.slots[i + 1] ?? "extra1";
+      const raw = await runBagelUnderstand({
+        imageUrl: url,
+        prompt: buildSlotPrompt(slot, productName),
+      });
+      const parsed = parseLlmJsonObject<SlotVisionJson>(
+        raw,
+        `Product ${slot} vision`,
+      );
+      return {
+        imageIndex: i + 2,
+        slot,
+        role: String(parsed.role ?? SLOT_LABELS[slot]).trim(),
+        visualDescription: String(parsed.visualDescription ?? "").trim(),
+      };
+    }),
   );
 
-  const imageRoles = (Array.isArray(parsed.imageRoles) ? parsed.imageRoles : [])
-    .slice(0, input.imageUrls.length)
-    .map((r, i) => ({
-      imageIndex: i + 1,
-      slot: input.slots[i] ?? "hero",
-      role: String(r?.role ?? SLOT_LABELS[input.slots[i] ?? "hero"]).trim(),
-      visualDescription: String(r?.visualDescription ?? "").trim(),
-    }));
-
-  for (let i = 0; i < input.imageUrls.length; i++) {
-    if (!imageRoles[i]) {
-      imageRoles.push({
-        imageIndex: i + 1,
-        slot: input.slots[i] ?? "hero",
-        role: SLOT_LABELS[input.slots[i] ?? "hero"],
-        visualDescription: "",
-      });
-    } else {
-      imageRoles[i].imageIndex = i + 1;
-      imageRoles[i].slot = input.slots[i] ?? imageRoles[i].slot;
-    }
-  }
+  const imageRoles = [
+    {
+      imageIndex: 1,
+      slot: input.slots[0] ?? "hero",
+      role: String(hero.role ?? SLOT_LABELS[input.slots[0] ?? "hero"]).trim(),
+      visualDescription: String(hero.visualDescription ?? "").trim(),
+    },
+    ...restRoles,
+  ];
 
   return {
     productSummary:
-      String(parsed.productSummary ?? "").trim() || "Product marketing reel",
-    category: String(parsed.category ?? "").trim() || "consumer product",
-    materials: Array.isArray(parsed.materials)
-      ? parsed.materials.map((m) => String(m).trim()).filter(Boolean).slice(0, 8)
+      String(hero.productSummary ?? "").trim() || "Product marketing reel",
+    category: String(hero.category ?? "").trim() || "consumer product",
+    materials: Array.isArray(hero.materials)
+      ? hero.materials.map((m) => String(m).trim()).filter(Boolean).slice(0, 8)
       : [],
-    colors: Array.isArray(parsed.colors)
-      ? parsed.colors.map((c) => String(c).trim()).filter(Boolean).slice(0, 6)
+    colors: Array.isArray(hero.colors)
+      ? hero.colors.map((c) => String(c).trim()).filter(Boolean).slice(0, 6)
       : [],
-    situation: String(parsed.situation ?? "").trim() || "Clean commercial setting",
+    situation: String(hero.situation ?? "").trim() || "Clean commercial setting",
     imageRoles,
   };
 }

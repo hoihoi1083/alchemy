@@ -19,7 +19,7 @@ export function ArtStylePicker({ value, onChange }: Props) {
     <div className="space-y-2">
       <p className="text-sm font-medium text-slate-700">{m.wizard.artStyleLabel}</p>
       <p className="text-xs text-slate-500">{m.wizard.artStyleHint}</p>
-      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="flex flex-wrap gap-2">
         {ART_STYLE_IDS.map((id) => {
           const def = getArtStyle(id);
           const copy = m.wizard.artStyles[id];
@@ -29,18 +29,30 @@ export function ArtStylePicker({ value, onChange }: Props) {
               key={id}
               type="button"
               onClick={() => onChange(id)}
-              className={`rounded-xl border px-3 py-2.5 text-left transition ${
+              className={`relative w-[5.5rem] shrink-0 overflow-hidden rounded-xl border bg-white text-left transition ${
                 selected
-                  ? "border-violet-500 bg-violet-50 ring-1 ring-violet-400"
-                  : "border-slate-200 bg-white hover:border-slate-300"
+                  ? "border-violet-500 ring-1 ring-violet-400"
+                  : "border-slate-200 hover:border-violet-200"
               }`}
             >
-              <span className="text-base" aria-hidden>
-                {def.icon}
-              </span>
-              <span className="mt-1 block text-sm font-medium text-slate-800">{copy.title}</span>
-              <span className="mt-0.5 block text-[11px] leading-snug text-slate-500">
-                {copy.description}
+              {selected ? (
+                <span
+                  className="absolute right-1.5 top-1.5 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-violet-600 text-white"
+                  aria-hidden
+                >
+                  <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="3">
+                    <path d="m5 12 5 5L20 7" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </span>
+              ) : null}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={def.previewSrc}
+                alt=""
+                className="h-[5.5rem] w-full object-cover"
+              />
+              <span className="block px-1.5 py-1.5 text-[11px] font-semibold leading-tight text-slate-800">
+                {copy.title}
               </span>
             </button>
           );
