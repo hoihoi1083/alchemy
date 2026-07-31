@@ -777,7 +777,8 @@ export function canProceedMicroStep(
     if (sub === "reference_reel" && !(state.referenceAd && state.referenceIsVideo)) {
       return "need_reference_video";
     }
-    if (ctx.promotionMode === "physical" && sub !== "reference_reel" && !state.productPhoto) {
+    // Physical product video always needs a product photo (@Image1), including R2V.
+    if (ctx.promotionMode === "physical" && sub !== "ugc_presenter" && !state.productPhoto) {
       return "need_product_photo";
     }
     if (

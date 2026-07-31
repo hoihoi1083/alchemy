@@ -244,11 +244,13 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
       const videoSubpath =
         pendingVideoSubpath ??
         ctx.videoSubpath ??
-        (ctx.workflowMode === "video-only" && ctx.intakePath === "direct"
-          ? ctx.promotionMode === "concept"
-            ? "creative_video"
-            : "product_promo"
-          : undefined);
+        (ctx.workflowMode === "video-only" && ctx.intakePath === "research"
+          ? "reference_reel"
+          : ctx.workflowMode === "video-only" && ctx.intakePath === "direct"
+            ? ctx.promotionMode === "concept"
+              ? "creative_video"
+              : "product_promo"
+            : undefined);
       return videoSubpath ? { ...ctx, videoSubpath } : ctx;
     }
     return ctx;
@@ -429,6 +431,15 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
         patchContext(nextCtx);
         if (defaultSub === "product_promo") wizard.applyPrimaryPathVideoOnly("creative");
         else wizard.applyPrimaryPathConceptVideo("creative");
+      }
+      // Video-only research: stay on reference_reel — never default to 快速廣告 / assistant.
+      if (
+        intakePath === "research" &&
+        (nextCtx.workflowMode === "video-only" || wizard.workflowMode === "video-only") &&
+        !nextCtx.videoSubpath
+      ) {
+        nextCtx = { ...nextCtx, videoSubpath: "reference_reel" };
+        patchContext(nextCtx);
       }
       // 圖+片 + 研究 → always storyboard reel (multi-scene stills).
       if (

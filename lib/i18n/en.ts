@@ -880,12 +880,12 @@ export const en = {
         description: "Analyze brand → 3 linked posts (hero / selling points / offer)",
       },
       "brand-video": {
-        title: "Brand video analysis",
-        description: "Analyze site / social → AI writes video prompt",
+        title: "Brand motion video",
+        description: "Analyze site / social → AI writes a motion prompt (how the reel moves)",
       },
       "creative-video": {
-        title: "Creative video prompt",
-        description: "Describe your Reel idea → AI writes video generation motion prompt",
+        title: "Creative motion brief",
+        description: "Describe your Reel idea → AI writes a motion prompt (camera / pacing)",
       },
       "concept-cinematic": {
         title: "Concept cinematic reel",
@@ -943,11 +943,11 @@ export const en = {
       "website-launch": "Launch promo — app or website mockup mood; logo/screenshot optional",
     },
     brandVideoIntro:
-      "Paste your site or IG @handle. AI analyzes the brand, then writes a video prompt (motion + mood). Upload a product photo to generate the Reel.",
+      "Paste your site or IG @handle. AI analyzes the brand, then writes a motion prompt (camera + mood — not spoken script). Optional product photo for the Reel.",
     modelWearIntro:
       "Upload a product photo — AI generates a photorealistic 9:16 lifestyle ad with a model wearing or using the product. Bracelets go on wrist; devices show real use. Use Advanced framing to control face vs hands-only.",
     creativeVideoIntro:
-      "Describe your short video in plain language (e.g. kung fu fight then drink the product). AI writes the video generation prompt and notes how to use reference MP4 or dual frames for a full story. Video step only — upload a product photo or keyframe.",
+      "Describe your short video in plain language (e.g. kung fu fight then drink the product). AI writes a motion prompt for how the reel should move — not a spoken voiceover. Optional product photo or keyframe.",
     creativeBriefLabel: "Creative video brief (required)",
     creativeBriefPlaceholder:
       "e.g. Hero faces five opponents in kung fu, wins, then drinks the energy drink — cinematic, fast pace",
@@ -1152,16 +1152,17 @@ export const en = {
     primaryPathsTitle: "Primary creation paths",
     primaryPathsHint: "Start with one of these 2 paths. More styles are under Advanced.",
     videoPathsTitle: "Video creation paths",
-    videoPathsHint: "Pick how to make your Reel — AI Video Assistant is recommended (upload a product photo kit).",
+    videoPathsHint: "Pick how to make your Reel — photo → motion prompt, or follow a reference reel.",
     videoAssistantStepHint:
-      "AI Video Assistant selected — continue to Step 3 to upload product, packaging, and angle photos; AI will analyze and write the video generation prompt.",
+      "AI Video Assistant selected — continue to Step 3 to upload product, packaging, and angle photos; AI will analyze and write the motion prompt.",
     primaryPathsShortcutNote:
       "These are quick shortcuts. In Advanced you can still pick the same style with more options.",
     primaryPathsHiddenResearchHint:
       "Content research already set your reference layout and output mode — add your product photo and copy, then continue.",
     pathQuickTitle: "Quick Ad",
     pathQuickDesc: "Fast image/video ad for most products.",
-    pathQuickVideoDesc: "One product photo + AI video generation motion prompt → short promo clip.",
+    pathQuickVideoDesc:
+      "One product photo + AI writes a motion prompt → short silent promo reel (add BGM/captions later).",
     pathModelTitle: "Model Wear/Use",
     pathModelDesc: "Shortcut to model-wear style (also available in Advanced).",
     pathStoryboardTitle: "Storyboard Reel",
@@ -1171,7 +1172,8 @@ export const en = {
     pathReferenceTitle: "Reference layout",
     pathReferenceDesc: "Upload a reference ad — keep layout, swap in your product and copy.",
     pathReferenceVideoTitle: "Follow reference reel",
-    pathReferenceVideoDesc: "Upload a reference MP4 — follow camera/edit concept (not frame-by-frame copy).",
+    pathReferenceVideoDesc:
+      "Upload a reference MP4 — we analyze it for motion/edit feel (not a frame copy). Your product photo is still @Image1.",
     contentResearchSectionTitle: "Content research (optional)",
     contentResearchSectionHint: "Find trending posts for layout inspiration — skip if you already have a reference.",
     conceptPathsTitle: "Main concept paths",
@@ -1312,7 +1314,7 @@ export const en = {
     researchReelAnalyzed:
       "Reference reel analyzed — visual style and edit rhythm follow the reference; content uses your topic and copy. A frame from the video replaced the search thumbnail as the style reference. Step 2: scene stills. Step 3: video generation stitch.",
     referenceVideoAnalyzed:
-      "Reference video analyzed — video generation prompt written from your clip. Generation uses digest montage + your product photo.",
+      "Reference video analyzed — motion prompt written from your clip. Generation uses digest montage + your product photo.",
     referenceVideoAnalyzing: "Analyzing your reference video…",
     researchReelAnalyzing: "Analyzing reference reel and planning storyboard…",
     researchReelAnalyzeFirstHint: "Wait for reel storyboard analysis, or upload a product photo first.",
@@ -1603,15 +1605,15 @@ export const en = {
     conceptVideoCreativeMode: {
       title: "Concept video (from brief)",
       description:
-        "Uses your Concept Wizard copy — no product photo. Plan the AI video prompt first, then generate.",
+        "Uses your Concept Wizard copy — no product photo. Write the AI motion prompt first, then generate.",
     },
     conceptVideoStepIntro:
-      "Concept mode: your anti-fight / PSA / service message becomes the video brief. Use “Concept video”, run AI prompt planning, then generate — skip product uploads.",
-    conceptVideoPromptSectionTitle: "AI video prompt (from your concept)",
+      "Concept mode: your anti-fight / PSA / service message becomes the video brief. Use “Concept video”, write the motion prompt, then generate — skip product uploads.",
+    conceptVideoPromptSectionTitle: "AI motion prompt (from your concept)",
     conceptVideoPromptSectionHint:
-      "No keyframe needed — video generation generates from text. Run “Plan AI video prompt” above first.",
+      "No keyframe needed — video generation runs from text. Tap “AI write motion prompt” above first.",
     conceptVideoPromptPending:
-      "Run “Plan AI video prompt” above — your Concept Wizard copy will become the motion brief.",
+      "Tap “AI write motion prompt” above — your Concept Wizard copy will become the motion brief.",
     conceptVideoReferenceModeTitle: "Reference clip mode",
     conceptVideoReferenceModeHint:
       "Optional: upload a reference MP4 to match pacing. Concept copy still guides the message.",
@@ -1624,7 +1626,7 @@ export const en = {
     cinematicRecipeTitle: "Concept cinematic recipe (recommended flow)",
     cinematicRecipeSteps: [
       "1) On Step 2, generate a cinematic keyframe (or upload a reference still).",
-      "2) On Video, click Plan AI video prompt for video generation motion text.",
+      "2) On Video, tap “AI write motion prompt” for camera / pacing text.",
       "3) Click Plan script & music, then pick one AI music track.",
       "4) Generate video — image → video with optional voice + subtitle burn.",
     ],
@@ -1757,8 +1759,8 @@ export const en = {
     continueToVideo: "Continue → Video step",
     finishImage: "Finish → Download",
     mobileVideoBusy: "Generation in progress — wait for it to finish.",
-    mobileVideoNeedPrompt: "Plan or fill the video prompt before generating.",
-    mobileVideoNeedPlan: "Run AI video planning first (product assistant).",
+    mobileVideoNeedPrompt: "Write or confirm the motion prompt before generating.",
+    mobileVideoNeedPlan: "Analyze the photo and write a motion prompt first (product assistant).",
     mobileVideoBlocked: "Complete the steps above before generating video.",
     step2Title: "Step 2 — Promotional image",
     step2Hint:
@@ -1848,7 +1850,7 @@ export const en = {
     ],
     videoReviewHeroBefore: "Review your",
     videoReviewHeroAccent: "generated video.",
-    videoReviewHeroHint: "Preview, download, add captions, or regenerate your reel.",
+    videoReviewHeroHint: "Preview and download the silent reel, or open caption studio for BGM and on-screen text.",
     videoReviewCompleteTitle: "Generation completed!",
     videoReviewCompleteBody: "Your video is ready to review.",
     videoReviewCompleteEmpty: "No video yet — regenerate or go back and try again.",
@@ -1933,29 +1935,29 @@ export const en = {
       "Will call image API once for an auto second frame (~extra image cost) — turn off “Auto-create a second scene” to save",
     videoPreflightSingleCall: "Expected: 1× video + local BGM (no extra image)",
     videoPreflightDoubleCall: "Expected: 1× image + 1× video + BGM",
-    videoPreflightAI: "+1× AI video prompt (brand video analysis)",
-    planVideoPromptBtn: "AI write video prompt",
-    planVideoPromptBusy: "AI writing video prompt…",
-    planVideoPromptReady: "Video prompt filled below — review before generating",
-    planVideoPromptDurationRefresh: "Output length changed — AI is rewriting the video prompt for the new duration…",
+    videoPreflightAI: "+1× AI motion prompt (brand / product analysis)",
+    planVideoPromptBtn: "AI write motion prompt",
+    planVideoPromptBusy: "AI writing motion prompt…",
+    planVideoPromptReady: "Motion prompt ready — review below, then generate",
+    planVideoPromptDurationRefresh: "Output length changed — AI is rewriting the motion prompt for the new duration…",
     productVideoKitTitle: "Product photo kit",
     productVideoKitHint:
-      "Upload hero product (required), packaging, or extra angles — AI vision reads all photos, then AI writes a situational video generation prompt.",
+      "Upload hero product (required), packaging, or extra angles — AI vision reads all photos, then writes a motion prompt.",
     productVideoHeroLabel: "Hero product (@Image1)",
     productVideoHeroHint: "Main product shot — required",
     productVideoPackagingLabel: "Packaging / box (optional)",
     productVideoPackagingHint: "Retail box or package — @Image2 if uploaded",
     productVideoExtraLabel: "Extra angles (optional)",
     productVideoExtraHint: "Up to 2 more photos — detail, back, in-use context",
-    planProductVideoBtn: "Analyze photos & plan video",
-    planProductVideoBusy: "AI analyzing photos & writing video generation prompt…",
-    planProductVideoReady: "Video plan ready — review prompt below, then generate",
+    planProductVideoBtn: "Analyze photo & write motion prompt",
+    planProductVideoBusy: "AI analyzing photo & writing motion prompt…",
+    planProductVideoReady: "Motion plan ready — review the prompt below, then generate",
     productVideoSituationLabel: "Suggested setting",
-    productVideoPlanLabel: "video generation prompt (from AI assistant)",
-    productVideoPlanHint: "Vision analyzed your uploads; AI wrote motion + scene plan. Edit in advanced if needed.",
-    productVideoAssistantPreflight: "Mode: AI video assistant — multi-image reference-to-video",
-    productVideoAnalyzeFirstHint: "Upload hero product, tap Analyze photos & plan video, then generate.",
-    productVideoUploadFirstHint: "Upload a hero product photo first, then tap Analyze photos & plan video.",
+    productVideoPlanLabel: "Motion prompt (AI)",
+    productVideoPlanHint: "Vision analyzed your uploads; AI wrote camera + motion plan. Edit in advanced if needed.",
+    productVideoAssistantPreflight: "Mode: product motion assistant — multi-image reference-to-video",
+    productVideoAnalyzeFirstHint: "Upload hero product → tap “Analyze photo & write motion prompt” → generate.",
+    productVideoUploadFirstHint: "Upload a hero product photo first, then tap “Analyze photo & write motion prompt”.",
     storyboardVideoNeedScenesHint: "Go back to step 2 and generate storyboard scene images first.",
     videoKeyframeProductLabel: "Product / keyframe photo (@Image1)",
     videoKeyframeProductHint:
@@ -2206,12 +2208,12 @@ export const en = {
       description: "Analyze brand → 3 linked posts",
     },
     "brand-video": {
-      name: "Brand video analysis",
-      description: "AI writes video prompt",
+      name: "Brand motion video",
+      description: "AI writes a motion prompt from brand cues",
     },
     "creative-video": {
-      name: "Creative video prompt",
-      description: "Describe idea → AI writes video generation prompt",
+      name: "Creative motion brief",
+      description: "Describe idea → AI writes motion prompt",
     },
     "storyboard-video": {
       name: "Storyboard reel",
@@ -2297,9 +2299,9 @@ export const en = {
     needProductNameSetup: "Enter a product name before continuing.",
     extraAnglesNeedRefVideo:
       "Multi-angle mode needs a reference MP4 too (use “Inspired by reference video”).",
-    brandVideoPromptRequired: "Analyze brand first, then click “AI write video prompt”.",
+    brandVideoPromptRequired: "Analyze brand first, then tap “AI write motion prompt”.",
     creativeBriefRequired: "Fill in the creative video brief first.",
-    creativeVideoPromptRequired: "Click “AI write video prompt” and review the prompt below.",
+    creativeVideoPromptRequired: "Tap “AI write motion prompt” and review the prompt below first.",
     planVideoPromptFailed: "Video prompt planning failed. Please try again.",
     planProductVideoFailed: "Product video planning failed. Check photos and try again.",
     adPackPlanFailed: "Ad pack planning failed. Try again.",
@@ -2314,8 +2316,8 @@ export const en = {
     conceptVideoAssistantBlocked:
       "AI Video Assistant is for physical products only. Concept mode uses Concept video from your brief.",
     conceptVideoPlanRequired:
-      "AI is planning the video prompt — wait a few seconds, or tap “AI write video prompt”.",
-    needProductVideoPlan: "Tap Analyze photos & plan video first.",
+      "AI is writing the motion prompt — wait a few seconds, or tap “AI write motion prompt”.",
+    needProductVideoPlan: "Tap “Analyze photo & write motion prompt” first.",
     researchReelAnalyzeFailed: "Reference reel analysis failed — try again or pick another post.",
     brandAnalyzeRequired: "Tap Analyze brand first.",
   },
@@ -2812,7 +2814,7 @@ export const en = {
     generateVideoFooterHint: "When ready, tap Generate video below.",
     videoResultEyebrow: "STEP 5",
     videoResultTitle: "Your video is ready",
-    videoResultHint: "Preview, download, or open caption studio to add music and text.",
+    videoResultHint: "Preview, download the silent reel, or open caption studio for music and text.",
     videoResultEmpty: "No video yet — go back and generate one.",
     videoResultRegenerate: "Generate again",
     videoModeTitle: "Video creation mode",
@@ -3025,39 +3027,46 @@ export const en = {
     preVideoSetup: {
       titleBefore: "Set your",
       titleAccent: "video details",
-      hint: "Add copy, upload a product photo, pick duration and resolution, then generate your short video.",
+      hint: "Add copy, upload a product photo, write/confirm the motion prompt, pick duration, then generate a silent reel.",
       assistantHint:
-        "Upload a product photo, let AI write the motion prompt, review it, then generate.",
-      assistantTitle: "AI video plan",
+        "Upload a product photo → AI writes a motion prompt → review it → generate (silent reel; captions later).",
+      assistantTitle: "AI motion prompt",
       assistantBody:
-        "DeepSeek reads your product photo and writes the Seedance motion prompt for this reel.",
-      assistantNeedPlan: "Analyze the photo first — generate stays locked until a plan exists.",
+        "AI reads your product photo and writes how the camera should move — not spoken script or captions.",
+      assistantNeedPlan: "Analyze the photo first — generate stays locked until a motion prompt exists.",
       assistantTip1: {
-        title: "Analyze before generate",
-        body: "Tap “Analyze photos & plan video” so AI can write the camera-motion prompt.",
+        title: "Motion prompt first",
+        body: "Tap “Analyze photo & write motion prompt” before generate.",
       },
       assistantTip2: {
-        title: "Edit the prompt if needed",
-        body: "You can tweak the written prompt before generating the reel.",
+        title: "Edit if needed",
+        body: "You can tweak the motion text before generating the reel.",
       },
+      conceptPlanTitle: "AI motion prompt",
+      conceptPlanBody:
+        "AI writes how the reel should move from your brief or brand cues — not a spoken voiceover script.",
+      conceptPlanNeed:
+        "Tap “AI write motion prompt” first — generate stays locked until a prompt exists.",
       conceptHint:
-        "Confirm topic and copy, optionally add a photo, pick duration, then generate your short video.",
+        "Confirm topic and copy, optionally add a photo, write the motion prompt, pick duration, then generate.",
       conceptCreativeHint:
-        "Describe the creative direction, optionally add a photo, pick duration, then generate.",
+        "Describe the creative direction, write the motion prompt, optionally add a photo, then generate.",
       conceptBrandHint:
-        "Add brand website cues, optionally a photo, pick duration, then generate your brand video.",
+        "Add brand website cues if you want, write the motion prompt, optionally add a photo, then generate.",
       contentTitle: "Content details",
       hookLabel: "Main hook",
       supportingLabel: "Supporting copy",
-      extraLabel: "Extra requirements",
+      extraLabel: "Extra motion notes",
       extraOptional: "(optional)",
       conceptTopicLabel: "Topic / service",
       productPhotoTitle: "Product photo",
-      productPhotoHint: "Clear product shot — required for product video.",
-      conceptPhotoTitle: "Reference photo",
-      conceptPhotoHint: "Optional — helps motion stay on-brand when you have a visual.",
+      productPhotoHint: "Clear product shot — required. This becomes the subject in the reel.",
+      productPhotoWithRefHint:
+        "Required — your product as @Image1. The reference MP4 only supplies motion/edit feel.",
+      conceptPhotoTitle: "Optional still",
+      conceptPhotoHint: "Optional — helps grounding; concept reels can also run from brief + motion prompt alone.",
       brandTitle: "Brand website",
-      brandHint: "Optional analyze — helps tone and visual cues for brand video.",
+      brandHint: "Optional analyze — helps tone for the motion prompt and look.",
       dragDrop: "Upload",
       settingsTitle: "Video settings",
       settingsHint: "Duration and resolution affect token cost.",
@@ -3065,11 +3074,11 @@ export const en = {
       tipTitle: "Tips for better video",
       tip1: {
         title: "Use a clear product photo",
-        body: "Well-lit product shots keep identity stable when Seedance animates.",
+        body: "Well-lit product shots keep identity stable when the reel animates.",
       },
       tip2: {
         title: "Keep the hook short",
-        body: "A concrete headline guides motion and on-screen feel.",
+        body: "A concrete headline helps the motion plan stay on-message.",
       },
       tip3: {
         title: "Watch duration vs cost",
@@ -3077,26 +3086,29 @@ export const en = {
       },
       conceptTip1: {
         title: "Photo is optional",
-        body: "Topic + brief (or hook) can drive the clip — upload a visual only if it helps.",
+        body: "Topic + brief + motion prompt can drive the clip — upload a still only if it helps.",
       },
       conceptTip2: {
         title: "Be specific in the brief",
-        body: "Mood, camera move, and who it’s for beat vague “make it nice” prompts.",
+        body: "Mood, camera move, and who it’s for beat vague “make it nice” notes.",
       },
       conceptTip3: {
         title: "Start short",
         body: "6–8s is enough to judge pacing before spending more tokens.",
       },
-      stylePickerTitle: "Video style",
-      stylePickerHint: "Pick how to make the clip — same idea as image creation direction.",
-      referenceHint: "Upload a reference MP4, add your copy, then generate with matching motion feel.",
+      stylePickerTitle: "How to make this video",
+      stylePickerHint:
+        "AI writes the motion prompt from your photo, or a reference/research reel supplies the motion plan.",
+      referenceHint:
+        "Upload a reference MP4 (analyzed for motion). For products, also upload your product photo as @Image1, then generate.",
       ugcHint: "UGC needs a talking-head keyframe first — continue to build the presenter clip.",
       ugcContinueLabel: "Continue to keyframe",
       ugcNextNote:
         "Next you’ll generate a talking-head keyframe, review it, then produce the UGC video.",
       ugcPhotoHint: "Clear product photo for the presenter to hold or show.",
-      referenceVideoTitle: "Reference short (MP4)",
-      referenceVideoHint: "We follow camera / edit feel — not a frame-by-frame copy.",
+      referenceVideoTitle: "Reference reel (MP4)",
+      referenceVideoHint:
+        "We analyze this clip for camera / edit feel — not a frame-by-frame copy. Not used as spoken script.",
       referenceUploadCta: "Upload reference MP4",
       referenceRemove: "Remove",
       refTip1: {
@@ -3105,15 +3117,15 @@ export const en = {
       },
       refTip2: {
         title: "Your product, their pacing",
-        body: "Copy and subject stay yours — only motion language transfers.",
+        body: "Subject and copy stay yours — only motion language transfers from the reference.",
       },
       ugcTip1: {
         title: "Photo for the product",
         body: "UGC still needs a clear product shot for the keyframe.",
       },
       ugcTip2: {
-        title: "Script comes next",
-        body: "After the keyframe you’ll set presenter pack and lip-sync script.",
+        title: "Lip-sync script comes next",
+        body: "After the keyframe you’ll set presenter pack and spoken lip-sync lines.",
       },
       secureNote: "All your selections are safe and secure.",
     },
@@ -3191,8 +3203,8 @@ export const en = {
     combinedStyleHint: "Image + video defaults to storyboard keyframes stitched into one Reel.",
     combinedAnimateTitle: "Storyboard reel",
     combinedAnimateDesc: "Multi-scene keyframes → one stitched Reel (default for image+video).",
-    videoSubpathTitle: "Video creation style",
-    videoSubpathHint: "Promo clip, reference reel, or UGC digital presenter.",
+    videoSubpathTitle: "Video creation path",
+    videoSubpathHint: "AI motion plan from your photo, or follow a reference reel.",
     refVideoTitle: "Reference video (MP4)",
     refVideoHint: "Upload a reel if you have one; skip for image posts (style images + storyboard are enough).",
     refVideoTitleOptional: "Reference video (optional)",

@@ -596,6 +596,56 @@ describe("wizard v2 parity audit", () => {
     assert.ok(ids.includes("wait.video_generate"));
   });
 
+  it("video-only research setup.pre_video requires reference reel not product photo plan", () => {
+    const ctx: MicroWizardContext = {
+      promotionMode: "physical",
+      workflowMode: "video-only",
+      intakePath: "research",
+      videoSubpath: "reference_reel",
+    };
+    assert.equal(
+      canProceedMicroStep(
+        "setup.pre_video",
+        ctx,
+        baseState({
+          workflowMode: "video-only",
+          productPhoto: {} as File,
+          headline: "測試",
+          referenceAd: null,
+          referenceIsVideo: false,
+        }),
+      ),
+      "need_reference_video",
+    );
+    assert.equal(
+      canProceedMicroStep(
+        "setup.pre_video",
+        ctx,
+        baseState({
+          workflowMode: "video-only",
+          headline: "測試",
+          referenceAd: {} as File,
+          referenceIsVideo: true,
+        }),
+      ),
+      "need_product_photo",
+    );
+    assert.equal(
+      canProceedMicroStep(
+        "setup.pre_video",
+        ctx,
+        baseState({
+          workflowMode: "video-only",
+          productPhoto: {} as File,
+          headline: "測試",
+          referenceAd: {} as File,
+          referenceIsVideo: true,
+        }),
+      ),
+      null,
+    );
+  });
+
   it("product_combined ugc keeps ugc_pack before generate", () => {
     const ctx: MicroWizardContext = {
       promotionMode: "physical",

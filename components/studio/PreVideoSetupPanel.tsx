@@ -208,9 +208,17 @@ export function PreVideoSetupPanel({
   const mainInputId = useId();
   const refVideoInputId = useId();
   const isConcept = wizard.promotionMode === "concept";
+  /** Research / R2V already chose reference — do not default into 快速廣告. */
+  const prefersReference =
+    wizard.videoCreativeMode === "reference-concept" ||
+    Boolean(wizard.researchReelAnalysis?.seedancePrompt?.trim());
   const activeSubpath =
     videoSubpath ??
-    (isConcept ? "creative_video" : "product_promo");
+    (prefersReference
+      ? "reference_reel"
+      : isConcept
+        ? "creative_video"
+        : "product_promo");
   const isReference = activeSubpath === "reference_reel";
   const isUgc = activeSubpath === "ugc_presenter";
   const isQuickAssistant = !isConcept && activeSubpath === "product_promo";
@@ -218,12 +226,24 @@ export function PreVideoSetupPanel({
     !isReference && !isUgc && isCreativeVideoStyle(wizard.visualStyleId);
   const showBrandWebsite =
     !isReference && !isUgc && isBrandVideoStyle(wizard.visualStyleId);
-  const showProductPhoto = !isReference;
-  const photoRequired = !isConcept && !isReference;
+  const showConceptAiPlan =
+    isConcept && !isReference && !isUgc && (showCreativeBrief || showBrandWebsite);
+  // Product + reference/research still needs @Image1 (product photo). Concept R2V can be MP4-only.
+  const showProductPhoto = isConcept ? !isReference : !isUgc;
+  const photoRequired = !isConcept && !isUgc;
+
+  // Keep research/R2V on reference_reel when ctx.videoSubpath was never set.
+  useEffect(() => {
+    if (!onPickVideoSubpath || videoSubpath) return;
+    if (!prefersReference) return;
+    onPickVideoSubpath("reference_reel");
+  }, [onPickVideoSubpath, videoSubpath, prefersReference]);
 
   // 快速廣告 = DeepSeek product-assistant (vision → Seedance prompt), not raw product-promo I2V.
+  // Never run this when reference-concept / research reel is active — that was overwriting R2V.
   useEffect(() => {
     if (!isQuickAssistant) return;
+    if (wizard.videoCreativeMode === "reference-concept") return;
     if (wizard.videoCreativeMode === "product-assistant") return;
     wizard.applyPrimaryPathVideoOnly("assistant");
     // Intentionally omit applyPrimaryPathVideoOnly identity — only re-sync when mode/subpath drifts.
@@ -594,7 +614,9 @@ export function PreVideoSetupPanel({
                         ? pv.conceptPhotoHint
                         : isUgc
                           ? pv.ugcPhotoHint
-                          : pv.productPhotoHint}
+                          : isReference
+                            ? pv.productPhotoWithRefHint
+                            : pv.productPhotoHint}
                     </p>
                   </div>
                 </div>
@@ -688,6 +710,55 @@ export function PreVideoSetupPanel({
                   </div>
                 ) : (
                   <p className="mt-2 text-xs text-slate-500">{pv.assistantNeedPlan}</p>
+                )}
+              </section>
+            ) : null}
+
+            {showConceptAiPlan ? (
+              <section className="pv-card">
+                <div className="pv-card-title-row mb-3">
+                  <span className="pv-card-icon" aria-hidden>
+                    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
+                      <path d="M12 3v3M12 18v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M3 12h3M18 12h3M4.9 19.1 7 17M17 7l2.1-2.1" strokeLinecap="round" />
+                      <circle cx="12" cy="12" r="3.5" />
+                    </svg>
+                  </span>
+                  <div className="min-w-0">
+                    <h3 className="pv-card-title">{pv.conceptPlanTitle}</h3>
+                    <p className="mt-0.5 text-xs text-slate-500">{pv.conceptPlanBody}</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  disabled={
+                    wizard.planVideoPromptBusy ||
+                    (showCreativeBrief &&
+                      !wizard.creativeVideoBrief.trim() &&
+                      !wizard.headline.trim())
+                  }
+                  onClick={() => void wizard.planAiVideoPrompt()}
+                  className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {wizard.planVideoPromptBusy
+                    ? m.wizard.planVideoPromptBusy
+                    : m.wizard.planVideoPromptBtn}
+                </button>
+                {wizard.videoPrompt ? (
+                  <div className="mt-3 space-y-2 rounded-xl border border-violet-200 bg-violet-50/60 px-3 py-3">
+                    {wizard.videoPromptPlanNote ? (
+                      <p className="text-xs leading-relaxed text-violet-900/80">
+                        {wizard.videoPromptPlanNote}
+                      </p>
+                    ) : null}
+                    <textarea
+                      value={wizard.videoPrompt}
+                      onChange={(e) => wizard.setVideoPrompt(e.target.value)}
+                      rows={5}
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs leading-relaxed text-slate-700"
+                    />
+                  </div>
+                ) : (
+                  <p className="mt-2 text-xs text-slate-500">{pv.conceptPlanNeed}</p>
                 )}
               </section>
             ) : null}

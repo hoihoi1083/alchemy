@@ -1373,7 +1373,12 @@ export function useStudioWizard(promotionMode: PromotionMode) {
   ]);
 
   useEffect(() => {
-    if (stepKey !== "video" || usesCompositor || isStoryboardOutput || isUgcPresenterOutput) return;
+    // Classic VideoStep uses stepKey "video". Micro-wizard stays on "setup" for fused
+    // setup.pre_video — still auto-plan creative/brand motion prompts there.
+    const onClassicVideo = stepKey === "video";
+    const onMicroVideoSetup = stepKey === "setup" && workflowMode === "video-only";
+    if (!onClassicVideo && !onMicroVideoSetup) return;
+    if (usesCompositor || isStoryboardOutput || isUgcPresenterOutput) return;
     if (usesProductAssistant) return;
     if (planVideoPromptBusy) return;
     if (researchReelAnalysis?.seedancePrompt?.trim()) return;
@@ -1407,6 +1412,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     void planAiVideoPrompt();
   }, [
     stepKey,
+    workflowMode,
     visualStyleId,
     usesCompositor,
     isStoryboardOutput,

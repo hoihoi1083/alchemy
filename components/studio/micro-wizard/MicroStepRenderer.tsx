@@ -188,8 +188,8 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
                 />
                 <ChoiceCard
                   active={(micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) === "reference_reel"}
-                  title={m.wizard.pathReferenceTitle}
-                  description={m.wizard.pathReferenceDesc}
+                  title={m.wizard.pathReferenceVideoTitle}
+                  description={m.wizard.pathReferenceVideoDesc}
                   onClick={() => {
                     micro.setVideoSubpath("reference_reel");
                     wizard.onVideoCreativeModeChange("reference-concept");
