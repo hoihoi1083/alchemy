@@ -2654,6 +2654,24 @@ export const zh = {
         title: "你嘅資料安全",
         body: "我哋唔會分享你輸入嘅內容或參考連結。",
       },
+      conceptTip3: {
+        title: "風格大於內容",
+        body: "我哋借設計同構圖規律 — 文案仍然講你嘅服務或概念。",
+      },
+      assistantTipTitle: "概念助手點幫你",
+      assistantTipIntro: "你寫主題同方向，AI 幫你填標題同視覺 — 唔使先做平台研究。",
+      assistantTip1: {
+        title: "寫清楚服務",
+        body: "一兩個短句講你推咩同對象就夠。",
+      },
+      assistantTip2: {
+        title: "下一頁再微調",
+        body: "創作方向、參考圖同輸出格式會喺設定頁一次完成。",
+      },
+      assistantTip3: {
+        title: "之後可改",
+        body: "標題同文案喺設定頁仍然可以改。",
+      },
       directTitle: "而家跳過研究",
       directBody:
         "下一步會揀直接創作或模特兒佩戴、可選上傳參考圖，再用同研究路徑一樣嘅設定頁。",
@@ -2693,6 +2711,8 @@ export const zh = {
         "揀直接創作或模特兒佩戴、可選上傳參考圖，再填內容同產品相 — 同研究路徑揀完後嘅設定一樣。",
       conceptHint:
         "檢查研究簡報同文案，可選上傳產品相，再揀輸出類型同生成 — 概念廣告唔一定要有產品相。",
+      conceptDirectHint:
+        "先揀創作方向，可選上傳參考圖，再填文案同生成 — 概念廣告唔一定要有產品相。",
       conceptTopicLabel: "概念主題",
       conceptTopicRequired: "必填",
       productPhotosOptionalTitle: "產品相片（選填）",
@@ -2700,6 +2720,8 @@ export const zh = {
       mainPhotoOptionalHint: "有產品相可以上傳 — 冇嘅話會用主題、文案同研究風格出圖。",
       stylePickerTitle: "創作方向",
       stylePickerHint: "直接創作適合大部分產品；模特兒佩戴會生成人手／佩戴場景。",
+      conceptStylePickerHint:
+        "每個選項會改排版提示 — 資訊圖、品牌風格、方案優惠卡、或網站上線。",
       stylePickerQuickLabel: "直接創作",
       stylePickerQuickDesc: "以產品為主嘅宣傳圖，唔一定要有模特兒。",
       stylePickerModelLabel: "模特兒佩戴／使用",
@@ -2761,6 +2783,27 @@ export const zh = {
         title: "風格可交俾 AI",
         body: "風格、比例、文字模式預設通常夠用 — 有需要先改。",
       },
+      conceptTip1: {
+        title: "產品相唔係必須",
+        body: "有相可以上傳；冇相都可以用主題、文案同創作方向出圖。",
+      },
+      conceptTip2: {
+        title: "Hook 寫具體啲",
+        body: "短而清楚嘅標題，好過空泛宣傳句。",
+      },
+      conceptTip3: {
+        title: "揀啱輸出格式",
+        body: "單張發帖、A/B 比較、輪播適合教學或方案故事。",
+      },
+      conceptTip4: {
+        title: "創作方向會改排版",
+        body: "資訊圖、品牌風格、方案優惠、網站上線 — 每個選項用唔同提示。",
+      },
+      conceptBriefTopic: "主題",
+      conceptReferenceUploadHint:
+        "上傳版式／風格參考，AI 會分析並借構圖。只填主題同文案都可以出圖。",
+      conceptMainPhotoOptionalHint:
+        "有相可以上傳 — 冇嘅話會用主題、文案同創作方向／參考風格出圖。",
       secureNote: "你嘅選擇安全保存，唔會對外分享。",
     },
     conceptNameStep: {

@@ -418,7 +418,7 @@ export function ImageReviewGallery({
   return (
     <div className="space-y-6 sm:space-y-8">
       <style dangerouslySetInnerHTML={{ __html: IMAGE_REVIEW_LAYOUT_CSS }} />
-      <ImageReviewStepper />
+      <ImageReviewStepper activeIndex={4} />
 
       {/* Mobile: stack. Tablet: full-width cards under title. Laptop+: title | cards row. */}
       <div className="image-review-header">

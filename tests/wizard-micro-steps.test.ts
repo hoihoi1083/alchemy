@@ -249,6 +249,39 @@ describe("wizard v2 parity audit", () => {
     assert.ok(ids.includes("image.review"));
   });
 
+  it("concept image direct fuses into setup.pre_generate like product direct", () => {
+    const ctx: MicroWizardContext = {
+      promotionMode: "concept",
+      workflowMode: "image-only",
+      intakePath: "direct",
+      conceptSource: "assistant",
+    };
+    const steps = resolveMicroSteps(
+      ctx,
+      baseState({
+        promotionMode: "concept",
+        visualStyleId: "info-poster",
+        conceptIdea: "私人貸款",
+        headline: "快速批核",
+      }),
+    );
+    const ids = steps.map((s) => s.id);
+    assert.ok(ids.includes("setup.pre_generate"));
+    assert.ok(ids.includes("identity.concept"));
+    assert.ok(ids.includes("route.intake"));
+    assert.equal(ids[ids.indexOf("setup.pre_generate") - 1], "route.intake");
+    assert.ok(!ids.includes("route.primary_style"));
+    assert.ok(!ids.includes("asset.reference_image"));
+    assert.ok(!ids.includes("wait.reference_analyze"));
+    assert.ok(!ids.includes("copy.edit"));
+    assert.ok(!ids.includes("asset.product_photo"));
+    assert.ok(!ids.includes("image.output_format"));
+    assert.ok(!ids.includes("image.options"));
+    assert.ok(!ids.includes("image.generate"));
+    assert.ok(ids.includes("wait.image_generate"));
+    assert.ok(ids.includes("image.review"));
+  });
+
   it("product image direct fuses into setup.pre_generate (not discrete steps)", () => {
     const ctx: MicroWizardContext = {
       promotionMode: "physical",

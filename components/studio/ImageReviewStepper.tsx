@@ -3,9 +3,8 @@
 import { useLocale } from "@/components/LocaleProvider";
 
 /**
- * Final-step progress strip for the image review screen.
- * Matches the path-phase rail used on other wizard start steps:
- * steps 1–4 complete, step 5 “Generate content” active.
+ * Progress strip for wait + image review — aligned with start.phases:
+ * 揀推廣類型 → 揀創作路徑 → 設定 → 生成 → 完成
  */
 const REVIEW_STEPPER_CSS = `
 .image-review-phase-rail {
@@ -48,6 +47,7 @@ const REVIEW_STEPPER_CSS = `
   border-radius: 9999px;
   font-size: 11px;
   font-weight: 700;
+  line-height: 1;
 }
 .image-review-phase-dot--active {
   background: #7c3aed;
@@ -59,37 +59,35 @@ const REVIEW_STEPPER_CSS = `
   color: #fff;
 }
 .image-review-phase-dot--idle {
-  background: #f1f5f9;
+  background: #e2e8f0;
   color: #94a3b8;
 }
 .image-review-phase-label {
   font-size: 11px;
   line-height: 1.25;
   max-width: 7.5rem;
-  font-weight: 500;
-  color: #94a3b8;
+  color: #64748b;
 }
 .image-review-phase-item.is-active .image-review-phase-label {
-  font-weight: 600;
   color: #6d28d9;
+  font-weight: 600;
 }
 @media (min-width: 640px) {
   .image-review-phase-rail {
-    gap: 0.35rem;
-    padding: 0.35rem 0.25rem 0.85rem;
+    padding: 0.55rem 0.25rem 1rem;
   }
   .image-review-phase-line {
-    top: calc(0.35rem + 16px);
-    left: calc(0.25rem + 16px);
-    right: calc(0.25rem + 16px);
+    top: calc(0.55rem + 14px);
+    left: calc(0.25rem + 14px);
+    right: calc(0.25rem + 14px);
   }
   .image-review-phase-dot {
     height: 2rem;
     width: 2rem;
     font-size: 12px;
   }
-  .image-review-phase-item {
-    gap: 0.45rem;
+  .image-review-phase-label {
+    font-size: 12px;
   }
 }
 @media (max-width: 639px) {
@@ -113,12 +111,17 @@ const REVIEW_STEPPER_CSS = `
 }
 `;
 
-export function ImageReviewStepper() {
+type Props = {
+  /** Index into m.start.phases — wait=生成(3), review=完成(4). */
+  activeIndex?: number;
+};
+
+export function ImageReviewStepper({ activeIndex = 4 }: Props) {
   const { m } = useLocale();
-  const steps = m.wizard.imageReviewSteps;
+  const steps = m.start.phases;
   if (!steps?.length) return null;
 
-  const activeIndex = steps.length - 1;
+  const safeIndex = Math.min(Math.max(activeIndex, 0), steps.length - 1);
 
   return (
     <nav aria-label="Progress" className="w-full border-b border-slate-100">
@@ -126,8 +129,8 @@ export function ImageReviewStepper() {
       <ol className="image-review-phase-rail">
         <span className="image-review-phase-line" aria-hidden />
         {steps.map((label, i) => {
-          const done = i < activeIndex;
-          const active = i === activeIndex;
+          const done = i < safeIndex;
+          const active = i === safeIndex;
           return (
             <li
               key={`${label}-${i}`}

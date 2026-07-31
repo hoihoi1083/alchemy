@@ -97,10 +97,8 @@ const ROUTING_PREFIX_IDS = new Set<MicroStepId>([
   "route.video_subpath",
 ]);
 
-const DIRECT_IMAGE_STYLE_PATHS = new Set<MicroWizardPathId>([
-  // product_image_direct: style + optional ref live inside setup.pre_generate
-  "concept_image_direct",
-]);
+/** Empty: product + concept direct both fold style into setup.pre_generate. */
+const DIRECT_IMAGE_STYLE_PATHS = new Set<MicroWizardPathId>([]);
 
 const SKIPPABLE_DEFAULT = new Set<MicroStepId>([
   "asset.reference_image",

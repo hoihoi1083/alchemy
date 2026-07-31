@@ -214,7 +214,7 @@
     "concept_image_direct": {
       "id": "concept_image_direct",
       "label": "Concept / Image / Direct",
-      "description": "Path 2 structure + 概念助手 — NOT Path 3 minus research",
+      "description": "Path 2 structure + 概念助手 — fused violet setup like product direct; product photo optional",
       "priority": "P1",
       "basedOn": "product_image_direct",
       "context": {
@@ -231,27 +231,25 @@
           "label": "概念助手（非實體產品）",
           "required": ["conceptIdea"]
         },
-        { "id": "asset.reference_image", "skippable": true },
-        { "id": "wait.reference_analyze", "skipWhen": "!imageRefPhoto" },
+        { "id": "route.intake", "set": { "intakePath": "direct" } },
         {
-          "id": "copy.edit",
-          "label": "內容與生成設定",
-          "skippable": true,
-          "sections": ["copy", "brandKit", "advancedPrompt"],
-          "brandKit": { "required": false, "collapsedByDefault": true }
+          "id": "setup.pre_generate",
+          "label": "Pre-generate setup",
+          "handler": "generateImage",
+          "skippable": false,
+          "note": "創作方向 + optional ref + copy + optional product photo + generate",
+          "fuses": [
+            "route.primary_style",
+            "asset.reference_image",
+            "wait.reference_analyze",
+            "copy.edit",
+            "asset.brand_website",
+            "image.output_format",
+            "asset.product_photo",
+            "image.options",
+            "image.generate"
+          ]
         },
-        {
-          "id": "asset.brand_website",
-          "when": "isBrandVisualStyle(visualStyleId)",
-          "required": true
-        },
-        {
-          "id": "image.output_format",
-          "choices": ["single", "ab", "campaign", "teaching-carousel"]
-        },
-        { "id": "asset.product_photo", "skippable": true },
-        { "id": "image.options", "skippable": true },
-        { "id": "image.generate", "handler": "generateImage" },
         { "id": "wait.image_generate", "while": "imageBusy" },
         { "id": "image.review" },
         { "id": "done.export", "legacyStepKey": "done" }

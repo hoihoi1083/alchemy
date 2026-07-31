@@ -2836,6 +2836,25 @@ export const en = {
         title: "Your data is secure",
         body: "We never share your inputs or reference links.",
       },
+      conceptTip3: {
+        title: "Style over content",
+        body: "We focus on design patterns and framing — copy stays about your service or concept.",
+      },
+      assistantTipTitle: "How Concept assistant helps",
+      assistantTipIntro:
+        "You describe the topic and direction; AI fills headline and visuals — no platform research first.",
+      assistantTip1: {
+        title: "Be clear about the offer",
+        body: "One or two short lines on what you promote and who it’s for is enough.",
+      },
+      assistantTip2: {
+        title: "Fine-tune on the next page",
+        body: "Creative direction, optional reference, and output format all live on one setup screen.",
+      },
+      assistantTip3: {
+        title: "You can edit later",
+        body: "Headline and copy can still be changed on the setup page.",
+      },
       directTitle: "Skip research for now",
       directBody:
         "Next you’ll pick direct creation or model-wear, optionally upload a reference, then use the same setup page as after research.",
@@ -2875,6 +2894,8 @@ export const en = {
         "Choose quick ad or model-wear, optionally add a reference image, then set content and product photos — same setup as after research.",
       conceptHint:
         "Review research brief and copy, optionally add a product photo, then choose output type and generate — product photo is optional for concept ads.",
+      conceptDirectHint:
+        "Pick a creative direction, optionally add a reference image, then set copy and generate — product photo is optional for concept ads.",
       conceptTopicLabel: "Concept topic",
       conceptTopicRequired: "Required",
       productPhotosOptionalTitle: "Product images (optional)",
@@ -2884,6 +2905,8 @@ export const en = {
       stylePickerTitle: "Creation direction",
       stylePickerHint:
         "Quick ad suits most products. Model-wear puts a person using or wearing your item.",
+      conceptStylePickerHint:
+        "Each option changes layout prompts — info posters, brand match, pricing cards, or website launch.",
       stylePickerQuickLabel: "Direct creation",
       stylePickerQuickDesc: "Product-focused promo image — no model required.",
       stylePickerModelLabel: "Model wear / use",
@@ -2946,6 +2969,27 @@ export const en = {
         title: "Let AI enhance styling",
         body: "Defaults for style, ratio, and text usually work — tweak only if needed.",
       },
+      conceptTip1: {
+        title: "Product photo is optional",
+        body: "Upload one if you have it; otherwise we generate from topic, copy, and creative direction.",
+      },
+      conceptTip2: {
+        title: "Be specific with your hook",
+        body: "A short, concrete headline beats vague marketing phrases.",
+      },
+      conceptTip3: {
+        title: "Choose the right format",
+        body: "Single for one post, A/B to compare, carousel for teaching or offer stories.",
+      },
+      conceptTip4: {
+        title: "Creative direction changes layout",
+        body: "Info poster, brand match, pricing card, or website launch — each uses different prompts.",
+      },
+      conceptBriefTopic: "Topic",
+      conceptReferenceUploadHint:
+        "Upload a layout or style reference. AI analyzes it and borrows composition — topic and copy alone can still generate.",
+      conceptMainPhotoOptionalHint:
+        "Add a shot if you have one — otherwise we generate from topic, copy, and creative direction / reference style.",
       secureNote: "All your selections are safe and secure.",
     },
     conceptNameStep: {

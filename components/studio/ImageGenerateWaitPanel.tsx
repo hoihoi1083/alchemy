@@ -99,7 +99,7 @@ export function ImageGenerateWaitPanel({
     <div className="igw-page w-full min-w-0">
       <style dangerouslySetInnerHTML={{ __html: WAIT_PANEL_CSS }} />
 
-      {showStepper ? <ImageReviewStepper /> : null}
+      {showStepper ? <ImageReviewStepper activeIndex={3} /> : null}
 
       <div className={`igw-panel${showStepper ? " mt-3" : ""}`}>
         <div className="igw-panel-body">

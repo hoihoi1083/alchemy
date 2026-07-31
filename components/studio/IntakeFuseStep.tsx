@@ -298,11 +298,26 @@ export function IntakeFuseStep({
     ? wizard.conceptIdea.trim() || wizard.business.trim() || ""
     : wizard.business.trim() || wizard.product.trim();
 
-  const tipItems = [
-    { ...fuse.tip1, icon: "timer" as const },
-    { ...fuse.tip2, icon: "globe" as const },
-    { ...fuse.tip3, icon: "link" as const },
-  ];
+  const tipItems =
+    isConcept && activeTab === "direct"
+      ? [
+          { ...fuse.assistantTip1, icon: "timer" as const },
+          { ...fuse.assistantTip2, icon: "globe" as const },
+          { ...fuse.assistantTip3, icon: "link" as const },
+        ]
+      : [
+          { ...fuse.tip1, icon: "timer" as const },
+          { ...fuse.tip2, icon: "globe" as const },
+          {
+            ...(isConcept ? fuse.conceptTip3 : fuse.tip3),
+            icon: "link" as const,
+          },
+        ];
+
+  const tipTitle =
+    isConcept && activeTab === "direct" ? fuse.assistantTipTitle : fuse.tipTitle;
+  const tipIntro =
+    isConcept && activeTab === "direct" ? fuse.assistantTipIntro : fuse.tipIntro;
 
   return (
     <div className="if-page -mx-1 sm:mx-0">
@@ -461,9 +476,9 @@ export function IntakeFuseStep({
                 </svg>
               </div>
               <h3 className="mt-2.5 text-[15px] font-bold leading-snug tracking-tight text-slate-900">
-                {fuse.tipTitle}
+                {tipTitle}
               </h3>
-              <p className="mt-2 text-[13px] leading-relaxed text-slate-500">{fuse.tipIntro}</p>
+              <p className="mt-2 text-[13px] leading-relaxed text-slate-500">{tipIntro}</p>
               <div className="mt-4 space-y-3.5">
                 {tipItems.map((item) => (
                   <div key={item.title} className="if-tip-row">

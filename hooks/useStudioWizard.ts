@@ -3256,7 +3256,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     }
     if (promotionMode === "concept" && conceptStyleAllowsTextOnlyImage(visualStyleId)) {
       if (visualStyleId === "service-promo" || visualStyleId === "website-launch") {
-        if (!business.trim()) return false;
+        // Shop name preferred; concept topic is enough for text-only concept ads.
+        if (!business.trim() && !conceptIdea.trim() && !effectivePromoteName) {
+          return false;
+        }
       }
       // On-image hook is required for these styles — concept topic alone is not enough.
       if (conceptStyleRequiresHeadline(visualStyleId) && !headline.trim()) {

@@ -399,6 +399,27 @@ const PANEL_CSS = `
   }
   .pg-content-aside { width: 11.5rem; }
 }
+.pg-mobile-cta {
+  display: none;
+}
+@media (max-width: 767px) {
+  .pg-mobile-cta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    position: sticky;
+    bottom: 0.35rem;
+    z-index: 30;
+    margin-top: 0.75rem;
+    padding: 0.65rem 0.7rem;
+    border-radius: 1rem;
+    border: 1px solid #ddd6fe;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+    backdrop-filter: blur(8px);
+  }
+  .pg-tip-wrap .pg-desktop-generate { display: none; }
+}
 `;
 
 function TipSvg({ kind }: { kind: "bulb" | "photo" | "hook" | "grid" | "ai" | "shield" }) {
@@ -806,10 +827,27 @@ export function PreGenerateSetupPanel({
   const isQuickAd = !isModelWear;
   const hasReference = Boolean(wizard.imageRefPhoto);
   /** Reference layout transfer overrides model-wear staging — lock to product path. */
-  const modelWearLockedByReference = showStylePicker && hasReference;
+  const modelWearLockedByReference = showStylePicker && !isConcept && hasReference;
+  const conceptPath =
+    wizard.visualStyleId === "info-poster"
+      ? "info"
+      : wizard.visualStyleId === "brand-fit"
+        ? "brand"
+        : wizard.visualStyleId === "pricing-offer"
+          ? "pricing"
+          : wizard.visualStyleId === "website-launch"
+            ? "website"
+            : null;
+  const showConceptShopFields =
+    isConcept &&
+    (wizard.visualStyleId === "pricing-offer" ||
+      wizard.visualStyleId === "website-launch" ||
+      wizard.visualStyleId === "service-promo");
 
   const setupHint = isConcept
-    ? pg.conceptHint
+    ? showStylePicker || showReferenceUpload
+      ? pg.conceptDirectHint
+      : pg.conceptHint
     : showStylePicker || showReferenceUpload
       ? pg.directHint
       : pg.hint;
@@ -883,6 +921,13 @@ export function PreGenerateSetupPanel({
     }
   }
 
+  function pickConceptDirection(path: "info" | "brand" | "pricing" | "website") {
+    wizard.applyPrimaryPathConcept(path);
+    if (wizard.imageRefPhoto) {
+      wizard.setImageCreativeMode("reference-concept");
+    }
+  }
+
   function onReferenceFile(file: File | null) {
     wizard.setImageRefPhoto(file);
     if (file) {
@@ -903,7 +948,7 @@ export function PreGenerateSetupPanel({
     brief,
     isConcept ? wizard.conceptIdea || wizard.product : wizard.product,
     {
-      product: isConcept ? pg.conceptTopicLabel : pg.briefProduct,
+      product: isConcept ? pg.conceptBriefTopic : pg.briefProduct,
       target: pg.briefTarget,
       goal: pg.briefGoal,
       tone: pg.briefTone,
@@ -954,7 +999,7 @@ export function PreGenerateSetupPanel({
   return (
     <div className="pg-page">
       <style dangerouslySetInnerHTML={{ __html: PANEL_CSS }} />
-      <PhaseStepper phases={m.start.phases} activeIndex={3} />
+      <PhaseStepper phases={m.start.phases} activeIndex={2} />
 
       <div className="mt-4">
         <h2 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
@@ -974,7 +1019,7 @@ export function PreGenerateSetupPanel({
             {showReferenceUpload ? (
               <FusedReferenceCard
                 title={pg.referenceUploadTitle}
-                hint={pg.referenceUploadHint}
+                hint={isConcept ? pg.conceptReferenceUploadHint : pg.referenceUploadHint}
                 briefSummaryTitle={pg.briefSummaryTitle}
                 noReference={pg.noReference}
                 changeLabel={m.wizard.referenceChange}
@@ -1079,55 +1124,122 @@ export function PreGenerateSetupPanel({
                   </span>
                   <div className="min-w-0">
                     <h3 className="pg-card-title">{pg.stylePickerTitle}</h3>
-                    <p className="mt-0.5 text-xs text-slate-500">{pg.stylePickerHint}</p>
+                    <p className="mt-0.5 text-xs text-slate-500">
+                      {isConcept ? pg.conceptStylePickerHint : pg.stylePickerHint}
+                    </p>
                   </div>
                 </div>
-                <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  <button
-                    type="button"
-                    onClick={() => pickCreationDirection("quick")}
-                    className={`pg-output-card text-left${isQuickAd ? " is-selected" : ""}`}
-                  >
-                    {isQuickAd ? (
-                      <span className="pg-check" aria-hidden>
-                        <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="3">
-                          <path d="m5 12 5 5L20 7" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </span>
-                    ) : null}
-                    <div className="pg-output-copy">
-                      <strong>{pg.stylePickerQuickLabel}</strong>
-                      <span>{pg.stylePickerQuickDesc}</span>
-                    </div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => pickCreationDirection("model")}
-                    disabled={modelWearLockedByReference}
-                    title={
-                      modelWearLockedByReference ? pg.stylePickerModelLockedHint : undefined
-                    }
-                    className={`pg-output-card text-left${isModelWear ? " is-selected" : ""}${
-                      modelWearLockedByReference ? " opacity-45" : ""
-                    }`}
-                  >
-                    {isModelWear ? (
-                      <span className="pg-check" aria-hidden>
-                        <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="3">
-                          <path d="m5 12 5 5L20 7" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </span>
-                    ) : null}
-                    <div className="pg-output-copy">
-                      <strong>{pg.stylePickerModelLabel}</strong>
-                      <span>
-                        {modelWearLockedByReference
-                          ? pg.stylePickerModelLockedHint
-                          : pg.stylePickerModelDesc}
-                      </span>
-                    </div>
-                  </button>
-                </div>
+                {isConcept ? (
+                  <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    {(
+                      [
+                        ["info", m.wizard.pathInfoTitle, m.wizard.pathInfoDesc],
+                        ["brand", m.wizard.pathBrandTitle, m.wizard.pathBrandDesc],
+                        ["pricing", m.wizard.pathPricingTitle, m.wizard.pathPricingDesc],
+                        ["website", m.wizard.pathWebsiteTitle, m.wizard.pathWebsiteDesc],
+                      ] as const
+                    ).map(([path, title, desc]) => {
+                      const selected = conceptPath === path;
+                      return (
+                        <button
+                          key={path}
+                          type="button"
+                          onClick={() => pickConceptDirection(path)}
+                          className={`pg-output-card text-left${selected ? " is-selected" : ""}`}
+                        >
+                          {selected ? (
+                            <span className="pg-check" aria-hidden>
+                              <svg
+                                viewBox="0 0 24 24"
+                                className="h-3 w-3"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="3"
+                              >
+                                <path
+                                  d="m5 12 5 5L20 7"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </svg>
+                            </span>
+                          ) : null}
+                          <div className="pg-output-copy">
+                            <strong>{title}</strong>
+                            <span>{desc}</span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <button
+                      type="button"
+                      onClick={() => pickCreationDirection("quick")}
+                      className={`pg-output-card text-left${isQuickAd ? " is-selected" : ""}`}
+                    >
+                      {isQuickAd ? (
+                        <span className="pg-check" aria-hidden>
+                          <svg
+                            viewBox="0 0 24 24"
+                            className="h-3 w-3"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                          >
+                            <path
+                              d="m5 12 5 5L20 7"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </span>
+                      ) : null}
+                      <div className="pg-output-copy">
+                        <strong>{pg.stylePickerQuickLabel}</strong>
+                        <span>{pg.stylePickerQuickDesc}</span>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => pickCreationDirection("model")}
+                      disabled={modelWearLockedByReference}
+                      title={
+                        modelWearLockedByReference ? pg.stylePickerModelLockedHint : undefined
+                      }
+                      className={`pg-output-card text-left${isModelWear ? " is-selected" : ""}${
+                        modelWearLockedByReference ? " opacity-45" : ""
+                      }`}
+                    >
+                      {isModelWear ? (
+                        <span className="pg-check" aria-hidden>
+                          <svg
+                            viewBox="0 0 24 24"
+                            className="h-3 w-3"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                          >
+                            <path
+                              d="m5 12 5 5L20 7"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </span>
+                      ) : null}
+                      <div className="pg-output-copy">
+                        <strong>{pg.stylePickerModelLabel}</strong>
+                        <span>
+                          {modelWearLockedByReference
+                            ? pg.stylePickerModelLockedHint
+                            : pg.stylePickerModelDesc}
+                        </span>
+                      </div>
+                    </button>
+                  </div>
+                )}
                 {modelWearLockedByReference ? (
                   <p className="mt-2 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-xs leading-relaxed text-violet-900">
                     {pg.stylePickerModelLockedNote}
@@ -1204,6 +1316,34 @@ export function PreGenerateSetupPanel({
                     />
                     <p className="pg-count">{wizard.subline.length} / 200</p>
                   </label>
+                  {showConceptShopFields ? (
+                    <>
+                      <label>
+                        <span className="pg-label">
+                          {m.wizard.businessLabel}
+                          <span className="pg-label-opt">{pg.extraOptional}</span>
+                        </span>
+                        <input
+                          className="pg-input"
+                          value={wizard.business}
+                          onChange={(e) => wizard.setBusiness(e.target.value)}
+                          placeholder={m.wizard.businessPlaceholder}
+                        />
+                      </label>
+                      <label>
+                        <span className="pg-label">
+                          {m.wizard.offerLabel}
+                          <span className="pg-label-opt">{pg.extraOptional}</span>
+                        </span>
+                        <input
+                          className="pg-input"
+                          value={wizard.offer}
+                          onChange={(e) => wizard.setOffer(e.target.value)}
+                          placeholder={m.wizard.offerPlaceholder}
+                        />
+                      </label>
+                    </>
+                  ) : null}
                   <label>
                     <span className="pg-label">
                       {pg.extraLabel}
@@ -1365,7 +1505,7 @@ export function PreGenerateSetupPanel({
                       )}
                     </div>
                     <p className="mt-1.5 text-xs text-slate-500">
-                      {isConcept ? pg.mainPhotoOptionalHint : pg.mainPhotoHint}
+                      {isConcept ? pg.conceptMainPhotoOptionalHint : pg.mainPhotoHint}
                     </p>
                   </div>
 
@@ -1582,14 +1722,20 @@ export function PreGenerateSetupPanel({
                 <p className="text-sm font-bold text-violet-800">{pg.tipTitle}</p>
               </div>
               <div className="mt-3.5 space-y-3.5">
-                {(
-                  [
-                    [pg.tip1, "photo"],
-                    [pg.tip2, "hook"],
-                    [pg.tip3, "grid"],
-                    [pg.tip4, "ai"],
-                  ] as const
-                ).map(([tip, icon]) => (
+                {(isConcept
+                  ? [
+                      { tip: pg.conceptTip1, icon: "photo" as const },
+                      { tip: pg.conceptTip2, icon: "hook" as const },
+                      { tip: pg.conceptTip3, icon: "grid" as const },
+                      { tip: pg.conceptTip4, icon: "ai" as const },
+                    ]
+                  : [
+                      { tip: pg.tip1, icon: "photo" as const },
+                      { tip: pg.tip2, icon: "hook" as const },
+                      { tip: pg.tip3, icon: "grid" as const },
+                      { tip: pg.tip4, icon: "ai" as const },
+                    ]
+                ).map(({ tip, icon }) => (
                   <div key={tip.title} className="flex gap-2.5">
                     <span className="pg-tip-icon" aria-hidden>
                       <TipSvg kind={icon} />
@@ -1609,7 +1755,7 @@ export function PreGenerateSetupPanel({
               <p className="text-xs leading-relaxed text-slate-600">{pg.secureNote}</p>
             </div>
             {onGenerate ? (
-              <div className="flex flex-col gap-2.5">
+              <div className="pg-desktop-generate flex flex-col gap-2.5">
                 {generateBlockMessage ? (
                   <p className="rounded-xl border border-violet-200 bg-violet-50 px-3 py-2.5 text-sm text-violet-900">
                     {generateBlockMessage}
@@ -1639,6 +1785,36 @@ export function PreGenerateSetupPanel({
             ) : null}
           </aside>
         </div>
+
+        {onGenerate ? (
+          <div className="pg-mobile-cta">
+            {generateBlockMessage ? (
+              <p className="rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-sm text-violet-900">
+                {generateBlockMessage}
+              </p>
+            ) : null}
+            <button
+              type="button"
+              onClick={onGenerate}
+              disabled={generateDisabled}
+              className="pg-generate-btn"
+            >
+              {generateLabel ?? m.wizard.generateImageBtn}
+              <svg
+                viewBox="0 0 20 20"
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <path d="M7.5 4.5 13 10l-5.5 5.5" />
+              </svg>
+            </button>
+          </div>
+        ) : null}
       </div>
     </div>
   );

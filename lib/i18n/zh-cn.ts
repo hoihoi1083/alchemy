@@ -2655,6 +2655,24 @@ export const zhCn = {
         title: "你的数据安全",
         body: "我们不会分享你输入的内容或参考链接。",
       },
+      conceptTip3: {
+        title: "风格大于内容",
+        body: "我们借用设计和构图规律 — 文案仍然讲你的服务或概念。",
+      },
+      assistantTipTitle: "概念助手怎么帮你",
+      assistantTipIntro: "你写主题和方向，AI 帮你填标题和视觉 — 不必先做平台研究。",
+      assistantTip1: {
+        title: "写清楚服务",
+        body: "一两句讲清楚你推什么、给谁就够。",
+      },
+      assistantTip2: {
+        title: "下一页再微调",
+        body: "创作方向、参考图和输出格式会在设置页一次完成。",
+      },
+      assistantTip3: {
+        title: "之后可改",
+        body: "标题和文案在设置页仍然可以改。",
+      },
       directTitle: "现在跳过研究",
       directBody:
         "下一步会选直接创作或模特佩戴、可选上传参考图，再用与研究路径相同的设置页。",
@@ -2694,6 +2712,8 @@ export const zhCn = {
         "选择直接创作或模特佩戴、可选上传参考图，再填内容和产品照 — 与研究路径选完后的设置相同。",
       conceptHint:
         "检查研究简报和文案，可选上传产品照，再选输出类型并生成 — 概念广告不一定要有产品照。",
+      conceptDirectHint:
+        "先选创作方向，可选上传参考图，再填文案并生成 — 概念广告不一定要有产品照。",
       conceptTopicLabel: "概念主题",
       conceptTopicRequired: "必填",
       productPhotosOptionalTitle: "产品照片（选填）",
@@ -2701,6 +2721,8 @@ export const zhCn = {
       mainPhotoOptionalHint: "有产品照可以上传 — 没有的话会用主题、文案和研究风格出图。",
       stylePickerTitle: "创作方向",
       stylePickerHint: "直接创作适合大部分产品；模特佩戴会生成人手／佩戴场景。",
+      conceptStylePickerHint:
+        "每个选项会改排版提示 — 资讯图、品牌风格、方案优惠卡、或网站上线。",
       stylePickerQuickLabel: "直接创作",
       stylePickerQuickDesc: "以产品为主的宣传图，不一定要有模特。",
       stylePickerModelLabel: "模特佩戴／使用",
@@ -2762,6 +2784,27 @@ export const zhCn = {
         title: "风格可交给 AI",
         body: "风格、比例、文字模式默认通常够用 — 有需要再改。",
       },
+      conceptTip1: {
+        title: "产品照不是必须",
+        body: "有照可以上传；没有也可以用主题、文案和创作方向出图。",
+      },
+      conceptTip2: {
+        title: "Hook 写具体一点",
+        body: "短而清楚的标题，好过空泛宣传句。",
+      },
+      conceptTip3: {
+        title: "选对输出格式",
+        body: "单张发帖、A/B 比较、轮播适合教学或方案故事。",
+      },
+      conceptTip4: {
+        title: "创作方向会改排版",
+        body: "资讯图、品牌风格、方案优惠、网站上线 — 每个选项用不同提示。",
+      },
+      conceptBriefTopic: "主题",
+      conceptReferenceUploadHint:
+        "上传版式／风格参考，AI 会分析并借构图。只填主题和文案也可以出图。",
+      conceptMainPhotoOptionalHint:
+        "有照可以上传 — 没有的话会用主题、文案和创作方向／参考风格出图。",
       secureNote: "你的选择安全保存，不会对外分享。",
     },
     conceptNameStep: {
