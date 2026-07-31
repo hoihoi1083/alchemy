@@ -3,10 +3,11 @@ import { NextResponse } from "next/server";
 import { chargeTokens, refundTokens } from "@/lib/billing/charge";
 import { clampImageResolution } from "@/lib/billing/entitlements";
 import { getUserPlan } from "@/lib/billing/get-user-plan";
-import { estimateTeachingCarouselTokens } from "@/lib/billing/token-costs";
+import { estimateTeachingCarouselTokens, TOKEN_COST } from "@/lib/billing/token-costs";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import {
   buildFalLayoutTransferImageUrls,
+  carouselCoverSeriesAnchorHint,
   dualProductIdentityHint,
 } from "@/lib/fal-dual-reference-urls";
 import { defaultEditEndpoint, defaultTextEndpoint, sanitizeImageEndpoint } from "@/lib/image-endpoints";
@@ -22,10 +23,12 @@ import {
   DEFAULT_TEACHING_CAROUSEL_SLIDE_COUNT,
   MAX_TEACHING_CAROUSEL_SLIDE_COUNT,
   MIN_TEACHING_CAROUSEL_SLIDE_COUNT,
+  type TeachingCarouselPlan,
+  type TeachingCarouselSlide,
 } from "@/lib/teaching-carousel-types";
 import { planTeachingCarousel } from "@/lib/teaching-carousel-plan";
 import { isPromotionMode } from "@/lib/promotion-mode";
-import { parseBrandKit } from "@/lib/brand-kit";
+import { parseBrandKit, type BrandKit } from "@/lib/brand-kit";
 import {
   parseStrategyFromFormData,
   referenceStrategyPromptBlock,
@@ -67,6 +70,39 @@ function aspectRatioForApi(ratio: string): string {
   return map[ratio] ?? "4:5";
 }
 
+function parseExistingTeachingPlan(raw: string): TeachingCarouselPlan | null {
+  try {
+    const parsed = JSON.parse(raw) as Partial<TeachingCarouselPlan>;
+    if (!parsed || !Array.isArray(parsed.slides) || parsed.slides.length === 0) return null;
+    const slides: TeachingCarouselSlide[] = parsed.slides.map((s, i) => {
+      const row = s as TeachingCarouselSlide & { subline?: string; headline?: string };
+      const role =
+        row.role === "cover" || row.role === "summary" || row.role === "point"
+          ? row.role
+          : i === 0
+            ? "cover"
+            : i === parsed.slides!.length - 1
+              ? "summary"
+              : "point";
+      return {
+        index: Number(row.index) || i + 1,
+        role,
+        title: String(row.title ?? row.headline ?? "").trim() || `Slide ${i + 1}`,
+        body: String(row.body ?? row.subline ?? "").trim(),
+        takeaway: String(row.takeaway ?? "").trim(),
+        composition: String(row.composition ?? "").trim(),
+      };
+    });
+    return {
+      theme: String(parsed.theme ?? "").trim() || "教學輪播",
+      visualDna: String(parsed.visualDna ?? "").trim() || "consistent educational carousel",
+      slides,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(request: Request) {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
@@ -106,7 +142,7 @@ export async function POST(request: Request) {
     (formData.get("aspect_ratio") as string | null)?.trim() || "4:5",
   );
   const brandKitRaw = (formData.get("brand_kit") as string | null)?.trim() || "";
-  let brandKit = null;
+  let brandKit: BrandKit | null = null;
   if (brandKitRaw) {
     try {
       brandKit = parseBrandKit(JSON.parse(brandKitRaw));
@@ -150,32 +186,55 @@ export async function POST(request: Request) {
   );
   const systemPrompt = artStyleSystemPrompt(artStyleId);
 
-  const tokenCost = estimateTeachingCarouselTokens(slideCount);
+  const regenerateSlideRaw = (formData.get("slide_index") as string | null)?.trim() ?? "";
+  const regenerateSlideIndex =
+    regenerateSlideRaw === "" ? null : Number.parseInt(regenerateSlideRaw, 10);
+  const existingPlan = parseExistingTeachingPlan(
+    (formData.get("existing_plan") as string | null)?.trim() || "",
+  );
+  const seriesCoverUrl =
+    (formData.get("series_cover_url") as string | null)?.trim() || "";
+  const isSingleSlideRegen =
+    regenerateSlideIndex != null &&
+    Number.isInteger(regenerateSlideIndex) &&
+    regenerateSlideIndex >= 0 &&
+    Boolean(existingPlan?.slides[regenerateSlideIndex]);
+
+  const tokenCost = isSingleSlideRegen
+    ? TOKEN_COST.image
+    : estimateTeachingCarouselTokens(slideCount);
   const { resolution: imageResolution } = clampImageResolution(
     await getUserPlan(auth.user.userId),
   );
 
   let chargedBalance: number | null | undefined;
   try {
-    const plan = await planTeachingCarousel({
-      visualStyleId: visualStyle,
-      promotionMode,
-      artStyleId,
-      promptMarket: promptMarket,
-      product,
-      business,
-      headline,
-      subline,
-      offer,
-      promptExtra,
-      slideCount,
-      referenceStrategyKind:
-        strategy.kind === "layout-transfer" ? "layout-transfer" : strategy.kind === "style-only" ? "style-only" : "none",
-      carouselSlides: brief?.carouselSlides,
-    });
+    const plan: TeachingCarouselPlan = isSingleSlideRegen
+      ? existingPlan!
+      : await planTeachingCarousel({
+          visualStyleId: visualStyle,
+          promotionMode,
+          artStyleId,
+          promptMarket: promptMarket,
+          product,
+          business,
+          headline,
+          subline,
+          offer,
+          promptExtra,
+          slideCount,
+          hasProductPhoto: hasProduct,
+          referenceStrategyKind:
+            strategy.kind === "layout-transfer"
+              ? "layout-transfer"
+              : strategy.kind === "style-only"
+                ? "style-only"
+                : "none",
+          carouselSlides: brief?.carouselSlides,
+        });
 
     const charged = await chargeTokens(auth.user.userId, tokenCost, {
-      kind: "teaching_carousel",
+      kind: isSingleSlideRegen ? "image" : "teaching_carousel",
     });
     if ("error" in charged) return charged.error;
     chargedBalance = charged.balanceAfter;
@@ -226,56 +285,131 @@ export async function POST(request: Request) {
         ? dualProductIdentityHint(productAngleFiles.length > 0)
         : "";
 
-    const slideResults = await Promise.all(
-      plan.slides.map(async (slide) => {
-        const carouselSlideRef = brief?.carouselSlides?.[slide.index - 1];
-        const prompt = [
-          buildTeachingCarouselSlideImagePrompt(
-            vars,
-            plan,
-            slide,
-            plan.slides.length,
-            promptMode,
-            null,
-            referenceImageMode,
-            {
-              visualStyleId: visualStyle,
-              referenceConcept: strategy.useReferenceConceptPrompts,
-              carouselSlideRef,
-              brandKit,
-            },
-          ),
-          dualHint,
-        ]
-          .filter(Boolean)
-          .join("\n");
+    type SlideOut = {
+      role: string;
+      title: string;
+      headline: string;
+      subline: string;
+      imageUrl: string;
+      index: number;
+    };
 
-        const result = await fal.subscribe(endpoint, {
-          input: {
-            prompt,
-            ...(imageUrlsForFal?.length ? { image_urls: imageUrlsForFal } : {}),
-            aspect_ratio: aspectRatio,
-            num_images: 1,
-            resolution: imageResolution,
-            limit_generations: true,
-            ...(systemPrompt ? { system_prompt: systemPrompt } : {}),
+    async function generateOneSlide(
+      slide: TeachingCarouselSlide,
+      urls: string[] | null,
+      extraHints: string[],
+    ): Promise<SlideOut> {
+      const carouselSlideRef = brief?.carouselSlides?.[slide.index - 1];
+      const prompt = [
+        buildTeachingCarouselSlideImagePrompt(
+          vars,
+          plan,
+          slide,
+          plan.slides.length,
+          promptMode,
+          null,
+          referenceImageMode,
+          {
+            visualStyleId: visualStyle,
+            referenceConcept: strategy.useReferenceConceptPrompts,
+            carouselSlideRef,
+            brandKit,
+            hasProductPhoto: hasProduct,
+            productName: product,
           },
-          logs: true,
-        });
-        const outUrls = extractImageUrls(result.data);
-        if (!outUrls[0]) {
-          throw new Error(`Image URL missing for slide ${slide.index}.`);
-        }
-        return {
-          role: slide.role,
-          title: slide.title,
-          headline: slide.title,
-          subline: slide.body,
-          imageUrl: outUrls[0],
-        };
-      }),
-    );
-    const slides = slideResults;
+        ),
+        ...extraHints,
+      ]
+        .filter(Boolean)
+        .join("\n");
+
+      const result = await fal.subscribe(endpoint, {
+        input: {
+          prompt,
+          ...(urls?.length ? { image_urls: urls } : {}),
+          aspect_ratio: aspectRatio,
+          num_images: 1,
+          resolution: imageResolution,
+          limit_generations: true,
+          ...(systemPrompt ? { system_prompt: systemPrompt } : {}),
+        },
+        logs: true,
+      });
+      const outUrls = extractImageUrls(result.data);
+      if (!outUrls[0]) {
+        throw new Error(`Image URL missing for slide ${slide.index}.`);
+      }
+      return {
+        index: slide.index,
+        role: slide.role,
+        title: slide.title,
+        headline: slide.title,
+        subline: slide.body,
+        imageUrl: outUrls[0],
+      };
+    }
+
+    if (isSingleSlideRegen) {
+      const target = plan.slides[regenerateSlideIndex!]!;
+      const urls =
+        regenerateSlideIndex! > 0 && seriesCoverUrl.startsWith("http") && imageUrlsForFal?.length
+          ? [...imageUrlsForFal, seriesCoverUrl]
+          : imageUrlsForFal;
+      const hints = [
+        dualHint,
+        regenerateSlideIndex! > 0 && seriesCoverUrl.startsWith("http")
+          ? carouselCoverSeriesAnchorHint()
+          : "",
+      ];
+      const one = await generateOneSlide(target, urls, hints);
+      const durableUrls = await persistAndDurablizeMany({
+        clerkId: auth.user.userId,
+        kind: "image",
+        sourceUrls: [one.imageUrl],
+        fallbackUrls: [one.imageUrl],
+        prompt: `teaching-carousel-slide-${regenerateSlideIndex! + 1}`,
+      });
+      const imageUrl = durableUrls[0] ?? one.imageUrl;
+      await trackUsage(auth.user.userId, "image");
+      return NextResponse.json({
+        plan,
+        slideIndex: regenerateSlideIndex,
+        slide: {
+          role: one.role,
+          title: one.title,
+          headline: one.headline,
+          subline: one.subline,
+          imageUrl,
+        },
+        imageUrl,
+        endpoint,
+        mode: "teaching-carousel-slide",
+        tokensCharged: tokenCost,
+        creditBalance: balanceAfter,
+      });
+    }
+
+    const ordered = [...plan.slides].sort((a, b) => a.index - b.index);
+    const coverSlide = ordered[0];
+    const restSlides = ordered.slice(1);
+
+    // Cover first when we have product pixels — later slides see cover as a series
+    // anchor so tip cards stop inventing mascots / wrong jewelry colors independently.
+    let slideResults: SlideOut[];
+    if (hasProduct && imageUrlsForFal?.length && coverSlide && restSlides.length > 0) {
+      const coverOut = await generateOneSlide(coverSlide, imageUrlsForFal, [dualHint]);
+      const anchoredUrls = [...imageUrlsForFal, coverOut.imageUrl];
+      const coverHint = carouselCoverSeriesAnchorHint();
+      const restOut = await Promise.all(
+        restSlides.map((slide) => generateOneSlide(slide, anchoredUrls, [dualHint, coverHint])),
+      );
+      slideResults = [coverOut, ...restOut].sort((a, b) => a.index - b.index);
+    } else {
+      slideResults = await Promise.all(
+        ordered.map((slide) => generateOneSlide(slide, imageUrlsForFal, [dualHint])),
+      );
+    }
+    const slides = slideResults.map(({ index: _i, ...rest }) => rest);
 
     const falUrls = slides.map((s) => s.imageUrl);
     const archivedUrls = await archiveCampaignSlidesToPipeline(request, falUrls);
@@ -309,7 +443,7 @@ export async function POST(request: Request) {
   } catch (e: unknown) {
     if (chargedBalance !== undefined) {
       await refundTokens(auth.user.userId, tokenCost, {
-        kind: "teaching_carousel",
+        kind: isSingleSlideRegen ? "image" : "teaching_carousel",
         reason: "generation_failed",
       });
     }

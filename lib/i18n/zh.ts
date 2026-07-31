@@ -2655,11 +2655,12 @@ export const zh = {
         body: "我哋唔會分享你輸入嘅內容或參考連結。",
       },
       directTitle: "而家跳過研究",
-      directBody: "之後步驟可選上傳參考圖或片，再用你嘅產品名設定同生成。",
+      directBody:
+        "下一步會揀直接創作或模特兒佩戴、可選上傳參考圖，再用同研究路徑一樣嘅設定頁。",
       directBullets: [
         "唔使先做平台搜尋",
-        "可選參考上傳會喺之後出現",
-        "適合已經清楚想要咩風格",
+        "揀直接創作或模特兒佩戴／使用",
+        "可選參考圖喺下一頁設定",
       ],
       assistantIntro: "描述你嘅服務或優惠 — AI 幫你填標題同視覺方向。會跳過平台研究。",
     },
@@ -2688,6 +2689,21 @@ export const zh = {
       titleAccent: "內容同素材",
       title: "設定你嘅內容同素材",
       hint: "填內容詳情、上傳產品相、揀輸出類型同風格。",
+      directHint:
+        "揀直接創作或模特兒佩戴、可選上傳參考圖，再填內容同產品相 — 同研究路徑揀完後嘅設定一樣。",
+      stylePickerTitle: "創作方向",
+      stylePickerHint: "直接創作適合大部分產品；模特兒佩戴會生成人手／佩戴場景。",
+      stylePickerQuickLabel: "直接創作",
+      stylePickerQuickDesc: "以產品為主嘅宣傳圖，唔一定要有模特兒。",
+      stylePickerModelLabel: "模特兒佩戴／使用",
+      stylePickerModelDesc: "畫面有人佩戴或使用你嘅產品。",
+      stylePickerModelLockedHint: "有參考圖時唔可用 — 會跟參考圖版式。",
+      stylePickerModelLockedNote:
+        "已上傳參考圖，模特兒佩戴會停用。出圖會跟參考圖版式。想用模特兒佩戴請先移除參考圖。",
+      referenceUploadTitle: "參考圖（選填）",
+      referenceUploadHint:
+        "上傳版式／風格參考，AI 會分析並借構圖。只有產品相同文案都可以出圖。",
+      referenceRemove: "移除",
       referenceTitle: "參考創意簡報",
       changeBrief: "改簡報",
       noReference: "未有參考",

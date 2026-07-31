@@ -98,7 +98,7 @@ const ROUTING_PREFIX_IDS = new Set<MicroStepId>([
 ]);
 
 const DIRECT_IMAGE_STYLE_PATHS = new Set<MicroWizardPathId>([
-  "product_image_direct",
+  // product_image_direct: style + optional ref live inside setup.pre_generate
   "concept_image_direct",
 ]);
 

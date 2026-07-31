@@ -144,30 +144,22 @@
         { "id": "identity.product_name", "required": ["product"] },
         { "id": "route.intake", "set": { "intakePath": "direct" } },
         {
-          "id": "asset.reference_image",
-          "skippable": true,
-          "onUpload": { "imageCreativeMode": "reference-concept" }
+          "id": "setup.pre_generate",
+          "label": "Pre-generate setup",
+          "handler": "generateImage",
+          "skippable": false,
+          "fuses": [
+            "route.primary_style",
+            "asset.reference_image",
+            "wait.reference_analyze",
+            "copy.edit",
+            "asset.brand_website",
+            "image.output_format",
+            "asset.product_photo",
+            "image.options",
+            "image.generate"
+          ]
         },
-        {
-          "id": "wait.reference_analyze",
-          "skipWhen": "!imageRefPhoto"
-        },
-        {
-          "id": "copy.edit",
-          "label": "內容與生成設定",
-          "skippable": true,
-          "skipWhen": "allCopyEmpty",
-          "sections": ["copy", "brandKit", "advancedPrompt"],
-          "brandKit": { "required": false, "collapsedByDefault": true }
-        },
-        {
-          "id": "image.output_format",
-          "choices": ["single", "ab", "campaign", "teaching-carousel"],
-          "default": "ab"
-        },
-        { "id": "asset.product_photo", "required": true },
-        { "id": "image.options", "skippable": true },
-        { "id": "image.generate", "handler": "generateImage" },
         { "id": "wait.image_generate", "while": "imageBusy" },
         { "id": "image.review" },
         { "id": "done.export", "legacyStepKey": "done" }

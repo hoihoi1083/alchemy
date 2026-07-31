@@ -29,6 +29,7 @@ import {
   buildModelWearPresentationHint,
   buildSecondFrameSceneHint,
 } from "@/lib/product-scene-hints";
+import { carouselProductHeroLock, carouselSeriesConsistencyLock } from "@/lib/fal-dual-reference-urls";
 import {
   creativityMotionHint,
   type VideoCreativity,
@@ -641,6 +642,9 @@ export function buildTeachingCarouselSlideImagePrompt(
     carouselSlideRef?: CarouselSlideReferenceBrief;
     brandKit?: BrandKit | null;
     brandLogoImageIndex?: number | null;
+    /** When true, every slide must keep the uploaded product as hero (incl. tip slides). */
+    hasProductPhoto?: boolean;
+    productName?: string;
   },
 ): string {
   const brandKit = options?.brandKit;
@@ -649,6 +653,10 @@ export function buildTeachingCarouselSlideImagePrompt(
     brandLogoImageIndex != null
       ? joinParts(prompt, brandKitLogoImagePromptBlock(brandLogoImageIndex))
       : prompt;
+  const productLock = options?.hasProductPhoto
+    ? carouselProductHeroLock({ productName: options.productName ?? vars.product })
+    : "";
+  const seriesLock = carouselSeriesConsistencyLock(plan.visualDna);
   const referenceConcept = Boolean(options?.referenceConcept);
   const slideVars: PromptVariables = {
     ...vars,
@@ -677,6 +685,8 @@ export function buildTeachingCarouselSlideImagePrompt(
           slide.takeaway,
         ]),
         brandPromptExtras(brandProfile, brandKit),
+        seriesLock,
+        productLock,
       ),
     );
   }
@@ -698,7 +708,9 @@ export function buildTeachingCarouselSlideImagePrompt(
       `Slide role: ${slide.role}.`,
       slide.composition ? `Layout note: ${slide.composition}.` : "",
       refBlock,
+      seriesLock,
       "LAYOUT TRANSFER: IMAGE 1 = user product hero; IMAGE 2 = style reference. Replicate IMAGE 2 ad design grammar on this slide — same grid/list/panel structure, component types, and typography hierarchy; swap in IMAGE 1 product and user brief copy only.",
+      productLock,
     );
     return withLogo(
       joinParts(
@@ -737,6 +749,8 @@ export function buildTeachingCarouselSlideImagePrompt(
       "COPY RULE: one upright horizontal text block only — never duplicate headline/body; never rotate type 90° or stack letters vertically.",
       "No English meta/UI chips (Image, Video, Copy, Copywriting). No outer matte/letterbox frame.",
       slide.composition ? `Layout: ${slide.composition}.` : "",
+      seriesLock,
+      productLock,
       artStyleImageClause(vars.artStyle),
       FRAMING_IMAGE[vars.framing],
       MARKET_HINTS[vars.market],
@@ -1042,6 +1056,7 @@ function singlePlanBlock(plan: SingleImagePlan): string {
     plan.title ? `Main hook on image: "${plan.title}".` : "",
     plan.body ? `Supporting line: ${plan.body}.` : "",
     plan.takeaway ? `Closing line: ${plan.takeaway}.` : "",
+    "Do NOT paint the English word LOGO, or any fake brand-mark circle/placeholder seal. Skip logo marks unless a real brand logo image is provided. Do NOT invent 立即選購 / Shop Now unless that exact CTA is in the campaign copy above.",
   );
 }
 
@@ -1107,6 +1122,8 @@ export function buildCampaignSlideImagePrompt(
     carouselSlideRef?: CarouselSlideReferenceBrief;
     brandKit?: BrandKit | null;
     brandLogoImageIndex?: number | null;
+    hasProductPhoto?: boolean;
+    productName?: string;
   },
 ): string {
   const brandKit = options?.brandKit;
@@ -1116,6 +1133,10 @@ export function buildCampaignSlideImagePrompt(
   const referenceConcept = Boolean(
     options?.referenceConcept && referenceImageMode === "clone",
   );
+  const productLock = options?.hasProductPhoto
+    ? carouselProductHeroLock({ productName: options.productName ?? vars.product })
+    : "";
+  const seriesLock = carouselSeriesConsistencyLock(plan.visualDna);
   const slideVars: PromptVariables = {
     ...vars,
     headline: slide.headline || vars.headline,
@@ -1136,6 +1157,7 @@ export function buildCampaignSlideImagePrompt(
       ? `Layout note (secondary to IMAGE 1): ${slide.composition}.`
       : "",
     `Shared series styling (colors, typography, mood — same on every slide): ${plan.visualDna}.`,
+    seriesLock,
     referenceConcept
       ? "Keep IMAGE 2 ad design language on every slide — vary headline, layout role, and slide copy only; IMAGE 1 product must appear on every slide."
       : referenceImageMode === "style-only"
@@ -1146,6 +1168,7 @@ export function buildCampaignSlideImagePrompt(
     slide.role === "offer" && !vars.offer?.trim()
       ? "Offer slide: CTA / shop-now mood only — do NOT invent prices, HK$, discount %, or fake promotions."
       : "",
+    productLock,
   );
   const base =
     referenceConcept
@@ -1180,7 +1203,7 @@ export function buildCampaignSlideImagePrompt(
       ? joinParts(withBrand, brandKitLogoImagePromptBlock(brandLogoImageIndex))
       : withBrand;
   return mode === "concept-social" && !referenceConcept
-    ? withLogo
+    ? joinParts(withLogo, seriesLock, productLock)
     : joinParts(campaignBlock, withLogo, carouselSlideAvoidClause(slideVars.framing, slideVars.artStyle ?? DEFAULT_ART_STYLE));
 }
 
@@ -1311,6 +1334,7 @@ export function buildReferenceConceptImagePrompt(
       `IMAGE 1 = user's product hero (mascot/SKU to keep exactly). IMAGE 2 = layout/style reference only — never show IMAGE 2's product as the hero.`,
       `Transform IMAGE 1 into an ad that borrows IMAGE 2's layout rhythm, graphic component types, typography hierarchy, and staging pose type. Adapt background and lighting to suit IMAGE 1. Do not copy IMAGE 2 logos, wordmarks, or selling lines.`,
       `CRITICAL: The hero subject must be recognizable as IMAGE 1 (same character/product). If IMAGE 1 is a 3D mascot/character, keep that mascot — do not replace it with jewelry, bottles, or other items from IMAGE 2.`,
+      `Never paint the English word LOGO, BRAND, or CTA. Never invent a circular brand-mark / seal / placeholder logo. If IMAGE 2 has a logo zone, leave that area empty or fill only with campaign copy lines above — do not invent 立即選購 / Shop Now unless that exact phrase is in the campaign copy.`,
       shopBlock,
       campaignCopy ? `Campaign copy (all on-image text): ${campaignCopy}.` : "",
       artStyleImageClause(vars.artStyle),

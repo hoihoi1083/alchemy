@@ -274,6 +274,21 @@ const PANEL_CSS = `
   width: 1.15rem; height: 1.15rem; border-radius: 9999px;
   background: #7c3aed; color: #fff;
 }
+.pg-ref-drop {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.45rem;
+  width: 100%; min-height: 8.5rem; border-radius: 0.9rem; border: 1.5px dashed #ddd6fe;
+  background: #faf8ff; padding: 1.1rem 1rem; text-align: center;
+  color: #6d28d9; transition: border-color 0.15s ease, background 0.15s ease;
+}
+.pg-ref-drop:hover { border-color: #c4b5fd; background: #f5f3ff; }
+.pg-ref-actions {
+  display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.65rem;
+}
+.pg-ref-actions button {
+  flex: 1 1 auto; min-width: 5.5rem; border-radius: 0.75rem; border: 1px solid #e2e8f0;
+  background: #fff; padding: 0.5rem 0.75rem; font-size: 12px; font-weight: 600; color: #475569;
+}
+.pg-ref-actions button:hover { border-color: #ddd6fe; background: #f8fafc; color: #6d28d9; }
 .pg-aspect-frame {
   margin: 0 auto 0.45rem; border: 1.5px solid currentColor; border-radius: 0.25rem; opacity: 0.85;
 }
@@ -501,6 +516,138 @@ function SectionIcon({ kind }: { kind: "brief" | "content" | "output" | "upload"
   );
 }
 
+function FusedReferenceCard({
+  title,
+  hint,
+  briefSummaryTitle,
+  noReference,
+  changeLabel,
+  removeLabel,
+  cta,
+  uploadHint,
+  previewUrl,
+  fileName,
+  analyzeActive,
+  analyzingLabel,
+  analyzedFallback,
+  summaryRows,
+  onFile,
+}: {
+  title: string;
+  hint: string;
+  briefSummaryTitle: string;
+  noReference: string;
+  changeLabel: string;
+  removeLabel: string;
+  cta: string;
+  uploadHint: string;
+  previewUrl: string | null;
+  fileName: string | null;
+  analyzeActive: boolean;
+  analyzingLabel: string;
+  analyzedFallback: string;
+  summaryRows: { label: string; value: string }[];
+  onFile: (file: File | null) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const hasPreview = Boolean(previewUrl);
+
+  function onChange(e: ChangeEvent<HTMLInputElement>) {
+    onFile(e.target.files?.[0] ?? null);
+    e.target.value = "";
+  }
+
+  return (
+    <section className="pg-card">
+      <div className="pg-card-title-row">
+        <span className="pg-card-icon">
+          <SectionIcon kind="brief" />
+        </span>
+        <div className="min-w-0">
+          <h3 className="pg-card-title">{title}</h3>
+          <p className="mt-0.5 text-xs text-slate-500">{hint}</p>
+        </div>
+      </div>
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        className="sr-only"
+        onChange={onChange}
+      />
+
+      {!hasPreview ? (
+        <button type="button" onClick={() => inputRef.current?.click()} className="pg-ref-drop mt-3">
+          <span className="text-2xl" aria-hidden>
+            📎
+          </span>
+          <span className="text-sm font-semibold text-violet-700">{cta}</span>
+          <span className="max-w-sm text-xs leading-relaxed text-slate-500">{uploadHint}</span>
+        </button>
+      ) : (
+        <div className="pg-brief-row mt-3">
+          <div className="min-w-0">
+            <div className="pg-brief-media">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={previewUrl!} alt="" />
+            </div>
+            {fileName ? (
+              <p className="mt-1.5 truncate text-xs text-slate-500">{fileName}</p>
+            ) : null}
+            <div className="pg-ref-actions">
+              <button type="button" onClick={() => inputRef.current?.click()}>
+                {changeLabel}
+              </button>
+              <button type="button" onClick={() => onFile(null)}>
+                {removeLabel}
+              </button>
+            </div>
+          </div>
+
+          <div className="pg-brief-summary">
+            <p className="pg-brief-summary-title">{briefSummaryTitle}</p>
+            {analyzeActive ? (
+              <p className="flex items-center gap-2 text-sm text-violet-900">
+                <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-violet-500 border-t-transparent" />
+                {analyzingLabel}
+              </p>
+            ) : summaryRows.length > 0 ? (
+              <ul>
+                {summaryRows.map((row) => (
+                  <li key={row.label} className="pg-brief-row-item">
+                    <span className="pg-brief-check" aria-hidden>
+                      <svg
+                        viewBox="0 0 24 24"
+                        className="h-3.5 w-3.5"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.6"
+                      >
+                        <path
+                          d="m5 12 5 5L20 7"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </span>
+                    <span className="min-w-0">
+                      <span className="font-semibold text-slate-900">{row.label}:</span>{" "}
+                      <span className="text-slate-500">{row.value}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-slate-500">{analyzedFallback || noReference}</p>
+            )}
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
 function PhaseStepper({
   phases,
   activeIndex,
@@ -611,16 +758,26 @@ const OUTPUT_ICONS: Record<ImageOutputMode, ReactNode> = {
 };
 
 /**
- * Fused post-research setup — layout matches the purple pre-generate mockup.
+ * Fused post-intake setup — shared by research + direct creation.
+ * Direct adds: creation direction (quick vs model) + optional reference upload.
  */
 export function PreGenerateSetupPanel({
   onGenerate,
   generateDisabled = false,
   generateLabel,
+  generateBlockMessage,
+  showStylePicker = false,
+  showReferenceUpload = false,
 }: {
   onGenerate?: () => void;
   generateDisabled?: boolean;
   generateLabel?: string;
+  /** Shown above the generate CTA (e.g. wait for reference analysis). */
+  generateBlockMessage?: string | null;
+  /** Direct path: quick ad vs model-wear (affects visualStyleId / prompts). */
+  showStylePicker?: boolean;
+  /** Direct path: optional user reference image (triggers analyze + dual-ref). */
+  showReferenceUpload?: boolean;
 } = {}) {
   const { m } = useLocale();
   const wizard = useWizard();
@@ -631,17 +788,48 @@ export function PreGenerateSetupPanel({
   const showBrandWebsite = requiresBrandProfileForImages(wizard.visualStyleId);
 
   const brief = wizard.userReferenceBrief as UserReferenceBrief | null;
-  const showReference =
+  const showReferenceBrief =
     Boolean(wizard.imageRefPhoto) ||
     wizard.referenceAnalyzeBusy ||
     Boolean(brief) ||
     Boolean(wizard.referenceAnalyzeNote) ||
-    Boolean(wizard.promptExtra?.trim());
+    (!showReferenceUpload && Boolean(wizard.promptExtra?.trim()));
 
   const analyzeDone = Boolean(brief) || Boolean(wizard.referenceAnalyzeNote);
   const analyzeActive =
     wizard.referenceAnalyzeBusy ||
     (Boolean(wizard.imageRefPhoto) && !analyzeDone);
+
+  const isModelWear = wizard.visualStyleId === "model-wear";
+  const isQuickAd = !isModelWear;
+  const hasReference = Boolean(wizard.imageRefPhoto);
+  /** Reference layout transfer overrides model-wear staging — lock to product path. */
+  const modelWearLockedByReference = showStylePicker && hasReference;
+
+  function pickCreationDirection(path: "quick" | "model") {
+    if (path === "model" && hasReference) return;
+    wizard.applyPrimaryPath(path);
+    // Keep dual-ref mode if user already uploaded a reference.
+    if (wizard.imageRefPhoto) {
+      wizard.setImageCreativeMode("reference-concept");
+    }
+  }
+
+  function onReferenceFile(file: File | null) {
+    wizard.setImageRefPhoto(file);
+    if (file) {
+      // Reference layout wins over model-wear — switch to product path.
+      if (wizard.visualStyleId === "model-wear") {
+        wizard.applyPrimaryPath("quick");
+      }
+      wizard.setImageCreativeMode("reference-concept");
+      return;
+    }
+    // Cleared — fall back to promo mode for the selected creation direction.
+    wizard.setUserReferenceBrief(null);
+    wizard.setReferenceAnalyzeNote(null);
+    wizard.setImageCreativeMode("promo-ai");
+  }
 
   const summaryRows = briefSummaryRows(brief, wizard.product, {
     product: pg.briefProduct,
@@ -707,11 +895,33 @@ export function PreGenerateSetupPanel({
             />
           </span>
         </h2>
-        <p className="mt-1.5 max-w-2xl text-sm text-slate-500">{pg.hint}</p>
+        <p className="mt-1.5 max-w-2xl text-sm text-slate-500">
+          {showStylePicker || showReferenceUpload ? pg.directHint : pg.hint}
+        </p>
 
         <div className="pg-layout">
           <div className="pg-stack">
-            {showReference ? (
+            {showReferenceUpload ? (
+              <FusedReferenceCard
+                title={pg.referenceUploadTitle}
+                hint={pg.referenceUploadHint}
+                briefSummaryTitle={pg.briefSummaryTitle}
+                noReference={pg.noReference}
+                changeLabel={m.wizard.referenceChange}
+                removeLabel={pg.referenceRemove}
+                cta={m.wizard.referenceCta}
+                uploadHint={m.wizard.uploadHintConcept}
+                previewUrl={wizard.imageRefPreviewUrl}
+                fileName={wizard.imageRefPhoto?.name ?? null}
+                analyzeActive={analyzeActive}
+                analyzingLabel={m.wizard.referenceBriefAnalyzing}
+                analyzedFallback={
+                  wizard.referenceAnalyzeNote ?? m.wizard.referenceBriefAnalyzed
+                }
+                summaryRows={summaryRows}
+                onFile={onReferenceFile}
+              />
+            ) : showReferenceBrief ? (
               <section className="pg-card">
                 <div className="pg-card-head">
                   <h3 className="pg-card-title">{pg.referenceTitle}</h3>
@@ -788,6 +998,71 @@ export function PreGenerateSetupPanel({
                     )}
                   </div>
                 </div>
+              </section>
+            ) : null}
+
+            {showStylePicker ? (
+              <section className="pg-card">
+                <div className="pg-card-title-row">
+                  <span className="pg-card-icon">
+                    <SectionIcon kind="options" />
+                  </span>
+                  <div className="min-w-0">
+                    <h3 className="pg-card-title">{pg.stylePickerTitle}</h3>
+                    <p className="mt-0.5 text-xs text-slate-500">{pg.stylePickerHint}</p>
+                  </div>
+                </div>
+                <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <button
+                    type="button"
+                    onClick={() => pickCreationDirection("quick")}
+                    className={`pg-output-card text-left${isQuickAd ? " is-selected" : ""}`}
+                  >
+                    {isQuickAd ? (
+                      <span className="pg-check" aria-hidden>
+                        <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="3">
+                          <path d="m5 12 5 5L20 7" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </span>
+                    ) : null}
+                    <div className="pg-output-copy">
+                      <strong>{pg.stylePickerQuickLabel}</strong>
+                      <span>{pg.stylePickerQuickDesc}</span>
+                    </div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => pickCreationDirection("model")}
+                    disabled={modelWearLockedByReference}
+                    title={
+                      modelWearLockedByReference ? pg.stylePickerModelLockedHint : undefined
+                    }
+                    className={`pg-output-card text-left${isModelWear ? " is-selected" : ""}${
+                      modelWearLockedByReference ? " opacity-45" : ""
+                    }`}
+                  >
+                    {isModelWear ? (
+                      <span className="pg-check" aria-hidden>
+                        <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="3">
+                          <path d="m5 12 5 5L20 7" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </span>
+                    ) : null}
+                    <div className="pg-output-copy">
+                      <strong>{pg.stylePickerModelLabel}</strong>
+                      <span>
+                        {modelWearLockedByReference
+                          ? pg.stylePickerModelLockedHint
+                          : pg.stylePickerModelDesc}
+                      </span>
+                    </div>
+                  </button>
+                </div>
+                {modelWearLockedByReference ? (
+                  <p className="mt-2 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-xs leading-relaxed text-violet-900">
+                    {pg.stylePickerModelLockedNote}
+                  </p>
+                ) : null}
               </section>
             ) : null}
 
@@ -1232,26 +1507,33 @@ export function PreGenerateSetupPanel({
               <p className="text-xs leading-relaxed text-slate-600">{pg.secureNote}</p>
             </div>
             {onGenerate ? (
-              <button
-                type="button"
-                onClick={onGenerate}
-                disabled={generateDisabled}
-                className="pg-generate-btn"
-              >
-                {generateLabel ?? m.wizard.generateImageBtn}
-                <svg
-                  viewBox="0 0 20 20"
-                  className="h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden
+              <div className="flex flex-col gap-2.5">
+                {generateBlockMessage ? (
+                  <p className="rounded-xl border border-violet-200 bg-violet-50 px-3 py-2.5 text-sm text-violet-900">
+                    {generateBlockMessage}
+                  </p>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={onGenerate}
+                  disabled={generateDisabled}
+                  className="pg-generate-btn"
                 >
-                  <path d="M7.5 4.5 13 10l-5.5 5.5" />
-                </svg>
-              </button>
+                  {generateLabel ?? m.wizard.generateImageBtn}
+                  <svg
+                    viewBox="0 0 20 20"
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden
+                  >
+                    <path d="M7.5 4.5 13 10l-5.5 5.5" />
+                  </svg>
+                </button>
+              </div>
             ) : null}
           </aside>
         </div>

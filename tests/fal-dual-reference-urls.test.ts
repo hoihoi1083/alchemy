@@ -2,6 +2,9 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   buildFalLayoutTransferImageUrls,
+  carouselCoverSeriesAnchorHint,
+  carouselProductHeroLock,
+  carouselSeriesConsistencyLock,
   dualProductIdentityHint,
 } from "../lib/fal-dual-reference-urls";
 import { resolveReferenceStrategy } from "../lib/reference-strategy";
@@ -63,5 +66,31 @@ describe("dual reference layout-transfer (research OR manual style upload)", () 
     assert.match(dualProductIdentityHint(false), /IMAGE 1/);
     assert.match(dualProductIdentityHint(false), /never show IMAGE 2's product/);
     assert.match(dualProductIdentityHint(true), /IMAGE 1 only/);
+  });
+
+  it("carousel product hero lock bans substitute jewelry and mascots on tip slides", () => {
+    const lock = carouselProductHeroLock({ productName: "金砂石手鏈" });
+    assert.match(lock, /PRODUCT HERO LOCK/);
+    assert.match(lock, /金砂石手鏈/);
+    assert.match(lock, /tip|educational/i);
+    assert.match(lock, /substitute|jewelry/i);
+    assert.match(lock, /bathroom|gym|yoga|cutaway/i);
+    assert.match(lock, /mascot|flask|beaker/i);
+    assert.match(lock, /recolor|pink/i);
+  });
+
+  it("carousel series lock bans mid-series photoreal lifestyle flip", () => {
+    const lock = carouselSeriesConsistencyLock("soft product flat-lay edu cards");
+    assert.match(lock, /SERIES CONSISTENCY LOCK/);
+    assert.match(lock, /soft product flat-lay edu cards/);
+    assert.match(lock, /photorealistic human|bathroom|lifestyle cutaway|mascot/i);
+  });
+
+  it("cover series anchor tells later slides to match cover + keep IMAGE 1 product", () => {
+    const hint = carouselCoverSeriesAnchorHint();
+    assert.match(hint, /SERIES COVER ANCHOR/);
+    assert.match(hint, /LAST image|COVER/i);
+    assert.match(hint, /IMAGE 1/);
+    assert.match(hint, /mascot|recolor|jewelry/i);
   });
 });

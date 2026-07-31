@@ -14,8 +14,6 @@ describe("reference analyze trigger", () => {
         extras: [],
         promotionMode: "physical",
         imageOutputMode: "single",
-        visualStyleId: "product",
-        imageCreativeMode: "reference-concept",
         hasProductPhoto: false,
       }),
       null,
@@ -30,13 +28,34 @@ describe("reference analyze trigger", () => {
       extras: [] as File[],
       promotionMode: "physical",
       imageOutputMode: "teaching-carousel",
-      visualStyleId: "product",
-      imageCreativeMode: "reference-concept",
       hasProductPhoto: false,
       researchAngleId: "post-1",
     };
     const k1 = referenceAnalyzeTriggerKey(base);
     const k2 = referenceAnalyzeTriggerKey({ ...base, extras: [extra] });
+    assert.equal(k1, k2);
+  });
+
+  it("does not re-trigger when visual style or creative mode changes", () => {
+    const cover = new File(["a"], "cover.jpg", { type: "image/jpeg" });
+    const base = {
+      cover,
+      extras: [] as File[],
+      promotionMode: "physical",
+      imageOutputMode: "single",
+      hasProductPhoto: true,
+      researchAngleId: null as string | null,
+    };
+    const k1 = referenceAnalyzeTriggerKey({
+      ...base,
+      visualStyleId: "product",
+      imageCreativeMode: "reference-concept",
+    });
+    const k2 = referenceAnalyzeTriggerKey({
+      ...base,
+      visualStyleId: "model-wear",
+      imageCreativeMode: "promo-ai",
+    });
     assert.equal(k1, k2);
   });
 });

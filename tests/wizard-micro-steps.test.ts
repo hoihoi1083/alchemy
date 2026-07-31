@@ -158,7 +158,31 @@ describe("wizard v2 parity audit", () => {
       intakePath: "direct",
     };
     const steps = resolveMicroSteps(ctx, baseState());
-    assert.equal(steps[resumeStepIndex(steps)]?.id, "route.primary_style");
+    assert.equal(steps[resumeStepIndex(steps)]?.id, "setup.pre_generate");
+  });
+
+  it("product image direct fuses post-intake into setup.pre_generate like research", () => {
+    const ctx: MicroWizardContext = {
+      promotionMode: "physical",
+      workflowMode: "image-only",
+      intakePath: "direct",
+    };
+    const steps = resolveMicroSteps(ctx, baseState());
+    const ids = steps.map((s) => s.id);
+    assert.ok(ids.includes("setup.pre_generate"));
+    assert.ok(ids.includes("route.intake"));
+    assert.ok(ids.includes("identity.product_name"));
+    assert.equal(ids[ids.indexOf("setup.pre_generate") - 1], "route.intake");
+    assert.ok(!ids.includes("route.primary_style"));
+    assert.ok(!ids.includes("asset.reference_image"));
+    assert.ok(!ids.includes("wait.reference_analyze"));
+    assert.ok(!ids.includes("copy.edit"));
+    assert.ok(!ids.includes("image.output_format"));
+    assert.ok(!ids.includes("asset.product_photo"));
+    assert.ok(!ids.includes("image.options"));
+    assert.ok(!ids.includes("image.generate"));
+    assert.ok(ids.includes("wait.image_generate"));
+    assert.ok(ids.includes("image.review"));
   });
 
   it("product image research fuses post-intake into setup.pre_generate", () => {
@@ -192,7 +216,7 @@ describe("wizard v2 parity audit", () => {
     assert.equal(pre?.skippable, false);
   });
 
-  it("product image direct still uses discrete post-intake steps", () => {
+  it("product image direct fuses into setup.pre_generate (not discrete steps)", () => {
     const ctx: MicroWizardContext = {
       promotionMode: "physical",
       workflowMode: "image-only",
@@ -200,8 +224,10 @@ describe("wizard v2 parity audit", () => {
     };
     const steps = resolveMicroSteps(ctx, baseState());
     const ids = steps.map((s) => s.id);
-    assert.ok(!ids.includes("setup.pre_generate"));
-    assert.ok(ids.includes("copy.edit") || ids.includes("image.output_format"));
+    assert.ok(ids.includes("setup.pre_generate"));
+    assert.ok(!ids.includes("copy.edit"));
+    assert.ok(!ids.includes("image.output_format"));
+    assert.ok(!ids.includes("asset.reference_image"));
   });
 
   it("does not inject image.art_style when setup.pre_generate fuses options", () => {
@@ -298,14 +324,16 @@ describe("wizard v2 parity audit", () => {
     assert.ok(!ids.includes("asset.reference_video"));
   });
 
-  it("path 2 direct shows wait.reference_analyze when ref photo present", () => {
+  it("path 2 direct analyzes optional ref inside setup.pre_generate (no separate wait step)", () => {
     const ctx: MicroWizardContext = {
       promotionMode: "physical",
       workflowMode: "image-only",
       intakePath: "direct",
     };
     const steps = resolveMicroSteps(ctx, baseState({ imageRefPhoto: {} as File }));
-    assert.ok(steps.some((s) => s.id === "wait.reference_analyze"));
+    const ids = steps.map((s) => s.id);
+    assert.ok(ids.includes("setup.pre_generate"));
+    assert.ok(!ids.includes("wait.reference_analyze"));
   });
 
   it("path 6 product_promo includes video.ai_prompt", () => {

@@ -2656,11 +2656,12 @@ export const zhCn = {
         body: "我们不会分享你输入的内容或参考链接。",
       },
       directTitle: "现在跳过研究",
-      directBody: "之后步骤可选上传参考图或视频，再用你的产品名设定和生成。",
+      directBody:
+        "下一步会选直接创作或模特佩戴、可选上传参考图，再用与研究路径相同的设置页。",
       directBullets: [
         "不必先做平台搜索",
-        "可选参考上传会在之后出现",
-        "适合已经清楚想要什么风格",
+        "选择直接创作或模特佩戴／使用",
+        "可选参考图在下一页设置",
       ],
       assistantIntro: "描述你的服务或优惠 — AI 帮你填标题和视觉方向。会跳过平台研究。",
     },
@@ -2689,6 +2690,21 @@ export const zhCn = {
       titleAccent: "内容与素材",
       title: "设定你的内容与素材",
       hint: "填写内容详情、上传产品照、选择输出类型和风格。",
+      directHint:
+        "选择直接创作或模特佩戴、可选上传参考图，再填内容和产品照 — 与研究路径选完后的设置相同。",
+      stylePickerTitle: "创作方向",
+      stylePickerHint: "直接创作适合大部分产品；模特佩戴会生成人手／佩戴场景。",
+      stylePickerQuickLabel: "直接创作",
+      stylePickerQuickDesc: "以产品为主的宣传图，不一定要有模特。",
+      stylePickerModelLabel: "模特佩戴／使用",
+      stylePickerModelDesc: "画面有人佩戴或使用你的产品。",
+      stylePickerModelLockedHint: "有参考图时不可用 — 会跟参考图版式。",
+      stylePickerModelLockedNote:
+        "已上传参考图，模特佩戴会停用。出图会跟参考图版式。想用模特佩戴请先移除参考图。",
+      referenceUploadTitle: "参考图（选填）",
+      referenceUploadHint:
+        "上传版式／风格参考，AI 会分析并借构图。只有产品照和文案也可以出图。",
+      referenceRemove: "移除",
       referenceTitle: "参考创意简报",
       changeBrief: "改简报",
       noReference: "暂无参考",

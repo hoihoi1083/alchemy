@@ -351,12 +351,28 @@ export function ImageReviewGallery({
     if (!opened) router.push("/edit-image");
   }
 
-  function handleRegenerate() {
+  function handleRegenerateAll() {
     setActionNote(null);
     if (!wizard.canGenerateImage()) {
       setActionNote(
         wizard.imageGenerateDisabledReason || m.wizard.imageGenerateNotReady,
       );
+      return;
+    }
+    void wizard.generateImage();
+  }
+
+  function handleRegenerateOne(item: ReviewItem) {
+    setActionNote(null);
+    if (!wizard.canGenerateImage()) {
+      setActionNote(
+        wizard.imageGenerateDisabledReason || m.wizard.imageGenerateNotReady,
+      );
+      return;
+    }
+    // Multi-slide carousel/campaign: per-card regenerates that slide only.
+    if (wizard.campaignSlides.length > 1 && typeof wizard.regenerateCarouselSlide === "function") {
+      void wizard.regenerateCarouselSlide(item.index);
       return;
     }
     void wizard.generateImage();
@@ -519,7 +535,7 @@ export function ImageReviewGallery({
                       icon={<IconRefresh className="h-3.5 w-3.5 shrink-0" />}
                       label={m.wizard.imageReviewRegenerateOneBtn}
                       disabled={!canRegenerate}
-                      onClick={handleRegenerate}
+                      onClick={() => handleRegenerateOne(item)}
                     />
                   </div>
                 </div>
@@ -554,7 +570,7 @@ export function ImageReviewGallery({
           <button
             type="button"
             disabled={!canRegenerate}
-            onClick={handleRegenerate}
+            onClick={handleRegenerateAll}
             className="inline-flex min-h-10 w-full shrink-0 items-center justify-center gap-2 rounded-xl border border-violet-500 bg-white px-4 py-2 text-sm font-semibold text-violet-700 transition hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
           >
             <IconRefresh className="h-4 w-4" />
@@ -567,7 +583,7 @@ export function ImageReviewGallery({
         <ImageReviewFooterBar
           onBack={onBack ?? (() => router.push("/studio"))}
           onDownloadAll={() => void handleDownloadAll()}
-          onGenerateOneMore={handleRegenerate}
+          onGenerateOneMore={handleRegenerateAll}
           downloadAllBusy={downloadAllBusy}
           generateBusy={!canRegenerate}
         />

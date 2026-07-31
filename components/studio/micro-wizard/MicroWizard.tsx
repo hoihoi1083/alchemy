@@ -40,6 +40,8 @@ export function MicroWizard({ promotionMode }: Props) {
   const showReviewFooter = isImageReviewStep && !wizard.imageBusy;
   const isImageWait =
     currentId === "wait.image_generate" || currentId === "wait.storyboard_generate";
+  /** Hide Back/Continue while the violet wait panel is showing (research + direct). */
+  const showImageWaitOnly = isImageWait || (isImageReviewStep && wizard.imageBusy);
 
   const analyzeReady =
     (currentId === "wait.reference_analyze" || currentId === "wait.research_apply") &&
@@ -215,7 +217,11 @@ export function MicroWizard({ promotionMode }: Props) {
   );
 
   return (
-    <div className={`space-y-4 ${showReviewFooter ? "pb-36 md:pb-0" : "pb-28 md:pb-0"}`}>
+    <div
+      className={`space-y-4 ${
+        showReviewFooter ? "pb-36 md:pb-0" : showImageWaitOnly ? "pb-4" : "pb-28 md:pb-0"
+      }`}
+    >
       {!hideLegacyProgress && currentStep ? (
         <div className="flex items-center justify-between gap-3 text-xs text-slate-500">
           <span>
@@ -255,7 +261,7 @@ export function MicroWizard({ promotionMode }: Props) {
         </p>
       ) : null}
 
-      {blockMessage && !showReviewFooter ? (
+      {blockMessage && !showReviewFooter && currentId !== "setup.pre_generate" ? (
         <p
           className={`rounded-xl border px-3 py-2.5 text-sm ${
             isPurpleChrome
@@ -269,7 +275,7 @@ export function MicroWizard({ promotionMode }: Props) {
 
       {showReviewFooter ? (
         <div className="hidden md:block">{reviewFooter}</div>
-      ) : (
+      ) : showImageWaitOnly ? null : (
         <div
           className={`relative hidden items-center md:flex ${
             isPurpleChrome ? "justify-between" : "flex-wrap justify-between gap-3"
@@ -289,7 +295,7 @@ export function MicroWizard({ promotionMode }: Props) {
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur md:hidden">
           <div className="mx-auto max-w-7xl">{reviewFooter}</div>
         </div>
-      ) : (
+      ) : showImageWaitOnly ? null : (
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur md:hidden">
           <div className="relative mx-auto flex max-w-7xl items-center justify-between gap-3">
             {navButtons}

@@ -752,8 +752,6 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         extras: extraKitPhotos,
         promotionMode,
         imageOutputMode: effectiveImageOutputMode,
-        visualStyleId,
-        imageCreativeMode,
         hasProductPhoto: Boolean(productPhoto),
         researchAngleId: contentResearchApplyRef?.angle?.id,
       }),
@@ -762,8 +760,6 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       extraKitPhotos,
       promotionMode,
       effectiveImageOutputMode,
-      visualStyleId,
-      imageCreativeMode,
       productPhoto,
       contentResearchApplyRef?.angle?.id,
     ],
@@ -881,8 +877,6 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     imageRefPhoto,
     promotionMode,
     effectiveImageOutputMode,
-    visualStyleId,
-    imageCreativeMode,
     productPhoto,
     m.wizard.referenceBriefAnalyzed,
     m.wizard.referenceCarouselBriefAnalyzed,
@@ -2301,6 +2295,111 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         endpoint,
       }),
     );
+  }
+
+  /** Regenerate one carousel/campaign slide — not the full set. */
+  async function regenerateCarouselSlide(slideIndex: number): Promise<void> {
+    if (slideIndex < 0 || slideIndex >= campaignSlides.length) return;
+    if (!campaignPlan || campaignSlides.length <= 1) {
+      await generateImage();
+      return;
+    }
+    if (!canGenerateImage()) {
+      setError(imageGenerateDisabledReason || m.wizard.imageGenerateNotReady);
+      return;
+    }
+    // Prefer teaching single-slide API when in teaching mode, or when plan looks like teaching
+    // (stored plan may still have body/takeaway fields after a teaching run).
+    const useTeaching =
+      isTeachingCarouselOutput ||
+      Boolean(
+        (campaignPlan as { slides?: Array<{ body?: string; takeaway?: string }> }).slides?.some(
+          (s) => typeof s.body === "string" || typeof s.takeaway === "string",
+        ),
+      );
+    if (!useTeaching) {
+      // Campaign 3-pack still regenerates the full set until a single-slide API exists.
+      await generateImage();
+      return;
+    }
+
+    setImageBusy(true);
+    setError(null);
+    setImageJobMeta({
+      kind: "teaching-carousel",
+      startedAt: Date.now(),
+      sceneCount: 1,
+    });
+    try {
+      const fd = new FormData();
+      fd.set("visual_style", visualStyleId);
+      fd.set("art_style", artStyleId);
+      fd.set("brand_kit", JSON.stringify(brandKit));
+      fd.set("product_name", product.trim());
+      fd.set("business", business.trim());
+      fd.set("headline", headline.trim());
+      fd.set("subline", subline.trim());
+      fd.set("offer", offer.trim());
+      fd.set("prompt_market", promptMarket);
+      fd.set("subject_framing", subjectFraming);
+      fd.set("prompt_extra", effectivePromptExtra());
+      fd.set("promotion_mode", promotionMode);
+      fd.set("aspect_ratio", effectiveImageAspectRatio);
+      fd.set("slide_index", String(slideIndex));
+      fd.set("existing_plan", JSON.stringify(campaignPlan));
+      fd.set("slide_count", String(campaignSlides.length));
+      if (slideIndex > 0 && campaignSlides[0]?.imageUrl) {
+        fd.set("series_cover_url", campaignSlides[0].imageUrl);
+      }
+      if (productPhoto) fd.set("reference_image", productPhoto);
+      attachReferenceToForm(fd);
+      fd.set(
+        "endpoint",
+        referenceStrategy.sendPixelsToFal ? EDIT_ENDPOINT : TEXT_ENDPOINT,
+      );
+
+      const res = await fetch("/api/generate-teaching-carousel", {
+        method: "POST",
+        body: fd,
+      });
+      const data = await readGenerateJson(res);
+      if (!res.ok) throw new Error((data.error as string) ?? m.errors.campaignFailed);
+      notifyCreditBalance(readCreditBalanceFromResponse(data));
+      const slide = data.slide as
+        | {
+            role: string;
+            title: string;
+            headline: string;
+            subline: string;
+            imageUrl: string;
+          }
+        | undefined;
+      const nextUrl = normalizeGeneratedImageUrl(slide?.imageUrl ?? (data.imageUrl as string));
+      if (!nextUrl || !slide) throw new Error(m.errors.campaignFailed);
+      setCampaignSlides((prev) =>
+        prev.map((s, i) =>
+          i === slideIndex
+            ? {
+                ...s,
+                role: slide.role || s.role,
+                title: slide.title || s.title,
+                headline: slide.headline || s.headline,
+                subline: slide.subline || s.subline,
+                imageUrl: nextUrl,
+              }
+            : s,
+        ),
+      );
+      setImageVariantUrls((prev) => prev.map((u, i) => (i === slideIndex ? nextUrl : u)));
+      if (selectedVariantIndex === slideIndex) setImageUrl(nextUrl);
+      setImageGenKey((k: number) => k + 1);
+      if (typeof data.endpoint === "string") setLastImageEndpoint(data.endpoint);
+    } catch (e: unknown) {
+      setError(friendlyError(e, m.errors.campaignFailed));
+    } finally {
+      setImageBusy(false);
+      setImageJobMeta(null);
+    }
   }
 
   function campaignSlideLabel(role: string, title: string): string {
@@ -5638,6 +5737,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     referenceStrategy,
     referenceAnalyzeBusy,
     referenceAnalyzeNote,
+    setReferenceAnalyzeNote,
+    setReferenceAnalyzeBusy,
     researchReelAnalysis,
     researchReelAnalyzeBusy,
     researchReelAnalyzeNote,
@@ -5796,6 +5897,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     referenceIsVideo,
     referencePreviewUrl,
     regenerateStoryboardSceneWithAi,
+    regenerateCarouselSlide,
     stampStoryboardSceneLogo,
     reorderStoryboardScene,
     replaceStoryboardSceneImage,

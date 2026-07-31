@@ -29,6 +29,8 @@ type PlanInput = {
   offer?: string;
   promptExtra?: string;
   slideCount?: number;
+  /** When the user uploaded a product photo — every slide must keep that SKU as hero. */
+  hasProductPhoto?: boolean;
   /** When layout-transfer (reference ad + product photo), mirror reference layout like single-image mode. */
   referenceStrategyKind?: "layout-transfer" | "style-only" | "none";
   /** Per-slide layout DNA from multi-image carousel vision. */
@@ -123,16 +125,24 @@ function fallbackSlides(input: PlanInput, count: number): TeachingCarouselSlide[
               ? "Illustrated cover — bold headline integrated into drawn scene, not a photo"
               : "Editorial cover — bold headline over lifestyle/metaphor photo, magazine energy"
             : stylized
-              ? "Illustrated cover layout with strong headline hierarchy"
-              : "Editorial cover layout with strong headline hierarchy"
+              ? input.hasProductPhoto
+                ? "Illustrated cover — exact product from IMAGE 1 as hero with strong headline"
+                : "Illustrated cover layout with strong headline hierarchy"
+              : input.hasProductPhoto
+                ? "Editorial cover — exact product from IMAGE 1 as clear hero with strong headline"
+                : "Editorial cover layout with strong headline hierarchy"
           : role === "summary"
             ? input.promotionMode === "concept"
               ? stylized
                 ? "Closing illustrated slide — one CTA line in art medium"
                 : "Closing slide — one CTA line on moody photo, not a white recap box"
               : stylized
-                ? "Illustrated recap layout with closing takeaway"
-                : "Calm recap layout with closing takeaway box"
+                ? input.hasProductPhoto
+                  ? "Illustrated recap — exact product from IMAGE 1 still visible with closing takeaway"
+                  : "Illustrated recap layout with closing takeaway"
+                : input.hasProductPhoto
+                  ? "Calm recap — exact product from IMAGE 1 visible with closing takeaway"
+                  : "Calm recap layout with closing takeaway box"
             : input.promotionMode === "concept"
               ? stylized
                 ? "Tip slide — one key idea as illustration, not photo edu card"
@@ -140,8 +150,12 @@ function fallbackSlides(input: PlanInput, count: number): TeachingCarouselSlide[
                   ? "Tip slide — photo-led flat lay with integrated typography, no cartoon icons"
                   : "Tip slide — one key idea with visual metaphor, not bullet-list edu card"
               : stylized
-                ? "Illustrated educational card with title + short explanation"
-                : "Educational card layout with title + short explanation",
+                ? input.hasProductPhoto
+                  ? "Illustrated tip — exact product from IMAGE 1 visible as hero while teaching one point; no substitute SKU or mascot"
+                  : "Illustrated educational card with title + short explanation"
+                : input.hasProductPhoto
+                  ? "Educational tip — keep exact product from IMAGE 1 visible in the SAME soft/edu series aesthetic (vanity flat-lay / cloth / soft set); teach with typography — no photoreal bathroom/gym lifestyle cutaway, no substitute jewelry"
+                  : "Educational card layout with title + short explanation",
     });
   }
   return slides;
@@ -334,6 +348,13 @@ function buildPlanPrompt(input: PlanInput): string {
     "- Keep each slide copy concise and readable.",
     "- Cover slide introduces topic; middle slides teach; final slide summarizes.",
     "- Do not invent pricing, promotion, or app mechanics unless explicitly provided.",
+    input.hasProductPhoto
+      ? "- PRODUCT PHOTO present: every slide.composition MUST keep the user's exact product as the visible hero (cover, tip/point, and summary)."
+      : "",
+    input.hasProductPhoto
+      ? "- Tip/point slides teach with typography + product staging in the SAME series medium (flat-lay / soft set / macro) — NEVER plan diagram-only, substitute jewelry, OR a one-off photoreal bathroom/gym/yoga lifestyle cutaway that breaks carousel cohesion."
+      : "",
+    "- Every slide must share one visualDna medium — do not mix soft 3D/illustrated edu cards with photoreal human lifestyle shots in the same carousel.",
     ...conceptRules,
     "",
     `Visual style: ${input.visualStyleId}`,

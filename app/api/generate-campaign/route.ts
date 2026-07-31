@@ -7,12 +7,13 @@ import { TOKEN_COST } from "@/lib/billing/token-costs";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import {
   buildFalLayoutTransferImageUrls,
+  carouselCoverSeriesAnchorHint,
   dualProductIdentityHint,
 } from "@/lib/fal-dual-reference-urls";
 import type { BrandProfile } from "@/lib/brand-profile";
 import type { CampaignPlan } from "@/lib/campaign-types";
 import { planCampaign } from "@/lib/campaign-plan";
-import { parseBrandKit } from "@/lib/brand-kit";
+import { parseBrandKit, type BrandKit } from "@/lib/brand-kit";
 import { defaultEditEndpoint, defaultTextEndpoint, sanitizeImageEndpoint } from "@/lib/image-endpoints";
 import { persistAndDurablizeMany } from "@/lib/storage/durable-media";
 import {
@@ -126,7 +127,7 @@ export async function POST(request: Request) {
     }
   }
   const brandKitRaw = (formData.get("brand_kit") as string | null)?.trim() || "";
-  let brandKit = null;
+  let brandKit: BrandKit | null = null;
   if (brandKitRaw) {
     try {
       brandKit = parseBrandKit(JSON.parse(brandKitRaw));
@@ -246,59 +247,91 @@ export async function POST(request: Request) {
         ? dualProductIdentityHint(productAngleFiles.length > 0)
         : "";
 
-    const slides = await Promise.all(
-      plan.slides.map(async (slide, i) => {
-        const imageUrlsForFal = baseImageUrlsForFal ? [...baseImageUrlsForFal] : null;
+    type SlideOut = {
+      role: string;
+      title: string;
+      headline: string;
+      subline: string;
+      imageUrl: string;
+    };
 
-        const prompt = [
-          buildCampaignSlideImagePrompt(
-            vars,
-            slide,
-            plan,
-            promptMode,
-            brandProfile,
-            i,
-            plan.slides.length,
-            hasProduct || hasStyle,
-            {
-              visualStyleId: visualStyle,
-              referenceConcept: strategy.useReferenceConceptPrompts,
-              referenceImageMode: strategy.referenceImageMode,
-              brandKit,
-            },
-          ),
-          dualHint,
-        ]
-          .filter(Boolean)
-          .join("\n");
-
-        const result = await fal.subscribe(endpoint, {
-          input: {
-            prompt,
-            ...(imageUrlsForFal?.length ? { image_urls: imageUrlsForFal } : {}),
-            aspect_ratio: aspectRatio,
-            num_images: 1,
-            resolution: imageResolution,
-            limit_generations: true,
-            ...(systemPrompt ? { system_prompt: systemPrompt } : {}),
+    async function generateOneSlide(
+      slide: (typeof plan.slides)[number],
+      i: number,
+      urls: string[] | null,
+      extraHints: string[],
+    ): Promise<SlideOut> {
+      const prompt = [
+        buildCampaignSlideImagePrompt(
+          vars,
+          slide,
+          plan,
+          promptMode,
+          brandProfile,
+          i,
+          plan.slides.length,
+          hasProduct || hasStyle,
+          {
+            visualStyleId: visualStyle,
+            referenceConcept: strategy.useReferenceConceptPrompts,
+            referenceImageMode: strategy.referenceImageMode,
+            brandKit,
+            hasProductPhoto: hasProduct,
+            productName: productName,
           },
-          logs: true,
-        });
+        ),
+        ...extraHints,
+      ]
+        .filter(Boolean)
+        .join("\n");
 
-        const outUrls = extractImageUrls(result.data);
-        if (!outUrls[0]) {
-          throw new Error(`Image URL missing for slide ${i + 1}.`);
-        }
+      const result = await fal.subscribe(endpoint, {
+        input: {
+          prompt,
+          ...(urls?.length ? { image_urls: urls } : {}),
+          aspect_ratio: aspectRatio,
+          num_images: 1,
+          resolution: imageResolution,
+          limit_generations: true,
+          ...(systemPrompt ? { system_prompt: systemPrompt } : {}),
+        },
+        logs: true,
+      });
 
-        return {
-          role: slide.role,
-          title: slide.title,
-          headline: slide.headline,
-          subline: slide.subline,
-          imageUrl: outUrls[0],
-        };
-      }),
-    );
+      const outUrls = extractImageUrls(result.data);
+      if (!outUrls[0]) {
+        throw new Error(`Image URL missing for slide ${i + 1}.`);
+      }
+
+      return {
+        role: slide.role,
+        title: slide.title,
+        headline: slide.headline,
+        subline: slide.subline,
+        imageUrl: outUrls[0],
+      };
+    }
+
+    let slides: SlideOut[];
+    if (hasProduct && baseImageUrlsForFal?.length && plan.slides.length > 1) {
+      const coverOut = await generateOneSlide(plan.slides[0]!, 0, baseImageUrlsForFal, [dualHint]);
+      const anchoredUrls = [...baseImageUrlsForFal, coverOut.imageUrl];
+      const coverHint = carouselCoverSeriesAnchorHint();
+      const restOut = await Promise.all(
+        plan.slides.slice(1).map((slide, offset) =>
+          generateOneSlide(slide, offset + 1, anchoredUrls, [dualHint, coverHint]),
+        ),
+      );
+      slides = [coverOut, ...restOut];
+    } else {
+      slides = await Promise.all(
+        plan.slides.map((slide, i) =>
+          generateOneSlide(slide, i, baseImageUrlsForFal ? [...baseImageUrlsForFal] : null, [
+            dualHint,
+          ]),
+        ),
+      );
+    }
 
     const falUrls = slides.map((s) => s.imageUrl);
     const archivedUrls = await archiveCampaignSlidesToPipeline(request, falUrls);

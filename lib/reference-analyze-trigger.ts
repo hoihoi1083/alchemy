@@ -13,19 +13,22 @@ export function referenceAnalyzeTriggerKey(input: {
   extras: File[];
   promotionMode: string;
   imageOutputMode: string;
-  visualStyleId: string;
-  imageCreativeMode: string;
+  /** @deprecated Ignored — style/mode toggles must not re-bill vision. */
+  visualStyleId?: string;
+  /** @deprecated Ignored — style/mode toggles must not re-bill vision. */
+  imageCreativeMode?: string;
   hasProductPhoto: boolean;
   researchAngleId?: string | null;
 }): string | null {
   const files = referenceFilesFingerprint(input.cover, input.extras);
   if (!files) return null;
+  // Vision describes the reference pixels only. Do NOT include visualStyleId /
+  // imageCreativeMode — picking model-wear vs quick after upload used to
+  // re-trigger analyze-reference (and fal Florence) a second time.
   return [
     files,
     input.promotionMode,
     input.imageOutputMode,
-    input.visualStyleId,
-    input.imageCreativeMode,
     input.hasProductPhoto ? "1" : "0",
     input.researchAngleId ?? "",
   ].join("::");

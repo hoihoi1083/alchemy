@@ -152,6 +152,8 @@ function buildPlanPrompt(input: SingleImagePlanInput): string {
     "- composition: specific layout with a FULL scene (surface, props, lighting, type hierarchy) — NEVER 'centered product on plain white'.",
     "- Prefer magazine / Xiaohongshu feed energy: depth, styled set, layered copy — closer to a teaching cover than a catalog cutout.",
     "- title/body/takeaway: short on-image copy. body must not repeat title. takeaway optional unless offer exists.",
+    "- Do NOT write 'brand logo', '品牌標誌', 'logo mark', or placeholder logo zones in composition — leave that space empty or use campaign text only. Never instruct painting the English word LOGO.",
+    "- Do NOT invent shop-now CTAs (e.g. 立即選購) unless Offer/CTA is provided above.",
     "- Do not invent pricing or fake claims unless provided.",
     "- Avoid Canva/PPT/white edu-card layouts AND avoid blank catalog beauty shots.",
     stylized

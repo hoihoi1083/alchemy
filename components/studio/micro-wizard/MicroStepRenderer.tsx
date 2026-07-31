@@ -375,11 +375,19 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
     case "setup.pre_generate":
       return (
         <PreGenerateSetupPanel
+          showStylePicker={micro.ctx.intakePath === "direct"}
+          showReferenceUpload={micro.ctx.intakePath === "direct"}
           onGenerate={micro.goNext}
           generateDisabled={
             Boolean(micro.blockReason) || Boolean(wizard.imageGenerateDisabledReason)
           }
           generateLabel={m.wizard.generateImageBtn}
+          generateBlockMessage={
+            micro.blockReason
+              ? (mw.blockReasons[micro.blockReason as keyof typeof mw.blockReasons] ??
+                micro.blockReason)
+              : wizard.imageGenerateDisabledReason
+          }
         />
       );
 
@@ -1087,24 +1095,27 @@ function WaitScreen({
 }) {
   const { m } = useLocale();
   const shellTitle = title ?? message;
-  if (purpleChrome && busy) {
+  const progressInfo =
+    progress && typeof progress.pct === "number"
+      ? {
+          label: progress.label,
+          pct: progress.pct,
+          eta: progress.eta ?? "",
+        }
+      : null;
+
+  // Same wait UI for research + direct — never fall back to cyan ScreenShell.
+  if (purpleChrome) {
     return (
       <ImageGenerateWaitPanel
         message={message}
-        progress={
-          progress && typeof progress.pct === "number"
-            ? {
-                label: progress.label,
-                pct: progress.pct,
-                eta: progress.eta ?? "",
-              }
-            : null
-        }
+        progress={progressInfo}
         aspectRatio={aspectRatio}
         previewUrl={previewUrl}
       />
     );
   }
+
   if (!busy) {
     return (
       <ScreenShell title={shellTitle} hint={message}>
@@ -1116,15 +1127,7 @@ function WaitScreen({
     <ScreenShell title={shellTitle} hint={m.wizard.generationWaitHint}>
       <GenerationWaitPlaceholder
         message={message}
-        progress={
-          progress && typeof progress.pct === "number"
-            ? {
-                label: progress.label,
-                pct: progress.pct,
-                eta: progress.eta ?? "",
-              }
-            : null
-        }
+        progress={progressInfo}
         aspectRatio={waitAspectFromString(aspectRatio)}
         previewUrl={previewUrl}
         compact

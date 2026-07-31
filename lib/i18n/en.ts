@@ -2838,11 +2838,11 @@ export const en = {
       },
       directTitle: "Skip research for now",
       directBody:
-        "You’ll add an optional reference image or video in later steps, then style and generate with your product name.",
+        "Next you’ll pick direct creation or model-wear, optionally upload a reference, then use the same setup page as after research.",
       directBullets: [
         "No platform search required",
-        "Optional reference upload comes next",
-        "Best when you already know the look you want",
+        "Choose direct creation or model wear/use",
+        "Optional reference upload on the next setup page",
       ],
       assistantIntro: "Describe your offer — AI fills headline and visual direction. Platform research is skipped.",
     },
@@ -2871,6 +2871,23 @@ export const en = {
       titleAccent: "content and materials",
       title: "Set your content and materials",
       hint: "Add content details, upload product images, choose output type and style.",
+      directHint:
+        "Choose quick ad or model-wear, optionally add a reference image, then set content and product photos — same setup as after research.",
+      stylePickerTitle: "Creation direction",
+      stylePickerHint:
+        "Quick ad suits most products. Model-wear puts a person using or wearing your item.",
+      stylePickerQuickLabel: "Direct creation",
+      stylePickerQuickDesc: "Product-focused promo image — no model required.",
+      stylePickerModelLabel: "Model wear / use",
+      stylePickerModelDesc: "Person wearing or using your product in the shot.",
+      stylePickerModelLockedHint:
+        "Unavailable with a reference — layout follows the reference instead.",
+      stylePickerModelLockedNote:
+        "A reference image is uploaded, so model-wear is turned off. The ad will follow the reference layout. Remove the reference to use model-wear.",
+      referenceUploadTitle: "Reference image (optional)",
+      referenceUploadHint:
+        "Upload a layout or style reference. AI analyzes it and borrows composition — skip if you only have product + copy.",
+      referenceRemove: "Remove",
       referenceTitle: "Reference creative brief",
       changeBrief: "Change brief",
       noReference: "No reference",
