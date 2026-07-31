@@ -26,14 +26,17 @@ type Props = {
   /** Reference-reel paths: require explicit seconds before analyze (hide auto). */
   hideAutoDuration?: boolean;
   variant?: "light" | "dark";
+  /** Fused violet setup uses violet; classic video step keeps emerald. */
+  accent?: "emerald" | "violet";
 };
 
-function pillClass(active: boolean, dark: boolean) {
-  return active
-    ? "bg-emerald-600 text-white"
-    : dark
-      ? "border border-slate-600 text-slate-200"
-      : "border border-slate-300 text-slate-600";
+function pillClass(active: boolean, dark: boolean, accent: "emerald" | "violet") {
+  if (active) {
+    return accent === "violet" ? "bg-violet-600 text-white" : "bg-emerald-600 text-white";
+  }
+  return dark
+    ? "border border-slate-600 text-slate-200"
+    : "border border-slate-300 text-slate-600";
 }
 
 function asVideoResolution(r: VideoResolutionCap): VideoResolution {
@@ -47,16 +50,34 @@ export function VideoSettingsPanel({
   setup = false,
   hideAutoDuration = false,
   variant = "light",
+  accent,
 }: Props) {
   const { m } = useLocale();
   const { plan, maxVideoResolution } = useUserPlanEntitlements();
   const dark = variant === "dark";
+  const tone = accent ?? (setup ? "violet" : "emerald");
   const compactMode = compact || setup;
   const durationOptions = hideAutoDuration
     ? VIDEO_DURATIONS.filter((d) => d !== "auto")
     : VIDEO_DURATIONS;
   const allowedResolutions = videoResolutionsForPlan(plan).map(asVideoResolution);
   const showUpgradeHint = maxVideoResolution !== "1080p";
+  const linkClass =
+    tone === "violet"
+      ? dark
+        ? "font-medium text-violet-300 underline-offset-2 hover:underline"
+        : "font-medium text-violet-700 underline-offset-2 hover:underline"
+      : dark
+        ? "font-medium text-emerald-400 underline-offset-2 hover:underline"
+        : "font-medium text-emerald-700 underline-offset-2 hover:underline";
+  const selectedCardClass =
+    tone === "violet"
+      ? "border-violet-400 bg-violet-50 text-slate-900"
+      : "border-emerald-400 bg-emerald-50 text-slate-900";
+  const checkboxClass =
+    tone === "violet"
+      ? "size-4 rounded border-slate-300 text-violet-600 accent-violet-600"
+      : "size-4 rounded border-slate-600";
 
   useEffect(() => {
     if (!allowedResolutions.includes(value.resolution)) {
@@ -75,17 +96,17 @@ export function VideoSettingsPanel({
             : "space-y-4 rounded-2xl border border-slate-200 bg-white p-4"
       }
     >
-      <h3
-        className={
-          dark ? "text-sm font-semibold text-slate-100" : "text-sm font-semibold text-slate-900"
-        }
-      >
-        {setup
-          ? m.wizard.videoSetupOutputSettingsTitle
-          : compact
+      {!setup ? (
+        <h3
+          className={
+            dark ? "text-sm font-semibold text-slate-100" : "text-sm font-semibold text-slate-900"
+          }
+        >
+          {compact
             ? m.wizard.videoReferenceOutputSettingsTitle
             : m.wizard.videoSettingsTitle}
-      </h3>
+        </h3>
+      ) : null}
       {compact && !setup && (
         <p className="text-xs text-slate-400">{m.wizard.videoReferenceOutputSettingsHint}</p>
       )}
@@ -104,7 +125,7 @@ export function VideoSettingsPanel({
               key={r}
               type="button"
               onClick={() => onChange({ ...value, resolution: r })}
-              className={`rounded-full px-4 py-2 text-sm font-medium ${pillClass(value.resolution === r, dark)}`}
+              className={`rounded-full px-4 py-2 text-sm font-medium ${pillClass(value.resolution === r, dark, tone)}`}
             >
               {r}
             </button>
@@ -113,14 +134,7 @@ export function VideoSettingsPanel({
         {showUpgradeHint ? (
           <p className={dark ? "mt-2 text-xs text-slate-400" : "mt-2 text-xs text-slate-500"}>
             {m.wizard.videoResolutionPlanHint.replace("{max}", maxVideoResolution)}{" "}
-            <Link
-              href="/pricing"
-              className={
-                dark
-                  ? "font-medium text-emerald-400 underline-offset-2 hover:underline"
-                  : "font-medium text-emerald-700 underline-offset-2 hover:underline"
-              }
-            >
+            <Link href="/pricing" className={linkClass}>
               {m.wizard.videoResolutionUpgradeLink}
             </Link>
           </p>
@@ -141,7 +155,7 @@ export function VideoSettingsPanel({
               key={d}
               type="button"
               onClick={() => onChange({ ...value, duration: d })}
-              className={`rounded-full px-4 py-2 text-sm font-medium ${pillClass(value.duration === d, dark)}`}
+              className={`rounded-full px-4 py-2 text-sm font-medium ${pillClass(value.duration === d, dark, tone)}`}
             >
               {d === "auto" ? m.wizard.videoDurationAuto : `${d}s`}
             </button>
@@ -167,7 +181,7 @@ export function VideoSettingsPanel({
               }
               className={`rounded-xl border px-3 py-2.5 text-left text-sm ${
                 value.creativity === c
-                  ? "border-emerald-400 bg-emerald-50 text-slate-900"
+                  ? selectedCardClass
                   : "border-slate-300 text-slate-600"
               }`}
             >
@@ -182,7 +196,7 @@ export function VideoSettingsPanel({
           type="checkbox"
           checked={value.autoSecondFrame}
           onChange={(e) => onChange({ ...value, autoSecondFrame: e.target.checked })}
-          className="mt-0.5 size-4 rounded border-slate-600"
+          className={`mt-0.5 ${checkboxClass}`}
         />
         <span>
           <span className="font-medium text-slate-900">{m.wizard.videoAutoSecondFrame}</span>
@@ -200,7 +214,7 @@ export function VideoSettingsPanel({
               onClick={() => onChange({ ...value, motionStyle: s })}
               className={`rounded-xl border px-3 py-2.5 text-left text-sm ${
                 value.motionStyle === s
-                  ? "border-emerald-400 bg-emerald-50 text-slate-900"
+                  ? selectedCardClass
                   : "border-slate-300 text-slate-600"
               }`}
             >
@@ -221,7 +235,7 @@ export function VideoSettingsPanel({
           type="checkbox"
           checked={value.fast}
           onChange={(e) => onChange({ ...value, fast: e.target.checked })}
-          className="size-4 rounded border-slate-600"
+          className={checkboxClass}
         />
         {m.wizard.videoSettingsFast}
       </label>

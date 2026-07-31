@@ -20,6 +20,7 @@ import { isContentResearchStyleExtra } from "@/lib/content-research-promote";
 import {
   isBrandVideoStyle,
   isBrandVisualStyle,
+  isCreativeVideoStyle,
   isStoryboardVideoStyle,
   isUgcPresenterStyle,
   requiresBrandProfileForImages,
@@ -220,6 +221,35 @@ function evalWhen(
   }
   if (norm === 'videoSubpath === "product_promo"') {
     return ctx.videoSubpath === "product_promo";
+  }
+  if (norm === 'videoSubpath === "creative_video" || videoSubpath === "brand_video"') {
+    return ctx.videoSubpath === "creative_video" || ctx.videoSubpath === "brand_video";
+  }
+  if (norm === 'videoSubpath !== "product_promo"') {
+    return ctx.videoSubpath !== "product_promo";
+  }
+  if (norm === 'videoSubpath !== "product_promo" && visualStyleId !== "ugc-presenter"') {
+    return ctx.videoSubpath !== "product_promo" && state.visualStyleId !== "ugc-presenter";
+  }
+  if (norm === 'workflowMode === "video-only"') {
+    return ctx.workflowMode === "video-only";
+  }
+  if (norm === 'workflowMode !== "video-only"') {
+    return ctx.workflowMode !== "video-only";
+  }
+  if (
+    norm ===
+    'workflowMode !== "video-only" && isBrandVideoStyle(visualStyleId)'
+  ) {
+    return ctx.workflowMode !== "video-only" && isBrandVideoStyle(state.visualStyleId);
+  }
+  if (
+    norm ===
+    'workflowMode !== "video-only" && visualStyleId === "storyboard-video"'
+  ) {
+    return (
+      ctx.workflowMode !== "video-only" && isStoryboardVideoStyle(state.visualStyleId)
+    );
   }
   if (norm === 'videoCreativeMode === "product-assistant"') {
     return state.videoCreativeMode === "product-assistant";
@@ -430,6 +460,8 @@ function injectReelStoryboardBranch(
 
 function reorderReelVideoSettings(ids: MicroStepId[]): MicroStepId[] {
   if (!ids.includes("wait.reel_analyze")) return ids;
+  // Fused violet video setup already owns duration/cost — don't re-inject settings.
+  if (ids.includes("setup.pre_video") || !ids.includes("video.settings")) return ids;
   const without = ids.filter((id) => id !== "video.settings");
   const refIdx = without.indexOf("asset.reference_video");
   const insertAt = refIdx >= 0 ? refIdx : without.indexOf("wait.reel_analyze");
@@ -443,7 +475,7 @@ function injectArtStyle(ids: MicroStepId[], state?: WizardMicroStepState): Micro
   // UGC talking-head keyframes are photoreal-only — no art-style picker.
   if (state && isUgcPresenterStyle(state.visualStyleId)) return ids;
   // Fused pre-generate already includes art style / options / generate.
-  if (ids.includes("setup.pre_generate")) return ids;
+  if (ids.includes("setup.pre_generate") || ids.includes("setup.pre_video")) return ids;
   if (!ids.some((id) => id.startsWith("image."))) return ids;
   if (ids.includes("image.art_style")) return ids;
   // image.options already includes art style — skip duplicate step.
@@ -524,13 +556,22 @@ export function resolveMicroSteps(
     return finish(ids);
   }
 
-  // Video-only + direct must pick a style (promo / UGC / …) before the full path resolves.
-  // Otherwise resumeStepIndex skips route.video_subpath (it's a routing prefix) and UGC never appears.
-  if (ctx.workflowMode === "video-only" && ctx.intakePath === "direct" && !ctx.videoSubpath) {
-    return finish(["route.video_subpath"]);
+  // Video style (promo / UGC / …) is chosen inside setup.pre_video — same as image
+  // 創作方向. Default so the path resolves without a separate routing screen.
+  let effectiveCtx = ctx;
+  if (
+    ctx.workflowMode === "video-only" &&
+    ctx.intakePath === "direct" &&
+    !ctx.videoSubpath
+  ) {
+    effectiveCtx = {
+      ...ctx,
+      videoSubpath:
+        ctx.promotionMode === "concept" ? "creative_video" : "product_promo",
+    };
   }
 
-  const pathId = resolvePathId(ctx, state);
+  const pathId = resolvePathId(effectiveCtx, state);
   if (!pathId) {
     ids.push("route.intake");
     return finish(ids);
@@ -540,7 +581,7 @@ export function resolveMicroSteps(
   // DeepSeek scene planning + scene confirm never disappear after restore/HMR.
   let resolveState = state;
   if (
-    ctx.workflowMode === "combined" &&
+    effectiveCtx.workflowMode === "combined" &&
     !isUgcPresenterStyle(state.visualStyleId) &&
     state.visualStyleId !== "concept-cinematic" &&
     (pathId === "product_combined" ||
@@ -555,22 +596,22 @@ export function resolveMicroSteps(
     if (path && "merge" in path && path.merge) {
       return finish(
         injectIntakeHistory(
-          injectArtStyle(expandMergedPath(pathId, ctx, resolveState), resolveState),
-          ctx,
+          injectArtStyle(expandMergedPath(pathId, effectiveCtx, resolveState), resolveState),
+          effectiveCtx,
           resolveState,
         ),
       );
     }
   }
 
-  let pathSteps = filterGraphSteps(graphStepsForPath(pathId), resolveState, ctx);
+  let pathSteps = filterGraphSteps(graphStepsForPath(pathId), resolveState, effectiveCtx);
   if (REEL_PATHS.has(pathId)) {
     pathSteps = reorderReelVideoSettings(pathSteps);
-    pathSteps = injectReelStoryboardBranch(pathSteps, ctx, resolveState);
+    pathSteps = injectReelStoryboardBranch(pathSteps, effectiveCtx, resolveState);
   }
   pathSteps = injectArtStyle(pathSteps, resolveState);
   pathSteps = injectPrimaryStyle(pathSteps, pathId, resolveState);
-  pathSteps = injectIntakeHistory(pathSteps, ctx, resolveState);
+  pathSteps = injectIntakeHistory(pathSteps, effectiveCtx, resolveState);
 
   return finish(pathSteps);
 }
@@ -641,13 +682,14 @@ export function microStepLegacyKey(
   id: MicroStepId,
   state?: Pick<WizardMicroStepState, "visualStyleId">,
 ): "setup" | "image" | "video" | "done" | null {
-  // image.review stays in micro-wizard (ImageResultPanel); only storyboard needs full ImageStep.
+  // image.review / done.export stay in micro-wizard (ImageResultPanel / VideoResultPanel).
+  // Only storyboard stills need the full classic ImageStep.
   if (id === "image.storyboard_scenes") return "image";
   // UGC: hand off to classic VideoStep for PresenterAvatarPicker + HeyGen generate.
   if (id === "video.generate" && state && isUgcPresenterStyle(state.visualStyleId)) {
     return "video";
   }
-  if (id === "done.export") return "done";
+  // Never hand done.export to classic DoneStep — that was leaving the old dark Step 4 UI.
   return null;
 }
 
@@ -726,6 +768,35 @@ export function canProceedMicroStep(
     // Hook is required before generate — warn on setup, not on the wait screen.
     if (!state.headline.trim()) {
       return "need_headline";
+    }
+  }
+  if (id === "setup.pre_video") {
+    const sub =
+      ctx.videoSubpath ??
+      (ctx.promotionMode === "concept" ? "creative_video" : "product_promo");
+    if (sub === "reference_reel" && !(state.referenceAd && state.referenceIsVideo)) {
+      return "need_reference_video";
+    }
+    if (ctx.promotionMode === "physical" && sub !== "reference_reel" && !state.productPhoto) {
+      return "need_product_photo";
+    }
+    if (
+      isCreativeVideoStyle(state.visualStyleId) &&
+      !state.creativeVideoBrief.trim() &&
+      !state.headline.trim()
+    ) {
+      return "need_creative_brief";
+    }
+    if (
+      !state.headline.trim() &&
+      !state.product.trim() &&
+      !state.conceptIdea.trim() &&
+      sub !== "ugc_presenter"
+    ) {
+      return "need_headline";
+    }
+    if (sub === "ugc_presenter" && !state.product.trim()) {
+      return "need_product_name";
     }
   }
   if (id === "copy.creative_brief" && !state.creativeVideoBrief.trim()) {

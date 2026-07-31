@@ -9,8 +9,9 @@ import { useWizardMicroStep } from "@/hooks/useWizardMicroStep";
 import { MicroStepRenderer } from "@/components/studio/micro-wizard/MicroStepRenderer";
 import { WizardErrorBanner } from "@/components/studio/WizardErrorBanner";
 import { ImageReviewFooterBar } from "@/components/studio/ImageReviewGallery";
+import { VideoReviewFooterBar } from "@/components/studio/VideoResultPanel";
 import { referenceAnalyzeReady } from "@/components/studio/micro-wizard/ReferenceAnalyzeWaitPanel";
-import { downloadMediaUrls } from "@/lib/download-media";
+import { downloadMediaUrl, downloadMediaUrls } from "@/lib/download-media";
 import type { PromotionMode } from "@/lib/promotion-mode";
 
 type Props = {
@@ -40,8 +41,14 @@ export function MicroWizard({ promotionMode }: Props) {
   const showReviewFooter = isImageReviewStep && !wizard.imageBusy;
   const isImageWait =
     currentId === "wait.image_generate" || currentId === "wait.storyboard_generate";
+  const isVideoWait = currentId === "wait.video_generate";
+  const isVideoResult =
+    currentId === "done.export" &&
+    (Boolean(wizard.videoUrl) || wizard.workflowMode === "video-only");
+  const showVideoReviewFooter = isVideoResult && !wizard.videoBusy;
   /** Hide Back/Continue while the violet wait panel is showing (research + direct). */
-  const showImageWaitOnly = isImageWait || (isImageReviewStep && wizard.imageBusy);
+  const showImageWaitOnly =
+    isImageWait || isVideoWait || (isImageReviewStep && wizard.imageBusy);
 
   const analyzeReady =
     (currentId === "wait.reference_analyze" || currentId === "wait.research_apply") &&
@@ -50,7 +57,7 @@ export function MicroWizard({ promotionMode }: Props) {
   const continueLabel =
     currentId === "shortcut.ship_it"
       ? m.wizard.shipItRunBtn
-      : currentId === "video.generate"
+      : currentId === "video.generate" || currentId === "setup.pre_video"
         ? m.wizard.generateVideoBtn
         : currentId === "image.generate" || currentId === "setup.pre_generate"
           ? m.wizard.generateImageBtn
@@ -59,7 +66,9 @@ export function MicroWizard({ promotionMode }: Props) {
   const generateBlockedReason =
     currentId === "setup.pre_generate" || currentId === "image.generate"
       ? wizard.imageGenerateDisabledReason
-      : null;
+      : currentId === "setup.pre_video" || currentId === "video.generate"
+        ? wizard.videoGenerateDisabledReason
+        : null;
 
   const blockMessage = blockReason
     ? (mw.blockReasons[blockReason as keyof typeof mw.blockReasons] ?? blockReason)
@@ -75,8 +84,11 @@ export function MicroWizard({ promotionMode }: Props) {
     currentId === "route.intake" ||
     currentId === "route.concept_source" ||
     currentId === "setup.pre_generate" ||
+    currentId === "setup.pre_video" ||
     isImageReviewStep ||
-    isImageWait;
+    isImageWait ||
+    isVideoWait ||
+    isVideoResult;
   const hideLegacyProgress = isPurpleChrome;
 
   const onBack = () => {
@@ -103,6 +115,26 @@ export function MicroWizard({ promotionMode }: Props) {
     } finally {
       setDownloadAllBusy(false);
     }
+  }
+
+  async function downloadReviewVideo() {
+    if (!wizard.videoUrl) return;
+    setDownloadAllBusy(true);
+    try {
+      await downloadMediaUrl(wizard.videoUrl, "marketing-reel.mp4");
+    } catch (e) {
+      wizard.setError(e instanceof Error ? e.message : m.errors.videoFailed);
+    } finally {
+      setDownloadAllBusy(false);
+    }
+  }
+
+  function regenerateVideo() {
+    if (wizard.videoGenerateDisabledReason) {
+      wizard.setError(wizard.videoGenerateDisabledReason);
+      return;
+    }
+    void wizard.generateVideo();
   }
 
   const secureFooter = (
@@ -162,7 +194,7 @@ export function MicroWizard({ promotionMode }: Props) {
           {mw.skip}
         </button>
       ) : null}
-      {currentId === "setup.pre_generate" ? null : (
+      {currentId === "setup.pre_generate" || currentId === "setup.pre_video" ? null : (
         <button
           type="button"
           onClick={goNext}
@@ -209,6 +241,16 @@ export function MicroWizard({ promotionMode }: Props) {
     />
   );
 
+  const videoReviewFooter = (
+    <VideoReviewFooterBar
+      onBack={onBack}
+      onDownload={() => void downloadReviewVideo()}
+      onGenerateOneMore={regenerateVideo}
+      downloadBusy={downloadAllBusy || !wizard.videoUrl}
+      generateBusy={wizard.videoBusy || Boolean(wizard.videoGenerateDisabledReason)}
+    />
+  );
+
   const navButtons = (
     <>
       {backButton}
@@ -219,7 +261,11 @@ export function MicroWizard({ promotionMode }: Props) {
   return (
     <div
       className={`space-y-4 ${
-        showReviewFooter ? "pb-36 md:pb-0" : showImageWaitOnly ? "pb-4" : "pb-28 md:pb-0"
+        showReviewFooter || showVideoReviewFooter
+          ? "pb-36 md:pb-0"
+          : showImageWaitOnly
+            ? "pb-4"
+            : "pb-28 md:pb-0"
       }`}
     >
       {!hideLegacyProgress && currentStep ? (
@@ -261,7 +307,11 @@ export function MicroWizard({ promotionMode }: Props) {
         </p>
       ) : null}
 
-      {blockMessage && !showReviewFooter && currentId !== "setup.pre_generate" ? (
+      {blockMessage &&
+      !showReviewFooter &&
+      !showVideoReviewFooter &&
+      currentId !== "setup.pre_generate" &&
+      currentId !== "setup.pre_video" ? (
         <p
           className={`rounded-xl border px-3 py-2.5 text-sm ${
             isPurpleChrome
@@ -275,6 +325,8 @@ export function MicroWizard({ promotionMode }: Props) {
 
       {showReviewFooter ? (
         <div className="hidden md:block">{reviewFooter}</div>
+      ) : showVideoReviewFooter ? (
+        <div className="hidden md:block">{videoReviewFooter}</div>
       ) : showImageWaitOnly ? null : (
         <div
           className={`relative hidden items-center md:flex ${
@@ -294,6 +346,10 @@ export function MicroWizard({ promotionMode }: Props) {
       {showReviewFooter ? (
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur md:hidden">
           <div className="mx-auto max-w-7xl">{reviewFooter}</div>
+        </div>
+      ) : showVideoReviewFooter ? (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur md:hidden">
+          <div className="mx-auto max-w-7xl">{videoReviewFooter}</div>
         </div>
       ) : showImageWaitOnly ? null : (
         <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur md:hidden">

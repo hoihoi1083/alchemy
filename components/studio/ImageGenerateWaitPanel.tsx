@@ -75,10 +75,12 @@ type Props = {
   previewUrl?: string | null;
   /** Hide the 5-step rail (rare). */
   showStepper?: boolean;
+  /** Override default “Generate image” title (e.g. video wait). */
+  title?: string;
 };
 
 /**
- * Violet chrome wait screen for image generation — matches CreationPath /
+ * Violet chrome wait screen for image/video generation — matches CreationPath /
  * ProductName / review steps (stepper + white panel, no cyan ScreenShell).
  */
 export function ImageGenerateWaitPanel({
@@ -87,6 +89,7 @@ export function ImageGenerateWaitPanel({
   aspectRatio,
   previewUrl,
   showStepper = true,
+  title,
 }: Props) {
   const { m } = useLocale();
   const mw = m.microWizard;
@@ -106,7 +109,7 @@ export function ImageGenerateWaitPanel({
           <p className="text-[13px] font-bold tracking-[0.12em] text-violet-600 sm:text-[15px]">
             {mw.generateWaitEyebrow}
           </p>
-          <h2 className="igw-title">{mw.generateImageTitle}</h2>
+          <h2 className="igw-title">{title ?? mw.generateImageTitle}</h2>
           <p className="igw-hint">{m.wizard.generationWaitHint}</p>
 
           <div className="mt-3 min-w-0 sm:mt-4">

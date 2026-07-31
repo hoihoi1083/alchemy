@@ -31,6 +31,8 @@ import { VideoOutputSourceCard } from "@/components/studio/VideoOutputSourceCard
 import { ProductNameStep } from "@/components/studio/ProductNameStep";
 import { IntakeFuseStep, intakeTabFromPending } from "@/components/studio/IntakeFuseStep";
 import { PreGenerateSetupPanel } from "@/components/studio/PreGenerateSetupPanel";
+import { PreVideoSetupPanel } from "@/components/studio/PreVideoSetupPanel";
+import { VideoResultPanel } from "@/components/studio/VideoResultPanel";
 import { PrimaryPathsPanel } from "@/components/studio/PrimaryPathsPanel";
 import { SetupCopyEditPanel } from "@/components/studio/SetupCopyEditPanel";
 import { PresenterAvatarPicker } from "@/components/studio/PresenterAvatarPicker";
@@ -202,7 +204,7 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
                   description={m.wizard.pathQuickVideoDesc}
                   onClick={() => {
                     micro.setVideoSubpath("product_promo");
-                    wizard.applyPrimaryPathVideoOnly("creative");
+                    wizard.applyPrimaryPathVideoOnly("assistant");
                   }}
                 />
                 <ChoiceCard
@@ -212,16 +214,6 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
                   onClick={() => {
                     micro.setVideoSubpath("reference_reel");
                     wizard.onVideoCreativeModeChange("reference-concept");
-                  }}
-                />
-                <ChoiceCard
-                  active={(micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) === "ugc_presenter"}
-                  title={m.wizard.pathUgcPresenterTitle}
-                  description={m.wizard.pathUgcPresenterDesc}
-                  onClick={() => {
-                    micro.setVideoSubpath("ugc_presenter");
-                    micro.patchContext({ videoSubpath: "ugc_presenter" });
-                    wizard.applyPrimaryPathVideoOnly("ugc-presenter");
                   }}
                 />
               </>
@@ -390,6 +382,54 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
           }
         />
       );
+
+    case "setup.pre_video": {
+      const isUgc =
+        (micro.ctx.videoSubpath ?? micro.pendingVideoSubpath) === "ugc_presenter" ||
+        wizard.visualStyleId === "ugc-presenter";
+      return (
+        <PreVideoSetupPanel
+          onGenerate={micro.goNext}
+          generateDisabled={
+            Boolean(micro.blockReason) ||
+            (!isUgc && Boolean(wizard.videoGenerateDisabledReason))
+          }
+          generateLabel={
+            isUgc ? m.microWizard.preVideoSetup.ugcContinueLabel : m.wizard.generateVideoBtn
+          }
+          generateBlockMessage={
+            micro.blockReason
+              ? (mw.blockReasons[micro.blockReason as keyof typeof mw.blockReasons] ??
+                micro.blockReason)
+              : isUgc
+                ? null
+                : wizard.videoGenerateDisabledReason
+          }
+          videoSubpath={micro.pendingVideoSubpath ?? micro.ctx.videoSubpath}
+          onPickVideoSubpath={(subpath) => {
+            const id = subpath as
+              | "product_promo"
+              | "reference_reel"
+              | "ugc_presenter"
+              | "creative_video"
+              | "brand_video";
+            micro.setVideoSubpath(id);
+            micro.patchContext({ videoSubpath: id });
+            if (id === "product_promo") {
+              wizard.applyPrimaryPathVideoOnly("assistant");
+            } else if (id === "ugc_presenter") {
+              wizard.applyPrimaryPathVideoOnly("ugc-presenter");
+            } else if (id === "reference_reel") {
+              wizard.onVideoCreativeModeChange("reference-concept");
+            } else if (id === "creative_video") {
+              wizard.applyPrimaryPathConceptVideo("creative");
+            } else if (id === "brand_video") {
+              wizard.applyPrimaryPathConceptVideo("brand");
+            }
+          }}
+        />
+      );
+    }
 
     case "copy.edit":
       return (
@@ -815,6 +855,15 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
       );
 
     case "done.export":
+      if (wizard.videoUrl || wizard.workflowMode === "video-only") {
+        return (
+          <VideoResultPanel
+            onRegenerate={() => {
+              void wizard.generateVideo();
+            }}
+          />
+        );
+      }
       return (
         <ScreenShell title={mw.doneTitle} hint={mw.doneHint}>
           {wizard.imageUrl && !wizard.useOriginalImage ? (
@@ -852,9 +901,10 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
       return (
         <WaitScreen
           busy={wizard.videoBusy}
+          title={mw.generateVideoTitle}
           message={wizard.videoBusy ? phaseMessage : mw.generatingVideo}
           progress={wizard.videoProgressInfo}
-          aspectRatio={wizard.imageAspectRatio}
+          aspectRatio="9:16"
           previewUrl={
             wizard.keyframePreview ||
             wizard.imageUrl ||
@@ -862,6 +912,7 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
             wizard.referencePreviewUrl ||
             null
           }
+          purpleChrome
         />
       );
     }
@@ -1109,6 +1160,7 @@ function WaitScreen({
     return (
       <ImageGenerateWaitPanel
         message={message}
+        title={title}
         progress={progressInfo}
         aspectRatio={aspectRatio}
         previewUrl={previewUrl}

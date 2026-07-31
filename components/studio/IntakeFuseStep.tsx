@@ -434,9 +434,14 @@ export function IntakeFuseStep({
               {activeTab === "direct" && !isConcept ? (
                 <div className="if-direct-card space-y-3">
                   <h3 className="text-[15px] font-bold text-slate-900">{fuse.directTitle}</h3>
-                  <p className="text-[13px] leading-relaxed text-slate-600">{fuse.directBody}</p>
+                  <p className="text-[13px] leading-relaxed text-slate-600">
+                    {workflowMode === "video-only" ? fuse.videoDirectBody : fuse.directBody}
+                  </p>
                   <ul className="space-y-2">
-                    {fuse.directBullets.map((line) => (
+                    {(workflowMode === "video-only"
+                      ? fuse.videoDirectBullets
+                      : fuse.directBullets
+                    ).map((line) => (
                       <li key={line} className="if-tip-row">
                         <span className="if-tip-bullet" aria-hidden>
                           <svg viewBox="0 0 20 20" className="h-3 w-3" fill="currentColor">

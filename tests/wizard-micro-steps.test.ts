@@ -402,7 +402,7 @@ describe("wizard v2 parity audit", () => {
     assert.ok(!ids.includes("wait.reference_analyze"));
   });
 
-  it("path 6 product_promo includes video.ai_prompt", () => {
+  it("path 6 product_promo fuses style + generate into setup.pre_video", () => {
     const ctx: MicroWizardContext = {
       promotionMode: "physical",
       workflowMode: "video-only",
@@ -411,10 +411,10 @@ describe("wizard v2 parity audit", () => {
     };
     const steps = resolveMicroSteps(ctx, baseState());
     const ids = steps.map((s) => s.id);
-    const photoIdx = ids.indexOf("asset.product_photo");
-    const promptIdx = ids.indexOf("video.ai_prompt");
-    assert.ok(photoIdx >= 0);
-    assert.ok(promptIdx > photoIdx);
+    assert.ok(ids.includes("setup.pre_video"));
+    assert.ok(!ids.includes("route.video_subpath"));
+    assert.ok(!ids.includes("asset.product_photo"));
+    assert.ok(!ids.includes("video.ai_prompt"));
     assert.ok(!steps.some((s) => s.id === "copy.storyboard_brief"));
   });
 
@@ -444,17 +444,156 @@ describe("wizard v2 parity audit", () => {
     assert.ok(!ids.includes("wait.video_generate"));
     assert.ok(!ids.includes("done.export"));
     assert.equal(microStepLegacyKey("video.generate", state), "video");
+    assert.equal(microStepLegacyKey("done.export"), null);
   });
 
-  it("video-only direct without subpath shows route.video_subpath only", () => {
+  it("done.export stays in micro-wizard (no classic DoneStep handoff)", () => {
+    assert.equal(microStepLegacyKey("done.export"), null);
+    assert.equal(microStepLegacyKey("image.review"), null);
+  });
+
+  it("video-only direct without subpath lands on fused setup.pre_video", () => {
     const ctx: MicroWizardContext = {
       promotionMode: "physical",
       workflowMode: "video-only",
       intakePath: "direct",
     };
     const steps = resolveMicroSteps(ctx, baseState({ workflowMode: "video-only" }));
-    assert.deepEqual(steps.map((s) => s.id), ["route.output_goal", "route.video_subpath"]);
-    assert.equal(resumeStepIndex(steps), 0);
+    const ids = steps.map((s) => s.id);
+    assert.ok(ids.includes("setup.pre_video"));
+    assert.ok(!ids.includes("route.video_subpath"));
+    assert.ok(ids.includes("route.intake"));
+  });
+
+  it("product video direct promo fuses into setup.pre_video", () => {
+    const ctx: MicroWizardContext = {
+      promotionMode: "physical",
+      workflowMode: "video-only",
+      intakePath: "direct",
+      videoSubpath: "product_promo",
+    };
+    const steps = resolveMicroSteps(
+      ctx,
+      baseState({
+        workflowMode: "video-only",
+        visualStyleId: "product",
+        videoCreativeMode: "product-promo",
+        productPhoto: {} as File,
+        headline: "測試標題",
+      }),
+    );
+    const ids = steps.map((s) => s.id);
+    assert.ok(ids.includes("setup.pre_video"));
+    assert.ok(!ids.includes("copy.edit"));
+    assert.ok(!ids.includes("asset.product_photo"));
+    assert.ok(!ids.includes("video.ai_prompt"));
+    assert.ok(!ids.includes("video.settings"));
+    assert.ok(!ids.includes("video.generate"));
+    assert.ok(ids.includes("wait.video_generate"));
+    assert.ok(ids.includes("done.export"));
+    assert.equal(
+      canProceedMicroStep(
+        "setup.pre_video",
+        ctx,
+        baseState({
+          workflowMode: "video-only",
+          productPhoto: {} as File,
+          headline: "測試",
+          product: "手鏈",
+        }),
+      ),
+      null,
+    );
+    assert.equal(
+      canProceedMicroStep(
+        "setup.pre_video",
+        ctx,
+        baseState({
+          workflowMode: "video-only",
+          productPhoto: null,
+          headline: "測試",
+        }),
+      ),
+      "need_product_photo",
+    );
+  });
+
+  it("concept video direct creative fuses into setup.pre_video", () => {
+    const ctx: MicroWizardContext = {
+      promotionMode: "concept",
+      workflowMode: "video-only",
+      intakePath: "direct",
+      videoSubpath: "creative_video",
+    };
+    const steps = resolveMicroSteps(
+      ctx,
+      baseState({
+        workflowMode: "video-only",
+        promotionMode: "concept",
+        visualStyleId: "creative-video",
+        conceptIdea: "私人貸款",
+        creativeVideoBrief: "溫暖生活感運鏡",
+        headline: "",
+      }),
+    );
+    const ids = steps.map((s) => s.id);
+    assert.ok(ids.includes("setup.pre_video"));
+    assert.ok(!ids.includes("copy.creative_brief"));
+    assert.ok(!ids.includes("video.ai_prompt"));
+    assert.ok(!ids.includes("video.generate"));
+    assert.equal(
+      canProceedMicroStep(
+        "setup.pre_video",
+        ctx,
+        baseState({
+          workflowMode: "video-only",
+          promotionMode: "concept",
+          visualStyleId: "creative-video",
+          conceptIdea: "私人貸款",
+          creativeVideoBrief: "溫暖運鏡",
+          headline: "",
+          productPhoto: null,
+        }),
+      ),
+      null,
+    );
+    assert.equal(
+      canProceedMicroStep(
+        "setup.pre_video",
+        ctx,
+        baseState({
+          workflowMode: "video-only",
+          promotionMode: "concept",
+          visualStyleId: "creative-video",
+          conceptIdea: "私人貸款",
+          creativeVideoBrief: "",
+          headline: "",
+        }),
+      ),
+      "need_creative_brief",
+    );
+  });
+
+  it("product video research reel video-only fuses into setup.pre_video", () => {
+    const ctx: MicroWizardContext = {
+      promotionMode: "physical",
+      workflowMode: "video-only",
+      intakePath: "research",
+    };
+    const state = baseState({
+      workflowMode: "video-only",
+      visualStyleId: "product",
+      productPhoto: {} as File,
+      headline: "測試",
+      promptExtra: "Style reference (reel). Match layout only. Do NOT copy reference subject matter.",
+      contentResearchApplied: true,
+    });
+    assert.equal(resolvePathId(ctx, state), "product_video_research_reel");
+    const ids = resolveMicroSteps(ctx, state).map((s) => s.id);
+    assert.ok(ids.includes("setup.pre_video"));
+    assert.ok(!ids.includes("copy.edit"));
+    assert.ok(!ids.includes("video.generate"));
+    assert.ok(ids.includes("wait.video_generate"));
   });
 
   it("product_combined ugc keeps ugc_pack before generate", () => {

@@ -53,6 +53,8 @@
     "identity.product_name",
     "identity.concept",
     "identity.concept_topic",
+    "setup.pre_generate",
+    "setup.pre_video",
     "copy.edit",
     "copy.storyboard_brief",
     "copy.creative_brief",
@@ -313,26 +315,54 @@
           "skipWhen": "!referenceIsVideo"
         },
         {
+          "id": "setup.pre_video",
+          "label": "Pre-video setup",
+          "handler": "generateVideo",
+          "skippable": false,
+          "when": "workflowMode === 'video-only'",
+          "note": "Video-only research → fused violet setup like image research",
+          "fuses": [
+            "copy.edit",
+            "asset.product_photo",
+            "video.settings",
+            "video.generate"
+          ]
+        },
+        {
           "id": "copy.edit",
           "label": "內容與生成設定",
           "prefillFrom": "research",
           "skippable": false,
+          "when": "workflowMode !== 'video-only'",
           "sections": ["copy", "brandKit", "advancedPrompt"],
           "brandKit": { "required": false, "collapsedByDefault": true }
         },
         {
           "id": "asset.brand_website",
-          "when": "isBrandVideoStyle(visualStyleId)",
+          "when": "workflowMode !== 'video-only' && isBrandVideoStyle(visualStyleId)",
           "required": true
         },
-        { "id": "asset.product_photo", "required": true },
+        {
+          "id": "asset.product_photo",
+          "required": true,
+          "when": "workflowMode !== 'video-only'"
+        },
         {
           "id": "copy.storyboard_brief",
-          "when": "visualStyleId === 'storyboard-video'"
+          "when": "workflowMode !== 'video-only' && visualStyleId === 'storyboard-video'"
         },
         { "id": "IMAGE_STORYBOARD_BRANCH" },
-        { "id": "video.settings", "skippable": true },
-        { "id": "video.generate", "handler": "generateVideo", "legacyStepKey": "video" },
+        {
+          "id": "video.settings",
+          "skippable": true,
+          "when": "workflowMode !== 'video-only'"
+        },
+        {
+          "id": "video.generate",
+          "handler": "generateVideo",
+          "legacyStepKey": "video",
+          "when": "workflowMode !== 'video-only'"
+        },
         { "id": "wait.video_generate", "while": "videoBusy" },
         { "id": "done.export", "legacyStepKey": "done" }
       ]
@@ -353,35 +383,21 @@
         { "id": "identity.product_name", "required": ["product"] },
         { "id": "route.intake", "set": { "intakePath": "direct" } },
         {
-          "id": "route.video_subpath",
-          "choices": [
-            { "id": "product_promo", "set": { "visualStyleId": "product", "videoCreativeMode": "product-promo" } },
-            { "id": "reference_reel", "set": { "videoCreativeMode": "reference-concept" } },
-            { "id": "ugc_presenter", "set": { "visualStyleId": "ugc-presenter" } }
+          "id": "setup.pre_video",
+          "label": "Pre-video setup",
+          "handler": "generateVideo",
+          "skippable": false,
+          "note": "Fused violet setup — video style picker + copy/photo/settings like image 創作方向",
+          "fuses": [
+            "route.video_subpath",
+            "copy.edit",
+            "asset.product_photo",
+            "asset.reference_video",
+            "video.ai_prompt",
+            "video.settings",
+            "video.generate"
           ]
         },
-        { "id": "asset.reference_video", "when": "videoSubpath === 'reference_reel'", "required": true },
-        { "id": "wait.reel_analyze", "when": "referenceIsVideo" },
-        {
-          "id": "copy.edit",
-          "label": "內容與生成設定",
-          "sections": ["copy", "brandKit", "advancedPrompt"],
-          "brandKit": { "required": false, "collapsedByDefault": true }
-        },
-        {
-          "id": "asset.brand_website",
-          "when": "isBrandVideoStyle(visualStyleId)",
-          "required": true
-        },
-        {
-          "id": "copy.storyboard_brief",
-          "when": "visualStyleId === 'storyboard-video'"
-        },
-        { "id": "asset.product_photo", "required": true },
-        { "id": "asset.extra_kit", "when": "videoCreativeMode === 'product-assistant'", "skippable": true },
-        { "id": "video.ai_prompt", "when": "videoSubpath === 'product_promo'" },
-        { "id": "image.storyboard_scenes", "when": "visualStyleId === 'storyboard-video'" },
-        { "id": "wait.storyboard_generate", "when": "visualStyleId === 'storyboard-video'" },
         {
           "id": "image.generate",
           "when": "visualStyleId === 'ugc-presenter'",
@@ -393,9 +409,7 @@
           "while": "imageBusy"
         },
         { "id": "image.review", "when": "visualStyleId === 'ugc-presenter'" },
-        { "id": "video.product_plan", "when": "videoCreativeMode === 'product-assistant'" },
         { "id": "video.ugc_pack", "when": "visualStyleId === 'ugc-presenter'" },
-        { "id": "video.settings", "skippable": true },
         {
           "id": "video.generate",
           "handler": "generateVideo",
@@ -403,11 +417,10 @@
           "when": "visualStyleId === 'ugc-presenter'"
         },
         {
-          "id": "video.generate",
-          "handler": "generateVideo",
+          "id": "wait.video_generate",
+          "while": "videoBusy",
           "when": "visualStyleId !== 'ugc-presenter'"
         },
-        { "id": "wait.video_generate", "while": "videoBusy", "when": "visualStyleId !== 'ugc-presenter'" },
         { "id": "done.export", "when": "visualStyleId !== 'ugc-presenter'" }
       ]
     },
@@ -547,27 +560,60 @@
           "skipWhen": "!referenceIsVideo"
         },
         {
+          "id": "setup.pre_video",
+          "label": "Pre-video setup",
+          "handler": "generateVideo",
+          "skippable": false,
+          "when": "workflowMode === 'video-only'",
+          "note": "Concept video-only research → fused violet setup; product photo optional",
+          "fuses": [
+            "copy.edit",
+            "asset.product_photo",
+            "video.settings",
+            "video.generate"
+          ]
+        },
+        {
           "id": "copy.edit",
           "label": "內容與生成設定",
           "prefillFrom": "research",
           "skippable": false,
+          "when": "workflowMode !== 'video-only'",
           "sections": ["copy", "brandKit", "advancedPrompt"],
           "brandKit": { "required": false, "collapsedByDefault": true }
         },
         {
           "id": "asset.brand_website",
-          "when": "isBrandVideoStyle(visualStyleId)",
+          "when": "workflowMode !== 'video-only' && isBrandVideoStyle(visualStyleId)",
           "required": true
         },
-        { "id": "asset.reference_image", "skippable": true },
-        { "id": "asset.product_photo", "skippable": true, "required": false },
+        {
+          "id": "asset.reference_image",
+          "skippable": true,
+          "when": "workflowMode !== 'video-only'"
+        },
+        {
+          "id": "asset.product_photo",
+          "skippable": true,
+          "required": false,
+          "when": "workflowMode !== 'video-only'"
+        },
         {
           "id": "copy.storyboard_brief",
-          "when": "visualStyleId === 'storyboard-video'"
+          "when": "workflowMode !== 'video-only' && visualStyleId === 'storyboard-video'"
         },
         { "id": "IMAGE_STORYBOARD_BRANCH" },
-        { "id": "video.settings", "skippable": true },
-        { "id": "video.generate", "handler": "generateVideo", "legacyStepKey": "video" },
+        {
+          "id": "video.settings",
+          "skippable": true,
+          "when": "workflowMode !== 'video-only'"
+        },
+        {
+          "id": "video.generate",
+          "handler": "generateVideo",
+          "legacyStepKey": "video",
+          "when": "workflowMode !== 'video-only'"
+        },
         { "id": "wait.video_generate", "while": "videoBusy" },
         { "id": "done.export", "legacyStepKey": "done" }
       ]
@@ -595,41 +641,23 @@
         },
         { "id": "route.intake", "set": { "intakePath": "direct" } },
         {
-          "id": "route.video_subpath",
-          "choices": [
-            { "id": "creative_video", "set": { "visualStyleId": "creative-video" } },
-            { "id": "brand_video", "set": { "visualStyleId": "brand-video" } },
-            { "id": "reference_reel", "set": { "videoCreativeMode": "reference-concept" } }
+          "id": "setup.pre_video",
+          "label": "Pre-video setup",
+          "handler": "generateVideo",
+          "skippable": false,
+          "note": "Fused violet setup — creative/brand/reference picker inside like image 創作方向",
+          "fuses": [
+            "route.video_subpath",
+            "copy.edit",
+            "copy.creative_brief",
+            "asset.brand_website",
+            "asset.product_photo",
+            "asset.reference_video",
+            "video.ai_prompt",
+            "video.settings",
+            "video.generate"
           ]
         },
-        { "id": "asset.reference_image", "skippable": true },
-        { "id": "asset.reference_video", "when": "videoSubpath === 'reference_reel'", "required": true },
-        { "id": "wait.reel_analyze", "when": "referenceIsVideo" },
-        {
-          "id": "copy.edit",
-          "label": "內容與生成設定",
-          "skippable": true,
-          "sections": ["copy", "brandKit", "advancedPrompt"],
-          "brandKit": { "required": false, "collapsedByDefault": true }
-        },
-        {
-          "id": "copy.creative_brief",
-          "when": "visualStyleId === 'creative-video'",
-          "required": true
-        },
-        {
-          "id": "asset.brand_website",
-          "when": "isBrandVideoStyle(visualStyleId)",
-          "required": true
-        },
-        { "id": "asset.product_photo", "skippable": true, "required": false },
-        {
-          "id": "video.ai_prompt",
-          "when": "visualStyleId === 'creative-video'",
-          "handler": "planAiVideoPrompt"
-        },
-        { "id": "video.settings", "skippable": true },
-        { "id": "video.generate", "handler": "generateVideo" },
         { "id": "wait.video_generate", "while": "videoBusy" },
         { "id": "done.export" }
       ]

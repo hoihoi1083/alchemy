@@ -41,6 +41,7 @@ export type MicroStepId =
   | "identity.concept"
   | "identity.concept_topic"
   | "setup.pre_generate"
+  | "setup.pre_video"
   | "copy.edit"
   | "copy.storyboard_brief"
   | "copy.creative_brief"
@@ -120,6 +121,9 @@ export type MicroWizardPathId =
 export const WIZARD_V2_QUERY_FLAG = "wizard";
 export const WIZARD_V2_VALUE = "v2";
 export const WIZARD_CLASSIC_VALUE = "classic";
+
+/** sessionStorage: jump MicroWizard to done.export after classic DoneStep leak */
+export const MICRO_RESUME_DONE_KEY = "alchemy-micro-resume-done";
 
 export function isWizardV2Enabled(searchParams: URLSearchParams): boolean {
   const flag = searchParams.get(WIZARD_V2_QUERY_FLAG);

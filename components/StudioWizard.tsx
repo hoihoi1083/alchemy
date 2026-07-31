@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { StepIndicator } from "@/components/StepIndicator";
 import { DoneStep } from "@/components/studio/DoneStep";
@@ -18,6 +18,7 @@ import { WizardProvider, useWizard } from "@/components/studio/WizardContext";
 import { useLocale } from "@/components/LocaleProvider";
 import {
   isWizardV2Enabled,
+  MICRO_RESUME_DONE_KEY,
   WIZARD_CLASSIC_VALUE,
   WIZARD_V2_QUERY_FLAG,
 } from "@/lib/wizard-micro-steps.types";
@@ -37,6 +38,8 @@ function StudioWizardContent({
   const {
     workflowMode,
     stepKey,
+    setStepKey,
+    videoUrl,
     isStoryboardOutput,
     isVideoWorkflow,
     continueSetupLabel,
@@ -56,6 +59,19 @@ function StudioWizardContent({
   } = useWizard();
 
   const showMicroSetup = v2 && stepKey === "setup";
+
+  // Video finish used to set stepKey "done" and mount classic DoneStep (dark Step 4).
+  // Pull back into MicroWizard so VideoResultPanel can show.
+  useEffect(() => {
+    if (!v2 || stepKey !== "done") return;
+    if (!videoUrl && workflowMode !== "video-only") return;
+    try {
+      sessionStorage.setItem(MICRO_RESUME_DONE_KEY, "1");
+    } catch {
+      /* ignore */
+    }
+    setStepKey("setup");
+  }, [v2, stepKey, videoUrl, workflowMode, setStepKey]);
 
   const goClassic = () => {
     const params = new URLSearchParams(searchParams.toString());
@@ -97,7 +113,9 @@ function StudioWizardContent({
       {!showMicroSetup && stepKey === "setup" && <SetupStep />}
       {stepKey === "image" && <ImageStep />}
       {stepKey === "video" && isVideoWorkflow && <VideoStep />}
-      {stepKey === "done" && <DoneStep />}
+      {stepKey === "done" && !(v2 && (Boolean(videoUrl) || workflowMode === "video-only")) ? (
+        <DoneStep />
+      ) : null}
 
       <StudioAssistantWidget surface="studio" />
       <CoachSpotlightOverlay />

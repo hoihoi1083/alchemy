@@ -28,6 +28,7 @@ import type {
 import {
   WIZARD_CLASSIC_VALUE,
   WIZARD_V2_QUERY_FLAG,
+  MICRO_RESUME_DONE_KEY,
 } from "@/lib/wizard-micro-steps.types";
 
 const CTX_KEY = "wizardV2Context";
@@ -190,6 +191,23 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
 
   const steps = useMemo(() => resolveMicroSteps(ctx, state), [ctx, state]);
 
+  // After classic DoneStep leak, remount on setup and jump to violet video result.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    let resume = false;
+    try {
+      resume = sessionStorage.getItem(MICRO_RESUME_DONE_KEY) === "1";
+      if (resume) sessionStorage.removeItem(MICRO_RESUME_DONE_KEY);
+    } catch {
+      return;
+    }
+    if (!resume) return;
+    const doneIdx = steps.findIndex((s) => s.id === "done.export");
+    if (doneIdx < 0) return;
+    setFinishedSetup(false);
+    setStepIndex(doneIdx);
+  }, [steps]);
+
   useEffect(() => {
     if (stepIndex >= steps.length && steps.length > 0) {
       setStepIndex(steps.length - 1);
@@ -222,8 +240,15 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
         intakePath: intakePathForConceptSource(conceptSource),
       };
     }
-    if (currentId === "route.video_subpath") {
-      const videoSubpath = pendingVideoSubpath ?? ctx.videoSubpath;
+    if (currentId === "route.video_subpath" || currentId === "setup.pre_video") {
+      const videoSubpath =
+        pendingVideoSubpath ??
+        ctx.videoSubpath ??
+        (ctx.workflowMode === "video-only" && ctx.intakePath === "direct"
+          ? ctx.promotionMode === "concept"
+            ? "creative_video"
+            : "product_promo"
+          : undefined);
       return videoSubpath ? { ...ctx, videoSubpath } : ctx;
     }
     return ctx;
@@ -291,6 +316,14 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     ) {
       return;
     }
+    if (
+      (currentId === "setup.pre_video" || currentId === "video.generate") &&
+      wizard.videoGenerateDisabledReason &&
+      ctx.videoSubpath !== "ugc_presenter" &&
+      state.visualStyleId !== "ugc-presenter"
+    ) {
+      return;
+    }
 
     if (currentId === "shortcut.ship_it") {
       void wizard.runShipItPipeline();
@@ -307,6 +340,17 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
 
     if (currentId === "image.generate" || currentId === "setup.pre_generate") {
       void wizard.generateImage();
+      autoAdvancedRef.current = null;
+      setStepIndex((i) => i + 1);
+      return;
+    }
+
+    if (currentId === "setup.pre_video") {
+      const ugc =
+        ctx.videoSubpath === "ugc_presenter" || state.visualStyleId === "ugc-presenter";
+      if (!ugc) {
+        void wizard.generateVideo();
+      }
       autoAdvancedRef.current = null;
       setStepIndex((i) => i + 1);
       return;
@@ -372,6 +416,19 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
       setPendingIntakePath(undefined);
       if (intakePath === "direct") {
         wizard.setImageCreativeMode(wizard.imageRefPhoto ? "reference-concept" : "promo-ai");
+      }
+      // Video-only direct: default style lives in fused setup (like image 創作方向).
+      if (
+        intakePath === "direct" &&
+        (nextCtx.workflowMode === "video-only" || wizard.workflowMode === "video-only") &&
+        !nextCtx.videoSubpath
+      ) {
+        const defaultSub =
+          wizard.promotionMode === "concept" ? ("creative_video" as const) : ("product_promo" as const);
+        nextCtx = { ...nextCtx, videoSubpath: defaultSub };
+        patchContext(nextCtx);
+        if (defaultSub === "product_promo") wizard.applyPrimaryPathVideoOnly("creative");
+        else wizard.applyPrimaryPathConceptVideo("creative");
       }
       // 圖+片 + 研究 → always storyboard reel (multi-scene stills).
       if (
@@ -538,6 +595,16 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
       }
     }
 
+    if (currentId === "done.export") {
+      const genIdx = steps.findIndex(
+        (s) => s.id === "setup.pre_video" || s.id === "video.generate",
+      );
+      if (genIdx >= 0) {
+        setStepIndex(genIdx);
+        return;
+      }
+    }
+
     if (stepIndex > 0) setStepIndex((i) => i - 1);
   }, [currentId, finishedSetup, stepIndex, steps, wizard]);
 
@@ -668,9 +735,11 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     if (currentId !== "wait.video_generate") return;
     if (wizard.videoBusy) return;
     if (!wizard.videoUrl) {
-      // Failed or cancelled — return to generate step so the user can retry.
+      // Failed or cancelled — return to fused setup (or legacy generate) so the user can retry.
       if (wizard.error) {
-        const genIdx = steps.findIndex((s) => s.id === "video.generate");
+        const genIdx = steps.findIndex(
+          (s) => s.id === "setup.pre_video" || s.id === "video.generate",
+        );
         if (genIdx >= 0 && stepIndex !== genIdx) {
           autoAdvancedRef.current = null;
           setStepIndex(genIdx);
@@ -693,6 +762,15 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     wizard.videoBusy,
     wizard.videoUrl,
   ]);
+
+  // Regenerate from violet video result → jump back to wait screen.
+  useEffect(() => {
+    if (currentId !== "done.export" || !wizard.videoBusy) return;
+    const waitIdx = steps.findIndex((s) => s.id === "wait.video_generate");
+    if (waitIdx < 0 || stepIndex === waitIdx) return;
+    autoAdvancedRef.current = null;
+    setStepIndex(waitIdx);
+  }, [currentId, stepIndex, steps, wizard.videoBusy]);
 
   useEffect(() => {
     if (!currentId || blockReason || !isWaitMicroStep(currentId)) return;

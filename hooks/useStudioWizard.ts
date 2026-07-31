@@ -1791,7 +1791,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     setVideoCreativeMode("product-promo");
     if (path === "storyboard") selectVisualStyle("storyboard-video");
     else if (path === "brand") selectVisualStyle("brand-video");
-    else selectVisualStyle("creative-video");
+    else selectVisualStyle("product");
   }
 
   async function onProductPhotoSelected(file: File | null) {
@@ -5346,7 +5346,11 @@ export function useStudioWizard(promotionMode: PromotionMode) {
           negativePrompt,
         }),
       );
-      setStepKey("done");
+      // Micro-wizard keeps stepKey "setup" and advances to done.export → VideoResultPanel.
+      // Classic VideoStep still needs the legacy DoneStep host.
+      if (stepKey !== "setup") {
+        setStepKey("done");
+      }
     } catch (e: unknown) {
       setError(friendlyError(e, m.errors.videoFailed));
     } finally {
