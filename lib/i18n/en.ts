@@ -2873,6 +2873,14 @@ export const en = {
       hint: "Add content details, upload product images, choose output type and style.",
       directHint:
         "Choose quick ad or model-wear, optionally add a reference image, then set content and product photos — same setup as after research.",
+      conceptHint:
+        "Review research brief and copy, optionally add a product photo, then choose output type and generate — product photo is optional for concept ads.",
+      conceptTopicLabel: "Concept topic",
+      conceptTopicRequired: "Required",
+      productPhotosOptionalTitle: "Product images (optional)",
+      mainPhotoOptional: "Optional",
+      mainPhotoOptionalHint:
+        "Add a product shot if you have one — otherwise we generate from your topic, copy, and research style.",
       stylePickerTitle: "Creation direction",
       stylePickerHint:
         "Quick ad suits most products. Model-wear puts a person using or wearing your item.",

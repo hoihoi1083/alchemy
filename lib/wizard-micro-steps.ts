@@ -708,7 +708,13 @@ export function canProceedMicroStep(
     return "need_product_photo";
   }
   if (id === "setup.pre_generate") {
-    if (state.referenceAnalyzeBusy) return "reference_analyzing";
+    if (
+      state.referenceAnalyzeBusy &&
+      !state.userReferenceBrief &&
+      !state.referenceAnalyzeNote
+    ) {
+      return "reference_analyzing";
+    }
     if (
       state.imageRefPhoto &&
       !state.userReferenceBrief &&
@@ -719,11 +725,8 @@ export function canProceedMicroStep(
     if (ctx.promotionMode === "physical" && !state.productPhoto) {
       return "need_product_photo";
     }
-    if (
-      !state.imageRefPhoto &&
-      !state.headline.trim() &&
-      !state.product.trim()
-    ) {
+    // Hook is required before generate — warn on setup, not on the wait screen.
+    if (!state.headline.trim()) {
       return "need_headline";
     }
   }
@@ -737,7 +740,13 @@ export function canProceedMicroStep(
   }
   // asset.brand_website is optional — many SMB users have no website.
   if (id === "wait.research_apply" || id === "wait.reference_analyze") {
-    if (state.referenceAnalyzeBusy) return "reference_analyzing";
+    if (
+      state.referenceAnalyzeBusy &&
+      !state.userReferenceBrief &&
+      !state.referenceAnalyzeNote
+    ) {
+      return "reference_analyzing";
+    }
     if (
       id === "wait.reference_analyze" &&
       state.imageRefPhoto &&

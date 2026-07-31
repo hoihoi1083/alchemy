@@ -216,6 +216,39 @@ describe("wizard v2 parity audit", () => {
     assert.equal(pre?.skippable, false);
   });
 
+  it("concept image research fuses post-research into setup.pre_generate like product", () => {
+    const ctx: MicroWizardContext = {
+      promotionMode: "concept",
+      workflowMode: "image-only",
+      intakePath: "research",
+      conceptSource: "research",
+    };
+    const steps = resolveMicroSteps(
+      ctx,
+      baseState({
+        promotionMode: "concept",
+        promptExtra: "STYLE_REFERENCE_ONLY",
+        imageRefPhoto: {} as File,
+        contentResearchApplied: true,
+        conceptIdea: "春日保養攻略",
+      }),
+    );
+    const ids = steps.map((s) => s.id);
+    assert.ok(ids.includes("setup.pre_generate"));
+    assert.ok(ids.includes("identity.concept_topic"));
+    assert.ok(ids.includes("route.intake"));
+    assert.equal(ids[ids.indexOf("setup.pre_generate") - 1], "route.intake");
+    assert.ok(!ids.includes("wait.reference_analyze"));
+    assert.ok(!ids.includes("copy.edit"));
+    assert.ok(!ids.includes("asset.reference_image"));
+    assert.ok(!ids.includes("asset.product_photo"));
+    assert.ok(!ids.includes("image.output_format"));
+    assert.ok(!ids.includes("image.options"));
+    assert.ok(!ids.includes("image.generate"));
+    assert.ok(ids.includes("wait.image_generate"));
+    assert.ok(ids.includes("image.review"));
+  });
+
   it("product image direct fuses into setup.pre_generate (not discrete steps)", () => {
     const ctx: MicroWizardContext = {
       promotionMode: "physical",
@@ -728,6 +761,54 @@ describe("wizard v2 parity audit", () => {
         }),
       ),
       null,
+    );
+  });
+
+  it("concept setup.pre_generate allows generate without product photo", () => {
+    const ctx: MicroWizardContext = {
+      promotionMode: "concept",
+      workflowMode: "image-only",
+      intakePath: "research",
+      conceptSource: "research",
+    };
+    assert.equal(
+      canProceedMicroStep(
+        "setup.pre_generate",
+        ctx,
+        baseState({
+          promotionMode: "concept",
+          conceptIdea: "春日保養攻略",
+          headline: "春日保養",
+          imageRefPhoto: {} as File,
+          productPhoto: null,
+          userReferenceBrief: { summary: "ok" },
+        }),
+      ),
+      null,
+    );
+  });
+
+  it("concept setup.pre_generate blocks when headline missing even with concept topic", () => {
+    const ctx: MicroWizardContext = {
+      promotionMode: "concept",
+      workflowMode: "image-only",
+      intakePath: "research",
+      conceptSource: "research",
+    };
+    assert.equal(
+      canProceedMicroStep(
+        "setup.pre_generate",
+        ctx,
+        baseState({
+          promotionMode: "concept",
+          conceptIdea: "瑜伽會籍",
+          headline: "",
+          imageRefPhoto: {} as File,
+          productPhoto: null,
+          userReferenceBrief: { summary: "ok" },
+        }),
+      ),
+      "need_headline",
     );
   });
 

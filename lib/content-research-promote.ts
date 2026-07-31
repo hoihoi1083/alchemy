@@ -279,7 +279,9 @@ function promotedRewriteCopyFromAngle(
   let headline = "";
   if (title && !unsafe(title) && title !== source) {
     headline = title;
-  } else if (product && !isProductShotReferenceAngle(angle)) {
+  } else if (product) {
+    // Always keep a promote-target hook — including product-shot refs where
+    // planner title equals sourceTitle / omits the concept (left fields blank).
     headline = `${product}｜${structureHookSuffix(angle.format, locale)}`;
   }
 
@@ -292,7 +294,7 @@ function promotedRewriteCopyFromAngle(
       .filter((b) => b && !unsafe(b));
     if (bullets.length) {
       subline = bullets.slice(0, 4).join(" · ");
-    } else if (product && !isProductShotReferenceAngle(angle)) {
+    } else if (product) {
       subline = structureSublineFromAngle(angle, product, locale);
     }
   }
@@ -306,7 +308,7 @@ function promotedRewriteCopyFromAngle(
 
 /**
  * Headline/subline for wizard — prefer promote-target-specific copy; reference post topic is not copied.
- * In concept mode an explicit concept anchor is always retained, even when it equals the search topic.
+ * Concept and physical share the same fill path when a promote target is present.
  */
 export function copyFieldsFromAngle(
   angle: ContentAngleCandidate,
@@ -327,63 +329,55 @@ export function copyFieldsFromAngle(
   const finish = (copy: { headline: string; subline: string; offer: string }) =>
     market ? alignWizardCopyFields(copy, locale) : copy;
 
-  if (promotionMode === "concept") {
-    if (product) {
-      if (isResearchPostAngle(angle)) {
-        return finish(promotedRewriteCopyFromAngle(angle, product, search, locale));
-      }
-      return finish({
+  // Shared path: product name OR concept topic as promote target → same fill as product research.
+  if (product) {
+    if (isResearchPostAngle(angle)) {
+      const rewritten = finish(promotedRewriteCopyFromAngle(angle, product, search, locale));
+      const fallback = finish({
         headline: `${product}｜${structureHookSuffix(angle.format, locale)}`,
         subline: structureSublineFromAngle(angle, product, locale),
         offer: sanitizeOfferFromAngle(angle, product, locale),
       });
+      return {
+        headline:
+          rewritten.headline.trim() && rewritten.headline.includes(product)
+            ? rewritten.headline
+            : fallback.headline,
+        subline:
+          rewritten.subline.trim() && rewritten.subline.includes(product)
+            ? rewritten.subline
+            : fallback.subline,
+        offer: rewritten.offer || fallback.offer,
+      };
     }
-    if (referenceSourced && !search) {
-      return { headline: "", subline: "", offer: "" };
-    }
-    if (referenceSourced && search) {
+    return finish({
+      headline: `${product}｜${structureHookSuffix(angle.format, locale)}`,
+      subline: structureSublineFromAngle(angle, product, locale),
+      offer: sanitizeOfferFromAngle(angle, product, locale),
+    });
+  }
+
+  // No promote target yet.
+  if (referenceSourced) {
+    // Concept may still seed from search topic; physical waits for product name.
+    if (promotionMode === "concept" && search) {
       return finish({
-        headline: search,
+        headline: `${search}｜${structureHookSuffix(angle.format, locale)}`,
         subline: structureSublineFromAngle(angle, search, locale),
         offer: sanitizeOfferFromAngle(angle, search, locale),
       });
     }
-    const hook = angle.hook.trim() || angle.title.trim();
-    const subline = angle.bulletPoints.length
-      ? angle.bulletPoints.join(" · ")
-      : angle.scriptOutline.trim();
-    return finish({
-      headline: hook || search,
-      subline,
-      offer: sanitizeOfferFromAngle(angle, search, locale),
-    });
+    return { headline: "", subline: "", offer: "" };
   }
 
-  if (!product) {
-    if (referenceSourced) {
-      return { headline: "", subline: "", offer: "" };
-    }
-    const hook = angle.hook.trim();
-    const subline = angle.bulletPoints.length
-      ? angle.bulletPoints.join(" | ")
-      : angle.scriptOutline.trim();
-    return finish({
-      headline: hook || search,
-      subline,
-      offer: angle.cta,
-    });
-  }
-
-  if (isResearchPostAngle(angle)) {
-    return finish(promotedRewriteCopyFromAngle(angle, product, search, locale));
-  }
-
-  const headline = `${product}｜${structureHookSuffix(angle.format, locale)}`;
-
+  const hook = angle.hook.trim() || angle.title.trim();
+  const subline = angle.bulletPoints.length
+    ? angle.bulletPoints.join(" · ")
+    : angle.scriptOutline.trim();
   return finish({
-    headline,
-    subline: structureSublineFromAngle(angle, product, locale),
-    offer: sanitizeOfferFromAngle(angle, product, locale),
+    headline: hook || search,
+    subline,
+    offer: sanitizeOfferFromAngle(angle, search, locale),
   });
 }
 

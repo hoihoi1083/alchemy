@@ -49,7 +49,7 @@ describe("reference prompt merge", () => {
     assert.ok(strategy.includes("centered hero with overlaid text"));
   });
 
-  it("single-image pinned reference leaves copy empty when rewrite is unsafe", () => {
+  it("single-image pinned reference falls back to promote-target copy when rewrite is unsafe", () => {
     const angle = {
       ...zodiacCarouselAngle,
       id: "pinned-note-1",
@@ -58,8 +58,31 @@ describe("reference prompt merge", () => {
     };
     assert.ok(isSingleImageReferenceAngle(angle));
     const copy = copyFieldsFromAngle(angle, PROMOTE_PRODUCT, SEARCH_TOPIC);
-    assert.equal(copy.headline, "");
-    assert.equal(copy.subline, "");
+    assert.ok(copy.headline.includes(PROMOTE_PRODUCT));
+    assert.ok(copy.subline.includes(PROMOTE_PRODUCT));
+  });
+
+  it("concept single-image research fills hook/subline from concept topic", () => {
+    const angle = {
+      ...zodiacCarouselAngle,
+      id: "post-pilates",
+      format: "single" as const,
+      sourceTitle: "普拉提改革者機示範",
+      title: "普拉提改革者機示範",
+      hook: "普拉提改革者機示範",
+      whyItWorks: "生活風格參考",
+      scriptOutline: "",
+      bulletPoints: ["核心", "呼吸"],
+      cta: "留言領取",
+      sourceImageUrls: ["https://example.com/cover.jpg"],
+    };
+    const copy = copyFieldsFromAngle(angle, "瑜伽會籍", "瑜伽", {
+      promotionMode: "concept",
+      referenceSourced: true,
+      market: "hk",
+    });
+    assert.ok(copy.headline.includes("瑜伽會籍"), copy.headline);
+    assert.ok(copy.subline.includes("瑜伽會籍"), copy.subline);
   });
 
   it("product-shot reference uses planner rewrite for user product", () => {
@@ -76,7 +99,8 @@ describe("reference prompt merge", () => {
     assert.ok(isProductShotReferenceAngle(angle));
     const copy = copyFieldsFromAngle(angle, PROMOTE_PRODUCT, SEARCH_TOPIC);
     assert.equal(copy.headline, angle.title);
-    assert.equal(copy.subline, angle.hook);
+    // Hook omits exact product name → fall back to promote-target subline (same as concept).
+    assert.ok(copy.subline.includes(PROMOTE_PRODUCT));
   });
 
   it("buildReferenceConceptImagePrompt omits campaign copy when user fields empty", () => {

@@ -1,10 +1,11 @@
 "use client";
 
-import { useId, useRef, type ChangeEvent, type ReactNode } from "react";
+import { useEffect, useId, useRef, type ChangeEvent, type ReactNode } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 import { BrandWebsitePanel } from "@/components/studio/BrandWebsitePanel";
 import { useWizard } from "@/components/studio/WizardContext";
 import { ART_STYLE_IDS, getArtStyle, type ArtStyleId } from "@/lib/art-style";
+import { copyFieldsFromAngle } from "@/lib/content-research-promote";
 import { IMAGE_ASPECT_RATIOS, type ImageAspectRatio } from "@/lib/image-aspect-ratio";
 import type { ImageOutputMode } from "@/lib/image-output-mode";
 import type { ImageTextMode } from "@/lib/image-text-mode";
@@ -782,6 +783,7 @@ export function PreGenerateSetupPanel({
   const { m } = useLocale();
   const wizard = useWizard();
   const pg = m.microWizard.preGenerateSetup;
+  const isConcept = wizard.promotionMode === "concept";
   const contentRef = useRef<HTMLElement | null>(null);
   const mainInputId = useId();
   const angleInputId = useId();
@@ -796,15 +798,81 @@ export function PreGenerateSetupPanel({
     (!showReferenceUpload && Boolean(wizard.promptExtra?.trim()));
 
   const analyzeDone = Boolean(brief) || Boolean(wizard.referenceAnalyzeNote);
-  const analyzeActive =
-    wizard.referenceAnalyzeBusy ||
-    (Boolean(wizard.imageRefPhoto) && !analyzeDone);
+  // Don't keep spinning after brief/note exists — busy can stick true after a
+  // cancelled remount even when analyze-reference already returned 200.
+  const analyzeActive = Boolean(wizard.imageRefPhoto) && !analyzeDone;
 
   const isModelWear = wizard.visualStyleId === "model-wear";
   const isQuickAd = !isModelWear;
   const hasReference = Boolean(wizard.imageRefPhoto);
   /** Reference layout transfer overrides model-wear staging — lock to product path. */
   const modelWearLockedByReference = showStylePicker && hasReference;
+
+  const setupHint = isConcept
+    ? pg.conceptHint
+    : showStylePicker || showReferenceUpload
+      ? pg.directHint
+      : pg.hint;
+
+  // If research already applied but hook/subline were left blank (stale session /
+  // older concept branch), backfill the same way product research does.
+  const researchCopyBackfillKeyRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isConcept) return;
+    if (wizard.headline.trim() && wizard.subline.trim()) return;
+    const promote = wizard.conceptIdea.trim();
+    if (!promote) return;
+    const ref = wizard.contentResearchApplyRef;
+    const key = `${ref?.angle?.id ?? "no-angle"}:${promote}`;
+    if (researchCopyBackfillKeyRef.current === key) return;
+    researchCopyBackfillKeyRef.current = key;
+
+    if (ref?.angle) {
+      const copy = copyFieldsFromAngle(ref.angle, promote, ref.plan.topic, {
+        promotionMode: "concept",
+        referenceSourced: true,
+        market: wizard.promptMarket,
+      });
+      if (!wizard.headline.trim() && copy.headline.trim()) {
+        wizard.setHeadline(copy.headline);
+      }
+      if (!wizard.subline.trim() && copy.subline.trim()) {
+        wizard.setSubline(copy.subline);
+      }
+      return;
+    }
+
+    if (!wizard.headline.trim()) {
+      const copy = copyFieldsFromAngle(
+        {
+          id: "concept-topic-fallback",
+          title: promote,
+          hook: promote,
+          format: "single-image",
+          formatLabel: "Single",
+          whyItWorks: "",
+          bulletPoints: [],
+          cta: "",
+          scriptOutline: "",
+          score: 0,
+        },
+        promote,
+        promote,
+        { promotionMode: "concept", referenceSourced: false, market: wizard.promptMarket },
+      );
+      if (copy.headline.trim()) wizard.setHeadline(copy.headline);
+      if (copy.subline.trim()) wizard.setSubline(copy.subline);
+    }
+  }, [
+    isConcept,
+    wizard.headline,
+    wizard.subline,
+    wizard.conceptIdea,
+    wizard.contentResearchApplyRef,
+    wizard.promptMarket,
+    wizard.setHeadline,
+    wizard.setSubline,
+  ]);
 
   function pickCreationDirection(path: "quick" | "model") {
     if (path === "model" && hasReference) return;
@@ -831,13 +899,17 @@ export function PreGenerateSetupPanel({
     wizard.setImageCreativeMode("promo-ai");
   }
 
-  const summaryRows = briefSummaryRows(brief, wizard.product, {
-    product: pg.briefProduct,
-    target: pg.briefTarget,
-    goal: pg.briefGoal,
-    tone: pg.briefTone,
-    keyMessage: pg.briefKeyMessage,
-  });
+  const summaryRows = briefSummaryRows(
+    brief,
+    isConcept ? wizard.conceptIdea || wizard.product : wizard.product,
+    {
+      product: isConcept ? pg.conceptTopicLabel : pg.briefProduct,
+      target: pg.briefTarget,
+      goal: pg.briefGoal,
+      tone: pg.briefTone,
+      keyMessage: pg.briefKeyMessage,
+    },
+  );
 
   const mainThumb =
     wizard.uploadPreviewUrl
@@ -895,9 +967,7 @@ export function PreGenerateSetupPanel({
             />
           </span>
         </h2>
-        <p className="mt-1.5 max-w-2xl text-sm text-slate-500">
-          {showStylePicker || showReferenceUpload ? pg.directHint : pg.hint}
-        </p>
+        <p className="mt-1.5 max-w-2xl text-sm text-slate-500">{setupHint}</p>
 
         <div className="pg-layout">
           <div className="pg-stack">
@@ -1075,20 +1145,40 @@ export function PreGenerateSetupPanel({
                   <h3 className="pg-card-title">{pg.contentTitle}</h3>
                 </div>
                 <div className="pg-field-grid">
-                  <label>
-                    <span className="pg-label">
-                      {m.wizard.productLabelRequired}
-                      <span className="pg-label-req" aria-hidden>
-                        *
+                  {isConcept ? (
+                    <label>
+                      <span className="pg-label">
+                        {pg.conceptTopicLabel}
+                        <span className="pg-label-req" aria-hidden>
+                          *
+                        </span>
+                        <span className="ml-1.5 font-medium text-violet-600">
+                          ({pg.conceptTopicRequired})
+                        </span>
                       </span>
-                    </span>
-                    <input
-                      className="pg-input"
-                      value={wizard.product}
-                      onChange={(e) => wizard.setProduct(e.target.value)}
-                      placeholder={m.wizard.productPlaceholder}
-                    />
-                  </label>
+                      <input
+                        className="pg-input"
+                        value={wizard.conceptIdea}
+                        onChange={(e) => wizard.setConceptIdea(e.target.value)}
+                        placeholder={m.microWizard.conceptTopicPlaceholder}
+                      />
+                    </label>
+                  ) : (
+                    <label>
+                      <span className="pg-label">
+                        {m.wizard.productLabelRequired}
+                        <span className="pg-label-req" aria-hidden>
+                          *
+                        </span>
+                      </span>
+                      <input
+                        className="pg-input"
+                        value={wizard.product}
+                        onChange={(e) => wizard.setProduct(e.target.value)}
+                        placeholder={m.wizard.productPlaceholder}
+                      />
+                    </label>
+                  )}
                   <label>
                     <span className="pg-label">
                       {pg.hookLabel}
@@ -1193,18 +1283,28 @@ export function PreGenerateSetupPanel({
                   <span className="pg-card-icon">
                     <SectionIcon kind="upload" />
                   </span>
-                  <h3 className="pg-card-title">{pg.productPhotosTitle}</h3>
+                  <h3 className="pg-card-title">
+                    {isConcept ? pg.productPhotosOptionalTitle : pg.productPhotosTitle}
+                  </h3>
                 </div>
                 <div className="min-w-0 flex-1 space-y-4">
                   <div>
                     <p className="text-xs font-semibold text-slate-700">
                       {pg.mainPhotoRowLabel}
-                      <span className="pg-label-req" aria-hidden>
-                        *
-                      </span>
-                      <span className="ml-1.5 font-medium text-violet-600">
-                        ({pg.mainPhotoRequired})
-                      </span>
+                      {isConcept ? (
+                        <span className="ml-1.5 font-medium text-slate-500">
+                          ({pg.mainPhotoOptional})
+                        </span>
+                      ) : (
+                        <>
+                          <span className="pg-label-req" aria-hidden>
+                            *
+                          </span>
+                          <span className="ml-1.5 font-medium text-violet-600">
+                            ({pg.mainPhotoRequired})
+                          </span>
+                        </>
+                      )}
                     </p>
                     <input
                       id={mainInputId}
@@ -1264,7 +1364,9 @@ export function PreGenerateSetupPanel({
                         </label>
                       )}
                     </div>
-                    <p className="mt-1.5 text-xs text-slate-500">{pg.mainPhotoHint}</p>
+                    <p className="mt-1.5 text-xs text-slate-500">
+                      {isConcept ? pg.mainPhotoOptionalHint : pg.mainPhotoHint}
+                    </p>
                   </div>
 
                   <div>

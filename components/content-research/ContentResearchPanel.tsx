@@ -225,12 +225,16 @@ export function ContentResearchPanel({
     setNote(null);
     try {
       if (wizard) {
+        const promoteForApply =
+          promoteProduct.trim() ||
+          (promotionMode === "concept" ? topic.trim() : "") ||
+          undefined;
         const { refs } = await applyContentAngleToWizard(
           angleToApply,
           plan,
           promotionMode,
           wizard,
-          promoteProduct.trim() || undefined,
+          promoteForApply,
           undefined,
           workflowMode,
         );
@@ -276,7 +280,9 @@ export function ContentResearchPanel({
             angleToApply,
             plan,
             promotionMode,
-            promoteProduct.trim() || undefined,
+            promoteProduct.trim() ||
+              (promotionMode === "concept" ? topic.trim() : "") ||
+              undefined,
             workflowMode,
           ),
         );

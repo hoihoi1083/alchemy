@@ -16,7 +16,8 @@ export function ReferenceAnalyzeWaitPanel() {
     !wizard.imageRefPhoto && Boolean(wizard.promptExtra?.trim());
   const analyzePending =
     (Boolean(wizard.imageRefPhoto) || waitingForRef) && !analyzeDone;
-  const analyzeActive = wizard.referenceAnalyzeBusy || analyzePending;
+  // Prefer brief/note over busy — busy can stick after a cancelled remount.
+  const analyzeActive = analyzePending;
 
   return (
     <>
@@ -33,7 +34,7 @@ export function ReferenceAnalyzeWaitPanel() {
           {m.wizard.referenceBriefAnalyzing}
         </div>
       ) : null}
-      {analyzeDone && !wizard.referenceAnalyzeBusy ? (
+      {analyzeDone ? (
         <div className="mt-4 space-y-2 rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 ring-2 ring-emerald-200/80">
           <p className="font-semibold">{mw.referenceAnalyzeReadyTitle}</p>
           <p className="text-xs text-emerald-800">
@@ -51,8 +52,6 @@ export function referenceAnalyzeReady(wizard: {
   referenceAnalyzeNote: string | null;
   referenceAnalyzeBusy: boolean;
 }): boolean {
-  return (
-    (Boolean(wizard.userReferenceBrief) || Boolean(wizard.referenceAnalyzeNote)) &&
-    !wizard.referenceAnalyzeBusy
-  );
+  // Brief/note is enough — don't require !busy (can stick true after remount race).
+  return Boolean(wizard.userReferenceBrief) || Boolean(wizard.referenceAnalyzeNote);
 }

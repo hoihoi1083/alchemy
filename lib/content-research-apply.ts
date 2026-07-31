@@ -158,7 +158,11 @@ function wizardPatchForAngle(
   // For attaching refs, use the real post format (not the locked "reel" style).
   const resolvedFormat = combinedLocksStoryboard ? effectiveFormat : effectiveFormat;
 
-  const copyTarget = promotionMode === "concept" ? explicitPromoteTarget : productName;
+  const copyTarget =
+    promotionMode === "concept"
+      ? // Concept: always have a promote string (topic field) — same fill as product.
+        explicitPromoteTarget || plan.topic.trim()
+      : productName;
   const market = plan.market;
   const copy = copyFieldsFromAngle(angle, copyTarget, plan.topic, {
     promotionMode,
@@ -168,7 +172,7 @@ function wizardPatchForAngle(
   const promoteTargetRaw = contentResearchPromoteTarget(promotionMode, {
     product: promotionMode === "physical" ? copyTarget : "",
     headline: copy.headline,
-    conceptIdea: explicitPromoteTarget,
+    conceptIdea: explicitPromoteTarget || copyTarget,
     searchTopic: plan.topic,
   });
   const promoteTarget =
@@ -191,7 +195,7 @@ function wizardPatchForAngle(
   const conceptTopic = productName || plan.topic.trim();
   const conceptIdeaPatch =
     promotionMode === "concept"
-      ? explicitPromoteTarget || (pinnedReference ? "" : conceptTopic)
+      ? explicitPromoteTarget || copyTarget || (pinnedReference ? "" : conceptTopic)
       : isProductShotReferenceAngle(angle)
         ? ""
         : productName

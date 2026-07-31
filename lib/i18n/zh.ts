@@ -2691,6 +2691,13 @@ export const zh = {
       hint: "填內容詳情、上傳產品相、揀輸出類型同風格。",
       directHint:
         "揀直接創作或模特兒佩戴、可選上傳參考圖，再填內容同產品相 — 同研究路徑揀完後嘅設定一樣。",
+      conceptHint:
+        "檢查研究簡報同文案，可選上傳產品相，再揀輸出類型同生成 — 概念廣告唔一定要有產品相。",
+      conceptTopicLabel: "概念主題",
+      conceptTopicRequired: "必填",
+      productPhotosOptionalTitle: "產品相片（選填）",
+      mainPhotoOptional: "選填",
+      mainPhotoOptionalHint: "有產品相可以上傳 — 冇嘅話會用主題、文案同研究風格出圖。",
       stylePickerTitle: "創作方向",
       stylePickerHint: "直接創作適合大部分產品；模特兒佩戴會生成人手／佩戴場景。",
       stylePickerQuickLabel: "直接創作",

@@ -11,7 +11,7 @@ import {
   dualProductIdentityHint,
 } from "@/lib/fal-dual-reference-urls";
 import type { BrandProfile } from "@/lib/brand-profile";
-import type { CampaignPlan } from "@/lib/campaign-types";
+import type { CampaignPlan, CampaignSlidePlan } from "@/lib/campaign-types";
 import { planCampaign } from "@/lib/campaign-plan";
 import { parseBrandKit, type BrandKit } from "@/lib/brand-kit";
 import { defaultEditEndpoint, defaultTextEndpoint, sanitizeImageEndpoint } from "@/lib/image-endpoints";
@@ -67,6 +67,38 @@ function aspectRatioForApi(ratio: string): string {
     "4:5": "4:5",
   };
   return map[ratio] ?? "auto";
+}
+
+function parseExistingCampaignPlan(raw: string): CampaignPlan | null {
+  if (!raw.trim()) return null;
+  try {
+    const parsed = JSON.parse(raw) as CampaignPlan;
+    if (!parsed || !Array.isArray(parsed.slides) || parsed.slides.length < 1) return null;
+    const slides = parsed.slides
+      .map((s, i): CampaignSlidePlan | null => {
+        if (!s || typeof s !== "object") return null;
+        const role =
+          s.role === "hero" || s.role === "selling-points" || s.role === "offer"
+            ? s.role
+            : (["hero", "selling-points", "offer"] as const)[i] ?? "hero";
+        return {
+          role,
+          title: String(s.title ?? "").trim() || role,
+          headline: String(s.headline ?? "").trim(),
+          subline: String(s.subline ?? "").trim(),
+          composition: String(s.composition ?? "").trim(),
+        };
+      })
+      .filter((s): s is CampaignSlidePlan => Boolean(s));
+    if (!slides.length) return null;
+    return {
+      theme: String(parsed.theme ?? "").trim(),
+      visualDna: String(parsed.visualDna ?? "").trim(),
+      slides,
+    };
+  } catch {
+    return null;
+  }
 }
 
 export async function POST(request: Request) {
@@ -160,6 +192,20 @@ export async function POST(request: Request) {
   const artStyleId = resolveArtStyleId((formData.get("art_style") as string | null)?.trim());
   const systemPrompt = artStyleSystemPrompt(artStyleId);
 
+  const regenerateSlideRaw = (formData.get("slide_index") as string | null)?.trim() ?? "";
+  const regenerateSlideIndex =
+    regenerateSlideRaw === "" ? null : Number.parseInt(regenerateSlideRaw, 10);
+  const existingPlan = parseExistingCampaignPlan(
+    (formData.get("existing_plan") as string | null)?.trim() || "",
+  );
+  const seriesCoverUrl =
+    (formData.get("series_cover_url") as string | null)?.trim() || "";
+  const isSingleSlideRegen =
+    regenerateSlideIndex != null &&
+    Number.isInteger(regenerateSlideIndex) &&
+    regenerateSlideIndex >= 0 &&
+    Boolean(existingPlan?.slides[regenerateSlideIndex]);
+
   const vars = buildPromptVariables({
     product: productName,
     business,
@@ -178,32 +224,34 @@ export async function POST(request: Request) {
     { promotionMode, workflowMode: "image-only" },
   );
 
-  const tokenCost = TOKEN_COST.campaign;
+  const tokenCost = isSingleSlideRegen ? TOKEN_COST.image : TOKEN_COST.campaign;
   const { resolution: imageResolution } = clampImageResolution(
     await getUserPlan(auth.user.userId),
   );
 
   let plan: CampaignPlan;
   try {
-    plan = await planCampaign({
-      visualStyleId: visualStyle,
-      campaignTheme,
-      product: productName,
-      business,
-      headline,
-      subline,
-      offer,
-      brandProfile,
-      promotionMode,
-      hasReferenceLayout: strategy.useDualImage,
-      referenceStrategyKind:
-        strategy.kind === "layout-transfer"
-          ? "layout-transfer"
-          : strategy.kind === "style-only"
-            ? "style-only"
-            : "none",
-      promptExtra,
-    });
+    plan = isSingleSlideRegen
+      ? existingPlan!
+      : await planCampaign({
+          visualStyleId: visualStyle,
+          campaignTheme,
+          product: productName,
+          business,
+          headline,
+          subline,
+          offer,
+          brandProfile,
+          promotionMode,
+          hasReferenceLayout: strategy.useDualImage,
+          referenceStrategyKind:
+            strategy.kind === "layout-transfer"
+              ? "layout-transfer"
+              : strategy.kind === "style-only"
+                ? "style-only"
+                : "none",
+          promptExtra,
+        });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Campaign planning failed.";
     const status =
@@ -215,7 +263,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: message }, { status });
   }
 
-  const charged = await chargeTokens(auth.user.userId, tokenCost, { kind: "campaign" });
+  const charged = await chargeTokens(auth.user.userId, tokenCost, {
+    kind: isSingleSlideRegen ? "image" : "campaign",
+  });
   if ("error" in charged) return charged.error;
   const balanceAfter = charged.balanceAfter;
 
@@ -312,14 +362,64 @@ export async function POST(request: Request) {
       };
     }
 
+    if (isSingleSlideRegen) {
+      const target = plan.slides[regenerateSlideIndex!]!;
+      const urls =
+        regenerateSlideIndex! > 0 &&
+        seriesCoverUrl.startsWith("http") &&
+        baseImageUrlsForFal?.length
+          ? [...baseImageUrlsForFal, seriesCoverUrl]
+          : baseImageUrlsForFal;
+      const hints = [
+        dualHint,
+        regenerateSlideIndex! > 0 && seriesCoverUrl.startsWith("http")
+          ? carouselCoverSeriesAnchorHint({ hasProductPhoto: hasProduct })
+          : "",
+        // Encourage a fresh scene when re-rolling a non-hero slide.
+        regenerateSlideIndex! > 0
+          ? "VARIATION: Use a DIFFERENT photo composition / subject framing from the cover — keep series palette and typography only. Do not clone the cover photo."
+          : "",
+      ];
+      const one = await generateOneSlide(target, regenerateSlideIndex!, urls, hints);
+      const durableUrls = await persistAndDurablizeMany({
+        clerkId: auth.user.userId,
+        kind: "image",
+        sourceUrls: [one.imageUrl],
+        fallbackUrls: [one.imageUrl],
+        prompt: `campaign-slide-${regenerateSlideIndex! + 1}`,
+      });
+      const imageUrl = durableUrls[0] ?? one.imageUrl;
+      await trackUsage(auth.user.userId, "image");
+      return NextResponse.json({
+        plan,
+        slideIndex: regenerateSlideIndex,
+        slide: {
+          role: one.role,
+          title: one.title,
+          headline: one.headline,
+          subline: one.subline,
+          imageUrl,
+        },
+        imageUrl,
+        endpoint,
+        mode: "campaign-slide",
+        tokensCharged: tokenCost,
+        creditBalance: balanceAfter,
+      });
+    }
+
     let slides: SlideOut[];
-    if (hasProduct && baseImageUrlsForFal?.length && plan.slides.length > 1) {
+    if (baseImageUrlsForFal?.length && plan.slides.length > 1) {
       const coverOut = await generateOneSlide(plan.slides[0]!, 0, baseImageUrlsForFal, [dualHint]);
       const anchoredUrls = [...baseImageUrlsForFal, coverOut.imageUrl];
-      const coverHint = carouselCoverSeriesAnchorHint();
+      const coverHint = carouselCoverSeriesAnchorHint({ hasProductPhoto: hasProduct });
       const restOut = await Promise.all(
         plan.slides.slice(1).map((slide, offset) =>
-          generateOneSlide(slide, offset + 1, anchoredUrls, [dualHint, coverHint]),
+          generateOneSlide(slide, offset + 1, anchoredUrls, [
+            dualHint,
+            coverHint,
+            "VARIATION: Different composition from the cover — match palette/typography only, not the same photo.",
+          ]),
         ),
       );
       slides = [coverOut, ...restOut];
@@ -362,7 +462,7 @@ export async function POST(request: Request) {
     });
   } catch (e: unknown) {
     await refundTokens(auth.user.userId, tokenCost, {
-      kind: "campaign",
+      kind: isSingleSlideRegen ? "image" : "campaign",
       reason: "generation_failed",
     });
     return NextResponse.json({ error: formatFalError(e) }, { status: 502 });

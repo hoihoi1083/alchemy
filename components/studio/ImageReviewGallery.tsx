@@ -375,6 +375,14 @@ export function ImageReviewGallery({
       void wizard.regenerateCarouselSlide(item.index);
       return;
     }
+    // A/B: regenerate only the clicked variant.
+    if (
+      wizard.imageVariantUrls.length > 1 &&
+      typeof wizard.regenerateAbVariant === "function"
+    ) {
+      void wizard.regenerateAbVariant(item.index);
+      return;
+    }
     void wizard.generateImage();
   }
 

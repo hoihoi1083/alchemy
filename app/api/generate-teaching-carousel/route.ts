@@ -358,7 +358,7 @@ export async function POST(request: Request) {
       const hints = [
         dualHint,
         regenerateSlideIndex! > 0 && seriesCoverUrl.startsWith("http")
-          ? carouselCoverSeriesAnchorHint()
+          ? carouselCoverSeriesAnchorHint({ hasProductPhoto: hasProduct })
           : "",
       ];
       const one = await generateOneSlide(target, urls, hints);
@@ -393,13 +393,13 @@ export async function POST(request: Request) {
     const coverSlide = ordered[0];
     const restSlides = ordered.slice(1);
 
-    // Cover first when we have product pixels — later slides see cover as a series
-    // anchor so tip cards stop inventing mascots / wrong jewelry colors independently.
+    // Cover first when we have reference pixels (product and/or style) — later slides
+    // see cover as a series anchor so tip cards stay consistent.
     let slideResults: SlideOut[];
-    if (hasProduct && imageUrlsForFal?.length && coverSlide && restSlides.length > 0) {
+    if (imageUrlsForFal?.length && coverSlide && restSlides.length > 0) {
       const coverOut = await generateOneSlide(coverSlide, imageUrlsForFal, [dualHint]);
       const anchoredUrls = [...imageUrlsForFal, coverOut.imageUrl];
-      const coverHint = carouselCoverSeriesAnchorHint();
+      const coverHint = carouselCoverSeriesAnchorHint({ hasProductPhoto: hasProduct });
       const restOut = await Promise.all(
         restSlides.map((slide) => generateOneSlide(slide, anchoredUrls, [dualHint, coverHint])),
       );

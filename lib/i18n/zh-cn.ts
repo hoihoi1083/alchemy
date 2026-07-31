@@ -2692,6 +2692,13 @@ export const zhCn = {
       hint: "填写内容详情、上传产品照、选择输出类型和风格。",
       directHint:
         "选择直接创作或模特佩戴、可选上传参考图，再填内容和产品照 — 与研究路径选完后的设置相同。",
+      conceptHint:
+        "检查研究简报和文案，可选上传产品照，再选输出类型并生成 — 概念广告不一定要有产品照。",
+      conceptTopicLabel: "概念主题",
+      conceptTopicRequired: "必填",
+      productPhotosOptionalTitle: "产品照片（选填）",
+      mainPhotoOptional: "选填",
+      mainPhotoOptionalHint: "有产品照可以上传 — 没有的话会用主题、文案和研究风格出图。",
       stylePickerTitle: "创作方向",
       stylePickerHint: "直接创作适合大部分产品；模特佩戴会生成人手／佩戴场景。",
       stylePickerQuickLabel: "直接创作",

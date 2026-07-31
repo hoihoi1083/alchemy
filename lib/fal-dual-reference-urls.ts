@@ -79,11 +79,23 @@ export function carouselSeriesConsistencyLock(visualDna?: string): string {
 }
 
 /** After cover is generated: later slides see cover pixels as the last image_urls entry. */
-export function carouselCoverSeriesAnchorHint(): string {
-  return [
+export function carouselCoverSeriesAnchorHint(input?: {
+  hasProductPhoto?: boolean;
+}): string {
+  const parts = [
     "SERIES COVER ANCHOR: The LAST image in image_urls is the already-generated COVER slide of THIS carousel.",
     "Match that cover's art medium, lighting softness, surface/prop language, and overall look.",
-    "IMAGE 1 is still the exact product hero — this tip/summary slide MUST show IMAGE 1's product clearly (same colors/materials as IMAGE 1 and the cover).",
-    "Do not invent mascots, different jewelry colors, or a new photography style that conflicts with the cover.",
-  ].join(" ");
+  ];
+  if (input?.hasProductPhoto !== false) {
+    parts.push(
+      "IMAGE 1 is still the exact product hero — this tip/summary slide MUST show IMAGE 1's product clearly (same colors/materials as IMAGE 1 and the cover).",
+      "Do not invent mascots, different jewelry colors, or a new photography style that conflicts with the cover.",
+    );
+  } else {
+    parts.push(
+      "Match topic, typography, and shared series DNA from the cover — do not invent a fake product SKU or mascot.",
+      "Do not invent a new photography style that conflicts with the cover.",
+    );
+  }
+  return parts.join(" ");
 }

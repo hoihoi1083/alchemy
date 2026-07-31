@@ -773,6 +773,11 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     promptExtra,
     contentResearchApplyRef,
     promotionMode,
+    imageRefPhoto,
+    visualStyleId,
+    imageCreativeMode,
+    productPhoto,
+    effectiveImageOutputMode,
   });
   referenceAnalyzeContextRef.current = {
     conceptIdea,
@@ -782,6 +787,11 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     promptExtra,
     contentResearchApplyRef,
     promotionMode,
+    imageRefPhoto,
+    visualStyleId,
+    imageCreativeMode,
+    productPhoto,
+    effectiveImageOutputMode,
   };
 
   const lastCompletedReferenceAnalyzeKeyRef = useRef<string | null>(null);
@@ -793,9 +803,13 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       referenceAnalyzeInFlightKeyRef.current = null;
       setUserReferenceBrief(null);
       setReferenceAnalyzeNote(null);
+      setReferenceAnalyzeBusy(false);
       return;
     }
     if (lastCompletedReferenceAnalyzeKeyRef.current === referenceAnalyzeKey) {
+      // Effect may re-run (Strict Mode / File identity) after a cancelled in-flight
+      // request left busy=true — clear the spinner without re-billing Florence.
+      setReferenceAnalyzeBusy(false);
       return;
     }
     if (referenceAnalyzeInFlightKeyRef.current === referenceAnalyzeKey) {
@@ -805,11 +819,12 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 
     let cancelled = false;
     const run = async () => {
-      if (!imageRefPhoto) return;
+      const ctx = referenceAnalyzeContextRef.current;
+      const cover = ctx.imageRefPhoto;
+      if (!cover) return;
       setReferenceAnalyzeBusy(true);
       setReferenceAnalyzeNote(null);
       try {
-        const ctx = referenceAnalyzeContextRef.current;
         const promptForAnalyze = refreshContentResearchPromptExtra(
           ctx.promptExtra,
           ctx.contentResearchApplyRef,
@@ -822,12 +837,12 @@ export function useStudioWizard(promotionMode: PromotionMode) {
           promptMarket,
         );
         const fd = new FormData();
-        fd.set("reference_image", imageRefPhoto);
-        fd.set("promotion_mode", promotionMode);
-        fd.set("image_output_mode", effectiveImageOutputMode);
-        fd.set("visual_style", visualStyleId);
-        fd.set("image_creative_mode", imageCreativeMode);
-        fd.set("has_product_photo", productPhoto ? "1" : "0");
+        fd.set("reference_image", cover);
+        fd.set("promotion_mode", ctx.promotionMode);
+        fd.set("image_output_mode", ctx.effectiveImageOutputMode);
+        fd.set("visual_style", ctx.visualStyleId);
+        fd.set("image_creative_mode", ctx.imageCreativeMode);
+        fd.set("has_product_photo", ctx.productPhoto ? "1" : "0");
         fd.set("conceptIdea", ctx.conceptIdea.trim());
         fd.set("headline", ctx.headline.trim());
         fd.set("subline", ctx.subline.trim());
@@ -857,6 +872,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
           setReferenceAnalyzeNote(
             e instanceof Error ? e.message : m.wizard.referenceBriefAnalyzeFailed,
           );
+          // Mark complete on failure too — otherwise UI retries forever on every remount.
+          lastCompletedReferenceAnalyzeKeyRef.current = referenceAnalyzeKey;
         }
       } finally {
         if (referenceAnalyzeInFlightKeyRef.current === referenceAnalyzeKey) {
@@ -873,17 +890,16 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       }
     };
   }, [
+    // Key already fingerprints the cover file + mode — do not also depend on File
+    // identity or busy stays true after a cancelled remount with the same key.
     referenceAnalyzeKey,
-    imageRefPhoto,
-    promotionMode,
-    effectiveImageOutputMode,
-    productPhoto,
     m.wizard.referenceBriefAnalyzed,
     m.wizard.referenceCarouselBriefAnalyzed,
     m.wizard.referenceBriefAnalyzeFailed,
     setUserReferenceBrief,
     setReferenceAnalyzeBusy,
     setReferenceAnalyzeNote,
+    setPromptExtra,
     promptMarket,
   ]);
 
@@ -2297,6 +2313,84 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     );
   }
 
+  /** Regenerate one A/B variant — keep the other version. */
+  async function regenerateAbVariant(variantIndex: number): Promise<void> {
+    if (variantIndex < 0 || variantIndex >= imageVariantUrls.length) return;
+    if (imageVariantUrls.length <= 1) {
+      await generateImage();
+      return;
+    }
+    if (!canGenerateImage()) {
+      setError(imageGenerateDisabledReason || m.wizard.imageGenerateNotReady);
+      return;
+    }
+
+    setImageBusy(true);
+    setError(null);
+    setImageJobMeta({ kind: "image", startedAt: Date.now(), sceneCount: 1 });
+    try {
+      const fd = new FormData();
+      fd.set("visual_style", visualStyleId);
+      fd.set("art_style", artStyleId);
+      if (brandProfile) fd.set("brand_profile", JSON.stringify(brandProfile));
+      fd.set("brand_kit", JSON.stringify(brandKit));
+      fd.set(
+        "product_name",
+        promotionMode === "concept"
+          ? effectivePromoteName || product.trim() || conceptIdea.trim()
+          : product.trim(),
+      );
+      fd.set("business", business.trim());
+      fd.set("headline", headline.trim());
+      fd.set("subline", subline.trim());
+      fd.set("offer", offer.trim());
+      fd.set("prompt_market", promptMarket);
+      fd.set("subject_framing", subjectFraming);
+      fd.set("prompt_extra", effectivePromptExtra());
+      fd.set("workflow_mode", workflowMode);
+      fd.set("promotion_mode", promotionMode);
+      fd.set("image_text_mode", imageTextMode);
+      fd.set("aspect_ratio", effectiveImageAspectRatio);
+      fd.set("endpoint", referenceStrategy.sendPixelsToFal ? EDIT_ENDPOINT : TEXT_ENDPOINT);
+      fd.set("num_images", "1");
+      fd.set("image_output_mode", "single");
+      if (productPhoto) fd.set("reference_image", productPhoto);
+      attachReferenceToForm(fd);
+
+      // Small variation nudge so A/B re-rolls don't clone the sibling.
+      if (variantIndex === 1) {
+        fd.set(
+          "prompt_extra",
+          [effectivePromptExtra(), "A/B variant B: alternate layout / crop / accent emphasis vs version A."]
+            .filter(Boolean)
+            .join(" | "),
+        );
+      }
+
+      const res = await fetch("/api/generate-image", { method: "POST", body: fd });
+      const data = await readGenerateJson(res);
+      if (!res.ok) throw new Error((data.error as string) ?? m.errors.polishFailed);
+      notifyCreditBalance(readCreditBalanceFromResponse(data));
+      const urls = (data.imageUrls as string[] | undefined) ?? [data.imageUrl as string];
+      const nextUrl = normalizeGeneratedImageUrl(urls.find((u) => Boolean(u)) ?? null);
+      if (!nextUrl) throw new Error(m.errors.imageGenNoUrl);
+
+      setImageVariantUrls((prev) => prev.map((u, i) => (i === variantIndex ? nextUrl : u)));
+      if (selectedVariantIndex === variantIndex) {
+        setImageUrl(nextUrl);
+        imageUrlRef.current = nextUrl;
+        void refreshImagePostflight(nextUrl);
+      }
+      setImageGenKey((k: number) => k + 1);
+      if (typeof data.endpoint === "string") setLastImageEndpoint(data.endpoint);
+    } catch (e: unknown) {
+      setError(friendlyError(e, m.errors.polishFailed));
+    } finally {
+      setImageBusy(false);
+      setImageJobMeta(null);
+    }
+  }
+
   /** Regenerate one carousel/campaign slide — not the full set. */
   async function regenerateCarouselSlide(slideIndex: number): Promise<void> {
     if (slideIndex < 0 || slideIndex >= campaignSlides.length) return;
@@ -2317,16 +2411,12 @@ export function useStudioWizard(promotionMode: PromotionMode) {
           (s) => typeof s.body === "string" || typeof s.takeaway === "string",
         ),
       );
-    if (!useTeaching) {
-      // Campaign 3-pack still regenerates the full set until a single-slide API exists.
-      await generateImage();
-      return;
-    }
+    const apiPath = useTeaching ? "/api/generate-teaching-carousel" : "/api/generate-campaign";
 
     setImageBusy(true);
     setError(null);
     setImageJobMeta({
-      kind: "teaching-carousel",
+      kind: useTeaching ? "teaching-carousel" : "campaign",
       startedAt: Date.now(),
       sceneCount: 1,
     });
@@ -2334,12 +2424,19 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       const fd = new FormData();
       fd.set("visual_style", visualStyleId);
       fd.set("art_style", artStyleId);
+      if (brandProfile) fd.set("brand_profile", JSON.stringify(brandProfile));
       fd.set("brand_kit", JSON.stringify(brandKit));
-      fd.set("product_name", product.trim());
+      fd.set(
+        "product_name",
+        promotionMode === "concept"
+          ? effectivePromoteName || product.trim() || conceptIdea.trim()
+          : product.trim(),
+      );
       fd.set("business", business.trim());
       fd.set("headline", headline.trim());
       fd.set("subline", subline.trim());
       fd.set("offer", offer.trim());
+      if (!useTeaching) fd.set("campaign_theme", campaignTheme.trim());
       fd.set("prompt_market", promptMarket);
       fd.set("subject_framing", subjectFraming);
       fd.set("prompt_extra", effectivePromptExtra());
@@ -2358,7 +2455,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         referenceStrategy.sendPixelsToFal ? EDIT_ENDPOINT : TEXT_ENDPOINT,
       );
 
-      const res = await fetch("/api/generate-teaching-carousel", {
+      const res = await fetch(apiPath, {
         method: "POST",
         body: fd,
       });
@@ -2529,7 +2626,11 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 
   function imageGenerateBlockReason(): string | null {
     if (canGenerateImage()) return null;
-    if (referenceAnalyzeBusy || researchReelAnalyzeBusy) {
+    if (
+      (referenceAnalyzeBusy || researchReelAnalyzeBusy) &&
+      !userReferenceBrief &&
+      !referenceAnalyzeNote
+    ) {
       return m.wizard.referenceBriefAnalyzingWait;
     }
     if (useReferenceVideo && referenceAd && referenceIsVideo) {
@@ -3157,16 +3258,19 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       if (visualStyleId === "service-promo" || visualStyleId === "website-launch") {
         if (!business.trim()) return false;
       }
-      if (conceptStyleRequiresHeadline(visualStyleId) && !headline.trim()) return false;
-      if (imageCreativeMode === "reference-concept") {
-        if (!imageRefPhoto) return false;
-        if (productPhoto) return true;
-        // Concept + reference only → style-only (copy from step 1, palette from reference)
-        return true;
+      // On-image hook is required for these styles — concept topic alone is not enough.
+      if (conceptStyleRequiresHeadline(visualStyleId) && !headline.trim()) {
+        return false;
       }
-      if (productPhoto || imageRefPhoto) return true;
+      const hasConceptCopy = Boolean(
+        headline.trim() || conceptIdea.trim() || effectivePromoteName,
+      );
+      if (imageCreativeMode === "reference-concept") {
+        // Research / style-ref path: need ref + copy; product photo optional.
+        return Boolean(imageRefPhoto) && hasConceptCopy;
+      }
       if (effectiveImageMode === "describe") return imagePrompt.trim().length > 0;
-      return true;
+      return hasConceptCopy || Boolean(productPhoto || imageRefPhoto);
     }
     if (visualStyleId === "info-poster") {
       return Boolean(productPhoto && headline.trim());
@@ -5898,6 +6002,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     referencePreviewUrl,
     regenerateStoryboardSceneWithAi,
     regenerateCarouselSlide,
+    regenerateAbVariant,
     stampStoryboardSceneLogo,
     reorderStoryboardScene,
     replaceStoryboardSceneImage,

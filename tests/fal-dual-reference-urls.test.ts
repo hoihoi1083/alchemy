@@ -93,4 +93,11 @@ describe("dual reference layout-transfer (research OR manual style upload)", () 
     assert.match(hint, /IMAGE 1/);
     assert.match(hint, /mascot|recolor|jewelry/i);
   });
+
+  it("cover series anchor without product skips IMAGE 1 product hero language", () => {
+    const hint = carouselCoverSeriesAnchorHint({ hasProductPhoto: false });
+    assert.match(hint, /SERIES COVER ANCHOR/);
+    assert.doesNotMatch(hint, /exact product hero/i);
+    assert.match(hint, /series DNA|topic|typography/i);
+  });
 });
