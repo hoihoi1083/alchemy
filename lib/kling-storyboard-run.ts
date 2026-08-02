@@ -150,29 +150,29 @@ export async function runKlingStoryboardFallback(opts: {
     imageUrls.map(async (imageUrl, i) => {
       const duration = clipDurations[i] ?? 5;
       const meta = scenesMeta[i];
-      const prompt =
-        imageUrls.length === 1 && motionPrompt
-          ? [
-              "Animate this exact still with confident commercial camera motion and light movement.",
-              motionPrompt.slice(0, 400),
-              "Preserve layout, product, logo, and blank UI. Do not invent any readable text or Chinese glyphs.",
-              "If any accidental gibberish text appears, keep it heavily out-of-focus and unreadable.",
-            ].join(" ")
-          : klingSceneMotionPrompt({
-              sceneIndex: i + 1,
-              sceneCount: imageUrls.length,
-              // Do NOT pass Chinese sceneDescription as motion — Kling fills screens with gibberish.
-              sceneDescription: undefined,
-              imagePrompt: meta?.imagePrompt?.slice(0, 120),
-              role: meta?.role,
-              theme,
-              endWithBrandLogo: Boolean(meta?.useBrandLogo ?? meta?.endWithBrandLogo),
-              useBrandLogo: Boolean(meta?.useBrandLogo ?? meta?.endWithBrandLogo),
-            });
+      // Never embed Seedance/wizard marketing copy as Kling motion — it burns text onto video.
+      // Captions belong in /captions after generation.
+      const prompt = klingSceneMotionPrompt({
+        sceneIndex: i + 1,
+        sceneCount: imageUrls.length,
+        // Do NOT pass Chinese sceneDescription as motion — Kling fills screens with gibberish.
+        sceneDescription: undefined,
+        imagePrompt: meta?.imagePrompt?.slice(0, 120),
+        role: meta?.role,
+        theme: theme.slice(0, 80),
+        endWithBrandLogo: Boolean(meta?.useBrandLogo ?? meta?.endWithBrandLogo),
+        useBrandLogo: Boolean(meta?.useBrandLogo ?? meta?.endWithBrandLogo),
+      });
+      // Optional short camera hint from caller (must already be motion-only English).
+      const motionHint = motionPrompt.slice(0, 160).trim();
+      const finalPrompt =
+        imageUrls.length === 1 && motionHint
+          ? `${prompt} Extra camera hint: ${motionHint}`
+          : prompt;
 
       const result = await fal.subscribe(KLING_ENDPOINT, {
         input: {
-          prompt,
+          prompt: finalPrompt,
           image_url: imageUrl,
           duration: (duration === 10 ? "10" : "5") as "5" | "10",
           negative_prompt: KLING_TEXTLESS_NEGATIVE,

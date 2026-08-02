@@ -3069,6 +3069,11 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       fd.set("inpaint_mode", isEraseIntent(prompt) ? "erase" : "fill");
       fd.set("mask_image", new File([maskBlob], "mask.png", { type: "image/png" }));
       if (!isEraseIntent(prompt)) fd.set("brand_kit", JSON.stringify(brandKit));
+      fd.set("product_name", effectivePromoteName);
+      fd.set("headline", headline.trim());
+      fd.set("subline", subline.trim());
+      fd.set("offer", offer.trim());
+      fd.set("art_style", artStyleId);
       const res = await fetch("/api/inpaint-image", { method: "POST", body: fd, credentials: "include" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? m.errors.refineFailed);
@@ -3098,6 +3103,11 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       fd.set("inpaint_mode", isEraseIntent(prompt) ? "erase" : "fill");
       fd.set("mask_image", new File([maskBlob], "mask.png", { type: "image/png" }));
       if (!isEraseIntent(prompt)) fd.set("brand_kit", JSON.stringify(brandKit));
+      fd.set("product_name", effectivePromoteName);
+      fd.set("headline", headline.trim());
+      fd.set("subline", subline.trim());
+      fd.set("offer", offer.trim());
+      fd.set("art_style", artStyleId);
       const res = await fetch("/api/inpaint-image", { method: "POST", body: fd, credentials: "include" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? m.errors.refineFailed);

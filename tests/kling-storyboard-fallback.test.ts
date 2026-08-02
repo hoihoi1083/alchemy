@@ -52,4 +52,15 @@ describe("Kling storyboard clip duration helpers", () => {
     assert.match(prompt, /女主角微笑/);
     assert.match(prompt, /Keep the same people/);
   });
+
+  it("forbids readable invented text in motion prompts", () => {
+    const prompt = klingSceneMotionPrompt({
+      sceneIndex: 1,
+      sceneCount: 1,
+      theme: "product demo",
+      role: "hero",
+    });
+    assert.match(prompt, /do not invent.*readable text/i);
+    assert.match(prompt, /CRITICAL/i);
+  });
 });

@@ -645,8 +645,10 @@ export async function POST(request: Request) {
               request,
               clerkId: auth.user.userId,
               imageUrls,
-              theme: promptRaw.slice(0, 120),
-              motionPrompt: promptRaw,
+              // Mood only — never pass the Seedance marketing prompt as Kling motion
+              // (Kling invents on-screen Chinese/Latin from copy-heavy prompts).
+              theme: "",
+              motionPrompt: "",
               totalDurationSec,
             });
             await trackUsage(auth.user.userId, "video");

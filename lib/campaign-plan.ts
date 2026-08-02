@@ -263,7 +263,13 @@ function buildPlanPrompt(input: {
     input.headline ? `Seed headline: ${input.headline}` : "",
     input.subline ? `Seed selling points: ${input.subline}` : "",
     input.offer ? `Offer: ${input.offer}` : "",
-    input.promptExtra ? `Reference / style notes: ${input.promptExtra}` : "",
+    input.promptExtra
+      ? [
+          `Reference / research / style notes (MUST influence visualDna + each slide.composition):`,
+          input.promptExtra,
+          "When research/reference notes are present: match their palette, typography mood, and layout family — do NOT ignore them. Never copy reference on-image wording; use user headline/subline/offer only.",
+        ].join("\n")
+      : "",
     brandBlock,
   ]
     .filter(Boolean)

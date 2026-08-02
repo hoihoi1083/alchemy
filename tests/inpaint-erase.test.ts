@@ -14,4 +14,16 @@ describe("inpaint-erase", () => {
     assert.match(p, /Local heal only inside the mask/i);
     assert.match(p, /unmasked content/i);
   });
+
+  it("enriches fill prompts with product/ad context without inventing captions", () => {
+    const p = buildInpaintFillPrompt("replace background with soft marble", {
+      product: "Watch Pro",
+      headline: "週末特惠",
+      artStyle: "realistic",
+    });
+    assert.match(p, /Watch Pro/);
+    assert.match(p, /週末特惠/);
+    assert.match(p, /realistic/i);
+    assert.match(p, /do NOT paint new marketing captions/i);
+  });
 });

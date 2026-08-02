@@ -24,10 +24,35 @@ export function buildInpaintErasePrompt(): string {
 }
 
 /** Strong fill prompt when user wants replacement (not erase). */
-export function buildInpaintFillPrompt(userPrompt: string): string {
+export function buildInpaintFillPrompt(
+  userPrompt: string,
+  ctx?: {
+    product?: string;
+    headline?: string;
+    subline?: string;
+    offer?: string;
+    artStyle?: string;
+  },
+): string {
   const p = userPrompt.trim();
   if (isEraseIntent(p)) {
     return buildInpaintErasePrompt();
   }
-  return p;
+  const product = ctx?.product?.trim() ?? "";
+  const headline = ctx?.headline?.trim() ?? "";
+  const subline = ctx?.subline?.trim() ?? "";
+  const offer = ctx?.offer?.trim() ?? "";
+  const artStyle = ctx?.artStyle?.trim() ?? "";
+  return [
+    p,
+    product ? `Product identity: ${product} — keep the same product look outside and inside the mask when continuing the scene.` : "",
+    headline || subline || offer
+      ? `Ad context (do NOT paint new marketing captions unless the user asked for text): ${[headline, subline, offer].filter(Boolean).join(" | ")}.`
+      : "",
+    artStyle ? `Art style: ${artStyle}.` : "",
+    "Only regenerate masked pixels; match surrounding lighting, texture, and color.",
+    "CRITICAL: do not invent readable Chinese/Latin captions, watermarks, prices, or logos unless the user prompt explicitly asks for text.",
+  ]
+    .filter(Boolean)
+    .join(" ");
 }

@@ -69,6 +69,11 @@ export async function POST(req: Request) {
   const modeField = (formData.get("inpaint_mode") as string | null)?.trim();
   const maskFile = formData.get("mask_image");
   const brandKitRaw = (formData.get("brand_kit") as string | null)?.trim() || "";
+  const productName = (formData.get("product_name") as string | null)?.trim() || "";
+  const headline = (formData.get("headline") as string | null)?.trim() || "";
+  const subline = (formData.get("subline") as string | null)?.trim() || "";
+  const offer = (formData.get("offer") as string | null)?.trim() || "";
+  const artStyle = (formData.get("art_style") as string | null)?.trim() || "";
 
   // Erase = local heal via FILL (mask-only). FLUX Erase often deletes the whole
   // object under the brush (e.g. entire floating card), which feels wrong vs phone editors.
@@ -89,7 +94,13 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Invalid brand kit data." }, { status: 400 });
       }
     }
-    fillPrompt = buildInpaintFillPrompt(fillPrompt);
+    fillPrompt = buildInpaintFillPrompt(fillPrompt, {
+      product: productName,
+      headline,
+      subline,
+      offer,
+      artStyle,
+    });
     if (!fillPrompt.trim()) {
       return NextResponse.json({ error: "Describe what to paint inside the mask." }, { status: 400 });
     }
