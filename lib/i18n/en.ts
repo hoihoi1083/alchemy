@@ -3209,6 +3209,7 @@ export const en = {
       image_not_ready: "Wait for the generated image to appear.",
       video_busy: "Wait for video generation to finish.",
       video_not_ready: "Video is not ready yet — wait for generation, or go back and retry.",
+      plan_video_busy: "Wait for the AI motion plan to finish.",
     },
     combinedStyleTitle: "Image + video workflow",
     combinedStyleHint: "Image + video uses 分鏡 storyboard only — multi-scene stills, then one Reel. No single-poster Ship-it.",

@@ -3,11 +3,13 @@ import { NextResponse } from "next/server";
 import { chargeTokens, refundTokens } from "@/lib/billing/charge";
 import {
   collectKlingFallbackImageUrls,
+  countKlingFallbackImageSources,
   formatKlingFalError,
   klingStoryboardTokenCost,
+  parseKlingScenesMeta,
   resolveKlingClipDurations,
+  resolveKlingScenesMeta,
   runKlingStoryboardFallback,
-  type KlingSceneMeta,
 } from "@/lib/kling-storyboard-run";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 
@@ -15,11 +17,11 @@ export const runtime = "nodejs";
 export const maxDuration = 300;
 
 /**
- * Seedance face-policy fallback: animate each storyboard still with Kling I2V, then stitch.
- * Charged at Kling COGS-aligned tokens (cheaper than Seedance R2V for multi-scene).
+ * Animate storyboard stills with Kling I2V, then stitch.
+ * Charged at Kling COGS-aligned tokens.
  *
- * Accepts either multipart `images` files or `reference_image_urls` (preferred — avoids
- * Vercel 413 when re-uploading multi-MB scene PNGs).
+ * Charge BEFORE fal.storage.upload so insufficient balance never burns operator COGS.
+ * Accepts either multipart `images` files or `reference_image_urls` (preferred).
  */
 export async function POST(request: Request) {
   const auth = await requireAppUser();
@@ -41,21 +43,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid form data." }, { status: 400 });
   }
 
-  let imageUrls: string[];
-  try {
-    imageUrls = await collectKlingFallbackImageUrls(formData);
-  } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : "Failed to read storyboard images.";
-    return NextResponse.json({ error: message }, { status: 400 });
-  }
-
-  if (!imageUrls.length) {
+  // Count inputs without uploading — validate + charge first.
+  const sourceCount = countKlingFallbackImageSources(formData);
+  if (!sourceCount) {
     return NextResponse.json(
       { error: "Upload at least one storyboard scene image." },
       { status: 400 },
     );
   }
-  if (imageUrls.length > 9) {
+  if (sourceCount > 9) {
     return NextResponse.json({ error: "At most 9 storyboard scenes." }, { status: 400 });
   }
 
@@ -64,11 +60,11 @@ export async function POST(request: Request) {
   if (
     Number.isFinite(expectedCount) &&
     expectedCount > 0 &&
-    imageUrls.length < expectedCount
+    sourceCount < expectedCount
   ) {
     return NextResponse.json(
       {
-        error: `Only ${imageUrls.length} of ${expectedCount} scene images could be loaded for video. Re-generate the missing still (often the last scene URL expired), then try again.`,
+        error: `Only ${sourceCount} of ${expectedCount} scene images could be loaded for video. Re-generate the missing still (often the last scene URL expired), then try again.`,
       },
       { status: 400 },
     );
@@ -78,31 +74,63 @@ export async function POST(request: Request) {
   const totalDurationRaw = (formData.get("total_duration_sec") as string | null)?.trim();
   const totalDurationSec = totalDurationRaw ? Number(totalDurationRaw) || 8 : 8;
 
-  let scenesMeta: KlingSceneMeta[] = [];
-  const metaRaw = (formData.get("scenes_meta") as string | null)?.trim();
-  if (metaRaw) {
-    try {
-      const parsed = JSON.parse(metaRaw) as unknown;
-      if (Array.isArray(parsed)) scenesMeta = parsed as KlingSceneMeta[];
-    } catch {
-      /* ignore */
-    }
-  }
-
+  const clientMeta = parseKlingScenesMeta(formData.get("scenes_meta") as string | null);
+  const scenesMetaForBilling = resolveKlingScenesMeta(sourceCount, clientMeta);
   const clipDurations = resolveKlingClipDurations(
-    imageUrls.length,
+    sourceCount,
     totalDurationSec,
-    scenesMeta,
+    scenesMetaForBilling,
   );
   const tokenCost = klingStoryboardTokenCost(clipDurations);
 
   const charged = await chargeTokens(auth.user.userId, tokenCost, {
     kind: "kling_storyboard_fallback",
-    sceneCount: imageUrls.length,
+    sceneCount: sourceCount,
     clipDurations,
   });
   if ("error" in charged) return charged.error;
   const balanceAfter = charged.balanceAfter;
+
+  let imageUrls: string[];
+  try {
+    imageUrls = await collectKlingFallbackImageUrls(formData);
+  } catch (e: unknown) {
+    await refundTokens(auth.user.userId, tokenCost, {
+      kind: "kling_storyboard_fallback",
+      reason: "image_materialize_failed",
+    });
+    const message = e instanceof Error ? e.message : "Failed to read storyboard images.";
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
+
+  if (!imageUrls.length) {
+    await refundTokens(auth.user.userId, tokenCost, {
+      kind: "kling_storyboard_fallback",
+      reason: "no_images_after_charge",
+    });
+    return NextResponse.json(
+      { error: "Upload at least one storyboard scene image." },
+      { status: 400 },
+    );
+  }
+  if (
+    Number.isFinite(expectedCount) &&
+    expectedCount > 0 &&
+    imageUrls.length < expectedCount
+  ) {
+    await refundTokens(auth.user.userId, tokenCost, {
+      kind: "kling_storyboard_fallback",
+      reason: "incomplete_scene_images",
+    });
+    return NextResponse.json(
+      {
+        error: `Only ${imageUrls.length} of ${expectedCount} scene images could be loaded for video. Re-generate the missing still (often the last scene URL expired), then try again.`,
+      },
+      { status: 400 },
+    );
+  }
+
+  const scenesMeta = resolveKlingScenesMeta(imageUrls.length, clientMeta);
 
   try {
     const result = await runKlingStoryboardFallback({

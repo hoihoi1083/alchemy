@@ -36,6 +36,45 @@ export type KlingSceneMeta = {
   endWithBrandLogo?: boolean;
 };
 
+/** Parse client `scenes_meta` JSON; ignore malformed payloads. */
+export function parseKlingScenesMeta(raw: string | null | undefined): KlingSceneMeta[] {
+  const trimmed = raw?.trim();
+  if (!trimmed) return [];
+  try {
+    const parsed = JSON.parse(trimmed) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((row): row is KlingSceneMeta => Boolean(row) && typeof row === "object");
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * When the client omits scenes_meta, still give Kling role-based motion instead of
+ * identical generic push-ins across every clip.
+ */
+export function defaultKlingScenesMeta(sceneCount: number): KlingSceneMeta[] {
+  const n = Math.max(0, sceneCount);
+  if (n <= 0) return [];
+  if (n === 1) return [{ role: "product hero" }];
+  return Array.from({ length: n }, (_, i) => {
+    if (i === 0) return { role: "hook open" };
+    if (i === n - 1) return { role: "cta end" };
+    return { role: "product demo" };
+  });
+}
+
+/** Prefer client meta; pad with role defaults when short; cap when long. */
+export function resolveKlingScenesMeta(
+  sceneCount: number,
+  clientMeta: KlingSceneMeta[],
+): KlingSceneMeta[] {
+  if (sceneCount <= 0) return [];
+  if (clientMeta.length === 0) return defaultKlingScenesMeta(sceneCount);
+  const defaults = defaultKlingScenesMeta(sceneCount);
+  return defaults.map((d, i) => clientMeta[i] ?? d);
+}
+
 export function resolveKlingClipDurations(
   sceneCount: number,
   totalDurationSec: number,

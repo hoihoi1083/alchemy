@@ -6,7 +6,9 @@ import { mirrorImageUrlToFalStorage } from "@/lib/fal-mirror-media";
 import {
   klingSceneMotionPrompt,
   klingStoryboardTokenCost,
+  parseKlingScenesMeta,
   resolveKlingClipDurations,
+  resolveKlingScenesMeta,
   KLING_TEXTLESS_NEGATIVE,
   type KlingSceneMeta,
 } from "@/lib/kling-storyboard-fallback";
@@ -16,7 +18,12 @@ import { jobDir } from "@/lib/pipeline/paths";
 import { persistAndDurablize } from "@/lib/storage/durable-media";
 
 export type { KlingSceneMeta };
-export { klingStoryboardTokenCost, resolveKlingClipDurations };
+export {
+  klingStoryboardTokenCost,
+  parseKlingScenesMeta,
+  resolveKlingClipDurations,
+  resolveKlingScenesMeta,
+};
 
 const KLING_ENDPOINT = KLING_TURBO_PRO.endpoint;
 
@@ -35,6 +42,29 @@ function extractVideoUrl(data: unknown): string | null {
   const video = (data as { video?: { url?: unknown } }).video;
   if (video && typeof video.url === "string" && video.url) return video.url;
   return null;
+}
+
+/**
+ * Count storyboard/Kling image inputs WITHOUT uploading to fal (cheap pre-charge).
+ * Prefer reference_image_urls when present (primary storyboard client path).
+ */
+export function countKlingFallbackImageSources(formData: FormData): number {
+  const directRefUrls = (formData.get("reference_image_urls") as string | null)
+    ?.trim()
+    .split(/[\n,]+/)
+    .map((u) => u.trim())
+    .filter(Boolean);
+  if (directRefUrls?.length) return Math.min(directRefUrls.length, 9);
+
+  let n = 0;
+  const start = formData.get("image_start") as File | null;
+  if (start && start.size > 0) n += 1;
+  if ((formData.get("image_start_url") as string | null)?.trim()) n += 1;
+  for (const f of formData.getAll("images") as File[]) {
+    if (f && f.size > 0) n += 1;
+  }
+  if ((formData.get("image_ref_url") as string | null)?.trim()) n += 1;
+  return Math.min(n, 9);
 }
 
 /**

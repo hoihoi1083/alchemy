@@ -3021,6 +3021,7 @@ export const zhCn = {
       image_not_ready: "请等生成图片显示。",
       video_busy: "请等视频生成完成。",
       video_not_ready: "视频未完成 — 请等生成，或返回再试。",
+      plan_video_busy: "请等 AI 动态方案写完。",
     },
     combinedStyleTitle: "图片+视频工作流",
     combinedStyleHint: "图+片只用分镜：多场景关键帧再串成一条 Reel。不支持单图动态／一键出片。",

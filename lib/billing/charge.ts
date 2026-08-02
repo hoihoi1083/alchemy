@@ -84,9 +84,45 @@ export async function chargeTokens(
   }
 }
 
+function alertRefundFailure(
+  kind: "throw" | "null_user",
+  clerkId: string,
+  cost: number,
+  meta: Record<string, unknown>,
+  err?: unknown,
+): void {
+  console.error("[billing] refundTokens failed", {
+    kind,
+    clerkId,
+    cost,
+    meta,
+    err: err instanceof Error ? err.message : err != null ? String(err) : undefined,
+  });
+  void import("@sentry/nextjs")
+    .then((Sentry) => {
+      if (kind === "throw" && err != null) {
+        Sentry.captureException(err, {
+          tags: { billing: "refund_failed" },
+          extra: { clerkId, cost, meta, kind },
+        });
+      } else {
+        Sentry.captureMessage("billing_refund_null", {
+          level: "error",
+          tags: { billing: "refund_failed" },
+          extra: { clerkId, cost, meta, kind },
+        });
+      }
+    })
+    .catch(() => {
+      /* no Sentry */
+    });
+}
+
 /**
  * Refund tokens after a failed generation that was already charged.
- * Best-effort — never throws to the caller.
+ * Best-effort — never throws to the caller. Logs + Sentry on failure so ops
+ * can catch "charged with no refund" wallet leaks (including grantTokens null
+ * when the Mongo user row is missing).
  */
 export async function refundTokens(
   clerkId: string,
@@ -95,10 +131,15 @@ export async function refundTokens(
 ): Promise<number | null> {
   if (!isMongoConfigured() || cost <= 0) return null;
   try {
-    return await grantTokens(clerkId, cost, "refund", {
+    const balanceAfter = await grantTokens(clerkId, cost, "refund", {
       meta: { ...meta, phase: "refund" },
     });
-  } catch {
+    if (balanceAfter === null) {
+      alertRefundFailure("null_user", clerkId, cost, meta);
+    }
+    return balanceAfter;
+  } catch (err) {
+    alertRefundFailure("throw", clerkId, cost, meta, err);
     return null;
   }
 }

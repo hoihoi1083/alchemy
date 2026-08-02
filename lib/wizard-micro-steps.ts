@@ -74,6 +74,8 @@ export type WizardMicroStepState = {
   hasGeneratedImage: boolean;
   userReferenceBrief: unknown;
   referenceAnalyzeNote: string | null;
+  planProductVideoBusy: boolean;
+  planVideoPromptBusy: boolean;
 };
 
 const ROUTING_SKIP = new Set([
@@ -866,8 +868,14 @@ export function canProceedMicroStep(
   ) {
     return "need_headline";
   }
-  if (id === "video.product_plan" && !state.creativeVideoBrief.trim() && !state.product.trim()) {
-    return "need_product_name";
+  if (id === "video.product_plan") {
+    if (state.planProductVideoBusy) return "plan_video_busy";
+    if (!state.creativeVideoBrief.trim() && !state.product.trim()) {
+      return "need_product_name";
+    }
+  }
+  if (id === "video.ai_prompt" && state.planVideoPromptBusy) {
+    return "plan_video_busy";
   }
   return null;
 }

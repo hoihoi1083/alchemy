@@ -97,6 +97,8 @@ function wizardStateSnapshot(wizard: StudioWizardValue): WizardMicroStepState {
     ),
     userReferenceBrief: wizard.userReferenceBrief,
     referenceAnalyzeNote: wizard.referenceAnalyzeNote,
+    planProductVideoBusy: wizard.planProductVideoBusy,
+    planVideoPromptBusy: wizard.planVideoPromptBusy,
   };
 }
 
@@ -330,7 +332,7 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     }
   }, [currentId, handoffLegacy, wizard.visualStyleId]);
 
-  const goNext = useCallback(() => {
+  const goNext = useCallback(async () => {
     if (!currentId || blockReason) return;
     if (
       (currentId === "setup.pre_generate" || currentId === "image.generate") &&
@@ -345,11 +347,20 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
       return;
     }
 
+    // Await AI motion plans before leaving the step (do not race ahead of busy).
     if (currentId === "video.product_plan") {
-      void wizard.planProductVideo();
+      if (wizard.planProductVideoBusy) return;
+      if (!wizard.productVideoPlan) {
+        const ok = await wizard.planProductVideo();
+        if (!ok) return;
+      }
     }
     if (currentId === "video.ai_prompt") {
-      void wizard.planAiVideoPrompt();
+      if (wizard.planVideoPromptBusy) return;
+      if (!wizard.videoPrompt.trim()) {
+        const ok = await wizard.planAiVideoPrompt();
+        if (!ok) return;
+      }
     }
 
     if (currentId === "image.generate" || currentId === "setup.pre_generate") {

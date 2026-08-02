@@ -21,7 +21,7 @@ export type VideoStoryboardPlan = {
   visualDirection: string;
   totalDurationSec: number;
   scenes: StoryboardScenePlan[];
-  /** Full English Seedance reference-to-video prompt with @Image tags and time ranges. */
+  /** Full English motion-plan notes for Kling (JSON key kept as seedancePrompt for API compat). */
   seedancePrompt: string;
   productionNotes: string;
 };

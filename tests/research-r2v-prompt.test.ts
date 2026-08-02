@@ -22,6 +22,8 @@ describe("buildResearchR2vPrompt", () => {
     assert.match(prompt, /Fast cuts/);
     assert.match(prompt, /do NOT recreate tutorial/i);
     assert.doesNotMatch(prompt, /Generic slow push-in/);
+    // Research prompt must not be diluted by the generic fallback blob.
+    assert.doesNotMatch(prompt, /Reference-to-video fallback/);
   });
 
   it("uses videoPrompt when no research analysis", () => {

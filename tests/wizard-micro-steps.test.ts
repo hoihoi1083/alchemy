@@ -56,6 +56,8 @@ function baseState(overrides: Partial<WizardMicroStepState> = {}): WizardMicroSt
     hasGeneratedImage: false,
     userReferenceBrief: null,
     referenceAnalyzeNote: null,
+    planProductVideoBusy: false,
+    planVideoPromptBusy: false,
     ...overrides,
   };
 }
@@ -561,6 +563,30 @@ describe("wizard v2 parity audit", () => {
         }),
       ),
       "need_creative_brief",
+    );
+  });
+
+  it("blocks video plan steps while AI motion plan is busy", () => {
+    assert.equal(
+      canProceedMicroStep(
+        "video.product_plan",
+        { promotionMode: "physical", workflowMode: "video-only", videoSubpath: "product_promo" },
+        baseState({ product: "serum", planProductVideoBusy: true }),
+      ),
+      "plan_video_busy",
+    );
+    assert.equal(
+      canProceedMicroStep(
+        "video.ai_prompt",
+        { promotionMode: "concept", workflowMode: "video-only", videoSubpath: "creative_video" },
+        baseState({
+          promotionMode: "concept",
+          workflowMode: "video-only",
+          visualStyleId: "creative-video",
+          planVideoPromptBusy: true,
+        }),
+      ),
+      "plan_video_busy",
     );
   });
 

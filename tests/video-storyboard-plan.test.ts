@@ -8,7 +8,7 @@ import {
 } from "../lib/video-storyboard-plan";
 
 describe("parseVideoStoryboardPlan scene/prompt sync", () => {
-  it("pads missing @ImageN refs when scene_count forces more scenes", () => {
+  it("pads missing Scene N lines when scene_count forces more scenes", () => {
     const plan = parseVideoStoryboardPlan(
       {
         title: "Demo",
@@ -54,20 +54,21 @@ describe("parseVideoStoryboardPlan scene/prompt sync", () => {
           },
         ],
         seedancePrompt:
-          "Scene 1 [0-2s]: hard cut — @Image1 hook. Scene 2 [2-4s]: hard cut — @Image2 demo. Scene 3 [4-6s]: hard cut — @Image3 edit. Scene 4 [6-8s]: hard cut — @Image4 cta.",
+          "Scene 1 [0-2s]: hook — slow push-in. Scene 2 [2-4s]: demo — handheld drift. Scene 3 [4-6s]: edit — orbit. Scene 4 [6-8s]: cta — bold push-in.",
         productionNotes: "",
       },
       8,
       "6",
     );
     assert.equal(plan.scenes.length, 6);
-    assert.match(plan.seedancePrompt, /@Image5/i);
-    assert.match(plan.seedancePrompt, /@Image6/i);
+    assert.match(plan.seedancePrompt, /Scene\s*5/i);
+    assert.match(plan.seedancePrompt, /Scene\s*6/i);
+    assert.match(plan.seedancePrompt, /textless|captions/i);
   });
 });
 
 describe("video-storyboard-plan reel analysis", () => {
-  it("reel storyboard prompt maps reference shots to scenes", () => {
+  it("reel storyboard prompt maps reference shots and teaches Kling-first", () => {
     const prompt = buildReelStoryboardPlanPromptForTest({
       analysis: {
         durationSec: 180,
@@ -102,7 +103,8 @@ describe("video-storyboard-plan reel analysis", () => {
     });
     assert.match(prompt, /REFERENCE REEL structure/i);
     assert.match(prompt, /Hook close-up/i);
-    assert.match(prompt, /@ImageK/i);
+    assert.match(prompt, /Kling/i);
+    assert.doesNotMatch(prompt, /@ImageK/i);
   });
 });
 
@@ -133,13 +135,15 @@ describe("video-storyboard-plan layout transfer", () => {
     assert.doesNotMatch(prompt, /wearables → wrist\/on-body, macro detail/);
   });
 
-  it("generic storyboard keeps category adaptation template", () => {
+  it("generic storyboard keeps category adaptation and Kling-first motion grammar", () => {
     const prompt = buildStoryboardPlanPromptForTest({
       ...base,
       referenceStrategyKind: "none",
     });
     assert.match(prompt, /PRODUCT ADAPTATION \(critical\)/i);
     assert.match(prompt, /wearables → wrist\/on-body/i);
+    assert.match(prompt, /Kling/i);
     assert.doesNotMatch(prompt, /LAYOUT TRANSFER/i);
+    assert.doesNotMatch(prompt, /for Seedance API/i);
   });
 });

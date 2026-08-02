@@ -265,7 +265,7 @@ export const TEMPLATES: MarketingTemplate[] = [
     id: "storyboard-video",
     name: "Storyboard product reel",
     description:
-      "DeepSeek storyboard → Nano Banana scene stills → Seedance multi-image reference video.",
+      "DeepSeek storyboard → Nano Banana scene stills → Kling I2V per still (stitched; captions via /captions).",
     icon: "🎞️",
     aspectRatio: "9:16",
     duration: "10",

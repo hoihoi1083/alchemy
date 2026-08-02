@@ -236,93 +236,52 @@ export async function POST(request: Request) {
 
   const contentType = request.headers.get("content-type") ?? "";
 
-  // Peek caption count for billing (multipart needs form parse first).
-  let captionLineCount = 0;
-  let formData: FormData | null = null;
-  let jsonBody: {
-    video_url?: string;
-    script?: string;
-    locale?: string;
-    target_duration_sec?: number;
-    speech_start_sec?: number;
-    speech_url?: string;
-    voice_preset?: string;
-    caption_lines?: unknown;
-  } | null = null;
-
+  // Validate inputs BEFORE chargeTokens (same contract as add-bgm).
   if (contentType.includes("multipart/form-data")) {
-    formData = await request.formData();
-    captionLineCount = parseCaptionLines(formData.get("caption_lines")).length;
-  } else {
-    try {
-      jsonBody = await request.json();
-    } catch {
-      return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
+    const formData = await request.formData();
+    const videoFile = formData.get("video_file");
+    const videoUrl = (formData.get("video_url") as string | null)?.trim();
+    const script = (formData.get("script") as string | null)?.trim();
+    const speechUrl = (formData.get("speech_url") as string | null)?.trim();
+    const locale = ((formData.get("locale") as string | null)?.trim() || "hk") as VoiceoverLocale;
+    const rawPreset = (formData.get("voice_preset") as string | null)?.trim() ?? "";
+    const voicePreset: VoicePresetId | undefined = isVoicePresetId(rawPreset)
+      ? rawPreset
+      : undefined;
+    const targetRaw = formData.get("target_duration_sec");
+    const targetDurationSec =
+      typeof targetRaw === "string" && targetRaw.trim() ? Number(targetRaw) : undefined;
+    const startRaw = formData.get("speech_start_sec");
+    const speechStartSec =
+      typeof startRaw === "string" && startRaw.trim() ? Number(startRaw) : undefined;
+    const captionLines = parseCaptionLines(formData.get("caption_lines"));
+    const file = videoFile instanceof File && videoFile.size > 0 ? videoFile : undefined;
+
+    if (!LOCALES.has(locale)) {
+      return NextResponse.json({ error: "Invalid locale." }, { status: 400 });
     }
-    captionLineCount = parseCaptionLines(jsonBody?.caption_lines).length;
-  }
+    if (!file && !videoUrl) {
+      return NextResponse.json(
+        { error: "video_file or video_url is required." },
+        { status: 400 },
+      );
+    }
+    if (!speechUrl && !script && captionLines.length === 0) {
+      return NextResponse.json(
+        { error: "script, speech_url, or caption_lines is required." },
+        { status: 400 },
+      );
+    }
 
-  const tokenCost =
-    TOKEN_COST.voiceover * Math.max(1, captionLineCount >= 2 ? captionLineCount : 1);
-  const charged = await chargeTokens(auth.user.userId, tokenCost, {
-    kind: "voiceover_dub",
-    captionLines: captionLineCount,
-  });
-  if ("error" in charged) return charged.error;
-  const balanceAfter = charged.balanceAfter;
+    const tokenCost =
+      TOKEN_COST.voiceover * Math.max(1, captionLines.length >= 2 ? captionLines.length : 1);
+    const charged = await chargeTokens(auth.user.userId, tokenCost, {
+      kind: "voiceover_dub",
+      captionLines: captionLines.length,
+    });
+    if ("error" in charged) return charged.error;
 
-  try {
-    if (formData) {
-      const videoFile = formData.get("video_file");
-      const videoUrl = (formData.get("video_url") as string | null)?.trim();
-      const script = (formData.get("script") as string | null)?.trim();
-      const speechUrl = (formData.get("speech_url") as string | null)?.trim();
-      const locale = ((formData.get("locale") as string | null)?.trim() || "hk") as VoiceoverLocale;
-      const rawPreset = (formData.get("voice_preset") as string | null)?.trim() ?? "";
-      const voicePreset: VoicePresetId | undefined = isVoicePresetId(rawPreset)
-        ? rawPreset
-        : undefined;
-      const targetRaw = formData.get("target_duration_sec");
-      const targetDurationSec =
-        typeof targetRaw === "string" && targetRaw.trim()
-          ? Number(targetRaw)
-          : undefined;
-      const startRaw = formData.get("speech_start_sec");
-      const speechStartSec =
-        typeof startRaw === "string" && startRaw.trim()
-          ? Number(startRaw)
-          : undefined;
-      const captionLines = parseCaptionLines(formData.get("caption_lines"));
-
-      if (!LOCALES.has(locale)) {
-        await refundTokens(auth.user.userId, tokenCost, {
-          kind: "voiceover_dub",
-          reason: "validation",
-        });
-        return NextResponse.json({ error: "Invalid locale." }, { status: 400 });
-      }
-      const file = videoFile instanceof File && videoFile.size > 0 ? videoFile : undefined;
-      if (!file && !videoUrl) {
-        await refundTokens(auth.user.userId, tokenCost, {
-          kind: "voiceover_dub",
-          reason: "validation",
-        });
-        return NextResponse.json(
-          { error: "video_file or video_url is required." },
-          { status: 400 },
-        );
-      }
-      if (!speechUrl && !script && captionLines.length === 0) {
-        await refundTokens(auth.user.userId, tokenCost, {
-          kind: "voiceover_dub",
-          reason: "validation",
-        });
-        return NextResponse.json(
-          { error: "script, speech_url, or caption_lines is required." },
-          { status: 400 },
-        );
-      }
-
+    try {
       const result = await dubVoiceJob(request, {
         videoFile: file,
         videoUrl,
@@ -340,52 +299,72 @@ export async function POST(request: Request) {
       return NextResponse.json({
         ...result,
         tokensCharged: tokenCost,
-        creditBalance: balanceAfter,
+        creditBalance: charged.balanceAfter,
       });
-    }
-
-    const body = jsonBody!;
-    const videoUrl = body.video_url?.trim();
-    const script = body.script?.trim();
-    const speechUrl = body.speech_url?.trim();
-    const locale = (body.locale?.trim() || "hk") as VoiceoverLocale;
-    const rawPreset = body.voice_preset?.trim() ?? "";
-    const voicePreset: VoicePresetId | undefined = isVoicePresetId(rawPreset)
-      ? rawPreset
-      : undefined;
-    const captionLines = parseCaptionLines(body.caption_lines);
-
-    if (!videoUrl) {
+    } catch (e: unknown) {
       await refundTokens(auth.user.userId, tokenCost, {
         kind: "voiceover_dub",
-        reason: "validation",
+        reason: "generation_failed",
       });
-      return NextResponse.json({ error: "video_url is required." }, { status: 400 });
+      const message = e instanceof Error ? e.message : "Voiceover dub failed.";
+      return NextResponse.json({ error: message }, { status: 502 });
     }
-    if (!speechUrl && !script && captionLines.length === 0) {
-      await refundTokens(auth.user.userId, tokenCost, {
-        kind: "voiceover_dub",
-        reason: "validation",
-      });
-      return NextResponse.json(
-        { error: "script, speech_url, or caption_lines is required." },
-        { status: 400 },
-      );
-    }
-    if (!LOCALES.has(locale)) {
-      await refundTokens(auth.user.userId, tokenCost, {
-        kind: "voiceover_dub",
-        reason: "validation",
-      });
-      return NextResponse.json({ error: "Invalid locale." }, { status: 400 });
-    }
+  }
 
+  let body: {
+    video_url?: string;
+    script?: string;
+    locale?: string;
+    target_duration_sec?: number;
+    speech_start_sec?: number;
+    speech_url?: string;
+    voice_preset?: string;
+    caption_lines?: unknown;
+  } | null = null;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
+  }
+
+  const videoUrl = body?.video_url?.trim();
+  const script = body?.script?.trim();
+  const speechUrl = body?.speech_url?.trim();
+  const locale = (body?.locale?.trim() || "hk") as VoiceoverLocale;
+  const rawPreset = body?.voice_preset?.trim() ?? "";
+  const voicePreset: VoicePresetId | undefined = isVoicePresetId(rawPreset)
+    ? rawPreset
+    : undefined;
+  const captionLines = parseCaptionLines(body?.caption_lines);
+
+  if (!videoUrl) {
+    return NextResponse.json({ error: "video_url is required." }, { status: 400 });
+  }
+  if (!speechUrl && !script && captionLines.length === 0) {
+    return NextResponse.json(
+      { error: "script, speech_url, or caption_lines is required." },
+      { status: 400 },
+    );
+  }
+  if (!LOCALES.has(locale)) {
+    return NextResponse.json({ error: "Invalid locale." }, { status: 400 });
+  }
+
+  const tokenCost =
+    TOKEN_COST.voiceover * Math.max(1, captionLines.length >= 2 ? captionLines.length : 1);
+  const charged = await chargeTokens(auth.user.userId, tokenCost, {
+    kind: "voiceover_dub",
+    captionLines: captionLines.length,
+  });
+  if ("error" in charged) return charged.error;
+
+  try {
     const result = await dubVoiceJob(request, {
       videoUrl,
       script,
       locale,
-      targetDurationSec: body.target_duration_sec,
-      speechStartSec: body.speech_start_sec,
+      targetDurationSec: body?.target_duration_sec,
+      speechStartSec: body?.speech_start_sec,
       captionLines,
       speechUrl,
       voicePreset,
@@ -396,7 +375,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       ...result,
       tokensCharged: tokenCost,
-      creditBalance: balanceAfter,
+      creditBalance: charged.balanceAfter,
     });
   } catch (e: unknown) {
     await refundTokens(auth.user.userId, tokenCost, {

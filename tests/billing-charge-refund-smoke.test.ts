@@ -75,6 +75,45 @@ describe("billing smoke — invalid before charge (source contract)", () => {
       "missing-video 400 must be before chargeTokens",
     );
   });
+
+  it("dub-script-voice: validates video/script before chargeTokens", () => {
+    const src = readRoute("app/api/dub-script-voice/route.ts");
+    const chargeAt = firstIndex(src, /await chargeTokens\(/);
+    const videoRequired = src.indexOf("video_file or video_url is required");
+    const scriptRequired = src.indexOf("script, speech_url, or caption_lines is required");
+    assert.ok(chargeAt > 0, "chargeTokens present");
+    assert.ok(
+      videoRequired >= 0 && videoRequired < chargeAt,
+      "missing-video 400 must be before chargeTokens",
+    );
+    assert.ok(
+      scriptRequired >= 0 && scriptRequired < chargeAt,
+      "missing-script 400 must be before chargeTokens",
+    );
+    // Invalid paths must not charge-then-refund
+    assert.ok(
+      !/reason:\s*"validation"/.test(src),
+      "validation refunds should be gone after validate-before-charge",
+    );
+  });
+
+  it("refundTokens alerts on failure (Sentry) including null grant path", () => {
+    const src = readRoute("lib/billing/charge.ts");
+    assert.match(src, /refundTokens failed/);
+    assert.match(src, /captureException|captureMessage/);
+    assert.match(src, /refund_failed/);
+    assert.match(src, /billing_refund_null|null_user/);
+  });
+
+  it("generate-kling-storyboard: counts images and charges before fal upload", () => {
+    const src = readRoute("app/api/generate-kling-storyboard/route.ts");
+    const countAt = firstIndex(src, /countKlingFallbackImageSources\(/);
+    const chargeAt = firstIndex(src, /await chargeTokens\(/);
+    const uploadAt = firstIndex(src, /await collectKlingFallbackImageUrls\(/);
+    assert.ok(countAt >= 0, "must count sources without upload");
+    assert.ok(chargeAt > countAt, "charge must follow count");
+    assert.ok(uploadAt > chargeAt, "fal collect/upload must follow charge");
+  });
 });
 
 describe("billing smoke — fail → refund (source + wallet)", () => {
@@ -85,6 +124,8 @@ describe("billing smoke — fail → refund (source + wallet)", () => {
     "app/api/burn-visual-captions/route.ts",
     "app/api/generate-storyboard-images/route.ts",
     "app/api/add-bgm/route.ts",
+    "app/api/dub-script-voice/route.ts",
+    "app/api/generate-kling-storyboard/route.ts",
     "app/api/postprocess/route.ts",
     "app/api/analyze-research-reel/route.ts",
   ];

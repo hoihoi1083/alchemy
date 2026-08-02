@@ -19,7 +19,9 @@ import {
   collectKlingFallbackImageUrls,
   formatKlingFalError,
   klingStoryboardTokenCost,
+  parseKlingScenesMeta,
   resolveKlingClipDurations,
+  resolveKlingScenesMeta,
   runKlingStoryboardFallback,
 } from "@/lib/kling-storyboard-run";
 import { persistAndDurablize } from "@/lib/storage/durable-media";
@@ -623,10 +625,15 @@ export async function POST(request: Request) {
       if (imageUrls.length >= 1) {
         const totalDurationSec =
           typeof duration === "number" && duration > 0 ? duration : 8;
+        // Keep textless motionPrompt, but preserve shot-list roles/timing when present.
+        const scenesMeta = resolveKlingScenesMeta(
+          imageUrls.length,
+          parseKlingScenesMeta(formData.get("scenes_meta") as string | null),
+        );
         const clipDurations = resolveKlingClipDurations(
           imageUrls.length,
           totalDurationSec,
-          [],
+          scenesMeta,
         );
         const klingCost = klingStoryboardTokenCost(clipDurations);
         const klingCharged = await chargeTokens(auth.user.userId, klingCost, {
@@ -650,6 +657,7 @@ export async function POST(request: Request) {
               theme: "",
               motionPrompt: "",
               totalDurationSec,
+              scenesMeta,
             });
             await trackUsage(auth.user.userId, "video");
             return NextResponse.json({

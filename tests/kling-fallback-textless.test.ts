@@ -17,6 +17,10 @@ describe("Seedance→Kling fallback textless contract", () => {
       "theme must not be sliced from marketing promptRaw",
     );
     assert.match(src, /motionPrompt:\s*""/);
+    // Shot-list must still be passed so Kling gets role/timing motion (not generic push-in only).
+    assert.match(src, /scenesMeta/);
+    assert.match(src, /resolveKlingScenesMeta/);
+    assert.match(src, /parseKlingScenesMeta/);
   });
 
   it("kling-storyboard-run always uses klingSceneMotionPrompt (not raw marketing blob)", () => {

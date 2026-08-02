@@ -3020,6 +3020,7 @@ export const zh = {
       image_not_ready: "請等生成圖片顯示。",
       video_busy: "請等影片生成完成。",
       video_not_ready: "影片未完成 — 請等生成，或返回再試。",
+      plan_video_busy: "請等 AI 動態方案寫完。",
     },
     combinedStyleTitle: "圖片+影片工作流",
     combinedStyleHint: "圖+片只用分鏡：多場景關鍵幀再串成一條 Reel。唔支援單圖動態／一鍵出片。",

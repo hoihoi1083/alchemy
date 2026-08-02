@@ -215,7 +215,7 @@ export const VISUAL_STYLES: VisualStyleDef[] = [
     templateId: "storyboard-video",
     usesCompositor: false,
     promptHint:
-      "Photorealistic multi-scene product reel: DeepSeek plans story beats and scene stills for any product category, then Seedance reference-to-video with @Image tags.",
+      "Photorealistic multi-scene product reel: DeepSeek plans story beats and textless scene stills, then Kling I2V per still (stitched). Captions burn later via /captions.",
   },
   {
     id: "paper-layout",

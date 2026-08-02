@@ -17,13 +17,12 @@ import { isStoryboardStructureLabel } from "@/lib/prompt-variables";
 import type { ResearchReelAnalysis } from "@/lib/reel-analysis-types";
 import { pinStoryboardPlanToReelAnalysis } from "@/lib/reel-reference-brief";
 import type { SubjectFraming } from "@/lib/prompt-variables";
-import { VIDEO_BGM_HINT } from "@/lib/templates";
+import type { StoryboardSceneCount } from "@/lib/ad-pack-preferences";
+import { artStylePlannerHint, resolveArtStyleId, type ArtStyleId } from "@/lib/art-style";
 import type {
   StoryboardScenePlan,
   VideoStoryboardPlan,
 } from "@/lib/video-storyboard-types";
-import type { StoryboardSceneCount } from "@/lib/ad-pack-preferences";
-import { artStylePlannerHint, resolveArtStyleId, type ArtStyleId } from "@/lib/art-style";
 import {
   MAX_STORYBOARD_SCENES,
   MIN_STORYBOARD_SCENES,
@@ -36,15 +35,30 @@ function sceneCountForDuration(durationSec: number): { min: number; max: number 
   return { min: 5, max: MAX_STORYBOARD_SCENES };
 }
 
-function finishSeedancePrompt(prompt: string): string {
+function finishMotionPlanPrompt(prompt: string): string {
   const p = prompt.trim();
-  if (!/hard cut/i.test(p)) {
-    return `${p}\n\nRules: HARD CUTS between every scene — never blend or morph one reference into another. No on-screen text, logos, or watermarks. Photorealistic throughout. No face distortion, no finger morphing, no plastic skin.${VIDEO_BGM_HINT}`;
-  }
-  if (!p.includes("instrumental")) {
-    return `${p}${VIDEO_BGM_HINT}`;
+  if (!/textless|no on-screen text/i.test(p)) {
+    return `${p}\n\nRules: Textless video frames — captions burn later via /captions. English camera motion only per scene. Hard cuts between clips (no morph).`;
   }
   return p;
+}
+
+function ensureMotionPlanCoversScenes(
+  motionPlan: string,
+  scenes: StoryboardScenePlan[],
+): string {
+  let prompt = motionPlan.trim();
+  if (!prompt) return prompt;
+
+  for (let i = 1; i <= scenes.length; i++) {
+    if (new RegExp(`Scene\\s*${i}\\b`, "i").test(prompt)) continue;
+    const scene = scenes[i - 1];
+    const role = scene.role?.trim() || `scene ${i}`;
+    const start = Number.isFinite(scene.startSec) ? scene.startSec : i - 1;
+    const end = Number.isFinite(scene.endSec) ? scene.endSec : i;
+    prompt = `${prompt}\nScene ${i} [${start}-${end}s]: ${role} — subtle camera motion matching role; textless frame.`;
+  }
+  return prompt;
 }
 
 function normalizeScene(raw: Partial<StoryboardScenePlan>, fallbackIndex: number): StoryboardScenePlan {
@@ -103,27 +117,6 @@ function enforceSceneCount(
   }));
 }
 
-function ensureSeedancePromptCoversScenes(
-  seedancePrompt: string,
-  scenes: StoryboardScenePlan[],
-): string {
-  let prompt = seedancePrompt.trim();
-  if (!prompt) return prompt;
-
-  for (let i = 1; i <= scenes.length; i++) {
-    if (new RegExp(`@\\s*Image\\s*${i}\\b`, "i").test(prompt)) continue;
-    const scene = scenes[i - 1];
-    const start = Number.isFinite(scene.startSec) ? scene.startSec : i - 1;
-    const end = Number.isFinite(scene.endSec) ? scene.endSec : i;
-    const action =
-      scene.sceneDescriptionZh?.trim() ||
-      scene.role?.trim() ||
-      `scene ${i} still`;
-    prompt = `${prompt}\nScene ${i} [${start}-${end}s]: hard cut — @Image${i} ${action}, static or subtle motion only.`;
-  }
-  return prompt;
-}
-
 function normalizeStoryboardPlan(
   parsed: Partial<VideoStoryboardPlan>,
   durationSec: number,
@@ -160,15 +153,9 @@ function normalizeStoryboardPlan(
   if (!seedancePrompt) {
     throw new Error("AI planning returned an empty video prompt.");
   }
-  // Scene count can be padded/trimmed after planning — keep @ImageN refs in sync
-  // instead of 400'ing the whole generate (user saw "@Image6" with tokens not charged).
-  seedancePrompt = ensureSeedancePromptCoversScenes(seedancePrompt, scenes);
-
-  for (let i = 1; i <= scenes.length; i++) {
-    if (!new RegExp(`@\\s*Image\\s*${i}\\b`, "i").test(seedancePrompt)) {
-      throw new Error(`Seedance prompt must reference @Image${i}.`);
-    }
-  }
+  // Keep field name seedancePrompt for API compat; content is Kling motion plan notes.
+  // Pad missing Scene N lines when scene_count forces more scenes.
+  seedancePrompt = ensureMotionPlanCoversScenes(seedancePrompt, scenes);
 
   return {
     title: String(parsed.title ?? "").trim() || "Product story reel",
@@ -179,7 +166,7 @@ function normalizeStoryboardPlan(
       Number(parsed.totalDurationSec) || durationSec,
     ),
     scenes,
-    seedancePrompt: finishSeedancePrompt(seedancePrompt),
+    seedancePrompt: finishMotionPlanPrompt(seedancePrompt),
     productionNotes: String(parsed.productionNotes ?? "").trim(),
   };
 }
@@ -239,7 +226,7 @@ function buildPlanPrompt(input: {
 
   if (conceptMode) {
     return [
-      `Plan a ${artStyleId === "realistic" ? "photorealistic" : "stylized"} CONCEPT VIDEO STORYBOARD (service / idea short — product photo optional).`,
+      `Plan a ${artStyleId === "realistic" ? "photorealistic" : "stylized"} CONCEPT VIDEO STORYBOARD (service / idea short — product photo optional) for Kling I2V per still → stitch.`,
       "Return ONE JSON object only — no markdown fences.",
       "",
       "Required JSON shape:",
@@ -266,17 +253,16 @@ function buildPlanPrompt(input: {
       "",
       ...endCardLogoPlannerRules(input.useBrandLogo),
       "",
-      "seedancePrompt (English, for Seedance API):",
-      `- Opening line: 9:16 concept short for this campaign (~${input.durationSec}s).`,
-      "- One block per scene: Scene N [start-end s]: hard cut — @ImageK … static or very subtle motion only.",
-      "- Each @ImageK must match scenes[K-1].imageIndex exactly.",
-      "- Prefer locked/static camera, hard cuts, minimal morphing.",
-      "- NO on-screen text, prices, or discounts unless user brief includes them.",
+      "seedancePrompt (English — Kling motion plan notes; JSON key kept for API compat):",
+      `- Opening line: 9:16 concept short for this campaign (~${input.durationSec}s). Runtime animates EACH still with Kling I2V then stitches.`,
+      "- One block per scene: Scene N [start-end s]: <role> — English camera motion only (push-in, orbit, handheld drift).",
+      "- Do NOT use Seedance @Image / hard-cut R2V grammar — Kling never sees that blob as marketing copy.",
+      "- NO on-screen text, prices, or discounts in motion notes (captions burn later via /captions).",
       input.offer
-        ? `- User offer (may appear in CTA scene only): ${input.offer}`
+        ? `- User offer (may appear in CTA caption only): ${input.offer}`
         : "- User did NOT provide pricing — do NOT invent prices or discount % in prompts.",
       "",
-      "productionNotes: brief user note — what to expect.",
+      "productionNotes: brief user note — expect Kling multi-clip cost (~110 tokens/5s × scenes).",
       "",
       `Target duration: ${input.durationSec} seconds.`,
       artHint,
@@ -323,8 +309,8 @@ function buildPlanPrompt(input: {
 
   return [
     layoutTransferRef
-      ? "Plan a reference-layout VIDEO STORYBOARD: same ad design family as IMAGE 1 on every still, user's product and copy — for one Seedance reference-to-video call."
-      : `Plan a ${artStyleId === "realistic" ? "photorealistic" : "stylized"} product VIDEO STORYBOARD for a single Seedance reference-to-video call.`,
+      ? "Plan a reference-layout VIDEO STORYBOARD: same ad design family as IMAGE 1 on every still, user's product and copy — for Kling I2V per still → stitch (captions via /captions)."
+      : `Plan a ${artStyleId === "realistic" ? "photorealistic" : "stylized"} product VIDEO STORYBOARD for Kling I2V per still → stitch (not one Seedance R2V call).`,
     "Return ONE JSON object only — no markdown fences.",
     "",
     "Required JSON shape:",
@@ -347,18 +333,17 @@ function buildPlanPrompt(input: {
     "",
     ...endCardLogoPlannerRules(input.useBrandLogo),
     "",
-    "seedancePrompt (English, for Seedance API):",
+    "seedancePrompt (English — Kling motion plan notes; JSON key kept for API compat):",
     `- Opening line: 9:16 commercial for THIS product category in the chosen art direction.`,
-    "- One block per scene: Scene N [start-end s]: hard cut — @ImageK … static or very subtle motion only.",
-    "- Each @ImageK must match scenes[K-1].imageIndex exactly.",
-    "- Prefer locked/static camera, hard cuts, minimal morphing.",
+    "- One block per scene: Scene N [start-end s]: <role> — English camera motion only (push-in, orbit, handheld drift).",
+    "- Do NOT use Seedance @Image / hard-cut R2V grammar — runtime is Kling I2V per still.",
     "- People only when category-appropriate; no celebrity faces; hands-only OK.",
-    "- NO on-screen text, prices, or discounts unless user brief includes them.",
+    "- NO on-screen text, prices, or discounts in motion notes (captions burn later via /captions).",
     input.offer
-      ? `- User offer (may appear in CTA scene only): ${input.offer}`
+      ? `- User offer (may appear in CTA caption only): ${input.offer}`
       : "- User did NOT provide pricing — do NOT invent prices or discount % in prompts.",
     "",
-    "productionNotes: brief user note in 繁體中文 (HK) or English — what to expect, limits of one Seedance call.",
+    "productionNotes: brief user note in 繁體中文 (HK) or English — expect Kling multi-clip tokens (~110/5s × scenes).",
     "",
     `Target duration: ${input.durationSec} seconds.`,
     artHint,
@@ -588,11 +573,11 @@ function buildReelStoryboardPlanPrompt(input: {
     "",
     ...endCardLogoPlannerRules(input.useBrandLogo),
     "",
-    "seedancePrompt (English):",
+    "seedancePrompt (English — Kling motion plan notes):",
     seedanceLead,
-    "- One block per scene: Scene N [start-end s]: hard cut — @ImageK … static or subtle motion.",
-    "- Every @ImageK must match scenes[K-1].imageIndex.",
-    "- HARD CUTS only — no morphing between scenes.",
+    "- One block per scene: Scene N [start-end s]: <role> — English camera motion only.",
+    "- Do NOT use Seedance @Image / hard-cut R2V grammar — runtime is Kling I2V per still → stitch.",
+    "- Textless frames; captions burn later via /captions.",
     "",
     `Reference visual direction: ${input.analysis.visualDirection || "follow analyzed frames"}`,
     `Reference motion/pacing: ${input.analysis.motionSummary || "match reference reel"}`,
@@ -609,6 +594,7 @@ function buildReelStoryboardPlanPrompt(input: {
       : "",
     `Target duration: ${input.durationSec}s.`,
     artStylePlannerHint(input.artStyleId),
+    "productionNotes: expect Kling multi-clip cost; match reference pacing without cloning topic.",
   ]
     .filter(Boolean)
     .join("\n");
@@ -661,8 +647,8 @@ export async function planVideoStoryboardFromReelAnalysis(
       {
         role: "system",
         content: conceptMode
-          ? "You are a performance marketing storyboard director. Adapt a viral reference reel into a concept/message storyboard for Seedance multi-image reference-to-video. Output valid JSON only."
-          : "You are a performance marketing storyboard director. Adapt a viral reference reel into a product storyboard for Seedance multi-image reference-to-video. Output valid JSON only.",
+          ? "You are a performance marketing storyboard director. Adapt a viral reference reel into a concept/message storyboard for Kling I2V per still → stitch (textless frames; captions via /captions). Output valid JSON only."
+          : "You are a performance marketing storyboard director. Adapt a viral reference reel into a product storyboard for Kling I2V per still → stitch (textless frames; captions via /captions). Output valid JSON only.",
       },
       {
         role: "user",

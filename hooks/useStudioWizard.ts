@@ -1200,10 +1200,11 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     brandProfile,
   ]);
 
-  const planAiVideoPrompt = useCallback(async () => {
+  const planAiVideoPrompt = useCallback(async (): Promise<boolean> => {
+    if (planVideoPromptBusy) return false;
     if (isCreativeVideoStyle(visualStyleId) && !creativeVideoBrief.trim() && !headline.trim()) {
       setError(m.errors.creativeBriefRequired);
-      return;
+      return false;
     }
     const conceptTextPlan =
       promotionMode === "concept" &&
@@ -1267,12 +1268,15 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       aiVideoPromptDurationRef.current = String(outputDurationSec);
       const suggested = String(data.suggestedHeadline ?? "").trim();
       if (suggested && !headline.trim()) setHeadline(suggested);
+      return true;
     } catch (e: unknown) {
       setError(friendlyError(e, m.errors.planVideoPromptFailed));
+      return false;
     } finally {
       setPlanVideoPromptBusy(false);
     }
   }, [
+    planVideoPromptBusy,
     visualStyleId,
     brandProfile,
     creativeVideoBrief,
@@ -1299,10 +1303,11 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     m.wizard.planVideoPromptReady,
   ]);
 
-  const planProductVideo = useCallback(async () => {
+  const planProductVideo = useCallback(async (): Promise<boolean> => {
+    if (planProductVideoBusy) return false;
     if (!productPhoto) {
       setError(m.errors.needPhoto);
-      return;
+      return false;
     }
     setPlanProductVideoBusy(true);
     setError(null);
@@ -1346,12 +1351,15 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         .join(" — ");
       setVideoPromptPlanNote(note);
       setShowAdvancedVideo(true);
+      return true;
     } catch (e: unknown) {
       setError(friendlyError(e, m.errors.planProductVideoFailed));
+      return false;
     } finally {
       setPlanProductVideoBusy(false);
     }
   }, [
+    planProductVideoBusy,
     productPhoto,
     packagingPhoto,
     extraKitPhotos,
@@ -4523,6 +4531,16 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     if (packagingPhoto) fd.append("images", packagingPhoto);
     for (const f of extraKitPhotos.slice(0, 2)) fd.append("images", f);
 
+    // Shot-list for Seedance→Kling fallback (roles only — motion stays textless).
+    const kitMeta =
+      productVideoPlan?.imageRoles?.map((r) => ({
+        role: r.role || r.slot,
+        imagePrompt: r.visualDescription?.slice(0, 120),
+      })) ?? [];
+    if (kitMeta.length) {
+      fd.set("scenes_meta", JSON.stringify(kitMeta));
+    }
+
     const res = await fetch("/api/generate", { method: "POST", body: fd });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
@@ -4569,6 +4587,16 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     fd.set("negative_prompt", negativePrompt);
     fd.set("avoid_on_screen_text", vOpts.avoidOnScreenText ? "true" : "false");
     fd.set("fast", vOpts.fast ? "true" : "false");
+
+    const angleMeta = [
+      productPhoto ? { role: "product hero" } : null,
+      ...extraAnglePhotos.map((_, i) => ({
+        role: i === extraAnglePhotos.length - 1 ? "product detail" : "product demo",
+      })),
+    ].filter(Boolean);
+    if (angleMeta.length) {
+      fd.set("scenes_meta", JSON.stringify(angleMeta));
+    }
 
     const res = await fetch("/api/generate", { method: "POST", body: fd });
     const data = await res.json();

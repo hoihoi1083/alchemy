@@ -215,11 +215,11 @@ export function buildCoachReply(
     case "route-storyboard":
       return en
         ? [
-            "Step 1: Product storyboard — multi-scene stills → stitched video.",
+            "Step 1: Product storyboard — multi-scene stills → Kling video (textless frames; captions via /captions).",
             link ?? "",
             "Reply next on Setup.",
           ].join("\n")
-        : ["第一步：產品分鏡 — 多場景圖 → 拼接影片。", link ?? "", "到 Setup 回覆 下一步。"].join("\n");
+        : ["第一步：產品分鏡 — 多場景圖 → Kling 影片（畫面無字；字幕用 /captions）。", link ?? "", "到 Setup 回覆 下一步。"].join("\n");
 
     case "route-concept-studio":
       return en
@@ -294,7 +294,7 @@ export function buildCoachReply(
               "Step — Pick a visual style (3 primary paths at top of Setup):",
               "• Quick Ad — clean product shot on studio/lifestyle background (most SKUs)",
               "• Model Wear/Use — someone wearing or demoing the product",
-              "• Storyboard Reel — multi-scene stills stitched into a short video",
+              "• Storyboard Reel — multi-scene stills → Kling video (captions later)",
               "More styles (brand-fit, poster…) are under Advanced.",
               "Tap your choice, then reply next.",
             ].join("\n")
@@ -302,7 +302,7 @@ export function buildCoachReply(
               "呢步 — 揀 **視覺風格**（Setup 頂部三條主路徑）：",
               "• 快速廣告 — 產品特寫／生活場景（最多人用）",
               "• 模特兒穿戴／使用 — 有人示範產品",
-              "• 分鏡 Reel — 多場景圖再砌成短片",
+              "• 分鏡 Reel — 多場景圖 → Kling 影片（字幕之後加）",
               "進階區有更多風格。",
               "揀好回覆 下一步。",
             ].join("\n"),
@@ -546,8 +546,8 @@ export function buildCoachReply(
     case "generate-storyboard-video":
       return step(
         en
-          ? "Step 1 — generate storyboard video (Seedance per scene, then stitch). Reply next."
-          : "第一步 — **生成分鏡影片**（逐場景 Seedance 再拼接）。回覆 下一步。",
+          ? "Step 1 — generate storyboard video (Kling I2V per scene still, then stitch). Captions later via /captions. Reply next."
+          : "第一步 — **生成分鏡影片**（逐場靜幀 Kling I2V，再拼接；字幕之後去 /captions）。回覆 下一步。",
       );
 
     case "generate-cinematic-video":
@@ -625,11 +625,11 @@ export function formatCoachChecklistForPrompt(
       : "- brand-fit/campaign: analyze brand before image generate",
     isZh
       ? snapshot.promotionMode === "concept" && isStoryboardVideoStyle(snapshot.visualStyleId)
-        ? "- concept storyboard：概念／headline + 參考 Reel → 場景圖 → 分鏡片（唔使產品相）"
-        : "- storyboard：產品名 + 分鏡簡述 + 產品相 + 場景圖"
+        ? "- concept storyboard：概念／headline + 參考 Reel → 場景圖 → Kling 分鏡片（唔使產品相；字幕 /captions）"
+        : "- storyboard：產品名 + 分鏡簡述 + 產品相 + 場景圖 → Kling（畫面無字）"
       : snapshot.promotionMode === "concept" && isStoryboardVideoStyle(snapshot.visualStyleId)
-        ? "- concept storyboard: concept/headline + reference reel → scene stills → stitched video (no product photo)"
-        : "- storyboard: product name + brief + photo + scene stills",
+        ? "- concept storyboard: concept/headline + reference reel → scene stills → Kling video (no product photo; captions via /captions)"
+        : "- storyboard: product name + brief + photo + scene stills → Kling (textless frames)",
     isZh
       ? "- image-only 完成於出圖；video-only 跳過出圖步"
       : "- image-only finishes at image; video-only skips image step",
