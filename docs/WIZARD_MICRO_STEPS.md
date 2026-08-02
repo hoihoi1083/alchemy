@@ -1,8 +1,22 @@
 # Wizard v2 — Micro-step funnel spec
 
-**Status:** v0.5 — full path catalog (Paths 1–11) incl. concept/video + concept/combined  
+**Status:** v0.5.1 — path catalog synced to product truth below  
 **Scope:** Frontend-only refactor. **Minimal backend touch** only for concept research promote-target fix (see §9.5).  
 **Goal:** Replace the monolithic Setup step with one-decision-per-screen funnels that write the same `useWizardState` fields and call existing `useStudioWizard` handlers.
+
+---
+
+## 0. Product truth (shipped — Aug 2026)
+
+| Topic | Decision |
+|-------|----------|
+| **圖+片 / combined** | **分鏡 storyboard only** — multi-scene stills → video. Not single-poster I2V. |
+| **UGC presenter** | **Out of scope** for wizard v2 (no picker; sticky UGC bounces to 快速廣告). `/ugc` route may still exist separately. |
+| **Cinematic stitch** | **Out of scope** — Path 10 = **single 8s** cinematic only. |
+| **Ship-it / 一鍵出片** | **Out of scope** for combined / storyboard paths. |
+| **Labels** | Call combined 「分鏡」/ storyboard — do not market it as “animate keyframe”. |
+
+Older sections below that still describe UGC subpaths, Path 7 single-poster Ship-it, or Path 10 multi-scene stitch are **historical** — treat §0 as source of truth until those paragraphs are rewritten.
 
 ---
 

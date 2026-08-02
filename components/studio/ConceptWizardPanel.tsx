@@ -53,6 +53,8 @@ export function ConceptWizardPanel({
     workflowMode,
     promptMarket,
     planAiVideoPrompt,
+    conceptPlanBusy,
+    setConceptPlanBusy,
   } = wizard;
 
   const [conceptAudience, setConceptAudience] = useState("");
@@ -61,7 +63,6 @@ export function ConceptWizardPanel({
   const [conceptProof, setConceptProof] = useState("");
   const [conceptCta, setConceptCta] = useState("");
   const [conceptVisualMetaphor, setConceptVisualMetaphor] = useState("");
-  const [conceptPlanBusy, setConceptPlanBusy] = useState(false);
   const [conceptPlanNote, setConceptPlanNote] = useState<string | null>(null);
 
   const isConceptVideoOnly = workflowMode === "video-only";

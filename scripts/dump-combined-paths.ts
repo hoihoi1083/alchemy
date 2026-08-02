@@ -57,7 +57,7 @@ const cases: Array<{
     state: { visualStyleId: "storyboard-video" },
   },
   {
-    name: "B physical + combined + direct (UGC)",
+    name: "B physical + combined + sticky UGC (ignored)",
     ctx: { promotionMode: "physical", workflowMode: "combined", intakePath: "direct" },
     state: { visualStyleId: "ugc-presenter" },
   },
@@ -67,24 +67,24 @@ const cases: Array<{
     state: { visualStyleId: "storyboard-video" },
   },
   {
-    name: "D concept + combined + animate + direct",
+    name: "D concept + combined + storyboard + direct",
     ctx: {
       promotionMode: "concept",
       workflowMode: "combined",
       intakePath: "direct",
       conceptSource: "assistant",
-      combinedStyle: "animate",
+      combinedStyle: "storyboard",
     },
     state: { visualStyleId: "storyboard-video" },
   },
   {
-    name: "E concept + combined + animate + research",
+    name: "E concept + combined + storyboard + research",
     ctx: {
       promotionMode: "concept",
       workflowMode: "combined",
       intakePath: "research",
       conceptSource: "research",
-      combinedStyle: "animate",
+      combinedStyle: "storyboard",
     },
     state: { visualStyleId: "storyboard-video" },
   },
@@ -102,20 +102,7 @@ const cases: Array<{
       cinematicStitchReel: false,
     },
   },
-  {
-    name: "F2 concept + combined + cinematic stitch×3",
-    ctx: {
-      promotionMode: "concept",
-      workflowMode: "combined",
-      intakePath: "direct",
-      combinedStyle: "cinematic",
-    },
-    state: {
-      visualStyleId: "concept-cinematic",
-      cinematicSceneCount: 3,
-      cinematicStitchReel: true,
-    },
-  },
+  // F2 cinematic stitch×N removed — product truth: single 8s cinematic only.
 ];
 
 for (const c of cases) {

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { VOICEOVER_LOCALES, type VoiceoverLocale } from "@/lib/ad-pack-preferences";
+import { chargeTokens, refundTokens } from "@/lib/billing/charge";
+import { TOKEN_COST } from "@/lib/billing/token-costs";
 import { planCaptionVoice } from "@/lib/plan-caption-voice";
 import { requireAppUser } from "@/lib/require-app-user";
 import { SERVER_ERRORS } from "@/lib/api/server-errors";
@@ -41,6 +43,12 @@ export async function POST(request: Request) {
     );
   }
 
+  const tokenCost = TOKEN_COST.plan;
+  const charged = await chargeTokens(auth.user.userId, tokenCost, {
+    kind: "caption_plan",
+  });
+  if ("error" in charged) return charged.error;
+
   try {
     const result = await planCaptionVoice({
       topic,
@@ -48,8 +56,16 @@ export async function POST(request: Request) {
       videoDurationSec,
       lineCount: body.line_count,
     });
-    return NextResponse.json(result);
+    return NextResponse.json({
+      ...result,
+      tokensCharged: tokenCost,
+      creditBalance: charged.balanceAfter,
+    });
   } catch (e: unknown) {
+    await refundTokens(auth.user.userId, tokenCost, {
+      kind: "caption_plan",
+      reason: "plan_failed",
+    });
     const message = e instanceof Error ? e.message : SERVER_ERRORS.generationFailed;
     const status =
       message.includes("DEEPSEEK") || message.includes("DeepSeek") ? 503 : 502;

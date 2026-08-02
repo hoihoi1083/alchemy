@@ -45,7 +45,34 @@ export async function persistAndDurablize(input: {
     bytes: input.bytes,
     contentType: input.contentType,
   });
-  if (!asset) return input.fallbackUrl;
+  if (!asset) {
+    const reason =
+      !isMongoConfigured() && !isR2Configured()
+        ? "mongo_and_r2_unconfigured"
+        : !isMongoConfigured()
+          ? "mongo_unconfigured"
+          : !isR2Configured()
+            ? "r2_unconfigured"
+            : "persist_returned_null";
+    console.error("[durable-media] persist failed; falling back to ephemeral URL", {
+      reason,
+      clerkId: input.clerkId,
+      kind: input.kind,
+      sourceUrl: input.sourceUrl.slice(0, 160),
+      fallbackUrl: input.fallbackUrl.slice(0, 160),
+    });
+    void import("@sentry/nextjs")
+      .then((Sentry) => {
+        Sentry.captureMessage("durable_media_ephemeral_fallback", {
+          level: "error",
+          extra: { reason, kind: input.kind, clerkId: input.clerkId },
+        });
+      })
+      .catch(() => {
+        /* no Sentry */
+      });
+    return input.fallbackUrl;
+  }
   return libraryAssetUrl(String(asset._id));
 }
 

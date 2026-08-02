@@ -27,7 +27,7 @@ export function ImageResultPanel({ generatingLabel, allowRegenerate = false }: P
     );
   }
 
-  if (!wizard.imageUrl) {
+  if (!wizard.imageUrl && wizard.storyboardScenes.length === 0) {
     return (
       <div className="space-y-2 text-sm text-slate-600">
         <p>{wizard.error ?? generatingLabel}</p>

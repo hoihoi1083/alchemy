@@ -91,16 +91,19 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
       );
 
     case "route.cinematic_mode":
+      // Product truth: single 8s cinematic only — multi-scene stitch deferred.
       return (
         <ScreenShell title={mw.cinematicModeTitle} hint={mw.cinematicModeHint}>
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="grid gap-2 sm:grid-cols-1">
             <ChoiceCard
-              active={wizard.visualStyleId === "concept-cinematic" && !wizard.cinematicStitchReel}
+              active={wizard.visualStyleId === "concept-cinematic"}
               title={m.wizard.conceptCinematicSingleTitle}
               description={m.wizard.conceptCinematicSingleDesc}
               onClick={() => {
+                wizard.setCinematicStitchReel(false);
+                wizard.onCinematicSceneCountChange(1);
                 wizard.applyPrimaryPathConceptVideo("cinematic");
-                micro.patchContext({ workflowMode: "combined" });
+                micro.patchContext({ workflowMode: "combined", combinedStyle: "cinematic" });
               }}
             />
           </div>
@@ -142,19 +145,20 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
       );
 
     case "route.combined_style":
-      // Legacy step: cinematic multi-scene stitch is hidden; only storyboard remains.
+      // Product truth: 圖+片 = 分鏡 storyboard only (not single-poster / Ship-it).
       return (
         <ScreenShell title={mw.combinedStyleTitle} hint={mw.combinedStyleHint}>
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="grid gap-2 sm:grid-cols-1">
             <ChoiceCard
               active={
-                micro.ctx.combinedStyle === "animate" ||
+                micro.ctx.combinedStyle === "storyboard" ||
+                (micro.ctx.combinedStyle as string | undefined) === "animate" ||
                 wizard.visualStyleId === "storyboard-video"
               }
               title={mw.combinedAnimateTitle}
               description={mw.combinedAnimateDesc}
               onClick={() => {
-                micro.setCombinedStyle("animate");
+                micro.setCombinedStyle("storyboard");
                 wizard.selectVisualStyle("storyboard-video");
               }}
             />
@@ -340,8 +344,8 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
     case "wait.concept_plan":
       return (
         <WaitScreen
-          busy={wizard.referenceAnalyzeBusy}
-          message={m.wizard.referenceBriefAnalyzingWait}
+          busy={wizard.conceptPlanBusy}
+          message={m.wizard.conceptAnalyzeBusy}
         />
       );
 
@@ -367,58 +371,72 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
     case "setup.pre_generate":
       return (
         <PreGenerateSetupPanel
-          showStylePicker={micro.ctx.intakePath === "direct"}
+          showStylePicker={
+            micro.ctx.intakePath === "direct" && micro.ctx.workflowMode !== "combined"
+          }
           showReferenceUpload={micro.ctx.intakePath === "direct"}
+          combinedStoryboard={micro.ctx.workflowMode === "combined"}
           onGenerate={micro.goNext}
           generateDisabled={
-            Boolean(micro.blockReason) || Boolean(wizard.imageGenerateDisabledReason)
+            Boolean(micro.blockReason) ||
+            Boolean(wizard.imageGenerateDisabledReason) ||
+            (micro.ctx.workflowMode === "combined" &&
+              wizard.isStoryboardOutput &&
+              !wizard.storyboardPlan) ||
+            wizard.planStoryboardBusy
           }
-          generateLabel={m.wizard.generateImageBtn}
+          generateLabel={
+            micro.ctx.workflowMode === "combined"
+              ? m.wizard.storyboardGenerateScenesBtn
+              : m.wizard.generateImageBtn
+          }
           generateBlockMessage={
             micro.blockReason
               ? (mw.blockReasons[micro.blockReason as keyof typeof mw.blockReasons] ??
                 micro.blockReason)
               : wizard.imageGenerateDisabledReason
+                ? wizard.imageGenerateDisabledReason
+                : micro.ctx.workflowMode === "combined" &&
+                    wizard.isStoryboardOutput &&
+                    !wizard.storyboardPlan
+                  ? m.wizard.storyboardPlanReviewHint
+                  : null
           }
         />
       );
 
     case "setup.pre_video": {
-      const isUgc =
-        (micro.ctx.videoSubpath ?? micro.pendingVideoSubpath) === "ugc_presenter" ||
-        wizard.visualStyleId === "ugc-presenter";
+      const scenesReady = micro.ctx.workflowMode === "combined";
       return (
         <PreVideoSetupPanel
+          scenesReady={scenesReady}
           onGenerate={micro.goNext}
           generateDisabled={
-            Boolean(micro.blockReason) ||
-            (!isUgc && Boolean(wizard.videoGenerateDisabledReason))
+            Boolean(micro.blockReason) || Boolean(wizard.videoGenerateDisabledReason)
           }
-          generateLabel={
-            isUgc ? m.microWizard.preVideoSetup.ugcContinueLabel : m.wizard.generateVideoBtn
-          }
+          generateLabel={m.wizard.generateVideoBtn}
           generateBlockMessage={
             micro.blockReason
               ? (mw.blockReasons[micro.blockReason as keyof typeof mw.blockReasons] ??
                 micro.blockReason)
-              : isUgc
-                ? null
-                : wizard.videoGenerateDisabledReason
+              : wizard.videoGenerateDisabledReason
           }
-          videoSubpath={micro.pendingVideoSubpath ?? micro.ctx.videoSubpath}
+          videoSubpath={
+            (micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) === "ugc_presenter"
+              ? "product_promo"
+              : (micro.pendingVideoSubpath ?? micro.ctx.videoSubpath)
+          }
           onPickVideoSubpath={(subpath) => {
             const id = subpath as
               | "product_promo"
               | "reference_reel"
-              | "ugc_presenter"
               | "creative_video"
               | "brand_video";
+            // UGC deferred — never enter ugc_presenter from fused wizard.
             micro.setVideoSubpath(id);
             micro.patchContext({ videoSubpath: id });
             if (id === "product_promo") {
               wizard.applyPrimaryPathVideoOnly("assistant");
-            } else if (id === "ugc_presenter") {
-              wizard.applyPrimaryPathVideoOnly("ugc-presenter");
             } else if (id === "reference_reel") {
               wizard.onVideoCreativeModeChange("reference-concept");
             } else if (id === "creative_video") {
@@ -700,26 +718,11 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
       );
 
     case "shortcut.ship_it":
+      // Product truth: Ship-it / single-poster I2V is out of scope for 圖+片 分鏡.
       return (
-        <ScreenShell title={m.wizard.shipItModeOn} hint={m.wizard.shipItRunHint}>
-          <ShipItPanel
-            shipItMode={wizard.shipItMode}
-            onShipItModeChange={wizard.setShipItMode}
-            eligible={wizard.shipItEligible && !wizard.shipItVisionBlocked}
-            busy={wizard.shipItPipelineBusy}
-            onRun={() => void wizard.runShipItPipeline()}
-            showRunButton={wizard.workflowMode === "combined"}
-            labels={{
-              modeOn: m.wizard.shipItModeOn,
-              modeOff: m.wizard.shipItModeOff,
-              modeHint: m.wizard.shipItModeHint,
-              showExpert: m.wizard.shipItShowExpert,
-              runBtn: m.wizard.shipItRunBtn,
-              running: m.wizard.shipItRunning,
-              unsupported: m.wizard.shipItUnsupported,
-              runHint: m.wizard.shipItRunHint,
-            }}
-          />
+        <ScreenShell title={m.wizard.shipItUnsupported} hint={mw.combinedStyleHint}>
+          <p className="text-sm text-slate-600">{m.wizard.shipItUnsupported}</p>
+          <p className="mt-2 text-sm text-slate-500">{mw.combinedAnimateDesc}</p>
         </ScreenShell>
       );
 
@@ -798,11 +801,7 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
       return <ImageResultPanel generatingLabel={mw.generatingImage} />;
 
     case "image.storyboard_scenes":
-      return (
-        <ScreenShell title={mw.legacyImageTitle} hint={mw.legacyImageHint}>
-          <p className="text-sm text-slate-600">{mw.legacyImageHint}</p>
-        </ScreenShell>
-      );
+      return <ImageResultPanel generatingLabel={mw.generatingImage} />;
 
     case "video.generate":
       return (
@@ -855,7 +854,11 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
       );
 
     case "done.export":
-      if (wizard.videoUrl || wizard.workflowMode === "video-only") {
+      if (
+        wizard.videoUrl ||
+        wizard.workflowMode === "video-only" ||
+        wizard.workflowMode === "combined"
+      ) {
         return (
           <VideoResultPanel
             onRegenerate={() => {

@@ -14,6 +14,13 @@ import { isReferenceAdRequest } from "@/lib/studio-assistant-reference-intent";
 import type { StudioAssistantHandoffRecipe } from "@/lib/studio-assistant-handoff";
 import { writeStudioAssistantHandoff } from "@/lib/studio-assistant-handoff";
 import { studioHref } from "@/lib/promotion-mode";
+import { requestMicroWizardRestart } from "@/lib/wizard-micro-steps.types";
+
+function stayOnMicroSetup(wizard: StudioWizardValue) {
+  requestMicroWizardRestart();
+  wizard.setStepKey("setup");
+  wizard.setError(null);
+}
 
 function campaignFields(context: StudioAssistantActionContext, url?: string) {
   const campaign = context.campaignMessage?.trim();
@@ -114,8 +121,7 @@ export function runStudioAssistantAction(
         wizard!.applyPrimaryPath("quick");
       }
       if ("product" in fields && fields.product) wizard!.setProduct(fields.product);
-      wizard!.setStepKey("setup");
-      wizard!.setError(null);
+      stayOnMicroSetup(wizard!);
       return true;
     }
 
@@ -133,8 +139,7 @@ export function runStudioAssistantAction(
       wizard!.selectVisualStyle("product");
       wizard!.setImageCreativeMode("reference-concept");
       if ("product" in fields && fields.product) wizard!.setProduct(fields.product);
-      wizard!.setStepKey("setup");
-      wizard!.setError(null);
+      stayOnMicroSetup(wizard!);
       return true;
 
     case "open-storyboard-studio":
@@ -159,8 +164,7 @@ export function runStudioAssistantAction(
       if (url) wizard!.setBrandWebsiteUrl(url);
       if (fields.conceptIdea) wizard!.setConceptIdea(fields.conceptIdea);
       if (fields.creativeVideoBrief) wizard!.setCreativeVideoBrief(fields.creativeVideoBrief);
-      wizard!.setStepKey("setup");
-      wizard!.setError(null);
+      stayOnMicroSetup(wizard!);
       return true;
     }
 
@@ -175,8 +179,7 @@ export function runStudioAssistantAction(
       }
       if (url) wizard!.setBrandWebsiteUrl(url);
       if (fields.conceptIdea) wizard!.setConceptIdea(fields.conceptIdea);
-      wizard!.setStepKey("setup");
-      wizard!.setError(null);
+      stayOnMicroSetup(wizard!);
       return true;
     }
 
@@ -190,20 +193,21 @@ export function runStudioAssistantAction(
         });
       }
       wizard!.applyQuickTest8sRecipe();
-      wizard!.setError(null);
+      stayOnMicroSetup(wizard!);
       return true;
 
+    // Multi-scene cinematic stitch is out of scope (§0) — redirect to single 8s.
     case "apply-cinematic-stitch":
       if (!onStudio) {
         return goStudio("concept", context, {
           promotionMode: "concept",
-          recipe: "cinematic-stitch",
+          recipe: "8s-website-reel",
           brandWebsiteUrl: url,
           ...fields,
         });
       }
-      wizard!.applyCinematicStitchRecipe();
-      wizard!.setError(null);
+      wizard!.applyQuickTest8sRecipe();
+      stayOnMicroSetup(wizard!);
       return true;
 
     case "concept-cinematic":

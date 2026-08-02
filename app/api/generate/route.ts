@@ -271,6 +271,85 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid mode" }, { status: 400 });
   }
 
+  // Validate mode inputs BEFORE charging — avoid charge-then-400 leaks.
+  const imageStartFile = formData.get("image_start") as File | null;
+  const imageStartUrl = (formData.get("image_start_url") as string | null)?.trim();
+  if (mode === "image" && (!imageStartFile || imageStartFile.size === 0) && !imageStartUrl) {
+    return NextResponse.json(
+      { error: "Image-to-video requires a starting image." },
+      { status: 400 },
+    );
+  }
+
+  const refImageFiles = (formData.getAll("images") as File[]).filter((f) => f && f.size > 0);
+  const refVideoFiles = (formData.getAll("videos") as File[]).filter((f) => f && f.size > 0);
+  const refAudioFiles = (formData.getAll("audios") as File[]).filter((f) => f && f.size > 0);
+  const imageRefUrlEarly = (formData.get("image_ref_url") as string | null)?.trim();
+  const directRefUrlsEarly = (formData.get("reference_image_urls") as string | null)
+    ?.trim()
+    .split(/[\n,]+/)
+    .map((u) => u.trim())
+    .filter(Boolean);
+  const directVideoUrlsEarly =
+    (formData.get("reference_video_urls") as string | null)
+      ?.trim()
+      .split(/[\n,]+/)
+      .map((u) => u.trim())
+      .filter(Boolean) ?? [];
+
+  if (mode === "reference") {
+    if (refImageFiles.length > 9) {
+      return NextResponse.json(
+        { error: "At most 9 reference images are allowed." },
+        { status: 400 },
+      );
+    }
+    if (refVideoFiles.length > 3) {
+      return NextResponse.json(
+        { error: "At most 3 reference videos are allowed." },
+        { status: 400 },
+      );
+    }
+    if (refAudioFiles.length > 3) {
+      return NextResponse.json(
+        { error: "At most 3 audio clips are allowed." },
+        { status: 400 },
+      );
+    }
+    if (
+      refAudioFiles.length > 0 &&
+      refImageFiles.length === 0 &&
+      refVideoFiles.length === 0 &&
+      !imageRefUrlEarly &&
+      !(directRefUrlsEarly?.length) &&
+      directVideoUrlsEarly.length === 0
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "If you attach audio, video generation requires at least one reference image or video.",
+        },
+        { status: 400 },
+      );
+    }
+    const hasRefInput =
+      refImageFiles.length > 0 ||
+      refVideoFiles.length > 0 ||
+      Boolean(imageRefUrlEarly) ||
+      Boolean(directRefUrlsEarly?.length) ||
+      directVideoUrlsEarly.length > 0 ||
+      refAudioFiles.length > 0;
+    if (!hasRefInput) {
+      return NextResponse.json(
+        {
+          error:
+            "Reference-to-video needs at least one reference image or video. Upload images and use @Image1, @Image2… in your prompt.",
+        },
+        { status: 400 },
+      );
+    }
+  }
+
   const duration = parseDuration((formData.get("duration") as string) || "auto");
   const plan = await getUserPlan(auth.user.userId);
   const { resolution } = clampVideoResolution(plan, requestedResolution);
@@ -350,14 +429,8 @@ export async function POST(request: Request) {
     }
 
     if (mode === "image") {
-      const start = formData.get("image_start") as File | null;
-      const startUrl = (formData.get("image_start_url") as string | null)?.trim();
-      if ((!start || start.size === 0) && !startUrl) {
-        return NextResponse.json(
-          { error: "Image-to-video requires a starting image." },
-          { status: 400 },
-        );
-      }
+      const start = imageStartFile;
+      const startUrl = imageStartUrl;
       const imageUrl =
         start && start.size > 0
           ? await fal.storage.upload(start)
@@ -406,56 +479,14 @@ export async function POST(request: Request) {
       });
     }
 
-    // reference-to-video
-    const imageFiles = formData.getAll("images") as File[];
-    const videoFiles = formData.getAll("videos") as File[];
-    const audioFiles = formData.getAll("audios") as File[];
+    // reference-to-video (counts already validated pre-charge)
+    const nonEmptyImages = refImageFiles;
+    const nonEmptyVideos = refVideoFiles;
+    const nonEmptyAudios = refAudioFiles;
 
-    const nonEmptyImages = imageFiles.filter((f) => f && f.size > 0);
-    const nonEmptyVideos = videoFiles.filter((f) => f && f.size > 0);
-    const nonEmptyAudios = audioFiles.filter((f) => f && f.size > 0);
-
-    if (nonEmptyImages.length > 9) {
-      return NextResponse.json(
-        { error: "At most 9 reference images are allowed." },
-        { status: 400 },
-      );
-    }
-    if (nonEmptyVideos.length > 3) {
-      return NextResponse.json(
-        { error: "At most 3 reference videos are allowed." },
-        { status: 400 },
-      );
-    }
-    if (nonEmptyAudios.length > 3) {
-      return NextResponse.json(
-        { error: "At most 3 audio clips are allowed." },
-        { status: 400 },
-      );
-    }
-
-    if (nonEmptyAudios.length > 0 && nonEmptyImages.length === 0 && nonEmptyVideos.length === 0) {
-      return NextResponse.json(
-        {
-          error:
-            "If you attach audio, video generation requires at least one reference image or video.",
-        },
-        { status: 400 },
-      );
-    }
-
-    const imageRefUrl = (formData.get("image_ref_url") as string | null)?.trim();
-    const directRefUrls = (formData.get("reference_image_urls") as string | null)
-      ?.trim()
-      .split(/[\n,]+/)
-      .map((u) => u.trim())
-      .filter(Boolean);
-    const directVideoUrls =
-      (formData.get("reference_video_urls") as string | null)
-        ?.trim()
-        .split(/[\n,]+/)
-        .map((u) => u.trim())
-        .filter(Boolean) ?? [];
+    const imageRefUrl = imageRefUrlEarly;
+    const directRefUrls = directRefUrlsEarly;
+    const directVideoUrls = directVideoUrlsEarly;
     const uploadedImageUrls =
       nonEmptyImages.length > 0
         ? await Promise.all(nonEmptyImages.map((f) => fal.storage.upload(f)))
@@ -491,6 +522,12 @@ export async function POST(request: Request) {
       (audio_urls?.length ?? 0) > 0;
 
     if (!hasRefs) {
+      // Form looked valid but uploads/mirrors produced nothing — refund.
+      await refundTokens(auth.user.userId, tokenCost, {
+        kind: "video",
+        mode,
+        reason: "reference_materialize_empty",
+      });
       return NextResponse.json(
         {
           error:

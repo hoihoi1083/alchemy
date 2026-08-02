@@ -146,7 +146,7 @@ export function landingRoute(
     return "route-physical-product";
   }
   if (intent === "website_image") return "route-website-image";
-  if (/stitch|拼接|24\s*s|3\s*scene|三場|三场|longer/i.test(t)) return "route-cinematic-stitch";
+  if (/stitch|拼接|24\s*s|3\s*scene|三場|三场|longer/i.test(t)) return "route-website-reel";
   if (intent === "website_video") return "route-website-reel";
   if (snapshot.promotionMode === "physical") return "route-physical-product";
   if (snapshot.promotionMode === "concept") return "route-concept-studio";

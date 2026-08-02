@@ -194,6 +194,7 @@ export function PreVideoSetupPanel({
   generateBlockMessage,
   videoSubpath,
   onPickVideoSubpath,
+  scenesReady = false,
 }: {
   onGenerate?: () => void;
   generateDisabled?: boolean;
@@ -201,6 +202,8 @@ export function PreVideoSetupPanel({
   generateBlockMessage?: string | null;
   videoSubpath?: string;
   onPickVideoSubpath?: (subpath: string) => void;
+  /** 圖+片 after storyboard review — keyframes ready; hide motion-path picker. */
+  scenesReady?: boolean;
 } = {}) {
   const { m } = useLocale();
   const wizard = useWizard();
@@ -210,8 +213,9 @@ export function PreVideoSetupPanel({
   const isConcept = wizard.promotionMode === "concept";
   /** Research / R2V already chose reference — do not default into 快速廣告. */
   const prefersReference =
-    wizard.videoCreativeMode === "reference-concept" ||
-    Boolean(wizard.researchReelAnalysis?.seedancePrompt?.trim());
+    !scenesReady &&
+    (wizard.videoCreativeMode === "reference-concept" ||
+      Boolean(wizard.researchReelAnalysis?.seedancePrompt?.trim()));
   const activeSubpath =
     videoSubpath ??
     (prefersReference
@@ -219,18 +223,22 @@ export function PreVideoSetupPanel({
       : isConcept
         ? "creative_video"
         : "product_promo");
-  const isReference = activeSubpath === "reference_reel";
-  const isUgc = activeSubpath === "ugc_presenter";
-  const isQuickAssistant = !isConcept && activeSubpath === "product_promo";
+  const isReference = !scenesReady && activeSubpath === "reference_reel";
+  const isUgc = !scenesReady && activeSubpath === "ugc_presenter";
+  const isQuickAssistant = !scenesReady && !isConcept && activeSubpath === "product_promo";
   const showCreativeBrief =
-    !isReference && !isUgc && isCreativeVideoStyle(wizard.visualStyleId);
+    !scenesReady && !isReference && !isUgc && isCreativeVideoStyle(wizard.visualStyleId);
   const showBrandWebsite =
-    !isReference && !isUgc && isBrandVideoStyle(wizard.visualStyleId);
+    !scenesReady && !isReference && !isUgc && isBrandVideoStyle(wizard.visualStyleId);
   const showConceptAiPlan =
-    isConcept && !isReference && !isUgc && (showCreativeBrief || showBrandWebsite);
+    !scenesReady &&
+    isConcept &&
+    !isReference &&
+    !isUgc &&
+    (showCreativeBrief || showBrandWebsite);
   // Product + reference/research still needs @Image1 (product photo). Concept R2V can be MP4-only.
-  const showProductPhoto = isConcept ? !isReference : !isUgc;
-  const photoRequired = !isConcept && !isUgc;
+  const showProductPhoto = scenesReady ? false : isConcept ? !isReference : !isUgc;
+  const photoRequired = !scenesReady && !isConcept && !isUgc;
 
   // Keep research/R2V on reference_reel when ctx.videoSubpath was never set.
   useEffect(() => {
@@ -250,11 +258,15 @@ export function PreVideoSetupPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- see above
   }, [isQuickAssistant, wizard.videoCreativeMode]);
 
-  // UGC removed from product video fused setup — bounce sticky selection to 快速廣告.
+  // UGC is out of scope for wizard v2 — sticky ugc style falls back to 快速廣告 UI.
   useEffect(() => {
     if (isConcept || !isUgc || !onPickVideoSubpath) return;
     onPickVideoSubpath("product_promo");
-  }, [isConcept, isUgc, onPickVideoSubpath]);
+    if (wizard.visualStyleId === "ugc-presenter") {
+      wizard.applyPrimaryPathVideoOnly("assistant");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- bounce once when sticky UGC detected
+  }, [isConcept, isUgc, onPickVideoSubpath, wizard.visualStyleId]);
 
   const durationRaw = wizard.videoSettings.duration;
   const durationNum =
@@ -316,19 +328,21 @@ export function PreVideoSetupPanel({
 
   const styleOptions = isConcept ? conceptStyleOptions : productStyleOptions;
 
-  const setupHint = isUgc
-    ? pv.ugcHint
-    : isReference
-      ? pv.referenceHint
-      : isConcept
-        ? showCreativeBrief
-          ? pv.conceptCreativeHint
-          : showBrandWebsite
-            ? pv.conceptBrandHint
-            : pv.conceptHint
-        : isQuickAssistant
-          ? pv.assistantHint
-          : pv.hint;
+  const setupHint = scenesReady
+    ? pv.scenesReadyHint
+    : isUgc
+      ? pv.ugcHint
+      : isReference
+        ? pv.referenceHint
+        : isConcept
+          ? showCreativeBrief
+            ? pv.conceptCreativeHint
+            : showBrandWebsite
+              ? pv.conceptBrandHint
+              : pv.conceptHint
+          : isQuickAssistant
+            ? pv.assistantHint
+            : pv.hint;
 
   const tips = isConcept
     ? [pv.conceptTip1, pv.conceptTip2, pv.conceptTip3]
@@ -381,6 +395,49 @@ export function PreVideoSetupPanel({
 
         <div className="pv-layout">
           <div className="pv-stack">
+            {scenesReady ? (
+              <section className="pv-card">
+                <div className="pv-card-title-row mb-3">
+                  <span className="pv-card-icon" aria-hidden>
+                    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
+                      <rect x="3" y="5" width="7" height="14" rx="1.5" />
+                      <rect x="14" y="5" width="7" height="14" rx="1.5" />
+                    </svg>
+                  </span>
+                  <div className="min-w-0">
+                    <h3 className="pv-card-title">{pv.scenesReadyTitle}</h3>
+                    <p className="mt-0.5 text-xs text-slate-500">{pv.scenesReadyBody}</p>
+                  </div>
+                </div>
+                {wizard.storyboardScenes.length > 0 ? (
+                  <div className="flex gap-2 overflow-x-auto pb-1">
+                    {wizard.storyboardScenes.map((scene, i) => (
+                      <div
+                        key={scene.imageUrl ?? i}
+                        className="relative h-28 w-16 shrink-0 overflow-hidden rounded-lg border border-violet-200 bg-slate-100"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={scene.imageUrl}
+                          alt={`${m.wizard.storyboardSceneLabel} ${scene.imageIndex}`}
+                          className="h-full w-full object-cover"
+                        />
+                        <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1 text-[10px] font-medium text-white">
+                          {scene.imageIndex}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : wizard.imageUrl ? (
+                  <div className="relative h-36 w-20 overflow-hidden rounded-lg border border-violet-200">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={wizard.imageUrl} alt="" className="h-full w-full object-cover" />
+                  </div>
+                ) : (
+                  <p className="text-sm text-amber-800">{m.errors.storyboardVideoPromptRequired}</p>
+                )}
+              </section>
+            ) : (
             <section className="pv-card">
               <div className="pv-card-title-row">
                 <span className="pv-card-icon" aria-hidden>
@@ -419,7 +476,10 @@ export function PreVideoSetupPanel({
                 })}
               </div>
             </section>
+            )}
 
+            {!scenesReady ? (
+            <>
             <section className="pv-card">
               <div className="pv-card-title-row mb-3">
                 <span className="pv-card-icon" aria-hidden>
@@ -761,6 +821,9 @@ export function PreVideoSetupPanel({
                   <p className="mt-2 text-xs text-slate-500">{pv.conceptPlanNeed}</p>
                 )}
               </section>
+            ) : null}
+
+            </>
             ) : null}
 
             {!isUgc ? (

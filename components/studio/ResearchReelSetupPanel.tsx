@@ -4,6 +4,7 @@ import { useLocale } from "@/components/LocaleProvider";
 import { useWizard } from "@/components/studio/WizardContext";
 import { UploadZone } from "@/components/UploadZone";
 import { ReferenceUploadZone } from "@/components/ReferenceUploadZone";
+import { VideoSettingsPanel } from "@/components/VideoSettingsPanel";
 import { isContentResearchStyleExtra } from "@/lib/content-research-promote";
 
 type Props = {
@@ -31,6 +32,7 @@ export function ResearchReelSetupPanel({ onReferenceVideo }: Props) {
     researchReelAnalysis,
     researchReelAnalyzeBusy,
     researchReelAnalyzeNote,
+    setVideoSettings,
     uploadPreviewUrl,
     videoPrompt,
     videoSettings,
@@ -63,6 +65,21 @@ export function ResearchReelSetupPanel({ onReferenceVideo }: Props) {
         <p className="mt-1 leading-relaxed text-violet-800">
           {isConcept ? m.wizard.researchReelSetupIntroConcept : m.wizard.researchReelSetupIntro}
         </p>
+      </div>
+      {/* Duration must be pickable HERE — wait.reel_analyze gates on duration≠auto before setup.pre_video. */}
+      <div className="rounded-xl border border-violet-200 bg-white/90 p-3">
+        <VideoSettingsPanel
+          compact
+          setup
+          hideAutoDuration
+          value={videoSettings}
+          onChange={setVideoSettings}
+        />
+        {!outputDurationExplicit ? (
+          <p className="mt-2 rounded-lg bg-amber-100 px-3 py-2 text-xs text-amber-950">
+            {m.wizard.researchReelPickDurationFirst}
+          </p>
+        ) : null}
       </div>
       <ul className="space-y-1.5">
         <li className="flex items-start gap-2">

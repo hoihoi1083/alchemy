@@ -5,7 +5,7 @@ import type { StudioAssistantSnapshot } from "@/lib/studio-assistant-types";
 const LANDING_ACTION_BY_TASK: Partial<Record<CoachTaskKind, string>> = {
   "route-website-reel": "setup-website-reel",
   "route-website-image": "website-launch-image",
-  "route-cinematic-stitch": "apply-cinematic-stitch",
+  "route-cinematic-stitch": "apply-8s-recipe",
   "route-physical-product": "open-physical-studio",
   "route-physical-image-post": "open-physical-studio",
   "route-reference-ad": "open-reference-ad-studio",

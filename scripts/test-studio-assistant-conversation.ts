@@ -182,9 +182,10 @@ const FLOWS: FlowDef[] = [
     ],
   },
   {
-    id: "cinematic-stitch-landing",
+    id: "cinematic-8s-landing",
     opening: "24s cinematic stitch for my SaaS with 3 scenes",
-    expectLandingTask: "route-cinematic-stitch",
+    // Multi-scene stitch deferred — coach routes to single 8s website reel.
+    expectLandingTask: "route-website-reel",
     studio: snap({
       surface: "studio",
       promotionMode: "concept",

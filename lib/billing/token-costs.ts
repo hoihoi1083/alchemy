@@ -23,7 +23,21 @@ export const TOKEN_COST = {
   voiceover: 5, // ~$0.015
   bgm: 5, // local ffmpeg mix — small operator cost
   plan: 5, // LLM plan / brief ~$0.01–0.02
+  /**
+   * FLUX.1 [pro] Fill on fal: $0.05 / megapixel (rounded up).
+   * $0.05 / $0.0033 ≈ 15.2 → 16 tok for typical ~1MP social edit (+ thin buffer).
+   */
+  inpaint: 16,
+  /** ffmpeg caption burn + R2 persist — CPU/storage, not fal; flat processing fee. */
+  caption_burn: 8,
 } as const;
+
+/** Tokens for FLUX Fill — bill by rounded megapixels when known. */
+export function estimateInpaintTokens(megapixels = 1): number {
+  const mp = Math.max(1, Math.ceil(megapixels));
+  // $0.05/MP / $0.0033 ≈ 15.15 → 16 tok/MP
+  return 16 * mp;
+}
 
 /**
  * Tokens per second of Seedance video.

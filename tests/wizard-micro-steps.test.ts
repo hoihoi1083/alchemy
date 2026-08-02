@@ -101,7 +101,7 @@ const PATH_CONTEXTS: Record<MicroWizardPathId, MicroWizardContext> = {
     workflowMode: "combined",
     intakePath: "direct",
     conceptSource: "assistant",
-    combinedStyle: "animate",
+    combinedStyle: "storyboard",
   },
 };
 
@@ -340,7 +340,7 @@ describe("wizard v2 parity audit", () => {
     assert.ok(!steps.some((s) => s.id === "image.storyboard_scenes"));
   });
 
-  it("path 5 combined injects storyboard scene steps", () => {
+  it("path 5 combined fuses storyboard into violet setup", () => {
     const ctx: MicroWizardContext = {
       promotionMode: "physical",
       workflowMode: "combined",
@@ -351,16 +351,18 @@ describe("wizard v2 parity audit", () => {
       baseState({ visualStyleId: "storyboard-video", promptExtra: "STYLE_REFERENCE_ONLY" }),
     );
     const ids = steps.map((s) => s.id);
-    const briefIdx = ids.indexOf("copy.storyboard_brief");
-    const scenesIdx = ids.indexOf("image.storyboard_scenes");
-    const genIdx = ids.indexOf("wait.storyboard_generate");
-    const photoIdx = ids.indexOf("asset.product_photo");
-    assert.ok(briefIdx >= 0);
-    assert.ok(scenesIdx > briefIdx);
-    assert.ok(genIdx > scenesIdx);
-    // Image research: no MP4 step. Storyboard still after product photo.
+    const setupIdx = ids.indexOf("setup.pre_generate");
+    const waitIdx = ids.indexOf("wait.storyboard_generate");
+    const reviewIdx = ids.indexOf("image.review");
+    const videoSetupIdx = ids.indexOf("setup.pre_video");
+    assert.ok(setupIdx >= 0);
+    assert.ok(waitIdx > setupIdx);
+    assert.ok(reviewIdx > waitIdx);
+    assert.ok(videoSetupIdx > reviewIdx);
     assert.ok(!ids.includes("asset.reference_video"));
-    assert.ok(photoIdx >= 0 && photoIdx < scenesIdx);
+    assert.ok(!ids.includes("copy.edit"));
+    assert.ok(!ids.includes("asset.product_photo"));
+    assert.ok(!ids.includes("image.storyboard_scenes"));
 
     const withReel = resolveMicroSteps(
       ctx,
@@ -372,21 +374,21 @@ describe("wizard v2 parity audit", () => {
       }),
     ).map((s) => s.id);
     const refIdx = withReel.indexOf("asset.reference_video");
-    const scenesWithReel = withReel.indexOf("image.storyboard_scenes");
-    assert.ok(refIdx >= 0 && refIdx < scenesWithReel);
+    const setupWithReel = withReel.indexOf("setup.pre_generate");
+    assert.ok(refIdx >= 0 && refIdx < setupWithReel);
   });
 
-  it("path 5 combined injects storyboard after setup even without storyboard style yet", () => {
+  it("path 5 combined keeps fused storyboard after setup even without storyboard style yet", () => {
     const ctx: MicroWizardContext = {
       promotionMode: "physical",
       workflowMode: "combined",
       intakePath: "research",
     };
     const ids = resolveMicroSteps(ctx, baseState({ visualStyleId: "product" })).map((s) => s.id);
-    const scenesIdx = ids.indexOf("image.storyboard_scenes");
-    const photoIdx = ids.indexOf("asset.product_photo");
-    assert.ok(scenesIdx >= 0);
-    assert.ok(photoIdx >= 0 && photoIdx < scenesIdx);
+    assert.ok(ids.includes("setup.pre_generate"));
+    assert.ok(ids.includes("wait.storyboard_generate"));
+    assert.ok(ids.includes("image.review"));
+    assert.ok(ids.includes("setup.pre_video"));
     assert.ok(!ids.includes("asset.reference_video"));
   });
 
@@ -418,33 +420,21 @@ describe("wizard v2 parity audit", () => {
     assert.ok(!steps.some((s) => s.id === "copy.storyboard_brief"));
   });
 
-  it("path 6 ugc_presenter injects keyframe steps and ugc pack", () => {
+  it("path 6 ugc_presenter is out of scope — fused video-only without ugc pack", () => {
     const ctx: MicroWizardContext = {
       promotionMode: "physical",
       workflowMode: "video-only",
       intakePath: "direct",
       videoSubpath: "ugc_presenter",
     };
-    const state = baseState({ visualStyleId: "ugc-presenter", workflowMode: "combined" });
+    const state = baseState({ visualStyleId: "ugc-presenter", workflowMode: "video-only" });
     assert.equal(resolvePathId(ctx, state), "product_video_direct");
     const ids = resolveMicroSteps(ctx, state).map((s) => s.id);
-    const photoIdx = ids.indexOf("asset.product_photo");
-    const genIdx = ids.indexOf("image.generate");
-    const waitIdx = ids.indexOf("wait.image_generate");
-    const reviewIdx = ids.indexOf("image.review");
-    const packIdx = ids.indexOf("video.ugc_pack");
-    const videoGenIdx = ids.indexOf("video.generate");
-    assert.ok(photoIdx >= 0);
-    assert.ok(genIdx > photoIdx);
-    assert.ok(waitIdx > genIdx);
-    assert.ok(reviewIdx > waitIdx);
-    assert.ok(packIdx > reviewIdx);
-    assert.ok(videoGenIdx > packIdx);
-    assert.ok(!ids.includes("image.art_style"));
-    assert.ok(!ids.includes("wait.video_generate"));
-    assert.ok(!ids.includes("done.export"));
-    assert.equal(microStepLegacyKey("video.generate", state), "video");
-    assert.equal(microStepLegacyKey("done.export"), null);
+    assert.ok(ids.includes("setup.pre_video"));
+    assert.ok(ids.includes("wait.video_generate"));
+    assert.ok(ids.includes("done.export"));
+    assert.ok(!ids.includes("video.ugc_pack"));
+    assert.ok(!ids.includes("image.generate"));
   });
 
   it("done.export stays in micro-wizard (no classic DoneStep handoff)", () => {
@@ -646,7 +636,7 @@ describe("wizard v2 parity audit", () => {
     );
   });
 
-  it("product_combined ugc keeps ugc_pack before generate", () => {
+  it("product_combined ignores sticky ugc style — storyboard fuse only", () => {
     const ctx: MicroWizardContext = {
       promotionMode: "physical",
       workflowMode: "combined",
@@ -655,14 +645,14 @@ describe("wizard v2 parity audit", () => {
     const state = baseState({ visualStyleId: "ugc-presenter", workflowMode: "combined" });
     assert.equal(resolvePathId(ctx, state), "product_combined");
     const ids = resolveMicroSteps(ctx, state).map((s) => s.id);
-    assert.ok(ids.includes("video.ugc_pack"));
-    assert.ok(ids.includes("image.generate"));
-    assert.ok(!ids.includes("image.storyboard_scenes"));
-    assert.ok(ids.indexOf("video.ugc_pack") < ids.indexOf("video.generate"));
-    assert.equal(microStepLegacyKey("video.generate", state), "video");
+    assert.ok(ids.includes("setup.pre_generate"));
+    assert.ok(ids.includes("wait.storyboard_generate"));
+    assert.ok(ids.includes("setup.pre_video"));
+    assert.ok(!ids.includes("video.ugc_pack"));
+    assert.ok(!ids.includes("image.generate"));
   });
 
-  it("product_combined uses storyboard scenes not image output format", () => {
+  it("product_combined uses fused violet setup not discrete storyboard handoff", () => {
     const ctx: MicroWizardContext = {
       promotionMode: "physical",
       workflowMode: "combined",
@@ -671,11 +661,20 @@ describe("wizard v2 parity audit", () => {
     const state = baseState({ visualStyleId: "storyboard-video", workflowMode: "combined" });
     assert.equal(resolvePathId(ctx, state), "product_combined");
     const ids = resolveMicroSteps(ctx, state).map((s) => s.id);
-    assert.ok(ids.includes("copy.storyboard_brief"));
-    assert.ok(ids.includes("image.storyboard_scenes"));
+    assert.ok(ids.includes("setup.pre_generate"));
+    assert.ok(ids.includes("wait.storyboard_generate"));
+    assert.ok(ids.includes("image.review"));
+    assert.ok(ids.includes("setup.pre_video"));
+    assert.ok(!ids.includes("copy.edit"));
+    assert.ok(!ids.includes("copy.storyboard_brief"));
+    assert.ok(!ids.includes("image.storyboard_scenes"));
     assert.ok(!ids.includes("image.output_format"));
     assert.ok(!ids.includes("route.primary_style"));
-    assert.equal(microStepLegacyKey("image.storyboard_scenes"), "image");
+    assert.ok(!ids.includes("video.generate"));
+    assert.equal(
+      microStepLegacyKey("image.storyboard_scenes", { visualStyleId: "storyboard-video" }),
+      null,
+    );
   });
 
   it("product_combined keeps storyboard steps even if style drifted to product", () => {
@@ -688,8 +687,10 @@ describe("wizard v2 parity audit", () => {
       ctx,
       baseState({ visualStyleId: "product", workflowMode: "combined" }),
     ).map((s) => s.id);
-    assert.ok(ids.includes("copy.storyboard_brief"));
-    assert.ok(ids.includes("image.storyboard_scenes"));
+    assert.ok(ids.includes("setup.pre_generate"));
+    assert.ok(ids.includes("wait.storyboard_generate"));
+    assert.ok(ids.includes("image.review"));
+    assert.ok(ids.includes("setup.pre_video"));
     assert.ok(ids.includes("done.export"));
   });
 
@@ -712,7 +713,8 @@ describe("wizard v2 parity audit", () => {
     assert.ok(!ids.includes("wait.reel_analyze"));
     // Image-only research: skip the MP4 step entirely.
     assert.ok(!ids.includes("asset.reference_video"));
-    assert.ok(ids.includes("image.storyboard_scenes"));
+    assert.ok(ids.includes("setup.pre_generate"));
+    assert.ok(ids.includes("wait.storyboard_generate"));
     assert.equal(canProceedMicroStep("asset.reference_video", ctx, state), null);
   });
 
@@ -733,26 +735,27 @@ describe("wizard v2 parity audit", () => {
       }),
     ).map((s) => s.id);
     assert.ok(!ids.includes("asset.reference_video"));
-    assert.ok(ids.includes("image.storyboard_scenes"));
+    assert.ok(ids.includes("setup.pre_generate"));
+    assert.ok(ids.includes("wait.storyboard_generate"));
   });
 
-  it("product combined + research routes to research reel with storyboard inject", () => {
+  it("product combined + research routes to research reel with fused storyboard", () => {
     const ctx: MicroWizardContext = {
       promotionMode: "physical",
       workflowMode: "combined",
       intakePath: "research",
     };
-    // Even before style is forced to storyboard-video, path + scenes must resolve.
     const state = baseState({ visualStyleId: "product", workflowMode: "combined" });
     assert.equal(resolvePathId(ctx, state), "product_video_research_reel");
     const ids = resolveMicroSteps(ctx, state).map((s) => s.id);
-    // No reel attached yet → MP4 step skipped on combined.
     assert.ok(!ids.includes("asset.reference_video"));
-    assert.ok(ids.includes("copy.storyboard_brief"));
-    assert.ok(ids.includes("image.storyboard_scenes"));
+    assert.ok(ids.includes("setup.pre_generate"));
     assert.ok(ids.includes("wait.storyboard_generate"));
-    assert.ok(ids.indexOf("image.storyboard_scenes") < ids.indexOf("video.generate"));
-    assert.ok(ids.indexOf("asset.product_photo") < ids.indexOf("image.storyboard_scenes"));
+    assert.ok(ids.includes("image.review"));
+    assert.ok(ids.includes("setup.pre_video"));
+    assert.ok(ids.indexOf("setup.pre_generate") < ids.indexOf("setup.pre_video"));
+    assert.ok(!ids.includes("copy.storyboard_brief"));
+    assert.ok(!ids.includes("image.storyboard_scenes"));
   });
 
   it("concept combined animate + direct is storyboard end-to-end", () => {
@@ -761,16 +764,17 @@ describe("wizard v2 parity audit", () => {
       workflowMode: "combined",
       intakePath: "direct",
       conceptSource: "assistant",
-      combinedStyle: "animate",
+      combinedStyle: "storyboard",
     };
     const state = baseState({ visualStyleId: "storyboard-video", workflowMode: "combined" });
     assert.equal(resolvePathId(ctx, state), "concept_combined");
     const ids = resolveMicroSteps(ctx, state).map((s) => s.id);
-    assert.ok(ids.includes("copy.storyboard_brief"));
-    assert.ok(ids.includes("image.storyboard_scenes"));
-    assert.ok(ids.includes("video.generate"));
+    assert.ok(ids.includes("setup.pre_generate"));
+    assert.ok(ids.includes("wait.storyboard_generate"));
+    assert.ok(ids.includes("image.review"));
+    assert.ok(ids.includes("setup.pre_video"));
     assert.ok(ids.includes("done.export"));
-    assert.ok(ids.indexOf("image.storyboard_scenes") < ids.indexOf("video.generate"));
+    assert.ok(ids.indexOf("image.review") < ids.indexOf("setup.pre_video"));
   });
 
   it("concept combined research injects storyboard after reel setup", () => {
@@ -779,15 +783,18 @@ describe("wizard v2 parity audit", () => {
       workflowMode: "combined",
       intakePath: "research",
       conceptSource: "research",
-      combinedStyle: "animate",
+      combinedStyle: "storyboard",
     };
     const state = baseState({ visualStyleId: "storyboard-video", workflowMode: "combined" });
     assert.equal(resolvePathId(ctx, state), "concept_video_research_reel");
     const ids = resolveMicroSteps(ctx, state).map((s) => s.id);
     assert.ok(!ids.includes("asset.reference_video"));
-    assert.ok(ids.includes("image.storyboard_scenes"));
+    assert.ok(ids.includes("setup.pre_generate"));
+    assert.ok(ids.includes("wait.storyboard_generate"));
+    assert.ok(ids.includes("image.review"));
+    assert.ok(ids.includes("setup.pre_video"));
     assert.ok(ids.includes("done.export"));
-    // Image-only research: no reel analyze. With a real MP4, analyze comes before scenes.
+    // Image-only research: no reel analyze. With a real MP4, analyze comes before fused setup.
     assert.ok(!ids.includes("wait.reel_analyze"));
     const withVideo = resolveMicroSteps(
       ctx,
@@ -800,10 +807,10 @@ describe("wizard v2 parity audit", () => {
     ).map((s) => s.id);
     assert.ok(withVideo.includes("asset.reference_video"));
     assert.ok(withVideo.includes("wait.reel_analyze"));
-    assert.ok(withVideo.indexOf("wait.reel_analyze") < withVideo.indexOf("image.storyboard_scenes"));
+    assert.ok(withVideo.indexOf("wait.reel_analyze") < withVideo.indexOf("setup.pre_generate"));
   });
 
-  it("combined matrix: product/concept × direct/research all hand off storyboard before video", () => {
+  it("combined matrix: product/concept × direct/research all stay in fused violet storyboard flow", () => {
     const matrix: Array<{
       name: string;
       ctx: MicroWizardContext;
@@ -827,7 +834,7 @@ describe("wizard v2 parity audit", () => {
           workflowMode: "combined",
           intakePath: "direct",
           conceptSource: "assistant",
-          combinedStyle: "animate",
+          combinedStyle: "storyboard",
         },
         path: "concept_combined",
       },
@@ -838,7 +845,7 @@ describe("wizard v2 parity audit", () => {
           workflowMode: "combined",
           intakePath: "research",
           conceptSource: "research",
-          combinedStyle: "animate",
+          combinedStyle: "storyboard",
         },
         path: "concept_video_research_reel",
       },
@@ -853,18 +860,24 @@ describe("wizard v2 parity audit", () => {
       });
       assert.equal(resolvePathId(row.ctx, drifted), row.path, row.name);
       const ids = resolveMicroSteps(row.ctx, drifted).map((s) => s.id);
-      assert.ok(ids.includes("copy.storyboard_brief"), `${row.name} brief`);
-      assert.ok(ids.includes("image.storyboard_scenes"), `${row.name} scenes`);
+      assert.ok(ids.includes("setup.pre_generate"), `${row.name} setup`);
       assert.ok(ids.includes("wait.storyboard_generate"), `${row.name} wait`);
-      assert.ok(ids.includes("video.generate"), `${row.name} video`);
+      assert.ok(ids.includes("image.review"), `${row.name} review`);
+      assert.ok(ids.includes("setup.pre_video"), `${row.name} video setup`);
       assert.ok(ids.includes("done.export"), `${row.name} done`);
-      assert.equal(microStepLegacyKey("image.storyboard_scenes"), "image", `${row.name} handoff`);
+      assert.equal(
+        microStepLegacyKey("image.storyboard_scenes", { visualStyleId: "storyboard-video" }),
+        null,
+        `${row.name} no handoff`,
+      );
       assert.ok(
-        ids.indexOf("image.storyboard_scenes") < ids.indexOf("video.generate"),
+        ids.indexOf("image.review") < ids.indexOf("setup.pre_video"),
         `${row.name} order`,
       );
       assert.ok(!ids.includes("shortcut.ship_it"), `${row.name} no ship-it`);
       assert.ok(!ids.includes("image.generate"), `${row.name} no single-image generate`);
+      assert.ok(!ids.includes("image.storyboard_scenes"), `${row.name} no legacy scenes step`);
+      assert.ok(!ids.includes("video.generate"), `${row.name} no discrete video.generate`);
     }
   });
 
@@ -896,12 +909,15 @@ describe("wizard v2 parity audit", () => {
     assert.equal(resolvePathId(ctx, state), "concept_combined_cinematic");
     const ids = resolveMicroSteps(ctx, state).map((s) => s.id);
     assert.ok(ids.includes("image.storyboard_scenes"));
-    assert.equal(microStepLegacyKey("image.storyboard_scenes"), "image");
+    assert.equal(
+      microStepLegacyKey("image.storyboard_scenes", { visualStyleId: "concept-cinematic" }),
+      "image",
+    );
     assert.ok(ids.indexOf("copy.creative_brief") < ids.indexOf("image.storyboard_scenes"));
     assert.ok(ids.includes("done.export"));
   });
 
-  it("physical combined product photo is not skippable", () => {
+  it("physical combined product photo is gated on fused setup", () => {
     const ctx: MicroWizardContext = {
       promotionMode: "physical",
       workflowMode: "combined",
@@ -911,9 +927,19 @@ describe("wizard v2 parity audit", () => {
       ctx,
       baseState({ visualStyleId: "storyboard-video", workflowMode: "combined" }),
     );
-    const photo = steps.find((s) => s.id === "asset.product_photo");
-    assert.ok(photo);
-    assert.equal(photo?.skippable, false);
+    assert.ok(steps.some((s) => s.id === "setup.pre_generate"));
+    assert.ok(!steps.some((s) => s.id === "asset.product_photo"));
+    const blocked = canProceedMicroStep(
+      "setup.pre_generate",
+      ctx,
+      baseState({
+        visualStyleId: "storyboard-video",
+        workflowMode: "combined",
+        productPhoto: null,
+        headline: "Hook",
+      }),
+    );
+    assert.equal(blocked, "need_product_photo");
   });
 
   it("product image research keeps intake behind pre-generate for Back", () => {
@@ -1118,7 +1144,7 @@ describe("wizard v2 parity audit", () => {
     assert.ok(ids.includes("setup.pre_generate"));
   });
 
-  it("concept research copy.edit is not skippable", () => {
+  it("concept research fuses copy into setup.pre_generate (no discrete copy.edit)", () => {
     const ctx: MicroWizardContext = {
       promotionMode: "concept",
       workflowMode: "image-only",
@@ -1129,9 +1155,10 @@ describe("wizard v2 parity audit", () => {
       ctx,
       baseState({ promotionMode: "concept", promptExtra: "STYLE_REFERENCE_ONLY" }),
     );
-    const copyEdit = steps.find((s) => s.id === "copy.edit");
-    assert.ok(copyEdit);
-    assert.equal(copyEdit?.skippable, false);
+    const ids = steps.map((s) => s.id);
+    assert.ok(ids.includes("setup.pre_generate"));
+    assert.ok(!ids.includes("copy.edit"));
+    assert.ok(!ids.includes("research.pick_angle"));
   });
 
   it("concept routing after topic still needs intake fuse until path picked", () => {

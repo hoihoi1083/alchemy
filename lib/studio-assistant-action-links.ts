@@ -43,7 +43,7 @@ function mapUnknownSlug(slug: string): StudioAssistantActionId {
   if (VALID_SET.has(s)) return s as StudioAssistantActionId;
   if (/analyze|brand|品牌/.test(s)) return "analyze-brand";
   if (/caption|字幕/.test(s)) return "open-captions";
-  if (/stitch|拼接|longer|24/.test(s)) return "apply-cinematic-stitch";
+  if (/stitch|拼接|longer|24/.test(s)) return "apply-8s-recipe";
   if (/static|launch|上線|上线|mockup|poster/.test(s)) return "website-launch-image";
   if (/storyboard|分鏡|分镜/.test(s)) return "open-storyboard-studio";
   if (/reference|參考|参考|对标|對標|xhs|小紅|小红|layout/.test(s)) return "open-reference-ad-studio";

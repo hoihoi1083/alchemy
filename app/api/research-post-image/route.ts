@@ -31,12 +31,19 @@ const REFERERS: Record<string, string> = {
   facebook: "https://www.facebook.com/",
 };
 
+/** Exact / subdomain / DNS-label match only — never substring host.includes (SSRF). */
 function isAllowedImageUrl(raw: string): boolean {
   try {
     const url = new URL(raw);
     if (url.protocol !== "https:" && url.protocol !== "http:") return false;
     const host = url.hostname.toLowerCase();
-    return ALLOWED_HOSTS.some((h) => host === h || host.endsWith(`.${h}`) || host.includes(h));
+    return ALLOWED_HOSTS.some((h) => {
+      if (h.includes(".")) {
+        return host === h || host.endsWith(`.${h}`);
+      }
+      // Bare tokens like "scontent" / "sns-img": must be a full label or `token-…` label.
+      return host.split(".").some((part) => part === h || part.startsWith(`${h}-`));
+    });
   } catch {
     return false;
   }

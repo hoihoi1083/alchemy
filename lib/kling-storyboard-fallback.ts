@@ -127,14 +127,18 @@ export function klingSceneMotionPrompt(opts: {
 }): string {
   const motion = klingMotionFromMeta(opts);
   const theme = opts.theme?.trim();
+  const action = opts.sceneDescription?.trim();
   const endCard = isEndCardScene(opts);
   const logoOn = Boolean(opts.useBrandLogo ?? opts.endWithBrandLogo);
   return [
     `Animate this exact still as storyboard scene ${opts.sceneIndex}/${opts.sceneCount}.`,
     theme ? `Mood: ${theme}.` : "",
+    action
+      ? `Action: ${action} — follow this beat with natural motion; do not change identity or layout.`
+      : "",
     `Camera: ${motion}.`,
     "Add visible commercial motion — camera move and light should feel alive, not a near-static photo.",
-    "Preserve the input frame — same people, product, layout, and brand logo already in the still.",
+    "Preserve the input frame — Keep the same people, product, layout, and brand logo already in the still.",
     "CRITICAL: do not invent, redraw, or morph any readable text, Chinese characters, Latin letters, digits, captions, watermarks, or gibberish glyphs.",
     "If the still has a laptop/phone/tablet screen, keep UI blank or abstract — never invent English/Chinese labels, inverted text, or dashboard copy.",
     "If the still has blank bars or empty UI labels, keep them blank — never fill them with fake words.",

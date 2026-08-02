@@ -72,9 +72,10 @@ export function actionLinkForTask(task: CoachTaskKind, en: boolean): string | nu
         ? "[Website launch image](studio-action:website-launch-image)"
         : "[網站上線靜態圖](studio-action:website-launch-image)";
     case "route-cinematic-stitch":
+      // Stitch deferred — same CTA as single 8s cinematic.
       return en
-        ? "[24s cinematic stitch](studio-action:apply-cinematic-stitch)"
-        : "[24秒電影感拼接](studio-action:apply-cinematic-stitch)";
+        ? "[8s cinematic reel](studio-action:apply-8s-recipe)"
+        : "[8秒電影感短片](studio-action:apply-8s-recipe)";
     case "route-physical-product":
       return en
         ? "[Open physical studio](studio-action:open-physical-studio)"

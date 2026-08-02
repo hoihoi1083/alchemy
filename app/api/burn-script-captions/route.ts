@@ -1,6 +1,8 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { NextResponse } from "next/server";
+import { chargeTokens, refundTokens } from "@/lib/billing/charge";
+import { TOKEN_COST } from "@/lib/billing/token-costs";
 import { requireAppUser } from "@/lib/require-app-user";
 import {
   ensureFfmpeg,
@@ -135,6 +137,8 @@ export async function POST(request: Request) {
   if (!auth.ok) return auth.response;
 
   const contentType = request.headers.get("content-type") ?? "";
+  const tokenCost = TOKEN_COST.caption_burn;
+  let charged = false;
 
   try {
     if (contentType.includes("multipart/form-data")) {
@@ -161,6 +165,12 @@ export async function POST(request: Request) {
           captionStyle = styleRaw.trim();
         }
       }
+      const bill = await chargeTokens(auth.user.userId, tokenCost, {
+        kind: "caption_burn",
+        method: "script",
+      });
+      if ("error" in bill) return bill.error;
+      charged = true;
       const result = await burnCaptionsJob(request, {
         clerkId: auth.user.userId,
         videoFile: file,
@@ -168,7 +178,11 @@ export async function POST(request: Request) {
         captionLines: lines,
         captionStyle,
       });
-      return NextResponse.json(result);
+      return NextResponse.json({
+        ...result,
+        tokensCharged: tokenCost,
+        creditBalance: bill.balanceAfter,
+      });
     }
 
     let body: { video_url?: string; caption_lines?: CaptionLine[]; caption_style?: unknown };
@@ -188,14 +202,30 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "caption_lines is required." }, { status: 400 });
     }
 
+    const bill = await chargeTokens(auth.user.userId, tokenCost, {
+      kind: "caption_burn",
+      method: "script",
+    });
+    if ("error" in bill) return bill.error;
+    charged = true;
     const result = await burnCaptionsJob(request, {
       clerkId: auth.user.userId,
       videoUrl,
       captionLines: lines,
       captionStyle: body.caption_style,
     });
-    return NextResponse.json(result);
+    return NextResponse.json({
+      ...result,
+      tokensCharged: tokenCost,
+      creditBalance: bill.balanceAfter,
+    });
   } catch (e: unknown) {
+    if (charged) {
+      await refundTokens(auth.user.userId, tokenCost, {
+        kind: "caption_burn",
+        reason: "burn_failed",
+      });
+    }
     const message = e instanceof Error ? e.message : "Caption burn failed.";
     return NextResponse.json({ error: message }, { status: 502 });
   }

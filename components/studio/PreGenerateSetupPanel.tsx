@@ -790,6 +790,7 @@ export function PreGenerateSetupPanel({
   generateBlockMessage,
   showStylePicker = false,
   showReferenceUpload = false,
+  combinedStoryboard = false,
 }: {
   onGenerate?: () => void;
   generateDisabled?: boolean;
@@ -800,6 +801,8 @@ export function PreGenerateSetupPanel({
   showStylePicker?: boolean;
   /** Direct path: optional user reference image (triggers analyze + dual-ref). */
   showReferenceUpload?: boolean;
+  /** 圖+片: fuse storyboard brief; hide single-image output modes. */
+  combinedStoryboard?: boolean;
 } = {}) {
   const { m } = useLocale();
   const wizard = useWizard();
@@ -809,6 +812,7 @@ export function PreGenerateSetupPanel({
   const mainInputId = useId();
   const angleInputId = useId();
   const showBrandWebsite = requiresBrandProfileForImages(wizard.visualStyleId);
+  const effectiveShowStylePicker = showStylePicker && !combinedStoryboard;
 
   const brief = wizard.userReferenceBrief as UserReferenceBrief | null;
   const showReferenceBrief =
@@ -827,7 +831,7 @@ export function PreGenerateSetupPanel({
   const isQuickAd = !isModelWear;
   const hasReference = Boolean(wizard.imageRefPhoto);
   /** Reference layout transfer overrides model-wear staging — lock to product path. */
-  const modelWearLockedByReference = showStylePicker && !isConcept && hasReference;
+  const modelWearLockedByReference = effectiveShowStylePicker && !isConcept && hasReference;
   const conceptPath =
     wizard.visualStyleId === "info-poster"
       ? "info"
@@ -844,13 +848,17 @@ export function PreGenerateSetupPanel({
       wizard.visualStyleId === "website-launch" ||
       wizard.visualStyleId === "service-promo");
 
-  const setupHint = isConcept
-    ? showStylePicker || showReferenceUpload
-      ? pg.conceptDirectHint
-      : pg.conceptHint
-    : showStylePicker || showReferenceUpload
-      ? pg.directHint
-      : pg.hint;
+  const setupHint = combinedStoryboard
+    ? isConcept
+      ? pg.combinedConceptHint
+      : pg.combinedHint
+    : isConcept
+      ? showStylePicker || showReferenceUpload
+        ? pg.conceptDirectHint
+        : pg.conceptHint
+      : showStylePicker || showReferenceUpload
+        ? pg.directHint
+        : pg.hint;
 
   // If research already applied but hook/subline were left blank (stale session /
   // older concept branch), backfill the same way product research does.
@@ -1116,7 +1124,7 @@ export function PreGenerateSetupPanel({
               </section>
             ) : null}
 
-            {showStylePicker ? (
+            {effectiveShowStylePicker ? (
               <section className="pg-card">
                 <div className="pg-card-title-row">
                   <span className="pg-card-icon">
@@ -1362,6 +1370,155 @@ export function PreGenerateSetupPanel({
               </div>
             </section>
 
+            {combinedStoryboard ? (
+              <section className="pg-card">
+                <div className="pg-content-row">
+                  <div className="pg-content-aside">
+                    <span className="pg-card-icon">
+                      <SectionIcon kind="output" />
+                    </span>
+                    <h3 className="pg-card-title">{pg.storyboardTitle}</h3>
+                    <p className="mt-0.5 text-xs text-slate-500">{pg.storyboardHint}</p>
+                  </div>
+                  <div className="min-w-0 flex-1 space-y-3">
+                    <label className="block">
+                      <span className="mb-1 block text-xs font-medium text-slate-600">
+                        {m.wizard.storyboardBriefLabel}
+                        <span className="ml-1 font-normal text-slate-400">{pg.extraOptional}</span>
+                      </span>
+                      <textarea
+                        className="pg-textarea"
+                        rows={3}
+                        value={wizard.storyboardBrief}
+                        onChange={(e) => wizard.setStoryboardBrief(e.target.value)}
+                        placeholder={m.wizard.storyboardBriefPlaceholder}
+                      />
+                    </label>
+                    <div className="flex flex-wrap gap-3">
+                      <label className="text-sm text-slate-700">
+                        <span className="mb-1 block text-xs font-medium text-slate-600">
+                          {m.wizard.storyboardTrimDurationLabel}
+                        </span>
+                        <select
+                          className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm"
+                          value={wizard.storyboardTrimDuration}
+                          onChange={(e) =>
+                            wizard.setStoryboardTrimDuration(
+                              e.target.value as typeof wizard.storyboardTrimDuration,
+                            )
+                          }
+                        >
+                          {["6", "8", "10", "12"].map((n) => (
+                            <option key={n} value={n}>
+                              {n}s
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="text-sm text-slate-700">
+                        <span className="mb-1 block text-xs font-medium text-slate-600">
+                          {m.wizard.storyboardSceneCountLabel}
+                        </span>
+                        <select
+                          className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm"
+                          value={wizard.storyboardSceneCount}
+                          onChange={(e) =>
+                            wizard.setStoryboardSceneCount(
+                              e.target.value as typeof wizard.storyboardSceneCount,
+                            )
+                          }
+                        >
+                          <option value="auto">{m.wizard.storyboardSceneCountAuto}</option>
+                          {[2, 3, 4, 5, 6].map((n) => (
+                            <option key={n} value={String(n)}>
+                              {n}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                    <p className="text-[11px] text-slate-500">{m.wizard.storyboardSceneCountHint}</p>
+
+                    <p className="text-xs leading-relaxed text-violet-800/90">
+                      {m.wizard.storyboardPlanReviewHint}
+                    </p>
+                    <button
+                      type="button"
+                      disabled={
+                        wizard.planStoryboardBusy ||
+                        wizard.imageBusy ||
+                        Boolean(wizard.imageGenerateDisabledReason)
+                      }
+                      onClick={() => void wizard.planStoryboard()}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-violet-300 bg-violet-50 px-4 py-2.5 text-sm font-semibold text-violet-800 transition hover:bg-violet-100 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
+                    >
+                      {wizard.planStoryboardBusy
+                        ? m.wizard.storyboardPlanBusy
+                        : wizard.storyboardPlan
+                          ? m.wizard.storyboardPlanReplanBtn
+                          : m.wizard.storyboardPlanBtn}
+                    </button>
+
+                    {wizard.storyboardPlan ? (
+                      <div className="space-y-3 rounded-xl border border-violet-200 bg-violet-50/50 p-3">
+                        <label className="block text-xs font-medium text-slate-700">
+                          {m.wizard.storyboardPlanThemeLabel}
+                          <input
+                            value={wizard.storyboardPlan.theme}
+                            onChange={(e) =>
+                              wizard.setStoryboardPlan({
+                                ...wizard.storyboardPlan!,
+                                theme: e.target.value,
+                              })
+                            }
+                            className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-sm text-slate-900"
+                          />
+                        </label>
+                        {wizard.storyboardPlan.scenes.map((scene, i) => (
+                          <div
+                            key={`plan-scene-${scene.imageIndex}`}
+                            className="rounded-lg border border-violet-100 bg-white p-2.5"
+                          >
+                            <p className="text-xs font-semibold text-slate-800">
+                              {m.wizard.storyboardSceneLabel} {scene.imageIndex} ·{" "}
+                              {scene.startSec}–{scene.endSec}s
+                              {scene.role ? ` · ${scene.role}` : ""}
+                            </p>
+                            <label className="mt-1.5 block text-[11px] text-slate-600">
+                              {m.wizard.storyboardPlanSceneDescLabel}
+                              <textarea
+                                value={scene.sceneDescriptionZh}
+                                onChange={(e) =>
+                                  wizard.updateStoryboardPlanScene(i, {
+                                    sceneDescriptionZh: e.target.value,
+                                  })
+                                }
+                                rows={2}
+                                className="mt-0.5 w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-900"
+                              />
+                            </label>
+                            <label className="mt-1.5 block text-[11px] text-slate-600">
+                              {m.wizard.storyboardPlanCopyLabel}
+                              <input
+                                value={scene.onImageCopyZh ?? ""}
+                                onChange={(e) =>
+                                  wizard.updateStoryboardPlanScene(i, {
+                                    onImageCopyZh: e.target.value,
+                                  })
+                                }
+                                className="mt-0.5 w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-900"
+                              />
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              </section>
+            ) : null}
+
+            {!combinedStoryboard ? (
             <section className="pg-card">
               <div className="pg-content-row pg-content-row--center">
                 <div className="pg-content-aside">
@@ -1416,6 +1573,7 @@ export function PreGenerateSetupPanel({
                 </div>
               </div>
             </section>
+            ) : null}
 
             <section className="pg-card">
               <div className="pg-content-row">

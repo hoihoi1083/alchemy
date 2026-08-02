@@ -124,7 +124,7 @@ const WAIT_AUTO_ADVANCE = new Set<MicroStepId>([
   "wait.reel_download",
   "wait.reel_analyze",
   "wait.brand_analyze",
-  "wait.concept_plan",
+  // wait.concept_plan: dedicated effect waits for conceptPlanBusy (see useWizardMicroStep).
   // wait.image_generate / wait.video_generate / wait.storyboard_generate:
   // advance only when the job succeeds (see useWizardMicroStep dedicated effects).
 ]);
@@ -234,6 +234,9 @@ function evalWhen(
   if (norm === 'workflowMode === "video-only"') {
     return ctx.workflowMode === "video-only";
   }
+  if (norm === 'workflowMode === "combined"') {
+    return ctx.workflowMode === "combined";
+  }
   if (norm === 'workflowMode !== "video-only"') {
     return ctx.workflowMode !== "video-only";
   }
@@ -278,16 +281,7 @@ export function resolvePathId(
   const { workflowMode, promotionMode, intakePath } = ctx;
   if (!workflowMode || !promotionMode || !intakePath) return null;
 
-  // UGC from video subpath must stay on product_video_direct (image keyframe + HeyGen),
-  // even when wizard state flips to combined for the talking-head pipeline.
-  if (
-    promotionMode === "physical" &&
-    intakePath === "direct" &&
-    (ctx.videoSubpath === "ugc_presenter" ||
-      (isUgcPresenterStyle(state.visualStyleId) && workflowMode === "video-only"))
-  ) {
-    return "product_video_direct";
-  }
+  // UGC presenter is out of scope for wizard v2 — ignore sticky ugc subpath/style.
 
   if (promotionMode === "concept" && workflowMode === "combined") {
     if (
@@ -408,8 +402,13 @@ function expandMergedPath(
     trunk.push(id);
   }
 
+  // Ship-it is out of scope for combined (§0) — never inject shortcut.ship_it.
   const tail = filterGraphSteps(graphStepsForPath(pathId), state, ctx).filter(
-    (id) => id === "image.review" || id === "shortcut.ship_it" || id.startsWith("video.") || id.startsWith("wait.video") || id === "done.export",
+    (id) =>
+      id === "image.review" ||
+      id.startsWith("video.") ||
+      id.startsWith("wait.video") ||
+      id === "done.export",
   );
 
   const directSubId =
@@ -430,6 +429,10 @@ function injectReelStoryboardBranch(
   // Combined reel is always multi-scene stills (UGC / cinematic use other paths).
   if (isUgcPresenterStyle(state.visualStyleId)) return ids;
   if (state.visualStyleId === "concept-cinematic") return ids;
+  // Graph already fused combined storyboard (setup.pre_generate → wait → review).
+  if (ids.includes("wait.storyboard_generate") || ids.includes("image.review")) {
+    return ids;
+  }
   if (ids.includes("image.storyboard_scenes")) return ids;
 
   // Drop a misplaced brief so we can re-insert the full block after setup.
@@ -438,6 +441,7 @@ function injectReelStoryboardBranch(
   // After research/setup — never before reference reel / product photo.
   // Do NOT use early `video.settings` (reorderReelVideoSettings moves it up).
   const setupAnchors = [
+    base.indexOf("setup.pre_generate"),
     base.indexOf("asset.product_photo"),
     base.indexOf("copy.edit"),
     base.indexOf("wait.reel_analyze"),
@@ -450,9 +454,8 @@ function injectReelStoryboardBranch(
 
   const next = [...base];
   const storyboardBlock: MicroStepId[] = [
-    "copy.storyboard_brief",
-    "image.storyboard_scenes",
     "wait.storyboard_generate",
+    "image.review",
   ];
   next.splice(insertAt, 0, ...storyboardBlock);
   return dedupeSteps(next);
@@ -526,15 +529,12 @@ export function resolveMicroSteps(
   }
 
   if (ctx.promotionMode === "concept" && ctx.workflowMode === "combined") {
-    // Image+video defaults to storyboard; cinematic multi-scene stitch is hidden from the picker.
+    // Image+video defaults to 分鏡 storyboard. Cinematic = single 8s only (stitch deferred).
     const cinematic =
       ctx.combinedStyle === "cinematic" ||
       state.visualStyleId === "concept-cinematic";
     if (cinematic && state.visualStyleId !== "concept-cinematic") {
       ids.push("route.cinematic_mode");
-    }
-    if (cinematic && state.cinematicStitchReel) {
-      ids.push("cinematic.scene_count");
     }
   }
 
@@ -682,9 +682,11 @@ export function microStepLegacyKey(
   id: MicroStepId,
   state?: Pick<WizardMicroStepState, "visualStyleId">,
 ): "setup" | "image" | "video" | "done" | null {
-  // image.review / done.export stay in micro-wizard (ImageResultPanel / VideoResultPanel).
-  // Only storyboard stills need the full classic ImageStep.
-  if (id === "image.storyboard_scenes") return "image";
+  // Combined storyboard stays in micro-wizard. Cinematic stitch still uses classic ImageStep.
+  if (id === "image.storyboard_scenes") {
+    if (state?.visualStyleId === "concept-cinematic") return "image";
+    return null;
+  }
   // UGC: hand off to classic VideoStep for PresenterAvatarPicker + HeyGen generate.
   if (id === "video.generate" && state && isUgcPresenterStyle(state.visualStyleId)) {
     return "video";
@@ -771,6 +773,10 @@ export function canProceedMicroStep(
     }
   }
   if (id === "setup.pre_video") {
+    // Combined storyboard: scenes already generated — only need them ready.
+    if (ctx.workflowMode === "combined" && state.hasGeneratedImage) {
+      return null;
+    }
     const sub =
       ctx.videoSubpath ??
       (ctx.promotionMode === "concept" ? "creative_video" : "product_promo");
@@ -846,7 +852,9 @@ export function canProceedMicroStep(
   }
   if (id === "wait.image_generate" && state.imageBusy) return "image_busy";
   if (id === "wait.storyboard_generate" && state.imageBusy) return "image_busy";
-  if (id === "image.review" && !state.imageUrl && !state.imageBusy) return "image_not_ready";
+  if (id === "image.review" && !state.imageUrl && !state.imageBusy && !state.hasGeneratedImage) {
+    return "image_not_ready";
+  }
   if (id === "wait.video_generate" && state.videoBusy) return "video_busy";
   if (id === "wait.video_generate" && !state.videoUrl) return "video_not_ready";
   if (

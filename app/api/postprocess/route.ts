@@ -1,6 +1,8 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { NextResponse } from "next/server";
+import { chargeTokens, refundTokens } from "@/lib/billing/charge";
+import { TOKEN_COST } from "@/lib/billing/token-costs";
 import { requireAppUser } from "@/lib/require-app-user";
 import { synthesizeCantoneseToFile } from "@/lib/pipeline/azureTts";
 import {
@@ -24,6 +26,21 @@ type SubtitleMode = "none" | "soft" | "burn";
 type AsrProvider = "local" | "openai";
 type RewriteProvider = "none" | "openai";
 type DubProvider = "none" | "azure";
+
+/** ffmpeg base + optional OpenAI ASR/rewrite + Azure TTS. */
+function postprocessTokenCost(opts: {
+  asrProvider: AsrProvider;
+  rewriteProvider: RewriteProvider;
+  withDub: boolean;
+  dubProvider: DubProvider;
+  subtitleMode: SubtitleMode;
+}): number {
+  let cost = TOKEN_COST.caption_burn; // ffmpeg encode / subtitle attach
+  if (opts.asrProvider === "openai") cost += TOKEN_COST.plan;
+  if (opts.rewriteProvider === "openai") cost += TOKEN_COST.plan;
+  if (opts.withDub && opts.dubProvider === "azure") cost += TOKEN_COST.voiceover;
+  return cost;
+}
 
 export async function POST(request: Request) {
   const auth = await requireAppUser();
@@ -55,6 +72,21 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
+
+  const tokenCost = postprocessTokenCost({
+    asrProvider,
+    rewriteProvider,
+    withDub,
+    dubProvider,
+    subtitleMode,
+  });
+  const charged = await chargeTokens(auth.user.userId, tokenCost, {
+    kind: "postprocess",
+    asr: asrProvider,
+    rewrite: rewriteProvider,
+    dub: withDub ? dubProvider : "none",
+  });
+  if ("error" in charged) return charged.error;
 
   const jobId = crypto.randomUUID();
   const dir = jobDir(jobId);
@@ -150,8 +182,16 @@ export async function POST(request: Request) {
           : `Subtitles generated via ${asrProvider} ASR${rewriteProvider === "openai" ? " + OpenAI rewrite" : ""}.`,
     };
 
-    return NextResponse.json(result);
+    return NextResponse.json({
+      ...result,
+      tokensCharged: tokenCost,
+      creditBalance: charged.balanceAfter,
+    });
   } catch (e: unknown) {
+    await refundTokens(auth.user.userId, tokenCost, {
+      kind: "postprocess",
+      reason: "postprocess_failed",
+    });
     const message =
       e && typeof e === "object" && "message" in e
         ? String((e as { message: unknown }).message)

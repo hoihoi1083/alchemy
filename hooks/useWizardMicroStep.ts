@@ -29,6 +29,7 @@ import {
   WIZARD_CLASSIC_VALUE,
   WIZARD_V2_QUERY_FLAG,
   MICRO_RESUME_DONE_KEY,
+  MICRO_RESET_START_KEY,
 } from "@/lib/wizard-micro-steps.types";
 
 const CTX_KEY = "wizardV2Context";
@@ -89,7 +90,11 @@ function wizardStateSnapshot(wizard: StudioWizardValue): WizardMicroStepState {
     promptExtra: wizard.promptExtra,
     contentResearchApplied: Boolean(wizard.contentResearchApplyRef),
     shipItEligible: wizard.shipItEligible,
-    hasGeneratedImage: Boolean(wizard.imageUrl || wizard.cinematicScenes.length > 0),
+    hasGeneratedImage: Boolean(
+      wizard.imageUrl ||
+        wizard.cinematicScenes.length > 0 ||
+        wizard.storyboardScenes.length > 0,
+    ),
     userReferenceBrief: wizard.userReferenceBrief,
     referenceAnalyzeNote: wizard.referenceAnalyzeNote,
   };
@@ -208,6 +213,21 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     setStepIndex(doneIdx);
   }, [steps]);
 
+  // Assistant in-studio handoff: restart micro path at step 0 (stay on v2, not classic).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    let reset = false;
+    try {
+      reset = sessionStorage.getItem(MICRO_RESET_START_KEY) === "1";
+      if (reset) sessionStorage.removeItem(MICRO_RESET_START_KEY);
+    } catch {
+      return;
+    }
+    if (!reset) return;
+    setFinishedSetup(false);
+    setStepIndex(0);
+  }, [wizard.workflowMode, wizard.visualStyleId, wizard.stepKey, steps.length]);
+
   useEffect(() => {
     if (stepIndex >= steps.length && steps.length > 0) {
       setStepIndex(steps.length - 1);
@@ -320,16 +340,8 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     }
     if (
       (currentId === "setup.pre_video" || currentId === "video.generate") &&
-      wizard.videoGenerateDisabledReason &&
-      ctx.videoSubpath !== "ugc_presenter" &&
-      state.visualStyleId !== "ugc-presenter"
+      wizard.videoGenerateDisabledReason
     ) {
-      return;
-    }
-
-    if (currentId === "shortcut.ship_it") {
-      void wizard.runShipItPipeline();
-      handoffLegacy("done");
       return;
     }
 
@@ -341,6 +353,15 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     }
 
     if (currentId === "image.generate" || currentId === "setup.pre_generate") {
+      // Combined storyboard: require editable DeepSeek outline before Nano Banana spend.
+      if (
+        wizard.workflowMode === "combined" &&
+        wizard.isStoryboardOutput &&
+        !wizard.storyboardPlan
+      ) {
+        wizard.setError(wizard.m.wizard.storyboardPlanReviewHint);
+        return;
+      }
       void wizard.generateImage();
       autoAdvancedRef.current = null;
       setStepIndex((i) => i + 1);
@@ -348,21 +369,20 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     }
 
     if (currentId === "setup.pre_video") {
-      const ugc =
-        ctx.videoSubpath === "ugc_presenter" || state.visualStyleId === "ugc-presenter";
-      if (!ugc) {
-        void wizard.generateVideo();
-      }
+      void wizard.generateVideo();
       autoAdvancedRef.current = null;
       setStepIndex((i) => i + 1);
       return;
     }
 
-    // Never advance micro past storyboard_scenes into wait.storyboard_generate —
-    // that wait auto-skips only AFTER scenes exist. Hand off to ImageStep so the
-    // user can generate the scene grid (product/concept × direct/research).
+    // Combined storyboard stays in-micro. Cinematic still hands off to ImageStep.
     if (currentId === "image.storyboard_scenes") {
-      handoffLegacy("image");
+      if (wizard.visualStyleId === "concept-cinematic") {
+        handoffLegacy("image");
+        return;
+      }
+      autoAdvancedRef.current = null;
+      setStepIndex((i) => i + 1);
       return;
     }
 
@@ -375,10 +395,10 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
 
     if (currentId === "route.output_goal" && ctx.workflowMode) {
       wizard.onWorkflowModeChange(ctx.workflowMode);
-      // Image+video: skip cinematic stitch picker — default to storyboard animate path.
+      // Image+video: 分鏡 storyboard only (no UGC / single-poster Ship-it / cinematic stitch).
       if (ctx.workflowMode === "combined" && ctx.combinedStyle !== "cinematic") {
-        patchContext({ combinedStyle: "animate" });
-        if (!wizard.isUgcPresenterOutput && wizard.visualStyleId !== "concept-cinematic") {
+        patchContext({ combinedStyle: "storyboard" });
+        if (wizard.visualStyleId !== "concept-cinematic") {
           wizard.selectVisualStyle("storyboard-video");
         }
       }
@@ -634,12 +654,14 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
   }, []);
 
   const setCombinedStyle = useCallback(
-    (style: CombinedStyle) => {
-      patchContext({ combinedStyle: style });
-      // Animate branch = storyboard reel; cinematic keeps concept-cinematic via recipe.
-      if (style === "animate" && !wizard.isUgcPresenterOutput) {
+    (style: CombinedStyle | "animate") => {
+      // Legacy sessionStorage may still say "animate" → treat as storyboard.
+      const normalized: CombinedStyle = style === "animate" ? "storyboard" : style;
+      patchContext({ combinedStyle: normalized });
+      if (normalized === "storyboard") {
         wizard.selectVisualStyle("storyboard-video");
         wizard.setImageOutputMode("single");
+        wizard.setCinematicStitchReel(false);
       }
     },
     [patchContext, wizard],
@@ -660,11 +682,14 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     [patchContext, router, searchParams],
   );
 
-  // Stale sessions can still land on MP4 step after image research — never trap the user.
+  // asset.reference_video only appears when a reel is already attached (graph skipWhen
+  // combinedNoReel). Auto-skip if the file disappeared / flag stuck — never trap image research.
+  // Do NOT auto-skip while a download is in flight (user is about to get an MP4).
+  // Upload for paths without a reel lives on setup.pre_video (optional enrichment).
   useEffect(() => {
     if (currentId !== "asset.reference_video") return;
+    if (wizard.referenceClipLoading) return;
     if (wizard.referenceIsVideo && wizard.referenceAd) return;
-    // No real reel: auto-skip so 圖文研究 cannot get stuck on「請上傳參考 MP4」.
     const key = `auto-skip-ref-video-${stepIndex}`;
     if (autoAdvancedRef.current === key) return;
     autoAdvancedRef.current = key;
@@ -673,7 +698,14 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
       skipStep();
     }, 50);
     return () => window.clearTimeout(t);
-  }, [currentId, skipStep, stepIndex, wizard.referenceAd, wizard.referenceIsVideo]);
+  }, [
+    currentId,
+    skipStep,
+    stepIndex,
+    wizard.referenceAd,
+    wizard.referenceClipLoading,
+    wizard.referenceIsVideo,
+  ]);
 
   useEffect(() => {
     if (currentId === "wait.reel_download" && wizard.referenceAd && !blockReason) {
@@ -711,22 +743,70 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     wizard.userReferenceBrief,
   ]);
 
+  // After cinematic concept plan finishes, leave the wait screen.
+  // While busy, stay put (do not use WAIT_AUTO_ADVANCE generic timer).
   useEffect(() => {
-    if (currentId !== "wait.image_generate" || blockReason) return;
+    if (currentId !== "wait.concept_plan") return;
+    if (wizard.conceptPlanBusy) return;
+    const key = `wait.concept_plan-${stepIndex}-done`;
+    if (autoAdvancedRef.current === key) return;
+    autoAdvancedRef.current = key;
+    const t = window.setTimeout(() => goNext(), 400);
+    return () => window.clearTimeout(t);
+  }, [currentId, goNext, stepIndex, wizard.conceptPlanBusy]);
+
+  useEffect(() => {
+    if (currentId !== "wait.image_generate") return;
     if (wizard.imageBusy) return;
-    if (!wizard.imageUrl) return;
+    if (!wizard.imageUrl) {
+      // Mirror video wait: on failure, return to fused setup so user can retry.
+      if (wizard.error) {
+        const genIdx = steps.findIndex(
+          (s) => s.id === "setup.pre_generate" || s.id === "image.generate",
+        );
+        if (genIdx >= 0 && stepIndex !== genIdx) {
+          autoAdvancedRef.current = null;
+          setStepIndex(genIdx);
+        }
+      }
+      return;
+    }
+    if (blockReason) return;
     const key = `wait.image_generate-${stepIndex}-${wizard.imageUrl}`;
     if (autoAdvancedRef.current === key) return;
     autoAdvancedRef.current = key;
     goNext();
-  }, [blockReason, currentId, goNext, stepIndex, wizard.imageBusy, wizard.imageUrl]);
+  }, [
+    blockReason,
+    currentId,
+    goNext,
+    stepIndex,
+    steps,
+    wizard.error,
+    wizard.imageBusy,
+    wizard.imageUrl,
+  ]);
 
   useEffect(() => {
-    if (currentId !== "wait.storyboard_generate" || blockReason) return;
+    if (currentId !== "wait.storyboard_generate") return;
     if (wizard.imageBusy) return;
-    if (!wizard.imageUrl && wizard.cinematicScenes.length === 0 && wizard.storyboardScenes.length === 0) {
+    const hasScenes =
+      Boolean(wizard.imageUrl) ||
+      wizard.cinematicScenes.length > 0 ||
+      wizard.storyboardScenes.length > 0;
+    if (!hasScenes) {
+      if (wizard.error) {
+        const genIdx = steps.findIndex(
+          (s) => s.id === "setup.pre_generate" || s.id === "image.storyboard_scenes",
+        );
+        if (genIdx >= 0 && stepIndex !== genIdx) {
+          autoAdvancedRef.current = null;
+          setStepIndex(genIdx);
+        }
+      }
       return;
     }
+    if (blockReason) return;
     const key = `wait.storyboard_generate-${stepIndex}`;
     if (autoAdvancedRef.current === key) return;
     autoAdvancedRef.current = key;
@@ -736,7 +816,9 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     currentId,
     goNext,
     stepIndex,
+    steps,
     wizard.cinematicScenes.length,
+    wizard.error,
     wizard.imageBusy,
     wizard.imageUrl,
     wizard.storyboardScenes.length,

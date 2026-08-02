@@ -123,6 +123,7 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn") {
   const [brandSocialHint, setBrandSocialHint] = useState("");
   const [brandProfile, setBrandProfile] = useState<BrandProfile | null>(null);
   const [brandAnalyzeBusy, setBrandAnalyzeBusy] = useState(false);
+  const [conceptPlanBusy, setConceptPlanBusy] = useState(false);
   const [brandAnalyzeNote, setBrandAnalyzeNote] = useState<string | null>(null);
   const [creativeVideoBrief, setCreativeVideoBrief] = useState("");
   const [conceptImageVisionNote, setConceptImageVisionNote] = useState("");
@@ -317,6 +318,8 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn") {
     setBrandProfile,
     brandAnalyzeBusy,
     setBrandAnalyzeBusy,
+    conceptPlanBusy,
+    setConceptPlanBusy,
     brandAnalyzeNote,
     setBrandAnalyzeNote,
     creativeVideoBrief,

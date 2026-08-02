@@ -1666,6 +1666,7 @@ export const zhCn = {
     imageDoneTitle: "相片已完成",
     imageDoneHint: "下载图片。需要影片可另外拣「只整影片」或「相片+影片」。",
     generateImageBtn: "生成相片",
+    storyboardGenerateScenesBtn: "生成分镜场景图",
     regenerateImageBtn: "重新生成相片",
     tokenCostHint: "约用 {n} tokens",
     imageReviewRegenerateHint: "不满意？",
@@ -2640,7 +2641,7 @@ export const zhCn = {
     imagePromptTitle: "图片润色 prompt",
     imagePromptHint: "生成前可选填 — 给 AI 出圖 的额外指示。",
     cinematicModeTitle: "概念电影感模式",
-    cinematicModeHint: "单场 8 秒快速试片。",
+    cinematicModeHint: "目前只支持单场 8 秒电影感。多场景拼接暂未开放。",
     sceneCountTitle: "几个场景？",
     sceneCountHint: "每场约 8 秒。4–5 场 ≈ 拼接后 30–40 秒。",
     intakeTitle: "怎样开始？",
@@ -2835,12 +2836,22 @@ export const zhCn = {
         "上传版式／风格参考，AI 会分析并借构图。只填主题和文案也可以出图。",
       conceptMainPhotoOptionalHint:
         "有照可以上传 — 没有的话会用主题、文案和创作方向／参考风格出图。",
+      combinedHint:
+        "填写文案、上传产品照、可选故事备注，再生成多格场景图 — 下一步会串成一条无声短片。",
+      combinedConceptHint:
+        "填写主题和文案、照片选填、可选故事备注，再生成多格场景图 — 下一步会串成一条无声短片。",
+      storyboardTitle: "分镜短片",
+      storyboardHint: "选填故事备注，以及时长／场景数，用来串成一条 Reel。",
       secureNote: "你的选择安全保存，不会对外分享。",
     },
     preVideoSetup: {
       titleBefore: "设定你的",
       titleAccent: "影片详情",
       hint: "填写文案、上传产品照、写／确认动态 prompt、选择时长，再生成无声短片。",
+      scenesReadyHint:
+        "场景图已准备 — 选择时长和分辨率，再串成一条无声短片（字幕之后再加）。",
+      scenesReadyTitle: "分镜场景已准备",
+      scenesReadyBody: "这些静帧会串成短片。调好影片设定后再生成。",
       assistantHint:
         "上传产品照 → AI 写动态 prompt → 检查后再生成（无声片；字幕之后再加）。",
       assistantTitle: "AI 动态 Prompt",
@@ -3011,10 +3022,10 @@ export const zhCn = {
       video_busy: "请等视频生成完成。",
       video_not_ready: "视频未完成 — 请等生成，或返回再试。",
     },
-    combinedStyleTitle: "概念合并工作流",
-    combinedStyleHint: "图+片默认用分镜关键帧再串成一条 Reel。",
+    combinedStyleTitle: "图片+视频工作流",
+    combinedStyleHint: "图+片只用分镜：多场景关键帧再串成一条 Reel。不支持单图动态／一键出片。",
     combinedAnimateTitle: "分镜故事片",
-    combinedAnimateDesc: "多场景关键帧 → 串成一条 Reel（图+片默认）。",
+    combinedAnimateDesc: "多场景关键帧 → 串成一条 Reel。这是图+片唯一路径。",
     videoSubpathTitle: "视频创作方式",
     videoSubpathHint: "由产品照写动态方案，或跟参考短片运镜。",
     refVideoTitle: "参考短片（MP4）",

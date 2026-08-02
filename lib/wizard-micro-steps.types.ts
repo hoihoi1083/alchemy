@@ -24,7 +24,10 @@ export type VideoSubpath =
   | "brand_video";
 
 /** Concept combined: cinematic stitch vs animate keyframe */
-export type CombinedStyle = "cinematic" | "animate";
+/** Combined 圖+片: storyboard (分鏡) is the only shipped style; cinematic = single 8s only. */
+export type CombinedStyle = "cinematic" | "storyboard";
+/** @deprecated Use "storyboard" — kept for sessionStorage restore. */
+export type LegacyCombinedStyle = "animate";
 
 export type MicroStepId =
   | "entry.start"
@@ -124,6 +127,18 @@ export const WIZARD_CLASSIC_VALUE = "classic";
 
 /** sessionStorage: jump MicroWizard to done.export after classic DoneStep leak */
 export const MICRO_RESUME_DONE_KEY = "alchemy-micro-resume-done";
+
+/** sessionStorage: assistant handoff — restart micro path at step 0 */
+export const MICRO_RESET_START_KEY = "alchemy-micro-reset-start";
+
+export function requestMicroWizardRestart(): void {
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.setItem(MICRO_RESET_START_KEY, "1");
+  } catch {
+    /* ignore */
+  }
+}
 
 export function isWizardV2Enabled(searchParams: URLSearchParams): boolean {
   const flag = searchParams.get(WIZARD_V2_QUERY_FLAG);

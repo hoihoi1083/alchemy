@@ -2,6 +2,9 @@ import { promises as fs } from "fs";
 import path from "path";
 import { NextResponse } from "next/server";
 import { fal } from "@fal-ai/client";
+import sharp from "sharp";
+import { chargeTokens, refundTokens } from "@/lib/billing/charge";
+import { estimateInpaintTokens } from "@/lib/billing/token-costs";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import { parseBrandKit } from "@/lib/brand-kit";
 import { brandKitHasPromptContent, brandKitPromptBlock } from "@/lib/brand-merge";
@@ -33,6 +36,18 @@ function formatFalError(e: unknown): string {
   return "Inpaint failed";
 }
 
+async function megapixelsFromBuffer(buf: Buffer): Promise<number> {
+  try {
+    const meta = await sharp(buf).metadata();
+    const w = meta.width ?? 0;
+    const h = meta.height ?? 0;
+    if (w > 0 && h > 0) return (w * h) / 1_000_000;
+  } catch {
+    /* fall through */
+  }
+  return 1;
+}
+
 export async function POST(req: Request) {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
@@ -42,7 +57,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "FAL_KEY is not configured." }, { status: 503 });
   }
 
-  const formData = await req.formData();
+  let formData: FormData;
+  try {
+    formData = await req.formData();
+  } catch {
+    return NextResponse.json({ error: "Invalid or oversized upload." }, { status: 413 });
+  }
   const sourceUrl = (formData.get("source_image_url") as string | null)?.trim();
   const imageFile = formData.get("image_file");
   const rawPrompt = (formData.get("prompt") as string | null)?.trim() ?? "";
@@ -79,29 +99,55 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Draw a mask area first." }, { status: 400 });
   }
 
-  const jobId = crypto.randomUUID();
-  const dir = jobDir(jobId);
-  await fs.mkdir(dir, { recursive: true });
-
-  fal.config({ credentials: key });
-
-  let falImageUrl = "";
-  if (isUsableImageUrl(sourceUrl)) {
-    const inputPath = path.join(dir, "inpaint-input.png");
-    await materializeMediaInput(sourceUrl!, inputPath);
-    const inputFile = new File([await fs.readFile(inputPath)], "source.png", { type: "image/png" });
-    falImageUrl = await fal.storage.upload(inputFile);
-  } else if (imageFile instanceof File && imageFile.size > 0) {
-    await fs.writeFile(path.join(dir, "inpaint-input.png"), Buffer.from(await imageFile.arrayBuffer()));
-    falImageUrl = await fal.storage.upload(imageFile);
-  } else {
+  if (!isUsableImageUrl(sourceUrl) && !(imageFile instanceof File && imageFile.size > 0)) {
     return NextResponse.json(
       { error: "source_image_url or image_file is required." },
       { status: 400 },
     );
   }
 
+  const jobId = crypto.randomUUID();
+  const dir = jobDir(jobId);
+  await fs.mkdir(dir, { recursive: true });
+  const inputPath = path.join(dir, "inpaint-input.png");
+
+  // Materialize source BEFORE charge so we can bill by megapixel (fal $0.05/MP).
+  let sourceBytes: Buffer;
   try {
+    if (isUsableImageUrl(sourceUrl)) {
+      await materializeMediaInput(sourceUrl!, inputPath);
+      sourceBytes = await fs.readFile(inputPath);
+    } else if (imageFile instanceof File && imageFile.size > 0) {
+      sourceBytes = Buffer.from(await imageFile.arrayBuffer());
+      await fs.writeFile(inputPath, sourceBytes);
+    } else {
+      return NextResponse.json(
+        { error: "source_image_url or image_file is required." },
+        { status: 400 },
+      );
+    }
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : "Failed to load source image.";
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
+
+  const megapixels = await megapixelsFromBuffer(sourceBytes);
+  const tokenCost = estimateInpaintTokens(megapixels);
+  const charged = await chargeTokens(auth.user.userId, tokenCost, {
+    kind: "inpaint",
+    endpoint: FILL_ENDPOINT,
+    mode: useErase ? "erase" : "fill",
+    megapixels: Math.ceil(Math.max(1, megapixels)),
+  });
+  if ("error" in charged) return charged.error;
+
+  fal.config({ credentials: key });
+
+  try {
+    const inputFile = new File([new Uint8Array(sourceBytes)], "source.png", {
+      type: "image/png",
+    });
+    const falImageUrl = await fal.storage.upload(inputFile);
     const maskUrl = await fal.storage.upload(maskFile);
 
     const result = await fal.subscribe(FILL_ENDPOINT, {
@@ -140,11 +186,18 @@ export async function POST(req: Request) {
       imageUrl,
       endpoint: FILL_ENDPOINT,
       mode: useErase ? "erase" : "fill",
+      tokensCharged: tokenCost,
+      megapixelsBilled: Math.ceil(Math.max(1, megapixels)),
+      creditBalance: charged.balanceAfter,
       note: useErase
         ? "Local heal — only masked pixels were regenerated; surrounding content kept."
         : "FLUX Fill — only masked pixels were regenerated.",
     });
   } catch (e: unknown) {
+    await refundTokens(auth.user.userId, tokenCost, {
+      kind: "inpaint",
+      reason: "generation_failed",
+    });
     return NextResponse.json({ error: formatFalError(e) }, { status: 502 });
   }
 }

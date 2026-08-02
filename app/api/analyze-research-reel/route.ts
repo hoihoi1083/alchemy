@@ -1,5 +1,7 @@
 import { fal } from "@fal-ai/client";
 import { NextResponse } from "next/server";
+import { chargeTokens, refundTokens } from "@/lib/billing/charge";
+import { TOKEN_COST } from "@/lib/billing/token-costs";
 import { requireAppUser } from "@/lib/require-app-user";
 import { analyzeResearchReelFromVideo } from "@/lib/reel-video-analysis";
 import { researchReelAnalysisPromptBlock } from "@/lib/reel-analysis-types";
@@ -88,6 +90,15 @@ export async function POST(request: Request) {
   const planStoryboard =
     String(formData.get("plan_storyboard") ?? "true").trim() !== "false";
 
+  // fal vision (~image-class) + DeepSeek plan(s). Bill before vendor spend.
+  const tokenCost =
+    TOKEN_COST.image + TOKEN_COST.plan + (planStoryboard ? TOKEN_COST.plan : 0);
+  const charged = await chargeTokens(auth.user.userId, tokenCost, {
+    kind: "research_reel",
+    planStoryboard,
+  });
+  if ("error" in charged) return charged.error;
+
   try {
     const buffer = Buffer.from(await video.arrayBuffer());
     const result = await analyzeResearchReelFromVideo({
@@ -145,8 +156,14 @@ export async function POST(request: Request) {
       referenceDurationSec: result.referenceDurationSec,
       styleReferenceFrameUrl: result.styleReferenceFrameUrl ?? null,
       promptBlock: researchReelAnalysisPromptBlock(result.analysis),
+      tokensCharged: tokenCost,
+      creditBalance: charged.balanceAfter,
     });
   } catch (e: unknown) {
+    await refundTokens(auth.user.userId, tokenCost, {
+      kind: "research_reel",
+      reason: "analysis_failed",
+    });
     const message = e instanceof Error ? e.message : "Reel analysis failed.";
     const status =
       message.includes("ffmpeg") || message.includes("DEEPSEEK_API_KEY") ? 503 : 502;

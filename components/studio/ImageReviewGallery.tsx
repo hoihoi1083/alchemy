@@ -604,16 +604,21 @@ export function ImageReviewFooterBar({
   onBack,
   onDownloadAll,
   onGenerateOneMore,
+  onContinue,
   downloadAllBusy,
   generateBusy,
   backLabel,
+  continueLabel,
 }: {
   onBack: () => void;
   onDownloadAll: () => void;
   onGenerateOneMore: () => void;
+  /** Combined 圖+片: continue from scene review to video setup. */
+  onContinue?: () => void;
   downloadAllBusy?: boolean;
   generateBusy?: boolean;
   backLabel?: string;
+  continueLabel?: string;
 }) {
   const { m } = useLocale();
 
@@ -659,6 +664,27 @@ export function ImageReviewFooterBar({
             <IconRefresh className="h-4 w-4" />
             {m.wizard.imageReviewGenerateOneMore}
           </button>
+          {onContinue ? (
+            <button
+              type="button"
+              onClick={onContinue}
+              className="inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-emerald-600 bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:border-emerald-700 hover:bg-emerald-700 sm:w-auto"
+            >
+              {continueLabel ?? m.wizard.continueToVideo}
+              <svg
+                viewBox="0 0 20 20"
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <path d="M7.5 4.5 13 10l-5.5 5.5" />
+              </svg>
+            </button>
+          ) : null}
         </div>
       </div>
 

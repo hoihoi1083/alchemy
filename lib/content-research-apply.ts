@@ -158,10 +158,13 @@ function wizardPatchForAngle(
   // For attaching refs, use the real post format (not the locked "reel" style).
   const resolvedFormat = combinedLocksStoryboard ? effectiveFormat : effectiveFormat;
 
+  // Concept copy rules:
+  // - Planner angle (not pinned ref): headline = angle.hook; conceptIdea = topic.
+  // - Pinned ref + explicit promote: rewrite for promote; never paste ref hook.
+  // - Pinned ref without promote: empty conceptIdea (do not leak search topic).
   const copyTarget =
     promotionMode === "concept"
-      ? // Concept: always have a promote string (topic field) — same fill as product.
-        explicitPromoteTarget || plan.topic.trim()
+      ? explicitPromoteTarget
       : productName;
   const market = plan.market;
   const copy = copyFieldsFromAngle(angle, copyTarget, plan.topic, {
@@ -169,17 +172,24 @@ function wizardPatchForAngle(
     referenceSourced: pinnedReference,
     market,
   });
+  const conceptIdeaPatch =
+    promotionMode === "concept"
+      ? explicitPromoteTarget || (pinnedReference ? "" : plan.topic.trim())
+      : isProductShotReferenceAngle(angle)
+        ? ""
+        : productName
+          ? `${productName} — ${plan.platformLabel} style (from research)`
+          : "";
   const promoteTargetRaw = contentResearchPromoteTarget(promotionMode, {
     product: promotionMode === "physical" ? copyTarget : "",
     headline: copy.headline,
-    conceptIdea: explicitPromoteTarget || copyTarget,
+    conceptIdea: conceptIdeaPatch,
     searchTopic: plan.topic,
   });
+  // Pinned style-ref without an explicit promote target must not invent one
+  // from search topic or a fallback headline (leaks into promptExtra).
   const promoteTarget =
-    promotionMode === "concept" &&
-    pinnedReference &&
-    !explicitPromoteTarget &&
-    promoteTargetRaw.trim() === plan.topic.trim()
+    promotionMode === "concept" && pinnedReference && !explicitPromoteTarget
       ? ""
       : promoteTargetRaw;
   const promptExtra = isProductShotReferenceAngle(angle)
@@ -191,16 +201,6 @@ function wizardPatchForAngle(
         usePostInference ? inferred?.referenceNote : undefined,
         market,
       );
-
-  const conceptTopic = productName || plan.topic.trim();
-  const conceptIdeaPatch =
-    promotionMode === "concept"
-      ? explicitPromoteTarget || copyTarget || (pinnedReference ? "" : conceptTopic)
-      : isProductShotReferenceAngle(angle)
-        ? ""
-        : productName
-          ? `${productName} — ${plan.platformLabel} style (from research)`
-          : "";
 
   return {
     headline: copy.headline,

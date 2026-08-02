@@ -1,6 +1,6 @@
 {
-  "version": "0.5.0",
-  "description": "Wizard v2 micro-step graphs. UI-only; maps to useWizardState + useStudioWizard handlers.",
+  "version": "0.5.1",
+  "description": "Wizard v2 micro-step graphs (v0.5.1 — storyboard-only combined; UGC + cinematic stitch deferred). UI-only; maps to useWizardState + useStudioWizard handlers.",
   "rules": {
     "formatPickerSkipWhen": "imageOutputMode already set by applyContentAngleToWizard",
     "copyEditSkipWhen": "intakePath === 'direct' && all copy fields empty",
@@ -87,7 +87,6 @@
     "video.bgm",
     "video.generate",
     "wait.video_generate",
-    "shortcut.ship_it",
     "done.export"
   ],
   "outputFormatChoices": ["single", "ab", "campaign", "teaching-carousel"],
@@ -329,40 +328,35 @@
           ]
         },
         {
-          "id": "copy.edit",
-          "label": "內容與生成設定",
-          "prefillFrom": "research",
+          "id": "setup.pre_generate",
+          "label": "Pre-generate setup (combined storyboard)",
+          "handler": "generateImage",
           "skippable": false,
-          "when": "workflowMode !== 'video-only'",
-          "sections": ["copy", "brandKit", "advancedPrompt"],
-          "brandKit": { "required": false, "collapsedByDefault": true }
+          "when": "workflowMode === 'combined'",
+          "note": "Combined research → fuse copy/photo/brief; CTA generates scene stills",
+          "fuses": [
+            "copy.edit",
+            "asset.product_photo",
+            "copy.storyboard_brief"
+          ]
         },
         {
-          "id": "asset.brand_website",
-          "when": "workflowMode !== 'video-only' && isBrandVideoStyle(visualStyleId)",
-          "required": true
+          "id": "wait.storyboard_generate",
+          "when": "workflowMode === 'combined'"
         },
         {
-          "id": "asset.product_photo",
-          "required": true,
-          "when": "workflowMode !== 'video-only'"
+          "id": "image.review",
+          "when": "workflowMode === 'combined'"
         },
         {
-          "id": "copy.storyboard_brief",
-          "when": "workflowMode !== 'video-only' && visualStyleId === 'storyboard-video'"
+          "id": "setup.pre_video",
+          "label": "Pre-video setup (scenes ready)",
+          "handler": "generateVideo",
+          "skippable": false,
+          "when": "workflowMode === 'combined'",
+          "fuses": ["video.settings", "video.generate"]
         },
         { "id": "IMAGE_STORYBOARD_BRANCH" },
-        {
-          "id": "video.settings",
-          "skippable": true,
-          "when": "workflowMode !== 'video-only'"
-        },
-        {
-          "id": "video.generate",
-          "handler": "generateVideo",
-          "legacyStepKey": "video",
-          "when": "workflowMode !== 'video-only'"
-        },
         { "id": "wait.video_generate", "while": "videoBusy" },
         { "id": "done.export", "legacyStepKey": "done" }
       ]
@@ -398,36 +392,14 @@
             "video.generate"
           ]
         },
-        {
-          "id": "image.generate",
-          "when": "visualStyleId === 'ugc-presenter'",
-          "handler": "generateImage"
-        },
-        {
-          "id": "wait.image_generate",
-          "when": "visualStyleId === 'ugc-presenter'",
-          "while": "imageBusy"
-        },
-        { "id": "image.review", "when": "visualStyleId === 'ugc-presenter'" },
-        { "id": "video.ugc_pack", "when": "visualStyleId === 'ugc-presenter'" },
-        {
-          "id": "video.generate",
-          "handler": "generateVideo",
-          "legacyStepKey": "video",
-          "when": "visualStyleId === 'ugc-presenter'"
-        },
-        {
-          "id": "wait.video_generate",
-          "while": "videoBusy",
-          "when": "visualStyleId !== 'ugc-presenter'"
-        },
-        { "id": "done.export", "when": "visualStyleId !== 'ugc-presenter'" }
+        { "id": "wait.video_generate", "while": "videoBusy" },
+        { "id": "done.export" }
       ]
     },
     "product_combined": {
       "id": "product_combined",
       "label": "Product / Image → Video (storyboard)",
-      "description": "Path 7 — 圖+片 always storyboard scene stills → Seedance stitch. UGC is the only non-storyboard combined exception.",
+      "description": "Path 7 — 圖+片 = 分鏡 storyboard only (multi-scene stills → video). UGC and single-poster Ship-it are out of scope.",
       "priority": "P1",
       "context": {
         "workflowMode": "combined",
@@ -441,54 +413,33 @@
         { "id": "identity.product_name", "required": ["product"] },
         { "id": "route.intake" },
         {
-          "id": "copy.edit",
-          "label": "內容與生成設定",
-          "sections": ["copy", "brandKit", "advancedPrompt"],
-          "brandKit": { "required": false, "collapsedByDefault": true }
+          "id": "setup.pre_generate",
+          "label": "Pre-generate setup (combined storyboard)",
+          "handler": "generateImage",
+          "skippable": false,
+          "note": "Fuse copy + product photo + optional ref + storyboard brief; CTA generates scene stills",
+          "fuses": [
+            "copy.edit",
+            "asset.product_photo",
+            "asset.reference_image",
+            "wait.reference_analyze",
+            "copy.storyboard_brief"
+          ]
         },
-        { "id": "asset.product_photo", "required": true },
+        { "id": "wait.storyboard_generate" },
         {
-          "id": "asset.reference_image",
-          "skippable": true,
-          "label": "參考圖（選填）"
-        },
-        {
-          "id": "wait.reference_analyze",
-          "skipWhen": "!imageRefPhoto"
-        },
-        {
-          "id": "copy.storyboard_brief",
-          "when": "visualStyleId !== 'ugc-presenter'"
-        },
-        {
-          "id": "image.storyboard_scenes",
-          "when": "visualStyleId !== 'ugc-presenter'",
-          "legacyStepKey": "image"
+          "id": "image.review",
+          "note": "Violet scene review — Continue → fused video setup"
         },
         {
-          "id": "wait.storyboard_generate",
-          "when": "visualStyleId !== 'ugc-presenter'"
+          "id": "setup.pre_video",
+          "label": "Pre-video setup (scenes ready)",
+          "handler": "generateVideo",
+          "skippable": false,
+          "fuses": ["video.settings", "video.generate"]
         },
-        {
-          "id": "image.generate",
-          "when": "visualStyleId === 'ugc-presenter'",
-          "handler": "generateImage"
-        },
-        {
-          "id": "wait.image_generate",
-          "when": "visualStyleId === 'ugc-presenter'",
-          "while": "imageBusy"
-        },
-        { "id": "image.review", "when": "visualStyleId === 'ugc-presenter'" },
-        { "id": "video.ugc_pack", "when": "visualStyleId === 'ugc-presenter'" },
-        { "id": "video.settings", "skippable": true },
-        { "id": "video.generate", "handler": "generateVideo", "legacyStepKey": "video" },
-        {
-          "id": "wait.video_generate",
-          "while": "videoBusy",
-          "when": "visualStyleId !== 'ugc-presenter'"
-        },
-        { "id": "done.export", "when": "visualStyleId !== 'ugc-presenter'" }
+        { "id": "wait.video_generate", "while": "videoBusy" },
+        { "id": "done.export" }
       ]
     },
     "concept_video_research_reel": {
@@ -574,46 +525,36 @@
           ]
         },
         {
-          "id": "copy.edit",
-          "label": "內容與生成設定",
-          "prefillFrom": "research",
+          "id": "setup.pre_generate",
+          "label": "Pre-generate setup (combined storyboard)",
+          "handler": "generateImage",
           "skippable": false,
-          "when": "workflowMode !== 'video-only'",
-          "sections": ["copy", "brandKit", "advancedPrompt"],
-          "brandKit": { "required": false, "collapsedByDefault": true }
+          "when": "workflowMode === 'combined'",
+          "note": "Combined research → fuse copy/optional photo/brief; CTA generates scene stills",
+          "fuses": [
+            "copy.edit",
+            "asset.product_photo",
+            "asset.reference_image",
+            "copy.storyboard_brief"
+          ]
         },
         {
-          "id": "asset.brand_website",
-          "when": "workflowMode !== 'video-only' && isBrandVideoStyle(visualStyleId)",
-          "required": true
+          "id": "wait.storyboard_generate",
+          "when": "workflowMode === 'combined'"
         },
         {
-          "id": "asset.reference_image",
-          "skippable": true,
-          "when": "workflowMode !== 'video-only'"
+          "id": "image.review",
+          "when": "workflowMode === 'combined'"
         },
         {
-          "id": "asset.product_photo",
-          "skippable": true,
-          "required": false,
-          "when": "workflowMode !== 'video-only'"
-        },
-        {
-          "id": "copy.storyboard_brief",
-          "when": "workflowMode !== 'video-only' && visualStyleId === 'storyboard-video'"
+          "id": "setup.pre_video",
+          "label": "Pre-video setup (scenes ready)",
+          "handler": "generateVideo",
+          "skippable": false,
+          "when": "workflowMode === 'combined'",
+          "fuses": ["video.settings", "video.generate"]
         },
         { "id": "IMAGE_STORYBOARD_BRANCH" },
-        {
-          "id": "video.settings",
-          "skippable": true,
-          "when": "workflowMode !== 'video-only'"
-        },
-        {
-          "id": "video.generate",
-          "handler": "generateVideo",
-          "legacyStepKey": "video",
-          "when": "workflowMode !== 'video-only'"
-        },
         { "id": "wait.video_generate", "while": "videoBusy" },
         { "id": "done.export", "legacyStepKey": "done" }
       ]
@@ -665,7 +606,7 @@
     "concept_combined_cinematic": {
       "id": "concept_combined_cinematic",
       "label": "Concept / Combined / Cinematic",
-      "description": "Path 10 — concept-cinematic direct; NOT Path 8 reel storyboard or Path 11 animate keyframe",
+      "description": "Path 10 — single 8s cinematic only; multi-scene stitch deferred",
       "priority": "P1",
       "pathNumber": 10,
       "context": {
@@ -687,14 +628,8 @@
         {
           "id": "route.cinematic_mode",
           "choices": [
-            { "id": "single", "set": { "cinematicSceneCount": 1, "cinematicStitchReel": false } },
-            { "id": "stitch", "set": { "cinematicStitchReel": true } }
+            { "id": "single", "set": { "cinematicSceneCount": 1, "cinematicStitchReel": false } }
           ]
-        },
-        {
-          "id": "cinematic.scene_count",
-          "when": "cinematicStitchReel",
-          "choices": [1, 2, 3, 4, 5, 6]
         },
         { "id": "asset.reference_image", "skippable": true },
         { "id": "wait.concept_plan", "optionalHandler": "planConcept", "skippable": true },
@@ -708,7 +643,7 @@
         {
           "id": "image.storyboard_scenes",
           "legacyStepKey": "image",
-          "label": "Cinematic keyframe(s) — single or stitch"
+          "label": "Cinematic keyframe — single 8s"
         },
         { "id": "wait.storyboard_generate" },
         { "id": "video.settings" },
@@ -722,7 +657,7 @@
     "concept_combined": {
       "id": "concept_combined",
       "label": "Concept / Combined / Storyboard",
-      "description": "Path 11 — 圖+片 animate branch is storyboard (not single-poster image-to-video). Cinematic stays Path 10.",
+      "description": "Path 11 — 圖+片 分鏡 storyboard only (not single-poster animate). Cinematic stays Path 10.",
       "priority": "P2",
       "pathNumber": 11,
       "context": {
@@ -737,20 +672,31 @@
         { "id": "route.concept_source" },
         { "id": "identity.concept", "required": ["conceptIdea"] },
         {
-          "id": "copy.edit",
-          "label": "內容與生成設定",
-          "skippable": true,
-          "sections": ["copy", "brandKit", "advancedPrompt"],
-          "brandKit": { "required": false, "collapsedByDefault": true }
+          "id": "setup.pre_generate",
+          "label": "Pre-generate setup (combined storyboard)",
+          "handler": "generateImage",
+          "skippable": false,
+          "note": "Fuse copy + optional photo/ref + storyboard brief; CTA generates scene stills",
+          "fuses": [
+            "copy.edit",
+            "asset.product_photo",
+            "asset.reference_image",
+            "wait.reference_analyze",
+            "copy.storyboard_brief"
+          ]
         },
-        { "id": "asset.product_photo", "skippable": true, "required": false },
-        { "id": "asset.reference_image", "skippable": true },
-        { "id": "wait.reference_analyze", "skipWhen": "!imageRefPhoto" },
-        { "id": "copy.storyboard_brief" },
-        { "id": "image.storyboard_scenes", "legacyStepKey": "image" },
         { "id": "wait.storyboard_generate" },
-        { "id": "video.settings", "skippable": true },
-        { "id": "video.generate", "handler": "generateVideo", "legacyStepKey": "video" },
+        {
+          "id": "image.review",
+          "note": "Violet scene review — Continue → fused video setup"
+        },
+        {
+          "id": "setup.pre_video",
+          "label": "Pre-video setup (scenes ready)",
+          "handler": "generateVideo",
+          "skippable": false,
+          "fuses": ["video.settings", "video.generate"]
+        },
         { "id": "wait.video_generate", "while": "videoBusy" },
         { "id": "done.export" }
       ],
@@ -771,7 +717,6 @@
     { "number": 11, "id": "concept_combined" }
   ],
   "ancillaryOverlays": {
-    "ugc_presenter": { "appliesTo": ["product_video_direct"], "steps": ["video.ugc_pack"] },
     "product_video_assistant": { "appliesTo": ["product_video_direct"], "steps": ["video.product_plan", "asset.extra_kit"] },
     "storyboard_explainer": { "appliesTo": ["product_video_research_reel", "product_video_direct", "concept_video_research_reel"], "before": "image.storyboard_scenes" },
     "template_prefill": { "appliesTo": "all", "when": "url.template" },

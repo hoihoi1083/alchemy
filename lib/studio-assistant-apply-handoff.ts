@@ -3,6 +3,7 @@ import { applyResearchPostReferences } from "@/lib/content-research-apply-refs";
 import { initialCoachTaskAfterHandoff } from "@/lib/studio-assistant-handoff-coach";
 import { dispatchCoachSpotlight } from "@/lib/studio-assistant-spotlight-bus";
 import type { StudioWizardValue } from "@/hooks/useStudioWizard";
+import { requestMicroWizardRestart } from "@/lib/wizard-micro-steps.types";
 
 export async function applyStudioAssistantHandoff(
   handoff: StudioAssistantHandoff,
@@ -63,7 +64,8 @@ export async function applyStudioAssistantHandoff(
       wizard.applyQuickTest8sRecipe();
       break;
     case "cinematic-stitch":
-      wizard.applyCinematicStitchRecipe();
+      // Multi-scene stitch out of scope — same as quick 8s.
+      wizard.applyQuickTest8sRecipe();
       break;
     case "website-launch-image":
       wizard.onWorkflowModeChange("image-only");
@@ -91,6 +93,7 @@ export async function applyStudioAssistantHandoff(
       break;
   }
 
+  requestMicroWizardRestart();
   wizard.setStepKey("setup");
   wizard.setError(null);
 

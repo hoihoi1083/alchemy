@@ -357,16 +357,9 @@ export function copyFieldsFromAngle(
     });
   }
 
-  // No promote target yet.
+  // No promote target yet — never invent copy from the search topic or ref hook.
+  // User must set conceptIdea / product first (or pick a planner angle).
   if (referenceSourced) {
-    // Concept may still seed from search topic; physical waits for product name.
-    if (promotionMode === "concept" && search) {
-      return finish({
-        headline: `${search}｜${structureHookSuffix(angle.format, locale)}`,
-        subline: structureSublineFromAngle(angle, search, locale),
-        offer: sanitizeOfferFromAngle(angle, search, locale),
-      });
-    }
     return { headline: "", subline: "", offer: "" };
   }
 

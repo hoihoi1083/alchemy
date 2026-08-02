@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import type { CaptionLine } from "@/lib/ad-pack-types";
 import { VOICEOVER_LOCALES, type VoiceoverLocale } from "@/lib/ad-pack-preferences";
+import { chargeTokens, refundTokens } from "@/lib/billing/charge";
+import { TOKEN_COST } from "@/lib/billing/token-costs";
 import { expandCaptionVoice } from "@/lib/expand-caption-voice";
 import { requireAppUser } from "@/lib/require-app-user";
 import { SERVER_ERRORS } from "@/lib/api/server-errors";
@@ -57,6 +59,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid locale." }, { status: 400 });
   }
 
+  const tokenCost = TOKEN_COST.plan;
+  const charged = await chargeTokens(auth.user.userId, tokenCost, {
+    kind: "caption_expand",
+  });
+  if ("error" in charged) return charged.error;
+
   try {
     const result = await expandCaptionVoice({
       captionLines,
@@ -66,8 +74,16 @@ export async function POST(request: Request) {
       voiceoverScript: voiceoverScript || undefined,
       lineCount: body.line_count,
     });
-    return NextResponse.json(result);
+    return NextResponse.json({
+      ...result,
+      tokensCharged: tokenCost,
+      creditBalance: charged.balanceAfter,
+    });
   } catch (e: unknown) {
+    await refundTokens(auth.user.userId, tokenCost, {
+      kind: "caption_expand",
+      reason: "expand_failed",
+    });
     const message = e instanceof Error ? e.message : SERVER_ERRORS.generationFailed;
     const status = message.includes("DEEPSEEK") || message.includes("DeepSeek") ? 503 : 502;
     return NextResponse.json({ error: message }, { status });

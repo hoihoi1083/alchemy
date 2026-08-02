@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAppUser } from "@/lib/require-app-user";
 import { isEmailConfigured } from "@/lib/email/resend";
 import { ensureIndexes, isMongoConfigured } from "@/lib/mongodb";
 import { isMongoReady, mongoRequiredErrorMessage } from "@/lib/mongodb-production";
@@ -18,6 +19,9 @@ function indexesOnce(): Promise<void> {
 }
 
 export async function GET() {
+  const auth = await requireAppUser();
+  if (!auth.ok) return auth.response;
+
   if (!isMongoReady()) {
     return NextResponse.json(
       {

@@ -39,12 +39,16 @@ export function MicroWizard({ promotionMode }: Props) {
 
   const isImageReviewStep = currentId === "image.review";
   const showReviewFooter = isImageReviewStep && !wizard.imageBusy;
+  const isCombinedSceneReview =
+    isImageReviewStep && wizard.workflowMode === "combined" && wizard.isStoryboardOutput;
   const isImageWait =
     currentId === "wait.image_generate" || currentId === "wait.storyboard_generate";
   const isVideoWait = currentId === "wait.video_generate";
   const isVideoResult =
     currentId === "done.export" &&
-    (Boolean(wizard.videoUrl) || wizard.workflowMode === "video-only");
+    (Boolean(wizard.videoUrl) ||
+      wizard.workflowMode === "video-only" ||
+      wizard.workflowMode === "combined");
   const showVideoReviewFooter = isVideoResult && !wizard.videoBusy;
   /** Hide Back/Continue while the violet wait panel is showing (research + direct). */
   const showImageWaitOnly =
@@ -60,7 +64,9 @@ export function MicroWizard({ promotionMode }: Props) {
       : currentId === "video.generate" || currentId === "setup.pre_video"
         ? m.wizard.generateVideoBtn
         : currentId === "image.generate" || currentId === "setup.pre_generate"
-          ? m.wizard.generateImageBtn
+          ? wizard.workflowMode === "combined"
+            ? m.wizard.storyboardGenerateScenesBtn
+            : m.wizard.generateImageBtn
           : mw.continue;
 
   const generateBlockedReason =
@@ -236,6 +242,8 @@ export function MicroWizard({ promotionMode }: Props) {
         }
         void wizard.generateImage();
       }}
+      onContinue={isCombinedSceneReview ? goNext : undefined}
+      continueLabel={isCombinedSceneReview ? m.wizard.continueToVideo : undefined}
       downloadAllBusy={downloadAllBusy}
       generateBusy={wizard.imageBusy || !wizard.canGenerateImage()}
     />

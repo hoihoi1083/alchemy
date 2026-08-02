@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import type { CaptionLine } from "@/lib/ad-pack-types";
 import { VOICEOVER_LOCALES, type VoiceoverLocale } from "@/lib/ad-pack-preferences";
+import { chargeTokens, refundTokens } from "@/lib/billing/charge";
+import { TOKEN_COST } from "@/lib/billing/token-costs";
 import { expandSpokenForCaptions } from "@/lib/expand-spoken-captions";
 import { requireAppUser } from "@/lib/require-app-user";
 import { SERVER_ERRORS } from "@/lib/api/server-errors";
@@ -59,14 +61,28 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid locale." }, { status: 400 });
   }
 
+  const tokenCost = TOKEN_COST.plan;
+  const charged = await chargeTokens(auth.user.userId, tokenCost, {
+    kind: "caption_expand_spoken",
+  });
+  if ("error" in charged) return charged.error;
+
   try {
     const result = await expandSpokenForCaptions({
       captionLines,
       locale,
       product: body.product,
     });
-    return NextResponse.json(result);
+    return NextResponse.json({
+      ...result,
+      tokensCharged: tokenCost,
+      creditBalance: charged.balanceAfter,
+    });
   } catch (e: unknown) {
+    await refundTokens(auth.user.userId, tokenCost, {
+      kind: "caption_expand_spoken",
+      reason: "expand_failed",
+    });
     const message = e instanceof Error ? e.message : SERVER_ERRORS.generationFailed;
     const status =
       message.includes("DEEPSEEK") || message.includes("DeepSeek") ? 503 : 502;

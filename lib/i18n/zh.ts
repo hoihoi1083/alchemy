@@ -1665,6 +1665,7 @@ export const zh = {
     imageDoneTitle: "相片已完成",
     imageDoneHint: "下載圖片。需要影片可另外揀「只整影片」或「相片+影片」。",
     generateImageBtn: "生成相片",
+    storyboardGenerateScenesBtn: "生成分鏡場景圖",
     regenerateImageBtn: "重新生成相片",
     tokenCostHint: "約用 {n} tokens",
     imageReviewRegenerateHint: "唔滿意？",
@@ -2639,7 +2640,7 @@ export const zh = {
     imagePromptTitle: "圖片潤色 prompt",
     imagePromptHint: "生成前可選填 — 俾 AI 出圖 嘅額外指示。",
     cinematicModeTitle: "概念電影感模式",
-    cinematicModeHint: "單場 8 秒快速試片。",
+    cinematicModeHint: "而家只支援單場 8 秒電影感。多場景拼接未開放。",
     sceneCountTitle: "幾個場景？",
     sceneCountHint: "每場約 8 秒。4–5 場 ≈ 拼接後 30–40 秒。",
     intakeTitle: "點樣開始？",
@@ -2834,12 +2835,22 @@ export const zh = {
         "上傳版式／風格參考，AI 會分析並借構圖。只填主題同文案都可以出圖。",
       conceptMainPhotoOptionalHint:
         "有相可以上傳 — 冇嘅話會用主題、文案同創作方向／參考風格出圖。",
+      combinedHint:
+        "填文案、上傳產品相、可選故事備註，再生成多格場景圖 — 下一步會串成一條無聲短片。",
+      combinedConceptHint:
+        "填主題同文案、相片選填、可選故事備註，再生成多格場景圖 — 下一步會串成一條無聲短片。",
+      storyboardTitle: "分鏡短片",
+      storyboardHint: "選填故事備註，同片長／場景數，用嚟串成一條 Reel。",
       secureNote: "你嘅選擇安全保存，唔會對外分享。",
     },
     preVideoSetup: {
       titleBefore: "設定你嘅",
       titleAccent: "影片詳情",
       hint: "填文案、上傳產品相、寫／確認動態 prompt、揀片長，再生成無聲短片。",
+      scenesReadyHint:
+        "場景圖已準備 — 揀片長同解像度，再串成一條無聲短片（字幕之後再加）。",
+      scenesReadyTitle: "分鏡場景已準備",
+      scenesReadyBody: "呢啲靜態圖會串成短片。調影片設定後再生成。",
       assistantHint:
         "上傳產品相 → AI 寫動態 prompt → 檢查後再生成（無聲片；字幕之後再加）。",
       assistantTitle: "AI 動態 Prompt",
@@ -3010,10 +3021,10 @@ export const zh = {
       video_busy: "請等影片生成完成。",
       video_not_ready: "影片未完成 — 請等生成，或返回再試。",
     },
-    combinedStyleTitle: "概念合併工作流",
-    combinedStyleHint: "圖+片預設用分鏡關鍵幀再串成一條 Reel。",
+    combinedStyleTitle: "圖片+影片工作流",
+    combinedStyleHint: "圖+片只用分鏡：多場景關鍵幀再串成一條 Reel。唔支援單圖動態／一鍵出片。",
     combinedAnimateTitle: "分鏡故事片",
-    combinedAnimateDesc: "多場景關鍵幀 → 串成一條 Reel（圖+片預設）。",
+    combinedAnimateDesc: "多場景關鍵幀 → 串成一條 Reel。呢個係圖+片唯一路徑。",
     videoSubpathTitle: "影片創作方式",
     videoSubpathHint: "由產品相寫動態方案，或跟參考短片運鏡。",
     refVideoTitle: "參考短片（MP4）",
