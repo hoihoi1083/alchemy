@@ -24,6 +24,11 @@ import {
 import { useWizardProgress } from "@/hooks/useWizardProgress";
 import { apiGetBlob } from "@/lib/api/studio-api";
 import {
+  trackGenerateFailed,
+  trackGenerateStarted,
+  trackGenerateSuccess,
+} from "@/lib/analytics";
+import {
   promptMarketFromLocale,
   voiceoverLocaleFromUiLocale,
 } from "@/lib/copy-locale";
@@ -3136,7 +3141,11 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     }
   }
 
-  async function inpaintGeneratedImage(maskBlob: Blob, prompt: string) {
+  async function inpaintGeneratedImage(
+    maskBlob: Blob,
+    prompt: string,
+    mode: "erase" | "fill" = "fill",
+  ) {
     const sourceUrl = resolveRefineSourceUrl();
     if (!sourceUrl) {
       setError(m.errors.needRefineImage);
@@ -3146,12 +3155,13 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     setImageJobMeta({ kind: "image", startedAt: Date.now(), sceneCount: 1 });
     setImageBusy(true);
     try {
+      const useErase = mode === "erase" || (mode !== "fill" && isEraseIntent(prompt));
       const fd = new FormData();
       fd.set("source_image_url", sourceUrl);
       fd.set("prompt", prompt);
-      fd.set("inpaint_mode", isEraseIntent(prompt) ? "erase" : "fill");
+      fd.set("inpaint_mode", useErase ? "erase" : "fill");
       fd.set("mask_image", new File([maskBlob], "mask.png", { type: "image/png" }));
-      if (!isEraseIntent(prompt)) fd.set("brand_kit", JSON.stringify(brandKit));
+      if (!useErase) fd.set("brand_kit", JSON.stringify(brandKit));
       fd.set("product_name", effectivePromoteName);
       fd.set("headline", headline.trim());
       fd.set("subline", subline.trim());
@@ -3866,6 +3876,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 
     setImageJobMeta({ kind: "image", startedAt: Date.now(), sceneCount: 1 });
     setImageBusy(true);
+    trackGenerateStarted("image", { style: visualStyleId, mode: effectiveImageOutputMode });
     try {
       if (imageRefPhoto && productPhoto && imageCreativeMode !== "reference-concept") {
         setVideoNote(m.wizard.imageRefAutoModeNote);
@@ -3905,8 +3916,11 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       if (!urls.some((u) => normalizeGeneratedImageUrl(u))) {
         throw new Error(m.errors.imageGenNoUrl);
       }
-      return applyGeneratedImages(urls, data.endpoint as string | undefined);
+      const applied = applyGeneratedImages(urls, data.endpoint as string | undefined);
+      trackGenerateSuccess("image", { style: visualStyleId, count: urls.length });
+      return applied;
     } catch (e: unknown) {
+      trackGenerateFailed("image", { style: visualStyleId });
       setError(friendlyError(e, m.errors.polishFailed));
       return null;
     } finally {
@@ -4897,6 +4911,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       if (existing?.audioUrl) {
         aiMusicUrl = existing.audioUrl;
       } else if (plan.music.promptEn?.trim()) {
+        trackGenerateStarted("music", { source: "wizard_pack" });
         const res = await fetch("/api/generate-music", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -4906,13 +4921,20 @@ export function useStudioWizard(promotionMode: PromotionMode) {
           }),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? m.errors.musicGenerateFailed);
+        if (!res.ok) {
+          trackGenerateFailed("music", { source: "wizard_pack" });
+          throw new Error(data.error ?? m.errors.musicGenerateFailed);
+        }
         notifyCreditBalance(readCreditBalanceFromResponse(data));
         const tracks = data.tracks ?? [];
         setAiMusicTracks(tracks);
         const firstId = tracks[0]?.id ?? null;
         setSelectedAiMusicId(firstId);
         aiMusicUrl = tracks[0]?.audioUrl ?? null;
+        trackGenerateSuccess("music", {
+          source: "wizard_pack",
+          track_count: tracks.length,
+        });
       }
     }
 
@@ -4990,6 +5012,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     }
     setMusicGenerateBusy(true);
     setError(null);
+    trackGenerateStarted("music", { source: "wizard" });
     try {
       const res = await fetch("/api/generate-music", {
         method: "POST",
@@ -5005,7 +5028,12 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       setAiMusicTracks(data.tracks ?? []);
       setSelectedAiMusicId(data.tracks?.[0]?.id ?? null);
       setMusicSource("ai");
+      trackGenerateSuccess("music", {
+        source: "wizard",
+        track_count: (data.tracks ?? []).length,
+      });
     } catch (e: unknown) {
+      trackGenerateFailed("music", { source: "wizard" });
       setError(friendlyError(e, m.errors.musicGenerateFailed));
     } finally {
       setMusicGenerateBusy(false);
@@ -5332,6 +5360,11 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     setVideoBusy(true);
     setVideoJobStartedAt(Date.now());
     setVideoPhase("video");
+    trackGenerateStarted("video", {
+      style: visualStyleId,
+      creative_mode: videoCreativeMode,
+      workflow: workflowMode,
+    });
 
     try {
       let url: string;
@@ -5497,7 +5530,15 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       if (stepKey !== "setup") {
         setStepKey("done");
       }
+      trackGenerateSuccess("video", {
+        style: visualStyleId,
+        creative_mode: videoCreativeMode,
+      });
     } catch (e: unknown) {
+      trackGenerateFailed("video", {
+        style: visualStyleId,
+        creative_mode: videoCreativeMode,
+      });
       setError(friendlyError(e, m.errors.videoFailed));
     } finally {
       setVideoBusy(false);

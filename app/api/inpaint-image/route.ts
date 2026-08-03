@@ -8,11 +8,7 @@ import { estimateInpaintTokens } from "@/lib/billing/token-costs";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import { parseBrandKit } from "@/lib/brand-kit";
 import { brandKitHasPromptContent, brandKitPromptBlock } from "@/lib/brand-merge";
-import {
-  buildInpaintErasePrompt,
-  buildInpaintFillPrompt,
-  isEraseIntent,
-} from "@/lib/inpaint-erase";
+import { buildInpaintFillPrompt, isEraseIntent } from "@/lib/inpaint-erase";
 import { createOwnedJobDir } from "@/lib/pipeline/job-owner";
 import { materializeMediaInput, pipelineFileUrl } from "@/lib/pipeline/local-input";
 import { persistAndDurablize } from "@/lib/storage/durable-media";
@@ -20,7 +16,13 @@ import { persistAndDurablize } from "@/lib/storage/durable-media";
 export const runtime = "nodejs";
 export const maxDuration = 180;
 
+/** Prompted replacement inside the mask. */
 const FILL_ENDPOINT = "fal-ai/flux-pro/v1/fill";
+/**
+ * True erase — no text prompt. FLUX Fill was painting our heal instructions
+ * as literal words in the image (e.g. "Content-aware fill").
+ */
+const ERASE_ENDPOINT = "fal-ai/flux-pro/v1/erase";
 
 function isUsableImageUrl(url: string | undefined): boolean {
   const u = url?.trim() ?? "";
@@ -75,15 +77,15 @@ export async function POST(req: Request) {
   const offer = (formData.get("offer") as string | null)?.trim() || "";
   const artStyle = (formData.get("art_style") as string | null)?.trim() || "";
 
-  // Erase = local heal via FILL (mask-only). FLUX Erase often deletes the whole
-  // object under the brush (e.g. entire floating card), which feels wrong vs phone editors.
+  // Explicit fill mode always uses Fill (so "改成正確文字" is not swallowed by erase).
+  // Erase = dedicated FLUX Erase (no prompt) — Fill was painting heal instructions as text.
   const useErase =
-    modeField === "erase" || (modeField !== "fill" && (!rawPrompt || isEraseIntent(rawPrompt)));
+    modeField === "erase" ||
+    (modeField !== "fill" && (isEraseIntent(rawPrompt) || !rawPrompt));
 
-  let fillPrompt = rawPrompt;
-  if (useErase) {
-    fillPrompt = buildInpaintErasePrompt();
-  } else {
+  let fillPrompt = "";
+  if (!useErase) {
+    fillPrompt = rawPrompt;
     if (brandKitRaw) {
       try {
         const brandKit = parseBrandKit(JSON.parse(brandKitRaw));
@@ -120,7 +122,7 @@ export async function POST(req: Request) {
   const { jobId, dir } = await createOwnedJobDir(auth.user.userId);
   const inputPath = path.join(dir, "inpaint-input.png");
 
-  // Materialize source BEFORE charge so we can bill by megapixel (fal $0.05/MP).
+  // Materialize source BEFORE charge so we can bill by megapixel.
   let sourceBytes: Buffer;
   try {
     if (isUsableImageUrl(sourceUrl)) {
@@ -140,11 +142,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: message }, { status: 400 });
   }
 
+  const endpoint = useErase ? ERASE_ENDPOINT : FILL_ENDPOINT;
   const megapixels = await megapixelsFromBuffer(sourceBytes);
   const tokenCost = estimateInpaintTokens(megapixels);
   const charged = await chargeTokens(auth.user.userId, tokenCost, {
     kind: "inpaint",
-    endpoint: FILL_ENDPOINT,
+    endpoint,
     mode: useErase ? "erase" : "fill",
     megapixels: Math.ceil(Math.max(1, megapixels)),
   });
@@ -156,18 +159,31 @@ export async function POST(req: Request) {
     const inputFile = new File([new Uint8Array(sourceBytes)], "source.png", {
       type: "image/png",
     });
-    const falImageUrl = await fal.storage.upload(inputFile);
-    const maskUrl = await fal.storage.upload(maskFile);
+    const [falImageUrl, maskUrl] = await Promise.all([
+      fal.storage.upload(inputFile),
+      fal.storage.upload(maskFile),
+    ]);
 
-    const result = await fal.subscribe(FILL_ENDPOINT, {
-      input: {
-        prompt: fillPrompt,
-        image_url: falImageUrl,
-        mask_url: maskUrl,
-        output_format: "png",
-      },
-      logs: true,
-    });
+    const result = useErase
+      ? await fal.subscribe(ERASE_ENDPOINT, {
+          input: {
+            image_url: falImageUrl,
+            mask_url: maskUrl,
+            // Expand mask so text/box edges are fully removed.
+            dilate_pixels: 12,
+          },
+          logs: true,
+        })
+      : await fal.subscribe(FILL_ENDPOINT, {
+          input: {
+            prompt: fillPrompt,
+            image_url: falImageUrl,
+            mask_url: maskUrl,
+            output_format: "png",
+            enhance_prompt: true,
+          },
+          logs: true,
+        });
 
     const data = result.data as { images?: Array<{ url?: string }> };
     const outUrl = data.images?.[0]?.url;
@@ -179,7 +195,6 @@ export async function POST(req: Request) {
     const outName = useErase ? "erase-result.png" : "inpaint-result.png";
     await fs.writeFile(path.join(dir, outName), buffer);
     const pipelineUrl = pipelineFileUrl(req, jobId, outName);
-    // Durable R2 URL — pipeline /tmp files vanish across Vercel instances.
     const imageUrl = await persistAndDurablize({
       clerkId: auth.user.userId,
       kind: "image",
@@ -193,14 +208,14 @@ export async function POST(req: Request) {
     await trackUsage(auth.user.userId, "image");
     return NextResponse.json({
       imageUrl,
-      endpoint: FILL_ENDPOINT,
+      endpoint,
       mode: useErase ? "erase" : "fill",
       tokensCharged: tokenCost,
       megapixelsBilled: Math.ceil(Math.max(1, megapixels)),
       creditBalance: charged.balanceAfter,
       note: useErase
-        ? "Local heal — only masked pixels were regenerated; surrounding content kept."
-        : "FLUX Fill — only masked pixels were regenerated.",
+        ? "Erased — masked pixels removed with FLUX Erase (no prompt)."
+        : "FLUX Fill — only masked pixels were regenerated from your description.",
     });
   } catch (e: unknown) {
     await refundTokens(auth.user.userId, tokenCost, {

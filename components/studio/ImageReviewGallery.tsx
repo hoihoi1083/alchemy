@@ -351,8 +351,8 @@ export function ImageReviewGallery({
       label: item.label,
       returnTo: "/studio",
     });
-    const opened = window.open("/edit-image", "_blank", "noopener,noreferrer");
-    if (!opened) router.push("/edit-image");
+    // Same-tab navigation — avoids duplicate windows (noopener makes window.open return null).
+    router.push("/edit-image");
   }
 
   function handleRegenerateAll() {

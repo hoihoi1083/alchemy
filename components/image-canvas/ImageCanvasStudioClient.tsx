@@ -908,6 +908,8 @@ export function ImageCanvasStudioClient() {
                     maxRegions: t.cleanMaxRegions,
                     modeBrush: t.cleanModeBrush,
                     modeBox: t.cleanModeBox,
+                    brushSizeLabel: t.cleanBrushSize,
+                    aiStepsHint: t.cleanAiStepsHint,
                     clearBtn: w.quickFixInpaintClear,
                     promptPlaceholder: t.cleanPromptPlaceholder,
                     applyBtn: w.quickFixInpaintApply,

@@ -49,10 +49,10 @@ function openEditImageForSlide(opts: {
     label: opts.label,
     returnTo: "/studio?resumeDone=1",
   });
-  const opened = window.open("/edit-image", "_blank", "noopener,noreferrer");
-  if (!opened) {
-    opts.routerPush("/edit-image");
-  }
+  // Same-tab only. Do NOT window.open with "noopener" — modern browsers return
+  // null from open(..., "noopener"), which incorrectly also triggered router.push
+  // and opened edit-image twice.
+  opts.routerPush("/edit-image");
 }
 
 export function DoneStep() {

@@ -30,6 +30,18 @@ export function clampRegion(region: ImageEditRegion): ImageEditRegion {
   return { ...region, xPct, yPct, wPct, hPct };
 }
 
+/**
+ * Mask/inpaint boxes — allow tiny regions (down to ~0.5%) so small text/logos
+ * can be targeted. Do not use the general 4% floor from clampRegion.
+ */
+export function clampMaskRegion(region: ImageEditRegion): ImageEditRegion {
+  const wPct = Math.min(95, Math.max(0.5, region.wPct));
+  const hPct = Math.min(95, Math.max(0.5, region.hPct));
+  const xPct = Math.min(100 - wPct, Math.max(0, region.xPct));
+  const yPct = Math.min(100 - hPct, Math.max(0, region.yPct));
+  return { ...region, xPct, yPct, wPct, hPct };
+}
+
 export function regionBoundsLabel(region: ImageEditRegion): string {
   const left = Math.round(region.xPct);
   const top = Math.round(region.yPct);

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Stage, Layer, Image as KonvaImage, Line, Rect } from "react-konva";
 import type Konva from "konva";
 import {
-  clampRegion,
+  clampMaskRegion,
   MAX_IMAGE_EDIT_REGIONS,
   newImageEditRegion,
   type ImageEditRegion,
@@ -13,8 +13,9 @@ import { drawRegionsOnMaskCanvas } from "@/lib/regions-to-inpaint-mask";
 import { CanvasHistoryNav } from "@/components/studio/CanvasHistoryNav";
 
 const DEFAULT_STAGE_WIDTH = 400;
-/** Thin brush so erase stays close to the stroke (phone-editor style). */
-const BRUSH_SIZE = 10;
+const DEFAULT_BRUSH_SIZE = 22;
+const MIN_BRUSH_SIZE = 6;
+const MAX_BRUSH_SIZE = 64;
 const STAGE_VIEWPORT_MAX_VH = 70;
 
 type MaskMode = "brush" | "box";
@@ -46,6 +47,8 @@ type ImageInpaintMaskEditorProps = {
     deleteSelectedBtn?: string;
     undoBrushBtn?: string;
     maxRegions?: string;
+    brushSizeLabel?: string;
+    aiStepsHint?: string;
   };
   onApply: (maskBlob: Blob, prompt: string, mode?: "erase" | "fill") => Promise<void>;
   /** When true, primary action erases masked area (no prompt required). */
@@ -112,7 +115,7 @@ function boxFromDrag(
   const top = Math.min(y0, y1);
   const w = Math.abs(x1 - x0);
   const h = Math.abs(y1 - y0);
-  return clampRegion(
+  return clampMaskRegion(
     newImageEditRegion({
       xPct: (left / stageW) * 100,
       yPct: (top / stageH) * 100,
@@ -135,14 +138,17 @@ export function ImageInpaintMaskEditor({
   const bgImage = useHtmlImage(imageUrl);
   const [stageWidth, setStageWidth] = useState(DEFAULT_STAGE_WIDTH);
   const [stageHeight, setStageHeight] = useState(640);
-  const [mode, setMode] = useState<MaskMode>("box");
+  // Erase flow defaults to brush — box mode was easy to miss for “paint to remove”.
+  const [mode, setMode] = useState<MaskMode>(eraseMode ? "brush" : "box");
+  const [brushSize, setBrushSize] = useState(DEFAULT_BRUSH_SIZE);
   const [lines, setLines] = useState<number[][]>([]);
+  /** Live stroke while dragging — updated via rAF so React doesn’t re-render every pointermove. */
+  const [liveStroke, setLiveStroke] = useState<number[] | null>(null);
   const [boxes, setBoxes] = useState<ImageEditRegion[]>([]);
   const [selectedBoxId, setSelectedBoxId] = useState<string | null>(null);
   const [boxDrag, setBoxDrag] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(
     null,
   );
-  const [drawing, setDrawing] = useState(false);
   const [prompt, setPrompt] = useState(initialPrompt ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -150,8 +156,10 @@ export function ImageInpaintMaskEditor({
   const stageBoxRef = useRef<HTMLDivElement>(null);
   const stageViewportRef = useRef<HTMLDivElement>(null);
   const pageScrollLockRef = useRef<number | null>(null);
+  const drawingRef = useRef(false);
+  const livePointsRef = useRef<number[]>([]);
+  const rafRef = useRef(0);
 
-  /** Tall Konva canvases steal focus and scroll the page to the stage top — lock scroll. */
   function lockPageScroll() {
     pageScrollLockRef.current = window.scrollY;
     requestAnimationFrame(() => {
@@ -159,6 +167,36 @@ export function ImageInpaintMaskEditor({
         window.scrollTo({ top: pageScrollLockRef.current, left: window.scrollX });
       }
     });
+  }
+
+  function scheduleLiveStrokePaint() {
+    if (rafRef.current) return;
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = 0;
+      setLiveStroke(livePointsRef.current.slice());
+    });
+  }
+
+  function endBrushStroke() {
+    if (!drawingRef.current) return;
+    drawingRef.current = false;
+    let pts = livePointsRef.current;
+    livePointsRef.current = [];
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = 0;
+    }
+    setLiveStroke(null);
+    // Tap-to-dot: single point → short stamp so tiny defects can be healed.
+    if (pts.length === 2) {
+      const [x, y] = pts;
+      const r = Math.max(2, brushSize * 0.35);
+      pts = [x - r, y, x + r, y, x, y - r, x, y + r, x - r, y];
+    }
+    if (pts.length >= 4) {
+      setLines((prev) => [...prev, pts]);
+    }
+    pageScrollLockRef.current = null;
   }
 
   useEffect(() => {
@@ -188,6 +226,25 @@ export function ImageInpaintMaskEditor({
       setBoxes(initialRegions.map((r) => newImageEditRegion({ ...r, instruction: "" })));
     }
   }, [initialRegions]);
+
+  useEffect(() => {
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, []);
+
+  // Commit brush if the pointer is released outside the stage (leave no longer cuts the stroke).
+  useEffect(() => {
+    function onWinPointerUp() {
+      if (drawingRef.current) endBrushStroke();
+    }
+    window.addEventListener("pointerup", onWinPointerUp);
+    window.addEventListener("pointercancel", onWinPointerUp);
+    return () => {
+      window.removeEventListener("pointerup", onWinPointerUp);
+      window.removeEventListener("pointercancel", onWinPointerUp);
+    };
+  }, [brushSize]);
 
   function removeBox(id: string) {
     setBoxes((prev) => prev.filter((b) => b.id !== id));
@@ -233,7 +290,6 @@ export function ImageInpaintMaskEditor({
       ...boxes.map((b) => ({ ...b, instruction: "" })),
     ];
     if (allBoxes.length) {
-      // Small inset so stroke outline isn't treated as erase area.
       const insetPx = Math.max(1, Math.round(Math.min(w, h) * 0.002));
       drawRegionsOnMaskCanvas(ctx, allBoxes, w, h, { insetPx });
     }
@@ -243,9 +299,16 @@ export function ImageInpaintMaskEditor({
     ctx.strokeStyle = "white";
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
-    ctx.lineWidth = BRUSH_SIZE * scaleX;
+    ctx.lineWidth = brushSize * scaleX;
     for (const pts of lines) {
-      if (pts.length < 4) continue;
+      if (pts.length < 2) continue;
+      if (pts.length < 4) {
+        ctx.fillStyle = "white";
+        ctx.beginPath();
+        ctx.arc(pts[0] * scaleX, pts[1] * scaleY, (brushSize / 2) * scaleX, 0, Math.PI * 2);
+        ctx.fill();
+        continue;
+      }
       ctx.beginPath();
       ctx.moveTo(pts[0] * scaleX, pts[1] * scaleY);
       for (let i = 2; i < pts.length; i += 2) {
@@ -256,8 +319,8 @@ export function ImageInpaintMaskEditor({
     return new Promise((resolve) => canvas.toBlob((b) => resolve(b), "image/png"));
   }
 
-  async function handleApply(mode: "erase" | "fill" = eraseMode ? "erase" : "fill") {
-    if (mode === "fill" && !prompt.trim()) {
+  async function handleApply(applyMode: "erase" | "fill" = eraseMode ? "erase" : "fill") {
+    if (applyMode === "fill" && !prompt.trim()) {
       setError(labels.promptPlaceholder);
       return;
     }
@@ -271,9 +334,8 @@ export function ImageInpaintMaskEditor({
         setError(labels.needMask);
         return;
       }
-      await onApply(blob, prompt.trim(), mode);
-      if (mode === "fill") setPrompt("");
-      // Keep boxes/lines visible until user accepts preview (parent updates image).
+      await onApply(blob, prompt.trim(), applyMode);
+      if (applyMode === "fill") setPrompt("");
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Inpaint failed");
     } finally {
@@ -286,6 +348,7 @@ export function ImageInpaintMaskEditor({
   }
 
   function clearMask() {
+    endBrushStroke();
     setLines([]);
     setBoxes([]);
     setSelectedBoxId(null);
@@ -303,24 +366,22 @@ export function ImageInpaintMaskEditor({
   return (
     <div className="space-y-3">
       <p className="text-xs text-slate-400">{labels.hint}</p>
+      {labels.aiStepsHint ? (
+        <ol className="list-decimal space-y-0.5 pl-4 text-[10px] leading-relaxed text-slate-500">
+          {labels.aiStepsHint.split("\n").filter(Boolean).map((step, i) => (
+            <li key={i}>{step}</li>
+          ))}
+        </ol>
+      ) : null}
 
       <div className="flex flex-wrap gap-1">
         <button
           type="button"
           disabled={disabled || busy}
-          onClick={() => setMode("box")}
-          className={`rounded border px-2.5 py-1 text-xs ${
-            mode === "box"
-              ? "border-violet-500 bg-violet-950/50 text-violet-100"
-              : "border-slate-600 text-slate-400"
-          }`}
-        >
-          {modeBoxLabel}
-        </button>
-        <button
-          type="button"
-          disabled={disabled || busy}
-          onClick={() => setMode("brush")}
+          onClick={() => {
+            endBrushStroke();
+            setMode("brush");
+          }}
           className={`rounded border px-2.5 py-1 text-xs ${
             mode === "brush"
               ? "border-violet-500 bg-violet-950/50 text-violet-100"
@@ -329,7 +390,38 @@ export function ImageInpaintMaskEditor({
         >
           {modeBrushLabel}
         </button>
+        <button
+          type="button"
+          disabled={disabled || busy}
+          onClick={() => {
+            endBrushStroke();
+            setMode("box");
+          }}
+          className={`rounded border px-2.5 py-1 text-xs ${
+            mode === "box"
+              ? "border-violet-500 bg-violet-950/50 text-violet-100"
+              : "border-slate-600 text-slate-400"
+          }`}
+        >
+          {modeBoxLabel}
+        </button>
       </div>
+
+      {mode === "brush" && (
+        <label className="flex items-center gap-3 text-[10px] text-slate-400">
+          <span className="shrink-0">{labels.brushSizeLabel ?? "Brush size"}</span>
+          <input
+            type="range"
+            min={MIN_BRUSH_SIZE}
+            max={MAX_BRUSH_SIZE}
+            value={brushSize}
+            disabled={disabled || busy}
+            onChange={(e) => setBrushSize(Number(e.target.value))}
+            className="h-1.5 w-full max-w-[180px] accent-violet-500"
+          />
+          <span className="w-6 tabular-nums text-slate-500">{brushSize}</span>
+        </label>
+      )}
 
       <p className="text-[10px] text-violet-300">
         {mode === "box" ? (labels.boxLabel ?? labels.brushLabel) : labels.brushLabel}
@@ -420,7 +512,6 @@ export function ImageInpaintMaskEditor({
             canRecover={imageHistory.canRecover}
           />
         )}
-        {/* Fixed-height viewport: tall posters scroll inside here so clicks don't yank the page to the top. */}
         <div
           ref={stageViewportRef}
           className="overflow-auto overscroll-contain"
@@ -431,11 +522,15 @@ export function ImageInpaintMaskEditor({
               ref={stageRef}
               width={stageWidth}
               height={stageHeight}
-              style={{ touchAction: "none" }}
+              style={{ touchAction: "none", cursor: mode === "brush" ? "crosshair" : "default" }}
               onPointerDown={(e) => {
                 if (disabled || busy) return;
-                // Prevent canvas focus from scrolling the document to the stage top.
                 e.evt.preventDefault();
+                try {
+                  (e.evt.target as Element | null)?.setPointerCapture?.(e.evt.pointerId);
+                } catch {
+                  /* ignore */
+                }
                 lockPageScroll();
                 const pos = e.target.getStage()?.getPointerPosition();
                 if (!pos) return;
@@ -451,8 +546,9 @@ export function ImageInpaintMaskEditor({
                   setBoxDrag({ x0: pos.x, y0: pos.y, x1: pos.x, y1: pos.y });
                   return;
                 }
-                setDrawing(true);
-                setLines((prev) => [...prev, [pos.x, pos.y]]);
+                drawingRef.current = true;
+                livePointsRef.current = [pos.x, pos.y];
+                setLiveStroke([pos.x, pos.y]);
               }}
               onPointerMove={(e) => {
                 const pos = e.target.getStage()?.getPointerPosition();
@@ -461,15 +557,27 @@ export function ImageInpaintMaskEditor({
                   setBoxDrag((d) => (d ? { ...d, x1: pos.x, y1: pos.y } : null));
                   return;
                 }
-                if (!drawing || disabled || busy) return;
-                setLines((prev) => {
-                  const last = prev[prev.length - 1];
-                  if (!last) return prev;
-                  return [...prev.slice(0, -1), [...last, pos.x, pos.y]];
-                });
+                if (!drawingRef.current || disabled || busy) return;
+                const pts = livePointsRef.current;
+                const lastX = pts[pts.length - 2];
+                const lastY = pts[pts.length - 1];
+                // Skip tiny jitter to cut point count / paint cost.
+                if (
+                  lastX != null &&
+                  lastY != null &&
+                  Math.hypot(pos.x - lastX, pos.y - lastY) < 1.5
+                ) {
+                  return;
+                }
+                pts.push(pos.x, pos.y);
+                scheduleLiveStrokePaint();
               }}
-              onPointerUp={() => {
-                pageScrollLockRef.current = null;
+              onPointerUp={(e) => {
+                try {
+                  (e.evt.target as Element | null)?.releasePointerCapture?.(e.evt.pointerId);
+                } catch {
+                  /* ignore */
+                }
                 if (mode === "box" && boxDrag) {
                   const next = boxFromDrag(
                     boxDrag.x0,
@@ -479,16 +587,21 @@ export function ImageInpaintMaskEditor({
                     stageWidth,
                     stageHeight,
                   );
-                  if (next.wPct >= 2 && next.hPct >= 2) {
+                  if (next.wPct >= 0.5 && next.hPct >= 0.5) {
                     setBoxes((prev) => {
                       if (prev.length >= MAX_IMAGE_EDIT_REGIONS) return prev;
                       return [...prev, newImageEditRegion({ ...next, instruction: "" })];
                     });
                   }
                   setBoxDrag(null);
+                  pageScrollLockRef.current = null;
                   return;
                 }
-                setDrawing(false);
+                endBrushStroke();
+              }}
+              onPointerCancel={() => {
+                if (drawingRef.current) endBrushStroke();
+                setBoxDrag(null);
               }}
             >
               <Layer>
@@ -527,12 +640,27 @@ export function ImageInpaintMaskEditor({
                   <Line
                     key={`stroke-${i}`}
                     points={pts}
-                    stroke="rgba(255,255,255,0.55)"
-                    strokeWidth={BRUSH_SIZE}
+                    stroke="rgba(167,139,250,0.85)"
+                    strokeWidth={brushSize}
                     lineCap="round"
                     lineJoin="round"
+                    listening={false}
+                    perfectDrawEnabled={false}
+                    shadowForStrokeEnabled={false}
                   />
                 ))}
+                {liveStroke && liveStroke.length >= 2 && (
+                  <Line
+                    points={liveStroke}
+                    stroke="rgba(196,181,253,0.95)"
+                    strokeWidth={brushSize}
+                    lineCap="round"
+                    lineJoin="round"
+                    listening={false}
+                    perfectDrawEnabled={false}
+                    shadowForStrokeEnabled={false}
+                  />
+                )}
               </Layer>
             </Stage>
           )}
@@ -545,7 +673,11 @@ export function ImageInpaintMaskEditor({
             <button
               type="button"
               disabled={disabled || busy}
-              onClick={() => setPrompt(labels.presetRemoveText!)}
+              onClick={() => {
+                setPrompt("");
+                if (eraseMode) void handleApply("erase");
+                else setPrompt(labels.presetRemoveText!);
+              }}
               className="rounded border border-slate-600 px-2 py-0.5 text-[10px] text-slate-300"
             >
               {labels.presetRemoveText}
@@ -555,7 +687,11 @@ export function ImageInpaintMaskEditor({
             <button
               type="button"
               disabled={disabled || busy}
-              onClick={() => setPrompt(labels.presetRemoveLogo!)}
+              onClick={() => {
+                setPrompt("");
+                if (eraseMode) void handleApply("erase");
+                else setPrompt(labels.presetRemoveLogo!);
+              }}
               className="rounded border border-slate-600 px-2 py-0.5 text-[10px] text-slate-300"
             >
               {labels.presetRemoveLogo}
@@ -565,7 +701,11 @@ export function ImageInpaintMaskEditor({
             <button
               type="button"
               disabled={disabled || busy}
-              onClick={() => setPrompt(labels.presetSeamless!)}
+              onClick={() => {
+                setPrompt("");
+                if (eraseMode) void handleApply("erase");
+                else setPrompt(labels.presetSeamless!);
+              }}
               className="rounded border border-slate-600 px-2 py-0.5 text-[10px] text-slate-300"
             >
               {labels.presetSeamless}
@@ -598,6 +738,7 @@ export function ImageInpaintMaskEditor({
               disabled={disabled || busy}
               onClick={() => void handleApply("erase")}
               className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
+              title="AI fills painted pixels with surrounding background"
             >
               {busy ? labels.applying : labels.eraseBtn ?? labels.applyBtn}
             </button>
@@ -606,8 +747,9 @@ export function ImageInpaintMaskEditor({
               disabled={disabled || busy}
               onClick={() => void handleApply("fill")}
               className="rounded-lg border border-violet-600 px-4 py-2 text-sm text-violet-200 disabled:opacity-40"
+              title="AI paints your description inside the highlight only"
             >
-              {labels.fillBtn ?? "Replace with prompt"}
+              {labels.fillBtn ?? "Replace with my description"}
             </button>
           </>
         ) : (

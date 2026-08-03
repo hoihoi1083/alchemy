@@ -6,6 +6,12 @@ import { useState } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 import { PLAN_DEFINITIONS } from "@/lib/billing/plans";
 import { PRODUCT_SUPPORT_EMAIL } from "@/lib/brand";
+import {
+  trackCheckoutFailed,
+  trackCheckoutRedirected,
+  trackCheckoutStarted,
+  trackSubscribeSuccess,
+} from "@/lib/analytics";
 import { Reveal } from "@/components/landing/Reveal";
 
 type Interval = "monthly" | "yearly";
@@ -34,6 +40,12 @@ export function LandingPricingTeaser() {
 		}
 		const key = `${plan}-${interval}`;
 		setBusy(key);
+		trackCheckoutStarted({
+			kind: "subscription",
+			plan,
+			interval,
+			source: "landing",
+		});
 		try {
 			const res = await fetch("/api/stripe/checkout", {
 				method: "POST",
@@ -50,6 +62,12 @@ export function LandingPricingTeaser() {
 				throw new Error(raw?.slice(0, 200) || P.checkoutError);
 			}
 			if (res.ok && data.updated) {
+				trackSubscribeSuccess({
+					plan,
+					interval,
+					updated_in_place: true,
+					source: "landing",
+				});
 				setCheckoutError(null);
 				window.location.href = "/pricing?checkout=success&updated=1";
 				return;
@@ -57,8 +75,19 @@ export function LandingPricingTeaser() {
 			if (!res.ok || !data.url) {
 				throw new Error(data.error ?? P.checkoutError);
 			}
+			trackCheckoutRedirected({
+				kind: "subscription",
+				plan,
+				interval,
+				source: "landing",
+			});
 			window.location.href = data.url;
 		} catch (e) {
+			trackCheckoutFailed({
+				kind: "subscription",
+				plan,
+				source: "landing",
+			});
 			setCheckoutError(e instanceof Error ? e.message : P.checkoutError);
 			setBusy(null);
 		}

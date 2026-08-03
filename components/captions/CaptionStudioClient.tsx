@@ -20,6 +20,11 @@ import type {
 import { captionSpeakText } from "@/lib/ad-pack-types";
 import { DEFAULT_BGM_TRACK, type BgmTrackId } from "@/lib/bgm/tracks";
 import {
+  trackGenerateFailed,
+  trackGenerateStarted,
+  trackGenerateSuccess,
+} from "@/lib/analytics";
+import {
   CAPTION_STYLE_PRESETS,
   CAPTION_STYLE_PRESET_IDS,
   type CaptionStylePresetId,
@@ -627,6 +632,7 @@ export function CaptionStudioClient() {
     setMusicGenerateBusy(true);
     setError(null);
     setAudioNote(null);
+    trackGenerateStarted("music", { source: "captions" });
     try {
       const res = await fetch("/api/generate-music", {
         method: "POST",
@@ -645,7 +651,9 @@ export function CaptionStudioClient() {
       setSelectedAiMusicId(tracks[0]?.id ?? null);
       setMusicSource("ai");
       setAudioNote(t.aiMusicGeneratedNote.replace("{count}", String(tracks.length)));
+      trackGenerateSuccess("music", { source: "captions", track_count: tracks.length });
     } catch (e: unknown) {
+      trackGenerateFailed("music", { source: "captions" });
       setError(e instanceof Error ? e.message : m.errors.musicGenerateFailed);
     } finally {
       setMusicGenerateBusy(false);

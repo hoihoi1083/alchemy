@@ -3,6 +3,7 @@ import {
   notifyCreditBalance,
   readCreditBalanceFromResponse,
 } from "@/lib/credits-client";
+import { trackApiGenerateLifecycle } from "@/lib/analytics";
 
 async function parseJsonResponse(res: Response): Promise<unknown> {
   const text = await res.text();
@@ -57,28 +58,48 @@ export async function apiPostJson<T>(
   body: unknown,
   init?: RequestInit,
 ): Promise<T> {
-  const res = await fetch(path, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...init?.headers },
-    body: JSON.stringify(body),
-    ...init,
-  });
-  const data = await parseJsonResponse(res);
-  if (!res.ok) {
-    throw new ApiClientError(extractErrorMessage(data, res.status), res.status, data);
+  trackApiGenerateLifecycle(path, "started");
+  try {
+    const res = await fetch(path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...init?.headers },
+      body: JSON.stringify(body),
+      ...init,
+    });
+    const data = await parseJsonResponse(res);
+    if (!res.ok) {
+      trackApiGenerateLifecycle(path, "failed", { status: res.status });
+      throw new ApiClientError(extractErrorMessage(data, res.status), res.status, data);
+    }
+    syncCreditsFromBody(data);
+    trackApiGenerateLifecycle(path, "success");
+    return data as T;
+  } catch (e) {
+    if (!(e instanceof ApiClientError)) {
+      trackApiGenerateLifecycle(path, "failed");
+    }
+    throw e;
   }
-  syncCreditsFromBody(data);
-  return data as T;
 }
 
 export async function apiPostForm<T>(path: string, fd: FormData): Promise<T> {
-  const res = await fetch(path, { method: "POST", body: fd });
-  const data = await parseJsonResponse(res);
-  if (!res.ok) {
-    throw new ApiClientError(extractErrorMessage(data, res.status), res.status, data);
+  trackApiGenerateLifecycle(path, "started");
+  try {
+    const res = await fetch(path, { method: "POST", body: fd });
+    const data = await parseJsonResponse(res);
+    if (!res.ok) {
+      trackApiGenerateLifecycle(path, "failed", { status: res.status });
+      throw new ApiClientError(extractErrorMessage(data, res.status), res.status, data);
+    }
+    syncCreditsFromBody(data);
+    trackApiGenerateLifecycle(path, "success");
+    return data as T;
+  } catch (e) {
+    if (!(e instanceof ApiClientError)) {
+      trackApiGenerateLifecycle(path, "failed");
+    }
+    throw e;
   }
-  syncCreditsFromBody(data);
-  return data as T;
 }
 
 export async function apiGetBlob(url: string): Promise<Blob> {

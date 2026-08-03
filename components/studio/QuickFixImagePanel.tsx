@@ -403,6 +403,7 @@ export function QuickFixImagePanel({ variant = "dark" }: QuickFixImagePanelProps
             disabled={disabled}
             initialRegions={inpaintSeedRegions}
             initialPrompt={inpaintSeedPrompt}
+            eraseMode
             labels={{
               hint: w.quickFixInpaintHint,
               brushLabel: w.quickFixInpaintBrush,
@@ -411,6 +412,10 @@ export function QuickFixImagePanel({ variant = "dark" }: QuickFixImagePanelProps
               applyBtn: w.quickFixInpaintApply,
               applying: w.quickFixRefining,
               needMask: w.quickFixInpaintNeedMask,
+              eraseBtn: w.quickFixInpaintEraseBtn,
+              fillBtn: w.quickFixInpaintFillBtn,
+              brushSizeLabel: w.quickFixInpaintBrushSize,
+              aiStepsHint: w.quickFixInpaintAiSteps,
             }}
             onApply={inpaintGeneratedImage}
           />

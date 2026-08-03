@@ -10,6 +10,13 @@ import { Reveal } from "@/components/landing/Reveal";
 import { useLocale } from "@/components/LocaleProvider";
 import { PLAN_DEFINITIONS } from "@/lib/billing/plans";
 import { PRODUCT_SUPPORT_EMAIL } from "@/lib/brand";
+import {
+  trackCheckoutFailed,
+  trackCheckoutRedirected,
+  trackCheckoutStarted,
+  trackSubscribeSuccess,
+  trackTopupSuccess,
+} from "@/lib/analytics";
 
 type BillingInterval = "monthly" | "yearly";
 type PaidPlanKey = "standard" | "pro" | "master";
@@ -92,6 +99,18 @@ export function PricingPageClient() {
           setConfirmNote(data.error ?? p.checkoutError);
           return;
         }
+        const kind = searchParams.get("kind");
+        if (kind === "topup") {
+          trackTopupSuccess({
+            tokens_granted: data.tokensGranted,
+            source: "pricing",
+          });
+        } else {
+          trackSubscribeSuccess({
+            tokens_granted: data.tokensGranted,
+            source: "pricing",
+          });
+        }
         const granted = typeof data.tokensGranted === "number" ? data.tokensGranted : 0;
         const bal = typeof data.creditBalance === "number" ? data.creditBalance : null;
         if (granted > 0) {
@@ -121,6 +140,12 @@ export function PricingPageClient() {
     }
     const key = body.kind === "topup" ? "topup" : `${body.plan}-${body.interval}`;
     setBusy(key);
+    trackCheckoutStarted({
+      kind: body.kind ?? "subscription",
+      plan: body.plan,
+      interval: body.interval,
+      source: "pricing",
+    });
     try {
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
@@ -137,6 +162,12 @@ export function PricingPageClient() {
         throw new Error(raw?.slice(0, 200) || p.checkoutError);
       }
       if (res.ok && data.updated) {
+        trackSubscribeSuccess({
+          plan: body.plan,
+          interval: body.interval,
+          updated_in_place: true,
+          source: "pricing",
+        });
         setConfirmNote(p.subscriptionUpdated);
         setBusy(null);
         return;
@@ -144,8 +175,19 @@ export function PricingPageClient() {
       if (!res.ok || !data.url) {
         throw new Error(data.error ?? p.checkoutError);
       }
+      trackCheckoutRedirected({
+        kind: body.kind ?? "subscription",
+        plan: body.plan,
+        interval: body.interval,
+        source: "pricing",
+      });
       window.location.href = data.url;
     } catch (e) {
+      trackCheckoutFailed({
+        kind: body.kind ?? "subscription",
+        plan: body.plan,
+        source: "pricing",
+      });
       setCheckoutError(e instanceof Error ? e.message : p.checkoutError);
       setBusy(null);
     }
