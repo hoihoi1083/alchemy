@@ -138,6 +138,10 @@ import {
 import { layoutHookSplitCaptions } from "@/lib/ad-pack-hook-captions";
 import { captionLinesFromStoryboardScenes } from "@/lib/storyboard-captions";
 import {
+  buildManifestFromClipDurations,
+  buildSingleClipManifest,
+} from "@/lib/video-timing-manifest";
+import {
   researchReelAnalysisPromptBlock,
   type ResearchReelAnalysis,
 } from "@/lib/reel-analysis-types";
@@ -323,6 +327,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     error, setError,
     videoUrl, setVideoUrl,
     captionHandoffVideoUrl, setCaptionHandoffVideoUrl,
+    videoTimingManifest, setVideoTimingManifest,
     videoNote, setVideoNote,
     bgmNote, setBgmNote,
     quickFixCredits, setQuickFixCredits,
@@ -351,6 +356,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 
   const promotionInitRef = useRef(false);
   const lastStoryboardVideoDurationSecRef = useRef<number | null>(null);
+  const lastVideoTimingManifestRef = useRef<
+    import("@/lib/video-timing-manifest").VideoTimingManifest | null
+  >(null);
   /** Mode B: Nano Banana already integrated brand logo into cinematic stills. */
   const cinematicLogoIntegratedRef = useRef(false);
   const imageUrlRef = useRef<string | null>(imageUrl);
@@ -2075,9 +2083,17 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 
   function trimStoryboardDurations(targetSecRaw: StoryboardDurationPreset) {
     setStoryboardTrimDuration(targetSecRaw);
+    const asVideoDuration =
+      targetSecRaw === "4" ||
+      targetSecRaw === "6" ||
+      targetSecRaw === "8" ||
+      targetSecRaw === "10" ||
+      targetSecRaw === "12"
+        ? (targetSecRaw as VideoDuration)
+        : ("12" as VideoDuration);
     setVideoSettings((prev: VideoSettings) => ({
       ...prev,
-      duration: targetSecRaw as VideoDuration,
+      duration: asVideoDuration,
     }));
     const targetSec = Number(targetSecRaw);
     setStoryboardScenes((prev: StoryboardSceneResult[]) => {
@@ -2107,6 +2123,31 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       });
     });
     setStoryboardPlan((prev: VideoStoryboardPlan | null) => (prev ? { ...prev, totalDurationSec: targetSec } : prev));
+  }
+
+  /** Kling I2V only supports 5s or 10s per still — set equal clip spans for stitch. */
+  function applyKlingStoryboardClipDuration(clipSec: 5 | 10) {
+    setStoryboardScenes((prev: StoryboardSceneResult[]) => {
+      if (!prev.length) return prev;
+      let cursor = 0;
+      return prev.map((scene) => {
+        const startSec = cursor;
+        const endSec = cursor + clipSec;
+        cursor = endSec;
+        return { ...scene, startSec, endSec };
+      });
+    });
+    const n = Math.max(1, storyboardScenes.length);
+    const total = n * clipSec;
+    const preset = String(total) as StoryboardDurationPreset;
+    setStoryboardTrimDuration(preset);
+    setVideoSettings((prev: VideoSettings) => ({
+      ...prev,
+      duration: clipSec === 5 ? "4" : "10",
+    }));
+    setStoryboardPlan((prev: VideoStoryboardPlan | null) =>
+      prev ? { ...prev, totalDurationSec: total } : prev,
+    );
   }
 
   async function replaceStoryboardSceneImage(sceneIndex: number, file: File | null) {
@@ -3481,6 +3522,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 
         let seedancePrompt = first.seedancePrompt;
         let endpoint = first.endpoint;
+        if (first.logoNote?.trim()) setVideoNote(first.logoNote.trim());
         for (let i = 0; i < remaining.length; i += STORYBOARD_BATCH_SIZE) {
           const batch = remaining.slice(i, i + STORYBOARD_BATCH_SIZE);
           const data = await postStoryboardImages(buildStoryboardFd(planForGen, batch));
@@ -3553,6 +3595,11 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         const plan = planData.plan as CinematicReelPlan;
         setCinematicReelPlan(plan);
 
+        const freshKit = loadBrandKitFromStorage();
+        const kitForCinematic =
+          freshKit.logoUrl || freshKit.useBrandLogo ? freshKit : brandKit;
+        if (kitForCinematic !== brandKit) setBrandKit(kitForCinematic);
+
         const genRes = await fetch("/api/generate-cinematic-scenes", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -3560,7 +3607,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
             plan,
             aspect_ratio: effectiveImageAspectRatio,
             art_style: artStyleId,
-            brand_kit: brandKit,
+            brand_kit: kitForCinematic,
             // Top-right by default so burned captions at bottom stay clear.
             logo_placement:
               quickFixLogoPlacement === "bottom-right" || quickFixLogoPlacement === "bottom-left"
@@ -3577,6 +3624,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         setImageVariantUrls(scenes.map((s) => s.imageUrl));
         setSelectedVariantIndex(0);
         setLastImageEndpoint((genData.endpoint as string | undefined) ?? null);
+        if (typeof genData.logoNote === "string" && genData.logoNote.trim()) {
+          setVideoNote(genData.logoNote.trim());
+        }
         setVideoPrompt(
           scenes.map((s) => s.videoMotionPrompt).filter(Boolean).join(" · "),
         );
@@ -4062,7 +4112,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       ? `${m.wizard.videoGenPathLabel}: ${data.generationMode}${data.endpoint ? ` · ${data.endpoint}` : ""}${typeof data.referenceVideoCount === "number" ? ` · ${data.referenceVideoCount} ref video` : ""}`
       : "";
     const notes = [
-      usedKling ? m.wizard.klingStoryboardFallbackNote : m.wizard.referenceModeNote,
+      usedKling ? m.wizard.seedanceToKlingFallbackNote : m.wizard.referenceModeNote,
       pathNote,
       workflowMode !== "combined" && !productPhoto && imageUrl
         ? m.wizard.videoRefUseProductPhoto
@@ -4278,22 +4328,47 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     if (videoDurationSec && videoDurationSec > 0) {
       lastStoryboardVideoDurationSecRef.current = videoDurationSec;
     }
-    const storyboardCaps = captionLinesFromStoryboardScenes(scenes, { videoDurationSec });
+    const timingManifest = clipDurations?.length
+      ? buildManifestFromClipDurations(clipDurations, {
+          source: "kling",
+          engine: "kling",
+          timingSource: "reported",
+          labels: scenes.map((s) => `Scene ${s.imageIndex}`),
+        })
+      : videoDurationSec
+        ? buildSingleClipManifest(videoDurationSec, {
+            source: "kling",
+            engine: "kling",
+            timingSource: "estimated",
+          })
+        : null;
+    if (timingManifest) {
+      lastVideoTimingManifestRef.current = timingManifest;
+      setVideoTimingManifest(timingManifest);
+    }
+    const storyboardCaps = captionLinesFromStoryboardScenes(scenes, {
+      videoDurationSec,
+      clipBoundaries: timingManifest?.clipBoundaries,
+    });
     if (storyboardCaps.length) {
       setCaptionLines(storyboardCaps);
-      setCaptionBurnEnabled(true);
+      // Edit + burn in /captions — keep master clean for flexible post.
+      setCaptionBurnEnabled(false);
     }
+    const totalLabel = timingManifest
+      ? `${Math.round(timingManifest.outputDurationSec)}s`
+      : `${storyboardTrimDuration}s`;
     setVideoNote(
       [
         m.wizard.klingStoryboardFallbackNote,
-        `${m.wizard.storyboardTrimDurationLabel}: ${storyboardTrimDuration}s`,
+        `${m.wizard.storyboardTrimDurationLabel}: ${totalLabel}`,
         data.generationMode && data.endpoint
           ? `${m.wizard.videoGenPathLabel}: ${data.generationMode} · ${data.endpoint}`
           : "",
         typeof data.clipCount === "number"
           ? m.wizard.klingStoryboardClipCount.replace("{n}", String(data.clipCount))
           : "",
-        storyboardCaps.length ? m.wizard.storyboardCaptionsAutoNote : "",
+        storyboardCaps.length ? m.wizard.storyboardCaptionsReadyNote : "",
         data.note as string | undefined,
       ]
         .filter(Boolean)
@@ -4483,6 +4558,18 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
     notifyCreditBalance(readCreditBalanceFromResponse(data));
+    const stitchClipDurations = Array.isArray(data.clipDurations)
+      ? (data.clipDurations as number[]).filter((n) => typeof n === "number" && n > 0)
+      : [];
+    if (stitchClipDurations.length >= 2) {
+      const stitchManifest = buildManifestFromClipDurations(stitchClipDurations, {
+        source: "stitch",
+        engine: "mixed",
+        timingSource: "probed",
+      });
+      lastVideoTimingManifestRef.current = stitchManifest;
+      setVideoTimingManifest(stitchManifest);
+    }
     setVideoNote(
       [
         formatCinematicCopy(m.wizard.cinematicStitchVideoPreflight),
@@ -4551,7 +4638,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     setVideoNote(
       [
         data.generationMode === "kling-storyboard-fallback" || data.seedanceBlockedCode
-          ? m.wizard.klingStoryboardFallbackNote
+          ? m.wizard.seedanceToKlingFallbackNote
           : m.wizard.productVideoAssistantPreflight,
         productVideoPlan?.motionSummaryZh,
         pathNote,
@@ -4608,7 +4695,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     setVideoNote(
       [
         data.generationMode === "kling-storyboard-fallback" || data.seedanceBlockedCode
-          ? m.wizard.klingStoryboardFallbackNote
+          ? m.wizard.seedanceToKlingFallbackNote
           : null,
         pathNote,
         m.wizard.videoRichMotionNote,
@@ -4700,7 +4787,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       ? `${m.wizard.videoGenPathLabel}: ${data.generationMode}${data.endpoint ? ` · ${data.endpoint}` : ""}`
       : "";
     const notes = [
-      usedKling ? m.wizard.klingStoryboardFallbackNote : null,
+      usedKling ? m.wizard.seedanceToKlingFallbackNote : null,
       pathNote,
       dualFrame ? m.wizard.videoRichMotionNote : undefined,
       data.note as string | undefined,
@@ -5325,31 +5412,33 @@ export function useStudioWizard(promotionMode: PromotionMode) {
             [prev, m.wizard.ugcPresenter.voiceBakedInNote].filter(Boolean).join(" · "),
           );
         }
-        // Clean silent video by default — BGM / voiceover / captions are added later in /captions
-        // so users can change music without re-generating Seedance.
-        // Storyboard: always burn scene onImageCopyZh as captions (stills are textless).
+        // Clean silent video by default — BGM / voiceover / captions are added later in /captions.
+        // Storyboard: seed lines from scene copy + clip boundaries; burn in /captions (not here).
         if (isStoryboardOutput) {
           const videoDurationSec =
             lastStoryboardVideoDurationSecRef.current ??
             (Number(storyboardTrimDuration) || undefined);
+          const timing =
+            lastVideoTimingManifestRef.current ?? videoTimingManifest;
           const caps = captionLinesFromStoryboardScenes(storyboardScenes, {
             videoDurationSec: videoDurationSec || undefined,
+            clipBoundaries: timing?.clipBoundaries,
           });
           if (caps.length > 0) {
             setCaptionLines(caps);
-            setCaptionBurnEnabled(true);
-            setVideoPhase("captions");
-            const urlBeforeCaptionBurn = url;
-            try {
-              url = await burnScriptCaptionsIfEnabled(url, caps, { force: true });
-            } catch {
-              setVideoNote((prev: string | undefined) =>
-                [prev, m.wizard.adPack.captionBurnSkippedNote].filter(Boolean).join(" · "),
-              );
-            }
-            setCaptionHandoffVideoUrl(urlBeforeCaptionBurn);
-          } else {
-            setCaptionHandoffVideoUrl(url);
+            setCaptionBurnEnabled(false);
+          }
+          setCaptionHandoffVideoUrl(url);
+          if (timing) {
+            setVideoTimingManifest(timing);
+          } else if (videoDurationSec && videoDurationSec > 0) {
+            const fallback = buildSingleClipManifest(videoDurationSec, {
+              source: "kling",
+              engine: "kling",
+              timingSource: "estimated",
+            });
+            lastVideoTimingManifestRef.current = fallback;
+            setVideoTimingManifest(fallback);
           }
         } else if (captionBurnEnabled && (socialPack?.captions.length ?? captionLines.length) > 0) {
           setVideoPhase("captions");
@@ -5368,9 +5457,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       } else {
         setCaptionHandoffVideoUrl(url);
       }
-      // Storyboard/caption burn used to rewrite to /api/pipeline-files/…; durable outputs
-      // are now /api/library/download/…. Only a leftover fal CDN URL means burn/stitch never stuck.
-      const wantsProcessed = !isUgcPresenterOutput && (captionBurnEnabled || isStoryboardOutput);
+      // Caption burn used to rewrite to /api/pipeline-files/…; durable outputs
+      // are now /api/library/download/…. Only a leftover fal CDN URL means burn never stuck.
+      const wantsProcessed = !isUgcPresenterOutput && captionBurnEnabled && !isStoryboardOutput;
       if (
         wantsProcessed &&
         isFalCdnUrl(url) &&
@@ -5378,6 +5467,18 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         !isPipelineFileUrl(url)
       ) {
         throw new Error(m.errors.postProcessIncomplete);
+      }
+      if (!isStoryboardOutput) {
+        const dur = resolveWizardVideoDurationSec();
+        if (dur > 0) {
+          const seedanceManifest = buildSingleClipManifest(dur, {
+            source: "seedance",
+            engine: "seedance",
+            timingSource: "estimated",
+          });
+          lastVideoTimingManifestRef.current = seedanceManifest;
+          setVideoTimingManifest(seedanceManifest);
+        }
       }
       setVideoUrl(url);
       setQuickFixCredits(1);
@@ -5446,6 +5547,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     setUseOriginalImage(false);
     setVideoUrl(null);
     setCaptionHandoffVideoUrl(null);
+    setVideoTimingManifest(null);
+    lastVideoTimingManifestRef.current = null;
+    lastStoryboardVideoDurationSecRef.current = null;
     setVideoNote(undefined);
     setBgmNote(undefined);
     setQuickFixCredits(0);
@@ -6078,6 +6182,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     aiMusicTracks,
     captionBurnEnabled,
     captionHandoffVideoUrl,
+    videoTimingManifest,
     captionLines,
     setAdPackPlan,
     setAdPackPlanBusy,
@@ -6203,6 +6308,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     templateSlotStatus,
     tpl,
     trimStoryboardDurations,
+    applyKlingStoryboardClipDuration,
     updateCaptionLine,
     updateStoryboardSceneTiming,
     updateStoryboardPlanScene,

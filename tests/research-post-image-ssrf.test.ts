@@ -16,8 +16,7 @@ describe("research-post-image SSRF allowlist", () => {
     );
   });
 
-  it("matches via exact, subdomain suffix, or DNS label", () => {
-    assert.match(src, /host\.endsWith\(`\.\$\{h\}`\)/);
-    assert.match(src, /host\.split\("\."\)\.some/);
+  it("uses shared hostMatchesAllowlist helper", () => {
+    assert.match(src, /hostMatchesAllowlist/);
   });
 });

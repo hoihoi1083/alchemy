@@ -11,11 +11,15 @@ import {
   resolveGeneratedImageResultView,
   type GeneratedImageResultViewKind,
 } from "@/lib/generated-image-result-view";
+import { storyboardSceneDisplayCopy } from "@/lib/storyboard-scene-copy";
 
 type ReviewItem = {
   url: string;
   label: string;
+  /** Primary consumer script / caption under the still. */
   sublabel?: string;
+  /** Optional beat description when different from caption. */
+  beat?: string;
   index: number;
 };
 
@@ -521,6 +525,21 @@ export function ImageReviewGallery({
                   onSelect={() => selectItem(item.index, item.url)}
                 />
 
+                {item.sublabel || item.beat ? (
+                  <div className="space-y-1 border-t border-slate-100 px-2.5 py-2.5 sm:px-3">
+                    {item.sublabel ? (
+                      <p className="text-[12px] font-medium leading-snug text-slate-800 sm:text-[13px]">
+                        {item.sublabel}
+                      </p>
+                    ) : null}
+                    {item.beat ? (
+                      <p className="text-[11px] leading-snug text-slate-500 line-clamp-3">
+                        {item.beat}
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
+
                 <div className="mt-auto border-t border-slate-100 p-2.5 sm:p-3">
                   <div className="grid grid-cols-2 gap-1.5">
                     <CompactAction
@@ -821,20 +840,28 @@ function collectReviewItems(
   m: ReturnType<typeof useLocale>["m"],
 ): ReviewItem[] {
   if (kind === "storyboard") {
-    return wizard.storyboardScenes.map((scene, i) => ({
-      index: i,
-      url: scene.imageUrl,
-      label: `${m.wizard.storyboardSceneLabel} ${scene.imageIndex}`,
-      sublabel: scene.sceneDescriptionZh || scene.role,
-    }));
+    return wizard.storyboardScenes.map((scene, i) => {
+      const copy = storyboardSceneDisplayCopy(scene);
+      return {
+        index: i,
+        url: scene.imageUrl,
+        label: `${m.wizard.storyboardSceneLabel} ${scene.imageIndex}`,
+        sublabel: copy.caption || copy.beat || undefined,
+        beat: copy.caption && copy.beat ? copy.beat : undefined,
+      };
+    });
   }
   if (kind === "cinematic") {
-    return wizard.cinematicScenes.map((scene, i) => ({
-      index: i,
-      url: scene.imageUrl,
-      label: `${m.wizard.storyboardSceneLabel} ${scene.sceneIndex}`,
-      sublabel: scene.sceneDescriptionZh || scene.role,
-    }));
+    return wizard.cinematicScenes.map((scene, i) => {
+      const copy = storyboardSceneDisplayCopy(scene);
+      return {
+        index: i,
+        url: scene.imageUrl,
+        label: `${m.wizard.storyboardSceneLabel} ${scene.sceneIndex}`,
+        sublabel: copy.caption || copy.beat || undefined,
+        beat: copy.caption && copy.beat ? copy.beat : undefined,
+      };
+    });
   }
   if (kind === "carousel") {
     return wizard.campaignSlides.map((slide, i) => ({

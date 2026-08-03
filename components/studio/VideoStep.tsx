@@ -23,6 +23,11 @@ import {
   klingStoryboardTokenCost,
   resolveKlingClipDurations,
 } from "@/lib/kling-storyboard-fallback";
+import { KlingStoryboardSettings } from "@/components/studio/KlingStoryboardSettings";
+import {
+  inferKlingClipFromScenes,
+  storyboardSceneDisplayCopy,
+} from "@/lib/storyboard-scene-copy";
 import { isBrandVideoStyle, isCreativeVideoStyle, isStoryboardVideoStyle } from "@/lib/visual-styles";
 import { isVideoOutputPathLocked, resolveVideoOutputPresentation } from "@/lib/video-output-presentation";
 import { analyzeProductImageFile } from "@/lib/image-upload-quality";
@@ -31,11 +36,15 @@ import type { CinematicSceneResult } from "@/lib/cinematic-reel-types";
 import type { StoryboardSceneResult } from "@/lib/video-storyboard-types";
 
 export function VideoStep() {
-  const { applyPromptRebuild, bgmOptions, bgmTrack, brandProfile, cinematicScenes, cinematicSceneCount, cinematicStitchReady, conceptReferenceR2vReady, directReferenceR2vReady, creativeVideoBrief, endFramePhoto, endFramePreviewUrl, endFrameUrl, error, extraAnglePhotos, extraKitPhotos, extraKitPreviewUrls, formatCinematicCopy, generateVideo, goBackFromVideo, hasFinalImage, headline, imageAspectRatio, imagePrompt, imageUrl, isCinematicStitchOutput, isConceptCinematicSingleOutput, isStoryboardOutput, isUgcPresenterOutput, keyframePreview, loadReferenceClip, m, onReferenceAdFile, onVideoCreativeModeChange, packagingPhoto, packagingPreviewUrl, planAiVideoPrompt, planProductVideo, planProductVideoBusy, planVideoPromptBusy, presenterAvatarId, presenterSourceMode, productPhoto, productVideoPlan, promotionMode, promptExtra, promptMarket, referenceAd, referenceClipLoading, referenceIsVideo, referencePreviewUrl, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, selectedReferenceClipId, setBgmTrack, setConceptImageVisionNote, setEndFramePhoto, setEndFrameUrl, setError, setExtraAnglePhotos, setExtraKitPhotos, setPackagingPhoto, setImagePrompt, setImageUrl, setPresenterAvatarId, setPresenterSourceMode, setProductPhoto, setPromptExtra, setPromptMarket, setShowAdvancedVideo, setSubjectFraming, setUploadQualityWarning, setUseOriginalImage, setVideoPrompt, setVideoSettings, shipItMode, showAdvancedVideo, showVideoReferenceSection, storyboardScenes, storyboardTrimDuration, subjectFraming, templateId, templateSlotStatus, uploadPreviewUrl, useReferenceVideo, usesCompositor, usesConceptTextVideo, usesProductAssistant, videoBusy, videoCreativeMode, videoGenerateDisabled, videoGenerateDisabledReason, videoPhase, videoPreflight, videoProgressInfo, videoPrompt, videoPromptPlanNote, videoSettings, videoStepHint, visualStyleId, workflowMode } = useWizard();
+  const { applyKlingStoryboardClipDuration, applyPromptRebuild, bgmOptions, bgmTrack, brandProfile, cinematicScenes, cinematicSceneCount, cinematicStitchReady, conceptReferenceR2vReady, directReferenceR2vReady, creativeVideoBrief, endFramePhoto, endFramePreviewUrl, endFrameUrl, error, extraAnglePhotos, extraKitPhotos, extraKitPreviewUrls, formatCinematicCopy, generateVideo, goBackFromVideo, hasFinalImage, headline, imageAspectRatio, imagePrompt, imageUrl, isCinematicStitchOutput, isConceptCinematicSingleOutput, isStoryboardOutput, isUgcPresenterOutput, keyframePreview, loadReferenceClip, m, onReferenceAdFile, onVideoCreativeModeChange, packagingPhoto, packagingPreviewUrl, planAiVideoPrompt, planProductVideo, planProductVideoBusy, planVideoPromptBusy, presenterAvatarId, presenterSourceMode, productPhoto, productVideoPlan, promotionMode, promptExtra, promptMarket, referenceAd, referenceClipLoading, referenceIsVideo, referencePreviewUrl, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, selectedReferenceClipId, setBgmTrack, setConceptImageVisionNote, setEndFramePhoto, setEndFrameUrl, setError, setExtraAnglePhotos, setExtraKitPhotos, setPackagingPhoto, setImagePrompt, setImageUrl, setPresenterAvatarId, setPresenterSourceMode, setProductPhoto, setPromptExtra, setPromptMarket, setShowAdvancedVideo, setSubjectFraming, setUploadQualityWarning, setUseOriginalImage, setVideoPrompt, setVideoSettings, shipItMode, showAdvancedVideo, showVideoReferenceSection, storyboardScenes, storyboardTrimDuration, subjectFraming, templateId, templateSlotStatus, uploadPreviewUrl, useReferenceVideo, usesCompositor, usesConceptTextVideo, usesProductAssistant, videoBusy, videoCreativeMode, videoGenerateDisabled, videoGenerateDisabledReason, videoPhase, videoPreflight, videoProgressInfo, videoPrompt, videoPromptPlanNote, videoSettings, videoStepHint, visualStyleId, workflowMode } = useWizard();
   const isConcept = promotionMode === "concept";
   const outputDurationSec = resolveWizardOutputDurationSec(videoSettings);
   const storyboardSceneCount = Math.max(1, storyboardScenes.length || 4);
-  const storyboardTotalSec = Number(storyboardTrimDuration) || outputDurationSec || 8;
+  const klingClipSec = inferKlingClipFromScenes(storyboardScenes);
+  const storyboardTotalSec =
+    storyboardScenes.length > 0
+      ? storyboardScenes.length * klingClipSec
+      : Number(storyboardTrimDuration) || outputDurationSec || 8;
   const videoTokenCost = isStoryboardOutput
     ? storyboardScenes.length > 0
       ? klingStoryboardTokenCost(
@@ -50,6 +59,7 @@ export function VideoStep() {
         fast: videoSettings.fast,
         duration: outputDurationSec,
       });
+  const pv = m.microWizard.preVideoSetup;
   const showCinematicStitch = isCinematicStitchOutput || cinematicStitchReady;
   const showConceptCinematicSingle =
     isConceptCinematicSingleOutput && cinematicScenes.length > 0;
@@ -326,9 +336,28 @@ export function VideoStep() {
     </div>
   )}
 
-  {!usesCompositor && !shipItMode && !showReferenceR2vOutputSettings && (
+  {!usesCompositor && !shipItMode && !showReferenceR2vOutputSettings && !isStoryboardOutput && (
     <VideoSettingsPanel value={videoSettings} onChange={setVideoSettings} />
   )}
+
+  {isStoryboardOutput && !videoBusy ? (
+    <div className="space-y-2 rounded-xl border border-teal-900/50 bg-teal-950/25 p-4">
+      <p className="text-sm font-semibold text-teal-50">{pv.settingsTitle}</p>
+      <p className="text-xs text-teal-200/80">{pv.klingSettingsHint}</p>
+      <KlingStoryboardSettings
+        sceneCount={storyboardScenes.length || storyboardSceneCount}
+        clipSec={klingClipSec}
+        scenes={storyboardScenes}
+        onClipChange={applyKlingStoryboardClipDuration}
+        label={pv.klingClipLabel}
+        hint={pv.klingClipHint}
+        totalLabel={pv.klingTotalLabel}
+        costLabel={pv.costLabel}
+        accent="emerald"
+        variant="dark"
+      />
+    </div>
+  ) : null}
 
   {!usesCompositor && !isStoryboardOutput && !showCinematicStitch && !isConceptCinematicSingleOutput && !usesProductAssistant && !usesConceptTextVideo && (
     <div className="rounded-xl border border-sky-900/50 bg-sky-950/30 px-4 py-3 text-sm text-sky-100">
@@ -524,7 +553,9 @@ export function VideoStep() {
       <div className="space-y-3">
         <p className="text-xs text-teal-200/90">{m.wizard.storyboardAllScenesHint}</p>
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          {storyboardScenes.map((scene: StoryboardSceneResult) => (
+          {storyboardScenes.map((scene: StoryboardSceneResult) => {
+            const copy = storyboardSceneDisplayCopy(scene);
+            return (
             <div
               key={scene.imageUrl}
               className="rounded-lg border border-teal-900/40 bg-teal-950/20 p-2"
@@ -537,11 +568,23 @@ export function VideoStep() {
                 alt=""
                 className="mx-auto max-h-36 w-full rounded object-contain"
               />
-              <p className="mt-1 text-center text-[10px] text-slate-400 line-clamp-2">
-                {scene.sceneDescriptionZh || scene.role}
-              </p>
+              {copy.caption || copy.beat ? (
+                <div className="mt-1.5 space-y-0.5 px-0.5">
+                  {copy.caption ? (
+                    <p className="text-center text-[11px] font-medium leading-snug text-teal-50 line-clamp-3">
+                      {copy.caption}
+                    </p>
+                  ) : null}
+                  {copy.beat ? (
+                    <p className="text-center text-[10px] leading-snug text-slate-400 line-clamp-2">
+                      {copy.beat}
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     ) : workflowMode === "video-only" && !usesProductAssistant && !productPhoto ? (

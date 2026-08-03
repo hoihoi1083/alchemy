@@ -60,10 +60,34 @@ export function resolvePipelineFileUrl(url: string): string | null {
   return path.join(jobDir(jobId), file);
 }
 
-/** Download remote media or copy a local pipeline / library asset into destPath. */
-export async function materializeMediaInput(url: string, destPath: string): Promise<void> {
+/** Extract job id from a pipeline-files URL, or null. */
+export function pipelineJobIdFromUrl(url: string): string | null {
+  const pathname = pipelinePathname(url);
+  if (!pathname) return null;
+  const match = pathname.match(/^\/api\/pipeline-files\/([^/]+)\/([^/]+)$/);
+  if (!match) return null;
+  return isValidJobId(match[1]) ? match[1] : null;
+}
+
+/**
+ * Download remote media or copy a local pipeline / library asset into destPath.
+ * `clerkId` scopes library rematerialization and pipeline-file copies.
+ */
+export async function materializeMediaInput(
+  url: string,
+  destPath: string,
+  opts: { clerkId: string },
+): Promise<void> {
+  const clerkId = opts.clerkId.trim();
+  if (!clerkId) throw new Error("clerkId is required to materialize media.");
+
+  const pipelineJobId = pipelineJobIdFromUrl(url);
   const localPath = resolvePipelineFileUrl(url);
-  if (localPath) {
+  if (localPath && pipelineJobId) {
+    const { assertJobOwnedBy } = await import("@/lib/pipeline/job-owner");
+    if (!(await assertJobOwnedBy(pipelineJobId, clerkId))) {
+      throw new Error("Pipeline media not found or not owned by this user.");
+    }
     await fs.copyFile(localPath, destPath);
     return;
   }
@@ -72,7 +96,7 @@ export async function materializeMediaInput(url: string, destPath: string): Prom
     "@/lib/storage/durable-media"
   );
   if (isLibraryAssetUrl(url)) {
-    const media = await readLibraryAssetMedia(url);
+    const media = await readLibraryAssetMedia(url, clerkId);
     if (!media) {
       throw new Error("Library media not found or storage unavailable.");
     }

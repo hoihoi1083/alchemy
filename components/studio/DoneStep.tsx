@@ -62,6 +62,7 @@ export function DoneStep() {
     canGenerateImage,
     captionHandoffVideoUrl,
     captionLines,
+    videoTimingManifest,
     finalImageSrc,
     generateImage,
     headline,
@@ -338,6 +339,7 @@ export function DoneStep() {
                 videoUrl: captionHandoffVideoUrl ?? videoUrl,
                 captionLines,
                 label: headline?.trim() || product?.trim() || undefined,
+                timingManifest: videoTimingManifest ?? undefined,
               });
               router.push("/captions");
             }}

@@ -173,11 +173,25 @@ async function assertOverlayHasInk(png: Buffer, text: string): Promise<void> {
   }
 }
 
-async function loadLogoBuffer(url: string): Promise<Buffer> {
+async function loadLogoBuffer(
+  url: string,
+  opts?: { clerkId?: string },
+): Promise<Buffer> {
   if (url.startsWith("data:")) {
     const base64 = url.split(",")[1];
     return Buffer.from(base64, "base64");
   }
+  const { isLibraryAssetUrl } = await import("@/lib/storage/library-asset-url");
+  if (isLibraryAssetUrl(url) || url.includes("/api/library/download/")) {
+    const clerkId = opts?.clerkId?.trim();
+    if (!clerkId) throw new Error("clerkId required to load library logo.");
+    const { readLibraryAssetMedia } = await import("@/lib/storage/durable-media");
+    const media = await readLibraryAssetMedia(url, clerkId);
+    if (!media) throw new Error("Library logo not found.");
+    return media.bytes;
+  }
+  const { assertPublicHttpUrl } = await import("@/lib/pipeline/safe-url");
+  assertPublicHttpUrl(url);
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to load brand logo.");
   return Buffer.from(await res.arrayBuffer());
@@ -186,6 +200,7 @@ async function loadLogoBuffer(url: string): Promise<Buffer> {
 export async function burnImageCanvasOverlay(
   inputImage: string | Buffer,
   layers: ImageCanvasLayer[],
+  opts?: { clerkId?: string },
 ): Promise<Buffer> {
   ensureCompositorFonts();
   const base = sharp(inputImage);
@@ -201,7 +216,7 @@ export async function burnImageCanvasOverlay(
     const boxH = Math.max(8, Math.round((layer.hPct / 100) * height));
     const cx = Math.round((layer.xPct / 100) * width);
     const cy = Math.round((layer.yPct / 100) * height);
-    const logoBuf = await loadLogoBuffer(layer.url);
+    const logoBuf = await loadLogoBuffer(layer.url, opts);
     const logoMeta = await sharp(logoBuf).metadata();
     const naturalW = logoMeta.width ?? boxW;
     const naturalH = logoMeta.height ?? boxH;
@@ -221,9 +236,11 @@ export async function burnImageCanvasOverlay(
 export async function burnImageTextOverlay(
   inputImage: string | Buffer,
   layers: ImageTextLayer[],
+  opts?: { clerkId?: string },
 ): Promise<Buffer> {
   return burnImageCanvasOverlay(
     inputImage,
     layers.map((layer) => ({ kind: "text" as const, ...layer })),
+    opts,
   );
 }

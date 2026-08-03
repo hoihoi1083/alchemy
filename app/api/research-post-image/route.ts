@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAppUser } from "@/lib/require-app-user";
+import { hostMatchesAllowlist } from "@/lib/pipeline/safe-url";
 import { toBrowserJpegBuffer } from "@/lib/xhs-image-browser";
 
 export const runtime = "nodejs";
@@ -22,7 +23,7 @@ const ALLOWED_HOSTS = [
   "tiktokcdn-us.com",
   "muscdn.com",
   "byteimg.com",
-];
+] as const;
 
 const REFERERS: Record<string, string> = {
   xiaohongshu: "https://www.xiaohongshu.com/",
@@ -36,14 +37,7 @@ function isAllowedImageUrl(raw: string): boolean {
   try {
     const url = new URL(raw);
     if (url.protocol !== "https:" && url.protocol !== "http:") return false;
-    const host = url.hostname.toLowerCase();
-    return ALLOWED_HOSTS.some((h) => {
-      if (h.includes(".")) {
-        return host === h || host.endsWith(`.${h}`);
-      }
-      // Bare tokens like "scontent" / "sns-img": must be a full label or `token-…` label.
-      return host.split(".").some((part) => part === h || part.startsWith(`${h}-`));
-    });
+    return hostMatchesAllowlist(url.hostname, ALLOWED_HOSTS);
   } catch {
     return false;
   }

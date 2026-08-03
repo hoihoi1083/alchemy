@@ -12,7 +12,10 @@ export type TranscriptResult = {
 
 export type PostProcessResult = {
   jobId: string;
-  srtUrl: string;
+  /** @deprecated Prefer `srtText` — pipeline srt URLs are not durable on serverless. */
+  srtUrl?: string;
+  /** Full SRT contents for client download without a second request. */
+  srtText?: string;
   transcriptText: string;
   correctedText: string;
   finalVideoUrl?: string;

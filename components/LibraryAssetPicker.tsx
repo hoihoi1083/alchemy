@@ -9,6 +9,7 @@ export type LibraryPickerAsset = {
   downloadUrl: string;
   previewUrl: string;
   createdAt: string;
+  timingManifest?: import("@/lib/video-timing-manifest").VideoTimingManifest;
 };
 
 /** Ensure inline streaming once — previewUrl already includes ?inline=1 from the assets API. */

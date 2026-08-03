@@ -15,7 +15,7 @@ import {
   encodeImageSequence,
   ensureFfmpeg,
 } from "@/lib/pipeline/ffmpeg";
-import { jobDir } from "@/lib/pipeline/paths";
+import { createOwnedJobDir } from "@/lib/pipeline/job-owner";
 import { persistAndDurablize } from "@/lib/storage/durable-media";
 import type { TemplateId } from "@/lib/templates";
 
@@ -79,9 +79,7 @@ export async function POST(request: Request) {
     productImage: productBuffer,
   });
 
-  const jobId = crypto.randomUUID();
-  const dir = jobDir(jobId);
-  await fs.mkdir(dir, { recursive: true });
+  const { jobId, dir } = await createOwnedJobDir(auth.user.userId);
 
   try {
     if (mode === "image") {

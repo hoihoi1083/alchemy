@@ -242,9 +242,12 @@ export function VideoResultPanel({
       : "—";
   const duration =
     preview?.durationLabel ??
-    (wizard
-      ? durationLabel(wizard.videoSettings.duration, m.wizard.videoDurationAuto)
-      : "8s");
+    (wizard?.videoTimingManifest?.outputDurationSec
+      ? `${Math.round(wizard.videoTimingManifest.outputDurationSec * 10) / 10}s`
+      : wizard
+        ? durationLabel(wizard.videoSettings.duration, m.wizard.videoDurationAuto)
+        : "8s");
+  const clipCount = wizard?.videoTimingManifest?.clipBoundaries?.length ?? 0;
   const resolution = preview?.resolution ?? wizard?.videoSettings.resolution ?? "720p";
   const styleLabel =
     preview?.styleLabel ??
@@ -284,6 +287,7 @@ export function VideoResultPanel({
       videoUrl: wizard!.captionHandoffVideoUrl ?? videoUrl,
       captionLines: wizard!.captionLines,
       label: wizard!.headline?.trim() || wizard!.product?.trim() || undefined,
+      timingManifest: wizard!.videoTimingManifest ?? undefined,
     });
     router.push("/captions");
   }
@@ -343,7 +347,11 @@ export function VideoResultPanel({
           <div className="video-review-meta grid min-w-0 flex-[1.15] divide-x divide-slate-200 rounded-2xl border border-slate-200 bg-white shadow-sm">
             <MetaCell
               label={m.wizard.videoReviewMetaDuration}
-              value={duration}
+              value={
+                clipCount > 1
+                  ? `${duration} · ${clipCount}`
+                  : duration
+              }
               icon={<IconDuration className="h-4 w-4 shrink-0 text-violet-600" />}
             />
             <MetaCell

@@ -25,6 +25,7 @@ export type StoryboardImagesResult = {
   plan: VideoStoryboardPlan;
   seedancePrompt: string;
   endpoint?: string;
+  logoNote?: string;
 };
 
 export type CampaignGenerateResult = {

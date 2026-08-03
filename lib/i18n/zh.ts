@@ -301,14 +301,15 @@ export const zh = {
     brandKitLink: "設定品牌套件",
     brandKitBadge: "創作前準備",
     brandKitTitle: "上傳一次 Logo，之後每條 Reel 都用得着",
-    brandKitBody: "建議上傳透明底 PNG。工作室生成分鏡同品牌路徑時會用到。",
+    brandKitBody:
+      "建議上傳透明底 PNG。影片：勾選「影片靜幀使用品牌 Logo」後，分鏡／電影感關鍵幀會自動加 Logo。宣傳圖請去「編輯圖片」自行加。",
     brandKitLogoTip: "提示：接近正方形、Logo 佔畫面大部分、約 512–1024px。",
     brandKitCta: "繼續去工作室",
     toolsTitle: "更多創作工具",
     toolsSubtitle: "品牌套件、圖片編輯、字幕同 Pro 畫布 — 隨時跳入。",
     toolsOpenCta: "打開",
     toolBrandTitle: "品牌套件",
-    toolBrandDesc: "一次存 Logo 同色系，之後每條 Reel／靜態圖都用得着。",
+    toolBrandDesc: "一次存 Logo 同色系 — 影片靜幀可自動加；宣傳圖請去「編輯圖片」加。",
     toolEditTitle: "圖片編輯",
     toolEditDesc: "為任何圖片加字、Logo，微調成品。",
     toolCaptionsTitle: "字幕同音頻",
@@ -449,6 +450,8 @@ export const zh = {
     checkoutSuccess: "付款成功。Token 幾秒內會入帳 — 如未更新請重新整理。",
     checkoutCanceled: "已取消結帳，未有收費。",
     checkoutError: "無法開始結帳。請再試，或聯絡支援。",
+    subscriptionUpdated: "已更新方案。重複訂閱已取消，之後唔會收兩次費。",
+    alreadySubscribed: "你已有有效訂閱。請用「管理帳單」更改或取消方案。",
     tokenTitle: "Token 點樣計",
     tokenSubtitle: "Token 係工作室貨幣。每次生成前會顯示所需 token。",
     tokenItems: [
@@ -982,12 +985,15 @@ export const zh = {
     storyboardVideoPreflight: "模式：逐場景圖生影片 + 拼接（跳過 reference video）",
     klingStoryboardFallbackNote:
       "分鏡影片 — 每格靜幀變成短片，再拼接成完整片",
+    seedanceToKlingFallbackNote:
+      "Seedance 此請求被阻擋 — 改用 Kling 分鏡（每格短片再拼接）",
     klingStoryboardClipCount: "片段 × {n}",
     storyboardDurationLabel: "目標片長",
     storyboardDurationHint: "會影響分鏡場景數量。改咗片長請重新生成場景圖。",
     storyboardAllScenesHint:
       "場景圖會出無字版本（方便做片）。畫面字會喺出片後自動燒錄做字幕。",
     storyboardCaptionsAutoNote: "已自動燒錄分鏡文案做字幕",
+    storyboardCaptionsReadyNote: "分鏡文案已備好 — 去字幕工作室編時間、旁白同燒錄",
     storyboardAllScenesImageHint: "全部場景會用於影片 — 唔使喺下面揀「版本」。",
     storyboardTrimDurationLabel: "片長裁剪預設",
     storyboardSceneCountLabel: "場景數量",
@@ -1422,6 +1428,7 @@ export const zh = {
       savedNote: "品牌套件已儲存到帳戶。",
       localOnlyNote: "已儲存喺本機（登入 + MongoDB 可雲端同步）。",
       addLogoToCanvas: "加入品牌 Logo",
+      clearLogo: "移除 Logo",
     },
     pickCampaignSlideLabel: "揀一張繼續（或全部下載）",
     pickTeachingCarouselSlideLabel: "教學輪播 — 揀一張預覽（全部可下載）",
@@ -2210,18 +2217,28 @@ export const zh = {
     videoFailed: "UGC 影片生成失敗。",
   },
   captions: {
-    badge: "獨立工具 · 唔使重新生成影片",
+    badge: "後期工作室 · 任何影片",
     title: "字幕同音頻工作室",
     subtitle:
-      "從作品庫揀 Reels — 加 BGM、口播配音同燒錄字幕。同 wizard 後期一樣，唔使重新生成影片。",
-    uploadTitle: "影片來源",
+      "由作品庫或你自己嘅片開始 — 改文案、加 BGM／口播、再燒錄字幕。片長無限制。",
+    uploadTitle: "加入影片",
     uploadHint:
       "從作品庫揀片（studio 生成會自動存入），或由 studio 完成頁開啟字幕工作室。",
-    chooseFile: "選擇影片檔案",
+    uploadHintAny:
+      "由作品庫揀、上傳你自己嘅 MP4，或由 Studio 完成頁帶住成品嚟呢度。",
+    anyLengthNote:
+      "片長隨意 — 會讀檔案真實時長。多段拼接片會顯示場次切開標記。",
+    chooseFile: "上傳影片檔案",
     chooseFromLibrary: "從作品庫選擇",
     changeVideo: "更換影片（作品庫）",
     sourceFromStudio: "來自 studio",
     sourceFromLibrary: "來自作品庫",
+    phaseScript: "1 · 文案",
+    phaseAudio: "2 · 旁白同音樂",
+    phaseBurn: "3 · 燒錄",
+    cutsLabel: "{n} 段",
+    timingFromVideo: "時間來自影片",
+    timingEstimated: "時間為估算",
     largeFileHint:
       "大檔要用直傳雲端（R2 CORS）或「從作品庫選擇」— 伺服器上傳上限約 4.5MB。",
     uploadNeedCorsOrLibrary:
@@ -2260,6 +2277,10 @@ export const zh = {
     fitCaptionsToVoice: "對齊口播時長",
     fitCaptionsNeedVoice: "請先生成口播預聽，再對齊字幕時間。",
     fitCaptionsToVoiceDone: "字幕時間已對齊口播（約 {sec} 秒）。片尾無對白保持靜音。",
+    voiceLongerThanVideo:
+      "口播（約 {voice}s）長過可用影片（約 {video}s）。字幕已壓到影片長度；請縮短文案或少剪一點。",
+    voiceFittedToVoice: "字幕時間已對齊口播（約 {voice}s）。影片尾段約 {tail}s 會保持靜音。",
+    voiceFittedCapped: "口播（約 {voice}s）超過影片（約 {video}s）— 字幕已壓到影片長度。",
     applyBtn: "燒錄字幕到影片",
     applying: "燒錄字幕中…",
     appliedNote: "字幕已燒錄到影片 — 請拖動播放器檢查每個時段。",
@@ -2278,8 +2299,9 @@ export const zh = {
     invalidVideoType: "請選擇影片檔案（MP4、WebM、MOV）。",
     reeditHint: "字幕文字會喺瀏覽器為此影片保存。要開新項目，",
     studioLink: "打開 studio",
-    openFromDone: "加 BGM／字幕",
-    doneHint: "先下載無聲影片，或開啟字幕同音頻工作室加音樂同文字。",
+    openFromDone: "編輯字幕同音頻",
+    doneHint:
+      "下載乾淨影片，或開啟字幕工作室改文案、旁白、音樂同燒錄 — 亦可以之後上傳任何影片嚟編。",
     styleLabel: "字幕樣式",
     styleHint: "燒錄字幕嘅預設顏色同粗幼（overlay 模式）。",
     audioTitle: "背景音樂同口播",
@@ -2299,6 +2321,9 @@ export const zh = {
     audioBgmLabel: "音樂曲目",
     audioApplyBgm: "加 BGM",
     audioApplyingBgm: "加緊 BGM…",
+    audioReplaceOriginal: "取代原片聲音",
+    audioReplaceOriginalHint:
+      "關閉時會保留上傳影片原聲，BGM 混在底下。開啟則輸出以音樂為主。",
     audioVoicePlaceholder: "完整口播稿（可以長過畫面字幕）",
     audioApplyVoice: "混入口播",
     audioApplyingVoice: "混音中…",
@@ -2446,10 +2471,13 @@ export const zh = {
     cleanAcceptBtn: "使用此圖，繼續加字",
     cleanRetryBtn: "唔滿意，再試",
     cleanApplyNote: "清理完成 — 可以繼續加你自己嘅文字同 Logo。",
+    cleanFillNote: "填補完成 — 可以繼續加你自己嘅文字同 Logo。",
     workflowNote: "建議流程：Studio 生成 → Wizard 快速修正 → 呢度擦除 → 第 3 步加字。",
     reeditHint: "圖層配置會儲存在瀏覽器（同一張圖）。",
     studioHint: "需要 AI 生成圖片？",
     studioLink: "開啟 Studio",
+    sourcePreviewFailed: "無法載入圖片預覽。請檢查網絡或再試一次。",
+    retryPreview: "再試",
     openFromDone: "為圖片加字同 Logo",
     doneHint: "用已生成嘅宣傳圖開啟畫布 — 加標題同品牌 Logo。",
     editAnotherHint:
@@ -2848,9 +2876,9 @@ export const zh = {
       titleAccent: "影片詳情",
       hint: "填文案、上傳產品相、寫／確認動態 prompt、揀片長，再生成無聲短片。",
       scenesReadyHint:
-        "場景圖已準備 — 揀片長同解像度，再串成一條無聲短片（字幕之後再加）。",
+        "場景圖已準備 — 揀每場 Kling 片長（5 秒或 10 秒），再串成一條無聲短片（字幕之後再加）。",
       scenesReadyTitle: "分鏡場景已準備",
-      scenesReadyBody: "呢啲靜態圖會串成短片。調影片設定後再生成。",
+      scenesReadyBody: "呢啲靜態圖會串成短片。調 Kling 每場片長後再生成。",
       assistantHint:
         "上傳產品相 → AI 寫動態 prompt → 檢查後再生成（無聲片；字幕之後再加）。",
       assistantTitle: "AI 動態 Prompt",
@@ -2893,6 +2921,11 @@ export const zh = {
       dragDrop: "上傳",
       settingsTitle: "影片設定",
       settingsHint: "片長同解像度會影響 token 費用。",
+      klingSettingsHint:
+        "Kling 會將每張靜態圖變成 5 秒或 10 秒短片再串埋。解像度／快速模式唔適用。",
+      klingClipLabel: "每場片長",
+      klingClipHint: "Kling 每場只支援 5 秒或 10 秒 — 唔係 Seedance 嗰種 4–12 秒總片長。",
+      klingTotalLabel: "合計約 {total} 秒（{n} × {clip} 秒）",
       costLabel: "預計約 {n} tokens",
       tipTitle: "更好影片小提示",
       tip1: {
@@ -2906,6 +2939,18 @@ export const zh = {
       tip3: {
         title: "留意片長同費用",
         body: "愈長愈高解像度愈貴 — 建議先試 6–8 秒。",
+      },
+      klingTip1: {
+        title: "圖下有劇本",
+        body: "AI 場景文案顯示故事節拍 — 之後可以燒成字幕。",
+      },
+      klingTip2: {
+        title: "先試 5 秒",
+        body: "每場先用 5 秒再試 10 秒 — 平啲，通常已經夠動態。",
+      },
+      klingTip3: {
+        title: "總長 = 場數 × 片長",
+        body: "四場各 5 秒 ≈ 20 秒串片，唔係 Seedance 嗰條 8 秒片。",
       },
       conceptTip1: {
         title: "相片可以唔傳",

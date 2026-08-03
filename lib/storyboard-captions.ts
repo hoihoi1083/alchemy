@@ -1,4 +1,8 @@
 import type { CaptionLine } from "@/lib/ad-pack-types";
+import {
+  captionLinesOntoBoundaries,
+  type VideoClipBoundary,
+} from "@/lib/video-timing-manifest";
 
 export type StoryboardCaptionSource = {
   startSec: number;
@@ -9,13 +13,24 @@ export type StoryboardCaptionSource = {
 
 /**
  * Build timed captions from storyboard scene copy.
- * When `videoDurationSec` is set (e.g. Kling 4×5s = 20s vs plan 8s),
- * scene windows are scaled to fill the finished video.
+ * Prefer real clip boundaries (Seedance stitch / Kling) when provided;
+ * otherwise scale planned windows to finished duration.
  */
 export function captionLinesFromStoryboardScenes(
   scenes: StoryboardCaptionSource[],
-  opts?: { videoDurationSec?: number },
+  opts?: { videoDurationSec?: number; clipBoundaries?: VideoClipBoundary[] },
 ): CaptionLine[] {
+  const texts = scenes.map(
+    (scene) =>
+      scene.onImageCopyZh?.trim() ||
+      scene.sceneDescriptionZh?.trim() ||
+      "",
+  );
+  if (opts?.clipBoundaries && opts.clipBoundaries.length > 0) {
+    const mapped = captionLinesOntoBoundaries(texts, opts.clipBoundaries);
+    if (mapped.length) return mapped;
+  }
+
   const lines: CaptionLine[] = [];
   for (const scene of scenes) {
     const text =

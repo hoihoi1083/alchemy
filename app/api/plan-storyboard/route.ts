@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAppUser } from "@/lib/require-app-user";
+import { assertFreeDeepSeekQuota } from "@/lib/rate-limit-deepseek";
 import type { PromptMarket, SubjectFraming } from "@/lib/prompt-variables";
 import { planVideoStoryboard } from "@/lib/video-storyboard-plan";
 import type { StoryboardSceneCount } from "@/lib/ad-pack-preferences";
@@ -17,6 +18,8 @@ export const maxDuration = 90;
 export async function POST(request: Request) {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
+  const quota = await assertFreeDeepSeekQuota(auth.user.userId);
+  if (!quota.ok) return quota.response;
 
   let formData: FormData;
   try {

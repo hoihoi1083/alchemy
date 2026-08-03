@@ -62,4 +62,5 @@ export type VoicePreviewTrack = {
   label: string;
   presetId: string;
   audioUrl: string;
+  durationSec?: number;
 };

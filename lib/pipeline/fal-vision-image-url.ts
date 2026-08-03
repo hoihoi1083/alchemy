@@ -1,7 +1,11 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { fal } from "@fal-ai/client";
-import { pipelineFileUrl, resolvePipelineFileUrl } from "@/lib/pipeline/local-input";
+import {
+  pipelineFileUrl,
+  pipelineJobIdFromUrl,
+  resolvePipelineFileUrl,
+} from "@/lib/pipeline/local-input";
 import { isLibraryAssetUrl, readLibraryAssetMedia } from "@/lib/storage/durable-media";
 
 function isLocalOrPipelineUrl(url: string): boolean {
@@ -33,12 +37,15 @@ async function uploadBytesToFal(
 export async function falVisionImageUrl(
   request: Request,
   imageUrl: string,
+  opts: { clerkId: string },
 ): Promise<string> {
   const trimmed = imageUrl.trim();
+  const clerkId = opts.clerkId.trim();
+  if (!clerkId) throw new Error("clerkId is required for vision image mirroring.");
 
   // Durable library assets are private (Clerk). Read R2 server-side → fal CDN.
   if (isLibraryAssetUrl(trimmed)) {
-    const media = await readLibraryAssetMedia(trimmed);
+    const media = await readLibraryAssetMedia(trimmed, clerkId);
     if (!media) {
       throw new Error("Could not read library image for vision review.");
     }
@@ -53,6 +60,14 @@ export async function falVisionImageUrl(
 
   const localPath = resolvePipelineFileUrl(trimmed);
   if (localPath) {
+    const jobId = pipelineJobIdFromUrl(trimmed);
+    if (!jobId) {
+      throw new Error("Invalid pipeline media URL.");
+    }
+    const { assertJobOwnedBy } = await import("@/lib/pipeline/job-owner");
+    if (!(await assertJobOwnedBy(jobId, clerkId))) {
+      throw new Error("Pipeline media not found or not owned by this user.");
+    }
     const bytes = await fs.readFile(localPath);
     const ext = path.extname(localPath).toLowerCase();
     const type =

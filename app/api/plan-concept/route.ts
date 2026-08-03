@@ -1,6 +1,7 @@
 import { fal } from "@fal-ai/client";
 import { NextResponse } from "next/server";
 import { requireAppUser } from "@/lib/require-app-user";
+import { assertFreeDeepSeekQuota } from "@/lib/rate-limit-deepseek";
 import {
   analyzeConceptReferenceImage,
   conceptImageVisionBlock,
@@ -56,6 +57,8 @@ function parseConceptBody(fd: FormData): ConceptRequest {
 export async function POST(request: Request) {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
+  const quota = await assertFreeDeepSeekQuota(auth.user.userId);
+  if (!quota.ok) return quota.response;
 
   const contentType = request.headers.get("content-type") || "";
   let body: ConceptRequest;

@@ -64,5 +64,7 @@ export type DbAsset = {
   name?: string | null;
   prompt?: string | null;
   sizeBytes?: number | null;
+  /** Scene-cut timing for videos (captions cut markers). */
+  timingManifest?: import("@/lib/video-timing-manifest").VideoTimingManifest | null;
   createdAt: Date;
 };

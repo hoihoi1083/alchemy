@@ -2,6 +2,7 @@ import { promises as fs } from "fs";
 import { NextResponse } from "next/server";
 import { getAssetForUser } from "@/lib/db/assets";
 import { archiveRemoteImageToPipeline } from "@/lib/pipeline/archive-image";
+import { assertJobOwnedBy } from "@/lib/pipeline/job-owner";
 import { PIPELINE_FILES } from "@/lib/pipeline/local-input";
 import { jobDir, isValidJobId } from "@/lib/pipeline/paths";
 import { assertSafeRemoteMediaUrl, isFalCdnUrl, isPipelineFileUrl } from "@/lib/pipeline/safe-url";
@@ -47,9 +48,13 @@ function attachmentDisposition(filename: string): string {
   return `attachment; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(trimmed)}`;
 }
 
-async function readPipelineBytes(raw: string): Promise<{ data: Buffer; contentType: string } | null> {
+async function readPipelineBytes(
+  clerkId: string,
+  raw: string,
+): Promise<{ data: Buffer; contentType: string } | null> {
   const pipeline = pipelinePathFromUrl(raw);
   if (!pipeline) return null;
+  if (!(await assertJobOwnedBy(pipeline.jobId, clerkId))) return null;
   try {
     const data = await fs.readFile(`${jobDir(pipeline.jobId)}/${pipeline.file}`);
     return { data, contentType: contentTypeForFile(pipeline.file) };
@@ -100,7 +105,7 @@ export async function POST(request: Request) {
   let bytes = await readLibraryBytes(auth.user.userId, imageUrl);
 
   if (!bytes) {
-    bytes = await readPipelineBytes(imageUrl);
+    bytes = await readPipelineBytes(auth.user.userId, imageUrl);
   }
 
   if (!bytes && isFalCdnUrl(imageUrl)) {
@@ -128,7 +133,12 @@ export async function POST(request: Request) {
       });
       // Best-effort local archive for same-instance re-downloads.
       try {
-        await archiveRemoteImageToPipeline(request, imageUrl, "generated.png");
+        await archiveRemoteImageToPipeline(
+          request,
+          imageUrl,
+          "generated.png",
+          auth.user.userId,
+        );
       } catch {
         /* ignore */
       }

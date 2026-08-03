@@ -65,7 +65,7 @@ export function LandingHero() {
           <p className="landing-hero-built-label mt-4 text-[11px] font-semibold uppercase tracking-wide text-slate-500 sm:mt-5">
             {L.builtForLabel}
           </p>
-          <ul className="mt-2 flex flex-wrap gap-2">
+          <ul className="landing-hero-built-list mt-2 flex flex-wrap gap-2">
             {L.builtFor.map((item) => (
               <li
                 key={item}

@@ -16,13 +16,18 @@ export function MongoRequiredBanner() {
         const data = (await res.json()) as {
           ok?: boolean;
           configured?: boolean;
+          r2Configured?: boolean;
           error?: string;
           code?: string;
         };
         if (data.ok) return;
         setShow(true);
-        if (data.code === "MONGODB_URI_MISSING" || data.configured === false) {
-          setDetail(null);
+        if (
+          data.code === "MONGODB_URI_MISSING" ||
+          data.code === "R2_MISSING" ||
+          data.configured === false
+        ) {
+          setDetail(data.code === "R2_MISSING" ? data.error ?? null : null);
         } else if (data.error) {
           setDetail(data.error);
         } else {

@@ -1,4 +1,5 @@
 import type { ContentPlatform } from "@/lib/content-research-types";
+import { hostMatchesAllowlist } from "@/lib/pipeline/safe-url";
 
 const ALLOWED_HOSTS = [
   "xhscdn.com",
@@ -20,7 +21,7 @@ const ALLOWED_HOSTS = [
   "muscdn.com",
   "byteimg.com",
   "bytecdn.cn",
-];
+] as const;
 
 const REFERERS: Record<string, string> = {
   xiaohongshu: "https://www.xiaohongshu.com/",
@@ -31,13 +32,14 @@ const REFERERS: Record<string, string> = {
 
 export const RESEARCH_VIDEO_MAX_BYTES = 50 * 1024 * 1024;
 
+/** Exact / subdomain / DNS-label match only — never substring host.includes (SSRF). */
 export function isAllowedResearchVideoUrl(raw: string): boolean {
   try {
     const url = new URL(raw);
     if (url.protocol !== "https:" && url.protocol !== "http:") return false;
     const host = url.hostname.toLowerCase();
     if (host.includes("m3u8")) return false;
-    return ALLOWED_HOSTS.some((h) => host === h || host.endsWith(`.${h}`) || host.includes(h));
+    return hostMatchesAllowlist(host, ALLOWED_HOSTS);
   } catch {
     return false;
   }

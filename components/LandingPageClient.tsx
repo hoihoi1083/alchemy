@@ -88,17 +88,33 @@ const LANDING_LAYOUT_CSS = `
 
 /* Mobile hero type/CTAs — clearer over bright scene; desktop keeps Tailwind classes */
 @media (max-width: 639px) {
-  /* Keep copy higher so CTAs don't sit on the mascot face */
+  /* Copy on the right over darker laptop/desk; mascot flipped onto the left */
   .landing-hero-inner {
     align-items: flex-start !important;
+    justify-content: flex-end !important;
     padding-top: 1.25rem !important;
     padding-bottom: 1.75rem !important;
   }
-  /* Mid crop — mascot visible beside copy, not clipped on the right edge */
+  .landing-hero-copy {
+    margin-left: auto !important;
+    text-align: right !important;
+  }
+  /* Flip scene: mascot → left, face looks left; crop keeps face in frame */
   .landing-hero-video {
-    object-position: 58% 34% !important;
-    transform: scale(1.08) !important;
-    transform-origin: 50% 40% !important;
+    object-position: 78% 28% !important;
+    transform: scaleX(-1) scale(1.16) !important;
+    transform-origin: center center !important;
+  }
+  /* Darken from the right so right-aligned copy stays readable */
+  .landing-hero-scrim-x {
+    background: linear-gradient(
+      270deg,
+      rgba(6, 4, 15, 0.9) 0%,
+      rgba(6, 4, 15, 0.72) 28%,
+      rgba(6, 4, 15, 0.4) 52%,
+      rgba(6, 4, 15, 0.12) 74%,
+      transparent 100%
+    ) !important;
   }
   .landing-hero-badge {
     font-size: 11px !important;
@@ -107,7 +123,7 @@ const LANDING_LAYOUT_CSS = `
   .landing-hero-title {
     font-size: 1.85rem !important;
     line-height: 1.15 !important;
-    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.55) !important;
+    text-shadow: 0 2px 16px rgba(0, 0, 0, 0.75) !important;
   }
   .landing-hero-title-hl {
     color: #e9d5ff !important; /* violet-200 */
@@ -116,12 +132,13 @@ const LANDING_LAYOUT_CSS = `
     color: #f8fafc !important; /* slate-50 */
     font-size: 14px !important;
     line-height: 1.5 !important;
-    text-shadow: 0 1px 10px rgba(0, 0, 0, 0.5) !important;
+    margin-left: auto !important;
+    text-shadow: 0 1px 12px rgba(0, 0, 0, 0.65) !important;
   }
   .landing-hero-ctas {
     gap: 0.5rem !important;
     margin-top: 1rem !important;
-    align-items: flex-start !important;
+    align-items: flex-end !important;
   }
   .landing-hero-cta-primary,
   .landing-hero-cta-secondary {
@@ -137,11 +154,12 @@ const LANDING_LAYOUT_CSS = `
   }
   .landing-hero-cta-secondary {
     border-color: rgba(255, 255, 255, 0.55) !important;
-    background: rgba(6, 4, 15, 0.45) !important;
+    background: rgba(6, 4, 15, 0.55) !important;
     color: #fff !important;
   }
   .landing-hero-trust {
     margin-top: 0.85rem !important;
+    justify-content: flex-end !important;
   }
   .landing-hero-trust li {
     font-size: 12px !important;
@@ -153,11 +171,14 @@ const LANDING_LAYOUT_CSS = `
     font-size: 11px !important;
     margin-top: 0.75rem !important;
   }
+  .landing-hero-built-list {
+    justify-content: flex-end !important;
+  }
   .landing-hero-chip {
     font-size: 11px !important;
     color: #f1f5f9 !important;
     border-color: rgba(255, 255, 255, 0.35) !important;
-    background: rgba(6, 4, 15, 0.4) !important;
+    background: rgba(6, 4, 15, 0.55) !important;
   }
 }
 

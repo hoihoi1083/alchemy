@@ -25,6 +25,18 @@ import {
   runKlingStoryboardFallback,
 } from "@/lib/kling-storyboard-run";
 import { persistAndDurablize } from "@/lib/storage/durable-media";
+import { buildSingleClipManifest } from "@/lib/video-timing-manifest";
+
+function seedanceTimingManifest(duration: "auto" | number) {
+  if (typeof duration === "number" && duration > 0) {
+    return buildSingleClipManifest(duration, {
+      source: "seedance",
+      engine: "seedance",
+      timingSource: "reported",
+    });
+  }
+  return undefined;
+}
 
 function formatFalError(e: unknown): string {
   if (e instanceof ValidationError) {
@@ -415,6 +427,7 @@ export async function POST(request: Request) {
         sourceUrl: videoUrl,
         fallbackUrl: videoUrl,
         prompt: common.prompt.slice(0, 500),
+        timingManifest: seedanceTimingManifest(duration),
       });
       return NextResponse.json({
         videoUrl: durableVideoUrl,
@@ -436,14 +449,14 @@ export async function POST(request: Request) {
       const imageUrl =
         start && start.size > 0
           ? await fal.storage.upload(start)
-          : await mirrorImageUrlToFalStorage(startUrl!);
+          : await mirrorImageUrlToFalStorage(startUrl!, { clerkId: auth.user.userId });
       const end = formData.get("image_end") as File | null;
       const endDirectUrl = (formData.get("image_end_url") as string | null)?.trim();
       const endUrl =
         end && end.size > 0
           ? await fal.storage.upload(end)
           : endDirectUrl
-            ? await mirrorImageUrlToFalStorage(endDirectUrl)
+            ? await mirrorImageUrlToFalStorage(endDirectUrl, { clerkId: auth.user.userId })
             : undefined;
 
       const imageInput = {
@@ -466,6 +479,7 @@ export async function POST(request: Request) {
         sourceUrl: videoUrl,
         fallbackUrl: videoUrl,
         prompt: common.prompt.slice(0, 500),
+        timingManifest: seedanceTimingManifest(duration),
       });
       return NextResponse.json({
         videoUrl: durableVideoUrl,
@@ -496,10 +510,14 @@ export async function POST(request: Request) {
     // Prefer URL refs (library/pipeline/CDN) — client should not re-upload multi-MB scene PNGs
     // (Vercel request body limit ≈ 4.5MB → "Request Entity Too Large").
     const mirroredDirectUrls = directRefUrls?.length
-      ? await Promise.all(directRefUrls.map((u) => mirrorImageUrlToFalStorage(u)))
+      ? await Promise.all(
+          directRefUrls.map((u) =>
+            mirrorImageUrlToFalStorage(u, { clerkId: auth.user.userId }),
+          ),
+        )
       : [];
     const mirroredImageRef = imageRefUrl
-      ? await mirrorImageUrlToFalStorage(imageRefUrl)
+      ? await mirrorImageUrlToFalStorage(imageRefUrl, { clerkId: auth.user.userId })
       : undefined;
     const image_urls = [
       ...mirroredDirectUrls,
@@ -582,6 +600,7 @@ export async function POST(request: Request) {
       sourceUrl: videoUrl,
       fallbackUrl: videoUrl,
       prompt: common.prompt.slice(0, 500),
+      timingManifest: seedanceTimingManifest(duration),
     });
     return NextResponse.json({
       videoUrl: durableVideoUrl,
@@ -621,7 +640,9 @@ export async function POST(request: Request) {
 
     // Any Seedance 422 (content/sensitive/validation) with stills → try Kling I2V.
     if (seedance422Block && mode !== "text") {
-      const imageUrls = await collectKlingFallbackImageUrls(formData);
+      const imageUrls = await collectKlingFallbackImageUrls(formData, {
+        clerkId: auth.user.userId,
+      });
       if (imageUrls.length >= 1) {
         const totalDurationSec =
           typeof duration === "number" && duration > 0 ? duration : 8;

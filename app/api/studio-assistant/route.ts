@@ -20,6 +20,7 @@ import type { StudioAssistantIntent } from "@/lib/studio-assistant-intent";
 import { enforceLandingCoachAction } from "@/lib/studio-assistant-enforce-coach";
 import { extractUrlFromMessages } from "@/lib/studio-assistant-url";
 import { requireAppUser } from "@/lib/require-app-user";
+import { assertFreeDeepSeekQuota } from "@/lib/rate-limit-deepseek";
 import type {
   AssistantSurface,
   StudioAssistantMessage,
@@ -195,6 +196,8 @@ async function loadSitePreview(url: string): Promise<string> {
 export async function POST(request: Request) {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
+  const quota = await assertFreeDeepSeekQuota(auth.user.userId);
+  if (!quota.ok) return quota.response;
 
   let body: {
     messages?: unknown;

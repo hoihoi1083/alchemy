@@ -3,6 +3,7 @@ import { requireAppUser } from "@/lib/require-app-user";
 import { isMongoConfigured } from "@/lib/mongodb";
 import { getBrandKit, upsertBrandKit } from "@/lib/db/brand-kits";
 import { parseBrandKit } from "@/lib/brand-kit";
+import { durablizeBrandKitLogo } from "@/lib/brand-kit-persist";
 
 export const runtime = "nodejs";
 
@@ -23,7 +24,14 @@ export async function PUT(req: Request) {
   if (!auth.ok) return auth.response;
 
   const body = (await req.json()) as { kit?: unknown };
-  const kit = parseBrandKit(body.kit);
+  let kit = parseBrandKit(body.kit);
+
+  try {
+    kit = await durablizeBrandKitLogo(auth.user.userId, kit);
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : "Could not store brand logo.";
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
 
   if (!isMongoConfigured()) {
     return NextResponse.json({ kit, storage: "client" });

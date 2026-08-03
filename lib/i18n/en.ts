@@ -424,7 +424,7 @@ export const en = {
     brandKitBadge: "Before you create",
     brandKitTitle: "Save your logo once. Use it on every reel.",
     brandKitBody:
-      "Upload a clean PNG logo (transparent background works best). Studio uses it across storyboard and brand paths.",
+      "Upload a clean PNG logo (transparent background works best). Turn on “Use brand logo on video stills” for storyboard/cinematic keyframes. For promo images, add the logo in Edit image.",
     brandKitLogoTip:
       "Tip: square-ish PNG, logo filling most of the canvas, about 512–1024px — avoid tiny marks on huge empty backgrounds.",
     brandKitCta: "Continue to studio",
@@ -432,7 +432,8 @@ export const en = {
     toolsSubtitle: "Brand kit, image editor, captions, and Pro canvas — jump in anytime.",
     toolsOpenCta: "Open",
     toolBrandTitle: "Brand kit",
-    toolBrandDesc: "Save logo & colors once — reuse on reels and stills.",
+    toolBrandDesc:
+      "Save logo & colors once — auto on video stills; add to images in Edit image.",
     toolEditTitle: "Edit image",
     toolEditDesc: "Add text, logo, and polish any generated photo.",
     toolCaptionsTitle: "Captions & audio",
@@ -550,6 +551,10 @@ export const en = {
     checkoutSuccess: "Payment received. Tokens will appear in your balance within a few seconds — refresh if needed.",
     checkoutCanceled: "Checkout canceled. No charge was made.",
     checkoutError: "Could not start checkout. Try again or contact support.",
+    subscriptionUpdated:
+      "Plan updated. Duplicate subscriptions were canceled so you won’t be charged twice.",
+    alreadySubscribed:
+      "You already have an active subscription. Open Manage billing to change or cancel plans.",
     tokenTitle: "How tokens work",
     tokenSubtitle: "Tokens are your studio currency. Each generation shows the cost before you run.",
     tokenItems: [
@@ -1104,12 +1109,16 @@ export const en = {
     storyboardVideoPreflight: "Mode: per-scene image-to-video + stitch",
     klingStoryboardFallbackNote:
       "Storyboard video — each scene still becomes a short clip, then we stitch them together",
+    seedanceToKlingFallbackNote:
+      "Seedance was blocked for this request — used Kling storyboard (per-scene clips + stitch) instead",
     klingStoryboardClipCount: "clips × {n}",
     storyboardDurationLabel: "Target duration",
     storyboardDurationHint: "Affects how many scenes are planned. Regenerate scene images if you change this.",
     storyboardAllScenesHint:
       "Stills are textless for clean video. Scene copy burns in as captions after generate.",
     storyboardCaptionsAutoNote: "Auto-burned scene copy as captions",
+    storyboardCaptionsReadyNote:
+      "Scene scripts ready — open Caption studio to edit timing, voice, and burn",
     storyboardAllScenesImageHint: "Every scene is used in the video — do not pick a “version” below.",
     storyboardTrimDurationLabel: "Trim duration preset",
     storyboardSceneCountLabel: "Scene count",
@@ -1562,6 +1571,7 @@ export const en = {
       savedNote: "Brand kit saved to your account.",
       localOnlyNote: "Saved on this device (sign in + MongoDB for cloud sync).",
       addLogoToCanvas: "Add brand logo",
+      clearLogo: "Remove logo",
     },
     pickCampaignSlideLabel: "Pick one to continue (or download all)",
     pickTeachingCarouselSlideLabel: "Teaching carousel — pick one to preview (download all)",
@@ -2382,18 +2392,28 @@ export const en = {
     videoFailed: "UGC video generation failed.",
   },
   captions: {
-    badge: "Standalone tool · no re-generation",
+    badge: "Post studio · any video",
     title: "Caption & audio studio",
     subtitle:
-      "Pick a library reel — add BGM, spoken voiceover, and burned captions. Same post-production as the wizard, without re-generating video.",
-    uploadTitle: "Video source",
+      "Import a library reel or your own video — edit scripts, add BGM/voice, then burn captions. Works for any length.",
+    uploadTitle: "Add a video",
     uploadHint:
       "Choose a video from My library (studio outputs are saved there), or open Caption studio from the studio done screen.",
-    chooseFile: "Choose video file",
+    uploadHintAny:
+      "Pick from My library, upload your own MP4, or open this page from Studio Done with a finished reel.",
+    anyLengthNote:
+      "Any length is fine — we read the real duration from the file. Scene cut markers appear when the video came from a multi-clip stitch.",
+    chooseFile: "Upload video file",
     chooseFromLibrary: "Choose from library",
     changeVideo: "Change video (library)",
     sourceFromStudio: "From studio",
     sourceFromLibrary: "From library",
+    phaseScript: "1 · Script",
+    phaseAudio: "2 · Voice & music",
+    phaseBurn: "3 · Burn",
+    cutsLabel: "{n} clips",
+    timingFromVideo: "timing from video",
+    timingEstimated: "timing estimated",
     largeFileHint:
       "Large files need direct cloud upload (R2 CORS) or Choose from library — the server path caps ~4.5MB.",
     uploadNeedCorsOrLibrary:
@@ -2432,6 +2452,11 @@ export const en = {
     fitCaptionsToVoice: "Fit captions to voice",
     fitCaptionsNeedVoice: "Generate a voice preview first, then fit captions to it.",
     fitCaptionsToVoiceDone: "Caption timings fitted to voice (~{sec}s). Rest of the video stays silent.",
+    voiceLongerThanVideo:
+      "Voice (~{voice}s) is longer than available video (~{video}s). Captions were fitted to the video; shorten the script or trim less.",
+    voiceFittedToVoice: "Caption timings fitted to voice (~{voice}s). Video has ~{tail}s silent tail.",
+    voiceFittedCapped:
+      "Voice (~{voice}s) exceeds video (~{video}s) — captions fitted to video length.",
     applyBtn: "Burn captions onto video",
     applying: "Burning captions…",
     appliedNote: "Captions burned onto your video — scrub the player to check each time slot.",
@@ -2450,8 +2475,9 @@ export const en = {
     invalidVideoType: "Please choose a video file (MP4, WebM, MOV).",
     reeditHint: "Caption text is saved in your browser for this video. To start a new project,",
     studioLink: "open the studio",
-    openFromDone: "Add BGM / captions",
-    doneHint: "Download the clean silent video, or open caption & audio studio to add music and wording.",
+    openFromDone: "Edit captions & audio",
+    doneHint:
+      "Download the clean video, or open Caption studio to edit scripts, voice, music, and burn — works for this reel or any video you upload later.",
     styleLabel: "Caption style",
     styleHint: "Preset colors and weight for burned subtitles (overlay mode).",
     audioTitle: "Background music & voiceover",
@@ -2471,6 +2497,9 @@ export const en = {
     audioBgmLabel: "Music track",
     audioApplyBgm: "Add BGM",
     audioApplyingBgm: "Adding BGM…",
+    audioReplaceOriginal: "Replace original audio",
+    audioReplaceOriginalHint:
+      "Off keeps the uploaded video’s existing sound and mixes BGM underneath. Turn on for music-only output.",
     audioVoicePlaceholder: "Full spoken script (can be longer than on-screen captions)",
     audioApplyVoice: "Mix voiceover",
     audioApplyingVoice: "Mixing voice…",
@@ -2621,11 +2650,14 @@ export const en = {
     cleanAcceptBtn: "Use this image → add text",
     cleanRetryBtn: "Not good — try again",
     cleanApplyNote: "Cleanup done — continue to add your own text and logo.",
+    cleanFillNote: "Fill done — continue to add your own text and logo.",
     workflowNote:
       "Recommended flow: Studio generate → AI quick fix in wizard → erase here if needed → add your text in step 3.",
     reeditHint: "Layer layout is saved in your browser for this image.",
     studioHint: "Need AI-generated images?",
     studioLink: "Open studio",
+    sourcePreviewFailed: "Could not load this image preview. Check your connection or try again.",
+    retryPreview: "Retry",
     openFromDone: "Edit text & logo on image",
     doneHint: "Opens image canvas with your generated still — add headlines and brand logo.",
     editAnotherHint:
@@ -3036,9 +3068,9 @@ export const en = {
       titleAccent: "video details",
       hint: "Add copy, upload a product photo, write/confirm the motion prompt, pick duration, then generate a silent reel.",
       scenesReadyHint:
-        "Scene stills are ready — pick duration and resolution, then stitch into one silent reel (captions later).",
+        "Scene stills are ready — pick Kling clip length (5s or 10s per scene), then stitch into one silent reel (captions later).",
       scenesReadyTitle: "Storyboard scenes ready",
-      scenesReadyBody: "These stills become the stitched reel. Adjust video settings, then generate.",
+      scenesReadyBody: "These stills become the stitched reel. Adjust Kling clip length, then generate.",
       assistantHint:
         "Upload a product photo → AI writes a motion prompt → review it → generate (silent reel; captions later).",
       assistantTitle: "AI motion prompt",
@@ -3081,6 +3113,11 @@ export const en = {
       dragDrop: "Upload",
       settingsTitle: "Video settings",
       settingsHint: "Duration and resolution affect token cost.",
+      klingSettingsHint:
+        "Kling animates each still as a 5s or 10s clip, then stitches them. Resolution/fast mode do not apply.",
+      klingClipLabel: "Clip length (per scene)",
+      klingClipHint: "Kling only supports 5s or 10s per scene — not Seedance-style 4–12s totals.",
+      klingTotalLabel: "About {total}s total ({n} × {clip}s)",
       costLabel: "Estimated ~{n} tokens for this video",
       tipTitle: "Tips for better video",
       tip1: {
@@ -3094,6 +3131,18 @@ export const en = {
       tip3: {
         title: "Watch duration vs cost",
         body: "Longer clips and higher resolution use more tokens — start with 6–8s.",
+      },
+      klingTip1: {
+        title: "Script under each still",
+        body: "The AI scene copy shows the story beat — captions can burn it later.",
+      },
+      klingTip2: {
+        title: "5s first",
+        body: "Try 5s per scene before 10s — cheaper and usually enough motion.",
+      },
+      klingTip3: {
+        title: "Total = scenes × clip",
+        body: "Four scenes at 5s each ≈ 20s stitched reel, not an 8s Seedance clip.",
       },
       conceptTip1: {
         title: "Photo is optional",

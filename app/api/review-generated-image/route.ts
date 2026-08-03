@@ -53,7 +53,9 @@ export async function POST(req: Request) {
   const imageTextMode = isImageTextMode(textModeRaw) ? textModeRaw : "integrated";
 
   try {
-    const visionUrl = await falVisionImageUrl(req, imageUrl);
+    const visionUrl = await falVisionImageUrl(req, imageUrl, {
+      clerkId: auth.user.userId,
+    });
     const review = await reviewPipelineOutput({
       imageUrl: visionUrl,
       mediaKind: "image",

@@ -1,5 +1,6 @@
 import type { ContentPlatform } from "@/lib/content-research-types";
 import { exploreIdFromUrl } from "@/lib/content-research-enrich";
+import { assertPublicHttpUrl } from "@/lib/pipeline/safe-url";
 import { resolveXhsShareUrl } from "@/lib/resolve-xhs-share-url";
 
 const BROWSER_UA =
@@ -43,14 +44,19 @@ export async function resolvePostUrl(url: string): Promise<string> {
     return resolveXhsShareUrl(normalized);
   }
 
+  // Only resolve known social post hosts; never open-fetch arbitrary URLs.
+  if (!platform) return normalized;
   try {
+    assertPublicHttpUrl(normalized);
     const res = await fetch(normalized, {
       method: "GET",
       redirect: "follow",
       headers: { "User-Agent": BROWSER_UA },
       signal: AbortSignal.timeout(12_000),
     });
-    return res.url || normalized;
+    const finalUrl = res.url || normalized;
+    assertPublicHttpUrl(finalUrl);
+    return finalUrl;
   } catch {
     return normalized;
   }

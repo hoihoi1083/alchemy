@@ -1,5 +1,6 @@
 import { promises as fs } from "fs";
 import { NextResponse } from "next/server";
+import { assertJobOwnedBy } from "@/lib/pipeline/job-owner";
 import { PIPELINE_FILES } from "@/lib/pipeline/local-input";
 import { jobDir, isValidJobId } from "@/lib/pipeline/paths";
 import { assertSafeRemoteMediaUrl } from "@/lib/pipeline/safe-url";
@@ -49,6 +50,9 @@ export async function GET(request: Request) {
 
   const pipeline = pipelinePathFromUrl(raw);
   if (pipeline) {
+    if (!(await assertJobOwnedBy(pipeline.jobId, auth.user.userId))) {
+      return NextResponse.json({ error: "File not found." }, { status: 404 });
+    }
     const fullPath = `${jobDir(pipeline.jobId)}/${pipeline.file}`;
     try {
       const data = await fs.readFile(fullPath);

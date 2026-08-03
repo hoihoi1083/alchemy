@@ -81,6 +81,7 @@ async function uploadAudioForFal(localPath: string): Promise<string> {
 }
 
 async function resolveAudioUrl(input: {
+  clerkId: string;
   speechUrl?: string;
   script?: string;
   locale: VoiceoverLocale;
@@ -94,7 +95,7 @@ async function resolveAudioUrl(input: {
     let usedPreview: boolean;
     if (input.speechUrl?.trim()) {
       local = path.join(tmpDir, "preview.mp3");
-      await materializeMediaInput(input.speechUrl.trim(), local);
+      await materializeMediaInput(input.speechUrl.trim(), local, { clerkId: input.clerkId });
       usedPreview = true;
     } else {
       if (!input.script?.trim()) {
@@ -219,6 +220,7 @@ export async function POST(request: Request) {
 
   try {
     const { audioUrl, usedPreview, durationSec } = await resolveAudioUrl({
+      clerkId: auth.user.userId,
       speechUrl,
       script,
       locale,
@@ -302,7 +304,9 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-    imageUrl = await mirrorImageUrlToFalStorage(imageUrl);
+    imageUrl = await mirrorImageUrlToFalStorage(imageUrl, {
+      clerkId: auth.user.userId,
+    });
 
     const prompt = motionHint || ugcPresenterMotionHint(productName);
 

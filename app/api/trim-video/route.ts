@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { requireAppUser } from "@/lib/require-app-user";
 import { ensureFfmpeg, getMediaDurationSeconds } from "@/lib/pipeline/ffmpeg";
 import { trimVideoFile } from "@/lib/pipeline/video-trim";
-import { jobDir } from "@/lib/pipeline/paths";
+import { createOwnedJobDir } from "@/lib/pipeline/job-owner";
 import { materializeMediaInput, pipelineFileUrl } from "@/lib/pipeline/local-input";
 import { persistAndDurablize } from "@/lib/storage/durable-media";
 
@@ -20,9 +20,7 @@ export async function POST(req: Request) {
   const videoFile = formData.get("video_file");
   const startSec = Number(formData.get("trim_in_sec") ?? 0);
   const endSecRaw = formData.get("trim_out_sec");
-  const jobId = crypto.randomUUID();
-  const dir = jobDir(jobId);
-  await fs.mkdir(dir, { recursive: true });
+  const { jobId, dir } = await createOwnedJobDir(auth.user.userId);
 
   const inputPath = path.join(dir, "input.mp4");
   const outputPath = path.join(dir, "trimmed.mp4");
@@ -32,7 +30,7 @@ export async function POST(req: Request) {
     if (videoFile instanceof File && videoFile.size > 0) {
       await fs.writeFile(inputPath, Buffer.from(await videoFile.arrayBuffer()));
     } else if (videoUrl) {
-      await materializeMediaInput(videoUrl, inputPath);
+      await materializeMediaInput(videoUrl, inputPath, { clerkId: auth.user.userId });
     } else {
       return NextResponse.json({ error: "Provide video_file or video_url." }, { status: 400 });
     }

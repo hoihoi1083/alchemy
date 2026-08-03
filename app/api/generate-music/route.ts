@@ -3,8 +3,11 @@ import { chargeTokens, refundTokens } from "@/lib/billing/charge";
 import { TOKEN_COST } from "@/lib/billing/token-costs";
 import { generateMusicOptions } from "@/lib/music-generation";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
-import { persistUserAsset } from "@/lib/storage/persist-asset";
-import { libraryAssetUrl } from "@/lib/storage/durable-media";
+import {
+  isLibraryAssetUrl,
+  libraryAssetIdFromUrl,
+  persistAndDurablize,
+} from "@/lib/storage/durable-media";
 import { SERVER_ERRORS } from "@/lib/api/server-errors";
 
 export const runtime = "nodejs";
@@ -33,25 +36,38 @@ export async function POST(request: Request) {
 
   try {
     const tracks = await generateMusicOptions(promptEn, body.durationSec ?? 10);
-    await trackUsage(auth.user.userId, "music");
+    if (!tracks.length) {
+      throw new Error("No music tracks were generated.");
+    }
 
-    // Mirror generated tracks into durable storage so they stay in the library.
+    // Never return ephemeral fal CDN URLs — next step / later reopen will break.
     const persisted = await Promise.all(
       tracks.map(async (t) => {
-        if (!t.audioUrl) return t;
-        const asset = await persistUserAsset({
+        if (!t.audioUrl) {
+          throw new Error("Music track missing audio URL.");
+        }
+        const audioUrl = await persistAndDurablize({
           clerkId: auth.user.userId,
           kind: "audio",
           sourceUrl: t.audioUrl,
+          fallbackUrl: t.audioUrl,
           name: `AI music ${t.label}`,
           prompt: promptEn,
         });
-        if (!asset) return t;
-        const assetId = String(asset._id);
-        return { ...t, assetId, audioUrl: libraryAssetUrl(assetId) };
+        if (!isLibraryAssetUrl(audioUrl)) {
+          throw new Error(
+            "Music could not be saved to My library. Configure cloud storage (R2) and try again.",
+          );
+        }
+        return {
+          ...t,
+          assetId: libraryAssetIdFromUrl(audioUrl) ?? undefined,
+          audioUrl,
+        };
       }),
     );
 
+    await trackUsage(auth.user.userId, "music");
     return NextResponse.json({
       tracks: persisted,
       tokensCharged: tokenCost,

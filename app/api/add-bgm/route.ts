@@ -10,10 +10,9 @@ import {
   assertVideoHasAudio,
   ensureFfmpeg,
 } from "@/lib/pipeline/ffmpeg";
-import { jobDir } from "@/lib/pipeline/paths";
+import { createOwnedJobDir } from "@/lib/pipeline/job-owner";
 import { materializeMediaInput, pipelineFileUrl } from "@/lib/pipeline/local-input";
-import { libraryAssetUrl } from "@/lib/storage/durable-media";
-import { persistUserAsset } from "@/lib/storage/persist-asset";
+import { persistAndDurablize } from "@/lib/storage/durable-media";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -23,6 +22,7 @@ const TRACK_IDS = new Set<BgmTrackId>(["calm", "upbeat", "warm"]);
 async function mixBgmJob(
   request: Request,
   input: {
+    clerkId: string;
     videoUrl?: string;
     videoFile?: File;
     track: BgmTrackId;
@@ -31,9 +31,7 @@ async function mixBgmJob(
     persistUserId?: string;
   },
 ) {
-  const jobId = crypto.randomUUID();
-  const dir = jobDir(jobId);
-  await fs.mkdir(dir, { recursive: true });
+  const { jobId, dir } = await createOwnedJobDir(input.clerkId);
 
   const inputPath = path.join(dir, "input.mp4");
   const outputPath = path.join(dir, "with-bgm.mp4");
@@ -62,13 +60,13 @@ async function mixBgmJob(
     const buffer = Buffer.from(await input.videoFile.arrayBuffer());
     await fs.writeFile(inputPath, buffer);
   } else if (input.videoUrl?.trim()) {
-    await materializeMediaInput(input.videoUrl.trim(), inputPath);
+    await materializeMediaInput(input.videoUrl.trim(), inputPath, { clerkId: input.clerkId });
   } else {
     throw new Error("video_url or video_file is required.");
   }
 
   if (input.musicUrl) {
-    await materializeMediaInput(input.musicUrl, musicPath);
+    await materializeMediaInput(input.musicUrl, musicPath, { clerkId: input.clerkId });
   }
 
   await addBackgroundMusic(
@@ -81,32 +79,19 @@ async function mixBgmJob(
   await assertVideoHasAudio(outputPath, "BGM mix");
 
   const pipelineUrl = pipelineFileUrl(request, jobId, "with-bgm.mp4");
-  let videoUrl = pipelineUrl;
-  let assetId: string | undefined;
-
-  if (input.persistUserId) {
-    try {
-      const bytes = await fs.readFile(outputPath);
-      const asset = await persistUserAsset({
-        clerkId: input.persistUserId,
-        kind: "video",
-        sourceUrl: pipelineUrl,
-        name: "Video with music",
-        bytes,
-        contentType: "video/mp4",
-      });
-      if (asset) {
-        assetId = String(asset._id);
-        videoUrl = libraryAssetUrl(assetId);
-      }
-    } catch {
-      /* durable mirroring is best-effort */
-    }
-  }
+  const bytes = await fs.readFile(outputPath);
+  const videoUrl = await persistAndDurablize({
+    clerkId: input.clerkId,
+    kind: "video",
+    sourceUrl: `bgm://${jobId}/with-bgm.mp4`,
+    fallbackUrl: pipelineUrl,
+    bytes,
+    contentType: "video/mp4",
+    name: "Video with music",
+  });
 
   return {
     videoUrl,
-    assetId,
     jobId,
     track: input.musicUrl ? "ai" : input.track,
     source: input.musicUrl ? "ai" : "library",
@@ -143,6 +128,7 @@ export async function POST(request: Request) {
 
       try {
         const result = await mixBgmJob(request, {
+          clerkId: auth.user.userId,
           videoFile: file,
           videoUrl,
           track,
@@ -192,6 +178,7 @@ export async function POST(request: Request) {
 
     try {
       const result = await mixBgmJob(request, {
+        clerkId: auth.user.userId,
         videoUrl,
         track: (body?.track?.trim() || DEFAULT_BGM_TRACK) as BgmTrackId,
         musicUrl: body?.music_url?.trim(),

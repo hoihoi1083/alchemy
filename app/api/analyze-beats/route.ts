@@ -50,7 +50,7 @@ export async function POST(req: Request) {
     const mediaPath = path.join(tmpDir, "media.mp4");
     const wavPath = path.join(tmpDir, "audio.wav");
     // Supports pipeline-files, library assets, and allowlisted remote HTTPS.
-    await materializeMediaInput(sourceUrl, mediaPath);
+    await materializeMediaInput(sourceUrl, mediaPath, { clerkId: auth.user.userId });
 
     // Silent Seedance / caption-only videos have no audio — return empty beats
     // (200) instead of ffmpeg 502 so the UI can prompt “add BGM”.

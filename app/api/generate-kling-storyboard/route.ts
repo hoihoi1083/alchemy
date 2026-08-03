@@ -93,7 +93,9 @@ export async function POST(request: Request) {
 
   let imageUrls: string[];
   try {
-    imageUrls = await collectKlingFallbackImageUrls(formData);
+    imageUrls = await collectKlingFallbackImageUrls(formData, {
+      clerkId: auth.user.userId,
+    });
   } catch (e: unknown) {
     await refundTokens(auth.user.userId, tokenCost, {
       kind: "kling_storyboard_fallback",

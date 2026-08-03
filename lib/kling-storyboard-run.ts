@@ -13,9 +13,10 @@ import {
   type KlingSceneMeta,
 } from "@/lib/kling-storyboard-fallback";
 import { concatVideos, ensureFfmpeg } from "@/lib/pipeline/ffmpeg";
+import { createOwnedJobDir } from "@/lib/pipeline/job-owner";
 import { materializeMediaInput, pipelineFileUrl } from "@/lib/pipeline/local-input";
-import { jobDir } from "@/lib/pipeline/paths";
 import { persistAndDurablize } from "@/lib/storage/durable-media";
+import { buildManifestFromClipDurations } from "@/lib/video-timing-manifest";
 
 export type { KlingSceneMeta };
 export {
@@ -73,9 +74,11 @@ export function countKlingFallbackImageSources(formData: FormData): number {
  */
 export async function collectKlingFallbackImageUrls(
   formData: FormData,
+  opts?: { clerkId?: string },
 ): Promise<string[]> {
   const urls: string[] = [];
   const seen = new Set<string>();
+  const mirrorOpts = opts?.clerkId ? { clerkId: opts.clerkId } : undefined;
 
   const addFalUrl = (falUrl: string) => {
     if (!falUrl || seen.has(falUrl)) return;
@@ -88,7 +91,7 @@ export async function collectKlingFallbackImageUrls(
     if (!trimmed || seen.has(trimmed)) return;
     seen.add(trimmed);
     try {
-      addFalUrl(await mirrorImageUrlToFalStorage(trimmed));
+      addFalUrl(await mirrorImageUrlToFalStorage(trimmed, mirrorOpts));
     } catch {
       /* skip unreadable URL */
     }
@@ -171,9 +174,7 @@ export async function runKlingStoryboardFallback(opts: {
   const theme = opts.theme?.trim() || "";
   const motionPrompt = opts.motionPrompt?.trim() || "";
 
-  const jobId = crypto.randomUUID();
-  const dir = jobDir(jobId);
-  await fs.mkdir(dir, { recursive: true });
+  const { jobId, dir } = await createOwnedJobDir(opts.clerkId);
 
   // Run Kling I2V in parallel — sequential 4× clips often approaches Hobby's 300s limit.
   const clipUrls = await Promise.all(
@@ -229,7 +230,7 @@ export async function runKlingStoryboardFallback(opts: {
     const clipPaths = await Promise.all(
       clipUrls.map(async (clipUrl, i) => {
         const clipPath = path.join(dir, `kling-${i}.mp4`);
-        await materializeMediaInput(clipUrl, clipPath);
+        await materializeMediaInput(clipUrl, clipPath, { clerkId: opts.clerkId });
         return clipPath;
       }),
     );
@@ -247,6 +248,14 @@ export async function runKlingStoryboardFallback(opts: {
     prompt: "kling-seedance-fallback",
     bytes: localBytes,
     contentType: "video/mp4",
+    timingManifest: buildManifestFromClipDurations(
+      clipDurations.map((d) => Number(d) || 5),
+      {
+        source: "kling",
+        engine: "kling",
+        timingSource: "reported",
+      },
+    ),
   });
 
   return {

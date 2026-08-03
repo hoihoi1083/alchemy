@@ -4,9 +4,9 @@ import { NextResponse } from "next/server";
 import sharp from "sharp";
 import { requireAppUser } from "@/lib/require-app-user";
 import { BATCH_EXPORT_SIZES } from "@/lib/batch-export-sizes";
-import { jobDir } from "@/lib/pipeline/paths";
+import { createOwnedJobDir } from "@/lib/pipeline/job-owner";
 import { materializeMediaInput, pipelineFileUrl } from "@/lib/pipeline/local-input";
-import { persistAndDurablize } from "@/lib/storage/durable-media";
+import { isLibraryAssetUrl, persistAndDurablize } from "@/lib/storage/durable-media";
 
 export const runtime = "nodejs";
 export const maxDuration = 90;
@@ -23,7 +23,12 @@ export async function POST(request: Request) {
   }
 
   const imageUrl = body.image_url?.trim();
-  if (!imageUrl?.startsWith("http")) {
+  if (
+    !imageUrl ||
+    (!imageUrl.startsWith("http") &&
+      !isLibraryAssetUrl(imageUrl) &&
+      !imageUrl.startsWith("/api/library/download/"))
+  ) {
     return NextResponse.json({ error: "image_url is required." }, { status: 400 });
   }
 
@@ -33,11 +38,9 @@ export async function POST(request: Request) {
   );
 
   try {
-    const jobId = crypto.randomUUID();
-    const dir = jobDir(jobId);
-    await fs.mkdir(dir, { recursive: true });
+    const { jobId, dir } = await createOwnedJobDir(auth.user.userId);
     const inputPath = path.join(dir, "source.png");
-    await materializeMediaInput(imageUrl, inputPath);
+    await materializeMediaInput(imageUrl, inputPath, { clerkId: auth.user.userId });
 
     const exports: Array<{ id: string; width: number; height: number; imageUrl: string }> = [];
     for (const size of targets) {

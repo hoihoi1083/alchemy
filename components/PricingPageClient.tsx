@@ -128,11 +128,18 @@ export function PricingPageClient() {
         body: JSON.stringify(body),
       });
       const raw = await res.text();
-      let data: { url?: string; error?: string } = {};
+      let data: { url?: string; error?: string; updated?: boolean } = {};
       try {
-        data = raw ? (JSON.parse(raw) as { url?: string; error?: string }) : {};
+        data = raw
+          ? (JSON.parse(raw) as { url?: string; error?: string; updated?: boolean })
+          : {};
       } catch {
         throw new Error(raw?.slice(0, 200) || p.checkoutError);
+      }
+      if (res.ok && data.updated) {
+        setConfirmNote(p.subscriptionUpdated);
+        setBusy(null);
+        return;
       }
       if (!res.ok || !data.url) {
         throw new Error(data.error ?? p.checkoutError);
@@ -251,6 +258,11 @@ export function PricingPageClient() {
             {checkoutStatus === "success" ? (
               <div className="mb-5 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-900">
                 {confirmNote ?? p.checkoutSuccess}
+              </div>
+            ) : null}
+            {checkoutStatus !== "success" && confirmNote ? (
+              <div className="mb-5 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-900">
+                {confirmNote}
               </div>
             ) : null}
             {checkoutStatus === "cancel" ? (

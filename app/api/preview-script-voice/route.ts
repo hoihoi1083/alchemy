@@ -8,11 +8,12 @@ import {
   VOICEOVER_LOCALES,
   type VoiceoverLocale,
 } from "@/lib/ad-pack-preferences";
-import { jobDir } from "@/lib/pipeline/paths";
 import { pipelineFileUrl } from "@/lib/pipeline/local-input";
-import { ensureJobDir, generateVoicePreviewTracks } from "@/lib/voice-preview";
+import { createOwnedJobDir } from "@/lib/pipeline/job-owner";
+import { generateVoicePreviewTracks } from "@/lib/voice-preview";
 import { persistAndDurablize } from "@/lib/storage/durable-media";
 import type { VoicePreviewTrack } from "@/lib/ad-pack-types";
+import type { VoicePresetId } from "@/lib/ad-pack-preferences";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -54,11 +55,9 @@ export async function POST(request: Request) {
   if ("error" in charged) return charged.error;
   const balanceAfter = charged.balanceAfter;
 
-  const jobId = crypto.randomUUID();
-  const dir = jobDir(jobId);
+  const { jobId, dir } = await createOwnedJobDir(auth.user.userId);
 
   try {
-    await ensureJobDir(dir);
     const { tracks, errors } = await generateVoicePreviewTracks({
       script,
       locale,
@@ -80,15 +79,14 @@ export async function POST(request: Request) {
       );
     }
 
-    // Pipeline /tmp URLs 404 on the next Vercel instance — persist MP3s to R2.
+    // Pipeline /tmp URLs 404 on the next Vercel instance — persist MP3s to R2 only.
     const durableTracks: VoicePreviewTrack[] = [];
     for (const track of tracks) {
       const fileName = path.basename(new URL(track.audioUrl, "http://local").pathname);
       const filePath = path.join(dir, fileName);
-      let audioUrl = track.audioUrl;
       try {
         const bytes = await fs.readFile(filePath);
-        audioUrl = await persistAndDurablize({
+        const audioUrl = await persistAndDurablize({
           clerkId: auth.user.userId,
           kind: "audio",
           sourceUrl: `voice-preview://${jobId}/${fileName}`,
@@ -97,10 +95,35 @@ export async function POST(request: Request) {
           contentType: "audio/mpeg",
           name: `voice-preview-${track.presetId}`,
         });
-      } catch {
-        /* keep pipeline fallback */
+        // Never hand clients a /tmp pipeline URL — next Vercel instance will 404.
+        if (audioUrl.includes("/api/pipeline-files/")) {
+          throw new Error("Voice preview could not be saved to durable storage.");
+        }
+        durableTracks.push({ ...track, audioUrl });
+      } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : "Persist failed";
+        console.error("[preview-script-voice] durable persist failed", track.presetId, e);
+        errors.push({
+          presetId: track.presetId as VoicePresetId,
+          message,
+        });
       }
-      durableTracks.push({ ...track, audioUrl });
+    }
+
+    if (!durableTracks.length) {
+      await refundTokens(auth.user.userId, tokenCost, {
+        kind: "voiceover",
+        reason: "persist_failed",
+      });
+      const detail = errors.map((e) => `${e.presetId}: ${e.message}`).join("; ");
+      return NextResponse.json(
+        {
+          error:
+            detail ||
+            "Voice preview could not be saved to My library. Check cloud storage (R2) configuration.",
+        },
+        { status: 502 },
+      );
     }
 
     await trackUsage(auth.user.userId, "voiceover");

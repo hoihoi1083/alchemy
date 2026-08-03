@@ -24,7 +24,11 @@ import {
 } from "@/lib/image-output-mode";
 import type { ImageTextMode } from "@/lib/image-text-mode";
 import type { BrandKit } from "@/lib/brand-kit";
-import { DEFAULT_BRAND_KIT, loadBrandKitFromStorage } from "@/lib/brand-kit";
+import {
+  DEFAULT_BRAND_KIT,
+  hydrateBrandKitFromCloud,
+  loadBrandKitFromStorage,
+} from "@/lib/brand-kit";
 import type { PromptMarket, SubjectFraming } from "@/lib/prompts";
 import {
   promptMarketFromLocale,
@@ -65,12 +69,30 @@ import type {
 } from "@/lib/ad-pack-types";
 import type { UserReferenceBrief } from "@/lib/user-reference-brief";
 import type { ContentResearchApplyRef } from "@/lib/content-research-apply";
+import type { VideoTimingManifest } from "@/lib/video-timing-manifest";
 
 export type MusicSource = "library" | "ai";
 
 export type PresenterSourceMode = "custom-keyframe" | "stock-avatar";
 
-export type StoryboardDurationPreset = "4" | "6" | "8" | "10" | "12";
+/** Seedance trim presets plus Kling stitch totals (N × 5s/10s clips). */
+export type StoryboardDurationPreset =
+  | "4"
+  | "6"
+  | "8"
+  | "10"
+  | "12"
+  | "15"
+  | "20"
+  | "25"
+  | "30"
+  | "35"
+  | "40"
+  | "45"
+  | "50"
+  | "55"
+  | "60"
+  | "90";
 
 export type CampaignSlide = {
   role: string;
@@ -228,6 +250,10 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn") {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   /** Video without burned captions — used when opening /captions from Done. */
   const [captionHandoffVideoUrl, setCaptionHandoffVideoUrl] = useState<string | null>(null);
+  /** Actual output timing (probed/reported) — optional for handoff to /captions. */
+  const [videoTimingManifest, setVideoTimingManifest] = useState<VideoTimingManifest | null>(
+    null,
+  );
   const [videoNote, setVideoNote] = useState<string | undefined>();
   const [bgmNote, setBgmNote] = useState<string | undefined>();
   const [quickFixCredits, setQuickFixCredits] = useState(0);
@@ -247,6 +273,16 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn") {
   const [brandKit, setBrandKit] = useState<BrandKit>(() =>
     typeof window !== "undefined" ? loadBrandKitFromStorage() : DEFAULT_BRAND_KIT,
   );
+
+  useEffect(() => {
+    let cancelled = false;
+    void hydrateBrandKitFromCloud().then((kit) => {
+      if (!cancelled) setBrandKit(kit);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const [adPackPlan, setAdPackPlan] = useState<AdPackPlan | null>(null);
   const [adPackPlanBusy, setAdPackPlanBusy] = useState(false);
@@ -478,6 +514,8 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn") {
     setVideoUrl,
     captionHandoffVideoUrl,
     setCaptionHandoffVideoUrl,
+    videoTimingManifest,
+    setVideoTimingManifest,
     videoNote,
     setVideoNote,
     bgmNote,

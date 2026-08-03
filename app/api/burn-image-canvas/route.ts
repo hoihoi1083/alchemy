@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { requireAppUser } from "@/lib/require-app-user";
 import { parseImageCanvasLayers } from "@/lib/image-canvas-layers";
 import { burnImageCanvasOverlay } from "@/lib/image-text-overlay-burn";
-import { jobDir } from "@/lib/pipeline/paths";
+import { createOwnedJobDir } from "@/lib/pipeline/job-owner";
 import { materializeMediaInput, pipelineFileUrl } from "@/lib/pipeline/local-input";
 import { persistAndDurablize } from "@/lib/storage/durable-media";
 
@@ -28,7 +28,9 @@ async function burnAndPersist(input: {
   outputPath: string;
   layers: ReturnType<typeof parseImageCanvasLayers>;
 }): Promise<string> {
-  const output = await burnImageCanvasOverlay(input.inputPath, input.layers);
+  const output = await burnImageCanvasOverlay(input.inputPath, input.layers, {
+    clerkId: input.clerkId,
+  });
   await fs.writeFile(input.outputPath, output);
   const pipelineUrl = pipelineFileUrl(
     input.request,
@@ -65,15 +67,13 @@ export async function POST(request: Request) {
       if (!layers.length) {
         return NextResponse.json({ error: "Add at least one layer." }, { status: 400 });
       }
-      const jobId = crypto.randomUUID();
-      const dir = jobDir(jobId);
-      await fs.mkdir(dir, { recursive: true });
+      const { jobId, dir } = await createOwnedJobDir(auth.user.userId);
       const inputPath = path.join(dir, "input.png");
       const outputPath = path.join(dir, "image-canvas-overlay.png");
       if (imageFile instanceof File && imageFile.size > 0) {
         await fs.writeFile(inputPath, Buffer.from(await imageFile.arrayBuffer()));
       } else if (isUsableImageUrl(imageUrl)) {
-        await materializeMediaInput(imageUrl!, inputPath);
+        await materializeMediaInput(imageUrl!, inputPath, { clerkId: auth.user.userId });
       } else {
         return NextResponse.json({ error: "image_file or image_url is required." }, { status: 400 });
       }
@@ -105,12 +105,10 @@ export async function POST(request: Request) {
     if (!layers.length) {
       return NextResponse.json({ error: "layers is required." }, { status: 400 });
     }
-    const jobId = crypto.randomUUID();
-    const dir = jobDir(jobId);
-    await fs.mkdir(dir, { recursive: true });
+    const { jobId, dir } = await createOwnedJobDir(auth.user.userId);
     const inputPath = path.join(dir, "input.png");
     const outputPath = path.join(dir, "image-canvas-overlay.png");
-    await materializeMediaInput(imageUrl!, inputPath);
+    await materializeMediaInput(imageUrl!, inputPath, { clerkId: auth.user.userId });
     const durableUrl = await burnAndPersist({
       clerkId: auth.user.userId,
       request,

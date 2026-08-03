@@ -31,12 +31,23 @@ import {
   readCaptionHandoff,
   writeCaptionDraft,
 } from "@/lib/caption-studio-draft";
+import {
+  buildSingleClipManifest,
+  cutMarkersFromManifest,
+  rebaseCaptionLinesAfterTrim,
+  scaleManifestToDuration,
+  type VideoTimingManifest,
+} from "@/lib/video-timing-manifest";
 import { toRelativePipelineUrl, withCacheBust, toBeatAnalysisUrl } from "@/lib/caption-studio-url";
 import {
   captionLinesFromVoiceScript,
   captionVoiceStartSec,
+  fitCaptionLinesToVoiceDuration,
+  offsetCaptionLinesBySec,
   probeAudioDurationSec,
+  scaleCaptionLinesToDuration,
   splitCaptionLinesOverDuration,
+  voiceTimingStatus,
 } from "@/lib/caption-voice-timing";
 import { alignCaptionsToBeats } from "@/lib/beat-detect";
 import { resolveCaptionStudioMusicPrompt } from "@/lib/caption-music-prompt";
@@ -96,6 +107,12 @@ type UploadCopy = {
   uploadFailed: string;
 };
 
+function revokeBlobAudioUrls(tracks: Array<{ audioUrl?: string }>) {
+  for (const track of tracks) {
+    if (track.audioUrl?.startsWith("blob:")) URL.revokeObjectURL(track.audioUrl);
+  }
+}
+
 /** Upload a local File — prefer direct R2 PUT; small-file server fallback only. */
 async function uploadVideoFileToLibrary(
   file: File,
@@ -115,7 +132,11 @@ async function uploadVideoFileToLibrary(
   const presign = await readApiJson(presignRes);
   if (!presignRes.ok || typeof presign.uploadUrl !== "string" || typeof presign.downloadUrl !== "string") {
     throw new Error(
-      typeof presign.error === "string" ? presign.error : "Upload prep failed.",
+      !isSafeForServerUpload(file.size) || presign.code === "REQUEST_TOO_LARGE"
+        ? copy.uploadNeedCorsOrLibrary
+        : typeof presign.error === "string"
+          ? presign.error
+          : copy.uploadFailed,
     );
   }
 
@@ -193,6 +214,7 @@ export function CaptionStudioClient() {
   const [musicMood, setMusicMood] = useState<MusicMood>("auto");
   const [musicSource, setMusicSource] = useState<MusicSource>("ai");
   const [bgmTrack, setBgmTrack] = useState<BgmTrackId>(DEFAULT_BGM_TRACK);
+  const [replaceSourceAudio, setReplaceSourceAudio] = useState(false);
   const [aiMusicTracks, setAiMusicTracks] = useState<AiMusicTrack[]>([]);
   const [selectedAiMusicId, setSelectedAiMusicId] = useState<string | null>(null);
   const [musicGenerateBusy, setMusicGenerateBusy] = useState(false);
@@ -209,8 +231,15 @@ export function CaptionStudioClient() {
   const [defaultStylePreset, setDefaultStylePreset] =
     useState<CaptionStylePresetId>("classic");
   const [libraryPickerOpen, setLibraryPickerOpen] = useState(false);
+  const [timingManifest, setTimingManifest] = useState<VideoTimingManifest | null>(null);
+  const [workspacePhase, setWorkspacePhase] = useState<"script" | "audio" | "burn">("script");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const previewVideoRef = useRef<HTMLVideoElement>(null);
+  const cutMarkers = useMemo(
+    () => cutMarkersFromManifest(timingManifest),
+    [timingManifest],
+  );
 
   const sourceKey = sourceFile
     ? `file:${sourceFile.name}:${sourceFile.size}`
@@ -234,6 +263,25 @@ export function CaptionStudioClient() {
   ];
 
   const displayVideoSrc = playbackUrl ?? localPreviewUrl;
+
+  const needsTrim = videoTrimIn > 0.05 || videoTrimOut < videoDuration - 0.05;
+
+  function activeTimelineSec() {
+    return needsTrim ? Math.max(0.5, videoTrimOut - videoTrimIn) : videoDuration;
+  }
+
+  function seekPreviewTo(sec: number) {
+    const video = previewVideoRef.current;
+    if (!video) return;
+    const maxSec = Number.isFinite(video.duration) && video.duration > 0 ? video.duration : videoDuration;
+    video.currentTime = Math.min(Math.max(0, sec), Math.max(0, maxSec));
+  }
+
+  function selectCaptionLine(index: number) {
+    setSelectedCaptionIndex(index);
+    const line = captionLines[index];
+    if (line) seekPreviewTo(line.startSec);
+  }
 
   async function materializePlaybackBlob(pipelineUrl: string): Promise<string> {
     const rel = toRelativePipelineUrl(pipelineUrl);
@@ -281,6 +329,9 @@ export function CaptionStudioClient() {
     const input = workingVideoInput();
     if (input.url) return input.url;
     if (!input.file) throw new Error(t.needVideo);
+    if (!isSafeForServerUpload(input.file.size)) {
+      setNote(t.largeFileHint);
+    }
     const downloadUrl = await uploadVideoFileToLibrary(input.file, {
       uploadNeedCorsOrLibrary: t.uploadNeedCorsOrLibrary,
       uploadFailed: t.uploadFailed,
@@ -294,17 +345,44 @@ export function CaptionStudioClient() {
   }
 
   const loadSource = useCallback(
-    (kind: SourceKind, opts: { file?: File; url?: string; label?: string; lines?: CaptionLine[] }) => {
+    (
+      kind: SourceKind,
+      opts: {
+        file?: File;
+        url?: string;
+        label?: string;
+        lines?: CaptionLine[];
+        timingManifest?: VideoTimingManifest | null;
+      },
+    ) => {
       if (localPreviewUrl?.startsWith("blob:")) URL.revokeObjectURL(localPreviewUrl);
       if (playbackUrl?.startsWith("blob:")) URL.revokeObjectURL(playbackUrl);
 
       setProcessedVideoUrl(null);
       setPlaybackUrl(null);
       setVideoReloadKey(0);
+      setVoiceoverScript("");
+      setVoicePreviewTracks((prev) => {
+        revokeBlobAudioUrls(prev);
+        return [];
+      });
+      setSelectedVoicePreviewId(null);
+      setAiMusicTracks((prev) => {
+        revokeBlobAudioUrls(prev);
+        return [];
+      });
+      setSelectedAiMusicId(null);
       setAudioNote(null);
       setNote(null);
       setError(null);
       setSourceKind(kind);
+      setTimingManifest(opts.timingManifest ?? null);
+      setWorkspacePhase("script");
+      // New source must not inherit prior trim / selection state.
+      setVideoTrimIn(0);
+      setVideoDuration(8);
+      setVideoTrimOut(8);
+      setSelectedCaptionIndex(0);
 
       if (kind === "file" && opts.file) {
         setSourceFile(opts.file);
@@ -328,7 +406,7 @@ export function CaptionStudioClient() {
       const draft = key ? readCaptionDraft(key) : null;
       setCaptionLines(opts.lines ?? draft ?? defaultCaptionLines());
     },
-    [localPreviewUrl, t.sourceFromStudio],
+    [localPreviewUrl, playbackUrl, t.sourceFromStudio],
   );
 
   useEffect(() => {
@@ -340,10 +418,25 @@ export function CaptionStudioClient() {
         url,
         label: handoff?.label,
         lines: handoff?.captionLines,
+        timingManifest: handoff?.timingManifest ?? null,
       });
       clearCaptionHandoff();
     }
   }, [searchParams, loadSource]);
+
+  function onPickLocalFile(file: File | null) {
+    if (!file) return;
+    if (!file.type.startsWith("video/")) {
+      setError(t.invalidVideoType);
+      return;
+    }
+    const showLargeFileHint = !isSafeForServerUpload(file.size);
+    loadSource("file", { file, label: file.name });
+    if (showLargeFileHint) {
+      setNote(t.largeFileHint);
+      setError(null);
+    }
+  }
 
   useEffect(() => {
     if (!sourceKey) return;
@@ -495,13 +588,33 @@ export function CaptionStudioClient() {
       setError(t.fitCaptionsNeedVoice);
       return;
     }
-    const voiceSec = await probeAudioDurationSec(selected.audioUrl);
+    const voiceSec = selected.durationSec ?? (await probeAudioDurationSec(selected.audioUrl));
     if (voiceSec < 0.5) {
       setError(t.fitCaptionsNeedVoice);
       return;
     }
-    setCaptionLines((prev) => splitCaptionLinesOverDuration(prev, voiceSec));
-    setAudioNote(t.fitCaptionsToVoiceDone.replace("{sec}", voiceSec.toFixed(1)));
+    // Fit into the active trim *span*, then rebase onto full-timeline coords
+    // so burn/voice rebaseCaptionLinesAfterTrim still works.
+    const result = fitCaptionLinesToVoiceDuration(
+      captionLines,
+      voiceSec,
+      activeTimelineSec(),
+    );
+    const trimOffset = needsTrim ? Math.max(0, videoTrimIn) : 0;
+    setCaptionLines(offsetCaptionLinesBySec(result.lines, trimOffset));
+    if (result.exceedsVideo) {
+      setAudioNote(
+        t.voiceFittedCapped
+          .replace("{voice}", voiceSec.toFixed(1))
+          .replace("{video}", activeTimelineSec().toFixed(1)),
+      );
+    } else {
+      setAudioNote(
+        t.voiceFittedToVoice
+          .replace("{voice}", result.fittedSec.toFixed(1))
+          .replace("{tail}", result.tailSilenceSec.toFixed(1)),
+      );
+    }
     setError(null);
   }
 
@@ -575,13 +688,20 @@ export function CaptionStudioClient() {
         }
         playable.push(track);
       }
+      const playableWithDuration = await Promise.all(
+        playable.map(async (track) => {
+          const durationSec =
+            track.durationSec ?? (track.audioUrl ? await probeAudioDurationSec(track.audioUrl) : 0);
+          return durationSec > 0 ? { ...track, durationSec } : track;
+        }),
+      );
       setVoicePreviewTracks((prev) => {
         for (const t of prev) {
           if (t.audioUrl?.startsWith("blob:")) URL.revokeObjectURL(t.audioUrl);
         }
-        return playable;
+        return playableWithDuration;
       });
-      setSelectedVoicePreviewId(playable[0]?.id ?? null);
+      setSelectedVoicePreviewId(playableWithDuration[0]?.id ?? null);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : m.errors.voiceoverFailed);
     } finally {
@@ -589,28 +709,50 @@ export function CaptionStudioClient() {
     }
   }
 
-  function syncCaptionsFromVoiceScript() {
+  async function syncCaptionsFromVoiceScript() {
     const script = voiceoverScript.trim();
     if (!script) {
       setError(t.syncCaptionsNeedScript);
       setAudioNote(null);
       return;
     }
-    const lines = captionLinesFromVoiceScript(script, videoDuration, {
+    const selected =
+      voicePreviewTracks.find((tr) => tr.id === selectedVoicePreviewId) ??
+      voicePreviewTracks[0];
+    const timelineSec = activeTimelineSec();
+    const voiceSec = selected?.audioUrl
+      ? selected.durationSec ?? (await probeAudioDurationSec(selected.audioUrl))
+      : 0;
+    const status = selected?.audioUrl
+      ? voiceTimingStatus(voiceSec, timelineSec)
+      : voiceTimingStatus(timelineSec, timelineSec);
+    const durationForCaptions = selected?.audioUrl ? status.fittedSec : timelineSec;
+    const relativeLines = captionLinesFromVoiceScript(script, durationForCaptions, {
       stylePreset: defaultStylePreset,
     });
-    if (!lines.length) {
+    if (!relativeLines.length) {
       setError(t.syncCaptionsNeedScript);
       return;
     }
+    const trimOffset = needsTrim ? Math.max(0, videoTrimIn) : 0;
+    const lines = offsetCaptionLinesBySec(relativeLines, trimOffset);
     setCaptionLines(lines);
     setSelectedCaptionIndex(0);
+    seekPreviewTo(lines[0]?.startSec ?? trimOffset);
     setVoiceoverEnabled(true);
     setError(null);
+    if (selected?.audioUrl && status.exceedsVideo) {
+      setAudioNote(
+        t.voiceLongerThanVideo
+          .replace("{voice}", voiceSec.toFixed(1))
+          .replace("{video}", timelineSec.toFixed(1)),
+      );
+      return;
+    }
     setAudioNote(
       t.syncCaptionsFromVoiceDone
         .replaceAll("{n}", String(lines.length))
-        .replaceAll("{sec}", videoDuration.toFixed(1)),
+        .replaceAll("{sec}", durationForCaptions.toFixed(1)),
     );
   }
 
@@ -636,7 +778,7 @@ export function CaptionStudioClient() {
       }
 
       const videoUrl = await resolveWorkingVideoUrl();
-      const body: Record<string, unknown> = { replace_source_audio: true };
+      const body: Record<string, unknown> = { replace_source_audio: replaceSourceAudio };
       if (musicSource === "ai" && selectedAi?.audioUrl) {
         body.music_url = selectedAi.audioUrl;
       } else {
@@ -657,11 +799,16 @@ export function CaptionStudioClient() {
 
   async function applyVoiceover() {
     const script = voiceoverScript.trim();
-    const timedCaptionLines = captionLines.filter((l) => l.text.trim());
     const selectedPreview = voicePreviewTracks.find((tr) => tr.id === selectedVoicePreviewId);
-    // Need 2+ timed caption lines — otherwise we'd only reuse the single preview clip.
-    if (timedCaptionLines.length < 2) {
-      setError(t.audioVoiceNeedCaptionLines.replace("{n}", String(timedCaptionLines.length)));
+    let captionLinesForMix = captionLines;
+    // At least one timed caption line (or rely on full script / preview track).
+    if (captionLinesForMix.filter((l) => l.text.trim()).length < 1 && !script && !selectedPreview) {
+      setError(
+        t.audioVoiceNeedCaptionLines.replace(
+          "{n}",
+          String(captionLinesForMix.filter((l) => l.text.trim()).length),
+        ),
+      );
       return;
     }
     if (!script && !selectedPreview) {
@@ -678,8 +825,55 @@ export function CaptionStudioClient() {
     setAudioNote(null);
 
     try {
-      const speechStartSec = captionVoiceStartSec(captionLines);
-      const captionPayload = timedCaptionLines.map((l) => ({
+      let voiceFitNote: string | null = null;
+      const targetDurationSec = activeTimelineSec();
+      if (selectedPreview?.audioUrl) {
+        const voiceSec =
+          selectedPreview.durationSec ?? (await probeAudioDurationSec(selectedPreview.audioUrl));
+        const status = voiceTimingStatus(voiceSec, targetDurationSec);
+        if (status.exceedsVideo) {
+          const fitted = fitCaptionLinesToVoiceDuration(
+            captionLinesForMix,
+            voiceSec,
+            targetDurationSec,
+          );
+          const trimOffset = needsTrim ? Math.max(0, videoTrimIn) : 0;
+          captionLinesForMix = offsetCaptionLinesBySec(fitted.lines, trimOffset);
+          setCaptionLines(captionLinesForMix);
+          voiceFitNote = t.voiceFittedCapped
+            .replace("{voice}", voiceSec.toFixed(1))
+            .replace("{video}", targetDurationSec.toFixed(1));
+          setAudioNote(voiceFitNote);
+        }
+      }
+
+      let videoUrl = await resolveWorkingVideoUrl();
+      let mixLines = captionLinesForMix.filter((l) => l.text.trim());
+      let rebasedDuration: number | null = null;
+      if (needsTrim) {
+        const trimInSec = Math.max(0, videoTrimIn);
+        const trimOutSec = Math.max(trimInSec + 0.2, videoTrimOut);
+        const trimFd = new FormData();
+        trimFd.set("video_url", videoUrl);
+        trimFd.set("trim_in_sec", String(trimInSec));
+        trimFd.set("trim_out_sec", String(trimOutSec));
+        const trimRes = await fetch("/api/trim-video", {
+          method: "POST",
+          credentials: "include",
+          body: trimFd,
+        });
+        const trimData = await readApiJson(trimRes);
+        if (!trimRes.ok) throw new Error((trimData.error as string) ?? t.trimFailed);
+        videoUrl = trimData.videoUrl as string;
+        mixLines = rebaseCaptionLinesAfterTrim(mixLines, trimInSec, trimOutSec);
+        rebasedDuration = trimOutSec - trimInSec;
+      }
+      if (mixLines.length < 1 && !script && !selectedPreview) {
+        throw new Error(t.audioVoiceNeedCaptionLines.replace("{n}", String(mixLines.length)));
+      }
+
+      const speechStartSec = captionVoiceStartSec(mixLines);
+      const captionPayload = mixLines.map((l) => ({
         text: l.text.trim(),
         startSec: l.startSec,
         endSec: l.endSec,
@@ -688,32 +882,55 @@ export function CaptionStudioClient() {
       // Never send speech_url for multi-caption — preview is voice pick only.
       const voiceBody: Record<string, unknown> = {
         locale: voiceoverLocale,
-        target_duration_sec: videoDuration,
+        target_duration_sec: rebasedDuration ?? targetDurationSec,
         speech_start_sec: speechStartSec,
         caption_lines: captionPayload,
       };
+      // Always send typed script when present — preview only picks the voice;
+      // otherwise empty captions + preset-only drops the script.
       if (selectedPreview) voiceBody.voice_preset = selectedPreview.presetId;
-      else if (script) voiceBody.script = script;
+      if (script) voiceBody.script = script;
 
-      const videoUrl = await resolveWorkingVideoUrl();
       const res = await postVideoJson("/api/dub-script-voice", videoUrl, voiceBody);
       const data = await readApiJson(res);
       if (!res.ok) throw new Error((data.error as string) ?? t.burnFailed);
       await commitProcessedVideo(data.videoUrl as string);
       previewVideoRef.current?.load();
-      const clipCount = Number(data.clipCount) || timedCaptionLines.length;
+      if (rebasedDuration !== null) {
+        const newDuration = rebasedDuration;
+        setCaptionLines(mixLines);
+        setSelectedCaptionIndex(0);
+        setVideoTrimIn(0);
+        setVideoTrimOut(newDuration);
+        setVideoDuration(newDuration);
+        setTimingManifest((prev) =>
+          buildSingleClipManifest(newDuration, {
+            source: prev?.clipBoundaries?.[0]?.source ?? "upload",
+            engine: prev?.engine ?? "unknown",
+            timingSource: "estimated",
+          }),
+        );
+      }
+      const clipCount = Number(data.clipCount) || mixLines.length;
       if (data.perCaption && clipCount >= 2) {
-        setAudioNote(t.audioVoiceDonePerCaption.replace("{n}", String(clipCount)));
+        const doneNote = t.audioVoiceDonePerCaption.replace("{n}", String(clipCount));
+        setAudioNote(voiceFitNote ? `${voiceFitNote} ${doneNote}` : doneNote);
       } else {
         // Server fell back somehow — surface that clearly.
         setError(
           t.audioVoiceSingleClipFallback.replace(
             "{n}",
-            String(timedCaptionLines.length),
+            String(mixLines.length),
           ),
         );
         setAudioNote(
-          speechStartSec > 0.05
+          voiceFitNote
+            ? `${voiceFitNote} ${
+                speechStartSec > 0.05
+                  ? t.audioVoiceDoneAtCaption.replace("{sec}", speechStartSec.toFixed(1))
+                  : t.audioVoiceDone
+              }`
+            : speechStartSec > 0.05
             ? t.audioVoiceDoneAtCaption.replace("{sec}", speechStartSec.toFixed(1))
             : t.audioVoiceDone,
         );
@@ -901,11 +1118,15 @@ export function CaptionStudioClient() {
     try {
       let videoUrl = await resolveWorkingVideoUrl();
       const needsTrim = videoTrimIn > 0.05 || videoTrimOut < videoDuration - 0.05;
+      let burnLines = lines;
+      let rebasedDuration: number | null = null;
       if (needsTrim) {
+        const trimInSec = Math.max(0, videoTrimIn);
+        const trimOutSec = Math.max(trimInSec + 0.2, videoTrimOut);
         const trimFd = new FormData();
         trimFd.set("video_url", videoUrl);
-        trimFd.set("trim_in_sec", String(videoTrimIn));
-        trimFd.set("trim_out_sec", String(videoTrimOut));
+        trimFd.set("trim_in_sec", String(trimInSec));
+        trimFd.set("trim_out_sec", String(trimOutSec));
         const trimRes = await fetch("/api/trim-video", {
           method: "POST",
           credentials: "include",
@@ -914,10 +1135,15 @@ export function CaptionStudioClient() {
         const trimData = await readApiJson(trimRes);
         if (!trimRes.ok) throw new Error((trimData.error as string) ?? t.trimFailed);
         videoUrl = trimData.videoUrl as string;
+        burnLines = rebaseCaptionLinesAfterTrim(lines, trimInSec, trimOutSec);
+        rebasedDuration = trimOutSec - trimInSec;
+        if (burnLines.length === 0) {
+          throw new Error(t.needCaptionText);
+        }
       }
 
       const res = await postVideoJson("/api/burn-script-captions", videoUrl, {
-        caption_lines: lines,
+        caption_lines: burnLines,
         caption_style: captionStyle,
       });
       const data = await readApiJson(res);
@@ -925,6 +1151,22 @@ export function CaptionStudioClient() {
 
       await commitProcessedVideo(data.videoUrl as string);
       previewVideoRef.current?.load();
+      setWorkspacePhase("burn");
+      if (rebasedDuration !== null) {
+        const newDuration = rebasedDuration;
+        setCaptionLines(burnLines);
+        setSelectedCaptionIndex(0);
+        setVideoTrimIn(0);
+        setVideoTrimOut(newDuration);
+        setVideoDuration(newDuration);
+        setTimingManifest((prev) =>
+          buildSingleClipManifest(newDuration, {
+            source: prev?.clipBoundaries?.[0]?.source ?? "upload",
+            engine: prev?.engine ?? "unknown",
+            timingSource: "estimated",
+          }),
+        );
+      }
 
       if (data.softSubtitles) {
         setNote(t.softTrackNote);
@@ -976,38 +1218,118 @@ export function CaptionStudioClient() {
       }`}
     >
       {!hasWorkspace ? (
-        <div className="flex min-h-[min(56vh,520px)] items-center justify-center px-2 py-8">
-          <section className="w-full max-w-md rounded-3xl border border-slate-800 bg-slate-950/70 p-8 text-center shadow-xl">
+        <div className="flex min-h-[min(52vh,480px)] items-center justify-center px-2 py-6">
+          <section className="w-full max-w-lg rounded-3xl border border-slate-800 bg-slate-950/70 p-7 text-center shadow-xl sm:p-8">
             <h2 className="text-xl font-semibold text-white">{t.uploadTitle}</h2>
-            <p className="mx-auto mt-2 max-w-sm text-sm text-slate-400">{t.uploadHint}</p>
-            <div className="mt-6 flex flex-col items-center gap-3">
+            <p className="mx-auto mt-2 max-w-md text-sm text-slate-400">{t.uploadHintAny}</p>
+            <div className="mx-auto mt-6 grid w-full max-w-sm gap-3 sm:max-w-none sm:grid-cols-2">
               <button
                 type="button"
                 onClick={() => setLibraryPickerOpen(true)}
-                className="rounded-full bg-violet-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-violet-500"
+                className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-violet-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-violet-500"
               >
                 {t.chooseFromLibrary}
               </button>
-              {sourceLabel && (
-                <span className="text-xs text-slate-400">{sourceLabel}</span>
-              )}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-slate-600 px-5 py-2.5 text-sm font-medium text-slate-100 hover:border-violet-400 hover:bg-violet-950/40"
+              >
+                {t.chooseFile}
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="video/mp4,video/webm,video/quicktime,video/*"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0] ?? null;
+                  e.target.value = "";
+                  onPickLocalFile(f);
+                }}
+              />
             </div>
+            {sourceLabel && (
+              <span className="mt-3 block text-xs text-slate-400">{sourceLabel}</span>
+            )}
             {sourceUrl && isPipelineFileUrl(sourceUrl) && (
               <p className="mt-3 text-xs text-emerald-300">{t.pipelineSourceNote}</p>
             )}
+            <p className="mt-4 text-[11px] leading-relaxed text-slate-500">{t.anyLengthNote}</p>
           </section>
         </div>
       ) : (
-        <div className="flex flex-wrap items-center justify-center gap-4">
-          <button
-            type="button"
-            onClick={() => setLibraryPickerOpen(true)}
-            className="text-xs text-violet-300 underline underline-offset-2 hover:text-violet-200"
-          >
-            {t.changeVideo}
-          </button>
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-800 bg-slate-950/50 px-3 py-2.5">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium text-slate-100">
+              {sourceLabel || t.sourceFromLibrary}
+            </p>
+            <p className="text-[11px] text-slate-500">
+              {t.durationLabel.replace("{sec}", videoDuration.toFixed(1))}
+              {cutMarkers.length
+                ? ` · ${t.cutsLabel.replace("{n}", String(cutMarkers.length + 1))}`
+                : ""}
+              {timingManifest?.timingSource === "estimated"
+                ? ` · ${t.timingEstimated}`
+                : timingManifest
+                  ? ` · ${t.timingFromVideo}`
+                  : ""}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="rounded-full border border-slate-600 px-3 py-1.5 text-xs text-slate-200 hover:border-violet-400"
+            >
+              {t.chooseFile}
+            </button>
+            <button
+              type="button"
+              onClick={() => setLibraryPickerOpen(true)}
+              className="rounded-full border border-violet-500/50 px-3 py-1.5 text-xs text-violet-200 hover:bg-violet-950/50"
+            >
+              {t.changeVideo}
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="video/mp4,video/webm,video/quicktime,video/*"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0] ?? null;
+                e.target.value = "";
+                onPickLocalFile(f);
+              }}
+            />
+          </div>
         </div>
       )}
+
+      {hasWorkspace ? (
+        <div className="flex flex-wrap gap-2">
+          {(
+            [
+              ["script", t.phaseScript],
+              ["audio", t.phaseAudio],
+              ["burn", t.phaseBurn],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setWorkspacePhase(id)}
+              className={`rounded-full px-3.5 py-1.5 text-xs font-semibold ${
+                workspacePhase === id
+                  ? "bg-violet-600 text-white"
+                  : "border border-slate-700 text-slate-300 hover:border-violet-500/50"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       {hasWorkspace && error && (
         <p className="rounded-lg bg-red-950/50 px-3 py-2 text-sm text-red-200">{error}</p>
@@ -1016,7 +1338,11 @@ export function CaptionStudioClient() {
       {hasWorkspace && (
         <div className="grid gap-5 pb-24 xl:grid-cols-[minmax(300px,1fr)_minmax(280px,400px)_minmax(300px,1fr)] xl:items-start xl:pb-0">
           {/* Mobile: preview first. Desktop xl: audio | preview | lines (order restored). */}
-          <div className="order-2 xl:order-1 xl:min-w-0">
+          <div
+            className={`order-2 xl:order-1 xl:min-w-0 ${
+              workspacePhase === "audio" ? "rounded-3xl ring-2 ring-violet-500/50" : ""
+            }`}
+          >
           <CaptionAudioSection
             disabled={!sourceKind}
             audioBusy={audioBusy}
@@ -1036,6 +1362,8 @@ export function CaptionStudioClient() {
             musicGenerateBusy={musicGenerateBusy}
             onGenerateAiMusic={() => void generateAiMusicTracks()}
             aiMusicGenerateFirstHint={t.aiMusicGenerateFirst}
+            replaceSourceAudio={replaceSourceAudio}
+            onReplaceSourceAudioChange={setReplaceSourceAudio}
             onApplyBgm={() => void applyBgm()}
             voiceoverEnabled={voiceoverEnabled}
             onVoiceoverEnabledChange={setVoiceoverEnabled}
@@ -1084,6 +1412,8 @@ export function CaptionStudioClient() {
               selected: ad.selected,
               applyBgm: t.audioApplyBgm,
               applyingBgm: t.audioApplyingBgm,
+              audioReplaceOriginal: t.audioReplaceOriginal,
+              audioReplaceOriginalHint: t.audioReplaceOriginalHint,
               libraryPreviewLabel: t.libraryBgmPreviewLabel,
               voiceSection: ad.voiceSection,
               voicePreviewHint: t.audioVoicePerCaptionHint,
@@ -1130,13 +1460,40 @@ export function CaptionStudioClient() {
               onLoadedMetadata={(e) => {
                 const dur = e.currentTarget.duration;
                 if (Number.isFinite(dur) && dur > 0) {
+                  const shouldScaleMultiBoundary =
+                    Boolean(timingManifest?.clipBoundaries && timingManifest.clipBoundaries.length > 1) &&
+                    Math.abs(dur - (timingManifest?.outputDurationSec ?? dur)) > 0.75;
                   setVideoDuration(dur);
                   setVideoTrimOut(dur);
+                  if (shouldScaleMultiBoundary) {
+                    setCaptionLines((lines) => scaleCaptionLinesToDuration(lines, dur));
+                  }
+                  // User uploads / unknown length: probe actual duration as source of truth.
+                  setTimingManifest((prev) => {
+                    if (prev?.clipBoundaries && prev.clipBoundaries.length > 1) {
+                      if (Math.abs(dur - prev.outputDurationSec) > 0.75) {
+                        return scaleManifestToDuration(prev, dur);
+                      }
+                      return {
+                        ...prev,
+                        outputDurationSec: dur,
+                        timingSource: "probed",
+                      };
+                    }
+                    return buildSingleClipManifest(dur, {
+                      source: prev?.clipBoundaries?.[0]?.source ?? "upload",
+                      engine: prev?.engine ?? "unknown",
+                      timingSource: "probed",
+                    });
+                  });
                 }
               }}
             />
             <p className="text-center text-xs text-slate-500">
               {t.durationLabel.replace("{sec}", videoDuration.toFixed(1))}
+              {cutMarkers.length > 0
+                ? ` · ${t.cutsLabel.replace("{n}", String(cutMarkers.length + 1))}`
+                : ""}
             </p>
             {processedVideoUrl && (
               <p className="text-center text-[11px] text-emerald-300/90">{t.previewProcessedHint}</p>
@@ -1146,7 +1503,13 @@ export function CaptionStudioClient() {
             )}
           </section>
 
-          <section className="order-3 space-y-3 rounded-3xl border border-violet-500/30 bg-violet-950/20 p-3 sm:p-4 xl:sticky xl:top-4 xl:max-h-[calc(100vh-5rem)] xl:overflow-y-auto">
+          <section
+            className={`order-3 space-y-3 rounded-3xl border border-violet-500/30 bg-violet-950/20 p-3 sm:p-4 xl:sticky xl:top-4 xl:max-h-[calc(100vh-5rem)] xl:overflow-y-auto ${
+              workspacePhase === "script" || workspacePhase === "burn"
+                ? "ring-2 ring-violet-500/40"
+                : ""
+            }`}
+          >
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
                 <h2 className="text-lg font-semibold text-violet-50">{t.linesTitle}</h2>
@@ -1201,9 +1564,10 @@ export function CaptionStudioClient() {
               videoTrimIn={videoTrimIn}
               videoTrimOut={videoTrimOut}
               beatMarkers={beatMarkers}
+              cutMarkers={cutMarkers}
               snapToBeats={snapToBeats}
               beatStatus={beatBusy ? t.beatStatusAnalyzing : beatStatus}
-              onSelect={setSelectedCaptionIndex}
+              onSelect={selectCaptionLine}
               onUpdate={updateCaptionLine}
               onVideoTrimChange={(trimIn, trimOut) => {
                 setVideoTrimIn(trimIn);
@@ -1228,24 +1592,29 @@ export function CaptionStudioClient() {
 
             <div className="space-y-2">
               {captionLines.map((line, index) => (
-                <CaptionLineEditor
+                <div
                   key={`cap-${index}`}
-                  line={line}
-                  index={index}
-                  timingLabel={t.timingLabel}
-                  positionLabel={t.positionLabel}
-                  positionOptions={t.positionOptions}
-                  multilineHint={t.multilineHint}
-                  removeLabel={t.removeLine}
-                  spokenLabel={t.spokenLineLabel}
-                  spokenPlaceholder={t.spokenLinePlaceholder}
-                  styleLabel={t.lineStyleLabel}
-                  styleOptions={styleOptions}
-                  defaultStylePreset={defaultStylePreset}
-                  locale={locale}
-                  onChange={(patch) => updateCaptionLine(index, patch)}
-                  onRemove={() => removeCaptionLine(index)}
-                />
+                  onFocusCapture={() => selectCaptionLine(index)}
+                  onClick={() => selectCaptionLine(index)}
+                >
+                  <CaptionLineEditor
+                    line={line}
+                    index={index}
+                    timingLabel={t.timingLabel}
+                    positionLabel={t.positionLabel}
+                    positionOptions={t.positionOptions}
+                    multilineHint={t.multilineHint}
+                    removeLabel={t.removeLine}
+                    spokenLabel={t.spokenLineLabel}
+                    spokenPlaceholder={t.spokenLinePlaceholder}
+                    styleLabel={t.lineStyleLabel}
+                    styleOptions={styleOptions}
+                    defaultStylePreset={defaultStylePreset}
+                    locale={locale}
+                    onChange={(patch) => updateCaptionLine(index, patch)}
+                    onRemove={() => removeCaptionLine(index)}
+                  />
+                </div>
               ))}
             </div>
 
@@ -1367,6 +1736,10 @@ export function CaptionStudioClient() {
         <Link href="/start" className="text-emerald-400 underline underline-offset-2">
           {t.studioLink}
         </Link>
+        {" · "}
+        <Link href="/" className="text-slate-400 underline underline-offset-2 hover:text-slate-300">
+          {m.header.homeLink}
+        </Link>
       </p>
 
       <LibraryAssetPicker
@@ -1378,6 +1751,7 @@ export function CaptionStudioClient() {
           loadSource("url", {
             url: asset.downloadUrl,
             label: asset.name?.trim() || t.sourceFromLibrary,
+            timingManifest: asset.timingManifest ?? null,
           });
         }}
         labels={{

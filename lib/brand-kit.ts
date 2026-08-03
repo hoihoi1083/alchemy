@@ -1,7 +1,6 @@
 /** Persisted brand assets — logo, colors, fonts — reused across projects. */
 export type BrandKit = {
   logoUrl: string | null;
-  logoPipelinePath: string | null;
   primaryColor: string;
   secondaryColor: string;
   accentColor: string;
@@ -20,7 +19,6 @@ export const BRAND_KIT_STORAGE_KEY = "alchemy-brand-kit-v1";
 
 export const DEFAULT_BRAND_KIT: BrandKit = {
   logoUrl: null,
-  logoPipelinePath: null,
   primaryColor: "#10b981",
   secondaryColor: "#0f172a",
   accentColor: "#f59e0b",
@@ -38,7 +36,6 @@ export function parseBrandKit(raw: unknown): BrandKit {
   const useBrandLogo = row.useBrandLogo === true || row.endWithBrandLogo === true;
   return {
     logoUrl: typeof row.logoUrl === "string" ? row.logoUrl : null,
-    logoPipelinePath: typeof row.logoPipelinePath === "string" ? row.logoPipelinePath : null,
     primaryColor: typeof row.primaryColor === "string" ? row.primaryColor : DEFAULT_BRAND_KIT.primaryColor,
     secondaryColor:
       typeof row.secondaryColor === "string" ? row.secondaryColor : DEFAULT_BRAND_KIT.secondaryColor,
@@ -48,6 +45,51 @@ export function parseBrandKit(raw: unknown): BrandKit {
     useBrandLogo,
     updatedAt: typeof row.updatedAt === "string" ? row.updatedAt : new Date().toISOString(),
   };
+}
+
+export function brandKitUpdatedAtMs(kit: BrandKit | null | undefined): number {
+  if (!kit?.updatedAt) return 0;
+  const t = Date.parse(kit.updatedAt);
+  return Number.isFinite(t) ? t : 0;
+}
+
+/**
+ * Cloud hydrate must not wipe a newer local logo/colors.
+ * Equal timestamps keep local (avoids race where GET returns mid-upload kit).
+ */
+export function preferNewerBrandKit(local: BrandKit, remote: BrandKit): BrandKit {
+  const localMs = brandKitUpdatedAtMs(local);
+  const remoteMs = brandKitUpdatedAtMs(remote);
+  if (remoteMs > localMs) return parseBrandKit(remote);
+  return parseBrandKit(local);
+}
+
+export function isBrandLogoDataUrl(url: string | null | undefined): boolean {
+  return Boolean(url?.trim().startsWith("data:image/"));
+}
+
+/**
+ * Merge cloud brand kit into localStorage (newer wins). Safe to call from wizard
+ * mount even when BrandKitPanel never opens.
+ */
+export async function hydrateBrandKitFromCloud(
+  seed?: BrandKit,
+): Promise<BrandKit> {
+  const local = seed ?? loadBrandKitFromStorage();
+  if (typeof window === "undefined") return local;
+  try {
+    const res = await fetch("/api/brand-kit", { credentials: "include" });
+    if (!res.ok) return local;
+    const data = (await res.json()) as { kit?: BrandKit | null };
+    if (!data.kit) return local;
+    // Re-read — user may have patched local while the request was in flight.
+    const latestLocal = loadBrandKitFromStorage();
+    const merged = preferNewerBrandKit(latestLocal, data.kit);
+    saveBrandKitToStorage(merged);
+    return merged;
+  } catch {
+    return local;
+  }
 }
 
 export function loadBrandKitFromStorage(): BrandKit {
@@ -63,8 +105,12 @@ export function loadBrandKitFromStorage(): BrandKit {
 
 export function saveBrandKitToStorage(kit: BrandKit): void {
   if (typeof window === "undefined") return;
-  localStorage.setItem(
-    BRAND_KIT_STORAGE_KEY,
-    JSON.stringify({ ...kit, updatedAt: new Date().toISOString() }),
-  );
+  try {
+    localStorage.setItem(
+      BRAND_KIT_STORAGE_KEY,
+      JSON.stringify({ ...kit, updatedAt: kit.updatedAt || new Date().toISOString() }),
+    );
+  } catch (e) {
+    console.warn("[brand-kit] localStorage save failed (quota?)", e);
+  }
 }

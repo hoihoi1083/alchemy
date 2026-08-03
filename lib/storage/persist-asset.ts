@@ -2,12 +2,19 @@ import { randomUUID } from "crypto";
 import { promises as fs } from "fs";
 import path from "path";
 import type { WithId } from "mongodb";
-import { findAssetBySource, insertAsset, updateAssetContent } from "@/lib/db/assets";
+import {
+  findAssetBySource,
+  insertAsset,
+  updateAssetContent,
+  updateAssetTiming,
+} from "@/lib/db/assets";
 import type { AssetKind, DbAsset } from "@/lib/db/types";
 import { isMongoConfigured } from "@/lib/mongodb";
-import { resolvePipelineFileUrl } from "@/lib/pipeline/local-input";
+import { resolvePipelineFileUrl, pipelineJobIdFromUrl } from "@/lib/pipeline/local-input";
 import { isPipelineFileUrl } from "@/lib/pipeline/safe-url";
 import { isR2Configured, mirrorRemoteToR2, putR2Object } from "@/lib/storage/r2";
+import type { VideoTimingManifest } from "@/lib/video-timing-manifest";
+import { parseTimingManifest } from "@/lib/video-timing-manifest";
 
 const EXT_BY_KIND: Record<AssetKind, string> = {
   image: "png",
@@ -23,6 +30,8 @@ function isMirrorableUrl(url: string | null | undefined): url is string {
   // Already in our own storage — skip.
   if (u.includes(".r2.cloudflarestorage.com") || u.includes("r2.dev")) return false;
   if (u.includes("/api/library/download/")) return false;
+  // Pipeline scratch must go through owned local-disk path, never remote fetch.
+  if (u.includes("/api/pipeline-files/")) return false;
   return true;
 }
 
@@ -93,17 +102,27 @@ export async function persistUserAsset(input: {
   prompt?: string | null;
   bytes?: Buffer | Uint8Array;
   contentType?: string;
+  timingManifest?: VideoTimingManifest | null;
 }): Promise<WithId<DbAsset> | null> {
   if (!isMongoConfigured() || !isR2Configured()) return null;
 
   const hasBytes = input.bytes != null && input.bytes.length > 0;
-  if (!hasBytes && !isMirrorableUrl(input.sourceUrl)) return null;
+  if (!hasBytes && !isMirrorableUrl(input.sourceUrl) && !isPipelineFileUrl(input.sourceUrl)) {
+    return null;
+  }
+  const timing = parseTimingManifest(input.timingManifest);
 
   try {
     const existing = await findAssetBySource(input.clerkId, input.sourceUrl);
     if (existing) {
       // Do not return a known-bad HTML asset as "success".
-      if (!existing.contentType.toLowerCase().includes("text/html")) return existing;
+      if (!existing.contentType.toLowerCase().includes("text/html")) {
+        if (timing) {
+          const updated = await updateAssetTiming(String(existing._id), timing);
+          return updated ?? existing;
+        }
+        return existing;
+      }
     }
 
     const provisionalExt = EXT_BY_KIND[input.kind];
@@ -119,6 +138,14 @@ export async function persistUserAsset(input: {
       put = await putR2Object(key, Buffer.from(input.bytes!), contentType);
     } else if (isPipelineFileUrl(input.sourceUrl)) {
       // Read the real file from disk — never HTTP-fetch localhost (Clerk HTML).
+      const jobId = pipelineJobIdFromUrl(input.sourceUrl);
+      if (!jobId) {
+        throw new Error("Invalid pipeline media URL.");
+      }
+      const { assertJobOwnedBy } = await import("@/lib/pipeline/job-owner");
+      if (!(await assertJobOwnedBy(jobId, input.clerkId))) {
+        throw new Error("Pipeline media not found or not owned by this user.");
+      }
       const localPath = resolvePipelineFileUrl(input.sourceUrl);
       if (!localPath) {
         throw new Error("Pipeline file path could not be resolved.");
@@ -138,16 +165,24 @@ export async function persistUserAsset(input: {
     // Re-check dedupe in case a concurrent save mirrored the same URL.
     const raced = await findAssetBySource(input.clerkId, input.sourceUrl);
     if (raced && !raced.contentType.toLowerCase().includes("text/html")) {
+      if (timing) {
+        const updated = await updateAssetTiming(String(raced._id), timing);
+        return updated ?? raced;
+      }
       return raced;
     }
 
     if (existing && existing.contentType.toLowerCase().includes("text/html")) {
       // Repair path: overwrite the bad object; update Mongo metadata.
-      return updateAssetContent(String(existing._id), {
+      const repaired = await updateAssetContent(String(existing._id), {
         r2Key: put.key,
         contentType: put.contentType ?? "application/octet-stream",
         sizeBytes: null,
       });
+      if (repaired && timing) {
+        return (await updateAssetTiming(String(repaired._id), timing)) ?? repaired;
+      }
+      return repaired;
     }
 
     return await insertAsset({
@@ -159,6 +194,7 @@ export async function persistUserAsset(input: {
       contentType: put.contentType ?? "application/octet-stream",
       name: input.name ?? null,
       prompt: input.prompt ?? null,
+      timingManifest: timing,
     });
   } catch {
     return null;

@@ -15,7 +15,7 @@ import {
 } from "@/lib/pipeline/caption-burn";
 import { parseCaptionLinesInput } from "@/lib/pipeline/caption-lines";
 import { parseCaptionBurnStyleJson } from "@/lib/caption-burn-styles";
-import { jobDir } from "@/lib/pipeline/paths";
+import { createOwnedJobDir } from "@/lib/pipeline/job-owner";
 import { buildSrt } from "@/lib/pipeline/srt";
 import { materializeMediaInput, pipelineFileUrl } from "@/lib/pipeline/local-input";
 import { persistAndDurablize } from "@/lib/storage/durable-media";
@@ -38,9 +38,7 @@ async function burnCaptionsJob(
     captionStyle?: unknown;
   },
 ) {
-  const jobId = crypto.randomUUID();
-  const dir = jobDir(jobId);
-  await fs.mkdir(dir, { recursive: true });
+  const { jobId, dir } = await createOwnedJobDir(input.clerkId);
 
   const inputPath = path.join(dir, "input.mp4");
   const srtPath = path.join(dir, "captions.srt");
@@ -52,7 +50,7 @@ async function burnCaptionsJob(
     const buffer = Buffer.from(await input.videoFile.arrayBuffer());
     await fs.writeFile(inputPath, buffer);
   } else if (input.videoUrl?.trim()) {
-    await materializeMediaInput(input.videoUrl.trim(), inputPath);
+    await materializeMediaInput(input.videoUrl.trim(), inputPath, { clerkId: input.clerkId });
   } else {
     throw new Error("Provide video_file or video_url.");
   }
@@ -122,11 +120,12 @@ async function burnCaptionsJob(
     contentType: "video/mp4",
     name: "burned-captions",
   });
+  const srtText = await fs.readFile(srtPath, "utf8").catch(() => "");
 
   return {
     videoUrl,
     jobId,
-    srtUrl: pipelineFileUrl(request, jobId, "captions.srt"),
+    srtText: srtText || undefined,
     softSubtitles: false,
     burnMethod,
   };

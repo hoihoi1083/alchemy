@@ -1,11 +1,16 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { NextResponse } from "next/server";
-import { ensureFfmpeg, concatVideos } from "@/lib/pipeline/ffmpeg";
+import {
+  concatVideos,
+  ensureFfmpeg,
+  getMediaDurationSeconds,
+} from "@/lib/pipeline/ffmpeg";
+import { createOwnedJobDir } from "@/lib/pipeline/job-owner";
 import { materializeMediaInput, pipelineFileUrl } from "@/lib/pipeline/local-input";
-import { jobDir } from "@/lib/pipeline/paths";
 import { requireAppUser } from "@/lib/require-app-user";
 import { persistAndDurablize } from "@/lib/storage/durable-media";
+import { buildManifestFromClipDurations } from "@/lib/video-timing-manifest";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -29,19 +34,27 @@ export async function POST(request: Request) {
     );
   }
 
-  const jobId = crypto.randomUUID();
-  const dir = jobDir(jobId);
-  await fs.mkdir(dir, { recursive: true });
+  const { jobId, dir } = await createOwnedJobDir(auth.user.userId);
 
   const clipPaths: string[] = [];
   let outputPath = "";
+  let clipDurations: number[] = [];
   try {
     await ensureFfmpeg();
     for (let i = 0; i < videoUrls.length; i++) {
       const clipPath = path.join(dir, `clip-${i}.mp4`);
-      await materializeMediaInput(videoUrls[i], clipPath);
+      await materializeMediaInput(videoUrls[i], clipPath, { clerkId: auth.user.userId });
       clipPaths.push(clipPath);
     }
+    clipDurations = await Promise.all(
+      clipPaths.map(async (p) => {
+        try {
+          return Math.max(0.1, await getMediaDurationSeconds(p));
+        } catch {
+          return 0;
+        }
+      }),
+    );
     outputPath = path.join(dir, "final.mp4");
     await concatVideos(clipPaths, outputPath);
   } catch (e: unknown) {
@@ -51,6 +64,7 @@ export async function POST(request: Request) {
 
   const pipelineUrl = pipelineFileUrl(request, jobId, "final.mp4");
   const bytes = await fs.readFile(outputPath);
+  const probed = clipDurations.every((d) => d > 0) ? clipDurations : null;
   const videoUrl = await persistAndDurablize({
     clerkId: auth.user.userId,
     kind: "video",
@@ -59,11 +73,19 @@ export async function POST(request: Request) {
     bytes,
     contentType: "video/mp4",
     name: "stitched-video",
+    timingManifest: probed
+      ? buildManifestFromClipDurations(probed, {
+          source: "stitch",
+          engine: "mixed",
+          timingSource: "probed",
+        })
+      : undefined,
   });
 
   return NextResponse.json({
     videoUrl,
     jobId,
     clipCount: videoUrls.length,
+    ...(probed ? { clipDurations: probed } : {}),
   });
 }

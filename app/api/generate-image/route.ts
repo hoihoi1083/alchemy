@@ -123,11 +123,11 @@ function banana2Input(
   return input;
 }
 
-async function mirrorImageToFalStorage(url: string): Promise<string> {
+async function mirrorImageToFalStorage(url: string, clerkId: string): Promise<string> {
   // Delegate to the shared mirror, which returns fal-CDN URLs as-is, reads
   // local pipeline files from disk, and SSRF-guards any other remote URL
   // before fetching it.
-  return mirrorImageUrlToFalStorage(url);
+  return mirrorImageUrlToFalStorage(url, { clerkId });
 }
 
 function parseLogoPlacement(raw: string | null | undefined): LogoPlacement {
@@ -145,12 +145,16 @@ function parseLogoPlacement(raw: string | null | undefined): LogoPlacement {
   return "bottom-right";
 }
 
-async function archiveOutputUrls(request: Request, urls: string[]): Promise<string[]> {
+async function archiveOutputUrls(
+  request: Request,
+  urls: string[],
+  clerkId: string,
+): Promise<string[]> {
   if (!urls.length) return urls;
   if (urls.length === 1) {
-    return [await archiveRemoteImageToPipeline(request, urls[0], "generated.png")];
+    return [await archiveRemoteImageToPipeline(request, urls[0], "generated.png", clerkId)];
   }
-  return archiveCampaignSlidesToPipeline(request, urls);
+  return archiveCampaignSlidesToPipeline(request, urls, clerkId);
 }
 
 async function runRefineEdit(
@@ -175,7 +179,9 @@ async function runRefineEdit(
   try {
     const plan = await getUserPlan(opts.userId);
     const { resolution: imageResolution } = clampImageResolution(plan, opts.resolution ?? null);
-    const hostedUrls = await Promise.all(opts.imageUrls.map((url) => mirrorImageToFalStorage(url)));
+    const hostedUrls = await Promise.all(
+      opts.imageUrls.map((url) => mirrorImageToFalStorage(url, opts.userId)),
+    );
     const result = await fal.subscribe(opts.endpoint, {
       input: {
         ...banana2Input(opts.prompt, hostedUrls, opts.aspectRatio, opts.numImages, {
@@ -216,7 +222,7 @@ async function runRefineEdit(
     }
 
     await trackUsage(opts.userId, "image");
-    const archived = await archiveOutputUrls(request, outUrls);
+    const archived = await archiveOutputUrls(request, outUrls, opts.userId);
     const durable = await persistAndDurablizeMany({
       clerkId: opts.userId,
       kind: "image",
@@ -286,7 +292,13 @@ export async function POST(request: Request) {
       if (placement !== "replace") {
         try {
           const logoBuffer = Buffer.from(await (logoFile as File).arrayBuffer());
-          const archived = await archiveImageWithLogoFile(request, sourceUrl, logoBuffer, placement);
+          const archived = await archiveImageWithLogoFile(
+            request,
+            sourceUrl,
+            logoBuffer,
+            placement,
+            auth.user.userId,
+          );
           const durable = await persistAndDurablize({
             clerkId: auth.user.userId,
             kind: "image",
@@ -642,7 +654,7 @@ export async function POST(request: Request) {
       }
 
       await trackUsage(auth.user.userId, "image");
-      const archived = await archiveOutputUrls(request, outUrls);
+      const archived = await archiveOutputUrls(request, outUrls, auth.user.userId);
       const durable = await persistAndDurablizeMany({
         clerkId: auth.user.userId,
         kind: "image",
@@ -758,7 +770,7 @@ export async function POST(request: Request) {
     }
 
     await trackUsage(auth.user.userId, "image");
-    const archived = await archiveOutputUrls(request, outUrls);
+    const archived = await archiveOutputUrls(request, outUrls, auth.user.userId);
     const durable = await persistAndDurablizeMany({
       clerkId: auth.user.userId,
       kind: "image",

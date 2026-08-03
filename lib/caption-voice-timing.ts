@@ -1,6 +1,36 @@
 import type { CaptionLine } from "@/lib/ad-pack-types";
 import { defaultCaptionLineCount } from "@/lib/plan-caption-voice";
 
+const MIN_CAPTION_LINE_SEC = 0.15;
+const ZEROISH_SEC = 0.001;
+
+function clampNonNegativeSec(value: number): number {
+  return Number.isFinite(value) ? Math.max(0, value) : 0;
+}
+
+function roundTimingSec(value: number): number {
+  return Number(clampNonNegativeSec(value).toFixed(3));
+}
+
+function evenSplitCaptionLines(lines: CaptionLine[], targetSec: number): CaptionLine[] {
+  if (!lines.length) return [];
+  const target = clampNonNegativeSec(targetSec);
+  const slice = target / lines.length;
+  return lines.map((line, i) => {
+    let startSec = i * slice;
+    let endSec = i === lines.length - 1 ? target : (i + 1) * slice;
+    if (endSec < startSec + MIN_CAPTION_LINE_SEC) {
+      startSec = Math.max(0, Math.min(startSec, endSec - MIN_CAPTION_LINE_SEC));
+      endSec = Math.max(endSec, startSec + MIN_CAPTION_LINE_SEC);
+    }
+    return {
+      ...line,
+      startSec: roundTimingSec(startSec),
+      endSec: roundTimingSec(endSec),
+    };
+  });
+}
+
 /** Evenly distribute caption lines across `[0, durationSec]`. */
 export function splitCaptionLinesOverDuration(
   lines: CaptionLine[],
@@ -74,6 +104,83 @@ export function captionLinesFromVoiceScript(
     text,
     position: (i % 2 === 0 ? "bottom" : "top") as CaptionLine["position"],
     stylePreset: opts?.stylePreset,
+  }));
+}
+
+export function scaleCaptionLinesToDuration(
+  lines: CaptionLine[],
+  targetSec: number,
+): CaptionLine[] {
+  if (!lines.length) return [];
+  const target = clampNonNegativeSec(targetSec);
+  const lastEndSec = Math.max(
+    0,
+    ...lines.map((line) => clampNonNegativeSec(Math.max(line.startSec, line.endSec))),
+  );
+  if (lastEndSec <= ZEROISH_SEC) return evenSplitCaptionLines(lines, target);
+  const scale = target / lastEndSec;
+  return lines.map((line) => {
+    let startSec = clampNonNegativeSec(line.startSec) * scale;
+    let endSec = clampNonNegativeSec(line.endSec) * scale;
+    if (endSec < startSec + MIN_CAPTION_LINE_SEC) {
+      startSec = Math.max(0, Math.min(startSec, endSec - MIN_CAPTION_LINE_SEC));
+      endSec = Math.max(endSec, startSec + MIN_CAPTION_LINE_SEC);
+    }
+    return {
+      ...line,
+      startSec: roundTimingSec(startSec),
+      endSec: roundTimingSec(endSec),
+    };
+  });
+}
+
+export function voiceTimingStatus(voiceSec: number, maxTimelineSec: number) {
+  const safeVoiceSec = clampNonNegativeSec(voiceSec);
+  const safeMaxTimelineSec = clampNonNegativeSec(maxTimelineSec);
+  const fittedSec = Math.min(safeVoiceSec, safeMaxTimelineSec);
+  return {
+    fittedSec,
+    exceedsVideo: safeVoiceSec > safeMaxTimelineSec + 0.25,
+    overflowSec: Math.max(0, safeVoiceSec - safeMaxTimelineSec),
+    tailSilenceSec: Math.max(0, safeMaxTimelineSec - fittedSec),
+  };
+}
+
+export function fitCaptionLinesToVoiceDuration(
+  lines: CaptionLine[],
+  voiceSec: number,
+  maxTimelineSec: number,
+): {
+  lines: CaptionLine[];
+  fittedSec: number;
+  exceedsVideo: boolean;
+  overflowSec: number;
+  tailSilenceSec: number;
+} {
+  const status = voiceTimingStatus(voiceSec, maxTimelineSec);
+  if (!lines.length) return { lines: [], ...status };
+  return {
+    lines: scaleCaptionLinesToDuration(lines, status.fittedSec),
+    ...status,
+  };
+}
+
+/**
+ * Shift caption times by `offsetSec` (e.g. map 0-based fit/sync times onto the
+ * full-video timeline when a trim window starts at `videoTrimIn`).
+ * Burn/voice still rebase with `rebaseCaptionLinesAfterTrim`, which expects
+ * absolute full-timeline coordinates.
+ */
+export function offsetCaptionLinesBySec(
+  lines: CaptionLine[],
+  offsetSec: number,
+): CaptionLine[] {
+  const offset = clampNonNegativeSec(offsetSec);
+  if (offset <= ZEROISH_SEC || !lines.length) return lines;
+  return lines.map((line) => ({
+    ...line,
+    startSec: roundTimingSec(clampNonNegativeSec(line.startSec) + offset),
+    endSec: roundTimingSec(clampNonNegativeSec(line.endSec) + offset),
   }));
 }
 

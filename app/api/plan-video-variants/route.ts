@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAppUser } from "@/lib/require-app-user";
+import { assertFreeDeepSeekQuota } from "@/lib/rate-limit-deepseek";
 import { planVideoScriptVariants } from "@/lib/plan-video-variants";
 
 export const runtime = "nodejs";
@@ -8,6 +9,8 @@ export const maxDuration = 60;
 export async function POST(request: Request) {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
+  const quota = await assertFreeDeepSeekQuota(auth.user.userId);
+  if (!quota.ok) return quota.response;
 
   let body: {
     product?: string;

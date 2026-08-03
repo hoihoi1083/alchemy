@@ -40,6 +40,7 @@ import {
 import { fitImageInBox, logoPctFromAspect } from "@/lib/image-canvas-layout";
 import type { BrandKit } from "@/lib/brand-kit";
 import { brandKitFontFamily } from "@/lib/brand-merge";
+import { isLibraryAssetUrl } from "@/lib/storage/library-asset-url";
 import { useLocale } from "@/components/LocaleProvider";
 import { CanvasHistoryNav } from "@/components/studio/CanvasHistoryNav";
 
@@ -131,17 +132,43 @@ function useHtmlImage(src: string) {
       setImage(null);
       return;
     }
+    let cancelled = false;
+    let objectUrl: string | null = null;
     const img = new window.Image();
-    // blob:/data: are same-origin; crossOrigin can break load in some browsers.
-    if (!src.startsWith("blob:") && !src.startsWith("data:")) {
-      img.crossOrigin = "anonymous";
+
+    async function load() {
+      let displaySrc = src;
+      // Auth-gated library logos need cookies — fetch → blob (crossOrigin=anonymous drops them).
+      if (isLibraryAssetUrl(src) || src.includes("/api/library/download/")) {
+        try {
+          const res = await fetch(src, { credentials: "include", cache: "no-store" });
+          if (!res.ok) throw new Error(`logo ${res.status}`);
+          const blob = await res.blob();
+          objectUrl = URL.createObjectURL(blob);
+          displaySrc = objectUrl;
+        } catch {
+          if (!cancelled) setImage(null);
+          return;
+        }
+      } else if (!src.startsWith("blob:") && !src.startsWith("data:")) {
+        img.crossOrigin = "anonymous";
+      }
+      if (cancelled) return;
+      img.onload = () => {
+        if (!cancelled) setImage(img);
+      };
+      img.onerror = () => {
+        if (!cancelled) setImage(null);
+      };
+      img.src = displaySrc;
     }
-    img.onload = () => setImage(img);
-    img.onerror = () => setImage(null);
-    img.src = src;
+
+    void load();
     return () => {
+      cancelled = true;
       img.onload = null;
       img.onerror = null;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
   }, [src]);
   return image;
@@ -480,26 +507,48 @@ export function KonvaImageLayerCanvas({
   function addLogo() {
     const url = brandKit?.logoUrl;
     if (!url) return;
-    const img = new window.Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-      const aspect = img.naturalWidth / img.naturalHeight;
-      const imageAspect = bgImage
-        ? bgImage.naturalWidth / bgImage.naturalHeight
-        : STAGE_WIDTH / stageHeight;
-      const { wPct, hPct } = logoPctFromAspect(aspect, imageAspect, 20);
-      const layer = newImageLogoLayer({
-        url,
-        yPct: 88,
-        xPct: 88,
-        wPct,
-        hPct,
-        aspectRatio: aspect,
-      });
-      mutateLayers((prev) => [...prev, layer], true);
-      setSelectedId(layer.id);
-    };
-    img.src = url;
+    void (async () => {
+      let displayUrl = url;
+      let revoke: string | null = null;
+      try {
+        if (isLibraryAssetUrl(url) || url.includes("/api/library/download/")) {
+          const res = await fetch(url, { credentials: "include", cache: "no-store" });
+          if (!res.ok) return;
+          const blob = await res.blob();
+          revoke = URL.createObjectURL(blob);
+          displayUrl = revoke;
+        }
+        const img = new window.Image();
+        if (!displayUrl.startsWith("blob:") && !displayUrl.startsWith("data:")) {
+          img.crossOrigin = "anonymous";
+        }
+        await new Promise<void>((resolve, reject) => {
+          img.onload = () => resolve();
+          img.onerror = () => reject(new Error("logo load failed"));
+          img.src = displayUrl;
+        });
+        const aspect = img.naturalWidth / img.naturalHeight;
+        const imageAspect = bgImage
+          ? bgImage.naturalWidth / bgImage.naturalHeight
+          : STAGE_WIDTH / stageHeight;
+        const { wPct, hPct } = logoPctFromAspect(aspect, imageAspect, 20);
+        // Persist the durable/original URL on the layer (not a transient blob).
+        const layer = newImageLogoLayer({
+          url,
+          yPct: 88,
+          xPct: 88,
+          wPct,
+          hPct,
+          aspectRatio: aspect,
+        });
+        mutateLayers((prev) => [...prev, layer], true);
+        setSelectedId(layer.id);
+      } catch {
+        /* preview unavailable */
+      } finally {
+        if (revoke) URL.revokeObjectURL(revoke);
+      }
+    })();
   }
 
   function applyPreset(layer: ImageCanvasTextLayer, presetId: CaptionStylePresetId) {

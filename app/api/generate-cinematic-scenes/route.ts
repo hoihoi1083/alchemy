@@ -16,6 +16,11 @@ import { SERVER_ERRORS } from "@/lib/api/server-errors";
 import { parseBrandKit } from "@/lib/brand-kit";
 import { uploadBrandKitLogoToFal } from "@/lib/brand-kit-fal";
 import { brandKitLogoImagePromptBlock } from "@/lib/brand-merge";
+import {
+  archiveCinematicStillsWithBrandLogo,
+  CINEMATIC_LOGO_PLACEMENT,
+} from "@/lib/brand-logo-composite";
+import type { LogoPlacement } from "@/lib/image-refine-prompt";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -80,10 +85,21 @@ export async function POST(request: Request) {
   const aspectRatio = body.aspect_ratio?.trim() || "9:16";
   const artStyleId = resolveArtStyleId(body.art_style);
   const brandKit = parseBrandKit(body.brand_kit);
-  const brandLogoFalUrl = brandKit.logoUrl?.trim()
-    ? await uploadBrandKitLogoToFal(brandKit).catch(() => null)
-    : null;
-  const useBrandLogoModeB = Boolean(brandLogoFalUrl && brandKit.useBrandLogo);
+  const brandLogoWanted = Boolean(brandKit.useBrandLogo && brandKit.logoUrl?.trim());
+  let brandLogoFalUrl: string | null = null;
+  let logoMirrorNote: string | undefined;
+  if (brandLogoWanted) {
+    try {
+      brandLogoFalUrl = await uploadBrandKitLogoToFal(brandKit, {
+        clerkId: auth.user.userId,
+      });
+    } catch (e: unknown) {
+      const detail = e instanceof Error ? e.message : "Brand logo mirror failed";
+      console.error("[generate-cinematic-scenes] brand logo → fal failed", e);
+      logoMirrorNote = `Logo AI composite unavailable (${detail}); using exact PNG stamp.`;
+    }
+  }
+  const useBrandLogoModeB = Boolean(brandLogoFalUrl && brandLogoWanted);
   const endpoint = resolveEditEndpointWhenNeeded(body.endpoint, useBrandLogoModeB);
 
   const tokenCost = estimateImageTokens({
@@ -136,14 +152,55 @@ export async function POST(request: Request) {
     );
 
     const falUrls = scenes.map((s) => s.imageUrl);
+    let sourceUrls = falUrls;
+    let logoStamped = false;
+    let logoMode: "nano-banana" | "stamp-fallback" | "none" = useBrandLogoModeB
+      ? "nano-banana"
+      : "none";
+
+    // Mode B failed to mirror logo → stamp fal CDN stills before durable persist.
+    if (brandLogoWanted && !useBrandLogoModeB) {
+      try {
+        const placement =
+          body.logo_placement === "bottom-right" ||
+          body.logo_placement === "bottom-left" ||
+          body.logo_placement === "top-left" ||
+          body.logo_placement === "top-right"
+            ? (body.logo_placement as LogoPlacement)
+            : CINEMATIC_LOGO_PLACEMENT;
+        const stamped = await archiveCinematicStillsWithBrandLogo(
+          request,
+          falUrls,
+          brandKit,
+          auth.user.userId,
+          placement,
+        );
+        if (stamped.logoStamped && stamped.urls.length === falUrls.length) {
+          sourceUrls = stamped.urls;
+          logoStamped = true;
+          logoMode = "stamp-fallback";
+        } else if (!logoMirrorNote) {
+          logoMirrorNote = "Brand logo was opted in but could not be applied to cinematic stills.";
+        }
+      } catch (stampErr) {
+        console.error("[generate-cinematic-scenes] logo stamp fallback failed", stampErr);
+        if (!logoMirrorNote) {
+          logoMirrorNote =
+            stampErr instanceof Error
+              ? stampErr.message
+              : "Brand logo stamp failed.";
+        }
+      }
+    }
+
     const durableUrls = await persistAndDurablizeMany({
       clerkId: auth.user.userId,
       kind: "image",
-      sourceUrls: falUrls,
-      fallbackUrls: falUrls,
+      sourceUrls,
+      fallbackUrls: sourceUrls,
       prompt: "cinematic-reel",
     });
-    const finalUrls = durableUrls.map((u, i) => u ?? falUrls[i]!);
+    const finalUrls = durableUrls.map((u, i) => u ?? sourceUrls[i]!);
 
     const durableScenes: CinematicSceneResult[] = scenes.map((scene, index) => ({
       ...scene,
@@ -161,10 +218,10 @@ export async function POST(request: Request) {
       sceneCount: durableScenes.length,
       tokensCharged: tokenCost,
       creditBalance: balanceAfter,
-      /** Mode B: logo baked by Nano Banana on first gen (no sharp corner stamp). */
-      logoMode: useBrandLogoModeB ? "nano-banana" : "none",
-      logoIntegrated: useBrandLogoModeB,
-      logoStamped: false,
+      logoMode,
+      logoIntegrated: useBrandLogoModeB || logoStamped,
+      logoStamped,
+      ...(logoMirrorNote ? { logoNote: logoMirrorNote } : {}),
     });
   } catch (e: unknown) {
     await refundTokens(auth.user.userId, tokenCost, {

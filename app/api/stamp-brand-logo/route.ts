@@ -68,7 +68,7 @@ export async function POST(request: Request) {
     const placement = parsePlacement(body.placement);
     const stamped =
       placement === "center"
-        ? await archiveImagesWithBrandLogo(request, urls, brandKit, {
+        ? await archiveImagesWithBrandLogo(request, urls, brandKit, auth.user.userId, {
             placement: "center",
             sizeRatio: END_CARD_LOGO_SIZE_RATIO,
             fileName: "generated.png",
@@ -77,6 +77,7 @@ export async function POST(request: Request) {
             request,
             urls,
             brandKit,
+            auth.user.userId,
             placement,
           );
     return NextResponse.json({

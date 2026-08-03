@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useLocale } from "@/components/LocaleProvider";
-import { DEFAULT_BRAND_KIT, loadBrandKitFromStorage } from "@/lib/brand-kit";
+import { DEFAULT_BRAND_KIT, hydrateBrandKitFromCloud, loadBrandKitFromStorage } from "@/lib/brand-kit";
 import { seedBrandCanvasLayers } from "@/lib/brand-merge";
 import type { ImageCanvasLayer } from "@/lib/image-canvas-layers";
 import {
@@ -172,7 +172,7 @@ export function ImageCanvasStudioClient() {
   const [originalSourceUrl, setOriginalSourceUrl] = useState<string | null>(null);
   const [visitedSteps, setVisitedSteps] = useState<Set<EditStep>>(new Set());
   const [inpaintEditorKey, setInpaintEditorKey] = useState(0);
-  const [brandKit] = useState(() =>
+  const [brandKit, setBrandKit] = useState(() =>
     typeof window !== "undefined" ? loadBrandKitFromStorage() : DEFAULT_BRAND_KIT,
   );
   const [libraryPickerOpen, setLibraryPickerOpen] = useState(false);
@@ -183,6 +183,16 @@ export function ImageCanvasStudioClient() {
   const localPreviewUrlRef = useRef<string | null>(null);
   const resultPreviewUrlRef = useRef<string | null>(null);
   const bootstrappedFromQueryRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void hydrateBrandKitFromCloud().then((kit) => {
+      if (!cancelled) setBrandKit(kit);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     localPreviewUrlRef.current = localPreviewUrl;
@@ -274,7 +284,7 @@ export function ImageCanvasStudioClient() {
             } catch (e: unknown) {
               if (gen !== previewLoadGenRef.current) return;
               const detail = e instanceof Error ? e.message : "";
-              setError(detail ? `${t.previewLoadFailed} (${detail})` : t.previewLoadFailed);
+              setError(detail ? `${t.sourcePreviewFailed} (${detail})` : t.sourcePreviewFailed);
               setLocalPreviewUrl(null);
               setCleanFrames([]);
             } finally {
@@ -306,7 +316,7 @@ export function ImageCanvasStudioClient() {
         });
       setInitialLayers(seeded.length ? seeded : []);
     },
-    [brandKit, t.previewLoadFailed, t.sourceFromStudio],
+    [brandKit, t.sourcePreviewFailed, t.sourceFromStudio],
   );
 
   useEffect(() => {
@@ -407,7 +417,7 @@ export function ImageCanvasStudioClient() {
       });
       setCleanFrameIndex((i) => i + 1);
       setInpaintEditorKey((k) => k + 1);
-      setNote(data.mode === "erase" ? t.cleanApplyNote : t.cleanApplyNote);
+      setNote(data.mode === "erase" ? t.cleanApplyNote : t.cleanFillNote);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : w.quickFixRefining);
     } finally {
@@ -498,7 +508,7 @@ export function ImageCanvasStudioClient() {
             });
           } catch {
             if (gen !== previewLoadGenRef.current) return;
-            setError(t.previewLoadFailed);
+            setError(t.sourcePreviewFailed);
           } finally {
             if (gen === previewLoadGenRef.current) setBusy(false);
           }
@@ -507,6 +517,48 @@ export function ImageCanvasStudioClient() {
         setLocalPreviewUrl(sourceUrl);
       }
     }
+  }
+
+  function retryPreviewLoad() {
+    if (!sourceUrl) return;
+    const rel = libraryPipelineUrl(sourceUrl);
+    if (!needsCredentialedPreview(rel)) {
+      setCleanFrames((prev) => {
+        revokeBlobUrls(prev.map((f) => f.displayUrl));
+        return [{ pipelineUrl: rel, displayUrl: rel }];
+      });
+      setLocalPreviewUrl((prev) => {
+        if (prev?.startsWith("blob:")) URL.revokeObjectURL(prev);
+        return rel;
+      });
+      setError(null);
+      return;
+    }
+    const gen = ++previewLoadGenRef.current;
+    setBusy(true);
+    setError(null);
+    void (async () => {
+      try {
+        const blob = await fetchPreviewBlob(rel);
+        if (gen !== previewLoadGenRef.current) return;
+        const blobUrl = URL.createObjectURL(blob);
+        setCleanFrames((prev) => {
+          revokeBlobUrls(prev.map((f) => f.displayUrl));
+          return [{ pipelineUrl: rel, displayUrl: blobUrl }];
+        });
+        setLocalPreviewUrl((prev) => {
+          if (prev?.startsWith("blob:")) URL.revokeObjectURL(prev);
+          return blobUrl;
+        });
+        setError(null);
+      } catch (e: unknown) {
+        if (gen !== previewLoadGenRef.current) return;
+        const detail = e instanceof Error ? e.message : "";
+        setError(detail ? `${t.sourcePreviewFailed} (${detail})` : t.sourcePreviewFailed);
+      } finally {
+        if (gen === previewLoadGenRef.current) setBusy(false);
+      }
+    })();
   }
 
   function isOnOriginalImage(): boolean {
@@ -560,7 +612,7 @@ export function ImageCanvasStudioClient() {
             setCleanFrames([{ pipelineUrl: rel, displayUrl: blobUrl }]);
           } catch {
             if (gen !== previewLoadGenRef.current) return;
-            setError(t.previewLoadFailed);
+            setError(t.sourcePreviewFailed);
           } finally {
             if (gen === previewLoadGenRef.current) setBusy(false);
           }
@@ -643,11 +695,11 @@ export function ImageCanvasStudioClient() {
   return (
     <div className="space-y-6">
       {(returnTo || hasWorkspace) && (
-        <div className="flex flex-wrap items-center justify-center gap-3 rounded-2xl border border-cyan-500/20 bg-slate-950/50 px-4 py-3 text-xs">
+        <div className="flex flex-wrap items-center justify-center gap-3 rounded-2xl border border-violet-500/20 bg-slate-950/50 px-4 py-3 text-xs">
           {returnTo?.includes("/studio") ? (
             <Link
               href={returnTo}
-              className="rounded-full bg-cyan-600 px-4 py-2 font-medium text-white hover:bg-cyan-500"
+              className="rounded-full bg-violet-600 px-4 py-2 font-medium text-white hover:bg-violet-500"
             >
               {t.backToResults}
             </Link>
@@ -655,7 +707,7 @@ export function ImageCanvasStudioClient() {
           {returnTo?.includes("/library") ? (
             <Link
               href="/library"
-              className="rounded-full bg-cyan-600 px-4 py-2 font-medium text-white hover:bg-cyan-500"
+              className="rounded-full bg-violet-600 px-4 py-2 font-medium text-white hover:bg-violet-500"
             >
               {t.backToLibrary}
             </Link>
@@ -671,7 +723,7 @@ export function ImageCanvasStudioClient() {
           <button
             type="button"
             onClick={() => setLibraryPickerOpen(true)}
-            className="rounded-full border border-cyan-600/60 px-4 py-2 font-medium text-cyan-100 hover:bg-cyan-950/40"
+            className="rounded-full border border-violet-600/60 px-4 py-2 font-medium text-violet-100 hover:bg-violet-950/40"
           >
             {t.editAnotherFromLibrary}
           </button>
@@ -679,24 +731,24 @@ export function ImageCanvasStudioClient() {
       )}
 
       {!hasWorkspace ? (
-        <div className="flex min-h-[min(56vh,520px)] items-center justify-center px-2 py-8">
-          <section className="w-full max-w-md rounded-3xl border border-slate-800 bg-slate-950/70 p-8 text-center shadow-xl">
+        <div className="flex min-h-[min(52vh,480px)] items-center justify-center px-2 py-6">
+          <section className="w-full max-w-lg rounded-3xl border border-slate-800 bg-slate-950/70 p-7 text-center shadow-xl sm:p-8">
             <h2 className="text-xl font-semibold text-white">{t.uploadTitle}</h2>
-            <p className="mx-auto mt-2 max-w-sm text-sm text-slate-400">{t.uploadHint}</p>
-            <div className="mt-6 flex flex-col items-center gap-3">
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="rounded-full bg-cyan-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-cyan-500"
-              >
-                {t.chooseFile}
-              </button>
+            <p className="mx-auto mt-2 max-w-md text-sm text-slate-400">{t.uploadHint}</p>
+            <div className="mx-auto mt-6 grid w-full max-w-sm gap-3 sm:max-w-none sm:grid-cols-2">
               <button
                 type="button"
                 onClick={() => setLibraryPickerOpen(true)}
-                className="rounded-full border border-slate-600 px-6 py-2.5 text-sm font-medium text-slate-200 hover:bg-slate-900"
+                className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-violet-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-violet-500"
               >
                 {t.chooseFromLibrary}
+              </button>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-slate-600 px-5 py-2.5 text-sm font-medium text-slate-100 hover:border-violet-400 hover:bg-violet-950/40"
+              >
+                {t.chooseFile}
               </button>
               <input
                 ref={fileInputRef}
@@ -706,12 +758,7 @@ export function ImageCanvasStudioClient() {
                 onChange={(e) => onFileSelected(e.target.files?.[0] ?? null)}
               />
             </div>
-            <p className="mt-6 text-xs text-slate-500">
-              {t.studioHint}{" "}
-              <Link href="/start" className="text-emerald-400 underline hover:text-emerald-300">
-                {t.studioLink}
-              </Link>
-            </p>
+            <p className="mt-4 text-[11px] leading-relaxed text-slate-500">{t.workflowNote}</p>
           </section>
         </div>
       ) : (
@@ -719,10 +766,11 @@ export function ImageCanvasStudioClient() {
           <nav className="rounded-2xl border border-slate-800 bg-slate-950/60 p-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-wrap gap-1">
-                {WORKFLOW_STEPS.filter((s) => s !== "upload").map((s) => {
+                {WORKFLOW_STEPS.map((s) => {
                   const stepIdx = WORKFLOW_STEPS.indexOf(s);
                   const currentIdx = WORKFLOW_STEPS.indexOf(step);
                   const reachable =
+                    s === "upload" ||
                     stepIdx <= currentIdx ||
                     visitedSteps.has(s) ||
                     (s === "design" && visitedSteps.has("clean"));
@@ -738,9 +786,9 @@ export function ImageCanvasStudioClient() {
                       onClick={() => goToStep(s)}
                       className={`rounded-full px-3 py-1 text-xs font-medium transition ${
                         step === s
-                          ? "bg-cyan-600 text-white"
+                          ? "bg-violet-600 text-white"
                           : visitedSteps.has(s)
-                            ? "border border-slate-600 text-slate-300 hover:border-cyan-600/50"
+                            ? "border border-slate-600 text-slate-300 hover:border-violet-500/50"
                             : "border border-slate-700 text-slate-500"
                       } disabled:cursor-not-allowed disabled:opacity-40`}
                     >
@@ -765,7 +813,7 @@ export function ImageCanvasStudioClient() {
               <button
                 type="button"
                 onClick={() => setLibraryPickerOpen(true)}
-                className="text-xs text-cyan-300 underline underline-offset-2 hover:text-cyan-200"
+                className="text-xs text-violet-300 underline underline-offset-2 hover:text-violet-200"
               >
                 {t.chooseFromLibrary}
               </button>
@@ -784,6 +832,40 @@ export function ImageCanvasStudioClient() {
             <p className="text-xs text-emerald-300">{t.pipelineSourceNote}</p>
           )}
 
+          {step === "upload" && (
+            <section className="rounded-2xl border border-slate-800 bg-slate-950/50 p-5 text-center sm:p-6">
+              <h2 className="text-lg font-semibold text-white">{t.uploadTitle}</h2>
+              <p className="mx-auto mt-1.5 max-w-md text-sm text-slate-400">{t.uploadHint}</p>
+              <div className="mx-auto mt-5 grid w-full max-w-sm gap-3 sm:max-w-md sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => setLibraryPickerOpen(true)}
+                  className="inline-flex min-h-11 w-full items-center justify-center rounded-full bg-violet-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-violet-500"
+                >
+                  {t.chooseFromLibrary}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="inline-flex min-h-11 w-full items-center justify-center rounded-full border border-slate-600 px-5 py-2.5 text-sm font-medium text-slate-100 hover:border-violet-400 hover:bg-violet-950/40"
+                >
+                  {t.changeImage}
+                </button>
+              </div>
+              {sourceLabel ? (
+                <p className="mt-3 text-xs text-slate-500">{sourceLabel}</p>
+              ) : null}
+              <button
+                type="button"
+                disabled={busy || !editorImageUrl}
+                onClick={() => setStep("clean")}
+                className="mt-5 rounded-full border border-emerald-500/40 px-5 py-2 text-xs font-medium text-emerald-300 hover:bg-emerald-950/40 disabled:opacity-40"
+              >
+                {t.stepNext}
+              </button>
+            </section>
+          )}
+
           {step === "clean" && (
             <div className="rounded-2xl border border-slate-800 bg-slate-950/50 p-4">
               <p className="text-sm font-semibold text-slate-200">{t.cleanTitle}</p>
@@ -795,9 +877,19 @@ export function ImageCanvasStudioClient() {
                     {t.previewLoading}
                   </p>
                 ) : !editorImageUrl ? (
-                  <p className="rounded-xl border border-amber-800/50 bg-amber-950/30 px-4 py-10 text-center text-sm text-amber-100">
-                    {error ?? t.previewLoadFailed}
-                  </p>
+                  <div className="rounded-xl border border-amber-800/50 bg-amber-950/30 px-4 py-10 text-center">
+                    <p className="text-sm text-amber-100">{error ?? t.sourcePreviewFailed}</p>
+                    {sourceUrl ? (
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => retryPreviewLoad()}
+                        className="mt-4 rounded-full bg-violet-600 px-5 py-2 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-40"
+                      >
+                        {t.retryPreview}
+                      </button>
+                    ) : null}
+                  </div>
                 ) : (
                 <ImageInpaintMaskEditor
                   key={`inpaint-${inpaintEditorKey}-${editorImageUrl}`}
@@ -857,6 +949,9 @@ export function ImageCanvasStudioClient() {
                   </button>
                 </div>
               )}
+              {note ? (
+                <p className="mt-3 text-xs text-emerald-300">{note}</p>
+              ) : null}
               <button
                 type="button"
                 disabled={busy}
@@ -953,6 +1048,17 @@ export function ImageCanvasStudioClient() {
           {error}
         </p>
       )}
+
+      <p className="text-center text-xs text-slate-500">
+        {t.reeditHint}{" "}
+        <Link href="/start" className="text-emerald-400 underline underline-offset-2">
+          {t.studioLink}
+        </Link>
+        {" · "}
+        <Link href="/" className="text-slate-400 underline underline-offset-2 hover:text-slate-300">
+          {m.header.homeLink}
+        </Link>
+      </p>
 
       <LibraryAssetPicker
         open={libraryPickerOpen}

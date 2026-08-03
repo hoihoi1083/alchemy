@@ -8,16 +8,17 @@ import { synthesizeCantoneseToFile } from "@/lib/pipeline/azureTts";
 import {
   attachSoftSubtitleTrack,
   burnSubtitles,
-  downloadToFile,
   ensureFfmpeg,
   extractAudioWav,
   mergeAudioIntoVideo,
 } from "@/lib/pipeline/ffmpeg";
-import { jobDir } from "@/lib/pipeline/paths";
 import { transcribeWithLocalWhisper } from "@/lib/pipeline/localWhisper";
 import { rewriteToCantonese, transcribeAudio } from "@/lib/pipeline/openai";
 import { buildSrt } from "@/lib/pipeline/srt";
 import { PostProcessResult } from "@/lib/pipeline/types";
+import { createOwnedJobDir } from "@/lib/pipeline/job-owner";
+import { persistAndDurablize } from "@/lib/storage/durable-media";
+import { materializeMediaInput, pipelineFileUrl } from "@/lib/pipeline/local-input";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -88,9 +89,7 @@ export async function POST(request: Request) {
   });
   if ("error" in charged) return charged.error;
 
-  const jobId = crypto.randomUUID();
-  const dir = jobDir(jobId);
-  await fs.mkdir(dir, { recursive: true });
+  const { jobId, dir } = await createOwnedJobDir(auth.user.userId);
 
   const inputVideoPath = path.join(dir, "input.mp4");
   const extractedAudioPath = path.join(dir, "extracted.wav");
@@ -106,7 +105,9 @@ export async function POST(request: Request) {
       const buffer = Buffer.from(await inputVideoFile.arrayBuffer());
       await fs.writeFile(inputVideoPath, buffer);
     } else if (inputVideoUrl) {
-      await downloadToFile(inputVideoUrl, inputVideoPath);
+      await materializeMediaInput(inputVideoUrl, inputVideoPath, {
+        clerkId: auth.user.userId,
+      });
     }
 
     await extractAudioWav(inputVideoPath, extractedAudioPath);
@@ -151,7 +152,16 @@ export async function POST(request: Request) {
         voice,
         outputWavPath: dubbedAudioPath,
       });
-      dubbedAudioUrl = `/api/pipeline-files/${jobId}/dubbed.wav`;
+      const dubBytes = await fs.readFile(dubbedAudioPath);
+      dubbedAudioUrl = await persistAndDurablize({
+        clerkId: auth.user.userId,
+        kind: "audio",
+        sourceUrl: `postprocess://${jobId}/dubbed.wav`,
+        fallbackUrl: pipelineFileUrl(request, jobId, "dubbed.wav"),
+        bytes: dubBytes,
+        contentType: "audio/wav",
+        name: "dubbed-audio",
+      });
       await mergeAudioIntoVideo(finalSource, dubbedAudioPath, outputVideoPath);
       finalSource = outputVideoPath;
     } else if (withDub && dubProvider !== "azure") {
@@ -168,12 +178,27 @@ export async function POST(request: Request) {
       finalSource = subtitledPath;
     }
 
+    const finalName = path.basename(finalSource);
+    const videoBytes = await fs.readFile(finalSource);
+    const finalVideoUrl = await persistAndDurablize({
+      clerkId: auth.user.userId,
+      kind: "video",
+      sourceUrl: `postprocess://${jobId}/${finalName}`,
+      fallbackUrl: pipelineFileUrl(request, jobId, finalName),
+      bytes: videoBytes,
+      contentType: "video/mp4",
+      name: "postprocessed-video",
+    });
+    // SRT stays downloadable from the same response body as text — avoid cross-instance pipeline URL.
+    const srtTextOut = await fs.readFile(srtPath, "utf8");
+
     const result: PostProcessResult = {
       jobId,
-      srtUrl: `/api/pipeline-files/${jobId}/corrected.srt`,
+      srtUrl: undefined,
+      srtText: srtTextOut,
       transcriptText: transcript.text,
       correctedText: correctedSegments.map((s) => s.text).join(" "),
-      finalVideoUrl: `/api/pipeline-files/${jobId}/${path.basename(finalSource)}`,
+      finalVideoUrl,
       dubbedAudioUrl,
       note: withDub
         ? `Dubbed audio generated via ${dubProvider}.`

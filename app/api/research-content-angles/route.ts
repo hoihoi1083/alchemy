@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { isContentPlatform, planContentResearch } from "@/lib/content-research-plan";
 import { requireAppUser } from "@/lib/require-app-user";
+import { assertFreeDeepSeekQuota } from "@/lib/rate-limit-deepseek";
 import type { PromptMarket } from "@/lib/prompt-variables";
 
 export const runtime = "nodejs";
@@ -20,6 +21,8 @@ type ResearchBody = {
 export async function POST(request: Request) {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
+  const quota = await assertFreeDeepSeekQuota(auth.user.userId);
+  if (!quota.ok) return quota.response;
 
   let body: ResearchBody;
   try {

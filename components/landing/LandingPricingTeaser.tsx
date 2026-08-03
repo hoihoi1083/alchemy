@@ -41,13 +41,18 @@ export function LandingPricingTeaser() {
 				body: JSON.stringify({ kind: "subscription", plan, interval }),
 			});
 			const raw = await res.text();
-			let data: { url?: string; error?: string } = {};
+			let data: { url?: string; error?: string; updated?: boolean } = {};
 			try {
 				data = raw
-					? (JSON.parse(raw) as { url?: string; error?: string })
+					? (JSON.parse(raw) as { url?: string; error?: string; updated?: boolean })
 					: {};
 			} catch {
 				throw new Error(raw?.slice(0, 200) || P.checkoutError);
+			}
+			if (res.ok && data.updated) {
+				setCheckoutError(null);
+				window.location.href = "/pricing?checkout=success&updated=1";
+				return;
 			}
 			if (!res.ok || !data.url) {
 				throw new Error(data.error ?? P.checkoutError);

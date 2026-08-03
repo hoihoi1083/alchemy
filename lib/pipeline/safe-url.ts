@@ -3,6 +3,7 @@ function isPrivateOrLocalHost(hostname: string): boolean {
   if (host === "localhost" || host.endsWith(".localhost")) return true;
   if (host === "::1" || host === "[::1]") return true;
   if (host === "0.0.0.0") return true;
+  if (host === "metadata.google.internal") return true;
 
   const ipv4 = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
   if (ipv4) {
@@ -27,6 +28,8 @@ function isPrivateOrLocalHost(hostname: string): boolean {
 
   return false;
 }
+
+export { isPrivateOrLocalHost };
 
 function isAllowedRemoteHost(hostname: string): boolean {
   const host = hostname.toLowerCase();
@@ -59,6 +62,30 @@ export function isPipelineFileUrl(url: string): boolean {
   return url.includes("/api/pipeline-files/");
 }
 
+/**
+ * Open-web fetches (brand shop URLs, public logo https, post redirects).
+ * Allows any public http(s) host — does NOT use a domain allowlist.
+ * Only blocks private/local/metadata targets (SSRF fence).
+ */
+export function assertPublicHttpUrl(rawUrl: string): URL {
+  let parsed: URL;
+  try {
+    parsed = new URL(rawUrl);
+  } catch {
+    throw new Error("Invalid URL.");
+  }
+
+  if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+    throw new Error("Only http(s) URLs are allowed.");
+  }
+  if (isPrivateOrLocalHost(parsed.hostname)) {
+    throw new Error("Private or local network URLs are not allowed.");
+  }
+
+  return parsed;
+}
+
+/** Fal/CDN media rematerialization — tight allowlist. */
 export function assertSafeRemoteMediaUrl(rawUrl: string): URL {
   let parsed: URL;
   try {
@@ -78,4 +105,23 @@ export function assertSafeRemoteMediaUrl(rawUrl: string): URL {
   }
 
   return parsed;
+}
+
+/**
+ * Platform CDN host check (XHS / IG / TikTok / FB).
+ * Exact, subdomain suffix, or full DNS-label token — never host.includes(token).
+ */
+export function hostMatchesAllowlist(
+  hostname: string,
+  allowedHosts: readonly string[],
+): boolean {
+  const host = hostname.toLowerCase();
+  return allowedHosts.some((h) => {
+    const needle = h.toLowerCase();
+    if (needle.includes(".")) {
+      return host === needle || host.endsWith(`.${needle}`);
+    }
+    // Bare tokens like "scontent" / "sns-video": full label or `token-…` label.
+    return host.split(".").some((part) => part === needle || part.startsWith(`${needle}-`));
+  });
 }

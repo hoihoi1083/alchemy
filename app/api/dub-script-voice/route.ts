@@ -21,13 +21,12 @@ import {
   materializeMediaInput,
   pipelineFileUrl,
 } from "@/lib/pipeline/local-input";
-import { jobDir } from "@/lib/pipeline/paths";
+import { createOwnedJobDir } from "@/lib/pipeline/job-owner";
 import { resolveTtsProvider, synthesizeSpeechToFile } from "@/lib/pipeline/tts";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import { chargeTokens, refundTokens } from "@/lib/billing/charge";
 import { TOKEN_COST } from "@/lib/billing/token-costs";
-import { libraryAssetUrl } from "@/lib/storage/durable-media";
-import { persistUserAsset } from "@/lib/storage/persist-asset";
+import { persistAndDurablize } from "@/lib/storage/durable-media";
 
 export const runtime = "nodejs";
 export const maxDuration = 180;
@@ -75,6 +74,7 @@ function parseCaptionLines(raw: unknown): CaptionLine[] {
 async function dubVoiceJob(
   request: Request,
   input: {
+    clerkId: string;
     videoUrl?: string;
     videoFile?: File;
     script?: string;
@@ -89,9 +89,7 @@ async function dubVoiceJob(
     persistUserId?: string;
   },
 ) {
-  const jobId = crypto.randomUUID();
-  const dir = jobDir(jobId);
-  await fs.mkdir(dir, { recursive: true });
+  const { jobId, dir } = await createOwnedJobDir(input.clerkId);
 
   const inputPath = path.join(dir, "input.mp4");
   const narrationWav = path.join(dir, "narration-fit.wav");
@@ -105,7 +103,7 @@ async function dubVoiceJob(
     const buffer = Buffer.from(await input.videoFile.arrayBuffer());
     await fs.writeFile(inputPath, buffer);
   } else if (input.videoUrl?.trim()) {
-    await materializeMediaInput(input.videoUrl.trim(), inputPath);
+    await materializeMediaInput(input.videoUrl.trim(), inputPath, { clerkId: input.clerkId });
   } else {
     throw new Error("video_url or video_file is required.");
   }
@@ -157,7 +155,7 @@ async function dubVoiceJob(
           : 0;
 
     if (input.speechUrl && timedLines.length < 2) {
-      await materializeMediaInput(input.speechUrl, narrationSrc);
+      await materializeMediaInput(input.speechUrl, narrationSrc, { clerkId: input.clerkId });
       ttsVoice = input.voicePreset ? `preview:${input.voicePreset}` : "preview:selected";
     } else {
       const text =
@@ -193,32 +191,19 @@ async function dubVoiceJob(
   }
 
   const videoUrlPipeline = pipelineFileUrl(request, jobId, "with-voice.mp4");
-  let videoUrl = videoUrlPipeline;
-  let assetId: string | undefined;
-
-  if (input.persistUserId) {
-    try {
-      const bytes = await fs.readFile(outputPath);
-      const asset = await persistUserAsset({
-        clerkId: input.persistUserId,
-        kind: "voiceover",
-        sourceUrl: videoUrlPipeline,
-        name: "Voiceover video",
-        bytes,
-        contentType: "video/mp4",
-      });
-      if (asset) {
-        assetId = String(asset._id);
-        videoUrl = libraryAssetUrl(assetId);
-      }
-    } catch {
-      /* durable mirroring is best-effort */
-    }
-  }
+  const bytes = await fs.readFile(outputPath);
+  const videoUrl = await persistAndDurablize({
+    clerkId: input.clerkId,
+    kind: "voiceover",
+    sourceUrl: `voiceover://${jobId}/with-voice.mp4`,
+    fallbackUrl: videoUrlPipeline,
+    bytes,
+    contentType: "video/mp4",
+    name: "Voiceover video",
+  });
 
   return {
     videoUrl,
-    assetId,
     jobId,
     locale: input.locale,
     voice: ttsVoice,
@@ -283,6 +268,7 @@ export async function POST(request: Request) {
 
     try {
       const result = await dubVoiceJob(request, {
+        clerkId: auth.user.userId,
         videoFile: file,
         videoUrl,
         script,
@@ -360,6 +346,7 @@ export async function POST(request: Request) {
 
   try {
     const result = await dubVoiceJob(request, {
+      clerkId: auth.user.userId,
       videoUrl,
       script,
       locale,

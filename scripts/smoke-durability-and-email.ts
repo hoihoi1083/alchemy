@@ -92,7 +92,7 @@ async function smokeDurability() {
   }
   console.log("✓ Got durable library URL (not fal CDN)");
 
-  const media = await readLibraryAssetMedia(durableUrl);
+  const media = await readLibraryAssetMedia(durableUrl, clerkId);
   if (!media) {
     console.error("✗ Could not read bytes back from R2 via library asset");
     return false;

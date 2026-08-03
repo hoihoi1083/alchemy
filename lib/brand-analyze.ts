@@ -1,5 +1,6 @@
 import type { BrandProfile } from "@/lib/brand-profile";
 import { callDeepSeekChat } from "@/lib/deepseek-client";
+import { assertPublicHttpUrl } from "@/lib/pipeline/safe-url";
 
 const MAX_TEXT_CHARS = 14_000;
 const FETCH_TIMEOUT_MS = 12_000;
@@ -27,6 +28,8 @@ function htmlToText(html: string): string {
 
 export async function fetchWebsiteText(url: string): Promise<{ url: string; text: string }> {
   const normalized = normalizeUrl(url);
+  // Any public shop URL is fine — only block private/local SSRF targets.
+  assertPublicHttpUrl(normalized);
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
@@ -43,6 +46,11 @@ export async function fetchWebsiteText(url: string): Promise<{ url: string; text
       throw new Error(
         `Could not fetch website (HTTP ${res.status}). Try another URL or paste social handle only.`,
       );
+    }
+    try {
+      assertPublicHttpUrl(res.url || normalized);
+    } catch {
+      throw new Error("Website redirected to a blocked address. Try another URL.");
     }
     const html = await res.text();
     const text = htmlToText(html).slice(0, MAX_TEXT_CHARS);

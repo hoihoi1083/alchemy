@@ -1,4 +1,8 @@
 import type { CaptionLine } from "@/lib/ad-pack-types";
+import {
+  parseTimingManifest,
+  type VideoTimingManifest,
+} from "@/lib/video-timing-manifest";
 
 export const CAPTION_HANDOFF_KEY = "alchemy-caption-handoff";
 export const CAPTION_DRAFT_KEY = "alchemy-caption-draft";
@@ -7,6 +11,8 @@ export type CaptionHandoff = {
   videoUrl: string;
   captionLines?: CaptionLine[];
   label?: string;
+  /** Optional — studio outputs may include cut structure; user uploads usually omit it. */
+  timingManifest?: VideoTimingManifest;
 };
 
 export type CaptionDraft = {
@@ -22,7 +28,8 @@ export function readCaptionHandoff(): CaptionHandoff | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw) as CaptionHandoff;
     if (!parsed?.videoUrl?.trim()) return null;
-    return parsed;
+    const timingManifest = parseTimingManifest(parsed.timingManifest);
+    return timingManifest ? { ...parsed, timingManifest } : { ...parsed, timingManifest: undefined };
   } catch {
     return null;
   }

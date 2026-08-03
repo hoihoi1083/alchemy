@@ -154,6 +154,18 @@ function isEndCardScene(opts: {
   return opts.sceneCount > 0 && opts.sceneIndex === opts.sceneCount;
 }
 
+/** Drop UI placeholders / Chinese prompt-editor junk so Kling never sees them as Action. */
+export function sanitizeKlingSceneAction(raw?: string): string | undefined {
+  const text = raw?.trim();
+  if (!text) return undefined;
+  if (/自动生成|可编辑\s*Prompt|editable\s*prompt|placeholder/i.test(text)) {
+    return undefined;
+  }
+  // Keep motion beats short; long Chinese marketing copy tends to paint gibberish on screens.
+  if (text.length > 180) return text.slice(0, 180).trim();
+  return text;
+}
+
 export function klingSceneMotionPrompt(opts: {
   sceneIndex: number;
   sceneCount: number;
@@ -166,7 +178,7 @@ export function klingSceneMotionPrompt(opts: {
 }): string {
   const motion = klingMotionFromMeta(opts);
   const theme = opts.theme?.trim();
-  const action = opts.sceneDescription?.trim();
+  const action = sanitizeKlingSceneAction(opts.sceneDescription);
   const endCard = isEndCardScene(opts);
   const logoOn = Boolean(opts.useBrandLogo ?? opts.endWithBrandLogo);
   return [

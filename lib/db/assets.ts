@@ -1,6 +1,8 @@
 import { ObjectId, type WithId } from "mongodb";
 import { getDb } from "@/lib/mongodb";
 import type { AssetKind, DbAsset } from "@/lib/db/types";
+import type { VideoTimingManifest } from "@/lib/video-timing-manifest";
+import { parseTimingManifest } from "@/lib/video-timing-manifest";
 
 export async function listAssetsForUser(
   clerkId: string,
@@ -52,8 +54,10 @@ export async function insertAsset(input: {
   name?: string | null;
   prompt?: string | null;
   sizeBytes?: number | null;
+  timingManifest?: VideoTimingManifest | null;
 }): Promise<WithId<DbAsset>> {
   const db = await getDb();
+  const timing = parseTimingManifest(input.timingManifest) ?? null;
   const doc: DbAsset = {
     clerkId: input.clerkId,
     projectId: input.projectId ?? null,
@@ -64,10 +68,27 @@ export async function insertAsset(input: {
     name: input.name ?? null,
     prompt: input.prompt ?? null,
     sizeBytes: input.sizeBytes ?? null,
+    ...(timing ? { timingManifest: timing } : {}),
     createdAt: new Date(),
   };
   const result = await db.collection<DbAsset>("assets").insertOne(doc);
   return { ...doc, _id: result.insertedId };
+}
+
+export async function updateAssetTiming(
+  assetId: string,
+  timingManifest: VideoTimingManifest,
+): Promise<WithId<DbAsset> | null> {
+  if (!ObjectId.isValid(assetId)) return null;
+  const timing = parseTimingManifest(timingManifest);
+  if (!timing) return null;
+  const db = await getDb();
+  const result = await db.collection<DbAsset>("assets").findOneAndUpdate(
+    { _id: new ObjectId(assetId) },
+    { $set: { timingManifest: timing } },
+    { returnDocument: "after" },
+  );
+  return result ?? null;
 }
 
 export async function updateAssetContent(

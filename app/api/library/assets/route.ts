@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { listAssetsForUser } from "@/lib/db/assets";
 import { isMongoReady, mongoRequiredErrorMessage } from "@/lib/mongodb-production";
 import { requireAppUser } from "@/lib/require-app-user";
+import { parseTimingManifest } from "@/lib/video-timing-manifest";
 
 export const runtime = "nodejs";
 
@@ -23,6 +24,7 @@ export async function GET() {
       createdAt: a.createdAt,
       downloadUrl: `/api/library/download/${String(a._id)}`,
       previewUrl: `/api/library/download/${String(a._id)}?inline=1`,
+      timingManifest: parseTimingManifest(a.timingManifest) ?? undefined,
     })),
   });
 }

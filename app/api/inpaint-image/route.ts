@@ -13,7 +13,7 @@ import {
   buildInpaintFillPrompt,
   isEraseIntent,
 } from "@/lib/inpaint-erase";
-import { jobDir } from "@/lib/pipeline/paths";
+import { createOwnedJobDir } from "@/lib/pipeline/job-owner";
 import { materializeMediaInput, pipelineFileUrl } from "@/lib/pipeline/local-input";
 import { persistAndDurablize } from "@/lib/storage/durable-media";
 
@@ -117,16 +117,14 @@ export async function POST(req: Request) {
     );
   }
 
-  const jobId = crypto.randomUUID();
-  const dir = jobDir(jobId);
-  await fs.mkdir(dir, { recursive: true });
+  const { jobId, dir } = await createOwnedJobDir(auth.user.userId);
   const inputPath = path.join(dir, "inpaint-input.png");
 
   // Materialize source BEFORE charge so we can bill by megapixel (fal $0.05/MP).
   let sourceBytes: Buffer;
   try {
     if (isUsableImageUrl(sourceUrl)) {
-      await materializeMediaInput(sourceUrl!, inputPath);
+      await materializeMediaInput(sourceUrl!, inputPath, { clerkId: auth.user.userId });
       sourceBytes = await fs.readFile(inputPath);
     } else if (imageFile instanceof File && imageFile.size > 0) {
       sourceBytes = Buffer.from(await imageFile.arrayBuffer());

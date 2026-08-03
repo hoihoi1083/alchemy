@@ -434,7 +434,11 @@ export async function POST(request: Request) {
     }
 
     const falUrls = slides.map((s) => s.imageUrl);
-    const archivedUrls = await archiveCampaignSlidesToPipeline(request, falUrls);
+    const archivedUrls = await archiveCampaignSlidesToPipeline(
+      request,
+      falUrls,
+      auth.user.userId,
+    );
     const durableUrls = await persistAndDurablizeMany({
       clerkId: auth.user.userId,
       kind: "image",

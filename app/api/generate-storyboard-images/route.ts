@@ -309,11 +309,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No storyboard scenes to generate." }, { status: 400 });
   }
 
-  const brandLogoFalUrl = brandKit?.logoUrl?.trim()
-    ? await uploadBrandKitLogoToFal(brandKit).catch(() => null)
-    : null;
+  const brandLogoWanted = Boolean(brandKit?.useBrandLogo && brandKit?.logoUrl?.trim());
+  let brandLogoFalUrl: string | null = null;
+  let logoMirrorNote: string | undefined;
+  if (brandLogoWanted && brandKit) {
+    try {
+      brandLogoFalUrl = await uploadBrandKitLogoToFal(brandKit, {
+        clerkId: auth.user.userId,
+      });
+    } catch (e: unknown) {
+      const detail = e instanceof Error ? e.message : "Brand logo mirror failed";
+      console.error("[generate-storyboard-images] brand logo → fal failed", e);
+      logoMirrorNote = `Logo AI composite unavailable (${detail}); using exact PNG stamp when possible.`;
+    }
+  }
   // Opt-in: Mode A = textless still + Nano Banana logo edit (2× image COGS). Sharp stamp = fallback.
-  const useBrandLogo = Boolean(brandKit?.useBrandLogo && brandKit?.logoUrl?.trim());
+  const useBrandLogo = brandLogoWanted;
   const useLogoModeA = Boolean(useBrandLogo && brandLogoFalUrl);
   const passesPerScene = useLogoModeA ? 2 : 1;
   const tokenCost = estimateImageTokens({
@@ -483,6 +494,7 @@ export async function POST(request: Request) {
                 request,
                 [stillUrl],
                 brandKit,
+                auth.user.userId,
                 endCard
                   ? {
                       placement: "center",
@@ -585,6 +597,7 @@ export async function POST(request: Request) {
       creditBalance: balanceForClient,
       logoMode: useLogoModeA ? "mode-a" : useBrandLogo ? "stamp-fallback" : "none",
       logoIntegrated: useBrandLogo,
+      ...(logoMirrorNote ? { logoNote: logoMirrorNote } : {}),
     });
   } catch (e: unknown) {
     await refundTokens(auth.user.userId, tokenCost, {

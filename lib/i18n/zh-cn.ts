@@ -301,14 +301,15 @@ export const zhCn = {
     brandKitLink: "设置品牌套件",
     brandKitBadge: "创作前准备",
     brandKitTitle: "上传一次 Logo，之后每条 Reel 都能用上",
-    brandKitBody: "建议上传透明底 PNG。工作室生成分镜和品牌路径时会用到。",
+    brandKitBody:
+      "建议上传透明底 PNG。视频：勾选「影片静帧使用品牌 Logo」后，分镜／电影感关键帧会自动加 Logo。宣传图请去「编辑图片」自行加。",
     brandKitLogoTip: "提示：接近正方形、Logo 占画面大部分、约 512–1024px。",
     brandKitCta: "继续去工作室",
     toolsTitle: "更多创作工具",
     toolsSubtitle: "品牌套件、图片编辑、字幕和 Pro 画布 — 随时跳入。",
     toolsOpenCta: "打开",
     toolBrandTitle: "品牌套件",
-    toolBrandDesc: "一次存 Logo 和色系，之后每条 Reel／静态图都能用。",
+    toolBrandDesc: "一次存 Logo 和色系 — 视频静帧可自动加；宣传图请去「编辑图片」加。",
     toolEditTitle: "图片编辑",
     toolEditDesc: "为任何图片加字、Logo，微调成品。",
     toolCaptionsTitle: "字幕与音频",
@@ -449,6 +450,8 @@ export const zhCn = {
     checkoutSuccess: "付款成功。Token 几秒内到账 — 如未更新请刷新。",
     checkoutCanceled: "已取消结账，未收费。",
     checkoutError: "无法开始结账。请重试，或联系支持。",
+    subscriptionUpdated: "已更新方案。重复订阅已取消，之后不会收两次费。",
+    alreadySubscribed: "你已有有效订阅。请用「管理账单」更改或取消方案。",
     tokenTitle: "Token 怎么计",
     tokenSubtitle: "Token 是工作室货币。每次生成前会显示所需 token。",
     tokenItems: [
@@ -982,12 +985,15 @@ export const zhCn = {
     storyboardVideoPreflight: "模式：逐场景图生视频 + 拼接（跳过 reference video）",
     klingStoryboardFallbackNote:
       "分镜影片 — 每格静帧变成短片，再拼接成完整片",
+    seedanceToKlingFallbackNote:
+      "Seedance 此请求被阻挡 — 改用 Kling 分镜（每格短片再拼接）",
     klingStoryboardClipCount: "片段 × {n}",
     storyboardDurationLabel: "目标片长",
     storyboardDurationHint: "会影响分镜场景数量。改咗片长请重新生成场景图。",
     storyboardAllScenesHint:
       "场景图会出无字版本（方便做片）。画面字会在出片后自动烧录做字幕。",
     storyboardCaptionsAutoNote: "已自动烧录分镜文案做字幕",
+    storyboardCaptionsReadyNote: "分镜文案已备好 — 去字幕工作室编辑时间、旁白并烧录",
     storyboardAllScenesImageHint: "全部场景会用于影片 — 唔使喺下面拣「版本」。",
     storyboardTrimDurationLabel: "片长裁剪预设",
     storyboardSceneCountLabel: "场景数量",
@@ -1423,6 +1429,7 @@ export const zhCn = {
       savedNote: "品牌套件已保存到账户。",
       localOnlyNote: "已保存在本机（登录 + MongoDB 可云端同步）。",
       addLogoToCanvas: "加入品牌 Logo",
+      clearLogo: "移除 Logo",
     },
     pickCampaignSlideLabel: "拣一张继续（或全部下载）",
     pickTeachingCarouselSlideLabel: "教学轮播 — 拣一张预览（全部可下载）",
@@ -2211,18 +2218,28 @@ export const zhCn = {
     videoFailed: "UGC 视频生成失败。",
   },
   captions: {
-    badge: "独立工具 · 无需重新生成视频",
+    badge: "后期工作室 · 任何视频",
     title: "字幕与音频工作室",
     subtitle:
-      "从作品库选 Reels — 添加 BGM、口播配音并烧录字幕。与向导后期相同，无需重新生成视频。",
-    uploadTitle: "视频来源",
+      "从作品库或你自己的视频开始 — 改文案、加 BGM／口播，再烧录字幕。片长不限。",
+    uploadTitle: "加入视频",
     uploadHint:
       "从作品库选片（studio 生成会自动保存），或从 studio 完成页打开字幕工作室。",
-    chooseFile: "选择视频文件",
+    uploadHintAny:
+      "从作品库选择、上传你自己的 MP4，或从 Studio 完成页带着成品来这里。",
+    anyLengthNote:
+      "片长随意 — 会读取文件真实时长。多段拼接片会显示场次切开标记。",
+    chooseFile: "上传视频文件",
     chooseFromLibrary: "从作品库选择",
     changeVideo: "更换视频（作品库）",
     sourceFromStudio: "来自 studio",
     sourceFromLibrary: "来自作品库",
+    phaseScript: "1 · 文案",
+    phaseAudio: "2 · 旁白与音乐",
+    phaseBurn: "3 · 烧录",
+    cutsLabel: "{n} 段",
+    timingFromVideo: "时间来自视频",
+    timingEstimated: "时间为估算",
     largeFileHint:
       "大文件要用直传云端（R2 CORS）或「从作品库选择」— 服务器上传上限约 4.5MB。",
     uploadNeedCorsOrLibrary:
@@ -2261,6 +2278,10 @@ export const zhCn = {
     fitCaptionsToVoice: "对齐口播时长",
     fitCaptionsNeedVoice: "请先生成口播预听，再对齐字幕时间。",
     fitCaptionsToVoiceDone: "字幕时间已对齐口播（约 {sec} 秒）。片尾无对白保持静音。",
+    voiceLongerThanVideo:
+      "口播（约 {voice}s）长过可用视频（约 {video}s）。字幕已压到视频长度；请缩短文案或少剪一点。",
+    voiceFittedToVoice: "字幕时间已对齐口播（约 {voice}s）。视频尾段约 {tail}s 会保持静音。",
+    voiceFittedCapped: "口播（约 {voice}s）超过视频（约 {video}s）— 字幕已压到视频长度。",
     applyBtn: "烧录字幕到视频",
     applying: "烧录字幕中…",
     appliedNote: "字幕已烧录到视频 — 请拖动播放器检查每个时段。",
@@ -2279,8 +2300,9 @@ export const zhCn = {
     invalidVideoType: "请选择视频文件（MP4、WebM、MOV）。",
     reeditHint: "字幕文字会在浏览器为此视频保存。要开始新项目，",
     studioLink: "打开 studio",
-    openFromDone: "加 BGM／字幕",
-    doneHint: "先下载无声视频，或打开字幕和音频工作室加音乐和文字。",
+    openFromDone: "编辑字幕与音频",
+    doneHint:
+      "下载干净视频，或打开字幕工作室改文案、旁白、音乐并烧录 — 之后也可以上传任何视频来编辑。",
     styleLabel: "字幕样式",
     styleHint: "烧录字幕的预设颜色和粗细（overlay 模式）。",
     audioTitle: "背景音乐与口播",
@@ -2300,6 +2322,9 @@ export const zhCn = {
     audioBgmLabel: "音乐曲目",
     audioApplyBgm: "添加 BGM",
     audioApplyingBgm: "正在添加 BGM…",
+    audioReplaceOriginal: "替换原视频声音",
+    audioReplaceOriginalHint:
+      "关闭时会保留上传视频原声，BGM 混在底下。开启则输出以音乐为主。",
     audioVoicePlaceholder: "完整口播稿（可以长过画面字幕）",
     audioApplyVoice: "混入口播",
     audioApplyingVoice: "混音中…",
@@ -2447,10 +2472,13 @@ export const zhCn = {
     cleanAcceptBtn: "使用此图，继续加字",
     cleanRetryBtn: "不满意，再试",
     cleanApplyNote: "清理完成 — 可以继续加你自己的文字和 Logo。",
+    cleanFillNote: "填充完成 — 可以继续加你自己的文字和 Logo。",
     workflowNote: "建议流程：Studio 生成 → Wizard 快速修正 → 此处擦除 → 第 3 步加字。",
     reeditHint: "图层配置会保存在浏览器（同一张图）。",
     studioHint: "需要 AI 生成图片？",
     studioLink: "打开 Studio",
+    sourcePreviewFailed: "无法加载图片预览。请检查网络或再试一次。",
+    retryPreview: "重试",
     openFromDone: "为图片加字和 Logo",
     doneHint: "用已生成的宣传图打开画布 — 添加标题和品牌 Logo。",
     editAnotherHint:
@@ -2849,9 +2877,9 @@ export const zhCn = {
       titleAccent: "影片详情",
       hint: "填写文案、上传产品照、写／确认动态 prompt、选择时长，再生成无声短片。",
       scenesReadyHint:
-        "场景图已准备 — 选择时长和分辨率，再串成一条无声短片（字幕之后再加）。",
+        "场景图已准备 — 选择每场 Kling 时长（5 秒或 10 秒），再串成一条无声短片（字幕之后再加）。",
       scenesReadyTitle: "分镜场景已准备",
-      scenesReadyBody: "这些静帧会串成短片。调好影片设定后再生成。",
+      scenesReadyBody: "这些静帧会串成短片。调好 Kling 每场时长后再生成。",
       assistantHint:
         "上传产品照 → AI 写动态 prompt → 检查后再生成（无声片；字幕之后再加）。",
       assistantTitle: "AI 动态 Prompt",
@@ -2894,6 +2922,11 @@ export const zhCn = {
       dragDrop: "上传",
       settingsTitle: "影片设定",
       settingsHint: "时长和分辨率会影响 token 费用。",
+      klingSettingsHint:
+        "Kling 会把每张静帧变成 5 秒或 10 秒短片再拼接。分辨率／快速模式不适用。",
+      klingClipLabel: "每场时长",
+      klingClipHint: "Kling 每场只支持 5 秒或 10 秒 — 不是 Seedance 那种 4–12 秒总时长。",
+      klingTotalLabel: "合计约 {total} 秒（{n} × {clip} 秒）",
       costLabel: "预计约 {n} tokens",
       tipTitle: "更好影片小提示",
       tip1: {
@@ -2907,6 +2940,18 @@ export const zhCn = {
       tip3: {
         title: "留意时长和费用",
         body: "越长、越高分辨率越贵 — 建议先试 6–8 秒。",
+      },
+      klingTip1: {
+        title: "图下有剧本",
+        body: "AI 场景文案显示故事节拍 — 之后可以烧成字幕。",
+      },
+      klingTip2: {
+        title: "先试 5 秒",
+        body: "每场先用 5 秒再试 10 秒 — 更便宜，通常已够动态。",
+      },
+      klingTip3: {
+        title: "总长 = 场数 × 时长",
+        body: "四场各 5 秒 ≈ 20 秒拼接片，不是 Seedance 那条 8 秒片。",
       },
       conceptTip1: {
         title: "照片可以不传",

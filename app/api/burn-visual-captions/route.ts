@@ -7,7 +7,7 @@ import { requireAppUser } from "@/lib/require-app-user";
 import { ensureFfmpeg, getMediaDurationSeconds } from "@/lib/pipeline/ffmpeg";
 import { parseVisualCaptionClips } from "@/lib/pipeline/visual-caption-clips";
 import { burnVisualCaptionsOverlay } from "@/lib/pipeline/visual-caption-burn";
-import { jobDir } from "@/lib/pipeline/paths";
+import { createOwnedJobDir } from "@/lib/pipeline/job-owner";
 import { materializeMediaInput, pipelineFileUrl } from "@/lib/pipeline/local-input";
 import { persistAndDurablize } from "@/lib/storage/durable-media";
 import type { VisualCaptionClip } from "@/lib/visual-caption-types";
@@ -24,9 +24,7 @@ async function burnVisualJob(
     clips: VisualCaptionClip[];
   },
 ) {
-  const jobId = crypto.randomUUID();
-  const dir = jobDir(jobId);
-  await fs.mkdir(dir, { recursive: true });
+  const { jobId, dir } = await createOwnedJobDir(input.clerkId);
 
   const inputPath = path.join(dir, "input.mp4");
   const outputPath = path.join(dir, "visual-subtitled.mp4");
@@ -37,7 +35,7 @@ async function burnVisualJob(
     const buffer = Buffer.from(await input.videoFile.arrayBuffer());
     await fs.writeFile(inputPath, buffer);
   } else if (input.videoUrl?.trim()) {
-    await materializeMediaInput(input.videoUrl.trim(), inputPath);
+    await materializeMediaInput(input.videoUrl.trim(), inputPath, { clerkId: input.clerkId });
   } else {
     throw new Error("Provide video_file or video_url.");
   }

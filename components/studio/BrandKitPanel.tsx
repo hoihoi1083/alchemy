@@ -5,6 +5,7 @@ import { useLocale } from "@/components/LocaleProvider";
 import { PRODUCT_LOGO_SRC } from "@/lib/brand";
 import {
   DEFAULT_BRAND_KIT,
+  hydrateBrandKitFromCloud,
   loadBrandKitFromStorage,
   saveBrandKitToStorage,
   type BrandKit,
@@ -17,6 +18,31 @@ type BrandKitPanelProps = {
   variant?: "studio" | "light" | "landing";
 };
 
+/** Compress oversized logos so unsigned/local-only fallbacks fit in localStorage. */
+async function fileToCompressedDataUrl(file: File, maxSide = 512): Promise<string> {
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+  const w = Math.max(1, Math.round(bitmap.width * scale));
+  const h = Math.max(1, Math.round(bitmap.height * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(new Error("Could not read logo file."));
+      reader.readAsDataURL(file);
+    });
+  }
+  ctx.clearRect(0, 0, w, h);
+  ctx.drawImage(bitmap, 0, 0, w, h);
+  bitmap.close();
+  // Prefer PNG to keep transparency for stamps.
+  return canvas.toDataURL("image/png");
+}
+
 export function BrandKitPanel({
   disabled,
   onChange,
@@ -28,6 +54,8 @@ export function BrandKitPanel({
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const kitRef = useRef(kit);
+  kitRef.current = kit;
   const light = variant === "light" || variant === "landing";
   const landing = variant === "landing";
 
@@ -35,27 +63,21 @@ export function BrandKitPanel({
     const local = loadBrandKitFromStorage();
     setKit(local);
     onChange?.(local);
-    void (async () => {
-      try {
-        const res = await fetch("/api/brand-kit", { credentials: "include" });
-        const data = await res.json();
-        if (data.kit) {
-          setKit(data.kit);
-          saveBrandKitToStorage(data.kit);
-          onChange?.(data.kit);
-        }
-      } catch {
-        /* local fallback */
-      }
-    })();
+    void hydrateBrandKitFromCloud(local).then((merged) => {
+      setKit(merged);
+      onChange?.(merged);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- load once
   }, []);
 
-  function patch(next: Partial<BrandKit>) {
-    const updated = { ...kit, ...next, updatedAt: new Date().toISOString() };
+  function applyKit(updated: BrandKit) {
     setKit(updated);
     saveBrandKitToStorage(updated);
     onChange?.(updated);
+  }
+
+  function patch(next: Partial<BrandKit>) {
+    applyKit({ ...kitRef.current, ...next, updatedAt: new Date().toISOString() });
   }
 
   async function persist() {
@@ -66,13 +88,15 @@ export function BrandKitPanel({
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ kit }),
+        body: JSON.stringify({ kit: kitRef.current }),
       });
-      const data = await res.json();
+      const data = (await res.json()) as { kit?: BrandKit; error?: string };
+      if (!res.ok) {
+        setNote(typeof data.error === "string" ? data.error : w.localOnlyNote);
+        return;
+      }
       if (data.kit) {
-        setKit(data.kit);
-        saveBrandKitToStorage(data.kit);
-        onChange?.(data.kit);
+        applyKit(data.kit);
       }
       setNote(w.savedNote);
     } catch {
@@ -82,11 +106,86 @@ export function BrandKitPanel({
     }
   }
 
-  function onLogoFile(file: File | null) {
+  async function onLogoFile(file: File | null) {
     if (!file?.type.startsWith("image/")) return;
-    const reader = new FileReader();
-    reader.onload = () => patch({ logoUrl: String(reader.result) });
-    reader.readAsDataURL(file);
+    setBusy(true);
+    setNote(null);
+    try {
+      const fd = new FormData();
+      fd.set("file", file);
+      fd.set("kind", "image");
+      const res = await fetch("/api/library/upload", {
+        method: "POST",
+        body: fd,
+        credentials: "include",
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { downloadUrl?: string };
+        if (typeof data.downloadUrl === "string" && data.downloadUrl) {
+          const updated: BrandKit = {
+            ...kitRef.current,
+            logoUrl: data.downloadUrl,
+            updatedAt: new Date().toISOString(),
+          };
+          applyKit(updated);
+          // Keep cloud in sync so remount cannot pull an older kit without logo.
+          void fetch("/api/brand-kit", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ kit: updated }),
+          })
+            .then(async (saveRes) => {
+              if (!saveRes.ok) return;
+              const saveData = (await saveRes.json()) as { kit?: BrandKit };
+              if (saveData.kit) applyKit(saveData.kit);
+            })
+            .catch(() => {
+              /* local durable URL is enough */
+            });
+          return;
+        }
+      }
+      // Unsigned / storage unavailable — compressed data URL local-only fallback.
+      const dataUrl = await fileToCompressedDataUrl(file);
+      patch({ logoUrl: dataUrl });
+      setNote(w.localOnlyNote);
+    } catch {
+      try {
+        const dataUrl = await fileToCompressedDataUrl(file);
+        patch({ logoUrl: dataUrl });
+        setNote(w.localOnlyNote);
+      } catch {
+        setNote(w.localOnlyNote);
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function clearLogo() {
+    const updated: BrandKit = {
+      ...kitRef.current,
+      logoUrl: null,
+      useBrandLogo: false,
+      updatedAt: new Date().toISOString(),
+    };
+    applyKit(updated);
+    setNote(null);
+    void fetch("/api/brand-kit", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ kit: updated }),
+    })
+      .then(async (saveRes) => {
+        if (!saveRes.ok) return;
+        const saveData = (await saveRes.json()) as { kit?: BrandKit };
+        if (saveData.kit) applyKit(saveData.kit);
+      })
+      .catch(() => {
+        /* local clear is enough */
+      });
   }
 
   const shell = landing
@@ -165,18 +264,28 @@ export function BrandKitPanel({
           accept="image/*"
           className="hidden"
           onChange={(e) => {
-            onLogoFile(e.target.files?.[0] ?? null);
+            void onLogoFile(e.target.files?.[0] ?? null);
             e.target.value = "";
           }}
         />
         <button
           type="button"
-          disabled={disabled}
+          disabled={disabled || busy}
           onClick={() => logoInputRef.current?.click()}
           className={btnSecondary}
         >
-          {kit.logoUrl ? w.changeLogo : w.uploadLogo}
+          {busy ? w.saving : kit.logoUrl ? w.changeLogo : w.uploadLogo}
         </button>
+        {kit.logoUrl ? (
+          <button
+            type="button"
+            disabled={disabled || busy}
+            onClick={() => clearLogo()}
+            className={btnSecondary}
+          >
+            {w.clearLogo}
+          </button>
+        ) : null}
         {!landing && kit.logoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={kit.logoUrl} alt="" className={logoPreview} />

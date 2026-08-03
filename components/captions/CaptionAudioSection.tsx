@@ -26,6 +26,8 @@ type Props = {
   musicGenerateBusy: boolean;
   onGenerateAiMusic: () => void;
   aiMusicGenerateFirstHint: string;
+  replaceSourceAudio: boolean;
+  onReplaceSourceAudioChange: (v: boolean) => void;
   onApplyBgm: () => void;
   voiceoverEnabled: boolean;
   onVoiceoverEnabledChange: (v: boolean) => void;
@@ -75,6 +77,8 @@ type Props = {
     selected: string;
     applyBgm: string;
     applyingBgm: string;
+    audioReplaceOriginal: string;
+    audioReplaceOriginalHint: string;
     libraryPreviewLabel: string;
     voiceSection: string;
     voicePreviewHint: string;
@@ -116,6 +120,8 @@ export function CaptionAudioSection({
   musicGenerateBusy,
   onGenerateAiMusic,
   aiMusicGenerateFirstHint,
+  replaceSourceAudio,
+  onReplaceSourceAudioChange,
   onApplyBgm,
   voiceoverEnabled,
   onVoiceoverEnabledChange,
@@ -352,6 +358,22 @@ export function CaptionAudioSection({
             ))}
           </div>
         )}
+
+        <label className="flex items-start gap-2 rounded-lg border border-emerald-800/40 bg-slate-950/30 p-2 text-xs text-slate-200">
+          <input
+            type="checkbox"
+            checked={replaceSourceAudio}
+            disabled={disabled || busy}
+            onChange={(e) => onReplaceSourceAudioChange(e.target.checked)}
+            className="mt-0.5"
+          />
+          <span>
+            <span className="block font-medium text-emerald-100">{t.audioReplaceOriginal}</span>
+            <span className="mt-0.5 block text-[10px] text-emerald-200/70">
+              {t.audioReplaceOriginalHint}
+            </span>
+          </span>
+        </label>
 
         <button
           type="button"

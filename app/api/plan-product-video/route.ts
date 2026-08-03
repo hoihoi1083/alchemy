@@ -1,6 +1,7 @@
 import { ApiError, fal } from "@fal-ai/client";
 import { NextResponse } from "next/server";
 import { requireAppUser } from "@/lib/require-app-user";
+import { assertFreeDeepSeekQuota } from "@/lib/rate-limit-deepseek";
 import type { PromptMarket, SubjectFraming } from "@/lib/prompt-variables";
 import { planProductVideoFromVision } from "@/lib/product-video-plan";
 import {
@@ -38,6 +39,8 @@ function isKitSlot(value: string): value is ProductVideoKitSlot {
 export async function POST(request: Request) {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
+  const quota = await assertFreeDeepSeekQuota(auth.user.userId);
+  if (!quota.ok) return quota.response;
 
   const key = process.env.FAL_KEY?.trim();
   if (!key) {

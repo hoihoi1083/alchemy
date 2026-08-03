@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
+import type Stripe from "stripe";
 import { PLAN_DEFINITIONS, normalizeUserPlan } from "@/lib/billing/plans";
 import type { DbUser } from "@/lib/db/types";
 import { getDb, isMongoConfigured } from "@/lib/mongodb";
 import { requireAppUser } from "@/lib/require-app-user";
+import { setUserSubscription } from "@/lib/stripe/billing-sync";
 import { appBaseUrl, getStripe, isStripeConfigured } from "@/lib/stripe/client";
 import {
   isBillingInterval,
@@ -20,6 +22,87 @@ type Body = {
   plan?: string;
   interval?: string;
 };
+
+const BILLABLE_SUB_STATUSES = new Set<Stripe.Subscription.Status>([
+  "active",
+  "trialing",
+  "past_due",
+]);
+
+async function listBillableSubscriptions(
+  stripe: Stripe,
+  customerId: string,
+): Promise<Stripe.Subscription[]> {
+  const listed = await stripe.subscriptions.list({
+    customer: customerId,
+    status: "all",
+    limit: 20,
+  });
+  return listed.data.filter((sub) => BILLABLE_SUB_STATUSES.has(sub.status));
+}
+
+/**
+ * One paid subscription per customer. If they already subscribe, switch the
+ * primary sub to the requested price and cancel duplicate actives immediately
+ * so Stripe does not bill two plans.
+ */
+async function switchExistingSubscription(opts: {
+  stripe: Stripe;
+  clerkId: string;
+  customerId: string;
+  preferredSubId: string | null | undefined;
+  plan: PaidPlan;
+  interval: BillingInterval;
+  price: string;
+}): Promise<{ subscriptionId: string; renewsAt: Date | null }> {
+  const billable = await listBillableSubscriptions(opts.stripe, opts.customerId);
+  if (!billable.length) {
+    throw new Error("NO_ACTIVE_SUB");
+  }
+
+  const primary =
+    billable.find((sub) => sub.id === opts.preferredSubId) ??
+    [...billable].sort((a, b) => (b.created ?? 0) - (a.created ?? 0))[0];
+
+  for (const extra of billable) {
+    if (extra.id === primary.id) continue;
+    try {
+      await opts.stripe.subscriptions.cancel(extra.id, {
+        invoice_now: false,
+        prorate: true,
+      });
+    } catch (e: unknown) {
+      console.error(
+        "[stripe] failed to cancel duplicate subscription",
+        extra.id,
+        e instanceof Error ? e.message : e,
+      );
+    }
+  }
+
+  const itemId = primary.items.data[0]?.id;
+  if (!itemId) {
+    throw new Error("Active subscription has no price item.");
+  }
+
+  const updated = await opts.stripe.subscriptions.update(primary.id, {
+    items: [{ id: itemId, price: opts.price }],
+    metadata: {
+      ...primary.metadata,
+      clerkId: opts.clerkId,
+      plan: opts.plan,
+      interval: opts.interval,
+    },
+    proration_behavior: "create_prorations",
+    cancel_at_period_end: false,
+  });
+
+  const periodEnd = updated.items.data[0]?.current_period_end ?? null;
+  return {
+    subscriptionId: updated.id,
+    renewsAt: periodEnd ? new Date(periodEnd * 1000) : null,
+  };
+}
 
 export async function POST(request: Request) {
   try {
@@ -106,6 +189,50 @@ export async function POST(request: Request) {
         { error: `Missing Stripe price for ${plan} ${interval}` },
         { status: 503 },
       );
+    }
+
+    // Already subscribed → switch plan in-place (never stack a second Stripe sub).
+    if (user?.stripeCustomerId) {
+      const billable = await listBillableSubscriptions(stripe, user.stripeCustomerId);
+      if (billable.length > 0) {
+        try {
+          const switched = await switchExistingSubscription({
+            stripe,
+            clerkId,
+            customerId: user.stripeCustomerId,
+            preferredSubId: user.stripeSubscriptionId,
+            plan,
+            interval,
+            price,
+          });
+          await setUserSubscription({
+            clerkId,
+            plan,
+            stripeCustomerId: user.stripeCustomerId,
+            stripeSubscriptionId: switched.subscriptionId,
+            planRenewsAt: switched.renewsAt,
+          });
+          return NextResponse.json({
+            updated: true,
+            plan,
+            interval,
+            subscriptionId: switched.subscriptionId,
+          });
+        } catch (e: unknown) {
+          const message = e instanceof Error ? e.message : "Could not update subscription.";
+          if (message !== "NO_ACTIVE_SUB") {
+            console.error("[stripe] switch subscription failed:", message);
+            return NextResponse.json(
+              {
+                error:
+                  "You already have an active subscription. Open Manage billing to change plans.",
+                code: "already_subscribed",
+              },
+              { status: 409 },
+            );
+          }
+        }
+      }
     }
 
     const session = await stripe.checkout.sessions.create({

@@ -4,6 +4,7 @@ import { planCinematicReel } from "@/lib/cinematic-reel-plan";
 import { resolveArtStyleId } from "@/lib/art-style";
 import type { PromptMarket } from "@/lib/prompt-variables";
 import { requireAppUser } from "@/lib/require-app-user";
+import { assertFreeDeepSeekQuota } from "@/lib/rate-limit-deepseek";
 import { SERVER_ERRORS } from "@/lib/api/server-errors";
 
 export const runtime = "nodejs";
@@ -12,6 +13,8 @@ export const maxDuration = 90;
 export async function POST(request: Request) {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
+  const quota = await assertFreeDeepSeekQuota(auth.user.userId);
+  if (!quota.ok) return quota.response;
 
   let body: {
     product?: string;

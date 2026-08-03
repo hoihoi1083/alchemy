@@ -11,6 +11,8 @@ type CaptionTimelineL2Props = {
   videoTrimIn: number;
   videoTrimOut: number;
   beatMarkers: number[];
+  /** Interior cut times from stitch / storyboard (optional for user uploads). */
+  cutMarkers?: number[];
   snapToBeats: boolean;
   beatStatus?: string | null;
   onSelect: (index: number) => void;
@@ -42,6 +44,7 @@ export function CaptionTimelineL2({
   videoTrimIn,
   videoTrimOut,
   beatMarkers,
+  cutMarkers = [],
   snapToBeats,
   beatStatus,
   onSelect,
@@ -74,6 +77,12 @@ export function CaptionTimelineL2({
     [safeDuration, snapToBeats, beatMarkers],
   );
 
+  const deltaSecFromStartX = useCallback(
+    (clientX: number, startX: number) =>
+      Math.round((secFromClientX(clientX) - secFromClientX(startX)) * 10) / 10,
+    [secFromClientX],
+  );
+
   const onPointerMove = useCallback(
     (e: PointerEvent) => {
       const drag = dragRef.current;
@@ -84,25 +93,27 @@ export function CaptionTimelineL2({
       } else if (drag.kind === "video-out") {
         onVideoTrimChange(videoTrimIn, Math.max(sec, videoTrimIn + 0.2));
       } else if (drag.kind === "caption-start") {
-        const line = lines[drag.index];
-        if (!line) return;
-        onUpdate(drag.index, { startSec: Math.min(sec, line.endSec - 0.1) });
+        onUpdate(drag.index, { startSec: Math.min(sec, drag.origEnd - 0.1) });
       } else if (drag.kind === "caption-end") {
-        const line = lines[drag.index];
-        if (!line) return;
-        onUpdate(drag.index, { endSec: Math.max(sec, line.startSec + 0.1) });
+        onUpdate(drag.index, { endSec: Math.max(sec, drag.origStart + 0.1) });
       } else if (drag.kind === "caption-move") {
-        const line = lines[drag.index];
-        if (!line) return;
         const len = drag.origEnd - drag.origStart;
-        const delta = sec - drag.origStart;
+        const delta = deltaSecFromStartX(e.clientX, drag.startX);
         onUpdate(drag.index, {
-          startSec: Math.max(0, Math.min(safeDuration - len, line.startSec + delta)),
-          endSec: Math.max(len, Math.min(safeDuration, line.endSec + delta)),
+          startSec: Math.max(0, Math.min(safeDuration - len, drag.origStart + delta)),
+          endSec: Math.max(len, Math.min(safeDuration, drag.origEnd + delta)),
         });
       }
     },
-    [lines, onUpdate, onVideoTrimChange, secFromClientX, safeDuration, videoTrimIn, videoTrimOut],
+    [
+      deltaSecFromStartX,
+      onUpdate,
+      onVideoTrimChange,
+      secFromClientX,
+      safeDuration,
+      videoTrimIn,
+      videoTrimOut,
+    ],
   );
 
   const endDrag = useCallback(() => {
@@ -184,6 +195,14 @@ export function CaptionTimelineL2({
               onPointerDown={(e) => startDrag("video-out", -1, e)}
               aria-label={labels.trimVideoOut}
             />
+            {cutMarkers.map((c) => (
+              <div
+                key={`cut-video-${c}`}
+                className="pointer-events-none absolute top-0 bottom-0 z-[1] w-0.5 bg-fuchsia-400/90"
+                style={{ left: pct(c) }}
+                title={`Cut ${c.toFixed(1)}s`}
+              />
+            ))}
           </div>
         </div>
 
@@ -220,6 +239,13 @@ export function CaptionTimelineL2({
                 key={`beat-cap-${b}`}
                 className="pointer-events-none absolute top-0 bottom-0 w-px bg-amber-500/25"
                 style={{ left: pct(b) }}
+              />
+            ))}
+            {cutMarkers.map((c) => (
+              <div
+                key={`cut-cap-${c}`}
+                className="pointer-events-none absolute top-0 bottom-0 z-[1] w-0.5 bg-fuchsia-400/70"
+                style={{ left: pct(c) }}
               />
             ))}
             {lines.map((line, index) => {

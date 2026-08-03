@@ -4,6 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { jobDir, isValidJobId } from "@/lib/pipeline/paths";
 import { PIPELINE_FILES } from "@/lib/pipeline/local-input";
+import { assertJobOwnedBy } from "@/lib/pipeline/job-owner";
 
 const ALLOWED_FILES = PIPELINE_FILES;
 
@@ -30,6 +31,9 @@ export async function GET(
     return NextResponse.json({ error: "File not found." }, { status: 404 });
   }
   if (!ALLOWED_FILES.has(file)) {
+    return NextResponse.json({ error: "File not found." }, { status: 404 });
+  }
+  if (!(await assertJobOwnedBy(jobId, userId))) {
     return NextResponse.json({ error: "File not found." }, { status: 404 });
   }
 

@@ -4,8 +4,10 @@ import { useEffect, useId, type ChangeEvent } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 import { VideoSettingsPanel } from "@/components/VideoSettingsPanel";
 import { BrandWebsitePanel } from "@/components/studio/BrandWebsitePanel";
+import { KlingStoryboardSettings } from "@/components/studio/KlingStoryboardSettings";
 import { useWizard } from "@/components/studio/WizardContext";
 import { estimateVideoTokens } from "@/lib/billing/token-costs";
+import { inferKlingClipFromScenes, storyboardSceneDisplayCopy } from "@/lib/storyboard-scene-copy";
 import { isBrandVideoStyle, isCreativeVideoStyle } from "@/lib/visual-styles";
 
 const PANEL_CSS = `
@@ -271,11 +273,28 @@ export function PreVideoSetupPanel({
   const durationRaw = wizard.videoSettings.duration;
   const durationNum =
     durationRaw === "auto" ? 8 : typeof durationRaw === "number" ? durationRaw : Number(durationRaw) || 8;
-  const tokenEstimate = estimateVideoTokens({
-    resolution: wizard.videoSettings.resolution,
-    fast: Boolean(wizard.videoSettings.fast),
-    duration: durationRaw === "auto" ? "auto" : durationNum,
-  });
+  const klingClipSec = scenesReady
+    ? inferKlingClipFromScenes(wizard.storyboardScenes)
+    : null;
+  const tokenEstimate = scenesReady
+    ? 0
+    : estimateVideoTokens({
+        resolution: wizard.videoSettings.resolution,
+        fast: Boolean(wizard.videoSettings.fast),
+        duration: durationRaw === "auto" ? "auto" : durationNum,
+      });
+
+  const tips = scenesReady
+    ? [pv.klingTip1, pv.klingTip2, pv.klingTip3]
+    : isConcept
+      ? [pv.conceptTip1, pv.conceptTip2, pv.conceptTip3]
+      : isReference
+        ? [pv.refTip1, pv.refTip2, pv.tip3]
+        : isUgc
+          ? [pv.ugcTip1, pv.ugcTip2, pv.tip3]
+          : isQuickAssistant
+            ? [pv.assistantTip1, pv.assistantTip2, pv.tip3]
+            : [pv.tip1, pv.tip2, pv.tip3];
 
   const mainThumb = wizard.uploadPreviewUrl
     ? { url: wizard.uploadPreviewUrl, name: wizard.productPhoto?.name ?? "product" }
@@ -344,16 +363,6 @@ export function PreVideoSetupPanel({
             ? pv.assistantHint
             : pv.hint;
 
-  const tips = isConcept
-    ? [pv.conceptTip1, pv.conceptTip2, pv.conceptTip3]
-    : isReference
-      ? [pv.refTip1, pv.refTip2, pv.tip3]
-      : isUgc
-        ? [pv.ugcTip1, pv.ugcTip2, pv.tip3]
-        : isQuickAssistant
-          ? [pv.assistantTip1, pv.assistantTip2, pv.tip3]
-          : [pv.tip1, pv.tip2, pv.tip3];
-
   const generateBlock = (
     <>
       {generateBlockMessage ? (
@@ -410,23 +419,43 @@ export function PreVideoSetupPanel({
                   </div>
                 </div>
                 {wizard.storyboardScenes.length > 0 ? (
-                  <div className="flex gap-2 overflow-x-auto pb-1">
-                    {wizard.storyboardScenes.map((scene, i) => (
-                      <div
-                        key={scene.imageUrl ?? i}
-                        className="relative h-28 w-16 shrink-0 overflow-hidden rounded-lg border border-violet-200 bg-slate-100"
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={scene.imageUrl}
-                          alt={`${m.wizard.storyboardSceneLabel} ${scene.imageIndex}`}
-                          className="h-full w-full object-cover"
-                        />
-                        <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1 text-[10px] font-medium text-white">
-                          {scene.imageIndex}
-                        </span>
-                      </div>
-                    ))}
+                  <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+                    {wizard.storyboardScenes.map((scene, i) => {
+                      const copy = storyboardSceneDisplayCopy(scene);
+                      const script = copy.caption || copy.beat;
+                      return (
+                        <div
+                          key={scene.imageUrl ?? i}
+                          className="min-w-0 overflow-hidden rounded-xl border border-violet-200 bg-slate-50"
+                        >
+                          <div className="relative aspect-[4/5] bg-slate-100">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={scene.imageUrl}
+                              alt={`${m.wizard.storyboardSceneLabel} ${scene.imageIndex}`}
+                              className="h-full w-full object-cover"
+                            />
+                            <span className="absolute left-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-violet-600 text-[10px] font-bold text-white">
+                              {scene.imageIndex}
+                            </span>
+                          </div>
+                          {script ? (
+                            <div className="space-y-0.5 px-2 py-1.5">
+                              {copy.caption ? (
+                                <p className="text-[11px] font-medium leading-snug text-slate-800 line-clamp-3">
+                                  {copy.caption}
+                                </p>
+                              ) : null}
+                              {copy.beat ? (
+                                <p className="text-[10px] leading-snug text-slate-500 line-clamp-2">
+                                  {copy.beat}
+                                </p>
+                              ) : null}
+                            </div>
+                          ) : null}
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : wizard.imageUrl ? (
                   <div className="relative h-36 w-20 overflow-hidden rounded-lg border border-violet-200">
@@ -837,19 +866,37 @@ export function PreVideoSetupPanel({
                   </span>
                   <div className="min-w-0">
                     <h3 className="pv-card-title">{pv.settingsTitle}</h3>
-                    <p className="mt-0.5 text-xs text-slate-500">{pv.settingsHint}</p>
+                    <p className="mt-0.5 text-xs text-slate-500">
+                      {scenesReady ? pv.klingSettingsHint : pv.settingsHint}
+                    </p>
                   </div>
                 </div>
-                <VideoSettingsPanel
-                  compact
-                  setup
-                  accent="violet"
-                  value={wizard.videoSettings}
-                  onChange={wizard.setVideoSettings}
-                />
-                <p className="pv-cost mt-3">
-                  {pv.costLabel.replace("{n}", String(tokenEstimate))}
-                </p>
+                {scenesReady && klingClipSec != null ? (
+                  <KlingStoryboardSettings
+                    sceneCount={wizard.storyboardScenes.length}
+                    clipSec={klingClipSec}
+                    scenes={wizard.storyboardScenes}
+                    onClipChange={(clip) => wizard.applyKlingStoryboardClipDuration(clip)}
+                    label={pv.klingClipLabel}
+                    hint={pv.klingClipHint}
+                    totalLabel={pv.klingTotalLabel}
+                    costLabel={pv.costLabel}
+                    accent="violet"
+                  />
+                ) : (
+                  <>
+                    <VideoSettingsPanel
+                      compact
+                      setup
+                      accent="violet"
+                      value={wizard.videoSettings}
+                      onChange={wizard.setVideoSettings}
+                    />
+                    <p className="pv-cost mt-3">
+                      {pv.costLabel.replace("{n}", String(tokenEstimate))}
+                    </p>
+                  </>
+                )}
               </section>
             ) : (
               <section className="pv-card">
