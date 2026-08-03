@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /**
- * Left/right only — fixed-camera head-turn video + pointer X scrubs currentTime.
- * Responsive: object-position shifts so the flask stays visible on narrow screens;
- * touch + mouse both drive the look.
+ * Desktop: fixed-camera head-turn video — pointer X scrubs currentTime.
+ * Mobile / touch / reduced-motion: static poster only (iOS seeks on paused
+ * video paint black — one blink then empty frame).
  */
 const VIDEO = "/images/landing/alchemy-flask-headturn.mp4?v=1";
 const POSTER = "/images/landing/alchemy-flask-poster.jpg?v=1";
@@ -13,11 +13,23 @@ const FALLBACK_POSTER = "/images/landing/look-grid/cm.png?v=v5-cute-goggles-2";
 
 const FOLLOW = 7;
 
+/** Fine pointer + hover ≈ desktop mouse; excludes phones / most tablets. */
+function canScrubHeroVideo(): boolean {
+  if (typeof window === "undefined") return false;
+  const fineHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  return fineHover && !reduceMotion;
+}
+
 type Props = {
   alt: string;
 };
 
 export function LandingHeroMascot({ alt }: Props) {
+  // Start static so SSR + first mobile paint never mount a scrubbing <video>.
+  const [useScrub, setUseScrub] = useState(false);
+  const [posterSrc, setPosterSrc] = useState(POSTER);
+
   const wrapRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const targetT = useRef(0.5);
@@ -26,6 +38,21 @@ export function LandingHeroMascot({ alt }: Props) {
   const lastTs = useRef(0);
 
   useEffect(() => {
+    const update = () => setUseScrub(canScrubHeroVideo());
+    update();
+    const fineHover = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    fineHover.addEventListener("change", update);
+    reduceMotion.addEventListener("change", update);
+    return () => {
+      fineHover.removeEventListener("change", update);
+      reduceMotion.removeEventListener("change", update);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!useScrub) return;
+
     const video = videoRef.current;
     if (!video) return;
 
@@ -45,11 +72,6 @@ export function LandingHeroMascot({ alt }: Props) {
 
     const onPointerMove = (e: PointerEvent) => {
       setFromClientX(e.clientX);
-    };
-
-    const onTouchMove = (e: TouchEvent) => {
-      const t = e.touches[0];
-      if (t) setFromClientX(t.clientX);
     };
 
     const tick = (ts: number) => {
@@ -82,38 +104,48 @@ export function LandingHeroMascot({ alt }: Props) {
     };
 
     window.addEventListener("pointermove", onPointerMove, { passive: true });
-    window.addEventListener("touchmove", onTouchMove, { passive: true });
     video.addEventListener("loadedmetadata", onLoaded);
     if (video.readyState >= 1) onLoaded();
     rafRef.current = requestAnimationFrame(tick);
 
     return () => {
       window.removeEventListener("pointermove", onPointerMove);
-      window.removeEventListener("touchmove", onTouchMove);
       video.removeEventListener("loadedmetadata", onLoaded);
       cancelAnimationFrame(rafRef.current);
       lastTs.current = 0;
     };
-  }, []);
+  }, [useScrub]);
 
   return (
     <div ref={wrapRef} className="absolute inset-0 h-full w-full overflow-hidden bg-[#06040f]">
-      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-      <video
-        ref={videoRef}
-        className="landing-hero-video h-full w-full object-cover"
-        src={VIDEO}
-        poster={POSTER}
-        muted
-        playsInline
-        preload="auto"
-        disablePictureInPicture
-        controls={false}
-        aria-label={alt}
-        onError={(e) => {
-          e.currentTarget.poster = FALLBACK_POSTER;
-        }}
-      />
+      {useScrub ? (
+        // eslint-disable-next-line jsx-a11y/media-has-caption
+        <video
+          ref={videoRef}
+          className="landing-hero-video h-full w-full object-cover"
+          src={VIDEO}
+          poster={POSTER}
+          muted
+          playsInline
+          preload="auto"
+          disablePictureInPicture
+          controls={false}
+          aria-label={alt}
+          onError={(e) => {
+            e.currentTarget.poster = FALLBACK_POSTER;
+          }}
+        />
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={posterSrc}
+          alt={alt}
+          className="landing-hero-video h-full w-full object-cover"
+          decoding="async"
+          fetchPriority="high"
+          onError={() => setPosterSrc(FALLBACK_POSTER)}
+        />
+      )}
     </div>
   );
 }
