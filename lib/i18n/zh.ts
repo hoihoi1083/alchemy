@@ -1282,7 +1282,7 @@ export const zh = {
     quickFixTitle: "快速小修（細節）",
     quickFixImageHint: "描述要改什麼——我們會編輯你在上方選中的那張圖。改文字時請寫明想要的文案、字號或樣式。",
     quickFixEditingSlide: "正在編輯：{label}",
-    quickFixVideoHint: "加一條修正要求，用同一設定重新生成影片。",
+    quickFixVideoHint: "加一條提示後重新生成影片——重新生成仍會扣影片 tokens（並非免費）。",
     quickFixRealism: "提升真實感",
     quickFixText: "移除文字/Logo",
     quickFixLighting: "微調光線",
@@ -1309,8 +1309,14 @@ export const zh = {
     quickFixLessMotion: "減少動作",
     quickFixNoFace: "不要露臉",
     quickFixMinor: "修正細微瑕疵",
-    quickFixCreditReady: "本次生成含 1 次免費快速小修（可選任意一張圖）。",
-    quickFixCreditUsed: "免費快速小修額度已用完；仍可繼續套用修正，之後按正常圖片生成收費。",
+    quickFixCreditReady:
+      "AI 快速小修會扣圖片 tokens（每次約 {tokens}）——與正常圖片生成相同。",
+    quickFixCreditUsed:
+      "AI 快速小修會扣圖片 tokens（每次約 {tokens}）。文字／Logo 燒錄疊加不扣 tokens。",
+    quickFixVideoTipReady:
+      "本片可加一條建議提示。重新生成影片仍會扣影片 tokens。",
+    quickFixVideoTipUsed:
+      "提示已套用。你仍可在「影片」步驟自行加註再生成——會扣影片 tokens。",
     quickFixTabPresets: "快速預設",
     quickFixTabRegions: "框選區域",
     quickFixTabTextEditor: "自己加字",
@@ -1340,13 +1346,19 @@ export const zh = {
     quickFixRegionInpaintDirectBtn: "直接修補區域（FLUX Fill）",
     quickFixTextEditorHint: "若要精確文案與位置：先移除 AI 文字，再在圖上放置你自己的文字。",
     quickFixStripTextBtn: "移除 AI 文字並打開編輯器",
-    quickFixTextOverlayHint: "在圖上拖拽文字同形狀。揀樣式預覽可見顏色 — 輪播預設配合小紅書教學圖。",
-    quickFixTextOverlayDragHint: "在預覽圖上拖動文字以調整位置。",
+    quickFixTextOverlayHint:
+      "喺圖上加你自己嘅文字、形狀同 Logo。如果要清走 AI 原有文字，先去清理步驟擦走，再喺呢度加字同燒錄。",
+    quickFixTextOverlayDragHint:
+      "拖圖層移動 · 旋轉手柄轉角度 · Cmd/Ctrl+Z 撤銷 · Delete 刪除已選",
     quickFixTextLayerLabel: "文字 {n}",
     quickFixTextLayerPlaceholder: "標題或副標題",
     quickFixTextStyleLabel: "樣式預設",
     quickFixTextAddLayerBtn: "添加一行文字",
     quickFixTextRemoveLayerBtn: "刪除",
+    quickFixDuplicateLayerBtn: "複製",
+    quickFixBringForwardBtn: "移前一層",
+    quickFixSendBackwardBtn: "移後一層",
+    quickFixNoLogoHint: "請先喺品牌套件上傳 Logo，再喺呢度加入",
     quickFixTextApplyBtn: "將文字合成到圖片",
     quickFixTextNeedLayer: "請至少添加一行文字。",
     quickFixTextRestoreBtn: "恢復 AI 原圖",

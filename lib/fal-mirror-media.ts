@@ -20,14 +20,16 @@ function contentTypeForPath(filePath: string): string {
  * fal/HeyGen/Seedance run on fal servers — they cannot fetch localhost or
  * authenticated pipeline URLs. Mirror to fal storage before API calls.
  * `clerkId` required for private library assets and pipeline job files.
+ * `refresh: true` re-uploads even when the source is already a fal CDN URL
+ * (avoids mid-job expiry on long Kling/cinematic multi-clip runs).
  */
 export async function mirrorImageUrlToFalStorage(
   url: string,
-  opts?: { clerkId?: string },
+  opts?: { clerkId?: string; refresh?: boolean },
 ): Promise<string> {
   const trimmed = url.trim();
   if (!trimmed) throw new Error("Image URL is required.");
-  if (isFalCdnUrl(trimmed)) return trimmed;
+  if (isFalCdnUrl(trimmed) && !opts?.refresh) return trimmed;
 
   const localPath = resolvePipelineFileUrl(trimmed);
   if (localPath) {

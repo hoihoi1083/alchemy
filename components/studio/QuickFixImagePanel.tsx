@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import { ImageRegionFixEditor } from "@/components/studio/ImageRegionFixEditor";
 import type { LogoPlacement } from "@/lib/image-refine-prompt";
 import type { ImageEditRegion } from "@/lib/image-edit-region";
+import { TOKEN_COST } from "@/lib/billing/token-costs";
 import { regionsInpaintPrompt } from "@/lib/regions-to-inpaint-mask";
 
 const ImageInpaintMaskEditor = dynamic(
@@ -55,7 +56,6 @@ export function QuickFixImagePanel({ variant = "dark" }: QuickFixImagePanelProps
     isCampaignOutput,
     m,
     onQuickFixLogoSelected,
-    quickFixCredits,
     quickFixImage,
     quickFixLogoFile,
     quickFixLogoPlacement,
@@ -155,7 +155,7 @@ export function QuickFixImagePanel({ variant = "dark" }: QuickFixImagePanelProps
         </p>
       )}
       <p className={creditClass}>
-        {quickFixCredits > 0 ? w.quickFixCreditReady : w.quickFixCreditUsed}
+        {w.quickFixCreditReady.replace("{tokens}", String(TOKEN_COST.image))}
       </p>
 
       <div className="mt-3 flex flex-wrap gap-2">
@@ -384,6 +384,10 @@ export function QuickFixImagePanel({ variant = "dark" }: QuickFixImagePanelProps
                 addShapeBtn: w.quickFixAddShapeBtn,
                 addLogoBtn: w.brandKit.addLogoToCanvas,
                 removeLayerBtn: w.quickFixTextRemoveLayerBtn,
+                duplicateLayerBtn: w.quickFixDuplicateLayerBtn,
+                bringForwardBtn: w.quickFixBringForwardBtn,
+                sendBackwardBtn: w.quickFixSendBackwardBtn,
+                noLogoHint: w.quickFixNoLogoHint,
                 applyBtn: w.quickFixTextApplyBtn,
                 applying: w.quickFixRefining,
                 needLayer: w.quickFixTextNeedLayer,

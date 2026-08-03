@@ -449,14 +449,20 @@ export async function POST(request: Request) {
       const imageUrl =
         start && start.size > 0
           ? await fal.storage.upload(start)
-          : await mirrorImageUrlToFalStorage(startUrl!, { clerkId: auth.user.userId });
+          : await mirrorImageUrlToFalStorage(startUrl!, {
+              clerkId: auth.user.userId,
+              refresh: true,
+            });
       const end = formData.get("image_end") as File | null;
       const endDirectUrl = (formData.get("image_end_url") as string | null)?.trim();
       const endUrl =
         end && end.size > 0
           ? await fal.storage.upload(end)
           : endDirectUrl
-            ? await mirrorImageUrlToFalStorage(endDirectUrl, { clerkId: auth.user.userId })
+            ? await mirrorImageUrlToFalStorage(endDirectUrl, {
+                clerkId: auth.user.userId,
+                refresh: true,
+              })
             : undefined;
 
       const imageInput = {

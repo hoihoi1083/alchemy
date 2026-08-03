@@ -5,10 +5,16 @@ import {
   resolveCaptionBurnStyle,
   resolveLineCaptionStyle,
 } from "@/lib/caption-burn-styles";
+import { canvasTextFontSizePx } from "@/lib/image-canvas-style";
 import { fitImageInBox } from "@/lib/image-canvas-layout";
 import { wrapTextToLines, textBoxHeightPx } from "@/lib/image-canvas-text-layout";
 import type { ImageCanvasLayer, ImageShapeLayer } from "@/lib/image-canvas-layers";
 import type { ImageTextLayer } from "@/lib/image-text-overlay-types";
+
+function withRotation(inner: string, rotationDeg: number | undefined, cx: number, cy: number): string {
+  if (!rotationDeg || !Number.isFinite(rotationDeg)) return inner;
+  return `<g transform="rotate(${rotationDeg} ${cx} ${cy})">${inner}</g>`;
+}
 
 async function renderLayerTextNodes(
   width: number,
@@ -16,10 +22,7 @@ async function renderLayerTextNodes(
   layer: ImageTextLayer,
 ): Promise<string> {
   const style = resolveLineCaptionStyle(layer.stylePreset, resolveCaptionBurnStyle("classic"));
-  const fontSize = Math.max(
-    20,
-    Math.round(width * 0.052 * (style.fontSizeScale ?? 1) * (layer.fontSizeScale ?? 1)),
-  );
+  const fontSize = canvasTextFontSizePx(width, layer);
   const lineHeight = Math.round(fontSize * 1.35);
   const fill = layer.fill ?? style.fill ?? "white";
   const strokeColor = layer.stroke ?? style.stroke ?? "black";
@@ -50,7 +53,7 @@ async function renderLayerTextNodes(
   const startY = anchorY - blockHeight / 2 + lineHeight / 2;
   const lineYs = lines.map((_, index) => Math.round(startY + index * lineHeight));
 
-  return burnTextSvgPaths({
+  const paths = burnTextSvgPaths({
     lines,
     lineYs,
     x: textX,
@@ -62,6 +65,7 @@ async function renderLayerTextNodes(
     stroke: hasStroke ? strokeColor : "transparent",
     strokeWidth: hasStroke ? strokeW : 0,
   });
+  return withRotation(paths, layer.rotationDeg, anchorX, anchorY);
 }
 
 function shapeBounds(width: number, height: number, layer: ImageShapeLayer) {
@@ -82,15 +86,13 @@ function renderShapeNodes(width: number, height: number, layer: ImageShapeLayer)
     .padStart(2, "0");
   const fill = layer.fillOpacity > 0 ? `${fillHex}${fillAlpha}` : "none";
 
+  let inner = "";
   if (layer.shape === "check-badge") {
     const r = Math.max(w, h) / 2;
-    // Vector check — no font dependency (Linux tofu-safe).
     const s = r * 0.55;
     const check = `M${cx - s * 0.55} ${cy} L${cx - s * 0.1} ${cy + s * 0.45} L${cx + s * 0.6} ${cy - s * 0.4}`;
-    return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" /><path d="${check}" fill="none" stroke="${stroke}" stroke-width="${Math.max(2, Math.round(r * 0.18))}" stroke-linecap="round" stroke-linejoin="round"/>`;
-  }
-
-  if (layer.shape === "line" || layer.shape === "arrow") {
+    inner = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" /><path d="${check}" fill="none" stroke="${stroke}" stroke-width="${Math.max(2, Math.round(r * 0.18))}" stroke-linecap="round" stroke-linejoin="round"/>`;
+  } else if (layer.shape === "line" || layer.shape === "arrow") {
     const yLine = layer.hPct < 1.5 ? cy : Math.round(y + h / 2);
     const x1 = Math.round(x);
     const x2 = Math.round(x + w);
@@ -100,24 +102,21 @@ function renderShapeNodes(width: number, height: number, layer: ImageShapeLayer)
       layer.shape === "arrow"
         ? `<polygon points="${x2},${y2} ${x2 - 10},${y2 - 6} ${x2 - 10},${y2 + 6}" fill="${layer.color}" />`
         : "";
-    return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${layer.color}" stroke-width="${sw}" stroke-linecap="round" />${arrow}`;
-  }
-
-  if (layer.shape === "circle") {
+    inner = `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${layer.color}" stroke-width="${sw}" stroke-linecap="round" />${arrow}`;
+  } else if (layer.shape === "circle") {
     const rx = w / 2;
     const ry = h / 2;
-    return `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" />`;
+    inner = `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" />`;
+  } else {
+    const rx =
+      layer.shape === "capsule"
+        ? h / 2
+        : layer.cornerRadius ?? (layer.shape === "button" || layer.shape === "badge" ? 6 : 8);
+    const buttonFill = layer.shape === "button" ? "#ffffff" : fill;
+    const buttonStroke = layer.shape === "button" ? stroke : stroke;
+    inner = `<rect x="${Math.round(x)}" y="${Math.round(y)}" width="${Math.round(w)}" height="${Math.round(h)}" rx="${rx}" fill="${buttonFill}" stroke="${buttonStroke}" stroke-width="${sw}" />`;
   }
-
-  const rx =
-    layer.shape === "capsule"
-      ? h / 2
-      : layer.cornerRadius ?? (layer.shape === "button" || layer.shape === "badge" ? 6 : 8);
-
-  const buttonFill = layer.shape === "button" ? "#ffffff" : fill;
-  const buttonStroke = layer.shape === "button" ? stroke : stroke;
-
-  return `<rect x="${Math.round(x)}" y="${Math.round(y)}" width="${Math.round(w)}" height="${Math.round(h)}" rx="${rx}" fill="${buttonFill}" stroke="${buttonStroke}" stroke-width="${sw}" />`;
+  return withRotation(inner, layer.rotationDeg, cx, cy);
 }
 
 async function renderCanvasOverlayPng(
@@ -225,9 +224,20 @@ export async function burnImageCanvasOverlay(
       .resize(Math.round(fit.w), Math.round(fit.h), { fit: "inside" })
       .png()
       .toBuffer();
-    const left = Math.round(cx - boxW / 2 + fit.offsetX);
-    const top = Math.round(cy - boxH / 2 + fit.offsetY);
-    composites.push({ input: resized, left: Math.max(0, left), top: Math.max(0, top) });
+    const rot = layer.rotationDeg ?? 0;
+    const placed =
+      rot && Number.isFinite(rot)
+        ? await sharp(resized)
+            .rotate(rot, { background: { r: 0, g: 0, b: 0, alpha: 0 } })
+            .png()
+            .toBuffer()
+        : resized;
+    const placedMeta = await sharp(placed).metadata();
+    const pw = placedMeta.width ?? Math.round(fit.w);
+    const ph = placedMeta.height ?? Math.round(fit.h);
+    const left = Math.round(cx - pw / 2);
+    const top = Math.round(cy - ph / 2);
+    composites.push({ input: placed, left: Math.max(0, left), top: Math.max(0, top) });
   }
 
   return base.composite(composites).png().toBuffer();

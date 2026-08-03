@@ -1421,7 +1421,8 @@ export const en = {
     quickFixImageHint:
       "Describe what to fix — we edit the image you selected above. For text, say exactly what wording, size, or style you want.",
     quickFixEditingSlide: "Editing: {label}",
-    quickFixVideoHint: "Apply one fix note and regenerate video from the same setup.",
+    quickFixVideoHint:
+      "Apply one tip note, then regenerate video — regenerating uses video tokens (not free).",
     quickFixRealism: "Improve realism",
     quickFixText: "Remove text/logo",
     quickFixLighting: "Adjust lighting",
@@ -1448,8 +1449,14 @@ export const en = {
     quickFixLessMotion: "Less motion",
     quickFixNoFace: "No face",
     quickFixMinor: "Fix minor artifacts",
-    quickFixCreditReady: "1 free quick-fix credit for this generation (any image you select).",
-    quickFixCreditUsed: "Free quick-fix credit used. You can still apply fixes — each one counts as a normal image generation.",
+    quickFixCreditReady:
+      "AI quick fixes use image tokens (~{tokens} each) — same as a normal image generation.",
+    quickFixCreditUsed:
+      "AI quick fixes use image tokens (~{tokens} each). Text/logo overlay burn does not charge tokens.",
+    quickFixVideoTipReady:
+      "One suggested tip for this clip. Regenerating video still uses video tokens.",
+    quickFixVideoTipUsed:
+      "Tip already applied. You can still regenerate from Video with your own notes — that uses video tokens.",
     quickFixTabPresets: "Quick presets",
     quickFixTabRegions: "Select areas",
     quickFixTabTextEditor: "Add your text",
@@ -1481,13 +1488,19 @@ export const en = {
     quickFixTextEditorHint:
       "For exact copy and position: remove AI text first, then place your own words on the image.",
     quickFixStripTextBtn: "Remove AI text & open editor",
-    quickFixTextOverlayHint: "Drag text and shapes on the image. Pick a style swatch to see colors — carousel presets match XHS teaching slides.",
-    quickFixTextOverlayDragHint: "Drag a line on the preview to reposition it.",
+    quickFixTextOverlayHint:
+      "Add your own text, shapes, and logo on top of the image. First erase AI text in Clean if you need a blank area — then type here and burn.",
+    quickFixTextOverlayDragHint:
+      "Drag layers to move · rotate with the handle · Cmd/Ctrl+Z undo · Delete removes selected",
     quickFixTextLayerLabel: "Text {n}",
     quickFixTextLayerPlaceholder: "Headline or subline",
     quickFixTextStyleLabel: "Style preset",
     quickFixTextAddLayerBtn: "Add text line",
     quickFixTextRemoveLayerBtn: "Remove",
+    quickFixDuplicateLayerBtn: "Duplicate",
+    quickFixBringForwardBtn: "Bring forward",
+    quickFixSendBackwardBtn: "Send backward",
+    quickFixNoLogoHint: "Upload a logo in Brand Kit first, then add it here",
     quickFixTextApplyBtn: "Apply text to image",
     quickFixTextNeedLayer: "Add at least one text line.",
     quickFixTextRestoreBtn: "Restore AI image",

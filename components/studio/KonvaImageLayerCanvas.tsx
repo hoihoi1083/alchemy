@@ -32,7 +32,7 @@ import {
   buildMarketingBlock,
   type MarketingBlockId,
 } from "@/lib/image-canvas-marketing";
-import { applyTextStylePreset, effectiveTextStrokeWidth } from "@/lib/image-canvas-style";
+import { applyTextStylePreset, canvasTextFontSizePx, effectiveTextStrokeWidth } from "@/lib/image-canvas-style";
 import {
   textBoxHeightPx,
   wrappedLineCount,
@@ -113,6 +113,10 @@ type CanvasLabels = {
   recoverOriginal?: string;
   canvasRecoverEdits?: string;
   canvasVersion?: (current: number, total: number) => string;
+  duplicateLayerBtn?: string;
+  bringForwardBtn?: string;
+  sendBackwardBtn?: string;
+  noLogoHint?: string;
 };
 
 type KonvaImageLayerCanvasProps = {
@@ -357,6 +361,56 @@ export function KonvaImageLayerCanvas({
     setLayerHistoryIndex(0);
   }
 
+  function deleteSelectedLayer() {
+    if (!selectedId) return;
+    mutateLayers((p) => p.filter((l) => l.id !== selectedId), true);
+    setSelectedId(null);
+  }
+
+  function duplicateSelectedLayer() {
+    if (!selected) return;
+    const clone = structuredClone(selected) as ImageCanvasLayer;
+    clone.id = crypto.randomUUID();
+    clone.yPct = Math.min(95, (clone.yPct ?? 50) + 4);
+    mutateLayers((p) => [...p, clone], true);
+    setSelectedId(clone.id);
+  }
+
+  function moveSelectedLayer(delta: number) {
+    if (!selectedId) return;
+    mutateLayers((prev) => {
+      const idx = prev.findIndex((l) => l.id === selectedId);
+      if (idx < 0) return prev;
+      const nextIdx = idx + delta;
+      if (nextIdx < 0 || nextIdx >= prev.length) return prev;
+      const copy = [...prev];
+      const [item] = copy.splice(idx, 1);
+      copy.splice(nextIdx, 0, item!);
+      return copy;
+    }, true);
+  }
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      const typing = tag === "INPUT" || tag === "TEXTAREA";
+      if ((e.metaKey || e.ctrlKey) && (e.key === "z" || e.key === "Z")) {
+        if (typing) return;
+        e.preventDefault();
+        if (e.shiftKey) layerHistoryNext();
+        else layerHistoryPrev();
+        return;
+      }
+      if (typing) return;
+      if ((e.key === "Delete" || e.key === "Backspace") && selectedId) {
+        e.preventDefault();
+        deleteSelectedLayer();
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selectedId, layerHistory.length, layerHistoryIndex]);
+
   useEffect(() => {
     const tr = transformerRef.current;
     const stage = stageRef.current;
@@ -384,7 +438,7 @@ export function KonvaImageLayerCanvas({
     };
   }
 
-  /** Map Group top-left back to layer xPct/yPct — xPct is the align anchor, not always box center. */
+  /** Map Group position back to layer xPct/yPct — xPct is the align anchor. */
   function textAnchorFromGroup(
     layer: ImageCanvasTextLayer,
     node: Konva.Node,
@@ -395,11 +449,13 @@ export function KonvaImageLayerCanvas({
     const w = boxW ?? ((layer.wPct ?? 70) / 100) * STAGE_WIDTH;
     const h = boxH ?? height;
     const align = layer.align ?? "center";
-    const anchorX =
-      align === "left" ? node.x() : align === "right" ? node.x() + w : node.x() + w / 2;
+    // Text groups are positioned at box center (with offset) so rotation is stable.
+    const cx = node.x();
+    const cy = node.y();
+    const anchorX = align === "left" ? cx - w / 2 : align === "right" ? cx + w / 2 : cx;
     return {
       xPct: clampPct((anchorX / STAGE_WIDTH) * 100),
-      yPct: clampPct(((node.y() + h / 2) / stageHeight) * 100),
+      yPct: clampPct((cy / stageHeight) * 100),
     };
   }
 
@@ -430,8 +486,8 @@ export function KonvaImageLayerCanvas({
       updateLayer(
         id,
         {
-          xPct: clampPct(((node.x() + w / 2) / STAGE_WIDTH) * 100),
-          yPct: clampPct(((node.y() + h / 2) / stageHeight) * 100),
+          xPct: clampPct((node.x() / STAGE_WIDTH) * 100),
+          yPct: clampPct((node.y() / stageHeight) * 100),
           wPct: Math.min(95, Math.max(4, (w / STAGE_WIDTH) * 100)),
           hPct: Math.min(95, Math.max(4, (h / stageHeight) * 100)),
         },
@@ -467,6 +523,7 @@ export function KonvaImageLayerCanvas({
         {
           ...textAnchorFromGroup(layer, node, w, h),
           wPct: Math.min(95, Math.max(8, (w / STAGE_WIDTH) * 100)),
+          rotationDeg: node.rotation(),
         },
         true,
       );
@@ -476,10 +533,11 @@ export function KonvaImageLayerCanvas({
       updateLayer(
         id,
         {
-          xPct: clampPct(((node.x() + w / 2) / STAGE_WIDTH) * 100),
-          yPct: clampPct(((node.y() + h / 2) / stageHeight) * 100),
+          xPct: clampPct((node.x() / STAGE_WIDTH) * 100),
+          yPct: clampPct((node.y() / stageHeight) * 100),
           wPct: Math.min(95, Math.max(4, (w / STAGE_WIDTH) * 100)),
           hPct: Math.min(95, Math.max(4, (h / stageHeight) * 100)),
+          rotationDeg: node.rotation(),
         },
         true,
       );
@@ -487,7 +545,7 @@ export function KonvaImageLayerCanvas({
     }
     w = node.width();
     h = node.height();
-    updateLayer(id, pctFromNode(node.x(), node.y(), w, h), true);
+    updateLayer(id, { ...pctFromNode(node.x(), node.y(), w, h), rotationDeg: node.rotation() }, true);
   }
 
   function addShape(shape: ImageShapeKind) {
@@ -576,7 +634,7 @@ export function KonvaImageLayerCanvas({
 
   function textMetrics(layer: ImageCanvasTextLayer) {
     const preset = CAPTION_STYLE_PRESETS[layer.stylePreset];
-    const fontSize = 18 * (layer.fontSizeScale ?? preset?.fontSizeScale ?? 1);
+    const fontSize = canvasTextFontSizePx(STAGE_WIDTH, layer);
     const w = ((layer.wPct ?? 70) / 100) * STAGE_WIDTH;
     const lineCount = wrappedLineCount(layer.text, w, fontSize);
     const height = textBoxHeightPx(lineCount, fontSize);
@@ -610,13 +668,16 @@ export function KonvaImageLayerCanvas({
       <Group
         key={layer.id}
         {...groupRest}
-        x={x}
-        y={y}
+        x={x + w / 2}
+        y={y + height / 2}
+        offsetX={w / 2}
+        offsetY={height / 2}
         width={w}
         height={height}
+        rotation={layer.rotationDeg ?? 0}
         dragBoundFunc={(pos) => ({
-          x: Math.min(STAGE_WIDTH - 8, Math.max(8 - w, pos.x)),
-          y: Math.min(stageHeight - 8, Math.max(8 - height, pos.y)),
+          x: Math.min(STAGE_WIDTH - 8, Math.max(8, pos.x)),
+          y: Math.min(stageHeight - 8, Math.max(8, pos.y)),
         })}
         onDragEnd={onDragEnd}
         onTransformEnd={onTransformEnd}
@@ -659,6 +720,7 @@ export function KonvaImageLayerCanvas({
     const lx = x - w / 2;
     const ly = y - h / 2;
     const stroke = layer.strokeColor ?? layer.color;
+    const rot = layer.rotationDeg ?? 0;
     const cornerRadius =
       layer.shape === "capsule"
         ? h / 2
@@ -667,7 +729,7 @@ export function KonvaImageLayerCanvas({
     if (layer.shape === "check-badge") {
       const r = Math.max(w, h) / 2;
       return (
-        <Group key={layer.id} {...common} x={x} y={y}>
+        <Group key={layer.id} {...common} x={x} y={y} rotation={rot}>
           <Circle
             radius={r}
             fill={layer.color}
@@ -696,6 +758,7 @@ export function KonvaImageLayerCanvas({
           {...common}
           x={x}
           y={y}
+          rotation={rot}
           radius={Math.max(w, h) / 2}
           fill={layer.color}
           opacity={layer.fillOpacity}
@@ -720,6 +783,7 @@ export function KonvaImageLayerCanvas({
           y={y - hitH / 2}
           width={w}
           height={hitH}
+          rotation={rot}
           onDragEnd={onDragEnd}
           onTransformEnd={onTransformEnd}
         >
@@ -739,6 +803,7 @@ export function KonvaImageLayerCanvas({
           key={layer.id}
           {...common}
           points={[lx, ly, lx + w, ly + h]}
+          rotation={rot}
           stroke={layer.color}
           fill={layer.color}
           strokeWidth={layer.strokeWidth}
@@ -757,6 +822,7 @@ export function KonvaImageLayerCanvas({
         y={ly}
         width={w}
         height={h}
+        rotation={rot}
         fill={isButton ? "#ffffff" : layer.color}
         opacity={isButton ? 1 : layer.fillOpacity}
         stroke={stroke}
@@ -792,8 +858,8 @@ export function KonvaImageLayerCanvas({
           key={layer.id}
           layer={layer}
           url={layer.url}
-          x={cx - boxW / 2}
-          y={cy - boxH / 2}
+          cx={cx}
+          cy={cy}
           boxW={boxW}
           boxH={boxH}
           common={common}
@@ -870,6 +936,34 @@ export function KonvaImageLayerCanvas({
               </button>
             ))}
           </div>
+          {selectedId && (
+            <div className="mt-2 flex flex-wrap gap-1">
+              <button
+                type="button"
+                disabled={disabled || busy}
+                onClick={() => moveSelectedLayer(1)}
+                className="rounded border border-slate-600 px-2 py-0.5 text-[10px] text-slate-300"
+              >
+                {labels.bringForwardBtn ?? "Bring forward"}
+              </button>
+              <button
+                type="button"
+                disabled={disabled || busy}
+                onClick={() => moveSelectedLayer(-1)}
+                className="rounded border border-slate-600 px-2 py-0.5 text-[10px] text-slate-300"
+              >
+                {labels.sendBackwardBtn ?? "Send backward"}
+              </button>
+              <button
+                type="button"
+                disabled={disabled || busy}
+                onClick={duplicateSelectedLayer}
+                className="rounded border border-slate-600 px-2 py-0.5 text-[10px] text-slate-300"
+              >
+                {labels.duplicateLayerBtn ?? "Duplicate"}
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -1122,7 +1216,7 @@ export function KonvaImageLayerCanvas({
         >
           {labels.addTextBtn}
         </button>
-        {brandKit?.logoUrl && (
+        {brandKit?.logoUrl ? (
           <button
             type="button"
             disabled={disabled || busy}
@@ -1131,15 +1225,16 @@ export function KonvaImageLayerCanvas({
           >
             {labels.addLogoBtn}
           </button>
+        ) : (
+          <span className="rounded border border-slate-800 px-2 py-1 text-[10px] text-slate-500">
+            {labels.noLogoHint ?? "Add a logo in Brand Kit to place it here"}
+          </span>
         )}
         {selectedId && (
           <button
             type="button"
             disabled={disabled || busy}
-            onClick={() => {
-              mutateLayers((p) => p.filter((l) => l.id !== selectedId), true);
-              setSelectedId(null);
-            }}
+            onClick={deleteSelectedLayer}
             className="rounded border border-red-800 px-2 py-1 text-xs text-red-200"
           >
             {labels.removeLayerBtn}
@@ -1175,16 +1270,16 @@ export function KonvaImageLayerCanvas({
 function LogoNode({
   layer,
   url,
-  x,
-  y,
+  cx,
+  cy,
   boxW,
   boxH,
   common,
 }: {
   layer: ImageCanvasLayer & { kind: "logo" };
   url: string;
-  x: number;
-  y: number;
+  cx: number;
+  cy: number;
   boxW: number;
   boxH: number;
   common: Record<string, unknown>;
@@ -1203,10 +1298,13 @@ function LogoNode({
     <Group
       key={layer.id}
       {...groupRest}
-      x={x}
-      y={y}
+      x={cx}
+      y={cy}
+      offsetX={boxW / 2}
+      offsetY={boxH / 2}
       width={boxW}
       height={boxH}
+      rotation={layer.rotationDeg ?? 0}
       onDragEnd={onDragEnd}
       onTransformEnd={onTransformEnd}
     >

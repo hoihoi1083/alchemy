@@ -25,6 +25,7 @@ export type ImageShapeLayer = {
   strokeWidth: number;
   fillOpacity: number;
   cornerRadius?: number;
+  rotationDeg?: number;
 };
 
 export type ImageCanvasTextLayer = ImageTextLayer & { kind: "text" };
@@ -39,6 +40,7 @@ export type ImageLogoLayer = {
   url: string;
   /** width / height of source image — keeps aspect when resizing. */
   aspectRatio?: number;
+  rotationDeg?: number;
 };
 
 export type ImageCanvasLayer = ImageCanvasTextLayer | ImageShapeLayer | ImageLogoLayer;
@@ -53,6 +55,7 @@ export function newImageLogoLayer(partial?: Partial<ImageLogoLayer>): ImageLogoL
     hPct: partial?.hPct ?? 10,
     url: partial?.url ?? "",
     aspectRatio: partial?.aspectRatio,
+    rotationDeg: partial?.rotationDeg,
   };
 }
 
@@ -83,6 +86,7 @@ export function newImageShapeLayer(partial?: Partial<ImageShapeLayer>): ImageSha
     strokeWidth: partial?.strokeWidth ?? defaults.strokeWidth ?? 4,
     fillOpacity: partial?.fillOpacity ?? defaults.fillOpacity ?? 0.15,
     cornerRadius: partial?.cornerRadius ?? defaults.cornerRadius,
+    rotationDeg: partial?.rotationDeg,
   };
 }
 
@@ -110,6 +114,7 @@ export function parseImageCanvasLayers(raw: unknown): ImageCanvasLayer[] {
           strokeWidth: typeof row.strokeWidth === "number" ? row.strokeWidth : undefined,
           fillOpacity: typeof row.fillOpacity === "number" ? row.fillOpacity : undefined,
           cornerRadius: typeof row.cornerRadius === "number" ? row.cornerRadius : undefined,
+          rotationDeg: typeof row.rotationDeg === "number" ? row.rotationDeg : undefined,
         }),
       );
       continue;
@@ -124,6 +129,7 @@ export function parseImageCanvasLayers(raw: unknown): ImageCanvasLayer[] {
           wPct: typeof row.wPct === "number" ? row.wPct : undefined,
           hPct: typeof row.hPct === "number" ? row.hPct : undefined,
           aspectRatio: typeof row.aspectRatio === "number" ? row.aspectRatio : undefined,
+          rotationDeg: typeof row.rotationDeg === "number" ? row.rotationDeg : undefined,
         }),
       );
       continue;
@@ -144,6 +150,7 @@ export function parseImageCanvasLayers(raw: unknown): ImageCanvasLayer[] {
           fill: typeof row.fill === "string" ? row.fill : undefined,
           stroke: typeof row.stroke === "string" ? row.stroke : undefined,
           fontFamily: typeof row.fontFamily === "string" ? row.fontFamily : undefined,
+          rotationDeg: typeof row.rotationDeg === "number" ? row.rotationDeg : undefined,
         }),
       );
     }

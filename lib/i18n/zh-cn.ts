@@ -1283,7 +1283,7 @@ export const zhCn = {
     quickFixTitle: "快速小修（细节）",
     quickFixImageHint: "描述要改什么——我们会编辑你在上方选中的那张图。改文字时请写明想要的文案、字号或样式。",
     quickFixEditingSlide: "正在编辑：{label}",
-    quickFixVideoHint: "加一条修正要求，用同一设定重新生成影片。",
+    quickFixVideoHint: "加一条提示后重新生成影片——重新生成仍会扣影片 tokens（并非免费）。",
     quickFixRealism: "提升真实感",
     quickFixText: "移除文字/Logo",
     quickFixLighting: "微调光线",
@@ -1310,8 +1310,14 @@ export const zhCn = {
     quickFixLessMotion: "减少动作",
     quickFixNoFace: "不要露脸",
     quickFixMinor: "修正细微瑕疵",
-    quickFixCreditReady: "本次生成含 1 次免费快速小修（可选任意一张图）。",
-    quickFixCreditUsed: "免费快速小修额度已用完；仍可继续套用修正，之后按正常图片生成收费。",
+    quickFixCreditReady:
+      "AI 快速小修会扣图片 tokens（每次约 {tokens}）——与正常图片生成相同。",
+    quickFixCreditUsed:
+      "AI 快速小修会扣图片 tokens（每次约 {tokens}）。文字／Logo 烧录叠加不扣 tokens。",
+    quickFixVideoTipReady:
+      "本片可加一条建议提示。重新生成影片仍会扣影片 tokens。",
+    quickFixVideoTipUsed:
+      "提示已套用。你仍可在「影片」步骤自行加注再生成——会扣影片 tokens。",
     quickFixTabPresets: "快速预设",
     quickFixTabRegions: "框选区域",
     quickFixTabTextEditor: "自己加字",
@@ -1341,13 +1347,19 @@ export const zhCn = {
     quickFixRegionInpaintDirectBtn: "直接修补区域（FLUX Fill）",
     quickFixTextEditorHint: "若要精确文案与位置：先移除 AI 文字，再在图上放置你自己的文字。",
     quickFixStripTextBtn: "移除 AI 文字并打开编辑器",
-    quickFixTextOverlayHint: "在图上拖拽文字和形状。选样式预览可见颜色 — 轮播预设配合小红书教学图。",
-    quickFixTextOverlayDragHint: "在预览图上拖动文字以调整位置。",
+    quickFixTextOverlayHint:
+      "在图上加你自己的文字、形状和 Logo。如果要清掉 AI 原有文字，先去清理步骤擦走，再在这里加字并烧录。",
+    quickFixTextOverlayDragHint:
+      "拖图层移动 · 旋转手柄转角度 · Cmd/Ctrl+Z 撤销 · Delete 删除已选",
     quickFixTextLayerLabel: "文字 {n}",
     quickFixTextLayerPlaceholder: "标题或副标题",
     quickFixTextStyleLabel: "样式预设",
     quickFixTextAddLayerBtn: "添加一行文字",
     quickFixTextRemoveLayerBtn: "删除",
+    quickFixDuplicateLayerBtn: "复制",
+    quickFixBringForwardBtn: "移前一层",
+    quickFixSendBackwardBtn: "移后一层",
+    quickFixNoLogoHint: "请先在品牌套件上传 Logo，再在这里加入",
     quickFixTextApplyBtn: "将文字合成到图片",
     quickFixTextNeedLayer: "请至少添加一行文字。",
     quickFixTextRestoreBtn: "恢复 AI 原图",

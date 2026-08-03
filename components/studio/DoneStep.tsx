@@ -357,8 +357,8 @@ export function DoneStep() {
           <p className="mt-1 text-xs text-slate-400">{m.wizard.quickFixVideoHint}</p>
           <p className="mt-1 text-xs text-slate-500">
             {quickFixCredits > 0
-              ? m.wizard.quickFixCreditReady.replace("{count}", String(quickFixCredits))
-              : m.wizard.quickFixCreditUsed}
+              ? m.wizard.quickFixVideoTipReady
+              : m.wizard.quickFixVideoTipUsed}
           </p>
           <div className="mt-3 grid gap-2 sm:grid-cols-3">
             <button

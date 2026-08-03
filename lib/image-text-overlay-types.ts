@@ -17,6 +17,8 @@ export type ImageTextLayer = {
   fill?: string;
   stroke?: string;
   fontFamily?: string;
+  /** Degrees clockwise — preview + burn. */
+  rotationDeg?: number;
 };
 
 export function newImageTextLayer(partial?: Partial<ImageTextLayer>): ImageTextLayer {
@@ -32,6 +34,7 @@ export function newImageTextLayer(partial?: Partial<ImageTextLayer>): ImageTextL
     fontFamily: partial?.fontFamily,
     align: partial?.align ?? "center",
     wPct: partial?.wPct,
+    rotationDeg: partial?.rotationDeg,
   };
 }
 
@@ -55,6 +58,7 @@ export function parseImageTextLayers(raw: unknown): ImageTextLayer[] {
         fontFamily: typeof layer.fontFamily === "string" ? layer.fontFamily : undefined,
         align: layer.align === "left" || layer.align === "right" ? layer.align : "center",
         wPct: typeof layer.wPct === "number" ? layer.wPct : undefined,
+        rotationDeg: typeof layer.rotationDeg === "number" ? layer.rotationDeg : undefined,
       });
     })
     .filter((layer): layer is ImageTextLayer => layer !== null)

@@ -78,7 +78,11 @@ export async function collectKlingFallbackImageUrls(
 ): Promise<string[]> {
   const urls: string[] = [];
   const seen = new Set<string>();
-  const mirrorOpts = opts?.clerkId ? { clerkId: opts.clerkId } : undefined;
+  const mirrorOpts = {
+    ...(opts?.clerkId ? { clerkId: opts.clerkId } : {}),
+    // Fresh fal upload at fallback start — stale fal.media stills fail mid-job.
+    refresh: true as const,
+  };
 
   const addFalUrl = (falUrl: string) => {
     if (!falUrl || seen.has(falUrl)) return;
@@ -162,6 +166,13 @@ export async function runKlingStoryboardFallback(opts: {
   if (imageUrls.length > 9) {
     throw new Error("At most 9 storyboard scenes.");
   }
+
+  // Re-mirror before parallel Kling clips so stale fal.media stills fail fast.
+  imageUrls = await Promise.all(
+    imageUrls.map((u) =>
+      mirrorImageUrlToFalStorage(u, { clerkId: opts.clerkId, refresh: true }),
+    ),
+  );
 
   const totalDurationSec =
     opts.totalDurationSec && opts.totalDurationSec > 0 ? opts.totalDurationSec : 8;

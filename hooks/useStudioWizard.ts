@@ -122,6 +122,7 @@ import {
 } from "@/lib/template-slots";
 import { getTemplate, type TemplateId } from "@/lib/templates";
 import { BANANA2_EDIT_ENDPOINT, BANANA2_TEXT_ENDPOINT } from "@/lib/image-endpoints";
+import { TOKEN_COST } from "@/lib/billing/token-costs";
 import { loadBrandKitFromStorage } from "@/lib/brand-kit";
 import { buildImageRefinePrompt, normalizeImageSourceUrl, type LogoPlacement } from "@/lib/image-refine-prompt";
 import { isLibraryAssetUrl } from "@/lib/storage/library-asset-url";
@@ -5822,9 +5823,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       );
     }
     lines.push(
-      quickFixCredits > 0
-        ? m.wizard.quickFixCreditReady.replace("{count}", String(quickFixCredits))
-        : m.wizard.quickFixCreditUsed,
+      m.wizard.quickFixCreditReady.replace("{tokens}", String(TOKEN_COST.image)),
     );
     return lines;
   })();

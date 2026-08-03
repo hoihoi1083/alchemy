@@ -16,6 +16,26 @@ export function applyTextStylePreset(
   };
 }
 
+/**
+ * Single scale factor for preview + burn.
+ * Do NOT multiply preset × layer — applyTextStylePreset copies preset onto the layer.
+ */
+export function effectiveLayerFontSizeScale(
+  layer: Pick<ImageCanvasTextLayer, "fontSizeScale" | "stylePreset">,
+): number {
+  const preset = CAPTION_STYLE_PRESETS[layer.stylePreset];
+  const scale = layer.fontSizeScale ?? preset?.fontSizeScale ?? 1;
+  return Number.isFinite(scale) && scale > 0 ? scale : 1;
+}
+
+/** Font size in px for a given image/stage width — same formula in Konva preview and burn. */
+export function canvasTextFontSizePx(
+  imageWidth: number,
+  layer: Pick<ImageCanvasTextLayer, "fontSizeScale" | "stylePreset">,
+): number {
+  return Math.max(12, Math.round(imageWidth * 0.052 * effectiveLayerFontSizeScale(layer)));
+}
+
 export function effectiveTextStrokeWidth(
   stroke: string | undefined,
   fontSize: number,
