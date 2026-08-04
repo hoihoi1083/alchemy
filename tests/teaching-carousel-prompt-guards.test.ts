@@ -42,12 +42,12 @@ describe("concept teaching carousel prompt guards", () => {
     assert.doesNotMatch(prompt, /Create a scroll-stopping vertical SOCIAL MEDIA POST/);
   });
 
-  it("寫實 concept locks photoreal and bans robot/cartoon mascots", () => {
+  it("寫實 concept allows creative metaphor (not desk-only / anti-robot lock)", () => {
     const prompt = buildTeachingCarouselSlideImagePrompt(
       { ...vars, artStyle: "realistic" },
       {
         theme: "一站式廣告平台",
-        visualDna: "photorealistic commercial photography of real workplaces",
+        visualDna: "editorial metaphor matching concept mood",
       },
       {
         index: 1,
@@ -55,14 +55,14 @@ describe("concept teaching carousel prompt guards", () => {
         title: "一站式廣告平台",
         body: "集中管理多渠道廣告",
         takeaway: "",
-        composition: "Editorial cover — photoreal desk scene",
+        composition: "Editorial cover — bold headline over lifestyle/metaphor photo",
       },
       4,
       "concept-social",
     );
-    assert.match(prompt, /Photorealistic commercial photography|MANDATORY RENDER MEDIUM/i);
-    assert.match(prompt, /Do NOT invent robot|NO cute robot|NO Pixar/i);
-    assert.match(prompt, /robot mascot|Pixar CGI|cartoon 3D/i);
+    assert.match(prompt, /metaphorical scene|visual metaphor|concept mood/i);
+    assert.doesNotMatch(prompt, /Do NOT invent robot mascots/i);
+    assert.doesNotMatch(prompt, /NO cute robot or AI mascots/i);
   });
 
   it("concept tip slides get unique copy lock with that slide's headline", () => {
@@ -91,7 +91,6 @@ describe("concept teaching carousel prompt guards", () => {
     assert.match(neg, /Copywriting/i);
     assert.match(neg, /duplicated headline/i);
     assert.match(neg, /rotated text|sideways typography|vertical lettering/i);
-    assert.match(neg, /robot mascot|Pixar|cartoon 3D/i);
   });
   it("locks product hero on tip slides when product photo is present", () => {
     const prompt = buildTeachingCarouselSlideImagePrompt(

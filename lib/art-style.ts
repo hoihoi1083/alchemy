@@ -154,25 +154,22 @@ export function artStyleMandatoryLead(id: ArtStyleId | undefined): string {
 }
 
 /**
- * Concept + 寫實 only — stops models inventing robot/AI mascots or flipping to Pixar CGI
- * when the user asked for photoreal photography.
+ * Concept + 寫實 — light photoreal bias only.
+ * Do NOT ban creative metaphors (robots, mascots, stylized scenes) when the
+ * concept brief / assistant plan asks for them — creative concept is intentional.
  */
 export function artStylePhotorealConceptLock(id: ArtStyleId | undefined): string {
   if (resolveArtStyleId(id) !== "realistic") return "";
-  return (
-    "MANDATORY RENDER MEDIUM: Photorealistic commercial photography / live-action editorial — real materials, real lighting, real environments. " +
-    "NO cartoon, NO Pixar/3D CGI characters, NO anime, NO cute robot or AI mascots, NO illustrated UI robots, NO plastic toy figures, NO watercolor/comic redraw."
-  );
+  // Empty on purpose: hard anti-robot / desk-only locks fought the concept assistant
+  // when visualMetaphor asked for creative scenes. Art style clause still steers 寫實.
+  return "";
 }
 
 /** Concept-social HERO line — avoid "lifestyle photography" when stylized. */
 export function artStyleConceptHeroHint(id: ArtStyleId | undefined): string {
   const styleId = id ?? DEFAULT_ART_STYLE;
   if (styleId === "realistic") {
-    return (
-      "HERO: photorealistic commercial photography filling 60–70% of frame — real people, desks, phones/laptops, street ads, or product/service environments. " +
-      "Do NOT invent robot mascots, AI characters, cartoon figures, or sci-fi CGI metaphors for the concept."
-    );
+    return "HERO: lifestyle photography, metaphorical scene, or stylized editorial visual filling 60–70% of frame — match the concept mood and the planned visual metaphor.";
   }
   const hints: Record<Exclude<ArtStyleId, "realistic">, string> = {
     "anime-2d":
