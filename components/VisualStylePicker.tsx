@@ -64,7 +64,7 @@ export function VisualStylePicker({ value, onChange, workflowMode, promotionMode
               onClick={() => onChange(s.id)}
               className={`rounded-xl border p-3 text-left transition ${
                 value === s.id
-                  ? "border-emerald-400 bg-emerald-50"
+                  ? "border-violet-400 bg-violet-50"
                   : "border-slate-200 bg-white hover:border-slate-300"
               }`}
             >

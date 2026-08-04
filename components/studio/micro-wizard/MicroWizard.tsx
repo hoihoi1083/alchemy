@@ -289,7 +289,7 @@ export function MicroWizard({ promotionMode }: Props) {
       {!hideLegacyProgress ? (
         <div className="h-1.5 overflow-hidden rounded-full bg-slate-200">
           <div
-            className="h-full rounded-full bg-linear-to-r from-cyan-500 to-emerald-500 transition-all"
+            className="h-full rounded-full bg-linear-to-r from-violet-600 to-violet-500 transition-all"
             style={{
               width: currentStep
                 ? `${(currentStep.index / Math.max(currentStep.estimatedTotal, 1)) * 100}%`

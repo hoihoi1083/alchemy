@@ -10,7 +10,7 @@ export function ImageNode({ id, data }: NodeProps & { data: ImageNodeData }) {
 
   return (
     <div className="w-72 rounded-xl border border-slate-600 bg-slate-900 p-3 shadow-lg">
-      <Handle type="target" position={Position.Left} className="!bg-emerald-500" />
+      <Handle type="target" position={Position.Left} className="!bg-violet-500" />
       <input
         value={data.alias ?? ""}
         onChange={(e) => updateNodeData(id, { alias: e.target.value })}
@@ -39,7 +39,7 @@ export function ImageNode({ id, data }: NodeProps & { data: ImageNodeData }) {
         <img src={data.imageUrl} alt="" className="mt-2 max-h-36 w-full rounded-lg object-contain" />
       )}
       {data.error && <p className="mt-2 text-xs text-red-400">{data.error}</p>}
-      <Handle type="source" position={Position.Right} className="!bg-emerald-500" />
+      <Handle type="source" position={Position.Right} className="!bg-violet-500" />
     </div>
   );
 }

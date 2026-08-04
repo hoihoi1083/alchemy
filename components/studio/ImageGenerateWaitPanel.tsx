@@ -49,8 +49,8 @@ const WAIT_PANEL_CSS = `
 .igw-progress-fill {
   height: 100%;
   border-radius: 9999px;
-  background: #7c3aed;
-  box-shadow: 0 0 0 1px rgba(124,58,237,0.08);
+  background: #6c3bff;
+  box-shadow: 0 0 0 1px rgba(108,59,255,0.08);
   transition: width 0.4s ease;
 }
 @media (max-width: 639px) {

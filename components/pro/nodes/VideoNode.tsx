@@ -29,7 +29,7 @@ export function VideoNode({ id, data }: NodeProps & { data: VideoNodeData }) {
 
   return (
     <div className="w-72 rounded-xl border border-slate-600 bg-slate-900 p-3 shadow-lg">
-      <Handle type="target" position={Position.Left} className="!bg-emerald-500" />
+      <Handle type="target" position={Position.Left} className="!bg-violet-500" />
       <p className="text-xs font-semibold uppercase tracking-wide text-violet-400">{data.label}</p>
       <MentionInput
         nodeId={id}
@@ -104,7 +104,7 @@ export function VideoNode({ id, data }: NodeProps & { data: VideoNodeData }) {
         <video src={data.videoUrl} controls className="mt-2 max-h-36 w-full rounded-lg" />
       )}
       {data.error && <p className="mt-2 text-xs text-red-400">{data.error}</p>}
-      <Handle type="source" position={Position.Right} className="!bg-emerald-500" />
+      <Handle type="source" position={Position.Right} className="!bg-violet-500" />
     </div>
   );
 }

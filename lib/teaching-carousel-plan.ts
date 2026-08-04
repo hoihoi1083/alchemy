@@ -57,7 +57,7 @@ function defaultVisualDna(input: PlanInput): string {
     return `Photorealistic lifestyle product photography — soft natural light, low saturation, linen/fabric textures, ${typePhrase} — NOT cartoon icons or flat infographic clipart`;
   }
   if (input.promotionMode === "concept") {
-    return "Editorial IG carousel, cinematic lifestyle or product-in-scene photography, bold integrated typography — NOT classroom slide deck or white infographic";
+    return "Photorealistic editorial IG carousel — live-action commercial photography of real workplaces, screens, or street ads; bold integrated typography — NOT robots, cartoon mascots, Pixar CGI, or white infographic decks";
   }
   return "Clean educational carousel, consistent typography hierarchy, high readability";
 }
@@ -123,7 +123,7 @@ function fallbackSlides(input: PlanInput, count: number): TeachingCarouselSlide[
           ? input.promotionMode === "concept"
             ? stylized
               ? "Illustrated cover — bold headline integrated into drawn scene, not a photo"
-              : "Editorial cover — bold headline over lifestyle/metaphor photo, magazine energy"
+              : "Editorial cover — photoreal desk/office/screen or street-ad scene with bold headline; no robot/mascot"
             : stylized
               ? input.hasProductPhoto
                 ? "Illustrated cover — exact product from IMAGE 1 as hero with strong headline"
@@ -135,7 +135,7 @@ function fallbackSlides(input: PlanInput, count: number): TeachingCarouselSlide[
             ? input.promotionMode === "concept"
               ? stylized
                 ? "Closing illustrated slide — one CTA line in art medium"
-                : "Closing slide — one CTA line on moody photo, not a white recap box"
+                : "Closing slide — one CTA on the same photoreal workplace/ad setting family, not a white recap box"
               : stylized
                 ? input.hasProductPhoto
                   ? "Illustrated recap — exact product from IMAGE 1 still visible with closing takeaway"
@@ -148,7 +148,7 @@ function fallbackSlides(input: PlanInput, count: number): TeachingCarouselSlide[
                 ? "Tip slide — one key idea as illustration, not photo edu card"
                 : photoRef
                   ? "Tip slide — photo-led flat lay with integrated typography, no cartoon icons"
-                  : "Tip slide — one key idea with visual metaphor, not bullet-list edu card"
+                  : "Tip slide — one key idea via real photo scene (screens, ads, people at work) — no robot/cartoon metaphor"
               : stylized
                 ? input.hasProductPhoto
                   ? "Illustrated tip — exact product from IMAGE 1 visible as hero while teaching one point; no substitute SKU or mascot"
@@ -312,11 +312,13 @@ function buildPlanPrompt(input: PlanInput): string {
             "- CONCEPT mode: editorial social carousel (HK/IG agency style), NOT classroom edu slides or white infographic posters.",
             stylized
               ? `- visualDna MUST match: ${artStylePlannerHint(artStyleId)} — illustrated medium on every slide, NOT photography.`
-              : "- visualDna: moody/color-graded photography, stylized display typography — avoid plain system font on white boxes.",
+              : "- visualDna: photorealistic commercial photography of REAL workplaces, phones/laptops with dashboards, outdoor ads, or people at desks — NOT robot/AI mascots, Pixar CGI, cartoon characters, or sci-fi mecha metaphors.",
             "- Each slide = ONE main idea with a distinct composition (cover / tip / recap) — no repeated layout template.",
             "- Copy is short; body/takeaway must not repeat the title verbatim.",
             "- composition must NOT invent English UI chips/labels (Image, Video, Copy, Copywriting) or an outer matte/letterbox frame around the slide.",
-            "- Prefer full-bleed scene metaphors; do not plan 'poster card floating on blank canvas' layouts.",
+            stylized
+              ? "- Prefer full-bleed illustrated scenes; do not plan 'poster card floating on blank canvas' layouts."
+              : "- Prefer full-bleed REAL photo scenes (office, street ads, device screens). NEVER plan robot mascots, cute AI characters, or cartoon 3D figures as the concept metaphor. Keep the SAME setting/character family across all slides.",
           ]
         : stylized
           ? [

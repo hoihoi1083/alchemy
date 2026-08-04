@@ -58,7 +58,7 @@ export function WizardMobileBar({
             onClick={onSetupNext}
             disabled={setupNextDisabled}
             title={setupNextDisabledReason ?? undefined}
-            className="w-full rounded-xl bg-linear-to-r from-cyan-500 via-emerald-500 to-teal-500 py-3 text-sm font-semibold text-white shadow-[0_0_22px_rgba(16,185,129,0.35)] disabled:opacity-40"
+            className="w-full rounded-xl bg-linear-to-r from-violet-600 via-violet-500 to-violet-700 py-3 text-sm font-semibold text-white shadow-[0_0_22px_rgba(108,59,255,0.35)] disabled:opacity-40"
           >
             {continueSetupLabel}
           </button>
@@ -83,7 +83,7 @@ export function WizardMobileBar({
               disabled={imageNextDisabled}
               title={imageNextDisabledReason ?? undefined}
               onClick={onImageNext}
-              className="flex-1 rounded-xl bg-linear-to-r from-cyan-500 to-emerald-500 py-3 text-sm font-semibold text-white shadow-[0_0_22px_rgba(16,185,129,0.35)] disabled:opacity-40"
+              className="flex-1 rounded-xl bg-linear-to-r from-violet-600 to-violet-500 py-3 text-sm font-semibold text-white shadow-[0_0_22px_rgba(108,59,255,0.35)] disabled:opacity-40"
             >
               {imageFinishLabel}
             </button>
@@ -110,7 +110,7 @@ export function WizardMobileBar({
               disabled={videoGenerateDisabled}
               title={videoGenerateDisabledReason ?? undefined}
               onClick={onGenerateVideo}
-              className="flex-1 rounded-xl bg-linear-to-r from-cyan-500 to-emerald-500 py-3 text-sm font-semibold text-white shadow-[0_0_22px_rgba(16,185,129,0.35)] disabled:opacity-40"
+              className="flex-1 rounded-xl bg-linear-to-r from-violet-600 to-violet-500 py-3 text-sm font-semibold text-white shadow-[0_0_22px_rgba(108,59,255,0.35)] disabled:opacity-40"
             >
               {videoBusy ? phaseVideoLabel : generateVideoLabel}
             </button>

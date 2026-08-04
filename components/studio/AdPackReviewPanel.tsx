@@ -364,7 +364,7 @@ export function AdPackReviewPanel() {
                     key={track.id}
                     className={`flex flex-wrap items-center gap-2 rounded-lg border px-3 py-2 ${
                       w.selectedAiMusicId === track.id
-                        ? "border-emerald-400 bg-emerald-950/40"
+                        ? "border-violet-400 bg-violet-950/40"
                         : "border-slate-700 bg-slate-950/30"
                     }`}
                   >

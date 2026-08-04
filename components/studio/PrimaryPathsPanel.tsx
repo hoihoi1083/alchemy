@@ -79,7 +79,7 @@ export function PrimaryPathsPanel({ variant, showCinematicExtras = false }: Prop
           : m.wizard.primaryPathsHint;
 
   return (
-    <div className="rounded-2xl border border-cyan-200 bg-linear-to-br from-cyan-50 via-white to-indigo-50 p-4">
+    <div className="rounded-2xl border border-violet-200 bg-linear-to-br from-violet-50 via-white to-violet-100/60 p-4">
       <p className="text-sm font-semibold text-slate-900">{pathsTitle}</p>
       <p className="mt-1 text-xs text-slate-600">{pathsHint}</p>
 
@@ -217,9 +217,9 @@ export function PrimaryPathsPanel({ variant, showCinematicExtras = false }: Prop
       )}
 
       {showCinematicExtras ? (
-        <div className="mt-3 rounded-xl border border-fuchsia-200 bg-fuchsia-50/70 p-3">
-          <p className="text-xs font-semibold text-fuchsia-900">{m.wizard.conceptCinematicPathsTitle}</p>
-          <p className="mt-1 text-xs text-fuchsia-800">{m.wizard.conceptCinematicPathsHint}</p>
+        <div className="mt-3 rounded-xl border border-violet-200 bg-violet-50/70 p-3">
+          <p className="text-xs font-semibold text-violet-900">{m.wizard.conceptCinematicPathsTitle}</p>
+          <p className="mt-1 text-xs text-violet-800">{m.wizard.conceptCinematicPathsHint}</p>
           <div className="mt-2 grid gap-2 sm:grid-cols-2">
             <PathButton
               compact

@@ -1647,7 +1647,7 @@ export function CaptionStudioClient() {
               type="button"
               disabled={busy || audioBusy || !sourceKind}
               onClick={() => void applyCaptions()}
-              className="hidden w-full rounded-2xl bg-linear-to-r from-violet-500 to-fuchsia-500 py-3 text-sm font-semibold text-white disabled:opacity-40 xl:block"
+              className="hidden w-full rounded-2xl bg-linear-to-r from-violet-600 to-violet-500 py-3 text-sm font-semibold text-white disabled:opacity-40 xl:block"
             >
               {busy ? t.applying : t.applyBtn}
             </button>
@@ -1682,7 +1682,7 @@ export function CaptionStudioClient() {
                 type="button"
                 disabled={busy || audioBusy || !sourceKind}
                 onClick={() => void applyCaptions()}
-                className="min-w-0 flex-1 rounded-full bg-linear-to-r from-violet-500 to-fuchsia-500 py-2.5 text-xs font-semibold text-white disabled:opacity-40"
+                className="min-w-0 flex-1 rounded-full bg-linear-to-r from-violet-600 to-violet-500 py-2.5 text-xs font-semibold text-white disabled:opacity-40"
               >
                 {busy ? t.applying : t.applyBtn}
               </button>

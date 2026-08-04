@@ -12,6 +12,11 @@ export const PRODUCT_LEGAL_NAME = "Alchemy AI Lab";
 export const PRODUCT_LEGAL_REGION = "Hong Kong SAR";
 export const PRODUCT_LEGAL_LAST_UPDATED = "2026-07-27";
 
+/** Brand colors — mirrored in `app/globals.css` `@theme` (Tailwind violet/emerald). */
+export const BRAND_PURPLE = "#6C3BFF";
+export const BRAND_PURPLE_SECONDARY = "#8B5CF6";
+export const BRAND_SUCCESS = "#059669";
+
 export function productSiteUrl(): string {
   const fromEnv = process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/$/, "");
   // Never bake localhost into production sitemap/OG (local `next build` + .env.local).

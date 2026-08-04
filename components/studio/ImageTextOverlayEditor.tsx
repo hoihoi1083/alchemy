@@ -130,7 +130,7 @@ export function ImageTextOverlayEditor({
               onPointerCancel={endDrag}
               onClick={() => setSelectedId(layer.id)}
               className={`absolute max-w-[88%] -translate-x-1/2 -translate-y-1/2 cursor-move whitespace-pre-wrap px-1 text-center text-sm font-bold leading-tight text-white [text-shadow:0_0_4px_rgba(0,0,0,0.9),0_2px_8px_rgba(0,0,0,0.6)] ${
-                selectedId === layer.id ? "ring-2 ring-emerald-400 ring-offset-1 ring-offset-transparent" : ""
+                selectedId === layer.id ? "ring-2 ring-violet-400 ring-offset-1 ring-offset-transparent" : ""
               }`}
               style={{ left: `${layer.xPct}%`, top: `${layer.yPct}%` }}
             >

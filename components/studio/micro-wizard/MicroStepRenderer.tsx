@@ -706,7 +706,7 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
                 onClick={() => wizard.setBgmTrack(opt.id)}
                 className={`rounded-full border px-3 py-1.5 text-xs font-medium ${
                   wizard.bgmTrack === opt.id
-                    ? "border-emerald-400 bg-emerald-50 text-emerald-900"
+                    ? "border-violet-400 bg-violet-50 text-emerald-900"
                     : "border-slate-200 bg-white text-slate-700"
                 }`}
               >
@@ -940,7 +940,7 @@ function ScreenShell({
 }) {
   return (
     <section className="space-y-4 rounded-3xl border border-cyan-100/70 bg-white/90 p-5 shadow-sm backdrop-blur">
-      <div className="h-1 w-full rounded-full bg-linear-to-r from-cyan-400 via-indigo-400 to-emerald-400 opacity-80" />
+      <div className="h-1 w-full rounded-full bg-linear-to-r from-violet-400 via-violet-500 to-violet-600 opacity-80" />
       <div>
         <h2 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">{title}</h2>
         {hint ? <p className="mt-2 text-sm leading-relaxed text-slate-600">{hint}</p> : null}
@@ -966,7 +966,7 @@ function ChoiceCard({
       type="button"
       onClick={onClick}
       className={`rounded-xl border px-4 py-3 text-left transition ${
-        active ? "border-emerald-400 bg-emerald-50" : "border-slate-200 bg-white hover:border-slate-300"
+        active ? "border-violet-400 bg-violet-50" : "border-slate-200 bg-white hover:border-slate-300"
       }`}
     >
       <p className="text-sm font-semibold text-slate-900">{title}</p>

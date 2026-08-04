@@ -337,7 +337,7 @@ export function CaptionAudioSection({
                 key={track.id}
                 className={`rounded-lg border px-2 py-2 ${
                   selectedAiMusicId === track.id
-                    ? "border-emerald-400 bg-emerald-950/40"
+                    ? "border-violet-400 bg-violet-950/40"
                     : "border-slate-700 bg-slate-950/30"
                 }`}
               >
@@ -461,7 +461,7 @@ export function CaptionAudioSection({
                   type="button"
                   disabled={disabled || busy || captionLineCount < 1}
                   onClick={onExpandSpokenCaptions}
-                  className="rounded-full border border-fuchsia-500/50 px-3 py-1.5 text-[11px] font-medium text-fuchsia-100 hover:bg-fuchsia-950/40 disabled:opacity-50"
+                  className="rounded-full border border-violet-500/50 px-3 py-1.5 text-[11px] font-medium text-violet-100 hover:bg-violet-950/40 disabled:opacity-50"
                 >
                   {expandSpokenBusy
                     ? (t.expandingSpokenCaptions ?? t.expandSpokenCaptions)

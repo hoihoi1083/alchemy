@@ -44,7 +44,7 @@ export function ImageOutputModePicker({
   const selectedClass =
     accent === "violet"
       ? "border-violet-400 bg-violet-50"
-      : "border-emerald-400 bg-emerald-50";
+      : "border-violet-400 bg-violet-50";
 
   return (
     <div className="space-y-2">

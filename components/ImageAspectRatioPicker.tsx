@@ -49,7 +49,7 @@ export function ImageAspectRatioPicker({
                       : "border-emerald-500 bg-emerald-950/40"
                     : violet
                       ? "border-violet-400 bg-violet-50"
-                      : "border-emerald-400 bg-emerald-50"
+                      : "border-violet-400 bg-violet-50"
                   : isDark
                     ? "border-slate-700 bg-slate-900/50 hover:border-slate-600"
                     : "border-slate-200 bg-white hover:border-slate-300"

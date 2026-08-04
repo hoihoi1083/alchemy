@@ -65,7 +65,7 @@ export const CAPTION_STYLE_PRESETS: Record<
     labelEn: "High-contrast pop",
     labelZh: "高對比彈出字",
     fill: "#ffffff",
-    stroke: "#7c3aed",
+    stroke: "#6c3bff",
     fontWeight: 800,
     fontFamily: "NotoDisplay",
     fontSizeScale: 1.05,

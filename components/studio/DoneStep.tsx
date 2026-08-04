@@ -91,7 +91,7 @@ export function DoneStep() {
   if (workflowMode === "image-only" && finalImageSrc) {
     return (
       <section className="space-y-5 rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-xl shadow-slate-900/40 backdrop-blur">
-        <div className="h-1 w-full rounded-full bg-linear-to-r from-emerald-400 via-cyan-400 to-violet-400" />
+        <div className="h-1 w-full rounded-full bg-linear-to-r from-violet-400 via-violet-500 to-violet-600" />
         <div>
           <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
             {m.wizard.imageDoneTitle}
@@ -148,7 +148,7 @@ export function DoneStep() {
                           setDownloadBusy(false);
                         }
                       }}
-                      className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
+                      className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
                     >
                       {downloadBusy ? m.imageCanvas.downloading : m.wizard.downloadSlide}
                     </button>
@@ -196,7 +196,7 @@ export function DoneStep() {
                   setDownloadBusy(false);
                 }
               }}
-              className="w-full rounded-xl border border-emerald-600 px-4 py-2.5 text-sm font-medium text-emerald-100 disabled:opacity-50"
+              className="w-full rounded-xl border border-violet-500/60 px-4 py-2.5 text-sm font-medium text-violet-100 disabled:opacity-50"
             >
               {downloadBusy ? m.imageCanvas.downloading : m.wizard.downloadAllSlides}
             </button>
@@ -225,7 +225,7 @@ export function DoneStep() {
                   setDownloadBusy(false);
                 }
               }}
-              className="block w-full rounded-xl bg-emerald-600 py-3 text-center text-sm font-semibold text-white disabled:opacity-50"
+              className="block w-full rounded-xl bg-violet-600 py-3 text-center text-sm font-semibold text-white disabled:opacity-50"
             >
               {downloadBusy ? m.imageCanvas.downloading : m.wizard.downloadImage}
             </button>
@@ -287,7 +287,7 @@ export function DoneStep() {
   if (workflowMode !== "image-only" && videoUrl) {
     return (
       <section className="space-y-5 rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-xl shadow-slate-900/40 backdrop-blur">
-        <div className="h-1 w-full rounded-full bg-linear-to-r from-emerald-400 via-cyan-400 to-violet-400" />
+        <div className="h-1 w-full rounded-full bg-linear-to-r from-violet-400 via-violet-500 to-violet-600" />
         <div>
           <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
             {m.wizard.step4Title}
@@ -327,7 +327,7 @@ export function DoneStep() {
                 setDownloadBusy(false);
               }
             }}
-            className="rounded-xl bg-emerald-600 py-3 text-center text-sm font-semibold text-white disabled:opacity-50"
+            className="rounded-xl bg-violet-600 py-3 text-center text-sm font-semibold text-white disabled:opacity-50"
           >
             {downloadBusy ? m.wizard.phaseVideo : m.wizard.download}
           </button>
@@ -421,7 +421,7 @@ export function DoneStep() {
         <button
           type="button"
           onClick={() => setStepKey("video")}
-          className="w-full rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white"
+          className="w-full rounded-xl bg-violet-600 py-3 text-sm font-semibold text-white"
         >
           {m.wizard.videoDoneEmptyBack}
         </button>

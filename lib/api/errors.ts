@@ -16,6 +16,7 @@ export type ErrorFallbacks = {
 const TECHNICAL_PATTERNS: Array<{ test: RegExp; key: keyof ErrorFallbacks }> = [
   { test: /\.env(\.local)?/i, key: "default" },
   { test: /FAL_KEY|fal\.ai/i, key: "missingFalKey" },
+  { test: /Photo analysis was blocked|forbidden|unauthorized/i, key: "missingFalKey" },
   { test: /insufficient balance|balance is empty|top up at platform\.deepseek/i, key: "deepSeekBalanceEmpty" },
   { test: /not enough tokens|insufficient_tokens/i, key: "insufficientTokens" },
   { test: /DEEPSEEK_API_KEY|deepseek/i, key: "missingDeepSeek" },
@@ -48,6 +49,9 @@ export function mapApiError(raw: unknown, fallbacks: ErrorFallbacks): string {
   }
   if (raw instanceof ApiClientError && raw.status === 413) {
     return pickFallback("requestTooLarge", fallbacks);
+  }
+  if (raw instanceof ApiClientError && (raw.status === 401 || raw.status === 403)) {
+    return pickFallback("missingFalKey", fallbacks);
   }
   if (raw instanceof ApiClientError && raw.body && typeof raw.body === "object") {
     const code = (raw.body as { code?: unknown }).code;

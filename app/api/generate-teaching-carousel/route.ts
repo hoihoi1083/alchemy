@@ -8,9 +8,15 @@ import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import {
   buildFalLayoutTransferImageUrls,
   carouselCoverSeriesAnchorHint,
+  carouselSlideRoleVariationHint,
   dualProductIdentityHint,
 } from "@/lib/fal-dual-reference-urls";
-import { defaultEditEndpoint, defaultTextEndpoint, sanitizeImageEndpoint } from "@/lib/image-endpoints";
+import {
+  defaultEditEndpoint,
+  defaultTextEndpoint,
+  resolveEditEndpointWhenNeeded,
+  sanitizeImageEndpoint,
+} from "@/lib/image-endpoints";
 import { persistAndDurablizeMany } from "@/lib/storage/durable-media";
 import {
   buildPromptVariables,
@@ -173,8 +179,9 @@ export async function POST(request: Request) {
       : "";
   const promptExtra = [promptExtraRaw, strategyBlock, carouselExtra].filter(Boolean).join(" | ");
   const referenceImageMode = strategy.referenceImageMode;
+  const endpointRaw = (formData.get("endpoint") as string | null)?.trim() || null;
   const endpoint = sanitizeImageEndpoint(
-    formData.get("endpoint") as string | null,
+    endpointRaw,
     strategy.sendPixelsToFal ? defaultEditEndpoint() : defaultTextEndpoint(),
   );
   const slideCount = Math.min(
@@ -323,7 +330,9 @@ export async function POST(request: Request) {
         .filter(Boolean)
         .join("\n");
 
-      const result = await fal.subscribe(endpoint, {
+      // image_urls require /edit — concept cover-anchor tips otherwise hit text-to-image and ignore the cover.
+      const slideEndpoint = resolveEditEndpointWhenNeeded(endpointRaw, Boolean(urls?.length));
+      const result = await fal.subscribe(slideEndpoint, {
         input: {
           prompt,
           ...(urls?.length ? { image_urls: urls } : {}),
@@ -393,20 +402,56 @@ export async function POST(request: Request) {
     const coverSlide = ordered[0];
     const restSlides = ordered.slice(1);
 
-    // Cover first when we have reference pixels (product and/or style) — later slides
-    // see cover as a series anchor so tip cards stay consistent.
+    // Always render cover first when there are tip slides. Parallel tip-only
+    // generation (common for concept with no product photo) invents a new art
+    // medium/character per slide. Product+style dual refs already lock DNA —
+    // do NOT also attach cover pixels there (that clones the cover with swapped text).
     let slideResults: SlideOut[];
-    if (imageUrlsForFal?.length && coverSlide && restSlides.length > 0) {
-      const coverOut = await generateOneSlide(coverSlide, imageUrlsForFal, [dualHint]);
-      const anchoredUrls = [...imageUrlsForFal, coverOut.imageUrl];
-      const coverHint = carouselCoverSeriesAnchorHint({ hasProductPhoto: hasProduct });
+    if (coverSlide && restSlides.length > 0) {
+      const baseUrls = imageUrlsForFal?.length ? imageUrlsForFal : null;
+      const coverOut = await generateOneSlide(coverSlide, baseUrls, [
+        dualHint,
+        carouselSlideRoleVariationHint({
+          role: coverSlide.role,
+          index: coverSlide.index,
+          total: plan.slides.length,
+        }),
+      ]);
+      const dualLocksLook = Boolean(strategy.useDualImage && hasStyle && hasProduct);
+      const attachCoverPixels = !dualLocksLook;
+      const tipUrls = attachCoverPixels
+        ? [...(baseUrls ?? []), coverOut.imageUrl]
+        : baseUrls;
+      const coverHint = carouselCoverSeriesAnchorHint({
+        hasProductPhoto: hasProduct,
+        pixelAnchor: attachCoverPixels,
+      });
       const restOut = await Promise.all(
-        restSlides.map((slide) => generateOneSlide(slide, anchoredUrls, [dualHint, coverHint])),
+        restSlides.map((slide) =>
+          generateOneSlide(slide, tipUrls, [
+            dualHint,
+            coverHint,
+            carouselSlideRoleVariationHint({
+              role: slide.role,
+              index: slide.index,
+              total: plan.slides.length,
+            }),
+          ]),
+        ),
       );
       slideResults = [coverOut, ...restOut].sort((a, b) => a.index - b.index);
     } else {
       slideResults = await Promise.all(
-        ordered.map((slide) => generateOneSlide(slide, imageUrlsForFal, [dualHint])),
+        ordered.map((slide) =>
+          generateOneSlide(slide, imageUrlsForFal, [
+            dualHint,
+            carouselSlideRoleVariationHint({
+              role: slide.role,
+              index: slide.index,
+              total: plan.slides.length,
+            }),
+          ]),
+        ),
       );
     }
     const slides = slideResults.map(({ index: _i, ...rest }) => rest);

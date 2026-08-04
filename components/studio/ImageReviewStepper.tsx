@@ -50,12 +50,12 @@ const REVIEW_STEPPER_CSS = `
   line-height: 1;
 }
 .image-review-phase-dot--active {
-  background: #7c3aed;
+  background: #6c3bff;
   color: #fff;
-  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.16);
+  box-shadow: 0 0 0 4px rgba(108, 59, 255, 0.16);
 }
 .image-review-phase-dot--done {
-  background: #7c3aed;
+  background: #6c3bff;
   color: #fff;
 }
 .image-review-phase-dot--idle {
@@ -69,7 +69,7 @@ const REVIEW_STEPPER_CSS = `
   color: #64748b;
 }
 .image-review-phase-item.is-active .image-review-phase-label {
-  color: #6d28d9;
+  color: #5b2fe0;
   font-weight: 600;
 }
 @media (min-width: 640px) {
@@ -100,7 +100,7 @@ const REVIEW_STEPPER_CSS = `
     right: calc(0.1rem + 14px);
   }
   .image-review-phase-dot--active {
-    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.16);
+    box-shadow: 0 0 0 3px rgba(108, 59, 255, 0.16);
   }
   .image-review-phase-label { display: none; }
   .image-review-phase-item.is-active .image-review-phase-label {

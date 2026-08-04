@@ -24,14 +24,14 @@ const PANEL_CSS = `
   position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center;
   gap: 0.45rem; flex: 1 1 0; min-width: 0; text-align: center;
 }
-.pn-phase-dot--active { background: #7c3aed !important; color: #fff !important; box-shadow: 0 0 0 4px rgba(124,58,237,0.16); }
-.pn-phase-dot--done { background: #7c3aed !important; color: #fff !important; }
+.pn-phase-dot--active { background: #6c3bff !important; color: #fff !important; box-shadow: 0 0 0 4px rgba(108,59,255,0.16); }
+.pn-phase-dot--done { background: #6c3bff !important; color: #fff !important; }
 .pn-phase-dot--idle { background: #f1f5f9 !important; color: #94a3b8 !important; }
 .pn-phase-label { font-size: 11px; line-height: 1.25; max-width: 7.5rem; }
 @media (max-width: 639px) {
   .pn-phase-label { display: none; }
   .pn-phase-item.is-active .pn-phase-label {
-    display: block; font-weight: 600; color: #6d28d9;
+    display: block; font-weight: 600; color: #5b2fe0;
   }
 }
 .pn-panel {
@@ -53,17 +53,17 @@ const PANEL_CSS = `
   color: #0f172a; outline: none; transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .pn-input:focus {
-  border-color: #7c3aed; box-shadow: 0 0 0 4px rgba(124,58,237,0.12);
+  border-color: #6c3bff; box-shadow: 0 0 0 4px rgba(108,59,255,0.12);
 }
 .pn-input::placeholder { color: #94a3b8; }
 .pn-example {
   display: inline-flex; align-items: center; border-radius: 9999px;
   border: 1px solid #ddd6fe; background: #f5f3ff; padding: 0.4rem 0.85rem;
-  font-size: 12px; font-weight: 600; color: #6d28d9; transition: background 0.15s ease, border-color 0.15s ease;
+  font-size: 12px; font-weight: 600; color: #5b2fe0; transition: background 0.15s ease, border-color 0.15s ease;
 }
 .pn-example:hover { background: #ede9fe; border-color: #c4b5fd; }
 .pn-example.is-on {
-  background: #7c3aed; border-color: #7c3aed; color: #fff;
+  background: #6c3bff; border-color: #6c3bff; color: #fff;
 }
 .pn-tip-card {
   display: flex; flex-direction: column; min-width: 0; height: 100%;
@@ -72,12 +72,12 @@ const PANEL_CSS = `
 .pn-tip-icon {
   display: flex; align-items: center; justify-content: center;
   width: 2.35rem; height: 2.35rem; border-radius: 9999px;
-  background: #ede9fe; color: #6d28d9; flex-shrink: 0;
+  background: #ede9fe; color: #5b2fe0; flex-shrink: 0;
 }
 .pn-tip-star {
   display: flex; align-items: center; justify-content: center;
   width: 1.5rem; height: 1.5rem; margin-top: 0.1rem; border-radius: 9999px;
-  background: #7c3aed; color: #fff; flex-shrink: 0; line-height: 0;
+  background: #6c3bff; color: #fff; flex-shrink: 0; line-height: 0;
 }
 @media (max-width: 639px) {
   .pn-phase-rail { padding: 0.85rem 0.5rem 0.95rem; }

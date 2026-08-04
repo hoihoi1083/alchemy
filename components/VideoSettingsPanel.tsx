@@ -73,7 +73,7 @@ export function VideoSettingsPanel({
   const selectedCardClass =
     tone === "violet"
       ? "border-violet-400 bg-violet-50 text-slate-900"
-      : "border-emerald-400 bg-emerald-50 text-slate-900";
+      : "border-violet-400 bg-violet-50 text-slate-900";
   const checkboxClass =
     tone === "violet"
       ? "size-4 rounded border-slate-300 text-violet-600 accent-violet-600"

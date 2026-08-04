@@ -61,7 +61,7 @@ const REC_CARD_CSS = `
   text-overflow: ellipsis;
   border-radius: 9999px;
   background: #f5f3ff;
-  color: #6d28d9;
+  color: #5b2fe0;
   font-size: 11px;
   font-weight: 500;
   padding: 0.25rem 0.625rem;

@@ -4,12 +4,24 @@ import { Fragment } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 import { Reveal } from "@/components/landing/Reveal";
 
-const STEP_ICONS = [
-	"/images/landing/how-icon-upload.png",
-	"/images/landing/how-icon-analyze.png",
-	"/images/landing/how-icon-edit.png",
-	"/images/landing/how-icon-generate.png",
-];
+const STEP_IMAGES = [
+	{
+		src: "/images/landing/how-step-1-upload.jpg",
+		altEn: "Upload a product photo or paste a style reference",
+	},
+	{
+		src: "/images/landing/how-step-2-analyze.jpg",
+		altEn: "AI analyzing layout, colors, and tone from the reference",
+	},
+	{
+		src: "/images/landing/how-step-3-plan.jpg",
+		altEn: "Review and edit copy, prompts, and storyboard scenes",
+	},
+	{
+		src: "/images/landing/how-step-4-generate.jpg",
+		altEn: "Generated creative ready to edit on canvas and export",
+	},
+] as const;
 
 export function LandingHowItWorks() {
 	const { m } = useLocale();
@@ -34,58 +46,65 @@ export function LandingHowItWorks() {
           (arrows are real columns, not absolute overlays — so they sit between cards)
         */}
 				<ol className="landing-how-grid mt-10 grid grid-cols-1 items-stretch gap-4 md:gap-5">
-					{L.howSteps.map((step, i) => (
-						<Fragment key={step.title}>
-							<li className="min-w-0">
-								<Reveal
-									delayMs={i * 110}
-									distance={52}
-									scaleFrom={1.44}
-									className="h-full"
-								>
-									<div className="relative flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-4 pt-5 shadow-sm">
-										<span className="absolute left-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-violet-600 text-xs font-bold text-white">
-											{i + 1}
-										</span>
-										{/* eslint-disable-next-line @next/next/no-img-element */}
-										<img
-											src={STEP_ICONS[i]}
-											alt=""
-											className="mx-auto mb-3 aspect-square h-20 w-20 object-contain object-center sm:h-24 sm:w-24"
-										/>
-										<h3 className="text-center text-sm font-semibold text-slate-900">
-											{step.title}
-										</h3>
-										<p className="mt-1.5 text-center text-xs leading-relaxed text-slate-500">
-											{step.body}
-										</p>
-									</div>
-								</Reveal>
-							</li>
-
-							{i < L.howSteps.length - 1 ? (
-								<li
-									className="landing-how-arrow items-center justify-center self-center"
-									aria-hidden
-								>
+					{L.howSteps.map((step, i) => {
+						const image = STEP_IMAGES[i];
+						return (
+							<Fragment key={step.title}>
+								<li className="min-w-0">
 									<Reveal
-										delayMs={i * 110 + 180}
-										distance={0}
+										delayMs={i * 110}
+										distance={52}
 										scaleFrom={1.44}
-										className="flex"
+										className="h-full"
 									>
-										<span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-violet-100 text-lg font-semibold leading-none text-violet-600 shadow-sm ring-2 ring-white">
-											<span
-												className={`landing-arrow-pulse landing-arrow-pulse--${i}`}
-											>
-												→
+										<div className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+											<span className="absolute left-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-violet-600 text-xs font-bold text-white shadow-sm ring-2 ring-white">
+												{i + 1}
 											</span>
-										</span>
+											<div className="relative aspect-[4/3] w-full overflow-hidden bg-violet-50">
+												{/* eslint-disable-next-line @next/next/no-img-element */}
+												<img
+													src={image.src}
+													alt={image.altEn}
+													className="h-full w-full object-cover object-center"
+												/>
+											</div>
+											<div className="flex flex-1 flex-col px-4 pb-4 pt-3">
+												<h3 className="text-sm font-semibold text-slate-900">
+													{step.title}
+												</h3>
+												<p className="mt-1.5 text-xs leading-relaxed text-slate-500">
+													{step.body}
+												</p>
+											</div>
+										</div>
 									</Reveal>
 								</li>
-							) : null}
-						</Fragment>
-					))}
+
+								{i < L.howSteps.length - 1 ? (
+									<li
+										className="landing-how-arrow items-center justify-center self-center"
+										aria-hidden
+									>
+										<Reveal
+											delayMs={i * 110 + 180}
+											distance={0}
+											scaleFrom={1.44}
+											className="flex"
+										>
+											<span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-violet-100 text-lg font-semibold leading-none text-violet-600 shadow-sm ring-2 ring-white">
+												<span
+													className={`landing-arrow-pulse landing-arrow-pulse--${i}`}
+												>
+													→
+												</span>
+											</span>
+										</Reveal>
+									</li>
+								) : null}
+							</Fragment>
+						);
+					})}
 				</ol>
 			</div>
 		</section>

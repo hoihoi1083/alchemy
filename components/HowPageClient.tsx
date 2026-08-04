@@ -63,7 +63,7 @@ export function HowPageClient() {
               <p className="text-xs font-semibold text-slate-400">{s.no}</p>
               <h2 className="mt-2 text-lg font-semibold">{s.title}</h2>
               <p className="mt-2 text-sm text-slate-600">{s.body}</p>
-              <div className="mt-4 h-1 w-full rounded-full bg-linear-to-r from-cyan-400/60 via-indigo-400/60 to-emerald-400/60" />
+              <div className="mt-4 h-1 w-full rounded-full bg-linear-to-r from-violet-400/60 via-violet-500/60 to-violet-600/60" />
             </div>
           ))}
         </div>

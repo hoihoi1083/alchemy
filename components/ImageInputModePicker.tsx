@@ -31,7 +31,7 @@ export function ImageInputModePicker({ value, onChange }: Props) {
               onClick={() => onChange(id)}
               className={`rounded-xl border p-3 text-left transition ${
                 value === id
-                  ? "border-emerald-500/60 bg-emerald-950/40"
+                  ? "border-violet-500/60 bg-violet-950/40"
                   : "border-slate-800 bg-slate-900/40 hover:border-slate-600"
               }`}
             >

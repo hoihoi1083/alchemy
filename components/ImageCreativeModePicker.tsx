@@ -30,7 +30,7 @@ export function ImageCreativeModePicker({ value, onChange }: Props) {
               onClick={() => onChange(id)}
               className={`rounded-xl border p-4 text-left transition ${
                 value === id
-                  ? "border-emerald-400 bg-emerald-50"
+                  ? "border-violet-400 bg-violet-50"
                   : "border-slate-200 bg-white hover:border-slate-300"
               }`}
             >

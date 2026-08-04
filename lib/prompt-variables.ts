@@ -51,6 +51,7 @@ import {
   artStyleConceptHeroHint,
   artStyleImageClause,
   artStyleMandatoryLead,
+  artStylePhotorealConceptLock,
   artStylePlannerHint,
   artStyleSeedanceHint,
   artStyleStoryboardLead,
@@ -468,10 +469,10 @@ function conceptSocialPreferAvoid(
   }
   return {
     avoid:
-      "white infographic template, edu-carousel flyer, Canva 3-block layout, stacked bullet list, stock handshake, generic AI poster collage, plain white seamless catalog backdrop, empty cream studio sweep, outer matte/letterbox frame, poster card floating on a blank canvas, repeating the same headline or CTA line multiple times, English UI chips labeled Image/Video/Copy/Copywriting",
+      "white infographic template, edu-carousel flyer, Canva 3-block layout, stacked bullet list, stock handshake, generic AI poster collage, plain white seamless catalog backdrop, empty cream studio sweep, outer matte/letterbox frame, poster card floating on a blank canvas, repeating the same headline or CTA line multiple times, English UI chips labeled Image/Video/Copy/Copywriting, robot mascot, cute AI robot, Pixar CGI character, cartoon 3D figure, anime mecha, illustrated UI robot",
     prefer: stylized
       ? "consistent illustrated palette, layered scene with props, one strong visual metaphor, medium-appropriate lettering, full-bleed edge-to-edge"
-      : "cinematic color grade, lifestyle set design with props and depth, HK/IG agency aesthetic, one strong visual metaphor, layered typography full-bleed — never a lone product on blank white, never a framed card on a larger empty background",
+      : "photorealistic commercial photography — real desk/office/street-ad or device-screen scenes, cinematic color grade, layered typography full-bleed — never invent robot/AI mascots or cartoon characters as the concept metaphor, never a lone product on blank white, never a framed card on a larger empty background",
   };
 }
 
@@ -512,6 +513,7 @@ export function buildConceptSocialImagePrompt(
   const { prefer, avoid } = conceptSocialPreferAvoid(direction, stylized, refMode, locale);
   return joinParts(
     artStyleMandatoryLead(vars.artStyle),
+    artStylePhotorealConceptLock(vars.artStyle),
     plan
       ? joinParts(
           `SINGLE SOCIAL AD — role: ${plan.role}.`,
@@ -557,7 +559,7 @@ export function buildConceptSocialImagePrompt(
 }
 
 const CAROUSEL_ANTI_POSTER_NEGATIVE =
-  "white infographic, edu slide, classroom poster, bullet list template, Canva layout, powerpoint slide, plain white background box, outer matte frame, letterbox border, poster card on blank canvas, duplicated headline text, twin masthead titles, top and bottom same headline, rotated text, sideways typography, vertical lettering, 90-degree rotated words, stacked single characters, English UI chips Image/Video/Copy/Copywriting, watermark";
+  "white infographic, edu slide, classroom poster, bullet list template, Canva layout, powerpoint slide, plain white background box, outer matte frame, letterbox border, poster card on blank canvas, duplicated headline text, twin masthead titles, top and bottom same headline, rotated text, sideways typography, vertical lettering, 90-degree rotated words, stacked single characters, English UI chips Image/Video/Copy/Copywriting, watermark, robot mascot, cute AI robot, Pixar CGI character, cartoon 3D figure, anime mecha";
 
 export function buildCarouselImageNegativePrompt(
   framing: SubjectFraming,
@@ -567,6 +569,7 @@ export function buildCarouselImageNegativePrompt(
   const base = framingNeg
     ? `${CAROUSEL_ANTI_POSTER_NEGATIVE}, ${framingNeg}`
     : CAROUSEL_ANTI_POSTER_NEGATIVE;
+  // Realistic: keep anti-cartoon terms. Stylized: applyArtStyleNegative may strip "cartoon".
   return applyArtStyleNegative(base, artStyle);
 }
 
@@ -596,6 +599,7 @@ export function buildConceptSocialCarouselSlidePrompt(
       : "";
   const seriesBlock = joinParts(
     artStyleMandatoryLead(vars.artStyle),
+    artStylePhotorealConceptLock(vars.artStyle),
     referenceBlockForMode(referenceImageMode, vars),
     `LINKED CAROUSEL (${totalSlides} slides — image ${slideIndex + 1}/${totalSlides}).`,
     plan.theme ? `Series theme: ${plan.theme}.` : "",
@@ -605,7 +609,7 @@ export function buildConceptSocialCarouselSlidePrompt(
       ? "Each slide MUST use a distinct composition — same color/typography family, never the same layout template."
       : referenceImageMode === "clone"
         ? "Keep IMAGE 1 subject recognizable — vary layout role and copy only."
-        : "Keep consistent color grade and typography energy across the series.",
+        : "Keep consistent color grade, typography energy, and character identity across the series — do not invent a new robot/mascot on later slides.",
     "Each slide must use a DIFFERENT composition — not the same white text box layout copied on every card.",
   );
   return joinParts(
@@ -759,7 +763,7 @@ export function buildTeachingCarouselSlideImagePrompt(
         ? "Illustrated social carousel — typography and icons drawn in the same art medium, NOT photorealistic photography."
         : referenceImageMode === "style-only" && isPhotographicReferenceBrief(vars.extra)
           ? `Photorealistic lifestyle product carousel — soft natural light, real product textures, ${integratedTypographyPhrase(locale)} — NO cartoon icons or flat line-art badges.`
-          : "Editorial social carousel — integrated typography, not a plain white edu poster.",
+          : "Photorealistic editorial social carousel — real commercial photography, integrated typography — NO robot mascots, Pixar CGI, or cartoon characters.",
       typographyHintForLocale(locale, slideLines),
       carouselSlideAvoidClause(vars.framing, vars.artStyle ?? DEFAULT_ART_STYLE),
       referenceImageMode === "style-only" ? vars.extra : undefined,

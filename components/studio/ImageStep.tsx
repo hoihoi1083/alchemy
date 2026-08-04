@@ -73,7 +73,7 @@ export function ImageStep() {
   const showProductUpload = usesCompositor || needsProductUpload;
   return (
 <section className="space-y-5 rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-xl shadow-slate-900/40 backdrop-blur">
-  <div className="h-1 w-full animate-pulse rounded-full bg-linear-to-r from-fuchsia-500 via-cyan-400 to-emerald-400" />
+  <div className="h-1 w-full animate-pulse rounded-full bg-linear-to-r from-violet-500 via-violet-400 to-violet-600" />
   <div>
     <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
       {m.wizard.step2Title}
@@ -331,9 +331,9 @@ export function ImageStep() {
   )}
 
   {isConceptCinematicSingleOutput && (
-    <div className="rounded-2xl border border-fuchsia-800/50 bg-fuchsia-950/25 p-4">
-      <p className="text-sm font-semibold text-fuchsia-100">{m.wizard.conceptCinematicSingleOutputTitle}</p>
-      <p className="mt-1 text-xs text-fuchsia-200/90">{m.wizard.conceptCinematicSingleOutputDesc}</p>
+    <div className="rounded-2xl border border-violet-800/50 bg-violet-950/25 p-4">
+      <p className="text-sm font-semibold text-violet-100">{m.wizard.conceptCinematicSingleOutputTitle}</p>
+      <p className="mt-1 text-xs text-violet-200/90">{m.wizard.conceptCinematicSingleOutputDesc}</p>
       <p className="mt-2 text-xs text-amber-200/90">{m.wizard.conceptCinematicSingleNoPosterHint}</p>
     </div>
   )}
@@ -369,20 +369,20 @@ export function ImageStep() {
   )}
 
   {isCinematicStitchOutput && (
-    <div className="rounded-2xl border border-fuchsia-800/50 bg-fuchsia-950/25 p-4">
-      <p className="text-sm font-semibold text-fuchsia-100">
+    <div className="rounded-2xl border border-violet-800/50 bg-violet-950/25 p-4">
+      <p className="text-sm font-semibold text-violet-100">
         {formatCinematicCopy(m.wizard.cinematicStitchOutputTitle)}
       </p>
-      <p className="mt-1 text-xs text-fuchsia-200/90">{m.wizard.cinematicStitchOutputDesc}</p>
+      <p className="mt-1 text-xs text-violet-200/90">{m.wizard.cinematicStitchOutputDesc}</p>
       <div className="mt-3 flex flex-wrap items-center gap-3">
-        <label className="flex items-center gap-2 text-xs text-fuchsia-200">
+        <label className="flex items-center gap-2 text-xs text-violet-200">
           {m.wizard.cinematicSceneCountLabel}
           <select
             value={cinematicSceneCount}
             onChange={(e) =>
               onCinematicSceneCountChange(Number(e.target.value) as CinematicSceneCount)
             }
-            className="rounded-lg border border-fuchsia-700 bg-slate-900 px-2 py-1 text-xs text-fuchsia-100"
+            className="rounded-lg border border-violet-700 bg-slate-900 px-2 py-1 text-xs text-violet-100"
           >
             {CINEMATIC_SCENE_COUNTS.filter((n) => n > 1).map((n) => (
               <option key={n} value={n}>
@@ -392,7 +392,7 @@ export function ImageStep() {
           </select>
         </label>
       </div>
-      <p className="mt-2 text-[10px] text-fuchsia-200/80">{m.wizard.cinematicSceneCountHint}</p>
+      <p className="mt-2 text-[10px] text-violet-200/80">{m.wizard.cinematicSceneCountHint}</p>
     </div>
   )}
 
@@ -750,10 +750,10 @@ export function ImageStep() {
   )}
 
   {cinematicScenes.length > 0 && (
-    <div className="rounded-2xl border border-fuchsia-700/50 bg-fuchsia-950/25 p-4">
+    <div className="rounded-2xl border border-violet-700/50 bg-violet-950/25 p-4">
       {cinematicReelPlan?.theme && (
-        <p className="mb-2 text-xs text-fuchsia-100/80">
-          <span className="font-medium text-fuchsia-200">{m.wizard.cinematicReelPlanLabel}:</span>{" "}
+        <p className="mb-2 text-xs text-violet-100/80">
+          <span className="font-medium text-violet-200">{m.wizard.cinematicReelPlanLabel}:</span>{" "}
           {cinematicReelPlan.theme}
         </p>
       )}
@@ -778,8 +778,8 @@ export function ImageStep() {
           </div>
         ))}
       </div>
-      <p className="mt-3 text-xs text-fuchsia-200/80">{formatCinematicCopy(m.wizard.cinematicStitchImageHint)}</p>
-      <p className="mt-2 text-xs text-fuchsia-200/70">{m.wizard.cinematicLogoStampHint}</p>
+      <p className="mt-3 text-xs text-violet-200/80">{formatCinematicCopy(m.wizard.cinematicStitchImageHint)}</p>
+      <p className="mt-2 text-xs text-violet-200/70">{m.wizard.cinematicLogoStampHint}</p>
     </div>
   )}
 
@@ -973,7 +973,7 @@ export function ImageStep() {
       data-coach-id="coach-continue-image"
       disabled={imageNextDisabled}
       onClick={finishImageStep}
-      className="flex-1 rounded-xl bg-linear-to-r from-cyan-500 to-emerald-500 py-2.5 text-sm font-semibold text-white shadow-[0_0_24px_rgba(16,185,129,0.35)] disabled:opacity-40"
+      className="flex-1 rounded-xl bg-linear-to-r from-violet-600 to-violet-500 py-2.5 text-sm font-semibold text-white shadow-[0_0_24px_rgba(108,59,255,0.35)] disabled:opacity-40"
     >
       {imageFinishLabel}
     </button>

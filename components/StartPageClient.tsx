@@ -56,7 +56,7 @@ const START_LAYOUT_CSS = `
   margin-bottom: 0.4rem !important;
 }
 .start-hero-sparks svg {
-  color: #7c3aed !important;
+  color: #6c3bff !important;
 }
 .start-hero-title {
   font-weight: 800 !important;
@@ -66,7 +66,7 @@ const START_LAYOUT_CSS = `
   font-size: 1.95rem !important;
 }
 .start-hero-title-hl {
-  color: #7c3aed !important;
+  color: #6c3bff !important;
 }
 .start-hero-sub {
   margin-top: 0.7rem !important;
@@ -123,11 +123,11 @@ const START_LAYOUT_CSS = `
 }
 .start-type-card:hover {
   border-color: #c4b5fd !important;
-  box-shadow: 0 10px 28px -16px rgba(91, 33, 182, 0.35) !important;
+  box-shadow: 0 10px 28px -16px rgba(76, 37, 212, 0.35) !important;
 }
 .start-type-card.is-selected {
-  border-color: #7c3aed !important;
-  box-shadow: 0 16px 40px -18px rgba(91, 33, 182, 0.45) !important;
+  border-color: #6c3bff !important;
+  box-shadow: 0 16px 40px -18px rgba(76, 37, 212, 0.45) !important;
 }
 .start-type-check {
   position: absolute !important;
@@ -148,8 +148,8 @@ const START_LAYOUT_CSS = `
   line-height: 1 !important;
 }
 .start-type-card.is-selected .start-type-check {
-  border-color: #7c3aed !important;
-  background: #7c3aed !important;
+  border-color: #6c3bff !important;
+  background: #6c3bff !important;
   color: #fff !important;
 }
 .start-card-inner {
@@ -206,13 +206,13 @@ const START_LAYOUT_CSS = `
   line-height: 1.2 !important;
 }
 .start-type-cta.is-on {
-  background: #7c3aed !important;
+  background: #6c3bff !important;
   color: #fff !important;
   border: none !important;
 }
 .start-type-cta.is-off {
   background: #fff !important;
-  color: #6d28d9 !important;
+  color: #5b2fe0 !important;
   border: 1.5px solid #a78bfa !important;
 }
 .start-tip-card {
@@ -233,7 +233,7 @@ const START_LAYOUT_CSS = `
   height: 2.35rem !important;
   border-radius: 9999px !important;
   background: #ede9fe !important;
-  color: #6d28d9 !important;
+  color: #5b2fe0 !important;
   flex-shrink: 0 !important;
 }
 .start-tip-star {
@@ -244,7 +244,7 @@ const START_LAYOUT_CSS = `
   height: 1.5rem !important;
   margin-top: 0.1rem !important;
   border-radius: 9999px !important;
-  background: #7c3aed !important;
+  background: #6c3bff !important;
   color: #fff !important;
   flex-shrink: 0 !important;
   line-height: 0 !important;
@@ -338,7 +338,7 @@ const START_LAYOUT_CSS = `
   width: 1.45rem !important;
   height: 1.45rem !important;
   border-radius: 9999px !important;
-  background: #7c3aed !important;
+  background: #6c3bff !important;
   color: #fff !important;
   font-size: 12px !important;
   font-weight: 700 !important;
@@ -389,7 +389,7 @@ const START_LAYOUT_CSS = `
   }
 }
 .start-continue-btn {
-  background: linear-gradient(90deg, #7c3aed 0%, #6d28d9 55%, #5b21b6 100%) !important;
+  background: linear-gradient(90deg, #6c3bff 0%, #5b2fe0 55%, #4c25d4 100%) !important;
   box-shadow: 0 10px 28px -8px rgba(109, 40, 217, 0.55) !important;
   border: none !important;
   transition: filter 0.15s ease, transform 0.15s ease !important;
@@ -431,10 +431,10 @@ const START_LAYOUT_CSS = `
   align-items: center !important;
 }
 .start-phase-dot--active {
-  background: #7c3aed !important;
+  background: #6c3bff !important;
   color: #fff !important;
   border: none !important;
-  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35) !important;
+  box-shadow: 0 4px 14px rgba(108, 59, 255, 0.35) !important;
 }
 .start-phase-dot--idle {
   background: #fff !important;
@@ -649,7 +649,7 @@ const START_LAYOUT_CSS = `
     height: 5.25rem !important;
     padding: 0 !important;
     margin: 0 !important;
-    color: #7c3aed !important;
+    color: #6c3bff !important;
     font-size: 1.25rem !important;
     font-weight: 600 !important;
     line-height: 1 !important;

@@ -61,8 +61,8 @@ export function VideoCreativeModePicker({
                   ? isAssistant
                     ? "border-cyan-400 bg-cyan-950/50 ring-1 ring-cyan-400/60"
                     : isDark
-                      ? "border-emerald-400 bg-emerald-950/40"
-                      : "border-emerald-400 bg-emerald-50"
+                      ? "border-violet-400 bg-violet-950/40"
+                      : "border-violet-400 bg-violet-50"
                   : isDark
                     ? "border-slate-600 bg-slate-900/60 hover:border-slate-500"
                     : "border-slate-200 bg-white hover:border-slate-300"

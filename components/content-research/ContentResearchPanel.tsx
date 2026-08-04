@@ -385,7 +385,7 @@ export function ContentResearchPanel({
                   aria-pressed={on}
                   className={`flex min-h-[3.25rem] min-w-0 items-center gap-2.5 rounded-xl border px-3.5 py-3 text-left transition ${
                     on
-                      ? "border-violet-600 bg-violet-50 shadow-[0_0_0_1px_rgba(124,58,237,0.12)]"
+                      ? "border-violet-600 bg-violet-50 shadow-[0_0_0_1px_rgba(108,59,255,0.12)]"
                       : "border-slate-200/90 bg-white hover:border-slate-300"
                   }`}
                 >

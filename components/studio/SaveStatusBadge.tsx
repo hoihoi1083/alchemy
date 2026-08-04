@@ -25,8 +25,8 @@ export function SaveStatusBadge({ theme = "light" }: { theme?: "light" | "dark" 
           ? "border-slate-600 bg-slate-800/80 text-slate-300"
           : "border-slate-200 bg-white text-slate-600"
         : theme === "dark"
-          ? "border-violet-800/50 bg-violet-950/40 text-violet-300"
-          : "border-violet-200 bg-violet-50 text-violet-800";
+          ? "border-emerald-800/50 bg-emerald-950/40 text-emerald-300"
+          : "border-emerald-200 bg-emerald-50 text-emerald-800";
 
   return (
     <div

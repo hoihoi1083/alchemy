@@ -32,8 +32,8 @@ const PANEL: Record<
       sublabel: "text-[10px] text-slate-500",
     },
     cinematic: {
-      wrap: "rounded-2xl border border-fuchsia-200 bg-fuchsia-50/60 p-4",
-      title: "text-sm font-medium text-fuchsia-900",
+      wrap: "rounded-2xl border border-violet-200 bg-violet-50/60 p-4",
+      title: "text-sm font-medium text-violet-900",
       card: "rounded-xl border border-slate-200 bg-white p-2",
       label: "text-xs font-medium text-slate-700",
       sublabel: "text-[10px] text-slate-500",
@@ -71,8 +71,8 @@ const PANEL: Record<
       sublabel: "text-[10px] text-slate-400",
     },
     cinematic: {
-      wrap: "rounded-2xl border border-fuchsia-700/50 bg-fuchsia-950/25 p-4",
-      title: "text-xs font-medium text-fuchsia-200",
+      wrap: "rounded-2xl border border-violet-700/50 bg-violet-950/25 p-4",
+      title: "text-xs font-medium text-violet-200",
       card: "rounded-xl border border-slate-700 bg-slate-900/40 p-2",
       label: "text-xs font-medium text-slate-200",
       sublabel: "text-[10px] text-slate-400",
@@ -247,7 +247,7 @@ export function GeneratedImageResultsView({
         {modeBadge}
         <div className={palette.wrap}>
           {wizard.cinematicReelPlan?.theme ? (
-            <p className={`mb-2 text-xs ${variant === "light" ? "text-fuchsia-900/80" : "text-fuchsia-100/80"}`}>
+            <p className={`mb-2 text-xs ${variant === "light" ? "text-violet-900/80" : "text-violet-100/80"}`}>
               <span className="font-medium">{m.wizard.cinematicReelPlanLabel}:</span>{" "}
               {wizard.cinematicReelPlan.theme}
             </p>
@@ -266,7 +266,7 @@ export function GeneratedImageResultsView({
               </div>
             ))}
           </div>
-          <p className={`mt-3 text-xs ${variant === "light" ? "text-fuchsia-800/80" : "text-fuchsia-200/80"}`}>
+          <p className={`mt-3 text-xs ${variant === "light" ? "text-violet-800/80" : "text-violet-200/80"}`}>
             {wizard.formatCinematicCopy(m.wizard.cinematicStitchImageHint)}
           </p>
         </div>

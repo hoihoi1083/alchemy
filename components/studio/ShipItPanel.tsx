@@ -54,7 +54,7 @@ export function ShipItPanel({
             type="button"
             disabled={!eligible || busy}
             onClick={onRun}
-            className="mt-2 w-full rounded-xl bg-linear-to-r from-violet-500 to-fuchsia-500 py-2.5 text-sm font-semibold text-white shadow-[0_0_20px_rgba(139,92,246,0.35)] disabled:opacity-40"
+            className="mt-2 w-full rounded-xl bg-linear-to-r from-violet-600 to-violet-500 py-2.5 text-sm font-semibold text-white shadow-[0_0_20px_rgba(108,59,255,0.35)] disabled:opacity-40"
           >
             {busy ? labels.running : labels.runBtn}
           </button>

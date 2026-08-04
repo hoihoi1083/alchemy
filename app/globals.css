@@ -3,14 +3,62 @@
 /* Force landing utilities that Next/Tailwind-dev sometimes drops from the CSS graph. */
 @source inline("max-w-[240px] max-w-[300px] max-w-[340px] max-w-[500px] max-w-[560px] max-w-[860px] max-w-[1120px] h-[170px] md:h-[190px] md:max-w-[340px] lg:max-w-[560px] lg:py-20 py-20");
 
+/*
+  Brand palette (Alchemy AI Lab)
+  - Primary purple:   #6C3BFF
+  - Auxiliary purple: #8B5CF6
+  - Success / discount green: emerald scale below
+*/
 :root {
+  --brand: #6c3bff;
+  --brand-secondary: #8b5cf6;
+  --brand-hover: #5b2fe0;
+  --brand-deep: #4c25d4;
+  --brand-soft: #f1ecff;
+  --brand-muted: #c4b5fd;
+  --success: #059669;
+  --success-hover: #047857;
+  --success-soft: #d1fae5;
+  --success-text: #065f46;
+
   --bg: #0a0f1a;
   --surface: #111827;
   --border: #1e3a5f;
-  --accent: #38bdf8;
-  --accent-dim: #0c4a6e;
+  --accent: var(--brand);
+  --accent-dim: #3b1d99;
   --text: #e2e8f0;
   --muted: #94a3b8;
+}
+
+/* Remap Tailwind violet-* → brand purple; emerald-* stays success/discount green. */
+@theme {
+  --color-brand: #6c3bff;
+  --color-brand-secondary: #8b5cf6;
+  --color-success: #059669;
+
+  --color-violet-50: #f8f5ff;
+  --color-violet-100: #f1ecff;
+  --color-violet-200: #e4dbff;
+  --color-violet-300: #cbb8ff;
+  --color-violet-400: #a78bfa;
+  --color-violet-500: #8b5cf6;
+  --color-violet-600: #6c3bff;
+  --color-violet-700: #5b2fe0;
+  --color-violet-800: #4c25d4;
+  --color-violet-900: #3b1d99;
+  --color-violet-950: #2a1570;
+
+  --color-emerald-50: #ecfdf5;
+  --color-emerald-100: #d1fae5;
+  --color-emerald-200: #a7f3d0;
+  --color-emerald-300: #6ee7b7;
+  --color-emerald-400: #34d399;
+  --color-emerald-500: #10b981;
+  --color-emerald-600: #059669;
+  --color-emerald-700: #047857;
+  --color-emerald-800: #065f46;
+  --color-emerald-900: #064e3b;
+  --color-emerald-950: #022c22;
 }
 
 html {

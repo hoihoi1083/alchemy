@@ -125,15 +125,15 @@ const PATH_CSS = `
   position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center;
   gap: 0.45rem; flex: 1 1 0; min-width: 0; text-align: center;
 }
-.path-phase-dot--active { background: #7c3aed !important; color: #fff !important; box-shadow: 0 0 0 4px rgba(124,58,237,0.16); }
+.path-phase-dot--active { background: #6c3bff !important; color: #fff !important; box-shadow: 0 0 0 4px rgba(108,59,255,0.16); }
 .path-phase-dot--idle { background: #f1f5f9 !important; color: #94a3b8 !important; }
 .path-phase-label { font-size: 11px; line-height: 1.25; max-width: 7.5rem; }
-.path-phase-dot--done { background: #7c3aed !important; color: #fff !important; }
+.path-phase-dot--done { background: #6c3bff !important; color: #fff !important; }
 @media (max-width: 639px) {
   .path-phase-label { display: none; }
   /* Show the active step label only (not a fixed nth-child — line span shifts indices). */
   .path-phase-item.is-active .path-phase-label {
-    display: block; font-weight: 600; color: #6d28d9;
+    display: block; font-weight: 600; color: #5b2fe0;
   }
 }
 .path-panel {
@@ -153,13 +153,13 @@ const PATH_CSS = `
   box-shadow: 0 1px 2px rgba(15,23,42,0.04);
 }
 .path-type-card:hover {
-  border-color: #c4b5fd; box-shadow: 0 10px 28px -16px rgba(91,33,182,0.35);
+  border-color: #c4b5fd; box-shadow: 0 10px 28px -16px rgba(76,37,212,0.35);
 }
 .path-type-card.is-selected {
-  border-color: #7c3aed; box-shadow: 0 16px 40px -18px rgba(91,33,182,0.45);
+  border-color: #6c3bff; box-shadow: 0 16px 40px -18px rgba(76,37,212,0.45);
 }
 .path-type-card.is-selected .path-type-cta {
-  background: #7c3aed !important;
+  background: #6c3bff !important;
   color: #fff !important;
   border: none !important;
 }
@@ -172,7 +172,7 @@ const PATH_CSS = `
   box-shadow: 0 1px 2px rgba(15,23,42,0.12);
 }
 .path-type-card.is-selected .path-type-check {
-  border-color: #7c3aed; background: #7c3aed; color: #fff;
+  border-color: #6c3bff; background: #6c3bff; color: #fff;
 }
 .path-card-preview {
   position: relative;
@@ -197,7 +197,7 @@ const PATH_CSS = `
   height: 2.15rem;
   border-radius: 0.55rem;
   background: #ede9fe;
-  color: #6d28d9;
+  color: #5b2fe0;
 }
 .path-card-icon svg {
   width: 1.15rem !important;
@@ -207,9 +207,9 @@ const PATH_CSS = `
   display: flex; width: 100%; margin-top: auto; align-items: center; justify-content: center;
   border-radius: 0.8rem; padding: 0.7rem 1rem; font-size: 13px; font-weight: 650; line-height: 1.2;
 }
-.path-type-cta.is-on { background: #7c3aed; color: #fff; border: none; }
+.path-type-cta.is-on { background: #6c3bff; color: #fff; border: none; }
 .path-type-cta.is-off {
-  background: #fff; color: #6d28d9; border: 1.5px solid #a78bfa;
+  background: #fff; color: #5b2fe0; border: 1.5px solid #a78bfa;
 }
 .path-tip-card {
   display: flex; flex-direction: column; min-width: 0; height: 100%;
@@ -218,7 +218,7 @@ const PATH_CSS = `
 .path-tip-icon {
   display: flex; align-items: center; justify-content: center;
   width: 2.35rem; height: 2.35rem; border-radius: 9999px;
-  background: #ede9fe; color: #6d28d9; flex-shrink: 0;
+  background: #ede9fe; color: #5b2fe0; flex-shrink: 0;
 }
 .path-tip-list {
   display: flex;
@@ -240,7 +240,7 @@ const PATH_CSS = `
   width: 2.35rem;
   height: 2.35rem;
   border-radius: 9999px;
-  background: #7c3aed;
+  background: #6c3bff;
   color: #fff;
   flex-shrink: 0;
 }
@@ -251,7 +251,7 @@ const PATH_CSS = `
 .path-tip-star {
   display: flex; align-items: center; justify-content: center;
   width: 1.5rem; height: 1.5rem; margin-top: 0.1rem; border-radius: 9999px;
-  background: #7c3aed; color: #fff; flex-shrink: 0; line-height: 0;
+  background: #6c3bff; color: #fff; flex-shrink: 0; line-height: 0;
 }
 .path-tip-star svg { width: 0.75rem; height: 0.75rem; display: block; }
 .path-next-wrap {
@@ -267,9 +267,9 @@ const PATH_CSS = `
 .path-next-icon {
   display: flex; align-items: center; justify-content: center;
   width: 3rem; height: 3rem; border-radius: 0.85rem;
-  background: #ede9fe; color: #6d28d9; box-sizing: border-box;
+  background: #ede9fe; color: #5b2fe0; box-sizing: border-box;
 }
-.path-next-arrow { display: none; color: #7c3aed; }
+.path-next-arrow { display: none; color: #6c3bff; }
 /* Tablet+: next-step arrows; keep path cards single-column to avoid orphan 3rd card. */
 @media (min-width: 768px) {
   .path-select-grid { gap: 1rem; }

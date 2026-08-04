@@ -16,7 +16,7 @@ export function JobProgressBar({ info, busyLabel }: JobProgressBarProps) {
       </div>
       <div className="h-2 overflow-hidden rounded-full bg-slate-800">
         <div
-          className="h-full rounded-full bg-linear-to-r from-cyan-500 to-emerald-500 transition-all duration-1000"
+          className="h-full rounded-full bg-linear-to-r from-violet-600 to-violet-500 transition-all duration-1000"
           style={{ width: `${info.pct}%` }}
         />
       </div>

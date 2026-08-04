@@ -366,7 +366,7 @@ export function PricingPageClient() {
                   >
                     {p.yearly}
                   </button>
-                  <span className="mr-1.5 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-700">
+                  <span className="mr-1.5 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
                     {p.yearlyBadge}
                   </span>
                 </div>
@@ -438,7 +438,7 @@ export function PricingPageClient() {
                           ) : null}
                         </p>
                         {"saveLabel" in card && card.saveLabel ? (
-                          <p className="mt-0.5 text-[10px] font-medium text-violet-600">
+                          <p className="mt-0.5 text-[10px] font-medium text-emerald-600">
                             {card.saveLabel}
                           </p>
                         ) : null}

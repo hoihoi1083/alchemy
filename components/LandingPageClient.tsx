@@ -149,8 +149,8 @@ const LANDING_LAYOUT_CSS = `
     line-height: 1.25 !important;
   }
   .landing-hero-cta-primary {
-    background: #7c3aed !important; /* violet-600 — punchier */
-    box-shadow: 0 6px 18px rgba(91, 33, 182, 0.4) !important;
+    background: #6c3bff !important; /* violet-600 — punchier */
+    box-shadow: 0 6px 18px rgba(76, 37, 212, 0.4) !important;
   }
   .landing-hero-cta-secondary {
     border-color: rgba(255, 255, 255, 0.55) !important;

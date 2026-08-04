@@ -66,35 +66,70 @@ export function carouselProductHeroLock(input?: {
 /**
  * Keep every carousel slide in one visual family (avoids tip slides flipping to
  * photoreal lifestyle while cover/tips stay soft 3D / illustrated).
+ * Consistency = medium/palette/product — NOT the same photo with swapped text.
  */
 export function carouselSeriesConsistencyLock(visualDna?: string): string {
   const dna = visualDna?.trim() || "same medium, palette, lighting, and character language";
   return [
     `SERIES CONSISTENCY LOCK: Shared visual DNA for ALL slides: ${dna}.`,
-    "This slide must clearly belong in the SAME carousel — same art medium (photoreal vs soft 3D/illustration), same lighting softness, same prop language.",
-    "Tip/point slides may change layout and props, but MUST NOT switch medium mid-series.",
+    "This slide must clearly belong in the SAME carousel — same art medium (photoreal vs soft 3D/illustration vs flat vector), same lighting softness, same product/character identity.",
+    "CRITICAL MEDIUM LOCK: Never mix styles inside one carousel (e.g. flat vector + photoreal + Pixar CGI). Match the cover's render medium exactly.",
+    "CRITICAL VARIATION: Each slide MUST use a DISTINCT composition / camera crop / prop arrangement — NEVER reuse the same flat-lay or hand pose with only text changed.",
+    "Cover = hero poster; point/tip slides = new angle, crop, or staging (macro detail, alternate flat-lay, list/card layout, side props rearranged); summary = recap layout.",
+    "Tip/point slides may change layout and secondary props, but MUST NOT switch medium mid-series.",
+    "If a character/mascot appears on the cover, reuse that SAME character design — do not invent a new robot, costume, or art style on later slides.",
     "Do NOT make one tip slide a photorealistic human wrist/bathroom/gym lifestyle cutaway if other slides are soft product flat-lays.",
     "Do NOT invent a one-off photoreal model-wear scene or a cartoon mascot that breaks series cohesion.",
   ].join(" ");
 }
 
-/** After cover is generated: later slides see cover pixels as the last image_urls entry. */
+/** Role-specific staging so tip slides do not clone the cover. */
+export function carouselSlideRoleVariationHint(input: {
+  role: string;
+  index: number;
+  total: number;
+}): string {
+  const role = input.role.trim().toLowerCase();
+  if (role === "cover" || input.index <= 1) {
+    return `SLIDE VARIATION (${input.index}/${input.total}, cover): Full hero poster — product dominant, strong title hierarchy, generous negative space.`;
+  }
+  if (role === "summary" || input.index >= input.total) {
+    return `SLIDE VARIATION (${input.index}/${input.total}, summary): Recap / checklist / outro card — DIFFERENT layout from cover (e.g. bottom nav bar, tip list, or split panel). Same product, new composition.`;
+  }
+  return `SLIDE VARIATION (${input.index}/${input.total}, ${role || "point"}): Educational tip card — MUST differ from cover: new crop or angle of the SAME product, rearranged props, or typography-led tip layout. Do NOT paste cover pixels with only headline swapped.`;
+}
+
+/**
+ * Series look guidance for tip slides after the cover exists.
+ * Prefer text DNA over feeding cover pixels — cover-as-image_url makes models clone the cover.
+ */
 export function carouselCoverSeriesAnchorHint(input?: {
   hasProductPhoto?: boolean;
+  /** When true, cover is attached as last image_urls entry. */
+  pixelAnchor?: boolean;
 }): string {
-  const parts = [
-    "SERIES COVER ANCHOR: The LAST image in image_urls is the already-generated COVER slide of THIS carousel.",
-    "Match that cover's art medium, lighting softness, surface/prop language, and overall look.",
-  ];
+  const pixel = Boolean(input?.pixelAnchor);
+  const parts = pixel
+    ? [
+        "SERIES COVER ANCHOR: The LAST image in image_urls is the already-generated COVER slide — use it ONLY for palette / medium / character identity cues.",
+        "DO NOT clone the cover composition, prop positions, or camera framing. Create a NEW layout for this tip/summary slide.",
+        "Match that cover's art medium EXACTLY (photoreal stays photoreal; flat vector stays flat vector; 3D CGI stays 3D CGI) — never switch to a different render style.",
+        "If the cover shows a character, keep that SAME character design — do not invent a new robot, mascot, or costume.",
+      ]
+    : [
+        "SERIES LOOK (text DNA only — no cover pixels attached): Keep the same art medium, palette, and product identity as the carousel cover.",
+        "This tip/summary slide MUST use a NEW composition — do not redesign the cover with different text.",
+        "If any human or character appears, keep the SAME identity/costume language across the series — do not invent a new robot, mascot, or cartoon figure on later slides.",
+      ];
   if (input?.hasProductPhoto !== false) {
     parts.push(
-      "IMAGE 1 is still the exact product hero — this tip/summary slide MUST show IMAGE 1's product clearly (same colors/materials as IMAGE 1 and the cover).",
-      "Do not invent mascots, different jewelry colors, or a new photography style that conflicts with the cover.",
+      "IMAGE 1 is still the exact product hero — show IMAGE 1's product clearly (same colors/materials).",
+      "Do not invent mascots, different jewelry colors, or a new photography style that conflicts with the series.",
     );
   } else {
     parts.push(
-      "Match topic, typography, and shared series DNA from the cover — do not invent a fake product SKU or mascot.",
-      "Do not invent a new photography style that conflicts with the cover.",
+      "Match topic, typography, and shared series DNA — do not invent a fake product SKU or mascot.",
+      "Do not invent a new photography style that conflicts with the series.",
     );
   }
   return parts.join(" ");

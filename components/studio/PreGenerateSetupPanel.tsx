@@ -35,8 +35,8 @@ const PANEL_CSS = `
   position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center;
   gap: 0.45rem; flex: 1 1 0; min-width: 0; text-align: center;
 }
-.pg-phase-dot--active { background: #7c3aed !important; color: #fff !important; box-shadow: 0 0 0 4px rgba(124,58,237,0.16); }
-.pg-phase-dot--done { background: #7c3aed !important; color: #fff !important; }
+.pg-phase-dot--active { background: #6c3bff !important; color: #fff !important; box-shadow: 0 0 0 4px rgba(108,59,255,0.16); }
+.pg-phase-dot--done { background: #6c3bff !important; color: #fff !important; }
 .pg-phase-dot--idle { background: #e2e8f0 !important; color: #94a3b8 !important; }
 .pg-phase-label { font-size: 11px; line-height: 1.25; max-width: 7.5rem; }
 .pg-layout {
@@ -58,7 +58,7 @@ const PANEL_CSS = `
 .pg-card-icon {
   display: inline-flex; align-items: center; justify-content: center;
   width: 2.35rem; height: 2.35rem; border-radius: 0.65rem;
-  background: #f5f3ff; color: #7c3aed; flex-shrink: 0;
+  background: #f5f3ff; color: #6c3bff; flex-shrink: 0;
 }
 .pg-card-title {
   font-size: 0.95rem; font-weight: 700; color: #0f172a; letter-spacing: -0.01em;
@@ -115,7 +115,7 @@ const PANEL_CSS = `
   margin-top: 0.1rem;
   width: 0.95rem;
   height: 0.95rem;
-  color: #7c3aed;
+  color: #6c3bff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -132,7 +132,7 @@ const PANEL_CSS = `
   padding: 0.4rem 0.85rem;
   font-size: 12px;
   font-weight: 600;
-  color: #7c3aed;
+  color: #6c3bff;
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 .pg-edit-brief:hover {
@@ -180,9 +180,9 @@ const PANEL_CSS = `
 }
 .pg-output-card:hover { border-color: #ddd6fe; }
 .pg-output-card.is-selected {
-  border-color: #7c3aed;
+  border-color: #6c3bff;
   background: #faf5ff;
-  box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.2);
+  box-shadow: 0 0 0 1px rgba(108, 59, 255, 0.2);
 }
 .pg-output-icon {
   display: inline-flex;
@@ -192,11 +192,11 @@ const PANEL_CSS = `
   height: 2.5rem;
   border-radius: 0.65rem;
   background: #ede9fe;
-  color: #7c3aed;
+  color: #6c3bff;
   flex-shrink: 0;
 }
 .pg-output-card.is-selected .pg-output-icon {
-  background: #7c3aed;
+  background: #6c3bff;
   color: #fff;
 }
 .pg-output-copy { min-width: 0; padding-right: 0.85rem; }
@@ -220,7 +220,7 @@ const PANEL_CSS = `
   color: #0f172a; outline: none; transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
 }
 .pg-input:focus, .pg-textarea:focus {
-  border-color: #7c3aed; background: #fff; box-shadow: 0 0 0 4px rgba(124,58,237,0.12);
+  border-color: #6c3bff; background: #fff; box-shadow: 0 0 0 4px rgba(108,59,255,0.12);
 }
 .pg-input::placeholder, .pg-textarea::placeholder { color: #94a3b8; }
 .pg-label { display: block; font-size: 12px; font-weight: 600; color: #334155; margin-bottom: 0.4rem; }
@@ -239,12 +239,12 @@ const PANEL_CSS = `
 }
 .pg-tip-head-icon {
   display: inline-flex; align-items: center; justify-content: center;
-  color: #7c3aed; flex-shrink: 0;
+  color: #6c3bff; flex-shrink: 0;
 }
 .pg-tip-icon {
   display: inline-flex; align-items: center; justify-content: center;
   width: 2.5rem; height: 2.5rem; border-radius: 0.65rem;
-  background: #ede9fe; color: #7c3aed; flex-shrink: 0;
+  background: #ede9fe; color: #6c3bff; flex-shrink: 0;
 }
 .pg-secure {
   display: flex; align-items: flex-start; gap: 0.7rem;
@@ -254,18 +254,18 @@ const PANEL_CSS = `
 .pg-secure-icon {
   display: inline-flex; align-items: center; justify-content: center;
   width: 2.25rem; height: 2.25rem; border-radius: 0.55rem;
-  background: #fff; color: #7c3aed; flex-shrink: 0;
+  background: #fff; color: #6c3bff; flex-shrink: 0;
   box-shadow: 0 0 0 1px rgba(167, 139, 250, 0.35);
 }
 .pg-generate-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
   width: 100%; border-radius: 9999px; border: none;
-  background: #7c3aed; color: #fff;
+  background: #6c3bff; color: #fff;
   padding: 0.85rem 1.1rem; font-size: 0.9rem; font-weight: 700;
-  box-shadow: 0 8px 20px rgba(124, 58, 237, 0.22);
+  box-shadow: 0 8px 20px rgba(108, 59, 255, 0.22);
   transition: background 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
 }
-.pg-generate-btn:hover:not(:disabled) { background: #6d28d9; }
+.pg-generate-btn:hover:not(:disabled) { background: #5b2fe0; }
 .pg-generate-btn:disabled {
   background: #c4b5fd; color: #fff; box-shadow: none; cursor: not-allowed; opacity: 1;
 }
@@ -273,13 +273,13 @@ const PANEL_CSS = `
   position: absolute; top: 0.4rem; right: 0.4rem;
   display: flex; align-items: center; justify-content: center;
   width: 1.15rem; height: 1.15rem; border-radius: 9999px;
-  background: #7c3aed; color: #fff;
+  background: #6c3bff; color: #fff;
 }
 .pg-ref-drop {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.45rem;
   width: 100%; min-height: 8.5rem; border-radius: 0.9rem; border: 1.5px dashed #ddd6fe;
   background: #faf8ff; padding: 1.1rem 1rem; text-align: center;
-  color: #6d28d9; transition: border-color 0.15s ease, background 0.15s ease;
+  color: #5b2fe0; transition: border-color 0.15s ease, background 0.15s ease;
 }
 .pg-ref-drop:hover { border-color: #c4b5fd; background: #f5f3ff; }
 .pg-ref-actions {
@@ -289,7 +289,7 @@ const PANEL_CSS = `
   flex: 1 1 auto; min-width: 5.5rem; border-radius: 0.75rem; border: 1px solid #e2e8f0;
   background: #fff; padding: 0.5rem 0.75rem; font-size: 12px; font-weight: 600; color: #475569;
 }
-.pg-ref-actions button:hover { border-color: #ddd6fe; background: #f8fafc; color: #6d28d9; }
+.pg-ref-actions button:hover { border-color: #ddd6fe; background: #f8fafc; color: #5b2fe0; }
 .pg-aspect-frame {
   margin: 0 auto 0.45rem; border: 1.5px solid currentColor; border-radius: 0.25rem; opacity: 0.85;
 }
@@ -317,8 +317,8 @@ const PANEL_CSS = `
 }
 .pg-style-card:hover { border-color: #ddd6fe; }
 .pg-style-card.is-selected {
-  border-color: #7c3aed;
-  box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.22);
+  border-color: #6c3bff;
+  box-shadow: 0 0 0 1px rgba(108, 59, 255, 0.22);
 }
 .pg-style-card img {
   display: block;
@@ -337,7 +337,7 @@ const PANEL_CSS = `
 @media (max-width: 639px) {
   .pg-phase-label { display: none; }
   .pg-phase-item.is-active .pg-phase-label {
-    display: block; font-weight: 600; color: #6d28d9;
+    display: block; font-weight: 600; color: #5b2fe0;
   }
 }
 @media (min-width: 640px) {

@@ -113,14 +113,14 @@ export function VideoStep() {
   )}
 
   {showCinematicStitch && (
-    <p className="rounded-xl border border-fuchsia-800/50 bg-fuchsia-950/30 px-4 py-3 text-xs text-fuchsia-100">
+    <p className="rounded-xl border border-violet-800/50 bg-violet-950/30 px-4 py-3 text-xs text-violet-100">
       {formatCinematicCopy(m.wizard.cinematicStitchWorkflowOrder)}
     </p>
   )}
 
   {isConcept && visualStyleId === "concept-cinematic" && (
-    <div className="rounded-xl border border-fuchsia-900/50 bg-fuchsia-950/25 px-4 py-3 text-xs text-fuchsia-100">
-      <p className="font-semibold text-fuchsia-50">{m.wizard.cinematicRecipeTitle}</p>
+    <div className="rounded-xl border border-violet-900/50 bg-violet-950/25 px-4 py-3 text-xs text-violet-100">
+      <p className="font-semibold text-violet-50">{m.wizard.cinematicRecipeTitle}</p>
       <ul className="mt-2 list-disc space-y-1 pl-4">
         {(showCinematicStitch
           ? m.wizard.cinematicStitchRecipeSteps
@@ -135,8 +135,8 @@ export function VideoStep() {
   )}
 
   {showConceptCinematicSingle && (
-    <div className="rounded-xl border border-fuchsia-800/50 bg-fuchsia-950/30 p-4">
-      <p className="text-sm font-semibold text-fuchsia-100">{m.wizard.conceptCinematicSingleSceneReady}</p>
+    <div className="rounded-xl border border-violet-800/50 bg-violet-950/30 p-4">
+      <p className="text-sm font-semibold text-violet-100">{m.wizard.conceptCinematicSingleSceneReady}</p>
       <div className="mt-3 max-w-xs">
         <img
           src={cinematicScenes[0].imageUrl}
@@ -149,8 +149,8 @@ export function VideoStep() {
   )}
 
   {showCinematicStitch && cinematicScenes.length > 0 && (
-    <div className="rounded-xl border border-fuchsia-800/50 bg-fuchsia-950/30 p-4">
-      <p className="text-sm font-semibold text-fuchsia-100">
+    <div className="rounded-xl border border-violet-800/50 bg-violet-950/30 p-4">
+      <p className="text-sm font-semibold text-violet-100">
         {formatCinematicCopy(m.wizard.cinematicStitchScenesReady).replace(
           "{ready}",
           String(cinematicScenes.length),
@@ -546,9 +546,9 @@ export function VideoStep() {
         )}
       </div>
     ) : showCinematicStitch && cinematicScenes.length > 0 ? (
-      <p className="text-xs text-fuchsia-200/90">{formatCinematicCopy(m.wizard.cinematicStitchImageHint)}</p>
+      <p className="text-xs text-violet-200/90">{formatCinematicCopy(m.wizard.cinematicStitchImageHint)}</p>
     ) : isConceptCinematicSingleOutput && cinematicScenes.length > 0 ? (
-      <p className="text-xs text-fuchsia-200/90">{m.wizard.conceptCinematicSingleOutputDesc}</p>
+      <p className="text-xs text-violet-200/90">{m.wizard.conceptCinematicSingleOutputDesc}</p>
     ) : isStoryboardOutput && storyboardScenes.length > 0 ? (
       <div className="space-y-3">
         <p className="text-xs text-teal-200/90">{m.wizard.storyboardAllScenesHint}</p>
@@ -810,7 +810,7 @@ export function VideoStep() {
       disabled={videoGenerateDisabled}
       title={videoGenerateDisabledReason ?? undefined}
       onClick={() => void generateVideo()}
-      className="flex-1 rounded-2xl bg-linear-to-r from-cyan-500 via-emerald-500 to-teal-500 py-3.5 text-base font-semibold text-white shadow-[0_0_28px_rgba(16,185,129,0.35)] disabled:opacity-40"
+      className="flex-1 rounded-2xl bg-linear-to-r from-violet-600 via-violet-500 to-violet-700 py-3.5 text-base font-semibold text-white shadow-[0_0_28px_rgba(108,59,255,0.35)] disabled:opacity-40"
     >
       {videoBusy
         ? usesCompositor

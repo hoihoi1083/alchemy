@@ -15,9 +15,9 @@ export function LandingFinalCta() {
 					className="relative mx-auto w-full max-w-[1440px] overflow-hidden rounded-[1.5rem] shadow-xl"
 					style={{
 						background:
-							"linear-gradient(90deg, #6366f1 0%, #7c3aed 45%, #2563eb 100%)",
+							"linear-gradient(90deg, #8b5cf6 0%, #6c3bff 45%, #5b2fe0 100%)",
 						color: "#ffffff",
-						boxShadow: "0 20px 40px -12px rgba(124, 58, 237, 0.35)",
+						boxShadow: "0 20px 40px -12px rgba(108, 59, 255, 0.35)",
 					}}
 				>
 					<div className="relative px-6 py-8 md:px-10 md:py-10">
@@ -40,7 +40,7 @@ export function LandingFinalCta() {
 									className="landing-cta-shine inline-flex w-full items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold shadow sm:w-auto"
 									style={{
 										background: "#ffffff",
-										color: "#6d28d9",
+										color: "#5b2fe0",
 									}}
 								>
 									{L.ctaPrimary}

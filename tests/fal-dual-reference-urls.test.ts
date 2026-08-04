@@ -79,24 +79,33 @@ describe("dual reference layout-transfer (research OR manual style upload)", () 
     assert.match(lock, /recolor|pink/i);
   });
 
-  it("carousel series lock bans mid-series photoreal lifestyle flip", () => {
+  it("carousel series lock bans mid-series photoreal lifestyle flip and demands layout variation", () => {
     const lock = carouselSeriesConsistencyLock("soft product flat-lay edu cards");
     assert.match(lock, /SERIES CONSISTENCY LOCK/);
     assert.match(lock, /soft product flat-lay edu cards/);
     assert.match(lock, /photorealistic human|bathroom|lifestyle cutaway|mascot/i);
+    assert.match(lock, /DISTINCT composition|NEVER reuse the same/i);
+    assert.match(lock, /CRITICAL MEDIUM LOCK|Never mix styles|SAME character/i);
   });
 
-  it("cover series anchor tells later slides to match cover + keep IMAGE 1 product", () => {
+  it("cover series text DNA (default) forbids cloning cover with swapped text", () => {
     const hint = carouselCoverSeriesAnchorHint();
-    assert.match(hint, /SERIES COVER ANCHOR/);
-    assert.match(hint, /LAST image|COVER/i);
+    assert.match(hint, /SERIES LOOK|SERIES COVER ANCHOR/);
+    assert.match(hint, /NEW composition|Do not redesign the cover/i);
     assert.match(hint, /IMAGE 1/);
-    assert.match(hint, /mascot|recolor|jewelry/i);
+  });
+
+  it("cover pixel anchor still warns against cloning cover layout and locks medium/character", () => {
+    const hint = carouselCoverSeriesAnchorHint({ pixelAnchor: true });
+    assert.match(hint, /SERIES COVER ANCHOR/);
+    assert.match(hint, /LAST image/);
+    assert.match(hint, /DO NOT clone the cover/i);
+    assert.match(hint, /art medium EXACTLY|SAME character/i);
   });
 
   it("cover series anchor without product skips IMAGE 1 product hero language", () => {
     const hint = carouselCoverSeriesAnchorHint({ hasProductPhoto: false });
-    assert.match(hint, /SERIES COVER ANCHOR/);
+    assert.match(hint, /SERIES LOOK|SERIES COVER ANCHOR/);
     assert.doesNotMatch(hint, /exact product hero/i);
     assert.match(hint, /series DNA|topic|typography/i);
   });

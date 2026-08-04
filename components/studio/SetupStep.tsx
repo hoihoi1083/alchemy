@@ -228,7 +228,7 @@ export function SetupStep() {
   }
   return (
 <section className="space-y-5 rounded-3xl border border-cyan-100/70 bg-white/90 p-5 shadow-sm backdrop-blur">
-  <div className="h-1 w-full rounded-full bg-linear-to-r from-cyan-400 via-indigo-400 to-emerald-400 opacity-80" />
+  <div className="h-1 w-full rounded-full bg-linear-to-r from-violet-400 via-violet-500 to-violet-600 opacity-80" />
   <div>
     <h2 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
       {m.wizard.step1Title}
@@ -495,7 +495,7 @@ export function SetupStep() {
       </p>
     ) : null
   ) : (
-  <div className="rounded-2xl border border-cyan-200 bg-linear-to-br from-cyan-50 via-white to-indigo-50 p-4">
+  <div className="rounded-2xl border border-violet-200 bg-linear-to-br from-violet-50 via-white to-violet-100/60 p-4">
     <p className="text-sm font-semibold text-slate-900">{pathsTitle}</p>
     <p className="mt-1 text-xs text-slate-600">{pathsHint}</p>
     {isConceptVideoOnly ? (
@@ -608,7 +608,7 @@ export function SetupStep() {
           onClick={() => applyPrimaryPathVideoOnly("storyboard")}
           className={`rounded-xl border px-3 py-3 text-left ${
             visualStyleId === "storyboard-video"
-              ? "border-emerald-400 bg-emerald-50"
+              ? "border-violet-400 bg-violet-50"
               : "border-slate-200 bg-white"
           }`}
         >
@@ -669,7 +669,7 @@ export function SetupStep() {
           onClick={() => applyPrimaryPath("storyboard")}
           className={`rounded-xl border px-3 py-3 text-left ${
             visualStyleId === "storyboard-video"
-              ? "border-emerald-400 bg-emerald-50"
+              ? "border-violet-400 bg-violet-50"
               : "border-slate-200 bg-white"
           }`}
         >
@@ -696,7 +696,7 @@ export function SetupStep() {
           onClick={() => applyPrimaryPath("quick")}
           className={`rounded-xl border px-3 py-3 text-left ${
             visualStyleId === "product" && imageCreativeMode !== "reference-concept"
-              ? "border-emerald-400 bg-emerald-50"
+              ? "border-violet-400 bg-violet-50"
               : "border-slate-200 bg-white"
           }`}
         >
@@ -708,7 +708,7 @@ export function SetupStep() {
           onClick={() => applyPrimaryPath("model")}
           className={`rounded-xl border px-3 py-3 text-left ${
             visualStyleId === "model-wear"
-              ? "border-emerald-400 bg-emerald-50"
+              ? "border-violet-400 bg-violet-50"
               : "border-slate-200 bg-white"
           }`}
         >
@@ -746,7 +746,7 @@ export function SetupStep() {
               onClick={() => applyPrimaryPath("storyboard")}
               className={`rounded-xl border px-3 py-3 text-left ${
                 visualStyleId === "storyboard-video"
-                  ? "border-emerald-400 bg-emerald-50"
+                  ? "border-violet-400 bg-violet-50"
                   : "border-slate-200 bg-white"
               }`}
             >
@@ -758,21 +758,21 @@ export function SetupStep() {
       </div>
     )}
     {isConcept && (
-      <div className="mt-3 rounded-xl border border-fuchsia-200 bg-fuchsia-50/70 p-3">
-        <p className="text-xs font-semibold text-fuchsia-900">{m.wizard.conceptCinematicPathsTitle}</p>
-        <p className="mt-1 text-xs text-fuchsia-800">{m.wizard.conceptCinematicPathsHint}</p>
+      <div className="mt-3 rounded-xl border border-violet-200 bg-violet-50/70 p-3">
+        <p className="text-xs font-semibold text-violet-900">{m.wizard.conceptCinematicPathsTitle}</p>
+        <p className="mt-1 text-xs text-violet-800">{m.wizard.conceptCinematicPathsHint}</p>
         <div className="mt-2 grid gap-2 sm:grid-cols-2">
           <button
             type="button"
             onClick={() => applyPrimaryPathConceptVideo("cinematic")}
             className={`rounded-lg border px-3 py-2 text-left text-xs ${
               visualStyleId === "concept-cinematic" && cinematicSceneCount === 1
-                ? "border-fuchsia-400 bg-white"
-                : "border-fuchsia-200 bg-white/90"
+                ? "border-violet-400 bg-white"
+                : "border-violet-200 bg-white/90"
             }`}
           >
-            <p className="font-semibold text-fuchsia-950">{m.wizard.conceptCinematicSingleTitle}</p>
-            <p className="mt-0.5 text-fuchsia-800">{m.wizard.conceptCinematicSingleDesc}</p>
+            <p className="font-semibold text-violet-950">{m.wizard.conceptCinematicSingleTitle}</p>
+            <p className="mt-0.5 text-violet-800">{m.wizard.conceptCinematicSingleDesc}</p>
           </button>
         </div>
         <div className="mt-3 rounded-lg border border-cyan-200 bg-cyan-50/80 p-2">
@@ -1238,7 +1238,7 @@ export function SetupStep() {
     onClick={goNextFromSetup}
     disabled={setupNextDisabled}
     title={setupNextDisabledReason ?? undefined}
-    className="hidden w-full rounded-2xl bg-linear-to-r from-cyan-500 via-emerald-500 to-teal-500 py-3.5 text-base font-semibold text-white shadow-[0_0_30px_rgba(16,185,129,0.35)] transition hover:scale-[1.01] disabled:opacity-40 md:block"
+    className="hidden w-full rounded-2xl bg-linear-to-r from-violet-600 via-violet-500 to-violet-700 py-3.5 text-base font-semibold text-white shadow-[0_0_30px_rgba(108,59,255,0.35)] transition hover:scale-[1.01] disabled:opacity-40 md:block"
   >
     {continueSetupLabel}
   </button>

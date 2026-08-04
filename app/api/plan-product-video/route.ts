@@ -17,12 +17,50 @@ export const maxDuration = 120;
 
 function formatFalError(e: unknown): string {
   if (e instanceof ApiError) {
-    return `${e.message}${e.requestId ? ` (fal request: ${e.requestId})` : ""}`;
+    const detail = e.message?.trim() || "Request failed";
+    if (e.status === 401 || e.status === 403 || /forbidden|unauthorized/i.test(detail)) {
+      return `Photo analysis was blocked (${e.status || 403}). Check fal.ai key/credits for vision, or re-upload a smaller JPG/PNG.`;
+    }
+    return `${detail}${e.requestId ? ` (fal request: ${e.requestId})` : ""}`;
   }
   if (e && typeof e === "object" && "message" in e) {
     return String((e as { message: unknown }).message);
   }
   return "Product video planning failed.";
+}
+
+function isFalForbidden(e: unknown): boolean {
+  if (e instanceof ApiError) {
+    return e.status === 401 || e.status === 403 || /forbidden|unauthorized/i.test(e.message);
+  }
+  if (e instanceof Error) {
+    return /blocked \(40[13]\)|forbidden|unauthorized|FAL_KEY access/i.test(e.message);
+  }
+  return false;
+}
+
+function stubVisionFromUpload(input: {
+  productName: string;
+  slots: ProductVideoKitSlot[];
+  imageCount: number;
+}): import("@/lib/product-video-types").ProductVideoVisionProfile {
+  const name = input.productName.trim() || "Product";
+  return {
+    productSummary: `${name} product marketing reel`,
+    category: "consumer product",
+    materials: [],
+    colors: [],
+    situation: "Clean commercial setting with soft product lighting",
+    imageRoles: Array.from({ length: input.imageCount }, (_, i) => {
+      const slot = input.slots[i] ?? "hero";
+      return {
+        imageIndex: i + 1,
+        slot,
+        role: slot === "hero" ? "Main product hero" : `Product ${slot}`,
+        visualDescription: `Uploaded ${slot} product photo for identity reference`,
+      };
+    }),
+  };
 }
 
 function parseDurationSec(raw: string): number {
@@ -67,8 +105,9 @@ export async function POST(request: Request) {
   const files: File[] = [];
   for (const slot of slots.length ? slots : (["hero"] as ProductVideoKitSlot[])) {
     const file = formData.get(slot);
-    if (file instanceof File && file.size > 0) {
-      files.push(file);
+    // Next/Node FormData may yield Blob; File extends Blob — accept both with size > 0.
+    if (file instanceof Blob && file.size > 0) {
+      files.push(file instanceof File ? file : new File([file], `${slot}.jpg`, { type: file.type || "image/jpeg" }));
     }
   }
 
@@ -115,13 +154,44 @@ export async function POST(request: Request) {
     .join(". ");
 
   try {
-    const imageUrls = await Promise.all(files.map((f) => fal.storage.upload(f)));
+    let imageUrls: string[];
+    try {
+      imageUrls = await Promise.all(files.map((f) => fal.storage.upload(f)));
+    } catch (uploadErr: unknown) {
+      if (isFalForbidden(uploadErr)) {
+        return NextResponse.json(
+          {
+            error:
+              "Could not upload the product photo to AI storage (Forbidden). Check FAL_KEY credits/permissions, or try a smaller JPG/PNG under 5MB.",
+          },
+          { status: 502 },
+        );
+      }
+      throw uploadErr;
+    }
 
-    const vision = await analyzeProductImagesWithVision({
-      imageUrls,
-      slots: effectiveSlots,
-      productName,
-    });
+    let vision;
+    let visionNote = "vision (Gemini/Bagel)";
+    try {
+      vision = await analyzeProductImagesWithVision({
+        imageUrls,
+        slots: effectiveSlots,
+        productName,
+      });
+    } catch (visionErr: unknown) {
+      // fal vision often returns bare "Forbidden", empty analysis, or JSON parse noise.
+      // Fall back so video-only users can still get a DeepSeek motion prompt.
+      const visionMsg = formatFalError(visionErr);
+      console.warn("[plan-product-video] vision failed — falling back to stub vision:", visionMsg);
+      vision = stubVisionFromUpload({
+        productName,
+        slots: effectiveSlots,
+        imageCount: files.length,
+      });
+      visionNote = isFalForbidden(visionErr) || /Photo analysis was blocked|forbidden/i.test(visionMsg)
+        ? "vision fallback (photo upload OK; AI vision blocked)"
+        : "vision fallback (photo upload OK; AI vision failed)";
+    }
 
     const plan = await planProductVideoFromVision({
       vision,
@@ -141,16 +211,19 @@ export async function POST(request: Request) {
       plan,
       vision,
       imageCount: files.length,
-      sourceNote: "AI video assistant — vision (Gemini) + Seedance prompt (DeepSeek)",
+      sourceNote: `AI video assistant — ${visionNote} + Seedance prompt (DeepSeek)`,
     });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : formatFalError(e);
+    console.error("[plan-product-video] failed:", message, e);
     const status =
       message.includes("DEEPSEEK_API_KEY") ||
       message.includes("DeepSeek API") ||
       message.includes("balance")
         ? 503
-        : 400;
+        : isFalForbidden(e) || /Photo analysis was blocked/i.test(message)
+          ? 502
+          : 400;
     return NextResponse.json({ error: message }, { status });
   }
 }

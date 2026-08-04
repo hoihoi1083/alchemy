@@ -21,8 +21,8 @@ export default function TwitterImage() {
           fontFamily: "ui-sans-serif, system-ui, sans-serif",
         }}
       >
-        <div style={{ fontSize: 28, letterSpacing: "0.08em", color: "#94a3b8", marginBottom: 16 }}>
-          ALCHEMY AI LAB
+        <div style={{ fontSize: 28, letterSpacing: "0.08em", color: "#8B5CF6", marginBottom: 16 }}>
+          Alchemy AI Lab
         </div>
         <div style={{ fontSize: 64, fontWeight: 700, lineHeight: 1.15, maxWidth: 900 }}>
           Product ads and short videos for marketing

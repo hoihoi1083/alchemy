@@ -198,7 +198,7 @@ export function CaptionTimelineL2({
             {cutMarkers.map((c) => (
               <div
                 key={`cut-video-${c}`}
-                className="pointer-events-none absolute top-0 bottom-0 z-[1] w-0.5 bg-fuchsia-400/90"
+                className="pointer-events-none absolute top-0 bottom-0 z-[1] w-0.5 bg-violet-400/90"
                 style={{ left: pct(c) }}
                 title={`Cut ${c.toFixed(1)}s`}
               />
@@ -244,7 +244,7 @@ export function CaptionTimelineL2({
             {cutMarkers.map((c) => (
               <div
                 key={`cut-cap-${c}`}
-                className="pointer-events-none absolute top-0 bottom-0 z-[1] w-0.5 bg-fuchsia-400/70"
+                className="pointer-events-none absolute top-0 bottom-0 z-[1] w-0.5 bg-violet-400/70"
                 style={{ left: pct(c) }}
               />
             ))}

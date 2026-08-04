@@ -42,14 +42,37 @@ describe("concept teaching carousel prompt guards", () => {
     assert.doesNotMatch(prompt, /Create a scroll-stopping vertical SOCIAL MEDIA POST/);
   });
 
+  it("寫實 concept locks photoreal and bans robot/cartoon mascots", () => {
+    const prompt = buildTeachingCarouselSlideImagePrompt(
+      { ...vars, artStyle: "realistic" },
+      {
+        theme: "一站式廣告平台",
+        visualDna: "photorealistic commercial photography of real workplaces",
+      },
+      {
+        index: 1,
+        role: "cover",
+        title: "一站式廣告平台",
+        body: "集中管理多渠道廣告",
+        takeaway: "",
+        composition: "Editorial cover — photoreal desk scene",
+      },
+      4,
+      "concept-social",
+    );
+    assert.match(prompt, /Photorealistic commercial photography|MANDATORY RENDER MEDIUM/i);
+    assert.match(prompt, /Do NOT invent robot|NO cute robot|NO Pixar/i);
+    assert.match(prompt, /robot mascot|Pixar CGI|cartoon 3D/i);
+  });
+
   it("negative prompt includes frame, twin-title, and rotated-type avoids", () => {
     const neg = buildCarouselImageNegativePrompt("auto");
     assert.match(neg, /outer matte|letterbox/i);
     assert.match(neg, /Copywriting/i);
     assert.match(neg, /duplicated headline/i);
     assert.match(neg, /rotated text|sideways typography|vertical lettering/i);
+    assert.match(neg, /robot mascot|Pixar|cartoon 3D/i);
   });
-
   it("locks product hero on tip slides when product photo is present", () => {
     const prompt = buildTeachingCarouselSlideImagePrompt(
       { ...vars, product: "金砂石手鏈" },

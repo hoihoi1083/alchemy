@@ -33,7 +33,7 @@ export function UploadNode({ id, data }: NodeProps & { data: UploadNodeData }) {
         <img src={data.previewUrl} alt="" className="mt-2 max-h-32 w-full rounded-lg object-contain" />
       )}
       {data.error && <p className="mt-2 text-xs text-red-400">{data.error}</p>}
-      <Handle type="source" position={Position.Right} className="!bg-emerald-500" />
+      <Handle type="source" position={Position.Right} className="!bg-violet-500" />
     </div>
   );
 }

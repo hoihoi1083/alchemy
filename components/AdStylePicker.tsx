@@ -25,7 +25,7 @@ export function AdStylePicker({ value, onChange }: Props) {
               onClick={() => onChange(style.id)}
               className={`rounded-xl border p-4 text-left transition ${
                 value === style.id
-                  ? "border-emerald-500/60 bg-emerald-950/40"
+                  ? "border-violet-500/60 bg-violet-950/40"
                   : "border-slate-800 bg-slate-900/40 hover:border-slate-600"
               }`}
             >
