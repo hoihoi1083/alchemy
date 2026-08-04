@@ -104,10 +104,13 @@ export async function POST(request: Request) {
 
   const files: File[] = [];
   for (const slot of slots.length ? slots : (["hero"] as ProductVideoKitSlot[])) {
-    const file = formData.get(slot);
-    // Next/Node FormData may yield Blob; File extends Blob — accept both with size > 0.
-    if (file instanceof Blob && file.size > 0) {
-      files.push(file instanceof File ? file : new File([file], `${slot}.jpg`, { type: file.type || "image/jpeg" }));
+    const entry = formData.get(slot);
+    // DOM FormData types say File | string; Node/undici may still hand back a plain Blob.
+    if (entry instanceof File && entry.size > 0) {
+      files.push(entry);
+    } else if (entry instanceof Blob && entry.size > 0) {
+      const blob = entry as Blob;
+      files.push(new File([blob], `${slot}.jpg`, { type: blob.type || "image/jpeg" }));
     }
   }
 
