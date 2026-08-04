@@ -12,6 +12,9 @@ import type { PaidPlan } from "@/lib/stripe/prices";
 /**
  * Idempotent credit: claim a lock on `ref`, then grant once.
  * Returns { granted, balanceAfter }.
+ *
+ * If grant fails after the lock is claimed, the lock is released so Stripe
+ * webhook / confirm-checkout retries can succeed (paid → 0 tokens forever).
  */
 export async function grantTokensOnce(
   clerkId: string,
@@ -30,8 +33,9 @@ export async function grantTokensOnce(
     reason: string;
     createdAt: Date;
   };
+  const locks = db.collection<BillingLock>("billing_event_locks");
   // returnDocument:"before" + upsert → null means we just claimed the lock.
-  const prior = await db.collection<BillingLock>("billing_event_locks").findOneAndUpdate(
+  const prior = await locks.findOneAndUpdate(
     { _id: ref },
     {
       $setOnInsert: {
@@ -48,8 +52,31 @@ export async function grantTokensOnce(
     return { granted: false, balanceAfter: (existing?.balanceAfter as number) ?? null };
   }
 
-  const balanceAfter = await grantTokens(clerkId, amount, reason, { ref, meta });
-  return { granted: balanceAfter != null, balanceAfter };
+  try {
+    const balanceAfter = await grantTokens(clerkId, amount, reason, { ref, meta });
+    if (balanceAfter != null) {
+      return { granted: true, balanceAfter };
+    }
+    // User missing / grant no-op — drop lock so a later retry can credit.
+    await locks.deleteOne({ _id: ref });
+    console.error("[billing] grantTokensOnce released lock after null grant", {
+      clerkId,
+      reason,
+      ref,
+      amount,
+    });
+    return { granted: false, balanceAfter: null };
+  } catch (err) {
+    await locks.deleteOne({ _id: ref }).catch(() => undefined);
+    console.error("[billing] grantTokensOnce released lock after grant error", {
+      clerkId,
+      reason,
+      ref,
+      amount,
+      err,
+    });
+    throw err;
+  }
 }
 
 export async function setUserSubscription(opts: {
