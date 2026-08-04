@@ -21,6 +21,10 @@ type KonvaImageLayerEditorProps = {
     addShapeBtn: string;
     addLogoBtn: string;
     removeLayerBtn: string;
+    duplicateLayerBtn?: string;
+    bringForwardBtn?: string;
+    sendBackwardBtn?: string;
+    noLogoHint?: string;
     applyBtn: string;
     applying: string;
     needLayer: string;
