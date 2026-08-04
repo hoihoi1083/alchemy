@@ -199,17 +199,29 @@ function normalizePlan(parsed: Partial<TeachingCarouselPlan>, input: PlanInput):
   );
   const fallback = fallbackSlides(input, targetCount);
   const rawSlides = Array.isArray(parsed.slides) ? parsed.slides : [];
+  const seenTitles = new Set<string>();
   const slides = rawSlides
     .slice(0, targetCount)
     .map((s, i) => {
       const fb = fallback[i];
       const role =
         s.role === "cover" || s.role === "point" || s.role === "summary" ? s.role : fb.role;
+      let title = String(s.title ?? "").trim() || fb.title;
+      const titleKey = title.toLowerCase();
+      // Planner sometimes repeats the cover headline on every tip — force uniqueness.
+      if (seenTitles.has(titleKey)) {
+        title = fb.title;
+      }
+      seenTitles.add(title.toLowerCase());
+      let body = String(s.body ?? "").trim() || fb.body;
+      if (i > 0 && body && body === String(rawSlides[0]?.body ?? "").trim()) {
+        body = fb.body;
+      }
       return {
         index: i + 1,
         role,
-        title: String(s.title ?? "").trim() || fb.title,
-        body: String(s.body ?? "").trim() || fb.body,
+        title,
+        body,
         takeaway: String(s.takeaway ?? "").trim() || fb.takeaway,
         composition: String(s.composition ?? "").trim() || fb.composition,
       };
@@ -349,6 +361,8 @@ function buildPlanPrompt(input: PlanInput): string {
     `- ${plannerCopyLanguageRule(copyLocale)}`,
     "- Keep each slide copy concise and readable.",
     "- Cover slide introduces topic; middle slides teach; final slide summarizes.",
+    "- CRITICAL: Every slide.title MUST be unique — tip/summary slides must NOT reuse the cover headline. Different point = different title.",
+    "- body/takeaway must not repeat the title verbatim, and tip bodies must not copy the cover body.",
     "- Do not invent pricing, promotion, or app mechanics unless explicitly provided.",
     input.hasProductPhoto
       ? "- PRODUCT PHOTO present: every slide.composition MUST keep the user's exact product as the visible hero (cover, tip/point, and summary)."

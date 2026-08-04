@@ -5,6 +5,7 @@ import {
   carouselCoverSeriesAnchorHint,
   carouselProductHeroLock,
   carouselSeriesConsistencyLock,
+  carouselUniqueCopyHint,
   dualProductIdentityHint,
 } from "../lib/fal-dual-reference-urls";
 import { resolveReferenceStrategy } from "../lib/reference-strategy";
@@ -101,6 +102,21 @@ describe("dual reference layout-transfer (research OR manual style upload)", () 
     assert.match(hint, /LAST image/);
     assert.match(hint, /DO NOT clone the cover/i);
     assert.match(hint, /art medium EXACTLY|SAME character/i);
+    assert.match(hint, /on-image text|unique headline/i);
+  });
+
+  it("unique copy hint forces distinct on-image wording per slide", () => {
+    const hint = carouselUniqueCopyHint({
+      index: 2,
+      role: "point",
+      title: "集中管理多渠道",
+      body: "一個後台追蹤成效",
+      takeaway: "記住重點",
+    });
+    assert.match(hint, /UNIQUE SLIDE COPY LOCK/);
+    assert.match(hint, /集中管理多渠道/);
+    assert.match(hint, /一個後台追蹤成效/);
+    assert.match(hint, /differ from the cover|never reuse/i);
   });
 
   it("cover series anchor without product skips IMAGE 1 product hero language", () => {

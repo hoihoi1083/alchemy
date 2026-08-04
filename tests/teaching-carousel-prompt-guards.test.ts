@@ -65,6 +65,26 @@ describe("concept teaching carousel prompt guards", () => {
     assert.match(prompt, /robot mascot|Pixar CGI|cartoon 3D/i);
   });
 
+  it("concept tip slides get unique copy lock with that slide's headline", () => {
+    const prompt = buildTeachingCarouselSlideImagePrompt(
+      { ...vars, artStyle: "realistic", headline: "唔使識寫prompt，廣告輕鬆到手" },
+      { theme: "AI廣告", visualDna: "photoreal office" },
+      {
+        index: 2,
+        role: "point",
+        title: "三步完成廣告",
+        body: "上傳產品、選模板、一鍵生成",
+        takeaway: "記住流程",
+        composition: "Tip — desk with laptop dashboard",
+      },
+      5,
+      "concept-social",
+    );
+    assert.match(prompt, /UNIQUE SLIDE COPY LOCK/);
+    assert.match(prompt, /三步完成廣告/);
+    assert.match(prompt, /never reuse|differ from the cover/i);
+  });
+
   it("negative prompt includes frame, twin-title, and rotated-type avoids", () => {
     const neg = buildCarouselImageNegativePrompt("auto");
     assert.match(neg, /outer matte|letterbox/i);

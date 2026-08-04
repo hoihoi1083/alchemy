@@ -29,7 +29,7 @@ import {
   buildModelWearPresentationHint,
   buildSecondFrameSceneHint,
 } from "@/lib/product-scene-hints";
-import { carouselProductHeroLock, carouselSeriesConsistencyLock } from "@/lib/fal-dual-reference-urls";
+import { carouselProductHeroLock, carouselSeriesConsistencyLock, carouselUniqueCopyHint } from "@/lib/fal-dual-reference-urls";
 import {
   creativityMotionHint,
   type VideoCreativity,
@@ -682,6 +682,7 @@ export function buildTeachingCarouselSlideImagePrompt(
           brandProfile,
           referenceImageMode,
         ),
+        carouselUniqueCopyHint(slide),
         marketChineseScriptBlock(vars.market),
         typographyHintForLocale(copyLocaleForVars(vars, [slide.title, slide.body, slide.takeaway]), [
           slide.title,

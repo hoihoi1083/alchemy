@@ -102,23 +102,25 @@ export function carouselSlideRoleVariationHint(input: {
 /**
  * Series look guidance for tip slides after the cover exists.
  * Prefer text DNA over feeding cover pixels — cover-as-image_url makes models clone the cover.
+ * Never attach the cover as the ONLY / first image_url (nano-banana/edit treats IMAGE 1 as the edit subject).
  */
 export function carouselCoverSeriesAnchorHint(input?: {
   hasProductPhoto?: boolean;
-  /** When true, cover is attached as last image_urls entry. */
+  /** When true, cover is attached as last image_urls entry (after product/style refs). */
   pixelAnchor?: boolean;
 }): string {
   const pixel = Boolean(input?.pixelAnchor);
   const parts = pixel
     ? [
         "SERIES COVER ANCHOR: The LAST image in image_urls is the already-generated COVER slide — use it ONLY for palette / medium / character identity cues.",
-        "DO NOT clone the cover composition, prop positions, or camera framing. Create a NEW layout for this tip/summary slide.",
+        "DO NOT clone the cover composition, prop positions, camera framing, OR any on-image text from the cover.",
+        "Create a NEW layout for this tip/summary slide and paint ONLY this slide's unique headline/body (never the cover headline).",
         "Match that cover's art medium EXACTLY (photoreal stays photoreal; flat vector stays flat vector; 3D CGI stays 3D CGI) — never switch to a different render style.",
         "If the cover shows a character, keep that SAME character design — do not invent a new robot, mascot, or costume.",
       ]
     : [
-        "SERIES LOOK (text DNA only — no cover pixels attached): Keep the same art medium, palette, and product identity as the carousel cover.",
-        "This tip/summary slide MUST use a NEW composition — do not redesign the cover with different text.",
+        "SERIES LOOK (text DNA only — no cover pixels attached): Keep the same art medium, palette, and setting family as the carousel cover.",
+        "This tip/summary slide MUST use a NEW composition and NEW on-image copy — do not redesign the cover with the same headline.",
         "If any human or character appears, keep the SAME identity/costume language across the series — do not invent a new robot, mascot, or cartoon figure on later slides.",
       ];
   if (input?.hasProductPhoto !== false) {
@@ -133,4 +135,28 @@ export function carouselCoverSeriesAnchorHint(input?: {
     );
   }
   return parts.join(" ");
+}
+
+/** Force tip slides to paint their own copy — stops cover-headline reuse across the carousel. */
+export function carouselUniqueCopyHint(slide: {
+  index: number;
+  role: string;
+  title: string;
+  body?: string;
+  takeaway?: string;
+}): string {
+  const title = slide.title.trim();
+  const body = slide.body?.trim() || "";
+  const takeaway = slide.takeaway?.trim() || "";
+  return [
+    `UNIQUE SLIDE COPY LOCK (slide ${slide.index}, role ${slide.role}):`,
+    title ? `Paint headline EXACTLY ONCE: "${title}".` : "",
+    body && body !== title ? `Paint supporting line EXACTLY ONCE: "${body}".` : "",
+    takeaway && takeaway !== title && takeaway !== body
+      ? `Optional closing line once: "${takeaway}".`
+      : "",
+    "This slide's on-image wording MUST differ from the cover and from every other slide — never reuse one shared headline across the carousel.",
+  ]
+    .filter(Boolean)
+    .join(" ");
 }

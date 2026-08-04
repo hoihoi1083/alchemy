@@ -9,6 +9,7 @@ import {
   buildFalLayoutTransferImageUrls,
   carouselCoverSeriesAnchorHint,
   carouselSlideRoleVariationHint,
+  carouselUniqueCopyHint,
   dualProductIdentityHint,
 } from "@/lib/fal-dual-reference-urls";
 import {
@@ -367,8 +368,12 @@ export async function POST(request: Request) {
       const hints = [
         dualHint,
         regenerateSlideIndex! > 0 && seriesCoverUrl.startsWith("http")
-          ? carouselCoverSeriesAnchorHint({ hasProductPhoto: hasProduct })
+          ? carouselCoverSeriesAnchorHint({
+              hasProductPhoto: hasProduct,
+              pixelAnchor: Boolean(imageUrlsForFal?.length),
+            })
           : "",
+        carouselUniqueCopyHint(target),
       ];
       const one = await generateOneSlide(target, urls, hints);
       const durableUrls = await persistAndDurablizeMany({
@@ -402,49 +407,75 @@ export async function POST(request: Request) {
     const coverSlide = ordered[0];
     const restSlides = ordered.slice(1);
 
-    // Always render cover first when there are tip slides. Parallel tip-only
-    // generation (common for concept with no product photo) invents a new art
-    // medium/character per slide. Product+style dual refs already lock DNA —
-    // do NOT also attach cover pixels there (that clones the cover with swapped text).
+    // Cover-first only when tip slides can safely use the cover as a *secondary*
+    // style cue (after product/style refs). Attaching the cover as the ONLY
+    // image_url makes nano-banana/edit clone cover pixels + cover text.
     let slideResults: SlideOut[];
     if (coverSlide && restSlides.length > 0) {
       const baseUrls = imageUrlsForFal?.length ? imageUrlsForFal : null;
-      const coverOut = await generateOneSlide(coverSlide, baseUrls, [
-        dualHint,
-        carouselSlideRoleVariationHint({
-          role: coverSlide.role,
-          index: coverSlide.index,
-          total: plan.slides.length,
-        }),
-      ]);
       const dualLocksLook = Boolean(strategy.useDualImage && hasStyle && hasProduct);
-      const attachCoverPixels = !dualLocksLook;
-      const tipUrls = attachCoverPixels
-        ? [...(baseUrls ?? []), coverOut.imageUrl]
-        : baseUrls;
-      const coverHint = carouselCoverSeriesAnchorHint({
-        hasProductPhoto: hasProduct,
-        pixelAnchor: attachCoverPixels,
-      });
-      const restOut = await Promise.all(
-        restSlides.map((slide) =>
-          generateOneSlide(slide, tipUrls, [
-            dualHint,
-            coverHint,
-            carouselSlideRoleVariationHint({
-              role: slide.role,
-              index: slide.index,
-              total: plan.slides.length,
-            }),
-          ]),
-        ),
-      );
-      slideResults = [coverOut, ...restOut].sort((a, b) => a.index - b.index);
+      // Never put cover alone as IMAGE 1 — that clones the cover (same image + same words).
+      const attachCoverPixels = !dualLocksLook && Boolean(baseUrls?.length);
+
+      if (attachCoverPixels || dualLocksLook || baseUrls?.length) {
+        const coverOut = await generateOneSlide(coverSlide, baseUrls, [
+          dualHint,
+          carouselUniqueCopyHint(coverSlide),
+          carouselSlideRoleVariationHint({
+            role: coverSlide.role,
+            index: coverSlide.index,
+            total: plan.slides.length,
+          }),
+        ]);
+        const tipUrls = attachCoverPixels
+          ? [...(baseUrls ?? []), coverOut.imageUrl]
+          : baseUrls;
+        const coverHint = carouselCoverSeriesAnchorHint({
+          hasProductPhoto: hasProduct,
+          pixelAnchor: attachCoverPixels,
+        });
+        const restOut = await Promise.all(
+          restSlides.map((slide) =>
+            generateOneSlide(slide, tipUrls, [
+              dualHint,
+              coverHint,
+              carouselUniqueCopyHint(slide),
+              carouselSlideRoleVariationHint({
+                role: slide.role,
+                index: slide.index,
+                total: plan.slides.length,
+              }),
+            ]),
+          ),
+        );
+        slideResults = [coverOut, ...restOut].sort((a, b) => a.index - b.index);
+      } else {
+        // Concept / no reference pixels: parallel text-to-image with shared DNA + unique copy.
+        // Do not feed the cover image into tip slides (clones).
+        slideResults = await Promise.all(
+          ordered.map((slide) =>
+            generateOneSlide(slide, null, [
+              dualHint,
+              carouselCoverSeriesAnchorHint({
+                hasProductPhoto: false,
+                pixelAnchor: false,
+              }),
+              carouselUniqueCopyHint(slide),
+              carouselSlideRoleVariationHint({
+                role: slide.role,
+                index: slide.index,
+                total: plan.slides.length,
+              }),
+            ]),
+          ),
+        );
+      }
     } else {
       slideResults = await Promise.all(
         ordered.map((slide) =>
           generateOneSlide(slide, imageUrlsForFal, [
             dualHint,
+            carouselUniqueCopyHint(slide),
             carouselSlideRoleVariationHint({
               role: slide.role,
               index: slide.index,
