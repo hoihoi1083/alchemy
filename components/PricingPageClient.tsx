@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { LandingNav } from "@/components/landing/LandingNav";
+import { PlanTokenCapacityGrid } from "@/components/landing/PlanTokenCapacityGrid";
 import { Reveal } from "@/components/landing/Reveal";
 import { useLocale } from "@/components/LocaleProvider";
 import { PLAN_DEFINITIONS } from "@/lib/billing/plans";
@@ -81,6 +82,33 @@ export function PricingPageClient() {
     if (confirmStarted.current) return;
     confirmStarted.current = true;
 
+    // In-place plan switch (no Checkout Session) — show upgrade/downgrade note from query.
+    if (searchParams.get("updated") === "1" && !checkoutSessionId) {
+      if (searchParams.get("deferred") === "1") {
+        const pendingPlan = searchParams.get("pendingPlan");
+        const pendingAt = searchParams.get("pendingAt");
+        const planName =
+          pendingPlan === "standard"
+            ? p.plans.standard.name
+            : pendingPlan === "pro"
+              ? p.plans.pro.name
+              : pendingPlan === "master"
+                ? p.plans.master.name
+                : pendingPlan ?? "";
+        const dateLabel = pendingAt
+          ? new Date(pendingAt).toLocaleDateString(undefined, { dateStyle: "medium" })
+          : "—";
+        setConfirmNote(
+          p.subscriptionDowngradeScheduled
+            .replace("{plan}", planName)
+            .replace("{date}", dateLabel),
+        );
+      } else {
+        setConfirmNote(p.subscriptionUpgraded);
+      }
+      return;
+    }
+
     void (async () => {
       try {
         const res = await fetch("/api/stripe/confirm-checkout", {
@@ -128,7 +156,20 @@ export function PricingPageClient() {
         setConfirmNote(p.checkoutSuccess);
       }
     })();
-  }, [isLoaded, isSignedIn, checkoutStatus, checkoutSessionId, p.checkoutError, p.checkoutSuccess]);
+  }, [
+    isLoaded,
+    isSignedIn,
+    checkoutStatus,
+    checkoutSessionId,
+    p.checkoutError,
+    p.checkoutSuccess,
+    p.subscriptionUpgraded,
+    p.subscriptionDowngradeScheduled,
+    p.plans.standard.name,
+    p.plans.pro.name,
+    p.plans.master.name,
+    searchParams,
+  ]);
 
   async function startCheckout(body: Record<string, string>) {
     setCheckoutError(null);
@@ -153,10 +194,24 @@ export function PricingPageClient() {
         body: JSON.stringify(body),
       });
       const raw = await res.text();
-      let data: { url?: string; error?: string; updated?: boolean } = {};
+      let data: {
+        url?: string;
+        error?: string;
+        updated?: boolean;
+        deferred?: boolean;
+        pendingPlan?: string | null;
+        pendingEffectiveAt?: string | null;
+      } = {};
       try {
         data = raw
-          ? (JSON.parse(raw) as { url?: string; error?: string; updated?: boolean })
+          ? (JSON.parse(raw) as {
+              url?: string;
+              error?: string;
+              updated?: boolean;
+              deferred?: boolean;
+              pendingPlan?: string | null;
+              pendingEffectiveAt?: string | null;
+            })
           : {};
       } catch {
         throw new Error(raw?.slice(0, 200) || p.checkoutError);
@@ -168,7 +223,28 @@ export function PricingPageClient() {
           updated_in_place: true,
           source: "pricing",
         });
-        setConfirmNote(p.subscriptionUpdated);
+        if (data.deferred && data.pendingPlan) {
+          const planName =
+            data.pendingPlan === "standard"
+              ? p.plans.standard.name
+              : data.pendingPlan === "pro"
+                ? p.plans.pro.name
+                : data.pendingPlan === "master"
+                  ? p.plans.master.name
+                  : data.pendingPlan;
+          const dateLabel = data.pendingEffectiveAt
+            ? new Date(data.pendingEffectiveAt).toLocaleDateString(undefined, {
+                dateStyle: "medium",
+              })
+            : "—";
+          setConfirmNote(
+            p.subscriptionDowngradeScheduled
+              .replace("{plan}", planName)
+              .replace("{date}", dateLabel),
+          );
+        } else {
+          setConfirmNote(p.subscriptionUpgraded);
+        }
         setBusy(null);
         return;
       }
@@ -529,35 +605,10 @@ export function PricingPageClient() {
           </div>
         </section>
 
-        {/* Token how-to — compact cards, landing-style */}
+        {/* Plan capacity — same cards as landing */}
         <section className="border-t border-slate-100 bg-slate-50/60">
-          <div className="mx-auto w-full max-w-5xl px-5 py-10 md:px-8 md:py-12">
-            <Reveal>
-              <div className="mx-auto max-w-xl text-center">
-                <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-                  {p.tokenTitle}
-                </h2>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600">{p.tokenSubtitle}</p>
-              </div>
-            </Reveal>
-
-            <ol className="mt-8 grid gap-3 sm:grid-cols-3 sm:gap-4">
-              {p.tokenItems.map((item, index) => (
-                <Reveal key={item.title} delayMs={index * 90} distance={36} scaleFrom={0.94}>
-                  <li className="flex h-full flex-col rounded-2xl border border-violet-100 bg-white p-5 shadow-sm">
-                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-violet-100 text-[12px] font-bold tabular-nums text-violet-700">
-                      {String(index + 1).padStart(2, "0")}
-                    </span>
-                    <h3 className="mt-3 text-[15px] font-semibold leading-snug text-slate-900">
-                      {item.title}
-                    </h3>
-                    <p className="mt-2 flex-1 text-[13px] leading-relaxed text-slate-600">
-                      {item.body}
-                    </p>
-                  </li>
-                </Reveal>
-              ))}
-            </ol>
+          <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 md:px-8 md:py-12">
+            <PlanTokenCapacityGrid />
           </div>
         </section>
 

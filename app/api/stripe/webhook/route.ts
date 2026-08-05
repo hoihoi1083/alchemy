@@ -99,18 +99,35 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
     },
   });
 
-  // Email on first successful grant for this invoice only (idempotent).
+  // New billing cycle (or schedule-applied price) — pending downgrade is done/stale.
+  if (invoice.billing_reason === "subscription_cycle") {
+    await setUserSubscription({
+      clerkId,
+      plan,
+      stripeCustomerId: cust,
+      stripeSubscriptionId: subId,
+      planRenewsAt: renewsAt,
+      clearPendingPlanChange: true,
+    });
+  }
+
+  // Email once per invoice (idempotent with grant). Log skips so local debugging is possible.
   if (result.granted) {
     const to = await resolvePurchaseEmail({
       clerkId,
       stripeEmail: invoice.customer_email,
     });
-    if (to) {
+    if (!to) {
+      console.warn("[email] subscription receipt skipped — no recipient", {
+        invoiceId: invoice.id,
+        clerkId,
+      });
+    } else {
       const amountPaid =
         typeof invoice.amount_paid === "number"
           ? `$${(invoice.amount_paid / 100).toFixed(2)}`
           : null;
-      await sendPurchaseConfirmationEmail({
+      const sent = await sendPurchaseConfirmationEmail({
         to,
         kind: "subscription",
         plan,
@@ -119,7 +136,26 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
         renewsAt,
         amountLabel: amountPaid,
       });
+      if (!sent.sent) {
+        console.error("[email] subscription receipt send failed", {
+          invoiceId: invoice.id,
+          to,
+          skipped: sent.skipped,
+          error: sent.error,
+        });
+      } else {
+        console.info("[email] subscription receipt sent", {
+          invoiceId: invoice.id,
+          to,
+          id: sent.id,
+        });
+      }
     }
+  } else {
+    console.info("[email] subscription receipt skipped — grant not first claim", {
+      invoiceId: invoice.id,
+      clerkId,
+    });
   }
 }
 
@@ -183,9 +219,20 @@ async function handleSubscriptionUpdated(sub: Stripe.Subscription) {
   const priceId = sub.items.data[0]?.price?.id;
   const fromPrice = priceId ? planFromPriceId(priceId) : null;
   const planMeta = sub.metadata?.plan;
+  // Price is source of truth for active entitlements (metadata can lag on schedules).
   const plan: PaidPlan | null =
-    (planMeta && isPaidPlan(planMeta) ? planMeta : null) ?? fromPrice?.plan ?? null;
+    fromPrice?.plan ??
+    (planMeta && isPaidPlan(planMeta) ? planMeta : null);
   if (!plan) return;
+
+  const pendingRaw = sub.metadata?.pendingPlan;
+  const pendingPlan =
+    pendingRaw && isPaidPlan(pendingRaw) ? pendingRaw : null;
+  const pendingIntervalRaw = sub.metadata?.pendingInterval;
+  const pendingInterval =
+    pendingIntervalRaw === "monthly" || pendingIntervalRaw === "yearly"
+      ? pendingIntervalRaw
+      : null;
 
   // Mid-cycle upgrade: credit the token delta once per period when plan tokens increase.
   let oldPlanTokens = 0;
@@ -199,12 +246,22 @@ async function handleSubscriptionUpdated(sub: Stripe.Subscription) {
   const periodEnd = sub.items.data[0]?.current_period_end ?? null;
   const periodStart = sub.items.data[0]?.current_period_start ?? null;
 
+  // Pending downgrade only while price is still the higher (current) plan.
+  const pendingStillActive = Boolean(pendingPlan && pendingPlan !== plan);
+
   await setUserSubscription({
     clerkId,
     plan,
     stripeCustomerId: customerId(sub.customer),
     stripeSubscriptionId: sub.id,
     planRenewsAt: periodEnd ? new Date(periodEnd * 1000) : null,
+    ...(pendingStillActive
+      ? {
+          pendingPlan,
+          pendingPlanInterval: pendingInterval,
+          pendingPlanEffectiveAt: periodEnd ? new Date(periodEnd * 1000) : null,
+        }
+      : { clearPendingPlanChange: true }),
   });
 
   const newPlanTokens = tokensForPaidPlan(plan);

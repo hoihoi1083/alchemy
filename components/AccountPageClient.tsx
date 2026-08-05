@@ -15,6 +15,8 @@ type MeUser = {
   creditBalance?: number | null;
   plan?: UserPlan | string | null;
   planRenewsAt?: string | Date | null;
+  pendingPlan?: "standard" | "pro" | "master" | null;
+  pendingPlanEffectiveAt?: string | Date | null;
   stripeCustomerId?: string | null;
   email?: string | null;
   name?: string | null;
@@ -128,6 +130,25 @@ export function AccountPageClient() {
         )
       : null;
 
+  const pendingPlanKey = user?.pendingPlan ?? null;
+  const pendingPlanLabel =
+    pendingPlanKey === "standard"
+      ? m.pricing.plans.standard.name
+      : pendingPlanKey === "pro"
+        ? m.pricing.plans.pro.name
+        : pendingPlanKey === "master"
+          ? m.pricing.plans.master.name
+          : null;
+  const pendingAt =
+    user?.pendingPlanEffectiveAt != null
+      ? formatDate(
+          typeof user.pendingPlanEffectiveAt === "string"
+            ? user.pendingPlanEffectiveAt
+            : new Date(user.pendingPlanEffectiveAt).toISOString(),
+          locale,
+        )
+      : null;
+
   function reasonLabel(reason: CreditReason): string {
     return a.reasons[reason] ?? reason;
   }
@@ -175,6 +196,14 @@ export function AccountPageClient() {
                   {renewsAt ? (
                     <p className="mt-2 text-sm text-slate-600">
                       {a.renewsLabel}: {renewsAt}
+                    </p>
+                  ) : null}
+                  {pendingPlanLabel && pendingAt ? (
+                    <p className="mt-2 text-sm text-amber-800">
+                      {a.pendingDowngradeLabel}:{" "}
+                      {a.pendingDowngradeBody
+                        .replace("{plan}", pendingPlanLabel)
+                        .replace("{date}", pendingAt)}
                     </p>
                   ) : null}
                   {user?.email ? (

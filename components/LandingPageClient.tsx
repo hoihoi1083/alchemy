@@ -187,7 +187,6 @@ const LANDING_LAYOUT_CSS = `
   .landing-why-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
   .landing-scenarios-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
   .landing-pricing-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
-  .landing-tokens-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
   .landing-how-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
   .landing-hero-cyber,
   .landing-hero-inner { min-height: min(74vh, 680px) !important; }
@@ -240,7 +239,6 @@ const LANDING_LAYOUT_CSS = `
   .landing-how-arrow { display: flex !important; }
   .landing-why-grid { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; }
   .landing-scenarios-grid { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; }
-  .landing-tokens-grid { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; }
   .landing-hero-cyber,
   .landing-hero-inner { min-height: min(82vh, 780px) !important; }
   .landing-hero-video { object-position: 58% 50% !important; }

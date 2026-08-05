@@ -7,7 +7,7 @@ import {
 import { grantTokens } from "@/lib/billing/ledger";
 import type { DbUser } from "@/lib/db/types";
 import { getDb, isMongoConfigured } from "@/lib/mongodb";
-import type { PaidPlan } from "@/lib/stripe/prices";
+import type { BillingInterval, PaidPlan } from "@/lib/stripe/prices";
 
 /**
  * Idempotent credit: claim a lock on `ref`, then grant once.
@@ -85,6 +85,11 @@ export async function setUserSubscription(opts: {
   stripeCustomerId?: string | null;
   stripeSubscriptionId?: string | null;
   planRenewsAt?: Date | null;
+  pendingPlan?: PaidPlan | null;
+  pendingPlanInterval?: BillingInterval | null;
+  pendingPlanEffectiveAt?: Date | null;
+  /** Drop deferred downgrade fields (upgrade, schedule applied, cancel). */
+  clearPendingPlanChange?: boolean;
 }): Promise<void> {
   if (!isMongoConfigured()) return;
   const db = await getDb();
@@ -98,6 +103,19 @@ export async function setUserSubscription(opts: {
     $set.stripeSubscriptionId = opts.stripeSubscriptionId;
   }
   if (opts.planRenewsAt !== undefined) $set.planRenewsAt = opts.planRenewsAt;
+  if (opts.clearPendingPlanChange) {
+    $set.pendingPlan = null;
+    $set.pendingPlanInterval = null;
+    $set.pendingPlanEffectiveAt = null;
+  } else {
+    if (opts.pendingPlan !== undefined) $set.pendingPlan = opts.pendingPlan;
+    if (opts.pendingPlanInterval !== undefined) {
+      $set.pendingPlanInterval = opts.pendingPlanInterval;
+    }
+    if (opts.pendingPlanEffectiveAt !== undefined) {
+      $set.pendingPlanEffectiveAt = opts.pendingPlanEffectiveAt;
+    }
+  }
 
   await db.collection<DbUser>("users").updateOne(
     { clerkId: opts.clerkId },
@@ -127,6 +145,9 @@ export async function clearPaidSubscription(clerkId: string): Promise<void> {
         plan: "free" satisfies UserPlan,
         stripeSubscriptionId: null,
         planRenewsAt: null,
+        pendingPlan: null,
+        pendingPlanInterval: null,
+        pendingPlanEffectiveAt: null,
         updatedAt: new Date(),
       },
     },

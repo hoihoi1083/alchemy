@@ -14,6 +14,7 @@ import {
   type BillingInterval,
   type PaidPlan,
 } from "@/lib/stripe/prices";
+import { switchExistingSubscription } from "@/lib/stripe/switch-subscription";
 
 export const runtime = "nodejs";
 
@@ -39,69 +40,6 @@ async function listBillableSubscriptions(
     limit: 20,
   });
   return listed.data.filter((sub) => BILLABLE_SUB_STATUSES.has(sub.status));
-}
-
-/**
- * One paid subscription per customer. If they already subscribe, switch the
- * primary sub to the requested price and cancel duplicate actives immediately
- * so Stripe does not bill two plans.
- */
-async function switchExistingSubscription(opts: {
-  stripe: Stripe;
-  clerkId: string;
-  customerId: string;
-  preferredSubId: string | null | undefined;
-  plan: PaidPlan;
-  interval: BillingInterval;
-  price: string;
-}): Promise<{ subscriptionId: string; renewsAt: Date | null }> {
-  const billable = await listBillableSubscriptions(opts.stripe, opts.customerId);
-  if (!billable.length) {
-    throw new Error("NO_ACTIVE_SUB");
-  }
-
-  const primary =
-    billable.find((sub) => sub.id === opts.preferredSubId) ??
-    [...billable].sort((a, b) => (b.created ?? 0) - (a.created ?? 0))[0];
-
-  for (const extra of billable) {
-    if (extra.id === primary.id) continue;
-    try {
-      await opts.stripe.subscriptions.cancel(extra.id, {
-        invoice_now: false,
-        prorate: true,
-      });
-    } catch (e: unknown) {
-      console.error(
-        "[stripe] failed to cancel duplicate subscription",
-        extra.id,
-        e instanceof Error ? e.message : e,
-      );
-    }
-  }
-
-  const itemId = primary.items.data[0]?.id;
-  if (!itemId) {
-    throw new Error("Active subscription has no price item.");
-  }
-
-  const updated = await opts.stripe.subscriptions.update(primary.id, {
-    items: [{ id: itemId, price: opts.price }],
-    metadata: {
-      ...primary.metadata,
-      clerkId: opts.clerkId,
-      plan: opts.plan,
-      interval: opts.interval,
-    },
-    proration_behavior: "create_prorations",
-    cancel_at_period_end: false,
-  });
-
-  const periodEnd = updated.items.data[0]?.current_period_end ?? null;
-  return {
-    subscriptionId: updated.id,
-    renewsAt: periodEnd ? new Date(periodEnd * 1000) : null,
-  };
 }
 
 export async function POST(request: Request) {
@@ -204,18 +142,57 @@ export async function POST(request: Request) {
             plan,
             interval,
             price,
+            listBillable: (customerId) => listBillableSubscriptions(stripe, customerId),
           });
-          await setUserSubscription({
-            clerkId,
-            plan,
-            stripeCustomerId: user.stripeCustomerId,
-            stripeSubscriptionId: switched.subscriptionId,
-            planRenewsAt: switched.renewsAt,
-          });
+
+          if (switched.effective === "next_cycle") {
+            // Keep current entitlements; only record the deferred target.
+            await setUserSubscription({
+              clerkId,
+              plan: switched.activePlan,
+              stripeCustomerId: user.stripeCustomerId,
+              stripeSubscriptionId: switched.subscriptionId,
+              planRenewsAt: switched.renewsAt,
+              pendingPlan: switched.pendingPlan,
+              pendingPlanInterval: switched.pendingInterval,
+              pendingPlanEffectiveAt: switched.pendingEffectiveAt,
+            });
+          } else if (switched.effective === "immediate") {
+            await setUserSubscription({
+              clerkId,
+              plan: switched.activePlan,
+              stripeCustomerId: user.stripeCustomerId,
+              stripeSubscriptionId: switched.subscriptionId,
+              planRenewsAt: switched.renewsAt,
+              clearPendingPlanChange: true,
+            });
+          } else {
+            // Same price — preserve any already-scheduled downgrade.
+            await setUserSubscription({
+              clerkId,
+              plan: switched.activePlan,
+              stripeCustomerId: user.stripeCustomerId,
+              stripeSubscriptionId: switched.subscriptionId,
+              planRenewsAt: switched.renewsAt,
+              ...(switched.pendingPlan
+                ? {
+                    pendingPlan: switched.pendingPlan,
+                    pendingPlanInterval: switched.pendingInterval,
+                    pendingPlanEffectiveAt: switched.pendingEffectiveAt,
+                  }
+                : {}),
+            });
+          }
+
           return NextResponse.json({
             updated: true,
-            plan,
-            interval,
+            deferred: switched.effective === "next_cycle",
+            effective: switched.effective,
+            plan: switched.activePlan,
+            interval: switched.activeInterval,
+            pendingPlan: switched.pendingPlan,
+            pendingInterval: switched.pendingInterval,
+            pendingEffectiveAt: switched.pendingEffectiveAt?.toISOString() ?? null,
             subscriptionId: switched.subscriptionId,
           });
         } catch (e: unknown) {

@@ -26,6 +26,8 @@ export const en = {
     balanceLabel: "Token balance",
     tokensUnit: "tokens",
     renewsLabel: "Renews",
+    pendingDowngradeLabel: "Scheduled downgrade",
+    pendingDowngradeBody: "Changes to {plan} on {date}. You keep your current plan until then.",
     manageBilling: "Manage billing",
     portalRedirecting: "Opening Stripe…",
     portalError: "Could not open billing portal.",
@@ -401,15 +403,22 @@ export const en = {
     planFeaturesMaster: ["16,000 tokens / month", "Pro canvas", "Priority support", "2K images"],
     planFeaturesCustom: ["Custom token volume", "Custom limits", "Dedicated support"],
     tokensTitle: "How AI Tokens Work",
-    tokensBody: "Tokens are used when you generate content.",
+    tokensBody:
+      "Rough monthly capacity if you spend tokens on images only, or on ~10s storyboard reels. Mix formats in practice.",
     tokensUnit: "tokens",
+    tokensPlanGrant: "{n} tokens",
+    tokensCapacityImages: "single images",
+    tokensCapacityOr: "or",
+    tokensCapacityVideos: "short videos (~8s · {res})",
+    tokensCapacityStoryboards: "storyboard reels (~{sec}s)",
     tokenCostPlan: "AI plan / brief",
     tokenCostImage: "Image creation",
     tokenCostStoryboard: "Storyboard pack",
     tokenCostMusic: "Music bed",
     tokenCostVideoDraft: "Short video (~8s)",
     tokenCostVoice: "Voiceover",
-    tokensVideoNote: "Video cost scales with seconds and resolution — see Pricing for full detail.",
+    tokensVideoNote:
+      "Estimates only — based on a typical ~10s storyboard reel. Longer reels, more scenes, logo passes, and music use more tokens.",
     tokensSeePricing: "See full pricing →",
     topUpTitle: "Need more tokens?",
     topUpBody: "Top up anytime after you subscribe.",
@@ -553,6 +562,10 @@ export const en = {
     checkoutError: "Could not start checkout. Try again or contact support.",
     subscriptionUpdated:
       "Plan updated. Duplicate subscriptions were canceled so you won’t be charged twice.",
+    subscriptionUpgraded:
+      "Upgraded successfully. You get the new plan features and token top-up for this period right away.",
+    subscriptionDowngradeScheduled:
+      "Downgrade to {plan} is scheduled for {date}. You keep your current plan and remaining tokens until then — the lower price starts on your next billing cycle.",
     alreadySubscribed:
       "You already have an active subscription. Open Manage billing to change or cancel plans.",
     tokenTitle: "How tokens work",
@@ -589,9 +602,13 @@ export const en = {
         q: "When can I buy extra tokens?",
         body: "After you subscribe to any paid plan. Free users upgrade first, then buy top-ups as needed.",
       },
+      {
+        q: "What happens if I upgrade or downgrade?",
+        body: "Upgrades apply immediately (with proration and extra tokens for the higher plan). Downgrades are scheduled for your next billing cycle — you keep the current plan until then so unused higher-tier time isn’t converted into a lower price mid-cycle.",
+      },
     ],
     footnote:
-      "Prices in USD. Video resolution and duration affect token cost. Paid via Stripe. Cancel or change plans anytime from Manage billing.",
+      "Prices in USD. Video resolution and duration affect token cost. Paid via Stripe. Upgrade anytime from Pricing; downgrades take effect next cycle. Cancel from Manage billing.",
     plans: {
       free: {
         name: "Free",

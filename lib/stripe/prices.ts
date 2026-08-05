@@ -54,3 +54,24 @@ export function monthlyTokensForPlan(plan: UserPlan): number {
   if (plan === "master") return 16000;
   return 0;
 }
+
+/** Higher number = higher tier (used to decide upgrade vs downgrade). */
+export function paidPlanRank(plan: PaidPlan): number {
+  if (plan === "standard") return 1;
+  if (plan === "pro") return 2;
+  return 3; // master
+}
+
+export type PlanChangeKind = "upgrade" | "downgrade" | "lateral";
+
+/**
+ * Compare paid plan tiers only (interval monthly↔yearly is lateral).
+ * Upgrades apply immediately; downgrades are deferred to the next cycle.
+ */
+export function comparePaidPlans(from: PaidPlan, to: PaidPlan): PlanChangeKind {
+  const a = paidPlanRank(from);
+  const b = paidPlanRank(to);
+  if (b > a) return "upgrade";
+  if (b < a) return "downgrade";
+  return "lateral";
+}

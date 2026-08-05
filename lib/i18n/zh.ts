@@ -26,6 +26,8 @@ export const zh = {
     balanceLabel: "Token 餘額",
     tokensUnit: "tokens",
     renewsLabel: "下次續費",
+    pendingDowngradeLabel: "已排程降級",
+    pendingDowngradeBody: "將於 {date} 改為 {plan}。在此之前仍享用目前計劃。",
     manageBilling: "管理帳單",
     portalRedirecting: "正開啟 Stripe…",
     portalError: "無法開啟帳單頁面。",
@@ -284,13 +286,19 @@ export const zh = {
     pricingCustom: "聯絡我們",
     pricingCustomHint: "大量 token 同自訂上限",
     tokensTitle: "AI Tokens 點計",
-    tokensBody: "常用固定動作成本示例。影片會按秒數同解析度加權。",
+    tokensBody:
+      "粗略每月產能：token 全用嚟出單圖，或者全用嚟出約 10 秒分鏡短片。實際可以混搭。",
     tokensUnit: "tokens",
+    tokensPlanGrant: "{n} tokens",
+    tokensCapacityImages: "張單圖",
+    tokensCapacityOr: "或",
+    tokensCapacityStoryboards: "條分鏡短片（約 {sec} 秒）",
     tokenCostPlan: "AI 規劃／brief",
     tokenCostImage: "單張圖片",
     tokenCostStoryboard: "分鏡套組（約 4 場）",
     tokenCostMusic: "音樂床",
-    tokensVideoNote: "Seedance 短片按秒計費 — 詳情見收費頁。",
+    tokensVideoNote:
+      "僅供估算 — 以典型約 10 秒分鏡短片計算。更長片、更多場、Logo 同音樂會多用 token。",
     tokensSeePricing: "睇完整收費 →",
     finalTitle: "準備做好似代理嘅內容？",
     finalBody: "免費開始，上傳一張產品相，幾分鐘出第一隻廣告。",
@@ -451,6 +459,9 @@ export const zh = {
     checkoutCanceled: "已取消結帳，未有收費。",
     checkoutError: "無法開始結帳。請再試，或聯絡支援。",
     subscriptionUpdated: "已更新方案。重複訂閱已取消，之後唔會收兩次費。",
+    subscriptionUpgraded: "已即時升級。新計劃功能同額外 token 本週期即時生效。",
+    subscriptionDowngradeScheduled:
+      "已安排於 {date} 降級至 {plan}。在此之前仍保持目前計劃同剩餘 token；較低價錢由下一個帳單週期開始。",
     alreadySubscribed: "你已有有效訂閱。請用「管理帳單」更改或取消方案。",
     tokenTitle: "Token 點樣計",
     tokenSubtitle: "Token 係工作室貨幣。每次生成前會顯示所需 token。",
@@ -486,9 +497,13 @@ export const zh = {
         q: "幾時可以買額外 token？",
         body: "訂閱任何付費計劃之後。免費用戶需先升級。",
       },
+      {
+        q: "升級或降級會點樣收費？",
+        body: "升級即時生效（按比例補差價，並即時補發較高計劃 token）。降級會排程到下一個帳單週期生效 — 在此之前保持目前計劃，避免中途用較低價錢享用較高計劃權益。",
+      },
     ],
     footnote:
-      "價格以美元計。影片解像度同片長會影響 token。經 Stripe 付款。可隨時喺「管理帳單」取消或更改計劃。",
+      "價格以美元計。影片解像度同片長會影響 token。經 Stripe 付款。可喺定價頁即時升級；降級由下個週期生效。取消請用「管理帳單」。",
     plans: {
       free: {
         name: "免費",

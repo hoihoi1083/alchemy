@@ -2,7 +2,8 @@ import { PRODUCT_SUPPORT_EMAIL } from "@/lib/brand";
 import { PLAN_DEFINITIONS, TOP_UP_PRICE_USD, type UserPlan } from "@/lib/billing/plans";
 import type { PaidPlan } from "@/lib/stripe/prices";
 import { EMAIL_LOGO_CONTENT_ID, getEmailLogoAttachment } from "@/lib/email/logo-attachment";
-import { emailFromAddress, getResend, isEmailConfigured } from "@/lib/email/resend";
+import { emailFromAddress, isEmailConfigured } from "@/lib/email/resend";
+import { sendResendEmail } from "@/lib/email/send";
 
 export type PurchaseEmailKind = "subscription" | "topup";
 
@@ -296,32 +297,40 @@ export async function sendPurchaseConfirmationEmail(
 
   const { subject, html, text } = buildPurchaseConfirmationContent(input);
   try {
-    const resend = getResend();
     const logo = await getEmailLogoAttachment();
-    const { data, error } = await resend.emails.send({
-      from: emailFromAddress(),
-      to: [to],
-      replyTo: PRODUCT_SUPPORT_EMAIL,
-      subject,
-      html,
-      text,
-      attachments: [
-        {
-          filename: logo.filename,
-          content: logo.content,
-          contentId: logo.contentId,
-          contentType: logo.contentType,
-        },
-      ],
-    });
-    if (error) {
-      console.error("[email] CRITICAL: send failed", error);
-      return { sent: false, error: error.message };
-    }
-    return { sent: true, id: data?.id };
+    return sendResendEmail(
+      {
+        from: emailFromAddress(),
+        to: [to],
+        replyTo: PRODUCT_SUPPORT_EMAIL,
+        subject,
+        html,
+        text,
+        attachments: [
+          {
+            filename: logo.filename,
+            content: logo.content,
+            contentId: logo.contentId,
+            contentType: logo.contentType,
+          },
+        ],
+      },
+      { kind: `purchase_${input.kind}`, attempts: 3 },
+    );
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error("[email] CRITICAL: send failed", message);
-    return { sent: false, error: message };
+    console.error("[email] CRITICAL: prepare purchase email failed", message);
+    // Logo/sharp failure — still try plain text+html without CID attachment.
+    return sendResendEmail(
+      {
+        from: emailFromAddress(),
+        to: [to],
+        replyTo: PRODUCT_SUPPORT_EMAIL,
+        subject,
+        html,
+        text,
+      },
+      { kind: `purchase_${input.kind}_no_logo`, attempts: 3 },
+    );
   }
 }

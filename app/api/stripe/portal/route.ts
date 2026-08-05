@@ -28,9 +28,13 @@ export async function POST() {
     }
 
     const stripe = getStripe();
+    // Prefer a portal config that disables in-portal plan switches so
+    // upgrades/downgrades go through /pricing (deferred downgrade rules).
+    const configuration = process.env.STRIPE_BILLING_PORTAL_CONFIGURATION_ID?.trim();
     const session = await stripe.billingPortal.sessions.create({
       customer: user.stripeCustomerId,
       return_url: `${appBaseUrl()}/pricing`,
+      ...(configuration ? { configuration } : {}),
     });
 
     return NextResponse.json({ url: session.url });

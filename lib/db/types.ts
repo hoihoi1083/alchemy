@@ -21,6 +21,14 @@ export type DbUser = {
   stripeCustomerId?: string | null;
   stripeSubscriptionId?: string | null;
   planRenewsAt?: Date | null;
+  /**
+   * Deferred downgrade target. Active `plan` stays until `pendingPlanEffectiveAt`
+   * (usually current period end). Cleared when the lower price takes effect or
+   * the user upgrades instead.
+   */
+  pendingPlan?: "standard" | "pro" | "master" | null;
+  pendingPlanInterval?: "monthly" | "yearly" | null;
+  pendingPlanEffectiveAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
 };

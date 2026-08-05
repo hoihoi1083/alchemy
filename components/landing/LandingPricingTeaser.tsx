@@ -53,10 +53,24 @@ export function LandingPricingTeaser() {
 				body: JSON.stringify({ kind: "subscription", plan, interval }),
 			});
 			const raw = await res.text();
-			let data: { url?: string; error?: string; updated?: boolean } = {};
+			let data: {
+				url?: string;
+				error?: string;
+				updated?: boolean;
+				deferred?: boolean;
+				pendingPlan?: string | null;
+				pendingEffectiveAt?: string | null;
+			} = {};
 			try {
 				data = raw
-					? (JSON.parse(raw) as { url?: string; error?: string; updated?: boolean })
+					? (JSON.parse(raw) as {
+							url?: string;
+							error?: string;
+							updated?: boolean;
+							deferred?: boolean;
+							pendingPlan?: string | null;
+							pendingEffectiveAt?: string | null;
+						})
 					: {};
 			} catch {
 				throw new Error(raw?.slice(0, 200) || P.checkoutError);
@@ -69,7 +83,18 @@ export function LandingPricingTeaser() {
 					source: "landing",
 				});
 				setCheckoutError(null);
-				window.location.href = "/pricing?checkout=success&updated=1";
+				if (data.deferred && data.pendingPlan) {
+					const qs = new URLSearchParams({
+						checkout: "success",
+						updated: "1",
+						deferred: "1",
+						pendingPlan: data.pendingPlan,
+					});
+					if (data.pendingEffectiveAt) qs.set("pendingAt", data.pendingEffectiveAt);
+					window.location.href = `/pricing?${qs.toString()}`;
+				} else {
+					window.location.href = "/pricing?checkout=success&updated=1";
+				}
 				return;
 			}
 			if (!res.ok || !data.url) {

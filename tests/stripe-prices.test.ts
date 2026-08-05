@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
 import { afterEach, describe, it } from "node:test";
 import {
+  comparePaidPlans,
   isBillingInterval,
   isPaidPlan,
+  paidPlanRank,
   planFromPriceId,
   priceIdForPlan,
   topUpPriceId,
@@ -67,5 +69,15 @@ describe("stripe price mapping", () => {
       interval: "yearly",
     });
     assert.equal(planFromPriceId("price_unknown"), null);
+  });
+
+  it("ranks paid plans and classifies upgrade vs downgrade", () => {
+    assert.ok(paidPlanRank("master") > paidPlanRank("pro"));
+    assert.ok(paidPlanRank("pro") > paidPlanRank("standard"));
+    assert.equal(comparePaidPlans("standard", "master"), "upgrade");
+    assert.equal(comparePaidPlans("master", "standard"), "downgrade");
+    assert.equal(comparePaidPlans("pro", "pro"), "lateral");
+    assert.equal(comparePaidPlans("standard", "pro"), "upgrade");
+    assert.equal(comparePaidPlans("pro", "standard"), "downgrade");
   });
 });

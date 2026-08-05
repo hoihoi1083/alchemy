@@ -7,7 +7,8 @@
  *
  * Free grant (1,000) covers 1× image + 1× 8s 480p video with buffer.
  */
-import { TOKEN_COGS_USD_PER_1000 } from "@/lib/billing/plans";
+import { PLAN_DEFINITIONS, TOKEN_COGS_USD_PER_1000 } from "@/lib/billing/plans";
+import type { UserPlan } from "@/lib/billing/plans";
 
 export const USD_PER_TOKEN = TOKEN_COGS_USD_PER_1000 / 1000;
 
@@ -171,4 +172,58 @@ export function estimateImageTokens(opts: {
 
 export function cogsUsdForTokens(tokens: number): number {
   return Math.round(tokens * USD_PER_TOKEN * 100) / 100;
+}
+
+/**
+ * Landing capacity unit: a typical short storyboard reel
+ * (2 scenes × 5s Kling clips ≈ 10s stitched).
+ * Cheaper than max-res Seedance singles → clearer “how many reels” messaging.
+ */
+export const STORYBOARD_LANDING_PACK = {
+  scenes: 2,
+  clipSec: 5 as const,
+  totalSec: 10,
+  imageTokens: TOKEN_COST.storyboard_scene * 2, // 52
+  videoTokens: estimateKlingStoryboardTokens(2, 5), // 220
+  /** Stills + Kling animate — one full ~10s storyboard run (52 + 220). */
+  totalTokens: TOKEN_COST.storyboard_scene * 2 + estimateKlingStoryboardTokens(2, 5),
+} as const;
+
+export type LandingCapacityPlan = Extract<
+  UserPlan,
+  "free" | "standard" | "pro" | "master"
+>;
+
+export type PlanApproxCapacity = {
+  plan: LandingCapacityPlan;
+  tokens: number;
+  /** Rough count if tokens are spent only on single images (1K Nano Banana). */
+  approxImages: number;
+  /**
+   * Rough count if spent only on ~10s storyboard reels
+   * (2 scenes × 5s Kling + stills).
+   */
+  approxStoryboards: number;
+  storyboardScenes: number;
+  storyboardSec: number;
+};
+
+/**
+ * Marketing estimates for the landing “what can I make?” section.
+ * Not a hard cap — mix of formats, longer clips, and logo passes use more.
+ */
+export function estimatePlanApproxCapacity(
+  plan: LandingCapacityPlan,
+): PlanApproxCapacity {
+  const def = PLAN_DEFINITIONS[plan];
+  const tokens = def.monthlyTokens;
+  const packCost = STORYBOARD_LANDING_PACK.totalTokens;
+  return {
+    plan,
+    tokens,
+    approxImages: Math.max(0, Math.floor(tokens / TOKEN_COST.image)),
+    approxStoryboards: Math.max(0, Math.floor(tokens / packCost)),
+    storyboardScenes: STORYBOARD_LANDING_PACK.scenes,
+    storyboardSec: STORYBOARD_LANDING_PACK.totalSec,
+  };
 }

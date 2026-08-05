@@ -135,9 +135,205 @@ footer.site-footer a.site-footer-logo:focus {
   color: #475569 !important;
 }
 
+/* Plan capacity cards — landing + pricing (self-contained responsive) */
+.plan-capacity {
+  width: 100%;
+}
+.plan-capacity-header {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 36rem;
+  text-align: center;
+}
+.plan-capacity-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: #0f172a;
+  line-height: 1.2;
+}
+@media (min-width: 640px) {
+  .plan-capacity-title {
+    font-size: 1.875rem;
+  }
+}
+.plan-capacity-body {
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: #475569;
+}
+@media (min-width: 768px) {
+  .plan-capacity-body {
+    font-size: 1rem;
+  }
+}
+.plan-capacity-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  margin: 1.75rem auto 0;
+  width: 100%;
+  max-width: 72rem;
+}
+@media (min-width: 640px) {
+  .plan-capacity-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.875rem;
+  }
+}
+@media (min-width: 1100px) {
+  .plan-capacity-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+}
+.plan-capacity-reveal {
+  height: 100%;
+  min-width: 0;
+  width: 100%;
+}
+.plan-capacity-card {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  align-items: center;
+  border-radius: 1rem;
+  border: 1px solid #ede9fe;
+  background: #fff;
+  padding: 1rem 0.875rem;
+  text-align: center;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+}
+@media (min-width: 640px) {
+  .plan-capacity-card {
+    padding: 1.125rem 1rem;
+  }
+}
+.plan-capacity-plan {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+@media (min-width: 640px) {
+  .plan-capacity-plan {
+    font-size: 1rem;
+  }
+}
+.plan-capacity-tokens {
+  margin-top: 0.2rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6d28d9;
+}
+.plan-capacity-metrics {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 0.375rem;
+  width: 100%;
+  margin-top: 0.875rem;
+}
+.plan-capacity-or {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  padding: 0 0.125rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+.plan-capacity-metric {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  border: 1px solid #f1f5f9;
+  background: #f8fafc;
+  padding: 0.625rem 0.375rem;
+  text-align: center;
+}
+@media (min-width: 640px) {
+  .plan-capacity-metric {
+    padding: 0.75rem 0.5rem;
+  }
+}
+.plan-capacity-metric-icon {
+  display: flex;
+  height: 1.75rem;
+  width: 1.75rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.5rem;
+  background: #fff;
+  color: #7c3aed;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.05);
+  outline: 1px solid #ede9fe;
+}
+.plan-capacity-metric-value {
+  margin-top: 0.375rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+  line-height: 1.2;
+}
+@media (min-width: 640px) {
+  .plan-capacity-metric-value {
+    font-size: 1.0625rem;
+  }
+}
+.plan-capacity-metric-label {
+  margin-top: 0.2rem;
+  font-size: 0.625rem;
+  line-height: 1.35;
+  color: #64748b;
+}
+@media (min-width: 640px) {
+  .plan-capacity-metric-label {
+    font-size: 0.6875rem;
+  }
+}
+@media (min-width: 1100px) {
+  .plan-capacity-metric-label {
+    font-size: 0.625rem;
+  }
+}
+.plan-capacity-note {
+  margin-top: 1rem;
+  text-align: center;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: #64748b;
+  max-width: 40rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding-inline: 0.5rem;
+}
+
 /* Product tools — keep tiles large; don't rely on arbitrary Tailwind max-w scanning */
 .landing-tools-grid {
   max-width: 1120px;
+}
+
+/* Legacy alias kept for any leftover class hooks */
+.landing-token-metrics {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch;
+  width: 100%;
+  gap: 0.5rem;
+}
+.landing-token-metrics > div {
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 /* Landing page horizontal layouts — explicit so MBA 13"+ never falls back to stacked */
@@ -167,9 +363,6 @@ footer.site-footer a.site-footer-logo:focus {
   }
   .landing-pricing-grid {
     grid-template-columns: repeat(5, minmax(0, 1fr));
-  }
-  .landing-tokens-grid {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
   .landing-nav-links {
     display: flex !important;

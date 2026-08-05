@@ -1,0 +1,307 @@
+import type Stripe from "stripe";
+import {
+  comparePaidPlans,
+  isBillingInterval,
+  isPaidPlan,
+  planFromPriceId,
+  type BillingInterval,
+  type PaidPlan,
+} from "@/lib/stripe/prices";
+
+export type SwitchEffective = "immediate" | "next_cycle" | "unchanged";
+
+export type SwitchSubscriptionResult = {
+  subscriptionId: string;
+  renewsAt: Date | null;
+  effective: SwitchEffective;
+  /** Plan the customer is entitled to right now (unchanged on deferred downgrade). */
+  activePlan: PaidPlan;
+  activeInterval: BillingInterval;
+  /** Set when a downgrade is scheduled for period end. */
+  pendingPlan: PaidPlan | null;
+  pendingInterval: BillingInterval | null;
+  pendingEffectiveAt: Date | null;
+};
+
+function scheduleIdOf(sub: Stripe.Subscription): string | null {
+  const raw = sub.schedule;
+  if (!raw) return null;
+  if (typeof raw === "string") return raw;
+  return raw.id ?? null;
+}
+
+async function releaseScheduleIfAny(
+  stripe: Stripe,
+  sub: Stripe.Subscription,
+): Promise<void> {
+  const id = scheduleIdOf(sub);
+  if (!id) return;
+  try {
+    await stripe.subscriptionSchedules.release(id);
+  } catch (e: unknown) {
+    console.warn(
+      "[stripe] release schedule failed (may already be released)",
+      id,
+      e instanceof Error ? e.message : e,
+    );
+  }
+}
+
+async function ensureScheduleFromSubscription(
+  stripe: Stripe,
+  sub: Stripe.Subscription,
+): Promise<Stripe.SubscriptionSchedule> {
+  const existingId = scheduleIdOf(sub);
+  if (existingId) {
+    return stripe.subscriptionSchedules.retrieve(existingId);
+  }
+  return stripe.subscriptionSchedules.create({
+    from_subscription: sub.id,
+  });
+}
+
+/**
+ * Defer a lower-tier price to the next billing period via Subscription Schedule.
+ * Keeps current price + entitlements until period end — closes the
+ * "pay Standard, keep Master tokens" loophole from immediate prorated downgrades.
+ */
+async function scheduleDowngradeAtPeriodEnd(opts: {
+  stripe: Stripe;
+  clerkId: string;
+  primary: Stripe.Subscription;
+  currentPlan: PaidPlan;
+  currentInterval: BillingInterval;
+  currentPriceId: string;
+  periodStart: number;
+  periodEnd: number;
+  plan: PaidPlan;
+  interval: BillingInterval;
+  price: string;
+}): Promise<SwitchSubscriptionResult> {
+  const {
+    stripe,
+    clerkId,
+    primary,
+    currentPlan,
+    currentInterval,
+    currentPriceId,
+    periodStart,
+    periodEnd,
+    plan,
+    interval,
+    price,
+  } = opts;
+
+  const schedule = await ensureScheduleFromSubscription(stripe, primary);
+  const phase0Start = schedule.phases[0]?.start_date ?? periodStart;
+
+  await stripe.subscriptionSchedules.update(schedule.id, {
+    end_behavior: "release",
+    phases: [
+      {
+        items: [{ price: currentPriceId, quantity: 1 }],
+        start_date: phase0Start,
+        end_date: periodEnd,
+        proration_behavior: "none",
+        metadata: {
+          clerkId,
+          plan: currentPlan,
+          interval: currentInterval,
+          pendingPlan: plan,
+          pendingInterval: interval,
+        },
+      },
+      {
+        items: [{ price, quantity: 1 }],
+        duration: {
+          interval: interval === "yearly" ? "year" : "month",
+          interval_count: 1,
+        },
+        proration_behavior: "none",
+        metadata: {
+          clerkId,
+          plan,
+          interval,
+          pendingPlan: "",
+          pendingInterval: "",
+        },
+      },
+    ],
+  });
+
+  // Reflect pending change on the live subscription for webhooks / support.
+  await stripe.subscriptions.update(primary.id, {
+    cancel_at_period_end: false,
+    metadata: {
+      ...primary.metadata,
+      clerkId,
+      plan: currentPlan,
+      interval: currentInterval,
+      pendingPlan: plan,
+      pendingInterval: interval,
+    },
+  });
+
+  const effectiveAt = new Date(periodEnd * 1000);
+  return {
+    subscriptionId: primary.id,
+    renewsAt: effectiveAt,
+    effective: "next_cycle",
+    activePlan: currentPlan,
+    activeInterval: currentInterval,
+    pendingPlan: plan,
+    pendingInterval: interval,
+    pendingEffectiveAt: effectiveAt,
+  };
+}
+
+async function applyImmediatePlanChange(opts: {
+  stripe: Stripe;
+  clerkId: string;
+  primary: Stripe.Subscription;
+  itemId: string;
+  plan: PaidPlan;
+  interval: BillingInterval;
+  price: string;
+}): Promise<SwitchSubscriptionResult> {
+  const { stripe, clerkId, primary, itemId, plan, interval, price } = opts;
+
+  // Drop any deferred downgrade so the upgrade (or lateral switch) wins now.
+  await releaseScheduleIfAny(stripe, primary);
+
+  const updated = await stripe.subscriptions.update(primary.id, {
+    items: [{ id: itemId, price }],
+    metadata: {
+      ...primary.metadata,
+      clerkId,
+      plan,
+      interval,
+      pendingPlan: "",
+      pendingInterval: "",
+    },
+    proration_behavior: "create_prorations",
+    cancel_at_period_end: false,
+  });
+
+  const periodEnd = updated.items.data[0]?.current_period_end ?? null;
+  return {
+    subscriptionId: updated.id,
+    renewsAt: periodEnd ? new Date(periodEnd * 1000) : null,
+    effective: "immediate",
+    activePlan: plan,
+    activeInterval: interval,
+    pendingPlan: null,
+    pendingInterval: null,
+    pendingEffectiveAt: null,
+  };
+}
+
+/**
+ * One paid subscription per customer. Upgrades (and same-tier interval changes)
+ * apply immediately with proration. Downgrades take effect at the next cycle.
+ */
+export async function switchExistingSubscription(opts: {
+  stripe: Stripe;
+  clerkId: string;
+  customerId: string;
+  preferredSubId: string | null | undefined;
+  plan: PaidPlan;
+  interval: BillingInterval;
+  price: string;
+  listBillable: (customerId: string) => Promise<Stripe.Subscription[]>;
+}): Promise<SwitchSubscriptionResult> {
+  const billable = await opts.listBillable(opts.customerId);
+  if (!billable.length) {
+    throw new Error("NO_ACTIVE_SUB");
+  }
+
+  const primary =
+    billable.find((sub) => sub.id === opts.preferredSubId) ??
+    [...billable].sort((a, b) => (b.created ?? 0) - (a.created ?? 0))[0];
+
+  for (const extra of billable) {
+    if (extra.id === primary.id) continue;
+    try {
+      await opts.stripe.subscriptions.cancel(extra.id, {
+        invoice_now: false,
+        prorate: true,
+      });
+    } catch (e: unknown) {
+      console.error(
+        "[stripe] failed to cancel duplicate subscription",
+        extra.id,
+        e instanceof Error ? e.message : e,
+      );
+    }
+  }
+
+  const item = primary.items.data[0];
+  const itemId = item?.id;
+  const currentPriceId =
+    typeof item?.price === "string" ? item.price : item?.price?.id;
+  if (!itemId || !currentPriceId) {
+    throw new Error("Active subscription has no price item.");
+  }
+
+  const periodEnd = item.current_period_end;
+  const periodStart = item.current_period_start;
+  if (!periodEnd || !periodStart) {
+    throw new Error("Active subscription missing billing period.");
+  }
+
+  const currentFromPrice = planFromPriceId(currentPriceId);
+  if (!currentFromPrice) {
+    throw new Error("Active subscription price is not a known Alchemy plan.");
+  }
+
+  if (currentPriceId === opts.price) {
+    const pendingRaw = primary.metadata?.pendingPlan;
+    const pendingPlan =
+      pendingRaw && isPaidPlan(pendingRaw) ? pendingRaw : null;
+    const pendingIntervalRaw = primary.metadata?.pendingInterval;
+    const pendingInterval =
+      pendingIntervalRaw && isBillingInterval(pendingIntervalRaw)
+        ? pendingIntervalRaw
+        : null;
+    // Same price requested — if they had a pending downgrade away from this
+    // price, leave it; otherwise report unchanged.
+    return {
+      subscriptionId: primary.id,
+      renewsAt: new Date(periodEnd * 1000),
+      effective: pendingPlan ? "next_cycle" : "unchanged",
+      activePlan: currentFromPrice.plan,
+      activeInterval: currentFromPrice.interval,
+      pendingPlan,
+      pendingInterval,
+      pendingEffectiveAt: pendingPlan ? new Date(periodEnd * 1000) : null,
+    };
+  }
+
+  const kind = comparePaidPlans(currentFromPrice.plan, opts.plan);
+
+  if (kind === "downgrade") {
+    return scheduleDowngradeAtPeriodEnd({
+      stripe: opts.stripe,
+      clerkId: opts.clerkId,
+      primary,
+      currentPlan: currentFromPrice.plan,
+      currentInterval: currentFromPrice.interval,
+      currentPriceId,
+      periodStart,
+      periodEnd,
+      plan: opts.plan,
+      interval: opts.interval,
+      price: opts.price,
+    });
+  }
+
+  return applyImmediatePlanChange({
+    stripe: opts.stripe,
+    clerkId: opts.clerkId,
+    primary,
+    itemId,
+    plan: opts.plan,
+    interval: opts.interval,
+    price: opts.price,
+  });
+}

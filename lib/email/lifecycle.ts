@@ -1,7 +1,8 @@
 import { PRODUCT_SUPPORT_EMAIL } from "@/lib/brand";
 import { EMAIL_LOGO_CONTENT_ID, getEmailLogoAttachment } from "@/lib/email/logo-attachment";
 import { emailAppBaseUrl } from "@/lib/email/purchase-confirmation";
-import { emailFromAddress, getResend, isEmailConfigured } from "@/lib/email/resend";
+import { emailFromAddress, isEmailConfigured } from "@/lib/email/resend";
+import { sendResendEmail } from "@/lib/email/send";
 
 function isProductionEmailEnv(): boolean {
   return (
@@ -36,33 +37,40 @@ async function sendSimpleEmail(opts: {
   }
 
   try {
-    const resend = getResend();
     const logo = await getEmailLogoAttachment();
-    const { data, error } = await resend.emails.send({
-      from: emailFromAddress(),
-      to: [to],
-      replyTo: PRODUCT_SUPPORT_EMAIL,
-      subject: opts.subject,
-      html: opts.html,
-      text: opts.text,
-      attachments: [
-        {
-          filename: logo.filename,
-          content: logo.content,
-          contentId: logo.contentId,
-          contentType: logo.contentType,
-        },
-      ],
-    });
-    if (error) {
-      console.error("[email] CRITICAL: send failed", opts.kind, error);
-      return { sent: false, error: error.message };
-    }
-    return { sent: true, id: data?.id };
+    return sendResendEmail(
+      {
+        from: emailFromAddress(),
+        to: [to],
+        replyTo: PRODUCT_SUPPORT_EMAIL,
+        subject: opts.subject,
+        html: opts.html,
+        text: opts.text,
+        attachments: [
+          {
+            filename: logo.filename,
+            content: logo.content,
+            contentId: logo.contentId,
+            contentType: logo.contentType,
+          },
+        ],
+      },
+      { kind: opts.kind, attempts: 3 },
+    );
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error("[email] CRITICAL: send failed", opts.kind, message);
-    return { sent: false, error: message };
+    console.error("[email] CRITICAL: prepare lifecycle email failed", opts.kind, message);
+    return sendResendEmail(
+      {
+        from: emailFromAddress(),
+        to: [to],
+        replyTo: PRODUCT_SUPPORT_EMAIL,
+        subject: opts.subject,
+        html: opts.html,
+        text: opts.text,
+      },
+      { kind: `${opts.kind}_no_logo`, attempts: 3 },
+    );
   }
 }
 

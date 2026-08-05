@@ -5,6 +5,8 @@ import {
 } from "@/lib/billing/plans";
 import { sendPurchaseConfirmationEmail } from "@/lib/email/purchase-confirmation";
 import { resolvePurchaseEmail } from "@/lib/email/resolve-user-email";
+import type { DbUser } from "@/lib/db/types";
+import { getDb, isMongoConfigured } from "@/lib/mongodb";
 import {
   applyTopUpGrant,
   findClerkIdByStripeCustomer,
@@ -45,7 +47,102 @@ export type FulfillCheckoutResult = {
   balanceAfter: number | null;
   tokensGranted: number;
   reason?: string;
+  emailSent?: boolean;
 };
+
+/**
+ * Send top-up receipt once per Checkout session (separate from token grant lock).
+ * Fixes: webhook grants first → confirm-checkout gets granted:false → email never sent.
+ */
+async function sendTopUpReceiptOnce(opts: {
+  session: Stripe.Checkout.Session;
+  clerkId: string;
+  balanceAfter: number | null;
+}): Promise<boolean> {
+  const sessionId = opts.session.id;
+  const emailRef = `email_checkout_${sessionId}`;
+
+  if (isMongoConfigured()) {
+    const db = await getDb();
+    type BillingLock = { _id: string; clerkId: string; reason: string; createdAt: Date };
+    const locks = db.collection<BillingLock>("billing_event_locks");
+    const prior = await locks.findOneAndUpdate(
+      { _id: emailRef },
+      {
+        $setOnInsert: {
+          clerkId: opts.clerkId,
+          reason: "topup_receipt",
+          createdAt: new Date(),
+        },
+      },
+      { upsert: true, returnDocument: "before" },
+    );
+    if (prior) {
+      console.info("[email] top-up receipt already sent for session", sessionId);
+      return false;
+    }
+  }
+
+  const to = await resolvePurchaseEmail({
+    clerkId: opts.clerkId,
+    stripeEmail: opts.session.customer_details?.email ?? opts.session.customer_email,
+  });
+  if (!to) {
+    console.warn("[email] top-up receipt skipped — no recipient", {
+      sessionId,
+      clerkId: opts.clerkId,
+    });
+    // Release email lock so a later retry can send once email is known.
+    if (isMongoConfigured()) {
+      const db = await getDb();
+      type BillingLock = { _id: string; clerkId: string; reason: string; createdAt: Date };
+      await db
+        .collection<BillingLock>("billing_event_locks")
+        .deleteOne({ _id: emailRef })
+        .catch(() => undefined);
+    }
+    return false;
+  }
+
+  let balanceAfter = opts.balanceAfter;
+  if (balanceAfter == null && isMongoConfigured()) {
+    const db = await getDb();
+    const user = await db.collection<DbUser>("users").findOne({ clerkId: opts.clerkId });
+    balanceAfter = user?.creditBalance ?? null;
+  }
+
+  const result = await sendPurchaseConfirmationEmail({
+    to,
+    kind: "topup",
+    tokensGranted: TOP_UP_TOKENS,
+    balanceAfter,
+    amountLabel: `$${TOP_UP_PRICE_USD.toFixed(2)}`,
+    purchasedAt: opts.session.created
+      ? new Date(opts.session.created * 1000)
+      : new Date(),
+  });
+
+  if (!result.sent) {
+    console.error("[email] top-up receipt send failed", {
+      sessionId,
+      to,
+      skipped: result.skipped,
+      error: result.error,
+    });
+    if (isMongoConfigured()) {
+      const db = await getDb();
+      type BillingLock = { _id: string; clerkId: string; reason: string; createdAt: Date };
+      await db
+        .collection<BillingLock>("billing_event_locks")
+        .deleteOne({ _id: emailRef })
+        .catch(() => undefined);
+    }
+    return false;
+  }
+
+  console.info("[email] top-up receipt sent", { sessionId, to, id: result.id });
+  return true;
+}
 
 /**
  * Idempotent: same Stripe session can be fulfilled from webhook and/or success-page confirm.
@@ -91,24 +188,12 @@ export async function fulfillCheckoutSession(
       stripeCustomerId: cust,
       meta: { sessionId: session.id },
     });
-    if (result.granted) {
-      const to = await resolvePurchaseEmail({
-        clerkId,
-        stripeEmail: session.customer_details?.email ?? session.customer_email,
-      });
-      if (to) {
-        await sendPurchaseConfirmationEmail({
-          to,
-          kind: "topup",
-          tokensGranted: TOP_UP_TOKENS,
-          balanceAfter: result.balanceAfter,
-          amountLabel: `$${TOP_UP_PRICE_USD.toFixed(2)}`,
-          purchasedAt: session.created
-            ? new Date(session.created * 1000)
-            : new Date(),
-        });
-      }
-    }
+    // Receipt is independent of grant race: webhook may credit first, confirm second.
+    const emailSent = await sendTopUpReceiptOnce({
+      session,
+      clerkId,
+      balanceAfter: result.balanceAfter,
+    });
     return {
       kind: "topup",
       clerkId,
@@ -116,6 +201,7 @@ export async function fulfillCheckoutSession(
       balanceAfter: result.balanceAfter,
       tokensGranted: result.granted ? TOP_UP_TOKENS : 0,
       reason: result.granted ? undefined : "already_granted_or_refused",
+      emailSent,
     };
   }
 
