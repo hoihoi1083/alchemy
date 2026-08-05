@@ -542,6 +542,8 @@ export const en = {
     billedYearly: "Billed yearly",
     tokensPerMonth: "tokens / month",
     tokensIncluded: "tokens included",
+    capacityImagesFeature: "~{n} single images",
+    capacityStoryboardsFeature: "~{n} storyboard reels (~{sec}s)",
     mostPopular: "Most popular",
     getStarted: "Get started",
     subscribe: "Subscribe",

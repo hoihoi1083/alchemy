@@ -440,6 +440,8 @@ export const zhCn = {
     billedYearly: "按年收费",
     tokensPerMonth: "token / 月",
     tokensIncluded: "token",
+    capacityImagesFeature: "约 {n} 张单图",
+    capacityStoryboardsFeature: "约 {n} 条分镜短片（约 {sec} 秒）",
     mostPopular: "最受欢迎",
     getStarted: "开始使用",
     subscribe: "订阅",

@@ -6,10 +6,12 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { LandingNav } from "@/components/landing/LandingNav";
-import { PlanTokenCapacityGrid } from "@/components/landing/PlanTokenCapacityGrid";
 import { Reveal } from "@/components/landing/Reveal";
 import { useLocale } from "@/components/LocaleProvider";
 import { PLAN_DEFINITIONS } from "@/lib/billing/plans";
+import {
+  estimatePlanApproxCapacity,
+} from "@/lib/billing/token-costs";
 import { PRODUCT_SUPPORT_EMAIL } from "@/lib/brand";
 import {
   trackCheckoutFailed,
@@ -302,6 +304,21 @@ export function PricingPageClient() {
       blurb: p.plans.free.description,
       priceLabel: p.freeForever,
       tokensLabel: `${PLAN_DEFINITIONS.free.monthlyTokens.toLocaleString()} ${p.tokensPerMonth}`,
+      capacity: (() => {
+        const c = estimatePlanApproxCapacity("free");
+        return [
+          {
+            kind: "images" as const,
+            label: p.capacityImagesFeature.replace("{n}", String(c.approxImages)),
+          },
+          {
+            kind: "storyboard" as const,
+            label: p.capacityStoryboardsFeature
+              .replace("{n}", String(c.approxStoryboards))
+              .replace("{sec}", String(c.storyboardSec)),
+          },
+        ];
+      })(),
       features: p.plans.free.features.slice(1),
       cta: p.getStarted,
       popular: false,
@@ -314,6 +331,21 @@ export function PricingPageClient() {
       listPrice: p.plans.standard.listPrice,
       saveLabel: interval === "monthly" ? p.plans.standard.monthlySave : p.plans.standard.yearlySave,
       tokensLabel: `${p.plans.standard.tokens} ${p.tokensPerMonth}`,
+      capacity: (() => {
+        const c = estimatePlanApproxCapacity("standard");
+        return [
+          {
+            kind: "images" as const,
+            label: p.capacityImagesFeature.replace("{n}", String(c.approxImages)),
+          },
+          {
+            kind: "storyboard" as const,
+            label: p.capacityStoryboardsFeature
+              .replace("{n}", String(c.approxStoryboards))
+              .replace("{sec}", String(c.storyboardSec)),
+          },
+        ];
+      })(),
       features: p.plans.standard.features.slice(1),
       cta: p.subscribe,
       popular: false,
@@ -326,6 +358,21 @@ export function PricingPageClient() {
       listPrice: p.plans.pro.listPrice,
       saveLabel: interval === "monthly" ? p.plans.pro.monthlySave : p.plans.pro.yearlySave,
       tokensLabel: `${p.plans.pro.tokens} ${p.tokensPerMonth}`,
+      capacity: (() => {
+        const c = estimatePlanApproxCapacity("pro");
+        return [
+          {
+            kind: "images" as const,
+            label: p.capacityImagesFeature.replace("{n}", String(c.approxImages)),
+          },
+          {
+            kind: "storyboard" as const,
+            label: p.capacityStoryboardsFeature
+              .replace("{n}", String(c.approxStoryboards))
+              .replace("{sec}", String(c.storyboardSec)),
+          },
+        ];
+      })(),
       features: p.plans.pro.features.slice(1),
       cta: p.subscribe,
       popular: true,
@@ -338,6 +385,21 @@ export function PricingPageClient() {
       listPrice: p.plans.master.listPrice,
       saveLabel: interval === "monthly" ? p.plans.master.monthlySave : p.plans.master.yearlySave,
       tokensLabel: `${p.plans.master.tokens} ${p.tokensPerMonth}`,
+      capacity: (() => {
+        const c = estimatePlanApproxCapacity("master");
+        return [
+          {
+            kind: "images" as const,
+            label: p.capacityImagesFeature.replace("{n}", String(c.approxImages)),
+          },
+          {
+            kind: "storyboard" as const,
+            label: p.capacityStoryboardsFeature
+              .replace("{n}", String(c.approxStoryboards))
+              .replace("{sec}", String(c.storyboardSec)),
+          },
+        ];
+      })(),
       features: p.plans.master.features.slice(1),
       cta: p.subscribe,
       popular: false,
@@ -348,6 +410,9 @@ export function PricingPageClient() {
       blurb: p.plans.custom.description,
       priceLabel: p.contactSales,
       tokensLabel: null as string | null,
+      capacity: null as
+        | { kind: "images" | "storyboard"; label: string }[]
+        | null,
       features: p.plans.custom.features,
       cta: p.contactSales,
       popular: false,
@@ -358,6 +423,9 @@ export function PricingPageClient() {
       blurb: p.topUpSubtitle,
       priceLabel: p.topUpPrice,
       tokensLabel: p.topUpTokens,
+      capacity: null as
+        | { kind: "images" | "storyboard"; label: string }[]
+        | null,
       features: [p.topUpNote],
       cta: p.buyTopUp,
       popular: false,
@@ -530,7 +598,35 @@ export function PricingPageClient() {
                         <p className="mt-2 text-xs font-medium text-violet-700">{card.tokensLabel}</p>
                       ) : null}
 
-                      <ul className="mt-4 flex-1 space-y-2">
+                      {card.capacity && card.capacity.length > 0 ? (
+                        <ul className="mt-3 space-y-2 border-b border-dashed border-slate-200 pb-3">
+                          {card.capacity.map((item) => (
+                            <li
+                              key={item.kind}
+                              className="flex items-start gap-2 text-[11px] leading-snug text-slate-700"
+                            >
+                              <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center text-violet-600">
+                                {item.kind === "images" ? (
+                                  <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5" aria-hidden>
+                                    <rect x="3.5" y="5" width="17" height="14" rx="2" stroke="currentColor" strokeWidth="1.75" />
+                                    <circle cx="9" cy="10" r="1.4" fill="currentColor" />
+                                    <path d="M3.5 15.5 8 12l3.5 2.5L15 11l5.5 4.5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+                                  </svg>
+                                ) : (
+                                  <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5" aria-hidden>
+                                    <rect x="2.5" y="5" width="5.5" height="14" rx="1.2" stroke="currentColor" strokeWidth="1.75" />
+                                    <rect x="9.25" y="5" width="5.5" height="14" rx="1.2" stroke="currentColor" strokeWidth="1.75" />
+                                    <rect x="16" y="5" width="5.5" height="14" rx="1.2" stroke="currentColor" strokeWidth="1.75" />
+                                  </svg>
+                                )}
+                              </span>
+                              {item.label}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+
+                      <ul className={`flex-1 space-y-2 ${card.capacity ? "mt-3" : "mt-4"}`}>
                         {card.features.map((f) => (
                           <li
                             key={f}
@@ -605,14 +701,7 @@ export function PricingPageClient() {
           </div>
         </section>
 
-        {/* Plan capacity — same cards as landing */}
-        <section className="border-t border-slate-100 bg-slate-50/60">
-          <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 md:px-8 md:py-12">
-            <PlanTokenCapacityGrid />
-          </div>
-        </section>
-
-        {/* Compare — match Token section title; constrained table width */}
+        {/* Compare — constrained table width */}
         <section className="border-t border-slate-100 bg-white">
           <div className="mx-auto w-full max-w-5xl px-5 py-10 md:px-8 md:py-12">
             <Reveal>

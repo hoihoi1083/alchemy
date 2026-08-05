@@ -5,6 +5,7 @@ import { useAuth } from "@clerk/nextjs";
 import { useState } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 import { PLAN_DEFINITIONS } from "@/lib/billing/plans";
+import { estimatePlanApproxCapacity } from "@/lib/billing/token-costs";
 import { PRODUCT_SUPPORT_EMAIL } from "@/lib/brand";
 import {
   trackCheckoutFailed,
@@ -16,6 +17,28 @@ import { Reveal } from "@/components/landing/Reveal";
 
 type Interval = "monthly" | "yearly";
 type PaidPlan = "standard" | "pro" | "master";
+
+function capacityFor(
+	plan: "free" | "standard" | "pro" | "master",
+	p: {
+		capacityImagesFeature: string;
+		capacityStoryboardsFeature: string;
+	},
+) {
+	const c = estimatePlanApproxCapacity(plan);
+	return [
+		{
+			kind: "images" as const,
+			label: p.capacityImagesFeature.replace("{n}", String(c.approxImages)),
+		},
+		{
+			kind: "storyboard" as const,
+			label: p.capacityStoryboardsFeature
+				.replace("{n}", String(c.approxStoryboards))
+				.replace("{sec}", String(c.storyboardSec)),
+		},
+	];
+}
 
 /**
  * Landing pricing — same plans/prices as /pricing, Subscribe → Stripe Checkout.
@@ -125,6 +148,7 @@ export function LandingPricingTeaser() {
 			blurb: P.plans.free.description,
 			priceLabel: P.freeForever,
 			tokensLabel: `${PLAN_DEFINITIONS.free.monthlyTokens.toLocaleString()} ${P.tokensPerMonth}`,
+			capacity: capacityFor("free", P),
 			features: P.plans.free.features.slice(1),
 			cta: P.getStarted,
 			popular: false,
@@ -143,6 +167,7 @@ export function LandingPricingTeaser() {
 					? P.plans.standard.monthlySave
 					: P.plans.standard.yearlySave,
 			tokensLabel: `${P.plans.standard.tokens} ${P.tokensPerMonth}`,
+			capacity: capacityFor("standard", P),
 			features: P.plans.standard.features.slice(1),
 			cta: P.subscribe,
 			popular: false,
@@ -161,6 +186,7 @@ export function LandingPricingTeaser() {
 					? P.plans.pro.monthlySave
 					: P.plans.pro.yearlySave,
 			tokensLabel: `${P.plans.pro.tokens} ${P.tokensPerMonth}`,
+			capacity: capacityFor("pro", P),
 			features: P.plans.pro.features.slice(1),
 			cta: P.subscribe,
 			popular: true,
@@ -179,6 +205,7 @@ export function LandingPricingTeaser() {
 					? P.plans.master.monthlySave
 					: P.plans.master.yearlySave,
 			tokensLabel: `${P.plans.master.tokens} ${P.tokensPerMonth}`,
+			capacity: capacityFor("master", P),
 			features: P.plans.master.features.slice(1),
 			cta: P.subscribe,
 			popular: false,
@@ -189,6 +216,7 @@ export function LandingPricingTeaser() {
 			blurb: P.plans.custom.description,
 			priceLabel: P.contactSales,
 			tokensLabel: null as string | null,
+			capacity: null as ReturnType<typeof capacityFor> | null,
 			features: P.plans.custom.features,
 			cta: P.contactSales,
 			popular: false,
@@ -332,7 +360,35 @@ export function LandingPricingTeaser() {
 										</p>
 									) : null}
 
-									<ul className="mt-4 flex-1 space-y-2">
+									{card.capacity && card.capacity.length > 0 ? (
+										<ul className="mt-3 space-y-2 border-b border-dashed border-slate-200 pb-3">
+											{card.capacity.map((item) => (
+												<li
+													key={item.kind}
+													className="flex items-start gap-2 text-[11px] leading-snug text-slate-700"
+												>
+													<span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center text-violet-600">
+														{item.kind === "images" ? (
+															<svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5" aria-hidden>
+																<rect x="3.5" y="5" width="17" height="14" rx="2" stroke="currentColor" strokeWidth="1.75" />
+																<circle cx="9" cy="10" r="1.4" fill="currentColor" />
+																<path d="M3.5 15.5 8 12l3.5 2.5L15 11l5.5 4.5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+															</svg>
+														) : (
+															<svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5" aria-hidden>
+																<rect x="2.5" y="5" width="5.5" height="14" rx="1.2" stroke="currentColor" strokeWidth="1.75" />
+																<rect x="9.25" y="5" width="5.5" height="14" rx="1.2" stroke="currentColor" strokeWidth="1.75" />
+																<rect x="16" y="5" width="5.5" height="14" rx="1.2" stroke="currentColor" strokeWidth="1.75" />
+															</svg>
+														)}
+													</span>
+													{item.label}
+												</li>
+											))}
+										</ul>
+									) : null}
+
+									<ul className={`flex-1 space-y-2 ${card.capacity ? "mt-3" : "mt-4"}`}>
 										{card.features.map((f) => (
 											<li
 												key={f}
