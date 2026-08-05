@@ -4,8 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { useLocale } from "@/components/LocaleProvider";
 import { TOP_UP_PRICE_USD, TOP_UP_TOKENS } from "@/lib/billing/plans";
-import { Reveal } from "@/components/landing/Reveal";
-import { PlanTokenCapacityGrid } from "@/components/landing/PlanTokenCapacityGrid";
 
 export function LandingTokensAndFaq() {
 	const { m } = useLocale();
@@ -15,9 +13,7 @@ export function LandingTokensAndFaq() {
 	return (
 		<section id="resources" className="w-full bg-slate-50">
 			<div className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 md:px-8 md:py-14">
-				<PlanTokenCapacityGrid />
-
-				<div className="mt-12 grid gap-8 lg:grid-cols-2">
+				<div className="grid gap-8 lg:grid-cols-2">
 					<div className="rounded-3xl border border-violet-100 bg-white p-6 shadow-sm">
 						<h3 className="text-xl font-bold text-violet-700">
 							{L.topUpTitle}

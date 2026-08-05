@@ -93,10 +93,16 @@ function MetricCell(opts: {
 	label: string;
 }) {
 	return (
-		<div className="plan-capacity-metric">
-			<div className="plan-capacity-metric-icon">{opts.icon}</div>
-			<p className="plan-capacity-metric-value">{opts.value}</p>
-			<p className="plan-capacity-metric-label">{opts.label}</p>
+		<div className="flex min-w-0 flex-1 flex-col items-center justify-center rounded-xl border border-slate-100 bg-slate-50 px-1.5 py-2.5 text-center sm:px-2 sm:py-3">
+			<div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white text-violet-600 shadow-sm ring-1 ring-violet-100">
+				{opts.icon}
+			</div>
+			<p className="mt-1.5 text-[15px] font-bold leading-tight tracking-tight text-slate-900 sm:text-base">
+				{opts.value}
+			</p>
+			<p className="mt-0.5 text-[10px] leading-snug text-slate-500 sm:text-[11px]">
+				{opts.label}
+			</p>
 		</div>
 	);
 }
@@ -133,39 +139,49 @@ export function PlanTokenCapacityGrid({
 	const footnote = note ?? L.tokensVideoNote;
 
 	return (
-		<div className={`plan-capacity ${className}`.trim()}>
-			<div className="plan-capacity-header">
+		<div className={`w-full ${className}`.trim()}>
+			<div className="mx-auto max-w-xl text-center">
 				<Reveal>
-					<h2 className="plan-capacity-title">{heading}</h2>
-					<p className="plan-capacity-body">{subtitle}</p>
+					<h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+						{heading}
+					</h2>
+					<p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
+						{subtitle}
+					</p>
 				</Reveal>
 			</div>
 
-			<div className="plan-capacity-grid">
+			{/* Class + utilities: landing CSS forces columns (Tailwind breakpoints can drop). */}
+			<div className="landing-capacity-grid mt-7 grid w-full grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-3">
 				{rows.map((row, i) => (
 					<Reveal
 						key={row.plan}
 						delayMs={i * 70}
 						distance={28}
 						scaleFrom={0.96}
-						className="plan-capacity-reveal"
+						className="h-full min-w-0"
 					>
-						<article className="plan-capacity-card">
-							<p className="plan-capacity-plan">{planName(row.plan)}</p>
-							<p className="plan-capacity-tokens">
+						<article className="flex h-full flex-col items-center rounded-2xl border border-violet-100 bg-white px-3.5 py-4 text-center shadow-sm sm:px-4">
+							<p className="text-[15px] font-bold text-slate-900 sm:text-base">
+								{planName(row.plan)}
+							</p>
+							<p className="mt-0.5 text-xs font-semibold text-violet-700">
 								{L.tokensPlanGrant.replace(
 									"{n}",
 									row.tokens.toLocaleString(),
 								)}
 							</p>
 
-							<div className="plan-capacity-metrics">
+							<div className="mt-3.5 flex w-full flex-row flex-nowrap items-stretch gap-1.5">
 								<MetricCell
 									icon={<IconImages className="h-4 w-4" />}
 									value={`~${row.approxImages.toLocaleString()}`}
 									label={L.tokensCapacityImages}
 								/>
-								<span className="plan-capacity-or" aria-hidden="true">
+								<span
+									className="flex shrink-0 items-center px-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400"
+									aria-hidden="true"
+								>
 									{L.tokensCapacityOr}
 								</span>
 								<MetricCell
@@ -181,7 +197,9 @@ export function PlanTokenCapacityGrid({
 					</Reveal>
 				))}
 			</div>
-			<p className="plan-capacity-note">{footnote}</p>
+			<p className="mx-auto mt-4 max-w-xl px-2 text-center text-xs leading-relaxed text-slate-500">
+				{footnote}
+			</p>
 		</div>
 	);
 }

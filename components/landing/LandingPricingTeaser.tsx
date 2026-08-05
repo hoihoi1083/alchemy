@@ -308,29 +308,35 @@ export function LandingPricingTeaser() {
 											: "border-slate-200 ring-0"
 									}`}
 								>
-									{card.popular ? (
-										<p className="mb-2 inline-flex self-start rounded-full bg-violet-600 px-2.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">
-											{P.mostPopular}
-										</p>
-									) : (
-										<div className="mb-2 h-5" />
-									)}
-									<h3 className="text-base font-semibold text-slate-900">
+									<div className="flex h-5 shrink-0 items-center">
+										{card.popular ? (
+											<p className="inline-flex rounded-full bg-violet-600 px-2.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">
+												{P.mostPopular}
+											</p>
+										) : null}
+									</div>
+									<h3 className="mt-2 text-base font-semibold leading-tight text-slate-900">
 										{card.name}
 									</h3>
-									<p className="mt-1 text-[11px] text-slate-500">
+									<p className="mt-1 min-h-[2.5rem] text-[11px] leading-snug text-slate-500 line-clamp-2">
 										{card.blurb}
 									</p>
 
-									<div className="mt-4">
-										{"listPrice" in card &&
-										card.listPrice &&
-										interval === "monthly" ? (
-											<p className="text-[11px] text-slate-400 line-through">
-												{card.listPrice}
-											</p>
-										) : null}
-										<p className="text-2xl font-bold text-slate-900">
+									<div className="mt-4 flex min-h-[4.75rem] flex-col justify-start">
+										<p
+											className={`h-4 text-[11px] leading-4 ${
+												"listPrice" in card &&
+												card.listPrice &&
+												interval === "monthly"
+													? "text-slate-400 line-through"
+													: "invisible"
+											}`}
+										>
+											{"listPrice" in card && card.listPrice
+												? card.listPrice
+												: "—"}
+										</p>
+										<p className="text-2xl font-bold leading-none text-slate-900">
 											{card.priceLabel}
 											{card.id !== "free" &&
 											card.id !== "custom" ? (
@@ -339,30 +345,43 @@ export function LandingPricingTeaser() {
 												</span>
 											) : null}
 										</p>
-										{"saveLabel" in card &&
-										card.saveLabel ? (
-											<p className="mt-0.5 text-[10px] font-medium text-emerald-600">
-												{card.saveLabel}
-											</p>
-										) : null}
-										{interval === "yearly" &&
-										card.id !== "free" &&
-										card.id !== "custom" ? (
-											<p className="mt-0.5 text-[10px] text-slate-400">
-												{P.billedYearly}
-											</p>
-										) : null}
+										<p
+											className={`mt-0.5 h-4 text-[10px] font-medium leading-4 ${
+												"saveLabel" in card && card.saveLabel
+													? "text-emerald-600"
+													: "invisible"
+											}`}
+										>
+											{"saveLabel" in card && card.saveLabel
+												? card.saveLabel
+												: "—"}
+										</p>
+										<p
+											className={`h-4 text-[10px] leading-4 ${
+												interval === "yearly" &&
+												card.id !== "free" &&
+												card.id !== "custom"
+													? "text-slate-400"
+													: "invisible"
+											}`}
+										>
+											{P.billedYearly}
+										</p>
 									</div>
 
-									{card.tokensLabel ? (
-										<p className="mt-2 text-xs font-medium text-violet-700">
-											{card.tokensLabel}
-										</p>
-									) : null}
+									<p
+										className={`mt-2 min-h-[1.25rem] text-xs font-medium leading-5 ${
+											card.tokensLabel
+												? "text-violet-700"
+												: "invisible"
+										}`}
+									>
+										{card.tokensLabel ?? "—"}
+									</p>
 
-									{card.capacity && card.capacity.length > 0 ? (
-										<ul className="mt-3 space-y-2 border-b border-dashed border-slate-200 pb-3">
-											{card.capacity.map((item) => (
+									<ul className="mt-3 min-h-[5.5rem] space-y-2 border-b border-dashed border-slate-200 pb-3">
+										{card.capacity && card.capacity.length > 0 ? (
+											card.capacity.map((item) => (
 												<li
 													key={item.kind}
 													className="flex items-start gap-2 text-[11px] leading-snug text-slate-700"
@@ -384,11 +403,22 @@ export function LandingPricingTeaser() {
 													</span>
 													{item.label}
 												</li>
-											))}
-										</ul>
-									) : null}
+											))
+										) : (
+											<>
+												<li className="invisible flex items-start gap-2 text-[11px] leading-snug">
+													<span className="h-4 w-4 shrink-0" />
+													—
+												</li>
+												<li className="invisible flex items-start gap-2 text-[11px] leading-snug">
+													<span className="h-4 w-4 shrink-0" />
+													—
+												</li>
+											</>
+										)}
+									</ul>
 
-									<ul className={`flex-1 space-y-2 ${card.capacity ? "mt-3" : "mt-4"}`}>
+									<ul className="mt-3 flex-1 space-y-2">
 										{card.features.map((f) => (
 											<li
 												key={f}
@@ -402,10 +432,11 @@ export function LandingPricingTeaser() {
 										))}
 									</ul>
 
+									<div className="mt-5 shrink-0">
 									{card.id === "free" ? (
 										<Link
 											href="/start"
-											className={`mt-5 block rounded-full px-3 py-2.5 text-center text-xs font-semibold transition ${
+											className={`block rounded-full px-3 py-2.5 text-center text-xs font-semibold transition ${
 												isActive
 													? "bg-violet-600 text-white hover:bg-violet-500"
 													: "border border-violet-300 text-violet-700 hover:bg-violet-50"
@@ -416,7 +447,7 @@ export function LandingPricingTeaser() {
 									) : card.id === "custom" ? (
 										<a
 											href={`mailto:${PRODUCT_SUPPORT_EMAIL}?subject=Custom%20plan`}
-											className={`mt-5 block rounded-full px-3 py-2.5 text-center text-xs font-semibold transition ${
+											className={`block rounded-full px-3 py-2.5 text-center text-xs font-semibold transition ${
 												isActive
 													? "bg-violet-600 text-white hover:bg-violet-500"
 													: "border border-violet-300 text-violet-700 hover:bg-violet-50"
@@ -431,7 +462,7 @@ export function LandingPricingTeaser() {
 											onClick={() =>
 												void startCheckout(card.id)
 											}
-											className={`mt-5 block w-full rounded-full px-3 py-2.5 text-center text-xs font-semibold transition disabled:opacity-60 ${
+											className={`block w-full rounded-full px-3 py-2.5 text-center text-xs font-semibold transition disabled:opacity-60 ${
 												isActive
 													? "bg-violet-600 text-white hover:bg-violet-500"
 													: "border border-violet-300 text-violet-700 hover:bg-violet-50"
@@ -440,6 +471,7 @@ export function LandingPricingTeaser() {
 											{ctaLabel}
 										</button>
 									)}
+									</div>
 								</div>
 							</Reveal>
 						);
