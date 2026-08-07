@@ -6,7 +6,6 @@ import { LandingNav } from "@/components/landing/LandingNav";
 import { LandingHero } from "@/components/landing/LandingHero";
 import { LandingHowItWorks } from "@/components/landing/LandingHowItWorks";
 import { LandingTemplatesShowcase } from "@/components/landing/LandingTemplatesShowcase";
-import { LandingWhyDifferent } from "@/components/landing/LandingWhyDifferent";
 import { LandingPricingTeaser } from "@/components/landing/LandingPricingTeaser";
 import { LandingTokensAndFaq } from "@/components/landing/LandingTokensAndFaq";
 import { LandingFinalCta } from "@/components/landing/LandingFinalCta";
@@ -119,18 +118,77 @@ const LANDING_LAYOUT_CSS = `
   }
 }
 
-/* Cyber hero — responsive height, crop, scrims */
+/* Cyber hero + Why — pinned layout (local/prod must match; do not rely on Tailwind alone) */
 .landing-hero-cyber {
-  min-height: min(70vh, 640px) !important;
+  position: relative !important;
+  width: 100% !important;
+  overflow: hidden !important;
+  background-color: #06040f !important;
 }
+.landing-hero-scene {
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  top: 0 !important;
+  width: 100% !important;
+  height: min(70vh, 640px) !important;
+  overflow: hidden !important;
+  z-index: 0 !important;
+}
+/* Content column under sticky nav — spacing pinned for server */
 .landing-hero-inner {
-  min-height: min(70vh, 640px) !important;
+  position: relative !important;
+  z-index: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  max-width: 1440px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  min-height: 0 !important;
+  box-sizing: border-box !important;
+  padding-left: 1.25rem !important;
+  padding-right: 1.25rem !important;
+  padding-top: 2.75rem !important;
+  padding-bottom: 1.5rem !important;
+}
+.landing-hero-copy-band {
+  display: flex !important;
+  width: 100% !important;
+  align-items: center !important;
+  min-height: 0 !important;
+  padding-bottom: 0.25rem !important;
+}
+@media (min-width: 640px) {
+  .landing-hero-inner {
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
+    padding-top: 3.5rem !important;
+    padding-bottom: 1.75rem !important;
+  }
+}
+@media (min-width: 768px) {
+  .landing-hero-inner {
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+    padding-top: 4rem !important;
+    padding-bottom: 2rem !important;
+  }
+}
+@media (min-width: 1024px) {
+  .landing-hero-inner {
+    padding-top: 4.5rem !important;
+    padding-bottom: 2.5rem !important;
+  }
 }
 .landing-hero-video {
   object-position: 72% 42% !important;
 }
 /* Mid-strength on mobile — readable copy, scene still visible; stronger from md+ */
 .landing-hero-scrim-x {
+  position: absolute !important;
+  inset: 0 !important;
+  pointer-events: none !important;
   background: linear-gradient(
     90deg,
     rgba(6, 4, 15, 0.78) 0%,
@@ -141,31 +199,39 @@ const LANDING_LAYOUT_CSS = `
   ) !important;
 }
 .landing-hero-scrim-y {
-  height: 4rem !important;
-  background: linear-gradient(to top, #06040f, transparent) !important;
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  pointer-events: none !important;
+  height: 7rem !important;
+  background: linear-gradient(to top, #06040f 0%, rgba(6, 4, 15, 0.85) 35%, transparent 100%) !important;
 }
 
-/* Why section — seamless dark extension under hero (pinned: local/prod match) */
+/* Why — directly under hero chips; solid dark so scene never shows through on prod */
 .landing-why {
-  margin-top: -1px !important; /* kill subpixel seam */
+  position: relative !important;
+  z-index: 2 !important;
+  width: 100% !important;
+  margin-top: 0.5rem !important;
   border-top: 0 !important;
   background-color: #06040f !important;
-  background-image:
-    radial-gradient(ellipse at 20% 0%, rgba(108, 59, 255, 0.28), transparent 55%),
-    radial-gradient(ellipse at 85% 30%, rgba(139, 92, 246, 0.18), transparent 50%),
-    radial-gradient(ellipse at 50% 100%, rgba(76, 29, 149, 0.22), transparent 55%) !important;
-  padding: 3.5rem 0 5rem !important;
+  background-image: none !important;
+  padding: 0.75rem 0 0 !important;
+  box-sizing: border-box !important;
 }
 .landing-why-inner {
-  max-width: 1440px !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
-  padding-left: 1.25rem !important;
-  padding-right: 1.25rem !important;
+  max-width: none !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
 }
 .landing-why-grid {
-  margin-top: 2.5rem !important;
-  gap: 2rem 1rem !important;
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  margin-top: 1rem !important;
+  gap: 1.25rem 0.75rem !important;
 }
 .landing-why h2 {
   color: #fff !important;
@@ -178,23 +244,21 @@ const LANDING_LAYOUT_CSS = `
 }
 @media (min-width: 768px) {
   .landing-why {
-    padding: 4rem 0 6rem !important;
-  }
-  .landing-why-inner {
-    padding-left: 2rem !important;
-    padding-right: 2rem !important;
+    margin-top: 0.75rem !important;
+    padding: 0.75rem 0 0 !important;
   }
   .landing-why-grid {
-    margin-top: 3rem !important;
-    gap: 2rem 1.25rem !important;
+    margin-top: 1.25rem !important;
+    gap: 1.5rem 1rem !important;
   }
 }
 @media (min-width: 1024px) {
   .landing-why {
-    padding: 5rem 0 7rem !important;
+    margin-top: 1rem !important;
+    padding: 1rem 0 0 !important;
   }
   .landing-why-grid {
-    margin-top: 3.5rem !important;
+    margin-top: 1.5rem !important;
   }
 }
 
@@ -208,10 +272,12 @@ const LANDING_LAYOUT_CSS = `
 @media (max-width: 639px) {
   /* Copy on the right over darker laptop/desk; mascot flipped onto the left */
   .landing-hero-inner {
+    padding-top: 2.5rem !important;
+    padding-bottom: 1.75rem !important;
+  }
+  .landing-hero-copy-band {
     align-items: flex-start !important;
     justify-content: flex-end !important;
-    padding-top: 1.25rem !important;
-    padding-bottom: 1.75rem !important;
   }
   .landing-hero-copy {
     margin-left: auto !important;
@@ -307,8 +373,7 @@ const LANDING_LAYOUT_CSS = `
   .landing-pricing-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
   .landing-capacity-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
   .landing-how-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
-  .landing-hero-cyber,
-  .landing-hero-inner { min-height: min(74vh, 680px) !important; }
+  .landing-hero-scene { min-height: min(74vh, 680px) !important; height: min(74vh, 680px) !important; }
   .landing-hero-video { object-position: 70% 45% !important; }
 }
 
@@ -328,8 +393,7 @@ const LANDING_LAYOUT_CSS = `
   .landing-why-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
   .landing-scenarios-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
   .landing-pricing-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
-  .landing-hero-cyber,
-  .landing-hero-inner { min-height: min(78vh, 720px) !important; }
+  .landing-hero-scene { min-height: min(78vh, 720px) !important; height: min(78vh, 720px) !important; }
   .landing-hero-video { object-position: 62% 48% !important; }
   .landing-hero-scrim-x {
     background: linear-gradient(
@@ -341,8 +405,8 @@ const LANDING_LAYOUT_CSS = `
     ) !important;
   }
   .landing-hero-scrim-y {
-    height: 5rem !important;
-    background: linear-gradient(to top, #06040f, transparent) !important;
+    height: 8rem !important;
+    background: linear-gradient(to top, #06040f 0%, rgba(6, 4, 15, 0.9) 40%, transparent 100%) !important;
   }
 }
 
@@ -359,16 +423,14 @@ const LANDING_LAYOUT_CSS = `
   .landing-why-grid { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; }
   .landing-scenarios-grid { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; }
   .landing-capacity-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
-  .landing-hero-cyber,
-  .landing-hero-inner { min-height: min(82vh, 780px) !important; }
+  .landing-hero-scene { min-height: min(82vh, 780px) !important; height: min(82vh, 780px) !important; }
   .landing-hero-video { object-position: 58% 50% !important; }
 }
 
 /* Wide desktop — pricing 5-up + taller hero */
 @media (min-width: 1440px) {
   .landing-pricing-grid { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; }
-  .landing-hero-cyber,
-  .landing-hero-inner { min-height: min(84vh, 860px) !important; }
+  .landing-hero-scene { min-height: min(84vh, 860px) !important; height: min(84vh, 860px) !important; }
   .landing-hero-video { object-position: center 50% !important; }
 }
 
@@ -647,8 +709,8 @@ export function LandingPageClient() {
 			<style dangerouslySetInnerHTML={{ __html: LANDING_LAYOUT_CSS }} />
 			<main className="landing-page flex min-h-screen flex-col overflow-x-clip bg-white text-slate-900 supports-[min-height:100dvh]:min-h-dvh">
 				<LandingNav />
+				{/* Why is nested inside LandingHero so they share one dark plane */}
 				<LandingHero />
-				<LandingWhyDifferent />
 				<LandingHowItWorks />
 				{SHOW_LANDING_BELOW_HOW ? (
 					<>

@@ -220,22 +220,22 @@ export function LandingWhyDifferent() {
 	const L = m.landing;
 
 	return (
-		<section id="why" className="landing-why relative w-full overflow-hidden">
-			<div className="landing-why-inner relative">
+		<div id="why" className="landing-why">
+			<div className="landing-why-inner">
 				<Reveal>
 					<h2 className="max-w-3xl text-left text-2xl font-bold tracking-tight text-white sm:text-3xl md:text-4xl">
 						{L.whyTitle}
 					</h2>
 				</Reveal>
-				<div className="landing-why-grid grid grid-cols-2">
+				<div className="landing-why-grid">
 					{L.whyItems.map((item, i) => {
 						const Icon = WHY_ICONS[i];
 						return (
 							<Reveal
 								key={item.title}
 								delayMs={i * 95}
-								distance={44}
-								scaleFrom={0.94}
+								distance={28}
+								scaleFrom={0.96}
 							>
 								<div className="text-center">
 									<div className="mx-auto mb-1 inline-flex rounded-2xl border border-white/10 bg-white/5 px-2 py-1 backdrop-blur-md">
@@ -253,6 +253,6 @@ export function LandingWhyDifferent() {
 					})}
 				</div>
 			</div>
-		</section>
+		</div>
 	);
 }

@@ -11,6 +11,8 @@ type Format = "image" | "carousel" | "reels" | "video";
 type ShowcaseCard = {
   id: string;
   platform: Platform;
+  /** Extra platform marks (e.g. TikTok + X for short video). */
+  platforms?: readonly Platform[];
   format: Format;
   ratio: string;
   /** Optional muted looping video. */
@@ -24,13 +26,15 @@ type ShowcaseCard = {
     | "tplBizFashion"
     | "tplBizBranding"
     | "tplBizCafe"
-    | "tplBizService";
+    | "tplBizService"
+    | "tplBizRealEstate";
   captionKey:
     | "tplAdMakeup"
     | "tplAdFashion"
     | "tplAdBranding"
     | "tplAdCafe"
-    | "tplAdService";
+    | "tplAdService"
+    | "tplAdRealEstate";
 };
 
 const BRANDING_CAROUSEL = [
@@ -91,6 +95,17 @@ const SHOWCASE: ShowcaseCard[] = [
     captionKey: "tplAdService",
   },
   {
+    id: "realestate",
+    platform: "tiktok",
+    platforms: ["tiktok", "x"],
+    format: "video",
+    ratio: "9:16",
+    video: "/videos/landing/tpl-biz-realestate.mp4?v=1",
+    poster: "/images/landing/tpl-biz-realestate.jpg?v=1",
+    businessKey: "tplBizRealEstate",
+    captionKey: "tplAdRealEstate",
+  },
+  {
     id: "cafe",
     platform: "xhs",
     format: "image",
@@ -103,19 +118,6 @@ const SHOWCASE: ShowcaseCard[] = [
 
 const HIGHLIGHT_MS = 2800;
 const CAROUSEL_MS = 1600;
-
-function formatMetaLabel(format: Format) {
-  switch (format) {
-    case "image":
-      return "IMAGE";
-    case "carousel":
-      return "CAROUSEL";
-    case "reels":
-      return "REELS";
-    case "video":
-      return "VIDEO";
-  }
-}
 
 function platformIconSrc(platform: Platform) {
   switch (platform) {
@@ -132,28 +134,55 @@ function platformIconSrc(platform: Platform) {
   }
 }
 
+function formatLabelFor(
+  format: Format,
+  L: {
+    tplFormatImage: string;
+    tplFormatCarousel: string;
+    tplFormatReels: string;
+    tplFormatVideo: string;
+  },
+) {
+  switch (format) {
+    case "image":
+      return L.tplFormatImage;
+    case "carousel":
+      return L.tplFormatCarousel;
+    case "reels":
+      return L.tplFormatReels;
+    case "video":
+      return L.tplFormatVideo;
+  }
+}
+
 function CardMetaBar({
   platform,
-  format,
+  platforms,
+  formatLabel,
   ratio,
 }: {
   platform: Platform;
-  format: Format;
+  platforms?: readonly Platform[];
+  formatLabel: string;
   ratio: string;
   featured?: boolean;
 }) {
+  const marks = platforms?.length ? platforms : [platform];
   return (
     <div className="pointer-events-none absolute inset-x-0 top-0 z-30 p-2">
       <div className="inline-flex max-w-full items-center gap-1.5 rounded-md bg-white px-2 py-1 shadow-sm">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={platformIconSrc(platform)}
-          alt=""
-          className="h-4 w-4 shrink-0 rounded-[4px] object-cover"
-          aria-hidden
-        />
-        <span className="truncate text-[10px] font-bold uppercase tracking-[0.04em] text-zinc-900">
-          {formatMetaLabel(format)} · {ratio}
+        {marks.map((p) => (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            key={p}
+            src={platformIconSrc(p)}
+            alt=""
+            className="h-4 w-4 shrink-0 rounded-[4px] object-cover"
+            aria-hidden
+          />
+        ))}
+        <span className="truncate text-[10px] font-bold tracking-[0.04em] text-zinc-900">
+          {formatLabel} · {ratio}
         </span>
       </div>
     </div>
@@ -395,7 +424,8 @@ export function LandingTemplatesShowcase() {
                       />
                       <CardMetaBar
                         platform={card.platform}
-                        format={card.format}
+                        platforms={card.platforms}
+                        formatLabel={formatLabelFor(card.format, L)}
                         ratio={card.ratio}
                       />
                     </div>
