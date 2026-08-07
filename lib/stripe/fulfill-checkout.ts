@@ -116,7 +116,10 @@ async function sendTopUpReceiptOnce(opts: {
     kind: "topup",
     tokensGranted: TOP_UP_TOKENS,
     balanceAfter,
-    amountLabel: `$${TOP_UP_PRICE_USD.toFixed(2)}`,
+    amountLabel:
+      typeof opts.session.amount_total === "number"
+        ? `$${(opts.session.amount_total / 100).toFixed(2)}`
+        : `$${TOP_UP_PRICE_USD.toFixed(2)}`,
     purchasedAt: opts.session.created
       ? new Date(opts.session.created * 1000)
       : new Date(),

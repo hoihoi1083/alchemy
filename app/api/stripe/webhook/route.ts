@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
-import { normalizeUserPlan } from "@/lib/billing/plans";
-import { sendSubscriptionEndedEmail } from "@/lib/email/lifecycle";
+import {
+  notifyPaymentFailedOnce,
+  notifySubscriptionEndedOnce,
+  notifyUpgradeReceiptOnce,
+  sendLockedEmail,
+} from "@/lib/email/billing-notices";
 import { sendPurchaseConfirmationEmail } from "@/lib/email/purchase-confirmation";
-import { resolvePurchaseEmail } from "@/lib/email/resolve-user-email";
-import type { DbUser } from "@/lib/db/types";
 import {
   applySubscriptionGrant,
-  clearPaidSubscription,
+  clearPaidSubscriptionIfNoActiveSub,
   findClerkIdByStripeCustomer,
   grantPlanUpgradeDelta,
   setUserSubscription,
@@ -19,11 +21,19 @@ import {
   resolveCheckoutClerkId,
 } from "@/lib/stripe/fulfill-checkout";
 import { isPaidPlan, planFromPriceId, type PaidPlan } from "@/lib/stripe/prices";
-import { getDb, isMongoConfigured } from "@/lib/mongodb";
+import { isMongoConfigured } from "@/lib/mongodb";
 
 export const runtime = "nodejs";
 
-function customerId(value: string | Stripe.Customer | Stripe.DeletedCustomer | null): string | null {
+/** Only these invoice reasons should credit a full monthly subscription grant. */
+const SUBSCRIPTION_GRANT_REASONS = new Set([
+  "subscription_create",
+  "subscription_cycle",
+]);
+
+function customerId(
+  value: string | Stripe.Customer | Stripe.DeletedCustomer | null,
+): string | null {
   if (!value) return null;
   if (typeof value === "string") return value;
   if ("deleted" in value && value.deleted) return null;
@@ -36,16 +46,6 @@ function subscriptionId(
   if (!value) return null;
   if (typeof value === "string") return value;
   return value.id;
-}
-
-async function notifySubscriptionEnded(
-  clerkId: string,
-  reason: "canceled" | "unpaid",
-  stripeEmail?: string | null,
-): Promise<void> {
-  const to = await resolvePurchaseEmail({ clerkId, stripeEmail });
-  if (!to) return;
-  await sendSubscriptionEndedEmail({ to, reason });
 }
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
@@ -61,18 +61,31 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
   let plan: PaidPlan | null = null;
   let clerkId: string | null = null;
   let renewsAt: Date | null = null;
+  let previousPlanMeta: PaidPlan | null = null;
+  let periodStart: number | null = null;
 
   if (subId) {
     const sub = await stripe.subscriptions.retrieve(subId);
     clerkId = sub.metadata?.clerkId ?? null;
     const planMeta = sub.metadata?.plan;
     if (planMeta && isPaidPlan(planMeta)) plan = planMeta;
+    const prevRaw = sub.metadata?.previousPlan;
+    if (prevRaw && isPaidPlan(prevRaw)) previousPlanMeta = prevRaw;
     const priceId = sub.items.data[0]?.price?.id;
     if (!plan && priceId) {
       plan = planFromPriceId(priceId)?.plan ?? null;
     }
     const periodEnd = sub.items.data[0]?.current_period_end ?? null;
+    periodStart = sub.items.data[0]?.current_period_start ?? null;
     if (periodEnd) renewsAt = new Date(periodEnd * 1000);
+
+    if (sub.pending_update && invoice.billing_reason === "subscription_update") {
+      console.info(
+        "[stripe] invoice.paid subscription_update — pending_update still set, skip",
+        { invoiceId: invoice.id, clerkId },
+      );
+      return;
+    }
   }
 
   if (!clerkId) {
@@ -82,12 +95,19 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
     });
   }
   if (!clerkId || !plan) {
-    console.error("[stripe] invoice.paid missing clerkId/plan", invoice.id, { clerkId, plan });
+    console.error("[stripe] invoice.paid missing clerkId/plan", invoice.id, {
+      clerkId,
+      plan,
+    });
     return;
   }
 
-  // Mid-cycle plan change invoices are prorations — full monthly tokens would
-  // double-count with the upgrade delta on subscription.updated / checkout.
+  const amountPaid =
+    typeof invoice.amount_paid === "number"
+      ? `$${(invoice.amount_paid / 100).toFixed(2)}`
+      : null;
+
+  // Cycle-reset upgrade invoice — backup grant + receipt (idempotent with checkout).
   if (invoice.billing_reason === "subscription_update") {
     await setUserSubscription({
       clerkId,
@@ -97,8 +117,70 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
       planRenewsAt: renewsAt,
       clearPendingPlanChange: true,
     });
-    console.info("[stripe] invoice.paid subscription_update — skipped full grant", {
+
+    if (
+      subId &&
+      previousPlanMeta &&
+      previousPlanMeta !== plan &&
+      periodStart != null
+    ) {
+      const upgrade = await grantPlanUpgradeDelta({
+        clerkId,
+        previousPlan: previousPlanMeta,
+        newPlan: plan,
+        subscriptionId: subId,
+        periodStart,
+        meta: {
+          source: "invoice_paid_subscription_update",
+          invoiceId: invoice.id,
+        },
+      });
+      if (upgrade.delta > 0) {
+        await notifyUpgradeReceiptOnce({
+          clerkId,
+          subscriptionId: subId,
+          periodStart,
+          plan,
+          tokensGranted: upgrade.delta,
+          balanceAfter: upgrade.balanceAfter,
+          renewsAt,
+          amountLabel: amountPaid,
+          stripeEmail: invoice.customer_email,
+        });
+      }
+      // Clear breadcrumb after upgrade invoice is handled (checkout already used it).
+      try {
+        await stripe.subscriptions.update(subId, {
+          metadata: { previousPlan: "" },
+        });
+      } catch (err) {
+        console.warn(
+          "[stripe] clear previousPlan metadata failed",
+          subId,
+          err instanceof Error ? err.message : err,
+        );
+      }
+      console.info("[stripe] invoice.paid subscription_update — upgrade grant", {
+        invoiceId: invoice.id,
+        clerkId,
+        plan,
+        previousPlan: previousPlanMeta,
+        granted: upgrade.granted,
+        amount: upgrade.delta,
+      });
+    } else {
+      console.info(
+        "[stripe] invoice.paid subscription_update — no upgrade grant needed",
+        { invoiceId: invoice.id, clerkId, plan, previousPlan: previousPlanMeta },
+      );
+    }
+    return;
+  }
+
+  if (!SUBSCRIPTION_GRANT_REASONS.has(invoice.billing_reason ?? "")) {
+    console.info("[stripe] invoice.paid — skip grant for billing_reason", {
       invoiceId: invoice.id,
+      billingReason: invoice.billing_reason,
       clerkId,
       plan,
     });
@@ -118,7 +200,6 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
     },
   });
 
-  // New billing cycle (or schedule-applied price) — pending downgrade is done/stale.
   if (invoice.billing_reason === "subscription_cycle") {
     await setUserSubscription({
       clerkId,
@@ -130,23 +211,13 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
     });
   }
 
-  // Email once per invoice (idempotent with grant). Log skips so local debugging is possible.
-  if (result.granted) {
-    const to = await resolvePurchaseEmail({
-      clerkId,
-      stripeEmail: invoice.customer_email,
-    });
-    if (!to) {
-      console.warn("[email] subscription receipt skipped — no recipient", {
-        invoiceId: invoice.id,
-        clerkId,
-      });
-    } else {
-      const amountPaid =
-        typeof invoice.amount_paid === "number"
-          ? `$${(invoice.amount_paid / 100).toFixed(2)}`
-          : null;
-      const sent = await sendPurchaseConfirmationEmail({
+  await sendLockedEmail({
+    ref: `email_invoice_${invoice.id}`,
+    clerkId,
+    reason: "subscription_receipt",
+    stripeEmail: invoice.customer_email,
+    send: (to) =>
+      sendPurchaseConfirmationEmail({
         to,
         kind: "subscription",
         plan,
@@ -154,28 +225,8 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
         balanceAfter: result.balanceAfter,
         renewsAt,
         amountLabel: amountPaid,
-      });
-      if (!sent.sent) {
-        console.error("[email] subscription receipt send failed", {
-          invoiceId: invoice.id,
-          to,
-          skipped: sent.skipped,
-          error: sent.error,
-        });
-      } else {
-        console.info("[email] subscription receipt sent", {
-          invoiceId: invoice.id,
-          to,
-          id: sent.id,
-        });
-      }
-    }
-  } else {
-    console.info("[email] subscription receipt skipped — grant not first claim", {
-      invoiceId: invoice.id,
-      clerkId,
-    });
-  }
+      }),
+  });
 }
 
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
@@ -189,7 +240,11 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
       const sub = await getStripe().subscriptions.retrieve(subId);
       clerkId = sub.metadata?.clerkId ?? null;
     } catch (err) {
-      console.error("[stripe] invoice.payment_failed retrieve sub failed", invoice.id, err);
+      console.error(
+        "[stripe] invoice.payment_failed retrieve sub failed",
+        invoice.id,
+        err,
+      );
     }
   }
   if (!clerkId) {
@@ -204,13 +259,12 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   }
 
   // Do not clear plan here — subscription.updated unpaid handles entitlement drop.
-  const to = await resolvePurchaseEmail({
+  // One email per invoice (Stripe retries must not spam).
+  await notifyPaymentFailedOnce({
     clerkId,
+    invoiceId: invoice.id,
     stripeEmail: invoice.customer_email,
   });
-  if (to) {
-    await sendSubscriptionEndedEmail({ to, reason: "payment_failed" });
-  }
 }
 
 function previousPlanFromSubscriptionEvent(
@@ -248,10 +302,30 @@ async function handleSubscriptionUpdated(
     sub.status === "unpaid" ||
     sub.status === "incomplete_expired";
   if (ended) {
-    await clearPaidSubscription(clerkId);
-    await notifySubscriptionEnded(
+    const result = await clearPaidSubscriptionIfNoActiveSub({
       clerkId,
-      sub.status === "unpaid" ? "unpaid" : "canceled",
+      customerId: customerId(sub.customer),
+      endingSubscriptionId: sub.id,
+    });
+    // Email only when entitlements were actually dropped (and not for canceled —
+    // subscription.deleted handles that). Unpaid / incomplete_expired may not
+    // always emit deleted.
+    if (result.cleared && sub.status !== "canceled") {
+      await notifySubscriptionEndedOnce({
+        clerkId,
+        reason: "unpaid",
+        subscriptionId: sub.id,
+      });
+    }
+    return;
+  }
+
+  // Payment for an upgrade/switch failed or needs authentication — plan change
+  // is NOT applied yet. Do not grant tokens or flip Mongo to the pending price.
+  if (sub.pending_update) {
+    console.info(
+      "[stripe] subscription.updated — pending_update, skip grant/plan flip",
+      { subscriptionId: sub.id, clerkId },
     );
     return;
   }
@@ -274,47 +348,37 @@ async function handleSubscriptionUpdated(
       ? pendingIntervalRaw
       : null;
 
-  // Prefer Stripe previous_attributes — Mongo `user.plan` is often already the
-  // new plan because checkout updates it before this webhook runs.
-  const previousPlan = previousPlanFromSubscriptionEvent(previousAttributes);
-  let previousPlanForDelta: string | null = previousPlan;
-  if (!previousPlanForDelta && isMongoConfigured()) {
-    const db = await getDb();
-    const user = await db.collection<DbUser>("users").findOne({ clerkId });
-    previousPlanForDelta = normalizeUserPlan(user?.plan);
-  }
+  // Only upgrade-grant when Stripe previous_attributes show a real plan/price
+  // change. Do NOT use metadata.previousPlan alone — it stays on the sub after
+  // upgrade and would re-grant on renewals when periodStart changes (new ref).
+  // Token backup for upgrades is: checkout API + invoice.paid subscription_update.
+  const previousFromEvent = previousPlanFromSubscriptionEvent(previousAttributes);
 
   const periodEnd = sub.items.data[0]?.current_period_end ?? null;
   const periodStart = sub.items.data[0]?.current_period_start ?? null;
 
-  // Mid-cycle upgrade: credit delta before flipping Mongo plan when possible.
-  if (previousPlanForDelta && periodStart != null) {
+  if (previousFromEvent && periodStart != null) {
     const result = await grantPlanUpgradeDelta({
       clerkId,
-      previousPlan: previousPlanForDelta,
+      previousPlan: previousFromEvent,
       newPlan: plan,
       subscriptionId: sub.id,
       periodStart,
-      meta: {
-        source: previousPlan ? "webhook_previous_attributes" : "webhook_mongo_fallback",
-      },
+      meta: { source: "webhook_previous_attributes" },
     });
-    if (result.granted) {
-      const to = await resolvePurchaseEmail({ clerkId });
-      if (to) {
-        await sendPurchaseConfirmationEmail({
-          to,
-          kind: "subscription",
-          plan,
-          tokensGranted: result.delta,
-          balanceAfter: result.balanceAfter,
-          renewsAt: periodEnd ? new Date(periodEnd * 1000) : null,
-        });
-      }
+    if (result.delta > 0) {
+      await notifyUpgradeReceiptOnce({
+        clerkId,
+        subscriptionId: sub.id,
+        periodStart,
+        plan,
+        tokensGranted: result.delta,
+        balanceAfter: result.balanceAfter,
+        renewsAt: periodEnd ? new Date(periodEnd * 1000) : null,
+      });
     }
   }
 
-  // Pending downgrade only while price is still the higher (current) plan.
   const pendingStillActive = Boolean(pendingPlan && pendingPlan !== plan);
 
   await setUserSubscription({
@@ -338,8 +402,19 @@ async function handleSubscriptionDeleted(sub: Stripe.Subscription) {
     sub.metadata?.clerkId ??
     (await findClerkIdByStripeCustomer(customerId(sub.customer) ?? ""));
   if (!clerkId) return;
-  await clearPaidSubscription(clerkId);
-  await notifySubscriptionEnded(clerkId, "canceled");
+  const result = await clearPaidSubscriptionIfNoActiveSub({
+    clerkId,
+    customerId: customerId(sub.customer),
+    endingSubscriptionId: sub.id,
+  });
+  // Only email "ended" when we actually dropped them to free.
+  if (result.cleared) {
+    await notifySubscriptionEndedOnce({
+      clerkId,
+      reason: "canceled",
+      subscriptionId: sub.id,
+    });
+  }
 }
 
 export async function POST(request: Request) {
@@ -352,7 +427,10 @@ export async function POST(request: Request) {
 
   const secret = process.env.STRIPE_WEBHOOK_SECRET?.trim();
   if (!secret) {
-    return NextResponse.json({ error: "STRIPE_WEBHOOK_SECRET is not set" }, { status: 503 });
+    return NextResponse.json(
+      { error: "STRIPE_WEBHOOK_SECRET is not set" },
+      { status: 503 },
+    );
   }
 
   const body = await request.text();
@@ -374,7 +452,9 @@ export async function POST(request: Request) {
   try {
     switch (event.type) {
       case "checkout.session.completed":
-        await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
+        await handleCheckoutCompleted(
+          event.data.object as Stripe.Checkout.Session,
+        );
         break;
       case "invoice.paid":
         await handleInvoicePaid(event.data.object as Stripe.Invoice);
@@ -385,11 +465,15 @@ export async function POST(request: Request) {
       case "customer.subscription.updated":
         await handleSubscriptionUpdated(
           event.data.object as Stripe.Subscription,
-          event.data.previous_attributes as Partial<Stripe.Subscription> | undefined,
+          event.data.previous_attributes as
+            | Partial<Stripe.Subscription>
+            | undefined,
         );
         break;
       case "customer.subscription.deleted":
-        await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
+        await handleSubscriptionDeleted(
+          event.data.object as Stripe.Subscription,
+        );
         break;
       default:
         break;

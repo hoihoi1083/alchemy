@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { resolveStripeCustomerIdForUser } from "@/lib/db/email-identity";
 import type { DbUser } from "@/lib/db/types";
 import { getDb, isMongoConfigured } from "@/lib/mongodb";
 import { requireAppUser } from "@/lib/require-app-user";
@@ -18,9 +19,15 @@ export async function POST() {
     const auth = await requireAppUser();
     if (!auth.ok) return auth.response;
 
+    const clerkId = auth.user.userId;
     const db = await getDb();
-    const user = await db.collection<DbUser>("users").findOne({ clerkId: auth.user.userId });
-    if (!user?.stripeCustomerId) {
+    const user = await db.collection<DbUser>("users").findOne({ clerkId });
+    const stripeCustomerId = await resolveStripeCustomerIdForUser({
+      clerkId,
+      email: user?.email,
+      stripeCustomerId: user?.stripeCustomerId,
+    });
+    if (!stripeCustomerId) {
       return NextResponse.json(
         { error: "No Stripe customer on file. Subscribe first." },
         { status: 400 },
@@ -31,8 +38,13 @@ export async function POST() {
     // Prefer a portal config that disables in-portal plan switches so
     // upgrades/downgrades go through /pricing (deferred downgrade rules).
     const configuration = process.env.STRIPE_BILLING_PORTAL_CONFIGURATION_ID?.trim();
+    if (!configuration) {
+      console.warn(
+        "[stripe] STRIPE_BILLING_PORTAL_CONFIGURATION_ID unset — portal may allow immediate plan changes that bypass deferred downgrade rules",
+      );
+    }
     const session = await stripe.billingPortal.sessions.create({
-      customer: user.stripeCustomerId,
+      customer: stripeCustomerId,
       return_url: `${appBaseUrl()}/pricing`,
       ...(configuration ? { configuration } : {}),
     });

@@ -451,8 +451,16 @@ export const zh = {
       { q: "一定要上傳參考影片？", a: "唔一定。參考 MP4 係選填。" },
       { q: "係咪全部都要先分鏡？", a: "唔係。只要影片可直接出片；先圖後片先走分鏡靜幀。" },
       {
-        q: "計劃點樣升級／降級？",
-        a: "付費計劃每月會補發點數。升級可喺「收費」頁即時生效（補差價同補發差額點數）；降級會排程到下個帳單週期。詳情見收費頁嘅收費常見問題。",
+        q: "點樣升級計劃？",
+        a: "登入後喺「收費」頁揀更高計劃即可。升級會由今日起開新嘅更高計劃帳單期：Stripe 會退回舊計劃未用日子嘅差額，再由今日起收新計劃費用（產品標價唔會改）。你保留剩餘 token，並即時獲得新計劃成個月份額。下次續費日會改為升級日起計一個月。例如：8 月 1 日 Standard → 8 月 15 日升 Master → 下次係 9 月 15 日再發完整 Master token。",
+      },
+      {
+        q: "點樣降級計劃？",
+        a: "喺「收費」頁揀較低計劃。降級會排程到下一個帳單日生效 — 之前仍然用目前計劃、功能同剩餘 token。較低價錢同每月 token 由下個週期開始。",
+      },
+      {
+        q: "點樣取消訂閱？",
+        a: "喺收費頁用「管理帳單」（Stripe）取消續訂或改卡。取消後，目前週期完結前仍然可用付費功能。升級／降級請喺收費頁操作，唔係喺 Portal 改計劃。",
       },
     ],
     builtFor: [
@@ -568,6 +576,7 @@ export const zh = {
     monthly: "月付",
     yearly: "年付",
     yearlyBadge: "慳高達 50%",
+    monthlyBadge: "慳高達 38%",
     perMonth: "/月",
     billedYearly: "按年收費",
     tokensPerMonth: "token / 月",
@@ -592,11 +601,15 @@ export const zh = {
     checkoutSuccess: "付款成功。Token 幾秒內會入帳 — 如未更新請重新整理。",
     checkoutCanceled: "已取消結帳，未有收費。",
     checkoutError: "無法開始結帳。請再試，或聯絡支援。",
+    paymentIncomplete:
+      "付款未成功。請喺「管理帳單」更新信用卡後再試升級。你原本嘅計劃未有更改。",
     subscriptionUpdated: "已更新方案。重複訂閱已取消，之後唔會收兩次費。",
-    subscriptionUpgraded: "已即時升級。新計劃功能同額外 token 本週期即時生效。",
+    subscriptionUpgraded:
+      "已即時升級。新計劃月份由今日起計 — 已加入完整每月 token，剩餘保留，下次續費改為一個月後。",
     subscriptionDowngradeScheduled:
       "已安排於 {date} 降級至 {plan}。在此之前仍保持目前計劃同剩餘 token；較低價錢由下一個帳單週期開始。",
-    alreadySubscribed: "你已有有效訂閱。請用「管理帳單」更改或取消方案。",
+    alreadySubscribed:
+      "你已有有效訂閱。改計劃請喺呢個收費頁；取消／改卡請用「管理帳單」。",
     tokenTitle: "Token 點樣計",
     tokenSubtitle: "Token 係工作室貨幣。每次生成前會顯示所需 token。",
     tokenItems: [
@@ -634,7 +647,7 @@ export const zh = {
       {
         q: "點樣升級計劃？",
         body:
-          "喺呢個收費頁揀更高計劃（Standard → Pro → Master）確認即可。升級即時生效：Stripe 會按比例補差價，即時開通新計劃功能，並補發呢個帳單期嘅點數差額（例如 Pro 8,000 → Master 16,000 會加 8,000 點）。升級唔使經「管理帳單」。",
+          "登入後喺呢個收費頁揀更高計劃（Standard → Pro → Master）確認即可。升級會由今日起開新帳單期：Stripe 退回舊計劃未用日子嘅差額，再由今日起收新計劃費用 — 我哋唔會改 Stripe 產品標價。你保留剩餘 token，並即時獲得新計劃完整每月份額（例如 Standard 3,000 → Master 會再加 16,000）。下次續費日改為升級日起計一個月。升級唔使經「管理帳單」。",
       },
       {
         q: "點樣降級計劃？",
@@ -648,7 +661,7 @@ export const zh = {
       },
     ],
     footnote:
-      "價格以美元計。影片解像度同片長會影響 token。經 Stripe 付款。可喺定價頁即時升級；降級由下個週期生效。取消請用「管理帳單」。",
+      "價格以美元計。影片解像度同片長會影響 token。經 Stripe 付款。喺定價頁升級會由今日起開新計劃月；降級由下個週期生效。取消請用「管理帳單」。",
     plans: {
       free: {
         name: "免費",

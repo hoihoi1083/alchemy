@@ -44,13 +44,43 @@ async function ensureCreditTransactionsRefIndex(db: Db): Promise<void> {
   );
 }
 
+async function ensureStripeCustomerIdIndex(db: Db): Promise<void> {
+  const col = db.collection("users");
+  const existing = await col.indexes();
+  const idx = existing.find((i) => {
+    const key = i.key as Record<string, number> | undefined;
+    return key && Object.keys(key).length === 1 && key.stripeCustomerId === 1;
+  });
+  const partial = (idx as { partialFilterExpression?: { stripeCustomerId?: { $type?: string } } } | undefined)
+    ?.partialFilterExpression;
+  const wantsPartial = partial?.stripeCustomerId?.$type === "string";
+  if (idx && !wantsPartial) {
+    await col.dropIndex(idx.name as string);
+  }
+  await col.createIndex(
+    { stripeCustomerId: 1 },
+    {
+      unique: true,
+      partialFilterExpression: { stripeCustomerId: { $type: "string" } },
+    },
+  );
+}
+
 async function createAllIndexes(db: Db): Promise<void> {
   await db.collection("users").createIndex({ clerkId: 1 }, { unique: true });
   await db.collection("users").createIndex({ email: 1 }, { sparse: true });
+  // One active (non-superseded) Mongo identity per normalized email.
   await db.collection("users").createIndex(
-    { stripeCustomerId: 1 },
-    { sparse: true, unique: true },
+    { emailNormalized: 1 },
+    {
+      unique: true,
+      partialFilterExpression: {
+        emailNormalized: { $type: "string" },
+        supersededBy: null,
+      },
+    },
   );
+  await ensureStripeCustomerIdIndex(db);
   await db.collection("projects").createIndex({ clerkId: 1, updatedAt: -1 });
   await db.collection("brand_kits").createIndex({ clerkId: 1 }, { unique: true });
   await db.collection("usage_events").createIndex({ clerkId: 1, createdAt: -1 });

@@ -216,3 +216,44 @@ export async function sendSubscriptionEndedEmail(opts: {
   });
   return sendSimpleEmail({ to: opts.to, subject, html, text, kind: "lifecycle" });
 }
+
+/**
+ * Downgrade scheduled for period end. Never throws.
+ */
+export async function sendDowngradeScheduledEmail(opts: {
+  to: string;
+  currentPlan: string;
+  pendingPlan: string;
+  effectiveAt: Date;
+}): Promise<{ sent: boolean; id?: string; skipped?: string; error?: string }> {
+  const siteUrl = emailAppBaseUrl();
+  const pricingUrl = `${siteUrl}/pricing`;
+  const dateLabel = opts.effectiveAt.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+  const current =
+    opts.currentPlan.charAt(0).toUpperCase() + opts.currentPlan.slice(1);
+  const pending =
+    opts.pendingPlan.charAt(0).toUpperCase() + opts.pendingPlan.slice(1);
+  const subject = `Alchemy downgrade scheduled — ${pending} starts ${dateLabel}`;
+  const title = "Downgrade scheduled";
+  const bodyHtml = `Your plan will switch from <strong style="color:#18181b;">${current}</strong> to <strong style="color:#18181b;">${pending}</strong> on <strong style="color:#18181b;">${dateLabel}</strong>. Until then you keep your current plan, features, and remaining tokens.`;
+  const bodyText = `Your plan will switch from ${current} to ${pending} on ${dateLabel}. Until then you keep your current plan, features, and remaining tokens.`;
+  const text = [
+    title,
+    "",
+    bodyText,
+    "",
+    `Manage plans: ${pricingUrl}`,
+    `Questions? Write ${PRODUCT_SUPPORT_EMAIL}.`,
+  ].join("\n");
+  const html = simpleHtml({
+    title,
+    body: bodyHtml,
+    ctaLabel: "View pricing",
+    ctaUrl: pricingUrl,
+  });
+  return sendSimpleEmail({ to: opts.to, subject, html, text, kind: "lifecycle" });
+}

@@ -9,6 +9,7 @@ import {
   priceIdForPlan,
   topUpPriceId,
 } from "../lib/stripe/prices";
+import { upgradeTokenGrantAmount } from "../lib/stripe/billing-sync";
 
 const ENV_KEYS = [
   "STRIPE_PRICE_STANDARD_MONTHLY",
@@ -79,5 +80,13 @@ describe("stripe price mapping", () => {
     assert.equal(comparePaidPlans("pro", "pro"), "lateral");
     assert.equal(comparePaidPlans("standard", "pro"), "upgrade");
     assert.equal(comparePaidPlans("pro", "standard"), "downgrade");
+  });
+
+  it("grants full new-plan tokens on upgrade cycle reset", () => {
+    assert.equal(upgradeTokenGrantAmount("standard", "master"), 16000);
+    assert.equal(upgradeTokenGrantAmount("pro", "master"), 16000);
+    assert.equal(upgradeTokenGrantAmount("standard", "pro"), 8000);
+    assert.equal(upgradeTokenGrantAmount("master", "standard"), 0);
+    assert.equal(upgradeTokenGrantAmount("pro", "pro"), 0);
   });
 });

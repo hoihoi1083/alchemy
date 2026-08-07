@@ -199,6 +199,7 @@ export function PricingPageClient() {
       let data: {
         url?: string;
         error?: string;
+        code?: string;
         updated?: boolean;
         deferred?: boolean;
         pendingPlan?: string | null;
@@ -209,6 +210,7 @@ export function PricingPageClient() {
           ? (JSON.parse(raw) as {
               url?: string;
               error?: string;
+              code?: string;
               updated?: boolean;
               deferred?: boolean;
               pendingPlan?: string | null;
@@ -251,6 +253,9 @@ export function PricingPageClient() {
         return;
       }
       if (!res.ok || !data.url) {
+        if (data.code === "payment_incomplete") {
+          throw new Error(p.paymentIncomplete);
+        }
         throw new Error(data.error ?? p.checkoutError);
       }
       trackCheckoutRedirected({
@@ -471,7 +476,7 @@ export function PricingPageClient() {
                     {p.yearly}
                   </button>
                   <span className="mr-1.5 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
-                    {p.yearlyBadge}
+                    {interval === "monthly" ? p.monthlyBadge : p.yearlyBadge}
                   </span>
                 </div>
               </div>
@@ -536,7 +541,7 @@ export function PricingPageClient() {
                       <div className="mt-4 flex min-h-[4.75rem] flex-col justify-start">
                         <p
                           className={`h-4 text-[11px] leading-4 ${
-                            "listPrice" in card && card.listPrice && interval === "monthly"
+                            "listPrice" in card && card.listPrice
                               ? "text-slate-400 line-through"
                               : "invisible"
                           }`}
@@ -560,15 +565,17 @@ export function PricingPageClient() {
                           ) : null}
                         </p>
                         <p
-                          className={`mt-0.5 h-4 text-[10px] font-medium leading-4 ${
-                            "saveLabel" in card && card.saveLabel
-                              ? "text-emerald-600"
-                              : "invisible"
+                          className={`mt-0.5 flex h-5 items-center ${
+                            "saveLabel" in card && card.saveLabel ? "" : "invisible"
                           }`}
                         >
-                          {"saveLabel" in card && card.saveLabel
-                            ? card.saveLabel
-                            : "—"}
+                          {"saveLabel" in card && card.saveLabel ? (
+                            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                              {card.saveLabel}
+                            </span>
+                          ) : (
+                            "—"
+                          )}
                         </p>
                         <p
                           className={`h-4 text-[10px] leading-4 ${

@@ -653,8 +653,16 @@ export const en = {
         a: "No. Video-only paths generate video directly. Storyboard stills are used on image→video (combined) paths.",
       },
       {
-        q: "How do plans, upgrades, and downgrades work?",
-        a: "Paid plans renew monthly tokens. Upgrade anytime on Pricing for immediate features and token top-up. Downgrades take effect next billing cycle. See Pricing → Billing FAQ for full details.",
+        q: "How do upgrades work?",
+        a: "Upgrade on the Pricing page (signed in). It starts a new higher-plan billing period today: Stripe credits unused days on your old plan and charges the new plan from today (list prices stay the same). You keep remaining tokens and get the full new monthly token allotment right away. Your next renewal date moves to one month from the upgrade. Example: Standard on 1 Aug → Master on 15 Aug → next renew is 15 Sep with a full Master grant.",
+      },
+      {
+        q: "How do downgrades work?",
+        a: "Choose a lower plan on Pricing. The downgrade is scheduled for your next billing date — you keep your current plan, features, and remaining tokens until then. The lower price and monthly token allotment start on the next cycle.",
+      },
+      {
+        q: "How do I cancel?",
+        a: "Open Manage billing on Pricing (Stripe Customer Portal) to cancel renewal or update your card. Paid access continues until the end of the current period. Plan upgrades and downgrades are done on Pricing, not in the portal.",
       },
     ],
   },
@@ -669,6 +677,7 @@ export const en = {
     monthly: "Monthly",
     yearly: "Yearly",
     yearlyBadge: "Save up to 50%",
+    monthlyBadge: "Save up to 38%",
     perMonth: "/mo",
     billedYearly: "Billed yearly",
     tokensPerMonth: "tokens / month",
@@ -693,14 +702,16 @@ export const en = {
     checkoutSuccess: "Payment received. Tokens will appear in your balance within a few seconds — refresh if needed.",
     checkoutCanceled: "Checkout canceled. No charge was made.",
     checkoutError: "Could not start checkout. Try again or contact support.",
+    paymentIncomplete:
+      "Payment did not go through. Update your card in Manage billing, then try upgrading again. Your previous plan was not changed.",
     subscriptionUpdated:
       "Plan updated. Duplicate subscriptions were canceled so you won’t be charged twice.",
     subscriptionUpgraded:
-      "Upgraded successfully. You get the new plan features and token top-up for this period right away.",
+      "Upgraded successfully. Your new plan month starts today — full token allotment added, remaining tokens kept, and the next renewal moves to one month from now.",
     subscriptionDowngradeScheduled:
       "Downgrade to {plan} is scheduled for {date}. You keep your current plan and remaining tokens until then — the lower price starts on your next billing cycle.",
     alreadySubscribed:
-      "You already have an active subscription. Open Manage billing to change or cancel plans.",
+      "You already have an active subscription. Change plans on this Pricing page, or open Manage billing to cancel / update your card.",
     tokenTitle: "How tokens work",
     tokenSubtitle: "Tokens are your studio currency. Each generation shows the cost before you run.",
     tokenItems: [
@@ -738,7 +749,7 @@ export const en = {
       {
         q: "How do I upgrade my plan?",
         body:
-          "On this Pricing page, choose a higher plan (Standard → Pro → Master) and confirm. The upgrade applies immediately: Stripe prorates the price difference, you get the new plan features right away, and we add the token difference for this billing period (for example Pro 8,000 → Master 16,000 adds 8,000 tokens). You don’t need Manage billing to upgrade.",
+          "On this Pricing page (signed in), choose a higher plan (Standard → Pro → Master) and confirm. Upgrade starts a new billing period today: Stripe credits unused days on your current plan and charges the new plan from today — we do not change Stripe product list prices. You keep remaining tokens and receive the full new monthly allotment immediately (for example Standard 3,000 → Master adds 16,000 on top). Your next renewal date becomes one month from the upgrade. You don’t need Manage billing to upgrade.",
       },
       {
         q: "How do I downgrade my plan?",
@@ -748,11 +759,11 @@ export const en = {
       {
         q: "Where do I change or cancel my subscription?",
         body:
-          "Change plans (upgrade or schedule a downgrade) from Pricing while signed in. Cancel renewal or update cards in Manage billing (Stripe Customer Portal). After cancel, paid access continues until the end of the current period.",
+          "Upgrade or schedule a downgrade on this Pricing page while signed in. Cancel renewal or update cards in Manage billing (Stripe Customer Portal). After cancel, paid access continues until the end of the current period.",
       },
     ],
     footnote:
-      "Prices in USD. Video resolution and duration affect token cost. Paid via Stripe. Upgrade anytime from Pricing; downgrades take effect next cycle. Cancel from Manage billing.",
+      "Prices in USD. Video resolution and duration affect token cost. Paid via Stripe. Upgrade on Pricing starts a new plan month today; downgrades take effect next cycle. Cancel from Manage billing.",
     plans: {
       free: {
         name: "Free",

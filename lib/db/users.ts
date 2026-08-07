@@ -1,5 +1,9 @@
 import { FREE_SIGNUP_GRANT_TOKENS, normalizeUserPlan } from "@/lib/billing/plans";
 import { ensureSignupGrant } from "@/lib/billing/ledger";
+import {
+  mergeEmailDuplicatesInto,
+  normalizeEmail,
+} from "@/lib/db/email-identity";
 import { sendWelcomeEmail } from "@/lib/email/lifecycle";
 import { getDb } from "@/lib/mongodb";
 import type { DbUser } from "@/lib/db/types";
@@ -13,7 +17,10 @@ export async function ensureUser(input: {
   const db = await getDb();
   const now = new Date();
   const region = process.env.REGION === "cn" ? "cn" : "hk";
+  const emailNormalized = normalizeEmail(input.email);
 
+  // Upsert without emailNormalized first so a duplicate active email cannot
+  // trip the unique partial index before merge runs.
   const result = await db.collection<DbUser>("users").findOneAndUpdate(
     { clerkId: input.clerkId },
     {
@@ -23,6 +30,8 @@ export async function ensureUser(input: {
         imageUrl: input.imageUrl,
         region,
         updatedAt: now,
+        supersededBy: null,
+        supersededAt: null,
       },
       $setOnInsert: {
         clerkId: input.clerkId,
@@ -38,8 +47,25 @@ export async function ensureUser(input: {
     throw new Error("Failed to upsert user");
   }
 
-  const plan = normalizeUserPlan(result.plan);
-  if (result.plan !== plan) {
+  // Soft identity guard: fold other active rows with the same email into us.
+  if (emailNormalized) {
+    await mergeEmailDuplicatesInto({
+      clerkId: input.clerkId,
+      emailNormalized,
+    });
+    await db.collection<DbUser>("users").updateOne(
+      { clerkId: input.clerkId },
+      { $set: { emailNormalized, updatedAt: new Date() } },
+    );
+  }
+
+  const afterMerge = await db.collection<DbUser>("users").findOne({
+    clerkId: input.clerkId,
+  });
+  if (!afterMerge) throw new Error("Failed to load user after email merge");
+
+  const plan = normalizeUserPlan(afterMerge.plan);
+  if (afterMerge.plan !== plan) {
     await db.collection<DbUser>("users").updateOne(
       { clerkId: input.clerkId },
       { $set: { plan, updatedAt: now } },

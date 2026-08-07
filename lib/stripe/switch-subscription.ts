@@ -17,10 +17,10 @@ export type SwitchSubscriptionResult = {
   /** Plan the customer is entitled to right now (unchanged on deferred downgrade). */
   activePlan: PaidPlan;
   activeInterval: BillingInterval;
-  /** Plan before this switch (for upgrade token delta). */
+  /** Plan before this switch (for upgrade token grant). */
   previousPlan: PaidPlan;
   previousInterval: BillingInterval;
-  /** Billing period start (unix) — used in upgrade grant idempotency key. */
+  /** Billing period start (unix) — after upgrade reset, this is the new period. */
   periodStart: number | null;
   /** Set when a downgrade is scheduled for period end. */
   pendingPlan: PaidPlan | null;
@@ -181,6 +181,8 @@ async function applyImmediatePlanChange(opts: {
   previousPlan: PaidPlan;
   previousInterval: BillingInterval;
   periodStart: number;
+  /** Upgrades restart the billing period today; lateral interval switches keep the anchor. */
+  resetBillingCycle: boolean;
 }): Promise<SwitchSubscriptionResult> {
   const {
     stripe,
@@ -193,25 +195,80 @@ async function applyImmediatePlanChange(opts: {
     previousPlan,
     previousInterval,
     periodStart,
+    resetBillingCycle,
   } = opts;
 
   // Drop any deferred downgrade so the upgrade (or lateral switch) wins now.
   await releaseScheduleIfAny(stripe, primary);
 
-  const updated = await stripe.subscriptions.update(primary.id, {
-    items: [{ id: itemId, price }],
-    metadata: {
-      ...primary.metadata,
-      clerkId,
-      plan,
-      interval,
-      pendingPlan: "",
-      pendingInterval: "",
-    },
-    proration_behavior: "create_prorations",
-    cancel_at_period_end: false,
-  });
+  // Money-critical:
+  // - always_invoice → create + attempt payment on the proration/cycle-reset invoice now
+  // - pending_if_incomplete → do NOT apply the plan change if payment fails / needs action
+  // Without these, Stripe can leave the sub upgraded while the card declines, and we
+  // must never grant tokens before payment succeeds.
+  let updated: Stripe.Subscription;
+  try {
+    updated = await stripe.subscriptions.update(primary.id, {
+      items: [{ id: itemId, price }],
+      metadata: {
+        ...primary.metadata,
+        clerkId,
+        plan,
+        interval,
+        previousPlan,
+        pendingPlan: "",
+        pendingInterval: "",
+      },
+      ...(resetBillingCycle ? { billing_cycle_anchor: "now" as const } : {}),
+      proration_behavior: "always_invoice",
+      payment_behavior: "pending_if_incomplete",
+      cancel_at_period_end: false,
+      expand: ["latest_invoice"],
+    });
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    const code =
+      e && typeof e === "object" && "code" in e
+        ? String((e as { code?: unknown }).code ?? "")
+        : "";
+    if (
+      /card|declined|insufficient|authentication|payment|incomplete/i.test(msg) ||
+      /card_declined|payment_intent|authentication_required/i.test(code)
+    ) {
+      const err = new Error(
+        "PAYMENT_INCOMPLETE: Card was declined or needs authentication. Update your card in Manage billing, then try the upgrade again.",
+      );
+      err.name = "PaymentIncompleteError";
+      throw err;
+    }
+    throw e;
+  }
 
+  if (updated.pending_update) {
+    const err = new Error(
+      "PAYMENT_INCOMPLETE: Card was declined or needs authentication. Update your card in Manage billing, then try the upgrade again.",
+    );
+    err.name = "PaymentIncompleteError";
+    throw err;
+  }
+
+  const latestInvoice = updated.latest_invoice;
+  const invoiceStatus =
+    latestInvoice && typeof latestInvoice !== "string"
+      ? latestInvoice.status
+      : null;
+  // open / uncollectible means we did not collect — treat as failure (should be rare
+  // with pending_if_incomplete, but belt-and-suspenders for money safety).
+  if (invoiceStatus === "open" || invoiceStatus === "uncollectible") {
+    const err = new Error(
+      "PAYMENT_INCOMPLETE: Upgrade invoice was not paid. Update your card in Manage billing, then try again.",
+    );
+    err.name = "PaymentIncompleteError";
+    throw err;
+  }
+
+  const newPeriodStart =
+    updated.items.data[0]?.current_period_start ?? periodStart;
   const periodEnd = updated.items.data[0]?.current_period_end ?? null;
   return {
     subscriptionId: updated.id,
@@ -221,7 +278,7 @@ async function applyImmediatePlanChange(opts: {
     activeInterval: interval,
     previousPlan,
     previousInterval,
-    periodStart,
+    periodStart: newPeriodStart,
     pendingPlan: null,
     pendingInterval: null,
     pendingEffectiveAt: null,
@@ -229,8 +286,10 @@ async function applyImmediatePlanChange(opts: {
 }
 
 /**
- * One paid subscription per customer. Upgrades (and same-tier interval changes)
- * apply immediately with proration. Downgrades take effect at the next cycle.
+ * One paid subscription per customer.
+ * Upgrades: immediate, billing cycle resets to now, full new-plan token grant.
+ * Lateral interval switches: immediate proration, same cycle anchor.
+ * Downgrades: deferred to next cycle via subscription schedule.
  */
 export async function switchExistingSubscription(opts: {
   stripe: Stripe;
@@ -341,5 +400,6 @@ export async function switchExistingSubscription(opts: {
     previousPlan: currentFromPrice.plan,
     previousInterval: currentFromPrice.interval,
     periodStart,
+    resetBillingCycle: kind === "upgrade",
   });
 }

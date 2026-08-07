@@ -66,7 +66,8 @@ export type PlanChangeKind = "upgrade" | "downgrade" | "lateral";
 
 /**
  * Compare paid plan tiers only (interval monthly↔yearly is lateral).
- * Upgrades apply immediately; downgrades are deferred to the next cycle.
+ * Upgrades apply immediately and reset the billing cycle; downgrades are
+ * deferred to the next cycle.
  */
 export function comparePaidPlans(from: PaidPlan, to: PaidPlan): PlanChangeKind {
   const a = paidPlanRank(from);

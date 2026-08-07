@@ -262,7 +262,7 @@ export function LandingPricingTeaser() {
 							{P.yearly}
 						</button>
 						<span className="mr-1.5 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
-							{P.yearlyBadge}
+							{interval === "monthly" ? P.monthlyBadge : P.yearlyBadge}
 						</span>
 					</div>
 				</div>
@@ -326,8 +326,7 @@ export function LandingPricingTeaser() {
 										<p
 											className={`h-4 text-[11px] leading-4 ${
 												"listPrice" in card &&
-												card.listPrice &&
-												interval === "monthly"
+												card.listPrice
 													? "text-slate-400 line-through"
 													: "invisible"
 											}`}
@@ -346,15 +345,19 @@ export function LandingPricingTeaser() {
 											) : null}
 										</p>
 										<p
-											className={`mt-0.5 h-4 text-[10px] font-medium leading-4 ${
+											className={`mt-0.5 flex h-5 items-center ${
 												"saveLabel" in card && card.saveLabel
-													? "text-emerald-600"
+													? ""
 													: "invisible"
 											}`}
 										>
-											{"saveLabel" in card && card.saveLabel
-												? card.saveLabel
-												: "—"}
+											{"saveLabel" in card && card.saveLabel ? (
+												<span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+													{card.saveLabel}
+												</span>
+											) : (
+												"—"
+											)}
 										</p>
 										<p
 											className={`h-4 text-[10px] leading-4 ${

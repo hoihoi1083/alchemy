@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { PLAN_DEFINITIONS, normalizeUserPlan } from "@/lib/billing/plans";
+import { resolveStripeCustomerIdForUser } from "@/lib/db/email-identity";
 import type { DbUser } from "@/lib/db/types";
+import {
+  notifyDowngradeScheduledOnce,
+  notifyUpgradeReceiptOnce,
+} from "@/lib/email/billing-notices";
 import { getDb, isMongoConfigured } from "@/lib/mongodb";
 import { requireAppUser } from "@/lib/require-app-user";
 import {
@@ -69,7 +74,15 @@ export async function POST(request: Request) {
     const stripe = getStripe();
     const base = appBaseUrl();
     const db = await getDb();
-    const user = await db.collection<DbUser>("users").findOne({ clerkId });
+    let user = await db.collection<DbUser>("users").findOne({ clerkId });
+    const stripeCustomerId = await resolveStripeCustomerIdForUser({
+      clerkId,
+      email: user?.email,
+      stripeCustomerId: user?.stripeCustomerId,
+    });
+    if (stripeCustomerId && stripeCustomerId !== user?.stripeCustomerId) {
+      user = await db.collection<DbUser>("users").findOne({ clerkId });
+    }
 
     if (kind === "topup") {
       const plan = normalizeUserPlan(user?.plan);
@@ -84,7 +97,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "STRIPE_PRICE_TOPUP is not set" }, { status: 503 });
       }
       // Must reuse the subscription customer so the invoice lands in the same portal history.
-      if (!user?.stripeCustomerId) {
+      if (!stripeCustomerId) {
         return NextResponse.json(
           { error: "No Stripe customer on file. Subscribe once first, then top up." },
           { status: 400 },
@@ -97,7 +110,7 @@ export async function POST(request: Request) {
         success_url: `${base}/pricing?checkout=success&kind=topup&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${base}/pricing?checkout=cancel`,
         client_reference_id: clerkId,
-        customer: user.stripeCustomerId,
+        customer: stripeCustomerId,
         metadata: { clerkId, kind: "topup" },
         allow_promotion_codes: true,
         // One-time Checkout does not create invoices by default — without this,
@@ -133,15 +146,15 @@ export async function POST(request: Request) {
     }
 
     // Already subscribed → switch plan in-place (never stack a second Stripe sub).
-    if (user?.stripeCustomerId) {
-      const billable = await listBillableSubscriptions(stripe, user.stripeCustomerId);
+    if (stripeCustomerId) {
+      const billable = await listBillableSubscriptions(stripe, stripeCustomerId);
       if (billable.length > 0) {
         try {
           const switched = await switchExistingSubscription({
             stripe,
             clerkId,
-            customerId: user.stripeCustomerId,
-            preferredSubId: user.stripeSubscriptionId,
+            customerId: stripeCustomerId,
+            preferredSubId: user?.stripeSubscriptionId,
             plan,
             interval,
             price,
@@ -153,16 +166,28 @@ export async function POST(request: Request) {
             await setUserSubscription({
               clerkId,
               plan: switched.activePlan,
-              stripeCustomerId: user.stripeCustomerId,
+              stripeCustomerId,
               stripeSubscriptionId: switched.subscriptionId,
               planRenewsAt: switched.renewsAt,
               pendingPlan: switched.pendingPlan,
               pendingPlanInterval: switched.pendingInterval,
               pendingPlanEffectiveAt: switched.pendingEffectiveAt,
             });
+            if (
+              switched.pendingPlan &&
+              switched.pendingEffectiveAt
+            ) {
+              await notifyDowngradeScheduledOnce({
+                clerkId,
+                subscriptionId: switched.subscriptionId,
+                currentPlan: switched.activePlan,
+                pendingPlan: switched.pendingPlan,
+                effectiveAt: switched.pendingEffectiveAt,
+              });
+            }
           } else if (switched.effective === "immediate") {
-            // Grant upgrade delta before flipping Mongo plan so we never rely on
-            // the webhook reading an already-updated `user.plan` (race → 0 tokens).
+            // Grant full new-plan tokens before flipping Mongo plan so we never
+            // rely on the webhook reading an already-updated `user.plan`.
             if (
               switched.periodStart != null &&
               switched.previousPlan !== switched.activePlan
@@ -176,19 +201,30 @@ export async function POST(request: Request) {
                 meta: { source: "checkout_switch" },
               });
               if (upgrade.delta > 0 && !upgrade.granted) {
-                console.warn("[stripe] upgrade delta not first claim (or failed)", {
+                console.warn("[stripe] upgrade grant not first claim (or failed)", {
                   clerkId,
                   subscriptionId: switched.subscriptionId,
                   previousPlan: switched.previousPlan,
                   plan: switched.activePlan,
-                  delta: upgrade.delta,
+                  amount: upgrade.delta,
+                });
+              }
+              if (upgrade.delta > 0) {
+                await notifyUpgradeReceiptOnce({
+                  clerkId,
+                  subscriptionId: switched.subscriptionId,
+                  periodStart: switched.periodStart,
+                  plan: switched.activePlan,
+                  tokensGranted: upgrade.delta,
+                  balanceAfter: upgrade.balanceAfter,
+                  renewsAt: switched.renewsAt,
                 });
               }
             }
             await setUserSubscription({
               clerkId,
               plan: switched.activePlan,
-              stripeCustomerId: user.stripeCustomerId,
+              stripeCustomerId,
               stripeSubscriptionId: switched.subscriptionId,
               planRenewsAt: switched.renewsAt,
               clearPendingPlanChange: true,
@@ -198,7 +234,7 @@ export async function POST(request: Request) {
             await setUserSubscription({
               clerkId,
               plan: switched.activePlan,
-              stripeCustomerId: user.stripeCustomerId,
+              stripeCustomerId,
               stripeSubscriptionId: switched.subscriptionId,
               planRenewsAt: switched.renewsAt,
               ...(switched.pendingPlan
@@ -226,6 +262,19 @@ export async function POST(request: Request) {
           const message = e instanceof Error ? e.message : "Could not update subscription.";
           if (message !== "NO_ACTIVE_SUB") {
             console.error("[stripe] switch subscription failed:", message);
+            if (
+              message.startsWith("PAYMENT_INCOMPLETE") ||
+              (e instanceof Error && e.name === "PaymentIncompleteError")
+            ) {
+              return NextResponse.json(
+                {
+                  error:
+                    "Payment did not go through. Update your card in Manage billing, then try upgrading again. Your previous plan was not changed.",
+                  code: "payment_incomplete",
+                },
+                { status: 402 },
+              );
+            }
             const looksLikeSchedule =
               /subscription schedule|managed by the schedule|phases/i.test(message);
             return NextResponse.json(
@@ -248,8 +297,8 @@ export async function POST(request: Request) {
       success_url: `${base}/pricing?checkout=success&plan=${plan}&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${base}/pricing?checkout=cancel`,
       client_reference_id: clerkId,
-      customer: user?.stripeCustomerId || undefined,
-      customer_email: user?.stripeCustomerId ? undefined : user?.email || undefined,
+      customer: stripeCustomerId || undefined,
+      customer_email: stripeCustomerId ? undefined : user?.email || undefined,
       metadata: { clerkId, kind: "subscription", plan, interval },
       subscription_data: {
         metadata: { clerkId, plan, interval },

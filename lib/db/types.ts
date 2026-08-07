@@ -10,6 +10,8 @@ export type DbUser = {
   _id?: ObjectId;
   clerkId: string;
   email: string | null;
+  /** Lowercased email for identity merge / unique active-user index. */
+  emailNormalized?: string | null;
   name: string | null;
   imageUrl: string | null;
   region: "hk" | "cn";
@@ -29,6 +31,12 @@ export type DbUser = {
   pendingPlan?: "standard" | "pro" | "master" | null;
   pendingPlanInterval?: "monthly" | "yearly" | null;
   pendingPlanEffectiveAt?: Date | null;
+  /**
+   * When set, this row is a superseded duplicate of another clerkId (same email).
+   * Not used for auth/billing; kept for audit.
+   */
+  supersededBy?: string | null;
+  supersededAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
 };
