@@ -199,7 +199,7 @@ export function LandingStoryWheel() {
                       }`}
                       onClick={() => setActiveIndex(i)}
                     >
-                      <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-violet-600">
+                      <span className="text-sm font-bold tracking-[0.08em] text-violet-600">
                         {String(i + 1).padStart(2, "0")} · {slide.eyebrow}
                       </span>
                       {on ? (
@@ -381,7 +381,7 @@ function MobileSlide({
     <section className="w-full border-b border-slate-100 bg-white px-5 py-10 md:px-8">
       <div className="landing-story-mobile-grid mx-auto max-w-[1440px]">
         <div className="min-w-0">
-          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-violet-600">
+          <p className="text-sm font-bold tracking-[0.08em] text-violet-600">
             {eyebrow}
           </p>
           <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">

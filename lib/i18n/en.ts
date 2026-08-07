@@ -245,8 +245,8 @@ export const en = {
     heroTrust: [
       "No prompt needed",
       "Storyboard first",
-      "Editable canvas",
-      "Ready for IG, FB, 小红书",
+      "Products & concepts",
+      "AI research",
     ],
     builtForLabel: "Built for",
     builtFor: [
@@ -549,6 +549,7 @@ export const en = {
     topUpCustom: "Custom tokens",
     finalTitle: "Ready to create agency-like content?",
     finalBody: "Join marketers and businesses creating better ads, faster.",
+    finalImageAlt: "Alchemy studio creatives and product asset preview",
     proCanvasLink: "Pro canvas",
     captionsLink: "Caption, BGM & voice for any video",
     imageCanvasLink: "Add text & logo to any image",
@@ -659,7 +660,9 @@ export const en = {
   },
   pricing: {
     badge: "Simple token pricing",
-    title: "Plans that scale with your creative output",
+    title: "Plans by Volume and Preference — Pick What Fits You",
+    titleBefore: "By Volume & Preference",
+    titleHighlight: "Choose the Plan That Fits You",
     subtitle:
       "Every plan includes tokens for AI image and video generation. Pay for what you use — top up anytime after subscribing.",
     pricingLink: "Pricing",

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useLocale } from "@/components/LocaleProvider";
 import { Reveal } from "@/components/landing/Reveal";
 
+const FINAL_CTA_IMAGE = "/images/landing/final-cta-studio.jpg?v=1";
+
 export function LandingFinalCta() {
 	const { m } = useLocale();
 	const L = m.landing;
@@ -20,7 +22,7 @@ export function LandingFinalCta() {
 						boxShadow: "0 20px 40px -12px rgba(108, 59, 255, 0.35)",
 					}}
 				>
-					<div className="relative px-6 py-8 md:px-10 md:py-10">
+					<div className="landing-final-cta-grid relative grid items-center gap-6 px-6 py-8 md:gap-8 md:px-10 md:py-10">
 						<div className="min-w-0 max-w-2xl">
 							<h2
 								className="text-2xl font-bold tracking-tight md:text-3xl"
@@ -57,6 +59,17 @@ export function LandingFinalCta() {
 									{L.ctaSecondary}
 								</a>
 							</div>
+						</div>
+
+						<div className="landing-final-cta-media relative mx-auto w-full max-w-xl md:mx-0 md:justify-self-end">
+							{/* eslint-disable-next-line @next/next/no-img-element */}
+							<img
+								src={FINAL_CTA_IMAGE}
+								alt={L.finalImageAlt}
+								className="h-auto w-full rounded-2xl object-cover shadow-[0_16px_40px_-12px_rgba(0,0,0,0.35)] ring-1 ring-white/25"
+								loading="lazy"
+								decoding="async"
+							/>
 						</div>
 					</div>
 				</div>

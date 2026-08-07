@@ -188,7 +188,7 @@ export const zh = {
     titleAfter: "自己寫 prompt。",
     title: "做營銷內容，唔使自己寫 prompt。",
     subtitle:
-      "上傳產品相或貼參考帖。Alchemy 分析風格、引導設定，再生成可編輯廣告圖同影片，適合 IG、Facebook、TikTok。",
+      "上傳產品相或貼參考帖。Alchemy 分析風格、引導設定，再生成可編輯廣告圖同影片。",
     openStudio: "開啟工作室",
     startCreating: "開始製作",
     tryFree: "免費試用",
@@ -205,7 +205,7 @@ export const zh = {
     navEditImage: "改圖",
     navCaptions: "字幕",
     navPro: "Pro",
-    heroTrust: ["唔使空白 prompt", "參考風格唔抄內容", "可編輯畫布", "支援 9:16 / 4:5 / 1:1"],
+    heroTrust: ["唔使空白 prompt", "先分鏡再出片", "產品同概念都得", "AI 市場研究"],
     heroImageAlt: "產品相同 AI 風格分析",
     heroMascotAlt: "Alchemy 可愛燒瓶夥伴（護目鏡）— 郁吓滑鼠就會睇唔同方向",
     heroBeforeLabel: "之前",
@@ -391,6 +391,7 @@ export const zh = {
     tokensSeePricing: "睇完整收費 →",
     finalTitle: "準備做好似代理嘅內容？",
     finalBody: "免費開始，上傳一張產品相，幾分鐘出第一隻廣告。",
+    finalImageAlt: "Alchemy 工作室創作同產品素材預覽",
     proCanvasLink: "Pro 智能畫布",
     captionsLink: "為任何影片加字幕、BGM 同口播",
     imageCanvasLink: "為任何圖片加字同 Logo",
@@ -558,7 +559,9 @@ export const zh = {
 
   pricing: {
     badge: "簡單 token 定價",
-    title: "按創作量選計劃",
+    title: "按創作量與喜好選擇適合你的計劃",
+    titleBefore: "按創作量與喜好",
+    titleHighlight: "選擇適合你的計劃",
     subtitle:
       "每個計劃都包含 AI 圖片同影片 token。用多少付多少 — 訂閱後可隨時加購 token。",
     pricingLink: "收費方案",

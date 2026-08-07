@@ -188,7 +188,7 @@ export const zhCn = {
     titleAfter: "自己寫 prompt。",
     title: "做营销内容，不用自己寫 prompt。",
     subtitle:
-      "上传产品相或贴参考帖。Alchemy 分析风格、引导設定，再生成可编辑广告圖同视频，適合 IG、Facebook、TikTok。",
+      "上传产品照或贴参考帖。Alchemy 分析风格、引导设定，再生成可编辑广告图和视频。",
     openStudio: "開啟工作室",
     startCreating: "开始製作",
     tryFree: "免费试用",
@@ -205,7 +205,7 @@ export const zhCn = {
     navEditImage: "改图",
     navCaptions: "字幕",
     navPro: "Pro",
-    heroTrust: ["不用空白 prompt", "参考风格不抄内容", "可编辑画布", "支持 9:16 / 4:5 / 1:1"],
+    heroTrust: ["不用空白 prompt", "先分镜再出片", "产品与概念都行", "AI 市场研究"],
     heroImageAlt: "产品相和 AI 风格分析",
     heroMascotAlt: "Alchemy 可爱烧瓶伙伴（护目镜）— 移动鼠标就会看不同方向",
     heroBeforeLabel: "之前",
@@ -391,6 +391,7 @@ export const zhCn = {
     tokensSeePricing: "看完整收费 →",
     finalTitle: "準備做好似代理的内容？",
     finalBody: "免费开始，上传一张产品照片，几分钟出第一个广告。",
+    finalImageAlt: "Alchemy 工作室创作与产品素材预览",
     proCanvasLink: "Pro 智能画布",
     captionsLink: "为任何视频加字幕、BGM 同口播",
     imageCanvasLink: "為任何图片加字和 Logo",
@@ -558,7 +559,9 @@ export const zhCn = {
 
   pricing: {
     badge: "简单 点数 定价",
-    title: "按创作量选计划",
+    title: "按创作量与喜好选择适合你的计划",
+    titleBefore: "按创作量与喜好",
+    titleHighlight: "选择适合你的计划",
     subtitle:
       "每个计划都包含 AI 图片和视频 点数。用多少付多少 — 订阅后可随时加购 点数。",
     pricingLink: "收费方案",

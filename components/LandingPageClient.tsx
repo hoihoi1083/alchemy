@@ -392,6 +392,10 @@ const LANDING_LAYOUT_CSS = `
   }
   .landing-canvas-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; }
   .landing-cta-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; }
+  .landing-final-cta-grid {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr) !important;
+    column-gap: 1.5rem !important;
+  }
   .landing-why-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
   .landing-scenarios-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
   .landing-pricing-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }

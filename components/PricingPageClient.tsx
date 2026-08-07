@@ -271,32 +271,6 @@ export function PricingPageClient() {
     }
   }
 
-  async function openPortal() {
-    setCheckoutError(null);
-    if (!isSignedIn) {
-      window.location.href = `/sign-in?redirect_url=${encodeURIComponent("/pricing")}`;
-      return;
-    }
-    setBusy("portal");
-    try {
-      const res = await fetch("/api/stripe/portal", { method: "POST" });
-      const raw = await res.text();
-      let data: { url?: string; error?: string } = {};
-      try {
-        data = raw ? (JSON.parse(raw) as { url?: string; error?: string }) : {};
-      } catch {
-        throw new Error(raw?.slice(0, 200) || p.checkoutError);
-      }
-      if (!res.ok || !data.url) {
-        throw new Error(data.error ?? p.checkoutError);
-      }
-      window.location.href = data.url;
-    } catch (e) {
-      setCheckoutError(e instanceof Error ? e.message : p.checkoutError);
-      setBusy(null);
-    }
-  }
-
   const cards = [
     {
       id: "free" as const,
@@ -462,36 +436,22 @@ export function PricingPageClient() {
               </div>
             ) : null}
 
-            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-              <Reveal>
-                <div className="max-w-xl">
-                  <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-                    {p.title}
-                  </h1>
-                  <p className="mt-2 text-sm text-slate-600">{p.subtitle}</p>
-                  {isSignedIn ? (
-                    <div className="mt-3 flex flex-wrap items-center gap-3">
-                      <Link
-                        href="/account"
-                        className="text-sm font-medium text-violet-700 underline-offset-2 hover:underline"
-                      >
-                        {m.auth.accountMenu}
-                      </Link>
-                      <button
-                        type="button"
-                        onClick={() => void openPortal()}
-                        disabled={busy === "portal"}
-                        className="text-sm font-medium text-slate-600 underline-offset-2 hover:underline disabled:opacity-60"
-                      >
-                        {busy === "portal" ? p.checkoutRedirecting : p.manageBilling}
-                      </button>
-                    </div>
-                  ) : null}
-                </div>
-              </Reveal>
+            <Reveal>
+              <div className="mx-auto max-w-3xl text-center">
+                <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl md:text-[2.75rem] md:leading-[1.15]">
+                  {p.titleBefore}
+                  <br />
+                  <span className="text-violet-600">{p.titleHighlight}</span>
+                </h1>
+                <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-slate-500 sm:text-[17px]">
+                  {p.subtitle}
+                </p>
+              </div>
+            </Reveal>
 
-              <Reveal delayMs={80} distance={28} scaleFrom={0.96}>
-                <div className="inline-flex max-w-full flex-wrap items-center gap-1 self-start rounded-full border border-slate-200 bg-slate-50 p-1">
+            <Reveal delayMs={80} distance={28} scaleFrom={0.96}>
+              <div className="mt-6 flex justify-center">
+                <div className="inline-flex max-w-full flex-wrap items-center justify-center gap-1 rounded-full border border-slate-200 bg-slate-50 p-1">
                   <button
                     type="button"
                     onClick={() => setInterval("monthly")}
@@ -514,8 +474,8 @@ export function PricingPageClient() {
                     {p.yearlyBadge}
                   </span>
                 </div>
-              </Reveal>
-            </div>
+              </div>
+            </Reveal>
 
             <div
               className="pricing-page-grid mt-8"
