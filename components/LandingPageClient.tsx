@@ -125,13 +125,13 @@ const LANDING_LAYOUT_CSS = `
   overflow: hidden !important;
   background-color: #06040f !important;
 }
+/* Scene fills the whole hero (copy + Why) so Why can stay transparent */
 .landing-hero-scene {
   position: absolute !important;
-  left: 0 !important;
-  right: 0 !important;
-  top: 0 !important;
+  inset: 0 !important;
   width: 100% !important;
-  height: min(70vh, 640px) !important;
+  height: auto !important;
+  min-height: 0 !important;
   overflow: hidden !important;
   z-index: 0 !important;
 }
@@ -204,18 +204,20 @@ const LANDING_LAYOUT_CSS = `
   right: 0 !important;
   bottom: 0 !important;
   pointer-events: none !important;
-  height: 7rem !important;
-  background: linear-gradient(to top, #06040f 0%, rgba(6, 4, 15, 0.85) 35%, transparent 100%) !important;
+  /* Soft fade only — keep Why readable without a solid opaque band */
+  height: 5rem !important;
+  background: linear-gradient(to top, rgba(6, 4, 15, 0.55), transparent) !important;
 }
 
-/* Why — directly under hero chips; solid dark so scene never shows through on prod */
+/* Why — transparent so hero scene shows through (pinned for local/prod) */
 .landing-why {
   position: relative !important;
   z-index: 2 !important;
   width: 100% !important;
   margin-top: 0.5rem !important;
   border-top: 0 !important;
-  background-color: #06040f !important;
+  background: transparent !important;
+  background-color: transparent !important;
   background-image: none !important;
   padding: 0.75rem 0 0 !important;
   box-sizing: border-box !important;
@@ -240,7 +242,8 @@ const LANDING_LAYOUT_CSS = `
   color: #f8fafc !important;
 }
 .landing-why p {
-  color: #94a3b8 !important;
+  color: #e2e8f0 !important; /* slate-200 — readable on dark / scene */
+  text-shadow: 0 1px 10px rgba(6, 4, 15, 0.65) !important;
 }
 @media (min-width: 768px) {
   .landing-why {
@@ -373,7 +376,6 @@ const LANDING_LAYOUT_CSS = `
   .landing-pricing-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
   .landing-capacity-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
   .landing-how-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
-  .landing-hero-scene { min-height: min(74vh, 680px) !important; height: min(74vh, 680px) !important; }
   .landing-hero-video { object-position: 70% 45% !important; }
 }
 
@@ -393,7 +395,6 @@ const LANDING_LAYOUT_CSS = `
   .landing-why-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
   .landing-scenarios-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
   .landing-pricing-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
-  .landing-hero-scene { min-height: min(78vh, 720px) !important; height: min(78vh, 720px) !important; }
   .landing-hero-video { object-position: 62% 48% !important; }
   .landing-hero-scrim-x {
     background: linear-gradient(
@@ -405,8 +406,8 @@ const LANDING_LAYOUT_CSS = `
     ) !important;
   }
   .landing-hero-scrim-y {
-    height: 8rem !important;
-    background: linear-gradient(to top, #06040f 0%, rgba(6, 4, 15, 0.9) 40%, transparent 100%) !important;
+    height: 5rem !important;
+    background: linear-gradient(to top, rgba(6, 4, 15, 0.5), transparent) !important;
   }
 }
 
@@ -423,14 +424,12 @@ const LANDING_LAYOUT_CSS = `
   .landing-why-grid { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; }
   .landing-scenarios-grid { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; }
   .landing-capacity-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
-  .landing-hero-scene { min-height: min(82vh, 780px) !important; height: min(82vh, 780px) !important; }
   .landing-hero-video { object-position: 58% 50% !important; }
 }
 
 /* Wide desktop — pricing 5-up + taller hero */
 @media (min-width: 1440px) {
   .landing-pricing-grid { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; }
-  .landing-hero-scene { min-height: min(84vh, 860px) !important; height: min(84vh, 860px) !important; }
   .landing-hero-video { object-position: center 50% !important; }
 }
 

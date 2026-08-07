@@ -244,7 +244,7 @@ export function LandingWhyDifferent() {
 									<h3 className="text-[13px] font-semibold leading-snug text-white md:text-sm">
 										{item.title}
 									</h3>
-									<p className="mt-1.5 text-[11px] leading-relaxed text-slate-400 md:text-xs">
+									<p className="mt-1.5 text-[11px] leading-relaxed text-slate-200 md:text-xs">
 										{item.body}
 									</p>
 								</div>
