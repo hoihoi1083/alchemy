@@ -7,7 +7,6 @@ import { LandingHero } from "@/components/landing/LandingHero";
 import { LandingHowItWorks } from "@/components/landing/LandingHowItWorks";
 import { LandingTemplatesShowcase } from "@/components/landing/LandingTemplatesShowcase";
 import { LandingWhyDifferent } from "@/components/landing/LandingWhyDifferent";
-import { LandingScenarios } from "@/components/landing/LandingScenarios";
 import { LandingPricingTeaser } from "@/components/landing/LandingPricingTeaser";
 import { LandingTokensAndFaq } from "@/components/landing/LandingTokensAndFaq";
 import { LandingFinalCta } from "@/components/landing/LandingFinalCta";
@@ -543,7 +542,6 @@ export function LandingPageClient() {
 						{/* Sections own their Reveal stagger — avoid wrapping whole blocks twice */}
 						<LandingStoryWheel />
 						<LandingTemplatesShowcase />
-						<LandingScenarios />
 						<LandingPricingTeaser />
 						<LandingTokensAndFaq />
 						<LandingProductTools />

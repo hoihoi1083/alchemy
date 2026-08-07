@@ -11,14 +11,33 @@ import { PRODUCT_LOGO_ALT, PRODUCT_LOGO_SRC, PRODUCT_NAME } from "@/lib/brand";
 /** Home + section anchors + product tool routes. */
 const NAV = [
 	{ href: "/", key: "navHome" as const },
-	{ href: "/#templates", key: "navTemplates" as const },
 	{ href: "/#how", key: "navHow" as const },
 	{ href: "/pricing", key: "navPricing" as const },
-	{ href: "/#use-cases", key: "navUseCases" as const },
+	/** Label comes from tpl title so it always matches the templates section. */
+	{ href: "/#templates", key: "navPlatforms" as const },
 	{ href: "/captions", key: "navCaptions" as const },
 	{ href: "/edit-image", key: "navEditImage" as const },
 	{ href: "/pro", key: "navPro" as const },
 ];
+
+function navLabel(
+	key: (typeof NAV)[number]["key"],
+	L: {
+		navHome: string;
+		navHow: string;
+		navPricing: string;
+		navCaptions: string;
+		navEditImage: string;
+		navPro: string;
+		tplTitleBefore: string;
+		tplTitleHighlight: string;
+	},
+) {
+	if (key === "navPlatforms") {
+		return `${L.tplTitleBefore}${L.tplTitleHighlight}`;
+	}
+	return L[key];
+}
 
 /** Full-bleed bar; nav sits next to logo (no bottom rule). */
 export function LandingNav() {
@@ -52,7 +71,7 @@ export function LandingNav() {
 							href={item.href}
 							className="whitespace-nowrap text-[12px] font-medium text-slate-600 hover:text-violet-700 xl:text-[13px]"
 						>
-							{L[item.key]}
+							{navLabel(item.key, L)}
 						</Link>
 					))}
 				</nav>
@@ -96,7 +115,7 @@ export function LandingNav() {
 								className="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-violet-50 hover:text-violet-700"
 								onClick={() => setOpen(false)}
 							>
-								{L[item.key]}
+								{navLabel(item.key, L)}
 							</Link>
 						))}
 						{!isSignedIn ? (

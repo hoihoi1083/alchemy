@@ -244,7 +244,12 @@ export function LandingTemplatesShowcase() {
   const rowRef = useRef<HTMLDivElement>(null);
   const lastFeatured = useRef(0);
 
-  const platformTags = [L.tplPlatformIg, L.tplPlatformFb, L.tplPlatformXhs, L.tplPlatformX];
+  const platformLogos = [
+    { id: "instagram", label: L.tplPlatformIg, src: "/images/landing/platform-instagram.svg" },
+    { id: "facebook", label: L.tplPlatformFb, src: "/images/landing/platform-facebook.svg" },
+    { id: "xhs", label: L.tplPlatformXhs, src: "/images/landing/platform-xhs.png?v=2" },
+    { id: "x", label: L.tplPlatformX, src: "/images/landing/platform-x.svg" },
+  ] as const;
   const formatTags = [L.tplFormatImage, L.tplFormatCarousel, L.tplFormatReels, L.tplFormatVideo];
 
   useEffect(() => {
@@ -290,19 +295,14 @@ export function LandingTemplatesShowcase() {
             <span className="text-violet-600">{L.tplTitleHighlight}</span>
             {L.tplTitleAfter}
           </h2>
-          <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-relaxed text-slate-600 md:text-base">
-            {L.tplSubtitle}
-          </p>
         </Reveal>
 
         <Reveal delayMs={80}>
-          <div className="mt-7 flex flex-wrap justify-center gap-2" aria-label={L.tplPlatformsLabel}>
-            {platformTags.map((label) => (
-              <span
-                key={label}
-                className="landing-tpl-chip rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-medium text-slate-700 md:text-sm"
-              >
-                {label}
+          <div className="mt-7 flex flex-wrap items-center justify-center gap-5" aria-label={L.tplPlatformsLabel}>
+            {platformLogos.map((p) => (
+              <span key={p.id} title={p.label} className="inline-flex items-center justify-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={p.src} alt={p.label} className="h-10 w-10 rounded-[10px] object-contain sm:h-11 sm:w-11" />
               </span>
             ))}
           </div>
