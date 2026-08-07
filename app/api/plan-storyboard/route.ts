@@ -3,14 +3,15 @@ import { requireAppUser } from "@/lib/require-app-user";
 import { assertFreeDeepSeekQuota } from "@/lib/rate-limit-deepseek";
 import type { PromptMarket, SubjectFraming } from "@/lib/prompt-variables";
 import { planVideoStoryboard } from "@/lib/video-storyboard-plan";
-import type { StoryboardSceneCount } from "@/lib/ad-pack-preferences";
+import type { BrandProfile } from "@/lib/brand-profile";
+import { parseBrandKit } from "@/lib/brand-kit";
+import { parseStoryboardSceneCount } from "@/lib/ad-pack-preferences";
+import { brandKitWantsLogo } from "@/lib/brand-merge";
 import { mergePromptExtra, type VisualStyleId } from "@/lib/visual-styles";
 import { resolveArtStyleId } from "@/lib/art-style";
 import { parseStrategyFromFormData } from "@/lib/reference-strategy";
 import { isPromotionMode } from "@/lib/promotion-mode";
 import { wizardPromoteName } from "@/lib/wizard-promote-name";
-import type { BrandProfile } from "@/lib/brand-profile";
-import { parseBrandKit } from "@/lib/brand-kit";
 
 export const runtime = "nodejs";
 export const maxDuration = 90;
@@ -66,10 +67,9 @@ export async function POST(request: Request) {
     if (Number.isNaN(n)) return 10;
     return Math.min(15, Math.max(4, n));
   })();
-  const sceneCountRaw = (formData.get("scene_count") as string | null)?.trim() || "auto";
-  const sceneCountTarget = (
-    ["auto", "4", "5", "6", "7"].includes(sceneCountRaw) ? sceneCountRaw : "auto"
-  ) as StoryboardSceneCount;
+  const sceneCountTarget = parseStoryboardSceneCount(
+    (formData.get("scene_count") as string | null)?.trim() || "auto",
+  );
   const visualStyle = ((formData.get("visual_style") as string | null)?.trim() ||
     "storyboard-video") as VisualStyleId;
   const artStyleId = resolveArtStyleId((formData.get("art_style") as string | null)?.trim());
@@ -91,7 +91,7 @@ export async function POST(request: Request) {
   if (brandKitRaw) {
     try {
       const kit = parseBrandKit(JSON.parse(brandKitRaw));
-      useBrandLogo = Boolean(kit.useBrandLogo && kit.logoUrl?.trim());
+      useBrandLogo = brandKitWantsLogo(kit);
     } catch {
       /* ignore */
     }

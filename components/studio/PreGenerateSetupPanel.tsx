@@ -13,6 +13,7 @@ import type { UserReferenceBrief } from "@/lib/user-reference-brief";
 import { requiresBrandProfileForImages } from "@/lib/visual-styles";
 import { studioPhasesForMode } from "@/lib/studio-phases";
 import { estimateImageTokens } from "@/lib/billing/token-costs";
+import { STORYBOARD_SCENE_COUNTS } from "@/lib/ad-pack-preferences";
 
 const PANEL_CSS = `
 .pg-page {
@@ -1430,10 +1431,9 @@ export function PreGenerateSetupPanel({
                             )
                           }
                         >
-                          <option value="auto">{m.wizard.storyboardSceneCountAuto}</option>
-                          {[2, 3, 4, 5, 6].map((n) => (
-                            <option key={n} value={String(n)}>
-                              {n}
+                          {STORYBOARD_SCENE_COUNTS.map((n) => (
+                            <option key={n} value={n}>
+                              {n === "auto" ? m.wizard.storyboardSceneCountAuto : n}
                             </option>
                           ))}
                         </select>

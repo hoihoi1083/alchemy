@@ -1,4 +1,4 @@
-export const MIN_STORYBOARD_SCENES = 3;
+export const MIN_STORYBOARD_SCENES = 2;
 export const MAX_STORYBOARD_SCENES = 9;
 
 export type StoryboardScenePlan = {

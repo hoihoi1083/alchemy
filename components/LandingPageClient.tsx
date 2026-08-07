@@ -145,10 +145,27 @@ const LANDING_LAYOUT_CSS = `
   background: linear-gradient(to top, #06040f, transparent) !important;
 }
 
-/* Why section — seamless dark extension under hero */
+/* Why section — seamless dark extension under hero (pinned: local/prod match) */
 .landing-why {
   margin-top: -1px !important; /* kill subpixel seam */
   border-top: 0 !important;
+  background-color: #06040f !important;
+  background-image:
+    radial-gradient(ellipse at 20% 0%, rgba(108, 59, 255, 0.28), transparent 55%),
+    radial-gradient(ellipse at 85% 30%, rgba(139, 92, 246, 0.18), transparent 50%),
+    radial-gradient(ellipse at 50% 100%, rgba(76, 29, 149, 0.22), transparent 55%) !important;
+  padding: 3.5rem 0 5rem !important;
+}
+.landing-why-inner {
+  max-width: 1440px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding-left: 1.25rem !important;
+  padding-right: 1.25rem !important;
+}
+.landing-why-grid {
+  margin-top: 2.5rem !important;
+  gap: 2rem 1rem !important;
 }
 .landing-why h2 {
   color: #fff !important;
@@ -158,6 +175,27 @@ const LANDING_LAYOUT_CSS = `
 }
 .landing-why p {
   color: #94a3b8 !important;
+}
+@media (min-width: 768px) {
+  .landing-why {
+    padding: 4rem 0 6rem !important;
+  }
+  .landing-why-inner {
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+  }
+  .landing-why-grid {
+    margin-top: 3rem !important;
+    gap: 2rem 1.25rem !important;
+  }
+}
+@media (min-width: 1024px) {
+  .landing-why {
+    padding: 5rem 0 7rem !important;
+  }
+  .landing-why-grid {
+    margin-top: 3.5rem !important;
+  }
 }
 
 /* Transform mock — fill left column (bigger look); pinned so local/prod match */

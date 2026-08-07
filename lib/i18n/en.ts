@@ -455,28 +455,28 @@ export const en = {
     whyTitle: "Why Alchemy AI Lab is different",
     whyItems: [
       {
-        title: "Guided, not blank-prompt",
-        body: "MicroWizard asks one decision at a time — no empty chat box to fill.",
+        title: "Prompt-free",
+        body: "First prompt-free AI tool. Hassle-free guidance by MicroWizard. Deliver delicate content with few simple steps.",
       },
       {
-        title: "Reference, not copy",
-        body: "We learn style and layout from references while keeping your product and message.",
+        title: "Intelligent market research",
+        body: "See what’s trending now. Reference updated styles instead of wild guessing.",
       },
       {
-        title: "Storyboard when you need it",
-        body: "Image→video paths confirm stills first. Video-only paths go straight to the clip.",
+        title: "Storyboard first",
+        body: "Lock every scene before full render. Zero wasted tokens.",
       },
       {
         title: "Editable output",
-        body: "Fix text, logo, and layout after generation instead of regenerating everything.",
+        body: "Tweak any detail after generation. Instant fixes. No restart required.",
       },
       {
-        title: "Products & concepts",
-        body: "Physical SKUs and service / brand concepts both have dedicated paths.",
+        title: "Products & Concepts",
+        body: "Physical products, services, concepts, or abstract ideas work just as well.",
       },
       {
-        title: "Token-based pricing",
-        body: "Pay for what you generate. Plans include monthly tokens; top up when you need more.",
+        title: "Subscription + Token",
+        body: "Join basic plan and top up only when needed.",
       },
     ],
     scenariosTitle: "Built for every marketing scenario",

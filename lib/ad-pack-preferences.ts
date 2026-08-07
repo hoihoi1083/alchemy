@@ -19,9 +19,24 @@ export function musicMoodHint(mood: MusicMood): string {
 }
 
 /** Storyboard scene count — auto lets DeepSeek choose inside duration range. */
-export type StoryboardSceneCount = "auto" | "4" | "5" | "6" | "7";
+export type StoryboardSceneCount = "auto" | "2" | "3" | "4" | "5" | "6" | "7";
 
-export const STORYBOARD_SCENE_COUNTS: StoryboardSceneCount[] = ["auto", "4", "5", "6", "7"];
+export const STORYBOARD_SCENE_COUNTS: StoryboardSceneCount[] = [
+  "auto",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+];
+
+export function parseStoryboardSceneCount(raw: string | null | undefined): StoryboardSceneCount {
+  const v = (raw ?? "auto").trim();
+  return (STORYBOARD_SCENE_COUNTS as readonly string[]).includes(v)
+    ? (v as StoryboardSceneCount)
+    : "auto";
+}
 
 /** TTS locale for scripted voiceover dub. */
 export type VoiceoverLocale = "hk" | "en" | "cn";

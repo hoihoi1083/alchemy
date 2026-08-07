@@ -334,12 +334,30 @@ export const zhCn = {
     tplTabService: "服务业",
     whyTitle: "为什么Alchemy AI Lab 不同",
     whyItems: [
-      { title: "引导式，唔係空白框", body: "MicroWizard 一次一个决定，不用面对空白 chat。" },
-      { title: "参考风格，不抄内容", body: "學排版同色调，保留你的产品同信息。" },
-      { title: "需要先分镜先分镜", body: "先圖後片會确认静帧；只要视频就直接出片。" },
-      { title: "输出可再编辑", body: "生成後改字、Logo、排版，不用整套重跑。" },
-      { title: "产品同概念都行", body: "实物产品 同服務／品牌概念各自有路径。" },
-      { title: "点数计费", body: "用多少付多少；計劃包月点数，用完可加购。" },
+      {
+        title: "免写 Prompt",
+        body: "首个免 Prompt AI 工具。MicroWizard 一步一步带你，几个简单步骤就出精致内容。",
+      },
+      {
+        title: "智能市场研究",
+        body: "看清现在什么最火。参考最新风格，不用乱猜。",
+      },
+      {
+        title: "先分镜再出片",
+        body: "全片渲染前锁定每个场景，不会白费点数。",
+      },
+      {
+        title: "输出可再编辑",
+        body: "生成后即改细节。即时修正，不用整套重跑。",
+      },
+      {
+        title: "产品与概念都行",
+        body: "实体产品、服务、概念以至抽象意念都一样好用。",
+      },
+      {
+        title: "订阅 + 点数",
+        body: "加入基本方案，需要时再加购点数。",
+      },
     ],
     scenariosTitle: "覆盖常見营销场景",
     scenariosSubtitle: "选贴近你下一个 campaign 的行业方向。",

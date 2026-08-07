@@ -65,6 +65,73 @@ describe("parseVideoStoryboardPlan scene/prompt sync", () => {
     assert.match(plan.seedancePrompt, /Scene\s*6/i);
     assert.match(plan.seedancePrompt, /textless|captions/i);
   });
+
+  it("trims to exactly 2 scenes when user selects 2", () => {
+    const plan = parseVideoStoryboardPlan(
+      {
+        title: "Demo",
+        theme: "alchemy",
+        visualDirection: "clean",
+        totalDurationSec: 8,
+        scenes: [
+          {
+            imageIndex: 1,
+            role: "hook",
+            startSec: 0,
+            endSec: 2,
+            sceneDescriptionZh: "开场",
+            onImageCopyZh: "不用写 Prompt",
+            imagePrompt: "hook still",
+          },
+          {
+            imageIndex: 2,
+            role: "demo",
+            startSec: 2,
+            endSec: 4,
+            sceneDescriptionZh: "上传",
+            onImageCopyZh: "上传产品图",
+            imagePrompt: "demo still",
+          },
+          {
+            imageIndex: 3,
+            role: "edit",
+            startSec: 4,
+            endSec: 6,
+            sceneDescriptionZh: "编辑",
+            onImageCopyZh: "自动生成可编辑 Prompt",
+            imagePrompt: "edit still",
+          },
+          {
+            imageIndex: 4,
+            role: "cta",
+            startSec: 6,
+            endSec: 8,
+            sceneDescriptionZh: "结尾",
+            onImageCopyZh: "试试 Alchemy AI Lab",
+            imagePrompt: "cta still",
+          },
+          {
+            imageIndex: 5,
+            role: "extra",
+            startSec: 8,
+            endSec: 10,
+            sceneDescriptionZh: "多余",
+            onImageCopyZh: "马上试",
+            imagePrompt: "extra still",
+          },
+        ],
+        seedancePrompt:
+          "Scene 1 [0-2s]: hook. Scene 2 [2-4s]: demo. Scene 3 [4-6s]: edit. Scene 4 [6-8s]: cta. Scene 5 [8-10s]: extra.",
+        productionNotes: "",
+      },
+      8,
+      "2",
+    );
+    assert.equal(plan.scenes.length, 2);
+    assert.equal(plan.scenes[0]?.imageIndex, 1);
+    assert.equal(plan.scenes[1]?.imageIndex, 2);
+    assert.equal(plan.scenes[1]?.endSec, 8);
+  });
 });
 
 describe("video-storyboard-plan reel analysis", () => {

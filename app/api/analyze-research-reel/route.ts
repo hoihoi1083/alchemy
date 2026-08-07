@@ -10,8 +10,7 @@ import type { PromptMarket, SubjectFraming } from "@/lib/prompt-variables";
 import { isPromotionMode } from "@/lib/promotion-mode";
 import { wizardPromoteName } from "@/lib/wizard-promote-name";
 import { resolveArtStyleId } from "@/lib/art-style";
-import type { StoryboardSceneCount } from "@/lib/ad-pack-preferences";
-import { STORYBOARD_SCENE_COUNTS } from "@/lib/ad-pack-preferences";
+import { parseStoryboardSceneCount } from "@/lib/ad-pack-preferences";
 import type { ReferenceStrategyKind } from "@/lib/reference-strategy";
 import { parseBrandKit } from "@/lib/brand-kit";
 
@@ -56,10 +55,9 @@ export async function POST(request: Request) {
   const referenceStrategyKind = String(formData.get("reference_strategy_kind") ?? "").trim() as
     | ReferenceStrategyKind
     | "";
-  const sceneCountRaw = String(formData.get("scene_count") ?? "auto").trim();
-  const sceneCountTarget = (STORYBOARD_SCENE_COUNTS as readonly string[]).includes(sceneCountRaw)
-    ? (sceneCountRaw as StoryboardSceneCount)
-    : "auto";
+  const sceneCountTarget = parseStoryboardSceneCount(
+    String(formData.get("scene_count") ?? "auto"),
+  );
   const product = wizardPromoteName({
     promotionMode,
     product: String(formData.get("product_name") ?? "").trim(),

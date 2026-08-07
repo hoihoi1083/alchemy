@@ -5,6 +5,7 @@ import { clampImageResolution } from "@/lib/billing/entitlements";
 import { getUserPlan } from "@/lib/billing/get-user-plan";
 import { estimateImageTokens, TOKEN_COST } from "@/lib/billing/token-costs";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
+import { parseStoryboardSceneCount } from "@/lib/ad-pack-preferences";
 import type { BrandProfile } from "@/lib/brand-profile";
 import { parseBrandKit } from "@/lib/brand-kit";
 import { brandKitForGeneration, brandKitWantsLogo } from "@/lib/brand-merge";
@@ -33,7 +34,6 @@ import {
 import { mergePromptExtra, type VisualStyleId } from "@/lib/visual-styles";
 import { resolveArtStyleId, artStyleSystemPrompt } from "@/lib/art-style";
 import { planVideoStoryboard, parseVideoStoryboardPlan } from "@/lib/video-storyboard-plan";
-import type { StoryboardSceneCount } from "@/lib/ad-pack-preferences";
 import type { StoryboardSceneResult, VideoStoryboardPlan } from "@/lib/video-storyboard-types";
 import {
   parseStrategyFromFormData,
@@ -195,10 +195,9 @@ export async function POST(request: Request) {
   const durationSec = parseDurationSec(
     (formData.get("duration") as string | null)?.trim() || "8",
   );
-  const sceneCountRaw = (formData.get("scene_count") as string | null)?.trim() || "auto";
-  const sceneCountTarget = (
-    ["auto", "4", "5", "6", "7"].includes(sceneCountRaw) ? sceneCountRaw : "auto"
-  ) as StoryboardSceneCount;
+  const sceneCountTarget = parseStoryboardSceneCount(
+    (formData.get("scene_count") as string | null)?.trim() || "auto",
+  );
   const aspectRatio = aspectRatioForApi(
     (formData.get("aspect_ratio") as string | null)?.trim() || "9:16",
   );
