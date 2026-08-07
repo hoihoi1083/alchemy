@@ -21,7 +21,7 @@ export function PresenterAvatarPicker({
 }: PresenterAvatarPickerProps) {
   const { locale, m } = useLocale();
   const w = m.wizard.presenterPicker;
-  const isZh = locale === "zh" || locale === "zh-cn";
+  const isZh = locale === "zh" || locale === "zh-cn" || locale === "zh-tw";
 
   return (
     <div className="rounded-xl border border-violet-800/50 bg-violet-950/25 p-4">

@@ -8,6 +8,7 @@ import { useWizard } from "@/components/studio/WizardContext";
 import type { ConceptSource } from "@/lib/concept-source-state";
 import type { IntakePath } from "@/lib/wizard-micro-steps.types";
 import type { WorkflowMode } from "@/lib/workflow-mode";
+import { studioPhasesForMode } from "@/lib/studio-phases";
 
 type TabId = "research" | "direct";
 
@@ -324,7 +325,7 @@ export function IntakeFuseStep({
       <style dangerouslySetInnerHTML={{ __html: FUSE_CSS }} />
 
       {showPhaseStepper ? (
-        <PhaseStepper phases={m.start.phases} activeIndex={2} />
+        <PhaseStepper phases={studioPhasesForMode(m.start, workflowMode)} activeIndex={2} />
       ) : null}
 
       <div className="if-panel mt-3">

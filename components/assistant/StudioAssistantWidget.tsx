@@ -451,9 +451,12 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
     surface === "studio" &&
     (wizardStepKey === "setup" || wizardStepKey === "image" || wizardStepKey === "video");
 
-  const launcherBottom = studioMobileBarVisible
-    ? "max(calc(4.75rem + env(safe-area-inset-bottom)), 5.5rem)"
-    : "max(1.25rem, env(safe-area-inset-bottom))";
+  const launcherBottom =
+    surface === "studio"
+      ? "max(calc(5.75rem + env(safe-area-inset-bottom)), 6.75rem)"
+      : studioMobileBarVisible
+        ? "max(calc(4.75rem + env(safe-area-inset-bottom)), 5.5rem)"
+        : "max(1.25rem, env(safe-area-inset-bottom))";
 
   return (
     <div

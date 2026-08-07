@@ -35,7 +35,15 @@ type TxRow = {
 function formatDate(iso: string, locale: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString(locale === "zh-cn" ? "zh-CN" : locale === "zh" ? "zh-HK" : "en-US", {
+  return d.toLocaleString(
+    locale === "zh-cn"
+      ? "zh-CN"
+      : locale === "zh-tw"
+        ? "zh-TW"
+        : locale === "zh"
+          ? "zh-HK"
+          : "en-US",
+    {
     dateStyle: "medium",
     timeStyle: "short",
   });

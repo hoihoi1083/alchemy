@@ -7,6 +7,7 @@ import { Reveal } from "@/components/landing/Reveal";
 const MOCK_BY_LOCALE = {
 	zh: "/images/landing/landing-transform-mock.png?v=14",
 	"zh-cn": "/images/landing/landing-transform-mock-zh-cn.png?v=14",
+	"zh-tw": "/images/landing/landing-transform-mock.png?v=14",
 	en: "/images/landing/landing-transform-mock-en.png?v=14",
 } as const;
 

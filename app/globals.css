@@ -204,3 +204,385 @@ footer.site-footer a.site-footer-logo:focus {
     display: flex !important;
   }
 }
+
+/* —— How it works: live UI motion on top of step stills (all 4 cards) —— */
+@keyframes landing-how-ken {
+  0%,
+  100% {
+    transform: scale(1.03) translate3d(0, 0, 0);
+  }
+  50% {
+    transform: scale(1.09) translate3d(-1%, -0.8%, 0);
+  }
+}
+@keyframes landing-how-sheen {
+  0% {
+    transform: translateX(-130%) skewX(-16deg);
+    opacity: 0;
+  }
+  18% {
+    opacity: 0.45;
+  }
+  42%,
+  100% {
+    transform: translateX(140%) skewX(-16deg);
+    opacity: 0;
+  }
+}
+@keyframes landing-how-box {
+  0%,
+  100% {
+    box-shadow: inset 0 0 0 2px rgba(139, 92, 246, 0.25);
+    opacity: 0.55;
+  }
+  50% {
+    box-shadow: inset 0 0 0 2px rgba(139, 92, 246, 0.95);
+    opacity: 1;
+  }
+}
+@keyframes landing-how-orb {
+  0%,
+  100% {
+    transform: translateX(-50%) scale(0.92);
+    opacity: 0.75;
+    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.5);
+  }
+  50% {
+    transform: translateX(-50%) scale(1.08);
+    opacity: 1;
+    box-shadow: 0 0 0 14px rgba(139, 92, 246, 0);
+  }
+}
+@keyframes landing-how-spark {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  70% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+@keyframes landing-how-scan {
+  0% {
+    top: 18%;
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    top: 68%;
+    opacity: 0;
+  }
+}
+@keyframes landing-how-cross {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.08);
+  }
+}
+@keyframes landing-how-swatch {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: scale(0.92);
+  }
+  40%,
+  55% {
+    opacity: 1;
+    transform: scale(1.06);
+    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.9);
+  }
+}
+@keyframes landing-how-brain {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.94);
+    box-shadow: 0 0 0 0 rgba(167, 139, 250, 0.5);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+    box-shadow: 0 0 24px 4px rgba(167, 139, 250, 0.45);
+  }
+}
+@keyframes landing-how-scene {
+  0%,
+  18%,
+  100% {
+    opacity: 0.2;
+    box-shadow: inset 0 0 0 0 rgba(139, 92, 246, 0);
+  }
+  25%,
+  45% {
+    opacity: 1;
+    box-shadow: inset 0 0 0 2px rgba(139, 92, 246, 0.95);
+  }
+}
+@keyframes landing-how-playhead {
+  0% {
+    left: 0%;
+  }
+  100% {
+    left: 72%;
+  }
+}
+@keyframes landing-how-play-pulse {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(0.92);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.08);
+    opacity: 1;
+  }
+}
+@keyframes landing-how-play-sm {
+  0%,
+  100% {
+    transform: scale(0.94);
+    opacity: 0.75;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+}
+@keyframes landing-how-sel {
+  0%,
+  100% {
+    opacity: 0.45;
+    box-shadow: inset 0 0 0 1.5px rgba(139, 92, 246, 0.35);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: inset 0 0 0 2px rgba(139, 92, 246, 0.95);
+  }
+}
+@keyframes landing-how-sel-alt {
+  0%,
+  100% {
+    opacity: 0.35;
+    box-shadow: inset 0 0 0 1.5px rgba(139, 92, 246, 0.3);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: inset 0 0 0 2px rgba(139, 92, 246, 0.95);
+  }
+}
+
+.landing-how-live__bg {
+  transform: scale(1.03);
+  will-change: transform;
+}
+.landing-how-live__sheen {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  width: 42%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.38),
+    transparent
+  );
+  opacity: 0;
+}
+.landing-how-live__box,
+.landing-how-live__orb,
+.landing-how-live__spark,
+.landing-how-live__scan,
+.landing-how-live__crosshair,
+.landing-how-live__swatch,
+.landing-how-live__brain,
+.landing-how-live__scene,
+.landing-how-live__timeline,
+.landing-how-live__play,
+.landing-how-live__sel {
+  opacity: 0;
+}
+.landing-how-live__crosshair::before,
+.landing-how-live__crosshair::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  background: rgba(167, 139, 250, 0.95);
+}
+.landing-how-live__crosshair::before {
+  width: 2px;
+  height: 100%;
+  transform: translate(-50%, -50%);
+}
+.landing-how-live__crosshair::after {
+  width: 100%;
+  height: 2px;
+  transform: translate(-50%, -50%);
+}
+.landing-how-live__handle {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1.5px solid rgb(139, 92, 246);
+  transform: translate(-50%, -50%);
+}
+.landing-how-live__handle.right-0 {
+  left: 100%;
+}
+.landing-how-live__handle.left-0 {
+  left: 0;
+}
+.landing-how-live__handle.top-0 {
+  top: 0;
+}
+.landing-how-live__handle.bottom-0 {
+  top: 100%;
+}
+.landing-how-live__spark {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #c4b5fd;
+  box-shadow: 0 0 8px #a78bfa;
+}
+.landing-how-live__spark--a {
+  top: 30%;
+  right: 18%;
+}
+.landing-how-live__spark--b {
+  top: 42%;
+  right: 12%;
+}
+.landing-how-live__spark--c {
+  top: 36%;
+  right: 28%;
+}
+.landing-how-live__scan {
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(196, 181, 253, 0.45),
+    transparent
+  );
+}
+.landing-how-live__swatch {
+  background: rgba(139, 92, 246, 0.55);
+}
+.landing-how-live__playhead {
+  left: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .landing-how-live--on .landing-how-live__bg {
+    animation: landing-how-ken 8s ease-in-out infinite;
+  }
+  .landing-how-live--on .landing-how-live__sheen {
+    animation: landing-how-sheen 4.8s ease-in-out infinite;
+  }
+
+  /* Step 1 */
+  .landing-how-live--on .landing-how-live__box--upload {
+    animation: landing-how-box 2.8s ease-in-out infinite;
+  }
+  .landing-how-live--on .landing-how-live__box--ref {
+    animation: landing-how-box 2.8s ease-in-out 1.4s infinite;
+  }
+  .landing-how-live--on .landing-how-live__orb--upload {
+    animation: landing-how-orb 2.2s ease-out infinite;
+  }
+  .landing-how-live--on .landing-how-live__spark--a {
+    animation: landing-how-spark 2.4s ease-in-out infinite;
+  }
+  .landing-how-live--on .landing-how-live__spark--b {
+    animation: landing-how-spark 2.4s ease-in-out 0.4s infinite;
+  }
+  .landing-how-live--on .landing-how-live__spark--c {
+    animation: landing-how-spark 2.4s ease-in-out 0.8s infinite;
+  }
+
+  /* Step 2 */
+  .landing-how-live--on .landing-how-live__scan {
+    animation: landing-how-scan 2.8s ease-in-out infinite;
+  }
+  .landing-how-live--on .landing-how-live__crosshair {
+    animation: landing-how-cross 2s ease-in-out infinite;
+  }
+  .landing-how-live--on .landing-how-live__swatch--0 {
+    animation: landing-how-swatch 3.6s ease-in-out infinite;
+  }
+  .landing-how-live--on .landing-how-live__swatch--1 {
+    animation: landing-how-swatch 3.6s ease-in-out 0.7s infinite;
+  }
+  .landing-how-live--on .landing-how-live__swatch--2 {
+    animation: landing-how-swatch 3.6s ease-in-out 1.4s infinite;
+  }
+  .landing-how-live--on .landing-how-live__brain {
+    animation: landing-how-brain 2.4s ease-in-out infinite;
+  }
+
+  /* Step 3 */
+  .landing-how-live--on .landing-how-live__scene--0 {
+    animation: landing-how-scene 4.5s ease-in-out infinite;
+  }
+  .landing-how-live--on .landing-how-live__scene--1 {
+    animation: landing-how-scene 4.5s ease-in-out 1.5s infinite;
+  }
+  .landing-how-live--on .landing-how-live__scene--2 {
+    animation: landing-how-scene 4.5s ease-in-out 3s infinite;
+  }
+  .landing-how-live--on .landing-how-live__timeline {
+    opacity: 1;
+  }
+  .landing-how-live--on .landing-how-live__playhead {
+    animation: landing-how-playhead 4.5s linear infinite;
+  }
+  .landing-how-live--on .landing-how-live__play--sm {
+    animation: landing-how-play-sm 1.8s ease-in-out infinite;
+  }
+
+  /* Step 4 */
+  .landing-how-live--on .landing-how-live__sel--text {
+    animation: landing-how-sel 2.4s ease-in-out infinite;
+  }
+  .landing-how-live--on .landing-how-live__sel--logo {
+    animation: landing-how-sel-alt 2.4s ease-in-out 1.2s infinite;
+  }
+  .landing-how-live--on .landing-how-live__play--lg {
+    animation: landing-how-play-pulse 2s ease-in-out infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-how-live__bg {
+    transform: none !important;
+  }
+  .landing-how-live__box,
+  .landing-how-live__orb,
+  .landing-how-live__sel,
+  .landing-how-live__play,
+  .landing-how-live__scene,
+  .landing-how-live__brain,
+  .landing-how-live__timeline {
+    opacity: 0.85 !important;
+  }
+}
+

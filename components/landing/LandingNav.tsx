@@ -8,15 +8,15 @@ import { LanguageToggle } from "@/components/LanguageToggle";
 import { useLocale } from "@/components/LocaleProvider";
 import { PRODUCT_LOGO_ALT, PRODUCT_LOGO_SRC, PRODUCT_NAME } from "@/lib/brand";
 
-/** Section anchors + product tool routes (via `/` for legal pages). */
+/** Home + section anchors + product tool routes. */
 const NAV = [
-	{ href: "/#product", key: "navProduct" as const },
-	{ href: "/#how", key: "navHow" as const },
-	{ href: "/#brand-kit", key: "navBrandKit" as const },
+	{ href: "/", key: "navHome" as const },
 	{ href: "/#templates", key: "navTemplates" as const },
+	{ href: "/#how", key: "navHow" as const },
 	{ href: "/pricing", key: "navPricing" as const },
-	{ href: "/edit-image", key: "navEditImage" as const },
+	{ href: "/#use-cases", key: "navUseCases" as const },
 	{ href: "/captions", key: "navCaptions" as const },
+	{ href: "/edit-image", key: "navEditImage" as const },
 	{ href: "/pro", key: "navPro" as const },
 ];
 

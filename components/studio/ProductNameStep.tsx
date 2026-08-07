@@ -1,6 +1,8 @@
 "use client";
 
 import { useLocale } from "@/components/LocaleProvider";
+import { useWizard } from "@/components/studio/WizardContext";
+import { studioPhasesForMode } from "@/lib/studio-phases";
 
 type Props = {
   value: string;
@@ -152,6 +154,7 @@ export function ProductNameStep({
   variant = "product",
 }: Props) {
   const { m } = useLocale();
+  const wizard = useWizard();
   const pn =
     variant === "concept" ? m.microWizard.conceptNameStep : m.microWizard.productNameStep;
   const trimmed = value.trim();
@@ -162,7 +165,7 @@ export function ProductNameStep({
       <style dangerouslySetInnerHTML={{ __html: PANEL_CSS }} />
 
       {showPhaseStepper ? (
-        <PhaseStepper phases={m.start.phases} activeIndex={2} />
+        <PhaseStepper phases={studioPhasesForMode(m.start, wizard.workflowMode)} activeIndex={2} />
       ) : null}
 
       <div className="pn-panel mt-3">

@@ -235,6 +235,15 @@ export function VideoResultPanel({
   }
 
   const videoUrl = preview?.videoUrl ?? wizard?.videoUrl ?? null;
+  const failed = Boolean(wizard?.error) && !videoUrl && !wizard?.videoBusy;
+  const statusTitle = failed
+    ? m.wizard.videoReviewFailedTitle
+    : m.wizard.videoReviewCompleteTitle;
+  const statusBody = failed
+    ? m.wizard.videoReviewFailedBody
+    : videoUrl
+      ? m.wizard.videoReviewCompleteBody
+      : m.wizard.videoReviewCompleteEmpty;
   const resolvedProductLabel = preview?.productLabel
     ? preview.productLabel
     : wizard
@@ -308,7 +317,10 @@ export function VideoResultPanel({
   return (
     <div className="space-y-6 sm:space-y-8">
       <style dangerouslySetInnerHTML={{ __html: VIDEO_REVIEW_LAYOUT_CSS }} />
-      <ImageReviewStepper activeIndex={4} />
+      <ImageReviewStepper
+        workflowMode={wizard?.workflowMode ?? null}
+        kind="video"
+      />
 
       <div className="video-review-header">
         <div className="min-w-0 shrink-0">
@@ -327,19 +339,19 @@ export function VideoResultPanel({
         <div className="video-review-header-cards">
           <div className="flex min-w-0 flex-1 items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
             <span
-              className="mt-0.5 flex shrink-0 items-center justify-center rounded-full bg-emerald-500 text-base font-bold text-white"
+              className={`mt-0.5 flex shrink-0 items-center justify-center rounded-full text-base font-bold text-white ${
+                failed ? "bg-red-500" : videoUrl ? "bg-emerald-500" : "bg-amber-500"
+              }`}
               style={{ width: 36, height: 36, minWidth: 36 }}
             >
-              ✓
+              {failed ? "!" : videoUrl ? "✓" : "…"}
             </span>
             <div className="min-w-0">
               <p className="text-sm font-semibold text-slate-900">
-                {m.wizard.videoReviewCompleteTitle}
+                {statusTitle}
               </p>
               <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
-                {videoUrl
-                  ? m.wizard.videoReviewCompleteBody
-                  : m.wizard.videoReviewCompleteEmpty}
+                {statusBody}
               </p>
             </div>
           </div>

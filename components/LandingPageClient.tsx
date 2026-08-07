@@ -4,10 +4,7 @@ import { StudioAssistantWidget } from "@/components/assistant/StudioAssistantWid
 import { CoachSpotlightOverlay } from "@/components/assistant/CoachSpotlightOverlay";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { LandingHero } from "@/components/landing/LandingHero";
-import { LandingTransformSection } from "@/components/landing/LandingTransformSection";
 import { LandingHowItWorks } from "@/components/landing/LandingHowItWorks";
-import { LandingReferenceCompare } from "@/components/landing/LandingReferenceCompare";
-import { LandingEditableCanvas } from "@/components/landing/LandingEditableCanvas";
 import { LandingTemplatesShowcase } from "@/components/landing/LandingTemplatesShowcase";
 import { LandingWhyDifferent } from "@/components/landing/LandingWhyDifferent";
 import { LandingScenarios } from "@/components/landing/LandingScenarios";
@@ -15,8 +12,8 @@ import { LandingPricingTeaser } from "@/components/landing/LandingPricingTeaser"
 import { LandingTokensAndFaq } from "@/components/landing/LandingTokensAndFaq";
 import { LandingFinalCta } from "@/components/landing/LandingFinalCta";
 import { LandingFooter } from "@/components/landing/LandingFooter";
-import { LandingBrandKit } from "@/components/landing/LandingBrandKit";
 import { LandingProductTools } from "@/components/landing/LandingProductTools";
+import { LandingStoryWheel } from "@/components/landing/LandingStoryWheel";
 
 /**
  * Explicit breakpoints so layouts stay correct even when Tailwind HMR misses utilities.
@@ -54,6 +51,75 @@ const LANDING_LAYOUT_CSS = `
   }
 }
 
+/* Story wheel — always copy left / visual right (Tailwind arbitrary grids can miss HMR) */
+.landing-story-wheel-grid {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 1.25rem !important;
+  align-items: center !important;
+  width: 100%;
+  max-width: 1440px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
+.landing-story-mobile-grid {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 1.25rem !important;
+  align-items: center !important;
+}
+.landing-story-phone-fan {
+  height: min(68vh, 600px);
+  margin-inline: auto;
+}
+.landing-story-phone {
+  width: min(70%, 340px);
+  height: 100%;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.landing-story-phone-frame {
+  border-radius: 2.25rem;
+}
+@media (min-width: 640px) {
+  .landing-story-mobile-grid {
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr) !important;
+    gap: 1.5rem !important;
+  }
+}
+@media (min-width: 768px) {
+  .landing-story-wheel-grid {
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr) !important;
+    gap: 2rem !important;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+  .landing-story-phone-fan {
+    height: min(72vh, 620px);
+  }
+  .landing-story-phone {
+    width: min(72%, 380px);
+  }
+}
+@media (min-width: 1280px) {
+  .landing-story-wheel-grid {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr) !important;
+    gap: 2.5rem !important;
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+  }
+  .landing-story-phone-fan {
+    height: min(74vh, 660px);
+  }
+  .landing-story-phone {
+    width: min(70%, 420px);
+  }
+}
+
 /* Cyber hero — responsive height, crop, scrims */
 .landing-hero-cyber {
   min-height: min(70vh, 640px) !important;
@@ -76,8 +142,23 @@ const LANDING_LAYOUT_CSS = `
   ) !important;
 }
 .landing-hero-scrim-y {
-  height: 6rem !important;
-  background: linear-gradient(to top, rgba(6, 4, 15, 0.85), transparent) !important;
+  height: 4rem !important;
+  background: linear-gradient(to top, #06040f, transparent) !important;
+}
+
+/* Why section — seamless dark extension under hero */
+.landing-why {
+  margin-top: -1px !important; /* kill subpixel seam */
+  border-top: 0 !important;
+}
+.landing-why h2 {
+  color: #fff !important;
+}
+.landing-why h3 {
+  color: #f8fafc !important;
+}
+.landing-why p {
+  color: #94a3b8 !important;
 }
 
 /* Transform mock — fill left column (bigger look); pinned so local/prod match */
@@ -223,7 +304,7 @@ const LANDING_LAYOUT_CSS = `
     ) !important;
   }
   .landing-hero-scrim-y {
-    height: 7rem !important;
+    height: 5rem !important;
     background: linear-gradient(to top, #06040f, transparent) !important;
   }
 }
@@ -337,6 +418,112 @@ const LANDING_LAYOUT_CSS = `
     transform: none !important;
   }
 }
+
+.landing-how-motion { overflow: hidden; }
+
+/* Templates showcase — sizes + featured pop (explicit CSS; Tailwind HMR can miss utilities) */
+.landing-tpl-row {
+  overflow: visible;
+  margin-block: 0;
+}
+.landing-tpl-scroller {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  align-items: center;
+  gap: 8px;
+  /* Just enough for scale + purple outline — avoid large empty bands */
+  padding: 28px 10px 32px;
+  overflow-x: auto;
+  overflow-y: visible;
+}
+.landing-tpl-scroller::-webkit-scrollbar { display: none; }
+.landing-tpl-slot {
+  position: relative;
+  width: 168px;
+  flex: 0 0 168px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+.landing-tpl-card {
+  display: block;
+  width: 100%;
+  border-radius: 16px;
+  background: #18181b;
+  overflow: hidden;
+  text-decoration: none;
+  transform: scale(1);
+  transform-origin: center center;
+  transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+    outline-color 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: none;
+  z-index: 1;
+  /* Idle: invisible ring so layout doesn't jump when featured */
+  outline: 4px solid transparent;
+  outline-offset: 0;
+}
+.landing-tpl-card--featured {
+  transform: scale(1.1) !important;
+  z-index: 8 !important;
+  outline-color: #7c3aed !important;
+  box-shadow: none !important;
+}
+.landing-tpl-media {
+  aspect-ratio: 9 / 16 !important;
+  width: 100% !important;
+}
+.landing-tpl-media-wrap {
+  overflow: hidden;
+  border-radius: 16px 16px 0 0;
+}
+.landing-tpl-badge {
+  letter-spacing: 0.04em;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #18181b;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+@media (min-width: 640px) {
+  .landing-tpl-slot {
+    width: 188px;
+    flex-basis: 188px;
+  }
+  .landing-tpl-scroller {
+    gap: 10px;
+    padding: 32px 12px 36px;
+  }
+  .landing-tpl-card--featured {
+    transform: scale(1.12) !important;
+  }
+}
+@media (min-width: 768px) {
+  .landing-tpl-slot {
+    width: 208px;
+    flex-basis: 208px;
+  }
+  .landing-tpl-scroller {
+    gap: 12px;
+    padding: 36px 16px 40px;
+  }
+  .landing-tpl-scroll-btn { display: flex !important; }
+  .landing-tpl-card--featured {
+    transform: scale(1.12) !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-tpl-card,
+  .landing-tpl-card--featured {
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
 `;
 
 /** Mid-landing sections (transform → final CTA). Keep true for full landing. */
@@ -349,16 +536,13 @@ export function LandingPageClient() {
 			<main className="landing-page flex min-h-screen flex-col overflow-x-clip bg-white text-slate-900 supports-[min-height:100dvh]:min-h-dvh">
 				<LandingNav />
 				<LandingHero />
+				<LandingWhyDifferent />
 				<LandingHowItWorks />
 				{SHOW_LANDING_BELOW_HOW ? (
 					<>
 						{/* Sections own their Reveal stagger — avoid wrapping whole blocks twice */}
-						<LandingBrandKit />
-						<LandingTransformSection />
-						<LandingReferenceCompare />
-						<LandingEditableCanvas />
+						<LandingStoryWheel />
 						<LandingTemplatesShowcase />
-						<LandingWhyDifferent />
 						<LandingScenarios />
 						<LandingPricingTeaser />
 						<LandingTokensAndFaq />

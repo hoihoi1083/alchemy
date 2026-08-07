@@ -13,7 +13,6 @@ import { StudioAssistantWidget } from "@/components/assistant/StudioAssistantWid
 import { CoachSpotlightOverlay } from "@/components/assistant/CoachSpotlightOverlay";
 import { MongoRequiredBanner } from "@/components/MongoRequiredBanner";
 import { SaveStatusBadge } from "@/components/studio/SaveStatusBadge";
-import { StudioModeBar } from "@/components/studio/StudioModeBar";
 import { WizardProvider, useWizard } from "@/components/studio/WizardContext";
 import { useLocale } from "@/components/LocaleProvider";
 import {
@@ -83,7 +82,6 @@ function StudioWizardContent({
   return (
     <div className="space-y-4 pb-4 md:space-y-6 md:pb-0">
       <div className="flex flex-wrap items-center gap-2">
-        <StudioModeBar promotionMode={promotionMode} />
         <SaveStatusBadge theme={theme} />
         {showMicroSetup ? (
           <button

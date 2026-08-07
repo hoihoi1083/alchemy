@@ -122,7 +122,7 @@ export function buildCoachReply(
   const url = snapshot.brandWebsiteUrl.trim() || opts?.detectedUrl?.trim() || "";
   const hint = opts?.campaignHint ?? "";
   const link = actionLinkForTask(task, en);
-  const isZh = locale === "zh" || locale === "zh-cn";
+  const isZh = locale === "zh" || locale === "zh-cn" || locale === "zh-tw";
   const path = pathLabel(snapshot, isZh && !en ? true : isZh);
   const mode = detectStudioCoachMode(snapshot);
 
@@ -607,7 +607,7 @@ export function formatCoachChecklistForPrompt(
   locale: Locale,
 ): string {
   const task = getNextStudioCoachTask(snapshot);
-  const isZh = locale === "zh" || locale === "zh-cn";
+  const isZh = locale === "zh" || locale === "zh-cn" || locale === "zh-tw";
   const lines: string[] = [
     isZh ? "【嚮導 — 必須跟 wizard 狀態同路線】" : "【Coach — follow wizard state and path】",
     isZh

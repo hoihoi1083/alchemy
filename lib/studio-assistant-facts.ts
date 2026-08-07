@@ -37,7 +37,7 @@ function replyFormatRule(locale: Locale): string {
 
 export function getStudioAssistantFacts(locale: Locale): string {
   const isCn = locale === "zh-cn";
-  const isZh = locale === "zh" || isCn;
+  const isZh = locale === "zh" || isCn || locale === "zh-tw";
 
   if (isZh) {
     return `
@@ -179,7 +179,8 @@ export function buildStudioAssistantSystemPrompt(
     intent?: StudioAssistantIntent;
   },
 ): string {
-  const name = locale === "zh-cn" ? "小炼" : locale === "zh" ? "小煉" : "Alchemy guide";
+  const name =
+    locale === "zh-cn" ? "小炼" : locale === "zh-tw" || locale === "zh" ? "小煉" : "Alchemy guide";
   const facts = getStudioAssistantFacts(locale);
   const stateBlock = formatSnapshotForPrompt(snapshot, locale);
   const siteBlock =

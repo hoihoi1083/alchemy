@@ -314,10 +314,30 @@ export function ImageReviewGallery({
 
   const modeCopy = m.wizard.imageOutputModes[wizard.effectiveImageOutputMode];
   const aspect = wizard.imageAspectRatio || "4:5";
-  const completeBody =
-    items.length === 1
+  const isStoryboardReview =
+    wizard.workflowMode === "combined" &&
+    (view.kind === "storyboard" || wizard.isStoryboardOutput);
+  const hasError = Boolean(wizard.error) && items.length === 0;
+  const completeBody = isStoryboardReview
+    ? m.wizard.imageReviewStoryboardReadyBody
+    : items.length === 1
       ? m.wizard.imageReviewCompleteBodySingle
       : m.wizard.imageReviewCompleteBodyMany.replace("{n}", String(items.length));
+  const statusTitle = hasError
+    ? m.wizard.imageReviewFailedTitle
+    : isStoryboardReview
+      ? m.wizard.imageReviewStoryboardReadyTitle
+      : m.wizard.imageReviewCompleteTitle;
+  const statusBody = hasError ? m.wizard.imageReviewFailedBody : completeBody;
+  const heroBefore = isStoryboardReview
+    ? m.wizard.imageReviewStoryboardHeroBefore
+    : m.wizard.imageReviewHeroBefore;
+  const heroAccent = isStoryboardReview
+    ? m.wizard.imageReviewStoryboardHeroAccent
+    : m.wizard.imageReviewHeroAccent;
+  const heroHint = isStoryboardReview
+    ? m.wizard.imageReviewStoryboardHeroHint
+    : m.wizard.imageReviewHeroHint;
 
   const selectable = view.kind === "ab" || view.kind === "carousel";
   const canRegenerate = wizard.canGenerateImage() && !wizard.imageBusy;
@@ -422,7 +442,10 @@ export function ImageReviewGallery({
   return (
     <div className="space-y-6 sm:space-y-8">
       <style dangerouslySetInnerHTML={{ __html: IMAGE_REVIEW_LAYOUT_CSS }} />
-      <ImageReviewStepper activeIndex={4} />
+      <ImageReviewStepper
+        workflowMode={wizard.workflowMode}
+        kind={isStoryboardReview ? "storyboard" : "image"}
+      />
 
       {/* Mobile: stack. Tablet: full-width cards under title. Laptop+: title | cards row. */}
       <div className="image-review-header">
@@ -431,34 +454,48 @@ export function ImageReviewGallery({
             <IconSparkles className="h-6 w-6" />
           </div>
           <h2 className="text-balance text-[1.375rem] font-bold leading-snug tracking-tight text-slate-900 sm:text-2xl">
-            {m.wizard.imageReviewHeroBefore}{" "}
-            <span className="text-violet-600">{m.wizard.imageReviewHeroAccent}</span>
+            {heroBefore}{" "}
+            <span className="text-violet-600">{heroAccent}</span>
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-slate-500">
-            {m.wizard.imageReviewHeroHint}
+            {heroHint}
           </p>
         </div>
 
         <div className="image-review-header-cards">
           <div className="flex min-w-0 flex-1 items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
             <span
-              className="mt-0.5 flex shrink-0 items-center justify-center rounded-full bg-emerald-500 text-base font-bold text-white"
+              className={`mt-0.5 flex shrink-0 items-center justify-center rounded-full text-base font-bold text-white ${
+                hasError
+                  ? "bg-red-500"
+                  : isStoryboardReview
+                    ? "bg-violet-600"
+                    : "bg-emerald-500"
+              }`}
               style={{ width: 36, height: 36, minWidth: 36 }}
             >
-              ✓
+              {hasError ? "!" : isStoryboardReview ? "→" : "✓"}
             </span>
             <div className="min-w-0">
               <p className="text-sm font-semibold text-slate-900">
-                {m.wizard.imageReviewCompleteTitle}
+                {statusTitle}
               </p>
-              <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{completeBody}</p>
+              <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{statusBody}</p>
             </div>
           </div>
 
           <div className="image-review-meta grid min-w-0 flex-[1.15] grid-cols-3 divide-x divide-slate-200 rounded-2xl border border-slate-200 bg-white shadow-sm">
             <MetaCell
-              label={m.wizard.imageReviewMetaOutput}
-              value={modeCopy?.title ?? "—"}
+              label={
+                isStoryboardReview
+                  ? m.wizard.imageReviewPathLabel
+                  : m.wizard.imageReviewMetaOutput
+              }
+              value={
+                isStoryboardReview
+                  ? m.wizard.imageReviewPathImagesVideo
+                  : (modeCopy?.title ?? "—")
+              }
               icon={
                 <OutputModeIcon
                   mode={wizard.effectiveImageOutputMode}
@@ -467,8 +504,16 @@ export function ImageReviewGallery({
               }
             />
             <MetaCell
-              label={m.wizard.imageReviewMetaAspect}
-              value={aspect}
+              label={
+                isStoryboardReview
+                  ? m.wizard.imageReviewVisualSetLabel
+                  : m.wizard.imageReviewMetaAspect
+              }
+              value={
+                isStoryboardReview
+                  ? m.wizard.imageReviewVisualSetStoryboard
+                  : aspect
+              }
               icon={<IconAspectPhone className="h-4 w-4 shrink-0 text-violet-600" />}
             />
             <MetaCell
@@ -541,29 +586,31 @@ export function ImageReviewGallery({
                 ) : null}
 
                 <div className="mt-auto border-t border-slate-100 p-2.5 sm:p-3">
-                  <div className="grid grid-cols-2 gap-1.5">
+                  <div className="grid grid-cols-1 gap-1.5">
                     <CompactAction
-                      icon={<IconDownload className="h-3.5 w-3.5 shrink-0" />}
-                      label={
-                        downloadBusyIndex === item.index
-                          ? m.imageCanvas.downloading
-                          : m.wizard.downloadSlide
-                      }
-                      busy={downloadBusyIndex === item.index}
-                      onClick={() => void handleDownload(item)}
-                    />
-                    <CompactAction
+                      className="!border-violet-600 !bg-violet-600 !text-white hover:!bg-violet-700 hover:!border-violet-700"
                       icon={<IconEdit className="h-3.5 w-3.5 shrink-0" />}
                       label={m.wizard.imageReviewEditCanvasBtn}
                       onClick={() => handleEditCanvas(item)}
                     />
-                    <CompactAction
-                      className="col-span-2"
-                      icon={<IconRefresh className="h-3.5 w-3.5 shrink-0" />}
-                      label={m.wizard.imageReviewRegenerateOneBtn}
-                      disabled={!canRegenerate}
-                      onClick={() => handleRegenerateOne(item)}
-                    />
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <CompactAction
+                        icon={<IconDownload className="h-3.5 w-3.5 shrink-0" />}
+                        label={
+                          downloadBusyIndex === item.index
+                            ? m.imageCanvas.downloading
+                            : m.wizard.downloadSlide
+                        }
+                        busy={downloadBusyIndex === item.index}
+                        onClick={() => void handleDownload(item)}
+                      />
+                      <CompactAction
+                        icon={<IconRefresh className="h-3.5 w-3.5 shrink-0" />}
+                        label={m.wizard.imageReviewRegenerateOneBtn}
+                        disabled={!canRegenerate}
+                        onClick={() => handleRegenerateOne(item)}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -687,7 +734,7 @@ export function ImageReviewFooterBar({
             <button
               type="button"
               onClick={onContinue}
-              className="inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-emerald-600 bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:border-emerald-700 hover:bg-emerald-700 sm:w-auto"
+              className="inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-violet-600 bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:border-violet-700 hover:bg-violet-700 sm:w-auto"
             >
               {continueLabel ?? m.wizard.continueToVideo}
               <svg

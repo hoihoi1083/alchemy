@@ -167,6 +167,50 @@ export function tokensForPaidPlan(plan: PaidPlan): number {
   return PLAN_DEFINITIONS[plan].monthlyTokens;
 }
 
+/** Idempotent key for mid-cycle upgrade delta (checkout + webhook share this). */
+export function upgradeGrantRef(
+  subscriptionId: string,
+  plan: PaidPlan,
+  periodStart: number,
+): string {
+  return `upgrade_${subscriptionId}_${plan}_${periodStart}`;
+}
+
+/**
+ * Credit the monthly-token delta when moving to a higher plan mid-cycle.
+ * Safe to call from checkout and customer.subscription.updated — same ref.
+ */
+export async function grantPlanUpgradeDelta(opts: {
+  clerkId: string;
+  previousPlan: UserPlan | PaidPlan | string;
+  newPlan: PaidPlan;
+  subscriptionId: string;
+  periodStart: number;
+  meta?: Record<string, unknown>;
+}): Promise<{ granted: boolean; balanceAfter: number | null; delta: number }> {
+  const oldPlanTokens =
+    PLAN_DEFINITIONS[normalizeUserPlan(opts.previousPlan)].monthlyTokens;
+  const newPlanTokens = tokensForPaidPlan(opts.newPlan);
+  const delta = newPlanTokens - oldPlanTokens;
+  if (delta <= 0 || opts.periodStart == null) {
+    return { granted: false, balanceAfter: null, delta: 0 };
+  }
+  const result = await grantTokensOnce(
+    opts.clerkId,
+    delta,
+    "subscription_grant",
+    upgradeGrantRef(opts.subscriptionId, opts.newPlan, opts.periodStart),
+    {
+      plan: opts.newPlan,
+      upgrade: true,
+      oldPlanTokens,
+      newPlanTokens,
+      ...opts.meta,
+    },
+  );
+  return { ...result, delta };
+}
+
 export async function applySubscriptionGrant(opts: {
   clerkId: string;
   plan: PaidPlan;

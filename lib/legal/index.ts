@@ -10,6 +10,8 @@ const bundles: Record<Locale, LegalBundle> = {
   en: legalEn,
   zh: legalZh,
   "zh-cn": legalZhCn,
+  // Taiwan Traditional: reuse HK Traditional legal until a TW-specific bundle exists.
+  "zh-tw": legalZh,
 };
 
 export function getLegalDocument(kind: LegalKind, locale: Locale): LegalDocument {

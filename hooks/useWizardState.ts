@@ -110,7 +110,7 @@ export type ImageJobMeta = {
 
 export type VideoPhase = "video" | "second-frame" | "bgm" | "voiceover" | "captions";
 
-export function useWizardState(locale: "en" | "zh" | "zh-cn") {
+export function useWizardState(locale: "en" | "zh" | "zh-cn" | "zh-tw") {
   const [workflowMode, setWorkflowMode] = useState<WorkflowMode>("image-only");
   const [stepKey, setStepKey] = useState<WorkflowStepKey>("setup");
   const [visualStyleId, setVisualStyleId] = useState<VisualStyleId>(DEFAULT_VISUAL_STYLE);

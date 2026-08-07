@@ -5,6 +5,7 @@ const CLERK_LOCALES = {
   en: enUS,
   zh: zhTW,
   "zh-cn": zhCN,
+  "zh-tw": zhTW,
 } as const satisfies Record<Locale, typeof enUS>;
 
 export function clerkLocalizationFor(locale: Locale) {

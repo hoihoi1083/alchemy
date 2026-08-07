@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
-import { PLAN_DEFINITIONS, normalizeUserPlan } from "@/lib/billing/plans";
+import { normalizeUserPlan } from "@/lib/billing/plans";
 import { sendSubscriptionEndedEmail } from "@/lib/email/lifecycle";
 import { sendPurchaseConfirmationEmail } from "@/lib/email/purchase-confirmation";
 import { resolvePurchaseEmail } from "@/lib/email/resolve-user-email";
@@ -9,7 +9,7 @@ import {
   applySubscriptionGrant,
   clearPaidSubscription,
   findClerkIdByStripeCustomer,
-  grantTokensOnce,
+  grantPlanUpgradeDelta,
   setUserSubscription,
   tokensForPaidPlan,
 } from "@/lib/stripe/billing-sync";
@@ -83,6 +83,25 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
   }
   if (!clerkId || !plan) {
     console.error("[stripe] invoice.paid missing clerkId/plan", invoice.id, { clerkId, plan });
+    return;
+  }
+
+  // Mid-cycle plan change invoices are prorations — full monthly tokens would
+  // double-count with the upgrade delta on subscription.updated / checkout.
+  if (invoice.billing_reason === "subscription_update") {
+    await setUserSubscription({
+      clerkId,
+      plan,
+      stripeCustomerId: cust,
+      stripeSubscriptionId: subId,
+      planRenewsAt: renewsAt,
+      clearPendingPlanChange: true,
+    });
+    console.info("[stripe] invoice.paid subscription_update — skipped full grant", {
+      invoiceId: invoice.id,
+      clerkId,
+      plan,
+    });
     return;
   }
 
@@ -194,7 +213,28 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   }
 }
 
-async function handleSubscriptionUpdated(sub: Stripe.Subscription) {
+function previousPlanFromSubscriptionEvent(
+  previousAttributes: Partial<Stripe.Subscription> | undefined,
+): PaidPlan | null {
+  if (!previousAttributes) return null;
+
+  const prevMetaPlan = previousAttributes.metadata?.plan;
+  if (prevMetaPlan && isPaidPlan(prevMetaPlan)) return prevMetaPlan;
+
+  const prevItems = previousAttributes.items;
+  const prevPrice = prevItems?.data?.[0]?.price;
+  const prevPriceId =
+    typeof prevPrice === "string" ? prevPrice : prevPrice?.id ?? null;
+  if (prevPriceId) {
+    return planFromPriceId(prevPriceId)?.plan ?? null;
+  }
+  return null;
+}
+
+async function handleSubscriptionUpdated(
+  sub: Stripe.Subscription,
+  previousAttributes?: Partial<Stripe.Subscription>,
+) {
   const clerkId =
     sub.metadata?.clerkId ??
     (await findClerkIdByStripeCustomer(customerId(sub.customer) ?? ""));
@@ -234,17 +274,45 @@ async function handleSubscriptionUpdated(sub: Stripe.Subscription) {
       ? pendingIntervalRaw
       : null;
 
-  // Mid-cycle upgrade: credit the token delta once per period when plan tokens increase.
-  let oldPlanTokens = 0;
-  if (isMongoConfigured()) {
+  // Prefer Stripe previous_attributes — Mongo `user.plan` is often already the
+  // new plan because checkout updates it before this webhook runs.
+  const previousPlan = previousPlanFromSubscriptionEvent(previousAttributes);
+  let previousPlanForDelta: string | null = previousPlan;
+  if (!previousPlanForDelta && isMongoConfigured()) {
     const db = await getDb();
     const user = await db.collection<DbUser>("users").findOne({ clerkId });
-    const oldPlan = normalizeUserPlan(user?.plan);
-    oldPlanTokens = PLAN_DEFINITIONS[oldPlan].monthlyTokens;
+    previousPlanForDelta = normalizeUserPlan(user?.plan);
   }
 
   const periodEnd = sub.items.data[0]?.current_period_end ?? null;
   const periodStart = sub.items.data[0]?.current_period_start ?? null;
+
+  // Mid-cycle upgrade: credit delta before flipping Mongo plan when possible.
+  if (previousPlanForDelta && periodStart != null) {
+    const result = await grantPlanUpgradeDelta({
+      clerkId,
+      previousPlan: previousPlanForDelta,
+      newPlan: plan,
+      subscriptionId: sub.id,
+      periodStart,
+      meta: {
+        source: previousPlan ? "webhook_previous_attributes" : "webhook_mongo_fallback",
+      },
+    });
+    if (result.granted) {
+      const to = await resolvePurchaseEmail({ clerkId });
+      if (to) {
+        await sendPurchaseConfirmationEmail({
+          to,
+          kind: "subscription",
+          plan,
+          tokensGranted: result.delta,
+          balanceAfter: result.balanceAfter,
+          renewsAt: periodEnd ? new Date(periodEnd * 1000) : null,
+        });
+      }
+    }
+  }
 
   // Pending downgrade only while price is still the higher (current) plan.
   const pendingStillActive = Boolean(pendingPlan && pendingPlan !== plan);
@@ -263,31 +331,6 @@ async function handleSubscriptionUpdated(sub: Stripe.Subscription) {
         }
       : { clearPendingPlanChange: true }),
   });
-
-  const newPlanTokens = tokensForPaidPlan(plan);
-  if (newPlanTokens > oldPlanTokens && periodStart != null) {
-    const delta = newPlanTokens - oldPlanTokens;
-    const result = await grantTokensOnce(
-      clerkId,
-      delta,
-      "subscription_grant",
-      `upgrade_${sub.id}_${plan}_${periodStart}`,
-      { plan, upgrade: true, oldPlanTokens, newPlanTokens },
-    );
-    if (result.granted) {
-      const to = await resolvePurchaseEmail({ clerkId });
-      if (to) {
-        await sendPurchaseConfirmationEmail({
-          to,
-          kind: "subscription",
-          plan,
-          tokensGranted: delta,
-          balanceAfter: result.balanceAfter,
-          renewsAt: periodEnd ? new Date(periodEnd * 1000) : null,
-        });
-      }
-    }
-  }
 }
 
 async function handleSubscriptionDeleted(sub: Stripe.Subscription) {
@@ -340,7 +383,10 @@ export async function POST(request: Request) {
         await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
         break;
       case "customer.subscription.updated":
-        await handleSubscriptionUpdated(event.data.object as Stripe.Subscription);
+        await handleSubscriptionUpdated(
+          event.data.object as Stripe.Subscription,
+          event.data.previous_attributes as Partial<Stripe.Subscription> | undefined,
+        );
         break;
       case "customer.subscription.deleted":
         await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);

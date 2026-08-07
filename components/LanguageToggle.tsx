@@ -10,7 +10,7 @@ type ToggleProps = {
   size?: "default" | "compact";
 };
 
-const LOCALES: Locale[] = ["en", "zh", "zh-cn"];
+const LOCALES: Locale[] = ["en", "zh-cn", "zh-tw", "zh"];
 
 function GlobeIcon({ className }: { className?: string }) {
   return (

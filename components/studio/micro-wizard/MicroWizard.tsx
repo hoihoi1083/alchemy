@@ -62,7 +62,7 @@ export function MicroWizard({ promotionMode }: Props) {
     currentId === "shortcut.ship_it"
       ? m.wizard.shipItRunBtn
       : currentId === "video.generate" || currentId === "setup.pre_video"
-        ? m.wizard.generateVideoBtn
+        ? m.wizard.approveGenerateVideoBtn
         : currentId === "image.generate" || currentId === "setup.pre_generate"
           ? wizard.workflowMode === "combined"
             ? m.wizard.storyboardGenerateScenesBtn
@@ -207,13 +207,13 @@ export function MicroWizard({ promotionMode }: Props) {
           disabled={Boolean(blockReason) || Boolean(generateBlockedReason)}
           className={`inline-flex items-center gap-1.5 rounded-xl px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-40 ${
             analyzeReady
-              ? "bg-emerald-600 ring-4 ring-emerald-300/50 animate-pulse"
-              : isPurpleChrome
-                ? "bg-violet-600 hover:bg-violet-700"
-                : "bg-emerald-600"
+              ? "bg-violet-600 ring-4 ring-violet-300/50 animate-pulse hover:bg-violet-700"
+              : "bg-violet-600 hover:bg-violet-700"
           }`}
         >
-          {isCreationPath ? m.wizard.creationPath.continueToSetup : continueLabel}
+          {isCreationPath
+            ? m.wizard.creationPath.continueToSetup
+            : continueLabel}
           <svg
             viewBox="0 0 20 20"
             className="h-4 w-4"

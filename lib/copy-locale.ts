@@ -8,12 +8,14 @@ import { parseLlmJsonObject } from "@/lib/parse-llm-json";
 export function promptMarketFromLocale(locale: Locale): PromptMarket {
   if (locale === "en") return "en";
   if (locale === "zh-cn") return "cn";
+  if (locale === "zh-tw") return "tw";
   return "hk";
 }
 
 export function voiceoverLocaleFromUiLocale(locale: Locale): VoiceoverLocale {
   if (locale === "en") return "en";
-  if (locale === "zh-cn") return "cn";
+  // TW UI uses Mandarin voice (cn); no separate TW voice locale yet.
+  if (locale === "zh-cn" || locale === "zh-tw") return "cn";
   return "hk";
 }
 

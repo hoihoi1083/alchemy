@@ -3,6 +3,7 @@
 import { Fragment } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 import type { WorkflowMode } from "@/lib/workflow-mode";
+import { studioPhasesForMode } from "@/lib/studio-phases";
 
 type Props = {
   value: WorkflowMode | null;
@@ -373,7 +374,7 @@ export function CreationPathPicker({
       <style dangerouslySetInnerHTML={{ __html: PATH_CSS }} />
 
       {showPhaseStepper ? (
-        <PhaseStepper phases={m.start.phases} activeIndex={1} />
+        <PhaseStepper phases={studioPhasesForMode(m.start, value)} activeIndex={1} />
       ) : null}
 
       <div className="path-panel mt-3">

@@ -414,7 +414,7 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
           generateDisabled={
             Boolean(micro.blockReason) || Boolean(wizard.videoGenerateDisabledReason)
           }
-          generateLabel={m.wizard.generateVideoBtn}
+          generateLabel={m.wizard.approveGenerateVideoBtn}
           generateBlockMessage={
             micro.blockReason
               ? (mw.blockReasons[micro.blockReason as keyof typeof mw.blockReasons] ??

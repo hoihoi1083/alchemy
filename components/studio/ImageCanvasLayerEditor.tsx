@@ -58,7 +58,7 @@ export function ImageCanvasLayerEditor({
   const boxRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<DragState | null>(null);
   const selected = layers.find((l) => l.id === selectedId) ?? layers[0] ?? null;
-  const labelLocale = locale === "zh-cn" || locale === "zh" ? "zh" : "en";
+  const labelLocale = locale === "zh-cn" || locale === "zh" || locale === "zh-tw" ? "zh" : "en";
 
   const updateLayer = useCallback((id: string, patch: Partial<ImageCanvasLayer>) => {
     setLayers((prev) => prev.map((l) => (l.id === id ? ({ ...l, ...patch } as ImageCanvasLayer) : l)));

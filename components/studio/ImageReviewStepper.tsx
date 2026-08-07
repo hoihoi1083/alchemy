@@ -1,10 +1,15 @@
 "use client";
 
 import { useLocale } from "@/components/LocaleProvider";
+import {
+  imageReviewPhaseIndex,
+  studioPhasesForMode,
+  videoReviewPhaseIndex,
+} from "@/lib/studio-phases";
+import type { WorkflowMode } from "@/lib/workflow-mode";
 
 /**
- * Progress strip for wait + image review — aligned with start.phases:
- * 揀推廣類型 → 揀創作路徑 → 設定 → 生成 → 完成
+ * Progress strip for wait + image/video review — path-aware phase labels.
  */
 const REVIEW_STEPPER_CSS = `
 .image-review-phase-rail {
@@ -112,16 +117,31 @@ const REVIEW_STEPPER_CSS = `
 `;
 
 type Props = {
-  /** Index into m.start.phases — wait=生成(3), review=完成(4). */
+  /** Override index; otherwise derived from workflowMode + kind. */
   activeIndex?: number;
+  workflowMode?: WorkflowMode | null;
+  kind?: "image" | "storyboard" | "video";
 };
 
-export function ImageReviewStepper({ activeIndex = 4 }: Props) {
+export function ImageReviewStepper({
+  activeIndex,
+  workflowMode = null,
+  kind = "image",
+}: Props) {
   const { m } = useLocale();
-  const steps = m.start.phases;
+  const steps = studioPhasesForMode(m.start, workflowMode);
   if (!steps?.length) return null;
 
-  const safeIndex = Math.min(Math.max(activeIndex, 0), steps.length - 1);
+  const derived =
+    activeIndex != null
+      ? activeIndex
+      : kind === "video"
+        ? videoReviewPhaseIndex()
+        : imageReviewPhaseIndex(workflowMode, {
+            isStoryboard: kind === "storyboard",
+          });
+
+  const safeIndex = Math.min(Math.max(derived, 0), steps.length - 1);
 
   return (
     <nav aria-label="Progress" className="w-full border-b border-slate-100">

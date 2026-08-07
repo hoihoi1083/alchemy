@@ -4,7 +4,10 @@ import { PLAN_DEFINITIONS, normalizeUserPlan } from "@/lib/billing/plans";
 import type { DbUser } from "@/lib/db/types";
 import { getDb, isMongoConfigured } from "@/lib/mongodb";
 import { requireAppUser } from "@/lib/require-app-user";
-import { setUserSubscription } from "@/lib/stripe/billing-sync";
+import {
+  grantPlanUpgradeDelta,
+  setUserSubscription,
+} from "@/lib/stripe/billing-sync";
 import { appBaseUrl, getStripe, isStripeConfigured } from "@/lib/stripe/client";
 import {
   isBillingInterval,
@@ -158,6 +161,30 @@ export async function POST(request: Request) {
               pendingPlanEffectiveAt: switched.pendingEffectiveAt,
             });
           } else if (switched.effective === "immediate") {
+            // Grant upgrade delta before flipping Mongo plan so we never rely on
+            // the webhook reading an already-updated `user.plan` (race → 0 tokens).
+            if (
+              switched.periodStart != null &&
+              switched.previousPlan !== switched.activePlan
+            ) {
+              const upgrade = await grantPlanUpgradeDelta({
+                clerkId,
+                previousPlan: switched.previousPlan,
+                newPlan: switched.activePlan,
+                subscriptionId: switched.subscriptionId,
+                periodStart: switched.periodStart,
+                meta: { source: "checkout_switch" },
+              });
+              if (upgrade.delta > 0 && !upgrade.granted) {
+                console.warn("[stripe] upgrade delta not first claim (or failed)", {
+                  clerkId,
+                  subscriptionId: switched.subscriptionId,
+                  previousPlan: switched.previousPlan,
+                  plan: switched.activePlan,
+                  delta: upgrade.delta,
+                });
+              }
+            }
             await setUserSubscription({
               clerkId,
               plan: switched.activePlan,
@@ -199,11 +226,14 @@ export async function POST(request: Request) {
           const message = e instanceof Error ? e.message : "Could not update subscription.";
           if (message !== "NO_ACTIVE_SUB") {
             console.error("[stripe] switch subscription failed:", message);
+            const looksLikeSchedule =
+              /subscription schedule|managed by the schedule|phases/i.test(message);
             return NextResponse.json(
               {
-                error:
-                  "You already have an active subscription. Open Manage billing to change plans.",
-                code: "already_subscribed",
+                error: looksLikeSchedule
+                  ? "Could not schedule the plan change. Try again from Pricing — Manage billing only cancels; downgrades must be chosen on a lower plan card."
+                  : `Could not change plan: ${message}`,
+                code: "switch_failed",
               },
               { status: 409 },
             );

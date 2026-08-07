@@ -53,7 +53,7 @@ export function UgcStudioClient() {
     () => heygenAvatarVoice(avatarId, voiceLocale),
     [avatarId, voiceLocale],
   );
-  const isZh = locale === "zh" || locale === "zh-cn";
+  const isZh = locale === "zh" || locale === "zh-cn" || locale === "zh-tw";
 
   function onLocaleChange(next: VoiceoverLocale) {
     setVoiceLocale(next);

@@ -11,6 +11,8 @@ import type { ImageOutputMode } from "@/lib/image-output-mode";
 import type { ImageTextMode } from "@/lib/image-text-mode";
 import type { UserReferenceBrief } from "@/lib/user-reference-brief";
 import { requiresBrandProfileForImages } from "@/lib/visual-styles";
+import { studioPhasesForMode } from "@/lib/studio-phases";
+import { estimateImageTokens } from "@/lib/billing/token-costs";
 
 const PANEL_CSS = `
 .pg-page {
@@ -1007,7 +1009,7 @@ export function PreGenerateSetupPanel({
   return (
     <div className="pg-page">
       <style dangerouslySetInnerHTML={{ __html: PANEL_CSS }} />
-      <PhaseStepper phases={m.start.phases} activeIndex={2} />
+      <PhaseStepper phases={studioPhasesForMode(m.start, wizard.workflowMode)} activeIndex={2} />
 
       <div className="mt-4">
         <h2 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
@@ -1877,9 +1879,71 @@ export function PreGenerateSetupPanel({
                 <span className="pg-tip-head-icon" aria-hidden>
                   <TipSvg kind="bulb" />
                 </span>
-                <p className="text-sm font-bold text-violet-800">{pg.tipTitle}</p>
+                <p className="text-sm font-bold text-violet-800">{m.wizard.sidePanelRequirementsTitle}</p>
               </div>
-              <div className="mt-3.5 space-y-3.5">
+              <ul className="mt-3 space-y-2">
+                {[
+                  {
+                    ok: Boolean(
+                      wizard.product.trim() ||
+                        wizard.conceptIdea.trim() ||
+                        wizard.effectivePromoteName,
+                    ),
+                    label: isConcept
+                      ? m.microWizard.conceptNameStep.label
+                      : m.microWizard.productNameStep.label,
+                  },
+                  {
+                    ok: isConcept || Boolean(wizard.productPhoto || wizard.uploadPreviewUrl),
+                    label: m.wizard.videoKeyframeLabel,
+                  },
+                  {
+                    ok: !wizard.imageGenerateDisabledReason,
+                    label: m.wizard.sidePanelReqReady,
+                  },
+                ].map((row) => (
+                  <li key={row.label} className="flex items-start gap-2 text-xs">
+                    <span
+                      className={`mt-0.5 font-bold ${row.ok ? "text-emerald-600" : "text-amber-600"}`}
+                    >
+                      {row.ok ? "✓" : "✕"}
+                    </span>
+                    <span className={row.ok ? "text-slate-700" : "text-amber-800"}>
+                      {row.label}{" "}
+                      <span className="text-slate-400">
+                        ({row.ok ? m.wizard.sidePanelReqReady : m.wizard.sidePanelReqMissing})
+                      </span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-4 rounded-xl border border-violet-100 bg-white px-3 py-2.5">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-700">
+                  {m.wizard.sidePanelCostTitle}
+                </p>
+                <p className="mt-1 text-sm font-semibold text-slate-900">
+                  {m.wizard.tokenCostHint.replace(
+                    "{n}",
+                    String(
+                      estimateImageTokens({
+                        mode:
+                          wizard.workflowMode === "combined" || wizard.isStoryboardOutput
+                            ? "storyboard"
+                            : wizard.effectiveImageOutputMode === "ab"
+                              ? "ab"
+                              : wizard.effectiveImageOutputMode === "campaign"
+                                ? "campaign"
+                                : wizard.effectiveImageOutputMode === "teaching-carousel"
+                                  ? "teaching_carousel"
+                                  : "single",
+                        sceneCount: wizard.storyboardScenes.length || 4,
+                      }),
+                    ),
+                  )}
+                </p>
+              </div>
+              <p className="mt-4 text-sm font-bold text-violet-800">{m.wizard.sidePanelTipsTitle}</p>
+              <div className="mt-2.5 space-y-3.5">
                 {(isConcept
                   ? [
                       { tip: pg.conceptTip1, icon: "photo" as const },

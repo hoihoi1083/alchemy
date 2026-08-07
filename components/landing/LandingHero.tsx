@@ -22,7 +22,7 @@ export function LandingHero() {
       <div className="landing-hero-scrim-x pointer-events-none absolute inset-0" aria-hidden />
       <div className="landing-hero-scrim-y pointer-events-none absolute inset-x-0 bottom-0" aria-hidden />
 
-      <div className="landing-hero-inner relative z-[1] mx-auto flex w-full max-w-[1440px] items-center px-5 py-12 sm:px-6 md:px-8 md:py-16 lg:py-20">
+      <div className="landing-hero-inner relative z-[1] mx-auto flex w-full max-w-[1440px] items-center px-5 pb-6 pt-12 sm:px-6 md:px-8 md:pb-8 md:pt-16 lg:pb-10 lg:pt-20">
         <div className="landing-hero-copy w-full min-w-0 max-w-xl">
           <span className="landing-hero-badge inline-flex rounded-full border border-violet-400/40 bg-violet-600/90 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white backdrop-blur-sm">
             {L.badge}

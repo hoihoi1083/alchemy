@@ -2,7 +2,8 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { LandingNav } from "@/components/landing/LandingNav";
+import { StudioNav } from "@/components/studio/StudioNav";
+import { StudioModeBar } from "@/components/studio/StudioModeBar";
 import { StudioWizard } from "@/components/StudioWizard";
 import { useLocale } from "@/components/LocaleProvider";
 import {
@@ -53,7 +54,7 @@ function StudioPageContent() {
 
   return (
     <main className="min-h-screen bg-white text-slate-900">
-      <LandingNav />
+      <StudioNav trailing={<StudioModeBar promotionMode={promotionMode} />} />
       <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-6 md:pb-8">
         <StudioWizard promotionMode={promotionMode} theme="light" />
       </div>

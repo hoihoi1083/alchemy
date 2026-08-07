@@ -8,6 +8,7 @@ import { KlingStoryboardSettings } from "@/components/studio/KlingStoryboardSett
 import { useWizard } from "@/components/studio/WizardContext";
 import { estimateVideoTokens } from "@/lib/billing/token-costs";
 import { inferKlingClipFromScenes, storyboardSceneDisplayCopy } from "@/lib/storyboard-scene-copy";
+import { studioPhasesForMode } from "@/lib/studio-phases";
 import { isBrandVideoStyle, isCreativeVideoStyle } from "@/lib/visual-styles";
 
 const PANEL_CSS = `
@@ -376,7 +377,7 @@ export function PreVideoSetupPanel({
         disabled={generateDisabled}
         className="pv-generate-btn"
       >
-        {generateLabel ?? (isUgc ? pv.ugcContinueLabel : m.wizard.generateVideoBtn)}
+        {generateLabel ?? (isUgc ? pv.ugcContinueLabel : m.wizard.approveGenerateVideoBtn)}
         <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2">
           <path d="M7.5 4.5 13 10l-5.5 5.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
@@ -387,7 +388,7 @@ export function PreVideoSetupPanel({
   return (
     <div className="pv-page">
       <style dangerouslySetInnerHTML={{ __html: PANEL_CSS }} />
-      <PhaseStepper phases={m.start.phases} activeIndex={2} />
+      <PhaseStepper phases={studioPhasesForMode(m.start, wizard.workflowMode)} activeIndex={3} />
 
       <div className="mt-4">
         <h2 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
@@ -917,9 +918,71 @@ export function PreVideoSetupPanel({
                     />
                   </svg>
                 </span>
-                <p className="text-sm font-bold text-violet-800">{pv.tipTitle}</p>
+                <p className="text-sm font-bold text-violet-800">{m.wizard.sidePanelRequirementsTitle}</p>
               </div>
-              <div className="mt-3.5 space-y-3.5">
+              <ul className="mt-3 space-y-2">
+                {[
+                  {
+                    ok: Boolean(
+                      wizard.product.trim() ||
+                        wizard.conceptIdea.trim() ||
+                        wizard.effectivePromoteName,
+                    ),
+                    label: isConcept
+                      ? m.microWizard.conceptNameStep.label
+                      : m.microWizard.productNameStep.label,
+                  },
+                  {
+                    ok: scenesReady
+                      ? wizard.storyboardScenes.length > 0
+                      : Boolean(mainThumb || wizard.imageUrl),
+                    label: scenesReady
+                      ? m.wizard.imageReviewVisualSetStoryboard
+                      : m.wizard.videoKeyframeLabel,
+                  },
+                  {
+                    ok: !generateDisabled,
+                    label: m.wizard.sidePanelReqReady,
+                  },
+                ].map((row) => (
+                  <li key={row.label} className="flex items-start gap-2 text-xs">
+                    <span
+                      className={`mt-0.5 font-bold ${row.ok ? "text-emerald-600" : "text-amber-600"}`}
+                    >
+                      {row.ok ? "✓" : "✕"}
+                    </span>
+                    <span className={row.ok ? "text-slate-700" : "text-amber-800"}>
+                      {row.label}
+                      <span className="ml-1 text-slate-400">
+                        ({row.ok ? m.wizard.sidePanelReqReady : m.wizard.sidePanelReqMissing})
+                      </span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="mt-4 rounded-xl border border-violet-100 bg-white px-3 py-2.5">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-700">
+                  {m.wizard.sidePanelCostTitle}
+                </p>
+                <p className="mt-1 text-sm font-semibold text-slate-900">
+                  {pv.costLabel.replace(
+                    "{n}",
+                    String(
+                      scenesReady && klingClipSec
+                        ? estimateVideoTokens({
+                            resolution: wizard.videoSettings.resolution,
+                            fast: Boolean(wizard.videoSettings.fast),
+                            duration: klingClipSec,
+                          }) * Math.max(wizard.storyboardScenes.length, 1)
+                        : tokenEstimate,
+                    ),
+                  )}
+                </p>
+              </div>
+
+              <p className="mt-4 text-sm font-bold text-violet-800">{m.wizard.sidePanelTipsTitle}</p>
+              <div className="mt-2.5 space-y-3.5">
                 {tips.map((tip) => (
                   <div key={tip.title} className="flex gap-2.5">
                     <span className="pv-tip-icon" aria-hidden>
