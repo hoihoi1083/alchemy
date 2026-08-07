@@ -14,6 +14,7 @@ import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import { artStyleAvoidTail, artStyleSystemPrompt, resolveArtStyleId } from "@/lib/art-style";
 import { SERVER_ERRORS } from "@/lib/api/server-errors";
 import { parseBrandKit } from "@/lib/brand-kit";
+import { brandKitForGeneration, brandKitWantsLogo } from "@/lib/brand-merge";
 import { uploadBrandKitLogoToFal } from "@/lib/brand-kit-fal";
 import { brandKitLogoImagePromptBlock } from "@/lib/brand-merge";
 import {
@@ -84,8 +85,9 @@ export async function POST(request: Request) {
 
   const aspectRatio = body.aspect_ratio?.trim() || "9:16";
   const artStyleId = resolveArtStyleId(body.art_style);
-  const brandKit = parseBrandKit(body.brand_kit);
-  const brandLogoWanted = Boolean(brandKit.useBrandLogo && brandKit.logoUrl?.trim());
+  const brandKit =
+    brandKitForGeneration(parseBrandKit(body.brand_kit)) ?? parseBrandKit(null);
+  const brandLogoWanted = brandKitWantsLogo(brandKit);
   let brandLogoFalUrl: string | null = null;
   let logoMirrorNote: string | undefined;
   if (brandLogoWanted) {

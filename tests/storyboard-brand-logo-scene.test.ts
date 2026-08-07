@@ -6,7 +6,7 @@ import {
 } from "../lib/storyboard-brand-logo-scene";
 
 describe("isStoryboardEndCardLogoScene", () => {
-  it("never marks a scene when useBrandLogo is off", () => {
+  it("never marks end-card scenes (path retired)", () => {
     assert.equal(isStoryboardEndCardLogoScene({ imageIndex: 4, role: "cta" }, 4), false);
     assert.equal(
       isStoryboardEndCardLogoScene({ imageIndex: 4, role: "demo" }, 4, {
@@ -14,14 +14,11 @@ describe("isStoryboardEndCardLogoScene", () => {
       }),
       false,
     );
-  });
-
-  it("marks only the last scene when user opts in", () => {
     assert.equal(
       isStoryboardEndCardLogoScene({ imageIndex: 4, role: "demo" }, 4, {
         useBrandLogo: true,
       }),
-      true,
+      false,
     );
     assert.equal(
       isStoryboardEndCardLogoScene({ imageIndex: 2, role: "cta" }, 4, {
@@ -31,10 +28,10 @@ describe("isStoryboardEndCardLogoScene", () => {
     );
   });
 
-  it("legacy endWithBrandLogo alias still works", () => {
+  it("legacy endWithBrandLogo alias also stays off", () => {
     assert.equal(
       isStoryboardBrandLogoScene({ imageIndex: 4 }, 4, { endWithBrandLogo: true }),
-      true,
+      false,
     );
   });
 });

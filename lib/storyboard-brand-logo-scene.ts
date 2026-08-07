@@ -1,18 +1,18 @@
 /**
  * Opt-in brand logo on storyboard stills.
- * - useBrandLogo off → never treat as logo scene
- * - on → last scene is the centered end-card hero; earlier scenes get a corner badge
+ * Previously treated the last scene as a centered end-card; that path is retired.
+ * Logo opt-in now means Mode A (or stamp fallback) on every scene equally —
+ * natural placement, no blank logo-hero last frame.
  */
 export function isStoryboardEndCardLogoScene(
-  scene: { role?: string; imageIndex: number },
-  totalScenes: number,
-  opts?: { useBrandLogo?: boolean },
+  _scene: { role?: string; imageIndex: number },
+  _totalScenes: number,
+  _opts?: { useBrandLogo?: boolean },
 ): boolean {
-  if (!opts?.useBrandLogo) return false;
-  return totalScenes > 0 && scene.imageIndex === totalScenes;
+  return false;
 }
 
-/** @deprecated Use isStoryboardEndCardLogoScene */
+/** @deprecated Use isStoryboardEndCardLogoScene (always false — end-card path retired). */
 export function isStoryboardBrandLogoScene(
   scene: { role?: string; imageIndex: number },
   totalScenes: number,

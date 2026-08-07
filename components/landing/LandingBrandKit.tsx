@@ -34,10 +34,10 @@ export function LandingBrandKit() {
 
 					<div className="mt-7">
 						<Link
-							href="/start"
+							href="/brand-kit"
 							className="inline-flex rounded-full bg-violet-600 px-5 py-2.5 text-base font-semibold text-white shadow-md shadow-violet-600/20 hover:bg-violet-500"
 						>
-							{L.brandKitCta}
+							{L.brandKitLink}
 						</Link>
 					</div>
 				</Reveal>

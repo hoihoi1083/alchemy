@@ -12,32 +12,13 @@ import { PRODUCT_LOGO_ALT, PRODUCT_LOGO_SRC, PRODUCT_NAME } from "@/lib/brand";
 const NAV = [
 	{ href: "/", key: "navHome" as const },
 	{ href: "/#how", key: "navHow" as const },
+	{ href: "/brand-kit", key: "navBrandKit" as const },
 	{ href: "/pricing", key: "navPricing" as const },
-	/** Label comes from tpl title so it always matches the templates section. */
-	{ href: "/#templates", key: "navPlatforms" as const },
+	{ href: "/#templates", key: "navUseCases" as const },
 	{ href: "/captions", key: "navCaptions" as const },
 	{ href: "/edit-image", key: "navEditImage" as const },
 	{ href: "/pro", key: "navPro" as const },
 ];
-
-function navLabel(
-	key: (typeof NAV)[number]["key"],
-	L: {
-		navHome: string;
-		navHow: string;
-		navPricing: string;
-		navCaptions: string;
-		navEditImage: string;
-		navPro: string;
-		tplTitleBefore: string;
-		tplTitleHighlight: string;
-	},
-) {
-	if (key === "navPlatforms") {
-		return `${L.tplTitleBefore}${L.tplTitleHighlight}`;
-	}
-	return L[key];
-}
 
 /** Full-bleed bar; nav sits next to logo (no bottom rule). */
 export function LandingNav() {
@@ -48,18 +29,18 @@ export function LandingNav() {
 
 	return (
 		<header className="sticky top-0 z-40 w-full bg-white">
-			<div className="mx-auto flex w-full max-w-[1440px] items-center gap-2 px-3 py-2.5 sm:gap-3 sm:px-6 sm:py-3 md:px-8">
+			<div className="mx-auto flex w-full max-w-[1440px] items-center gap-2 px-3 py-3 sm:gap-3 sm:px-6 sm:py-3.5 md:px-8">
 				<Link
 					href="/"
-					className="flex min-w-0 shrink-0 items-center gap-2 sm:gap-2.5"
+					className="flex min-w-0 shrink-0 items-center gap-2.5 sm:gap-3"
 				>
 					{/* eslint-disable-next-line @next/next/no-img-element */}
 					<img
 						src={PRODUCT_LOGO_SRC}
 						alt={PRODUCT_LOGO_ALT}
-						className="h-8 w-8 shrink-0 rounded-lg object-contain"
+						className="h-10 w-10 shrink-0 rounded-xl object-contain sm:h-11 sm:w-11"
 					/>
-					<span className="hidden whitespace-nowrap text-base font-semibold tracking-tight text-slate-900 sm:inline sm:text-[17px]">
+					<span className="hidden whitespace-nowrap text-lg font-bold tracking-tight text-slate-900 sm:inline sm:text-[20px]">
 						{PRODUCT_NAME}
 					</span>
 				</Link>
@@ -71,7 +52,7 @@ export function LandingNav() {
 							href={item.href}
 							className="whitespace-nowrap text-[12px] font-medium text-slate-600 hover:text-violet-700 xl:text-[13px]"
 						>
-							{navLabel(item.key, L)}
+							{L[item.key]}
 						</Link>
 					))}
 				</nav>
@@ -115,7 +96,7 @@ export function LandingNav() {
 								className="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-violet-50 hover:text-violet-700"
 								onClick={() => setOpen(false)}
 							>
-								{navLabel(item.key, L)}
+								{L[item.key]}
 							</Link>
 						))}
 						{!isSignedIn ? (

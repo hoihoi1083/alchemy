@@ -142,16 +142,15 @@ function klingMotionFromMeta(opts: {
   return "confident slow push-in with light sweep and gentle parallax, premium social-ad pacing";
 }
 
-function isEndCardScene(opts: {
+function isEndCardScene(_opts: {
   role?: string;
   sceneIndex: number;
   sceneCount: number;
   useBrandLogo?: boolean;
   endWithBrandLogo?: boolean;
 }): boolean {
-  const on = opts.useBrandLogo ?? opts.endWithBrandLogo;
-  if (!on) return false;
-  return opts.sceneCount > 0 && opts.sceneIndex === opts.sceneCount;
+  // Blank centered logo end-card path retired — last scene is a normal beat.
+  return false;
 }
 
 /** Drop UI placeholders / Chinese prompt-editor junk so Kling never sees them as Action. */

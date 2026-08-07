@@ -236,7 +236,7 @@ export const en = {
     navTemplates: "Templates",
     navHow: "How it Works",
     navBrandKit: "Brand kit",
-    navUseCases: "Every platform & scenario",
+    navUseCases: "Use Cases",
     navPricing: "Pricing",
     navResources: "Tokens",
     navEditImage: "Edit image",
@@ -404,6 +404,7 @@ export const en = {
     tplPlatformIg: "Instagram",
     tplPlatformFb: "Facebook",
     tplPlatformXhs: "小红书",
+    tplPlatformTiktok: "TikTok",
     tplPlatformX: "X",
     tplFormatImage: "Image",
     tplFormatCarousel: "Carousel",
@@ -1290,7 +1291,7 @@ export const en = {
     storyboardStampLogoBtn: "Stamp brand logo",
     storyboardStampingLogo: "Stamping logo…",
     storyboardStampLogoHint:
-      "Last scene: centers your Brand kit logo (no AI redraw, no charge).",
+      "Stamps your Brand kit logo as a corner badge (no AI redraw, no charge).",
     storyboardStampLogoCornerHint:
       "Stamps your Brand kit logo as a corner badge (no AI redraw, no charge).",
     storyboardReplacingImage: "Replacing…",
@@ -1415,7 +1416,7 @@ export const en = {
     cinematicLogoStampNote:
       "Brand logo stamped on stills before video (same corner/size on every scene).",
     cinematicLogoModeBNote:
-      "When “Use brand logo on video stills” is on, each video keyframe gets your Brand kit logo (corner; last scene centered).",
+      "When “Use brand logo on video stills” is on, each video keyframe gets your Brand kit logo (Nano Banana picks natural placement).",
     cinematicLogoStampHint:
       "Upload your logo in Brand kit, then turn on “Use brand logo on video stills”. Regenerate video stills to apply. For images, use Edit image instead.",
     cinematicStitchWorkflowOrder:
@@ -1732,10 +1733,10 @@ export const en = {
       changeLogo: "Change logo",
       endWithLogoLabel: "Use brand logo on video stills",
       endWithLogoHint:
-        "Video only — stamps your logo onto each video keyframe/still (2× image tokens; last scene centered). For images, add logo anytime in Edit image instead.",
+        "Video only — composites your logo onto each video keyframe/still (2× image tokens; placement chosen to fit the frame). For images, add logo anytime in Edit image instead.",
       useLogoLabel: "Use brand logo on video stills",
       useLogoHint:
-        "Video only — stamps your logo onto each video keyframe/still (2× image tokens; last scene centered). For images, add logo anytime anywhere in Edit image.",
+        "Video only — composites your logo onto each video keyframe/still (2× image tokens; placement chosen to fit the frame). For images, add logo anytime anywhere in Edit image.",
       primaryColor: "Primary",
       secondaryColor: "Secondary",
       accentColor: "Accent",

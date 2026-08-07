@@ -6,7 +6,7 @@ import { Reveal } from "@/components/landing/Reveal";
 
 const TOOLS = [
 	{
-		href: "/studio",
+		href: "/brand-kit",
 		titleKey: "toolBrandTitle" as const,
 		descKey: "toolBrandDesc" as const,
 		src: "/images/landing/tool-icon-brand.png?v=2",

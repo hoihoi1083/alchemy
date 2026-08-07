@@ -174,11 +174,10 @@ function normalizeStoryboardPlan(
 function endCardLogoPlannerRules(useBrandLogo?: boolean): string[] {
   if (useBrandLogo) {
     return [
-      "BRAND LOGO (user opted in — real logo stamped after stills):",
-      "- Do NOT invent logos or wordmarks in any imagePrompt — the Brand kit PNG is stamped later.",
-      "- LAST scene: empty-center commercial end-card backdrop (soft gradient/bokeh), NO logo/text in imagePrompt.",
-      "- LAST sceneDescriptionZh: brand end card / 品牌片尾 only.",
-      "- Middle scenes: normal product/story beats; leave a little clear margin top-right for a small logo badge.",
+      "BRAND LOGO (user opted in — real logo composited after stills via Mode A):",
+      "- Do NOT invent logos or wordmarks in any imagePrompt — the Brand kit PNG is added in a second pass.",
+      "- EVERY scene (including the last) is a normal product/story beat — never plan a blank end-card or logo-hero last frame.",
+      "- Leave a little clear margin somewhere in each still so a small logo can sit cleanly (placement is chosen later).",
     ];
   }
   return [

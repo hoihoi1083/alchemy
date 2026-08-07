@@ -7,8 +7,8 @@ export type BrandKit = {
   fontPreset: "noto" | "pingfang" | "inter";
   tagline: string;
   /**
-   * When true and a logo is set: stamp Brand kit logo onto every storyboard still.
-   * Last scene = centered hero; earlier scenes = corner badge.
+   * When true and a logo is set: Mode A composites Brand kit logo onto every
+   * storyboard still (model picks natural placement; stamp fallback = corner).
    * Default false — no logo unless the user opts in.
    */
   useBrandLogo: boolean;

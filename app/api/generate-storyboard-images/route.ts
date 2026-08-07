@@ -7,12 +7,12 @@ import { estimateImageTokens, TOKEN_COST } from "@/lib/billing/token-costs";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import type { BrandProfile } from "@/lib/brand-profile";
 import { parseBrandKit } from "@/lib/brand-kit";
+import { brandKitForGeneration, brandKitWantsLogo } from "@/lib/brand-merge";
 import { uploadBrandKitLogoToFal } from "@/lib/brand-kit-fal";
 import {
   archiveImagesWithBrandLogo,
   CINEMATIC_LOGO_PLACEMENT,
   CINEMATIC_LOGO_SIZE_RATIO,
-  END_CARD_LOGO_SIZE_RATIO,
 } from "@/lib/brand-logo-composite";
 import {
   defaultEditEndpoint,
@@ -20,12 +20,9 @@ import {
   resolveEditEndpointWhenNeeded,
 } from "@/lib/image-endpoints";
 import {
-  buildStoryboardEndCardLogoModeAPrompt,
-  buildStoryboardEndCardStillPrompt,
   buildStoryboardLogoModeAPrompt,
   IMAGE_LOGO_REFINE_SYSTEM_PROMPT,
 } from "@/lib/image-refine-prompt";
-import { isStoryboardBrandLogoScene } from "@/lib/storyboard-brand-logo-scene";
 import { persistAndDurablizeMany } from "@/lib/storage/durable-media";
 import {
   buildPromptVariables,
@@ -155,7 +152,8 @@ export async function POST(request: Request) {
   let brandKit = null;
   if (brandKitRaw) {
     try {
-      brandKit = parseBrandKit(JSON.parse(brandKitRaw));
+      // Strip logo when useBrandLogo is off — Mode A / stamp must never see it.
+      brandKit = brandKitForGeneration(parseBrandKit(JSON.parse(brandKitRaw)));
     } catch {
       return NextResponse.json({ error: "Invalid brand kit data." }, { status: 400 });
     }
@@ -263,7 +261,7 @@ export async function POST(request: Request) {
         artStyleId,
         referenceStrategyKind: strategy.kind,
         conceptMode: conceptStoryboardNoProduct,
-        useBrandLogo: Boolean(brandKit?.useBrandLogo && brandKit?.logoUrl?.trim()),
+        useBrandLogo: brandKitWantsLogo(brandKit),
       });
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "Storyboard planning failed.";
@@ -309,7 +307,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No storyboard scenes to generate." }, { status: 400 });
   }
 
-  const brandLogoWanted = Boolean(brandKit?.useBrandLogo && brandKit?.logoUrl?.trim());
+  const brandLogoWanted = brandKitWantsLogo(brandKit);
   let brandLogoFalUrl: string | null = null;
   let logoMirrorNote: string | undefined;
   if (brandLogoWanted && brandKit) {
@@ -388,31 +386,26 @@ export async function POST(request: Request) {
       scenesToGenerate,
       STORYBOARD_FAL_CONCURRENCY,
       async (scene) => {
-        const endCard = isStoryboardBrandLogoScene(scene, plan.scenes.length, {
-          useBrandLogo,
+        // Pass 1: normal textless storyboard still (every scene, including last).
+        const prompt = buildStoryboardSceneImagePrompt(scene, plan, vars, {
+          referenceConcept:
+            strategy.useReferenceConceptPrompts &&
+            !conceptTextOnlyStoryboard &&
+            !forceConceptTextOnly,
+          conceptTextOnly: conceptTextOnlyStoryboard || forceConceptTextOnly,
+          storyboardStyleRef: storyboardStyleRef || dualProductAndStyle,
+          dualProductAndStyle,
+          textless: true,
+          visualStyleId: visualStyle,
+          brandProfile,
+          brandKit,
+          brandLogoImageIndex: null,
+          hasProductImage: hasProduct,
         });
-        // Pass 1: textless still. Last scene = empty center when logo opted in.
-        const prompt = endCard
-          ? buildStoryboardEndCardStillPrompt(plan.theme || headline || productName)
-          : buildStoryboardSceneImagePrompt(scene, plan, vars, {
-              referenceConcept:
-                strategy.useReferenceConceptPrompts &&
-                !conceptTextOnlyStoryboard &&
-                !forceConceptTextOnly,
-              conceptTextOnly: conceptTextOnlyStoryboard || forceConceptTextOnly,
-              storyboardStyleRef: storyboardStyleRef || dualProductAndStyle,
-              dualProductAndStyle,
-              textless: true,
-              visualStyleId: visualStyle,
-              brandProfile,
-              brandKit,
-              brandLogoImageIndex: null,
-              hasProductImage: hasProduct,
-            });
 
         const subscribe = async (inputPrompt: string, withImages: boolean) => {
           const useImages = withImages && hasImageUrls;
-          // /edit requires image_urls — never call it without pixels (end card / policy fallback).
+          // /edit requires image_urls — never call it without pixels (policy fallback).
           const callEndpoint = useImages ? endpoint : textEndpoint;
           return fal.subscribe(callEndpoint, {
             input: {
@@ -434,20 +427,17 @@ export async function POST(request: Request) {
 
         let result;
         try {
-          // End cards: text-only backdrop (no product refs) so center stays clear.
-          result = await subscribe(prompt, endCard ? false : hasImageUrls);
+          result = await subscribe(prompt, hasImageUrls);
         } catch (firstErr) {
           if (!isFalContentPolicyThrowable(firstErr)) throw firstErr;
-          const safePrompt = endCard
-            ? buildStoryboardEndCardStillPrompt(plan.theme || productName)
-            : spaSafeStillFallbackPrompt({
-                theme: plan.theme || productName || headline,
-                role: scene.role,
-                marketHint:
-                  promptMarket === "en"
-                    ? "International English-market commercial spa aesthetic."
-                    : "",
-              });
+          const safePrompt = spaSafeStillFallbackPrompt({
+            theme: plan.theme || productName || headline,
+            role: scene.role,
+            marketHint:
+              promptMarket === "en"
+                ? "International English-market commercial spa aesthetic."
+                : "",
+          });
           result = await subscribe(safePrompt, false);
         }
 
@@ -458,14 +448,12 @@ export async function POST(request: Request) {
 
         if (useBrandLogo && brandKit?.logoUrl?.trim()) {
           let logoIntegrated = false;
-          // Mode A (preferred): second fal image job composites Brand kit logo.
+          // Mode A (preferred): second fal image job composites Brand kit logo — model picks placement.
           if (brandLogoFalUrl) {
             try {
               const logoPass = await fal.subscribe(logoEditEndpoint, {
                 input: {
-                  prompt: endCard
-                    ? buildStoryboardEndCardLogoModeAPrompt()
-                    : buildStoryboardLogoModeAPrompt(),
+                  prompt: buildStoryboardLogoModeAPrompt(),
                   image_urls: [stillUrl, brandLogoFalUrl],
                   aspect_ratio: aspectRatio,
                   num_images: 1,
@@ -487,7 +475,7 @@ export async function POST(request: Request) {
               );
             }
           }
-          // Fallback: exact PNG sharp stamp if Mode A unavailable/failed.
+          // Fallback: exact PNG sharp corner stamp if Mode A unavailable/failed.
           if (!logoIntegrated) {
             try {
               const stamped = await archiveImagesWithBrandLogo(
@@ -495,17 +483,11 @@ export async function POST(request: Request) {
                 [stillUrl],
                 brandKit,
                 auth.user.userId,
-                endCard
-                  ? {
-                      placement: "center",
-                      fileName: "generated.png",
-                      sizeRatio: END_CARD_LOGO_SIZE_RATIO,
-                    }
-                  : {
-                      placement: CINEMATIC_LOGO_PLACEMENT,
-                      fileName: "generated.png",
-                      sizeRatio: CINEMATIC_LOGO_SIZE_RATIO,
-                    },
+                {
+                  placement: CINEMATIC_LOGO_PLACEMENT,
+                  fileName: "generated.png",
+                  sizeRatio: CINEMATIC_LOGO_SIZE_RATIO,
+                },
               );
               if (stamped.logoStamped && stamped.urls[0]) {
                 stillUrl = stamped.urls[0];

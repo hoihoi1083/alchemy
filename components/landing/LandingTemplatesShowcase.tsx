@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 import { Reveal } from "@/components/landing/Reveal";
 
-type Platform = "instagram" | "facebook" | "xhs" | "x";
+type Platform = "instagram" | "facebook" | "xhs" | "x" | "tiktok";
 type Format = "image" | "carousel" | "reels" | "video";
 
 type ShowcaseCard = {
@@ -51,6 +51,16 @@ const SERVICE_CAROUSEL = [
 /** Each attached set becomes its own card — never merge into another carousel. */
 const SHOWCASE: ShowcaseCard[] = [
   {
+    id: "makeup",
+    platform: "instagram",
+    format: "reels",
+    ratio: "9:16",
+    video: "/videos/landing/tpl-biz-makeup.mp4?v=3",
+    poster: "/images/landing/tpl-biz-makeup.jpg?v=3",
+    businessKey: "tplBizMakeup",
+    captionKey: "tplAdMakeup",
+  },
+  {
     id: "branding-carousel",
     platform: "instagram",
     format: "carousel",
@@ -59,16 +69,6 @@ const SHOWCASE: ShowcaseCard[] = [
     slides: BRANDING_CAROUSEL,
     businessKey: "tplBizBranding",
     captionKey: "tplAdBranding",
-  },
-  {
-    id: "service-carousel",
-    platform: "facebook",
-    format: "carousel",
-    ratio: "4:5",
-    poster: SERVICE_CAROUSEL[0],
-    slides: SERVICE_CAROUSEL,
-    businessKey: "tplBizService",
-    captionKey: "tplAdService",
   },
   {
     id: "fashion",
@@ -81,18 +81,18 @@ const SHOWCASE: ShowcaseCard[] = [
     captionKey: "tplAdFashion",
   },
   {
-    id: "makeup",
-    platform: "instagram",
-    format: "reels",
-    ratio: "9:16",
-    video: "/videos/landing/tpl-biz-makeup.mp4?v=2",
-    poster: "/images/landing/tpl-biz-makeup.jpg?v=2",
-    businessKey: "tplBizMakeup",
-    captionKey: "tplAdMakeup",
+    id: "service-carousel",
+    platform: "facebook",
+    format: "carousel",
+    ratio: "4:5",
+    poster: SERVICE_CAROUSEL[0],
+    slides: SERVICE_CAROUSEL,
+    businessKey: "tplBizService",
+    captionKey: "tplAdService",
   },
   {
     id: "cafe",
-    platform: "facebook",
+    platform: "xhs",
     format: "image",
     ratio: "4:5",
     poster: "/images/landing/tpl-biz-cafe-2.jpg?v=1",
@@ -104,38 +104,60 @@ const SHOWCASE: ShowcaseCard[] = [
 const HIGHLIGHT_MS = 2800;
 const CAROUSEL_MS = 1600;
 
-function formatLabel(
-  format: Format,
-  L: {
-    tplFormatImage: string;
-    tplFormatCarousel: string;
-    tplFormatReels: string;
-    tplFormatVideo: string;
-  },
-) {
+function formatMetaLabel(format: Format) {
   switch (format) {
     case "image":
-      return L.tplFormatImage;
+      return "IMAGE";
     case "carousel":
-      return L.tplFormatCarousel;
+      return "CAROUSEL";
     case "reels":
-      return L.tplFormatReels;
+      return "REELS";
     case "video":
-      return L.tplFormatVideo;
+      return "VIDEO";
   }
 }
 
-function platformShort(platform: Platform) {
+function platformIconSrc(platform: Platform) {
   switch (platform) {
     case "instagram":
-      return "IG";
+      return "/images/landing/platform-instagram.svg?v=3";
     case "facebook":
-      return "FB";
+      return "/images/landing/platform-facebook.svg?v=3";
     case "xhs":
-      return "RED";
+      return "/images/landing/platform-xhs.svg?v=3";
+    case "tiktok":
+      return "/images/landing/platform-tiktok.svg?v=3";
     case "x":
-      return "X";
+      return "/images/landing/platform-x.svg?v=3";
   }
+}
+
+function CardMetaBar({
+  platform,
+  format,
+  ratio,
+}: {
+  platform: Platform;
+  format: Format;
+  ratio: string;
+  featured?: boolean;
+}) {
+  return (
+    <div className="pointer-events-none absolute inset-x-0 top-0 z-30 p-2">
+      <div className="inline-flex max-w-full items-center gap-1.5 rounded-md bg-white px-2 py-1 shadow-sm">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={platformIconSrc(platform)}
+          alt=""
+          className="h-4 w-4 shrink-0 rounded-[4px] object-cover"
+          aria-hidden
+        />
+        <span className="truncate text-[10px] font-bold uppercase tracking-[0.04em] text-zinc-900">
+          {formatMetaLabel(format)} · {ratio}
+        </span>
+      </div>
+    </div>
+  );
 }
 
 function CardMedia({
@@ -157,14 +179,19 @@ function CardMedia({
   const [failed, setFailed] = useState(false);
   const [slide, setSlide] = useState(0);
   const isCarousel = Boolean(slides && slides.length > 1);
+  const slideCount = slides?.length ?? 0;
 
+  // Always advance carousel slides — do not gate on reduceMotion (that only
+  // affects decorative zoom). Restarting on `featured` was also clearing the
+  // timer every highlight tick and made switches feel stuck.
   useEffect(() => {
-    if (!isCarousel || !inView || reduceMotion) return;
+    if (!isCarousel || slideCount < 2) return;
+    const ms = CAROUSEL_MS;
     const id = window.setInterval(() => {
-      setSlide((s) => (s + 1) % (slides?.length ?? 1));
-    }, featured ? CAROUSEL_MS : CAROUSEL_MS + 600);
+      setSlide((s) => (s + 1) % slideCount);
+    }, ms);
     return () => window.clearInterval(id);
-  }, [isCarousel, inView, reduceMotion, featured, slides?.length]);
+  }, [isCarousel, slideCount]);
 
   useEffect(() => {
     const v = videoRef.current;
@@ -186,22 +213,33 @@ function CardMedia({
   if (isCarousel && slides) {
     return (
       <div className="landing-tpl-media relative w-full overflow-hidden bg-zinc-800">
-        {slides.map((src, i) => (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            key={src}
-            src={src}
-            alt=""
-            className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${
-              i === slide ? "opacity-100" : "opacity-0"
-            }`}
-            loading={i === 0 ? "eager" : "lazy"}
-          />
-        ))}
-        <span className="pointer-events-none absolute right-2 top-12 z-10 rounded-md bg-black/55 px-1.5 py-0.5 text-[9px] font-bold text-white">
+        {slides.map((src, i) => {
+          const active = i === slide;
+          const zoom = active && featured && !reduceMotion;
+          return (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              key={src}
+              src={src}
+              alt=""
+              className={`landing-tpl-still absolute inset-0 h-full w-full object-cover ${
+                zoom ? "landing-tpl-still--zoom" : ""
+              }`}
+              style={{
+                opacity: active ? 1 : 0,
+                zIndex: active ? 2 : 1,
+                transition: reduceMotion ? "none" : "opacity 0.45s ease",
+              }}
+              loading="eager"
+              decoding="async"
+              draggable={false}
+            />
+          );
+        })}
+        <span className="pointer-events-none absolute right-2 top-10 z-20 rounded-md bg-black/55 px-1.5 py-0.5 text-[9px] font-bold text-white">
           {slide + 1}/{slides.length}
         </span>
-        <div className="pointer-events-none absolute bottom-2 left-0 right-0 z-10 flex justify-center gap-1">
+        <div className="pointer-events-none absolute bottom-2 left-0 right-0 z-20 flex justify-center gap-1">
           {slides.map((_, i) => (
             <span
               key={i}
@@ -213,10 +251,21 @@ function CardMedia({
     );
   }
 
+  const stillOnly = !video || failed;
+  const zoom = stillOnly && featured && !reduceMotion;
+
   return (
     <div className="landing-tpl-media relative w-full overflow-hidden bg-zinc-800">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={poster} alt="" className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
+      <img
+        key={zoom ? "still-zoom" : "still-idle"}
+        src={poster}
+        alt=""
+        className={`landing-tpl-still absolute inset-0 h-full w-full object-cover ${
+          zoom ? "landing-tpl-still--zoom" : ""
+        }`}
+        loading="lazy"
+      />
       {video && !reduceMotion && !failed ? (
         <video
           ref={videoRef}
@@ -240,15 +289,16 @@ export function LandingTemplatesShowcase() {
   const [reduceMotion, setReduceMotion] = useState(false);
   const [rowInView, setRowInView] = useState(false);
   const [featuredIndex, setFeaturedIndex] = useState(0);
-  const scroller = useRef<HTMLDivElement>(null);
   const rowRef = useRef<HTMLDivElement>(null);
   const lastFeatured = useRef(0);
 
+  // Official-style app marks (Simple Icons glyphs on brand tiles).
   const platformLogos = [
-    { id: "instagram", label: L.tplPlatformIg, src: "/images/landing/platform-instagram.svg" },
-    { id: "facebook", label: L.tplPlatformFb, src: "/images/landing/platform-facebook.svg" },
-    { id: "xhs", label: L.tplPlatformXhs, src: "/images/landing/platform-xhs.png?v=2" },
-    { id: "x", label: L.tplPlatformX, src: "/images/landing/platform-x.svg" },
+    { id: "instagram", label: L.tplPlatformIg, src: "/images/landing/platform-instagram.svg?v=3" },
+    { id: "tiktok", label: L.tplPlatformTiktok, src: "/images/landing/platform-tiktok.svg?v=3" },
+    { id: "xhs", label: L.tplPlatformXhs, src: "/images/landing/platform-xhs.svg?v=3" },
+    { id: "facebook", label: L.tplPlatformFb, src: "/images/landing/platform-facebook.svg?v=3" },
+    { id: "x", label: L.tplPlatformX, src: "/images/landing/platform-x.svg?v=3" },
   ] as const;
   const formatTags = [L.tplFormatImage, L.tplFormatCarousel, L.tplFormatReels, L.tplFormatVideo];
 
@@ -265,7 +315,7 @@ export function LandingTemplatesShowcase() {
     if (!el) return;
     const io = new IntersectionObserver(
       ([entry]) => setRowInView(Boolean(entry?.isIntersecting)),
-      { threshold: 0.12 },
+      { threshold: 0.05, rootMargin: "80px 0px" },
     );
     io.observe(el);
     return () => io.disconnect();
@@ -298,15 +348,19 @@ export function LandingTemplatesShowcase() {
         </Reveal>
 
         <Reveal delayMs={80}>
-          <div className="mt-7 flex flex-wrap items-center justify-center gap-5" aria-label={L.tplPlatformsLabel}>
+          <div className="mt-7 flex flex-wrap items-center justify-center gap-3.5 sm:gap-4" aria-label={L.tplPlatformsLabel}>
             {platformLogos.map((p) => (
-              <span key={p.id} title={p.label} className="inline-flex items-center justify-center">
+              <span key={p.id} title={p.label} className="inline-flex">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={p.src} alt={p.label} className="h-10 w-10 rounded-[10px] object-contain sm:h-11 sm:w-11" />
+                <img
+                  src={p.src}
+                  alt={p.label}
+                  className="h-11 w-11 rounded-[12px] object-contain shadow-[0_6px_16px_rgba(15,23,42,0.12)] sm:h-12 sm:w-12"
+                />
               </span>
             ))}
           </div>
-          <div className="mt-3 flex flex-wrap justify-center gap-2" aria-label={L.tplFormatsLabel}>
+          <div className="mt-5 flex flex-wrap justify-center gap-2" aria-label={L.tplFormatsLabel}>
             {formatTags.map((label) => (
               <span
                 key={label}
@@ -320,7 +374,6 @@ export function LandingTemplatesShowcase() {
 
         <div ref={rowRef} className="landing-tpl-row relative mt-6">
           <div
-            ref={scroller}
             className="landing-tpl-scroller flex items-center justify-start overflow-x-auto md:justify-center"
           >
             {SHOWCASE.map((card, i) => {
@@ -332,12 +385,6 @@ export function LandingTemplatesShowcase() {
                     className={`landing-tpl-card group ${featured ? "landing-tpl-card--featured" : ""}`}
                   >
                     <div className="landing-tpl-media-wrap relative">
-                      <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start justify-between gap-2 p-2.5">
-                        <span className="landing-tpl-badge">
-                          {formatLabel(card.format, L)} · {card.ratio}
-                        </span>
-                        <span className="landing-tpl-badge">{platformShort(card.platform)}</span>
-                      </div>
                       <CardMedia
                         poster={card.poster}
                         video={card.video}
@@ -345,6 +392,11 @@ export function LandingTemplatesShowcase() {
                         inView={rowInView}
                         reduceMotion={reduceMotion}
                         featured={featured}
+                      />
+                      <CardMetaBar
+                        platform={card.platform}
+                        format={card.format}
+                        ratio={card.ratio}
                       />
                     </div>
                     <div className="landing-tpl-caption px-3 py-2.5">
@@ -365,14 +417,6 @@ export function LandingTemplatesShowcase() {
             className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-slate-50 to-transparent md:hidden"
             aria-hidden
           />
-          <button
-            type="button"
-            aria-label="Scroll templates"
-            onClick={() => scroller.current?.scrollBy({ left: 240, behavior: "smooth" })}
-            className="landing-tpl-scroll-btn absolute -right-1 top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-violet-200 bg-white text-violet-600 md:flex"
-          >
-            →
-          </button>
         </div>
       </div>
     </section>

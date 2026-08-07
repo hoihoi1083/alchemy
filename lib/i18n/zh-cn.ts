@@ -200,7 +200,7 @@ export const zhCn = {
     navTemplates: "模板",
     navHow: "使用方法",
     navBrandKit: "品牌套件",
-    navUseCases: "覆盖每个平台，营销场景",
+    navUseCases: "使用场景",
     navPricing: "收费",
     navEditImage: "改图",
     navCaptions: "字幕",
@@ -501,6 +501,7 @@ export const zhCn = {
     tplPlatformIg: "Instagram",
     tplPlatformFb: "Facebook",
     tplPlatformXhs: "小红书",
+    tplPlatformTiktok: "TikTok",
     tplPlatformX: "X",
     tplFormatImage: "图片",
     tplFormatCarousel: "轮播",
@@ -1144,7 +1145,7 @@ export const zhCn = {
     storyboardStampLogoBtn: "印上品牌 Logo",
     storyboardStampingLogo: "印 Logo 中…",
     storyboardStampLogoHint:
-      "最后一幕：居中印上 Brand kit Logo（不经 AI、不收费）。",
+      "角标印上 Brand kit Logo（不经 AI、不收费）。",
     storyboardStampLogoCornerHint:
       "角标印上 Brand kit Logo（不经 AI、不收费）。",
     storyboardReplacingImage: "替换中…",
@@ -1265,7 +1266,7 @@ export const zhCn = {
     cinematicStitchFfmpegNote: "拼接在本地完成（每段 8 秒动态分开生成）",
     cinematicLogoStampNote: "已在出片前将品牌 logo 印在静帧（每场景同一位置和大小）。",
     cinematicLogoModeBNote:
-      "勾选「视频静帧使用品牌 Logo」时，每张视频关键帧会印上 Brand kit Logo（角标；最后一幕居中）。",
+      "勾选「视频静帧使用品牌 Logo」时，每张视频关键帧会印上 Brand kit Logo（由模型选自然位置）。",
     cinematicLogoStampHint:
       "在 Brand kit 上传 logo，再勾选「视频静帧使用品牌 Logo」。重新生成视频静帧才会套用。图片请用「编辑图片」加 Logo。",
     cinematicStitchWorkflowOrder:
@@ -1569,10 +1570,10 @@ export const zhCn = {
       changeLogo: "更换 Logo",
       endWithLogoLabel: "视频静帧使用品牌 Logo",
       endWithLogoHint:
-        "仅用于视频 — 给每张视频关键帧/静帧加 Logo（2 倍出图 点数；最后一幕居中）。图片请到「编辑图片」随时加 Logo。",
+        "仅用于视频 — 给每张视频关键帧/静帧加 Logo（2 倍出图 点数；位置由模型按画面选择）。图片请到「编辑图片」随时加 Logo。",
       useLogoLabel: "视频静帧使用品牌 Logo",
       useLogoHint:
-        "仅用于视频 — 给每张视频关键帧/静帧加你的 Logo（2 倍出图 点数；最后一幕居中）。图片请到「编辑图片」随时、任意位置加 Logo。",
+        "仅用于视频 — 给每张视频关键帧/静帧加你的 Logo（2 倍出图 点数；位置由模型按画面选择）。图片请到「编辑图片」随时、任意位置加 Logo。",
       primaryColor: "主色",
       secondaryColor: "副色",
       accentColor: "强调色",

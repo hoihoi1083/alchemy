@@ -734,9 +734,7 @@ export function ImageStep() {
             </p>
             {brandKit?.logoUrl ? (
               <p className="mt-1 text-center text-[10px] text-emerald-300/90">
-                {i === storyboardScenes.length - 1
-                  ? m.wizard.storyboardStampLogoHint
-                  : m.wizard.storyboardStampLogoCornerHint}
+                {m.wizard.storyboardStampLogoCornerHint}
               </p>
             ) : null}
           </div>

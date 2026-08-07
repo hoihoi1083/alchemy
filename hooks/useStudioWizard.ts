@@ -123,7 +123,7 @@ import {
 import { getTemplate, type TemplateId } from "@/lib/templates";
 import { BANANA2_EDIT_ENDPOINT, BANANA2_TEXT_ENDPOINT } from "@/lib/image-endpoints";
 import { TOKEN_COST } from "@/lib/billing/token-costs";
-import { loadBrandKitFromStorage } from "@/lib/brand-kit";
+import { loadBrandKitFromStorage, preferNewerBrandKit } from "@/lib/brand-kit";
 import { buildImageRefinePrompt, normalizeImageSourceUrl, type LogoPlacement } from "@/lib/image-refine-prompt";
 import { isLibraryAssetUrl } from "@/lib/storage/library-asset-url";
 import type { ImageEditRegion } from "@/lib/image-edit-region";
@@ -169,6 +169,8 @@ import {
 import { referenceAnalyzeTriggerKey } from "@/lib/reference-analyze-trigger";
 import { saveBrandKitToStorage } from "@/lib/brand-kit";
 import {
+  brandKitForGeneration,
+  brandKitWantsLogo,
   effectiveBrandHeadline,
   mergeBrandProfileIntoKit,
   seedBrandCanvasLayers,
@@ -2178,7 +2180,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
   async function stampStoryboardSceneLogo(sceneIndex: number) {
     if (sceneIndex < 0 || sceneIndex >= storyboardScenes.length) return;
     const freshKit = loadBrandKitFromStorage();
-    const kit = freshKit.logoUrl ? freshKit : brandKit;
+    const kit = preferNewerBrandKit(brandKit, freshKit);
     if (!kit.logoUrl?.trim()) {
       setError(m.errors.brandLogoRequired);
       return;
@@ -2198,8 +2200,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         body: JSON.stringify({
           image_urls: [scene.imageUrl],
           brand_kit: { ...kit, useBrandLogo: true },
-          placement:
-            sceneIndex === storyboardScenes.length - 1 ? "center" : "top-right",
+          placement: "top-right",
         }),
       });
       const data = await res.json();
@@ -2244,9 +2245,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     setError(null);
     try {
       const freshKit = loadBrandKitFromStorage();
-      const kitForGen = freshKit.logoUrl ? freshKit : brandKit;
-      if (kitForGen !== brandKit && kitForGen.logoUrl) {
-        setBrandKit(kitForGen);
+      const liveKit = preferNewerBrandKit(brandKit, freshKit);
+      const kitForGen = brandKitForGeneration(liveKit) ?? liveKit;
+      if (liveKit !== brandKit) {
+        setBrandKit(liveKit);
       }
 
       const planForGen: VideoStoryboardPlan =
@@ -3456,11 +3458,12 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       });
       setImageBusy(true);
       try {
-        // Landing / another tab may have updated the kit — prefer freshest logo before Mode B.
+        // Landing / another tab may have updated the kit — prefer freshest before Mode A/B.
         const freshKit = loadBrandKitFromStorage();
-        const kitForGen = freshKit.logoUrl ? freshKit : brandKit;
-        if (kitForGen !== brandKit && kitForGen.logoUrl) {
-          setBrandKit(kitForGen);
+        const liveKit = preferNewerBrandKit(brandKit, freshKit);
+        const kitForGen = brandKitForGeneration(liveKit) ?? liveKit;
+        if (liveKit !== brandKit) {
+          setBrandKit(liveKit);
         }
 
         const buildStoryboardFd = (planForGen: VideoStoryboardPlan | null, sceneIndexes?: number[]) => {
@@ -3607,9 +3610,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         setCinematicReelPlan(plan);
 
         const freshKit = loadBrandKitFromStorage();
-        const kitForCinematic =
-          freshKit.logoUrl || freshKit.useBrandLogo ? freshKit : brandKit;
-        if (kitForCinematic !== brandKit) setBrandKit(kitForCinematic);
+        const liveKit = preferNewerBrandKit(brandKit, freshKit);
+        const kitForCinematic = brandKitForGeneration(liveKit) ?? liveKit;
+        if (liveKit !== brandKit) setBrandKit(liveKit);
 
         const genRes = await fetch("/api/generate-cinematic-scenes", {
           method: "POST",
@@ -4293,9 +4296,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
   ): Promise<string> {
     setVideoPhase("video");
     const freshKit = loadBrandKitFromStorage();
-    const kitForVideo = freshKit.logoUrl || freshKit.useBrandLogo ? freshKit : brandKit;
-    if (kitForVideo !== brandKit) setBrandKit(kitForVideo);
-    const logoOn = Boolean(kitForVideo?.useBrandLogo && kitForVideo?.logoUrl);
+    const liveKit = preferNewerBrandKit(brandKit, freshKit);
+    if (liveKit !== brandKit) setBrandKit(liveKit);
+    const logoOn = brandKitWantsLogo(liveKit);
 
     const fd = new FormData();
     fd.set("theme", storyboardPlan?.theme?.trim() || headline.trim() || product.trim());
@@ -4484,7 +4487,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         totalScenes,
         referenceMotionNote: extractReferenceMotionNote(effectivePromptExtra()),
       }),
-      brandKit?.logoUrl
+      brandKitWantsLogo(brandKit)
         ? "Preserve any brand logo already in the input still — exact geometry, no redraw, no new text."
         : "",
     ]
@@ -4517,8 +4520,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     // Mode B already baked the logo into stills via Nano Banana — skip sharp corner stamp.
     if (cinematicLogoIntegratedRef.current) return scenes;
     const freshKit = loadBrandKitFromStorage();
-    const kit = freshKit.logoUrl ? freshKit : brandKit;
-    if (!kit?.useBrandLogo || !kit?.logoUrl || scenes.length === 0) return scenes;
+    const kit = preferNewerBrandKit(brandKit, freshKit);
+    if (!brandKitWantsLogo(kit) || scenes.length === 0) return scenes;
     if (kit !== brandKit) setBrandKit(kit);
     const placement =
       quickFixLogoPlacement === "bottom-right" || quickFixLogoPlacement === "bottom-left"
@@ -4589,7 +4592,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       [
         formatCinematicCopy(m.wizard.cinematicStitchVideoPreflight),
         `${m.wizard.cinematicStitchClipCount}: ${clipUrls.length}`,
-        brandKit?.logoUrl
+        brandKitWantsLogo(brandKit)
           ? cinematicLogoIntegratedRef.current
             ? m.wizard.cinematicLogoModeBNote
             : m.wizard.cinematicLogoStampNote
@@ -5105,8 +5108,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     setError(null);
     try {
       const freshKit = loadBrandKitFromStorage();
-      const kitForPlan = freshKit.logoUrl || freshKit.useBrandLogo ? freshKit : brandKit;
-      if (kitForPlan !== brandKit) setBrandKit(kitForPlan);
+      const liveKit = preferNewerBrandKit(brandKit, freshKit);
+      const kitForPlan = brandKitForGeneration(liveKit) ?? liveKit;
+      if (liveKit !== brandKit) setBrandKit(liveKit);
 
       const fd = new FormData();
       fd.set("visual_style", visualStyleId);

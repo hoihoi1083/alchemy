@@ -1,4 +1,4 @@
-import type { BrandKit } from "@/lib/brand-kit";
+import { parseBrandKit, type BrandKit } from "@/lib/brand-kit";
 import type { BrandProfile } from "@/lib/brand-profile";
 import { newImageCanvasTextLayer, type ImageCanvasLayer } from "@/lib/image-canvas-layers";
 
@@ -13,6 +13,22 @@ export function brandKitHasPromptContent(kit: BrandKit | null | undefined): bool
   // (green / near-black / amber) otherwise get painted as literal color bars.
   // Kit colors stay for canvas / compositor; AI freely designs the full image.
   return Boolean(kit.tagline.trim());
+}
+
+/** True only when the user opted in AND a logo file exists. */
+export function brandKitWantsLogo(kit: BrandKit | null | undefined): boolean {
+  return Boolean(kit?.useBrandLogo === true && kit?.logoUrl?.trim());
+}
+
+/**
+ * For generation payloads: when logo is off, strip logoUrl so downstream
+ * stamp/Mode-A paths cannot accidentally apply a mark.
+ */
+export function brandKitForGeneration(kit: BrandKit | null | undefined): BrandKit | null {
+  if (!kit) return null;
+  const parsed = parseBrandKit(kit);
+  if (brandKitWantsLogo(parsed)) return parsed;
+  return { ...parsed, useBrandLogo: false, logoUrl: null };
 }
 
 export function mergeBrandProfileIntoKit(profile: BrandProfile, kit: BrandKit): BrandKit {

@@ -6,6 +6,7 @@ import {
   END_CARD_LOGO_SIZE_RATIO,
 } from "@/lib/brand-logo-composite";
 import { parseBrandKit } from "@/lib/brand-kit";
+import { brandKitForGeneration, brandKitWantsLogo } from "@/lib/brand-merge";
 import type { LogoPlacement } from "@/lib/image-refine-prompt";
 import { requireAppUser } from "@/lib/require-app-user";
 import { SERVER_ERRORS } from "@/lib/api/server-errors";
@@ -55,12 +56,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "image_urls required." }, { status: 400 });
   }
 
-  const brandKit = parseBrandKit(body.brand_kit);
-  if (!brandKit.logoUrl) {
+  const brandKit = brandKitForGeneration(parseBrandKit(body.brand_kit));
+  if (!brandKit || !brandKitWantsLogo(brandKit)) {
     return NextResponse.json({
       urls,
       logoStamped: false,
-      note: "No brand logo uploaded — stills unchanged.",
+      note: "Brand logo not enabled — stills unchanged.",
     });
   }
 

@@ -471,10 +471,33 @@ const LANDING_LAYOUT_CSS = `
 .landing-tpl-media {
   aspect-ratio: 9 / 16 !important;
   width: 100% !important;
+  overflow: hidden;
 }
 .landing-tpl-media-wrap {
   overflow: hidden;
   border-radius: 16px 16px 0 0;
+}
+@keyframes landing-tpl-featured-zoom {
+  /* Match card enlarge (~0.55s of ~2.6s featured window) then keep drifting */
+  0% { transform: scale(1) translate3d(0, 0, 0); }
+  21% { transform: scale(1.07) translate3d(-0.6%, -0.4%, 0); }
+  100% { transform: scale(1.12) translate3d(-1.2%, -0.8%, 0); }
+}
+.landing-tpl-still {
+  transform: scale(1);
+  transform-origin: center center;
+  /* Keep opacity transitions for carousel fades — only animate transform here */
+  transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+.landing-tpl-still--zoom {
+  animation: landing-tpl-featured-zoom 2.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-tpl-still--zoom {
+    animation: none !important;
+    transform: none !important;
+  }
 }
 .landing-tpl-badge {
   letter-spacing: 0.04em;
@@ -487,6 +510,59 @@ const LANDING_LAYOUT_CSS = `
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
+}
+.landing-tpl-meta {
+  padding: 0;
+}
+.landing-tpl-meta-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-height: 28px;
+  padding: 5px 8px;
+  background: rgba(24, 24, 27, 0.78);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #e4e4e7;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.landing-tpl-meta-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.landing-tpl-meta-icon {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.landing-tpl-meta-text {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #f4f4f5;
+}
+.landing-tpl-meta-status {
+  flex-shrink: 0;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #a1a1aa;
+}
+.landing-tpl-meta-status--winner {
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #f59e0b;
+  color: #18181b;
 }
 @media (min-width: 640px) {
   .landing-tpl-slot {
@@ -510,7 +586,6 @@ const LANDING_LAYOUT_CSS = `
     gap: 12px;
     padding: 36px 16px 40px;
   }
-  .landing-tpl-scroll-btn { display: flex !important; }
   .landing-tpl-card--featured {
     transform: scale(1.12) !important;
   }
