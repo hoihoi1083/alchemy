@@ -3,7 +3,9 @@
 import { Suspense, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { LandingNav } from "@/components/landing/LandingNav";
+import { StudioGlowShell } from "@/components/studio/StudioGlowShell";
 import { useLocale } from "@/components/LocaleProvider";
+import { STUDIO_PAGE_GLOW } from "@/lib/studio-glow";
 
 const ImageCanvasStudioClient = dynamic(
   () =>
@@ -23,7 +25,7 @@ function EditImagePageContent() {
   const t = m.imageCanvas;
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,#0f172a_0%,#111827_45%,#020617_100%)] text-slate-100">
+    <StudioGlowShell theme={STUDIO_PAGE_GLOW.editImage}>
       <LandingNav />
       <div className="mx-auto w-full max-w-[1800px] px-3 py-5 pb-28 sm:px-6 sm:py-6 sm:pb-24 lg:px-8 xl:pb-24">
         <header className="mb-5 text-center sm:mb-6">
@@ -40,7 +42,7 @@ function EditImagePageContent() {
 
         <ImageCanvasStudioClient />
       </div>
-    </main>
+    </StudioGlowShell>
   );
 }
 
@@ -50,18 +52,22 @@ export default function EditImagePage() {
 
   if (!mounted) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-950 text-sm text-slate-500">
-        …
-      </main>
+      <StudioGlowShell theme={STUDIO_PAGE_GLOW.editImage}>
+        <div className="flex flex-1 items-center justify-center text-sm text-slate-500">
+          …
+        </div>
+      </StudioGlowShell>
     );
   }
 
   return (
     <Suspense
       fallback={
-        <main className="flex min-h-screen items-center justify-center bg-slate-950 text-sm text-slate-500">
-          …
-        </main>
+        <StudioGlowShell theme={STUDIO_PAGE_GLOW.editImage}>
+          <div className="flex flex-1 items-center justify-center text-sm text-slate-500">
+            …
+          </div>
+        </StudioGlowShell>
       }
     >
       <EditImagePageContent />

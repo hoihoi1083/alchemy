@@ -1,17 +1,143 @@
 "use client";
 
+import { useEffect, useRef, type ReactNode } from "react";
 import { StudioAssistantWidget } from "@/components/assistant/StudioAssistantWidget";
 import { CoachSpotlightOverlay } from "@/components/assistant/CoachSpotlightOverlay";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { LandingHero } from "@/components/landing/LandingHero";
 import { LandingHowItWorks } from "@/components/landing/LandingHowItWorks";
 import { LandingTemplatesShowcase } from "@/components/landing/LandingTemplatesShowcase";
+import { LandingFloatingCta } from "@/components/landing/LandingFloatingCta";
 import { LandingPricingTeaser } from "@/components/landing/LandingPricingTeaser";
 import { LandingTokensAndFaq } from "@/components/landing/LandingTokensAndFaq";
 import { LandingFinalCta } from "@/components/landing/LandingFinalCta";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { LandingProductTools } from "@/components/landing/LandingProductTools";
 import { LandingStoryWheel } from "@/components/landing/LandingStoryWheel";
+
+/**
+ * Templates + pricing + FAQ share one stage:
+ * white top → purple glow (pinned to pricing) → dotted black floor.
+ */
+function LandingNeonBand({ children }: { children: ReactNode }) {
+	const ref = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		const band = ref.current;
+		if (!band) return;
+
+		const syncGlow = () => {
+			const pricing = band.querySelector("#pricing");
+			if (!pricing) return;
+			const bandH = band.getBoundingClientRect().height;
+			if (bandH < 1) return;
+			const pricingTop =
+				pricing.getBoundingClientRect().top - band.getBoundingClientRect().top;
+			const glowAt = Math.min(72, Math.max(28, (pricingTop / bandH) * 100));
+			band.style.setProperty("--glow-at", `${glowAt.toFixed(2)}%`);
+		};
+
+		syncGlow();
+		const ro = new ResizeObserver(syncGlow);
+		ro.observe(band);
+		window.addEventListener("resize", syncGlow);
+		return () => {
+			ro.disconnect();
+			window.removeEventListener("resize", syncGlow);
+		};
+	}, []);
+
+	return (
+		<div ref={ref} className="landing-neon-band relative">
+			<style>{`
+        .landing-neon-band {
+          --glow-at: 46%;
+          position: relative;
+          isolation: isolate;
+          overflow-x: clip;
+          padding-bottom: clamp(3rem, 7vw, 5rem);
+          background-color: #0c0a12;
+          /*
+            Full-bleed CSS wash only — no mesh PNG.
+            (PNG has a solid white top that painted a hard white stripe + side gutters.)
+          */
+          background-image:
+            radial-gradient(
+              ellipse 140% 42% at 50% var(--glow-at),
+              rgba(255, 255, 255, 0.5) 0%,
+              rgba(230, 195, 255, 0.4) 28%,
+              rgba(167, 100, 245, 0.32) 52%,
+              rgba(88, 40, 180, 0.14) 72%,
+              transparent 88%
+            ),
+            linear-gradient(
+              180deg,
+              #ffffff 0%,
+              #ffffff calc(var(--glow-at) - 18%),
+              #fcfbff calc(var(--glow-at) - 13%),
+              #f6efff calc(var(--glow-at) - 9%),
+              #eadfff calc(var(--glow-at) - 5%),
+              #d4bfff calc(var(--glow-at) - 2%),
+              #b794f6 var(--glow-at),
+              #8b5cf6 calc(var(--glow-at) + 5%),
+              #6d28d9 calc(var(--glow-at) + 10%),
+              #3b1766 calc(var(--glow-at) + 16%),
+              #161022 calc(var(--glow-at) + 23%),
+              #0c0a12 calc(var(--glow-at) + 30%),
+              #0c0a12 100%
+            );
+          background-repeat: no-repeat;
+          background-size: 100% 100%, 100% 100%;
+        }
+        .landing-neon-band::before {
+          content: "";
+          pointer-events: none;
+          position: absolute;
+          inset: 0;
+          z-index: 0;
+          background-image: radial-gradient(
+            rgba(255, 255, 255, 0.16) 1px,
+            transparent 1.2px
+          );
+          background-size: 18px 18px;
+          mask-image: linear-gradient(
+            180deg,
+            transparent 0%,
+            transparent calc(var(--glow-at) + 10%),
+            rgba(0, 0, 0, 0.35) calc(var(--glow-at) + 16%),
+            #000 calc(var(--glow-at) + 24%),
+            #000 100%
+          );
+          -webkit-mask-image: linear-gradient(
+            180deg,
+            transparent 0%,
+            transparent calc(var(--glow-at) + 10%),
+            rgba(0, 0, 0, 0.35) calc(var(--glow-at) + 16%),
+            #000 calc(var(--glow-at) + 24%),
+            #000 100%
+          );
+        }
+        .landing-neon-band__light,
+        .landing-neon-band__dark {
+          position: relative;
+          z-index: 1;
+          background: transparent;
+        }
+        .landing-neon-band__light #templates > div {
+          padding-bottom: clamp(2.5rem, 6vw, 4rem);
+        }
+        .landing-neon-band__dark #pricing > div {
+          padding-top: clamp(2rem, 5vw, 3.5rem);
+          padding-bottom: clamp(1.5rem, 3vw, 2.5rem);
+        }
+        .landing-neon-band__dark .landing-pricing-grid > * {
+          filter: drop-shadow(0 18px 40px rgb(0 0 0 / 0.35));
+        }
+      `}</style>
+			{children}
+		</div>
+	);
+}
 
 /**
  * Explicit breakpoints so layouts stay correct even when Tailwind HMR misses utilities.
@@ -719,15 +845,26 @@ export function LandingPageClient() {
 					<>
 						{/* Sections own their Reveal stagger — avoid wrapping whole blocks twice */}
 						<LandingStoryWheel />
-						<LandingTemplatesShowcase />
-						<LandingPricingTeaser />
-						<LandingTokensAndFaq />
+						{/*
+						  One continuous stage: white (templates) → purple glow → dotted black
+						  (pricing + FAQ). Background lives on the parent only.
+						*/}
+						<LandingNeonBand>
+							<div className="landing-neon-band__light">
+								<LandingTemplatesShowcase />
+							</div>
+							<div className="landing-neon-band__dark">
+								<LandingPricingTeaser />
+								<LandingTokensAndFaq />
+							</div>
+						</LandingNeonBand>
 						<LandingProductTools />
 						<LandingFinalCta />
 					</>
 				) : null}
 				<LandingFooter />
 			</main>
+			<LandingFloatingCta />
 			<CoachSpotlightOverlay />
 			<StudioAssistantWidget surface="landing" />
 		</>

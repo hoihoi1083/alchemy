@@ -192,6 +192,7 @@ export const zhCn = {
     openStudio: "開啟工作室",
     startCreating: "开始製作",
     tryFree: "免费试用",
+    floatingCta: "立即开始",
     ctaPrimary: "免费试用 — 做你第一隻广告",
     ctaSecondary: "查看使用方法",
     howItWorks: "使用方法",
@@ -445,6 +446,8 @@ export const zhCn = {
       "下载干净 MP4 到 CapCut/Premiere",
     ],
     faqTitle: "常见问题",
+    faqShowMore: "显示更多问题",
+    faqShowLess: "收起问题",
     faq: [
       {
         q: "Alchemy AI Lab 是什么？",
@@ -663,6 +666,8 @@ export const zhCn = {
       },
     ],
     faqTitle: "收费常见问题",
+    faqShowMore: "显示更多问题",
+    faqShowLess: "收起问题",
     faq: [
       {
         q: "点数怎么计算？",

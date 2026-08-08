@@ -3,18 +3,28 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useLocale } from "@/components/LocaleProvider";
+import { FaqExpandToggle } from "@/components/landing/FaqExpandToggle";
 import { TOP_UP_PRICE_USD, TOP_UP_TOKENS } from "@/lib/billing/plans";
+
+const FAQ_PREVIEW_COUNT = 4;
 
 export function LandingTokensAndFaq() {
 	const { m } = useLocale();
 	const L = m.landing;
 	const [openFaq, setOpenFaq] = useState<number | null>(null);
+	const [faqExpanded, setFaqExpanded] = useState(false);
+
+	const faqItems = L.faq;
+	const visibleFaq = faqExpanded
+		? faqItems
+		: faqItems.slice(0, FAQ_PREVIEW_COUNT);
+	const canToggleFaq = faqItems.length > FAQ_PREVIEW_COUNT;
 
 	return (
-		<section id="resources" className="w-full bg-slate-50">
+		<section id="resources" className="w-full bg-transparent">
 			<div className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 md:px-8 md:py-14">
 				<div className="grid gap-8 lg:grid-cols-2">
-					<div className="rounded-3xl border border-violet-100 bg-white p-6 shadow-sm">
+					<div className="rounded-3xl border border-white/15 bg-white/95 p-6 shadow-lg shadow-black/20 backdrop-blur-sm">
 						<h3 className="text-xl font-bold text-violet-700">
 							{L.topUpTitle}
 						</h3>
@@ -52,16 +62,16 @@ export function LandingTokensAndFaq() {
 					</div>
 
 					<div>
-						<h3 className="text-xl font-bold tracking-tight text-slate-900">
+						<h3 className="text-xl font-bold tracking-tight text-white">
 							{L.faqTitle}
 						</h3>
 						<div className="mt-5 space-y-2">
-							{L.faq.map((item, i) => {
+							{visibleFaq.map((item, i) => {
 								const open = openFaq === i;
 								return (
 									<div
 										key={item.q}
-										className="rounded-xl border border-slate-200 bg-white"
+										className="rounded-xl border border-white/15 bg-white/95 backdrop-blur-sm"
 									>
 										<button
 											type="button"
@@ -84,6 +94,18 @@ export function LandingTokensAndFaq() {
 								);
 							})}
 						</div>
+						{canToggleFaq ? (
+							<FaqExpandToggle
+								tone="onDark"
+								expanded={faqExpanded}
+								showMore={L.faqShowMore}
+								showLess={L.faqShowLess}
+								onToggle={() => {
+									setFaqExpanded((v) => !v);
+									if (faqExpanded) setOpenFaq(null);
+								}}
+							/>
+						) : null}
 					</div>
 				</div>
 			</div>

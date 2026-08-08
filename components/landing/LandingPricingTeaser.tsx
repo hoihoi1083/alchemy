@@ -224,28 +224,28 @@ export function LandingPricingTeaser() {
 	];
 
 	return (
-		<section id="pricing" className="w-full bg-white">
+		<section id="pricing" className="w-full bg-transparent">
 			<div className="mx-auto w-full max-w-[1440px] px-5 py-12 md:px-8 md:py-14">
 				<div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
 					<Reveal>
 						<div className="max-w-xl">
-							<h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+							<h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
 								{P.title}
 							</h2>
-							<p className="mt-2 text-sm text-slate-600">
+							<p className="mt-2 text-sm text-slate-300">
 								{P.subtitle}
 							</p>
 						</div>
 					</Reveal>
 
-					<div className="inline-flex max-w-full flex-wrap items-center gap-1 self-start rounded-full border border-slate-200 bg-slate-50 p-1">
+					<div className="inline-flex max-w-full flex-wrap items-center gap-1 self-start rounded-full border border-white/15 bg-white/5 p-1 backdrop-blur-sm">
 						<button
 							type="button"
 							onClick={() => setInterval("monthly")}
 							className={`rounded-full px-3.5 py-1.5 text-sm font-medium ${
 								interval === "monthly"
 									? "bg-violet-600 text-white"
-									: "text-slate-600"
+									: "text-slate-300 hover:text-white"
 							}`}
 						>
 							{P.monthly}
@@ -256,12 +256,12 @@ export function LandingPricingTeaser() {
 							className={`rounded-full px-3.5 py-1.5 text-sm font-medium ${
 								interval === "yearly"
 									? "bg-violet-600 text-white"
-									: "text-slate-600"
+									: "text-slate-300 hover:text-white"
 							}`}
 						>
 							{P.yearly}
 						</button>
-						<span className="mr-1.5 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+						<span className="mr-1.5 rounded-full bg-emerald-400/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
 							{interval === "monthly" ? P.monthlyBadge : P.yearlyBadge}
 						</span>
 					</div>
@@ -302,10 +302,10 @@ export function LandingPricingTeaser() {
 							>
 								<div
 									onMouseEnter={() => setHoveredId(card.id)}
-									className={`flex h-full min-h-[320px] min-w-0 flex-col rounded-2xl border bg-white p-5 shadow-sm transition duration-200 ${
+									className={`flex h-full min-h-[320px] min-w-0 flex-col rounded-2xl border bg-white p-5 shadow-lg shadow-black/25 transition duration-200 ${
 										isActive
-											? "border-violet-400 ring-2 ring-violet-200"
-											: "border-slate-200 ring-0"
+											? "border-violet-400 ring-2 ring-violet-400/50"
+											: "border-white/80 ring-0"
 									}`}
 								>
 									<div className="flex h-5 shrink-0 items-center">

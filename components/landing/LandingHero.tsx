@@ -47,22 +47,6 @@ export function LandingHero() {
 							{L.subtitle}
 						</p>
 
-						<div className="landing-hero-ctas mt-6 flex w-full flex-col gap-3 sm:mt-7 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
-							<Link
-								href="/start"
-								className="landing-hero-cta-primary inline-flex w-full items-center justify-center rounded-full bg-violet-500 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-violet-600/30 hover:bg-violet-400 sm:w-auto sm:px-6 sm:py-3"
-							>
-								{L.ctaPrimary}
-							</Link>
-							<a
-								href="#how"
-								className="landing-hero-cta-secondary inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/25 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur-sm hover:border-violet-300/50 hover:bg-white/10 sm:w-auto sm:px-5 sm:py-3"
-							>
-								<span aria-hidden>▶</span>
-								{L.ctaSecondary}
-							</a>
-						</div>
-
 						<ul className="landing-hero-trust mt-5 flex flex-wrap gap-x-4 gap-y-1.5 sm:mt-6">
 							{L.heroTrust.map((item) => (
 								<li
@@ -87,6 +71,22 @@ export function LandingHero() {
 								</li>
 							))}
 						</ul>
+
+						<div className="landing-hero-ctas mt-6 flex w-full flex-col gap-3 sm:mt-7 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
+							<Link
+								href="/start"
+								className="landing-hero-cta-primary inline-flex w-full items-center justify-center rounded-full bg-violet-500 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-violet-600/30 hover:bg-violet-400 sm:w-auto sm:px-6 sm:py-3"
+							>
+								{L.ctaPrimary}
+							</Link>
+							<a
+								href="#how"
+								className="landing-hero-cta-secondary inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/25 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur-sm hover:border-violet-300/50 hover:bg-white/10 sm:w-auto sm:px-5 sm:py-3"
+							>
+								<span aria-hidden>▶</span>
+								{L.ctaSecondary}
+							</a>
+						</div>
 					</div>
 				</div>
 

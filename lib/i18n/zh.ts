@@ -192,6 +192,7 @@ export const zh = {
     openStudio: "開啟工作室",
     startCreating: "開始製作",
     tryFree: "免費試用",
+    floatingCta: "立即開始",
     ctaPrimary: "免費試用 — 做你第一隻廣告",
     ctaSecondary: "睇下點運作",
     howItWorks: "運作方式",
@@ -445,6 +446,8 @@ export const zh = {
       "下載乾淨 MP4 去 CapCut/Premiere",
     ],
     faqTitle: "常見問題",
+    faqShowMore: "顯示更多問題",
+    faqShowLess: "收起問題",
     faq: [
       {
         q: "Alchemy AI Lab 係咩？",
@@ -663,6 +666,8 @@ export const zh = {
       },
     ],
     faqTitle: "收費常見問題",
+    faqShowMore: "顯示更多問題",
+    faqShowLess: "收起問題",
     faq: [
       {
         q: "Token 點樣計？",

@@ -155,7 +155,7 @@ export function LandingStoryWheel() {
   }, [activeIndex, paused, reduceMotion]);
 
   return (
-    <>
+    <section className="w-full bg-white">
       <div className="md:hidden">
         {slides.map((slide) => (
           <MobileSlide
@@ -337,7 +337,7 @@ export function LandingStoryWheel() {
           </div>
         </div>
       </section>
-    </>
+    </section>
   );
 }
 
@@ -378,7 +378,7 @@ function MobileSlide({
   }, [reduceMotion, video]);
 
   return (
-    <section className="w-full border-b border-slate-100 bg-white px-5 py-10 md:px-8">
+    <section className="w-full border-b border-slate-200/80 bg-white px-5 py-10 md:px-8">
       <div className="landing-story-mobile-grid mx-auto max-w-[1440px]">
         <div className="min-w-0">
           <p className="text-sm font-bold tracking-[0.08em] text-violet-600">

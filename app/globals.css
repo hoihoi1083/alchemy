@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* Force landing utilities that Next/Tailwind-dev sometimes drops from the CSS graph. */
-@source inline("max-w-[240px] max-w-[300px] max-w-[340px] max-w-[500px] max-w-[560px] max-w-[860px] max-w-[1120px] h-[170px] md:h-[190px] md:max-w-[340px] lg:max-w-[560px] lg:py-20 py-20");
+@source inline("max-w-[240px] max-w-[300px] max-w-[340px] max-w-[500px] max-w-[560px] max-w-[860px] max-w-[1120px] h-[170px] md:h-[190px] md:max-w-[340px] lg:max-w-[560px] lg:py-20 py-20 z-[90] z-[100] bg-[#050507]/96");
 
 /*
   Brand palette (Alchemy AI Lab)
@@ -584,5 +584,26 @@ footer.site-footer a.site-footer-logo:focus {
   .landing-how-live__timeline {
     opacity: 0.85 !important;
   }
+  .faq-expand-arrow-bounce {
+    animation: none !important;
+  }
+}
+
+/* FAQ expand — circled chevron with gentle downward nudge */
+@keyframes faq-expand-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  45% {
+    transform: translateY(3px);
+  }
+  70% {
+    transform: translateY(1px);
+  }
+}
+
+.faq-expand-arrow-bounce {
+  animation: faq-expand-bounce 1.35s ease-in-out infinite;
 }
 

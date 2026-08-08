@@ -228,6 +228,7 @@ export const en = {
     openStudio: "Open Studio",
     startCreating: "Start Creating",
     tryFree: "Try Free",
+    floatingCta: "Start now",
     ctaPrimary: "Try Free — Create Your First Ad",
     ctaSecondary: "Watch Demo",
     howItWorks: "How It Works",
@@ -635,6 +636,8 @@ export const en = {
       "Download clean MP4 for CapCut/Premiere",
     ],
     faqTitle: "FAQ",
+    faqShowMore: "Show more questions",
+    faqShowLess: "Show fewer questions",
     faq: [
       {
         q: "What is Alchemy AI Lab?",
@@ -753,6 +756,8 @@ export const en = {
       },
     ],
     faqTitle: "Billing FAQ",
+    faqShowMore: "Show more questions",
+    faqShowLess: "Show fewer questions",
     faq: [
       {
         q: "How do AI Tokens work?",

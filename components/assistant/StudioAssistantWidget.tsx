@@ -451,12 +451,17 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
     surface === "studio" &&
     (wizardStepKey === "setup" || wizardStepKey === "image" || wizardStepKey === "video");
 
+  const floatingCtaBottom =
+    "max(1.25rem, calc(env(safe-area-inset-bottom) + 0.75rem))";
   const launcherBottom =
     surface === "studio"
       ? "max(calc(5.75rem + env(safe-area-inset-bottom)), 6.75rem)"
-      : studioMobileBarVisible
-        ? "max(calc(4.75rem + env(safe-area-inset-bottom)), 5.5rem)"
-        : "max(1.25rem, env(safe-area-inset-bottom))";
+      : surface === "landing"
+        ? // Align with LandingFloatingCta (立即開始 dock)
+          floatingCtaBottom
+        : studioMobileBarVisible
+          ? "max(calc(4.75rem + env(safe-area-inset-bottom)), 5.5rem)"
+          : "max(1.25rem, env(safe-area-inset-bottom))";
 
   return (
     <div
@@ -666,7 +671,14 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
         aria-expanded={open}
         aria-label={sa.openLauncher}
       >
-        <span className="relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl sm:h-16 sm:w-16 md:h-[88px] md:w-[88px] lg:h-[112px] lg:w-[112px]">
+        <span
+          className={
+            surface === "landing"
+              ? // Match LandingFloatingCta pill (~53px) so it lines up with 立即開始
+                "relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl"
+              : "relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl sm:h-16 sm:w-16 md:h-[88px] md:w-[88px] lg:h-[112px] lg:w-[112px]"
+          }
+        >
           <Image
             src={LAUNCHER_IMAGE_SRC}
             alt="Alchemy AI Lab logo"

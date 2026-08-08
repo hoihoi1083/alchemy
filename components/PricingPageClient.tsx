@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useAuth } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { FaqExpandToggle } from "@/components/landing/FaqExpandToggle";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { Reveal } from "@/components/landing/Reveal";
@@ -23,6 +24,56 @@ import {
 
 type BillingInterval = "monthly" | "yearly";
 type PaidPlanKey = "standard" | "pro" | "master";
+
+const FAQ_PREVIEW_COUNT = 4;
+
+function PricingFaqList({
+  items,
+  showMore,
+  showLess,
+}: {
+  items: readonly { q: string; body: string }[];
+  showMore: string;
+  showLess: string;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const visible = expanded ? items : items.slice(0, FAQ_PREVIEW_COUNT);
+  const canToggle = items.length > FAQ_PREVIEW_COUNT;
+
+  return (
+    <>
+      <div className="mt-6 space-y-3">
+        {visible.map((item, i) => (
+          <Reveal key={item.q} delayMs={i * 60} distance={28} scaleFrom={0.98}>
+            <details className="group rounded-2xl border border-violet-200/80 bg-white p-4 shadow-sm open:border-violet-400 open:bg-violet-50/60 open:shadow-md open:shadow-violet-100/60">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-semibold text-slate-900 marker:content-none [&::-webkit-details-marker]:hidden">
+                <span className="min-w-0 text-sm sm:text-[15px]">{item.q}</span>
+                <span
+                  className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-bold leading-none text-violet-700 transition group-open:rotate-45 group-open:bg-violet-600 group-open:text-white"
+                  style={{ width: 28, height: 28 }}
+                  aria-hidden
+                >
+                  +
+                </span>
+              </summary>
+              <p className="mt-3 border-t border-violet-100 pt-3 text-sm leading-relaxed text-slate-600">
+                {item.body}
+              </p>
+            </details>
+          </Reveal>
+        ))}
+      </div>
+      {canToggle ? (
+        <FaqExpandToggle
+          expanded={expanded}
+          showMore={showMore}
+          showLess={showLess}
+          onToggle={() => setExpanded((v) => !v)}
+        />
+      ) : null}
+    </>
+  );
+}
 
 const PRICING_LAYOUT_CSS = `
 .pricing-page-grid {
@@ -795,27 +846,11 @@ export function PricingPageClient() {
                 <div className="mx-auto mt-3 h-1 w-12 rounded-full bg-violet-500" aria-hidden />
               </div>
             </Reveal>
-            <div className="mt-6 space-y-3">
-              {p.faq.map((item, i) => (
-                <Reveal key={item.q} delayMs={i * 60} distance={28} scaleFrom={0.98}>
-                  <details className="group rounded-2xl border border-violet-200/80 bg-white p-4 shadow-sm open:border-violet-400 open:bg-violet-50/60 open:shadow-md open:shadow-violet-100/60">
-                    <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-semibold text-slate-900 marker:content-none [&::-webkit-details-marker]:hidden">
-                      <span className="min-w-0 text-sm sm:text-[15px]">{item.q}</span>
-                      <span
-                        className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-bold leading-none text-violet-700 transition group-open:rotate-45 group-open:bg-violet-600 group-open:text-white"
-                        style={{ width: 28, height: 28 }}
-                        aria-hidden
-                      >
-                        +
-                      </span>
-                    </summary>
-                    <p className="mt-3 border-t border-violet-100 pt-3 text-sm leading-relaxed text-slate-600">
-                      {item.body}
-                    </p>
-                  </details>
-                </Reveal>
-              ))}
-            </div>
+            <PricingFaqList
+              items={p.faq}
+              showMore={p.faqShowMore}
+              showLess={p.faqShowLess}
+            />
             <p className="mt-8 text-center text-xs leading-relaxed text-violet-800/70">{p.footnote}</p>
           </div>
         </section>

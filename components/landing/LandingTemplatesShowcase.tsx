@@ -366,7 +366,7 @@ export function LandingTemplatesShowcase() {
   }, [reduceMotion, rowInView]);
 
   return (
-    <section id="templates" className="w-full bg-slate-50">
+    <section id="templates" className="w-full bg-transparent">
       <div className="mx-auto w-full max-w-[1440px] px-5 py-12 md:px-8 md:py-14">
         <Reveal>
           <h2 className="text-center text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
@@ -444,7 +444,7 @@ export function LandingTemplatesShowcase() {
             })}
           </div>
           <div
-            className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-slate-50 to-transparent md:hidden"
+            className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-white to-transparent md:hidden"
             aria-hidden
           />
         </div>
