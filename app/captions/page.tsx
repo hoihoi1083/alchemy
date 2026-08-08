@@ -2,8 +2,8 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { CaptionStudioClient } from "@/components/captions/CaptionStudioClient";
+import { LandingNav } from "@/components/landing/LandingNav";
 import { StudioGlowShell } from "@/components/studio/StudioGlowShell";
-import { StudioNav } from "@/components/studio/StudioNav";
 import { useLocale } from "@/components/LocaleProvider";
 import { STUDIO_PAGE_GLOW } from "@/lib/studio-glow";
 
@@ -13,7 +13,7 @@ function CaptionsPageContent() {
 
   return (
     <StudioGlowShell theme={STUDIO_PAGE_GLOW.captions}>
-      <StudioNav variant="dark" />
+      <LandingNav />
       <div className="mx-auto w-full max-w-[1800px] px-3 py-5 pb-28 sm:px-6 sm:py-6 sm:pb-24 lg:px-8 xl:pb-24">
         <header className="mb-5 text-center sm:mb-6">
           <p className="text-xs font-medium tracking-wide text-cyan-300 sm:text-sm">

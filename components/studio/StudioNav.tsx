@@ -38,22 +38,25 @@ export function StudioNav({ trailing, variant = "light" }: StudioNavProps) {
       className={
         dark
           ? "sticky top-0 z-40 w-full border-b border-white/10 bg-slate-950/70 backdrop-blur-md"
-          : "sticky top-0 z-40 w-full border-b border-slate-100 bg-white/95 backdrop-blur-sm"
+          : "sticky top-0 z-40 w-full bg-white"
       }
     >
-      <div className="mx-auto flex w-full max-w-7xl items-center gap-2 px-3 py-2 sm:gap-3 sm:px-6 sm:py-2.5">
-        <Link href="/" className="flex min-w-0 shrink-0 items-center gap-2">
+      <div className="mx-auto flex w-full max-w-[1440px] items-center gap-2 px-3 py-3 sm:gap-3 sm:px-6 sm:py-3.5 md:px-8">
+        <Link
+          href="/"
+          className="flex min-w-0 shrink-0 items-center gap-2.5 sm:gap-3"
+        >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={PRODUCT_LOGO_SRC}
             alt={PRODUCT_LOGO_ALT}
-            className="h-8 w-8 shrink-0 rounded-lg object-contain"
+            className="h-10 w-10 shrink-0 rounded-xl object-contain sm:h-11 sm:w-11"
           />
           <span
             className={
               dark
-                ? "hidden whitespace-nowrap text-[15px] font-semibold tracking-tight text-white sm:inline"
-                : "hidden whitespace-nowrap text-[15px] font-semibold tracking-tight text-slate-900 sm:inline"
+                ? "hidden whitespace-nowrap text-lg font-bold tracking-tight text-white sm:inline sm:text-[20px]"
+                : "hidden whitespace-nowrap text-lg font-bold tracking-tight text-slate-900 sm:inline sm:text-[20px]"
             }
           >
             {PRODUCT_NAME}
@@ -101,7 +104,7 @@ export function StudioNav({ trailing, variant = "light" }: StudioNavProps) {
           {!isSignedIn ? (
             <Link
               href="/start"
-              className="hidden rounded-full bg-violet-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-violet-500 sm:inline-flex"
+              className="hidden rounded-full bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500 sm:inline-flex"
             >
               {L.tryFree}
             </Link>

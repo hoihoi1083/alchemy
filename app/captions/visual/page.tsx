@@ -3,8 +3,8 @@
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { VisualCaptionStudioClient } from "@/components/captions/VisualCaptionStudioClient";
+import { LandingNav } from "@/components/landing/LandingNav";
 import { StudioGlowShell } from "@/components/studio/StudioGlowShell";
-import { StudioNav } from "@/components/studio/StudioNav";
 import { useLocale } from "@/components/LocaleProvider";
 import { STUDIO_PAGE_GLOW } from "@/lib/studio-glow";
 
@@ -14,7 +14,7 @@ function VisualCaptionsPageContent() {
 
   return (
     <StudioGlowShell theme={STUDIO_PAGE_GLOW.captions}>
-      <StudioNav variant="dark" />
+      <LandingNav />
       <div className="mx-auto w-full max-w-5xl px-4 py-8 pb-24 sm:px-6">
         <header className="mb-8 text-center">
           <p className="text-sm font-medium tracking-wide text-cyan-300">{t.badge}</p>
