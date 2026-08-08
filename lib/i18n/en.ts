@@ -637,6 +637,30 @@ export const en = {
     faqTitle: "FAQ",
     faq: [
       {
+        q: "What is Alchemy AI Lab?",
+        a: "Alchemy AI Lab is an AI marketing studio that helps brands create product ads, social posts, storyboards, and short videos — without writing complex prompts.",
+      },
+      {
+        q: "Do I need to write prompts?",
+        a: "No. Upload a product image, paste a reference link, or pick a template. Alchemy analyzes style, layout, colors, and marketing direction for you.",
+      },
+      {
+        q: "How does the AI creative workflow work?",
+        a: "1) Upload or paste a reference 2) AI analyzes style 3) Review or edit the brief and storyboard 4) Generate and refine the creative.",
+      },
+      {
+        q: "Can I use reference images?",
+        a: "Yes. Alchemy analyzes visual style, structure, colors, and creative direction from references to guide new creatives — it is not meant to clone the original post or brand assets.",
+      },
+      {
+        q: "What content can I create?",
+        a: "Product ads, sale banners, new-arrival posts, Instagram/Facebook creatives, Xiaohongshu (RedNote) posts, Reels, service promos, testimonials, teaching carousels, and more.",
+      },
+      {
+        q: "Can I create short videos?",
+        a: "Yes. You can generate video directly, or use a storyboard-first path to review scenes before the final clip.",
+      },
+      {
         q: "How long does one run take?",
         a: "Quick image: ~10-30s. Storyboard image pack: ~2-5 min. Video: usually ~1-3 min depending on queue and duration.",
       },
@@ -654,7 +678,7 @@ export const en = {
       },
       {
         q: "How do upgrades work?",
-        a: "Upgrade on the Pricing page (signed in). It starts a new higher-plan billing period today: Stripe credits unused days on your old plan and charges the new plan from today (list prices stay the same). You keep remaining tokens and get the full new monthly token allotment right away. Your next renewal date moves to one month from the upgrade. Example: Standard on 1 Aug → Master on 15 Aug → next renew is 15 Sep with a full Master grant.",
+        a: "Upgrade on the Pricing page (signed in). It starts a new higher-plan billing period today: Stripe credits unused time on your old plan and charges the new plan from today (list prices stay the same). You keep remaining tokens and get the full new plan token allotment right away. Your next renewal date moves forward from the upgrade (one month for monthly plans, one year for yearly). Example: Standard monthly on 1 Aug → Master monthly on 15 Aug → next renew is 15 Sep with a full Master grant.",
       },
       {
         q: "How do downgrades work?",
@@ -731,16 +755,36 @@ export const en = {
     faqTitle: "Billing FAQ",
     faq: [
       {
+        q: "How do AI Tokens work?",
+        body: "Tokens measure billable AI usage in the studio. Harder jobs (longer video, higher resolution, storyboard packs) use more tokens. Each paid step shows the cost before you generate.",
+      },
+      {
+        q: "What are AI Tokens used for?",
+        body: "Tokens are charged for image generation, storyboard scenes, video generation, planning/brief steps, and some analysis jobs (for example research-reel analysis). Costs are shown before you run.",
+      },
+      {
         q: "What happens when I run out of tokens?",
         body: "Generation is blocked until you top up or upgrade. You’ll see a clear warning before each run.",
       },
       {
-        q: "Do failed generations charge tokens?",
-        body: "No — if the AI job fails, reserved tokens are released back to your balance.",
+        q: "How many images or videos can I create with each plan?",
+        body: "It depends on format and settings. Pricing cards show approximate capacity (e.g. single images vs storyboard reels). Higher resolution and longer clips use more tokens per run.",
       },
       {
-        q: "Can I use the Free plan for commercial work?",
-        body: "Yes for trying the studio. Heavy commercial use should move to a paid plan for higher limits and resolution.",
+        q: "Do failed generations charge tokens?",
+        body: "If an AI job fails after charge, we refund that run’s tokens to your balance. You are not meant to pay for a failed generation.",
+      },
+      {
+        q: "Can I use Alchemy-generated content commercially?",
+        body: "Yes — for lawful marketing under our Terms. You must review outputs before publishing. Heavy volume should use a paid plan for higher limits and resolution.",
+      },
+      {
+        q: "Which platforms are supported?",
+        body: "Export sizes cover common Instagram, Facebook, TikTok, Xiaohongshu (RedNote), YouTube Shorts, and general web/social ad ratios. Publishing to each network is done from your own accounts.",
+      },
+      {
+        q: "Does Alchemy support agencies and teams?",
+        body: "For higher volume: Pro raises monthly tokens; Master adds more tokens, 2K images, and Pro canvas. Custom is negotiated for enterprise needs. Built-in multi-seat team workspaces are not included yet — contact us for Custom.",
       },
       {
         q: "When can I buy extra tokens?",
@@ -749,12 +793,12 @@ export const en = {
       {
         q: "How do I upgrade my plan?",
         body:
-          "On this Pricing page (signed in), choose a higher plan (Standard → Pro → Master) and confirm. Upgrade starts a new billing period today: Stripe credits unused days on your current plan and charges the new plan from today — we do not change Stripe product list prices. You keep remaining tokens and receive the full new monthly allotment immediately (for example Standard 3,000 → Master adds 16,000 on top). Your next renewal date becomes one month from the upgrade. You don’t need Manage billing to upgrade.",
+          "On this Pricing page (signed in), choose a higher plan (Standard → Pro → Master) and confirm. Upgrade starts a new billing period today: Stripe credits unused time on your current plan and charges the new plan from today — we do not change Stripe product list prices. You keep remaining tokens and receive the full new plan allotment immediately (for example Standard 3,000 → Master adds 16,000 on top). Your next renewal moves forward from the upgrade (monthly or yearly, matching the plan you chose). You don’t need Manage billing to upgrade.",
       },
       {
         q: "How do I downgrade my plan?",
         body:
-          "On this Pricing page, choose a lower plan. Downgrades are scheduled for your next billing date — you keep your current plan, features, and remaining tokens until then. The lower price and monthly token allotment start on the next cycle. This avoids paying a lower price while still using a higher-tier plan mid-cycle. Manage billing is for cancel / payment methods, not for picking a lower plan.",
+          "On this Pricing page, choose a lower plan. Downgrades are scheduled for your next billing date — you keep your current plan, features, and remaining tokens until then. The lower price and plan token allotment start on the next cycle. This avoids paying a lower price while still using a higher-tier plan mid-cycle. Manage billing is for cancel / payment methods, not for picking a lower plan.",
       },
       {
         q: "Where do I change or cancel my subscription?",
