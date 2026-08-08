@@ -11,18 +11,21 @@ import { PRODUCT_LOGO_ALT, PRODUCT_LOGO_SRC, PRODUCT_NAME } from "@/lib/brand";
 type StudioNavProps = {
   /** Optional chips under/ beside brand (e.g. promotion mode). */
   trailing?: ReactNode;
+  /** Light = white wizard bar; dark = translucent bar over glow tool pages. */
+  variant?: "light" | "dark";
 };
 
 /**
  * Focused studio chrome — logo + core tools + tokens/language/user.
  * Avoids full marketing LandingNav links that pull attention off the wizard.
  */
-export function StudioNav({ trailing }: StudioNavProps) {
+export function StudioNav({ trailing, variant = "light" }: StudioNavProps) {
   const { m } = useLocale();
   const L = m.landing;
   const H = m.header;
   const { isSignedIn } = useAuth();
   const [open, setOpen] = useState(false);
+  const dark = variant === "dark";
 
   const tools = [
     { href: "/#templates", label: L.navTemplates },
@@ -31,7 +34,13 @@ export function StudioNav({ trailing }: StudioNavProps) {
   ] as const;
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-slate-100 bg-white/95 backdrop-blur-sm">
+    <header
+      className={
+        dark
+          ? "sticky top-0 z-40 w-full border-b border-white/10 bg-slate-950/70 backdrop-blur-md"
+          : "sticky top-0 z-40 w-full border-b border-slate-100 bg-white/95 backdrop-blur-sm"
+      }
+    >
       <div className="mx-auto flex w-full max-w-7xl items-center gap-2 px-3 py-2 sm:gap-3 sm:px-6 sm:py-2.5">
         <Link href="/" className="flex min-w-0 shrink-0 items-center gap-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -40,7 +49,13 @@ export function StudioNav({ trailing }: StudioNavProps) {
             alt={PRODUCT_LOGO_ALT}
             className="h-8 w-8 shrink-0 rounded-lg object-contain"
           />
-          <span className="hidden whitespace-nowrap text-[15px] font-semibold tracking-tight text-slate-900 sm:inline">
+          <span
+            className={
+              dark
+                ? "hidden whitespace-nowrap text-[15px] font-semibold tracking-tight text-white sm:inline"
+                : "hidden whitespace-nowrap text-[15px] font-semibold tracking-tight text-slate-900 sm:inline"
+            }
+          >
             {PRODUCT_NAME}
           </span>
         </Link>
@@ -54,14 +69,22 @@ export function StudioNav({ trailing }: StudioNavProps) {
             <Link
               key={item.href}
               href={item.href}
-              className="whitespace-nowrap rounded-lg px-2 py-1.5 text-[12px] font-medium text-slate-600 hover:bg-violet-50 hover:text-violet-700 xl:text-[13px]"
+              className={
+                dark
+                  ? "whitespace-nowrap rounded-lg px-2 py-1.5 text-[12px] font-medium text-slate-300 hover:bg-white/10 hover:text-white xl:text-[13px]"
+                  : "whitespace-nowrap rounded-lg px-2 py-1.5 text-[12px] font-medium text-slate-600 hover:bg-violet-50 hover:text-violet-700 xl:text-[13px]"
+              }
             >
               {item.label}
             </Link>
           ))}
           <Link
             href="/pricing"
-            className="whitespace-nowrap rounded-lg px-2 py-1.5 text-[12px] font-medium text-violet-700 hover:bg-violet-50 xl:text-[13px]"
+            className={
+              dark
+                ? "whitespace-nowrap rounded-lg px-2 py-1.5 text-[12px] font-medium text-violet-300 hover:bg-white/10 hover:text-violet-200 xl:text-[13px]"
+                : "whitespace-nowrap rounded-lg px-2 py-1.5 text-[12px] font-medium text-violet-700 hover:bg-violet-50 xl:text-[13px]"
+            }
           >
             {L.navResources}
           </Link>
@@ -72,7 +95,7 @@ export function StudioNav({ trailing }: StudioNavProps) {
             <div className="flex items-center gap-1.5 md:hidden">{trailing}</div>
           ) : null}
           <div className="hidden sm:block">
-            <LanguageToggle variant="light" />
+            <LanguageToggle variant={dark ? "dark" : "light"} />
           </div>
           <AuthNav compact />
           {!isSignedIn ? (
@@ -85,7 +108,11 @@ export function StudioNav({ trailing }: StudioNavProps) {
           ) : null}
           <button
             type="button"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-700 lg:hidden"
+            className={
+              dark
+                ? "inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/15 text-slate-200 lg:hidden"
+                : "inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-700 lg:hidden"
+            }
             aria-expanded={open}
             aria-label="Menu"
             onClick={() => setOpen((v) => !v)}
@@ -98,13 +125,23 @@ export function StudioNav({ trailing }: StudioNavProps) {
       </div>
 
       {open ? (
-        <div className="border-t border-slate-100 bg-white px-3 py-3 lg:hidden">
+        <div
+          className={
+            dark
+              ? "border-t border-white/10 bg-slate-950/95 px-3 py-3 lg:hidden"
+              : "border-t border-slate-100 bg-white px-3 py-3 lg:hidden"
+          }
+        >
           <div className="flex flex-col gap-1">
             {tools.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-violet-50"
+                className={
+                  dark
+                    ? "rounded-lg px-3 py-2 text-sm font-medium text-slate-200 hover:bg-white/10"
+                    : "rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-violet-50"
+                }
                 onClick={() => setOpen(false)}
               >
                 {item.label}
@@ -112,20 +149,34 @@ export function StudioNav({ trailing }: StudioNavProps) {
             ))}
             <Link
               href="/pricing"
-              className="rounded-lg px-3 py-2 text-sm font-medium text-violet-700 hover:bg-violet-50"
+              className={
+                dark
+                  ? "rounded-lg px-3 py-2 text-sm font-medium text-violet-300 hover:bg-white/10"
+                  : "rounded-lg px-3 py-2 text-sm font-medium text-violet-700 hover:bg-violet-50"
+              }
               onClick={() => setOpen(false)}
             >
               {L.navResources}
             </Link>
             <Link
               href="/pro"
-              className="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-violet-50"
+              className={
+                dark
+                  ? "rounded-lg px-3 py-2 text-sm font-medium text-slate-200 hover:bg-white/10"
+                  : "rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-violet-50"
+              }
               onClick={() => setOpen(false)}
             >
               {H.proLink}
             </Link>
-            <div className="mt-2 border-t border-slate-100 pt-2 sm:hidden">
-              <LanguageToggle variant="light" />
+            <div
+              className={
+                dark
+                  ? "mt-2 border-t border-white/10 pt-2 sm:hidden"
+                  : "mt-2 border-t border-slate-100 pt-2 sm:hidden"
+              }
+            >
+              <LanguageToggle variant={dark ? "dark" : "light"} />
             </div>
           </div>
         </div>
