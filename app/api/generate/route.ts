@@ -16,16 +16,27 @@ import {
 import { mirrorImageUrlToFalStorage } from "@/lib/fal-mirror-media";
 import { sanitizeVideoEndpoint } from "@/lib/image-endpoints";
 import {
-  collectKlingFallbackImageUrls,
-  formatKlingFalError,
-  klingStoryboardTokenCost,
+  adaptScriptForKlingFallback,
+  adaptScriptForMinimaxH3,
+  ensureSeedanceReferenceTags,
+  friendlyAutoFallbackNote,
+} from "@/lib/video-engine-prompt-adapters";
+import {
+  clampMinimaxH3Duration,
+  collectMinimaxH3FallbackMedia,
+  runMinimaxH3Fallback,
+} from "@/lib/minimax-h3-run";
+import { persistAndDurablize } from "@/lib/storage/durable-media";
+import { buildSingleClipManifest } from "@/lib/video-timing-manifest";
+import {
   parseKlingScenesMeta,
   resolveKlingClipDurations,
   resolveKlingScenesMeta,
+  klingStoryboardTokenCost,
   runKlingStoryboardFallback,
+  collectKlingFallbackImageUrls,
+  formatKlingFalError,
 } from "@/lib/kling-storyboard-run";
-import { persistAndDurablize } from "@/lib/storage/durable-media";
-import { buildSingleClipManifest } from "@/lib/video-timing-manifest";
 
 function seedanceTimingManifest(duration: "auto" | number) {
   if (typeof duration === "number" && duration > 0) {
@@ -165,37 +176,6 @@ function parseDuration(v: string): "auto" | number {
 /** Seedance OpenAPI expects duration enum strings ("4"…"15"), not integers. */
 function durationForFal(duration: "auto" | number): string {
   return duration === "auto" ? "auto" : String(duration);
-}
-
-function hasReferenceTag(prompt: string, kind: "Image" | "Video" | "Audio", index: number): boolean {
-  return new RegExp(`@\\s*${kind}\\s*${index}\\b`, "i").test(prompt);
-}
-
-/** Prepend any missing @Image1 / @Video1 tags so reference mode always works. */
-function ensureReferenceTags(
-  prompt: string,
-  imageCount: number,
-  videoCount: number,
-  audioCount: number,
-): { prompt: string; added: string[] } {
-  const added: string[] = [];
-  let result = prompt.trim();
-
-  for (let i = 1; i <= imageCount; i++) {
-    if (!hasReferenceTag(result, "Image", i)) added.push(`@Image${i}`);
-  }
-  for (let i = 1; i <= videoCount; i++) {
-    if (!hasReferenceTag(result, "Video", i)) added.push(`@Video${i}`);
-  }
-  for (let i = 1; i <= audioCount; i++) {
-    if (!hasReferenceTag(result, "Audio", i)) added.push(`@Audio${i}`);
-  }
-
-  if (added.length > 0) {
-    result = `${added.join(" ")} ${result}`.trim();
-  }
-
-  return { prompt: result, added };
 }
 
 function applyAdvancedGuidance(prompt: string, opts: {
@@ -566,7 +546,7 @@ export async function POST(request: Request) {
     const imageCount = imageUrlsFinal?.length ?? 0;
     const videoCount = videoUrlsFinal?.length ?? 0;
     const audioCount = audio_urls?.length ?? 0;
-    const { prompt: taggedPrompt, added: addedTags } = ensureReferenceTags(
+    const { prompt: taggedPrompt, added: addedTags } = ensureSeedanceReferenceTags(
       common.prompt,
       imageCount,
       videoCount,
@@ -644,28 +624,105 @@ export async function POST(request: Request) {
         e.status === 422 &&
         !isDurationValidationError(e));
 
-    // Any Seedance 422 (content/sensitive/validation) with stills → try Kling I2V.
+    // Seedance 422 (content/sensitive/validation) → MiniMax H3 first (keeps R2V),
+    // then Kling I2V stills as last resort.
     if (seedance422Block && mode !== "text") {
-      const imageUrls = await collectKlingFallbackImageUrls(formData, {
-        clerkId: auth.user.userId,
-      });
+      const totalDurationSec =
+        typeof duration === "number" && duration > 0 ? duration : 8;
+      const blockedCode = isSeedanceSensitiveError(message)
+        ? "SEEDANCE_SENSITIVE_CONTENT"
+        : "FAL_CONTENT_POLICY";
+
+      const { imageUrls: h3Images, videoUrls: h3Videos } =
+        await collectMinimaxH3FallbackMedia(formData, {
+          clerkId: auth.user.userId,
+        });
+      if (h3Images.length >= 1 || h3Videos.length >= 1) {
+        const h3Duration = clampMinimaxH3Duration(totalDurationSec);
+        // fal MiniMax H3 enums are 768P / 2K / 4K (capital P) — not Seedance 768p.
+        const h3ResHint =
+          resolution === "480p" || resolution === "720p" ? "768P" : "2K";
+        const h3Cost = videoTokenCostFromRequest({
+          duration: h3Duration,
+          resolution: h3ResHint === "768P" ? "720p" : "1080p",
+          fast: false,
+        });
+        const h3Charged = await chargeTokens(auth.user.userId, h3Cost, {
+          kind: "minimax_h3",
+          via: "generate_auto_fallback",
+          seedanceMode: mode,
+        });
+        if (!("error" in h3Charged)) {
+          try {
+            const h3Prompt = adaptScriptForMinimaxH3({
+              seedancePrompt: common.prompt,
+              imageCount: h3Images.length,
+              videoCount: h3Videos.length,
+            });
+            console.info(
+              `[api/generate] Seedance 422 → MiniMax H3 fallback (${h3Images.length} image(s), ${h3Videos.length} video(s), mode=${mode})`,
+            );
+            const h3 = await runMinimaxH3Fallback({
+              clerkId: auth.user.userId,
+              prompt: h3Prompt,
+              durationSec: h3Duration,
+              aspectRatio: aspectRatio === "auto" ? "9:16" : aspectRatio,
+              resolution: h3ResHint,
+              imageUrls: h3Images,
+              videoUrls: h3Videos,
+            });
+            await trackUsage(auth.user.userId, "video");
+            return NextResponse.json({
+              videoUrl: h3.videoUrl,
+              generationMode: h3.generationMode,
+              endpoint: h3.endpoint,
+              referenceImageCount: h3Images.length,
+              referenceVideoCount: h3Videos.length,
+              tokensCharged: h3Cost,
+              creditBalance: h3Charged.balanceAfter,
+              note: friendlyAutoFallbackNote("minimax-h3"),
+              seedanceBlockedCode: blockedCode,
+            });
+          } catch (h3Err: unknown) {
+            console.error("[api/generate] MiniMax H3 fallback failed", h3Err);
+            await refundTokens(auth.user.userId, h3Cost, {
+              kind: "minimax_h3",
+              reason: "generation_failed",
+              via: "generate_auto_fallback",
+            });
+          }
+        }
+      }
+
+      const imageUrls = h3Images.length
+        ? h3Images
+        : await collectKlingFallbackImageUrls(formData, {
+            clerkId: auth.user.userId,
+          });
       if (imageUrls.length >= 1) {
-        const totalDurationSec =
-          typeof duration === "number" && duration > 0 ? duration : 8;
-        // Keep textless motionPrompt, but preserve shot-list roles/timing when present.
-        const scenesMeta = resolveKlingScenesMeta(
-          imageUrls.length,
-          parseKlingScenesMeta(formData.get("scenes_meta") as string | null),
+        const clientMeta = parseKlingScenesMeta(
+          formData.get("scenes_meta") as string | null,
         );
+        const klingPlan = adaptScriptForKlingFallback({
+          seedancePrompt: common.prompt,
+          totalDurationSec,
+          imageUrls,
+          clientScenesMeta: clientMeta,
+        });
+        const klingImageUrls = klingPlan.imageUrls;
+        const scenesMeta =
+          klingPlan.scenesMeta.length > 0
+            ? klingPlan.scenesMeta
+            : resolveKlingScenesMeta(klingImageUrls.length, clientMeta);
         const clipDurations = resolveKlingClipDurations(
-          imageUrls.length,
+          klingImageUrls.length,
           totalDurationSec,
           scenesMeta,
         );
         const klingCost = klingStoryboardTokenCost(clipDurations);
         const klingCharged = await chargeTokens(auth.user.userId, klingCost, {
           kind: "kling_storyboard_fallback",
-          sceneCount: imageUrls.length,
+          sceneCount: klingImageUrls.length,
           clipDurations,
           via: "generate_auto",
           seedanceMode: mode,
@@ -673,16 +730,14 @@ export async function POST(request: Request) {
         if (!("error" in klingCharged)) {
           try {
             console.info(
-              `[api/generate] Seedance 422 → Kling fallback (${imageUrls.length} image(s), mode=${mode})`,
+              `[api/generate] Seedance 422 → Kling fallback (${klingImageUrls.length} image(s), ${scenesMeta.length} beat(s), mode=${mode})`,
             );
             const kling = await runKlingStoryboardFallback({
               request,
               clerkId: auth.user.userId,
-              imageUrls,
-              // Mood only — never pass the Seedance marketing prompt as Kling motion
-              // (Kling invents on-screen Chinese/Latin from copy-heavy prompts).
-              theme: "",
-              motionPrompt: "",
+              imageUrls: klingImageUrls,
+              theme: klingPlan.theme,
+              motionPrompt: klingPlan.motionPrompt,
               totalDurationSec,
               scenesMeta,
             });
@@ -693,13 +748,11 @@ export async function POST(request: Request) {
               endpoint: kling.endpoint,
               clipCount: kling.clipCount,
               clipDurations: kling.clipDurations,
-              referenceImageCount: imageUrls.length,
+              referenceImageCount: klingImageUrls.length,
               tokensCharged: klingCost,
               creditBalance: klingCharged.balanceAfter,
-              note: kling.note,
-              seedanceBlockedCode: isSeedanceSensitiveError(message)
-                ? "SEEDANCE_SENSITIVE_CONTENT"
-                : "FAL_CONTENT_POLICY",
+              note: friendlyAutoFallbackNote("kling", kling.clipCount),
+              seedanceBlockedCode: blockedCode,
             });
           } catch (klingErr: unknown) {
             console.error("[api/generate] Kling fallback failed", klingErr);
@@ -711,9 +764,7 @@ export async function POST(request: Request) {
             return NextResponse.json(
               {
                 error: formatKlingFalError(klingErr),
-                code: isSeedanceSensitiveError(message)
-                  ? "SEEDANCE_SENSITIVE_CONTENT"
-                  : "FAL_CONTENT_POLICY",
+                code: blockedCode,
                 klingFallbackFailed: true,
                 hint:
                   "Video generation failed. Try again or use a different still.",

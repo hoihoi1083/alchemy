@@ -226,6 +226,36 @@ export function VideoSettingsPanel({
         </>
       )}
 
+      <div>
+        <p className={`mb-2 text-xs font-medium ${dark ? "text-slate-400" : "text-slate-600"}`}>
+          {m.wizard.videoEngineLabel}
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {(
+            [
+              ["seedance", m.wizard.videoEngineSeedance],
+              ["minimax-h3", m.wizard.videoEngineMinimaxH3],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => onChange({ ...value, videoEngine: id })}
+              className={`rounded-full px-3 py-1.5 text-xs font-medium ${pillClass(
+                (value.videoEngine ?? "seedance") === id,
+                dark,
+                tone,
+              )}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <p className={`mt-1.5 text-[11px] ${dark ? "text-slate-500" : "text-slate-500"}`}>
+          {m.wizard.videoEngineHint}
+        </p>
+      </div>
+
       <label
         className={`flex cursor-pointer items-center gap-3 text-sm ${
           dark ? "text-slate-300" : "text-slate-700"

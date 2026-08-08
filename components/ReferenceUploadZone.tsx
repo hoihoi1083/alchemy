@@ -49,7 +49,7 @@ export function ReferenceUploadZone({
               src={previewUrl}
               controls
               playsInline
-              className="mx-auto max-h-48 w-full rounded-xl border border-slate-700"
+              className="mx-auto max-h-28 w-full max-w-[14rem] rounded-xl border border-slate-700 object-contain"
             />
           ) : (
             <img

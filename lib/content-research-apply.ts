@@ -30,6 +30,7 @@ import type { ImageInputMode } from "@/lib/image-input-mode";
 import type { VisualStyleId } from "@/lib/visual-styles";
 import type { WorkflowMode } from "@/lib/workflow-mode";
 import { resolveReelResearchRouting } from "@/lib/content-research-reel-routing";
+import { mergeResearchIdeaRemapIntoPromptExtra } from "@/lib/research-idea-remap";
 import {
   DEFAULT_TEACHING_CAROUSEL_SLIDE_COUNT,
   MAX_TEACHING_CAROUSEL_SLIDE_COUNT,
@@ -192,7 +193,7 @@ function wizardPatchForAngle(
     promotionMode === "concept" && pinnedReference && !explicitPromoteTarget
       ? ""
       : promoteTargetRaw;
-  const promptExtra = isProductShotReferenceAngle(angle)
+  const styleExtra = isProductShotReferenceAngle(angle)
     ? ""
     : styleReferencePromptBlock(
         angle,
@@ -201,6 +202,34 @@ function wizardPatchForAngle(
         usePostInference ? inferred?.referenceNote : undefined,
         market,
       );
+
+  // Video / reel research: keep structure, remap idea onto user product/concept.
+  const wantsIdeaRemap =
+    effectiveFormat === "reel" ||
+    Boolean(angle.sourceVideoUrl) ||
+    userWorkflowMode === "video-only" ||
+    userWorkflowMode === "combined";
+  const promptExtra =
+    wantsIdeaRemap && (promoteTarget || productName)
+      ? mergeResearchIdeaRemapIntoPromptExtra(styleExtra, {
+          promotionMode,
+          productOrConcept:
+            promoteTarget ||
+            productName ||
+            (promotionMode === "concept" ? conceptIdeaPatch : productName),
+          headline: copy.headline,
+          subline: copy.subline,
+          offer: copy.offer,
+          referenceHook: angle.hook,
+          referenceTitle: angle.sourceTitle ?? angle.title,
+          referenceStructure: [
+            angle.format,
+            angle.whyItWorks,
+          ]
+            .filter(Boolean)
+            .join(" · "),
+        })
+      : styleExtra;
 
   return {
     headline: copy.headline,
@@ -320,6 +349,7 @@ export type ContentAngleWizardApi = {
   setReferenceCarouselSlideCount?: (count: number) => void;
   setCinematicSceneCount?: (count: 1 | 2 | 3 | 4 | 5 | 6) => void;
   setContentResearchApplyRef?: (ref: ContentResearchApplyRef | null) => void;
+  setReferenceClipLoading?: (busy: boolean) => void;
   setError?: (message: string | null) => void;
 };
 
@@ -388,7 +418,8 @@ export async function applyContentAngleToWizard(
   if (patch.carouselSlideCount && wizard.setReferenceCarouselSlideCount) {
     wizard.setReferenceCarouselSlideCount(patch.carouselSlideCount);
   }
-  wizard.setContentResearchApplyRef?.({ angle, plan });
+  // Do NOT set contentResearchApplyRef yet — unlocking Continue mid-download
+  // skips wait.reel_* and dumps users on setup while analysis races.
 
   const loadVideo = wantsResearchVideoReference(
     patch.resolvedFormat ?? angle.format,
@@ -431,10 +462,13 @@ export async function applyContentAngleToWizard(
         onVideoCreativeModeChange: wizard.onVideoCreativeModeChange,
         onReferenceAdFile: wizard.onReferenceAdFile,
         setReferenceCarouselSlideCount: wizard.setReferenceCarouselSlideCount,
+        setReferenceClipLoading: wizard.setReferenceClipLoading,
       },
       refDeps,
     );
   }
+
+  wizard.setContentResearchApplyRef?.({ angle, plan });
 
   return {
     patch,

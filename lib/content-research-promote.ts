@@ -446,7 +446,12 @@ export function refreshContentResearchPromptExtra(
   market?: PromptMarket,
 ): string {
   if (!ref || !isContentResearchStyleExtra(prevExtra)) return prevExtra;
-  const stripped = stripContentResearchStyleExtra(prevExtra);
+  // Keep idea-remap block — strip only the style reference segment, then rebuild style.
+  const remapIdx = prevExtra.indexOf("RESEARCH IDEA REMAP");
+  const remapBlock = remapIdx >= 0 ? prevExtra.slice(remapIdx).trim() : "";
+  const withoutRemap =
+    remapIdx >= 0 ? prevExtra.slice(0, remapIdx).trim() : prevExtra;
+  const stripped = stripContentResearchStyleExtra(withoutRemap);
   const promoteTarget = contentResearchPromoteTarget(promotionMode, {
     product: fields.product,
     headline: fields.headline,
@@ -461,7 +466,10 @@ export function refreshContentResearchPromptExtra(
     undefined,
     effectiveMarket,
   );
-  return [stripped.trim(), newBlock].filter(Boolean).join(" | ");
+  const withStyle = [stripped.trim(), newBlock].filter(Boolean).join(" | ");
+  if (!remapBlock) return withStyle;
+  // Re-attach existing remap after style refresh (do not lose research→script idea transfer).
+  return [withStyle, remapBlock].filter(Boolean).join("\n\n").trim();
 }
 
 export function researchProductPromptLines(

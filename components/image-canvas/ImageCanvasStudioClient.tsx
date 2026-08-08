@@ -19,6 +19,7 @@ import { isLibraryAssetUrl } from "@/lib/storage/library-asset-url";
 import { readImageCanvasDraft, writeImageCanvasDraft } from "@/lib/image-canvas-studio-draft";
 import { isPipelineFileUrl } from "@/lib/pipeline/safe-url";
 import { LibraryAssetPicker } from "@/components/LibraryAssetPicker";
+import { ToolPhaseStrip } from "@/components/studio/ToolPhaseStrip";
 
 const ImageInpaintMaskEditor = dynamic(
   () => import("@/components/studio/ImageInpaintMaskEditor").then((m) => m.ImageInpaintMaskEditor),
@@ -215,10 +216,17 @@ export function ImageCanvasStudioClient() {
   const hasWorkspace = Boolean(sourceKind && (localPreviewUrl || busy || sourceUrl || sourceFile));
 
   const stepLabels: Record<EditStep, string> = {
-    upload: t.stepUpload,
-    clean: t.stepClean,
-    design: t.stepDesign,
-    export: t.stepExport,
+    upload: t.stepUploadName,
+    clean: t.stepCleanName,
+    design: t.stepDesignName,
+    export: t.stepExportName,
+  };
+
+  const stepHowTo: Record<EditStep, string> = {
+    upload: t.stepHowToUpload,
+    clean: t.stepHowToClean,
+    design: t.stepHowToDesign,
+    export: t.stepHowToExport,
   };
 
   const loadSource = useCallback(
@@ -767,43 +775,27 @@ export function ImageCanvasStudioClient() {
         </div>
       ) : (
         <>
-          <nav className="rounded-2xl border border-slate-800 bg-slate-950/60 p-3">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex flex-wrap gap-1">
-                {WORKFLOW_STEPS.map((s) => {
-                  const stepIdx = WORKFLOW_STEPS.indexOf(s);
-                  const currentIdx = WORKFLOW_STEPS.indexOf(step);
-                  const reachable =
-                    s === "upload" ||
-                    stepIdx <= currentIdx ||
-                    visitedSteps.has(s) ||
-                    (s === "design" && visitedSteps.has("clean"));
-                  const disabledStep =
-                    busy ||
-                    !reachable ||
-                    (s === "export" && !resultPreviewUrl && !visitedSteps.has("export"));
-                  return (
-                    <button
-                      key={s}
-                      type="button"
-                      disabled={disabledStep}
-                      onClick={() => goToStep(s)}
-                      className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-                        step === s
-                          ? "bg-violet-600 text-white"
-                          : visitedSteps.has(s)
-                            ? "border border-slate-600 text-slate-300 hover:border-violet-500/50"
-                            : "border border-slate-700 text-slate-500"
-                      } disabled:cursor-not-allowed disabled:opacity-40`}
-                    >
-                      {stepLabels[s]}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-            <p className="mt-2 text-[11px] text-slate-500">{t.workflowNote}</p>
-          </nav>
+          <ToolPhaseStrip
+            phases={WORKFLOW_STEPS.map((s) => ({ id: s, label: stepLabels[s] }))}
+            currentId={step}
+            disabledIds={WORKFLOW_STEPS.filter((s) => {
+              const stepIdx = WORKFLOW_STEPS.indexOf(s);
+              const currentIdx = WORKFLOW_STEPS.indexOf(step);
+              const reachable =
+                s === "upload" ||
+                stepIdx <= currentIdx ||
+                visitedSteps.has(s) ||
+                (s === "design" && visitedSteps.has("clean"));
+              const blockedExport =
+                s === "export" && !resultPreviewUrl && !visitedSteps.has("export");
+              return busy || !reachable || blockedExport;
+            })}
+            onSelect={(id) => {
+              const target = id as EditStep;
+              goToStep(target);
+            }}
+            howTo={stepHowTo[step]}
+          />
 
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-3">
@@ -863,9 +855,9 @@ export function ImageCanvasStudioClient() {
                 type="button"
                 disabled={busy || !editorImageUrl}
                 onClick={() => setStep("clean")}
-                className="mt-5 rounded-full border border-emerald-500/40 px-5 py-2 text-xs font-medium text-emerald-300 hover:bg-emerald-950/40 disabled:opacity-40"
+                className="mt-5 rounded-full bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-40"
               >
-                {t.stepNext}
+                {t.stepContinueClean}
               </button>
             </section>
           )}
@@ -944,28 +936,36 @@ export function ImageCanvasStudioClient() {
                 />
                 )}
               </div>
-              {cleanFrames.length > 1 && (
-                <div className="mt-4 flex flex-wrap gap-2">
+              <div className="mt-4 flex flex-wrap gap-2">
+                {cleanFrames.length > 1 ? (
                   <button
                     type="button"
                     onClick={acceptCleanResult}
-                    className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white"
+                    className="rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500"
                   >
                     {t.cleanAcceptBtn}
                   </button>
-                </div>
-              )}
+                ) : null}
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => setStep("design")}
+                  className="rounded-full border border-emerald-500/40 bg-emerald-950/40 px-5 py-2.5 text-sm font-semibold text-emerald-100 hover:bg-emerald-900/50 disabled:opacity-40"
+                >
+                  {t.stepContinueDesign}
+                </button>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => setStep("design")}
+                  className="rounded-full border border-slate-600 px-4 py-2.5 text-xs font-medium text-slate-300 hover:border-slate-500 disabled:opacity-40"
+                >
+                  {t.stepSkipClean}
+                </button>
+              </div>
               {note ? (
                 <p className="mt-3 text-xs text-emerald-300">{note}</p>
               ) : null}
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => setStep("design")}
-                className="mt-4 text-xs text-slate-400 underline hover:text-slate-300"
-              >
-                {t.stepSkipClean}
-              </button>
             </div>
           )}
 

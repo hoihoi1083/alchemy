@@ -541,10 +541,12 @@ export function ContentResearchPanel({
                       labels={{
                         scoreLabel: cr.scoreLabel,
                         inspiredBy: cr.inspiredBy,
+                        originalPostLabel: cr.originalPostLabel,
                         yourAngle: cr.yourAngle,
                         useAngle: cr.useAngle,
                         applyingAngle: cr.applyingAngle,
                         openNote: cr.openNote,
+                        sourceLabel: cr.sourceLabel,
                         likes: cr.likes,
                         collects: cr.collects,
                         noCover: cr.noCover,
@@ -600,6 +602,11 @@ export function ContentResearchPanel({
                       ))}
                     </ul>
                   )}
+                  {angle.sourceSnippet ? (
+                    <p className="mt-2 line-clamp-3 text-[11px] leading-relaxed text-slate-500">
+                      {angle.sourceSnippet}
+                    </p>
+                  ) : null}
                   {angle.sourceUrl && (
                     <a
                       href={angle.sourceUrl}
@@ -607,7 +614,7 @@ export function ContentResearchPanel({
                       rel="noopener noreferrer"
                       className="mt-2 block truncate text-[10px] text-sky-700 underline"
                     >
-                      {cr.sourceLabel}: {angle.sourceTitle || angle.sourceUrl}
+                      {cr.openNote}: {angle.sourceTitle || angle.sourceUrl}
                     </a>
                   )}
                   <button

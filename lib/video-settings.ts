@@ -20,6 +20,8 @@ export type VideoSettings = {
   /** AI generates a second frame from your product (start → end) for richer motion. */
   autoSecondFrame: boolean;
   fast: boolean;
+  /** Seedance (default) or MiniMax H3 for direct I2V / R2V. Storyboard stays Kling. */
+  videoEngine?: "seedance" | "minimax-h3";
 };
 
 export const VIDEO_RESOLUTIONS: VideoResolution[] = ["480p", "720p", "1080p"];
@@ -52,6 +54,7 @@ export const DEFAULT_VIDEO_SETTINGS: VideoSettings = {
   creativity: "lively",
   autoSecondFrame: true,
   fast: true,
+  videoEngine: "seedance",
 };
 
 export function cameraForMotion(style: VideoMotionStyle): string {

@@ -164,7 +164,7 @@ export function ResearchReelSetupPanel({ onReferenceVideo }: Props) {
       {referencePreviewUrl && referenceIsVideo ? (
         <video
           src={referencePreviewUrl}
-          className="max-h-40 w-full rounded-lg border border-violet-200 object-contain"
+          className="mx-auto max-h-28 w-full max-w-[14rem] rounded-lg border border-violet-200 object-contain"
           muted
           playsInline
           controls

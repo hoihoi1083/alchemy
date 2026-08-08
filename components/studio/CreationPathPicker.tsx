@@ -159,11 +159,6 @@ const PATH_CSS = `
 .path-type-card.is-selected {
   border-color: #6c3bff; box-shadow: 0 16px 40px -18px rgba(76,37,212,0.45);
 }
-.path-type-card.is-selected .path-type-cta {
-  background: #6c3bff !important;
-  color: #fff !important;
-  border: none !important;
-}
 .path-type-check {
   position: absolute; top: 0.5rem; right: 0.5rem; z-index: 2;
   display: flex; align-items: center; justify-content: center;
@@ -203,14 +198,6 @@ const PATH_CSS = `
 .path-card-icon svg {
   width: 1.15rem !important;
   height: 1.15rem !important;
-}
-.path-type-cta {
-  display: flex; width: 100%; margin-top: auto; align-items: center; justify-content: center;
-  border-radius: 0.8rem; padding: 0.7rem 1rem; font-size: 13px; font-weight: 650; line-height: 1.2;
-}
-.path-type-cta.is-on { background: #6c3bff; color: #fff; border: none; }
-.path-type-cta.is-off {
-  background: #fff; color: #5b2fe0; border: 1.5px solid #a78bfa;
 }
 .path-tip-card {
   display: flex; flex-direction: column; min-width: 0; height: 100%;
@@ -424,7 +411,7 @@ export function CreationPathPicker({
                     </p>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-1.5">
+                  <div className="mt-auto flex flex-wrap items-center gap-1.5">
                     <span className="text-[11px] font-semibold text-slate-400">
                       {cp.bestForLabel}
                     </span>
@@ -441,10 +428,6 @@ export function CreationPathPicker({
                       </span>
                     ))}
                   </div>
-
-                  <span className={`path-type-cta ${selected ? "is-on" : "is-off"}`}>
-                    {cp.chooseLabel}
-                  </span>
                 </button>
               );
             })}

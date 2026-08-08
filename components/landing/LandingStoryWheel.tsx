@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { useLocale } from "@/components/LocaleProvider";
+import { Reveal } from "@/components/landing/Reveal";
 
 /** Fallback dwell when a video has no duration yet. Storyboard stitch may be ~6s. */
 const FALLBACK_LOOP_MS = 5000;
@@ -157,22 +158,30 @@ export function LandingStoryWheel() {
   return (
     <section className="w-full bg-white">
       <div className="md:hidden">
-        {slides.map((slide) => (
-          <MobileSlide
+        {slides.map((slide, i) => (
+          <Reveal
             key={slide.id}
-            eyebrow={slide.eyebrow}
-            title={slide.title}
-            body={slide.body}
-            points={slide.points}
-            pointIcons={undefined}
-            ctaHref={slide.ctaHref}
-            ctaLabel={slide.ctaLabel}
-            hint={slide.hint}
-            poster={slide.poster}
-            video={slide.video}
-            imageAlt={slide.imageAlt}
-            reduceMotion={reduceMotion}
-          />
+            delayMs={i * 70}
+            distance={44}
+            scaleFrom={0.94}
+            threshold={0}
+            rootMargin="0px 0px -6% 0px"
+          >
+            <MobileSlide
+              eyebrow={slide.eyebrow}
+              title={slide.title}
+              body={slide.body}
+              points={slide.points}
+              pointIcons={undefined}
+              ctaHref={slide.ctaHref}
+              ctaLabel={slide.ctaLabel}
+              hint={slide.hint}
+              poster={slide.poster}
+              video={slide.video}
+              imageAlt={slide.imageAlt}
+              reduceMotion={reduceMotion}
+            />
+          </Reveal>
         ))}
       </div>
 
@@ -184,6 +193,13 @@ export function LandingStoryWheel() {
         onMouseLeave={() => setPaused(false)}
       >
         <div className="landing-story-wheel-grid py-12 lg:py-14">
+          <Reveal
+            distance={48}
+            scaleFrom={0.94}
+            threshold={0}
+            rootMargin="0px 0px -8% 0px"
+            className="min-h-0"
+          >
           <div className="flex min-h-0 flex-col justify-center overflow-y-auto pr-1">
             <ol className="space-y-2.5">
               {slides.map((slide, i) => {
@@ -258,7 +274,16 @@ export function LandingStoryWheel() {
               })}
             </ol>
           </div>
+          </Reveal>
 
+          <Reveal
+            delayMs={160}
+            distance={56}
+            scaleFrom={1.44}
+            threshold={0}
+            rootMargin="0px 0px -8% 0px"
+            className="min-h-0"
+          >
           <div className="relative flex min-h-0 flex-col items-center justify-center overflow-visible px-2">
             <div className="landing-story-phone-fan relative w-full max-w-[560px]">
               {slides.map((slide, i) => {
@@ -335,6 +360,7 @@ export function LandingStoryWheel() {
               ))}
             </div>
           </div>
+          </Reveal>
         </div>
       </section>
     </section>

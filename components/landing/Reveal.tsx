@@ -23,6 +23,10 @@ type RevealProps = {
   className?: string;
   /** Once visible, stay revealed (default true). */
   once?: boolean;
+  /** IntersectionObserver threshold (0 = any pixel). */
+  threshold?: number;
+  /** IntersectionObserver rootMargin. */
+  rootMargin?: string;
 };
 
 /**
@@ -36,6 +40,8 @@ export function Reveal({
   scaleFrom = 0.92,
   className = "",
   once = true,
+  threshold = 0.08,
+  rootMargin = "0px 0px -12% 0px",
 }: RevealProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
@@ -66,12 +72,11 @@ export function Reveal({
           setVisible(false);
         }
       },
-      // Fire a bit before fully in view so the rise feels intentional
-      { threshold: 0.08, rootMargin: "0px 0px -12% 0px" },
+      { threshold, rootMargin },
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [once, reduceMotion]);
+  }, [once, reduceMotion, threshold, rootMargin]);
 
   const style: CSSProperties | undefined = reduceMotion
     ? undefined

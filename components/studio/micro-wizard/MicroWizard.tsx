@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale } from "@/components/LocaleProvider";
@@ -369,10 +368,7 @@ export function MicroWizard({ promotionMode }: Props) {
 
       {!isPurpleChrome ? (
         <p className="hidden text-center text-[11px] text-slate-400 md:block">
-          {mw.footerHint}{" "}
-          <Link href="/studio?wizard=classic" className="text-cyan-700 hover:underline">
-            {mw.classicLink}
-          </Link>
+          {mw.footerHint}
         </p>
       ) : null}
     </div>

@@ -138,7 +138,6 @@ export const en = {
       "No physical SKU — promote a brand, site, course, membership, or pricing plan.",
     conceptExamples: "e.g. career report site, yoga studio, SaaS trial, 3-tier plan",
     conceptTags: ["Consulting", "SaaS", "Courses"],
-    chooseTypeLabel: "Choose this type",
     continueLabel: "Continue to studio",
     continueToStep2: "Continue to Step 2",
     switchLaterHint: "You can switch mode anytime from the studio header.",
@@ -197,7 +196,6 @@ export const en = {
     examplesLabel: "Examples",
     templateBanner: "Template: {name} — physical product mode",
     templateBannerHint: "Choose Physical product below to open the wizard with this layout.",
-    templateContinuePhysical: "Continue with this template",
     welcomeTitle: "Welcome — you’re in!",
     welcomeBody:
       "You’ve received {n} free tokens to start creating. Pick a path below and make your first ad.",
@@ -934,7 +932,6 @@ export const en = {
       stepEyebrow: "STEP 2",
       title: "Choose how to create",
       hint: "Choose generate images only, generate video only, or generate images then video.",
-      chooseLabel: "Choose this method",
       bestForLabel: "Best for:",
       tipTitle: "How should I choose?",
       tipImage: "Best when you need stills for feed posts, carousels, or static ads.",
@@ -1316,6 +1313,7 @@ export const en = {
     storyboardProgressPlanning: "Planning storyboard with AI…",
     storyboardProgressRendering: "Generating scene images {current}/{total}…",
     progressEta: "ETA ~{seconds}s",
+    progressEtaMinutes: "ETA ~{minutes} min",
     storyboardPlanLabel: "Storyboard plan",
     storyboardPlanReviewHint:
       "Generate a AI outline first, edit any odd scenes, then create the stills.",
@@ -1325,14 +1323,25 @@ export const en = {
     storyboardPlanThemeLabel: "Story theme",
     storyboardPlanSceneDescLabel: "Scene description",
     storyboardPlanCopyLabel: "On-image copy (optional)",
+    storyboardPlanCameraLabel: "Camera / motion (English, editable)",
+    storyboardPlanPlacementLabel: "Product / concept placement",
+    storyboardPlanPunchLabel: "Punch line / caption beat",
+    videoEngineLabel: "Video engine",
+    videoEngineSeedance: "Seedance (default)",
+    videoEngineMinimaxH3: "MiniMax H3 (faces / product lock)",
+    videoEngineHint: "MiniMax H3 is stronger for face identity and later replace-edits. Seedance stays the default commercial path.",
     storyboardSceneLabel: "Scene",
     storyboardVideoIntro:
       "Storyboard and scene images are ready. Video animates each still, then stitches one clip.",
     storyboardVideoPreflight: "Mode: per-scene image-to-video + stitch",
     klingStoryboardFallbackNote:
       "Storyboard video — each scene still becomes a short clip, then we stitch them together",
+    storyboardMinimaxH3Note:
+      "Storyboard video — MiniMax H3 single clip from scene stills (no stitch)",
     seedanceToKlingFallbackNote:
       "Seedance was blocked for this request — used Kling storyboard (per-scene clips + stitch) instead",
+    seedanceToMinimaxH3FallbackNote:
+      "Seedance was blocked for this request — used MiniMax H3 (keeps reference motion when possible)",
     klingStoryboardClipCount: "clips × {n}",
     storyboardDurationLabel: "Target duration",
     storyboardDurationHint: "Affects how many scenes are planned. Regenerate scene images if you change this.",
@@ -2214,6 +2223,8 @@ export const en = {
     planVideoPromptBusy: "AI writing motion prompt…",
     planVideoPromptReady: "Motion prompt ready — review below, then generate",
     planVideoPromptDurationRefresh: "Output length changed — AI is rewriting the motion prompt for the new duration…",
+    planVideoPromptDurationStale: "Output length changed — tap “AI write motion prompt” to refresh (your current script is kept).",
+    planStaleAfterAssetChange: "Product photos changed — re-run AI plan if the motion script should match the new kit.",
     productVideoKitTitle: "Product photo kit",
     productVideoKitHint:
       "Upload hero product (required), packaging, or extra angles — AI vision reads all photos, then writes a motion prompt.",
@@ -2237,7 +2248,7 @@ export const en = {
     videoKeyframeProductHint:
       "Required. Your product or still — used as @Image1. With a reference MP4, AI matches @Video1 motion.",
     referenceCta: "Tap to choose reference ad",
-    referenceChange: "Change reference",
+    referenceChange: "Change video",
     productLabel: "Product name (optional)",
     productLabelRequired: "Product name",
     productPlaceholder: "e.g. goldstone bracelet",
@@ -2589,6 +2600,7 @@ export const en = {
     planConceptFailed: "Concept analysis failed. Please try again.",
     conceptVideoAssistantBlocked:
       "AI Video Assistant is for physical products only. Concept mode uses Concept video from your brief.",
+    conceptIdentityRequired: "Add a concept idea, headline, or concept still before generating video.",
     conceptVideoPlanRequired:
       "AI is writing the motion prompt — wait a few seconds, or tap “AI write motion prompt”.",
     needProductVideoPlan: "Tap “Analyze photo & write motion prompt” first.",
@@ -2674,6 +2686,17 @@ export const en = {
     phaseScript: "1 · Script",
     phaseAudio: "2 · Voice & music",
     phaseBurn: "3 · Burn",
+    phaseScriptName: "Script",
+    phaseAudioName: "Voice & music",
+    phaseBurnName: "Burn",
+    continueToAudio: "Continue to voice & music",
+    continueToBurn: "Continue to burn",
+    phaseHowToScript:
+      "Edit on-screen lines and timing on the right. When the script looks right, continue to voice & music.",
+    phaseHowToAudio:
+      "Optional: plan voice from a topic, generate voice previews, or add BGM. Then continue to burn captions onto the video.",
+    phaseHowToBurn:
+      "Review the preview, then burn captions (and applied audio) onto the video. Download when ready.",
     cutsLabel: "{n} clips",
     timingFromVideo: "timing from video",
     timingEstimated: "timing estimated",
@@ -2880,8 +2903,19 @@ export const en = {
     stepClean: "2. Clean up",
     stepDesign: "3. Add text",
     stepExport: "4. Export",
+    stepUploadName: "Image",
+    stepCleanName: "Clean up",
+    stepDesignName: "Add text",
+    stepExportName: "Export",
     stepPrev: "Previous",
     stepNext: "Next",
+    stepContinueClean: "Continue to clean up",
+    stepContinueDesign: "Continue to add text",
+    stepHowToUpload: "Load an image from your library or device, then continue.",
+    stepHowToClean:
+      "Optional: erase logos or text, then use this image to add your own copy — or skip if nothing to remove.",
+    stepHowToDesign: "Add headlines and logo on the canvas, then burn layers to export.",
+    stepHowToExport: "Download your finished image, or go back to the canvas to adjust layers.",
     canvasPrev: "Previous edit",
     canvasNext: "Next edit",
     canvasVersion: (current: number, total: number) => `Image edit ${current} / ${total}`,
@@ -2986,6 +3020,7 @@ export const en = {
     topicRequired: "Enter a search keyword first.",
     topPicksTitle: "Top 3 picks — inspired by trending posts",
     inspiredBy: "Trending post",
+    originalPostLabel: "Original post",
     yourAngle: "Your adapted angle",
     allPostsTitle: "All posts found",
     prevPage: "Previous",
@@ -3045,7 +3080,7 @@ export const en = {
     likes: "Likes",
     collects: "Saves",
     comments: "Comments",
-    openNote: "Open note",
+    openNote: "Open original post",
     noCover: "No cover",
     platforms: {
       xiaohongshu: "小紅書",

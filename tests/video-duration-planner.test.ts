@@ -1,28 +1,21 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import {
-  resolvePlannerDurationSec,
-  videoDurationPlannerBlock,
-} from "../lib/video-duration-planner";
+import { videoDurationPlannerBlock } from "../lib/video-duration-planner";
 
-describe("resolvePlannerDurationSec", () => {
-  it("resolves auto and explicit values", () => {
-    assert.equal(resolvePlannerDurationSec("auto"), 8);
-    assert.equal(resolvePlannerDurationSec("auto", 6), 6);
-    assert.equal(resolvePlannerDurationSec("6"), 6);
-    assert.equal(resolvePlannerDurationSec(undefined), 8);
-  });
-});
-
-describe("videoDurationPlannerBlock", () => {
-  it("includes exact output seconds for DeepSeek", () => {
-    const block = videoDurationPlannerBlock(6).join("\n");
-    assert.match(block, /EXACTLY 6 seconds/);
-    assert.match(block, /standalone complete/);
+describe("videoDurationPlannerBlock script quality", () => {
+  it("gives different script beats for 4s vs 10s", () => {
+    const short = videoDurationPlannerBlock(4).join("\n");
+    const longer = videoDurationPlannerBlock(10).join("\n");
+    assert.match(short, /EXACTLY 4 seconds/);
+    assert.match(short, /ONE continuous beat|0\.0–1\.0s HOOK/i);
+    assert.match(longer, /EXACTLY 10 seconds/);
+    assert.match(longer, /DEMO \/ proof|SETUP/i);
+    assert.notEqual(short, longer);
   });
 
-  it("uses tighter pacing copy for 4s clips", () => {
-    const block = videoDurationPlannerBlock(4).join("\n");
-    assert.match(block, /ONE visual beat/);
+  it("allows flexible scene count while requiring a complete arc", () => {
+    const block = videoDurationPlannerBlock(8).join("\n");
+    assert.match(block, /Scene\/shot COUNT is flexible/i);
+    assert.match(block, /standalone complete short ad/i);
   });
 });

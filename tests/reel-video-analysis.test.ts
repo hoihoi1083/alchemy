@@ -43,6 +43,8 @@ describe("reel video analysis prompts", () => {
     assert.match(prompt, /COMPLETE standalone ad/i);
     assert.match(prompt, /DIGEST MONTAGE/i);
     assert.match(prompt, /180s source/i);
+    assert.match(prompt, /prepared at generate/i);
+    assert.match(prompt, /Florence caption|Analyzed frames/i);
   });
 
   it("prompt block marks research reel analysis source", () => {

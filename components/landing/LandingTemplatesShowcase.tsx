@@ -317,6 +317,7 @@ export function LandingTemplatesShowcase() {
   const L = m.landing;
   const [reduceMotion, setReduceMotion] = useState(false);
   const [rowInView, setRowInView] = useState(false);
+  const [rowEntered, setRowEntered] = useState(false);
   const [featuredIndex, setFeaturedIndex] = useState(0);
   const rowRef = useRef<HTMLDivElement>(null);
   const lastFeatured = useRef(0);
@@ -343,8 +344,12 @@ export function LandingTemplatesShowcase() {
     const el = rowRef.current;
     if (!el) return;
     const io = new IntersectionObserver(
-      ([entry]) => setRowInView(Boolean(entry?.isIntersecting)),
-      { threshold: 0.05, rootMargin: "80px 0px" },
+      ([entry]) => {
+        const on = Boolean(entry?.isIntersecting);
+        setRowInView(on);
+        if (on) setRowEntered(true);
+      },
+      { threshold: 0, rootMargin: "0px 0px -10% 0px" },
     );
     io.observe(el);
     return () => io.disconnect();
@@ -368,7 +373,7 @@ export function LandingTemplatesShowcase() {
   return (
     <section id="templates" className="w-full bg-transparent">
       <div className="mx-auto w-full max-w-[1440px] px-5 py-12 md:px-8 md:py-14">
-        <Reveal>
+        <Reveal distance={48} scaleFrom={0.94} threshold={0} rootMargin="0px 0px -8% 0px">
           <h2 className="text-center text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
             {L.tplTitleBefore}
             <span className="text-violet-600">{L.tplTitleHighlight}</span>
@@ -376,7 +381,13 @@ export function LandingTemplatesShowcase() {
           </h2>
         </Reveal>
 
-        <Reveal delayMs={80}>
+        <Reveal
+          delayMs={80}
+          distance={40}
+          scaleFrom={0.92}
+          threshold={0}
+          rootMargin="0px 0px -8% 0px"
+        >
           <div className="mt-7 flex flex-wrap items-center justify-center gap-3.5 sm:gap-4" aria-label={L.tplPlatformsLabel}>
             {platformLogos.map((p) => (
               <span key={p.id} title={p.label} className="inline-flex">
@@ -401,14 +412,21 @@ export function LandingTemplatesShowcase() {
           </div>
         </Reveal>
 
-        <div ref={rowRef} className="landing-tpl-row relative mt-6">
+        <div
+          ref={rowRef}
+          className={`landing-tpl-row relative mt-6 ${rowEntered ? "is-entered" : ""}`}
+        >
           <div
             className="landing-tpl-scroller flex items-center justify-start overflow-x-auto md:justify-center"
           >
             {SHOWCASE.map((card, i) => {
               const featured = !reduceMotion && featuredIndex === i;
               return (
-                <div key={card.id} className="landing-tpl-slot">
+                <div
+                  key={card.id}
+                  className="landing-tpl-slot"
+                  style={{ ["--tpl-i" as string]: i }}
+                >
                   <Link
                     href="/start"
                     className={`landing-tpl-card group ${featured ? "landing-tpl-card--featured" : ""}`}

@@ -102,10 +102,12 @@ type ResearchAngleCardsProps = {
   labels: {
     scoreLabel: string;
     inspiredBy: string;
+    originalPostLabel?: string;
     yourAngle: string;
     useAngle: string;
     applyingAngle: string;
     openNote: string;
+    sourceLabel?: string;
     likes: string;
     collects: string;
     noCover: string;
@@ -188,6 +190,56 @@ export function ResearchAngleCards({
 
                 {/* Left cover | Middle info | Right actions */}
                 <div className="research-rec-card-body">
+                  {angle.sourceUrl ? (
+                    <a
+                      href={angle.sourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="research-rec-cover block overflow-hidden rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+                      title={labels.openNote}
+                    >
+                      <ResearchCoverThumb
+                        platform={platform}
+                        sourceCoverImageUrl={angle.sourceCoverImageUrl}
+                        sourceImageUrls={angle.sourceImageUrls}
+                        noCoverLabel={labels.noCover}
+                        className="h-full w-full rounded-xl"
+                        style={{ width: 132, height: 174 }}
+                        badges={
+                          <>
+                            {videoReady === "has_url" && (
+                              <span className="absolute left-1.5 top-1.5 z-10 rounded bg-emerald-700 px-1 py-0.5 text-[9px] font-medium text-white">
+                                {labels.videoReadyUrl}
+                              </span>
+                            )}
+                            {videoReady === "can_resolve" && (
+                              <span className="absolute left-1.5 top-1.5 z-10 rounded bg-sky-700 px-1 py-0.5 text-[9px] font-medium text-white">
+                                {labels.videoReadyResolve}
+                              </span>
+                            )}
+                            {videoReady === "missing" && (
+                              <span className="absolute left-1.5 top-1.5 z-10 rounded bg-amber-700 px-1 py-0.5 text-[9px] font-medium text-white">
+                                {labels.videoReadyMissing}
+                              </span>
+                            )}
+                            {engagement != null && (
+                              <span className="absolute bottom-1.5 left-1.5 z-10 inline-flex items-center gap-1 rounded-full bg-white/95 px-1.5 py-0.5 text-[10px] font-semibold text-slate-800 shadow-sm">
+                                <svg
+                                  viewBox="0 0 16 16"
+                                  className="h-3 w-3 text-violet-600"
+                                  fill="currentColor"
+                                  aria-hidden
+                                >
+                                  <path d="M8 13.6S2.5 10.1 2.5 6.4A3.1 3.1 0 0 1 8 4.7 3.1 3.1 0 0 1 13.5 6.4C13.5 10.1 8 13.6 8 13.6Z" />
+                                </svg>
+                                {engagement}
+                              </span>
+                            )}
+                          </>
+                        }
+                      />
+                    </a>
+                  ) : (
                   <ResearchCoverThumb
                     platform={platform}
                     sourceCoverImageUrl={angle.sourceCoverImageUrl}
@@ -228,8 +280,50 @@ export function ResearchAngleCards({
                       </>
                     }
                   />
+                  )}
 
                   <div className="research-rec-middle space-y-3">
+                    {(angle.sourceTitle ||
+                      angle.sourceSnippet ||
+                      angle.sourceUrl ||
+                      angle.sourceAuthor) && (
+                      <div className="rounded-lg border border-slate-100 bg-slate-50/90 px-2.5 py-2">
+                        <p className="text-[11px] font-bold text-emerald-800">
+                          {labels.originalPostLabel ?? labels.inspiredBy}
+                        </p>
+                        {angle.sourceTitle ? (
+                          <p className="mt-0.5 line-clamp-2 text-[12px] font-semibold text-slate-900">
+                            {angle.sourceTitle}
+                          </p>
+                        ) : null}
+                        {angle.sourceSnippet ? (
+                          <p className="mt-0.5 line-clamp-3 text-[11px] leading-relaxed text-slate-600">
+                            {angle.sourceSnippet}
+                          </p>
+                        ) : null}
+                        <p className="mt-1 text-[10px] text-slate-500">
+                          {angle.sourceAuthor ? `@${angle.sourceAuthor}` : null}
+                          {angle.sourceAuthor && engagement != null ? " · " : null}
+                          {engagement != null ? engagement : null}
+                        </p>
+                        {angle.sourceUrl ? (
+                          <a
+                            href={angle.sourceUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-1 inline-block max-w-full truncate text-[11px] font-semibold text-sky-700 underline underline-offset-2"
+                            title={angle.sourceUrl}
+                          >
+                            {labels.openNote}
+                            <span className="ml-1 font-normal text-slate-400">
+                              {angle.sourceUrl.replace(/^https?:\/\//, "").slice(0, 42)}
+                              {angle.sourceUrl.replace(/^https?:\/\//, "").length > 42 ? "…" : ""}
+                            </span>
+                          </a>
+                        ) : null}
+                      </div>
+                    )}
+
                     <div className="flex gap-2.5">
                       <span
                         className="mt-1.5 h-2 w-2 shrink-0 rotate-45 bg-violet-500"
@@ -310,11 +404,20 @@ export function ResearchAngleCards({
                         href={angle.sourceUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex w-full items-center justify-center whitespace-nowrap rounded-xl border border-violet-300 bg-white px-3 py-2.5 text-[12px] font-semibold text-violet-700 hover:bg-violet-50"
+                        className="inline-flex w-full flex-col items-center justify-center gap-0.5 whitespace-nowrap rounded-xl border border-violet-300 bg-white px-3 py-2 text-[12px] font-semibold text-violet-700 hover:bg-violet-50"
+                        title={angle.sourceUrl}
                       >
-                        {labels.viewMoreExamples ?? labels.openNote}
+                        <span>{labels.openNote}</span>
+                        {(angle.sourceTitle || angle.sourceAuthor) && (
+                          <span className="max-w-full truncate text-[10px] font-medium text-slate-500">
+                            {angle.sourceTitle ||
+                              (angle.sourceAuthor ? `@${angle.sourceAuthor}` : "")}
+                          </span>
+                        )}
                       </a>
-                    ) : totalPages > 1 ? (
+                    ) : null}
+
+                    {totalPages > 1 ? (
                       <button
                         type="button"
                         onClick={() =>
@@ -322,7 +425,7 @@ export function ResearchAngleCards({
                             p >= totalPages - 1 ? 0 : Math.min(totalPages - 1, p + 1),
                           )
                         }
-                        className="inline-flex w-full items-center justify-center whitespace-nowrap rounded-xl border border-violet-300 bg-white px-3 py-2.5 text-[12px] font-semibold text-violet-700 hover:bg-violet-50"
+                        className="inline-flex w-full items-center justify-center whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-[12px] font-medium text-slate-600 hover:bg-slate-50"
                       >
                         {labels.viewMoreExamples}
                       </button>
@@ -405,7 +508,8 @@ export function ResearchAngleCards({
               key={angle.id}
               className="overflow-hidden rounded-xl border border-emerald-200 bg-white shadow-sm"
             >
-              {angle.sourceTitle && (
+              {angle.sourceUrl || angle.sourceTitle || angle.sourceSnippet ? (
+                angle.sourceUrl ? (
                 <a
                   href={angle.sourceUrl}
                   target="_blank"
@@ -442,11 +546,16 @@ export function ResearchAngleCards({
                   />
                   <div className="min-w-0 flex-1">
                     <p className="text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
-                      {labels.inspiredBy}
+                      {labels.originalPostLabel ?? labels.inspiredBy}
                     </p>
                     <p className="mt-0.5 line-clamp-2 text-xs font-semibold text-slate-900">
-                      {angle.sourceTitle}
+                      {angle.sourceTitle || angle.title}
                     </p>
+                    {angle.sourceSnippet ? (
+                      <p className="mt-0.5 line-clamp-2 text-[10px] text-slate-600">
+                        {angle.sourceSnippet}
+                      </p>
+                    ) : null}
                     {angle.sourceAuthor && (
                       <p className="mt-0.5 text-[10px] text-slate-500">@{angle.sourceAuthor}</p>
                     )}
@@ -467,7 +576,33 @@ export function ResearchAngleCards({
                     </span>
                   </div>
                 </a>
-              )}
+                ) : (
+                <div className="flex gap-3 border-b border-slate-100 bg-slate-50/80 p-3">
+                  <ResearchCoverThumb
+                    platform={platform}
+                    sourceCoverImageUrl={angle.sourceCoverImageUrl}
+                    sourceImageUrls={angle.sourceImageUrls}
+                    noCoverLabel={labels.noCover}
+                    slideCount={slideCount}
+                    slideCountLabel={labels.carouselSlides}
+                    className="h-24 w-20"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+                      {labels.originalPostLabel ?? labels.inspiredBy}
+                    </p>
+                    <p className="mt-0.5 line-clamp-2 text-xs font-semibold text-slate-900">
+                      {angle.sourceTitle || angle.title}
+                    </p>
+                    {angle.sourceSnippet ? (
+                      <p className="mt-0.5 line-clamp-2 text-[10px] text-slate-600">
+                        {angle.sourceSnippet}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+                )
+              ) : null}
 
               <div className="p-3">
                 <div className="flex items-start justify-between gap-2">

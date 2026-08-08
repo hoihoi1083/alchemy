@@ -5,11 +5,15 @@ import {
   fetchResearchPostVideoBytes,
   isAllowedResearchVideoUrl,
 } from "@/lib/research-post-video-fetch";
-import { buildSeedanceReferenceClip } from "@/lib/reference-video-prepare";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
 
+/**
+ * Proxy research CDN MP4s for the wizard.
+ * Returns the full source reel — Seedance digest is built later at
+ * /api/prepare-reference-video (generate time), not here, so download + analyze stay fast.
+ */
 export async function GET(request: Request) {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
@@ -28,21 +32,10 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: result.error ?? "Video fetch failed." }, { status });
   }
 
-  let body: BodyInit = result.buffer;
-  let trimmed = false;
-  try {
-    const prepared = await buildSeedanceReferenceClip(Buffer.from(result.buffer));
-    body = new Uint8Array(prepared.buffer);
-    trimmed = prepared.digestMontage || prepared.sourceDurationSec > 15.25;
-  } catch (e) {
-    console.warn("[research-post-video] trim skipped:", e);
-  }
-
-  return new NextResponse(body, {
+  return new NextResponse(result.buffer, {
     status: 200,
     headers: {
       "Content-Type": result.contentType ?? "video/mp4",
-      ...(trimmed ? { "X-Reference-Trimmed": "1" } : {}),
       "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800",
     },
   });

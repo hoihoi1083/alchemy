@@ -921,6 +921,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
   ]);
 
   const researchReelAnalyzeKeyRef = useRef<string | null>(null);
+  /** Prevents overlapping /api/analyze-research-reel while the first is still in flight. */
+  const researchReelAnalyzeInFlightKeyRef = useRef<string | null>(null);
+  /** Avoid re-billing refine when duration/product/reel unchanged. */
+  const researchScriptRefineKeyRef = useRef<string | null>(null);
   const aiVideoPromptDurationRef = useRef<string | null>(null);
 
   const seedancePromptForGenerate = useCallback(
@@ -1013,8 +1017,11 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         if (typeof data.styleReferenceFrameUrl === "string" && data.styleReferenceFrameUrl) {
           await applyReelStyleReferenceFrame(data.styleReferenceFrameUrl);
         }
-        if (typeof data.referenceVideoUrl === "string") {
+        // Clip upload is deferred to ensureReferenceVideoFalUrl at generate time.
+        if (typeof data.referenceVideoUrl === "string" && data.referenceVideoUrl.startsWith("http")) {
           setReferenceVideoFalUrl(data.referenceVideoUrl);
+        } else {
+          setReferenceVideoFalUrl(null);
         }
         if (typeof data.referenceDurationSec === "number") {
           setRefVideoDurationSec(data.referenceDurationSec);
@@ -1084,6 +1091,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     setResearchReelAnalyzeNote(null);
     setReferenceVideoFalUrl(null);
     researchReelAnalyzeKeyRef.current = null;
+    researchReelAnalyzeInFlightKeyRef.current = null;
+    researchScriptRefineKeyRef.current = null;
 
     // Wipe generated storyboard only when switching/clearing the reference —
     // not on first mount (would erase scenes right after generate + remount/HMR).
@@ -1109,14 +1118,21 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     if (!shouldAnalyzeReferenceVideo || !referenceAd || !reelAnalyzeCacheKey) return;
     const prevKey = researchReelAnalyzeKeyRef.current;
     if (prevKey === reelAnalyzeCacheKey) return;
+    // Same key already running (effect re-ran because analyzeResearchReel deps changed).
+    if (researchReelAnalyzeInFlightKeyRef.current === reelAnalyzeCacheKey) return;
     if (prevKey && prevKey !== reelAnalyzeCacheKey) {
       setResearchReelAnalysis(null);
       setStoryboardPlan(null);
       // Keep storyboardScenes — wiping here hid fal results after generate
       // whenever duration/name/cache key changed and re-analyze fired.
       setResearchReelAnalyzeNote(m.wizard.researchReelReanalyzeForDuration);
+      researchScriptRefineKeyRef.current = null;
     }
+    researchReelAnalyzeInFlightKeyRef.current = reelAnalyzeCacheKey;
     void analyzeResearchReel(referenceAd).then((ok) => {
+      if (researchReelAnalyzeInFlightKeyRef.current === reelAnalyzeCacheKey) {
+        researchReelAnalyzeInFlightKeyRef.current = null;
+      }
       if (ok) researchReelAnalyzeKeyRef.current = reelAnalyzeCacheKey;
     });
   }, [
@@ -1182,13 +1198,22 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     return () => urls.forEach((u: string) => URL.revokeObjectURL(u));
   }, [extraKitPhotos]);
 
+  const kitPlanStaleSkipFirstRef = useRef(true);
   useEffect(() => {
-    setProductVideoPlan(null);
-    setVideoPromptPlanNote(null);
-    if (promotionMode === "concept" && isAiPlannedVideoStyle(visualStyleId)) {
-      setVideoPrompt("");
+    // Skip initial mount — only warn after the kit actually changes mid-session.
+    if (kitPlanStaleSkipFirstRef.current) {
+      kitPlanStaleSkipFirstRef.current = false;
+      return;
     }
-  }, [productPhoto, packagingPhoto, extraKitPhotos, promotionMode, visualStyleId, setVideoPrompt]);
+    // Kit photos changed — product-assistant vision plan is stale, but keep any
+    // editable DeepSeek videoPrompt the user may already be reviewing.
+    setProductVideoPlan(null);
+    setVideoPromptPlanNote((prev) => {
+      const stamp = m.wizard.planStaleAfterAssetChange;
+      if (prev?.includes(stamp)) return prev;
+      return [prev, stamp].filter(Boolean).join(" — ");
+    });
+  }, [productPhoto, packagingPhoto, extraKitPhotos, m.wizard.planStaleAfterAssetChange]);
 
   useEffect(() => {
     applyPromptRebuild();
@@ -1409,30 +1434,29 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     if (researchReelAnalysis?.seedancePrompt?.trim()) return;
     if (directReferenceR2vReady) return;
     if (useReferenceVideo && isContentResearchStyle) return;
-    const plannedDuration = String(resolveWizardOutputDurationSec(videoSettings));
-    if (
-      isAiPlannedVideoStyle(visualStyleId) &&
-      videoPrompt.trim() &&
-      aiVideoPromptDurationRef.current === plannedDuration &&
-      videoPromptPlanNote
-    ) {
+    // If user already has an editable prompt, never auto-wipe/replan on duration or
+    // settings tweaks — only soft-note so they can re-run AI plan deliberately.
+    if (videoPrompt.trim()) {
+      const plannedDuration = String(resolveWizardOutputDurationSec(videoSettings));
+      if (
+        isAiPlannedVideoStyle(visualStyleId) &&
+        aiVideoPromptDurationRef.current &&
+        aiVideoPromptDurationRef.current !== plannedDuration
+      ) {
+        setVideoPromptPlanNote((prev) =>
+          prev?.includes(m.wizard.planVideoPromptDurationRefresh)
+            ? prev
+            : [prev, m.wizard.planVideoPromptDurationStale].filter(Boolean).join(" — "),
+        );
+      }
       return;
     }
-    if (!isAiPlannedVideoStyle(visualStyleId) && videoPrompt.trim()) return;
     if (
       isCreativeVideoStyle(visualStyleId) &&
       !creativeVideoBrief.trim() &&
       !headline.trim()
     ) {
       return;
-    }
-    if (
-      isAiPlannedVideoStyle(visualStyleId) &&
-      videoPrompt.trim() &&
-      aiVideoPromptDurationRef.current &&
-      aiVideoPromptDurationRef.current !== plannedDuration
-    ) {
-      setVideoPromptPlanNote(m.wizard.planVideoPromptDurationRefresh);
     }
     void planAiVideoPrompt();
   }, [
@@ -1461,6 +1485,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     artStyleId,
     subjectFraming,
     m.wizard.planVideoPromptDurationRefresh,
+    m.wizard.planVideoPromptDurationStale,
   ]);
 
   async function analyzeBrand(override?: { websiteUrl?: string }) {
@@ -2668,9 +2693,18 @@ export function useStudioWizard(promotionMode: PromotionMode) {
   }, [storyboardSceneCount, storyboardTrimDuration]);
 
   const formatEta = useCallback(
-    (sec: number): string =>
-      m.wizard.progressEta.replace("{seconds}", String(Math.max(1, Math.round(sec)))),
-    [m.wizard.progressEta],
+    (sec: number): string => {
+      const s = Math.max(1, Math.round(sec));
+      if (s >= 60) {
+        const minutes = Math.max(1, Math.ceil(s / 60));
+        return (m.wizard.progressEtaMinutes ?? m.wizard.progressEta).replace(
+          "{minutes}",
+          String(minutes),
+        ).replace("{seconds}", String(s));
+      }
+      return m.wizard.progressEta.replace("{seconds}", String(s));
+    },
+    [m.wizard.progressEta, m.wizard.progressEtaMinutes],
   );
 
   function resolveSetupImageGateMessage(reason: SetupImageGateReason): string {
@@ -4078,7 +4112,82 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     return url;
   }
 
+  /**
+   * DeepSeek fuse: reel analysis + product photo + exact duration → better R2V script.
+   * Returns the prompt/analysis to use immediately (setState is async).
+   */
+  async function refineResearchVideoScriptIfNeeded(): Promise<{
+    analysis: typeof researchReelAnalysis;
+    videoPrompt: string;
+  }> {
+    const baselineAnalysis = researchReelAnalysis;
+    const baselinePrompt = videoPrompt.trim();
+    if (!baselineAnalysis?.seedancePrompt?.trim()) {
+      return { analysis: baselineAnalysis, videoPrompt: baselinePrompt };
+    }
+    const promoteName = wizardPromoteName({
+      promotionMode,
+      product,
+      headline,
+      conceptIdea,
+    });
+    if (!promoteName) {
+      return { analysis: baselineAnalysis, videoPrompt: baselinePrompt };
+    }
+    const durationSec = resolveWizardOutputDurationSec(videoSettings);
+    const productKey = productPhoto
+      ? `${productPhoto.name}:${productPhoto.size}:${productPhoto.lastModified}`
+      : imageUrl || "no-product";
+    const cacheKey = `${referenceAdIdentity ?? "no-reel"}:${durationSec}:${productKey}:${promoteName}`;
+    if (researchScriptRefineKeyRef.current === cacheKey) {
+      return {
+        analysis: baselineAnalysis,
+        videoPrompt: baselinePrompt || baselineAnalysis.seedancePrompt,
+      };
+    }
+
+    const fd = new FormData();
+    fd.set("research_reel_analysis", JSON.stringify(baselineAnalysis));
+    fd.set("product_name", promoteName);
+    fd.set("headline", headline.trim());
+    fd.set("subline", subline.trim());
+    fd.set("offer", offer.trim());
+    fd.set("duration", String(durationSec));
+    if (productPhoto) fd.set("product_photo", productPhoto);
+    else if (imageUrl?.startsWith("http")) fd.set("product_photo_url", imageUrl);
+
+    const res = await fetch("/api/refine-research-video-script", { method: "POST", body: fd });
+    const data = await res.json();
+    if (!res.ok) {
+      console.warn("[refine-research-video-script]", data.error);
+      return { analysis: baselineAnalysis, videoPrompt: baselinePrompt };
+    }
+    notifyCreditBalance(readCreditBalanceFromResponse(data));
+    const prompt = String(data.seedancePrompt ?? "").trim();
+    if (!prompt) {
+      return { analysis: baselineAnalysis, videoPrompt: baselinePrompt };
+    }
+    researchScriptRefineKeyRef.current = cacheKey;
+    const nextAnalysis = {
+      ...baselineAnalysis,
+      seedancePrompt: prompt,
+      motionSummary:
+        String(data.motionSummary ?? "").trim() || baselineAnalysis.motionSummary,
+      productionNotesZh:
+        String(data.productionNotesZh ?? "").trim() ||
+        baselineAnalysis.productionNotesZh,
+    };
+    setResearchReelAnalysis(nextAnalysis);
+    setVideoPrompt(prompt);
+    const beats = String(data.scriptBeatsZh ?? "").trim();
+    if (beats) {
+      setResearchReelAnalyzeNote(beats);
+    }
+    return { analysis: nextAnalysis, videoPrompt: prompt };
+  }
+
   async function makeReferenceVideo(refVideo: File): Promise<string> {
+    const refined = await refineResearchVideoScriptIfNeeded();
     const vOpts = resolveVideoGenerationOpts(templateId, videoSettings);
     const outputDuration =
       videoSettings.duration === "auto" || Number(videoSettings.duration) > 15
@@ -4091,8 +4200,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       "prompt",
       seedancePromptForGenerate(
         buildResearchR2vPrompt({
-          researchAnalysis: researchReelAnalysis,
-          videoPrompt,
+          researchAnalysis: refined.analysis,
+          videoPrompt: refined.videoPrompt,
           fallbackPrompt:
             buildReferenceVideoPrompt(getPromptVars(), templateId) +
             " Follow @Video1 shot structure and timing as closely as the model allows. Do not apply a generic slow push-in unless @Video1 uses it.",
@@ -4119,18 +4228,32 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     fd.set("avoid_on_screen_text", vOpts.avoidOnScreenText ? "true" : "false");
     fd.set("fast", vOpts.fast ? "true" : "false");
 
-    const res = await fetch("/api/generate", { method: "POST", body: fd });
+    const useH3 = videoSettings.videoEngine === "minimax-h3";
+    if (useH3) {
+      fd.set("reference_video_url", refFalUrl);
+      if (productPhoto) fd.append("reference_images", productPhoto);
+      else if (imageUrl) fd.set("image_start_url", imageUrl);
+    }
+    const res = await fetch(useH3 ? "/api/generate-minimax-h3" : "/api/generate", {
+      method: "POST",
+      body: fd,
+    });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
     notifyCreditBalance(readCreditBalanceFromResponse(data));
-    const usedKling =
+    const usedFallback =
       data.generationMode === "kling-storyboard-fallback" ||
+      String(data.generationMode ?? "").startsWith("minimax-h3-fallback") ||
       Boolean(data.seedanceBlockedCode);
     const pathNote = data.generationMode
       ? `${m.wizard.videoGenPathLabel}: ${data.generationMode}${data.endpoint ? ` · ${data.endpoint}` : ""}${typeof data.referenceVideoCount === "number" ? ` · ${data.referenceVideoCount} ref video` : ""}`
       : "";
     const notes = [
-      usedKling ? m.wizard.seedanceToKlingFallbackNote : m.wizard.referenceModeNote,
+      usedFallback
+        ? String(data.generationMode ?? "").startsWith("minimax-h3")
+          ? m.wizard.seedanceToMinimaxH3FallbackNote
+          : m.wizard.seedanceToKlingFallbackNote
+        : m.wizard.referenceModeNote,
       pathNote,
       workflowMode !== "combined" && !productPhoto && imageUrl
         ? m.wizard.videoRefUseProductPhoto
@@ -4284,15 +4407,13 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     const orderedScenes = normalizeStoryboardIndices(storyboardScenes);
     if (orderedScenes.length < 1) throw new Error(m.errors.needKeyframe);
 
-    // Kling-first: Seedance R2V often blocks people likenesses, then Kling still runs —
-    // that double wait exceeds the gateway timeout ("請求逾時"). Skip Seedance for
-    // multi-scene storyboard and animate+stitch with Kling directly.
+    // MiniMax H3 first (single clip from stills); Kling per-scene + stitch if H3 fails.
     return makeKlingStoryboardVideo(orderedScenes, prompt);
   }
 
   async function makeKlingStoryboardVideo(
     scenes: StoryboardSceneResult[],
-    _seedancePrompt: string,
+    seedancePrompt: string,
   ): Promise<string> {
     setVideoPhase("video");
     const freshKit = loadBrandKitFromStorage();
@@ -4300,21 +4421,35 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     if (liveKit !== brandKit) setBrandKit(liveKit);
     const logoOn = brandKitWantsLogo(liveKit);
 
+    const motionPlan =
+      seedancePrompt.trim() ||
+      storyboardPlan?.seedancePrompt?.trim() ||
+      videoPrompt.trim() ||
+      "";
+
     const fd = new FormData();
     fd.set("theme", storyboardPlan?.theme?.trim() || headline.trim() || product.trim());
     fd.set("total_duration_sec", storyboardTrimDuration);
+    fd.set("aspect_ratio", imageAspectRatio || "9:16");
+    if (motionPlan) fd.set("motion_prompt", motionPlan);
     fd.set(
       "scenes_meta",
       JSON.stringify(
-        scenes.map((s) => ({
-          startSec: s.startSec,
-          endSec: s.endSec,
-          sceneDescriptionZh: s.sceneDescriptionZh,
-          imagePrompt: s.imagePrompt,
-          role: s.role,
-          endWithBrandLogo: logoOn,
-          useBrandLogo: logoOn,
-        })),
+        scenes.map((s, i) => {
+          const planScene = storyboardPlan?.scenes?.find(
+            (p) => p.imageIndex === s.imageIndex,
+          ) ?? storyboardPlan?.scenes?.[i];
+          return {
+            startSec: s.startSec,
+            endSec: s.endSec,
+            sceneDescriptionZh: s.sceneDescriptionZh,
+            imagePrompt: s.imagePrompt ?? planScene?.imagePrompt,
+            role: s.role,
+            cameraMotionEn: planScene?.cameraMotionEn,
+            endWithBrandLogo: logoOn,
+            useBrandLogo: logoOn,
+          };
+        }),
       ),
     );
     const refCount = await appendStoryboardImageRefs(fd, scenes);
@@ -4329,6 +4464,18 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     }
     fd.set("expected_scene_count", String(scenes.length));
 
+    // Optional motion reference for H3 (research reel / uploaded MP4).
+    if (referenceVideoFalUrl?.startsWith("http")) {
+      fd.set("reference_video_url", referenceVideoFalUrl);
+    } else if (referenceAd && referenceIsVideo) {
+      try {
+        const prepared = await ensureReferenceVideoFalUrl(referenceAd);
+        if (prepared.startsWith("http")) fd.set("reference_video_url", prepared);
+      } catch {
+        /* H3 still works from stills alone */
+      }
+    }
+
     const res = await fetch("/api/generate-kling-storyboard", { method: "POST", body: fd });
     const data = await readGenerateJson(res);
     if (!res.ok) {
@@ -4337,6 +4484,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       );
     }
     notifyCreditBalance(readCreditBalanceFromResponse(data));
+    const usedH3 = String(data.generationMode ?? "").startsWith("minimax-h3");
     const clipDurations = Array.isArray(data.clipDurations)
       ? (data.clipDurations as number[])
       : undefined;
@@ -4346,20 +4494,26 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     if (videoDurationSec && videoDurationSec > 0) {
       lastStoryboardVideoDurationSecRef.current = videoDurationSec;
     }
-    const timingManifest = clipDurations?.length
-      ? buildManifestFromClipDurations(clipDurations, {
-          source: "kling",
-          engine: "kling",
+    const timingManifest = usedH3 && videoDurationSec
+      ? buildSingleClipManifest(videoDurationSec, {
+          source: "seedance",
+          engine: "unknown",
           timingSource: "reported",
-          labels: scenes.map((s) => `Scene ${s.imageIndex}`),
         })
-      : videoDurationSec
-        ? buildSingleClipManifest(videoDurationSec, {
+      : clipDurations?.length
+        ? buildManifestFromClipDurations(clipDurations, {
             source: "kling",
             engine: "kling",
-            timingSource: "estimated",
+            timingSource: "reported",
+            labels: scenes.map((s) => `Scene ${s.imageIndex}`),
           })
-        : null;
+        : videoDurationSec
+          ? buildSingleClipManifest(videoDurationSec, {
+              source: "kling",
+              engine: "kling",
+              timingSource: "estimated",
+            })
+          : null;
     if (timingManifest) {
       lastVideoTimingManifestRef.current = timingManifest;
       setVideoTimingManifest(timingManifest);
@@ -4378,12 +4532,14 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       : `${storyboardTrimDuration}s`;
     setVideoNote(
       [
-        m.wizard.klingStoryboardFallbackNote,
+        usedH3
+          ? m.wizard.storyboardMinimaxH3Note
+          : m.wizard.klingStoryboardFallbackNote,
         `${m.wizard.storyboardTrimDurationLabel}: ${totalLabel}`,
         data.generationMode && data.endpoint
           ? `${m.wizard.videoGenPathLabel}: ${data.generationMode} · ${data.endpoint}`
           : "",
-        typeof data.clipCount === "number"
+        !usedH3 && typeof data.clipCount === "number"
           ? m.wizard.klingStoryboardClipCount.replace("{n}", String(data.clipCount))
           : "",
         storyboardCaps.length ? m.wizard.storyboardCaptionsReadyNote : "",
@@ -4655,9 +4811,12 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       : "";
     setVideoNote(
       [
-        data.generationMode === "kling-storyboard-fallback" || data.seedanceBlockedCode
-          ? m.wizard.seedanceToKlingFallbackNote
-          : m.wizard.productVideoAssistantPreflight,
+        String(data.generationMode ?? "").startsWith("minimax-h3-fallback") ||
+        (data.seedanceBlockedCode && String(data.generationMode ?? "").startsWith("minimax-h3"))
+          ? m.wizard.seedanceToMinimaxH3FallbackNote
+          : data.generationMode === "kling-storyboard-fallback" || data.seedanceBlockedCode
+            ? m.wizard.seedanceToKlingFallbackNote
+            : m.wizard.productVideoAssistantPreflight,
         productVideoPlan?.motionSummaryZh,
         pathNote,
         data.note as string | undefined,
@@ -4712,9 +4871,12 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       : "";
     setVideoNote(
       [
-        data.generationMode === "kling-storyboard-fallback" || data.seedanceBlockedCode
-          ? m.wizard.seedanceToKlingFallbackNote
-          : null,
+        String(data.generationMode ?? "").startsWith("minimax-h3-fallback") ||
+        (data.seedanceBlockedCode && String(data.generationMode ?? "").startsWith("minimax-h3"))
+          ? m.wizard.seedanceToMinimaxH3FallbackNote
+          : data.generationMode === "kling-storyboard-fallback" || data.seedanceBlockedCode
+            ? m.wizard.seedanceToKlingFallbackNote
+            : null,
         pathNote,
         m.wizard.videoRichMotionNote,
         data.note as string | undefined,
@@ -4743,7 +4905,11 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     fd.set("avoid_on_screen_text", vOpts.avoidOnScreenText ? "true" : "false");
     fd.set("fast", vOpts.fast ? "true" : "false");
 
-    const res = await fetch("/api/generate", { method: "POST", body: fd });
+    const useH3 = videoSettings.videoEngine === "minimax-h3";
+    const res = await fetch(useH3 ? "/api/generate-minimax-h3" : "/api/generate", {
+      method: "POST",
+      body: fd,
+    });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
     notifyCreditBalance(readCreditBalanceFromResponse(data));
@@ -4794,18 +4960,29 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     if (endFramePhoto) fd.set("image_end", endFramePhoto);
     else if (endUrl) fd.set("image_end_url", endUrl);
 
-    const res = await fetch("/api/generate", { method: "POST", body: fd });
+    const useH3 = videoSettings.videoEngine === "minimax-h3";
+    const res = await fetch(useH3 ? "/api/generate-minimax-h3" : "/api/generate", {
+      method: "POST",
+      body: fd,
+    });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
     notifyCreditBalance(readCreditBalanceFromResponse(data));
+    const usedH3Fallback = String(data.generationMode ?? "").startsWith(
+      "minimax-h3-fallback",
+    );
     const usedKling =
       data.generationMode === "kling-storyboard-fallback" ||
-      Boolean(data.seedanceBlockedCode);
+      (Boolean(data.seedanceBlockedCode) && !usedH3Fallback);
     const pathNote = data.generationMode
       ? `${m.wizard.videoGenPathLabel}: ${data.generationMode}${data.endpoint ? ` · ${data.endpoint}` : ""}`
       : "";
     const notes = [
-      usedKling ? m.wizard.seedanceToKlingFallbackNote : null,
+      usedH3Fallback
+        ? m.wizard.seedanceToMinimaxH3FallbackNote
+        : usedKling
+          ? m.wizard.seedanceToKlingFallbackNote
+          : null,
       pathNote,
       dualFrame ? m.wizard.videoRichMotionNote : undefined,
       data.note as string | undefined,
@@ -5083,7 +5260,18 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 
   function updateStoryboardPlanScene(
     index: number,
-    patch: Partial<Pick<StoryboardScenePlan, "sceneDescriptionZh" | "onImageCopyZh" | "imagePrompt" | "role">>,
+    patch: Partial<
+      Pick<
+        StoryboardScenePlan,
+        | "sceneDescriptionZh"
+        | "onImageCopyZh"
+        | "imagePrompt"
+        | "role"
+        | "cameraMotionEn"
+        | "productPlacementZh"
+        | "punchLineZh"
+      >
+    >,
   ) {
     if (!storyboardPlan) return;
     setStoryboardPlan({
@@ -5277,6 +5465,51 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       setVideoCreativeMode("product-promo");
       setError(m.errors.conceptVideoAssistantBlocked);
       return;
+    }
+
+    // Identity lock — physical needs product photo; concept needs idea/headline/still.
+    const conceptIdentityOk =
+      Boolean(conceptIdea.trim()) ||
+      Boolean(headline.trim()) ||
+      Boolean(product.trim()) ||
+      Boolean(productPhoto) ||
+      Boolean(imageUrl) ||
+      Boolean(opts?.imageUrlOverride);
+    if (promotionMode === "concept" && !conceptIdentityOk && !directReferenceR2vReady) {
+      setError(m.errors.conceptIdentityRequired);
+      return;
+    }
+    if (
+      promotionMode === "physical" &&
+      workflowMode === "video-only" &&
+      !usesCompositor &&
+      !productPhoto &&
+      !directReferenceR2vReady &&
+      !(isStoryboardOutput && storyboardScenes.length > 0) &&
+      !opts?.imageUrlOverride
+    ) {
+      setError(m.errors.needPhoto);
+      return;
+    }
+
+    // Ensure DeepSeek motion/script exists when empty — keep result editable in videoPrompt.
+    if (
+      !isStoryboardOutput &&
+      !usesCompositor &&
+      !usesProductAssistant &&
+      !isUgcPresenterOutput &&
+      !videoPrompt.trim() &&
+      !researchReelAnalysis?.seedancePrompt?.trim()
+    ) {
+      const planned = await planAiVideoPrompt();
+      if (!planned && isAiPlannedVideoStyle(visualStyleId)) {
+        setError(m.errors.conceptVideoPlanRequired);
+        return;
+      }
+    }
+    if (usesProductAssistant && !productVideoPlan?.seedancePrompt) {
+      const planned = await planProductVideo();
+      if (!planned) return;
     }
 
     const conceptTextVideoReady =
@@ -5768,6 +6001,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     progressNow,
     videoPhase,
     usesCompositor,
+    referenceR2v: useReferenceVideo,
     labels: {
       storyboardProgressPlanning: m.wizard.storyboardProgressPlanning,
       storyboardProgressRendering: m.wizard.storyboardProgressRendering,

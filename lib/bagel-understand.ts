@@ -50,7 +50,9 @@ function formatBagelVisionError(e: unknown): Error {
 
 /**
  * Image → text/JSON via fal-ai/bagel/understand (single image_url).
- * Prefer this over deprecated fal-ai/any-llm/vision (OpenRouter).
+ * Prefer Florence-2 + DeepSeek (`captionImageToVisionJson`) for product/reel/reference
+ * analysis — Bagel is ~$0.05/request and slower (think traces). Keep Bagel only where
+ * a promptable VLM is required and Florence captions are not enough (e.g. smoke QA).
  */
 export async function runBagelUnderstand(input: {
   imageUrl: string;

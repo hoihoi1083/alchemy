@@ -124,7 +124,7 @@ const REEL_PATHS = new Set<MicroWizardPathId>([
 
 const WAIT_AUTO_ADVANCE = new Set<MicroStepId>([
   "wait.reel_download",
-  "wait.reel_analyze",
+  // wait.reel_analyze: dedicated effect — generic advance races before busy flips.
   "wait.brand_analyze",
   // wait.concept_plan: dedicated effect waits for conceptPlanBusy (see useWizardMicroStep).
   // wait.image_generate / wait.video_generate / wait.storyboard_generate:
@@ -179,9 +179,12 @@ function evalSkipWhen(
   }
   if (expr === "!referenceAd") return !state.referenceAd;
   if (expr === "!referenceIsVideo") return !state.referenceIsVideo;
-  // Skip MP4 picker unless a real video file is attached (not a stuck boolean flag).
+  // Standalone MP4 step is retired for research paths:
+  // - Image research posts: no reel → skip
+  // - Research reels: angle apply already attaches the MP4 → wait.reel_* then setup
+  // Manual / optional MP4 enrichment lives on setup.pre_video (fused).
   if (expr === "combinedNoReel") {
-    return !(state.referenceAd && state.referenceIsVideo);
+    return true;
   }
   if (expr === "anglePresetOutputMode") {
     // Only model-wear locks format; research ref / style extra must not hide the picker.
@@ -369,6 +372,11 @@ function filterGraphSteps(
         id === "research.pick_angle" ||
         id === "wait.research_apply")
     ) {
+      continue;
+    }
+    // Reel / cover analysis runs in the background (useStudioWizard effects).
+    // Do not park users on a dedicated wait screen — status lives on setup.
+    if (id === "wait.reel_analyze" || id === "wait.reference_analyze") {
       continue;
     }
     if (ctx.conceptSource === "research" && id === "identity.concept") continue;
@@ -729,6 +737,9 @@ export function canProceedMicroStep(
   }
   if (id === "route.intake") {
     if (!ctx.intakePath) return "pick_intake";
+    if (state.referenceClipLoading || state.researchReelDownloadBusy) {
+      return "reel_downloading";
+    }
     // Physical product: Research tab alone is not enough — must apply a direction first.
     // Concept uses Research | Assistant with different completion rules.
     // Unlock when style prompt is set, cover was attached, or apply-ref was written
@@ -833,8 +844,8 @@ export function canProceedMicroStep(
     ) {
       return "reference_analyzing";
     }
+    // Cover still downloading after research pick — same gate video uses for reel fetch.
     if (
-      id === "wait.research_apply" &&
       ctx.intakePath === "research" &&
       isContentResearchStyleExtra(state.promptExtra) &&
       !state.imageRefPhoto

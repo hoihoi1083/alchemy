@@ -69,6 +69,9 @@ const ALLOWED_VIDEO_ENDPOINTS = new Set<string>([
   "bytedance/seedance-2.0/fast/text-to-video",
   "bytedance/seedance-2.0/fast/image-to-video",
   "bytedance/seedance-2.0/fast/reference-to-video",
+  "minimax/h3/text-to-video",
+  "minimax/h3/image-to-video",
+  "minimax/h3/reference-to-video",
 ]);
 
 /**

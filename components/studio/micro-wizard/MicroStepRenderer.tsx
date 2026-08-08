@@ -815,22 +815,62 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
       );
 
     case "wait.reel_download":
-    case "wait.reel_analyze":
+    case "wait.reel_analyze": {
+      const needDuration =
+        wizard.referenceIsVideo && wizard.videoSettings.duration === "auto";
+      const downloading = wizard.referenceClipLoading;
+      const analyzing = wizard.researchReelAnalyzeBusy;
       return (
-        <>
-          <ResearchReelSetupPanel />
+        <ScreenShell
+          title={
+            downloading
+              ? mw.reelDownloading
+              : needDuration
+                ? m.wizard.researchReelPickDurationFirst
+                : m.wizard.researchReelAnalyzing
+          }
+          hint={
+            needDuration
+              ? m.wizard.researchReelSetupIntro
+              : m.wizard.researchReelAnalyzeFirstHint
+          }
+        >
+          {wizard.referencePreviewUrl && wizard.referenceIsVideo ? (
+            <video
+              src={wizard.referencePreviewUrl}
+              className="mx-auto max-h-28 w-full max-w-[14rem] rounded-lg border border-violet-200 bg-black object-contain"
+              muted
+              playsInline
+              controls
+            />
+          ) : null}
+          {needDuration ? (
+            <div className="rounded-xl border border-violet-200 bg-violet-50/80 p-3">
+              <VideoSettingsPanel
+                compact
+                setup
+                hideAutoDuration
+                value={wizard.videoSettings}
+                onChange={wizard.setVideoSettings}
+              />
+            </div>
+          ) : null}
           <WaitScreen
-            busy={wizard.researchReelAnalyzeBusy || wizard.referenceClipLoading}
+            busy={downloading || analyzing}
             message={
-              wizard.referenceClipLoading
+              downloading
                 ? mw.reelDownloading
-                : wizard.researchReelAnalyzeBusy
+                : analyzing
                   ? m.wizard.researchReelAnalyzing
                   : (wizard.researchReelAnalyzeNote ?? mw.analyzing)
             }
           />
-        </>
+          {!downloading && !analyzing && wizard.researchReelAnalyzeNote ? (
+            <p className="text-xs text-emerald-800">{wizard.researchReelAnalyzeNote}</p>
+          ) : null}
+        </ScreenShell>
       );
+    }
 
     case "wait.brand_analyze":
       return (
@@ -1096,15 +1136,6 @@ function ReferenceVideoStep({
           fileName={wizard.referenceAd?.name ?? null}
           onFile={handleReferenceVideo}
         />
-        {wizard.referencePreviewUrl && wizard.referenceIsVideo ? (
-          <video
-            src={wizard.referencePreviewUrl}
-            className="max-h-48 w-full rounded-lg border border-emerald-200 object-contain"
-            muted
-            playsInline
-            controls
-          />
-        ) : null}
         {wizard.referenceAd && wizard.referenceIsVideo && (wizard.researchReelAnalyzeBusy || wizard.researchReelAnalyzeNote) ? (
           <p className="rounded-lg bg-purple-950/10 px-3 py-2 text-purple-900">
             {wizard.researchReelAnalyzeBusy ? m.wizard.researchReelAnalyzing : wizard.researchReelAnalyzeNote}

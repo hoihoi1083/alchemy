@@ -30,6 +30,11 @@ export type KlingSceneMeta = {
   sceneDescriptionZh?: string;
   imagePrompt?: string;
   role?: string;
+  /**
+   * English camera/motion only from DeepSeek plan (or user edit).
+   * Never put Chinese captions or marketing copy here — Kling burns glyphs.
+   */
+  cameraMotionEn?: string;
   /** User opted into Brand kit logo on storyboard stills. */
   useBrandLogo?: boolean;
   /** @deprecated alias of useBrandLogo */
@@ -134,7 +139,12 @@ function klingMotionFromMeta(opts: {
   sceneDescription?: string;
   imagePrompt?: string;
   role?: string;
+  cameraMotionEn?: string;
 }): string {
+  const planned = opts.cameraMotionEn?.trim();
+  if (planned && planned.length >= 8) {
+    return planned.length > 220 ? planned.slice(0, 220).trim() : planned;
+  }
   const blob = [opts.role, opts.sceneDescription, opts.imagePrompt].filter(Boolean).join(" ");
   for (const row of KLING_MOTION_BY_ROLE) {
     if (row.re.test(blob)) return row.motion;
@@ -172,6 +182,8 @@ export function klingSceneMotionPrompt(opts: {
   imagePrompt?: string;
   theme?: string;
   role?: string;
+  /** DeepSeek / user English camera motion for this scene. */
+  cameraMotionEn?: string;
   useBrandLogo?: boolean;
   endWithBrandLogo?: boolean;
 }): string {

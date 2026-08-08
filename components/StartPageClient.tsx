@@ -193,28 +193,6 @@ const START_LAYOUT_CSS = `
   color: #94a3b8 !important;
   margin-right: 0.1rem !important;
 }
-.start-type-cta {
-  display: flex !important;
-  width: 100% !important;
-  margin-top: auto !important;
-  align-items: center !important;
-  justify-content: center !important;
-  border-radius: 0.8rem !important;
-  padding: 0.75rem 1rem !important;
-  font-size: 13px !important;
-  font-weight: 650 !important;
-  line-height: 1.2 !important;
-}
-.start-type-cta.is-on {
-  background: #6c3bff !important;
-  color: #fff !important;
-  border: none !important;
-}
-.start-type-cta.is-off {
-  background: #fff !important;
-  color: #5b2fe0 !important;
-  border: 1.5px solid #a78bfa !important;
-}
 .start-tip-card {
   display: flex !important;
   flex-direction: column !important;
@@ -743,10 +721,6 @@ const START_LAYOUT_CSS = `
     height: auto !important;
     aspect-ratio: 1 / 1 !important;
   }
-  .start-type-cta {
-    padding: 0.6rem 0.75rem !important;
-    font-size: 12.5px !important;
-  }
   .start-tip-card {
     padding: 0.9rem !important;
   }
@@ -974,7 +948,7 @@ function StartPageBody() {
                       </div>
                     </div>
 
-                    <div className="start-card-examples">
+                    <div className="start-card-examples mt-auto">
                       <span className="start-card-examples-label">
                         {m.start.examplesLabel}:
                       </span>
@@ -992,14 +966,6 @@ function StartPageBody() {
                         </span>
                       ))}
                     </div>
-
-                    <span
-                      className={`start-type-cta ${isSelected ? "is-on" : "is-off"}`}
-                    >
-                      {templateId && card.mode === "physical"
-                        ? m.start.templateContinuePhysical
-                        : m.start.chooseTypeLabel}
-                    </span>
                   </button>
                 );
               })}

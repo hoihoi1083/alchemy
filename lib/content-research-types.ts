@@ -37,6 +37,8 @@ export type ContentAngleCandidate = {
   /** Real post/article this angle was inferred from (live web research). */
   sourceUrl?: string;
   sourceTitle?: string;
+  /** Original post caption / snippet when matched from platform search. */
+  sourceSnippet?: string;
   /** Matched platform post preview (when Just One API returns posts). */
   sourceCoverImageUrl?: string;
   /** All image URLs from the source post (carousel / multi-image). */

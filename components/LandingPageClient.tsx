@@ -696,6 +696,25 @@ const LANDING_LAYOUT_CSS = `
   align-items: center;
   justify-content: center;
   min-height: 0;
+  opacity: 0;
+  transform: translate3d(0, 28px, 0) scale(0.94);
+}
+.landing-tpl-row.is-entered .landing-tpl-slot {
+  animation: landing-tpl-slot-in 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: calc(var(--tpl-i, 0) * 90ms);
+}
+@keyframes landing-tpl-slot-in {
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-tpl-slot {
+    opacity: 1;
+    transform: none;
+    animation: none !important;
+  }
 }
 .landing-tpl-card {
   display: block;

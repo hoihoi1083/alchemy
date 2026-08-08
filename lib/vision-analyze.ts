@@ -1,5 +1,4 @@
-import { runBagelUnderstand } from "@/lib/bagel-understand";
-import { parseLlmJsonObject } from "@/lib/parse-llm-json";
+import { captionImageToVisionJson } from "@/lib/vision-json-repair";
 import type {
   ProductVideoKitSlot,
   ProductVideoVisionProfile,
@@ -27,47 +26,14 @@ type SlotVisionJson = {
   visualDescription?: string;
 };
 
-function buildHeroPrompt(productName: string): string {
-  return [
-    "Analyze this HERO product marketing photo for a short Seedance reference-to-video Reel.",
-    "Output valid JSON only — no markdown fences, no thinking notes.",
-    "",
-    "Required JSON shape:",
-    '{"productSummary":"","category":"","materials":[],"colors":[],"situation":"","role":"","visualDescription":""}',
-    "",
-    "Rules:",
-    "- productSummary: one English sentence describing what is being sold",
-    "- category: e.g. personal-care device, jewelry, food, skincare, electronics",
-    "- materials: visible materials/finishes",
-    "- colors: dominant colors",
-    "- situation: best realistic setting/mood for a 9:16 social ad",
-    "- role: short English label for Seedance (@ImageK role)",
-    "- visualDescription: concrete details visible in this photo",
-    "- Do NOT invent text, prices, or brand names not visible",
-    productName ? `User product name hint: ${productName}` : "",
-  ]
-    .filter(Boolean)
-    .join("\n");
-}
+const HERO_SCHEMA =
+  '{"productSummary":"","category":"","materials":[],"colors":[],"situation":"","role":"","visualDescription":""}';
+const SLOT_SCHEMA = '{"role":"","visualDescription":""}';
 
-function buildSlotPrompt(slot: ProductVideoKitSlot, productName: string): string {
-  return [
-    `Analyze this product marketing photo (${SLOT_LABELS[slot]}).`,
-    "Output valid JSON only — no markdown fences, no thinking notes.",
-    "",
-    "Required JSON shape:",
-    '{"role":"","visualDescription":""}',
-    "",
-    "Rules:",
-    "- role: short English label for Seedance (@ImageK role)",
-    "- visualDescription: concrete details visible in this photo",
-    "- Do NOT invent text, prices, or brand names not visible",
-    productName ? `User product name hint: ${productName}` : "",
-  ]
-    .filter(Boolean)
-    .join("\n");
-}
-
+/**
+ * Product kit photos → vision profile.
+ * Uses Florence-2 + DeepSeek (same path as concept/carousel refs) — not Bagel ($0.05/img).
+ */
 export async function analyzeProductImagesWithVision(input: {
   imageUrls: string[];
   slots: ProductVideoKitSlot[];
@@ -81,23 +47,44 @@ export async function analyzeProductImagesWithVision(input: {
   }
 
   const productName = input.productName?.trim() || "";
-  const heroRaw = await runBagelUnderstand({
-    imageUrl: input.imageUrls[0],
-    prompt: buildHeroPrompt(productName),
+
+  const hero = await captionImageToVisionJson<HeroVisionJson>({
+    imageUrl: input.imageUrls[0]!,
+    schemaExample: HERO_SCHEMA,
+    label: "Product hero vision",
+    extraInstructions: [
+      "This is the HERO product marketing photo for a short Seedance reference-to-video Reel.",
+      "productSummary: one English sentence describing what is being sold",
+      "category: e.g. personal-care device, jewelry, food, skincare, electronics",
+      "materials: visible materials/finishes (array of short strings)",
+      "colors: dominant colors (array of short strings)",
+      "situation: best realistic setting/mood for a 9:16 social ad",
+      "role: short English label for Seedance (@ImageK role)",
+      "visualDescription: concrete details visible in this photo",
+      "Do NOT invent text, prices, or brand names not visible",
+      productName ? `User product name hint: ${productName}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n"),
   });
-  const hero = parseLlmJsonObject<HeroVisionJson>(heroRaw, "Product hero vision");
 
   const restRoles = await Promise.all(
     input.imageUrls.slice(1).map(async (url, i) => {
       const slot = input.slots[i + 1] ?? "extra1";
-      const raw = await runBagelUnderstand({
+      const parsed = await captionImageToVisionJson<SlotVisionJson>({
         imageUrl: url,
-        prompt: buildSlotPrompt(slot, productName),
+        schemaExample: SLOT_SCHEMA,
+        label: `Product ${slot} vision`,
+        extraInstructions: [
+          `This is a product marketing photo (${SLOT_LABELS[slot]}).`,
+          "role: short English label for Seedance (@ImageK role)",
+          "visualDescription: concrete details visible in this photo",
+          "Do NOT invent text, prices, or brand names not visible",
+          productName ? `User product name hint: ${productName}` : "",
+        ]
+          .filter(Boolean)
+          .join("\n"),
       });
-      const parsed = parseLlmJsonObject<SlotVisionJson>(
-        raw,
-        `Product ${slot} vision`,
-      );
       return {
         imageIndex: i + 2,
         slot,

@@ -11,6 +11,8 @@ export type ResearchRefWizard = {
   onVideoCreativeModeChange: (mode: "reference-concept") => void;
   onReferenceAdFile: (file: File | null) => void;
   setReferenceCarouselSlideCount?: (count: number) => void;
+  /** Drives wait.reel_download + blocks intake Continue while research MP4 fetches. */
+  setReferenceClipLoading?: (busy: boolean) => void;
 };
 
 export type ResearchRefDeps = {
@@ -102,14 +104,20 @@ export async function applyResearchPostReferences(
   }
 
   wizard.onVideoCreativeModeChange("reference-concept");
-  const [videoFile] = await Promise.all([
-    deps.fetchResearchVideoAsFile(
-      videoUrl,
-      input.platform,
-      `${input.platform}-reference.mp4`,
-    ),
-    attachCoverImages(),
-  ]);
+  wizard.setReferenceClipLoading?.(true);
+  let videoFile: File | null = null;
+  try {
+    [videoFile] = await Promise.all([
+      deps.fetchResearchVideoAsFile(
+        videoUrl,
+        input.platform,
+        `${input.platform}-reference.mp4`,
+      ),
+      attachCoverImages(),
+    ]);
+  } finally {
+    wizard.setReferenceClipLoading?.(false);
+  }
 
   if (!videoFile) {
     return {

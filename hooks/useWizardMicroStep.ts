@@ -193,6 +193,15 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
       wizard.product,
       wizard.headline,
       wizard.subline,
+      wizard.referenceAd,
+      wizard.referenceIsVideo,
+      wizard.referenceClipLoading,
+      wizard.researchReelAnalyzeBusy,
+      wizard.researchReelAnalyzeNote,
+      wizard.researchReelAnalysis,
+      wizard.videoSettings.duration,
+      wizard.videoPrompt,
+      wizard.productPhoto,
     ],
   );
 
@@ -235,6 +244,33 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
       setStepIndex(steps.length - 1);
     }
   }, [stepIndex, steps.length]);
+
+  // Re-anchor when dynamic wait steps insert/remove — never trust a bare index.
+  const anchoredIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    const id = steps[stepIndex]?.id ?? null;
+    if (id) anchoredIdRef.current = id;
+  }, [stepIndex, steps]);
+
+  useEffect(() => {
+    const want = anchoredIdRef.current;
+    if (!want || steps.length === 0) return;
+    const idx = steps.findIndex((s) => s.id === want);
+    if (idx >= 0) {
+      if (idx !== stepIndex) setStepIndex(idx);
+      return;
+    }
+    // Step vanished (e.g. wait.reel_download when busy cleared) — land on setup.
+    if (want === "wait.reel_download" || want === "wait.reel_analyze") {
+      const setup = steps.findIndex(
+        (s) => s.id === "setup.pre_generate" || s.id === "setup.pre_video",
+      );
+      if (setup >= 0) {
+        setStepIndex(setup);
+        return;
+      }
+    }
+  }, [steps, stepIndex]);
 
   const currentStep = steps[stepIndex] ?? null;
   const currentId = currentStep?.id ?? null;
@@ -493,7 +529,10 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
       };
       const nextSteps = resolveMicroSteps(nextCtx, nextState);
       autoAdvancedRef.current = null;
-      setStepIndex(resumeStepIndex(nextSteps));
+      // Skip dedicated analyze waits — analysis runs in background on setup.
+      const downloadIdx = nextSteps.findIndex((s) => s.id === "wait.reel_download");
+      if (downloadIdx >= 0) setStepIndex(downloadIdx);
+      else setStepIndex(resumeStepIndex(nextSteps));
       return;
     }
 
@@ -693,14 +732,23 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     [patchContext, router, searchParams],
   );
 
-  // asset.reference_video only appears when a reel is already attached (graph skipWhen
-  // combinedNoReel). Auto-skip if the file disappeared / flag stuck — never trap image research.
-  // Do NOT auto-skip while a download is in flight (user is about to get an MP4).
-  // Upload for paths without a reel lives on setup.pre_video (optional enrichment).
+  // asset.reference_video is always skipped via graph skipWhen combinedNoReel.
+  // Keep a safety auto-skip if the step ever reappears without a file.
+  // Do NOT auto-skip while a download is in flight.
   useEffect(() => {
     if (currentId !== "asset.reference_video") return;
     if (wizard.referenceClipLoading) return;
-    if (wizard.referenceIsVideo && wizard.referenceAd) return;
+    if (wizard.referenceIsVideo && wizard.referenceAd) {
+      // Research already attached the reel — jump past this retired screen.
+      const key = `auto-skip-ref-video-attached-${stepIndex}`;
+      if (autoAdvancedRef.current === key) return;
+      autoAdvancedRef.current = key;
+      const t = window.setTimeout(() => {
+        autoAdvancedRef.current = null;
+        skipStep();
+      }, 50);
+      return () => window.clearTimeout(t);
+    }
     const key = `auto-skip-ref-video-${stepIndex}`;
     if (autoAdvancedRef.current === key) return;
     autoAdvancedRef.current = key;
@@ -719,10 +767,16 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
   ]);
 
   useEffect(() => {
-    if (currentId === "wait.reel_download" && wizard.referenceAd && !blockReason) {
-      goNext();
-    }
-  }, [blockReason, currentId, goNext, wizard.referenceAd]);
+    if (currentId !== "wait.reel_download") return;
+    if (!wizard.referenceAd || blockReason) return;
+    // Jump by id — list may have already dropped this wait step.
+    const setup = steps.findIndex(
+      (s) => s.id === "setup.pre_generate" || s.id === "setup.pre_video",
+    );
+    if (setup < 0 || setup === stepIndex) return;
+    autoAdvancedRef.current = null;
+    setStepIndex(setup);
+  }, [blockReason, currentId, stepIndex, steps, wizard.referenceAd]);
 
   useEffect(() => {
     if (currentId !== "wait.research_apply") return;
@@ -752,6 +806,30 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     wizard.referenceAnalyzeBusy,
     wizard.referenceAnalyzeNote,
     wizard.userReferenceBrief,
+  ]);
+
+  // Reel analyze: only leave after busy finishes (and duration gate clears).
+  useEffect(() => {
+    if (currentId !== "wait.reel_analyze") return;
+    if (blockReason) return;
+    if (wizard.researchReelAnalyzeBusy) return;
+    if (!wizard.researchReelAnalyzeNote && !wizard.researchReelAnalysis && !wizard.videoPrompt.trim()) {
+      return;
+    }
+    const key = `wait.reel_analyze-${stepIndex}-done`;
+    if (autoAdvancedRef.current === key) return;
+    autoAdvancedRef.current = key;
+    const t = window.setTimeout(() => goNext(), 600);
+    return () => window.clearTimeout(t);
+  }, [
+    blockReason,
+    currentId,
+    goNext,
+    stepIndex,
+    wizard.researchReelAnalyzeBusy,
+    wizard.researchReelAnalyzeNote,
+    wizard.researchReelAnalysis,
+    wizard.videoPrompt,
   ]);
 
   // After cinematic concept plan finishes, leave the wait screen.

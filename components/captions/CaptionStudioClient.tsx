@@ -59,6 +59,7 @@ import { resolveCaptionStudioMusicPrompt } from "@/lib/caption-music-prompt";
 import { isPipelineFileUrl } from "@/lib/pipeline/safe-url";
 import { isSafeForServerUpload } from "@/lib/upload-limits";
 import { LibraryAssetPicker } from "@/components/LibraryAssetPicker";
+import { ToolPhaseStrip } from "@/components/studio/ToolPhaseStrip";
 
 type SourceKind = "file" | "url";
 
@@ -1315,28 +1316,24 @@ export function CaptionStudioClient() {
       )}
 
       {hasWorkspace ? (
-        <div className="flex flex-wrap gap-2">
-          {(
-            [
-              ["script", t.phaseScript],
-              ["audio", t.phaseAudio],
-              ["burn", t.phaseBurn],
-            ] as const
-          ).map(([id, label]) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setWorkspacePhase(id)}
-              className={`rounded-full px-3.5 py-1.5 text-xs font-semibold ${
-                workspacePhase === id
-                  ? "bg-violet-600 text-white"
-                  : "border border-slate-700 text-slate-300 hover:border-violet-500/50"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        <ToolPhaseStrip
+          phases={[
+            { id: "script", label: t.phaseScriptName },
+            { id: "audio", label: t.phaseAudioName },
+            { id: "burn", label: t.phaseBurnName },
+          ]}
+          currentId={workspacePhase}
+          onSelect={(id) =>
+            setWorkspacePhase(id as "script" | "audio" | "burn")
+          }
+          howTo={
+            workspacePhase === "script"
+              ? t.phaseHowToScript
+              : workspacePhase === "audio"
+                ? t.phaseHowToAudio
+                : t.phaseHowToBurn
+          }
+        />
       ) : null}
 
       {hasWorkspace && error && (
@@ -1344,11 +1341,13 @@ export function CaptionStudioClient() {
       )}
 
       {hasWorkspace && (
-        <div className="grid gap-5 pb-24 xl:grid-cols-[minmax(300px,1fr)_minmax(280px,400px)_minmax(300px,1fr)] xl:items-start xl:pb-0">
+        <div className="grid gap-5 pb-36 xl:grid-cols-[minmax(300px,1fr)_minmax(280px,400px)_minmax(300px,1fr)] xl:items-start xl:pb-0">
           {/* Mobile: preview first. Desktop xl: audio | preview | lines (order restored). */}
           <div
-            className={`order-2 xl:order-1 xl:min-w-0 ${
-              workspacePhase === "audio" ? "rounded-3xl ring-2 ring-violet-500/50" : ""
+            className={`order-2 xl:order-1 xl:min-w-0 transition-opacity ${
+              workspacePhase === "audio"
+                ? "rounded-3xl ring-2 ring-violet-500/50 opacity-100"
+                : "opacity-55 hover:opacity-100 xl:opacity-70 xl:hover:opacity-100"
             }`}
           >
           <CaptionAudioSection
@@ -1512,10 +1511,10 @@ export function CaptionStudioClient() {
           </section>
 
           <section
-            className={`order-3 space-y-3 rounded-3xl border border-violet-500/30 bg-violet-950/20 p-3 sm:p-4 xl:sticky xl:top-4 xl:max-h-[calc(100vh-5rem)] xl:overflow-y-auto ${
+            className={`order-3 space-y-3 rounded-3xl border border-violet-500/30 bg-violet-950/20 p-3 sm:p-4 xl:sticky xl:top-4 xl:max-h-[calc(100vh-5rem)] xl:overflow-y-auto transition-opacity ${
               workspacePhase === "script" || workspacePhase === "burn"
-                ? "ring-2 ring-violet-500/40"
-                : ""
+                ? "ring-2 ring-violet-500/40 opacity-100"
+                : "opacity-55 hover:opacity-100 xl:opacity-70 xl:hover:opacity-100"
             }`}
           >
             <div className="flex flex-wrap items-start justify-between gap-2">
@@ -1651,14 +1650,62 @@ export function CaptionStudioClient() {
             >
               {busy ? t.applying : t.applyBtn}
             </button>
+            {workspacePhase === "script" ? (
+              <button
+                type="button"
+                onClick={() => setWorkspacePhase("audio")}
+                className="w-full rounded-2xl border border-emerald-500/40 bg-emerald-950/40 py-3 text-sm font-semibold text-emerald-100 hover:bg-emerald-900/50"
+              >
+                {t.continueToAudio}
+              </button>
+            ) : null}
+            {workspacePhase === "audio" ? (
+              <button
+                type="button"
+                onClick={() => setWorkspacePhase("burn")}
+                className="w-full rounded-2xl border border-emerald-500/40 bg-emerald-950/40 py-3 text-sm font-semibold text-emerald-100 hover:bg-emerald-900/50 xl:hidden"
+              >
+                {t.continueToBurn}
+              </button>
+            ) : null}
           </section>
         </div>
       )}
 
+      {hasWorkspace && workspacePhase === "audio" ? (
+        <div className="hidden justify-center xl:flex">
+          <button
+            type="button"
+            onClick={() => setWorkspacePhase("burn")}
+            className="rounded-2xl border border-emerald-500/40 bg-emerald-950/40 px-8 py-3 text-sm font-semibold text-emerald-100 hover:bg-emerald-900/50"
+          >
+            {t.continueToBurn}
+          </button>
+        </div>
+      ) : null}
+
       {hasWorkspace && (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-800 bg-slate-950/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur xl:hidden">
-          <div className="mx-auto flex max-w-lg flex-col gap-2">
-            <div className="flex gap-2">
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-800 bg-slate-950/95 p-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur xl:hidden">
+          <div className="mx-auto flex max-w-lg flex-col gap-1.5">
+            <div className="flex gap-1.5">
+              {workspacePhase === "script" ? (
+                <button
+                  type="button"
+                  onClick={() => setWorkspacePhase("audio")}
+                  className="min-w-0 flex-1 rounded-full border border-emerald-500/40 bg-emerald-950/50 py-2 text-[11px] font-semibold text-emerald-100"
+                >
+                  {t.continueToAudio}
+                </button>
+              ) : null}
+              {workspacePhase === "audio" ? (
+                <button
+                  type="button"
+                  onClick={() => setWorkspacePhase("burn")}
+                  className="min-w-0 flex-1 rounded-full border border-emerald-500/40 bg-emerald-950/50 py-2 text-[11px] font-semibold text-emerald-100"
+                >
+                  {t.continueToBurn}
+                </button>
+              ) : null}
               <button
                 type="button"
                 disabled={
@@ -1667,7 +1714,7 @@ export function CaptionStudioClient() {
                   (!voiceoverScript.trim() && !selectedVoicePreviewId)
                 }
                 onClick={() => void applyVoiceover()}
-                className="min-w-0 flex-1 rounded-full bg-violet-700 py-2.5 text-xs font-semibold text-white hover:bg-violet-600 disabled:opacity-40"
+                className="min-w-0 flex-1 rounded-full bg-violet-700 py-2 text-[11px] font-semibold text-white hover:bg-violet-600 disabled:opacity-40"
               >
                 {audioBusy
                   ? t.audioApplyingVoice
@@ -1682,7 +1729,7 @@ export function CaptionStudioClient() {
                 type="button"
                 disabled={busy || audioBusy || !sourceKind}
                 onClick={() => void applyCaptions()}
-                className="min-w-0 flex-1 rounded-full bg-linear-to-r from-violet-600 to-violet-500 py-2.5 text-xs font-semibold text-white disabled:opacity-40"
+                className="min-w-0 flex-1 rounded-full bg-linear-to-r from-violet-600 to-violet-500 py-2 text-[11px] font-semibold text-white disabled:opacity-40"
               >
                 {busy ? t.applying : t.applyBtn}
               </button>
@@ -1701,7 +1748,7 @@ export function CaptionStudioClient() {
                     setDownloadBusy(false);
                   }
                 }}
-                className="w-full rounded-full border border-slate-600 py-2 text-xs font-medium text-slate-200 disabled:opacity-40"
+                className="w-full rounded-full border border-slate-600 py-1.5 text-[11px] font-medium text-slate-200 disabled:opacity-40"
               >
                 {downloadBusy ? t.downloading : t.downloadBtn}
               </button>

@@ -105,33 +105,49 @@ function buildPlanPrompt(input: {
     "",
     'Required JSON: {"productSummary":"","category":"","situation":"","seedancePrompt":"","motionSummaryZh":"","productionNotes":""}',
     "",
-    "VISION ANALYSIS (from uploaded photos):",
-    `Summary: ${input.vision.productSummary}`,
-    `Category: ${input.vision.category}`,
+    "USER-DECLARED PRODUCT (authoritative for WHAT it is / story / use-case):",
+    input.product
+      ? `Product name / function: ${input.product}`
+      : "Product name: (not provided — infer carefully from headline, not from photo category alone)",
+    input.business ? `Business: ${input.business}` : "",
+    input.headline ? `Headline / hook (drive the story): ${input.headline}` : "",
+    input.subline ? `Selling points: ${input.subline}` : "",
+    "",
+    "CRITICAL:",
+    "- The uploaded photo may LOOK like a different category (e.g. dropper bottle) while the user sells another function (e.g. portable power / battery).",
+    "- Trust the USER name + headline for category, use-case, and marketing story.",
+    "- Use PHOTO VISION only for on-screen appearance: shape, materials, colors, packaging — lock @Image1 identity.",
+    "- Do NOT write a skincare/serum/oil ad just because Florence guessed that from the photo.",
+    "- situation + seedancePrompt must sell the DECLARED product function (outdoor power, charging, etc. when named), while keeping the exact visual of @Image1.",
+    "",
+    "PHOTO VISION (appearance only — not category override):",
+    `Visual summary: ${input.vision.productSummary}`,
+    `Vision-guessed category (IGNORE if it conflicts with user product name): ${input.vision.category}`,
     input.vision.materials.length
       ? `Materials: ${input.vision.materials.join(", ")}`
       : "",
     input.vision.colors.length ? `Colors: ${input.vision.colors.join(", ")}` : "",
-    `Suggested setting: ${input.vision.situation}`,
+    `Vision-suggested setting (adapt to user story): ${input.vision.situation}`,
     "",
     "Image roles:",
     rolesBlock,
     "",
     "seedancePrompt rules (English, for Seedance API):",
     stylized
-      ? `- Opening: 9:16 commercial for this ${input.vision.category}. ${artStylePlannerHint(artStyleId)}`
-      : `- Opening: photorealistic 9:16 commercial for this ${input.vision.category}.`,
+      ? `- Opening: 9:16 commercial for the USER's product (${input.product || "see headline"}). ${artStylePlannerHint(artStyleId)}`
+      : `- Opening: photorealistic 9:16 commercial for the USER's product (${input.product || "see headline"}).`,
     `- Reference exactly ${imageCount} images as @Image1 … @Image${imageCount}.`,
     imageCount === 1
-      ? "- Single-image mode: subtle commercial motion on @Image1 — slow push-in or gentle light shimmer, locked product identity."
+      ? "- Single-image mode: commercial motion on @Image1 that fits the declared use-case — not a generic beauty packshot unless the user product is beauty."
       : [
           "- Multi-image mode: NOT a slideshow; avoid rigid scene blocks and avoid per-image hard cuts.",
           "- Build one coherent commercial flow with smooth transitions (motivated pan, match move, whip or light-wipe) and continuous motion energy.",
           "- Motion should feel dynamic but controllable: push-in/pull-out, arc shot, rack focus, parallax depth, subtle product interaction.",
           "- No static hold longer than ~1s. Every beat should include clear motion.",
-          "- Match motion to each image role (hero reveal, packaging confidence beat, detail/usage moment) while keeping one product identity.",
+          "- Match motion to each image role while keeping one product identity.",
         ].join("\n"),
-    "- Preserve exact product identity from references — do not morph into a different item.",
+    "- Preserve exact visual identity from @Image references — do not morph into a different-looking item.",
+    "- category/productSummary in JSON must match the USER-declared product, not the vision guess.",
     "- NO on-screen text, prices, logos, or watermarks unless user offer requires CTA text.",
     input.offer
       ? `- User offer (optional CTA beat only): ${input.offer}`
@@ -141,10 +157,6 @@ function buildPlanPrompt(input: {
     "productionNotes: brief note on what to expect from one Seedance clip (繁體中文 or English).",
     ...videoDurationPlannerBlock(input.durationSec),
     input.styleHint ? `Visual mood hint: ${input.styleHint}` : "",
-    input.product ? `Product name: ${input.product}` : "",
-    input.business ? `Business: ${input.business}` : "",
-    input.headline ? `Headline hint: ${input.headline}` : "",
-    input.subline ? `Selling points: ${input.subline}` : "",
     input.framing !== "auto" ? `Framing preference: ${input.framing}` : "",
   ]
     .filter(Boolean)
@@ -180,7 +192,7 @@ export async function planProductVideoFromVision(
       {
         role: "system",
         content:
-          "You are a Seedance video prompt engineer for HK/TW/CN SMB product Reels. Output valid JSON only. Write achievable single-clip motion — not a full TV commercial.",
+          "You are a Seedance video prompt engineer for HK/TW/CN SMB product Reels. Output valid JSON only. User-declared product name/headline define WHAT the product is; photo vision only defines how it LOOKS. Never override a power-bank/electronics story with skincare just because the photo looks like a bottle.",
       },
       {
         role: "user",

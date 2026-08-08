@@ -293,11 +293,12 @@
         { "id": "wait.research_apply", "skipWhen": "!contentResearchApplyRef" },
         {
           "id": "asset.reference_video",
-          "label": "參考短片（有 reel 先用；圖文帖可跳過）",
+          "label": "參考短片（已由研究帶入則自動跳過）",
           "required": false,
           "alwaysVisible": true,
           "accepts": ["searchDownload", "manualUpload"],
-          "skipWhen": "combinedNoReel"
+          "skipWhen": "combinedNoReel",
+          "note": "Always skipped — research reels attach MP4 on angle apply; analyze on wait.reel_*; manual MP4 on setup.pre_video"
         },
         {
           "id": "wait.reel_download",
@@ -490,11 +491,12 @@
         { "id": "wait.research_apply", "skipWhen": "!contentResearchApplyRef" },
         {
           "id": "asset.reference_video",
-          "label": "參考短片（有 reel 先用；圖文帖可跳過）",
+          "label": "參考短片（已由研究帶入則自動跳過）",
           "required": false,
           "alwaysVisible": true,
           "accepts": ["searchDownload", "manualUpload"],
-          "skipWhen": "combinedNoReel"
+          "skipWhen": "combinedNoReel",
+          "note": "Always skipped — research reels attach MP4 on angle apply; analyze on wait.reel_*; manual MP4 on setup.pre_video"
         },
         {
           "id": "wait.reel_download",

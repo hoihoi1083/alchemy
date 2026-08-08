@@ -1,5 +1,4 @@
 import { fal } from "@fal-ai/client";
-import { runBagelUnderstand } from "@/lib/bagel-understand";
 import { callDeepSeekChat } from "@/lib/deepseek-client";
 import { parseLlmJsonObject } from "@/lib/parse-llm-json";
 import type { PromptMarket } from "@/lib/prompt-variables";
@@ -9,15 +8,20 @@ import {
   getMediaDurationSeconds,
 } from "@/lib/pipeline/ffmpeg";
 import type { ResearchReelAnalysis, ReelShotFrame } from "@/lib/reel-analysis-types";
-import {
-  buildSeedanceReferenceClip,
-} from "@/lib/reference-video-prepare";
+import { SEEDANCE_MAX_REFERENCE_SEC } from "@/lib/reference-video-prepare";
+import { videoDurationPlannerBlock } from "@/lib/video-duration-planner";
+import { runFlorenceDetailedCaption } from "@/lib/vision-json-repair";
 import { mkdtemp, readFile, rm, writeFile } from "fs/promises";
 import path from "path";
 import { tmpdir } from "os";
 
-const MAX_FRAMES = 6;
-const MIN_FRAMES = 3;
+/**
+ * Sample stills across the full reel — more frames = richer beat detail for DeepSeek.
+ * Vision uses Florence-2 (same path as concept/carousel refs), not Bagel.
+ */
+const TIMELINE_FRAMES = 5;
+const FLORENCE_TIMEOUT_MS = 25_000;
+const FLORENCE_CONCURRENCY = 3;
 
 type FrameVisionRow = {
   index: number;
@@ -27,60 +31,86 @@ type FrameVisionRow = {
   motionHint: string;
   subjects: string;
   visibleText: string;
+  visionScored?: boolean;
 };
 
-type RawFrameVisionRow = Partial<FrameVisionRow> & {
-  summary?: string;
-  motion?: string;
-};
-
-function normalizeFrameRow(
-  raw: RawFrameVisionRow,
-  index: number,
-  timeSec: number,
-): FrameVisionRow {
+function timelineStubRow(index: number, timeSec: number): FrameVisionRow {
   return {
     index,
     timeSec,
-    sceneSummary: String(raw.sceneSummary ?? raw.summary ?? "").trim() || `Scene ${index}`,
-    layoutStyle: String(raw.layoutStyle ?? "").trim(),
-    motionHint: String(raw.motionHint ?? raw.motion ?? "").trim(),
-    subjects: String(raw.subjects ?? "").trim(),
-    visibleText: String(raw.visibleText ?? "").trim(),
+    sceneSummary: `Timeline beat ${index} (~${timeSec.toFixed(1)}s)`,
+    layoutStyle: "",
+    motionHint: "",
+    subjects: "",
+    visibleText: "",
+    visionScored: false,
   };
 }
 
-async function visionAnalyzeOneFrame(
-  imageUrl: string,
-  index: number,
-  frameCount: number,
-  timeSec: number,
-): Promise<FrameVisionRow> {
-  const raw = await runBagelUnderstand({
-    imageUrl,
-    prompt: [
-      `This is frame ${index} of ${frameCount} chronological frames from one social-media reel.`,
-      "Output valid JSON only — no markdown fences, no thinking notes.",
-      "Return JSON:",
-      '{"sceneSummary":"","layoutStyle":"","motionHint":"","subjects":"","visibleText":""}',
-      "motionHint = how this shot moves or cuts (static, pan, zoom, hand motion, etc.).",
-      "visibleText = legible on-screen text if any (original language); empty string if none.",
-      "Do not invent text that is not visible.",
-    ].join("\n"),
-  });
-  const parsed = parseLlmJsonObject<RawFrameVisionRow>(raw, `Reel frame ${index} vision`);
-  return normalizeFrameRow(parsed, index, timeSec);
+async function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
 }
 
-async function visionAnalyzeReelFrames(
+async function mapPool<T, R>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  const out = new Array<R>(items.length);
+  let next = 0;
+  async function worker() {
+    while (next < items.length) {
+      const i = next++;
+      out[i] = await fn(items[i]!, i);
+    }
+  }
+  const n = Math.min(concurrency, Math.max(1, items.length));
+  await Promise.all(Array.from({ length: n }, () => worker()));
+  return out;
+}
+
+/**
+ * Florence-2 detailed caption per frame (fast fal-native VLM).
+ * DeepSeek later turns captions into structured shots + Seedance prompt.
+ */
+async function visionCaptionAllFrames(
   frameUrls: string[],
   timesSec: number[],
 ): Promise<FrameVisionRow[]> {
-  return Promise.all(
-    frameUrls.map((url, i) =>
-      visionAnalyzeOneFrame(url, i + 1, frameUrls.length, timesSec[i] ?? 0),
-    ),
-  );
+  return mapPool(frameUrls, FLORENCE_CONCURRENCY, async (url, i) => {
+    const index = i + 1;
+    const timeSec = timesSec[i] ?? 0;
+    if (!url) return timelineStubRow(index, timeSec);
+    try {
+      const caption = await withTimeout(
+        runFlorenceDetailedCaption(url),
+        FLORENCE_TIMEOUT_MS,
+        `Reel frame ${index} Florence`,
+      );
+      return {
+        index,
+        timeSec,
+        sceneSummary: caption.trim() || `Scene ${index}`,
+        layoutStyle: "",
+        motionHint: "",
+        subjects: "",
+        visibleText: "",
+        visionScored: true,
+      };
+    } catch {
+      return timelineStubRow(index, timeSec);
+    }
+  });
 }
 
 function buildDeepSeekAdaptPrompt(input: {
@@ -97,15 +127,18 @@ function buildDeepSeekAdaptPrompt(input: {
   frames: FrameVisionRow[];
 }): string {
   const frameBlock = input.frames
-    .map(
-      (f) =>
-        `Frame ${f.index} (at ${f.timeSec.toFixed(1)}s in the ${input.sourceDurationSec.toFixed(0)}s source): ${f.sceneSummary}. Layout: ${f.layoutStyle}. Motion: ${f.motionHint}. Subjects (DO NOT copy): ${f.subjects}.`,
-    )
+    .map((f) => {
+      const tag =
+        f.visionScored === false
+          ? " [caption missing — infer from neighbors]"
+          : " [Florence caption]";
+      return `Frame ${f.index} (at ${f.timeSec.toFixed(1)}s in the ${input.sourceDurationSec.toFixed(0)}s source)${tag}: ${f.sceneSummary}`;
+    })
     .join("\n");
 
   const refNote = input.digestMontage
-    ? `@Video1 is a ${input.referenceClipSec.toFixed(0)}s DIGEST MONTAGE stitched from hook, middle, and closing beats across the full ${input.sourceDurationSec.toFixed(0)}s reference — not just the opening.`
-    : `@Video1 is the reference reel (${input.referenceClipSec.toFixed(0)}s).`;
+    ? `@Video1 will be a ~${input.referenceClipSec.toFixed(0)}s DIGEST MONTAGE of the full ${input.sourceDurationSec.toFixed(0)}s reference (prepared at generate) — not just the opening.`
+    : `@Video1 is the reference reel (up to ${input.referenceClipSec.toFixed(0)}s).`;
 
   return [
     "Adapt this reference REEL structure for the user's product video (Seedance reference-to-video).",
@@ -116,18 +149,23 @@ function buildDeepSeekAdaptPrompt(input: {
     "",
     "Rules:",
     "- Frames above span the FULL source timeline — use the whole story arc (hook, product demo, payoff/CTA), not only the first seconds.",
+    "- For each shot: compress the Florence caption into sceneSummary/layoutStyle/motionHint/subjects/visibleText (do not invent on-screen text).",
     "- seedancePrompt: English for Seedance R2V. The OUTPUT must feel like a COMPLETE standalone ad in the target duration — clear opening hook, product hero moment, and satisfying close (even if subtle).",
     "- Compress the reference's narrative arc into the output duration; do NOT produce a fragment that feels like it cuts off mid-intro.",
-    "- Match reference pacing, cut rhythm, camera language, and VISUAL STYLE FAMILY (render medium, palette, meme/cinematic energy) — NOT reference faces, brands, unrelated topics, or on-video text.",
-    "- All hero CONTENT = user's product/topic — keep reference LOOK and edit grammar.",
-    "- If the reference is tutorial, how-to, authenticity test, or educational demo: do NOT copy literal test steps or props (flashlight, fire, tools). Repurpose the same edit energy and visual style as a showcase starring the user's product/topic.",
+    "- Match reference pacing, cut rhythm, camera language, locations/shot types, and VISUAL STYLE FAMILY — NOT reference faces, brands, or on-video text.",
+    "- spine = reference structure; swap hero object to the user's product/topic.",
+    "- If the reference product category differs from the user's product: keep the SAME scenes/settings/camera from the reference and place the user's product as the held/placed hero prop — do not rewrite into a blank studio packshot that drops the reference structure.",
+    "- If the reference is tutorial, how-to, authenticity test, or educational demo: keep the test/structure energy when the research direction asks for it; still avoid copying reference faces/brands/on-screen text.",
     refNote,
-    `- OUTPUT length: ${input.outputDurationSec}s (Seedance). Map the full reference story into this short ad.`,
+    `- OUTPUT length: ${input.outputDurationSec}s (Seedance / MiniMax). Map the full reference story into this short ad.`,
+    ...videoDurationPlannerBlock(input.outputDurationSec),
     "",
     "Analyzed frames (full source timeline):",
     frameBlock,
     "",
-    input.product ? `User product: ${input.product}` : "",
+    input.product
+      ? `User product name (label — at generate time the uploaded photo @Image1 overrides if they conflict): ${input.product}`
+      : "",
     input.headline ? `Headline: ${input.headline}` : "",
     input.subline ? `Selling points: ${input.subline}` : "",
     input.offer ? `Offer/CTA: ${input.offer}` : "",
@@ -187,7 +225,8 @@ export type AnalyzeResearchReelInput = {
 
 export type AnalyzeResearchReelResult = {
   analysis: ResearchReelAnalysis;
-  referenceVideoUrl: string;
+  /** Null when clip is deferred to /api/prepare-reference-video at generate time. */
+  referenceVideoUrl: string | null;
   referenceDigestMontage: boolean;
   sourceDurationSec: number;
   referenceDurationSec: number;
@@ -195,6 +234,13 @@ export type AnalyzeResearchReelResult = {
   styleReferenceFrameUrl?: string;
 };
 
+/**
+ * Research-reel analysis:
+ * - ffmpeg stills across the full timeline (detail)
+ * - Florence-2 captions (fast; same stack as concept/carousel refs — not Bagel)
+ * - DeepSeek adapts captions → Seedance R2V brief
+ * - Seedance digest clip deferred to generate
+ */
 export async function analyzeResearchReelFromVideo(
   input: AnalyzeResearchReelInput,
 ): Promise<AnalyzeResearchReelResult> {
@@ -204,28 +250,31 @@ export async function analyzeResearchReelFromVideo(
 
   try {
     await writeFile(videoPath, input.videoBytes);
-    const sourceDurationSec = await getMediaDurationSeconds(videoPath);
+
+    const [sourceDurationSec, frameExtract] = await Promise.all([
+      getMediaDurationSeconds(videoPath),
+      extractVideoFrames(videoPath, workDir, {
+        maxFrames: TIMELINE_FRAMES,
+        minFrames: Math.min(3, TIMELINE_FRAMES),
+      }),
+    ]);
+    const { paths, timesSec } = frameExtract;
     const outputDurationSec = input.outputDurationSec ?? 8;
+    const willDigest = sourceDurationSec > SEEDANCE_MAX_REFERENCE_SEC + 0.25;
+    const referenceDurationSec = willDigest
+      ? SEEDANCE_MAX_REFERENCE_SEC
+      : sourceDurationSec;
 
-    const { paths, timesSec } = await extractVideoFrames(videoPath, workDir, {
-      maxFrames: MAX_FRAMES,
-      minFrames: MIN_FRAMES,
-    });
+    const buffers = await Promise.all(paths.map((p) => readFile(p)));
+    const frameUrls = await Promise.all(
+      buffers.map((buf, i) =>
+        fal.storage.upload(
+          new File([buf], path.basename(paths[i]!), { type: "image/jpeg" }),
+        ),
+      ),
+    );
 
-    const clip = await buildSeedanceReferenceClip(input.videoBytes);
-    const refFile = new File([new Uint8Array(clip.buffer)], "reference-clip.mp4", {
-      type: "video/mp4",
-    });
-    const referenceVideoUrl = await fal.storage.upload(refFile);
-
-    const frameUrls: string[] = [];
-    for (const framePath of paths) {
-      const buf = await readFile(framePath);
-      const file = new File([buf], path.basename(framePath), { type: "image/jpeg" });
-      frameUrls.push(await fal.storage.upload(file));
-    }
-
-    const frameVision = await visionAnalyzeReelFrames(frameUrls, timesSec);
+    const frameVision = await visionCaptionAllFrames(frameUrls, timesSec);
 
     const deepSeekRaw = await callDeepSeekChat(
       [
@@ -244,9 +293,9 @@ export async function analyzeResearchReelFromVideo(
             promptExtra: input.promptExtra?.trim() ?? "",
             market: input.market ?? "hk",
             sourceDurationSec,
-            referenceClipSec: clip.durationSec,
+            referenceClipSec: referenceDurationSec,
             outputDurationSec,
-            digestMontage: clip.digestMontage,
+            digestMontage: willDigest,
             frames: frameVision,
           }),
         },
@@ -267,10 +316,10 @@ export async function analyzeResearchReelFromVideo(
 
     return {
       analysis,
-      referenceVideoUrl,
-      referenceDigestMontage: clip.digestMontage,
+      referenceVideoUrl: null,
+      referenceDigestMontage: willDigest,
       sourceDurationSec,
-      referenceDurationSec: clip.durationSec,
+      referenceDurationSec,
       styleReferenceFrameUrl: frameUrls[0],
     };
   } finally {

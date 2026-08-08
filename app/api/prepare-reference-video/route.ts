@@ -1,7 +1,10 @@
 import { fal } from "@fal-ai/client";
 import { NextResponse } from "next/server";
 import { requireAppUser } from "@/lib/require-app-user";
-import { buildSeedanceReferenceClip } from "@/lib/reference-video-prepare";
+import {
+  buildSeedanceReferenceClip,
+  MINIMAX_MAX_REFERENCE_SEC,
+} from "@/lib/reference-video-prepare";
 
 export const runtime = "nodejs";
 export const maxDuration = 180;
@@ -36,7 +39,9 @@ export async function POST(request: Request) {
 
   try {
     const raw = Buffer.from(await video.arrayBuffer());
-    const clip = await buildSeedanceReferenceClip(raw);
+    // Cap under 15.0s — MiniMax H3 rejects reference_video_urls at/over 15s
+    // (that limit is the REFERENCE clip, not the user's chosen output length).
+    const clip = await buildSeedanceReferenceClip(raw, MINIMAX_MAX_REFERENCE_SEC);
 
     return NextResponse.json({
       videoUrl: await fal.storage.upload(
@@ -45,7 +50,7 @@ export async function POST(request: Request) {
         }),
       ),
       durationSec: clip.durationSec,
-      trimmed: clip.digestMontage || clip.sourceDurationSec > 15.25,
+      trimmed: clip.digestMontage || clip.sourceDurationSec > MINIMAX_MAX_REFERENCE_SEC,
       digestMontage: clip.digestMontage,
       sourceDurationSec: clip.sourceDurationSec,
       bytes: clip.buffer.byteLength,

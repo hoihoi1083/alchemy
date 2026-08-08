@@ -653,22 +653,38 @@ export function PreVideoSetupPanel({
                   onChange={onRefVideoFile}
                 />
                 {refVideoName ? (
-                  <div className="flex items-center justify-between gap-3 rounded-xl border border-violet-300 bg-violet-50/70 px-3 py-2.5">
-                    <p className="min-w-0 truncate text-sm font-medium text-slate-800">{refVideoName}</p>
-                    <div className="flex shrink-0 gap-2">
-                      <label
-                        htmlFor={refVideoInputId}
-                        className="cursor-pointer text-xs font-semibold text-violet-700"
-                      >
-                        {m.wizard.uploadChange}
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => wizard.onReferenceAdFile(null)}
-                        className="text-xs font-semibold text-slate-500"
-                      >
-                        {pv.referenceRemove}
-                      </button>
+                  <div className="space-y-2">
+                    {wizard.referencePreviewUrl &&
+                    (wizard.referenceIsVideo ||
+                      /\.(mp4|webm|mov)$/i.test(refVideoName)) ? (
+                      <video
+                        src={wizard.referencePreviewUrl}
+                        className="mx-auto max-h-28 w-full max-w-[14rem] rounded-lg border border-violet-300 bg-slate-950/5 object-contain"
+                        muted
+                        playsInline
+                        controls
+                        preload="metadata"
+                      />
+                    ) : null}
+                    <div className="flex items-center justify-between gap-3 rounded-xl border border-violet-300 bg-violet-50/70 px-3 py-2.5">
+                      <p className="min-w-0 truncate text-sm font-medium text-slate-800">
+                        {refVideoName}
+                      </p>
+                      <div className="flex shrink-0 gap-2">
+                        <label
+                          htmlFor={refVideoInputId}
+                          className="cursor-pointer text-xs font-semibold text-violet-700"
+                        >
+                          {m.wizard.referenceChange}
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => wizard.onReferenceAdFile(null)}
+                          className="text-xs font-semibold text-slate-500"
+                        >
+                          {pv.referenceRemove}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ) : (

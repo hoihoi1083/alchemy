@@ -27,7 +27,9 @@ import {
   MAX_STORYBOARD_SCENES,
   MIN_STORYBOARD_SCENES,
 } from "@/lib/video-storyboard-types";
+import { parseSceneMotionHintsFromPlan } from "@/lib/kling-motion-from-plan";
 import { seedanceSafePlannerRules, softenStoryboardStillPromptForModeration } from "@/lib/seedance-moderation";
+import { videoDurationPlannerBlock } from "@/lib/video-duration-planner";
 
 function sceneCountForDuration(durationSec: number): { min: number; max: number } {
   if (durationSec <= 6) return { min: 3, max: 5 };
@@ -70,6 +72,9 @@ function normalizeScene(raw: Partial<StoryboardScenePlan>, fallbackIndex: number
     sceneDescriptionZh: String(raw.sceneDescriptionZh ?? raw.role ?? "").trim(),
     onImageCopyZh: String(raw.onImageCopyZh ?? "").trim() || undefined,
     imagePrompt: softenStoryboardStillPromptForModeration(String(raw.imagePrompt ?? "").trim()),
+    cameraMotionEn: String(raw.cameraMotionEn ?? "").trim() || undefined,
+    productPlacementZh: String(raw.productPlacementZh ?? "").trim() || undefined,
+    punchLineZh: String(raw.punchLineZh ?? "").trim() || undefined,
   };
 }
 
@@ -157,6 +162,14 @@ function normalizeStoryboardPlan(
   // Pad missing Scene N lines when scene_count forces more scenes.
   seedancePrompt = ensureMotionPlanCoversScenes(seedancePrompt, scenes);
 
+  // Backfill cameraMotionEn from Scene N blocks when the model omitted the field.
+  const hints = parseSceneMotionHintsFromPlan(seedancePrompt);
+  scenes = scenes.map((s) =>
+    s.cameraMotionEn
+      ? s
+      : { ...s, cameraMotionEn: hints.get(s.imageIndex) || s.cameraMotionEn },
+  );
+
   return {
     title: String(parsed.title ?? "").trim() || "Product story reel",
     theme: String(parsed.theme ?? "").trim(),
@@ -229,7 +242,7 @@ function buildPlanPrompt(input: {
       "Return ONE JSON object only — no markdown fences.",
       "",
       "Required JSON shape:",
-      '{"title":"","theme":"","visualDirection":"","totalDurationSec":0,"scenes":[{"imageIndex":1,"role":"","startSec":0,"endSec":2,"sceneDescriptionZh":"","onImageCopyZh":"","imagePrompt":""}],"seedancePrompt":"","productionNotes":""}',
+      '{"title":"","theme":"","visualDirection":"","totalDurationSec":0,"scenes":[{"imageIndex":1,"role":"","startSec":0,"endSec":2,"sceneDescriptionZh":"","onImageCopyZh":"","imagePrompt":"","cameraMotionEn":"","productPlacementZh":"","punchLineZh":""}],"seedancePrompt":"","productionNotes":""}',
       "",
       "CONCEPT ADAPTATION:",
       `- Campaign topic: ${input.product}.`,
@@ -249,6 +262,9 @@ function buildPlanPrompt(input: {
       `- onImageCopyZh (burned caption after video) AND sceneDescriptionZh (UI note): ${plannerCopyLanguageRule(resolveCopyLocale((input.market as PromptMarket) || "hk"))}`,
       "- onImageCopyZh: short consumer caption for THIS scene only.",
       "- sceneDescriptionZh: one line for the user UI — same language as onImageCopyZh.",
+      "- cameraMotionEn: English camera motion ONLY for this scene (push-in, orbit, handheld) — no Chinese, no prices, no on-screen text.",
+      "- productPlacementZh: where the product/concept sits in frame (market language).",
+      "- punchLineZh: optional spoken/caption line for this beat (burn later via /captions).",
       "",
       ...endCardLogoPlannerRules(input.useBrandLogo),
       "",
@@ -264,6 +280,7 @@ function buildPlanPrompt(input: {
       "productionNotes: brief user note — expect Kling multi-clip cost (~110 tokens/5s × scenes).",
       "",
       `Target duration: ${input.durationSec} seconds.`,
+      ...videoDurationPlannerBlock(input.durationSec),
       artHint,
       input.styleHint ? `Visual mood hint: ${input.styleHint}` : "",
       input.promptExtra ? `Style / reference notes: ${input.promptExtra}` : "",
@@ -313,7 +330,7 @@ function buildPlanPrompt(input: {
     "Return ONE JSON object only — no markdown fences.",
     "",
     "Required JSON shape:",
-    '{"title":"","theme":"","visualDirection":"","totalDurationSec":0,"scenes":[{"imageIndex":1,"role":"","startSec":0,"endSec":2,"sceneDescriptionZh":"","onImageCopyZh":"","imagePrompt":""}],"seedancePrompt":"","productionNotes":""}',
+    '{"title":"","theme":"","visualDirection":"","totalDurationSec":0,"scenes":[{"imageIndex":1,"role":"","startSec":0,"endSec":2,"sceneDescriptionZh":"","onImageCopyZh":"","imagePrompt":"","cameraMotionEn":"","productPlacementZh":"","punchLineZh":""}],"seedancePrompt":"","productionNotes":""}',
     "",
     ...productAdaptationBlock,
     "",
@@ -327,6 +344,9 @@ function buildPlanPrompt(input: {
     `- onImageCopyZh (burned caption) AND sceneDescriptionZh (UI note): ${plannerCopyLanguageRule(resolveCopyLocale((input.market as PromptMarket) || "hk"))}`,
     "- onImageCopyZh: consumer-facing caption text for THIS scene only (burned AFTER video). Short headline + optional subline or CTA. NEVER use production labels: 開場亮點, 行動呼籲, 中段, arrows (→), or storyboard role names.",
     "- sceneDescriptionZh: one line for the user UI — same language as onImageCopyZh.",
+      "- cameraMotionEn: English camera motion ONLY for this scene (push-in, orbit, handheld) — no Chinese, no prices, no on-screen text.",
+      "- productPlacementZh: where the product/concept sits in frame (market language).",
+      "- punchLineZh: optional spoken/caption line for this beat (burn later via /captions).",
     "- Phone/laptop/tablet scenes: describe blank or abstract UI chrome only — never ask Nano Banana to invent readable Chinese/English on screens (it becomes gibberish).",
     "- Do NOT put marketing headlines (e.g. 不用写 Prompt) into imagePrompt — those belong only in onImageCopyZh for caption burn.",
     "",
@@ -345,6 +365,7 @@ function buildPlanPrompt(input: {
     "productionNotes: brief user note in 繁體中文 (HK) or English — expect Kling multi-clip tokens (~110/5s × scenes).",
     "",
     `Target duration: ${input.durationSec} seconds.`,
+    ...videoDurationPlannerBlock(input.durationSec),
     artHint,
     input.styleHint ? `Visual mood hint: ${input.styleHint}` : "",
     input.promptExtra ? `Style / reference notes: ${input.promptExtra}` : "",
@@ -556,7 +577,7 @@ function buildReelStoryboardPlanPrompt(input: {
     adaptLine,
     "Return ONE JSON object only — no markdown fences.",
     "",
-    '{"title":"","theme":"","visualDirection":"","totalDurationSec":0,"scenes":[{"imageIndex":1,"role":"","startSec":0,"endSec":2,"sceneDescriptionZh":"","onImageCopyZh":"","imagePrompt":""}],"seedancePrompt":"","productionNotes":""}',
+    '{"title":"","theme":"","visualDirection":"","totalDurationSec":0,"scenes":[{"imageIndex":1,"role":"","startSec":0,"endSec":2,"sceneDescriptionZh":"","onImageCopyZh":"","imagePrompt":"","cameraMotionEn":"","productPlacementZh":"","punchLineZh":""}],"seedancePrompt":"","productionNotes":""}',
     "",
     "Rules:",
     "- Map reference shot beats to storyboard scenes in timeline order (hook → demo → payoff/CTA).",
@@ -568,6 +589,9 @@ function buildReelStoryboardPlanPrompt(input: {
     "- Each scene = ONE still (imageIndex 1…N).",
     ...layoutRules,
     "- sceneDescriptionZh: one line for the user UI — same language as onImageCopyZh.",
+      "- cameraMotionEn: English camera motion ONLY for this scene (push-in, orbit, handheld) — no Chinese, no prices, no on-screen text.",
+      "- productPlacementZh: where the product/concept sits in frame (market language).",
+      "- punchLineZh: optional spoken/caption line for this beat (burn later via /captions).",
     `- onImageCopyZh: consumer ad copy for THIS scene. ${plannerCopyLanguageRule(resolveCopyLocale((input.market as PromptMarket) || "hk"))} Real headline/CTA only — NEVER 開場亮點, 行動呼籲, → arrows, or role names.`,
     "",
     ...endCardLogoPlannerRules(input.useBrandLogo),
@@ -592,6 +616,7 @@ function buildReelStoryboardPlanPrompt(input: {
       ? `Campaign notes (TOPIC/copy only — do NOT let Visual metaphor override Reference visual direction): ${input.promptExtra}`
       : "",
     `Target duration: ${input.durationSec}s.`,
+    ...videoDurationPlannerBlock(input.durationSec),
     artStylePlannerHint(input.artStyleId),
     "productionNotes: expect Kling multi-clip cost; match reference pacing without cloning topic.",
   ]

@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import type { ImageJobMeta, VideoPhase } from "@/hooks/useWizardState";
 import {
   estimateImageJobTotalSec,
+  estimateRemainingSec,
   estimateVideoJobTotalSec,
   PROGRESS_ESTIMATES,
 } from "@/lib/generation-progress-estimates";
@@ -34,6 +35,8 @@ type UseWizardProgressArgs = {
   progressNow: number;
   videoPhase: VideoPhase;
   usesCompositor: boolean;
+  /** Research / reference R2V path — longer fal / fallback chains. */
+  referenceR2v?: boolean;
   labels: WizardProgressLabels;
   formatEta: (sec: number) => string;
 };
@@ -48,7 +51,7 @@ function phasedImageProgress(
   formatEta: (sec: number) => string,
 ): ProgressInfo {
   const totalSec = planningSec + sceneCount * renderPerSceneSec;
-  const etaSec = Math.max(2, totalSec - elapsedSec);
+  const etaSec = estimateRemainingSec(totalSec, elapsedSec);
   if (elapsedSec <= planningSec) {
     const pct = Math.min(40, Math.round((elapsedSec / planningSec) * 40));
     return { label: labels.planning, pct, eta: formatEta(etaSec) };
@@ -76,6 +79,7 @@ export function useWizardProgress({
   progressNow,
   videoPhase,
   usesCompositor,
+  referenceR2v = false,
   labels,
   formatEta,
 }: UseWizardProgressArgs) {
@@ -141,18 +145,33 @@ export function useWizardProgress({
     return {
       label: labels.imageGenerating,
       pct,
-      eta: formatEta(Math.max(2, totalSec - elapsedSec)),
+      eta: formatEta(estimateRemainingSec(totalSec, elapsedSec)),
     };
   }, [imageBusy, imageJobMeta, progressNow, labels, formatEta]);
 
   const videoProgressInfo = useMemo((): ProgressInfo | null => {
     if (!videoBusy || !videoJobStartedAt) return null;
     const elapsedSec = Math.max(1, Math.floor((progressNow - videoJobStartedAt) / 1000));
-    const totalSec = estimateVideoJobTotalSec(videoPhase, usesCompositor);
+    const totalSec = estimateVideoJobTotalSec(videoPhase, usesCompositor, {
+      referenceR2v,
+    });
     const pctBase = videoPhase === "second-frame" ? 15 : videoPhase === "bgm" ? 80 : 35;
-    const pct = Math.min(97, Math.max(pctBase, Math.round((elapsedSec / totalSec) * 100)));
-    return { pct, eta: formatEta(Math.max(2, totalSec - elapsedSec)) };
-  }, [videoBusy, videoJobStartedAt, progressNow, usesCompositor, videoPhase, formatEta]);
+    // Cap at 97% until done; slow climb after expected duration so ETA stays believable.
+    const rawPct = Math.round((elapsedSec / totalSec) * 100);
+    const pct =
+      elapsedSec >= totalSec
+        ? Math.min(97, 90 + Math.min(7, Math.floor((elapsedSec - totalSec) / 45)))
+        : Math.min(97, Math.max(pctBase, rawPct));
+    return { pct, eta: formatEta(estimateRemainingSec(totalSec, elapsedSec)) };
+  }, [
+    videoBusy,
+    videoJobStartedAt,
+    progressNow,
+    usesCompositor,
+    videoPhase,
+    referenceR2v,
+    formatEta,
+  ]);
 
   return { imageProgressInfo, videoProgressInfo };
 }

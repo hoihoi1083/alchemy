@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { StepIndicator } from "@/components/StepIndicator";
 import { DoneStep } from "@/components/studio/DoneStep";
 import { ImageStep } from "@/components/studio/ImageStep";
@@ -18,8 +18,6 @@ import { useLocale } from "@/components/LocaleProvider";
 import {
   isWizardV2Enabled,
   MICRO_RESUME_DONE_KEY,
-  WIZARD_CLASSIC_VALUE,
-  WIZARD_V2_QUERY_FLAG,
 } from "@/lib/wizard-micro-steps.types";
 import type { PromotionMode } from "@/lib/promotion-mode";
 
@@ -31,7 +29,6 @@ function StudioWizardContent({
   theme?: "light" | "dark";
 }) {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const { m } = useLocale();
   const v2 = isWizardV2Enabled(searchParams);
   const {
@@ -72,27 +69,11 @@ function StudioWizardContent({
     setStepKey("setup");
   }, [v2, stepKey, videoUrl, workflowMode, setStepKey]);
 
-  const goClassic = () => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set(WIZARD_V2_QUERY_FLAG, WIZARD_CLASSIC_VALUE);
-    params.delete("fresh");
-    router.replace(`/studio?${params.toString()}`);
-  };
-
   return (
     <div className="space-y-4 pb-4 md:space-y-6 md:pb-0">
       <div className="flex flex-wrap items-center gap-2">
         <SaveStatusBadge theme={theme} />
-        {showMicroSetup ? (
-          <button
-            type="button"
-            onClick={goClassic}
-            className="text-xs font-medium text-violet-700 underline-offset-2 hover:underline sm:ml-auto"
-          >
-            {m.microWizard.classicLink}
-          </button>
-        ) : null}
-        <div className="min-w-0 basis-full sm:basis-auto">
+        <div className="min-w-0 basis-full sm:basis-auto sm:ml-auto">
           <MongoRequiredBanner />
         </div>
       </div>

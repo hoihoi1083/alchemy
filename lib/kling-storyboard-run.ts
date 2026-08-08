@@ -12,6 +12,10 @@ import {
   KLING_TEXTLESS_NEGATIVE,
   type KlingSceneMeta,
 } from "@/lib/kling-storyboard-fallback";
+import {
+  parseSceneMotionHintsFromPlan,
+  sanitizeKlingMotionHint,
+} from "@/lib/kling-motion-from-plan";
 import { concatVideos, ensureFfmpeg } from "@/lib/pipeline/ffmpeg";
 import { createOwnedJobDir } from "@/lib/pipeline/job-owner";
 import { materializeMediaInput, pipelineFileUrl } from "@/lib/pipeline/local-input";
@@ -184,6 +188,7 @@ export async function runKlingStoryboardFallback(opts: {
   );
   const theme = opts.theme?.trim() || "";
   const motionPrompt = opts.motionPrompt?.trim() || "";
+  const planHints = parseSceneMotionHintsFromPlan(motionPrompt);
 
   const { jobId, dir } = await createOwnedJobDir(opts.clerkId);
 
@@ -192,29 +197,31 @@ export async function runKlingStoryboardFallback(opts: {
     imageUrls.map(async (imageUrl, i) => {
       const duration = clipDurations[i] ?? 5;
       const meta = scenesMeta[i];
-      // Never embed Seedance/wizard marketing copy as Kling motion — it burns text onto video.
-      // Captions belong in /captions after generation.
+      const sceneIndex = i + 1;
+      // Prefer per-scene DeepSeek cameraMotionEn, then Scene N block from motion plan.
+      // Never embed Chinese marketing copy — Kling burns gibberish glyphs.
+      const cameraMotionEn =
+        sanitizeKlingMotionHint(meta?.cameraMotionEn) ||
+        planHints.get(sceneIndex) ||
+        (imageUrls.length === 1
+          ? sanitizeKlingMotionHint(motionPrompt.slice(0, 280))
+          : undefined);
       const prompt = klingSceneMotionPrompt({
-        sceneIndex: i + 1,
+        sceneIndex,
         sceneCount: imageUrls.length,
         // Do NOT pass Chinese sceneDescription as motion — Kling fills screens with gibberish.
         sceneDescription: undefined,
         imagePrompt: meta?.imagePrompt?.slice(0, 120),
         role: meta?.role,
         theme: theme.slice(0, 80),
+        cameraMotionEn,
         endWithBrandLogo: Boolean(meta?.useBrandLogo ?? meta?.endWithBrandLogo),
         useBrandLogo: Boolean(meta?.useBrandLogo ?? meta?.endWithBrandLogo),
       });
-      // Optional short camera hint from caller (must already be motion-only English).
-      const motionHint = motionPrompt.slice(0, 160).trim();
-      const finalPrompt =
-        imageUrls.length === 1 && motionHint
-          ? `${prompt} Extra camera hint: ${motionHint}`
-          : prompt;
 
       const result = await fal.subscribe(KLING_ENDPOINT, {
         input: {
-          prompt: finalPrompt,
+          prompt,
           image_url: imageUrl,
           duration: (duration === 10 ? "10" : "5") as "5" | "10",
           negative_prompt: KLING_TEXTLESS_NEGATIVE,

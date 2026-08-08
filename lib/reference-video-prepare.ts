@@ -4,6 +4,8 @@ import { tmpdir } from "os";
 import { ensureFfmpeg, getFfmpegPath, getMediaDurationSeconds } from "@/lib/pipeline/ffmpeg";
 
 export const SEEDANCE_MAX_REFERENCE_SEC = 15;
+/** MiniMax H3 rejects refs at/over 15.0s — keep a safety margin under fal's check. */
+export const MINIMAX_MAX_REFERENCE_SEC = 14.5;
 const DIGEST_SEGMENT_COUNT = 5;
 
 /** Start times (seconds) for a montage that samples hook → middle → payoff across a long reel. */
@@ -47,10 +49,24 @@ export async function buildSeedanceReferenceClip(
     await writeFile(inputPath, input);
     const sourceDurationSec = await getMediaDurationSeconds(inputPath);
 
-    if (sourceDurationSec <= maxSec + 0.25) {
+    // Always re-cut when at/over the limit (pass-through near 15s still fails MiniMax/Seedance).
+    if (sourceDurationSec <= maxSec - 0.05) {
       return {
         buffer: input,
         durationSec: sourceDurationSec,
+        digestMontage: false,
+        sourceDurationSec,
+      };
+    }
+
+    // Slightly long but under ~20s: simple head trim is enough (and stays under maxSec).
+    if (sourceDurationSec <= maxSec + 8) {
+      await extractVideoSegment(inputPath, outputPath, 0, maxSec - 0.1);
+      const buffer = await readFile(outputPath);
+      const durationSec = await getMediaDurationSeconds(outputPath);
+      return {
+        buffer,
+        durationSec: Math.min(durationSec, maxSec),
         digestMontage: false,
         sourceDurationSec,
       };
@@ -67,12 +83,20 @@ export async function buildSeedanceReferenceClip(
     }
 
     await concatVideoSegments(segmentPaths, outputPath);
-    const buffer = await readFile(outputPath);
-    const durationSec = await getMediaDurationSeconds(outputPath);
+    let buffer = await readFile(outputPath);
+    let durationSec = await getMediaDurationSeconds(outputPath);
+
+    // fal MiniMax treats 15.0 as over — hard-cap after montage.
+    if (durationSec > maxSec - 0.05) {
+      const cappedPath = path.join(workDir, "capped.mp4");
+      await extractVideoSegment(outputPath, cappedPath, 0, maxSec - 0.15);
+      buffer = await readFile(cappedPath);
+      durationSec = await getMediaDurationSeconds(cappedPath);
+    }
 
     return {
       buffer,
-      durationSec,
+      durationSec: Math.min(durationSec, maxSec),
       digestMontage: true,
       sourceDurationSec,
     };

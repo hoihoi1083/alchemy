@@ -207,6 +207,7 @@ describe("wizard v2 parity audit", () => {
     assert.ok(ids.includes("identity.product_name"));
     assert.equal(ids[ids.indexOf("setup.pre_generate") - 1], "route.intake");
     assert.ok(!ids.includes("wait.reference_analyze"));
+    assert.ok(!ids.includes("wait.reel_analyze"));
     assert.ok(!ids.includes("copy.edit"));
     assert.ok(!ids.includes("image.output_format"));
     assert.ok(!ids.includes("asset.product_photo"));
@@ -375,9 +376,10 @@ describe("wizard v2 parity audit", () => {
         referenceIsVideo: true,
       }),
     ).map((s) => s.id);
-    const refIdx = withReel.indexOf("asset.reference_video");
-    const setupWithReel = withReel.indexOf("setup.pre_generate");
-    assert.ok(refIdx >= 0 && refIdx < setupWithReel);
+    // Research reel MP4 is attached on angle apply — no standalone 參考短片 / analyze wait.
+    assert.ok(!withReel.includes("asset.reference_video"));
+    assert.ok(!withReel.includes("wait.reel_analyze"));
+    assert.ok(withReel.includes("setup.pre_generate"));
   });
 
   it("path 5 combined keeps fused storyboard after setup even without storyboard style yet", () => {
@@ -820,7 +822,7 @@ describe("wizard v2 parity audit", () => {
     assert.ok(ids.includes("image.review"));
     assert.ok(ids.includes("setup.pre_video"));
     assert.ok(ids.includes("done.export"));
-    // Image-only research: no reel analyze. With a real MP4, analyze comes before fused setup.
+    // Analyze runs in background on setup — no dedicated wait.reel_analyze screen.
     assert.ok(!ids.includes("wait.reel_analyze"));
     const withVideo = resolveMicroSteps(
       ctx,
@@ -831,9 +833,25 @@ describe("wizard v2 parity audit", () => {
         referenceIsVideo: true,
       }),
     ).map((s) => s.id);
-    assert.ok(withVideo.includes("asset.reference_video"));
-    assert.ok(withVideo.includes("wait.reel_analyze"));
-    assert.ok(withVideo.indexOf("wait.reel_analyze") < withVideo.indexOf("setup.pre_generate"));
+    assert.ok(!withVideo.includes("asset.reference_video"));
+    assert.ok(!withVideo.includes("wait.reel_analyze"));
+    assert.ok(withVideo.includes("setup.pre_generate"));
+  });
+
+  it("blocks intake Continue while research reel is downloading", () => {
+    const ctx: MicroWizardContext = {
+      promotionMode: "physical",
+      workflowMode: "combined",
+      intakePath: "research",
+    };
+    const state = baseState({
+      workflowMode: "combined",
+      visualStyleId: "storyboard-video",
+      promptExtra: "STYLE_REFERENCE_ONLY | x",
+      contentResearchApplied: false,
+      referenceClipLoading: true,
+    });
+    assert.equal(canProceedMicroStep("route.intake", ctx, state), "reel_downloading");
   });
 
   it("combined matrix: product/concept × direct/research all stay in fused violet storyboard flow", () => {

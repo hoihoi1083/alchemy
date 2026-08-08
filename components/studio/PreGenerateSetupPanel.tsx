@@ -1511,6 +1511,43 @@ export function PreGenerateSetupPanel({
                                 className="mt-0.5 w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-900"
                               />
                             </label>
+                            <label className="mt-1.5 block text-[11px] text-slate-600">
+                              {m.wizard.storyboardPlanCameraLabel}
+                              <textarea
+                                value={scene.cameraMotionEn ?? ""}
+                                onChange={(e) =>
+                                  wizard.updateStoryboardPlanScene(i, {
+                                    cameraMotionEn: e.target.value,
+                                  })
+                                }
+                                rows={2}
+                                className="mt-0.5 w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-900"
+                              />
+                            </label>
+                            <label className="mt-1.5 block text-[11px] text-slate-600">
+                              {m.wizard.storyboardPlanPlacementLabel}
+                              <input
+                                value={scene.productPlacementZh ?? ""}
+                                onChange={(e) =>
+                                  wizard.updateStoryboardPlanScene(i, {
+                                    productPlacementZh: e.target.value,
+                                  })
+                                }
+                                className="mt-0.5 w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-900"
+                              />
+                            </label>
+                            <label className="mt-1.5 block text-[11px] text-slate-600">
+                              {m.wizard.storyboardPlanPunchLabel}
+                              <input
+                                value={scene.punchLineZh ?? ""}
+                                onChange={(e) =>
+                                  wizard.updateStoryboardPlanScene(i, {
+                                    punchLineZh: e.target.value,
+                                  })
+                                }
+                                className="mt-0.5 w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-900"
+                              />
+                            </label>
                           </div>
                         ))}
                       </div>

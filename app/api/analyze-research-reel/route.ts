@@ -110,8 +110,13 @@ export async function POST(request: Request) {
       outputDurationSec,
     });
 
-    const storyboardPlan = planStoryboard
-      ? await planVideoStoryboardFromReelAnalysis({
+    let storyboardPlan:
+      | Awaited<ReturnType<typeof planVideoStoryboardFromReelAnalysis>>
+      | undefined;
+    let storyboardPlanError: string | undefined;
+    if (planStoryboard) {
+      try {
+        storyboardPlan = await planVideoStoryboardFromReelAnalysis({
           analysis: result.analysis,
           product,
           business,
@@ -142,12 +147,23 @@ export async function POST(request: Request) {
               return false;
             }
           })(),
-        })
-      : undefined;
+        });
+      } catch (planErr: unknown) {
+        // Reel analysis already succeeded — don't 502 the whole request on plan timeout.
+        storyboardPlanError =
+          planErr instanceof Error ? planErr.message : "Storyboard plan failed.";
+        console.warn("[analyze-research-reel] storyboard plan failed:", storyboardPlanError);
+        await refundTokens(auth.user.userId, TOKEN_COST.plan, {
+          kind: "research_reel",
+          reason: "storyboard_plan_failed",
+        });
+      }
+    }
 
     return NextResponse.json({
       analysis: result.analysis,
       ...(storyboardPlan ? { storyboardPlan } : {}),
+      ...(storyboardPlanError ? { storyboardPlanError } : {}),
       referenceVideoUrl: result.referenceVideoUrl,
       referenceDigestMontage: result.referenceDigestMontage,
       sourceDurationSec: result.sourceDurationSec,
@@ -163,6 +179,7 @@ export async function POST(request: Request) {
       reason: "analysis_failed",
     });
     const message = e instanceof Error ? e.message : "Reel analysis failed.";
+    console.error("[analyze-research-reel] failed:", message);
     const status =
       message.includes("ffmpeg") || message.includes("DEEPSEEK_API_KEY") ? 503 : 502;
     return NextResponse.json({ error: message }, { status });

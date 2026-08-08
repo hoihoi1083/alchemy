@@ -65,6 +65,7 @@ export function enrichAngleWithPost(
     ...angle,
     sourceUrl: angle.sourceUrl || normalized.url,
     sourceTitle: angle.sourceTitle || normalized.title,
+    sourceSnippet: angle.sourceSnippet || normalized.snippet || undefined,
     sourceCoverImageUrl: normalized.coverImageUrl,
     sourceImageUrls:
       normalized.imageUrls ?? (normalized.coverImageUrl ? [normalized.coverImageUrl] : undefined),
@@ -108,6 +109,7 @@ export function attachSourcePostsToPlan(plan: ContentResearchPlan): ContentResea
         score: 40,
         sourceUrl: post.url,
         sourceTitle: post.title,
+        sourceSnippet: post.snippet || undefined,
         sourceCoverImageUrl: post.coverImageUrl,
         sourceImageUrls: post.imageUrls ?? (post.coverImageUrl ? [post.coverImageUrl] : undefined),
         sourceVideoUrl: post.videoUrl,
