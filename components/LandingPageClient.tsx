@@ -133,6 +133,29 @@ function LandingNeonBand({ children }: { children: ReactNode }) {
         .landing-neon-band__dark .landing-pricing-grid > * {
           filter: drop-shadow(0 18px 40px rgb(0 0 0 / 0.35));
         }
+        /* Beat .landing-page { color: #0f172a !important } on the purple glow */
+        .landing-neon-band__dark .landing-pricing-header h2 {
+          color: #ffffff !important;
+        }
+        .landing-neon-band__dark .landing-pricing-subtitle {
+          color: rgba(255, 255, 255, 0.92) !important;
+        }
+        .landing-neon-band__dark .landing-pricing-toggle {
+          background-color: rgba(0, 0, 0, 0.55) !important;
+          border-color: rgba(255, 255, 255, 0.14) !important;
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+        }
+        .landing-neon-band__dark .landing-pricing-toggle-btn:not(.is-active) {
+          color: rgba(255, 255, 255, 0.82) !important;
+        }
+        .landing-neon-band__dark .landing-pricing-toggle-btn.is-active {
+          color: #ffffff !important;
+        }
+        .landing-neon-band__dark .landing-pricing-toggle-badge {
+          color: #6ee7b7 !important; /* emerald-300 */
+          background-color: rgba(52, 211, 153, 0.22) !important;
+        }
       `}</style>
 			{children}
 		</div>

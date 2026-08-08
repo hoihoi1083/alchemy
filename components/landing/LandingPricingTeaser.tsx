@@ -226,26 +226,26 @@ export function LandingPricingTeaser() {
 	return (
 		<section id="pricing" className="w-full bg-transparent">
 			<div className="mx-auto w-full max-w-[1440px] px-5 py-12 md:px-8 md:py-14">
-				<div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+				<div className="landing-pricing-header flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
 					<Reveal>
 						<div className="max-w-xl">
 							<h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
 								{P.title}
 							</h2>
-							<p className="mt-2 text-sm text-slate-300">
+							<p className="landing-pricing-subtitle mt-2 text-sm leading-relaxed text-white/90">
 								{P.subtitle}
 							</p>
 						</div>
 					</Reveal>
 
-					<div className="inline-flex max-w-full flex-wrap items-center gap-1 self-start rounded-full border border-white/15 bg-white/5 p-1 backdrop-blur-sm">
+					<div className="landing-pricing-toggle inline-flex max-w-full flex-wrap items-center gap-1 self-start rounded-full border border-white/10 bg-black/50 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-md">
 						<button
 							type="button"
 							onClick={() => setInterval("monthly")}
-							className={`rounded-full px-3.5 py-1.5 text-sm font-medium ${
+							className={`landing-pricing-toggle-btn rounded-full px-3.5 py-1.5 text-sm font-medium transition ${
 								interval === "monthly"
-									? "bg-violet-600 text-white"
-									: "text-slate-300 hover:text-white"
+									? "is-active bg-violet-600 text-white shadow-sm"
+									: "text-white/80 hover:bg-white/10 hover:text-white"
 							}`}
 						>
 							{P.monthly}
@@ -253,15 +253,15 @@ export function LandingPricingTeaser() {
 						<button
 							type="button"
 							onClick={() => setInterval("yearly")}
-							className={`rounded-full px-3.5 py-1.5 text-sm font-medium ${
+							className={`landing-pricing-toggle-btn rounded-full px-3.5 py-1.5 text-sm font-medium transition ${
 								interval === "yearly"
-									? "bg-violet-600 text-white"
-									: "text-slate-300 hover:text-white"
+									? "is-active bg-violet-600 text-white shadow-sm"
+									: "text-white/80 hover:bg-white/10 hover:text-white"
 							}`}
 						>
 							{P.yearly}
 						</button>
-						<span className="mr-1.5 rounded-full bg-emerald-400/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
+						<span className="landing-pricing-toggle-badge mr-1.5 rounded-full bg-emerald-400/20 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
 							{interval === "monthly" ? P.monthlyBadge : P.yearlyBadge}
 						</span>
 					</div>
