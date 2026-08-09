@@ -1,6 +1,10 @@
 import type { Locale } from "@/lib/i18n";
 import type { StudioAssistantIntent } from "@/lib/studio-assistant-intent";
 import { detectStudioAssistantIntent } from "@/lib/studio-assistant-intent";
+import {
+  isLandingLikeSurface,
+  isToolAssistantSurface,
+} from "@/lib/studio-assistant-surface";
 import type {
   StudioAssistantMessage,
   StudioAssistantSnapshot,
@@ -19,6 +23,7 @@ const LANDING_INTENTS = new Set<StudioAssistantIntent>([
   "physical_product",
   "physical_image_post",
   "captions_only",
+  "edit_image",
   "reference_ad",
   "pro_canvas",
 ]);
@@ -28,6 +33,15 @@ export function shouldUseLandingCoachFastPath(
   snapshot: StudioAssistantSnapshot,
 ): boolean {
   if (snapshot.surface === "studio") return false;
+  if (isToolAssistantSurface(snapshot.surface)) {
+    return (
+      shouldUseCoachFastPath(userText) ||
+      /how|怎|點|点|字幕|燒|烧|修圖|修图|inpaint|bgm|配樂|配乐|voice|配音|匯出|导出|upload|上傳|上传/i.test(
+        userText,
+      )
+    );
+  }
+  if (!isLandingLikeSurface(snapshot.surface)) return false;
   const intent = detectStudioAssistantIntent(userText);
   if (LANDING_INTENTS.has(intent)) return true;
   if (/storyboard|分鏡|分镜|multi.?scene|多場|多场/i.test(userText)) return true;

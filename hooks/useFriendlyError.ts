@@ -47,6 +47,9 @@ export function useFriendlyError(m: Messages) {
         timeout: m.errors.timeout,
       });
       if (mapped === m.errors.insufficientTokens) return mapped;
+      if (/STORYBOARD_CELL_BLOCKED/i.test(String(e instanceof Error ? e.message : mapped))) {
+        return m.errors.storyboardCellBlocked;
+      }
       if (!isBillableAttemptFallback(m, fallback)) return mapped;
       if (mapped.includes(m.errors.tokensNotCharged)) return mapped;
       return `${mapped} ${m.errors.tokensNotCharged}`;

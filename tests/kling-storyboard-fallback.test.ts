@@ -1,11 +1,14 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
+import { join } from "node:path";
 import {
   estimateKlingStoryboardTokens,
   klingClipTokens,
   KLING_TURBO_PRO,
 } from "../lib/billing/token-costs";
 import {
+  isStoryboardGridApprovedFlag,
   klingClipDurationForScene,
   klingClipDurationForStoryboard,
   klingSceneMotionPrompt,
@@ -53,6 +56,16 @@ describe("Kling storyboard clip duration helpers", () => {
     assert.match(prompt, /Keep the same people/);
   });
 
+  it("accepts only explicit storyboard approve flags", () => {
+    assert.equal(isStoryboardGridApprovedFlag("1"), true);
+    assert.equal(isStoryboardGridApprovedFlag("true"), true);
+    assert.equal(isStoryboardGridApprovedFlag("YES"), true);
+    assert.equal(isStoryboardGridApprovedFlag("0"), false);
+    assert.equal(isStoryboardGridApprovedFlag(""), false);
+    assert.equal(isStoryboardGridApprovedFlag(null), false);
+    assert.equal(isStoryboardGridApprovedFlag(undefined), false);
+  });
+
   it("forbids readable invented text in motion prompts", () => {
     const prompt = klingSceneMotionPrompt({
       sceneIndex: 1,
@@ -62,5 +75,43 @@ describe("Kling storyboard clip duration helpers", () => {
     });
     assert.match(prompt, /do not invent.*readable text/i);
     assert.match(prompt, /CRITICAL/i);
+  });
+});
+
+describe("storyboard approve gate (per-cell + checkbox, no regen-all skip)", () => {
+  const root = process.cwd();
+
+  it("API rejects video before charge unless storyboard_grid_approved", () => {
+    const src = readFileSync(
+      join(root, "app/api/generate-kling-storyboard/route.ts"),
+      "utf8",
+    );
+    const approveAt = src.indexOf("isStoryboardGridApprovedFlag");
+    const chargeAt = src.indexOf("await chargeTokens");
+    assert.ok(approveAt > 0, "must check approve flag");
+    assert.ok(chargeAt > approveAt, "approve must run before charge");
+  });
+
+  it("wizard generateVideo + storyboard POST send the approve flag", () => {
+    const src = readFileSync(join(root, "hooks/useStudioWizard.ts"), "utf8");
+    assert.match(src, /isStoryboardOutput && !storyboardGridApproved/);
+    assert.match(src, /fd\.set\("storyboard_grid_approved"/);
+    assert.match(src, /storyboardApproveRequiredHint/);
+  });
+
+  it("hides storyboard regen-all; keeps per-cell regen + approve checkbox", () => {
+    const gallery = readFileSync(
+      join(root, "components/studio/ImageReviewGallery.tsx"),
+      "utf8",
+    );
+    const micro = readFileSync(
+      join(root, "components/studio/micro-wizard/MicroWizard.tsx"),
+      "utf8",
+    );
+    assert.match(gallery, /view\.kind !== "storyboard"/);
+    assert.match(gallery, /isStoryboardReview \? undefined : handleRegenerateAll/);
+    assert.match(gallery, /regenerateStoryboardSceneWithAi/);
+    assert.match(gallery, /storyboardGridApproved/);
+    assert.match(micro, /isCombinedSceneReview\s*\?\s*undefined/);
   });
 });

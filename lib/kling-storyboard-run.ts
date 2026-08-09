@@ -16,11 +16,20 @@ import {
   parseSceneMotionHintsFromPlan,
   sanitizeKlingMotionHint,
 } from "@/lib/kling-motion-from-plan";
-import { concatVideos, ensureFfmpeg } from "@/lib/pipeline/ffmpeg";
+import {
+  concatVideos,
+  ensureFfmpeg,
+  getMediaDurationSeconds,
+  timeCompressVideoToDuration,
+} from "@/lib/pipeline/ffmpeg";
+import {
+  KlingDurationUnreachableError,
+  klingStitchCanHitDuration,
+} from "@/lib/video-engine-router";
 import { createOwnedJobDir } from "@/lib/pipeline/job-owner";
 import { materializeMediaInput, pipelineFileUrl } from "@/lib/pipeline/local-input";
 import { persistAndDurablize } from "@/lib/storage/durable-media";
-import { buildManifestFromClipDurations } from "@/lib/video-timing-manifest";
+import { buildSingleClipManifest } from "@/lib/video-timing-manifest";
 
 export type { KlingSceneMeta };
 export {
@@ -158,6 +167,8 @@ export async function runKlingStoryboardFallback(opts: {
   endpoint: string;
   generationMode: "kling-storyboard-fallback";
   note: string;
+  outputDurationSec: number;
+  timingSource: "probed" | "reported";
 }> {
   let imageUrls = (opts.imageUrls ?? []).filter(Boolean);
   if (!imageUrls.length && opts.imageFiles?.length) {
@@ -215,6 +226,8 @@ export async function runKlingStoryboardFallback(opts: {
         role: meta?.role,
         theme: theme.slice(0, 80),
         cameraMotionEn,
+        lightingEn: meta?.lightingEn,
+        lookBibleGrade: meta?.lookBibleGrade,
         endWithBrandLogo: Boolean(meta?.useBrandLogo ?? meta?.endWithBrandLogo),
         useBrandLogo: Boolean(meta?.useBrandLogo ?? meta?.endWithBrandLogo),
       });
@@ -241,6 +254,9 @@ export async function runKlingStoryboardFallback(opts: {
 
   let finalUrl: string;
   let localBytes: Buffer | undefined;
+  let durationNote = "";
+  let probedOutputSec: number | undefined;
+  let timingSource: "probed" | "reported" = "reported";
   if (clipUrls.length === 1) {
     finalUrl = clipUrls[0];
   } else {
@@ -252,11 +268,39 @@ export async function runKlingStoryboardFallback(opts: {
         return clipPath;
       }),
     );
+    const concatPath = path.join(dir, "concat.mp4");
     const outputPath = path.join(dir, "final.mp4");
-    await concatVideos(clipPaths, outputPath);
+    await concatVideos(clipPaths, concatPath);
+    const compress = await timeCompressVideoToDuration(
+      concatPath,
+      outputPath,
+      totalDurationSec,
+    );
+    const probedSec = await getMediaDurationSeconds(outputPath);
+    if (
+      !klingStitchCanHitDuration(compress.sourceSec, totalDurationSec, {
+        clipCount: clipUrls.length,
+      }) ||
+      (totalDurationSec <= 8 && probedSec > totalDurationSec * 1.12)
+    ) {
+      throw new KlingDurationUnreachableError(
+        `Kling stitch is ~${probedSec.toFixed(1)}s; cannot honestly hit ${totalDurationSec}s (min 5s/clip, max 1.85×). Retry MiniMax H3 or pick 12s.`,
+        probedSec,
+      );
+    }
+    if (compress.applied) {
+      durationNote = ` Time-compressed ~${compress.sourceSec.toFixed(0)}s stitch → ~${probedSec.toFixed(1)}s file (target ${totalDurationSec}s).`;
+    } else {
+      durationNote = ` Stitch file ~${probedSec.toFixed(1)}s.`;
+    }
     localBytes = await fs.readFile(outputPath);
     finalUrl = pipelineFileUrl(opts.request, jobId, "final.mp4");
+    probedOutputSec = probedSec;
+    timingSource = "probed";
   }
+
+  const outputDurationSec =
+    probedOutputSec ?? clipDurations.reduce((a, d) => a + (Number(d) || 5), 0);
 
   const durable = await persistAndDurablize({
     clerkId: opts.clerkId,
@@ -266,14 +310,11 @@ export async function runKlingStoryboardFallback(opts: {
     prompt: "kling-seedance-fallback",
     bytes: localBytes,
     contentType: "video/mp4",
-    timingManifest: buildManifestFromClipDurations(
-      clipDurations.map((d) => Number(d) || 5),
-      {
-        source: "kling",
-        engine: "kling",
-        timingSource: "reported",
-      },
-    ),
+    timingManifest: buildSingleClipManifest(outputDurationSec, {
+      source: "kling",
+      engine: "kling",
+      timingSource,
+    }),
   });
 
   return {
@@ -282,7 +323,8 @@ export async function runKlingStoryboardFallback(opts: {
     clipDurations,
     endpoint: KLING_ENDPOINT,
     generationMode: "kling-storyboard-fallback",
-    note:
-      "Per-scene image-to-video (parallel clips) + stitch.",
+    note: `Per-scene image-to-video (parallel clips) + stitch.${durationNote}`,
+    outputDurationSec,
+    timingSource,
   };
 }

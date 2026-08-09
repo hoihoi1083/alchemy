@@ -54,6 +54,7 @@ function baseState(overrides: Partial<WizardMicroStepState> = {}): WizardMicroSt
     contentResearchApplied: false,
     shipItEligible: false,
     hasGeneratedImage: false,
+    storyboardGridApproved: false,
     userReferenceBrief: null,
     referenceAnalyzeNote: null,
     planProductVideoBusy: false,
@@ -105,6 +106,13 @@ const PATH_CONTEXTS: Record<MicroWizardPathId, MicroWizardContext> = {
     conceptSource: "assistant",
     combinedStyle: "storyboard",
   },
+  concept_combined_motion_poster: {
+    promotionMode: "concept",
+    workflowMode: "combined",
+    intakePath: "direct",
+    conceptSource: "assistant",
+    videoSubpath: "motion_poster",
+  },
 };
 
 describe("wizard v2 parity audit", () => {
@@ -132,7 +140,11 @@ describe("wizard v2 parity audit", () => {
             ? "concept-cinematic"
             : pathId === "product_combined" || pathId === "concept_combined"
               ? "storyboard-video"
-              : baseState().visualStyleId,
+              : pathId === "concept_combined_motion_poster"
+                ? "service-promo"
+                : baseState().visualStyleId,
+        videoCreativeMode:
+          pathId === "concept_combined_motion_poster" ? "motion-poster" : "product-promo",
         promptExtra:
           ctx.intakePath === "research" && ctx.workflowMode === "image-only"
             ? "STYLE_REFERENCE_ONLY"
@@ -803,6 +815,88 @@ describe("wizard v2 parity audit", () => {
     assert.ok(ids.includes("setup.pre_video"));
     assert.ok(ids.includes("done.export"));
     assert.ok(ids.indexOf("image.review") < ids.indexOf("setup.pre_video"));
+  });
+
+  it("concept combined motion-poster is one still then video, not 九宫格", () => {
+    const ctx: MicroWizardContext = {
+      promotionMode: "concept",
+      workflowMode: "combined",
+      intakePath: "direct",
+      conceptSource: "assistant",
+      videoSubpath: "motion_poster",
+    };
+    const state = baseState({
+      promotionMode: "concept",
+      workflowMode: "combined",
+      visualStyleId: "service-promo",
+      videoCreativeMode: "motion-poster",
+    });
+    assert.equal(resolvePathId(ctx, state), "concept_combined_motion_poster");
+    const ids = resolveMicroSteps(ctx, state).map((s) => s.id);
+    assert.ok(ids.includes("setup.pre_generate"));
+    assert.ok(ids.includes("wait.image_generate"));
+    assert.ok(ids.includes("image.review"));
+    assert.ok(ids.includes("setup.pre_video"));
+    assert.ok(!ids.includes("wait.storyboard_generate"));
+  });
+
+  it("motion-poster skips creative-brief gate on pre_video", () => {
+    const ctx: MicroWizardContext = {
+      promotionMode: "concept",
+      workflowMode: "video-only",
+      intakePath: "direct",
+      conceptSource: "assistant",
+      videoSubpath: "motion_poster",
+    };
+    assert.equal(
+      canProceedMicroStep(
+        "setup.pre_video",
+        ctx,
+        baseState({
+          promotionMode: "concept",
+          workflowMode: "video-only",
+          visualStyleId: "creative-video",
+          videoCreativeMode: "motion-poster",
+          conceptIdea: "周末瑜伽班",
+          headline: "",
+          creativeVideoBrief: "",
+          productPhoto: null,
+        }),
+      ),
+      null,
+    );
+  });
+
+  it("combined storyboard review requires explicit 九宫格 approve", () => {
+    const ctx: MicroWizardContext = {
+      promotionMode: "physical",
+      workflowMode: "combined",
+      intakePath: "direct",
+      combinedStyle: "storyboard",
+    };
+    const ready = baseState({
+      visualStyleId: "storyboard-video",
+      workflowMode: "combined",
+      hasGeneratedImage: true,
+      imageUrl: "https://example.com/s1.jpg",
+      storyboardGridApproved: false,
+    });
+    assert.equal(canProceedMicroStep("image.review", ctx, ready), "need_storyboard_approve");
+    assert.equal(canProceedMicroStep("setup.pre_video", ctx, ready), "need_storyboard_approve");
+    assert.equal(
+      canProceedMicroStep("image.review", ctx, {
+        ...ready,
+        storyboardGridApproved: true,
+      }),
+      null,
+    );
+    assert.equal(
+      canProceedMicroStep("setup.pre_video", ctx, {
+        ...ready,
+        storyboardGridApproved: true,
+      }),
+      null,
+    );
   });
 
   it("concept combined research injects storyboard after reel setup", () => {

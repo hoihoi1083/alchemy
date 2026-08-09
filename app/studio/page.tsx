@@ -13,6 +13,11 @@ import {
   type PromotionMode,
 } from "@/lib/promotion-mode";
 import { isTemplateId, TEMPLATE_PREF_KEY } from "@/lib/template-pref";
+import {
+  isLandingRecipeId,
+  LANDING_RECIPES,
+  storeLandingRecipe,
+} from "@/lib/landing-recipes";
 
 function StudioLoading() {
   const { m } = useLocale();
@@ -32,8 +37,16 @@ function StudioPageContent() {
   useEffect(() => {
     const fromUrl = searchParams.get("mode");
     const template = searchParams.get("template");
+    const recipe = searchParams.get("recipe");
     if (template && isTemplateId(template)) {
       window.sessionStorage.setItem(TEMPLATE_PREF_KEY, template);
+    }
+    if (isLandingRecipeId(recipe)) {
+      storeLandingRecipe(recipe);
+      const mode = LANDING_RECIPES[recipe].promotionMode;
+      storePromotionMode(mode);
+      setPromotionMode(mode);
+      return;
     }
     if (isPromotionMode(fromUrl)) {
       storePromotionMode(fromUrl);

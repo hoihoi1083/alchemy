@@ -9,6 +9,7 @@ import {
 } from "@/lib/pipeline/ffmpeg";
 import type { ResearchReelAnalysis, ReelShotFrame } from "@/lib/reel-analysis-types";
 import { SEEDANCE_MAX_REFERENCE_SEC } from "@/lib/reference-video-prepare";
+import { productIdentityContractLines } from "@/lib/prompt-balance-contract";
 import { videoDurationPlannerBlock } from "@/lib/video-duration-planner";
 import { runFlorenceDetailedCaption } from "@/lib/vision-json-repair";
 import { mkdtemp, readFile, rm, writeFile } from "fs/promises";
@@ -125,6 +126,7 @@ function buildDeepSeekAdaptPrompt(input: {
   outputDurationSec: number;
   digestMontage: boolean;
   frames: FrameVisionRow[];
+  conceptMode?: boolean;
 }): string {
   const frameBlock = input.frames
     .map((f) => {
@@ -140,36 +142,43 @@ function buildDeepSeekAdaptPrompt(input: {
     ? `@Video1 will be a ~${input.referenceClipSec.toFixed(0)}s DIGEST MONTAGE of the full ${input.sourceDurationSec.toFixed(0)}s reference (prepared at generate) — not just the opening.`
     : `@Video1 is the reference reel (up to ${input.referenceClipSec.toFixed(0)}s).`;
 
+  const concept = Boolean(input.conceptMode);
+
   return [
-    "Adapt this reference REEL structure for the user's product video (Seedance reference-to-video).",
+    concept
+      ? "Adapt this reference REEL structure for the user's CONCEPT / SERVICE video (Seedance reference-to-video)."
+      : "Adapt this reference REEL structure for the user's product video (Seedance reference-to-video).",
     "Return ONE JSON object only.",
     "",
     "Required JSON:",
     '{"visualDirection":"","motionSummary":"","seedancePrompt":"","productionNotesZh":"","shots":[{"index":1,"timeSec":0,"sceneSummary":"","layoutStyle":"","motionHint":"","subjects":"","visibleText":""}]}',
     "",
     "Rules:",
-    "- Frames above span the FULL source timeline — use the whole story arc (hook, product demo, payoff/CTA), not only the first seconds.",
+    "- Frames above span the FULL source timeline — use the reference's own opening → mid → close, not only the first seconds.",
     "- For each shot: compress the Florence caption into sceneSummary/layoutStyle/motionHint/subjects/visibleText (do not invent on-screen text).",
-    "- seedancePrompt: English for Seedance R2V. The OUTPUT must feel like a COMPLETE standalone ad in the target duration — clear opening hook, product hero moment, and satisfying close (even if subtle).",
-    "- Compress the reference's narrative arc into the output duration; do NOT produce a fragment that feels like it cuts off mid-intro.",
+    "- seedancePrompt: English for Seedance R2V. Compress @Video1's arc into the target duration — feel COMPLETE, never mid-intro cut-off.",
     "- Match reference pacing, cut rhythm, camera language, locations/shot types, and VISUAL STYLE FAMILY — NOT reference faces, brands, or on-video text.",
-    "- spine = reference structure; swap hero object to the user's product/topic.",
-    "- If the reference product category differs from the user's product: keep the SAME scenes/settings/camera from the reference and place the user's product as the held/placed hero prop — do not rewrite into a blank studio packshot that drops the reference structure.",
     "- If the reference is tutorial, how-to, authenticity test, or educational demo: keep the test/structure energy when the research direction asks for it; still avoid copying reference faces/brands/on-screen text.",
     refNote,
-    `- OUTPUT length: ${input.outputDurationSec}s (Seedance / MiniMax). Map the full reference story into this short ad.`,
-    ...videoDurationPlannerBlock(input.outputDurationSec),
+    `- OUTPUT length: ${input.outputDurationSec}s (Seedance / MiniMax).`,
+    ...productIdentityContractLines({
+      hasReferenceVideo: true,
+      conceptMode: concept,
+    }),
+    ...videoDurationPlannerBlock(input.outputDurationSec, { hasReferenceVideo: true }),
     "",
     "Analyzed frames (full source timeline):",
     frameBlock,
     "",
     input.product
-      ? `User product name (label — at generate time the uploaded photo @Image1 overrides if they conflict): ${input.product}`
+      ? concept
+        ? `User campaign / service name (CLAIM): ${input.product}`
+        : `User product name (CLAIM — at generate time @Image1 photo is the on-screen object): ${input.product}`
       : "",
-    input.headline ? `Headline: ${input.headline}` : "",
+    input.headline ? `Title / headline (CLAIM): ${input.headline}` : "",
     input.subline ? `Selling points: ${input.subline}` : "",
     input.offer ? `Offer/CTA: ${input.offer}` : "",
-    input.promptExtra ? `Campaign notes: ${input.promptExtra}` : "",
+    input.promptExtra ? `Research / campaign tone notes: ${input.promptExtra}` : "",
   ]
     .filter(Boolean)
     .join("\n");
@@ -221,6 +230,8 @@ export type AnalyzeResearchReelInput = {
   promptExtra?: string;
   market?: PromptMarket;
   outputDurationSec?: number;
+  /** Concept/service research — identity contract without SKU packaging. */
+  conceptMode?: boolean;
 };
 
 export type AnalyzeResearchReelResult = {
@@ -280,8 +291,9 @@ export async function analyzeResearchReelFromVideo(
       [
         {
           role: "system",
-          content:
-            "You are a performance marketing video director. Adapt reference reel structure for a new product. Output valid JSON only.",
+          content: input.conceptMode
+            ? "You are a performance marketing video director. Adapt reference reel structure for a concept/service campaign (not a product SKU packshot). Output valid JSON only."
+            : "You are a performance marketing video director. Adapt reference reel structure for a new product. Output valid JSON only.",
         },
         {
           role: "user",
@@ -297,6 +309,7 @@ export async function analyzeResearchReelFromVideo(
             outputDurationSec,
             digestMontage: willDigest,
             frames: frameVision,
+            conceptMode: Boolean(input.conceptMode),
           }),
         },
       ],

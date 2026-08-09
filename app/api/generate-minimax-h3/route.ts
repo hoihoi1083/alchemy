@@ -157,6 +157,10 @@ export async function POST(request: Request) {
       for (const f of formData.getAll("reference_images") as File[]) {
         if (f && f.size > 0) refImages.push(await fal.storage.upload(f));
       }
+      // Wizard product-assistant / Seedance-shaped clients send `images`.
+      for (const f of formData.getAll("images") as File[]) {
+        if (f && f.size > 0) refImages.push(await fal.storage.upload(f));
+      }
       const refVideos: string[] = [];
       const refVideo = formData.get("reference_video") as File | null;
       if (refVideo && refVideo.size > 0) {

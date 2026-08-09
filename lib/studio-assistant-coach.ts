@@ -96,6 +96,14 @@ export function actionLinkForTask(task: CoachTaskKind, en: boolean): string | nu
       return en
         ? "[Caption studio](studio-action:open-captions)"
         : "[字幕工具](studio-action:open-captions)";
+    case "route-edit-image":
+      return en
+        ? "[Open image editor](studio-action:open-edit-image)"
+        : "[開啟修圖工作室](studio-action:open-edit-image)";
+    case "route-pro-canvas":
+      return en
+        ? "[Open Pro canvas](studio-action:open-pro)"
+        : "[開啟 Pro 畫布](studio-action:open-pro)";
     case "analyze-brand":
     case "analyze-brand-before-image":
       return en
@@ -241,10 +249,59 @@ export function buildCoachReply(
         ? ["Step 1: Burn captions on any MP4 — no regeneration needed.", link ?? ""].join("\n")
         : ["第一步：任何 MP4 燒錄字幕 — 唔使重新出片。", link ?? ""].join("\n");
 
+    case "route-edit-image":
+      return en
+        ? [
+            "Step 1: Image editor — upload or pick from library → clean (inpaint) → design layers → export.",
+            link ?? "",
+          ].join("\n")
+        : ["第一步：修圖 — 上傳或從作品庫揀圖 → 清雜物 → 排版 → 匯出。", link ?? ""].join("\n");
+
     case "route-pro-canvas":
       return en
-        ? "Step 1: Power-user node canvas — open [/pro](/pro). Upload → Nano Banana image → Seedance video. Pay-per-use fal credits."
-        : "第一步：進階節點畫布 — 開 [/pro](/pro)。上傳 → 出圖 → 出片。按次 fal 計費。";
+        ? [
+            "Step 1: Power-user node canvas — upload → Nano Banana image → Seedance video. Pay-per-use fal.",
+            link ?? "",
+          ].join("\n")
+        : ["第一步：進階節點畫布 — 上傳 → 出圖 → 出片。按次 fal 計費。", link ?? ""].join("\n");
+
+    case "guide-edit-image":
+      return en
+        ? snapshot.hasEditImageSource
+          ? "You already have an image loaded. Step 1 — Clean: brush to remove objects/text, then Design to add logo/copy, then Export. Ask me what to change."
+          : "Step 1 — upload a photo or pick one from Library. Then Clean (inpaint) → Design (layers/text/logo) → Export. I stay on this page."
+        : snapshot.hasEditImageSource
+          ? "你已有圖喺畫布。第一步 — 清雜物：用筆刷清走唔要嘅物件／字，再去排版加 logo／文案，最後匯出。想改咩直接問我。"
+          : "第一步 — 上傳相片或從作品庫揀圖。然後清雜物 → 排版（圖層／文字／logo）→ 匯出。我會喺呢頁教你，唔使返 studio。";
+
+    case "guide-captions":
+      return en
+        ? snapshot.hasCaptionSource
+          ? "Video is loaded. Step 1 — edit timed caption lines, then Audio (BGM / voice) if you want, then Burn onto the video. Ask me about style, timing, or voice."
+          : "Step 1 — import an MP4 (library or upload). Then edit script/captions → optional BGM/voice → Burn. No need to regenerate the video."
+        : snapshot.hasCaptionSource
+          ? "片已載入。第一步 — 改時間軸字幕，然後可加 BGM／配音，最後燒錄。風格、時間、口播直接問我。"
+          : "第一步 — 匯入 MP4（作品庫或上傳）。然後改字幕文案 → 可選 BGM／配音 → 燒錄。唔使重新出片。";
+
+    case "guide-pro":
+      return en
+        ? "You are on Pro canvas. Step 1 — add an Upload node, connect to Image (Nano Banana), then Video (Seedance). Pay-per-use fal — check the cost hint before run."
+        : "你喺 Pro 畫布。第一步 — 加 Upload 節點，接到 Image（Nano Banana），再接 Video（Seedance）。按次 fal 計費，跑之前睇成本提示。";
+
+    case "guide-brand-kit":
+      return en
+        ? "Step 1 — upload logo + brand colors here. Opt in if you want the logo stamped on storyboard stills; leave off for textless frames."
+        : "第一步 — 喺呢頁上傳 logo 同品牌色。分鏡靜幀要蓋 logo 先開；想畫面無 logo 就關。";
+
+    case "guide-library":
+      return en
+        ? "This is your library. Download past images/videos, or open one in Image editor / Caption studio. Ask if you cannot find a file."
+        : "呢度係作品庫。下載舊圖／片，或開去修圖／字幕工作室。搵唔到檔可以問我。";
+
+    case "guide-ugc":
+      return en
+        ? "UGC studio — generate creator-style clips. Tell me the product and the vibe you want (unboxing, review, street). For ads with storyboard, use /studio instead."
+        : "UGC 工作室 — 出創作者風格短片。話我知產品同感覺（開箱、評價、街拍）。要分鏡廣告就去 /studio。";
 
     case "fix-error":
       return en

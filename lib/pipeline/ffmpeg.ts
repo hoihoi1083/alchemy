@@ -695,6 +695,45 @@ export async function concatVideos(inputPaths: string[], outputVideo: string): P
   ]);
 }
 
+/**
+ * Time-compress a silent (or muted) stitch when Kling 5s-min clips inflate past the planned TVC length.
+ * Caps speed-up at ~1.85× so motion stays readable.
+ */
+export async function timeCompressVideoToDuration(
+  inputPath: string,
+  outputPath: string,
+  targetSec: number,
+): Promise<{ applied: boolean; sourceSec: number; factor: number }> {
+  const sourceSec = await getMediaDurationSeconds(inputPath);
+  const target = Math.max(4, targetSec);
+  if (!(sourceSec > target * 1.12)) {
+    if (inputPath !== outputPath) await fs.copyFile(inputPath, outputPath);
+    return { applied: false, sourceSec, factor: 1 };
+  }
+  const rawFactor = sourceSec / target;
+  const factor = Math.min(1.85, rawFactor);
+  const hasAudio = await videoHasAudioStream(inputPath);
+  const filters = [`setpts=PTS/${factor.toFixed(4)}`];
+  const args = ["-y", "-i", inputPath, "-filter:v", filters[0]];
+  if (hasAudio) {
+    // Chain atempo for factors up to ~1.85 (single atempo max is 2.0).
+    args.push("-filter:a", `atempo=${factor.toFixed(4)}`);
+  } else {
+    args.push("-an");
+  }
+  args.push(
+    "-c:v",
+    "libx264",
+    "-pix_fmt",
+    "yuv420p",
+    "-movflags",
+    "+faststart",
+    outputPath,
+  );
+  await runFfmpeg(args);
+  return { applied: true, sourceSec, factor };
+}
+
 export async function encodeImageSequence(
   framesDir: string,
   outputVideo: string,

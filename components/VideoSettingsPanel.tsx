@@ -25,6 +25,13 @@ type Props = {
   setup?: boolean;
   /** Reference-reel paths: require explicit seconds before analyze (hide auto). */
   hideAutoDuration?: boolean;
+  /**
+   * Motion poster: only short durations (4/6/8). Hides auto + long TVC lengths.
+   * Implies compact (no creativity / motion-style chrome).
+   */
+  motionPoster?: boolean;
+  /** /pro only — simple /studio hides Seedance vs H3; router picks the engine. */
+  showEnginePicker?: boolean;
   variant?: "light" | "dark";
   /** Fused violet setup uses violet; classic video step keeps emerald. */
   accent?: "emerald" | "violet";
@@ -49,6 +56,8 @@ export function VideoSettingsPanel({
   compact = false,
   setup = false,
   hideAutoDuration = false,
+  motionPoster = false,
+  showEnginePicker = false,
   variant = "light",
   accent,
 }: Props) {
@@ -56,10 +65,14 @@ export function VideoSettingsPanel({
   const { plan, maxVideoResolution } = useUserPlanEntitlements();
   const dark = variant === "dark";
   const tone = accent ?? (setup ? "violet" : "emerald");
-  const compactMode = compact || setup;
-  const durationOptions = hideAutoDuration
-    ? VIDEO_DURATIONS.filter((d) => d !== "auto")
-    : VIDEO_DURATIONS;
+  const compactMode = compact || setup || motionPoster;
+  const durationOptions = (
+    motionPoster
+      ? VIDEO_DURATIONS.filter((d) => d === "4" || d === "6" || d === "8")
+      : hideAutoDuration
+        ? VIDEO_DURATIONS.filter((d) => d !== "auto")
+        : VIDEO_DURATIONS
+  );
   const allowedResolutions = videoResolutionsForPlan(plan).map(asVideoResolution);
   const showUpgradeHint = maxVideoResolution !== "1080p";
   const linkClass =
@@ -85,6 +98,15 @@ export function VideoSettingsPanel({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- clamp only when plan/selection drifts
   }, [maxVideoResolution, value.resolution]);
+
+  useEffect(() => {
+    if (!motionPoster) return;
+    const allowed = new Set(["4", "6", "8"]);
+    if (!allowed.has(String(value.duration))) {
+      onChange({ ...value, duration: "6", autoSecondFrame: false });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- clamp poster duration once when mode engages
+  }, [motionPoster, value.duration]);
 
   return (
     <div
@@ -226,6 +248,7 @@ export function VideoSettingsPanel({
         </>
       )}
 
+      {showEnginePicker ? (
       <div>
         <p className={`mb-2 text-xs font-medium ${dark ? "text-slate-400" : "text-slate-600"}`}>
           {m.wizard.videoEngineLabel}
@@ -242,7 +265,7 @@ export function VideoSettingsPanel({
               type="button"
               onClick={() => onChange({ ...value, videoEngine: id })}
               className={`rounded-full px-3 py-1.5 text-xs font-medium ${pillClass(
-                (value.videoEngine ?? "seedance") === id,
+                (value.videoEngine ?? "minimax-h3") === id,
                 dark,
                 tone,
               )}`}
@@ -255,6 +278,7 @@ export function VideoSettingsPanel({
           {m.wizard.videoEngineHint}
         </p>
       </div>
+      ) : null}
 
       <label
         className={`flex cursor-pointer items-center gap-3 text-sm ${

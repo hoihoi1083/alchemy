@@ -1,7 +1,7 @@
 "use client";
 
 import { useLocale } from "@/components/LocaleProvider";
-import { SUBJECT_FRAMINGS, type SubjectFraming } from "@/lib/prompt-variables";
+import { SUBJECT_FRAMINGS, subjectFramingPreviewSrc, type SubjectFraming } from "@/lib/prompt-variables";
 
 type Props = {
   value: SubjectFraming;
@@ -22,7 +22,7 @@ export function SubjectFramingPicker({ value, onChange, variant = "dark" }: Prop
       <p className={`text-xs ${isDark ? "text-slate-400" : "text-slate-500"}`}>
         {m.wizard.framingPickerHint}
       </p>
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
         {SUBJECT_FRAMINGS.map((id) => {
           const copy = framings[id];
           const selected = value === id;
@@ -31,25 +31,33 @@ export function SubjectFramingPicker({ value, onChange, variant = "dark" }: Prop
               key={id}
               type="button"
               onClick={() => onChange(id)}
-              className={`rounded-xl border px-3 py-2.5 text-left transition ${
+              className={`overflow-hidden rounded-xl border text-left transition ${
                 selected
                   ? isDark
-                    ? "border-cyan-500 bg-cyan-950/40 ring-1 ring-cyan-500/50"
-                    : "border-cyan-600 bg-cyan-50 ring-1 ring-cyan-500/30"
+                    ? "border-cyan-500 ring-1 ring-cyan-500/50"
+                    : "border-cyan-600 ring-1 ring-cyan-500/30"
                   : isDark
                     ? "border-slate-700 bg-slate-900/60 hover:border-slate-600"
                     : "border-slate-200 bg-white hover:border-slate-300"
               }`}
             >
-              <span
-                className={`block text-sm font-medium ${
-                  isDark ? "text-slate-100" : "text-slate-900"
-                }`}
-              >
-                {copy.label}
-              </span>
-              <span className={`mt-0.5 block text-xs ${isDark ? "text-slate-400" : "text-slate-500"}`}>
-                {copy.hint}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={subjectFramingPreviewSrc(id)}
+                alt=""
+                className="aspect-square w-full object-cover"
+              />
+              <span className="block px-2.5 py-2">
+                <span
+                  className={`block text-sm font-medium ${
+                    isDark ? "text-slate-100" : "text-slate-900"
+                  }`}
+                >
+                  {copy.label}
+                </span>
+                <span className={`mt-0.5 block text-xs ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+                  {copy.hint}
+                </span>
               </span>
             </button>
           );

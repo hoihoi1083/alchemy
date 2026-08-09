@@ -6,6 +6,7 @@ import {
 } from "@/lib/art-style";
 import { callDeepSeekChat } from "@/lib/deepseek-client";
 import { parseLlmJsonObject } from "@/lib/parse-llm-json";
+import { productIdentityContractLines } from "@/lib/prompt-balance-contract";
 import type { PromptMarket, SubjectFraming } from "@/lib/prompt-variables";
 import { VIDEO_BGM_HINT } from "@/lib/templates";
 import { videoDurationPlannerBlock } from "@/lib/video-duration-planner";
@@ -113,12 +114,7 @@ function buildPlanPrompt(input: {
     input.headline ? `Headline / hook (drive the story): ${input.headline}` : "",
     input.subline ? `Selling points: ${input.subline}` : "",
     "",
-    "CRITICAL:",
-    "- The uploaded photo may LOOK like a different category (e.g. dropper bottle) while the user sells another function (e.g. portable power / battery).",
-    "- Trust the USER name + headline for category, use-case, and marketing story.",
-    "- Use PHOTO VISION only for on-screen appearance: shape, materials, colors, packaging — lock @Image1 identity.",
-    "- Do NOT write a skincare/serum/oil ad just because Florence guessed that from the photo.",
-    "- situation + seedancePrompt must sell the DECLARED product function (outdoor power, charging, etc. when named), while keeping the exact visual of @Image1.",
+    ...productIdentityContractLines({ hasReferenceVideo: false }),
     "",
     "PHOTO VISION (appearance only — not category override):",
     `Visual summary: ${input.vision.productSummary}`,

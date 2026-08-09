@@ -7,7 +7,17 @@ import type { CoachTaskKind } from "@/lib/studio-assistant-coach-profile";
 import type { WorkflowMode, WorkflowStepKey } from "@/lib/workflow-mode";
 import type { Locale } from "@/lib/i18n";
 
-export type AssistantSurface = "landing" | "start" | "studio";
+export type AssistantSurface =
+  | "landing"
+  | "start"
+  | "studio"
+  | "edit-image"
+  | "captions"
+  | "pro"
+  | "brand-kit"
+  | "library"
+  | "ugc"
+  | "site";
 
 export type StudioAssistantMessage = {
   role: "user" | "assistant";
@@ -45,6 +55,10 @@ export type StudioAssistantSnapshot = {
   imageOutputMode?: ImageOutputMode;
   imageCreativeMode?: ImageCreativeMode;
   hasStyleReference?: boolean;
+  /** Image editor has a loaded source / draft */
+  hasEditImageSource?: boolean;
+  /** Caption studio has an imported video / draft */
+  hasCaptionSource?: boolean;
   /** Client-side: coach micro-steps user acknowledged with 下一步 */
   coachAck?: CoachTaskKind[];
 };
@@ -61,6 +75,11 @@ export type StudioAssistantActionId =
   | "concept-cinematic"
   | "website-launch-image"
   | "open-captions"
+  | "open-edit-image"
+  | "open-pro"
+  | "open-brand-kit"
+  | "open-library"
+  | "open-ugc"
   | "setup-website-reel"
   | "analyze-brand"
   | "open-concept-studio"

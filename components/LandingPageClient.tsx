@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useRef, type ReactNode } from "react";
-import { StudioAssistantWidget } from "@/components/assistant/StudioAssistantWidget";
-import { CoachSpotlightOverlay } from "@/components/assistant/CoachSpotlightOverlay";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { LandingHero } from "@/components/landing/LandingHero";
 import { LandingHowItWorks } from "@/components/landing/LandingHowItWorks";
 import { LandingTemplatesShowcase } from "@/components/landing/LandingTemplatesShowcase";
+import { LandingRecipeCards } from "@/components/landing/LandingRecipeCards";
 import { LandingFloatingCta } from "@/components/landing/LandingFloatingCta";
+
 import { LandingPricingTeaser } from "@/components/landing/LandingPricingTeaser";
 import { LandingTokensAndFaq } from "@/components/landing/LandingTokensAndFaq";
 import { LandingFinalCta } from "@/components/landing/LandingFinalCta";
@@ -894,6 +894,7 @@ export function LandingPageClient() {
 						<LandingNeonBand>
 							<div className="landing-neon-band__light">
 								<LandingTemplatesShowcase />
+								<LandingRecipeCards />
 							</div>
 							<div className="landing-neon-band__dark">
 								<LandingPricingTeaser />
@@ -907,8 +908,6 @@ export function LandingPageClient() {
 				<LandingFooter />
 			</main>
 			<LandingFloatingCta />
-			<CoachSpotlightOverlay />
-			<StudioAssistantWidget surface="landing" />
 		</>
 	);
 }

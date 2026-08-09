@@ -1,5 +1,6 @@
 import { actionLinkForTask } from "@/lib/studio-assistant-coach";
 import type { CoachTaskKind } from "@/lib/studio-assistant-coach-profile";
+import { isLandingLikeSurface } from "@/lib/studio-assistant-surface";
 import type { StudioAssistantSnapshot } from "@/lib/studio-assistant-types";
 
 const LANDING_ACTION_BY_TASK: Partial<Record<CoachTaskKind, string>> = {
@@ -12,6 +13,8 @@ const LANDING_ACTION_BY_TASK: Partial<Record<CoachTaskKind, string>> = {
   "route-storyboard": "open-storyboard-studio",
   "route-concept-studio": "open-concept-studio",
   "route-captions": "open-captions",
+  "route-edit-image": "open-edit-image",
+  "route-pro-canvas": "open-pro",
 };
 
 function escapeRe(s: string): string {
@@ -25,7 +28,7 @@ export function enforceLandingCoachAction(
   snapshot: StudioAssistantSnapshot,
   userWritesEnglish: boolean,
 ): string {
-  if (snapshot.surface === "studio") return reply;
+  if (!isLandingLikeSurface(snapshot.surface)) return reply;
 
   const allowed = LANDING_ACTION_BY_TASK[task];
   const link = actionLinkForTask(task, userWritesEnglish);

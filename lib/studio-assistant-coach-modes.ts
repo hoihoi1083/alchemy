@@ -21,11 +21,34 @@ export type StudioCoachMode =
   | "concept-service"
   | "concept-creative-video"
   | "concept-storyboard"
+  | "edit-image"
   | "captions"
-  | "pro-canvas";
+  | "pro-canvas"
+  | "brand-kit"
+  | "library"
+  | "ugc";
 
 export function detectStudioCoachMode(snapshot: StudioAssistantSnapshot): StudioCoachMode {
-  if (snapshot.surface !== "studio") return "landing";
+  switch (snapshot.surface) {
+    case "edit-image":
+      return "edit-image";
+    case "captions":
+      return "captions";
+    case "pro":
+      return "pro-canvas";
+    case "brand-kit":
+      return "brand-kit";
+    case "library":
+      return "library";
+    case "ugc":
+      return "ugc";
+    case "landing":
+    case "start":
+    case "site":
+      return "landing";
+    default:
+      break;
+  }
   if (snapshot.promotionMode === "physical") {
     if (snapshot.imageCreativeMode === "reference-concept") return "physical-reference-ad";
     if (isStoryboardVideoStyle(snapshot.visualStyleId)) return "physical-storyboard";

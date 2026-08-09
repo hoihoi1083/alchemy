@@ -6,6 +6,7 @@ import {
   resolveGeneratedImageResultView,
   type GeneratedImageResultViewKind,
 } from "@/lib/generated-image-result-view";
+import { localizeTvcShotRole } from "@/lib/shot-recipes";
 
 type Props = {
   /** Light = micro-wizard review; dark = classic ImageStep palette. */
@@ -173,7 +174,9 @@ export function GeneratedImageResultsView({
                   {scene.startSec !== scene.endSec ? ` · ${scene.startSec}–${scene.endSec}s` : ""}
                 </span>
                 <span className={`mt-1 block text-center line-clamp-2 ${palette.sublabel}`}>
-                  {scene.sceneDescriptionZh || scene.role}
+                  {scene.sceneDescriptionZh ||
+                    localizeTvcShotRole(scene.role, m.wizard.tvcShotRoles) ||
+                    scene.role}
                 </span>
                 {showStoryboardControls ? (
                   <div className="mt-2 flex flex-wrap justify-center gap-1.5">
@@ -261,7 +264,9 @@ export function GeneratedImageResultsView({
                   {` · ${scene.startSec}–${scene.endSec}s`}
                 </span>
                 <span className={`mt-1 block text-center line-clamp-2 ${palette.sublabel}`}>
-                  {scene.sceneDescriptionZh || scene.role}
+                  {scene.sceneDescriptionZh ||
+                    localizeTvcShotRole(scene.role, m.wizard.tvcShotRoles) ||
+                    scene.role}
                 </span>
               </div>
             ))}

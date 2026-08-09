@@ -49,8 +49,10 @@ import { formatFalGenerationError } from "@/lib/fal-errors";
 import {
   isFalContentPolicyThrowable,
   looksLikeSpaOrBeautyBrief,
+  saferSameSceneStillPrompt,
   softenStoryboardStillPromptForModeration,
   spaSafeStillFallbackPrompt,
+  storyboardCellBlockedMessage,
 } from "@/lib/seedance-moderation";
 
 export const runtime = "nodejs";
@@ -429,15 +431,30 @@ export async function POST(request: Request) {
           result = await subscribe(prompt, hasImageUrls);
         } catch (firstErr) {
           if (!isFalContentPolicyThrowable(firstErr)) throw firstErr;
-          const safePrompt = spaSafeStillFallbackPrompt({
-            theme: plan.theme || productName || headline,
+          const saferPrompt = saferSameSceneStillPrompt({
+            originalPrompt: prompt,
             role: scene.role,
-            marketHint:
-              promptMarket === "en"
-                ? "International English-market commercial spa aesthetic."
-                : "",
+            theme: plan.theme || headline,
+            productName: productName || plan.theme,
           });
-          result = await subscribe(safePrompt, false);
+          try {
+            result = await subscribe(saferPrompt, false);
+          } catch (secondErr) {
+            if (!isFalContentPolicyThrowable(secondErr)) throw secondErr;
+            if (spaBeautyBrief) {
+              const safePrompt = spaSafeStillFallbackPrompt({
+                theme: plan.theme || productName || headline,
+                role: scene.role,
+                marketHint:
+                  promptMarket === "en"
+                    ? "International English-market commercial spa aesthetic."
+                    : "",
+              });
+              result = await subscribe(safePrompt, false);
+            } else {
+              throw new Error(storyboardCellBlockedMessage(scene.imageIndex));
+            }
+          }
         }
 
         let stillUrl = extractImageUrls(result.data)[0];

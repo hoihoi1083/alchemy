@@ -7,6 +7,7 @@ import type { ResearchReelAnalysis } from "@/lib/reel-analysis-types";
 import { refineResearchVideoScript } from "@/lib/video-script-refine";
 import { runFlorenceDetailedCaption } from "@/lib/vision-json-repair";
 import { resolvePlannerDurationSec } from "@/lib/video-duration-planner";
+import { isPromotionMode } from "@/lib/promotion-mode";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -56,6 +57,9 @@ export async function POST(request: Request) {
   const headline = (formData.get("headline") as string | null)?.trim() || "";
   const subline = (formData.get("subline") as string | null)?.trim() || "";
   const offer = (formData.get("offer") as string | null)?.trim() || "";
+  const promotionModeRaw = String(formData.get("promotion_mode") ?? "").trim();
+  const conceptMode =
+    isPromotionMode(promotionModeRaw) && promotionModeRaw === "concept";
 
   const tokenCost = TOKEN_COST.plan;
   const charged = await chargeTokens(auth.user.userId, tokenCost, {
@@ -92,6 +96,7 @@ export async function POST(request: Request) {
       subline,
       offer,
       productVisionNote: productVisionNote || undefined,
+      conceptMode,
     });
 
     return NextResponse.json({

@@ -20,7 +20,7 @@ export type VideoSettings = {
   /** AI generates a second frame from your product (start → end) for richer motion. */
   autoSecondFrame: boolean;
   fast: boolean;
-  /** Seedance (default) or MiniMax H3 for direct I2V / R2V. Storyboard stays Kling. */
+  /** MiniMax H3 is simple-studio default. Seedance only when a research reel is attached. */
   videoEngine?: "seedance" | "minimax-h3";
 };
 
@@ -53,8 +53,8 @@ export const DEFAULT_VIDEO_SETTINGS: VideoSettings = {
   motionStyle: "gentle-orbit",
   creativity: "lively",
   autoSecondFrame: true,
-  fast: true,
-  videoEngine: "seedance",
+  fast: false,
+  videoEngine: "minimax-h3",
 };
 
 export function cameraForMotion(style: VideoMotionStyle): string {

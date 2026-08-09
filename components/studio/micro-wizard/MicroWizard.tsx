@@ -234,15 +234,35 @@ export function MicroWizard({ promotionMode }: Props) {
     <ImageReviewFooterBar
       onBack={onBack}
       onDownloadAll={() => void downloadAllReviewImages()}
-      onGenerateOneMore={() => {
-        if (!wizard.canGenerateImage()) {
-          wizard.setError(wizard.imageGenerateDisabledReason || m.wizard.imageGenerateNotReady);
-          return;
-        }
-        void wizard.generateImage();
-      }}
+      onGenerateOneMore={
+        isCombinedSceneReview
+          ? undefined
+          : () => {
+              if (!wizard.canGenerateImage()) {
+                wizard.setError(
+                  wizard.imageGenerateDisabledReason || m.wizard.imageGenerateNotReady,
+                );
+                return;
+              }
+              void wizard.generateImage();
+            }
+      }
       onContinue={isCombinedSceneReview ? goNext : undefined}
       continueLabel={isCombinedSceneReview ? m.wizard.continueToVideo : undefined}
+      continueDisabled={
+        isCombinedSceneReview &&
+        (Boolean(blockReason) ||
+          !wizard.storyboardAllCellsViewed ||
+          !wizard.storyboardGridApproved)
+      }
+      continueDisabledReason={
+        isCombinedSceneReview
+          ? blockMessage ||
+            (!wizard.storyboardAllCellsViewed
+              ? m.wizard.storyboardApproveNeedLookHint
+              : m.wizard.storyboardApproveRequiredHint)
+          : null
+      }
       downloadAllBusy={downloadAllBusy}
       generateBusy={wizard.imageBusy || !wizard.canGenerateImage()}
     />

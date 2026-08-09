@@ -16,6 +16,7 @@ export type ConceptSource = "assistant" | "research";
 /** Direct video sub-path (product + video-only). UI-only routing. */
 export type VideoSubpath =
   | "product_promo"
+  | "motion_poster"
   | "reference_reel"
   | "product_assistant"
   | "ugc_presenter"
@@ -119,7 +120,8 @@ export type MicroWizardPathId =
   | "concept_video_research_reel"
   | "concept_video_direct"
   | "concept_combined_cinematic"
-  | "concept_combined";
+  | "concept_combined"
+  | "concept_combined_motion_poster";
 
 export const WIZARD_V2_QUERY_FLAG = "wizard";
 export const WIZARD_V2_VALUE = "v2";

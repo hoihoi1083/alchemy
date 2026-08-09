@@ -6,6 +6,7 @@ import {
   MINIMAX_MAX_REFERENCE_SEC,
 } from "@/lib/reference-video-prepare";
 import { persistAndDurablize } from "@/lib/storage/durable-media";
+import { VIDEO1_SPINE_SCREENPLAY } from "@/lib/prompt-balance-contract";
 import { buildSingleClipManifest } from "@/lib/video-timing-manifest";
 
 export type MinimaxH3Mode = "image" | "reference";
@@ -57,6 +58,25 @@ function h3Endpoint(mode: MinimaxH3Mode): string {
   return mode === "image"
     ? "minimax/h3/image-to-video"
     : "minimax/h3/reference-to-video";
+}
+
+/** True when the client sent a reference MP4 / @Video1 spine (not stills-only). */
+export function formDataExpectsReferenceVideo(formData: FormData, prompt?: string): boolean {
+  if (prompt && (/@\s*Video\s*1\b/i.test(prompt) || /\bVideo\s+1\b/i.test(prompt))) {
+    return true;
+  }
+  const url =
+    (formData.get("reference_video_url") as string | null)?.trim() ||
+    (formData.get("reference_video_urls") as string | null)?.trim();
+  if (url) return true;
+  for (const key of ["reference_video", "video"] as const) {
+    const f = formData.get(key);
+    if (f instanceof File && f.size > 0) return true;
+  }
+  for (const f of formData.getAll("videos")) {
+    if (f instanceof File && f.size > 0) return true;
+  }
+  return false;
 }
 
 /** Collect reference video URLs/files from Seedance generate FormData. */
@@ -246,6 +266,7 @@ export async function collectMinimaxH3FallbackMedia(
 export type StoryboardH3SceneHint = {
   role?: string;
   cameraMotionEn?: string;
+  lightingEn?: string;
   imagePrompt?: string;
 };
 
@@ -259,17 +280,21 @@ export function buildStoryboardMinimaxH3Prompt(input: {
   durationSec: number;
   scenes: StoryboardH3SceneHint[];
   hasReferenceVideo?: boolean;
+  lookBibleGrade?: string;
 }): string {
   const n = Math.max(1, input.scenes.length);
   const duration = clampMinimaxH3Duration(input.durationSec);
+  const look = (input.lookBibleGrade ?? "").trim();
   const lines = input.scenes.map((s, i) => {
     const idx = i + 1;
     const role = (s.role ?? "").trim() || `storyboard beat ${idx}`;
     const cam = (s.cameraMotionEn ?? "").trim();
+    const lighting = (s.lightingEn ?? "").trim();
     const hint = (s.imagePrompt ?? "").trim().slice(0, 100);
     return [
       `Image ${idx} is storyboard frame ${idx} (${role}).`,
       cam ? `Motion for this beat: ${cam}.` : "",
+      lighting ? `Lighting for this beat: ${lighting}.` : "",
       hint ? `Visual cue: ${hint}.` : "",
       `Keep subject identity locked to Image ${idx}.`,
     ]
@@ -284,9 +309,8 @@ export function buildStoryboardMinimaxH3Prompt(input: {
     `Create ONE continuous ${duration}s vertical marketing video that progresses through ${n} storyboard beats in order (Image 1 → Image ${n}).`,
     "Hard cuts between beats are OK when matching the storyboard; do not invent on-screen text, logos, or watermarks.",
     theme ? `Theme: ${theme}.` : "",
-    input.hasReferenceVideo
-      ? "Video 1 is an optional motion/edit-rhythm reference — match pacing and camera energy only; hero content stays on Image 1…N."
-      : "",
+    look ? `Look lock (grade only across all beats): ${look}.` : "",
+    input.hasReferenceVideo ? seedancePromptToMinimaxH3(VIDEO1_SPINE_SCREENPLAY) : "",
     ...lines,
     plan ? `Director notes (adapt, do not copy on-screen copy): ${plan}` : "",
   ]

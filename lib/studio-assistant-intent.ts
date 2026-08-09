@@ -11,11 +11,19 @@ export type StudioAssistantIntent =
   | "physical_product"
   | "physical_image_post"
   | "captions_only"
+  | "edit_image"
   | "reference_ad"
   | "pro_canvas"
   | "general";
 
 export function detectStudioAssistantIntent(text: string): StudioAssistantIntent {
+  if (
+    /edit.?image|image editor|修圖|修图|改圖|改图|inpaint|摳圖|抠图|去水印|水印|watermark|圖像編輯|图像编辑|canvas editor/i.test(
+      text,
+    )
+  ) {
+    return "edit_image";
+  }
   if (/caption|subtitle|字幕|燒錄|烧录|加字/.test(text) && !/video|影片|视频|reel/i.test(text)) {
     return "captions_only";
   }

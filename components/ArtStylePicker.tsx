@@ -2,7 +2,7 @@
 
 import { useLocale } from "@/components/LocaleProvider";
 import {
-  ART_STYLE_IDS,
+  artStyleIdsForPicker,
   type ArtStyleId,
   getArtStyle,
 } from "@/lib/art-style";
@@ -10,17 +10,22 @@ import {
 type Props = {
   value: ArtStyleId;
   onChange: (id: ArtStyleId) => void;
+  /** When true, only film / CCD / 国风 / cinematic / realistic (video-safe grades). */
+  videoSafeOnly?: boolean;
 };
 
-export function ArtStylePicker({ value, onChange }: Props) {
+export function ArtStylePicker({ value, onChange, videoSafeOnly = false }: Props) {
   const { m } = useLocale();
+  const ids = artStyleIdsForPicker({ videoSafeOnly });
 
   return (
     <div className="space-y-2">
       <p className="text-sm font-medium text-slate-700">{m.wizard.artStyleLabel}</p>
-      <p className="text-xs text-slate-500">{m.wizard.artStyleHint}</p>
+      <p className="text-xs text-slate-500">
+        {videoSafeOnly ? m.wizard.artStyleVideoSafeHint : m.wizard.artStyleHint}
+      </p>
       <div className="flex flex-wrap gap-2">
-        {ART_STYLE_IDS.map((id) => {
+        {ids.map((id) => {
           const def = getArtStyle(id);
           const copy = m.wizard.artStyles[id];
           const selected = value === id;

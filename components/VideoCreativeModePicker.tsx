@@ -2,7 +2,7 @@
 
 import { useLocale } from "@/components/LocaleProvider";
 import type { VideoCreativeMode } from "@/lib/creative-workflow";
-import { videoModesForStudio } from "@/lib/creative-workflow";
+import { videoModePreviewSrc, videoModesForStudio } from "@/lib/creative-workflow";
 import type { OutputGoal } from "@/lib/creative-workflow";
 import type { PromotionMode } from "@/lib/promotion-mode";
 
@@ -13,13 +13,6 @@ type Props = {
   onChange: (mode: VideoCreativeMode) => void;
   /** Video step uses dark panel — light text for readability */
   variant?: "light" | "dark";
-};
-
-const ICONS: Record<VideoCreativeMode, string> = {
-  "product-assistant": "🤖",
-  "product-promo": "📦",
-  "reference-concept": "🎬",
-  "image-to-video": "📷→🎬",
 };
 
 export function VideoCreativeModePicker({
@@ -56,7 +49,7 @@ export function VideoCreativeModePicker({
               key={id}
               type="button"
               onClick={() => onChange(id)}
-              className={`rounded-xl border p-4 text-left transition ${
+              className={`flex gap-3 overflow-hidden rounded-xl border p-2 text-left transition ${
                 selected
                   ? isAssistant
                     ? "border-cyan-400 bg-cyan-950/50 ring-1 ring-cyan-400/60"
@@ -68,17 +61,24 @@ export function VideoCreativeModePicker({
                     : "border-slate-200 bg-white hover:border-slate-300"
               }`}
             >
-              <span className="mr-2 text-xl">{ICONS[id]}</span>
-              <span
-                className={`text-sm font-semibold ${isDark ? "text-white" : "text-slate-900"}`}
-              >
-                {copy.title}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={videoModePreviewSrc(id)}
+                alt=""
+                className="h-16 w-16 shrink-0 rounded-lg object-cover"
+              />
+              <span className="min-w-0 py-0.5">
+                <span
+                  className={`block text-sm font-semibold ${isDark ? "text-white" : "text-slate-900"}`}
+                >
+                  {copy.title}
+                </span>
+                <span
+                  className={`mt-0.5 block text-xs leading-snug ${isDark ? "text-slate-300" : "text-slate-600"}`}
+                >
+                  {copy.description}
+                </span>
               </span>
-              <p
-                className={`mt-1 text-xs ${isDark ? "text-slate-300" : "text-slate-600"}`}
-              >
-                {copy.description}
-              </p>
             </button>
           );
         })}

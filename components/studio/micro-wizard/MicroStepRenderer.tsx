@@ -406,7 +406,9 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
       );
 
     case "setup.pre_video": {
-      const scenesReady = micro.ctx.workflowMode === "combined";
+      const scenesReady =
+        micro.ctx.workflowMode === "combined" &&
+        wizard.videoCreativeMode !== "motion-poster";
       return (
         <PreVideoSetupPanel
           scenesReady={scenesReady}
@@ -424,11 +426,14 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
           videoSubpath={
             (micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) === "ugc_presenter"
               ? "product_promo"
-              : (micro.pendingVideoSubpath ?? micro.ctx.videoSubpath)
+              : wizard.videoCreativeMode === "motion-poster"
+                ? "motion_poster"
+                : (micro.pendingVideoSubpath ?? micro.ctx.videoSubpath)
           }
           onPickVideoSubpath={(subpath) => {
             const id = subpath as
               | "product_promo"
+              | "motion_poster"
               | "reference_reel"
               | "creative_video"
               | "brand_video";
@@ -437,6 +442,8 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
             micro.patchContext({ videoSubpath: id });
             if (id === "product_promo") {
               wizard.applyPrimaryPathVideoOnly("assistant");
+            } else if (id === "motion_poster") {
+              wizard.onVideoCreativeModeChange("motion-poster");
             } else if (id === "reference_reel") {
               wizard.onVideoCreativeModeChange("reference-concept");
             } else if (id === "creative_video") {
@@ -527,8 +534,19 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
 
     case "image.art_style":
       return (
-        <ScreenShell title={m.wizard.artStyleLabel} hint={m.wizard.artStyleHint}>
-          <ArtStylePicker value={wizard.artStyleId} onChange={wizard.setArtStyleId} />
+        <ScreenShell
+          title={m.wizard.artStyleLabel}
+          hint={
+            wizard.workflowMode !== "image-only"
+              ? m.wizard.artStyleVideoSafeHint
+              : m.wizard.artStyleHint
+          }
+        >
+          <ArtStylePicker
+            value={wizard.artStyleId}
+            onChange={wizard.setArtStyleId}
+            videoSafeOnly={wizard.workflowMode !== "image-only"}
+          />
         </ScreenShell>
       );
 
@@ -550,9 +568,22 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
     case "image.options":
       return (
         <ScreenShell title={mw.imageOptionsTitle} hint={mw.imageOptionsHint}>
-          <ArtStylePicker value={wizard.artStyleId} onChange={wizard.setArtStyleId} />
-          <ImageAspectRatioPicker value={wizard.imageAspectRatio} onChange={wizard.setImageAspectRatio} />
-          <ImageTextModePicker value={wizard.imageTextMode} onChange={wizard.setImageTextMode} />
+          <ArtStylePicker
+            value={wizard.artStyleId}
+            onChange={wizard.setArtStyleId}
+            videoSafeOnly={wizard.workflowMode !== "image-only"}
+          />
+          <ImageAspectRatioPicker
+            value={wizard.imageAspectRatio}
+            onChange={wizard.setImageAspectRatio}
+            variant="light"
+            accent="violet"
+          />
+          <ImageTextModePicker
+            value={wizard.imageTextMode}
+            onChange={wizard.setImageTextMode}
+            variant="violet"
+          />
         </ScreenShell>
       );
 

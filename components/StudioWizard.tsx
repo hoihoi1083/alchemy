@@ -9,6 +9,7 @@ import { SetupStep } from "@/components/studio/SetupStep";
 import { VideoStep } from "@/components/studio/VideoStep";
 import { MicroWizard } from "@/components/studio/micro-wizard/MicroWizard";
 import { WizardMobileBar } from "@/components/studio/WizardMobileBar";
+import { StoryboardEngineChoiceDialog } from "@/components/studio/StoryboardEngineChoiceDialog";
 import { StudioAssistantWidget } from "@/components/assistant/StudioAssistantWidget";
 import { CoachSpotlightOverlay } from "@/components/assistant/CoachSpotlightOverlay";
 import { MongoRequiredBanner } from "@/components/MongoRequiredBanner";
@@ -52,6 +53,9 @@ function StudioWizardContent({
     finishImageStep,
     goBackFromVideo,
     generateVideo,
+    storyboardEngineChoice,
+    confirmStoryboardKlingChoice,
+    dismissStoryboardEngineChoice,
   } = useWizard();
 
   const showMicroSetup = v2 && stepKey === "setup";
@@ -98,6 +102,14 @@ function StudioWizardContent({
 
       <StudioAssistantWidget surface="studio" />
       <CoachSpotlightOverlay />
+
+      {storyboardEngineChoice ? (
+        <StoryboardEngineChoiceDialog
+          choice={storyboardEngineChoice}
+          onKling={confirmStoryboardKlingChoice}
+          onDismiss={dismissStoryboardEngineChoice}
+        />
+      ) : null}
 
       {!showMicroSetup ? (
         <WizardMobileBar

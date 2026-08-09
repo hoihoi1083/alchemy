@@ -11,12 +11,56 @@ export function resolvePlannerDurationSec(
   return Math.min(15, Math.max(4, Math.round(n)));
 }
 
+export type DurationPlannerOpts = {
+  /**
+   * When true (research / reference R2V), do NOT inject HOOK→DEMO→CTA.
+   * Duration only compresses @Video1's existing beats into N seconds.
+   */
+  hasReferenceVideo?: boolean;
+  /**
+   * When true (product/concept TVC storyboard), size TVC roles into N seconds —
+   * do NOT invent a competing HOOK→DEMO marketing plot.
+   */
+  storyboardTvc?: boolean;
+};
+
 /**
- * Mandatory pacing + SCRIPT structure for video planners.
- * Scene count is flexible — prioritize a complete story arc that fits the runtime.
+ * Mandatory pacing for video planners.
+ * - No @Video1: marketing / recipe arc sized to N seconds.
+ * - With @Video1: compress the reference spine only — never invent a new plot.
+ * - Storyboard TVC: compress establish→…→payoff roles into N seconds.
  */
-export function videoDurationPlannerBlock(durationSec: number): string[] {
+export function videoDurationPlannerBlock(
+  durationSec: number,
+  opts?: DurationPlannerOpts,
+): string[] {
   const sec = Math.min(15, Math.max(4, Math.round(durationSec)));
+
+  if (opts?.hasReferenceVideo) {
+    return [
+      "",
+      "OUTPUT LENGTH + REFERENCE SPINE (mandatory):",
+      `- The model will render EXACTLY ${sec} seconds.`,
+      `- @Video1 already has a shot structure. COMPRESS those existing beats into ${sec}s — keep the same locations, camera language, and cut energy.`,
+      "- Do NOT invent a new HOOK → DEMO → DESIRE → CTA story that replaces @Video1.",
+      "- Do NOT invent a second location, tutorial rewrite, or studio-only packshot arc.",
+      `- Map the reference's opening → mid → close into ${sec}s so the clip still feels COMPLETE (never cut mid-intro).`,
+      "- Scene/shot COUNT is flexible — quality of matching @Video1 > arbitrary beat count.",
+      `- Do NOT describe beats that need more than ${sec}s to land.`,
+    ];
+  }
+
+  if (opts?.storyboardTvc) {
+    return [
+      "",
+      "OUTPUT LENGTH + TVC ROLE SPINE (mandatory):",
+      `- Target finished storyboard is about ${sec} seconds across the planned scenes.`,
+      "- Use TVC shot roles (establish → macro → orbit/logo-trace → lifestyle/payoff) — NOT a separate HOOK→DEMO→DESIRE→CTA rewrite.",
+      `- Compress those roles into ~${sec}s total so the stitch / H3 clip feels COMPLETE.`,
+      "- Do NOT invent a second location, tutorial rewrite, or studio-only packshot arc that ignores the roles.",
+      `- Do NOT describe beats that need more than ${sec}s to land.`,
+    ];
+  }
 
   let scriptBeats: string;
   if (sec <= 4) {
@@ -56,8 +100,8 @@ export function videoDurationPlannerBlock(durationSec: number): string[] {
     scriptBeats = [
       `SCRIPT STRUCTURE (~${sec}s longer Reel):`,
       "HOOK → CONTEXT → DEMO/PROOF → DESIRE → PAYOFF/CTA.",
-      "Compress the reference arc into this length; still feel COMPLETE (never cut mid-intro).",
       "Prefer fewer sharper beats over many rushed cuts.",
+      "Still feel COMPLETE (never cut mid-intro).",
     ].join("\n");
   }
 

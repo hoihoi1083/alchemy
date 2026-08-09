@@ -33,5 +33,7 @@ export function buildDefaultAssistantSnapshot(
     error: null,
     voiceoverEnabled: false,
     captionBurnEnabled: false,
+    hasEditImageSource: false,
+    hasCaptionSource: false,
   };
 }

@@ -31,11 +31,17 @@ import { shouldAckCoachTaskOnNext } from "@/lib/studio-assistant-coach-completio
 import { dispatchCoachSpotlight } from "@/lib/studio-assistant-spotlight-bus";
 import { shouldShowSpotlight } from "@/lib/studio-assistant-coach-targets";
 import type { CoachTaskKind } from "@/lib/studio-assistant-coach-profile";
+import {
+  isLandingLikeSurface,
+  usesDarkAssistantChrome,
+} from "@/lib/studio-assistant-surface";
 import type {
   AssistantSurface,
   StudioAssistantMessage,
 } from "@/lib/studio-assistant-types";
 import { ContentResearchPanel } from "@/components/content-research/ContentResearchPanel";
+import { readCaptionHandoff } from "@/lib/caption-studio-draft";
+import { IMAGE_CANVAS_DRAFT_KEY } from "@/lib/image-canvas-studio-draft";
 
 const LAUNCHER_IMAGE_SRC = "/alchemy-logo.png";
 
@@ -47,11 +53,66 @@ function welcomeForSurface(
     welcome: string;
     welcomeLanding: string;
     welcomeStart: string;
+    welcomeEditImage: string;
+    welcomeCaptions: string;
+    welcomePro: string;
+    welcomeBrandKit: string;
+    welcomeLibrary: string;
+    welcomeUgc: string;
+    welcomeSite: string;
   },
 ): string {
-  if (surface === "landing") return sa.welcomeLanding;
-  if (surface === "start") return sa.welcomeStart;
-  return sa.welcome;
+  switch (surface) {
+    case "landing":
+      return sa.welcomeLanding;
+    case "start":
+      return sa.welcomeStart;
+    case "edit-image":
+      return sa.welcomeEditImage;
+    case "captions":
+      return sa.welcomeCaptions;
+    case "pro":
+      return sa.welcomePro;
+    case "brand-kit":
+      return sa.welcomeBrandKit;
+    case "library":
+      return sa.welcomeLibrary;
+    case "ugc":
+      return sa.welcomeUgc;
+    case "site":
+      return sa.welcomeSite;
+    default:
+      return sa.welcome;
+  }
+}
+
+function readToolSourceFlags(): {
+  hasEditImageSource: boolean;
+  hasCaptionSource: boolean;
+} {
+  if (typeof window === "undefined") {
+    return { hasEditImageSource: false, hasCaptionSource: false };
+  }
+  let hasEditImageSource = false;
+  try {
+    const raw = localStorage.getItem(IMAGE_CANVAS_DRAFT_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as { sourceKey?: string; layers?: unknown[] };
+      hasEditImageSource = Boolean(parsed.sourceKey) || (Array.isArray(parsed.layers) && parsed.layers.length > 0);
+    }
+  } catch {
+    /* ignore */
+  }
+  let hasCaptionSource = false;
+  try {
+    hasCaptionSource = Boolean(readCaptionHandoff()?.videoUrl?.trim());
+    if (!hasCaptionSource) {
+      hasCaptionSource = Boolean(localStorage.getItem("alchemy-caption-draft"));
+    }
+  } catch {
+    /* ignore */
+  }
+  return { hasEditImageSource, hasCaptionSource };
 }
 
 function renderMessageContent(
@@ -143,16 +204,19 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
   const [coachAckTick, setCoachAckTick] = useState(0);
   const [showContentResearch, setShowContentResearch] = useState(false);
 
-  const needsSignIn = surface === "landing" && isLoaded && !isSignedIn;
+  /** Soft gate outside the wizard — API requires auth on every surface. */
+  const needsSignIn = surface !== "studio" && isLoaded && !isSignedIn;
   const hasUserTyped = messages.some((msg) => msg.role === "user");
-  const showQuickChips = surface !== "studio" && hasUserTyped;
+  const showQuickChips = isLandingLikeSurface(surface) && hasUserTyped;
+  const darkChrome = usesDarkAssistantChrome(surface);
 
   const snapshot = useMemo(() => {
     const base =
       surface === "studio" && wizard
         ? buildStudioAssistantSnapshot(wizard, "studio")
         : buildDefaultAssistantSnapshot(surface);
-    return { ...base, coachAck: readCoachAck() };
+    const tools = readToolSourceFlags();
+    return { ...base, ...tools, coachAck: readCoachAck() };
   }, [surface, wizard, coachAckTick]);
 
   const appendAssistant = useCallback((content: string) => {
@@ -351,6 +415,7 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
       ...(surface === "studio" && wizard
         ? buildStudioAssistantSnapshot(wizard, "studio")
         : buildDefaultAssistantSnapshot(surface)),
+      ...readToolSourceFlags(),
       coachAck: readCoachAck(),
     };
 
@@ -459,13 +524,15 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
       : surface === "landing"
         ? // Align with LandingFloatingCta (立即開始 dock)
           floatingCtaBottom
+        : surface === "captions"
+          ? "max(calc(5.25rem + env(safe-area-inset-bottom)), 6rem)"
         : studioMobileBarVisible
           ? "max(calc(4.75rem + env(safe-area-inset-bottom)), 5.5rem)"
           : "max(1.25rem, env(safe-area-inset-bottom))";
 
   return (
     <div
-      className="pointer-events-none fixed z-[100] flex flex-col items-end gap-3"
+      className="pointer-events-none fixed z-[200] flex flex-col items-end gap-3"
       style={{
         bottom: launcherBottom,
         right: "max(1rem, env(safe-area-inset-right))",
@@ -578,7 +645,7 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
                       : undefined
                   }
                   navigateOnApply={
-                    surface !== "studio" ? (path) => router.push(path) : undefined
+                    isLandingLikeSurface(surface) ? (path) => router.push(path) : undefined
                   }
                   onApplied={() => {
                     appendAssistant(m.contentResearch.applied);
@@ -667,16 +734,19 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="pointer-events-auto inline-flex items-center bg-transparent p-0 shadow-none transition hover:scale-[1.02] active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+        className={
+          darkChrome
+            ? "pointer-events-auto inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-slate-950/85 p-1.5 pr-3 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.7)] backdrop-blur-md transition hover:scale-[1.02] hover:border-violet-300/50 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
+            : "pointer-events-auto inline-flex items-center bg-transparent p-0 shadow-none transition hover:scale-[1.02] active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+        }
         aria-expanded={open}
         aria-label={sa.openLauncher}
       >
         <span
           className={
-            surface === "landing"
-              ? // Match LandingFloatingCta pill (~53px) so it lines up with 立即開始
-                "relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl"
-              : "relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl sm:h-16 sm:w-16 md:h-[88px] md:w-[88px] lg:h-[112px] lg:w-[112px]"
+            darkChrome
+              ? "relative h-11 w-11 shrink-0 overflow-hidden rounded-xl ring-2 ring-violet-400/80"
+              : "relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl"
           }
         >
           <Image
@@ -684,10 +754,15 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
             alt="Alchemy AI Lab logo"
             width={200}
             height={200}
-            className="h-full w-full rounded-2xl object-contain drop-shadow-lg"
+            className="h-full w-full rounded-xl object-contain drop-shadow-lg"
             priority
           />
         </span>
+        {darkChrome ? (
+          <span className="pr-0.5 text-sm font-semibold tracking-wide text-white">
+            {sa.shortLabel}
+          </span>
+        ) : null}
       </button>
     </div>
   );

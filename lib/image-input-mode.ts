@@ -9,3 +9,7 @@ export const IMAGE_INPUT_MODES: ImageInputMode[] = [
   "describe",
   "reference",
 ];
+
+export function imageInputPreviewSrc(id: ImageInputMode): string {
+  return `/images/studio/image-input/${id}.png?v=1`;
+}

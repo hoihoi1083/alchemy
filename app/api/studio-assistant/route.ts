@@ -21,6 +21,7 @@ import { enforceLandingCoachAction } from "@/lib/studio-assistant-enforce-coach"
 import { extractUrlFromMessages } from "@/lib/studio-assistant-url";
 import { requireAppUser } from "@/lib/require-app-user";
 import { assertFreeDeepSeekQuota } from "@/lib/rate-limit-deepseek";
+import { isAssistantSurface } from "@/lib/studio-assistant-surface";
 import type {
   AssistantSurface,
   StudioAssistantMessage,
@@ -95,8 +96,8 @@ function parseMessages(raw: unknown): StudioAssistantMessage[] {
 }
 
 function parseSurface(raw: unknown): AssistantSurface {
-  if (raw === "landing" || raw === "start" || raw === "studio") return raw;
-  return "studio";
+  if (isAssistantSurface(raw)) return raw;
+  return "landing";
 }
 
 function parseSnapshot(raw: unknown): StudioAssistantSnapshot | null {
@@ -178,6 +179,8 @@ function parseSnapshot(raw: unknown): StudioAssistantSnapshot | null {
         ? s.imageCreativeMode
         : undefined,
     hasStyleReference: Boolean(s.hasStyleReference),
+    hasEditImageSource: Boolean(s.hasEditImageSource),
+    hasCaptionSource: Boolean(s.hasCaptionSource),
     coachAck: Array.isArray(s.coachAck)
       ? (s.coachAck as CoachTaskKind[]).filter((t) => typeof t === "string")
       : undefined,

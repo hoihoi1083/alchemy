@@ -98,6 +98,7 @@ export function adaptScriptForKlingFallback(opts: {
   totalDurationSec: number;
   imageUrls: string[];
   clientScenesMeta?: KlingSceneMeta[];
+  conceptMode?: boolean;
 }): KlingFallbackPromptPlan {
   const clientMeta = opts.clientScenesMeta ?? [];
   const existingSceneCount = Math.max(opts.imageUrls.length, clientMeta.length);
@@ -108,11 +109,12 @@ export function adaptScriptForKlingFallback(opts: {
   });
 
   const motionPrompt = extractKlingMotionFromSeedancePrompt(opts.seedancePrompt) ?? "";
+  const theme = opts.conceptMode ? "concept promo" : "product promo";
 
   if (opts.imageUrls.length === 1 && beats.length >= 2) {
     const imageUrls = Array.from({ length: beats.length }, () => opts.imageUrls[0]!);
     return {
-      theme: "product promo",
+      theme,
       motionPrompt,
       imageUrls,
       scenesMeta: beats.map((b) => ({
@@ -127,7 +129,7 @@ export function adaptScriptForKlingFallback(opts: {
 
   if (beats.length === 1 && opts.imageUrls.length === 1) {
     return {
-      theme: "product promo",
+      theme,
       motionPrompt,
       imageUrls: opts.imageUrls,
       scenesMeta: [
@@ -144,7 +146,7 @@ export function adaptScriptForKlingFallback(opts: {
 
   // Multi-still storyboard already supplied — keep client meta / image list.
   return {
-    theme: "product promo",
+    theme,
     motionPrompt,
     imageUrls: opts.imageUrls,
     scenesMeta:

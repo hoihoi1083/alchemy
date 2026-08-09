@@ -2,6 +2,7 @@
 
 import { ClerkProvider } from "@clerk/nextjs";
 import type { ReactNode } from "react";
+import { GlobalStudioAssistant } from "@/components/assistant/GlobalStudioAssistant";
 import { LocaleProvider, useLocale } from "@/components/LocaleProvider";
 import { MixpanelProvider } from "@/components/MixpanelProvider";
 import { SyncUserOnAuth } from "@/components/SyncUserOnAuth";
@@ -15,6 +16,7 @@ function ClerkWithLocale({ children }: { children: ReactNode }) {
       <SyncUserOnAuth />
       <MixpanelProvider />
       {children}
+      <GlobalStudioAssistant />
     </ClerkProvider>
   );
 }

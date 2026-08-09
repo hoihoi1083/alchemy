@@ -1,7 +1,11 @@
 import type { Locale } from "@/lib/i18n";
 import type { StudioAssistantIntent } from "@/lib/studio-assistant-intent";
 import { formatCoachChecklistForPrompt } from "@/lib/studio-assistant-coach";
-import type { AssistantSurface, StudioAssistantSnapshot } from "@/lib/studio-assistant-types";
+import {
+  isLandingLikeSurface,
+  isToolAssistantSurface,
+} from "@/lib/studio-assistant-surface";
+import type { StudioAssistantSnapshot } from "@/lib/studio-assistant-types";
 
 function langLine(_locale: Locale): string {
   return "Reply in the SAME language as the user's latest message (English → English; 中文 → 繁體 or 简体 per locale setting if user wrote Chinese).";
@@ -54,7 +58,7 @@ export function getStudioAssistantFacts(locale: Locale): string {
 
 三、步驟
 - setup →（image）→（video）→ done。依工作流跳過 image 或 video。
-- 進階：/pro 節點畫布；/captions 獨立字幕燒錄（任何 MP4 都可用）。
+- 進階：/pro 節點畫布；/captions 獨立字幕燒錄（任何 MP4 都可用）；/edit-image 修圖（清雜物 → 排版 → 匯出）；/brand-kit 品牌套件；/library 作品庫；/ugc UGC 片。
 
 四、常見視覺風格（擇要）
 - product / model-wear：實體商品圖。
@@ -97,7 +101,7 @@ export function getStudioAssistantFacts(locale: Locale): string {
 
 2) Workflows: image-only | video-only | combined (image → video Reel).
 
-3) Steps: setup → image? → video? → done. Also /pro canvas and /captions for burn-in subtitles on any MP4.
+3) Steps: setup → image? → video? → done. Standalone tools: /pro canvas, /captions (burn-in on any MP4), /edit-image (clean → design → export), /brand-kit, /library, /ugc.
 
 4) Key visual styles:
    - storyboard-video: multi-scene stills → **Kling I2V per still, then stitch** (textless frames; burn captions later via /captions). Physical needs product photo; concept/content-research reel does not.
@@ -133,7 +137,7 @@ export function formatSnapshotForPrompt(
 
   return [
     "【User's current context】",
-    `surface: ${snapshot.surface} (landing=start page, studio=in wizard)`,
+    `surface: ${snapshot.surface} (landing/start/site=marketing pages; studio=wizard; edit-image/captions/pro/brand-kit/library/ugc=standalone tools)`,
     snapshot.promotionMode
       ? `promotionMode: ${snapshot.promotionMode}`
       : "promotionMode: not chosen yet",
@@ -164,6 +168,12 @@ export function formatSnapshotForPrompt(
     `cinematicSceneCount: ${snapshot.cinematicSceneCount}`,
     `voiceoverEnabled: ${snapshot.voiceoverEnabled}`,
     `captionBurnEnabled: ${snapshot.captionBurnEnabled}`,
+    snapshot.hasEditImageSource !== undefined
+      ? `hasEditImageSource: ${snapshot.hasEditImageSource}`
+      : "",
+    snapshot.hasCaptionSource !== undefined
+      ? `hasCaptionSource: ${snapshot.hasCaptionSource}`
+      : "",
     snapshot.error ? `lastError: ${snapshot.error.slice(0, 400)}` : "",
   ]
     .filter(Boolean)
@@ -205,15 +215,26 @@ export function buildStudioAssistantSystemPrompt(
     stateBlock,
     formatCoachChecklistForPrompt(snapshot, locale),
     extras?.intent ? `Detected intent (weak hint only): ${extras.intent}` : "",
-    snapshot.surface !== "studio"
+    isToolAssistantSurface(snapshot.surface)
       ? [
-          "User is NOT in studio yet. Step 1 button MUST match what they asked for:",
-          "- Real product / product photo / image post → [Open product image studio](studio-action:open-physical-studio) — NOT setup-website-reel.",
-          "- Website / service / concept video → setup-website-reel or open-concept-studio.",
-          "- Static website launch image → website-launch-image.",
-          "Never route a physical product image post to concept 8s Reel.",
+          `User is ON the ${snapshot.surface} tool — coach THIS page. Do not send them to /studio unless they ask to generate a new ad.`,
+          "edit-image: upload/library → Clean (inpaint) → Design (layers/text/logo) → Export.",
+          "captions: import MP4 → edit timed lines → optional BGM/voice → Burn. No regenerate.",
+          "pro: Upload → Image (Nano Banana) → Video (Seedance); pay-per-use fal.",
+          "No landing-only studio-action links (setup-website-reel, open-*-studio) unless they ask to leave.",
         ].join("\n")
-      : "User is IN studio — Step 1 should be a field to fill or a button on the current step.",
+      : isLandingLikeSurface(snapshot.surface)
+        ? [
+            "User is NOT in studio yet. Step 1 button MUST match what they asked for:",
+            "- Real product / product photo / image post → [Open product image studio](studio-action:open-physical-studio) — NOT setup-website-reel.",
+            "- Website / service / concept video → setup-website-reel or open-concept-studio.",
+            "- Static website launch image → website-launch-image.",
+            "- Edit / retouch an existing image → open-edit-image.",
+            "- Captions / subtitles on an existing MP4 → open-captions.",
+            "- Node canvas → open-pro.",
+            "Never route a physical product image post to concept 8s Reel.",
+          ].join("\n")
+        : "User is IN studio — Step 1 should be a field to fill or a button on the current step.",
   ]
     .filter(Boolean)
     .join("\n\n");

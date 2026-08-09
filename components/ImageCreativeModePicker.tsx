@@ -2,16 +2,11 @@
 
 import { useLocale } from "@/components/LocaleProvider";
 import type { ImageCreativeMode } from "@/lib/creative-workflow";
-import { IMAGE_CREATIVE_MODES } from "@/lib/creative-workflow";
+import { IMAGE_CREATIVE_MODES, imageModePreviewSrc } from "@/lib/creative-workflow";
 
 type Props = {
   value: ImageCreativeMode;
   onChange: (mode: ImageCreativeMode) => void;
-};
-
-const ICONS: Record<ImageCreativeMode, string> = {
-  "promo-ai": "✨",
-  "reference-concept": "🎨",
 };
 
 export function ImageCreativeModePicker({ value, onChange }: Props) {
@@ -23,20 +18,24 @@ export function ImageCreativeModePicker({ value, onChange }: Props) {
       <div className="grid gap-2 sm:grid-cols-2">
         {IMAGE_CREATIVE_MODES.map((id) => {
           const copy = m.wizard.imageCreativeModes[id];
+          const selected = value === id;
           return (
             <button
               key={id}
               type="button"
               onClick={() => onChange(id)}
-              className={`rounded-xl border p-4 text-left transition ${
-                value === id
-                  ? "border-violet-400 bg-violet-50"
-                  : "border-slate-200 bg-white hover:border-slate-300"
+              className={`overflow-hidden rounded-xl border bg-white text-left transition ${
+                selected
+                  ? "border-violet-400 bg-violet-50 ring-1 ring-violet-400"
+                  : "border-slate-200 hover:border-slate-300"
               }`}
             >
-              <span className="text-xl">{ICONS[id]}</span>
-              <p className="mt-2 text-sm font-semibold text-slate-900">{copy.title}</p>
-              <p className="mt-1 text-xs text-slate-600">{copy.description}</p>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={imageModePreviewSrc(id)} alt="" className="aspect-[4/3] w-full object-cover" />
+              <span className="block p-3">
+                <span className="block text-sm font-semibold text-slate-900">{copy.title}</span>
+                <span className="mt-1 block text-xs text-slate-600">{copy.description}</span>
+              </span>
             </button>
           );
         })}

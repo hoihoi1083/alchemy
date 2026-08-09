@@ -3,8 +3,6 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Fragment, Suspense, useEffect, useMemo, useState } from "react";
 import { LandingNav } from "@/components/landing/LandingNav";
-import { StudioAssistantWidget } from "@/components/assistant/StudioAssistantWidget";
-import { CoachSpotlightOverlay } from "@/components/assistant/CoachSpotlightOverlay";
 import { useLocale } from "@/components/LocaleProvider";
 import { FREE_SIGNUP_GRANT_TOKENS } from "@/lib/billing/plans";
 import { isTemplateId } from "@/lib/template-pref";
@@ -1109,9 +1107,6 @@ function StartPageBody() {
           </div>
         </div>
       </section>
-
-      <CoachSpotlightOverlay />
-      <StudioAssistantWidget surface="start" />
     </main>
   );
 }

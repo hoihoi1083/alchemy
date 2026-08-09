@@ -18,4 +18,22 @@ describe("videoDurationPlannerBlock script quality", () => {
     assert.match(block, /Scene\/shot COUNT is flexible/i);
     assert.match(block, /standalone complete short ad/i);
   });
+
+  it("with reference video compresses Video1 and drops HOOK/DEMO rewrite", () => {
+    const block = videoDurationPlannerBlock(8, { hasReferenceVideo: true }).join(
+      "\n",
+    );
+    assert.match(block, /REFERENCE SPINE/i);
+    assert.match(block, /COMPRESS those existing beats/i);
+    assert.match(block, /Do NOT invent a new HOOK/);
+    assert.doesNotMatch(block, /0–~2s HOOK: stop-scroll/i);
+    assert.doesNotMatch(block, /classic Reel/i);
+  });
+
+  it("without reference video keeps marketing arc", () => {
+    const block = videoDurationPlannerBlock(8).join("\n");
+    assert.match(block, /HOOK/);
+    assert.match(block, /DEMO|DESIRE|CLOSE/i);
+    assert.doesNotMatch(block, /REFERENCE SPINE/i);
+  });
 });

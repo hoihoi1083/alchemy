@@ -145,7 +145,35 @@ export function softenStoryboardStillPromptForModeration(prompt: string): string
   return out;
 }
 
-/** Ultra-safe still when a spa/beauty scene still trips fal after softening — room + props only. */
+/**
+ * Same storyboard cell, safer wording — keep SKU / role / theme.
+ * Never invent a different industry (no spa swap).
+ */
+export function saferSameSceneStillPrompt(vars: {
+  originalPrompt: string;
+  role?: string;
+  theme?: string;
+  productName?: string;
+}): string {
+  const softened = softenStoryboardStillPromptForModeration(vars.originalPrompt);
+  const subject =
+    vars.productName?.trim() || vars.theme?.trim() || "";
+  return [
+    softened,
+    subject
+      ? `Keep the same subject/category: ${subject}. Do not change product type or invent another industry.`
+      : "",
+    vars.role?.trim() ? `Keep this storyboard beat/role: ${vars.role.trim()}.` : "",
+    "SAFETY RETRY: no photorealistic faces, no identifiable people, no celebrity likeness.",
+    "No logos, trademarks, readable text, or watermarks.",
+    "No extreme skin close-ups. Hands, product, packaging, and environment OK.",
+    "Commercial photography of the SAME scene — not a spa, clinic, or unrelated stock set.",
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+/** Ultra-safe still when a REAL spa/beauty scene still trips fal after safer retry. */
 export function spaSafeStillFallbackPrompt(vars: {
   theme?: string;
   role?: string;
@@ -163,6 +191,12 @@ export function spaSafeStillFallbackPrompt(vars: {
   ]
     .filter(Boolean)
     .join(" ");
+}
+
+export const STORYBOARD_CELL_BLOCKED_PREFIX = "STORYBOARD_CELL_BLOCKED";
+
+export function storyboardCellBlockedMessage(imageIndex: number): string {
+  return `${STORYBOARD_CELL_BLOCKED_PREFIX}: Scene ${imageIndex} was blocked by the safety filter. Tap regen on this cell — same product, no faces, no brand text.`;
 }
 
 export function looksLikeSpaOrBeautyBrief(...samples: (string | undefined)[]): boolean {

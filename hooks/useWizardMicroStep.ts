@@ -31,6 +31,10 @@ import {
   MICRO_RESUME_DONE_KEY,
   MICRO_RESET_START_KEY,
 } from "@/lib/wizard-micro-steps.types";
+import {
+  microContextForLandingRecipe,
+  peekLandingRecipe,
+} from "@/lib/landing-recipes";
 
 const CTX_KEY = "wizardV2Context";
 
@@ -95,6 +99,7 @@ function wizardStateSnapshot(wizard: StudioWizardValue): WizardMicroStepState {
         wizard.cinematicScenes.length > 0 ||
         wizard.storyboardScenes.length > 0,
     ),
+    storyboardGridApproved: wizard.storyboardGridApproved,
     userReferenceBrief: wizard.userReferenceBrief,
     referenceAnalyzeNote: wizard.referenceAnalyzeNote,
     planProductVideoBusy: wizard.planProductVideoBusy,
@@ -111,13 +116,27 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     if (freshEntry) clearStoredContext();
     const stored = readStoredContext();
     const sameMode = !stored.promotionMode || stored.promotionMode === promotionMode;
+    const recipeId = peekLandingRecipe();
+    const recipeMicro = recipeId
+      ? microContextForLandingRecipe(recipeId, promotionMode)
+      : null;
     return {
       ...defaultMicroContext(promotionMode),
-      ...(sameMode && !freshEntry ? stored : {}),
+      ...(recipeMicro ?? (sameMode && !freshEntry ? stored : {})),
       promotionMode,
     };
   });
-  const [stepIndex, setStepIndex] = useState(0);
+  const [stepIndex, setStepIndex] = useState(() => {
+    const recipeId = peekLandingRecipe();
+    if (!recipeId) return 0;
+    const recipeMicro = microContextForLandingRecipe(recipeId, promotionMode);
+    const initial = {
+      ...defaultMicroContext(promotionMode),
+      ...recipeMicro,
+      promotionMode,
+    };
+    return resumeStepIndex(resolveMicroSteps(initial, wizardStateSnapshot(wizard)));
+  });
   const [finishedSetup, setFinishedSetup] = useState(false);
   const [pendingIntakePath, setPendingIntakePath] = useState<IntakePath | undefined>();
   const [pendingConceptSource, setPendingConceptSource] = useState<ConceptSource | undefined>();
@@ -148,6 +167,7 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
       setWizardWorkflowMode(ctx.workflowMode);
     }
     if (ctx.workflowMode !== "combined") return;
+    if (wizard.videoCreativeMode === "motion-poster") return;
     if (wizard.isUgcPresenterOutput || wizard.visualStyleId === "concept-cinematic") return;
     if (wizard.visualStyleId !== "storyboard-video") {
       wizard.selectVisualStyle("storyboard-video");
@@ -166,6 +186,7 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     wizard.visualStyleId,
     wizard.imageOutputMode,
     wizard.shipItMode,
+    wizard.videoCreativeMode,
     wizard.selectVisualStyle,
     wizard.setImageOutputMode,
     wizard.setShipItMode,

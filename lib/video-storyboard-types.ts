@@ -1,5 +1,9 @@
+import type { StoryboardLookBible } from "@/lib/shot-recipes";
+
 export const MIN_STORYBOARD_SCENES = 2;
 export const MAX_STORYBOARD_SCENES = 9;
+
+export type { StoryboardLookBible };
 
 export type StoryboardScenePlan = {
   /** 1-based — maps to Seedance @Image1, @Image2, … */
@@ -18,6 +22,8 @@ export type StoryboardScenePlan = {
    * Example: "slow push-in with soft parallax, product stays locked center".
    */
   cameraMotionEn?: string;
+  /** English lighting for this beat (editable) — TVC grammar. */
+  lightingEn?: string;
   /** Where the product/concept appears in frame (user-facing, market language). */
   productPlacementZh?: string;
   /** Spoken or caption punch line for this beat (burn later in /captions). */
@@ -28,6 +34,8 @@ export type VideoStoryboardPlan = {
   title: string;
   theme: string;
   visualDirection: string;
+  /** Structured look lock — injected into every still + motion note. */
+  lookBible?: StoryboardLookBible;
   totalDurationSec: number;
   scenes: StoryboardScenePlan[];
   /** Full English motion-plan notes for Kling (JSON key kept as seedancePrompt for API compat). */

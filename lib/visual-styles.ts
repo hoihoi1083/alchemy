@@ -119,16 +119,23 @@ export function visualStylesForWorkflow(
 export type VisualStyleDef = {
   id: VisualStyleId;
   icon: string;
+  /** Square preview for wizard / landing pickers. */
+  previewSrc: string;
   templateId: TemplateId;
   usesCompositor: boolean;
   /** Appended to image/video AI prompts (user extra requirements are added after). */
   promptHint: string;
 };
 
+function visualPreview(id: VisualStyleId): string {
+  return `/images/studio/visual-styles/${id}.png?v=1`;
+}
+
 export const VISUAL_STYLES: VisualStyleDef[] = [
   {
     id: "product",
     icon: "📦",
+    previewSrc: visualPreview("product"),
     templateId: "product-reel",
     usesCompositor: false,
     promptHint:
@@ -137,6 +144,7 @@ export const VISUAL_STYLES: VisualStyleDef[] = [
   {
     id: "dark-premium",
     icon: "💎",
+    previewSrc: visualPreview("dark-premium"),
     templateId: "crystal-promo",
     usesCompositor: false,
     promptHint:
@@ -145,6 +153,7 @@ export const VISUAL_STYLES: VisualStyleDef[] = [
   {
     id: "warm-shop",
     icon: "🏪",
+    previewSrc: visualPreview("warm-shop"),
     templateId: "shop-promo",
     usesCompositor: false,
     promptHint:
@@ -153,6 +162,7 @@ export const VISUAL_STYLES: VisualStyleDef[] = [
   {
     id: "model-wear",
     icon: "🧑‍💼",
+    previewSrc: visualPreview("model-wear"),
     templateId: "model-wear-reel",
     usesCompositor: false,
     promptHint:
@@ -161,6 +171,7 @@ export const VISUAL_STYLES: VisualStyleDef[] = [
   {
     id: "ugc-presenter",
     icon: "🎙️",
+    previewSrc: visualPreview("ugc-presenter"),
     templateId: "ugc-presenter-reel",
     usesCompositor: false,
     promptHint:
@@ -169,6 +180,7 @@ export const VISUAL_STYLES: VisualStyleDef[] = [
   {
     id: "info-poster",
     icon: "📋",
+    previewSrc: visualPreview("info-poster"),
     templateId: "info-poster",
     usesCompositor: false,
     promptHint: "",
@@ -176,6 +188,7 @@ export const VISUAL_STYLES: VisualStyleDef[] = [
   {
     id: "brand-fit",
     icon: "🔗",
+    previewSrc: visualPreview("brand-fit"),
     templateId: "brand-fit",
     usesCompositor: false,
     promptHint: "",
@@ -183,6 +196,7 @@ export const VISUAL_STYLES: VisualStyleDef[] = [
   {
     id: "brand-campaign",
     icon: "🎯",
+    previewSrc: visualPreview("brand-campaign"),
     templateId: "brand-campaign",
     usesCompositor: false,
     promptHint: "",
@@ -190,6 +204,7 @@ export const VISUAL_STYLES: VisualStyleDef[] = [
   {
     id: "brand-video",
     icon: "🎬",
+    previewSrc: visualPreview("brand-video"),
     templateId: "brand-video",
     usesCompositor: false,
     promptHint: "",
@@ -197,6 +212,7 @@ export const VISUAL_STYLES: VisualStyleDef[] = [
   {
     id: "creative-video",
     icon: "✨",
+    previewSrc: visualPreview("creative-video"),
     templateId: "creative-video",
     usesCompositor: false,
     promptHint: "",
@@ -204,6 +220,7 @@ export const VISUAL_STYLES: VisualStyleDef[] = [
   {
     id: "concept-cinematic",
     icon: "🎥",
+    previewSrc: visualPreview("concept-cinematic"),
     templateId: "creative-video",
     usesCompositor: false,
     promptHint:
@@ -212,6 +229,7 @@ export const VISUAL_STYLES: VisualStyleDef[] = [
   {
     id: "storyboard-video",
     icon: "🎞️",
+    previewSrc: visualPreview("storyboard-video"),
     templateId: "storyboard-video",
     usesCompositor: false,
     promptHint:
@@ -220,6 +238,7 @@ export const VISUAL_STYLES: VisualStyleDef[] = [
   {
     id: "paper-layout",
     icon: "📄",
+    previewSrc: visualPreview("paper-layout"),
     templateId: "paper-sticker-reel",
     usesCompositor: true,
     promptHint: "",
@@ -227,6 +246,7 @@ export const VISUAL_STYLES: VisualStyleDef[] = [
   {
     id: "service-promo",
     icon: "🤝",
+    previewSrc: visualPreview("service-promo"),
     templateId: "service-promo",
     usesCompositor: false,
     promptHint:
@@ -235,6 +255,7 @@ export const VISUAL_STYLES: VisualStyleDef[] = [
   {
     id: "pricing-offer",
     icon: "💳",
+    previewSrc: visualPreview("pricing-offer"),
     templateId: "pricing-offer",
     usesCompositor: false,
     promptHint:
@@ -243,6 +264,7 @@ export const VISUAL_STYLES: VisualStyleDef[] = [
   {
     id: "website-launch",
     icon: "🌐",
+    previewSrc: visualPreview("website-launch"),
     templateId: "website-launch",
     usesCompositor: false,
     promptHint:

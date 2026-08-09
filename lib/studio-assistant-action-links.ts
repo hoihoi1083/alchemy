@@ -14,6 +14,11 @@ export const STUDIO_ACTION_IDS: StudioAssistantActionId[] = [
   "concept-cinematic",
   "website-launch-image",
   "open-captions",
+  "open-edit-image",
+  "open-pro",
+  "open-brand-kit",
+  "open-library",
+  "open-ugc",
   "setup-website-reel",
   "analyze-brand",
   "open-concept-studio",
@@ -34,6 +39,8 @@ const LANDING_TASKS = new Set<CoachTaskKind>([
   "route-storyboard",
   "route-concept-studio",
   "route-captions",
+  "route-edit-image",
+  "route-pro-canvas",
 ]);
 
 const STUDIO_LINK_TASKS = new Set<CoachTaskKind>(["analyze-brand", "analyze-brand-before-image"]);
@@ -41,8 +48,13 @@ const STUDIO_LINK_TASKS = new Set<CoachTaskKind>(["analyze-brand", "analyze-bran
 function mapUnknownSlug(slug: string): StudioAssistantActionId {
   const s = slug.toLowerCase().replace(/_/g, "-");
   if (VALID_SET.has(s)) return s as StudioAssistantActionId;
-  if (/analyze|brand|品牌/.test(s)) return "analyze-brand";
+  if (/edit.?image|inpaint|修圖|修图|改圖|改图/.test(s)) return "open-edit-image";
   if (/caption|字幕/.test(s)) return "open-captions";
+  if (/^pro$|pro-canvas|node/.test(s)) return "open-pro";
+  if (/brand.?kit|品牌套件|brand kit/.test(s)) return "open-brand-kit";
+  if (/library|作品庫|作品库/.test(s)) return "open-library";
+  if (/ugc/.test(s)) return "open-ugc";
+  if (/analyze|brand|品牌/.test(s)) return "analyze-brand";
   if (/stitch|拼接|longer|24/.test(s)) return "apply-8s-recipe";
   if (/static|launch|上線|上线|mockup|poster/.test(s)) return "website-launch-image";
   if (/storyboard|分鏡|分镜/.test(s)) return "open-storyboard-studio";
@@ -68,7 +80,7 @@ export function normalizeAssistantActionLinks(text: string): string {
 }
 
 export function replyHasValidActionLink(text: string): boolean {
-  return /\[([^\]]+)\]\(studio-action:(setup-website-reel|analyze-brand|open-concept-studio|open-physical-studio|open-reference-ad-studio|open-storyboard-studio|apply-cinematic-stitch|website-launch-image|open-captions|apply-8s-recipe|concept-cinematic)\)/i.test(
+  return /\[([^\]]+)\]\(studio-action:(setup-website-reel|analyze-brand|open-concept-studio|open-physical-studio|open-reference-ad-studio|open-storyboard-studio|apply-cinematic-stitch|website-launch-image|open-captions|open-edit-image|open-pro|open-brand-kit|open-library|open-ugc|apply-8s-recipe|concept-cinematic)\)/i.test(
     text,
   );
 }

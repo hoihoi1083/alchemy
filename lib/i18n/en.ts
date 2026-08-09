@@ -575,6 +575,39 @@ export const en = {
     toolProDesc: "Node workflow for power users — Master plan.",
     proMasterBadge: "Master plan",
     visualCaptionsLink: "Visual subtitle lab (beta)",
+    recipes: {
+      badge: "1-tap recipes",
+      title: "Finishable video recipes",
+      subtitle:
+        "Same two walks for product and concept. Motion poster fits the free grant. 12s MiniMax H3 TVC needs a paid plan.",
+      cta: "Start this recipe",
+      physicalGroup: "Product",
+      conceptGroup: "Concept / service",
+      tvcPaidHint:
+        "12s MiniMax H3 needs a paid plan (~1140 tokens). Free grant can cover stills + Kling stitch if H3 does not fit.",
+      items: {
+        "motion-poster": {
+          title: "Motion poster",
+          description: "1 still + micro camera/env motion (optional start→end). Usually cheaper.",
+          costHint: "~1 image + 1 short clip · fits free grant",
+        },
+        "product-tvc-12s": {
+          title: "Product TVC ~12s",
+          description: "4-beat storyboard: establish → macro → orbit → lifestyle/payoff.",
+          costHint: "~4 stills + 12s H3 — paid plan · Kling stitch may fit free",
+        },
+        "concept-motion-poster": {
+          title: "Concept motion poster",
+          description: "1 AI scene still + micro camera/env motion for a service or idea — no SKU packshot.",
+          costHint: "~1 AI still + 1 short clip · fits free grant",
+        },
+        "concept-tvc-12s": {
+          title: "Concept TVC ~12s",
+          description: "4-beat storyboard for a service / idea: establish → metaphor → orbit → payoff.",
+          costHint: "~4 stills + 12s H3 — paid plan · Kling stitch may fit free",
+        },
+      },
+    },
     templatesBadge: "Templates",
     templatesTitle: "Start from a marketing template",
     templatesSubtitle:
@@ -1049,12 +1082,30 @@ export const en = {
     styleModeSimple: "Show fewer (recommended)",
     styleModeAll: "Show all styles",
     artStyleLabel: "Art direction (keyframes)",
+    artStyleVideoSafeHint:
+      "Video-safe grades only (film / CCD / 国风 / cinematic). Look changes grade, not the story. @Video1 still owns spine when a reference reel is attached.",
     artStyleHint:
       "Controls AI image keyframe look — video generation only adds motion. For manga/watercolor/3D, the whole frame (including text) uses that medium; text-heavy product ads work best with concept cinematic or realistic.",
     artStyles: {
       realistic: {
         title: "Realistic photo",
         description: "Live-action commercial photography (default)",
+      },
+      cinematic: {
+        title: "Cinematic TVC",
+        description: "Controlled rim light, shallow DOF, premium commercial",
+      },
+      film: {
+        title: "Film grain",
+        description: "Analog grain, soft halation, nostalgic grade",
+      },
+      ccd: {
+        title: "CCD snapshot",
+        description: "Early-digital flash, candid social energy",
+      },
+      guofeng: {
+        title: "国风 cinematic",
+        description: "Tyndall light, poetic atmosphere, photoreal product",
       },
       "anime-2d": {
         title: "2D anime",
@@ -1324,20 +1375,63 @@ export const en = {
     storyboardPlanSceneDescLabel: "Scene description",
     storyboardPlanCopyLabel: "On-image copy (optional)",
     storyboardPlanCameraLabel: "Camera / motion (English, editable)",
+    storyboardPlanLightingLabel: "Lighting (English, editable)",
+    storyboardShotMapTitle: "Shot map (review before generate)",
+    storyboardLookBibleLabel: "Look bible (grade lock):",
+    storyboardShotMapEmptyStill: "Still pending",
+    tvcShotRoles: {
+      establish: "Establish",
+      macro: "Macro",
+      "logo-trace": "Logo trace",
+      orbit: "Orbit",
+      lifestyle: "Lifestyle",
+      payoff: "Payoff",
+    },
+    tvcShotJobs: {
+      establish: "Where am I? Hero in a world.",
+      macro: "Why is this premium? Texture / logo.",
+      "logo-trace": "Trace the mark. Keep geometry locked.",
+      orbit: "Energy / use. Turntable or hand in use.",
+      lifestyle: "Life context. Product stays the hero.",
+      payoff: "Remember / buy. Pack + claim energy.",
+    },
+    storyboardTapToReview: "Tap to review",
+    storyboardCellReviewed: "Reviewed",
+    storyboardApproveNeedLookHint:
+      "Tap every still first. Video will animate mistakes — regen a bad cell, don’t generate video to hide it.",
+    storyboardApproveCheckbox: "I looked at every cell — stills are ready for video",
+    storyboardApproveHint:
+      "Stills are the ad. Regen a junk cell, then tap it again. Approval clears if a still changes.",
+    storyboardApproveRequiredHint: "Approve the shot-map stills before generating video.",
     storyboardPlanPlacementLabel: "Product / concept placement",
     storyboardPlanPunchLabel: "Punch line / caption beat",
     videoEngineLabel: "Video engine",
     videoEngineSeedance: "Seedance (default)",
     videoEngineMinimaxH3: "MiniMax H3 (faces / product lock)",
-    videoEngineHint: "MiniMax H3 is stronger for face identity and later replace-edits. Seedance stays the default commercial path.",
+    videoEngineHint:
+      "Simple studio picks the engine: Seedance when you attach a research reel, MiniMax H3 for stills and posters. Kling is stills-only backup.",
     storyboardSceneLabel: "Scene",
     storyboardVideoIntro:
-      "Storyboard and scene images are ready. Video animates each still, then stitches one clip.",
-    storyboardVideoPreflight: "Mode: per-scene image-to-video + stitch",
+      "These stills are locked into the video. Regen a bad cell in review — generating will not invent a better ad. With a research reel: Seedance copies that spine, then MiniMax H3. Stills only: H3 first, Kling stitch if H3 fails.",
+    storyboardVideoPreflight:
+      "Reel: Seedance R2V → MiniMax H3. Stills: MiniMax H3 → Kling stitch",
     klingStoryboardFallbackNote:
-      "Storyboard video — each scene still becomes a short clip, then we stitch them together",
+      "Storyboard video — Kling fallback: each scene still becomes a short clip, then we stitch them together",
     storyboardMinimaxH3Note:
       "Storyboard video — MiniMax H3 single clip from scene stills (no stitch)",
+    storyboardSeedanceR2vNote:
+      "Storyboard video — Seedance reference-to-video (@Video1 spine + stills, quality)",
+    storyboardEnginePipelineHint:
+      "Research reel: Seedance quality R2V → MiniMax H3 (never Kling). Stills only: MiniMax H3 → Kling 5s/10s stitch.",
+    researchReelCopyingNote:
+      "Copying your reference — if faces are blocked we retry MiniMax H3.",
+    switchToMotionPosterBtn: "Use motion poster instead (cheaper)",
+    switchToMotionPosterHint:
+      "Skip multi-scene stitch — animate one keyframe with micro-motion only.",
+    lookBiblePaletteLabel: "Palette",
+    lookBibleLightingLabel: "Lighting",
+    lookBibleMaterialsLabel: "Materials",
+    lookBibleNegativesLabel: "Avoid",
     seedanceToKlingFallbackNote:
       "Seedance was blocked for this request — used Kling storyboard (per-scene clips + stitch) instead",
     seedanceToMinimaxH3FallbackNote:
@@ -1900,6 +1994,11 @@ export const en = {
         title: "Product promo video",
         description: "Animate your product / keyframe — smooth commercial motion",
       },
+      "motion-poster": {
+        title: "Motion poster",
+        description:
+          "1 product still + tiny camera/env motion (or start→end). Not a multi-scene storyboard — usually cheaper.",
+      },
       "reference-concept": {
         title: "Inspired by reference video",
         description: "Your product + reference MP4 → motion & edit concept (not a clone)",
@@ -1909,6 +2008,9 @@ export const en = {
         description: "Use the AI image from Step 2 — best for full image-then-video flow",
       },
     },
+    motionPosterHint:
+      "Motion poster locks the hero still and only allows listed micro-motions. Upload an optional closing frame for start→end morph.",
+    motionPosterNeedKeyframe: "Add a product photo, scene still, or keyframe first for motion poster.",
     videoSettingsTitle: "Video settings",
     videoReferenceOutputSettingsTitle: "Output length & quality",
     videoReferenceOutputSettingsHint:
@@ -2091,11 +2193,11 @@ export const en = {
     imageReviewCompleteMany: "Generation completed! Your {n} images are ready to review.",
     imageReviewStoryboardReadyTitle: "Storyboard visuals ready",
     imageReviewStoryboardReadyBody:
-      "Review these scene stills, then continue to video setup. This is not the final video yet.",
+      "4-beat stills are the product. Tap each cell, regen junk frames, then approve. Video only animates what you lock.",
     imageReviewStoryboardHeroBefore: "Review your",
     imageReviewStoryboardHeroAccent: "storyboard visuals.",
     imageReviewStoryboardHeroHint:
-      "Confirm the scene pack looks right, then continue to create the video.",
+      "Tap every still. Regen a bad cell. Approve only after you looked — video will not fix a weak grid.",
     imageReviewPathLabel: "Path",
     imageReviewPathImagesVideo: "Images → Video",
     imageReviewVisualSetLabel: "Visual set",
@@ -2549,6 +2651,16 @@ export const en = {
     insufficientTokensTitle: "Out of tokens",
     insufficientTokensCta: "View plans & top up",
     insufficientTokensDismiss: "Close",
+    tvcNeedsPaidPlan:
+      "12s MiniMax H3 needs more tokens than the free grant (~1140 for 12s). Upgrade on Pricing, or use Kling stitch if it fits your balance.",
+    tvcNeedsPaidPlanTitle: "12s TVC needs a paid plan",
+    storyboardEngineChoiceTitle: "H3 needs more tokens — Kling stitch fits now",
+    storyboardEngineChoiceBody:
+      "MiniMax H3 12s costs ~{h3} tokens. You have {balance}. Kling stitch (~{kling}) is 4 clips cut together, not one H3 take.",
+    storyboardEngineChoiceH3: "Upgrade for MiniMax H3",
+    storyboardEngineChoiceKling: "Use Kling stitch now",
+    storyboardCellBlocked:
+      "This scene was blocked by the safety filter. Tap regen on this cell — same product, no faces, no brand text.",
     tokensNotCharged: "You weren’t charged for this attempt.",
     timeout: "The request took too long. Please try again.",
     seedanceSensitive:
@@ -2556,12 +2668,16 @@ export const en = {
     falContentPolicy:
       "video generation blocked this media (people / private-info filter). We can retry with per-scene animation + stitch—if auto-switch fails, tap Generate video again.",
     klingStoryboardFailed: "storyboard fallback failed. Try again or use stills without faces.",
+    klingDurationUnreachable:
+      "This duration can’t be hit with Kling stitch (5s min per still). Retry MiniMax H3 or pick 12s.",
     needPhoto: "Please upload a product photo first.",
     needReferenceImage: "Please upload a reference image first.",
     needHeadline: "Please enter a headline for this template.",
     needKeyframe: "Generate an image or choose “use my upload as-is” before making video.",
     needStyleReference: "Upload a reference ad image for “inspired by reference” mode.",
     needReferenceVideo: "Upload a reference MP4 for “inspired by reference video” mode.",
+    referenceVideoPrepareFailed:
+      "Your reference video (@Video1) could not be prepared. We did not generate a stills-only clip — fix the MP4 and try again.",
     needGeneratedImage: "Generate your AI image in Step 2 first (image → video flow).",
     needPrompt: "Upload a photo, or describe what to create in advanced options.",
     imageGenNoUrl: "AI did not return an image URL — check the terminal or try again.",
@@ -3098,6 +3214,21 @@ export const en = {
       "Hi! I'm your studio guide — start here before you open the wizard. Tell me what you want (website, product photo, captions…) and I'll pick the right path and open studio for you.",
     welcomeStart:
       "Not sure physical vs concept? Describe your goal or paste a URL — I'll tell you which card to pick and what to type in the studio.",
+    welcomeEditImage:
+      "You're in the image editor. Upload or pick a photo, then ask me how to clean (inpaint), add logo/text, or export. I stay on this page.",
+    welcomeCaptions:
+      "You're in caption studio. Import any MP4 — I'll help with timed lines, BGM, voice, then burn. No need to regenerate the video.",
+    welcomePro:
+      "Pro canvas — connect Upload → Image → Video nodes. Ask me the order or cost before you run. Pay-per-use fal.",
+    welcomeBrandKit:
+      "Brand kit — upload logo and colors once. Ask me whether to stamp the logo on storyboard stills.",
+    welcomeLibrary:
+      "Your library. Ask me how to reopen a file in the image editor or caption studio, or download it.",
+    welcomeUgc:
+      "UGC studio — tell me the product and vibe (unboxing, review, street). For storyboard ads, say so and I'll send you to /studio.",
+    welcomeSite:
+      "Hi — I can open the wizard, image editor, captions, Pro canvas, or brand kit. What do you want to make?",
+    shortLabel: "Ask AI",
     openingStudio: "Opening the studio with your setup — one moment…",
     studioContinued:
       "You're in the studio now — your chat history is kept here. Reply next or 下一步 for Step 2.",
@@ -3416,7 +3547,7 @@ export const en = {
       settingsTitle: "Video settings",
       settingsHint: "Duration and resolution affect token cost.",
       klingSettingsHint:
-        "Kling animates each still as a 5s or 10s clip, then stitches them. Resolution/fast mode do not apply.",
+        "Video tries MiniMax H3 first (all stills → one clip). Clip length below applies only if Kling fallback runs (5s or 10s per still + stitch).",
       klingClipLabel: "Clip length (per scene)",
       klingClipHint: "Kling only supports 5s or 10s per scene — not Seedance-style 4–12s totals.",
       klingTotalLabel: "About {total}s total ({n} × {clip}s)",
@@ -3558,6 +3689,7 @@ export const en = {
       need_headline: "Add a headline or concept idea.",
       image_busy: "Wait for image generation to finish.",
       image_not_ready: "Wait for the generated image to appear.",
+      need_storyboard_approve: "Approve the storyboard stills (九宫格) before continuing to video.",
       video_busy: "Wait for video generation to finish.",
       video_not_ready: "Video is not ready yet — wait for generation, or go back and retry.",
       plan_video_busy: "Wait for the AI motion plan to finish.",

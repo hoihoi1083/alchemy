@@ -156,6 +156,8 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn" | "zh-tw") {
   const [storyboardBrief, setStoryboardBrief] = useState("");
   const [storyboardPlan, setStoryboardPlan] = useState<VideoStoryboardPlan | null>(null);
   const [storyboardScenes, setStoryboardScenes] = useState<StoryboardSceneResult[]>([]);
+  const [storyboardGridApproved, setStoryboardGridApproved] = useState(false);
+  const [storyboardCellsViewed, setStoryboardCellsViewed] = useState<number[]>([]);
   const [cinematicStitchReel, setCinematicStitchReel] = useState(false);
   const [cinematicSceneCount, setCinematicSceneCount] = useState<CinematicSceneCount>(3);
   const [cinematicReelPlan, setCinematicReelPlan] = useState<CinematicReelPlan | null>(null);
@@ -163,7 +165,7 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn" | "zh-tw") {
   const [storyboardTrimDuration, setStoryboardTrimDuration] =
     useState<StoryboardDurationPreset>("8");
   const [storyboardSceneCount, setStoryboardSceneCount] =
-    useState<StoryboardSceneCount>("auto");
+    useState<StoryboardSceneCount>("4");
   const [musicMood, setMusicMood] = useState<MusicMood>("auto");
   const [voiceoverEnabled, setVoiceoverEnabled] = useState(false);
   const [voiceoverLocale, setVoiceoverLocale] = useState<VoiceoverLocale>(() =>
@@ -376,6 +378,10 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn" | "zh-tw") {
     setStoryboardPlan,
     storyboardScenes,
     setStoryboardScenes,
+    storyboardGridApproved,
+    setStoryboardGridApproved,
+    storyboardCellsViewed,
+    setStoryboardCellsViewed,
     cinematicStitchReel,
     setCinematicStitchReel,
     cinematicSceneCount,

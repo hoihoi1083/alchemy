@@ -38,6 +38,7 @@ import type {
   StoryboardScenePlan,
   VideoStoryboardPlan,
 } from "@/lib/video-storyboard-types";
+import { lookBibleSummaryLine } from "@/lib/shot-recipes";
 import {
   REFERENCE_CONTENT_REPLACE_LINE,
   REFERENCE_CONTENT_REPLACE_TEXTLESS_LINE,
@@ -100,6 +101,10 @@ export const SUBJECT_FRAMINGS: SubjectFraming[] = [
   "torso-no-face",
   "no-people",
 ];
+
+export function subjectFramingPreviewSrc(id: SubjectFraming): string {
+  return `/images/studio/framing/${id}.png?v=1`;
+}
 
 export type PromptVariables = {
   product: string;
@@ -1558,6 +1563,17 @@ export function buildStoryboardSceneImagePrompt(
     ? getVisualStyle(options.visualStyleId).promptHint
     : "";
   const sceneCopy = textless ? undefined : scene.onImageCopyZh?.trim();
+  const lookLock = (() => {
+    const bibleLine = plan.lookBible ? lookBibleSummaryLine(plan.lookBible) : "";
+    const lighting = scene.lightingEn?.trim();
+    return joinParts(
+      bibleLine ? `LOOK BIBLE LOCK (grade only — all scenes): ${bibleLine}.` : "",
+      lighting ? `Scene lighting (this beat): ${lighting}.` : "",
+      plan.visualDirection && !bibleLine
+        ? `Series look: ${plan.visualDirection}.`
+        : "",
+    );
+  })();
   const textlessRule =
     brandLogoImageIndex != null
       ? `TEXTLESS STILL (mandatory for video): ZERO readable marketing copy — no Chinese/Latin captions, title bars, or watermarks. Exception: integrate the client's brand logo from IMAGE ${brandLogoImageIndex} exactly as provided. Leave blank space for burned captions AFTER Kling/Seedance.`
@@ -1578,7 +1594,7 @@ export function buildStoryboardSceneImagePrompt(
       joinParts(
         artStyleMandatoryLead(sceneVars.artStyle),
         `Storyboard still ${scene.imageIndex}/${plan.scenes.length}.`,
-        plan.visualDirection ? `Series look: ${plan.visualDirection}.` : "",
+        lookLock,
         plan.theme ? `Story theme: ${plan.theme}.` : "",
         `Scene role: ${scene.role}.`,
         sceneImagePrompt ? `Scene action: ${sceneImagePrompt}.` : "",
@@ -1604,7 +1620,10 @@ export function buildStoryboardSceneImagePrompt(
         artStyleMandatoryLead(vars.artStyle),
         `Storyboard still ${scene.imageIndex}/${plan.scenes.length}.`,
         plan.theme ? `User story theme (content lane): ${plan.theme}.` : "",
-        plan.visualDirection ? `Series look (from reference reel): ${plan.visualDirection}.` : "",
+        lookLock ||
+          (plan.visualDirection
+            ? `Series look (from reference reel): ${plan.visualDirection}.`
+            : ""),
         `Scene role: ${scene.role}.`,
         sceneImagePrompt ? `Scene action: ${sceneImagePrompt}.` : "",
         imageStoryboardStyleRefBlock(plan, dualProductAndStyle, textless),
@@ -1626,7 +1645,7 @@ export function buildStoryboardSceneImagePrompt(
       joinParts(
         artStyleMandatoryLead(vars.artStyle),
         `Storyboard still ${scene.imageIndex}/${plan.scenes.length} for a concept short.`,
-        plan.visualDirection ? `Series look: ${plan.visualDirection}.` : "",
+        lookLock,
         plan.theme ? `Story theme: ${plan.theme}.` : "",
         `Scene role: ${scene.role}.`,
         sceneImagePrompt,
@@ -1650,7 +1669,7 @@ export function buildStoryboardSceneImagePrompt(
       joinParts(
         artStyleMandatoryLead(vars.artStyle),
         `Storyboard still ${scene.imageIndex}/${plan.scenes.length} for a concept short.`,
-        plan.visualDirection ? `Series look: ${plan.visualDirection}.` : "",
+        lookLock,
         plan.theme ? `Story theme: ${plan.theme}.` : "",
         `Scene role: ${scene.role}.`,
         sceneImagePrompt,
@@ -1669,7 +1688,7 @@ export function buildStoryboardSceneImagePrompt(
     joinParts(
       artStyleMandatoryLead(vars.artStyle),
       `Storyboard still ${scene.imageIndex}/${plan.scenes.length} for a ${artStyleStoryboardLead(vars.artStyle)}.`,
-      plan.visualDirection ? `Series look: ${plan.visualDirection}.` : "",
+      lookLock,
       plan.theme ? `Story theme: ${plan.theme}.` : "",
       `Scene role: ${scene.role}.`,
       sceneImagePrompt,
@@ -1738,27 +1757,27 @@ export function rebuildPromptsForTemplate(
   };
 }
 
-/** Reference-to-video — @Video1 drives motion/scene; @Image1 is product identity only (fal pattern). */
+/** Reference-to-video — @Video1 = spine, @Image1 = object, name/title = claim (fal pattern). */
 export function buildReferenceVideoPrompt(
   vars: PromptVariables,
   templateId?: TemplateId,
 ): string {
-  const styleMood = templateId
-    ? applyTemplate(getTemplate(templateId).videoPromptTemplate, vars)
-    : "";
+  // Do NOT inject template videoPromptTemplate (often "Slow cinematic push-in…") —
+  // that fights @Video1 spine. Template id is unused for R2V camera/mood.
+  void templateId;
   const productLabel = vars.product?.trim() || "the user's product";
+  const claim = vars.headline?.trim();
   return (
     joinParts(
-      "Reference-to-video. @Video1 is the PRIMARY reference: copy its camera angles, shot composition, hand movements, scene layout, pacing, and edit rhythm.",
-      `@Image1 performs the same actions and scene structure as @Video1 — only swap the hero product to ${productLabel} (match @Image1 colors, materials, and shape).`,
+      "Reference-to-video. @Video1 = SPINE: camera angles, shot composition, hand movements, scene layout, pacing, and edit rhythm.",
+      `@Image1 = OBJECT ONLY: perform the same actions/structure as @Video1, swap the hero to ${productLabel} (match @Image1 colors, materials, and shape).`,
+      claim
+        ? `Product name + title are CLAIM only (${productLabel} — ${claim}): sell this use-case without changing the on-screen object away from @Image1.`
+        : `Product name is CLAIM only (${productLabel}): sell the named use-case; on-screen object must stay @Image1.`,
       `If @Video1 shows hands using or presenting a product, show natural hands with ${productLabel} — do NOT collapse into a generic slow push-in unless @Video1 does that.`,
       "Keep the same background type, lighting direction, and framing as @Video1.",
       "Do not copy identifiable faces, brand logos, social UI, or readable on-screen text from @Video1.",
       "Silent video: no speech, dialogue, vocals, or ambient talk — audio is added in post-production.",
-      styleMood
-        ? `When not conflicting with @Video1, match this brand/style mood: ${styleMood}.`
-        : "",
-      vars.headline ? `Campaign theme: ${vars.headline}.` : "",
       MARKET_HINTS[vars.market],
       vars.framing === "hands-only"
         ? "Hands may appear; face never visible."

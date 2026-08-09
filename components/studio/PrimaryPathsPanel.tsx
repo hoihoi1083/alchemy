@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 import { useWizard } from "@/components/studio/WizardContext";
 import { isContentResearchStyleExtra } from "@/lib/content-research-promote";
+import { imageModePreviewSrc, videoModePreviewSrc } from "@/lib/creative-workflow";
+import { getVisualStyle } from "@/lib/visual-styles";
 
 type Variant = "physical-image" | "concept-image" | "physical-video" | "concept-video";
 
@@ -89,12 +91,14 @@ export function PrimaryPathsPanel({ variant, showCinematicExtras = false }: Prop
             active={visualStyleId === "creative-video"}
             title={m.wizard.visualStyles["creative-video"].title}
             description={m.wizard.visualStyles["creative-video"].description}
+            previewSrc={getVisualStyle("creative-video").previewSrc}
             onClick={() => applyPrimaryPathConceptVideo("creative")}
           />
           <PathButton
             active={visualStyleId === "brand-video"}
             title={m.wizard.visualStyles["brand-video"].title}
             description={m.wizard.visualStyles["brand-video"].description}
+            previewSrc={getVisualStyle("brand-video").previewSrc}
             onClick={() => applyPrimaryPathConceptVideo("brand")}
           />
         </div>
@@ -104,24 +108,28 @@ export function PrimaryPathsPanel({ variant, showCinematicExtras = false }: Prop
             active={visualStyleId === "info-poster"}
             title={m.wizard.pathInfoTitle}
             description={m.wizard.pathInfoDesc}
+            previewSrc={getVisualStyle("info-poster").previewSrc}
             onClick={() => applyPrimaryPathConcept("info")}
           />
           <PathButton
             active={visualStyleId === "brand-fit"}
             title={m.wizard.pathBrandTitle}
             description={m.wizard.pathBrandDesc}
+            previewSrc={getVisualStyle("brand-fit").previewSrc}
             onClick={() => applyPrimaryPathConcept("brand")}
           />
           <PathButton
             active={visualStyleId === "pricing-offer"}
             title={m.wizard.pathPricingTitle}
             description={m.wizard.pathPricingDesc}
+            previewSrc={getVisualStyle("pricing-offer").previewSrc}
             onClick={() => applyPrimaryPathConcept("pricing")}
           />
           <PathButton
             active={visualStyleId === "website-launch"}
             title={m.wizard.pathWebsiteTitle}
             description={m.wizard.pathWebsiteDesc}
+            previewSrc={getVisualStyle("website-launch").previewSrc}
             onClick={() => applyPrimaryPathConcept("website")}
           />
         </div>
@@ -131,30 +139,35 @@ export function PrimaryPathsPanel({ variant, showCinematicExtras = false }: Prop
             active={videoCreativeMode === "product-assistant"}
             title={`🤖 ${assistantMode.title}`}
             description={assistantMode.description}
+            previewSrc={videoModePreviewSrc("product-assistant")}
             onClick={() => applyPrimaryPathVideoOnly("assistant")}
           />
           <PathButton
             active={visualStyleId === "storyboard-video"}
             title={m.wizard.pathStoryboardTitle}
             description={m.wizard.pathStoryboardDesc}
+            previewSrc={getVisualStyle("storyboard-video").previewSrc}
             onClick={() => applyPrimaryPathVideoOnly("storyboard")}
           />
           <PathButton
             active={visualStyleId === "brand-video"}
             title={m.wizard.visualStyles["brand-video"].title}
             description={m.wizard.visualStyles["brand-video"].description}
+            previewSrc={getVisualStyle("brand-video").previewSrc}
             onClick={() => applyPrimaryPathVideoOnly("brand")}
           />
           <PathButton
             active={visualStyleId === "creative-video"}
             title={m.wizard.visualStyles["creative-video"].title}
             description={m.wizard.visualStyles["creative-video"].description}
+            previewSrc={getVisualStyle("creative-video").previewSrc}
             onClick={() => applyPrimaryPathVideoOnly("creative")}
           />
           <PathButton
             active={visualStyleId === "ugc-presenter"}
             title={m.wizard.pathUgcPresenterTitle}
             description={m.wizard.pathUgcPresenterDesc}
+            previewSrc={getVisualStyle("ugc-presenter").previewSrc}
             onClick={() => applyPrimaryPathVideoOnly("ugc-presenter")}
           />
         </div>
@@ -166,12 +179,14 @@ export function PrimaryPathsPanel({ variant, showCinematicExtras = false }: Prop
                 active={visualStyleId === "storyboard-video"}
                 title={m.wizard.pathStoryboardTitle}
                 description={m.wizard.pathStoryboardDesc}
+                previewSrc={getVisualStyle("storyboard-video").previewSrc}
                 onClick={() => applyPrimaryPath("storyboard")}
               />
               <PathButton
                 active={visualStyleId === "ugc-presenter"}
                 title={m.wizard.pathUgcPresenterTitle}
                 description={m.wizard.pathUgcPresenterDesc}
+                previewSrc={getVisualStyle("ugc-presenter").previewSrc}
                 onClick={() => applyPrimaryPath("ugc-presenter")}
               />
             </>
@@ -181,12 +196,14 @@ export function PrimaryPathsPanel({ variant, showCinematicExtras = false }: Prop
                 active={visualStyleId === "product" && imageCreativeMode !== "reference-concept"}
                 title={m.wizard.pathQuickTitle}
                 description={m.wizard.pathQuickDesc}
+                previewSrc={getVisualStyle("product").previewSrc}
                 onClick={() => applyPrimaryPath("quick")}
               />
               <PathButton
                 active={visualStyleId === "model-wear"}
                 title={m.wizard.pathModelTitle}
                 description={m.wizard.pathModelDesc}
+                previewSrc={getVisualStyle("model-wear").previewSrc}
                 onClick={() => applyPrimaryPath("model")}
               />
               {workflowMode !== "image-only" ? (
@@ -195,18 +212,21 @@ export function PrimaryPathsPanel({ variant, showCinematicExtras = false }: Prop
                     active={imageCreativeMode === "reference-concept"}
                     title={m.wizard.pathReferenceTitle}
                     description={m.wizard.pathReferenceDesc}
+                    previewSrc={imageModePreviewSrc("reference-concept")}
                     onClick={() => applyPrimaryPath("reference")}
                   />
                   <PathButton
                     active={visualStyleId === "ugc-presenter"}
                     title={m.wizard.pathUgcPresenterTitle}
                     description={m.wizard.pathUgcPresenterDesc}
+                    previewSrc={getVisualStyle("ugc-presenter").previewSrc}
                     onClick={() => applyPrimaryPath("ugc-presenter")}
                   />
                   <PathButton
                     active={visualStyleId === "storyboard-video"}
                     title={m.wizard.pathStoryboardTitle}
                     description={m.wizard.pathStoryboardDesc}
+                    previewSrc={getVisualStyle("storyboard-video").previewSrc}
                     onClick={() => applyPrimaryPath("storyboard")}
                   />
                 </>
@@ -226,6 +246,7 @@ export function PrimaryPathsPanel({ variant, showCinematicExtras = false }: Prop
               active={visualStyleId === "concept-cinematic" && cinematicSceneCount === 1}
               title={m.wizard.conceptCinematicSingleTitle}
               description={m.wizard.conceptCinematicSingleDesc}
+              previewSrc={getVisualStyle("concept-cinematic").previewSrc}
               onClick={() => applyPrimaryPathConceptVideo("cinematic")}
             />
           </div>
@@ -274,26 +295,42 @@ function PathButton({
   description,
   active,
   onClick,
+  previewSrc,
   compact = false,
 }: {
   title: string;
   description: string;
   active: boolean;
   onClick: () => void;
+  previewSrc?: string;
   compact?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-xl border px-3 py-3 text-left ${
+      className={`flex gap-3 overflow-hidden rounded-xl border px-3 py-3 text-left ${
         compact ? "rounded-lg py-2 text-xs" : ""
       } ${
         active ? "border-violet-400 bg-violet-50" : "border-slate-200 bg-white"
       }`}
     >
-      <p className={`font-semibold text-slate-900 ${compact ? "text-xs" : "text-sm"}`}>{title}</p>
-      <p className={`mt-1 text-slate-600 ${compact ? "text-[11px]" : "text-xs"}`}>{description}</p>
+      {previewSrc ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={previewSrc}
+          alt=""
+          className={`shrink-0 rounded-lg object-cover ${compact ? "h-12 w-12" : "h-14 w-14"}`}
+        />
+      ) : null}
+      <span className="min-w-0">
+        <span className={`block font-semibold text-slate-900 ${compact ? "text-xs" : "text-sm"}`}>
+          {title}
+        </span>
+        <span className={`mt-1 block text-slate-600 ${compact ? "text-[11px]" : "text-xs"}`}>
+          {description}
+        </span>
+      </span>
     </button>
   );
 }

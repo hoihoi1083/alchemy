@@ -23,6 +23,15 @@ export function klingClipDurationForStoryboard(
   return per > 5.5 ? 10 : 5;
 }
 
+/** Client + API: storyboard video may not skip the 九宫格 checkbox. */
+export function isStoryboardGridApprovedFlag(
+  raw: FormDataEntryValue | string | null | undefined,
+): boolean {
+  if (typeof raw !== "string") return false;
+  const v = raw.trim().toLowerCase();
+  return v === "1" || v === "true" || v === "yes";
+}
+
 /** Lightweight scene timing meta for client + server token estimates (no Node deps). */
 export type KlingSceneMeta = {
   startSec?: number;
@@ -35,6 +44,10 @@ export type KlingSceneMeta = {
    * Never put Chinese captions or marketing copy here — Kling burns glyphs.
    */
   cameraMotionEn?: string;
+  /** English lighting for this beat (DeepSeek / user edit). */
+  lightingEn?: string;
+  /** Short look-bible grade line (palette/light/materials) — grade only, not a new plot. */
+  lookBibleGrade?: string;
   /** User opted into Brand kit logo on storyboard stills. */
   useBrandLogo?: boolean;
   /** @deprecated alias of useBrandLogo */
@@ -109,9 +122,34 @@ export function klingStoryboardTokenCost(clipDurations: KlingClipDuration[]): nu
 /** English-only camera language for I2V — never pass Chinese captions (Kling invents glyphs). */
 const KLING_MOTION_BY_ROLE: Array<{ re: RegExp; motion: string }> = [
   {
-    re: /\b(hook|open|intro|cover)\b/i,
+    re: /\b(establish|open|intro|cover|wide|hook)\b/i,
     motion:
-      "confident slow push-in with parallax background bokeh and soft light sweep across the frame",
+      "slow establishing push or gentle widen, ambient light drift, premium commercial open — product locked",
+  },
+  {
+    re: /\b(macro|detail|texture|close[- ]?up)\b/i,
+    motion:
+      "slow macro drift along surface detail and logo edge, shallow DOF shimmer, locked product identity",
+  },
+  {
+    re: /\b(logo[- ]?trace|wordmark|badge)\b/i,
+    motion:
+      "soft rim-light sweep tracing the logo edge, micro push-in, keep mark geometry locked",
+  },
+  {
+    re: /\b(orbit|turntable|spin|rotate)\b/i,
+    motion:
+      "gentle product orbit / turntable with controlled light wrap, premium commercial energy",
+  },
+  {
+    re: /\b(life|wear|use|hand|ugc|social|lifestyle)\b/i,
+    motion:
+      "natural handheld lifestyle energy, slight parallax, product stays the clear hero in use",
+  },
+  {
+    re: /\b(cta|end|outro|brand|payoff|closing)\b/i,
+    motion:
+      "bold slow push-in on the payoff beat, lens flare sweep and depth parallax — keep layout locked",
   },
   {
     re: /\b(upload|phone|mobile|hand)\b/i,
@@ -122,11 +160,6 @@ const KLING_MOTION_BY_ROLE: Array<{ re: RegExp; motion: string }> = [
     re: /\b(edit|laptop|prompt|type|screen|tablet|dashboard)\b/i,
     motion:
       "slow orbit around the device, panels softly pulse with light, camera drifts closer — keep UI chrome blank",
-  },
-  {
-    re: /\b(cta|end|outro|brand|payoff|closing)\b/i,
-    motion:
-      "bold slow push-in on the end card, lens flare sweep, logo sparkle and depth parallax — keep layout locked",
   },
   {
     re: /\b(demo|product|hero|publish|ad)\b/i,
@@ -184,6 +217,10 @@ export function klingSceneMotionPrompt(opts: {
   role?: string;
   /** DeepSeek / user English camera motion for this scene. */
   cameraMotionEn?: string;
+  /** DeepSeek / user English lighting for this scene. */
+  lightingEn?: string;
+  /** Global look bible grade (palette/light/materials/negatives). */
+  lookBibleGrade?: string;
   useBrandLogo?: boolean;
   endWithBrandLogo?: boolean;
 }): string {
@@ -192,13 +229,17 @@ export function klingSceneMotionPrompt(opts: {
   const action = sanitizeKlingSceneAction(opts.sceneDescription);
   const endCard = isEndCardScene(opts);
   const logoOn = Boolean(opts.useBrandLogo ?? opts.endWithBrandLogo);
+  const lighting = opts.lightingEn?.trim();
+  const look = opts.lookBibleGrade?.trim();
   return [
     `Animate this exact still as storyboard scene ${opts.sceneIndex}/${opts.sceneCount}.`,
     theme ? `Mood: ${theme}.` : "",
+    look ? `Look lock (grade only): ${look}.` : "",
     action
       ? `Action: ${action} — follow this beat with natural motion; do not change identity or layout.`
       : "",
     `Camera: ${motion}.`,
+    lighting ? `Lighting: ${lighting}.` : "",
     "Add visible commercial motion — camera move and light should feel alive, not a near-static photo.",
     "Preserve the input frame — Keep the same people, product, layout, and brand logo already in the still.",
     "CRITICAL: do not invent, redraw, or morph any readable text, Chinese characters, Latin letters, digits, captions, watermarks, or gibberish glyphs.",

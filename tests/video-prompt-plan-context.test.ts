@@ -20,6 +20,15 @@ describe("videoPlannerContextBlock", () => {
     const block = videoPlannerContextBlock({ subjectFraming: "auto" }).join("\n");
     assert.doesNotMatch(block, /Framing preference/);
   });
+
+  it("skips art-style hints when hasReferenceVideo", () => {
+    const block = videoPlannerContextBlock({
+      artStyleId: "watercolor",
+      hasReferenceVideo: true,
+    }).join("\n");
+    assert.match(block, /follow @Video1/i);
+    assert.doesNotMatch(block, /stylized medium/i);
+  });
 });
 
 describe("appendArtStyleSeedanceHintIfNeeded", () => {
@@ -36,5 +45,26 @@ describe("appendArtStyleSeedanceHintIfNeeded", () => {
   it("leaves realistic prompts unchanged aside from trim", () => {
     const p = "Slow push-in on product.";
     assert.equal(appendArtStyleSeedanceHintIfNeeded(p, "realistic"), p);
+  });
+
+  it("does not glue illustration styles onto @Video1 R2V prompts", () => {
+    const p =
+      "Follow @Video1 shot structure. @Image1 replaces the hero product.";
+    assert.equal(appendArtStyleSeedanceHintIfNeeded(p, "watercolor"), p);
+  });
+
+  it("applies video-safe grade on @Video1 when user picked cinematic", () => {
+    const p =
+      "Follow @Video1 shot structure. @Image1 replaces the hero product.";
+    const out = appendArtStyleSeedanceHintIfNeeded(p, "cinematic");
+    assert.match(out, /cinematic lighting|contrast/i);
+  });
+
+  it("honors explicit skip for reference video without @Video1 text", () => {
+    const p = "Multi-angle product showcase with commercial pacing.";
+    assert.equal(
+      appendArtStyleSeedanceHintIfNeeded(p, "watercolor", { skip: true }),
+      p,
+    );
   });
 });

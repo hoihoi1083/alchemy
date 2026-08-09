@@ -72,6 +72,8 @@ export type WizardMicroStepState = {
   contentResearchApplied: boolean;
   shipItEligible: boolean;
   hasGeneratedImage: boolean;
+  /** Combined storyboard: user explicitly approved the 九宫格 stills. */
+  storyboardGridApproved: boolean;
   userReferenceBrief: unknown;
   referenceAnalyzeNote: string | null;
   planProductVideoBusy: boolean;
@@ -224,8 +226,16 @@ function evalWhen(
   if (norm === 'videoSubpath === "reference_reel"') {
     return ctx.videoSubpath === "reference_reel";
   }
+  if (norm === 'videoSubpath === "motion_poster"') {
+    return ctx.videoSubpath === "motion_poster";
+  }
   if (norm === 'videoSubpath === "product_promo"') {
     return ctx.videoSubpath === "product_promo";
+  }
+  if (norm === 'videoSubpath === "product_promo" || videoSubpath === "motion_poster"') {
+    return (
+      ctx.videoSubpath === "product_promo" || ctx.videoSubpath === "motion_poster"
+    );
   }
   if (norm === 'videoSubpath === "creative_video" || videoSubpath === "brand_video"') {
     return ctx.videoSubpath === "creative_video" || ctx.videoSubpath === "brand_video";
@@ -281,7 +291,7 @@ function evalWhen(
 
 export function resolvePathId(
   ctx: MicroWizardContext,
-  state: Pick<WizardMicroStepState, "visualStyleId" | "promptExtra">,
+  state: Pick<WizardMicroStepState, "visualStyleId" | "promptExtra" | "videoCreativeMode">,
 ): MicroWizardPathId | null {
   const { workflowMode, promotionMode, intakePath } = ctx;
   if (!workflowMode || !promotionMode || !intakePath) return null;
@@ -294,6 +304,12 @@ export function resolvePathId(
       ctx.combinedStyle === "cinematic"
     ) {
       return "concept_combined_cinematic";
+    }
+    if (
+      ctx.videoSubpath === "motion_poster" ||
+      state.videoCreativeMode === "motion-poster"
+    ) {
+      return "concept_combined_motion_poster";
     }
     // Combined + research always uses the reel storyboard path (not animate poster).
     if (intakePath === "research") {
@@ -587,11 +603,12 @@ export function resolveMicroSteps(
     return finish(ids);
   }
 
-  // 圖+片 (except UGC / cinematic): always evaluate steps as storyboard-video so
+  // 圖+片 (except UGC / cinematic / motion-poster escape): always evaluate steps as storyboard-video so
   // DeepSeek scene planning + scene confirm never disappear after restore/HMR.
   let resolveState = state;
   if (
     effectiveCtx.workflowMode === "combined" &&
+    state.videoCreativeMode !== "motion-poster" &&
     !isUgcPresenterStyle(state.visualStyleId) &&
     state.visualStyleId !== "concept-cinematic" &&
     (pathId === "product_combined" ||
@@ -786,8 +803,14 @@ export function canProceedMicroStep(
     }
   }
   if (id === "setup.pre_video") {
-    // Combined storyboard: scenes already generated — only need them ready.
+    // Combined storyboard: scenes already generated — still require 九宫格 approve.
     if (ctx.workflowMode === "combined" && state.hasGeneratedImage) {
+      if (
+        state.visualStyleId === "storyboard-video" &&
+        !state.storyboardGridApproved
+      ) {
+        return "need_storyboard_approve";
+      }
       return null;
     }
     const sub =
@@ -801,6 +824,7 @@ export function canProceedMicroStep(
       return "need_product_photo";
     }
     if (
+      state.videoCreativeMode !== "motion-poster" &&
       isCreativeVideoStyle(state.visualStyleId) &&
       !state.creativeVideoBrief.trim() &&
       !state.headline.trim()
@@ -865,8 +889,18 @@ export function canProceedMicroStep(
   }
   if (id === "wait.image_generate" && state.imageBusy) return "image_busy";
   if (id === "wait.storyboard_generate" && state.imageBusy) return "image_busy";
-  if (id === "image.review" && !state.imageUrl && !state.imageBusy && !state.hasGeneratedImage) {
-    return "image_not_ready";
+  if (id === "image.review") {
+    if (!state.imageUrl && !state.imageBusy && !state.hasGeneratedImage) {
+      return "image_not_ready";
+    }
+    if (
+      state.workflowMode === "combined" &&
+      state.visualStyleId === "storyboard-video" &&
+      state.hasGeneratedImage &&
+      !state.storyboardGridApproved
+    ) {
+      return "need_storyboard_approve";
+    }
   }
   if (id === "wait.video_generate" && state.videoBusy) return "video_busy";
   if (id === "wait.video_generate" && !state.videoUrl) return "video_not_ready";

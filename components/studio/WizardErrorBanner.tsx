@@ -28,8 +28,11 @@ export function WizardErrorBanner({
 }: WizardErrorBannerProps) {
   const { m } = useLocale();
   const insufficient = isInsufficientTokensMessage(message, m.errors.insufficientTokens);
+  const tvcPaid =
+    message.trim() === m.errors.tvcNeedsPaidPlan.trim() ||
+    /12s minimax h3|12 秒 minimax h3/i.test(message);
 
-  if (insufficient) {
+  if (insufficient || tvcPaid) {
     return (
       <div
         className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4"
@@ -42,9 +45,11 @@ export function WizardErrorBanner({
             id="insufficient-tokens-title"
             className="text-lg font-semibold text-slate-900"
           >
-            {m.errors.insufficientTokensTitle}
+            {tvcPaid ? m.errors.tvcNeedsPaidPlanTitle : m.errors.insufficientTokensTitle}
           </h2>
-          <p className="mt-2 text-sm text-slate-600">{m.errors.insufficientTokens}</p>
+          <p className="mt-2 text-sm text-slate-600">
+            {tvcPaid ? m.errors.tvcNeedsPaidPlan : m.errors.insufficientTokens}
+          </p>
           <div className="mt-5 flex flex-wrap items-center gap-3">
             <Link
               href="/pricing"

@@ -1,16 +1,21 @@
 "use client";
 
-import { useEffect, useId, useRef, type ChangeEvent, type ReactNode } from "react";
+import { useEffect, useId, useRef, type ChangeEvent } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 import { BrandWebsitePanel } from "@/components/studio/BrandWebsitePanel";
+import { StoryboardShotMap } from "@/components/studio/StoryboardShotMap";
 import { useWizard } from "@/components/studio/WizardContext";
-import { ART_STYLE_IDS, getArtStyle, type ArtStyleId } from "@/lib/art-style";
+import {
+  artStyleIdsForPicker,
+  getArtStyle,
+  type ArtStyleId,
+} from "@/lib/art-style";
 import { copyFieldsFromAngle } from "@/lib/content-research-promote";
 import { IMAGE_ASPECT_RATIOS, type ImageAspectRatio } from "@/lib/image-aspect-ratio";
-import type { ImageOutputMode } from "@/lib/image-output-mode";
-import type { ImageTextMode } from "@/lib/image-text-mode";
+import { imageOutputPreviewSrc, type ImageOutputMode } from "@/lib/image-output-mode";
+import { imageTextPreviewSrc, type ImageTextMode } from "@/lib/image-text-mode";
 import type { UserReferenceBrief } from "@/lib/user-reference-brief";
-import { requiresBrandProfileForImages } from "@/lib/visual-styles";
+import { getVisualStyle, requiresBrandProfileForImages } from "@/lib/visual-styles";
 import { studioPhasesForMode } from "@/lib/studio-phases";
 import { estimateImageTokens } from "@/lib/billing/token-costs";
 import { STORYBOARD_SCENE_COUNTS } from "@/lib/ad-pack-preferences";
@@ -201,6 +206,14 @@ const PANEL_CSS = `
 .pg-output-card.is-selected .pg-output-icon {
   background: #6c3bff;
   color: #fff;
+}
+.pg-output-thumb {
+  width: 4.25rem;
+  height: 4.25rem;
+  border-radius: 0.65rem;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: #f1f5f9;
 }
 .pg-output-copy { min-width: 0; padding-right: 0.85rem; }
 .pg-output-copy strong {
@@ -749,38 +762,12 @@ function briefSummaryRows(
   ].filter((row) => Boolean(row.value?.trim()));
 }
 
-const OUTPUT_ICONS: Record<ImageOutputMode, ReactNode> = {
-  single: (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.7">
-      <rect x="3.5" y="5" width="17" height="14" rx="2.2" />
-      <circle cx="16.2" cy="9.2" r="1.35" fill="currentColor" stroke="none" />
-      <path d="m5.5 16.2 4.1-4.4 2.6 2.5 2.5-2.7 4.3 4.6" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  ),
-  ab: (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.7">
-      <rect x="7.2" y="3.8" width="12.5" height="10.5" rx="1.8" />
-      <rect x="4" y="8.2" width="12.5" height="10.5" rx="1.8" fill="currentColor" fillOpacity="0.06" />
-      <circle cx="13.3" cy="11.4" r="1.05" fill="currentColor" stroke="none" />
-      <path d="m5.6 16.6 3.1-3.2 1.9 1.8 1.9-2 3.2 3.4" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  ),
-  campaign: (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.7">
-      <rect x="3.5" y="5" width="17" height="14" rx="2.2" />
-      <path d="M3.5 10.5h17M11.5 5v14" strokeLinecap="round" />
-      <path d="M13.2 12.2c1.1.9 2.5.9 3.6 0 1.1-.9 2.4-.9 3.2-.15" strokeLinecap="round" />
-    </svg>
-  ),
-  "teaching-carousel": (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.7">
-      <rect x="8.5" y="3.5" width="11" height="13.5" rx="1.6" />
-      <rect x="6" y="5.5" width="11" height="13.5" rx="1.6" />
-      <rect x="3.5" y="7.5" width="11" height="13.5" rx="1.6" fill="currentColor" fillOpacity="0.06" />
-      <path d="M6.2 12.2h5.4M6.2 14.8h3.8" strokeLinecap="round" />
-    </svg>
-  ),
-};
+const CONCEPT_PATH_STYLE = {
+  info: "info-poster",
+  brand: "brand-fit",
+  pricing: "pricing-offer",
+  website: "website-launch",
+} as const;
 
 /**
  * Fused post-intake setup — shared by research + direct creation.
@@ -1175,6 +1162,12 @@ export function PreGenerateSetupPanel({
                               </svg>
                             </span>
                           ) : null}
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={getVisualStyle(CONCEPT_PATH_STYLE[path]).previewSrc}
+                            alt=""
+                            className="pg-output-thumb"
+                          />
                           <div className="pg-output-copy">
                             <strong>{title}</strong>
                             <span>{desc}</span>
@@ -1207,6 +1200,12 @@ export function PreGenerateSetupPanel({
                           </svg>
                         </span>
                       ) : null}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={getVisualStyle("product").previewSrc}
+                        alt=""
+                        className="pg-output-thumb"
+                      />
                       <div className="pg-output-copy">
                         <strong>{pg.stylePickerQuickLabel}</strong>
                         <span>{pg.stylePickerQuickDesc}</span>
@@ -1240,6 +1239,12 @@ export function PreGenerateSetupPanel({
                           </svg>
                         </span>
                       ) : null}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={getVisualStyle("model-wear").previewSrc}
+                        alt=""
+                        className="pg-output-thumb"
+                      />
                       <div className="pg-output-copy">
                         <strong>{pg.stylePickerModelLabel}</strong>
                         <span>
@@ -1463,6 +1468,39 @@ export function PreGenerateSetupPanel({
 
                     {wizard.storyboardPlan ? (
                       <div className="space-y-3 rounded-xl border border-violet-200 bg-violet-50/50 p-3">
+                        <StoryboardShotMap
+                          plan={wizard.storyboardPlan}
+                          stillUrls={Object.fromEntries(
+                            wizard.storyboardScenes.map(
+                              (s) => [s.imageIndex, s.imageUrl] as const,
+                            ),
+                          )}
+                          title={m.wizard.storyboardShotMapTitle}
+                          bibleLabel={m.wizard.storyboardLookBibleLabel}
+                          emptyStillLabel={m.wizard.storyboardShotMapEmptyStill}
+                          cameraLabel={m.wizard.storyboardPlanCameraLabel}
+                          lightingLabel={m.wizard.storyboardPlanLightingLabel}
+                          variant="light"
+                          onLookBibleChange={(lookBible) =>
+                            wizard.setStoryboardPlan({
+                              ...wizard.storyboardPlan!,
+                              lookBible,
+                            })
+                          }
+                          lookBibleFieldLabels={{
+                            palette: m.wizard.lookBiblePaletteLabel,
+                            lighting: m.wizard.lookBibleLightingLabel,
+                            materials: m.wizard.lookBibleMaterialsLabel,
+                            negatives: m.wizard.lookBibleNegativesLabel,
+                          }}
+                          roleLabels={m.wizard.tvcShotRoles}
+                          onRegenerateScene={(i) =>
+                            void wizard.regenerateStoryboardSceneWithAi(i)
+                          }
+                          regenerateBusyIndex={wizard.storyboardSceneRegenerateBusy}
+                          regenerateLabel={m.wizard.storyboardRegenerateAiBtn}
+                          regeneratingLabel={m.wizard.storyboardRegeneratingImage}
+                        />
                         <label className="block text-xs font-medium text-slate-700">
                           {m.wizard.storyboardPlanThemeLabel}
                           <input
@@ -1484,7 +1522,9 @@ export function PreGenerateSetupPanel({
                             <p className="text-xs font-semibold text-slate-800">
                               {m.wizard.storyboardSceneLabel} {scene.imageIndex} ·{" "}
                               {scene.startSec}–{scene.endSec}s
-                              {scene.role ? ` · ${scene.role}` : ""}
+                              {scene.role
+                                ? ` · ${m.wizard.tvcShotRoles[scene.role as keyof typeof m.wizard.tvcShotRoles] ?? scene.role}`
+                                : ""}
                             </p>
                             <label className="mt-1.5 block text-[11px] text-slate-600">
                               {m.wizard.storyboardPlanSceneDescLabel}
@@ -1521,6 +1561,18 @@ export function PreGenerateSetupPanel({
                                   })
                                 }
                                 rows={2}
+                                className="mt-0.5 w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-900"
+                              />
+                            </label>
+                            <label className="mt-1.5 block text-[11px] text-slate-600">
+                              {m.wizard.storyboardPlanLightingLabel}
+                              <input
+                                value={scene.lightingEn ?? ""}
+                                onChange={(e) =>
+                                  wizard.updateStoryboardPlanScene(i, {
+                                    lightingEn: e.target.value,
+                                  })
+                                }
                                 className="mt-0.5 w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-900"
                               />
                             </label>
@@ -1579,7 +1631,12 @@ export function PreGenerateSetupPanel({
                           className={`pg-output-card${selected ? " is-selected" : ""}`}
                         >
                           {selected ? <CheckBadge /> : null}
-                          <span className="pg-output-icon">{OUTPUT_ICONS[mode]}</span>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={imageOutputPreviewSrc(mode)}
+                            alt=""
+                            className="pg-output-thumb"
+                          />
                           <span className="pg-output-copy">
                             <strong>{copy.title}</strong>
                             <span>{copy.description}</span>
@@ -1784,7 +1841,9 @@ export function PreGenerateSetupPanel({
                   <div>
                     <p className="text-xs font-semibold text-slate-700">{pg.styleLabel}</p>
                     <div className="pg-style-row">
-                      {ART_STYLE_IDS.map((id: ArtStyleId) => {
+                      {artStyleIdsForPicker({
+                        videoSafeOnly: wizard.workflowMode !== "image-only",
+                      }).map((id: ArtStyleId) => {
                         const def = getArtStyle(id);
                         const copy = m.wizard.artStyles[id];
                         const selected = wizard.artStyleId === id;
@@ -1870,16 +1929,12 @@ export function PreGenerateSetupPanel({
                             }`}
                           >
                             {selected ? <CheckBadge /> : null}
-                            <span
-                              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-bold ${
-                                selected
-                                  ? "bg-violet-600 text-white"
-                                  : "bg-violet-100 text-violet-700"
-                              }`}
-                              aria-hidden
-                            >
-                              T
-                            </span>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={imageTextPreviewSrc(mode)}
+                              alt=""
+                              className="h-16 w-16 shrink-0 rounded-lg object-cover"
+                            />
                             <span className="min-w-0 pr-4">
                               <span className="block text-sm font-semibold text-slate-900">
                                 {title}

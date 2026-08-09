@@ -212,6 +212,7 @@ export function PreVideoSetupPanel({
   const wizard = useWizard();
   const pv = m.microWizard.preVideoSetup;
   const mainInputId = useId();
+  const endFrameInputId = useId();
   const refVideoInputId = useId();
   const isConcept = wizard.promotionMode === "concept";
   /** Research / R2V already chose reference — do not default into 快速廣告. */
@@ -219,25 +220,33 @@ export function PreVideoSetupPanel({
     !scenesReady &&
     (wizard.videoCreativeMode === "reference-concept" ||
       Boolean(wizard.researchReelAnalysis?.seedancePrompt?.trim()));
+  /** Landing recipe / creative mode already chose motion poster — keep it. */
+  const prefersMotionPoster =
+    !scenesReady && wizard.videoCreativeMode === "motion-poster";
   const activeSubpath =
     videoSubpath ??
-    (prefersReference
-      ? "reference_reel"
-      : isConcept
-        ? "creative_video"
-        : "product_promo");
+    (prefersMotionPoster
+      ? "motion_poster"
+      : prefersReference
+        ? "reference_reel"
+        : isConcept
+          ? "creative_video"
+          : "product_promo");
   const isReference = !scenesReady && activeSubpath === "reference_reel";
+  const isMotionPoster = !scenesReady && activeSubpath === "motion_poster";
   const isUgc = !scenesReady && activeSubpath === "ugc_presenter";
-  const isQuickAssistant = !scenesReady && !isConcept && activeSubpath === "product_promo";
+  const isQuickAssistant =
+    !scenesReady && !isConcept && activeSubpath === "product_promo";
   const showCreativeBrief =
-    !scenesReady && !isReference && !isUgc && isCreativeVideoStyle(wizard.visualStyleId);
+    !scenesReady && !isReference && !isUgc && !isMotionPoster && isCreativeVideoStyle(wizard.visualStyleId);
   const showBrandWebsite =
-    !scenesReady && !isReference && !isUgc && isBrandVideoStyle(wizard.visualStyleId);
+    !scenesReady && !isReference && !isUgc && !isMotionPoster && isBrandVideoStyle(wizard.visualStyleId);
   const showConceptAiPlan =
     !scenesReady &&
     isConcept &&
     !isReference &&
     !isUgc &&
+    !isMotionPoster &&
     (showCreativeBrief || showBrandWebsite);
   // Product + reference/research still needs @Image1 (product photo). Concept R2V can be MP4-only.
   const showProductPhoto = scenesReady ? false : isConcept ? !isReference : !isUgc;
@@ -246,15 +255,20 @@ export function PreVideoSetupPanel({
   // Keep research/R2V on reference_reel when ctx.videoSubpath was never set.
   useEffect(() => {
     if (!onPickVideoSubpath || videoSubpath) return;
+    if (prefersMotionPoster) {
+      onPickVideoSubpath("motion_poster");
+      return;
+    }
     if (!prefersReference) return;
     onPickVideoSubpath("reference_reel");
-  }, [onPickVideoSubpath, videoSubpath, prefersReference]);
+  }, [onPickVideoSubpath, videoSubpath, prefersReference, prefersMotionPoster]);
 
   // 快速廣告 = DeepSeek product-assistant (vision → Seedance prompt), not raw product-promo I2V.
-  // Never run this when reference-concept / research reel is active — that was overwriting R2V.
+  // Never run this when reference-concept / research reel / motion-poster is active.
   useEffect(() => {
     if (!isQuickAssistant) return;
     if (wizard.videoCreativeMode === "reference-concept") return;
+    if (wizard.videoCreativeMode === "motion-poster") return;
     if (wizard.videoCreativeMode === "product-assistant") return;
     wizard.applyPrimaryPathVideoOnly("assistant");
     // Intentionally omit applyPrimaryPathVideoOnly identity — only re-sync when mode/subpath drifts.
@@ -291,11 +305,20 @@ export function PreVideoSetupPanel({
       ? [pv.conceptTip1, pv.conceptTip2, pv.conceptTip3]
       : isReference
         ? [pv.refTip1, pv.refTip2, pv.tip3]
-        : isUgc
-          ? [pv.ugcTip1, pv.ugcTip2, pv.tip3]
-          : isQuickAssistant
-            ? [pv.assistantTip1, pv.assistantTip2, pv.tip3]
-            : [pv.tip1, pv.tip2, pv.tip3];
+        : isMotionPoster
+          ? [
+              {
+                title: m.wizard.videoCreativeModes["motion-poster"].title,
+                body: m.wizard.motionPosterHint,
+              },
+              pv.tip2,
+              pv.tip3,
+            ]
+          : isUgc
+            ? [pv.ugcTip1, pv.ugcTip2, pv.tip3]
+            : isQuickAssistant
+              ? [pv.assistantTip1, pv.assistantTip2, pv.tip3]
+              : [pv.tip1, pv.tip2, pv.tip3];
 
   const mainThumb = wizard.uploadPreviewUrl
     ? { url: wizard.uploadPreviewUrl, name: wizard.productPhoto?.name ?? "product" }
@@ -309,6 +332,13 @@ export function PreVideoSetupPanel({
     if (file) wizard.onProductPhotoSelected(file);
   }
 
+  function onEndFrameFile(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0] ?? null;
+    e.target.value = "";
+    wizard.setEndFramePhoto(file);
+    wizard.setError(null);
+  }
+
   function onRefVideoFile(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] ?? null;
     e.target.value = "";
@@ -320,6 +350,11 @@ export function PreVideoSetupPanel({
       id: "product_promo",
       title: m.wizard.pathQuickTitle,
       desc: m.wizard.pathQuickVideoDesc,
+    },
+    {
+      id: "motion_poster",
+      title: m.wizard.videoCreativeModes["motion-poster"].title,
+      desc: m.wizard.videoCreativeModes["motion-poster"].description,
     },
     {
       id: "reference_reel",
@@ -352,17 +387,19 @@ export function PreVideoSetupPanel({
     ? pv.scenesReadyHint
     : isUgc
       ? pv.ugcHint
-      : isReference
-        ? pv.referenceHint
-        : isConcept
-          ? showCreativeBrief
-            ? pv.conceptCreativeHint
-            : showBrandWebsite
-              ? pv.conceptBrandHint
-              : pv.conceptHint
-          : isQuickAssistant
-            ? pv.assistantHint
-            : pv.hint;
+      : isMotionPoster
+        ? m.wizard.motionPosterHint
+        : isReference
+          ? pv.referenceHint
+          : isConcept
+            ? showCreativeBrief
+              ? pv.conceptCreativeHint
+              : showBrandWebsite
+                ? pv.conceptBrandHint
+                : pv.conceptHint
+            : isQuickAssistant
+              ? pv.assistantHint
+              : pv.hint;
 
   const generateBlock = (
     <>
@@ -420,7 +457,13 @@ export function PreVideoSetupPanel({
                   </div>
                 </div>
                 {wizard.storyboardScenes.length > 0 ? (
-                  <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+                  <div
+                    className={`grid gap-2.5 ${
+                      wizard.storyboardScenes.length === 4
+                        ? "grid-cols-2"
+                        : "grid-cols-2 sm:grid-cols-4"
+                    }`}
+                  >
                     {wizard.storyboardScenes.map((scene, i) => {
                       const copy = storyboardSceneDisplayCopy(scene);
                       const script = copy.caption || copy.beat;
@@ -466,6 +509,25 @@ export function PreVideoSetupPanel({
                 ) : (
                   <p className="text-sm text-amber-800">{m.errors.storyboardVideoPromptRequired}</p>
                 )}
+                <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50/80 px-3 py-3">
+                  <p className="text-xs leading-relaxed text-amber-900/90">
+                    {m.wizard.switchToMotionPosterHint}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const firstStill =
+                        wizard.storyboardScenes[0]?.imageUrl || wizard.imageUrl || null;
+                      if (firstStill) wizard.setImageUrl(firstStill);
+                      wizard.selectVisualStyle("product");
+                      wizard.onVideoCreativeModeChange("motion-poster");
+                      if (onPickVideoSubpath) onPickVideoSubpath("motion_poster");
+                    }}
+                    className="mt-2 inline-flex min-h-10 w-full items-center justify-center rounded-xl border border-amber-300 bg-white px-3 py-2 text-sm font-semibold text-amber-900 hover:bg-amber-100"
+                  >
+                    {m.wizard.switchToMotionPosterBtn}
+                  </button>
+                </div>
               </section>
             ) : (
             <section className="pv-card">
@@ -765,6 +827,66 @@ export function PreVideoSetupPanel({
               </section>
             ) : null}
 
+            {isMotionPoster ? (
+              <section className="pv-card">
+                <div className="pv-card-title-row mb-3">
+                  <span className="pv-card-icon" aria-hidden>
+                    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
+                      <rect x="3.5" y="5" width="17" height="14" rx="2.2" />
+                      <path d="M8 12h8M14 9l3 3-3 3" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
+                  <div className="min-w-0">
+                    <h3 className="pv-card-title">
+                      {m.wizard.endFrameLabel}
+                      <span className="pv-label-opt font-medium">{pv.extraOptional}</span>
+                    </h3>
+                    <p className="mt-0.5 text-xs text-slate-500">{m.wizard.endFrameHint}</p>
+                  </div>
+                </div>
+                <input
+                  id={endFrameInputId}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="sr-only"
+                  onChange={onEndFrameFile}
+                />
+                <div className="flex flex-wrap gap-2.5">
+                  {wizard.endFramePreviewUrl ? (
+                    <div className="relative h-28 w-28 overflow-hidden rounded-xl border border-amber-400 ring-1 ring-amber-300">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={wizard.endFramePreviewUrl}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => wizard.setEndFramePhoto(null)}
+                        className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-slate-900/70 text-[10px] text-white"
+                        aria-label={m.wizard.uploadChange}
+                      >
+                        ×
+                      </button>
+                      <label
+                        htmlFor={endFrameInputId}
+                        className="absolute inset-x-0 bottom-0 cursor-pointer bg-slate-900/55 py-0.5 text-center text-[9px] font-semibold text-white"
+                      >
+                        {m.wizard.uploadChange}
+                      </label>
+                    </div>
+                  ) : (
+                    <label
+                      htmlFor={endFrameInputId}
+                      className="flex h-28 w-28 shrink-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-amber-300 bg-amber-50/70 px-1 text-center text-[11px] font-semibold text-amber-800 hover:bg-amber-50"
+                    >
+                      {pv.dragDrop}
+                    </label>
+                  )}
+                </div>
+              </section>
+            ) : null}
+
             {isQuickAssistant ? (
               <section className="pv-card">
                 <div className="pv-card-title-row mb-3">
@@ -905,6 +1027,7 @@ export function PreVideoSetupPanel({
                     <VideoSettingsPanel
                       compact
                       setup
+                      motionPoster={isMotionPoster}
                       accent="violet"
                       value={wizard.videoSettings}
                       onChange={wizard.setVideoSettings}

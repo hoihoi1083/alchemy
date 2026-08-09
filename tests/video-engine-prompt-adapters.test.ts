@@ -55,6 +55,16 @@ describe("video-engine-prompt-adapters (auto Seedance→H3→Kling)", () => {
     assert.match(friendlyAutoFallbackNote("kling", 2), /combined/i);
   });
 
+  it("Kling theme is concept promo when conceptMode", () => {
+    const plan = adaptScriptForKlingFallback({
+      seedancePrompt: DEEPSEEK_SCRIPT,
+      totalDurationSec: 10,
+      imageUrls: ["https://example.com/scene.png"],
+      conceptMode: true,
+    });
+    assert.equal(plan.theme, "concept promo");
+  });
+
   it("generate route wires adapters for automatic fallback", () => {
     const { readFileSync } = require("node:fs") as typeof import("node:fs");
     const { join } = require("node:path") as typeof import("node:path");
@@ -62,5 +72,7 @@ describe("video-engine-prompt-adapters (auto Seedance→H3→Kling)", () => {
     assert.ok(src.includes("adaptScriptForMinimaxH3"));
     assert.ok(src.includes("adaptScriptForKlingFallback"));
     assert.ok(src.includes("friendlyAutoFallbackNote"));
+    assert.ok(src.includes("REFERENCE_VIDEO_REQUIRED"));
+    assert.ok(src.includes("formDataExpectsReferenceVideo"));
   });
 });

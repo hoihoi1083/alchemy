@@ -82,6 +82,7 @@ export function VideoStep() {
     isConceptCinematicSingleOutput;
   const showReferenceR2vOutputSettings =
     !usesCompositor && useReferenceVideo && !isStoryboardOutput;
+  const isMotionPoster = videoCreativeMode === "motion-poster";
   return (
 <section className="space-y-6 rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-xl shadow-slate-900/40 backdrop-blur">
   <div className="h-1 w-full animate-pulse rounded-full bg-linear-to-r from-violet-500 via-cyan-400 to-teal-400" />
@@ -199,9 +200,10 @@ export function VideoStep() {
     )}
 
   {isStoryboardOutput && (
-    <p className="rounded-xl border border-teal-900/50 bg-teal-950/30 px-4 py-3 text-xs text-teal-100">
-      {m.wizard.storyboardVideoIntro}
-    </p>
+    <div className="space-y-2 rounded-xl border border-teal-900/50 bg-teal-950/30 px-4 py-3 text-xs text-teal-100">
+      <p>{m.wizard.storyboardVideoIntro}</p>
+      <p className="text-teal-200/80">{m.wizard.storyboardEnginePipelineHint}</p>
+    </div>
   )}
 
   {/* Reference ad MP4 — only when template includes this slot */}
@@ -337,13 +339,19 @@ export function VideoStep() {
   )}
 
   {!usesCompositor && !shipItMode && !showReferenceR2vOutputSettings && !isStoryboardOutput && (
-    <VideoSettingsPanel value={videoSettings} onChange={setVideoSettings} />
+    <VideoSettingsPanel
+      value={videoSettings}
+      onChange={setVideoSettings}
+      motionPoster={isMotionPoster}
+      compact={isMotionPoster}
+    />
   )}
 
   {isStoryboardOutput && !videoBusy ? (
     <div className="space-y-2 rounded-xl border border-teal-900/50 bg-teal-950/25 p-4">
       <p className="text-sm font-semibold text-teal-50">{pv.settingsTitle}</p>
       <p className="text-xs text-teal-200/80">{pv.klingSettingsHint}</p>
+      <p className="text-[11px] text-teal-300/75">{m.wizard.storyboardEnginePipelineHint}</p>
       <KlingStoryboardSettings
         sceneCount={storyboardScenes.length || storyboardSceneCount}
         clipSec={klingClipSec}
@@ -359,7 +367,7 @@ export function VideoStep() {
     </div>
   ) : null}
 
-  {!usesCompositor && !isStoryboardOutput && !showCinematicStitch && !isConceptCinematicSingleOutput && !usesProductAssistant && !usesConceptTextVideo && (
+  {!usesCompositor && !isStoryboardOutput && !showCinematicStitch && !isConceptCinematicSingleOutput && !usesProductAssistant && !usesConceptTextVideo && !isMotionPoster && (
     <div className="rounded-xl border border-sky-900/50 bg-sky-950/30 px-4 py-3 text-sm text-sky-100">
       <p className="font-semibold text-sky-50">{m.wizard.videoWearVarietyTitle}</p>
       <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-sky-100/90">
@@ -370,7 +378,7 @@ export function VideoStep() {
     </div>
   )}
 
-  {!usesCompositor && !isStoryboardOutput && !showCinematicStitch && !isConceptCinematicSingleOutput && !usesProductAssistant && (
+  {!usesCompositor && !isStoryboardOutput && !showCinematicStitch && !isConceptCinematicSingleOutput && !usesProductAssistant && !isMotionPoster && (
     <div className="space-y-3 rounded-xl border border-violet-900/50 bg-violet-950/25 px-4 py-3">
       <p className="text-sm font-semibold text-violet-50">{m.wizard.planVideoPromptBtn}</p>
       <p className="text-xs text-violet-200/90">
@@ -402,6 +410,27 @@ export function VideoStep() {
     </div>
   )}
 
+  {!usesCompositor && videoCreativeMode === "motion-poster" && (
+    <div className="space-y-3 rounded-xl border border-amber-500/40 bg-amber-950/25 px-4 py-3">
+      <p className="text-sm font-semibold text-amber-50">
+        {m.wizard.videoCreativeModes["motion-poster"].title}
+      </p>
+      <p className="text-xs text-amber-100/85">{m.wizard.motionPosterHint}</p>
+      <UploadZone
+        label={m.wizard.endFrameLabel}
+        hint={m.wizard.endFrameHint}
+        cta={m.wizard.uploadCta}
+        changeLabel={m.wizard.uploadChange}
+        previewUrl={endFramePreviewUrl}
+        fileName={endFramePhoto?.name ?? null}
+        onFile={(f) => {
+          setEndFramePhoto(f);
+          setError(null);
+        }}
+      />
+    </div>
+  )}
+
   {!usesCompositor && videoCreativeMode === "reference-concept" && (
       <div className="space-y-3 rounded-2xl border border-violet-900/40 bg-violet-950/20 p-4">
         <p className="text-sm font-medium text-violet-100">{m.wizard.extraAnglesLabel}</p>
@@ -425,7 +454,7 @@ export function VideoStep() {
       </div>
     )}
 
-  {!usesCompositor && videoCreativeMode !== "reference-concept" && !usesConceptTextVideo && !showCinematicStitch && !isConceptCinematicSingleOutput && (
+  {!usesCompositor && videoCreativeMode !== "reference-concept" && !isMotionPoster && !usesConceptTextVideo && !showCinematicStitch && !isConceptCinematicSingleOutput && (
     <UploadZone
       label={m.wizard.endFrameLabel}
       hint={m.wizard.endFrameHint}

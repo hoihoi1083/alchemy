@@ -11,6 +11,7 @@ export type VideoGenerationKind =
   | "reference-r2v"
   | "multi-angle-r2v"
   | "digital-presenter"
+  | "motion-poster"
   | "image-to-video";
 
 export type ResolveVideoGenerationKindInput = {
@@ -33,6 +34,10 @@ export function resolveVideoGenerationKind(
   input: ResolveVideoGenerationKindInput,
 ): VideoGenerationKind {
   if (input.usesCompositor) return "compositor";
+  // Motion poster is a single-clip video recipe — wins over storyboard lock when selected.
+  if (input.videoCreativeMode === "motion-poster") {
+    return "motion-poster";
+  }
   if (input.isStoryboardOutput) return "storyboard";
   if (input.isUgcPresenterOutput) return "digital-presenter";
   if (input.shouldCinematicStitch) return "cinematic-stitch";

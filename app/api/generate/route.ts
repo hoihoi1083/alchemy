@@ -24,8 +24,13 @@ import {
 import {
   clampMinimaxH3Duration,
   collectMinimaxH3FallbackMedia,
+  formDataExpectsReferenceVideo,
   runMinimaxH3Fallback,
 } from "@/lib/minimax-h3-run";
+import {
+  promptAlreadySpecifiesCamera,
+  promptHasVideo1,
+} from "@/lib/prompt-balance-contract";
 import { persistAndDurablize } from "@/lib/storage/durable-media";
 import { buildSingleClipManifest } from "@/lib/video-timing-manifest";
 import {
@@ -183,9 +188,13 @@ function applyAdvancedGuidance(prompt: string, opts: {
   motionStrength?: number;
   negativePrompt?: string;
   avoidOnScreenText?: boolean;
+  /** Skip template camera when script already owns motion (DeepSeek / @Video1). */
+  skipCamera?: boolean;
 }): string {
   const guidance: string[] = [];
-  if (opts.camera) guidance.push(`Camera movement: ${opts.camera}.`);
+  if (opts.camera && !opts.skipCamera) {
+    guidance.push(`Camera movement: ${opts.camera}.`);
+  }
   if (typeof opts.motionStrength === "number") {
     guidance.push(`Motion strength: ${opts.motionStrength}/100 (smooth and stable).`);
   }
@@ -232,7 +241,8 @@ export async function POST(request: Request) {
   const mode = (formData.get("mode") as string) as Mode;
   const promptRaw = (formData.get("prompt") as string)?.trim() ?? "";
   const prompt = softenSeedancePromptForModeration(promptRaw);
-  const fast = formData.get("fast") === "true";
+  const reelExpectedEarly = formDataExpectsReferenceVideo(formData, prompt);
+  const fast = reelExpectedEarly ? false : formData.get("fast") === "true";
   const resolutionBase = (formData.get("resolution") as string) || "720p";
   const resolutionOverride =
     (formData.get("resolution_override") as string | null)?.trim() || "";
@@ -369,12 +379,18 @@ export async function POST(request: Request) {
       negativePrompt
     : negativePrompt;
 
+  const skipTemplateCamera =
+    referenceMatch ||
+    promptHasVideo1(prompt) ||
+    promptAlreadySpecifiesCamera(prompt);
+
   const common = {
     prompt: applyAdvancedGuidance(prompt, {
-      camera: referenceMatch ? undefined : camera,
-      motionStrength: referenceMatch ? undefined : motionStrength,
+      camera: skipTemplateCamera ? undefined : camera,
+      motionStrength: referenceMatch || promptHasVideo1(prompt) ? undefined : motionStrength,
       negativePrompt: effectiveNegative,
       avoidOnScreenText,
+      skipCamera: skipTemplateCamera,
     }),
     resolution,
     duration: durationForFal(duration),
@@ -637,6 +653,17 @@ export async function POST(request: Request) {
         await collectMinimaxH3FallbackMedia(formData, {
           clerkId: auth.user.userId,
         });
+      if (formDataExpectsReferenceVideo(formData, common.prompt) && h3Videos.length < 1) {
+        return NextResponse.json(
+          {
+            error:
+              "Reference video (@Video1) was required but could not be prepared. We did not generate a stills-only clip — fix the MP4 and retry.",
+            code: "REFERENCE_VIDEO_REQUIRED",
+            seedanceBlockedCode: blockedCode,
+          },
+          { status: 422 },
+        );
+      }
       if (h3Images.length >= 1 || h3Videos.length >= 1) {
         const h3Duration = clampMinimaxH3Duration(totalDurationSec);
         // fal MiniMax H3 enums are 768P / 2K / 4K (capital P) — not Seedance 768p.
@@ -694,6 +721,21 @@ export async function POST(request: Request) {
         }
       }
 
+      const expectsVideo1 =
+        h3Videos.length >= 1 ||
+        formDataExpectsReferenceVideo(formData, common.prompt);
+      if (expectsVideo1) {
+        return NextResponse.json(
+          {
+            error:
+              "Reference video (@Video1) was required but could not be used. We did not generate a stills-only clip — fix the MP4 and retry.",
+            code: "REFERENCE_VIDEO_REQUIRED",
+            seedanceBlockedCode: blockedCode,
+          },
+          { status: 422 },
+        );
+      }
+
       const imageUrls = h3Images.length
         ? h3Images
         : await collectKlingFallbackImageUrls(formData, {
@@ -708,6 +750,7 @@ export async function POST(request: Request) {
           totalDurationSec,
           imageUrls,
           clientScenesMeta: clientMeta,
+          conceptMode: (formData.get("promotion_mode") as string | null) === "concept",
         });
         const klingImageUrls = klingPlan.imageUrls;
         const scenesMeta =

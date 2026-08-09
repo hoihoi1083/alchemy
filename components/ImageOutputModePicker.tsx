@@ -2,7 +2,10 @@
 
 import { useEffect, useMemo } from "react";
 import { useLocale } from "@/components/LocaleProvider";
-import type { ImageOutputMode } from "@/lib/image-output-mode";
+import {
+  imageOutputPreviewSrc,
+  type ImageOutputMode,
+} from "@/lib/image-output-mode";
 
 type Props = {
   value: ImageOutputMode;
@@ -67,14 +70,22 @@ export function ImageOutputModePicker({
               type="button"
               onClick={() => !lockedCampaign && onChange(mode)}
               disabled={lockedCampaign && mode !== "campaign"}
-              className={`rounded-xl border p-3 text-left transition ${
+              className={`overflow-hidden rounded-xl border text-left transition ${
                 value === mode
                   ? selectedClass
                   : "border-slate-200 bg-white hover:border-slate-300"
               } ${lockedCampaign ? "cursor-default" : ""}`}
             >
-              <p className="text-sm font-semibold text-slate-900">{copy.title}</p>
-              <p className="mt-1 text-xs text-slate-600">{copy.description}</p>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={imageOutputPreviewSrc(mode)}
+                alt=""
+                className="aspect-[4/3] w-full object-cover"
+              />
+              <span className="block p-3">
+                <span className="block text-sm font-semibold text-slate-900">{copy.title}</span>
+                <span className="mt-1 block text-xs text-slate-600">{copy.description}</span>
+              </span>
             </button>
           );
         })}

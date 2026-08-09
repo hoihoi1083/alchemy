@@ -112,7 +112,7 @@ const CASES: Case[] = [
     snapshot: snap({ surface: "landing" }),
     userText: "use /pro node canvas",
     expectTask: "route-pro-canvas",
-    expectReplyIncludes: ["/pro"],
+    expectReplyIncludes: ["studio-action:open-pro"],
   },
   {
     name: "studio concept cinematic — fill concept first (no URL required)",

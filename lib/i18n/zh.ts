@@ -415,6 +415,39 @@ export const zh = {
     toolProDesc: "節點式進階工作流 — 需 Master 方案。",
     proMasterBadge: "Master 方案",
     visualCaptionsLink: "視覺字幕實驗室（Beta）",
+    recipes: {
+      badge: "一鍵配方",
+      title: "可完成嘅影片配方",
+      subtitle:
+        "產品同概念同一套兩條路。動態海報免費額度夠用。12 秒 MiniMax H3 TVC 需要付費方案。",
+      cta: "用呢個配方",
+      physicalGroup: "產品",
+      conceptGroup: "概念／服務",
+      tvcPaidHint:
+        "12 秒 MiniMax H3 需要付費方案（約 1140 token）。免費額度可以出靜幀；H3 唔夠就改用 Kling 拼接。",
+      items: {
+        "motion-poster": {
+          title: "動態海報",
+          description: "1 張靜圖 + 微運鏡／環境動態（可選開頭→結尾）。通常更平。",
+          costHint: "約 1 圖 + 1 段短片 · 免費額度夠",
+        },
+        "product-tvc-12s": {
+          title: "產品 TVC 約 12 秒",
+          description: "4 拍分鏡：開場 → 微距 → 環繞 → 生活／收束。",
+          costHint: "約 4 張靜幀 + 12 秒 H3 — 要付費 · Kling 拼接或夠免費額",
+        },
+        "concept-motion-poster": {
+          title: "概念動態海報",
+          description: "1 張 AI 場景靜圖 + 微運鏡，服務／想法用 — 唔使 SKU 包裝特寫。",
+          costHint: "約 1 張 AI 靜圖 + 1 段短片 · 免費額度夠",
+        },
+        "concept-tvc-12s": {
+          title: "概念 TVC 約 12 秒",
+          description: "服務／想法 4 拍分鏡：開場 → 隱喻 → 環繞 → 收束。",
+          costHint: "約 4 張靜幀 + 12 秒 H3 — 要付費 · Kling 拼接或夠免費額",
+        },
+      },
+    },
     templatesBadge: "模板",
     templatesTitle: "由營銷模板開始",
     templatesSubtitle: "場景卡 — 揀一個，跟住精靈（上傳 → 圖片 → 影片）。",
@@ -946,12 +979,30 @@ export const zh = {
     styleModeSimple: "顯示精簡（推薦）",
     styleModeAll: "顯示全部風格",
     artStyleLabel: "畫面風格（關鍵圖）",
+    artStyleVideoSafeHint:
+      "只顯示影片安全色調（膠片／CCD／國風／電影感）。Look 只改色調，唔改故事。有參考片時 @Video1 仍然係骨架。",
     artStyleHint:
       "控制 AI 出圖 關鍵圖外觀 — 影片生成 只負責動態。選漫畫／水彩／3D 時，成張圖（包括文字）都會用該風格；含大量文案的 product ad 建議用「概念 cinematic」或寫實。",
     artStyles: {
       realistic: {
         title: "寫實相片",
         description: "真人實拍商業感（預設）",
+      },
+      cinematic: {
+        title: "電影感 TVC",
+        description: "受控輪廓光、淺景深、高級商業感",
+      },
+      film: {
+        title: "膠片顆粒",
+        description: "菲林顆粒、柔和光暈、懷舊色調",
+      },
+      ccd: {
+        title: "CCD 快拍",
+        description: "早期數碼閃光、隨手社交感",
+      },
+      guofeng: {
+        title: "國風電影感",
+        description: "丁達爾光、詩意氛圍、寫實產品",
       },
       "anime-2d": {
         title: "2D 動漫",
@@ -1217,15 +1268,28 @@ export const zh = {
     videoEngineLabel: "影片引擎",
     videoEngineSeedance: "Seedance（預設）",
     videoEngineMinimaxH3: "MiniMax H3（人臉／產品鎖定）",
-    videoEngineHint: "H3 較啱人臉一致同後期替換；商業片預設仍用 Seedance。",
+    videoEngineHint:
+      "簡易工作室自動揀引擎：有研究片用 Seedance，淨靜幀／海報用 MiniMax H3。Kling 只係無片時後備。",
     storyboardSceneLabel: "場景",
     storyboardVideoIntro:
-      "已規劃分鏡同場景圖。生成影片會用 逐格圖生影片再拼接（唔再先等 影片生成）。",
-    storyboardVideoPreflight: "模式：逐場景圖生影片 + 拼接（跳過 reference video）",
+      "呢啲靜幀會鎖入影片。壞格請返去審查重產。有研究片：Seedance 跟節奏，再 MiniMax H3。淨靜幀：先 H3，失敗先 Kling 拼接。",
+    storyboardVideoPreflight: "有研究片：Seedance R2V → H3。淨靜幀：H3 → Kling 拼接",
     klingStoryboardFallbackNote:
       "分鏡影片 — 每格靜幀變成短片，再拼接成完整片",
     storyboardMinimaxH3Note:
       "分鏡影片 — MiniMax H3 用場景圖一次出片（唔使拼接）",
+    storyboardSeedanceR2vNote:
+      "分鏡影片 — Seedance 參考片對片（@Video1 主軸 + 靜幀，非 fast）",
+    storyboardEnginePipelineHint:
+      "有研究片：Seedance 正片 R2V → MiniMax H3（唔用 Kling）。淨靜幀：H3 → Kling 5/10 秒拼接。",
+    researchReelCopyingNote: "跟緊你嘅參考片 — 如果人臉被擋會改用 MiniMax H3。",
+    switchToMotionPosterBtn: "改用動態海報（通常更平）",
+    switchToMotionPosterHint:
+      "跳過多場景拼接 — 只對一張關鍵幀做微動態。",
+    lookBiblePaletteLabel: "色盤",
+    lookBibleLightingLabel: "燈光",
+    lookBibleMaterialsLabel: "材質",
+    lookBibleNegativesLabel: "避免",
     seedanceToKlingFallbackNote:
       "Seedance 此請求被阻擋 — 改用 Kling 分鏡（每格短片再拼接）",
     seedanceToMinimaxH3FallbackNote:
@@ -1767,6 +1831,11 @@ export const zh = {
         title: "產品宣傳片",
         description: "用關鍵圖做柔和商業動態",
       },
+      "motion-poster": {
+        title: "動態海報",
+        description:
+          "1 張產品靜圖 + 微運鏡／環境動態（或開頭→結尾）。唔係多分鏡故事板 — 通常更平。",
+      },
       "reference-concept": {
         title: "跟參考片概念",
         description: "產品 + 參考 MP4 → 跟運鏡同剪輯概念（唔係逐格複製）",
@@ -1776,6 +1845,37 @@ export const zh = {
         description: "用步驟 2 嘅 AI 圖 — 最適合「先要圖後要片」",
       },
     },
+    motionPosterHint:
+      "動態海報會鎖住主視覺，只允許列出嘅微動態。可選上傳結尾幀做開頭→結尾變化。",
+    motionPosterNeedKeyframe: "動態海報請先上傳產品相、場景相或關鍵幀。",
+    storyboardShotMapTitle: "分鏡圖（生成前預覽）",
+    storyboardLookBibleLabel: "Look bible（色調鎖定）：",
+    storyboardShotMapEmptyStill: "靜幀待生成",
+    tvcShotRoles: {
+      establish: "開場建立",
+      macro: "細節特寫",
+      "logo-trace": "Logo 掃光",
+      orbit: "環繞運鏡",
+      lifestyle: "生活場景",
+      payoff: "收束／行動",
+    },
+    tvcShotJobs: {
+      establish: "我喺邊？主角出現喺一個世界。",
+      macro: "點解高級？質感 / Logo。",
+      "logo-trace": "掃過標誌，幾何唔可以跑。",
+      orbit: "郁起來／使用。轉台或手持。",
+      lifestyle: "生活場景，產品仲係主角。",
+      payoff: "記住／落單。包裝 + 賣點。",
+    },
+    storyboardTapToReview: "撳入去檢查",
+    storyboardCellReviewed: "已睇過",
+    storyboardApproveNeedLookHint:
+      "請先撳開每一格。影片只會郁你鎖住嘅錯 — 壞格請重產嗰格，唔好指望生成影片嚟遮。",
+    storyboardApproveCheckbox: "我已逐格睇過，呢啲靜幀可以做片",
+    storyboardApproveHint:
+      "靜幀就係成片。壞格只重產嗰格，再撳一次。靜幀一變，確認會取消。",
+    storyboardApproveRequiredHint: "請先確認九宮格靜幀，先至可以生成影片。",
+    storyboardPlanLightingLabel: "燈光（英文，可改）",
     videoSettingsTitle: "影片設定",
     videoReferenceOutputSettingsTitle: "輸出片長與畫質",
     videoReferenceOutputSettingsHint:
@@ -1949,10 +2049,11 @@ export const zh = {
     imageReviewCompleteMany: "生成完成！你嘅 {n} 張圖已經可以檢查。",
     imageReviewStoryboardReadyTitle: "分鏡圖已準備好",
     imageReviewStoryboardReadyBody:
-      "檢查呢啲場景圖，然後繼續去影片設定。呢度未係最終影片。",
+      "四拍靜幀就係成片。逐格撳開，壞格重產，再確認。影片只會郁你鎖住嘅畫面。",
     imageReviewStoryboardHeroBefore: "檢查你嘅",
     imageReviewStoryboardHeroAccent: "分鏡圖。",
-    imageReviewStoryboardHeroHint: "確認場景包無問題，再繼續製作影片。",
+    imageReviewStoryboardHeroHint:
+      "請撳開每一格。壞格只重產嗰格。睇過再確認 — 生成影片修唔好弱九宮格。",
     imageReviewPathLabel: "路徑",
     imageReviewPathImagesVideo: "先圖再片",
     imageReviewVisualSetLabel: "視覺組",
@@ -2384,6 +2485,16 @@ export const zh = {
     insufficientTokensTitle: "Token 已用完",
     insufficientTokensCta: "查看方案與加購",
     insufficientTokensDismiss: "關閉",
+    tvcNeedsPaidPlan:
+      "12 秒 MiniMax H3 比免費額度貴（約 1140 token）。請到 Pricing 升級，或者餘額夠就用 Kling 拼接。",
+    tvcNeedsPaidPlanTitle: "12 秒 TVC 需要付費方案",
+    storyboardEngineChoiceTitle: "H3 額度唔夠 — Kling 拼接而家用得",
+    storyboardEngineChoiceBody:
+      "MiniMax H3 12 秒大約要 {h3} token。你而家有 {balance}。Kling 拼接（約 {kling}）係 4 段剪埋，唔係一條 H3。",
+    storyboardEngineChoiceH3: "升級用 MiniMax H3",
+    storyboardEngineChoiceKling: "而家用 Kling 拼接",
+    storyboardCellBlocked:
+      "呢格被安全過濾擋住。撳呢格重新生成 — 同一個產品，唔好有臉同品牌字。",
     tokensNotCharged: "今次嘗試冇扣 Token。",
     timeout: "請求逾時，請再試。",
     seedanceSensitive:
@@ -2391,12 +2502,16 @@ export const zh = {
     falContentPolicy:
       "影片生成 拒絕呢次媒體（人物／私隱過濾）。我哋可以改用 逐場動畫再拼接——如果自動切換失敗，請再撳生成影片。",
     klingStoryboardFailed: "分鏡備援失敗，請再試或改用無臉場景圖。",
+    klingDurationUnreachable:
+      "Kling 拼接唔到呢個秒數（每格最少 5 秒）。請再試 MiniMax H3 或改揀 12 秒。",
     needPhoto: "請先上傳產品相片。",
     needReferenceImage: "請先上傳參考圖。",
     needHeadline: "請輸入呢個模板需要嘅主標題。",
     needKeyframe: "請先生成相片，或選擇「直接用原圖」，再製作影片。",
     needStyleReference: "請上傳參考廣告圖（跟參考概念模式）。",
     needReferenceVideo: "請上傳參考 MP4（跟參考片概念模式）。",
+    referenceVideoPrepareFailed:
+      "參考片（@Video1）準備失敗。我哋冇改做純靜圖影片 — 請修好 MP4 再試。",
     needGeneratedImage: "請先喺步驟 2 生成 AI 宣傳圖（圖片變影片流程）。",
     needPrompt: "請上傳相片，或在進階選項描述要製作嘅內容。",
     imageGenNoUrl: "AI 冇返回圖片網址 — 請睇終端機錯誤或再試。",
@@ -2918,6 +3033,21 @@ export const zh = {
       "你好！我係工作室嚮導 — 未入 wizard 都可以問我。話你想做咩（網站、產品圖、字幕…），我會揀路線同幫你開 studio。",
     welcomeStart:
       "唔肯定實體定概念？描述目標或貼網址 — 我會話你揀邊張卡、入 studio 要填咩。",
+    welcomeEditImage:
+      "你而家喺修圖工作室。上傳或從作品庫揀圖，問我點清雜物、加 logo／文字、或匯出。我會喺呢頁教你。",
+    welcomeCaptions:
+      "你而家喺字幕工作室。匯入任何 MP4 — 我幫你改時間軸字幕、BGM、配音，再燒錄。唔使重新出片。",
+    welcomePro:
+      "Pro 畫布 — 將 Upload → Image → Video 節點接好。跑之前可以問我順序同成本。按次 fal 計費。",
+    welcomeBrandKit:
+      "品牌套件 — 上傳一次 logo 同品牌色。分鏡靜幀要唔要蓋 logo 可以問我。",
+    welcomeLibrary:
+      "呢度係作品庫。問我點樣再開去修圖／字幕，或者下載檔案。",
+    welcomeUgc:
+      "UGC 工作室 — 話我知產品同感覺（開箱、評價、街拍）。要分鏡廣告就同我講，我帶你去 /studio。",
+    welcomeSite:
+      "你好 — 我可以幫你開 wizard、修圖、字幕、Pro 畫布或品牌套件。想做咩？",
+    shortLabel: "問 AI",
     openingStudio: "正在開啟工作室並套用設定…",
     studioContinued: "你已入 studio — 對話會保留。回覆 下一步 繼續 Step 2。",
     placeholder: "例如：8 秒網站 Reel、產品分鏡…",
@@ -3228,7 +3358,7 @@ export const zh = {
       settingsTitle: "影片設定",
       settingsHint: "片長同解像度會影響 token 費用。",
       klingSettingsHint:
-        "Kling 會將每張靜態圖變成 5 秒或 10 秒短片再串埋。解像度／快速模式唔適用。",
+        "影片會先試 MiniMax H3（全部靜幀 → 一條）。以下 clip 長度只喺 Kling 後備先適用（每格 5 或 10 秒再拼接）。",
       klingClipLabel: "每場片長",
       klingClipHint: "Kling 每場只支援 5 秒或 10 秒 — 唔係 Seedance 嗰種 4–12 秒總片長。",
       klingTotalLabel: "合計約 {total} 秒（{n} × {clip} 秒）",
@@ -3369,6 +3499,7 @@ export const zh = {
       need_headline: "請填主標或概念 idea。",
       image_busy: "請等圖片生成完成。",
       image_not_ready: "請等生成圖片顯示。",
+      need_storyboard_approve: "請先確認分鏡靜幀（九宮格）再繼續做片。",
       video_busy: "請等影片生成完成。",
       video_not_ready: "影片未完成 — 請等生成，或返回再試。",
       plan_video_busy: "請等 AI 動態方案寫完。",

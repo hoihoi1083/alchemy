@@ -10,6 +10,7 @@ export type ImageCreativeMode = "promo-ai" | "reference-concept";
 export type VideoCreativeMode =
   | "product-assistant"
   | "product-promo"
+  | "motion-poster"
   | "reference-concept"
   | "image-to-video";
 
@@ -21,9 +22,18 @@ export const IMAGE_CREATIVE_MODES: ImageCreativeMode[] = [
 export const VIDEO_CREATIVE_MODES: VideoCreativeMode[] = [
   "product-assistant",
   "product-promo",
+  "motion-poster",
   "reference-concept",
   "image-to-video",
 ];
+
+export function videoModePreviewSrc(id: VideoCreativeMode): string {
+  return `/images/studio/video-modes/${id}.png?v=1`;
+}
+
+export function imageModePreviewSrc(id: ImageCreativeMode): string {
+  return `/images/studio/image-modes/${id}.png?v=1`;
+}
 
 export function defaultImageModeForGoal(goal: OutputGoal): ImageCreativeMode {
   if (goal === "image-only") return "reference-concept";
@@ -47,10 +57,10 @@ export function defaultVideoModeForStudio(
 
 export function videoModesForGoal(goal: OutputGoal): VideoCreativeMode[] {
   if (goal === "combined") {
-    return ["image-to-video", "reference-concept", "product-promo"];
+    return ["image-to-video", "motion-poster", "reference-concept", "product-promo"];
   }
   if (goal === "video-only") {
-    return ["product-assistant", "product-promo", "reference-concept"];
+    return ["product-assistant", "motion-poster", "product-promo", "reference-concept"];
   }
   return [];
 }
@@ -62,7 +72,9 @@ export function videoModesForStudio(
 ): VideoCreativeMode[] {
   const modes = videoModesForGoal(goal);
   if (promotionMode !== "concept") return modes;
-  if (goal === "video-only") return ["product-promo", "reference-concept"];
-  if (goal === "combined") return ["image-to-video", "product-promo", "reference-concept"];
+  if (goal === "video-only") return ["product-promo", "motion-poster", "reference-concept"];
+  if (goal === "combined") {
+    return ["image-to-video", "motion-poster", "product-promo", "reference-concept"];
+  }
   return modes;
 }

@@ -12,6 +12,7 @@ import {
   type GeneratedImageResultViewKind,
 } from "@/lib/generated-image-result-view";
 import { storyboardSceneDisplayCopy } from "@/lib/storyboard-scene-copy";
+import { localizeTvcShotRole, tvcShotJobLine } from "@/lib/shot-recipes";
 
 type ReviewItem = {
   url: string;
@@ -20,6 +21,8 @@ type ReviewItem = {
   sublabel?: string;
   /** Optional beat description when different from caption. */
   beat?: string;
+  /** 4-beat job line (establish / macro / orbit / payoff). */
+  job?: string;
   index: number;
 };
 
@@ -235,12 +238,20 @@ function ReviewImageFrame({
   item,
   selected,
   selectable,
+  reviewable,
+  reviewed,
+  reviewHint,
+  reviewedHint,
   imageGenKey,
   onSelect,
 }: {
   item: ReviewItem;
   selected: boolean;
   selectable: boolean;
+  reviewable?: boolean;
+  reviewed?: boolean;
+  reviewHint?: string;
+  reviewedHint?: string;
   imageGenKey: number;
   onSelect: () => void;
 }) {
@@ -260,17 +271,28 @@ function ReviewImageFrame({
           className="max-h-full max-w-full object-contain"
         />
       </div>
+      {reviewable ? (
+        <span
+          className={`absolute bottom-2 left-2 z-10 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+            reviewed
+              ? "bg-violet-600 text-white"
+              : "bg-amber-400 text-amber-950"
+          }`}
+        >
+          {reviewed ? reviewedHint : reviewHint}
+        </span>
+      ) : null}
     </>
   );
 
-  if (selectable) {
+  if (selectable || reviewable) {
     return (
       <button
         type="button"
         onClick={onSelect}
         className={`relative block w-full overflow-hidden text-left ${
-          selected ? "" : ""
-        }`}
+          reviewable && !reviewed ? "ring-2 ring-inset ring-amber-300" : ""
+        } ${selected ? "" : ""}`}
       >
         {media}
       </button>
@@ -388,6 +410,11 @@ export function ImageReviewGallery({
 
   function handleRegenerateOne(item: ReviewItem) {
     setActionNote(null);
+    if (view.kind === "storyboard") {
+      if (wizard.storyboardSceneRegenerateBusy !== null) return;
+      void wizard.regenerateStoryboardSceneWithAi(item.index);
+      return;
+    }
     if (!wizard.canGenerateImage()) {
       setActionNote(
         wizard.imageGenerateDisabledReason || m.wizard.imageGenerateNotReady,
@@ -566,12 +593,24 @@ export function ImageReviewGallery({
                   item={item}
                   selected={selected}
                   selectable={selectable}
+                  reviewable={isStoryboardReview}
+                  reviewed={wizard.storyboardCellsViewed.includes(item.index)}
+                  reviewHint={m.wizard.storyboardTapToReview}
+                  reviewedHint={m.wizard.storyboardCellReviewed}
                   imageGenKey={wizard.imageGenKey}
-                  onSelect={() => selectItem(item.index, item.url)}
+                  onSelect={() => {
+                    if (isStoryboardReview) wizard.markStoryboardCellViewed(item.index);
+                    selectItem(item.index, item.url);
+                  }}
                 />
 
-                {item.sublabel || item.beat ? (
+                {item.job || item.sublabel || item.beat ? (
                   <div className="space-y-1 border-t border-slate-100 px-2.5 py-2.5 sm:px-3">
+                    {item.job ? (
+                      <p className="text-[11px] font-medium leading-snug text-violet-800">
+                        {item.job}
+                      </p>
+                    ) : null}
                     {item.sublabel ? (
                       <p className="text-[12px] font-medium leading-snug text-slate-800 sm:text-[13px]">
                         {item.sublabel}
@@ -606,8 +645,17 @@ export function ImageReviewGallery({
                       />
                       <CompactAction
                         icon={<IconRefresh className="h-3.5 w-3.5 shrink-0" />}
-                        label={m.wizard.imageReviewRegenerateOneBtn}
-                        disabled={!canRegenerate}
+                        label={
+                          view.kind === "storyboard" &&
+                          wizard.storyboardSceneRegenerateBusy === item.index
+                            ? m.wizard.storyboardRegeneratingImage
+                            : m.wizard.imageReviewRegenerateOneBtn
+                        }
+                        disabled={
+                          view.kind === "storyboard"
+                            ? wizard.storyboardSceneRegenerateBusy !== null
+                            : !canRegenerate
+                        }
                         onClick={() => handleRegenerateOne(item)}
                       />
                     </div>
@@ -618,6 +666,34 @@ export function ImageReviewGallery({
           })}
         </div>
       </div>
+
+      {isStoryboardReview && items.length > 0 ? (
+        <label
+          className={`flex items-start gap-3 rounded-2xl border px-4 py-3 ${
+            wizard.storyboardAllCellsViewed
+              ? "cursor-pointer border-violet-300 bg-violet-50/80"
+              : "cursor-not-allowed border-amber-200 bg-amber-50/70 opacity-90"
+          }`}
+        >
+          <input
+            type="checkbox"
+            className="mt-1 h-4 w-4 shrink-0 rounded border-violet-400 text-violet-600 disabled:cursor-not-allowed"
+            checked={wizard.storyboardGridApproved}
+            disabled={!wizard.storyboardAllCellsViewed}
+            onChange={(e) => wizard.setStoryboardGridApproved(e.target.checked)}
+          />
+          <span>
+            <span className="block text-sm font-semibold text-violet-950">
+              {m.wizard.storyboardApproveCheckbox}
+            </span>
+            <span className="mt-0.5 block text-xs leading-relaxed text-violet-800/80">
+              {wizard.storyboardAllCellsViewed
+                ? m.wizard.storyboardApproveHint
+                : m.wizard.storyboardApproveNeedLookHint}
+            </span>
+          </span>
+        </label>
+      ) : null}
 
       {downloadError ? (
         <p className="text-center text-xs text-amber-700">{downloadError}</p>
@@ -657,7 +733,7 @@ export function ImageReviewGallery({
         <ImageReviewFooterBar
           onBack={onBack ?? (() => router.push("/studio"))}
           onDownloadAll={() => void handleDownloadAll()}
-          onGenerateOneMore={handleRegenerateAll}
+          onGenerateOneMore={isStoryboardReview ? undefined : handleRegenerateAll}
           downloadAllBusy={downloadAllBusy}
           generateBusy={!canRegenerate}
         />
@@ -673,16 +749,21 @@ export function ImageReviewFooterBar({
   onContinue,
   downloadAllBusy,
   generateBusy,
+  continueDisabled,
+  continueDisabledReason,
   backLabel,
   continueLabel,
 }: {
   onBack: () => void;
   onDownloadAll: () => void;
-  onGenerateOneMore: () => void;
+  /** Omit on storyboard — per-cell regen only; regen-all fights the approve gate. */
+  onGenerateOneMore?: () => void;
   /** Combined 圖+片: continue from scene review to video setup. */
   onContinue?: () => void;
   downloadAllBusy?: boolean;
   generateBusy?: boolean;
+  continueDisabled?: boolean;
+  continueDisabledReason?: string | null;
   backLabel?: string;
   continueLabel?: string;
 }) {
@@ -721,20 +802,24 @@ export function ImageReviewFooterBar({
             <IconDownload className="h-4 w-4" />
             {downloadAllBusy ? m.imageCanvas.downloading : m.wizard.downloadAllSlides}
           </button>
-          <button
-            type="button"
-            disabled={generateBusy}
-            onClick={onGenerateOneMore}
-            className="inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-violet-600 bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:border-violet-700 hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
-          >
-            <IconRefresh className="h-4 w-4" />
-            {m.wizard.imageReviewGenerateOneMore}
-          </button>
+          {onGenerateOneMore ? (
+            <button
+              type="button"
+              disabled={generateBusy}
+              onClick={onGenerateOneMore}
+              className="inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-violet-600 bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:border-violet-700 hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
+            >
+              <IconRefresh className="h-4 w-4" />
+              {m.wizard.imageReviewGenerateOneMore}
+            </button>
+          ) : null}
           {onContinue ? (
             <button
               type="button"
+              disabled={continueDisabled}
+              title={continueDisabled ? continueDisabledReason ?? undefined : undefined}
               onClick={onContinue}
-              className="inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-violet-600 bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:border-violet-700 hover:bg-violet-700 sm:w-auto"
+              className="inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-violet-600 bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:border-violet-700 hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
             >
               {continueLabel ?? m.wizard.continueToVideo}
               <svg
@@ -889,12 +974,20 @@ function collectReviewItems(
   if (kind === "storyboard") {
     return wizard.storyboardScenes.map((scene, i) => {
       const copy = storyboardSceneDisplayCopy(scene);
+      const roleLabel = localizeTvcShotRole(scene.role, m.wizard.tvcShotRoles);
+      const beat =
+        copy.caption && copy.beat
+          ? localizeTvcShotRole(copy.beat, m.wizard.tvcShotRoles) || copy.beat
+          : undefined;
       return {
         index: i,
         url: scene.imageUrl,
-        label: `${m.wizard.storyboardSceneLabel} ${scene.imageIndex}`,
-        sublabel: copy.caption || copy.beat || undefined,
-        beat: copy.caption && copy.beat ? copy.beat : undefined,
+        label: `${m.wizard.storyboardSceneLabel} ${scene.imageIndex}${
+          roleLabel ? ` · ${roleLabel}` : ""
+        }`,
+        job: tvcShotJobLine(scene.role, m.wizard.tvcShotJobs),
+        sublabel: copy.caption || beat || roleLabel || undefined,
+        beat,
       };
     });
   }

@@ -5,6 +5,7 @@ import { join } from "node:path";
 import {
   buildStoryboardMinimaxH3Prompt,
   clampMinimaxH3Duration,
+  formDataExpectsReferenceVideo,
   normalizeMinimaxH3Resolution,
   seedancePromptToMinimaxH3,
 } from "../lib/minimax-h3-run";
@@ -49,6 +50,19 @@ describe("MiniMax H3 Seedance fallback helpers", () => {
     assert.match(prompt, /Video 1/);
     assert.match(prompt, /continuous 8s/);
     assert.match(prompt, /Image 1 hero product/);
+    assert.match(prompt, /spine/i);
+    assert.doesNotMatch(prompt, /optional/i);
+    assert.match(prompt, /wardrobe/i);
+  });
+
+  it("omits Video 1 spine when no reference reel", () => {
+    const prompt = buildStoryboardMinimaxH3Prompt({
+      durationSec: 8,
+      hasReferenceVideo: false,
+      scenes: [{ role: "establish" }],
+    });
+    assert.doesNotMatch(prompt, /Video 1 is the spine/i);
+    assert.doesNotMatch(prompt, /optional/i);
   });
 
   it("generate route tries MiniMax H3 before Kling on Seedance 422", () => {
@@ -62,7 +76,7 @@ describe("MiniMax H3 Seedance fallback helpers", () => {
     assert.ok(h3Idx > 0 && klingIdx > h3Idx, "H3 fallback must run before Kling log");
   });
 
-  it("storyboard route tries MiniMax H3 before Kling stitch", () => {
+  it("storyboard stills path tries MiniMax H3 before Kling stitch", () => {
     const src = readFileSync(
       join(process.cwd(), "app/api/generate-kling-storyboard/route.ts"),
       "utf8",
@@ -73,5 +87,27 @@ describe("MiniMax H3 Seedance fallback helpers", () => {
     const h3Idx = src.indexOf("MiniMax H3 first");
     const klingIdx = src.indexOf("Kling fallback");
     assert.ok(h3Idx > 0 && klingIdx > h3Idx);
+  });
+
+  it("H3 reference mode accepts wizard `images` as well as reference_images", () => {
+    const src = readFileSync(
+      join(process.cwd(), "app/api/generate-minimax-h3/route.ts"),
+      "utf8",
+    );
+    assert.match(src, /getAll\("reference_images"\)/);
+    assert.match(src, /getAll\("images"\)/);
+  });
+
+  it("detects @Video1 / reference MP4 as required spine", () => {
+    const withUrl = new FormData();
+    withUrl.set("reference_video_url", "https://example.com/reel.mp4");
+    assert.equal(formDataExpectsReferenceVideo(withUrl), true);
+
+    const withPrompt = new FormData();
+    assert.equal(formDataExpectsReferenceVideo(withPrompt, "Follow @Video1 spine."), true);
+
+    const stillsOnly = new FormData();
+    stillsOnly.set("prompt", "Orbit the bottle.");
+    assert.equal(formDataExpectsReferenceVideo(stillsOnly, "Orbit the bottle."), false);
   });
 });

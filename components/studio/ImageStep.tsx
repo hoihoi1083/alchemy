@@ -25,6 +25,7 @@ import { QuickFixImagePanel } from "@/components/studio/QuickFixImagePanel";
 import { ImagePostflightPanel } from "@/components/studio/ImagePostflightPanel";
 import { ImagePostGenChecklist } from "@/components/studio/ImagePostGenChecklist";
 import { ShipItPanel } from "@/components/studio/ShipItPanel";
+import { StoryboardShotMap } from "@/components/studio/StoryboardShotMap";
 import { estimateImageTokens } from "@/lib/billing/token-costs";
 import { isBrandVideoStyle, isCreativeVideoStyle, isBrandVisualStyle, isStoryboardVideoStyle, isAiPlannedVideoStyle } from "@/lib/visual-styles";
 import { CINEMATIC_SCENE_COUNTS, type CinematicSceneCount } from "@/lib/cinematic-scene-config";
@@ -33,7 +34,7 @@ import type { CinematicSceneResult } from "@/lib/cinematic-reel-types";
 import type { StoryboardSceneResult } from "@/lib/video-storyboard-types";
 
 export function ImageStep() {
-  const { applyPromptRebuild, artStyleId, campaignPlan, campaignSlideLabel, campaignSlides, campaignTheme, canGenerateImage, cinematicReelPlan, cinematicSceneCount, cinematicScenes, effectiveImageMode, effectiveImageOutputMode, error, finishImageStep, formatCinematicCopy, generateImage, goBackFromImage, headline, imageAspectRatio, imageBusy, imageCreativeMode, imageFinishLabel, imageGenKey, imageGenerateDisabledReason, imageInputMode, imageNextDisabled, imagePostflight, imagePostflightBusy, imagePreflight, imageProgressInfo, imagePrompt, imageQualityChecklist, imageRefPhoto, imageRefPreviewUrl, imageStepHint, imageTextMode, imageUrl, imageVariantUrls, imageVisionReview, imageVisionReviewBusy, isCampaignOutput, isCinematicStitchOutput, isConceptCinematicSingleOutput, isConceptStoryboardOutput, isStoryboardOutput, lastImageEndpoint, lockedCampaignMode, m, needsProductUpload, onCinematicSceneCountChange, onImageCreativeModeChange, onImageInputModeChange, onProductPhotoSelected, planStoryboard, planStoryboardBusy, product, productPhoto, promotionMode, promptExtra, promptMarket, referenceAd, referenceAnalyzeBusy, referenceAnalyzeNote, referenceCarouselSlideCount, referenceIsVideo, referenceStrategy, regenerateStoryboardSceneWithAi, stampStoryboardSceneLogo, brandKit, reorderStoryboardScene, replaceStoryboardSceneImage, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, runShipItPipeline, selectVisualStyle, selectedVariantIndex, setArtStyleId, setCampaignPlan, setCampaignSlides, setCampaignTheme, setImageAspectRatio, setImageGenKey, setImageOutputMode, setImagePrompt, setImageRefPhoto, setImageQualityChecklist, setImageTextMode, setImageUrl, setImageVariantUrls, setPromptExtra, setPromptMarket, setError, setReferenceCarouselSlideCount, setSelectedVariantIndex, setShipItMode, setShowAdvancedImage, setStoryboardBrief, setStoryboardPlan, setStoryboardSceneCount, setSubjectFraming, setVideoPrompt, shipItEligible, shipItMode, shipItPipelineBusy, shipItVisionBlocked, showAdvancedImage, storyboardBrief, storyboardPlan, storyboardSceneCount, storyboardSceneRegenerateBusy, storyboardSceneReplaceBusy, storyboardScenes, storyboardTrimDuration, subjectFraming, templateId, templateSlotStatus, trimStoryboardDurations, updateStoryboardPlanScene, uploadPreviewUrl, uploadQualityMessage, uploadQualityWarning, useOriginalAsKeyframe, useOriginalImage, userReferenceBrief, useReferenceVideo, usesCompositor, videoPrompt, visualStyle, visualStyleId, workflowMode } = useWizard();
+  const { applyPromptRebuild, artStyleId, campaignPlan, campaignSlideLabel, campaignSlides, campaignTheme, canGenerateImage, cinematicReelPlan, cinematicSceneCount, cinematicScenes, effectiveImageMode, effectiveImageOutputMode, error, finishImageStep, formatCinematicCopy, generateImage, goBackFromImage, headline, imageAspectRatio, imageBusy, imageCreativeMode, imageFinishLabel, imageGenKey, imageGenerateDisabledReason, imageInputMode, imageNextDisabled, imagePostflight, imagePostflightBusy, imagePreflight, imageProgressInfo, imagePrompt, imageQualityChecklist, imageRefPhoto, imageRefPreviewUrl, imageStepHint, imageTextMode, imageUrl, imageVariantUrls, imageVisionReview, imageVisionReviewBusy, isCampaignOutput, isCinematicStitchOutput, isConceptCinematicSingleOutput, isConceptStoryboardOutput, isStoryboardOutput, lastImageEndpoint, lockedCampaignMode, m, needsProductUpload, onCinematicSceneCountChange, onImageCreativeModeChange, onImageInputModeChange, onProductPhotoSelected, planStoryboard, planStoryboardBusy, product, productPhoto, promotionMode, promptExtra, promptMarket, referenceAd, referenceAnalyzeBusy, referenceAnalyzeNote, referenceCarouselSlideCount, referenceIsVideo, referenceStrategy, regenerateStoryboardSceneWithAi, stampStoryboardSceneLogo, brandKit, reorderStoryboardScene, replaceStoryboardSceneImage, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, runShipItPipeline, selectVisualStyle, selectedVariantIndex, setArtStyleId, setCampaignPlan, setCampaignSlides, setCampaignTheme, setImageAspectRatio, setImageGenKey, setImageOutputMode, setImagePrompt, setImageRefPhoto, setImageQualityChecklist, setImageTextMode, setImageUrl, setImageVariantUrls, setPromptExtra, setPromptMarket, setError, setReferenceCarouselSlideCount, setSelectedVariantIndex, setShipItMode, setShowAdvancedImage, setStoryboardBrief, setStoryboardPlan, setStoryboardSceneCount, setSubjectFraming, setVideoPrompt, shipItEligible, shipItMode, shipItPipelineBusy, shipItVisionBlocked, showAdvancedImage, storyboardBrief, storyboardPlan, storyboardSceneCount, storyboardSceneRegenerateBusy, storyboardSceneReplaceBusy, storyboardScenes, storyboardGridApproved, setStoryboardGridApproved, storyboardCellsViewed, storyboardAllCellsViewed, markStoryboardCellViewed, storyboardTrimDuration, subjectFraming, templateId, templateSlotStatus, trimStoryboardDurations, updateStoryboardPlanScene, uploadPreviewUrl, uploadQualityMessage, uploadQualityWarning, useOriginalAsKeyframe, useOriginalImage, userReferenceBrief, useReferenceVideo, usesCompositor, videoPrompt, visualStyle, visualStyleId, workflowMode } = useWizard();
   const isConcept = promotionMode === "concept";
   const storyboardSceneEstimate = (() => {
     if (storyboardPlan?.scenes?.length) return storyboardPlan.scenes.length;
@@ -492,6 +493,32 @@ export function ImageStep() {
 
       {storyboardPlan ? (
         <div className="mt-4 space-y-3 rounded-xl border border-teal-800/40 bg-slate-950/50 p-3">
+          <StoryboardShotMap
+            plan={storyboardPlan}
+            stillUrls={Object.fromEntries(
+              storyboardScenes.map((s) => [s.imageIndex, s.imageUrl] as const),
+            )}
+            title={m.wizard.storyboardShotMapTitle}
+            bibleLabel={m.wizard.storyboardLookBibleLabel}
+            emptyStillLabel={m.wizard.storyboardShotMapEmptyStill}
+            cameraLabel={m.wizard.storyboardPlanCameraLabel}
+            lightingLabel={m.wizard.storyboardPlanLightingLabel}
+            variant="dark"
+            onLookBibleChange={(lookBible) =>
+              setStoryboardPlan({ ...storyboardPlan, lookBible })
+            }
+            lookBibleFieldLabels={{
+              palette: m.wizard.lookBiblePaletteLabel,
+              lighting: m.wizard.lookBibleLightingLabel,
+              materials: m.wizard.lookBibleMaterialsLabel,
+              negatives: m.wizard.lookBibleNegativesLabel,
+            }}
+            roleLabels={m.wizard.tvcShotRoles}
+            onRegenerateScene={(i) => void regenerateStoryboardSceneWithAi(i)}
+            regenerateBusyIndex={storyboardSceneRegenerateBusy}
+            regenerateLabel={m.wizard.storyboardRegenerateAiBtn}
+            regeneratingLabel={m.wizard.storyboardRegeneratingImage}
+          />
           <label className="block text-xs font-medium text-teal-100">
             {m.wizard.storyboardPlanThemeLabel}
             <input
@@ -509,7 +536,7 @@ export function ImageStep() {
             >
               <p className="text-xs font-semibold text-teal-100">
                 {m.wizard.storyboardSceneLabel} {scene.imageIndex} · {scene.startSec}–{scene.endSec}s
-                {scene.role ? ` · ${scene.role}` : ""}
+                {scene.role ? ` · ${m.wizard.tvcShotRoles[scene.role as keyof typeof m.wizard.tvcShotRoles] ?? scene.role}` : ""}
               </p>
               <label className="mt-1.5 block text-[11px] text-teal-200/80">
                 {m.wizard.storyboardPlanSceneDescLabel}
@@ -538,6 +565,17 @@ export function ImageStep() {
                   value={scene.cameraMotionEn ?? ""}
                   onChange={(e) =>
                     updateStoryboardPlanScene(i, { cameraMotionEn: e.target.value })
+                  }
+                  rows={2}
+                  className="mt-0.5 w-full rounded-lg border border-teal-800/50 bg-slate-950/70 px-2 py-1.5 text-xs text-teal-50"
+                />
+              </label>
+              <label className="mt-1.5 block text-[11px] text-teal-200/80">
+                {m.wizard.storyboardPlanLightingLabel}
+                <textarea
+                  value={scene.lightingEn ?? ""}
+                  onChange={(e) =>
+                    updateStoryboardPlanScene(i, { lightingEn: e.target.value })
                   }
                   rows={2}
                   className="mt-0.5 w-full rounded-lg border border-teal-800/50 bg-slate-950/70 px-2 py-1.5 text-xs text-teal-50"
@@ -576,7 +614,11 @@ export function ImageStep() {
 
   {!usesCompositor && (
     <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-3">
-      <ArtStylePicker value={artStyleId} onChange={setArtStyleId} />
+      <ArtStylePicker
+        value={artStyleId}
+        onChange={setArtStyleId}
+        videoSafeOnly={workflowMode !== "image-only"}
+      />
     </div>
   )}
 
@@ -693,11 +735,21 @@ export function ImageStep() {
             key={`${scene.imageUrl}-${i}`}
             className="rounded-xl border border-slate-700 bg-slate-900/40 p-2"
           >
-            <img
-              src={`${scene.imageUrl}${scene.imageUrl.includes("?") ? "&" : "?"}v=${imageGenKey}-${i}`}
-              alt=""
-              className="mx-auto max-h-48 w-full rounded-lg object-contain"
-            />
+            <button
+              type="button"
+              onClick={() => markStoryboardCellViewed(i)}
+              className={`mx-auto block w-full overflow-hidden rounded-lg ${
+                storyboardCellsViewed.includes(i)
+                  ? "ring-2 ring-teal-400/70"
+                  : "ring-2 ring-amber-400/80"
+              }`}
+            >
+              <img
+                src={`${scene.imageUrl}${scene.imageUrl.includes("?") ? "&" : "?"}v=${imageGenKey}-${i}`}
+                alt=""
+                className="mx-auto max-h-48 w-full object-contain"
+              />
+            </button>
             <span className="mt-2 block text-center text-xs font-medium text-slate-200">
               {m.wizard.storyboardSceneLabel} {scene.imageIndex}
               {scene.startSec !== scene.endSec
@@ -988,6 +1040,34 @@ export function ImageStep() {
       />
     </div>
   )}
+
+  {isStoryboardOutput && storyboardScenes.length > 0 ? (
+    <label
+      className={`flex items-start gap-3 rounded-xl border px-4 py-3 ${
+        storyboardAllCellsViewed
+          ? "cursor-pointer border-teal-700/70 bg-teal-950/40"
+          : "cursor-not-allowed border-amber-700/50 bg-amber-950/30"
+      }`}
+    >
+      <input
+        type="checkbox"
+        className="mt-1 h-4 w-4 shrink-0 rounded border-teal-400 text-teal-600 disabled:cursor-not-allowed"
+        checked={storyboardGridApproved}
+        disabled={!storyboardAllCellsViewed}
+        onChange={(e) => setStoryboardGridApproved(e.target.checked)}
+      />
+      <span>
+        <span className="block text-sm font-semibold text-teal-50">
+          {m.wizard.storyboardApproveCheckbox}
+        </span>
+        <span className="mt-0.5 block text-xs leading-relaxed text-teal-200/80">
+          {storyboardAllCellsViewed
+            ? m.wizard.storyboardApproveHint
+            : m.wizard.storyboardApproveNeedLookHint}
+        </span>
+      </span>
+    </label>
+  ) : null}
 
   <div className="hidden gap-3 md:flex">
     <button

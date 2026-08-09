@@ -108,6 +108,7 @@ export async function POST(request: Request) {
       promptExtra,
       market: promptMarket,
       outputDurationSec,
+      conceptMode: promotionMode === "concept",
     });
 
     let storyboardPlan:

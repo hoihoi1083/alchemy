@@ -30,6 +30,7 @@ export function resolveVideoOutputPresentation(
 ): VideoOutputPresentationId | null {
   if (input.workflowMode === "image-only") return null;
   if (input.usesCompositor) return "animate-keyframe";
+  if (input.videoCreativeMode === "motion-poster") return "animate-keyframe";
   if (input.isStoryboardOutput) return "storyboard-reel";
   if (input.isUgcPresenterOutput) return "digital-presenter";
   if (input.shouldCinematicStitch || input.isConceptCinematicSingleOutput) {

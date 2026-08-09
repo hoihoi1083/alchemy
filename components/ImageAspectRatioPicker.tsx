@@ -55,6 +55,25 @@ export function ImageAspectRatioPicker({
                     : "border-slate-200 bg-white hover:border-slate-300"
               }`}
             >
+              <span
+                className={`mx-auto mb-2 block rounded-[4px] border-2 ${
+                  selected
+                    ? isDark
+                      ? "border-current opacity-90"
+                      : "border-violet-500"
+                    : isDark
+                      ? "border-slate-500"
+                      : "border-slate-300"
+                }`}
+                style={
+                  ratio === "9:16"
+                    ? { width: 18, height: 32 }
+                    : ratio === "4:5"
+                      ? { width: 22, height: 28 }
+                      : { width: 26, height: 26 }
+                }
+                aria-hidden
+              />
               <p
                 className={`text-sm font-semibold ${isDark ? "text-white" : "text-slate-900"}`}
               >

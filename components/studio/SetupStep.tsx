@@ -1062,7 +1062,11 @@ export function SetupStep() {
 
   {!usesCompositor && (
     <div className="rounded-xl border border-slate-200 bg-white p-3">
-      <ArtStylePicker value={artStyleId} onChange={setArtStyleId} />
+      <ArtStylePicker
+        value={artStyleId}
+        onChange={setArtStyleId}
+        videoSafeOnly={isVideoWorkflow}
+      />
     </div>
   )}
 

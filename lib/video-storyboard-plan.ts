@@ -12,6 +12,7 @@ import { isContentResearchStyleExtra } from "@/lib/content-research-promote";
 import { isLayoutTransferReferenceExtra } from "@/lib/user-reference-brief";
 import type { ReferenceStrategyKind } from "@/lib/reference-strategy";
 import { parseLlmJsonObject } from "@/lib/parse-llm-json";
+import { productIdentityContractLines } from "@/lib/prompt-balance-contract";
 import { inferProductSceneCategory } from "@/lib/product-scene-hints";
 import { isStoryboardStructureLabel } from "@/lib/prompt-variables";
 import type { ResearchReelAnalysis } from "@/lib/reel-analysis-types";
@@ -30,11 +31,21 @@ import {
 import { parseSceneMotionHintsFromPlan } from "@/lib/kling-motion-from-plan";
 import { seedanceSafePlannerRules, softenStoryboardStillPromptForModeration } from "@/lib/seedance-moderation";
 import { videoDurationPlannerBlock } from "@/lib/video-duration-planner";
+import {
+  DEFAULT_STORYBOARD_SCENE_COUNT,
+  assignTvcRolesToScenes,
+  coerceTvcShotRole,
+  normalizeLookBible,
+  storyboardLookBiblePlannerLines,
+  storyboardTvcRolesPlannerLines,
+  tvcRolesForSceneCount,
+} from "@/lib/shot-recipes";
 
 function sceneCountForDuration(durationSec: number): { min: number; max: number } {
-  if (durationSec <= 6) return { min: 3, max: 5 };
-  if (durationSec <= 10) return { min: 4, max: 7 };
-  return { min: 5, max: MAX_STORYBOARD_SCENES };
+  // Prefer 4-beat TVC (九宫格 review) for typical Reel lengths.
+  if (durationSec <= 6) return { min: 3, max: 4 };
+  if (durationSec <= 10) return { min: 4, max: 5 };
+  return { min: 4, max: 6 };
 }
 
 function finishMotionPlanPrompt(prompt: string): string {
@@ -66,13 +77,14 @@ function ensureMotionPlanCoversScenes(
 function normalizeScene(raw: Partial<StoryboardScenePlan>, fallbackIndex: number): StoryboardScenePlan {
   return {
     imageIndex: Math.max(1, Number(raw.imageIndex) || fallbackIndex),
-    role: String(raw.role ?? `scene-${fallbackIndex}`).trim() || `scene-${fallbackIndex}`,
+    role: String(raw.role ?? "").trim() || `scene-${fallbackIndex}`,
     startSec: Math.max(0, Number(raw.startSec) || 0),
     endSec: Math.max(1, Number(raw.endSec) || 1),
     sceneDescriptionZh: String(raw.sceneDescriptionZh ?? raw.role ?? "").trim(),
     onImageCopyZh: String(raw.onImageCopyZh ?? "").trim() || undefined,
     imagePrompt: softenStoryboardStillPromptForModeration(String(raw.imagePrompt ?? "").trim()),
     cameraMotionEn: String(raw.cameraMotionEn ?? "").trim() || undefined,
+    lightingEn: String(raw.lightingEn ?? "").trim() || undefined,
     productPlacementZh: String(raw.productPlacementZh ?? "").trim() || undefined,
     punchLineZh: String(raw.punchLineZh ?? "").trim() || undefined,
   };
@@ -101,17 +113,20 @@ function enforceSceneCount(
 
   const padded = [...scenes];
   const span = durationSec / n;
+  const roles = tvcRolesForSceneCount(n);
   while (padded.length < n) {
     const i = padded.length;
     const last = padded[padded.length - 1];
     padded.push({
       imageIndex: i + 1,
-      role: `scene-${i + 1}`,
+      role: roles[i] ?? coerceTvcShotRole(undefined, i, n),
       startSec: i * span,
       endSec: (i + 1) * span,
       sceneDescriptionZh: last?.sceneDescriptionZh ?? `場景 ${i + 1}`,
       onImageCopyZh: last?.onImageCopyZh ?? last?.sceneDescriptionZh ?? `場景 ${i + 1}`,
       imagePrompt: last?.imagePrompt ?? "Product hero still, photorealistic 9:16.",
+      lightingEn: last?.lightingEn,
+      cameraMotionEn: last?.cameraMotionEn,
     });
   }
   return padded.map((s, i) => ({
@@ -133,6 +148,7 @@ function normalizeStoryboardPlan(
     .map((s, i) => normalizeScene(s, i + 1));
 
   scenes = enforceSceneCount(scenes, sceneCountTarget, durationSec);
+  scenes = assignTvcRolesToScenes(scenes);
 
   if (scenes.length < MIN_STORYBOARD_SCENES) {
     throw new Error(`Storyboard needs at least ${MIN_STORYBOARD_SCENES} scenes.`);
@@ -158,7 +174,7 @@ function normalizeStoryboardPlan(
   if (!seedancePrompt) {
     throw new Error("AI planning returned an empty video prompt.");
   }
-  // Keep field name seedancePrompt for API compat; content is Kling motion plan notes.
+  // Keep field name seedancePrompt for API compat; content is H3/Kling motion plan notes.
   // Pad missing Scene N lines when scene_count forces more scenes.
   seedancePrompt = ensureMotionPlanCoversScenes(seedancePrompt, scenes);
 
@@ -174,6 +190,10 @@ function normalizeStoryboardPlan(
     title: String(parsed.title ?? "").trim() || "Product story reel",
     theme: String(parsed.theme ?? "").trim(),
     visualDirection: String(parsed.visualDirection ?? "").trim(),
+    lookBible: normalizeLookBible(
+      (parsed as { lookBible?: Parameters<typeof normalizeLookBible>[0] }).lookBible,
+      String(parsed.visualDirection ?? "").trim(),
+    ),
     totalDurationSec: Math.max(
       durationSec,
       Number(parsed.totalDurationSec) || durationSec,
@@ -222,7 +242,18 @@ function buildPlanPrompt(input: {
   const sceneCountLine =
     input.sceneCountTarget && input.sceneCountTarget !== "auto"
       ? `Scene count: EXACTLY ${input.sceneCountTarget} scenes for ~${input.durationSec}s total.`
-      : `Scene count: ${min}–${max} scenes for ~${input.durationSec}s total. Max ${MAX_STORYBOARD_SCENES} images.`;
+      : `Scene count: prefer EXACTLY ${DEFAULT_STORYBOARD_SCENE_COUNT} scenes for ~${input.durationSec}s (allowed ${min}–${max}). Max ${MAX_STORYBOARD_SCENES} images.`;
+  const sceneJsonShape =
+    '{"imageIndex":1,"role":"establish","startSec":0,"endSec":2,"sceneDescriptionZh":"","onImageCopyZh":"","imagePrompt":"","cameraMotionEn":"","lightingEn":"","productPlacementZh":"","punchLineZh":""}';
+  const planJsonShape = `{"title":"","theme":"","visualDirection":"","lookBible":{"palette":"","lighting":"","materials":"","negatives":""},"totalDurationSec":0,"scenes":[${sceneJsonShape}],"seedancePrompt":"","productionNotes":""}`;
+  const bibleAndRoles = [
+    ...storyboardLookBiblePlannerLines(),
+    ...storyboardTvcRolesPlannerLines(
+      input.sceneCountTarget && input.sceneCountTarget !== "auto"
+        ? Number(input.sceneCountTarget)
+        : DEFAULT_STORYBOARD_SCENE_COUNT,
+    ),
+  ];
   const brandBlock = input.brandProfile?.businessName
     ? brandProfilePromptBlock(input.brandProfile)
     : "";
@@ -242,13 +273,15 @@ function buildPlanPrompt(input: {
       "Return ONE JSON object only — no markdown fences.",
       "",
       "Required JSON shape:",
-      '{"title":"","theme":"","visualDirection":"","totalDurationSec":0,"scenes":[{"imageIndex":1,"role":"","startSec":0,"endSec":2,"sceneDescriptionZh":"","onImageCopyZh":"","imagePrompt":"","cameraMotionEn":"","productPlacementZh":"","punchLineZh":""}],"seedancePrompt":"","productionNotes":""}',
+      planJsonShape,
       "",
       "CONCEPT ADAPTATION:",
       `- Campaign topic: ${input.product}.`,
       "- Scenes show the SERVICE / EXPERIENCE / IDEA — atmosphere, hands, tools, room, silhouette — not a SKU product catalog.",
       "- If the user brief asks for extreme face close-ups or mask-on-skin macros: use tasteful MID-SHOTS of guest + therapist instead (faces OK soft/partial).",
       "- Spa facial demo scenes MAY show people (guest + therapist) — do not plan empty rooms for 'treatment in progress' beats.",
+      "",
+      ...productIdentityContractLines({ conceptMode: true }),
       "",
       ...seedanceSafePlannerRules().map((line) =>
         line.includes("NO photorealistic human faces")
@@ -257,12 +290,14 @@ function buildPlanPrompt(input: {
       ),
       "",
       sceneCountLine,
+      ...bibleAndRoles,
       "- Each scene gets ONE still (imageIndex 1…N in timeline order).",
-      "- imagePrompt: English text-to-image still for Nano Banana — 9:16, cinematic concept, NO readable text/captions on the still.",
+      "- imagePrompt: English text-to-image still for Nano Banana — 9:16, cinematic concept, NO readable text/captions on the still. Open with lookBible echo.",
       `- onImageCopyZh (burned caption after video) AND sceneDescriptionZh (UI note): ${plannerCopyLanguageRule(resolveCopyLocale((input.market as PromptMarket) || "hk"))}`,
       "- onImageCopyZh: short consumer caption for THIS scene only.",
       "- sceneDescriptionZh: one line for the user UI — same language as onImageCopyZh.",
-      "- cameraMotionEn: English camera motion ONLY for this scene (push-in, orbit, handheld) — no Chinese, no prices, no on-screen text.",
+      "- cameraMotionEn: English camera motion ONLY for this scene — no Chinese, no prices, no on-screen text.",
+      "- lightingEn: English lighting ONLY for this scene.",
       "- productPlacementZh: where the product/concept sits in frame (market language).",
       "- punchLineZh: optional spoken/caption line for this beat (burn later via /captions).",
       "",
@@ -280,7 +315,7 @@ function buildPlanPrompt(input: {
       "productionNotes: brief user note — expect Kling multi-clip cost (~110 tokens/5s × scenes).",
       "",
       `Target duration: ${input.durationSec} seconds.`,
-      ...videoDurationPlannerBlock(input.durationSec),
+      ...videoDurationPlannerBlock(input.durationSec, { storyboardTvc: true }),
       artHint,
       input.styleHint ? `Visual mood hint: ${input.styleHint}` : "",
       input.promptExtra ? `Style / reference notes: ${input.promptExtra}` : "",
@@ -330,21 +365,25 @@ function buildPlanPrompt(input: {
     "Return ONE JSON object only — no markdown fences.",
     "",
     "Required JSON shape:",
-    '{"title":"","theme":"","visualDirection":"","totalDurationSec":0,"scenes":[{"imageIndex":1,"role":"","startSec":0,"endSec":2,"sceneDescriptionZh":"","onImageCopyZh":"","imagePrompt":"","cameraMotionEn":"","productPlacementZh":"","punchLineZh":""}],"seedancePrompt":"","productionNotes":""}',
+    planJsonShape,
     "",
     ...productAdaptationBlock,
     "",
+    ...productIdentityContractLines({ hasReferenceVideo: false }),
+    "",
     ...layoutTransferRules,
     ...(layoutTransferRules.length ? [""] : []),
+    ...bibleAndRoles,
     sceneCountLine,
     "- Each scene gets ONE still (imageIndex 1…N in timeline order).",
     layoutTransferRef
-      ? "- imagePrompt: English, dual-image edit — IMAGE 1 product hero, keep IMAGE 2 layout shell, 9:16, subject upright. NEVER ask for readable text/captions on the still (captions burn after video)."
-      : "- imagePrompt: English, for Nano Banana edit from user's product photo — 9:16 still matching the art direction, subject upright (head at top), correct vertical orientation. NEVER describe on-image text, titles, captions, logos, or slogans (stills are textless for Kling; captions burn after video).",
+      ? "- imagePrompt: English, dual-image edit — IMAGE 1 product hero, keep IMAGE 2 layout shell, 9:16, subject upright. NEVER ask for readable text/captions on the still (captions burn after video). Open with lookBible echo."
+      : "- imagePrompt: English, for Nano Banana edit from user's product photo — 9:16 still matching the art direction / lookBible, subject upright (head at top), correct vertical orientation. NEVER describe on-image text, titles, captions, logos, or slogans (stills are textless for Kling; captions burn after video).",
     `- onImageCopyZh (burned caption) AND sceneDescriptionZh (UI note): ${plannerCopyLanguageRule(resolveCopyLocale((input.market as PromptMarket) || "hk"))}`,
     "- onImageCopyZh: consumer-facing caption text for THIS scene only (burned AFTER video). Short headline + optional subline or CTA. NEVER use production labels: 開場亮點, 行動呼籲, 中段, arrows (→), or storyboard role names.",
     "- sceneDescriptionZh: one line for the user UI — same language as onImageCopyZh.",
-      "- cameraMotionEn: English camera motion ONLY for this scene (push-in, orbit, handheld) — no Chinese, no prices, no on-screen text.",
+      "- cameraMotionEn: English camera motion ONLY for this scene — match TVC role, not a generic slow push-in for every beat.",
+      "- lightingEn: English lighting ONLY for this scene (side key, rim, backlight, etc.).",
       "- productPlacementZh: where the product/concept sits in frame (market language).",
       "- punchLineZh: optional spoken/caption line for this beat (burn later via /captions).",
     "- Phone/laptop/tablet scenes: describe blank or abstract UI chrome only — never ask Nano Banana to invent readable Chinese/English on screens (it becomes gibberish).",
@@ -353,8 +392,8 @@ function buildPlanPrompt(input: {
     ...endCardLogoPlannerRules(input.useBrandLogo),
     "",
     "seedancePrompt (English — Kling motion plan notes; JSON key kept for API compat):",
-    `- Opening line: 9:16 commercial for THIS product category in the chosen art direction.`,
-    "- One block per scene: Scene N [start-end s]: <role> — English camera motion only (push-in, orbit, handheld drift).",
+    `- Opening line: 9:16 commercial for THIS product category; echo lookBible lighting/palette.`,
+    "- One block per scene: Scene N [start-end s]: <role> — English camera + lighting for that beat.",
     "- Do NOT use Seedance @Image / hard-cut R2V grammar — runtime is Kling I2V per still.",
     "- People only when category-appropriate; no celebrity faces; hands-only OK.",
     "- NO on-screen text, prices, or discounts in motion notes (captions burn later via /captions).",
@@ -365,7 +404,7 @@ function buildPlanPrompt(input: {
     "productionNotes: brief user note in 繁體中文 (HK) or English — expect Kling multi-clip tokens (~110/5s × scenes).",
     "",
     `Target duration: ${input.durationSec} seconds.`,
-    ...videoDurationPlannerBlock(input.durationSec),
+    ...videoDurationPlannerBlock(input.durationSec, { storyboardTvc: true }),
     artHint,
     input.styleHint ? `Visual mood hint: ${input.styleHint}` : "",
     input.promptExtra ? `Style / reference notes: ${input.promptExtra}` : "",
@@ -573,33 +612,51 @@ function buildReelStoryboardPlanPrompt(input: {
     ? `- 9:16 concept short, ~${input.durationSec}s total.`
     : `- 9:16 product commercial, ~${input.durationSec}s total.`;
 
+  const preferCount =
+    input.sceneCountTarget && input.sceneCountTarget !== "auto"
+      ? Number(input.sceneCountTarget)
+      : DEFAULT_STORYBOARD_SCENE_COUNT;
+
+  const sceneJsonShape =
+    '{"imageIndex":1,"role":"establish","startSec":0,"endSec":2,"sceneDescriptionZh":"","onImageCopyZh":"","imagePrompt":"","cameraMotionEn":"","lightingEn":"","productPlacementZh":"","punchLineZh":""}';
+  const planJsonShape = `{"title":"","theme":"","visualDirection":"","lookBible":{"palette":"","lighting":"","materials":"","negatives":""},"totalDurationSec":0,"scenes":[${sceneJsonShape}],"seedancePrompt":"","productionNotes":""}`;
+
   return [
     adaptLine,
     "Return ONE JSON object only — no markdown fences.",
     "",
-    '{"title":"","theme":"","visualDirection":"","totalDurationSec":0,"scenes":[{"imageIndex":1,"role":"","startSec":0,"endSec":2,"sceneDescriptionZh":"","onImageCopyZh":"","imagePrompt":"","cameraMotionEn":"","productPlacementZh":"","punchLineZh":""}],"seedancePrompt":"","productionNotes":""}',
+    planJsonShape,
     "",
     "Rules:",
-    "- Map reference shot beats to storyboard scenes in timeline order (hook → demo → payoff/CTA).",
+    "- Map reference shot beats to storyboard scenes in timeline order (opening → mid → close from the reference — do NOT invent a new HOOK→DEMO→CTA plot).",
     "- Match reference pacing, cut rhythm, camera language, and VISUAL STYLE FAMILY — NOT reference faces, brands, unrelated topics, or on-video text.",
     "- visualDirection in JSON must describe the REFERENCE reel look (from Reference visual direction above), not a generic stock aesthetic.",
+    ...storyboardLookBiblePlannerLines(),
+    "- lookBible should echo Reference visual direction (palette/light/materials) — grade lock for ALL stills; do not invent a new medium.",
+    ...storyboardTvcRolesPlannerLines(preferCount),
     heroLine,
     input.conceptMode ? "" : `- Product category guess: ${category}.`,
     sceneCountLine,
     "- Each scene = ONE still (imageIndex 1…N).",
     ...layoutRules,
     "- sceneDescriptionZh: one line for the user UI — same language as onImageCopyZh.",
-      "- cameraMotionEn: English camera motion ONLY for this scene (push-in, orbit, handheld) — no Chinese, no prices, no on-screen text.",
-      "- productPlacementZh: where the product/concept sits in frame (market language).",
-      "- punchLineZh: optional spoken/caption line for this beat (burn later via /captions).",
+    "- cameraMotionEn: English camera motion ONLY for this scene — echo the reference beat's camera, not a generic slow push-in.",
+    "- lightingEn: English lighting ONLY for this scene (side key, rim, backlight, etc.).",
+    "- productPlacementZh: where the product/concept sits in frame (market language).",
+    "- punchLineZh: optional spoken/caption line for this beat (burn later via /captions).",
     `- onImageCopyZh: consumer ad copy for THIS scene. ${plannerCopyLanguageRule(resolveCopyLocale((input.market as PromptMarket) || "hk"))} Real headline/CTA only — NEVER 開場亮點, 行動呼籲, → arrows, or role names.`,
+    "",
+    ...productIdentityContractLines({
+      hasReferenceVideo: true,
+      conceptMode: Boolean(input.conceptMode),
+    }),
     "",
     ...endCardLogoPlannerRules(input.useBrandLogo),
     "",
-    "seedancePrompt (English — Kling motion plan notes):",
+    "seedancePrompt (English — motion plan notes for MiniMax H3 first, Kling I2V+stitch fallback; JSON key kept for API compat):",
     seedanceLead,
-    "- One block per scene: Scene N [start-end s]: <role> — English camera motion only.",
-    "- Do NOT use Seedance @Image / hard-cut R2V grammar — runtime is Kling I2V per still → stitch.",
+    "- One block per scene: Scene N [start-end s]: <role> — English camera + lighting for that beat.",
+    "- Do NOT use Seedance @Image / hard-cut R2V grammar — runtime prefers MiniMax H3 (all stills → one clip), else Kling I2V per still → stitch.",
     "- Textless frames; captions burn later via /captions.",
     "",
     `Reference visual direction: ${input.analysis.visualDirection || "follow analyzed frames"}`,
@@ -616,9 +673,10 @@ function buildReelStoryboardPlanPrompt(input: {
       ? `Campaign notes (TOPIC/copy only — do NOT let Visual metaphor override Reference visual direction): ${input.promptExtra}`
       : "",
     `Target duration: ${input.durationSec}s.`,
-    ...videoDurationPlannerBlock(input.durationSec),
-    artStylePlannerHint(input.artStyleId),
-    "productionNotes: expect Kling multi-clip cost; match reference pacing without cloning topic.",
+    ...videoDurationPlannerBlock(input.durationSec, { hasReferenceVideo: true }),
+    // Look follows the reference reel — do not inject a conflicting art-style plot.
+    "Look/grade: match Reference visual direction + lookBible; do not invent a new art medium.",
+    "productionNotes: expect MiniMax H3 (preferred) or Kling multi-clip cost; match reference pacing without cloning topic.",
   ]
     .filter(Boolean)
     .join("\n");
@@ -671,8 +729,8 @@ export async function planVideoStoryboardFromReelAnalysis(
       {
         role: "system",
         content: conceptMode
-          ? "You are a performance marketing storyboard director. Adapt a viral reference reel into a concept/message storyboard for Kling I2V per still → stitch (textless frames; captions via /captions). Output valid JSON only."
-          : "You are a performance marketing storyboard director. Adapt a viral reference reel into a product storyboard for Kling I2V per still → stitch (textless frames; captions via /captions). Output valid JSON only.",
+          ? "You are a performance marketing storyboard director. Adapt a viral reference reel into a concept/message storyboard for MiniMax H3 (preferred) or Kling I2V per still → stitch (textless frames; captions via /captions). Output valid JSON only."
+          : "You are a performance marketing storyboard director. Adapt a viral reference reel into a product storyboard for MiniMax H3 (preferred) or Kling I2V per still → stitch (textless frames; captions via /captions). Output valid JSON only.",
       },
       {
         role: "user",

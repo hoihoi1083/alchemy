@@ -13,9 +13,9 @@ import {
 } from "../lib/studio-assistant-intent";
 import { shouldUseLandingCoachFastPath, tryStudioAssistantFastPath } from "../lib/studio-assistant-fast-paths";
 import { appendPrimaryActionIfMissing, normalizeAssistantActionLinks } from "../lib/studio-assistant-action-links";
-import type { StudioAssistantSnapshot } from "../lib/studio-assistant-types";
+import type { AssistantSurface, StudioAssistantSnapshot } from "../lib/studio-assistant-types";
 
-type Surface = "landing" | "start" | "studio";
+type Surface = AssistantSurface;
 
 type MatrixCase = {
   id: string;
@@ -285,7 +285,36 @@ const OTHER: MatrixCase[] = [
     message: "use /pro node canvas",
     expectIntent: "pro_canvas",
     expectTask: "route-pro-canvas",
-    expectAction: "/pro",
+    expectAction: "studio-action:open-pro",
+    expectFastPath: true,
+  },
+  {
+    id: "edit-image-en",
+    message: "I need to edit image and remove watermark",
+    expectIntent: "edit_image",
+    expectTask: "route-edit-image",
+    expectAction: "studio-action:open-edit-image",
+    forbidActions: ["studio-action:setup-website-reel"],
+    expectFastPath: true,
+  },
+  {
+    id: "tool-edit-image",
+    message: "how do I remove the watermark",
+    surface: "edit-image",
+    expectIntent: "edit_image",
+    expectTask: "guide-edit-image",
+    expectAction: "Clean",
+    forbidActions: ["studio-action:setup-website-reel", "studio-action:open-physical-studio"],
+    expectFastPath: true,
+  },
+  {
+    id: "tool-captions",
+    message: "how to burn subtitles",
+    surface: "captions",
+    expectIntent: "captions_only",
+    expectTask: "guide-captions",
+    expectAction: "Burn",
+    forbidActions: ["studio-action:setup-website-reel"],
     expectFastPath: true,
   },
 ];

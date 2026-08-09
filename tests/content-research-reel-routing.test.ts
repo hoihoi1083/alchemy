@@ -21,7 +21,10 @@ describe("resolveReelResearchRouting", () => {
     );
   });
 
-  it("concept video-only → direct R2V (no storyboard)", () => {
-    assert.equal(resolveReelResearchRouting("concept", "video-only").visualStyleId, "product");
+  it("concept video-only → creative-video (not physical product style)", () => {
+    assert.equal(
+      resolveReelResearchRouting("concept", "video-only").visualStyleId,
+      "creative-video",
+    );
   });
 });

@@ -1,6 +1,10 @@
 /** Visual art direction for Nano Banana keyframes — Seedance animates this look. */
 export type ArtStyleId =
   | "realistic"
+  | "cinematic"
+  | "film"
+  | "ccd"
+  | "guofeng"
   | "anime-2d"
   | "cartoon-3d"
   | "comic-webtoon"
@@ -8,10 +12,23 @@ export type ArtStyleId =
 
 export const ART_STYLE_IDS: ArtStyleId[] = [
   "realistic",
+  "cinematic",
+  "film",
+  "ccd",
+  "guofeng",
   "anime-2d",
   "cartoon-3d",
   "comic-webtoon",
   "watercolor",
+];
+
+/** Tier-1 looks safe to offer on video / Seedance (grade only — never new plot). */
+export const VIDEO_SAFE_ART_STYLE_IDS: ArtStyleId[] = [
+  "realistic",
+  "cinematic",
+  "film",
+  "ccd",
+  "guofeng",
 ];
 
 export const DEFAULT_ART_STYLE: ArtStyleId = "realistic";
@@ -35,13 +52,18 @@ export type ArtStyleDef = {
   stripNegativeTerms: string[];
   /** Extra negative terms for stylized looks. */
   negativeAdditions: string;
+  /**
+   * When true, safe as a video grade on Seedance/Kling after stills match.
+   * Illustration styles stay image/storyboard-first unless stills already painted.
+   */
+  videoSafe: boolean;
 };
 
 const ART_STYLES: Record<ArtStyleId, ArtStyleDef> = {
   realistic: {
     id: "realistic",
     icon: "📷",
-    previewSrc: "/images/studio/art-styles/realistic.png",
+    previewSrc: "/images/studio/art-styles/realistic.png?v=2",
     imageClause: "Photorealistic commercial photography, natural skin and materials, realistic lighting.",
     storyboardLead: "photorealistic product video",
     cinematicGuard:
@@ -53,11 +75,81 @@ const ART_STYLES: Record<ArtStyleId, ArtStyleDef> = {
     seedanceHint: "Preserve photorealistic look; locked camera, minimal morphing.",
     stripNegativeTerms: [],
     negativeAdditions: "",
+    videoSafe: true,
+  },
+  cinematic: {
+    id: "cinematic",
+    icon: "🎥",
+    previewSrc: "/images/studio/art-styles/cinematic.png?v=2",
+    imageClause:
+      "Cinematic commercial photography, ARRI-like contrast, shallow depth of field, controlled rim light, premium TVC atmosphere.",
+    storyboardLead: "cinematic TVC product video",
+    cinematicGuard:
+      "Cinematic movie still, controlled lighting, shallow DOF, premium commercial atmosphere. " +
+      "NOT a flat poster or infographic. NO on-screen text, logos, or watermarks.",
+    plannerHint:
+      "Art direction: cinematic TVC photography — controlled key/rim light, shallow DOF, premium commercial grade.",
+    seedanceHint:
+      "Preserve cinematic lighting and contrast; subtle camera energy; do not flatten into a poster look.",
+    stripNegativeTerms: [],
+    negativeAdditions: "flat lighting, harsh flash, plastic CGI, oversharpened",
+    videoSafe: true,
+  },
+  film: {
+    id: "film",
+    icon: "🎞",
+    previewSrc: "/images/studio/art-styles/film.png?v=2",
+    imageClause:
+      "Analog film photography look, fine grain, soft halation, muted highlights, nostalgic color science.",
+    storyboardLead: "film-grain product video",
+    cinematicGuard:
+      "Film still with visible grain and soft halation, nostalgic color grade. NOT digital plastic CGI. NO on-screen text or logos.",
+    plannerHint:
+      "Art direction: analog film look — grain, soft highlights, nostalgic grade. Photoreal base with film character.",
+    seedanceHint:
+      "Preserve film grain and soft analog grade; minimal morphing; do not clean into sterile digital CGI.",
+    stripNegativeTerms: [],
+    negativeAdditions: "sterile digital CGI, plastic skin, HDR crunch",
+    videoSafe: true,
+  },
+  ccd: {
+    id: "ccd",
+    icon: "📱",
+    previewSrc: "/images/studio/art-styles/ccd.png?v=2",
+    imageClause:
+      "Early digital CCD camera aesthetic, slight flash, cool-warm color cast, candid social snapshot energy, soft sensor noise.",
+    storyboardLead: "CCD snapshot product video",
+    cinematicGuard:
+      "CCD / early-digital snapshot still, soft flash character, candid energy. NOT glossy studio CGI. NO on-screen text or logos.",
+    plannerHint:
+      "Art direction: CCD / early digital snapshot — soft flash, candid social energy, slight sensor noise.",
+    seedanceHint:
+      "Preserve CCD snapshot grade and soft flash character; subtle motion; do not polish into premium studio CGI.",
+    stripNegativeTerms: [],
+    negativeAdditions: "ultra-clean studio CGI, plastic perfection",
+    videoSafe: true,
+  },
+  guofeng: {
+    id: "guofeng",
+    icon: "🏯",
+    previewSrc: "/images/studio/art-styles/guofeng.png?v=2",
+    imageClause:
+      "Chinese 国风 cinematic mood, soft Tyndall light, ink-wash atmosphere accents, elegant traditional palette, photoreal base with poetic environment.",
+    storyboardLead: "国风 cinematic product video",
+    cinematicGuard:
+      "国风 cinematic still — Tyndall forest/mist mood, elegant traditional palette, photoreal product in poetic environment. NO on-screen text or logos.",
+    plannerHint:
+      "Art direction: 国风 cinematic — soft Tyndall light, ink-wash atmosphere, elegant traditional palette on a photoreal base.",
+    seedanceHint:
+      "Preserve 国风 atmosphere and soft Tyndall light; gentle env motion; do not turn into mural illustration unless stills already are.",
+    stripNegativeTerms: [],
+    negativeAdditions: "neon cyberpunk, plastic CGI, western stock studio",
+    videoSafe: true,
   },
   "anime-2d": {
     id: "anime-2d",
     icon: "🎌",
-    previewSrc: "/images/studio/art-styles/anime-2d.png",
+    previewSrc: "/images/studio/art-styles/anime-2d.png?v=2",
     imageClause:
       "Japanese anime style, 2D cel-shaded illustration, clean linework, vibrant colors, consistent character design, anime background art.",
     storyboardLead: "anime-style 2D cel-shaded illustrated product video",
@@ -70,11 +162,12 @@ const ART_STYLES: Record<ArtStyleId, ArtStyleDef> = {
       "Keep 2D anime cel-shaded illustration style; subtle motion only; do not morph toward photorealistic.",
     stripNegativeTerms: ["cartoon"],
     negativeAdditions: "photorealistic, live-action, DSLR photo, hyperrealistic skin, uncanny valley",
+    videoSafe: false,
   },
   "cartoon-3d": {
     id: "cartoon-3d",
     icon: "🧸",
-    previewSrc: "/images/studio/art-styles/cartoon-3d.png",
+    previewSrc: "/images/studio/art-styles/cartoon-3d.png?v=2",
     imageClause:
       "3D animated Pixar-style render, soft global illumination, stylized friendly proportions, smooth surfaces, cinematic 3D cartoon look.",
     storyboardLead: "3D animated Pixar-style product video",
@@ -87,11 +180,12 @@ const ART_STYLES: Record<ArtStyleId, ArtStyleDef> = {
       "Keep 3D animated Pixar-style look; gentle motion; do not morph toward photorealistic.",
     stripNegativeTerms: ["cartoon"],
     negativeAdditions: "photorealistic, live-action, DSLR, hyperrealistic skin, uncanny valley",
+    videoSafe: false,
   },
   "comic-webtoon": {
     id: "comic-webtoon",
     icon: "💬",
-    previewSrc: "/images/studio/art-styles/comic-webtoon.png",
+    previewSrc: "/images/studio/art-styles/comic-webtoon.png?v=2",
     imageClause:
       "Korean webtoon / comic book style, bold clean outlines, flat cel shading, expressive characters, feed-friendly illustration.",
     storyboardLead: "webtoon / comic-style illustrated product video",
@@ -104,11 +198,12 @@ const ART_STYLES: Record<ArtStyleId, ArtStyleDef> = {
       "Keep webtoon/comic illustration style; subtle motion; preserve outlines and flat shading.",
     stripNegativeTerms: ["cartoon"],
     negativeAdditions: "photorealistic, live-action, DSLR photo, hyperrealistic skin",
+    videoSafe: false,
   },
   watercolor: {
     id: "watercolor",
     icon: "🎨",
-    previewSrc: "/images/studio/art-styles/watercolor.png",
+    previewSrc: "/images/studio/art-styles/watercolor.png?v=2",
     imageClause:
       "Soft watercolor illustration, visible paper grain, wet-on-wet color bleeds, delicate linework, painterly soft edges, artistic hand-painted feel.",
     storyboardLead: "watercolor illustrated product video",
@@ -121,6 +216,7 @@ const ART_STYLES: Record<ArtStyleId, ArtStyleDef> = {
       "Keep watercolor illustration style; very subtle motion; preserve painterly texture.",
     stripNegativeTerms: ["cartoon"],
     negativeAdditions: "photorealistic, live-action, DSLR, hyperrealistic skin, harsh CGI",
+    videoSafe: false,
   },
 };
 
@@ -172,6 +268,14 @@ export function artStyleConceptHeroHint(id: ArtStyleId | undefined): string {
     return "HERO: lifestyle photography, metaphorical scene, or stylized editorial visual filling 60–70% of frame — match the concept mood and the planned visual metaphor.";
   }
   const hints: Record<Exclude<ArtStyleId, "realistic">, string> = {
+    cinematic:
+      "HERO: cinematic TVC photography filling 60–70% of frame — controlled rim light, shallow DOF.",
+    film:
+      "HERO: analog film photography filling 60–70% of frame — grain, soft halation, nostalgic grade.",
+    ccd:
+      "HERO: CCD snapshot aesthetic filling 60–70% of frame — soft flash, candid social energy.",
+    guofeng:
+      "HERO: 国风 cinematic mood filling 60–70% of frame — Tyndall light, poetic environment, photoreal product.",
     "anime-2d":
       "HERO: anime-style 2D illustrated scene filling 60–70% of frame — cel shading, clean linework, NOT photography.",
     "cartoon-3d":
@@ -223,11 +327,18 @@ export function artStyleSeedanceHint(id: ArtStyleId | undefined): string {
 export function appendArtStyleSeedanceHintIfNeeded(
   prompt: string,
   artStyleId: ArtStyleId | undefined,
+  opts?: { skip?: boolean },
 ): string {
-  const id = resolveArtStyleId(artStyleId);
-  const hint = artStyleSeedanceHint(id);
-  if (!hint || id === "realistic") return prompt.trim();
   const p = prompt.trim();
+  if (opts?.skip) return p;
+  const id = resolveArtStyleId(artStyleId);
+  if (id === "realistic") return p;
+  const hasVideo1 = /@\s*Video\s*1\b/i.test(p) || /\bVideo\s+1\b/i.test(p);
+  // R2V: never glue illustration styles. Video-safe grades (film/CCD/国风/cinematic)
+  // apply only when the user explicitly picked them — grade only, not a new plot.
+  if (hasVideo1 && !isVideoSafeArtStyle(id)) return p;
+  const hint = artStyleSeedanceHint(id);
+  if (!hint) return p;
   if (!p) return hint;
   const key = hint.slice(0, 28).toLowerCase();
   if (p.toLowerCase().includes(key)) return p;
@@ -265,4 +376,13 @@ export function cinematicSceneNegativePrompt(artStyleId: ArtStyleId): string {
   const base =
     "text, typography, headline, subtitle, bullet points, poster, infographic, flyer, logo, watermark, UI overlay, chart, diagram, marketing layout, slide deck";
   return applyArtStyleNegative(base, artStyleId);
+}
+
+export function isVideoSafeArtStyle(id: ArtStyleId | undefined): boolean {
+  return getArtStyle(id ?? DEFAULT_ART_STYLE).videoSafe;
+}
+
+export function artStyleIdsForPicker(opts?: { videoSafeOnly?: boolean }): ArtStyleId[] {
+  if (opts?.videoSafeOnly) return VIDEO_SAFE_ART_STYLE_IDS;
+  return ART_STYLE_IDS;
 }

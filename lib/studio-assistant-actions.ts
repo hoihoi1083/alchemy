@@ -237,17 +237,36 @@ export function runStudioAssistantAction(
       return true;
 
     case "open-captions":
-      markAssistantReopenAfterNavigate();
-      if (context.navigate) {
-        context.navigate("/captions");
-      } else if (typeof window !== "undefined") {
-        window.location.href = "/captions";
-      }
-      return true;
+      return goPath("/captions", context);
+
+    case "open-edit-image":
+      return goPath("/edit-image", context);
+
+    case "open-pro":
+      return goPath("/pro", context);
+
+    case "open-brand-kit":
+      return goPath("/brand-kit", context);
+
+    case "open-library":
+      return goPath("/library", context);
+
+    case "open-ugc":
+      return goPath("/ugc", context);
 
     default:
       return false;
   }
+}
+
+function goPath(path: string, context: StudioAssistantActionContext): boolean {
+  markAssistantReopenAfterNavigate();
+  if (context.navigate) {
+    context.navigate(path);
+  } else if (typeof window !== "undefined") {
+    window.location.href = path;
+  }
+  return true;
 }
 
 export function parseStudioAssistantActionId(
@@ -261,6 +280,11 @@ export function parseStudioAssistantActionId(
     "concept-cinematic",
     "website-launch-image",
     "open-captions",
+    "open-edit-image",
+    "open-pro",
+    "open-brand-kit",
+    "open-library",
+    "open-ugc",
     "setup-website-reel",
     "analyze-brand",
     "open-concept-studio",
@@ -286,6 +310,11 @@ export function actionNavigatesAway(actionId: StudioAssistantActionId): boolean 
     actionId === "open-reference-ad-studio" ||
     actionId === "open-storyboard-studio" ||
     actionId === "open-captions" ||
+    actionId === "open-edit-image" ||
+    actionId === "open-pro" ||
+    actionId === "open-brand-kit" ||
+    actionId === "open-library" ||
+    actionId === "open-ugc" ||
     actionId === "setup-website-reel" ||
     actionId === "analyze-brand"
   );
