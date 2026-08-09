@@ -33,7 +33,7 @@ describe("content research reel routing", () => {
     const videoOnly = buildContentAngleHandoff(reelAngle, xhsPlan, "concept", undefined, "video-only");
     assert.equal(combined.visualStyleId, "storyboard-video");
     assert.equal(combined.workflowMode, "combined");
-    assert.equal(videoOnly.visualStyleId, "product");
+    assert.equal(videoOnly.visualStyleId, "creative-video");
     assert.equal(videoOnly.workflowMode, "video-only");
     assert.equal(combined.product, undefined);
   });

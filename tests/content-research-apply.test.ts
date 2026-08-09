@@ -29,10 +29,10 @@ describe("content-research-apply handoff", () => {
     assert.ok(!handoff.promptExtra?.includes("Slide1:"));
   });
 
-  it("concept reel video-only handoff uses direct R2V (product style)", () => {
+  it("concept reel video-only handoff uses direct R2V (creative-video style)", () => {
     const handoff = buildContentAngleHandoff(reelAngle, xhsPlan, "concept", undefined, "video-only");
     assert.equal(handoff.workflowMode, "video-only");
-    assert.equal(handoff.visualStyleId, "product");
+    assert.equal(handoff.visualStyleId, "creative-video");
     assert.equal(handoff.product, undefined);
     assert.ok(handoff.conceptIdea);
   });

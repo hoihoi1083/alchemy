@@ -45,7 +45,7 @@ describe("Mode B brand logo prompts", () => {
     assert.match(p, /FALLBACK|heavily out-of-focus|unreadable/i);
   });
 
-  it("end card prompt only when user opted in", () => {
+  it("retired END CARD beat stays off; logo opt-in preserves the mark in-still", () => {
     const off = klingSceneMotionPrompt({
       sceneIndex: 6,
       sceneCount: 6,
@@ -62,8 +62,8 @@ describe("Mode B brand logo prompts", () => {
       endWithBrandLogo: true,
       useBrandLogo: true,
     });
-    assert.match(p, /END CARD/);
-    assert.match(p, /do not invent a second wordmark|fake Chinese/i);
-    assert.match(p, /push-in|sparkle|parallax/i);
+    assert.doesNotMatch(p, /END CARD/);
+    assert.match(p, /corner brand logo badge|second mark or slogan/i);
+    assert.match(p, /push-in|parallax/i);
   });
 });

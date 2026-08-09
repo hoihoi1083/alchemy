@@ -43,7 +43,7 @@ describe("content-research-infer", () => {
     assert.equal(physical.visualStyleId, "storyboard-video");
     const concept = inferWizardFromPost(post, "concept");
     assert.equal(concept.workflowMode, "video-only");
-    assert.equal(concept.visualStyleId, "product");
+    assert.equal(concept.visualStyleId, "creative-video");
   });
 
   it("isImageCarouselAngle", () => {

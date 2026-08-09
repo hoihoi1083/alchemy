@@ -40,7 +40,8 @@ describe("reel video analysis prompts", () => {
     assert.match(prompt, /Analyzed frames/i);
     assert.match(prompt, /Hands hold bracelets/i);
     assert.match(prompt, /seedancePrompt/i);
-    assert.match(prompt, /COMPLETE standalone ad/i);
+    assert.match(prompt, /feel COMPLETE/i);
+    assert.match(prompt, /never mid-intro cut-off|never cut mid-intro/i);
     assert.match(prompt, /DIGEST MONTAGE/i);
     assert.match(prompt, /180s source/i);
     assert.match(prompt, /prepared at generate/i);

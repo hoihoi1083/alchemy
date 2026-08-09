@@ -5,7 +5,6 @@ import { LandingNav } from "@/components/landing/LandingNav";
 import { LandingHero } from "@/components/landing/LandingHero";
 import { LandingHowItWorks } from "@/components/landing/LandingHowItWorks";
 import { LandingTemplatesShowcase } from "@/components/landing/LandingTemplatesShowcase";
-import { LandingRecipeCards } from "@/components/landing/LandingRecipeCards";
 import { LandingFloatingCta } from "@/components/landing/LandingFloatingCta";
 
 import { LandingPricingTeaser } from "@/components/landing/LandingPricingTeaser";
@@ -894,7 +893,6 @@ export function LandingPageClient() {
 						<LandingNeonBand>
 							<div className="landing-neon-band__light">
 								<LandingTemplatesShowcase />
-								<LandingRecipeCards />
 							</div>
 							<div className="landing-neon-band__dark">
 								<LandingPricingTeaser />
