@@ -13,18 +13,13 @@ export const ASSISTANT_SURFACES = [
   "site",
 ] as const satisfies readonly AssistantSurface[];
 
-const HIDE_PREFIXES = ["/sign-in", "/sign-up"];
-
 export function isAssistantSurface(raw: unknown): raw is AssistantSurface {
   return typeof raw === "string" && (ASSISTANT_SURFACES as readonly string[]).includes(raw);
 }
 
 export function shouldHideAssistant(pathname: string): boolean {
-  return HIDE_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
-}
-
-export function isStudioWizardPath(pathname: string): boolean {
-  return pathname === "/studio" || pathname === "/studio/";
+  const path = pathname.split("?")[0] || "/";
+  return path !== "/" && path !== "";
 }
 
 export function isToolAssistantSurface(surface: AssistantSurface): boolean {
@@ -49,14 +44,6 @@ export function usesDarkAssistantChrome(surface: AssistantSurface): boolean {
 
 export function assistantSurfaceFromPathname(pathname: string): AssistantSurface | null {
   const path = pathname.split("?")[0] || "/";
-  if (shouldHideAssistant(path) || isStudioWizardPath(path)) return null;
   if (path === "/" || path === "") return "landing";
-  if (path === "/start" || path.startsWith("/start/")) return "start";
-  if (path === "/edit-image" || path.startsWith("/edit-image/")) return "edit-image";
-  if (path === "/captions" || path.startsWith("/captions/")) return "captions";
-  if (path === "/pro" || path.startsWith("/pro/")) return "pro";
-  if (path === "/brand-kit" || path.startsWith("/brand-kit/")) return "brand-kit";
-  if (path === "/library" || path.startsWith("/library/")) return "library";
-  if (path === "/ugc" || path.startsWith("/ugc/")) return "ugc";
-  return "site";
+  return null;
 }

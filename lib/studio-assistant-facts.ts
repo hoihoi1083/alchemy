@@ -2,6 +2,13 @@ import type { Locale } from "@/lib/i18n";
 import type { StudioAssistantIntent } from "@/lib/studio-assistant-intent";
 import { formatCoachChecklistForPrompt } from "@/lib/studio-assistant-coach";
 import {
+  formatKnowledgeForPrompt,
+  knowledgeLocaleFromApp,
+  retrieveAssistantKnowledge,
+  type AssistantKnowledgeChunk,
+} from "@/lib/studio-assistant-knowledge";
+import type { AssistantTurnMode } from "@/lib/studio-assistant-turn-mode";
+import {
   isLandingLikeSurface,
   isToolAssistantSurface,
 } from "@/lib/studio-assistant-surface";
@@ -11,116 +18,59 @@ function langLine(_locale: Locale): string {
   return "Reply in the SAME language as the user's latest message (English → English; 中文 → 繁體 or 简体 per locale setting if user wrote Chinese).";
 }
 
-function replyFormatRule(locale: Locale): string {
+function askFormatRule(): string {
+  return [
+    "【Ask mode — product Q&A】",
+    "Answer the user's question about Alchemy using 【Product knowledge】 + current context only.",
+    "If knowledge does not cover it, say you don't know. Never invent features, buttons, prices, or engines.",
+    "Do NOT force Step 1 or studio-action links unless they clearly ask to start making something now.",
+    "Real paths you may mention as markdown: [/](/) [/start](/start) [/studio](/studio) [/captions](/captions) [/edit-image](/edit-image) [/pro](/pro) [/brand-kit](/brand-kit) [/library](/library) [/ugc](/ugc) [/pricing](/pricing).",
+    "Homepage finishable video-recipe cards are HIDDEN — do not tell users to click them.",
+    "Ask-AI launcher is landing-only (small logo). Hidden on studio, captions, edit-image, brand-kit, pricing, pro, and all other pages.",
+    "Plain text; no **.",
+  ].join("\n");
+}
+
+function guideFormatRule(locale: Locale): string {
   const captions =
     locale === "en"
       ? "[Caption studio](/captions)"
       : "[字幕工具](/captions)";
   return [
-    "【Reply style — CRITICAL】",
-    "1. User's LATEST message defines the campaign (e.g. World Cup new feature). That topic wins — never substitute crystals, fortune reports, or default homepage products unless THEY asked.",
+    "【Guide mode — one next step】",
+    "1. User's LATEST message defines the campaign. Never substitute crystals or default products unless THEY asked.",
     "2. Homepage excerpt = background facts only.",
-    "3. Match reply language to the user's latest message.",
-    "4. STEP-BY-STEP: ONLY Step 1 — must match 【Coach】 block (path + task id).",
-    "   - physical product / storyboard / brand-fit / website-launch / image-only / video-only / captions / pro — each has different required fields",
-    "   - URL field empty → paste in 品牌網站 first; never analyze brand before that",
-    "   - storyboard (physical): product name + storyboard brief + photo + scene images",
-    "   - storyboard (concept / content research reel): concept or headline + reference reel → scene stills → video; no product photo required",
-    "   - brand-fit: analyze brand BEFORE generate image",
-    "   - In studio: no landing-only links (setup-website-reel, open-*-studio)",
-    "5. Max ONE action link. Copy EXACTLY — never invent IDs:",
+    "3. ONLY Step 1 — must match 【Coach】 block (path + task id).",
+    "4. Max ONE action link. Copy EXACTLY — never invent IDs:",
     "   English landing: [Set up & open studio](studio-action:setup-website-reel)",
     "   中文 landing: [一鍵設定並進入工作室](studio-action:setup-website-reel)",
-    "   In studio + URL filled: [Analyze brand](studio-action:analyze-brand) / [分析品牌](studio-action:analyze-brand)",
-    "6. If you mention a button, use exact markdown from above.",
-    `- Captions: ${captions}`,
-    "7. Mood scene must match THEIR campaign (World Cup → sports/fans/match night, NOT generic crystal b-roll).",
-    "8. Plain text; no **.",
+    "   Physical product: [Open product image studio](studio-action:open-physical-studio)",
+    "   Captions: [Caption studio](studio-action:open-captions) or " + captions,
+    "   Edit image: [Image editor](studio-action:open-edit-image)",
+    "5. In studio: no landing-only links (setup-website-reel, open-*-studio).",
+    "6. Plain text; no **.",
   ].join("\n");
 }
 
 export function getStudioAssistantFacts(locale: Locale): string {
-  const isCn = locale === "zh-cn";
-  const isZh = locale === "zh" || isCn || locale === "zh-tw";
-
+  const isZh = locale === "zh" || locale === "zh-cn" || locale === "zh-tw";
   if (isZh) {
     return `
-【Alchemy Studio 工作室說明 — 請優先依此回答，勿捏造功能】
-
-一、兩種推廣模式（/start 選擇）
-- physical（實體產品）：有真實商品可拍／上傳。
-- concept（服務／網站／概念）：無實體 SKU — 品牌、網站、課程、會員等。
-
-二、三種工作流（Setup 可選）
-- image-only：只出圖（社交帖、海報）。
-- video-only：只出片（需上傳參考圖或文字成片）。
-- combined：圖 → 片（最常見 Reel 流程）。
-
-三、步驟
-- setup →（image）→（video）→ done。依工作流跳過 image 或 video。
-- 進階：/pro 節點畫布；/captions 獨立字幕燒錄（任何 MP4 都可用）；/edit-image 修圖（清雜物 → 排版 → 匯出）；/brand-kit 品牌套件；/library 作品庫；/ugc UGC 片。
-
-四、常見視覺風格（擇要）
-- product / model-wear：實體商品圖。
-- storyboard-video：多場景故事板 → **Kling I2V 逐場再拼接**（畫面無字；字幕／配音之後用 /captions）。實體：產品名 + 相 + 簡述；概念／內容研究 Reel：概念或 headline + 參考片節奏 → 場景圖（唔使產品相）。
-- concept-cinematic：概念電影感 Reel（關鍵幀 → Seedance 8 秒單場）；多場拼接暫緩（非內容研究 Reel 預設）。
-- creative-video / brand-video：概念或品牌文字成片（Seedance）。
-- website-launch：網站／App 上線 **靜態** mockup 圖（image-only，非影片 UI 克隆）。
-- brand-fit / brand-campaign：需先「分析品牌」網站或社交。
-
-五、網站推廣（重要限制）
-- 貼網址不會自動抓圖進影片。請用 Setup「分析品牌」按鈕（/api/analyze-brand）填寫品牌欄位。
-- concept-cinematic 的畫面是 **電影感場景**，刻意 **不含** 真實網站 UI、logo、海報文字；賣點放 **字幕＋配音**（ad pack /captions）。
-- 若要在片裡列出多個功能：用分鏡 storyboard（Kling），或螢幕錄製網站後到 /captions 加字幕。
-- 8 秒快速測試：concept + video-only / combined cinematic 單場 + 480p fast + 字幕配音 BGM。
-
-六、實體產品
-- 上傳 product photo；可選 storyboard（Kling）或 AI video assistant（多圖參考成片）。
-- 參考廣告可分析風格（analyze reference），注意市場繁簡與 HK 繁體設定。
-
-七、Setup 實用按鈕
-- 「分析概念」：DeepSeek 規劃概念欄位；有上傳圖時會做 vision 筆記（文字進 prompt，非像素貼圖）。
-- 「分析品牌」：抓網站文字 → brand profile → 填 headline 等（cinematic 規劃本身不讀 brandProfile，但 ad pack 會用）。
-- 選 cinematic 後再分析品牌，避免先選 brand 風格再切換導致 profile 被清掉。
-
-八、費用提示（按次計費，約略）
-- 出圖約 USD 0.04–0.08。
-- 單段 Seedance fast 8s 480p 約 USD 1.5（或約 300+ tokens，視解析度）。
-- **分鏡 storyboard（Kling）**：約 **110 tokens／5 秒 clip** × 場景數（4 場約 440 tokens；10 秒 clip 更貴）。唔係「一次 Seedance 包晒」。
-- 字幕燒錄／配音另計小額 tokens。
-
-九、錯誤時
-- 若使用者貼錯誤訊息，用白話解釋並給下一步（補欄位、重試、檢查登入與 API key）。
+【Alchemy 硬事實 — 唔好同下面知識庫矛盾】
+- 免寫 Prompt；Tokens 按次。免費註冊一次 1000。
+- /start：實體 vs 概念。/studio 引導 wizard。/captions 燒字幕。/edit-image 修圖。/pro 節點畫布（Master）。
+- 分鏡 TVC 無參考片：先 MiniMax H3（一鏡）；額度唔夠先問 Kling 拼接。有參考 MP4：Seedance R2V。
+- 12 秒 H3 ≈ 1140 tokens，免費 1000 唔夠；Kling 4×5s ≈ 440 可能夠。
+- 首頁「可完成影片配方」卡已隱藏。問 AI 只喺首頁細 Logo；其他頁關閉。
 `.trim();
   }
-
   return `
-【Alchemy Studio facts — follow these; do not invent features】
-
-1) Promotion modes (/start): physical (real product photo) vs concept (service, website, offer).
-
-2) Workflows: image-only | video-only | combined (image → video Reel).
-
-3) Steps: setup → image? → video? → done. Standalone tools: /pro canvas, /captions (burn-in on any MP4), /edit-image (clean → design → export), /brand-kit, /library, /ugc.
-
-4) Key visual styles:
-   - storyboard-video: multi-scene stills → **Kling I2V per still, then stitch** (textless frames; burn captions later via /captions). Physical needs product photo; concept/content-research reel does not.
-   - concept-cinematic: cinematic keyframe → single 8s Seedance (multi-scene stitch deferred).
-   - product, creative-video, brand-video, website-launch (static mockup), brand-fit (needs analyze brand).
-
-5) Website promos: pasting a URL does nothing until user clicks Analyze brand. concept-cinematic shows a mood scene — NOT real site UI; put features in captions/voiceover. Prefer storyboard (Kling) or screen-record + /captions for feature tours.
-
-6) Physical: upload product photo; storyboard (Kling) or AI video assistant paths. Concept storyboard from content research uses reference reel analysis — not direct R2V as the primary path.
-
-7) Analyze concept / Analyze brand buttons in Setup — vision note is text-only for cinematic keyframes.
-
-8) Pay-per-use pricing (ballpark):
-   - Image ~$0.04–0.08.
-   - Single Seedance fast 8s 480p ~$1.5.
-   - **Storyboard Kling: ~110 tokens per 5s clip × scene count** (4×5s ≈ 440 tokens). Not one Seedance R2V call.
-   - Caption burn / voiceover are small extra token charges.
-
-9) Explain errors plainly with next steps.
+【Alchemy hard facts — do not contradict knowledge below】
+- Prompt-free; tokens pay-per-use. Free signup grant 1000 once.
+- /start: physical vs concept. /studio guided wizard. /captions burn-in. /edit-image retouch. /pro node canvas (Master).
+- Stills TVC without reference MP4: MiniMax H3 first (one take); offer Kling stitch if H3 does not fit. Reference reel: Seedance R2V.
+- 12s H3 ≈ 1140 tokens — free 1000 cannot cover it; Kling 4×5s ≈ 440 may fit.
+- Homepage finishable recipe cards are hidden. Ask-AI is landing-only (small logo); off everywhere else.
 `.trim();
 }
 
@@ -187,10 +137,14 @@ export function buildStudioAssistantSystemPrompt(
     detectedUrl?: string;
     sitePreview?: string;
     intent?: StudioAssistantIntent;
+    turnMode?: AssistantTurnMode;
+    knowledgeChunks?: AssistantKnowledgeChunk[];
+    userText?: string;
   },
 ): string {
   const name =
     locale === "zh-cn" ? "小炼" : locale === "zh-tw" || locale === "zh" ? "小煉" : "Alchemy guide";
+  const turnMode = extras?.turnMode ?? "ask";
   const facts = getStudioAssistantFacts(locale);
   const stateBlock = formatSnapshotForPrompt(snapshot, locale);
   const siteBlock =
@@ -205,36 +159,47 @@ export function buildStudioAssistantSystemPrompt(
         ? `【Website URL from user】: ${extras.detectedUrl}`
         : "";
 
+  const chunks =
+    extras?.knowledgeChunks ??
+    retrieveAssistantKnowledge(extras?.userText ?? "", {
+      locale: knowledgeLocaleFromApp(locale),
+      limit: turnMode === "ask" ? 6 : 4,
+    });
+  const knowledgeBlock = formatKnowledgeForPrompt(chunks, knowledgeLocaleFromApp(locale));
+
+  const role =
+    turnMode === "ask"
+      ? `You are "${name}". You explain how Alchemy AI Lab works — pages, tokens, video engines, and how to start. Warm, accurate, no fluff.`
+      : `You are "${name}", a step-by-step coach. Never dump menus. Never ignore what the user said they want to promote.`;
+
   return [
-    `You are "${name}", the friendly Alchemy Studio assistant — warm, specific, practical.`,
-    "You are a step-by-step coach. Never dump menus. Never ignore what the user said they want to promote.",
+    role,
     langLine(locale),
-    replyFormatRule(locale),
+    turnMode === "ask" ? askFormatRule() : guideFormatRule(locale),
     facts,
+    knowledgeBlock,
     siteBlock,
     stateBlock,
-    formatCoachChecklistForPrompt(snapshot, locale),
+    turnMode === "guide" ? formatCoachChecklistForPrompt(snapshot, locale) : "",
     extras?.intent ? `Detected intent (weak hint only): ${extras.intent}` : "",
-    isToolAssistantSurface(snapshot.surface)
+    `Turn mode: ${turnMode}`,
+    turnMode === "guide" && isToolAssistantSurface(snapshot.surface)
       ? [
           `User is ON the ${snapshot.surface} tool — coach THIS page. Do not send them to /studio unless they ask to generate a new ad.`,
-          "edit-image: upload/library → Clean (inpaint) → Design (layers/text/logo) → Export.",
-          "captions: import MP4 → edit timed lines → optional BGM/voice → Burn. No regenerate.",
-          "pro: Upload → Image (Nano Banana) → Video (Seedance); pay-per-use fal.",
-          "No landing-only studio-action links (setup-website-reel, open-*-studio) unless they ask to leave.",
+          "No landing-only studio-action links unless they ask to leave.",
         ].join("\n")
-      : isLandingLikeSurface(snapshot.surface)
+      : turnMode === "guide" && isLandingLikeSurface(snapshot.surface)
         ? [
             "User is NOT in studio yet. Step 1 button MUST match what they asked for:",
             "- Real product / product photo / image post → [Open product image studio](studio-action:open-physical-studio) — NOT setup-website-reel.",
             "- Website / service / concept video → setup-website-reel or open-concept-studio.",
             "- Static website launch image → website-launch-image.",
-            "- Edit / retouch an existing image → open-edit-image.",
-            "- Captions / subtitles on an existing MP4 → open-captions.",
-            "- Node canvas → open-pro.",
+            "- Edit / retouch → open-edit-image. Captions → open-captions. Canvas → open-pro.",
             "Never route a physical product image post to concept 8s Reel.",
           ].join("\n")
-        : "User is IN studio — Step 1 should be a field to fill or a button on the current step.",
+        : turnMode === "guide"
+          ? "User is IN studio — Step 1 should be a field to fill or a button on the current step."
+          : "",
   ]
     .filter(Boolean)
     .join("\n\n");

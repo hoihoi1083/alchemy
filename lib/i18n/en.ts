@@ -3207,11 +3207,11 @@ export const en = {
   },
   studioAssistant: {
     title: "Studio guide",
-    subtitle: "Pick modes & fill your brief · pay-per-use tips",
+    subtitle: "Ask how Alchemy works · or start a path",
     welcome:
-      "Hi! Tell me what you're promoting — paste your website URL, describe a product, or say「8 秒 Reel」. I'll suggest one path and can set up the wizard for you.",
+      "Hi! Ask me how Alchemy works (tokens, pages, H3 vs Kling), or tell me what you want to make and I'll open the right path.",
     welcomeLanding:
-      "Hi! I'm your studio guide — start here before you open the wizard. Tell me what you want (website, product photo, captions…) and I'll pick the right path and open studio for you.",
+      "Hi! Ask anything about Alchemy — tokens, studio vs captions vs edit-image, what fits the free grant. Or say what you want to promote and I'll start the right path.",
     welcomeStart:
       "Not sure physical vs concept? Describe your goal or paste a URL — I'll tell you which card to pick and what to type in the studio.",
     welcomeEditImage:
@@ -3227,12 +3227,12 @@ export const en = {
     welcomeUgc:
       "UGC studio — tell me the product and vibe (unboxing, review, street). For storyboard ads, say so and I'll send you to /studio.",
     welcomeSite:
-      "Hi — I can open the wizard, image editor, captions, Pro canvas, or brand kit. What do you want to make?",
+      "Hi — ask how Alchemy works, or I can open the wizard, image editor, captions, Pro canvas, or brand kit.",
     shortLabel: "Ask AI",
     openingStudio: "Opening the studio with your setup — one moment…",
     studioContinued:
       "You're in the studio now — your chat history is kept here. Reply next or 下一步 for Step 2.",
-    placeholder: "e.g. 8s Reel for my website, or product storyboard…",
+    placeholder: "e.g. Does free grant cover 12s TVC? Or: bracelet Reel…",
     thinking: "Thinking…",
     send: "Send",
     close: "Close",

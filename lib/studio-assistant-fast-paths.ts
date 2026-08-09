@@ -1,6 +1,7 @@
 import type { Locale } from "@/lib/i18n";
 import type { StudioAssistantIntent } from "@/lib/studio-assistant-intent";
 import { detectStudioAssistantIntent } from "@/lib/studio-assistant-intent";
+import { detectAssistantTurnMode } from "@/lib/studio-assistant-turn-mode";
 import {
   isLandingLikeSurface,
   isToolAssistantSurface,
@@ -32,6 +33,9 @@ export function shouldUseLandingCoachFastPath(
   userText: string,
   snapshot: StudioAssistantSnapshot,
 ): boolean {
+  if (detectAssistantTurnMode(userText, detectStudioAssistantIntent(userText)) === "ask") {
+    return false;
+  }
   if (snapshot.surface === "studio") return false;
   if (isToolAssistantSurface(snapshot.surface)) {
     return (
@@ -59,6 +63,7 @@ export function tryStudioAssistantFastPath(
 ): string | null {
   const trimmed = userText.trim();
   if (trimmed.length < 2) return null;
+  if (detectAssistantTurnMode(trimmed, intent) === "ask") return null;
 
   const resolvedIntent = intent ?? detectStudioAssistantIntent(trimmed);
   const useCoach =

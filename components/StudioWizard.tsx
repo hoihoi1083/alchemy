@@ -10,8 +10,6 @@ import { VideoStep } from "@/components/studio/VideoStep";
 import { MicroWizard } from "@/components/studio/micro-wizard/MicroWizard";
 import { WizardMobileBar } from "@/components/studio/WizardMobileBar";
 import { StoryboardEngineChoiceDialog } from "@/components/studio/StoryboardEngineChoiceDialog";
-import { StudioAssistantWidget } from "@/components/assistant/StudioAssistantWidget";
-import { CoachSpotlightOverlay } from "@/components/assistant/CoachSpotlightOverlay";
 import { MongoRequiredBanner } from "@/components/MongoRequiredBanner";
 import { SaveStatusBadge } from "@/components/studio/SaveStatusBadge";
 import { WizardProvider, useWizard } from "@/components/studio/WizardContext";
@@ -99,9 +97,6 @@ function StudioWizardContent({
       {stepKey === "done" && !(v2 && (Boolean(videoUrl) || workflowMode === "video-only")) ? (
         <DoneStep />
       ) : null}
-
-      <StudioAssistantWidget surface="studio" />
-      <CoachSpotlightOverlay />
 
       {storyboardEngineChoice ? (
         <StoryboardEngineChoiceDialog

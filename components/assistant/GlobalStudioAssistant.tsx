@@ -6,8 +6,7 @@ import { StudioAssistantWidget } from "@/components/assistant/StudioAssistantWid
 import { assistantSurfaceFromPathname } from "@/lib/studio-assistant-surface";
 
 /**
- * Site-wide AI assistant.
- * Main `/studio` keeps its own widget inside WizardProvider for live wizard context.
+ * Landing-only AI assistant (logo launcher). Hidden on every other route.
  */
 export function GlobalStudioAssistant() {
   const pathname = usePathname() || "/";

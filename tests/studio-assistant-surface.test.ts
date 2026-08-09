@@ -13,19 +13,19 @@ import {
 describe("studio-assistant-surface", () => {
   it("maps every public route to a surface or hide", () => {
     assert.equal(assistantSurfaceFromPathname("/"), "landing");
-    assert.equal(assistantSurfaceFromPathname("/start"), "start");
+    assert.equal(assistantSurfaceFromPathname("/start"), null);
     assert.equal(assistantSurfaceFromPathname("/studio"), null);
     assert.equal(assistantSurfaceFromPathname("/studio/"), null);
-    assert.equal(assistantSurfaceFromPathname("/edit-image"), "edit-image");
-    assert.equal(assistantSurfaceFromPathname("/captions"), "captions");
-    assert.equal(assistantSurfaceFromPathname("/captions/visual"), "captions");
-    assert.equal(assistantSurfaceFromPathname("/pro"), "pro");
-    assert.equal(assistantSurfaceFromPathname("/brand-kit"), "brand-kit");
-    assert.equal(assistantSurfaceFromPathname("/library"), "library");
-    assert.equal(assistantSurfaceFromPathname("/ugc"), "ugc");
-    assert.equal(assistantSurfaceFromPathname("/pricing"), "site");
-    assert.equal(assistantSurfaceFromPathname("/how"), "site");
-    assert.equal(assistantSurfaceFromPathname("/account"), "site");
+    assert.equal(assistantSurfaceFromPathname("/edit-image"), null);
+    assert.equal(assistantSurfaceFromPathname("/captions"), null);
+    assert.equal(assistantSurfaceFromPathname("/captions/visual"), null);
+    assert.equal(assistantSurfaceFromPathname("/pro"), null);
+    assert.equal(assistantSurfaceFromPathname("/brand-kit"), null);
+    assert.equal(assistantSurfaceFromPathname("/library"), null);
+    assert.equal(assistantSurfaceFromPathname("/ugc"), null);
+    assert.equal(assistantSurfaceFromPathname("/pricing"), null);
+    assert.equal(assistantSurfaceFromPathname("/how"), null);
+    assert.equal(assistantSurfaceFromPathname("/account"), null);
     assert.equal(assistantSurfaceFromPathname("/sign-in"), null);
     assert.equal(assistantSurfaceFromPathname("/sign-up/sso"), null);
   });

@@ -3026,11 +3026,11 @@ export const zh = {
   },
   studioAssistant: {
     title: "工作室嚮導",
-    subtitle: "揀模式、填文案 · 按次計費提示",
+    subtitle: "問 Alchemy 點用 · 或者幫你開路",
     welcome:
-      "你好！話我知你想推廣咩 — 可以直接貼網址、講產品，或者話「8 秒 Reel」。我會建議一條路，仲可以幫你一次過設定好工作室。",
+      "你好！可以問 Alchemy 點運作（Tokens、頁面、H3 vs Kling），或者話我想出咩，我幫你開正確路徑。",
     welcomeLanding:
-      "你好！我係工作室嚮導 — 未入 wizard 都可以問我。話你想做咩（網站、產品圖、字幕…），我會揀路線同幫你開 studio。",
+      "你好！問我 Alchemy 任何嘢 — Tokens、studio／字幕／修圖、免費額度夠唔夠。或者話你想推廣咩，我幫你開路。",
     welcomeStart:
       "唔肯定實體定概念？描述目標或貼網址 — 我會話你揀邊張卡、入 studio 要填咩。",
     welcomeEditImage:
@@ -3046,11 +3046,11 @@ export const zh = {
     welcomeUgc:
       "UGC 工作室 — 話我知產品同感覺（開箱、評價、街拍）。要分鏡廣告就同我講，我帶你去 /studio。",
     welcomeSite:
-      "你好 — 我可以幫你開 wizard、修圖、字幕、Pro 畫布或品牌套件。想做咩？",
+      "你好 — 可以問 Alchemy 點用，或者我幫你開 wizard、修圖、字幕、Pro 畫布或品牌套件。",
     shortLabel: "問 AI",
     openingStudio: "正在開啟工作室並套用設定…",
     studioContinued: "你已入 studio — 對話會保留。回覆 下一步 繼續 Step 2。",
-    placeholder: "例如：8 秒網站 Reel、產品分鏡…",
+    placeholder: "例如：免費額度夠唔夠 12 秒 TVC？或者：手鏈 Reel…",
     thinking: "諗緊…",
     send: "發送",
     close: "關閉",

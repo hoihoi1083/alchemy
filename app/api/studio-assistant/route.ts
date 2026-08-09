@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import { callDeepSeekChat } from "@/lib/deepseek-client";
 import { fetchWebsiteText } from "@/lib/brand-analyze";
 import { buildStudioAssistantSystemPrompt } from "@/lib/studio-assistant-facts";
+import {
+  knowledgeLocaleFromApp,
+  retrieveAssistantKnowledge,
+} from "@/lib/studio-assistant-knowledge";
+import { detectAssistantTurnMode } from "@/lib/studio-assistant-turn-mode";
 import { extractCampaignHint } from "@/lib/studio-assistant-coach";
 import {
   getNextStudioCoachTask,
@@ -45,8 +50,12 @@ function finalizeAssistantReply(
     detectedUrl?: string;
     campaignHint?: string;
     hasWebsiteUrl: boolean;
+    turnMode: "ask" | "guide";
   },
-): { reply: string; coachTask: CoachTaskKind } {
+): { reply: string; coachTask: CoachTaskKind | null } {
+  if (opts.turnMode === "ask") {
+    return { reply, coachTask: null };
+  }
   const coachTask = getNextStudioCoachTask(snapshot, {
     intent,
     detectedUrl: opts.detectedUrl,
@@ -244,6 +253,11 @@ export async function POST(request: Request) {
     extractUrlFromMessages(messages) || snapshot.brandWebsiteUrl.trim() || undefined;
   const sitePreview = detectedUrl ? await loadSitePreview(detectedUrl) : "";
   const intent = detectStudioAssistantIntent(lastUser.content);
+  const turnMode = detectAssistantTurnMode(lastUser.content, intent);
+  const knowledgeChunks = retrieveAssistantKnowledge(lastUser.content, {
+    locale: knowledgeLocaleFromApp(locale),
+    limit: turnMode === "ask" ? 6 : 4,
+  });
   const previousCoachTask =
     typeof body.previousCoachTask === "string"
       ? (body.previousCoachTask as CoachTaskKind)
@@ -253,7 +267,9 @@ export async function POST(request: Request) {
     fastPath: false,
     detectedUrl: detectedUrl ?? null,
     intent,
+    turnMode,
     surface: snapshot.surface,
+    knowledgeIds: knowledgeChunks.map((c) => c.id),
   };
 
   // Only ultra-short utility queries skip the LLM (e.g. "next step" on studio).
@@ -274,6 +290,7 @@ export async function POST(request: Request) {
       detectedUrl,
       campaignHint: extractCampaignHint(messages),
       hasWebsiteUrl: Boolean(detectedUrl),
+      turnMode,
     });
     return NextResponse.json({
       success: true,
@@ -287,6 +304,9 @@ export async function POST(request: Request) {
       detectedUrl,
       sitePreview,
       intent,
+      turnMode,
+      knowledgeChunks,
+      userText: lastUser.content,
     });
     const replyRaw = await callDeepSeekChat(
       [{ role: "system", content: systemContent }, ...messages],
@@ -299,6 +319,7 @@ export async function POST(request: Request) {
       detectedUrl,
       campaignHint: extractCampaignHint(messages),
       hasWebsiteUrl: Boolean(detectedUrl),
+      turnMode,
     });
     return NextResponse.json({
       success: true,
