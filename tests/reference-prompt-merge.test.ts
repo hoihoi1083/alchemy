@@ -103,7 +103,7 @@ describe("reference prompt merge", () => {
     assert.ok(copy.subline.includes(PROMOTE_PRODUCT));
   });
 
-  it("buildReferenceConceptImagePrompt omits campaign copy when user fields empty", () => {
+  it("buildReferenceConceptImagePrompt uses product claim and forbids IMAGE 2 text when user fields empty", () => {
     const extra = `${USER_REFERENCE_LAYOUT_TRANSFER_MARKER}: Reference layout grammar: flat lay`;
     const prompt = buildReferenceConceptImagePrompt(
       buildPromptVariables({
@@ -112,8 +112,10 @@ describe("reference prompt merge", () => {
       }),
       { structuredReferenceBrief: true, aspectRatio: "4:5" },
     );
-    assert.ok(!prompt.includes("Campaign copy"));
-    assert.ok(prompt.includes("no on-image copy"));
+    assert.ok(prompt.includes("IMAGE 2 text is FORBIDDEN"));
+    assert.ok(prompt.includes(PROMOTE_PRODUCT));
+    assert.match(prompt, /only masthead|product claim/i);
+    assert.doesNotMatch(prompt, /Do NOT copy readable wording.*from IMAGE 1/i);
   });
 
   it("buildReferenceConceptImagePrompt includes user headline when provided", () => {
@@ -127,6 +129,7 @@ describe("reference prompt merge", () => {
     );
     assert.ok(prompt.includes("我的主標"));
     assert.ok(prompt.includes("Campaign copy"));
+    assert.ok(prompt.includes("IMAGE 2 text is FORBIDDEN"));
   });
 
   it("buildReferenceConceptImagePrompt skips LAYER essay when brief marker in extra", () => {

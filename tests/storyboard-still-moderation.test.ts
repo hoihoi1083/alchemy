@@ -26,11 +26,27 @@ describe("storyboard still policy fallback", () => {
   it("spa template is only for actual spa briefs", () => {
     assert.equal(looksLikeSpaOrBeautyBrief("Anker 20000mAh power bank", "desk hero"), false);
     assert.equal(looksLikeSpaOrBeautyBrief("facial spa", "serum ritual"), true);
+    assert.equal(looksLikeSpaOrBeautyBrief("massage gun", "recovery tool launch"), false);
+    assert.equal(looksLikeSpaOrBeautyBrief("towel warmer", "hotel amenity"), false);
+    assert.equal(looksLikeSpaOrBeautyBrief("serum bottle", "glass packaging"), false);
+    assert.equal(looksLikeSpaOrBeautyBrief("gold bracelet", "close-up of face wearing jewelry"), false);
     const spa = spaSafeStillFallbackPrompt({
       theme: "facial spa",
       role: "establish",
     });
     assert.match(spa, /spa marketing still/i);
+  });
+
+  it("safer retry softens face close-ups without inventing spa for jewelry", () => {
+    const out = saferSameSceneStillPrompt({
+      originalPrompt: "close-up of face wearing a gold bracelet on linen",
+      role: "detail",
+      theme: "bracelet launch",
+      productName: "gold bracelet",
+    });
+    assert.match(out, /mid-shot/i);
+    assert.doesNotMatch(out, /spa guest|spa room|white towels/i);
+    assert.match(out, /gold bracelet/i);
   });
 
   it("blocked cell message is tap-regen, not category swap", () => {

@@ -753,12 +753,18 @@ function briefSummaryRows(
   },
 ): Array<{ label: string; value: string }> {
   if (!brief) return [];
+  // Key message = user's campaign claim, never reference OCR / vision topic (e.g. CR7 copy).
+  const keyMessage =
+    brief.userHeadline?.trim() ||
+    brief.userConceptIdea?.trim() ||
+    product.trim() ||
+    "";
   return [
-    { label: labels.product, value: product.trim() || brief.subjects || brief.topic },
-    { label: labels.target, value: brief.contentType || brief.topic },
+    { label: labels.product, value: product.trim() || brief.userConceptIdea || "" },
+    { label: labels.target, value: brief.contentType || "poster" },
     { label: labels.goal, value: brief.layoutStyle },
     { label: labels.tone, value: brief.mood },
-    { label: labels.keyMessage, value: brief.contentSummary || brief.visibleText },
+    { label: labels.keyMessage, value: keyMessage },
   ].filter((row) => Boolean(row.value?.trim()));
 }
 

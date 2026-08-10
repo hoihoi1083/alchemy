@@ -81,6 +81,7 @@ import {
 import {
 	seedanceSafeStillPromptClause,
 	conceptServiceStillSafetyClause,
+	looksLikeSpaOrBeautyBrief,
 	softenStoryboardStillPromptForModeration,
 } from "@/lib/seedance-moderation";
 
@@ -309,16 +310,36 @@ function imageStyleOnlyReferenceBlock(compositionHint?: string): string {
 	);
 }
 
+/**
+ * Concept single still: borrow design grammar from IMAGE 1 without cloning its people/SKU/topic.
+ * Stronger than carousel style-only (which deliberately varies layout every slide).
+ */
+function imageStyleOnlyConceptReferenceBlock(): string {
+	return joinParts(
+		"STYLE-ONLY REFERENCE — IMAGE 1 (when attached) is design grammar ONLY",
+		"Borrow IMAGE 1 layout family: information density, callout/label structure, accent data chips, tip or insight footer band, typography hierarchy, and color palette.",
+		"Rebuild the scene for the USER concept and on-image copy below — new subjects, props, and setting that fit the user's topic.",
+		"Do NOT invent a generic cinematic collage poster (e.g. train + lightning + city skyline) if IMAGE 1 is an annotated infographic / edu layout.",
+		"Replace ALL on-image text with the user copy in this prompt — never copy wording, celebrity names, logos, or mascots from IMAGE 1.",
+		thirdPartyBrandGuardBlock(),
+		"Avoid real celebrity likenesses from IMAGE 1 — use original characters in similar thematic roles only when the concept needs people.",
+	);
+}
+
 export type ReferenceImageMode = "none" | "clone" | "style-only";
 
 function referenceBlockForMode(
 	mode: ReferenceImageMode,
 	vars: PromptVariables,
 	compositionHint?: string,
+	opts?: { conceptSingle?: boolean },
 ): string {
 	if (mode === "clone") return imageReferenceAnchorBlock(vars);
-	if (mode === "style-only")
-		return imageStyleOnlyReferenceBlock(compositionHint);
+	if (mode === "style-only") {
+		return opts?.conceptSingle
+			? imageStyleOnlyConceptReferenceBlock()
+			: imageStyleOnlyReferenceBlock(compositionHint);
+	}
 	return "";
 }
 
@@ -385,16 +406,22 @@ function copyLocaleForVars(
 
 function promoTypographyHint(
 	vars: PromptVariables,
-	copyFromReference?: boolean,
+	opts?: boolean | { layoutTransferDual?: boolean },
 ): string {
+	const layoutTransferDual =
+		typeof opts === "object" ? Boolean(opts.layoutTransferDual) : false;
+	const copyFromReference = opts === true || layoutTransferDual;
 	const lines = copyFromReference
 		? userFacingAdCopyLines(vars)
 		: promoAdCopyLines(vars);
 	const locale = copyLocaleForVars(vars, lines);
 	const langHint = typographyHintForLocale(locale, lines);
-	const refNote = copyFromReference
-		? " Do NOT copy readable wording or Chinese character forms from IMAGE 1 — write fresh on-image copy in the required script only."
-		: "";
+	const product = vars.product?.trim() || "the product";
+	const refNote = layoutTransferDual
+		? " Do NOT copy readable wording, Chinese character forms, jersey numbers, celebrity names, club names, or logos from IMAGE 2 (style reference) — paint only user campaign copy / product claim."
+		: copyFromReference
+			? " Do NOT copy readable wording or Chinese character forms from IMAGE 1 — write fresh on-image copy in the required script only."
+			: "";
 	const noInventedPricing =
 		" Do NOT add price tags, currency amounts (e.g. HK$, ¥), discount percentages (e.g. 88折), or limited-time sale claims unless the brief explicitly includes an Offer line.";
 	if (lines.length > 0) {
@@ -404,10 +431,12 @@ function promoTypographyHint(
 			: noInventedPricing;
 		return `${langHint} Integrate these marketing lines into the poster as readable ad copy — bold main headline, supporting sublines${hasOffer ? ", optional offer badge" : ""}, optional brand footer.${offerNote}${refNote}`;
 	}
+	if (layoutTransferDual) {
+		return `${langHint} User provided no separate headline — paint ONLY the product claim "${product}" (and brand if given) in IMAGE 2's typography zones. Leave other text zones empty rather than copying IMAGE 2's CR7/football/edu wording.${noInventedPricing}${refNote}`;
+	}
 	if (copyFromReference) {
 		return `${langHint} User provided no on-image copy — keep text minimal: product hero only, matching IMAGE 1 layout and typography zones without inventing 攻略/edu headlines, bullet lists, or offer badges.${noInventedPricing}${refNote}`;
 	}
-	const product = vars.product?.trim() || "the product";
 	return `${langHint} Add short boutique ad headlines suited to ${product} — hook plus supporting line, woven into the layout.${noInventedPricing}${refNote}`;
 }
 
@@ -504,14 +533,16 @@ function conceptSocialPreferAvoid(
 	}
 	if (styleOnly && direction && isInfographicLikeBrief(direction)) {
 		return {
-			avoid: "stock handshake, generic AI poster collage, duplicated headline text, watermark, loud neon gradients unrelated to the reference palette",
-			prefer: "Match the reference Colors, Typography, and Mood from Creative direction — soft infographic / edu-carousel aesthetic, low saturation, clean hierarchy; new layout every slide.",
+			avoid: "generic cinematic collage poster that ignores the reference, stock train/lightning metaphor when the reference is an annotated infographic, celebrity likeness from IMAGE 1, reference logos/mascots, watermark",
+			prefer:
+				"Match IMAGE 1 / Creative direction: callout lines + role labels around a central hero, gold/accent data chips, dense edu-infographic hierarchy, tip/insight footer band, same palette family — rebuild for the user concept only.",
 		};
 	}
 	if (styleOnly) {
 		return {
-			avoid: "unrelated stock scene, generic AI poster collage, duplicated headline, watermark",
-			prefer: "Match reference Colors and Typography from Creative direction — distinct composition per slide, same visual family.",
+			avoid: "unrelated cinematic collage that ignores IMAGE 1 layout, generic AI poster with no design grammar from the reference, celebrity likeness or logos from IMAGE 1, duplicated headline, watermark",
+			prefer:
+				"Match IMAGE 1 design grammar family (layout rhythm, palette, typography, info density, callouts/panels when present) — distinct subjects and copy for the user concept.",
 		};
 	}
 	return {
@@ -571,9 +602,16 @@ export function buildConceptSocialImagePrompt(
 		refMode,
 		locale,
 	);
+	const styleRefBlock =
+		refMode === "style-only"
+			? referenceBlockForMode("style-only", vars, undefined, {
+					conceptSingle: !carousel,
+				})
+			: "";
 	return joinParts(
 		artStyleMandatoryLead(vars.artStyle),
 		artStylePhotorealConceptLock(vars.artStyle),
+		styleRefBlock,
 		plan
 			? joinParts(
 					`SINGLE SOCIAL AD — role: ${plan.role}.`,
@@ -1089,11 +1127,16 @@ export function buildWizardImagePrompt(
 		singleImagePlan?: SingleImagePlan | null;
 		/** When false, skip IMAGE 1 mandatory blocks (concept / text-only). Default true for product promo. */
 		hasReferenceImage?: boolean;
+		/** style-only = palette/mood from IMAGE 1, not product lock. */
+		referenceImageMode?: ReferenceImageMode;
 	},
 ): string {
 	const brandLogoImageIndex = promptOptions?.brandLogoImageIndex ?? null;
 	const plan = promptOptions?.singleImagePlan ?? null;
 	const hasReferenceImage = promptOptions?.hasReferenceImage !== false;
+	const referenceImageMode =
+		promptOptions?.referenceImageMode ??
+		(hasReferenceImage ? "clone" : "none");
 	const withLogo = (prompt: string) =>
 		brandLogoImageIndex != null
 			? joinParts(
@@ -1200,6 +1243,7 @@ export function buildWizardImagePrompt(
 			joinParts(
 				buildConceptSocialImagePrompt(vars, brandProfile, {
 					singleImagePlan: plan,
+					referenceImageMode,
 				}),
 				brandPromptExtras(null, brandKit),
 			),
@@ -1224,6 +1268,7 @@ export function buildWizardImagePrompt(
 			joinParts(
 				buildConceptSocialImagePrompt(vars, brandProfile, {
 					singleImagePlan: plan,
+					referenceImageMode,
 				}),
 				"BRAND-FIT LAYOUT: unified brand palette and typography mood — analyze website/social when available; do not invent a random product packshot.",
 				brandPromptExtras(null, brandKit),
@@ -1238,6 +1283,7 @@ export function buildWizardImagePrompt(
 		joinParts(
 			buildPromoImagePrompt(vars, brandProfile, brandKit, plan, {
 				hasReferenceImage,
+				referenceImageMode,
 			}),
 			styleHint,
 		),
@@ -1485,7 +1531,10 @@ export function buildPromoImagePrompt(
 	brandProfile?: BrandProfile | null,
 	brandKit?: BrandKit | null,
 	plan?: SingleImagePlan | null,
-	options?: { hasReferenceImage?: boolean },
+	options?: {
+		hasReferenceImage?: boolean;
+		referenceImageMode?: ReferenceImageMode;
+	},
 ): string {
 	const product = vars.product?.trim() || "the product";
 	const theme = plan
@@ -1493,10 +1542,16 @@ export function buildPromoImagePrompt(
 		: joinParts(vars.headline, vars.subline, vars.offer);
 	const illustrated = isIllustratedArtStyle(vars.artStyle);
 	const hasReferenceImage = options?.hasReferenceImage !== false;
-	const refBlock = hasReferenceImage ? imageReferenceAnchorBlock(vars) : "";
-	const eraseRefText = hasReferenceImage
-		? "Remove outdated marketing text from IMAGE 1 where new copy replaces it."
-		: "Text-to-image: invent a fitting hero subject and set from the campaign brief — no uploaded IMAGE 1.";
+	const referenceImageMode =
+		options?.referenceImageMode ??
+		(hasReferenceImage ? "clone" : "none");
+	const refBlock = referenceBlockForMode(referenceImageMode, vars);
+	const eraseRefText =
+		referenceImageMode === "clone"
+			? "Remove outdated marketing text from IMAGE 1 where new copy replaces it."
+			: referenceImageMode === "style-only"
+				? "Replace ALL on-image text with the campaign copy below — never copy text, logos, or SKUs from IMAGE 1."
+				: "Text-to-image: invent a fitting hero subject and set from the campaign brief — no uploaded IMAGE 1.";
 	if (vars.imageTextMode === "textless") {
 		return joinParts(
 			artStyleMandatoryLead(vars.artStyle),
@@ -1712,7 +1767,7 @@ export function buildReferenceConceptImagePrompt(
 		vars.subline ? `Subline: ${vars.subline}` : undefined,
 		vars.offer ? `Offer: ${vars.offer}` : undefined,
 	);
-	const copyHint = promoTypographyHint(vars, true);
+	const copyHint = promoTypographyHint(vars, { layoutTransferDual: true });
 	const framingHint =
 		vars.framing === "auto"
 			? "Staging: adapt IMAGE 2's pose type (hand / wrist / flat lay / pedestal) but the held/shown item must be IMAGE 1's exact product — never IMAGE 2's item. Face out of frame when hands appear."
@@ -1730,6 +1785,15 @@ export function buildReferenceConceptImagePrompt(
 		options?.structuredReferenceBrief ??
 		(isLayoutTransferReferenceExtra(vars.extra) ||
 			isStyleOnlyReferenceExtra(vars.extra));
+	const dualCopyGuard = joinParts(
+		"COPY LOCK: All readable on-image text must promote the user's product only.",
+		`Product claim: ${product}.`,
+		campaignCopy
+			? `Campaign copy (all on-image text): ${campaignCopy}.`
+			: `No user headline provided — use "${product}" as the only masthead; do not invent football/celebrity/edu headlines.`,
+		"IMAGE 2 text is FORBIDDEN to paint — wipe every character from IMAGE 2 (headlines, bullets, club names, jersey numbers, CR7, watermarks, logos) and replace with user campaign copy / product claim only.",
+		thirdPartyBrandGuardBlock().replaceAll("IMAGE 1", "IMAGE 2"),
+	);
 
 	if (structuredBrief) {
 		return joinParts(
@@ -1741,9 +1805,7 @@ export function buildReferenceConceptImagePrompt(
 			`CRITICAL: The hero subject must be recognizable as IMAGE 1 (same character/product). If IMAGE 1 is a 3D mascot/character, keep that mascot — do not replace it with jewelry, bottles, or other items from IMAGE 2.`,
 			`Never paint the English word LOGO, BRAND, or CTA. Never invent a circular brand-mark / seal / placeholder logo. If IMAGE 2 has a logo zone, leave that area empty or fill only with campaign copy lines above — do not invent 立即選購 / Shop Now unless that exact phrase is in the campaign copy.`,
 			shopBlock,
-			campaignCopy
-				? `Campaign copy (all on-image text): ${campaignCopy}.`
-				: "",
+			dualCopyGuard,
 			artStyleImageClause(vars.artStyle),
 			copyHint,
 			marketChineseScriptBlock(vars.market),
@@ -1766,9 +1828,7 @@ export function buildReferenceConceptImagePrompt(
 		`LAYER C — REPLACE (content): hero must be IMAGE 1's exact item. All readable copy from the campaign brief below — never reuse IMAGE 2 product names, selling lines, or on-image text. Do not copy IMAGE 2 logos, wordmarks, store names, @handles, or watermarks.`,
 		`If the campaign product name disagrees with IMAGE 1 pixels, trust IMAGE 1 for product category, shape, and materials.`,
 		shopBlock,
-		campaignCopy
-			? `Campaign copy (all on-image text): ${campaignCopy}.`
-			: "",
+		dualCopyGuard,
 		artStyleImageClause(vars.artStyle),
 		copyHint,
 		marketChineseScriptBlock(vars.market),
@@ -1959,15 +2019,23 @@ export function buildStoryboardSceneImagePrompt(
 	// Default: product storyboard assumes IMAGE 1 unless explicitly concept text-only.
 	const hasProductImage = options?.hasProductImage ?? !conceptTextOnly;
 	const textless = options?.textless !== false; // default ON for video-safe stills
+	const spaBeautyBrief = looksLikeSpaOrBeautyBrief(
+		vars.product,
+		plan.theme,
+		scene.imagePrompt,
+		vars.extra,
+	);
 	const sceneImagePrompt = softenStoryboardStillPromptForModeration(
 		textless
 			? sanitizeStoryboardImagePromptForTextless(scene.imagePrompt)
 			: scene.imagePrompt?.trim() || "",
+		{ spaBeautyBrief },
 	);
 	const sceneVars: PromptVariables = {
 		...vars,
 		extra: softenStoryboardStillPromptForModeration(
 			[vars.extra, sceneImagePrompt].filter(Boolean).join(" | "),
+			{ spaBeautyBrief },
 		),
 	};
 	const shopHint = options?.visualStyleId
@@ -2013,8 +2081,8 @@ export function buildStoryboardSceneImagePrompt(
 				plan.theme ? `Story theme: ${plan.theme}.` : "",
 				`Scene role: ${scene.role}.`,
 				sceneImagePrompt ? `Scene action: ${sceneImagePrompt}.` : "",
-				"Keep the SAME ad layout shell as IMAGE 1 on every scene — only scene copy and micro-angle change inside that design family.",
-				"Keep IMAGE 2 ad design language; IMAGE 1 product as hero in this scene.",
+				"Keep the SAME ad layout shell as IMAGE 2 on every scene — only scene action and micro-angle change inside that design family.",
+				"IMAGE 1 = product hero (keep identity); IMAGE 2 = layout/style shell — never treat the product photo as the layout template.",
 				buildReferenceConceptImagePrompt(imageBriefVars, {
 					shopStyleHint: shopHint,
 					brandProfile: options?.brandProfile ?? undefined,

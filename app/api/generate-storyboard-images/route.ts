@@ -235,7 +235,9 @@ export async function POST(request: Request) {
     offer,
     market: promptMarket,
     framing: subjectFraming,
-    extra: softenStoryboardStillPromptForModeration(promptExtra),
+    extra: softenStoryboardStillPromptForModeration(promptExtra, {
+      spaBeautyBrief,
+    }),
     artStyle: artStyleId,
   });
 

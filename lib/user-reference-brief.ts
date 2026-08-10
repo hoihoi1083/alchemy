@@ -310,8 +310,17 @@ export function userReferenceLayoutTransferPromptBlock(
 		parts.push(`Reference subjects (DO NOT reproduce): ${brief.subjects}`);
 	}
 	if (brief.visibleText) {
+		const clipped = brief.visibleText.trim().slice(0, 280);
 		parts.push(
-			"Reference image contained on-image text — ignore all wording and character forms; write only the user's campaign copy in the target script.",
+			`FORBIDDEN ON-IMAGE TEXT from reference (do not paint or paraphrase any of this): ${clipped}`,
+		);
+		parts.push(
+			"Reference image contained on-image text — ignore all wording and character forms; write only the user's campaign copy / product name in the target script.",
+		);
+	}
+	if (brief.topic || brief.contentSummary) {
+		parts.push(
+			`Reference topic lane (DO NOT paint as headlines): ${[brief.topic, brief.contentSummary].filter(Boolean).join(" — ")}`,
 		);
 	}
 	const layerHints = [

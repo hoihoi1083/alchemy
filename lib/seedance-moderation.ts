@@ -107,39 +107,124 @@ export function seedanceSafePlannerRules(): string[] {
 }
 
 /**
- * Soften still prompts that commonly trip Nano Banana content policy.
- * Spa / beauty services ARE allowed — avoid extreme skin/mask close-ups, not people entirely.
+ * True only for spa / facial / beauty-service briefs.
+ * Bare product nouns (massage gun, towel warmer, serum bottle) must NOT match.
  */
-export function softenStoryboardStillPromptForModeration(prompt: string): string {
+export function looksLikeSpaOrBeautyBrief(...samples: (string | undefined)[]): boolean {
+  const joined = samples.filter(Boolean).join("\n").toLowerCase();
+  if (!joined.trim()) return false;
+  if (
+    /\bspa\b|facial\b|skincare|esthetician|aesthetician|treatment\s+bed|rejuvenat|美容院|水療|護膚|面部護理/i.test(
+      joined,
+    )
+  ) {
+    return true;
+  }
+  if (
+    /\b(facial\s+)?massage\s+(therapy|treatment|oil|room|table)\b|\bspa\s+massage\b/i.test(
+      joined,
+    )
+  ) {
+    return true;
+  }
+  if (
+    /\bfacial\s+serum\b|\bskincare\s+serum\b|\bserum\s+ritual\b|\bapplying\s+(?:a\s+)?serum\b/i.test(
+      joined,
+    )
+  ) {
+    return true;
+  }
+  if (/\bspa\s+towel\b|\btowel[- ]wrapped\b|\bwarm\s+(?:spa\s+)?towel\b/i.test(joined)) {
+    return true;
+  }
+  return false;
+}
+
+/** Industry-neutral face/close-up softens — never invent spa guest / spa room. */
+const NEUTRAL_STILL_SOFTEN: Array<[RegExp, string]> = [
+  [
+    /close-?up of (?:a |the )?(?:calm )?face[^.!]*/gi,
+    "tasteful mid-shot of the subject (face soft, not fill-frame)",
+  ],
+  [/close-?up (?:of )?(?:the )?face[^.!]*/gi, "mid-shot, face not filling the frame"],
+  [/steam rising (?:around|on|from) (?:the )?face/gi, "soft atmospheric steam in the scene"],
+  [/hands applying gentle massage on temples/gi, "hands near the subject (mid-shot, face soft)"],
+  [/massage on temples/gi, "hands near temples (mid-shot)"],
+  [/bare skin extreme/gi, "tasteful commercial beauty mood"],
+  [/visible discount sign/gi, "small wooden price card on the table"],
+  [/\bnatural skin\b/gi, "natural materials and soft light"],
+];
+
+/** Spa/beauty-service only — keep people, drop extreme mask/skin close-up language. */
+const SPA_BEAUTY_STILL_SOFTEN: Array<[RegExp, string]> = [
+  [
+    /close-?up of (?:a |the )?(?:calm )?face[^.!]*/gi,
+    "tasteful mid-shot of spa guest (face soft, not fill-frame)",
+  ],
+  [/close-?up (?:of )?(?:the )?face[^.!]*/gi, "mid-shot spa atmosphere, face not filling the frame"],
+  [
+    /steam rising (?:around|on|from) (?:the )?face/gi,
+    "soft steam rising from a ceramic spa bowl beside the guest",
+  ],
+  [
+    /hands applying gentle massage on temples/gi,
+    "therapist adjusting a warm spa towel (mid-shot, faces soft)",
+  ],
+  [/massage on temples/gi, "therapist hands gently near towel-wrapped guest (mid-shot)"],
+  [/bare skin extreme/gi, "tasteful spa skincare mood"],
+  [
+    /client lying on (?:a |the )?treatment bed with (?:a )?facial mask[^.|]*/gi,
+    "mid-shot: therapist applying a facial treatment to a guest reclining on the spa bed in a robe — calm commercial beauty ad, soft light, faces visible but not extreme close-up",
+  ],
+  [
+    /person lying on (?:a |the )?treatment bed with (?:a )?facial mask[^.|]*/gi,
+    "mid-shot spa facial treatment in progress — guest and therapist, tasteful framing",
+  ],
+  [
+    /client lying on (?:a |the )?treatment bed[^.|]*/gi,
+    "guest reclining on spa treatment bed in a robe, mid-shot with therapist nearby",
+  ],
+  [
+    /lying on (?:a |the )?(?:treatment )?bed with (?:a )?facial mask[^.|]*/gi,
+    "spa facial treatment mid-shot with guest and therapist",
+  ],
+  [
+    /esthetician applying (?:a )?serum[^.|]*/gi,
+    "therapist applying serum during a facial — mid-shot, commercial beauty ad",
+  ],
+  [
+    /aesthetician applying (?:a )?serum[^.|]*/gi,
+    "therapist applying serum during a facial — mid-shot, commercial beauty ad",
+  ],
+  [
+    /esthetician applying (?:a )?facial mask[^.|]*/gi,
+    "therapist applying a facial treatment — mid-shot of guest and therapist",
+  ],
+  [/治療師為客人敷面膜[^.|]*/gi, "therapist applying facial treatment to guest, mid-shot"],
+  [/客人放鬆閉眼/gi, "guest relaxing with eyes gently closed"],
+];
+
+/**
+ * Soften still prompts that commonly trip Nano Banana content policy.
+ * Spa lexicon only when the brief is actually spa/beauty — jewelry/coffee/etc. stay industry-neutral.
+ */
+export function softenStoryboardStillPromptForModeration(
+  prompt: string,
+  opts?: { spaBeautyBrief?: boolean },
+): string {
   let out = prompt.trim();
-  const replacements: Array<[RegExp, string]> = [
-    [/close-?up of (?:a |the )?(?:calm )?face[^.!]*/gi, "tasteful mid-shot of spa guest (face soft, not fill-frame)"],
-    [/close-?up (?:of )?(?:the )?face[^.!]*/gi, "mid-shot spa atmosphere, face not filling the frame"],
-    [/steam rising (?:around|on|from) (?:the )?face/gi, "soft steam rising from a ceramic spa bowl beside the guest"],
-    [/massage on temples/gi, "therapist hands gently near towel-wrapped guest (mid-shot)"],
-    [/hands applying gentle massage on temples/gi, "therapist adjusting a warm spa towel (mid-shot, faces soft)"],
-    [/bare skin extreme/gi, "tasteful spa skincare mood"],
-    // Treatment-bed facial: keep PEOPLE, drop extreme mask-on-skin close-up language
-    [/client lying on (?:a |the )?treatment bed with (?:a )?facial mask[^.|]*/gi,
-      "mid-shot: therapist applying a facial treatment to a guest reclining on the spa bed in a robe — calm commercial beauty ad, soft light, faces visible but not extreme close-up"],
-    [/person lying on (?:a |the )?treatment bed with (?:a )?facial mask[^.|]*/gi,
-      "mid-shot spa facial treatment in progress — guest and therapist, tasteful framing"],
-    [/client lying on (?:a |the )?treatment bed[^.|]*/gi,
-      "guest reclining on spa treatment bed in a robe, mid-shot with therapist nearby"],
-    [/lying on (?:a |the )?(?:treatment )?bed with (?:a )?facial mask[^.|]*/gi,
-      "spa facial treatment mid-shot with guest and therapist"],
-    [/esthetician applying (?:a )?serum[^.|]*/gi,
-      "therapist applying serum during a facial — mid-shot, commercial beauty ad"],
-    [/aesthetician applying (?:a )?serum[^.|]*/gi,
-      "therapist applying serum during a facial — mid-shot, commercial beauty ad"],
-    [/esthetician applying (?:a )?facial mask[^.|]*/gi,
-      "therapist applying a facial treatment — mid-shot of guest and therapist"],
-    [/治療師為客人敷面膜[^.|]*/gi, "therapist applying facial treatment to guest, mid-shot"],
-    [/客人放鬆閉眼/gi, "guest relaxing with eyes gently closed"],
-    [/visible discount sign/gi, "small wooden price card on the table"],
-    [/\bnatural skin\b/gi, "natural materials and soft light"],
-  ];
-  for (const [pattern, replacement] of replacements) {
+  const spa = opts?.spaBeautyBrief ?? looksLikeSpaOrBeautyBrief(out);
+  const list = spa
+    ? [
+        ...SPA_BEAUTY_STILL_SOFTEN,
+        [/visible discount sign/gi, "small wooden price card on the table"] as [
+          RegExp,
+          string,
+        ],
+        [/\bnatural skin\b/gi, "natural materials and soft light"] as [RegExp, string],
+      ]
+    : NEUTRAL_STILL_SOFTEN;
+  for (const [pattern, replacement] of list) {
     out = out.replace(pattern, replacement);
   }
   return out;
@@ -155,7 +240,14 @@ export function saferSameSceneStillPrompt(vars: {
   theme?: string;
   productName?: string;
 }): string {
-  const softened = softenStoryboardStillPromptForModeration(vars.originalPrompt);
+  const spaBeautyBrief = looksLikeSpaOrBeautyBrief(
+    vars.originalPrompt,
+    vars.productName,
+    vars.theme,
+  );
+  const softened = softenStoryboardStillPromptForModeration(vars.originalPrompt, {
+    spaBeautyBrief,
+  });
   const subject =
     vars.productName?.trim() || vars.theme?.trim() || "";
   return [
@@ -197,13 +289,6 @@ export const STORYBOARD_CELL_BLOCKED_PREFIX = "STORYBOARD_CELL_BLOCKED";
 
 export function storyboardCellBlockedMessage(imageIndex: number): string {
   return `${STORYBOARD_CELL_BLOCKED_PREFIX}: Scene ${imageIndex} was blocked by the safety filter. Tap regen on this cell — same product, no faces, no brand text.`;
-}
-
-export function looksLikeSpaOrBeautyBrief(...samples: (string | undefined)[]): boolean {
-  const joined = samples.filter(Boolean).join("\n").toLowerCase();
-  return /spa|facial|skincare|esthetician|aesthetician|massage|treatment bed|serum|towel|rejuvenat/i.test(
-    joined,
-  );
 }
 
 export function seedanceModerationPlannerRules(): string[] {

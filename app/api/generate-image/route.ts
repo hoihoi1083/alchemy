@@ -682,6 +682,7 @@ export async function POST(request: Request) {
               aspectRatio: aspectRatioRaw,
               singleImagePlan,
               hasReferenceImage: hasProduct || hasStyle,
+              referenceImageMode: strategy.referenceImageMode,
             },
           );
       // Prefer server-built prompt when we ran the single-still planner (teaching-quality DNA).

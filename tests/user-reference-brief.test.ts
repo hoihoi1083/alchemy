@@ -3,9 +3,11 @@ import { describe, it } from "node:test";
 import { styleReferencePromptBlock } from "../lib/content-research-promote";
 import {
   overrideBriefForContentResearch,
+  userReferenceLayoutTransferPromptBlock,
   userReferenceStyleOnlyPromptBlock,
   type UserReferenceBrief,
 } from "../lib/user-reference-brief";
+import { resolveReferenceLayers } from "../lib/reference-strategy";
 import { PROMOTE_PRODUCT, xhsPlan, zodiacCarouselAngle } from "./fixtures/content-research";
 
 const visionBrief: UserReferenceBrief = {
@@ -48,5 +50,23 @@ describe("user-reference-brief content research override", () => {
     assert.ok(block.includes(PROMOTE_PRODUCT));
     assert.ok(!block.includes("水瓶座幸運色"));
     assert.ok(promptExtra.includes("Do NOT copy: reference post title"));
+  });
+
+  it("layout-transfer block lists forbidden reference wording and topic", () => {
+    const layers = resolveReferenceLayers("layout-transfer");
+    const block = userReferenceLayoutTransferPromptBlock(
+      {
+        ...visionBrief,
+        visibleText: "7號如何變成 CR7? 曼聯 皇馬",
+        topic: "CR7 brand story",
+        contentSummary: "football jersey number 7",
+        userHeadline: "便攜電源快充",
+      },
+      layers,
+    );
+    assert.match(block, /FORBIDDEN ON-IMAGE TEXT/i);
+    assert.match(block, /7號如何變成 CR7/);
+    assert.match(block, /DO NOT paint as headlines/i);
+    assert.match(block, /便攜電源快充/);
   });
 });

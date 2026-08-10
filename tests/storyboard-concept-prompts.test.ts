@@ -92,6 +92,31 @@ describe("concept vs product storyboard prompts", () => {
     assert.ok(/Text-to-image/i.test(promoNoRef));
   });
 
+  it("concept-social style-only borrows layout grammar, not product lock or cinematic collage default", () => {
+    const prompt = buildWizardImagePrompt(
+      {
+        ...baseVars,
+        product: "閃電貸款",
+        headline: "閃電批核，告別等待",
+        subline: "簡化流程，即時周轉",
+        offer: "立即申請",
+      },
+      "concept-social",
+      null,
+      "concept-social",
+      null,
+      {
+        hasReferenceImage: true,
+        referenceImageMode: "style-only",
+      },
+    );
+    assert.match(prompt, /STYLE-ONLY REFERENCE/i);
+    assert.match(prompt, /design grammar|callout|info density|layout family/i);
+    assert.match(prompt, /Do NOT invent a generic cinematic collage/i);
+    assert.doesNotMatch(prompt, /IMAGE 1 PIXELS ARE THE PRODUCT/i);
+    assert.doesNotMatch(prompt, /white infographic template, edu-carousel flyer/i);
+  });
+
   it("concept text-only storyboard stills skip IMAGE 1 mandatory", () => {
     const prompt = buildStoryboardSceneImagePrompt(plan.scenes[0]!, plan, baseVars, {
       conceptTextOnly: true,
@@ -124,6 +149,37 @@ describe("concept vs product storyboard prompts", () => {
     assert.match(prompt, /CLAIM|PIXEL LOCK/i);
   });
 
+  it("layout-transfer storyboard uses IMAGE 2 as layout shell, IMAGE 1 as product", () => {
+    const prompt = buildStoryboardSceneImagePrompt(plan.scenes[0]!, plan, baseVars, {
+      referenceConcept: true,
+      textless: true,
+      hasProductImage: true,
+    });
+    assert.match(prompt, /layout shell as IMAGE 2/i);
+    assert.match(prompt, /IMAGE 1 = product hero/i);
+    assert.doesNotMatch(prompt, /layout shell as IMAGE 1/i);
+  });
+
+  it("style-only single promo does not use product IMAGE 1 pixel lock", () => {
+    const prompt = buildWizardImagePrompt(
+      {
+        ...baseVars,
+        product: "Gold bracelet",
+        headline: "New drop",
+      },
+      "promo-ai",
+      null,
+      "product",
+      null,
+      {
+        hasReferenceImage: true,
+        referenceImageMode: "style-only",
+      },
+    );
+    assert.match(prompt, /STYLE-ONLY REFERENCE/i);
+    assert.doesNotMatch(prompt, /IMAGE 1 PIXELS ARE THE PRODUCT/i);
+  });
+
   it("concept planner prompt does not require product photo edit language", () => {
     const text = buildStoryboardPlanPromptForTest({
       product: "facial spa for 60 mins",
@@ -143,12 +199,22 @@ describe("concept vs product storyboard prompts", () => {
     assert.ok(!/edit from user's product photo/i.test(text));
   });
 
-  it("softenStoryboardStillPromptForModeration rewrites face close-ups", () => {
+  it("softenStoryboardStillPromptForModeration rewrites face close-ups without spa for non-spa briefs", () => {
     const out = softenStoryboardStillPromptForModeration(
       "Close-up of calm face with steam rising; Hands applying gentle massage on temples",
+      { spaBeautyBrief: false },
     );
     assert.ok(!/Close-up of calm face with steam rising/i.test(out));
-    assert.ok(/mid-shot|steam bowl|towel|spa/i.test(out));
+    assert.ok(/mid-shot/i.test(out));
+    assert.ok(!/spa guest|spa bowl|spa towel/i.test(out));
+  });
+
+  it("soften uses spa lexicon only for spa beauty briefs", () => {
+    const out = softenStoryboardStillPromptForModeration(
+      "Close-up of calm face with steam rising; Hands applying gentle massage on temples",
+      { spaBeautyBrief: true },
+    );
+    assert.ok(/spa guest|spa bowl|spa towel|towel-wrapped/i.test(out));
   });
 
   it("soften keeps people for spa facial mid-shot (not empty room)", () => {
