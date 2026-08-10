@@ -86,6 +86,12 @@ const PATH_CONTEXTS: Record<MicroWizardPathId, MicroWizardContext> = {
     videoSubpath: "product_promo",
   },
   product_combined: { promotionMode: "physical", workflowMode: "combined", intakePath: "direct" },
+  product_combined_motion_poster: {
+    promotionMode: "physical",
+    workflowMode: "combined",
+    intakePath: "direct",
+    videoSubpath: "motion_poster",
+  },
   concept_video_research_reel: { promotionMode: "concept", workflowMode: "video-only", intakePath: "research" },
   concept_video_direct: {
     promotionMode: "concept",
@@ -142,9 +148,14 @@ describe("wizard v2 parity audit", () => {
               ? "storyboard-video"
               : pathId === "concept_combined_motion_poster"
                 ? "service-promo"
-                : baseState().visualStyleId,
+                : pathId === "product_combined_motion_poster"
+                  ? "product"
+                  : baseState().visualStyleId,
         videoCreativeMode:
-          pathId === "concept_combined_motion_poster" ? "motion-poster" : "product-promo",
+          pathId === "concept_combined_motion_poster" ||
+          pathId === "product_combined_motion_poster"
+            ? "motion-poster"
+            : "product-promo",
         promptExtra:
           ctx.intakePath === "research" && ctx.workflowMode === "image-only"
             ? "STYLE_REFERENCE_ONLY"
@@ -817,6 +828,28 @@ describe("wizard v2 parity audit", () => {
     assert.ok(ids.indexOf("image.review") < ids.indexOf("setup.pre_video"));
   });
 
+  it("product combined motion-poster is one poster still then video, not 九宫格", () => {
+    const ctx: MicroWizardContext = {
+      promotionMode: "physical",
+      workflowMode: "combined",
+      intakePath: "direct",
+      videoSubpath: "motion_poster",
+    };
+    const state = baseState({
+      promotionMode: "physical",
+      workflowMode: "combined",
+      visualStyleId: "product",
+      videoCreativeMode: "motion-poster",
+    });
+    assert.equal(resolvePathId(ctx, state), "product_combined_motion_poster");
+    const ids = resolveMicroSteps(ctx, state).map((s) => s.id);
+    assert.ok(ids.includes("setup.pre_generate"));
+    assert.ok(ids.includes("wait.image_generate"));
+    assert.ok(ids.includes("image.review"));
+    assert.ok(ids.includes("setup.pre_video"));
+    assert.ok(!ids.includes("wait.storyboard_generate"));
+  });
+
   it("concept combined motion-poster is one still then video, not 九宫格", () => {
     const ctx: MicroWizardContext = {
       promotionMode: "concept",
@@ -1221,6 +1254,36 @@ describe("wizard v2 parity audit", () => {
       baseState({ promotionMode: "concept", workflowMode: "image-only" }),
     );
     assert.ok(!steps.some((s) => s.id === "route.concept_source"));
+    assert.deepEqual(steps.map((s) => s.id), [
+      "route.output_goal",
+      "identity.concept_topic",
+      "route.intake",
+    ]);
+  });
+
+  it("concept fused pre-video offers 短片製作 + 動態海報 only", () => {
+    const panel = fs.readFileSync("components/studio/PreVideoSetupPanel.tsx", "utf8");
+    assert.match(panel, /sceneReelTitle/);
+    assert.match(panel, /id: "creative_video"/);
+    assert.match(panel, /id: "motion_poster"/);
+    assert.doesNotMatch(panel, /id: "brand_video"/);
+    assert.match(panel, /showBrandWebsite = isSceneReel/);
+    assert.match(panel, /showReferenceUpload = isReference \|\| isSceneReel/);
+    assert.doesNotMatch(panel, /switchToMotionPosterBtn/);
+    assert.doesNotMatch(panel, /KlingStoryboardSettings/);
+    const wizard = fs.readFileSync("hooks/useStudioWizard.ts", "utf8");
+    assert.match(
+      wizard,
+      /promotionMode === "physical" &&\s*\n\s*videoCreativeMode === "reference-concept" &&\s*\n\s*!productPhoto/,
+    );
+  });
+
+  it("concept video-only entry is topic then intake — not a second full 概念助手", () => {
+    const steps = resolveMicroSteps(
+      { promotionMode: "concept", workflowMode: "video-only" },
+      baseState({ promotionMode: "concept", workflowMode: "video-only" }),
+    );
+    assert.ok(!steps.some((s) => s.id === "identity.concept"));
     assert.deepEqual(steps.map((s) => s.id), [
       "route.output_goal",
       "identity.concept_topic",

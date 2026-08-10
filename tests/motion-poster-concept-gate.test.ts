@@ -31,8 +31,59 @@ describe("concept motion-poster unblock + recipe lock", () => {
     const wizard = readFileSync(join(process.cwd(), "hooks/useStudioWizard.ts"), "utf8");
     assert.match(wizard, /resolveMotionPosterPromptIdentity/);
     assert.match(wizard, /const rawPrompt = posterPrompt/);
+    assert.match(wizard, /generateMotionPosterKeyframe/);
+    assert.match(wizard, /motion_poster_frame/);
+    assert.match(wizard, /motionPosterBuildingEnd/);
+    assert.match(wizard, /mode = "start-end"/);
+    const posterCase = wizard.slice(
+      wizard.indexOf('case "motion-poster":'),
+      wizard.indexOf('case "image-to-video":'),
+    );
+    assert.doesNotMatch(posterCase, /addBgm/);
+    assert.doesNotMatch(posterCase, /videoBgmEnabled/);
+    assert.match(wizard, /Keep MiniMax H3 native audio/);
+    assert.match(wizard, /buildMotionPosterStillPrompt/);
+    assert.match(wizard, /never H3 the raw catalog photo/);
+    assert.match(wizard, /motionPosterStillUrlRef/);
+    assert.match(wizard, /motionPosterBuildingStill/);
+    assert.match(wizard, /motionPosterBuildingEnd/);
+    assert.match(wizard, /motionPosterCanAutoStill/);
+    assert.match(wizard, /if \(videoCreativeMode === "motion-poster"\) return;/);
+    assert.match(
+      wizard,
+      /!conceptTextVideoReady &&\s*\n\s*!motionPosterCanAutoStill &&\s*\n\s*!directReferenceR2vReady/,
+    );
+    assert.match(wizard, /resolveMotionPosterDialect/);
+    assert.match(wizard, /motionPosterDialectPick/);
+    assert.match(wizard, /skip Bagel QA/);
+    const applyBlock = wizard.slice(
+      wizard.indexOf("function applyGeneratedImages"),
+      wizard.indexOf("function applyGeneratedStoryboard"),
+    );
+    assert.doesNotMatch(applyBlock, /refreshImagePostflight/);
     const skips = [...wizard.matchAll(/videoCreativeMode !== "motion-poster"/g)];
     assert.ok(skips.length >= 4, "unblock must skip plan + generate + disabled gates");
+  });
+
+  it("generate-image ignores client prompt and uses textless system prompt for posters", () => {
+    const src = readFileSync(
+      join(process.cwd(), "app/api/generate-image/route.ts"),
+      "utf8",
+    );
+    assert.match(src, /posterFrame === "end"/);
+    assert.match(src, /buildMotionPosterEndStillPrompt/);
+    assert.match(src, /textless: motionPoster && posterFrame !== "end"/);
+    assert.doesNotMatch(src, /motionPoster\s*\n\s*\? clientPrompt \|\| builtPrompt/);
+  });
+
+  it("pre-video poster setup exposes full art-style picker", () => {
+    const src = readFileSync(
+      join(process.cwd(), "components/studio/PreVideoSetupPanel.tsx"),
+      "utf8",
+    );
+    assert.match(src, /ArtStylePicker/);
+    assert.match(src, /motionPosterArtStyleTitle/);
+    assert.match(src, /videoSafeOnly=\{false\}/);
   });
 
   it("simple studio hides Seedance vs H3 picker (poster included)", () => {

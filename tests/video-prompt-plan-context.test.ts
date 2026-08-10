@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, it } from "node:test";
 import { appendArtStyleSeedanceHintIfNeeded } from "../lib/art-style";
 import { videoPlannerContextBlock } from "../lib/video-prompt-plan";
@@ -28,6 +30,15 @@ describe("videoPlannerContextBlock", () => {
     }).join("\n");
     assert.match(block, /follow @Video1/i);
     assert.doesNotMatch(block, /stylized medium/i);
+  });
+});
+
+describe("creative planner brand fuse", () => {
+  it("creative plan prompt accepts optional brand DNA", () => {
+    const src = readFileSync(join(process.cwd(), "lib/video-prompt-plan.ts"), "utf8");
+    assert.match(src, /brandProfile\?: BrandProfile/);
+    assert.match(src, /Brand DNA below is OPTIONAL lock/);
+    assert.match(src, /brandProfilePromptBlock\(input\.brandProfile\)/);
   });
 });
 

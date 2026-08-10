@@ -251,16 +251,11 @@ export function MicroWizard({ promotionMode }: Props) {
       continueLabel={isCombinedSceneReview ? m.wizard.continueToVideo : undefined}
       continueDisabled={
         isCombinedSceneReview &&
-        (Boolean(blockReason) ||
-          !wizard.storyboardAllCellsViewed ||
-          !wizard.storyboardGridApproved)
+        (Boolean(blockReason) || !wizard.storyboardGridApproved)
       }
       continueDisabledReason={
         isCombinedSceneReview
-          ? blockMessage ||
-            (!wizard.storyboardAllCellsViewed
-              ? m.wizard.storyboardApproveNeedLookHint
-              : m.wizard.storyboardApproveRequiredHint)
+          ? blockMessage || m.wizard.storyboardApproveRequiredHint
           : null
       }
       downloadAllBusy={downloadAllBusy}

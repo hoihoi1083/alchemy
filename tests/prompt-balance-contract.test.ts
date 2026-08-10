@@ -28,7 +28,10 @@ describe("productIdentityContractLines", () => {
     );
     assert.match(block, /@Image1/);
     assert.match(block, /CLAIM/);
+    assert.match(block, /Pixels win|KEEP IMAGE 1/i);
+    assert.match(block, /substitute SKU|CLAIM only/i);
     assert.doesNotMatch(block, /@Video1 = SPINE/);
+    assert.doesNotMatch(block, /never override a named electronics/i);
   });
 
   it("concept mode drops SKU packaging swap language", () => {

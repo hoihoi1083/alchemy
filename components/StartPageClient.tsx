@@ -810,14 +810,14 @@ function StartPageBody() {
       [
         {
           mode: "physical" as const,
-          title: m.start.physicalTitle,
+      title: m.start.physicalTitle,
           short: m.start.physicalShort,
           tags: m.start.physicalTags,
           image: PHYSICAL_IMG,
-        },
-        {
+    },
+    {
           mode: "concept" as const,
-          title: m.start.conceptTitle,
+      title: m.start.conceptTitle,
           short: m.start.conceptShort,
           tags: m.start.conceptTags,
           image: CONCEPT_IMG,

@@ -79,6 +79,7 @@ export async function POST(request: Request) {
         hasKeyframe: Boolean(body.hasKeyframe),
         imageVisionNote: body.imageVisionNote,
         conceptIdea: body.conceptIdea,
+        brandProfile: body.brandProfile,
       });
       return NextResponse.json({
         ...plan,

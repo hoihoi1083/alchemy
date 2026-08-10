@@ -13,6 +13,7 @@ import { resolveArtStyleId } from "@/lib/art-style";
 import { parseStoryboardSceneCount } from "@/lib/ad-pack-preferences";
 import type { ReferenceStrategyKind } from "@/lib/reference-strategy";
 import { parseBrandKit } from "@/lib/brand-kit";
+import { parseImageTextMode } from "@/lib/image-text-mode";
 
 export const runtime = "nodejs";
 export const maxDuration = 180;
@@ -138,6 +139,9 @@ export async function POST(request: Request) {
               ? referenceStrategyKind
               : undefined,
           sceneCountTarget,
+          imageTextMode: parseImageTextMode(
+            formData.get("image_text_mode") as string | null,
+          ),
           useBrandLogo: (() => {
             const brandKitRaw = (formData.get("brand_kit") as string | null)?.trim() || "";
             if (!brandKitRaw) return false;

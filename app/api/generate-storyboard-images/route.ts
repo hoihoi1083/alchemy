@@ -41,6 +41,7 @@ import {
 } from "@/lib/reference-strategy";
 import { isPromotionMode } from "@/lib/promotion-mode";
 import { wizardPromoteName } from "@/lib/wizard-promote-name";
+import { parseImageTextMode } from "@/lib/image-text-mode";
 import { RESEARCH_REEL_ANALYSIS_MARKER } from "@/lib/reel-analysis-types";
 import type { ResearchReelAnalysis } from "@/lib/reel-analysis-types";
 import { pinStoryboardPlanToReelAnalysis } from "@/lib/reel-reference-brief";
@@ -221,6 +222,10 @@ export async function POST(request: Request) {
   // "At least one image URL is required".
   const artStyleId = resolveArtStyleId((formData.get("art_style") as string | null)?.trim());
   const styleHint = mergePromptExtra(visualStyle, promptExtra);
+  const imageTextMode = parseImageTextMode(
+    formData.get("image_text_mode") as string | null,
+  );
+  const textlessStills = imageTextMode !== "integrated";
 
   const vars = buildPromptVariables({
     product: productName,
@@ -263,6 +268,7 @@ export async function POST(request: Request) {
         referenceStrategyKind: strategy.kind,
         conceptMode: conceptStoryboardNoProduct,
         useBrandLogo: brandKitWantsLogo(brandKit),
+        imageTextMode,
       });
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "Storyboard planning failed.";
@@ -396,7 +402,7 @@ export async function POST(request: Request) {
           conceptTextOnly: conceptTextOnlyStoryboard || forceConceptTextOnly,
           storyboardStyleRef: storyboardStyleRef || dualProductAndStyle,
           dualProductAndStyle,
-          textless: true,
+          textless: textlessStills,
           visualStyleId: visualStyle,
           brandProfile,
           brandKit,

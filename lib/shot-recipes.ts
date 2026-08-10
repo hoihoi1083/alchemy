@@ -1,7 +1,9 @@
 /**
  * Shot recipes — Look stays in art-style; Recipe owns shot grammar + motion type.
- * Motion poster is a VIDEO recipe (1 still + micro-motion), not a storyboard path.
+ * Motion poster = 1 designed poster still (with type) + micro graphic motion — not 九宫格.
  */
+
+import { MOTION_POSTER_DIALECTS, type MotionPosterDialectId } from "@/lib/motion-poster-dialects";
 
 export const TVC_SHOT_ROLES = [
   "establish",
@@ -60,10 +62,10 @@ export const SHOT_RECIPES: Record<ShotRecipeId, ShotRecipe> = {
     defaultSceneCount: 1,
     roles: ["establish"],
     microMotions: [
-      "slow camera rotate around locked product",
-      "subtle ambient particles or moss/light drift",
-      "soft parallax on background only",
-      "gentle light shimmer on product surface",
+      "3D paper/card warp: the whole poster (product + type) rides the same surface",
+      "headline letters fade in or slide into their layout positions in the first 1–2s",
+      "type tracks the card — never a floating title bar that ignores the warp",
+      "soft light sweep / sparkle on the poster surface after type has landed",
     ],
   },
   "motion-poster-start-end": {
@@ -74,9 +76,10 @@ export const SHOT_RECIPES: Record<ShotRecipeId, ShotRecipe> = {
     defaultSceneCount: 1,
     roles: ["establish", "payoff"],
     microMotions: [
-      "morph environment from start frame to end frame",
-      "product identity locked — only surroundings transform",
-      "smooth continuous interpolate, no hard cut",
+      "即梦 首尾帧: interpolate Image 1 (textless start) into Image 2 (typed end poster)",
+      "camera + hero must visibly travel (push-in, orbit, or product turn) — not a freeze",
+      "on-screen type blooms/slides into Image 2 masthead pixels — no invented letters",
+      "smooth continuous interpolate, no hard cut, no second location",
     ],
   },
 };
@@ -218,6 +221,8 @@ export type MotionPosterPromptInput = {
   mode: "loop" | "start-end";
   /** Concept/service — lock scene mood, not SKU packaging. */
   conceptMode?: boolean;
+  /** Resolved dialect — wizard always passes one; default card-warp for tests. */
+  dialect?: MotionPosterDialectId;
 };
 
 /** Same identity for mode-switch + generate so Advanced leftovers cannot drift. */
@@ -238,48 +243,65 @@ export function resolveMotionPosterPromptIdentity(input: {
   return { product, headline, conceptMode };
 }
 
-/** Seedance I2V prompt for motion poster — subject locked, listed micro-motions only. */
+/** Seedance I2V prompt for motion poster — subject locked, dialect micro-motions only. */
 export function buildMotionPosterPrompt(input: MotionPosterPromptInput): string {
   const product = input.product.trim() || (input.conceptMode ? "the service scene" : "the product");
   const claim = input.headline?.trim();
   const sec = Math.min(8, Math.max(4, Math.round(input.durationSec) || 6));
-  const recipe =
-    input.mode === "start-end"
-      ? SHOT_RECIPES["motion-poster-start-end"]
-      : SHOT_RECIPES["motion-poster-loop"];
+  const dialect = MOTION_POSTER_DIALECTS[input.dialect ?? "card-warp"];
   const concept = Boolean(input.conceptMode);
+  const startEnd =
+    input.mode === "start-end" ? SHOT_RECIPES["motion-poster-start-end"].microMotions : [];
+  const dialectMotions =
+    concept && dialect.microMotionsConcept ? dialect.microMotionsConcept : dialect.microMotions;
+  const motionList = [...startEnd, ...dialectMotions].map((m) => `- ${m}`).join("\n");
 
-  const motionList = recipe.microMotions.map((m) => `- ${m}`).join("\n");
+  const heroMotionRule =
+    "HERO MOTION REQUIRED (visible in the first 2 seconds): the main subject must clearly turn, float, settle, or the camera must push/orbit so the silhouette changes. Frozen still + only smoke/bokeh is a FAIL.";
+  const startEndType =
+    "即梦 3.0 首尾帧: Image 1 = textless START poster. Image 2 = finished END poster with the exact headline already painted as a large masthead. ONE continuous interpolate Image 1 → Image 2. Type must bloom/slide into Image 2 pixels only — do not invent different letters or gibberish.";
 
   if (concept) {
     return [
-      `Motion poster, ${sec}s, 9:16. Single continuous micro-motion on a locked CONCEPT / SERVICE hero still.`,
-      `@Image1 is the scene lock (room, hands, tools, atmosphere) — keep layout, subjects, and mood. Do not invent a product packshot catalog.`,
-      claim
-        ? `Claim/title only (service / idea / offer): ${claim}.`
-        : `Campaign label (claim only): ${product}.`,
+      `Designed motion poster (動態海報), CONCEPT / SERVICE, ${sec}s, 9:16. Dialect: ${dialect.id}. Scene: ${product}. Not a live-action TVC.`,
       input.mode === "start-end"
-        ? "Start frame = @Image1 (or image_url); end frame = end_image_url. Interpolate light/atmosphere only — scene identity immutable."
-        : "One keyframe image-to-video. Light/particles/camera may move; scene composition stays locked.",
-      "Allowed micro-motions ONLY (pick 1–2):",
+        ? `@Image1 is the textless start plate. End frame is Image 2 (typed poster). ${startEndType}`
+        : `@Image1 is the textless poster scene plate. Keep the same subjects and mood. Do not invent on-screen text.`,
+      claim && input.mode !== "start-end"
+        ? `Campaign claim (NOT on-screen — overlay later): ${claim}.`
+        : claim
+          ? `Campaign claim on Image 2 masthead (match those exact characters): ${claim}.`
+          : "",
+      input.mode === "start-end"
+        ? `Start frame = @Image1; end frame = end_image_url. ${dialect.endBeatConcept} Interpolate camera + subject + type appearing.`
+        : dialect.videoLeadConcept,
+      input.mode === "start-end" ? "" : dialect.kineticTypeLine,
+      heroMotionRule,
+      "Dialect motions (do these, visibly):",
       motionList,
-      "FORBIDDEN: second location, tutorial steps, HOOK→DEMO→CTA rewrite, fake SKU packaging hero, readable on-screen text, logos, watermarks, speech.",
+      "FORBIDDEN: freeze-frame, second location, tutorial steps, HOOK→DEMO→CTA rewrite, fake SKU packaging hero, new gibberish text, fake logos, watermarks, speech.",
       "Silent commercial loop energy — feel complete at the end.",
     ].join(" ");
   }
 
   return [
-    `Motion poster, ${sec}s, 9:16. Single continuous micro-motion on a locked product hero.`,
-    `@Image1 is the on-screen OBJECT — keep exact shape, colors, materials, logo geometry. Do not morph the product.`,
-    claim
-      ? `Claim/title only (do not change object): ${claim}.`
-      : `Product label (claim only): ${product}.`,
+    `Designed motion poster (動態海報), ${sec}s, 9:16. Dialect: ${dialect.id}. Hero: ${product}. Not a live-action TVC.`,
     input.mode === "start-end"
-      ? "Start frame = @Image1 (or image_url); end frame = end_image_url. Interpolate environment/mood only — product identity immutable."
-      : "One keyframe image-to-video. Environment/particles/camera may move; product stays locked.",
-    "Allowed micro-motions ONLY (pick 1–2):",
+      ? `@Image1 is the textless start plate (same SKU). Image 2 is the typed end poster. ${startEndType} Product MAY rotate or resettle.`
+      : `@Image1 is the textless poster scene plate: same product identity (shape, cap, color). The product MAY rotate, tilt, or float — do not morph into a different SKU. Do not invent on-screen text.`,
+    claim && input.mode !== "start-end"
+      ? `Campaign claim (NOT on-screen — overlay later): ${claim}.`
+      : claim
+        ? `Campaign claim on Image 2 masthead (match those exact characters): ${claim}.`
+        : "",
+    input.mode === "start-end"
+      ? `Start frame = @Image1; end frame = end_image_url. ${dialect.endBeat} Interpolate product motion AND type appearing.`
+      : dialect.videoLead,
+    input.mode === "start-end" ? "" : dialect.kineticTypeLine,
+    heroMotionRule,
+    "Dialect motions (do these, visibly):",
     motionList,
-    "FORBIDDEN: second location, tutorial steps, HOOK→DEMO→CTA rewrite, new props that change the SKU, readable on-screen text, logos, watermarks, speech.",
+    "FORBIDDEN: freeze-frame, second location, tutorial steps, HOOK→DEMO→CTA rewrite, new props that change the SKU, new gibberish text, fake logos, watermarks, speech, only background bokeh with a locked bottle.",
     "Silent commercial loop energy — feel complete at the end.",
   ].join(" ");
 }

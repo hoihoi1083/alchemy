@@ -117,6 +117,7 @@ export type MicroWizardPathId =
   | "product_video_research_reel"
   | "product_video_direct"
   | "product_combined"
+  | "product_combined_motion_poster"
   | "concept_video_research_reel"
   | "concept_video_direct"
   | "concept_combined_cinematic"

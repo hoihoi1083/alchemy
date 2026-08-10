@@ -9,6 +9,7 @@ type ImageTextModePickerProps = {
   onChange: (mode: ImageTextMode) => void;
   /** Studio fuse pages — light violet instead of dark emerald. */
   variant?: "dark" | "violet";
+  hint?: string;
 };
 
 export function ImageTextModePicker({
@@ -16,6 +17,7 @@ export function ImageTextModePicker({
   disabled,
   onChange,
   variant = "dark",
+  hint,
 }: ImageTextModePickerProps) {
   const { m } = useLocale();
   const w = m.wizard;
@@ -36,7 +38,7 @@ export function ImageTextModePicker({
         {w.imageTextModeTitle}
       </p>
       <p className={`mt-1 text-xs ${violet ? "text-slate-500" : "text-slate-400"}`}>
-        {w.imageTextModeHint}
+        {hint ?? w.imageTextModeHint}
       </p>
       <div className="mt-3 grid gap-2 sm:grid-cols-2">
         {modes.map((mode) => {

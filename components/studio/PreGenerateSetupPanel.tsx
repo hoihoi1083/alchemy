@@ -1383,6 +1383,131 @@ export function PreGenerateSetupPanel({
                 <div className="pg-content-row">
                   <div className="pg-content-aside">
                     <span className="pg-card-icon">
+                      <SectionIcon kind="options" />
+                    </span>
+                    <h3 className="pg-card-title">{pg.imageOptionsTitle}</h3>
+                    <p className="mt-0.5 text-xs text-slate-500">{pg.storyboardLookBeforePlanHint}</p>
+                  </div>
+                  <div className="min-w-0 flex-1 space-y-4">
+                    <div>
+                      <p className="text-xs font-semibold text-slate-700">{pg.styleLabel}</p>
+                      <div className="pg-style-row">
+                        {artStyleIdsForPicker({
+                          videoSafeOnly: wizard.workflowMode !== "image-only",
+                        }).map((id: ArtStyleId) => {
+                          const def = getArtStyle(id);
+                          const copy = m.wizard.artStyles[id];
+                          const selected = wizard.artStyleId === id;
+                          return (
+                            <button
+                              key={id}
+                              type="button"
+                              onClick={() => wizard.setArtStyleId(id)}
+                              className={`pg-style-card${selected ? " is-selected" : ""}`}
+                            >
+                              {selected ? <CheckBadge /> : null}
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={def.previewSrc} alt="" />
+                              <span>{copy.title}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-slate-700">{pg.aspectLabel}</p>
+                      <div className="mt-2 grid grid-cols-3 gap-2">
+                        {IMAGE_ASPECT_RATIOS.map((ratio: ImageAspectRatio) => {
+                          const copy = m.wizard.imageAspectRatios[ratio];
+                          const selected = wizard.imageAspectRatio === ratio;
+                          const frameStyle =
+                            ratio === "9:16"
+                              ? { width: 18, height: 32 }
+                              : ratio === "4:5"
+                                ? { width: 22, height: 28 }
+                                : { width: 26, height: 26 };
+                          return (
+                            <button
+                              key={ratio}
+                              type="button"
+                              onClick={() => wizard.setImageAspectRatio(ratio)}
+                              className={`relative rounded-xl border px-2 py-3 text-center transition ${
+                                selected
+                                  ? "border-violet-500 bg-violet-50 text-violet-700"
+                                  : "border-slate-200 bg-white text-slate-400 hover:border-violet-200"
+                              }`}
+                            >
+                              {selected ? <CheckBadge /> : null}
+                              <span className="pg-aspect-frame block" style={frameStyle} />
+                              <span className="block text-sm font-bold text-slate-900">{ratio}</span>
+                              <span className="mt-0.5 block text-[10px] leading-snug text-slate-500">
+                                {copy.title}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-slate-700">{pg.textModeLabel}</p>
+                      <p className="mt-0.5 text-[11px] text-slate-500">{pg.storyboardTextModeHint}</p>
+                      <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                        {(
+                          [
+                            [
+                              "textless",
+                              m.wizard.imageTextModeTextless,
+                              m.wizard.imageTextModeTextlessHint,
+                            ],
+                            [
+                              "integrated",
+                              m.wizard.imageTextModeIntegrated,
+                              m.wizard.imageTextModeIntegratedHint,
+                            ],
+                          ] as Array<[ImageTextMode, string, string]>
+                        ).map(([mode, title, hint]) => {
+                          const selected = wizard.imageTextMode === mode;
+                          return (
+                            <button
+                              key={mode}
+                              type="button"
+                              onClick={() => wizard.setImageTextMode(mode)}
+                              className={`relative flex items-start gap-3 rounded-xl border px-3 py-3 text-left transition ${
+                                selected
+                                  ? "border-violet-500 bg-violet-50"
+                                  : "border-slate-200 bg-white hover:border-violet-200"
+                              }`}
+                            >
+                              {selected ? <CheckBadge /> : null}
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={imageTextPreviewSrc(mode)}
+                                alt=""
+                                className="h-16 w-16 shrink-0 rounded-lg object-cover"
+                              />
+                              <span className="min-w-0 pr-4">
+                                <span className="block text-sm font-semibold text-slate-900">
+                                  {title}
+                                </span>
+                                <span className="mt-0.5 block text-[11px] text-slate-500">
+                                  {hint}
+                                </span>
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            ) : null}
+
+            {combinedStoryboard ? (
+              <section className="pg-card">
+                <div className="pg-content-row">
+                  <div className="pg-content-aside">
+                    <span className="pg-card-icon">
                       <SectionIcon kind="output" />
                     </span>
                     <h3 className="pg-card-title">{pg.storyboardTitle}</h3>
@@ -1829,6 +1954,7 @@ export function PreGenerateSetupPanel({
               </div>
             </section>
 
+            {!combinedStoryboard ? (
             <section className="pg-card">
               <div className="pg-content-row">
                 <div className="pg-content-aside">
@@ -1899,6 +2025,7 @@ export function PreGenerateSetupPanel({
                     </div>
                   </div>
 
+                  {wizard.videoCreativeMode !== "motion-poster" ? (
                   <div>
                     <p className="text-xs font-semibold text-slate-700">{pg.textModeLabel}</p>
                     <div className="mt-2 grid gap-2 sm:grid-cols-2">
@@ -1946,9 +2073,11 @@ export function PreGenerateSetupPanel({
                       })}
                     </div>
                   </div>
+                  ) : null}
                 </div>
               </div>
             </section>
+            ) : null}
 
             {showBrandWebsite ? (
               <section className="pg-card">

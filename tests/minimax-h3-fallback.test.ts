@@ -55,6 +55,17 @@ describe("MiniMax H3 Seedance fallback helpers", () => {
     assert.match(prompt, /wardrobe/i);
   });
 
+  it("storyboard H3 keeps type when preserveOnScreenType", () => {
+    const prompt = buildStoryboardMinimaxH3Prompt({
+      durationSec: 8,
+      hasReferenceVideo: false,
+      preserveOnScreenType: true,
+      scenes: [{ role: "hook" }],
+    });
+    assert.match(prompt, /Keep existing on-screen wording/i);
+    assert.doesNotMatch(prompt, /do not invent on-screen text, logos, or watermarks/i);
+  });
+
   it("omits Video 1 spine when no reference reel", () => {
     const prompt = buildStoryboardMinimaxH3Prompt({
       durationSec: 8,
@@ -96,6 +107,12 @@ describe("MiniMax H3 Seedance fallback helpers", () => {
     );
     assert.match(src, /getAll\("reference_images"\)/);
     assert.match(src, /getAll\("images"\)/);
+    // H3 always returns native stereo — do not send Seedance generate_audio.
+    assert.doesNotMatch(src, /generate_audio/);
+    assert.match(src, /burnMotionPosterTypeOverlay/);
+    assert.match(src, /!hasEndFrame/);
+    assert.match(src, /preserveOnScreenType: Boolean\(endUrl\)/);
+    assert.match(src, /motion_poster_dialect/);
   });
 
   it("detects @Video1 / reference MP4 as required spine", () => {

@@ -175,6 +175,44 @@ describe("video-storyboard-plan reel analysis", () => {
   });
 });
 
+describe("video-storyboard-plan on-image type", () => {
+  it("textless planner forbids type in imagePrompt", () => {
+    const prompt = buildStoryboardPlanPromptForTest({
+      product: "serum",
+      business: "",
+      headline: "Glow",
+      subline: "",
+      offer: "",
+      storyboardBrief: "",
+      durationSec: 8,
+      market: "hk",
+      framing: "auto",
+      styleHint: "",
+      imageTextMode: "textless",
+    });
+    assert.match(prompt, /NEVER describe on-image text/i);
+    assert.doesNotMatch(prompt, /MUST render exact readable on-image/i);
+  });
+
+  it("integrated planner requires on-image copy in stills", () => {
+    const prompt = buildStoryboardPlanPromptForTest({
+      product: "serum",
+      business: "",
+      headline: "Glow",
+      subline: "",
+      offer: "",
+      storyboardBrief: "",
+      durationSec: 8,
+      market: "hk",
+      framing: "auto",
+      styleHint: "",
+      imageTextMode: "integrated",
+    });
+    assert.match(prompt, /MUST render exact readable on-image/i);
+    assert.doesNotMatch(prompt, /NEVER describe on-image text/i);
+  });
+});
+
 describe("video-storyboard-plan layout transfer", () => {
   const base = {
     product: "馬達加斯加粉水晶手链",
@@ -208,7 +246,9 @@ describe("video-storyboard-plan layout transfer", () => {
       referenceStrategyKind: "none",
     });
     assert.match(prompt, /PRODUCT ADAPTATION \(critical\)/i);
-    assert.match(prompt, /wearables → wrist\/on-body/i);
+    assert.match(prompt, /Never guess SKU from the product NAME/i);
+    assert.match(prompt, /IMAGE 1/i);
+    assert.doesNotMatch(prompt, /current guess:/i);
     assert.match(prompt, /Kling/i);
     assert.doesNotMatch(prompt, /LAYOUT TRANSFER/i);
     assert.doesNotMatch(prompt, /for Seedance API/i);

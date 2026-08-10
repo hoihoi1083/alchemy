@@ -238,13 +238,19 @@ export function artStyleImageClause(id: ArtStyleId | undefined): string {
 }
 
 /** Strong opener — entire frame including typography must use this medium (Nano Banana). */
-export function artStyleMandatoryLead(id: ArtStyleId | undefined): string {
+export function artStyleMandatoryLead(
+  id: ArtStyleId | undefined,
+  opts?: { textless?: boolean },
+): string {
   const styleId = id ?? DEFAULT_ART_STYLE;
   if (styleId === "realistic") return "";
   const style = getArtStyle(styleId);
+  const scope = opts?.textless
+    ? `The ENTIRE image — background, characters, and props — must be rendered in this medium. No written characters. `
+    : `The ENTIRE image — background, characters, props, icons, badges, AND all marketing typography — must be rendered in this medium. `;
   return (
     `MANDATORY RENDER MEDIUM: ${style.imageClause} ` +
-    `The ENTIRE image — background, characters, props, icons, badges, AND all marketing typography — must be rendered in this medium. ` +
+    scope +
     `Do NOT use photorealistic photography, DSLR commercial shots, generic Canva template look, or plain 3D product visualization.`
   );
 }
@@ -299,10 +305,23 @@ export function artStyleAvoidTail(id: ArtStyleId | undefined): string {
 }
 
 /** Optional system_prompt for Nano Banana edit — steers global medium. */
-export function artStyleSystemPrompt(id: ArtStyleId | undefined): string | undefined {
+export function artStyleSystemPrompt(
+  id: ArtStyleId | undefined,
+  opts?: { textless?: boolean },
+): string | undefined {
   const styleId = id ?? DEFAULT_ART_STYLE;
-  if (styleId === "realistic") return undefined;
+  if (styleId === "realistic") {
+    return opts?.textless
+      ? "Photoreal scene only. No written characters in any language. No title bars, captions, logos, or buttons."
+      : undefined;
+  }
   const style = getArtStyle(styleId);
+  if (opts?.textless) {
+    return (
+      `Output ONLY ${style.imageClause} ` +
+      `Atmosphere and subjects only. No written characters in any language. Typography is added later.`
+    );
+  }
   return (
     `Output ONLY ${style.imageClause} ` +
     `Never default to photorealistic photography or generic corporate marketing mockups. ` +

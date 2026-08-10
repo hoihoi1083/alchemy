@@ -134,6 +134,7 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn" | "zh-tw") {
   const [showAdvancedImage, setShowAdvancedImage] = useState(false);
   const [showAdvancedVideo, setShowAdvancedVideo] = useState(false);
   const [bgmTrack, setBgmTrack] = useState<BgmTrackId>("calm");
+  const [videoBgmEnabled, setVideoBgmEnabled] = useState(true);
   const [imageInputMode, setImageInputMode] = useState<ImageInputMode>(DEFAULT_IMAGE_INPUT_MODE);
 
   const [promptMarket, setPromptMarket] = useState<PromptMarket>(() =>
@@ -340,6 +341,8 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn" | "zh-tw") {
     setShowAdvancedVideo,
     bgmTrack,
     setBgmTrack,
+    videoBgmEnabled,
+    setVideoBgmEnabled,
     imageInputMode,
     setImageInputMode,
     promptMarket,

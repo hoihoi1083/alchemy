@@ -31,12 +31,30 @@ describe("shot-recipes", () => {
       headline: "Calm night",
       durationSec: 6,
       mode: "loop",
+      dialect: "card-warp",
     });
-    assert.match(p, /Motion poster/i);
+    assert.match(p, /Motion poster|動態海報/i);
     assert.match(p, /@Image1/);
     assert.match(p, /FORBIDDEN/);
+    assert.match(p, /TEXTLESS FRAME/i);
+    assert.match(p, /3D|card warp|paper/i);
     assert.doesNotMatch(p, /HOOK→DEMO→CTA invent/i);
-    assert.match(p, /micro-motions ONLY/i);
+    assert.match(p, /HERO MOTION REQUIRED/i);
+    assert.match(p, /Dialect motions/i);
+  });
+
+  it("start-end poster prompt interpolates typed Image 2", () => {
+    const p = buildMotionPosterPrompt({
+      product: "jade bottle",
+      headline: "Calm night",
+      durationSec: 6,
+      mode: "start-end",
+      dialect: "light-sweep",
+    });
+    assert.match(p, /Image 2/i);
+    assert.match(p, /typed end poster|exact headline|首尾帧/i);
+    assert.match(p, /masthead/i);
+    assert.doesNotMatch(p, /TEXTLESS FRAME/);
   });
 
   it("builds concept motion poster without SKU packshot language", () => {
@@ -46,9 +64,10 @@ describe("shot-recipes", () => {
       durationSec: 6,
       mode: "loop",
       conceptMode: true,
+      dialect: "scene-breathe",
     });
     assert.match(p, /CONCEPT \/ SERVICE/i);
-    assert.match(p, /scene lock/i);
+    assert.match(p, /Designed motion poster|textless poster/i);
     assert.doesNotMatch(p, /logo geometry/i);
     assert.match(p, /FORBIDDEN/);
   });
@@ -149,6 +168,7 @@ describe("landing recipe smoke (no fal)", () => {
     assert.equal(LANDING_RECIPES["product-tvc-12s"].visualStyleId, "storyboard-video");
     assert.equal(LANDING_RECIPES["product-tvc-12s"].storyboardSceneCount, "4");
     assert.equal(LANDING_RECIPES["concept-motion-poster"].promotionMode, "concept");
+    assert.equal(LANDING_RECIPES["concept-motion-poster"].workflowMode, "video-only");
     assert.equal(LANDING_RECIPES["concept-tvc-12s"].promotionMode, "concept");
   });
 });

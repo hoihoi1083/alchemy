@@ -8,6 +8,10 @@ import {
   thirdPartyBrandGuardBlock,
 } from "@/lib/brand-merge";
 import type { ImageTextMode } from "@/lib/image-text-mode";
+import {
+  MOTION_POSTER_DIALECTS,
+  type MotionPosterDialectId,
+} from "@/lib/motion-poster-dialects";
 import { TEXTLESS_IMAGE_GUARD } from "@/lib/image-text-mode";
 import type { PromotionMode } from "@/lib/promotion-mode";
 import type { WorkflowMode } from "@/lib/workflow-mode";
@@ -57,6 +61,7 @@ import {
   artStyleSeedanceHint,
   artStyleStoryboardLead,
   DEFAULT_ART_STYLE,
+  resolveArtStyleId,
   type ArtStyleId,
 } from "@/lib/art-style";
 
@@ -124,6 +129,13 @@ const MARKET_HINTS: Record<PromptMarket, string> = {
   tw: "Taiwan lifestyle aesthetic, soft natural tones, friendly local brand feel. All on-image marketing copy in Traditional Chinese (繁體中文).",
   cn: "Mainland China Xiaohongshu/Douyin social creative — designed editorial feed post with atmosphere and props, not a blank catalog cutout. All on-image marketing copy in Simplified Chinese (简体中文) ONLY — never Traditional 繁體.",
   en: "International English-market commercial style, clean premium western retail look with intentional art direction. All on-image marketing copy in English only.",
+};
+
+const MARKET_HINTS_TEXTLESS: Record<PromptMarket, string> = {
+  hk: "Hong Kong local boutique aesthetic, modern Asian urban lifestyle, premium but approachable. Atmosphere only — no writing.",
+  tw: "Taiwan lifestyle aesthetic, soft natural tones, friendly local brand feel. Atmosphere only — no writing.",
+  cn: "Mainland China Xiaohongshu/Douyin social creative — designed editorial atmosphere and props, not a blank catalog cutout. Atmosphere only — no writing.",
+  en: "International English-market commercial style, clean premium western retail look with intentional art direction. Atmosphere only — no writing.",
 };
 
 const FRAMING_IMAGE: Record<SubjectFraming, string> = {
@@ -250,10 +262,12 @@ function brandPromptExtras(
 
 /** Strong anchor so edit models keep the uploaded reference as the hero — not brand-template stock scenes. */
 function imageReferenceAnchorBlock(vars: PromptVariables): string {
-  const label = vars.product?.trim() || "the uploaded reference";
+  const label = vars.product?.trim() || "the uploaded product";
   return joinParts(
-    "CRITICAL — IMAGE 1 IS MANDATORY",
-    `IMAGE 1 is the user's uploaded reference for "${label}". The output MUST clearly show recognizable content from IMAGE 1 as the hero subject.`,
+    "CRITICAL — IMAGE 1 PIXELS ARE THE PRODUCT",
+    `IMAGE 1 is the uploaded photo. The object IN THE PIXELS is the hero — not a stock item inferred from the name "${label}".`,
+    `"${label}" is a marketing CLAIM / caption only. Whatever category the name implies, keep the object that is actually in IMAGE 1 pixels. Never invent a substitute SKU.`,
+    "The output MUST clearly show the same item as IMAGE 1 (shape, materials, color, packaging).",
     "Do NOT replace IMAGE 1 with an unrelated stock scene or a different product category.",
     "If IMAGE 1 is a graphic, poster, or app/UI screenshot: keep the same visual content and layout as the hero — polish lighting and integrate campaign copy; do not swap in unrelated products.",
     "If IMAGE 1 is a physical product photo: preserve the exact item — colors, materials, shape, packaging, label details.",
@@ -1300,6 +1314,118 @@ export function buildPromoImagePrompt(
   );
 }
 
+function motionPosterArtStyleLock(
+  artStyle?: ArtStyleId,
+  opts?: { textless?: boolean },
+): string {
+  const id = resolveArtStyleId(artStyle);
+  const clause = artStyleImageClause(id);
+  const textless = opts?.textless !== false;
+  if (id === "realistic") {
+    return joinParts(
+      `RENDER MEDIUM (mandatory): ${clause}`,
+      "Photoreal or cinematic live-action photography. NOT comic, NOT webtoon, NOT cel-shaded illustration, NOT anime key visual.",
+    );
+  }
+  return joinParts(
+    artStyleMandatoryLead(id, { textless }),
+    clause,
+    artStyleAvoidTail(id),
+  );
+}
+
+/** 即梦 首尾帧 · 首帧 — designed poster, no type. Type arrives on the END still. */
+export function buildMotionPosterStillPrompt(
+  vars: PromptVariables,
+  opts?: {
+    conceptMode?: boolean;
+    dialect?: MotionPosterDialectId;
+  },
+): string {
+  const product = vars.product?.trim() || (opts?.conceptMode ? "the service scene" : "the product");
+  const dialect = MOTION_POSTER_DIALECTS[opts?.dialect ?? "card-warp"];
+  if (opts?.conceptMode) {
+    return joinParts(
+      motionPosterArtStyleLock(vars.artStyle, { textless: true }),
+      `Design a vertical CONCEPT motion-poster START keyframe (即梦 首尾帧 · 首帧 / 動態海報). Theme (mood only, never as letters): ${product}.`,
+      "Premium designed poster still — one hero scene, studio/C4D or shallow-DOF set. Not a busy catalog, not a live-action TVC freeze.",
+      "TEXTLESS start plate: atmosphere and hero only. Type exists only on the END frame — do not paint letters here.",
+      dialect.stillLayoutConcept,
+      dialect.startBeatConcept,
+      TEXTLESS_IMAGE_GUARD,
+      "The frame must contain no readable writing of any kind. Top ~20% is empty masthead atmosphere (sky, mist, wall) — not a title bar.",
+      MARKET_HINTS_TEXTLESS[vars.market],
+      FRAMING_IMAGE[vars.framing],
+      "9:16 textless poster still. Leave the masthead band empty for the end frame.",
+    );
+  }
+  return joinParts(
+    motionPosterArtStyleLock(vars.artStyle, { textless: true }),
+    imageReferenceAnchorBlock(vars),
+    `Design a vertical MOTION-POSTER START keyframe (即梦 首尾帧 · 首帧 / 動態海報) for ${product}.`,
+    "Premium designed poster still: IMAGE 1 product hero + intentional set (studio/C4D or shallow-DOF). Not a blank white sweep.",
+    "TEXTLESS start plate. Type exists only on the END frame — do not paint letters here.",
+    dialect.stillLayout,
+    dialect.startBeat,
+    `"${product}" names the photographed object only — do not paint those letters on the still. The object must stay IMAGE 1 pixels.`,
+    TEXTLESS_IMAGE_GUARD,
+    "The frame must contain no readable writing of any kind. Top ~20% is empty masthead atmosphere — not a title bar.",
+    MARKET_HINTS_TEXTLESS[vars.market],
+    FRAMING_IMAGE[vars.framing],
+    "9:16 textless poster still. Leave the masthead band empty for the end frame.",
+  );
+}
+
+/** 即梦 首尾帧 · 尾帧 — same poster family, large masthead, product may shift pose. */
+export function buildMotionPosterEndStillPrompt(
+  vars: PromptVariables,
+  opts?: {
+    conceptMode?: boolean;
+    dialect?: MotionPosterDialectId;
+  },
+): string {
+  const product = vars.product?.trim() || (opts?.conceptMode ? "the service scene" : "the product");
+  const dialect = MOTION_POSTER_DIALECTS[opts?.dialect ?? "card-warp"];
+  const headline = vars.headline?.trim() || product;
+  const subline = vars.subline?.trim() || "";
+  const offer = vars.offer?.trim() || "";
+  const copy = joinParts(
+    `ON-IMAGE HEADLINE — oversized designed poster masthead (not a tiny caption, not a floating subtitle bar). Paint these exact characters: ${headline}`,
+    subline ? `ON-IMAGE SUBLINE under the masthead (exact): ${subline}` : "",
+    offer
+      ? `ON-IMAGE BUTTON TEXT (small bottom pill — exact offer line, never paint the English letters C-T-A): ${offer}`
+      : "",
+  );
+  if (opts?.conceptMode) {
+    return joinParts(
+      motionPosterArtStyleLock(vars.artStyle, { textless: false }),
+      `Design the END keyframe (即梦 首尾帧 · 尾帧) of a CONCEPT motion-poster pair (動態海報) for: ${product}.`,
+      "IMAGE 1 (when attached) is the textless START plate — keep the same venue, lighting, wardrobe, and subject identity.",
+      dialect.endBeatConcept,
+      "Readable marketing type is REQUIRED. Large masthead in the band that was empty on the start plate.",
+      dialect.stillLayoutConcept.replace(/ZERO readable marketing text\.?/i, "Type lives in the reserved masthead."),
+      copy,
+      MARKET_HINTS[vars.market],
+      FRAMING_IMAGE[vars.framing],
+      "9:16 finished designed poster still. No watermarks, no English meta labels, no hashtag clutter.",
+    );
+  }
+  return joinParts(
+    motionPosterArtStyleLock(vars.artStyle, { textless: false }),
+    imageReferenceAnchorBlock(vars),
+    `Design the END keyframe (即梦 首尾帧 · 尾帧) of a MOTION-POSTER pair (動態海報) for ${product}.`,
+    "IMAGE 1 (when attached) is the textless START plate — keep the same venue, lighting, and SKU identity.",
+    dialect.endBeat,
+    "The product MAY rotate, tilt, float, or move to a new settle pose. Same bottle/object — do not swap category.",
+    "Readable marketing type is REQUIRED. Large masthead in the band that was empty on the start plate.",
+    dialect.stillLayout.replace(/ZERO readable marketing text\.?/i, "Type lives in the reserved masthead."),
+    copy,
+    MARKET_HINTS[vars.market],
+    FRAMING_IMAGE[vars.framing],
+    "9:16 finished designed poster still. No watermarks, no English meta labels, no hashtag clutter.",
+  );
+}
+
 /** Nano Banana: reference ad → new image keeping design language, adapting venue/lighting to product/shop. */
 export function buildReferenceConceptImagePrompt(
   vars: PromptVariables,
@@ -1691,8 +1817,9 @@ export function buildStoryboardSceneImagePrompt(
       lookLock,
       plan.theme ? `Story theme: ${plan.theme}.` : "",
       `Scene role: ${scene.role}.`,
-      sceneImagePrompt,
       imageReferenceAnchorBlock(vars),
+      "PIXEL LOCK: if the scene action names a different object category than IMAGE 1 pixels, IGNORE the substitute and stage IMAGE 1's object.",
+      sceneImagePrompt,
       "Keep the exact product from IMAGE 1 — same item, colors, materials, and shape. Do not swap for a different product category.",
       artStyleImageClause(vars.artStyle),
       artStyleAvoidTail(vars.artStyle),
@@ -1701,7 +1828,13 @@ export function buildStoryboardSceneImagePrompt(
       FRAMING_IMAGE[vars.framing],
       sceneVars.extra,
       brandPromptExtras(options?.brandProfile, brandKit),
-      textlessRule,
+      sceneCopy
+        ? joinParts(
+            `ON-IMAGE COPY (this scene only): ${sceneCopy}`,
+            "Integrate ON-IMAGE COPY as designed poster type — exact consumer words, no production labels.",
+            promoTypographyHint(sceneVars, false),
+          )
+        : textlessRule,
       "9:16 vertical, no watermark, no social UI.",
     ),
   );

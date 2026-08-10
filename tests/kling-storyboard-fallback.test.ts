@@ -113,5 +113,15 @@ describe("storyboard approve gate (per-cell + checkbox, no regen-all skip)", () 
     assert.match(gallery, /regenerateStoryboardSceneWithAi/);
     assert.match(gallery, /storyboardGridApproved/);
     assert.match(micro, /isCombinedSceneReview\s*\?\s*undefined/);
+    const videoStep = readFileSync(
+      join(root, "components/studio/VideoStep.tsx"),
+      "utf8",
+    );
+    const preVideo = readFileSync(
+      join(root, "components/studio/PreVideoSetupPanel.tsx"),
+      "utf8",
+    );
+    assert.doesNotMatch(videoStep, /KlingStoryboardSettings/);
+    assert.doesNotMatch(preVideo, /KlingStoryboardSettings/);
   });
 });

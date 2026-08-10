@@ -874,7 +874,7 @@ const LANDING_LAYOUT_CSS = `
 const SHOW_LANDING_BELOW_HOW = true;
 
 export function LandingPageClient() {
-	return (
+  return (
 		<>
 			<style dangerouslySetInnerHTML={{ __html: LANDING_LAYOUT_CSS }} />
 			<main className="landing-page flex min-h-screen flex-col overflow-x-clip bg-white text-slate-900 supports-[min-height:100dvh]:min-h-dvh">
@@ -893,19 +893,19 @@ export function LandingPageClient() {
 						<LandingNeonBand>
 							<div className="landing-neon-band__light">
 								<LandingTemplatesShowcase />
-							</div>
+          </div>
 							<div className="landing-neon-band__dark">
 								<LandingPricingTeaser />
 								<LandingTokensAndFaq />
-							</div>
+          </div>
 						</LandingNeonBand>
 						<LandingProductTools />
 						<LandingFinalCta />
 					</>
 				) : null}
 				<LandingFooter />
-			</main>
+    </main>
 			<LandingFloatingCta />
 		</>
-	);
+  );
 }

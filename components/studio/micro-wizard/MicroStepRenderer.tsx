@@ -41,6 +41,7 @@ import { ReferenceAnalyzeWaitPanel, referenceAnalyzeReady } from "@/components/s
 import { ResearchReelSetupPanel } from "@/components/studio/ResearchReelSetupPanel";
 import { BrandWebsitePanel } from "@/components/studio/BrandWebsitePanel";
 import { useState } from "react";
+import { isStoryboardVideoStyle } from "@/lib/visual-styles";
 
 type Props = {
   micro: WizardMicroStepValue;
@@ -173,30 +174,23 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
             {wizard.promotionMode === "concept" ? (
               <>
                 <ChoiceCard
-                  active={(micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) === "creative_video"}
-                  title={m.wizard.visualStyles["creative-video"].title}
-                  description={m.wizard.visualStyles["creative-video"].description}
+                  active={
+                    (micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) !== "motion_poster"
+                  }
+                  title={m.wizard.sceneReelTitle}
+                  description={m.wizard.sceneReelDesc}
                   onClick={() => {
                     micro.setVideoSubpath("creative_video");
                     wizard.applyPrimaryPathConceptVideo("creative");
                   }}
                 />
                 <ChoiceCard
-                  active={(micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) === "brand_video"}
-                  title={m.wizard.visualStyles["brand-video"].title}
-                  description={m.wizard.visualStyles["brand-video"].description}
+                  active={(micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) === "motion_poster"}
+                  title={m.wizard.videoCreativeModes["motion-poster"].title}
+                  description={m.wizard.videoCreativeModes["motion-poster"].description}
                   onClick={() => {
-                    micro.setVideoSubpath("brand_video");
-                    wizard.applyPrimaryPathConceptVideo("brand");
-                  }}
-                />
-                <ChoiceCard
-                  active={(micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) === "reference_reel"}
-                  title={m.wizard.pathReferenceVideoTitle}
-                  description={m.wizard.pathReferenceVideoDesc}
-                  onClick={() => {
-                    micro.setVideoSubpath("reference_reel");
-                    wizard.onVideoCreativeModeChange("reference-concept");
+                    micro.setVideoSubpath("motion_poster");
+                    wizard.onVideoCreativeModeChange("motion-poster");
                   }}
                 />
               </>
@@ -375,7 +369,11 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
             micro.ctx.intakePath === "direct" && micro.ctx.workflowMode !== "combined"
           }
           showReferenceUpload={micro.ctx.intakePath === "direct"}
-          combinedStoryboard={micro.ctx.workflowMode === "combined"}
+          combinedStoryboard={
+            micro.ctx.workflowMode === "combined" &&
+            isStoryboardVideoStyle(wizard.visualStyleId) &&
+            wizard.videoCreativeMode !== "motion-poster"
+          }
           onGenerate={micro.goNext}
           generateDisabled={
             Boolean(micro.blockReason) ||
@@ -446,10 +444,8 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
               wizard.onVideoCreativeModeChange("motion-poster");
             } else if (id === "reference_reel") {
               wizard.onVideoCreativeModeChange("reference-concept");
-            } else if (id === "creative_video") {
+            } else if (id === "creative_video" || id === "brand_video") {
               wizard.applyPrimaryPathConceptVideo("creative");
-            } else if (id === "brand_video") {
-              wizard.applyPrimaryPathConceptVideo("brand");
             }
           }}
         />
@@ -579,11 +575,13 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
             variant="light"
             accent="violet"
           />
-          <ImageTextModePicker
-            value={wizard.imageTextMode}
-            onChange={wizard.setImageTextMode}
-            variant="violet"
-          />
+          {wizard.videoCreativeMode !== "motion-poster" ? (
+            <ImageTextModePicker
+              value={wizard.imageTextMode}
+              onChange={wizard.setImageTextMode}
+              variant="violet"
+            />
+          ) : null}
         </ScreenShell>
       );
 

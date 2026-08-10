@@ -588,8 +588,9 @@ export const en = {
       items: {
         "motion-poster": {
           title: "Motion poster",
-          description: "1 still + micro camera/env motion (optional start→end). Usually cheaper.",
-          costHint: "~1 image + 1 short clip · fits free grant",
+          description:
+            "2 stills (no type → typed poster) then MiniMax H3 interpolates product + words. Not a multi-scene storyboard.",
+          costHint: "~2 images + 1 short clip · fits free grant",
         },
         "product-tvc-12s": {
           title: "Product TVC ~12s",
@@ -598,8 +599,9 @@ export const en = {
         },
         "concept-motion-poster": {
           title: "Concept motion poster",
-          description: "1 AI scene still + micro camera/env motion for a service or idea — no SKU packshot.",
-          costHint: "~1 AI still + 1 short clip · fits free grant",
+          description:
+            "2 scene stills (no type → typed) + H3 interpolates a service-fit motion. No SKU packshot.",
+          costHint: "~2 AI stills + 1 short clip · fits free grant",
         },
         "concept-tvc-12s": {
           title: "Concept TVC ~12s",
@@ -1399,9 +1401,9 @@ export const en = {
     storyboardCellReviewed: "Reviewed",
     storyboardApproveNeedLookHint:
       "Tap every still first. Video will animate mistakes — regen a bad cell, don’t generate video to hide it.",
-    storyboardApproveCheckbox: "I looked at every cell — stills are ready for video",
+    storyboardApproveCheckbox: "These stills are good — continue to video",
     storyboardApproveHint:
-      "Stills are the ad. Regen a junk cell, then tap it again. Approval clears if a still changes.",
+      "Optional: tap a cell to zoom. Regen a bad one anytime. Approval clears if a still changes.",
     storyboardApproveRequiredHint: "Approve the shot-map stills before generating video.",
     storyboardPlanPlacementLabel: "Product / concept placement",
     storyboardPlanPunchLabel: "Punch line / caption beat",
@@ -1508,6 +1510,9 @@ export const en = {
     pathReferenceVideoTitle: "Follow reference reel",
     pathReferenceVideoDesc:
       "Upload a reference MP4 — we analyze it for motion/edit feel (not a frame copy). Your product photo is still @Image1.",
+    sceneReelTitle: "Scene reel",
+    sceneReelDesc:
+      "A short scene from your idea. Optional website / IG for brand tone; optional MP4 for camera feel.",
     contentResearchSectionTitle: "Content research (optional)",
     contentResearchSectionHint: "Find trending posts for layout inspiration — skip if you already have a reference.",
     conceptPathsTitle: "Main concept paths",
@@ -1997,7 +2002,7 @@ export const en = {
       "motion-poster": {
         title: "Motion poster",
         description:
-          "1 product still + tiny camera/env motion (or start→end). Not a multi-scene storyboard — usually cheaper.",
+          "Start still (no type) + end still (with type) → H3 interpolates. Not a normal product I2V.",
       },
       "reference-concept": {
         title: "Inspired by reference video",
@@ -2009,7 +2014,48 @@ export const en = {
       },
     },
     motionPosterHint:
-      "Motion poster locks the hero still and only allows listed micro-motions. Upload an optional closing frame for start→end morph.",
+      "Jimeng-style start→end: two designed poster stills (textless start, typed end with a large masthead). MiniMax H3 interpolates so product and words move together. Costs 2 images + 1 short clip.",
+    motionPosterBuildingStill:
+      "Step 1/3: textless start still…",
+    motionPosterBuildingEnd:
+      "Step 2/3: typed end still…",
+    motionPosterAnimatingCard:
+      "Step 3/3: H3 interpolating start→end…",
+    motionPosterArtStyleTitle: "Poster look",
+    motionPosterArtStyleHint:
+      "Style of the Nano Banana still — realistic, 3D, comic, film…. Motion is applied after. Default is realistic photo.",
+    motionPosterDialectTitle: "Poster motion",
+    motionPosterDialectHint:
+      "Same 即梦 start→end method, different beat (type reveal, 3D card, parallax, pour…). Auto picks a fit — generate again to try another.",
+    motionPosterDialectAuto: "Auto · best fit",
+    motionPosterDialects: {
+      "card-warp": {
+        title: "3D card",
+        desc: "Flat start → warped card + masthead",
+      },
+      "kinetic-type": {
+        title: "Type reveal",
+        desc: "Wide textless → closer hero + large type",
+      },
+      parallax: {
+        title: "Parallax",
+        desc: "Wide scene → close hero + type",
+      },
+      "light-sweep": {
+        title: "Light sweep",
+        desc: "Dim silhouette → lit turn + type",
+      },
+      "liquid-reveal": {
+        title: "Liquid reveal",
+        desc: "Calm vessel → pour/steam + type",
+      },
+      "scene-breathe": {
+        title: "Atmosphere",
+        desc: "Still air → settle + masthead",
+      },
+    },
+    motionPosterTypeOverlayNote: "Type overlay",
+    motionPosterTypeOverlaySkipped: "Type overlay skipped — showing atmosphere clip only",
     motionPosterNeedKeyframe: "Add a product photo, scene still, or keyframe first for motion poster.",
     videoSettingsTitle: "Video settings",
     videoReferenceOutputSettingsTitle: "Output length & quality",
@@ -2193,11 +2239,11 @@ export const en = {
     imageReviewCompleteMany: "Generation completed! Your {n} images are ready to review.",
     imageReviewStoryboardReadyTitle: "Storyboard visuals ready",
     imageReviewStoryboardReadyBody:
-      "4-beat stills are the product. Tap each cell, regen junk frames, then approve. Video only animates what you lock.",
+      "4-beat stills are the product. Regen a bad cell, then confirm once. Video animates these frames.",
     imageReviewStoryboardHeroBefore: "Review your",
     imageReviewStoryboardHeroAccent: "storyboard visuals.",
     imageReviewStoryboardHeroHint:
-      "Tap every still. Regen a bad cell. Approve only after you looked — video will not fix a weak grid.",
+      "Check the grid, regen a bad cell if needed, then confirm. Video will not invent a better ad.",
     imageReviewPathLabel: "Path",
     imageReviewPathImagesVideo: "Images → Video",
     imageReviewVisualSetLabel: "Visual set",
@@ -2362,6 +2408,7 @@ export const en = {
     bgmCalm: "Calm",
     bgmUpbeat: "Upbeat",
     bgmWarm: "Warm",
+    bgmNone: "No music",
     phaseSecondFrame: "Creating a second scene for richer motion…",
     phaseVideo: "Making your video…",
     phaseBgm: "Adding background music…",
@@ -3446,6 +3493,10 @@ export const en = {
       productPhotosHint:
         "Main photo is required and drives product identity. Extra angles are optional and help detail.",
       imageOptionsTitle: "Image options",
+      storyboardLookBeforePlanHint:
+        "Pick look first — style is written into the AI storyboard plan and the stills.",
+      storyboardTextModeHint:
+        "Default is textless stills (captions later). Choose AI on-image type if you want words baked into each frame — H3 will try to keep them moving.",
       styleLabel: "Choose image style",
       aspectLabel: "Aspect ratio",
       textModeLabel: "Text mode",
@@ -3501,9 +3552,9 @@ export const en = {
       titleAccent: "video details",
       hint: "Add copy, upload a product photo, write/confirm the motion prompt, pick duration, then generate a silent reel.",
       scenesReadyHint:
-        "Scene stills are ready — pick Kling clip length (5s or 10s per scene), then stitch into one silent reel (captions later).",
+        "Scene stills are ready. Generate uses MiniMax H3 (one clip from all stills). Captions later.",
       scenesReadyTitle: "Storyboard scenes ready",
-      scenesReadyBody: "These stills become the stitched reel. Adjust Kling clip length, then generate.",
+      scenesReadyBody: "These stills become one H3 clip. Regen a bad cell first if needed.",
       assistantHint:
         "Upload a product photo → AI writes a motion prompt → review it → generate (silent reel; captions later).",
       assistantTitle: "AI motion prompt",
@@ -3529,6 +3580,10 @@ export const en = {
         "Describe the creative direction, write the motion prompt, optionally add a photo, then generate.",
       conceptBrandHint:
         "Add brand website cues if you want, write the motion prompt, optionally add a photo, then generate.",
+      sceneReelHint:
+        "Describe the scene; optional website / IG for brand tone; optional MP4 for camera feel. Photo optional.",
+      referenceVideoHintConcept:
+        "Optional — we follow motion/edit feel, not a frame copy. Concept reels can skip a product photo.",
       contentTitle: "Content details",
       hookLabel: "Main hook",
       supportingLabel: "Supporting copy",
@@ -3547,7 +3602,7 @@ export const en = {
       settingsTitle: "Video settings",
       settingsHint: "Duration and resolution affect token cost.",
       klingSettingsHint:
-        "Video tries MiniMax H3 first (all stills → one clip). Clip length below applies only if Kling fallback runs (5s or 10s per still + stitch).",
+        "Video uses MiniMax H3 first (all stills → one clip). Kling stitch only if H3 fails — no 5s/10s picker.",
       klingClipLabel: "Clip length (per scene)",
       klingClipHint: "Kling only supports 5s or 10s per scene — not Seedance-style 4–12s totals.",
       klingTotalLabel: "About {total}s total ({n} × {clip}s)",
@@ -3570,12 +3625,12 @@ export const en = {
         body: "The AI scene copy shows the story beat — captions can burn it later.",
       },
       klingTip2: {
-        title: "5s first",
-        body: "Try 5s per scene before 10s — cheaper and usually enough motion.",
+        title: "H3 one take",
+        body: "All stills go into one MiniMax H3 clip — not four separate videos.",
       },
       klingTip3: {
-        title: "Total = scenes × clip",
-        body: "Four scenes at 5s each ≈ 20s stitched reel, not an 8s Seedance clip.",
+        title: "Fix stills first",
+        body: "Regen a weak cell before generate. Video only animates what you lock.",
       },
       conceptTip1: {
         title: "Photo is optional",

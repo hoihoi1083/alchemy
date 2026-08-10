@@ -564,7 +564,7 @@
     "concept_video_direct": {
       "id": "concept_video_direct",
       "label": "Concept / Video / Direct",
-      "description": "Path 9 — Path 6 + 概念助手; creative / brand / reference reel only",
+      "description": "Path 9 — Path 6 + 概念助手; 短片製作 (brand/ref optional) or 動態海報",
       "priority": "P1",
       "pathNumber": 9,
       "basedOn": "product_video_direct",
@@ -652,6 +652,50 @@
         { "id": "video.ai_prompt", "handler": "planAiVideoPrompt" },
         { "id": "video.bgm", "skippable": true },
         { "id": "video.generate", "handler": "generateVideo" },
+        { "id": "wait.video_generate", "while": "videoBusy" },
+        { "id": "done.export" }
+      ]
+    },
+    "product_combined_motion_poster": {
+      "id": "product_combined_motion_poster",
+      "label": "Product / Combined / Motion poster",
+      "description": "1 designed poster still (product + on-image type) → MiniMax H3 graphic micro-motion. Not 4-cell storyboard.",
+      "priority": "P1",
+      "context": {
+        "workflowMode": "combined",
+        "promotionMode": "physical",
+        "videoSubpath": "motion_poster"
+      },
+      "steps": [
+        { "id": "entry.start" },
+        { "id": "route.output_goal", "set": { "workflowMode": "combined" } },
+        { "id": "route.subject", "set": { "promotionMode": "physical" } },
+        { "id": "identity.product_name", "required": ["product"] },
+        { "id": "route.intake", "set": { "intakePath": "direct" } },
+        {
+          "id": "setup.pre_generate",
+          "label": "Pre-generate setup (poster still)",
+          "handler": "generateImage",
+          "skippable": false,
+          "note": "Copy + product photo; CTA generates one designed poster still with type",
+          "fuses": [
+            "copy.edit",
+            "asset.product_photo",
+            "asset.reference_image",
+            "wait.reference_analyze",
+            "image.options",
+            "image.generate"
+          ]
+        },
+        { "id": "wait.image_generate", "while": "imageBusy" },
+        { "id": "image.review" },
+        {
+          "id": "setup.pre_video",
+          "label": "Pre-video setup (poster ready)",
+          "handler": "generateVideo",
+          "skippable": false,
+          "fuses": ["video.settings", "video.generate"]
+        },
         { "id": "wait.video_generate", "while": "videoBusy" },
         { "id": "done.export" }
       ]
@@ -761,7 +805,8 @@
     { "number": 9, "id": "concept_video_direct" },
     { "number": 10, "id": "concept_combined_cinematic" },
     { "number": 11, "id": "concept_combined" },
-    { "number": 12, "id": "concept_combined_motion_poster" }
+    { "number": 12, "id": "concept_combined_motion_poster" },
+    { "number": 13, "id": "product_combined_motion_poster" }
   ],
   "ancillaryOverlays": {
     "product_video_assistant": { "appliesTo": ["product_video_direct"], "steps": ["video.product_plan", "asset.extra_kit"] },

@@ -29,6 +29,29 @@ describe("video-engine-prompt-adapters (auto Seedance→H3→Kling)", () => {
     assert.match(prompt, /^@Image1 @Video1 /);
   });
 
+  it("motion poster H3 stays textless so ffmpeg can burn type", () => {
+    const h3 = adaptScriptForMinimaxH3({
+      seedancePrompt:
+        "Designed motion poster. Image 1 is the textless poster scene plate. TEXTLESS FRAME: do not invent on-screen text.",
+      imageCount: 1,
+      videoCount: 0,
+      preserveOnScreenType: false,
+    });
+    assert.match(h3, /do not invent on-screen text/i);
+    assert.doesNotMatch(h3, /Keep poster wording identical/i);
+  });
+
+  it("storyboard 有字 H3 keeps existing typography", () => {
+    const h3 = adaptScriptForMinimaxH3({
+      seedancePrompt: "Image 1 is storyboard frame 1 with printed headline.",
+      imageCount: 1,
+      videoCount: 0,
+      preserveOnScreenType: true,
+    });
+    assert.match(h3, /Keep poster wording|Type may fade|KINETIC TYPE/i);
+    assert.doesNotMatch(h3, /Do not invent on-screen text/);
+  });
+
   it("MiniMax gets Image/Video grammar + same timed beats", () => {
     const h3 = adaptScriptForMinimaxH3({
       seedancePrompt: DEEPSEEK_SCRIPT,

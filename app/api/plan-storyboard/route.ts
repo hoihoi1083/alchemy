@@ -12,6 +12,7 @@ import { resolveArtStyleId } from "@/lib/art-style";
 import { parseStrategyFromFormData } from "@/lib/reference-strategy";
 import { isPromotionMode } from "@/lib/promotion-mode";
 import { wizardPromoteName } from "@/lib/wizard-promote-name";
+import { parseImageTextMode } from "@/lib/image-text-mode";
 
 export const runtime = "nodejs";
 export const maxDuration = 90;
@@ -116,6 +117,7 @@ export async function POST(request: Request) {
       referenceStrategyKind: strategy.kind,
       useBrandLogo,
       conceptMode: promotionMode === "concept",
+      imageTextMode: parseImageTextMode(formData.get("image_text_mode") as string | null),
     });
     return NextResponse.json({ plan, seedancePrompt: plan.seedancePrompt });
   } catch (e: unknown) {

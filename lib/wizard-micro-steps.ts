@@ -147,20 +147,19 @@ function allCopyEmpty(state: WizardMicroStepState): boolean {
   );
 }
 
-/** Concept image / combined storyboard: pick 概念助手 OR 平台研究 — not both. */
+/** Concept: short topic name, then 概念助手 OR 平台研究 — not a second full assistant. */
 export function needsConceptSourceSplit(
   ctx: MicroWizardContext,
   state: Pick<WizardMicroStepState, "visualStyleId">,
 ): boolean {
   if (ctx.promotionMode !== "concept") return false;
-  if (ctx.workflowMode === "image-only") return true;
   if (ctx.workflowMode === "combined") {
     // Image+video storyboard path (default). Cinematic stitch / single cinematic skip this split.
     const cinematic =
       ctx.combinedStyle === "cinematic" || state.visualStyleId === "concept-cinematic";
     return !cinematic;
   }
-  return false;
+  return ctx.workflowMode === "image-only" || ctx.workflowMode === "video-only";
 }
 
 export function intakePathForConceptSource(source: ConceptSource): IntakePath {
@@ -319,6 +318,12 @@ export function resolvePathId(
   }
 
   if (promotionMode === "physical" && workflowMode === "combined") {
+    if (
+      ctx.videoSubpath === "motion_poster" ||
+      state.videoCreativeMode === "motion-poster"
+    ) {
+      return "product_combined_motion_poster";
+    }
     // Combined + research always storyboard reel path (force style at intake).
     if (intakePath === "research") {
       return "product_video_research_reel";

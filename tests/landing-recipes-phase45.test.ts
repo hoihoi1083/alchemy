@@ -54,7 +54,7 @@ describe("landing-recipes", () => {
 
     const conceptPoster = LANDING_RECIPES["concept-motion-poster"];
     assert.equal(conceptPoster.promotionMode, "concept");
-    assert.equal(conceptPoster.workflowMode, "combined");
+    assert.equal(conceptPoster.workflowMode, "video-only");
     assert.equal(conceptPoster.videoCreativeMode, "motion-poster");
     assert.equal(conceptPoster.visualStyleId, "service-promo");
 
@@ -118,6 +118,7 @@ describe("landing-recipes", () => {
 
     const posterCtx = microContextForLandingRecipe("motion-poster");
     assert.equal(posterCtx.videoSubpath, "motion_poster");
+    assert.equal(posterCtx.workflowMode, "video-only");
     const posterSteps = resolveMicroSteps(posterCtx, stubState);
     assert.equal(posterSteps[resumeStepIndex(posterSteps)]?.id, "setup.pre_video");
 
@@ -133,22 +134,22 @@ describe("landing-recipes", () => {
 
     const conceptPosterCtx = microContextForLandingRecipe("concept-motion-poster", "concept");
     assert.equal(conceptPosterCtx.promotionMode, "concept");
-    assert.equal(conceptPosterCtx.workflowMode, "combined");
+    assert.equal(conceptPosterCtx.workflowMode, "video-only");
     assert.equal(conceptPosterCtx.videoSubpath, "motion_poster");
     const conceptPosterSteps = resolveMicroSteps(conceptPosterCtx, {
       ...stubState,
       promotionMode: "concept",
-      workflowMode: "combined",
+      workflowMode: "video-only",
       visualStyleId: "service-promo",
       videoCreativeMode: "motion-poster",
     });
     const conceptPosterIds = conceptPosterSteps.map((s) => s.id);
-    assert.ok(conceptPosterIds.includes("setup.pre_generate"));
-    assert.ok(conceptPosterIds.includes("wait.image_generate"));
+    assert.ok(conceptPosterIds.includes("setup.pre_video"));
     assert.ok(!conceptPosterIds.includes("wait.storyboard_generate"));
+    assert.ok(!conceptPosterIds.includes("wait.image_generate"));
     assert.equal(
       conceptPosterSteps[resumeStepIndex(conceptPosterSteps)]?.id,
-      "setup.pre_generate",
+      "setup.pre_video",
     );
 
     const conceptTvcCtx = microContextForLandingRecipe("concept-tvc-12s", "concept");

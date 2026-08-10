@@ -13,7 +13,6 @@ import { isLayoutTransferReferenceExtra } from "@/lib/user-reference-brief";
 import type { ReferenceStrategyKind } from "@/lib/reference-strategy";
 import { parseLlmJsonObject } from "@/lib/parse-llm-json";
 import { productIdentityContractLines } from "@/lib/prompt-balance-contract";
-import { inferProductSceneCategory } from "@/lib/product-scene-hints";
 import { isStoryboardStructureLabel } from "@/lib/prompt-variables";
 import type { ResearchReelAnalysis } from "@/lib/reel-analysis-types";
 import { pinStoryboardPlanToReelAnalysis } from "@/lib/reel-reference-brief";
@@ -30,6 +29,7 @@ import {
 } from "@/lib/video-storyboard-types";
 import { parseSceneMotionHintsFromPlan } from "@/lib/kling-motion-from-plan";
 import { seedanceSafePlannerRules, softenStoryboardStillPromptForModeration } from "@/lib/seedance-moderation";
+import type { ImageTextMode } from "@/lib/image-text-mode";
 import { videoDurationPlannerBlock } from "@/lib/video-duration-planner";
 import {
   DEFAULT_STORYBOARD_SCENE_COUNT,
@@ -218,6 +218,26 @@ function endCardLogoPlannerRules(useBrandLogo?: boolean): string[] {
   ];
 }
 
+function storyboardTypePlannerLines(
+  integrated: boolean,
+  copyRule: string,
+): string[] {
+  if (integrated) {
+    return [
+      "- imagePrompt: English 9:16 still. MUST render exact readable on-image headline/CTA for THIS scene — same words as onImageCopyZh. Integrated typography in the art, not a white flyer or production label. Open with lookBible echo.",
+      `- onImageCopyZh: exact consumer words printed on the still (optional captions later). ${copyRule}`,
+      "- sceneDescriptionZh: one line for the user UI — same language as onImageCopyZh.",
+      "- Do NOT leave the still textless when on-image type is requested.",
+    ];
+  }
+  return [
+    "- imagePrompt: English 9:16 still. NEVER describe on-image text, titles, captions, logos, or slogans (stills are textless; captions burn after video). Open with lookBible echo.",
+    `- onImageCopyZh (burned caption after video) AND sceneDescriptionZh (UI note): ${copyRule}`,
+    "- sceneDescriptionZh: one line for the user UI — same language as onImageCopyZh.",
+    "- Do NOT put marketing headlines into imagePrompt — those belong only in onImageCopyZh for caption burn.",
+  ];
+}
+
 function buildPlanPrompt(input: {
   product: string;
   business: string;
@@ -236,8 +256,8 @@ function buildPlanPrompt(input: {
   referenceStrategyKind?: ReferenceStrategyKind;
   conceptMode?: boolean;
   useBrandLogo?: boolean;
+  imageTextMode?: ImageTextMode;
 }): string {
-  const category = inferProductSceneCategory(input.product);
   const { min, max } = sceneCountForDuration(input.durationSec);
   const sceneCountLine =
     input.sceneCountTarget && input.sceneCountTarget !== "auto"
@@ -292,10 +312,10 @@ function buildPlanPrompt(input: {
       sceneCountLine,
       ...bibleAndRoles,
       "- Each scene gets ONE still (imageIndex 1…N in timeline order).",
-      "- imagePrompt: English text-to-image still for Nano Banana — 9:16, cinematic concept, NO readable text/captions on the still. Open with lookBible echo.",
-      `- onImageCopyZh (burned caption after video) AND sceneDescriptionZh (UI note): ${plannerCopyLanguageRule(resolveCopyLocale((input.market as PromptMarket) || "hk"))}`,
-      "- onImageCopyZh: short consumer caption for THIS scene only.",
-      "- sceneDescriptionZh: one line for the user UI — same language as onImageCopyZh.",
+      ...storyboardTypePlannerLines(
+        input.imageTextMode === "integrated",
+        plannerCopyLanguageRule(resolveCopyLocale((input.market as PromptMarket) || "hk")),
+      ),
       "- cameraMotionEn: English camera motion ONLY for this scene — no Chinese, no prices, no on-screen text.",
       "- lightingEn: English lighting ONLY for this scene.",
       "- productPlacementZh: where the product/concept sits in frame (market language).",
@@ -307,7 +327,9 @@ function buildPlanPrompt(input: {
       `- Opening line: 9:16 concept short for this campaign (~${input.durationSec}s). Runtime animates EACH still with Kling I2V then stitches.`,
       "- One block per scene: Scene N [start-end s]: <role> — English camera motion only (push-in, orbit, handheld drift).",
       "- Do NOT use Seedance @Image / hard-cut R2V grammar — Kling never sees that blob as marketing copy.",
-      "- NO on-screen text, prices, or discounts in motion notes (captions burn later via /captions).",
+      input.imageTextMode === "integrated"
+        ? "- Keep still typography in motion notes; do not invent new on-screen text, prices, or discounts."
+        : "- NO on-screen text, prices, or discounts in motion notes (captions burn later via /captions).",
       input.offer
         ? `- User offer (may appear in CTA caption only): ${input.offer}`
         : "- User did NOT provide pricing — do NOT invent prices or discount % in prompts.",
@@ -340,22 +362,19 @@ function buildPlanPrompt(input: {
       ]
     : [];
 
-  const productAdaptationBlock = layoutTransferRef
+  const productAdaptationBlock =     layoutTransferRef
     ? [
         "PRODUCT ADAPTATION (layout-transfer):",
-        `- Product category from name and IMAGE 2 (guess: ${category}).`,
-        "- Match how IMAGE 2 stages the hero (hands, wrist, flat lay, centered hero) — swap in IMAGE 1 product.",
+        "- IMAGE 1 = user product hero (pixels). IMAGE 2 = layout shell only.",
+        "- Match how IMAGE 2 stages the hero (hands, wrist, flat lay, centered hero) — swap in the IMAGE 1 object. Do not infer SKU from the product name.",
         "- Scene variety comes from copy and subtle angle changes inside the SAME ad template, not unrelated compositions.",
       ]
     : [
         "PRODUCT ADAPTATION (critical):",
-        `- Infer product category from name and IMAGE 1 (current guess: ${category}).`,
-        "- Scenes MUST match how this product is actually shown/used:",
-        "  · wearables → wrist/on-body, macro detail, lifestyle context",
-        "  · personal-care devices → bathroom/counter demo, hands showing use — NOT worn like jewelry",
-        "  · footwear → on feet or paired flat lay",
-        "  · food/consumables → kitchen/table context, packaging hero",
-        "  · generic → studio hero, macro texture, lifestyle surface — never default to jewelry/cheongsam unless product implies it",
+        "- You do NOT see IMAGE 1 pixels. Never guess SKU from the product NAME, headline, or research topic.",
+        "- Every imagePrompt must stage the exact object visible in IMAGE 1 — camera, lighting, and context only. Do not rename the object into a different product type.",
+        "- Name / headline / research = CLAIM + tone for captions. They must not introduce a substitute hero item.",
+        "- Scene variety = angle, lighting, scale, and setting AROUND IMAGE 1 — not a new SKU.",
       ];
 
   return [
@@ -376,27 +395,34 @@ function buildPlanPrompt(input: {
     ...bibleAndRoles,
     sceneCountLine,
     "- Each scene gets ONE still (imageIndex 1…N in timeline order).",
-    layoutTransferRef
-      ? "- imagePrompt: English, dual-image edit — IMAGE 1 product hero, keep IMAGE 2 layout shell, 9:16, subject upright. NEVER ask for readable text/captions on the still (captions burn after video). Open with lookBible echo."
-      : "- imagePrompt: English, for Nano Banana edit from user's product photo — 9:16 still matching the art direction / lookBible, subject upright (head at top), correct vertical orientation. NEVER describe on-image text, titles, captions, logos, or slogans (stills are textless for Kling; captions burn after video).",
-    `- onImageCopyZh (burned caption) AND sceneDescriptionZh (UI note): ${plannerCopyLanguageRule(resolveCopyLocale((input.market as PromptMarket) || "hk"))}`,
-    "- onImageCopyZh: consumer-facing caption text for THIS scene only (burned AFTER video). Short headline + optional subline or CTA. NEVER use production labels: 開場亮點, 行動呼籲, 中段, arrows (→), or storyboard role names.",
-    "- sceneDescriptionZh: one line for the user UI — same language as onImageCopyZh.",
+    ...(layoutTransferRef
+      ? [
+          "- Dual-image edit: IMAGE 1 product hero identity, IMAGE 2 layout shell, subject upright (head at top).",
+        ]
+      : [
+          "- Nano Banana edit from user's product photo — 9:16 still matching lookBible, subject upright (head at top).",
+        ]),
+    ...storyboardTypePlannerLines(
+      input.imageTextMode === "integrated",
+      plannerCopyLanguageRule(resolveCopyLocale((input.market as PromptMarket) || "hk")),
+    ),
+    "- onImageCopyZh: consumer headline/CTA for THIS scene only. NEVER use production labels: 開場亮點, 行動呼籲, 中段, arrows (→), or storyboard role names.",
       "- cameraMotionEn: English camera motion ONLY for this scene — match TVC role, not a generic slow push-in for every beat.",
       "- lightingEn: English lighting ONLY for this scene (side key, rim, backlight, etc.).",
       "- productPlacementZh: where the product/concept sits in frame (market language).",
       "- punchLineZh: optional spoken/caption line for this beat (burn later via /captions).",
     "- Phone/laptop/tablet scenes: describe blank or abstract UI chrome only — never ask Nano Banana to invent readable Chinese/English on screens (it becomes gibberish).",
-    "- Do NOT put marketing headlines (e.g. 不用写 Prompt) into imagePrompt — those belong only in onImageCopyZh for caption burn.",
     "",
     ...endCardLogoPlannerRules(input.useBrandLogo),
     "",
     "seedancePrompt (English — Kling motion plan notes; JSON key kept for API compat):",
-    `- Opening line: 9:16 commercial for THIS product category; echo lookBible lighting/palette.`,
+    `- Opening line: 9:16 commercial for the IMAGE 1 object; echo lookBible lighting/palette.`,
     "- One block per scene: Scene N [start-end s]: <role> — English camera + lighting for that beat.",
     "- Do NOT use Seedance @Image / hard-cut R2V grammar — runtime is Kling I2V per still.",
-    "- People only when category-appropriate; no celebrity faces; hands-only OK.",
-    "- NO on-screen text, prices, or discounts in motion notes (captions burn later via /captions).",
+    "- People only when IMAGE 1 staging needs hands/lifestyle; never invent a different SKU; no celebrity faces; hands-only OK.",
+    input.imageTextMode === "integrated"
+      ? "- Keep still typography in motion notes; do not invent new on-screen text, prices, or discounts."
+      : "- NO on-screen text, prices, or discounts in motion notes (captions burn later via /captions).",
     input.offer
       ? `- User offer (may appear in CTA caption only): ${input.offer}`
       : "- User did NOT provide pricing — do NOT invent prices or discount % in prompts.",
@@ -443,6 +469,8 @@ export type PlanStoryboardInput = {
   conceptMode?: boolean;
   /** User opted into Brand kit logo stamps on storyboard stills. */
   useBrandLogo?: boolean;
+  /** Default textless; integrated bakes onImageCopyZh into each still. */
+  imageTextMode?: ImageTextMode;
 };
 
 /** @internal Exported for unit tests — storyboard planner prompt text. */
@@ -490,7 +518,7 @@ export async function planVideoStoryboard(
           ? "You are a layout-transfer video storyboard director for HK/TW/CN SMB Reels. Output valid JSON only. Every scene still must share the same ad design grammar as the user's reference — not a generic product photo reel."
           : stylized
           ? "You are a stylized product video storyboard director for HK/TW/CN SMB Reels. Output valid JSON only. Match the user's art direction in every scene still."
-          : "You are a photorealistic product video storyboard director for HK/TW/CN SMB Reels. Output valid JSON only. Adapt every scene to the actual product category — never copy a fixed template from unrelated categories.",
+          : "You are a photorealistic product video storyboard director for HK/TW/CN SMB Reels. Output valid JSON only. Adapt every scene to the IMAGE 1 object — never invent a SKU from the product name.",
       },
       {
         role: "user",
@@ -512,6 +540,7 @@ export async function planVideoStoryboard(
           referenceStrategyKind: input.referenceStrategyKind,
           conceptMode,
           useBrandLogo: input.useBrandLogo,
+          imageTextMode: input.imageTextMode,
         }),
       },
     ],
@@ -569,8 +598,8 @@ function buildReelStoryboardPlanPrompt(input: {
   artStyleId: ArtStyleId;
   conceptMode?: boolean;
   useBrandLogo?: boolean;
+  imageTextMode?: ImageTextMode;
 }): string {
-  const category = inferProductSceneCategory(input.product);
   const { min, max } = sceneCountForDuration(input.durationSec);
   const frameBlock = input.analysis.shots
     .map(
@@ -596,9 +625,13 @@ function buildReelStoryboardPlanPrompt(input: {
           "- imagePrompt: English 9:16 still. MATCH reference reel visual style family and layout grammar for this beat; REPLACE hero subject and props with imagery for the USER topic.",
           "- Do NOT default to generic photorealistic 小红书 lifestyle if reference is cartoon/3D/meme/illustrated.",
         ]
-      : [
-          "- imagePrompt: English still for Nano Banana edit from user's product photo — 9:16, photorealistic, no readable text.",
-        ];
+      : input.imageTextMode === "integrated"
+        ? [
+            "- imagePrompt: English still for Nano Banana edit from user's product photo — 9:16, photorealistic. MUST render exact on-image headline/CTA matching onImageCopyZh.",
+          ]
+        : [
+            "- imagePrompt: English still for Nano Banana edit from user's product photo — 9:16, photorealistic, no readable text.",
+          ];
 
   const adaptLine = input.conceptMode
     ? "Plan a VIDEO STORYBOARD that mirrors the REFERENCE REEL structure below, adapted for the user's concept/message short."
@@ -606,7 +639,7 @@ function buildReelStoryboardPlanPrompt(input: {
 
   const heroLine = input.conceptMode
     ? "- Scene CONTENT (what is promoted, on-image copy) = user's headline/concept — reference post topic is irrelevant."
-    : "- All hero content = user's product category.";
+    : "- All hero content = the exact object in IMAGE 1 (uploaded photo). Name is claim only.";
 
   const seedanceLead = input.conceptMode
     ? `- 9:16 concept short, ~${input.durationSec}s total.`
@@ -635,10 +668,16 @@ function buildReelStoryboardPlanPrompt(input: {
     "- lookBible should echo Reference visual direction (palette/light/materials) — grade lock for ALL stills; do not invent a new medium.",
     ...storyboardTvcRolesPlannerLines(preferCount),
     heroLine,
-    input.conceptMode ? "" : `- Product category guess: ${category}.`,
+    input.conceptMode
+      ? ""
+      : "- Never infer SKU from the product name — stage IMAGE 1's object in every scene.",
     sceneCountLine,
     "- Each scene = ONE still (imageIndex 1…N).",
     ...layoutRules,
+    ...storyboardTypePlannerLines(
+      input.imageTextMode === "integrated",
+      plannerCopyLanguageRule(resolveCopyLocale((input.market as PromptMarket) || "hk")),
+    ),
     "- sceneDescriptionZh: one line for the user UI — same language as onImageCopyZh.",
     "- cameraMotionEn: English camera motion ONLY for this scene — echo the reference beat's camera, not a generic slow push-in.",
     "- lightingEn: English lighting ONLY for this scene (side key, rim, backlight, etc.).",
@@ -657,7 +696,9 @@ function buildReelStoryboardPlanPrompt(input: {
     seedanceLead,
     "- One block per scene: Scene N [start-end s]: <role> — English camera + lighting for that beat.",
     "- Do NOT use Seedance @Image / hard-cut R2V grammar — runtime prefers MiniMax H3 (all stills → one clip), else Kling I2V per still → stitch.",
-    "- Textless frames; captions burn later via /captions.",
+    input.imageTextMode === "integrated"
+      ? "- Keep planned on-image type on stills; motion must not rewrite letters or invent new slogans."
+      : "- Textless frames; captions burn later via /captions.",
     "",
     `Reference visual direction: ${input.analysis.visualDirection || "follow analyzed frames"}`,
     `Reference motion/pacing: ${input.analysis.motionSummary || "match reference reel"}`,
@@ -698,6 +739,7 @@ export type PlanReelStoryboardInput = {
   referenceStrategyKind?: ReferenceStrategyKind;
   promotionMode?: "physical" | "concept";
   useBrandLogo?: boolean;
+  imageTextMode?: ImageTextMode;
 };
 
 /** @internal Exported for unit tests. */
@@ -729,8 +771,8 @@ export async function planVideoStoryboardFromReelAnalysis(
       {
         role: "system",
         content: conceptMode
-          ? "You are a performance marketing storyboard director. Adapt a viral reference reel into a concept/message storyboard for MiniMax H3 (preferred) or Kling I2V per still → stitch (textless frames; captions via /captions). Output valid JSON only."
-          : "You are a performance marketing storyboard director. Adapt a viral reference reel into a product storyboard for MiniMax H3 (preferred) or Kling I2V per still → stitch (textless frames; captions via /captions). Output valid JSON only.",
+          ? `You are a performance marketing storyboard director. Adapt a viral reference reel into a concept/message storyboard for MiniMax H3 (preferred) or Kling I2V per still → stitch (${input.imageTextMode === "integrated" ? "on-image type on stills" : "textless frames; captions via /captions"}). Output valid JSON only.`
+          : `You are a performance marketing storyboard director. Adapt a viral reference reel into a product storyboard for MiniMax H3 (preferred) or Kling I2V per still → stitch (${input.imageTextMode === "integrated" ? "on-image type on stills" : "textless frames; captions via /captions"}). Output valid JSON only.`,
       },
       {
         role: "user",
@@ -750,6 +792,7 @@ export async function planVideoStoryboardFromReelAnalysis(
           artStyleId,
           conceptMode,
           useBrandLogo: input.useBrandLogo,
+          imageTextMode: input.imageTextMode,
         }),
       },
     ],

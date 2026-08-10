@@ -4,6 +4,7 @@ import { useWizard } from "@/components/studio/WizardContext";
 import { VideoCreativeModePicker } from "@/components/VideoCreativeModePicker";
 import { VideoSettingsPanel } from "@/components/VideoSettingsPanel";
 import { UploadZone } from "@/components/UploadZone";
+import { MotionPosterDialectPicker } from "@/components/studio/MotionPosterDialectPicker";
 import { ReferenceClipPicker } from "@/components/ReferenceClipPicker";
 import { ReferenceUploadZone } from "@/components/ReferenceUploadZone";
 import { TemplateSlotChecklist } from "@/components/TemplateSlotChecklist";
@@ -17,17 +18,8 @@ import {
   GenerationWaitPlaceholder,
   waitAspectFromString,
 } from "@/components/studio/GenerationWaitPlaceholder";
-import { estimateKlingStoryboardTokens, estimateVideoTokens } from "@/lib/billing/token-costs";
-import {
-  klingClipDurationForStoryboard,
-  klingStoryboardTokenCost,
-  resolveKlingClipDurations,
-} from "@/lib/kling-storyboard-fallback";
-import { KlingStoryboardSettings } from "@/components/studio/KlingStoryboardSettings";
-import {
-  inferKlingClipFromScenes,
-  storyboardSceneDisplayCopy,
-} from "@/lib/storyboard-scene-copy";
+import { estimateVideoTokens } from "@/lib/billing/token-costs";
+import { storyboardSceneDisplayCopy } from "@/lib/storyboard-scene-copy";
 import { isBrandVideoStyle, isCreativeVideoStyle, isStoryboardVideoStyle } from "@/lib/visual-styles";
 import { isVideoOutputPathLocked, resolveVideoOutputPresentation } from "@/lib/video-output-presentation";
 import { analyzeProductImageFile } from "@/lib/image-upload-quality";
@@ -36,29 +28,16 @@ import type { CinematicSceneResult } from "@/lib/cinematic-reel-types";
 import type { StoryboardSceneResult } from "@/lib/video-storyboard-types";
 
 export function VideoStep() {
-  const { applyKlingStoryboardClipDuration, applyPromptRebuild, bgmOptions, bgmTrack, brandProfile, cinematicScenes, cinematicSceneCount, cinematicStitchReady, conceptReferenceR2vReady, directReferenceR2vReady, creativeVideoBrief, endFramePhoto, endFramePreviewUrl, endFrameUrl, error, extraAnglePhotos, extraKitPhotos, extraKitPreviewUrls, formatCinematicCopy, generateVideo, goBackFromVideo, hasFinalImage, headline, imageAspectRatio, imagePrompt, imageUrl, isCinematicStitchOutput, isConceptCinematicSingleOutput, isStoryboardOutput, isUgcPresenterOutput, keyframePreview, loadReferenceClip, m, onReferenceAdFile, onVideoCreativeModeChange, packagingPhoto, packagingPreviewUrl, planAiVideoPrompt, planProductVideo, planProductVideoBusy, planVideoPromptBusy, presenterAvatarId, presenterSourceMode, productPhoto, productVideoPlan, promotionMode, promptExtra, promptMarket, referenceAd, referenceClipLoading, referenceIsVideo, referencePreviewUrl, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, selectedReferenceClipId, setBgmTrack, setConceptImageVisionNote, setEndFramePhoto, setEndFrameUrl, setError, setExtraAnglePhotos, setExtraKitPhotos, setPackagingPhoto, setImagePrompt, setImageUrl, setPresenterAvatarId, setPresenterSourceMode, setProductPhoto, setPromptExtra, setPromptMarket, setShowAdvancedVideo, setSubjectFraming, setUploadQualityWarning, setUseOriginalImage, setVideoPrompt, setVideoSettings, shipItMode, showAdvancedVideo, showVideoReferenceSection, storyboardScenes, storyboardTrimDuration, subjectFraming, templateId, templateSlotStatus, uploadPreviewUrl, useReferenceVideo, usesCompositor, usesConceptTextVideo, usesProductAssistant, videoBusy, videoCreativeMode, videoGenerateDisabled, videoGenerateDisabledReason, videoPhase, videoPreflight, videoProgressInfo, videoPrompt, videoPromptPlanNote, videoSettings, videoStepHint, visualStyleId, workflowMode } = useWizard();
+  const { applyPromptRebuild, bgmOptions, bgmTrack, brandProfile, cinematicScenes, cinematicSceneCount, cinematicStitchReady, conceptReferenceR2vReady, directReferenceR2vReady, creativeVideoBrief, endFramePhoto, endFramePreviewUrl, endFrameUrl, error, extraAnglePhotos, extraKitPhotos, extraKitPreviewUrls, formatCinematicCopy, generateVideo, goBackFromVideo, hasFinalImage, headline, imageAspectRatio, imagePrompt, imageUrl, isCinematicStitchOutput, isConceptCinematicSingleOutput, isStoryboardOutput, isUgcPresenterOutput, keyframePreview, loadReferenceClip, m, onReferenceAdFile, onVideoCreativeModeChange, packagingPhoto, packagingPreviewUrl, planAiVideoPrompt, planProductVideo, planProductVideoBusy, planVideoPromptBusy, presenterAvatarId, presenterSourceMode, productPhoto, productVideoPlan, promotionMode, promptExtra, promptMarket, referenceAd, referenceClipLoading, referenceIsVideo, referencePreviewUrl, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, selectedReferenceClipId, setBgmTrack, setConceptImageVisionNote, setEndFramePhoto, setEndFrameUrl, setError, setExtraAnglePhotos, setExtraKitPhotos, setPackagingPhoto, setImagePrompt, setImageUrl, setPresenterAvatarId, setPresenterSourceMode, setProductPhoto, setPromptExtra, setPromptMarket, setShowAdvancedVideo, setSubjectFraming, setUploadQualityWarning, setUseOriginalImage, setVideoPrompt, setVideoSettings, shipItMode, showAdvancedVideo, showVideoReferenceSection, storyboardScenes, storyboardTrimDuration, subjectFraming, templateId, templateSlotStatus, uploadPreviewUrl, useReferenceVideo, usesCompositor, usesConceptTextVideo, usesProductAssistant, videoBusy, videoCreativeMode, motionPosterDialectPick, setMotionPosterDialectPick, videoGenerateDisabled, videoGenerateDisabledReason, videoPhase, videoPreflight, videoProgressInfo, videoPrompt, videoPromptPlanNote, videoSettings, videoStepHint, visualStyleId, workflowMode } = useWizard();
   const isConcept = promotionMode === "concept";
   const outputDurationSec = resolveWizardOutputDurationSec(videoSettings);
-  const storyboardSceneCount = Math.max(1, storyboardScenes.length || 4);
-  const klingClipSec = inferKlingClipFromScenes(storyboardScenes);
-  const storyboardTotalSec =
-    storyboardScenes.length > 0
-      ? storyboardScenes.length * klingClipSec
-      : Number(storyboardTrimDuration) || outputDurationSec || 8;
-  const videoTokenCost = isStoryboardOutput
-    ? storyboardScenes.length > 0
-      ? klingStoryboardTokenCost(
-          resolveKlingClipDurations(storyboardScenes.length, storyboardTotalSec, storyboardScenes),
-        )
-      : estimateKlingStoryboardTokens(
-          storyboardSceneCount,
-          klingClipDurationForStoryboard(storyboardSceneCount, storyboardTotalSec),
-        )
-    : estimateVideoTokens({
-        resolution: videoSettings.resolution,
-        fast: videoSettings.fast,
-        duration: outputDurationSec,
-      });
+  const videoTokenCost = estimateVideoTokens({
+    resolution: videoSettings.resolution,
+    fast: isStoryboardOutput ? false : videoSettings.fast,
+    duration: isStoryboardOutput
+      ? Number(storyboardTrimDuration) || 8
+      : outputDurationSec,
+  });
   const pv = m.microWizard.preVideoSetup;
   const showCinematicStitch = isCinematicStitchOutput || cinematicStitchReady;
   const showConceptCinematicSingle =
@@ -352,18 +331,9 @@ export function VideoStep() {
       <p className="text-sm font-semibold text-teal-50">{pv.settingsTitle}</p>
       <p className="text-xs text-teal-200/80">{pv.klingSettingsHint}</p>
       <p className="text-[11px] text-teal-300/75">{m.wizard.storyboardEnginePipelineHint}</p>
-      <KlingStoryboardSettings
-        sceneCount={storyboardScenes.length || storyboardSceneCount}
-        clipSec={klingClipSec}
-        scenes={storyboardScenes}
-        onClipChange={applyKlingStoryboardClipDuration}
-        label={pv.klingClipLabel}
-        hint={pv.klingClipHint}
-        totalLabel={pv.klingTotalLabel}
-        costLabel={pv.costLabel}
-        accent="emerald"
-        variant="dark"
-      />
+      <p className="text-sm font-semibold text-teal-50">
+        {pv.costLabel.replace("{n}", String(videoTokenCost))}
+      </p>
     </div>
   ) : null}
 
@@ -416,6 +386,11 @@ export function VideoStep() {
         {m.wizard.videoCreativeModes["motion-poster"].title}
       </p>
       <p className="text-xs text-amber-100/85">{m.wizard.motionPosterHint}</p>
+      <MotionPosterDialectPicker
+        variant="dark"
+        value={motionPosterDialectPick}
+        onChange={setMotionPosterDialectPick}
+      />
       <UploadZone
         label={m.wizard.endFrameLabel}
         hint={m.wizard.endFrameHint}

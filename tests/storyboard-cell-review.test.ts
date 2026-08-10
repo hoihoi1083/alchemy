@@ -21,18 +21,53 @@ describe("storyboard cell review (stills are the product)", () => {
     assert.equal(allStoryboardCellsViewed(4, [0, 2, 3]), false);
   });
 
-  it("gallery + generateVideo require look-then-approve; poster skips empty prompt", () => {
+  it("gallery + generateVideo require one confirm; poster skips empty prompt", () => {
     const root = process.cwd();
     const gallery = readFileSync(
       join(root, "components/studio/ImageReviewGallery.tsx"),
       "utf8",
     );
     const wizard = readFileSync(join(root, "hooks/useStudioWizard.ts"), "utf8");
-    assert.match(gallery, /markStoryboardCellViewed/);
-    assert.match(gallery, /storyboardAllCellsViewed/);
-    assert.match(gallery, /disabled=\{!wizard\.storyboardAllCellsViewed\}/);
-    assert.match(wizard, /storyboardApproveNeedLookHint/);
+    assert.match(gallery, /storyboardGridApproved/);
+    assert.doesNotMatch(gallery, /disabled=\{!wizard\.storyboardAllCellsViewed\}/);
+    assert.doesNotMatch(gallery, /reviewable=\{isStoryboardReview\}/);
+    assert.match(gallery, /reviewable=\{false\}/);
+    assert.doesNotMatch(wizard, /storyboardApproveNeedLookHint/);
+    assert.match(wizard, /isStoryboardOutput && !storyboardGridApproved/);
     assert.match(wizard, /videoCreativeMode !== "motion-poster"/);
     assert.match(wizard, /const rawPrompt = posterPrompt/);
+  });
+
+  it("combined storyboard: look + text mode before plan; poster hides picker", () => {
+    const root = process.cwd();
+    const src = readFileSync(
+      join(root, "components/studio/PreGenerateSetupPanel.tsx"),
+      "utf8",
+    );
+    const lookAt = src.indexOf("pg.storyboardLookBeforePlanHint");
+    const textHintAt = src.indexOf("pg.storyboardTextModeHint");
+    const planAt = src.indexOf("void wizard.planStoryboard()");
+    assert.ok(lookAt > 0 && lookAt < planAt, "style picker must sit above 生成分鏡大綱");
+    assert.ok(
+      textHintAt > lookAt && textHintAt < planAt,
+      "有字/無字 picker sits on the look card before 生成分鏡大綱",
+    );
+    assert.match(src, /videoCreativeMode !== "motion-poster"/);
+    assert.match(src, /!combinedStoryboard \? \(/);
+
+    const images = readFileSync(
+      join(root, "app/api/generate-storyboard-images/route.ts"),
+      "utf8",
+    );
+    assert.match(images, /parseImageTextMode/);
+    assert.match(images, /textless: textlessStills/);
+    assert.doesNotMatch(images, /textless: true/);
+
+    const micro = readFileSync(
+      join(root, "components/studio/micro-wizard/MicroStepRenderer.tsx"),
+      "utf8",
+    );
+    assert.match(micro, /isStoryboardVideoStyle\(wizard\.visualStyleId\)/);
+    assert.match(micro, /videoCreativeMode !== "motion-poster"/);
   });
 });

@@ -5,6 +5,7 @@
 export {
   buildCampaignSlideImagePrompt,
   buildEndFrameImagePrompt,
+  buildMotionPosterStillPrompt,
   buildMultiAngleVideoPrompt,
   buildNegativePrompt,
   buildPromptVariables,

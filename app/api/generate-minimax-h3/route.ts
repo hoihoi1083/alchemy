@@ -10,6 +10,12 @@ import { getUserPlan } from "@/lib/billing/get-user-plan";
 import { mirrorImageUrlToFalStorage } from "@/lib/fal-mirror-media";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import { persistAndDurablize } from "@/lib/storage/durable-media";
+import { createOwnedJobDir } from "@/lib/pipeline/job-owner";
+import { materializeMediaInput } from "@/lib/pipeline/local-input";
+import { burnMotionPosterTypeOverlay } from "@/lib/pipeline/motion-poster-type-burn";
+import { parseMotionPosterDialectPick } from "@/lib/motion-poster-dialects";
+import { promises as fs } from "fs";
+import path from "path";
 import { buildSingleClipManifest } from "@/lib/video-timing-manifest";
 import {
   normalizeMinimaxH3Resolution,
@@ -39,6 +45,14 @@ function clampH3Duration(raw: string | null): number {
   const n = Number(raw);
   if (!Number.isFinite(n)) return 8;
   return Math.min(15, Math.max(5, Math.round(n)));
+}
+
+function isMotionPosterForm(formData: FormData): boolean {
+  return ["1", "true", "yes"].includes(
+    String(formData.get("motion_poster") ?? "")
+      .trim()
+      .toLowerCase(),
+  );
 }
 
 /**
@@ -125,12 +139,6 @@ export async function POST(request: Request) {
         refresh: true,
       });
       input.image_url = imageUrl;
-      input.prompt = adaptScriptForMinimaxH3({
-        seedancePrompt: prompt,
-        imageCount: 1,
-        videoCount: 0,
-      });
-
       let endUrl =
         (formData.get("image_end_url") as string | null)?.trim() || "";
       const endFile = formData.get("image_end") as File | null;
@@ -144,6 +152,13 @@ export async function POST(request: Request) {
         });
         input.end_image_url = endUrl;
       }
+      input.prompt = adaptScriptForMinimaxH3({
+        seedancePrompt: prompt,
+        imageCount: endUrl ? 2 : 1,
+        videoCount: 0,
+        // Start→end poster: Image 2 already has type. Loop/textless stills stay silent.
+        preserveOnScreenType: Boolean(endUrl),
+      });
     }
 
     if (mode === "reference") {
@@ -195,17 +210,71 @@ export async function POST(request: Request) {
       throw new Error("MiniMax H3 returned no video.");
     }
 
-    const durableUrl = await persistAndDurablize({
-      clerkId: auth.user.userId,
-      kind: "video",
-      sourceUrl: videoUrl,
-      fallbackUrl: videoUrl,
-      timingManifest: buildSingleClipManifest(duration, {
-        source: "seedance",
-        engine: "unknown",
-        timingSource: "reported",
-      }),
-    });
+    let finalUrl = videoUrl;
+    let typeOverlay: string | undefined;
+    const hasEndFrame = Boolean(
+      (formData.get("image_end_url") as string | null)?.trim() ||
+        ((formData.get("image_end") as File | null)?.size ?? 0) > 0,
+    );
+    if (mode === "image" && isMotionPosterForm(formData) && !hasEndFrame) {
+      try {
+        const dialectPick = parseMotionPosterDialectPick(
+          formData.get("motion_poster_dialect"),
+        );
+        const dialect = dialectPick === "auto" ? undefined : dialectPick;
+        const { dir } = await createOwnedJobDir(auth.user.userId);
+        const inPath = path.join(dir, "h3.mp4");
+        const outPath = path.join(dir, "poster-typed.mp4");
+        await materializeMediaInput(videoUrl, inPath, { clerkId: auth.user.userId });
+        const overlayPlan = await burnMotionPosterTypeOverlay({
+          inputVideo: inPath,
+          outputVideo: outPath,
+          workDir: dir,
+          headline: String(formData.get("headline") ?? "").trim(),
+          subline: String(formData.get("subline") ?? "").trim(),
+          offer: String(formData.get("offer") ?? "").trim(),
+          product:
+            String(formData.get("product_name") ?? "").trim() ||
+            String(formData.get("business") ?? "").trim(),
+          dialect,
+          durationSec: duration,
+        });
+        if (overlayPlan) {
+          const bytes = await fs.readFile(outPath);
+          finalUrl = await persistAndDurablize({
+            clerkId: auth.user.userId,
+            kind: "video",
+            sourceUrl: `${videoUrl}#poster-type`,
+            fallbackUrl: videoUrl,
+            bytes,
+            contentType: "video/mp4",
+            timingManifest: buildSingleClipManifest(duration, {
+              source: "seedance",
+              engine: "unknown",
+              timingSource: "reported",
+            }),
+          });
+          typeOverlay = overlayPlan.kind;
+        }
+      } catch (overlayErr) {
+        console.warn("[generate-minimax-h3] poster type overlay failed:", overlayErr);
+      }
+    }
+
+    const durableUrl =
+      finalUrl === videoUrl
+        ? await persistAndDurablize({
+            clerkId: auth.user.userId,
+            kind: "video",
+            sourceUrl: videoUrl,
+            fallbackUrl: videoUrl,
+            timingManifest: buildSingleClipManifest(duration, {
+              source: "seedance",
+              engine: "unknown",
+              timingSource: "reported",
+            }),
+          })
+        : finalUrl;
     await trackUsage(auth.user.userId, "video");
 
     return NextResponse.json({
@@ -214,6 +283,7 @@ export async function POST(request: Request) {
       endpoint,
       tokensCharged: tokenCost,
       creditBalance: balanceAfter,
+      typeOverlay,
       timingManifest: buildSingleClipManifest(duration, {
         source: "seedance",
         engine: "unknown",

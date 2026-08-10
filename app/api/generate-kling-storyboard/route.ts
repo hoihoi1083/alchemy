@@ -30,6 +30,7 @@ import {
   runMinimaxH3Fallback,
 } from "@/lib/minimax-h3-run";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
+import { parseImageTextMode } from "@/lib/image-text-mode";
 import { runSeedanceStoryboardR2v } from "@/lib/seedance-r2v-run";
 import {
   KLING_DURATION_UNREACHABLE_MESSAGE,
@@ -125,6 +126,9 @@ export async function POST(request: Request) {
   const totalDurationSec = totalDurationRaw ? Number(totalDurationRaw) || 8 : 8;
   const aspectRatio =
     (formData.get("aspect_ratio") as string | null)?.trim() || "9:16";
+  const preserveOnScreenType =
+    parseImageTextMode(formData.get("image_text_mode") as string | null) ===
+    "integrated";
 
   const expectsReel = formDataExpectsReferenceVideo(formData, motionPrompt);
   const faceHeavy = parseFaceHeavyFlag(formData.get("face_heavy"));
@@ -285,6 +289,7 @@ export async function POST(request: Request) {
     durationSec: h3Duration,
     hasReferenceVideo: videoUrls.length > 0,
     lookBibleGrade: scenesMeta.find((s) => s.lookBibleGrade?.trim())?.lookBibleGrade,
+    preserveOnScreenType,
     scenes: scenesMeta.map((s) => ({
       role: s.role,
       cameraMotionEn: s.cameraMotionEn,
@@ -360,6 +365,7 @@ export async function POST(request: Request) {
         motionPrompt: motionPrompt || undefined,
         totalDurationSec,
         scenesMeta,
+        preserveOnScreenType,
       });
       await trackUsage(clerkId, "video");
       return NextResponse.json({
@@ -507,6 +513,7 @@ export async function POST(request: Request) {
       motionPrompt: motionPrompt || undefined,
       totalDurationSec,
       scenesMeta,
+      preserveOnScreenType,
     });
     await trackUsage(clerkId, "video");
     return NextResponse.json({

@@ -281,6 +281,7 @@ export function buildStoryboardMinimaxH3Prompt(input: {
   scenes: StoryboardH3SceneHint[];
   hasReferenceVideo?: boolean;
   lookBibleGrade?: string;
+  preserveOnScreenType?: boolean;
 }): string {
   const n = Math.max(1, input.scenes.length);
   const duration = clampMinimaxH3Duration(input.durationSec);
@@ -307,7 +308,9 @@ export function buildStoryboardMinimaxH3Prompt(input: {
 
   return [
     `Create ONE continuous ${duration}s vertical marketing video that progresses through ${n} storyboard beats in order (Image 1 → Image ${n}).`,
-    "Hard cuts between beats are OK when matching the storyboard; do not invent on-screen text, logos, or watermarks.",
+    input.preserveOnScreenType
+      ? "Hard cuts between beats are OK when matching the storyboard. Keep existing on-screen wording identical — type may fade or track with the card. Do not invent new logos or rewrite letters."
+      : "Hard cuts between beats are OK when matching the storyboard; do not invent on-screen text, logos, or watermarks.",
     theme ? `Theme: ${theme}.` : "",
     look ? `Look lock (grade only across all beats): ${look}.` : "",
     input.hasReferenceVideo ? seedancePromptToMinimaxH3(VIDEO1_SPINE_SCREENPLAY) : "",

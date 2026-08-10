@@ -70,7 +70,7 @@ describe("concept vs product storyboard prompts", () => {
     const promoNoRef = buildPromoImagePrompt(baseVars, null, null, null, {
       hasReferenceImage: false,
     });
-    assert.ok(!/IMAGE 1 IS MANDATORY/i.test(promoNoRef));
+    assert.ok(!/IMAGE 1 IS MANDATORY|IMAGE 1 PIXELS ARE THE PRODUCT/i.test(promoNoRef));
     assert.ok(/Text-to-image/i.test(promoNoRef));
   });
 
@@ -80,9 +80,20 @@ describe("concept vs product storyboard prompts", () => {
       textless: true,
       hasProductImage: false,
     });
-    assert.ok(!/IMAGE 1 IS MANDATORY/i.test(prompt));
+    assert.ok(!/IMAGE 1 IS MANDATORY|IMAGE 1 PIXELS ARE THE PRODUCT/i.test(prompt));
     assert.ok(/mid-shot|Service still safety/i.test(prompt));
     assert.ok(!/Close-up of calm face with steam rising/i.test(prompt));
+  });
+
+  it("integrated storyboard stills include ON-IMAGE COPY", () => {
+    const prompt = buildStoryboardSceneImagePrompt(plan.scenes[0]!, plan, baseVars, {
+      conceptTextOnly: true,
+      textless: false,
+      hasProductImage: false,
+    });
+    assert.match(prompt, /ON-IMAGE COPY/);
+    assert.match(prompt, /Relax/);
+    assert.doesNotMatch(prompt, /TEXTLESS STILL/);
   });
 
   it("product storyboard stills keep IMAGE 1 when product photo exists", () => {
@@ -91,7 +102,8 @@ describe("concept vs product storyboard prompts", () => {
       textless: true,
       hasProductImage: true,
     });
-    assert.ok(/IMAGE 1 IS MANDATORY/i.test(prompt));
+    assert.ok(/IMAGE 1 (IS MANDATORY|PIXELS ARE THE PRODUCT)/i.test(prompt));
+    assert.match(prompt, /CLAIM|PIXEL LOCK/i);
   });
 
   it("concept planner prompt does not require product photo edit language", () => {

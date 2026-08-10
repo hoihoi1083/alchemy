@@ -62,7 +62,7 @@ export const LANDING_RECIPES: Record<LandingRecipeId, LandingRecipeDef> = {
     id: "concept-motion-poster",
     previewSrc: "/images/studio/recipes/concept-motion-poster.png?v=1",
     promotionMode: "concept",
-    workflowMode: "combined",
+    workflowMode: "video-only",
     visualStyleId: "service-promo",
     videoCreativeMode: "motion-poster",
     duration: "6",
@@ -129,7 +129,7 @@ export function microContextForLandingRecipe(
   if (recipe === "concept-motion-poster") {
     return {
       promotionMode,
-      workflowMode: "combined",
+      workflowMode: "video-only",
       intakePath: "direct",
       conceptSource: "assistant",
       videoSubpath: "motion_poster",

@@ -4,12 +4,13 @@ import { useEffect, useId, type ChangeEvent } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 import { VideoSettingsPanel } from "@/components/VideoSettingsPanel";
 import { BrandWebsitePanel } from "@/components/studio/BrandWebsitePanel";
-import { KlingStoryboardSettings } from "@/components/studio/KlingStoryboardSettings";
 import { useWizard } from "@/components/studio/WizardContext";
 import { estimateVideoTokens } from "@/lib/billing/token-costs";
-import { inferKlingClipFromScenes, storyboardSceneDisplayCopy } from "@/lib/storyboard-scene-copy";
+import { storyboardSceneDisplayCopy } from "@/lib/storyboard-scene-copy";
 import { studioPhasesForMode } from "@/lib/studio-phases";
-import { isBrandVideoStyle, isCreativeVideoStyle } from "@/lib/visual-styles";
+import { isCreativeVideoStyle } from "@/lib/visual-styles";
+import { MotionPosterDialectPicker } from "@/components/studio/MotionPosterDialectPicker";
+import { ArtStylePicker } from "@/components/ArtStylePicker";
 
 const PANEL_CSS = `
 .pv-page {
@@ -232,24 +233,24 @@ export function PreVideoSetupPanel({
         : isConcept
           ? "creative_video"
           : "product_promo");
-  const isReference = !scenesReady && activeSubpath === "reference_reel";
+  const isReference = !scenesReady && !isConcept && activeSubpath === "reference_reel";
   const isMotionPoster = !scenesReady && activeSubpath === "motion_poster";
   const isUgc = !scenesReady && activeSubpath === "ugc_presenter";
+  const isSceneReel = !scenesReady && isConcept && !isMotionPoster;
   const isQuickAssistant =
     !scenesReady && !isConcept && activeSubpath === "product_promo";
   const showCreativeBrief =
-    !scenesReady && !isReference && !isUgc && !isMotionPoster && isCreativeVideoStyle(wizard.visualStyleId);
-  const showBrandWebsite =
-    !scenesReady && !isReference && !isUgc && !isMotionPoster && isBrandVideoStyle(wizard.visualStyleId);
-  const showConceptAiPlan =
-    !scenesReady &&
-    isConcept &&
-    !isReference &&
-    !isUgc &&
-    !isMotionPoster &&
-    (showCreativeBrief || showBrandWebsite);
-  // Product + reference/research still needs @Image1 (product photo). Concept R2V can be MP4-only.
-  const showProductPhoto = scenesReady ? false : isConcept ? !isReference : !isUgc;
+    isSceneReel ||
+    (!scenesReady &&
+      !isReference &&
+      !isUgc &&
+      !isMotionPoster &&
+      isCreativeVideoStyle(wizard.visualStyleId));
+  const showBrandWebsite = isSceneReel;
+  const showConceptAiPlan = isSceneReel;
+  const showReferenceUpload = isReference || isSceneReel;
+  // Product + reference/research still needs @Image1. Concept photo stays optional even with MP4.
+  const showProductPhoto = scenesReady ? false : isConcept ? true : !isUgc;
   const photoRequired = !scenesReady && !isConcept && !isUgc;
 
   // Keep research/R2V on reference_reel when ctx.videoSubpath was never set.
@@ -288,11 +289,12 @@ export function PreVideoSetupPanel({
   const durationRaw = wizard.videoSettings.duration;
   const durationNum =
     durationRaw === "auto" ? 8 : typeof durationRaw === "number" ? durationRaw : Number(durationRaw) || 8;
-  const klingClipSec = scenesReady
-    ? inferKlingClipFromScenes(wizard.storyboardScenes)
-    : null;
   const tokenEstimate = scenesReady
-    ? 0
+    ? estimateVideoTokens({
+        resolution: wizard.videoSettings.resolution,
+        fast: false,
+        duration: Number(wizard.storyboardTrimDuration) || 8,
+      })
     : estimateVideoTokens({
         resolution: wizard.videoSettings.resolution,
         fast: Boolean(wizard.videoSettings.fast),
@@ -343,6 +345,16 @@ export function PreVideoSetupPanel({
     const file = e.target.files?.[0] ?? null;
     e.target.value = "";
     wizard.onReferenceAdFile(file);
+    if (isSceneReel && file) {
+      wizard.onVideoCreativeModeChange("reference-concept");
+    }
+  }
+
+  function onClearReferenceVideo() {
+    wizard.onReferenceAdFile(null);
+    if (isSceneReel) {
+      wizard.onVideoCreativeModeChange("product-promo");
+    }
   }
 
   const productStyleOptions = [
@@ -366,18 +378,13 @@ export function PreVideoSetupPanel({
   const conceptStyleOptions = [
     {
       id: "creative_video",
-      title: m.wizard.visualStyles["creative-video"].title,
-      desc: m.wizard.visualStyles["creative-video"].description,
+      title: m.wizard.sceneReelTitle,
+      desc: m.wizard.sceneReelDesc,
     },
     {
-      id: "brand_video",
-      title: m.wizard.visualStyles["brand-video"].title,
-      desc: m.wizard.visualStyles["brand-video"].description,
-    },
-    {
-      id: "reference_reel",
-      title: m.wizard.pathReferenceVideoTitle,
-      desc: m.wizard.pathReferenceVideoDesc,
+      id: "motion_poster",
+      title: m.wizard.videoCreativeModes["motion-poster"].title,
+      desc: m.wizard.videoCreativeModes["motion-poster"].description,
     },
   ] as const;
 
@@ -392,11 +399,9 @@ export function PreVideoSetupPanel({
         : isReference
           ? pv.referenceHint
           : isConcept
-            ? showCreativeBrief
-              ? pv.conceptCreativeHint
-              : showBrandWebsite
-                ? pv.conceptBrandHint
-                : pv.conceptHint
+            ? isSceneReel
+              ? pv.sceneReelHint
+              : pv.conceptHint
             : isQuickAssistant
               ? pv.assistantHint
               : pv.hint;
@@ -509,25 +514,6 @@ export function PreVideoSetupPanel({
                 ) : (
                   <p className="text-sm text-amber-800">{m.errors.storyboardVideoPromptRequired}</p>
                 )}
-                <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50/80 px-3 py-3">
-                  <p className="text-xs leading-relaxed text-amber-900/90">
-                    {m.wizard.switchToMotionPosterHint}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const firstStill =
-                        wizard.storyboardScenes[0]?.imageUrl || wizard.imageUrl || null;
-                      if (firstStill) wizard.setImageUrl(firstStill);
-                      wizard.selectVisualStyle("product");
-                      wizard.onVideoCreativeModeChange("motion-poster");
-                      if (onPickVideoSubpath) onPickVideoSubpath("motion_poster");
-                    }}
-                    className="mt-2 inline-flex min-h-10 w-full items-center justify-center rounded-xl border border-amber-300 bg-white px-3 py-2 text-sm font-semibold text-amber-900 hover:bg-amber-100"
-                  >
-                    {m.wizard.switchToMotionPosterBtn}
-                  </button>
-                </div>
               </section>
             ) : (
             <section className="pv-card">
@@ -544,7 +530,11 @@ export function PreVideoSetupPanel({
               </div>
               <div className="pv-style-grid">
                 {styleOptions.map((opt) => {
-                  const selected = activeSubpath === opt.id;
+                  const selected = isConcept
+                    ? opt.id === "motion_poster"
+                      ? isMotionPoster
+                      : isSceneReel
+                    : activeSubpath === opt.id;
                   return (
                     <button
                       key={opt.id}
@@ -646,9 +636,13 @@ export function PreVideoSetupPanel({
                   <label className="sm:col-span-2">
                     <span className="pv-label">
                       {m.wizard.creativeBriefLabel}
-                      <span className="pv-label-req" aria-hidden>
-                        *
-                      </span>
+                      {isSceneReel ? (
+                        <span className="pv-label-opt">{pv.extraOptional}</span>
+                      ) : (
+                        <span className="pv-label-req" aria-hidden>
+                          *
+                        </span>
+                      )}
                     </span>
                     <textarea
                       className="pv-textarea"
@@ -675,6 +669,32 @@ export function PreVideoSetupPanel({
               </div>
             </section>
 
+            {isMotionPoster ? (
+              <section className="pv-card">
+                <div className="pv-card-title-row mb-2">
+                  <h3 className="pv-card-title">{m.wizard.motionPosterArtStyleTitle}</h3>
+                </div>
+                <p className="mb-3 text-xs text-slate-500">{m.wizard.motionPosterArtStyleHint}</p>
+                <ArtStylePicker
+                  value={wizard.artStyleId}
+                  onChange={wizard.setArtStyleId}
+                  videoSafeOnly={false}
+                />
+              </section>
+            ) : null}
+
+            {isMotionPoster ? (
+              <section className="pv-card">
+                <div className="pv-card-title-row mb-2">
+                  <h3 className="pv-card-title">{m.wizard.motionPosterDialectTitle}</h3>
+                </div>
+                <MotionPosterDialectPicker
+                  value={wizard.motionPosterDialectPick}
+                  onChange={wizard.setMotionPosterDialectPick}
+                />
+              </section>
+            ) : null}
+
             {showBrandWebsite ? (
               <section className="pv-card">
                 <div className="pv-card-title-row mb-3">
@@ -693,7 +713,7 @@ export function PreVideoSetupPanel({
               </section>
             ) : null}
 
-            {isReference ? (
+            {showReferenceUpload ? (
               <section className="pv-card">
                 <div className="pv-card-title-row mb-3">
                   <span className="pv-card-icon" aria-hidden>
@@ -703,8 +723,15 @@ export function PreVideoSetupPanel({
                     </svg>
                   </span>
                   <div className="min-w-0">
-                    <h3 className="pv-card-title">{pv.referenceVideoTitle}</h3>
-                    <p className="mt-0.5 text-xs text-slate-500">{pv.referenceVideoHint}</p>
+                    <h3 className="pv-card-title">
+                      {pv.referenceVideoTitle}
+                      {isSceneReel ? (
+                        <span className="pv-label-opt font-medium">{pv.extraOptional}</span>
+                      ) : null}
+                    </h3>
+                    <p className="mt-0.5 text-xs text-slate-500">
+                      {isSceneReel ? pv.referenceVideoHintConcept : pv.referenceVideoHint}
+                    </p>
                   </div>
                 </div>
                 <input
@@ -741,7 +768,7 @@ export function PreVideoSetupPanel({
                         </label>
                         <button
                           type="button"
-                          onClick={() => wizard.onReferenceAdFile(null)}
+                          onClick={onClearReferenceVideo}
                           className="text-xs font-semibold text-slate-500"
                         >
                           {pv.referenceRemove}
@@ -1010,18 +1037,10 @@ export function PreVideoSetupPanel({
                     </p>
                   </div>
                 </div>
-                {scenesReady && klingClipSec != null ? (
-                  <KlingStoryboardSettings
-                    sceneCount={wizard.storyboardScenes.length}
-                    clipSec={klingClipSec}
-                    scenes={wizard.storyboardScenes}
-                    onClipChange={(clip) => wizard.applyKlingStoryboardClipDuration(clip)}
-                    label={pv.klingClipLabel}
-                    hint={pv.klingClipHint}
-                    totalLabel={pv.klingTotalLabel}
-                    costLabel={pv.costLabel}
-                    accent="violet"
-                  />
+                {scenesReady ? (
+                  <p className="pv-cost mt-1">
+                    {pv.costLabel.replace("{n}", String(tokenEstimate))}
+                  </p>
                 ) : (
                   <>
                     <VideoSettingsPanel
@@ -1074,7 +1093,9 @@ export function PreVideoSetupPanel({
                   {
                     ok: scenesReady
                       ? wizard.storyboardScenes.length > 0
-                      : Boolean(mainThumb || wizard.imageUrl),
+                      : isConcept && !isReference
+                        ? true
+                        : Boolean(mainThumb || wizard.imageUrl),
                     label: scenesReady
                       ? m.wizard.imageReviewVisualSetStoryboard
                       : m.wizard.videoKeyframeLabel,
@@ -1105,18 +1126,7 @@ export function PreVideoSetupPanel({
                   {m.wizard.sidePanelCostTitle}
                 </p>
                 <p className="mt-1 text-sm font-semibold text-slate-900">
-                  {pv.costLabel.replace(
-                    "{n}",
-                    String(
-                      scenesReady && klingClipSec
-                        ? estimateVideoTokens({
-                            resolution: wizard.videoSettings.resolution,
-                            fast: Boolean(wizard.videoSettings.fast),
-                            duration: klingClipSec,
-                          }) * Math.max(wizard.storyboardScenes.length, 1)
-                        : tokenEstimate,
-                    ),
-                  )}
+                  {pv.costLabel.replace("{n}", String(tokenEstimate))}
                 </p>
               </div>
 

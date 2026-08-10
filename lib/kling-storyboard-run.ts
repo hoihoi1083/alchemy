@@ -10,6 +10,7 @@ import {
   resolveKlingClipDurations,
   resolveKlingScenesMeta,
   KLING_TEXTLESS_NEGATIVE,
+  KLING_PRESERVE_TYPE_NEGATIVE,
   type KlingSceneMeta,
 } from "@/lib/kling-storyboard-fallback";
 import {
@@ -160,6 +161,7 @@ export async function runKlingStoryboardFallback(opts: {
   motionPrompt?: string;
   totalDurationSec?: number;
   scenesMeta?: KlingSceneMeta[];
+  preserveOnScreenType?: boolean;
 }): Promise<{
   videoUrl: string;
   clipCount: number;
@@ -230,6 +232,7 @@ export async function runKlingStoryboardFallback(opts: {
         lookBibleGrade: meta?.lookBibleGrade,
         endWithBrandLogo: Boolean(meta?.useBrandLogo ?? meta?.endWithBrandLogo),
         useBrandLogo: Boolean(meta?.useBrandLogo ?? meta?.endWithBrandLogo),
+        preserveOnScreenType: Boolean(opts.preserveOnScreenType),
       });
 
       const result = await fal.subscribe(KLING_ENDPOINT, {
@@ -237,7 +240,9 @@ export async function runKlingStoryboardFallback(opts: {
           prompt,
           image_url: imageUrl,
           duration: (duration === 10 ? "10" : "5") as "5" | "10",
-          negative_prompt: KLING_TEXTLESS_NEGATIVE,
+          negative_prompt: opts.preserveOnScreenType
+            ? KLING_PRESERVE_TYPE_NEGATIVE
+            : KLING_TEXTLESS_NEGATIVE,
           // Slightly higher guidance so camera/motion instructions stick.
           cfg_scale: 0.6,
         },

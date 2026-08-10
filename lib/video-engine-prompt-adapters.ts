@@ -53,6 +53,8 @@ export function adaptScriptForMinimaxH3(opts: {
   seedancePrompt: string;
   imageCount: number;
   videoCount: number;
+  /** Storyboard 有字 stills — keep baked type. Poster type is ffmpeg overlay (false). */
+  preserveOnScreenType?: boolean;
 }): string {
   const { prompt: tagged } = ensureSeedanceReferenceTags(
     opts.seedancePrompt,
@@ -73,8 +75,12 @@ export function adaptScriptForMinimaxH3(opts: {
     result = `${missing.join(" ")} ${result}`.trim();
   }
 
-  // H3 is quieter about invented captions when we keep the silent/textless intent.
-  if (!/no (?:on-?screen )?text|silent video|no speech/i.test(result)) {
+  if (opts.preserveOnScreenType) {
+    if (!/KINETIC TYPE|type may fade|ride the card/i.test(result)) {
+      result = `${result} Silent video: no speech. Keep poster wording identical. Type may fade in, slide, or track a 3D paper/card warp. Do not change letters or invent new logos.`;
+    }
+  } else if (!/no (?:on-?screen )?text|silent video|no speech/i.test(result)) {
+    // H3 is quieter about invented captions when we keep the silent/textless intent.
     result = `${result} Silent video: no speech. Do not invent on-screen text or logos.`;
   }
 

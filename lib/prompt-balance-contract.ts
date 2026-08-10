@@ -1,11 +1,11 @@
 /**
  * Shared prompt-balance contract for fal video scripts.
  *
- * Priority when inputs conflict:
- * 1. @Video1  = spine (shots, locations, camera, pacing)
- * 2. @Image1  = on-screen object (shape / color / packaging)
- * 3. Name + title/headline = what we claim / sell (category & story)
- * 4. Research angle = tone / hook for captions — not new locations
+ * Priority when inputs conflict (any combo — not one SKU pair):
+ * 1. @Video1 (user / research MP4) = spine (shots, locations, camera, pacing)
+ * 2. @Image1 (uploaded product photo) = on-screen OBJECT — pixels win
+ * 3. Name + title/headline = CLAIM only (captions / poster type / voice) — never a new SKU
+ * 4. Research angle / viral cover = tone + IMAGE 2 layout/grade — not a new hero
  * 5. Duration = compress the chosen spine into N seconds
  * 6. Look (art style) = grade only — never a new plot
  */
@@ -71,9 +71,11 @@ export function productIdentityContractLines(opts?: {
   }
   return [
     "IDENTITY CONTRACT (mandatory):",
-    "- @Image1 (or uploaded product stills) = on-screen OBJECT: shape, color, materials, packaging — lock visual identity.",
-    "- Product NAME + TITLE/HEADLINE = CLAIM: what it is, use-case, and marketing story.",
-    "- PHOTO VISION / Florence guesses are appearance-only — never override a named electronics/power/etc. story with skincare just because the photo looks like a bottle.",
+    "- @Image1 (uploaded product photo) = on-screen OBJECT. Pixels win: shape, color, materials, packaging.",
+    "- Product NAME + TITLE/HEADLINE = CLAIM only (what we sell / why buy / captions / poster type). They must not redraw the object.",
+    "- Any name vs photo mismatch (any categories): KEEP IMAGE 1 appearance. Sell the named claim around that object — never invent a substitute SKU.",
+    "- Research angle = tone / hook for captions only — not a new product and not new locations that replace IMAGE 1.",
+    "- Research / reference stills = IMAGE 2 layout or grade only — never replace the IMAGE 1 hero.",
     "- Do not morph @Image1 into a different-looking item.",
   ];
 }

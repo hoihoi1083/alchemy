@@ -17,10 +17,13 @@ import type { BrandProfile } from "@/lib/brand-profile";
 import { parseBrandKit } from "@/lib/brand-kit";
 import { archiveImageWithLogoFile } from "@/lib/brand-logo-composite";
 import {
+  buildMotionPosterEndStillPrompt,
+  buildMotionPosterStillPrompt,
   buildPromptVariables,
   buildWizardImagePrompt,
   resolveImagePromptMode,
 } from "@/lib/prompt-variables";
+import { parseMotionPosterDialectPick } from "@/lib/motion-poster-dialects";
 import type { PromptMarket, SubjectFraming } from "@/lib/prompt-variables";
 import { defaultEditEndpoint, defaultTextEndpoint, sanitizeImageEndpoint } from "@/lib/image-endpoints";
 import { mirrorImageUrlToFalStorage } from "@/lib/fal-mirror-media";
@@ -445,7 +448,13 @@ export async function POST(request: Request) {
     const promotionModeRawEarly = (formData.get("promotion_mode") as string | null)?.trim() || "";
     const isConceptMode = isPromotionMode(promotionModeRawEarly) && promotionModeRawEarly === "concept";
 
-    if (!hasProduct && !hasStyle && !isConceptMode) {
+    const startPlateUrlEarly = (formData.get("start_plate_url") as string | null)?.trim() || "";
+    const motionPosterEarly = ["1", "true", "yes"].includes(
+      String(formData.get("motion_poster") ?? "")
+        .trim()
+        .toLowerCase(),
+    );
+    if (!hasProduct && !hasStyle && !isConceptMode && !(motionPosterEarly && startPlateUrlEarly)) {
       return NextResponse.json(
         {
           error:
@@ -539,9 +548,23 @@ export async function POST(request: Request) {
     );
 
     const imageOutputMode = (formData.get("image_output_mode") as string | null)?.trim() || "";
+    const motionPoster = ["1", "true", "yes"].includes(
+      String(formData.get("motion_poster") ?? "")
+        .trim()
+        .toLowerCase(),
+    );
+    const posterFrame =
+      String(formData.get("motion_poster_frame") ?? "start").trim() === "end"
+        ? "end"
+        : "start";
+    const startPlateUrl = (formData.get("start_plate_url") as string | null)?.trim() || "";
+    if (motionPoster) {
+      vars.imageTextMode = posterFrame === "end" ? "integrated" : "textless";
+    }
     let singleImagePlan: SingleImagePlan | null = null;
     // Never override specialized client prompts (end-frame, storyboard scene regen, advanced paste).
     const wantSinglePlan =
+      !motionPoster &&
       !clientPrompt &&
       (!imageOutputMode || imageOutputMode === "single" || imageOutputMode === "ab") &&
       shouldPlanSingleImageAd(promptMode, imageTextMode);
@@ -599,6 +622,13 @@ export async function POST(request: Request) {
           imageUrls.push(await fal.storage.upload(styleRef as File));
         }
       }
+      if (motionPoster && posterFrame === "end" && startPlateUrl) {
+        const plate = await mirrorImageUrlToFalStorage(startPlateUrl, {
+          clerkId: auth.user.userId,
+          refresh: true,
+        });
+        imageUrls.splice(0, imageUrls.length, plate);
+      }
 
       const angleHint =
         useReferenceConcept && dualImage && hasProduct && hasStyle
@@ -607,24 +637,45 @@ export async function POST(request: Request) {
             ? dualProductIdentityHint(true)
             : "";
 
-      const builtPrompt = buildWizardImagePrompt(
-        vars,
-        promptMode,
-        brandProfile,
-        visualStyle as VisualStyleId,
-        brandKit,
-        {
-          structuredReferenceBrief: Boolean(brief),
-          aspectRatio: aspectRatioRaw,
-          singleImagePlan,
-          hasReferenceImage: hasProduct || hasStyle,
-        },
+      const motionPosterDialectPick = parseMotionPosterDialectPick(
+        formData.get("motion_poster_dialect"),
       );
+      const builtPrompt = motionPoster
+        ? posterFrame === "end"
+          ? buildMotionPosterEndStillPrompt(vars, {
+              conceptMode: promotionMode === "concept",
+              dialect:
+                motionPosterDialectPick === "auto" ? undefined : motionPosterDialectPick,
+            })
+          : buildMotionPosterStillPrompt(vars, {
+              conceptMode: promotionMode === "concept",
+              dialect:
+                motionPosterDialectPick === "auto" ? undefined : motionPosterDialectPick,
+            })
+        : buildWizardImagePrompt(
+            vars,
+            promptMode,
+            brandProfile,
+            visualStyle as VisualStyleId,
+            brandKit,
+            {
+              structuredReferenceBrief: Boolean(brief),
+              aspectRatio: aspectRatioRaw,
+              singleImagePlan,
+              hasReferenceImage: hasProduct || hasStyle,
+            },
+          );
       // Prefer server-built prompt when we ran the single-still planner (teaching-quality DNA).
       // Honor explicit client prompts (e.g. storyboard scene regenerate) — do not replace with
       // a generic concept-cinematic rebuild that drops the scene action.
       const finalPrompt = [
-        singleImagePlan ? builtPrompt : clientPrompt ? clientPrompt : builtPrompt,
+        motionPoster
+          ? builtPrompt
+          : singleImagePlan
+            ? builtPrompt
+            : clientPrompt
+              ? clientPrompt
+              : builtPrompt,
         angleHint,
       ]
         .filter(Boolean)
@@ -632,7 +683,9 @@ export async function POST(request: Request) {
 
       const result = await fal.subscribe(endpoint, {
         input: banana2Input(finalPrompt, imageUrls, aspectRatio, numImages, {
-          systemPrompt: artStyleSystemPrompt(artStyleId),
+          systemPrompt: artStyleSystemPrompt(artStyleId, {
+            textless: motionPoster && posterFrame !== "end",
+          }),
           resolution: imageResolution,
         }),
         logs: true,

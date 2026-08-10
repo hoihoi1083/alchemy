@@ -174,6 +174,7 @@ function buildCreativePlanPrompt(input: {
   hasKeyframe?: boolean;
   imageVisionNote?: string;
   conceptIdea?: string;
+  brandProfile?: BrandProfile;
   styleContext: VideoPlannerStyleContext;
 }): string {
   const isConcept = input.promotionMode === "concept";
@@ -215,6 +216,9 @@ function buildCreativePlanPrompt(input: {
     input.hasReferenceVideo
       ? "- User WILL attach @Video1 — align pacing with the reference and compress into the OUTPUT length below; do not invent a new camera grammar."
       : "",
+    input.brandProfile?.businessName
+      ? "- Brand DNA below is OPTIONAL lock for mood, colors, and copy tone. Scene/action still follows the creative brief — do not invent a physical SKU just because the brand sells one."
+      : "",
     "- Avoid identifiable celebrity faces; silhouettes, back view, or symbolic figures are OK for PSAs.",
     "- NO on-screen text, subtitles, logos, watermarks, speech, or lyrics.",
     "",
@@ -246,6 +250,9 @@ function buildCreativePlanPrompt(input: {
     input.headline ? `User headline: ${input.headline}` : "",
     input.subline ? `Supporting points: ${input.subline}` : "",
     input.offer ? `CTA: ${input.offer}` : "",
+    input.brandProfile?.businessName
+      ? brandProfilePromptBlock(input.brandProfile)
+      : "",
     input.hasReferenceVideo
       ? "User WILL attach a reference MP4 (@Video1)."
       : textToVideo
@@ -329,6 +336,7 @@ export async function planCreativeVideoPrompt(input: {
   hasKeyframe?: boolean;
   imageVisionNote?: string;
   conceptIdea?: string;
+  brandProfile?: BrandProfile;
   artStyleId?: ArtStyleId | string;
   subjectFraming?: SubjectFraming | string;
   promptExtra?: string;
@@ -367,6 +375,7 @@ export async function planCreativeVideoPrompt(input: {
           hasKeyframe: Boolean(input.hasKeyframe),
           imageVisionNote: input.imageVisionNote?.trim() || "",
           conceptIdea: input.conceptIdea?.trim() || "",
+          brandProfile: input.brandProfile,
           styleContext,
         }),
       },

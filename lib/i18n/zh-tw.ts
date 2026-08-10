@@ -428,8 +428,9 @@ export const zhTw = {
       items: {
         "motion-poster": {
           title: "動態海報",
-          description: "1 張靜圖 + 微運鏡／環境動態（可選開頭→結尾）。通常更平。",
-          costHint: "約 1 圖 + 1 段短片 · 免費額度夠",
+          description:
+            "兩張靜圖（無字 → 有字）再交 MiniMax H3 中間過渡，產品同字一起動。不是多分鏡故事板。",
+          costHint: "約 2 圖 + 1 段短片 · 免費額度夠",
         },
         "product-tvc-12s": {
           title: "產品 TVC 約 12 秒",
@@ -438,8 +439,9 @@ export const zhTw = {
         },
         "concept-motion-poster": {
           title: "概念動態海報",
-          description: "1 張 AI 場景靜圖 + 微運鏡，服務／想法用 — 不要 SKU 包裝特寫。",
-          costHint: "約 1 張 AI 靜圖 + 1 段短片 · 免費額度夠",
+          description:
+            "兩張場景靜圖（無字 → 有字）+ H3 過渡，按服務／想法揀動態。不要 SKU 包裝特寫。",
+          costHint: "約 2 張 AI 靜圖 + 1 段短片 · 免費額度夠",
         },
         "concept-tvc-12s": {
           title: "概念 TVC 約 12 秒",
@@ -1362,6 +1364,9 @@ export const zhTw = {
     pathReferenceVideoTitle: "跟參考短影片",
     pathReferenceVideoDesc:
       "上傳參考短影片 MP4 — 會分析運鏡／剪輯感覺（不是逐格複製）。你的產品照仍然是 @Image1。",
+    sceneReelTitle: "短片製作",
+    sceneReelDesc:
+      "用主題寫一條場景短片。可選官網／IG 對齊品牌語氣，可選參考 MP4 跟運鏡。",
     contentResearchSectionTitle: "平臺內容研究（選填）",
     contentResearchSectionHint: "找熱門帖做版式靈感 — 已有參考圖可跳過。",
     conceptPathsTitle: "概念推廣主路徑",
@@ -1835,7 +1840,7 @@ export const zhTw = {
       "motion-poster": {
         title: "動態海報",
         description:
-          "1 張產品靜圖 + 微運鏡／環境動態（或開頭→結尾）。唔係多分鏡故事板 — 通常更平。",
+          "開頭無字靜圖 + 結尾有字靜圖 → H3 過渡。不是普通產品 I2V。",
       },
       "reference-concept": {
         title: "跟參考影片概念",
@@ -1847,7 +1852,27 @@ export const zhTw = {
       },
     },
     motionPosterHint:
-      "動態海報會鎖住主視覺，只允許列出的微動態。可選上傳結尾幀做開頭→結尾變化。",
+      "即夢式首尾幀：兩張設計海報靜圖（開頭無字、結尾大標題）。MiniMax H3 由開頭過渡到結尾，產品同字一起動。計 2 圖 + 1 短片。",
+    motionPosterBuildingStill: "第 1/3 步：無字開頭靜圖…",
+    motionPosterBuildingEnd: "第 2/3 步：有字結尾靜圖…",
+    motionPosterAnimatingCard: "第 3/3 步：H3 開頭→結尾過渡中…",
+    motionPosterArtStyleTitle: "海報畫面",
+    motionPosterArtStyleHint:
+      "Nano Banana 靜圖風格 — 寫實、3D、漫畫、膠片…。動態是之後再加。預設寫實相片。",
+    motionPosterDialectTitle: "海報動態",
+    motionPosterDialectHint:
+      "同一套即夢首尾幀，不同節奏（出字、3D 卡、視差、倒液…）。自動會揀合適的——再生成試另一種。",
+    motionPosterDialectAuto: "自動 · 適合產品",
+    motionPosterDialects: {
+      "card-warp": { title: "3D 卡片", desc: "平面開頭 → 卡紙彎曲＋大標題" },
+      "kinetic-type": { title: "文字揭幕", desc: "無字遠景 → 拉近＋大字" },
+      parallax: { title: "層次視差", desc: "廣景 → 特寫＋大標題" },
+      "light-sweep": { title: "掃光", desc: "暗影 → 轉面掃光＋字" },
+      "liquid-reveal": { title: "液體揭幕", desc: "靜杯 → 倒液／蒸汽＋字" },
+      "scene-breathe": { title: "氛圍呼吸", desc: "靜氣 → 定格＋大標題" },
+    },
+    motionPosterTypeOverlayNote: "疊字",
+    motionPosterTypeOverlaySkipped: "疊字未加上 — 現在是無字氣氛片",
     motionPosterNeedKeyframe: "動態海報請先上傳產品圖、場景圖或關鍵幀。",
     storyboardShotMapTitle: "分鏡圖（生成前預覽）",
     storyboardLookBibleLabel: "Look bible（色調鎖定）：",
@@ -1872,9 +1897,9 @@ export const zhTw = {
     storyboardCellReviewed: "已看過",
     storyboardApproveNeedLookHint:
       "請先點開每一格。影片只會動你鎖住的錯 — 壞格請重產這一格，不要指望生成影片來遮。",
-    storyboardApproveCheckbox: "我已逐格看過，這些靜幀可以做影片",
+    storyboardApproveCheckbox: "這些靜幀可以，繼續去做影片",
     storyboardApproveHint:
-      "靜幀就是成片。壞格只重產那一格，再點一次。靜幀一變，確認會取消。",
+      "想看大一點可以點格子。壞格隨時重產。靜幀一變，確認會取消。",
     storyboardApproveRequiredHint: "請先確認九宮格靜幀，才能生成影片。",
     storyboardPlanLightingLabel: "燈光（英文，可改）",
     videoSettingsTitle: "影片設定",
@@ -2050,11 +2075,11 @@ export const zhTw = {
     imageReviewCompleteMany: "生成完成！你的 {n} 張圖已經可以檢查。",
     imageReviewStoryboardReadyTitle: "分鏡圖已準備好",
     imageReviewStoryboardReadyBody:
-      "四拍靜幀就是成片。逐格點開，壞格重產，再確認。影片只會動你鎖住的畫面。",
+      "四拍靜幀就是成片。壞格重產，再一次確認。影片會動這些畫面。",
     imageReviewStoryboardHeroBefore: "檢查你的",
     imageReviewStoryboardHeroAccent: "分鏡圖。",
     imageReviewStoryboardHeroHint:
-      "請點開每一格。壞格只重產那一格。看過再確認 — 生成影片修不好弱九宮格。",
+      "看一下分鏡，壞格重產，再確認。生成影片修不好弱九宮格。",
     imageReviewPathLabel: "路徑",
     imageReviewPathImagesVideo: "先生成圖片再製作影片",
     imageReviewVisualSetLabel: "視覺組",
@@ -2207,6 +2232,7 @@ export const zhTw = {
     bgmCalm: "柔和",
     bgmUpbeat: "活潑",
     bgmWarm: "溫暖",
+    bgmNone: "無音樂",
     phaseSecondFrame: "正在生成第二個畫面（豐富動態）…",
     phaseVideo: "正在製作影片…",
     phaseBgm: "正在加入背景音樂…",
@@ -3258,6 +3284,10 @@ export const zhTw = {
       productPhotosHint:
         "主圖必須上傳，決定產品樣貌。額外角度選填，會一併參考細節。",
       imageOptionsTitle: "圖片選項",
+      storyboardLookBeforePlanHint:
+        "先選畫面風格 — 會寫入 AI 分鏡大綱和之後的靜幀。",
+      storyboardTextModeHint:
+        "預設無字靜幀（字幕之後再燒）。想每格有標題就選 AI 圖上文字 — H3 會盡量跟著字做動態。",
       styleLabel: "選擇畫面風格",
       aspectLabel: "比例",
       textModeLabel: "文字模式",
@@ -3313,9 +3343,9 @@ export const zhTw = {
       titleAccent: "影片詳情",
       hint: "填寫文案、上傳產品照、寫／確認動態 prompt、選擇時長，再生成無聲短影片。",
       scenesReadyHint:
-        "場景圖已準備 — 選擇每場 Kling 時長（5 秒或 10 秒），再串成一條無聲短影片（字幕之後再加）。",
+        "場景圖已準備 — 會用 MiniMax H3 一次出一條片（全部靜幀）。字幕之後再加。",
       scenesReadyTitle: "分鏡場景已準備",
-      scenesReadyBody: "這些靜幀會串成短影片。調好 Kling 每場時長後再生成。",
+      scenesReadyBody: "這些靜幀會合成一條 H3 短片。壞格請先重產那一格。",
       assistantHint:
         "上傳產品照 → AI 寫動態 prompt → 檢查後再生成（無聲片；字幕之後再加）。",
       assistantTitle: "AI 動態 Prompt",
@@ -3341,6 +3371,10 @@ export const zhTw = {
         "寫清創作方向，寫動態 prompt，照片選填，再生成。",
       conceptBrandHint:
         "可加品牌網站線索，寫動態 prompt，照片選填，再生成。",
+      sceneReelHint:
+        "寫場景方向；可加官網／IG 對齊品牌；可選參考 MP4 跟運鏡。照片選填。",
+      referenceVideoHintConcept:
+        "選填 — 跟運鏡／節奏，不是逐格複製。概念短片可以沒有產品照。",
       contentTitle: "內容詳情",
       hookLabel: "主標題 (hook)",
       supportingLabel: "輔助文案",
@@ -3359,7 +3393,7 @@ export const zhTw = {
       settingsTitle: "影片設定",
       settingsHint: "時長和分辨率會影響 點數 費用。",
       klingSettingsHint:
-        "影片會先試 MiniMax H3（全部靜幀 → 一條）。以下 clip 長度只在 Kling 後備時適用（每格 5 或 10 秒再拼接）。",
+        "影片會先用 MiniMax H3（全部靜幀 → 一條）。H3 失敗才會改 Kling 拼接，不用你選 5／10 秒。",
       klingClipLabel: "每場時長",
       klingClipHint: "Kling 每場只支持 5 秒或 10 秒 — 不是 Seedance 那種 4–12 秒總時長。",
       klingTotalLabel: "合計約 {total} 秒（{n} × {clip} 秒）",
@@ -3382,12 +3416,12 @@ export const zhTw = {
         body: "AI 場景文案顯示故事節拍 — 之後可以燒成字幕。",
       },
       klingTip2: {
-        title: "先試 5 秒",
-        body: "每場先用 5 秒再試 10 秒 — 更便宜，通常已夠動態。",
+        title: "H3 一鏡",
+        body: "全部靜幀進入同一條 MiniMax H3，不是四段分開出。",
       },
       klingTip3: {
-        title: "總長 = 場數 × 時長",
-        body: "四場各 5 秒 ≈ 20 秒拼接片，不是 Seedance 那條 8 秒片。",
+        title: "先修好靜幀",
+        body: "壞格先重產再出片。影片只會動你鎖住的畫面。",
       },
       conceptTip1: {
         title: "照片可以不傳",

@@ -223,6 +223,7 @@ export function klingSceneMotionPrompt(opts: {
   lookBibleGrade?: string;
   useBrandLogo?: boolean;
   endWithBrandLogo?: boolean;
+  preserveOnScreenType?: boolean;
 }): string {
   const motion = klingMotionFromMeta(opts);
   const theme = opts.theme?.trim();
@@ -231,6 +232,7 @@ export function klingSceneMotionPrompt(opts: {
   const logoOn = Boolean(opts.useBrandLogo ?? opts.endWithBrandLogo);
   const lighting = opts.lightingEn?.trim();
   const look = opts.lookBibleGrade?.trim();
+  const keepType = Boolean(opts.preserveOnScreenType);
   return [
     `Animate this exact still as storyboard scene ${opts.sceneIndex}/${opts.sceneCount}.`,
     theme ? `Mood: ${theme}.` : "",
@@ -242,10 +244,16 @@ export function klingSceneMotionPrompt(opts: {
     lighting ? `Lighting: ${lighting}.` : "",
     "Add visible commercial motion — camera move and light should feel alive, not a near-static photo.",
     "Preserve the input frame — Keep the same people, product, layout, and brand logo already in the still.",
-    "CRITICAL: do not invent, redraw, or morph any readable text, Chinese characters, Latin letters, digits, captions, watermarks, or gibberish glyphs.",
+    keepType
+      ? "CRITICAL: keep existing on-screen wording identical — do not rewrite, misspell, or invent new headlines, logos, or gibberish."
+      : "CRITICAL: do not invent, redraw, or morph any readable text, Chinese characters, Latin letters, digits, captions, watermarks, or gibberish glyphs.",
     "If the still has a laptop/phone/tablet screen, keep UI blank or abstract — never invent English/Chinese labels, inverted text, or dashboard copy.",
-    "If the still has blank bars or empty UI labels, keep them blank — never fill them with fake words.",
-    "FALLBACK: if any accidental on-screen words, glyphs, or gibberish appear, keep them heavily out-of-focus / soft bokeh so they are unreadable — never sharpen fake text.",
+    keepType
+      ? "Type already in the still may stay locked to the card; do not add subtitles or extra captions."
+      : "If the still has blank bars or empty UI labels, keep them blank — never fill them with fake words.",
+    keepType
+      ? ""
+      : "FALLBACK: if any accidental on-screen words, glyphs, or gibberish appear, keep them heavily out-of-focus / soft bokeh so they are unreadable — never sharpen fake text.",
     endCard
       ? "END CARD: the centered brand logo is the hero — preserve it exactly, do not invent a second wordmark, slogan, or fake Chinese. Motion = camera + light + sparkle only."
       : logoOn
@@ -259,3 +267,7 @@ export function klingSceneMotionPrompt(opts: {
 
 export const KLING_TEXTLESS_NEGATIVE =
   "static image, no motion, frozen frame, distort, low quality, watermark, morphing face, extra limbs, readable text, chinese characters, latin letters, gibberish text, sharp fake text, legible invented words, fake ui labels, inverted text, mirrored text, laptop screen text, monitor ui text, dashboard labels, hexagon labels, subtitles, captions, invented logo, second logo, misspelled words, on-screen typography, slogan under logo";
+
+/** When stills already have designed type — do not tell Kling to erase letters. */
+export const KLING_PRESERVE_TYPE_NEGATIVE =
+  "static image, no motion, frozen frame, distort, low quality, watermark, morphing face, extra limbs, gibberish text, misspelled words, invented logo, second logo, fake ui labels, inverted text, mirrored text";

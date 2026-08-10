@@ -593,13 +593,12 @@ export function ImageReviewGallery({
                   item={item}
                   selected={selected}
                   selectable={selectable}
-                  reviewable={isStoryboardReview}
+                  reviewable={false}
                   reviewed={wizard.storyboardCellsViewed.includes(item.index)}
                   reviewHint={m.wizard.storyboardTapToReview}
                   reviewedHint={m.wizard.storyboardCellReviewed}
                   imageGenKey={wizard.imageGenKey}
                   onSelect={() => {
-                    if (isStoryboardReview) wizard.markStoryboardCellViewed(item.index);
                     selectItem(item.index, item.url);
                   }}
                 />
@@ -668,18 +667,11 @@ export function ImageReviewGallery({
       </div>
 
       {isStoryboardReview && items.length > 0 ? (
-        <label
-          className={`flex items-start gap-3 rounded-2xl border px-4 py-3 ${
-            wizard.storyboardAllCellsViewed
-              ? "cursor-pointer border-violet-300 bg-violet-50/80"
-              : "cursor-not-allowed border-amber-200 bg-amber-50/70 opacity-90"
-          }`}
-        >
+        <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-violet-300 bg-violet-50/80 px-4 py-3">
           <input
             type="checkbox"
-            className="mt-1 h-4 w-4 shrink-0 rounded border-violet-400 text-violet-600 disabled:cursor-not-allowed"
+            className="mt-1 h-4 w-4 shrink-0 rounded border-violet-400 text-violet-600"
             checked={wizard.storyboardGridApproved}
-            disabled={!wizard.storyboardAllCellsViewed}
             onChange={(e) => wizard.setStoryboardGridApproved(e.target.checked)}
           />
           <span>
@@ -687,9 +679,7 @@ export function ImageReviewGallery({
               {m.wizard.storyboardApproveCheckbox}
             </span>
             <span className="mt-0.5 block text-xs leading-relaxed text-violet-800/80">
-              {wizard.storyboardAllCellsViewed
-                ? m.wizard.storyboardApproveHint
-                : m.wizard.storyboardApproveNeedLookHint}
+              {m.wizard.storyboardApproveHint}
             </span>
           </span>
         </label>
