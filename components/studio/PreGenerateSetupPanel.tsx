@@ -837,6 +837,22 @@ export function PreGenerateSetupPanel({
     (wizard.visualStyleId === "pricing-offer" ||
       wizard.visualStyleId === "website-launch" ||
       wizard.visualStyleId === "service-promo");
+  const copyFocus =
+    conceptPath != null ? pg.conceptCopyFocus?.[conceptPath] : null;
+  const supportingLabel = copyFocus?.supportingLabel ?? pg.supportingLabel;
+  const supportingPlaceholder =
+    copyFocus?.supportingPlaceholder ?? m.wizard.sublinePlaceholder;
+  const offerLabel =
+    copyFocus && "offerLabel" in copyFocus && copyFocus.offerLabel
+      ? copyFocus.offerLabel
+      : m.wizard.offerLabel;
+  const offerPlaceholder =
+    copyFocus && "offerPlaceholder" in copyFocus && copyFocus.offerPlaceholder
+      ? copyFocus.offerPlaceholder
+      : m.wizard.offerPlaceholder;
+  const emphasizeSupporting =
+    conceptPath === "info" || conceptPath === "website" || conceptPath === "brand";
+  const emphasizeOffer = conceptPath === "pricing";
 
   const setupHint = combinedStoryboard
     ? isConcept
@@ -1273,6 +1289,14 @@ export function PreGenerateSetupPanel({
                   <h3 className="pg-card-title">{pg.contentTitle}</h3>
                 </div>
                 <div className="pg-field-grid">
+                  {copyFocus ? (
+                    <div className="rounded-xl border border-violet-200 bg-violet-50 px-3.5 py-3 text-sm text-violet-950 sm:col-span-full">
+                      <p className="font-semibold">{copyFocus.title}</p>
+                      <p className="mt-1 text-xs leading-relaxed text-violet-900/90">
+                        {copyFocus.body}
+                      </p>
+                    </div>
+                  ) : null}
                   {isConcept ? (
                     <label>
                       <span className="pg-label">
@@ -1313,6 +1337,11 @@ export function PreGenerateSetupPanel({
                       <span className="pg-label-req" aria-hidden>
                         *
                       </span>
+                      {copyFocus ? (
+                        <span className="ml-1.5 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700">
+                          {pg.onImageBadge}
+                        </span>
+                      ) : null}
                     </span>
                     <input
                       className="pg-input"
@@ -1321,14 +1350,27 @@ export function PreGenerateSetupPanel({
                       placeholder={m.wizard.headlinePlaceholder}
                     />
                   </label>
-                  <label>
-                    <span className="pg-label">{pg.supportingLabel}</span>
+                  <label
+                    className={
+                      emphasizeSupporting
+                        ? "rounded-xl border border-violet-300 bg-violet-50/60 p-3 ring-1 ring-violet-200"
+                        : undefined
+                    }
+                  >
+                    <span className="pg-label">
+                      {supportingLabel}
+                      {emphasizeSupporting ? (
+                        <span className="ml-1.5 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700">
+                          {pg.onImageBadge}
+                        </span>
+                      ) : null}
+                    </span>
                     <textarea
                       className="pg-textarea"
-                      rows={3}
+                      rows={conceptPath === "info" ? 4 : 3}
                       value={wizard.subline}
                       onChange={(e) => wizard.setSubline(e.target.value.slice(0, 200))}
-                      placeholder={m.wizard.sublinePlaceholder}
+                      placeholder={supportingPlaceholder}
                     />
                     <p className="pg-count">{wizard.subline.length} / 200</p>
                   </label>
@@ -1346,16 +1388,28 @@ export function PreGenerateSetupPanel({
                           placeholder={m.wizard.businessPlaceholder}
                         />
                       </label>
-                      <label>
+                      <label
+                        className={
+                          emphasizeOffer
+                            ? "rounded-xl border border-violet-300 bg-violet-50/60 p-3 ring-1 ring-violet-200"
+                            : undefined
+                        }
+                      >
                         <span className="pg-label">
-                          {m.wizard.offerLabel}
-                          <span className="pg-label-opt">{pg.extraOptional}</span>
+                          {offerLabel}
+                          {emphasizeOffer ? (
+                            <span className="ml-1.5 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700">
+                              {pg.onImageBadge}
+                            </span>
+                          ) : (
+                            <span className="pg-label-opt">{pg.extraOptional}</span>
+                          )}
                         </span>
                         <input
                           className="pg-input"
                           value={wizard.offer}
                           onChange={(e) => wizard.setOffer(e.target.value)}
-                          placeholder={m.wizard.offerPlaceholder}
+                          placeholder={offerPlaceholder}
                         />
                       </label>
                     </>

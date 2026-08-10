@@ -1218,6 +1218,18 @@ export function buildWizardImagePrompt(
 			),
 		);
 	}
+	// brand-fit without analyze yet: still keep concept editorial layout, not product promo.
+	if (mode === "brand-fit") {
+		return withLogo(
+			joinParts(
+				buildConceptSocialImagePrompt(vars, brandProfile, {
+					singleImagePlan: plan,
+				}),
+				"BRAND-FIT LAYOUT: unified brand palette and typography mood — analyze website/social when available; do not invent a random product packshot.",
+				brandPromptExtras(null, brandKit),
+			),
+		);
+	}
 	const styleHint =
 		visualStyleId && getVisualStyle(visualStyleId).promptHint
 			? `Visual style direction: ${getVisualStyle(visualStyleId).promptHint}`
@@ -1253,6 +1265,18 @@ function shouldUseConceptSocialPrompt(
 	if (visualStyleId === "concept-cinematic") return false;
 	// Social creative layout is for image-only posts — video keyframes use cinematic or style-specific prompts.
 	if (context?.workflowMode !== "image-only") return false;
+	// Keep specialized 創作方向 layouts distinct (info / brand / pricing / website).
+	// Without this gate, every concept image path collapsed to concept-social.
+	if (
+		visualStyleId === "info-poster" ||
+		visualStyleId === "brand-fit" ||
+		visualStyleId === "brand-campaign" ||
+		visualStyleId === "pricing-offer" ||
+		visualStyleId === "website-launch" ||
+		visualStyleId === "service-promo"
+	) {
+		return false;
+	}
 	return true;
 }
 
@@ -1398,19 +1422,36 @@ export function buildCampaignSlideImagePrompt(
 					)
 				: mode === "brand-fit" && brandProfile?.businessName
 					? buildBrandFitImagePrompt(slideVars, brandProfile)
-					: mode === "info-poster"
-						? buildInfoPosterImagePrompt(slideVars)
-						: mode === "service-promo"
-							? buildServicePromoImagePrompt(slideVars)
-							: mode === "pricing-offer"
-								? buildPricingOfferImagePrompt(slideVars)
-								: mode === "website-launch"
-									? buildWebsiteLaunchImagePrompt(slideVars)
-									: buildPromoImagePrompt(
-											slideVars,
-											brandProfile,
-											brandKit,
-										);
+					: mode === "brand-fit"
+						? joinParts(
+								buildConceptSocialCarouselSlidePrompt(
+									slideVars,
+									{
+										role: slide.role,
+										headline: slide.headline,
+										subline: slide.subline,
+									},
+									plan,
+									slideIndex,
+									totalSlides,
+									brandProfile,
+									referenceImageMode,
+								),
+								"BRAND-FIT LAYOUT: unified brand palette and typography mood — analyze website/social when available.",
+							)
+						: mode === "info-poster"
+							? buildInfoPosterImagePrompt(slideVars)
+							: mode === "service-promo"
+								? buildServicePromoImagePrompt(slideVars)
+								: mode === "pricing-offer"
+									? buildPricingOfferImagePrompt(slideVars)
+									: mode === "website-launch"
+										? buildWebsiteLaunchImagePrompt(slideVars)
+										: buildPromoImagePrompt(
+												slideVars,
+												brandProfile,
+												brandKit,
+											);
 	const withBrand =
 		brandKitHasPromptContent(brandKit) &&
 		mode === "concept-social" &&

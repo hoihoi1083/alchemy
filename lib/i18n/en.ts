@@ -3984,6 +3984,38 @@ export const en = {
 			supportingLabel: "Supporting copy",
 			extraLabel: "Extra requirements",
 			extraOptional: "(optional)",
+			onImageBadge: "Shows on the image",
+			conceptCopyFocus: {
+				info: {
+					title: "For this direction: fill selling-point bullets",
+					body: "Hook is the headline. Put one selling point per line in supporting copy — they become the info-poster bullets.",
+					supportingLabel: "Selling points (one per line)",
+					supportingPlaceholder:
+						"e.g.\nNatural ingredients\nVisible results\nDaily use friendly",
+				},
+				brand: {
+					title: "For this direction: brand style comes first",
+					body: "Analyze your website/social when you can. Hook + supporting copy follow brand palette — not a pricing card.",
+					supportingLabel: "Brand message / subline",
+					supportingPlaceholder: "e.g. Trusted local experts · Clear results",
+				},
+				pricing: {
+					title: "For this direction: fill offer / CTA",
+					body: "Hook names the plan. Offer text becomes the pricing-card CTA. We won’t invent prices if Offer is empty.",
+					supportingLabel: "Plan highlights (short)",
+					supportingPlaceholder: "e.g. Three tiers · Beginner to pro",
+					offerLabel: "Offer / CTA (recommended)",
+					offerPlaceholder: "e.g. 20% off this week · Book now · From $198",
+				},
+				website: {
+					title: "For this direction: launch hook first",
+					body: "Hook is the launch line; supporting copy lists features. Layout leans website/app mockup.",
+					supportingLabel: "Features / benefits",
+					supportingPlaceholder: "e.g. Book in one tap · Instant confirm · Mobile ready",
+					offerLabel: "CTA (optional)",
+					offerPlaceholder: "e.g. Try free · Open the site",
+				},
+			},
 			outputTypeTitle: "Output type",
 			productPhotosTitle: "Upload product images",
 			dragDrop: "Drag & drop",

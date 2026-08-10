@@ -3655,6 +3655,38 @@ export const zh = {
 			supportingLabel: "輔助文案",
 			extraLabel: "額外要求",
 			extraOptional: "（選填）",
+			onImageBadge: "會出現喺圖上",
+			conceptCopyFocus: {
+				info: {
+					title: "呢個方向：重點填「賣點條列」",
+					body: "主標題係 hook；輔助文案請一行一個賣點 — 會直接變成資訊圖 bullets。",
+					supportingLabel: "賣點條列（一行一點）",
+					supportingPlaceholder:
+						"例如：\n天然成分\n即時見效\n適合每日使用",
+				},
+				brand: {
+					title: "呢個方向：重點係品牌風格",
+					body: "有網站／社交請先做品牌分析。主標題同輔助文案會跟品牌色調排版，唔係價卡。",
+					supportingLabel: "品牌訊息／副標",
+					supportingPlaceholder: "例如：專業顧問 · 可信賴 · 本地服務",
+				},
+				pricing: {
+					title: "呢個方向：重點填「優惠／CTA」",
+					body: "主標題寫方案名；優惠欄會變成價卡／套票上嘅 CTA。冇填優惠就唔會發明價錢。",
+					supportingLabel: "方案重點（簡短）",
+					supportingPlaceholder: "例如：三個方案 · 適合初學／進階",
+					offerLabel: "優惠／CTA（建議填）",
+					offerPlaceholder: "例如：限時 8 折 · 立即報名 · 首月 $198",
+				},
+				website: {
+					title: "呢個方向：重點係上線 hook",
+					body: "主標題寫上線賣點；輔助文案寫功能／好處。畫面會偏網站／App mockup。",
+					supportingLabel: "功能／好處",
+					supportingPlaceholder: "例如：一鍵預約 · 即時確認 · 手機都用得",
+					offerLabel: "CTA（選填）",
+					offerPlaceholder: "例如：立即體驗 · 免費試用",
+				},
+			},
 			outputTypeTitle: "輸出類型",
 			productPhotosTitle: "上傳產品相片",
 			dragDrop: "拖放上傳",

@@ -100,6 +100,39 @@ export function SetupCopyEditPanel({
         </div>
       ) : null}
 
+      {!usesCompositor && visualStyleId === "pricing-offer" ? (
+        <div className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-950">
+          <p className="font-semibold">
+            {m.microWizard.preGenerateSetup.conceptCopyFocus.pricing.title}
+          </p>
+          <p className="mt-1 text-xs text-violet-900/90">
+            {m.microWizard.preGenerateSetup.conceptCopyFocus.pricing.body}
+          </p>
+        </div>
+      ) : null}
+
+      {!usesCompositor && visualStyleId === "website-launch" ? (
+        <div className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-950">
+          <p className="font-semibold">
+            {m.microWizard.preGenerateSetup.conceptCopyFocus.website.title}
+          </p>
+          <p className="mt-1 text-xs text-violet-900/90">
+            {m.microWizard.preGenerateSetup.conceptCopyFocus.website.body}
+          </p>
+        </div>
+      ) : null}
+
+      {!usesCompositor && visualStyleId === "brand-fit" ? (
+        <div className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-950">
+          <p className="font-semibold">
+            {m.microWizard.preGenerateSetup.conceptCopyFocus.brand.title}
+          </p>
+          <p className="mt-1 text-xs text-violet-900/90">
+            {m.microWizard.preGenerateSetup.conceptCopyFocus.brand.body}
+          </p>
+        </div>
+      ) : null}
+
       {!usesCompositor && usesReferenceConceptForImage ? (
         <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
           {m.wizard.referenceConceptOverridesStyle}
@@ -161,7 +194,13 @@ export function SetupCopyEditPanel({
           <span className="text-sm font-medium text-slate-700">
             {usesCompositor || visualStyleId === "info-poster"
               ? m.wizard.sublineBulletsLabel
-              : m.wizard.sublineLabel}
+              : visualStyleId === "pricing-offer"
+                ? m.microWizard.preGenerateSetup.conceptCopyFocus.pricing.supportingLabel
+                : visualStyleId === "website-launch"
+                  ? m.microWizard.preGenerateSetup.conceptCopyFocus.website.supportingLabel
+                  : visualStyleId === "brand-fit"
+                    ? m.microWizard.preGenerateSetup.conceptCopyFocus.brand.supportingLabel
+                    : m.wizard.sublineLabel}
           </span>
           {usesCompositor || visualStyleId === "info-poster" ? (
             <textarea
@@ -179,7 +218,18 @@ export function SetupCopyEditPanel({
             <input
               value={subline}
               onChange={(e) => setSubline(e.target.value)}
-              placeholder={m.wizard.sublinePlaceholder}
+              placeholder={
+                visualStyleId === "pricing-offer"
+                  ? m.microWizard.preGenerateSetup.conceptCopyFocus.pricing
+                      .supportingPlaceholder
+                  : visualStyleId === "website-launch"
+                    ? m.microWizard.preGenerateSetup.conceptCopyFocus.website
+                        .supportingPlaceholder
+                    : visualStyleId === "brand-fit"
+                      ? m.microWizard.preGenerateSetup.conceptCopyFocus.brand
+                          .supportingPlaceholder
+                      : m.wizard.sublinePlaceholder
+              }
               className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
             />
           )}
@@ -206,15 +256,33 @@ export function SetupCopyEditPanel({
       {templateHasSlot(templateId, "offer") ? (
         <label className="block space-y-1">
           <span className="text-sm font-medium text-slate-700">
-            {usesCompositor ? m.wizard.signoffLabel : m.wizard.offerLabel}
+            {usesCompositor
+              ? m.wizard.signoffLabel
+              : visualStyleId === "pricing-offer"
+                ? m.microWizard.preGenerateSetup.conceptCopyFocus.pricing.offerLabel
+                : visualStyleId === "website-launch"
+                  ? m.microWizard.preGenerateSetup.conceptCopyFocus.website.offerLabel
+                  : m.wizard.offerLabel}
           </span>
           <input
             value={offer}
             onChange={(e) => setOffer(e.target.value)}
             placeholder={
-              usesCompositor ? m.wizard.signoffPlaceholder : m.wizard.offerPlaceholder
+              usesCompositor
+                ? m.wizard.signoffPlaceholder
+                : visualStyleId === "pricing-offer"
+                  ? m.microWizard.preGenerateSetup.conceptCopyFocus.pricing
+                      .offerPlaceholder
+                  : visualStyleId === "website-launch"
+                    ? m.microWizard.preGenerateSetup.conceptCopyFocus.website
+                        .offerPlaceholder
+                    : m.wizard.offerPlaceholder
             }
-            className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
+            className={`w-full rounded-xl border px-3 py-2.5 text-sm ${
+              visualStyleId === "pricing-offer"
+                ? "border-violet-300 bg-violet-50/40"
+                : "border-slate-200"
+            }`}
           />
         </label>
       ) : null}

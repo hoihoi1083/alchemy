@@ -3270,6 +3270,38 @@ export const zhCn = {
       supportingLabel: "辅助文案",
       extraLabel: "额外要求",
       extraOptional: "（选填）",
+      onImageBadge: "会出现在图上",
+      conceptCopyFocus: {
+        info: {
+          title: "这个方向：重点填「卖点条列」",
+          body: "主标题是 hook；辅助文案请一行一个卖点 — 会直接变成信息图 bullets。",
+          supportingLabel: "卖点条列（一行一点）",
+          supportingPlaceholder:
+            "例如：\n天然成分\n即时见效\n适合每日使用",
+        },
+        brand: {
+          title: "这个方向：重点是品牌风格",
+          body: "有网站／社交请先做品牌分析。主标题和辅助文案会跟品牌色调排版，不是价卡。",
+          supportingLabel: "品牌讯息／副标",
+          supportingPlaceholder: "例如：专业顾问 · 可信赖 · 本地服务",
+        },
+        pricing: {
+          title: "这个方向：重点填「优惠／CTA」",
+          body: "主标题写方案名；优惠栏会变成价卡／套票上的 CTA。没填优惠就不会发明价钱。",
+          supportingLabel: "方案重点（简短）",
+          supportingPlaceholder: "例如：三个方案 · 适合初学／进阶",
+          offerLabel: "优惠／CTA（建议填）",
+          offerPlaceholder: "例如：限时 8 折 · 立即报名 · 首月 ¥198",
+        },
+        website: {
+          title: "这个方向：重点是上线 hook",
+          body: "主标题写上线卖点；辅助文案写功能／好处。画面会偏网站／App mockup。",
+          supportingLabel: "功能／好处",
+          supportingPlaceholder: "例如：一键预约 · 即时确认 · 手机都能用",
+          offerLabel: "CTA（选填）",
+          offerPlaceholder: "例如：立即体验 · 免费试用",
+        },
+      },
       outputTypeTitle: "输出类型",
       productPhotosTitle: "上传产品照片",
       dragDrop: "拖放上传",
