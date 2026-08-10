@@ -23,6 +23,15 @@ describe("videoPlannerContextBlock", () => {
     assert.doesNotMatch(block, /Framing preference/);
   });
 
+  it("国风 is look grade not illustrated medium", () => {
+    const block = videoPlannerContextBlock({
+      artStyleId: "guofeng",
+      subjectFraming: "auto",
+    }).join("\n");
+    assert.match(block, /LOOK GRADE|look grade/i);
+    assert.doesNotMatch(block, /illustrated or stylized medium/i);
+  });
+
   it("skips art-style hints when hasReferenceVideo", () => {
     const block = videoPlannerContextBlock({
       artStyleId: "watercolor",

@@ -36,6 +36,33 @@ describe("reference analyze trigger", () => {
     assert.equal(k1, k2);
   });
 
+  it("does not re-trigger when output mode or product photo flag changes", () => {
+    const cover = new File(["a"], "cover.jpg", { type: "image/jpeg" });
+    const base = {
+      cover,
+      extras: [] as File[],
+      promotionMode: "physical",
+      researchAngleId: null as string | null,
+    };
+    const k1 = referenceAnalyzeTriggerKey({
+      ...base,
+      imageOutputMode: "single",
+      hasProductPhoto: false,
+    });
+    const k2 = referenceAnalyzeTriggerKey({
+      ...base,
+      imageOutputMode: "teaching-carousel",
+      hasProductPhoto: true,
+    });
+    const k3 = referenceAnalyzeTriggerKey({
+      ...base,
+      imageOutputMode: "campaign",
+      hasProductPhoto: true,
+    });
+    assert.equal(k1, k2);
+    assert.equal(k1, k3);
+  });
+
   it("does not re-trigger when visual style or creative mode changes", () => {
     const cover = new File(["a"], "cover.jpg", { type: "image/jpeg" });
     const base = {

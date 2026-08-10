@@ -30,6 +30,7 @@ function emptyCampaignPlan(): CampaignPlan {
 
 function normalizeCampaignPlan(parsed: Partial<CampaignPlan>): CampaignPlan {
   const slides = Array.isArray(parsed.slides) ? parsed.slides : [];
+  const seenHeadlines = new Set<string>();
   const normalized: CampaignSlidePlan[] = slides
     .slice(0, CAMPAIGN_SLIDE_COUNT)
     .map((s, i) => {
@@ -37,10 +38,17 @@ function normalizeCampaignPlan(parsed: Partial<CampaignPlan>): CampaignPlan {
         s.role === "hero" || s.role === "selling-points" || s.role === "offer"
           ? s.role
           : (["hero", "selling-points", "offer"] as const)[i];
+      let headline = String(s.headline ?? "").trim();
+      const headlineKey = headline.toLowerCase();
+      // Planner sometimes reuses the hero hook on every card — clear so fallbacks can diversify.
+      if (headline && seenHeadlines.has(headlineKey)) {
+        headline = "";
+      }
+      if (headline) seenHeadlines.add(headlineKey);
       return {
         role,
         title: String(s.title ?? "").trim() || defaultSlideTitle(role),
-        headline: String(s.headline ?? "").trim(),
+        headline,
         subline: String(s.subline ?? "").trim(),
         composition: String(s.composition ?? "").trim(),
       };
@@ -82,6 +90,7 @@ function applyCampaignFallbacks(
     brandProfile?: BrandProfile | null;
     hasReferenceLayout?: boolean;
     hasStyleReference?: boolean;
+    modelWear?: boolean;
   },
 ): CampaignPlan {
   const seedHeadline =
@@ -119,23 +128,29 @@ function applyCampaignFallbacks(
       }
     }
     if (!next.composition) {
-      next.composition = input.hasReferenceLayout
+      next.composition = input.modelWear
         ? i === 0
-          ? "Hero slide — IMAGE 1 user product as hero; mirror IMAGE 2 ad layout rhythm"
+          ? "Hero lifestyle — real person wearing/using IMAGE 1, product clearly visible"
           : i === 1
-            ? "Selling-points slide — IMAGE 1 product + IMAGE 2 design language with bullet / feature copy layout"
-            : "Offer slide — IMAGE 1 product + IMAGE 2 design language with CTA / offer badge area"
-        : input.hasStyleReference
+            ? "Feature lifestyle — new pose or crop of person with IMAGE 1 (wrist/hand macro or alternate angle)"
+            : "CTA lifestyle — different pose of person with IMAGE 1; offer/CTA band"
+        : input.hasReferenceLayout
           ? i === 0
-            ? "Hero slide — match reference palette/typography; new cover layout with main hook headline"
+            ? "Hero slide — IMAGE 1 user product as hero; mirror IMAGE 2 ad layout rhythm"
             : i === 1
-              ? "Selling-points slide — same reference visual family; distinct bullet/feature layout (not same grid as hero)"
-              : "Offer slide — same reference visual family; CTA / recap band with distinct composition"
-          : i === 0
-            ? "Hero slide — IMAGE 1 content centered and dominant, brand-matched lighting"
-            : i === 1
-              ? "Selling-points slide — same IMAGE 1 hero with bullet copy layout"
-              : "Offer slide — same IMAGE 1 hero with CTA / offer badge";
+              ? "Selling-points slide — IMAGE 1 product + IMAGE 2 design language with bullet / feature copy layout"
+              : "Offer slide — IMAGE 1 product + IMAGE 2 design language with CTA / offer badge area"
+          : input.hasStyleReference
+            ? i === 0
+              ? "Hero slide — match reference palette/typography; new cover layout with main hook headline"
+              : i === 1
+                ? "Selling-points slide — same reference visual family; distinct bullet/feature layout (not same grid as hero)"
+                : "Offer slide — same reference visual family; CTA / recap band with distinct composition"
+            : i === 0
+              ? "Hero slide — IMAGE 1 content centered and dominant, brand-matched lighting"
+              : i === 1
+                ? "Selling-points slide — new crop or flat-lay detail of IMAGE 1; bullet/feature copy in a side or lower panel"
+                : "Offer slide — IMAGE 1 in a different staging (hand-held, lifestyle set, or CTA band); distinct composition from hero";
     }
     return next;
   });
@@ -163,6 +178,8 @@ function buildPlanPrompt(input: {
   promotionMode?: "physical" | "concept";
   hasReferenceLayout?: boolean;
   hasStyleReference?: boolean;
+  /** User uploaded a product photo (IMAGE 1) — name is claim only. */
+  hasProductPhoto?: boolean;
   referenceStrategyKind?: "layout-transfer" | "style-only" | "none";
   promptExtra?: string;
 }): string {
@@ -227,6 +244,7 @@ function buildPlanPrompt(input: {
     "Plan a 3-image social ad CAMPAIGN for a small business. Return a single JSON object only.",
     "All 3 images must feel like ONE coordinated series: same colors, typography energy, and brand mood.",
     "Each slide MUST have a non-empty headline string.",
+    "CRITICAL: Every slide.headline MUST be unique — hero, selling-points, and offer each need DIFFERENT on-image headline copy. Never reuse one shared hook on every card.",
     "Keep visualDna on one line — no line breaks inside JSON string values.",
     "",
     "Required JSON:",
@@ -235,14 +253,20 @@ function buildPlanPrompt(input: {
     "- theme: one-line campaign theme",
     "- visualDna: one-line shared art direction (palette, lighting, typography)",
     "- slides[0] hero: product hero, main hook headline",
-    "- slides[1] selling-points: 2-3 bullets as subline, educational/social proof angle",
-    "- slides[2] offer: CTA / shop now mood — use ONLY user Offer text if provided",
+    "- slides[1] selling-points: 2-3 bullets as subline, educational/social proof angle — DIFFERENT headline from hero",
+    "- slides[2] offer: CTA / shop now mood — use ONLY user Offer text if provided — DIFFERENT headline from hero and selling-points",
     "- NEVER invent specific prices (HK$, ¥), discount %, or fake promotions unless Offer field is filled",
+    input.visualStyleId === "model-wear"
+      ? "- MODEL WEAR style: every slide.composition MUST include a real person wearing or using the product — distinct pose/crop per slide. Never product-only catalog or mascot-only hero."
+      : "",
+    input.hasProductPhoto
+      ? "- PRODUCT PHOTO present: every slide.composition MUST keep IMAGE 1's photographed object as the visible hero (hero, selling-points, and offer). Product NAME is claim/copy only — never plan a different SKU that matches the name or a selling point (e.g. do not turn a bottle photo into a power bank or charging station)."
+      : "",
     input.hasReferenceLayout
       ? "- User uploaded product photo (IMAGE 1) + REFERENCE AD (IMAGE 2): plan compositions that follow IMAGE 2 layout family (typography hierarchy, graphic components, product staging pose) while IMAGE 1 product stays the hero. All on-image copy must come from user fields — never reuse reference poster wording."
       : styleOnlyRef || layoutTransferRef
         ? "- composition: per-slide layout note — follow USER REFERENCE visual family; distinct layout per slide."
-        : "- composition: per-slide layout note — coordinated series with consistent art direction",
+        : "- composition: per-slide layout note — coordinated series with DISTINCT camera crop / staging per slide (never 'same hero photo with different text')",
     ...referenceRules,
     "- HK/TW market: ALL Chinese copy in Traditional Chinese (繁體) — never Simplified (简体), even if reference material uses 简体",
     "- CN market: Simplified Chinese (简体) only",
@@ -258,7 +282,11 @@ function buildPlanPrompt(input: {
     "",
     `Visual style preset: ${style.id} — ${style.promptHint || "general product ad"}`,
     input.campaignTheme ? `User campaign brief: ${input.campaignTheme}` : "",
-    input.product ? `Product: ${input.product}` : "",
+    input.product
+      ? input.hasProductPhoto
+        ? `Topic/product NAME (claim / copy only — hero is IMAGE 1 pixels): ${input.product}`
+        : `Product: ${input.product}`
+      : "",
     input.business ? `Business: ${input.business}` : "",
     input.headline ? `Seed headline: ${input.headline}` : "",
     input.subline ? `Seed selling points: ${input.subline}` : "",
@@ -287,6 +315,8 @@ type PlanInput = {
   brandProfile?: BrandProfile | null;
   promotionMode?: "physical" | "concept";
   hasReferenceLayout?: boolean;
+  /** Product photo attached — planner must not invent a SKU from the typed name. */
+  hasProductPhoto?: boolean;
   referenceStrategyKind?: "layout-transfer" | "style-only" | "none";
   promptExtra?: string;
 };
@@ -318,6 +348,7 @@ export async function planCampaign(input: PlanInput): Promise<CampaignPlan> {
           visualStyleId: input.visualStyleId,
           promotionMode: input.promotionMode,
           hasReferenceLayout: input.hasReferenceLayout,
+          hasProductPhoto: input.hasProductPhoto,
           hasStyleReference: input.referenceStrategyKind === "style-only",
           referenceStrategyKind: input.referenceStrategyKind,
           promptExtra: input.promptExtra?.trim() || "",
@@ -342,10 +373,18 @@ export async function planCampaign(input: PlanInput): Promise<CampaignPlan> {
     ...fb,
     hasReferenceLayout: input.hasReferenceLayout,
     hasStyleReference: input.referenceStrategyKind === "style-only",
+    modelWear: input.visualStyleId === "model-wear",
   });
 
   if (!plan.slides.every((s) => s.headline.trim())) {
     throw new Error("Could not plan campaign slides. Try adding a headline or campaign theme.");
   }
   return plan;
+}
+
+/** Exposed for unit tests — same prompt DeepSeek sees. */
+export function buildCampaignPlanPromptForTest(
+  input: Parameters<typeof buildPlanPrompt>[0],
+): string {
+  return buildPlanPrompt(input);
 }

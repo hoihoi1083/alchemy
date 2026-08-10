@@ -11,6 +11,7 @@ import {
   carouselSlideRoleVariationHint,
   carouselUniqueCopyHint,
   dualProductIdentityHint,
+  teachingCarouselTipImageUrls,
 } from "@/lib/fal-dual-reference-urls";
 import {
   defaultEditEndpoint,
@@ -40,6 +41,7 @@ import {
   parseStrategyFromFormData,
   referenceStrategyPromptBlock,
 } from "@/lib/reference-strategy";
+import { ensureOptimizedSceneEssay } from "@/lib/optimize-reference-scene-prompt";
 import type { VisualStyleId } from "@/lib/visual-styles";
 import { artStyleSystemPrompt, resolveArtStyleId } from "@/lib/art-style";
 import { archiveCampaignSlidesToPipeline } from "@/lib/pipeline/archive-image";
@@ -60,6 +62,26 @@ function extractImageUrls(resultData: unknown): string[] {
     if (image && typeof image.url === "string") return [image.url];
   }
   return [];
+}
+
+const TIP_SLIDE_CONCURRENCY = 2;
+
+async function mapPool<T, R>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  const out = new Array<R>(items.length);
+  let next = 0;
+  async function worker() {
+    while (next < items.length) {
+      const i = next++;
+      out[i] = await fn(items[i]!, i);
+    }
+  }
+  const n = Math.min(Math.max(1, concurrency), Math.max(1, items.length));
+  await Promise.all(Array.from({ length: n }, () => worker()));
+  return out;
 }
 
 function formatFalError(e: unknown): string {
@@ -161,7 +183,20 @@ export async function POST(request: Request) {
   const styleRef = formData.get("style_reference_image");
   const hasProduct = reference instanceof File && reference.size > 0;
   const hasStyle = styleRef instanceof File && styleRef.size > 0;
-  const { strategy, brief } = parseStrategyFromFormData(formData);
+  const { strategy, brief: parsedBrief } = parseStrategyFromFormData(formData);
+  let brief = parsedBrief;
+  if (strategy.kind === "layout-transfer" && brief && (product || headline)) {
+    try {
+      brief = await ensureOptimizedSceneEssay(brief, {
+        product,
+        headline,
+        subline,
+        offer,
+      });
+    } catch {
+      /* keep unoptimized brief */
+    }
+  }
   const strategyBlock = brief ? referenceStrategyPromptBlock(brief, strategy) : "";
   // Do not treat product_angle_images as research carousel panels — kit is user product detail only.
   const carouselRefs = formData
@@ -264,6 +299,7 @@ export async function POST(request: Request) {
       strategy.useReferenceConceptPrompts ? "reference-concept" : "promo-ai",
       { promotionMode, workflowMode: "image-only" },
     );
+    const modelWear = promptMode === "model-wear";
 
     let imageUrlsForFal: string[] | null = null;
     if (strategy.sendPixelsToFal) {
@@ -333,30 +369,38 @@ export async function POST(request: Request) {
 
       // image_urls require /edit — concept cover-anchor tips otherwise hit text-to-image and ignore the cover.
       const slideEndpoint = resolveEditEndpointWhenNeeded(endpointRaw, Boolean(urls?.length));
-      const result = await fal.subscribe(slideEndpoint, {
-        input: {
-          prompt,
-          ...(urls?.length ? { image_urls: urls } : {}),
-          aspect_ratio: aspectRatio,
-          num_images: 1,
-          resolution: imageResolution,
-          limit_generations: true,
-          ...(systemPrompt ? { system_prompt: systemPrompt } : {}),
-        },
-        logs: true,
-      });
-      const outUrls = extractImageUrls(result.data);
-      if (!outUrls[0]) {
-        throw new Error(`Image URL missing for slide ${slide.index}.`);
-      }
-      return {
-        index: slide.index,
-        role: slide.role,
-        title: slide.title,
-        headline: slide.title,
-        subline: slide.body,
-        imageUrl: outUrls[0],
+      const runOnce = async (): Promise<SlideOut> => {
+        const result = await fal.subscribe(slideEndpoint, {
+          input: {
+            prompt,
+            ...(urls?.length ? { image_urls: urls } : {}),
+            aspect_ratio: aspectRatio,
+            num_images: 1,
+            resolution: imageResolution,
+            limit_generations: true,
+            ...(systemPrompt ? { system_prompt: systemPrompt } : {}),
+          },
+          logs: true,
+        });
+        const outUrls = extractImageUrls(result.data);
+        if (!outUrls[0]) {
+          throw new Error(`Image URL missing for slide ${slide.index}.`);
+        }
+        return {
+          index: slide.index,
+          role: slide.role,
+          title: slide.title,
+          headline: slide.title,
+          subline: slide.body,
+          imageUrl: outUrls[0],
+        };
       };
+      try {
+        return await runOnce();
+      } catch {
+        // Parallel first-pass edits flake (empty URL / transient fal). One retry matches regen success.
+        return await runOnce();
+      }
     }
 
     if (isSingleSlideRegen) {
@@ -374,6 +418,12 @@ export async function POST(request: Request) {
             })
           : "",
         carouselUniqueCopyHint(target),
+        carouselSlideRoleVariationHint({
+          role: target.role,
+          index: target.index,
+          total: plan.slides.length,
+          modelWear,
+        }),
       ];
       const one = await generateOneSlide(target, urls, hints);
       const durableUrls = await persistAndDurablizeMany({
@@ -413,11 +463,10 @@ export async function POST(request: Request) {
     let slideResults: SlideOut[];
     if (coverSlide && restSlides.length > 0) {
       const baseUrls = imageUrlsForFal?.length ? imageUrlsForFal : null;
-      const dualLocksLook = Boolean(strategy.useDualImage && hasStyle && hasProduct);
-      // Never put cover alone as IMAGE 1 — that clones the cover (same image + same words).
-      const attachCoverPixels = !dualLocksLook && Boolean(baseUrls?.length);
+      // Cover LAST after product/style refs — same as single-slide regen. Dual layout-transfer
+      // used to skip this, so first-pass tips invented a charger while regen brought IMAGE 1 back.
 
-      if (attachCoverPixels || dualLocksLook || baseUrls?.length) {
+      if (baseUrls?.length) {
         const coverOut = await generateOneSlide(coverSlide, baseUrls, [
           dualHint,
           carouselUniqueCopyHint(coverSlide),
@@ -425,28 +474,26 @@ export async function POST(request: Request) {
             role: coverSlide.role,
             index: coverSlide.index,
             total: plan.slides.length,
+            modelWear,
           }),
         ]);
-        const tipUrls = attachCoverPixels
-          ? [...(baseUrls ?? []), coverOut.imageUrl]
-          : baseUrls;
+        const tipUrls = teachingCarouselTipImageUrls(baseUrls, coverOut.imageUrl);
         const coverHint = carouselCoverSeriesAnchorHint({
           hasProductPhoto: hasProduct,
-          pixelAnchor: attachCoverPixels,
+          pixelAnchor: true,
         });
-        const restOut = await Promise.all(
-          restSlides.map((slide) =>
-            generateOneSlide(slide, tipUrls, [
-              dualHint,
-              coverHint,
-              carouselUniqueCopyHint(slide),
-              carouselSlideRoleVariationHint({
-                role: slide.role,
-                index: slide.index,
-                total: plan.slides.length,
-              }),
-            ]),
-          ),
+        const restOut = await mapPool(restSlides, TIP_SLIDE_CONCURRENCY, (slide) =>
+          generateOneSlide(slide, tipUrls, [
+            dualHint,
+            coverHint,
+            carouselUniqueCopyHint(slide),
+            carouselSlideRoleVariationHint({
+              role: slide.role,
+              index: slide.index,
+              total: plan.slides.length,
+              modelWear,
+            }),
+          ]),
         );
         slideResults = [coverOut, ...restOut].sort((a, b) => a.index - b.index);
       } else {
@@ -465,6 +512,7 @@ export async function POST(request: Request) {
                 role: slide.role,
                 index: slide.index,
                 total: plan.slides.length,
+                modelWear,
               }),
             ]),
           ),
@@ -480,6 +528,7 @@ export async function POST(request: Request) {
               role: slide.role,
               index: slide.index,
               total: plan.slides.length,
+              modelWear,
             }),
           ]),
         ),

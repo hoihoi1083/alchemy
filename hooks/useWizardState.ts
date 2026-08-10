@@ -182,6 +182,9 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn" | "zh-tw") {
   const [storyboardSceneRegenerateBusy, setStoryboardSceneRegenerateBusy] = useState<number | null>(
     null,
   );
+  const [carouselSlideRegenerateBusy, setCarouselSlideRegenerateBusy] = useState<number | null>(
+    null,
+  );
   const [planVideoPromptBusy, setPlanVideoPromptBusy] = useState(false);
   const [planStoryboardBusy, setPlanStoryboardBusy] = useState(false);
   const [videoPromptPlanNote, setVideoPromptPlanNote] = useState<string | null>(null);
@@ -407,6 +410,8 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn" | "zh-tw") {
     setStoryboardSceneReplaceBusy,
     storyboardSceneRegenerateBusy,
     setStoryboardSceneRegenerateBusy,
+    carouselSlideRegenerateBusy,
+    setCarouselSlideRegenerateBusy,
     planVideoPromptBusy,
     setPlanVideoPromptBusy,
     planStoryboardBusy,

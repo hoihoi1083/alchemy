@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { Fragment, Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { useLocale } from "@/components/LocaleProvider";
 import { FREE_SIGNUP_GRANT_TOKENS } from "@/lib/billing/plans";
@@ -12,19 +12,10 @@ const PHYSICAL_IMG = "/images/landing/start-card-physical-v3.png?v=1";
 const CONCEPT_IMG = "/images/landing/start-card-concept-v3.png?v=1";
 const HERO_IMG = "/images/landing/start-hero-ai-studio-v6.png?v=1";
 
-/** Same illustrated icon language as landing How-it-works / Why sections */
-const ROADMAP_ICONS = [
-  "/images/landing/start-roadmap-bag.png?v=1",
-  "/images/landing/token-icon-plan.png",
-  "/images/landing/start-roadmap-form.png?v=1",
-  "/images/landing/how-icon-generate.png",
-  "/images/landing/how-icon-edit.png",
-] as const;
-
 /**
  * Spacing system:
  * - Page canvas always white
- * - Desktop: type | type | tip; roadmap 5-col only at lg+
+ * - Desktop: type | type | tip
  * - Mobile: single column, tighter vertical rhythm
  * - Short laptop: modest compression (not tiny)
  */
@@ -230,111 +221,11 @@ const START_LAYOUT_CSS = `
   height: 0.75rem !important;
   display: block !important;
 }
-.start-roadmap-wrap {
-  margin-top: 1.5rem !important;
-  padding-top: 1.25rem !important;
-  border-top: 1px solid #f1f5f9 !important;
-}
 .start-continue-row {
   display: flex !important;
   justify-content: flex-end !important;
   margin-top: 1.15rem !important;
   padding-top: 0.15rem !important;
-}
-.start-roadmap-heading-block {
-  text-align: center !important;
-}
-.start-roadmap-heading-title {
-  margin: 0 !important;
-  font-size: 1.05rem !important;
-  font-weight: 700 !important;
-  line-height: 1.3 !important;
-  color: #0f172a !important;
-}
-.start-roadmap-heading-sub {
-  margin: 0.35rem 0 0 !important;
-  font-size: 0.9rem !important;
-  font-weight: 400 !important;
-  line-height: 1.45 !important;
-  color: #64748b !important;
-}
-.start-roadmap {
-  display: grid !important;
-  grid-template-columns: 1fr !important;
-  gap: 1rem !important;
-  align-items: start !important;
-  margin-top: 1rem !important;
-}
-.start-roadmap-step {
-  display: grid !important;
-  grid-template-columns: 4.25rem minmax(0, 1fr) !important;
-  gap: 0.75rem !important;
-  align-items: center !important;
-  min-width: 0 !important;
-}
-.start-roadmap-cluster {
-  display: contents !important;
-}
-.start-roadmap-icon {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  width: 4.25rem !important;
-  height: 4.25rem !important;
-  border-radius: 0.9rem !important;
-  border: 1.5px solid #e2e8f0 !important;
-  background: #ffffff !important;
-  padding: 0.7rem !important;
-  box-sizing: border-box !important;
-}
-.start-roadmap-icon img {
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: contain !important;
-  display: block !important;
-}
-.start-roadmap-copy {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: flex-start !important;
-  gap: 0.2rem !important;
-  min-width: 0 !important;
-}
-.start-roadmap-heading {
-  display: flex !important;
-  align-items: center !important;
-  gap: 0.45rem !important;
-  min-width: 0 !important;
-}
-.start-roadmap-num {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  flex-shrink: 0 !important;
-  width: 1.45rem !important;
-  height: 1.45rem !important;
-  border-radius: 9999px !important;
-  background: #6c3bff !important;
-  color: #fff !important;
-  font-size: 12px !important;
-  font-weight: 700 !important;
-  line-height: 1 !important;
-}
-.start-roadmap-title {
-  margin: 0 !important;
-  font-size: 14px !important;
-  font-weight: 700 !important;
-  line-height: 1.35 !important;
-  color: #0f172a !important;
-}
-.start-roadmap-body {
-  margin: 0 !important;
-  font-size: 12.5px !important;
-  line-height: 1.45 !important;
-  color: #64748b !important;
-}
-.start-roadmap-arrow {
-  display: none !important;
 }
 .start-panel {
   margin-top: 1.1rem !important;
@@ -455,7 +346,6 @@ const START_LAYOUT_CSS = `
     max-height: min(240px, 28vh) !important;
     object-fit: contain !important;
   }
-  .start-roadmap-heading-title { font-size: 1.125rem !important; }
   .start-select-grid {
     grid-template-columns: 1fr 1fr !important;
     gap: 1rem !important;
@@ -479,18 +369,6 @@ const START_LAYOUT_CSS = `
     align-items: center !important;
     justify-content: space-between !important;
     padding: 0.9rem 1.5rem !important;
-  }
-  /* Tablet roadmap: 2 columns, no arrows */
-  .start-roadmap {
-    grid-template-columns: 1fr 1fr !important;
-    gap: 1rem 1.25rem !important;
-  }
-  .start-roadmap-step {
-    grid-template-columns: 4.5rem minmax(0, 1fr) !important;
-  }
-  .start-roadmap-icon {
-    width: 4.5rem !important;
-    height: 4.5rem !important;
   }
 }
 
@@ -580,58 +458,6 @@ const START_LAYOUT_CSS = `
     border-radius: 0.95rem !important;
   }
   .start-phase-label { font-size: 12px !important; }
-  /* Desktop roadmap: 5 steps + chevrons */
-  .start-roadmap {
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr) !important;
-    gap: 0.35rem 0.35rem !important;
-    align-items: start !important;
-    width: 100% !important;
-  }
-  .start-roadmap-step {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: stretch !important;
-    gap: 0 !important;
-    min-width: 0 !important;
-    height: auto !important;
-  }
-  .start-roadmap-cluster {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 0.7rem !important;
-    width: 100% !important;
-    max-width: 100% !important;
-  }
-  .start-roadmap-icon {
-    width: 5.25rem !important;
-    height: 5.25rem !important;
-    margin: 0 !important;
-    padding: 0.95rem !important;
-    flex-shrink: 0 !important;
-  }
-  .start-roadmap-copy {
-    width: 100% !important;
-    max-width: 100% !important;
-    min-width: 0 !important;
-    align-items: flex-start !important;
-  }
-  .start-roadmap-arrow {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    align-self: start !important;
-    width: 1.15rem !important;
-    height: 5.25rem !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    color: #6c3bff !important;
-    font-size: 1.25rem !important;
-    font-weight: 600 !important;
-    line-height: 1 !important;
-  }
-  .start-roadmap-title { font-size: 14.5px !important; }
-  .start-roadmap-body { font-size: 12.5px !important; }
 }
 
 /* Short laptop (MBA 13" with browser chrome) */
@@ -722,27 +548,6 @@ const START_LAYOUT_CSS = `
   .start-tip-card {
     padding: 0.9rem !important;
   }
-  .start-roadmap-wrap {
-    margin-top: 1rem !important;
-    padding-top: 0.85rem !important;
-  }
-  .start-roadmap-icon {
-    width: 4.35rem !important;
-    height: 4.35rem !important;
-    padding: 0.7rem !important;
-    margin: 0 !important;
-  }
-  .start-roadmap-copy {
-    min-width: 0 !important;
-  }
-  .start-roadmap-arrow {
-    width: 1.1rem !important;
-    height: 4.35rem !important;
-    padding: 0 !important;
-    align-self: start !important;
-  }
-  .start-roadmap-title { font-size: 13px !important; }
-  .start-roadmap-body { font-size: 12px !important; }
 }
 `;
 
@@ -901,7 +706,7 @@ function StartPageBody() {
           </div>
         ) : null}
 
-        {/* Step 1 → how-it-works → continue: one bordered panel */}
+        {/* Step 1 type pick → continue */}
         <div className="start-panel">
           <div className="start-panel-body">
             <p className="start-step-eyebrow text-[14px] font-bold tracking-[0.12em] text-violet-600 sm:text-[15px]">
@@ -1025,46 +830,6 @@ function StartPageBody() {
                   </div>
                 </div>
               </aside>
-            </div>
-
-            {/* How it works — landing icon language */}
-            <div className="start-roadmap-wrap">
-              <div className="start-roadmap-heading-block">
-                <h3 className="start-roadmap-heading-title">
-                  {m.start.roadmapTitle}
-                </h3>
-                <p className="start-roadmap-heading-sub">
-                  {m.start.roadmapSubtitle}
-                </p>
-              </div>
-              <ol className="start-roadmap">
-                {m.start.phases.map((label, i) => (
-                  <Fragment key={label}>
-                    <li className="start-roadmap-step">
-                      <div className="start-roadmap-cluster">
-                        <div className="start-roadmap-icon">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={ROADMAP_ICONS[i]} alt="" />
-                        </div>
-                        <div className="start-roadmap-copy">
-                          <div className="start-roadmap-heading">
-                            <span className="start-roadmap-num" aria-hidden>
-                              {i + 1}
-                            </span>
-                            <p className="start-roadmap-title">{label}</p>
-                          </div>
-                          <p className="start-roadmap-body">{m.start.phaseBodies[i]}</p>
-                        </div>
-                      </div>
-                    </li>
-                    {i < m.start.phases.length - 1 ? (
-                      <li className="start-roadmap-arrow" aria-hidden>
-                        ›
-                      </li>
-                    ) : null}
-                  </Fragment>
-                ))}
-              </ol>
             </div>
           </div>
 

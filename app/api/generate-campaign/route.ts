@@ -8,6 +8,8 @@ import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import {
   buildFalLayoutTransferImageUrls,
   carouselCoverSeriesAnchorHint,
+  carouselSlideRoleVariationHint,
+  carouselUniqueCopyHint,
   dualProductIdentityHint,
 } from "@/lib/fal-dual-reference-urls";
 import type { BrandProfile } from "@/lib/brand-profile";
@@ -20,6 +22,7 @@ import {
   parseStrategyFromFormData,
   referenceStrategyPromptBlock,
 } from "@/lib/reference-strategy";
+import { ensureOptimizedSceneEssay } from "@/lib/optimize-reference-scene-prompt";
 import {
   buildCampaignSlideImagePrompt,
   buildPromptVariables,
@@ -131,7 +134,7 @@ export async function POST(request: Request) {
     .slice(0, 4);
   const creativeMode =
     (formData.get("image_creative_mode") as string | null)?.trim() || "promo-ai";
-  const { strategy, brief } = parseStrategyFromFormData(formData);
+  const { strategy, brief: parsedBrief } = parseStrategyFromFormData(formData);
   const useReferenceConcept = strategy.useReferenceConceptPrompts;
   const dualImage = strategy.useDualImage;
   const promotionMode = ((formData.get("promotion_mode") as string | null)?.trim() ||
@@ -179,6 +182,19 @@ export async function POST(request: Request) {
   const subjectFraming = ((formData.get("subject_framing") as string | null)?.trim() ||
     "auto") as SubjectFraming;
   const promptExtraRaw = (formData.get("prompt_extra") as string | null)?.trim() || "";
+  let brief = parsedBrief;
+  if (strategy.kind === "layout-transfer" && brief && (productName || headline)) {
+    try {
+      brief = await ensureOptimizedSceneEssay(brief, {
+        product: productName,
+        headline,
+        subline,
+        offer,
+      });
+    } catch {
+      /* keep unoptimized brief */
+    }
+  }
   const strategyBlock = brief ? referenceStrategyPromptBlock(brief, strategy) : "";
   const promptExtra = [promptExtraRaw, strategyBlock].filter(Boolean).join(" | ");
   const aspectRatio = aspectRatioForApi(
@@ -244,6 +260,7 @@ export async function POST(request: Request) {
           brandProfile,
           promotionMode,
           hasReferenceLayout: strategy.useDualImage,
+          hasProductPhoto: hasProduct,
           referenceStrategyKind:
             strategy.kind === "layout-transfer"
               ? "layout-transfer"
@@ -296,6 +313,7 @@ export async function POST(request: Request) {
       strategy.useDualImage && dualImage && hasProduct && hasStyle
         ? dualProductIdentityHint(productAngleFiles.length > 0)
         : "";
+    const modelWear = promptMode === "model-wear";
 
     type SlideOut = {
       role: string;
@@ -304,6 +322,29 @@ export async function POST(request: Request) {
       subline: string;
       imageUrl: string;
     };
+
+    function slideHints(
+      slide: (typeof plan.slides)[number],
+      i: number,
+      extras: string[] = [],
+    ): string[] {
+      return [
+        dualHint,
+        ...extras,
+        carouselUniqueCopyHint({
+          index: i + 1,
+          role: slide.role,
+          title: slide.headline,
+          body: slide.subline,
+        }),
+        carouselSlideRoleVariationHint({
+          role: slide.role,
+          index: i + 1,
+          total: plan.slides.length,
+          modelWear,
+        }),
+      ];
+    }
 
     async function generateOneSlide(
       slide: (typeof plan.slides)[number],
@@ -370,16 +411,14 @@ export async function POST(request: Request) {
         baseImageUrlsForFal?.length
           ? [...baseImageUrlsForFal, seriesCoverUrl]
           : baseImageUrlsForFal;
-      const hints = [
-        dualHint,
+      const hints = slideHints(target, regenerateSlideIndex!, [
         regenerateSlideIndex! > 0 && seriesCoverUrl.startsWith("http")
-          ? carouselCoverSeriesAnchorHint({ hasProductPhoto: hasProduct })
+          ? carouselCoverSeriesAnchorHint({
+              hasProductPhoto: hasProduct,
+              pixelAnchor: true,
+            })
           : "",
-        // Encourage a fresh scene when re-rolling a non-hero slide.
-        regenerateSlideIndex! > 0
-          ? "VARIATION: Use a DIFFERENT photo composition / subject framing from the cover — keep series palette and typography only. Do not clone the cover photo."
-          : "",
-      ];
+      ]);
       const one = await generateOneSlide(target, regenerateSlideIndex!, urls, hints);
       const durableUrls = await persistAndDurablizeMany({
         clerkId: auth.user.userId,
@@ -410,25 +449,37 @@ export async function POST(request: Request) {
 
     let slides: SlideOut[];
     if (baseImageUrlsForFal?.length && plan.slides.length > 1) {
-      const coverOut = await generateOneSlide(plan.slides[0]!, 0, baseImageUrlsForFal, [dualHint]);
+      const coverOut = await generateOneSlide(
+        plan.slides[0]!,
+        0,
+        baseImageUrlsForFal,
+        slideHints(plan.slides[0]!, 0),
+      );
       const anchoredUrls = [...baseImageUrlsForFal, coverOut.imageUrl];
-      const coverHint = carouselCoverSeriesAnchorHint({ hasProductPhoto: hasProduct });
+      const coverHint = carouselCoverSeriesAnchorHint({
+        hasProductPhoto: hasProduct,
+        pixelAnchor: true,
+      });
       const restOut = await Promise.all(
         plan.slides.slice(1).map((slide, offset) =>
-          generateOneSlide(slide, offset + 1, anchoredUrls, [
-            dualHint,
-            coverHint,
-            "VARIATION: Different composition from the cover — match palette/typography only, not the same photo.",
-          ]),
+          generateOneSlide(
+            slide,
+            offset + 1,
+            anchoredUrls,
+            slideHints(slide, offset + 1, [coverHint]),
+          ),
         ),
       );
       slides = [coverOut, ...restOut];
     } else {
       slides = await Promise.all(
         plan.slides.map((slide, i) =>
-          generateOneSlide(slide, i, baseImageUrlsForFal ? [...baseImageUrlsForFal] : null, [
-            dualHint,
-          ]),
+          generateOneSlide(
+            slide,
+            i,
+            baseImageUrlsForFal ? [...baseImageUrlsForFal] : null,
+            slideHints(slide, i),
+          ),
         ),
       );
     }

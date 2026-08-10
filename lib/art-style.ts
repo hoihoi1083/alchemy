@@ -22,6 +22,14 @@ export const ART_STYLE_IDS: ArtStyleId[] = [
   "watercolor",
 ];
 
+/** Drawn/CGI mediums — whole frame including icons/type. Not film/CCD/国风/cinematic. */
+export const ILLUSTRATED_ART_STYLE_IDS: ArtStyleId[] = [
+  "anime-2d",
+  "cartoon-3d",
+  "comic-webtoon",
+  "watercolor",
+];
+
 /** Tier-1 looks safe to offer on video / Seedance (grade only — never new plot). */
 export const VIDEO_SAFE_ART_STYLE_IDS: ArtStyleId[] = [
   "realistic",
@@ -233,6 +241,18 @@ export function resolveArtStyleId(value: string | undefined | null): ArtStyleId 
   return isArtStyleId(v) ? v : DEFAULT_ART_STYLE;
 }
 
+/** Anime / comic / 3D cartoon / watercolor — switch render medium. */
+export function isIllustratedArtStyle(id?: ArtStyleId | string | null): boolean {
+  const resolved = resolveArtStyleId(id);
+  return (ILLUSTRATED_ART_STYLE_IDS as string[]).includes(resolved);
+}
+
+/** Film / CCD / 国风 / cinematic — photoreal product + atmosphere grade only. */
+export function isLookGradeArtStyle(id?: ArtStyleId | string | null): boolean {
+  const resolved = resolveArtStyleId(id);
+  return resolved !== "realistic" && !isIllustratedArtStyle(resolved);
+}
+
 export function artStyleImageClause(id: ArtStyleId | undefined): string {
   return getArtStyle(id ?? DEFAULT_ART_STYLE).imageClause;
 }
@@ -242,9 +262,19 @@ export function artStyleMandatoryLead(
   id: ArtStyleId | undefined,
   opts?: { textless?: boolean },
 ): string {
-  const styleId = id ?? DEFAULT_ART_STYLE;
+  const styleId = resolveArtStyleId(id);
   if (styleId === "realistic") return "";
   const style = getArtStyle(styleId);
+  if (isLookGradeArtStyle(styleId)) {
+    const scope = opts?.textless
+      ? `Photoreal scene and environment. This is lighting/palette/atmosphere only. No written characters. `
+      : `Keep a photoreal product and scene. Apply this as lighting, palette, and atmosphere only. `;
+    return (
+      `LOOK GRADE (not a new medium): ${style.imageClause} ` +
+      scope +
+      `Do NOT switch to manga, webtoon, anime cel, cartoon icons, speed lines, flat clipart badges, or Pixar CGI.`
+    );
+  }
   const scope = opts?.textless
     ? `The ENTIRE image — background, characters, and props — must be rendered in this medium. No written characters. `
     : `The ENTIRE image — background, characters, props, icons, badges, AND all marketing typography — must be rendered in this medium. `;
@@ -296,9 +326,12 @@ export function artStyleConceptHeroHint(id: ArtStyleId | undefined): string {
 
 /** Semantic negatives appended to Nano Banana prompt (no negative_prompt param). */
 export function artStyleAvoidTail(id: ArtStyleId | undefined): string {
-  const styleId = id ?? DEFAULT_ART_STYLE;
+  const styleId = resolveArtStyleId(id);
   if (styleId === "realistic") return "";
   const style = getArtStyle(styleId);
+  if (isLookGradeArtStyle(styleId)) {
+    return `Avoid: ${style.negativeAdditions}, cartoon icons, manga speed lines, webtoon outlines, anime cel, flat infographic clipart, Pixar CGI product.`;
+  }
   return (
     `Avoid: ${style.negativeAdditions}, photorealistic commercial photo, stock ad template, plain white studio backdrop, hyperrealistic skin, uncanny 3D product mockup.`
   );
@@ -309,13 +342,25 @@ export function artStyleSystemPrompt(
   id: ArtStyleId | undefined,
   opts?: { textless?: boolean },
 ): string | undefined {
-  const styleId = id ?? DEFAULT_ART_STYLE;
+  const styleId = resolveArtStyleId(id);
   if (styleId === "realistic") {
     return opts?.textless
       ? "Photoreal scene only. No written characters in any language. No title bars, captions, logos, or buttons."
       : undefined;
   }
   const style = getArtStyle(styleId);
+  if (isLookGradeArtStyle(styleId)) {
+    if (opts?.textless) {
+      return (
+        `Photoreal still with this look grade: ${style.imageClause} ` +
+        `Atmosphere only. No written characters. No manga/cartoon icons.`
+      );
+    }
+    return (
+      `Photoreal commercial still with this look grade: ${style.imageClause} ` +
+      `Product stays photographic. Do not render manga icons, webtoon outlines, or illustrated clipart.`
+    );
+  }
   if (opts?.textless) {
     return (
       `Output ONLY ${style.imageClause} ` +

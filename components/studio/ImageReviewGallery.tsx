@@ -243,6 +243,8 @@ function ReviewImageFrame({
   reviewHint,
   reviewedHint,
   imageGenKey,
+  regenerating,
+  regeneratingLabel,
   onSelect,
 }: {
   item: ReviewItem;
@@ -253,6 +255,8 @@ function ReviewImageFrame({
   reviewHint?: string;
   reviewedHint?: string;
   imageGenKey: number;
+  regenerating?: boolean;
+  regeneratingLabel?: string;
   onSelect: () => void;
 }) {
   const media = (
@@ -264,12 +268,22 @@ function ReviewImageFrame({
         {item.index + 1}
       </span>
       {/* Fixed frame keeps cards even; object-contain shows the full image without crop */}
-      <div className="flex aspect-[4/5] w-full items-center justify-center bg-stone-100">
-        <img
-          src={`${item.url}${item.url.includes("?") ? "&" : "?"}v=${imageGenKey}-${item.index}`}
-          alt=""
-          className="max-h-full max-w-full object-contain"
-        />
+      <div className="relative flex aspect-[4/5] w-full items-center justify-center bg-stone-100">
+        {item.url ? (
+          <img
+            src={`${item.url}${item.url.includes("?") ? "&" : "?"}v=${imageGenKey}-${item.index}`}
+            alt=""
+            className={`max-h-full max-w-full object-contain ${regenerating ? "opacity-40" : ""}`}
+          />
+        ) : null}
+        {regenerating ? (
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-slate-950/55 px-3 text-center">
+            <span className="h-8 w-8 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+            <span className="text-xs font-medium text-white">
+              {regeneratingLabel ?? "Regenerating…"}
+            </span>
+          </div>
+        ) : null}
       </div>
       {reviewable ? (
         <span
@@ -362,7 +376,9 @@ export function ImageReviewGallery({
     : m.wizard.imageReviewHeroHint;
 
   const selectable = view.kind === "ab" || view.kind === "carousel";
-  const canRegenerate = wizard.canGenerateImage() && !wizard.imageBusy;
+  const cellRegenBusy = wizard.carouselSlideRegenerateBusy;
+  const canRegenerate =
+    wizard.canGenerateImage() && !wizard.imageBusy && cellRegenBusy == null;
 
   function selectItem(index: number, url: string) {
     if (!selectable) return;
@@ -423,6 +439,7 @@ export function ImageReviewGallery({
     }
     // Multi-slide carousel/campaign: per-card regenerates that slide only.
     if (wizard.campaignSlides.length > 1 && typeof wizard.regenerateCarouselSlide === "function") {
+      if (wizard.carouselSlideRegenerateBusy != null) return;
       void wizard.regenerateCarouselSlide(item.index);
       return;
     }
@@ -598,6 +615,10 @@ export function ImageReviewGallery({
                   reviewHint={m.wizard.storyboardTapToReview}
                   reviewedHint={m.wizard.storyboardCellReviewed}
                   imageGenKey={wizard.imageGenKey}
+                  regenerating={
+                    view.kind === "carousel" && cellRegenBusy === item.index
+                  }
+                  regeneratingLabel={m.wizard.storyboardRegeneratingImage}
                   onSelect={() => {
                     selectItem(item.index, item.url);
                   }}
@@ -645,15 +666,18 @@ export function ImageReviewGallery({
                       <CompactAction
                         icon={<IconRefresh className="h-3.5 w-3.5 shrink-0" />}
                         label={
-                          view.kind === "storyboard" &&
-                          wizard.storyboardSceneRegenerateBusy === item.index
+                          (view.kind === "storyboard" &&
+                            wizard.storyboardSceneRegenerateBusy === item.index) ||
+                          (view.kind === "carousel" && cellRegenBusy === item.index)
                             ? m.wizard.storyboardRegeneratingImage
                             : m.wizard.imageReviewRegenerateOneBtn
                         }
                         disabled={
                           view.kind === "storyboard"
                             ? wizard.storyboardSceneRegenerateBusy !== null
-                            : !canRegenerate
+                            : view.kind === "carousel"
+                              ? cellRegenBusy !== null || !wizard.canGenerateImage()
+                              : !canRegenerate
                         }
                         onClick={() => handleRegenerateOne(item)}
                       />
@@ -811,7 +835,7 @@ export function ImageReviewFooterBar({
               onClick={onContinue}
               className="inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-violet-600 bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:border-violet-700 hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
             >
-              {continueLabel ?? m.wizard.continueToVideo}
+              {continueLabel ?? m.wizard.continueNext}
               <svg
                 viewBox="0 0 20 20"
                 className="h-4 w-4"

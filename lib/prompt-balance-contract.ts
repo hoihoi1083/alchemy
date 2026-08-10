@@ -10,6 +10,13 @@
  * 6. Look (art style) = grade only — never a new plot
  */
 
+/** Still + carousel: typed name never redraws the uploaded hero. */
+export function nameIsClaimImage1IsObjectLine(productName?: string): string {
+  const name = productName?.trim();
+  const named = name ? `"${name}"` : "the product name";
+  return `NAME VS PHOTO: ${named} is CLAIM only (topic / captions / why-buy). IMAGE 1 pixels are the on-screen OBJECT. If ${named} names a different category than IMAGE 1 (e.g. power bank vs bottle), KEEP IMAGE 1's exact item — never invent a substitute SKU that matches the name.`;
+}
+
 export const PROMPT_BALANCE_PRIORITY = [
   "video1_spine",
   "image1_object",
@@ -73,7 +80,7 @@ export function productIdentityContractLines(opts?: {
     "IDENTITY CONTRACT (mandatory):",
     "- @Image1 (uploaded product photo) = on-screen OBJECT. Pixels win: shape, color, materials, packaging.",
     "- Product NAME + TITLE/HEADLINE = CLAIM only (what we sell / why buy / captions / poster type). They must not redraw the object.",
-    "- Any name vs photo mismatch (any categories): KEEP IMAGE 1 appearance. Sell the named claim around that object — never invent a substitute SKU.",
+    `- ${nameIsClaimImage1IsObjectLine()}`,
     "- Research angle = tone / hook for captions only — not a new product and not new locations that replace IMAGE 1.",
     "- Research / reference stills = IMAGE 2 layout or grade only — never replace the IMAGE 1 hero.",
     "- Do not morph @Image1 into a different-looking item.",

@@ -50,6 +50,7 @@ import {
   mergeReferencePromptExtra,
   parseStrategyFromFormData,
 } from "@/lib/reference-strategy";
+import { ensureOptimizedSceneEssay } from "@/lib/optimize-reference-scene-prompt";
 import { resolveArtStyleId, artStyleSystemPrompt } from "@/lib/art-style";
 import {
   planSingleImageAd,
@@ -473,15 +474,33 @@ export async function POST(request: Request) {
     const subjectFraming = ((formData.get("subject_framing") as string | null)?.trim() ||
       "auto") as SubjectFraming;
     const promptExtraRaw = (formData.get("prompt_extra") as string | null)?.trim() || "";
-    const { strategy, brief } = parseStrategyFromFormData(formData);
+    const headline = (formData.get("headline") as string | null)?.trim() || "";
+    const subline = (formData.get("subline") as string | null)?.trim() || "";
+    const offer = (formData.get("offer") as string | null)?.trim() || "";
+    const { strategy, brief: parsedBrief } = parseStrategyFromFormData(formData);
+    let brief = parsedBrief;
+    if (
+      !motionPosterEarly &&
+      strategy.kind === "layout-transfer" &&
+      brief &&
+      (productName || headline)
+    ) {
+      try {
+        brief = await ensureOptimizedSceneEssay(brief, {
+          product: productName,
+          headline,
+          subline,
+          offer,
+        });
+      } catch {
+        /* keep unoptimized brief */
+      }
+    }
     const promptExtra = mergeReferencePromptExtra(promptExtraRaw, brief, strategy);
     const artStyleId = resolveArtStyleId((formData.get("art_style") as string | null)?.trim());
     const imageTextModeRaw = (formData.get("image_text_mode") as string | null)?.trim();
     const imageTextMode =
       imageTextModeRaw === "textless" ? ("textless" as const) : ("integrated" as const);
-    const headline = (formData.get("headline") as string | null)?.trim() || "";
-    const subline = (formData.get("subline") as string | null)?.trim() || "";
-    const offer = (formData.get("offer") as string | null)?.trim() || "";
     const clientPrompt = (formData.get("prompt") as string | null)?.trim() || "";
 
     const aspectRatioRaw = (formData.get("aspect_ratio") as string | null)?.trim() || "9:16";

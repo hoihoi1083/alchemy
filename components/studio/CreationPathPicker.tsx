@@ -1,6 +1,5 @@
 "use client";
 
-import { Fragment } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 import type { WorkflowMode } from "@/lib/workflow-mode";
 import { studioPhasesForMode } from "@/lib/studio-phases";
@@ -56,58 +55,6 @@ function PathHeroIcon({ mode }: { mode: WorkflowMode }) {
       <circle cx="15.5" cy="17.5" r="1.8" fill="currentColor" />
       <circle cx="34" cy="32" r="8" fill="currentColor" fillOpacity="0.2" stroke="currentColor" strokeWidth="2" />
       <path d="M32 28.8v6.4l5.5-3.2-5.5-3.2Z" fill="currentColor" />
-    </svg>
-  );
-}
-
-type NextIconKind = "setup" | "generate" | "image" | "video" | "done";
-
-function NextStepIcon({ kind }: { kind: NextIconKind }) {
-  const common = {
-    className: "h-6 w-6",
-    fill: "none" as const,
-    stroke: "currentColor",
-    strokeWidth: 1.8,
-    strokeLinecap: "round" as const,
-    strokeLinejoin: "round" as const,
-    "aria-hidden": true as const,
-  };
-  if (kind === "setup") {
-    return (
-      <svg viewBox="0 0 24 24" {...common}>
-        <path d="M8 4h8a2 2 0 0 1 2 2v14l-6-3-6 3V6a2 2 0 0 1 2-2Z" />
-        <path d="M9.5 9h5M9.5 12h5M9.5 15h3" />
-      </svg>
-    );
-  }
-  if (kind === "image") {
-    return (
-      <svg viewBox="0 0 24 24" {...common}>
-        <rect x="3.5" y="5.5" width="17" height="13" rx="2" />
-        <path d="m6.5 15.5 3.2-3.6a1.2 1.2 0 0 1 1.8 0L14 14.5l1.4-1.5a1.2 1.2 0 0 1 1.8.1L18.5 15.5" />
-        <circle cx="9" cy="9.5" r="1.2" fill="currentColor" stroke="none" />
-      </svg>
-    );
-  }
-  if (kind === "video") {
-    return (
-      <svg viewBox="0 0 24 24" {...common}>
-        <circle cx="12" cy="12" r="7.5" />
-        <path d="M10.5 9.2v5.6L15.2 12l-4.7-2.8Z" fill="currentColor" stroke="none" />
-      </svg>
-    );
-  }
-  if (kind === "generate") {
-    return (
-      <svg viewBox="0 0 24 24" {...common}>
-        <path d="M12 3.5 13.2 8l4.3.4-3.3 3 1.1 4.3L12 13.5 8.7 15.7l1.1-4.3-3.3-3L10.8 8 12 3.5Z" />
-      </svg>
-    );
-  }
-  return (
-    <svg viewBox="0 0 24 24" {...common}>
-      <circle cx="12" cy="12" r="7.5" />
-      <path d="m8.8 12.2 2.2 2.2 4.2-4.4" />
     </svg>
   );
 }
@@ -242,32 +189,8 @@ const PATH_CSS = `
   background: #6c3bff; color: #fff; flex-shrink: 0; line-height: 0;
 }
 .path-tip-star svg { width: 0.75rem; height: 0.75rem; display: block; }
-.path-next-wrap {
-  margin-top: 1.35rem; padding: 1.1rem 1rem 1.15rem;
-  border-radius: 1rem; border: 1px solid #ede9fe; background: #faf8ff;
-}
-.path-next-grid {
-  display: grid; gap: 0.85rem; margin-top: 0.9rem;
-}
-.path-next-step {
-  display: grid; grid-template-columns: 3rem minmax(0,1fr); gap: 0.65rem; align-items: center;
-}
-.path-next-icon {
-  display: flex; align-items: center; justify-content: center;
-  width: 3rem; height: 3rem; border-radius: 0.85rem;
-  background: #ede9fe; color: #5b2fe0; box-sizing: border-box;
-}
-.path-next-arrow { display: none; color: #6c3bff; }
-/* Tablet+: next-step arrows; keep path cards single-column to avoid orphan 3rd card. */
 @media (min-width: 768px) {
   .path-select-grid { gap: 1rem; }
-  .path-next-grid {
-    grid-template-columns: repeat(var(--path-next-cols, 5), minmax(0, 1fr));
-    align-items: center;
-  }
-  .path-next-grid[data-count="3"] { --path-next-cols: 5; grid-template-columns: 1fr auto 1fr auto 1fr; }
-  .path-next-grid[data-count="4"] { --path-next-cols: 7; grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr; }
-  .path-next-arrow { display: flex; align-items: center; justify-content: center; }
 }
 /* Wide tablet / small laptop: 3 equal path cards, tip full-width underneath. */
 @media (min-width: 900px) {
@@ -337,24 +260,6 @@ export function CreationPathPicker({
   const { m } = useLocale();
   const cp = m.wizard.creationPath;
   const modes = m.wizard.workflowModes;
-
-  const nextSteps =
-    value === "image-only"
-      ? cp.nextStepsImage
-      : value === "video-only"
-        ? cp.nextStepsVideo
-        : value === "combined"
-          ? cp.nextStepsCombined
-          : cp.nextStepsUnset;
-
-  const nextSubtitle =
-    value === "image-only"
-      ? cp.nextSubtitleImage
-      : value === "video-only"
-        ? cp.nextSubtitleVideo
-        : value === "combined"
-          ? cp.nextSubtitleCombined
-          : cp.nextSubtitleUnset;
 
   return (
     <div className="path-page -mx-1 sm:mx-0">
@@ -498,39 +403,6 @@ export function CreationPathPicker({
                 </div>
               </div>
             </aside>
-          </div>
-
-          <div className="path-next-wrap">
-            <h3 className="text-center text-[15px] font-bold text-slate-900 sm:text-left">
-              {cp.nextTitle}
-            </h3>
-            <p className="mt-1 text-center text-sm text-slate-500 sm:text-left">
-              {nextSubtitle}
-            </p>
-            <div className="path-next-grid" data-count={nextSteps.length}>
-              {nextSteps.map((step, i) => (
-                <Fragment key={`${step.icon}-${step.title}`}>
-                  <div className="path-next-step">
-                    <div className="path-next-icon">
-                      <NextStepIcon kind={step.icon as NextIconKind} />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-[13px] font-bold text-slate-900">{step.title}</p>
-                      <p className="mt-0.5 text-[12px] leading-snug text-slate-500">
-                        {step.body}
-                      </p>
-                    </div>
-                  </div>
-                  {i < nextSteps.length - 1 ? (
-                    <div className="path-next-arrow" aria-hidden>
-                      <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M7 4.5 12.5 10 7 15.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </div>
-                  ) : null}
-                </Fragment>
-              ))}
-            </div>
           </div>
         </div>
       </div>

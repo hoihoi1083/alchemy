@@ -2,6 +2,8 @@ import {
   appendArtStyleSeedanceHintIfNeeded,
   artStylePlannerHint,
   DEFAULT_ART_STYLE,
+  isIllustratedArtStyle,
+  isLookGradeArtStyle,
   resolveArtStyleId,
   type ArtStyleId,
 } from "@/lib/art-style";
@@ -33,9 +35,13 @@ export function videoPlannerContextBlock(input: VideoPlannerStyleContext): strin
   if (!input.hasReferenceVideo) {
     const artHint = artStylePlannerHint(artStyleId);
     if (artHint) lines.push(artHint);
-    if (artStyleId !== "realistic") {
+    if (isIllustratedArtStyle(artStyleId)) {
       lines.push(
         "The user's keyframe/stills use this illustrated or stylized medium — videoPrompt MUST preserve it; do NOT default to photorealistic live-action.",
+      );
+    } else if (isLookGradeArtStyle(artStyleId)) {
+      lines.push(
+        "The user's keyframes use this photoreal LOOK GRADE (atmosphere/palette only) — preserve it; do not switch to manga, webtoon, or illustration.",
       );
     }
   } else {

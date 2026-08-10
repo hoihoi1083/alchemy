@@ -23,13 +23,7 @@ export function referenceAnalyzeTriggerKey(input: {
   const files = referenceFilesFingerprint(input.cover, input.extras);
   if (!files) return null;
   // Vision describes the reference pixels only. Do NOT include visualStyleId /
-  // imageCreativeMode — picking model-wear vs quick after upload used to
-  // re-trigger analyze-reference (and fal Florence) a second time.
-  return [
-    files,
-    input.promotionMode,
-    input.imageOutputMode,
-    input.hasProductPhoto ? "1" : "0",
-    input.researchAngleId ?? "",
-  ].join("::");
+  // imageCreativeMode / imageOutputMode / hasProductPhoto — switching 單張→教學
+  // or adding the product photo used to re-bill Florence with the same caption.
+  return [files, input.promotionMode, input.researchAngleId ?? ""].join("::");
 }

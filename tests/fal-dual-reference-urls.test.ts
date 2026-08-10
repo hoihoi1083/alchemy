@@ -4,9 +4,11 @@ import {
   buildFalLayoutTransferImageUrls,
   carouselCoverSeriesAnchorHint,
   carouselProductHeroLock,
+  carouselSlideRoleVariationHint,
   carouselSeriesConsistencyLock,
   carouselUniqueCopyHint,
   dualProductIdentityHint,
+  teachingCarouselTipImageUrls,
 } from "../lib/fal-dual-reference-urls";
 import { resolveReferenceStrategy } from "../lib/reference-strategy";
 
@@ -69,15 +71,55 @@ describe("dual reference layout-transfer (research OR manual style upload)", () 
     assert.match(dualProductIdentityHint(true), /IMAGE 1 only/);
   });
 
+  it("name vs photo: typed 便攜電源 does not redefine IMAGE 1", () => {
+    const lock = carouselProductHeroLock({ productName: "便攜電源" });
+    assert.match(lock, /NAME VS PHOTO/);
+    assert.match(lock, /便攜電源/);
+    assert.match(lock, /CLAIM only/);
+    assert.doesNotMatch(lock, /exact photo of 便攜電源/);
+    assert.match(lock, /power bank vs bottle|substitute SKU/i);
+    assert.match(lock, /TIP \/ SELLING-POINT|typography only/i);
+    assert.match(lock, /charger|power station/i);
+  });
+
   it("carousel product hero lock bans substitute jewelry and mascots on tip slides", () => {
     const lock = carouselProductHeroLock({ productName: "金砂石手鏈" });
     assert.match(lock, /PRODUCT HERO LOCK/);
+    assert.match(lock, /IMAGE 1 pixels ARE the product/);
+    assert.match(lock, /NAME VS PHOTO/);
     assert.match(lock, /金砂石手鏈/);
+    assert.doesNotMatch(lock, /IMAGE 1 is the exact photo of/);
     assert.match(lock, /tip|educational/i);
     assert.match(lock, /substitute|jewelry/i);
     assert.match(lock, /bathroom|gym|yoga|cutaway/i);
     assert.match(lock, /mascot|flask|beaker/i);
     assert.match(lock, /recolor|pink/i);
+    assert.match(lock, /TIP \/ SELLING-POINT|typography only/i);
+    assert.match(lock, /charger|power station|快速充電/i);
+  });
+
+  it("first-pass tip urls match regen: product/style first, cover last", () => {
+    assert.deepEqual(
+      teachingCarouselTipImageUrls(
+        ["url:product.jpg", "url:style.jpg"],
+        "url:cover.jpg",
+      ),
+      ["url:product.jpg", "url:style.jpg", "url:cover.jpg"],
+    );
+    assert.equal(teachingCarouselTipImageUrls(null, "url:cover.jpg"), null);
+    assert.deepEqual(teachingCarouselTipImageUrls(["url:product.jpg"], ""), [
+      "url:product.jpg",
+    ]);
+  });
+
+  it("tip slide variation forbids inventing a charger to illustrate the tip", () => {
+    const hint = carouselSlideRoleVariationHint({
+      role: "point",
+      index: 3,
+      total: 5,
+    });
+    assert.match(hint, /SAME product/i);
+    assert.match(hint, /charger|power station/i);
   });
 
   it("carousel series lock bans mid-series photoreal lifestyle flip and demands layout variation", () => {
@@ -87,6 +129,31 @@ describe("dual reference layout-transfer (research OR manual style upload)", () 
     assert.match(lock, /photorealistic human|bathroom|lifestyle cutaway|mascot/i);
     assert.match(lock, /DISTINCT composition|NEVER reuse the same/i);
     assert.match(lock, /CRITICAL MEDIUM LOCK|Never mix styles|SAME character/i);
+  });
+
+  it("model-wear series lock requires a person on every slide", () => {
+    const lock = carouselSeriesConsistencyLock("lifestyle jewelry ads", {
+      modelWear: true,
+    });
+    assert.match(lock, /SERIES MODEL-WEAR LOCK|real person/i);
+    assert.doesNotMatch(lock, /Do NOT invent a one-off photoreal model-wear/i);
+  });
+
+  it("campaign role variation uses selling-points / offer language", () => {
+    const mid = carouselSlideRoleVariationHint({
+      role: "selling-points",
+      index: 2,
+      total: 3,
+    });
+    assert.match(mid, /selling-points|Feature/i);
+    assert.match(mid, /differ from hero|MUST differ/i);
+    const wear = carouselSlideRoleVariationHint({
+      role: "offer",
+      index: 3,
+      total: 3,
+      modelWear: true,
+    });
+    assert.match(wear, /person|wearing|using/i);
   });
 
   it("cover series text DNA (default) forbids cloning cover with swapped text", () => {

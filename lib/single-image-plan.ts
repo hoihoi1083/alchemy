@@ -1,6 +1,12 @@
 import { callDeepSeekChat, deepSeekApiKey } from "@/lib/deepseek-client";
 import { parseLlmJsonObject } from "@/lib/parse-llm-json";
-import { artStylePlannerHint, resolveArtStyleId, type ArtStyleId } from "@/lib/art-style";
+import {
+  artStylePlannerHint,
+  isIllustratedArtStyle,
+  isLookGradeArtStyle,
+  resolveArtStyleId,
+  type ArtStyleId,
+} from "@/lib/art-style";
 import { resolveCopyLocale, plannerCopyLanguageRule, rewriteCopyToScript, coerceCopyScript } from "@/lib/copy-locale";
 import type { PromotionMode } from "@/lib/promotion-mode";
 import type { PromptMarket } from "@/lib/prompt-variables";
@@ -38,9 +44,12 @@ export type SingleImagePlanInput = {
 };
 
 function defaultVisualDna(input: SingleImagePlanInput): string {
-  const stylized = resolveArtStyleId(input.artStyleId) !== "realistic";
-  if (stylized) {
-    return `${artStylePlannerHint(resolveArtStyleId(input.artStyleId))} Finished illustrated social ad with layered composition — NOT a flat catalog cutout.`;
+  const artId = resolveArtStyleId(input.artStyleId);
+  if (isIllustratedArtStyle(artId)) {
+    return `${artStylePlannerHint(artId)} Finished illustrated social ad with layered composition — NOT a flat catalog cutout.`;
+  }
+  if (isLookGradeArtStyle(artId)) {
+    return `${artStylePlannerHint(artId)} Photoreal social ad with this look grade — atmosphere only. NOT manga icons or cartoon clipart.`;
   }
   if (
     input.promotionMode === "concept" &&
@@ -64,21 +73,21 @@ function defaultRole(input: SingleImagePlanInput): SingleImageAdRole {
 }
 
 function defaultComposition(input: SingleImagePlanInput, role: SingleImageAdRole): string {
-  const stylized = resolveArtStyleId(input.artStyleId) !== "realistic";
+  const illustrated = isIllustratedArtStyle(input.artStyleId);
   const photoRef = isPhotographicReferenceBrief(input.promptExtra ?? "");
   if (role === "cta") {
-    return stylized
+    return illustrated
       ? "Closing illustrated ad — dramatic scene + one clear CTA, layered type, generous negative space — not a blank white card"
       : "Closing social ad — moody lifestyle scene with product in context, one CTA line, gradient scrim — not a catalog cutout";
   }
   if (role === "benefit") {
-    return stylized
+    return illustrated
       ? "Benefit illustration — visual metaphor + product, title and short support woven into layout — not a bullet list on white"
       : photoRef
         ? "Photo-led benefit still — lifestyle flat lay or in-use scene, integrated typography, props and texture — no blank sweep"
         : "Benefit social ad — product in a styled scene with one key idea, magazine hierarchy — not a plain product-only beauty shot";
   }
-  return stylized
+  return illustrated
     ? "Illustrated cover — bold hook integrated into a rich drawn scene with depth"
     : input.hasProductPhoto
       ? "Editorial magazine cover — keep exact product from IMAGE 1 as hero, but BUILD a full lifestyle/editorial SETTING around it (stone/linen/glass props, soft rim light, shallow DOF); large headline band + support line; never leave product on empty white seamless"
@@ -128,7 +137,8 @@ function normalizePlan(
 
 function buildPlanPrompt(input: SingleImagePlanInput): string {
   const artStyleId = resolveArtStyleId(input.artStyleId);
-  const stylized = artStyleId !== "realistic";
+  const illustrated = isIllustratedArtStyle(artStyleId);
+  const lookGrade = isLookGradeArtStyle(artStyleId);
   const copyLocale = resolveCopyLocale(
     input.promptMarket ?? "hk",
     input.headline,
@@ -156,9 +166,11 @@ function buildPlanPrompt(input: SingleImagePlanInput): string {
     "- Do NOT invent shop-now CTAs (e.g. 立即選購) unless Offer/CTA is provided above.",
     "- Do not invent pricing or fake claims unless provided.",
     "- Avoid Canva/PPT/white edu-card layouts AND avoid blank catalog beauty shots.",
-    stylized
+    illustrated
       ? `- visualDna MUST match: ${artStylePlannerHint(artStyleId)} — illustrated medium, NOT photography.`
-      : "",
+      : lookGrade
+        ? `- visualDna MUST match: ${artStylePlannerHint(artStyleId)} — photoreal product + look grade only. NO manga icons or cartoon clipart.`
+        : "",
     styleOnlyRef
       ? "- Extra requirements may include a style reference — match palette/typography mood, invent a fresh layout."
       : "",
@@ -167,7 +179,7 @@ function buildPlanPrompt(input: SingleImagePlanInput): string {
       : "",
     "",
     `Visual style: ${input.visualStyleId}`,
-    stylized ? `Art style: ${artStyleId}` : "",
+    illustrated || lookGrade ? `Art style: ${artStyleId}` : "",
     input.product ? `Product: ${input.product}` : "",
     input.business ? `Brand: ${input.business}` : "",
     input.headline ? `Headline: ${input.headline}` : "",

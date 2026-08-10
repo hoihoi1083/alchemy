@@ -4,6 +4,7 @@ import {
   buildTeachingCarouselSlideImagePrompt,
   buildCarouselImageNegativePrompt,
 } from "../lib/prompt-variables";
+import { buildTeachingCarouselPlanPromptForTest } from "../lib/teaching-carousel-plan";
 
 const vars = {
   product: "一站式廣告平台",
@@ -111,9 +112,75 @@ describe("concept teaching carousel prompt guards", () => {
       { hasProductPhoto: true, productName: "金砂石手鏈" },
     );
     assert.match(prompt, /PRODUCT HERO LOCK/);
+    assert.match(prompt, /IMAGE 1 pixels ARE the product/);
+    assert.match(prompt, /NAME VS PHOTO/);
     assert.match(prompt, /SERIES CONSISTENCY LOCK/);
     assert.match(prompt, /金砂石手鏈/);
+    assert.doesNotMatch(prompt, /exact photo of 金砂石手鏈/);
     assert.match(prompt, /Do NOT replace|substitute/i);
+    assert.match(prompt, /TIP \/ SELLING-POINT|typography only/i);
+    assert.match(prompt, /charger|power station|快速充電/i);
     assert.match(prompt, /photorealistic human|bathroom|lifestyle cutaway/i);
+  });
+
+  it("国风 look grade stays photoreal — no illustrated teaching page / manga icons", () => {
+    const prompt = buildTeachingCarouselSlideImagePrompt(
+      { ...vars, artStyle: "guofeng" },
+      { theme: "便攜電源", visualDna: "国风 mist mountains" },
+      {
+        index: 2,
+        role: "point",
+        title: "快速充電",
+        body: "節省時間",
+        takeaway: "效率",
+        composition: "Tip — product hero",
+      },
+      5,
+      "promo-ai",
+      null,
+      "clone",
+      { hasProductPhoto: true, productName: "便攜電源" },
+    );
+    assert.match(prompt, /LOOK GRADE|look grade/i);
+    assert.doesNotMatch(prompt, /ILLUSTRATED teaching carousel/i);
+    assert.match(prompt, /manga|cartoon icons|webtoon/i);
+
+    const plan = buildTeachingCarouselPlanPromptForTest({
+      visualStyleId: "product",
+      artStyleId: "guofeng",
+      product: "便攜電源",
+      headline: "一電在手",
+      hasProductPhoto: true,
+      promptMarket: "hk",
+    });
+    assert.match(plan, /LOOK GRADE|look grade/i);
+    assert.match(plan, /manga icons|cartoon USB/i);
+    assert.doesNotMatch(plan, /entire carousel in this illustrated medium/);
+  });
+
+  it("model-wear teaching slides require a real person, not promo catalog", () => {
+    const prompt = buildTeachingCarouselSlideImagePrompt(
+      vars,
+      { theme: "金砂石手鏈保養", visualDna: "lifestyle jewelry tips" },
+      {
+        index: 2,
+        role: "point",
+        title: "清潔與保養技巧",
+        body: "使用柔軟乾布輕拭",
+        takeaway: "定期保養",
+        composition: "Tip — person wearing bracelet",
+      },
+      4,
+      "model-wear",
+      null,
+      "clone",
+      {
+        visualStyleId: "model-wear",
+        hasProductPhoto: true,
+        productName: "金砂石手鏈",
+      },
+    );
+    assert.match(prompt, /MODEL WEAR|real person/i);
+    assert.match(prompt, /SERIES MODEL-WEAR LOCK|wearing or using/i);
   });
 });

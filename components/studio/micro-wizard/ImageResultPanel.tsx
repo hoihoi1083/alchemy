@@ -16,7 +16,7 @@ export function ImageResultPanel({ generatingLabel, allowRegenerate = false }: P
   const { m } = useLocale();
   const wizard = useWizard();
 
-  if (wizard.imageBusy) {
+  if (wizard.imageBusy && wizard.carouselSlideRegenerateBusy == null) {
     return (
       <ImageGenerateWaitPanel
         message={wizard.imageProgressInfo?.label ?? generatingLabel}

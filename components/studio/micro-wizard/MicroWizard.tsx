@@ -37,7 +37,8 @@ export function MicroWizard({ promotionMode }: Props) {
   } = micro;
 
   const isImageReviewStep = currentId === "image.review";
-  const showReviewFooter = isImageReviewStep && !wizard.imageBusy;
+  const showReviewFooter =
+    isImageReviewStep && !wizard.imageBusy && wizard.carouselSlideRegenerateBusy == null;
   const isCombinedSceneReview =
     isImageReviewStep && wizard.workflowMode === "combined" && wizard.isStoryboardOutput;
   const isImageWait =
@@ -51,7 +52,11 @@ export function MicroWizard({ promotionMode }: Props) {
   const showVideoReviewFooter = isVideoResult && !wizard.videoBusy;
   /** Hide Back/Continue while the violet wait panel is showing (research + direct). */
   const showImageWaitOnly =
-    isImageWait || isVideoWait || (isImageReviewStep && wizard.imageBusy);
+    isImageWait ||
+    isVideoWait ||
+    (isImageReviewStep &&
+      wizard.imageBusy &&
+      wizard.carouselSlideRegenerateBusy == null);
 
   const analyzeReady =
     (currentId === "wait.reference_analyze" || currentId === "wait.research_apply") &&
@@ -184,7 +189,7 @@ export function MicroWizard({ promotionMode }: Props) {
       >
         <path d="M12.5 4.5 7 10l5.5 5.5" />
       </svg>
-      {isCreationPath ? m.wizard.creationPath.backToStep1 : m.wizard.back}
+      {m.wizard.back}
     </button>
   );
 
@@ -210,9 +215,7 @@ export function MicroWizard({ promotionMode }: Props) {
               : "bg-violet-600 hover:bg-violet-700"
           }`}
         >
-          {isCreationPath
-            ? m.wizard.creationPath.continueToSetup
-            : continueLabel}
+          {continueLabel}
           <svg
             viewBox="0 0 20 20"
             className="h-4 w-4"
@@ -248,7 +251,7 @@ export function MicroWizard({ promotionMode }: Props) {
             }
       }
       onContinue={isCombinedSceneReview ? goNext : undefined}
-      continueLabel={isCombinedSceneReview ? m.wizard.continueToVideo : undefined}
+      continueLabel={isCombinedSceneReview ? mw.continue : undefined}
       continueDisabled={
         isCombinedSceneReview &&
         (Boolean(blockReason) || !wizard.storyboardGridApproved)

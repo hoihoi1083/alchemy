@@ -9,7 +9,13 @@ import {
   MAX_TEACHING_CAROUSEL_SLIDE_COUNT,
   MIN_TEACHING_CAROUSEL_SLIDE_COUNT,
 } from "@/lib/teaching-carousel-types";
-import { artStylePlannerHint, resolveArtStyleId, type ArtStyleId } from "@/lib/art-style";
+import {
+  artStylePlannerHint,
+  isIllustratedArtStyle,
+  isLookGradeArtStyle,
+  resolveArtStyleId,
+  type ArtStyleId,
+} from "@/lib/art-style";
 import { resolveCopyLocale, plannerCopyLanguageRule, rewriteCopyToScript, coerceCopyScript, integratedTypographyPhrase } from "@/lib/copy-locale";
 import type { PromotionMode } from "@/lib/promotion-mode";
 import type { PromptMarket } from "@/lib/prompt-variables";
@@ -38,7 +44,7 @@ type PlanInput = {
 };
 
 function defaultVisualDna(input: PlanInput): string {
-  const stylized = resolveArtStyleId(input.artStyleId) !== "realistic";
+  const artId = resolveArtStyleId(input.artStyleId);
   const copyLocale = resolveCopyLocale(
     input.promptMarket ?? "hk",
     input.headline,
@@ -47,8 +53,11 @@ function defaultVisualDna(input: PlanInput): string {
     input.promptExtra,
   );
   const typePhrase = integratedTypographyPhrase(copyLocale);
-  if (stylized) {
-    return `${artStylePlannerHint(resolveArtStyleId(input.artStyleId))} Consistent illustrated palette and lettering across all slides — NOT photorealistic photography.`;
+  if (isIllustratedArtStyle(artId)) {
+    return `${artStylePlannerHint(artId)} Consistent illustrated palette and lettering across all slides — NOT photorealistic photography.`;
+  }
+  if (isLookGradeArtStyle(artId)) {
+    return `${artStylePlannerHint(artId)} Photoreal product photography with this look grade on every slide — atmosphere/palette/lighting only. NOT manga icons, NOT webtoon, NOT cartoon clipart.`;
   }
   if (
     input.promotionMode === "concept" &&
@@ -80,7 +89,7 @@ function fallbackSlides(input: PlanInput, count: number): TeachingCarouselSlide[
     .map((s) => s.trim())
     .filter(Boolean)
     .map((s) => coerceCopyScript(s, copyLocale));
-  const stylized = resolveArtStyleId(input.artStyleId) !== "realistic";
+  const illustrated = isIllustratedArtStyle(input.artStyleId);
   const photoRef = isPhotographicReferenceBrief(input.promptExtra ?? "");
   const pointBody =
     copyLocale === "zh-hans"
@@ -121,10 +130,10 @@ function fallbackSlides(input: PlanInput, count: number): TeachingCarouselSlide[
       composition:
         role === "cover"
           ? input.promotionMode === "concept"
-            ? stylized
+            ? illustrated
               ? "Illustrated cover — bold headline integrated into drawn scene, not a photo"
               : "Editorial cover — bold headline over lifestyle/metaphor photo, magazine energy"
-            : stylized
+            : illustrated
               ? input.hasProductPhoto
                 ? "Illustrated cover — exact product from IMAGE 1 as hero with strong headline"
                 : "Illustrated cover layout with strong headline hierarchy"
@@ -133,10 +142,10 @@ function fallbackSlides(input: PlanInput, count: number): TeachingCarouselSlide[
                 : "Editorial cover layout with strong headline hierarchy"
           : role === "summary"
             ? input.promotionMode === "concept"
-              ? stylized
+              ? illustrated
                 ? "Closing illustrated slide — one CTA line in art medium"
                 : "Closing slide — one CTA line on moody photo, not a white recap box"
-              : stylized
+              : illustrated
                 ? input.hasProductPhoto
                   ? "Illustrated recap — exact product from IMAGE 1 still visible with closing takeaway"
                   : "Illustrated recap layout with closing takeaway"
@@ -144,12 +153,12 @@ function fallbackSlides(input: PlanInput, count: number): TeachingCarouselSlide[
                   ? "Calm recap — exact product from IMAGE 1 visible with closing takeaway"
                   : "Calm recap layout with closing takeaway box"
             : input.promotionMode === "concept"
-              ? stylized
+              ? illustrated
                 ? "Tip slide — one key idea as illustration, not photo edu card"
                 : photoRef
                   ? "Tip slide — photo-led flat lay with integrated typography, no cartoon icons"
                   : "Tip slide — one key idea with visual metaphor, not bullet-list edu card"
-              : stylized
+              : illustrated
                 ? input.hasProductPhoto
                   ? "Illustrated tip — exact product from IMAGE 1 visible as hero while teaching one point; no substitute SKU or mascot"
                   : "Illustrated educational card with title + short explanation"
@@ -243,7 +252,8 @@ function buildPlanPrompt(input: PlanInput): string {
     Math.max(MIN_TEACHING_CAROUSEL_SLIDE_COUNT, Number(input.slideCount) || DEFAULT_TEACHING_CAROUSEL_SLIDE_COUNT),
   );
   const artStyleId = resolveArtStyleId(input.artStyleId);
-  const stylized = artStyleId !== "realistic";
+  const illustrated = isIllustratedArtStyle(artStyleId);
+  const lookGrade = isLookGradeArtStyle(artStyleId);
   const copyLocale = resolveCopyLocale(
     input.promptMarket ?? "hk",
     input.headline,
@@ -322,21 +332,28 @@ function buildPlanPrompt(input: PlanInput): string {
       : input.promotionMode === "concept"
         ? [
             "- CONCEPT mode: editorial social carousel (HK/IG agency style), NOT classroom edu slides or white infographic posters.",
-            stylized
+            illustrated
               ? `- visualDna MUST match: ${artStylePlannerHint(artStyleId)} — illustrated medium on every slide, NOT photography.`
-              : "- visualDna: moody/color-graded photography or stylized editorial — strong visual metaphor allowed; avoid plain system font on white boxes.",
+              : lookGrade
+                ? `- visualDna MUST match: ${artStylePlannerHint(artStyleId)} — photoreal product + this look grade only. NO manga icons, webtoon panels, cartoon USB/battery clipart, or speed lines.`
+                : "- visualDna: moody/color-graded photography or stylized editorial — strong visual metaphor allowed; avoid plain system font on white boxes.",
             "- Each slide = ONE main idea with a distinct composition (cover / tip / recap) — no repeated layout template.",
             "- Copy is short; body/takeaway must not repeat the title verbatim.",
             "- composition must NOT invent English UI chips/labels (Image, Video, Copy, Copywriting) or an outer matte/letterbox frame around the slide.",
             "- Prefer full-bleed scene metaphors; do not plan 'poster card floating on blank canvas' layouts.",
             "- Follow the user's concept hook / visual metaphor when provided (including stylized characters if the brief implies them) — keep the SAME metaphor family across all slides.",
           ]
-        : stylized
+        : illustrated
           ? [
               `- Art direction: ${artStylePlannerHint(artStyleId)} — entire carousel in this illustrated medium.`,
               "- visualDna must describe illustrated style consistency, NOT photorealistic photography.",
             ]
-          : [];
+          : lookGrade
+            ? [
+                `- Art direction (look grade): ${artStylePlannerHint(artStyleId)} — keep photoreal product photography; atmosphere/palette only.`,
+                "- visualDna must describe this look grade on photography — NEVER manga icons, webtoon, cartoon clipart, or illustrated edu pictograms.",
+              ]
+            : [];
   return [
     layoutTransferRef
       ? "Create a teaching/info carousel — LAYOUT TRANSFER: IMAGE 1 product hero + IMAGE 2 reference design grammar/grid; user's product and copy on every slide."
@@ -364,17 +381,30 @@ function buildPlanPrompt(input: PlanInput): string {
     "- body/takeaway must not repeat the title verbatim, and tip bodies must not copy the cover body.",
     "- Do not invent pricing, promotion, or app mechanics unless explicitly provided.",
     input.hasProductPhoto
-      ? "- PRODUCT PHOTO present: every slide.composition MUST keep the user's exact product as the visible hero (cover, tip/point, and summary)."
+      ? "- PRODUCT PHOTO present: every slide.composition MUST keep IMAGE 1's photographed object as the visible hero (cover, tip/point, and summary). Product NAME is claim/topic only — never plan a different SKU that matches the name (e.g. do not turn a bottle photo into a power bank)."
       : "",
     input.hasProductPhoto
-      ? "- Tip/point slides teach with typography + product staging in the SAME series medium (flat-lay / soft set / macro) — NEVER plan diagram-only, substitute jewelry, OR a one-off photoreal bathroom/gym/yoga lifestyle cutaway that breaks carousel cohesion."
+      ? input.visualStyleId === "model-wear"
+        ? "- Tip/point slides teach with typography + a person wearing/using IMAGE 1 in the SAME lifestyle series — vary pose/crop; never invent a different SKU or mascot."
+        : "- Tip/point slides teach with typography + product staging in the SAME series medium (flat-lay / soft set / macro) — NEVER plan diagram-only, substitute jewelry, a charger/power station to illustrate 快速充電/mAh/ports, OR a one-off photoreal bathroom/gym/yoga lifestyle cutaway that breaks carousel cohesion. Tip topic = copy only; hero stays IMAGE 1."
       : "",
-    "- Every slide must share one visualDna medium — do not mix soft 3D/illustrated edu cards with photoreal human lifestyle shots in the same carousel.",
+    lookGrade
+      ? "- LOOK GRADE (film/CCD/国风/cinematic): photoreal product + atmosphere only. NEVER plan manga icons, webtoon outlines, cartoon USB/cables, speed lines, battery clipart, or illustrated edu pictograms — teach with typography and real props."
+      : "",
+    input.visualStyleId === "model-wear"
+      ? "- MODEL WEAR style: every slide.composition MUST include a real person wearing or using the product — distinct pose/crop per tip. Never product-only catalog or mascot-only hero."
+      : "- Every slide must share one visualDna medium — do not mix soft 3D/illustrated edu cards with photoreal human lifestyle shots in the same carousel.",
     ...conceptRules,
     "",
     `Visual style: ${input.visualStyleId}`,
-    stylized ? `Art style (mandatory): ${artStyleId} — ${artStylePlannerHint(artStyleId)}` : "",
-    input.product ? `Topic/product: ${input.product}` : "",
+    illustrated || lookGrade
+      ? `Art style (mandatory): ${artStyleId} — ${artStylePlannerHint(artStyleId)}`
+      : "",
+    input.product
+      ? input.hasProductPhoto
+        ? `Topic/product NAME (claim / copy only — hero is IMAGE 1 pixels): ${input.product}`
+        : `Topic/product: ${input.product}`
+      : "",
     input.business ? `Brand: ${input.business}` : "",
     input.headline ? `Main headline: ${input.headline}` : "",
     input.subline ? `Supporting points: ${input.subline}` : "",
@@ -431,5 +461,10 @@ export async function planTeachingCarousel(input: PlanInput): Promise<TeachingCa
       takeaway: rewritten[`s${slide.index}_takeaway`] || slide.takeaway,
     })),
   };
+}
+
+/** Exposed for unit tests — same prompt DeepSeek sees. */
+export function buildTeachingCarouselPlanPromptForTest(input: PlanInput): string {
+  return buildPlanPrompt(input);
 }
 

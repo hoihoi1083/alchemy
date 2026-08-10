@@ -1,3 +1,5 @@
+import { nameIsClaimImage1IsObjectLine } from "@/lib/prompt-balance-contract";
+
 /**
  * Build fal `image_urls` for physical product + style reference.
  *
@@ -46,11 +48,12 @@ export function carouselProductHeroLock(input?: {
 }): string {
   const name = input?.productName?.trim() || "the user's product";
   const parts = [
-    `PRODUCT HERO LOCK (this slide and every slide): IMAGE 1 is the exact photo of ${name}.`,
-    "Show that SAME product as a clear, recognizable hero — same shape, materials, colors, beads/charm/packaging details.",
+    "PRODUCT HERO LOCK (this slide and every slide): IMAGE 1 pixels ARE the product. Show that SAME photographed item as a clear hero — same shape, materials, colors, cap/packaging.",
+    nameIsClaimImage1IsObjectLine(name === "the user's product" ? undefined : name),
     "Match IMAGE 1 colors exactly — do not recolor beads/metal (e.g. brown goldstone must not become pink/peach).",
-    "Even tip / educational / metaphor slides: keep IMAGE 1's product in frame (flat-lay, macro, held, or gently worn) in the SAME art medium as the shared series DNA.",
-    "Do NOT replace it with a different jewelry SKU, crystal, bottle, cartoon bead face, stock prop, or science diagram substitute.",
+    "Even tip / educational / metaphor slides: keep IMAGE 1's item in frame (flat-lay, macro, held, or gently worn) in the SAME art medium as the shared series DNA.",
+    "Do NOT replace it with a different jewelry SKU, crystal, bottle, cartoon bead face, stock prop, power bank, power station, charger brick, or science diagram substitute.",
+    "TIP / SELLING-POINT / FEATURE copy (fast charging, mAh, ports, safety, capacity, etc.) is typography only — never illustrate the topic by drawing a different gadget than IMAGE 1 (e.g. a 快速充電 tip must not become a charger if IMAGE 1 is a bottle).",
     "Do NOT invent cute brand mascots (flask/beaker/lab characters, cartoon faces) instead of the product.",
     "Teach with typography and staging around IMAGE 1 — never invent a different product to illustrate the tip.",
     "If teaching wear/care tips: stage the product in the series aesthetic (soft set / vanity / cloth) — do NOT jump to a photoreal bathroom/gym/yoga lifestyle cutaway that breaks the carousel look.",
@@ -68,8 +71,20 @@ export function carouselProductHeroLock(input?: {
  * photoreal lifestyle while cover/tips stay soft 3D / illustrated).
  * Consistency = medium/palette/product — NOT the same photo with swapped text.
  */
-export function carouselSeriesConsistencyLock(visualDna?: string): string {
+export function carouselSeriesConsistencyLock(
+  visualDna?: string,
+  opts?: { modelWear?: boolean },
+): string {
   const dna = visualDna?.trim() || "same medium, palette, lighting, and character language";
+  if (opts?.modelWear) {
+    return [
+      `SERIES CONSISTENCY LOCK: Shared visual DNA for ALL slides: ${dna}.`,
+      "SERIES MODEL-WEAR LOCK: Every slide MUST show a real person wearing or using IMAGE 1's product — hands, wrist, neck, or held clearly in frame.",
+      "Vary pose, crop, wardrobe framing, and secondary props per slide — NEVER reuse the same photo with only text changed.",
+      "Keep the same art medium and lighting family across the carousel (photoreal lifestyle stays photoreal lifestyle).",
+      "No product-only catalog cutouts, no empty table still life with no person, no cute mascot/flask character replacing the model.",
+    ].join(" ");
+  }
   return [
     `SERIES CONSISTENCY LOCK: Shared visual DNA for ALL slides: ${dna}.`,
     "This slide must clearly belong in the SAME carousel — same art medium (photoreal vs soft 3D/illustration vs flat vector), same lighting softness, same product/character identity.",
@@ -88,15 +103,49 @@ export function carouselSlideRoleVariationHint(input: {
   role: string;
   index: number;
   total: number;
+  /** When true, every role must keep a real person wearing/using the product. */
+  modelWear?: boolean;
 }): string {
   const role = input.role.trim().toLowerCase();
+  if (input.modelWear) {
+    if (role === "hero" || role === "cover" || input.index <= 1) {
+      return `SLIDE VARIATION (${input.index}/${input.total}, ${role || "hero"}): Lifestyle hero — real person wearing/using the product, strong title hierarchy, product clearly visible.`;
+    }
+    if (role === "offer" || role === "summary" || input.index >= input.total) {
+      return `SLIDE VARIATION (${input.index}/${input.total}, ${role || "offer"}): CTA / outro lifestyle — NEW pose or crop of a person with the product (e.g. closer wrist detail, different angle). Do NOT clone the hero photo.`;
+    }
+    return `SLIDE VARIATION (${input.index}/${input.total}, ${role || "point"}): Feature / tip lifestyle — MUST differ from hero: new crop (macro of product on body, alternate pose, or props rearranged) with a real person still wearing/using IMAGE 1. Do NOT paste hero pixels with only headline swapped.`;
+  }
+  if (role === "hero") {
+    return `SLIDE VARIATION (${input.index}/${input.total}, hero): Full hero poster — product dominant, strong title hierarchy, generous negative space.`;
+  }
+  if (role === "selling-points") {
+    return `SLIDE VARIATION (${input.index}/${input.total}, selling-points): Feature / bullet layout — MUST differ from hero: new crop or angle of the SAME product, rearranged props, or typography-led feature panel. Do NOT paste hero pixels with only headline swapped.`;
+  }
+  if (role === "offer") {
+    return `SLIDE VARIATION (${input.index}/${input.total}, offer): CTA / shop mood — DIFFERENT composition from hero (badge band, split panel, or alternate product staging). Same product, new layout.`;
+  }
   if (role === "cover" || input.index <= 1) {
     return `SLIDE VARIATION (${input.index}/${input.total}, cover): Full hero poster — product dominant, strong title hierarchy, generous negative space.`;
   }
   if (role === "summary" || input.index >= input.total) {
     return `SLIDE VARIATION (${input.index}/${input.total}, summary): Recap / checklist / outro card — DIFFERENT layout from cover (e.g. bottom nav bar, tip list, or split panel). Same product, new composition.`;
   }
-  return `SLIDE VARIATION (${input.index}/${input.total}, ${role || "point"}): Educational tip card — MUST differ from cover: new crop or angle of the SAME product, rearranged props, or typography-led tip layout. Do NOT paste cover pixels with only headline swapped.`;
+  return `SLIDE VARIATION (${input.index}/${input.total}, ${role || "point"}): Educational tip card — MUST differ from cover: new crop or angle of the SAME product, rearranged props, or typography-led tip layout. Do NOT paste cover pixels with only headline swapped. Do NOT invent a charger, power station, or new SKU to illustrate the tip headline.`;
+}
+
+/**
+ * Tip-slide image_urls for first-pass generate — same order as single-slide regen:
+ * product (+ style) refs first, generated cover LAST (never IMAGE 1).
+ */
+export function teachingCarouselTipImageUrls(
+  baseUrls: string[] | null | undefined,
+  coverUrl: string,
+): string[] | null {
+  if (!baseUrls?.length) return baseUrls ?? null;
+  const cover = coverUrl.trim();
+  if (!cover) return [...baseUrls];
+  return [...baseUrls, cover];
 }
 
 /**
