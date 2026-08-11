@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useLocale } from "@/components/LocaleProvider";
 import { Reveal } from "@/components/landing/Reveal";
 
-const FINAL_CTA_IMAGE = "/images/landing/final-cta-studio.jpg?v=1";
+const FINAL_CTA_IMAGE = "/images/landing/final-cta-studio.jpg?v=2";
 
 export function LandingFinalCta() {
 	const { m } = useLocale();

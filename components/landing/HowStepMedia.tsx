@@ -3,17 +3,17 @@
 import { useEffect, useRef, useState } from "react";
 
 const HOW_STEP_IMAGES = [
-  "/images/landing/how-step-1-upload.jpg",
+  "/images/landing/how-step-1-upload.jpg?v=3",
   "/images/landing/how-step-2-analyze.jpg",
-  "/images/landing/how-step-3-plan.jpg",
-  "/images/landing/how-step-4-generate.jpg",
+  "/images/landing/how-step-3-plan.jpg?v=3",
+  "/images/landing/how-step-4-generate.jpg?v=3",
 ] as const;
 
 const HOW_STEP_VIDEOS = [
-  "/videos/landing/how-step-1-upload.mp4?v=2",
+  "/videos/landing/how-step-1-upload.mp4?v=3",
   "/videos/landing/how-step-2-analyze.mp4",
-  "/videos/landing/how-step-3-plan.mp4",
-  "/videos/landing/how-step-4-generate.mp4",
+  "/videos/landing/how-step-3-plan.mp4?v=3",
+  "/videos/landing/how-step-4-generate.mp4?v=3",
 ] as const;
 
 type HowStepMediaProps = {
