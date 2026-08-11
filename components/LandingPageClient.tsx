@@ -31,8 +31,12 @@ function LandingNeonBand({ children }: { children: ReactNode }) {
 			const bandH = band.getBoundingClientRect().height;
 			if (bandH < 1) return;
 			const pricingTop =
-				pricing.getBoundingClientRect().top - band.getBoundingClientRect().top;
-			const glowAt = Math.min(72, Math.max(28, (pricingTop / bandH) * 100));
+				pricing.getBoundingClientRect().top -
+				band.getBoundingClientRect().top;
+			const glowAt = Math.min(
+				72,
+				Math.max(28, (pricingTop / bandH) * 100),
+			);
 			band.style.setProperty("--glow-at", `${glowAt.toFixed(2)}%`);
 		};
 
@@ -352,25 +356,33 @@ const LANDING_LAYOUT_CSS = `
   right: 0 !important;
   bottom: 0 !important;
   pointer-events: none !important;
-  /* Soft fade only — keep Why readable without a solid opaque band */
-  height: 5rem !important;
-  background: linear-gradient(to top, rgba(6, 4, 15, 0.55), transparent) !important;
+  /* Cover the Why band — right side of the scene is bright */
+  height: min(52%, 22rem) !important;
+  background: linear-gradient(
+    to top,
+    rgba(6, 4, 15, 0.92) 0%,
+    rgba(6, 4, 15, 0.72) 38%,
+    rgba(6, 4, 15, 0.35) 72%,
+    transparent 100%
+  ) !important;
 }
 
-/* Why — transparent so hero scene shows through (pinned for local/prod) */
+/* Why — glass cards over hero scene (pinned for local/prod) */
 .landing-why {
   position: relative !important;
   z-index: 2 !important;
   width: 100% !important;
-  margin-top: 0.5rem !important;
+  margin-top: 1.25rem !important;
   border-top: 0 !important;
   background: transparent !important;
   background-color: transparent !important;
   background-image: none !important;
-  padding: 0.75rem 0 0 !important;
+  padding: 1.5rem 0 0 !important;
   box-sizing: border-box !important;
 }
 .landing-why-inner {
+  position: relative !important;
+  z-index: 1 !important;
   max-width: none !important;
   margin-left: 0 !important;
   margin-right: 0 !important;
@@ -381,35 +393,65 @@ const LANDING_LAYOUT_CSS = `
   display: grid !important;
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   margin-top: 1rem !important;
-  gap: 1.25rem 0.75rem !important;
+  gap: 0.75rem !important;
+}
+.landing-why-card {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center !important;
+  height: 100% !important;
+  padding: 0.85rem 0.65rem 0.95rem !important;
+  border-radius: 1rem !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  background: rgba(8, 6, 20, 0.28) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 8px 22px -16px rgba(0, 0, 0, 0.4) !important;
+  backdrop-filter: blur(10px) saturate(1.1) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(1.1) !important;
+}
+.landing-why-card .landing-why-icon {
+  margin-bottom: 0.15rem !important;
+  border: 0 !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  padding: 0 !important;
 }
 .landing-why h2 {
   color: #fff !important;
+  text-shadow: 0 2px 18px rgba(6, 4, 15, 0.85) !important;
 }
 .landing-why h3 {
   color: #f8fafc !important;
+  text-shadow: 0 1px 8px rgba(6, 4, 15, 0.55) !important;
 }
 .landing-why p {
-  color: #e2e8f0 !important; /* slate-200 — readable on dark / scene */
-  text-shadow: 0 1px 10px rgba(6, 4, 15, 0.65) !important;
+  color: #e2e8f0 !important;
+  text-shadow: 0 1px 8px rgba(6, 4, 15, 0.45) !important;
 }
 @media (min-width: 768px) {
   .landing-why {
-    margin-top: 0.75rem !important;
-    padding: 0.75rem 0 0 !important;
+    margin-top: 1.9rem !important;
+    padding: 1.9rem 0 0 !important;
   }
   .landing-why-grid {
     margin-top: 1.25rem !important;
-    gap: 1.5rem 1rem !important;
+    gap: 0.85rem !important;
+  }
+  .landing-why-card {
+    padding: 1rem 0.75rem 1.1rem !important;
   }
 }
 @media (min-width: 1024px) {
   .landing-why {
-    margin-top: 1rem !important;
-    padding: 1rem 0 0 !important;
+    margin-top: 2.25rem !important;
+    padding: 2rem 0 0 !important;
   }
   .landing-why-grid {
     margin-top: 1.5rem !important;
+    gap: 0.9rem !important;
   }
 }
 
@@ -558,8 +600,14 @@ const LANDING_LAYOUT_CSS = `
     ) !important;
   }
   .landing-hero-scrim-y {
-    height: 5rem !important;
-    background: linear-gradient(to top, rgba(6, 4, 15, 0.5), transparent) !important;
+    height: min(48%, 20rem) !important;
+    background: linear-gradient(
+      to top,
+      rgba(6, 4, 15, 0.9) 0%,
+      rgba(6, 4, 15, 0.68) 40%,
+      rgba(6, 4, 15, 0.28) 75%,
+      transparent 100%
+    ) !important;
   }
 }
 
@@ -874,7 +922,7 @@ const LANDING_LAYOUT_CSS = `
 const SHOW_LANDING_BELOW_HOW = true;
 
 export function LandingPageClient() {
-  return (
+	return (
 		<>
 			<style dangerouslySetInnerHTML={{ __html: LANDING_LAYOUT_CSS }} />
 			<main className="landing-page flex min-h-screen flex-col overflow-x-clip bg-white text-slate-900 supports-[min-height:100dvh]:min-h-dvh">
@@ -893,19 +941,19 @@ export function LandingPageClient() {
 						<LandingNeonBand>
 							<div className="landing-neon-band__light">
 								<LandingTemplatesShowcase />
-          </div>
+							</div>
 							<div className="landing-neon-band__dark">
 								<LandingPricingTeaser />
 								<LandingTokensAndFaq />
-          </div>
+							</div>
 						</LandingNeonBand>
 						<LandingProductTools />
 						<LandingFinalCta />
 					</>
 				) : null}
 				<LandingFooter />
-    </main>
+			</main>
 			<LandingFloatingCta />
 		</>
-  );
+	);
 }

@@ -41,20 +41,17 @@ export function LandingHowItWorks() {
 										className="h-full"
 									>
 										<div className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-											<span className="absolute left-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-violet-600 text-xs font-bold text-white shadow-sm ring-2 ring-white">
-												{i + 1}
-											</span>
-											<div className="relative aspect-[4/3] w-full overflow-hidden">
+											<div className="relative aspect-square w-full overflow-hidden">
 												<HowStepMedia
 													step={stepIndex}
 													alt={step.title}
 												/>
 											</div>
-											<div className="flex flex-1 flex-col px-4 pb-4 pt-3">
-												<h3 className="text-sm font-semibold text-slate-900">
+											<div className="flex min-h-[5.5rem] flex-1 flex-col px-4 pb-4 pt-3">
+												<h3 className="text-sm font-semibold leading-snug text-slate-900">
 													{step.title}
 												</h3>
-												<p className="mt-1.5 text-xs leading-relaxed text-slate-500">
+												<p className="mt-1.5 line-clamp-3 text-xs leading-relaxed text-slate-500">
 													{step.body}
 												</p>
 											</div>

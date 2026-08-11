@@ -46,28 +46,28 @@ const STEPS = [
     startFile: "how-step-1-upload-empty.jpg",
     out: "how-step-1-upload.mp4",
     prompt:
-      "Animate a product photo being pasted into the LEFT dashed upload box. Start with an empty light upload panel on the left. The amber bottle product photo drops from above and pastes firmly into that left box with a clear landing bounce. Cloud upload icon appears after the photo lands. The right style-reference phone stays mostly stable. Keep title and tip text readable. Strong paste-in motion on the left only.",
+      "Product upload UI mock only. Soft paste-in motion: product photo settles into the dashed upload well with a light bounce. Phone style-reference stays mostly still with a tiny droplet shimmer. Keep UI labels sharp. No morphing text. No people.",
   },
   {
     id: 2,
     file: "how-step-2-analyze.jpg",
     out: "how-step-2-analyze.mp4",
     prompt:
-      "AI style analysis UI. Keep all cards, palette swatches, and labels sharp and fixed. A soft purple scan beam travels slowly left to right across the serum bottle. Slight glow pulse on the AI brain badge. Very subtle camera push-in. No morphing text or UI elements.",
+      "AI style analysis UI. Soft violet scan beam sweeps across the amber bottle. Neural brain badge gently pulses. Palette cards stay fixed and sharp. Light camera push-in. No morphing text. No people.",
   },
   {
     id: 3,
     file: "how-step-3-plan.jpg",
     out: "how-step-3-plan.mp4",
     prompt:
-      "Storyboard planning UI with three scene frames. Keep the interface and all copy locked and readable. Soft left-to-right Ken Burns emphasis across the three frames, then settle. Timeline bar stays stable. Tiny ambient light flicker. No morphing text or buttons.",
+      "Storyboard planner with three frames. Soft Ken Burns left-to-right across frames, then settle. Timeline and labels stay locked. No morphing text. No people.",
   },
   {
     id: 4,
     file: "how-step-4-generate.jpg",
     out: "how-step-4-generate.mp4",
     prompt:
-      "Video edit canvas UI with filmstrip border and play control. Keep all text, toolbars, and selection boxes sharp and fixed. Soft cinematic zoom toward the product in the canvas center. Gentle breathing light on the play button area. No morphing UI or labels.",
+      "Video edit canvas with filmstrip and Play control. Soft cinematic zoom into the product preview. Play button breathes with a gentle glow. UI text stays sharp. No morphing labels. No people.",
   },
 ] as const;
 

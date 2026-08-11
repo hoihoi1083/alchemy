@@ -1,10 +1,93 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 import { Reveal } from "@/components/landing/Reveal";
 
-const FINAL_CTA_IMAGE = "/images/landing/final-cta-studio.jpg?v=2";
+const FINAL_CTA_IMAGE = "/images/landing/final-cta-studio.jpg?v=3";
+const FINAL_CTA_VIDEO = "/videos/landing/final-cta-studio.mp4?v=3";
+
+function FinalCtaMedia({ alt }: { alt: string }) {
+	const rootRef = useRef<HTMLDivElement>(null);
+	const videoRef = useRef<HTMLVideoElement>(null);
+	const [active, setActive] = useState(true);
+	const [reduce, setReduce] = useState(false);
+	const [failed, setFailed] = useState(false);
+	const showVideo = !reduce && !failed;
+
+	useEffect(() => {
+		const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+		const sync = () => setReduce(mq.matches);
+		sync();
+		mq.addEventListener("change", sync);
+		return () => mq.removeEventListener("change", sync);
+	}, []);
+
+	useEffect(() => {
+		const el = rootRef.current;
+		if (!el) return;
+		const io = new IntersectionObserver(
+			([entry]) => setActive(Boolean(entry?.isIntersecting)),
+			{ threshold: 0.15, rootMargin: "80px 0px" },
+		);
+		io.observe(el);
+		return () => io.disconnect();
+	}, []);
+
+	useEffect(() => {
+		const v = videoRef.current;
+		if (!v || !showVideo) return;
+		v.defaultMuted = true;
+		v.muted = true;
+		if (!active) {
+			v.pause();
+			return;
+		}
+		const tryPlay = () => {
+			void v.play().catch(() => {});
+		};
+		if (v.readyState >= 2) tryPlay();
+		else {
+			const onReady = () => tryPlay();
+			v.addEventListener("canplay", onReady, { once: true });
+			v.load();
+			return () => v.removeEventListener("canplay", onReady);
+		}
+	}, [active, showVideo]);
+
+	return (
+		<div
+			ref={rootRef}
+			className="relative overflow-hidden rounded-2xl shadow-[0_16px_40px_-12px_rgba(0,0,0,0.35)] ring-1 ring-white/25"
+		>
+			{/* eslint-disable-next-line @next/next/no-img-element */}
+			<img
+				src={FINAL_CTA_IMAGE}
+				alt={alt}
+				className="h-auto w-full object-cover"
+				loading="lazy"
+				decoding="async"
+			/>
+			{showVideo ? (
+				<video
+					ref={videoRef}
+					key={FINAL_CTA_VIDEO}
+					className="absolute inset-0 h-full w-full object-cover"
+					src={FINAL_CTA_VIDEO}
+					poster={FINAL_CTA_IMAGE}
+					muted
+					playsInline
+					loop
+					autoPlay
+					preload="auto"
+					aria-label={alt}
+					onError={() => setFailed(true)}
+				/>
+			) : null}
+		</div>
+	);
+}
 
 export function LandingFinalCta() {
 	const { m } = useLocale();
@@ -76,14 +159,7 @@ export function LandingFinalCta() {
 						</div>
 
 						<div className="landing-final-cta-media relative mx-auto w-full max-w-xl md:mx-0 md:justify-self-end">
-							{/* eslint-disable-next-line @next/next/no-img-element */}
-							<img
-								src={FINAL_CTA_IMAGE}
-								alt={L.finalImageAlt}
-								className="h-auto w-full rounded-2xl object-cover shadow-[0_16px_40px_-12px_rgba(0,0,0,0.35)] ring-1 ring-white/25"
-								loading="lazy"
-								decoding="async"
-							/>
+							<FinalCtaMedia alt={L.finalImageAlt} />
 						</div>
 					</div>
 				</div>

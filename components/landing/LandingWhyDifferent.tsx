@@ -236,9 +236,10 @@ export function LandingWhyDifferent() {
 								delayMs={i * 95}
 								distance={28}
 								scaleFrom={0.96}
+								className="h-full"
 							>
-								<div className="text-center">
-									<div className="mx-auto mb-1 inline-flex rounded-2xl border border-white/10 bg-white/5 px-2 py-1 backdrop-blur-md">
+								<div className="landing-why-card">
+									<div className="landing-why-icon mx-auto mb-1 inline-flex">
 										<Icon />
 									</div>
 									<h3 className="text-[13px] font-semibold leading-snug text-white md:text-sm">
