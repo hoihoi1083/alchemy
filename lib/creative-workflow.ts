@@ -11,6 +11,7 @@ export type VideoCreativeMode =
   | "product-assistant"
   | "product-promo"
   | "motion-poster"
+  | "social-drip"
   | "reference-concept"
   | "image-to-video";
 
@@ -23,12 +24,15 @@ export const VIDEO_CREATIVE_MODES: VideoCreativeMode[] = [
   "product-assistant",
   "product-promo",
   "motion-poster",
+  "social-drip",
   "reference-concept",
   "image-to-video",
 ];
 
 export function videoModePreviewSrc(id: VideoCreativeMode): string {
-  return `/images/studio/video-modes/${id}.png?v=1`;
+  // Social drip shares motion-poster card art until dedicated preview ships.
+  const file = id === "social-drip" ? "motion-poster" : id;
+  return `/images/studio/video-modes/${file}.png?v=1`;
 }
 
 export function imageModePreviewSrc(id: ImageCreativeMode): string {
@@ -57,10 +61,22 @@ export function defaultVideoModeForStudio(
 
 export function videoModesForGoal(goal: OutputGoal): VideoCreativeMode[] {
   if (goal === "combined") {
-    return ["image-to-video", "motion-poster", "reference-concept", "product-promo"];
+    return [
+      "image-to-video",
+      "motion-poster",
+      "social-drip",
+      "reference-concept",
+      "product-promo",
+    ];
   }
   if (goal === "video-only") {
-    return ["product-assistant", "motion-poster", "product-promo", "reference-concept"];
+    return [
+      "product-assistant",
+      "motion-poster",
+      "social-drip",
+      "product-promo",
+      "reference-concept",
+    ];
   }
   return [];
 }
@@ -72,9 +88,17 @@ export function videoModesForStudio(
 ): VideoCreativeMode[] {
   const modes = videoModesForGoal(goal);
   if (promotionMode !== "concept") return modes;
-  if (goal === "video-only") return ["product-promo", "motion-poster", "reference-concept"];
+  if (goal === "video-only") {
+    return ["product-promo", "motion-poster", "social-drip", "reference-concept"];
+  }
   if (goal === "combined") {
-    return ["image-to-video", "motion-poster", "product-promo", "reference-concept"];
+    return [
+      "image-to-video",
+      "motion-poster",
+      "social-drip",
+      "product-promo",
+      "reference-concept",
+    ];
   }
   return modes;
 }

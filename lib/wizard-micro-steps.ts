@@ -226,7 +226,7 @@ function evalWhen(
     return ctx.videoSubpath === "reference_reel";
   }
   if (norm === 'videoSubpath === "motion_poster"') {
-    return ctx.videoSubpath === "motion_poster";
+    return ctx.videoSubpath === "motion_poster" || ctx.videoSubpath === "social_drip";
   }
   if (norm === 'videoSubpath === "product_promo"') {
     return ctx.videoSubpath === "product_promo";
@@ -306,7 +306,9 @@ export function resolvePathId(
     }
     if (
       ctx.videoSubpath === "motion_poster" ||
-      state.videoCreativeMode === "motion-poster"
+      ctx.videoSubpath === "social_drip" ||
+      state.videoCreativeMode === "motion-poster" ||
+      state.videoCreativeMode === "social-drip"
     ) {
       return "concept_combined_motion_poster";
     }
@@ -320,7 +322,9 @@ export function resolvePathId(
   if (promotionMode === "physical" && workflowMode === "combined") {
     if (
       ctx.videoSubpath === "motion_poster" ||
-      state.videoCreativeMode === "motion-poster"
+      ctx.videoSubpath === "social_drip" ||
+      state.videoCreativeMode === "motion-poster" ||
+      state.videoCreativeMode === "social-drip"
     ) {
       return "product_combined_motion_poster";
     }

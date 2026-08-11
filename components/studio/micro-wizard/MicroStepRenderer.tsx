@@ -406,7 +406,8 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
     case "setup.pre_video": {
       const scenesReady =
         micro.ctx.workflowMode === "combined" &&
-        wizard.videoCreativeMode !== "motion-poster";
+        wizard.videoCreativeMode !== "motion-poster" &&
+        wizard.videoCreativeMode !== "social-drip";
       return (
         <PreVideoSetupPanel
           scenesReady={scenesReady}
@@ -424,7 +425,9 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
           videoSubpath={
             (micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) === "ugc_presenter"
               ? "product_promo"
-              : wizard.videoCreativeMode === "motion-poster"
+              : wizard.videoCreativeMode === "social-drip"
+                ? "social_drip"
+                : wizard.videoCreativeMode === "motion-poster"
                 ? "motion_poster"
                 : (micro.pendingVideoSubpath ?? micro.ctx.videoSubpath)
           }
@@ -432,6 +435,7 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
             const id = subpath as
               | "product_promo"
               | "motion_poster"
+              | "social_drip"
               | "reference_reel"
               | "creative_video"
               | "brand_video";
@@ -442,6 +446,8 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
               wizard.applyPrimaryPathVideoOnly("assistant");
             } else if (id === "motion_poster") {
               wizard.onVideoCreativeModeChange("motion-poster");
+            } else if (id === "social_drip") {
+              wizard.onVideoCreativeModeChange("social-drip");
             } else if (id === "reference_reel") {
               wizard.onVideoCreativeModeChange("reference-concept");
             } else if (id === "creative_video" || id === "brand_video") {

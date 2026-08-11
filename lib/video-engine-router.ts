@@ -53,12 +53,14 @@ export function parseFaceHeavyFlag(
 
 export function resolveVideoEnginePlan(input: {
   motionPoster?: boolean;
+  /** Social drip 三分屏 — H3 only, never attach research MP4. */
+  socialDrip?: boolean;
   hasReel: boolean;
   faceHeavy?: boolean;
   /** Multi-still 九宫格 TVC — only this path may Kling-stitch. */
   storyboard?: boolean;
 }): VideoEnginePlan {
-  if (input.motionPoster) {
+  if (input.motionPoster || input.socialDrip) {
     return {
       firstEngine: "minimax-h3",
       seedanceFast: false,

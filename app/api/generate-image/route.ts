@@ -24,6 +24,13 @@ import {
   resolveImagePromptMode,
 } from "@/lib/prompt-variables";
 import { parseMotionPosterDialectPick } from "@/lib/motion-poster-dialects";
+import {
+  buildSocialDripStillPrompt,
+  heuristicSocialDripPlan,
+  normalizeSocialDripPlan,
+  parseSocialDripMetaphorPick,
+  type SocialDripPlan,
+} from "@/lib/social-drip";
 import type { PromptMarket, SubjectFraming } from "@/lib/prompt-variables";
 import { defaultEditEndpoint, defaultTextEndpoint, sanitizeImageEndpoint } from "@/lib/image-endpoints";
 import { mirrorImageUrlToFalStorage } from "@/lib/fal-mirror-media";
@@ -455,7 +462,18 @@ export async function POST(request: Request) {
         .trim()
         .toLowerCase(),
     );
-    if (!hasProduct && !hasStyle && !isConceptMode && !(motionPosterEarly && startPlateUrlEarly)) {
+    const socialDripEarly = ["1", "true", "yes"].includes(
+      String(formData.get("social_drip") ?? "")
+        .trim()
+        .toLowerCase(),
+    );
+    if (
+      !hasProduct &&
+      !hasStyle &&
+      !isConceptMode &&
+      !(motionPosterEarly && startPlateUrlEarly) &&
+      !socialDripEarly
+    ) {
       return NextResponse.json(
         {
           error:
@@ -572,18 +590,51 @@ export async function POST(request: Request) {
         .trim()
         .toLowerCase(),
     );
+    const socialDrip = ["1", "true", "yes"].includes(
+      String(formData.get("social_drip") ?? "")
+        .trim()
+        .toLowerCase(),
+    );
     const posterFrame =
       String(formData.get("motion_poster_frame") ?? "start").trim() === "end"
+        ? "end"
+        : "start";
+    const socialDripFrame =
+      String(formData.get("social_drip_frame") ?? "start").trim() === "end"
         ? "end"
         : "start";
     const startPlateUrl = (formData.get("start_plate_url") as string | null)?.trim() || "";
     if (motionPoster) {
       vars.imageTextMode = posterFrame === "end" ? "integrated" : "textless";
     }
+    let socialDripPlan: SocialDripPlan | null = null;
+    if (socialDrip) {
+      const planRaw = (formData.get("social_drip_plan") as string | null)?.trim() || "";
+      if (planRaw) {
+        try {
+          socialDripPlan = JSON.parse(planRaw) as SocialDripPlan;
+        } catch {
+          socialDripPlan = null;
+        }
+      }
+      if (!socialDripPlan) {
+        socialDripPlan = heuristicSocialDripPlan({
+          product: productName,
+          conceptIdea: productName,
+          headline,
+          business,
+          conceptMode: promotionMode === "concept",
+          pick: parseSocialDripMetaphorPick(formData.get("social_drip_metaphor")),
+        });
+      } else {
+        socialDripPlan = normalizeSocialDripPlan(socialDripPlan);
+      }
+    }
     let singleImagePlan: SingleImagePlan | null = null;
     // Never override specialized client prompts (end-frame, storyboard scene regen, advanced paste).
     const wantSinglePlan =
       !motionPoster &&
+      !socialDrip &&
       !clientPrompt &&
       (!imageOutputMode || imageOutputMode === "single" || imageOutputMode === "ab") &&
       shouldPlanSingleImageAd(promptMode, imageTextMode);
@@ -648,6 +699,13 @@ export async function POST(request: Request) {
         });
         imageUrls.splice(0, imageUrls.length, plate);
       }
+      if (socialDrip && socialDripFrame === "end" && startPlateUrl) {
+        const plate = await mirrorImageUrlToFalStorage(startPlateUrl, {
+          clerkId: auth.user.userId,
+          refresh: true,
+        });
+        imageUrls.splice(0, imageUrls.length, plate);
+      }
 
       const angleHint =
         useReferenceConcept && dualImage && hasProduct && hasStyle
@@ -659,7 +717,18 @@ export async function POST(request: Request) {
       const motionPosterDialectPick = parseMotionPosterDialectPick(
         formData.get("motion_poster_dialect"),
       );
-      const builtPrompt = motionPoster
+      const builtPrompt = socialDrip && socialDripPlan
+        ? buildSocialDripStillPrompt({
+            plan: socialDripPlan,
+            product:
+              productName ||
+              headline ||
+              (promotionMode === "concept" ? "the service scene" : "the product"),
+            conceptMode: promotionMode === "concept",
+            aspectRatio: aspectRatioRaw,
+            frame: socialDripFrame,
+          })
+        : motionPoster
         ? posterFrame === "end"
           ? buildMotionPosterEndStillPrompt(vars, {
               conceptMode: promotionMode === "concept",
@@ -691,7 +760,7 @@ export async function POST(request: Request) {
       // Honor explicit client prompts (e.g. storyboard scene regenerate) — do not replace with
       // a generic concept-cinematic rebuild that drops the scene action.
       const finalPrompt = [
-        motionPoster
+        socialDrip || motionPoster
           ? builtPrompt
           : singleImagePlan
             ? builtPrompt

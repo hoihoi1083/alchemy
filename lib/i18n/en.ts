@@ -2345,6 +2345,11 @@ export const en = {
 				description:
 					"Start still (no type) + end still (with type) → H3 interpolates. Not a normal product I2V.",
 			},
+			"social-drip": {
+				title: "Social drip (三分屏)",
+				description:
+					"Meme 3-band gag with a falling metaphor — not a lifestyle TVC. Check fit before generate.",
+			},
 			"reference-concept": {
 				title: "Inspired by reference video",
 				description:
@@ -2403,6 +2408,75 @@ export const en = {
 			"Type overlay skipped — showing atmosphere clip only",
 		motionPosterNeedKeyframe:
 			"Add a product photo, scene still, or keyframe first for motion poster.",
+		socialDripHint:
+			"三分屏 meme: hero → fake IG bar → cute polished cartoon. Something falls across the bar. Not a photoreal lifestyle ad.",
+		socialDripPlanningMetaphor: "Planning crossing metaphor…",
+		socialDripBuildingStill: "Step 1/3: social-drip start still…",
+		socialDripBuildingEnd: "Step 2/3: social-drip end still…",
+		socialDripAnimatingCard: "Step 3/3: H3 interpolating start→end…",
+		socialDripMetaphorTitle: "Crossing metaphor",
+		socialDripMetaphorHint:
+			"Auto picks a metaphor that fits your category. Wrong pick (e.g. mouth-pour on serum) gets flagged below.",
+		socialDripMetaphorAuto: "Auto · AI pick",
+		socialDripNoReferenceNote:
+			"Reference video is disabled for Social drip — layout is owned by this recipe.",
+		socialDripNeedKeyframe:
+			"Add a product photo (or concept topic) first for Social drip.",
+		socialDripFitTitle: "What this format can do",
+		socialDripFitGoodTitle: "Works well",
+		socialDripFitGoodItems: [
+			"Bottom band = cute polished cartoon (joyful meme vibe)",
+			"F&B sauce pour into a cartoon mouth",
+			"Beauty: thin serum drip onto cartoon cheeks (not drinking)",
+			"Jewelry sparkle / fashion confetti / tech energy beam over fake IG chrome",
+		],
+		socialDripFitBadTitle: "Won’t work well — pick another path",
+		socialDripFitBadItems: [
+			"Real / photoreal person under a table catching liquid (feels creepy)",
+			"Rough stick-figure scribbles (cartoon must look finished & cute)",
+			"Drinking / ingesting non-food products (serum, gadgets…)",
+			"Multi-shot TVC, cinematic storytelling, or cloning a reference reel",
+		],
+		socialDripFitLevels: {
+			good: "Good fit for Social drip",
+			caution: "Possible, but action may look weird",
+			mismatch: "Poor fit — change metaphor or video style",
+		},
+		socialDripFitReasons: {
+			good_fnb: "Food/drink pour gag fits this format.",
+			good_beauty_skin: "Beauty works as a skin drip onto a doodle — not mouth drinking.",
+			good_sparkle: "Sparkle cascade onto hands/shoulders fits jewelry.",
+			good_fashion: "Confetti or fabric fall fits fashion launches.",
+			good_tech: "Energy beam onto a doodle fits electronics.",
+			good_wellness: "Steam or petals onto a doodle fits wellness.",
+			good_general: "Use a clear falling metaphor that matches the product.",
+			caution_mouth_nonfood:
+				"Open-mouth pour is an F&B gag — weird for non-food.",
+			caution_beauty_pour:
+				"Serum into an open mouth looks like drinking. Prefer Serum drip.",
+			caution_concept_pour:
+				"Concept topics rarely need a mouth-pour — prefer petals / beam / steam.",
+			caution_no_product_photo:
+				"Add a product photo so the fall has a clear origin.",
+			mismatch_no_falling:
+				"This product has no natural falling metaphor — try Image→video.",
+			mismatch_wrong_metaphor:
+				"This metaphor doesn’t match the product category.",
+		},
+		socialDripFitSuggest: "Suggested metaphor: {metaphor}",
+		socialDripMetaphors: {
+			pour: { title: "Pour", desc: "Edible sauce/syrup into doodle mouth — F&B only" },
+			glow: { title: "Serum drip", desc: "Thin dropper drip onto cheeks — beauty" },
+			sparkle: { title: "Sparkle", desc: "Dense glitter cascade — jewelry & fashion" },
+			steam: { title: "Steam", desc: "Dense steam plume — cafe, spa, home" },
+			confetti: { title: "Confetti", desc: "Heavy confetti fall — fashion & launches" },
+			"light-streak": {
+				title: "Energy beam",
+				desc: "Thick beam onto doodle — tech",
+			},
+			fabric: { title: "Fabric fall", desc: "Ribbon falls straight down — soft goods" },
+			petals: { title: "Petals", desc: "Dense petal cascade — wellness & concept" },
+		},
 		videoSettingsTitle: "Video settings",
 		videoReferenceOutputSettingsTitle: "Output length & quality",
 		videoReferenceOutputSettingsHint:

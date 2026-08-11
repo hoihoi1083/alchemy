@@ -127,6 +127,15 @@ import {
 	type MotionPosterDialectPick,
 } from "@/lib/motion-poster-dialects";
 import {
+	SOCIAL_DRIP_METAPHOR_IDS,
+	buildSocialDripVideoPrompt,
+	heuristicSocialDripPlan,
+	normalizeSocialDripPlan,
+	parseSocialDripMetaphorPick,
+	type SocialDripMetaphorPick,
+	type SocialDripPlan,
+} from "@/lib/social-drip";
+import {
 	consumeLandingRecipe,
 	isMotionPosterLandingRecipe,
 	isTvcLandingRecipe,
@@ -602,12 +611,32 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 	);
 	const [motionPosterDialectPick, setMotionPosterDialectPickState] =
 		useState<MotionPosterDialectPick>("auto");
+	const socialDripStillUrlRef = useRef<string | null>(null);
+	const socialDripEndUrlRef = useRef<string | null>(null);
+	const socialDripPlanRef = useRef<SocialDripPlan | null>(null);
+	const [socialDripMetaphorPick, setSocialDripMetaphorPickState] =
+		useState<SocialDripMetaphorPick>("auto");
+	const [socialDripPlanNote, setSocialDripPlanNote] = useState<string | null>(
+		null,
+	);
 
 	function setMotionPosterDialectPick(next: MotionPosterDialectPick) {
 		setMotionPosterDialectPickState((prev) => {
 			if (prev !== next) {
 				motionPosterStillUrlRef.current = null;
 				motionPosterEndUrlRef.current = null;
+			}
+			return next;
+		});
+	}
+
+	function setSocialDripMetaphorPick(next: SocialDripMetaphorPick) {
+		setSocialDripMetaphorPickState((prev) => {
+			if (prev !== next) {
+				socialDripStillUrlRef.current = null;
+				socialDripEndUrlRef.current = null;
+				socialDripPlanRef.current = null;
+				setSocialDripPlanNote(null);
 			}
 			return next;
 		});
@@ -1932,6 +1961,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		if (usesCompositor || isStoryboardOutput || isUgcPresenterOutput)
 			return;
 		if (videoCreativeMode === "motion-poster") return;
+		if (videoCreativeMode === "social-drip") return;
 		if (usesProductAssistant) return;
 		if (planVideoPromptBusy) return;
 		if (researchReelAnalysis?.seedancePrompt?.trim()) return;
@@ -2458,9 +2488,12 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		setSelectedVariantIndex(0);
 		motionPosterStillUrlRef.current = null;
 		motionPosterEndUrlRef.current = null;
+		socialDripStillUrlRef.current = null;
+		socialDripEndUrlRef.current = null;
 		setUseOriginalImage(
 			Boolean(file) &&
 				videoCreativeMode !== "motion-poster" &&
+				videoCreativeMode !== "social-drip" &&
 				(promotionMode === "concept" ||
 					workflowMode === "video-only" ||
 					workflowMode === "combined"),
@@ -2606,6 +2639,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 	useEffect(() => {
 		if (workflowMode !== "combined") return;
 		if (videoCreativeMode === "motion-poster") return;
+		if (videoCreativeMode === "social-drip") return;
 		if (
 			isUgcPresenterStyle(visualStyleId) ||
 			isConceptCinematicStyle(visualStyleId)
@@ -3395,9 +3429,29 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				motionStyle: "gentle-orbit",
 				videoEngine: "minimax-h3",
 			}));
+		} else if (mode === "social-drip") {
+			// Social drip owns layout — never carry a research/reference MP4 into H3.
+			setUseOriginalImage(false);
+			setReferenceAd(null);
+			setReferencePreviewUrl(null);
+			setReferenceIsVideo(false);
+			setResearchReelAnalysis(null);
+			setVideoSettings((s: VideoSettings) => ({
+				...s,
+				duration:
+					s.duration === "auto" || Number(s.duration) > 8
+						? "6"
+						: s.duration,
+				autoSecondFrame: false,
+				motionStyle: "gentle-orbit",
+				videoEngine: "minimax-h3",
+			}));
 		} else {
 			motionPosterStillUrlRef.current = null;
 			motionPosterEndUrlRef.current = null;
+			socialDripStillUrlRef.current = null;
+			socialDripEndUrlRef.current = null;
+			socialDripPlanRef.current = null;
 		}
 		applyPromptRebuild();
 	}
@@ -3444,6 +3498,14 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 
 	const motionPosterCanAutoStill =
 		videoCreativeMode === "motion-poster" &&
+		(Boolean(productPhoto) ||
+			(promotionMode === "concept" &&
+				Boolean(
+					conceptIdea.trim() || headline.trim() || product.trim(),
+				)));
+
+	const socialDripCanAutoStill =
+		videoCreativeMode === "social-drip" &&
 		(Boolean(productPhoto) ||
 			(promotionMode === "concept" &&
 				Boolean(
@@ -6519,6 +6581,255 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		return data.videoUrl as string;
 	}
 
+	async function resolveSocialDripPlan(): Promise<SocialDripPlan> {
+		const pick = parseSocialDripMetaphorPick(socialDripMetaphorPick);
+		if (pick !== "auto") {
+			const plan = normalizeSocialDripPlan(
+				heuristicSocialDripPlan({
+					product,
+					conceptIdea,
+					headline,
+					business,
+					conceptMode: promotionMode === "concept",
+					pick,
+				}),
+			);
+			socialDripPlanRef.current = plan;
+			setSocialDripPlanNote(
+				`${plan.metaphorLabel} · ${plan.reason}`,
+			);
+			return plan;
+		}
+		setVideoNote(m.wizard.socialDripPlanningMetaphor);
+		try {
+			const res = await fetch("/api/plan-social-drip", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					product: product.trim(),
+					conceptIdea: conceptIdea.trim(),
+					headline: headline.trim(),
+					subline: subline.trim(),
+					business: business.trim(),
+					promotionMode,
+					pick: "auto",
+					locale: promptMarket,
+				}),
+			});
+			const data = await res.json();
+			if (!res.ok) {
+				throw new Error(
+					(data.error as string) || "Social drip plan failed",
+				);
+			}
+			const plan = normalizeSocialDripPlan(data.plan as SocialDripPlan);
+			socialDripPlanRef.current = plan;
+			setSocialDripPlanNote(
+				`${plan.metaphorLabel} · ${plan.reason}`,
+			);
+			return plan;
+		} catch {
+			const plan = normalizeSocialDripPlan(
+				heuristicSocialDripPlan({
+					product,
+					conceptIdea,
+					headline,
+					business,
+					conceptMode: promotionMode === "concept",
+					pick: "auto",
+				}),
+			);
+			socialDripPlanRef.current = plan;
+			setSocialDripPlanNote(
+				`${plan.metaphorLabel} · ${plan.reason}`,
+			);
+			return plan;
+		}
+	}
+
+	async function generateSocialDripKeyframe(
+		plan: SocialDripPlan,
+		frame: "start" | "end",
+		startPlateUrl?: string,
+	): Promise<string> {
+		setVideoNote(
+			frame === "end"
+				? m.wizard.socialDripBuildingEnd
+				: m.wizard.socialDripBuildingStill,
+		);
+		setImageJobMeta({
+			kind: "image",
+			startedAt: Date.now(),
+			sceneCount: 1,
+		});
+		try {
+			const fd = new FormData();
+			fd.set("visual_style", visualStyleId);
+			fd.set("art_style", artStyleId);
+			if (brandProfile)
+				fd.set("brand_profile", JSON.stringify(brandProfile));
+			fd.set("brand_kit", JSON.stringify(brandKit));
+			fd.set(
+				"product_name",
+				promotionMode === "concept"
+					? effectivePromoteName ||
+							product.trim() ||
+							conceptIdea.trim()
+					: product.trim(),
+			);
+			fd.set("business", business.trim());
+			fd.set(
+				"headline",
+				headline.trim() || product.trim() || conceptIdea.trim(),
+			);
+			fd.set("subline", subline.trim());
+			fd.set("offer", offer.trim());
+			fd.set("prompt_market", promptMarket);
+			fd.set("subject_framing", subjectFraming);
+			fd.set("prompt_extra", effectivePromptExtra());
+			fd.set("workflow_mode", workflowMode);
+			fd.set("promotion_mode", promotionMode);
+			fd.set("image_text_mode", "integrated");
+			fd.set("aspect_ratio", effectiveImageAspectRatio);
+			fd.set(
+				"endpoint",
+				frame === "end" && startPlateUrl
+					? EDIT_ENDPOINT
+					: productPhoto
+						? EDIT_ENDPOINT
+						: TEXT_ENDPOINT,
+			);
+			fd.set("num_images", "1");
+			fd.set("image_output_mode", "single");
+			fd.set("social_drip", "1");
+			fd.set("social_drip_frame", frame);
+			fd.set("social_drip_metaphor", plan.metaphorId);
+			fd.set("social_drip_plan", JSON.stringify(plan));
+			if (frame === "end" && startPlateUrl)
+				fd.set("start_plate_url", startPlateUrl);
+			attachReferenceToForm(fd);
+
+			const res = await fetch("/api/generate-image", {
+				method: "POST",
+				body: fd,
+			});
+			const data = await readGenerateJson(res);
+			if (!res.ok)
+				throw new Error(
+					(data.error as string) ?? m.errors.polishFailed,
+				);
+			notifyCreditBalance(readCreditBalanceFromResponse(data));
+			const urls = (data.imageUrls as string[] | undefined) ?? [
+				data.imageUrl as string,
+			];
+			const applied = applyGeneratedImages(
+				urls,
+				data.endpoint as string | undefined,
+			);
+			if (!applied) throw new Error(m.errors.imageGenNoUrl);
+			return applied;
+		} finally {
+			setImageJobMeta(null);
+		}
+	}
+
+	async function makeSocialDripVideo(
+		imageStartUrlOverride?: string,
+	): Promise<string> {
+		const plan = await resolveSocialDripPlan();
+		// Always rebuild start/end stills for the latest pour contract — never reuse
+		// a previous decorative-glow plate that blocks the drip gag.
+		socialDripStillUrlRef.current = null;
+		socialDripEndUrlRef.current = null;
+		void imageStartUrlOverride;
+		if (!productPhoto && promotionMode !== "concept") {
+			throw new Error(m.wizard.socialDripNeedKeyframe);
+		}
+		const startUrl = await generateSocialDripKeyframe(plan, "start");
+		socialDripStillUrlRef.current = startUrl;
+		const endUrl = await generateSocialDripKeyframe(plan, "end", startUrl);
+		socialDripEndUrlRef.current = endUrl;
+		const pair = [startUrl, endUrl].filter(Boolean);
+		if (pair.length) {
+			setImageVariantUrls(pair);
+			setSelectedVariantIndex(0);
+			setImageUrl(startUrl);
+			imageUrlRef.current = startUrl;
+		}
+		setVideoNote(
+			`${m.wizard.socialDripAnimatingCard} · ${plan.metaphorLabel}`,
+		);
+		const vOpts = resolveVideoGenerationOpts(templateId, videoSettings);
+		const durationSec = resolvePlannerDurationSec(
+			String(vOpts.duration),
+			6,
+		);
+		const subject =
+			promotionMode === "concept"
+				? effectivePromoteName ||
+					product.trim() ||
+					conceptIdea.trim() ||
+					business.trim()
+				: product.trim() || business.trim();
+		const dripPrompt = buildSocialDripVideoPrompt({
+			plan,
+			product: subject || "the hero",
+			durationSec,
+			conceptMode: promotionMode === "concept",
+		});
+		if (videoPrompt.trim() !== dripPrompt) setVideoPrompt(dripPrompt);
+
+		const fd = new FormData();
+		fd.set("mode", "image");
+		fd.set("promotion_mode", promotionMode);
+		fd.set("prompt", seedancePromptForGenerate(dripPrompt));
+		fd.set("resolution", vOpts.resolution);
+		fd.set("duration", String(Math.min(8, Math.max(5, durationSec))));
+		fd.set("aspect_ratio", effectiveImageAspectRatio);
+		fd.set("generate_audio", "false");
+		fd.set("motion_strength", "72");
+		fd.set("negative_prompt", negativePrompt);
+		fd.set("avoid_on_screen_text", "false");
+		fd.set("fast", "false");
+		fd.set("social_drip", "1");
+		fd.set("social_drip_metaphor", plan.metaphorId);
+		fd.set(
+			"headline",
+			headline.trim() ||
+				product.trim() ||
+				conceptIdea.trim() ||
+				business.trim(),
+		);
+		fd.set("subline", subline.trim());
+		fd.set("offer", offer.trim());
+		fd.set("product_name", subject);
+		fd.set("business", business.trim());
+		fd.set("image_start_url", startUrl);
+		fd.set("image_end_url", endUrl);
+
+		const res = await fetch("/api/generate-minimax-h3", {
+			method: "POST",
+			body: fd,
+		});
+		const data = await res.json();
+		if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
+		notifyCreditBalance(readCreditBalanceFromResponse(data));
+		const pathNote = data.generationMode
+			? `${m.wizard.videoGenPathLabel}: ${data.generationMode}${data.endpoint ? ` · ${data.endpoint}` : ""}`
+			: "";
+		setVideoNote(
+			[
+				m.wizard.socialDripHint,
+				`${plan.metaphorLabel}`,
+				pathNote,
+				data.note as string | undefined,
+			]
+				.filter(Boolean)
+				.join(" · "),
+		);
+		return data.videoUrl as string;
+	}
+
 	async function makeImageToVideo(
 		imageStartUrlOverride?: string,
 	): Promise<string> {
@@ -7191,6 +7502,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		// Motion poster owns its recipe prompt — never let planAiVideoPrompt overwrite it.
 		if (
 			videoCreativeMode !== "motion-poster" &&
+			videoCreativeMode !== "social-drip" &&
 			!isStoryboardOutput &&
 			!usesCompositor &&
 			!usesProductAssistant &&
@@ -7326,6 +7638,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			!productPhoto &&
 			!conceptTextVideoReady &&
 			!motionPosterCanAutoStill &&
+			!socialDripCanAutoStill &&
 			!directReferenceR2vReady &&
 			!(isStoryboardOutput && storyboardScenes.length > 0)
 		) {
@@ -7342,6 +7655,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		}
 		if (
 			videoCreativeMode !== "motion-poster" &&
+			videoCreativeMode !== "social-drip" &&
 			isCreativeVideoStyle(visualStyleId) &&
 			!shouldCinematicStitch &&
 			!videoPrompt.trim()
@@ -7351,6 +7665,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		}
 		if (
 			videoCreativeMode !== "motion-poster" &&
+			videoCreativeMode !== "social-drip" &&
 			promotionMode === "concept" &&
 			isAiPlannedVideoStyle(visualStyleId) &&
 			!shouldCinematicStitch &&
@@ -7370,7 +7685,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			!opts?.imageUrlOverride &&
 			!conceptTextVideoReady &&
 			!directReferenceR2vReady &&
-			!motionPosterCanAutoStill
+			!motionPosterCanAutoStill &&
+			!socialDripCanAutoStill
 		) {
 			setError(
 				usesCompositor ? m.errors.needHeadline : m.errors.needKeyframe,
@@ -7457,6 +7773,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				case "motion-poster":
 					// Keep MiniMax H3 native audio — do not replace with library BGM.
 					url = await makeMotionPosterVideo(opts?.imageUrlOverride);
+					break;
+				case "social-drip":
+					url = await makeSocialDripVideo(opts?.imageUrlOverride);
 					break;
 				case "image-to-video":
 				default:
@@ -7757,7 +8076,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		(!hasFinalImage &&
 			!conceptTextVideoReady &&
 			!directReferenceR2vReady &&
-			!motionPosterCanAutoStill) ||
+			!motionPosterCanAutoStill &&
+			!socialDripCanAutoStill) ||
 		(isCinematicStitchOutput &&
 			cinematicScenes.length < cinematicSceneCount) ||
 		videoBusy ||
@@ -7775,6 +8095,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			!videoPrompt.trim()) ||
 		(isContentResearchPhysicalR2v && !referenceR2vReady) ||
 		(videoCreativeMode !== "motion-poster" &&
+			videoCreativeMode !== "social-drip" &&
 			promotionMode === "concept" &&
 			isAiPlannedVideoStyle(visualStyleId) &&
 			!isCinematicStitchOutput &&
@@ -7863,12 +8184,14 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			!hasFinalImage &&
 			!conceptTextVideoReady &&
 			!directReferenceR2vReady &&
-			!motionPosterCanAutoStill
+			!motionPosterCanAutoStill &&
+			!socialDripCanAutoStill
 		) {
 			return m.errors.needAiImage;
 		}
 		if (
 			videoCreativeMode !== "motion-poster" &&
+			videoCreativeMode !== "social-drip" &&
 			promotionMode === "concept" &&
 			isAiPlannedVideoStyle(visualStyleId) &&
 			!isCinematicStitchOutput &&
@@ -8549,6 +8872,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		videoCreativeMode,
 		motionPosterDialectPick,
 		setMotionPosterDialectPick,
+		socialDripMetaphorPick,
+		setSocialDripMetaphorPick,
+		socialDripPlanNote,
 		videoGenerateDisabled,
 		videoGenerateDisabledReason,
 		videoJobStartedAt,

@@ -12,6 +12,13 @@ import { isCreativeVideoStyle } from "@/lib/visual-styles";
 import { MotionPosterDialectPicker } from "@/components/studio/MotionPosterDialectPicker";
 import { ArtStylePicker } from "@/components/ArtStylePicker";
 import { IMAGE_ASPECT_RATIOS, type ImageAspectRatio } from "@/lib/image-aspect-ratio";
+import {
+  SOCIAL_DRIP_METAPHOR_IDS,
+  SOCIAL_DRIP_METAPHOR_DEFS,
+  assessSocialDripFit,
+  type SocialDripFitReasonId,
+  type SocialDripMetaphorPick,
+} from "@/lib/social-drip";
 
 const PANEL_CSS = `
 .pv-page {
@@ -228,9 +235,13 @@ export function PreVideoSetupPanel({
   /** Landing recipe / creative mode already chose motion poster — keep it. */
   const prefersMotionPoster =
     !scenesReady && wizard.videoCreativeMode === "motion-poster";
+  const prefersSocialDrip =
+    !scenesReady && wizard.videoCreativeMode === "social-drip";
   const activeSubpath =
     videoSubpath ??
-    (prefersMotionPoster
+    (prefersSocialDrip
+      ? "social_drip"
+      : prefersMotionPoster
       ? "motion_poster"
       : prefersReference
         ? "reference_reel"
@@ -239,8 +250,9 @@ export function PreVideoSetupPanel({
           : "product_promo");
   const isReference = !scenesReady && !isConcept && activeSubpath === "reference_reel";
   const isMotionPoster = !scenesReady && activeSubpath === "motion_poster";
+  const isSocialDrip = !scenesReady && activeSubpath === "social_drip";
   const isUgc = !scenesReady && activeSubpath === "ugc_presenter";
-  const isSceneReel = !scenesReady && isConcept && !isMotionPoster;
+  const isSceneReel = !scenesReady && isConcept && !isMotionPoster && !isSocialDrip;
   const isQuickAssistant =
     !scenesReady && !isConcept && activeSubpath === "product_promo";
   const showCreativeBrief =
@@ -249,6 +261,7 @@ export function PreVideoSetupPanel({
       !isReference &&
       !isUgc &&
       !isMotionPoster &&
+      !isSocialDrip &&
       isCreativeVideoStyle(wizard.visualStyleId));
   const showBrandWebsite = isSceneReel;
   const showConceptAiPlan = isSceneReel;
@@ -260,20 +273,31 @@ export function PreVideoSetupPanel({
   // Keep research/R2V on reference_reel when ctx.videoSubpath was never set.
   useEffect(() => {
     if (!onPickVideoSubpath || videoSubpath) return;
+    if (prefersSocialDrip) {
+      onPickVideoSubpath("social_drip");
+      return;
+    }
     if (prefersMotionPoster) {
       onPickVideoSubpath("motion_poster");
       return;
     }
     if (!prefersReference) return;
     onPickVideoSubpath("reference_reel");
-  }, [onPickVideoSubpath, videoSubpath, prefersReference, prefersMotionPoster]);
+  }, [
+    onPickVideoSubpath,
+    videoSubpath,
+    prefersReference,
+    prefersMotionPoster,
+    prefersSocialDrip,
+  ]);
 
   // 快速廣告 = DeepSeek product-assistant (vision → Seedance prompt), not raw product-promo I2V.
-  // Never run this when reference-concept / research reel / motion-poster is active.
+  // Never run this when reference-concept / research reel / motion-poster / social-drip is active.
   useEffect(() => {
     if (!isQuickAssistant) return;
     if (wizard.videoCreativeMode === "reference-concept") return;
     if (wizard.videoCreativeMode === "motion-poster") return;
+    if (wizard.videoCreativeMode === "social-drip") return;
     if (wizard.videoCreativeMode === "product-assistant") return;
     wizard.applyPrimaryPathVideoOnly("assistant");
     // Intentionally omit applyPrimaryPathVideoOnly identity — only re-sync when mode/subpath drifts.
@@ -311,7 +335,19 @@ export function PreVideoSetupPanel({
       ? [pv.conceptTip1, pv.conceptTip2, pv.conceptTip3]
       : isReference
         ? [pv.refTip1, pv.refTip2, pv.tip3]
-        : isMotionPoster
+        : isSocialDrip
+          ? [
+              {
+                title: m.wizard.socialDripFitTitle,
+                body: m.wizard.socialDripHint,
+              },
+              {
+                title: m.wizard.socialDripMetaphorTitle,
+                body: m.wizard.socialDripMetaphorHint,
+              },
+              pv.tip3,
+            ]
+          : isMotionPoster
           ? [
               {
                 title: m.wizard.videoCreativeModes["motion-poster"].title,
@@ -373,6 +409,11 @@ export function PreVideoSetupPanel({
       desc: m.wizard.videoCreativeModes["motion-poster"].description,
     },
     {
+      id: "social_drip",
+      title: m.wizard.videoCreativeModes["social-drip"].title,
+      desc: m.wizard.videoCreativeModes["social-drip"].description,
+    },
+    {
       id: "reference_reel",
       title: m.wizard.pathReferenceVideoTitle,
       desc: m.wizard.pathReferenceVideoDesc,
@@ -390,6 +431,11 @@ export function PreVideoSetupPanel({
       title: m.wizard.videoCreativeModes["motion-poster"].title,
       desc: m.wizard.videoCreativeModes["motion-poster"].description,
     },
+    {
+      id: "social_drip",
+      title: m.wizard.videoCreativeModes["social-drip"].title,
+      desc: m.wizard.videoCreativeModes["social-drip"].description,
+    },
   ] as const;
 
   const styleOptions = isConcept ? conceptStyleOptions : productStyleOptions;
@@ -398,7 +444,9 @@ export function PreVideoSetupPanel({
     ? pv.scenesReadyHint
     : isUgc
       ? pv.ugcHint
-      : isMotionPoster
+      : isSocialDrip
+        ? m.wizard.socialDripHint
+        : isMotionPoster
         ? m.wizard.motionPosterHint
         : isReference
           ? pv.referenceHint
@@ -535,9 +583,11 @@ export function PreVideoSetupPanel({
               <div className="pv-style-grid">
                 {styleOptions.map((opt) => {
                   const selected = isConcept
-                    ? opt.id === "motion_poster"
-                      ? isMotionPoster
-                      : isSceneReel
+                    ? opt.id === "social_drip"
+                      ? isSocialDrip
+                      : opt.id === "motion_poster"
+                        ? isMotionPoster
+                        : isSceneReel
                     : activeSubpath === opt.id;
                   return (
                     <button
@@ -792,6 +842,194 @@ export function PreVideoSetupPanel({
                   value={wizard.motionPosterDialectPick}
                   onChange={wizard.setMotionPosterDialectPick}
                 />
+              </section>
+            ) : null}
+
+            {isSocialDrip ? (
+              <section className="pv-card">
+                <div className="pv-card-title-row mb-2">
+                  <h3 className="pv-card-title">{m.wizard.socialDripFitTitle}</h3>
+                </div>
+                <p className="mb-3 text-xs text-slate-500">{m.wizard.socialDripHint}</p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-800">
+                      {m.wizard.socialDripFitGoodTitle}
+                    </p>
+                    <ul className="mt-2 space-y-1.5 text-[11px] leading-snug text-emerald-900/90">
+                      {m.wizard.socialDripFitGoodItems.map((item) => (
+                        <li key={item} className="flex gap-1.5">
+                          <span aria-hidden className="shrink-0 text-emerald-600">
+                            ✓
+                          </span>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-900">
+                      {m.wizard.socialDripFitBadTitle}
+                    </p>
+                    <ul className="mt-2 space-y-1.5 text-[11px] leading-snug text-amber-950/90">
+                      {m.wizard.socialDripFitBadItems.map((item) => (
+                        <li key={item} className="flex gap-1.5">
+                          <span aria-hidden className="shrink-0 text-amber-700">
+                            ✕
+                          </span>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+                {(() => {
+                  const fit = assessSocialDripFit({
+                    product: wizard.product,
+                    conceptIdea: wizard.conceptIdea,
+                    headline: wizard.headline,
+                    business: wizard.business,
+                    conceptMode: isConcept,
+                    hasProductPhoto: Boolean(wizard.productPhoto),
+                    pick: wizard.socialDripMetaphorPick,
+                  });
+                  const levelTone =
+                    fit.level === "good"
+                      ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                      : fit.level === "caution"
+                        ? "border-amber-200 bg-amber-50 text-amber-950"
+                        : "border-rose-200 bg-rose-50 text-rose-950";
+                  const reasonCopy = (id: SocialDripFitReasonId) =>
+                    m.wizard.socialDripFitReasons[id] ?? id;
+                  const suggestLabel = fit.suggestedMetaphor
+                    ? m.wizard.socialDripMetaphors[fit.suggestedMetaphor]
+                        ?.title ??
+                      SOCIAL_DRIP_METAPHOR_DEFS[fit.suggestedMetaphor].label
+                    : null;
+                  return (
+                    <div className={`mt-3 rounded-xl border px-3 py-2.5 ${levelTone}`}>
+                      <p className="text-[11px] font-semibold">
+                        {m.wizard.socialDripFitLevels[fit.level]}
+                      </p>
+                      <ul className="mt-1.5 space-y-1 text-[11px] leading-snug opacity-90">
+                        {fit.reasons.map((id) => (
+                          <li key={id}>{reasonCopy(id)}</li>
+                        ))}
+                      </ul>
+                      {suggestLabel && fit.suggestedMetaphor ? (
+                        <button
+                          type="button"
+                          className="mt-2 text-[11px] font-semibold underline underline-offset-2"
+                          onClick={() =>
+                            wizard.setSocialDripMetaphorPick(
+                              fit.suggestedMetaphor as SocialDripMetaphorPick,
+                            )
+                          }
+                        >
+                          {m.wizard.socialDripFitSuggest.replace(
+                            "{metaphor}",
+                            suggestLabel,
+                          )}
+                        </button>
+                      ) : null}
+                    </div>
+                  );
+                })()}
+              </section>
+            ) : null}
+
+            {isSocialDrip ? (
+              <section className="pv-card">
+                <div className="pv-card-title-row mb-2">
+                  <h3 className="pv-card-title">{m.wizard.socialDripMetaphorTitle}</h3>
+                </div>
+                <p className="mb-3 text-xs text-slate-500">{m.wizard.socialDripMetaphorHint}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold transition ${
+                      wizard.socialDripMetaphorPick === "auto"
+                        ? "border-violet-500 bg-violet-50 text-violet-900"
+                        : "border-slate-200 bg-white text-slate-600 hover:border-violet-300"
+                    }`}
+                    onClick={() => wizard.setSocialDripMetaphorPick("auto")}
+                  >
+                    {m.wizard.socialDripMetaphorAuto}
+                  </button>
+                  {SOCIAL_DRIP_METAPHOR_IDS.map((id) => {
+                    const selected = wizard.socialDripMetaphorPick === id;
+                    const label =
+                      m.wizard.socialDripMetaphors[id]?.title ??
+                      SOCIAL_DRIP_METAPHOR_DEFS[id].label;
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        title={m.wizard.socialDripMetaphors[id]?.desc}
+                        className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold transition ${
+                          selected
+                            ? "border-violet-500 bg-violet-50 text-violet-900"
+                            : "border-slate-200 bg-white text-slate-600 hover:border-violet-300"
+                        }`}
+                        onClick={() =>
+                          wizard.setSocialDripMetaphorPick(id as SocialDripMetaphorPick)
+                        }
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+                {wizard.socialDripPlanNote ? (
+                  <p className="mt-2 text-[11px] text-violet-700">{wizard.socialDripPlanNote}</p>
+                ) : null}
+                <p className="mt-2 text-[11px] text-slate-400">{m.wizard.socialDripNoReferenceNote}</p>
+              </section>
+            ) : null}
+
+            {isSocialDrip ? (
+              <section className="pv-card">
+                <div className="pv-card-title-row mb-2">
+                  <h3 className="pv-card-title">{pv.aspectLabel}</h3>
+                </div>
+                <p className="mb-3 text-xs text-slate-500">{pv.aspectHint}</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {IMAGE_ASPECT_RATIOS.map((ratio: ImageAspectRatio) => {
+                    const copy = m.wizard.imageAspectRatios[ratio];
+                    const selected = wizard.imageAspectRatio === ratio;
+                    const frameStyle =
+                      ratio === "9:16"
+                        ? { width: 18, height: 32 }
+                        : ratio === "4:5"
+                          ? { width: 22, height: 28 }
+                          : { width: 26, height: 26 };
+                    return (
+                      <button
+                        key={ratio}
+                        type="button"
+                        onClick={() => wizard.setImageAspectRatio(ratio)}
+                        className={`relative rounded-xl border px-2 py-3 text-center transition ${
+                          selected
+                            ? "border-violet-500 bg-violet-50 text-violet-700"
+                            : "border-slate-200 bg-white text-slate-400 hover:border-violet-200"
+                        }`}
+                      >
+                        {selected ? (
+                          <span className="pv-check" aria-hidden>
+                            <svg viewBox="0 0 24 24" className="h-2.5 w-2.5" fill="none" stroke="currentColor" strokeWidth="3">
+                              <path d="m5 12 5 5L20 7" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          </span>
+                        ) : null}
+                        <span className="pv-aspect-frame block" style={frameStyle} />
+                        <span className="block text-sm font-bold text-slate-900">{ratio}</span>
+                        <span className="mt-0.5 block text-[10px] leading-snug text-slate-500">
+                          {copy.title}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </section>
             ) : null}
 
