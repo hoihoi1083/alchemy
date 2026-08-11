@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useLocale } from "@/components/LocaleProvider";
-import { PRODUCT_LOGO_SRC, PRODUCT_NAME, PRODUCT_SUPPORT_EMAIL } from "@/lib/brand";
+import { PRODUCT_LOGO_SRC, PRODUCT_NAME, PRODUCT_SUPPORT_EMAIL, PRODUCT_WORDMARK_ALT, PRODUCT_WORDMARK_WHITE_SRC } from "@/lib/brand";
 
 const PAYMENTS: { alt: string; src: string }[] = [
   { alt: "Visa", src: "/images/footer/payments/visa.svg" },
@@ -109,14 +109,19 @@ export function LandingFooter() {
       <div className="relative z-10 mx-auto w-full max-w-[1440px] px-4 py-10 sm:px-6 md:px-8 md:py-12">
         <div className="landing-footer-top">
           <div className="landing-footer-brand min-w-0 max-w-md">
-            <Link href="/" className="inline-flex items-center gap-3">
+            <Link href="/" className="inline-flex items-center gap-3.5" aria-label={PRODUCT_WORDMARK_ALT}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={PRODUCT_LOGO_SRC}
                 alt=""
-                className="h-9 w-9 rounded-xl object-contain"
+                className="h-14 w-14 rounded-xl object-contain"
               />
-              <span className="text-base font-semibold">{PRODUCT_NAME}</span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={`${PRODUCT_WORDMARK_WHITE_SRC}?v=2`}
+                alt=""
+                className="h-12 w-auto max-w-[20rem] object-contain object-left sm:h-16 sm:max-w-[26rem]"
+              />
             </Link>
             <p className="mt-3 text-sm leading-relaxed text-slate-300/90">{f.tagline}</p>
           </div>

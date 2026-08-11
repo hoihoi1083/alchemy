@@ -6,7 +6,12 @@ import { useAuth } from "@clerk/nextjs";
 import { AuthNav } from "@/components/AuthNav";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { useLocale } from "@/components/LocaleProvider";
-import { PRODUCT_LOGO_ALT, PRODUCT_LOGO_SRC, PRODUCT_NAME } from "@/lib/brand";
+import {
+	PRODUCT_LOGO_ALT,
+	PRODUCT_LOGO_SRC,
+	PRODUCT_WORDMARK_ALT,
+	PRODUCT_WORDMARK_BLACK_SRC,
+} from "@/lib/brand";
 
 /** Home + section anchors + product tool routes. */
 const NAV = [
@@ -33,16 +38,20 @@ export function LandingNav() {
 				<Link
 					href="/"
 					className="flex min-w-0 shrink-0 items-center gap-2.5 sm:gap-3"
+					aria-label={PRODUCT_WORDMARK_ALT}
 				>
 					{/* eslint-disable-next-line @next/next/no-img-element */}
 					<img
 						src={PRODUCT_LOGO_SRC}
-						alt={PRODUCT_LOGO_ALT}
+						alt=""
 						className="h-10 w-10 shrink-0 rounded-xl object-contain sm:h-11 sm:w-11"
 					/>
-					<span className="hidden whitespace-nowrap text-lg font-bold tracking-tight text-slate-900 sm:inline sm:text-[20px]">
-						{PRODUCT_NAME}
-					</span>
+					{/* eslint-disable-next-line @next/next/no-img-element */}
+					<img
+						src={`${PRODUCT_WORDMARK_BLACK_SRC}?v=2`}
+						alt={PRODUCT_LOGO_ALT}
+						className="h-8 w-auto max-w-[12rem] object-contain object-left sm:h-9 sm:max-w-[14rem]"
+					/>
 				</Link>
 
 				<nav className="landing-nav-links ml-8 hidden min-w-0 items-center gap-2.5 xl:ml-12 xl:gap-3.5 lg:flex">

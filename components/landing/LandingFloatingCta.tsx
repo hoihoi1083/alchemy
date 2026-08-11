@@ -3,23 +3,17 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { Syne } from "next/font/google";
 import { useLocale } from "@/components/LocaleProvider";
 import {
 	PRODUCT_LOGO_ALT,
 	PRODUCT_LOGO_SRC,
-	PRODUCT_NAME_SHORT,
+	PRODUCT_WORDMARK_ALT,
+	PRODUCT_WORDMARK_WHITE_SRC,
 } from "@/lib/brand";
 
-const brandDisplay = Syne({
-	subsets: ["latin"],
-	weight: ["600", "700", "800"],
-	display: "swap",
-});
-
 /**
- * Fixed bottom dock — Advoo-style compact pill.
- * Brand: flask mark + split lockup (Alchemy / AI Lab). No custom wordmark image needed.
+ * Fixed bottom dock — compact pill.
+ * Brand: flask mark + stacked Alchemy / AI Lab wordmark.
  */
 export function LandingFloatingCta() {
 	const { m } = useLocale();
@@ -44,22 +38,41 @@ export function LandingFloatingCta() {
           pointer-events: auto;
           display: inline-flex;
           align-items: center;
-          gap: 0.75rem;
+          gap: 0.85rem;
           max-width: calc(100vw - 2rem);
-          padding: 0.4rem 0.4rem 0.4rem 0.55rem;
+          padding: 0.45rem 0.45rem 0.45rem 0.65rem;
           border-radius: 9999px;
-          background: rgb(8 6 14 / 0.92);
-          border: 1px solid rgb(255 255 255 / 0.14);
+          background:
+            radial-gradient(
+              120% 140% at 12% 50%,
+              rgb(139 92 246 / 0.38) 0%,
+              rgb(108 59 255 / 0.16) 32%,
+              transparent 62%
+            ),
+            radial-gradient(
+              90% 120% at 78% 50%,
+              rgb(91 47 224 / 0.22) 0%,
+              transparent 55%
+            ),
+            linear-gradient(
+              105deg,
+              rgb(18 10 36 / 0.96) 0%,
+              rgb(10 7 22 / 0.94) 48%,
+              rgb(16 10 34 / 0.96) 100%
+            );
+          border: 1px solid rgb(167 139 250 / 0.42);
           box-shadow:
             0 16px 40px -12px rgb(0 0 0 / 0.55),
-            inset 0 1px 0 rgb(255 255 255 / 0.06);
+            0 0 0 1px rgb(108 59 255 / 0.12),
+            inset 0 1px 0 rgb(255 255 255 / 0.1),
+            inset 0 0 28px rgb(108 59 255 / 0.14);
           backdrop-filter: blur(14px);
           -webkit-backdrop-filter: blur(14px);
         }
         @media (min-width: 640px) {
           .landing-float-pill {
-            gap: 0.95rem;
-            padding: 0.45rem 0.45rem 0.45rem 0.6rem;
+            gap: 1rem;
+            padding: 0.5rem 0.5rem 0.5rem 0.75rem;
           }
         }
         .landing-float-mark {
@@ -68,7 +81,7 @@ export function LandingFloatingCta() {
           gap: 0.55rem;
           min-width: 0;
         }
-        .landing-float-mark img {
+        .landing-float-logo {
           height: 1.7rem;
           width: 1.7rem;
           flex-shrink: 0;
@@ -76,55 +89,45 @@ export function LandingFloatingCta() {
           object-fit: contain;
         }
         @media (min-width: 640px) {
-          .landing-float-mark img {
+          .landing-float-logo {
             height: 1.85rem;
             width: 1.85rem;
           }
         }
-        .landing-float-lockup {
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          gap: 0.12rem;
-          min-width: 0;
-          line-height: 1;
-        }
-        .landing-float-name {
-          font-size: 0.92rem;
-          font-weight: 800;
-          letter-spacing: -0.035em;
-          white-space: nowrap;
+        .landing-float-wordmark-wrap {
+          display: inline-block;
+          height: 1.45rem;
+          max-width: min(8.5rem, 36vw);
           background: linear-gradient(
             105deg,
             #ffffff 0%,
-            #f5f3ff 38%,
-            #c4b5fd 72%,
+            #f5f3ff 34%,
+            #c4b5fd 68%,
+            #e9d5ff 86%,
             #ffffff 100%
           );
           background-size: 160% 100%;
-          -webkit-background-clip: text;
-          background-clip: text;
-          color: transparent;
-          -webkit-text-fill-color: transparent;
+          -webkit-mask-image: url(${PRODUCT_WORDMARK_WHITE_SRC}?v=2);
+          mask-image: url(${PRODUCT_WORDMARK_WHITE_SRC}?v=2);
+          -webkit-mask-size: contain;
+          mask-size: contain;
+          -webkit-mask-repeat: no-repeat;
+          mask-repeat: no-repeat;
+          -webkit-mask-position: left center;
+          mask-position: left center;
         }
         @media (min-width: 640px) {
-          .landing-float-name {
-            font-size: 1.02rem;
+          .landing-float-wordmark-wrap {
+            height: 1.65rem;
+            max-width: 10rem;
           }
         }
-        .landing-float-sub {
-          font-size: 0.58rem;
-          font-weight: 600;
-          letter-spacing: 0.18em;
-          text-transform: uppercase;
-          color: rgb(196 181 253 / 0.78);
-          white-space: nowrap;
-        }
-        @media (min-width: 640px) {
-          .landing-float-sub {
-            font-size: 0.62rem;
-            letter-spacing: 0.2em;
-          }
+        .landing-float-wordmark-wrap img {
+          display: block;
+          height: 100%;
+          width: auto;
+          max-width: 100%;
+          opacity: 0;
         }
         .landing-float-cta {
           display: inline-flex;
@@ -132,8 +135,8 @@ export function LandingFloatingCta() {
           justify-content: center;
           flex-shrink: 0;
           border-radius: 9999px;
-          padding: 0.55rem 1.05rem;
-          font-size: 0.8125rem;
+          padding: 0.5rem 0.95rem;
+          font-size: 0.72rem;
           font-weight: 600;
           line-height: 1;
           color: #fff;
@@ -152,8 +155,8 @@ export function LandingFloatingCta() {
         }
         @media (min-width: 640px) {
           .landing-float-cta {
-            padding: 0.65rem 1.25rem;
-            font-size: 0.875rem;
+            padding: 0.55rem 1.1rem;
+            font-size: 0.78rem;
           }
         }
         .landing-float-cta:hover {
@@ -162,12 +165,19 @@ export function LandingFloatingCta() {
         }
       `}</style>
 			<div className="landing-float-pill">
-				<span className="landing-float-mark">
+				<span className="landing-float-mark" aria-label={PRODUCT_WORDMARK_ALT}>
 					{/* eslint-disable-next-line @next/next/no-img-element */}
-					<img src={PRODUCT_LOGO_SRC} alt={PRODUCT_LOGO_ALT} />
-					<span className={`${brandDisplay.className} landing-float-lockup`}>
-						<span className="landing-float-name">{PRODUCT_NAME_SHORT}</span>
-						<span className="landing-float-sub">AI Lab</span>
+					<img
+						className="landing-float-logo"
+						src={PRODUCT_LOGO_SRC}
+						alt=""
+					/>
+					<span className="landing-float-wordmark-wrap">
+						{/* eslint-disable-next-line @next/next/no-img-element */}
+						<img
+							src={`${PRODUCT_WORDMARK_WHITE_SRC}?v=2`}
+							alt={PRODUCT_LOGO_ALT}
+						/>
 					</span>
 				</span>
 				<Link href="/start" className="landing-float-cta">

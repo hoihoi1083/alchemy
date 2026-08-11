@@ -6,6 +6,12 @@ export const PRODUCT_TAB_TITLE =
   "Alchemy AI Lab - Prompt-free AI Marketing Studio";
 export const PRODUCT_LOGO_SRC = "/alchemy-logo.png";
 export const PRODUCT_LOGO_ALT = `${PRODUCT_NAME} logo`;
+/** Stacked ALCHEMY / AI LAB wordmark (transparent). */
+export const PRODUCT_WORDMARK_WHITE_SRC =
+	"/images/brand/alchemy-wordmark-white.png";
+export const PRODUCT_WORDMARK_BLACK_SRC =
+	"/images/brand/alchemy-wordmark-black.png";
+export const PRODUCT_WORDMARK_ALT = PRODUCT_NAME;
 export const PRODUCT_SUPPORT_EMAIL = "support@alchemyailab.com";
 /** Canonical public site (OG, sitemap, robots). Override with NEXT_PUBLIC_APP_URL in env. */
 export const PRODUCT_SITE_URL = "https://www.alchemyailab.com";
