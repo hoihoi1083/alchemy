@@ -6,7 +6,13 @@ import { useAuth } from "@clerk/nextjs";
 import { AuthNav } from "@/components/AuthNav";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { useLocale } from "@/components/LocaleProvider";
-import { PRODUCT_LOGO_ALT, PRODUCT_LOGO_SRC, PRODUCT_NAME } from "@/lib/brand";
+import {
+  PRODUCT_LOGO_ALT,
+  PRODUCT_LOGO_SRC,
+  PRODUCT_WORDMARK_ALT,
+  PRODUCT_WORDMARK_BLACK_SRC,
+  PRODUCT_WORDMARK_WHITE_SRC,
+} from "@/lib/brand";
 
 type StudioNavProps = {
   /** Optional chips under/ beside brand (e.g. promotion mode). */
@@ -45,22 +51,20 @@ export function StudioNav({ trailing, variant = "light" }: StudioNavProps) {
         <Link
           href="/"
           className="flex min-w-0 shrink-0 items-center gap-2.5 sm:gap-3"
+          aria-label={PRODUCT_WORDMARK_ALT}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={PRODUCT_LOGO_SRC}
-            alt={PRODUCT_LOGO_ALT}
+            alt=""
             className="h-10 w-10 shrink-0 rounded-xl object-contain sm:h-11 sm:w-11"
           />
-          <span
-            className={
-              dark
-                ? "hidden whitespace-nowrap text-lg font-bold tracking-tight text-white sm:inline sm:text-[20px]"
-                : "hidden whitespace-nowrap text-lg font-bold tracking-tight text-slate-900 sm:inline sm:text-[20px]"
-            }
-          >
-            {PRODUCT_NAME}
-          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={`${dark ? PRODUCT_WORDMARK_WHITE_SRC : PRODUCT_WORDMARK_BLACK_SRC}?v=2`}
+            alt={PRODUCT_LOGO_ALT}
+            className="hidden h-8 w-auto max-w-[12rem] object-contain object-left sm:inline sm:h-9 sm:max-w-[14rem]"
+          />
         </Link>
 
         {trailing ? (

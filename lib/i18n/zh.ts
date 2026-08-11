@@ -3901,6 +3901,9 @@ export const zh = {
 			dragDrop: "上傳",
 			settingsTitle: "影片設定",
 			settingsHint: "片長同解像度會影響 token 費用。",
+			aspectLabel: "海報尺寸",
+			aspectHint:
+				"靜圖同影片共用呢個比例。9:16 Reels／Stories · 4:5 IG feed · 1:1 正方形。",
 			klingSettingsHint:
 				"影片會先用 MiniMax H3（全部靜幀 → 一條）。H3 失敗先會改 Kling 拼接，唔使你揀 5／10 秒。",
 			klingClipLabel: "每場片長",

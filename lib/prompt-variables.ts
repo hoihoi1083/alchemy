@@ -1771,47 +1771,58 @@ function motionPosterArtStyleLock(
 	);
 }
 
+function motionPosterAspectLabel(aspectRatio?: string): string {
+	const a = aspectRatio?.trim();
+	return a === "4:5" || a === "1:1" || a === "9:16" ? a : "9:16";
+}
+
+function withMotionPosterAspect(text: string, aspect: string): string {
+	return text.replaceAll("9:16", aspect);
+}
+
 /** 即梦 首尾帧 · 首帧 — designed poster, no type. Type arrives on the END still. */
 export function buildMotionPosterStillPrompt(
 	vars: PromptVariables,
 	opts?: {
 		conceptMode?: boolean;
 		dialect?: MotionPosterDialectId;
+		aspectRatio?: string;
 	},
 ): string {
 	const product =
 		vars.product?.trim() ||
 		(opts?.conceptMode ? "the service scene" : "the product");
 	const dialect = MOTION_POSTER_DIALECTS[opts?.dialect ?? "card-warp"];
+	const aspect = motionPosterAspectLabel(opts?.aspectRatio);
 	if (opts?.conceptMode) {
 		return joinParts(
 			motionPosterArtStyleLock(vars.artStyle, { textless: true }),
-			`Design a vertical CONCEPT motion-poster START keyframe (即梦 首尾帧 · 首帧 / 動態海報). Theme (mood only, never as letters): ${product}.`,
+			`Design a ${aspect} CONCEPT motion-poster START keyframe (即梦 首尾帧 · 首帧 / 動態海報). Theme (mood only, never as letters): ${product}.`,
 			"Premium designed poster still — one hero scene, studio/C4D or shallow-DOF set. Not a busy catalog, not a live-action TVC freeze.",
 			"TEXTLESS start plate: atmosphere and hero only. Type exists only on the END frame — do not paint letters here.",
-			dialect.stillLayoutConcept,
+			withMotionPosterAspect(dialect.stillLayoutConcept, aspect),
 			dialect.startBeatConcept,
 			TEXTLESS_IMAGE_GUARD,
 			"The frame must contain no readable writing of any kind. Top ~20% is empty masthead atmosphere (sky, mist, wall) — not a title bar.",
 			MARKET_HINTS_TEXTLESS[vars.market],
 			FRAMING_IMAGE[vars.framing],
-			"9:16 textless poster still. Leave the masthead band empty for the end frame.",
+			`${aspect} textless poster still. Leave the masthead band empty for the end frame.`,
 		);
 	}
 	return joinParts(
 		motionPosterArtStyleLock(vars.artStyle, { textless: true }),
 		imageReferenceAnchorBlock(vars),
-		`Design a vertical MOTION-POSTER START keyframe (即梦 首尾帧 · 首帧 / 動態海報) for ${product}.`,
+		`Design a ${aspect} MOTION-POSTER START keyframe (即梦 首尾帧 · 首帧 / 動態海報) for ${product}.`,
 		"Premium designed poster still: IMAGE 1 product hero + intentional set (studio/C4D or shallow-DOF). Not a blank white sweep.",
 		"TEXTLESS start plate. Type exists only on the END frame — do not paint letters here.",
-		dialect.stillLayout,
+		withMotionPosterAspect(dialect.stillLayout, aspect),
 		dialect.startBeat,
 		`"${product}" names the photographed object only — do not paint those letters on the still. The object must stay IMAGE 1 pixels.`,
 		TEXTLESS_IMAGE_GUARD,
 		"The frame must contain no readable writing of any kind. Top ~20% is empty masthead atmosphere — not a title bar.",
 		MARKET_HINTS_TEXTLESS[vars.market],
 		FRAMING_IMAGE[vars.framing],
-		"9:16 textless poster still. Leave the masthead band empty for the end frame.",
+		`${aspect} textless poster still. Leave the masthead band empty for the end frame.`,
 	);
 }
 
@@ -1821,12 +1832,14 @@ export function buildMotionPosterEndStillPrompt(
 	opts?: {
 		conceptMode?: boolean;
 		dialect?: MotionPosterDialectId;
+		aspectRatio?: string;
 	},
 ): string {
 	const product =
 		vars.product?.trim() ||
 		(opts?.conceptMode ? "the service scene" : "the product");
 	const dialect = MOTION_POSTER_DIALECTS[opts?.dialect ?? "card-warp"];
+	const aspect = motionPosterAspectLabel(opts?.aspectRatio);
 	const headline = vars.headline?.trim() || product;
 	const subline = vars.subline?.trim() || "";
 	const offer = vars.offer?.trim() || "";
@@ -1856,14 +1869,17 @@ export function buildMotionPosterEndStillPrompt(
 			"IMAGE 1 (when attached) is the textless START plate — keep the same venue, lighting, wardrobe, and subject identity.",
 			dialect.endBeatConcept,
 			"Readable marketing type is REQUIRED. Large masthead in the band that was empty on the start plate.",
-			dialect.stillLayoutConcept.replace(
-				/ZERO readable marketing text\.?/i,
-				"Type lives in the reserved masthead.",
+			withMotionPosterAspect(
+				dialect.stillLayoutConcept.replace(
+					/ZERO readable marketing text\.?/i,
+					"Type lives in the reserved masthead.",
+				),
+				aspect,
 			),
 			copy,
 			MARKET_HINTS[vars.market],
 			FRAMING_IMAGE[vars.framing],
-			"9:16 finished designed poster still. No watermarks, no English meta labels, no hashtag clutter.",
+			`${aspect} finished designed poster still. No watermarks, no English meta labels, no hashtag clutter.`,
 		);
 	}
 	return joinParts(
@@ -1874,14 +1890,17 @@ export function buildMotionPosterEndStillPrompt(
 		dialect.endBeat,
 		"The product MAY rotate, tilt, float, or move to a new settle pose. Same bottle/object — do not swap category.",
 		"Readable marketing type is REQUIRED. Large masthead in the band that was empty on the start plate.",
-		dialect.stillLayout.replace(
-			/ZERO readable marketing text\.?/i,
-			"Type lives in the reserved masthead.",
+		withMotionPosterAspect(
+			dialect.stillLayout.replace(
+				/ZERO readable marketing text\.?/i,
+				"Type lives in the reserved masthead.",
+			),
+			aspect,
 		),
 		copy,
 		MARKET_HINTS[vars.market],
 		FRAMING_IMAGE[vars.framing],
-		"9:16 finished designed poster still. No watermarks, no English meta labels, no hashtag clutter.",
+		`${aspect} finished designed poster still. No watermarks, no English meta labels, no hashtag clutter.`,
 	);
 }
 

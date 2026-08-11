@@ -665,11 +665,13 @@ export async function POST(request: Request) {
               conceptMode: promotionMode === "concept",
               dialect:
                 motionPosterDialectPick === "auto" ? undefined : motionPosterDialectPick,
+              aspectRatio: aspectRatioRaw,
             })
           : buildMotionPosterStillPrompt(vars, {
               conceptMode: promotionMode === "concept",
               dialect:
                 motionPosterDialectPick === "auto" ? undefined : motionPosterDialectPick,
+              aspectRatio: aspectRatioRaw,
             })
         : buildWizardImagePrompt(
             vars,

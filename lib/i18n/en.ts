@@ -4241,6 +4241,9 @@ export const en = {
 			dragDrop: "Upload",
 			settingsTitle: "Video settings",
 			settingsHint: "Duration and resolution affect token cost.",
+			aspectLabel: "Poster size",
+			aspectHint:
+				"Still + video share this size. 9:16 Reels/Stories · 4:5 IG feed · 1:1 square.",
 			klingSettingsHint:
 				"Video uses MiniMax H3 first (all stills → one clip). Kling stitch only if H3 fails — no 5s/10s picker.",
 			klingClipLabel: "Clip length (per scene)",

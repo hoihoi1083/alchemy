@@ -11,6 +11,7 @@ import { studioPhasesForMode } from "@/lib/studio-phases";
 import { isCreativeVideoStyle } from "@/lib/visual-styles";
 import { MotionPosterDialectPicker } from "@/components/studio/MotionPosterDialectPicker";
 import { ArtStylePicker } from "@/components/ArtStylePicker";
+import { IMAGE_ASPECT_RATIOS, type ImageAspectRatio } from "@/lib/image-aspect-ratio";
 
 const PANEL_CSS = `
 .pv-page {
@@ -111,6 +112,9 @@ const PANEL_CSS = `
   display: inline-flex; align-items: center; justify-content: center;
   width: 1.25rem; height: 1.25rem; border-radius: 999px;
   background: #6c3bff; color: #fff;
+}
+.pv-aspect-frame {
+  margin: 0 auto 0.45rem; border: 1.5px solid currentColor; border-radius: 0.25rem; opacity: 0.85;
 }
 .pv-style-grid { display: grid; gap: 0.55rem; margin-top: 0.75rem; grid-template-columns: 1fr; }
 @media (min-width: 640px) {
@@ -718,6 +722,52 @@ export function PreVideoSetupPanel({
                 </label>
               </div>
             </section>
+
+            {isMotionPoster ? (
+              <section className="pv-card">
+                <div className="pv-card-title-row mb-2">
+                  <h3 className="pv-card-title">{pv.aspectLabel}</h3>
+                </div>
+                <p className="mb-3 text-xs text-slate-500">{pv.aspectHint}</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {IMAGE_ASPECT_RATIOS.map((ratio: ImageAspectRatio) => {
+                    const copy = m.wizard.imageAspectRatios[ratio];
+                    const selected = wizard.imageAspectRatio === ratio;
+                    const frameStyle =
+                      ratio === "9:16"
+                        ? { width: 18, height: 32 }
+                        : ratio === "4:5"
+                          ? { width: 22, height: 28 }
+                          : { width: 26, height: 26 };
+                    return (
+                      <button
+                        key={ratio}
+                        type="button"
+                        onClick={() => wizard.setImageAspectRatio(ratio)}
+                        className={`relative rounded-xl border px-2 py-3 text-center transition ${
+                          selected
+                            ? "border-violet-500 bg-violet-50 text-violet-700"
+                            : "border-slate-200 bg-white text-slate-400 hover:border-violet-200"
+                        }`}
+                      >
+                        {selected ? (
+                          <span className="pv-check" aria-hidden>
+                            <svg viewBox="0 0 24 24" className="h-2.5 w-2.5" fill="none" stroke="currentColor" strokeWidth="3">
+                              <path d="m5 12 5 5L20 7" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          </span>
+                        ) : null}
+                        <span className="pv-aspect-frame block" style={frameStyle} />
+                        <span className="block text-sm font-bold text-slate-900">{ratio}</span>
+                        <span className="mt-0.5 block text-[10px] leading-snug text-slate-500">
+                          {copy.title}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            ) : null}
 
             {isMotionPoster ? (
               <section className="pv-card">

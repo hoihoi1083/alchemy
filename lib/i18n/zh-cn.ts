@@ -3510,6 +3510,9 @@ export const zhCn = {
       dragDrop: "上传",
       settingsTitle: "视频设置",
       settingsHint: "时长和分辨率会影响 点数 费用。",
+      aspectLabel: "海报尺寸",
+      aspectHint:
+        "静图和视频共用此比例。9:16 Reels/Stories · 4:5 IG feed · 1:1 方形。",
       klingSettingsHint:
         "视频会先用 MiniMax H3（全部静帧 → 一条）。H3 失败才会改 Kling 拼接，不用你选 5／10 秒。",
       klingClipLabel: "每场时长",

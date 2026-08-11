@@ -613,6 +613,18 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		});
 	}
 
+	const motionPosterAspectRef = useRef(imageAspectRatio);
+	useEffect(() => {
+		if (videoCreativeMode !== "motion-poster") {
+			motionPosterAspectRef.current = imageAspectRatio;
+			return;
+		}
+		if (motionPosterAspectRef.current === imageAspectRatio) return;
+		motionPosterAspectRef.current = imageAspectRatio;
+		motionPosterStillUrlRef.current = null;
+		motionPosterEndUrlRef.current = null;
+	}, [imageAspectRatio, videoCreativeMode]);
+
 	function previewMotionPosterDialect(): MotionPosterDialectId {
 		return resolveMotionPosterDialect({
 			pick: motionPosterDialectPick,
@@ -6453,7 +6465,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		fd.set("prompt", seedancePromptForGenerate(rawPrompt));
 		fd.set("resolution", vOpts.resolution);
 		fd.set("duration", String(Math.min(8, Math.max(4, durationSec))));
-		fd.set("aspect_ratio", vOpts.aspectRatio);
+		fd.set("aspect_ratio", effectiveImageAspectRatio);
 		fd.set("generate_audio", "false");
 		fd.set("motion_strength", String(dialectDef.motionStrength));
 		fd.set("negative_prompt", negativePrompt);
