@@ -21,6 +21,21 @@ describe("motion-poster dialects", () => {
     assert.equal(picked.reason, "product-fit");
   });
 
+  it("fits dessert bakery to designed-poster dialect", () => {
+    const tones = inferMotionPosterTones({
+      product: "草莓舒芙蕾",
+      headline: "Creamy & Juicy",
+    });
+    assert.ok(tones.includes("dessert"));
+    const picked = resolveMotionPosterDialect({
+      pick: "auto",
+      product: "草莓舒芙蕾",
+      headline: "Creamy & Juicy",
+      stable: true,
+    });
+    assert.equal(picked.id, "designed-poster");
+  });
+
   it("fits beauty serum toward light-sweep or kinetic-type", () => {
     const picked = resolveMotionPosterDialect({
       pick: "auto",

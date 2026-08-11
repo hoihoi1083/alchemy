@@ -15,7 +15,8 @@ export function LandingHowItWorks() {
 				<Reveal>
 					<div className="mx-auto max-w-2xl text-center">
 						<h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-							{L.howTitle}
+							{L.howTitleBefore}
+							<span className="text-violet-600">{L.howTitleHighlight}</span>
 						</h2>
 						<p className="mt-2 text-sm text-slate-500">
 							{L.howSubtitle}

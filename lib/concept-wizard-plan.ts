@@ -68,6 +68,16 @@ function styleSpecificRules(input: PlanConceptInput): string[] {
       "- INFO POSTER mode: visualMetaphor may suggest category props and clean white/off-white mood — typography is added in a separate image step.",
     ];
   }
+  if (input.visualStyleId === "designed-poster") {
+    return [
+      "- DESIGNED COMMERCIAL POSTER: visualMetaphor must match the product category (electronics desk set, beauty linen, F&B appetite, etc.) — never force food/dessert props on non-food products. Include bilingual type zones, circular seal, and one brush category word for THIS category.",
+    ];
+  }
+  if (input.visualStyleId === "parts-poster") {
+    return [
+      "- PARTS-BREAKDOWN POSTER: visualMetaphor should describe a clean exploded-view / labeled-components diagram of THIS product — technical commercial teardown, not violent destruction. Title + short part callouts.",
+    ];
+  }
   if (input.visualStyleId === "service-promo" || input.visualStyleId === "pricing-offer") {
     return [
       "- SERVICE/OFFER graphic mode: visualMetaphor may suggest professional graphic mood — not required to be a literal photo scene.",

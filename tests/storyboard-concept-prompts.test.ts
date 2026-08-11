@@ -64,12 +64,41 @@ describe("concept vs product storyboard prompts", () => {
       workflowMode: "image-only" as const,
     };
     assert.equal(resolveImagePromptMode("info-poster", "promo-ai", ctx), "info-poster");
+    assert.equal(
+      resolveImagePromptMode("designed-poster", "promo-ai", ctx),
+      "designed-poster",
+    );
+    assert.equal(
+      resolveImagePromptMode("parts-poster", "promo-ai", {
+        promotionMode: "physical",
+        workflowMode: "image-only",
+      }),
+      "parts-poster",
+    );
     assert.equal(resolveImagePromptMode("brand-fit", "promo-ai", ctx), "brand-fit");
     assert.equal(resolveImagePromptMode("pricing-offer", "promo-ai", ctx), "pricing-offer");
     assert.equal(resolveImagePromptMode("website-launch", "promo-ai", ctx), "website-launch");
 
     const info = buildWizardImagePrompt(baseVars, "info-poster", null, "info-poster");
     assert.match(info, /INFO POSTER/i);
+
+    const designed = buildWizardImagePrompt(
+      baseVars,
+      "designed-poster",
+      null,
+      "designed-poster",
+    );
+    assert.match(designed, /DESIGNED COMMERCIAL POSTER/i);
+    assert.match(designed, /bilingual|circular seal|brush/i);
+    assert.match(designed, /CATEGORY LOCK|never default to food/i);
+    const parts = buildWizardImagePrompt(
+      baseVars,
+      "parts-poster",
+      null,
+      "parts-poster",
+    );
+    assert.match(parts, /PARTS-BREAKDOWN|EXPLODED-VIEW/i);
+    assert.match(parts, /callout|leader line|component/i);
     const pricing = buildWizardImagePrompt(baseVars, "pricing-offer", null, "pricing-offer");
     assert.match(pricing, /pricing|limited-offer|CTA/i);
     const website = buildWizardImagePrompt(baseVars, "website-launch", null, "website-launch");

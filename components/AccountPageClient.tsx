@@ -3,13 +3,12 @@
 import Link from "next/link";
 import { useAuth } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
-import { AuthNav } from "@/components/AuthNav";
-import { LanguageToggle } from "@/components/LanguageToggle";
+import { LandingFloatingCta } from "@/components/landing/LandingFloatingCta";
+import { LandingNav } from "@/components/landing/LandingNav";
 import { useLocale } from "@/components/LocaleProvider";
 import type { CreditReason } from "@/lib/billing/ledger";
 import type { UserPlan } from "@/lib/billing/plans";
 import { CREDITS_EVENT } from "@/lib/credits-client";
-import { PRODUCT_LOGO_ALT, PRODUCT_LOGO_SRC, PRODUCT_NAME } from "@/lib/brand";
 
 type MeUser = {
   creditBalance?: number | null;
@@ -163,26 +162,9 @@ export function AccountPageClient() {
 
   return (
     <main className="min-h-screen bg-white text-slate-900">
-      <header className="mx-auto max-w-3xl px-6" style={{ paddingTop: 40, paddingBottom: 32 }}>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <img src={PRODUCT_LOGO_SRC} alt={PRODUCT_LOGO_ALT} className="h-10 w-10 rounded-xl object-contain" />
-            <p className="text-lg font-semibold tracking-tight">{PRODUCT_NAME}</p>
-          </Link>
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <LanguageToggle variant="light" />
-            <Link
-              href="/pricing"
-              className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-            >
-              {m.pricing.pricingLink}
-            </Link>
-            <AuthNav />
-          </div>
-        </div>
-      </header>
+      <LandingNav />
 
-      <div className="mx-auto max-w-3xl px-6 pb-20">
+      <div className="mx-auto max-w-3xl px-6 pb-28 pt-8">
         <h1 className="text-3xl font-semibold tracking-tight">{a.title}</h1>
         <p className="mt-2 text-sm text-slate-600">{a.subtitle}</p>
 
@@ -300,6 +282,7 @@ export function AccountPageClient() {
           </>
         )}
       </div>
+      <LandingFloatingCta />
     </main>
   );
 }

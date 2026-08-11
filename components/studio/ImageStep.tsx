@@ -34,7 +34,7 @@ import type { CinematicSceneResult } from "@/lib/cinematic-reel-types";
 import type { StoryboardSceneResult } from "@/lib/video-storyboard-types";
 
 export function ImageStep() {
-  const { applyPromptRebuild, artStyleId, campaignPlan, campaignSlideLabel, campaignSlides, campaignTheme, canGenerateImage, cinematicReelPlan, cinematicSceneCount, cinematicScenes, effectiveImageMode, effectiveImageOutputMode, error, finishImageStep, formatCinematicCopy, generateImage, goBackFromImage, headline, imageAspectRatio, imageBusy, imageCreativeMode, imageFinishLabel, imageGenKey, imageGenerateDisabledReason, imageInputMode, imageNextDisabled, imagePostflight, imagePostflightBusy, imagePreflight, imageProgressInfo, imagePrompt, imageQualityChecklist, imageRefPhoto, imageRefPreviewUrl, imageStepHint, imageTextMode, imageUrl, imageVariantUrls, imageVisionReview, imageVisionReviewBusy, isCampaignOutput, isCinematicStitchOutput, isConceptCinematicSingleOutput, isConceptStoryboardOutput, isStoryboardOutput, lastImageEndpoint, lockedCampaignMode, m, needsProductUpload, onCinematicSceneCountChange, onImageCreativeModeChange, onImageInputModeChange, onProductPhotoSelected, planStoryboard, planStoryboardBusy, product, productPhoto, promotionMode, promptExtra, promptMarket, referenceAd, referenceAnalyzeBusy, referenceAnalyzeNote, referenceCarouselSlideCount, referenceIsVideo, referenceStrategy, regenerateStoryboardSceneWithAi, stampStoryboardSceneLogo, brandKit, reorderStoryboardScene, replaceStoryboardSceneImage, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, runShipItPipeline, selectVisualStyle, selectedVariantIndex, setArtStyleId, setCampaignPlan, setCampaignSlides, setCampaignTheme, setImageAspectRatio, setImageGenKey, setImageOutputMode, setImagePrompt, setImageRefPhoto, setImageQualityChecklist, setImageTextMode, setImageUrl, setImageVariantUrls, setPromptExtra, setPromptMarket, setError, setReferenceCarouselSlideCount, setSelectedVariantIndex, setShipItMode, setShowAdvancedImage, setStoryboardBrief, setStoryboardPlan, setStoryboardSceneCount, setSubjectFraming, setVideoPrompt, shipItEligible, shipItMode, shipItPipelineBusy, shipItVisionBlocked, showAdvancedImage, storyboardBrief, storyboardPlan, storyboardSceneCount, storyboardSceneRegenerateBusy, storyboardSceneReplaceBusy, storyboardScenes, storyboardGridApproved, setStoryboardGridApproved, storyboardCellsViewed, storyboardAllCellsViewed, markStoryboardCellViewed, storyboardTrimDuration, subjectFraming, templateId, templateSlotStatus, trimStoryboardDurations, updateStoryboardPlanScene, uploadPreviewUrl, uploadQualityMessage, uploadQualityWarning, useOriginalAsKeyframe, useOriginalImage, userReferenceBrief, useReferenceVideo, usesCompositor, videoCreativeMode, videoPrompt, visualStyle, visualStyleId, workflowMode } = useWizard();
+  const { applyPromptRebuild, artStyleId, campaignPlan, campaignSlideLabel, campaignSlides, campaignTheme, canGenerateImage, cinematicReelPlan, cinematicSceneCount, cinematicScenes, effectiveImageMode, effectiveImageOutputMode, error, finishImageStep, formatCinematicCopy, generateImage, goBackFromImage, headline, imageAspectRatio, imageBusy, imageCreativeMode, imageFinishLabel, imageGenKey, imageGenerateDisabledReason, imageInputMode, imageNextDisabled, imagePostflight, imagePostflightBusy, imagePreflight, imageProgressInfo, imagePrompt, imageQualityChecklist, imageRefPhoto, imageRefPreviewUrl, imageStepHint, imageTextMode, imageUrl, imageVariantUrls, imageVisionReview, imageVisionReviewBusy, isCampaignOutput, isCinematicStitchOutput, isConceptCinematicSingleOutput, isConceptStoryboardOutput, isStoryboardOutput, lastImageEndpoint, lockedCampaignMode, lockedSingleImageMode, m, needsProductUpload, onCinematicSceneCountChange, onImageCreativeModeChange, onImageInputModeChange, onProductPhotoSelected, planStoryboard, planStoryboardBusy, product, productPhoto, promotionMode, promptExtra, promptMarket, referenceAd, referenceAnalyzeBusy, referenceAnalyzeNote, referenceCarouselSlideCount, referenceIsVideo, referenceStrategy, regenerateStoryboardSceneWithAi, stampStoryboardSceneLogo, brandKit, reorderStoryboardScene, replaceStoryboardSceneImage, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, runShipItPipeline, selectVisualStyle, selectedVariantIndex, setArtStyleId, setCampaignPlan, setCampaignSlides, setCampaignTheme, setImageAspectRatio, setImageGenKey, setImageOutputMode, setImagePrompt, setImageRefPhoto, setImageQualityChecklist, setImageTextMode, setImageUrl, setImageVariantUrls, setPromptExtra, setPromptMarket, setError, setReferenceCarouselSlideCount, setSelectedVariantIndex, setShipItMode, setShowAdvancedImage, setStoryboardBrief, setStoryboardPlan, setStoryboardSceneCount, setSubjectFraming, setVideoPrompt, shipItEligible, shipItMode, shipItPipelineBusy, shipItVisionBlocked, showAdvancedImage, storyboardBrief, storyboardPlan, storyboardSceneCount, storyboardSceneRegenerateBusy, storyboardSceneReplaceBusy, storyboardScenes, storyboardGridApproved, setStoryboardGridApproved, storyboardCellsViewed, storyboardAllCellsViewed, markStoryboardCellViewed, storyboardTrimDuration, subjectFraming, templateId, templateSlotStatus, trimStoryboardDurations, updateStoryboardPlanScene, uploadPreviewUrl, uploadQualityMessage, uploadQualityWarning, useOriginalAsKeyframe, useOriginalImage, userReferenceBrief, useReferenceVideo, usesCompositor, videoCreativeMode, videoPrompt, visualStyle, visualStyleId, workflowMode } = useWizard();
   const isConcept = promotionMode === "concept";
   const storyboardSceneEstimate = (() => {
     if (storyboardPlan?.scenes?.length) return storyboardPlan.scenes.length;
@@ -143,7 +143,10 @@ export function ImageStep() {
     <ImageInputModePicker value={imageInputMode} onChange={onImageInputModeChange} />
   ) : null}
 
-  {!usesCompositor && imageCreativeMode === "reference-concept" && (
+  {!usesCompositor &&
+    imageCreativeMode === "reference-concept" &&
+    visualStyleId !== "designed-poster" &&
+    visualStyleId !== "parts-poster" && (
     <>
       <div data-coach-id="coach-style-reference">
       <UploadZone
@@ -164,7 +167,9 @@ export function ImageStep() {
     </>
   )}
 
-  {(imageRefPhoto ||
+  {visualStyleId !== "designed-poster" &&
+    visualStyleId !== "parts-poster" &&
+    (imageRefPhoto ||
     referenceAnalyzeBusy ||
     userReferenceBrief ||
     (useReferenceVideo && referenceAd)) && (
@@ -410,6 +415,7 @@ export function ImageStep() {
         setImageVariantUrls([]);
       }}
       lockedCampaign={lockedCampaignMode}
+      lockedSingle={lockedSingleImageMode}
     />
     </div>
   )}

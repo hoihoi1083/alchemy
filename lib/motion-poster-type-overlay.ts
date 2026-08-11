@@ -23,6 +23,7 @@ const OVERLAY_BY_DIALECT: Record<
   "light-sweep": { kind: "fade", headStart: 0.2, headDur: 1.05, ctaLag: 0.4 },
   "liquid-reveal": { kind: "wipe-up", headStart: 0.45, headDur: 1.45, ctaLag: 0.35 },
   "scene-breathe": { kind: "fade", headStart: 0.5, headDur: 1.8, ctaLag: 0.4 },
+  "designed-poster": { kind: "fade", headStart: 0.2, headDur: 1.2, ctaLag: 0.4 },
 };
 
 export function planMotionPosterTypeOverlay(input: {

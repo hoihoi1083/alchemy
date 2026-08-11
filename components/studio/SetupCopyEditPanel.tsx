@@ -100,6 +100,34 @@ export function SetupCopyEditPanel({
         </div>
       ) : null}
 
+      {!usesCompositor && visualStyleId === "designed-poster" ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          <p className="font-semibold">{m.wizard.designedPosterTechniqueTitle}</p>
+          <p className="mt-1 text-xs text-amber-900/90">
+            {m.wizard.designedPosterTechniqueIntro}
+          </p>
+          <ol className="mt-2 list-decimal space-y-1 pl-4 text-xs text-amber-900/90">
+            {m.wizard.designedPosterTechniqueSteps.map((step) => (
+              <li key={step}>{step}</li>
+            ))}
+          </ol>
+        </div>
+      ) : null}
+
+      {!usesCompositor && visualStyleId === "parts-poster" ? (
+        <div className="rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-950">
+          <p className="font-semibold">{m.wizard.partsPosterTechniqueTitle}</p>
+          <p className="mt-1 text-xs text-sky-900/90">
+            {m.wizard.partsPosterTechniqueIntro}
+          </p>
+          <ol className="mt-2 list-decimal space-y-1 pl-4 text-xs text-sky-900/90">
+            {m.wizard.partsPosterTechniqueSteps.map((step) => (
+              <li key={step}>{step}</li>
+            ))}
+          </ol>
+        </div>
+      ) : null}
+
       {!usesCompositor && visualStyleId === "pricing-offer" ? (
         <div className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-950">
           <p className="font-semibold">
@@ -194,24 +222,34 @@ export function SetupCopyEditPanel({
           <span className="text-sm font-medium text-slate-700">
             {usesCompositor || visualStyleId === "info-poster"
               ? m.wizard.sublineBulletsLabel
-              : visualStyleId === "pricing-offer"
-                ? m.microWizard.preGenerateSetup.conceptCopyFocus.pricing.supportingLabel
-                : visualStyleId === "website-launch"
-                  ? m.microWizard.preGenerateSetup.conceptCopyFocus.website.supportingLabel
-                  : visualStyleId === "brand-fit"
-                    ? m.microWizard.preGenerateSetup.conceptCopyFocus.brand.supportingLabel
-                    : m.wizard.sublineLabel}
+              : visualStyleId === "parts-poster"
+                ? m.microWizard.preGenerateSetup.conceptCopyFocus.parts.supportingLabel
+                : visualStyleId === "pricing-offer"
+                  ? m.microWizard.preGenerateSetup.conceptCopyFocus.pricing.supportingLabel
+                  : visualStyleId === "website-launch"
+                    ? m.microWizard.preGenerateSetup.conceptCopyFocus.website.supportingLabel
+                    : visualStyleId === "brand-fit"
+                      ? m.microWizard.preGenerateSetup.conceptCopyFocus.brand.supportingLabel
+                      : visualStyleId === "designed-poster"
+                        ? m.microWizard.preGenerateSetup.conceptCopyFocus.designed.supportingLabel
+                        : m.wizard.sublineLabel}
           </span>
-          {usesCompositor || visualStyleId === "info-poster" ? (
+          {usesCompositor ||
+          visualStyleId === "info-poster" ||
+          visualStyleId === "parts-poster" ? (
             <textarea
               value={subline}
               onChange={(e) => setSubline(e.target.value)}
               placeholder={
                 visualStyleId === "info-poster"
                   ? m.wizard.infoPosterBulletsPlaceholder
-                  : m.wizard.sublineBulletsPlaceholder
+                  : visualStyleId === "parts-poster"
+                    ? m.wizard.partsPosterPartsPlaceholder
+                    : visualStyleId === "designed-poster"
+                      ? m.wizard.designedPosterTaglinePlaceholder
+                      : m.wizard.sublineBulletsPlaceholder
               }
-              rows={4}
+              rows={visualStyleId === "parts-poster" ? 5 : 4}
               className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
             />
           ) : (
@@ -228,7 +266,9 @@ export function SetupCopyEditPanel({
                     : visualStyleId === "brand-fit"
                       ? m.microWizard.preGenerateSetup.conceptCopyFocus.brand
                           .supportingPlaceholder
-                      : m.wizard.sublinePlaceholder
+                      : visualStyleId === "designed-poster"
+                        ? m.wizard.designedPosterTaglinePlaceholder
+                        : m.wizard.sublinePlaceholder
               }
               className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm"
             />

@@ -63,14 +63,12 @@ export function LandingNav() {
 						<LanguageToggle variant="light" />
 					</div>
 					<AuthNav compact />
-					{!isSignedIn ? (
-						<Link
-							href="/start"
-							className="landing-cta-shine landing-try-free hidden rounded-full bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500 sm:inline-flex"
-						>
-							{L.tryFree}
-						</Link>
-					) : null}
+					<Link
+						href="/start"
+						className="landing-cta-shine landing-try-free hidden rounded-full bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500 sm:inline-flex"
+					>
+						{isSignedIn ? L.startCreating : L.tryFree}
+					</Link>
 					<button
 						type="button"
 						className="landing-nav-menu-btn inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-700 lg:hidden"
@@ -99,15 +97,13 @@ export function LandingNav() {
 								{L[item.key]}
 							</Link>
 						))}
-						{!isSignedIn ? (
-							<Link
-								href="/start"
-								className="mt-1 rounded-full bg-violet-600 px-4 py-2.5 text-center text-sm font-semibold text-white"
-								onClick={() => setOpen(false)}
-							>
-								{L.tryFree}
-							</Link>
-						) : null}
+						<Link
+							href="/start"
+							className="mt-1 rounded-full bg-violet-600 px-4 py-2.5 text-center text-sm font-semibold text-white"
+							onClick={() => setOpen(false)}
+						>
+							{isSignedIn ? L.startCreating : L.tryFree}
+						</Link>
 					</nav>
 				</div>
 			) : null}

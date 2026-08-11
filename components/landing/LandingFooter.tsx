@@ -9,6 +9,8 @@ const PAYMENTS: { alt: string; src: string }[] = [
   { alt: "Mastercard", src: "/images/footer/payments/mastercard.svg" },
   { alt: "Apple Pay", src: "/images/footer/payments/applepay.svg" },
   { alt: "Google Pay", src: "/images/footer/payments/googlepay.svg" },
+  { alt: "Alipay", src: "/images/footer/payments/alipay.svg?v=2" },
+  { alt: "WeChat Pay", src: "/images/footer/payments/wechatpay.svg?v=2" },
 ];
 
 /** Slim landing footer — brand + essential links, left-aligned (no subscribe). */
@@ -95,7 +97,12 @@ export function LandingFooter() {
           .landing-footer-brand { grid-column: auto; }
         }
         .landing-footer-payments {
-          grid-template-columns: repeat(4, minmax(0, 1fr));
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        @media (min-width: 640px) {
+          .landing-footer-payments {
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+          }
         }
       `}</style>
 
@@ -157,7 +164,7 @@ export function LandingFooter() {
           <p className="text-xs text-slate-400">
             © {year} {PRODUCT_NAME}. {f.rights}
           </p>
-          <div className="landing-footer-payments grid w-full max-w-md items-center gap-2 sm:w-auto sm:max-w-none sm:gap-2.5">
+          <div className="landing-footer-payments grid w-full max-w-xl items-center gap-2 sm:w-auto sm:max-w-none sm:gap-2.5">
             {PAYMENTS.map((p) => (
               <div
                 key={p.alt}

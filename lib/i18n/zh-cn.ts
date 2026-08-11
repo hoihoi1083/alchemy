@@ -99,7 +99,7 @@ export const zhCn = {
     terms: "服务条款",
     refund: "退款政策",
     followUs: "关注我们",
-    paymentsNote: "由 Stripe 提供安全支付",
+    paymentsNote: "由 Stripe 提供安全支付（Visa、Mastercard、Apple Pay、Google Pay、支付宝、微信支付）",
     rights: "保留所有权利。",
   },
   studio: {
@@ -237,7 +237,8 @@ export const zhCn = {
     ],
     transformCta: "帮我变产品图",
     transformHint: "不用空白 prompt，从你的产品照开始。",
-    howTitle: "使用方法",
+    howTitleBefore: "使用",
+    howTitleHighlight: "方法",
     howSubtitle: "由参考到成品，四个引导步骤。",
     howSteps: [
       { title: "上传或贴参考", body: "加产品照片，或帶入你喜欢的帖／Reel 做风格参考。" },
@@ -982,7 +983,7 @@ export const zhCn = {
     styleModeAll: "显示全部风格",
     artStyleLabel: "画面风格（关键图）",
     artStyleVideoSafeHint:
-      "只显示视频安全色调（胶片／CCD／国风／电影感）。Look 只改色调，不改故事。有参考片时 @Video1 仍然是骨架。",
+      "只显示视频安全色调（胶片／数码闪光快拍／中式电影感／电影感）。Look 只改色调，不改故事。有参考片时 @Video1 仍然是骨架。",
     artStyleHint:
       "控制 AI 出圖 关键图外观 — 视频生成 只负责动态。选漫画/水彩/3D 时，整张图（包括文字）都会用该风格；含大量文案的 product ad 建议用「概念 cinematic」或写实。",
     artStyles: {
@@ -999,12 +1000,12 @@ export const zhCn = {
         description: "胶片颗粒、柔和光晕、怀旧色调",
       },
       ccd: {
-        title: "CCD 快拍",
-        description: "早期数码闪光、随手社交感",
+        title: "数码闪光快拍",
+        description: "早期轻便相机闪光感、随手社交快拍",
       },
       guofeng: {
-        title: "国风电影感",
-        description: "丁达尔光、诗意氛围、写实产品",
+        title: "中式电影感",
+        description: "烟雾山景、诗意光线、写实产品（国风氛围）",
       },
       "anime-2d": {
         title: "2D 动漫",
@@ -1044,6 +1045,15 @@ export const zhCn = {
       "info-poster": {
         title: "精品资讯海报",
         description: "白底单主题、卖点拆解 — 避免一眼 AI 海报（IG 技巧）",
+      },
+      "designed-poster": {
+        title: "设计海报",
+        description:
+          "商业 feed 海报 — 中英字排、圆章、毛笔品类字、食欲／产品主视觉",
+      },
+      "parts-poster": {
+        title: "零件拆解",
+        description: "产品爆炸图 — 拆开零件并标注说明，一张海报连标题和内容",
       },
       "brand-fit": {
         title: "品牌风格分析",
@@ -1097,6 +1107,8 @@ export const zhCn = {
       "model-wear":
         "上传产品相 → AI 生成模特儿佩戴／使用嘅生活感广告（按产品类型自动调整，唔系固定手链模板）",
       "info-poster": "",
+      "designed-poster": "",
+      "parts-poster": "",
       "brand-fit": "",
       "brand-campaign": "",
       "brand-video": "",
@@ -1146,6 +1158,29 @@ export const zhCn = {
       "品质检查 — 避免挤满文字、制式模板框",
     ],
     infoPosterBulletsPlaceholder: "每行一个卖点，例如：\n招财聚气\n日常配戴百搭\n低调有质感",
+    designedPosterTechniqueTitle: "设计商业海报（已内建）",
+    designedPosterTechniqueIntro:
+      "小红书／IG feed 海报文法 — 产品／场景主视觉＋设计字排（任何品类，不限食品；不是白底目录 cutout）：",
+    designedPosterTechniqueSteps: [
+      "主视觉摄影 — 左上柔光、浅景深、场景跟这件产品品类走",
+      "中英字排 — 大中文标题 → 英文全大写 → 短 script 标语",
+      "圆章＋一个跟产品相符的毛笔品类字（例如：数码／护肤／甜品／课程）",
+      "色调跟产品／场景走 — 统一，不要彩虹乱撞",
+      "电子／美妆／食品／时装和概念／服务场景都适用",
+    ],
+    designedPosterTaglinePlaceholder: "短标语，例如：All-day power／柔软新鲜",
+    partsPosterTechniqueTitle: "零件拆解海报（已内建）",
+    partsPosterTechniqueIntro:
+      "技术爆炸图海报 — 将产品拆成标注零件，标题＋短说明（不是暴力破坏）：",
+    partsPosterTechniqueSteps: [
+      "保留产品照身份 — 外形、颜色、材质",
+      "拆开浮动零件，用细引线连到标注",
+      "上方标题；辅助文案 = 一行一个零件说明",
+      "干净棚拍背景 — 手机尺寸也看得清",
+      "只限产品路径 — 需要清晰产品照",
+    ],
+    partsPosterPartsPlaceholder:
+      "每行一个零件标注，例如：\n电池 — 全日续航\n外壳 — 磨砂防滑\n芯片 — 快充 IC",
     requirementsLabel: "额外要求（选填）",
     requirementsPlaceholder: "例如：柔和日光、唔出人、街头穿搭感…",
     requirementsPlaceholders: {
@@ -1154,6 +1189,8 @@ export const zhCn = {
       "warm-shop": "例如：开张优惠、木枱小店、社区街坊感…",
       "model-wear": "例如：男士沉稳风、窗边自然光、唔要价钱字样…",
       "info-poster": "例如：美妆清新感、食品天然感、珠宝极简 pedestal…",
+      "designed-poster": "例如：左上柔光、食欲场景、中英字排、圆章＋毛笔品类字…",
+      "parts-poster": "例如：深色棚拍、细引线、6 个标注、石墨色调…",
       "brand-fit": "分析后会自动填；你可再微调产品或场景",
       "brand-campaign": "可填 campaign 主题，例如：春季新品三张图讲清功效",
       "brand-video": "分析后会自动写动态 prompt；可补充运镜或氛围要求",
@@ -1170,6 +1207,8 @@ export const zhCn = {
     campaignThemePlaceholder: "例如：开张优惠三连 post、新品功效系列…",
     imageOutputModeLabel: "出图数量",
     imageOutputModeHint: "Campaign 会出 3 张概念串连嘅图（约 3× API 成本 + AI 规划）",
+    imageOutputModeHintDesignedPoster:
+      "这个海报方向是一张完整静帧 — 不适合 A/B、Campaign 套图和教学轮播。",
     imageKeyframeModeLabel: "关键帧数量",
     imageKeyframeModeHint:
       "图→片只需 1 张关键帧做动态（可选 A/B 选一张）。不是故事分镜；Campaign／教学轮播请用「只要图」。",
@@ -1871,6 +1910,10 @@ export const zhCn = {
       "light-sweep": { title: "扫光", desc: "暗影 → 转面扫光＋字" },
       "liquid-reveal": { title: "液体揭幕", desc: "静杯 → 倒液／蒸汽＋字" },
       "scene-breathe": { title: "氛围呼吸", desc: "静气 → 定格＋大标题" },
+      "designed-poster": {
+        title: "设计海报",
+        desc: "食欲主视觉 → 中英字排＋圆章＋毛笔字",
+      },
     },
     motionPosterTypeOverlayNote: "叠字",
     motionPosterTypeOverlaySkipped: "叠字未加上 — 现在是无字气氛片",
@@ -2449,6 +2492,14 @@ export const zhCn = {
     "info-poster": {
       name: "精品资讯海报",
       description: "白底 IG 资讯图 — 单主题、精简文案、品类视觉",
+    },
+    "designed-poster": {
+      name: "设计商业海报",
+      description: "食欲主视觉＋中英字排、圆章、毛笔品类 — 小红书／IG feed",
+    },
+    "parts-poster": {
+      name: "零件拆解海报",
+      description: "爆炸图零件＋标题和标注说明 — 技术商业静帧",
     },
     "brand-fit": {
       name: "品牌风格分析",
@@ -3242,11 +3293,16 @@ export const zhCn = {
       mainPhotoOptional: "选填",
       mainPhotoOptionalHint: "有产品照可以上传 — 没有的话会用主题、文案和研究风格出图。",
       stylePickerTitle: "创作方向",
-      stylePickerHint: "直接创作适合大部分产品；模特佩戴会生成人手／佩戴场景。",
+      stylePickerHint: "选一个：直接产品广告、设计海报、零件拆解、或模特佩戴／使用。",
       conceptStylePickerHint:
-        "每个选项会改排版提示 — 资讯图、品牌风格、方案优惠卡、或网站上线。",
+        "每个选项会改排版提示 — 资讯图、设计海报、品牌风格、方案优惠卡、或网站上线。",
       stylePickerQuickLabel: "直接创作",
       stylePickerQuickDesc: "以产品为主的宣传图，不一定要有模特。",
+      stylePickerDesignedLabel: "设计海报",
+      stylePickerDesignedDesc: "商业 feed 海报 — 中英字排、圆章、跟产品品类的毛笔字（不限食品）。",
+      stylePickerPartsLabel: "零件拆解",
+      stylePickerPartsDesc:
+        "产品爆炸图 — 拆开零件并标注说明，一张海报连标题和内容。",
       stylePickerModelLabel: "模特佩戴／使用",
       stylePickerModelDesc: "画面有人佩戴或使用你的产品。",
       stylePickerModelLockedHint: "有参考图时不可用 — 会跟参考图版式。",
@@ -3278,6 +3334,24 @@ export const zhCn = {
           supportingLabel: "卖点条列（一行一点）",
           supportingPlaceholder:
             "例如：\n天然成分\n即时见效\n适合每日使用",
+        },
+        designed: {
+          title: "这个方向：重点填「会上海报的字」",
+          body: "主标题 = 海报大标题（中英字排）。辅助文案 = 短标语。产品名影响主视觉和毛笔品类字。额外要求写圆章文案／色调／场景 — 不要当主标题用。",
+          hookLabel: "海报主标题 (hook)",
+          hookPlaceholder: "例如：便携续航 · All-day power",
+          supportingLabel: "海报标语",
+          supportingPlaceholder:
+            "短句上海报，例如：Creamy & Juicy／柔软新鲜",
+        },
+        parts: {
+          title: "这个方向：重点填「标题＋零件标注」",
+          body: "主标题 = 海报标题。辅助文案 = 一行一个零件短说明 — 会变成爆炸图标注。额外要求写灯光／零件数量／背景气氛。",
+          hookLabel: "海报主标题 (hook)",
+          hookPlaceholder: "例如：内在结构 · Inside the build",
+          supportingLabel: "零件标注（一行一点）",
+          supportingPlaceholder:
+            "例如：\n电池 — 全日续航\n外壳 — 磨砂防滑\n芯片 — 快充 IC",
         },
         brand: {
           title: "这个方向：重点是品牌风格",
@@ -3413,6 +3487,17 @@ export const zhCn = {
       supportingLabel: "辅助文案",
       extraLabel: "额外运镜备注",
       extraOptional: "（选填）",
+      onImageBadge: "会出现在结尾静图",
+      motionPosterCopyFocus: {
+        title: "动态海报：重点填「结尾静图标题」",
+        body: "开头静图无字；结尾静图会用你的主标题做大海报字（辅助文案可做副标）。产品照必须 — 是主体。额外备注只写光线／场景，不要当标题。",
+        hookLabel: "结尾静图标题 (hook)",
+        hookPlaceholder: "例如：便携续航 · All-day power",
+        supportingLabel: "结尾静图副标",
+        supportingPlaceholder: "标题下短句（选填）",
+        extraLabel: "额外画面／运镜备注",
+        extraPlaceholder: "例如：左上柔光、桌面场景、不要出人…",
+      },
       conceptTopicLabel: "主题／服务",
       productPhotoTitle: "产品照片",
       productPhotoHint: "清晰产品照 — 必须。会做短视频里的主体。",

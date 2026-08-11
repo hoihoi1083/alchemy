@@ -13,6 +13,7 @@ export const PHYSICAL_ONLY_VISUAL_STYLE_IDS = new Set<VisualStyleId>([
   "dark-premium",
   "model-wear",
   "ugc-presenter",
+  "parts-poster",
 ]);
 
 /** Service / website / plan styles — hidden in physical promotion mode. */
@@ -27,6 +28,7 @@ export const CONCEPT_ONLY_VISUAL_STYLE_IDS = new Set<VisualStyleId>([
 export const SHARED_VISUAL_STYLE_IDS = new Set<VisualStyleId>([
   "warm-shop",
   "info-poster",
+  "designed-poster",
   "brand-fit",
   "brand-campaign",
   "brand-video",
@@ -73,6 +75,7 @@ export function conceptStyleAllowsTextOnlyImage(id: VisualStyleId): boolean {
   return (
     CONCEPT_ONLY_VISUAL_STYLE_IDS.has(id) ||
     id === "info-poster" ||
+    id === "designed-poster" ||
     id === "warm-shop" ||
     id === "brand-fit" ||
     id === "brand-campaign"
@@ -83,6 +86,7 @@ export function conceptStyleRequiresHeadline(id: VisualStyleId): boolean {
   return (
     isConceptOnlyVisualStyle(id) ||
     id === "info-poster" ||
+    id === "designed-poster" ||
     id === "brand-fit" ||
     id === "brand-campaign"
   );

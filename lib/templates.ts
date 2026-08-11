@@ -7,6 +7,8 @@ export type TemplateId =
   | "crystal-promo"
   | "shop-promo"
   | "info-poster"
+  | "designed-poster"
+  | "parts-poster"
   | "brand-fit"
   | "brand-campaign"
   | "brand-video"
@@ -153,6 +155,52 @@ export const TEMPLATES: MarketingTemplate[] = [
       "Gentle push-in on {{product}} info poster, subtle sparkle, stable camera, preserve on-screen text legibility",
     negativePrompt:
       "cluttered layout, overcrowded text blocks, dark muddy background, neon gradients, generic AI template frame, watermark, social media UI, blurry illegible text, misspelled characters, cartoon, low quality, speech, voiceover",
+  },
+  {
+    id: "designed-poster",
+    name: "Designed commercial poster",
+    description:
+      "Commercial feed poster — bilingual type, circular seal, brush category matched to product (any category).",
+    icon: "🪧",
+    aspectRatio: "9:16",
+    duration: "6",
+    fast: true,
+    resolution: "480p",
+    motionStrength: 28,
+    camera: "Slow Push In",
+    avoidOnScreenText: false,
+    generateAudio: true,
+    imagePromptTemplate:
+      "Vertical designed commercial poster for {{product}}. Category-matched hero photography, bilingual title {{headline}}, support {{subline}}, circular seal, brush category word. Soft upper-left light, not a blank catalog cutout, not food-only.",
+    imageEditPromptTemplate:
+      "Create a designed commercial poster. Keep exact {{product}} from IMAGE 1. Bilingual headline {{headline}}, support {{subline}}. Circular seal + brush category matching THIS product. Soft upper-left light; set must match product category (not forced food).",
+    videoPromptTemplate:
+      "Gentle push-in on {{product}} designed poster, soft steam or sauce drip, preserve on-screen text",
+    negativePrompt:
+      "blank white catalog cutout, cluttered Canva flyer, neon gradients, watermark, social UI, blurry illegible text, misspelled characters, plastic CGI food, low quality, speech, voiceover",
+  },
+  {
+    id: "parts-poster",
+    name: "Parts breakdown poster",
+    description:
+      "Exploded product view — labeled components with title and short descriptions on one poster.",
+    icon: "🧩",
+    aspectRatio: "9:16",
+    duration: "6",
+    fast: true,
+    resolution: "480p",
+    motionStrength: 28,
+    camera: "Slow Push In",
+    avoidOnScreenText: false,
+    generateAudio: true,
+    imagePromptTemplate:
+      "Vertical parts-breakdown poster for {{product}}. Exploded components with callout labels, title {{headline}}, part descriptions {{subline}}. Technical commercial still, soft studio light.",
+    imageEditPromptTemplate:
+      "Create a parts-breakdown poster. Keep exact {{product}} from IMAGE 1 identity. Explode into labeled components with leader lines. Title {{headline}}. Part descriptions from {{subline}}. Technical commercial poster, not violent destruction.",
+    videoPromptTemplate:
+      "Gentle push-in on {{product}} parts-breakdown poster, preserve on-screen text and callouts",
+    negativePrompt:
+      "violent destruction, fire, debris chaos, blank catalog cutout, cluttered Canva flyer, neon gradients, watermark, social UI, blurry illegible text, misspelled characters, low quality, speech, voiceover",
   },
   {
     id: "brand-fit",

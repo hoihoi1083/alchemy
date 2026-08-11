@@ -573,6 +573,14 @@ export function PreVideoSetupPanel({
                 <h3 className="pv-card-title">{pv.contentTitle}</h3>
               </div>
               <div className="pv-field-grid">
+                {isMotionPoster ? (
+                  <div className="rounded-xl border border-violet-200 bg-violet-50 px-3.5 py-3 text-sm text-violet-950 sm:col-span-2">
+                    <p className="font-semibold">{pv.motionPosterCopyFocus.title}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-violet-900/90">
+                      {pv.motionPosterCopyFocus.body}
+                    </p>
+                  </div>
+                ) : null}
                 {isConcept ? (
                   <label className="sm:col-span-2">
                     <span className="pv-label">
@@ -604,9 +612,17 @@ export function PreVideoSetupPanel({
                     />
                   </label>
                 )}
-                <label className={isConcept ? "sm:col-span-2" : undefined}>
+                <label
+                  className={`${isConcept ? "sm:col-span-2" : ""} ${
+                    isMotionPoster
+                      ? "rounded-xl border border-violet-300 bg-violet-50/60 p-3 ring-1 ring-violet-200"
+                      : ""
+                  }`.trim()}
+                >
                   <span className="pv-label">
-                    {pv.hookLabel}
+                    {isMotionPoster
+                      ? pv.motionPosterCopyFocus.hookLabel
+                      : pv.hookLabel}
                     {!showCreativeBrief && !isUgc ? (
                       <span className="pv-label-req" aria-hidden>
                         *
@@ -614,22 +630,50 @@ export function PreVideoSetupPanel({
                     ) : (
                       <span className="pv-label-opt">{pv.extraOptional}</span>
                     )}
+                    {isMotionPoster ? (
+                      <span className="ml-1.5 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700">
+                        {pv.onImageBadge}
+                      </span>
+                    ) : null}
                   </span>
                   <input
                     className="pv-input"
                     value={wizard.headline}
                     onChange={(e) => wizard.setHeadline(e.target.value)}
-                    placeholder={m.wizard.headlinePlaceholder}
+                    placeholder={
+                      isMotionPoster
+                        ? pv.motionPosterCopyFocus.hookPlaceholder
+                        : m.wizard.headlinePlaceholder
+                    }
                   />
                 </label>
-                <label className="sm:col-span-2">
-                  <span className="pv-label">{pv.supportingLabel}</span>
+                <label
+                  className={`sm:col-span-2 ${
+                    isMotionPoster
+                      ? "rounded-xl border border-violet-300 bg-violet-50/60 p-3 ring-1 ring-violet-200"
+                      : ""
+                  }`.trim()}
+                >
+                  <span className="pv-label">
+                    {isMotionPoster
+                      ? pv.motionPosterCopyFocus.supportingLabel
+                      : pv.supportingLabel}
+                    {isMotionPoster ? (
+                      <span className="ml-1.5 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700">
+                        {pv.onImageBadge}
+                      </span>
+                    ) : null}
+                  </span>
                   <textarea
                     className="pv-textarea"
                     rows={2}
                     value={wizard.subline}
                     onChange={(e) => wizard.setSubline(e.target.value.slice(0, 200))}
-                    placeholder={m.wizard.sublinePlaceholder}
+                    placeholder={
+                      isMotionPoster
+                        ? pv.motionPosterCopyFocus.supportingPlaceholder
+                        : m.wizard.sublinePlaceholder
+                    }
                   />
                 </label>
                 {showCreativeBrief ? (
@@ -655,7 +699,9 @@ export function PreVideoSetupPanel({
                 ) : null}
                 <label className="sm:col-span-2">
                   <span className="pv-label">
-                    {pv.extraLabel}
+                    {isMotionPoster
+                      ? pv.motionPosterCopyFocus.extraLabel
+                      : pv.extraLabel}
                     <span className="pv-label-opt">{pv.extraOptional}</span>
                   </span>
                   <textarea
@@ -663,7 +709,11 @@ export function PreVideoSetupPanel({
                     rows={2}
                     value={wizard.promptExtra}
                     onChange={(e) => wizard.setPromptExtra(e.target.value)}
-                    placeholder={m.wizard.requirementsPlaceholder}
+                    placeholder={
+                      isMotionPoster
+                        ? pv.motionPosterCopyFocus.extraPlaceholder
+                        : m.wizard.requirementsPlaceholder
+                    }
                   />
                 </label>
               </div>

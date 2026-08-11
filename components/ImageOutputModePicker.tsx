@@ -11,6 +11,8 @@ type Props = {
   value: ImageOutputMode;
   onChange: (mode: ImageOutputMode) => void;
   lockedCampaign?: boolean;
+  /** Designed poster etc. — only a finished single still makes sense. */
+  lockedSingle?: boolean;
   /**
    * Combined / video keyframe flow: only single + A/B.
    * Campaign & teaching carousel are image-pack deliverables, not Seedance keyframes.
@@ -26,17 +28,20 @@ export function ImageOutputModePicker({
   value,
   onChange,
   lockedCampaign,
+  lockedSingle,
   forVideoKeyframe = false,
   includeTeachingCarousel = true,
   accent = "emerald",
 }: Props) {
   const { m } = useLocale();
+  const locked = Boolean(lockedCampaign || lockedSingle);
   const options: ImageOutputMode[] = useMemo(() => {
     if (lockedCampaign) return ["campaign"];
+    if (lockedSingle) return ["single"];
     if (forVideoKeyframe) return ["single", "ab"];
     if (includeTeachingCarousel) return ["single", "ab", "campaign", "teaching-carousel"];
     return ["single", "ab", "campaign"];
-  }, [forVideoKeyframe, includeTeachingCarousel, lockedCampaign]);
+  }, [forVideoKeyframe, includeTeachingCarousel, lockedCampaign, lockedSingle]);
 
   useEffect(() => {
     if (!options.includes(value)) {
@@ -55,7 +60,11 @@ export function ImageOutputModePicker({
         {forVideoKeyframe ? m.wizard.imageKeyframeModeLabel : m.wizard.imageOutputModeLabel}
       </p>
       <p className="text-xs text-slate-500">
-        {forVideoKeyframe ? m.wizard.imageKeyframeModeHint : m.wizard.imageOutputModeHint}
+        {lockedSingle
+          ? m.wizard.imageOutputModeHintDesignedPoster
+          : forVideoKeyframe
+            ? m.wizard.imageKeyframeModeHint
+            : m.wizard.imageOutputModeHint}
       </p>
       <div
         className={`grid gap-2 sm:grid-cols-2 ${
@@ -68,13 +77,13 @@ export function ImageOutputModePicker({
             <button
               key={mode}
               type="button"
-              onClick={() => !lockedCampaign && onChange(mode)}
-              disabled={lockedCampaign && mode !== "campaign"}
+              onClick={() => !locked && onChange(mode)}
+              disabled={locked}
               className={`overflow-hidden rounded-xl border text-left transition ${
                 value === mode
                   ? selectedClass
                   : "border-slate-200 bg-white hover:border-slate-300"
-              } ${lockedCampaign ? "cursor-default" : ""}`}
+              } ${locked ? "cursor-default" : ""}`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img

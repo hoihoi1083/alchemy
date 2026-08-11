@@ -105,7 +105,7 @@ export const en = {
 		terms: "Terms of service",
 		refund: "Refund policy",
 		followUs: "Follow us",
-		paymentsNote: "Secure payments via Stripe",
+		paymentsNote: "Secure payments via Stripe — Visa, Mastercard, Apple Pay, Google Pay, Alipay & WeChat Pay",
 		rights: "All rights reserved.",
 	},
 	studio: {
@@ -300,7 +300,8 @@ export const en = {
 		],
 		transformCta: "Transform my product",
 		transformHint: "No blank prompt. Start from your photo.",
-		howTitle: "How it works",
+		howTitleBefore: "How it ",
+		howTitleHighlight: "Works",
 		howSubtitle: "From reference to final creative in 4 simple steps.",
 		howSteps: [
 			{
@@ -1272,7 +1273,7 @@ export const en = {
 		styleModeAll: "Show all styles",
 		artStyleLabel: "Art direction (keyframes)",
 		artStyleVideoSafeHint:
-			"Video-safe grades only (film / CCD / 国风 / cinematic). Look changes grade, not the story. @Video1 still owns spine when a reference reel is attached.",
+			"Video-safe grades only (film / digicam flash / Chinese cinematic / cinematic). Look changes grade, not the story. @Video1 still owns spine when a reference reel is attached.",
 		artStyleHint:
 			"Controls AI image keyframe look — video generation only adds motion. For manga/watercolor/3D, the whole frame (including text) uses that medium; text-heavy product ads work best with concept cinematic or realistic.",
 		artStyles: {
@@ -1290,13 +1291,14 @@ export const en = {
 				description: "Analog grain, soft halation, nostalgic grade",
 			},
 			ccd: {
-				title: "CCD snapshot",
-				description: "Early-digital flash, candid social energy",
+				title: "Digicam flash",
+				description:
+					"Early compact-camera flash look — candid, slightly blown highlights",
 			},
 			guofeng: {
-				title: "国风 cinematic",
+				title: "Chinese cinematic",
 				description:
-					"Tyndall light, poetic atmosphere, photoreal product",
+					"Misty mountains, poetic light, photoreal product in a classical Chinese mood",
 			},
 			"anime-2d": {
 				title: "2D anime",
@@ -1340,6 +1342,16 @@ export const en = {
 				title: "Premium info poster",
 				description:
 					"White-bg single-theme selling points — anti-generic-AI layout (IG technique)",
+			},
+			"designed-poster": {
+				title: "Designed poster",
+				description:
+					"Commercial feed poster — bilingual type, seal, category brush word for any product (not food-only)",
+			},
+			"parts-poster": {
+				title: "Parts breakdown",
+				description:
+					"Exploded product view — labeled components with title + short descriptions on one poster",
 			},
 			"brand-fit": {
 				title: "Brand style analysis",
@@ -1405,6 +1417,8 @@ export const en = {
 			"model-wear":
 				"Upload product photo → AI generates a model wearing/using it — adapts to product type, not a fixed template",
 			"info-poster": "",
+			"designed-poster": "",
+			"parts-poster": "",
 			"brand-fit": "",
 			"brand-campaign": "",
 			"brand-video": "",
@@ -1460,6 +1474,30 @@ export const en = {
 		],
 		infoPosterBulletsPlaceholder:
 			"One selling point per line, e.g.:\nBoost daily energy\nEasy to wear\nSubtle premium look",
+		designedPosterTechniqueTitle: "Designed commercial poster (built in)",
+		designedPosterTechniqueIntro:
+			"XHS/IG feed poster grammar — product/scene hero plus designed type chrome (any category — not food-only, not a blank catalog cutout):",
+		designedPosterTechniqueSteps: [
+			"Hero photography — soft upper-left light, shallow DOF, set matched to THIS product category",
+			"Bilingual type stack — big CN title → EN all-caps → short script tagline",
+			"Circular seal + one brush category word that matches the product (e.g. 數碼 / 護膚 / 甜品 / 課程)",
+			"Palette from the product/scene — cohesive, not rainbow",
+			"Works for electronics, beauty, F&B, fashion, and concept/service scenes",
+		],
+		designedPosterTaglinePlaceholder:
+			"Short line on the poster, e.g. All-day power / Soft & Fresh",
+		partsPosterTechniqueTitle: "Parts breakdown poster (built in)",
+		partsPosterTechniqueIntro:
+			"Technical exploded-view poster — deconstruct the product into labeled parts with title + short descriptions (not violent destruction):",
+		partsPosterTechniqueSteps: [
+			"Keep product identity from your photo — shape, color, materials",
+			"Explode into floating components with thin leader lines + callouts",
+			"Title on top; supporting copy = one short part description per line",
+			"Clean studio background — readable at phone size",
+			"Product-only path — needs a clear product photo",
+		],
+		partsPosterPartsPlaceholder:
+			"One part callout per line, e.g.:\nBattery — all-day charge\nShell — matte grip\nChip — fast charge IC",
 		requirementsLabel: "Extra requirements (optional)",
 		requirementsPlaceholder:
 			"e.g. soft daylight, no hands, streetwear vibe…",
@@ -1474,6 +1512,10 @@ export const en = {
 				"e.g. masculine calm mood, window natural light, no price text…",
 			"info-poster":
 				"e.g. fresh skincare mood, natural food styling, minimal jewelry pedestal…",
+			"designed-poster":
+				"e.g. soft upper-left light, appetite set, bilingual type, seal + brush category…",
+			"parts-poster":
+				"e.g. dark studio, thin leader lines, 6 callouts, graphite palette…",
 			"brand-fit":
 				"Filled after analysis; tweak product or scene if needed",
 			"brand-campaign":
@@ -1503,6 +1545,8 @@ export const en = {
 		imageOutputModeLabel: "How many images?",
 		imageOutputModeHint:
 			"Campaign generates 3 linked posts (~3× image API cost + AI planning)",
+		imageOutputModeHintDesignedPoster:
+			"This poster style is one finished still — A/B, campaign, and teaching carousel don’t fit this look.",
 		imageKeyframeModeLabel: "Keyframe count",
 		imageKeyframeModeHint:
 			"Image→video only needs 1 keyframe to animate (optional A/B pick). Not storyboard — use Image-only for Campaign / teaching carousel.",
@@ -2349,6 +2393,10 @@ export const en = {
 				title: "Atmosphere",
 				desc: "Still air → settle + masthead",
 			},
+			"designed-poster": {
+				title: "Designed poster",
+				desc: "Appetite hero → bilingual type + seal + brush word",
+			},
 		},
 		motionPosterTypeOverlayNote: "Type overlay",
 		motionPosterTypeOverlaySkipped:
@@ -3017,6 +3065,16 @@ export const en = {
 			name: "Premium info poster",
 			description:
 				"White IG info graphic — single theme, tight copy, category visuals",
+		},
+		"designed-poster": {
+			name: "Designed commercial poster",
+			description:
+				"Appetite hero + bilingual type, seal, brush category — XHS/IG feed poster",
+		},
+		"parts-poster": {
+			name: "Parts breakdown poster",
+			description:
+				"Exploded components with title + labeled callouts — technical commercial still",
 		},
 		"brand-fit": {
 			name: "Brand style analysis",
@@ -3953,12 +4011,18 @@ export const en = {
 				"Add a product shot if you have one — otherwise we generate from your topic, copy, and research style.",
 			stylePickerTitle: "Creation direction",
 			stylePickerHint:
-				"Quick ad suits most products. Model-wear puts a person using or wearing your item.",
+				"Pick one look: direct product ad, designed commercial poster, parts breakdown, or model wear/use.",
 			conceptStylePickerHint:
-				"Each option changes layout prompts — info posters, brand match, pricing cards, or website launch.",
+				"Each option changes layout prompts — info posters, designed posters, brand match, pricing cards, or website launch.",
 			stylePickerQuickLabel: "Direct creation",
 			stylePickerQuickDesc:
 				"Product-focused promo image — no model required.",
+			stylePickerDesignedLabel: "Designed poster",
+			stylePickerDesignedDesc:
+				"Commercial feed poster — bilingual type, seal, category brush word (any product, not food-only).",
+			stylePickerPartsLabel: "Parts breakdown",
+			stylePickerPartsDesc:
+				"Exploded product view — labeled components with title + short descriptions on one poster.",
 			stylePickerModelLabel: "Model wear / use",
 			stylePickerModelDesc:
 				"Person wearing or using your product in the shot.",
@@ -3992,6 +4056,24 @@ export const en = {
 					supportingLabel: "Selling points (one per line)",
 					supportingPlaceholder:
 						"e.g.\nNatural ingredients\nVisible results\nDaily use friendly",
+				},
+				designed: {
+					title: "For this direction: fill on-poster type",
+					body: "Hook = big bilingual title on the poster. Supporting = short tagline under it. Product name drives the hero + brush category word. Extra requirements = seal claim, palette, set mood — not the main title.",
+					hookLabel: "Poster title (hook)",
+					hookPlaceholder: "e.g. 便攜續航 · All-day power",
+					supportingLabel: "Poster tagline",
+					supportingPlaceholder:
+						"Short line on the poster, e.g. Creamy & Juicy / Soft & Fresh",
+				},
+				parts: {
+					title: "For this direction: fill title + part callouts",
+					body: "Hook = poster title. Supporting copy = one short part description per line — they become labeled callouts on the exploded diagram. Extra requirements = lighting, part count, background mood.",
+					hookLabel: "Poster title (hook)",
+					hookPlaceholder: "e.g. 內在結構 · Inside the build",
+					supportingLabel: "Part callouts (one per line)",
+					supportingPlaceholder:
+						"e.g.\nBattery — all-day charge\nShell — matte grip\nChip — fast charge IC",
 				},
 				brand: {
 					title: "For this direction: brand style comes first",
@@ -4132,6 +4214,18 @@ export const en = {
 			supportingLabel: "Supporting copy",
 			extraLabel: "Extra motion notes",
 			extraOptional: "(optional)",
+			onImageBadge: "Shows on end frame",
+			motionPosterCopyFocus: {
+				title: "For motion poster: fill the end-frame title",
+				body: "Start still is textless. End still paints your hook as a large masthead (plus optional supporting line). Product photo is required — it is the hero. Extra notes = lighting / set only, not the title.",
+				hookLabel: "End-frame title (hook)",
+				hookPlaceholder: "e.g. 便攜續航 · All-day power",
+				supportingLabel: "End-frame support line",
+				supportingPlaceholder: "Short line under the masthead (optional)",
+				extraLabel: "Extra still / motion notes",
+				extraPlaceholder:
+					"e.g. soft upper-left light, desk set, no people…",
+			},
 			conceptTopicLabel: "Topic / service",
 			productPhotoTitle: "Product photo",
 			productPhotoHint:

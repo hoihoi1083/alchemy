@@ -1045,6 +1045,38 @@ export function SetupStep() {
     </div>
   )}
 
+  {!usesCompositor && visualStyleId === "designed-poster" && (
+    <div className="rounded-xl border border-amber-900/40 bg-amber-950/25 px-4 py-3 text-sm text-amber-50">
+      <p className="font-semibold text-amber-50">
+        {m.wizard.designedPosterTechniqueTitle}
+      </p>
+      <p className="mt-1 text-xs text-amber-100/90">
+        {m.wizard.designedPosterTechniqueIntro}
+      </p>
+      <ol className="mt-2 list-decimal space-y-1 pl-4 text-xs text-amber-100/90">
+        {m.wizard.designedPosterTechniqueSteps.map((step) => (
+          <li key={step}>{step}</li>
+        ))}
+      </ol>
+    </div>
+  )}
+
+  {!usesCompositor && visualStyleId === "parts-poster" && (
+    <div className="rounded-xl border border-sky-900/40 bg-sky-950/25 px-4 py-3 text-sm text-sky-50">
+      <p className="font-semibold text-sky-50">
+        {m.wizard.partsPosterTechniqueTitle}
+      </p>
+      <p className="mt-1 text-xs text-sky-100/90">
+        {m.wizard.partsPosterTechniqueIntro}
+      </p>
+      <ol className="mt-2 list-decimal space-y-1 pl-4 text-xs text-sky-100/90">
+        {m.wizard.partsPosterTechniqueSteps.map((step) => (
+          <li key={step}>{step}</li>
+        ))}
+      </ol>
+    </div>
+  )}
+
   {!usesCompositor && usesReferenceConceptForImage && (
     <p className="rounded-lg border border-amber-900/50 bg-amber-950/25 px-3 py-2 text-xs text-amber-100/90">
       {m.wizard.referenceConceptOverridesStyle}
@@ -1129,25 +1161,35 @@ export function SetupStep() {
       <label className="block text-sm font-medium text-slate-700">
         {usesCompositor || visualStyleId === "info-poster"
           ? m.wizard.sublineBulletsLabel
-          : m.wizard.sublineLabel}
+          : visualStyleId === "parts-poster"
+            ? m.microWizard.preGenerateSetup.conceptCopyFocus.parts.supportingLabel
+            : m.wizard.sublineLabel}
       </label>
-      {usesCompositor || visualStyleId === "info-poster" ? (
+      {usesCompositor ||
+      visualStyleId === "info-poster" ||
+      visualStyleId === "parts-poster" ? (
         <textarea
           value={subline}
           onChange={(e) => setSubline(e.target.value)}
           placeholder={
             visualStyleId === "info-poster"
               ? m.wizard.infoPosterBulletsPlaceholder
-              : m.wizard.sublineBulletsPlaceholder
+              : visualStyleId === "parts-poster"
+                ? m.wizard.partsPosterPartsPlaceholder
+                : m.wizard.sublineBulletsPlaceholder
           }
-          rows={4}
+          rows={visualStyleId === "parts-poster" ? 5 : 4}
           className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-500"
         />
       ) : (
         <input
           value={subline}
           onChange={(e) => setSubline(e.target.value)}
-          placeholder={m.wizard.sublinePlaceholder}
+          placeholder={
+            visualStyleId === "designed-poster"
+              ? m.wizard.designedPosterTaglinePlaceholder
+              : m.wizard.sublinePlaceholder
+          }
           className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-500"
         />
       )}

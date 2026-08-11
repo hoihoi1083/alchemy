@@ -503,6 +503,7 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
             value={wizard.imageOutputMode}
             onChange={wizard.setImageOutputMode}
             lockedCampaign={wizard.lockedCampaignMode}
+            lockedSingle={wizard.lockedSingleImageMode}
             forVideoKeyframe={wizard.workflowMode === "combined"}
             includeTeachingCarousel={wizard.workflowMode === "image-only"}
           />
@@ -800,6 +801,7 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
                 value={wizard.imageOutputMode}
                 onChange={wizard.setImageOutputMode}
                 lockedCampaign={wizard.lockedCampaignMode}
+                lockedSingle={wizard.lockedSingleImageMode}
                 forVideoKeyframe={wizard.workflowMode === "combined"}
                 includeTeachingCarousel={wizard.workflowMode === "image-only"}
               />

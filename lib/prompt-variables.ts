@@ -492,6 +492,98 @@ export function buildInfoPosterImagePrompt(vars: PromptVariables): string {
 	);
 }
 
+/**
+ * Designed commercial poster (XHS/IG feed): category-matched hero + bilingual type stack,
+ * circular seal, brush category word — not a blank catalog cutout, not a white info flyer.
+ * Works for F&B, beauty, electronics, fashion, services — NOT food-only.
+ */
+export function buildDesignedPosterImagePrompt(vars: PromptVariables): string {
+	const product = vars.product?.trim() || "the product";
+	const headline = vars.headline?.trim() || product;
+	const subline = vars.subline?.trim() || "";
+	const offer = vars.offer?.trim() || "";
+	const bilingual =
+		vars.market === "en"
+			? `Bilingual optional: large English headline "${headline}" + short support line; keep hierarchy clear.`
+			: vars.market === "cn"
+				? `Bilingual type stack (mandatory): large Simplified Chinese title with exact characters from "${headline}" → English ALL-CAPS serif translation under it → short script/italic tagline from support copy. Spell every Chinese character accurately.`
+				: `Bilingual type stack (mandatory): large Traditional Chinese title with exact characters from "${headline}" → English ALL-CAPS serif translation under it → short script/italic tagline from support copy. Spell every Chinese character accurately.`;
+
+	return joinParts(
+		`Create a vertical DESIGNED COMMERCIAL POSTER for ${product} — premium commercial photography with intentional set design matching THIS product category.`,
+		`NOT a blank white catalog cutout. NOT a white IG info-flyer. NOT a crowded Canva collage.`,
+		`CATEGORY LOCK (critical): Infer category from "${product}" and IMAGE 1 (electronics / beauty / F&B / fashion / jewelry / wellness / service…).`,
+		`Set, props, palette, and brush category word MUST match that category. NEVER default to food, dessert, oranges, fruit, or serum/精華液 aesthetics unless the product truly is food or skincare.`,
+		`Examples: power bank/electronics → desk/cable/tech surface, cool or graphite palette, brush word like 數碼／充電／科技 — NOT oranges, NOT 精華液.`,
+		`Beauty serum → stone/linen + soft botanical. Dessert/F&B → appetite food set. Jewelry → velvet/pedestal.`,
+		`POSTER GRAMMAR (fixed zones, not free collage):`,
+		`1) Hero: keep exact product from IMAGE 1 when attached; fill lower-mid frame; soft key from upper-left; shallow DOF; real material texture (no plastic CGI).`,
+		`2) Palette: derive from the product packaging / material / category mood — cohesive, not rainbow.`,
+		`3) ${bilingual}`,
+		subline
+			? `Support / tagline copy (exact when Chinese): ${subline}.`
+			: "Invent a short commercial tagline matching the product benefit — keep under 6 words (not a food slogan unless it is food).",
+		`4) Chrome: one circular seal/stamp (small claim or brand cue); ONE large brush/calligraphy category word that names THIS category only — not a wall of stickers.`,
+		offer ? `Optional small offer badge (exact): ${offer}.` : "",
+		vars.business ? `Brand cue may appear in seal or footer: ${vars.business}.` : "",
+		`5) Layout: generous negative space in type zones; hero and type must both read at phone size.`,
+		`6) Quality: no watermark, no social UI, no misspelled characters, no neon gradients, no floating English meta labels (CTA/logo/brand).`,
+		`FORBIDDEN: wrong-category set dressing (fruit/dessert behind electronics; spa serum look for a power bank; fake food when product is tech).`,
+		imageReferenceAnchorBlock(vars),
+		`Remove outdated marketing text from IMAGE 1 only where new poster copy replaces it.`,
+		MARKET_HINTS[vars.market],
+		FRAMING_IMAGE[vars.framing],
+		vars.extra,
+		"Single 9:16 designed commercial poster still.",
+	);
+}
+
+/** Exploded / parts-breakdown commercial poster — product identity + labeled components. */
+export function buildPartsPosterImagePrompt(vars: PromptVariables): string {
+	const product = vars.product?.trim() || "the product";
+	const headline = vars.headline?.trim() || product;
+	const subline = vars.subline?.trim() || "";
+	const offer = vars.offer?.trim() || "";
+	const partLines = subline
+		? subline
+				.split(/\n|\|/)
+				.map((s) => s.trim())
+				.filter(Boolean)
+		: [];
+	const titleRule =
+		vars.market === "en"
+			? `Large clear English title with exact text: "${headline}".`
+			: vars.market === "cn"
+				? `Large Simplified Chinese title with exact characters from "${headline}" (optional short English under-title). Spell every Chinese character accurately.`
+				: `Large Traditional Chinese title with exact characters from "${headline}" (optional short English under-title). Spell every Chinese character accurately.`;
+	const partsCopy =
+		partLines.length > 0
+			? `Part callouts / descriptions (use these; one short label+line per component, exact when Chinese): ${partLines.map((l, i) => `${i + 1}) ${l}`).join(" · ")}.`
+			: `Invent 4–7 short part callouts that match REAL components of "${product}" (material / function / feature) — each label under ~8 words; do not invent unrelated accessories.`;
+
+	return joinParts(
+		`Create a vertical PARTS-BREAKDOWN / EXPLODED-VIEW COMMERCIAL POSTER for ${product}.`,
+		`Technical product teardown aesthetic: the product is deconstructed into floating components arranged in a clear exploded diagram — NOT violent destruction, NOT fire/debris chaos, NOT a smashed product.`,
+		`IDENTITY LOCK: Keep the exact product look from IMAGE 1 (shape, color, logo marks, materials). Components must clearly belong to THIS product.`,
+		`POSTER GRAMMAR:`,
+		`1) Center: exploded assembly — shell / core / chips / pads / lids / straps / nozzles etc. as fits the category; soft gaps between parts; thin leader lines from each part to its callout.`,
+		`2) Title zone (top): ${titleRule}`,
+		partsCopy,
+		offer ? `Optional small offer / claim badge (exact): ${offer}.` : "",
+		vars.business ? `Brand cue may appear in footer or a small seal: ${vars.business}.` : "",
+		`3) Background: clean studio gradient or soft paper/tech surface matched to category — generous negative space so labels read at phone size.`,
+		`4) Lighting: soft upper-left key, crisp material texture, photoreal (no plastic toy CGI).`,
+		`5) Quality: no watermark, no social UI, no misspelled characters, no neon cyberpunk clutter, no English meta labels like CTA/LOGO.`,
+		`FORBIDDEN: intact-only hero with no parts; random unrelated spare parts; food props on non-food; violent smash; overcrowded unreadable text.`,
+		imageReferenceAnchorBlock(vars),
+		`Remove outdated packaging marketing text from IMAGE 1 only where new poster copy replaces it.`,
+		MARKET_HINTS[vars.market],
+		FRAMING_IMAGE[vars.framing],
+		vars.extra,
+		"Single 9:16 parts-breakdown commercial poster still.",
+	);
+}
+
 import type { CampaignSlidePlan } from "@/lib/campaign-types";
 import { getVisualStyle, type VisualStyleId } from "@/lib/visual-styles";
 import type { SingleImagePlan } from "@/lib/single-image-plan";
@@ -500,6 +592,8 @@ export type ImagePromptMode =
 	| "promo-ai"
 	| "reference-concept"
 	| "info-poster"
+	| "designed-poster"
+	| "parts-poster"
 	| "brand-fit"
 	| "model-wear"
 	| "ugc-presenter"
@@ -1178,6 +1272,30 @@ export function buildWizardImagePrompt(
 			),
 		);
 	}
+	if (mode === "designed-poster") {
+		return withLogo(
+			joinParts(
+				buildDesignedPosterImagePrompt(vars),
+				plan ? singlePlanBlock(plan) : "",
+				carouselSlideAvoidClause(
+					vars.framing,
+					vars.artStyle ?? DEFAULT_ART_STYLE,
+				),
+			),
+		);
+	}
+	if (mode === "parts-poster") {
+		return withLogo(
+			joinParts(
+				buildPartsPosterImagePrompt(vars),
+				plan ? singlePlanBlock(plan) : "",
+				carouselSlideAvoidClause(
+					vars.framing,
+					vars.artStyle ?? DEFAULT_ART_STYLE,
+				),
+			),
+		);
+	}
 	if (mode === "model-wear") {
 		return withLogo(
 			joinParts(
@@ -1315,6 +1433,8 @@ function shouldUseConceptSocialPrompt(
 	// Without this gate, every concept image path collapsed to concept-social.
 	if (
 		visualStyleId === "info-poster" ||
+		visualStyleId === "designed-poster" ||
+		visualStyleId === "parts-poster" ||
 		visualStyleId === "brand-fit" ||
 		visualStyleId === "brand-campaign" ||
 		visualStyleId === "pricing-offer" ||
@@ -1349,6 +1469,9 @@ export function resolveImagePromptMode(
 	creativeMode: string,
 	context?: ImagePromptContext,
 ): ImagePromptMode {
+	// Designed / parts posters never borrow reference layout — keep their recipes.
+	if (visualStyleId === "designed-poster") return "designed-poster";
+	if (visualStyleId === "parts-poster") return "parts-poster";
 	if (creativeMode === "reference-concept") return "reference-concept";
 	if (shouldUseConceptCinematicPrompt(visualStyleId, context))
 		return "concept-cinematic";
@@ -1487,7 +1610,11 @@ export function buildCampaignSlideImagePrompt(
 							)
 						: mode === "info-poster"
 							? buildInfoPosterImagePrompt(slideVars)
-							: mode === "service-promo"
+							: mode === "designed-poster"
+								? buildDesignedPosterImagePrompt(slideVars)
+								: mode === "parts-poster"
+									? buildPartsPosterImagePrompt(slideVars)
+								: mode === "service-promo"
 								? buildServicePromoImagePrompt(slideVars)
 								: mode === "pricing-offer"
 									? buildPricingOfferImagePrompt(slideVars)
@@ -1703,6 +1830,15 @@ export function buildMotionPosterEndStillPrompt(
 	const headline = vars.headline?.trim() || product;
 	const subline = vars.subline?.trim() || "";
 	const offer = vars.offer?.trim() || "";
+	const designedPosterChrome =
+		opts?.dialect === "designed-poster"
+			? joinParts(
+					"DESIGNED POSTER CHROME (paint on this END frame only):",
+					"Bilingual masthead stack — large Chinese title (exact headline chars) → English ALL-CAPS serif under it → short script tagline from subline.",
+					"One circular seal/stamp with a tiny claim; ONE large brush/calligraphy category word matching the product category.",
+					"Soft upper-left key light; appetite set — not a blank white catalog cutout, not a white info flyer.",
+				)
+			: "";
 	const copy = joinParts(
 		`ON-IMAGE HEADLINE — oversized designed poster masthead (not a tiny caption, not a floating subtitle bar). Paint these exact characters: ${headline}`,
 		subline
@@ -1711,6 +1847,7 @@ export function buildMotionPosterEndStillPrompt(
 		offer
 			? `ON-IMAGE BUTTON TEXT (small bottom pill — exact offer line, never paint the English letters C-T-A): ${offer}`
 			: "",
+		designedPosterChrome,
 	);
 	if (opts?.conceptMode) {
 		return joinParts(

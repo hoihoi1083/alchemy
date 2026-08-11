@@ -1,5 +1,10 @@
 import { AppProviders } from "@/components/AppProviders";
-import { PRODUCT_LOGO_SRC, PRODUCT_NAME, productSiteUrl } from "@/lib/brand";
+import {
+  PRODUCT_LOGO_SRC,
+  PRODUCT_NAME,
+  PRODUCT_TAB_TITLE,
+  productSiteUrl,
+} from "@/lib/brand";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
@@ -10,7 +15,7 @@ const description =
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: PRODUCT_NAME,
+    default: PRODUCT_TAB_TITLE,
     template: `%s · ${PRODUCT_NAME}`,
   },
   description,
@@ -34,12 +39,12 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: siteUrl,
     siteName: PRODUCT_NAME,
-    title: PRODUCT_NAME,
+    title: PRODUCT_TAB_TITLE,
     description,
   },
   twitter: {
     card: "summary_large_image",
-    title: PRODUCT_NAME,
+    title: PRODUCT_TAB_TITLE,
     description,
   },
   icons: {

@@ -142,6 +142,7 @@ import {
 	isCreativeVideoStyle,
 	isBrandVisualStyle,
 	isCampaignVisualStyle,
+	isLockedSinglePosterStyle,
 	isStoryboardVideoStyle,
 	isUgcPresenterStyle,
 	isConceptCinematicStyle,
@@ -708,9 +709,12 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 	const templateConfig = getTemplateConfig(templateId);
 	const usesCompositor = visualStyle.usesCompositor;
 	const lockedCampaignMode = isCampaignVisualStyle(visualStyleId);
+	const lockedSingleImageMode = isLockedSinglePosterStyle(visualStyleId);
 	const effectiveImageOutputMode: ImageOutputMode = lockedCampaignMode
 		? "campaign"
-		: imageOutputMode;
+		: lockedSingleImageMode
+			? "single"
+			: imageOutputMode;
 	const isCampaignOutput = effectiveImageOutputMode === "campaign";
 	const isTeachingCarouselOutput =
 		effectiveImageOutputMode === "teaching-carousel";
@@ -816,8 +820,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		workflowMode === "image-only" || workflowMode === "combined";
 
 	const usesReferenceConceptForImage =
-		imageCreativeMode === "reference-concept" ||
-		Boolean(imageRefPhoto && productPhoto);
+		!isLockedSinglePosterStyle(visualStyleId) &&
+		(imageCreativeMode === "reference-concept" ||
+			Boolean(imageRefPhoto && productPhoto));
 
 	const referenceStrategy = useMemo(
 		() =>
@@ -826,12 +831,17 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				imageOutputMode: effectiveImageOutputMode,
 				visualStyleId,
 				workflowMode,
-				imageCreativeMode,
-				hasReferenceUpload: Boolean(imageRefPhoto),
+				imageCreativeMode: isLockedSinglePosterStyle(visualStyleId)
+					? "promo-ai"
+					: imageCreativeMode,
+				hasReferenceUpload:
+					!isLockedSinglePosterStyle(visualStyleId) &&
+					Boolean(imageRefPhoto),
 				hasProductPhoto: Boolean(productPhoto),
 				hasReferenceBrief:
-					Boolean(userReferenceBrief) ||
-					Boolean(conceptImageVisionNote.trim()),
+					!isLockedSinglePosterStyle(visualStyleId) &&
+					(Boolean(userReferenceBrief) ||
+						Boolean(conceptImageVisionNote.trim())),
 			}),
 		[
 			promotionMode,
@@ -859,36 +869,48 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 
 	const attachReferenceToForm = useCallback(
 		(fd: FormData) => {
+			// Designed / parts posters never borrow a reference — product (+ angles) only.
+			const lockedPoster = isLockedSinglePosterStyle(visualStyleId);
 			// Both research cover and manual style upload land in imageRefPhoto.
 			// Generate maps: reference_image (主圖) = IMAGE1 product; style_reference = IMAGE2 look.
 			// Order matters: nano-banana/edit prioritizes the first image as the hero subject.
 			const useConceptRef =
-				imageCreativeMode === "reference-concept" ||
-				Boolean(imageRefPhoto && productPhoto);
+				!lockedPoster &&
+				(imageCreativeMode === "reference-concept" ||
+					Boolean(imageRefPhoto && productPhoto));
 			fd.set(
 				"image_creative_mode",
-				useConceptRef ? "reference-concept" : imageCreativeMode,
+				lockedPoster
+					? "promo-ai"
+					: useConceptRef
+						? "reference-concept"
+						: imageCreativeMode,
 			);
 			fd.set(
 				"image_mode",
-				effectiveImageMode === "reference"
-					? "reference"
-					: useConceptRef
-						? "product-style"
-						: "product-ad",
+				lockedPoster
+					? "product-ad"
+					: effectiveImageMode === "reference"
+						? "reference"
+						: useConceptRef
+							? "product-style"
+							: "product-ad",
 			);
 			if (productPhoto) {
 				fd.set("reference_image", productPhoto);
 			}
-			if (imageRefPhoto) {
+			if (!lockedPoster && imageRefPhoto) {
 				fd.set("style_reference_image", imageRefPhoto);
 			}
 			for (const f of extraKitPhotos.slice(0, 4)) {
 				fd.append("product_angle_images", f);
 			}
-			appendReferenceFormFields(fd);
+			if (!lockedPoster) {
+				appendReferenceFormFields(fd);
+			}
 		},
 		[
+			visualStyleId,
 			imageCreativeMode,
 			imageRefPhoto,
 			productPhoto,
@@ -2176,7 +2198,14 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 	}
 
 	function applyPrimaryPath(
-		path: "quick" | "model" | "storyboard" | "reference" | "ugc-presenter",
+		path:
+			| "quick"
+			| "model"
+			| "designed"
+			| "parts"
+			| "storyboard"
+			| "reference"
+			| "ugc-presenter",
 	) {
 		setError(null);
 		setStepKey("setup");
@@ -2191,6 +2220,27 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			if (workflowMode === "video-only") setWorkflowMode("image-only");
 			selectVisualStyle("product");
 			setImageCreativeMode("promo-ai");
+			return;
+		}
+		if (path === "designed") {
+			if (workflowMode === "video-only") setWorkflowMode("image-only");
+			selectVisualStyle("designed-poster");
+			setImageCreativeMode("promo-ai");
+			setImageOutputMode("single");
+			// Designed poster ignores reference layout/style borrow.
+			setImageRefPhoto(null);
+			setUserReferenceBrief(null);
+			setReferenceAnalyzeNote(null);
+			return;
+		}
+		if (path === "parts") {
+			if (workflowMode === "video-only") setWorkflowMode("image-only");
+			selectVisualStyle("parts-poster");
+			setImageCreativeMode("promo-ai");
+			setImageOutputMode("single");
+			setImageRefPhoto(null);
+			setUserReferenceBrief(null);
+			setReferenceAnalyzeNote(null);
 			return;
 		}
 		if (path === "model") {
@@ -2223,7 +2273,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 	}
 
 	function applyPrimaryPathConcept(
-		path: "info" | "brand" | "pricing" | "website",
+		path: "info" | "brand" | "pricing" | "website" | "designed",
 	) {
 		setError(null);
 		setStepKey("setup");
@@ -2232,7 +2282,14 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			setImageOutputMode("single");
 		}
 		if (path === "info") selectVisualStyle("info-poster");
-		else if (path === "brand") selectVisualStyle("brand-fit");
+		else if (path === "designed") {
+			selectVisualStyle("designed-poster");
+			setImageOutputMode("single");
+			setImageCreativeMode("promo-ai");
+			setImageRefPhoto(null);
+			setUserReferenceBrief(null);
+			setReferenceAnalyzeNote(null);
+		} else if (path === "brand") selectVisualStyle("brand-fit");
 		else if (path === "pricing") selectVisualStyle("pricing-offer");
 		else selectVisualStyle("website-launch");
 	}
@@ -2519,6 +2576,18 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		videoCreativeMode === "image-to-video" &&
 		promotionMode !== "concept" &&
 		Boolean(productPhoto || product.trim());
+
+	// Designed / parts posters = one finished commercial still (not A/B / campaign / teaching).
+	// Also drop any reference — these posters never borrow layout/style.
+	useEffect(() => {
+		if (!isLockedSinglePosterStyle(visualStyleId)) return;
+		if (imageOutputMode !== "single") setImageOutputMode("single");
+		if (imageCreativeMode !== "promo-ai") setImageCreativeMode("promo-ai");
+		if (imageRefPhoto) setImageRefPhoto(null);
+		if (userReferenceBrief) setUserReferenceBrief(null);
+		if (referenceAnalyzeNote) setReferenceAnalyzeNote(null);
+		// eslint-disable-next-line react-hooks/exhaustive-deps -- snap when locked poster style
+	}, [visualStyleId, imageOutputMode, imageCreativeMode, imageRefPhoto, userReferenceBrief, referenceAnalyzeNote]);
 
 	// Hard lock: 圖+片 (except UGC / cinematic / motion-poster escape) must stay on storyboard-video.
 	// Prevents drift into 單圖動態 / 教學輪播 / 一鍵出片 after research or mode sync.
@@ -3477,7 +3546,11 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			if (!product.trim()) return m.errors.needProductName;
 			if (!productPhoto) return m.errors.needPhoto;
 		}
-		if (visualStyleId === "info-poster" && !headline.trim()) {
+		if (
+			(visualStyleId === "info-poster" ||
+				isLockedSinglePosterStyle(visualStyleId)) &&
+			!headline.trim()
+		) {
 			return m.errors.needHeadline;
 		}
 		if (promotionMode === "physical") {
@@ -3488,7 +3561,11 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			) {
 				return m.errors.needPhoto;
 			}
-			if (visualStyleId === "info-poster" && !productPhoto) {
+			if (
+				(visualStyleId === "info-poster" ||
+					isLockedSinglePosterStyle(visualStyleId)) &&
+				!productPhoto
+			) {
 				return m.errors.needPhoto;
 			}
 		}
@@ -4264,7 +4341,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				return imagePrompt.trim().length > 0;
 			return hasConceptCopy || Boolean(productPhoto || imageRefPhoto);
 		}
-		if (visualStyleId === "info-poster") {
+		if (
+			visualStyleId === "info-poster" ||
+			isLockedSinglePosterStyle(visualStyleId)
+		) {
 			return Boolean(productPhoto && headline.trim());
 		}
 		if (isBrandVisualStyle(visualStyleId)) {
@@ -4338,7 +4418,11 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			}
 		}
 
-		if (visualStyleId === "info-poster" && !headline.trim()) {
+		if (
+			(visualStyleId === "info-poster" ||
+				isLockedSinglePosterStyle(visualStyleId)) &&
+			!headline.trim()
+		) {
 			setError(m.errors.needHeadline);
 			return null;
 		}
@@ -8197,6 +8281,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		loadReferenceClip,
 		locale,
 		lockedCampaignMode,
+		lockedSingleImageMode,
 		m,
 		makeDigitalPresenterVideo,
 		makeImageToVideo,

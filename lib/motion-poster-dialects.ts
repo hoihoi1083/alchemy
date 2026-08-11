@@ -10,6 +10,7 @@ export const MOTION_POSTER_DIALECT_IDS = [
   "light-sweep",
   "liquid-reveal",
   "scene-breathe",
+  "designed-poster",
 ] as const;
 
 export type MotionPosterDialectId = (typeof MOTION_POSTER_DIALECT_IDS)[number];
@@ -17,6 +18,7 @@ export type MotionPosterDialectPick = MotionPosterDialectId | "auto";
 
 export type MotionPosterTone =
   | "fnb"
+  | "dessert"
   | "beauty"
   | "jewelry"
   | "fashion"
@@ -238,9 +240,49 @@ export const MOTION_POSTER_DIALECTS: Record<MotionPosterDialectId, MotionPosterD
       "no invented captions",
     ],
   },
+  "designed-poster": {
+    id: "designed-poster",
+    tones: ["dessert", "fnb", "beauty", "concept", "general"],
+    motionStrength: 60,
+    stillLayout:
+      "Designed 9:16 commercial feed poster plate: appetite/product hero mid-lower frame, soft upper-left key light, reserved zones for bilingual masthead + circular seal + brush category word. ZERO readable marketing text on START.",
+    stillLayoutConcept:
+      "Designed 9:16 commercial concept poster: scene hero mid-lower frame, soft upper-left light, reserved zones for bilingual masthead + seal + brush category. Not a fake SKU. ZERO readable marketing text on START.",
+    startBeat:
+      "START: hero almost frontal on the set — empty type zones (masthead / seal / brush word not yet painted).",
+    startBeatConcept:
+      "START: scene almost frontal — empty type zones (masthead / seal / brush not yet painted).",
+    endBeat:
+      "END: hero turned 10–20° or slightly closer; bilingual CN+EN masthead stack, circular seal, and large brush category word all painted in reserved zones — finished XHS/IG designed poster.",
+    endBeatConcept:
+      "END: subject shifted; bilingual masthead stack, circular seal, and brush category word painted — finished designed poster (not a white flyer).",
+    videoLead:
+      "Animate as a designed commercial poster: hero slowly turns or steam/sauce drifts while type blooms into Image 2 pixels (bilingual stack + seal + brush word). Do not invent different letters.",
+    videoLeadConcept:
+      "Animate as a designed commercial concept poster: subject shifts while bilingual type + seal + brush word bloom into Image 2. Do not invent different letters.",
+    kineticTypeLine: MOTION_POSTER_H3_TEXTLESS_LINE,
+    microMotions: [
+      "visible hero turn / float / settle — silhouette changes in the first 2s",
+      "bilingual masthead + circular seal + brush category word bloom into Image 2 layout only",
+      "same SKU identity — no morph into a different product",
+      "no blank catalog cutout, no second kitchen/tutorial",
+      "no invented captions or post-burn subtitle bars",
+    ],
+    microMotionsConcept: [
+      "visible subject motion or camera push-in",
+      "bilingual masthead + seal + brush category bloom into Image 2",
+      "same scene identity — no fake SKU morph",
+      "no white info-flyer look, no tutorial steps",
+      "no invented captions",
+    ],
+  },
 };
 
 const TONE_PATTERNS: readonly [MotionPosterTone, RegExp][] = [
+  [
+    "dessert",
+    /dessert|cake|souffl[eé]|bagel|bakery|pastry|tart|mousse|pudding|macaron|croissant|bun|面包|麵包|甜品|蛋糕|贝果|貝果|软欧|軟歐|挞|撻|布丁|慕斯|舒芙蕾|马卡龙|馬卡龍/i,
+  ],
   [
     "fnb",
     /coffee|latte|cafe|café|tea|drink|wine|beer|juice|soda|cocktail|matcha|dirty\s*coffee|咖啡|拿铁|拿鐵|茶|酒|飲|饮|果汁|汽水|美食|甜品/i,

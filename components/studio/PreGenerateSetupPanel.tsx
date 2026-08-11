@@ -773,6 +773,7 @@ const CONCEPT_PATH_STYLE = {
   brand: "brand-fit",
   pricing: "pricing-offer",
   website: "website-launch",
+  designed: "designed-poster",
 } as const;
 
 /**
@@ -805,10 +806,17 @@ export function PreGenerateSetupPanel({
   const pg = m.microWizard.preGenerateSetup;
   const isConcept = wizard.promotionMode === "concept";
   const contentRef = useRef<HTMLElement | null>(null);
+  const pageTopRef = useRef<HTMLDivElement | null>(null);
   const mainInputId = useId();
   const angleInputId = useId();
   const showBrandWebsite = requiresBrandProfileForImages(wizard.visualStyleId);
   const effectiveShowStylePicker = showStylePicker && !combinedStoryboard;
+
+  // Entering this fused setup step should start at the top (router uses scroll: false).
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    pageTopRef.current?.scrollIntoView({ behavior: "auto", block: "start" });
+  }, []);
 
   const brief = wizard.userReferenceBrief as UserReferenceBrief | null;
   const showReferenceBrief =
@@ -824,7 +832,9 @@ export function PreGenerateSetupPanel({
   const analyzeActive = Boolean(wizard.imageRefPhoto) && !analyzeDone;
 
   const isModelWear = wizard.visualStyleId === "model-wear";
-  const isQuickAd = !isModelWear;
+  const isDesignedPoster = wizard.visualStyleId === "designed-poster";
+  const isPartsPoster = wizard.visualStyleId === "parts-poster";
+  const isQuickAd = !isModelWear && !isDesignedPoster && !isPartsPoster;
   const hasReference = Boolean(wizard.imageRefPhoto);
   /** Reference layout transfer overrides model-wear staging — lock to product path. */
   const modelWearLockedByReference = effectiveShowStylePicker && !isConcept && hasReference;
@@ -837,17 +847,32 @@ export function PreGenerateSetupPanel({
           ? "pricing"
           : wizard.visualStyleId === "website-launch"
             ? "website"
-            : null;
+            : wizard.visualStyleId === "designed-poster"
+              ? "designed"
+              : null;
   const showConceptShopFields =
     isConcept &&
     (wizard.visualStyleId === "pricing-offer" ||
       wizard.visualStyleId === "website-launch" ||
       wizard.visualStyleId === "service-promo");
-  const copyFocus =
-    conceptPath != null ? pg.conceptCopyFocus?.[conceptPath] : null;
+  const isDesignedDirection = isDesignedPoster || conceptPath === "designed";
+  const isPartsDirection = isPartsPoster;
+  const lockedPosterDirection = isDesignedDirection || isPartsDirection;
+  const copyFocus = isPartsDirection
+    ? pg.conceptCopyFocus.parts
+    : isDesignedDirection
+      ? pg.conceptCopyFocus.designed
+      : conceptPath != null
+        ? pg.conceptCopyFocus[conceptPath]
+        : null;
   const supportingLabel = copyFocus?.supportingLabel ?? pg.supportingLabel;
   const supportingPlaceholder =
-    copyFocus?.supportingPlaceholder ?? m.wizard.sublinePlaceholder;
+    copyFocus?.supportingPlaceholder ??
+    (isPartsDirection
+      ? m.wizard.partsPosterPartsPlaceholder
+      : isDesignedDirection
+        ? m.wizard.designedPosterTaglinePlaceholder
+        : m.wizard.sublinePlaceholder);
   const offerLabel =
     copyFocus && "offerLabel" in copyFocus && copyFocus.offerLabel
       ? copyFocus.offerLabel
@@ -857,8 +882,20 @@ export function PreGenerateSetupPanel({
       ? copyFocus.offerPlaceholder
       : m.wizard.offerPlaceholder;
   const emphasizeSupporting =
-    conceptPath === "info" || conceptPath === "website" || conceptPath === "brand";
+    conceptPath === "info" ||
+    conceptPath === "website" ||
+    conceptPath === "brand" ||
+    lockedPosterDirection;
+  const emphasizeHook = lockedPosterDirection || conceptPath === "info";
   const emphasizeOffer = conceptPath === "pricing";
+  const extraPlaceholder =
+    m.wizard.requirementsPlaceholders[
+      isPartsDirection
+        ? "parts-poster"
+        : isDesignedDirection
+          ? "designed-poster"
+          : wizard.visualStyleId
+    ] ?? m.wizard.requirementsPlaceholder;
 
   const setupHint = combinedStoryboard
     ? isConcept
@@ -932,17 +969,26 @@ export function PreGenerateSetupPanel({
     wizard.setSubline,
   ]);
 
-  function pickCreationDirection(path: "quick" | "model") {
+  const showReferenceForDirection =
+    showReferenceUpload && !isDesignedPoster && !isPartsPoster;
+
+  function pickCreationDirection(
+    path: "quick" | "model" | "designed" | "parts",
+  ) {
     if (path === "model" && hasReference) return;
     wizard.applyPrimaryPath(path);
-    // Keep dual-ref mode if user already uploaded a reference.
+    // Locked posters never use reference; other paths keep dual-ref if already uploaded.
+    if (path === "designed" || path === "parts") return;
     if (wizard.imageRefPhoto) {
       wizard.setImageCreativeMode("reference-concept");
     }
   }
 
-  function pickConceptDirection(path: "info" | "brand" | "pricing" | "website") {
+  function pickConceptDirection(
+    path: "info" | "brand" | "pricing" | "website" | "designed",
+  ) {
     wizard.applyPrimaryPathConcept(path);
+    if (path === "designed") return;
     if (wizard.imageRefPhoto) {
       wizard.setImageCreativeMode("reference-concept");
     }
@@ -1014,10 +1060,12 @@ export function PreGenerateSetupPanel({
 
   const outputModes: ImageOutputMode[] = wizard.lockedCampaignMode
     ? ["campaign"]
-    : ["single", "ab", "campaign", "teaching-carousel"];
+    : wizard.lockedSingleImageMode
+      ? ["single"]
+      : ["single", "ab", "campaign", "teaching-carousel"];
 
   return (
-    <div className="pg-page">
+    <div className="pg-page" ref={pageTopRef}>
       <style dangerouslySetInnerHTML={{ __html: PANEL_CSS }} />
       <PhaseStepper phases={studioPhasesForMode(m.start, wizard.workflowMode)} activeIndex={2} />
 
@@ -1036,106 +1084,6 @@ export function PreGenerateSetupPanel({
 
         <div className="pg-layout">
           <div className="pg-stack">
-            {showReferenceUpload ? (
-              <FusedReferenceCard
-                title={pg.referenceUploadTitle}
-                hint={isConcept ? pg.conceptReferenceUploadHint : pg.referenceUploadHint}
-                briefSummaryTitle={pg.briefSummaryTitle}
-                noReference={pg.noReference}
-                changeLabel={m.wizard.referenceChange}
-                removeLabel={pg.referenceRemove}
-                cta={m.wizard.referenceCta}
-                uploadHint={m.wizard.uploadHintConcept}
-                previewUrl={wizard.imageRefPreviewUrl}
-                fileName={wizard.imageRefPhoto?.name ?? null}
-                analyzeActive={analyzeActive}
-                analyzingLabel={m.wizard.referenceBriefAnalyzing}
-                analyzedFallback={
-                  wizard.referenceAnalyzeNote ?? m.wizard.referenceBriefAnalyzed
-                }
-                summaryRows={summaryRows}
-                onFile={onReferenceFile}
-              />
-            ) : showReferenceBrief ? (
-              <section className="pg-card">
-                <div className="pg-card-head">
-                  <h3 className="pg-card-title">{pg.referenceTitle}</h3>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      contentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
-                    }
-                    className="pg-edit-brief shrink-0"
-                  >
-                    <svg
-                      viewBox="0 0 24 24"
-                      className="h-3.5 w-3.5"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <path d="M12 20h9" strokeLinecap="round" />
-                      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
-                    </svg>
-                    {pg.changeBrief}
-                  </button>
-                </div>
-
-                <div className="pg-brief-row">
-                  <div className="pg-brief-media">
-                    {wizard.imageRefPreviewUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={wizard.imageRefPreviewUrl} alt="" />
-                    ) : (
-                      <div className="flex h-full min-h-[120px] items-center justify-center text-xs text-slate-400">
-                        {pg.noReference}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="pg-brief-summary">
-                    <p className="pg-brief-summary-title">{pg.briefSummaryTitle}</p>
-                    {analyzeActive ? (
-                      <p className="flex items-center gap-2 text-sm text-violet-900">
-                        <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-violet-500 border-t-transparent" />
-                        {m.wizard.referenceBriefAnalyzing}
-                      </p>
-                    ) : summaryRows.length > 0 ? (
-                      <ul>
-                        {summaryRows.map((row) => (
-                          <li key={row.label} className="pg-brief-row-item">
-                            <span className="pg-brief-check" aria-hidden>
-                              <svg
-                                viewBox="0 0 24 24"
-                                className="h-3.5 w-3.5"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2.6"
-                              >
-                                <path
-                                  d="m5 12 5 5L20 7"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                              </svg>
-                            </span>
-                            <span className="min-w-0">
-                              <span className="font-semibold text-slate-900">{row.label}:</span>{" "}
-                              <span className="text-slate-500">{row.value}</span>
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-sm text-slate-500">
-                        {wizard.referenceAnalyzeNote ?? m.wizard.referenceBriefAnalyzed}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </section>
-            ) : null}
-
             {effectiveShowStylePicker ? (
               <section className="pg-card">
                 <div className="pg-card-title-row">
@@ -1154,6 +1102,7 @@ export function PreGenerateSetupPanel({
                     {(
                       [
                         ["info", m.wizard.pathInfoTitle, m.wizard.pathInfoDesc],
+                        ["designed", pg.stylePickerDesignedLabel, pg.stylePickerDesignedDesc],
                         ["brand", m.wizard.pathBrandTitle, m.wizard.pathBrandDesc],
                         ["pricing", m.wizard.pathPricingTitle, m.wizard.pathPricingDesc],
                         ["website", m.wizard.pathWebsiteTitle, m.wizard.pathWebsiteDesc],
@@ -1235,6 +1184,72 @@ export function PreGenerateSetupPanel({
                     </button>
                     <button
                       type="button"
+                      onClick={() => pickCreationDirection("designed")}
+                      className={`pg-output-card text-left${isDesignedPoster ? " is-selected" : ""}`}
+                    >
+                      {isDesignedPoster ? (
+                        <span className="pg-check" aria-hidden>
+                          <svg
+                            viewBox="0 0 24 24"
+                            className="h-3 w-3"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                          >
+                            <path
+                              d="m5 12 5 5L20 7"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </span>
+                      ) : null}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={getVisualStyle("designed-poster").previewSrc}
+                        alt=""
+                        className="pg-output-thumb"
+                      />
+                      <div className="pg-output-copy">
+                        <strong>{pg.stylePickerDesignedLabel}</strong>
+                        <span>{pg.stylePickerDesignedDesc}</span>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => pickCreationDirection("parts")}
+                      className={`pg-output-card text-left${isPartsPoster ? " is-selected" : ""}`}
+                    >
+                      {isPartsPoster ? (
+                        <span className="pg-check" aria-hidden>
+                          <svg
+                            viewBox="0 0 24 24"
+                            className="h-3 w-3"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                          >
+                            <path
+                              d="m5 12 5 5L20 7"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </span>
+                      ) : null}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={getVisualStyle("parts-poster").previewSrc}
+                        alt=""
+                        className="pg-output-thumb"
+                      />
+                      <div className="pg-output-copy">
+                        <strong>{pg.stylePickerPartsLabel}</strong>
+                        <span>{pg.stylePickerPartsDesc}</span>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => pickCreationDirection("model")}
                       disabled={modelWearLockedByReference}
                       title={
@@ -1278,11 +1293,121 @@ export function PreGenerateSetupPanel({
                     </button>
                   </div>
                 )}
+                {isDesignedPoster || conceptPath === "designed" ? (
+                  <p className="mt-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-950">
+                    {m.wizard.designedPosterTechniqueIntro}
+                  </p>
+                ) : null}
+                {isPartsPoster ? (
+                  <p className="mt-2 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-xs leading-relaxed text-sky-950">
+                    {m.wizard.partsPosterTechniqueIntro}
+                  </p>
+                ) : null}
                 {modelWearLockedByReference ? (
                   <p className="mt-2 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-xs leading-relaxed text-violet-900">
                     {pg.stylePickerModelLockedNote}
                   </p>
                 ) : null}
+              </section>
+            ) : null}
+
+            {showReferenceForDirection ? (
+              <FusedReferenceCard
+                title={pg.referenceUploadTitle}
+                hint={isConcept ? pg.conceptReferenceUploadHint : pg.referenceUploadHint}
+                briefSummaryTitle={pg.briefSummaryTitle}
+                noReference={pg.noReference}
+                changeLabel={m.wizard.referenceChange}
+                removeLabel={pg.referenceRemove}
+                cta={m.wizard.referenceCta}
+                uploadHint={m.wizard.uploadHintConcept}
+                previewUrl={wizard.imageRefPreviewUrl}
+                fileName={wizard.imageRefPhoto?.name ?? null}
+                analyzeActive={analyzeActive}
+                analyzingLabel={m.wizard.referenceBriefAnalyzing}
+                analyzedFallback={
+                  wizard.referenceAnalyzeNote ?? m.wizard.referenceBriefAnalyzed
+                }
+                summaryRows={summaryRows}
+                onFile={onReferenceFile}
+              />
+            ) : showReferenceBrief && !isDesignedPoster && !isPartsPoster ? (
+              <section className="pg-card">
+                <div className="pg-card-head">
+                  <h3 className="pg-card-title">{pg.referenceTitle}</h3>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      contentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+                    }
+                    className="pg-edit-brief shrink-0"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-3.5 w-3.5"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="M12 20h9" strokeLinecap="round" />
+                      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                    </svg>
+                    {pg.changeBrief}
+                  </button>
+                </div>
+
+                <div className="pg-brief-row">
+                  <div className="pg-brief-media">
+                    {wizard.imageRefPreviewUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={wizard.imageRefPreviewUrl} alt="" />
+                    ) : (
+                      <div className="flex h-full min-h-[120px] items-center justify-center text-xs text-slate-400">
+                        {pg.noReference}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="pg-brief-summary">
+                    <p className="pg-brief-summary-title">{pg.briefSummaryTitle}</p>
+                    {analyzeActive ? (
+                      <p className="flex items-center gap-2 text-sm text-violet-900">
+                        <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-violet-500 border-t-transparent" />
+                        {m.wizard.referenceBriefAnalyzing}
+                      </p>
+                    ) : summaryRows.length > 0 ? (
+                      <ul>
+                        {summaryRows.map((row) => (
+                          <li key={row.label} className="pg-brief-row-item">
+                            <span className="pg-brief-check" aria-hidden>
+                              <svg
+                                viewBox="0 0 24 24"
+                                className="h-3.5 w-3.5"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.6"
+                              >
+                                <path
+                                  d="m5 12 5 5L20 7"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </svg>
+                            </span>
+                            <span className="min-w-0">
+                              <span className="font-semibold text-slate-900">{row.label}:</span>{" "}
+                              <span className="text-slate-500">{row.value}</span>
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-sm text-slate-500">
+                        {wizard.referenceAnalyzeNote ?? m.wizard.referenceBriefAnalyzed}
+                      </p>
+                    )}
+                  </div>
+                </div>
               </section>
             ) : null}
 
@@ -1337,13 +1462,23 @@ export function PreGenerateSetupPanel({
                       />
                     </label>
                   )}
-                  <label>
+                  <label
+                    className={
+                      emphasizeHook
+                        ? "rounded-xl border border-violet-300 bg-violet-50/60 p-3 ring-1 ring-violet-200"
+                        : undefined
+                    }
+                  >
                     <span className="pg-label">
-                      {pg.hookLabel}
+                      {copyFocus &&
+                      "hookLabel" in copyFocus &&
+                      copyFocus.hookLabel
+                        ? copyFocus.hookLabel
+                        : pg.hookLabel}
                       <span className="pg-label-req" aria-hidden>
                         *
                       </span>
-                      {copyFocus ? (
+                      {copyFocus || emphasizeHook ? (
                         <span className="ml-1.5 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700">
                           {pg.onImageBadge}
                         </span>
@@ -1353,7 +1488,13 @@ export function PreGenerateSetupPanel({
                       className="pg-input"
                       value={wizard.headline}
                       onChange={(e) => wizard.setHeadline(e.target.value)}
-                      placeholder={m.wizard.headlinePlaceholder}
+                      placeholder={
+                        copyFocus &&
+                        "hookPlaceholder" in copyFocus &&
+                        copyFocus.hookPlaceholder
+                          ? copyFocus.hookPlaceholder
+                          : m.wizard.headlinePlaceholder
+                      }
                     />
                   </label>
                   <label
@@ -1373,7 +1514,9 @@ export function PreGenerateSetupPanel({
                     </span>
                     <textarea
                       className="pg-textarea"
-                      rows={conceptPath === "info" ? 4 : 3}
+                      rows={
+                        conceptPath === "info" || isPartsDirection ? 5 : 3
+                      }
                       value={wizard.subline}
                       onChange={(e) => wizard.setSubline(e.target.value.slice(0, 200))}
                       placeholder={supportingPlaceholder}
@@ -1430,7 +1573,7 @@ export function PreGenerateSetupPanel({
                       rows={3}
                       value={wizard.promptExtra}
                       onChange={(e) => wizard.setPromptExtra(e.target.value)}
-                      placeholder={m.wizard.requirementsPlaceholder}
+                      placeholder={extraPlaceholder}
                     />
                     <p className="pg-count">{wizard.promptExtra.length}</p>
                   </label>
@@ -1807,13 +1950,21 @@ export function PreGenerateSetupPanel({
                   <div className="pg-output-grid">
                     {outputModes.map((mode) => {
                       const copy = m.wizard.imageOutputModes[mode];
-                      const selected = wizard.imageOutputMode === mode;
+                      const selected = wizard.effectiveImageOutputMode === mode;
+                      const outputLocked =
+                        wizard.lockedCampaignMode || wizard.lockedSingleImageMode;
                       return (
                         <button
                           key={mode}
                           type="button"
-                          onClick={() => wizard.setImageOutputMode(mode)}
-                          className={`pg-output-card${selected ? " is-selected" : ""}`}
+                          onClick={() => {
+                            if (outputLocked) return;
+                            wizard.setImageOutputMode(mode);
+                          }}
+                          disabled={outputLocked}
+                          className={`pg-output-card${selected ? " is-selected" : ""}${
+                            outputLocked ? " cursor-default" : ""
+                          }`}
                         >
                           {selected ? <CheckBadge /> : null}
                           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1830,7 +1981,12 @@ export function PreGenerateSetupPanel({
                       );
                     })}
                   </div>
-                  {wizard.imageOutputMode === "teaching-carousel" ? (
+                  {wizard.lockedSingleImageMode ? (
+                    <p className="mt-2 text-xs leading-relaxed text-slate-500">
+                      {m.wizard.imageOutputModeHintDesignedPoster}
+                    </p>
+                  ) : null}
+                  {wizard.effectiveImageOutputMode === "teaching-carousel" ? (
                     <label className="mt-3 flex flex-wrap items-center gap-3 text-sm text-slate-700">
                       <span className="font-medium">{m.wizard.teachingCarouselSlideCountLabel}</span>
                       <select

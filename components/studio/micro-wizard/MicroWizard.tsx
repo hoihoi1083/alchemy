@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale } from "@/components/LocaleProvider";
 import { useWizard } from "@/components/studio/WizardContext";
@@ -35,6 +35,14 @@ export function MicroWizard({ promotionMode }: Props) {
     isSkippable,
     canGoBack,
   } = micro;
+
+  // URL updates use scroll:false — reset viewport when entering a new micro step.
+  useEffect(() => {
+    if (!currentId) return;
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [currentId]);
 
   const isImageReviewStep = currentId === "image.review";
   const showReviewFooter =

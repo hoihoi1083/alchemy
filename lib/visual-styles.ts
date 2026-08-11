@@ -11,6 +11,8 @@ export type VisualStyleId =
   | "dark-premium"
   | "warm-shop"
   | "info-poster"
+  | "designed-poster"
+  | "parts-poster"
   | "brand-fit"
   | "brand-campaign"
   | "brand-video"
@@ -48,6 +50,11 @@ export function isConceptCinematicStyle(id: VisualStyleId): boolean {
   return id === "concept-cinematic";
 }
 
+/** Single finished still — locks output to one image (no A/B / campaign / teaching). */
+export function isLockedSinglePosterStyle(id: VisualStyleId): boolean {
+  return id === "designed-poster" || id === "parts-poster";
+}
+
 /** Video styles where DeepSeek writes the Seedance prompt (storyboard, brand, creative). */
 export function isAiPlannedVideoStyle(id: VisualStyleId): boolean {
   return (
@@ -70,6 +77,8 @@ export function isCampaignVisualStyle(id: VisualStyleId): boolean {
 /** Image-step styles — hidden in video-only workflow. */
 const IMAGE_FIRST_VISUAL_STYLE_IDS = new Set<VisualStyleId>([
   "info-poster",
+  "designed-poster",
+  "parts-poster",
   "brand-fit",
   "brand-campaign",
   "model-wear",
@@ -184,6 +193,24 @@ export const VISUAL_STYLES: VisualStyleDef[] = [
     templateId: "info-poster",
     usesCompositor: false,
     promptHint: "",
+  },
+  {
+    id: "designed-poster",
+    icon: "🪧",
+    previewSrc: visualPreview("designed-poster"),
+    templateId: "designed-poster",
+    usesCompositor: false,
+    promptHint:
+      "Commercial designed poster for any category: product hero + bilingual type, circular seal, brush category word matched to the product — XHS/IG feed poster, not food-only, not a blank catalog cutout.",
+  },
+  {
+    id: "parts-poster",
+    icon: "🧩",
+    previewSrc: visualPreview("parts-poster"),
+    templateId: "parts-poster",
+    usesCompositor: false,
+    promptHint:
+      "Exploded parts breakdown poster: deconstruct the product into labeled components with title + short descriptions — technical commercial still, not violent destruction.",
   },
   {
     id: "brand-fit",

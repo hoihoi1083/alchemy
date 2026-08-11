@@ -99,7 +99,7 @@ export const zhTw = {
     terms: "服務條款",
     refund: "退款政策",
     followUs: "關注我們",
-    paymentsNote: "由 Stripe 提供安全支付",
+    paymentsNote: "由 Stripe 提供安全支付（Visa、Mastercard、Apple Pay、Google Pay、支付寶、微信支付）",
     rights: "保留所有權利。",
   },
   studio: {
@@ -237,7 +237,8 @@ export const zhTw = {
     ],
     transformCta: "幫我變產品圖",
     transformHint: "不用空白 prompt，從你的產品照開始。",
-    howTitle: "使用方法",
+    howTitleBefore: "使用",
+    howTitleHighlight: "方法",
     howSubtitle: "由參考到成品，四個引導步驟。",
     howSteps: [
       { title: "上傳或貼參考", body: "加產品照片，或帶入你喜歡的帖／Reel 做風格參考。" },
@@ -982,7 +983,7 @@ export const zhTw = {
     styleModeAll: "顯示全部風格",
     artStyleLabel: "畫面風格（關鍵圖）",
     artStyleVideoSafeHint:
-      "只顯示影片安全色調（膠片／CCD／國風／電影感）。Look 只改色調，不改故事。有參考片時 @Video1 仍然是骨架。",
+      "只顯示影片安全色調（膠片／數碼閃光快拍／中式電影感／電影感）。Look 只改色調，不改故事。有參考片時 @Video1 仍然是骨架。",
     artStyleHint:
       "控制 AI 出圖 關鍵圖外觀 — 影片生成 只負責動態。選漫畫/水彩/3D 時，整張圖（包括文字）都會用該風格；含大量文案的 product ad 建議用「概念 cinematic」或寫實。",
     artStyles: {
@@ -999,12 +1000,12 @@ export const zhTw = {
         description: "菲林顆粒、柔和光暈、懷舊色調",
       },
       ccd: {
-        title: "CCD 快拍",
-        description: "早期數位閃光、隨手社交感",
+        title: "數碼閃光快拍",
+        description: "早期輕便相機閃光感、隨手社交快拍",
       },
       guofeng: {
-        title: "國風電影感",
-        description: "丁達爾光、詩意氛圍、寫實產品",
+        title: "中式電影感",
+        description: "煙霧山景、詩意光線、寫實產品（國風氛圍）",
       },
       "anime-2d": {
         title: "2D 動漫",
@@ -1044,6 +1045,15 @@ export const zhTw = {
       "info-poster": {
         title: "精品資訊海報",
         description: "白底單主題、賣點拆解 — 避免一眼 AI 海報（IG 技巧）",
+      },
+      "designed-poster": {
+        title: "設計海報",
+        description:
+          "商業 feed 海報 — 中英字排、圓章、毛筆品類字、食慾／產品主視覺",
+      },
+      "parts-poster": {
+        title: "零件拆解",
+        description: "產品爆炸圖 — 拆開零件並標註說明，一張海報連標題同內容",
       },
       "brand-fit": {
         title: "品牌風格分析",
@@ -1097,6 +1107,8 @@ export const zhTw = {
       "model-wear":
         "上傳產品相 → AI 生成模特兒佩戴／使用嘅生活感廣告（按產品類型自動調整，唔系固定手鍊模板）",
       "info-poster": "",
+      "designed-poster": "",
+      "parts-poster": "",
       "brand-fit": "",
       "brand-campaign": "",
       "brand-video": "",
@@ -1146,6 +1158,29 @@ export const zhTw = {
       "品質檢查 — 避免擠滿文字、制式模板框",
     ],
     infoPosterBulletsPlaceholder: "每行一個賣點，例如：\n招財聚氣\n日常配戴百搭\n低調有質感",
+    designedPosterTechniqueTitle: "設計商業海報（已內建）",
+    designedPosterTechniqueIntro:
+      "小紅書／IG feed 海報文法 — 產品／場景主視覺＋設計字排（任何品類，不限食品；唔係白紙目錄 cutout）：",
+    designedPosterTechniqueSteps: [
+      "主視覺攝影 — 左上柔光、淺景深、場景跟這件產品品類走",
+      "中英字排 — 大中文標題 → 英文全大楷 → 短 script 標語",
+      "圓章＋一個跟產品相符的毛筆品類字（例如：數碼／護膚／甜品／課程）",
+      "色調跟產品／場景走 — 統一，唔好彩虹亂撞",
+      "電子／美妝／食品／時裝和概念／服務場景都用得",
+    ],
+    designedPosterTaglinePlaceholder: "短標語，例如：All-day power／柔軟新鮮",
+    partsPosterTechniqueTitle: "零件拆解海報（已內建）",
+    partsPosterTechniqueIntro:
+      "技術爆炸圖海報 — 將產品拆成標註零件，標題＋短說明（不是暴力破壞）：",
+    partsPosterTechniqueSteps: [
+      "保留產品相身份 — 外形、顏色、材質",
+      "拆開浮動零件，用細引線連去標註",
+      "上方標題；輔助文案 = 一行一個零件說明",
+      "乾淨棚影背景 — 手機尺寸都看得清",
+      "只限產品路徑 — 需要清晰產品相",
+    ],
+    partsPosterPartsPlaceholder:
+      "每行一個零件標註，例如：\n電池 — 全日續航\n外殼 — 磨砂防滑\n晶片 — 快充 IC",
     requirementsLabel: "額外要求（選填）",
     requirementsPlaceholder: "例如：柔和日光、唔出人、街頭穿搭感…",
     requirementsPlaceholders: {
@@ -1154,6 +1189,8 @@ export const zhTw = {
       "warm-shop": "例如：開張優惠、木枱小店、社區街坊感…",
       "model-wear": "例如：男士沉穩風、窗邊自然光、唔要價錢字樣…",
       "info-poster": "例如：美妝清新感、食品天然感、珠寶極簡 pedestal…",
+      "designed-poster": "例如：左上柔光、食慾場景、中英字排、圓章＋毛筆品類字…",
+      "parts-poster": "例如：深色棚影、細引線、6 個標註、石墨色調…",
       "brand-fit": "分析後會自動填；你可再微調產品或場景",
       "brand-campaign": "可填 campaign 主題，例如：春季新品三張圖講清功效",
       "brand-video": "分析後會自動寫動態 prompt；可補充運鏡或氛圍要求",
@@ -1170,6 +1207,8 @@ export const zhTw = {
     campaignThemePlaceholder: "例如：開張優惠三連 post、新品功效系列…",
     imageOutputModeLabel: "出圖數量",
     imageOutputModeHint: "Campaign 會出 3 張概念串連嘅圖（約 3× API 成本 + AI 規劃）",
+    imageOutputModeHintDesignedPoster:
+      "這個海報方向是一張完整靜幀 — 不適合 A/B、Campaign 套圖和教學輪播。",
     imageKeyframeModeLabel: "關鍵幀數量",
     imageKeyframeModeHint:
       "圖→片只需 1 張關鍵幀做動態（可選 A/B 選一張）。不是故事分鏡；Campaign／教學輪播請用「只要圖」。",
@@ -1871,6 +1910,10 @@ export const zhTw = {
       "light-sweep": { title: "掃光", desc: "暗影 → 轉面掃光＋字" },
       "liquid-reveal": { title: "液體揭幕", desc: "靜杯 → 倒液／蒸汽＋字" },
       "scene-breathe": { title: "氛圍呼吸", desc: "靜氣 → 定格＋大標題" },
+      "designed-poster": {
+        title: "設計海報",
+        desc: "食慾主視覺 → 中英字排＋圓章＋毛筆字",
+      },
     },
     motionPosterTypeOverlayNote: "疊字",
     motionPosterTypeOverlaySkipped: "疊字未加上 — 現在是無字氣氛片",
@@ -2449,6 +2492,14 @@ export const zhTw = {
     "info-poster": {
       name: "精品資訊海報",
       description: "白底 IG 資訊圖 — 單主題、精簡文案、品類視覺",
+    },
+    "designed-poster": {
+      name: "設計商業海報",
+      description: "食慾主視覺＋中英字排、圓章、毛筆品類 — 小紅書／IG feed",
+    },
+    "parts-poster": {
+      name: "零件拆解海報",
+      description: "爆炸圖零件＋標題同標註說明 — 技術商業靜幀",
     },
     "brand-fit": {
       name: "品牌風格分析",
@@ -3242,11 +3293,16 @@ export const zhTw = {
       mainPhotoOptional: "選填",
       mainPhotoOptionalHint: "有產品照可以上傳 — 沒有的話會用主題、文案和研究風格出圖。",
       stylePickerTitle: "創作方向",
-      stylePickerHint: "直接創作適合大部分產品；模特佩戴會生成人手／佩戴場景。",
+      stylePickerHint: "選一個：直接產品廣告、設計海報、零件拆解、或模特佩戴／使用。",
       conceptStylePickerHint:
-        "每個選項會改排版提示 — 資訊圖、品牌風格、方案優惠卡、或網站上線。",
+        "每個選項會改排版提示 — 資訊圖、設計海報、品牌風格、方案優惠卡、或網站上線。",
       stylePickerQuickLabel: "直接創作",
       stylePickerQuickDesc: "以產品為主的宣傳圖，不一定要有模特。",
+      stylePickerDesignedLabel: "設計海報",
+      stylePickerDesignedDesc: "商業 feed 海報 — 中英字排、圓章、跟產品品類的毛筆字（不限食品）。",
+      stylePickerPartsLabel: "零件拆解",
+      stylePickerPartsDesc:
+        "產品爆炸圖 — 拆開零件並標註說明，一張海報連標題同內容。",
       stylePickerModelLabel: "模特佩戴／使用",
       stylePickerModelDesc: "畫面有人佩戴或使用你的產品。",
       stylePickerModelLockedHint: "有參考圖時不可用 — 會跟參考圖版式。",
@@ -3278,6 +3334,24 @@ export const zhTw = {
           supportingLabel: "賣點條列（一行一點）",
           supportingPlaceholder:
             "例如：\n天然成分\n即時見效\n適合每日使用",
+        },
+        designed: {
+          title: "這個方向：重點填「會上海報的字」",
+          body: "主標題 = 海報大標題（中英字排）。輔助文案 = 短標語。產品名影響主視覺和毛筆品類字。額外要求寫圓章文案／色調／場景 — 不要當主標題用。",
+          hookLabel: "海報主標題 (hook)",
+          hookPlaceholder: "例如：便攜續航 · All-day power",
+          supportingLabel: "海報標語",
+          supportingPlaceholder:
+            "短句上海報，例如：Creamy & Juicy／柔軟新鮮",
+        },
+        parts: {
+          title: "這個方向：重點填「標題＋零件標註」",
+          body: "主標題 = 海報標題。輔助文案 = 一行一個零件短說明 — 會變成爆炸圖標註。額外要求寫燈光／零件數量／背景氣氛。",
+          hookLabel: "海報主標題 (hook)",
+          hookPlaceholder: "例如：內在結構 · Inside the build",
+          supportingLabel: "零件標註（一行一點）",
+          supportingPlaceholder:
+            "例如：\n電池 — 全日續航\n外殼 — 磨砂防滑\n晶片 — 快充 IC",
         },
         brand: {
           title: "這個方向：重點是品牌風格",
@@ -3413,6 +3487,17 @@ export const zhTw = {
       supportingLabel: "輔助文案",
       extraLabel: "額外運鏡備註",
       extraOptional: "（選填）",
+      onImageBadge: "會出現在結尾靜圖",
+      motionPosterCopyFocus: {
+        title: "動態海報：重點填「結尾靜圖標題」",
+        body: "開頭靜圖無字；結尾靜圖會用你的主標題做大海報字（輔助文案可做副標）。產品照必須 — 是主體。額外備註只寫光線／場景，不要當標題。",
+        hookLabel: "結尾靜圖標題 (hook)",
+        hookPlaceholder: "例如：便攜續航 · All-day power",
+        supportingLabel: "結尾靜圖副標",
+        supportingPlaceholder: "標題下短句（選填）",
+        extraLabel: "額外畫面／運鏡備註",
+        extraPlaceholder: "例如：左上柔光、桌面場景、不要出人…",
+      },
       conceptTopicLabel: "主題／服務",
       productPhotoTitle: "產品照片",
       productPhotoHint: "清晰產品照 — 必須。會做短影片裡的主體。",

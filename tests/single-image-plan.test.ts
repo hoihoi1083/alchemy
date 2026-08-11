@@ -11,6 +11,8 @@ describe("single image planner quality path", () => {
     assert.equal(shouldPlanSingleImageAd("promo-ai"), true);
     assert.equal(shouldPlanSingleImageAd("concept-social"), true);
     assert.equal(shouldPlanSingleImageAd("info-poster"), true);
+    assert.equal(shouldPlanSingleImageAd("designed-poster"), true);
+    assert.equal(shouldPlanSingleImageAd("parts-poster"), true);
     assert.equal(shouldPlanSingleImageAd("reference-concept"), true);
     assert.equal(shouldPlanSingleImageAd("model-wear"), false);
     assert.equal(shouldPlanSingleImageAd("concept-cinematic"), true);
