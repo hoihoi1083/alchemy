@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { SignInButton, useAuth } from "@clerk/nextjs";
+import { AssistantMascotLauncher } from "@/components/assistant/AssistantMascotLauncher";
 import { useLocale } from "@/components/LocaleProvider";
 import { useOptionalWizard } from "@/components/studio/WizardContext";
 import {
@@ -42,8 +42,6 @@ import type {
 import { ContentResearchPanel } from "@/components/content-research/ContentResearchPanel";
 import { readCaptionHandoff } from "@/lib/caption-studio-draft";
 import { IMAGE_CANVAS_DRAFT_KEY } from "@/lib/image-canvas-studio-draft";
-
-const LAUNCHER_IMAGE_SRC = "/alchemy-logo.png";
 
 type ChatMessage = StudioAssistantMessage & { _id?: string };
 
@@ -545,9 +543,17 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
           aria-label={sa.dialogLabel}
         >
           <div className="flex shrink-0 items-center justify-between gap-2 border-b border-violet-100 bg-gradient-to-r from-violet-50 to-white px-4 py-3">
-            <div className="min-w-0">
-              <p className="text-base font-semibold text-violet-950">{sa.title}</p>
-              <p className="truncate text-xs text-violet-600/90">{sa.subtitle}</p>
+            <div className="flex min-w-0 items-center gap-2.5">
+              <AssistantMascotLauncher
+                alt=""
+                size="md"
+                animated={false}
+                className="!h-10 !w-10 !rounded-xl !ring-1 !ring-violet-300/70"
+              />
+              <div className="min-w-0">
+                <p className="text-base font-semibold text-violet-950">{sa.title}</p>
+                <p className="truncate text-xs text-violet-600/90">{sa.subtitle}</p>
+              </div>
             </div>
             <div className="flex shrink-0 items-center gap-0.5">
               <button
@@ -736,28 +742,16 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
         onClick={() => setOpen((v) => !v)}
         className={
           darkChrome
-            ? "pointer-events-auto inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-slate-950/85 p-1.5 pr-3 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.7)] backdrop-blur-md transition hover:scale-[1.02] hover:border-violet-300/50 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
-            : "pointer-events-auto inline-flex items-center bg-transparent p-0 shadow-none transition hover:scale-[1.02] active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+            ? "pointer-events-auto inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-slate-950/85 p-1.5 pr-3 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.7)] backdrop-blur-md transition hover:scale-[1.02] hover:border-violet-300/50 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 motion-safe:animate-[assistant-mascot-float_3.2s_ease-in-out_infinite]"
+            : "pointer-events-auto inline-flex items-center bg-transparent p-0 shadow-none transition hover:scale-[1.02] active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 motion-safe:animate-[assistant-mascot-float_3.2s_ease-in-out_infinite]"
         }
         aria-expanded={open}
         aria-label={sa.openLauncher}
       >
-        <span
-          className={
-            darkChrome
-              ? "relative h-11 w-11 shrink-0 overflow-hidden rounded-xl ring-2 ring-violet-400/80"
-              : "relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl"
-          }
-        >
-          <Image
-            src={LAUNCHER_IMAGE_SRC}
-            alt="Alchemy AI Lab logo"
-            width={200}
-            height={200}
-            className="h-full w-full rounded-xl object-contain drop-shadow-lg"
-            priority
-          />
-        </span>
+        <AssistantMascotLauncher
+          alt="Alchemy AI Lab mascot"
+          size={darkChrome ? "md" : "lg"}
+        />
         {darkChrome ? (
           <span className="pr-0.5 text-sm font-semibold tracking-wide text-white">
             {sa.shortLabel}

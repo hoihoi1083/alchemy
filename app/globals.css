@@ -607,3 +607,14 @@ footer.site-footer a.site-footer-logo:focus {
   animation: faq-expand-bounce 1.35s ease-in-out infinite;
 }
 
+/* Ask AI mascot launcher — soft float (video provides face idle motion) */
+@keyframes assistant-mascot-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
