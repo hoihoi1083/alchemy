@@ -5,6 +5,7 @@ import { useWizard } from "@/components/studio/WizardContext";
 import { WorkflowModePicker } from "@/components/WorkflowModePicker";
 import { ImageOutputModePicker } from "@/components/ImageOutputModePicker";
 import { ArtStylePicker } from "@/components/ArtStylePicker";
+import { CompositionPresetPicker } from "@/components/studio/CompositionPresetPicker";
 import { ImageAspectRatioPicker } from "@/components/ImageAspectRatioPicker";
 import { ImageTextModePicker } from "@/components/studio/ImageTextModePicker";
 import { UploadZone } from "@/components/UploadZone";
@@ -550,6 +551,13 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
             onChange={wizard.setArtStyleId}
             videoSafeOnly={wizard.workflowMode !== "image-only"}
           />
+          <div className="mt-3">
+            <CompositionPresetPicker
+              artStyleId={wizard.artStyleId}
+              value={wizard.compositionPresetId}
+              onChange={wizard.setCompositionPresetId}
+            />
+          </div>
         </ScreenShell>
       );
 
@@ -575,6 +583,11 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
             value={wizard.artStyleId}
             onChange={wizard.setArtStyleId}
             videoSafeOnly={wizard.workflowMode !== "image-only"}
+          />
+          <CompositionPresetPicker
+            artStyleId={wizard.artStyleId}
+            value={wizard.compositionPresetId}
+            onChange={wizard.setCompositionPresetId}
           />
           <ImageAspectRatioPicker
             value={wizard.imageAspectRatio}

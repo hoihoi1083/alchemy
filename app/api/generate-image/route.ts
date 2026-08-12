@@ -59,6 +59,7 @@ import {
 } from "@/lib/reference-strategy";
 import { ensureOptimizedSceneEssay } from "@/lib/optimize-reference-scene-prompt";
 import { resolveArtStyleId, artStyleSystemPrompt } from "@/lib/art-style";
+import { resolveCompositionPresetId } from "@/lib/composition-presets";
 import {
   planSingleImageAd,
   shouldPlanSingleImageAd,
@@ -516,6 +517,9 @@ export async function POST(request: Request) {
     }
     const promptExtra = mergeReferencePromptExtra(promptExtraRaw, brief, strategy);
     const artStyleId = resolveArtStyleId((formData.get("art_style") as string | null)?.trim());
+    const compositionPresetId = resolveCompositionPresetId(
+      (formData.get("composition_preset") as string | null)?.trim(),
+    );
     const imageTextModeRaw = (formData.get("image_text_mode") as string | null)?.trim();
     const imageTextMode =
       imageTextModeRaw === "textless" ? ("textless" as const) : ("integrated" as const);
@@ -554,6 +558,7 @@ export async function POST(request: Request) {
       extra: promptExtra,
       artStyle: artStyleId,
       imageTextMode,
+      compositionPreset: compositionPresetId,
     });
 
     const visualStyle = (formData.get("visual_style") as string | null)?.trim() || "product";

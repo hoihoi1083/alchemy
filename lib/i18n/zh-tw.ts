@@ -1297,6 +1297,89 @@ export const zhTw = {
     storyboardPlanLabel: "分鏡大綱",
     storyboardPlanReviewHint:
       "先用 AI 出分鏡大綱，改到合適再生成場景圖。不對的場景描述／畫面字可以直接改。",
+    storyboardRecipeTitle: "分鏡配方",
+    storyboardRecipeHint:
+      "經典彈性分鏡，或豪華產品誕生（建議實體產品）。不是三分屏 Social drip。",
+    storyboardRecipeLuxuryNoRefHint:
+      "不用參考短片。可選 3 場（緊湊）或 5 場（建議）。影片預設 MiniMax H3。",
+    storyboardRecipeLuxuryDrivers: {
+      title: "豪華分鏡故事由什麼決定？",
+      intro:
+        "AI 只根據你填的文字出大綱——規劃時看不到產品圖。下方高亮欄位最重要：",
+      priorityPrimary: "最重要",
+      prioritySecondary: "影響語氣",
+      items: [
+        {
+          field: "storyboardBrief",
+          priority: "primary",
+          section: "分鏡卡片",
+          hint: "寫清隱喻弧（例如：紅色水晶虛空 → 紅寶心脈動 → 液體金屬中誕生唇膏）",
+        },
+        {
+          field: "product",
+          priority: "primary",
+          hint: "產品名稱定品類與語氣——請用真實產品名",
+        },
+        {
+          field: "productPhoto",
+          priority: "primary",
+          section: "產品圖",
+          hint: "包裝圖鎖定最後 reveal 靜幀（規劃後才使用）",
+        },
+        {
+          field: "headline",
+          priority: "secondary",
+          hint: "主標題與字幕語氣——可搭配輔助文案",
+        },
+        {
+          field: "promptExtra",
+          priority: "secondary",
+          hint: "電影感、光線、質感、要避免的元素",
+        },
+        {
+          field: "artStyle",
+          priority: "secondary",
+          section: "畫面風格",
+          hint: "整體視覺語言（靜幀與動態）",
+        },
+      ],
+      footnote:
+        "最適合實體產品（美妝、珠寶、高級包裝）。概念模式配此配方較弱。",
+    },
+    storyboardLuxuryFieldBadge: "故事驅動",
+    storyboardLuxuryContentBanner: {
+      title: "這些欄位決定豪華分鏡大綱",
+      body: "產生大綱前，請先填寫「內容詳情」與「分鏡」中高亮的欄位。",
+    },
+    storyboardBriefLuxuryRequired: "— 豪華配方請填",
+    storyboardBriefLuxuryPlaceholder:
+      "例如：紅色水晶虛空 → 紅寶心脈動 → 液體金屬中誕生唇膏；珠寶廣告光；不要價錢…",
+    storyboardLuxurySceneCountHint:
+      "3 場 → 10 秒影片（短 Reel）；5 場 → 15 秒影片（建議，每拍更有空間）。片長自動設定。",
+    storyboardLuxuryDurationAutoHint: "自動",
+    storyboardRecipes: {
+      "classic-tvc": {
+        title: "經典 TVC",
+        desc: "彈性場景數 · 開場 → 細節 → 收束",
+      },
+      "luxury-birth": {
+        title: "豪華誕生",
+        desc: "產品包裝圖 · 抽象 → 隱喻 → reveal · 3 或 5 場",
+      },
+    },
+    compositionPresetLabel: "構圖",
+    compositionPresetHint:
+      "疊在漫畫／動漫／3D 卡通畫風上的鏡頭語法。",
+    compositionPresets: {
+      standard: {
+        title: "標準",
+        desc: "依畫風一般構圖",
+      },
+      "fisheye-hero": {
+        title: "魚眼英雄",
+        desc: "超廣角魚眼 · 桶形變形 · 大手／產品衝向鏡頭",
+      },
+    },
     storyboardPlanBtn: "生成分鏡大綱",
     storyboardPlanBusy: "AI 規劃中…",
     storyboardPlanReplanBtn: "重新規劃大綱",

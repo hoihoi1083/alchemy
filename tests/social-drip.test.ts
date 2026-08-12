@@ -151,9 +151,10 @@ describe("social-drip metaphors", () => {
       conceptMode: true,
       frame: "start",
     });
-    assert.match(still, /NOT a fake product bottle/i);
+    assert.match(still, /fake product bottles/i);
     assert.match(still, /viral 三分屏 START/i);
-    assert.match(still, /Paint the user headline exactly/i);
+    assert.match(still, /3–5 LARGE creative cards/i);
+    assert.match(still, /NOTHING crossing/i);
     const video = buildSocialDripVideoPrompt({
       plan,
       product: "can't sleep over prompting",

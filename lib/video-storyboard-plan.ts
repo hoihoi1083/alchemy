@@ -40,6 +40,13 @@ import {
   storyboardTvcRolesPlannerLines,
   tvcRolesForSceneCount,
 } from "@/lib/shot-recipes";
+import {
+  effectiveStoryboardSceneCount,
+  resolveStoryboardRecipeId,
+  storyboardRecipeForbidsReference,
+  storyboardRecipePlannerLines,
+  type StoryboardRecipeId,
+} from "@/lib/storyboard-recipes";
 
 function sceneCountForDuration(durationSec: number): { min: number; max: number } {
   // Prefer 4-beat TVC (九宫格 review) for typical Reel lengths.
@@ -257,11 +264,23 @@ function buildPlanPrompt(input: {
   conceptMode?: boolean;
   useBrandLogo?: boolean;
   imageTextMode?: ImageTextMode;
+  storyboardRecipeId?: StoryboardRecipeId;
 }): string {
+  const recipeId = resolveStoryboardRecipeId(input.storyboardRecipeId);
+  const forbidRef = storyboardRecipeForbidsReference(recipeId);
+  const effectiveCount = effectiveStoryboardSceneCount(
+    recipeId,
+    input.sceneCountTarget ?? "auto",
+  );
+  const recipeLines = storyboardRecipePlannerLines(
+    recipeId,
+    Boolean(input.conceptMode),
+    effectiveCount,
+  );
   const { min, max } = sceneCountForDuration(input.durationSec);
   const sceneCountLine =
-    input.sceneCountTarget && input.sceneCountTarget !== "auto"
-      ? `Scene count: EXACTLY ${input.sceneCountTarget} scenes for ~${input.durationSec}s total.`
+    effectiveCount !== "auto"
+      ? `Scene count: EXACTLY ${effectiveCount} scenes for ~${input.durationSec}s total.`
       : `Scene count: prefer EXACTLY ${DEFAULT_STORYBOARD_SCENE_COUNT} scenes for ~${input.durationSec}s (allowed ${min}–${max}). Max ${MAX_STORYBOARD_SCENES} images.`;
   const sceneJsonShape =
     '{"imageIndex":1,"role":"establish","startSec":0,"endSec":2,"sceneDescriptionZh":"","onImageCopyZh":"","imagePrompt":"","cameraMotionEn":"","lightingEn":"","productPlacementZh":"","punchLineZh":""}';
@@ -269,10 +288,11 @@ function buildPlanPrompt(input: {
   const bibleAndRoles = [
     ...storyboardLookBiblePlannerLines(),
     ...storyboardTvcRolesPlannerLines(
-      input.sceneCountTarget && input.sceneCountTarget !== "auto"
-        ? Number(input.sceneCountTarget)
+      effectiveCount !== "auto"
+        ? Number(effectiveCount)
         : DEFAULT_STORYBOARD_SCENE_COUNT,
     ),
+    ...recipeLines,
   ];
   const brandBlock = input.brandProfile?.businessName
     ? brandProfilePromptBlock(input.brandProfile)
@@ -282,10 +302,12 @@ function buildPlanPrompt(input: {
   const artHint = artStylePlannerHint(artStyleId);
   const conceptMode = Boolean(input.conceptMode);
   const layoutTransferRef =
+    !forbidRef &&
     !conceptMode &&
     (input.referenceStrategyKind === "layout-transfer" ||
       isLayoutTransferReferenceExtra(input.promptExtra));
-  const contentResearchRef = isContentResearchStyleExtra(input.promptExtra);
+  const contentResearchRef =
+    !forbidRef && isContentResearchStyleExtra(input.promptExtra);
 
   if (conceptMode) {
     return [
@@ -471,6 +493,8 @@ export type PlanStoryboardInput = {
   useBrandLogo?: boolean;
   /** Default textless; integrated bakes onImageCopyZh into each still. */
   imageTextMode?: ImageTextMode;
+  /** classic-tvc (default) or luxury-birth (locked 3-beat, no reference). */
+  storyboardRecipeId?: StoryboardRecipeId;
 };
 
 /** @internal Exported for unit tests — storyboard planner prompt text. */
@@ -503,22 +527,35 @@ export async function planVideoStoryboard(
   const artStyleId = resolveArtStyleId(input.artStyleId);
   const stylized = artStyleId !== "realistic";
   const conceptMode = Boolean(input.conceptMode);
+  const recipeId = resolveStoryboardRecipeId(input.storyboardRecipeId);
+  const sceneCountTarget = effectiveStoryboardSceneCount(
+    recipeId,
+    input.sceneCountTarget ?? "auto",
+  );
   const layoutTransfer =
+    !storyboardRecipeForbidsReference(recipeId) &&
     !conceptMode &&
     (input.referenceStrategyKind === "layout-transfer" ||
       isLayoutTransferReferenceExtra(input.promptExtra));
+
+  const systemContent =
+    recipeId === "luxury-birth"
+      ? conceptMode
+        ? "You are a luxury 3-beat CONCEPT birth storyboard director. Output valid JSON only. Arc: abstract mood → metaphor → service payoff. No fake SKU. No reference-reel matching."
+        : "You are a luxury 3-beat PRODUCT birth storyboard director. Output valid JSON only. Arc: abstract mood → metaphor → product reveal from IMAGE 1. No Social drip. No reference-reel matching."
+      : conceptMode
+        ? "You are a concept/service video storyboard director for SMB Reels. Output valid JSON only. Prefer hands, rooms, props, and silhouettes — avoid extreme photoreal face close-ups that fail content filters."
+        : layoutTransfer
+          ? "You are a layout-transfer video storyboard director for HK/TW/CN SMB Reels. Output valid JSON only. Every scene still must share the same ad design grammar as the user's reference — not a generic product photo reel."
+          : stylized
+            ? "You are a stylized product video storyboard director for HK/TW/CN SMB Reels. Output valid JSON only. Match the user's art direction in every scene still."
+            : "You are a photorealistic product video storyboard director for HK/TW/CN SMB Reels. Output valid JSON only. Adapt every scene to the IMAGE 1 object — never invent a SKU from the product name.";
 
   const outputText = await callDeepSeekChat(
     [
       {
         role: "system",
-        content: conceptMode
-          ? "You are a concept/service video storyboard director for SMB Reels. Output valid JSON only. Prefer hands, rooms, props, and silhouettes — avoid extreme photoreal face close-ups that fail content filters."
-          : layoutTransfer
-          ? "You are a layout-transfer video storyboard director for HK/TW/CN SMB Reels. Output valid JSON only. Every scene still must share the same ad design grammar as the user's reference — not a generic product photo reel."
-          : stylized
-          ? "You are a stylized product video storyboard director for HK/TW/CN SMB Reels. Output valid JSON only. Match the user's art direction in every scene still."
-          : "You are a photorealistic product video storyboard director for HK/TW/CN SMB Reels. Output valid JSON only. Adapt every scene to the IMAGE 1 object — never invent a SKU from the product name.",
+        content: systemContent,
       },
       {
         role: "user",
@@ -530,17 +567,20 @@ export async function planVideoStoryboard(
           offer: input.offer?.trim() || "",
           storyboardBrief: input.storyboardBrief?.trim() || "",
           durationSec,
-          sceneCountTarget: input.sceneCountTarget,
+          sceneCountTarget,
           market: input.market || "hk",
           framing: input.framing || "auto",
           brandProfile: input.brandProfile,
           styleHint: input.styleHint?.trim() || "",
           promptExtra: input.promptExtra?.trim() || "",
           artStyleId,
-          referenceStrategyKind: input.referenceStrategyKind,
+          referenceStrategyKind: storyboardRecipeForbidsReference(recipeId)
+            ? undefined
+            : input.referenceStrategyKind,
           conceptMode,
           useBrandLogo: input.useBrandLogo,
           imageTextMode: input.imageTextMode,
+          storyboardRecipeId: recipeId,
         }),
       },
     ],
@@ -550,7 +590,7 @@ export async function planVideoStoryboard(
   const plan = normalizeStoryboardPlan(
     parseLlmJsonObject<Partial<VideoStoryboardPlan>>(outputText, "Video storyboard plan"),
     durationSec,
-    input.sceneCountTarget,
+    sceneCountTarget,
   );
 
   return alignStoryboardPlanCopyLanguage(plan, (input.market as PromptMarket) || "hk");

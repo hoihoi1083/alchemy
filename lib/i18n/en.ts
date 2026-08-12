@@ -1650,6 +1650,89 @@ export const en = {
 		storyboardPlanLabel: "Storyboard plan",
 		storyboardPlanReviewHint:
 			"Generate a AI outline first, edit any odd scenes, then create the stills.",
+		storyboardRecipeTitle: "Storyboard recipe",
+		storyboardRecipeHint:
+			"Classic flexible TVC, or luxury product birth (physical SKU recommended). No Social drip chrome.",
+		storyboardRecipeLuxuryNoRefHint:
+			"No reference reel. Pick 3 scenes (tight) or 5 scenes (recommended). Default video: MiniMax H3.",
+		storyboardRecipeLuxuryDrivers: {
+			title: "What drives the Luxury story?",
+			intro:
+				"AI plans the outline from your text — it does not see the product photo until stills are generated. Highlighted fields below matter most:",
+			priorityPrimary: "Most important",
+			prioritySecondary: "Also shapes tone",
+			items: [
+				{
+					field: "storyboardBrief",
+					priority: "primary",
+					section: "Storyboard card",
+					hint: "Describe the metaphor arc (e.g. red crystal void → ruby heart → lipstick born from liquid metal)",
+				},
+				{
+					field: "product",
+					priority: "primary",
+					hint: "Sets category and voice — use the real product name",
+				},
+				{
+					field: "productPhoto",
+					priority: "primary",
+					section: "Product photos",
+					hint: "Packshot locks the final reveal still (used after planning)",
+				},
+				{
+					field: "headline",
+					priority: "secondary",
+					hint: "Hook and on-screen title tone — pair with supporting copy when you have one",
+				},
+				{
+					field: "promptExtra",
+					priority: "secondary",
+					hint: "Cinematic grade, lighting, materials, and things to avoid",
+				},
+				{
+					field: "artStyle",
+					priority: "secondary",
+					section: "Look & options",
+					hint: "Overall visual language for stills and motion",
+				},
+			],
+			footnote:
+				"Best for physical products (beauty, jewelry, premium packshots). Concept mode is a weaker fit for this recipe.",
+		},
+		storyboardLuxuryFieldBadge: "Story driver",
+		storyboardLuxuryContentBanner: {
+			title: "These fields drive your Luxury outline",
+			body: "Fill the highlighted fields in Content details and Storyboard before you generate the outline.",
+		},
+		storyboardBriefLuxuryRequired: "— fill this for Luxury",
+		storyboardBriefLuxuryPlaceholder:
+			"e.g. red crystal void → ruby heart pulse → lipstick born from liquid metal; jewelry-ad lighting; no prices…",
+		storyboardLuxurySceneCountHint:
+			"3 scenes → 10 s video (tight Reel). 5 scenes → 15 s video (recommended, more breathing room). Duration is set automatically.",
+		storyboardLuxuryDurationAutoHint: "auto",
+		storyboardRecipes: {
+			"classic-tvc": {
+				title: "Classic TVC",
+				desc: "Flexible scene count · establish → detail → payoff",
+			},
+			"luxury-birth": {
+				title: "Luxury birth",
+				desc: "Product packshot · abstract → metaphor → reveal · 3 or 5 scenes",
+			},
+		},
+		compositionPresetLabel: "Composition",
+		compositionPresetHint:
+			"Camera grammar on top of comic / anime / 3D cartoon art styles.",
+		compositionPresets: {
+			standard: {
+				title: "Standard",
+				desc: "Normal framing for the art style",
+			},
+			"fisheye-hero": {
+				title: "Fisheye hero",
+				desc: "Ultra-wide fisheye · barrel distortion · hero thrust toward camera",
+			},
+		},
 		storyboardPlanBtn: "Generate storyboard outline",
 		storyboardPlanBusy: "AI is planning…",
 		storyboardPlanReplanBtn: "Re-plan outline",

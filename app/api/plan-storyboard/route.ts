@@ -13,6 +13,7 @@ import { parseStrategyFromFormData } from "@/lib/reference-strategy";
 import { isPromotionMode } from "@/lib/promotion-mode";
 import { wizardPromoteName } from "@/lib/wizard-promote-name";
 import { parseImageTextMode } from "@/lib/image-text-mode";
+import { resolveStoryboardRecipeId } from "@/lib/storyboard-recipes";
 
 export const runtime = "nodejs";
 export const maxDuration = 90;
@@ -74,6 +75,9 @@ export async function POST(request: Request) {
   const visualStyle = ((formData.get("visual_style") as string | null)?.trim() ||
     "storyboard-video") as VisualStyleId;
   const artStyleId = resolveArtStyleId((formData.get("art_style") as string | null)?.trim());
+  const storyboardRecipeId = resolveStoryboardRecipeId(
+    (formData.get("storyboard_recipe") as string | null)?.trim(),
+  );
   const styleHint = mergePromptExtra(visualStyle, promptExtra);
   const { strategy } = parseStrategyFromFormData(formData);
 
@@ -118,6 +122,7 @@ export async function POST(request: Request) {
       useBrandLogo,
       conceptMode: promotionMode === "concept",
       imageTextMode: parseImageTextMode(formData.get("image_text_mode") as string | null),
+      storyboardRecipeId,
     });
     return NextResponse.json({ plan, seedancePrompt: plan.seedancePrompt });
   } catch (e: unknown) {

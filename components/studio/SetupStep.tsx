@@ -5,6 +5,7 @@ import { useWizard } from "@/components/studio/WizardContext";
 import { WorkflowModePicker } from "@/components/WorkflowModePicker";
 import { VisualStylePicker } from "@/components/VisualStylePicker";
 import { ArtStylePicker } from "@/components/ArtStylePicker";
+import { CompositionPresetPicker } from "@/components/studio/CompositionPresetPicker";
 import { TemplateSlotChecklist } from "@/components/TemplateSlotChecklist";
 import { AdvancedPromptPanel } from "@/components/AdvancedPromptPanel";
 import { isSlotRequired, templateHasSlot } from "@/lib/template-slots";
@@ -21,7 +22,7 @@ import { VideoOutputSourceCard } from "@/components/studio/VideoOutputSourceCard
 import { isContentResearchStyleExtra } from "@/lib/content-research-promote";
 
 export function SetupStep() {
-  const { advancedSection, analyzeBrand, applyClosestMatchRecipe, applyPrimaryPath, applyPrimaryPathConcept, applyPrimaryPathConceptVideo, applyPrimaryPathVideoOnly, applyPromptRebuild, applyQuickTest8sRecipe, artStyleId, brandAnalyzeBusy, brandAnalyzeNote, brandSocialHint, brandWebsiteUrl, business, cinematicSceneCount, conceptIdea, conceptPlanBusy, setConceptPlanBusy, continueSetupLabel, effectivePromoteName, effectivePromptExtra, setupNextDisabled, setupNextDisabledReason, creativeVideoBrief, error, goNextFromSetup, headline, imageCreativeMode, imagePrompt, isConceptStoryboardOutput, isContentResearchVideoPath, isStoryboardOutput, lockedCampaignMode, m, offer, onCinematicSceneCountChange, onImageInputModeChange, onProductPhotoSelected, onImageCreativeModeChange, onReferenceAdFile, onVideoCreativeModeChange, onWorkflowModeChange, planAiVideoPrompt, product, productPhoto, promotionMode, promptExtra, promptMarket, referenceAd, referenceIsVideo, referencePreviewUrl, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, runShipItPipeline, selectVisualStyle, setArtStyleId, setBrandKit, setBrandSocialHint, setBrandWebsiteUrl, setBusiness, setCampaignTheme, setConceptIdea, setConceptImageVisionNote, setCreativeVideoBrief, setError, setExtraKitPhotos, setHeadline, setImageAspectRatio, setImageCreativeMode, setImageOutputMode, setImagePrompt, setImageRefPhoto, setOffer, setProduct, setPromptExtra, setPromptMarket, setReferenceCarouselSlideCount, setContentResearchApplyRef, setShipItMode, setShowAdvancedSetup, setShowAdvancedSetupPrompts, setStoryboardBrief, setSubjectFraming, setSubline, setUserReferenceBrief, setUseOriginalImage, setVideoPrompt, setVideoSettings, shipItEligible, shipItVisionBlocked, shipItMode, shipItPipelineBusy, showAdvancedSetup, showAdvancedSetupPrompts, storyboardBrief, subjectFraming, subline, templateId, templateSlotStatus, uploadPreviewUrl, usesCompositor, usesReferenceConceptForImage, videoCreativeMode, videoPrompt, videoSettings, visualStyleId, workflowMode } = useWizard();
+  const { advancedSection, analyzeBrand, applyClosestMatchRecipe, applyPrimaryPath, applyPrimaryPathConcept, applyPrimaryPathConceptVideo, applyPrimaryPathVideoOnly, applyPromptRebuild, applyQuickTest8sRecipe, artStyleId, compositionPresetId, brandAnalyzeBusy, brandAnalyzeNote, brandSocialHint, brandWebsiteUrl, business, cinematicSceneCount, conceptIdea, conceptPlanBusy, setConceptPlanBusy, continueSetupLabel, effectivePromoteName, effectivePromptExtra, setupNextDisabled, setupNextDisabledReason, creativeVideoBrief, error, goNextFromSetup, headline, imageCreativeMode, imagePrompt, isConceptStoryboardOutput, isContentResearchVideoPath, isStoryboardOutput, lockedCampaignMode, m, offer, onCinematicSceneCountChange, onImageInputModeChange, onProductPhotoSelected, onImageCreativeModeChange, onReferenceAdFile, onVideoCreativeModeChange, onWorkflowModeChange, planAiVideoPrompt, product, productPhoto, promotionMode, promptExtra, promptMarket, referenceAd, referenceIsVideo, referencePreviewUrl, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, runShipItPipeline, selectVisualStyle, setArtStyleId, setCompositionPresetId, setBrandKit, setBrandSocialHint, setBrandWebsiteUrl, setBusiness, setCampaignTheme, setConceptIdea, setConceptImageVisionNote, setCreativeVideoBrief, setError, setExtraKitPhotos, setHeadline, setImageAspectRatio, setImageCreativeMode, setImageOutputMode, setImagePrompt, setImageRefPhoto, setOffer, setProduct, setPromptExtra, setPromptMarket, setReferenceCarouselSlideCount, setContentResearchApplyRef, setShipItMode, setShowAdvancedSetup, setShowAdvancedSetupPrompts, setStoryboardBrief, setSubjectFraming, setSubline, setUserReferenceBrief, setUseOriginalImage, setVideoPrompt, setVideoSettings, shipItEligible, shipItVisionBlocked, shipItMode, shipItPipelineBusy, showAdvancedSetup, showAdvancedSetupPrompts, storyboardBrief, subjectFraming, subline, templateId, templateSlotStatus, uploadPreviewUrl, usesCompositor, usesReferenceConceptForImage, videoCreativeMode, videoPrompt, videoSettings, visualStyleId, workflowMode } = useWizard();
   const isConcept = promotionMode === "concept";
   const isConceptImageOnly = isConcept && workflowMode === "image-only";
   const isConceptVideoOnly = isConcept && workflowMode === "video-only";
@@ -1099,6 +1100,13 @@ export function SetupStep() {
         onChange={setArtStyleId}
         videoSafeOnly={isVideoWorkflow}
       />
+      <div className="mt-3">
+        <CompositionPresetPicker
+          artStyleId={artStyleId}
+          value={compositionPresetId}
+          onChange={setCompositionPresetId}
+        />
+      </div>
     </div>
   )}
 

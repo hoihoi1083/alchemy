@@ -185,11 +185,11 @@ export const SOCIAL_DRIP_METAPHOR_DEFS: Record<
     label: "Confetti fall",
     categories: ["fashion", "general", "concept"],
     crossingDefault:
-      "dense confetti / colorful ad cards / poster tiles FALL in a vertical column from the hero through the middle bar (readable pieces, not a side swirl)",
+      "5–8 LARGE poster/phone/color cards fall in ONE vertical column (readable pieces) — never a swarm of 30+ tiny shards",
     characterDefault:
       "simple line-art person lying on their BACK, arms open under the fall",
     landingDefault:
-      "cards/confetti land on the doodle and cover the bottom panel floor",
+      "a small pile of the same large cards around the doodle on the white floor",
     allowMouthCatch: false,
   },
   "light-streak": {
@@ -378,7 +378,7 @@ export function assessSocialDripFit(input: {
     if (!hasFallingCue) {
       reasons.push("caution_concept_abstract");
       suggestedMetaphor = suggestedMetaphor ?? "confetti";
-      level = level === "mismatch" ? level : "caution";
+      level = "caution";
     } else if (reasons.length === 0) {
       reasons.push("good_concept_falling");
     }
@@ -678,8 +678,10 @@ export function buildSocialDripStillPrompt(input: {
       : "9:16";
   const hero = input.conceptMode
     ? joinParts(
-        `TOP: concept scene for “${input.product}” — visualize the SERVICE as falling creative assets (ad posters / carousel slides / phone mockups / color cards), NOT an empty light beam, NOT a fake product bottle.`,
-        `Paint the user headline exactly once on the top scene in large clean type: “${input.plan.igCaption || input.product}”. Do not invent a different slogan.`,
+        `TOP: concept scene for “${input.product}”.`,
+        "Show a SMALL stack of creative assets at top-center (phone mockups / poster cards / color chips) as the fall origin.",
+        `Headline once only in clean white type: “${input.plan.igCaption || input.product}”.`,
+        "FORBIDDEN: empty light beams, fake product bottles, repeating the headline a second time as giant bottom typography.",
       )
     : `TOP: photoreal “${input.product}” (keep IMAGE 1 identity). Liquid/fall comes FROM the product itself — do not invent an extra squeeze bottle or pitcher unless the product is that bottle.`;
 
@@ -689,11 +691,16 @@ export function buildSocialDripStillPrompt(input: {
       ? `Avatar = IMAGE ${logoIdx} brand logo cropped in a circle (exact mark). Do not invent a different logo.`
       : `Avatar = plain grey/beige circle only. Do not invent a letter-A or fake brand mark.`;
 
+  // Short caption on chrome — long slogans warp under H3.
+  const chromeCaption = (input.plan.igCaption || input.product)
+    .trim()
+    .slice(0, 28);
+
   const chrome = joinParts(
     "MIDDLE: one thin white Instagram bar (icons sharp, not garbled):",
     avatarLock,
-    `handle “${input.plan.igHandle}” + verified badge, heart/comment/share/bookmark, caption “${input.plan.igCaption}”.`,
-    "The fall must go IN FRONT OF this bar (covering the icon row). Not behind the card. Not disappearing then reappearing.",
+    `handle “${input.plan.igHandle}” + verified badge, heart/comment/share/bookmark, short caption “${chromeCaption}”.`,
+    "The fall must go IN FRONT OF this bar (covering the icon row). Not behind the card.",
   );
 
   const character = joinParts(
@@ -703,7 +710,34 @@ export function buildSocialDripStillPrompt(input: {
   );
 
   const noAnnotations =
-    "Finished ad only — never paint TOP/MIDDLE/BOTTOM, percentages, arrows, or layout labels on the image. No phone status bar.";
+    "Finished ad only — never paint TOP/MIDDLE/BOTTOM, percentages, arrows, or layout labels. No phone status bar.";
+
+  if (input.conceptMode) {
+    // Concept motion fails when start≈end with 30+ cards already mid-stream.
+    // Keep a burger-like progressive gag: few large pieces, clear incomplete→complete.
+    if (input.frame === "start") {
+      return joinParts(
+        `One ${aspect} viral 三分屏 START still on a dark subtle grid.`,
+        hero,
+        chrome,
+        character,
+        "Crossing: 3–5 LARGE creative cards only (phone/poster/swatch), readable, not a swarm of tiny shards.",
+        "START (critical for motion): cards sit at the TOP cluster only — at most 1 card just leaving. Gap of empty dark space above the Instagram bar. NOTHING crossing the bar yet. Floor empty. Doodle waiting arms open.",
+        "Do NOT draw a finished waterfall already. Do NOT add extra giant stylized title text at the bottom.",
+        noAnnotations,
+      );
+    }
+    return joinParts(
+      `One ${aspect} viral 三分屏 END still. Same layout family as start (IMAGE 1 when attached). Same chrome pixels and same doodle identity.`,
+      hero,
+      chrome,
+      character,
+      "Crossing: ONE continuous column of 5–8 LARGE creative cards falling top→over Instagram icons→bottom (same gag as sauce pour, but cards).",
+      "END: cards visibly cover the IG icon row, then pile around the doodle on the white floor. Doodle joyful.",
+      "Keep card count low and large — FORBIDDEN: dozens of tiny overlapping fragments, morphing text, new giant bottom title that was not on the start plate.",
+      noAnnotations,
+    );
+  }
 
   if (input.frame === "start") {
     return joinParts(
@@ -746,6 +780,9 @@ export function buildSocialDripVideoPrompt(input: {
     `Payoff: ${input.plan.landingDescription}`,
     `Keep the same line-art person: ${input.plan.characterBeat}`,
     "Beat: drip leaves product → crosses IN FRONT of the IG bar → lands on the doodle. Do not hide behind the card. Do not skip the middle.",
+    input.conceptMode
+      ? "Concept motion: animate only a few LARGE cards sliding downward along one centerline — do not morph dozens of tiny shards or invent new text."
+      : false,
     "Image 1 = start (drip just begun). Image 2 = end (column over chrome into landing).",
     "No layout labels. No extra squeeze bottle. No morphing the doodle into photoreal or a product mascot.",
   );

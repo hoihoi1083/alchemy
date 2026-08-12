@@ -1297,6 +1297,89 @@ export const zhCn = {
     storyboardPlanLabel: "分镜大纲",
     storyboardPlanReviewHint:
       "先用 AI 出分镜大纲，改到合适再生成场景图。不对的场景描述／画面字可以直接改。",
+    storyboardRecipeTitle: "分镜配方",
+    storyboardRecipeHint:
+      "经典弹性分镜，或豪华产品诞生（建议实体产品）。不是三分屏 Social drip。",
+    storyboardRecipeLuxuryNoRefHint:
+      "不用参考短片。可选 3 场（紧凑）或 5 场（建议）。影片默认 MiniMax H3。",
+    storyboardRecipeLuxuryDrivers: {
+      title: "豪华分镜故事由什么决定？",
+      intro:
+        "AI 只根据你填的文字出大纲——规划时看不到产品图。下方高亮字段最重要：",
+      priorityPrimary: "最重要",
+      prioritySecondary: "影响语气",
+      items: [
+        {
+          field: "storyboardBrief",
+          priority: "primary",
+          section: "分镜卡片",
+          hint: "写清隐喻弧（例如：红色水晶虚空 → 红宝石心脏 → 液体金属中诞生唇膏）",
+        },
+        {
+          field: "product",
+          priority: "primary",
+          hint: "产品名称定品类与语气——请用真实产品名",
+        },
+        {
+          field: "productPhoto",
+          priority: "primary",
+          section: "产品图",
+          hint: "包装图锁定最后 reveal 静帧（规划后才使用）",
+        },
+        {
+          field: "headline",
+          priority: "secondary",
+          hint: "主标题与字幕语气——可搭配辅助文案",
+        },
+        {
+          field: "promptExtra",
+          priority: "secondary",
+          hint: "电影感、光线、质感、要避免的元素",
+        },
+        {
+          field: "artStyle",
+          priority: "secondary",
+          section: "画面风格",
+          hint: "整体视觉语言（静帧与动态）",
+        },
+      ],
+      footnote:
+        "最适合实体产品（美妆、珠宝、高级包装）。概念模式配此配方较弱。",
+    },
+    storyboardLuxuryFieldBadge: "故事驱动",
+    storyboardLuxuryContentBanner: {
+      title: "这些字段决定豪华分镜大纲",
+      body: "生成大纲前，请先填写「内容详情」与「分镜」中高亮的字段。",
+    },
+    storyboardBriefLuxuryRequired: "— 豪华配方请填",
+    storyboardBriefLuxuryPlaceholder:
+      "例如：红色水晶虚空 → 红宝石脉动 → 液体金属中诞生唇膏；珠宝广告光；不要价钱…",
+    storyboardLuxurySceneCountHint:
+      "3 场 → 10 秒视频（短 Reel）；5 场 → 15 秒视频（建议，每拍更有空间）。时长自动设置。",
+    storyboardLuxuryDurationAutoHint: "自动",
+    storyboardRecipes: {
+      "classic-tvc": {
+        title: "经典 TVC",
+        desc: "弹性场景数 · 开场 → 细节 → 收束",
+      },
+      "luxury-birth": {
+        title: "豪华诞生",
+        desc: "产品包装图 · 抽象 → 隐喻 → reveal · 3 或 5 场",
+      },
+    },
+    compositionPresetLabel: "构图",
+    compositionPresetHint:
+      "叠在漫画／动漫／3D 卡通画风上的镜头语法。",
+    compositionPresets: {
+      standard: {
+        title: "标准",
+        desc: "依画风一般构图",
+      },
+      "fisheye-hero": {
+        title: "鱼眼英雄",
+        desc: "超广角鱼眼 · 桶形变形 · 大手／产品冲向镜头",
+      },
+    },
     storyboardPlanBtn: "生成分镜大纲",
     storyboardPlanBusy: "AI 规划中…",
     storyboardPlanReplanBtn: "重新规划大纲",

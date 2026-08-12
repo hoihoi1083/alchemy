@@ -19,6 +19,14 @@ import { getVisualStyle, requiresBrandProfileForImages } from "@/lib/visual-styl
 import { studioPhasesForMode } from "@/lib/studio-phases";
 import { estimateImageTokens } from "@/lib/billing/token-costs";
 import { STORYBOARD_SCENE_COUNTS } from "@/lib/ad-pack-preferences";
+import { CompositionPresetPicker } from "@/components/studio/CompositionPresetPicker";
+import { StoryboardRecipePicker } from "@/components/studio/StoryboardRecipePicker";
+import { LuxuryFieldBadge } from "@/components/studio/StoryboardLuxuryStoryDrivers";
+import {
+  isLuxuryBirthRecipe,
+  luxuryBirthSceneCountOptions,
+} from "@/lib/storyboard-recipes";
+import { LUXURY_FIELD_WRAP_CLASS, luxuryFieldWrap } from "@/lib/storyboard-luxury-fields";
 
 const PANEL_CSS = `
 .pg-page {
@@ -888,6 +896,26 @@ export function PreGenerateSetupPanel({
     lockedPosterDirection;
   const emphasizeHook = lockedPosterDirection || conceptPath === "info";
   const emphasizeOffer = conceptPath === "pricing";
+  const luxuryStoryboard =
+    combinedStoryboard &&
+    isLuxuryBirthRecipe(wizard.storyboardRecipeId) &&
+    !isConcept;
+  const luxuryFieldBadge = m.wizard.storyboardLuxuryFieldBadge;
+  const luxuryFieldLabels = {
+    storyboardBrief: m.wizard.storyboardBriefLabel,
+    product: m.wizard.productLabelRequired,
+    productPhoto: pg.mainPhotoRowLabel,
+    headline: pg.hookLabel,
+    subline: pg.supportingLabel,
+    promptExtra: pg.extraLabel,
+    artStyle: pg.styleLabel,
+  };
+
+  useEffect(() => {
+    if (isConcept && isLuxuryBirthRecipe(wizard.storyboardRecipeId)) {
+      wizard.setStoryboardRecipeId("classic-tvc");
+    }
+  }, [isConcept, wizard.storyboardRecipeId, wizard.setStoryboardRecipeId]);
   const extraPlaceholder =
     m.wizard.requirementsPlaceholders[
       isPartsDirection
@@ -1428,6 +1456,16 @@ export function PreGenerateSetupPanel({
                       </p>
                     </div>
                   ) : null}
+                  {luxuryStoryboard ? (
+                    <div className="rounded-xl border border-amber-300 bg-amber-50 px-3.5 py-3 text-sm text-amber-950 sm:col-span-full">
+                      <p className="font-semibold">
+                        {m.wizard.storyboardLuxuryContentBanner.title}
+                      </p>
+                      <p className="mt-1 text-xs leading-relaxed text-amber-900/90">
+                        {m.wizard.storyboardLuxuryContentBanner.body}
+                      </p>
+                    </div>
+                  ) : null}
                   {isConcept ? (
                     <label>
                       <span className="pg-label">
@@ -1447,12 +1485,15 @@ export function PreGenerateSetupPanel({
                       />
                     </label>
                   ) : (
-                    <label>
+                    <label className={luxuryFieldWrap(luxuryStoryboard)}>
                       <span className="pg-label">
                         {m.wizard.productLabelRequired}
                         <span className="pg-label-req" aria-hidden>
                           *
                         </span>
+                        {luxuryStoryboard ? (
+                          <LuxuryFieldBadge label={luxuryFieldBadge} />
+                        ) : null}
                       </span>
                       <input
                         className="pg-input"
@@ -1464,9 +1505,11 @@ export function PreGenerateSetupPanel({
                   )}
                   <label
                     className={
-                      emphasizeHook
-                        ? "rounded-xl border border-violet-300 bg-violet-50/60 p-3 ring-1 ring-violet-200"
-                        : undefined
+                      luxuryStoryboard
+                        ? LUXURY_FIELD_WRAP_CLASS
+                        : emphasizeHook
+                          ? "rounded-xl border border-violet-300 bg-violet-50/60 p-3 ring-1 ring-violet-200"
+                          : undefined
                     }
                   >
                     <span className="pg-label">
@@ -1478,7 +1521,9 @@ export function PreGenerateSetupPanel({
                       <span className="pg-label-req" aria-hidden>
                         *
                       </span>
-                      {copyFocus || emphasizeHook ? (
+                      {luxuryStoryboard ? (
+                        <LuxuryFieldBadge label={luxuryFieldBadge} />
+                      ) : copyFocus || emphasizeHook ? (
                         <span className="ml-1.5 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700">
                           {pg.onImageBadge}
                         </span>
@@ -1506,7 +1551,9 @@ export function PreGenerateSetupPanel({
                   >
                     <span className="pg-label">
                       {supportingLabel}
-                      {emphasizeSupporting ? (
+                      {luxuryStoryboard ? (
+                        <LuxuryFieldBadge label={luxuryFieldBadge} />
+                      ) : emphasizeSupporting ? (
                         <span className="ml-1.5 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700">
                           {pg.onImageBadge}
                         </span>
@@ -1563,10 +1610,13 @@ export function PreGenerateSetupPanel({
                       </label>
                     </>
                   ) : null}
-                  <label>
+                  <label className={luxuryFieldWrap(luxuryStoryboard)}>
                     <span className="pg-label">
                       {pg.extraLabel}
                       <span className="pg-label-opt">{pg.extraOptional}</span>
+                      {luxuryStoryboard ? (
+                        <LuxuryFieldBadge label={luxuryFieldBadge} />
+                      ) : null}
                     </span>
                     <textarea
                       className="pg-textarea"
@@ -1592,8 +1642,13 @@ export function PreGenerateSetupPanel({
                     <p className="mt-0.5 text-xs text-slate-500">{pg.storyboardLookBeforePlanHint}</p>
                   </div>
                   <div className="min-w-0 flex-1 space-y-4">
-                    <div>
-                      <p className="text-xs font-semibold text-slate-700">{pg.styleLabel}</p>
+                    <div className={luxuryFieldWrap(luxuryStoryboard)}>
+                      <p className="text-xs font-semibold text-slate-700">
+                        {pg.styleLabel}
+                        {luxuryStoryboard ? (
+                          <LuxuryFieldBadge label={luxuryFieldBadge} />
+                        ) : null}
+                      </p>
                       <div className="pg-style-row">
                         {artStyleIdsForPicker({
                           videoSafeOnly: wizard.workflowMode !== "image-only",
@@ -1617,6 +1672,11 @@ export function PreGenerateSetupPanel({
                         })}
                       </div>
                     </div>
+                    <CompositionPresetPicker
+                      artStyleId={wizard.artStyleId}
+                      value={wizard.compositionPresetId}
+                      onChange={wizard.setCompositionPresetId}
+                    />
                     <div>
                       <p className="text-xs font-semibold text-slate-700">{pg.aspectLabel}</p>
                       <div className="mt-2 grid grid-cols-3 gap-2">
@@ -1717,62 +1777,132 @@ export function PreGenerateSetupPanel({
                     <p className="mt-0.5 text-xs text-slate-500">{pg.storyboardHint}</p>
                   </div>
                   <div className="min-w-0 flex-1 space-y-3">
-                    <label className="block">
+                    <div>
+                      <p className="mb-1 text-xs font-medium text-slate-600">
+                        {m.wizard.storyboardRecipeTitle}
+                      </p>
+                      <StoryboardRecipePicker
+                        value={wizard.storyboardRecipeId}
+                        onChange={wizard.setStoryboardRecipeId}
+                        fieldLabels={luxuryFieldLabels}
+                        showLuxuryBirth={!isConcept}
+                      />
+                    </div>
+                    <label
+                      className={luxuryFieldWrap(
+                        isLuxuryBirthRecipe(wizard.storyboardRecipeId) && !isConcept,
+                        "block",
+                      )}
+                    >
                       <span className="mb-1 block text-xs font-medium text-slate-600">
                         {m.wizard.storyboardBriefLabel}
-                        <span className="ml-1 font-normal text-slate-400">{pg.extraOptional}</span>
+                        {isLuxuryBirthRecipe(wizard.storyboardRecipeId) && !isConcept ? (
+                          <>
+                            <span className="ml-1 font-semibold text-amber-700">
+                              {m.wizard.storyboardBriefLuxuryRequired}
+                            </span>
+                            <LuxuryFieldBadge label={luxuryFieldBadge} />
+                          </>
+                        ) : (
+                          <span className="ml-1 font-normal text-slate-400">
+                            {pg.extraOptional}
+                          </span>
+                        )}
                       </span>
                       <textarea
                         className="pg-textarea"
-                        rows={3}
+                        rows={
+                          isLuxuryBirthRecipe(wizard.storyboardRecipeId) && !isConcept ? 4 : 3
+                        }
                         value={wizard.storyboardBrief}
                         onChange={(e) => wizard.setStoryboardBrief(e.target.value)}
-                        placeholder={m.wizard.storyboardBriefPlaceholder}
+                        placeholder={
+                          isLuxuryBirthRecipe(wizard.storyboardRecipeId) && !isConcept
+                            ? m.wizard.storyboardBriefLuxuryPlaceholder
+                            : m.wizard.storyboardBriefPlaceholder
+                        }
                       />
                     </label>
-                    <div className="flex flex-wrap gap-3">
-                      <label className="text-sm text-slate-700">
-                        <span className="mb-1 block text-xs font-medium text-slate-600">
-                          {m.wizard.storyboardTrimDurationLabel}
-                        </span>
-                        <select
-                          className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm"
-                          value={wizard.storyboardTrimDuration}
-                          onChange={(e) =>
-                            wizard.setStoryboardTrimDuration(
-                              e.target.value as typeof wizard.storyboardTrimDuration,
-                            )
-                          }
-                        >
-                          {["6", "8", "10", "12"].map((n) => (
-                            <option key={n} value={n}>
-                              {n}s
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <label className="text-sm text-slate-700">
-                        <span className="mb-1 block text-xs font-medium text-slate-600">
-                          {m.wizard.storyboardSceneCountLabel}
-                        </span>
-                        <select
-                          className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm"
-                          value={wizard.storyboardSceneCount}
-                          onChange={(e) =>
-                            wizard.setStoryboardSceneCount(
-                              e.target.value as typeof wizard.storyboardSceneCount,
-                            )
-                          }
-                        >
-                          {STORYBOARD_SCENE_COUNTS.map((n) => (
-                            <option key={n} value={n}>
-                              {n === "auto" ? m.wizard.storyboardSceneCountAuto : n}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                    </div>
-                    <p className="text-[11px] text-slate-500">{m.wizard.storyboardSceneCountHint}</p>
+                    {isLuxuryBirthRecipe(wizard.storyboardRecipeId) && !isConcept ? (
+                      /* Luxury birth: scene count only — duration auto-coupled */
+                      <div className="flex flex-wrap items-end gap-3">
+                        <label className="text-sm text-slate-700">
+                          <span className="mb-1 block text-xs font-medium text-slate-600">
+                            {m.wizard.storyboardSceneCountLabel}
+                          </span>
+                          <select
+                            className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-sm font-semibold text-amber-900"
+                            value={wizard.storyboardSceneCount === "3" ? "3" : "5"}
+                            onChange={(e) =>
+                              wizard.setStoryboardSceneCount(
+                                e.target.value as typeof wizard.storyboardSceneCount,
+                              )
+                            }
+                          >
+                            {luxuryBirthSceneCountOptions().map((n) => (
+                              <option key={n} value={n}>
+                                {n}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <div className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm text-slate-500">
+                          <svg viewBox="0 0 16 16" className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+                            <circle cx="8" cy="8" r="6.5" /><path d="M8 4.5V8l2.5 1.5" strokeLinecap="round" />
+                          </svg>
+                          <span className="font-semibold text-slate-700">{wizard.storyboardTrimDuration}s</span>
+                          <span className="text-[11px]">{m.wizard.storyboardLuxuryDurationAutoHint}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap gap-3">
+                        <label className="text-sm text-slate-700">
+                          <span className="mb-1 block text-xs font-medium text-slate-600">
+                            {m.wizard.storyboardTrimDurationLabel}
+                          </span>
+                          <select
+                            className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm"
+                            value={wizard.storyboardTrimDuration}
+                            onChange={(e) =>
+                              wizard.setStoryboardTrimDuration(
+                                e.target.value as typeof wizard.storyboardTrimDuration,
+                              )
+                            }
+                          >
+                            {["6", "8", "10", "12", "15", "20"].map((n) => (
+                              <option key={n} value={n}>
+                                {n}s
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="text-sm text-slate-700">
+                          <span className="mb-1 block text-xs font-medium text-slate-600">
+                            {m.wizard.storyboardSceneCountLabel}
+                          </span>
+                          <select
+                            className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm"
+                            value={wizard.storyboardSceneCount}
+                            onChange={(e) =>
+                              wizard.setStoryboardSceneCount(
+                                e.target.value as typeof wizard.storyboardSceneCount,
+                              )
+                            }
+                          >
+                            {STORYBOARD_SCENE_COUNTS.map((n) => (
+                              <option key={n} value={n}>
+                                {n === "auto" ? m.wizard.storyboardSceneCountAuto : n}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      </div>
+                    )}
+                    <p className="text-[11px] text-slate-500">
+                      {isLuxuryBirthRecipe(wizard.storyboardRecipeId)
+                        ? m.wizard.storyboardLuxurySceneCountHint
+                        : m.wizard.storyboardSceneCountHint}
+                    </p>
 
                     <p className="text-xs leading-relaxed text-violet-800/90">
                       {m.wizard.storyboardPlanReviewHint}
@@ -2022,10 +2152,13 @@ export function PreGenerateSetupPanel({
                     {isConcept ? pg.productPhotosOptionalTitle : pg.productPhotosTitle}
                   </h3>
                 </div>
-                <div className="min-w-0 flex-1 space-y-4">
+                <div className={`min-w-0 flex-1 space-y-4${luxuryStoryboard ? ` ${LUXURY_FIELD_WRAP_CLASS}` : ""}`}>
                   <div>
                     <p className="text-xs font-semibold text-slate-700">
                       {pg.mainPhotoRowLabel}
+                      {luxuryStoryboard ? (
+                        <LuxuryFieldBadge label={luxuryFieldBadge} />
+                      ) : null}
                       {isConcept ? (
                         <span className="ml-1.5 font-medium text-slate-500">
                           ({pg.mainPhotoOptional})
@@ -2205,6 +2338,12 @@ export function PreGenerateSetupPanel({
                       })}
                     </div>
                   </div>
+
+                  <CompositionPresetPicker
+                    artStyleId={wizard.artStyleId}
+                    value={wizard.compositionPresetId}
+                    onChange={wizard.setCompositionPresetId}
+                  />
 
                   <div>
                     <p className="text-xs font-semibold text-slate-700">{pg.aspectLabel}</p>

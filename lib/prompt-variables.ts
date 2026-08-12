@@ -70,6 +70,10 @@ import {
 	resolveArtStyleId,
 	type ArtStyleId,
 } from "@/lib/art-style";
+import {
+	prepareCompositionForImagePrompt,
+	type CompositionPresetId,
+} from "@/lib/composition-presets";
 
 import {
 	typographyHintForLocale,
@@ -129,6 +133,7 @@ export type PromptVariables = {
 	extra?: string;
 	artStyle?: ArtStyleId;
 	imageTextMode?: ImageTextMode;
+	compositionPreset?: CompositionPresetId;
 };
 
 const MARKET_HINTS: Record<PromptMarket, string> = {
@@ -193,6 +198,7 @@ export function buildPromptVariables(input: {
 	extra?: string;
 	artStyle?: ArtStyleId;
 	imageTextMode?: ImageTextMode;
+	compositionPreset?: CompositionPresetId;
 }): PromptVariables {
 	const product = input.product.trim();
 	const sanitized = sanitizeOnImageCopy({
@@ -211,6 +217,7 @@ export function buildPromptVariables(input: {
 		extra: input.extra?.trim(),
 		artStyle: input.artStyle ?? DEFAULT_ART_STYLE,
 		imageTextMode: input.imageTextMode,
+		compositionPreset: input.compositionPreset,
 	};
 }
 
@@ -677,6 +684,12 @@ export function buildConceptSocialImagePrompt(
 		slideOpts?.ctaLine?.trim() ||
 		vars.offer?.trim();
 	const direction = vars.extra?.trim();
+	const composition = prepareCompositionForImagePrompt({
+		artStyle: vars.artStyle,
+		compositionPreset: vars.compositionPreset,
+		extra: direction,
+	});
+	const directionSansComposition = composition.extraWithoutComposition;
 	const locale = copyLocaleForVars(
 		vars,
 		[hook, support, cta].filter((s): s is string => Boolean(s?.trim())),
@@ -691,7 +704,7 @@ export function buildConceptSocialImagePrompt(
 	const illustrated = isIllustratedArtStyle(vars.artStyle);
 	const refMode = slideOpts?.referenceImageMode ?? "none";
 	const { prefer, avoid } = conceptSocialPreferAvoid(
-		direction,
+		directionSansComposition,
 		illustrated,
 		refMode,
 		locale,
@@ -704,6 +717,7 @@ export function buildConceptSocialImagePrompt(
 			: "";
 	return joinParts(
 		artStyleMandatoryLead(vars.artStyle),
+		composition.blocks?.camera ?? "",
 		artStylePhotorealConceptLock(vars.artStyle),
 		styleRefBlock,
 		plan
@@ -719,7 +733,9 @@ export function buildConceptSocialImagePrompt(
 			: carousel
 				? `Create one full-bleed 9:16 carousel slide for ${name} — edge-to-edge Instagram/Facebook creative, not a framed card on a blank background.`
 				: `Create a scroll-stopping vertical SOCIAL MEDIA POST for ${name} — Instagram/Facebook feed creative.`,
-		direction ? `Creative direction: ${direction}.` : "",
+		directionSansComposition
+			? `Creative direction: ${directionSansComposition}.`
+			: "",
 		illustrated || isLookGradeArtStyle(vars.artStyle)
 			? artStylePlannerHint(vars.artStyle)
 			: "",
@@ -735,11 +751,15 @@ export function buildConceptSocialImagePrompt(
 		"Do NOT render English meta/UI chips or labels such as Image, Video, Copy, Copywriting, Copywring, CTA, Logo, Brand, Watermark.",
 		brandProfile?.businessName ? brandProfilePromptBlock(brandProfile) : "",
 		FRAMING_IMAGE[vars.framing],
-		artStyleConceptHeroHint(vars.artStyle),
+		composition.blocks?.hero ?? artStyleConceptHeroHint(vars.artStyle),
 		illustrated
 			? "TYPE: headline and copy drawn/rendered IN the same art medium — integrated illustration typography, not a plain text box on white."
 			: "TYPE: one headline + optional support + optional CTA in a single scrim/overlay stack — editorial, not a white text box. Prefer a clean single-band layout over magazine dual mastheads.",
-		"AVOID: " + avoid + ".",
+		"AVOID: " +
+			(composition.blocks?.avoid
+				? `${composition.blocks.avoid}, ${avoid}`
+				: avoid) +
+			".",
 		"PREFER: " + prefer + ".",
 		artStyleImageClause(vars.artStyle),
 		langHint,
@@ -1673,6 +1693,12 @@ export function buildPromoImagePrompt(
 		options?.referenceImageMode ??
 		(hasReferenceImage ? "clone" : "none");
 	const refBlock = referenceBlockForMode(referenceImageMode, vars);
+	const composition = prepareCompositionForImagePrompt({
+		artStyle: vars.artStyle,
+		compositionPreset: vars.compositionPreset,
+		extra: vars.extra,
+	});
+	const extraSansComposition = composition.extraWithoutComposition;
 	const eraseRefText =
 		referenceImageMode === "clone"
 			? "Remove outdated marketing text from IMAGE 1 where new copy replaces it."
@@ -1682,6 +1708,7 @@ export function buildPromoImagePrompt(
 	if (vars.imageTextMode === "textless") {
 		return joinParts(
 			artStyleMandatoryLead(vars.artStyle),
+			composition.blocks?.camera ?? "",
 			refBlock,
 			illustrated
 				? `Create a brand-new vertical social media ILLUSTRATION scene for ${product} — art medium only, no readable text.`
@@ -1699,12 +1726,16 @@ export function buildPromoImagePrompt(
 			FRAMING_IMAGE[vars.framing],
 			MARKET_HINTS[vars.market],
 			artStyleAvoidTail(vars.artStyle),
-			vars.extra,
+			composition.blocks?.avoid
+				? `Avoid: ${composition.blocks.avoid}.`
+				: "",
+			extraSansComposition,
 			"Vertical ad background plate, no Instagram/FB UI chrome.",
 		);
 	}
 	return joinParts(
 		artStyleMandatoryLead(vars.artStyle),
+		composition.blocks?.camera ?? "",
 		refBlock,
 		plan ? singlePlanBlock(plan) : "",
 		illustrated
@@ -1741,12 +1772,16 @@ export function buildPromoImagePrompt(
 		MARKET_HINTS[vars.market],
 		marketChineseScriptBlock(vars.market),
 		FRAMING_IMAGE[vars.framing],
+		composition.blocks?.hero ?? "",
 		carouselSlideAvoidClause(
 			vars.framing,
 			vars.artStyle ?? DEFAULT_ART_STYLE,
 		),
 		artStyleAvoidTail(vars.artStyle),
-		vars.extra,
+		composition.blocks?.avoid
+			? `Avoid: ${composition.blocks.avoid}.`
+			: "",
+		extraSansComposition,
 		"Single 9:16 marketing still.",
 	);
 }

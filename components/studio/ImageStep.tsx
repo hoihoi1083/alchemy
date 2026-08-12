@@ -20,7 +20,13 @@ import {
   waitAspectFromString,
 } from "@/components/studio/GenerationWaitPlaceholder";
 import { ArtStylePicker } from "@/components/ArtStylePicker";
+import { CompositionPresetPicker } from "@/components/studio/CompositionPresetPicker";
+import { StoryboardRecipePicker } from "@/components/studio/StoryboardRecipePicker";
 import { ImageTextModePicker } from "@/components/studio/ImageTextModePicker";
+import {
+  isLuxuryBirthRecipe,
+  luxuryBirthSceneCountOptions,
+} from "@/lib/storyboard-recipes";
 import { QuickFixImagePanel } from "@/components/studio/QuickFixImagePanel";
 import { ImagePostflightPanel } from "@/components/studio/ImagePostflightPanel";
 import { ImagePostGenChecklist } from "@/components/studio/ImagePostGenChecklist";
@@ -34,8 +40,10 @@ import type { CinematicSceneResult } from "@/lib/cinematic-reel-types";
 import type { StoryboardSceneResult } from "@/lib/video-storyboard-types";
 
 export function ImageStep() {
-  const { applyPromptRebuild, artStyleId, campaignPlan, campaignSlideLabel, campaignSlides, campaignTheme, canGenerateImage, cinematicReelPlan, cinematicSceneCount, cinematicScenes, effectiveImageMode, effectiveImageOutputMode, error, finishImageStep, formatCinematicCopy, generateImage, goBackFromImage, headline, imageAspectRatio, imageBusy, imageCreativeMode, imageFinishLabel, imageGenKey, imageGenerateDisabledReason, imageInputMode, imageNextDisabled, imagePostflight, imagePostflightBusy, imagePreflight, imageProgressInfo, imagePrompt, imageQualityChecklist, imageRefPhoto, imageRefPreviewUrl, imageStepHint, imageTextMode, imageUrl, imageVariantUrls, imageVisionReview, imageVisionReviewBusy, isCampaignOutput, isCinematicStitchOutput, isConceptCinematicSingleOutput, isConceptStoryboardOutput, isStoryboardOutput, lastImageEndpoint, lockedCampaignMode, lockedSingleImageMode, m, needsProductUpload, onCinematicSceneCountChange, onImageCreativeModeChange, onImageInputModeChange, onProductPhotoSelected, planStoryboard, planStoryboardBusy, product, productPhoto, promotionMode, promptExtra, promptMarket, referenceAd, referenceAnalyzeBusy, referenceAnalyzeNote, referenceCarouselSlideCount, referenceIsVideo, referenceStrategy, regenerateStoryboardSceneWithAi, stampStoryboardSceneLogo, brandKit, reorderStoryboardScene, replaceStoryboardSceneImage, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, runShipItPipeline, selectVisualStyle, selectedVariantIndex, setArtStyleId, setCampaignPlan, setCampaignSlides, setCampaignTheme, setImageAspectRatio, setImageGenKey, setImageOutputMode, setImagePrompt, setImageRefPhoto, setImageQualityChecklist, setImageTextMode, setImageUrl, setImageVariantUrls, setPromptExtra, setPromptMarket, setError, setReferenceCarouselSlideCount, setSelectedVariantIndex, setShipItMode, setShowAdvancedImage, setStoryboardBrief, setStoryboardPlan, setStoryboardSceneCount, setSubjectFraming, setVideoPrompt, shipItEligible, shipItMode, shipItPipelineBusy, shipItVisionBlocked, showAdvancedImage, storyboardBrief, storyboardPlan, storyboardSceneCount, storyboardSceneRegenerateBusy, storyboardSceneReplaceBusy, storyboardScenes, storyboardGridApproved, setStoryboardGridApproved, storyboardCellsViewed, storyboardAllCellsViewed, markStoryboardCellViewed, storyboardTrimDuration, subjectFraming, templateId, templateSlotStatus, trimStoryboardDurations, updateStoryboardPlanScene, uploadPreviewUrl, uploadQualityMessage, uploadQualityWarning, useOriginalAsKeyframe, useOriginalImage, userReferenceBrief, useReferenceVideo, usesCompositor, videoCreativeMode, videoPrompt, visualStyle, visualStyleId, workflowMode } = useWizard();
+  const { applyPromptRebuild, artStyleId, campaignPlan, campaignSlideLabel, campaignSlides, campaignTheme, canGenerateImage, cinematicReelPlan, cinematicSceneCount, cinematicScenes, compositionPresetId, effectiveImageMode, effectiveImageOutputMode, error, finishImageStep, formatCinematicCopy, generateImage, goBackFromImage, headline, imageAspectRatio, imageBusy, imageCreativeMode, imageFinishLabel, imageGenKey, imageGenerateDisabledReason, imageInputMode, imageNextDisabled, imagePostflight, imagePostflightBusy, imagePreflight, imageProgressInfo, imagePrompt, imageQualityChecklist, imageRefPhoto, imageRefPreviewUrl, imageStepHint, imageTextMode, imageUrl, imageVariantUrls, imageVisionReview, imageVisionReviewBusy, isCampaignOutput, isCinematicStitchOutput, isConceptCinematicSingleOutput, isConceptStoryboardOutput, isStoryboardOutput, lastImageEndpoint, lockedCampaignMode, lockedSingleImageMode, m, needsProductUpload, onCinematicSceneCountChange, onImageCreativeModeChange, onImageInputModeChange, onProductPhotoSelected, planStoryboard, planStoryboardBusy, product, productPhoto, promotionMode, promptExtra, promptMarket, referenceAd, referenceAnalyzeBusy, referenceAnalyzeNote, referenceCarouselSlideCount, referenceIsVideo, referenceStrategy, regenerateStoryboardSceneWithAi, stampStoryboardSceneLogo, brandKit, reorderStoryboardScene, replaceStoryboardSceneImage, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, runShipItPipeline, selectVisualStyle, selectedVariantIndex, setArtStyleId, setCampaignPlan, setCampaignSlides, setCampaignTheme, setCompositionPresetId, setImageAspectRatio, setImageGenKey, setImageOutputMode, setImagePrompt, setImageRefPhoto, setImageQualityChecklist, setImageTextMode, setImageUrl, setImageVariantUrls, setPromptExtra, setPromptMarket, setError, setReferenceCarouselSlideCount, setSelectedVariantIndex, setShipItMode, setShowAdvancedImage, setStoryboardBrief, setStoryboardPlan, setStoryboardRecipeId, setStoryboardSceneCount, setSubjectFraming, setVideoPrompt, shipItEligible, shipItMode, shipItPipelineBusy, shipItVisionBlocked, showAdvancedImage, storyboardBrief, storyboardPlan, storyboardRecipeId, storyboardSceneCount, storyboardSceneRegenerateBusy, storyboardSceneReplaceBusy, storyboardScenes, storyboardGridApproved, setStoryboardGridApproved, storyboardCellsViewed, storyboardAllCellsViewed, markStoryboardCellViewed, storyboardTrimDuration, subjectFraming, templateId, templateSlotStatus, trimStoryboardDurations, updateStoryboardPlanScene, uploadPreviewUrl, uploadQualityMessage, uploadQualityWarning, useOriginalAsKeyframe, useOriginalImage, userReferenceBrief, useReferenceVideo, usesCompositor, videoCreativeMode, videoPrompt, visualStyle, visualStyleId, workflowMode } = useWizard();
   const isConcept = promotionMode === "concept";
+  const luxuryStoryboard = isLuxuryBirthRecipe(storyboardRecipeId) && !isConcept;
+  const luxurySceneOptions = luxuryBirthSceneCountOptions();
   const storyboardSceneEstimate = (() => {
     if (storyboardPlan?.scenes?.length) return storyboardPlan.scenes.length;
     if (storyboardScenes.length) return storyboardScenes.length;
@@ -436,50 +444,106 @@ export function ImageStep() {
 
   {isStoryboardOutput && (
     <div className="rounded-2xl border border-teal-800/50 bg-teal-950/20 p-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <label className="flex items-center gap-2 text-xs text-teal-200">
-          {m.wizard.storyboardTrimDurationLabel}
-          <select
-            value={storyboardTrimDuration}
-            onChange={(e) =>
-              trimStoryboardDurations(e.target.value as StoryboardDurationPreset)
-            }
-            className="rounded-lg border border-teal-700 bg-slate-900 px-2 py-1 text-xs text-teal-100"
-          >
-            <option value="4">4s</option>
-            <option value="6">6s</option>
-            <option value="8">8s</option>
-            <option value="10">10s</option>
-            <option value="12">12s</option>
-          </select>
-        </label>
-        <label className="flex items-center gap-2 text-xs text-teal-200">
-          {m.wizard.storyboardSceneCountLabel}
-          <select
-            value={storyboardSceneCount}
-            onChange={(e) =>
-              setStoryboardSceneCount(e.target.value as StoryboardSceneCount)
-            }
-            className="rounded-lg border border-teal-700 bg-slate-900 px-2 py-1 text-xs text-teal-100"
-          >
-            {STORYBOARD_SCENE_COUNTS.map((n) => (
-              <option key={n} value={n}>
-                {n === "auto" ? m.wizard.storyboardSceneCountAuto : n}
-              </option>
-            ))}
-          </select>
-        </label>
+      <h3 className="mb-2 text-xs font-semibold text-teal-100">
+        {m.wizard.storyboardRecipeTitle}
+      </h3>
+      <StoryboardRecipePicker
+        value={storyboardRecipeId}
+        onChange={setStoryboardRecipeId}
+        variant="dark"
+        showLuxuryBirth={!isConcept}
+      />
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        {luxuryStoryboard ? (
+          /* Luxury birth — scene count only, duration auto-coupled */
+          <>
+            <label className="flex items-center gap-2 text-xs text-teal-200">
+              {m.wizard.storyboardSceneCountLabel}
+              <select
+                value={storyboardSceneCount === "3" ? "3" : "5"}
+                onChange={(e) =>
+                  setStoryboardSceneCount(e.target.value as StoryboardSceneCount)
+                }
+                className="rounded-lg border border-amber-500/60 bg-amber-950/30 px-2 py-1 text-xs font-semibold text-amber-100"
+              >
+                {luxurySceneOptions.map((n) => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </select>
+            </label>
+            <span className="flex items-center gap-1 text-[11px] text-amber-200/80">
+              <svg viewBox="0 0 16 16" className="h-3 w-3 shrink-0" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+                <circle cx="8" cy="8" r="6.5" /><path d="M8 4.5V8l2.5 1.5" strokeLinecap="round" />
+              </svg>
+              {storyboardTrimDuration}s · {m.wizard.storyboardLuxuryDurationAutoHint}
+            </span>
+          </>
+        ) : (
+          <>
+            <label className="flex items-center gap-2 text-xs text-teal-200">
+              {m.wizard.storyboardTrimDurationLabel}
+              <select
+                value={storyboardTrimDuration}
+                onChange={(e) =>
+                  trimStoryboardDurations(e.target.value as StoryboardDurationPreset)
+                }
+                className="rounded-lg border border-teal-700 bg-slate-900 px-2 py-1 text-xs text-teal-100"
+              >
+                <option value="4">4s</option>
+                <option value="6">6s</option>
+                <option value="8">8s</option>
+                <option value="10">10s</option>
+                <option value="12">12s</option>
+                <option value="15">15s</option>
+                <option value="20">20s</option>
+              </select>
+            </label>
+            <label className="flex items-center gap-2 text-xs text-teal-200">
+              {m.wizard.storyboardSceneCountLabel}
+              <select
+                value={storyboardSceneCount}
+                onChange={(e) =>
+                  setStoryboardSceneCount(e.target.value as StoryboardSceneCount)
+                }
+                className="rounded-lg border border-teal-700 bg-slate-900 px-2 py-1 text-xs text-teal-100"
+              >
+                {STORYBOARD_SCENE_COUNTS.map((n) => (
+                  <option key={n} value={n}>
+                    {n === "auto" ? m.wizard.storyboardSceneCountAuto : n}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </>
+        )}
       </div>
-      <p className="mt-2 text-[10px] text-teal-200/80">{m.wizard.storyboardSceneCountHint}</p>
+      <p className="mt-2 text-[10px] text-teal-200/80">
+        {luxuryStoryboard
+          ? m.wizard.storyboardLuxurySceneCountHint
+          : m.wizard.storyboardSceneCountHint}
+      </p>
 
       <label className="mt-3 block text-xs font-medium text-teal-100">
         {m.wizard.storyboardBriefLabel}
+        {luxuryStoryboard ? (
+          <span className="ml-1 font-semibold text-amber-300">
+            {m.wizard.storyboardBriefLuxuryRequired}
+          </span>
+        ) : null}
         <textarea
           value={storyboardBrief}
           onChange={(e) => setStoryboardBrief(e.target.value)}
-          placeholder={m.wizard.storyboardBriefPlaceholder}
-          rows={3}
-          className="mt-1 w-full rounded-xl border border-teal-800/60 bg-slate-950/60 px-3 py-2 text-sm text-teal-50"
+          placeholder={
+            luxuryStoryboard
+              ? m.wizard.storyboardBriefLuxuryPlaceholder
+              : m.wizard.storyboardBriefPlaceholder
+          }
+          rows={luxuryStoryboard ? 4 : 3}
+          className={`mt-1 w-full rounded-xl border px-3 py-2 text-sm text-teal-50 ${
+            luxuryStoryboard
+              ? "border-amber-500/50 bg-amber-950/20 ring-1 ring-amber-500/25"
+              : "border-teal-800/60 bg-slate-950/60"
+          }`}
         />
       </label>
 
@@ -619,11 +683,17 @@ export function ImageStep() {
   )}
 
   {!usesCompositor && (
-    <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-3">
+    <div className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/40 p-3">
       <ArtStylePicker
         value={artStyleId}
         onChange={setArtStyleId}
         videoSafeOnly={workflowMode !== "image-only"}
+      />
+      <CompositionPresetPicker
+        artStyleId={artStyleId}
+        value={compositionPresetId}
+        onChange={setCompositionPresetId}
+        variant="dark"
       />
     </div>
   )}

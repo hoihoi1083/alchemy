@@ -1525,6 +1525,89 @@ export const zh = {
 		storyboardPlanLabel: "分鏡大綱",
 		storyboardPlanReviewHint:
 			"先用 AI 出分鏡大綱，改到啱再生成場景圖。唔啱嘅場景描述／畫面字可以直接改。",
+		storyboardRecipeTitle: "分鏡配方",
+		storyboardRecipeHint:
+			"經典彈性分鏡，或豪華產品誕生（建議實體產品）。唔係三分屏 Social drip。",
+		storyboardRecipeLuxuryNoRefHint:
+			"唔用參考短片。可揀 3 場（緊湊）或 5 場（建議）。影片預設 MiniMax H3。",
+		storyboardRecipeLuxuryDrivers: {
+			title: "豪華分鏡故事靠咩決定？",
+			intro:
+				"AI 只根據你填嘅文字出大綱——規劃時睇唔到產品相。下面高亮欄位最重要：",
+			priorityPrimary: "最重要",
+			prioritySecondary: "影響語氣",
+			items: [
+				{
+					field: "storyboardBrief",
+					priority: "primary",
+					section: "分鏡卡片",
+					hint: "寫清隱喻弧（例如：紅色水晶虛空 → 紅寶心脈動 → 液體金屬中誕生唇膏）",
+				},
+				{
+					field: "product",
+					priority: "primary",
+					hint: "產品名定品類同語氣——用真實產品名",
+				},
+				{
+					field: "productPhoto",
+					priority: "primary",
+					section: "產品相",
+					hint: "包裝相鎖定最後 reveal 靜幀（規劃後先用）",
+				},
+				{
+					field: "headline",
+					priority: "secondary",
+					hint: "主標題同字幕語氣——有輔助文案可以一齊填",
+				},
+				{
+					field: "promptExtra",
+					priority: "secondary",
+					hint: "電影感、光線、質感、唔想要嘅元素",
+				},
+				{
+					field: "artStyle",
+					priority: "secondary",
+					section: "畫面風格",
+					hint: "整體視覺語言（靜幀同動態）",
+				},
+			],
+			footnote:
+				"最啱實體產品（美妝、珠寶、高級包裝）。概念模式配呢個配方較弱。",
+		},
+		storyboardLuxuryFieldBadge: "故事驅動",
+		storyboardLuxuryContentBanner: {
+			title: "呢啲欄位決定豪華分鏡大綱",
+			body: "出大綱前，先填好「內容詳情」同「分鏡」入面高亮嘅欄位。",
+		},
+		storyboardBriefLuxuryRequired: "— 豪華配方請填",
+		storyboardBriefLuxuryPlaceholder:
+			"例如：紅色水晶虛空 → 紅寶心脈動 → 液體金屬中誕生唇膏；珠寶廣告光；唔好價錢…",
+		storyboardLuxurySceneCountHint:
+			"3 場 → 10 秒影片（短 Reel）；5 場 → 15 秒影片（建議，每拍更有空間）。片長自動設定。",
+		storyboardLuxuryDurationAutoHint: "自動",
+		storyboardRecipes: {
+			"classic-tvc": {
+				title: "經典 TVC",
+				desc: "彈性場景數 · 開場 → 細節 → 收束",
+			},
+			"luxury-birth": {
+				title: "豪華誕生",
+				desc: "產品包裝相 · 抽象 → 隱喻 → reveal · 3 或 5 場",
+			},
+		},
+		compositionPresetLabel: "構圖",
+		compositionPresetHint:
+			"疊喺漫畫／動漫／3D 卡通畫風上面嘅鏡頭語法。",
+		compositionPresets: {
+			standard: {
+				title: "標準",
+				desc: "跟畫風一般構圖",
+			},
+			"fisheye-hero": {
+				title: "魚眼英雄",
+				desc: "超廣角魚眼 · 桶形變形 · 大手／產品衝向鏡頭",
+			},
+		},
 		storyboardPlanBtn: "生成分鏡大綱",
 		storyboardPlanBusy: "AI 規劃中…",
 		storyboardPlanReplanBtn: "重新規劃大綱",

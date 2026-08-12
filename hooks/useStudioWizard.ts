@@ -28,6 +28,7 @@ import {
 	useWizardState,
 	type StoryboardDurationPreset,
 } from "@/hooks/useWizardState";
+import type { StoryboardSceneCount } from "@/lib/ad-pack-preferences";
 import { useWizardProgress } from "@/hooks/useWizardProgress";
 import {
 	allStoryboardCellsViewed,
@@ -142,6 +143,20 @@ import {
 	LANDING_RECIPES,
 	type LandingRecipeId,
 } from "@/lib/landing-recipes";
+import {
+	STORYBOARD_RECIPES,
+	coerceLuxuryBirthSceneCount,
+	effectiveStoryboardSceneCount,
+	isLuxuryBirthRecipe,
+	luxuryBirthDurationForSceneCount,
+	resolveStoryboardRecipeId,
+	storyboardRecipeForbidsReference,
+	type StoryboardRecipeId,
+} from "@/lib/storyboard-recipes";
+import {
+	appendCompositionToExtra,
+	type CompositionPresetId,
+} from "@/lib/composition-presets";
 import { resolvePlannerDurationSec } from "@/lib/video-duration-planner";
 import {
 	DEFAULT_VISUAL_STYLE,
@@ -619,6 +634,40 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 	const [socialDripPlanNote, setSocialDripPlanNote] = useState<string | null>(
 		null,
 	);
+	const [storyboardRecipeId, setStoryboardRecipeIdState] =
+		useState<StoryboardRecipeId>("classic-tvc");
+	const [compositionPresetId, setCompositionPresetId] =
+		useState<CompositionPresetId>("standard");
+
+	function setStoryboardRecipeId(next: StoryboardRecipeId) {
+		const id = resolveStoryboardRecipeId(next);
+		setStoryboardRecipeIdState(id);
+		const def = STORYBOARD_RECIPES[id];
+		if (isLuxuryBirthRecipe(id)) {
+			const currentCount = storyboardSceneCount === "3" ? "3" : "5";
+			setStoryboardSceneCount(currentCount);
+			// Auto-couple duration to scene count
+			setStoryboardTrimDuration(
+				String(luxuryBirthDurationForSceneCount(currentCount)) as typeof storyboardTrimDuration,
+			);
+			onReferenceAdFile(null);
+			return;
+		}
+		if (storyboardRecipeForbidsReference(id)) {
+			onReferenceAdFile(null);
+		}
+	}
+
+	/** Wrapper used by UI — auto-couples duration when Luxury birth is active. */
+	function setLuxuryAwareSceneCount(next: StoryboardSceneCount) {
+		setStoryboardSceneCount(next);
+		if (isLuxuryBirthRecipe(storyboardRecipeId)) {
+			const coerced = coerceLuxuryBirthSceneCount(next);
+			setStoryboardTrimDuration(
+				String(luxuryBirthDurationForSceneCount(coerced)) as typeof storyboardTrimDuration,
+			);
+		}
+	}
 
 	function setMotionPosterDialectPick(next: MotionPosterDialectPick) {
 		setMotionPosterDialectPickState((prev) => {
@@ -978,23 +1027,30 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			userReferenceBrief,
 			referenceStrategy,
 		);
-		const reelBlock = researchReelAnalysis
-			? researchReelAnalysisPromptBlock(researchReelAnalysis)
-			: "";
+		const reelBlock =
+			storyboardRecipeForbidsReference(storyboardRecipeId)
+				? ""
+				: researchReelAnalysis
+					? researchReelAnalysisPromptBlock(researchReelAnalysis)
+					: "";
 		const legacyRef =
 			!userReferenceBrief && conceptImageVisionNote.trim()
 				? conceptImageVisionNote.trim()
 				: "";
-		if (
+		let combined =
 			legacyRef &&
 			!base.includes(USER_REFERENCE_MARKER) &&
 			!base.includes(USER_REFERENCE_STYLE_ONLY_MARKER) &&
 			!base.includes(USER_REFERENCE_LAYOUT_TRANSFER_MARKER) &&
 			!isContentResearchStyleExtra(base)
-		) {
-			return [base, legacyRef, reelBlock].filter(Boolean).join(" | ");
-		}
-		return [base, reelBlock].filter(Boolean).join(" | ");
+				? [base, legacyRef, reelBlock].filter(Boolean).join(" | ")
+				: [base, reelBlock].filter(Boolean).join(" | ");
+		combined = appendCompositionToExtra(
+			combined,
+			compositionPresetId,
+			artStyleId,
+		);
+		return combined;
 	}, [
 		visualStyleId,
 		promptExtra,
@@ -1009,6 +1065,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		researchReelAnalysis,
 		referenceStrategy,
 		promptMarket,
+		storyboardRecipeId,
+		compositionPresetId,
+		artStyleId,
 	]);
 
 	const getPromptVars = useCallback(
@@ -1028,6 +1087,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				extra: effectivePromptExtra(),
 				artStyle: artStyleId,
 				imageTextMode,
+				compositionPreset: compositionPresetId,
 			}),
 		[
 			product,
@@ -1040,6 +1100,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			effectivePromptExtra,
 			artStyleId,
 			imageTextMode,
+			compositionPresetId,
 			brandKit,
 			brandProfile,
 		],
@@ -3057,7 +3118,11 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			fd.set("offer", offer.trim());
 			fd.set("storyboard_brief", storyboardBrief.trim());
 			fd.set("duration", storyboardTrimDuration);
-			fd.set("scene_count", storyboardSceneCount);
+			fd.set(
+				"scene_count",
+				effectiveStoryboardSceneCount(storyboardRecipeId, storyboardSceneCount),
+			);
+			fd.set("storyboard_recipe", storyboardRecipeId);
 			fd.set("prompt_market", promptMarket);
 			fd.set("subject_framing", subjectFraming);
 			fd.set("prompt_extra", effectivePromptExtra());
@@ -3073,7 +3138,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			fd.set("endpoint", needsEdit ? EDIT_ENDPOINT : TEXT_ENDPOINT);
 			fd.set("storyboard_plan", JSON.stringify(planForGen));
 			fd.set("scene_indexes", String(scene.imageIndex));
-			if (researchReelAnalysis) {
+			if (
+				researchReelAnalysis &&
+				!storyboardRecipeForbidsReference(storyboardRecipeId)
+			) {
 				fd.set(
 					"research_reel_analysis",
 					JSON.stringify(researchReelAnalysis),
@@ -3595,6 +3663,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		}
 		if (useReferenceVideo && referenceAd && referenceIsVideo) {
 			if (
+				!storyboardRecipeForbidsReference(storyboardRecipeId) &&
 				!researchReelAnalysis &&
 				!storyboardPlan &&
 				!videoPrompt.trim()
@@ -7285,12 +7354,18 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			fd.set("offer", offer.trim());
 			fd.set("storyboard_brief", storyboardBrief.trim());
 			fd.set("duration", storyboardTrimDuration);
-			fd.set("scene_count", storyboardSceneCount);
+			fd.set(
+				"scene_count",
+				effectiveStoryboardSceneCount(storyboardRecipeId, storyboardSceneCount),
+			);
+			fd.set("storyboard_recipe", storyboardRecipeId);
 			fd.set("prompt_market", promptMarket);
 			fd.set("subject_framing", subjectFraming);
 			fd.set("prompt_extra", effectivePromptExtra());
 			fd.set("image_text_mode", imageTextMode);
-			appendReferenceFormFields(fd);
+			if (!storyboardRecipeForbidsReference(storyboardRecipeId)) {
+				appendReferenceFormFields(fd);
+			}
 			const res = await fetch("/api/plan-storyboard", {
 				method: "POST",
 				body: fd,
@@ -8843,7 +8918,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		musicMood,
 		voiceoverEnabled,
 		voiceoverLocale,
-		setStoryboardSceneCount,
+		setStoryboardSceneCount: setLuxuryAwareSceneCount,
 		setMusicMood,
 		setVoiceoverEnabled,
 		setVoiceoverLocale,
@@ -8878,6 +8953,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		socialDripMetaphorPick,
 		setSocialDripMetaphorPick,
 		socialDripPlanNote,
+		storyboardRecipeId,
+		setStoryboardRecipeId,
+		compositionPresetId,
+		setCompositionPresetId,
 		videoGenerateDisabled,
 		videoGenerateDisabledReason,
 		videoJobStartedAt,
