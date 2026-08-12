@@ -707,6 +707,24 @@ export async function POST(request: Request) {
         imageUrls.splice(0, imageUrls.length, plate);
       }
 
+      // Social drip IG avatar: attach Brand kit logo when available (always for this path).
+      let socialDripLogoImageIndex: number | undefined;
+      if (socialDrip) {
+        const logoSrc = brandKit?.logoUrl?.trim() || "";
+        if (logoSrc) {
+          try {
+            const logoFal = await mirrorImageUrlToFalStorage(logoSrc, {
+              clerkId: auth.user.userId,
+              refresh: true,
+            });
+            imageUrls.push(logoFal);
+            socialDripLogoImageIndex = imageUrls.length;
+          } catch {
+            socialDripLogoImageIndex = undefined;
+          }
+        }
+      }
+
       const angleHint =
         useReferenceConcept && dualImage && hasProduct && hasStyle
           ? dualProductIdentityHint(productAngleFiles.length > 0)
@@ -727,6 +745,7 @@ export async function POST(request: Request) {
             conceptMode: promotionMode === "concept",
             aspectRatio: aspectRatioRaw,
             frame: socialDripFrame,
+            brandLogoImageIndex: socialDripLogoImageIndex,
           })
         : motionPoster
         ? posterFrame === "end"

@@ -2425,17 +2425,17 @@ export const en = {
 		socialDripFitTitle: "What this format can do",
 		socialDripFitGoodTitle: "Works well",
 		socialDripFitGoodItems: [
-			"Bottom band = cute polished cartoon (joyful meme vibe)",
-			"F&B sauce pour into a cartoon mouth",
-			"Beauty: thin serum drip onto cartoon cheeks (not drinking)",
-			"Jewelry sparkle / fashion confetti / tech energy beam over fake IG chrome",
+			"Physical product with a clear pour/fall (burger cheese, serum drip…)",
+			"Bottom = simple line-art person lying on their back (meme gag)",
+			"Brand kit logo + brand handle on the IG bar",
+			"Concept ONLY if you can show falling creatives (posters/cards raining down)",
 		],
 		socialDripFitBadTitle: "Won’t work well — pick another path",
 		socialDripFitBadItems: [
-			"Real / photoreal person under a table catching liquid (feels creepy)",
-			"Rough stick-figure scribbles (cartoon must look finished & cute)",
-			"Drinking / ingesting non-food products (serum, gadgets…)",
-			"Multi-shot TVC, cinematic storytelling, or cloning a reference reel",
+			"Abstract concept slogans with no falling visual (use Motion poster / Image→video)",
+			"Empty light beams or invented slogans instead of your headline",
+			"Cartoon of the product itself under a real product",
+			"Multi-shot TVC or cloning a reference reel",
 		],
 		socialDripFitLevels: {
 			good: "Good fit for Social drip",
@@ -2450,12 +2450,16 @@ export const en = {
 			good_tech: "Energy beam onto a doodle fits electronics.",
 			good_wellness: "Steam or petals onto a doodle fits wellness.",
 			good_general: "Use a clear falling metaphor that matches the product.",
+			good_concept_falling:
+				"Concept can work if creatives visibly rain down (cards/posters) — not abstract light only.",
 			caution_mouth_nonfood:
 				"Open-mouth pour is an F&B gag — weird for non-food.",
 			caution_beauty_pour:
 				"Serum into an open mouth looks like drinking. Prefer Serum drip.",
 			caution_concept_pour:
-				"Concept topics rarely need a mouth-pour — prefer petals / beam / steam.",
+				"Concept topics rarely need a mouth-pour — prefer confetti / petals / beam.",
+			caution_concept_abstract:
+				"This concept is abstract. Social drip needs falling creatives (素材/海报 raining). Or use Motion poster.",
 			caution_no_product_photo:
 				"Add a product photo so the fall has a clear origin.",
 			mismatch_no_falling:

@@ -95,9 +95,11 @@ export type SocialDripFitReasonId =
   | "good_tech"
   | "good_wellness"
   | "good_general"
+  | "good_concept_falling"
   | "caution_mouth_nonfood"
   | "caution_beauty_pour"
   | "caution_concept_pour"
+  | "caution_concept_abstract"
   | "caution_no_product_photo"
   | "mismatch_no_falling"
   | "mismatch_wrong_metaphor";
@@ -112,14 +114,14 @@ export type SocialDripFitAssessment = {
 };
 
 /**
- * Bottom-band character lock — cute polished cartoon only.
- * Photoreal people make the gag feel creepy; rough stick figures look cheap.
+ * Bottom-band character — match viral 三分屏 (AIGC-洋咩咩 / KFC cheese gag):
+ * simple line-art PERSON lying on their back, not a standing chibi or product mascot.
  */
 export const SOCIAL_DRIP_CARTOON_CHARACTER_LOCK = [
-  "BOTTOM character MUST be a polished cute cartoon / chibi-style 2D character (clean linework, soft shading, expressive big eyes, friendly smile).",
-  "Quality bar: finished Instagram-meme illustration — NOT a rough stick figure, NOT scribbly MS-Paint doodle, NOT ugly deformed face.",
-  "FORBIDDEN: photoreal photo of a real person, AI lifestyle model, under-table photography, uncanny semi-realistic face.",
-  "Keep the same cartoon identity from start→end; open clean floor space above them (no furniture blocking the fall).",
+  "BOTTOM character: a SIMPLE cute 2D LINE-ART person (thin blue or black outline on white, chef/kid/office doodle style).",
+  "Pose: lying on their BACK on the floor, face looking UP, under the fall centerline — joyful, meme-like.",
+  "NOT a standing 3D chibi, NOT a photoreal person, NOT a cartoon of the product (no burger-mascot under a burger).",
+  "Same doodle identity from start→end. Clean white floor, no table, no furniture overhead.",
 ].join(" ");
 
 export const SOCIAL_DRIP_METAPHOR_DEFS: Record<
@@ -139,11 +141,11 @@ export const SOCIAL_DRIP_METAPHOR_DEFS: Record<
     label: "Pour / drip",
     categories: ["fnb", "home", "general"],
     crossingDefault:
-      "ONE continuous thick opaque liquid column (sauce / syrup / cream / honey) pours straight down from the hero — dense and readable, never a wispy light ribbon or soft glow swirl",
+      "thick melted cheese / sauce / syrup column falls from the PRODUCT itself (not from an extra squeeze bottle unless the hero IS a bottle) — one opaque vertical stream, readable over the middle chrome",
     characterDefault:
-      "cute polished cartoon character lying joyfully on the clean floor, mouth wide open UNDER the pour path — playful and funny, never creepy",
+      "simple line-art person lying on their BACK, mouth wide open under the stream, looking up joyfully (viral 三分屏 chef-doodle pose)",
     landingDefault:
-      "liquid lands in the open mouth AND spills a visible puddle on the floor beside the cartoon (F&B gag only)",
+      "stream hits the OPEN MOUTH then puddles on the white floor beside the doodle",
     allowMouthCatch: true,
   },
   glow: {
@@ -152,7 +154,7 @@ export const SOCIAL_DRIP_METAPHOR_DEFS: Record<
     crossingDefault:
       "a thin-to-medium amber SERUM stream falls from the dropper TIP only (same liquid as the bottle) — readable vertical drip, NOT a syrup hose, NOT a decorative light ribbon looping the bottle",
     characterDefault:
-      "cute polished cartoon face looking UP with soft smile / closed mouth, cheeks under the drip path — joyful glow reaction, NOT drinking, NO furniture overhead",
+      "simple line-art person lying on their BACK looking UP, mouth closed / soft smile, cheeks under the drip (not drinking)",
     landingDefault:
       "serum dots land on cartoon cheeks / forehead (topical skincare) with at most a tiny glossy splash on the floor — NEVER pour into an open mouth",
     allowMouthCatch: false,
@@ -163,7 +165,7 @@ export const SOCIAL_DRIP_METAPHOR_DEFS: Record<
     crossingDefault:
       "dense glitter / sparkle CASCADE falls as a clear vertical stream from the hero (packed particles, readable column) — not a faint glow halo",
     characterDefault:
-      "cute polished cartoon looking up with open hands under the cascade — delighted sparkle reaction",
+      "simple line-art person lying on their BACK, hands open under the cascade",
     landingDefault:
       "sparkles pile on cartoon hands/shoulders and scatter on the bottom panel floor — no liquid drinking",
     allowMouthCatch: false,
@@ -174,7 +176,7 @@ export const SOCIAL_DRIP_METAPHOR_DEFS: Record<
     crossingDefault:
       "thick visible steam / cream mist pours downward as a continuous plume from the hero (dense enough to read as a stream crossing the chrome)",
     characterDefault:
-      "cute polished cartoon face under the plume path, soft inhale / cozy happy expression",
+      "simple line-art person lying on their BACK under the plume, cozy inhale",
     landingDefault:
       "plume reaches the cartoon face; soft mist gathers near the bottom panel floor — no syrup puddle",
     allowMouthCatch: false,
@@ -183,11 +185,11 @@ export const SOCIAL_DRIP_METAPHOR_DEFS: Record<
     label: "Confetti fall",
     categories: ["fashion", "general", "concept"],
     crossingDefault:
-      "heavy confetti FALLS in a vertical column from the hero through the middle bar (dense paper pieces, not a side swirl)",
+      "dense confetti / colorful ad cards / poster tiles FALL in a vertical column from the hero through the middle bar (readable pieces, not a side swirl)",
     characterDefault:
-      "cute polished cartoon sitting or leaning back, arms open under the fall path — celebratory joy",
+      "simple line-art person lying on their BACK, arms open under the fall",
     landingDefault:
-      "confetti lands on the cartoon and covers the bottom panel floor",
+      "cards/confetti land on the doodle and cover the bottom panel floor",
     allowMouthCatch: false,
   },
   "light-streak": {
@@ -196,7 +198,7 @@ export const SOCIAL_DRIP_METAPHOR_DEFS: Record<
     crossingDefault:
       "a thick bright ENERGY BEAM / liquid-light column shoots straight down from the device (solid readable beam, not a thin decorative ribbon looping the product)",
     characterDefault:
-      "cute polished cartoon looking up under the beam, eyes wide / hands open — playful power-up reaction",
+      "simple line-art person lying on their BACK looking up under the beam, eyes wide",
     landingDefault:
       "beam hits the cartoon and leaves a bright impact mark on the bottom panel floor — not a liquid mouth pour",
     allowMouthCatch: false,
@@ -207,7 +209,7 @@ export const SOCIAL_DRIP_METAPHOR_DEFS: Record<
     crossingDefault:
       "a fabric ribbon FALLS straight down from the product as a continuous hanging strip through the chrome (gravity fall, not a side drape swirl)",
     characterDefault:
-      "cute polished cartoon catching the ribbon with open hands under the fall path — soft delighted pose",
+      "simple line-art person lying on their BACK catching the ribbon with open hands",
     landingDefault:
       "ribbon end lands in the cartoon hands and rests on the bottom panel floor",
     allowMouthCatch: false,
@@ -218,7 +220,7 @@ export const SOCIAL_DRIP_METAPHOR_DEFS: Record<
     crossingDefault:
       "petals FALL in a dense vertical cascade from the hero through the middle bar",
     characterDefault:
-      "cute polished cartoon under the cascade, face/hands open — dreamy joyful reaction",
+      "simple line-art person lying on their BACK under the cascade, face/hands open",
     landingDefault:
       "petals cover the cartoon and the bottom panel floor",
     allowMouthCatch: false,
@@ -326,7 +328,8 @@ function defaultMetaphorForCategory(
     case "home":
       return "pour";
     case "concept":
-      return "petals";
+      // Abstract services → dense confetti/cards falling (= materials arriving), not liquid pour.
+      return "confetti";
     default:
       return "pour";
   }
@@ -357,6 +360,28 @@ export function assessSocialDripFit(input: {
   if (!input.conceptMode && !input.hasProductPhoto) {
     reasons.push("caution_no_product_photo");
     level = "caution";
+  }
+
+  // Concept needs a visual “falling materials” gag — abstract slogans alone are weak.
+  if (input.conceptMode) {
+    const idea = [
+      input.conceptIdea,
+      input.headline,
+      input.product,
+    ]
+      .filter(Boolean)
+      .join(" ");
+    const hasFallingCue =
+      /素材|素材包|卡片|海报|海報|輪播|轮播|模板|creative|asset|template|carousel|confetti|fall|到手|下載|下载|deliver|drop/i.test(
+        idea,
+      );
+    if (!hasFallingCue) {
+      reasons.push("caution_concept_abstract");
+      suggestedMetaphor = suggestedMetaphor ?? "confetti";
+      level = level === "mismatch" ? level : "caution";
+    } else if (reasons.length === 0) {
+      reasons.push("good_concept_falling");
+    }
   }
 
   // Mouth-catch pour on non-food → weird (serum drinking, phone drinking…).
@@ -421,6 +446,11 @@ export function assessSocialDripFit(input: {
       case "wellness":
         reasons.push("good_wellness");
         break;
+      case "concept":
+        if (!reasons.includes("good_concept_falling")) {
+          reasons.push("good_concept_falling");
+        }
+        break;
       default:
         reasons.push("good_general");
         break;
@@ -435,11 +465,23 @@ export function assessSocialDripFit(input: {
   };
 }
 
+export function socialDripHandleFromName(name: string): string {
+  return (
+    name
+      .replace(/[^\w\u4e00-\u9fff]+/g, "_")
+      .replace(/^_|_$/g, "")
+      .slice(0, 18)
+      .toLowerCase() || "brand"
+  );
+}
+
 export function heuristicSocialDripPlan(input: {
   product?: string;
   conceptIdea?: string;
   headline?: string;
   business?: string;
+  /** Preferred IG handle source (Brand profile / kit name). */
+  brandName?: string;
   conceptMode?: boolean;
   pick?: SocialDripMetaphorPick;
 }): SocialDripPlan {
@@ -453,11 +495,13 @@ export function heuristicSocialDripPlan(input: {
     input.conceptIdea?.trim() ||
     input.business?.trim() ||
     "brand";
-  const handle = name
-    .replace(/[^\w\u4e00-\u9fff]+/g, "_")
-    .replace(/^_|_$/g, "")
-    .slice(0, 18)
-    .toLowerCase() || "brand";
+  // Handle = brand/business, never the product SKU (avoids “漢堡” under a burger).
+  const handleSource =
+    input.brandName?.trim() ||
+    input.business?.trim() ||
+    (input.conceptMode ? input.conceptIdea?.trim() : "") ||
+    "brand";
+  const handle = socialDripHandleFromName(handleSource);
   const caption =
     input.headline?.trim() ||
     (input.conceptMode
@@ -502,6 +546,7 @@ export async function planSocialDripMetaphor(input: {
   headline?: string;
   subline?: string;
   business?: string;
+  brandName?: string;
   conceptMode?: boolean;
   pick?: SocialDripMetaphorPick;
   locale?: string;
@@ -515,19 +560,24 @@ export async function planSocialDripMetaphor(input: {
   const subject = input.conceptMode
     ? input.conceptIdea?.trim() || input.product?.trim() || "the service idea"
     : input.product?.trim() || "the product";
+  const preferredHandle = socialDripHandleFromName(
+    input.brandName?.trim() ||
+      input.business?.trim() ||
+      subject,
+  );
 
   const system = `You plan a viral vertical 3-band “social drip / 三分屏” ad for Alchemy AI Lab.
-Layout contract (ALWAYS): photoreal product OR concept scene on TOP → fake Instagram chrome in MIDDLE → CUTE polished cartoon character on BOTTOM (never a real person). Something readable crosses OVER the chrome on one vertical centerline.
-Bottom character quality: finished cute meme illustration (clean lines, soft shading, joyful expression) — NOT photoreal, NOT stick-figure scribbles.
+Layout contract (ALWAYS, match viral 三分屏): photoreal product TOP → thin Instagram chrome MIDDLE (real brand handle + logo) → simple LINE-ART person lying on their BACK at BOTTOM. Something readable crosses IN FRONT OF the chrome on one vertical centerline.
+Bottom character: 2D outline doodle person (chef/kid), not photoreal, not standing chibi, not a cartoon of the product.
 
 Pick ONE metaphor id from: ${SOCIAL_DRIP_METAPHOR_IDS.join(", ")}.
 Hard rules by category:
-- F&B → "pour" with open-mouth catch + floor puddle (edible gag OK).
+- F&B → "pour" with open-mouth catch + floor puddle (edible gag OK) onto a cartoon PERSON.
 - Beauty / skincare → "glow" as a thin serum drip from the dropper TIP onto CHEEKS/skin — mouth CLOSED, NEVER drinking serum, NO furniture blocking the face.
 - Jewelry → sparkle cascade onto hands. Fashion → confetti/fabric. Electronics → energy beam. Wellness → steam/petals.
 - Crossing MUST be a dense vertical fall — FORBIDDEN: wispy light ribbons, soft decorative glow swirls that never cross chrome.
-- Concept/service: NEVER invent a fake SKU bottle; still use a readable vertical fall metaphor.
-- igHandle: short brand-like handle. igCaption: punchy, ≤12 words.
+- Concept/service: NEVER invent a fake SKU bottle. Hero must show falling creative assets (posters/cards/mockups). Prefer metaphor "confetti". igCaption MUST reuse the user's headline/topic wording — do not invent a different slogan.
+- igHandle: prefer “${preferredHandle}” unless empty.
 Return STRICT JSON only:
 {"metaphorId":"...","category":"fnb|beauty|fashion|jewelry|electronics|wellness|home|general|concept","metaphorLabel":"...","crossingDescription":"...","characterBeat":"...","landingDescription":"...","igHandle":"...","igCaption":"...","reason":"..."}`;
 
@@ -539,6 +589,8 @@ Return STRICT JSON only:
     headline: input.headline ?? "",
     subline: input.subline ?? "",
     business: input.business ?? "",
+    brandName: input.brandName ?? "",
+    preferredIgHandle: preferredHandle,
     locale: input.locale ?? "en",
   });
 
@@ -617,66 +669,63 @@ export function buildSocialDripStillPrompt(input: {
   conceptMode?: boolean;
   aspectRatio?: string;
   frame: "start" | "end";
+  /** 1-based fal IMAGE index for Brand kit logo (avatar lock). */
+  brandLogoImageIndex?: number;
 }): string {
   const aspect =
     input.aspectRatio === "4:5" || input.aspectRatio === "1:1"
       ? input.aspectRatio
       : "9:16";
   const hero = input.conceptMode
-    ? `CONCEPT hero (top band): service/idea scene for “${input.product}” — no fake product bottle, no packshot SKU. Leave a clear pour origin at top-center.`
-    : `PRODUCT hero (top band): photoreal “${input.product}” as the clear hero (honor IMAGE 1 pixels when attached). Pour origin = product mouth / dropper tip / top center — aligned to vertical midline.`;
+    ? joinParts(
+        `TOP: concept scene for “${input.product}” — visualize the SERVICE as falling creative assets (ad posters / carousel slides / phone mockups / color cards), NOT an empty light beam, NOT a fake product bottle.`,
+        `Paint the user headline exactly once on the top scene in large clean type: “${input.plan.igCaption || input.product}”. Do not invent a different slogan.`,
+      )
+    : `TOP: photoreal “${input.product}” (keep IMAGE 1 identity). Liquid/fall comes FROM the product itself — do not invent an extra squeeze bottle or pitcher unless the product is that bottle.`;
+
+  const logoIdx = input.brandLogoImageIndex;
+  const avatarLock =
+    typeof logoIdx === "number" && logoIdx >= 1
+      ? `Avatar = IMAGE ${logoIdx} brand logo cropped in a circle (exact mark). Do not invent a different logo.`
+      : `Avatar = plain grey/beige circle only. Do not invent a letter-A or fake brand mark.`;
 
   const chrome = joinParts(
-    "MIDDLE ~18%: fake Instagram chrome as a WHITE horizontal card (exact UI, sharp, not garbled):",
-    `circular avatar, verified name “${input.plan.igHandle}”, heart / comment / share / bookmark icons in a row, caption “${input.plan.igCaption}”.`,
-    "This chrome is a PHYSICAL GATE the pour must cross OVER (in front of / across the icons), not a soft glow behind it.",
+    "MIDDLE: one thin white Instagram bar (icons sharp, not garbled):",
+    avatarLock,
+    `handle “${input.plan.igHandle}” + verified badge, heart/comment/share/bookmark, caption “${input.plan.igCaption}”.`,
+    "The fall must go IN FRONT OF this bar (covering the icon row). Not behind the card. Not disappearing then reappearing.",
   );
 
   const character = joinParts(
-    "BOTTOM ~40%: clean light panel with visible FLOOR surface — open space above the character.",
+    "BOTTOM: white floor panel.",
     SOCIAL_DRIP_CARTOON_CHARACTER_LOCK,
-    `Character pose / beat: ${input.plan.characterBeat}`,
-    "Character catch point MUST sit on the SAME vertical centerline as the product pour origin.",
+    input.plan.characterBeat,
   );
 
-  const crossingPhysics = joinParts(
-    `Crossing metaphor (${input.plan.metaphorId}): ${input.plan.crossingDescription}`,
-    `Landing: ${input.plan.landingDescription}`,
-    "FORBIDDEN: wispy light ribbons looping the bottle, decorative lens flares, side swirls that never cross the chrome, two disconnected stickers.",
-    input.plan.metaphorId !== "pour"
-      ? "FORBIDDEN for this metaphor: open-mouth drinking / ingestion gag (that is F&B pour only)."
-      : false,
-  );
+  const noAnnotations =
+    "Finished ad only — never paint TOP/MIDDLE/BOTTOM, percentages, arrows, or layout labels on the image. No phone status bar.";
 
   if (input.frame === "start") {
     return joinParts(
-      `Design a single ${aspect} SOCIAL-DRIP (三分屏) START keyframe — ONE image, THREE stacked bands on a dark subtle grid backdrop.`,
-      "TOP ~42% / MIDDLE ~18% / BOTTOM ~40%. Fixed front orthographic camera.",
+      `One ${aspect} viral 三分屏 START still on a dark subtle grid. Three stacked bands, no labels.`,
       hero,
       chrome,
       character,
-      crossingPhysics,
-      "START state (incomplete crossing — required for H3 motion):",
-      "- The crossing has JUST begun at the hero origin (1–2 drops / first particles / short tongue) — not a finished column.",
-      "- The stream has NOT reached the middle Instagram chrome yet.",
-      "- Bottom floor is still clean. Character waits under the future fall path.",
-      "- Do NOT draw a finished ribbon connecting top→bottom already.",
-      "No phone status bar, no extra watermarks, no real Instagram app chrome outside our fake middle card.",
+      `Crossing: ${input.plan.crossingDescription}`,
+      "START: only the first drip/particles leaving the hero — stream has NOT reached the Instagram bar yet. Floor dry. Doodle waiting.",
+      noAnnotations,
     );
   }
 
   return joinParts(
-    `Design a single ${aspect} SOCIAL-DRIP (三分屏) END keyframe — SAME layout family as the start plate (IMAGE 1 when attached).`,
-    "TOP ~42% / MIDDLE ~18% / BOTTOM ~40%. Fixed front orthographic camera. Keep IG chrome text/icons identical and sharp.",
+    `One ${aspect} viral 三分屏 END still. Same layout as start (IMAGE 1 when attached). Same chrome pixels.`,
     hero,
     chrome,
     character,
-    crossingPhysics,
-    "END state (completed crossing — required payoff):",
-    "- ONE continuous readable fall from the hero origin, OVER the middle chrome (crossing the icon row), down into the bottom panel.",
-    `- Landing matches metaphor: ${input.plan.landingDescription}`,
-    "- Same product identity and same chrome pixels as start — only the crossing progress + landing change.",
-    "No phone status bar, no extra watermarks.",
+    `Crossing: ${input.plan.crossingDescription}`,
+    `Landing: ${input.plan.landingDescription}`,
+    "END: one continuous thick column from product, OVER the Instagram icons, into the doodle landing. No extra props.",
+    noAnnotations,
   );
 }
 
@@ -691,14 +740,13 @@ export function buildSocialDripVideoPrompt(input: {
     ? `Keep the same concept scene identity for “${input.product}”.`
     : `Keep the same product identity for “${input.product}” (IMAGE 1 → IMAGE 2).`;
   return joinParts(
-    `Animate a viral social-drip 三分屏 clip (~${input.durationSec}s): FIXED camera, Instagram chrome + all text/icons must stay sharp and STABLE (no warp, no new letters).`,
+    `Animate ~${input.durationSec}s viral 三分屏. Fixed camera. Keep IG text/icons sharp.`,
     hero,
-    `ONLY animate the crossing: ${input.plan.crossingDescription}`,
-    `Landing payoff: ${input.plan.landingDescription}`,
-    `Character: ${input.plan.characterBeat}`,
-    "Keep the bottom character as the SAME cute polished cartoon — do not morph into a photoreal person, do not invent furniture over their face, do not degrade into a rough stick figure.",
-    "Image 1 = START (crossing just beginning, not through chrome). Image 2 = END (continuous fall over chrome into the metaphor landing).",
-    "Motion must read as gravity fall along one vertical centerline — NOT a glowing ribbon shimmering in place.",
-    "Do not move the product off-center. Do not invent a second location. No hard cut. No busy TVC.",
+    `Animate ONLY the fall: ${input.plan.crossingDescription}`,
+    `Payoff: ${input.plan.landingDescription}`,
+    `Keep the same line-art person: ${input.plan.characterBeat}`,
+    "Beat: drip leaves product → crosses IN FRONT of the IG bar → lands on the doodle. Do not hide behind the card. Do not skip the middle.",
+    "Image 1 = start (drip just begun). Image 2 = end (column over chrome into landing).",
+    "No layout labels. No extra squeeze bottle. No morphing the doodle into photoreal or a product mascot.",
   );
 }

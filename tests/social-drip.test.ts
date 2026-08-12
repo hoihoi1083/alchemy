@@ -73,7 +73,7 @@ describe("social-drip metaphors", () => {
     assert.match(fixed.landingDescription, /mouth/i);
   });
 
-  it("start/end stills require cute polished cartoon, forbid photoreal", () => {
+  it("start/end stills match viral 三分屏 line-art recipe", () => {
     const plan = heuristicSocialDripPlan({
       product: "vitamin C serum",
       pick: "glow",
@@ -88,11 +88,55 @@ describe("social-drip metaphors", () => {
       product: "vitamin C serum",
       frame: "end",
     });
-    assert.match(start, /THREE stacked bands/i);
-    assert.match(start, /polished cute cartoon/i);
-    assert.match(start, /photoreal photo of a real person/i);
-    assert.match(end, /drinking \/ ingestion/i);
-    assert.match(end, /Landing matches metaphor/i);
+    assert.match(start, /viral 三分屏 START/i);
+    assert.match(start, /LINE-ART person/i);
+    assert.match(start, /lying on their BACK/i);
+    assert.match(end, /OVER the Instagram icons/i);
+  });
+
+  it("locks brand logo avatar and uses brand handle", () => {
+    const plan = heuristicSocialDripPlan({
+      product: "cheeseburger",
+      brandName: "Alchemy AI Lab",
+      pick: "pour",
+    });
+    assert.equal(plan.igHandle, "alchemy_ai_lab");
+    const still = buildSocialDripStillPrompt({
+      plan,
+      product: "cheeseburger",
+      frame: "start",
+      brandLogoImageIndex: 2,
+    });
+    assert.match(still, /IMAGE 2 brand logo/i);
+    assert.match(still, /LINE-ART person/i);
+    assert.doesNotMatch(still, /漢堡/);
+  });
+
+  it("does not use product name as IG handle", () => {
+    const plan = heuristicSocialDripPlan({
+      product: "漢堡",
+      business: "Alchemy AI Lab",
+      pick: "pour",
+    });
+    assert.equal(plan.igHandle, "alchemy_ai_lab");
+    assert.notEqual(plan.igHandle, "漢堡");
+  });
+
+  it("still prompts never paint layout percentage labels", () => {
+    const plan = heuristicSocialDripPlan({
+      conceptIdea: "ads made easy",
+      conceptMode: true,
+      pick: "confetti",
+    });
+    const still = buildSocialDripStillPrompt({
+      plan,
+      product: "ads made easy",
+      conceptMode: true,
+      frame: "start",
+    });
+    assert.match(still, /never paint TOP\/MIDDLE\/BOTTOM/i);
+    assert.doesNotMatch(still, /TOP ~42%/);
+    assert.doesNotMatch(still, /MIDDLE ~18%/);
   });
 
   it("concept mode avoids inventing SKU language in still prompt", () => {
@@ -107,16 +151,41 @@ describe("social-drip metaphors", () => {
       conceptMode: true,
       frame: "start",
     });
-    assert.match(still, /no fake product bottle/i);
-    assert.match(still, /THREE stacked bands/i);
+    assert.match(still, /NOT a fake product bottle/i);
+    assert.match(still, /viral 三分屏 START/i);
+    assert.match(still, /Paint the user headline exactly/i);
     const video = buildSocialDripVideoPrompt({
       plan,
       product: "can't sleep over prompting",
       durationSec: 6,
       conceptMode: true,
     });
-    assert.match(video, /Landing payoff/i);
-    assert.match(video, /cute polished cartoon/i);
+    assert.match(video, /Payoff/i);
+    assert.match(video, /line-art person/i);
+    assert.match(video, /IN FRONT of the IG bar/i);
+  });
+
+  it("concept defaults to confetti and flags abstract slogans", () => {
+    const plan = heuristicSocialDripPlan({
+      conceptIdea: "廣告素材立即到手",
+      conceptMode: true,
+      pick: "auto",
+    });
+    assert.equal(plan.metaphorId, "confetti");
+    const fitOk = assessSocialDripFit({
+      conceptIdea: "廣告素材立即到手",
+      conceptMode: true,
+      pick: "auto",
+    });
+    assert.equal(fitOk.level, "good");
+    assert.ok(fitOk.reasons.includes("good_concept_falling"));
+    const fitWeak = assessSocialDripFit({
+      conceptIdea: "品牌成長",
+      conceptMode: true,
+      pick: "auto",
+    });
+    assert.equal(fitWeak.level, "caution");
+    assert.ok(fitWeak.reasons.includes("caution_concept_abstract"));
   });
 
   it("parses pick safely", () => {

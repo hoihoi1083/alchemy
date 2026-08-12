@@ -21,6 +21,7 @@ export async function POST(request: Request) {
     headline?: string;
     subline?: string;
     business?: string;
+    brandName?: string;
     promotionMode?: "physical" | "concept";
     pick?: string;
     locale?: string;
@@ -48,6 +49,7 @@ export async function POST(request: Request) {
       headline: body.headline,
       subline: body.subline,
       business: body.business,
+      brandName: body.brandName || body.business,
       conceptMode,
       pick: parseSocialDripMetaphorPick(body.pick),
       locale: body.locale,

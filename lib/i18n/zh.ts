@@ -2238,9 +2238,13 @@ export const zh = {
 			good_tech: "電子產品用能量束落到塗鴉。",
 			good_wellness: "養生用蒸汽或花瓣落到塗鴉。",
 			good_general: "請揀同產品匹配嘅下落隱喻。",
+			good_concept_falling:
+				"概念可以用——要睇到素材／海報落下，唔好淨係抽象光柱。",
 			caution_mouth_nonfood: "張嘴接汁係餐飲 gag — 非食品會怪。",
 			caution_beauty_pour: "精華倒入口似飲精華。請用「精華滴」。",
-			caution_concept_pour: "概念主題少用張嘴接汁 — 建議花瓣／光束／蒸汽。",
+			caution_concept_pour: "概念主題少用張嘴接汁 — 建議彩紙／花瓣／光束。",
+			caution_concept_abstract:
+				"呢個概念太抽象。三分屏要見到素材落下，或者改用動態海報。",
 			caution_no_product_photo: "請加產品相，下落先有清晰起點。",
 			mismatch_no_falling: "呢個產品冇自然下落故事 — 試圖片→影片。",
 			mismatch_wrong_metaphor: "呢個穿越動作同產品品類唔夾。",
