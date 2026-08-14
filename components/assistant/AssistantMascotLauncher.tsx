@@ -102,12 +102,21 @@ export function AssistantMascotLauncher({
 					viewBox="0 0 52 52"
 					style={{ display: "block" }}
 				>
-					{/* Round body */}
-					<circle cx="25" cy="25" r="23" fill="#0b0818" />
-					{/* Short tip at bottom-right — like the green chat FAB reference */}
+					{/* Round body + short tip with brand purple outline */}
+					<circle
+						cx="25"
+						cy="25"
+						r="23"
+						fill="#0b0818"
+						stroke="#8B5CF6"
+						strokeWidth="2"
+					/>
 					<path
 						d="M39 41 L46 49.5 L35.5 44.5 Z"
 						fill="#0b0818"
+						stroke="#8B5CF6"
+						strokeWidth="2"
+						strokeLinejoin="round"
 					/>
 				</svg>
 
