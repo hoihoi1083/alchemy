@@ -132,14 +132,14 @@ Three workflows in studio: image-only (posts), video-only (clip from upload or t
       "點數",
       "方案",
     ],
-    en: `Tokens ≈ pay-per-use. Free signup grant is 1000 tokens once (not a monthly refill).
+    en: `Tokens ≈ pay-per-use. Free signup grant is 500 tokens once (not a monthly refill).
 Rough costs: 1 still ≈ 25 tokens; 4 storyboard stills ≈ 104; 8s 480p video ≈ 336; 6s motion (billed 720p H3 table) ≈ 570; 12s MiniMax H3 ≈ 1140; Kling stitch 4×5s ≈ 440.
-Free 1000 covers about 1 image + 1 short 480p clip, or a motion poster (~595), or TVC stills + Kling stitch — NOT 12s H3 (1140 > 1000).
-Plans (typical): Free 1000 signup / 480p; Standard 3000/mo 720p; Pro 8000/mo 1080p; Master 16000/mo + Pro canvas. Paid can top up 1000 tokens. See /pricing. Estimates only.`,
-    zh: `Tokens ≈ 按次計費。免費註冊一次送 1000（唔係每月自動再送）。
+Free 500 covers about 1 image + 1 short 480p clip — NOT 12s H3 (1140 > 500). Motion poster (~595) and some Kling paths may need a paid plan.
+Plans (typical): Free 500 signup / 480p; Standard 3000/mo 720p; Pro 8000/mo 1080p; Master 16000/mo + Pro canvas. Paid can top up 1000 tokens. See /pricing. Estimates only.`,
+    zh: `Tokens ≈ 按次計費。免費註冊一次送 500（唔係每月自動再送）。
 大約：1 張靜圖 ≈ 25；4 格分鏡 ≈ 104；8 秒 480p ≈ 336；6 秒動態海報（按 720p H3 表）≈ 570；12 秒 MiniMax H3 ≈ 1140；Kling 4×5 秒拼接 ≈ 440。
-1000 夠大概 1 圖 + 1 條短 480p，或一張動態海報（約 595），或 TVC 靜幀 + Kling 拼接 — 唔夠 12 秒 H3（1140 > 1000）。
-方案大約：Free 註冊 1000／480p；Standard 每月 3000／720p；Pro 8000／1080p；Master 16000 + Pro 畫布。付費可加購 1000 tokens。詳情 /pricing。數字係估算。`,
+500 夠大概 1 圖 + 1 條短 480p — 唔夠 12 秒 H3（1140 > 500）。動態海報（約 595）同部分 Kling 路徑可能要付費方案。
+方案大約：Free 註冊 500／480p；Standard 每月 3000／720p；Pro 8000／1080p；Master 16000 + Pro 畫布。付費可加購 1000 tokens。詳情 /pricing。數字係估算。`,
   },
   {
     id: "video-engines",

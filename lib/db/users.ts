@@ -1,8 +1,11 @@
 import { FREE_SIGNUP_GRANT_TOKENS, normalizeUserPlan } from "@/lib/billing/plans";
 import { ensureSignupGrant } from "@/lib/billing/ledger";
 import {
+  emailAlreadyClaimedSignupGrant,
+  markSignupGrantClaimedWithoutCredit,
   mergeEmailDuplicatesInto,
   normalizeEmail,
+  tryReserveSignupGrantForEmail,
 } from "@/lib/db/email-identity";
 import { sendWelcomeEmail } from "@/lib/email/lifecycle";
 import { getDb } from "@/lib/mongodb";
@@ -72,8 +75,22 @@ export async function ensureUser(input: {
     );
   }
 
-  // One-time Free pack (ledger row written inside ensureSignupGrant).
-  const signupBalance = await ensureSignupGrant(input.clerkId);
+  // One-time Free pack only — never again for the same email / clerkId.
+  let signupBalance: number | null = null;
+  const alreadyClaimed = await emailAlreadyClaimedSignupGrant(emailNormalized);
+  const reserved = alreadyClaimed
+    ? false
+    : await tryReserveSignupGrantForEmail(emailNormalized, input.clerkId);
+  if (alreadyClaimed || !reserved) {
+    await markSignupGrantClaimedWithoutCredit(input.clerkId);
+  } else {
+    signupBalance = await ensureSignupGrant(input.clerkId);
+    // If clerk-level grant no-op'd (e.g. balance already > 0), keep the email
+    // claim so a later zero-balance re-login cannot farm another pack.
+    if (signupBalance == null && emailNormalized) {
+      await markSignupGrantClaimedWithoutCredit(input.clerkId);
+    }
+  }
   if (signupBalance != null && input.email) {
     await sendWelcomeEmail({
       to: input.email,

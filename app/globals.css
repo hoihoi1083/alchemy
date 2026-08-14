@@ -205,6 +205,22 @@ footer.site-footer a.site-footer-logo:focus {
   }
 }
 
+/* Header Canvas flyout — layout/spacing inlined in NavHoverMenu.tsx */
+.nav-hover-flyout-panel {
+  box-sizing: border-box;
+}
+.nav-hover-flyout__item {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
 /* —— How it works: live UI motion on top of step stills (all 4 cards) —— */
 @keyframes landing-how-ken {
   0%,

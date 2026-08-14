@@ -5,9 +5,13 @@
  * Derived from fal pass-through (Nano Banana ~$0.08/1K image;
  * Seedance pixel formula / published $/s; HeyGen Avatar ~$0.10/s) then rounded for UI.
  *
- * Free grant (1,000) covers 1× image + 1× 8s 480p video with buffer.
+ * Free signup grant covers 1× image + 1× 8s 480p video with buffer.
  */
-import { PLAN_DEFINITIONS, TOKEN_COGS_USD_PER_1000 } from "@/lib/billing/plans";
+import {
+  FREE_SIGNUP_GRANT_TOKENS,
+  PLAN_DEFINITIONS,
+  TOKEN_COGS_USD_PER_1000,
+} from "@/lib/billing/plans";
 import type { UserPlan } from "@/lib/billing/plans";
 
 export const USD_PER_TOKEN = TOKEN_COGS_USD_PER_1000 / 1000;
@@ -139,8 +143,8 @@ export const FREE_PACK = {
   image: TOKEN_COST.image, // 25
   video8s480p: VIDEO_TOKENS_PER_SEC["480p"] * 8, // 336
   total: TOKEN_COST.image + VIDEO_TOKENS_PER_SEC["480p"] * 8, // 361
-  grant: 1000,
-  buffer: 1000 - (TOKEN_COST.image + VIDEO_TOKENS_PER_SEC["480p"] * 8), // 639
+  grant: FREE_SIGNUP_GRANT_TOKENS,
+  buffer: FREE_SIGNUP_GRANT_TOKENS - (TOKEN_COST.image + VIDEO_TOKENS_PER_SEC["480p"] * 8),
 } as const;
 
 export function estimateTeachingCarouselTokens(slideCount: number): number {

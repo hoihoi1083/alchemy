@@ -35,28 +35,109 @@ export function pickCanonicalUser(a: DbUser, b: DbUser): DbUser {
   return aCreated <= bCreated ? a : b;
 }
 
+function emailMatchFilter(emailNormalized: string) {
+  const escaped = emailNormalized.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return {
+    $or: [
+      { emailNormalized },
+      { email: { $regex: `^${escaped}$`, $options: "i" } },
+    ],
+  };
+}
+
 export async function findActiveUsersByEmail(
   emailNormalized: string,
 ): Promise<DbUser[]> {
   if (!isMongoConfigured() || !emailNormalized) return [];
   const db = await getDb();
-  const escaped = emailNormalized.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   return db
     .collection<DbUser>("users")
     .find({
       $and: [
-        {
-          $or: [
-            { emailNormalized },
-            { email: { $regex: `^${escaped}$`, $options: "i" } },
-          ],
-        },
+        emailMatchFilter(emailNormalized),
         {
           $or: [{ supersededBy: null }, { supersededBy: { $exists: false } }],
         },
       ],
     })
     .toArray();
+}
+
+/**
+ * True if this email already received the one-time Free signup pack
+ * (any clerkId, including superseded duplicates). Prevents re-signup farming.
+ */
+export async function emailAlreadyClaimedSignupGrant(
+  emailNormalized: string | null,
+): Promise<boolean> {
+  if (!isMongoConfigured() || !emailNormalized) return false;
+  const db = await getDb();
+  const claim = await db.collection("signup_grant_claims").findOne({
+    emailNormalized,
+  });
+  if (claim) return true;
+  const users = await db
+    .collection<DbUser>("users")
+    .find(emailMatchFilter(emailNormalized))
+    .project({ clerkId: 1, signupGrantAt: 1 })
+    .toArray();
+  if (users.some((u) => Boolean(u.signupGrantAt))) return true;
+  const clerkIds = users.map((u) => u.clerkId).filter(Boolean);
+  if (clerkIds.length === 0) return false;
+  const prior = await db.collection("credit_transactions").findOne({
+    clerkId: { $in: clerkIds },
+    reason: "signup_grant",
+  });
+  return Boolean(prior);
+}
+
+/**
+ * Atomically reserve the Free signup pack for this email.
+ * Returns true if this clerkId may credit tokens; false if already claimed.
+ * Email-less users skip the email lock (clerkId signupGrantAt still applies).
+ */
+export async function tryReserveSignupGrantForEmail(
+  emailNormalized: string | null,
+  clerkId: string,
+): Promise<boolean> {
+  if (!emailNormalized) return true;
+  if (!isMongoConfigured() || !clerkId.trim()) return false;
+  const db = await getDb();
+  try {
+    await db.collection("signup_grant_claims").insertOne({
+      emailNormalized,
+      clerkId,
+      createdAt: new Date(),
+    });
+    return true;
+  } catch (err) {
+    const code =
+      err && typeof err === "object" && "code" in err
+        ? Number((err as { code?: unknown }).code)
+        : 0;
+    // Duplicate key — another clerkId already claimed this email.
+    if (code === 11000) return false;
+    throw err;
+  }
+}
+
+/**
+ * Stamp signupGrantAt without crediting — used when this email already claimed
+ * the free pack under a prior clerkId.
+ */
+export async function markSignupGrantClaimedWithoutCredit(
+  clerkId: string,
+): Promise<void> {
+  if (!isMongoConfigured() || !clerkId.trim()) return;
+  const db = await getDb();
+  const now = new Date();
+  await db.collection<DbUser>("users").updateOne(
+    {
+      clerkId,
+      $or: [{ signupGrantAt: { $exists: false } }, { signupGrantAt: null }],
+    },
+    { $set: { signupGrantAt: now, updatedAt: now } },
+  );
 }
 
 /**
@@ -127,6 +208,17 @@ export async function mergeEmailDuplicatesInto(opts: {
       );
     }
 
+    // Carry one-time Free pack flag so a new clerkId cannot re-claim signup tokens.
+    if (other.signupGrantAt && !survivor.signupGrantAt) {
+      await db.collection<DbUser>("users").updateOne(
+        {
+          clerkId: opts.clerkId,
+          $or: [{ signupGrantAt: { $exists: false } }, { signupGrantAt: null }],
+        },
+        { $set: { signupGrantAt: other.signupGrantAt, updatedAt: now } },
+      );
+    }
+
     if (donorBal > 0) {
       try {
         await grantTokens(opts.clerkId, donorBal, "admin_adjust", {
@@ -174,6 +266,7 @@ export async function mergeEmailDuplicatesInto(opts: {
       from: other.clerkId,
       tookBilling: takeBilling,
       tokensMoved: donorBal,
+      signupGrantCarried: Boolean(other.signupGrantAt),
     });
   }
 

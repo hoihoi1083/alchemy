@@ -17,6 +17,7 @@ export const zhTw = {
     tokensBalanceTitle: "你的點數餘額 — 查看方案與加購",
     accountMenu: "帳戶與帳單",
     libraryMenu: "我的作品庫",
+    brandKitMenu: "品牌套件",
   },
   account: {
     title: "帳戶與帳單",
@@ -202,8 +203,15 @@ export const zhTw = {
     navUseCases: "使用場景",
     navPricing: "收費",
     navEditImage: "改圖",
+    navEditImageHint: "加字、Logo、微調圖片",
     navCaptions: "字幕",
-    navPro: "Pro",
+    navCaptionsHint: "MP4 燒字幕、BGM、口播",
+    navCanva: "畫布",
+    canvaHubBadge: "後製工具",
+    canvaHubTitle: "畫布工具",
+    canvaHubSubtitle: "在畫布改圖，或為 MP4 燒錄字幕與音軌。",
+    navProCanvas: "Pro 畫布（需 Master 方案）",
+    navProCanvasUnlocked: "Pro 畫布",
     heroTrust: ["不用空白 prompt", "先分鏡再出片", "產品與概念都行", "AI 市場研究"],
     heroImageAlt: "產品相和 AI 風格分析",
     heroMascotAlt: "Alchemy 可愛燒瓶夥伴（護目鏡）— 移動鼠標就會看不同方向",
@@ -516,6 +524,10 @@ export const zhTw = {
         a: "會。每次 AI 重新產生（圖片、鏡頭或影片）都是新的模型呼叫，會再次消耗點數。",
       },
       {
+        q: "新註冊送多少免費點數？",
+        a: "新帳戶一次贈送 500 點數（不會每月自動再送），大約夠 1 張圖 + 1 條短 480p 影片。詳情見定價頁。",
+      },
+      {
         q: "一定要上傳參考影片嗎？",
         a: "不必。參考影片為選填，僅在你想參考某支廣告的鏡頭節奏或風格時再上傳。",
       },
@@ -572,7 +584,7 @@ export const zhTw = {
 
     planFeaturesCustom: ["Custom 點數 volume", "Custom limits", "Dedicated support"],
 
-    planFeaturesFree: ["Guided image & video paths", "1,000 signup 點數", "Library downloads"],
+    planFeaturesFree: ["Guided image & video paths", "500 signup 點數", "Library downloads"],
 
     planFeaturesMaster: ["16,000 點數 / month", "Pro canvas", "Priority support", "2K images"],
 
@@ -653,6 +665,7 @@ export const zhTw = {
     perMonth: "/月",
     billedYearly: "按年收費",
     tokensPerMonth: "點數 / 月",
+    tokensOnce: "點數 · 新註冊送一次",
     tokensIncluded: "點數",
     capacityImagesFeature: "約 {n} 張單圖",
     capacityStoryboardsFeature: "約 {n} 條分鏡影片（約 {sec} 秒）",
@@ -673,6 +686,7 @@ export const zhTw = {
     checkoutRedirecting: "正在前往 Stripe…",
     checkoutSuccess: "付款成功。點數 幾秒內到賬 — 如未更新請刷新。",
     checkoutCanceled: "已取消結賬，未收費。",
+    proCanvasUpgradeHint: "Pro 畫布包含在 Master 方案。請選擇下方 Master 方案以解鎖節點畫布。",
     checkoutError: "無法開始結賬。請重試，或聯繫支持。",
     paymentIncomplete:
       "付款未成功。請在「管理帳單」更新信用卡後再試升級。你原來的計劃沒有更改。",
@@ -706,6 +720,10 @@ export const zhTw = {
       {
         q: "點數怎麼計算？",
         body: "點數用來計量工作室中需計費的 AI 用量。任務越複雜（更長影片、更高解析度、分鏡組）消耗越多。每次付費步驟產生前都會顯示預計消耗。",
+      },
+      {
+        q: "新註冊送多少免費點數？",
+        body: "新帳戶一次贈送 500 點數，不會每月自動再送。大約夠 1 張圖 + 1 條短 480p 影片。需要更多請升級或加購。",
       },
       {
         q: "點數用在哪些地方？",
@@ -762,7 +780,7 @@ export const zhTw = {
         name: "免費",
         description: "試用完整引導流程",
         features: [
-          "1,000 點數（約 1 張圖 + 1 條 480p 短影片）",
+          "500 點數（約 1 張圖 + 1 條 480p 短影片）",
           "引導精靈 + 模板",
           "影片上限 480p",
           "平臺研究",
@@ -831,7 +849,7 @@ export const zhTw = {
       },
     },
     comparisonRows: [
-      { feature: "每月 點數", free: "1,000", standard: "3,000", pro: "8,000", master: "16,000" },
+      { feature: "點數", free: "500 · 新註冊送一次", standard: "3,000 / 月", pro: "8,000 / 月", master: "16,000 / 月" },
       { feature: "圖片最高分辨率", free: "1K", standard: "1K", pro: "1K", master: "2K" },
       { feature: "影片最高分辨率", free: "480p", standard: "720p", pro: "1080p", master: "1080p" },
       { feature: "平臺研究 / 合併流程 / 故事板", free: "✓", standard: "✓", pro: "✓", master: "✓" },

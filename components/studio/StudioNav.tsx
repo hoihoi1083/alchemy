@@ -5,6 +5,8 @@ import { useState, type ReactNode } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { AuthNav } from "@/components/AuthNav";
 import { LanguageToggle } from "@/components/LanguageToggle";
+import { NavHoverMenu } from "@/components/nav/NavHoverMenu";
+import { ProNavLink } from "@/components/nav/ProNavLink";
 import { useLocale } from "@/components/LocaleProvider";
 import {
   PRODUCT_LOGO_ALT,
@@ -21,6 +23,21 @@ type StudioNavProps = {
   variant?: "light" | "dark";
 };
 
+const CANVA_ITEMS = [
+  {
+    href: "/edit-image",
+    labelKey: "navEditImage" as const,
+    descKey: "navEditImageHint" as const,
+    icon: "edit" as const,
+  },
+  {
+    href: "/captions",
+    labelKey: "navCaptions" as const,
+    descKey: "navCaptionsHint" as const,
+    icon: "captions" as const,
+  },
+] as const;
+
 /**
  * Focused studio chrome — logo + core tools + tokens/language/user.
  * Avoids full marketing LandingNav links that pull attention off the wizard.
@@ -28,16 +45,26 @@ type StudioNavProps = {
 export function StudioNav({ trailing, variant = "light" }: StudioNavProps) {
   const { m } = useLocale();
   const L = m.landing;
-  const H = m.header;
   const { isSignedIn } = useAuth();
   const [open, setOpen] = useState(false);
   const dark = variant === "dark";
 
-  const tools = [
-    { href: "/#templates", label: L.navTemplates },
-    { href: "/edit-image", label: L.navEditImage },
-    { href: "/captions", label: L.navCaptions },
-  ] as const;
+  const tools = [{ href: "/#templates", label: L.navTemplates }] as const;
+
+  const canvaItems = CANVA_ITEMS.map((item) => ({
+    href: item.href,
+    label: L[item.labelKey],
+    description: L[item.descKey],
+    icon: item.icon,
+  }));
+
+  const linkClass = dark
+    ? "whitespace-nowrap rounded-lg px-2 py-1.5 text-[12px] font-medium text-slate-300 hover:bg-white/10 hover:text-white xl:text-[13px]"
+    : "whitespace-nowrap rounded-lg px-2 py-1.5 text-[12px] font-medium text-slate-600 hover:bg-violet-50 hover:text-violet-700 xl:text-[13px]";
+
+  const pricingClass = dark
+    ? "whitespace-nowrap rounded-lg px-2 py-1.5 text-[12px] font-medium text-violet-300 hover:bg-white/10 hover:text-violet-200 xl:text-[13px]"
+    : "whitespace-nowrap rounded-lg px-2 py-1.5 text-[12px] font-medium text-violet-700 hover:bg-violet-50 xl:text-[13px]";
 
   return (
     <header
@@ -73,28 +100,21 @@ export function StudioNav({ trailing, variant = "light" }: StudioNavProps) {
 
         <nav className="ml-2 hidden min-w-0 items-center gap-1 lg:flex xl:gap-2">
           {tools.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={
-                dark
-                  ? "whitespace-nowrap rounded-lg px-2 py-1.5 text-[12px] font-medium text-slate-300 hover:bg-white/10 hover:text-white xl:text-[13px]"
-                  : "whitespace-nowrap rounded-lg px-2 py-1.5 text-[12px] font-medium text-slate-600 hover:bg-violet-50 hover:text-violet-700 xl:text-[13px]"
-              }
-            >
+            <Link key={item.href} href={item.href} className={linkClass}>
               {item.label}
             </Link>
           ))}
-          <Link
-            href="/pricing"
-            className={
-              dark
-                ? "whitespace-nowrap rounded-lg px-2 py-1.5 text-[12px] font-medium text-violet-300 hover:bg-white/10 hover:text-violet-200 xl:text-[13px]"
-                : "whitespace-nowrap rounded-lg px-2 py-1.5 text-[12px] font-medium text-violet-700 hover:bg-violet-50 xl:text-[13px]"
-            }
-          >
+          <NavHoverMenu
+            label={L.navCanva}
+            href="/#tools"
+            items={canvaItems}
+            variant={variant}
+            triggerClassName={linkClass}
+          />
+          <Link href="/pricing" className={pricingClass}>
             {L.navResources}
           </Link>
+          <ProNavLink className={linkClass} />
         </nav>
 
         <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
@@ -155,6 +175,31 @@ export function StudioNav({ trailing, variant = "light" }: StudioNavProps) {
               </Link>
             ))}
             <Link
+              href="/#tools"
+              className={
+                dark
+                  ? "rounded-lg px-3 py-2 text-sm font-semibold text-slate-100 hover:bg-white/10"
+                  : "rounded-lg px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-violet-50"
+              }
+              onClick={() => setOpen(false)}
+            >
+              {L.navCanva}
+            </Link>
+            {CANVA_ITEMS.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={
+                  dark
+                    ? "rounded-lg py-2 pl-7 pr-3 text-sm font-medium text-slate-300 hover:bg-white/10"
+                    : "rounded-lg py-2 pl-7 pr-3 text-sm font-medium text-slate-600 hover:bg-violet-50"
+                }
+                onClick={() => setOpen(false)}
+              >
+                {L[item.labelKey]}
+              </Link>
+            ))}
+            <Link
               href="/pricing"
               className={
                 dark
@@ -165,17 +210,14 @@ export function StudioNav({ trailing, variant = "light" }: StudioNavProps) {
             >
               {L.navResources}
             </Link>
-            <Link
-              href="/pro"
+            <ProNavLink
               className={
                 dark
                   ? "rounded-lg px-3 py-2 text-sm font-medium text-slate-200 hover:bg-white/10"
                   : "rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-violet-50"
               }
               onClick={() => setOpen(false)}
-            >
-              {H.proLink}
-            </Link>
+            />
             <div
               className={
                 dark

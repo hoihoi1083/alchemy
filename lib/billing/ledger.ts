@@ -133,7 +133,8 @@ export async function grantTokens(
 }
 
 /**
- * One-time Free pack. Idempotent via `signupGrantAt`.
+ * One-time Free pack. Idempotent via `signupGrantAt` on this clerkId.
+ * Callers must also block re-claim by email (see ensureUser + emailAlreadyClaimedSignupGrant).
  * Only grants when the user has never received a signup grant and balance is 0.
  */
 export async function ensureSignupGrant(clerkId: string): Promise<number | null> {

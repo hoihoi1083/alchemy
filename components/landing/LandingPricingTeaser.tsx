@@ -147,7 +147,7 @@ export function LandingPricingTeaser() {
 			name: P.plans.free.name,
 			blurb: P.plans.free.description,
 			priceLabel: P.freeForever,
-			tokensLabel: `${PLAN_DEFINITIONS.free.monthlyTokens.toLocaleString()} ${P.tokensPerMonth}`,
+			tokensLabel: `${PLAN_DEFINITIONS.free.monthlyTokens.toLocaleString()} ${P.tokensOnce}`,
 			capacity: capacityFor("free", P),
 			features: P.plans.free.features.slice(1),
 			cta: P.getStarted,

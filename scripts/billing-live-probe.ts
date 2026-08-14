@@ -44,8 +44,8 @@ async function main() {
     });
 
     const granted = await ensureSignupGrant(CLERK_ID);
-    if (granted !== 1000) {
-      throw new Error(`Expected signup grant 1000, got ${granted}`);
+    if (granted !== 500) {
+      throw new Error(`Expected signup grant 500, got ${granted}`);
     }
     const again = await ensureSignupGrant(CLERK_ID);
     if (again !== null) {
@@ -56,14 +56,14 @@ async function main() {
     const afterImage = await consumeTokens(CLERK_ID, TOKEN_COST.image, {
       meta: { probe: "image" },
     });
-    if (afterImage !== 1000 - TOKEN_COST.image) {
-      throw new Error(`After image expected ${1000 - TOKEN_COST.image}, got ${afterImage}`);
+    if (afterImage !== 500 - TOKEN_COST.image) {
+      throw new Error(`After image expected ${500 - TOKEN_COST.image}, got ${afterImage}`);
     }
 
     // Simulate failed job: afford check only, no consume
     await assertCanAfford(CLERK_ID, TOKEN_COST.music);
     const mid = await getUserBalance(CLERK_ID);
-    if (mid?.balance !== 1000 - TOKEN_COST.image) {
+    if (mid?.balance !== 500 - TOKEN_COST.image) {
       throw new Error("Balance changed without consume — overcharge risk");
     }
 
@@ -92,14 +92,14 @@ async function main() {
       .filter((t) => t.reason === "signup_grant")
       .reduce((s, t) => s + Number(t.delta), 0);
 
-    if (grantedSum !== 1000) throw new Error(`Grant ledger sum ${grantedSum} != 1000`);
-    if (consumed !== 1000) throw new Error(`Consume ledger sum ${consumed} != 1000`);
+    if (grantedSum !== 500) throw new Error(`Grant ledger sum ${grantedSum} != 500`);
+    if (consumed !== 500) throw new Error(`Consume ledger sum ${consumed} != 500`);
 
     const final = await getUserBalance(CLERK_ID);
     if (final?.balance !== 0) throw new Error(`Final balance ${final?.balance} != 0`);
 
     console.log("Live probe OK:");
-    console.log(`  signup grant: 1000 (once)`);
+    console.log(`  signup grant: 500 (once)`);
     console.log(`  consumed total: ${consumed}`);
     console.log(`  final balance: 0`);
     console.log(`  ledger rows: ${txs.length}`);

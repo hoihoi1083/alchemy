@@ -20,7 +20,7 @@ export default async function ProPage() {
       assertProCanvasAllowed(plan);
     } catch (err) {
       if (err instanceof PlanEntitlementError) {
-        redirect("/pricing?upgrade=master&feature=pro-canvas");
+        redirect("/pricing?plan=master&feature=pro-canvas");
       }
       throw err;
     }

@@ -17,6 +17,7 @@ export const zh = {
 		tokensBalanceTitle: "你的點數餘額 — 查看方案與加購",
 		accountMenu: "帳戶與帳單",
 		libraryMenu: "我的作品庫",
+		brandKitMenu: "品牌套件",
 	},
 	account: {
 		title: "帳戶與帳單",
@@ -227,8 +228,15 @@ export const zh = {
 		navUseCases: "使用場景",
 		navPricing: "收費",
 		navEditImage: "改圖",
+		navEditImageHint: "加字、Logo、微調圖片",
 		navCaptions: "字幕",
-		navPro: "Pro",
+		navCaptionsHint: "MP4 燒字幕、BGM、口播",
+		navCanva: "畫布",
+		canvaHubBadge: "後製工具",
+		canvaHubTitle: "畫布工具",
+		canvaHubSubtitle: "喺畫布改圖，或者幫 MP4 燒字幕同音軌。",
+		navProCanvas: "Pro 畫布（需 Master 方案）",
+		navProCanvasUnlocked: "Pro 畫布",
 		heroTrust: [
 			"唔使空白 prompt",
 			"先分鏡再出片",
@@ -599,6 +607,10 @@ export const zh = {
 				a: "會。每次 AI 重新生成（圖片、鏡頭或影片）都係新模型調用，會再用 token。",
 			},
 			{
+				q: "新註冊送幾多免費 token？",
+				a: "新帳戶一次過送 500 token（唔會每月自動再送），大概夠 1 張圖 + 1 條短 480p 片。詳情見定價頁。",
+			},
+			{
 				q: "一定要上傳參考影片？",
 				a: "唔一定。參考 MP4 係選填，只係想跟某條廣告節奏／風格先至上傳。",
 			},
@@ -655,7 +667,7 @@ export const zh = {
 
 		planFeaturesFree: [
 			"Guided image & video paths",
-			"1,000 signup tokens",
+			"500 signup tokens",
 			"Library downloads",
 		],
 
@@ -752,6 +764,7 @@ export const zh = {
 		perMonth: "/月",
 		billedYearly: "按年收費",
 		tokensPerMonth: "token / 月",
+		tokensOnce: "token · 新註冊送一次",
 		tokensIncluded: "token",
 		capacityImagesFeature: "約 {n} 張單圖",
 		capacityStoryboardsFeature: "約 {n} 條分鏡短片（約 {sec} 秒）",
@@ -772,6 +785,7 @@ export const zh = {
 		checkoutRedirecting: "正前往 Stripe…",
 		checkoutSuccess: "付款成功。Token 幾秒內會入帳 — 如未更新請重新整理。",
 		checkoutCanceled: "已取消結帳，未有收費。",
+		proCanvasUpgradeHint: "Pro 畫布包含喺 Master 方案。請揀下面 Master 方案先可以解鎖節點畫布。",
 		checkoutError: "無法開始結帳。請再試，或聯絡支援。",
 		paymentIncomplete:
 			"付款未成功。請喺「管理帳單」更新信用卡後再試升級。你原本嘅計劃未有更改。",
@@ -805,6 +819,10 @@ export const zh = {
 			{
 				q: "Token 點樣計？",
 				body: "Token 用嚟量度工作室入面要計費嘅 AI 用量。工作越複雜（更長影片、更高解像度、分鏡組）用得越多。每次付費步驟生成前都會顯示預計消耗。",
+			},
+			{
+				q: "新註冊送幾多免費 token？",
+				body: "新帳戶一次過送 500 token，唔會每月自動再送。大概夠 1 張圖 + 1 條短 480p 片。要用多啲就升級或加購。",
 			},
 			{
 				q: "Token 用喺邊啲位？",
@@ -858,7 +876,7 @@ export const zh = {
 				name: "免費",
 				description: "試用完整引導流程",
 				features: [
-					"1,000 token（約 1 張圖 + 1 條 480p 短片）",
+					"500 token（約 1 張圖 + 1 條 480p 短片）",
 					"引導精靈 + 模板",
 					"影片上限 480p",
 					"平台研究",
@@ -928,11 +946,11 @@ export const zh = {
 		},
 		comparisonRows: [
 			{
-				feature: "每月 token",
-				free: "1,000",
-				standard: "3,000",
-				pro: "8,000",
-				master: "16,000",
+				feature: "Token",
+				free: "500 · 新註冊送一次",
+				standard: "3,000 / 月",
+				pro: "8,000 / 月",
+				master: "16,000 / 月",
 			},
 			{
 				feature: "圖片最高解像度",

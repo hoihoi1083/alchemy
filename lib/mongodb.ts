@@ -86,6 +86,11 @@ async function createAllIndexes(db: Db): Promise<void> {
   await db.collection("usage_events").createIndex({ clerkId: 1, createdAt: -1 });
   await db.collection("credit_transactions").createIndex({ clerkId: 1, createdAt: -1 });
   await ensureCreditTransactionsRefIndex(db);
+  // One Free signup pack per email (blocks delete/re-signup farming).
+  await db.collection("signup_grant_claims").createIndex(
+    { emailNormalized: 1 },
+    { unique: true },
+  );
   await db.collection("connection_tests").createIndex({ createdAt: -1 });
   // Drop Stripe idempotency locks after 90 days.
   await db.collection("billing_event_locks").createIndex(

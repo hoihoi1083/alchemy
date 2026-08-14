@@ -5,6 +5,8 @@ import { useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { AuthNav } from "@/components/AuthNav";
 import { LanguageToggle } from "@/components/LanguageToggle";
+import { NavHoverMenu } from "@/components/nav/NavHoverMenu";
+import { ProNavLink } from "@/components/nav/ProNavLink";
 import { useLocale } from "@/components/LocaleProvider";
 import {
 	PRODUCT_LOGO_ALT,
@@ -17,13 +19,24 @@ import {
 const NAV = [
 	{ href: "/", key: "navHome" as const },
 	{ href: "/#how", key: "navHow" as const },
-	{ href: "/brand-kit", key: "navBrandKit" as const },
 	{ href: "/pricing", key: "navPricing" as const },
 	{ href: "/#templates", key: "navUseCases" as const },
-	{ href: "/captions", key: "navCaptions" as const },
-	{ href: "/edit-image", key: "navEditImage" as const },
-	{ href: "/pro", key: "navPro" as const },
-];
+] as const;
+
+const CANVA_ITEMS = [
+	{
+		href: "/edit-image",
+		labelKey: "navEditImage" as const,
+		descKey: "navEditImageHint" as const,
+		icon: "edit" as const,
+	},
+	{
+		href: "/captions",
+		labelKey: "navCaptions" as const,
+		descKey: "navCaptionsHint" as const,
+		icon: "captions" as const,
+	},
+] as const;
 
 /** Full-bleed bar; nav sits next to logo (no bottom rule). */
 export function LandingNav() {
@@ -31,6 +44,13 @@ export function LandingNav() {
 	const L = m.landing;
 	const { isSignedIn } = useAuth();
 	const [open, setOpen] = useState(false);
+
+	const canvaItems = CANVA_ITEMS.map((item) => ({
+		href: item.href,
+		label: L[item.labelKey],
+		description: L[item.descKey],
+		icon: item.icon,
+	}));
 
 	return (
 		<header className="sticky top-0 z-40 w-full bg-white">
@@ -55,7 +75,7 @@ export function LandingNav() {
 				</Link>
 
 				<nav className="landing-nav-links ml-8 hidden min-w-0 items-center gap-2.5 xl:ml-12 xl:gap-3.5 lg:flex">
-					{NAV.map((item) => (
+					{NAV.slice(0, 4).map((item) => (
 						<Link
 							key={item.key}
 							href={item.href}
@@ -64,10 +84,11 @@ export function LandingNav() {
 							{L[item.key]}
 						</Link>
 					))}
+					<NavHoverMenu label={L.navCanva} href="/#tools" items={canvaItems} />
+					<ProNavLink className="whitespace-nowrap text-[12px] font-medium text-slate-600 hover:text-violet-700 xl:text-[13px]" />
 				</nav>
 
 				<div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
-					{/* Full language toggle from sm+; mobile uses drawer */}
 					<div className="hidden sm:block">
 						<LanguageToggle variant="light" />
 					</div>
@@ -96,7 +117,7 @@ export function LandingNav() {
 						<LanguageToggle variant="light" />
 					</div>
 					<nav className="flex flex-col gap-1">
-						{NAV.map((item) => (
+						{NAV.slice(0, 4).map((item) => (
 							<Link
 								key={item.key}
 								href={item.href}
@@ -106,6 +127,27 @@ export function LandingNav() {
 								{L[item.key]}
 							</Link>
 						))}
+						<Link
+							href="/#tools"
+							className="rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-800 hover:bg-violet-50 hover:text-violet-700"
+							onClick={() => setOpen(false)}
+						>
+							{L.navCanva}
+						</Link>
+						{CANVA_ITEMS.map((item) => (
+							<Link
+								key={item.href}
+								href={item.href}
+								className="rounded-lg py-2 pl-7 pr-3 text-sm font-medium text-slate-600 hover:bg-violet-50 hover:text-violet-700"
+								onClick={() => setOpen(false)}
+							>
+								{L[item.labelKey]}
+							</Link>
+						))}
+						<ProNavLink
+							className="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-violet-50 hover:text-violet-700"
+							onClick={() => setOpen(false)}
+						/>
 						<Link
 							href="/start"
 							className="mt-1 rounded-full bg-violet-600 px-4 py-2.5 text-center text-sm font-semibold text-white"

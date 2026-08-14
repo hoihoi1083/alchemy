@@ -42,13 +42,13 @@ export const TOP_UP_TOKENS = 1000;
 export const TOP_UP_PRICE_USD = 10;
 
 /** Free signup grant — once only. */
-export const FREE_SIGNUP_GRANT_TOKENS = 1000;
+export const FREE_SIGNUP_GRANT_TOKENS = 500;
 
 export const PLAN_DEFINITIONS: Record<UserPlan, PlanDefinition> = {
   free: {
     id: "free",
     monthlyTokens: FREE_SIGNUP_GRANT_TOKENS,
-    grantCogsUsd: 3.3,
+    grantCogsUsd: 1.65,
     listPriceUsd: null,
     monthlyPriceUsd: 0,
     yearlyPriceUsd: null,

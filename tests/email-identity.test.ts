@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, it } from "node:test";
 import {
   normalizeEmail,
@@ -63,5 +65,25 @@ describe("email-identity", () => {
       createdAt: new Date("2026-02-01"),
     });
     assert.equal(pickCanonicalUser(a, b).clerkId, "a");
+  });
+
+  it("ensureUser blocks free signup grant re-claim by email", () => {
+    const src = readFileSync(join(process.cwd(), "lib/db/users.ts"), "utf8");
+    assert.match(src, /emailAlreadyClaimedSignupGrant/);
+    assert.match(src, /tryReserveSignupGrantForEmail/);
+    assert.match(src, /markSignupGrantClaimedWithoutCredit/);
+    assert.match(src, /ensureSignupGrant/);
+  });
+
+  it("email merge carries signupGrantAt to survivor", () => {
+    const src = readFileSync(
+      join(process.cwd(), "lib/db/email-identity.ts"),
+      "utf8",
+    );
+    assert.match(src, /signupGrantAt/);
+    assert.match(src, /emailAlreadyClaimedSignupGrant/);
+    assert.match(src, /tryReserveSignupGrantForEmail/);
+    assert.match(src, /signup_grant_claims/);
+    assert.match(src, /signupGrantCarried/);
   });
 });

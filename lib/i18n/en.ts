@@ -18,6 +18,7 @@ export const en = {
 		tokensBalanceTitle: "Your token balance — view plans & top-ups",
 		accountMenu: "Account & billing",
 		libraryMenu: "My library",
+		brandKitMenu: "Brand kit",
 	},
 	account: {
 		title: "Account & billing",
@@ -250,8 +251,16 @@ export const en = {
 		navPricing: "Pricing",
 		navResources: "Tokens",
 		navEditImage: "Edit image",
+		navEditImageHint: "Text, logo & polish on stills",
 		navCaptions: "Captions",
-		navPro: "Pro",
+		navCaptionsHint: "Subtitles, BGM & voice on MP4",
+		navCanva: "Canvas",
+		canvaHubBadge: "Post-production",
+		canvaHubTitle: "Canvas tools",
+		canvaHubSubtitle:
+			"Polish stills on the image canvas, or burn subtitles and audio onto finished video.",
+		navProCanvas: "Pro Canvas (Master plan needed)",
+		navProCanvasUnlocked: "Pro Canvas",
 		heroTrust: [
 			"No prompt needed",
 			"Storyboard first",
@@ -550,7 +559,7 @@ export const en = {
 		planBlurbCustom: "For enterprise volume",
 		planFeaturesFree: [
 			"Guided image & video paths",
-			"1,000 signup tokens",
+			"500 signup tokens",
 			"Library downloads",
 		],
 		planFeaturesStandard: [
@@ -759,6 +768,10 @@ export const en = {
 				a: "Yes. Every AI regenerate call (image, scene, or video) is a new model run and uses tokens again.",
 			},
 			{
+				q: "How many free tokens do I get?",
+				a: "New accounts get 500 tokens once (not a monthly refill) — usually enough for about 1 image plus 1 short 480p video. See Pricing for plans and top-ups.",
+			},
+			{
 				q: "Do I need to upload reference videos?",
 				a: "No. Reference MP4 is optional. Use it only when you want to mimic motion/style from an existing ad.",
 			},
@@ -795,6 +808,7 @@ export const en = {
 		perMonth: "/mo",
 		billedYearly: "Billed yearly",
 		tokensPerMonth: "tokens / month",
+		tokensOnce: "tokens · once per signup",
 		tokensIncluded: "tokens included",
 		capacityImagesFeature: "~{n} single images",
 		capacityStoryboardsFeature: "~{n} storyboard reels (~{sec}s)",
@@ -817,6 +831,8 @@ export const en = {
 		checkoutSuccess:
 			"Payment received. Tokens will appear in your balance within a few seconds — refresh if needed.",
 		checkoutCanceled: "Checkout canceled. No charge was made.",
+		proCanvasUpgradeHint:
+			"Pro Canvas is included on the Master plan. Select Master below to unlock the node workflow.",
 		checkoutError:
 			"Could not start checkout. Try again or contact support.",
 		paymentIncomplete:
@@ -853,6 +869,10 @@ export const en = {
 			{
 				q: "How do AI Tokens work?",
 				body: "Tokens measure billable AI usage in the studio. Harder jobs (longer video, higher resolution, storyboard packs) use more tokens. Each paid step shows the cost before you generate.",
+			},
+			{
+				q: "How many free tokens do new accounts get?",
+				body: "New signups receive 500 tokens once — not a monthly refill. That usually covers about 1 image plus 1 short 480p video. Upgrade or top up when you need more.",
 			},
 			{
 				q: "What are AI Tokens used for?",
@@ -906,7 +926,7 @@ export const en = {
 				name: "Free",
 				description: "Try the full guided workflow",
 				features: [
-					"1,000 tokens (~1 image + 1 short 480p video)",
+					"500 tokens (~1 image + 1 short 480p video)",
 					"Guided wizard + templates",
 					"480p video cap",
 					"Platform research",
@@ -976,11 +996,11 @@ export const en = {
 		},
 		comparisonRows: [
 			{
-				feature: "Monthly tokens",
-				free: "1,000",
-				standard: "3,000",
-				pro: "8,000",
-				master: "16,000",
+				feature: "Tokens",
+				free: "500 once / signup",
+				standard: "3,000 / mo",
+				pro: "8,000 / mo",
+				master: "16,000 / mo",
 			},
 			{
 				feature: "Max image resolution",

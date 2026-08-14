@@ -57,19 +57,19 @@ export function getStudioAssistantFacts(locale: Locale): string {
   if (isZh) {
     return `
 【Alchemy 硬事實 — 唔好同下面知識庫矛盾】
-- 免寫 Prompt；Tokens 按次。免費註冊一次 1000。
+- 免寫 Prompt；Tokens 按次。免費註冊一次 500。
 - /start：實體 vs 概念。/studio 引導 wizard。/captions 燒字幕。/edit-image 修圖。/pro 節點畫布（Master）。
 - 分鏡 TVC 無參考片：先 MiniMax H3（一鏡）；額度唔夠先問 Kling 拼接。有參考 MP4：Seedance R2V。
-- 12 秒 H3 ≈ 1140 tokens，免費 1000 唔夠；Kling 4×5s ≈ 440 可能夠。
+- 12 秒 H3 ≈ 1140 tokens，免費 500 唔夠；Kling 4×5s ≈ 440 可能夠。
 - 首頁「可完成影片配方」卡已隱藏。問 AI 只喺首頁細 Logo；其他頁關閉。
 `.trim();
   }
   return `
 【Alchemy hard facts — do not contradict knowledge below】
-- Prompt-free; tokens pay-per-use. Free signup grant 1000 once.
+- Prompt-free; tokens pay-per-use. Free signup grant 500 once.
 - /start: physical vs concept. /studio guided wizard. /captions burn-in. /edit-image retouch. /pro node canvas (Master).
 - Stills TVC without reference MP4: MiniMax H3 first (one take); offer Kling stitch if H3 does not fit. Reference reel: Seedance R2V.
-- 12s H3 ≈ 1140 tokens — free 1000 cannot cover it; Kling 4×5s ≈ 440 may fit.
+- 12s H3 ≈ 1140 tokens — free 500 cannot cover it; Kling 4×5s ≈ 440 may fit.
 - Homepage finishable recipe cards are hidden. Ask-AI is landing-only (small logo); off everywhere else.
 `.trim();
 }

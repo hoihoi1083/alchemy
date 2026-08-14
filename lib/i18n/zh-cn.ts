@@ -17,6 +17,7 @@ export const zhCn = {
     tokensBalanceTitle: "你的点数余额 — 查看方案与加购",
     accountMenu: "账户与账单",
     libraryMenu: "我的作品库",
+    brandKitMenu: "品牌套件",
   },
   account: {
     title: "账户与账单",
@@ -202,8 +203,15 @@ export const zhCn = {
     navUseCases: "使用场景",
     navPricing: "收费",
     navEditImage: "改图",
+    navEditImageHint: "加字、Logo、微调图片",
     navCaptions: "字幕",
-    navPro: "Pro",
+    navCaptionsHint: "MP4 烧字幕、BGM、口播",
+    navCanva: "画布",
+    canvaHubBadge: "后期工具",
+    canvaHubTitle: "画布工具",
+    canvaHubSubtitle: "在画布改图，或为 MP4 烧录字幕与音轨。",
+    navProCanvas: "Pro 画布（需 Master 计划）",
+    navProCanvasUnlocked: "Pro 画布",
     heroTrust: ["不用空白 prompt", "先分镜再出片", "产品与概念都行", "AI 市场研究"],
     heroImageAlt: "产品相和 AI 风格分析",
     heroMascotAlt: "Alchemy 可爱烧瓶伙伴（护目镜）— 移动鼠标就会看不同方向",
@@ -516,6 +524,10 @@ export const zhCn = {
         a: "会。每次 AI 重新生成（图片、镜头或视频）都是新的模型调用，会再次消耗点数。",
       },
       {
+        q: "新注册送多少免费点数？",
+        a: "新账户一次性赠送 500 点数（不会每月自动再送），大约够 1 张图 + 1 条短 480p 视频。详情见定价页。",
+      },
+      {
         q: "一定要上传参考视频吗？",
         a: "不必。参考视频为选填，仅在你想参考某条广告的镜头节奏或风格时再上传。",
       },
@@ -572,7 +584,7 @@ export const zhCn = {
 
     planFeaturesCustom: ["Custom 点数 volume", "Custom limits", "Dedicated support"],
 
-    planFeaturesFree: ["Guided image & video paths", "1,000 signup 点数", "Library downloads"],
+    planFeaturesFree: ["Guided image & video paths", "500 signup 点数", "Library downloads"],
 
     planFeaturesMaster: ["16,000 点数 / month", "Pro canvas", "Priority support", "2K images"],
 
@@ -653,6 +665,7 @@ export const zhCn = {
     perMonth: "/月",
     billedYearly: "按年收费",
     tokensPerMonth: "点数 / 月",
+    tokensOnce: "点数 · 新注册送一次",
     tokensIncluded: "点数",
     capacityImagesFeature: "约 {n} 张单图",
     capacityStoryboardsFeature: "约 {n} 条分镜视频（约 {sec} 秒）",
@@ -673,6 +686,7 @@ export const zhCn = {
     checkoutRedirecting: "正在前往 Stripe…",
     checkoutSuccess: "付款成功。点数 几秒内到账 — 如未更新请刷新。",
     checkoutCanceled: "已取消结账，未收费。",
+    proCanvasUpgradeHint: "Pro 画布包含在 Master 计划。请选择下方 Master 计划以解锁节点画布。",
     checkoutError: "无法开始结账。请重试，或联系支持。",
     paymentIncomplete:
       "付款未成功。请在「管理账单」更新信用卡后再试升级。你原来的计划没有更改。",
@@ -706,6 +720,10 @@ export const zhCn = {
       {
         q: "点数怎么计算？",
         body: "点数用于计量工作室中需计费的 AI 用量。任务越复杂（更长视频、更高清晰度、分镜组）消耗越多。每次付费步骤生成前都会显示预计消耗。",
+      },
+      {
+        q: "新注册送多少免费点数？",
+        body: "新账户一次性赠送 500 点数，不会每月自动再送。大约够 1 张图 + 1 条短 480p 视频。需要更多请升级或加购。",
       },
       {
         q: "点数用在哪些地方？",
@@ -762,7 +780,7 @@ export const zhCn = {
         name: "免费",
         description: "试用完整引导流程",
         features: [
-          "1,000 点数（约 1 张图 + 1 条 480p 短视频）",
+          "500 点数（约 1 张图 + 1 条 480p 短视频）",
           "引导精灵 + 模板",
           "视频上限 480p",
           "平台研究",
@@ -831,7 +849,7 @@ export const zhCn = {
       },
     },
     comparisonRows: [
-      { feature: "每月 点数", free: "1,000", standard: "3,000", pro: "8,000", master: "16,000" },
+      { feature: "点数", free: "500 · 新注册送一次", standard: "3,000 / 月", pro: "8,000 / 月", master: "16,000 / 月" },
       { feature: "图片最高分辨率", free: "1K", standard: "1K", pro: "1K", master: "2K" },
       { feature: "视频最高分辨率", free: "480p", standard: "720p", pro: "1080p", master: "1080p" },
       { feature: "平台研究 / 合并流程 / 故事板", free: "✓", standard: "✓", pro: "✓", master: "✓" },

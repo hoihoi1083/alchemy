@@ -12,9 +12,9 @@ describe("estimatePlanApproxCapacity", () => {
     assert.equal(STORYBOARD_LANDING_PACK.totalTokens, 272);
 
     const free = estimatePlanApproxCapacity("free");
-    assert.equal(free.tokens, 1000);
-    assert.equal(free.approxImages, 40);
-    assert.equal(free.approxStoryboards, 3);
+    assert.equal(free.tokens, 500);
+    assert.equal(free.approxImages, 20);
+    assert.equal(free.approxStoryboards, 1);
     assert.equal(free.storyboardSec, 10);
 
     const standard = estimatePlanApproxCapacity("standard");

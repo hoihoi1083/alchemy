@@ -82,7 +82,7 @@ describe("assistant knowledge retrieve", () => {
       userText: "Does the free grant cover 12s TVC?",
     });
     assert.match(prompt, /Ask mode/i);
-    assert.match(prompt, /1140|free grant|1000/i);
+    assert.match(prompt, /1140|free grant|500/i);
     assert.doesNotMatch(prompt, /ONLY Step 1/);
   });
 });

@@ -53,7 +53,7 @@ Rules verified:
   • Success charges catalog cost exactly once
   • Insufficient balance blocks with 0 charge
   • Free logo stamp = 0
-  • Signup grant is idempotent (1000 once)
+  • Signup grant is idempotent (500 once)
   • Balance never goes negative
   • Concurrent settle cannot overdraw
   • API routes: require before settle; no settle in catch

@@ -108,8 +108,26 @@ export function PricingPageClient() {
   const checkoutStatus = searchParams.get("checkout");
   const checkoutSessionId = searchParams.get("session_id");
   const planParam = searchParams.get("plan");
+  const upgradeParam = searchParams.get("upgrade");
+  const featureParam = searchParams.get("feature");
+  const highlightPlan = planParam ?? upgradeParam;
   const intervalParam = searchParams.get("interval");
   const autoCheckoutStarted = useRef(false);
+  const planHighlightDone = useRef(false);
+
+  useEffect(() => {
+    if (planHighlightDone.current) return;
+    if (highlightPlan !== "master") return;
+    planHighlightDone.current = true;
+    setHoveredId("master");
+    const t = window.setTimeout(() => {
+      document.getElementById("plan-master")?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }, 120);
+    return () => window.clearTimeout(t);
+  }, [highlightPlan]);
 
   useEffect(() => {
     if (!isLoaded || !isSignedIn) return;
@@ -333,7 +351,7 @@ export function PricingPageClient() {
       name: p.plans.free.name,
       blurb: p.plans.free.description,
       priceLabel: p.freeForever,
-      tokensLabel: `${PLAN_DEFINITIONS.free.monthlyTokens.toLocaleString()} ${p.tokensPerMonth}`,
+      tokensLabel: `${PLAN_DEFINITIONS.free.monthlyTokens.toLocaleString()} ${p.tokensOnce}`,
       capacity: (() => {
         const c = estimatePlanApproxCapacity("free");
         return [
@@ -491,6 +509,11 @@ export function PricingPageClient() {
                 {checkoutError}
               </div>
             ) : null}
+            {featureParam === "pro-canvas" && highlightPlan === "master" ? (
+              <div className="mb-5 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-900">
+                {p.proCanvasUpgradeHint}
+              </div>
+            ) : null}
 
             <Reveal>
               <div className="mx-auto max-w-3xl text-center">
@@ -558,6 +581,7 @@ export function PricingPageClient() {
                     className="h-full"
                   >
                     <div
+                      id={card.id === "master" ? "plan-master" : undefined}
                       onMouseEnter={() => setHoveredId(card.id)}
                       className={`pricing-plan-card flex h-full min-h-[300px] min-w-0 flex-col rounded-2xl border bg-white p-5 shadow-sm transition duration-200 ${
                         isActive
