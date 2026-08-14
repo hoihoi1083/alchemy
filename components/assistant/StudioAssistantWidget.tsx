@@ -514,26 +514,28 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
     surface === "studio" &&
     (wizardStepKey === "setup" || wizardStepKey === "image" || wizardStepKey === "video");
 
-  const floatingCtaBottom =
-    "max(1.25rem, calc(env(safe-area-inset-bottom) + 0.75rem))";
   const launcherBottom =
     surface === "studio"
       ? "max(calc(5.75rem + env(safe-area-inset-bottom)), 6.75rem)"
       : surface === "landing"
-        ? // Align with LandingFloatingCta (立即開始 dock)
-          floatingCtaBottom
+        ? // Match LandingFloatingCta bottom so mascot sits level with “立即開始”
+          "max(1.25rem, calc(env(safe-area-inset-bottom) + 0.75rem))"
         : surface === "captions"
           ? "max(calc(5.25rem + env(safe-area-inset-bottom)), 6rem)"
         : studioMobileBarVisible
           ? "max(calc(4.75rem + env(safe-area-inset-bottom)), 5.5rem)"
           : "max(1.25rem, env(safe-area-inset-bottom))";
 
+  const landingLevelWithCta = surface === "landing";
+
   return (
     <div
       className="pointer-events-none fixed z-[200] flex flex-col items-end gap-3"
       style={{
         bottom: launcherBottom,
-        right: "max(1rem, env(safe-area-inset-right))",
+        right: landingLevelWithCta
+          ? "max(1.25rem, calc(env(safe-area-inset-right) + 0.5rem))"
+          : "max(1rem, env(safe-area-inset-right))",
       }}
     >
       {open && (
@@ -743,7 +745,8 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
         className={
           darkChrome
             ? "pointer-events-auto inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-slate-950/85 p-1.5 pr-3 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.7)] backdrop-blur-md transition hover:scale-[1.02] hover:border-violet-300/50 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 motion-safe:animate-[assistant-mascot-float_3.2s_ease-in-out_infinite]"
-            : "pointer-events-auto inline-flex items-center bg-transparent p-0 shadow-none transition hover:scale-[1.02] active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 motion-safe:animate-[assistant-mascot-float_3.2s_ease-in-out_infinite]"
+            : // Landing: no float bob — stay level with the bottom CTA pill
+              "pointer-events-auto inline-flex items-center bg-transparent p-0 shadow-none transition hover:scale-[1.03] active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
         }
         aria-expanded={open}
         aria-label={sa.openLauncher}

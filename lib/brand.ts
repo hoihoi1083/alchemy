@@ -3,7 +3,7 @@ export const PRODUCT_NAME = "Alchemy AI Lab";
 export const PRODUCT_NAME_SHORT = "Alchemy";
 /** Browser tab / document title (landing default). */
 export const PRODUCT_TAB_TITLE =
-  "Alchemy AI Lab - Prompt-free AI Marketing Studio";
+  "Alchemy AI Lab - Prompt-Free AI Marketing Studio";
 export const PRODUCT_LOGO_SRC = "/alchemy-logo.png";
 export const PRODUCT_LOGO_ALT = `${PRODUCT_NAME} logo`;
 /** Stacked ALCHEMY / AI LAB wordmark (transparent). */

@@ -8,15 +8,14 @@ const VIDEO = "/videos/assistant/mascot-launcher.mp4?v=1";
 type Props = {
 	alt: string;
 	className?: string;
-	/** Larger landing FAB vs compact dark chrome. */
 	size?: "lg" | "md";
-	/** Idle video loop; false = poster only (e.g. panel header). */
 	animated?: boolean;
 };
 
 /**
  * Ask AI floating launcher — brand flask mascot with idle motion loop.
- * Falls back to poster when reduced-motion or video fails.
+ * Landing (`lg`): soft chat-cloud — circle + small natural tip at bottom-right.
+ * Panel header stays rounded square.
  */
 export function AssistantMascotLauncher({
 	alt,
@@ -28,6 +27,7 @@ export function AssistantMascotLauncher({
 	const [reduce, setReduce] = useState(false);
 	const [failed, setFailed] = useState(false);
 	const showVideo = animated && !reduce && !failed;
+	const chatBubble = size === "lg";
 
 	useEffect(() => {
 		const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -54,15 +54,8 @@ export function AssistantMascotLauncher({
 		}
 	}, [showVideo]);
 
-	const box =
-		size === "lg"
-			? "relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl"
-			: "relative h-11 w-11 shrink-0 overflow-hidden rounded-xl ring-2 ring-violet-400/80";
-
-	return (
-		<span
-			className={`${box} bg-[#0b0818] shadow-[0_8px_24px_-10px_rgba(124,58,237,0.55)] ${className}`}
-		>
+	const media = (
+		<>
 			{/* eslint-disable-next-line @next/next/no-img-element */}
 			<img
 				src={POSTER}
@@ -88,6 +81,51 @@ export function AssistantMascotLauncher({
 					onError={() => setFailed(true)}
 				/>
 			) : null}
+		</>
+	);
+
+	if (chatBubble) {
+		// ~pill height so it sits level with “立即開始”; tip stays tiny at SE corner
+		return (
+			<span
+				className={`relative inline-block shrink-0 ${className}`}
+				style={{
+					width: 52,
+					height: 52,
+					filter: "drop-shadow(0 6px 16px rgba(15, 23, 42, 0.42))",
+				}}
+			>
+				<svg
+					aria-hidden
+					width={52}
+					height={52}
+					viewBox="0 0 52 52"
+					style={{ display: "block" }}
+				>
+					{/* Round body */}
+					<circle cx="25" cy="25" r="23" fill="#0b0818" />
+					{/* Short tip at bottom-right — like the green chat FAB reference */}
+					<path
+						d="M39 41 L46 49.5 L35.5 44.5 Z"
+						fill="#0b0818"
+					/>
+				</svg>
+
+				<span
+					className="absolute overflow-hidden rounded-full"
+					style={{ left: 3, top: 3, width: 44, height: 44 }}
+				>
+					{media}
+				</span>
+			</span>
+		);
+	}
+
+	return (
+		<span
+			className={`relative h-11 w-11 shrink-0 overflow-hidden rounded-xl bg-[#0b0818] shadow-[0_8px_24px_-10px_rgba(124,58,237,0.55)] ring-2 ring-violet-400/80 ${className}`}
+		>
+			{media}
 		</span>
 	);
 }

@@ -606,6 +606,7 @@ export async function POST(request: Request) {
       ...(logoMirrorNote ? { logoNote: logoMirrorNote } : {}),
     });
   } catch (e: unknown) {
+    console.error("[generate-storyboard-images] generation failed", e);
     await refundTokens(auth.user.userId, tokenCost, {
       kind: "storyboard",
       reason: "generation_failed",

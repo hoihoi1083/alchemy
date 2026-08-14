@@ -10,7 +10,7 @@ import "./globals.css";
 
 const siteUrl = productSiteUrl();
 const description =
-  "Product ad and video studio — create images and short videos for marketing.";
+  "Alchemy AI Lab eases marketers pain by generating scroll-stopping images and short video format marketing content without prompting.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
