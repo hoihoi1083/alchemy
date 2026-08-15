@@ -128,10 +128,10 @@ export async function POST(request: Request) {
 			imageVisionNote,
 			hasReferenceImage: hasReferenceImage || Boolean(userReferenceBrief),
 			sourceNote: hasReferenceImage
-				? "Concept brief from your upload + text (vision + DeepSeek)"
+				? "Concept brief from your upload + text (vision + AI)"
 				: userReferenceBrief
-					? "Concept brief from your text (DeepSeek)"
-					: "Concept wizard brief (DeepSeek)",
+					? "Concept brief from your text (AI)"
+					: "Concept wizard brief (AI)",
 		});
 	} catch (e: unknown) {
 		const message =

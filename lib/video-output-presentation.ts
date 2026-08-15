@@ -1,4 +1,5 @@
 import type { VideoCreativeMode } from "@/lib/creative-workflow";
+import { isH3ShotRecipeMode } from "@/lib/h3-shot-recipes";
 import type { WorkflowMode } from "@/lib/workflow-mode";
 
 /** User-facing video pipeline — not the Seedance API mode. */
@@ -32,6 +33,10 @@ export function resolveVideoOutputPresentation(
   if (input.usesCompositor) return "animate-keyframe";
   if (input.videoCreativeMode === "motion-poster") return "animate-keyframe";
   if (input.videoCreativeMode === "social-drip") return "animate-keyframe";
+  if (input.videoCreativeMode === "blockbuster") return "product-assistant";
+  if (isH3ShotRecipeMode(input.videoCreativeMode)) {
+    return "product-assistant";
+  }
   if (input.isStoryboardOutput) return "storyboard-reel";
   if (input.isUgcPresenterOutput) return "digital-presenter";
   if (input.shouldCinematicStitch || input.isConceptCinematicSingleOutput) {

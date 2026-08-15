@@ -9,6 +9,9 @@ export type TemplateId =
   | "info-poster"
   | "designed-poster"
   | "parts-poster"
+  | "gaming-cover"
+  | "sports-big-words"
+  | "jelly-3d"
   | "brand-fit"
   | "brand-campaign"
   | "brand-video"
@@ -203,6 +206,75 @@ export const TEMPLATES: MarketingTemplate[] = [
       "violent destruction, fire, debris chaos, blank catalog cutout, cluttered Canva flyer, neon gradients, watermark, social UI, blurry illegible text, misspelled characters, low quality, speech, voiceover",
   },
   {
+    id: "gaming-cover",
+    name: "Gaming cover poster",
+    description:
+      "AAA game-cover still — low-angle cinematic action, type baked into the scene, HUD accents.",
+    icon: "🎮",
+    aspectRatio: "9:16",
+    duration: "6",
+    fast: true,
+    resolution: "480p",
+    motionStrength: 28,
+    camera: "Slow Push In",
+    avoidOnScreenText: false,
+    generateAudio: true,
+    imagePromptTemplate:
+      "Vertical AAA gaming cover for {{product}}. Theme {{headline}}. Support {{subline}}. Low-angle cinematic action, typography integrated into the 3D world, HUD accents.",
+    imageEditPromptTemplate:
+      "Create an AAA gaming cover poster. Keep exact {{product}} from IMAGE 1. Theme {{headline}}. Support {{subline}}. Low-angle cinematic action; bake type into crates/path/rocks; HUD/barcode accents.",
+    videoPromptTemplate:
+      "Gentle push-in on {{product}} gaming cover, preserve on-screen text and scene type",
+    negativePrompt:
+      "flat Canva flyer, cluttered collage, blank catalog cutout, watermark, social UI, blurry illegible text, misspelled characters, low quality, speech, voiceover",
+  },
+  {
+    id: "sports-big-words",
+    name: "Sports big-words poster",
+    description:
+      "Sports editorial still — huge layered word, athlete/action energy, HUD stats.",
+    icon: "🏆",
+    aspectRatio: "9:16",
+    duration: "6",
+    fast: true,
+    resolution: "480p",
+    motionStrength: 28,
+    camera: "Slow Push In",
+    avoidOnScreenText: false,
+    generateAudio: true,
+    imagePromptTemplate:
+      "Vertical sports editorial poster for {{product}}. Huge integrated word from {{headline}}. Support {{subline}}. Low-angle action, HUD microcopy, sky/stadium energy.",
+    imageEditPromptTemplate:
+      "Create a sports big-words poster. Keep exact {{product}} from IMAGE 1 when present. One huge layered word from {{headline}}. Support {{subline}}. Layer type behind/around subject; HUD stats accents.",
+    videoPromptTemplate:
+      "Gentle push-in on {{product}} sports poster, preserve huge typography",
+    negativePrompt:
+      "plain catalog cutout, cluttered Canva flyer, tiny unreadable type, watermark, social UI, misspelled characters, low quality, speech, voiceover",
+  },
+  {
+    id: "jelly-3d",
+    name: "Jelly 3D poster",
+    description:
+      "Minimal glossy translucent 3D hero — soft shadow, sparse brand type.",
+    icon: "🫧",
+    aspectRatio: "9:16",
+    duration: "6",
+    fast: true,
+    resolution: "480p",
+    motionStrength: 24,
+    camera: "Slow Push In",
+    avoidOnScreenText: false,
+    generateAudio: true,
+    imagePromptTemplate:
+      "Vertical minimal jelly/glass 3D poster for {{product}}. Theme {{headline}}. Sparse type {{subline}}. Single glossy translucent hero on clean ground, soft colored shadow.",
+    imageEditPromptTemplate:
+      "Create a jelly/glass 3D still. Hero inspired by {{product}} / {{headline}}. Sparse brand type {{subline}}. Glossy translucent materials, clean white ground, no busy lifestyle scene.",
+    videoPromptTemplate:
+      "Gentle push-in on jelly 3D hero, soft light shimmer, preserve type",
+    negativePrompt:
+      "busy lifestyle scene, cluttered flyer, neon cyberpunk city, watermark, social UI, blurry illegible text, low quality, speech, voiceover",
+  },
+  {
     id: "brand-fit",
     name: "Brand-fit ad",
     description: "Match analyzed website/social brand DNA — mood, colors, copy tone.",
@@ -227,7 +299,7 @@ export const TEMPLATES: MarketingTemplate[] = [
   {
     id: "brand-video",
     name: "Brand-fit video",
-    description: "DeepSeek plans Seedance motion prompt from analyzed brand DNA.",
+    description: "AI plans motion from analyzed brand DNA.",
     icon: "🎬",
     aspectRatio: "9:16",
     duration: "6",
@@ -249,7 +321,7 @@ export const TEMPLATES: MarketingTemplate[] = [
   {
     id: "creative-video",
     name: "Creative video prompt",
-    description: "Describe your Reel idea — DeepSeek writes Seedance motion prompt for your product.",
+    description: "Describe your Reel idea — AI writes a motion prompt for your product.",
     icon: "✨",
     aspectRatio: "9:16",
     duration: "8",
@@ -291,7 +363,7 @@ export const TEMPLATES: MarketingTemplate[] = [
   {
     id: "ugc-presenter-reel",
     name: "UGC digital presenter",
-    description: "Product photo → talking-head keyframe → HeyGen Avatar IV lip-sync reel.",
+    description: "Product photo → talking-head keyframe → lip-sync reel.",
     icon: "🎙️",
     aspectRatio: "9:16",
     duration: "6",
@@ -313,7 +385,7 @@ export const TEMPLATES: MarketingTemplate[] = [
     id: "storyboard-video",
     name: "Storyboard product reel",
     description:
-      "DeepSeek storyboard → Nano Banana scene stills → Kling I2V per still (stitched; captions via /captions).",
+      "AI storyboard → scene stills → per-scene animation (stitched; captions via /captions).",
     icon: "🎞️",
     aspectRatio: "9:16",
     duration: "10",

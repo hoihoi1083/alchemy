@@ -13,6 +13,9 @@ export type VisualStyleId =
   | "info-poster"
   | "designed-poster"
   | "parts-poster"
+  | "gaming-cover"
+  | "sports-big-words"
+  | "jelly-3d"
   | "brand-fit"
   | "brand-campaign"
   | "brand-video"
@@ -52,7 +55,13 @@ export function isConceptCinematicStyle(id: VisualStyleId): boolean {
 
 /** Single finished still — locks output to one image (no A/B / campaign / teaching). */
 export function isLockedSinglePosterStyle(id: VisualStyleId): boolean {
-  return id === "designed-poster" || id === "parts-poster";
+  return (
+    id === "designed-poster" ||
+    id === "parts-poster" ||
+    id === "gaming-cover" ||
+    id === "sports-big-words" ||
+    id === "jelly-3d"
+  );
 }
 
 /** Video styles where DeepSeek writes the Seedance prompt (storyboard, brand, creative). */
@@ -79,6 +88,9 @@ const IMAGE_FIRST_VISUAL_STYLE_IDS = new Set<VisualStyleId>([
   "info-poster",
   "designed-poster",
   "parts-poster",
+  "gaming-cover",
+  "sports-big-words",
+  "jelly-3d",
   "brand-fit",
   "brand-campaign",
   "model-wear",
@@ -184,7 +196,7 @@ export const VISUAL_STYLES: VisualStyleDef[] = [
     templateId: "ugc-presenter-reel",
     usesCompositor: false,
     promptHint:
-      "UGC talking-head digital presenter: photoreal keyframe with product on wrist/hand, then HeyGen lip-sync to your ad-pack script (~$0.10/s).",
+      "UGC talking-head digital presenter: photoreal keyframe with product on wrist/hand, then lip-sync to your ad-pack script.",
   },
   {
     id: "info-poster",
@@ -211,6 +223,33 @@ export const VISUAL_STYLES: VisualStyleDef[] = [
     usesCompositor: false,
     promptHint:
       "Exploded parts breakdown poster: deconstruct the product into labeled components with title + short descriptions — technical commercial still, not violent destruction.",
+  },
+  {
+    id: "gaming-cover",
+    icon: "🎮",
+    previewSrc: visualPreview("gaming-cover"),
+    templateId: "gaming-cover",
+    usesCompositor: false,
+    promptHint:
+      "AAA game-cover poster: low-angle cinematic action, hero/SKU identity locked, typography baked into the 3D scene (crates, path, rocks), HUD/barcode accents — not a flat Canva flyer.",
+  },
+  {
+    id: "sports-big-words",
+    icon: "🏆",
+    previewSrc: visualPreview("sports-big-words"),
+    templateId: "sports-big-words",
+    usesCompositor: false,
+    promptHint:
+      "Sports editorial poster: athlete or product-in-action, one huge layered word integrated with the photo, HUD stats/microcopy, sky/stadium energy — not a plain catalog cutout.",
+  },
+  {
+    id: "jelly-3d",
+    icon: "🫧",
+    previewSrc: visualPreview("jelly-3d"),
+    templateId: "jelly-3d",
+    usesCompositor: false,
+    promptHint:
+      "Minimal jelly/glass 3D hero: single glossy translucent object or number on a clean ground, soft colored shadow, sparse brand type — no busy lifestyle scene.",
   },
   {
     id: "brand-fit",
@@ -260,7 +299,7 @@ export const VISUAL_STYLES: VisualStyleDef[] = [
     templateId: "storyboard-video",
     usesCompositor: false,
     promptHint:
-      "Photorealistic multi-scene product reel: DeepSeek plans story beats and textless scene stills, then Kling I2V per still (stitched). Captions burn later via /captions.",
+      "Photorealistic multi-scene product reel: AI plans story beats and textless scene stills, then per-scene animation (stitched). Captions burn later via /captions.",
   },
   {
     id: "paper-layout",

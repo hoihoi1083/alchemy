@@ -23,12 +23,13 @@ import { storyboardSceneDisplayCopy } from "@/lib/storyboard-scene-copy";
 import { isBrandVideoStyle, isCreativeVideoStyle, isStoryboardVideoStyle } from "@/lib/visual-styles";
 import { isVideoOutputPathLocked, resolveVideoOutputPresentation } from "@/lib/video-output-presentation";
 import { analyzeProductImageFile } from "@/lib/image-upload-quality";
+import { isH3ShotRecipeMode, MACRO_SNAP_INTENSITIES, type MacroSnapIntensity } from "@/lib/h3-shot-recipes";
 import { resolveWizardOutputDurationSec } from "@/lib/video-settings";
 import type { CinematicSceneResult } from "@/lib/cinematic-reel-types";
 import type { StoryboardSceneResult } from "@/lib/video-storyboard-types";
 
 export function VideoStep() {
-  const { applyPromptRebuild, bgmOptions, bgmTrack, brandProfile, cinematicScenes, cinematicSceneCount, cinematicStitchReady, conceptReferenceR2vReady, directReferenceR2vReady, creativeVideoBrief, endFramePhoto, endFramePreviewUrl, endFrameUrl, error, extraAnglePhotos, extraKitPhotos, extraKitPreviewUrls, formatCinematicCopy, generateVideo, goBackFromVideo, hasFinalImage, headline, imageAspectRatio, imagePrompt, imageUrl, isCinematicStitchOutput, isConceptCinematicSingleOutput, isStoryboardOutput, isUgcPresenterOutput, keyframePreview, loadReferenceClip, m, onReferenceAdFile, onVideoCreativeModeChange, packagingPhoto, packagingPreviewUrl, planAiVideoPrompt, planProductVideo, planProductVideoBusy, planVideoPromptBusy, presenterAvatarId, presenterSourceMode, productPhoto, productVideoPlan, promotionMode, promptExtra, promptMarket, referenceAd, referenceClipLoading, referenceIsVideo, referencePreviewUrl, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, selectedReferenceClipId, setBgmTrack, setConceptImageVisionNote, setEndFramePhoto, setEndFrameUrl, setError, setExtraAnglePhotos, setExtraKitPhotos, setPackagingPhoto, setImagePrompt, setImageUrl, setPresenterAvatarId, setPresenterSourceMode, setProductPhoto, setPromptExtra, setPromptMarket, setShowAdvancedVideo, setSubjectFraming, setUploadQualityWarning, setUseOriginalImage, setVideoPrompt, setVideoSettings, shipItMode, showAdvancedVideo, showVideoReferenceSection, storyboardScenes, storyboardTrimDuration, subjectFraming, templateId, templateSlotStatus, uploadPreviewUrl, useReferenceVideo, usesCompositor, usesConceptTextVideo, usesProductAssistant, videoBusy, videoCreativeMode, motionPosterDialectPick, setMotionPosterDialectPick, videoGenerateDisabled, videoGenerateDisabledReason, videoPhase, videoPreflight, videoProgressInfo, videoPrompt, videoPromptPlanNote, videoSettings, videoStepHint, visualStyleId, workflowMode } = useWizard();
+  const { applyPromptRebuild, bgmOptions, bgmTrack, brandProfile, cinematicScenes, cinematicSceneCount, cinematicStitchReady, conceptReferenceR2vReady, directReferenceR2vReady, creativeVideoBrief, endFramePhoto, endFramePreviewUrl, endFrameUrl, error, extraAnglePhotos, extraKitPhotos, extraKitPreviewUrls, formatCinematicCopy, generateVideo, goBackFromVideo, hasFinalImage, headline, imageAspectRatio, imagePrompt, imageUrl, isCinematicStitchOutput, isConceptCinematicSingleOutput, isStoryboardOutput, isUgcPresenterOutput, keyframePreview, loadReferenceClip, m, onReferenceAdFile, onVideoCreativeModeChange, packagingPhoto, packagingPreviewUrl, planAiVideoPrompt, planProductVideo, planProductVideoBusy, planVideoPromptBusy, presenterAvatarId, presenterSourceMode, productPhoto, productVideoPlan, promotionMode, promptExtra, promptMarket, referenceAd, referenceClipLoading, referenceIsVideo, referencePreviewUrl, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, selectedReferenceClipId, setBgmTrack, setConceptImageVisionNote, setEndFramePhoto, setEndFrameUrl, setError, setExtraAnglePhotos, setExtraKitPhotos, setPackagingPhoto, setImagePrompt, setImageUrl, setPresenterAvatarId, setPresenterSourceMode, setProductPhoto, setPromptExtra, setPromptMarket, setShowAdvancedVideo, setSubjectFraming, setUploadQualityWarning, setUseOriginalImage, setVideoPrompt, setVideoSettings, shipItMode, showAdvancedVideo, showVideoReferenceSection, storyboardScenes, storyboardTrimDuration, subjectFraming, templateId, templateSlotStatus, uploadPreviewUrl, useReferenceVideo, usesCompositor, usesConceptTextVideo, usesProductAssistant, videoBusy, videoCreativeMode, motionPosterDialectPick, setMotionPosterDialectPick, macroSnapIntensity, setMacroSnapIntensity, videoGenerateDisabled, videoGenerateDisabledReason, videoPhase, videoPreflight, videoProgressInfo, videoPrompt, videoPromptPlanNote, videoSettings, videoStepHint, visualStyleId, workflowMode } = useWizard();
   const isConcept = promotionMode === "concept";
   const outputDurationSec = resolveWizardOutputDurationSec(videoSettings);
   const videoTokenCost = estimateVideoTokens({
@@ -62,6 +63,11 @@ export function VideoStep() {
   const showReferenceR2vOutputSettings =
     !usesCompositor && useReferenceVideo && !isStoryboardOutput;
   const isMotionPoster = videoCreativeMode === "motion-poster";
+  const isBlockbuster = videoCreativeMode === "blockbuster";
+  const h3ShotMode = isH3ShotRecipeMode(videoCreativeMode)
+    ? videoCreativeMode
+    : null;
+  const isH3Shot = Boolean(h3ShotMode);
   return (
 <section className="space-y-6 rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-xl shadow-slate-900/40 backdrop-blur">
   <div className="h-1 w-full animate-pulse rounded-full bg-linear-to-r from-violet-500 via-cyan-400 to-teal-400" />
@@ -224,12 +230,68 @@ export function VideoStep() {
     </div>
   )}
 
-  {!usesCompositor && usesProductAssistant && (
+  {!usesCompositor && (usesProductAssistant || isBlockbuster || isH3Shot) && (
     <div className="space-y-4 rounded-xl border-2 border-cyan-500/40 bg-cyan-950/30 px-4 py-4 shadow-lg shadow-cyan-950/30">
       <div>
-        <p className="text-base font-semibold text-cyan-50">{m.wizard.productVideoKitTitle}</p>
-        <p className="mt-1 text-xs text-cyan-200/85">{m.wizard.productVideoKitHint}</p>
+        <p className="text-base font-semibold text-cyan-50">
+          {isBlockbuster
+            ? m.wizard.videoCreativeModes.blockbuster.title
+            : isH3Shot && h3ShotMode
+              ? m.wizard.videoCreativeModes[h3ShotMode].title
+              : m.wizard.productVideoKitTitle}
+        </p>
+        <p className="mt-1 text-xs text-cyan-200/85">
+          {isBlockbuster
+            ? m.wizard.blockbusterHint
+            : isH3Shot && h3ShotMode
+              ? m.wizard.h3ShotHint[h3ShotMode]
+              : m.wizard.productVideoKitHint}
+        </p>
       </div>
+      {h3ShotMode === "macro-snap" ? (
+        <div className="rounded-lg border border-cyan-500/30 bg-slate-950/40 px-3 py-3">
+          <p className="text-xs font-semibold text-cyan-100">
+            {m.wizard.macroSnapIntensityTitle}
+          </p>
+          <p className="mt-1 text-[11px] text-cyan-200/80">
+            {m.wizard.macroSnapIntensityHint}
+          </p>
+          <div
+            className="mt-2 grid grid-cols-3 gap-1.5"
+            role="radiogroup"
+            aria-label={m.wizard.macroSnapIntensityTitle}
+          >
+            {MACRO_SNAP_INTENSITIES.map((level) => {
+              const active = macroSnapIntensity === level;
+              return (
+                <button
+                  key={level}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => setMacroSnapIntensity(level as MacroSnapIntensity)}
+                  className={
+                    active
+                      ? "rounded-lg bg-cyan-500 px-2 py-2 text-center text-xs font-semibold text-slate-950"
+                      : "rounded-lg border border-cyan-500/40 bg-slate-900/60 px-2 py-2 text-center text-xs font-medium text-cyan-100 hover:bg-cyan-950/50"
+                  }
+                >
+                  <span className="block">{m.wizard.macroSnapIntensity[level].title}</span>
+                  <span
+                    className={
+                      active
+                        ? "mt-0.5 block text-[10px] font-normal text-slate-800"
+                        : "mt-0.5 block text-[10px] font-normal text-cyan-200/70"
+                    }
+                  >
+                    {m.wizard.macroSnapIntensity[level].desc}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
       <div className="grid gap-3 sm:grid-cols-2">
         <UploadZone
           label={m.wizard.productVideoHeroLabel}
@@ -292,6 +354,7 @@ export function VideoStep() {
           </div>
         )}
       </div>
+      {!isBlockbuster ? (
       <button
         type="button"
         onClick={planProductVideo}
@@ -300,6 +363,7 @@ export function VideoStep() {
       >
         {planProductVideoBusy ? m.wizard.planProductVideoBusy : m.wizard.planProductVideoBtn}
       </button>
+      ) : null}
       {productVideoPlan && (
         <div className="rounded-lg border border-cyan-800/50 bg-slate-950/40 px-3 py-3 text-xs text-cyan-100/90">
           <p className="font-semibold text-cyan-50">{productVideoPlan.productSummary}</p>
@@ -337,7 +401,7 @@ export function VideoStep() {
     </div>
   ) : null}
 
-  {!usesCompositor && !isStoryboardOutput && !showCinematicStitch && !isConceptCinematicSingleOutput && !usesProductAssistant && !usesConceptTextVideo && !isMotionPoster && (
+  {!usesCompositor && !isStoryboardOutput && !showCinematicStitch && !isConceptCinematicSingleOutput && !usesProductAssistant && !usesConceptTextVideo && !isMotionPoster && !isBlockbuster && (
     <div className="rounded-xl border border-sky-900/50 bg-sky-950/30 px-4 py-3 text-sm text-sky-100">
       <p className="font-semibold text-sky-50">{m.wizard.videoWearVarietyTitle}</p>
       <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-sky-100/90">
@@ -348,7 +412,7 @@ export function VideoStep() {
     </div>
   )}
 
-  {!usesCompositor && !isStoryboardOutput && !showCinematicStitch && !isConceptCinematicSingleOutput && !usesProductAssistant && !isMotionPoster && (
+  {!usesCompositor && !isStoryboardOutput && !showCinematicStitch && !isConceptCinematicSingleOutput && !usesProductAssistant && !isMotionPoster && !isBlockbuster && (
     <div className="space-y-3 rounded-xl border border-violet-900/50 bg-violet-950/25 px-4 py-3">
       <p className="text-sm font-semibold text-violet-50">{m.wizard.planVideoPromptBtn}</p>
       <p className="text-xs text-violet-200/90">

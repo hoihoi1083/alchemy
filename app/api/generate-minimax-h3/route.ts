@@ -207,7 +207,7 @@ export async function POST(request: Request) {
     const result = await fal.subscribe(endpoint, { input, logs: true });
     const videoUrl = extractVideoUrl(result.data);
     if (!videoUrl) {
-      throw new Error("MiniMax H3 returned no video.");
+      throw new Error("Video generation returned no output.");
     }
 
     let finalUrl = videoUrl;
@@ -295,7 +295,7 @@ export async function POST(request: Request) {
       kind: "minimax_h3",
       reason: "generation_failed",
     });
-    const message = e instanceof Error ? e.message : "MiniMax H3 generation failed.";
+    const message = e instanceof Error ? e.message : "Video generation failed.";
     return NextResponse.json({ error: message }, { status: 502 });
   }
 }

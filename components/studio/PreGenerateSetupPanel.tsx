@@ -16,6 +16,10 @@ import { imageOutputPreviewSrc, type ImageOutputMode } from "@/lib/image-output-
 import { imageTextPreviewSrc, type ImageTextMode } from "@/lib/image-text-mode";
 import type { UserReferenceBrief } from "@/lib/user-reference-brief";
 import { getVisualStyle, requiresBrandProfileForImages } from "@/lib/visual-styles";
+import {
+  isImagePosterUxStyle,
+  type ImagePosterUxStyleId,
+} from "@/lib/recipe-path-ux";
 import { studioPhasesForMode } from "@/lib/studio-phases";
 import { estimateImageTokens } from "@/lib/billing/token-costs";
 import { STORYBOARD_SCENE_COUNTS } from "@/lib/ad-pack-preferences";
@@ -776,14 +780,6 @@ function briefSummaryRows(
   ].filter((row) => Boolean(row.value?.trim()));
 }
 
-const CONCEPT_PATH_STYLE = {
-  info: "info-poster",
-  brand: "brand-fit",
-  pricing: "pricing-offer",
-  website: "website-launch",
-  designed: "designed-poster",
-} as const;
-
 /**
  * Fused post-intake setup — shared by research + direct creation.
  * Direct adds: creation direction (quick vs model) + optional reference upload.
@@ -842,7 +838,16 @@ export function PreGenerateSetupPanel({
   const isModelWear = wizard.visualStyleId === "model-wear";
   const isDesignedPoster = wizard.visualStyleId === "designed-poster";
   const isPartsPoster = wizard.visualStyleId === "parts-poster";
-  const isQuickAd = !isModelWear && !isDesignedPoster && !isPartsPoster;
+  const isGamingCover = wizard.visualStyleId === "gaming-cover";
+  const isSportsBigWords = wizard.visualStyleId === "sports-big-words";
+  const isJelly3d = wizard.visualStyleId === "jelly-3d";
+  const isLockedPosterStyle =
+    isDesignedPoster ||
+    isPartsPoster ||
+    isGamingCover ||
+    isSportsBigWords ||
+    isJelly3d;
+  const isQuickAd = !isModelWear && !isLockedPosterStyle;
   const hasReference = Boolean(wizard.imageRefPhoto);
   /** Reference layout transfer overrides model-wear staging — lock to product path. */
   const modelWearLockedByReference = effectiveShowStylePicker && !isConcept && hasReference;
@@ -857,7 +862,9 @@ export function PreGenerateSetupPanel({
             ? "website"
             : wizard.visualStyleId === "designed-poster"
               ? "designed"
-              : null;
+              : wizard.visualStyleId === "jelly-3d"
+                ? "jelly-3d"
+                : null;
   const showConceptShopFields =
     isConcept &&
     (wizard.visualStyleId === "pricing-offer" ||
@@ -865,14 +872,28 @@ export function PreGenerateSetupPanel({
       wizard.visualStyleId === "service-promo");
   const isDesignedDirection = isDesignedPoster || conceptPath === "designed";
   const isPartsDirection = isPartsPoster;
-  const lockedPosterDirection = isDesignedDirection || isPartsDirection;
+  const lockedPosterDirection =
+    isDesignedDirection ||
+    isPartsDirection ||
+    isGamingCover ||
+    isSportsBigWords ||
+    isJelly3d;
   const copyFocus = isPartsDirection
     ? pg.conceptCopyFocus.parts
     : isDesignedDirection
       ? pg.conceptCopyFocus.designed
-      : conceptPath != null
-        ? pg.conceptCopyFocus[conceptPath]
-        : null;
+      : isGamingCover
+        ? pg.conceptCopyFocus["gaming-cover"]
+        : isSportsBigWords
+          ? pg.conceptCopyFocus["sports-big-words"]
+          : isJelly3d
+            ? pg.conceptCopyFocus["jelly-3d"]
+            : conceptPath === "info" ||
+                conceptPath === "brand" ||
+                conceptPath === "pricing" ||
+                conceptPath === "website"
+              ? pg.conceptCopyFocus[conceptPath]
+              : null;
   const supportingLabel = copyFocus?.supportingLabel ?? pg.supportingLabel;
   const supportingPlaceholder =
     copyFocus?.supportingPlaceholder ??
@@ -998,25 +1019,55 @@ export function PreGenerateSetupPanel({
   ]);
 
   const showReferenceForDirection =
-    showReferenceUpload && !isDesignedPoster && !isPartsPoster;
+    showReferenceUpload && !isLockedPosterStyle;
 
   function pickCreationDirection(
-    path: "quick" | "model" | "designed" | "parts",
+    path:
+      | "quick"
+      | "model"
+      | "designed"
+      | "parts"
+      | "gaming-cover"
+      | "sports-big-words"
+      | "jelly-3d",
   ) {
     if (path === "model" && hasReference) return;
     wizard.applyPrimaryPath(path);
     // Locked posters never use reference; other paths keep dual-ref if already uploaded.
-    if (path === "designed" || path === "parts") return;
+    if (
+      path === "designed" ||
+      path === "parts" ||
+      path === "gaming-cover" ||
+      path === "sports-big-words" ||
+      path === "jelly-3d"
+    ) {
+      return;
+    }
     if (wizard.imageRefPhoto) {
       wizard.setImageCreativeMode("reference-concept");
     }
   }
 
   function pickConceptDirection(
-    path: "info" | "brand" | "pricing" | "website" | "designed",
+    path:
+      | "info"
+      | "brand"
+      | "pricing"
+      | "website"
+      | "designed"
+      | "gaming-cover"
+      | "sports-big-words"
+      | "jelly-3d",
   ) {
     wizard.applyPrimaryPathConcept(path);
-    if (path === "designed") return;
+    if (
+      path === "designed" ||
+      path === "gaming-cover" ||
+      path === "sports-big-words" ||
+      path === "jelly-3d"
+    ) {
+      return;
+    }
     if (wizard.imageRefPhoto) {
       wizard.setImageCreativeMode("reference-concept");
     }
@@ -1129,14 +1180,47 @@ export function PreGenerateSetupPanel({
                   <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
                     {(
                       [
-                        ["info", m.wizard.pathInfoTitle, m.wizard.pathInfoDesc],
-                        ["designed", pg.stylePickerDesignedLabel, pg.stylePickerDesignedDesc],
-                        ["brand", m.wizard.pathBrandTitle, m.wizard.pathBrandDesc],
-                        ["pricing", m.wizard.pathPricingTitle, m.wizard.pathPricingDesc],
-                        ["website", m.wizard.pathWebsiteTitle, m.wizard.pathWebsiteDesc],
+                        ["info", m.wizard.pathInfoTitle, m.wizard.pathInfoDesc, "info-poster"],
+                        [
+                          "designed",
+                          pg.stylePickerDesignedLabel,
+                          pg.stylePickerDesignedDesc,
+                          "designed-poster",
+                        ],
+                        [
+                          "gaming-cover",
+                          pg.stylePickerGamingLabel,
+                          pg.stylePickerGamingDesc,
+                          "gaming-cover",
+                        ],
+                        [
+                          "sports-big-words",
+                          pg.stylePickerSportsLabel,
+                          pg.stylePickerSportsDesc,
+                          "sports-big-words",
+                        ],
+                        [
+                          "jelly-3d",
+                          pg.stylePickerJellyLabel,
+                          pg.stylePickerJellyDesc,
+                          "jelly-3d",
+                        ],
+                        ["brand", m.wizard.pathBrandTitle, m.wizard.pathBrandDesc, "brand-fit"],
+                        [
+                          "pricing",
+                          m.wizard.pathPricingTitle,
+                          m.wizard.pathPricingDesc,
+                          "pricing-offer",
+                        ],
+                        [
+                          "website",
+                          m.wizard.pathWebsiteTitle,
+                          m.wizard.pathWebsiteDesc,
+                          "website-launch",
+                        ],
                       ] as const
-                    ).map(([path, title, desc]) => {
-                      const selected = conceptPath === path;
+                    ).map(([path, title, desc, styleId]) => {
+                      const selected = wizard.visualStyleId === styleId;
                       return (
                         <button
                           key={path}
@@ -1163,7 +1247,7 @@ export function PreGenerateSetupPanel({
                           ) : null}
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
-                            src={getVisualStyle(CONCEPT_PATH_STYLE[path]).previewSrc}
+                            src={getVisualStyle(styleId).previewSrc}
                             alt=""
                             className="pg-output-thumb"
                           />
@@ -1177,148 +1261,103 @@ export function PreGenerateSetupPanel({
                   </div>
                 ) : (
                   <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    <button
-                      type="button"
-                      onClick={() => pickCreationDirection("quick")}
-                      className={`pg-output-card text-left${isQuickAd ? " is-selected" : ""}`}
-                    >
-                      {isQuickAd ? (
-                        <span className="pg-check" aria-hidden>
-                          <svg
-                            viewBox="0 0 24 24"
-                            className="h-3 w-3"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="3"
-                          >
-                            <path
-                              d="m5 12 5 5L20 7"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        </span>
-                      ) : null}
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={getVisualStyle("product").previewSrc}
-                        alt=""
-                        className="pg-output-thumb"
-                      />
-                      <div className="pg-output-copy">
-                        <strong>{pg.stylePickerQuickLabel}</strong>
-                        <span>{pg.stylePickerQuickDesc}</span>
-                      </div>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => pickCreationDirection("designed")}
-                      className={`pg-output-card text-left${isDesignedPoster ? " is-selected" : ""}`}
-                    >
-                      {isDesignedPoster ? (
-                        <span className="pg-check" aria-hidden>
-                          <svg
-                            viewBox="0 0 24 24"
-                            className="h-3 w-3"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="3"
-                          >
-                            <path
-                              d="m5 12 5 5L20 7"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        </span>
-                      ) : null}
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={getVisualStyle("designed-poster").previewSrc}
-                        alt=""
-                        className="pg-output-thumb"
-                      />
-                      <div className="pg-output-copy">
-                        <strong>{pg.stylePickerDesignedLabel}</strong>
-                        <span>{pg.stylePickerDesignedDesc}</span>
-                      </div>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => pickCreationDirection("parts")}
-                      className={`pg-output-card text-left${isPartsPoster ? " is-selected" : ""}`}
-                    >
-                      {isPartsPoster ? (
-                        <span className="pg-check" aria-hidden>
-                          <svg
-                            viewBox="0 0 24 24"
-                            className="h-3 w-3"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="3"
-                          >
-                            <path
-                              d="m5 12 5 5L20 7"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        </span>
-                      ) : null}
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={getVisualStyle("parts-poster").previewSrc}
-                        alt=""
-                        className="pg-output-thumb"
-                      />
-                      <div className="pg-output-copy">
-                        <strong>{pg.stylePickerPartsLabel}</strong>
-                        <span>{pg.stylePickerPartsDesc}</span>
-                      </div>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => pickCreationDirection("model")}
-                      disabled={modelWearLockedByReference}
-                      title={
-                        modelWearLockedByReference ? pg.stylePickerModelLockedHint : undefined
-                      }
-                      className={`pg-output-card text-left${isModelWear ? " is-selected" : ""}${
-                        modelWearLockedByReference ? " opacity-45" : ""
-                      }`}
-                    >
-                      {isModelWear ? (
-                        <span className="pg-check" aria-hidden>
-                          <svg
-                            viewBox="0 0 24 24"
-                            className="h-3 w-3"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="3"
-                          >
-                            <path
-                              d="m5 12 5 5L20 7"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        </span>
-                      ) : null}
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={getVisualStyle("model-wear").previewSrc}
-                        alt=""
-                        className="pg-output-thumb"
-                      />
-                      <div className="pg-output-copy">
-                        <strong>{pg.stylePickerModelLabel}</strong>
-                        <span>
-                          {modelWearLockedByReference
+                    {(
+                      [
+                        [
+                          "quick",
+                          pg.stylePickerQuickLabel,
+                          pg.stylePickerQuickDesc,
+                          "product",
+                          isQuickAd,
+                        ],
+                        [
+                          "designed",
+                          pg.stylePickerDesignedLabel,
+                          pg.stylePickerDesignedDesc,
+                          "designed-poster",
+                          isDesignedPoster,
+                        ],
+                        [
+                          "parts",
+                          pg.stylePickerPartsLabel,
+                          pg.stylePickerPartsDesc,
+                          "parts-poster",
+                          isPartsPoster,
+                        ],
+                        [
+                          "gaming-cover",
+                          pg.stylePickerGamingLabel,
+                          pg.stylePickerGamingDesc,
+                          "gaming-cover",
+                          isGamingCover,
+                        ],
+                        [
+                          "sports-big-words",
+                          pg.stylePickerSportsLabel,
+                          pg.stylePickerSportsDesc,
+                          "sports-big-words",
+                          isSportsBigWords,
+                        ],
+                        [
+                          "jelly-3d",
+                          pg.stylePickerJellyLabel,
+                          pg.stylePickerJellyDesc,
+                          "jelly-3d",
+                          isJelly3d,
+                        ],
+                        [
+                          "model",
+                          pg.stylePickerModelLabel,
+                          modelWearLockedByReference
                             ? pg.stylePickerModelLockedHint
-                            : pg.stylePickerModelDesc}
-                        </span>
-                      </div>
-                    </button>
+                            : pg.stylePickerModelDesc,
+                          "model-wear",
+                          isModelWear,
+                        ],
+                      ] as const
+                    ).map(([path, title, desc, styleId, selected]) => {
+                      const locked = path === "model" && modelWearLockedByReference;
+                      return (
+                        <button
+                          key={path}
+                          type="button"
+                          onClick={() => pickCreationDirection(path)}
+                          disabled={locked}
+                          title={locked ? pg.stylePickerModelLockedHint : undefined}
+                          className={`pg-output-card text-left${selected ? " is-selected" : ""}${
+                            locked ? " opacity-45" : ""
+                          }`}
+                        >
+                          {selected ? (
+                            <span className="pg-check" aria-hidden>
+                              <svg
+                                viewBox="0 0 24 24"
+                                className="h-3 w-3"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="3"
+                              >
+                                <path
+                                  d="m5 12 5 5L20 7"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </svg>
+                            </span>
+                          ) : null}
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={getVisualStyle(styleId).previewSrc}
+                            alt=""
+                            className="pg-output-thumb"
+                          />
+                          <div className="pg-output-copy">
+                            <strong>{title}</strong>
+                            <span>{desc}</span>
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
                 {isDesignedPoster || conceptPath === "designed" ? (
@@ -2152,7 +2191,15 @@ export function PreGenerateSetupPanel({
                     {isConcept ? pg.productPhotosOptionalTitle : pg.productPhotosTitle}
                   </h3>
                 </div>
-                <div className={`min-w-0 flex-1 space-y-4${luxuryStoryboard ? ` ${LUXURY_FIELD_WRAP_CLASS}` : ""}`}>
+                <div
+                  className={`min-w-0 flex-1 space-y-4${
+                    luxuryStoryboard ? ` ${LUXURY_FIELD_WRAP_CLASS}` : ""
+                  }${
+                    lockedPosterDirection && !isConcept
+                      ? " rounded-xl border border-violet-300 bg-violet-50/50 p-3 ring-1 ring-violet-200"
+                      : ""
+                  }`}
+                >
                   <div>
                     <p className="text-xs font-semibold text-slate-700">
                       {pg.mainPhotoRowLabel}
@@ -2171,6 +2218,11 @@ export function PreGenerateSetupPanel({
                           <span className="ml-1.5 font-medium text-violet-600">
                             ({pg.mainPhotoRequired})
                           </span>
+                          {lockedPosterDirection ? (
+                            <span className="ml-1.5 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700">
+                              {pg.onImageBadge}
+                            </span>
+                          ) : null}
                         </>
                       )}
                     </p>
@@ -2470,7 +2522,9 @@ export function PreGenerateSetupPanel({
                       : m.microWizard.productNameStep.label,
                   },
                   {
-                    ok: isConcept || Boolean(wizard.productPhoto || wizard.uploadPreviewUrl),
+                    ok:
+                      isConcept ||
+                      Boolean(wizard.productPhoto || wizard.uploadPreviewUrl),
                     label: m.wizard.videoKeyframeLabel,
                   },
                   {
@@ -2520,7 +2574,37 @@ export function PreGenerateSetupPanel({
               </div>
               <p className="mt-4 text-sm font-bold text-violet-800">{m.wizard.sidePanelTipsTitle}</p>
               <div className="mt-2.5 space-y-3.5">
-                {(isConcept
+                {(isImagePosterUxStyle(wizard.visualStyleId)
+                  ? [
+                      {
+                        tip: {
+                          title: m.wizard.recipePathUxTitles.need,
+                          body: m.wizard.recipePathUx[
+                            wizard.visualStyleId as ImagePosterUxStyleId
+                          ].need.join(" · "),
+                        },
+                        icon: "photo" as const,
+                      },
+                      {
+                        tip: {
+                          title: m.wizard.recipePathUxTitles.attention,
+                          body: m.wizard.recipePathUx[
+                            wizard.visualStyleId as ImagePosterUxStyleId
+                          ].attention.join(" · "),
+                        },
+                        icon: "hook" as const,
+                      },
+                      {
+                        tip: {
+                          title: m.wizard.recipePathUxTitles.output,
+                          body: m.wizard.recipePathUx[
+                            wizard.visualStyleId as ImagePosterUxStyleId
+                          ].output.join(" · "),
+                        },
+                        icon: "grid" as const,
+                      },
+                    ]
+                  : isConcept
                   ? [
                       { tip: pg.conceptTip1, icon: "photo" as const },
                       { tip: pg.conceptTip2, icon: "hook" as const },

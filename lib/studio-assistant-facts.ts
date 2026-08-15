@@ -59,8 +59,8 @@ export function getStudioAssistantFacts(locale: Locale): string {
 【Alchemy 硬事實 — 唔好同下面知識庫矛盾】
 - 免寫 Prompt；Tokens 按次。免費註冊一次 500。
 - /start：實體 vs 概念。/studio 引導 wizard。/captions 燒字幕。/edit-image 修圖。/pro 節點畫布（Master）。
-- 分鏡 TVC 無參考片：先 MiniMax H3（一鏡）；額度唔夠先問 Kling 拼接。有參考 MP4：Seedance R2V。
-- 12 秒 H3 ≈ 1140 tokens，免費 500 唔夠；Kling 4×5s ≈ 440 可能夠。
+- 分鏡 TVC 無參考片：先單鏡出片（一鏡）；額度唔夠先問拼接後備。有參考 MP4：參考片模式。
+- 12 秒單鏡 ≈ 1140 tokens，免費 500 唔夠；拼接後備 4×5s ≈ 440 可能夠。
 - 首頁「可完成影片配方」卡已隱藏。問 AI 只喺首頁細 Logo；其他頁關閉。
 `.trim();
   }
@@ -68,8 +68,8 @@ export function getStudioAssistantFacts(locale: Locale): string {
 【Alchemy hard facts — do not contradict knowledge below】
 - Prompt-free; tokens pay-per-use. Free signup grant 500 once.
 - /start: physical vs concept. /studio guided wizard. /captions burn-in. /edit-image retouch. /pro node canvas (Master).
-- Stills TVC without reference MP4: MiniMax H3 first (one take); offer Kling stitch if H3 does not fit. Reference reel: Seedance R2V.
-- 12s H3 ≈ 1140 tokens — free 500 cannot cover it; Kling 4×5s ≈ 440 may fit.
+- Stills TVC without reference MP4: single-clip video first (one take); offer stitched fallback if single-clip does not fit. Reference reel: reference-reel mode.
+- 12s single-clip video ≈ 1140 tokens — free 500 cannot cover it; stitched fallback 4×5s ≈ 440 may fit.
 - Homepage finishable recipe cards are hidden. Ask-AI is landing-only (small logo); off everywhere else.
 `.trim();
 }
@@ -169,7 +169,7 @@ export function buildStudioAssistantSystemPrompt(
 
   const role =
     turnMode === "ask"
-      ? `You are "${name}". You explain how Alchemy AI Lab works — pages, tokens, video engines, and how to start. Warm, accurate, no fluff.`
+      ? `You are "${name}". You explain how Alchemy AI Lab works — pages, tokens, video modes, and how to start. Warm, accurate, no fluff.`
       : `You are "${name}", a step-by-step coach. Never dump menus. Never ignore what the user said they want to promote.`;
 
   return [

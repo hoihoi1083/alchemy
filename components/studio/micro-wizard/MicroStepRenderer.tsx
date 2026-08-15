@@ -43,6 +43,13 @@ import { ResearchReelSetupPanel } from "@/components/studio/ResearchReelSetupPan
 import { BrandWebsitePanel } from "@/components/studio/BrandWebsitePanel";
 import { useState } from "react";
 import { isStoryboardVideoStyle } from "@/lib/visual-styles";
+import {
+  h3ShotRecipeToSubpath,
+  isH3ShotRecipeMode,
+  subpathToH3ShotRecipe,
+} from "@/lib/h3-shot-recipes";
+import { h3ShotModesForPromotion } from "@/lib/recipe-path-ux";
+import { isRecipeOwnedVideoMode } from "@/lib/creative-workflow";
 
 type Props = {
   micro: WizardMicroStepValue;
@@ -176,7 +183,12 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
               <>
                 <ChoiceCard
                   active={
-                    (micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) !== "motion_poster"
+                    (micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) === "creative_video" ||
+                    ((micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) !== "motion_poster" &&
+                      (micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) !== "blockbuster" &&
+                      !subpathToH3ShotRecipe(
+                        (micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) as never,
+                      ))
                   }
                   title={m.wizard.sceneReelTitle}
                   description={m.wizard.sceneReelDesc}
@@ -194,6 +206,30 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
                     wizard.onVideoCreativeModeChange("motion-poster");
                   }}
                 />
+                <ChoiceCard
+                  active={(micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) === "blockbuster"}
+                  title={m.wizard.videoCreativeModes.blockbuster.title}
+                  description={m.wizard.videoCreativeModes.blockbuster.description}
+                  onClick={() => {
+                    micro.setVideoSubpath("blockbuster");
+                    wizard.onVideoCreativeModeChange("blockbuster");
+                  }}
+                />
+                {h3ShotModesForPromotion("concept").map((mode) => {
+                    const sub = h3ShotRecipeToSubpath(mode);
+                    return (
+                      <ChoiceCard
+                        key={mode}
+                        active={(micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) === sub}
+                        title={m.wizard.videoCreativeModes[mode].title}
+                        description={m.wizard.videoCreativeModes[mode].description}
+                        onClick={() => {
+                          micro.setVideoSubpath(sub);
+                          wizard.onVideoCreativeModeChange(mode);
+                        }}
+                      />
+                    );
+                  })}
               </>
             ) : (
               <>
@@ -206,6 +242,39 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
                     wizard.applyPrimaryPathVideoOnly("assistant");
                   }}
                 />
+                <ChoiceCard
+                  active={(micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) === "motion_poster"}
+                  title={m.wizard.videoCreativeModes["motion-poster"].title}
+                  description={m.wizard.videoCreativeModes["motion-poster"].description}
+                  onClick={() => {
+                    micro.setVideoSubpath("motion_poster");
+                    wizard.onVideoCreativeModeChange("motion-poster");
+                  }}
+                />
+                <ChoiceCard
+                  active={(micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) === "blockbuster"}
+                  title={m.wizard.videoCreativeModes.blockbuster.title}
+                  description={m.wizard.videoCreativeModes.blockbuster.description}
+                  onClick={() => {
+                    micro.setVideoSubpath("blockbuster");
+                    wizard.onVideoCreativeModeChange("blockbuster");
+                  }}
+                />
+                {h3ShotModesForPromotion("physical").map((mode) => {
+                  const sub = h3ShotRecipeToSubpath(mode);
+                  return (
+                    <ChoiceCard
+                      key={mode}
+                      active={(micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) === sub}
+                      title={m.wizard.videoCreativeModes[mode].title}
+                      description={m.wizard.videoCreativeModes[mode].description}
+                      onClick={() => {
+                        micro.setVideoSubpath(sub);
+                        wizard.onVideoCreativeModeChange(mode);
+                      }}
+                    />
+                  );
+                })}
                 <ChoiceCard
                   active={(micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) === "reference_reel"}
                   title={m.wizard.pathReferenceVideoTitle}
@@ -373,7 +442,7 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
           combinedStoryboard={
             micro.ctx.workflowMode === "combined" &&
             isStoryboardVideoStyle(wizard.visualStyleId) &&
-            wizard.videoCreativeMode !== "motion-poster"
+            !isRecipeOwnedVideoMode(wizard.videoCreativeMode)
           }
           onGenerate={micro.goNext}
           generateDisabled={
@@ -407,8 +476,10 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
     case "setup.pre_video": {
       const scenesReady =
         micro.ctx.workflowMode === "combined" &&
-        wizard.videoCreativeMode !== "motion-poster" &&
-        wizard.videoCreativeMode !== "social-drip";
+        !isRecipeOwnedVideoMode(wizard.videoCreativeMode);
+      const h3Subpath = isH3ShotRecipeMode(wizard.videoCreativeMode)
+        ? h3ShotRecipeToSubpath(wizard.videoCreativeMode)
+        : null;
       return (
         <PreVideoSetupPanel
           scenesReady={scenesReady}
@@ -428,30 +499,40 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
               ? "product_promo"
               : wizard.videoCreativeMode === "social-drip"
                 ? "social_drip"
+                : wizard.videoCreativeMode === "blockbuster"
+                ? "blockbuster"
+                : h3Subpath
+                ? h3Subpath
                 : wizard.videoCreativeMode === "motion-poster"
                 ? "motion_poster"
                 : (micro.pendingVideoSubpath ?? micro.ctx.videoSubpath)
           }
           onPickVideoSubpath={(subpath) => {
-            const id = subpath as
-              | "product_promo"
-              | "motion_poster"
-              | "social_drip"
-              | "reference_reel"
-              | "creative_video"
-              | "brand_video";
-            // UGC deferred — never enter ugc_presenter from fused wizard.
-            micro.setVideoSubpath(id);
-            micro.patchContext({ videoSubpath: id });
-            if (id === "product_promo") {
+            const h3Mode = subpathToH3ShotRecipe(subpath as never);
+            const recipeOwned =
+              subpath === "blockbuster" ||
+              subpath === "motion_poster" ||
+              subpath === "social_drip" ||
+              Boolean(h3Mode);
+            micro.setVideoSubpath(subpath as never);
+            micro.patchContext(
+              recipeOwned
+                ? { videoSubpath: subpath as never, workflowMode: "video-only" }
+                : { videoSubpath: subpath as never },
+            );
+            if (subpath === "product_promo") {
               wizard.applyPrimaryPathVideoOnly("assistant");
-            } else if (id === "motion_poster") {
+            } else if (subpath === "motion_poster") {
               wizard.onVideoCreativeModeChange("motion-poster");
-            } else if (id === "social_drip") {
+            } else if (subpath === "social_drip") {
               wizard.onVideoCreativeModeChange("social-drip");
-            } else if (id === "reference_reel") {
+            } else if (subpath === "blockbuster") {
+              wizard.onVideoCreativeModeChange("blockbuster");
+            } else if (h3Mode) {
+              wizard.onVideoCreativeModeChange(h3Mode);
+            } else if (subpath === "reference_reel") {
               wizard.onVideoCreativeModeChange("reference-concept");
-            } else if (id === "creative_video" || id === "brand_video") {
+            } else if (subpath === "creative_video" || subpath === "brand_video") {
               wizard.applyPrimaryPathConceptVideo("creative");
             }
           }}

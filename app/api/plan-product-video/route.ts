@@ -214,7 +214,7 @@ export async function POST(request: Request) {
       plan,
       vision,
       imageCount: files.length,
-      sourceNote: `AI video assistant — ${visionNote} + Seedance prompt (DeepSeek)`,
+      sourceNote: `AI video assistant — ${visionNote} + motion prompt (AI)`,
     });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : formatFalError(e);

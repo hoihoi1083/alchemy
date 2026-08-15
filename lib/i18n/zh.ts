@@ -70,7 +70,7 @@ export const zh = {
 		deleting: "刪除中…",
 		noMedia: "未有已儲存嘅媒體",
 		linkExpiredHint:
-			"舊專案可能仲用緊已過期嘅 fal 連結 — 請用下面「已儲存檔案」，或重新生成。新輸出會永久儲存。",
+			"舊專案可能仲用緊已過期嘅 臨時連結 — 請用下面「已儲存檔案」，或重新生成。新輸出會永久儲存。",
 		updatedLabel: "更新於",
 		imageBadge: "圖片",
 		videoBadge: "影片",
@@ -482,29 +482,29 @@ export const zh = {
 			badge: "一鍵配方",
 			title: "可完成嘅影片配方",
 			subtitle:
-				"產品同概念同一套兩條路。動態海報免費額度夠用。12 秒 MiniMax H3 TVC 需要付費方案。",
+				"產品同概念同一套兩條路。動態海報免費額度夠用。12 秒 單鏡出片 TVC 需要付費方案。",
 			cta: "用呢個配方",
 			physicalGroup: "產品",
 			conceptGroup: "概念／服務",
 			tvcPaidHint:
-				"12 秒 MiniMax H3 需要付費方案（約 1140 token）。免費額度可以出靜幀；H3 唔夠就改用 Kling 拼接。",
+				"12 秒 單鏡出片 需要付費方案（約 1140 token）。免費額度可以出靜幀；單鏡額度唔夠就改用 拼接後備 拼接。",
 			items: {
 				"motion-poster": {
 					title: "動態海報",
 					description:
-						"兩張靜圖（無字 → 有字）再交 MiniMax H3 中間過渡，產品同字一齊郁。唔係多分鏡故事板。",
+						"兩張靜圖（無字 → 有字）再交 單鏡出片 中間過渡，產品同字一齊郁。唔係多分鏡故事板。",
 					costHint: "約 2 圖 + 1 段短片 · 免費額度夠",
 				},
 				"product-tvc-12s": {
 					title: "產品 TVC 約 12 秒",
 					description: "4 拍分鏡：開場 → 微距 → 環繞 → 生活／收束。",
 					costHint:
-						"約 4 張靜幀 + 12 秒 H3 — 要付費 · Kling 拼接或夠免費額",
+						"約 4 張靜幀 + 12 秒高級影片 — 要付費 · 拼接後備 拼接或夠免費額",
 				},
 				"concept-motion-poster": {
 					title: "概念動態海報",
 					description:
-						"兩張場景靜圖（無字 → 有字）+ H3 過渡，按服務／想法揀動態。唔使 SKU 包裝特寫。",
+						"兩張場景靜圖（無字 → 有字）+ 影片過渡，按服務／想法揀動態。唔使 SKU 包裝特寫。",
 					costHint: "約 2 張 AI 靜圖 + 1 段短片 · 免費額度夠",
 				},
 				"concept-tvc-12s": {
@@ -512,8 +512,129 @@ export const zh = {
 					description:
 						"服務／想法 4 拍分鏡：開場 → 隱喻 → 環繞 → 收束。",
 					costHint:
-						"約 4 張靜幀 + 12 秒 H3 — 要付費 · Kling 拼接或夠免費額",
+						"約 4 張靜幀 + 12 秒高級影片 — 要付費 · 拼接後備 拼接或夠免費額",
 				},
+				"product-blockbuster-9s": {
+					title: "大片級出場 約 9 秒",
+					description:
+						"3 張圖單鏡：貨車紙箱撞天橋，產品升起。唔係分鏡拼接。",
+					costHint: "約 9 秒單鏡 · 產品 + 包裝 + 可選場景首幀",
+				},
+				"concept-blockbuster-9s": {
+					title: "大片級 Logo／吉祥物 約 9 秒",
+					description:
+						"同一套單鏡物流廣告，用 Logo 或吉祥物彈出，代替產品特寫。",
+					costHint: "約 9 秒單鏡 · Logo／吉祥物 + 品牌卡片 + 可選場景首幀",
+				},
+				"product-ecom-orbit-6s": {
+					title: "電商環繞 ~6s",
+					description:
+						"一張產品圖 → H3 環繞/仰拍/旋轉。身份鎖定的轉台廣告。",
+					costHint: "~6s 單鏡 · 產品圖",
+				},
+				"product-object-lock-6s": {
+					title: "物體鎖定運鏡 ~6s",
+					description:
+						"鏡頭黏在商品上，世界在動，產品不動。SnorriCam 感。",
+					costHint: "~6s 單鏡 · 產品圖",
+				},
+				"product-macro-snap-6s": {
+					title: "微距物理 / 美食碎裂 ~6s",
+					description:
+						"滴落、碎屑、斷裂 — 在你的靜物上做連續物理。",
+					costHint: "~6s 單鏡 · 美食/材質圖",
+				},
+				"product-luxury-tabletop-8s": {
+					title: "奢侈品桌面+手 ~8s",
+					description:
+						"大理石桌面，手指輕觸或打開產品，一鏡到底。",
+					costHint: "~8s 單鏡 · 產品圖",
+				},
+				"product-beauty-mv-10s": {
+					title: "美妝/角色一鏡 MV ~10s",
+					description:
+						"臉或吉祥物身份鎖定，柔光環繞 — MV/UGC 級一鏡。",
+					costHint: "~10s 單鏡 · 人像/角色圖",
+				},
+				"product-imitate-ad-8s": {
+					title: "仿拍這支廣告 ~8s",
+					description:
+						"你的產品圖 + 參考 MP4 → H3 學運鏡，保留你的 SKU。",
+					costHint: "~8s · 產品圖 + 參考影片",
+				},
+				"product-neon-on-real-8s": {
+					title: "霓虹疊實景 ~8s",
+					description:
+						"你的真實影片 + 發光霓虹線稿（動物、符號）在場景裡遊走。",
+					costHint: "~8s · 真實 MP4（可選產品靜圖）",
+				},
+				"product-food-bullet-time-6s": {
+					title: "美食子彈時間 ~6s",
+					description:
+						"打卡美食圖 → 飛濺定格靜圖 → H3 鏡頭環繞懸浮食物。",
+					costHint: "~6s · 人+食物生活照（或 Nano Banana）",
+				},
+				"product-gaming-cover": {
+					title: "電競封面",
+					description:
+						"AAA 遊戲封面靜圖 — 低角度動作、字刻進場景、HUD 裝飾。",
+					costHint: "只出圖 · 可選產品／主角圖",
+				},
+				"product-sports-big-words": {
+					title: "運動大字海報",
+					description:
+						"運動編輯海報 — 超大疊字、動作張力、HUD 數據。",
+					costHint: "只出圖 · 可選產品／運動員圖",
+				},
+				"product-jelly-3d": {
+					title: "果凍立體字",
+					description:
+						"極簡果凍／玻璃 3D 主體 — 柔和陰影、少量品牌字。",
+					costHint: "只出圖 · 品牌名／數字",
+				},
+				"concept-beauty-mv-10s": {
+					title: "美妝/角色一鏡（概念）~10s",
+					description:
+						"Logo 或吉祥物身份鎖定的 MV 一鏡 — 不需商品包材圖。",
+					costHint: "~10s 單鏡 · Logo/吉祥物",
+				},
+				"concept-imitate-ad-8s": {
+					title: "仿拍這支廣告（概念）~8s",
+					description:
+						"品牌標誌 + 參考 MP4 → H3 跟運鏡，保留你的身份。",
+					costHint: "~8s · Logo/吉祥物 + 參考影片",
+				},
+				"concept-neon-on-real-8s": {
+					title: "霓虹疊實景（概念）~8s",
+					description:
+						"真實影片 + 霓虹動物/符號在場景中移動 — 可選 Logo 鎖定。",
+					costHint: "~8s · 真實 MP4（可選 Logo 靜圖）",
+				},
+				"concept-food-bullet-time-6s": {
+					title: "美食子彈時間（概念）~6s",
+					description:
+						"餐廳／美食 campaign 子彈時間 — 飛濺定格＋環繞，唔一定要 SKU 包裝圖。",
+					costHint: "~6s · 打卡美食圖（或生成靜圖）",
+				},
+				"concept-gaming-cover": {
+					title: "電競封面（概念）",
+					description:
+						"品牌／吉祥物 AAA 遊戲封面 — 電影感動作、場景內嵌字。",
+					costHint: "只出圖 · 可選 Logo／吉祥物",
+				},
+				"concept-sports-big-words": {
+					title: "運動大字海報（概念）",
+					description:
+						"活動／品牌運動海報 — 超大字、HUD 感，唔一定要 SKU。",
+					costHint: "只出圖 · 標題帶動大字",
+				},
+				"concept-jelly-3d": {
+					title: "果凍立體字（概念）",
+					description:
+						"周年／品牌果凍標 — 半透明立體、極簡字排。",
+					costHint: "只出圖 · 品牌名／數字",
+				},
+
 			},
 		},
 		templatesBadge: "模板",
@@ -1280,6 +1401,21 @@ export const zh = {
 				description:
 					"產品爆炸圖 — 拆開零件並標註說明，一張海報連標題同內容",
 			},
+			"gaming-cover": {
+				title: "電競封面",
+				description:
+					"AAA 遊戲封面 — 低角度動作、字刻進場景、HUD 裝飾",
+			},
+			"sports-big-words": {
+				title: "運動大字海報",
+				description:
+					"運動編輯海報 — 超大疊字、動作張力、HUD 數據",
+			},
+			"jelly-3d": {
+				title: "果凍立體字",
+				description:
+					"極簡果凍／玻璃 3D 主體 — 柔和陰影、少量品牌字",
+			},
 			"brand-fit": {
 				title: "品牌風格分析",
 				description: "貼網站 / IG → AI 分析品牌再出相符廣告",
@@ -1339,6 +1475,9 @@ export const zh = {
 			"info-poster": "",
 			"designed-poster": "",
 			"parts-poster": "",
+			"gaming-cover": "",
+			"sports-big-words": "",
+			"jelly-3d": "",
 			"brand-fit": "",
 			"brand-campaign": "",
 			"brand-video": "",
@@ -1427,6 +1566,12 @@ export const zh = {
 				"例如：左上柔光、食慾場景、中英字排、圓章＋毛筆品類字…",
 			"parts-poster":
 				"例如：深色棚影、幼引線、6 個標註、石墨色調…",
+			"gaming-cover":
+				"例如：低角度追擊、貨箱路徑、地上寫 CHALLENGE…",
+			"sports-big-words":
+				"例如：超大 SMASH、螢光 HUD、賽點比分板…",
+			"jelly-3d":
+				"例如：半透明果凍「1」、青→藍漸層、ONE YEAR 字…",
 			"brand-fit": "分析後會自動填；你可再微調產品或場景",
 			"brand-campaign":
 				"可填 campaign 主題，例如：春季新品三張圖講清功效",
@@ -1547,7 +1692,7 @@ export const zh = {
 		storyboardRecipeHint:
 			"經典彈性分鏡，或豪華產品誕生（建議實體產品）。唔係三分屏 Social drip。",
 		storyboardRecipeLuxuryNoRefHint:
-			"唔用參考短片。可揀 3 場（緊湊）或 5 場（建議）。影片預設 MiniMax H3。",
+			"唔用參考短片。可揀 3 場（緊湊）或 5 場（建議）。影片預設 單鏡出片。",
 		storyboardRecipeLuxuryDrivers: {
 			title: "豪華分鏡故事靠咩決定？",
 			intro:
@@ -1636,25 +1781,25 @@ export const zh = {
 		storyboardPlanPlacementLabel: "產品／概念位置",
 		storyboardPlanPunchLabel: "金句／字幕節拍",
 		videoEngineLabel: "影片引擎",
-		videoEngineSeedance: "Seedance（預設）",
-		videoEngineMinimaxH3: "MiniMax H3（人臉／產品鎖定）",
+		videoEngineSeedance: "參考片模式（預設）",
+		videoEngineMinimaxH3: "單鏡出片（人臉／產品鎖定）",
 		videoEngineHint:
-			"簡易工作室自動揀引擎：有研究片用 Seedance，淨靜幀／海報用 MiniMax H3。Kling 只係無片時後備。",
+			"簡易工作室自動揀引擎：有研究片用 參考片模式，淨靜幀／海報用 單鏡出片。拼接後備 只係無片時後備。",
 		storyboardSceneLabel: "場景",
 		storyboardVideoIntro:
-			"呢啲靜幀會鎖入影片。壞格請返去審查重產。有研究片：Seedance 跟節奏，再 MiniMax H3。淨靜幀：先 H3，失敗先 Kling 拼接。",
+			"呢啲靜幀會鎖入影片。壞格請返去審查重產。有研究片：參考片模式 跟節奏，再 單鏡出片。淨靜幀：先單鏡，失敗先 拼接後備 拼接。",
 		storyboardVideoPreflight:
-			"有研究片：Seedance R2V → H3。淨靜幀：H3 → Kling 拼接",
+			"有研究片：參考片模式 → 單鏡。淨靜幀：單鏡 → 拼接後備 拼接",
 		klingStoryboardFallbackNote:
 			"分鏡影片 — 每格靜幀變成短片，再拼接成完整片",
 		storyboardMinimaxH3Note:
-			"分鏡影片 — MiniMax H3 用場景圖一次出片（唔使拼接）",
+			"分鏡影片 — 單鏡出片 用場景圖一次出片（唔使拼接）",
 		storyboardSeedanceR2vNote:
-			"分鏡影片 — Seedance 參考片對片（@Video1 主軸 + 靜幀，非 fast）",
+			"分鏡影片 — 參考片模式 參考片對片（@Video1 主軸 + 靜幀，非 fast）",
 		storyboardEnginePipelineHint:
-			"有研究片：Seedance 正片 R2V → MiniMax H3（唔用 Kling）。淨靜幀：H3 → Kling 5/10 秒拼接。",
+			"有研究片：參考片模式 → 單鏡出片（唔用 拼接後備）。淨靜幀：單鏡 → 拼接後備 5/10 秒拼接。",
 		researchReelCopyingNote:
-			"跟緊你嘅參考片 — 如果人臉被擋會改用 MiniMax H3。",
+			"跟緊你嘅參考片 — 如果人臉被擋會改用 單鏡出片。",
 		switchToMotionPosterBtn: "改用動態海報（通常更平）",
 		switchToMotionPosterHint: "跳過多場景拼接 — 只對一張關鍵幀做微動態。",
 		lookBiblePaletteLabel: "色盤",
@@ -1662,9 +1807,9 @@ export const zh = {
 		lookBibleMaterialsLabel: "材質",
 		lookBibleNegativesLabel: "避免",
 		seedanceToKlingFallbackNote:
-			"Seedance 此請求被阻擋 — 改用 Kling 分鏡（每格短片再拼接）",
+			"參考片模式 此請求被阻擋 — 改用 拼接後備 分鏡（每格短片再拼接）",
 		seedanceToMinimaxH3FallbackNote:
-			"Seedance 此請求被阻擋 — 改用 MiniMax H3（盡量保留參考片運鏡）",
+			"參考片模式 此請求被阻擋 — 改用 單鏡出片（盡量保留參考片運鏡）",
 		klingStoryboardClipCount: "片段 × {n}",
 		storyboardDurationLabel: "目標片長",
 		storyboardDurationHint:
@@ -2055,7 +2200,7 @@ export const zh = {
 		quickFixRegionNeedZone: "請至少框選一個區域並填寫修改說明。",
 		quickFixRegionMaxZones: "每次最多 5 個區域。",
 		quickFixRegionInpaintBtn: "用修補編輯器精修（筆刷 + 區域）",
-		quickFixRegionInpaintDirectBtn: "直接修補區域（FLUX Fill）",
+		quickFixRegionInpaintDirectBtn: "直接修補區域（inpaint）",
 		quickFixTextEditorHint:
 			"若要精確文案與位置：先移除 AI 文字，再在圖上放置你自己的文字。",
 		quickFixStripTextBtn: "移除 AI 文字並打開編輯器",
@@ -2246,14 +2391,60 @@ export const zh = {
 			"motion-poster": {
 				title: "動態海報",
 				description:
-					"開頭無字靜圖 + 結尾有字靜圖 → H3 過渡。唔係普通產品 I2V。",
+					"開頭無字靜圖 + 結尾有字靜圖 → 影片過渡。唔係普通產品 I2V。",
 			},
 			"social-drip": {
 				title: "三分屏 Social drip",
 				description:
 					"迷因三分屏＋下落穿越——唔係生活寫實 TVC。生成前請睇清適配。",
 			},
-			"reference-concept": {
+			blockbuster: {
+				title: "大片級出場",
+				description:
+					"3 張圖 → 9 秒單鏡：紙箱飛出，產品（或 Logo／吉祥物）揭曉。唔係分鏡。",
+			},
+			
+			"ecom-orbit": {
+				title: "電商環繞",
+				description:
+					"一張產品圖 → 6s 環繞/仰拍/旋轉。身份鎖定轉台廣告。",
+			},
+			"object-lock": {
+				title: "物體鎖定運鏡",
+				description:
+					"鏡頭黏在商品上，背景流動。SnorriCam 一鏡。",
+			},
+			"macro-snap": {
+				title: "微距物理 / 美食碎裂",
+				description:
+					"滴落、碎屑、斷裂 — 在你的美食/材質靜物上做物理。",
+			},
+			"luxury-tabletop": {
+				title: "奢侈品桌面+手",
+				description:
+					"大理石桌面，優雅手部互動，連續奢侈品廣告。",
+			},
+			"beauty-mv": {
+				title: "美妝/角色一鏡 MV",
+				description:
+					"臉或吉祥物鎖定，柔光環繞 — 10s MV/美妝一鏡。",
+			},
+			"imitate-ad": {
+				title: "仿拍這支廣告",
+				description:
+					"產品圖 + 參考 MP4 → 學運鏡，保留你的 SKU。",
+			},
+			"neon-on-real": {
+				title: "霓虹疊實景",
+				description:
+					"真實影片 + 發光霓虹線稿在場景裡遊走。",
+			},
+			"food-bullet-time": {
+				title: "美食子彈時間",
+				description:
+					"打卡美食飛濺定格靜圖 → 6s 鏡頭環繞（3D 食物飛濺）。",
+			},
+"reference-concept": {
 				title: "跟參考片概念",
 				description:
 					"產品 + 參考 MP4 → 跟運鏡同剪輯概念（唔係逐格複製）",
@@ -2264,13 +2455,13 @@ export const zh = {
 			},
 		},
 		motionPosterHint:
-			"即夢式首尾幀：兩張設計海報靜圖（開頭無字、結尾大標題）。MiniMax H3 由開頭過渡到結尾，產品同字一齊郁。計 2 圖 + 1 短片。",
+			"首尾幀：兩張設計海報靜圖（開頭無字、結尾大標題）。單鏡出片 由開頭過渡到結尾，產品同字一齊郁。計 2 圖 + 1 短片。",
 		motionPosterBuildingStill: "第 1/3 步：無字開頭靜圖…",
 		motionPosterBuildingEnd: "第 2/3 步：有字結尾靜圖…",
-		motionPosterAnimatingCard: "第 3/3 步：H3 開頭→結尾過渡中…",
+		motionPosterAnimatingCard: "第 3/3 步：影片開頭→結尾過渡中…",
 		motionPosterArtStyleTitle: "海報畫面",
 		motionPosterArtStyleHint:
-			"Nano Banana 靜圖風格 — 寫實、3D、漫畫、膠片…。動態係之後先加。預設寫實相片。",
+			"AI 靜圖風格 — 寫實、3D、漫畫、膠片…。動態係之後先加。預設寫實相片。",
 		motionPosterDialectTitle: "海報動態",
 		motionPosterDialectHint:
 			"同一套即夢首尾幀，唔同節奏（出字、3D 卡、視差、倒液…）。自動會揀啱嘅——再生成試另一種。",
@@ -2299,12 +2490,193 @@ export const zh = {
 		motionPosterTypeOverlayNote: "疊字",
 		motionPosterTypeOverlaySkipped: "疊字未加上 — 而家係無字氣氛片",
 		motionPosterNeedKeyframe: "動態海報請先上傳產品相、場景相或關鍵幀。",
+		blockbusterHint:
+			"一條 9 秒單鏡：貨車撞天橋、紙箱炸開、再升起主體。上傳主體 + 包裝。請生成天橋貨車首幀——冇呢張，模型好容易變成產品棚拍。",
+		blockbusterHeroTitle: "主體（必填）",
+		blockbusterHeroHint: "清晰產品圖。結尾升起嘅就係呢件。",
+		blockbusterHeroHintConcept:
+			"Logo 或吉祥物。飛出嘅卡片會揭曉呢個——冇上傳就用品牌套件 Logo。",
+		blockbusterPackTitle: "包裝／飛出道具",
+		blockbusterPackHint: "空中複製嘅紙箱或印刷。顏色同 Logo 要同主體一致。",
+		blockbusterPackHintConcept:
+			"品牌卡片、貼紙或 Logo 卡。留空就用 Logo／吉祥物做飛出道具。",
+		blockbusterSceneTitle: "場景首幀",
+		blockbusterSceneHint:
+			"貨車上路靜圖＝開場第一幀。請生成黃昏天橋（貨箱堆得過高）。盡量唔好留空。",
+		blockbusterGenerateSceneBtn: "生成場景靜圖",
+		blockbusterGenerateSceneBusy: "正在生成天橋靜圖…",
+		blockbusterNeedHero: "請先上傳產品相（概念模式可上傳 Logo／吉祥物）。",
+		blockbusterNeedConceptHero: "請上傳 Logo／吉祥物，或喺品牌套件存好 Logo。",
+		blockbusterAnimating: "正在生成 9 秒單鏡…",
+		
+		h3ShotNeedHero: "可上傳產品圖，或用 Nano Banana 生成靜圖。",
+		h3ShotNeedConceptHero:
+			"可上傳 Logo/吉祥物、用品牌套件 Logo，或用 Nano Banana 生成靜圖。",
+		h3ShotNeedReferenceVideo:
+			"請上傳真實／參考 MP4（仿拍與霓虹疊實景必填）。",
+		h3ShotGenerateStillBtn: "生成靜圖（Nano Banana）",
+		h3ShotHeroHint: {
+			"ecom-orbit":
+				"必填：上傳產品圖。H3 環繞該 SKU。",
+			"object-lock":
+				"必填：上傳產品圖。鏡頭黏住該商品。",
+			"macro-snap":
+				"必填：上傳美食或材質近拍。物理效果基於該圖。",
+			"luxury-tabletop":
+				"必填：上傳產品圖作為桌面主視覺。",
+			"beauty-mv":
+				"必填：上傳人臉或角色靜圖作身份鎖定。",
+			"imitate-ad":
+				"必填：產品圖 + 參考 MP4。H3 學運鏡，保留你的 SKU。",
+			"neon-on-real":
+				"必填真實 MP4。產品／Logo／吉祥物靜圖可選作霓虹身份。",
+			"food-bullet-time":
+				"必填：人+食物打卡照（臉與菜要清楚）。",
+		},
+		h3ShotHint: {
+			"ecom-orbit":
+				"請先上傳產品圖 — 未上傳前無法按生成。之後 H3 環繞約 6s。",
+			"object-lock":
+				"請先上傳產品圖 — 未上傳前無法按生成。鏡頭黏住商品。",
+			"macro-snap":
+				"請先上傳美食／材質圖 — 未上傳前無法按生成。再做滴落／碎裂。",
+			"luxury-tabletop":
+				"請先上傳產品圖 — 未上傳前無法按生成。再接手部互動約 8s。",
+			"beauty-mv":
+				"請先上傳人像／角色圖 — 未上傳前無法按生成。再做 MV 環繞約 10s。",
+			"imitate-ad":
+				"請上傳產品圖 + 參考 MP4 — 兩者齊備才能生成。",
+			"neon-on-real":
+				"請上傳真實 MP4（必填）。可把 Logo／吉祥物放進「產品照片」作霓虹身份；也可只用品牌包 Logo。霓虹在場景中移動。",
+			"food-bullet-time":
+				"請先上傳人+食物打卡照 — 未上傳前無法按生成。鏡頭環繞飛濺定格約 6s。",
+		},
+		macroSnapIntensityTitle: "碎裂／滴落強度",
+		macroSnapIntensityHint:
+			"餅乾／食物裂開同醬汁湧出嘅力度。開場仍會先見完整產品。",
+		macroSnapIntensity: {
+			weak: {
+				title: "弱",
+				desc: "細裂紋 + 輕滴",
+			},
+			medium: {
+				title: "中",
+				desc: "清晰裂縫 + 可見滴落",
+			},
+			strong: {
+				title: "強",
+				desc: "戲劇性掰開 + 大量湧出",
+			},
+		},
+		recipePathUxTitles: {
+			need: "你需要",
+			attention: "請注意",
+			output: "你會得到",
+		},
+		recipePathUx: {
+			"ecom-orbit": {
+				need: ["產品圖（清楚包裝／英雄位）"],
+				attention: ["SKU 外形、Logo、配色會鎖定", "乾淨背景最好 — 避免拼貼雜圖"],
+				output: ["約 6 秒單鏡環繞／傾斜產品"],
+			},
+			"object-lock": {
+				need: ["產品圖（盡量填滿畫面）"],
+				attention: ["產品保持清晰置中", "移動的是背景，不是商品"],
+				output: ["約 6 秒物體鎖定（SnorriCam）短片"],
+			},
+			"macro-snap": {
+				need: ["美食或材質近拍圖"],
+				attention: [
+					"同一道菜／材質身份 — 不要換盤",
+					"開場先見完整產品，再戲劇性裂開 + 熔融湧出（不要細線裂紋）",
+					"預期明顯斷裂／碎屑／滴落（不是子彈時間定格）",
+				],
+				output: ["約 6 秒微距物理一鏡"],
+			},
+			"luxury-tabletop": {
+				need: ["產品圖"],
+				attention: ["奢華材質與 Logo 鎖定", "一次優雅手部互動"],
+				output: ["約 8 秒桌面奢華一鏡"],
+			},
+			"beauty-mv": {
+				need: ["人臉或吉祥物／角色靜圖"],
+				attention: ["身份鎖定 — 禁止換臉", "柔光 MV 環繞"],
+				output: ["約 10 秒美妝／MV 一鏡"],
+			},
+			"imitate-ad": {
+				need: ["產品圖", "參考 MP4（運鏡語言）"],
+				attention: ["保留你的 SKU — 不複製參考片產品", "運鏡／節奏跟隨參考片"],
+				output: ["約 8 秒仿拍廣告（MiniMax H3）"],
+			},
+			"neon-on-real": {
+				need: ["真實／參考 MP4", "可選產品／Logo／吉祥物靜圖（霓虹身份）"],
+				attention: [
+					"實景保留 — 霓虹是疊加而非整段 CGI",
+					"上傳 Logo／吉祥物可鎖定霓虹外形；不上傳則用通用霓虹符號",
+				],
+				output: ["約 8 秒霓虹疊實景一鏡"],
+			},
+			"food-bullet-time": {
+				need: ["人+食物打卡生活照（臉與菜要清楚）"],
+				attention: [
+					"保持同一道菜 — 不要憑空加食材",
+					"目標：飛濺定格＋鏡頭環繞（不是拉絲融化動畫）",
+					"臉部盡量保持可辨",
+				],
+				output: ["約 6 秒美食子彈時間／3D 飛濺環繞"],
+			},
+			"designed-poster": {
+				need: ["產品圖", "標題（畫面主文案）"],
+				attention: ["商業 feed 海報排版", "鎖定單張 — 無 A/B 或 campaign"],
+				output: ["一張設計商業海報靜圖"],
+			},
+			"parts-poster": {
+				need: ["產品圖", "標題"],
+				attention: ["爆炸／零件標註保持技術感", "鎖定單張"],
+				output: ["一張零件拆解海報靜圖"],
+			},
+			"gaming-cover": {
+				need: ["產品或英雄圖", "標題（封面大字）"],
+				attention: ["AAA 封面感 — 字嵌進場景", "上傳圖身份鎖定"],
+				output: ["一張電競封面靜圖"],
+			},
+			"sports-big-words": {
+				need: ["產品或運動員圖", "標題（驅動巨大動作詞）"],
+				attention: ["巨大疊層字＋動作能量", "高飽和運動字 — 主體要清晰"],
+				output: ["一張運動大字海報靜圖"],
+			},
+			"jelly-3d": {
+				need: ["產品、Logo 或名稱（果凍造型）", "標題"],
+				attention: ["極簡透亮 3D — 少量文字", "不要雜亂生活場景"],
+				output: ["一張果凍／玻璃 3D 海報靜圖"],
+			},
+		},
+		h3ShotGenerateStillBusy: {
+			"ecom-orbit": "Nano Banana 產品圖…",
+			"object-lock": "Nano Banana 靜圖…",
+			"macro-snap": "Nano Banana 美食圖…",
+			"luxury-tabletop": "Nano Banana 奢侈品圖…",
+			"beauty-mv": "Nano Banana 人像…",
+			"imitate-ad": "Nano Banana 產品圖…",
+			"neon-on-real": "Nano Banana 霓虹鎖定靜圖…",
+			"food-bullet-time": "Nano Banana 飛濺定格…",
+		},
+		h3ShotAnimating: {
+			"ecom-orbit": "正在生成電商環繞片…",
+			"object-lock": "正在生成物體鎖定運鏡…",
+			"macro-snap": "正在生成微距物理片…",
+			"luxury-tabletop": "正在生成奢侈品桌面片…",
+			"beauty-mv": "正在生成美妝/MV 一鏡…",
+			"imitate-ad": "正在生成仿拍廣告…",
+			"neon-on-real": "正在生成霓虹疊實景…",
+			"food-bullet-time": "正在生成美食子彈時間…",
+		},
 		socialDripHint:
 			"三分屏迷因：產品 → 假 IG 欄 → 可愛精緻卡通。有嘢垂直落下穿過中間欄。唔係寫實生活廣告。",
 		socialDripPlanningMetaphor: "正在諗穿越動作…",
 		socialDripBuildingStill: "第 1/3 步：三分屏開頭靜圖…",
 		socialDripBuildingEnd: "第 2/3 步：三分屏結尾靜圖…",
-		socialDripAnimatingCard: "第 3/3 步：H3 開頭→結尾過渡中…",
+		socialDripAnimatingCard: "第 3/3 步：影片開頭→結尾過渡中…",
 		socialDripMetaphorTitle: "穿越動作",
 		socialDripMetaphorHint:
 			"自動會按品類揀合適穿越。揀錯（例如精華用張嘴接汁）會喺下面警示。",
@@ -2838,7 +3210,7 @@ export const zh = {
 				"三個唔同切入角度 — 揀好會更新口播同字幕（hook 置頂、產品句置底）。",
 			hookOptionLabel: "Hook {n}",
 			voiceoverPlaceholder:
-				"口播旁白文案 — 生成後用 fal TTS 朗讀（可手動填寫）",
+				"口播旁白文案 — 生成後用 AI TTS 朗讀（可手動填寫）",
 			voiceoverEmptyHint:
 				"口播文案係空 — 口播會跳過。請填寫下方，或按「從字幕填入口播」。",
 			voiceoverFromCaptionsBtn: "從字幕填入口播文案",
@@ -3008,6 +3380,18 @@ export const zh = {
 			name: "零件拆解海報",
 			description: "爆炸圖零件＋標題同標註說明 — 技術商業靜幀",
 		},
+		"gaming-cover": {
+			name: "電競封面海報",
+			description: "AAA 遊戲封面 — 低角度動作、場景內嵌字、HUD 裝飾",
+		},
+		"sports-big-words": {
+			name: "運動大字海報",
+			description: "運動編輯海報 — 超大疊字、HUD 數據、動作張力",
+		},
+		"jelly-3d": {
+			name: "果凍立體字海報",
+			description: "極簡果凍／玻璃 3D 主體 — 柔和陰影、少量品牌字",
+		},
 		"brand-fit": {
 			name: "品牌風格分析",
 			description: "跟網站/社交品牌 DNA 出廣告",
@@ -3066,20 +3450,20 @@ export const zh = {
 		serviceUnavailable: "圖片／影片生成暫時不可用，請稍後再試。",
 		planningUnavailable: "AI 規劃暫時不可用，請稍後再試。",
 		deepSeekBalanceEmpty:
-			"AI 帳戶餘額已用完，請到 platform.deepseek.com 充值後再試。",
+			"AI 帳戶餘額已用完，請到 platform.AI.com 充值後再試。",
 		insufficientTokens:
 			"Token 不足，無法生成。請到 Pricing 升級或加購後再試。",
 		insufficientTokensTitle: "Token 已用完",
 		insufficientTokensCta: "查看方案與加購",
 		insufficientTokensDismiss: "關閉",
 		tvcNeedsPaidPlan:
-			"12 秒 MiniMax H3 比免費額度貴（約 1140 token）。請到 Pricing 升級，或者餘額夠就用 Kling 拼接。",
+			"12 秒 單鏡出片 比免費額度貴（約 1140 token）。請到 Pricing 升級，或者餘額夠就用 拼接後備 拼接。",
 		tvcNeedsPaidPlanTitle: "12 秒 TVC 需要付費方案",
-		storyboardEngineChoiceTitle: "H3 額度唔夠 — Kling 拼接而家用得",
+		storyboardEngineChoiceTitle: "單鏡額度唔夠 — 拼接後備 拼接而家用得",
 		storyboardEngineChoiceBody:
-			"MiniMax H3 12 秒大約要 {h3} token。你而家有 {balance}。Kling 拼接（約 {kling}）係 4 段剪埋，唔係一條 H3。",
-		storyboardEngineChoiceH3: "升級用 MiniMax H3",
-		storyboardEngineChoiceKling: "而家用 Kling 拼接",
+			"單鏡出片 12 秒大約要 {h3} token。你而家有 {balance}。拼接後備 拼接（約 {拼接後備}）係 4 段剪埋，唔係一鏡到底。",
+		storyboardEngineChoiceH3: "升級用單鏡出片",
+		storyboardEngineChoiceKling: "而家用拼接後備",
 		storyboardCellBlocked:
 			"呢格被安全過濾擋住。撳呢格重新生成 — 同一個產品，唔好有臉同品牌字。",
 		tokensNotCharged: "今次嘗試冇扣 Token。",
@@ -3090,7 +3474,7 @@ export const zh = {
 			"影片生成 拒絕呢次媒體（人物／私隱過濾）。我哋可以改用 逐場動畫再拼接——如果自動切換失敗，請再撳生成影片。",
 		klingStoryboardFailed: "分鏡備援失敗，請再試或改用無臉場景圖。",
 		klingDurationUnreachable:
-			"Kling 拼接唔到呢個秒數（每格最少 5 秒）。請再試 MiniMax H3 或改揀 12 秒。",
+			"拼接後備 拼接唔到呢個秒數（每格最少 5 秒）。請再試 單鏡出片 或改揀 12 秒。",
 		needPhoto: "請先上傳產品相片。",
 		needReferenceImage: "請先上傳參考圖。",
 		needHeadline: "請輸入呢個模板需要嘅主標題。",
@@ -3180,7 +3564,7 @@ export const zh = {
 		voiceLabel: "聲線",
 		avatarVoiceLabel: "主播聲線（跟呢個主播鎖定）",
 		avatarVoiceHint:
-			"每個庫存主播都有配對嘅 MiniMax 聲線（跟你揀嘅語言）。",
+			"每個庫存主播都有配對嘅 AI 聲線（跟你揀嘅語言）。",
 		previewVoice: "預聽聲線",
 		previewingVoice: "預聽中…",
 		generateVideo: "生成 UGC 影片",
@@ -3653,7 +4037,7 @@ export const zh = {
 		title: "工作室嚮導",
 		subtitle: "問 Alchemy 點用 · 或者幫你開路",
 		welcome:
-			"你好！可以問 Alchemy 點運作（Tokens、頁面、H3 vs Kling），或者話我想出咩，我幫你開正確路徑。",
+			"你好！可以問 Alchemy 點運作（Tokens、頁面、single clip vs stitch），或者話我想出咩，我幫你開正確路徑。",
 		welcomeLanding:
 			"你好！問我 Alchemy 任何嘢 — Tokens、studio／字幕／修圖、免費額度夠唔夠。或者話你想推廣咩，我幫你開路。",
 		welcomeStart:
@@ -3663,7 +4047,7 @@ export const zh = {
 		welcomeCaptions:
 			"你而家喺字幕工作室。匯入任何 MP4 — 我幫你改時間軸字幕、BGM、配音，再燒錄。唔使重新出片。",
 		welcomePro:
-			"Pro 畫布 — 將 Upload → Image → Video 節點接好。跑之前可以問我順序同成本。按次 fal 計費。",
+			"Pro 畫布 — 將 Upload → Image → Video 節點接好。跑之前可以問我順序同成本。按次 token 計費。",
 		welcomeBrandKit:
 			"品牌套件 — 上傳一次 logo 同品牌色。分鏡靜幀要唔要蓋 logo 可以問我。",
 		welcomeLibrary:
@@ -3861,6 +4245,15 @@ export const zh = {
 			stylePickerPartsLabel: "零件拆解",
 			stylePickerPartsDesc:
 				"產品爆炸圖 — 拆開零件並標註說明，一張海報連標題同內容。",
+						stylePickerGamingLabel: "電競封面",
+			stylePickerGamingDesc:
+				"AAA 封面靜圖 — 場景內大字、HUD、身份鎖定英雄。",
+			stylePickerSportsLabel: "運動大字",
+			stylePickerSportsDesc:
+				"巨大疊層動作詞（SMASH／SPIKE…）加運動能量。",
+			stylePickerJellyLabel: "果凍 3D",
+			stylePickerJellyDesc:
+				"極簡透亮果凍／玻璃 3D — 少量品牌字。",
 			stylePickerModelLabel: "模特兒佩戴／使用",
 			stylePickerModelDesc: "畫面有人佩戴或使用你嘅產品。",
 			stylePickerModelLockedHint: "有參考圖時唔可用 — 會跟參考圖版式。",
@@ -3911,6 +4304,30 @@ export const zh = {
 					supportingPlaceholder:
 						"例如：\n電池 — 全日續航\n外殼 — 磨砂防滑\n晶片 — 快充 IC",
 				},
+				"gaming-cover": {
+					title: "呢個方向：填封面大字",
+					body: "主標題會變成場景入面嘅大字。上傳圖鎖英雄／產品身份。輔助文案＝HUD。額外＝場景／燈光。",
+					hookLabel: "封面標題",
+					hookPlaceholder: "例如：CHALLENGE · 決戰",
+					supportingLabel: "HUD／輔助句",
+					supportingPlaceholder: "短遊戲標語（可選）",
+				},
+				"sports-big-words": {
+					title: "呢個方向：填巨大動作詞",
+					body: "主標題驅動巨大疊層字（SMASH／SPIKE…）。上傳＝運動員或產品動作。輔助＝HUD 數據。",
+					hookLabel: "大字／標題",
+					hookPlaceholder: "例如：SMASH · 爆發",
+					supportingLabel: "HUD／輔助句",
+					supportingPlaceholder: "短運動 HUD（可選）",
+				},
+				"jelly-3d": {
+					title: "呢個方向：填少量品牌字",
+					body: "主標題＝頂部稀疏字。上傳引導果凍造型／品牌。輔助＝底部品牌行。畫面保持極簡。",
+					hookLabel: "頂部品牌行",
+					hookPlaceholder: "例如：ONE YEAR · 一週年",
+					supportingLabel: "底部品牌行",
+					supportingPlaceholder: "短品牌句（可選）",
+				},
 				brand: {
 					title: "呢個方向：重點係品牌風格",
 					body: "有網站／社交請先做品牌分析。主標題同輔助文案會跟品牌色調排版，唔係價卡。",
@@ -3952,7 +4369,7 @@ export const zh = {
 			storyboardLookBeforePlanHint:
 				"先揀畫面風格 — 會寫入 AI 分鏡大綱同之後嘅靜幀。",
 			storyboardTextModeHint:
-				"預設無字靜幀（字幕之後先燒）。想每格有標題就揀 AI 圖上文字 — H3 會盡量跟住字做動態。",
+				"預設無字靜幀（字幕之後先燒）。想每格有標題就揀 AI 圖上文字 — 影片會盡量跟住字做動態。",
 			styleLabel: "揀畫面風格",
 			aspectLabel: "比例",
 			textModeLabel: "文字模式",
@@ -4008,9 +4425,9 @@ export const zh = {
 			titleAccent: "影片詳情",
 			hint: "填文案、上傳產品相、寫／確認動態 prompt、揀片長，再生成無聲短片。",
 			scenesReadyHint:
-				"場景圖已準備 — 會用 MiniMax H3 一次出一條片（全部靜幀）。字幕之後再加。",
+				"場景圖已準備 — 會用 單鏡出片 一次出一條片（全部靜幀）。字幕之後再加。",
 			scenesReadyTitle: "分鏡場景已準備",
-			scenesReadyBody: "呢啲靜態圖會合成一條 H3 短片。壞格請先重產嗰格。",
+			scenesReadyBody: "呢啲靜態圖會合成一條短片 短片。壞格請先重產嗰格。",
 			assistantHint:
 				"上傳產品相 → AI 寫動態 prompt → 檢查後再生成（無聲片；字幕之後再加）。",
 			assistantTitle: "AI 動態 Prompt",
@@ -4046,6 +4463,9 @@ export const zh = {
 			extraLabel: "額外運鏡備註",
 			extraOptional: "（選填）",
 			onImageBadge: "會出現喺結尾靜圖",
+			inVideoBadge: "會出現喺影片",
+			requiredBadge: "必填",
+			h3PathFocusLead: "呢條 path",
 			motionPosterCopyFocus: {
 				title: "動態海報：重點填「結尾靜圖標題」",
 				body: "開頭靜圖無字；結尾靜圖會用你嘅主標題做大海報字（輔助文案可做副標）。產品相必須 — 係主體。額外備註只寫光線／場景，唔好當標題。",
@@ -4061,6 +4481,9 @@ export const zh = {
 			productPhotoHint: "清晰產品相 — 必須。會做短片入面嘅主體。",
 			productPhotoWithRefHint:
 				"必須 — 你嘅產品做 @Image1。參考 MP4 只提供運鏡／剪輯感覺。",
+			neonIdentityPhotoTitle: "Logo／吉祥物（霓虹身份）",
+			neonIdentityPhotoHint:
+				"選填 — 將 Logo 或吉祥物放呢度，鎖定霓虹外形。亦可用品牌包 Logo。唔上傳就用通用霓虹符號。",
 			conceptPhotoTitle: "參考相片（選填）",
 			conceptPhotoHint:
 				"選填 — 幫畫面落地；概念短片亦可以只靠簡報 + 動態 prompt。",
@@ -4073,10 +4496,10 @@ export const zh = {
 			aspectHint:
 				"靜圖同影片共用呢個比例。9:16 Reels／Stories · 4:5 IG feed · 1:1 正方形。",
 			klingSettingsHint:
-				"影片會先用 MiniMax H3（全部靜幀 → 一條）。H3 失敗先會改 Kling 拼接，唔使你揀 5／10 秒。",
+				"影片會先用 單鏡出片（全部靜幀 → 一條）。單鏡失敗先會改 拼接後備 拼接，唔使你揀 5／10 秒。",
 			klingClipLabel: "每場片長",
 			klingClipHint:
-				"Kling 每場只支援 5 秒或 10 秒 — 唔係 Seedance 嗰種 4–12 秒總片長。",
+				"拼接後備 每場只支援 5 秒或 10 秒 — 唔係 參考片模式 嗰種 4–12 秒總片長。",
 			klingTotalLabel: "合計約 {total} 秒（{n} × {clip} 秒）",
 			costLabel: "預計約 {n} 點數",
 			tipTitle: "更好影片小提示",
@@ -4097,8 +4520,8 @@ export const zh = {
 				body: "AI 場景文案顯示故事節拍 — 之後可以燒成字幕。",
 			},
 			klingTip2: {
-				title: "H3 一鏡",
-				body: "全部靜幀入同一條 MiniMax H3，唔係四段分開出。",
+				title: "一鏡到底",
+				body: "全部靜幀入同一條 單鏡出片，唔係四段分開出。",
 			},
 			klingTip3: {
 				title: "先修好靜幀",

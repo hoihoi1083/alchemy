@@ -58,7 +58,7 @@ export async function POST(request: Request) {
       plan,
       sourceNote:
         plan.source === "deepseek"
-          ? "Social-drip metaphor (DeepSeek)"
+          ? "Social-drip metaphor (AI)"
           : plan.source === "user"
             ? "Social-drip metaphor (user override)"
             : "Social-drip metaphor (heuristic fallback)",

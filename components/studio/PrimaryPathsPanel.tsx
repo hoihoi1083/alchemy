@@ -112,6 +112,34 @@ export function PrimaryPathsPanel({ variant, showCinematicExtras = false }: Prop
             onClick={() => applyPrimaryPathConcept("info")}
           />
           <PathButton
+            active={visualStyleId === "designed-poster"}
+            title={m.microWizard.preGenerateSetup.stylePickerDesignedLabel}
+            description={m.microWizard.preGenerateSetup.stylePickerDesignedDesc}
+            previewSrc={getVisualStyle("designed-poster").previewSrc}
+            onClick={() => applyPrimaryPathConcept("designed")}
+          />
+          <PathButton
+            active={visualStyleId === "gaming-cover"}
+            title={m.microWizard.preGenerateSetup.stylePickerGamingLabel}
+            description={m.microWizard.preGenerateSetup.stylePickerGamingDesc}
+            previewSrc={getVisualStyle("gaming-cover").previewSrc}
+            onClick={() => applyPrimaryPathConcept("gaming-cover")}
+          />
+          <PathButton
+            active={visualStyleId === "sports-big-words"}
+            title={m.microWizard.preGenerateSetup.stylePickerSportsLabel}
+            description={m.microWizard.preGenerateSetup.stylePickerSportsDesc}
+            previewSrc={getVisualStyle("sports-big-words").previewSrc}
+            onClick={() => applyPrimaryPathConcept("sports-big-words")}
+          />
+          <PathButton
+            active={visualStyleId === "jelly-3d"}
+            title={m.microWizard.preGenerateSetup.stylePickerJellyLabel}
+            description={m.microWizard.preGenerateSetup.stylePickerJellyDesc}
+            previewSrc={getVisualStyle("jelly-3d").previewSrc}
+            onClick={() => applyPrimaryPathConcept("jelly-3d")}
+          />
+          <PathButton
             active={visualStyleId === "brand-fit"}
             title={m.wizard.pathBrandTitle}
             description={m.wizard.pathBrandDesc}
@@ -198,6 +226,41 @@ export function PrimaryPathsPanel({ variant, showCinematicExtras = false }: Prop
                 description={m.wizard.pathQuickDesc}
                 previewSrc={getVisualStyle("product").previewSrc}
                 onClick={() => applyPrimaryPath("quick")}
+              />
+              <PathButton
+                active={visualStyleId === "designed-poster"}
+                title={m.microWizard.preGenerateSetup.stylePickerDesignedLabel}
+                description={m.microWizard.preGenerateSetup.stylePickerDesignedDesc}
+                previewSrc={getVisualStyle("designed-poster").previewSrc}
+                onClick={() => applyPrimaryPath("designed")}
+              />
+              <PathButton
+                active={visualStyleId === "parts-poster"}
+                title={m.microWizard.preGenerateSetup.stylePickerPartsLabel}
+                description={m.microWizard.preGenerateSetup.stylePickerPartsDesc}
+                previewSrc={getVisualStyle("parts-poster").previewSrc}
+                onClick={() => applyPrimaryPath("parts")}
+              />
+              <PathButton
+                active={visualStyleId === "gaming-cover"}
+                title={m.microWizard.preGenerateSetup.stylePickerGamingLabel}
+                description={m.microWizard.preGenerateSetup.stylePickerGamingDesc}
+                previewSrc={getVisualStyle("gaming-cover").previewSrc}
+                onClick={() => applyPrimaryPath("gaming-cover")}
+              />
+              <PathButton
+                active={visualStyleId === "sports-big-words"}
+                title={m.microWizard.preGenerateSetup.stylePickerSportsLabel}
+                description={m.microWizard.preGenerateSetup.stylePickerSportsDesc}
+                previewSrc={getVisualStyle("sports-big-words").previewSrc}
+                onClick={() => applyPrimaryPath("sports-big-words")}
+              />
+              <PathButton
+                active={visualStyleId === "jelly-3d"}
+                title={m.microWizard.preGenerateSetup.stylePickerJellyLabel}
+                description={m.microWizard.preGenerateSetup.stylePickerJellyDesc}
+                previewSrc={getVisualStyle("jelly-3d").previewSrc}
+                onClick={() => applyPrimaryPath("jelly-3d")}
               />
               <PathButton
                 active={visualStyleId === "model-wear"}

@@ -13,6 +13,7 @@ export const PHYSICAL_ONLY_VISUAL_STYLE_IDS = new Set<VisualStyleId>([
   "dark-premium",
   "model-wear",
   "ugc-presenter",
+  // Exploded SKU diagram — logo-only does not work.
   "parts-poster",
 ]);
 
@@ -29,6 +30,9 @@ export const SHARED_VISUAL_STYLE_IDS = new Set<VisualStyleId>([
   "warm-shop",
   "info-poster",
   "designed-poster",
+  "gaming-cover",
+  "sports-big-words",
+  "jelly-3d",
   "brand-fit",
   "brand-campaign",
   "brand-video",
@@ -76,6 +80,9 @@ export function conceptStyleAllowsTextOnlyImage(id: VisualStyleId): boolean {
     CONCEPT_ONLY_VISUAL_STYLE_IDS.has(id) ||
     id === "info-poster" ||
     id === "designed-poster" ||
+    id === "gaming-cover" ||
+    id === "sports-big-words" ||
+    id === "jelly-3d" ||
     id === "warm-shop" ||
     id === "brand-fit" ||
     id === "brand-campaign"
@@ -87,6 +94,9 @@ export function conceptStyleRequiresHeadline(id: VisualStyleId): boolean {
     isConceptOnlyVisualStyle(id) ||
     id === "info-poster" ||
     id === "designed-poster" ||
+    id === "gaming-cover" ||
+    id === "sports-big-words" ||
+    id === "jelly-3d" ||
     id === "brand-fit" ||
     id === "brand-campaign"
   );

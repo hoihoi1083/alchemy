@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid research reel analysis JSON." }, { status: 400 });
   }
   if (!analysis?.seedancePrompt?.trim()) {
-    return NextResponse.json({ error: "Research analysis has no Seedance prompt." }, { status: 400 });
+    return NextResponse.json({ error: "Research analysis has no motion prompt." }, { status: 400 });
   }
 
   const product =

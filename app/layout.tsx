@@ -24,7 +24,6 @@ export const metadata: Metadata = {
     "AI video",
     "product ads",
     "marketing studio",
-    "Seedance",
     "short video",
     "captions",
     "Alchemy AI Lab",

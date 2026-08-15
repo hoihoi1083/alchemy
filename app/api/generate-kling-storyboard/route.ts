@@ -194,7 +194,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          "MiniMax H3 needs more tokens than your balance. Kling stitch fits now.",
+          "Single-clip video needs more tokens than your balance. Stitched fallback fits now.",
         code: STORYBOARD_ENGINE_CHOICE_CODE,
         balance: afford.balance,
         h3Cost: afford.h3Cost,
@@ -323,7 +323,7 @@ export async function POST(request: Request) {
       referenceVideoCount: videoUrls.length,
       tokensCharged,
       creditBalance: balanceAfter,
-      note: "MiniMax H3 storyboard — single clip from scene stills (no stitch).",
+      note: "Storyboard video — single continuous clip from scene stills (no stitch).",
     });
   }
 
@@ -374,7 +374,7 @@ export async function POST(request: Request) {
         creditBalance: klingCharged.balanceAfter,
         note:
           result.note ||
-          "Kling per-scene clips + stitch — MiniMax H3 needed more tokens than your balance.",
+          "Stitched per-scene clips — single-clip mode needed more tokens than your balance.",
       });
     } catch (e: unknown) {
       await refundTokens(clerkId, klingCost, {
@@ -423,7 +423,7 @@ export async function POST(request: Request) {
         referenceVideoCount: videoUrls.length,
         tokensCharged: firstCost,
         creditBalance: firstCharged.balanceAfter,
-        note: "Seedance reference-to-video — @Video1 spine + storyboard stills (quality, not fast).",
+        note: "Reference-reel video — your reference clip + storyboard stills.",
       });
     } catch (seedanceErr: unknown) {
       console.error(
@@ -522,7 +522,7 @@ export async function POST(request: Request) {
       creditBalance: klingCharged.balanceAfter,
       note:
         result.note ||
-        "MiniMax H3 unavailable — used Kling per-scene clips + stitch.",
+        "Single-clip mode unavailable — used per-scene clips + stitch.",
     });
   } catch (e: unknown) {
     await refundTokens(clerkId, klingCost, {

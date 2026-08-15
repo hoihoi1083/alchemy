@@ -51,8 +51,8 @@ function formatBagelVisionError(e: unknown): Error {
 /**
  * Image → text/JSON via fal-ai/bagel/understand (single image_url).
  * Prefer Florence-2 + DeepSeek (`captionImageToVisionJson`) for product/reel/reference
- * analysis — Bagel is ~$0.05/request and slower (think traces). Keep Bagel only where
- * a promptable VLM is required and Florence captions are not enough (e.g. smoke QA).
+ * analysis — Bagel is ~$0.05/request and slower (think traces). Smoke / postflight QA
+ * uses `fal-ai/any-llm/vision` (Gemini Flash Lite, ~$0.01) in pipeline-smoke-review.
  */
 export async function runBagelUnderstand(input: {
   imageUrl: string;

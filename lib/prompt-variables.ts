@@ -565,15 +565,16 @@ export function buildPartsPosterImagePrompt(vars: PromptVariables): string {
 				: `Large Traditional Chinese title with exact characters from "${headline}" (optional short English under-title). Spell every Chinese character accurately.`;
 	const partsCopy =
 		partLines.length > 0
-			? `Part callouts / descriptions (use these; one short label+line per component, exact when Chinese): ${partLines.map((l, i) => `${i + 1}) ${l}`).join(" · ")}.`
-			: `Invent 4–7 short part callouts that match REAL components of "${product}" (material / function / feature) — each label under ~8 words; do not invent unrelated accessories.`;
+			? `Part callouts / descriptions (use these; one short label+line per component, exact when Chinese): ${partLines.map((l, i) => `${i + 1}) ${l}`).join(" · ")}. Stack floating parts in THIS numbered order from OUTSIDE → INSIDE (or top → bottom of the explosion) — do not reorder or invert layers.`
+			: `Invent 4–7 short part callouts that match REAL components of "${product}" (material / function / feature) — each label under ~8 words; do not invent unrelated accessories. Stack them in real assembly order (outermost → innermost).`;
 
 	return joinParts(
 		`Create a vertical PARTS-BREAKDOWN / EXPLODED-VIEW COMMERCIAL POSTER for ${product}.`,
 		`Technical product teardown aesthetic: the product is deconstructed into floating components arranged in a clear exploded diagram — NOT violent destruction, NOT fire/debris chaos, NOT a smashed product.`,
 		`IDENTITY LOCK: Keep the exact product look from IMAGE 1 (shape, color, logo marks, materials). Components must clearly belong to THIS product.`,
+		`ASSEMBLY ORDER (critical): Floating layers must follow REAL build order, outside → inside (or front → back). Example for a smartphone: 1) cover glass (outermost) → 2) display panel → 3) camera module / mid-frame hardware → 4) logic board → 5) battery → 6) wireless coil / shields → 7) back chassis (innermost / rear). NEVER put the OLED/display above the front cover glass. NEVER invent impossible stack order.`,
 		`POSTER GRAMMAR:`,
-		`1) Center: exploded assembly — shell / core / chips / pads / lids / straps / nozzles etc. as fits the category; soft gaps between parts; thin leader lines from each part to its callout.`,
+		`1) Center: exploded assembly with soft vertical gaps; thin leader lines from each part to its callout; one callout per part (no duplicate labels).`,
 		`2) Title zone (top): ${titleRule}`,
 		partsCopy,
 		offer ? `Optional small offer / claim badge (exact): ${offer}.` : "",
@@ -581,13 +582,153 @@ export function buildPartsPosterImagePrompt(vars: PromptVariables): string {
 		`3) Background: clean studio gradient or soft paper/tech surface matched to category — generous negative space so labels read at phone size.`,
 		`4) Lighting: soft upper-left key, crisp material texture, photoreal (no plastic toy CGI).`,
 		`5) Quality: no watermark, no social UI, no misspelled characters, no neon cyberpunk clutter, no English meta labels like CTA/LOGO.`,
-		`FORBIDDEN: intact-only hero with no parts; random unrelated spare parts; food props on non-food; violent smash; overcrowded unreadable text.`,
+		`FORBIDDEN: intact-only hero with no parts; inverted or random layer order; random unrelated spare parts; food props on non-food; violent smash; overcrowded unreadable text; duplicate callouts for the same part.`,
 		imageReferenceAnchorBlock(vars),
 		`Remove outdated packaging marketing text from IMAGE 1 only where new poster copy replaces it.`,
 		MARKET_HINTS[vars.market],
 		FRAMING_IMAGE[vars.framing],
 		vars.extra,
 		"Single 9:16 parts-breakdown commercial poster still.",
+	);
+}
+
+/**
+ * AAA gaming cover — Peace Elite–style cinematic poster with type baked into the 3D world.
+ */
+export function buildGamingCoverImagePrompt(vars: PromptVariables): string {
+	const product = vars.product?.trim() || "the hero";
+	const headline = vars.headline?.trim() || product;
+	const subline = vars.subline?.trim() || "";
+	const offer = vars.offer?.trim() || "";
+	const titleRule =
+		vars.market === "en"
+			? `Large clear English title with exact text: "${headline}".`
+			: vars.market === "cn"
+				? `Large Simplified Chinese and/or English title using exact characters from "${headline}". Spell every character accurately.`
+				: `Large Traditional Chinese and/or English title using exact characters from "${headline}". Spell every character accurately.`;
+
+	return joinParts(
+		`Create a vertical AAA GAMING COVER POSTER for ${product} — photoreal cinematic game-key-art, not a flat Canva flyer.`,
+		`Look DNA: low-angle action hero, dramatic outdoor or industrial set, typography BAKED INTO the 3D world (painted on crates, carved in rock, stamped on path), HUD/barcode/crosshair accents in corners.`,
+		`IDENTITY LOCK: Keep exact product / character / mascot from IMAGE 1 when attached (shape, colors, materials, logos). Do not swap identity.`,
+		`POSTER GRAMMAR:`,
+		`1) Hero: dynamic pose (run / aim / leap) filling mid-frame; sharp materials; shallow DOF; cinematic daylight or golden rim.`,
+		`2) Environment: readable world (hill path, container yard, rocky overlook…) that supports the product category — not a blank studio.`,
+		`3) Title zone: ${titleRule}`,
+		subline
+			? `Support taglines / HUD microcopy (exact when Chinese): ${subline}.`
+			: "Invent 2–4 short gaming taglines (strategy / precision / one winner) in small HUD type — keep under 6 words each.",
+		`4) In-world type: at least one large word integrated into props/terrain (e.g. CHALLENGE / RUSH / DROP CLAIM) — must feel painted/embossed, not floating sticker.`,
+		offer ? `Optional small offer / season badge (exact): ${offer}.` : "",
+		vars.business ? `Brand name may appear in title block or footer: ${vars.business}.` : "",
+		`5) Accents: subtle barcode, reticle, or corner HUD — never clutter the hero face/product.`,
+		`FORBIDDEN: flat collage, neon cyberpunk city default, blank catalog cutout, social UI chrome, watermark, misspelled characters.`,
+		imageReferenceAnchorBlock(vars),
+		MARKET_HINTS[vars.market],
+		FRAMING_IMAGE[vars.framing],
+		vars.extra,
+		"Single 9:16 AAA gaming cover still.",
+	);
+}
+
+/**
+ * Sports editorial — huge layered word + athlete/action energy (SMASH / ACCELERATE / SPIKE).
+ * Not a gaming cover: impact photography + typography-as-architecture, not quest HUD.
+ */
+export function buildSportsBigWordsImagePrompt(vars: PromptVariables): string {
+	const product = vars.product?.trim() || "the athlete";
+	const headline = vars.headline?.trim() || "SMASH";
+	const subline = vars.subline?.trim() || "";
+	const offer = vars.offer?.trim() || "";
+	const extra = (vars.extra ?? "").toLowerCase();
+	const sportCue = `${product} ${headline} ${vars.extra ?? ""}`.toLowerCase();
+	const accent =
+		/\b(tennis|羽球|網球|网球)\b/.test(sportCue) || /\blime\b/.test(extra)
+			? "electric lime / acid yellow type on deep court green or night sky"
+			: /\b(basket|籃球|篮球|nba)\b/.test(sportCue)
+				? "hot orange / amber type on black arena"
+				: /\b(volley|排球)\b/.test(sportCue)
+					? "cyan / white type on deep blue court"
+					: /\b(soccer|football|足球)\b/.test(sportCue)
+						? "stadium white + grass green accents on night floodlights"
+						: /\b(swim|游泳|track|田徑|田径|sprint)\b/.test(sportCue)
+							? "white / gold type on dark lane or pool blue"
+							: "high-contrast electric lime OR hot orange type against deep stadium navy / black";
+	const bigWord =
+		headline.split(/\s+/).find((w) => /^[A-Za-z]{3,}$/.test(w))?.toUpperCase() ||
+		headline
+			.split(/[·|｜/\s]+/)
+			.map((w) => w.trim())
+			.find((w) => /^[A-Za-z]{3,}$/.test(w))
+			?.toUpperCase() ||
+		"SMASH";
+	const titleRule =
+		vars.market === "en"
+			? `The architectural word must read exactly "${bigWord}" (from hook "${headline}").`
+			: `Primary architectural word in bold English energy letters: "${bigWord}" (derived from "${headline}"). Chinese support lines from the copy must be exact when provided.`;
+
+	return joinParts(
+		`Create a vertical HIGH-IMPACT SPORTS BIG-WORDS EDITORIAL POSTER for ${product}.`,
+		`Look DNA: ESPN / Nike match-point freeze-frame — NOT a cute character poster, NOT a gaming key-art cover.`,
+		`CAMERA (mandatory): extreme worm's-eye or aggressive Dutch low-angle; lens almost on the turf/court looking UP so the subject and word tower over the viewer. Wide / fisheye sports feel OK.`,
+		`MOTION AS LAYOUT: peak-impact freeze — spike, smash, leap, slide, or stomp. Dirt / chalk / sweat / water spray / turf chunks exploding from contact. Motion streaks and rim light. Subject limbs MUST cut through the giant letters (some letters behind body, some in front) for depth.`,
+		`IDENTITY LOCK: Keep exact product / mascot / person from IMAGE 1 when attached (shape, colors, logos). Amplify athletic aggression and impact — never a soft standing smile pose. If no photo, invent a photoreal athlete or product-in-action matching "${product}".`,
+		`POSTER GRAMMAR:`,
+		`1) Hero: fills lower–mid frame in a violent peak-effort pose; sharp gear/spikes/hands; grit and spray visible; face (if any) intense, not kawaii idle.`,
+		`2) BIG WORD AS ARCHITECTURE: one enormous stacked or diagonal sports word taller than the hero — letters span ~45–65% of frame height, thick condensed sans or italic athletic display. ${titleRule} Word is a stadium LED wall / painted court graphic, not a small caption and not a floating sticker.`,
+		subline
+			? `3) Sports HUD only (exact when Chinese): ${subline}. Keep tiny — score, clock, set count — never gaming quest / barcode / battery UI.`
+			: "3) Sports HUD only: invent 2–3 micro lines (e.g. SET POINT · 15-40 · 00:03.21) plus optional LED scoreboard — never gaming reticle, barcode, daily-quest chrome, or battery icons.",
+		offer ? `Optional small claim badge (exact): ${offer}.` : "",
+		vars.business ? `Brand cue small in corner or footer: ${vars.business}.` : "",
+		`4) Color / venue: ${accent}. Floodlights, lens flare, wet court or turf OK.`,
+		`5) Hierarchy: first read = IMPACT + giant word; second = hero identity; third = tiny HUD. Phone-readable from arm's length.`,
+		`FORBIDDEN: soft cute idle mascot pose, pastel kawaii sports, gaming cover DNA (quest text, barcode, crosshair, wooden CHALLENGE plank), tiny timid type, flat catalog cutout, Canva flyer, social UI, watermark, misspelled characters, word smaller than the hero.`,
+		imageReferenceAnchorBlock(vars),
+		MARKET_HINTS[vars.market],
+		FRAMING_IMAGE[vars.framing],
+		vars.extra,
+		"Single 9:16 high-impact sports big-words poster still.",
+	);
+}
+
+/**
+ * Jelly / glass 3D TYPE poster — uploaded product/mascot stays identity-locked;
+ * the dramatic jelly material belongs on the words (same for product + concept).
+ */
+export function buildJelly3dImagePrompt(vars: PromptVariables): string {
+	const product = vars.product?.trim() || "the brand mark";
+	const headline = vars.headline?.trim() || product;
+	const subline = vars.subline?.trim() || "";
+	const offer = vars.offer?.trim() || "";
+	const jellyWordRule =
+		vars.market === "en"
+			? `Primary jelly word / short phrase must use exact text: "${headline}".`
+			: `Primary jelly word / short phrase must use exact characters from "${headline}". Spell every character accurately.`;
+	const jellySupport = subline
+		? `Optional second jelly word or smaller jelly subline (exact): ${subline}.`
+		: vars.business
+			? `Optional small jelly brand word (exact): ${vars.business}.`
+			: "Optional small jelly brand word matching the product/brand — still jelly/glass, not flat print.";
+
+	return joinParts(
+		`Create a vertical IG-DRAMATIC JELLY / GLASS 3D TYPE POSTER for ${product}.`,
+		`Look DNA: premium Instagram still-life — clean light ground, soft colored contact shadows, high speculars. The STAR is JELLY/GLASS 3D TYPOGRAPHY. The uploaded product or mascot stays itself.`,
+		`IDENTITY LOCK (critical): If IMAGE 1 is attached, keep the EXACT product / mascot / logo from the photo — same silhouette, materials, colors, face, logos. Do NOT rematerialize the subject into jelly/glass. Do NOT replace it with a different character. Photoreal / same CGI look as the upload.`,
+		`If NO photo: place a clean photoreal product or brand mark for "${product}" (not a jelly remake of a random object), AND still make the headline the jelly hero.`,
+		`POSTER GRAMMAR:`,
+		`1) Subject: ${product} from IMAGE 1 (when attached) as a real hero object/mascot on a clean white/off-white or soft pastel ground — studio product lighting, not a lifestyle scene.`,
+		`2) JELLY WORDS (mandatory hero type): thick rounded translucent jelly/glass 3D letters with internal color gradient (lime→emerald→sapphire or brand-matched), caustics, sharp specular highlights, soft colored ground shadow. ${jellyWordRule}`,
+		jellySupport,
+		`Letters should feel IG-dramatic: larger than flat captions, slight depth/tilt or gentle curve, readable at phone size — premium WPP jelly anniversary energy, not tiny footer text.`,
+		offer ? `Optional tiny flat claim under the jelly type (exact): ${offer}.` : "",
+		`3) Composition: subject + jelly words share the frame; generous negative space; no stadium, no athlete, no gaming HUD, no busy collage.`,
+		`FORBIDDEN: turning the product/mascot into jelly; flat printed 2D title only; missing jelly type; neon cyberpunk city; dense icons; social UI chrome; watermark; misspelled characters; plastic matte cheap CGI type.`,
+		imageReferenceAnchorBlock(vars),
+		MARKET_HINTS[vars.market],
+		FRAMING_IMAGE[vars.framing],
+		vars.extra,
+		"Single 9:16 jelly-type poster still — real subject + jelly words.",
 	);
 }
 
@@ -601,6 +742,9 @@ export type ImagePromptMode =
 	| "info-poster"
 	| "designed-poster"
 	| "parts-poster"
+	| "gaming-cover"
+	| "sports-big-words"
+	| "jelly-3d"
 	| "brand-fit"
 	| "model-wear"
 	| "ugc-presenter"
@@ -1316,6 +1460,41 @@ export function buildWizardImagePrompt(
 			),
 		);
 	}
+	if (mode === "gaming-cover") {
+		return withLogo(
+			joinParts(
+				buildGamingCoverImagePrompt(vars),
+				plan ? singlePlanBlock(plan) : "",
+				carouselSlideAvoidClause(
+					vars.framing,
+					vars.artStyle ?? DEFAULT_ART_STYLE,
+				),
+			),
+		);
+	}
+	if (mode === "sports-big-words") {
+		return withLogo(
+			joinParts(
+				buildSportsBigWordsImagePrompt(vars),
+				plan ? singlePlanBlock(plan) : "",
+				carouselSlideAvoidClause(
+					vars.framing,
+					vars.artStyle ?? DEFAULT_ART_STYLE,
+				),
+			),
+		);
+	}
+	if (mode === "jelly-3d") {
+		return withLogo(
+			joinParts(
+				buildJelly3dImagePrompt(vars),
+				carouselSlideAvoidClause(
+					vars.framing,
+					vars.artStyle ?? DEFAULT_ART_STYLE,
+				),
+			),
+		);
+	}
 	if (mode === "model-wear") {
 		return withLogo(
 			joinParts(
@@ -1455,6 +1634,9 @@ function shouldUseConceptSocialPrompt(
 		visualStyleId === "info-poster" ||
 		visualStyleId === "designed-poster" ||
 		visualStyleId === "parts-poster" ||
+		visualStyleId === "gaming-cover" ||
+		visualStyleId === "sports-big-words" ||
+		visualStyleId === "jelly-3d" ||
 		visualStyleId === "brand-fit" ||
 		visualStyleId === "brand-campaign" ||
 		visualStyleId === "pricing-offer" ||
@@ -1489,9 +1671,12 @@ export function resolveImagePromptMode(
 	creativeMode: string,
 	context?: ImagePromptContext,
 ): ImagePromptMode {
-	// Designed / parts posters never borrow reference layout — keep their recipes.
+	// Designed / parts / poster recipes never borrow reference layout — keep their recipes.
 	if (visualStyleId === "designed-poster") return "designed-poster";
 	if (visualStyleId === "parts-poster") return "parts-poster";
+	if (visualStyleId === "gaming-cover") return "gaming-cover";
+	if (visualStyleId === "sports-big-words") return "sports-big-words";
+	if (visualStyleId === "jelly-3d") return "jelly-3d";
 	if (creativeMode === "reference-concept") return "reference-concept";
 	if (shouldUseConceptCinematicPrompt(visualStyleId, context))
 		return "concept-cinematic";
@@ -1634,6 +1819,12 @@ export function buildCampaignSlideImagePrompt(
 								? buildDesignedPosterImagePrompt(slideVars)
 								: mode === "parts-poster"
 									? buildPartsPosterImagePrompt(slideVars)
+								: mode === "gaming-cover"
+									? buildGamingCoverImagePrompt(slideVars)
+								: mode === "sports-big-words"
+									? buildSportsBigWordsImagePrompt(slideVars)
+								: mode === "jelly-3d"
+									? buildJelly3dImagePrompt(slideVars)
 								: mode === "service-promo"
 								? buildServicePromoImagePrompt(slideVars)
 								: mode === "pricing-offer"

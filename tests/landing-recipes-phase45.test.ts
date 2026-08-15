@@ -14,6 +14,7 @@ import { IMAGE_TEXT_MODES, imageTextPreviewSrc } from "../lib/image-text-mode";
 import { SUBJECT_FRAMINGS, subjectFramingPreviewSrc } from "../lib/prompt-variables";
 import {
   isLandingRecipeId,
+  isImagePosterLandingRecipe,
   landingRecipesForPromotion,
   LANDING_RECIPE_IDS,
   LANDING_RECIPES,
@@ -32,6 +33,8 @@ describe("landing-recipes", () => {
     assert.equal(isLandingRecipeId("product-tvc-12s"), true);
     assert.equal(isLandingRecipeId("concept-motion-poster"), true);
     assert.equal(isLandingRecipeId("concept-tvc-12s"), true);
+    assert.equal(isLandingRecipeId("product-blockbuster-9s"), true);
+    assert.equal(isLandingRecipeId("concept-blockbuster-9s"), true);
     assert.equal(isLandingRecipeId("storyboard-video"), false);
     assert.match(studioRecipeHref("motion-poster"), /recipe=motion-poster/);
     assert.match(studioRecipeHref("product-tvc-12s"), /recipe=product-tvc-12s/);
@@ -65,11 +68,61 @@ describe("landing-recipes", () => {
     assert.deepEqual(landingRecipesForPromotion("physical"), [
       "motion-poster",
       "product-tvc-12s",
+      "product-blockbuster-9s",
+      "product-ecom-orbit-6s",
+      "product-object-lock-6s",
+      "product-macro-snap-6s",
+      "product-luxury-tabletop-8s",
+      "product-beauty-mv-10s",
+      "product-imitate-ad-8s",
+      "product-neon-on-real-8s",
+      "product-food-bullet-time-6s",
+      "product-gaming-cover",
+      "product-sports-big-words",
+      "product-jelly-3d",
     ]);
     assert.deepEqual(landingRecipesForPromotion("concept"), [
       "concept-motion-poster",
       "concept-tvc-12s",
+      "concept-blockbuster-9s",
+      "concept-beauty-mv-10s",
+      "concept-imitate-ad-8s",
+      "concept-neon-on-real-8s",
+      "concept-food-bullet-time-6s",
+      "concept-gaming-cover",
+      "concept-sports-big-words",
+      "concept-jelly-3d",
     ]);
+  });
+
+  it("maps image poster recipes to image-only + locked styles", () => {
+    const gaming = LANDING_RECIPES["product-gaming-cover"];
+    assert.equal(gaming.workflowMode, "image-only");
+    assert.equal(gaming.visualStyleId, "gaming-cover");
+    assert.equal(gaming.videoCreativeMode, undefined);
+    assert.equal(isImagePosterLandingRecipe("product-gaming-cover"), true);
+
+    const sports = LANDING_RECIPES["concept-sports-big-words"];
+    assert.equal(sports.promotionMode, "concept");
+    assert.equal(sports.workflowMode, "image-only");
+    assert.equal(sports.visualStyleId, "sports-big-words");
+
+    const jelly = LANDING_RECIPES["product-jelly-3d"];
+    assert.equal(jelly.visualStyleId, "jelly-3d");
+    assert.match(jelly.previewSrc, /jelly-3d\.jpg/);
+
+    const ctx = microContextForLandingRecipe("product-gaming-cover");
+    assert.equal(ctx.workflowMode, "image-only");
+    assert.equal(ctx.intakePath, "direct");
+    assert.equal(ctx.videoSubpath, undefined);
+
+    const conceptCtx = microContextForLandingRecipe("concept-jelly-3d", "concept");
+    assert.equal(conceptCtx.promotionMode, "concept");
+    assert.equal(conceptCtx.workflowMode, "image-only");
+    assert.equal(conceptCtx.conceptSource, "assistant");
+
+    assert.match(studioRecipeHref("product-gaming-cover"), /recipe=product-gaming-cover/);
+    assert.match(studioRecipeHref("concept-jelly-3d"), /mode=concept/);
   });
 
   it("landing recipes skip output-goal and resume at fused setup", () => {
@@ -149,6 +202,23 @@ describe("landing-recipes", () => {
     assert.ok(!conceptPosterIds.includes("wait.image_generate"));
     assert.equal(
       conceptPosterSteps[resumeStepIndex(conceptPosterSteps)]?.id,
+      "setup.pre_video",
+    );
+
+    const blockbusterCtx = microContextForLandingRecipe("product-blockbuster-9s");
+    assert.equal(blockbusterCtx.workflowMode, "video-only");
+    assert.equal(blockbusterCtx.videoSubpath, "blockbuster");
+    assert.equal(blockbusterCtx.combinedStyle, undefined);
+    const blockbusterSteps = resolveMicroSteps(blockbusterCtx, {
+      ...stubState,
+      videoCreativeMode: "blockbuster",
+      videoSettingsDuration: "8",
+    });
+    const blockbusterIds = blockbusterSteps.map((s) => s.id);
+    assert.ok(blockbusterIds.includes("setup.pre_video"));
+    assert.ok(!blockbusterIds.includes("wait.storyboard_generate"));
+    assert.equal(
+      blockbusterSteps[resumeStepIndex(blockbusterSteps)]?.id,
       "setup.pre_video",
     );
 

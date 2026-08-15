@@ -30,7 +30,7 @@ export function WizardErrorBanner({
   const insufficient = isInsufficientTokensMessage(message, m.errors.insufficientTokens);
   const tvcPaid =
     message.trim() === m.errors.tvcNeedsPaidPlan.trim() ||
-    /12s minimax h3|12 秒 minimax h3/i.test(message);
+    /12s single-clip|12 秒單鏡|12 秒单镜/i.test(message);
 
   if (insufficient || tvcPaid) {
     return (

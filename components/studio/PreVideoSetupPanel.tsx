@@ -19,6 +19,16 @@ import {
   type SocialDripFitReasonId,
   type SocialDripMetaphorPick,
 } from "@/lib/social-drip";
+import {
+  h3ShotRecipeNeedsReel,
+  h3ShotRecipeToSubpath,
+  isH3ShotRecipeMode,
+  subpathToH3ShotRecipe,
+  MACRO_SNAP_INTENSITIES,
+  type H3ShotRecipeMode,
+  type MacroSnapIntensity,
+} from "@/lib/h3-shot-recipes";
+import { h3ShotModesForPromotion } from "@/lib/recipe-path-ux";
 
 const PANEL_CSS = `
 .pv-page {
@@ -225,6 +235,8 @@ export function PreVideoSetupPanel({
   const pv = m.microWizard.preVideoSetup;
   const mainInputId = useId();
   const endFrameInputId = useId();
+  const packInputId = useId();
+  const sceneInputId = useId();
   const refVideoInputId = useId();
   const isConcept = wizard.promotionMode === "concept";
   /** Research / R2V already chose reference — do not default into 快速廣告. */
@@ -237,9 +249,20 @@ export function PreVideoSetupPanel({
     !scenesReady && wizard.videoCreativeMode === "motion-poster";
   const prefersSocialDrip =
     !scenesReady && wizard.videoCreativeMode === "social-drip";
+  const prefersBlockbuster =
+    !scenesReady && wizard.videoCreativeMode === "blockbuster";
+  const prefersH3Shot =
+    !scenesReady && isH3ShotRecipeMode(wizard.videoCreativeMode);
+  const preferredH3Subpath = prefersH3Shot
+    ? h3ShotRecipeToSubpath(wizard.videoCreativeMode as H3ShotRecipeMode)
+    : null;
   const activeSubpath =
     videoSubpath ??
-    (prefersSocialDrip
+    (prefersBlockbuster
+      ? "blockbuster"
+      : preferredH3Subpath
+      ? preferredH3Subpath
+      : prefersSocialDrip
       ? "social_drip"
       : prefersMotionPoster
       ? "motion_poster"
@@ -251,8 +274,18 @@ export function PreVideoSetupPanel({
   const isReference = !scenesReady && !isConcept && activeSubpath === "reference_reel";
   const isMotionPoster = !scenesReady && activeSubpath === "motion_poster";
   const isSocialDrip = !scenesReady && activeSubpath === "social_drip";
+  const isBlockbuster = !scenesReady && activeSubpath === "blockbuster";
+  const h3ShotMode = !scenesReady ? subpathToH3ShotRecipe(activeSubpath as never) : null;
+  const isH3Shot = Boolean(h3ShotMode);
+  const needsH3Reel = Boolean(h3ShotMode && h3ShotRecipeNeedsReel(h3ShotMode));
   const isUgc = !scenesReady && activeSubpath === "ugc_presenter";
-  const isSceneReel = !scenesReady && isConcept && !isMotionPoster && !isSocialDrip;
+  const isSceneReel =
+    !scenesReady &&
+    isConcept &&
+    !isMotionPoster &&
+    !isSocialDrip &&
+    !isBlockbuster &&
+    !isH3Shot;
   const isQuickAssistant =
     !scenesReady && !isConcept && activeSubpath === "product_promo";
   const showCreativeBrief =
@@ -262,19 +295,53 @@ export function PreVideoSetupPanel({
       !isUgc &&
       !isMotionPoster &&
       !isSocialDrip &&
+      !isBlockbuster &&
+      !isH3Shot &&
       isCreativeVideoStyle(wizard.visualStyleId));
   const showBrandWebsite = isSceneReel;
   const showConceptAiPlan = isSceneReel;
-  const showReferenceUpload = isReference || isSceneReel;
+  const showReferenceUpload = isReference || isSceneReel || needsH3Reel;
   // Product + reference/research still needs @Image1. Concept photo stays optional even with MP4.
   const showProductPhoto = scenesReady ? false : isConcept ? true : !isUgc;
-  const photoRequired = !scenesReady && !isConcept && !isUgc;
+  // Physical product paths require upload — except neon-on-real (MP4 is the required asset).
+  const photoRequired =
+    !scenesReady &&
+    !isConcept &&
+    !isUgc &&
+    h3ShotMode !== "neon-on-real";
 
   // Keep research/R2V on reference_reel when ctx.videoSubpath was never set.
+  // Also re-apply when UI shows an H3/recipe subpath but creative mode drifted
+  // (e.g. product-assistant) — otherwise Generate asks for "analyze photo".
   useEffect(() => {
-    if (!onPickVideoSubpath || videoSubpath) return;
+    if (!onPickVideoSubpath) return;
+    if (h3ShotMode && !isH3ShotRecipeMode(wizard.videoCreativeMode)) {
+      onPickVideoSubpath(activeSubpath as never);
+      return;
+    }
+    if (isBlockbuster && wizard.videoCreativeMode !== "blockbuster") {
+      onPickVideoSubpath("blockbuster");
+      return;
+    }
+    if (isMotionPoster && wizard.videoCreativeMode !== "motion-poster") {
+      onPickVideoSubpath("motion_poster");
+      return;
+    }
+    if (isSocialDrip && wizard.videoCreativeMode !== "social-drip") {
+      onPickVideoSubpath("social_drip");
+      return;
+    }
+    if (videoSubpath) return;
     if (prefersSocialDrip) {
       onPickVideoSubpath("social_drip");
+      return;
+    }
+    if (prefersBlockbuster) {
+      onPickVideoSubpath("blockbuster");
+      return;
+    }
+    if (preferredH3Subpath) {
+      onPickVideoSubpath(preferredH3Subpath);
       return;
     }
     if (prefersMotionPoster) {
@@ -289,6 +356,14 @@ export function PreVideoSetupPanel({
     prefersReference,
     prefersMotionPoster,
     prefersSocialDrip,
+    prefersBlockbuster,
+    preferredH3Subpath,
+    h3ShotMode,
+    isBlockbuster,
+    isMotionPoster,
+    isSocialDrip,
+    activeSubpath,
+    wizard.videoCreativeMode,
   ]);
 
   // 快速廣告 = DeepSeek product-assistant (vision → Seedance prompt), not raw product-promo I2V.
@@ -298,6 +373,8 @@ export function PreVideoSetupPanel({
     if (wizard.videoCreativeMode === "reference-concept") return;
     if (wizard.videoCreativeMode === "motion-poster") return;
     if (wizard.videoCreativeMode === "social-drip") return;
+    if (wizard.videoCreativeMode === "blockbuster") return;
+    if (isH3ShotRecipeMode(wizard.videoCreativeMode)) return;
     if (wizard.videoCreativeMode === "product-assistant") return;
     wizard.applyPrimaryPathVideoOnly("assistant");
     // Intentionally omit applyPrimaryPathVideoOnly identity — only re-sync when mode/subpath drifts.
@@ -346,6 +423,30 @@ export function PreVideoSetupPanel({
                 body: m.wizard.socialDripMetaphorHint,
               },
               pv.tip3,
+            ]
+          : isBlockbuster
+          ? [
+              {
+                title: m.wizard.videoCreativeModes.blockbuster.title,
+                body: m.wizard.blockbusterHint,
+              },
+              pv.tip1,
+              pv.tip3,
+            ]
+          : isH3Shot && h3ShotMode
+          ? [
+              {
+                title: m.wizard.recipePathUxTitles.need,
+                body: m.wizard.recipePathUx[h3ShotMode].need.join(" · "),
+              },
+              {
+                title: m.wizard.recipePathUxTitles.attention,
+                body: m.wizard.recipePathUx[h3ShotMode].attention.join(" · "),
+              },
+              {
+                title: m.wizard.recipePathUxTitles.output,
+                body: m.wizard.recipePathUx[h3ShotMode].output.join(" · "),
+              },
             ]
           : isMotionPoster
           ? [
@@ -409,6 +510,16 @@ export function PreVideoSetupPanel({
       desc: m.wizard.videoCreativeModes["motion-poster"].description,
     },
     {
+      id: "blockbuster",
+      title: m.wizard.videoCreativeModes.blockbuster.title,
+      desc: m.wizard.videoCreativeModes.blockbuster.description,
+    },
+    ...h3ShotModesForPromotion("physical").map((mode) => ({
+      id: h3ShotRecipeToSubpath(mode),
+      title: m.wizard.videoCreativeModes[mode].title,
+      desc: m.wizard.videoCreativeModes[mode].description,
+    })),
+    {
       id: "social_drip",
       title: m.wizard.videoCreativeModes["social-drip"].title,
       desc: m.wizard.videoCreativeModes["social-drip"].description,
@@ -418,7 +529,7 @@ export function PreVideoSetupPanel({
       title: m.wizard.pathReferenceVideoTitle,
       desc: m.wizard.pathReferenceVideoDesc,
     },
-  ] as const;
+  ];
 
   const conceptStyleOptions = [
     {
@@ -432,11 +543,21 @@ export function PreVideoSetupPanel({
       desc: m.wizard.videoCreativeModes["motion-poster"].description,
     },
     {
+      id: "blockbuster",
+      title: m.wizard.videoCreativeModes.blockbuster.title,
+      desc: m.wizard.videoCreativeModes.blockbuster.description,
+    },
+    ...h3ShotModesForPromotion("concept").map((mode) => ({
+      id: h3ShotRecipeToSubpath(mode),
+      title: m.wizard.videoCreativeModes[mode].title,
+      desc: m.wizard.videoCreativeModes[mode].description,
+    })),
+    {
       id: "social_drip",
       title: m.wizard.videoCreativeModes["social-drip"].title,
       desc: m.wizard.videoCreativeModes["social-drip"].description,
     },
-  ] as const;
+  ];
 
   const styleOptions = isConcept ? conceptStyleOptions : productStyleOptions;
 
@@ -444,8 +565,12 @@ export function PreVideoSetupPanel({
     ? pv.scenesReadyHint
     : isUgc
       ? pv.ugcHint
-      : isSocialDrip
+        : isSocialDrip
         ? m.wizard.socialDripHint
+        : isBlockbuster
+          ? m.wizard.blockbusterHint
+        : isH3Shot && h3ShotMode
+          ? m.wizard.h3ShotHint[h3ShotMode]
         : isMotionPoster
         ? m.wizard.motionPosterHint
         : isReference
@@ -587,7 +712,11 @@ export function PreVideoSetupPanel({
                       ? isSocialDrip
                       : opt.id === "motion_poster"
                         ? isMotionPoster
-                        : isSceneReel
+                        : opt.id === "blockbuster"
+                          ? isBlockbuster
+                          : subpathToH3ShotRecipe(opt.id as never)
+                            ? h3ShotMode === subpathToH3ShotRecipe(opt.id as never)
+                            : isSceneReel
                     : activeSubpath === opt.id;
                   return (
                     <button
@@ -633,6 +762,83 @@ export function PreVideoSetupPanel({
                     <p className="mt-1 text-xs leading-relaxed text-violet-900/90">
                       {pv.motionPosterCopyFocus.body}
                     </p>
+                  </div>
+                ) : null}
+                {isH3Shot && h3ShotMode ? (
+                  <div className="rounded-xl border border-violet-200 bg-violet-50 px-3.5 py-3 text-sm text-violet-950 sm:col-span-2">
+                    <p className="font-semibold">
+                      {pv.h3PathFocusLead}: {m.wizard.videoCreativeModes[h3ShotMode].title}
+                    </p>
+                    <p className="mt-2 text-[11px] font-semibold uppercase tracking-wide text-violet-700">
+                      {m.wizard.recipePathUxTitles.need}
+                    </p>
+                    <ul className="mt-1 list-disc space-y-0.5 pl-4 text-xs leading-relaxed text-violet-900/90">
+                      {m.wizard.recipePathUx[h3ShotMode].need.map((line) => (
+                        <li key={line}>{line}</li>
+                      ))}
+                    </ul>
+                    <p className="mt-2 text-[11px] font-semibold uppercase tracking-wide text-violet-700">
+                      {m.wizard.recipePathUxTitles.attention}
+                    </p>
+                    <ul className="mt-1 list-disc space-y-0.5 pl-4 text-xs leading-relaxed text-violet-900/90">
+                      {m.wizard.recipePathUx[h3ShotMode].attention.map((line) => (
+                        <li key={line}>{line}</li>
+                      ))}
+                    </ul>
+                    <p className="mt-2 text-[11px] font-semibold uppercase tracking-wide text-violet-700">
+                      {m.wizard.recipePathUxTitles.output}
+                    </p>
+                    <ul className="mt-1 list-disc space-y-0.5 pl-4 text-xs leading-relaxed text-violet-900/90">
+                      {m.wizard.recipePathUx[h3ShotMode].output.map((line) => (
+                        <li key={line}>{line}</li>
+                      ))}
+                    </ul>
+                    {h3ShotMode === "macro-snap" ? (
+                      <div className="mt-3 border-t border-violet-200/80 pt-3">
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-700">
+                          {m.wizard.macroSnapIntensityTitle}
+                        </p>
+                        <p className="mt-1 text-xs leading-relaxed text-violet-900/90">
+                          {m.wizard.macroSnapIntensityHint}
+                        </p>
+                        <div
+                          className="mt-2 grid grid-cols-3 gap-1.5"
+                          role="radiogroup"
+                          aria-label={m.wizard.macroSnapIntensityTitle}
+                        >
+                          {MACRO_SNAP_INTENSITIES.map((level) => {
+                            const active = wizard.macroSnapIntensity === level;
+                            return (
+                              <button
+                                key={level}
+                                type="button"
+                                role="radio"
+                                aria-checked={active}
+                                onClick={() => wizard.setMacroSnapIntensity(level as MacroSnapIntensity)}
+                                className={
+                                  active
+                                    ? "rounded-lg bg-violet-600 px-2 py-2 text-center text-xs font-semibold text-white"
+                                    : "rounded-lg border border-violet-200 bg-white px-2 py-2 text-center text-xs font-medium text-violet-800 hover:bg-violet-50"
+                                }
+                              >
+                                <span className="block">
+                                  {m.wizard.macroSnapIntensity[level].title}
+                                </span>
+                                <span
+                                  className={
+                                    active
+                                      ? "mt-0.5 block text-[10px] font-normal text-violet-100"
+                                      : "mt-0.5 block text-[10px] font-normal text-violet-600/80"
+                                  }
+                                >
+                                  {m.wizard.macroSnapIntensity[level].desc}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
                 ) : null}
                 {isConcept ? (
@@ -1052,7 +1258,13 @@ export function PreVideoSetupPanel({
             ) : null}
 
             {showReferenceUpload ? (
-              <section className="pv-card">
+              <section
+                className={`pv-card ${
+                  needsH3Reel
+                    ? "border-violet-300 bg-violet-50/50 ring-1 ring-violet-200"
+                    : ""
+                }`.trim()}
+              >
                 <div className="pv-card-title-row mb-3">
                   <span className="pv-card-icon" aria-hidden>
                     <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -1063,12 +1275,25 @@ export function PreVideoSetupPanel({
                   <div className="min-w-0">
                     <h3 className="pv-card-title">
                       {pv.referenceVideoTitle}
-                      {isSceneReel ? (
+                      {needsH3Reel ? (
+                        <>
+                          <span className="ml-1.5 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700">
+                            {pv.requiredBadge}
+                          </span>
+                          <span className="ml-1.5 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700">
+                            {pv.inVideoBadge}
+                          </span>
+                        </>
+                      ) : isSceneReel ? (
                         <span className="pv-label-opt font-medium">{pv.extraOptional}</span>
                       ) : null}
                     </h3>
                     <p className="mt-0.5 text-xs text-slate-500">
-                      {isSceneReel ? pv.referenceVideoHintConcept : pv.referenceVideoHint}
+                      {needsH3Reel && h3ShotMode
+                        ? m.wizard.h3ShotHeroHint[h3ShotMode]
+                        : isSceneReel
+                          ? pv.referenceVideoHintConcept
+                          : pv.referenceVideoHint}
                     </p>
                   </div>
                 </div>
@@ -1126,7 +1351,13 @@ export function PreVideoSetupPanel({
             ) : null}
 
             {showProductPhoto ? (
-              <section className="pv-card">
+              <section
+                className={`pv-card ${
+                  isH3Shot && photoRequired
+                    ? "border-violet-300 bg-violet-50/50 ring-1 ring-violet-200"
+                    : ""
+                }`.trim()}
+              >
                 <div className="pv-card-title-row mb-3">
                   <span className="pv-card-icon" aria-hidden>
                     <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -1137,13 +1368,36 @@ export function PreVideoSetupPanel({
                   </span>
                   <div className="min-w-0">
                     <h3 className="pv-card-title">
-                      {isConcept ? pv.conceptPhotoTitle : pv.productPhotoTitle}
-                      {!photoRequired ? (
+                      {h3ShotMode === "neon-on-real"
+                        ? pv.neonIdentityPhotoTitle
+                        : isBlockbuster
+                        ? m.wizard.blockbusterHeroTitle
+                        : isConcept
+                          ? pv.conceptPhotoTitle
+                          : pv.productPhotoTitle}
+                      {isH3Shot && photoRequired ? (
+                        <>
+                          <span className="ml-1.5 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700">
+                            {pv.requiredBadge}
+                          </span>
+                          <span className="ml-1.5 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700">
+                            {pv.inVideoBadge}
+                          </span>
+                        </>
+                      ) : !photoRequired ? (
                         <span className="pv-label-opt font-medium">{pv.extraOptional}</span>
                       ) : null}
                     </h3>
                     <p className="mt-0.5 text-xs text-slate-500">
-                      {isConcept
+                      {h3ShotMode === "neon-on-real"
+                        ? pv.neonIdentityPhotoHint
+                        : isH3Shot && h3ShotMode
+                        ? m.wizard.h3ShotHeroHint[h3ShotMode]
+                        : isBlockbuster
+                        ? isConcept
+                          ? m.wizard.blockbusterHeroHintConcept
+                          : m.wizard.blockbusterHeroHint
+                        : isConcept
                         ? pv.conceptPhotoHint
                         : isUgc
                           ? pv.ugcPhotoHint
@@ -1188,6 +1442,158 @@ export function PreVideoSetupPanel({
                       {pv.dragDrop}
                     </label>
                   )}
+                </div>
+                {isH3Shot && h3ShotMode ? (
+                  <button
+                    type="button"
+                    className="mt-3 rounded-xl border border-violet-300 bg-violet-50 px-3 py-2 text-sm font-semibold text-violet-800 hover:bg-violet-100 disabled:opacity-50"
+                    disabled={
+                      wizard.sceneFrameBusy ||
+                      wizard.videoBusy ||
+                      (!isConcept && !wizard.productPhoto)
+                    }
+                    title={
+                      !isConcept && !wizard.productPhoto
+                        ? m.errors.needPhoto
+                        : undefined
+                    }
+                    onClick={() => void wizard.generateH3ShotRecipeStill(h3ShotMode)}
+                  >
+                    {wizard.sceneFrameBusy
+                      ? m.wizard.h3ShotGenerateStillBusy[h3ShotMode]
+                      : m.wizard.h3ShotGenerateStillBtn}
+                  </button>
+                ) : null}
+              </section>
+            ) : null}
+
+            {isBlockbuster ? (
+              <section className="pv-card">
+                <div className="pv-card-title-row mb-3">
+                  <h3 className="pv-card-title">{m.wizard.blockbusterPackTitle}</h3>
+                </div>
+                <p className="mb-3 text-xs text-slate-500">
+                  {isConcept
+                    ? m.wizard.blockbusterPackHintConcept
+                    : m.wizard.blockbusterPackHint}
+                </p>
+                <input
+                  id={packInputId}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="sr-only"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] ?? null;
+                    e.target.value = "";
+                    wizard.setPackagingPhoto(file);
+                    wizard.setError(null);
+                  }}
+                />
+                <div className="flex flex-wrap gap-2.5">
+                  {wizard.packagingPreviewUrl ? (
+                    <div className="relative h-28 w-28 overflow-hidden rounded-xl border border-violet-400 ring-1 ring-violet-300">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={wizard.packagingPreviewUrl}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => wizard.setPackagingPhoto(null)}
+                        className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-slate-900/70 text-[10px] text-white"
+                        aria-label={m.wizard.uploadChange}
+                      >
+                        ×
+                      </button>
+                      <label
+                        htmlFor={packInputId}
+                        className="absolute inset-x-0 bottom-0 cursor-pointer bg-slate-900/55 py-0.5 text-center text-[9px] font-semibold text-white"
+                      >
+                        {m.wizard.uploadChange}
+                      </label>
+                    </div>
+                  ) : (
+                    <label
+                      htmlFor={packInputId}
+                      className="flex h-28 w-28 shrink-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-violet-300 bg-violet-50/70 px-1 text-center text-[11px] font-semibold text-violet-700 hover:bg-violet-50"
+                    >
+                      {pv.dragDrop}
+                    </label>
+                  )}
+                </div>
+              </section>
+            ) : null}
+
+            {isBlockbuster ? (
+              <section className="pv-card">
+                <div className="pv-card-title-row mb-3">
+                  <h3 className="pv-card-title">
+                    {m.wizard.blockbusterSceneTitle}
+                    <span className="pv-label-opt font-medium">{pv.extraOptional}</span>
+                  </h3>
+                </div>
+                <p className="mb-3 text-xs text-slate-500">{m.wizard.blockbusterSceneHint}</p>
+                <input
+                  id={sceneInputId}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="sr-only"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] ?? null;
+                    e.target.value = "";
+                    wizard.setSceneFramePhoto(file);
+                    wizard.setError(null);
+                  }}
+                />
+                <div className="flex flex-wrap items-start gap-2.5">
+                  {wizard.sceneFramePreviewUrl || wizard.sceneFrameUrl ? (
+                    <div className="relative h-28 w-28 overflow-hidden rounded-xl border border-amber-400 ring-1 ring-amber-300">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={wizard.sceneFramePreviewUrl ?? wizard.sceneFrameUrl ?? ""}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          wizard.setSceneFramePhoto(null);
+                          wizard.setSceneFrameUrl(null);
+                        }}
+                        className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-slate-900/70 text-[10px] text-white"
+                        aria-label={m.wizard.uploadChange}
+                      >
+                        ×
+                      </button>
+                      <label
+                        htmlFor={sceneInputId}
+                        className="absolute inset-x-0 bottom-0 cursor-pointer bg-slate-900/55 py-0.5 text-center text-[9px] font-semibold text-white"
+                      >
+                        {m.wizard.uploadChange}
+                      </label>
+                    </div>
+                  ) : (
+                    <label
+                      htmlFor={sceneInputId}
+                      className="flex h-28 w-28 shrink-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-amber-300 bg-amber-50/70 px-1 text-center text-[11px] font-semibold text-amber-800 hover:bg-amber-50"
+                    >
+                      {pv.dragDrop}
+                    </label>
+                  )}
+                  <button
+                    type="button"
+                    disabled={
+                      wizard.sceneFrameBusy ||
+                      (!isConcept && !wizard.productPhoto)
+                    }
+                    onClick={() => void wizard.generateBlockbusterSceneFrame()}
+                    className="inline-flex min-h-11 items-center justify-center rounded-xl border border-violet-300 bg-white px-3 py-2 text-xs font-semibold text-violet-800 hover:bg-violet-50 disabled:opacity-40"
+                  >
+                    {wizard.sceneFrameBusy
+                      ? m.wizard.blockbusterGenerateSceneBusy
+                      : m.wizard.blockbusterGenerateSceneBtn}
+                  </button>
                 </div>
               </section>
             ) : null}
@@ -1431,12 +1837,14 @@ export function PreVideoSetupPanel({
                   {
                     ok: scenesReady
                       ? wizard.storyboardScenes.length > 0
-                      : isConcept && !isReference
-                        ? true
-                        : Boolean(mainThumb || wizard.imageUrl),
+                      : needsH3Reel
+                        ? Boolean(wizard.referenceAd && wizard.referenceIsVideo)
+                        : !photoRequired || Boolean(mainThumb || wizard.imageUrl),
                     label: scenesReady
                       ? m.wizard.imageReviewVisualSetStoryboard
-                      : m.wizard.videoKeyframeLabel,
+                      : needsH3Reel
+                        ? pv.referenceVideoTitle
+                        : m.wizard.videoKeyframeLabel,
                   },
                   {
                     ok: !generateDisabled,
@@ -1497,7 +1905,9 @@ export function PreVideoSetupPanel({
           </aside>
         </div>
 
-        {onGenerate ? <div className="pv-mobile-cta">{generateBlock}</div> : null}
+        {onGenerate ? (
+          <div className="pv-mobile-cta md:hidden">{generateBlock}</div>
+        ) : null}
       </div>
     </div>
   );

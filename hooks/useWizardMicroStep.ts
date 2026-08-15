@@ -26,6 +26,11 @@ import type {
   VideoSubpath,
 } from "@/lib/wizard-micro-steps.types";
 import {
+  h3ShotRecipeToSubpath,
+  isH3ShotRecipeMode,
+  subpathToH3ShotRecipe,
+} from "@/lib/h3-shot-recipes";
+import {
   WIZARD_CLASSIC_VALUE,
   WIZARD_V2_QUERY_FLAG,
   MICRO_RESUME_DONE_KEY,
@@ -168,6 +173,9 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     }
     if (ctx.workflowMode !== "combined") return;
     if (wizard.videoCreativeMode === "motion-poster") return;
+    if (wizard.videoCreativeMode === "social-drip") return;
+    if (wizard.videoCreativeMode === "blockbuster") return;
+    if (isH3ShotRecipeMode(wizard.videoCreativeMode)) return;
     if (wizard.isUgcPresenterOutput || wizard.visualStyleId === "concept-cinematic") return;
     if (wizard.visualStyleId !== "storyboard-video") {
       wizard.selectVisualStyle("storyboard-video");
@@ -191,6 +199,57 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     wizard.setImageOutputMode,
     wizard.setShipItMode,
   ]);
+
+  useEffect(() => {
+    if (wizard.videoCreativeMode !== "blockbuster") return;
+    if (ctx.workflowMode === "video-only" && ctx.videoSubpath === "blockbuster") {
+      return;
+    }
+    setCtx((prev) => ({
+      ...prev,
+      workflowMode: "video-only",
+      videoSubpath: "blockbuster",
+    }));
+  }, [wizard.videoCreativeMode, ctx.workflowMode, ctx.videoSubpath]);
+
+  useEffect(() => {
+    const mode = wizard.videoCreativeMode;
+    if (!isH3ShotRecipeMode(mode)) return;
+    const subpath = h3ShotRecipeToSubpath(mode);
+    if (ctx.workflowMode === "video-only" && ctx.videoSubpath === subpath) {
+      return;
+    }
+    setCtx((prev) => ({
+      ...prev,
+      workflowMode: "video-only",
+      videoSubpath: subpath,
+    }));
+  }, [wizard.videoCreativeMode, ctx.workflowMode, ctx.videoSubpath]);
+
+  // Reverse sync: restored / landing ctx.videoSubpath can be neon_on_real while
+  // wizard still defaults to product-assistant — that shows neon UX + "analyze
+  // photo" product-assistant block. Force creative mode to match the subpath.
+  useEffect(() => {
+    const sub = ctx.videoSubpath;
+    if (!sub) return;
+    const h3Mode = subpathToH3ShotRecipe(sub);
+    if (h3Mode) {
+      if (wizard.videoCreativeMode === h3Mode) return;
+      wizard.onVideoCreativeModeChange(h3Mode);
+      return;
+    }
+    if (sub === "blockbuster" && wizard.videoCreativeMode !== "blockbuster") {
+      wizard.onVideoCreativeModeChange("blockbuster");
+      return;
+    }
+    if (sub === "motion_poster" && wizard.videoCreativeMode !== "motion-poster") {
+      wizard.onVideoCreativeModeChange("motion-poster");
+      return;
+    }
+    if (sub === "social_drip" && wizard.videoCreativeMode !== "social-drip") {
+      wizard.onVideoCreativeModeChange("social-drip");
+    }
+  }, [ctx.videoSubpath, wizard.videoCreativeMode, wizard.onVideoCreativeModeChange]);
 
   useEffect(() => {
     setCtx((prev) => ({

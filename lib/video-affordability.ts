@@ -13,7 +13,7 @@ export class StoryboardEngineChoiceError extends Error {
 
   constructor(opts: { balance: number; h3Cost: number; klingCost: number }) {
     super(
-      "MiniMax H3 needs more tokens than your balance. Kling stitch fits now.",
+      "Single-clip video needs more tokens than your balance. Stitched fallback fits now.",
     );
     this.name = "StoryboardEngineChoiceError";
     this.balance = opts.balance;

@@ -55,12 +55,21 @@ export function resolveVideoEnginePlan(input: {
   motionPoster?: boolean;
   /** Social drip 三分屏 — H3 only, never attach research MP4. */
   socialDrip?: boolean;
+  /** Blockbuster 3-ref one-take — H3 only, never Kling stitch. */
+  blockbuster?: boolean;
+  /** E-com orbit / object-lock / macro / luxury / beauty / imitate — H3 only. */
+  h3ShotRecipe?: boolean;
   hasReel: boolean;
   faceHeavy?: boolean;
   /** Multi-still 九宫格 TVC — only this path may Kling-stitch. */
   storyboard?: boolean;
 }): VideoEnginePlan {
-  if (input.motionPoster || input.socialDrip) {
+  if (
+    input.motionPoster ||
+    input.socialDrip ||
+    input.blockbuster ||
+    input.h3ShotRecipe
+  ) {
     return {
       firstEngine: "minimax-h3",
       seedanceFast: false,

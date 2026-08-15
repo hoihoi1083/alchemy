@@ -51,11 +51,11 @@ describe("concept motion-poster unblock + recipe lock", () => {
     assert.match(wizard, /if \(videoCreativeMode === "motion-poster"\) return;/);
     assert.match(
       wizard,
-      /!conceptTextVideoReady &&\s*\n\s*!motionPosterCanAutoStill &&\s*\n\s*!directReferenceR2vReady/,
+      /!conceptTextVideoReady &&\s*\n\s*!motionPosterCanAutoStill &&/,
     );
     assert.match(wizard, /resolveMotionPosterDialect/);
     assert.match(wizard, /motionPosterDialectPick/);
-    assert.match(wizard, /skip Bagel QA/);
+    assert.match(wizard, /skip vision QA/);
     const applyBlock = wizard.slice(
       wizard.indexOf("function applyGeneratedImages"),
       wizard.indexOf("function applyGeneratedStoryboard"),

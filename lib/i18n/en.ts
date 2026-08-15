@@ -71,7 +71,7 @@ export const en = {
 		deleting: "Deleting…",
 		noMedia: "No saved media yet",
 		linkExpiredHint:
-			"Older projects may still use expired fal links — use Saved files below, or regenerate. New outputs are stored permanently.",
+			"Older projects may still use expired temporary links — use Saved files below, or regenerate. New outputs are stored permanently.",
 		updatedLabel: "Updated",
 		imageBadge: "Image",
 		videoBadge: "Video",
@@ -259,7 +259,7 @@ export const en = {
 		canvaHubTitle: "Canvas tools",
 		canvaHubSubtitle:
 			"Polish stills on the image canvas, or burn subtitles and audio onto finished video.",
-		navProCanvas: "Pro Canvas (Master plan needed)",
+		navProCanvas: "Pro Canvas (need master plan)",
 		navProCanvasUnlocked: "Pro Canvas",
 		heroTrust: [
 			"No prompt needed",
@@ -638,17 +638,17 @@ export const en = {
 			badge: "1-tap recipes",
 			title: "Finishable video recipes",
 			subtitle:
-				"Same two walks for product and concept. Motion poster fits the free grant. 12s MiniMax H3 TVC needs a paid plan.",
+				"Same two walks for product and concept. Motion poster fits the free grant. 12s single-clip TVC needs a paid plan.",
 			cta: "Start this recipe",
 			physicalGroup: "Product",
 			conceptGroup: "Concept / service",
 			tvcPaidHint:
-				"12s MiniMax H3 needs a paid plan (~1140 tokens). Free grant can cover stills + Kling stitch if H3 does not fit.",
+				"12s single-clip video needs a paid plan (~1140 tokens). Free grant can cover stills + stitched fallback if single-clip does not fit.",
 			items: {
 				"motion-poster": {
 					title: "Motion poster",
 					description:
-						"2 stills (no type → typed poster) then MiniMax H3 interpolates product + words. Not a multi-scene storyboard.",
+						"2 stills (no type → typed poster) then video morphs product + words. Not a multi-scene storyboard.",
 					costHint: "~2 images + 1 short clip · fits free grant",
 				},
 				"product-tvc-12s": {
@@ -656,12 +656,12 @@ export const en = {
 					description:
 						"4-beat storyboard: establish → macro → orbit → lifestyle/payoff.",
 					costHint:
-						"~4 stills + 12s H3 — paid plan · Kling stitch may fit free",
+						"~4 stills + 12s single-clip — paid plan · stitched fallback may fit free",
 				},
 				"concept-motion-poster": {
 					title: "Concept motion poster",
 					description:
-						"2 scene stills (no type → typed) + H3 interpolates a service-fit motion. No SKU packshot.",
+						"2 scene stills (no type → typed) + Video morphs a service-fit motion. No SKU packshot.",
 					costHint: "~2 AI stills + 1 short clip · fits free grant",
 				},
 				"concept-tvc-12s": {
@@ -669,8 +669,129 @@ export const en = {
 					description:
 						"4-beat storyboard for a service / idea: establish → metaphor → orbit → payoff.",
 					costHint:
-						"~4 stills + 12s H3 — paid plan · Kling stitch may fit free",
+						"~4 stills + 12s single-clip — paid plan · stitched fallback may fit free",
 				},
+				"product-blockbuster-9s": {
+					title: "Blockbuster entrance ~9s",
+					description:
+						"3 refs, one take: truck + boxes hit the overpass, then the product rises. Not a storyboard stitch.",
+					costHint: "~9s single clip · product + box + optional scene plate",
+				},
+				"concept-blockbuster-9s": {
+					title: "Blockbuster logo/mascot ~9s",
+					description:
+						"Same one-take logistics ad, but logo or mascot pops instead of a product packshot.",
+					costHint: "~9s single clip · logo/mascot + brand tiles + optional scene plate",
+				},
+				"product-ecom-orbit-6s": {
+					title: "E-com orbit ~6s",
+					description:
+						"1 product still → H3 orbit / tilt / hero spin. Identity-locked commercial turntable.",
+					costHint: "~6s single clip · product photo",
+				},
+				"product-object-lock-6s": {
+					title: "Object-locked camera ~6s",
+					description:
+						"Camera glued to the SKU — world moves, product stays locked. SnorriCam energy.",
+					costHint: "~6s single clip · product photo",
+				},
+				"product-macro-snap-6s": {
+					title: "Macro snap / food physics ~6s",
+					description:
+						"Close-up drips, crumbs, break — continuous food/material physics on your still.",
+					costHint: "~6s single clip · food or texture still",
+				},
+				"product-luxury-tabletop-8s": {
+					title: "Luxury tabletop + hand ~8s",
+					description:
+						"Marble / silk tabletop, finger touch or open the product, one continuous take.",
+					costHint: "~8s single clip · product photo",
+				},
+				"product-beauty-mv-10s": {
+					title: "Beauty / MV one-take ~10s",
+					description:
+						"Face or mascot identity lock, soft light orbit — MV / UGC beauty grade.",
+					costHint: "~10s single clip · face or character still",
+				},
+				"product-imitate-ad-8s": {
+					title: "Imitate this ad ~8s",
+					description:
+						"Your product still + a reference MP4 → H3 copies camera language, keeps your SKU.",
+					costHint: "~8s · product photo + reference video",
+				},
+				"product-neon-on-real-8s": {
+					title: "Neon on real ~8s",
+					description:
+						"Your real footage + glowing neon drawings (animals, marks) that move through the scene.",
+					costHint: "~8s · real MP4 (+ optional product still)",
+				},
+				"product-food-bullet-time-6s": {
+					title: "Food bullet-time ~6s",
+					description:
+						"Lifestyle food selfie → frozen splash still → H3 camera orbit around the suspended food.",
+					costHint: "~6s · person + food photo (or Nano Banana still)",
+				},
+				"product-gaming-cover": {
+					title: "Gaming cover",
+					description:
+						"AAA game-key-art still — low-angle action, type baked into the scene, HUD accents.",
+					costHint: "Image only · product or hero photo optional",
+				},
+				"product-sports-big-words": {
+					title: "Sports big-words",
+					description:
+						"Sports editorial still — huge layered word, action energy, HUD stats.",
+					costHint: "Image only · product or athlete photo optional",
+				},
+				"product-jelly-3d": {
+					title: "Jelly 3D",
+					description:
+						"Keep your product/mascot as uploaded — headline becomes IG-dramatic jelly/glass 3D type.",
+					costHint: "Image only · photo + jelly headline",
+				},
+				"concept-beauty-mv-10s": {
+					title: "Beauty / MV (concept) ~10s",
+					description:
+						"Logo or mascot identity lock in an MV-style one-take — no SKU packshot required.",
+					costHint: "~10s single clip · logo/mascot still",
+				},
+				"concept-imitate-ad-8s": {
+					title: "Imitate this ad (concept) ~8s",
+					description:
+						"Brand mark + reference MP4 → H3 follows the reel’s camera, keeps your identity.",
+					costHint: "~8s · logo/mascot + reference video",
+				},
+				"concept-neon-on-real-8s": {
+					title: "Neon on real (concept) ~8s",
+					description:
+						"Real footage + neon animals/marks that move through the scene — optional logo lock.",
+					costHint: "~8s · real MP4 (+ optional logo still)",
+				},
+				"concept-food-bullet-time-6s": {
+					title: "Food bullet-time (concept) ~6s",
+					description:
+						"Cafe / food campaign bullet-time — frozen splash + orbit. Needs a person+food photo (logo alone won’t lock the dish).",
+					costHint: "~6s · lifestyle food photo required",
+				},
+				"concept-gaming-cover": {
+					title: "Gaming cover (concept)",
+					description:
+						"AAA game-cover poster — upload a mascot, character, or logo as the identity lock (we won’t invent a random hero).",
+					costHint: "Image only · logo / mascot / character + title",
+				},
+				"concept-sports-big-words": {
+					title: "Sports big-words (concept)",
+					description:
+						"Sports editorial — huge word + HUD. Best with athlete or campaign mark; logo can stand in.",
+					costHint: "Image only · photo or logo + big-word headline",
+				},
+				"concept-jelly-3d": {
+					title: "Jelly 3D (concept)",
+					description:
+						"Same as product: logo/mascot stays itself; headline becomes jelly/glass 3D type.",
+					costHint: "Image only · logo/mascot + jelly headline",
+				},
+
 			},
 		},
 		templatesBadge: "Templates",
@@ -1373,6 +1494,21 @@ export const en = {
 				description:
 					"Exploded product view — labeled components with title + short descriptions on one poster",
 			},
+			"gaming-cover": {
+				title: "Gaming cover",
+				description:
+					"AAA game-key-art — low-angle action, type baked into the scene, HUD accents",
+			},
+			"sports-big-words": {
+				title: "Sports big-words",
+				description:
+					"Sports editorial — huge layered word, action energy, HUD stats",
+			},
+			"jelly-3d": {
+				title: "Jelly 3D",
+				description:
+					"Real product/mascot stays locked — headline becomes IG jelly/glass 3D type",
+			},
 			"brand-fit": {
 				title: "Brand style analysis",
 				description:
@@ -1439,6 +1575,9 @@ export const en = {
 			"info-poster": "",
 			"designed-poster": "",
 			"parts-poster": "",
+			"gaming-cover": "",
+			"sports-big-words": "",
+			"jelly-3d": "",
 			"brand-fit": "",
 			"brand-campaign": "",
 			"brand-video": "",
@@ -1536,6 +1675,12 @@ export const en = {
 				"e.g. soft upper-left light, appetite set, bilingual type, seal + brush category…",
 			"parts-poster":
 				"e.g. dark studio, thin leader lines, 6 callouts, graphite palette…",
+			"gaming-cover":
+				"e.g. low-angle chase, crates on path, CHALLENGE painted on ground…",
+			"sports-big-words":
+				"e.g. huge SMASH word, lime HUD, match-point scoreboard…",
+			"jelly-3d":
+				"e.g. glossy translucent 1, lime-to-blue gradient, ONE YEAR type…",
 			"brand-fit":
 				"Filled after analysis; tweak product or scene if needed",
 			"brand-campaign":
@@ -1674,7 +1819,7 @@ export const en = {
 		storyboardRecipeHint:
 			"Classic flexible TVC, or luxury product birth (physical SKU recommended). No Social drip chrome.",
 		storyboardRecipeLuxuryNoRefHint:
-			"No reference reel. Pick 3 scenes (tight) or 5 scenes (recommended). Default video: MiniMax H3.",
+			"No reference reel. Pick 3 scenes (tight) or 5 scenes (recommended). Default video: single-clip mode.",
 		storyboardRecipeLuxuryDrivers: {
 			title: "What drives the Luxury story?",
 			intro:
@@ -1791,26 +1936,26 @@ export const en = {
 			"Approve the shot-map stills before generating video.",
 		storyboardPlanPlacementLabel: "Product / concept placement",
 		storyboardPlanPunchLabel: "Punch line / caption beat",
-		videoEngineLabel: "Video engine",
-		videoEngineSeedance: "Seedance (default)",
-		videoEngineMinimaxH3: "MiniMax H3 (faces / product lock)",
+		videoEngineLabel: "Video mode",
+		videoEngineSeedance: "Reference reel (default)",
+		videoEngineMinimaxH3: "Single-clip video (faces / product lock)",
 		videoEngineHint:
-			"Simple studio picks the engine: Seedance when you attach a research reel, MiniMax H3 for stills and posters. Kling is stills-only backup.",
+			"Simple studio picks the mode: reference-reel when you attach a research reel, single-clip for stills and posters. Stitched fallback is stills-only backup.",
 		storyboardSceneLabel: "Scene",
 		storyboardVideoIntro:
-			"These stills are locked into the video. Regen a bad cell in review — generating will not invent a better ad. With a research reel: Seedance copies that spine, then MiniMax H3. Stills only: H3 first, Kling stitch if H3 fails.",
+			"These stills are locked into the video. Regen a bad cell in review — generating will not invent a better ad. With a research reel: we copy that spine, then single-clip video. Stills only: single-clip first, stitched fallback if that fails.",
 		storyboardVideoPreflight:
-			"Reel: Seedance R2V → MiniMax H3. Stills: MiniMax H3 → Kling stitch",
+			"Reel: reference-reel → single-clip. Stills: single-clip → stitched fallback",
 		klingStoryboardFallbackNote:
-			"Storyboard video — Kling fallback: each scene still becomes a short clip, then we stitch them together",
+			"Storyboard video — stitched fallback: each scene still becomes a short clip, then we stitch them together",
 		storyboardMinimaxH3Note:
-			"Storyboard video — MiniMax H3 single clip from scene stills (no stitch)",
+			"Storyboard video — single continuous clip from scene stills (no stitch)",
 		storyboardSeedanceR2vNote:
-			"Storyboard video — Seedance reference-to-video (@Video1 spine + stills, quality)",
+			"Storyboard video — reference-reel mode (your clip + storyboard stills)",
 		storyboardEnginePipelineHint:
-			"Research reel: Seedance quality R2V → MiniMax H3 (never Kling). Stills only: MiniMax H3 → Kling 5s/10s stitch.",
+			"Research reel: reference-reel quality path → single-clip (never stitched). Stills only: single-clip → 5s/10s stitch fallback.",
 		researchReelCopyingNote:
-			"Copying your reference — if faces are blocked we retry MiniMax H3.",
+			"Copying your reference — if faces are blocked we retry single-clip mode.",
 		switchToMotionPosterBtn: "Use motion poster instead (cheaper)",
 		switchToMotionPosterHint:
 			"Skip multi-scene stitch — animate one keyframe with micro-motion only.",
@@ -1819,9 +1964,9 @@ export const en = {
 		lookBibleMaterialsLabel: "Materials",
 		lookBibleNegativesLabel: "Avoid",
 		seedanceToKlingFallbackNote:
-			"Seedance was blocked for this request — used Kling storyboard (per-scene clips + stitch) instead",
+			"Primary video mode was blocked — used stitched storyboard (per-scene clips + stitch) instead",
 		seedanceToMinimaxH3FallbackNote:
-			"Seedance was blocked for this request — used MiniMax H3 (keeps reference motion when possible)",
+			"Primary video mode was blocked — used single-clip video (keeps reference motion when possible)",
 		klingStoryboardClipCount: "clips × {n}",
 		storyboardDurationLabel: "Target duration",
 		storyboardDurationHint:
@@ -1996,7 +2141,7 @@ export const en = {
 		cinematicLogoStampNote:
 			"Brand logo stamped on stills before video (same corner/size on every scene).",
 		cinematicLogoModeBNote:
-			"When “Use brand logo on video stills” is on, each video keyframe gets your Brand kit logo (Nano Banana picks natural placement).",
+			"When “Use brand logo on video stills” is on, each video keyframe gets your Brand kit logo (AI picks natural placement).",
 		cinematicLogoStampHint:
 			"Upload your logo in Brand kit, then turn on “Use brand logo on video stills”. Regenerate video stills to apply. For images, use Edit image instead.",
 		cinematicStitchWorkflowOrder:
@@ -2249,7 +2394,7 @@ export const en = {
 			"Draw at least one area and describe what to change.",
 		quickFixRegionMaxZones: "Maximum 5 zones per fix.",
 		quickFixRegionInpaintBtn: "Refine in inpaint editor (brush + zones)",
-		quickFixRegionInpaintDirectBtn: "Inpaint zones now (FLUX Fill)",
+		quickFixRegionInpaintDirectBtn: "Inpaint zones now (inpaint)",
 		quickFixTextEditorHint:
 			"For exact copy and position: remove AI text first, then place your own words on the image.",
 		quickFixStripTextBtn: "Remove AI text & open editor",
@@ -2446,13 +2591,59 @@ export const en = {
 			"motion-poster": {
 				title: "Motion poster",
 				description:
-					"Start still (no type) + end still (with type) → H3 interpolates. Not a normal product I2V.",
+					"Start still (no type) + end still (with type) → Video morphs. Not a normal product I2V.",
 			},
 			"social-drip": {
 				title: "Social drip (三分屏)",
 				description:
 					"Meme 3-band gag with a falling metaphor — not a lifestyle TVC. Check fit before generate.",
 			},
+			blockbuster: {
+				title: "Blockbuster entrance",
+				description:
+					"3 images → 9s one-take: boxes fly, then product (or logo/mascot) reveals. Not a storyboard.",
+			},
+			"ecom-orbit": {
+				title: "E-com orbit",
+				description:
+					"1 product still → 6s orbit / tilt / spin. Identity-locked turntable ad.",
+			},
+			"object-lock": {
+				title: "Object-locked camera",
+				description:
+					"Camera glued to the product — background flies. SnorriCam one-take.",
+			},
+			"macro-snap": {
+				title: "Macro snap / food physics",
+				description:
+					"Drips, crumbs, break — micro physics on your food or texture still.",
+			},
+			"luxury-tabletop": {
+				title: "Luxury tabletop + hand",
+				description:
+					"Marble tabletop, elegant hand touch, continuous luxury product ad.",
+			},
+			"beauty-mv": {
+				title: "Beauty / MV one-take",
+				description:
+					"Face or mascot lock, soft orbit — 10s MV / beauty one-take.",
+			},
+			"imitate-ad": {
+				title: "Imitate this ad",
+				description:
+					"Product still + reference MP4 → copy camera language, keep your SKU.",
+			},
+			"neon-on-real": {
+				title: "Neon on real",
+				description:
+					"Real footage + glowing neon drawings that move through the scene.",
+			},
+			"food-bullet-time": {
+				title: "Food bullet-time",
+				description:
+					"Lifestyle food still with frozen splash → 6s camera orbit (3D food splash).",
+			},
+
 			"reference-concept": {
 				title: "Inspired by reference video",
 				description:
@@ -2465,16 +2656,16 @@ export const en = {
 			},
 		},
 		motionPosterHint:
-			"Jimeng-style start→end: two designed poster stills (textless start, typed end with a large masthead). MiniMax H3 interpolates so product and words move together. Costs 2 images + 1 short clip.",
+			"Start→end morph: two designed poster stills (textless start, typed end with a large masthead). Video morphs so product and words move together. Costs 2 images + 1 short clip.",
 		motionPosterBuildingStill: "Step 1/3: textless start still…",
 		motionPosterBuildingEnd: "Step 2/3: typed end still…",
-		motionPosterAnimatingCard: "Step 3/3: H3 interpolating start→end…",
+		motionPosterAnimatingCard: "Step 3/3: Video morphing start→end…",
 		motionPosterArtStyleTitle: "Poster look",
 		motionPosterArtStyleHint:
-			"Style of the Nano Banana still — realistic, 3D, comic, film…. Motion is applied after. Default is realistic photo.",
+			"Style of the AI still — realistic, 3D, comic, film…. Motion is applied after. Default is realistic photo.",
 		motionPosterDialectTitle: "Poster motion",
 		motionPosterDialectHint:
-			"Same 即梦 start→end method, different beat (type reveal, 3D card, parallax, pour…). Auto picks a fit — generate again to try another.",
+			"Same start→end morph method, different beat (type reveal, 3D card, parallax, pour…). Auto picks a fit — generate again to try another.",
 		motionPosterDialectAuto: "Auto · best fit",
 		motionPosterDialects: {
 			"card-warp": {
@@ -2511,12 +2702,258 @@ export const en = {
 			"Type overlay skipped — showing atmosphere clip only",
 		motionPosterNeedKeyframe:
 			"Add a product photo, scene still, or keyframe first for motion poster.",
+		blockbusterHint:
+			"One 9s take: truck hits the overpass, boxes explode, then the hero rises. Upload hero + packaging. Generate the truck/overpass first frame — without it the model often stays on a product beauty shot.",
+		blockbusterHeroTitle: "Hero (required)",
+		blockbusterHeroHint:
+			"Clear product packshot. This is the object that rises at the end.",
+		blockbusterHeroHintConcept:
+			"Logo or mascot photo. This pops out of the flying tiles — Brand kit logo is used if you skip this.",
+		blockbusterPackTitle: "Packaging / flying props",
+		blockbusterPackHint:
+			"Box or print that should multiply in the air. Colors and logo must match the hero.",
+		blockbusterPackHintConcept:
+			"Brand tiles, sticker sheet, or logo-on-card. If empty, we reuse the logo/mascot as flying props.",
+		blockbusterSceneTitle: "Scene first frame",
+		blockbusterSceneHint:
+			"Truck-on-road still — this is the opening frame. Generate a dusk overpass plate (boxes stacked too high). Skip only if you must.",
+		blockbusterGenerateSceneBtn: "Generate scene plate",
+		blockbusterGenerateSceneBusy: "Generating overpass still…",
+		blockbusterNeedHero:
+			"Upload a product photo first (or a logo/mascot for concept).",
+		blockbusterNeedConceptHero:
+			"Upload a logo/mascot, or save a logo in Brand kit.",
+		blockbusterAnimating: "Generating 9s one-take clip…",
+		h3ShotNeedHero: "Upload a product photo, or generate a still with Nano Banana.",
+		h3ShotNeedConceptHero:
+			"Upload a logo/mascot, save a Brand kit logo, or generate a still with Nano Banana.",
+		h3ShotNeedReferenceVideo:
+			"Upload a real / reference MP4 (required for imitate-ad and neon-on-real).",
+		h3ShotGenerateStillBtn: "Generate still (Nano Banana)",
+		h3ShotHeroHint: {
+			"ecom-orbit":
+				"Required: product photo — or logo / mascot still (concept). H3 orbits that exact subject.",
+			"object-lock":
+				"Required: product photo — or logo / mascot still (concept). Camera sticks to that subject.",
+			"macro-snap":
+				"Required: food or texture close-up (not a flat logo). Physics runs on that still.",
+			"luxury-tabletop":
+				"Required: product photo — or premium logo / packaging still (concept) for the tabletop hero.",
+			"beauty-mv":
+				"Required: face or character / mascot still for identity lock.",
+			"imitate-ad":
+				"Required: product or logo still + a reference MP4. H3 copies camera, keeps your subject.",
+			"neon-on-real":
+				"Required: real footage MP4. Optional product / logo / mascot still locks neon shape & color.",
+			"food-bullet-time":
+				"Required: person + food lifestyle photo (check-in shot). Face and dish must be clear — a logo alone is not enough.",
+		},
+		h3ShotHint: {
+			"ecom-orbit":
+				"Upload product or logo/mascot still first — Generate stays off until then. Then H3 orbits ~6s.",
+			"object-lock":
+				"Upload product or logo/mascot still first — Generate stays off until then. Camera glued to subject.",
+			"macro-snap":
+				"Upload a food/texture photo first — Generate stays off until then. Then drips / crumbs / break.",
+			"luxury-tabletop":
+				"Upload product or premium logo still first — Generate stays off until then. Then hand + tabletop ~8s.",
+			"beauty-mv":
+				"Upload a face/character photo first — Generate stays off until then. Then MV orbit ~10s.",
+			"imitate-ad":
+				"Upload product/logo still + reference MP4 — Generate stays off until both are ready.",
+			"neon-on-real":
+				"Upload a real MP4 (required). Optional: upload logo or mascot as the neon object identity.",
+			"food-bullet-time":
+				"Upload a person+food check-in photo first — Generate stays off until then. Camera orbits a frozen splash ~6s.",
+		},
+		macroSnapIntensityTitle: "Crack & drip strength",
+		macroSnapIntensityHint:
+			"How hard the cookie/food breaks and how much molten sauce pours. Full product still opens first.",
+		macroSnapIntensity: {
+			weak: {
+				title: "Weak",
+				desc: "Fine crack + light drip",
+			},
+			medium: {
+				title: "Medium",
+				desc: "Clear split + visible pour",
+			},
+			strong: {
+				title: "Strong",
+				desc: "Dramatic break + heavy pour",
+			},
+		},
+		recipePathUxTitles: {
+			need: "What you need",
+			attention: "Pay attention",
+			output: "What you’ll get",
+		},
+		recipePathUx: {
+			"ecom-orbit": {
+				need: [
+					"Product photo — or logo / mascot still (concept)",
+					"Clear hero subject to orbit",
+				],
+				attention: [
+					"Subject shape, logo, and colors stay locked — we won’t invent a replacement",
+					"Clean background works best — avoid busy collages",
+				],
+				output: ["~6s one-take orbit / tilt around your subject"],
+			},
+			"object-lock": {
+				need: [
+					"Product photo — or logo / mascot still (concept)",
+					"Subject should fill the frame",
+				],
+				attention: [
+					"Subject stays sharp and centered",
+					"Background will move — not the lock subject",
+				],
+				output: ["~6s SnorriCam-style object-locked clip"],
+			},
+			"macro-snap": {
+				need: ["Food or material close-up photo (not a flat logo)"],
+				attention: [
+					"Same dish/texture identity — no swapping plates",
+					"Opens on the full product, then dramatic break + molten drip (not a hairline crack)",
+					"Expect bold split / crumbs / pour — not bullet-time freeze",
+				],
+				output: ["~6s macro physics one-take"],
+			},
+			"luxury-tabletop": {
+				need: [
+					"Product photo — or premium logo / packaging still (concept)",
+				],
+				attention: [
+					"Luxury materials and mark stay locked",
+					"One elegant hand interaction",
+				],
+				output: ["~8s tabletop luxury one-take"],
+			},
+			"beauty-mv": {
+				need: ["Face or mascot / character still"],
+				attention: [
+					"Identity lock — no face morph",
+					"Soft MV light and orbit",
+				],
+				output: ["~10s beauty / MV one-take"],
+			},
+			"imitate-ad": {
+				need: [
+					"Product or logo / mascot still",
+					"Reference MP4 (camera language)",
+				],
+				attention: [
+					"Your subject stays — reference product is not copied",
+					"Camera / rhythm follow the reel",
+				],
+				output: ["~8s imitate-ad clip on MiniMax H3"],
+			},
+			"neon-on-real": {
+				need: [
+					"Real / reference MP4",
+					"Optional product, logo, or mascot still (neon identity)",
+				],
+				attention: [
+					"Real scene stays — neon is overlay, not a full CGI replace",
+					"Upload a logo/mascot to shape the neon object; skip still for generic neon marks",
+				],
+				output: ["~8s neon-on-real one-take"],
+			},
+			"food-bullet-time": {
+				need: [
+					"Person + food lifestyle photo (clear face and dish)",
+					"Logo alone is not enough — need real food in frame",
+				],
+				attention: [
+					"Keep the same food — do not invent extra ingredients",
+					"Target: frozen splash + camera orbit (not cheese-pull animation)",
+					"Face should stay readable",
+				],
+				output: ["~6s food bullet-time / 3D splash orbit clip"],
+			},
+			"designed-poster": {
+				need: [
+					"Product photo — or logo / brand mark (concept)",
+					"Headline (on-image hook)",
+				],
+				attention: [
+					"Commercial feed poster layout",
+					"Single locked still — no A/B or campaign",
+				],
+				output: ["One designed commercial poster still"],
+			},
+			"parts-poster": {
+				need: ["Product photo", "Headline"],
+				attention: [
+					"Explosion / parts callouts stay technical",
+					"Single locked still — product only (not logo)",
+				],
+				output: ["One parts-breakdown poster still"],
+			},
+			"gaming-cover": {
+				need: [
+					"Hero / character / product photo — or logo / mascot (concept)",
+					"Headline (cover title)",
+				],
+				attention: [
+					"AAA cover look — type baked into the scene",
+					"Identity lock from your upload — we won’t invent a random hero",
+				],
+				output: ["One gaming-cover poster still"],
+			},
+			"sports-big-words": {
+				need: [
+					"Athlete / product-in-action photo — or logo / campaign mark (concept)",
+					"Headline (drives the huge architectural word)",
+				],
+				attention: [
+					"Extreme low-angle impact freeze — word taller than the hero",
+					"Sports scoreboard HUD only — not gaming quest / barcode UI",
+					"High-saturation sports type — keep subject sharp",
+				],
+				output: ["One high-impact sports big-words poster still"],
+			},
+			"jelly-3d": {
+				need: [
+					"Product / mascot / logo photo (stays itself — not remade as jelly)",
+					"Headline (becomes the jelly 3D word)",
+				],
+				attention: [
+					"Upload identity lock — same product/mascot as the photo",
+					"Words are the jelly/glass hero — IG-dramatic, not flat captions",
+					"Same rule on product and concept",
+				],
+				output: ["One jelly-type poster: real subject + jelly words"],
+			},
+		},
+		h3ShotGenerateStillBusy: {
+			"ecom-orbit": "Nano Banana packshot…",
+			"object-lock": "Nano Banana still…",
+			"macro-snap": "Nano Banana food still…",
+			"luxury-tabletop": "Nano Banana luxury still…",
+			"beauty-mv": "Nano Banana portrait…",
+			"imitate-ad": "Nano Banana product still…",
+			"neon-on-real": "Nano Banana neon-lock still…",
+			"food-bullet-time": "Nano Banana splash-freeze still…",
+		},
+		h3ShotAnimating: {
+			"ecom-orbit": "Generating e-com orbit clip…",
+			"object-lock": "Generating object-locked camera clip…",
+			"macro-snap": "Generating macro physics clip…",
+			"luxury-tabletop": "Generating luxury tabletop clip…",
+			"beauty-mv": "Generating beauty / MV one-take…",
+			"imitate-ad": "Generating imitate-ad clip…",
+			"neon-on-real": "Generating neon-on-real clip…",
+			"food-bullet-time": "Generating food bullet-time clip…",
+		},
+
 		socialDripHint:
 			"三分屏 meme: hero → fake IG bar → cute polished cartoon. Something falls across the bar. Not a photoreal lifestyle ad.",
 		socialDripPlanningMetaphor: "Planning crossing metaphor…",
 		socialDripBuildingStill: "Step 1/3: social-drip start still…",
 		socialDripBuildingEnd: "Step 2/3: social-drip end still…",
-		socialDripAnimatingCard: "Step 3/3: H3 interpolating start→end…",
+		socialDripAnimatingCard: "Step 3/3: Video morphing start→end…",
 		socialDripMetaphorTitle: "Crossing metaphor",
 		socialDripMetaphorHint:
 			"Auto picks a metaphor that fits your category. Wrong pick (e.g. mouth-pour on serum) gets flagged below.",
@@ -3077,7 +3514,7 @@ export const en = {
 				"Three different angles — updates voiceover and captions (hook top-center, product line bottom-center).",
 			hookOptionLabel: "Hook {n}",
 			voiceoverPlaceholder:
-				"Voiceover script — spoken after video (fal TTS)",
+				"Voiceover script — spoken after video (AI TTS)",
 			voiceoverEmptyHint:
 				"Voiceover script is empty — dub will be skipped. Fill below or use “Fill from captions”.",
 			voiceoverFromCaptionsBtn: "Fill voiceover from captions",
@@ -3257,6 +3694,21 @@ export const en = {
 			description:
 				"Exploded components with title + labeled callouts — technical commercial still",
 		},
+		"gaming-cover": {
+			name: "Gaming cover poster",
+			description:
+				"AAA game-key-art — low-angle action, in-world type, HUD accents",
+		},
+		"sports-big-words": {
+			name: "Sports big-words poster",
+			description:
+				"Sports editorial — huge layered word, HUD stats, action energy",
+		},
+		"jelly-3d": {
+			name: "Jelly 3D poster",
+			description:
+				"Minimal glossy translucent 3D hero — soft shadow, sparse brand type",
+		},
 		"brand-fit": {
 			name: "Brand style analysis",
 			description: "Ads matched to website/social brand DNA",
@@ -3320,21 +3772,21 @@ export const en = {
 		planningUnavailable:
 			"AI planning is temporarily unavailable. Please try again later.",
 		deepSeekBalanceEmpty:
-			"AI account balance is empty. Top up at platform.deepseek.com, then try again.",
+			"AI planning is temporarily unavailable. Please try again later.",
 		insufficientTokens:
 			"Not enough tokens for this generation. Open Pricing to upgrade or top up, then try again.",
 		insufficientTokensTitle: "Out of tokens",
 		insufficientTokensCta: "View plans & top up",
 		insufficientTokensDismiss: "Close",
 		tvcNeedsPaidPlan:
-			"12s MiniMax H3 needs more tokens than the free grant (~1140 for 12s). Upgrade on Pricing, or use Kling stitch if it fits your balance.",
+			"12s single-clip video needs more tokens than the free grant (~1140 for 12s). Upgrade on Pricing, or use stitched fallback if it fits your balance.",
 		tvcNeedsPaidPlanTitle: "12s TVC needs a paid plan",
 		storyboardEngineChoiceTitle:
-			"H3 needs more tokens — Kling stitch fits now",
+			"Single-clip video needs more tokens — stitched fallback fits now",
 		storyboardEngineChoiceBody:
-			"MiniMax H3 12s costs ~{h3} tokens. You have {balance}. Kling stitch (~{kling}) is 4 clips cut together, not one H3 take.",
-		storyboardEngineChoiceH3: "Upgrade for MiniMax H3",
-		storyboardEngineChoiceKling: "Use Kling stitch now",
+			"Single-clip 12s costs ~{h3} tokens. You have {balance}. Stitched fallback (~{kling}) is 4 clips cut together, not one continuous take.",
+		storyboardEngineChoiceH3: "Upgrade for single-clip video",
+		storyboardEngineChoiceKling: "Use stitched fallback now",
 		storyboardCellBlocked:
 			"This scene was blocked by the safety filter. Tap regen on this cell — same product, no faces, no brand text.",
 		tokensNotCharged: "You weren’t charged for this attempt.",
@@ -3346,7 +3798,7 @@ export const en = {
 		klingStoryboardFailed:
 			"storyboard fallback failed. Try again or use stills without faces.",
 		klingDurationUnreachable:
-			"This duration can’t be hit with Kling stitch (5s min per still). Retry MiniMax H3 or pick 12s.",
+			"This duration can’t be hit with stitched fallback (5s min per still). Retry single-clip mode or pick 12s.",
 		needPhoto: "Please upload a product photo first.",
 		needReferenceImage: "Please upload a reference image first.",
 		needHeadline: "Please enter a headline for this template.",
@@ -3455,7 +3907,7 @@ export const en = {
 		voiceLabel: "Voice",
 		avatarVoiceLabel: "Presenter voice (locked to this 主播)",
 		avatarVoiceHint:
-			"Each stock presenter has a paired MiniMax voice for the language you selected.",
+			"Each stock presenter has a paired AI voice for the language you selected.",
 		previewVoice: "Preview voice",
 		previewingVoice: "Previewing voice…",
 		generateVideo: "Generate UGC video",
@@ -3974,7 +4426,7 @@ export const en = {
 		title: "Studio guide",
 		subtitle: "Ask how Alchemy works · or start a path",
 		welcome:
-			"Hi! Ask me how Alchemy works (tokens, pages, H3 vs Kling), or tell me what you want to make and I'll open the right path.",
+			"Hi! Ask me how Alchemy works (tokens, pages, single clip vs stitch), or tell me what you want to make and I'll open the right path.",
 		welcomeLanding:
 			"Hi! Ask anything about Alchemy — tokens, studio vs captions vs edit-image, what fits the free grant. Or say what you want to promote and I'll start the right path.",
 		welcomeStart:
@@ -3984,7 +4436,7 @@ export const en = {
 		welcomeCaptions:
 			"You're in caption studio. Import any MP4 — I'll help with timed lines, BGM, voice, then burn. No need to regenerate the video.",
 		welcomePro:
-			"Pro canvas — connect Upload → Image → Video nodes. Ask me the order or cost before you run. Pay-per-use fal.",
+			"Pro canvas — connect Upload → Image → Video nodes. Ask me the order or cost before you run. Pay-per-use tokens.",
 		welcomeBrandKit:
 			"Brand kit — upload logo and colors once. Ask me whether to stamp the logo on storyboard stills.",
 		welcomeLibrary:
@@ -4192,9 +4644,9 @@ export const en = {
 				"Add a product shot if you have one — otherwise we generate from your topic, copy, and research style.",
 			stylePickerTitle: "Creation direction",
 			stylePickerHint:
-				"Pick one look: direct product ad, designed commercial poster, parts breakdown, or model wear/use.",
+				"Pick one look: direct product ad, designed / gaming / sports / jelly posters, parts breakdown, or model wear/use.",
 			conceptStylePickerHint:
-				"Each option changes layout prompts — info posters, designed posters, brand match, pricing cards, or website launch.",
+				"Each option changes layout prompts — info, designed / gaming / sports / jelly posters, brand match, pricing, or website launch. Upload a logo or hero when the path asks for identity lock.",
 			stylePickerQuickLabel: "Direct creation",
 			stylePickerQuickDesc:
 				"Product-focused promo image — no model required.",
@@ -4204,6 +4656,15 @@ export const en = {
 			stylePickerPartsLabel: "Parts breakdown",
 			stylePickerPartsDesc:
 				"Exploded product view — labeled components with title + short descriptions on one poster.",
+			stylePickerGamingLabel: "Gaming cover",
+			stylePickerGamingDesc:
+				"AAA key-art still — in-world cover title, HUD accents, identity-locked hero.",
+			stylePickerSportsLabel: "Sports big words",
+			stylePickerSportsDesc:
+				"Huge layered action word (SMASH / SPIKE…) with sports energy.",
+			stylePickerJellyLabel: "Jelly 3D",
+			stylePickerJellyDesc:
+				"Real product/mascot stays locked — headline becomes IG-dramatic jelly/glass 3D type.",
 			stylePickerModelLabel: "Model wear / use",
 			stylePickerModelDesc:
 				"Person wearing or using your product in the shot.",
@@ -4256,6 +4717,30 @@ export const en = {
 					supportingPlaceholder:
 						"e.g.\nBattery — all-day charge\nShell — matte grip\nChip — fast charge IC",
 				},
+				"gaming-cover": {
+					title: "For gaming cover: fill the cover title",
+					body: "Hook becomes the large in-world cover title. Upload is the hero / SKU identity lock. Supporting = HUD taglines. Extra = set / lighting only.",
+					hookLabel: "Cover title (hook)",
+					hookPlaceholder: "e.g. CHALLENGE · 決戰",
+					supportingLabel: "HUD / support lines",
+					supportingPlaceholder: "Short gaming taglines (optional)",
+				},
+				"sports-big-words": {
+					title: "For sports big-words: fill the huge word",
+					body: "Hook drives one architectural impact word (SMASH / SPIKE…) taller than the hero. Upload = athlete or product-in-action. Supporting = tiny scoreboard HUD only — not gaming quest UI.",
+					hookLabel: "Big word / headline",
+					hookPlaceholder: "e.g. SMASH · 爆發",
+					supportingLabel: "Scoreboard / HUD lines",
+					supportingPlaceholder: "Short sports HUD (optional)",
+				},
+				"jelly-3d": {
+					title: "For jelly 3D: fill the jelly word",
+					body: "Upload keeps your product/mascot/logo as-is. Hook becomes the dramatic jelly/glass 3D word (IG still-life). Supporting = optional second jelly line. Same on product and concept.",
+					hookLabel: "Jelly word / headline",
+					hookPlaceholder: "e.g. ONE YEAR · 一週年",
+					supportingLabel: "Second jelly line",
+					supportingPlaceholder: "Short jelly subline (optional)",
+				},
 				brand: {
 					title: "For this direction: brand style comes first",
 					body: "Analyze your website/social when you can. Hook + supporting copy follow brand palette — not a pricing card.",
@@ -4299,7 +4784,7 @@ export const en = {
 			storyboardLookBeforePlanHint:
 				"Pick look first — style is written into the AI storyboard plan and the stills.",
 			storyboardTextModeHint:
-				"Default is textless stills (captions later). Choose AI on-image type if you want words baked into each frame — H3 will try to keep them moving.",
+				"Default is textless stills (captions later). Choose AI on-image type if you want words baked into each frame — Video will try to keep them moving.",
 			styleLabel: "Choose image style",
 			aspectLabel: "Aspect ratio",
 			textModeLabel: "Text mode",
@@ -4356,10 +4841,10 @@ export const en = {
 			titleAccent: "video details",
 			hint: "Add copy, upload a product photo, write/confirm the motion prompt, pick duration, then generate a silent reel.",
 			scenesReadyHint:
-				"Scene stills are ready. Generate uses MiniMax H3 (one clip from all stills). Captions later.",
+				"Scene stills are ready. Generate uses single-clip mode (one clip from all stills). Captions later.",
 			scenesReadyTitle: "Storyboard scenes ready",
 			scenesReadyBody:
-				"These stills become one H3 clip. Regen a bad cell first if needed.",
+				"These stills become one video clip. Regen a bad cell first if needed.",
 			assistantHint:
 				"Upload a product photo → AI writes a motion prompt → review it → generate (silent reel; captions later).",
 			assistantTitle: "AI motion prompt",
@@ -4396,6 +4881,9 @@ export const en = {
 			extraLabel: "Extra motion notes",
 			extraOptional: "(optional)",
 			onImageBadge: "Shows on end frame",
+			inVideoBadge: "Shows in the video",
+			requiredBadge: "Required",
+			h3PathFocusLead: "For this path",
 			motionPosterCopyFocus: {
 				title: "For motion poster: fill the end-frame title",
 				body: "Start still is textless. End still paints your hook as a large masthead (plus optional supporting line). Product photo is required — it is the hero. Extra notes = lighting / set only, not the title.",
@@ -4413,6 +4901,9 @@ export const en = {
 				"Clear product shot — required. This becomes the subject in the reel.",
 			productPhotoWithRefHint:
 				"Required — your product as @Image1. The reference MP4 only supplies motion/edit feel.",
+			neonIdentityPhotoTitle: "Logo / mascot (neon identity)",
+			neonIdentityPhotoHint:
+				"Optional — upload logo or mascot here to shape the neon object. Brand kit logo also works. Skip for generic neon marks.",
 			conceptPhotoTitle: "Optional still",
 			conceptPhotoHint:
 				"Optional — helps grounding; concept reels can also run from brief + motion prompt alone.",
@@ -4426,10 +4917,10 @@ export const en = {
 			aspectHint:
 				"Still + video share this size. 9:16 Reels/Stories · 4:5 IG feed · 1:1 square.",
 			klingSettingsHint:
-				"Video uses MiniMax H3 first (all stills → one clip). Kling stitch only if H3 fails — no 5s/10s picker.",
+				"Video uses single-clip mode first (all stills → one clip). Stitched fallback only if single-clip fails — no 5s/10s picker.",
 			klingClipLabel: "Clip length (per scene)",
 			klingClipHint:
-				"Kling only supports 5s or 10s per scene — not Seedance-style 4–12s totals.",
+				"Stitched fallback only supports 5s or 10s per scene — not flexible 4–12s totals.",
 			klingTotalLabel: "About {total}s total ({n} × {clip}s)",
 			costLabel: "Estimated ~{n} tokens for this video",
 			tipTitle: "Tips for better video",
@@ -4450,8 +4941,8 @@ export const en = {
 				body: "The AI scene copy shows the story beat — captions can burn it later.",
 			},
 			klingTip2: {
-				title: "H3 one take",
-				body: "All stills go into one MiniMax H3 clip — not four separate videos.",
+				title: "One continuous clip",
+				body: "All stills go into one continuous video clip — not four separate videos.",
 			},
 			klingTip3: {
 				title: "Fix stills first",

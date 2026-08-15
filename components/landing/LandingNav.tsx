@@ -5,7 +5,6 @@ import { useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { AuthNav } from "@/components/AuthNav";
 import { LanguageToggle } from "@/components/LanguageToggle";
-import { NavHoverMenu } from "@/components/nav/NavHoverMenu";
 import { ProNavLink } from "@/components/nav/ProNavLink";
 import { useLocale } from "@/components/LocaleProvider";
 import {
@@ -23,34 +22,12 @@ const NAV = [
 	{ href: "/#templates", key: "navUseCases" as const },
 ] as const;
 
-const CANVA_ITEMS = [
-	{
-		href: "/edit-image",
-		labelKey: "navEditImage" as const,
-		descKey: "navEditImageHint" as const,
-		icon: "edit" as const,
-	},
-	{
-		href: "/captions",
-		labelKey: "navCaptions" as const,
-		descKey: "navCaptionsHint" as const,
-		icon: "captions" as const,
-	},
-] as const;
-
 /** Full-bleed bar; nav sits next to logo (no bottom rule). */
 export function LandingNav() {
 	const { m } = useLocale();
 	const L = m.landing;
 	const { isSignedIn } = useAuth();
 	const [open, setOpen] = useState(false);
-
-	const canvaItems = CANVA_ITEMS.map((item) => ({
-		href: item.href,
-		label: L[item.labelKey],
-		description: L[item.descKey],
-		icon: item.icon,
-	}));
 
 	return (
 		<header className="sticky top-0 z-40 w-full bg-white">
@@ -84,7 +61,12 @@ export function LandingNav() {
 							{L[item.key]}
 						</Link>
 					))}
-					<NavHoverMenu label={L.navCanva} href="/#tools" items={canvaItems} />
+					<Link
+						href="/#tools"
+						className="whitespace-nowrap text-[12px] font-medium text-slate-600 hover:text-violet-700 xl:text-[13px]"
+					>
+						{L.navCanva}
+					</Link>
 					<ProNavLink className="whitespace-nowrap text-[12px] font-medium text-slate-600 hover:text-violet-700 xl:text-[13px]" />
 				</nav>
 
@@ -129,21 +111,11 @@ export function LandingNav() {
 						))}
 						<Link
 							href="/#tools"
-							className="rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-800 hover:bg-violet-50 hover:text-violet-700"
+							className="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-violet-50 hover:text-violet-700"
 							onClick={() => setOpen(false)}
 						>
 							{L.navCanva}
 						</Link>
-						{CANVA_ITEMS.map((item) => (
-							<Link
-								key={item.href}
-								href={item.href}
-								className="rounded-lg py-2 pl-7 pr-3 text-sm font-medium text-slate-600 hover:bg-violet-50 hover:text-violet-700"
-								onClick={() => setOpen(false)}
-							>
-								{L[item.labelKey]}
-							</Link>
-						))}
 						<ProNavLink
 							className="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-violet-50 hover:text-violet-700"
 							onClick={() => setOpen(false)}

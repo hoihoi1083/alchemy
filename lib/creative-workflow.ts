@@ -12,6 +12,15 @@ export type VideoCreativeMode =
   | "product-promo"
   | "motion-poster"
   | "social-drip"
+  | "blockbuster"
+  | "ecom-orbit"
+  | "object-lock"
+  | "macro-snap"
+  | "luxury-tabletop"
+  | "beauty-mv"
+  | "imitate-ad"
+  | "neon-on-real"
+  | "food-bullet-time"
   | "reference-concept"
   | "image-to-video";
 
@@ -25,14 +34,55 @@ export const VIDEO_CREATIVE_MODES: VideoCreativeMode[] = [
   "product-promo",
   "motion-poster",
   "social-drip",
+  "blockbuster",
+  "ecom-orbit",
+  "object-lock",
+  "macro-snap",
+  "luxury-tabletop",
+  "beauty-mv",
+  "imitate-ad",
+  "neon-on-real",
+  "food-bullet-time",
   "reference-concept",
   "image-to-video",
 ];
 
+const H3_RECIPE_PREVIEW_ALIAS = new Set<VideoCreativeMode>([
+  "social-drip",
+  "blockbuster",
+  "ecom-orbit",
+  "object-lock",
+  "macro-snap",
+  "luxury-tabletop",
+  "beauty-mv",
+  "imitate-ad",
+  "neon-on-real",
+  "food-bullet-time",
+]);
+
 export function videoModePreviewSrc(id: VideoCreativeMode): string {
-  // Social drip shares motion-poster card art until dedicated preview ships.
-  const file = id === "social-drip" ? "motion-poster" : id;
+  // H3 shot recipes share motion-poster card art until dedicated preview ships.
+  const file = H3_RECIPE_PREVIEW_ALIAS.has(id) ? "motion-poster" : id;
   return `/images/studio/video-modes/${file}.png?v=1`;
+}
+
+/** Recipe owns the motion prompt — skip DeepSeek auto-plan. */
+export function isRecipeOwnedVideoMode(
+  mode: string | null | undefined,
+): boolean {
+  return (
+    mode === "motion-poster" ||
+    mode === "social-drip" ||
+    mode === "blockbuster" ||
+    mode === "ecom-orbit" ||
+    mode === "object-lock" ||
+    mode === "macro-snap" ||
+    mode === "luxury-tabletop" ||
+    mode === "beauty-mv" ||
+    mode === "imitate-ad" ||
+    mode === "neon-on-real" ||
+    mode === "food-bullet-time"
+  );
 }
 
 export function imageModePreviewSrc(id: ImageCreativeMode): string {
@@ -59,11 +109,24 @@ export function defaultVideoModeForStudio(
   return defaultVideoModeForGoal(goal);
 }
 
+const H3_SHOT_PICKER_MODES: VideoCreativeMode[] = [
+  "ecom-orbit",
+  "object-lock",
+  "macro-snap",
+  "luxury-tabletop",
+  "beauty-mv",
+  "imitate-ad",
+  "neon-on-real",
+  "food-bullet-time",
+];
+
 export function videoModesForGoal(goal: OutputGoal): VideoCreativeMode[] {
   if (goal === "combined") {
     return [
       "image-to-video",
       "motion-poster",
+      "blockbuster",
+      ...H3_SHOT_PICKER_MODES,
       "social-drip",
       "reference-concept",
       "product-promo",
@@ -73,6 +136,8 @@ export function videoModesForGoal(goal: OutputGoal): VideoCreativeMode[] {
     return [
       "product-assistant",
       "motion-poster",
+      "blockbuster",
+      ...H3_SHOT_PICKER_MODES,
       "social-drip",
       "product-promo",
       "reference-concept",
@@ -89,12 +154,21 @@ export function videoModesForStudio(
   const modes = videoModesForGoal(goal);
   if (promotionMode !== "concept") return modes;
   if (goal === "video-only") {
-    return ["product-promo", "motion-poster", "social-drip", "reference-concept"];
+    return [
+      "product-promo",
+      "motion-poster",
+      "blockbuster",
+      ...H3_SHOT_PICKER_MODES,
+      "social-drip",
+      "reference-concept",
+    ];
   }
   if (goal === "combined") {
     return [
       "image-to-video",
       "motion-poster",
+      "blockbuster",
+      ...H3_SHOT_PICKER_MODES,
       "social-drip",
       "product-promo",
       "reference-concept",

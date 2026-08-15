@@ -214,8 +214,8 @@ export async function POST(req: Request) {
       megapixelsBilled: Math.ceil(Math.max(1, megapixels)),
       creditBalance: charged.balanceAfter,
       note: useErase
-        ? "Erased — masked pixels removed with FLUX Erase (no prompt)."
-        : "FLUX Fill — only masked pixels were regenerated from your description.",
+        ? "Erased — masked pixels removed (no prompt)."
+        : "Inpaint — only masked pixels were regenerated from your description.",
     });
   } catch (e: unknown) {
     await refundTokens(auth.user.userId, tokenCost, {

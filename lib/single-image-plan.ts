@@ -254,6 +254,8 @@ export function shouldPlanSingleImageAd(mode: string, imageTextMode?: string): b
     mode === "info-poster" ||
     mode === "designed-poster" ||
     mode === "parts-poster" ||
+    mode === "gaming-cover" ||
+    mode === "sports-big-words" ||
     mode === "service-promo" ||
     mode === "pricing-offer" ||
     mode === "brand-fit" ||

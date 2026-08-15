@@ -223,11 +223,11 @@ export function buildCoachReply(
     case "route-storyboard":
       return en
         ? [
-            "Step 1: Product storyboard — multi-scene stills → Kling video (textless frames; captions via /captions).",
+            "Step 1: Product storyboard — multi-scene stills → stitched fallback video (textless frames; captions via /captions).",
             link ?? "",
             "Reply next on Setup.",
           ].join("\n")
-        : ["第一步：產品分鏡 — 多場景圖 → Kling 影片（畫面無字；字幕用 /captions）。", link ?? "", "到 Setup 回覆 下一步。"].join("\n");
+        : ["第一步：產品分鏡 — 多場景圖 → stitched fallback 影片（畫面無字；字幕用 /captions）。", link ?? "", "到 Setup 回覆 下一步。"].join("\n");
 
     case "route-concept-studio":
       return en
@@ -260,10 +260,10 @@ export function buildCoachReply(
     case "route-pro-canvas":
       return en
         ? [
-            "Step 1: Power-user node canvas — upload → Nano Banana image → Seedance video. Pay-per-use fal.",
+            "Step 1: Power-user node canvas — upload → AI image → reference-reel video video. Pay-per-use tokens.",
             link ?? "",
           ].join("\n")
-        : ["第一步：進階節點畫布 — 上傳 → 出圖 → 出片。按次 fal 計費。", link ?? ""].join("\n");
+        : ["第一步：進階節點畫布 — 上傳 → 出圖 → 出片。按次 token 計費。", link ?? ""].join("\n");
 
     case "guide-edit-image":
       return en
@@ -285,8 +285,8 @@ export function buildCoachReply(
 
     case "guide-pro":
       return en
-        ? "You are on Pro canvas. Step 1 — add an Upload node, connect to Image (Nano Banana), then Video (Seedance). Pay-per-use fal — check the cost hint before run."
-        : "你喺 Pro 畫布。第一步 — 加 Upload 節點，接到 Image（Nano Banana），再接 Video（Seedance）。按次 fal 計費，跑之前睇成本提示。";
+        ? "You are on Pro canvas. Step 1 — add an Upload node, connect to Image (AI), then Video (reference-reel video). Pay-per-use tokens — check the cost hint before run."
+        : "你喺 Pro 畫布。第一步 — 加 Upload 節點，接到 Image（AI），再接 Video（reference-reel video）。按次 token 計費，跑之前睇成本提示。";
 
     case "guide-brand-kit":
       return en
@@ -351,7 +351,7 @@ export function buildCoachReply(
               "Step — Pick a visual style (3 primary paths at top of Setup):",
               "• Quick Ad — clean product shot on studio/lifestyle background (most SKUs)",
               "• Model Wear/Use — someone wearing or demoing the product",
-              "• Storyboard Reel — multi-scene stills → Kling video (captions later)",
+              "• Storyboard Reel — multi-scene stills → stitched fallback video (captions later)",
               "More styles (brand-fit, poster…) are under Advanced.",
               "Tap your choice, then reply next.",
             ].join("\n")
@@ -359,7 +359,7 @@ export function buildCoachReply(
               "呢步 — 揀 **視覺風格**（Setup 頂部三條主路徑）：",
               "• 快速廣告 — 產品特寫／生活場景（最多人用）",
               "• 模特兒穿戴／使用 — 有人示範產品",
-              "• 分鏡 Reel — 多場景圖 → Kling 影片（字幕之後加）",
+              "• 分鏡 Reel — 多場景圖 → stitched fallback 影片（字幕之後加）",
               "進階區有更多風格。",
               "揀好回覆 下一步。",
             ].join("\n"),
@@ -603,15 +603,15 @@ export function buildCoachReply(
     case "generate-storyboard-video":
       return step(
         en
-          ? "Step 1 — generate storyboard video (Kling I2V per scene still, then stitch). Captions later via /captions. Reply next."
-          : "第一步 — **生成分鏡影片**（逐場靜幀 Kling I2V，再拼接；字幕之後去 /captions）。回覆 下一步。",
+          ? "Step 1 — generate storyboard video (scene animation per scene still, then stitch). Captions later via /captions. Reply next."
+          : "第一步 — **生成分鏡影片**（逐場靜幀 scene animation，再拼接；字幕之後去 /captions）。回覆 下一步。",
       );
 
     case "generate-cinematic-video":
       return step(
         en
-          ? "Step 1 — generate 8s Seedance clip from cinematic keyframe(s). Check ad pack first if captions/voice on. Reply next."
-          : "第一步 — 由電影關鍵幀 **生成 8 秒 Seedance 片**。有開字幕配音就先檢查 Ad pack。回覆 下一步。",
+          ? "Step 1 — generate 8s reference-reel video clip from cinematic keyframe(s). Check ad pack first if captions/voice on. Reply next."
+          : "第一步 — 由電影關鍵幀 **生成 8 秒 reference-reel video 片**。有開字幕配音就先檢查 Ad pack。回覆 下一步。",
       );
 
     case "generate-creative-video":
@@ -682,11 +682,11 @@ export function formatCoachChecklistForPrompt(
       : "- brand-fit/campaign: analyze brand before image generate",
     isZh
       ? snapshot.promotionMode === "concept" && isStoryboardVideoStyle(snapshot.visualStyleId)
-        ? "- concept storyboard：概念／headline + 參考 Reel → 場景圖 → Kling 分鏡片（唔使產品相；字幕 /captions）"
-        : "- storyboard：產品名 + 分鏡簡述 + 產品相 + 場景圖 → Kling（畫面無字）"
+        ? "- concept storyboard：概念／headline + 參考 Reel → 場景圖 → stitched fallback 分鏡片（唔使產品相；字幕 /captions）"
+        : "- storyboard：產品名 + 分鏡簡述 + 產品相 + 場景圖 → stitched fallback（畫面無字）"
       : snapshot.promotionMode === "concept" && isStoryboardVideoStyle(snapshot.visualStyleId)
-        ? "- concept storyboard: concept/headline + reference reel → scene stills → Kling video (no product photo; captions via /captions)"
-        : "- storyboard: product name + brief + photo + scene stills → Kling (textless frames)",
+        ? "- concept storyboard: concept/headline + reference reel → scene stills → stitched fallback video (no product photo; captions via /captions)"
+        : "- storyboard: product name + brief + photo + scene stills → stitched fallback (textless frames)",
     isZh
       ? "- image-only 完成於出圖；video-only 跳過出圖步"
       : "- image-only finishes at image; video-only skips image step",

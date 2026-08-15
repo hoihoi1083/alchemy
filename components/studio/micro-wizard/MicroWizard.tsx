@@ -212,7 +212,7 @@ export function MicroWizard({ promotionMode }: Props) {
           {mw.skip}
         </button>
       ) : null}
-      {currentId === "setup.pre_generate" || currentId === "setup.pre_video" ? null : (
+      {currentId === "setup.pre_generate" ? null : (
         <button
           type="button"
           onClick={goNext}
@@ -343,8 +343,7 @@ export function MicroWizard({ promotionMode }: Props) {
       {blockMessage &&
       !showReviewFooter &&
       !showVideoReviewFooter &&
-      currentId !== "setup.pre_generate" &&
-      currentId !== "setup.pre_video" ? (
+      currentId !== "setup.pre_generate" ? (
         <p
           className={`rounded-xl border px-3 py-2.5 text-sm ${
             isPurpleChrome

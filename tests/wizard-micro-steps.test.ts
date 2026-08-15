@@ -535,6 +535,47 @@ describe("wizard v2 parity audit", () => {
     );
   });
 
+  it("object-lock / H3 shot recipes can proceed without a product photo", () => {
+    const ctx: MicroWizardContext = {
+      promotionMode: "physical",
+      workflowMode: "video-only",
+      intakePath: "direct",
+      videoSubpath: "object_lock",
+    };
+    assert.equal(
+      canProceedMicroStep(
+        "setup.pre_video",
+        ctx,
+        baseState({
+          workflowMode: "video-only",
+          videoCreativeMode: "object-lock",
+          productPhoto: null,
+          headline: "",
+          product: "",
+        }),
+      ),
+      null,
+    );
+    assert.equal(
+      canProceedMicroStep(
+        "setup.pre_video",
+        {
+          ...ctx,
+          workflowMode: "combined",
+        },
+        baseState({
+          workflowMode: "combined",
+          visualStyleId: "storyboard-video",
+          videoCreativeMode: "object-lock",
+          hasGeneratedImage: true,
+          storyboardGridApproved: false,
+          productPhoto: null,
+        }),
+      ),
+      null,
+    );
+  });
+
   it("concept video direct creative fuses into setup.pre_video", () => {
     const ctx: MicroWizardContext = {
       promotionMode: "concept",
@@ -871,6 +912,88 @@ describe("wizard v2 parity audit", () => {
     assert.ok(ids.includes("image.review"));
     assert.ok(ids.includes("setup.pre_video"));
     assert.ok(!ids.includes("wait.storyboard_generate"));
+  });
+
+  it("blockbuster stays on video-only one-take — never 九宫格", () => {
+    const combinedCtx: MicroWizardContext = {
+      promotionMode: "physical",
+      workflowMode: "combined",
+      intakePath: "direct",
+      videoSubpath: "blockbuster",
+    };
+    const combinedState = baseState({
+      promotionMode: "physical",
+      workflowMode: "combined",
+      visualStyleId: "storyboard-video",
+      videoCreativeMode: "blockbuster",
+    });
+    assert.equal(resolvePathId(combinedCtx, combinedState), "product_video_direct");
+    const combinedIds = resolveMicroSteps(combinedCtx, combinedState).map((s) => s.id);
+    assert.ok(combinedIds.includes("setup.pre_video"));
+    assert.ok(!combinedIds.includes("wait.storyboard_generate"));
+    assert.ok(!combinedIds.includes("image.review"));
+
+    const videoCtx: MicroWizardContext = {
+      promotionMode: "physical",
+      workflowMode: "video-only",
+      intakePath: "direct",
+      videoSubpath: "blockbuster",
+    };
+    const videoIds = resolveMicroSteps(
+      videoCtx,
+      baseState({
+        workflowMode: "video-only",
+        videoCreativeMode: "blockbuster",
+      }),
+    ).map((s) => s.id);
+    assert.ok(videoIds.includes("setup.pre_video"));
+    assert.ok(!videoIds.includes("wait.storyboard_generate"));
+
+    const conceptCtx: MicroWizardContext = {
+      promotionMode: "concept",
+      workflowMode: "combined",
+      intakePath: "direct",
+      conceptSource: "assistant",
+      videoSubpath: "blockbuster",
+    };
+    assert.equal(
+      resolvePathId(
+        conceptCtx,
+        baseState({
+          promotionMode: "concept",
+          workflowMode: "combined",
+          videoCreativeMode: "blockbuster",
+        }),
+      ),
+      "concept_video_direct",
+    );
+  });
+
+  it("blockbuster skips creative-brief gate on pre_video", () => {
+    const ctx: MicroWizardContext = {
+      promotionMode: "concept",
+      workflowMode: "video-only",
+      intakePath: "direct",
+      conceptSource: "assistant",
+      videoSubpath: "blockbuster",
+    };
+    assert.equal(
+      canProceedMicroStep(
+        "setup.pre_video",
+        ctx,
+        baseState({
+          promotionMode: "concept",
+          workflowMode: "video-only",
+          visualStyleId: "creative-video",
+          videoCreativeMode: "blockbuster",
+          conceptIdea: "Alchemy 吉祥物",
+          headline: "",
+          creativeVideoBrief: "",
+          productPhoto: null,
+        }),
+      ),
+      null,
+    );
   });
 
   it("motion-poster skips creative-brief gate on pre_video", () => {
@@ -1261,11 +1384,12 @@ describe("wizard v2 parity audit", () => {
     ]);
   });
 
-  it("concept fused pre-video offers 短片製作 + 動態海報 only", () => {
+  it("concept fused pre-video offers 短片製作 + 動態海報 + 大片級出場", () => {
     const panel = fs.readFileSync("components/studio/PreVideoSetupPanel.tsx", "utf8");
     assert.match(panel, /sceneReelTitle/);
     assert.match(panel, /id: "creative_video"/);
     assert.match(panel, /id: "motion_poster"/);
+    assert.match(panel, /id: "blockbuster"/);
     assert.doesNotMatch(panel, /id: "brand_video"/);
     assert.match(panel, /showBrandWebsite = isSceneReel/);
     assert.match(panel, /showReferenceUpload = isReference \|\| isSceneReel/);

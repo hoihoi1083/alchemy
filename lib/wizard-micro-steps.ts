@@ -25,6 +25,12 @@ import {
   isUgcPresenterStyle,
   requiresBrandProfileForImages,
 } from "@/lib/visual-styles";
+import {
+  isH3ShotRecipeMode,
+  h3ShotRecipeNeedsReel,
+  subpathToH3ShotRecipe,
+} from "@/lib/h3-shot-recipes";
+import { isRecipeOwnedVideoMode } from "@/lib/creative-workflow";
 
 type GraphStep = {
   id: string;
@@ -305,6 +311,17 @@ export function resolvePathId(
       return "concept_combined_cinematic";
     }
     if (
+      ctx.videoSubpath === "blockbuster" ||
+      state.videoCreativeMode === "blockbuster" ||
+      subpathToH3ShotRecipe(ctx.videoSubpath) ||
+      isH3ShotRecipeMode(state.videoCreativeMode)
+    ) {
+      return promotionMode === "concept"
+        ? "concept_video_direct"
+        : "product_video_direct";
+    }
+
+    if (
       ctx.videoSubpath === "motion_poster" ||
       ctx.videoSubpath === "social_drip" ||
       state.videoCreativeMode === "motion-poster" ||
@@ -320,6 +337,14 @@ export function resolvePathId(
   }
 
   if (promotionMode === "physical" && workflowMode === "combined") {
+    if (
+      ctx.videoSubpath === "blockbuster" ||
+      state.videoCreativeMode === "blockbuster" ||
+      subpathToH3ShotRecipe(ctx.videoSubpath) ||
+      isH3ShotRecipeMode(state.videoCreativeMode)
+    ) {
+      return "product_video_direct";
+    }
     if (
       ctx.videoSubpath === "motion_poster" ||
       ctx.videoSubpath === "social_drip" ||
@@ -617,7 +642,7 @@ export function resolveMicroSteps(
   let resolveState = state;
   if (
     effectiveCtx.workflowMode === "combined" &&
-    state.videoCreativeMode !== "motion-poster" &&
+    !isRecipeOwnedVideoMode(state.videoCreativeMode) &&
     !isUgcPresenterStyle(state.visualStyleId) &&
     state.visualStyleId !== "concept-cinematic" &&
     (pathId === "product_combined" ||
@@ -812,8 +837,18 @@ export function canProceedMicroStep(
     }
   }
   if (id === "setup.pre_video") {
+    const recipeOwnedOnVideo =
+      isRecipeOwnedVideoMode(state.videoCreativeMode) ||
+      Boolean(subpathToH3ShotRecipe(ctx.videoSubpath)) ||
+      ctx.videoSubpath === "blockbuster" ||
+      ctx.videoSubpath === "motion_poster" ||
+      ctx.videoSubpath === "social_drip";
     // Combined storyboard: scenes already generated — still require 九宫格 approve.
-    if (ctx.workflowMode === "combined" && state.hasGeneratedImage) {
+    if (
+      ctx.workflowMode === "combined" &&
+      state.hasGeneratedImage &&
+      !recipeOwnedOnVideo
+    ) {
       if (
         state.visualStyleId === "storyboard-video" &&
         !state.storyboardGridApproved
@@ -825,15 +860,32 @@ export function canProceedMicroStep(
     const sub =
       ctx.videoSubpath ??
       (ctx.promotionMode === "concept" ? "creative_video" : "product_promo");
-    if (sub === "reference_reel" && !(state.referenceAd && state.referenceIsVideo)) {
+    const h3AutoStill =
+      Boolean(subpathToH3ShotRecipe(sub)) ||
+      isH3ShotRecipeMode(state.videoCreativeMode);
+    const h3Mode =
+      subpathToH3ShotRecipe(sub) ??
+      (isH3ShotRecipeMode(state.videoCreativeMode)
+        ? state.videoCreativeMode
+        : null);
+    if (
+      (sub === "reference_reel" ||
+        (h3Mode != null && h3ShotRecipeNeedsReel(h3Mode))) &&
+      !(state.referenceAd && state.referenceIsVideo)
+    ) {
       return "need_reference_video";
     }
-    // Physical product video always needs a product photo (@Image1), including R2V.
-    if (ctx.promotionMode === "physical" && sub !== "ugc_presenter" && !state.productPhoto) {
+    // Physical product video needs @Image1 — H3 shot recipes can Nano Banana the still.
+    if (
+      ctx.promotionMode === "physical" &&
+      sub !== "ugc_presenter" &&
+      !state.productPhoto &&
+      !h3AutoStill
+    ) {
       return "need_product_photo";
     }
     if (
-      state.videoCreativeMode !== "motion-poster" &&
+      !isRecipeOwnedVideoMode(state.videoCreativeMode) &&
       isCreativeVideoStyle(state.visualStyleId) &&
       !state.creativeVideoBrief.trim() &&
       !state.headline.trim()
@@ -844,7 +896,8 @@ export function canProceedMicroStep(
       !state.headline.trim() &&
       !state.product.trim() &&
       !state.conceptIdea.trim() &&
-      sub !== "ugc_presenter"
+      sub !== "ugc_presenter" &&
+      !h3AutoStill
     ) {
       return "need_headline";
     }

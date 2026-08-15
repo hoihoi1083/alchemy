@@ -83,7 +83,7 @@ export async function POST(request: Request) {
       });
       return NextResponse.json({
         ...plan,
-        sourceNote: "Seedance creative video prompt (DeepSeek)",
+        sourceNote: "Creative video motion prompt (AI)",
       });
     }
 
@@ -93,7 +93,7 @@ export async function POST(request: Request) {
         const plan = await planVideoPrompt({ brandProfile: profile, ...shared });
         return NextResponse.json({
           ...plan,
-          sourceNote: "Seedance video prompt from brand analysis (DeepSeek)",
+          sourceNote: "Video motion prompt from brand analysis (AI)",
         });
       }
       // No brand analysis — fall through to product-context planner.
@@ -102,7 +102,7 @@ export async function POST(request: Request) {
     const plan = await planProductVideoPrompt(shared);
     return NextResponse.json({
       ...plan,
-      sourceNote: "Seedance video prompt from product context (DeepSeek)",
+      sourceNote: "Video motion prompt from product context (AI)",
     });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Video prompt planning failed.";

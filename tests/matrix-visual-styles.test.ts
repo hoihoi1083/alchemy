@@ -35,11 +35,18 @@ describe("visual styles × promotion × workflow matrix", () => {
   }
 
   it("physical-only styles hidden in concept mode", () => {
-    const physicalOnly: VisualStyleId[] = ["product", "model-wear"];
+    const physicalOnly: VisualStyleId[] = [
+      "product",
+      "model-wear",
+      "parts-poster",
+    ];
     for (const id of physicalOnly) {
       assert.equal(visualStyleAllowedForPromotion(id, "concept"), false);
       assert.equal(visualStyleAllowedForPromotion(id, "physical"), true);
     }
+    assert.equal(visualStyleAllowedForPromotion("gaming-cover", "concept"), true);
+    assert.equal(visualStyleAllowedForPromotion("sports-big-words", "concept"), true);
+    assert.equal(visualStyleAllowedForPromotion("jelly-3d", "concept"), true);
     assert.equal(visualStyleAllowedForPromotion("storyboard-video", "concept"), true);
     assert.equal(visualStyleAllowedForPromotion("storyboard-video", "physical"), true);
   });

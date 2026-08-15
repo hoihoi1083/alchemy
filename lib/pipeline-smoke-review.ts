@@ -1,10 +1,9 @@
-import { runBagelUnderstand } from "@/lib/bagel-understand";
 import { fal } from "@fal-ai/client";
 import { parseLlmJsonObject } from "@/lib/parse-llm-json";
 
-/** Dual-image layout compare still uses any-llm (needs 2 images); single QA uses Bagel. */
-const DUAL_VISION_ENDPOINT = "fal-ai/any-llm/vision";
-const DUAL_VISION_MODEL = "google/gemini-2.5-flash-lite";
+/** Single + dual image QA — any-llm/vision (~$0.01) instead of Bagel (~$0.05). */
+const VISION_ENDPOINT = "fal-ai/any-llm/vision";
+const VISION_MODEL = "google/gemini-2.5-flash-lite";
 
 export type PipelineSmokeReview = {
   matchesExpectation: boolean;
@@ -61,29 +60,37 @@ export async function reviewPipelineOutput(
       `Must NOT include or emphasize: ${input.mustAvoid.join("; ")}.`
     : "";
 
-  const raw = await runBagelUnderstand({
-    imageUrl: input.imageUrl,
-    prompt: [
-      "You QA generated marketing assets for an SMB ad pipeline smoke test. Be practical — minor style drift is OK; flag blockers only.",
-      "Output valid JSON only — no markdown fences, no thinking notes.",
-      `Asset label: ${input.label}`,
-      `Media type: ${input.mediaKind}`,
-      input.product ? `Product being promoted: ${input.product}` : "",
-      `Expected: ${input.expectation}`,
-      avoidBlock,
-      "",
-      "Return JSON only:",
-      '{"matchesExpectation":true,"score":85,"summary":"one sentence","positives":["…"],"issues":["…"]}',
-      "",
-      "Rules:",
-      "- matchesExpectation: true if good enough for a smoke test (not perfect ad quality)",
-      "- score: 0-100 for fit to expectation",
-      "- issues: empty if acceptable; list only real mismatches (wrong product category, offensive, broken anatomy, wrong topic like zodiac when product is jewelry)",
-      "- Do not nitpick resolution or minor color shifts",
-    ]
-      .filter(Boolean)
-      .join("\n"),
+  const result = await fal.subscribe(VISION_ENDPOINT, {
+    input: {
+      model: VISION_MODEL,
+      image_urls: [input.imageUrl],
+      system_prompt:
+        "You QA generated marketing assets for an SMB ad pipeline smoke test. Output valid JSON only — no markdown fences, no thinking notes.",
+      prompt: [
+        "Be practical — minor style drift is OK; flag blockers only.",
+        `Asset label: ${input.label}`,
+        `Media type: ${input.mediaKind}`,
+        input.product ? `Product being promoted: ${input.product}` : "",
+        `Expected: ${input.expectation}`,
+        avoidBlock,
+        "",
+        "Return JSON only:",
+        '{"matchesExpectation":true,"score":85,"summary":"one sentence","positives":["…"],"issues":["…"]}',
+        "",
+        "Rules:",
+        "- matchesExpectation: true if good enough for a smoke test (not perfect ad quality)",
+        "- score: 0-100 for fit to expectation",
+        "- When Expected includes exact on-image text (EN or CJK), verify those glyphs are present and readable; list misspellings / missing title as issues",
+        "- issues: empty if acceptable; list only real mismatches (wrong product category, offensive, broken anatomy, wrong topic like zodiac when product is jewelry)",
+        "- Do not nitpick resolution or minor color shifts",
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    },
+    logs: false,
   });
+
+  const raw = extractVisionText(result.data);
   if (!raw) throw new Error(`Vision review returned empty for ${input.label}`);
   return normalizeReview(
     parseLlmJsonObject<Partial<PipelineSmokeReview>>(raw, `Smoke review: ${input.label}`),
@@ -105,9 +112,9 @@ export async function reviewLayoutSimilarity(input: {
   label: string;
   product: string;
 }): Promise<LayoutSimilarityReview> {
-  const result = await fal.subscribe(DUAL_VISION_ENDPOINT, {
+  const result = await fal.subscribe(VISION_ENDPOINT, {
     input: {
-      model: DUAL_VISION_MODEL,
+      model: VISION_MODEL,
       image_urls: [input.referenceImageUrl, input.generatedImageUrl],
       system_prompt:
         "You compare social carousel reference vs generated slide for LAYOUT similarity only. Output valid JSON only.",

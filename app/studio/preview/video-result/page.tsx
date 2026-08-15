@@ -87,7 +87,7 @@ function VideoResultPreviewContent() {
             durationLabel: "8s",
             resolution: "720p",
             styleLabel: m.wizard.pathQuickTitle,
-            videoNote: "Design preview — not a generated Seedance output.",
+            videoNote: "Design preview — not a generated video output.",
           }}
         />
 

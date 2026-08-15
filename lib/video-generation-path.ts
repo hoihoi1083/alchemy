@@ -1,4 +1,8 @@
-import type { VideoCreativeMode } from "@/lib/creative-workflow";
+import {
+  isRecipeOwnedVideoMode,
+  type VideoCreativeMode,
+} from "@/lib/creative-workflow";
+import { isH3ShotRecipeMode } from "@/lib/h3-shot-recipes";
 
 /** Which Seedance path generateVideo() should take (unit-tested). */
 export type VideoGenerationKind =
@@ -13,6 +17,15 @@ export type VideoGenerationKind =
   | "digital-presenter"
   | "motion-poster"
   | "social-drip"
+  | "blockbuster"
+  | "ecom-orbit"
+  | "object-lock"
+  | "macro-snap"
+  | "luxury-tabletop"
+  | "beauty-mv"
+  | "imitate-ad"
+  | "neon-on-real"
+  | "food-bullet-time"
   | "image-to-video";
 
 export type ResolveVideoGenerationKindInput = {
@@ -42,6 +55,12 @@ export function resolveVideoGenerationKind(
   if (input.videoCreativeMode === "social-drip") {
     return "social-drip";
   }
+  if (input.videoCreativeMode === "blockbuster") {
+    return "blockbuster";
+  }
+  if (isH3ShotRecipeMode(input.videoCreativeMode)) {
+    return input.videoCreativeMode;
+  }
   if (input.isStoryboardOutput) return "storyboard";
   if (input.isUgcPresenterOutput) return "digital-presenter";
   if (input.shouldCinematicStitch) return "cinematic-stitch";
@@ -64,4 +83,27 @@ export function resolveVideoGenerationKind(
     return "multi-angle-r2v";
   }
   return "image-to-video";
+}
+
+/** Sticky 九宫格 style must not block recipe-owned H3 / poster / drip clips. */
+export function storyboardBlocksRecipeVideo(
+  isStoryboardOutput: boolean,
+  videoCreativeMode: VideoCreativeMode,
+): boolean {
+  return isStoryboardOutput && !isRecipeOwnedVideoMode(videoCreativeMode);
+}
+
+/** Physical video-only still needs @Image1 unless the recipe can Nano Banana it. */
+export function physicalVideoOnlyNeedsUploadedPhoto(input: {
+  hasProductPhoto: boolean;
+  hasDirectReferenceR2v: boolean;
+  hasStoryboardScenes: boolean;
+  hasImageOverride: boolean;
+  canAutoStill: boolean;
+}): boolean {
+  if (input.hasProductPhoto || input.hasDirectReferenceR2v || input.hasImageOverride) {
+    return false;
+  }
+  if (input.hasStoryboardScenes || input.canAutoStill) return false;
+  return true;
 }

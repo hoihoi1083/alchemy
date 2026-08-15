@@ -78,6 +78,21 @@ function styleSpecificRules(input: PlanConceptInput): string[] {
       "- PARTS-BREAKDOWN POSTER: visualMetaphor should describe a clean exploded-view / labeled-components diagram of THIS product — technical commercial teardown, not violent destruction. Title + short part callouts.",
     ];
   }
+  if (input.visualStyleId === "gaming-cover") {
+    return [
+      "- GAMING COVER: visualMetaphor = AAA cinematic key art — low-angle action, type baked into crates/path/rocks, HUD accents. Keep product/mascot identity.",
+    ];
+  }
+  if (input.visualStyleId === "sports-big-words") {
+    return [
+      "- SPORTS BIG-WORDS: visualMetaphor = sports editorial with one huge layered word, HUD stats, athlete or product-in-action energy.",
+    ];
+  }
+  if (input.visualStyleId === "jelly-3d") {
+    return [
+      "- JELLY 3D: visualMetaphor = single glossy translucent 3D object/number on clean ground, sparse brand type — no busy lifestyle scene.",
+    ];
+  }
   if (input.visualStyleId === "service-promo" || input.visualStyleId === "pricing-offer") {
     return [
       "- SERVICE/OFFER graphic mode: visualMetaphor may suggest professional graphic mood — not required to be a literal photo scene.",

@@ -245,6 +245,10 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn" | "zh-tw") {
   const [extraAnglePhotos, setExtraAnglePhotos] = useState<File[]>([]);
   const [packagingPhoto, setPackagingPhoto] = useState<File | null>(null);
   const [packagingPreviewUrl, setPackagingPreviewUrl] = useState<string | null>(null);
+  const [sceneFramePhoto, setSceneFramePhoto] = useState<File | null>(null);
+  const [sceneFramePreviewUrl, setSceneFramePreviewUrl] = useState<string | null>(null);
+  const [sceneFrameUrl, setSceneFrameUrl] = useState<string | null>(null);
+  const [sceneFrameBusy, setSceneFrameBusy] = useState(false);
   const [extraKitPhotos, setExtraKitPhotos] = useState<File[]>([]);
   const [extraKitPreviewUrls, setExtraKitPreviewUrls] = useState<string[]>([]);
   const [referenceCarouselSlideCount, setReferenceCarouselSlideCount] = useState(5);
@@ -510,6 +514,14 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn" | "zh-tw") {
     setPackagingPhoto,
     packagingPreviewUrl,
     setPackagingPreviewUrl,
+    sceneFramePhoto,
+    setSceneFramePhoto,
+    sceneFramePreviewUrl,
+    setSceneFramePreviewUrl,
+    sceneFrameUrl,
+    setSceneFrameUrl,
+    sceneFrameBusy,
+    setSceneFrameBusy,
     extraKitPhotos,
     setExtraKitPhotos,
     extraKitPreviewUrls,

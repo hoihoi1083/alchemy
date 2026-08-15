@@ -32,8 +32,8 @@ export const ASSISTANT_KNOWLEDGE: AssistantKnowledgeChunk[] = [
       "幹嘛",
       "平台",
     ],
-    en: `Alchemy AI Lab is a prompt-free marketing studio. You describe a product or idea (or upload a photo); DeepSeek plans the brief; then you generate social images and short videos. You do not write fal/model prompts. Pay with tokens (signup grant + paid plans).`,
-    zh: `Alchemy AI Lab 係免寫 Prompt 嘅行銷工作室。你講產品／概念或上傳相片，DeepSeek 幫手規劃，再出社交圖同短片。唔使自己寫模型 Prompt。用 Tokens 計費（註冊贈送 + 付費方案）。`,
+    en: `Alchemy AI Lab is a prompt-free marketing studio. You describe a product or idea (or upload a photo); AI plans the brief; then you generate social images and short videos. You do not write model prompts. Pay with tokens (signup grant + paid plans).`,
+    zh: `Alchemy AI Lab 係免寫 Prompt 嘅行銷工作室。你講產品／概念或上傳相片，AI 幫手規劃，再出社交圖同短片。唔使自己寫模型 Prompt。用 Tokens 計費（註冊贈送 + 付費方案）。`,
   },
   {
     id: "pages",
@@ -65,7 +65,7 @@ export const ASSISTANT_KNOWLEDGE: AssistantKnowledgeChunk[] = [
 - /studio — guided wizard (default simple mode). Ask-AI launcher is OFF here.
 - /captions — burn subtitles / BGM / voice on any MP4. Ask-AI OFF.
 - /edit-image — clean, add text/logo, export. Ask-AI OFF.
-- /pro — node canvas (Upload → image → video). Master plan. Pay-per-use fal.
+- /pro — node canvas (Upload → image → video). Master plan. Pay-per-use tokens.
 - /brand-kit — save logo & colors.
 - /library — past generations.
 - /ugc — talking presenter.
@@ -77,7 +77,7 @@ Ask-AI is a small logo on the landing page only. It is hidden on every other pag
 - /studio — 引導式 wizard（預設簡單模式）。呢頁冇問 AI 浮掣。
 - /captions — 任何 MP4 燒字幕／BGM／配音。冇問 AI。
 - /edit-image — 清雜物、加字／Logo、匯出。冇問 AI。
-- /pro — 節點畫布（上傳→圖→片）。Master 方案。按次 fal。
+- /pro — 節點畫布（上傳→圖→片）。Master 方案。按次 token。
 - /brand-kit — 儲 Logo 同顏色。
 - /library — 作品庫。
 - /ugc — 數字人口播。
@@ -133,22 +133,22 @@ Three workflows in studio: image-only (posts), video-only (clip from upload or t
       "方案",
     ],
     en: `Tokens ≈ pay-per-use. Free signup grant is 500 tokens once (not a monthly refill).
-Rough costs: 1 still ≈ 25 tokens; 4 storyboard stills ≈ 104; 8s 480p video ≈ 336; 6s motion (billed 720p H3 table) ≈ 570; 12s MiniMax H3 ≈ 1140; Kling stitch 4×5s ≈ 440.
-Free 500 covers about 1 image + 1 short 480p clip — NOT 12s H3 (1140 > 500). Motion poster (~595) and some Kling paths may need a paid plan.
+Rough costs: 1 still ≈ 25 tokens; 4 storyboard stills ≈ 104; 8s 480p video ≈ 336; 6s motion poster ≈ 570; 12s single-clip video ≈ 1140; stitched fallback 4×5s ≈ 440.
+Free 500 covers about 1 image + 1 short 480p clip — NOT 12s single-clip (1140 > 500). Motion poster (~595) and some stitched paths may need a paid plan.
 Plans (typical): Free 500 signup / 480p; Standard 3000/mo 720p; Pro 8000/mo 1080p; Master 16000/mo + Pro canvas. Paid can top up 1000 tokens. See /pricing. Estimates only.`,
     zh: `Tokens ≈ 按次計費。免費註冊一次送 500（唔係每月自動再送）。
-大約：1 張靜圖 ≈ 25；4 格分鏡 ≈ 104；8 秒 480p ≈ 336；6 秒動態海報（按 720p H3 表）≈ 570；12 秒 MiniMax H3 ≈ 1140；Kling 4×5 秒拼接 ≈ 440。
-500 夠大概 1 圖 + 1 條短 480p — 唔夠 12 秒 H3（1140 > 500）。動態海報（約 595）同部分 Kling 路徑可能要付費方案。
+大約：1 張靜圖 ≈ 25；4 格分鏡 ≈ 104；8 秒 480p ≈ 336；6 秒動態海報 ≈ 570；12 秒單鏡出片 ≈ 1140；拼接後備 4×5 秒 ≈ 440。
+500 夠大概 1 圖 + 1 條短 480p — 唔夠 12 秒單鏡（1140 > 500）。動態海報（約 595）同部分拼接路徑可能要付費方案。
 方案大約：Free 註冊 500／480p；Standard 每月 3000／720p；Pro 8000／1080p；Master 16000 + Pro 畫布。付費可加購 1000 tokens。詳情 /pricing。數字係估算。`,
   },
   {
     id: "video-engines",
-    title: "H3 vs Kling vs Seedance",
+    title: "Single clip vs stitch vs reference reel",
     keywords: [
       "h3",
-      "minimax",
-      "kling",
-      "seedance",
+      "AI",
+      "stitched fallback",
+      "reference-reel video",
       "engine",
       "stitch",
       "one take",
@@ -157,8 +157,8 @@ Plans (typical): Free 500 signup / 480p; Standard 3000/mo 720p; Pro 8000/mo 1080
       "拼接",
       "一鏡",
     ],
-    en: `Stills TVC (no reference MP4): MiniMax H3 first (one continuous take, ~12s). If balance < H3 cost but ≥ Kling, studio offers Kling stitch — 4 clips cut together, not one H3 take. Reference-reel jobs use Seedance R2V (reference is the spine); Kling is not used when a reference MP4 is required. Do not promise Lumina subscription pricing. Fast Seedance is not the default quality path.`,
-    zh: `冇參考 MP4 嘅分鏡 TVC：先 MiniMax H3（一鏡到底，約 12 秒）。餘額唔夠 H3 但夠 Kling 時，會問你用唔用 Kling 拼接 — 4 段剪埋，唔係一條 H3。有參考 Reel 用 Seedance R2V（參考片係劇本骨架）；要參考片時唔會改走 Kling。唔好承諾 Lumina 訂閱價。Seedance Fast 唔係預設高質路徑。`,
+    en: `Stills TVC (no reference MP4): single-clip video first (one continuous take, ~12s). If balance < single-clip cost but ≥ stitch cost, studio offers stitched fallback — 4 clips cut together, not one continuous take. Reference-reel jobs use your uploaded clip as the spine; stitch is not used when a reference MP4 is required. Do not promise Lumina subscription pricing.`,
+    zh: `冇參考 MP4 嘅分鏡 TVC：先單鏡出片（一鏡到底，約 12 秒）。餘額唔夠單鏡但夠拼接時，會問你用唔用拼接後備 — 4 段剪埋，唔係一鏡到底。有參考 Reel 用參考片模式（參考片係劇本骨架）；要參考片時唔會改走拼接。唔好承諾 Lumina 訂閱價。`,
   },
   {
     id: "storyboard",
@@ -178,8 +178,8 @@ Plans (typical): Free 500 signup / 480p; Standard 3000/mo 720p; Pro 8000/mo 1080
       "格子",
       "批核",
     ],
-    en: `Default product/concept TVC is 4 beats (establish → macro/metaphor → orbit → payoff), shown as a 2×2 shot map (九宫格-style review, not always 9 generates). Confirm the grid once, then continue — no tap-every-cell gate. Regen one bad cell — not regen-all. Approval clears if a still changes. Video animates mistakes; fix stills first. Stills-only video is MiniMax H3 first; Kling 5s/10s stitch is silent fallback (no user picker).`,
-    zh: `預設產品／概念 TVC 係 4 拍（開場→微距／隱喻→環繞→收束），2×2 分鏡圖（九宮格式檢視，唔等於一定出 9 張）。確認一次就可以繼續，唔使逐格點開先剔。壞格只 regen 嗰一格，唔好全部重出。靜圖一改就要重新批核。片會放大靜圖錯誤，先修好先出片。純靜幀片先 MiniMax H3；Kling 5／10 秒拼接係後備（唔畀用家揀）。`,
+    en: `Default product/concept TVC is 4 beats (establish → macro/metaphor → orbit → payoff), shown as a 2×2 shot map (九宫格-style review, not always 9 generates). Confirm the grid once, then continue — no tap-every-cell gate. Regen one bad cell — not regen-all. Approval clears if a still changes. Video animates mistakes; fix stills first. Stills-only video is single-clip first; 5s/10s stitch is silent fallback (no user picker).`,
+    zh: `預設產品／概念 TVC 係 4 拍（開場→微距／隱喻→環繞→收束），2×2 分鏡圖（九宮格式檢視，唔等於一定出 9 張）。確認一次就可以繼續，唔使逐格點開先剔。壞格只 regen 嗰一格，唔好全部重出。靜圖一改就要重新批核。片會放大靜圖錯誤，先修好先出片。純靜幀片先單鏡出片；5／10 秒拼接係後備（唔畀用家揀）。`,
   },
   {
     id: "motion-poster",
@@ -194,8 +194,48 @@ Plans (typical): Free 500 signup / 480p; Standard 3000/mo 720p; Pro 8000/mo 1080
       "6s",
       "6秒",
     ],
-    en: `Motion poster = Jimeng-style 首尾帧: 2 designed poster stills + MiniMax H3 interpolate (~6s). Start = textless designed plate (empty masthead); end = same family with a LARGE headline masthead (product may turn / camera push). H3 morphs Image 1 → Image 2 so product and type move — type pixels come from the end still, never invented letters. Dialects change the beat (3D card / type reveal / parallax / light sweep / liquid / atmosphere). Generate again to try another. Usually 2 images + 1 clip. Audio is MiniMax H3 native.`,
-    zh: `動態海報 = 即夢式首尾幀：2 張設計海報靜圖 + MiniMax H3 過渡（約 6 秒）。開頭無字設計版（預留大標題位）；結尾同一場加大標題（產品可以轉面／鏡頭推進）。H3 由 Image 1 過渡到 Image 2，產品同字一齊郁——字係結尾靜圖像素，唔好亂發明新字。動態方言改節奏（3D 卡片／文字揭幕／視差／掃光／液體／氛圍）。再生成會試另一種。通常 2 圖 + 1 短片。聲帶跟 MiniMax H3 原聲。`,
+    en: `Motion poster = start→end morph: 2 designed poster stills + one short video (~6s). Start = textless designed plate (empty masthead); end = same family with a LARGE headline masthead (product may turn / camera push). Video morphs Image 1 → Image 2 so product and type move — type pixels come from the end still, never invented letters. Dialects change the beat (3D card / type reveal / parallax / light sweep / liquid / atmosphere). Generate again to try another. Usually 2 images + 1 clip.`,
+    zh: `動態海報 = 首尾幀：2 張設計海報靜圖 + 單鏡過渡（約 6 秒）。開頭無字設計版（預留大標題位）；結尾同一場加大標題（產品可以轉面／鏡頭推進）。影片由 Image 1 過渡到 Image 2，產品同字一齊郁——字係結尾靜圖像素，唔好亂發明新字。動態方言改節奏（3D 卡片／文字揭幕／視差／掃光／液體／氛圍）。再生成會試另一種。通常 2 圖 + 1 短片。聲帶跟影片原聲。`,
+  },
+  {
+    id: "blockbuster",
+    title: "Blockbuster entrance",
+    keywords: [
+      "blockbuster",
+      "大片",
+      "出場",
+      "出场",
+      "truck",
+      "overpass",
+      "packaging",
+      "9s",
+      "9秒",
+    ],
+    en: `Blockbuster entrance is a 9s ONE-TAKE video (not 九宫格 stitch). Upload product + packaging box + optional scene first frame (truck/overpass). Timed beats: truck → box hits overpass → floating boxes → product rises. Concept mode uses logo/mascot instead of a SKU. Engine is single-clip H3.`,
+    zh: `大片級出場係 9 秒單鏡（唔係九宮格拼接）。上傳產品 + 包裝盒 + 可選場景首幀（貨車／天橋）。節奏：貨車→紙箱撞天橋→漂浮紙箱→產品升起。概念模式用 Logo／吉祥物代替產品。單鏡引擎出片。`,
+  },
+  {
+    id: "h3-shot-recipes",
+    title: "H3 shot recipes",
+    keywords: [
+      "ecom orbit",
+      "電商環繞",
+      "电商环绕",
+      "object lock",
+      "物體鎖定",
+      "物体锁定",
+      "macro snap",
+      "微距",
+      "luxury tabletop",
+      "奢侈品",
+      "beauty mv",
+      "美妝",
+      "美妆",
+      "imitate",
+      "仿拍",
+    ],
+    en: `Eight MiniMax H3 one-take recipes: e-com orbit, object-locked camera, macro food physics, luxury tabletop+hand, beauty/MV, imitate-this-ad (product still + reference MP4), neon-on-real (real footage + glowing neon drawings), and food bullet-time (lifestyle food still with frozen splash → camera orbit). Recipe owns the prompt — not a 九宫格 stitch.`,
+    zh: `八條 MiniMax H3 單鏡配方：電商環繞、物體鎖定運鏡、微距物理、奢侈品桌面+手、美妝/MV 一鏡、仿拍廣告（產品圖+參考 MP4）、霓虹疊實景（真實影片+發光霓虹線稿）、美食子彈時間（打卡圖飛濺定格→鏡頭環繞）。配方自己寫 prompt，唔係九宮格拼接。`,
   },
   {
     id: "scene-reel",
@@ -277,8 +317,8 @@ Plans (typical): Free 500 signup / 480p; Standard 3000/mo 720p; Pro 8000/mo 1080
       "作品库",
       "口播",
     ],
-    en: `/pro is a node canvas (upload → Nano Banana image → Seedance video), pay-per-use fal, Master plan — not Lumina subscription pricing. /brand-kit saves logo/colors for stills. /library stores outputs; reopen in editor or captions. /ugc is a talking presenter, separate from storyboard TVC.`,
-    zh: `/pro 係節點畫布（上傳→ Nano Banana 圖→ Seedance 片），按次 fal，Master 方案 — 唔係 Lumina 訂閱價。/brand-kit 存 Logo／色。/library 存成品，可再開去修圖或字幕。/ugc 係口播數字人，同分鏡 TVC 分開。`,
+    en: `/pro is a node canvas (upload → AI image → reference-reel video video), Pay-per-use tokens, Master plan — not Lumina subscription pricing. /brand-kit saves logo/colors for stills. /library stores outputs; reopen in editor or captions. /ugc is a talking presenter, separate from storyboard TVC.`,
+    zh: `/pro 係節點畫布（上傳→ AI 圖→ reference-reel video 片），按次 token，Master 方案 — 唔係 Lumina 訂閱價。/brand-kit 存 Logo／色。/library 存成品，可再開去修圖或字幕。/ugc 係口播數字人，同分鏡 TVC 分開。`,
   },
   {
     id: "how-to-start",
