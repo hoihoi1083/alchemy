@@ -18,6 +18,8 @@ export type VideoGenerationKind =
   | "motion-poster"
   | "social-drip"
   | "blockbuster"
+  | "vacuum-inflate"
+  | "creative-motion"
   | "ecom-orbit"
   | "object-lock"
   | "macro-snap"
@@ -26,6 +28,11 @@ export type VideoGenerationKind =
   | "imitate-ad"
   | "neon-on-real"
   | "food-bullet-time"
+  | "c4d-motion"
+  | "h3-showreel"
+  | "h3-sphere-mg"
+  | "h3-movie-title"
+  | "h3-lifestyle"
   | "image-to-video";
 
 export type ResolveVideoGenerationKindInput = {
@@ -57,6 +64,12 @@ export function resolveVideoGenerationKind(
   }
   if (input.videoCreativeMode === "blockbuster") {
     return "blockbuster";
+  }
+  if (input.videoCreativeMode === "vacuum-inflate") {
+    return "vacuum-inflate";
+  }
+  if (input.videoCreativeMode === "creative-motion") {
+    return "creative-motion";
   }
   if (isH3ShotRecipeMode(input.videoCreativeMode)) {
     return input.videoCreativeMode;

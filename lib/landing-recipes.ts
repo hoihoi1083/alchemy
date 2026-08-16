@@ -21,6 +21,8 @@ export const LANDING_RECIPE_IDS = [
   "motion-poster",
   "product-tvc-12s",
   "product-blockbuster-9s",
+  "product-vacuum-inflate-4s",
+  "product-creative-motion-4s",
   "product-ecom-orbit-6s",
   "product-object-lock-6s",
   "product-macro-snap-6s",
@@ -29,16 +31,26 @@ export const LANDING_RECIPE_IDS = [
   "product-imitate-ad-8s",
   "product-neon-on-real-8s",
   "product-food-bullet-time-6s",
+  "product-c4d-motion-8s",
+  "product-h3-showreel-8s",
+  "product-h3-sphere-mg-8s",
+  "product-h3-movie-title-8s",
+  "product-h3-lifestyle-8s",
   "product-gaming-cover",
   "product-sports-big-words",
   "product-jelly-3d",
   "concept-motion-poster",
   "concept-tvc-12s",
   "concept-blockbuster-9s",
+  "concept-vacuum-inflate-4s",
+  "concept-creative-motion-4s",
   "concept-beauty-mv-10s",
   "concept-imitate-ad-8s",
   "concept-neon-on-real-8s",
-  "concept-food-bullet-time-6s",
+  "concept-c4d-motion-8s",
+  "concept-h3-showreel-8s",
+  "concept-h3-sphere-mg-8s",
+  "concept-h3-movie-title-8s",
   "concept-gaming-cover",
   "concept-sports-big-words",
   "concept-jelly-3d",
@@ -162,6 +174,24 @@ export const LANDING_RECIPES: Record<LandingRecipeId, LandingRecipeDef> = {
     videoCreativeMode: "blockbuster",
     duration: "8",
   },
+  "product-vacuum-inflate-4s": {
+    id: "product-vacuum-inflate-4s",
+    previewSrc: "/images/studio/recipes/product-tvc-12s.png?v=1",
+    promotionMode: "physical",
+    workflowMode: "video-only",
+    visualStyleId: "product",
+    videoCreativeMode: "vacuum-inflate",
+    duration: "4",
+  },
+  "product-creative-motion-4s": {
+    id: "product-creative-motion-4s",
+    previewSrc: "/images/studio/recipes/product-tvc-12s.png?v=1",
+    promotionMode: "physical",
+    workflowMode: "video-only",
+    visualStyleId: "product",
+    videoCreativeMode: "creative-motion",
+    duration: "4",
+  },
   "product-ecom-orbit-6s": h3ProductRecipe("product-ecom-orbit-6s", "ecom-orbit", "6"),
   "product-object-lock-6s": h3ProductRecipe("product-object-lock-6s", "object-lock", "6"),
   "product-macro-snap-6s": h3ProductRecipe("product-macro-snap-6s", "macro-snap", "6"),
@@ -181,6 +211,31 @@ export const LANDING_RECIPES: Record<LandingRecipeId, LandingRecipeDef> = {
     ...h3ProductRecipe("product-food-bullet-time-6s", "food-bullet-time", "6"),
     previewSrc: "/images/studio/recipes/food-bullet-time.jpg?v=1",
   },
+  "product-c4d-motion-8s": h3ProductRecipe(
+    "product-c4d-motion-8s",
+    "c4d-motion",
+    "8",
+  ),
+  "product-h3-showreel-8s": h3ProductRecipe(
+    "product-h3-showreel-8s",
+    "h3-showreel",
+    "8",
+  ),
+  "product-h3-sphere-mg-8s": h3ProductRecipe(
+    "product-h3-sphere-mg-8s",
+    "h3-sphere-mg",
+    "8",
+  ),
+  "product-h3-movie-title-8s": h3ProductRecipe(
+    "product-h3-movie-title-8s",
+    "h3-movie-title",
+    "8",
+  ),
+  "product-h3-lifestyle-8s": h3ProductRecipe(
+    "product-h3-lifestyle-8s",
+    "h3-lifestyle",
+    "8",
+  ),
   "product-gaming-cover": imageProductRecipe("product-gaming-cover", "gaming-cover"),
   "product-sports-big-words": imageProductRecipe(
     "product-sports-big-words",
@@ -214,6 +269,24 @@ export const LANDING_RECIPES: Record<LandingRecipeId, LandingRecipeDef> = {
     videoCreativeMode: "blockbuster",
     duration: "8",
   },
+  "concept-vacuum-inflate-4s": {
+    id: "concept-vacuum-inflate-4s",
+    previewSrc: "/images/studio/recipes/concept-tvc-12s.png?v=1",
+    promotionMode: "concept",
+    workflowMode: "video-only",
+    visualStyleId: "service-promo",
+    videoCreativeMode: "vacuum-inflate",
+    duration: "4",
+  },
+  "concept-creative-motion-4s": {
+    id: "concept-creative-motion-4s",
+    previewSrc: "/images/studio/recipes/concept-tvc-12s.png?v=1",
+    promotionMode: "concept",
+    workflowMode: "video-only",
+    visualStyleId: "service-promo",
+    videoCreativeMode: "creative-motion",
+    duration: "4",
+  },
   "concept-beauty-mv-10s": h3ConceptRecipe("concept-beauty-mv-10s", "beauty-mv", "10"),
   "concept-imitate-ad-8s": h3ConceptRecipe("concept-imitate-ad-8s", "imitate-ad", "8"),
   "concept-neon-on-real-8s": h3ConceptRecipe(
@@ -221,10 +294,26 @@ export const LANDING_RECIPES: Record<LandingRecipeId, LandingRecipeDef> = {
     "neon-on-real",
     "8",
   ),
-  "concept-food-bullet-time-6s": {
-    ...h3ConceptRecipe("concept-food-bullet-time-6s", "food-bullet-time", "6"),
-    previewSrc: "/images/studio/recipes/food-bullet-time.jpg?v=1",
-  },
+  "concept-c4d-motion-8s": h3ConceptRecipe(
+    "concept-c4d-motion-8s",
+    "c4d-motion",
+    "8",
+  ),
+  "concept-h3-showreel-8s": h3ConceptRecipe(
+    "concept-h3-showreel-8s",
+    "h3-showreel",
+    "8",
+  ),
+  "concept-h3-sphere-mg-8s": h3ConceptRecipe(
+    "concept-h3-sphere-mg-8s",
+    "h3-sphere-mg",
+    "8",
+  ),
+  "concept-h3-movie-title-8s": h3ConceptRecipe(
+    "concept-h3-movie-title-8s",
+    "h3-movie-title",
+    "8",
+  ),
   "concept-gaming-cover": imageConceptRecipe("concept-gaming-cover", "gaming-cover"),
   "concept-sports-big-words": imageConceptRecipe(
     "concept-sports-big-words",
@@ -322,6 +411,19 @@ export function microContextForLandingRecipe(
       workflowMode: "video-only",
       intakePath: "direct",
       videoSubpath: "blockbuster",
+    };
+  }
+  if (
+    LANDING_RECIPES[recipe].videoCreativeMode === "vacuum-inflate" ||
+    LANDING_RECIPES[recipe].videoCreativeMode === "creative-motion"
+  ) {
+    const mode = LANDING_RECIPES[recipe].videoCreativeMode;
+    return {
+      promotionMode,
+      workflowMode: "video-only",
+      intakePath: "direct",
+      ...(promotionMode === "concept" ? { conceptSource: "assistant" as const } : {}),
+      videoSubpath: mode === "vacuum-inflate" ? "vacuum_inflate" : "creative_motion",
     };
   }
   if (isH3ShotLandingRecipe(recipe)) {

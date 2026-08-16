@@ -23,13 +23,23 @@ import { storyboardSceneDisplayCopy } from "@/lib/storyboard-scene-copy";
 import { isBrandVideoStyle, isCreativeVideoStyle, isStoryboardVideoStyle } from "@/lib/visual-styles";
 import { isVideoOutputPathLocked, resolveVideoOutputPresentation } from "@/lib/video-output-presentation";
 import { analyzeProductImageFile } from "@/lib/image-upload-quality";
-import { isH3ShotRecipeMode, MACRO_SNAP_INTENSITIES, type MacroSnapIntensity } from "@/lib/h3-shot-recipes";
+import {
+  isH3ShotRecipeMode,
+  MACRO_SNAP_INTENSITIES,
+  H3_SHOWREEL_ASPECTS,
+  H3_SHOWREEL_SCHEME_IDS,
+  H3_SPHERE_MG_SCHEME_IDS,
+  type MacroSnapIntensity,
+  type H3ShowreelAspect,
+  type H3ShowreelSchemePick,
+  type H3SphereMgSchemePick,
+} from "@/lib/h3-shot-recipes";
 import { resolveWizardOutputDurationSec } from "@/lib/video-settings";
 import type { CinematicSceneResult } from "@/lib/cinematic-reel-types";
 import type { StoryboardSceneResult } from "@/lib/video-storyboard-types";
 
 export function VideoStep() {
-  const { applyPromptRebuild, bgmOptions, bgmTrack, brandProfile, cinematicScenes, cinematicSceneCount, cinematicStitchReady, conceptReferenceR2vReady, directReferenceR2vReady, creativeVideoBrief, endFramePhoto, endFramePreviewUrl, endFrameUrl, error, extraAnglePhotos, extraKitPhotos, extraKitPreviewUrls, formatCinematicCopy, generateVideo, goBackFromVideo, hasFinalImage, headline, imageAspectRatio, imagePrompt, imageUrl, isCinematicStitchOutput, isConceptCinematicSingleOutput, isStoryboardOutput, isUgcPresenterOutput, keyframePreview, loadReferenceClip, m, onReferenceAdFile, onVideoCreativeModeChange, packagingPhoto, packagingPreviewUrl, planAiVideoPrompt, planProductVideo, planProductVideoBusy, planVideoPromptBusy, presenterAvatarId, presenterSourceMode, productPhoto, productVideoPlan, promotionMode, promptExtra, promptMarket, referenceAd, referenceClipLoading, referenceIsVideo, referencePreviewUrl, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, selectedReferenceClipId, setBgmTrack, setConceptImageVisionNote, setEndFramePhoto, setEndFrameUrl, setError, setExtraAnglePhotos, setExtraKitPhotos, setPackagingPhoto, setImagePrompt, setImageUrl, setPresenterAvatarId, setPresenterSourceMode, setProductPhoto, setPromptExtra, setPromptMarket, setShowAdvancedVideo, setSubjectFraming, setUploadQualityWarning, setUseOriginalImage, setVideoPrompt, setVideoSettings, shipItMode, showAdvancedVideo, showVideoReferenceSection, storyboardScenes, storyboardTrimDuration, subjectFraming, templateId, templateSlotStatus, uploadPreviewUrl, useReferenceVideo, usesCompositor, usesConceptTextVideo, usesProductAssistant, videoBusy, videoCreativeMode, motionPosterDialectPick, setMotionPosterDialectPick, macroSnapIntensity, setMacroSnapIntensity, videoGenerateDisabled, videoGenerateDisabledReason, videoPhase, videoPreflight, videoProgressInfo, videoPrompt, videoPromptPlanNote, videoSettings, videoStepHint, visualStyleId, workflowMode } = useWizard();
+  const { applyPromptRebuild, bgmOptions, bgmTrack, brandProfile, cinematicScenes, cinematicSceneCount, cinematicStitchReady, conceptReferenceR2vReady, directReferenceR2vReady, creativeVideoBrief, endFramePhoto, endFramePreviewUrl, endFrameUrl, error, extraAnglePhotos, extraKitPhotos, extraKitPreviewUrls, formatCinematicCopy, generateVideo, goBackFromVideo, hasFinalImage, headline, imageAspectRatio, imagePrompt, imageUrl, isCinematicStitchOutput, isConceptCinematicSingleOutput, isStoryboardOutput, isUgcPresenterOutput, keyframePreview, loadReferenceClip, m, onReferenceAdFile, onVideoCreativeModeChange, packagingPhoto, packagingPreviewUrl, planAiVideoPrompt, planProductVideo, planProductVideoBusy, planVideoPromptBusy, presenterAvatarId, presenterSourceMode, productPhoto, productVideoPlan, promotionMode, promptExtra, promptMarket, referenceAd, referenceClipLoading, referenceIsVideo, referencePreviewUrl, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, selectedReferenceClipId, setBgmTrack, setConceptImageVisionNote, setEndFramePhoto, setEndFrameUrl, setError, setExtraAnglePhotos, setExtraKitPhotos, setPackagingPhoto, setImagePrompt, setImageUrl, setPresenterAvatarId, setPresenterSourceMode, setProductPhoto, setPromptExtra, setPromptMarket, setShowAdvancedVideo, setSubjectFraming, setUploadQualityWarning, setUseOriginalImage, setVideoPrompt, setVideoSettings, shipItMode, showAdvancedVideo, showVideoReferenceSection, storyboardScenes, storyboardTrimDuration, subjectFraming, templateId, templateSlotStatus, uploadPreviewUrl, useReferenceVideo, usesCompositor, usesConceptTextVideo, usesProductAssistant, videoBusy, videoCreativeMode, motionPosterDialectPick, setMotionPosterDialectPick, macroSnapIntensity, setMacroSnapIntensity, h3ShowreelAspect, setH3ShowreelAspect, h3ShowreelSchemePick, setH3ShowreelSchemePick, h3SphereMgSchemePick, setH3SphereMgSchemePick, videoGenerateDisabled, videoGenerateDisabledReason, videoPhase, videoPreflight, videoProgressInfo, videoPrompt, videoPromptPlanNote, videoSettings, videoStepHint, visualStyleId, workflowMode } = useWizard();
   const isConcept = promotionMode === "concept";
   const outputDurationSec = resolveWizardOutputDurationSec(videoSettings);
   const videoTokenCost = estimateVideoTokens({
@@ -292,10 +302,148 @@ export function VideoStep() {
           </div>
         </div>
       ) : null}
+      {h3ShotMode === "h3-sphere-mg" ? (
+        <div className="rounded-lg border border-cyan-500/30 bg-slate-950/40 px-3 py-3">
+          <p className="text-xs font-semibold text-cyan-100">
+            {m.wizard.h3SphereMgSchemeTitle}
+          </p>
+          <p className="mt-1 text-[11px] text-cyan-200/80">
+            {m.wizard.h3SphereMgSchemeHint}
+          </p>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            <button
+              type="button"
+              className={
+                h3SphereMgSchemePick === "auto"
+                  ? "rounded-lg bg-cyan-500 px-2.5 py-1.5 text-xs font-semibold text-slate-950"
+                  : "rounded-lg border border-cyan-500/40 bg-slate-900/60 px-2.5 py-1.5 text-xs font-medium text-cyan-100 hover:bg-cyan-950/50"
+              }
+              onClick={() => setH3SphereMgSchemePick("auto")}
+            >
+              {m.wizard.h3SphereMgSchemeAuto}
+            </button>
+            {H3_SPHERE_MG_SCHEME_IDS.map((id) => {
+              const active = h3SphereMgSchemePick === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  title={m.wizard.h3SphereMgSchemes[id].desc}
+                  className={
+                    active
+                      ? "rounded-lg bg-cyan-500 px-2.5 py-1.5 text-xs font-semibold text-slate-950"
+                      : "rounded-lg border border-cyan-500/40 bg-slate-900/60 px-2.5 py-1.5 text-xs font-medium text-cyan-100 hover:bg-cyan-950/50"
+                  }
+                  onClick={() =>
+                    setH3SphereMgSchemePick(id as H3SphereMgSchemePick)
+                  }
+                >
+                  {m.wizard.h3SphereMgSchemes[id].title}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+      {h3ShotMode === "h3-showreel" ? (
+        <div className="rounded-lg border border-cyan-500/30 bg-slate-950/40 px-3 py-3">
+          <p className="text-xs font-semibold text-cyan-100">
+            {m.wizard.h3ShowreelSchemeTitle}
+          </p>
+          <p className="mt-1 text-[11px] text-cyan-200/80">
+            {m.wizard.h3ShowreelSchemeHint}
+          </p>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            <button
+              type="button"
+              className={
+                h3ShowreelSchemePick === "auto"
+                  ? "rounded-lg bg-cyan-500 px-2.5 py-1.5 text-xs font-semibold text-slate-950"
+                  : "rounded-lg border border-cyan-500/40 bg-slate-900/60 px-2.5 py-1.5 text-xs font-medium text-cyan-100 hover:bg-cyan-950/50"
+              }
+              onClick={() => setH3ShowreelSchemePick("auto")}
+            >
+              {m.wizard.h3ShowreelSchemeAuto}
+            </button>
+            {H3_SHOWREEL_SCHEME_IDS.map((id) => {
+              const active = h3ShowreelSchemePick === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  title={m.wizard.h3ShowreelSchemes[id].desc}
+                  className={
+                    active
+                      ? "rounded-lg bg-cyan-500 px-2.5 py-1.5 text-xs font-semibold text-slate-950"
+                      : "rounded-lg border border-cyan-500/40 bg-slate-900/60 px-2.5 py-1.5 text-xs font-medium text-cyan-100 hover:bg-cyan-950/50"
+                  }
+                  onClick={() =>
+                    setH3ShowreelSchemePick(id as H3ShowreelSchemePick)
+                  }
+                >
+                  {m.wizard.h3ShowreelSchemes[id].title}
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-3 text-xs font-semibold text-cyan-100">
+            {m.wizard.h3ShowreelAspectTitle}
+          </p>
+          <p className="mt-1 text-[11px] text-cyan-200/80">
+            {m.wizard.h3ShowreelAspectHint}
+          </p>
+          <div
+            className="mt-2 grid grid-cols-2 gap-1.5"
+            role="radiogroup"
+            aria-label={m.wizard.h3ShowreelAspectTitle}
+          >
+            {H3_SHOWREEL_ASPECTS.map((aspect) => {
+              const active = h3ShowreelAspect === aspect;
+              return (
+                <button
+                  key={aspect}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => setH3ShowreelAspect(aspect as H3ShowreelAspect)}
+                  className={
+                    active
+                      ? "rounded-lg bg-cyan-500 px-2 py-2 text-center text-xs font-semibold text-slate-950"
+                      : "rounded-lg border border-cyan-500/40 bg-slate-900/60 px-2 py-2 text-center text-xs font-medium text-cyan-100 hover:bg-cyan-950/50"
+                  }
+                >
+                  <span className="block">{m.wizard.h3ShowreelAspect[aspect].title}</span>
+                  <span
+                    className={
+                      active
+                        ? "mt-0.5 block text-[10px] font-normal text-slate-800"
+                        : "mt-0.5 block text-[10px] font-normal text-cyan-200/70"
+                    }
+                  >
+                    {m.wizard.h3ShowreelAspect[aspect].desc}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
       <div className="grid gap-3 sm:grid-cols-2">
         <UploadZone
-          label={m.wizard.productVideoHeroLabel}
-          hint={m.wizard.productVideoHeroHint}
+          label={
+            h3ShotMode === "food-bullet-time"
+              ? m.wizard.h3ShotPhotoTitle["food-bullet-time"]
+              : h3ShotMode === "h3-lifestyle"
+                ? m.wizard.h3ShotPhotoTitle["h3-lifestyle"]
+                : isH3Shot && isConcept
+                  ? m.wizard.h3ShotConceptHeroTitle
+                  : m.wizard.productVideoHeroLabel
+          }
+          hint={
+            isH3Shot && h3ShotMode
+              ? m.wizard.h3ShotHeroHint[h3ShotMode]
+              : m.wizard.productVideoHeroHint
+          }
           cta={m.wizard.uploadCta}
           changeLabel={m.wizard.uploadChange}
           previewUrl={uploadPreviewUrl}
@@ -327,6 +475,34 @@ export function VideoStep() {
           }}
         />
       </div>
+      {h3ShotMode &&
+      (h3ShotMode === "imitate-ad" ||
+        h3ShotMode === "neon-on-real" ||
+        h3ShotMode === "h3-showreel") ? (
+        <div className="space-y-2 rounded-xl border-2 border-violet-500/50 bg-violet-950/30 p-3">
+          <p className="text-sm font-semibold text-violet-100">
+            {m.wizard.videoSectionReference}
+            <span className="ml-2 rounded-full bg-violet-500/30 px-2 py-0.5 text-[11px] font-semibold text-violet-100">
+              {pv.requiredBadge}
+            </span>
+          </p>
+          <p className="text-xs text-violet-200/85">
+            {m.wizard.h3ShotReelHint[
+              h3ShotMode as keyof typeof m.wizard.h3ShotReelHint
+            ]}
+          </p>
+          <ReferenceUploadZone
+            label={m.wizard.referenceLabel}
+            hint={m.wizard.referenceVideoOnlyHint}
+            cta={m.wizard.referenceCta}
+            changeLabel={m.wizard.referenceChange}
+            previewUrl={referencePreviewUrl}
+            isVideo={referenceIsVideo}
+            fileName={referenceAd?.name ?? null}
+            onFile={onReferenceAdFile}
+          />
+        </div>
+      ) : null}
       <div className="space-y-2">
         <p className="text-xs font-medium text-cyan-100">{m.wizard.productVideoExtraLabel}</p>
         <p className="text-[11px] text-cyan-200/70">{m.wizard.productVideoExtraHint}</p>

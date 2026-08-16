@@ -499,6 +499,10 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
               ? "product_promo"
               : wizard.videoCreativeMode === "social-drip"
                 ? "social_drip"
+                : wizard.videoCreativeMode === "vacuum-inflate"
+                ? "vacuum_inflate"
+                : wizard.videoCreativeMode === "creative-motion"
+                ? "creative_motion"
                 : wizard.videoCreativeMode === "blockbuster"
                 ? "blockbuster"
                 : h3Subpath
@@ -513,6 +517,8 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
               subpath === "blockbuster" ||
               subpath === "motion_poster" ||
               subpath === "social_drip" ||
+              subpath === "vacuum_inflate" ||
+              subpath === "creative_motion" ||
               Boolean(h3Mode);
             micro.setVideoSubpath(subpath as never);
             micro.patchContext(
@@ -526,6 +532,10 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
               wizard.onVideoCreativeModeChange("motion-poster");
             } else if (subpath === "social_drip") {
               wizard.onVideoCreativeModeChange("social-drip");
+            } else if (subpath === "vacuum_inflate") {
+              wizard.onVideoCreativeModeChange("vacuum-inflate");
+            } else if (subpath === "creative_motion") {
+              wizard.onVideoCreativeModeChange("creative-motion");
             } else if (subpath === "blockbuster") {
               wizard.onVideoCreativeModeChange("blockbuster");
             } else if (h3Mode) {

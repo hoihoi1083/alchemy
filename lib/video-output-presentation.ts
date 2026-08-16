@@ -33,6 +33,8 @@ export function resolveVideoOutputPresentation(
   if (input.usesCompositor) return "animate-keyframe";
   if (input.videoCreativeMode === "motion-poster") return "animate-keyframe";
   if (input.videoCreativeMode === "social-drip") return "animate-keyframe";
+  if (input.videoCreativeMode === "vacuum-inflate") return "animate-keyframe";
+  if (input.videoCreativeMode === "creative-motion") return "animate-keyframe";
   if (input.videoCreativeMode === "blockbuster") return "product-assistant";
   if (isH3ShotRecipeMode(input.videoCreativeMode)) {
     return "product-assistant";

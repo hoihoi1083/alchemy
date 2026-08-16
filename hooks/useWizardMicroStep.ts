@@ -248,6 +248,14 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     }
     if (sub === "social_drip" && wizard.videoCreativeMode !== "social-drip") {
       wizard.onVideoCreativeModeChange("social-drip");
+      return;
+    }
+    if (sub === "vacuum_inflate" && wizard.videoCreativeMode !== "vacuum-inflate") {
+      wizard.onVideoCreativeModeChange("vacuum-inflate");
+      return;
+    }
+    if (sub === "creative_motion" && wizard.videoCreativeMode !== "creative-motion") {
+      wizard.onVideoCreativeModeChange("creative-motion");
     }
   }, [ctx.videoSubpath, wizard.videoCreativeMode, wizard.onVideoCreativeModeChange]);
 

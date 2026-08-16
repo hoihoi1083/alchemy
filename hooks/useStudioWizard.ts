@@ -142,6 +142,18 @@ import {
 	type SocialDripPlan,
 } from "@/lib/social-drip";
 import {
+	VACUUM_INFLATE_DURATION_SEC,
+	buildVacuumInflateVideoPrompt,
+} from "@/lib/vacuum-inflate";
+import {
+	CREATIVE_MOTION_DURATION_SEC,
+	buildCreativeMotionVideoPrompt,
+	parseCreativeMotionSchemePick,
+	resolveCreativeMotionScheme,
+	type CreativeMotionSchemeId,
+	type CreativeMotionSchemePick,
+} from "@/lib/creative-motion";
+import {
 	consumeLandingRecipe,
 	isBlockbusterLandingRecipe,
 	isH3ShotLandingRecipe,
@@ -165,10 +177,23 @@ import {
 	H3_SHOT_RECIPE_NEGATIVE,
 	H3_SHOT_RECIPE_SETTINGS_DURATION,
 	DEFAULT_MACRO_SNAP_INTENSITY,
+	DEFAULT_H3_SHOWREEL_ASPECT,
+	h3ShotRecipeAllowsKineticType,
+	h3ShotRecipeNeedsLifestyleStill,
 	h3ShotRecipeNeedsReel,
 	isH3ShotRecipeMode,
+	parseH3ShowreelAspect,
+	parseH3ShowreelSchemePick,
+	parseH3SphereMgSchemePick,
+	resolveH3ShowreelScheme,
+	resolveH3SphereMgScheme,
 	type H3ShotRecipeMode,
+	type H3ShowreelAspect,
+	type H3ShowreelSchemePick,
+	type H3SphereMgSchemePick,
 	type MacroSnapIntensity,
+	H3_SHOWREEL_NEGATIVE,
+	H3_MOVIE_TITLE_NEGATIVE,
 } from "@/lib/h3-shot-recipes";
 import { h3ShotRecipeInputsReady } from "@/lib/recipe-path-ux";
 import {
@@ -664,6 +689,12 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		useState<MotionPosterDialectPick>("auto");
 	const [macroSnapIntensity, setMacroSnapIntensity] =
 		useState<MacroSnapIntensity>(DEFAULT_MACRO_SNAP_INTENSITY);
+	const [h3ShowreelAspect, setH3ShowreelAspect] =
+		useState<H3ShowreelAspect>(DEFAULT_H3_SHOWREEL_ASPECT);
+	const [h3ShowreelSchemePick, setH3ShowreelSchemePick] =
+		useState<H3ShowreelSchemePick>("auto");
+	const [h3SphereMgSchemePick, setH3SphereMgSchemePick] =
+		useState<H3SphereMgSchemePick>("auto");
 	const socialDripStillUrlRef = useRef<string | null>(null);
 	const socialDripEndUrlRef = useRef<string | null>(null);
 	const socialDripPlanRef = useRef<SocialDripPlan | null>(null);
@@ -672,6 +703,15 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 	const [socialDripPlanNote, setSocialDripPlanNote] = useState<string | null>(
 		null,
 	);
+	const vacuumInflateStillUrlRef = useRef<string | null>(null);
+	const vacuumInflateEndUrlRef = useRef<string | null>(null);
+	const creativeMotionStillUrlRef = useRef<string | null>(null);
+	const creativeMotionEndUrlRef = useRef<string | null>(null);
+	const lastCreativeMotionSchemeRef = useRef<CreativeMotionSchemeId | null>(
+		null,
+	);
+	const [creativeMotionSchemePick, setCreativeMotionSchemePickState] =
+		useState<CreativeMotionSchemePick>("auto");
 	const [storyboardRecipeId, setStoryboardRecipeIdState] =
 		useState<StoryboardRecipeId>("classic-tvc");
 	const [compositionPresetId, setCompositionPresetId] =
@@ -724,6 +764,16 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				socialDripEndUrlRef.current = null;
 				socialDripPlanRef.current = null;
 				setSocialDripPlanNote(null);
+			}
+			return next;
+		});
+	}
+
+	function setCreativeMotionSchemePick(next: CreativeMotionSchemePick) {
+		setCreativeMotionSchemePickState((prev) => {
+			if (prev !== next) {
+				creativeMotionStillUrlRef.current = null;
+				creativeMotionEndUrlRef.current = null;
 			}
 			return next;
 		});
@@ -3709,6 +3759,22 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					conceptIdea.trim() || headline.trim() || product.trim(),
 				)));
 
+	const vacuumInflateCanAutoStill =
+		videoCreativeMode === "vacuum-inflate" &&
+		(Boolean(productPhoto) ||
+			(promotionMode === "concept" &&
+				Boolean(
+					conceptIdea.trim() || headline.trim() || product.trim(),
+				)));
+
+	const creativeMotionCanAutoStill =
+		videoCreativeMode === "creative-motion" &&
+		(Boolean(productPhoto) ||
+			(promotionMode === "concept" &&
+				Boolean(
+					conceptIdea.trim() || headline.trim() || product.trim(),
+				)));
+
 	const blockbusterCanGenerate =
 		videoCreativeMode === "blockbuster" &&
 		(Boolean(productPhoto) ||
@@ -3725,13 +3791,11 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		promotionMode,
 		hasProductPhoto: Boolean(productPhoto),
 		hasReferenceVideo: Boolean(referenceAd && referenceIsVideo),
+		// Visual lock only — brief/headline text must not unlock Generate.
 		hasConceptHero: Boolean(
-			brandKit.logoUrl?.trim() ||
-				packagingPhoto ||
-				imageUrl ||
-				conceptIdea.trim() ||
-				headline.trim(),
+			brandKit.logoUrl?.trim() || packagingPhoto || imageUrl,
 		),
+		hasLifestyleStill: Boolean(imageUrl),
 	});
 
 	const advancedSection: "image" | "video" | "all" =
@@ -6591,6 +6655,26 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		setError(null);
 		setVideoNote(m.wizard.h3ShotGenerateStillBusy[mode]);
 		try {
+			const showreelScheme =
+				mode === "h3-showreel"
+					? resolveH3ShowreelScheme({
+							pick: parseH3ShowreelSchemePick(h3ShowreelSchemePick),
+							product: product.trim() || conceptIdea.trim(),
+							headline: headline.trim(),
+							conceptIdea: conceptIdea.trim(),
+							conceptMode: promotionMode === "concept",
+						})
+					: undefined;
+			const sphereMgScheme =
+				mode === "h3-sphere-mg"
+					? resolveH3SphereMgScheme({
+							pick: parseH3SphereMgSchemePick(h3SphereMgSchemePick),
+							product: product.trim() || conceptIdea.trim(),
+							headline: headline.trim(),
+							conceptIdea: conceptIdea.trim(),
+							conceptMode: promotionMode === "concept",
+						})
+					: undefined;
 			const fd = new FormData();
 			fd.set(
 				"prompt",
@@ -6600,12 +6684,21 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					product: product.trim() || conceptIdea.trim(),
 					headline: headline.trim(),
 					conceptIdea: conceptIdea.trim(),
+					showreelAspect:
+						mode === "h3-showreel" ? h3ShowreelAspect : undefined,
+					showreelScheme,
+					sphereMgScheme,
 				}),
 			);
 			fd.set("visual_style", visualStyleId);
 			fd.set("art_style", artStyleId);
 			fd.set("image_text_mode", "textless");
-			fd.set("aspect_ratio", "9:16");
+			fd.set(
+				"aspect_ratio",
+				mode === "h3-showreel"
+					? parseH3ShowreelAspect(h3ShowreelAspect)
+					: "9:16",
+			);
 			fd.set("num_images", "1");
 			fd.set("promotion_mode", promotionMode);
 			fd.set("workflow_mode", "video-only");
@@ -6667,6 +6760,30 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					: m.errors.needPhoto,
 			);
 		}
+		const showreelAspect =
+			mode === "h3-showreel"
+				? parseH3ShowreelAspect(h3ShowreelAspect)
+				: "9:16";
+		const showreelScheme =
+			mode === "h3-showreel"
+				? resolveH3ShowreelScheme({
+						pick: parseH3ShowreelSchemePick(h3ShowreelSchemePick),
+						product: product.trim() || conceptIdea.trim(),
+						headline: headline.trim(),
+						conceptIdea: conceptIdea.trim(),
+						conceptMode: promotionMode === "concept",
+					})
+				: undefined;
+		const sphereMgScheme =
+			mode === "h3-sphere-mg"
+				? resolveH3SphereMgScheme({
+						pick: parseH3SphereMgSchemePick(h3SphereMgSchemePick),
+						product: product.trim() || conceptIdea.trim(),
+						headline: headline.trim(),
+						conceptIdea: conceptIdea.trim(),
+						conceptMode: promotionMode === "concept",
+					})
+				: undefined;
 		const prompt = buildH3ShotRecipePrompt({
 			mode,
 			conceptMode: promotionMode === "concept",
@@ -6676,6 +6793,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			hasReferenceVideo: Boolean(referenceAd && referenceIsVideo),
 			macroSnapIntensity:
 				mode === "macro-snap" ? macroSnapIntensity : undefined,
+			showreelAspect: mode === "h3-showreel" ? showreelAspect : undefined,
+			showreelScheme,
+			sphereMgScheme,
 		});
 		setVideoPrompt(prompt);
 		setVideoNote(m.wizard.h3ShotAnimating[mode]);
@@ -6687,10 +6807,20 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		fd.set("prompt", prompt);
 		fd.set("resolution", vOpts.resolution);
 		fd.set("duration", String(H3_SHOT_RECIPE_DURATION_SEC[mode]));
-		fd.set("aspect_ratio", "9:16");
+		fd.set("aspect_ratio", showreelAspect);
 		fd.set("generate_audio", "false");
-		fd.set("negative_prompt", H3_SHOT_RECIPE_NEGATIVE);
-		fd.set("avoid_on_screen_text", "true");
+		fd.set(
+			"negative_prompt",
+			mode === "h3-showreel"
+				? H3_SHOWREEL_NEGATIVE
+				: mode === "h3-movie-title"
+					? H3_MOVIE_TITLE_NEGATIVE
+					: H3_SHOT_RECIPE_NEGATIVE,
+		);
+		fd.set(
+			"avoid_on_screen_text",
+			h3ShotRecipeAllowsKineticType(mode) ? "false" : "true",
+		);
 		fd.set("fast", "false");
 		if (heroFile) {
 			fd.append("reference_images", heroFile);
@@ -7342,6 +7472,329 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			[
 				m.wizard.socialDripHint,
 				`${plan.metaphorLabel}`,
+				pathNote,
+				data.note as string | undefined,
+			]
+				.filter(Boolean)
+				.join(" · "),
+		);
+		return data.videoUrl as string;
+	}
+
+	async function generateVacuumInflateKeyframe(
+		frame: "start" | "end",
+		startPlateUrl?: string,
+	): Promise<string> {
+		setVideoNote(
+			frame === "end"
+				? m.wizard.vacuumInflateBuildingEnd
+				: m.wizard.vacuumInflateBuildingStill,
+		);
+		setImageJobMeta({
+			kind: "image",
+			startedAt: Date.now(),
+			sceneCount: 1,
+		});
+		try {
+			const fd = new FormData();
+			fd.set("visual_style", visualStyleId);
+			fd.set("art_style", artStyleId);
+			if (brandProfile)
+				fd.set("brand_profile", JSON.stringify(brandProfile));
+			fd.set("brand_kit", JSON.stringify(brandKit));
+			fd.set(
+				"product_name",
+				promotionMode === "concept"
+					? effectivePromoteName ||
+							product.trim() ||
+							conceptIdea.trim()
+					: product.trim(),
+			);
+			fd.set("business", business.trim());
+			fd.set(
+				"headline",
+				headline.trim() || product.trim() || conceptIdea.trim(),
+			);
+			fd.set("subline", subline.trim());
+			fd.set("offer", offer.trim());
+			fd.set("prompt_market", promptMarket);
+			fd.set("subject_framing", subjectFraming);
+			fd.set("prompt_extra", effectivePromptExtra());
+			fd.set("workflow_mode", workflowMode);
+			fd.set("promotion_mode", promotionMode);
+			fd.set("image_text_mode", "textless");
+			fd.set("aspect_ratio", effectiveImageAspectRatio);
+			fd.set(
+				"endpoint",
+				frame === "end" && startPlateUrl
+					? EDIT_ENDPOINT
+					: productPhoto
+						? EDIT_ENDPOINT
+						: TEXT_ENDPOINT,
+			);
+			fd.set("num_images", "1");
+			fd.set("image_output_mode", "single");
+			fd.set("vacuum_inflate", "1");
+			fd.set("vacuum_inflate_frame", frame);
+			if (frame === "end" && startPlateUrl)
+				fd.set("start_plate_url", startPlateUrl);
+			attachReferenceToForm(fd);
+
+			const res = await fetch("/api/generate-image", {
+				method: "POST",
+				body: fd,
+			});
+			const data = await readGenerateJson(res);
+			if (!res.ok)
+				throw new Error(
+					(data.error as string) || m.errors.polishFailed,
+				);
+			notifyCreditBalance(readCreditBalanceFromResponse(data));
+			const urls = (data.imageUrls as string[] | undefined) ?? [
+				data.imageUrl as string,
+			];
+			const applied = applyGeneratedImages(
+				urls,
+				data.endpoint as string | undefined,
+			);
+			if (!applied) throw new Error(m.errors.imageGenNoUrl);
+			return applied;
+		} finally {
+			setImageJobMeta(null);
+		}
+	}
+
+	async function makeVacuumInflateVideo(): Promise<string> {
+		vacuumInflateStillUrlRef.current = null;
+		vacuumInflateEndUrlRef.current = null;
+		if (!productPhoto && promotionMode !== "concept") {
+			throw new Error(m.wizard.vacuumInflateNeedKeyframe);
+		}
+		const startUrl = await generateVacuumInflateKeyframe("start");
+		vacuumInflateStillUrlRef.current = startUrl;
+		const endUrl = await generateVacuumInflateKeyframe("end", startUrl);
+		vacuumInflateEndUrlRef.current = endUrl;
+		const pair = [startUrl, endUrl].filter(Boolean);
+		if (pair.length) {
+			setImageVariantUrls(pair);
+			setSelectedVariantIndex(0);
+			setImageUrl(startUrl);
+			imageUrlRef.current = startUrl;
+		}
+		setVideoNote(m.wizard.vacuumInflateAnimatingCard);
+		const subject =
+			promotionMode === "concept"
+				? effectivePromoteName ||
+					product.trim() ||
+					conceptIdea.trim() ||
+					business.trim()
+				: product.trim() || business.trim();
+		const fxPrompt = buildVacuumInflateVideoPrompt({
+			product: subject || "the product pouch",
+			conceptMode: promotionMode === "concept",
+			durationSec: VACUUM_INFLATE_DURATION_SEC,
+		});
+		if (videoPrompt.trim() !== fxPrompt) setVideoPrompt(fxPrompt);
+
+		const fd = new FormData();
+		fd.set("mode", "image");
+		fd.set("promotion_mode", promotionMode);
+		fd.set("prompt", seedancePromptForGenerate(fxPrompt));
+		fd.set("resolution", "480p");
+		fd.set("duration", String(VACUUM_INFLATE_DURATION_SEC));
+		fd.set("aspect_ratio", effectiveImageAspectRatio);
+		fd.set("generate_audio", "false");
+		fd.set("motion_strength", "70");
+		fd.set("negative_prompt", negativePrompt);
+		fd.set("avoid_on_screen_text", "true");
+		fd.set("fast", "true");
+		fd.set("vacuum_inflate", "1");
+		fd.set("product_name", subject);
+		fd.set("business", business.trim());
+		fd.set("image_start_url", startUrl);
+		fd.set("image_end_url", endUrl);
+
+		const res = await fetch("/api/generate", { method: "POST", body: fd });
+		const data = await res.json();
+		if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
+		notifyCreditBalance(readCreditBalanceFromResponse(data));
+		const pathNote = data.generationMode
+			? `${m.wizard.videoGenPathLabel}: ${data.generationMode}${data.endpoint ? ` · ${data.endpoint}` : ""}`
+			: "";
+		setVideoNote(
+			[m.wizard.vacuumInflateHint, pathNote, data.note as string | undefined]
+				.filter(Boolean)
+				.join(" · "),
+		);
+		return data.videoUrl as string;
+	}
+
+	async function generateCreativeMotionKeyframe(
+		scheme: CreativeMotionSchemeId,
+		frame: "start" | "end",
+		startPlateUrl?: string,
+	): Promise<string> {
+		setVideoNote(
+			frame === "end"
+				? m.wizard.creativeMotionBuildingEnd
+				: m.wizard.creativeMotionBuildingStill,
+		);
+		setImageJobMeta({
+			kind: "image",
+			startedAt: Date.now(),
+			sceneCount: 1,
+		});
+		try {
+			const fd = new FormData();
+			fd.set("visual_style", visualStyleId);
+			fd.set("art_style", artStyleId);
+			if (brandProfile)
+				fd.set("brand_profile", JSON.stringify(brandProfile));
+			fd.set("brand_kit", JSON.stringify(brandKit));
+			fd.set(
+				"product_name",
+				promotionMode === "concept"
+					? effectivePromoteName ||
+							product.trim() ||
+							conceptIdea.trim()
+					: product.trim(),
+			);
+			fd.set("business", business.trim());
+			fd.set(
+				"headline",
+				headline.trim() || product.trim() || conceptIdea.trim(),
+			);
+			fd.set("subline", subline.trim());
+			fd.set("offer", offer.trim());
+			fd.set("prompt_market", promptMarket);
+			fd.set("subject_framing", subjectFraming);
+			fd.set("prompt_extra", effectivePromptExtra());
+			fd.set("workflow_mode", workflowMode);
+			fd.set("promotion_mode", promotionMode);
+			fd.set("image_text_mode", "textless");
+			fd.set("aspect_ratio", effectiveImageAspectRatio);
+			fd.set(
+				"endpoint",
+				frame === "end" && startPlateUrl
+					? EDIT_ENDPOINT
+					: productPhoto
+						? EDIT_ENDPOINT
+						: TEXT_ENDPOINT,
+			);
+			fd.set("num_images", "1");
+			fd.set("image_output_mode", "single");
+			fd.set("creative_motion", "1");
+			fd.set("creative_motion_frame", frame);
+			fd.set("creative_motion_scheme", scheme);
+			if (frame === "end" && startPlateUrl)
+				fd.set("start_plate_url", startPlateUrl);
+			attachReferenceToForm(fd);
+
+			const res = await fetch("/api/generate-image", {
+				method: "POST",
+				body: fd,
+			});
+			const data = await readGenerateJson(res);
+			if (!res.ok)
+				throw new Error(
+					(data.error as string) || m.errors.polishFailed,
+				);
+			notifyCreditBalance(readCreditBalanceFromResponse(data));
+			const urls = (data.imageUrls as string[] | undefined) ?? [
+				data.imageUrl as string,
+			];
+			const applied = applyGeneratedImages(
+				urls,
+				data.endpoint as string | undefined,
+			);
+			if (!applied) throw new Error(m.errors.imageGenNoUrl);
+			return applied;
+		} finally {
+			setImageJobMeta(null);
+		}
+	}
+
+	async function makeCreativeMotionVideo(): Promise<string> {
+		const scheme = resolveCreativeMotionScheme({
+			pick: parseCreativeMotionSchemePick(creativeMotionSchemePick),
+			product,
+			headline,
+			excludeId:
+				creativeMotionSchemePick === "auto"
+					? lastCreativeMotionSchemeRef.current
+					: null,
+		});
+		lastCreativeMotionSchemeRef.current = scheme;
+		creativeMotionStillUrlRef.current = null;
+		creativeMotionEndUrlRef.current = null;
+		if (!productPhoto && promotionMode !== "concept") {
+			throw new Error(m.wizard.creativeMotionNeedKeyframe);
+		}
+		const startUrl = await generateCreativeMotionKeyframe(scheme, "start");
+		creativeMotionStillUrlRef.current = startUrl;
+		const endUrl = await generateCreativeMotionKeyframe(
+			scheme,
+			"end",
+			startUrl,
+		);
+		creativeMotionEndUrlRef.current = endUrl;
+		const pair = [startUrl, endUrl].filter(Boolean);
+		if (pair.length) {
+			setImageVariantUrls(pair);
+			setSelectedVariantIndex(0);
+			setImageUrl(startUrl);
+			imageUrlRef.current = startUrl;
+		}
+		const schemeLabel =
+			m.wizard.creativeMotionSchemes[scheme]?.title ?? scheme;
+		setVideoNote(
+			`${m.wizard.creativeMotionAnimatingCard} · ${schemeLabel}`,
+		);
+		const subject =
+			promotionMode === "concept"
+				? effectivePromoteName ||
+					product.trim() ||
+					conceptIdea.trim() ||
+					business.trim()
+				: product.trim() || business.trim();
+		const fxPrompt = buildCreativeMotionVideoPrompt({
+			scheme,
+			product: subject || "the product",
+			conceptMode: promotionMode === "concept",
+			durationSec: CREATIVE_MOTION_DURATION_SEC,
+		});
+		if (videoPrompt.trim() !== fxPrompt) setVideoPrompt(fxPrompt);
+
+		const fd = new FormData();
+		fd.set("mode", "image");
+		fd.set("promotion_mode", promotionMode);
+		fd.set("prompt", seedancePromptForGenerate(fxPrompt));
+		fd.set("resolution", "480p");
+		fd.set("duration", String(CREATIVE_MOTION_DURATION_SEC));
+		fd.set("aspect_ratio", effectiveImageAspectRatio);
+		fd.set("generate_audio", "false");
+		fd.set("motion_strength", "72");
+		fd.set("negative_prompt", negativePrompt);
+		fd.set("avoid_on_screen_text", "true");
+		fd.set("fast", "true");
+		fd.set("creative_motion", "1");
+		fd.set("creative_motion_scheme", scheme);
+		fd.set("product_name", subject);
+		fd.set("business", business.trim());
+		fd.set("image_start_url", startUrl);
+		fd.set("image_end_url", endUrl);
+
+		const res = await fetch("/api/generate", { method: "POST", body: fd });
+		const data = await res.json();
+		if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
+		notifyCreditBalance(readCreditBalanceFromResponse(data));
+		const pathNote = data.generationMode
+			? `${m.wizard.videoGenPathLabel}: ${data.generationMode}${data.endpoint ? ` · ${data.endpoint}` : ""}`
+			: "";
+		setVideoNote(
+			[
+				m.wizard.creativeMotionHint,
+				schemeLabel,
 				pathNote,
 				data.note as string | undefined,
 			]
@@ -8329,12 +8782,23 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				case "imitate-ad":
 				case "neon-on-real":
 				case "food-bullet-time":
+				case "c4d-motion":
+				case "h3-showreel":
+				case "h3-sphere-mg":
+				case "h3-movie-title":
+				case "h3-lifestyle":
 					url = await makeH3ShotRecipeVideo(
 						generationKind as H3ShotRecipeMode,
 					);
 					break;
 				case "social-drip":
 					url = await makeSocialDripVideo(opts?.imageUrlOverride);
+					break;
+				case "vacuum-inflate":
+					url = await makeVacuumInflateVideo();
+					break;
+				case "creative-motion":
+					url = await makeCreativeMotionVideo();
 					break;
 				case "image-to-video":
 				default:
@@ -8644,6 +9108,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			!directReferenceR2vReady &&
 			!motionPosterCanAutoStill &&
 			!socialDripCanAutoStill &&
+			!vacuumInflateCanAutoStill &&
+			!creativeMotionCanAutoStill &&
 			!blockbusterCanGenerate &&
 			!h3ShotRecipeCanGenerate) ||
 		(isCinematicStitchOutput &&
@@ -8696,22 +9162,40 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		if (researchReelAnalyzeBusy) {
 			return m.wizard.researchReelAnalyzing;
 		}
-		if (
-			isH3ShotRecipeMode(videoCreativeMode) &&
-			promotionMode === "physical" &&
-			videoCreativeMode !== "neon-on-real" &&
-			!productPhoto
-		) {
-			return videoCreativeMode === "food-bullet-time"
-				? m.wizard.h3ShotHeroHint["food-bullet-time"]
-				: m.errors.needPhoto;
-		}
-		if (
-			isH3ShotRecipeMode(videoCreativeMode) &&
-			h3ShotRecipeNeedsReel(videoCreativeMode) &&
-			!(referenceAd && referenceIsVideo)
-		) {
-			return m.wizard.h3ShotNeedReferenceVideo;
+		if (isH3ShotRecipeMode(videoCreativeMode)) {
+			const lifestyle =
+				h3ShotRecipeNeedsLifestyleStill(videoCreativeMode);
+			const hasLifestyleLock = Boolean(productPhoto || imageUrl);
+			const hasConceptLock = Boolean(
+				productPhoto ||
+					imageUrl ||
+					brandKit.logoUrl?.trim() ||
+					packagingPhoto,
+			);
+			if (
+				videoCreativeMode !== "neon-on-real" &&
+				((lifestyle && !hasLifestyleLock) ||
+					(!lifestyle &&
+						promotionMode === "physical" &&
+						!productPhoto) ||
+					(!lifestyle &&
+						promotionMode === "concept" &&
+						!hasConceptLock))
+			) {
+				if (lifestyle) {
+					return m.wizard.h3ShotHeroHint[videoCreativeMode];
+				}
+				if (promotionMode === "concept") {
+					return m.wizard.h3ShotNeedConceptHero;
+				}
+				return m.errors.needPhoto;
+			}
+			if (
+				h3ShotRecipeNeedsReel(videoCreativeMode) &&
+				!(referenceAd && referenceIsVideo)
+			) {
+				return m.wizard.h3ShotNeedReferenceVideo;
+			}
 		}
 		if (
 			promotionMode === "physical" &&
@@ -9487,9 +9971,17 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		setMotionPosterDialectPick,
 		macroSnapIntensity,
 		setMacroSnapIntensity,
+		h3ShowreelAspect,
+		setH3ShowreelAspect,
+		h3ShowreelSchemePick,
+		setH3ShowreelSchemePick,
+		h3SphereMgSchemePick,
+		setH3SphereMgSchemePick,
 		socialDripMetaphorPick,
 		setSocialDripMetaphorPick,
 		socialDripPlanNote,
+		creativeMotionSchemePick,
+		setCreativeMotionSchemePick,
 		storyboardRecipeId,
 		setStoryboardRecipeId,
 		compositionPresetId,

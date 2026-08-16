@@ -677,11 +677,35 @@ export const en = {
 						"3 refs, one take: truck + boxes hit the overpass, then the product rises. Not a storyboard stitch.",
 					costHint: "~9s single clip · product + box + optional scene plate",
 				},
+				"product-vacuum-inflate-4s": {
+					title: "Vacuum inflate ~4s",
+					description:
+						"One-click: flat vacuum pouch → air-inflated pack stills → 4s Seedance morph.",
+					costHint: "~2 images + 4s Seedance · product photo",
+				},
+				"product-creative-motion-4s": {
+					title: "Product creative motion ~4s",
+					description:
+						"Scheme cards (juice burst, label peel, shredder…) → auto start/end → 4s Seedance.",
+					costHint: "~2 images + 4s Seedance · product photo",
+				},
 				"concept-blockbuster-9s": {
 					title: "Blockbuster logo/mascot ~9s",
 					description:
 						"Same one-take logistics ad, but logo or mascot pops instead of a product packshot.",
 					costHint: "~9s single clip · logo/mascot + brand tiles + optional scene plate",
+				},
+				"concept-vacuum-inflate-4s": {
+					title: "Vacuum inflate (concept) ~4s",
+					description:
+						"Logo/mascot as pouch identity — flat→inflated stills → 4s Seedance.",
+					costHint: "~2 images + 4s Seedance · logo/mascot",
+				},
+				"concept-creative-motion-4s": {
+					title: "Creative motion (concept) ~4s",
+					description:
+						"Scheme cards on a logo/mascot lock → auto start/end → 4s Seedance gag.",
+					costHint: "~2 images + 4s Seedance · logo/mascot",
 				},
 				"product-ecom-orbit-6s": {
 					title: "E-com orbit ~6s",
@@ -731,6 +755,36 @@ export const en = {
 						"Lifestyle food selfie → frozen splash still → H3 camera orbit around the suspended food.",
 					costHint: "~6s · person + food photo (or Nano Banana still)",
 				},
+				"product-c4d-motion-8s": {
+					title: "C4D motion visual ~8s",
+					description:
+						"Black-void brand MG: metallic open → abstract materials → your product reveal (Nike-style C4D).",
+					costHint: "~8s · product photo (or Nano Banana still)",
+				},
+				"product-h3-showreel-8s": {
+					title: "H3 showreel ~8s",
+					description:
+						"Hero still + reference MP4. Cards: Car cinematic · Keyboard tech · Abstract morph. Kinetic type OK; optional 16:9.",
+					costHint: "~8s · product photo + reference showreel",
+				},
+				"product-h3-sphere-mg-8s": {
+					title: "H3 sphere MG ~8s",
+					description:
+						"Reusable sphere motion-graphics hero — map your product/logo onto crystal, chrome, liquid, neon, or matte planet.",
+					costHint: "~8s · product photo (or Nano Banana still)",
+				},
+				"product-h3-movie-title-8s": {
+					title: "H3 movie-title ~8s",
+					description:
+						"Cinematic title cards + multi-panel wipes around your product. Designed type allowed — no reference reel.",
+					costHint: "~8s · product photo (or Nano Banana still)",
+				},
+				"product-h3-lifestyle-8s": {
+					title: "H3 lifestyle person ~8s",
+					description:
+						"Person using your product in a real lifestyle scene — cafe, street, home. Not beauty MV.",
+					costHint: "~8s · person + product photo (or generate still)",
+				},
 				"product-gaming-cover": {
 					title: "Gaming cover",
 					description:
@@ -772,6 +826,36 @@ export const en = {
 					description:
 						"Cafe / food campaign bullet-time — frozen splash + orbit. Needs a person+food photo (logo alone won’t lock the dish).",
 					costHint: "~6s · lifestyle food photo required",
+				},
+				"concept-c4d-motion-8s": {
+					title: "C4D motion visual (concept) ~8s",
+					description:
+						"Logo / mascot on black void → abstract CGI textures → identity-locked reveal. Premium brand MG.",
+					costHint: "~8s · logo/mascot still",
+				},
+				"concept-h3-showreel-8s": {
+					title: "H3 showreel (concept) ~8s",
+					description:
+						"Logo / mascot + reference showreel. Prefer Abstract morph; Car/Keyboard if the mark fits. Optional 16:9; kinetic type OK.",
+					costHint: "~8s · logo/mascot still + reference showreel",
+				},
+				"concept-h3-sphere-mg-8s": {
+					title: "H3 sphere MG (concept) ~8s",
+					description:
+						"Logo / mascot as sphere identity — matte planet / neon / crystal wrap. No reference reel required.",
+					costHint: "~8s · logo/mascot still",
+				},
+				"concept-h3-movie-title-8s": {
+					title: "H3 movie-title (concept) ~8s",
+					description:
+						"Logo / mascot in cinematic title cards + multi-panel. Designed type allowed.",
+					costHint: "~8s · logo/mascot still",
+				},
+				"concept-h3-lifestyle-8s": {
+					title: "H3 lifestyle (concept) ~8s",
+					description:
+						"Person + brand mark in a lifestyle scene. Prefer a lifestyle photo (logo alone is weak).",
+					costHint: "~8s · person + logo/mascot lifestyle still",
 				},
 				"concept-gaming-cover": {
 					title: "Gaming cover (concept)",
@@ -2603,6 +2687,16 @@ export const en = {
 				description:
 					"3 images → 9s one-take: boxes fly, then product (or logo/mascot) reveals. Not a storyboard.",
 			},
+			"vacuum-inflate": {
+				title: "Vacuum inflate",
+				description:
+					"Auto flat→inflated pouch stills + 4s Seedance morph (真空充气).",
+			},
+			"creative-motion": {
+				title: "Product creative motion",
+				description:
+					"Pick a scheme → auto start/end stills → 4s Seedance gag (产品创意动效).",
+			},
 			"ecom-orbit": {
 				title: "E-com orbit",
 				description:
@@ -2642,6 +2736,31 @@ export const en = {
 				title: "Food bullet-time",
 				description:
 					"Lifestyle food still with frozen splash → 6s camera orbit (3D food splash).",
+			},
+			"c4d-motion": {
+				title: "C4D motion visual",
+				description:
+					"Black-void brand MG → abstract materials → product reveal (premium C4D showreel).",
+			},
+			"h3-showreel": {
+				title: "H3 showreel",
+				description:
+					"Hero still + reference showreel. Cards: Car · Keyboard · Abstract. Kinetic type OK; optional 16:9.",
+			},
+			"h3-sphere-mg": {
+				title: "H3 sphere MG",
+				description:
+					"Sphere is the reusable MG hero — crystal, chrome, liquid, neon, or matte planet with your product/logo.",
+			},
+			"h3-movie-title": {
+				title: "H3 movie-title",
+				description:
+					"Cinematic title cards + multi-panel wipes. Designed type OK; no reference reel.",
+			},
+			"h3-lifestyle": {
+				title: "H3 lifestyle person",
+				description:
+					"Person using your product in a lifestyle scene — not beauty MV, not packshot-only.",
 			},
 
 			"reference-concept": {
@@ -2728,8 +2847,21 @@ export const en = {
 		h3ShotNeedConceptHero:
 			"Upload a logo/mascot, save a Brand kit logo, or generate a still with Nano Banana.",
 		h3ShotNeedReferenceVideo:
-			"Upload a real / reference MP4 (required for imitate-ad and neon-on-real).",
+			"Upload a reference MP4 (required for imitate-ad, neon-on-real, and h3-showreel).",
 		h3ShotGenerateStillBtn: "Generate still (Nano Banana)",
+		h3ShotConceptHeroTitle: "Hero lock still",
+		h3ShotPhotoTitle: {
+			"food-bullet-time": "Person + food photo",
+			"h3-lifestyle": "Person + product photo",
+		},
+		h3ShotReelHint: {
+			"imitate-ad":
+				"Required: reference ad MP4 — H3 copies camera / edit language only (not the reference product).",
+			"neon-on-real":
+				"Required: real footage MP4 — this clip is the neon scene base.",
+			"h3-showreel":
+				"Required: reference showreel MP4 — rhythm / camera language for the one-take.",
+		},
 		h3ShotHeroHint: {
 			"ecom-orbit":
 				"Required: product photo — or logo / mascot still (concept). H3 orbits that exact subject.",
@@ -2742,11 +2874,21 @@ export const en = {
 			"beauty-mv":
 				"Required: face or character / mascot still for identity lock.",
 			"imitate-ad":
-				"Required: product or logo still + a reference MP4. H3 copies camera, keeps your subject.",
+				"Required: product or logo still for subject lock (pair with the reference MP4 below).",
 			"neon-on-real":
-				"Required: real footage MP4. Optional product / logo / mascot still locks neon shape & color.",
+				"Optional: product / logo / mascot still locks neon shape & color. The MP4 above is required.",
 			"food-bullet-time":
 				"Required: person + food lifestyle photo (check-in shot). Face and dish must be clear — a logo alone is not enough.",
+			"c4d-motion":
+				"Required: product photo — or logo / mascot still (concept). H3 builds a black-void C4D reveal around that subject.",
+			"h3-showreel":
+				"Required: product or logo/mascot still for subject lock (pair with the showreel MP4 below). Kinetic type OK.",
+			"h3-sphere-mg":
+				"Required: product photo — or logo / mascot still (concept). Sphere wraps your identity; no reference reel.",
+			"h3-movie-title":
+				"Required: product photo — or logo / mascot still (concept). Title cards + panels; designed type allowed.",
+			"h3-lifestyle":
+				"Required: person + product lifestyle photo (clear face and product). Logo alone is weak — use Nano Banana to generate a lifestyle still.",
 		},
 		h3ShotHint: {
 			"ecom-orbit":
@@ -2765,6 +2907,16 @@ export const en = {
 				"Upload a real MP4 (required). Optional: upload logo or mascot as the neon object identity.",
 			"food-bullet-time":
 				"Upload a person+food check-in photo first — Generate stays off until then. Camera orbits a frozen splash ~6s.",
+			"c4d-motion":
+				"Upload product or logo/mascot still first — Generate stays off until then. Then ~8s black-void C4D reveal.",
+			"h3-showreel":
+				"Upload hero still + reference showreel MP4 — Generate stays off until both are ready. Optional 16:9; kinetic type allowed.",
+			"h3-sphere-mg":
+				"Upload product or logo/mascot still first — Generate stays off until then. Then ~8s sphere motion-graphics one-take.",
+			"h3-movie-title":
+				"Upload product or logo/mascot still first — Generate stays off until then. Then ~8s title-card / multi-panel one-take.",
+			"h3-lifestyle":
+				"Upload a person+product lifestyle photo first — Generate stays off until then. Then ~8s lifestyle one-take.",
 		},
 		macroSnapIntensityTitle: "Crack & drip strength",
 		macroSnapIntensityHint:
@@ -2781,6 +2933,63 @@ export const en = {
 			strong: {
 				title: "Strong",
 				desc: "Dramatic break + heavy pour",
+			},
+		},
+		h3ShowreelAspectTitle: "Showreel aspect",
+		h3ShowreelAspectHint:
+			"9:16 for feeds; 16:9 for landscape / presentation showreels. Default 16:9.",
+		h3ShowreelAspect: {
+			"9:16": {
+				title: "9:16",
+				desc: "Vertical feed",
+			},
+			"16:9": {
+				title: "16:9",
+				desc: "Landscape showreel",
+			},
+		},
+		h3ShowreelSchemeTitle: "Showreel card",
+		h3ShowreelSchemeHint:
+			"Same imitate-ad method + kinetic type + aspect pick — different camera language. Auto picks from your product name.",
+		h3ShowreelSchemeAuto: "Auto · best fit",
+		h3ShowreelSchemes: {
+			"car-cinematic": {
+				title: "Car cinematic",
+				desc: "Night asphalt · low angle · light trails",
+			},
+			"keyboard-tech": {
+				title: "Keyboard tech",
+				desc: "Keycap macro · RGB · tech grid",
+			},
+			"abstract-morph": {
+				title: "Abstract morph",
+				desc: "Liquid metal / voxels → product reveal",
+			},
+		},
+		h3SphereMgSchemeTitle: "Sphere style",
+		h3SphereMgSchemeHint:
+			"Sphere is the reusable MG hero — your product/logo locks identity on or inside it. Auto picks from product name.",
+		h3SphereMgSchemeAuto: "Auto · best fit",
+		h3SphereMgSchemes: {
+			"crystal-glass": {
+				title: "Crystal glass",
+				desc: "Refractive glass orb",
+			},
+			"chrome-spin": {
+				title: "Chrome spin",
+				desc: "Mirror chrome rotation",
+			},
+			"liquid-mercury": {
+				title: "Liquid mercury",
+				desc: "Fluid metal coalesce",
+			},
+			"neon-core": {
+				title: "Neon core",
+				desc: "Dark orb + energy core",
+			},
+			"matte-planet": {
+				title: "Matte planet",
+				desc: "Soft planet wrap (most general)",
 			},
 		},
 		recipePathUxTitles: {
@@ -2872,6 +3081,68 @@ export const en = {
 				],
 				output: ["~6s food bullet-time / 3D splash orbit clip"],
 			},
+			"c4d-motion": {
+				need: [
+					"Product photo — or logo / mascot still (concept)",
+					"Clear hero subject for black-void identity lock",
+				],
+				attention: [
+					"Subject shape, logo, and colors stay locked — no inventing another SKU",
+					"Dark void + abstract materials serve YOUR product, not a Nike clone",
+					"Continuous one-take — not a hard-cut montage",
+				],
+				output: ["~8s C4D / brand motion-graphics one-take"],
+			},
+			"h3-showreel": {
+				need: [
+					"Product photo — or logo / mascot still (concept)",
+					"Reference showreel MP4 (camera / rhythm / beat language)",
+				],
+				attention: [
+					"Pick a card: Car cinematic · Keyboard tech · Abstract morph (Auto from product name)",
+					"Your subject stays — reference product is not copied",
+					"Kinetic / designed type allowed; no captions or UI chrome",
+					"Abstract morph is the general fit; Car/Keyboard are specialist looks",
+				],
+				output: ["~8s H3 showreel (9:16 or 16:9)"],
+			},
+			"h3-sphere-mg": {
+				need: [
+					"Product photo — or logo / mascot still (concept)",
+					"Clear hero for sphere identity lock (no reference reel)",
+				],
+				attention: [
+					"Pick a sphere style: Crystal · Chrome · Liquid · Neon · Matte planet",
+					"Sphere is the reusable MG hero — product/logo maps onto it",
+					"Matte planet is the general fit; others are material specialists",
+					"Continuous one-take — not a hard-cut montage",
+				],
+				output: ["~8s sphere motion-graphics one-take"],
+			},
+			"h3-movie-title": {
+				need: [
+					"Product photo — or logo / mascot still (concept)",
+					"Clear hero for title-card identity lock",
+				],
+				attention: [
+					"Designed movie titles / multi-panel wipes allowed — not subtitle bars",
+					"Your subject stays locked across panels",
+					"No reference reel — use imitate-ad if you have an example MP4",
+				],
+				output: ["~8s movie-title / multi-panel one-take"],
+			},
+			"h3-lifestyle": {
+				need: [
+					"Person + product lifestyle photo (clear face and product)",
+					"Logo alone is weak — need a real use scene",
+				],
+				attention: [
+					"Lifestyle use scene — not beauty MV face orbit",
+					"Keep the same person and product identity",
+					"Natural cafe / street / home context works best",
+				],
+				output: ["~8s lifestyle person one-take"],
+			},
 			"designed-poster": {
 				need: [
 					"Product photo — or logo / brand mark (concept)",
@@ -2936,6 +3207,11 @@ export const en = {
 			"imitate-ad": "Nano Banana product still…",
 			"neon-on-real": "Nano Banana neon-lock still…",
 			"food-bullet-time": "Nano Banana splash-freeze still…",
+			"c4d-motion": "Nano Banana C4D void still…",
+			"h3-showreel": "Nano Banana showreel still…",
+			"h3-sphere-mg": "Nano Banana sphere MG still…",
+			"h3-movie-title": "Nano Banana movie-title still…",
+			"h3-lifestyle": "Nano Banana lifestyle still…",
 		},
 		h3ShotAnimating: {
 			"ecom-orbit": "Generating e-com orbit clip…",
@@ -2946,6 +3222,11 @@ export const en = {
 			"imitate-ad": "Generating imitate-ad clip…",
 			"neon-on-real": "Generating neon-on-real clip…",
 			"food-bullet-time": "Generating food bullet-time clip…",
+			"c4d-motion": "Generating C4D motion visual…",
+			"h3-showreel": "Generating H3 showreel…",
+			"h3-sphere-mg": "Generating H3 sphere MG…",
+			"h3-movie-title": "Generating H3 movie-title…",
+			"h3-lifestyle": "Generating H3 lifestyle…",
 		},
 
 		socialDripHint:
@@ -2962,6 +3243,50 @@ export const en = {
 			"Reference video is disabled for Social drip — layout is owned by this recipe.",
 		socialDripNeedKeyframe:
 			"Add a product photo (or concept topic) first for Social drip.",
+		vacuumInflateHint:
+			"One-click 真空充气: Nano Banana builds flat vacuum + inflated pouch stills, then Seedance morphs them in ~4s. Upload your product pack.",
+		vacuumInflateBuildingStill: "Step 1/3: vacuum-flat start still…",
+		vacuumInflateBuildingEnd: "Step 2/3: inflated end still…",
+		vacuumInflateAnimatingCard: "Step 3/3: Seedance inflate morph…",
+		vacuumInflateNeedKeyframe:
+			"Upload a product photo first (concept: logo/mascot or topic).",
+		creativeMotionHint:
+			"产品创意动效: pick a scheme card, we auto-build start/end stills, then Seedance morphs ~4s.",
+		creativeMotionBuildingStill: "Step 1/3: creative-motion start still…",
+		creativeMotionBuildingEnd: "Step 2/3: creative-motion end still…",
+		creativeMotionAnimatingCard: "Step 3/3: Seedance scheme morph…",
+		creativeMotionNeedKeyframe:
+			"Upload a product photo first (concept: logo/mascot or topic).",
+		creativeMotionSchemeTitle: "Scheme card",
+		creativeMotionSchemeHint:
+			"Same start→end Seedance method, different gag. Auto picks a fit — generate again to try another.",
+		creativeMotionSchemeAuto: "Auto · best fit",
+		creativeMotionSchemes: {
+			"juice-burst": {
+				title: "Juice burst",
+				desc: "Dry hero → citrus/liquid explosion",
+			},
+			"label-peel": {
+				title: "Label peel",
+				desc: "Sealed label → peeling reveal",
+			},
+			"squeeze-reveal": {
+				title: "Squeeze reveal",
+				desc: "Squeeze bead → miniature scene",
+			},
+			"cap-rays": {
+				title: "Cap rays",
+				desc: "Closed cap → unscrew + light beams",
+			},
+			"body-breathe": {
+				title: "Body breathe",
+				desc: "Compressed → plump package breath",
+			},
+			"shredder-restore": {
+				title: "Shredder restore",
+				desc: "Shreds → product reassembled",
+			},
+		},
 		socialDripFitTitle: "What this format can do",
 		socialDripFitGoodTitle: "Works well",
 		socialDripFitGoodItems: [
@@ -4883,6 +5208,7 @@ export const en = {
 			onImageBadge: "Shows on end frame",
 			inVideoBadge: "Shows in the video",
 			requiredBadge: "Required",
+			conceptLockWaysBadge: "Photo · logo · still",
 			h3PathFocusLead: "For this path",
 			motionPosterCopyFocus: {
 				title: "For motion poster: fill the end-frame title",

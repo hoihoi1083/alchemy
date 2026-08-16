@@ -467,6 +467,19 @@ export const zhCn = {
           description: "同一套单镜物流广告，用 Logo 或吉祥物弹出，代替产品特写。",
           costHint: "约 9 秒单镜 · Logo／吉祥物 + 品牌卡片 + 可选场景首帧",
         },
+				
+				"product-vacuum-inflate-4s": {
+					title: "真空充气 ~4s",
+					description:
+						"一键：瘪袋静图 → 充气饱满静图 → Seedance 4 秒过渡。",
+					costHint: "~2 图 + 4s Seedance · 产品图",
+				},
+				"product-creative-motion-4s": {
+					title: "产品创意动效 ~4s",
+					description:
+						"选方案卡（爆汁、撕标、碎纸还原…）→ 自动首尾帧 → Seedance 4 秒。",
+					costHint: "~2 图 + 4s Seedance · 产品图",
+				},
 				"product-ecom-orbit-6s": {
 					title: "电商环绕 ~6s",
 					description:
@@ -515,6 +528,49 @@ export const zhCn = {
 						"打卡美食图 → 飞溅定格静图 → H3 镜头环绕悬浮食物。",
 					costHint: "~6s · 人+食物生活照（或 Nano Banana）",
 				},
+				"product-c4d-motion-8s": {
+					title: "C4D 动态视觉 ~8s",
+					description:
+						"黑场品牌开场 → 抽象材质 → 你的产品揭幕（Nike 级 C4D 感）。",
+					costHint: "~8s · 产品图（或 Nano Banana 静图）",
+				},
+				"product-h3-showreel-8s": {
+					title: "H3 秀场 ~8s",
+					description:
+						"产品静图 + 参考秀场。方案卡：汽车电影感 · 键盘科技 · 抽象变形。允许动能大字，可选 16:9。",
+					costHint: "~8s · 产品图 + 参考秀场片",
+				},
+				"product-h3-sphere-mg-8s": {
+					title: "H3 球体运动图形 ~8s",
+					description:
+						"球体是可复用的 MG 英雄 — 水晶／铬面／液态／霓虹／哑光行星，映射你的产品或 Logo。",
+					costHint: "~8s · 产品图（或 Nano Banana 静图）",
+				},
+				"product-h3-movie-title-8s": {
+					title: "H3 电影标题 ~8s",
+					description:
+						"电影标题卡 + 多格擦除，围绕你的产品。允许设计感大字 — 不需要参考片。",
+					costHint: "~8s · 产品图（或 Nano Banana 静图）",
+				},
+				"product-h3-lifestyle-8s": {
+					title: "H3 生活人物 ~8s",
+					description:
+						"真人在咖啡馆／街道／居家场景使用产品 — 不是美妆 MV。",
+					costHint: "~8s · 人+产品生活照（或生成静图）",
+				},
+				
+				"concept-vacuum-inflate-4s": {
+					title: "真空充气（概念）~4s",
+					description:
+						"Logo／吉祥物作袋身身份 — 瘪→充气静图 → Seedance 4 秒。",
+					costHint: "~2 图 + 4s Seedance · Logo/吉祥物",
+				},
+				"concept-creative-motion-4s": {
+					title: "创意动效（概念）~4s",
+					description:
+						"方案卡 + Logo／吉祥物锁定 → 自动首尾帧 → Seedance 4 秒。",
+					costHint: "~2 图 + 4s Seedance · Logo/吉祥物",
+				},
 				"concept-beauty-mv-10s": {
 					title: "美妆/角色一鏡（概念）~10s",
 					description:
@@ -538,6 +594,36 @@ export const zhCn = {
 					description:
 						"餐厅／美食 campaign 子弹时间 — 飞溅定格＋环绕，不必 SKU 包装图。",
 					costHint: "~6s · 打卡美食图（或生成静图）",
+				},
+				"concept-c4d-motion-8s": {
+					title: "C4D 动态视觉（概念）~8s",
+					description:
+						"Logo／吉祥物黑场开场 → 抽象 CGI 材质 → 身份锁定揭幕。品牌级动态视觉。",
+					costHint: "~8s · Logo/吉祥物静图",
+				},
+				"concept-h3-showreel-8s": {
+					title: "H3 秀场（概念）~8s",
+					description:
+						"Logo／吉祥物 + 参考秀场。概念优先「抽象变形」；汽车／键盘卡看标识是否贴合。可选 16:9。",
+					costHint: "~8s · Logo/吉祥物 + 参考秀场片",
+				},
+				"concept-h3-sphere-mg-8s": {
+					title: "H3 球体运动图形（概念）~8s",
+					description:
+						"Logo／吉祥物作球体身份 — 哑光行星／霓虹／水晶包裹。不需要参考片。",
+					costHint: "~8s · Logo/吉祥物静图",
+				},
+				"concept-h3-movie-title-8s": {
+					title: "H3 电影标题（概念）~8s",
+					description:
+						"Logo／吉祥物进入电影标题卡 + 多格。允许设计感大字。",
+					costHint: "~8s · Logo/吉祥物静图",
+				},
+				"concept-h3-lifestyle-8s": {
+					title: "H3 生活人物（概念）~8s",
+					description:
+						"人物＋品牌标识的生活场景。最好有生活照（纯 Logo 偏弱）。",
+					costHint: "~8s · 人+Logo/吉祥物生活照",
 				},
 				"product-gaming-cover": {
 					title: "电竞封面",
@@ -2126,6 +2212,16 @@ export const zhCn = {
         description:
           "3 张图 → 9 秒单镜：纸箱飞出，产品（或 Logo／吉祥物）揭晓。不是分镜。",
       },
+			"vacuum-inflate": {
+				title: "真空充气",
+				description:
+					"自动瘪袋→充气静图 + Seedance 4 秒过渡。",
+			},
+			"creative-motion": {
+				title: "产品创意动效",
+				description:
+					"选方案 → 自动首尾帧 → Seedance 4 秒创意动效。",
+			},
       
 			"ecom-orbit": {
 				title: "电商环绕",
@@ -2166,6 +2262,31 @@ export const zhCn = {
 				title: "美食子弹时间",
 				description:
 					"打卡美食飞溅定格静图 → 6s 镜头环绕（3D 食物飞溅）。",
+			},
+			"c4d-motion": {
+				title: "C4D 动态视觉",
+				description:
+					"黑场品牌开场 → 抽象材质 → 产品揭幕（顶级三维动态视觉）。",
+			},
+			"h3-showreel": {
+				title: "H3 秀场",
+				description:
+					"主体静图 + 参考秀场。方案卡：汽车 · 键盘 · 抽象。允许动能大字，可选 16:9。",
+			},
+			"h3-sphere-mg": {
+				title: "H3 球体运动图形",
+				description:
+					"球体是可复用 MG 英雄 — 水晶、铬面、液态、霓虹或哑光行星，映射产品／Logo。",
+			},
+			"h3-movie-title": {
+				title: "H3 电影标题",
+				description:
+					"电影标题卡 + 多格擦除。允许设计感大字；不需要参考片。",
+			},
+			"h3-lifestyle": {
+				title: "H3 生活人物",
+				description:
+					"真人在生活场景使用产品 — 不是美妆 MV，不是纯静物。",
 			},
 "reference-concept": {
         title: "跟参考视频概念",
@@ -2226,8 +2347,21 @@ export const zhCn = {
 		h3ShotNeedConceptHero:
 			"可上传 Logo/吉祥物、用品牌套件 Logo，或用 Nano Banana 生成静图。",
 		h3ShotNeedReferenceVideo:
-			"请上传真实／参考 MP4（仿拍与霓虹叠实景必填）。",
+			"请上传参考 MP4（仿拍、霓虹叠实景、H3 秀场必填）。",
 		h3ShotGenerateStillBtn: "生成静图（Nano Banana）",
+		h3ShotConceptHeroTitle: "主体锁定静图",
+		h3ShotPhotoTitle: {
+			"food-bullet-time": "人＋食物照片",
+			"h3-lifestyle": "人＋产品照片",
+		},
+		h3ShotReelHint: {
+			"imitate-ad":
+				"必填：参考广告 MP4 — H3 只学运镜／剪辑节奏（不抄参考品）。",
+			"neon-on-real":
+				"必填：真实实景 MP4 — 这条片是霓虹场景底。",
+			"h3-showreel":
+				"必填：参考秀场 MP4 — 提供节奏／运镜语言给单镜。",
+		},
 		h3ShotHeroHint: {
 			"ecom-orbit":
 				"必填：上传产品图。H3 环绕该 SKU。",
@@ -2240,11 +2374,21 @@ export const zhCn = {
 			"beauty-mv":
 				"必填：上传人脸或角色静图作身份锁定。",
 			"imitate-ad":
-				"必填：产品图 + 参考 MP4。H3 学运镜，保留你的 SKU。",
+				"必填：产品或 Logo 静图作主体锁定（配下方参考 MP4）。",
 			"neon-on-real":
-				"必填真实 MP4。产品／Logo／吉祥物静图可选作霓虹身份。",
+				"选填：产品／Logo／吉祥物静图锁霓虹形状与色。上方 MP4 才是必填。",
 			"food-bullet-time":
-				"必填：人+食物打卡照（脸与菜要清楚）。",
+				"必填：人+食物打卡照（脸与菜要清楚）。纯 Logo 不够。",
+			"c4d-motion":
+				"必填：产品图（概念可用 Logo／吉祥物）。H3 以该主体做黑场 C4D 揭幕。",
+			"h3-showreel":
+				"必填：产品或 Logo／吉祥物静图作主体锁定（配下方秀场 MP4）。允许动能大字。",
+			"h3-sphere-mg":
+				"必填：产品图（概念可用 Logo／吉祥物）。球体包裹你的身份；不需要参考片。",
+			"h3-movie-title":
+				"必填：产品图（概念可用 Logo／吉祥物）。标题卡＋多格；允许设计感大字。",
+			"h3-lifestyle":
+				"必填：人+产品生活照（脸与产品要清楚）。纯 Logo 偏弱 — 可用 Nano Banana 生成生活静图。",
 		},
 		h3ShotHint: {
 			"ecom-orbit":
@@ -2263,6 +2407,16 @@ export const zhCn = {
 				"请上传真实 MP4（必填）。可把 Logo／吉祥物放进「产品照片」作霓虹身份；也可只用品牌包 Logo。霓虹在场景中移动。",
 			"food-bullet-time":
 				"请先上传人+食物打卡照 — 未上传前无法按生成。镜头环绕飞溅定格约 6s。",
+			"c4d-motion":
+				"请先上传产品图（概念可用 Logo／吉祥物）— 未上传前无法按生成。再做约 8s 黑场 C4D 揭幕。",
+			"h3-showreel":
+				"请上传主体静图 + 参考秀场 MP4 — 两者齐备才能生成。可选 16:9；允许动能大字。",
+			"h3-sphere-mg":
+				"请先上传产品图（概念可用 Logo／吉祥物）— 未上传前无法按生成。再做约 8s 球体运动图形一镜。",
+			"h3-movie-title":
+				"请先上传产品图（概念可用 Logo／吉祥物）— 未上传前无法按生成。再做约 8s 电影标题／多格一镜。",
+			"h3-lifestyle":
+				"请先上传人+产品生活照 — 未上传前无法按生成。再做约 8s 生活人物一镜。",
 		},
 		macroSnapIntensityTitle: "碎裂／滴落强度",
 		macroSnapIntensityHint:
@@ -2279,6 +2433,63 @@ export const zhCn = {
 			strong: {
 				title: "强",
 				desc: "戏剧性掰开 + 大量涌出",
+			},
+		},
+		h3ShowreelAspectTitle: "秀场画幅",
+		h3ShowreelAspectHint:
+			"9:16 适合信息流；16:9 适合横屏／演示秀场。默认 16:9。",
+		h3ShowreelAspect: {
+			"9:16": {
+				title: "9:16",
+				desc: "竖屏信息流",
+			},
+			"16:9": {
+				title: "16:9",
+				desc: "横屏秀场",
+			},
+		},
+		h3ShowreelSchemeTitle: "秀场方案卡",
+		h3ShowreelSchemeHint:
+			"同一套仿拍秀场 + 动能大字 + 画幅选择 — 不同镜头语言。自动会按产品名匹配。",
+		h3ShowreelSchemeAuto: "自动 · 适合产品",
+		h3ShowreelSchemes: {
+			"car-cinematic": {
+				title: "汽车电影感",
+				desc: "夜色路面 · 低机位 · 光轨",
+			},
+			"keyboard-tech": {
+				title: "键盘科技",
+				desc: "键帽微距 · RGB · 科技网格",
+			},
+			"abstract-morph": {
+				title: "抽象变形",
+				desc: "液态金属／体素 → 产品揭幕",
+			},
+		},
+		h3SphereMgSchemeTitle: "球体风格",
+		h3SphereMgSchemeHint:
+			"球体是可复用的 MG 英雄 — 产品／Logo 锁定身份。自动会按产品名匹配。",
+		h3SphereMgSchemeAuto: "自动 · 适合产品",
+		h3SphereMgSchemes: {
+			"crystal-glass": {
+				title: "水晶玻璃",
+				desc: "折射水晶球",
+			},
+			"chrome-spin": {
+				title: "铬面旋转",
+				desc: "镜面铬球自转",
+			},
+			"liquid-mercury": {
+				title: "液态汞",
+				desc: "流体金属凝聚",
+			},
+			"neon-core": {
+				title: "霓虹内核",
+				desc: "暗球 + 能量核",
+			},
+			"matte-planet": {
+				title: "哑光行星",
+				desc: "柔和行星包裹（最通用）",
 			},
 		},
 		recipePathUxTitles: {
@@ -2338,6 +2549,59 @@ export const zhCn = {
 				],
 				output: ["约 6 秒美食子弹时间／3D 飞溅环绕"],
 			},
+			"c4d-motion": {
+				need: ["产品图（概念可用 Logo／吉祥物）", "主体要清晰，便于黑场锁定"],
+				attention: [
+					"外形、Logo、配色锁定 — 不要换成另一件商品",
+					"黑场与抽象材质服务于你的产品，不是抄 Nike",
+					"一镜到底连续运动 — 不是硬切蒙太奇",
+				],
+				output: ["约 8 秒 C4D／品牌动态视觉一镜"],
+			},
+			"h3-showreel": {
+				need: [
+					"产品图（概念可用 Logo／吉祥物）",
+					"参考秀场 MP4（运镜／节奏／景别）",
+				],
+				attention: [
+					"选方案卡：汽车电影感 · 键盘科技 · 抽象变形（自动按产品名）",
+					"保留你的主体 — 不抄参考片里的原产品",
+					"允许设计感动能大字；禁止字幕条／UI",
+					"抽象变形最通用；汽车／键盘是专用镜头语言",
+				],
+				output: ["约 8 秒 H3 秀场（9:16 或 16:9）"],
+			},
+			"h3-sphere-mg": {
+				need: [
+					"产品图（概念可用 Logo／吉祥物）",
+					"清晰主体作球体身份锁定（不需要参考片）",
+				],
+				attention: [
+					"选球体风格：水晶 · 铬面 · 液态 · 霓虹 · 哑光行星",
+					"球体是可复用 MG 英雄 — 产品／Logo 映射其上",
+					"哑光行星最通用；其他是材质专用",
+					"一镜到底连续运动 — 不是硬切蒙太奇",
+				],
+				output: ["约 8 秒球体运动图形一镜"],
+			},
+			"h3-movie-title": {
+				need: ["产品图（概念可用 Logo／吉祥物）", "清晰主体作标题卡锁定"],
+				attention: [
+					"允许电影标题／多格擦除 — 不是字幕条",
+					"各格保持同一主体身份",
+					"不需要参考片 — 有示例 MP4 请用仿拍广告",
+				],
+				output: ["约 8 秒电影标题／多格一镜"],
+			},
+			"h3-lifestyle": {
+				need: ["人+产品生活照（脸与产品要清楚）", "纯 Logo 偏弱 — 需要使用场景"],
+				attention: [
+					"生活使用场景 — 不是美妆 MV 环绕肖像",
+					"保持同一人物与产品身份",
+					"咖啡馆／街道／居家场景最合适",
+				],
+				output: ["约 8 秒生活人物一镜"],
+			},
 			"designed-poster": {
 				need: ["产品图", "标题（画面主文案）"],
 				attention: ["商业 feed 海报排版", "锁定单张 — 无 A/B 或 campaign"],
@@ -2373,6 +2637,11 @@ export const zhCn = {
 			"imitate-ad": "Nano Banana 产品图…",
 			"neon-on-real": "Nano Banana 霓虹锁定静图…",
 			"food-bullet-time": "Nano Banana 飞溅定格…",
+			"c4d-motion": "Nano Banana 黑场 C4D 静图…",
+			"h3-showreel": "Nano Banana 秀场静图…",
+			"h3-sphere-mg": "Nano Banana 球体 MG 静图…",
+			"h3-movie-title": "Nano Banana 电影标题静图…",
+			"h3-lifestyle": "Nano Banana 生活人物静图…",
 		},
 		h3ShotAnimating: {
 			"ecom-orbit": "正在生成电商环绕片…",
@@ -2383,6 +2652,11 @@ export const zhCn = {
 			"imitate-ad": "正在生成仿拍广告…",
 			"neon-on-real": "正在生成霓虹叠实景…",
 			"food-bullet-time": "正在生成美食子弹时间…",
+			"c4d-motion": "正在生成 C4D 动态视觉…",
+			"h3-showreel": "正在生成 H3 秀场…",
+			"h3-sphere-mg": "正在生成 H3 球体运动图形…",
+			"h3-movie-title": "正在生成 H3 电影标题…",
+			"h3-lifestyle": "正在生成 H3 生活人物…",
 		},
 socialDripHint:
       "三分屏迷因：产品 → 假 IG 栏 → 可爱精致卡通。有东西垂直落下穿过中间栏。不是写实生活广告。",
@@ -2396,7 +2670,32 @@ socialDripHint:
     socialDripMetaphorAuto: "自动 · AI 选",
     socialDripNoReferenceNote: "三分屏不用参考片——版面由此 recipe 控制。",
     socialDripNeedKeyframe: "三分屏请先上传产品图，或填写概念主题。",
-    socialDripFitTitle: "这个格式可以／不可以做什么",
+    
+		vacuumInflateHint:
+			"一键真空充气：Nano Banana 生成瘪袋与充气静图，再由 Seedance 约 4 秒过渡。请上传产品包装图。",
+		vacuumInflateBuildingStill: "第 1/3 步：瘪袋开头静图…",
+		vacuumInflateBuildingEnd: "第 2/3 步：充气结尾静图…",
+		vacuumInflateAnimatingCard: "第 3/3 步：Seedance 充气过渡中…",
+		vacuumInflateNeedKeyframe: "请先上传产品图（概念可用 Logo／吉祥物或主题）。",
+		creativeMotionHint:
+			"产品创意动效：选方案卡，自动生成首尾帧，再 Seedance 约 4 秒。",
+		creativeMotionBuildingStill: "第 1/3 步：创意动效开头静图…",
+		creativeMotionBuildingEnd: "第 2/3 步：创意动效结尾静图…",
+		creativeMotionAnimatingCard: "第 3/3 步：Seedance 方案过渡中…",
+		creativeMotionNeedKeyframe: "请先上传产品图（概念可用 Logo／吉祥物或主题）。",
+		creativeMotionSchemeTitle: "方案卡",
+		creativeMotionSchemeHint:
+			"同一套首尾帧 Seedance，不同创意。自动会选合适的——再生成试另一种。",
+		creativeMotionSchemeAuto: "自动 · 适合产品",
+		creativeMotionSchemes: {
+			"juice-burst": { title: "柠檬爆汁", desc: "干燥产品 → 果汁飞溅开场" },
+			"label-peel": { title: "复古标签撕揭", desc: "封签 → 撕揭揭幕" },
+			"squeeze-reveal": { title: "挤出变场景", desc: "挤出珠 → 微缩场景" },
+			"cap-rays": { title: "瓶盖光芒", desc: "合盖 → 旋开＋光束" },
+			"body-breathe": { title: "管身呼吸", desc: "略瘪 → 饱满呼吸" },
+			"shredder-restore": { title: "碎纸机还原", desc: "碎条 → 产品还原" },
+		},
+socialDripFitTitle: "这个格式可以／不可以做什么",
     socialDripFitGoodTitle: "适合",
     socialDripFitGoodItems: [
       "底栏＝可爱精致卡通（开心迷因感觉）",
@@ -4063,6 +4362,7 @@ socialDripHint:
       onImageBadge: "会出现在结尾静图",
 			inVideoBadge: "会出现在影片中",
 			requiredBadge: "必填",
+			conceptLockWaysBadge: "图 · Logo · 静图",
 			h3PathFocusLead: "这条 path",
       motionPosterCopyFocus: {
         title: "动态海报：重点填「结尾静图标题」",

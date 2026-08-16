@@ -19,14 +19,23 @@ import {
   type SocialDripFitReasonId,
   type SocialDripMetaphorPick,
 } from "@/lib/social-drip";
+import { CREATIVE_MOTION_SCHEME_IDS } from "@/lib/creative-motion";
 import {
+  h3ShotRecipeNeedsHeroPhoto,
+  h3ShotRecipeNeedsLifestyleStill,
   h3ShotRecipeNeedsReel,
   h3ShotRecipeToSubpath,
   isH3ShotRecipeMode,
   subpathToH3ShotRecipe,
   MACRO_SNAP_INTENSITIES,
+  H3_SHOWREEL_ASPECTS,
+  H3_SHOWREEL_SCHEME_IDS,
+  H3_SPHERE_MG_SCHEME_IDS,
   type H3ShotRecipeMode,
   type MacroSnapIntensity,
+  type H3ShowreelAspect,
+  type H3ShowreelSchemePick,
+  type H3SphereMgSchemePick,
 } from "@/lib/h3-shot-recipes";
 import { h3ShotModesForPromotion } from "@/lib/recipe-path-ux";
 
@@ -249,6 +258,10 @@ export function PreVideoSetupPanel({
     !scenesReady && wizard.videoCreativeMode === "motion-poster";
   const prefersSocialDrip =
     !scenesReady && wizard.videoCreativeMode === "social-drip";
+  const prefersVacuumInflate =
+    !scenesReady && wizard.videoCreativeMode === "vacuum-inflate";
+  const prefersCreativeMotion =
+    !scenesReady && wizard.videoCreativeMode === "creative-motion";
   const prefersBlockbuster =
     !scenesReady && wizard.videoCreativeMode === "blockbuster";
   const prefersH3Shot =
@@ -262,6 +275,10 @@ export function PreVideoSetupPanel({
       ? "blockbuster"
       : preferredH3Subpath
       ? preferredH3Subpath
+      : prefersVacuumInflate
+      ? "vacuum_inflate"
+      : prefersCreativeMotion
+      ? "creative_motion"
       : prefersSocialDrip
       ? "social_drip"
       : prefersMotionPoster
@@ -274,16 +291,26 @@ export function PreVideoSetupPanel({
   const isReference = !scenesReady && !isConcept && activeSubpath === "reference_reel";
   const isMotionPoster = !scenesReady && activeSubpath === "motion_poster";
   const isSocialDrip = !scenesReady && activeSubpath === "social_drip";
+  const isVacuumInflate = !scenesReady && activeSubpath === "vacuum_inflate";
+  const isCreativeMotion = !scenesReady && activeSubpath === "creative_motion";
   const isBlockbuster = !scenesReady && activeSubpath === "blockbuster";
   const h3ShotMode = !scenesReady ? subpathToH3ShotRecipe(activeSubpath as never) : null;
   const isH3Shot = Boolean(h3ShotMode);
   const needsH3Reel = Boolean(h3ShotMode && h3ShotRecipeNeedsReel(h3ShotMode));
+  const needsH3Hero = Boolean(
+    h3ShotMode && h3ShotRecipeNeedsHeroPhoto(h3ShotMode),
+  );
+  const needsH3LifestyleStill = Boolean(
+    h3ShotMode && h3ShotRecipeNeedsLifestyleStill(h3ShotMode),
+  );
   const isUgc = !scenesReady && activeSubpath === "ugc_presenter";
   const isSceneReel =
     !scenesReady &&
     isConcept &&
     !isMotionPoster &&
     !isSocialDrip &&
+    !isVacuumInflate &&
+    !isCreativeMotion &&
     !isBlockbuster &&
     !isH3Shot;
   const isQuickAssistant =
@@ -295,20 +322,24 @@ export function PreVideoSetupPanel({
       !isUgc &&
       !isMotionPoster &&
       !isSocialDrip &&
+      !isVacuumInflate &&
+      !isCreativeMotion &&
       !isBlockbuster &&
       !isH3Shot &&
       isCreativeVideoStyle(wizard.visualStyleId));
   const showBrandWebsite = isSceneReel;
   const showConceptAiPlan = isSceneReel;
   const showReferenceUpload = isReference || isSceneReel || needsH3Reel;
-  // Product + reference/research still needs @Image1. Concept photo stays optional even with MP4.
+  // Product + reference/research still needs @Image1.
   const showProductPhoto = scenesReady ? false : isConcept ? true : !isUgc;
-  // Physical product paths require upload — except neon-on-real (MP4 is the required asset).
+  // Required upload (or lifestyle still): physical non-neon, or H3 lifestyle on either side.
   const photoRequired =
     !scenesReady &&
-    !isConcept &&
     !isUgc &&
-    h3ShotMode !== "neon-on-real";
+    (needsH3LifestyleStill ||
+      (!isConcept && h3ShotMode !== "neon-on-real"));
+  // Ring the hero card for every H3 path that needs a visual lock (incl. concept logo/still).
+  const highlightH3Hero = !scenesReady && needsH3Hero;
 
   // Keep research/R2V on reference_reel when ctx.videoSubpath was never set.
   // Also re-apply when UI shows an H3/recipe subpath but creative mode drifted
@@ -331,7 +362,23 @@ export function PreVideoSetupPanel({
       onPickVideoSubpath("social_drip");
       return;
     }
+    if (isVacuumInflate && wizard.videoCreativeMode !== "vacuum-inflate") {
+      onPickVideoSubpath("vacuum_inflate");
+      return;
+    }
+    if (isCreativeMotion && wizard.videoCreativeMode !== "creative-motion") {
+      onPickVideoSubpath("creative_motion");
+      return;
+    }
     if (videoSubpath) return;
+    if (prefersVacuumInflate) {
+      onPickVideoSubpath("vacuum_inflate");
+      return;
+    }
+    if (prefersCreativeMotion) {
+      onPickVideoSubpath("creative_motion");
+      return;
+    }
     if (prefersSocialDrip) {
       onPickVideoSubpath("social_drip");
       return;
@@ -356,12 +403,16 @@ export function PreVideoSetupPanel({
     prefersReference,
     prefersMotionPoster,
     prefersSocialDrip,
+    prefersVacuumInflate,
+    prefersCreativeMotion,
     prefersBlockbuster,
     preferredH3Subpath,
     h3ShotMode,
     isBlockbuster,
     isMotionPoster,
     isSocialDrip,
+    isVacuumInflate,
+    isCreativeMotion,
     activeSubpath,
     wizard.videoCreativeMode,
   ]);
@@ -373,6 +424,8 @@ export function PreVideoSetupPanel({
     if (wizard.videoCreativeMode === "reference-concept") return;
     if (wizard.videoCreativeMode === "motion-poster") return;
     if (wizard.videoCreativeMode === "social-drip") return;
+    if (wizard.videoCreativeMode === "vacuum-inflate") return;
+    if (wizard.videoCreativeMode === "creative-motion") return;
     if (wizard.videoCreativeMode === "blockbuster") return;
     if (isH3ShotRecipeMode(wizard.videoCreativeMode)) return;
     if (wizard.videoCreativeMode === "product-assistant") return;
@@ -514,6 +567,16 @@ export function PreVideoSetupPanel({
       title: m.wizard.videoCreativeModes.blockbuster.title,
       desc: m.wizard.videoCreativeModes.blockbuster.description,
     },
+    {
+      id: "vacuum_inflate",
+      title: m.wizard.videoCreativeModes["vacuum-inflate"].title,
+      desc: m.wizard.videoCreativeModes["vacuum-inflate"].description,
+    },
+    {
+      id: "creative_motion",
+      title: m.wizard.videoCreativeModes["creative-motion"].title,
+      desc: m.wizard.videoCreativeModes["creative-motion"].description,
+    },
     ...h3ShotModesForPromotion("physical").map((mode) => ({
       id: h3ShotRecipeToSubpath(mode),
       title: m.wizard.videoCreativeModes[mode].title,
@@ -547,6 +610,16 @@ export function PreVideoSetupPanel({
       title: m.wizard.videoCreativeModes.blockbuster.title,
       desc: m.wizard.videoCreativeModes.blockbuster.description,
     },
+    {
+      id: "vacuum_inflate",
+      title: m.wizard.videoCreativeModes["vacuum-inflate"].title,
+      desc: m.wizard.videoCreativeModes["vacuum-inflate"].description,
+    },
+    {
+      id: "creative_motion",
+      title: m.wizard.videoCreativeModes["creative-motion"].title,
+      desc: m.wizard.videoCreativeModes["creative-motion"].description,
+    },
     ...h3ShotModesForPromotion("concept").map((mode) => ({
       id: h3ShotRecipeToSubpath(mode),
       title: m.wizard.videoCreativeModes[mode].title,
@@ -565,6 +638,10 @@ export function PreVideoSetupPanel({
     ? pv.scenesReadyHint
     : isUgc
       ? pv.ugcHint
+        : isVacuumInflate
+        ? m.wizard.vacuumInflateHint
+        : isCreativeMotion
+        ? m.wizard.creativeMotionHint
         : isSocialDrip
         ? m.wizard.socialDripHint
         : isBlockbuster
@@ -710,6 +787,10 @@ export function PreVideoSetupPanel({
                   const selected = isConcept
                     ? opt.id === "social_drip"
                       ? isSocialDrip
+                      : opt.id === "vacuum_inflate"
+                        ? isVacuumInflate
+                        : opt.id === "creative_motion"
+                          ? isCreativeMotion
                       : opt.id === "motion_poster"
                         ? isMotionPoster
                         : opt.id === "blockbuster"
@@ -832,6 +913,140 @@ export function PreVideoSetupPanel({
                                   }
                                 >
                                   {m.wizard.macroSnapIntensity[level].desc}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : null}
+                    {h3ShotMode === "h3-sphere-mg" ? (
+                      <div className="mt-3 border-t border-violet-200/80 pt-3">
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-700">
+                          {m.wizard.h3SphereMgSchemeTitle}
+                        </p>
+                        <p className="mt-1 text-xs leading-relaxed text-violet-900/90">
+                          {m.wizard.h3SphereMgSchemeHint}
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          <button
+                            type="button"
+                            className={
+                              wizard.h3SphereMgSchemePick === "auto"
+                                ? "rounded-lg bg-violet-600 px-2.5 py-1.5 text-xs font-semibold text-white"
+                                : "rounded-lg border border-violet-200 bg-white px-2.5 py-1.5 text-xs font-medium text-violet-800 hover:bg-violet-50"
+                            }
+                            onClick={() => wizard.setH3SphereMgSchemePick("auto")}
+                          >
+                            {m.wizard.h3SphereMgSchemeAuto}
+                          </button>
+                          {H3_SPHERE_MG_SCHEME_IDS.map((id) => {
+                            const active = wizard.h3SphereMgSchemePick === id;
+                            return (
+                              <button
+                                key={id}
+                                type="button"
+                                title={m.wizard.h3SphereMgSchemes[id].desc}
+                                className={
+                                  active
+                                    ? "rounded-lg bg-violet-600 px-2.5 py-1.5 text-xs font-semibold text-white"
+                                    : "rounded-lg border border-violet-200 bg-white px-2.5 py-1.5 text-xs font-medium text-violet-800 hover:bg-violet-50"
+                                }
+                                onClick={() =>
+                                  wizard.setH3SphereMgSchemePick(
+                                    id as H3SphereMgSchemePick,
+                                  )
+                                }
+                              >
+                                {m.wizard.h3SphereMgSchemes[id].title}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : null}
+                    {h3ShotMode === "h3-showreel" ? (
+                      <div className="mt-3 border-t border-violet-200/80 pt-3">
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-700">
+                          {m.wizard.h3ShowreelSchemeTitle}
+                        </p>
+                        <p className="mt-1 text-xs leading-relaxed text-violet-900/90">
+                          {m.wizard.h3ShowreelSchemeHint}
+                        </p>
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          <button
+                            type="button"
+                            className={
+                              wizard.h3ShowreelSchemePick === "auto"
+                                ? "rounded-lg bg-violet-600 px-2.5 py-1.5 text-xs font-semibold text-white"
+                                : "rounded-lg border border-violet-200 bg-white px-2.5 py-1.5 text-xs font-medium text-violet-800 hover:bg-violet-50"
+                            }
+                            onClick={() => wizard.setH3ShowreelSchemePick("auto")}
+                          >
+                            {m.wizard.h3ShowreelSchemeAuto}
+                          </button>
+                          {H3_SHOWREEL_SCHEME_IDS.map((id) => {
+                            const active = wizard.h3ShowreelSchemePick === id;
+                            return (
+                              <button
+                                key={id}
+                                type="button"
+                                title={m.wizard.h3ShowreelSchemes[id].desc}
+                                className={
+                                  active
+                                    ? "rounded-lg bg-violet-600 px-2.5 py-1.5 text-xs font-semibold text-white"
+                                    : "rounded-lg border border-violet-200 bg-white px-2.5 py-1.5 text-xs font-medium text-violet-800 hover:bg-violet-50"
+                                }
+                                onClick={() =>
+                                  wizard.setH3ShowreelSchemePick(
+                                    id as H3ShowreelSchemePick,
+                                  )
+                                }
+                              >
+                                {m.wizard.h3ShowreelSchemes[id].title}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <p className="mt-3 text-[11px] font-semibold uppercase tracking-wide text-violet-700">
+                          {m.wizard.h3ShowreelAspectTitle}
+                        </p>
+                        <p className="mt-1 text-xs leading-relaxed text-violet-900/90">
+                          {m.wizard.h3ShowreelAspectHint}
+                        </p>
+                        <div
+                          className="mt-2 grid grid-cols-2 gap-1.5"
+                          role="radiogroup"
+                          aria-label={m.wizard.h3ShowreelAspectTitle}
+                        >
+                          {H3_SHOWREEL_ASPECTS.map((aspect) => {
+                            const active = wizard.h3ShowreelAspect === aspect;
+                            return (
+                              <button
+                                key={aspect}
+                                type="button"
+                                role="radio"
+                                aria-checked={active}
+                                onClick={() =>
+                                  wizard.setH3ShowreelAspect(aspect as H3ShowreelAspect)
+                                }
+                                className={
+                                  active
+                                    ? "rounded-lg bg-violet-600 px-2 py-2 text-center text-xs font-semibold text-white"
+                                    : "rounded-lg border border-violet-200 bg-white px-2 py-2 text-center text-xs font-medium text-violet-800 hover:bg-violet-50"
+                                }
+                              >
+                                <span className="block">
+                                  {m.wizard.h3ShowreelAspect[aspect].title}
+                                </span>
+                                <span
+                                  className={
+                                    active
+                                      ? "mt-0.5 block text-[10px] font-normal text-violet-100"
+                                      : "mt-0.5 block text-[10px] font-normal text-violet-600/80"
+                                  }
+                                >
+                                  {m.wizard.h3ShowreelAspect[aspect].desc}
                                 </span>
                               </button>
                             );
@@ -1193,6 +1408,59 @@ export function PreVideoSetupPanel({
               </section>
             ) : null}
 
+            {isCreativeMotion ? (
+              <section className="pv-card">
+                <div className="pv-card-title-row mb-2">
+                  <h3 className="pv-card-title">{m.wizard.creativeMotionSchemeTitle}</h3>
+                </div>
+                <p className="mb-3 text-xs text-slate-500">{m.wizard.creativeMotionSchemeHint}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold transition ${
+                      wizard.creativeMotionSchemePick === "auto"
+                        ? "border-violet-500 bg-violet-50 text-violet-900"
+                        : "border-slate-200 bg-white text-slate-600 hover:border-violet-300"
+                    }`}
+                    onClick={() => wizard.setCreativeMotionSchemePick("auto")}
+                  >
+                    {m.wizard.creativeMotionSchemeAuto}
+                  </button>
+                  {CREATIVE_MOTION_SCHEME_IDS.map((id) => {
+                    const selected = wizard.creativeMotionSchemePick === id;
+                    const title =
+                      m.wizard.creativeMotionSchemes[id]?.title ?? id;
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        title={m.wizard.creativeMotionSchemes[id]?.desc}
+                        className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold transition ${
+                          selected
+                            ? "border-violet-500 bg-violet-50 text-violet-900"
+                            : "border-slate-200 bg-white text-slate-600 hover:border-violet-300"
+                        }`}
+                        onClick={() => wizard.setCreativeMotionSchemePick(id)}
+                      >
+                        {title}
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            ) : null}
+
+            {isVacuumInflate ? (
+              <section className="pv-card">
+                <h3 className="pv-card-title">
+                  {m.wizard.videoCreativeModes["vacuum-inflate"].title}
+                </h3>
+                <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                  {m.wizard.vacuumInflateHint}
+                </p>
+              </section>
+            ) : null}
+
             {isSocialDrip ? (
               <section className="pv-card">
                 <div className="pv-card-title-row mb-2">
@@ -1290,7 +1558,9 @@ export function PreVideoSetupPanel({
                     </h3>
                     <p className="mt-0.5 text-xs text-slate-500">
                       {needsH3Reel && h3ShotMode
-                        ? m.wizard.h3ShotHeroHint[h3ShotMode]
+                        ? m.wizard.h3ShotReelHint[
+                            h3ShotMode as keyof typeof m.wizard.h3ShotReelHint
+                          ] ?? m.wizard.h3ShotHeroHint[h3ShotMode]
                         : isSceneReel
                           ? pv.referenceVideoHintConcept
                           : pv.referenceVideoHint}
@@ -1353,7 +1623,7 @@ export function PreVideoSetupPanel({
             {showProductPhoto ? (
               <section
                 className={`pv-card ${
-                  isH3Shot && photoRequired
+                  highlightH3Hero || (isH3Shot && photoRequired)
                     ? "border-violet-300 bg-violet-50/50 ring-1 ring-violet-200"
                     : ""
                 }`.trim()}
@@ -1370,18 +1640,26 @@ export function PreVideoSetupPanel({
                     <h3 className="pv-card-title">
                       {h3ShotMode === "neon-on-real"
                         ? pv.neonIdentityPhotoTitle
-                        : isBlockbuster
-                        ? m.wizard.blockbusterHeroTitle
-                        : isConcept
-                          ? pv.conceptPhotoTitle
-                          : pv.productPhotoTitle}
-                      {isH3Shot && photoRequired ? (
+                        : h3ShotMode === "food-bullet-time"
+                          ? m.wizard.h3ShotPhotoTitle["food-bullet-time"]
+                          : h3ShotMode === "h3-lifestyle"
+                            ? m.wizard.h3ShotPhotoTitle["h3-lifestyle"]
+                            : isH3Shot && isConcept
+                              ? m.wizard.h3ShotConceptHeroTitle
+                              : isBlockbuster
+                                ? m.wizard.blockbusterHeroTitle
+                                : isConcept
+                                  ? pv.conceptPhotoTitle
+                                  : pv.productPhotoTitle}
+                      {highlightH3Hero || (isH3Shot && photoRequired) ? (
                         <>
                           <span className="ml-1.5 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700">
                             {pv.requiredBadge}
                           </span>
                           <span className="ml-1.5 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700">
-                            {pv.inVideoBadge}
+                            {isConcept && !needsH3LifestyleStill
+                              ? pv.conceptLockWaysBadge
+                              : pv.inVideoBadge}
                           </span>
                         </>
                       ) : !photoRequired ? (
@@ -1834,18 +2112,57 @@ export function PreVideoSetupPanel({
                       ? m.microWizard.conceptNameStep.label
                       : m.microWizard.productNameStep.label,
                   },
-                  {
-                    ok: scenesReady
-                      ? wizard.storyboardScenes.length > 0
-                      : needsH3Reel
-                        ? Boolean(wizard.referenceAd && wizard.referenceIsVideo)
-                        : !photoRequired || Boolean(mainThumb || wizard.imageUrl),
-                    label: scenesReady
-                      ? m.wizard.imageReviewVisualSetStoryboard
-                      : needsH3Reel
-                        ? pv.referenceVideoTitle
-                        : m.wizard.videoKeyframeLabel,
-                  },
+                  ...(scenesReady
+                    ? [
+                        {
+                          ok: wizard.storyboardScenes.length > 0,
+                          label: m.wizard.imageReviewVisualSetStoryboard,
+                        },
+                      ]
+                    : [
+                        ...(needsH3Hero || photoRequired
+                          ? [
+                              {
+                                ok: needsH3LifestyleStill
+                                  ? Boolean(mainThumb || wizard.imageUrl)
+                                  : isConcept && isH3Shot
+                                    ? Boolean(
+                                        mainThumb ||
+                                          wizard.imageUrl ||
+                                          wizard.brandKit.logoUrl?.trim() ||
+                                          wizard.packagingPhoto,
+                                      )
+                                    : Boolean(mainThumb || wizard.imageUrl),
+                                label: needsH3LifestyleStill
+                                  ? h3ShotMode === "food-bullet-time"
+                                    ? m.wizard.h3ShotPhotoTitle["food-bullet-time"]
+                                    : m.wizard.h3ShotPhotoTitle["h3-lifestyle"]
+                                  : isH3Shot && isConcept
+                                    ? m.wizard.h3ShotConceptHeroTitle
+                                    : m.wizard.videoKeyframeLabel,
+                              },
+                            ]
+                          : !isH3Shot
+                            ? [
+                                {
+                                  ok:
+                                    !photoRequired ||
+                                    Boolean(mainThumb || wizard.imageUrl),
+                                  label: m.wizard.videoKeyframeLabel,
+                                },
+                              ]
+                            : []),
+                        ...(needsH3Reel
+                          ? [
+                              {
+                                ok: Boolean(
+                                  wizard.referenceAd && wizard.referenceIsVideo,
+                                ),
+                                label: pv.referenceVideoTitle,
+                              },
+                            ]
+                          : []),
+                      ]),
                   {
                     ok: !generateDisabled,
                     label: m.wizard.sidePanelReqReady,

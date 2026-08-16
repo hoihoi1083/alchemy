@@ -31,6 +31,15 @@ import {
   parseSocialDripMetaphorPick,
   type SocialDripPlan,
 } from "@/lib/social-drip";
+import {
+  buildVacuumInflateStillPrompt,
+} from "@/lib/vacuum-inflate";
+import {
+  buildCreativeMotionStillPrompt,
+  parseCreativeMotionSchemePick,
+  resolveCreativeMotionScheme,
+  type CreativeMotionSchemeId,
+} from "@/lib/creative-motion";
 import type { PromptMarket, SubjectFraming } from "@/lib/prompt-variables";
 import { defaultEditEndpoint, defaultTextEndpoint, sanitizeImageEndpoint } from "@/lib/image-endpoints";
 import { mirrorImageUrlToFalStorage } from "@/lib/fal-mirror-media";
@@ -468,12 +477,24 @@ export async function POST(request: Request) {
         .trim()
         .toLowerCase(),
     );
+    const vacuumInflateEarly = ["1", "true", "yes"].includes(
+      String(formData.get("vacuum_inflate") ?? "")
+        .trim()
+        .toLowerCase(),
+    );
+    const creativeMotionEarly = ["1", "true", "yes"].includes(
+      String(formData.get("creative_motion") ?? "")
+        .trim()
+        .toLowerCase(),
+    );
     if (
       !hasProduct &&
       !hasStyle &&
       !isConceptMode &&
       !(motionPosterEarly && startPlateUrlEarly) &&
-      !socialDripEarly
+      !socialDripEarly &&
+      !vacuumInflateEarly &&
+      !creativeMotionEarly
     ) {
       return NextResponse.json(
         {
@@ -600,6 +621,16 @@ export async function POST(request: Request) {
         .trim()
         .toLowerCase(),
     );
+    const vacuumInflate = ["1", "true", "yes"].includes(
+      String(formData.get("vacuum_inflate") ?? "")
+        .trim()
+        .toLowerCase(),
+    );
+    const creativeMotion = ["1", "true", "yes"].includes(
+      String(formData.get("creative_motion") ?? "")
+        .trim()
+        .toLowerCase(),
+    );
     const posterFrame =
       String(formData.get("motion_poster_frame") ?? "start").trim() === "end"
         ? "end"
@@ -608,6 +639,22 @@ export async function POST(request: Request) {
       String(formData.get("social_drip_frame") ?? "start").trim() === "end"
         ? "end"
         : "start";
+    const vacuumInflateFrame =
+      String(formData.get("vacuum_inflate_frame") ?? "start").trim() === "end"
+        ? "end"
+        : "start";
+    const creativeMotionFrame =
+      String(formData.get("creative_motion_frame") ?? "start").trim() === "end"
+        ? "end"
+        : "start";
+    let creativeMotionScheme: CreativeMotionSchemeId = "body-breathe";
+    if (creativeMotion) {
+      creativeMotionScheme = resolveCreativeMotionScheme({
+        pick: parseCreativeMotionSchemePick(formData.get("creative_motion_scheme")),
+        product: productName,
+        headline,
+      });
+    }
     const startPlateUrl = (formData.get("start_plate_url") as string | null)?.trim() || "";
     if (motionPoster) {
       vars.imageTextMode = posterFrame === "end" ? "integrated" : "textless";
@@ -640,6 +687,8 @@ export async function POST(request: Request) {
     const wantSinglePlan =
       !motionPoster &&
       !socialDrip &&
+      !vacuumInflate &&
+      !creativeMotion &&
       !clientPrompt &&
       (!imageOutputMode || imageOutputMode === "single" || imageOutputMode === "ab") &&
       shouldPlanSingleImageAd(promptMode, imageTextMode);
@@ -711,6 +760,22 @@ export async function POST(request: Request) {
         });
         imageUrls.splice(0, imageUrls.length, plate);
       }
+      if (
+        ((vacuumInflate && vacuumInflateFrame === "end") ||
+          (creativeMotion && creativeMotionFrame === "end")) &&
+        startPlateUrl
+      ) {
+        const plate = await mirrorImageUrlToFalStorage(startPlateUrl, {
+          clerkId: auth.user.userId,
+          refresh: true,
+        });
+        // Keep product ref if present; put start plate first for edit continuity.
+        if (imageUrls.length > 0) {
+          imageUrls.unshift(plate);
+        } else {
+          imageUrls.push(plate);
+        }
+      }
 
       // Social drip IG avatar: attach Brand kit logo when available (always for this path).
       let socialDripLogoImageIndex: number | undefined;
@@ -752,6 +817,27 @@ export async function POST(request: Request) {
             frame: socialDripFrame,
             brandLogoImageIndex: socialDripLogoImageIndex,
           })
+        : vacuumInflate
+        ? buildVacuumInflateStillPrompt({
+            product:
+              productName ||
+              headline ||
+              (promotionMode === "concept" ? "brand pouch" : "product pouch"),
+            conceptMode: promotionMode === "concept",
+            aspectRatio: aspectRatioRaw,
+            frame: vacuumInflateFrame,
+          })
+        : creativeMotion
+        ? buildCreativeMotionStillPrompt({
+            scheme: creativeMotionScheme,
+            product:
+              productName ||
+              headline ||
+              (promotionMode === "concept" ? "brand mark" : "the product"),
+            conceptMode: promotionMode === "concept",
+            aspectRatio: aspectRatioRaw,
+            frame: creativeMotionFrame,
+          })
         : motionPoster
         ? posterFrame === "end"
           ? buildMotionPosterEndStillPrompt(vars, {
@@ -784,7 +870,7 @@ export async function POST(request: Request) {
       // Honor explicit client prompts (e.g. storyboard scene regenerate) — do not replace with
       // a generic concept-cinematic rebuild that drops the scene action.
       const finalPrompt = [
-        socialDrip || motionPoster
+        socialDrip || motionPoster || vacuumInflate || creativeMotion
           ? builtPrompt
           : singleImagePlan
             ? builtPrompt

@@ -1,4 +1,8 @@
 import type { WorkflowMode } from "@/lib/workflow-mode";
+import {
+  h3ShotRecipeNeedsLifestyleStill,
+  isH3ShotRecipeMode,
+} from "@/lib/h3-shot-recipes";
 
 /** Step 1 — what the user wants to export. */
 export type OutputGoal = WorkflowMode;
@@ -13,6 +17,8 @@ export type VideoCreativeMode =
   | "motion-poster"
   | "social-drip"
   | "blockbuster"
+  | "vacuum-inflate"
+  | "creative-motion"
   | "ecom-orbit"
   | "object-lock"
   | "macro-snap"
@@ -21,6 +27,11 @@ export type VideoCreativeMode =
   | "imitate-ad"
   | "neon-on-real"
   | "food-bullet-time"
+  | "c4d-motion"
+  | "h3-showreel"
+  | "h3-sphere-mg"
+  | "h3-movie-title"
+  | "h3-lifestyle"
   | "reference-concept"
   | "image-to-video";
 
@@ -35,6 +46,8 @@ export const VIDEO_CREATIVE_MODES: VideoCreativeMode[] = [
   "motion-poster",
   "social-drip",
   "blockbuster",
+  "vacuum-inflate",
+  "creative-motion",
   "ecom-orbit",
   "object-lock",
   "macro-snap",
@@ -43,6 +56,11 @@ export const VIDEO_CREATIVE_MODES: VideoCreativeMode[] = [
   "imitate-ad",
   "neon-on-real",
   "food-bullet-time",
+  "c4d-motion",
+  "h3-showreel",
+  "h3-sphere-mg",
+  "h3-movie-title",
+  "h3-lifestyle",
   "reference-concept",
   "image-to-video",
 ];
@@ -50,6 +68,8 @@ export const VIDEO_CREATIVE_MODES: VideoCreativeMode[] = [
 const H3_RECIPE_PREVIEW_ALIAS = new Set<VideoCreativeMode>([
   "social-drip",
   "blockbuster",
+  "vacuum-inflate",
+  "creative-motion",
   "ecom-orbit",
   "object-lock",
   "macro-snap",
@@ -58,6 +78,11 @@ const H3_RECIPE_PREVIEW_ALIAS = new Set<VideoCreativeMode>([
   "imitate-ad",
   "neon-on-real",
   "food-bullet-time",
+  "c4d-motion",
+  "h3-showreel",
+  "h3-sphere-mg",
+  "h3-movie-title",
+  "h3-lifestyle",
 ]);
 
 export function videoModePreviewSrc(id: VideoCreativeMode): string {
@@ -74,6 +99,8 @@ export function isRecipeOwnedVideoMode(
     mode === "motion-poster" ||
     mode === "social-drip" ||
     mode === "blockbuster" ||
+    mode === "vacuum-inflate" ||
+    mode === "creative-motion" ||
     mode === "ecom-orbit" ||
     mode === "object-lock" ||
     mode === "macro-snap" ||
@@ -81,7 +108,12 @@ export function isRecipeOwnedVideoMode(
     mode === "beauty-mv" ||
     mode === "imitate-ad" ||
     mode === "neon-on-real" ||
-    mode === "food-bullet-time"
+    mode === "food-bullet-time" ||
+    mode === "c4d-motion" ||
+    mode === "h3-showreel" ||
+    mode === "h3-sphere-mg" ||
+    mode === "h3-movie-title" ||
+    mode === "h3-lifestyle"
   );
 }
 
@@ -118,7 +150,22 @@ const H3_SHOT_PICKER_MODES: VideoCreativeMode[] = [
   "imitate-ad",
   "neon-on-real",
   "food-bullet-time",
+  "c4d-motion",
+  "h3-showreel",
+  "h3-sphere-mg",
+  "h3-movie-title",
+  "h3-lifestyle",
 ];
+
+function h3ShotPickerModesForPromotion(
+  promotionMode: import("@/lib/promotion-mode").PromotionMode,
+): VideoCreativeMode[] {
+  if (promotionMode !== "concept") return [...H3_SHOT_PICKER_MODES];
+  return H3_SHOT_PICKER_MODES.filter(
+    (mode) =>
+      !isH3ShotRecipeMode(mode) || !h3ShotRecipeNeedsLifestyleStill(mode),
+  );
+}
 
 export function videoModesForGoal(goal: OutputGoal): VideoCreativeMode[] {
   if (goal === "combined") {
@@ -126,6 +173,8 @@ export function videoModesForGoal(goal: OutputGoal): VideoCreativeMode[] {
       "image-to-video",
       "motion-poster",
       "blockbuster",
+      "vacuum-inflate",
+      "creative-motion",
       ...H3_SHOT_PICKER_MODES,
       "social-drip",
       "reference-concept",
@@ -137,6 +186,8 @@ export function videoModesForGoal(goal: OutputGoal): VideoCreativeMode[] {
       "product-assistant",
       "motion-poster",
       "blockbuster",
+      "vacuum-inflate",
+      "creative-motion",
       ...H3_SHOT_PICKER_MODES,
       "social-drip",
       "product-promo",
@@ -146,19 +197,22 @@ export function videoModesForGoal(goal: OutputGoal): VideoCreativeMode[] {
   return [];
 }
 
-/** Concept promos skip product-photo assistant; physical goods keep all modes. */
+/** Concept promos skip product-photo assistant; hide lifestyle-weak H3 paths. */
 export function videoModesForStudio(
   promotionMode: import("@/lib/promotion-mode").PromotionMode,
   goal: OutputGoal,
 ): VideoCreativeMode[] {
   const modes = videoModesForGoal(goal);
   if (promotionMode !== "concept") return modes;
+  const h3Modes = h3ShotPickerModesForPromotion("concept");
   if (goal === "video-only") {
     return [
       "product-promo",
       "motion-poster",
       "blockbuster",
-      ...H3_SHOT_PICKER_MODES,
+      "vacuum-inflate",
+      "creative-motion",
+      ...h3Modes,
       "social-drip",
       "reference-concept",
     ];
@@ -168,7 +222,9 @@ export function videoModesForStudio(
       "image-to-video",
       "motion-poster",
       "blockbuster",
-      ...H3_SHOT_PICKER_MODES,
+      "vacuum-inflate",
+      "creative-motion",
+      ...h3Modes,
       "social-drip",
       "product-promo",
       "reference-concept",

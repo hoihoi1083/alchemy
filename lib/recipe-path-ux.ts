@@ -2,14 +2,14 @@
  * Path UX gates + briefing IDs for H3 shot recipes and locked image posters
  * (paths shipped in the recent H3 / poster pass).
  *
- * Concept policy: almost every path can run if the user supplies a lockable
- * subject (product, logo, mascot, face, food photo, or reel). We do not hide
- * paths — we state what to upload in Need / Attention. Exception: parts-poster
- * (exploded SKU) stays physical-only.
+ * Concept policy: offer paths that lock from logo / mascot / brand still / reel.
+ * Hide lifestyle-still paths (food-bullet-time, h3-lifestyle) — they need a real
+ * person+subject photo and are weak with logo-only. parts-poster stays physical-only.
  */
 
 import {
   H3_SHOT_RECIPE_MODES,
+  h3ShotRecipeNeedsLifestyleStill,
   h3ShotRecipeNeedsReel,
   isH3ShotRecipeMode,
   type H3ShotRecipeMode,
@@ -60,10 +60,13 @@ export function isRecipePathUxMode(
 
 /** H3 modes offered in the wizard / landing for this promotion mode. */
 export function h3ShotModesForPromotion(
-  _promotionMode: PromotionMode,
+  promotionMode: PromotionMode,
 ): readonly H3ShotRecipeMode[] {
-  // Concept can use logo/mascot/face/food as the lock — show the full set.
-  return H3_SHOT_RECIPE_MODES;
+  if (promotionMode === "physical") return H3_SHOT_RECIPE_MODES;
+  // Concept: hide lifestyle-still paths (need person+subject photo; logo is weak).
+  return H3_SHOT_RECIPE_MODES.filter(
+    (mode) => !h3ShotRecipeNeedsLifestyleStill(mode),
+  );
 }
 
 export function isH3ShotAllowedForPromotion(
@@ -89,14 +92,24 @@ export type H3ShotGenerateGateInput = {
   promotionMode: PromotionMode;
   hasProductPhoto: boolean;
   hasReferenceVideo: boolean;
-  /** Concept-only: brand logo URL, packaging, or Nano Banana still already on imageUrl */
+  /**
+   * Concept visual lock: brand logo URL, packaging photo, or Nano Banana still
+   * already on imageUrl. Do not pass text-only brief/headline here.
+   */
   hasConceptHero: boolean;
+  /**
+   * Lifestyle paths: uploaded photo or generated still (imageUrl).
+   * Logo-only does not count.
+   */
+  hasLifestyleStill?: boolean;
 };
 
 /**
  * Whether Generate may unlock for an H3 recipe.
- * Physical: uploaded product photo required (+ reel for imitate/neon).
+ * Physical: uploaded product photo required (+ reel for imitate/neon/showreel).
  * Concept: logo / packaging / still hero OK (+ reel when needed).
+ * Lifestyle (food-bullet-time / h3-lifestyle): need person+subject still
+ * (upload or Nano Banana) — logo alone is not enough on product or concept.
  * neon-on-real (both): real MP4 is enough; logo/mascot still is optional identity.
  */
 export function h3ShotRecipeInputsReady(input: H3ShotGenerateGateInput): boolean {
@@ -105,6 +118,9 @@ export function h3ShotRecipeInputsReady(input: H3ShotGenerateGateInput): boolean
   if (h3ShotRecipeNeedsReel(input.mode) && !input.hasReferenceVideo) return false;
   // neon-on-real: MP4 is the scene; still/logo/mascot optional on product + concept.
   if (input.mode === "neon-on-real") return true;
+  if (h3ShotRecipeNeedsLifestyleStill(input.mode)) {
+    return Boolean(input.hasProductPhoto || input.hasLifestyleStill);
+  }
   if (input.promotionMode === "physical") {
     return input.hasProductPhoto;
   }

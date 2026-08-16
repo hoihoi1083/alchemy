@@ -232,7 +232,12 @@ function evalWhen(
     return ctx.videoSubpath === "reference_reel";
   }
   if (norm === 'videoSubpath === "motion_poster"') {
-    return ctx.videoSubpath === "motion_poster" || ctx.videoSubpath === "social_drip";
+    return (
+      ctx.videoSubpath === "motion_poster" ||
+      ctx.videoSubpath === "social_drip" ||
+      ctx.videoSubpath === "vacuum_inflate" ||
+      ctx.videoSubpath === "creative_motion"
+    );
   }
   if (norm === 'videoSubpath === "product_promo"') {
     return ctx.videoSubpath === "product_promo";
@@ -324,8 +329,12 @@ export function resolvePathId(
     if (
       ctx.videoSubpath === "motion_poster" ||
       ctx.videoSubpath === "social_drip" ||
+      ctx.videoSubpath === "vacuum_inflate" ||
+      ctx.videoSubpath === "creative_motion" ||
       state.videoCreativeMode === "motion-poster" ||
-      state.videoCreativeMode === "social-drip"
+      state.videoCreativeMode === "social-drip" ||
+      state.videoCreativeMode === "vacuum-inflate" ||
+      state.videoCreativeMode === "creative-motion"
     ) {
       return "concept_combined_motion_poster";
     }
@@ -348,8 +357,12 @@ export function resolvePathId(
     if (
       ctx.videoSubpath === "motion_poster" ||
       ctx.videoSubpath === "social_drip" ||
+      ctx.videoSubpath === "vacuum_inflate" ||
+      ctx.videoSubpath === "creative_motion" ||
       state.videoCreativeMode === "motion-poster" ||
-      state.videoCreativeMode === "social-drip"
+      state.videoCreativeMode === "social-drip" ||
+      state.videoCreativeMode === "vacuum-inflate" ||
+      state.videoCreativeMode === "creative-motion"
     ) {
       return "product_combined_motion_poster";
     }
@@ -842,7 +855,9 @@ export function canProceedMicroStep(
       Boolean(subpathToH3ShotRecipe(ctx.videoSubpath)) ||
       ctx.videoSubpath === "blockbuster" ||
       ctx.videoSubpath === "motion_poster" ||
-      ctx.videoSubpath === "social_drip";
+      ctx.videoSubpath === "social_drip" ||
+      ctx.videoSubpath === "vacuum_inflate" ||
+      ctx.videoSubpath === "creative_motion";
     // Combined storyboard: scenes already generated — still require 九宫格 approve.
     if (
       ctx.workflowMode === "combined" &&
