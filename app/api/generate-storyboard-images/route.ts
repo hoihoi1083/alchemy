@@ -123,6 +123,8 @@ export async function POST(request: Request) {
   const styleRef = formData.get("style_reference_image");
   const hasProduct = reference instanceof File && reference.size > 0;
   const hasStyle = styleRef instanceof File && styleRef.size > 0;
+  const projectIdRaw = String(formData.get("project_id") ?? "").trim();
+  const projectId = projectIdRaw || null;
   const promotionModeRaw = String(formData.get("promotion_mode") ?? "").trim();
   const promotionMode = isPromotionMode(promotionModeRaw) ? promotionModeRaw : "physical";
   const planRawEarly = (formData.get("storyboard_plan") as string | null)?.trim();
@@ -573,6 +575,7 @@ export async function POST(request: Request) {
       kind: "image",
       sourceUrls: falUrls,
       fallbackUrls: falUrls,
+      projectId,
       prompt: useLogoModeA ? "storyboard-mode-a" : useBrandLogo ? "storyboard-logo-stamp" : "storyboard",
     });
     const durableScenes = scenes.map((scene, index) => ({

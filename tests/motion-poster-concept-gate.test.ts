@@ -48,7 +48,10 @@ describe("concept motion-poster unblock + recipe lock", () => {
     assert.match(wizard, /motionPosterBuildingStill/);
     assert.match(wizard, /motionPosterBuildingEnd/);
     assert.match(wizard, /motionPosterCanAutoStill/);
-    assert.match(wizard, /if \(videoCreativeMode === "motion-poster"\) return;/);
+    assert.match(
+      wizard,
+      /if \(videoCreativeMode === "motion-poster"\) \{\s*setImageVisionReview\(null\);\s*return;/,
+    );
     assert.match(
       wizard,
       /!conceptTextVideoReady &&\s*\n\s*!motionPosterCanAutoStill &&/,
@@ -61,8 +64,13 @@ describe("concept motion-poster unblock + recipe lock", () => {
       wizard.indexOf("function applyGeneratedStoryboard"),
     );
     assert.doesNotMatch(applyBlock, /refreshImagePostflight/);
-    const skips = [...wizard.matchAll(/videoCreativeMode !== "motion-poster"/g)];
-    assert.ok(skips.length >= 4, "unblock must skip plan + generate + disabled gates");
+    const recipeOwnedSkips = [
+      ...wizard.matchAll(/!isRecipeOwnedVideoMode\(videoCreativeMode\)/g),
+    ];
+    assert.ok(
+      recipeOwnedSkips.length >= 4,
+      "recipe-owned modes skip plan + generate + disabled gates",
+    );
   });
 
   it("generate-image ignores client prompt and uses textless system prompt for posters", () => {

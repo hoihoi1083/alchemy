@@ -38,7 +38,30 @@ export const CONCEPT_IMAGE_POSTER_STYLE_IDS = [
 export type ConceptImagePosterStyleId =
   (typeof CONCEPT_IMAGE_POSTER_STYLE_IDS)[number];
 
-export type RecipePathUxMode = H3ShotRecipeMode | ImagePosterUxStyleId;
+/** Morph / gag recipes that must lock the uploaded SKU — text-only is not enough. */
+export const IDENTITY_VIDEO_UX_MODES = [
+  "vacuum-inflate",
+  "creative-motion",
+  "hand-throw-scene",
+  "product-explode",
+] as const;
+
+export type IdentityVideoUxMode = (typeof IDENTITY_VIDEO_UX_MODES)[number];
+
+/** Non-H3 video recipes that get Need / Attention / Output cards. */
+export const VIDEO_RECIPE_UX_MODES = [
+  ...IDENTITY_VIDEO_UX_MODES,
+  "motion-poster",
+  "social-drip",
+  "blockbuster",
+] as const;
+
+export type VideoRecipeUxMode = (typeof VIDEO_RECIPE_UX_MODES)[number];
+
+export type RecipePathUxMode =
+  | H3ShotRecipeMode
+  | ImagePosterUxStyleId
+  | VideoRecipeUxMode;
 
 export function isImagePosterUxStyle(
   id: string | null | undefined,
@@ -52,10 +75,24 @@ export function isConceptImagePosterStyle(
   return (CONCEPT_IMAGE_POSTER_STYLE_IDS as readonly string[]).includes(id ?? "");
 }
 
+export function isIdentityVideoRecipeMode(
+  id: string | null | undefined,
+): id is IdentityVideoUxMode {
+  return (IDENTITY_VIDEO_UX_MODES as readonly string[]).includes(id ?? "");
+}
+
+export function isVideoRecipeUxMode(
+  id: string | null | undefined,
+): id is VideoRecipeUxMode {
+  return (VIDEO_RECIPE_UX_MODES as readonly string[]).includes(id ?? "");
+}
+
 export function isRecipePathUxMode(
   id: string | null | undefined,
 ): id is RecipePathUxMode {
-  return isH3ShotRecipeMode(id) || isImagePosterUxStyle(id);
+  return (
+    isH3ShotRecipeMode(id) || isImagePosterUxStyle(id) || isVideoRecipeUxMode(id)
+  );
 }
 
 /** H3 modes offered in the wizard / landing for this promotion mode. */
@@ -81,6 +118,7 @@ export function isH3ShotAllowedForPromotion(
 export function requiresProductPhotoPhysical(
   mode: RecipePathUxMode | string | null | undefined,
 ): boolean {
+  if (isIdentityVideoRecipeMode(mode)) return true;
   if (isH3ShotRecipeMode(mode)) return true;
   if (isImagePosterUxStyle(mode)) return true;
   if (mode && isLockedSinglePosterStyle(mode as VisualStyleId)) return true;
@@ -125,6 +163,20 @@ export function h3ShotRecipeInputsReady(input: H3ShotGenerateGateInput): boolean
     return input.hasProductPhoto;
   }
   return input.hasProductPhoto || input.hasConceptHero;
+}
+
+export type IdentityRecipeHeroInput = {
+  promotionMode: PromotionMode;
+  hasProductPhoto: boolean;
+  /** Logo / packaging / still / persistable preview — not text. */
+  hasConceptHero: boolean;
+};
+
+/** Vacuum / creative-motion / hand-throw / explode — never unlock from headline/topic alone. */
+export function identityRecipeHeroReady(input: IdentityRecipeHeroInput): boolean {
+  if (input.hasProductPhoto) return true;
+  if (input.promotionMode === "physical") return false;
+  return input.hasConceptHero;
 }
 
 export type RecipePathUxCopy = {

@@ -443,6 +443,9 @@ export const zhCn = {
       conceptGroup: "概念／服务",
       tvcPaidHint:
         "12 秒 单镜出片 需要付费方案（约 1140 token）。免费额度可以出静帧；单镜额度不够就改用 拼接后备 拼接。",
+      needPrefix: "需要",
+      tvcNeedPhysical: "产品图 + 产品名称",
+      tvcNeedConcept: "标题或概念 idea",
       items: {
         "motion-poster": {
           title: "动态海报",
@@ -2689,6 +2692,41 @@ export const zhCn = {
 				attention: ["极简透亮 3D — 少量文字", "不要杂乱生活场景"],
 				output: ["一张果冻／玻璃 3D 海报静图"],
 			},
+			"vacuum-inflate": {
+				need: ["产品图（概念可用 Logo／吉祥物静图）", "清晰主体 — 单靠文字／主题不够"],
+				attention: ["你的产品是主角 — 包膜充气，不会掉包", "手机就是手机，不会变成虚构袋装"],
+				output: ["约 2 张静图 + 4 秒真空→充气过渡"],
+			},
+			"creative-motion": {
+				need: ["产品图（概念可用 Logo／吉祥物静图）", "选方案卡（或自动）"],
+				attention: ["身份锁定上传图 — 噱头服务你的产品", "首尾静图再短过渡 — 不是分镜"],
+				output: ["约 2 张静图 + 4 秒方案过渡"],
+			},
+			"hand-throw-scene": {
+				need: ["产品／地标图（概念可用 Logo／吉祥物静图）", "掌心微缩要见到轮廓"],
+				attention: ["从掌心到实景结尾都是同一个主体", "约 6 秒抛出过渡 — 不是多分镜拼接"],
+				output: ["约 2 张静图 + 6 秒抛出→实景过渡"],
+			},
+			"product-explode": {
+				need: ["产品图（概念可用 Logo／吉祥物静图）", "棚拍可读的主体（不要太细 crop）"],
+				attention: ["风格化悬浮零件 — 不是精准 CAD 内部", "完整主角 → 拆解静图 → 短拆解片"],
+				output: ["约 2 张静图 + 4 秒风格化拆解过渡"],
+			},
+			"motion-poster": {
+				need: ["产品图（产品）— 或 Logo／主题 + 可选静图（概念）", "结尾海报要用的标题"],
+				attention: ["两张设计静图：无字开头 → 有字结尾", "产品和字一起过渡 — 不是分镜"],
+				output: ["约 2 张静图 + 1 段短过渡"],
+			},
+			"social-drip": {
+				need: ["产品图（产品）— 或主题／静图（概念）", "穿越隐喻（或自动）"],
+				attention: ["三分屏 meme 排版 — 不是写实生活广告", "不用参考 MP4 — 这个配方自己定 layout"],
+				output: ["首尾静图 + 短过渡"],
+			},
+			blockbuster: {
+				need: ["产品主图（概念可用 Logo／吉祥物静图）", "包装／品牌砖 + 可选场景板"],
+				attention: ["一镜物流入场 — 不是分镜拼接", "箱子之后才出你的主角 — 身份锁定"],
+				output: ["约 9 秒单镜入场"],
+			},
 		},
 		h3ShotGenerateStillBusy: {
 			"ecom-orbit": "AI 产品图…",
@@ -2738,25 +2776,25 @@ socialDripHint:
 		vacuumInflateBuildingStill: "第 1/3 步：瘪袋开头静图…",
 		vacuumInflateBuildingEnd: "第 2/3 步：充气结尾静图…",
 		vacuumInflateAnimatingCard: "第 3/3 步：充气过渡中…",
-		vacuumInflateNeedKeyframe: "请先上传产品图（概念可用 Logo／吉祥物或主题）。",
+		vacuumInflateNeedKeyframe: "请先上传产品图（概念用 Logo／吉祥物静图 — 单靠文字不够）。",
 		creativeMotionHint:
 			"产品创意动效：选方案卡，自动生成首尾帧，再 约 4 秒视频。",
 		creativeMotionBuildingStill: "第 1/3 步：创意动效开头静图…",
 		creativeMotionBuildingEnd: "第 2/3 步：创意动效结尾静图…",
 		creativeMotionAnimatingCard: "第 3/3 步：方案过渡中…",
-		creativeMotionNeedKeyframe: "请先上传产品图（概念可用 Logo／吉祥物或主题）。",
+		creativeMotionNeedKeyframe: "请先上传产品图（概念用 Logo／吉祥物静图 — 单靠文字不够）。",
 		handThrowHint:
 			"手抛万物变实景：AI 生成掌心+微缩开头与真实场景结尾，再由约 6 秒视频过渡。最好有清晰产品／地标图。",
 		handThrowBuildingStill: "第 1/3 步：掌心微缩开头静图…",
 		handThrowBuildingEnd: "第 2/3 步：真实场景结尾静图…",
 		handThrowAnimatingCard: "第 3/3 步：抛出→实景过渡中…",
-		handThrowNeedKeyframe: "请先上传产品图（概念可用 Logo／吉祥物或主题）。",
+		handThrowNeedKeyframe: "请先上传产品图（概念用 Logo／吉祥物静图 — 单靠文字不够）。",
 		productExplodeHint:
 			"风格化产品拆解：完整棚拍 → 悬浮零件静图 → 约 4 秒柔和拆解。零件是发明式点缀 — 不是精准 CAD 内部。",
 		productExplodeBuildingStill: "第 1/3 步：完整产品棚拍静图…",
 		productExplodeBuildingEnd: "第 2/3 步：悬浮零件拆解静图…",
 		productExplodeAnimatingCard: "第 3/3 步：拆解过渡中…",
-		productExplodeNeedKeyframe: "请先上传产品图（概念可用 Logo／吉祥物或主题）。",
+		productExplodeNeedKeyframe: "请先上传产品图（概念用 Logo／吉祥物静图 — 单靠文字不够）。",
 		creativeMotionSchemeTitle: "方案卡",
 		creativeMotionSchemeHint:
 			"同一套首尾帧过渡，不同创意。自动会选合适的——再生成试另一种。",
@@ -3335,7 +3373,7 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
     referenceClipLibraryHint: "按一下用作 @Video1 — 或者下面自己 upload MP4。",
     referenceClipsMissing:
       "可选内置运镜 sample 未安装。用研究片或下面自己 upload 参考 MP4 即可（这才是主路径）。",
-    videoGenerateDisabledHint: "请先喺「关键图」上传产品相，或返回步骤 2 生成／确认图片。",
+    videoGenerateDisabledHint: "请先在「关键图」上传产品照，或返回步骤 2 生成／确认图片。",
     referenceClips: {
       "product-push-in": "慢推近",
       "gentle-orbit": "轻微环绕",
@@ -4628,6 +4666,7 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
       image_busy: "请等图片生成完成。",
       image_not_ready: "请等生成图片显示。",
       need_storyboard_approve: "请先确认分镜静帧（九宫格）再继续做视频。",
+      need_visual_lock: "请上传产品图、Logo 或吉祥物静图 — 单靠文字／主题不够。",
       video_busy: "请等视频生成完成。",
       video_not_ready: "视频未完成 — 请等生成，或返回再试。",
       plan_video_busy: "请等 AI 动态方案写完。",

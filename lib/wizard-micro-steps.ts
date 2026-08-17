@@ -31,6 +31,7 @@ import {
   subpathToH3ShotRecipe,
 } from "@/lib/h3-shot-recipes";
 import { isRecipeOwnedVideoMode } from "@/lib/creative-workflow";
+import { isIdentityVideoRecipeMode } from "@/lib/recipe-path-ux";
 
 type GraphStep = {
   id: string;
@@ -48,6 +49,9 @@ export type WizardMicroStepState = {
   imageOutputMode: ImageOutputMode;
   imageRefPhoto: File | null;
   productPhoto: File | null;
+  /** Hydrated preview URL counts as a photo lock even before File rematerializes. */
+  hasProductPhotoLock?: boolean;
+  hasConceptHeroLock?: boolean;
   referenceAd: File | null;
   referenceIsVideo: boolean;
   product: string;
@@ -791,6 +795,23 @@ export function isWaitMicroStep(id: MicroStepId): boolean {
   return WAIT_AUTO_ADVANCE.has(id);
 }
 
+function photoLock(state: WizardMicroStepState): boolean {
+  return state.hasProductPhotoLock ?? Boolean(state.productPhoto);
+}
+
+function conceptHeroLock(state: WizardMicroStepState): boolean {
+  return state.hasConceptHeroLock ?? Boolean(state.imageUrl);
+}
+
+function identitySubpath(sub: string | undefined): boolean {
+  return (
+    sub === "vacuum_inflate" ||
+    sub === "creative_motion" ||
+    sub === "hand_throw_scene" ||
+    sub === "product_explode"
+  );
+}
+
 export function canProceedMicroStep(
   id: MicroStepId,
   ctx: MicroWizardContext,
@@ -837,7 +858,7 @@ export function canProceedMicroStep(
   if (id === "identity.product_name" && !state.product.trim()) return "need_product_name";
   if (id === "identity.concept" && !state.conceptIdea.trim()) return "need_concept";
   if (id === "identity.concept_topic" && !state.conceptIdea.trim()) return "need_concept_topic";
-  if (id === "asset.product_photo" && ctx.promotionMode === "physical" && !state.productPhoto) {
+  if (id === "asset.product_photo" && ctx.promotionMode === "physical" && !photoLock(state)) {
     return "need_product_photo";
   }
   if (id === "setup.pre_generate") {
@@ -855,7 +876,7 @@ export function canProceedMicroStep(
     ) {
       return "reference_analyzing";
     }
-    if (ctx.promotionMode === "physical" && !state.productPhoto) {
+    if (ctx.promotionMode === "physical" && !photoLock(state)) {
       return "need_product_photo";
     }
     // Hook is required before generate — warn on setup, not on the wait screen.
@@ -910,10 +931,20 @@ export function canProceedMicroStep(
     if (
       ctx.promotionMode === "physical" &&
       sub !== "ugc_presenter" &&
-      !state.productPhoto &&
+      !photoLock(state) &&
       !h3AutoStill
     ) {
       return "need_product_photo";
+    }
+    const identityRecipe =
+      isIdentityVideoRecipeMode(state.videoCreativeMode) || identitySubpath(sub);
+    if (
+      identityRecipe &&
+      ctx.promotionMode === "concept" &&
+      !photoLock(state) &&
+      !conceptHeroLock(state)
+    ) {
+      return "need_visual_lock";
     }
     if (
       !isRecipeOwnedVideoMode(state.videoCreativeMode) &&

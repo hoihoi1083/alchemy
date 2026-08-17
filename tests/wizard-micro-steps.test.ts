@@ -576,6 +576,48 @@ describe("wizard v2 parity audit", () => {
     );
   });
 
+  it("concept vacuum-inflate requires a visual lock, not topic text", () => {
+    const ctx: MicroWizardContext = {
+      promotionMode: "concept",
+      workflowMode: "video-only",
+      intakePath: "direct",
+      videoSubpath: "vacuum_inflate",
+    };
+    assert.equal(
+      canProceedMicroStep(
+        "setup.pre_video",
+        ctx,
+        baseState({
+          workflowMode: "video-only",
+          promotionMode: "concept",
+          videoCreativeMode: "vacuum-inflate",
+          productPhoto: null,
+          hasProductPhotoLock: false,
+          hasConceptHeroLock: false,
+          conceptIdea: "周末瑜伽班",
+          headline: "放鬆",
+        }),
+      ),
+      "need_visual_lock",
+    );
+    assert.equal(
+      canProceedMicroStep(
+        "setup.pre_video",
+        ctx,
+        baseState({
+          workflowMode: "video-only",
+          promotionMode: "concept",
+          videoCreativeMode: "vacuum-inflate",
+          productPhoto: null,
+          hasProductPhotoLock: false,
+          hasConceptHeroLock: true,
+          conceptIdea: "周末瑜伽班",
+        }),
+      ),
+      null,
+    );
+  });
+
   it("concept video direct creative fuses into setup.pre_video", () => {
     const ctx: MicroWizardContext = {
       promotionMode: "concept",
@@ -1398,7 +1440,7 @@ describe("wizard v2 parity audit", () => {
     const wizard = fs.readFileSync("hooks/useStudioWizard.ts", "utf8");
     assert.match(
       wizard,
-      /promotionMode === "physical" &&\s*\n\s*videoCreativeMode === "reference-concept" &&\s*\n\s*!productPhoto/,
+      /promotionMode === "physical" &&\s*\n\s*videoCreativeMode === "reference-concept" &&\s*\n\s*!hasProductPhotoLock/,
     );
   });
 

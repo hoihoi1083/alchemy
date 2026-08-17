@@ -7,8 +7,13 @@ import { LandingFloatingCta } from "@/components/landing/LandingFloatingCta";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { useLocale } from "@/components/LocaleProvider";
 import { downloadMediaUrl } from "@/lib/download-media";
+import {
+  isPromotionMode,
+  storePromotionMode,
+} from "@/lib/promotion-mode";
+import { ACTIVE_PROJECT_STORAGE_KEY } from "@/lib/wizard-project-snapshot";
 
-const ACTIVE_PROJECT_KEY = "alchemy-active-project-id";
+const ACTIVE_PROJECT_KEY = ACTIVE_PROJECT_STORAGE_KEY;
 
 type ProjectRow = {
   id: string;
@@ -236,8 +241,13 @@ export function LibraryPageClient() {
     void load();
   }, [isLoaded, isSignedIn, load]);
 
-  function openInStudio(projectId: string) {
+  function openInStudio(projectId: string, mode: string) {
     window.localStorage.setItem(ACTIVE_PROJECT_KEY, projectId);
+    if (isPromotionMode(mode)) {
+      storePromotionMode(mode);
+      window.location.href = `/studio?mode=${mode}`;
+      return;
+    }
     window.location.href = "/studio";
   }
 
@@ -449,7 +459,7 @@ export function LibraryPageClient() {
                     <div className="mt-auto flex flex-wrap gap-2">
                       <button
                         type="button"
-                        onClick={() => openInStudio(p.id)}
+                        onClick={() => openInStudio(p.id, p.promotionMode)}
                         className="rounded-full bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800"
                       >
                         {L.openStudio}

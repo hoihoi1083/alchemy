@@ -658,6 +658,9 @@ export const en = {
 			conceptGroup: "Concept / service",
 			tvcPaidHint:
 				"12s single-clip video needs a paid plan (~1140 tokens). Free grant can cover stills + stitched fallback if single-clip does not fit.",
+			needPrefix: "Need",
+			tvcNeedPhysical: "Product photo + product name",
+			tvcNeedConcept: "Headline or concept idea",
 			items: {
 				"motion-poster": {
 					title: "Motion poster",
@@ -706,7 +709,7 @@ export const en = {
 				"product-hand-throw-scene-6s": {
 					title: "Hand throw → real scene ~6s",
 					description:
-						"Palm + miniature start → real scenic end → ~6s throw morph (手抛万物变实景).",
+						"Palm + miniature start → real scenic end → ~6s throw morph.",
 					costHint: "~2 images + 6s video · product / landmark photo",
 				},
 				"product-product-explode-4s": {
@@ -2725,7 +2728,7 @@ export const en = {
 					"Start still (no type) + end still (with type) → Video morphs. Not a normal product I2V.",
 			},
 			"social-drip": {
-				title: "Social drip (三分屏)",
+				title: "Social drip (three-panel)",
 				description:
 					"Meme 3-band gag with a falling metaphor — not a lifestyle TVC. Check fit before generate.",
 			},
@@ -2737,17 +2740,17 @@ export const en = {
 			"vacuum-inflate": {
 				title: "Vacuum inflate",
 				description:
-					"Product stays visible: vacuum-tight wrap → inflated bubble → 4s morph (真空充气).",
+					"Product stays visible: vacuum-tight wrap → inflated bubble → 4s morph.",
 			},
 			"creative-motion": {
 				title: "Product creative motion",
 				description:
-					"Pick a scheme → auto start/end stills → 4s video gag (产品创意动效).",
+					"Pick a scheme → auto start/end stills → 4s video gag.",
 			},
 			"hand-throw-scene": {
 				title: "Hand throw → real scene",
 				description:
-					"Palm + miniature → real scenic end frame → ~6s throw morph (手抛万物变实景).",
+					"Palm + miniature → real scenic end frame → ~6s throw morph.",
 			},
 			"product-explode": {
 				title: "Product explode (stylized)",
@@ -3256,6 +3259,83 @@ export const en = {
 				],
 				output: ["One jelly-type poster: real subject + jelly words"],
 			},
+			"vacuum-inflate": {
+				need: [
+					"Product photo — or logo / mascot still (concept)",
+					"Clear hero SKU — text/topic alone is not enough",
+				],
+				attention: [
+					"Your product stays the hero — we wrap it, we don’t swap it",
+					"Phones stay phones; no fake pouch or invented label",
+				],
+				output: ["~2 stills + 4s vacuum-wrap → inflate morph"],
+			},
+			"creative-motion": {
+				need: [
+					"Product photo — or logo / mascot still (concept)",
+					"Pick a scheme card (or Auto)",
+				],
+				attention: [
+					"Identity lock from the upload — gag serves YOUR product",
+					"Start/end stills then a short morph — not a storyboard",
+				],
+				output: ["~2 stills + 4s scheme morph"],
+			},
+			"hand-throw-scene": {
+				need: [
+					"Product / landmark photo — or logo / mascot still (concept)",
+					"Clear silhouette for the palm miniature",
+				],
+				attention: [
+					"Same subject from palm to scenic end",
+					"Throw morph ~6s — not a multi-scene stitch",
+				],
+				output: ["~2 stills + 6s throw → real-scene morph"],
+			},
+			"product-explode": {
+				need: [
+					"Product photo — or logo / mascot still (concept)",
+					"Studio-readable hero (not a tiny crop)",
+				],
+				attention: [
+					"Stylized floating parts — not accurate CAD internals",
+					"Intact hero → explode still → short teardown",
+				],
+				output: ["~2 stills + 4s stylized explode morph"],
+			},
+			"motion-poster": {
+				need: [
+					"Product photo (product) — or logo/topic + optional still (concept)",
+					"Headline for the typed end poster",
+				],
+				attention: [
+					"Two designed stills: textless start → typed end",
+					"Video morphs product + words together — not a storyboard",
+				],
+				output: ["~2 stills + 1 short morph clip"],
+			},
+			"social-drip": {
+				need: [
+					"Product photo (product) — or topic / still (concept)",
+					"Crossing metaphor (or Auto)",
+				],
+				attention: [
+					"Three-panel meme layout — not a photoreal lifestyle ad",
+					"Reference MP4 is off — this recipe owns the layout",
+				],
+				output: ["Start + end stills + short morph"],
+			},
+			blockbuster: {
+				need: [
+					"Hero product photo — or logo / mascot still (concept)",
+					"Pack / brand tiles (boxes) + optional scene plate",
+				],
+				attention: [
+					"One-take logistics entrance — not a storyboard stitch",
+					"Your hero pops after the boxes — identity stays locked",
+				],
+				output: ["~9s single-clip entrance"],
+			},
 		},
 		h3ShotGenerateStillBusy: {
 			"ecom-orbit": "Generating packshot…",
@@ -3289,7 +3369,7 @@ export const en = {
 		},
 
 		socialDripHint:
-			"三分屏 meme: hero → fake IG bar → cute polished cartoon. Something falls across the bar. Not a photoreal lifestyle ad.",
+			"Three-panel meme: hero → fake IG bar → cute polished cartoon. Something falls across the bar. Not a photoreal lifestyle ad.",
 		socialDripPlanningMetaphor: "Planning crossing metaphor…",
 		socialDripBuildingStill: "Step 1/3: social-drip start still…",
 		socialDripBuildingEnd: "Step 2/3: social-drip end still…",
@@ -3308,28 +3388,28 @@ export const en = {
 		vacuumInflateBuildingEnd: "Step 2/3: inflated end still…",
 		vacuumInflateAnimatingCard: "Step 3/3: inflate morph…",
 		vacuumInflateNeedKeyframe:
-			"Upload a product photo first (concept: logo/mascot or topic).",
+			"Upload a product photo first (concept: logo/mascot still — text alone is not enough).",
 		creativeMotionHint:
-			"产品创意动效: pick a scheme card, we auto-build start/end stills, then video morphs ~4s.",
+			"Pick a scheme card. We auto-build start/end stills, then video morphs ~4s.",
 		creativeMotionBuildingStill: "Step 1/3: creative-motion start still…",
 		creativeMotionBuildingEnd: "Step 2/3: creative-motion end still…",
 		creativeMotionAnimatingCard: "Step 3/3: scheme morph…",
 		creativeMotionNeedKeyframe:
-			"Upload a product photo first (concept: logo/mascot or topic).",
+			"Upload a product photo first (concept: logo/mascot still — text alone is not enough).",
 		handThrowHint:
-			"手抛万物变实景: AI builds palm+miniature start + real scenic end, then video morphs the throw (~6s). Best with a clear product / landmark photo.",
+			"Palm + miniature start, real scenic end, then a ~6s throw morph. Needs a clear product or landmark photo.",
 		handThrowBuildingStill: "Step 1/3: palm + miniature start still…",
 		handThrowBuildingEnd: "Step 2/3: real scenic end still…",
 		handThrowAnimatingCard: "Step 3/3: throw → real scene morph…",
 		handThrowNeedKeyframe:
-			"Upload a product photo first (concept: logo/mascot or topic).",
+			"Upload a product photo first (concept: logo/mascot still — text alone is not enough).",
 		productExplodeHint:
 			"Stylized product explode: intact studio hero → floating-parts still → ~4s soft teardown. Parts are invented accents — not accurate CAD internals.",
 		productExplodeBuildingStill: "Step 1/3: intact product hero still…",
 		productExplodeBuildingEnd: "Step 2/3: floating-parts explode still…",
 		productExplodeAnimatingCard: "Step 3/3: explode morph…",
 		productExplodeNeedKeyframe:
-			"Upload a product photo first (concept: logo/mascot or topic).",
+			"Upload a product photo first (concept: logo/mascot still — text alone is not enough).",
 		creativeMotionSchemeTitle: "Scheme card",
 		creativeMotionSchemeHint:
 			"Same start→end morph method, different gag. Auto picks a fit — generate again to try another.",
@@ -5495,6 +5575,8 @@ export const en = {
 			image_not_ready: "Wait for the generated image to appear.",
 			need_storyboard_approve:
 				"Approve the storyboard stills (九宫格) before continuing to video.",
+			need_visual_lock:
+				"Upload a product photo, logo, or mascot still — text/topic alone is not enough.",
 			video_busy: "Wait for video generation to finish.",
 			video_not_ready:
 				"Video is not ready yet — wait for generation, or go back and retry.",

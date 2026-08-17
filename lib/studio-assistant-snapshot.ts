@@ -23,7 +23,7 @@ export function buildStudioAssistantSnapshot(
     creativeVideoBrief: w.creativeVideoBrief.trim(),
     brandWebsiteUrl: w.brandWebsiteUrl.trim(),
     hasBrandProfile: Boolean(w.brandProfile?.businessName),
-    hasProductPhoto: Boolean(w.productPhoto),
+    hasProductPhoto: Boolean(w.hasProductPhotoLock ?? w.productPhoto),
     hasKeyframe: w.hasFinalImage,
     hasStoryboardScenes: (w.storyboardScenes?.length ?? 0) > 0,
     hasVideo: Boolean(w.videoUrl),

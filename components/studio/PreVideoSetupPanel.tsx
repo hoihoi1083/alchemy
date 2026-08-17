@@ -40,7 +40,13 @@ import {
   type H3ShowreelSchemePick,
   type H3SphereMgSchemePick,
 } from "@/lib/h3-shot-recipes";
-import { h3ShotModesForPromotion } from "@/lib/recipe-path-ux";
+import {
+  h3ShotModesForPromotion,
+  isIdentityVideoRecipeMode,
+  isRecipePathUxMode,
+  isVideoRecipeUxMode,
+  type RecipePathUxMode,
+} from "@/lib/recipe-path-ux";
 import { videoModePreviewSrc } from "@/lib/creative-workflow";
 
 const PANEL_CSS = `
@@ -354,14 +360,22 @@ export function PreVideoSetupPanel({
   const showReferenceUpload = isReference || isSceneReel || needsH3Reel;
   // Product + reference/research still needs @Image1.
   const showProductPhoto = scenesReady ? false : isConcept ? true : !isUgc;
-  // Required upload (or lifestyle still): physical non-neon, or H3 lifestyle on either side.
+  const highlightH3Hero = !scenesReady && needsH3Hero;
+  const identityRecipe = isIdentityVideoRecipeMode(wizard.videoCreativeMode);
+  const recipeUxId: RecipePathUxMode | null =
+    h3ShotMode && isRecipePathUxMode(h3ShotMode)
+      ? h3ShotMode
+      : isVideoRecipeUxMode(wizard.videoCreativeMode)
+        ? wizard.videoCreativeMode
+        : null;
+  // Required: physical non-neon, lifestyle stills, identity recipes, or concept H3/identity until a visual lock exists.
   const photoRequired =
     !scenesReady &&
     !isUgc &&
     (needsH3LifestyleStill ||
+      identityRecipe ||
+      (isH3Shot && isConcept && h3ShotMode !== "neon-on-real") ||
       (!isConcept && h3ShotMode !== "neon-on-real"));
-  // Ring the hero card for every H3 path that needs a visual lock (incl. concept logo/still).
-  const highlightH3Hero = !scenesReady && needsH3Hero;
 
   // Keep research/R2V on reference_reel when ctx.videoSubpath was never set.
   // Also re-apply when UI shows an H3/recipe subpath but creative mode drifted
@@ -509,7 +523,22 @@ export function PreVideoSetupPanel({
       ? [pv.conceptTip1, pv.conceptTip2, pv.conceptTip3]
       : isReference
         ? [pv.refTip1, pv.refTip2, pv.tip3]
-        : isSocialDrip
+        : recipeUxId
+          ? [
+              {
+                title: m.wizard.recipePathUxTitles.need,
+                body: m.wizard.recipePathUx[recipeUxId].need.join(" · "),
+              },
+              {
+                title: m.wizard.recipePathUxTitles.attention,
+                body: m.wizard.recipePathUx[recipeUxId].attention.join(" · "),
+              },
+              {
+                title: m.wizard.recipePathUxTitles.output,
+                body: m.wizard.recipePathUx[recipeUxId].output.join(" · "),
+              },
+            ]
+          : isSocialDrip
           ? [
               {
                 title: m.wizard.socialDripFitTitle,
@@ -529,21 +558,6 @@ export function PreVideoSetupPanel({
               },
               pv.tip1,
               pv.tip3,
-            ]
-          : isH3Shot && h3ShotMode
-          ? [
-              {
-                title: m.wizard.recipePathUxTitles.need,
-                body: m.wizard.recipePathUx[h3ShotMode].need.join(" · "),
-              },
-              {
-                title: m.wizard.recipePathUxTitles.attention,
-                body: m.wizard.recipePathUx[h3ShotMode].attention.join(" · "),
-              },
-              {
-                title: m.wizard.recipePathUxTitles.output,
-                body: m.wizard.recipePathUx[h3ShotMode].output.join(" · "),
-              },
             ]
           : isMotionPoster
           ? [
@@ -941,16 +955,20 @@ export function PreVideoSetupPanel({
                     </p>
                   </div>
                 ) : null}
-                {isH3Shot && h3ShotMode ? (
+                {recipeUxId ? (
                   <div className="rounded-xl border border-violet-200 bg-violet-50 px-3.5 py-3 text-sm text-violet-950 sm:col-span-2">
                     <p className="font-semibold">
-                      {pv.h3PathFocusLead}: {m.wizard.videoCreativeModes[h3ShotMode].title}
+                      {h3ShotMode
+                        ? `${pv.h3PathFocusLead}: ${m.wizard.videoCreativeModes[h3ShotMode].title}`
+                        : m.wizard.videoCreativeModes[
+                            recipeUxId as keyof typeof m.wizard.videoCreativeModes
+                          ]?.title}
                     </p>
                     <p className="mt-2 text-[11px] font-semibold uppercase tracking-wide text-violet-700">
                       {m.wizard.recipePathUxTitles.need}
                     </p>
                     <ul className="mt-1 list-disc space-y-0.5 pl-4 text-xs leading-relaxed text-violet-900/90">
-                      {m.wizard.recipePathUx[h3ShotMode].need.map((line) => (
+                      {m.wizard.recipePathUx[recipeUxId].need.map((line) => (
                         <li key={line}>{line}</li>
                       ))}
                     </ul>
@@ -958,7 +976,7 @@ export function PreVideoSetupPanel({
                       {m.wizard.recipePathUxTitles.attention}
                     </p>
                     <ul className="mt-1 list-disc space-y-0.5 pl-4 text-xs leading-relaxed text-violet-900/90">
-                      {m.wizard.recipePathUx[h3ShotMode].attention.map((line) => (
+                      {m.wizard.recipePathUx[recipeUxId].attention.map((line) => (
                         <li key={line}>{line}</li>
                       ))}
                     </ul>
@@ -966,7 +984,7 @@ export function PreVideoSetupPanel({
                       {m.wizard.recipePathUxTitles.output}
                     </p>
                     <ul className="mt-1 list-disc space-y-0.5 pl-4 text-xs leading-relaxed text-violet-900/90">
-                      {m.wizard.recipePathUx[h3ShotMode].output.map((line) => (
+                      {m.wizard.recipePathUx[recipeUxId].output.map((line) => (
                         <li key={line}>{line}</li>
                       ))}
                     </ul>
@@ -1433,7 +1451,7 @@ export function PreVideoSetupPanel({
                     headline: wizard.headline,
                     business: wizard.business,
                     conceptMode: isConcept,
-                    hasProductPhoto: Boolean(wizard.productPhoto),
+                    hasProductPhoto: Boolean(wizard.hasProductPhotoLock),
                     pick: wizard.socialDripMetaphorPick,
                   });
                   const levelTone =
@@ -1793,7 +1811,7 @@ export function PreVideoSetupPanel({
             {showProductPhoto ? (
               <section
                 className={`pv-card ${
-                  highlightH3Hero || (isH3Shot && photoRequired)
+                  highlightH3Hero || photoRequired
                     ? "border-violet-300 bg-violet-50/50 ring-1 ring-violet-200"
                     : ""
                 }`.trim()}
@@ -1821,7 +1839,7 @@ export function PreVideoSetupPanel({
                                 : isConcept
                                   ? pv.conceptPhotoTitle
                                   : pv.productPhotoTitle}
-                      {highlightH3Hero || (isH3Shot && photoRequired) ? (
+                      {highlightH3Hero || photoRequired ? (
                         <>
                           <span className="ml-1.5 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700">
                             {pv.requiredBadge}

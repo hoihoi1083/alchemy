@@ -10,6 +10,10 @@ import {
   clearConceptResearchState,
 } from "@/lib/concept-source-state";
 import {
+  consumeProjectResumeHint,
+  peekProjectResumeHint,
+} from "@/lib/wizard-project-snapshot";
+import {
   canProceedMicroStep,
   defaultMicroContext,
   intakePathForConceptSource,
@@ -73,6 +77,8 @@ function wizardStateSnapshot(wizard: StudioWizardValue): WizardMicroStepState {
     imageOutputMode: wizard.imageOutputMode,
     imageRefPhoto: wizard.imageRefPhoto,
     productPhoto: wizard.productPhoto,
+    hasProductPhotoLock: wizard.hasProductPhotoLock,
+    hasConceptHeroLock: wizard.hasConceptHeroLock,
     referenceAd: wizard.referenceAd,
     referenceIsVideo: wizard.referenceIsVideo,
     product: wizard.product,
@@ -162,6 +168,68 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
   useEffect(() => {
     storeContext(ctx);
   }, [ctx]);
+
+  const projectResumeDoneRef = useRef(false);
+  const projectResumeCtxSeededRef = useRef(false);
+
+  // Open Studio hydrate: restore micro routing + jump to review/done when media exists.
+  useEffect(() => {
+    if (projectResumeDoneRef.current) return;
+    const hint = peekProjectResumeHint();
+    if (!hint) return;
+
+    const hasScenes = wizard.storyboardScenes.length > 0;
+    const hasVideo = Boolean(wizard.videoUrl);
+    const hasImage = Boolean(wizard.imageUrl || wizard.campaignSlides.length > 0);
+    const readyForTarget =
+      !hint.targetMicroStep ||
+      (hint.targetMicroStep === "image.review" && hasScenes) ||
+      (hint.targetMicroStep === "done.export" && hasVideo) ||
+      (hint.targetMicroStep === "setup.pre_video" && (hasImage || hasScenes));
+
+    if (!readyForTarget) {
+      if (hint.microContext && !projectResumeCtxSeededRef.current) {
+        projectResumeCtxSeededRef.current = true;
+        setCtx((prev) => ({ ...prev, ...hint.microContext, promotionMode }));
+      }
+      return;
+    }
+
+    const consumed = consumeProjectResumeHint();
+    if (!consumed) return;
+    projectResumeDoneRef.current = true;
+
+    const nextCtx = {
+      ...defaultMicroContext(promotionMode),
+      ...consumed.microContext,
+      promotionMode,
+    };
+    setCtx(nextCtx);
+
+    const target = consumed.targetMicroStep;
+    if (!target) return;
+
+    const t = window.setTimeout(() => {
+      const nextSteps = resolveMicroSteps(nextCtx, wizardStateSnapshot(wizard));
+      let idx = nextSteps.findIndex((s) => s.id === target);
+      if (idx < 0 && hasScenes) {
+        idx = nextSteps.findIndex((s) => s.id === "image.review");
+      }
+      if (idx >= 0) setStepIndex(idx);
+    }, 0);
+    return () => window.clearTimeout(t);
+  }, [
+    promotionMode,
+    wizard.storyboardScenes.length,
+    wizard.videoUrl,
+    wizard.imageUrl,
+    wizard.campaignSlides.length,
+    wizard.workflowMode,
+    wizard.visualStyleId,
+    wizard.product,
+    wizard.conceptIdea,
+    wizard.storyboardGridApproved,
+  ]);
 
   // Keep wizard.workflowMode in sync with micro ctx. After refresh, ctx restores from
   // sessionStorage (e.g. combined) while wizard defaults to image-only.

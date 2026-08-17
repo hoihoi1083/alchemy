@@ -8,7 +8,22 @@ import {
   landingRecipesForPromotion,
   studioRecipeHref,
 } from "@/lib/landing-recipes";
+import { isRecipePathUxMode } from "@/lib/recipe-path-ux";
 import type { PromotionMode } from "@/lib/promotion-mode";
+
+function landingNeedLine(
+  id: Parameters<typeof studioRecipeHref>[0],
+  copy: ReturnType<typeof useLocale>["m"]["landing"]["recipes"],
+  recipePathUx: ReturnType<typeof useLocale>["m"]["wizard"]["recipePathUx"],
+): string | null {
+  const def = LANDING_RECIPES[id];
+  if (isTvcLandingRecipe(id)) {
+    return def.promotionMode === "physical" ? copy.tvcNeedPhysical : copy.tvcNeedConcept;
+  }
+  const uxKey = def.videoCreativeMode ?? def.visualStyleId;
+  if (isRecipePathUxMode(uxKey)) return recipePathUx[uxKey].need[0] ?? null;
+  return null;
+}
 
 /**
  * 1-tap finishable recipes (deep-link into /studio?recipe=…).
@@ -61,6 +76,14 @@ export function LandingRecipeCards() {
                         <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600">
                           {item.description}
                         </p>
+                        {(() => {
+                          const need = landingNeedLine(id, copy, m.wizard.recipePathUx);
+                          return need ? (
+                            <p className="mt-2 text-[11px] font-medium leading-relaxed text-slate-700">
+                              {copy.needPrefix}: {need}
+                            </p>
+                          ) : null;
+                        })()}
                         <p className="mt-3 text-[11px] font-medium uppercase tracking-wide text-slate-500">
                           {item.costHint}
                         </p>
