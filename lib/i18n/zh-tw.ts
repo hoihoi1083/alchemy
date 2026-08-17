@@ -480,7 +480,7 @@ export const zhTw = {
 				"product-vacuum-inflate-4s": {
 					title: "真空充氣 ~4s",
 					description:
-						"一鍵：癟袋靜圖 → 充氣飽滿靜圖 → 4 秒视频過渡。",
+						"產品必須看得見：真空膜貼緊 → 充氣成透明泡 → 4 秒過渡。不會把手機換成包裝袋。",
 					costHint: "~2 圖 + 4s video · 產品圖",
 				},
 				"product-creative-motion-4s": {
@@ -583,7 +583,7 @@ export const zhTw = {
 				"concept-vacuum-inflate-4s": {
 					title: "真空充氣（概念）~4s",
 					description:
-						"Logo／吉祥物作袋身身份 — 癟→充氣靜圖 → 4 秒视频。",
+						"Logo／吉祥物留在充氣膜裡看得見 — 癟→透明泡靜圖 → 4 秒視頻。",
 					costHint: "~2 圖 + 4s video · Logo/吉祥物",
 				},
 				"concept-creative-motion-4s": {
@@ -2259,7 +2259,7 @@ export const zhTw = {
 			"vacuum-inflate": {
 				title: "真空充氣",
 				description:
-					"自動癟袋→充氣靜圖 + 4 秒视频過渡。",
+					"產品留在畫面裡：真空膜貼緊 → 充氣成泡 → 4 秒過渡。",
 			},
 			"creative-motion": {
 				title: "產品創意動效",
@@ -2734,7 +2734,7 @@ socialDripHint:
     socialDripNeedKeyframe: "三分屏請先上傳產品圖，或填寫概念主題。",
     
 		vacuumInflateHint:
-			"一鍵真空充氣：AI 生成癟袋與充氣靜圖，再由 約 4 秒影片過渡。請上傳產品包裝圖。",
+			"產品必須看得見。用真空膜包住你的商品再充氣成透明泡，約 4 秒過渡。相機會留成手機，不會變成別的包裝袋。",
 		vacuumInflateBuildingStill: "第 1/3 步：癟袋開頭靜圖…",
 		vacuumInflateBuildingEnd: "第 2/3 步：充氣結尾靜圖…",
 		vacuumInflateAnimatingCard: "第 3/3 步：充氣過渡中…",

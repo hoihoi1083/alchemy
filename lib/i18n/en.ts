@@ -694,7 +694,7 @@ export const en = {
 				"product-vacuum-inflate-4s": {
 					title: "Vacuum inflate ~4s",
 					description:
-						"One-click: flat vacuum pouch → air-inflated pack stills → 4s video morph.",
+						"Your product stays the hero: vacuum-tight wrap → inflated clear bubble → 4s morph. Never swaps a phone for a fake sachet.",
 					costHint: "~2 images + 4s video · product photo",
 				},
 				"product-creative-motion-4s": {
@@ -724,7 +724,7 @@ export const en = {
 				"concept-vacuum-inflate-4s": {
 					title: "Vacuum inflate (concept) ~4s",
 					description:
-						"Logo/mascot as pouch identity — flat→inflated stills → 4s video.",
+						"Logo/mascot stays visible inside the inflating wrap — flat→bubble stills → 4s video.",
 					costHint: "~2 images + 4s video · logo/mascot",
 				},
 				"concept-creative-motion-4s": {
@@ -2737,7 +2737,7 @@ export const en = {
 			"vacuum-inflate": {
 				title: "Vacuum inflate",
 				description:
-					"Auto flat→inflated pouch stills + 4s video morph (真空充气).",
+					"Product stays visible: vacuum-tight wrap → inflated bubble → 4s morph (真空充气).",
 			},
 			"creative-motion": {
 				title: "Product creative motion",
@@ -3303,7 +3303,7 @@ export const en = {
 		socialDripNeedKeyframe:
 			"Add a product photo (or concept topic) first for Social drip.",
 		vacuumInflateHint:
-			"One-click 真空充气: AI builds flat vacuum + inflated pouch stills, then video morphs them in ~4s. Upload your product pack.",
+			"Your product stays the hero. We wrap it in a vacuum film, inflate a clear bubble, then morph ~4s. Phones stay phones — we won’t replace them with a sachet.",
 		vacuumInflateBuildingStill: "Step 1/3: vacuum-flat start still…",
 		vacuumInflateBuildingEnd: "Step 2/3: inflated end still…",
 		vacuumInflateAnimatingCard: "Step 3/3: inflate morph…",

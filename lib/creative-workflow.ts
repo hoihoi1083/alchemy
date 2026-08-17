@@ -70,7 +70,7 @@ export const VIDEO_CREATIVE_MODES: VideoCreativeMode[] = [
 ];
 
 export function videoModePreviewSrc(id: VideoCreativeMode): string {
-  return `/images/studio/video-modes/${id}.png?v=2`;
+  return `/images/studio/video-modes/${id}.png?v=3`;
 }
 
 /** Recipe owns the motion prompt — skip DeepSeek auto-plan. */

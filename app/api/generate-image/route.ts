@@ -862,7 +862,9 @@ export async function POST(request: Request) {
             product:
               productName ||
               headline ||
-              (promotionMode === "concept" ? "brand pouch" : "product pouch"),
+              (promotionMode === "concept"
+                ? "the uploaded brand mark"
+                : "the uploaded product"),
             conceptMode: promotionMode === "concept",
             aspectRatio: aspectRatioRaw,
             frame: vacuumInflateFrame,

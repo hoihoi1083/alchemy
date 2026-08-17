@@ -480,7 +480,7 @@ export const zhCn = {
 				"product-vacuum-inflate-4s": {
 					title: "真空充气 ~4s",
 					description:
-						"一键：瘪袋静图 → 充气饱满静图 → 4 秒视频过渡。",
+						"产品必须看得见：真空膜贴紧 → 充气成透明泡 → 4 秒过渡。不会把手机换成包装袋。",
 					costHint: "~2 图 + 4s video · 产品图",
 				},
 				"product-creative-motion-4s": {
@@ -583,7 +583,7 @@ export const zhCn = {
 				"concept-vacuum-inflate-4s": {
 					title: "真空充气（概念）~4s",
 					description:
-						"Logo／吉祥物作袋身身份 — 瘪→充气静图 → 4 秒视频。",
+						"Logo／吉祥物留在充气膜里看得见 — 瘪→透明泡静图 → 4 秒视频。",
 					costHint: "~2 图 + 4s video · Logo/吉祥物",
 				},
 				"concept-creative-motion-4s": {
@@ -2259,7 +2259,7 @@ export const zhCn = {
 			"vacuum-inflate": {
 				title: "真空充气",
 				description:
-					"自动瘪袋→充气静图 + 4 秒视频过渡。",
+					"产品留在画面里：真空膜贴紧 → 充气成泡 → 4 秒过渡。",
 			},
 			"creative-motion": {
 				title: "产品创意动效",
@@ -2734,7 +2734,7 @@ socialDripHint:
     socialDripNeedKeyframe: "三分屏请先上传产品图，或填写概念主题。",
     
 		vacuumInflateHint:
-			"一键真空充气：AI 生成瘪袋与充气静图，再由 约 4 秒视频过渡。请上传产品包装图。",
+			"产品必须看得见。用真空膜包住你的商品再充气成透明泡，约 4 秒过渡。相机会留成手机，不会变成别的包装袋。",
 		vacuumInflateBuildingStill: "第 1/3 步：瘪袋开头静图…",
 		vacuumInflateBuildingEnd: "第 2/3 步：充气结尾静图…",
 		vacuumInflateAnimatingCard: "第 3/3 步：充气过渡中…",

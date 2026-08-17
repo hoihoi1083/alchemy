@@ -81,7 +81,7 @@ export type LandingRecipeDef = {
 };
 
 function videoModeRecipePreview(mode: string): string {
-  return `/images/studio/video-modes/${mode}.png?v=2`;
+  return `/images/studio/video-modes/${mode}.png?v=3`;
 }
 
 function h3ProductRecipe(

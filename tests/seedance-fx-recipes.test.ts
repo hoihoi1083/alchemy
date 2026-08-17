@@ -41,13 +41,32 @@ describe("vacuum-inflate Seedance recipe", () => {
       frame: "end",
     });
     assert.match(start, /vacuum|flat|wrinkl/i);
-    assert.match(end, /INFLAT|plump|air/i);
+    assert.match(end, /INFLAT|plump|air|bubble/i);
     assert.match(start, /ARC pouch/);
     assert.match(end, /ARC pouch/);
+    assert.match(start, /@Image1/);
+    assert.match(start, /foil sachet|do NOT convert/i);
     const video = buildVacuumInflateVideoPrompt({ product: "ARC pouch" });
     assert.match(video, /Image 1/);
     assert.match(video, /Image 2/);
+    assert.match(video, /VISIBLE/i);
     assert.match(video, new RegExp(String(VACUUM_INFLATE_DURATION_SEC)));
+  });
+
+  it("keeps a rigid SKU as the hero inside the wrap, not a replacement pack", () => {
+    const start = buildVacuumInflateStillPrompt({
+      product: "orange smartphone",
+      frame: "start",
+    });
+    const video = buildVacuumInflateVideoPrompt({
+      product: "orange smartphone",
+    });
+    assert.match(start, /orange smartphone/);
+    assert.match(start, /@Image1/);
+    assert.match(start, /transparent|clear|film|bubble/i);
+    assert.match(start, /phone, bottle, box, device/);
+    assert.match(video, /orange smartphone/);
+    assert.match(video, /sachet|different SKU/i);
   });
 });
 

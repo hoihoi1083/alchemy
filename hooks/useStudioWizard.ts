@@ -7620,7 +7620,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					business.trim()
 				: product.trim() || business.trim();
 		const fxPrompt = buildVacuumInflateVideoPrompt({
-			product: subject || "the product pouch",
+			product: subject || "the uploaded product",
 			conceptMode: promotionMode === "concept",
 			durationSec: VACUUM_INFLATE_DURATION_SEC,
 		});

@@ -1,3 +1,6 @@
+import { createHash } from "node:crypto";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
@@ -331,6 +334,26 @@ describe("video-safe art styles", () => {
     assert.equal(new Set(srcs).size, srcs.length);
     for (const id of VIDEO_CREATIVE_MODES) {
       assert.match(videoModePreviewSrc(id), new RegExp(`/video-modes/${id}\\.png`));
+    }
+  });
+
+  it("video-mode preview PNG files are unique on disk", () => {
+    const seen = new Map<string, string>();
+    for (const id of VIDEO_CREATIVE_MODES) {
+      const path = join(
+        process.cwd(),
+        "public/images/studio/video-modes",
+        `${id}.png`,
+      );
+      assert.ok(existsSync(path), `missing video-mode thumb: ${id}`);
+      const hash = createHash("sha256").update(readFileSync(path)).digest("hex");
+      const dup = [...seen.entries()].find(([, h]) => h === hash)?.[0];
+      assert.equal(
+        dup,
+        undefined,
+        `${id} is a byte-copy of ${dup}`,
+      );
+      seen.set(id, hash);
     }
   });
 
