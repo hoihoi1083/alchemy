@@ -114,7 +114,7 @@ export const en = {
 	},
 	footer: {
 		tagline:
-			"Turn a product photo into scroll-stopping social ads — image, video, and music in minutes.",
+			"Turn any idea into scroll-stopping content - image, video and reels in minutes.",
 		productTitle: "Product",
 		legalTitle: "Legal",
 		studio: "Open studio",
@@ -272,7 +272,7 @@ export const en = {
 		titleAfter: " writing prompts.",
 		title: "Create marketing content without writing prompts.",
 		subtitle:
-			"Upload a product image or paste a reference link. Alchemy AI analyzes the style, creates editable prompts and storyboards, then generates ready-to-use ads, images and reels.",
+			"Upload a product image or paste a reference link. Alchemy AI analyzes the style, creates editable prompts and storyboards, then generates ready-to-use ads, images and reels in 5 mins.",
 		openStudio: "Open Studio",
 		startCreating: "Start Creating",
 		tryFree: "Try Free",
@@ -527,11 +527,11 @@ export const en = {
 		tplCapReel: "Reels / Video",
 		tplCapService: "Service Business",
 		tplCapProduct: "Product Ad",
-		whyTitle: "Why Alchemy AI Lab is different",
+		whyTitle: "Why is Alchemy AI Lab different",
 		whyItems: [
 			{
 				title: "Prompt-free",
-				body: "First prompt-free AI tool. Hassle-free guidance by MicroWizard. Deliver delicate content with few simple steps.",
+				body: "Hassle-free guidance by MicroWizard. Deliver content with few simple steps.",
 			},
 			{
 				title: "Intelligent market research",
@@ -551,7 +551,7 @@ export const en = {
 			},
 			{
 				title: "Subscription + Token",
-				body: "Join basic plan and top up only when needed.",
+				body: "Enjoy Free plan upon signup. Upgrade and top up only when needed.",
 			},
 		],
 		scenariosTitle: "Built for every marketing scenario",

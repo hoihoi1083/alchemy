@@ -112,7 +112,7 @@ export const zh = {
 	},
 	footer: {
 		tagline:
-			"上傳產品相片，幾分鐘生成吸睛社交廣告 — 圖片、影片、配樂一次完成。",
+			"任何想法，幾分鐘變成停滑吸睛內容 — 圖片、影片同 Reels 一次完成。",
 		productTitle: "產品",
 		legalTitle: "法律資訊",
 		studio: "開始製作",
@@ -245,7 +245,7 @@ export const zh = {
 		titleAfter: "自己寫 prompt。",
 		title: "做營銷內容，唔使自己寫 prompt。",
 		subtitle:
-			"上傳產品相或貼參考帖。Alchemy 分析風格、引導設定，再生成可編輯廣告圖同影片。",
+			"上傳產品相或貼參考帖。Alchemy 分析風格、引導設定，再生成可編輯廣告圖同影片，5 分鐘搞掂。",
 		openStudio: "開啟工作室",
 		startCreating: "開始製作",
 		tryFree: "免費試用",
@@ -416,11 +416,11 @@ export const zh = {
 		tplTabProduct: "產品廣告",
 		tplTabVideo: "Reels / 影片",
 		tplTabService: "服務業",
-		whyTitle: "點解 Alchemy AI Lab 唔同",
+		whyTitle: "Why is Alchemy AI Lab different",
 		whyItems: [
 			{
 				title: "免寫 Prompt",
-				body: "首個免 Prompt AI 工具。MicroWizard 一步一步帶你，幾個簡單步驟就出精緻內容。",
+				body: "MicroWizard 全程省心引導，簡單幾步即可產出精緻內容。",
 			},
 			{
 				title: "智能市場研究",
@@ -440,7 +440,7 @@ export const zh = {
 			},
 			{
 				title: "訂閱 + Token",
-				body: "加入基本計劃，需要先至加購點數。",
+				body: "註冊即享 Free 方案，需要時再升級或充值點數。",
 			},
 		],
 		scenariosTitle: "覆蓋常見營銷場景",

@@ -108,7 +108,7 @@ export const zhCn = {
     editImage: "编辑图片",
   },
   footer: {
-    tagline: "上传产品照片，几分钟生成吸睛社交广告 — 图片、视频、配乐一次完成。",
+    tagline: "任何想法，几分钟变成停滑吸睛内容 — 图片、视频和 Reels 一次完成。",
     productTitle: "产品",
     legalTitle: "法律信息",
     studio: "开始制作",
@@ -220,7 +220,7 @@ export const zhCn = {
     titleAfter: "自己寫 prompt。",
     title: "做营销内容，不用自己寫 prompt。",
     subtitle:
-      "上传产品照或贴参考帖。Alchemy 分析风格、引导设定，再生成可编辑广告图和视频。",
+      "上传产品照或贴参考帖。Alchemy 分析风格、引导设定，再生成可编辑广告图和视频，5 分钟搞定。",
     openStudio: "開啟工作室",
     startCreating: "开始製作",
     tryFree: "免费试用",
@@ -373,11 +373,11 @@ export const zhCn = {
     tplTabProduct: "产品广告",
     tplTabVideo: "Reels / 视频",
     tplTabService: "服务业",
-    whyTitle: "为什么Alchemy AI Lab 不同",
+    whyTitle: "Why is Alchemy AI Lab different",
     whyItems: [
       {
         title: "免写 Prompt",
-        body: "首个免 Prompt AI 工具。MicroWizard 一步一步带你，几个简单步骤就出精致内容。",
+        body: "MicroWizard 全程省心引导，简单几步即可产出精致内容。",
       },
       {
         title: "智能市场研究",
@@ -397,7 +397,7 @@ export const zhCn = {
       },
       {
         title: "订阅 + 点数",
-        body: "加入基本方案，需要时再加购点数。",
+        body: "注册即享 Free 方案，需要时再升级或充值点数。",
       },
     ],
     scenariosTitle: "覆盖常見营销场景",
