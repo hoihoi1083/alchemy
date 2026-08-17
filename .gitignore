@@ -24,7 +24,6 @@ ref-input.mp4
 captions.srt
 --text-only/
 
-# Compositor fonts — run: npm run setup:compositor
-/public/compositor/fonts/*.ttf
+# Compositor fonts are vendored in git so Vercel does not fetch them at build.
 .vercel
 .env*

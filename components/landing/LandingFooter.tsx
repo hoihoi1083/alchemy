@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { useLocale } from "@/components/LocaleProvider";
-import { useLandingDemo } from "@/components/landing/LandingDemoModal";
+import {
+  LandingDemoProvider,
+  useLandingDemo,
+} from "@/components/landing/LandingDemoModal";
 import { PRODUCT_LOGO_SRC, PRODUCT_NAME, PRODUCT_SUPPORT_EMAIL, PRODUCT_WORDMARK_ALT, PRODUCT_WORDMARK_WHITE_SRC } from "@/lib/brand";
 
 const PAYMENTS: { alt: string; src: string }[] = [
@@ -16,6 +19,14 @@ const PAYMENTS: { alt: string; src: string }[] = [
 
 /** Slim landing footer — brand + essential links, left-aligned (no subscribe). */
 export function LandingFooter() {
+  return (
+    <LandingDemoProvider>
+      <LandingFooterInner />
+    </LandingDemoProvider>
+  );
+}
+
+function LandingFooterInner() {
   const { m } = useLocale();
   const { openLandingDemo } = useLandingDemo();
   const f = m.footer;

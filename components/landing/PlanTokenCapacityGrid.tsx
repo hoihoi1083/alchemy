@@ -120,7 +120,6 @@ export function PlanTokenCapacityGrid({
 			...approx,
 			displayImages: card.images,
 			displayVideos: card.videos8s,
-			packTogether: card.packTogether,
 		};
 	});
 	const heading = title ?? L.tokensTitle;
@@ -164,31 +163,19 @@ export function PlanTokenCapacityGrid({
 							<div className="mt-3.5 flex w-full flex-row flex-nowrap items-stretch gap-1.5">
 								<MetricCell
 									icon={<IconImages className="h-4 w-4" />}
-									value={
-										row.packTogether
-											? String(row.displayImages)
-											: `~${row.displayImages.toLocaleString()}`
-									}
+									value={row.displayImages.toLocaleString()}
 									label={L.tokensCapacityImages}
 								/>
 								<span
 									className="flex shrink-0 items-center px-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400"
 									aria-hidden="true"
 								>
-									{row.packTogether ? L.tokensCapacityAnd : L.tokensCapacityOr}
+									{L.tokensCapacityOr}
 								</span>
 								<MetricCell
 									icon={<IconVideo className="h-4 w-4" />}
-									value={
-										row.packTogether
-											? String(row.displayVideos)
-											: `~${row.displayVideos.toLocaleString()}`
-									}
-									label={
-										row.packTogether
-											? L.tokensCapacityVideosFree
-											: L.tokensCapacityVideos
-									}
+									value={row.displayVideos.toLocaleString()}
+									label={L.tokensCapacityVideos}
 								/>
 							</div>
 						</article>

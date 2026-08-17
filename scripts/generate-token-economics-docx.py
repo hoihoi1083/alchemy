@@ -379,46 +379,28 @@ def build_doc() -> Document:
     # 4. Approx capacity
     doc.add_heading("4. Approximate monthly capacity (marketing)", level=1)
     doc.add_paragraph(
-        "Pricing cards and the landing capacity grid use estimatePricingCardCapacity() "
-        "(lib/billing/pricing-card-capacity.ts). Free is the pack together — not the leftover "
-        "either/or math. Paid cards stay “if you spend the whole grant on one format.”"
+        "Pricing cards and the landing capacity grid use estimatePricingCardCapacity(). "
+        "Each line is an independent maximum prefixed with “Up to”: 1K stills, or 8s 480p video "
+        "(lowest studio video resolution, 328 tokens). Mixing formats or using 720p/1080p uses more "
+        "tokens per piece. Section 2 still describes the Free pack that fits together "
+        "(1 image + 1× 8s 480P)."
     )
     add_table(
         doc,
-        ["Plan", "What the pricing card shows", "Together?"],
+        ["Plan", "Pricing card (independent maxima at 1K / 8s 480p)"],
         [
-            [
-                "Free",
-                "1 promotional image and 1× 8s 480p video",
-                "Yes (393 of 500 tokens; 107 buffer)",
-            ],
-            [
-                "Standard",
-                "~46 images or ~5 × 8s 720p (768P billing)",
-                "No — either/or",
-            ],
-            [
-                "Pro",
-                "~123 images or ~9 × 8s 1080p (2K billing)",
-                "No — either/or",
-            ],
-            [
-                "Master",
-                "~246 images or ~18 × 8s 1080p (2K billing)",
-                "No — either/or",
-            ],
+            ["Free", "Up to 7 single images · Up to 1 × 8s 480p videos"],
+            ["Standard", "Up to 46 single images · Up to 9 × 8s 480p videos"],
+            ["Pro", "Up to 123 single images · Up to 24 × 8s 480p videos"],
+            ["Master", "Up to 246 single images · Up to 48 × 8s 480p videos"],
         ],
-    )
-    doc.add_paragraph(
-        "Do not put ~7 images on the Free card. That number is only the leftover if someone "
-        "spent the whole 500-token grant on 1K stills and skipped video (estimatePlanApproxCapacity)."
     )
     cap_rows = []
     for plan_name, tokens, video_unit in [
         ("Free", FREE_SIGNUP_GRANT, h3_8s("480P")),
-        ("Standard", 3000, h3_8s("768P")),
-        ("Pro", 8000, h3_8s("2K")),
-        ("Master", 16000, h3_8s("2K")),
+        ("Standard", 3000, h3_8s("480P")),
+        ("Pro", 8000, h3_8s("480P")),
+        ("Master", 16000, h3_8s("480P")),
     ]:
         cap_rows.append(
             [

@@ -1,58 +1,52 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  PRICING_CARD_VIDEO_8S_TOKENS,
   estimatePricingCardCapacity,
   pricingCardCapacityItems,
 } from "../lib/billing/pricing-card-capacity";
-import { estimatePlanApproxCapacity } from "../lib/billing/token-costs";
+import { H3_TOKENS_PER_SEC, TOKEN_COST } from "../lib/billing/token-costs";
 
 const copy = {
-  capacityFreeImages: "1 promotional image",
-  capacityFreeVideos: "1× 8s 480p video",
-  capacityImagesFeature: "~{n} single images",
-  capacityVideosFeature: "or ~{n} × 8s videos",
+  capacityFreeImages: "Up to {n} single images",
+  capacityFreeVideos: "Up to {n} × 8s 480p videos",
+  capacityImagesFeature: "Up to {n} single images",
+  capacityVideosFeature: "Up to {n} × 8s 480p videos",
 };
 
 describe("estimatePricingCardCapacity", () => {
-  it("shows the Free pack as 1 image and 1× 8s 480p together", () => {
-    const card = estimatePricingCardCapacity("free");
-    assert.deepEqual(card, {
-      images: 1,
-      videos8s: 1,
-      packTogether: true,
-    });
-    // Either/or math is higher — do not use it on Free cards.
-    const eitherOr = estimatePlanApproxCapacity("free");
-    assert.equal(eitherOr.approxImages, 7);
-    assert.ok(eitherOr.approxImages !== card.images);
-  });
+  it("counts 1K images and 8s 480p videos independently", () => {
+    assert.equal(PRICING_CARD_VIDEO_8S_TOKENS, H3_TOKENS_PER_SEC["480P"] * 8);
+    assert.equal(PRICING_CARD_VIDEO_8S_TOKENS, 328);
+    assert.equal(TOKEN_COST.image, 65);
 
-  it("keeps paid cards as either/or grant spend", () => {
+    const free = estimatePricingCardCapacity("free");
+    assert.equal(free.images, 7);
+    assert.equal(free.videos8s, 1);
+
     const standard = estimatePricingCardCapacity("standard");
-    const eitherOr = estimatePlanApproxCapacity("standard");
-    assert.equal(standard.packTogether, false);
-    assert.equal(standard.images, eitherOr.approxImages);
-    assert.equal(standard.videos8s, eitherOr.approxVideos8s);
     assert.equal(standard.images, 46);
-    assert.equal(standard.videos8s, 5);
+    assert.equal(standard.videos8s, 9);
+
+    const pro = estimatePricingCardCapacity("pro");
+    assert.equal(pro.images, 123);
+    assert.equal(pro.videos8s, 24);
+
+    const master = estimatePricingCardCapacity("master");
+    assert.equal(master.images, 246);
+    assert.equal(master.videos8s, 48);
   });
 });
 
 describe("pricingCardCapacityItems", () => {
-  it("labels Free as the pack, not ~7 images", () => {
-    const items = pricingCardCapacityItems("free", copy);
+  it("prefixes counts with Up to at 1K / 480p", () => {
     assert.deepEqual(
-      items.map((i) => i.label),
-      ["1 promotional image", "1× 8s 480p video"],
+      pricingCardCapacityItems("free", copy).map((i) => i.label),
+      ["Up to 7 single images", "Up to 1 × 8s 480p videos"],
     );
-    assert.ok(!items.some((i) => i.label.includes("7")));
-  });
-
-  it("labels paid as either/or counts", () => {
-    const items = pricingCardCapacityItems("pro", copy);
     assert.deepEqual(
-      items.map((i) => i.label),
-      ["~123 single images", "or ~9 × 8s videos"],
+      pricingCardCapacityItems("pro", copy).map((i) => i.label),
+      ["Up to 123 single images", "Up to 24 × 8s 480p videos"],
     );
   });
 });
