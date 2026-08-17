@@ -165,11 +165,13 @@ export function NavHoverMenu({
     };
   }, [open]);
 
+  const baseTrigger = "inline-flex items-center gap-0.5";
   const trigger =
-    triggerClassName ??
-    (dark
-      ? "inline-flex items-center gap-0.5 whitespace-nowrap rounded-lg px-2 py-1.5 text-[12px] font-medium text-slate-300 hover:bg-white/10 hover:text-white xl:text-[13px]"
-      : "inline-flex items-center gap-0.5 whitespace-nowrap text-[12px] font-medium text-slate-600 hover:text-violet-700 xl:text-[13px]");
+    triggerClassName != null
+      ? `${baseTrigger} ${triggerClassName}`
+      : dark
+        ? `${baseTrigger} whitespace-nowrap rounded-lg px-2 py-1.5 text-[12px] font-medium text-slate-300 hover:bg-white/10 hover:text-white xl:text-[13px]`
+        : `${baseTrigger} whitespace-nowrap text-[12px] font-medium text-slate-600 hover:text-violet-700 xl:text-[13px]`;
 
   const labelStyle: CSSProperties = {
     display: "block",
@@ -228,9 +230,9 @@ export function NavHoverMenu({
       : null;
 
   return (
-    <div ref={rootRef} className="relative shrink-0" onMouseEnter={openMenu} onMouseLeave={scheduleClose}>
+    <div ref={rootRef} className="relative inline-flex shrink-0 items-center" onMouseEnter={openMenu} onMouseLeave={scheduleClose}>
       <Link href={href} className={trigger} aria-haspopup="menu" aria-expanded={open}>
-        {label}
+        <span className="leading-none">{label}</span>
         <Chevron open={open} />
       </Link>
       {flyout}

@@ -4,10 +4,11 @@ import { useAuth } from "@clerk/nextjs";
 import { useEffect, useRef, useState } from "react";
 import type { StudioWizardValue } from "@/hooks/useStudioWizard";
 import type { PromotionMode } from "@/lib/promotion-mode";
-import type { ProjectSnapshot } from "@/lib/project-snapshot";
+import { EMPTY_PROJECT_SNAPSHOT, type ProjectSnapshot } from "@/lib/project-snapshot";
 import {
   ACTIVE_PROJECT_STORAGE_KEY,
   buildProjectResumeHint,
+  clearProjectResumeHint,
   shouldBlockEmptyOverwrite,
   snapshotFromWizard,
   writeProjectResumeHint,
@@ -43,7 +44,12 @@ async function fetchProjectSnapshot(
   return { snapshot: data.snapshot };
 }
 
-export function useProjectAutosave(wizard: StudioWizardValue, promotionMode: PromotionMode) {
+export function useProjectAutosave(
+  wizard: StudioWizardValue,
+  promotionMode: PromotionMode,
+  opts?: { startFresh?: boolean },
+) {
+  const startFresh = opts?.startFresh ?? false;
   const { isSignedIn } = useAuth();
   const [projectId, setProjectId] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
@@ -60,6 +66,19 @@ export function useProjectAutosave(wizard: StudioWizardValue, promotionMode: Pro
 
     void (async () => {
       try {
+        if (startFresh) {
+          clearProjectResumeHint();
+          window.localStorage.removeItem(ACTIVE_PROJECT_STORAGE_KEY);
+          const id = await createProjectId(promotionMode);
+          if (id) {
+            window.localStorage.setItem(ACTIVE_PROJECT_STORAGE_KEY, id);
+            setProjectId(id);
+            snapshotRef.current = JSON.stringify(EMPTY_PROJECT_SNAPSHOT(promotionMode));
+          }
+          setHydrateStatus("ready");
+          return;
+        }
+
         const stored = window.localStorage.getItem(ACTIVE_PROJECT_STORAGE_KEY);
         if (stored) {
           try {
@@ -103,7 +122,7 @@ export function useProjectAutosave(wizard: StudioWizardValue, promotionMode: Pro
         setHydrateStatus("ready");
       }
     })();
-  }, [isSignedIn, promotionMode]);
+  }, [isSignedIn, promotionMode, startFresh]);
 
   useEffect(() => {
     if (!isSignedIn || !projectId || hydrateStatus !== "ready") return;

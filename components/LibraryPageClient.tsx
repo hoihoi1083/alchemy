@@ -9,7 +9,9 @@ import { useLocale } from "@/components/LocaleProvider";
 import { downloadMediaUrl } from "@/lib/download-media";
 import {
   isPromotionMode,
+  readStoredPromotionMode,
   storePromotionMode,
+  studioHref,
 } from "@/lib/promotion-mode";
 import { ACTIVE_PROJECT_STORAGE_KEY } from "@/lib/wizard-project-snapshot";
 
@@ -250,7 +252,6 @@ export function LibraryPageClient() {
     }
     window.location.href = "/studio";
   }
-
   async function confirmPendingDelete() {
     if (!pendingDelete) return;
     const { type, id } = pendingDelete;
@@ -396,7 +397,7 @@ export function LibraryPageClient() {
                 <div className="mt-6 rounded-2xl border border-dashed border-slate-200 px-6 py-14 text-center">
                   <p className="text-sm text-slate-600">{L.empty}</p>
                   <Link
-                    href="/studio"
+                    href={studioHref(readStoredPromotionMode() ?? "physical")}
                     className="mt-6 inline-flex rounded-full bg-slate-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-slate-800"
                   >
                     {L.emptyCta}

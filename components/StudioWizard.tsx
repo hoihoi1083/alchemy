@@ -131,12 +131,27 @@ function StudioWizardContent({
   );
 }
 
+function StudioWizardShell({
+  promotionMode,
+  theme = "light",
+}: {
+  promotionMode: PromotionMode;
+  theme?: "light" | "dark";
+}) {
+  const searchParams = useSearchParams();
+  const startFresh = searchParams.get("fresh") === "1";
+
+  return (
+    <WizardProvider promotionMode={promotionMode} startFresh={startFresh}>
+      <StudioWizardContent promotionMode={promotionMode} theme={theme} />
+    </WizardProvider>
+  );
+}
+
 export function StudioWizard({ promotionMode, theme = "light" }: { promotionMode: PromotionMode; theme?: "light" | "dark" }) {
   return (
-    <WizardProvider promotionMode={promotionMode}>
-      <Suspense fallback={null}>
-        <StudioWizardContent promotionMode={promotionMode} theme={theme} />
-      </Suspense>
-    </WizardProvider>
+    <Suspense fallback={null}>
+      <StudioWizardShell promotionMode={promotionMode} theme={theme} />
+    </Suspense>
   );
 }

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { AuthNav } from "@/components/AuthNav";
 import { LanguageToggle } from "@/components/LanguageToggle";
+import { CanvaNavMenu, CanvaNavMobileLinks } from "@/components/nav/CanvaNavMenu";
 import { ProNavLink } from "@/components/nav/ProNavLink";
 import { useLocale } from "@/components/LocaleProvider";
 import { AuthBrandLockup } from "@/components/AuthBrandLockup";
@@ -46,12 +47,7 @@ export function LandingNav() {
 							{L[item.key]}
 						</Link>
 					))}
-					<Link
-						href="/#tools"
-						className="whitespace-nowrap text-[12px] font-medium text-slate-600 hover:text-violet-700 xl:text-[13px]"
-					>
-						{L.navCanva}
-					</Link>
+					<CanvaNavMenu />
 					<ProNavLink className="whitespace-nowrap text-[12px] font-medium text-slate-600 hover:text-violet-700 xl:text-[13px]" />
 				</nav>
 
@@ -94,13 +90,7 @@ export function LandingNav() {
 								{L[item.key]}
 							</Link>
 						))}
-						<Link
-							href="/#tools"
-							className="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-violet-50 hover:text-violet-700"
-							onClick={() => setOpen(false)}
-						>
-							{L.navCanva}
-						</Link>
+						<CanvaNavMobileLinks onNavigate={() => setOpen(false)} />
 						<ProNavLink
 							className="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-violet-50 hover:text-violet-700"
 							onClick={() => setOpen(false)}

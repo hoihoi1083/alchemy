@@ -193,6 +193,23 @@ function mapXhsItem(raw: unknown, index: number): ContentResearchPost | null {
   };
 }
 
+function instagramCaptionFromMedia(media: Record<string, unknown>, item: Record<string, unknown>): string {
+  const capEdges = asRecord(media.edge_media_to_caption)?.edges;
+  if (Array.isArray(capEdges)) {
+    for (const edge of capEdges) {
+      const text = pickString(asRecord(asRecord(edge)?.node)?.text);
+      if (text) return text;
+    }
+  }
+  return pickString(
+    asRecord(media.caption)?.text,
+    media.caption,
+    item.caption,
+    item.title,
+    item.text,
+  );
+}
+
 function mapInstagramItem(raw: unknown, index: number): ContentResearchPost | null {
   const item = asRecord(raw);
   if (!item) return null;
@@ -208,13 +225,7 @@ function mapInstagramItem(raw: unknown, index: number): ContentResearchPost | nu
     media.pk,
     item.pk,
   );
-  const caption = pickString(
-    asRecord(media.caption)?.text,
-    media.caption,
-    item.caption,
-    item.title,
-    item.text,
-  );
+  const caption = instagramCaptionFromMedia(media, item);
   const author = pickString(user?.username, user?.full_name, item.username);
   const versions = asRecord(media.image_versions2);
   const candidates = versions?.candidates;
@@ -231,6 +242,7 @@ function mapInstagramItem(raw: unknown, index: number): ContentResearchPost | nu
       : pickImageUrlsFromList(
           Array.isArray(candidates) ? candidates[0] : undefined,
           media.thumbnail_url,
+          media.thumbnail_src,
           media.display_url,
           media.cover,
           item.cover,
@@ -239,6 +251,7 @@ function mapInstagramItem(raw: unknown, index: number): ContentResearchPost | nu
   const coverImageUrl = imageUrls[0] ?? pickImageUrl(
     Array.isArray(candidates) ? candidates[0] : undefined,
     media.thumbnail_url,
+    media.thumbnail_src,
     media.display_url,
     media.cover,
     item.cover,
@@ -252,21 +265,30 @@ function mapInstagramItem(raw: unknown, index: number): ContentResearchPost | nu
     media.playback_url,
   );
 
+  const typename = pickString(media.__typename);
+  const isVideo =
+    Boolean(videoUrl) ||
+    media.is_video === true ||
+    typename.includes("Video") ||
+    media.media_type === 2;
+
   const url =
     pickString(media.url, item.url, item.permalink) ||
-    (shortcode ? `https://www.instagram.com/reel/${shortcode}/` : "");
+    (shortcode
+      ? `https://www.instagram.com/${isVideo ? "reel" : "p"}/${shortcode}/`
+      : "");
 
-  if (!caption && !url) return null;
+  if (!caption && !url && !coverImageUrl) return null;
 
   return {
     id: shortcode || pickString(media.id, item.id) || `ig-${index + 1}`,
-    title: caption.slice(0, 80) || `Reel ${index + 1}`,
+    title: caption.slice(0, 80) || (isVideo ? `Reel ${index + 1}` : `Post ${index + 1}`),
     url,
     snippet: caption.slice(0, 400),
     coverImageUrl,
     imageUrls: imageUrls.length > 1 ? imageUrls : undefined,
     videoUrl,
-    mediaType: videoUrl ? "video" : "image",
+    mediaType: isVideo ? "video" : "image",
     author: author || undefined,
     likes: pickNumber(
       media.like_count,
@@ -274,6 +296,7 @@ function mapInstagramItem(raw: unknown, index: number): ContentResearchPost | nu
       item.like_count,
       item.likes,
       asRecord(media.edge_media_preview_like)?.count,
+      asRecord(media.edge_liked_by)?.count,
     ),
     comments: pickNumber(
       media.comment_count,

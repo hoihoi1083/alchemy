@@ -225,6 +225,13 @@ export function flattenSearchItems(payload: unknown): unknown[] {
   const data = asRecord(root.data) ?? root;
   const nested = asRecord(data.data);
 
+  const igHashtag = flattenInstagramHashtagEdges(data);
+  if (igHashtag.length > 0) return igHashtag;
+  if (nested) {
+    const igNested = flattenInstagramHashtagEdges(nested);
+    if (igNested.length > 0) return igNested;
+  }
+
   const lists: unknown[] = [
     data.items,
     data.notes,
@@ -254,6 +261,19 @@ export function flattenSearchItems(payload: unknown): unknown[] {
   if (Array.isArray(data)) return data;
   if (Array.isArray(payload)) return payload;
   return [];
+}
+
+/** Instagram hashtag search: data.data.hashtag.edge_hashtag_to_media.edges[].node */
+function flattenInstagramHashtagEdges(data: Record<string, unknown>): unknown[] {
+  const hashtag = asRecord(data.hashtag);
+  const edges = asRecord(hashtag?.edge_hashtag_to_media)?.edges;
+  if (!Array.isArray(edges) || edges.length === 0) return [];
+  return edges
+    .map((edge) => {
+      const node = asRecord(edge)?.node ?? edge;
+      return node ?? null;
+    })
+    .filter(Boolean);
 }
 
 function logJustOneApiBillableCall(

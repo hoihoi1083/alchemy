@@ -5,10 +5,13 @@ import { EMPTY_PROJECT_SNAPSHOT } from "../lib/project-snapshot";
 import {
   buildProjectResumeHint,
   campaignSlidesFromSnapshot,
+  clearProjectResumeHint,
+  peekProjectResumeHint,
   shouldBlockEmptyOverwrite,
   snapshotFromWizard,
   snapshotLooksEmpty,
   storyboardScenesFromSnapshot,
+  writeProjectResumeHint,
 } from "../lib/wizard-project-snapshot";
 
 describe("snapshotFromWizard media URLs", () => {
@@ -173,5 +176,14 @@ describe("wizardFromSnapshot helpers", () => {
     assert.equal(hint.microContext.workflowMode, "combined");
     assert.equal(hint.microContext.combinedStyle, "storyboard");
     assert.equal(hint.microContext.intakePath, "direct");
+  });
+
+  it("clearProjectResumeHint removes session resume payload", () => {
+    writeProjectResumeHint({
+      targetMicroStep: "image.review",
+      microContext: { workflowMode: "combined" },
+    });
+    clearProjectResumeHint();
+    assert.equal(peekProjectResumeHint(), null);
   });
 });

@@ -5,6 +5,7 @@ import { useState, type ReactNode } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { AuthNav } from "@/components/AuthNav";
 import { LanguageToggle } from "@/components/LanguageToggle";
+import { CanvaNavMenu, CanvaNavMobileLinks } from "@/components/nav/CanvaNavMenu";
 import { ProNavLink } from "@/components/nav/ProNavLink";
 import { useLocale } from "@/components/LocaleProvider";
 import { AuthBrandLockup } from "@/components/AuthBrandLockup";
@@ -21,7 +22,7 @@ type StudioNavProps = {
 /**
  * Focused studio chrome — logo + core tools + tokens/language/user.
  * Avoids full marketing LandingNav links that pull attention off the wizard.
- * Canvas + Pro match landing: plain Canvas link (no flyout), ProNavLink copy.
+ * Canvas hover flyout (edit-image + captions) matches landing nav.
  */
 export function StudioNav({ trailing, variant = "light" }: StudioNavProps) {
   const { m } = useLocale();
@@ -32,13 +33,18 @@ export function StudioNav({ trailing, variant = "light" }: StudioNavProps) {
 
   const tools = [{ href: "/#templates", label: L.navTemplates }] as const;
 
-  const linkClass = dark
-    ? "whitespace-nowrap rounded-lg px-2 py-1.5 text-[12px] font-medium text-slate-300 hover:bg-white/10 hover:text-white xl:text-[13px]"
-    : "whitespace-nowrap rounded-lg px-2 py-1.5 text-[12px] font-medium text-slate-600 hover:bg-violet-50 hover:text-violet-700 xl:text-[13px]";
+  /** Match LandingNav link rhythm — no extra px/py so items stay on one baseline. */
+  const navLinkClass = dark
+    ? "whitespace-nowrap text-[12px] font-medium text-slate-300 hover:text-white xl:text-[13px]"
+    : "whitespace-nowrap text-[12px] font-medium text-slate-600 hover:text-violet-700 xl:text-[13px]";
 
   const pricingClass = dark
-    ? "whitespace-nowrap rounded-lg px-2 py-1.5 text-[12px] font-medium text-violet-300 hover:bg-white/10 hover:text-violet-200 xl:text-[13px]"
-    : "whitespace-nowrap rounded-lg px-2 py-1.5 text-[12px] font-medium text-violet-700 hover:bg-violet-50 xl:text-[13px]";
+    ? "whitespace-nowrap text-[12px] font-medium text-violet-300 hover:text-violet-200 xl:text-[13px]"
+    : "whitespace-nowrap text-[12px] font-medium text-violet-700 hover:text-violet-700 xl:text-[13px]";
+
+  const mobileLinkClass = dark
+    ? "rounded-lg px-3 py-2 text-sm font-medium text-slate-200 hover:bg-white/10"
+    : "rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-violet-50";
 
   return (
     <div className="sticky top-0 z-40 w-full">
@@ -57,28 +63,22 @@ export function StudioNav({ trailing, variant = "light" }: StudioNavProps) {
           className="min-w-0 shrink-0 [&_img]:h-10 [&_img]:w-10 sm:[&_img]:h-11 sm:[&_img]:w-11 [&_span]:text-lg sm:[&_span]:text-xl"
         />
 
-        {trailing ? (
-          <div className="hidden min-w-0 items-center gap-2 md:flex">{trailing}</div>
-        ) : null}
-
-        <nav className="ml-2 hidden min-w-0 items-center gap-1 lg:flex xl:gap-2">
+        <nav className="landing-nav-links ml-8 hidden min-w-0 flex-nowrap items-center gap-2.5 xl:ml-12 xl:gap-3.5 lg:flex">
           {tools.map((item) => (
-            <Link key={item.href} href={item.href} className={linkClass}>
+            <Link key={item.href} href={item.href} className={navLinkClass}>
               {item.label}
             </Link>
           ))}
-          <Link href="/#tools" className={linkClass}>
-            {L.navCanva}
-          </Link>
+          <CanvaNavMenu variant={dark ? "dark" : "light"} triggerClassName={navLinkClass} />
           <Link href="/pricing" className={pricingClass}>
             {L.navResources}
           </Link>
-          <ProNavLink className={linkClass} />
+          <ProNavLink className={navLinkClass} />
         </nav>
 
         <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
           {trailing ? (
-            <div className="flex items-center gap-1.5 md:hidden">{trailing}</div>
+            <div className="hidden min-w-0 items-center gap-2 md:flex">{trailing}</div>
           ) : null}
           <div className="hidden sm:block">
             <LanguageToggle variant={dark ? "dark" : "light"} />
@@ -119,50 +119,33 @@ export function StudioNav({ trailing, variant = "light" }: StudioNavProps) {
           }
         >
           <div className="flex flex-col gap-1">
+            {trailing ? (
+              <div className="mb-1 flex flex-wrap items-center gap-2 px-3 py-1 md:hidden">
+                {trailing}
+              </div>
+            ) : null}
             {tools.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={
-                  dark
-                    ? "rounded-lg px-3 py-2 text-sm font-medium text-slate-200 hover:bg-white/10"
-                    : "rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-violet-50"
-                }
+                className={mobileLinkClass}
                 onClick={() => setOpen(false)}
               >
                 {item.label}
               </Link>
             ))}
-            <Link
-              href="/#tools"
-              className={
-                dark
-                  ? "rounded-lg px-3 py-2 text-sm font-medium text-slate-200 hover:bg-white/10"
-                  : "rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-violet-50"
-              }
-              onClick={() => setOpen(false)}
-            >
-              {L.navCanva}
-            </Link>
+            <CanvaNavMobileLinks
+              variant={dark ? "dark" : "light"}
+              onNavigate={() => setOpen(false)}
+            />
             <Link
               href="/pricing"
-              className={
-                dark
-                  ? "rounded-lg px-3 py-2 text-sm font-medium text-violet-300 hover:bg-white/10"
-                  : "rounded-lg px-3 py-2 text-sm font-medium text-violet-700 hover:bg-violet-50"
-              }
+              className={dark ? `${mobileLinkClass} text-violet-300` : `${mobileLinkClass} text-violet-700`}
               onClick={() => setOpen(false)}
             >
               {L.navResources}
             </Link>
-            <ProNavLink
-              className={
-                dark
-                  ? "rounded-lg px-3 py-2 text-sm font-medium text-slate-200 hover:bg-white/10"
-                  : "rounded-lg px-3 py-2 text-sm font-medium text-slate-700 hover:bg-violet-50"
-              }
-              onClick={() => setOpen(false)}
-            />
+            <ProNavLink className={mobileLinkClass} onClick={() => setOpen(false)} />
             <div
               className={
                 dark

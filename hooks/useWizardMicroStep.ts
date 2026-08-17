@@ -10,6 +10,7 @@ import {
   clearConceptResearchState,
 } from "@/lib/concept-source-state";
 import {
+  clearProjectResumeHint,
   consumeProjectResumeHint,
   peekProjectResumeHint,
 } from "@/lib/wizard-project-snapshot";
@@ -127,7 +128,10 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
   const freshEntry = searchParams.get("fresh") === "1";
 
   const [ctx, setCtx] = useState<MicroWizardContext>(() => {
-    if (freshEntry) clearStoredContext();
+    if (freshEntry) {
+      clearStoredContext();
+      clearProjectResumeHint();
+    }
     const stored = readStoredContext();
     const sameMode = !stored.promotionMode || stored.promotionMode === promotionMode;
     const recipeId = peekLandingRecipe();
@@ -169,12 +173,12 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     storeContext(ctx);
   }, [ctx]);
 
-  const projectResumeDoneRef = useRef(false);
+  const projectResumeDoneRef = useRef(freshEntry);
   const projectResumeCtxSeededRef = useRef(false);
 
   // Open Studio hydrate: restore micro routing + jump to review/done when media exists.
   useEffect(() => {
-    if (projectResumeDoneRef.current) return;
+    if (freshEntry || projectResumeDoneRef.current) return;
     const hint = peekProjectResumeHint();
     if (!hint) return;
 
@@ -219,6 +223,7 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     }, 0);
     return () => window.clearTimeout(t);
   }, [
+    freshEntry,
     promotionMode,
     wizard.storyboardScenes.length,
     wizard.videoUrl,

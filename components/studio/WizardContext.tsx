@@ -13,27 +13,33 @@ const AutosaveContext = createContext<{ saveStatus: SaveStatus }>({ saveStatus: 
 
 function WizardAutosaveBridge({
   promotionMode,
+  startFresh,
   children,
 }: {
   promotionMode: PromotionMode;
+  startFresh?: boolean;
   children: ReactNode;
 }) {
   const wizard = useWizard();
-  const { saveStatus } = useProjectAutosave(wizard, promotionMode);
+  const { saveStatus } = useProjectAutosave(wizard, promotionMode, { startFresh });
   return <AutosaveContext.Provider value={{ saveStatus }}>{children}</AutosaveContext.Provider>;
 }
 
 export function WizardProvider({
   children,
   promotionMode,
+  startFresh,
 }: {
   children: ReactNode;
   promotionMode: PromotionMode;
+  startFresh?: boolean;
 }) {
   const value = useStudioWizard(promotionMode);
   return (
     <WizardContext.Provider value={value}>
-      <WizardAutosaveBridge promotionMode={promotionMode}>{children}</WizardAutosaveBridge>
+      <WizardAutosaveBridge promotionMode={promotionMode} startFresh={startFresh}>
+        {children}
+      </WizardAutosaveBridge>
     </WizardContext.Provider>
   );
 }

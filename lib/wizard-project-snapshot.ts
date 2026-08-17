@@ -271,6 +271,15 @@ export function writeProjectResumeHint(hint: ProjectResumeHint): void {
   }
 }
 
+export function clearProjectResumeHint(): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.removeItem(PROJECT_RESUME_STORAGE_KEY);
+  } catch {
+    /* ignore quota */
+  }
+}
+
 export function peekProjectResumeHint(): ProjectResumeHint | null {
   if (typeof window === "undefined") return null;
   try {
