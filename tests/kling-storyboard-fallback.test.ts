@@ -17,15 +17,15 @@ import {
 describe("Kling storyboard fallback billing", () => {
   it("prices 5s and 10s clips from fal Turbo Pro rates", () => {
     assert.equal(klingClipTokens(5), KLING_TURBO_PRO.tokens5s);
-    assert.equal(klingClipTokens(5), 110);
-    assert.equal(klingClipTokens(10), 110 + 22 * 5);
-    assert.equal(klingClipTokens(10), 220);
+    assert.equal(klingClipTokens(5), 284);
+    assert.equal(klingClipTokens(10), 284 + 57 * 5);
+    assert.equal(klingClipTokens(10), 569);
   });
 
   it("estimates N scenes × clip length", () => {
-    assert.equal(estimateKlingStoryboardTokens(4, 5), 440);
-    assert.equal(estimateKlingStoryboardTokens(4, 10), 880);
-    assert.equal(estimateKlingStoryboardTokens(1, 5), 110);
+    assert.equal(estimateKlingStoryboardTokens(4, 5), 1136);
+    assert.equal(estimateKlingStoryboardTokens(4, 10), 2276);
+    assert.equal(estimateKlingStoryboardTokens(1, 5), 284);
   });
 });
 

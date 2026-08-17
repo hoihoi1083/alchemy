@@ -15,15 +15,17 @@ describe("Stitched-fallback coach / facts / planner contract", () => {
 
   it("facts mention stitched multi-clip token ballpark", () => {
     const src = readFileSync(join(process.cwd(), "lib/studio-assistant-facts.ts"), "utf8");
-    assert.match(src, /440/);
+    assert.match(src, /1136/);
     assert.match(src, /stitched fallback/i);
     assert.doesNotMatch(src, /Pay-per-use fal pricing; 8s fast ~\$1\.5 ballpark\./);
   });
 
-  it("storyboard planner prompts are Kling-first", () => {
+  it("storyboard planner prompts do not name video vendors", () => {
     const src = readFileSync(join(process.cwd(), "lib/video-storyboard-plan.ts"), "utf8");
-    assert.match(src, /Kling I2V per still/);
+    assert.match(src, /per-still clips then stitch/);
     assert.doesNotMatch(src, /for Seedance API/);
     assert.doesNotMatch(src, /Seedance prompt must reference/);
+    assert.doesNotMatch(src, /Kling I2V per still/);
+    assert.doesNotMatch(src, /MiniMax H3/);
   });
 });

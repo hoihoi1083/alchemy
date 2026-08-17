@@ -311,7 +311,7 @@ function buildPlanPrompt(input: {
 
   if (conceptMode) {
     return [
-      `Plan a ${artStyleId === "realistic" ? "photorealistic" : "stylized"} CONCEPT VIDEO STORYBOARD (service / idea short — product photo optional) for Kling I2V per still → stitch.`,
+      `Plan a ${artStyleId === "realistic" ? "photorealistic" : "stylized"} CONCEPT VIDEO STORYBOARD (service / idea short — product photo optional) for per-still clips then stitch.`,
       "Return ONE JSON object only — no markdown fences.",
       "",
       "Required JSON shape:",
@@ -345,10 +345,10 @@ function buildPlanPrompt(input: {
       "",
       ...endCardLogoPlannerRules(input.useBrandLogo),
       "",
-      "seedancePrompt (English — Kling motion plan notes; JSON key kept for API compat):",
-      `- Opening line: 9:16 concept short for this campaign (~${input.durationSec}s). Runtime animates EACH still with Kling I2V then stitches.`,
+      "seedancePrompt (English — per-scene motion plan notes; JSON key kept for API compat):",
+      `- Opening line: 9:16 concept short for this campaign (~${input.durationSec}s). Runtime animates EACH still then stitches.`,
       "- One block per scene: Scene N [start-end s]: <role> — English camera motion only (push-in, orbit, handheld drift).",
-      "- Do NOT use Seedance @Image / hard-cut R2V grammar — Kling never sees that blob as marketing copy.",
+      "- Do NOT use @Image / hard-cut reference-video grammar — stitch never sees that blob as marketing copy.",
       input.imageTextMode === "integrated"
         ? "- Keep still typography in motion notes; do not invent new on-screen text, prices, or discounts."
         : "- NO on-screen text, prices, or discounts in motion notes (captions burn later via /captions).",
@@ -356,7 +356,7 @@ function buildPlanPrompt(input: {
         ? `- User offer (may appear in CTA caption only): ${input.offer}`
         : "- User did NOT provide pricing — do NOT invent prices or discount % in prompts.",
       "",
-      "productionNotes: brief user note — expect Kling multi-clip cost (~110 tokens/5s × scenes).",
+      "productionNotes: brief user note — expect stitched multi-clip token cost.",
       "",
       `Target duration: ${input.durationSec} seconds.`,
       ...videoDurationPlannerBlock(input.durationSec, { storyboardTvc: true }),
@@ -379,7 +379,7 @@ function buildPlanPrompt(input: {
         "- visualDirection MUST describe reference layout grid, palette, and typography bands from the USER REFERENCE block — not a generic natural-light product reel.",
         "- Do NOT plan a stock product-photography sequence (macro → wrist → flat lay) unless IMAGE 1 is clearly that style.",
         "- Scene 1 = opening hook in reference cover layout; middle scenes = same template shell with new copy/angle; final scene = CTA/recap band matching reference style.",
-        "- imagePrompt per scene: English still for Nano Banana dual-image edit — IMAGE 1 = product hero, IMAGE 2 = layout shell; keep IMAGE 2 LAYER A layout, IMAGE 1 product as hero, scene-specific action within that shell.",
+        "- imagePrompt per scene: English still for dual-image edit — IMAGE 1 = product hero, IMAGE 2 = layout shell; keep IMAGE 2 LAYER A layout, IMAGE 1 product as hero, scene-specific action within that shell.",
         "- All on-image copy promotes the user's product only — never zodiac/星座 hooks or wording from the reference post.",
       ]
     : [];
@@ -401,8 +401,8 @@ function buildPlanPrompt(input: {
 
   return [
     layoutTransferRef
-      ? "Plan a reference-layout VIDEO STORYBOARD: same ad design family as IMAGE 1 on every still, user's product and copy — for Kling I2V per still → stitch (captions via /captions)."
-      : `Plan a ${artStyleId === "realistic" ? "photorealistic" : "stylized"} product VIDEO STORYBOARD for Kling I2V per still → stitch (not one Seedance R2V call).`,
+      ? "Plan a reference-layout VIDEO STORYBOARD: same ad design family as IMAGE 1 on every still, user's product and copy — per-still clips then stitch (captions via /captions)."
+      : `Plan a ${artStyleId === "realistic" ? "photorealistic" : "stylized"} product VIDEO STORYBOARD for per-still clips then stitch (not one continuous reference-reel call).`,
     "Return ONE JSON object only — no markdown fences.",
     "",
     "Required JSON shape:",
@@ -422,7 +422,7 @@ function buildPlanPrompt(input: {
           "- Dual-image edit: IMAGE 1 product hero identity, IMAGE 2 layout shell, subject upright (head at top).",
         ]
       : [
-          "- Nano Banana edit from user's product photo — 9:16 still matching lookBible, subject upright (head at top).",
+          "- Image edit from user's product photo — 9:16 still matching lookBible, subject upright (head at top).",
         ]),
     ...storyboardTypePlannerLines(
       input.imageTextMode === "integrated",
@@ -433,14 +433,14 @@ function buildPlanPrompt(input: {
       "- lightingEn: English lighting ONLY for this scene (side key, rim, backlight, etc.).",
       "- productPlacementZh: where the product/concept sits in frame (market language).",
       "- punchLineZh: optional spoken/caption line for this beat (burn later via /captions).",
-    "- Phone/laptop/tablet scenes: describe blank or abstract UI chrome only — never ask Nano Banana to invent readable Chinese/English on screens (it becomes gibberish).",
+    "- Phone/laptop/tablet scenes: describe blank or abstract UI chrome only — never invent readable Chinese/English on screens (it becomes gibberish).",
     "",
     ...endCardLogoPlannerRules(input.useBrandLogo),
     "",
-    "seedancePrompt (English — Kling motion plan notes; JSON key kept for API compat):",
+    "seedancePrompt (English — per-scene motion plan notes; JSON key kept for API compat):",
     `- Opening line: 9:16 commercial for the IMAGE 1 object; echo lookBible lighting/palette.`,
     "- One block per scene: Scene N [start-end s]: <role> — English camera + lighting for that beat.",
-    "- Do NOT use Seedance @Image / hard-cut R2V grammar — runtime is Kling I2V per still.",
+    "- Do NOT use @Image / hard-cut reference-video grammar — runtime is per-still clip then stitch.",
     "- People only when IMAGE 1 staging needs hands/lifestyle; never invent a different SKU; no celebrity faces; hands-only OK.",
     input.imageTextMode === "integrated"
       ? "- Keep still typography in motion notes; do not invent new on-screen text, prices, or discounts."
@@ -449,7 +449,7 @@ function buildPlanPrompt(input: {
       ? `- User offer (may appear in CTA caption only): ${input.offer}`
       : "- User did NOT provide pricing — do NOT invent prices or discount % in prompts.",
     "",
-    "productionNotes: brief user note in 繁體中文 (HK) or English — expect Kling multi-clip tokens (~110/5s × scenes).",
+    "productionNotes: brief user note in 繁體中文 (HK) or English — expect stitched multi-clip tokens.",
     "",
     `Target duration: ${input.durationSec} seconds.`,
     ...videoDurationPlannerBlock(input.durationSec, { storyboardTvc: true }),
@@ -667,10 +667,10 @@ function buildReelStoryboardPlanPrompt(input: {
         ]
       : input.imageTextMode === "integrated"
         ? [
-            "- imagePrompt: English still for Nano Banana edit from user's product photo — 9:16, photorealistic. MUST render exact on-image headline/CTA matching onImageCopyZh.",
+            "- imagePrompt: English still from user's product photo — 9:16, photorealistic. MUST render exact on-image headline/CTA matching onImageCopyZh.",
           ]
         : [
-            "- imagePrompt: English still for Nano Banana edit from user's product photo — 9:16, photorealistic, no readable text.",
+            "- imagePrompt: English still from user's product photo — 9:16, photorealistic, no readable text.",
           ];
 
   const adaptLine = input.conceptMode
@@ -732,10 +732,10 @@ function buildReelStoryboardPlanPrompt(input: {
     "",
     ...endCardLogoPlannerRules(input.useBrandLogo),
     "",
-    "seedancePrompt (English — motion plan notes for MiniMax H3 first, Kling I2V+stitch fallback; JSON key kept for API compat):",
+    "seedancePrompt (English — motion plan notes for single-clip first, stitched fallback; JSON key kept for API compat):",
     seedanceLead,
     "- One block per scene: Scene N [start-end s]: <role> — English camera + lighting for that beat.",
-    "- Do NOT use Seedance @Image / hard-cut R2V grammar — runtime prefers MiniMax H3 (all stills → one clip), else Kling I2V per still → stitch.",
+    "- Do NOT use @Image / hard-cut reference-video grammar — runtime prefers one continuous clip from all stills, else per-still clips then stitch.",
     input.imageTextMode === "integrated"
       ? "- Keep planned on-image type on stills; motion must not rewrite letters or invent new slogans."
       : "- Textless frames; captions burn later via /captions.",
@@ -757,7 +757,7 @@ function buildReelStoryboardPlanPrompt(input: {
     ...videoDurationPlannerBlock(input.durationSec, { hasReferenceVideo: true }),
     // Look follows the reference reel — do not inject a conflicting art-style plot.
     "Look/grade: match Reference visual direction + lookBible; do not invent a new art medium.",
-    "productionNotes: expect MiniMax H3 (preferred) or Kling multi-clip cost; match reference pacing without cloning topic.",
+    "productionNotes: expect single-clip (preferred) or stitched multi-clip cost; match reference pacing without cloning topic.",
   ]
     .filter(Boolean)
     .join("\n");
@@ -811,8 +811,8 @@ export async function planVideoStoryboardFromReelAnalysis(
       {
         role: "system",
         content: conceptMode
-          ? `You are a performance marketing storyboard director. Adapt a viral reference reel into a concept/message storyboard for MiniMax H3 (preferred) or Kling I2V per still → stitch (${input.imageTextMode === "integrated" ? "on-image type on stills" : "textless frames; captions via /captions"}). Output valid JSON only.`
-          : `You are a performance marketing storyboard director. Adapt a viral reference reel into a product storyboard for MiniMax H3 (preferred) or Kling I2V per still → stitch (${input.imageTextMode === "integrated" ? "on-image type on stills" : "textless frames; captions via /captions"}). Output valid JSON only.`,
+          ? `You are a performance marketing storyboard director. Adapt a viral reference reel into a concept/message storyboard for single-clip video (preferred) or per-still clips then stitch (${input.imageTextMode === "integrated" ? "on-image type on stills" : "textless frames; captions via /captions"}). Output valid JSON only.`
+          : `You are a performance marketing storyboard director. Adapt a viral reference reel into a product storyboard for single-clip video (preferred) or per-still clips then stitch (${input.imageTextMode === "integrated" ? "on-image type on stills" : "textless frames; captions via /captions"}). Output valid JSON only.`,
       },
       {
         role: "user",

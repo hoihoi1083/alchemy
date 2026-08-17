@@ -86,7 +86,7 @@ export async function synthesizeSpeechToFileFal(args: {
 
   const audioUrl = extractAudioUrl(result.data);
   if (!audioUrl) {
-    throw new Error("fal TTS returned no audio URL.");
+    throw new Error("Voiceover generation returned no audio.");
   }
 
   await fs.mkdir(path.dirname(args.outputPath), { recursive: true });

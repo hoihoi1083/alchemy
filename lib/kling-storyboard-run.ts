@@ -1,4 +1,5 @@
 import { ApiError, fal } from "@fal-ai/client";
+import { messageHasVendorName } from "@/lib/api/errors";
 import { promises as fs } from "fs";
 import path from "path";
 import { KLING_TURBO_PRO, type KlingClipDuration } from "@/lib/billing/token-costs";
@@ -43,13 +44,14 @@ export {
 const KLING_ENDPOINT = KLING_TURBO_PRO.endpoint;
 
 export function formatKlingFalError(e: unknown): string {
-  if (e instanceof ApiError) {
-    return `${e.message}${e.requestId ? ` (request: ${e.requestId})` : ""}`;
-  }
+  const fallback = "Storyboard video generation failed";
+  if (e instanceof ApiError) return fallback;
   if (e && typeof e === "object" && "message" in e) {
-    return String((e as { message: unknown }).message);
+    const msg = String((e as { message: unknown }).message);
+    if (!msg || messageHasVendorName(msg)) return fallback;
+    return msg;
   }
-  return "Storyboard video generation failed";
+  return fallback;
 }
 
 function extractVideoUrl(data: unknown): string | null {
@@ -289,7 +291,7 @@ export async function runKlingStoryboardFallback(opts: {
       (totalDurationSec <= 8 && probedSec > totalDurationSec * 1.12)
     ) {
       throw new KlingDurationUnreachableError(
-        `Kling stitch is ~${probedSec.toFixed(1)}s; cannot honestly hit ${totalDurationSec}s (min 5s/clip, max 1.85×). Retry MiniMax H3 or pick 12s.`,
+        `Stitched fallback is ~${probedSec.toFixed(1)}s; cannot honestly hit ${totalDurationSec}s (min 5s/clip, max 1.85×). Retry single-clip mode or pick 12s.`,
         probedSec,
       );
     }

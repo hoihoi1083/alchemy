@@ -120,6 +120,7 @@ export const en = {
 		studio: "Open studio",
 		pricing: "Pricing & tokens",
 		how: "How it works",
+		watchDemo: "Watch demo",
 		proCanvas: "Pro canvas",
 		accountTitle: "Account",
 		library: "My library",
@@ -368,6 +369,31 @@ export const en = {
 				body: "Generate images or videos, then refine with our editable canvas.",
 			},
 		],
+		demoModal: {
+			title: "Image ads in 4 steps",
+			subtitle: "A real walkthrough of the studio — no blank prompt required.",
+			close: "Close demo",
+			tryCta: "Try free — create your first ad",
+			hint: "Real studio recording · sped up · click a step to jump",
+			steps: [
+				{
+					title: "Pick a product",
+					body: "Start from the landing, choose Physical product, then continue into Studio.",
+				},
+				{
+					title: "Images only",
+					body: "Choose Generate images only — skip video for a simple still-ad path.",
+				},
+				{
+					title: "Photo + hook",
+					body: "Name the product, upload a real product shot, and add a short headline.",
+				},
+				{
+					title: "Generate the still",
+					body: "Tap Generate image. Review the result, then download or edit on canvas.",
+				},
+			],
+		},
 		howDemo: {
 			uploadTitle: "Reference · drop or paste",
 			pasteHint: "Paste link",
@@ -624,11 +650,14 @@ export const en = {
 		],
 		tokensTitle: "How AI Tokens Work",
 		tokensBody:
-			"Rough monthly capacity if you spend tokens on images only, or on ~10s storyboard reels. Mix formats in practice.",
+			"Free covers 1 image + 1× 8s 480p video together. Paid plans show rough monthly capacity if you spend tokens on 1K images only, or on 8s videos.",
 		tokensUnit: "tokens",
 		tokensPlanGrant: "{n} tokens",
 		tokensCapacityImages: "single images",
 		tokensCapacityOr: "or",
+		tokensCapacityAnd: "and",
+		tokensCapacityVideos: "8s videos",
+		tokensCapacityVideosFree: "8s 480p videos",
 		tokensCapacityStoryboards: "storyboard reels (~{sec}s)",
 		tokenCostPlan: "AI plan / brief",
 		tokenCostImage: "Image creation",
@@ -637,7 +666,7 @@ export const en = {
 		tokenCostVideoDraft: "Short video (~8s)",
 		tokenCostVoice: "Voiceover",
 		tokensVideoNote:
-			"Estimates only — based on a typical ~10s storyboard reel. Longer reels, more scenes, logo passes, and music use more tokens.",
+			"Free: 1 image + 1× 8s 480p together. Paid estimates use 8s video at the plan’s max resolution (or a typical ~10s 2-scene storyboard). Longer clips, more scenes, and logo passes use more tokens.",
 		tokensSeePricing: "See full pricing →",
 		topUpTitle: "Need more tokens?",
 		topUpBody: "Top up anytime after you subscribe.",
@@ -681,7 +710,7 @@ export const en = {
 			physicalGroup: "Product",
 			conceptGroup: "Concept / service",
 			tvcPaidHint:
-				"12s single-clip video needs a paid plan (~1140 tokens). Free grant can cover stills + stitched fallback if single-clip does not fit.",
+				"4 stills + 12s video needs a paid plan (~752 tokens). Free grant covers about 1 image + 1× 8s 480p video.",
 			needPrefix: "Need",
 			tvcNeedPhysical: "Product photo + product name",
 			tvcNeedConcept: "Headline or concept idea",
@@ -1035,11 +1064,11 @@ export const en = {
 			},
 			{
 				q: "Will regenerating cost extra tokens?",
-				a: "Yes. Every AI regenerate call (image, scene, or video) is a new model run and uses tokens again.",
+				a: "Yes. Every AI regenerate call (image, scene, or video) is a new generation and uses tokens again.",
 			},
 			{
 				q: "How many free tokens do I get?",
-				a: "New accounts get 500 tokens once (not a monthly refill) — usually enough for about 1 image plus 1 short 480p video. See Pricing for plans and top-ups.",
+				a: "New accounts get 500 tokens once (not a monthly refill) — usually enough for 1 promotional image plus 1× 8s 480p video. See Pricing for plans and top-ups.",
 			},
 			{
 				q: "Do I need to upload reference videos?",
@@ -1081,6 +1110,9 @@ export const en = {
 		tokensOnce: "tokens · once per signup",
 		tokensIncluded: "tokens included",
 		capacityImagesFeature: "~{n} single images",
+		capacityVideosFeature: "or ~{n} × 8s videos",
+		capacityFreeImages: "1 promotional image",
+		capacityFreeVideos: "1× 8s 480p video",
 		capacityStoryboardsFeature: "~{n} storyboard reels (~{sec}s)",
 		mostPopular: "Most popular",
 		getStarted: "Get started",
@@ -1142,7 +1174,7 @@ export const en = {
 			},
 			{
 				q: "How many free tokens do new accounts get?",
-				body: "New signups receive 500 tokens once — not a monthly refill. That usually covers about 1 image plus 1 short 480p video. Upgrade or top up when you need more.",
+				body: "New signups receive 500 tokens once — not a monthly refill. That usually covers 1 promotional image plus 1× 8s 480p video. Upgrade or top up when you need more.",
 			},
 			{
 				q: "What are AI Tokens used for?",
@@ -1196,9 +1228,10 @@ export const en = {
 				name: "Free",
 				description: "Try the full guided workflow",
 				features: [
-					"500 tokens (~1 image + 1 short 480p video)",
+					"500 tokens (1 image + 1× 8s 480p video)",
 					"Guided wizard + templates",
-					"480p video cap",
+					"Up to 480p video",
+					"Up to 1K images",
 					"Platform research",
 					"Image → video combined flow",
 					"Storyboard mode",
@@ -1216,8 +1249,13 @@ export const en = {
 				description: "SMB owners posting weekly",
 				features: [
 					"3,000 tokens / month",
-					"720p video",
-					"1K images",
+					"Guided wizard + templates",
+					"Up to 720p video",
+					"Up to 1K images",
+					"Platform research",
+					"Image → video combined flow",
+					"Storyboard mode",
+					"A/B, Campaign, and teaching carousel",
 					"Email support",
 				],
 			},
@@ -1232,8 +1270,13 @@ export const en = {
 				description: "Agencies and power users",
 				features: [
 					"8,000 tokens / month",
-					"1080p video",
-					"1K images",
+					"Guided wizard + templates",
+					"Up to 1080p video",
+					"Up to 1K images",
+					"Platform research",
+					"Image → video combined flow",
+					"Storyboard mode",
+					"A/B, Campaign, and teaching carousel",
 					"Priority generation",
 				],
 			},
@@ -1248,7 +1291,13 @@ export const en = {
 				description: "Teams with high volume",
 				features: [
 					"16,000 tokens / month",
-					"1080p video + 2K images",
+					"Guided wizard + templates",
+					"Up to 1080p video",
+					"Up to 2K images",
+					"Platform research",
+					"Image → video combined flow",
+					"Storyboard mode",
+					"A/B, Campaign, and teaching carousel",
 					"Pro canvas",
 					"Priority support",
 				],
@@ -1273,18 +1322,25 @@ export const en = {
 				master: "16,000 / mo",
 			},
 			{
+				feature: "Typical output",
+				free: "1 image + 1× 8s 480p",
+				standard: "~46 images or ~5 × 8s 720p",
+				pro: "~123 images or ~9 × 8s 1080p",
+				master: "~246 images or ~18 × 8s 1080p",
+			},
+			{
 				feature: "Max image resolution",
-				free: "1K",
-				standard: "1K",
-				pro: "1K",
-				master: "2K",
+				free: "Up to 1K",
+				standard: "Up to 1K",
+				pro: "Up to 1K",
+				master: "Up to 2K",
 			},
 			{
 				feature: "Max video resolution",
-				free: "480p",
-				standard: "720p",
-				pro: "1080p",
-				master: "1080p",
+				free: "Up to 480p",
+				standard: "Up to 720p",
+				pro: "Up to 1080p",
+				master: "Up to 1080p",
 			},
 			{
 				feature: "Research / combined / storyboard",
@@ -2151,7 +2207,7 @@ export const en = {
 		storyboardReplacingImage: "Replacing…",
 		storyboardRegeneratingImage: "Regenerating…",
 		storyboardRegenerateConfirm:
-			"Regenerate Scene {scene} with AI now? This makes a new model call and charges again.",
+			"Regenerate Scene {scene} with AI now? This is a new generation and charges again.",
 		storyboardKeyframeSectionTitle: "Storyboard refs (@Image1…@ImageN)",
 		storyboardPromptLabel: "video generation storyboard prompt",
 		storyboardPromptHint:
@@ -2906,7 +2962,7 @@ export const en = {
 		motionPosterNeedKeyframe:
 			"Add a product photo, scene still, or keyframe first for motion poster.",
 		blockbusterHint:
-			"One 9s take: truck hits the overpass, boxes explode, then the hero rises. Upload hero + packaging. Generate the truck/overpass first frame — without it the model often stays on a product beauty shot.",
+			"One 9s take: truck hits the overpass, boxes explode, then the hero rises. Upload hero + packaging. Generate the truck/overpass first frame — without it the clip often stays on a product beauty shot.",
 		blockbusterHeroTitle: "Hero (required)",
 		blockbusterHeroHint:
 			"Clear product packshot. This is the object that rises at the end.",
@@ -2931,7 +2987,7 @@ export const en = {
 		h3ShotNeedConceptHero:
 			"Upload a logo/mascot, save a Brand kit logo, or generate a still with AI.",
 		h3ShotNeedReferenceVideo:
-			"Upload a reference MP4 (required for imitate-ad, neon-on-real, and h3-showreel).",
+			"Upload a reference MP4 (required for imitate-ad, neon-on-real, and showreel).",
 		h3ShotGenerateStillBtn: "Generate still",
 		h3ShotConceptHeroTitle: "Hero lock still",
 		h3ShotPhotoTitle: {
@@ -4283,12 +4339,12 @@ export const en = {
 		insufficientTokensCta: "View plans & top up",
 		insufficientTokensDismiss: "Close",
 		tvcNeedsPaidPlan:
-			"12s single-clip video needs more tokens than the free grant (~1140 for 12s). Upgrade on Pricing, or use stitched fallback if it fits your balance.",
+			"This video needs more tokens than the free grant. Free covers about 1 image + 1× 8s 480p video. Upgrade on Pricing, or use stitched fallback if it fits your balance.",
 		tvcNeedsPaidPlanTitle: "12s TVC needs a paid plan",
 		storyboardEngineChoiceTitle:
 			"Single-clip video needs more tokens — stitched fallback fits now",
 		storyboardEngineChoiceBody:
-			"Single-clip 12s costs ~{h3} tokens. You have {balance}. Stitched fallback (~{kling}) is 4 clips cut together, not one continuous take.",
+			"Single-clip 12s costs ~{single} tokens. You have {balance}. Stitched fallback (~{stitch}) is 4 clips cut together, not one continuous take.",
 		storyboardEngineChoiceH3: "Upgrade for single-clip video",
 		storyboardEngineChoiceKling: "Use stitched fallback now",
 		storyboardCellBlocked:

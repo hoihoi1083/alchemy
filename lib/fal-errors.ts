@@ -1,4 +1,5 @@
 import { ApiError, ValidationError } from "@fal-ai/client";
+import { messageHasVendorName } from "@/lib/api/errors";
 import { isFalContentPolicyThrowable } from "@/lib/seedance-moderation";
 
 function falDetailSnippet(e: ApiError<unknown> | ValidationError): string {
@@ -42,10 +43,12 @@ export function formatFalGenerationError(e: unknown, fallback = "Generation fail
       );
     }
     const base = detail || e.message || fallback;
-    return `${base}${requestSuffix}`;
+    if (messageHasVendorName(base)) return fallback;
+    return base;
   }
   if (e && typeof e === "object" && "message" in e) {
-    return String((e as { message: unknown }).message) || fallback;
+    const msg = String((e as { message: unknown }).message) || fallback;
+    return messageHasVendorName(msg) ? fallback : msg;
   }
   return fallback;
 }

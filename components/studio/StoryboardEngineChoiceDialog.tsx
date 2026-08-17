@@ -20,9 +20,9 @@ export function StoryboardEngineChoiceDialog({
 }) {
   const { m } = useLocale();
   const body = m.errors.storyboardEngineChoiceBody
-    .replace("{h3}", String(choice.h3Cost))
+    .replace("{single}", String(choice.h3Cost))
     .replace("{balance}", String(choice.balance))
-    .replace("{kling}", String(choice.klingCost));
+    .replace("{stitch}", String(choice.klingCost));
 
   return (
     <div

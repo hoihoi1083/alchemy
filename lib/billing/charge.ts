@@ -7,6 +7,7 @@ import {
   InsufficientTokensError,
 } from "@/lib/billing/ledger";
 import {
+  estimateH3Tokens,
   estimateVideoTokens,
   resolveVideoBillingResolution,
   TOKEN_COST,
@@ -14,7 +15,7 @@ import {
 import { isMongoConfigured } from "@/lib/mongodb";
 import { isProductionEnv } from "@/lib/mongodb-production";
 
-export { resolveVideoBillingResolution, estimateVideoTokens };
+export { resolveVideoBillingResolution, estimateVideoTokens, estimateH3Tokens };
 
 export function billingErrorResponse(err: unknown): NextResponse | null {
   if (err instanceof InsufficientTokensError) {
@@ -176,4 +177,13 @@ export function videoTokenCostFromRequest(opts: {
   duration: "auto" | number;
 }): number {
   return estimateVideoTokens(opts);
+}
+
+export function h3TokenCostFromRequest(opts: {
+  resolution: string;
+  duration: "auto" | number;
+  referenceVideoSec?: number;
+  extraReferenceImages?: number;
+}): number {
+  return estimateH3Tokens(opts);
 }

@@ -17,6 +17,7 @@ import {
   InsufficientTokensError,
 } from "../lib/billing/ledger";
 import { TOKEN_COST } from "../lib/billing/token-costs";
+import { FREE_SIGNUP_GRANT_TOKENS } from "../lib/billing/plans";
 import { getDb, isMongoConfigured } from "../lib/mongodb";
 
 const CLERK_ID = `billing_probe_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -56,14 +57,14 @@ async function main() {
     const afterImage = await consumeTokens(CLERK_ID, TOKEN_COST.image, {
       meta: { probe: "image" },
     });
-    if (afterImage !== 500 - TOKEN_COST.image) {
-      throw new Error(`After image expected ${500 - TOKEN_COST.image}, got ${afterImage}`);
+    if (afterImage !== FREE_SIGNUP_GRANT_TOKENS - TOKEN_COST.image) {
+      throw new Error(`After image expected ${FREE_SIGNUP_GRANT_TOKENS - TOKEN_COST.image}, got ${afterImage}`);
     }
 
     // Simulate failed job: afford check only, no consume
     await assertCanAfford(CLERK_ID, TOKEN_COST.music);
     const mid = await getUserBalance(CLERK_ID);
-    if (mid?.balance !== 500 - TOKEN_COST.image) {
+    if (mid?.balance !== FREE_SIGNUP_GRANT_TOKENS - TOKEN_COST.image) {
       throw new Error("Balance changed without consume — overcharge risk");
     }
 

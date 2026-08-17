@@ -26,13 +26,13 @@ export function imageCapForPlan(plan: UserPlan): ImageResolutionCap {
   return PLAN_DEFINITIONS[plan].maxImageResolution;
 }
 
-const ALL_VIDEO_CAPS: VideoResolutionCap[] = ["480p", "720p", "1080p"];
+export const VIDEO_RESOLUTION_CAPS: VideoResolutionCap[] = ["480p", "720p", "1080p"];
 const ALL_IMAGE_CAPS: ImageResolutionCap[] = ["1K", "2K", "4K"];
 
 /** Resolutions the UI may offer for this plan (inclusive of lower tiers). */
 export function videoResolutionsForPlan(plan: UserPlan): VideoResolutionCap[] {
   const max = videoCapForPlan(plan);
-  return ALL_VIDEO_CAPS.filter((r) => VIDEO_RANK[r] <= VIDEO_RANK[max]);
+  return VIDEO_RESOLUTION_CAPS.filter((r) => VIDEO_RANK[r] <= VIDEO_RANK[max]);
 }
 
 export function imageResolutionsForPlan(plan: UserPlan): ImageResolutionCap[] {
@@ -74,6 +74,14 @@ export function clampVideoResolution(plan: UserPlan, requested: string): {
     return { resolution: requested.trim() || max, capped: false, max };
   }
   return { resolution: max, capped: true, max };
+}
+
+/** UI / form resolution after plan clamp (Free → 480p). */
+export function capUiVideoResolution(
+  plan: UserPlan,
+  requested: string,
+): VideoResolutionCap {
+  return parseVideoResolutionTier(clampVideoResolution(plan, requested).resolution);
 }
 
 export function clampImageResolution(plan: UserPlan, requested?: string | null): {

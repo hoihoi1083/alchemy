@@ -12,6 +12,7 @@ playwright/.clerk/
 npm-debug.log*
 
 # Local test / debug artifacts
+.demo-record/
 tmp/
 tests/output/
 .out-frame.jpg

@@ -19,9 +19,9 @@ function formatFalError(e: unknown): string {
   if (e instanceof ApiError) {
     const detail = e.message?.trim() || "Request failed";
     if (e.status === 401 || e.status === 403 || /forbidden|unauthorized/i.test(detail)) {
-      return `Photo analysis was blocked (${e.status || 403}). Check fal.ai key/credits for vision, or re-upload a smaller JPG/PNG.`;
+      return "Photo analysis was blocked. Try a smaller JPG/PNG, or try again later.";
     }
-    return `${detail}${e.requestId ? ` (fal request: ${e.requestId})` : ""}`;
+    return "Photo analysis failed. Try a smaller JPG/PNG, or try again later.";
   }
   if (e && typeof e === "object" && "message" in e) {
     return String((e as { message: unknown }).message);

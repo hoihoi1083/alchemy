@@ -40,7 +40,7 @@ export function videoDurationPlannerBlock(
     return [
       "",
       "OUTPUT LENGTH + REFERENCE SPINE (mandatory):",
-      `- The model will render EXACTLY ${sec} seconds.`,
+      `- Output will be EXACTLY ${sec} seconds.`,
       `- @Video1 already has a shot structure. COMPRESS those existing beats into ${sec}s — keep the same locations, camera language, and cut energy.`,
       "- Do NOT invent a new HOOK → DEMO → DESIRE → CTA story that replaces @Video1.",
       "- Do NOT invent a second location, tutorial rewrite, or studio-only packshot arc.",
@@ -56,7 +56,7 @@ export function videoDurationPlannerBlock(
       "OUTPUT LENGTH + TVC ROLE SPINE (mandatory):",
       `- Target finished storyboard is about ${sec} seconds across the planned scenes.`,
       "- Use TVC shot roles (establish → macro → orbit/logo-trace → lifestyle/payoff) — NOT a separate HOOK→DEMO→DESIRE→CTA rewrite.",
-      `- Compress those roles into ~${sec}s total so the stitch / H3 clip feels COMPLETE.`,
+      `- Compress those roles into ~${sec}s total so the finished clip feels COMPLETE.`,
       "- Do NOT invent a second location, tutorial rewrite, or studio-only packshot arc that ignores the roles.",
       `- Do NOT describe beats that need more than ${sec}s to land.`,
     ];
@@ -108,7 +108,7 @@ export function videoDurationPlannerBlock(
   return [
     "",
     "OUTPUT LENGTH + SCRIPT (mandatory):",
-    `- The model will render EXACTLY ${sec} seconds. Write the spoken/visual SCRIPT and motion ONLY for this runtime.`,
+    `- Output will be EXACTLY ${sec} seconds. Write the spoken/visual SCRIPT and motion ONLY for this runtime.`,
     `- ${scriptBeats}`,
     `- Scene/shot COUNT is flexible — choose whatever count best serves this ${sec}s script (quality of arc > arbitrary scene count).`,
     `- Do NOT describe beats that need more than ${sec}s to land.`,

@@ -10,6 +10,7 @@ import {
   stripReferenceVideoTags,
 } from "../lib/video-engine-router";
 import { DEFAULT_VIDEO_SETTINGS } from "../lib/video-settings";
+import { normalizeSeedanceR2vResolution } from "../lib/seedance-r2v-run";
 
 describe("video engine router (A vs B)", () => {
   it("poster is always H3, never Kling or Seedance", () => {
@@ -93,7 +94,7 @@ describe("storyboard route + wizard wiring", () => {
       "utf8",
     );
     assert.match(src, /runSeedanceStoryboardR2v/);
-    assert.match(src, /reference-to-video|seedance-storyboard-r2v/);
+    assert.match(src, /runMinimaxH3Fallback/);
     assert.match(src, /REFERENCE_VIDEO_REQUIRED/);
     assert.match(src, /expectsReel \|\| !enginePlan\.allowKling/);
     const seedanceAt = src.indexOf("Seedance R2V first");
@@ -109,7 +110,17 @@ describe("storyboard route + wizard wiring", () => {
     assert.match(src, /bytedance\/seedance-2\.0\/reference-to-video/);
     assert.doesNotMatch(src, /seedance-2\.0\/fast/);
     assert.doesNotMatch(src, /SEEDANCE_R2V_QUALITY = "bytedance\/seedance-2\.0\/image-to-video"/);
-    assert.match(src, /needs @Video1/);
+    assert.match(src, /@Video1/);
+    assert.match(src, /normalizeSeedanceR2vResolution/);
+  });
+
+  it("storyboard Seedance uses the plan-clamped resolution, not hardcoded 1080p", () => {
+    const src = readFileSync(
+      join(root, "app/api/generate-kling-storyboard/route.ts"),
+      "utf8",
+    );
+    assert.match(src, /clampVideoResolution/);
+    assert.doesNotMatch(src, /resolution:\s*"1080p"/);
   });
 
   it("wizard sends face_heavy, forces reel quality, poster ignores leftover MP4", () => {
@@ -134,5 +145,15 @@ describe("storyboard route + wizard wiring", () => {
     );
     assert.match(src, /showEnginePicker \?/);
     assert.doesNotMatch(src, /motionPoster \? null/);
+    assert.match(src, /allowedResolutions\.map/);
+    assert.doesNotMatch(src, /VIDEO_RESOLUTION_CAPS\.map/);
+  });
+});
+
+describe("Seedance R2V resolution", () => {
+  it("does not bump 480p up to 720p", () => {
+    assert.equal(normalizeSeedanceR2vResolution("480p"), "480p");
+    assert.equal(normalizeSeedanceR2vResolution("720p"), "720p");
+    assert.equal(normalizeSeedanceR2vResolution("1080p"), "1080p");
   });
 });

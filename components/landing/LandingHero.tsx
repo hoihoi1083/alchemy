@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useLocale } from "@/components/LocaleProvider";
+import { LandingWatchDemoButton } from "@/components/landing/LandingDemoModal";
 import { LandingHeroMascot } from "@/components/landing/LandingHeroMascot";
 import { LandingWhyDifferent } from "@/components/landing/LandingWhyDifferent";
 
@@ -79,13 +80,7 @@ export function LandingHero() {
 							>
 								{L.ctaPrimary}
 							</Link>
-							<a
-								href="#how"
-								className="landing-hero-cta-secondary inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/25 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur-sm hover:border-violet-300/50 hover:bg-white/10 sm:w-auto sm:px-5 sm:py-3"
-							>
-								<span aria-hidden>▶</span>
-								{L.ctaSecondary}
-							</a>
+							<LandingWatchDemoButton className="landing-hero-cta-secondary inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/25 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur-sm hover:border-violet-300/50 hover:bg-white/10 sm:w-auto sm:px-5 sm:py-3" />
 						</div>
 					</div>
 				</div>

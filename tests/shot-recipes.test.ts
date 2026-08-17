@@ -156,7 +156,7 @@ describe("reel storyboard planner parity", () => {
     assert.match(prompt, /lookBible/);
     assert.match(prompt, /lightingEn/);
     assert.match(prompt, /establish/);
-    assert.match(prompt, /MiniMax H3/);
+    assert.match(prompt, /single-clip/i);
     assert.match(prompt, /@Image1|product identity|OBJECT/i);
   });
 });

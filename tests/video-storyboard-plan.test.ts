@@ -135,7 +135,7 @@ describe("parseVideoStoryboardPlan scene/prompt sync", () => {
 });
 
 describe("video-storyboard-plan reel analysis", () => {
-  it("reel storyboard prompt maps reference shots and teaches Kling-first", () => {
+  it("reel storyboard prompt maps reference shots and prefers single-clip then stitch", () => {
     const prompt = buildReelStoryboardPlanPromptForTest({
       analysis: {
         durationSec: 180,
@@ -170,7 +170,7 @@ describe("video-storyboard-plan reel analysis", () => {
     });
     assert.match(prompt, /REFERENCE REEL structure/i);
     assert.match(prompt, /Hook close-up/i);
-    assert.match(prompt, /Kling/i);
+    assert.match(prompt, /single-clip/i);
     assert.doesNotMatch(prompt, /@ImageK/i);
   });
 });
@@ -240,7 +240,7 @@ describe("video-storyboard-plan layout transfer", () => {
     assert.doesNotMatch(prompt, /wearables → wrist\/on-body, macro detail/);
   });
 
-  it("generic storyboard keeps category adaptation and Kling-first motion grammar", () => {
+  it("generic storyboard keeps category adaptation and stitch motion grammar", () => {
     const prompt = buildStoryboardPlanPromptForTest({
       ...base,
       referenceStrategyKind: "none",
@@ -249,7 +249,7 @@ describe("video-storyboard-plan layout transfer", () => {
     assert.match(prompt, /Never guess SKU from the product NAME/i);
     assert.match(prompt, /IMAGE 1/i);
     assert.doesNotMatch(prompt, /current guess:/i);
-    assert.match(prompt, /Kling/i);
+    assert.match(prompt, /per-still clips then stitch/i);
     assert.doesNotMatch(prompt, /LAYOUT TRANSFER/i);
     assert.doesNotMatch(prompt, /for Seedance API/i);
   });

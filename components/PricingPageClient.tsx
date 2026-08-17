@@ -10,9 +10,7 @@ import { LandingNav } from "@/components/landing/LandingNav";
 import { Reveal } from "@/components/landing/Reveal";
 import { useLocale } from "@/components/LocaleProvider";
 import { PLAN_DEFINITIONS } from "@/lib/billing/plans";
-import {
-  estimatePlanApproxCapacity,
-} from "@/lib/billing/token-costs";
+import { pricingCardCapacityItems } from "@/lib/billing/pricing-card-capacity";
 import { PRODUCT_SUPPORT_EMAIL } from "@/lib/brand";
 import {
   trackCheckoutFailed,
@@ -352,21 +350,7 @@ export function PricingPageClient() {
       blurb: p.plans.free.description,
       priceLabel: p.freeForever,
       tokensLabel: `${PLAN_DEFINITIONS.free.monthlyTokens.toLocaleString()} ${p.tokensOnce}`,
-      capacity: (() => {
-        const c = estimatePlanApproxCapacity("free");
-        return [
-          {
-            kind: "images" as const,
-            label: p.capacityImagesFeature.replace("{n}", String(c.approxImages)),
-          },
-          {
-            kind: "storyboard" as const,
-            label: p.capacityStoryboardsFeature
-              .replace("{n}", String(c.approxStoryboards))
-              .replace("{sec}", String(c.storyboardSec)),
-          },
-        ];
-      })(),
+      capacity: pricingCardCapacityItems("free", p),
       features: p.plans.free.features.slice(1),
       cta: p.getStarted,
       popular: false,
@@ -379,21 +363,7 @@ export function PricingPageClient() {
       listPrice: p.plans.standard.listPrice,
       saveLabel: interval === "monthly" ? p.plans.standard.monthlySave : p.plans.standard.yearlySave,
       tokensLabel: `${p.plans.standard.tokens} ${p.tokensPerMonth}`,
-      capacity: (() => {
-        const c = estimatePlanApproxCapacity("standard");
-        return [
-          {
-            kind: "images" as const,
-            label: p.capacityImagesFeature.replace("{n}", String(c.approxImages)),
-          },
-          {
-            kind: "storyboard" as const,
-            label: p.capacityStoryboardsFeature
-              .replace("{n}", String(c.approxStoryboards))
-              .replace("{sec}", String(c.storyboardSec)),
-          },
-        ];
-      })(),
+      capacity: pricingCardCapacityItems("standard", p),
       features: p.plans.standard.features.slice(1),
       cta: p.subscribe,
       popular: false,
@@ -406,21 +376,7 @@ export function PricingPageClient() {
       listPrice: p.plans.pro.listPrice,
       saveLabel: interval === "monthly" ? p.plans.pro.monthlySave : p.plans.pro.yearlySave,
       tokensLabel: `${p.plans.pro.tokens} ${p.tokensPerMonth}`,
-      capacity: (() => {
-        const c = estimatePlanApproxCapacity("pro");
-        return [
-          {
-            kind: "images" as const,
-            label: p.capacityImagesFeature.replace("{n}", String(c.approxImages)),
-          },
-          {
-            kind: "storyboard" as const,
-            label: p.capacityStoryboardsFeature
-              .replace("{n}", String(c.approxStoryboards))
-              .replace("{sec}", String(c.storyboardSec)),
-          },
-        ];
-      })(),
+      capacity: pricingCardCapacityItems("pro", p),
       features: p.plans.pro.features.slice(1),
       cta: p.subscribe,
       popular: true,
@@ -433,21 +389,7 @@ export function PricingPageClient() {
       listPrice: p.plans.master.listPrice,
       saveLabel: interval === "monthly" ? p.plans.master.monthlySave : p.plans.master.yearlySave,
       tokensLabel: `${p.plans.master.tokens} ${p.tokensPerMonth}`,
-      capacity: (() => {
-        const c = estimatePlanApproxCapacity("master");
-        return [
-          {
-            kind: "images" as const,
-            label: p.capacityImagesFeature.replace("{n}", String(c.approxImages)),
-          },
-          {
-            kind: "storyboard" as const,
-            label: p.capacityStoryboardsFeature
-              .replace("{n}", String(c.approxStoryboards))
-              .replace("{sec}", String(c.storyboardSec)),
-          },
-        ];
-      })(),
+      capacity: pricingCardCapacityItems("master", p),
       features: p.plans.master.features.slice(1),
       cta: p.subscribe,
       popular: false,
@@ -459,7 +401,7 @@ export function PricingPageClient() {
       priceLabel: p.contactSales,
       tokensLabel: null as string | null,
       capacity: null as
-        | { kind: "images" | "storyboard"; label: string }[]
+        | { kind: "images" | "videos"; label: string }[]
         | null,
       features: p.plans.custom.features,
       cta: p.contactSales,
@@ -472,7 +414,7 @@ export function PricingPageClient() {
       priceLabel: p.topUpPrice,
       tokensLabel: p.topUpTokens,
       capacity: null as
-        | { kind: "images" | "storyboard"; label: string }[]
+        | { kind: "images" | "videos"; label: string }[]
         | null,
       features: [p.topUpNote],
       cta: p.buyTopUp,
@@ -675,7 +617,7 @@ export function PricingPageClient() {
                         {card.tokensLabel ?? "—"}
                       </p>
 
-                      {/* Zone: capacity (images / storyboard) */}
+                      {/* Zone: capacity (images / 8s videos) */}
                       <ul className="mt-3 min-h-[5.5rem] space-y-2 border-b border-dashed border-slate-200 pb-3">
                         {card.capacity && card.capacity.length > 0 ? (
                           card.capacity.map((item) => (
@@ -692,9 +634,8 @@ export function PricingPageClient() {
                                   </svg>
                                 ) : (
                                   <svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5" aria-hidden>
-                                    <rect x="2.5" y="5" width="5.5" height="14" rx="1.2" stroke="currentColor" strokeWidth="1.75" />
-                                    <rect x="9.25" y="5" width="5.5" height="14" rx="1.2" stroke="currentColor" strokeWidth="1.75" />
-                                    <rect x="16" y="5" width="5.5" height="14" rx="1.2" stroke="currentColor" strokeWidth="1.75" />
+                                    <rect x="3.5" y="6" width="17" height="12" rx="2" stroke="currentColor" strokeWidth="1.75" />
+                                    <path d="M10 9.5 16 12l-6 2.5v-5Z" fill="currentColor" />
                                   </svg>
                                 )}
                               </span>

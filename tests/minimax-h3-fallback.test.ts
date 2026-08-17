@@ -5,6 +5,7 @@ import { join } from "node:path";
 import {
   buildStoryboardMinimaxH3Prompt,
   clampMinimaxH3Duration,
+  clampMinimaxH3ResolutionForPlan,
   formDataExpectsReferenceVideo,
   normalizeMinimaxH3Resolution,
   seedancePromptToMinimaxH3,
@@ -25,13 +26,22 @@ describe("MiniMax H3 Seedance fallback helpers", () => {
     assert.equal(clampMinimaxH3Duration("auto"), 8);
   });
 
-  it("maps Seedance-style resolution to fal H3 enums (768P not 768p)", () => {
+  it("maps UI resolution to H3 enums (480p stays 480P)", () => {
     assert.equal(normalizeMinimaxH3Resolution("768p"), "768P");
-    assert.equal(normalizeMinimaxH3Resolution("480p"), "768P");
+    assert.equal(normalizeMinimaxH3Resolution("480p"), "480P");
     assert.equal(normalizeMinimaxH3Resolution("720p"), "768P");
     assert.equal(normalizeMinimaxH3Resolution("1080p"), "2K");
     assert.equal(normalizeMinimaxH3Resolution("2K"), "2K");
     assert.equal(normalizeMinimaxH3Resolution("4K"), "4K");
+  });
+
+  it("clamps H3 resolution to the plan cap", () => {
+    assert.equal(clampMinimaxH3ResolutionForPlan("free", "2K"), "480P");
+    assert.equal(clampMinimaxH3ResolutionForPlan("free", "768P"), "480P");
+    assert.equal(clampMinimaxH3ResolutionForPlan("standard", "2K"), "768P");
+    assert.equal(clampMinimaxH3ResolutionForPlan("standard", "480P"), "480P");
+    assert.equal(clampMinimaxH3ResolutionForPlan("pro", "480P"), "480P");
+    assert.equal(clampMinimaxH3ResolutionForPlan("master", "4K"), "2K");
   });
 
   it("builds storyboard H3 prompt with Image N beats and no stitch", () => {

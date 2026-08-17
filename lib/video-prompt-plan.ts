@@ -84,7 +84,7 @@ function localeLineFromHints(input: {
 
 function normalizeVideoPromptPlan(parsed: Partial<VideoPromptPlan>): VideoPromptPlan {
   const videoPrompt = String(parsed.videoPrompt ?? "").trim();
-  if (!videoPrompt) throw new Error("DeepSeek returned an empty video prompt.");
+  if (!videoPrompt) throw new Error("Planning returned an empty video prompt.");
   return {
     videoPrompt,
     motionSummary: String(parsed.motionSummary ?? "").trim(),
@@ -122,12 +122,12 @@ function buildBrandPlanPrompt(input: {
   styleContext: VideoPlannerStyleContext;
 }): string {
   return [
-    "Write a Seedance image-to-video prompt for a small-business social Reel ad.",
+    "Write an image-to-video motion prompt for a small-business social Reel ad.",
     "Return JSON only — no markdown fences.",
     '{"videoPrompt":"","motionSummary":"","suggestedHeadline":"","productionNotes":""}',
     "",
     "Rules for videoPrompt:",
-    "- English prompt for Seedance API (model understands English best).",
+    "- English prompt for the video engine (English works best).",
     input.hasReferenceVideo
       ? "- Describe MOTION and CAMERA to match @Video1 — do NOT invent a generic slow push-in unless @Video1 uses it."
       : "- Describe MOTION and CAMERA only — slow push-in, gentle sparkle, stable commercial pacing.",
@@ -188,13 +188,13 @@ function buildCreativePlanPrompt(input: {
   const rawIdea = input.conceptIdea?.trim() || "";
   return [
     isConcept
-      ? "Write a Seedance video prompt from a NON-PHYSICAL concept brief (PSA, service, metaphor, social message)."
-      : "Write a Seedance video prompt from the user's CREATIVE brief for a product Reel.",
+      ? "Write a video motion prompt from a NON-PHYSICAL concept brief (PSA, service, metaphor, social message)."
+      : "Write a video motion prompt from the user's CREATIVE brief for a product Reel.",
     "Return JSON only — no markdown fences.",
     '{"videoPrompt":"","motionSummary":"","suggestedHeadline":"","productionNotes":""}',
     "",
     "IMPORTANT LIMITS (honest):",
-    `- Seedance makes ONE short clip (~${input.durationSec}s output), not a full movie.`,
+    `- Output is ONE short clip (~${input.durationSec}s), not a full movie.`,
     "- Complex multi-scene stories (e.g. fight many people THEN drink) cannot fit in one clip.",
     `- Pick the strongest SINGLE visual beat that fits ${input.durationSec} seconds.`,
     textToVideo
@@ -203,7 +203,7 @@ function buildCreativePlanPrompt(input: {
         ? "- IMAGE-TO-VIDEO mode: user uploaded @Image1 keyframe. Preserve visible subjects, layout, and message; describe camera motion and subtle animation only."
         : "- @Image1 is the user's keyframe photo — visual identity must stay consistent.",
     "",
-    "Rules for videoPrompt (English for Seedance):",
+    "Rules for videoPrompt (English motion prompt):",
     textToVideo
       ? "- Describe the entire scene visually: who/what is in frame, environment, mood, lighting, and camera movement."
       : "- Describe camera movement, action mood, pacing, lighting shifts, and how the subject appears/moves.",
@@ -299,7 +299,7 @@ export async function planVideoPrompt(input: {
       {
         role: "system",
         content:
-          "You are a Seedance video prompt engineer for HK/TW/CN SMB marketing Reels. Output valid JSON only.",
+          "You are a video prompt engineer for HK/TW/CN SMB marketing Reels. Output valid JSON only.",
       },
       {
         role: "user",
@@ -363,7 +363,7 @@ export async function planCreativeVideoPrompt(input: {
       {
         role: "system",
         content:
-          "You are a Seedance creative video prompt engineer. Output valid JSON only. Be honest about single-clip limits; help users achieve ambitious ideas via practical production notes.",
+          "You are a creative video prompt engineer. Output valid JSON only. Be honest about single-clip limits; help users achieve ambitious ideas via practical production notes.",
       },
       {
         role: "user",
@@ -409,12 +409,12 @@ function buildProductPlanPrompt(input: {
   styleContext: VideoPlannerStyleContext;
 }): string {
   return [
-    "Write a Seedance image-to-video prompt for a product social Reel.",
+    "Write an image-to-video motion prompt for a product social Reel.",
     "Return JSON only — no markdown fences.",
     '{"videoPrompt":"","motionSummary":"","suggestedHeadline":"","productionNotes":""}',
     "",
     "Rules for videoPrompt:",
-    "- English prompt for Seedance API.",
+    "- English prompt for the video engine.",
     "- The user's product still is @Image1; preserve visual identity and materials from the photo.",
     "- USER product name + headline define WHAT it is and the use-case story (e.g. portable power outdoors).",
     "- Photo may look like another category — still sell the declared function; do not write skincare/serum copy unless the user product is beauty.",
@@ -477,7 +477,7 @@ export async function planProductVideoPrompt(input: {
       {
         role: "system",
         content:
-          "You are a Seedance product video prompt engineer for SMB marketing. Output valid JSON only.",
+          "You are a product video prompt engineer for SMB marketing. Output valid JSON only.",
       },
       {
         role: "user",

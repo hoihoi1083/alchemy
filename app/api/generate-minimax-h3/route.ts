@@ -3,10 +3,10 @@ import { NextResponse } from "next/server";
 import {
   chargeTokens,
   refundTokens,
-  videoTokenCostFromRequest,
+  h3TokenCostFromRequest,
 } from "@/lib/billing/charge";
-import { clampVideoResolution } from "@/lib/billing/entitlements";
 import { getUserPlan } from "@/lib/billing/get-user-plan";
+import { videoCapForPlan } from "@/lib/billing/entitlements";
 import { mirrorImageUrlToFalStorage } from "@/lib/fal-mirror-media";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import { persistAndDurablize } from "@/lib/storage/durable-media";
@@ -18,6 +18,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import { buildSingleClipManifest } from "@/lib/video-timing-manifest";
 import {
+  clampMinimaxH3ResolutionForPlan,
   normalizeMinimaxH3Resolution,
   seedancePromptToMinimaxH3,
 } from "@/lib/minimax-h3-run";
@@ -90,21 +91,32 @@ export async function POST(request: Request) {
   }
 
   const duration = clampH3Duration(formData.get("duration") as string | null);
-  const resolution = normalizeMinimaxH3Resolution(
-    (formData.get("resolution") as string | null)?.trim() || "2K",
+  const plan = await getUserPlan(auth.user.userId);
+  const requestedH3 = normalizeMinimaxH3Resolution(
+    (formData.get("resolution") as string | null)?.trim() || videoCapForPlan(plan),
   );
+  const resolution = clampMinimaxH3ResolutionForPlan(plan, requestedH3);
   const aspectRatio =
     (formData.get("aspect_ratio") as string | null)?.trim() || "9:16";
 
-  const plan = await getUserPlan(auth.user.userId);
-  const billingRes = clampVideoResolution(
-    plan,
-    resolution === "768P" ? "720p" : "1080p",
-  ).resolution;
-  const tokenCost = videoTokenCostFromRequest({
+  const expectsRefVideo =
+    Boolean((formData.get("reference_video_url") as string | null)?.trim()) ||
+    Boolean((formData.get("reference_video") as File | null)?.size) ||
+    [...formData.getAll("videos")].some((f) => f instanceof File && f.size > 0);
+  let refImageCount = 0;
+  if ((formData.get("image_start") as File | null)?.size) refImageCount += 1;
+  if ((formData.get("image_start_url") as string | null)?.trim()) refImageCount += 1;
+  for (const key of ["reference_images", "images"] as const) {
+    for (const f of formData.getAll(key)) {
+      if (f instanceof File && f.size > 0) refImageCount += 1;
+    }
+  }
+  const extraReferenceImages = Math.max(0, Math.min(9, refImageCount) - 5);
+  const tokenCost = h3TokenCostFromRequest({
     duration,
-    resolution: billingRes,
-    fast: false,
+    resolution,
+    referenceVideoSec: expectsRefVideo ? duration : 0,
+    extraReferenceImages,
   });
 
   const charged = await chargeTokens(auth.user.userId, tokenCost, {
@@ -117,7 +129,7 @@ export async function POST(request: Request) {
 
   try {
     const endpoint = h3Endpoint(mode);
-    let input: Record<string, unknown> = {
+    const input: Record<string, unknown> = {
       prompt: seedancePromptToMinimaxH3(prompt),
       duration,
       resolution,

@@ -154,7 +154,7 @@ export async function POST(request: Request) {
   const talkingStyle = ((formData.get("talking_style") as string | null)?.trim() ||
     "expressive") as UgcPresenterTalkingStyle;
   const requestedResolution =
-    (formData.get("resolution") as string | null)?.trim() || "720p";
+    (formData.get("resolution") as string | null)?.trim() || "480p";
   const aspectRatio = (formData.get("aspect_ratio") as string | null)?.trim() || "9:16";
   const productName = (formData.get("product_name") as string | null)?.trim() || "";
   const motionHint = (formData.get("motion_hint") as string | null)?.trim();
@@ -189,6 +189,20 @@ export async function POST(request: Request) {
 
   const plan = await getUserPlan(auth.user.userId);
   const { resolution } = clampVideoResolution(plan, requestedResolution);
+  if (
+    presenterMode === "stock-avatar" &&
+    resolution !== "720p" &&
+    resolution !== "1080p"
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          "Stock presenter video needs a paid plan (720p+). Upgrade on Pricing, or use a custom keyframe at 480p.",
+        code: "PLAN_ENTITLEMENT",
+      },
+      { status: 403 },
+    );
+  }
   const willSynthesizeVoice = !speechUrl;
   const preflightSec = speechUrl
     ? 12
@@ -258,9 +272,7 @@ export async function POST(request: Request) {
           // Avatar V digital twin — named look must be Avatar V-eligible.
           avatar: avatar.id,
           audio_url: audioUrl,
-          resolution: (resolution === "1080p" || resolution === "720p" ? resolution : "720p") as
-            | "720p"
-            | "1080p",
+          resolution: (resolution === "1080p" ? "1080p" : "720p") as "720p" | "1080p",
           aspect_ratio: heygenAspect,
           fit: "cover",
         },

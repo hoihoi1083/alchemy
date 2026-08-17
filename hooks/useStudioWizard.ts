@@ -20,9 +20,12 @@ import {
 	readCreditBalanceFromResponse,
 } from "@/lib/credits-client";
 import {
+	estimateH3Tokens,
 	estimateKlingStoryboardTokens,
+	h3BillingResolutionForPlan,
 	videoTokenCost,
 } from "@/lib/billing/token-costs";
+import { wizardVideoReadyExtraNote } from "@/lib/video-output-presentation";
 import { klingClipDurationForStoryboard } from "@/lib/kling-storyboard-fallback";
 import {
 	useWizardState,
@@ -117,6 +120,7 @@ import {
 	type VideoDuration,
 	type VideoSettings,
 } from "@/lib/video-settings";
+import { capUiVideoResolution } from "@/lib/billing/entitlements";
 import {
 	physicalVideoOnlyNeedsUploadedPhoto,
 	resolveVideoGenerationKind,
@@ -394,7 +398,12 @@ const TEXT_ENDPOINT = BANANA2_TEXT_ENDPOINT;
 export function useStudioWizard(promotionMode: PromotionMode) {
 	const { m, locale } = useLocale();
 	const friendlyError = useFriendlyError(m);
-	const { creditBalance } = useUserPlanEntitlements();
+	const { creditBalance, plan } = useUserPlanEntitlements();
+	const capVideoRes = useCallback(
+		(requested: VideoSettings["resolution"] | "720p" | "1080p" | "480p") =>
+			capUiVideoResolution(plan, requested),
+		[plan],
+	);
 	const [storyboardEngineChoice, setStoryboardEngineChoice] =
 		useState<StoryboardEngineChoice | null>(null);
 	const storyboardPreferEngineRef = useRef<StoryboardEnginePrefer>(null);
@@ -707,6 +716,13 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 	useEffect(() => {
 		imageUrlRef.current = imageUrl;
 	}, [imageUrl]);
+	useEffect(() => {
+		setVideoSettings((prev) => {
+			const next = capVideoRes(prev.resolution);
+			if (next === prev.resolution) return prev;
+			return { ...prev, resolution: next };
+		});
+	}, [capVideoRes, setVideoSettings]);
 	/** Designed 動態海報 still only — never treat a leftover packshot / raw upload as the H3 start. */
 	const motionPosterStillUrlRef = useRef<string | null>(null);
 	const motionPosterEndUrlRef = useRef<string | null>(null);
@@ -2313,7 +2329,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			motionStyle: defaultMotionStyleForTemplate(style.templateId),
 			...(isStoryboardVideoStyle(id)
 				? {
-						resolution: "720p" as const,
+						resolution: capVideoRes("720p"),
 						creativity: "subtle" as const,
 						autoSecondFrame: false,
 						fast: false,
@@ -2396,7 +2412,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		}
 		if (mode === "video-only") {
 			setVideoSettings(
-				videoSettingsForWorkflow("video-only", templateId),
+				videoSettingsForWorkflow("video-only", templateId, plan),
 			);
 			// Don't keep combined's storyboard lock — video-only defaults to animate-one-photo.
 			selectVisualStyle(
@@ -2405,7 +2421,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			return;
 		}
 		if (mode === "combined") {
-			setVideoSettings(videoSettingsForWorkflow("combined", templateId));
+			setVideoSettings(videoSettingsForWorkflow("combined", templateId, plan));
 			setUseOriginalImage(false);
 			setShipItMode(false);
 			setImageOutputMode("single");
@@ -2513,14 +2529,14 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			setVideoSettings((prev: VideoSettings) => ({
 				...prev,
 				duration: "6",
-				resolution: "720p",
+				resolution: capVideoRes("720p"),
 				fast: false,
 			}));
 			return;
 		}
 		// 圖+片 primary paths → storyboard reel (not single-poster animate).
 		selectVisualStyle("storyboard-video");
-		setVideoSettings(videoSettingsForWorkflow("combined", templateId));
+		setVideoSettings(videoSettingsForWorkflow("combined", templateId, plan));
 	}
 
 	function applyPrimaryPathConcept(
@@ -2574,9 +2590,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		cinematicLogoIntegratedRef.current = false;
 		selectVisualStyle("concept-cinematic");
 		setVideoSettings((prev: VideoSettings) => ({
-			...videoSettingsForWorkflow("combined", "creative-video"),
+			...videoSettingsForWorkflow("combined", "creative-video", plan),
 			duration: "8",
-			resolution: "720p",
+			resolution: capVideoRes("720p"),
 			creativity: CINEMATIC_REEL_VIDEO_CREATIVITY,
 			motionStyle: "gentle-orbit",
 			fast: false,
@@ -2593,7 +2609,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		}
 		setError(null);
 		setWorkflowMode("video-only");
-		setVideoSettings(videoSettingsForWorkflow("video-only", templateId));
+		setVideoSettings(videoSettingsForWorkflow("video-only", templateId, plan));
 		setStepKey("setup");
 		// Brand site / IG is optional inside 短片製作 — one visual style, not a second card.
 		selectVisualStyle("creative-video");
@@ -2661,7 +2677,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			return;
 		}
 		setWorkflowMode("video-only");
-		setVideoSettings(videoSettingsForWorkflow("video-only", templateId));
+		setVideoSettings(videoSettingsForWorkflow("video-only", templateId, plan));
 		setStepKey("setup");
 		if (path === "assistant") {
 			setVideoCreativeMode("product-assistant");
@@ -3677,7 +3693,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		if (mode === "reference-concept") {
 			setVideoSettings((s: VideoSettings) => ({
 				...s,
-				resolution: "720p",
+				resolution: capVideoRes("720p"),
 				duration:
 					s.duration === "auto" || Number(s.duration) > 15
 						? "12"
@@ -5871,9 +5887,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				"minimax-h3-fallback",
 			) ||
 			Boolean(data.seedanceBlockedCode);
-		const pathNote = data.generationMode
-			? `${m.wizard.videoGenPathLabel}: ${data.generationMode}${data.endpoint ? ` · ${data.endpoint}` : ""}${typeof data.referenceVideoCount === "number" ? ` · ${data.referenceVideoCount} ref video` : ""}`
-			: "";
+		const pathNote = wizardVideoReadyExtraNote(data);
 		const notes = [
 			m.wizard.researchReelCopyingNote,
 			usedFallback
@@ -6292,9 +6306,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 						? m.wizard.storyboardMinimaxH3Note
 						: m.wizard.klingStoryboardFallbackNote,
 				`${m.wizard.storyboardTrimDurationLabel}: ${totalLabel}`,
-				data.generationMode && data.endpoint
-					? `${m.wizard.videoGenPathLabel}: ${data.generationMode} · ${data.endpoint}`
-					: "",
+				wizardVideoReadyExtraNote(data),
 				!usedH3 && !usedSeedance && typeof data.clipCount === "number"
 					? m.wizard.klingStoryboardClipCount.replace(
 							"{n}",
@@ -6366,9 +6378,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			[
 				m.wizard.ugcPresenter.videoPreflight,
 				data.note as string | undefined,
-				data.generationMode && data.endpoint
-					? `${m.wizard.videoGenPathLabel}: ${data.generationMode} · ${data.endpoint}`
-					: "",
+				wizardVideoReadyExtraNote(data),
 			]
 				.filter(Boolean)
 				.join(" · "),
@@ -6614,9 +6624,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		const data = await res.json();
 		if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
 		notifyCreditBalance(readCreditBalanceFromResponse(data));
-		const pathNote = data.generationMode
-			? `${m.wizard.videoGenPathLabel}: ${data.generationMode}${data.endpoint ? ` · ${data.endpoint}` : ""}${typeof data.referenceImageCount === "number" ? ` · ${data.referenceImageCount} images` : ""}`
-			: "";
+		const pathNote = wizardVideoReadyExtraNote(data);
 		setVideoNote(
 			[
 				String(data.generationMode ?? "").startsWith(
@@ -6770,9 +6778,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		const data = await res.json();
 		if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
 		notifyCreditBalance(readCreditBalanceFromResponse(data));
-		const pathNote = data.generationMode
-			? `${m.wizard.videoGenPathLabel}: ${data.generationMode}${data.endpoint ? ` · ${data.endpoint}` : ""}`
-			: "";
+		const pathNote = wizardVideoReadyExtraNote(data);
 		setVideoNote(
 			[
 				m.wizard.blockbusterHint,
@@ -6986,9 +6992,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		const data = await res.json();
 		if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
 		notifyCreditBalance(readCreditBalanceFromResponse(data));
-		const pathNote = data.generationMode
-			? `${m.wizard.videoGenPathLabel}: ${data.generationMode}${data.endpoint ? ` · ${data.endpoint}` : ""}`
-			: "";
+		const pathNote = wizardVideoReadyExtraNote(data);
 		setVideoNote(
 			[
 				m.wizard.h3ShotHint[mode],
@@ -7074,9 +7078,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		const data = await res.json();
 		if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
 		notifyCreditBalance(readCreditBalanceFromResponse(data));
-		const pathNote = data.generationMode
-			? `${m.wizard.videoGenPathLabel}: ${data.generationMode}`
-			: "";
+		const pathNote = wizardVideoReadyExtraNote(data);
 		setVideoNote(
 			[
 				String(data.generationMode ?? "").startsWith(
@@ -7127,9 +7129,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		const data = await res.json();
 		if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
 		notifyCreditBalance(readCreditBalanceFromResponse(data));
-		const pathNote = data.generationMode
-			? `${m.wizard.videoGenPathLabel}: ${data.generationMode}${data.endpoint ? ` · ${data.endpoint}` : ""}`
-			: "";
+		const pathNote = wizardVideoReadyExtraNote(data);
 		if (pathNote) setVideoNote(pathNote);
 		return data.videoUrl as string;
 	}
@@ -7353,9 +7353,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		const data = await res.json();
 		if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
 		notifyCreditBalance(readCreditBalanceFromResponse(data));
-		const pathNote = data.generationMode
-			? `${m.wizard.videoGenPathLabel}: ${data.generationMode}${data.endpoint ? ` · ${data.endpoint}` : ""}`
-			: "";
+		const pathNote = wizardVideoReadyExtraNote(data);
 		setVideoNote(
 			[
 				m.wizard.motionPosterHint,
@@ -7604,9 +7602,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		const data = await res.json();
 		if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
 		notifyCreditBalance(readCreditBalanceFromResponse(data));
-		const pathNote = data.generationMode
-			? `${m.wizard.videoGenPathLabel}: ${data.generationMode}${data.endpoint ? ` · ${data.endpoint}` : ""}`
-			: "";
+		const pathNote = wizardVideoReadyExtraNote(data);
 		setVideoNote(
 			[
 				m.wizard.socialDripHint,
@@ -7758,9 +7754,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		const data = await res.json();
 		if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
 		notifyCreditBalance(readCreditBalanceFromResponse(data));
-		const pathNote = data.generationMode
-			? `${m.wizard.videoGenPathLabel}: ${data.generationMode}${data.endpoint ? ` · ${data.endpoint}` : ""}`
-			: "";
+		const pathNote = wizardVideoReadyExtraNote(data);
 		setVideoNote(
 			[m.wizard.vacuumInflateHint, pathNote, data.note as string | undefined]
 				.filter(Boolean)
@@ -7929,9 +7923,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		const data = await res.json();
 		if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
 		notifyCreditBalance(readCreditBalanceFromResponse(data));
-		const pathNote = data.generationMode
-			? `${m.wizard.videoGenPathLabel}: ${data.generationMode}${data.endpoint ? ` · ${data.endpoint}` : ""}`
-			: "";
+		const pathNote = wizardVideoReadyExtraNote(data);
 		setVideoNote(
 			[
 				m.wizard.creativeMotionHint,
@@ -8083,9 +8075,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		const data = await res.json();
 		if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
 		notifyCreditBalance(readCreditBalanceFromResponse(data));
-		const pathNote = data.generationMode
-			? `${m.wizard.videoGenPathLabel}: ${data.generationMode}${data.endpoint ? ` · ${data.endpoint}` : ""}`
-			: "";
+		const pathNote = wizardVideoReadyExtraNote(data);
 		setVideoNote(
 			[m.wizard.handThrowHint, pathNote, data.note as string | undefined]
 				.filter(Boolean)
@@ -8232,9 +8222,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		const data = await res.json();
 		if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
 		notifyCreditBalance(readCreditBalanceFromResponse(data));
-		const pathNote = data.generationMode
-			? `${m.wizard.videoGenPathLabel}: ${data.generationMode}${data.endpoint ? ` · ${data.endpoint}` : ""}`
-			: "";
+		const pathNote = wizardVideoReadyExtraNote(data);
 		setVideoNote(
 			[
 				m.wizard.productExplodeHint,
@@ -8327,9 +8315,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		const usedKling =
 			data.generationMode === "kling-storyboard-fallback" ||
 			(Boolean(data.seedanceBlockedCode) && !usedH3Fallback);
-		const pathNote = data.generationMode
-			? `${m.wizard.videoGenPathLabel}: ${data.generationMode}${data.endpoint ? ` · ${data.endpoint}` : ""}`
-			: "";
+		const pathNote = wizardVideoReadyExtraNote(data);
 		const notes = [
 			usedH3Fallback
 				? m.wizard.seedanceToMinimaxH3FallbackNote
@@ -9019,10 +9005,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 						clipCount: sceneCount,
 					},
 				),
-				h3Cost: videoTokenCost(
-					"720p",
-					Math.min(15, Math.max(4, totalSec)),
-				),
+				h3Cost: estimateH3Tokens({
+					duration: Math.min(15, Math.max(5, totalSec)),
+					resolution: h3BillingResolutionForPlan(plan),
+				}),
 				klingCost: estimateKlingStoryboardTokens(sceneCount, clipDur),
 				seedanceCost: videoTokenCost(
 					"1080p",

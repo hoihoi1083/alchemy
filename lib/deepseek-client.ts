@@ -52,13 +52,13 @@ export async function callDeepSeekChat(
         "AI planning is temporarily unavailable. Please try again later.",
       );
     }
-    throw new Error(`DeepSeek API error (${res.status}): ${raw.slice(0, 300)}`);
+    throw new Error(`Planning failed (${res.status}). Please try again later.`);
   }
 
   const parsed = JSON.parse(raw) as {
     choices?: Array<{ message?: { content?: string } }>;
   };
   const content = parsed.choices?.[0]?.message?.content?.trim();
-  if (!content) throw new Error("DeepSeek returned an empty response.");
+  if (!content) throw new Error("Planning returned an empty response.");
   return content;
 }

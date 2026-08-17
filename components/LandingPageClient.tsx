@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type ReactNode } from "react";
+import { LandingDemoProvider } from "@/components/landing/LandingDemoModal";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { LandingHero } from "@/components/landing/LandingHero";
 import { LandingHowItWorks } from "@/components/landing/LandingHowItWorks";
@@ -923,7 +924,7 @@ const SHOW_LANDING_BELOW_HOW = true;
 
 export function LandingPageClient() {
   return (
-		<>
+		<LandingDemoProvider>
 			<style dangerouslySetInnerHTML={{ __html: LANDING_LAYOUT_CSS }} />
 			<main className="landing-page flex min-h-screen flex-col overflow-x-clip bg-white text-slate-900 supports-[min-height:100dvh]:min-h-dvh">
 				<LandingNav />
@@ -954,6 +955,6 @@ export function LandingPageClient() {
 				<LandingFooter />
     </main>
 			<LandingFloatingCta />
-		</>
+		</LandingDemoProvider>
   );
 }

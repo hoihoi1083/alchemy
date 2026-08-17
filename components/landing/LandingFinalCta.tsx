@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useLocale } from "@/components/LocaleProvider";
+import { LandingWatchDemoButton } from "@/components/landing/LandingDemoModal";
 import { Reveal } from "@/components/landing/Reveal";
 
 const FINAL_CTA_IMAGE = "/images/landing/final-cta-studio.jpg?v=3";
@@ -148,13 +149,7 @@ export function LandingFinalCta() {
 								>
 									{L.ctaPrimary}
 								</Link>
-								<a
-									href="#how"
-									className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/70 px-5 py-2.5 text-sm font-semibold text-white sm:w-auto"
-								>
-									<span>▶</span>
-									{L.ctaSecondary}
-								</a>
+								<LandingWatchDemoButton className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/70 px-5 py-2.5 text-sm font-semibold text-white sm:w-auto" />
 							</div>
 						</div>
 

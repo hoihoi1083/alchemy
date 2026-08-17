@@ -5,23 +5,40 @@ import {
   canUseProCanvas,
   clampImageResolution,
   clampVideoResolution,
+  capUiVideoResolution,
   parseVideoResolutionTier,
   PlanEntitlementError,
   videoResolutionsForPlan,
 } from "../lib/billing/entitlements";
 import { PLAN_DEFINITIONS } from "../lib/billing/plans";
+import { videoSettingsForWorkflow } from "../lib/video-settings";
 
 describe("plan entitlements", () => {
   it("clamps free video requests down to 480p", () => {
     const r = clampVideoResolution("free", "1080p");
     assert.equal(r.resolution, "480p");
     assert.equal(r.capped, true);
+    assert.equal(clampVideoResolution("free", "720p").resolution, "480p");
+    assert.equal(capUiVideoResolution("free", "720p"), "480p");
+    assert.equal(capUiVideoResolution("free", "1080p"), "480p");
+    assert.equal(capUiVideoResolution("standard", "720p"), "720p");
   });
 
   it("lists only plan-allowed video resolutions for UI", () => {
     assert.deepEqual(videoResolutionsForPlan("free"), ["480p"]);
     assert.deepEqual(videoResolutionsForPlan("standard"), ["480p", "720p"]);
     assert.deepEqual(videoResolutionsForPlan("pro"), ["480p", "720p", "1080p"]);
+  });
+
+  it("combined workflow defaults stay within the plan cap", () => {
+    assert.equal(
+      videoSettingsForWorkflow("combined", "creative-video", "free").resolution,
+      "480p",
+    );
+    assert.equal(
+      videoSettingsForWorkflow("combined", "creative-video", "standard").resolution,
+      "720p",
+    );
   });
 
   it("allows standard up to 720p and clamps 1080p", () => {

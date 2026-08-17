@@ -13,6 +13,7 @@ import {
 } from "@/lib/ad-pack-preferences";
 import { HEYGEN_STOCK_AVATARS, heygenAvatarVoice } from "@/lib/heygen-avatars";
 import type { PresenterSourceMode } from "@/hooks/useWizardState";
+import { useUserPlanEntitlements } from "@/hooks/useUserPlanEntitlements";
 import { ugcPresenterMotionHint } from "@/lib/ugc-presenter";
 
 function defaultScript(locale: VoiceoverLocale, product: string): string {
@@ -29,6 +30,7 @@ function defaultScript(locale: VoiceoverLocale, product: string): string {
 export function UgcStudioClient() {
   const { locale, m } = useLocale();
   const t = m.ugcStudio;
+  const { maxVideoResolution } = useUserPlanEntitlements();
   const voiceLabels = m.wizard.adPack.voicePresets;
 
   const [product, setProduct] = useState("");
@@ -237,7 +239,7 @@ export function UgcStudioClient() {
       const fd = new FormData();
       fd.set("product_name", product.trim() || "product");
       fd.set("talking_style", "expressive");
-      fd.set("resolution", "720p");
+      fd.set("resolution", maxVideoResolution);
       fd.set("aspect_ratio", "9:16");
       fd.set("presenter_mode", presenterMode);
       fd.set("motion_hint", ugcPresenterMotionHint(product.trim() || "the product"));

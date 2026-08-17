@@ -81,7 +81,7 @@ export function isFalContentPolicyThrowable(e: unknown, formattedMessage?: strin
  * Bake into storyboard planning + still prompts so concept stills can become video.
  */
 export const SEEDANCE_SAFE_STILL_RULES = [
-  "SEEDANCE VIDEO SAFETY (mandatory — stills will be fed to Seedance reference-to-video):",
+  "VIDEO SAFETY (mandatory — stills will be animated as a short video):",
   "NO photorealistic human faces, celebrity likenesses, or identifiable people.",
   "Prefer: product/UI/dashboard mockups, icons, charts, hands-only (wrists/hands, face out of frame), back-of-head/silhouette, abstract graphics, illustrated/3D characters (not photo-real faces).",
   "Office/lifestyle scenes: show screens, desks, devices — not a clear face looking at camera.",

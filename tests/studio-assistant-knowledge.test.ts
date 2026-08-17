@@ -62,8 +62,8 @@ describe("assistant knowledge retrieve", () => {
     const chunks = ASSISTANT_KNOWLEDGE.filter((c) => c.id === "tokens");
     const block = formatKnowledgeForPrompt(chunks, "en");
     assert.match(block, /Product knowledge/i);
-    assert.match(block, /1140/);
-    assert.ok(scoreKnowledgeChunk("tokens H3", chunks[0]!) > 0);
+    assert.match(block, /328/);
+    assert.ok(scoreKnowledgeChunk("tokens 12s", chunks[0]!) > 0);
   });
 
   it("skips landing coach fast-path for ask queries", () => {
@@ -82,7 +82,7 @@ describe("assistant knowledge retrieve", () => {
       userText: "Does the free grant cover 12s TVC?",
     });
     assert.match(prompt, /Ask mode/i);
-    assert.match(prompt, /1140|free grant|500/i);
+    assert.match(prompt, /328|free grant|500/i);
     assert.doesNotMatch(prompt, /ONLY Step 1/);
   });
 });

@@ -71,7 +71,7 @@ export async function stylizeToComic(
   });
 
   const outUrl = extractImageUrl(result.data);
-  if (!outUrl) throw new Error("No image URL from fal");
+  if (!outUrl) throw new Error("No image URL from generation");
 
   const res = await fetch(outUrl);
   if (!res.ok) throw new Error(`Failed to download: ${res.status}`);

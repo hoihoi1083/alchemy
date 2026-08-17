@@ -1,4 +1,6 @@
 import { fal } from "@fal-ai/client";
+import { videoCapForPlan } from "@/lib/billing/entitlements";
+import type { UserPlan } from "@/lib/billing/plans";
 import { mirrorImageUrlToFalStorage } from "@/lib/fal-mirror-media";
 import { collectKlingFallbackImageUrls } from "@/lib/kling-storyboard-run";
 import {
@@ -24,8 +26,8 @@ export function clampMinimaxH3Duration(raw: string | number | null | undefined):
   return Math.min(15, Math.max(5, Math.round(n)));
 }
 
-/** fal MiniMax H3 expects exact enums: 768P | 2K | 4K (not Seedance's 768p). */
-export type MinimaxH3Resolution = "768P" | "2K" | "4K";
+/** H3 expects exact enums: 480P | 768P | 2K | 4K (not Seedance's 768p). */
+export type MinimaxH3Resolution = "480P" | "768P" | "2K" | "4K";
 
 export function normalizeMinimaxH3Resolution(
   raw: string | null | undefined,
@@ -33,16 +35,29 @@ export function normalizeMinimaxH3Resolution(
   const t = (raw ?? "").trim();
   const lower = t.toLowerCase();
   if (t === "4K" || lower === "4k" || lower === "2160p") return "4K";
+  if (t === "480P" || lower === "480p" || lower === "480") return "480P";
   if (
     t === "768P" ||
     lower === "768p" ||
-    lower === "480p" ||
     lower === "720p" ||
     lower === "768"
   ) {
     return "768P";
   }
   // 1080p / 2K / unknown → 2K
+  return "2K";
+}
+
+/** Plan video cap clamps the H3 enum (Free → 480P, Standard → 768P, Pro/Master → 2K). */
+export function clampMinimaxH3ResolutionForPlan(
+  plan: UserPlan,
+  requested: MinimaxH3Resolution,
+): MinimaxH3Resolution {
+  const cap = videoCapForPlan(plan);
+  if (cap === "480p") return "480P";
+  if (cap === "720p") return requested === "480P" ? "480P" : "768P";
+  if (requested === "4K") return "2K";
+  if (requested === "480P" || requested === "768P") return requested;
   return "2K";
 }
 
@@ -190,7 +205,7 @@ export async function runMinimaxH3Fallback(
 ): Promise<RunMinimaxH3FallbackResult> {
   const duration = clampMinimaxH3Duration(input.durationSec);
   const prompt = seedancePromptToMinimaxH3(input.prompt).trim();
-  if (!prompt) throw new Error("MiniMax H3 needs a prompt.");
+  if (!prompt) throw new Error("Video generation needs a prompt.");
 
   const imageUrls = (
     await Promise.all(
@@ -204,7 +219,7 @@ export async function runMinimaxH3Fallback(
   );
 
   if (!imageUrls.length && !videoUrls.length) {
-    throw new Error("MiniMax H3 fallback needs at least one image or video.");
+    throw new Error("Video fallback needs at least one image or video.");
   }
 
   const mode: MinimaxH3Mode =
@@ -229,7 +244,7 @@ export async function runMinimaxH3Fallback(
 
   const result = await fal.subscribe(endpoint, { input: falInput, logs: false });
   const rawUrl = extractVideoUrl(result.data);
-  if (!rawUrl) throw new Error("MiniMax H3 returned no video.");
+  if (!rawUrl) throw new Error("Video generation returned no video.");
 
   const durableUrl = await persistAndDurablize({
     clerkId: input.clerkId,

@@ -22,6 +22,17 @@ function clampSeedanceDuration(raw: number): number {
   return Math.min(15, Math.max(4, Math.round(raw)));
 }
 
+/** Honor 480p for Free; do not bump it to 720p. */
+export function normalizeSeedanceR2vResolution(
+  raw?: string,
+): "480p" | "720p" | "1080p" {
+  const r = (raw ?? "").trim().toLowerCase();
+  if (r.includes("480") || r === "480p") return "480p";
+  if (r.includes("1080") || r === "2k" || r.includes("4k")) return "1080p";
+  if (r.includes("720") || r.includes("768")) return "720p";
+  return "720p";
+}
+
 export type RunSeedanceR2vInput = {
   clerkId: string;
   prompt: string;
@@ -51,10 +62,10 @@ export async function runSeedanceStoryboardR2v(input: RunSeedanceR2vInput): Prom
   ).filter(Boolean);
   const videoUrls = input.videoUrls.slice(0, 3).filter(Boolean);
   if (!imageUrls.length) {
-    throw new Error("Seedance R2V needs storyboard scene stills.");
+    throw new Error("Storyboard video needs scene stills.");
   }
   if (!videoUrls.length) {
-    throw new Error("Seedance R2V needs @Video1 — do not use image-to-video.");
+    throw new Error("Reference video (@Video1) is required for this path.");
   }
 
   const durationSec = clampSeedanceDuration(input.durationSec);
@@ -71,8 +82,7 @@ export async function runSeedanceStoryboardR2v(input: RunSeedanceR2vInput): Prom
   }
 
   const aspectRatio = input.aspectRatio?.trim() || "9:16";
-  const resolution =
-    input.resolution === "480p" || input.resolution === "720p" ? "720p" : "1080p";
+  const resolution = normalizeSeedanceR2vResolution(input.resolution);
 
   const result = await fal.subscribe(SEEDANCE_R2V_QUALITY, {
     input: {
@@ -88,7 +98,7 @@ export async function runSeedanceStoryboardR2v(input: RunSeedanceR2vInput): Prom
   });
 
   const rawUrl = extractVideoUrl(result.data);
-  if (!rawUrl) throw new Error("Seedance R2V returned no video.");
+  if (!rawUrl) throw new Error("Video generation returned no video.");
 
   const videoUrl = await persistAndDurablize({
     clerkId: input.clerkId,

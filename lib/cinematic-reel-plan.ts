@@ -128,7 +128,7 @@ export async function planCinematicReel(
             : `You plan a ${n}-scene cinematic social reel (${CINEMATIC_CLIP_SEC}s per scene, stitched to ~${n * CINEMATIC_CLIP_SEC}s).`,
           "Return JSON only.",
           localeHint(input.market),
-          "Each scene needs a still image prompt (Nano Banana) and a motion-only Seedance prompt.",
+          "Each scene needs a still image prompt and a motion-only video prompt.",
           artHint,
           ...CINEMATIC_MOTION_PLANNER_RULES,
           input.referenceImageNote

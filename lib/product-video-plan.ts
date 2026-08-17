@@ -52,12 +52,12 @@ function normalizePlan(
 ): ProductVideoPlan {
   const seedancePrompt = String(parsed.seedancePrompt ?? "").trim();
   if (!seedancePrompt) {
-    throw new Error("DeepSeek returned an empty Seedance prompt.");
+    throw new Error("Planning returned an empty video prompt.");
   }
 
   for (let i = 1; i <= imageCount; i++) {
     if (!new RegExp(`@\\s*Image\\s*${i}\\b`, "i").test(seedancePrompt)) {
-      throw new Error(`Seedance prompt must reference @Image${i}.`);
+      throw new Error(`Video prompt must reference @Image${i}.`);
     }
   }
 
@@ -100,8 +100,8 @@ function buildPlanPrompt(input: {
 
   return [
     stylized
-      ? "Write a Seedance reference-to-video prompt for a stylized product Reel."
-      : "Write a Seedance reference-to-video prompt for a photorealistic product Reel.",
+      ? "Write a reference-to-video motion prompt for a stylized product Reel."
+      : "Write a reference-to-video motion prompt for a photorealistic product Reel.",
     "Return ONE JSON object only — no markdown fences.",
     "",
     'Required JSON: {"productSummary":"","category":"","situation":"","seedancePrompt":"","motionSummaryZh":"","productionNotes":""}',
@@ -128,7 +128,7 @@ function buildPlanPrompt(input: {
     "Image roles:",
     rolesBlock,
     "",
-    "seedancePrompt rules (English, for Seedance API):",
+    "seedancePrompt rules (English motion prompt):",
     stylized
       ? `- Opening: 9:16 commercial for the USER's product (${input.product || "see headline"}). ${artStylePlannerHint(artStyleId)}`
       : `- Opening: photorealistic 9:16 commercial for the USER's product (${input.product || "see headline"}).`,
@@ -150,7 +150,7 @@ function buildPlanPrompt(input: {
       : "- User did NOT provide pricing — do NOT invent prices.",
     "",
     "motionSummaryZh: one line for the user (繁體中文 if HK/TW market).",
-    "productionNotes: brief note on what to expect from one Seedance clip (繁體中文 or English).",
+    "productionNotes: brief note on what to expect from one short clip (繁體中文 or English).",
     ...videoDurationPlannerBlock(input.durationSec),
     input.styleHint ? `Visual mood hint: ${input.styleHint}` : "",
     input.framing !== "auto" ? `Framing preference: ${input.framing}` : "",
@@ -188,7 +188,7 @@ export async function planProductVideoFromVision(
       {
         role: "system",
         content:
-          "You are a Seedance video prompt engineer for HK/TW/CN SMB product Reels. Output valid JSON only. User-declared product name/headline define WHAT the product is; photo vision only defines how it LOOKS. Never override a power-bank/electronics story with skincare just because the photo looks like a bottle.",
+          "You are a video prompt engineer for HK/TW/CN SMB product Reels. Output valid JSON only. User-declared product name/headline define WHAT the product is; photo vision only defines how it LOOKS. Never override a power-bank/electronics story with skincare just because the photo looks like a bottle.",
       },
       {
         role: "user",

@@ -207,7 +207,7 @@ function normalizeAnalysis(
 
   const seedancePrompt = String(parsed.seedancePrompt ?? "").trim();
   if (!seedancePrompt) {
-    throw new Error("DeepSeek returned an empty Seedance prompt.");
+    throw new Error("Planning returned an empty video prompt.");
   }
 
   return {

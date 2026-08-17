@@ -142,7 +142,7 @@ describe("billing smoke — fail → refund (source + wallet)", () => {
 
   it("MemoryWallet: charge then fail refund restores balance (video/inpaint/caption/storyboard costs)", () => {
     const cases = [
-      { kind: "video", cost: 336 },
+      { kind: "video", cost: 520 },
       { kind: "inpaint", cost: estimateInpaintTokens(2) },
       { kind: "caption_burn", cost: TOKEN_COST.caption_burn },
       { kind: "storyboard", cost: TOKEN_COST.storyboard_batch },

@@ -171,7 +171,7 @@ export function adaptScriptForKlingFallback(opts: {
 /** User-facing note — no engine jargon required; generationMode stays in API for debug. */
 export function friendlyAutoFallbackNote(engine: "minimax-h3" | "kling", clipCount?: number): string {
   if (engine === "minimax-h3") {
-    return "Video ready (alternate engine kept your script + reference motion).";
+    return "Video ready (backup path kept your script + reference motion).";
   }
   if (clipCount && clipCount > 1) {
     return "Video ready (script beats animated per scene, then combined).";

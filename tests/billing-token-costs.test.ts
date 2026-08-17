@@ -8,41 +8,85 @@ import {
 } from "../lib/billing/plans";
 import {
   FREE_PACK,
+  H3_TOKENS_PER_SEC,
+  KLING_TURBO_PRO,
+  MASTER_YEARLY_USD_PER_TOKEN,
   TOKEN_COST,
+  VIDEO_TOKENS_PER_SEC,
   cogsUsdForTokens,
+  estimateH3Tokens,
+  h3BillingResolutionForPlan,
+  h3TokenCost,
+  tokensForFalUsd,
   videoTokenCost,
 } from "../lib/billing/token-costs";
 
 describe("billing token economics", () => {
-  it("anchors 1000 tokens to ~USD 3.30 COGS", () => {
-    assert.equal(TOKEN_COGS_USD_PER_1000, 3.3);
-    assert.equal(cogsUsdForTokens(1000), 3.3);
-    assert.equal(cogsUsdForTokens(3000), 9.9);
+  it("anchors 1000 tokens to Master-yearly 75% fal COGS (~USD 1.23)", () => {
+    assert.equal(TOKEN_COGS_USD_PER_1000, 1.234375);
+    assert.equal(cogsUsdForTokens(1000), 1.23);
+    assert.equal(cogsUsdForTokens(3000), 3.7);
   });
 
-  it("Free pack fits 1 image + 1× 8s 480p inside the free signup grant", () => {
+  it("sizes fal actions at ~75% on Master yearly $0.0049375/token", () => {
+    assert.equal(MASTER_YEARLY_USD_PER_TOKEN, 79 / 16_000);
+    assert.equal(tokensForFalUsd(0.08), 65);
+    assert.equal(tokensForFalUsd(0.35), 284);
+    assert.equal(TOKEN_COST.image, 65);
+    assert.equal(H3_TOKENS_PER_SEC["480P"], 41);
+    assert.equal(H3_TOKENS_PER_SEC["768P"], 65);
+    assert.equal(H3_TOKENS_PER_SEC["2K"], 106);
+    assert.equal(KLING_TURBO_PRO.tokens5s, 284);
+    const user = 65 * MASTER_YEARLY_USD_PER_TOKEN;
+    const margin = (user - 0.08) / user;
+    assert.ok(margin >= 0.74 && margin <= 0.76, `image margin ${margin}`);
+  });
+
+  it("Free pack fits 1 image + 1× 8s 480P video inside the free signup grant", () => {
     assert.equal(FREE_PACK.image, TOKEN_COST.image);
-    assert.equal(FREE_PACK.video8s480p, videoTokenCost("480p", 8));
+    assert.equal(FREE_PACK.video8s480p, h3TokenCost("480P", 8));
     assert.ok(FREE_PACK.total <= FREE_PACK.grant);
     assert.equal(FREE_PACK.grant, 500);
-    assert.equal(FREE_PACK.total, 361);
-    assert.equal(FREE_PACK.buffer, 139);
+    assert.equal(FREE_PACK.total, 393);
+    assert.equal(FREE_PACK.buffer, 107);
+    assert.equal(PLAN_DEFINITIONS.free.grantCogsUsd, 0.62);
+    assert.equal(cogsUsdForTokens(500), 0.62);
   });
 
-  it("Standard monthly promo keeps ~50% margin on full token burn", () => {
+  it("8s video matches the 75% table at each H3 enum", () => {
+    assert.equal(estimateH3Tokens({ resolution: "480p", duration: 8 }), 328);
+    assert.equal(estimateH3Tokens({ resolution: "480P", duration: 8 }), 328);
+    assert.equal(estimateH3Tokens({ resolution: "768P", duration: 8 }), 520);
+    assert.equal(estimateH3Tokens({ resolution: "720p", duration: 8 }), 520);
+    assert.equal(estimateH3Tokens({ resolution: "2K", duration: 8 }), 848);
+    assert.equal(estimateH3Tokens({ resolution: "1080p", duration: 8 }), 848);
+    assert.equal(h3BillingResolutionForPlan("free"), "480P");
+    assert.equal(h3BillingResolutionForPlan("standard"), "768P");
+    assert.equal(h3BillingResolutionForPlan("pro"), "2K");
+    assert.equal(h3TokenCost("480P", 12), 492);
+  });
+
+  it("Seedance 8s is priced so we do not lose money vs fal", () => {
+    assert.equal(videoTokenCost("480p", 8), VIDEO_TOKENS_PER_SEC["480p"] * 8);
+    assert.equal(videoTokenCost("720p", 8), 1968);
+    assert.equal(videoTokenCost("1080p", 8), 4424);
+  });
+
+  it("Standard yearly stays at or above ~75% on full token burn", () => {
     const std = PLAN_DEFINITIONS.standard;
     assert.equal(std.monthlyTokens, 3000);
-    assert.equal(std.grantCogsUsd, 9.9);
-    assert.equal(marginPct(std.monthlyPriceUsd!, std.grantCogsUsd), 50.5);
-    // Yearly is thinner (~33%) by design (50% off list).
-    assert.ok(marginPct(std.yearlyPriceUsd!, std.grantCogsUsd) > 30);
+    assert.equal(std.grantCogsUsd, 3.7);
+    assert.ok(marginPct(std.monthlyPriceUsd!, std.grantCogsUsd) >= 80);
+    assert.ok(marginPct(std.yearlyPriceUsd!, std.grantCogsUsd) >= 75);
   });
 
-  it("Pro / Master monthly promo stay near 50% margin", () => {
+  it("Pro / Master yearly stay at or above ~75% on full token burn", () => {
     const pro = PLAN_DEFINITIONS.pro;
     const master = PLAN_DEFINITIONS.master;
-    assert.ok(Math.abs(marginPct(pro.monthlyPriceUsd!, pro.grantCogsUsd) - 47.2) < 1);
-    assert.ok(Math.abs(marginPct(master.monthlyPriceUsd!, master.grantCogsUsd) - 47.2) < 1);
+    assert.ok(marginPct(pro.yearlyPriceUsd!, pro.grantCogsUsd) >= 75);
+    assert.ok(marginPct(master.yearlyPriceUsd!, master.grantCogsUsd) >= 75);
+    assert.ok(marginPct(pro.monthlyPriceUsd!, pro.grantCogsUsd) >= 80);
+    assert.ok(marginPct(master.monthlyPriceUsd!, master.grantCogsUsd) >= 80);
   });
 
   it("normalizes legacy payg → standard", () => {

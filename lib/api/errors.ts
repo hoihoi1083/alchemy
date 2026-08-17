@@ -11,7 +11,16 @@ export type ErrorFallbacks = {
   seedanceSensitive?: string;
   falContentPolicy?: string;
   requestTooLarge?: string;
+  klingDurationUnreachable?: string;
 };
+
+/** Named vendors / providers — never show these in product UI. */
+export const USER_FACING_VENDOR_NAME_RE =
+  /fal\.ai|fal-ai|\bfal\b|minimax|\bh3\b|seedance|\bkling\b|heygen|nano banana|nano-banana|deepseek|hailuo|flux\.1/i;
+
+export function messageHasVendorName(text: string): boolean {
+  return USER_FACING_VENDOR_NAME_RE.test(text);
+}
 
 const TECHNICAL_PATTERNS: Array<{ test: RegExp; key: keyof ErrorFallbacks }> = [
   { test: /\.env(\.local)?/i, key: "default" },
@@ -32,6 +41,10 @@ const TECHNICAL_PATTERNS: Array<{ test: RegExp; key: keyof ErrorFallbacks }> = [
     test:
       /content_policy_violation|likenesses of real people|private information that cannot be processed|partner_validation_failed/i,
     key: "falContentPolicy",
+  },
+  {
+    test: USER_FACING_VENDOR_NAME_RE,
+    key: "default",
   },
 ];
 
@@ -59,6 +72,9 @@ export function mapApiError(raw: unknown, fallbacks: ErrorFallbacks): string {
     if (code === "REQUEST_TOO_LARGE") return pickFallback("requestTooLarge", fallbacks);
     if (code === "FAL_CONTENT_POLICY") return pickFallback("falContentPolicy", fallbacks);
     if (code === "SEEDANCE_SENSITIVE_CONTENT") return pickFallback("seedanceSensitive", fallbacks);
+    if (code === "KLING_DURATION_UNREACHABLE") {
+      return pickFallback("klingDurationUnreachable", fallbacks);
+    }
   }
   if (
     raw &&

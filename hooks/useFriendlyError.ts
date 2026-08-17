@@ -43,6 +43,7 @@ export function useFriendlyError(m: Messages) {
         insufficientTokens: m.errors.insufficientTokens,
         seedanceSensitive: m.errors.seedanceSensitive,
         falContentPolicy: m.errors.falContentPolicy,
+        klingDurationUnreachable: m.errors.klingDurationUnreachable,
         requestTooLarge: m.errors.requestTooLarge,
         timeout: m.errors.timeout,
       });

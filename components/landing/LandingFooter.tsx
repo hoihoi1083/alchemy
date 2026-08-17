@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useLocale } from "@/components/LocaleProvider";
+import { useLandingDemo } from "@/components/landing/LandingDemoModal";
 import { PRODUCT_LOGO_SRC, PRODUCT_NAME, PRODUCT_SUPPORT_EMAIL, PRODUCT_WORDMARK_ALT, PRODUCT_WORDMARK_WHITE_SRC } from "@/lib/brand";
 
 const PAYMENTS: { alt: string; src: string }[] = [
@@ -16,6 +17,7 @@ const PAYMENTS: { alt: string; src: string }[] = [
 /** Slim landing footer — brand + essential links, left-aligned (no subscribe). */
 export function LandingFooter() {
   const { m } = useLocale();
+  const { openLandingDemo } = useLandingDemo();
   const f = m.footer;
   const L = m.landing;
   const year = new Date().getFullYear();
@@ -23,6 +25,7 @@ export function LandingFooter() {
   const productLinks = [
     { label: f.studio, href: "/start" },
     { label: f.how, href: "/#how" },
+    { label: f.watchDemo, onClick: openLandingDemo },
     { label: f.pricing, href: "/pricing" },
     { label: f.library, href: "/library" },
     { label: L.proCanvasLink, href: "/pro" },
@@ -131,13 +134,25 @@ export function LandingFooter() {
               {f.productTitle}
             </p>
             <ul className="mt-3 space-y-2">
-              {productLinks.map((l) => (
-                <li key={l.label}>
-                  <Link href={l.href} className="text-sm text-slate-200 hover:text-white">
-                    {l.label}
-                  </Link>
-                </li>
-              ))}
+              {productLinks.map((l) =>
+                "onClick" in l && l.onClick ? (
+                  <li key={l.label}>
+                    <button
+                      type="button"
+                      onClick={l.onClick}
+                      className="text-sm text-slate-200 hover:text-white"
+                    >
+                      {l.label}
+                    </button>
+                  </li>
+                ) : (
+                  <li key={l.label}>
+                    <Link href={l.href!} className="text-sm text-slate-200 hover:text-white">
+                      {l.label}
+                    </Link>
+                  </li>
+                ),
+              )}
             </ul>
           </div>
 

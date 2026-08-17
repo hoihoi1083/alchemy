@@ -7,6 +7,7 @@ import {
 	estimatePlanApproxCapacity,
 	type LandingCapacityPlan,
 } from "@/lib/billing/token-costs";
+import { estimatePricingCardCapacity } from "@/lib/billing/pricing-card-capacity";
 
 const CAPACITY_PLANS: LandingCapacityPlan[] = [
 	"free",
@@ -44,7 +45,7 @@ function IconImages({ className }: { className?: string }) {
 	);
 }
 
-function IconStoryboard({ className }: { className?: string }) {
+function IconVideo({ className }: { className?: string }) {
 	return (
 		<svg
 			className={className}
@@ -53,36 +54,15 @@ function IconStoryboard({ className }: { className?: string }) {
 			aria-hidden="true"
 		>
 			<rect
-				x="2.5"
-				y="5"
-				width="5.5"
-				height="14"
-				rx="1.5"
+				x="3.5"
+				y="6"
+				width="17"
+				height="12"
+				rx="2.5"
 				stroke="currentColor"
 				strokeWidth="1.75"
 			/>
-			<rect
-				x="9.25"
-				y="5"
-				width="5.5"
-				height="14"
-				rx="1.5"
-				stroke="currentColor"
-				strokeWidth="1.75"
-			/>
-			<rect
-				x="16"
-				y="5"
-				width="5.5"
-				height="14"
-				rx="1.5"
-				stroke="currentColor"
-				strokeWidth="1.75"
-			/>
-			<path
-				d="M11.2 11.2 14.2 13l-3 1.8v-3.6Z"
-				fill="currentColor"
-			/>
+			<path d="M10 9.5 16 12l-6 2.5v-5Z" fill="currentColor" />
 		</svg>
 	);
 }
@@ -133,7 +113,16 @@ export function PlanTokenCapacityGrid({
 		return P.plans.master.name;
 	};
 
-	const rows = CAPACITY_PLANS.map((plan) => estimatePlanApproxCapacity(plan));
+	const rows = CAPACITY_PLANS.map((plan) => {
+		const approx = estimatePlanApproxCapacity(plan);
+		const card = estimatePricingCardCapacity(plan);
+		return {
+			...approx,
+			displayImages: card.images,
+			displayVideos: card.videos8s,
+			packTogether: card.packTogether,
+		};
+	});
 	const heading = title ?? L.tokensTitle;
 	const subtitle = body ?? L.tokensBody;
 	const footnote = note ?? L.tokensVideoNote;
@@ -175,22 +164,31 @@ export function PlanTokenCapacityGrid({
 							<div className="mt-3.5 flex w-full flex-row flex-nowrap items-stretch gap-1.5">
 								<MetricCell
 									icon={<IconImages className="h-4 w-4" />}
-									value={`~${row.approxImages.toLocaleString()}`}
+									value={
+										row.packTogether
+											? String(row.displayImages)
+											: `~${row.displayImages.toLocaleString()}`
+									}
 									label={L.tokensCapacityImages}
 								/>
 								<span
 									className="flex shrink-0 items-center px-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400"
 									aria-hidden="true"
 								>
-									{L.tokensCapacityOr}
+									{row.packTogether ? L.tokensCapacityAnd : L.tokensCapacityOr}
 								</span>
 								<MetricCell
-									icon={<IconStoryboard className="h-4 w-4" />}
-									value={`~${row.approxStoryboards.toLocaleString()}`}
-									label={L.tokensCapacityStoryboards.replace(
-										"{sec}",
-										String(row.storyboardSec),
-									)}
+									icon={<IconVideo className="h-4 w-4" />}
+									value={
+										row.packTogether
+											? String(row.displayVideos)
+											: `~${row.displayVideos.toLocaleString()}`
+									}
+									label={
+										row.packTogether
+											? L.tokensCapacityVideosFree
+											: L.tokensCapacityVideos
+									}
 								/>
 							</div>
 						</article>

@@ -25,6 +25,6 @@ Add silent MP4 files here only if you want one-tap samples:
 Requirements (if you add them):
 
 - **9:16** vertical
-- **No faces** if possible (Seedance sensitive filter)
+- **No faces** if possible (safety filter)
 - **Product-only** or abstract motion works best
 - **6–8 seconds**, no voiceover

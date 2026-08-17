@@ -74,7 +74,7 @@ export async function mirrorImageUrlToFalStorage(
   assertSafeRemoteMediaUrl(trimmed);
   const res = await fetch(trimmed, { cache: "no-store" });
   if (!res.ok) {
-    throw new Error(`Could not fetch source image for fal (${res.status}).`);
+    throw new Error(`Could not fetch source image (${res.status}).`);
   }
   const contentType = res.headers.get("content-type")?.split(";")[0]?.trim() || "image/png";
   const bytes = await res.arrayBuffer();

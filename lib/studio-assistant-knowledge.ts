@@ -133,12 +133,12 @@ Three workflows in studio: image-only (posts), video-only (clip from upload or t
       "方案",
     ],
     en: `Tokens ≈ pay-per-use. Free signup grant is 500 tokens once (not a monthly refill).
-Rough costs: 1 still ≈ 25 tokens; 4 storyboard stills ≈ 104; 8s 480p video ≈ 336; 6s motion poster ≈ 570; 12s single-clip video ≈ 1140; stitched fallback 4×5s ≈ 440.
-Free 500 covers about 1 image + 1 short 480p clip — NOT 12s single-clip (1140 > 500). Motion poster (~595) and some stitched paths may need a paid plan.
+Rough costs: 1 still ≈ 65 tokens; 4 storyboard stills ≈ 260; 8s video ≈ 328 at 480p (Free) or ≈ 520 at 720p; 6s motion poster ≈ 390; 12s at 480p ≈ 492; stitched fallback 4×5s ≈ 1136.
+Free 500 covers about 1 image + 1× 8s 480p video. 4-still + 12s TVC still needs a paid plan.
 Plans (typical): Free 500 signup / 480p; Standard 3000/mo 720p; Pro 8000/mo 1080p; Master 16000/mo + Pro canvas. Paid can top up 1000 tokens. See /pricing. Estimates only.`,
     zh: `Tokens ≈ 按次計費。免費註冊一次送 500（唔係每月自動再送）。
-大約：1 張靜圖 ≈ 25；4 格分鏡 ≈ 104；8 秒 480p ≈ 336；6 秒動態海報 ≈ 570；12 秒單鏡出片 ≈ 1140；拼接後備 4×5 秒 ≈ 440。
-500 夠大概 1 圖 + 1 條短 480p — 唔夠 12 秒單鏡（1140 > 500）。動態海報（約 595）同部分拼接路徑可能要付費方案。
+大約：1 張靜圖 ≈ 65；4 格分鏡 ≈ 260；8 秒影片 Free 480p ≈ 328，Standard 720p ≈ 520；6 秒動態海報 ≈ 390；12 秒 480p ≈ 492；拼接後備 4×5 秒 ≈ 1136。
+500 夠大概 1 圖 + 1 條 8 秒 480p 片。4 格 + 12 秒 TVC 仍然要付費方案。
 方案大約：Free 註冊 500／480p；Standard 每月 3000／720p；Pro 8000／1080p；Master 16000 + Pro 畫布。付費可加購 1000 tokens。詳情 /pricing。數字係估算。`,
   },
   {
@@ -146,13 +146,14 @@ Plans (typical): Free 500 signup / 480p; Standard 3000/mo 720p; Pro 8000/mo 1080
     title: "Single clip vs stitch vs reference reel",
     keywords: [
       "h3",
-      "AI",
+      "kling",
+      "minimax",
+      "seedance",
       "stitched fallback",
-      "reference-reel video",
+      "reference-reel",
       "engine",
       "stitch",
       "one take",
-      "fal",
       "引擎",
       "拼接",
       "一鏡",
@@ -211,12 +212,12 @@ Plans (typical): Free 500 signup / 480p; Standard 3000/mo 720p; Pro 8000/mo 1080
       "9s",
       "9秒",
     ],
-    en: `Blockbuster entrance is a 9s ONE-TAKE video (not 九宫格 stitch). Upload product + packaging box + optional scene first frame (truck/overpass). Timed beats: truck → box hits overpass → floating boxes → product rises. Concept mode uses logo/mascot instead of a SKU. Engine is single-clip H3.`,
+    en: `Blockbuster entrance is a 9s ONE-TAKE video (not 九宫格 stitch). Upload product + packaging box + optional scene first frame (truck/overpass). Timed beats: truck → box hits overpass → floating boxes → product rises. Concept mode uses logo/mascot instead of a SKU. Single-clip video.`,
     zh: `大片級出場係 9 秒單鏡（唔係九宮格拼接）。上傳產品 + 包裝盒 + 可選場景首幀（貨車／天橋）。節奏：貨車→紙箱撞天橋→漂浮紙箱→產品升起。概念模式用 Logo／吉祥物代替產品。單鏡引擎出片。`,
   },
   {
     id: "h3-shot-recipes",
-    title: "H3 shot recipes",
+    title: "One-take shot recipes",
     keywords: [
       "ecom orbit",
       "電商環繞",
@@ -321,8 +322,8 @@ Plans (typical): Free 500 signup / 480p; Standard 3000/mo 720p; Pro 8000/mo 1080
       "作品库",
       "口播",
     ],
-    en: `/pro is a node canvas (upload → AI image → reference-reel video video), Pay-per-use tokens, Master plan — not Lumina subscription pricing. /brand-kit saves logo/colors for stills. /library stores outputs; reopen in editor or captions. /ugc is a talking presenter, separate from storyboard TVC.`,
-    zh: `/pro 係節點畫布（上傳→ AI 圖→ reference-reel video 片），按次 token，Master 方案 — 唔係 Lumina 訂閱價。/brand-kit 存 Logo／色。/library 存成品，可再開去修圖或字幕。/ugc 係口播數字人，同分鏡 TVC 分開。`,
+    en: `/pro is a node canvas (upload → AI image → video). Pay-per-use tokens, Master plan — not Lumina subscription pricing. /brand-kit saves logo/colors for stills. /library stores outputs; reopen in editor or captions. /ugc is a talking presenter, separate from storyboard TVC.`,
+    zh: `/pro 係節點畫布（上傳→ AI 圖→ 片），按次 token，Master 方案 — 唔係 Lumina 訂閱價。/brand-kit 存 Logo／色。/library 存成品，可再開去修圖或字幕。/ugc 係口播數字人，同分鏡 TVC 分開。`,
   },
   {
     id: "how-to-start",

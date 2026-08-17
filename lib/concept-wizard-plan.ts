@@ -145,7 +145,7 @@ function buildConceptPrompt(input: PlanConceptInput): string {
     "- If user mentions anime/mecha/Gundam-style: describe as original anime-style giant mecha robot scene (no trademark names, no official logos).",
     "- If user wants an exciting setup but anti-violence message: visualMetaphor must be ONE frozen scene (standoff, lowered weapons, calm after tension) — not a full battle montage.",
     input.workflowMode === "video-only"
-      ? "- Video-only: visualMetaphor must be a single 6–8s renderable shot Seedance can animate."
+      ? "- Video-only: visualMetaphor must be a single 6–8s renderable shot the video engine can animate."
       : "",
     input.hasReferenceImage
       ? [

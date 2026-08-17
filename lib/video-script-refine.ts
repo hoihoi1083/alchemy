@@ -108,7 +108,7 @@ export async function refineResearchVideoScript(input: {
   );
   const seedancePrompt = String(parsed.seedancePrompt ?? "").trim();
   if (!seedancePrompt) {
-    throw new Error("DeepSeek returned an empty refined Seedance prompt.");
+    throw new Error("Planning returned an empty refined video prompt.");
   }
 
   return {

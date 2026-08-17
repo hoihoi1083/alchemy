@@ -17,4 +17,4 @@ npm run setup:bgm
 
 This creates simple placeholder loops. For real ads, replace with **your own licensed** MP3s using the same filenames (`calm.mp3`, `upbeat.mp3`, `warm.mp3`).
 
-If files are missing, the app still tries AI ambience from Seedance, but quality is best with these tracks + `ffmpeg` installed (`brew install ffmpeg`).
+If files are missing, the app still tries AI ambience, but quality is best with these tracks + `ffmpeg` installed (`brew install ffmpeg`).

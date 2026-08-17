@@ -145,4 +145,4 @@ export const REFERENCE_VIDEO_REQUIRED_MESSAGE =
   "Reference video (@Video1) was required but could not be used. We did not generate a stills-only clip — fix the MP4 and retry.";
 
 export const KLING_DURATION_UNREACHABLE_MESSAGE =
-  "Kling stitch cannot hit this duration (min 5s per still, max 1.85× speed-up). Retry MiniMax H3 or pick 12s.";
+  "This duration can’t be hit with stitched fallback (5s min per still). Retry single-clip mode or pick 12s.";

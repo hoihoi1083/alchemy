@@ -1,6 +1,7 @@
 /**
  * Subscription plans — aligned with /pricing UI.
- * Token COGS anchor: 1,000 tokens ≈ USD 3.30 (≈ USD 0.0033 / token).
+ * Token COGS: sized so Master yearly still yields ~75% gross vs fal.
+ * 1,000 tokens ≈ USD 1.23 operator fal COGS (≈ USD 0.001234 / token).
  */
 export type UserPlan = "free" | "standard" | "pro" | "master" | "custom";
 
@@ -35,20 +36,23 @@ export type PlanDefinition = {
   canTopUp: boolean;
 };
 
-/** 1,000 tokens ≈ USD 3.30 operator COGS. */
-export const TOKEN_COGS_USD_PER_1000 = 3.3;
+/**
+ * 1,000 tokens ≈ USD 1.234375 operator fal COGS
+ * (= 25% of Master yearly $79 / 16,000).
+ */
+export const TOKEN_COGS_USD_PER_1000 = 1.234375;
 
 export const TOP_UP_TOKENS = 1000;
 export const TOP_UP_PRICE_USD = 10;
 
-/** Free signup grant — once only. */
+/** Free signup grant — once only. Covers 1× image (65) + 8s 480P video (328) + buffer. */
 export const FREE_SIGNUP_GRANT_TOKENS = 500;
 
 export const PLAN_DEFINITIONS: Record<UserPlan, PlanDefinition> = {
   free: {
     id: "free",
     monthlyTokens: FREE_SIGNUP_GRANT_TOKENS,
-    grantCogsUsd: 1.65,
+    grantCogsUsd: 0.62,
     listPriceUsd: null,
     monthlyPriceUsd: 0,
     yearlyPriceUsd: null,
@@ -60,7 +64,7 @@ export const PLAN_DEFINITIONS: Record<UserPlan, PlanDefinition> = {
   standard: {
     id: "standard",
     monthlyTokens: 3000,
-    grantCogsUsd: 9.9,
+    grantCogsUsd: 3.7,
     listPriceUsd: 29.99,
     monthlyPriceUsd: 19.99,
     yearlyPriceUsd: 14.99,
@@ -72,7 +76,7 @@ export const PLAN_DEFINITIONS: Record<UserPlan, PlanDefinition> = {
   pro: {
     id: "pro",
     monthlyTokens: 8000,
-    grantCogsUsd: 26.4,
+    grantCogsUsd: 9.88,
     listPriceUsd: 79.99,
     monthlyPriceUsd: 49.99,
     yearlyPriceUsd: 39.99,
@@ -84,7 +88,7 @@ export const PLAN_DEFINITIONS: Record<UserPlan, PlanDefinition> = {
   master: {
     id: "master",
     monthlyTokens: 16000,
-    grantCogsUsd: 52.8,
+    grantCogsUsd: 19.75,
     listPriceUsd: 159.99,
     monthlyPriceUsd: 99.99,
     yearlyPriceUsd: 79.0,

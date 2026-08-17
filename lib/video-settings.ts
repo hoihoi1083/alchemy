@@ -1,3 +1,5 @@
+import { capUiVideoResolution } from "@/lib/billing/entitlements";
+import type { UserPlan } from "@/lib/billing/plans";
 import type { VideoCreativity } from "@/lib/video-creativity";
 import { motionStrengthForCreativity } from "@/lib/video-creativity";
 import type { TemplateId } from "@/lib/templates";
@@ -77,6 +79,7 @@ export function defaultMotionStyleForTemplate(templateId: TemplateId): VideoMoti
 export function videoSettingsForWorkflow(
   mode: "image-only" | "video-only" | "combined",
   templateId: TemplateId,
+  plan: UserPlan = "free",
 ): VideoSettings {
   const motionStyle = defaultMotionStyleForTemplate(templateId);
   if (mode === "video-only") {
@@ -84,7 +87,7 @@ export function videoSettingsForWorkflow(
       ...DEFAULT_VIDEO_SETTINGS,
       motionStyle,
       autoSecondFrame: false,
-      resolution: "480p",
+      resolution: capUiVideoResolution(plan, "480p"),
       fast: true,
       duration: "6",
     };
@@ -95,7 +98,7 @@ export function videoSettingsForWorkflow(
       motionStyle,
       autoSecondFrame: false,
       creativity: "subtle",
-      resolution: "720p",
+      resolution: capUiVideoResolution(plan, "720p"),
       fast: false,
     };
   }

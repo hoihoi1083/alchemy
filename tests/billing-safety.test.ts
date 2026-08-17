@@ -38,10 +38,10 @@ describe("billing safety — never overcharge", () => {
     w.seed({ clerkId: "u1", creditBalance: 1000, plan: "free" });
 
     const r = w.runJob({ clerkId: "u1", cost: TOKEN_COST.image, workSucceeded: true });
-    assert.equal(r.charged, 25);
-    assert.equal(w.balance("u1"), 975);
+    assert.equal(r.charged, TOKEN_COST.image);
+    assert.equal(w.balance("u1"), 1000 - TOKEN_COST.image);
     assert.equal(w.consumeCount("u1"), 1);
-    assert.equal(w.totalConsumed("u1"), 25);
+    assert.equal(w.totalConsumed("u1"), TOKEN_COST.image);
   });
 
   it("insufficient balance blocks before work — charge stays 0", () => {
@@ -90,13 +90,13 @@ describe("billing safety — never overcharge", () => {
 
   it("balance never goes negative under sequential jobs", () => {
     const w = new MemoryWallet();
-    w.seed({ clerkId: "u1", creditBalance: 100, plan: "free" });
+    w.seed({ clerkId: "u1", creditBalance: 260, plan: "free" });
 
     const costs = [
-      TOKEN_COST.image, // 25 → 75
-      TOKEN_COST.image, // 25 → 50
-      TOKEN_COST.image, // 25 → 25
-      TOKEN_COST.image, // 25 → 0
+      TOKEN_COST.image, // 65 → 195
+      TOKEN_COST.image, // 65 → 130
+      TOKEN_COST.image, // 65 → 65
+      TOKEN_COST.image, // 65 → 0
       TOKEN_COST.image, // blocked
       TOKEN_COST.music, // blocked
     ];
@@ -105,22 +105,22 @@ describe("billing safety — never overcharge", () => {
       assert.ok((w.balance("u1") ?? 0) >= 0, `balance went negative: ${w.balance("u1")}`);
     }
     assert.equal(w.balance("u1"), 0);
-    assert.equal(w.totalConsumed("u1"), 100);
+    assert.equal(w.totalConsumed("u1"), 260);
     assert.equal(w.consumeCount("u1"), 4);
   });
 
   it("concurrent settles cannot overdraw (second loses)", () => {
     const w = new MemoryWallet();
-    w.seed({ clerkId: "u1", creditBalance: 336, plan: "free" });
+    w.seed({ clerkId: "u1", creditBalance: 520, plan: "free" });
 
-    w.require("u1", 336);
-    w.require("u1", 336); // soft check both pass (same as production race window)
+    w.require("u1", 520);
+    w.require("u1", 520); // soft check both pass (same as production race window)
 
-    const first = w.settle("u1", 336);
+    const first = w.settle("u1", 520);
     assert.equal(first, 0);
-    assert.throws(() => w.settle("u1", 336), InsufficientTokensError);
+    assert.throws(() => w.settle("u1", 520), InsufficientTokensError);
     assert.equal(w.balance("u1"), 0);
-    assert.equal(w.totalConsumed("u1"), 336);
+    assert.equal(w.totalConsumed("u1"), 520);
   });
 
   it("missing user cannot be charged as a silent free pass", () => {
@@ -132,21 +132,21 @@ describe("billing safety — never overcharge", () => {
   });
 
   it("catalog costs match the published Free / action table", () => {
-    assert.equal(TOKEN_COST.image, 25);
-    assert.equal(TOKEN_COST.image_ab, 50);
-    assert.equal(TOKEN_COST.campaign, 90);
-    assert.equal(TOKEN_COST.teaching_carousel, 120);
-    assert.equal(TOKEN_COST.music, 30);
-    assert.equal(TOKEN_COST.voiceover, 5);
-    assert.equal(estimateImageTokens({ mode: "storyboard", sceneCount: 4 }), 104);
+    assert.equal(TOKEN_COST.image, 65);
+    assert.equal(TOKEN_COST.image_ab, 130);
+    assert.equal(TOKEN_COST.campaign, 200);
+    assert.equal(TOKEN_COST.teaching_carousel, 265);
+    assert.equal(TOKEN_COST.music, 82);
+    assert.equal(TOKEN_COST.voiceover, 13);
+    assert.equal(estimateImageTokens({ mode: "storyboard", sceneCount: 4 }), 260);
     assert.equal(
       estimateImageTokens({ mode: "storyboard", sceneCount: 4, passesPerScene: 2 }),
-      208,
+      520,
     );
-    assert.equal(estimateVideoTokens({ resolution: "480p", fast: false, duration: 8 }), 336);
+    assert.equal(estimateVideoTokens({ resolution: "480p", fast: false, duration: 8 }), 904);
     assert.equal(
       videoTokenCostFromRequest({ resolution: "720p", fast: true, duration: "auto" }),
-      600,
+      1568,
     );
   });
 
@@ -221,7 +221,7 @@ describe("billing safety — never overcharge", () => {
     assert.ok(!jobs.some((j) => !j.ok && w.totalConsumed("u1") === expected + j.cost));
     assert.equal(
       expected,
-      25 + 50 + 90 + 120 + 104 + 336 + 30 + 5,
+      65 + 130 + 200 + 265 + 260 + 904 + 82 + 13,
     );
   });
 });

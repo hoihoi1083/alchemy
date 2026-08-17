@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import {
   chargeTokens,
   refundTokens,
+  h3TokenCostFromRequest,
   videoTokenCostFromRequest,
 } from "@/lib/billing/charge";
 import { clampVideoResolution } from "@/lib/billing/entitlements";
@@ -23,8 +24,10 @@ import {
 } from "@/lib/video-engine-prompt-adapters";
 import {
   clampMinimaxH3Duration,
+  clampMinimaxH3ResolutionForPlan,
   collectMinimaxH3FallbackMedia,
   formDataExpectsReferenceVideo,
+  normalizeMinimaxH3Resolution,
   runMinimaxH3Fallback,
 } from "@/lib/minimax-h3-run";
 import {
@@ -243,7 +246,7 @@ export async function POST(request: Request) {
   const prompt = softenSeedancePromptForModeration(promptRaw);
   const reelExpectedEarly = formDataExpectsReferenceVideo(formData, prompt);
   const fast = reelExpectedEarly ? false : formData.get("fast") === "true";
-  const resolutionBase = (formData.get("resolution") as string) || "720p";
+  const resolutionBase = (formData.get("resolution") as string) || "480p";
   const resolutionOverride =
     (formData.get("resolution_override") as string | null)?.trim() || "";
   const requestedResolution = resolutionOverride || resolutionBase;
@@ -666,13 +669,15 @@ export async function POST(request: Request) {
       }
       if (h3Images.length >= 1 || h3Videos.length >= 1) {
         const h3Duration = clampMinimaxH3Duration(totalDurationSec);
-        // fal MiniMax H3 enums are 768P / 2K / 4K (capital P) — not Seedance 768p.
-        const h3ResHint =
-          resolution === "480p" || resolution === "720p" ? "768P" : "2K";
-        const h3Cost = videoTokenCostFromRequest({
+        const h3ResHint = clampMinimaxH3ResolutionForPlan(
+          plan,
+          normalizeMinimaxH3Resolution(resolution),
+        );
+        const h3Cost = h3TokenCostFromRequest({
           duration: h3Duration,
-          resolution: h3ResHint === "768P" ? "720p" : "1080p",
-          fast: false,
+          resolution: h3ResHint,
+          referenceVideoSec: h3Videos.length > 0 ? h3Duration : 0,
+          extraReferenceImages: Math.max(0, h3Images.length - 5),
         });
         const h3Charged = await chargeTokens(auth.user.userId, h3Cost, {
           kind: "minimax_h3",

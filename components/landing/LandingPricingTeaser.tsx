@@ -5,7 +5,7 @@ import { useAuth } from "@clerk/nextjs";
 import { useState } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 import { PLAN_DEFINITIONS } from "@/lib/billing/plans";
-import { estimatePlanApproxCapacity } from "@/lib/billing/token-costs";
+import { pricingCardCapacityItems } from "@/lib/billing/pricing-card-capacity";
 import { PRODUCT_SUPPORT_EMAIL } from "@/lib/brand";
 import {
   trackCheckoutFailed,
@@ -21,23 +21,13 @@ type PaidPlan = "standard" | "pro" | "master";
 function capacityFor(
 	plan: "free" | "standard" | "pro" | "master",
 	p: {
+		capacityFreeImages: string;
+		capacityFreeVideos: string;
 		capacityImagesFeature: string;
-		capacityStoryboardsFeature: string;
+		capacityVideosFeature: string;
 	},
 ) {
-	const c = estimatePlanApproxCapacity(plan);
-	return [
-		{
-			kind: "images" as const,
-			label: p.capacityImagesFeature.replace("{n}", String(c.approxImages)),
-		},
-		{
-			kind: "storyboard" as const,
-			label: p.capacityStoryboardsFeature
-				.replace("{n}", String(c.approxStoryboards))
-				.replace("{sec}", String(c.storyboardSec)),
-		},
-	];
+	return pricingCardCapacityItems(plan, p);
 }
 
 /**
@@ -398,9 +388,8 @@ export function LandingPricingTeaser() {
 															</svg>
 														) : (
 															<svg viewBox="0 0 24 24" fill="none" className="h-3.5 w-3.5" aria-hidden>
-																<rect x="2.5" y="5" width="5.5" height="14" rx="1.2" stroke="currentColor" strokeWidth="1.75" />
-																<rect x="9.25" y="5" width="5.5" height="14" rx="1.2" stroke="currentColor" strokeWidth="1.75" />
-																<rect x="16" y="5" width="5.5" height="14" rx="1.2" stroke="currentColor" strokeWidth="1.75" />
+																<rect x="3.5" y="6" width="17" height="12" rx="2" stroke="currentColor" strokeWidth="1.75" />
+																<path d="M10 9.5 16 12l-6 2.5v-5Z" fill="currentColor" />
 															</svg>
 														)}
 													</span>

@@ -1,11 +1,14 @@
 /**
  * Per-action token costs.
  *
- * Anchor: 1,000 tokens ≈ USD 3.30 COGS → ≈ USD 0.0033 / token.
- * Derived from fal pass-through (Nano Banana ~$0.08/1K image;
- * Seedance pixel formula / published $/s; HeyGen Avatar ~$0.10/s) then rounded for UI.
+ * Priced so Master yearly ($79 / 16,000 tokens ≈ $0.0049375 / token) still
+ * yields ~75% gross margin vs fal COGS. Every cheaper plan (monthly, Standard
+ * yearly, top-up $10/1,000) is fatter. Tokens = ceil(fal / 0.25 / 0.0049375).
  *
- * Free signup grant covers 1× image + 1× 8s 480p video with buffer.
+ * Operator COGS of granted tokens ≈ 25% of Master yearly revenue
+ * → 1,000 tokens ≈ USD 1.23 fal.
+ *
+ * Free signup grant covers 1× 1K image + 1× 8s 480P video with buffer.
  */
 import {
   FREE_SIGNUP_GRANT_TOKENS,
@@ -16,23 +19,35 @@ import type { UserPlan } from "@/lib/billing/plans";
 
 export const USD_PER_TOKEN = TOKEN_COGS_USD_PER_1000 / 1000;
 
+/** Master yearly — cheapest paid token. Use this when sizing new rates. */
+export const MASTER_YEARLY_USD_PER_TOKEN = 79 / 16_000;
+
+/** Target gross margin vs fal on that cheapest token. */
+export const TARGET_GROSS_MARGIN = 0.75;
+
+/** ceil(falUsd / (1 − margin) / Master-yearly $/token). */
+export function tokensForFalUsd(falUsd: number): number {
+  const userUsd = falUsd / (1 - TARGET_GROSS_MARGIN);
+  return Math.max(1, Math.ceil(userUsd / MASTER_YEARLY_USD_PER_TOKEN));
+}
+
 /** Flat action costs (tokens). */
 export const TOKEN_COST = {
-  image: 25, // ~$0.08
-  image_ab: 50, // 2 images
-  campaign: 90, // 3 slides + plan ~$0.30
-  teaching_carousel: 120, // ~4 slides + plan; prefer estimateTeachingCarouselTokens(n)
-  storyboard_scene: 26, // ~$0.086 — covers Nano Banana 1K ($0.08) + thin buffer
-  storyboard_batch: 104, // typical 4 scenes
-  music: 30, // ~$0.10
-  voiceover: 5, // ~$0.015
+  image: 65, // Nano Banana 2 1K $0.08
+  image_ab: 130, // 2 images
+  campaign: 200, // 3×65 + plan
+  teaching_carousel: 265, // plan + 4×65; prefer estimateTeachingCarouselTokens(n)
+  storyboard_scene: 65, // same 1K still as image
+  storyboard_batch: 260, // typical 4 scenes
+  music: 82, // ~$0.10
+  voiceover: 13, // ~$0.015
   bgm: 5, // local ffmpeg mix — small operator cost
-  plan: 5, // LLM plan / brief ~$0.01–0.02
+  plan: 5, // LLM plan / brief ~$0.01–0.02 (not fal video)
   /**
    * FLUX.1 [pro] Fill on fal: $0.05 / megapixel (rounded up).
-   * $0.05 / $0.0033 ≈ 15.2 → 16 tok for typical ~1MP social edit (+ thin buffer).
+   * $0.05 → 41 tok/MP at 75% Master yearly.
    */
-  inpaint: 16,
+  inpaint: 41,
   /** ffmpeg caption burn + R2 persist — CPU/storage, not fal; flat processing fee. */
   caption_burn: 8,
 } as const;
@@ -40,27 +55,39 @@ export const TOKEN_COST = {
 /** Tokens for FLUX Fill — bill by rounded megapixels when known. */
 export function estimateInpaintTokens(megapixels = 1): number {
   const mp = Math.max(1, Math.ceil(megapixels));
-  // $0.05/MP / $0.0033 ≈ 15.15 → 16 tok/MP
-  return 16 * mp;
+  return TOKEN_COST.inpaint * mp;
 }
 
 /**
- * Tokens per second of Seedance video.
- * 480p aligned to fal pixel formula (~$0.134/s → ~41 tok/s).
- * 720p/1080p track published fal $/s.
+ * MiniMax H3 on fal — billed separately from Seedance.
+ * 480P $0.05/s → 41 tok/s; 768P $0.08/s → 65 tok/s; 2K $0.13/s → 106 tok/s.
+ * UI 480p → 480P (Free cap); 720p → 768P (Standard); 1080p → 2K.
+ */
+export const H3_TOKENS_PER_SEC = {
+  "480P": 41, // $0.05/s · 8s = 328 · Free cap
+  "768P": 65, // $0.08/s · 8s = 520 · Standard 720p
+  "2K": 106, // $0.13/s · 8s = 848
+  "4K": 130, // $0.16/s
+} as const;
+
+export type H3BillingResolution = keyof typeof H3_TOKENS_PER_SEC;
+
+/**
+ * Seedance on fal — reel / quality path. Priced at the same 75% Master-yearly
+ * rule so we do not lose money when Seedance actually runs.
  */
 export const VIDEO_TOKENS_PER_SEC = {
-  "480p": 42, // ~$0.139/s → 8s ≈ 336
-  "720p_fast": 75, // fal Fast $0.2419/s → 8s ≈ 600
-  "720p": 95, // fal Standard $0.3034/s → 8s ≈ 760
-  "1080p": 210, // fal $0.682/s → 8s ≈ 1680
+  "480p": 113, // ~$0.139/s → 8s = 904
+  "720p_fast": 196, // fal Fast $0.2419/s → 8s = 1568
+  "720p": 246, // fal Standard $0.3034/s → 8s = 1968
+  "1080p": 553, // fal $0.682/s → 8s = 4424
 } as const;
 
 /**
  * HeyGen Avatar IV / V on fal — $0.10 per output video second.
- * $0.10 / $0.0033 ≈ 30.3 → 30 tokens/sec.
+ * $0.10 → 82 tokens/sec at 75% Master yearly.
  */
-export const HEYGEN_TOKENS_PER_SEC = 30;
+export const HEYGEN_TOKENS_PER_SEC = 82;
 export const HEYGEN_MIN_BILL_SEC = 4;
 export const HEYGEN_MAX_BILL_SEC = 60;
 
@@ -83,12 +110,12 @@ export function estimateSpeechDurationSec(script: string, locale: "hk" | "en" | 
 
 /**
  * Kling 2.5 Turbo Pro I2V (fal): $0.35 for 5s, +$0.07/extra sec.
- * Used as Seedance face-policy fallback for storyboard scenes.
+ * Used as H3 face-policy / duration fallback for storyboard scenes.
  */
 export const KLING_TURBO_PRO = {
   endpoint: "fal-ai/kling-video/v2.5-turbo/pro/image-to-video",
-  tokens5s: 110, // $0.35 / $0.0033
-  tokensPerExtraSec: 22, // $0.07 / $0.0033
+  tokens5s: 284, // $0.35
+  tokensPerExtraSec: 57, // $0.07
 } as const;
 
 export type KlingClipDuration = 5 | 10;
@@ -127,7 +154,7 @@ export function resolveVideoBillingResolution(
   return fast ? "720p_fast" : "720p";
 }
 
-/** Client-safe estimate for video generate (duration "auto" → 8s). */
+/** Seedance estimate (duration "auto" → 8s). */
 export function estimateVideoTokens(opts: {
   resolution: string;
   fast: boolean;
@@ -138,18 +165,62 @@ export function estimateVideoTokens(opts: {
   return videoTokenCost(res, sec);
 }
 
-/** Free pack promise: 1 image + 1× 8s 480p (+ buffer for plan/refine). */
+export function resolveH3BillingResolution(resolution: string): H3BillingResolution {
+  const t = (resolution ?? "").trim();
+  const lower = t.toLowerCase();
+  if (t === "4K" || lower === "4k" || lower === "2160p") return "4K";
+  if (t === "2K" || lower === "2k" || lower.includes("1080")) return "2K";
+  if (t === "480P" || lower === "480p" || lower === "480") return "480P";
+  return "768P";
+}
+
+/** Plan video cap → billing enum (Free 480p, Standard 720p, Pro/Master 1080p). */
+export function h3BillingResolutionForPlan(plan: UserPlan): H3BillingResolution {
+  const cap = PLAN_DEFINITIONS[plan].maxVideoResolution;
+  if (cap === "480p") return "480P";
+  if (cap === "720p") return "768P";
+  return "2K";
+}
+
+export function h3TokenCost(
+  resolution: H3BillingResolution,
+  durationSec: number,
+): number {
+  const sec = Math.max(5, Math.min(15, Math.round(durationSec)));
+  return H3_TOKENS_PER_SEC[resolution] * sec;
+}
+
+/**
+ * MiniMax H3 estimate. Extra reference images after the first 5 cost $0.08
+ * each on fal. Reference video is billed at the output $/s × input seconds
+ * (unknown length → assume same as output, capped 15s).
+ */
+export function estimateH3Tokens(opts: {
+  resolution: string;
+  duration: "auto" | number;
+  referenceVideoSec?: number;
+  extraReferenceImages?: number;
+}): number {
+  const res = resolveH3BillingResolution(opts.resolution);
+  const sec = opts.duration === "auto" ? 8 : opts.duration;
+  const output = h3TokenCost(res, sec);
+  const refSec = Math.max(0, Math.min(15, Math.round(opts.referenceVideoSec ?? 0)));
+  const refVideo = refSec > 0 ? H3_TOKENS_PER_SEC[res] * refSec : 0;
+  const extraImgs = Math.max(0, Math.round(opts.extraReferenceImages ?? 0));
+  return output + refVideo + extraImgs * TOKEN_COST.image;
+}
+
+/** Free pack promise: 1 image + 1× 8s 480P video + buffer. */
 export const FREE_PACK = {
-  image: TOKEN_COST.image, // 25
-  video8s480p: VIDEO_TOKENS_PER_SEC["480p"] * 8, // 336
-  total: TOKEN_COST.image + VIDEO_TOKENS_PER_SEC["480p"] * 8, // 361
+  image: TOKEN_COST.image, // 65
+  video8s480p: H3_TOKENS_PER_SEC["480P"] * 8, // 328
+  total: TOKEN_COST.image + H3_TOKENS_PER_SEC["480P"] * 8, // 393
   grant: FREE_SIGNUP_GRANT_TOKENS,
-  buffer: FREE_SIGNUP_GRANT_TOKENS - (TOKEN_COST.image + VIDEO_TOKENS_PER_SEC["480p"] * 8),
+  buffer: FREE_SIGNUP_GRANT_TOKENS - (TOKEN_COST.image + H3_TOKENS_PER_SEC["480P"] * 8),
 } as const;
 
 export function estimateTeachingCarouselTokens(slideCount: number): number {
   const n = Math.min(6, Math.max(4, Math.round(slideCount) || 5));
-  // plan + one Nano Banana 1K per slide
   return TOKEN_COST.plan + TOKEN_COST.image * n;
 }
 
@@ -215,15 +286,14 @@ export function cogsUsdForTokens(tokens: number): number {
 /**
  * Landing capacity unit: a typical short storyboard reel
  * (2 scenes × 5s Kling clips ≈ 10s stitched).
- * Cheaper than max-res Seedance singles → clearer “how many reels” messaging.
  */
 export const STORYBOARD_LANDING_PACK = {
   scenes: 2,
   clipSec: 5 as const,
   totalSec: 10,
-  imageTokens: TOKEN_COST.storyboard_scene * 2, // 52
-  videoTokens: estimateKlingStoryboardTokens(2, 5), // 220
-  /** Stills + Kling animate — one full ~10s storyboard run (52 + 220). */
+  imageTokens: TOKEN_COST.storyboard_scene * 2, // 130
+  videoTokens: estimateKlingStoryboardTokens(2, 5), // 568
+  /** Stills + Kling animate — one full ~10s storyboard run. */
   totalTokens: TOKEN_COST.storyboard_scene * 2 + estimateKlingStoryboardTokens(2, 5),
 } as const;
 
@@ -232,11 +302,18 @@ export type LandingCapacityPlan = Extract<
   "free" | "standard" | "pro" | "master"
 >;
 
+/** 8s video at the plan’s max resolution (480P / 768P / 2K). */
+export function h3Video8sTokensForPlan(plan: LandingCapacityPlan): number {
+  return H3_TOKENS_PER_SEC[h3BillingResolutionForPlan(plan)] * 8;
+}
+
 export type PlanApproxCapacity = {
   plan: LandingCapacityPlan;
   tokens: number;
   /** Rough count if tokens are spent only on single images (1K Nano Banana). */
   approxImages: number;
+  /** Rough count if spent only on 8s H3 clips at the plan max resolution. */
+  approxVideos8s: number;
   /**
    * Rough count if spent only on ~10s storyboard reels
    * (2 scenes × 5s Kling + stills).
@@ -256,10 +333,12 @@ export function estimatePlanApproxCapacity(
   const def = PLAN_DEFINITIONS[plan];
   const tokens = def.monthlyTokens;
   const packCost = STORYBOARD_LANDING_PACK.totalTokens;
+  const video8s = h3Video8sTokensForPlan(plan);
   return {
     plan,
     tokens,
     approxImages: Math.max(0, Math.floor(tokens / TOKEN_COST.image)),
+    approxVideos8s: Math.max(0, Math.floor(tokens / video8s)),
     approxStoryboards: Math.max(0, Math.floor(tokens / packCost)),
     storyboardScenes: STORYBOARD_LANDING_PACK.scenes,
     storyboardSec: STORYBOARD_LANDING_PACK.totalSec,

@@ -3,9 +3,12 @@ import { NextResponse } from "next/server";
 import {
   chargeTokens,
   refundTokens,
+  h3TokenCostFromRequest,
   videoTokenCostFromRequest,
 } from "@/lib/billing/charge";
 import { getUserBalance } from "@/lib/billing/ledger";
+import { getUserPlan } from "@/lib/billing/get-user-plan";
+import { clampVideoResolution } from "@/lib/billing/entitlements";
 import { isStoryboardGridApprovedFlag } from "@/lib/kling-storyboard-fallback";
 import {
   evaluateStoryboardVideoAffordability,
@@ -25,8 +28,10 @@ import {
 import {
   buildStoryboardMinimaxH3Prompt,
   clampMinimaxH3Duration,
+  clampMinimaxH3ResolutionForPlan,
   collectMinimaxH3FallbackVideoUrls,
   formDataExpectsReferenceVideo,
+  normalizeMinimaxH3Resolution,
   runMinimaxH3Fallback,
 } from "@/lib/minimax-h3-run";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
@@ -147,15 +152,24 @@ export async function POST(request: Request) {
   );
 
   const h3Duration = clampMinimaxH3Duration(totalDurationSec);
-  const h3Cost = videoTokenCostFromRequest({
+  const plan = await getUserPlan(clerkId);
+  const requestedVideoRes =
+    (formData.get("resolution") as string | null)?.trim() || "480p";
+  const { resolution: uiResolution } = clampVideoResolution(plan, requestedVideoRes);
+  const h3Resolution = clampMinimaxH3ResolutionForPlan(
+    plan,
+    normalizeMinimaxH3Resolution(requestedVideoRes),
+  );
+  const h3Cost = h3TokenCostFromRequest({
     duration: h3Duration,
-    resolution: "720p",
-    fast: false,
+    resolution: h3Resolution,
+    referenceVideoSec: expectsReel ? h3Duration : 0,
+    extraReferenceImages: Math.max(0, sourceCount - 5),
   });
   const seedanceDuration = Math.min(15, Math.max(4, Math.round(totalDurationSec) || 8));
   const seedanceCost = videoTokenCostFromRequest({
     duration: seedanceDuration,
-    resolution: "1080p",
+    resolution: uiResolution,
     fast: false,
   });
 
@@ -307,7 +321,7 @@ export async function POST(request: Request) {
       prompt: h3Prompt,
       durationSec: h3Duration,
       aspectRatio: aspectRatio === "auto" ? "9:16" : aspectRatio,
-      resolution: "768P",
+      resolution: h3Resolution,
       imageUrls,
       videoUrls,
     });
@@ -407,7 +421,7 @@ export async function POST(request: Request) {
         prompt: motionPrompt || theme || "Follow @Video1 spine. @Image1…N wardrobe only.",
         durationSec: seedanceDuration,
         aspectRatio,
-        resolution: "1080p",
+        resolution: uiResolution,
         imageUrls,
         videoUrls,
       });

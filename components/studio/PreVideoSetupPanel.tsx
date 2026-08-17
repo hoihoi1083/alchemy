@@ -5,7 +5,7 @@ import { useLocale } from "@/components/LocaleProvider";
 import { VideoSettingsPanel } from "@/components/VideoSettingsPanel";
 import { BrandWebsitePanel } from "@/components/studio/BrandWebsitePanel";
 import { useWizard } from "@/components/studio/WizardContext";
-import { estimateVideoTokens } from "@/lib/billing/token-costs";
+import { estimateH3Tokens } from "@/lib/billing/token-costs";
 import { storyboardSceneDisplayCopy } from "@/lib/storyboard-scene-copy";
 import { studioPhasesForMode, videoSetupPhaseIndex } from "@/lib/studio-phases";
 import { isCreativeVideoStyle, getVisualStyle } from "@/lib/visual-styles";
@@ -506,14 +506,12 @@ export function PreVideoSetupPanel({
   const durationNum =
     durationRaw === "auto" ? 8 : typeof durationRaw === "number" ? durationRaw : Number(durationRaw) || 8;
   const tokenEstimate = scenesReady
-    ? estimateVideoTokens({
+    ? estimateH3Tokens({
         resolution: wizard.videoSettings.resolution,
-        fast: false,
         duration: Number(wizard.storyboardTrimDuration) || 8,
       })
-    : estimateVideoTokens({
+    : estimateH3Tokens({
         resolution: wizard.videoSettings.resolution,
-        fast: Boolean(wizard.videoSettings.fast),
         duration: durationRaw === "auto" ? "auto" : durationNum,
       });
 

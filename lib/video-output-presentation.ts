@@ -2,7 +2,23 @@ import type { VideoCreativeMode } from "@/lib/creative-workflow";
 import { isH3ShotRecipeMode } from "@/lib/h3-shot-recipes";
 import type { WorkflowMode } from "@/lib/workflow-mode";
 
-/** User-facing video pipeline — not the Seedance API mode. */
+/** User-facing video pipeline — not an internal API mode. */
+
+/** Extra wizard note after generate — never include generationMode or API endpoints. */
+export function wizardVideoReadyExtraNote(data: {
+  referenceVideoCount?: unknown;
+  referenceImageCount?: unknown;
+}): string {
+  const parts: string[] = [];
+  if (typeof data.referenceVideoCount === "number" && data.referenceVideoCount > 0) {
+    parts.push(`${data.referenceVideoCount} ref video`);
+  }
+  if (typeof data.referenceImageCount === "number" && data.referenceImageCount > 0) {
+    parts.push(`${data.referenceImageCount} images`);
+  }
+  return parts.join(" · ");
+}
+
 export type VideoOutputPresentationId =
   | "storyboard-reel"
   | "animate-keyframe"
