@@ -40,6 +40,8 @@ import {
   microContextForLandingRecipe,
   peekLandingRecipe,
 } from "@/lib/landing-recipes";
+import { applyContentAngleToWizard } from "@/lib/content-research-apply";
+import { enrichAngleVideoFromPlan } from "@/lib/content-research-angle-video";
 
 const CTX_KEY = "wizardV2Context";
 
@@ -98,6 +100,7 @@ function wizardStateSnapshot(wizard: StudioWizardValue): WizardMicroStepState {
     videoUrl: wizard.videoUrl,
     promptExtra: wizard.promptExtra,
     contentResearchApplied: Boolean(wizard.contentResearchApplyRef),
+    contentResearchPending: Boolean(wizard.pendingContentResearchPick),
     shipItEligible: wizard.shipItEligible,
     hasGeneratedImage: Boolean(
       wizard.imageUrl ||
@@ -256,6 +259,14 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     }
     if (sub === "creative_motion" && wizard.videoCreativeMode !== "creative-motion") {
       wizard.onVideoCreativeModeChange("creative-motion");
+      return;
+    }
+    if (sub === "hand_throw_scene" && wizard.videoCreativeMode !== "hand-throw-scene") {
+      wizard.onVideoCreativeModeChange("hand-throw-scene");
+      return;
+    }
+    if (sub === "product_explode" && wizard.videoCreativeMode !== "product-explode") {
+      wizard.onVideoCreativeModeChange("product-explode");
     }
   }, [ctx.videoSubpath, wizard.videoCreativeMode, wizard.onVideoCreativeModeChange]);
 
@@ -278,6 +289,7 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
       wizard.imageBusy,
       wizard.promptExtra,
       wizard.contentResearchApplyRef,
+      wizard.pendingContentResearchPick,
       wizard.product,
       wizard.headline,
       wizard.subline,
@@ -547,80 +559,133 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
         (conceptSource ? intakePathForConceptSource(conceptSource) : undefined);
       if (!intakePath) return;
 
-      const wizardApi = {
-        setImageRefPhoto: wizard.setImageRefPhoto,
-        setImageCreativeMode: wizard.setImageCreativeMode,
-        setExtraKitPhotos: wizard.setExtraKitPhotos,
-        setContentResearchApplyRef: wizard.setContentResearchApplyRef,
-        setUserReferenceBrief: wizard.setUserReferenceBrief,
-        setPromptExtra: wizard.setPromptExtra,
-        setCreativeVideoBrief: wizard.setCreativeVideoBrief,
-        setHeadline: wizard.setHeadline,
-        setSubline: wizard.setSubline,
-        setOffer: wizard.setOffer,
-        onReferenceAdFile: wizard.onReferenceAdFile,
-      };
+      const finishIntakeAdvance = () => {
+        const wizardApi = {
+          setImageRefPhoto: wizard.setImageRefPhoto,
+          setImageCreativeMode: wizard.setImageCreativeMode,
+          setExtraKitPhotos: wizard.setExtraKitPhotos,
+          setContentResearchApplyRef: wizard.setContentResearchApplyRef,
+          setUserReferenceBrief: wizard.setUserReferenceBrief,
+          setPromptExtra: wizard.setPromptExtra,
+          setCreativeVideoBrief: wizard.setCreativeVideoBrief,
+          setHeadline: wizard.setHeadline,
+          setSubline: wizard.setSubline,
+          setOffer: wizard.setOffer,
+          onReferenceAdFile: wizard.onReferenceAdFile,
+        };
 
-      let nextCtx: MicroWizardContext = { ...ctx, intakePath };
-      if (wizard.promotionMode === "concept" && conceptSource) {
-        if (conceptSource === "assistant") clearConceptResearchState(wizardApi);
-        else clearConceptAssistantState(wizardApi);
-        nextCtx = { ...nextCtx, conceptSource };
-        setPendingConceptSource(undefined);
-      }
+        let nextCtx: MicroWizardContext = { ...ctx, intakePath };
+        if (wizard.promotionMode === "concept" && conceptSource) {
+          if (conceptSource === "assistant") clearConceptResearchState(wizardApi);
+          else clearConceptAssistantState(wizardApi);
+          nextCtx = { ...nextCtx, conceptSource };
+          setPendingConceptSource(undefined);
+        }
 
-      patchContext(nextCtx);
-      setPendingIntakePath(undefined);
-      if (intakePath === "direct") {
-        wizard.setImageCreativeMode(wizard.imageRefPhoto ? "reference-concept" : "promo-ai");
-      }
-      // Video-only direct: default style lives in fused setup (like image 創作方向).
-      if (
-        intakePath === "direct" &&
-        (nextCtx.workflowMode === "video-only" || wizard.workflowMode === "video-only") &&
-        !nextCtx.videoSubpath
-      ) {
-        const defaultSub =
-          wizard.promotionMode === "concept" ? ("creative_video" as const) : ("product_promo" as const);
-        nextCtx = { ...nextCtx, videoSubpath: defaultSub };
         patchContext(nextCtx);
-        if (defaultSub === "product_promo") wizard.applyPrimaryPathVideoOnly("creative");
-        else wizard.applyPrimaryPathConceptVideo("creative");
-      }
-      // Video-only research: stay on reference_reel — never default to 快速廣告 / assistant.
-      if (
-        intakePath === "research" &&
-        (nextCtx.workflowMode === "video-only" || wizard.workflowMode === "video-only") &&
-        !nextCtx.videoSubpath
-      ) {
-        nextCtx = { ...nextCtx, videoSubpath: "reference_reel" };
-        patchContext(nextCtx);
-      }
-      // 圖+片 + 研究 → always storyboard reel (multi-scene stills).
-      if (
-        intakePath === "research" &&
-        (ctx.workflowMode === "combined" || wizard.workflowMode === "combined") &&
-        !wizard.isUgcPresenterOutput &&
-        wizard.visualStyleId !== "concept-cinematic"
-      ) {
-        wizard.selectVisualStyle("storyboard-video");
-      }
-      const nextState = {
-        ...state,
-        visualStyleId:
+        setPendingIntakePath(undefined);
+        if (intakePath === "direct") {
+          wizard.setImageCreativeMode(wizard.imageRefPhoto ? "reference-concept" : "promo-ai");
+        }
+        if (
+          intakePath === "direct" &&
+          (nextCtx.workflowMode === "video-only" || wizard.workflowMode === "video-only") &&
+          !nextCtx.videoSubpath
+        ) {
+          const defaultSub =
+            wizard.promotionMode === "concept"
+              ? ("creative_video" as const)
+              : ("product_promo" as const);
+          nextCtx = { ...nextCtx, videoSubpath: defaultSub };
+          patchContext(nextCtx);
+          if (defaultSub === "product_promo") wizard.applyPrimaryPathVideoOnly("creative");
+          else wizard.applyPrimaryPathConceptVideo("creative");
+        }
+        if (
+          intakePath === "research" &&
+          (nextCtx.workflowMode === "video-only" || wizard.workflowMode === "video-only") &&
+          !nextCtx.videoSubpath
+        ) {
+          nextCtx = { ...nextCtx, videoSubpath: "reference_reel" };
+          patchContext(nextCtx);
+        }
+        if (
           intakePath === "research" &&
           (ctx.workflowMode === "combined" || wizard.workflowMode === "combined") &&
           !wizard.isUgcPresenterOutput &&
           wizard.visualStyleId !== "concept-cinematic"
-            ? ("storyboard-video" as const)
-            : state.visualStyleId,
+        ) {
+          wizard.selectVisualStyle("storyboard-video");
+        }
+        const nextState = {
+          ...state,
+          visualStyleId:
+            intakePath === "research" &&
+            (ctx.workflowMode === "combined" || wizard.workflowMode === "combined") &&
+            !wizard.isUgcPresenterOutput &&
+            wizard.visualStyleId !== "concept-cinematic"
+              ? ("storyboard-video" as const)
+              : state.visualStyleId,
+          contentResearchApplied: Boolean(
+            wizard.contentResearchApplyRef || wizard.pendingContentResearchPick,
+          ),
+          contentResearchPending: false,
+        };
+        const nextSteps = resolveMicroSteps(nextCtx, nextState);
+        autoAdvancedRef.current = null;
+        const downloadIdx = nextSteps.findIndex((s) => s.id === "wait.reel_download");
+        if (downloadIdx >= 0) setStepIndex(downloadIdx);
+        else setStepIndex(resumeStepIndex(nextSteps));
       };
-      const nextSteps = resolveMicroSteps(nextCtx, nextState);
-      autoAdvancedRef.current = null;
-      // Skip dedicated analyze waits — analysis runs in background on setup.
-      const downloadIdx = nextSteps.findIndex((s) => s.id === "wait.reel_download");
-      if (downloadIdx >= 0) setStepIndex(downloadIdx);
-      else setStepIndex(resumeStepIndex(nextSteps));
+
+      const pick = wizard.pendingContentResearchPick;
+      if (intakePath === "research" && pick && !wizard.contentResearchApplyRef) {
+        void (async () => {
+          try {
+            const angleToApply = enrichAngleVideoFromPlan(pick.angle, pick.plan);
+            await applyContentAngleToWizard(
+              angleToApply,
+              pick.plan,
+              pick.promotionMode,
+              {
+                setHeadline: wizard.setHeadline,
+                setSubline: wizard.setSubline,
+                setOffer: wizard.setOffer,
+                setConceptIdea: wizard.setConceptIdea,
+                setProduct: wizard.setProduct,
+                setPromptExtra: wizard.setPromptExtra,
+                setImageOutputMode: wizard.setImageOutputMode,
+                setImageAspectRatio: wizard.setImageAspectRatio,
+                setCampaignTheme: wizard.setCampaignTheme,
+                selectVisualStyle: wizard.selectVisualStyle,
+                onWorkflowModeChange: wizard.onWorkflowModeChange,
+                setImageRefPhoto: wizard.setImageRefPhoto,
+                setImageCreativeMode: wizard.setImageCreativeMode,
+                onImageInputModeChange: wizard.onImageInputModeChange,
+                setExtraKitPhotos: wizard.setExtraKitPhotos,
+                setReferenceCarouselSlideCount: wizard.setReferenceCarouselSlideCount,
+                setContentResearchApplyRef: wizard.setContentResearchApplyRef,
+                setCinematicSceneCount: wizard.onCinematicSceneCountChange,
+                onVideoCreativeModeChange: wizard.onVideoCreativeModeChange,
+                onReferenceAdFile: wizard.onReferenceAdFile,
+                setReferenceClipLoading: wizard.setReferenceClipLoading,
+                setError: wizard.setError,
+              },
+              pick.promoteProduct,
+              undefined,
+              wizard.workflowMode,
+            );
+            wizard.setPendingContentResearchPick(null);
+            wizard.setError(null);
+            finishIntakeAdvance();
+          } catch (e: unknown) {
+            wizard.setError(e instanceof Error ? e.message : "Research apply failed.");
+          }
+        })();
+        return;
+      }
+
+      finishIntakeAdvance();
       return;
     }
 

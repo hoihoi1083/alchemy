@@ -139,14 +139,28 @@ export const en = {
 		physicalDesc:
 			"You have a real product to photograph — jewelry, food, skincare, gadgets, and more.",
 		physicalExamples:
-			"e.g. bracelet, nasal washer, crystal, packaged goods",
-		physicalTags: ["Skincare", "Home décor", "Apparel"],
-		conceptTitle: "Services / Website / Concept",
+			"e.g. skincare set, snack pack, crystal bracelet, apparel, home goods",
+		physicalTags: [
+			"Skincare",
+			"Food & drinks",
+			"Jewelry",
+			"Apparel",
+			"Home goods",
+		],
+		conceptTitle: "Services / Website / Brand / Concept",
 		conceptDesc:
-			"No physical SKU — promote a brand, site, course, membership, or pricing plan.",
+			"No physical SKU — promote a service, website, brand, or campaign idea.",
 		conceptExamples:
-			"e.g. career report site, yoga studio, SaaS trial, 3-tier plan",
-		conceptTags: ["Consulting", "SaaS", "Courses"],
+			"e.g. beauty salon, consulting, site launch, brand promo, brand story, campaign idea",
+		conceptTags: [
+			"Beauty service",
+			"Consulting",
+			"Website launch",
+			"Brand promo",
+			"Brand story",
+			"Campaign idea",
+			"Membership",
+		],
 		continueLabel: "Continue to studio",
 		continueToStep2: "Continue",
 		switchLaterHint: "You can switch mode anytime from the studio header.",
@@ -155,7 +169,7 @@ export const en = {
 		tipPhysical:
 			"if you sell or promote items that customers can buy and receive.",
 		tipConcept:
-			"if you’re promoting something intangible — a website, a service, or an idea.",
+			"if you’re promoting something intangible — a service, website, brand, or idea.",
 		tipNote: "You can always change this later",
 		tipNoteBody:
 			"Not sure right now? You can update this anytime inside Studio.",
@@ -194,16 +208,16 @@ export const en = {
 			"Generate video",
 		],
 		phaseBodies: [
-			"Pick a physical product, or a brand / website / service.",
+			"Pick a physical product, or a service / website / brand / concept.",
 			"Images only, video only, or images then video.",
 			"Add product details, assets, and visual style.",
 			"AI generates images and/or video from your setup.",
 			"Download creatives for Xiaohongshu, Instagram, Facebook, and TikTok.",
 		],
 		physicalShort:
-			"Real products you can photograph — skincare sets, home goods, apparel, and more.",
+			"Real products you can photograph — skincare, food, jewelry, apparel, home goods, and more.",
 		conceptShort:
-			"Ideas, brands, websites, and services you promote without a physical SKU.",
+			"Promote a service, website, brand, or idea — no physical product needed.",
 		examplesLabel: "Examples",
 		templateBanner: "Template: {name} — physical product mode",
 		templateBannerHint:
@@ -218,7 +232,7 @@ export const en = {
 		subtitle: "Upload product · pick a style · get Reels",
 		subtitleConcept: "Brand copy · pick a style · get feed posts & reels",
 		promotionPhysical: "Physical product",
-		promotionConcept: "Service / concept",
+		promotionConcept: "Service / brand / concept",
 		switchPromotion: "Switch type",
 		homeLink: "Back to landing",
 		themeToggleLight: "Light",
@@ -680,14 +694,26 @@ export const en = {
 				"product-vacuum-inflate-4s": {
 					title: "Vacuum inflate ~4s",
 					description:
-						"One-click: flat vacuum pouch → air-inflated pack stills → 4s Seedance morph.",
-					costHint: "~2 images + 4s Seedance · product photo",
+						"One-click: flat vacuum pouch → air-inflated pack stills → 4s video morph.",
+					costHint: "~2 images + 4s video · product photo",
 				},
 				"product-creative-motion-4s": {
 					title: "Product creative motion ~4s",
 					description:
-						"Scheme cards (juice burst, label peel, shredder…) → auto start/end → 4s Seedance.",
-					costHint: "~2 images + 4s Seedance · product photo",
+						"Scheme cards (juice burst, label peel, shredder…) → auto start/end → 4s video.",
+					costHint: "~2 images + 4s video · product photo",
+				},
+				"product-hand-throw-scene-6s": {
+					title: "Hand throw → real scene ~6s",
+					description:
+						"Palm + miniature start → real scenic end → ~6s throw morph (手抛万物变实景).",
+					costHint: "~2 images + 6s video · product / landmark photo",
+				},
+				"product-product-explode-4s": {
+					title: "Product explode ~4s",
+					description:
+						"Intact studio hero → floating-parts still → ~4s soft teardown (stylized, not CAD).",
+					costHint: "~2 images + 4s video · product photo",
 				},
 				"concept-blockbuster-9s": {
 					title: "Blockbuster logo/mascot ~9s",
@@ -698,19 +724,31 @@ export const en = {
 				"concept-vacuum-inflate-4s": {
 					title: "Vacuum inflate (concept) ~4s",
 					description:
-						"Logo/mascot as pouch identity — flat→inflated stills → 4s Seedance.",
-					costHint: "~2 images + 4s Seedance · logo/mascot",
+						"Logo/mascot as pouch identity — flat→inflated stills → 4s video.",
+					costHint: "~2 images + 4s video · logo/mascot",
 				},
 				"concept-creative-motion-4s": {
 					title: "Creative motion (concept) ~4s",
 					description:
-						"Scheme cards on a logo/mascot lock → auto start/end → 4s Seedance gag.",
-					costHint: "~2 images + 4s Seedance · logo/mascot",
+						"Scheme cards on a logo/mascot lock → auto start/end → 4s video gag.",
+					costHint: "~2 images + 4s video · logo/mascot",
+				},
+				"concept-hand-throw-scene-6s": {
+					title: "Hand throw → scene (concept) ~6s",
+					description:
+						"Logo/mascot as miniature identity → real scenic end → ~6s throw morph.",
+					costHint: "~2 images + 6s video · logo/mascot",
+				},
+				"concept-product-explode-4s": {
+					title: "Product explode (concept) ~4s",
+					description:
+						"Logo/mascot as device lock → floating-parts still → ~4s soft teardown.",
+					costHint: "~2 images + 4s video · logo/mascot",
 				},
 				"product-ecom-orbit-6s": {
 					title: "E-com orbit ~6s",
 					description:
-						"1 product still → H3 orbit / tilt / hero spin. Identity-locked commercial turntable.",
+						"1 product still → orbit / tilt / hero spin. Identity-locked commercial turntable.",
 					costHint: "~6s single clip · product photo",
 				},
 				"product-object-lock-6s": {
@@ -740,7 +778,7 @@ export const en = {
 				"product-imitate-ad-8s": {
 					title: "Imitate this ad ~8s",
 					description:
-						"Your product still + a reference MP4 → H3 copies camera language, keeps your SKU.",
+						"Your product still + a reference MP4 → copies camera language, keeps your SKU.",
 					costHint: "~8s · product photo + reference video",
 				},
 				"product-neon-on-real-8s": {
@@ -752,35 +790,35 @@ export const en = {
 				"product-food-bullet-time-6s": {
 					title: "Food bullet-time ~6s",
 					description:
-						"Lifestyle food selfie → frozen splash still → H3 camera orbit around the suspended food.",
-					costHint: "~6s · person + food photo (or Nano Banana still)",
+						"Lifestyle food selfie → frozen splash still → camera orbit around the suspended food.",
+					costHint: "~6s · person + food photo (or generating still)",
 				},
 				"product-c4d-motion-8s": {
 					title: "C4D motion visual ~8s",
 					description:
 						"Black-void brand MG: metallic open → abstract materials → your product reveal (Nike-style C4D).",
-					costHint: "~8s · product photo (or Nano Banana still)",
+					costHint: "~8s · product photo (or generating still)",
 				},
 				"product-h3-showreel-8s": {
-					title: "H3 showreel ~8s",
+					title: "showreel ~8s",
 					description:
 						"Hero still + reference MP4. Cards: Car cinematic · Keyboard tech · Abstract morph. Kinetic type OK; optional 16:9.",
 					costHint: "~8s · product photo + reference showreel",
 				},
 				"product-h3-sphere-mg-8s": {
-					title: "H3 sphere MG ~8s",
+					title: "sphere MG ~8s",
 					description:
 						"Reusable sphere motion-graphics hero — map your product/logo onto crystal, chrome, liquid, neon, or matte planet.",
-					costHint: "~8s · product photo (or Nano Banana still)",
+					costHint: "~8s · product photo (or generating still)",
 				},
 				"product-h3-movie-title-8s": {
-					title: "H3 movie-title ~8s",
+					title: "movie-title ~8s",
 					description:
 						"Cinematic title cards + multi-panel wipes around your product. Designed type allowed — no reference reel.",
-					costHint: "~8s · product photo (or Nano Banana still)",
+					costHint: "~8s · product photo (or generating still)",
 				},
 				"product-h3-lifestyle-8s": {
-					title: "H3 lifestyle person ~8s",
+					title: "lifestyle person ~8s",
 					description:
 						"Person using your product in a real lifestyle scene — cafe, street, home. Not beauty MV.",
 					costHint: "~8s · person + product photo (or generate still)",
@@ -812,7 +850,7 @@ export const en = {
 				"concept-imitate-ad-8s": {
 					title: "Imitate this ad (concept) ~8s",
 					description:
-						"Brand mark + reference MP4 → H3 follows the reel’s camera, keeps your identity.",
+						"Brand mark + reference MP4 → follows the reel’s camera, keeps your identity.",
 					costHint: "~8s · logo/mascot + reference video",
 				},
 				"concept-neon-on-real-8s": {
@@ -834,25 +872,25 @@ export const en = {
 					costHint: "~8s · logo/mascot still",
 				},
 				"concept-h3-showreel-8s": {
-					title: "H3 showreel (concept) ~8s",
+					title: "showreel (concept) ~8s",
 					description:
 						"Logo / mascot + reference showreel. Prefer Abstract morph; Car/Keyboard if the mark fits. Optional 16:9; kinetic type OK.",
 					costHint: "~8s · logo/mascot still + reference showreel",
 				},
 				"concept-h3-sphere-mg-8s": {
-					title: "H3 sphere MG (concept) ~8s",
+					title: "sphere MG (concept) ~8s",
 					description:
 						"Logo / mascot as sphere identity — matte planet / neon / crystal wrap. No reference reel required.",
 					costHint: "~8s · logo/mascot still",
 				},
 				"concept-h3-movie-title-8s": {
-					title: "H3 movie-title (concept) ~8s",
+					title: "movie-title (concept) ~8s",
 					description:
 						"Logo / mascot in cinematic title cards + multi-panel. Designed type allowed.",
 					costHint: "~8s · logo/mascot still",
 				},
 				"concept-h3-lifestyle-8s": {
-					title: "H3 lifestyle (concept) ~8s",
+					title: "lifestyle (concept) ~8s",
 					description:
 						"Person + brand mark in a lifestyle scene. Prefer a lifestyle photo (logo alone is weak).",
 					costHint: "~8s · person + logo/mascot lifestyle still",
@@ -1290,19 +1328,20 @@ export const en = {
 			},
 			"video-only": {
 				title: "Generate video only",
-				description:
-					"AI scenes and shots — ready-to-publish short video",
+				description: "One continuous scene — ready-to-publish short video",
 				cardDescription:
-					"Use AI to create scenes and camera moves for short videos you can publish right away.",
-				tags: ["Short video", "Video ads", "Product intro"],
+					"One continuous scene from your product still — AI camera moves for a short clip you can publish right away.",
+				tags: ["One scene", "Short video", "Video ads"],
+				sceneBadge: "One scene only",
 			},
 			combined: {
 				title: "Generate images, then video",
 				description:
-					"Approve visuals first, then turn them into short video",
+					"Multi-scene storyboard — approve stills, then stitch into video",
 				cardDescription:
-					"Generate and refine images first, then create a short video from the approved look.",
-				tags: ["Ad creative", "Product story", "Motion ads"],
+					"Generate multiple storyboard scene stills first, approve the look, then stitch them into one short video.",
+				tags: ["Multiple scenes", "Storyboard", "Motion ads"],
+				sceneBadge: "Multiple scenes",
 			},
 		},
 		creationPath: {
@@ -1313,9 +1352,10 @@ export const en = {
 			tipTitle: "How should I choose?",
 			tipImage:
 				"Best when you need stills for feed posts, carousels, or static ads.",
-			tipVideo: "Best when you want a short-video-first workflow.",
+			tipVideo:
+				"One continuous scene only — best for a short single-shot clip from one keyframe.",
 			tipCombined:
-				"Best when you want to approve the look, then add motion.",
+				"Multiple scenes (storyboard) — best when you want several stills, then stitch them into one video.",
 			tipNote: "You can change this later",
 			tipNoteBody:
 				"Not sure yet? You can switch creation methods anytime in Studio.",
@@ -1571,7 +1611,7 @@ export const en = {
 			"designed-poster": {
 				title: "Designed poster",
 				description:
-					"Commercial feed poster — bilingual type, seal, category brush word for any product (not food-only)",
+					"Commercial feed poster — your title + tagline on a styled product hero (any category, not food-only)",
 			},
 			"parts-poster": {
 				title: "Parts breakdown",
@@ -1722,8 +1762,8 @@ export const en = {
 			"XHS/IG feed poster grammar — product/scene hero plus designed type chrome (any category — not food-only, not a blank catalog cutout):",
 		designedPosterTechniqueSteps: [
 			"Hero photography — soft upper-left light, shallow DOF, set matched to THIS product category",
-			"Bilingual type stack — big CN title → EN all-caps → short script tagline",
-			"Circular seal + one brush category word that matches the product (e.g. 數碼 / 護膚 / 甜品 / 課程)",
+			"Your title + tagline painted verbatim (what you type is what shows)",
+			"Small seal + optional one brush category word — chrome stays smaller than your title",
 			"Palette from the product/scene — cohesive, not rainbow",
 			"Works for electronics, beauty, F&B, fashion, and concept/service scenes",
 		],
@@ -1756,7 +1796,7 @@ export const en = {
 			"info-poster":
 				"e.g. fresh skincare mood, natural food styling, minimal jewelry pedestal…",
 			"designed-poster":
-				"e.g. soft upper-left light, appetite set, bilingual type, seal + brush category…",
+				"e.g. soft upper-left light, appetite set, your title + tagline, small seal…",
 			"parts-poster":
 				"e.g. dark studio, thin leader lines, 6 callouts, graphite palette…",
 			"gaming-cover":
@@ -2254,15 +2294,22 @@ export const en = {
 		conceptWizardTitle: "Concept Wizard (for non-physical offers)",
 		conceptWizardHint:
 			"Fill these 6 blocks, then auto-apply to headline/subline/offer and prompt direction.",
+		conceptIdeaLabel: "Your concept",
 		conceptIdeaPlaceholder:
-			"Your concept in one short paragraph (e.g. World Cup watch-party booking campaign for HK football fans).",
-		conceptAudiencePlaceholder: "Audience: who should this ad speak to?",
-		conceptPainPlaceholder: "Pain point: what problem do they feel now?",
-		conceptPromisePlaceholder: "Promise: what outcome can they get?",
-		conceptProofPlaceholder: "Proof/mechanism: why should they trust this?",
-		conceptCtaPlaceholder: "Offer + CTA: what should they do now?",
+			"e.g. Yoga membership drive, or skincare brand relaunch",
+		conceptAudienceLabel: "Audience",
+		conceptAudiencePlaceholder: "Who should this ad speak to?",
+		conceptPainLabel: "Pain point",
+		conceptPainPlaceholder: "What problem do they feel now?",
+		conceptPromiseLabel: "Promise",
+		conceptPromisePlaceholder: "What outcome can they get?",
+		conceptProofLabel: "Proof / method",
+		conceptProofPlaceholder: "Why should they trust this?",
+		conceptCtaLabel: "Offer + action",
+		conceptCtaPlaceholder: "What should they do now?",
+		conceptVisualMetaphorLabel: "Visual metaphor",
 		conceptVisualMetaphorPlaceholder:
-			"Visual metaphor: what scene or symbolic visual should appear?",
+			"What scene or symbolic visual should appear?",
 		conceptAnalyzeBtn: "AI analyze concept",
 		conceptAnalyzeBusy: "AI analyzing concept…",
 		conceptAnalyzeReady:
@@ -2342,7 +2389,7 @@ export const en = {
 		setupReferenceVideoHint:
 			"MP4 or MOV · optional — analyzed automatically when headline/product is filled",
 		setupReferenceVideoSkipNote:
-			"Optional — you can still generate video without a reference (product promo, AI video assistant, or text prompt).",
+			"Optional — you can still generate video without a reference (product promo, video assistant, or text prompt).",
 		setupReferenceVideoWaitingCopy:
 			"Reference MP4 uploaded — fill headline or product name above, then we analyze style and pacing automatically.",
 		setupReferenceVideoAnalyzeRequired:
@@ -2663,7 +2710,7 @@ export const en = {
 		conceptAnalyzeApplied: "Fields applied — continue to video when ready.",
 		videoCreativeModes: {
 			"product-assistant": {
-				title: "AI video assistant",
+				title: "video assistant",
 				description:
 					"Upload product + packaging + angles → AI analyzes photos → situational video generation reel",
 			},
@@ -2690,12 +2737,22 @@ export const en = {
 			"vacuum-inflate": {
 				title: "Vacuum inflate",
 				description:
-					"Auto flat→inflated pouch stills + 4s Seedance morph (真空充气).",
+					"Auto flat→inflated pouch stills + 4s video morph (真空充气).",
 			},
 			"creative-motion": {
 				title: "Product creative motion",
 				description:
-					"Pick a scheme → auto start/end stills → 4s Seedance gag (产品创意动效).",
+					"Pick a scheme → auto start/end stills → 4s video gag (产品创意动效).",
+			},
+			"hand-throw-scene": {
+				title: "Hand throw → real scene",
+				description:
+					"Palm + miniature → real scenic end frame → ~6s throw morph (手抛万物变实景).",
+			},
+			"product-explode": {
+				title: "Product explode (stylized)",
+				description:
+					"Studio hero → floating-parts end still → ~4s soft teardown (not CAD-accurate).",
 			},
 			"ecom-orbit": {
 				title: "E-com orbit",
@@ -2735,7 +2792,7 @@ export const en = {
 			"food-bullet-time": {
 				title: "Food bullet-time",
 				description:
-					"Lifestyle food still with frozen splash → 6s camera orbit (3D food splash).",
+					"Person holding food toward camera + frozen splash → 6s rightward orbit (XHS check-in).",
 			},
 			"c4d-motion": {
 				title: "C4D motion visual",
@@ -2743,22 +2800,22 @@ export const en = {
 					"Black-void brand MG → abstract materials → product reveal (premium C4D showreel).",
 			},
 			"h3-showreel": {
-				title: "H3 showreel",
+				title: "showreel",
 				description:
 					"Hero still + reference showreel. Cards: Car · Keyboard · Abstract. Kinetic type OK; optional 16:9.",
 			},
 			"h3-sphere-mg": {
-				title: "H3 sphere MG",
+				title: "sphere MG",
 				description:
 					"Sphere is the reusable MG hero — crystal, chrome, liquid, neon, or matte planet with your product/logo.",
 			},
 			"h3-movie-title": {
-				title: "H3 movie-title",
+				title: "movie-title",
 				description:
 					"Cinematic title cards + multi-panel wipes. Designed type OK; no reference reel.",
 			},
 			"h3-lifestyle": {
-				title: "H3 lifestyle person",
+				title: "lifestyle person",
 				description:
 					"Person using your product in a lifestyle scene — not beauty MV, not packshot-only.",
 			},
@@ -2813,7 +2870,7 @@ export const en = {
 			},
 			"designed-poster": {
 				title: "Designed poster",
-				desc: "Appetite hero → bilingual type + seal + brush word",
+				desc: "Styled hero → your title + tagline on the poster",
 			},
 		},
 		motionPosterTypeOverlayNote: "Type overlay",
@@ -2843,12 +2900,12 @@ export const en = {
 		blockbusterNeedConceptHero:
 			"Upload a logo/mascot, or save a logo in Brand kit.",
 		blockbusterAnimating: "Generating 9s one-take clip…",
-		h3ShotNeedHero: "Upload a product photo, or generate a still with Nano Banana.",
+		h3ShotNeedHero: "Upload a product photo, or generate a still with AI.",
 		h3ShotNeedConceptHero:
-			"Upload a logo/mascot, save a Brand kit logo, or generate a still with Nano Banana.",
+			"Upload a logo/mascot, save a Brand kit logo, or generate a still with AI.",
 		h3ShotNeedReferenceVideo:
 			"Upload a reference MP4 (required for imitate-ad, neon-on-real, and h3-showreel).",
-		h3ShotGenerateStillBtn: "Generate still (Nano Banana)",
+		h3ShotGenerateStillBtn: "Generate still",
 		h3ShotConceptHeroTitle: "Hero lock still",
 		h3ShotPhotoTitle: {
 			"food-bullet-time": "Person + food photo",
@@ -2856,7 +2913,7 @@ export const en = {
 		},
 		h3ShotReelHint: {
 			"imitate-ad":
-				"Required: reference ad MP4 — H3 copies camera / edit language only (not the reference product).",
+				"Required: reference ad MP4 — AI copies camera / edit language only (not the reference product).",
 			"neon-on-real":
 				"Required: real footage MP4 — this clip is the neon scene base.",
 			"h3-showreel":
@@ -2864,7 +2921,7 @@ export const en = {
 		},
 		h3ShotHeroHint: {
 			"ecom-orbit":
-				"Required: product photo — or logo / mascot still (concept). H3 orbits that exact subject.",
+				"Required: product photo — or logo / mascot still (concept). AI orbits that exact subject.",
 			"object-lock":
 				"Required: product photo — or logo / mascot still (concept). Camera sticks to that subject.",
 			"macro-snap":
@@ -2880,7 +2937,7 @@ export const en = {
 			"food-bullet-time":
 				"Required: person + food lifestyle photo (check-in shot). Face and dish must be clear — a logo alone is not enough.",
 			"c4d-motion":
-				"Required: product photo — or logo / mascot still (concept). H3 builds a black-void C4D reveal around that subject.",
+				"Required: product photo — or logo / mascot still (concept). AI builds a black-void C4D reveal around that subject.",
 			"h3-showreel":
 				"Required: product or logo/mascot still for subject lock (pair with the showreel MP4 below). Kinetic type OK.",
 			"h3-sphere-mg":
@@ -2888,11 +2945,11 @@ export const en = {
 			"h3-movie-title":
 				"Required: product photo — or logo / mascot still (concept). Title cards + panels; designed type allowed.",
 			"h3-lifestyle":
-				"Required: person + product lifestyle photo (clear face and product). Logo alone is weak — use Nano Banana to generate a lifestyle still.",
+				"Required: person + product lifestyle photo (clear face and product). Logo alone is weak — use AI to generate a lifestyle still.",
 		},
 		h3ShotHint: {
 			"ecom-orbit":
-				"Upload product or logo/mascot still first — Generate stays off until then. Then H3 orbits ~6s.",
+				"Upload product or logo/mascot still first — Generate stays off until then. Then orbits ~6s.",
 			"object-lock":
 				"Upload product or logo/mascot still first — Generate stays off until then. Camera glued to subject.",
 			"macro-snap":
@@ -3056,7 +3113,7 @@ export const en = {
 					"Your subject stays — reference product is not copied",
 					"Camera / rhythm follow the reel",
 				],
-				output: ["~8s imitate-ad clip on MiniMax H3"],
+				output: ["~8s imitate-ad clip on single-clip"],
 			},
 			"neon-on-real": {
 				need: [
@@ -3071,15 +3128,16 @@ export const en = {
 			},
 			"food-bullet-time": {
 				need: [
-					"Person + food lifestyle photo (clear face and dish)",
+					"Person + food/drink lifestyle photo (clear face and dish)",
+					"Holding toward camera — wrap, plate, or boba works",
 					"Logo alone is not enough — need real food in frame",
 				],
 				attention: [
 					"Keep the same food — do not invent extra ingredients",
-					"Target: frozen splash + camera orbit (not cheese-pull animation)",
-					"Face should stay readable",
+					"Target: frozen splash + rightward orbit while person stays still",
+					"Face should stay readable; cafe/street backdrop preferred",
 				],
-				output: ["~6s food bullet-time / 3D splash orbit clip"],
+				output: ["~6s food bullet-time / 3D splash check-in clip"],
 			},
 			"c4d-motion": {
 				need: [
@@ -3104,7 +3162,7 @@ export const en = {
 					"Kinetic / designed type allowed; no captions or UI chrome",
 					"Abstract morph is the general fit; Car/Keyboard are specialist looks",
 				],
-				output: ["~8s H3 showreel (9:16 or 16:9)"],
+				output: ["~8s showreel (9:16 or 16:9)"],
 			},
 			"h3-sphere-mg": {
 				need: [
@@ -3149,6 +3207,7 @@ export const en = {
 					"Headline (on-image hook)",
 				],
 				attention: [
+					"Your hook + tagline are painted on the poster as typed",
 					"Commercial feed poster layout",
 					"Single locked still — no A/B or campaign",
 				],
@@ -3199,19 +3258,19 @@ export const en = {
 			},
 		},
 		h3ShotGenerateStillBusy: {
-			"ecom-orbit": "Nano Banana packshot…",
-			"object-lock": "Nano Banana still…",
-			"macro-snap": "Nano Banana food still…",
-			"luxury-tabletop": "Nano Banana luxury still…",
-			"beauty-mv": "Nano Banana portrait…",
-			"imitate-ad": "Nano Banana product still…",
-			"neon-on-real": "Nano Banana neon-lock still…",
-			"food-bullet-time": "Nano Banana splash-freeze still…",
-			"c4d-motion": "Nano Banana C4D void still…",
-			"h3-showreel": "Nano Banana showreel still…",
-			"h3-sphere-mg": "Nano Banana sphere MG still…",
-			"h3-movie-title": "Nano Banana movie-title still…",
-			"h3-lifestyle": "Nano Banana lifestyle still…",
+			"ecom-orbit": "Generating packshot…",
+			"object-lock": "generating still…",
+			"macro-snap": "generating food still…",
+			"luxury-tabletop": "generating luxury still…",
+			"beauty-mv": "generating portrait…",
+			"imitate-ad": "generating product still…",
+			"neon-on-real": "Generating neon-lock still…",
+			"food-bullet-time": "Generating splash-freeze still…",
+			"c4d-motion": "Generating C4D still…",
+			"h3-showreel": "Generating showreel still…",
+			"h3-sphere-mg": "Generating sphere still…",
+			"h3-movie-title": "Generating title still…",
+			"h3-lifestyle": "generating lifestyle still…",
 		},
 		h3ShotAnimating: {
 			"ecom-orbit": "Generating e-com orbit clip…",
@@ -3223,10 +3282,10 @@ export const en = {
 			"neon-on-real": "Generating neon-on-real clip…",
 			"food-bullet-time": "Generating food bullet-time clip…",
 			"c4d-motion": "Generating C4D motion visual…",
-			"h3-showreel": "Generating H3 showreel…",
-			"h3-sphere-mg": "Generating H3 sphere MG…",
-			"h3-movie-title": "Generating H3 movie-title…",
-			"h3-lifestyle": "Generating H3 lifestyle…",
+			"h3-showreel": "Generating showreel…",
+			"h3-sphere-mg": "Generating sphere MG…",
+			"h3-movie-title": "Generating movie-title…",
+			"h3-lifestyle": "Generating lifestyle…",
 		},
 
 		socialDripHint:
@@ -3244,22 +3303,36 @@ export const en = {
 		socialDripNeedKeyframe:
 			"Add a product photo (or concept topic) first for Social drip.",
 		vacuumInflateHint:
-			"One-click 真空充气: Nano Banana builds flat vacuum + inflated pouch stills, then Seedance morphs them in ~4s. Upload your product pack.",
+			"One-click 真空充气: AI builds flat vacuum + inflated pouch stills, then video morphs them in ~4s. Upload your product pack.",
 		vacuumInflateBuildingStill: "Step 1/3: vacuum-flat start still…",
 		vacuumInflateBuildingEnd: "Step 2/3: inflated end still…",
-		vacuumInflateAnimatingCard: "Step 3/3: Seedance inflate morph…",
+		vacuumInflateAnimatingCard: "Step 3/3: inflate morph…",
 		vacuumInflateNeedKeyframe:
 			"Upload a product photo first (concept: logo/mascot or topic).",
 		creativeMotionHint:
-			"产品创意动效: pick a scheme card, we auto-build start/end stills, then Seedance morphs ~4s.",
+			"产品创意动效: pick a scheme card, we auto-build start/end stills, then video morphs ~4s.",
 		creativeMotionBuildingStill: "Step 1/3: creative-motion start still…",
 		creativeMotionBuildingEnd: "Step 2/3: creative-motion end still…",
-		creativeMotionAnimatingCard: "Step 3/3: Seedance scheme morph…",
+		creativeMotionAnimatingCard: "Step 3/3: scheme morph…",
 		creativeMotionNeedKeyframe:
+			"Upload a product photo first (concept: logo/mascot or topic).",
+		handThrowHint:
+			"手抛万物变实景: AI builds palm+miniature start + real scenic end, then video morphs the throw (~6s). Best with a clear product / landmark photo.",
+		handThrowBuildingStill: "Step 1/3: palm + miniature start still…",
+		handThrowBuildingEnd: "Step 2/3: real scenic end still…",
+		handThrowAnimatingCard: "Step 3/3: throw → real scene morph…",
+		handThrowNeedKeyframe:
+			"Upload a product photo first (concept: logo/mascot or topic).",
+		productExplodeHint:
+			"Stylized product explode: intact studio hero → floating-parts still → ~4s soft teardown. Parts are invented accents — not accurate CAD internals.",
+		productExplodeBuildingStill: "Step 1/3: intact product hero still…",
+		productExplodeBuildingEnd: "Step 2/3: floating-parts explode still…",
+		productExplodeAnimatingCard: "Step 3/3: explode morph…",
+		productExplodeNeedKeyframe:
 			"Upload a product photo first (concept: logo/mascot or topic).",
 		creativeMotionSchemeTitle: "Scheme card",
 		creativeMotionSchemeHint:
-			"Same start→end Seedance method, different gag. Auto picks a fit — generate again to try another.",
+			"Same start→end morph method, different gag. Auto picks a fit — generate again to try another.",
 		creativeMotionSchemeAuto: "Auto · best fit",
 		creativeMotionSchemes: {
 			"juice-burst": {
@@ -3482,7 +3555,7 @@ export const en = {
 			combined:
 				"Default: upload product only for a clean ad image. Use “Product + style reference” only if you want to copy another ad’s look.",
 		},
-		imageModelLabel: "Image AI model",
+		imageModelLabel: "Image quality",
 		imageModels: {
 			"nano-banana-2-edit": {
 				label: "AI image Edit (default)",
@@ -3570,6 +3643,8 @@ export const en = {
 		imageReviewAddLogoBtn: "Add Logo",
 		imageReviewEditCanvasBtn: "Edit in Canvas",
 		imageReviewRegenerateOneBtn: "Regenerate",
+		imageReviewBackLibraryNote:
+			"This output is already saved in My library. If you go back, reopen it there — this review screen won’t return.",
 		sidePanelRequirementsTitle: "Requirements",
 		sidePanelCostTitle: "Estimated cost",
 		sidePanelTipsTitle: "Tips",
@@ -3626,7 +3701,7 @@ export const en = {
 			"video generation animates your image. Optional: upload a reference ad MP4 to copy its motion (@Image1 + @Video1).",
 		step3Hints: {
 			"video-only":
-				"Default: AI video assistant — upload product (+ packaging / angles), analyze, then generate. Or switch to product promo / reference MP4.",
+				"Default: video assistant — upload product (+ packaging / angles), analyze, then generate. Or switch to product promo / reference MP4.",
 			combined:
 				"Your image from Step 2 is @Image1. Add a reference ad MP4 below to copy motion — same as before.",
 		},
@@ -3715,7 +3790,7 @@ export const en = {
 		planProductVideoReady:
 			"Motion plan ready — review the prompt below, then generate",
 		productVideoSituationLabel: "Suggested setting",
-		productVideoPlanLabel: "Motion prompt (AI)",
+		productVideoPlanLabel: "Motion prompt",
 		productVideoPlanHint:
 			"Vision analyzed your uploads; AI wrote camera + motion plan. Edit in advanced if needed.",
 		productVideoAssistantPreflight:
@@ -3971,7 +4046,7 @@ export const en = {
 		compositorImageBtn: "Build ad image",
 		compositorRegenerateImageBtn: "Rebuild image",
 		compositorVideoHint:
-			"Builds a 6-second reel: slow zoom, paper float, sparkle twinkle, plus BGM. No video generation AI video.",
+			"Builds a 6-second reel: slow zoom, paper float, sparkle twinkle, plus BGM. No external video API.",
 		compositorVideoBtn: "Build reel video",
 		compositorPhaseRender: "Rendering frames…",
 		templateSlots: {
@@ -4012,7 +4087,7 @@ export const en = {
 		"designed-poster": {
 			name: "Designed commercial poster",
 			description:
-				"Appetite hero + bilingual type, seal, brush category — XHS/IG feed poster",
+				"Styled product hero + your title and tagline — XHS/IG feed poster",
 		},
 		"parts-poster": {
 			name: "Parts breakdown poster",
@@ -4220,7 +4295,7 @@ export const en = {
 			"Keep it under ~10 seconds — one hook + one benefit + CTA.",
 		scriptHint:
 			"For ~10s UGC, aim for 1–3 short sentences. Edit AI script before generate.",
-		planScript: "AI write script (AI)",
+		planScript: "Write script with AI",
 		planningScript: "Writing script…",
 		planScriptHint:
 			"Uses AI to draft a ~10s spoken intro from your product name. Edit freely after.",
@@ -4641,7 +4716,7 @@ export const en = {
 	contentResearch: {
 		title: "AI platform content research",
 		physical: "Physical product",
-		concept: "Service / concept",
+		concept: "Service / brand / concept",
 		topicPlaceholder: "e.g. crystal bracelet gift guide, nasal washer…",
 		searchKeywordLabel:
 			"Search keyword (find trending posts in this category)",
@@ -4655,9 +4730,10 @@ export const en = {
 		promoteProductRequired:
 			"Enter your product name first — all copy and images will promote this, not the reference post topic.",
 		researchBtn: "Research live content",
+		directPostBadge: "Shortcut",
 		directPostTitle: "Or paste a post you want to match",
 		directPostHint:
-			"Skip search when you already have the reference — xhslink, xiaohongshu.com/explore/…, or Instagram /p/ /reel/ links. Layout comes from this post; copy stays about your product. In physical mode, fill product name above first. If xhslink fails, copy the full link from the 小紅書 app (Share → Copy link).",
+			"Already have a target post? Paste the link — skip keyword search. Supports xhslink, Xiaohongshu explore links, and Instagram /p/ or /reel/. In physical mode, fill product name above first. If xhslink fails, copy the full link from the app (Share → Copy link).",
 		directPostUrlLabel: "Reference post link",
 		directPostUrlPlaceholder:
 			"e.g. http://xhslink.com/o/… or https://www.instagram.com/reel/…",
@@ -4689,15 +4765,20 @@ export const en = {
 		tiktokImageWarning:
 			"TikTok is video-only. Use 小紅書 or Instagram for image research, or switch workflow to Video.",
 		useAngle: "Use this direction",
+		selectAngle: "Select this style",
 		selectedLabel: "Selected ✓",
+		selectedContinueHint: "Selected — click Continue below to apply this style.",
 		resultTitle: "AI Research Result (Recommendation)",
 		resultSubtitle:
 			"Based on trending posts from Xiaohongshu, Instagram, TikTok.",
+		resultSubtitleForPlatform: (platform: string) =>
+			`Based on trending ${platform} posts from this search.`,
 		styleSummaryLabel: "Style Summary",
 		toneLabel: "Tone",
 		layoutNotesLabel: "Layout Notes",
 		viewMoreExamples: "View more examples",
 		sourcePlatformsLabel: "Source Platforms",
+		sourcePlatformLabel: "Source platform",
 		morePlatforms: (count: number) => `+${count} more`,
 		applyingAngle: "Downloading reference clip…",
 		applied: "Angle applied to your brief — review fields and continue.",
@@ -4862,6 +4943,10 @@ export const en = {
 			conceptTitle: "Research a style, or use Concept assistant.",
 			conceptHint:
 				"Platform research finds layout references. Concept assistant writes your brief without research.",
+			pathOptionsPhysical:
+				"Pick one path: ① Platform research · ② Direct create · ③ Or paste a reference post link below.",
+			pathOptionsConcept:
+				"Pick one path: ① Platform research · ② Concept assistant · ③ Or paste a reference post link / continue later.",
 			tabsAriaLabel: "How to start",
 			tabResearch: "Platform research",
 			tabDirect: "Direct create",
@@ -4977,7 +5062,7 @@ export const en = {
 				"Product-focused promo image — no model required.",
 			stylePickerDesignedLabel: "Designed poster",
 			stylePickerDesignedDesc:
-				"Commercial feed poster — bilingual type, seal, category brush word (any product, not food-only).",
+				"Commercial feed poster — your title + tagline on a styled product hero (any category, not food-only).",
 			stylePickerPartsLabel: "Parts breakdown",
 			stylePickerPartsDesc:
 				"Exploded product view — labeled components with title + short descriptions on one poster.",
@@ -5026,7 +5111,7 @@ export const en = {
 				},
 				designed: {
 					title: "For this direction: fill on-poster type",
-					body: "Hook = big bilingual title on the poster. Supporting = short tagline under it. Product name drives the hero + brush category word. Extra requirements = seal claim, palette, set mood — not the main title.",
+					body: "Hook = the exact big title painted on the poster. Supporting = the exact tagline under it. We paint what you type — we won’t swap in the product name or invent extra slogans. Extra requirements = palette / set mood only.",
 					hookLabel: "Poster title (hook)",
 					hookPlaceholder: "e.g. 便攜續航 · All-day power",
 					supportingLabel: "Poster tagline",
@@ -5323,20 +5408,23 @@ export const en = {
 		},
 		conceptNameStep: {
 			stepEyebrow: "STEP 3",
-			title: "What's your concept name?",
-			hint: "Name your service or concept — next you’ll choose research or Concept assistant.",
-			label: "Concept / service name",
+			title: "What is your concept?",
+			hint: "Describe the service, brand, membership, or campaign idea you’re promoting — next you’ll choose research or Concept assistant.",
+			label: "Your concept",
 			labelHint: "Required before you continue",
-			placeholder: "e.g. fast-approval personal loan",
+			placeholder: "e.g. Yoga membership drive",
 			examplesLabel: "Try an example",
 			examples: [
-				"Fast-approval personal loan",
-				"Yoga membership",
-				"SaaS free trial",
+				"Skincare brand relaunch",
+				"Yoga membership drive",
+				"Double-11 flash sale",
+				"Same-day whitening booking",
+				"Consultancy site launch",
+				"Weekend brunch campaign",
 			],
 			tipTitle: "Why we ask",
 			tipBody:
-				"Studio uses this name in prompts, briefs, and on-screen copy so ads stay clear about the service or offer you promote.",
+				"Studio uses this concept in prompts, briefs, and on-screen copy so ads stay clear about what you’re promoting — brand, membership, offer, or campaign.",
 			tipNote: "You can edit this later",
 			tipNoteBody: "Change it anytime in Setup or Advanced studio.",
 		},
@@ -5351,11 +5439,11 @@ export const en = {
 		conceptSourceResearchTitle: "Platform research",
 		conceptSourceResearchDesc:
 			"Find trending layout references — skips concept assistant; copy review required.",
-		conceptTopicTitle: "Concept name",
+		conceptTopicTitle: "Your concept",
 		conceptTopicHint:
-			"Name your service or concept — next you’ll choose research or Concept assistant.",
-		conceptTopicLabel: "Concept / service name",
-		conceptTopicPlaceholder: "e.g. fast-approval personal loan",
+			"Describe the service, brand, membership, or campaign idea you’re promoting — next you’ll choose research or Concept assistant.",
+		conceptTopicLabel: "Your concept",
+		conceptTopicPlaceholder: "e.g. Yoga membership drive",
 		copyEditTitle: "Copy & generation settings",
 		copyEditHint:
 			"Hook, subline, offer, and optional brand kit before generating.",
@@ -5381,7 +5469,7 @@ export const en = {
 			pick_subject: "Pick physical product or concept to continue.",
 			pick_intake: "Pick research or direct create.",
 			complete_research:
-				"Apply a research direction, or switch to Direct create.",
+				"Select a research direction (or paste a post), then Continue — or switch to Direct create.",
 			pick_concept_source: "Pick concept assistant or platform research.",
 			need_pick_angle: "Pick a research post or upload a reference.",
 			pick_cinematic_mode: "Pick single scene or multi-scene stitch.",
@@ -5429,7 +5517,7 @@ export const en = {
 			"Image posts don't need an MP4 — this step auto-skips. Upload a reel only if you want rhythm matching.",
 		extraKitTitle: "Product photo kit",
 		extraKitHint:
-			"Optional packaging and angle photos for AI video assistant.",
+			"Optional packaging and angle photos for video assistant.",
 		bgmTitle: "Background music",
 		bgmHint: "Optional — pick a track mood for the final reel.",
 		legacyImageTitle: "Generate scenes",

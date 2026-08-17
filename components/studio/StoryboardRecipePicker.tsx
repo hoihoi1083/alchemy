@@ -4,6 +4,7 @@ import { useLocale } from "@/components/LocaleProvider";
 import {
   STORYBOARD_RECIPE_IDS,
   isLuxuryBirthRecipe,
+  storyboardRecipePreviewSrc,
   type StoryboardRecipeId,
 } from "@/lib/storyboard-recipes";
 import { StoryboardLuxuryStoryDrivers } from "@/components/studio/StoryboardLuxuryStoryDrivers";
@@ -37,7 +38,7 @@ export function StoryboardRecipePicker({
         {m.wizard.storyboardRecipeHint}
       </p>
       <div
-        className="grid grid-cols-1 gap-2 sm:grid-cols-2"
+        className="grid grid-cols-1 gap-1.5 sm:grid-cols-2"
         role="listbox"
         aria-label={m.wizard.storyboardRecipeTitle}
       >
@@ -51,7 +52,7 @@ export function StoryboardRecipePicker({
               role="option"
               aria-selected={selected}
               onClick={() => onChange(id)}
-              className={`rounded-xl border px-3 py-2.5 text-left transition ${
+              className={`flex items-center gap-2.5 rounded-xl border px-2.5 py-2 text-left transition ${
                 dark
                   ? selected
                     ? "border-amber-300 bg-amber-950/40 text-amber-50"
@@ -61,13 +62,21 @@ export function StoryboardRecipePicker({
                     : "border-slate-200 bg-white text-slate-800 hover:border-violet-200"
               }`}
             >
-              <span className="block text-sm font-semibold">{copy.title}</span>
-              <span
-                className={`mt-0.5 block text-[11px] leading-snug ${
-                  dark ? "text-teal-200/75" : "text-slate-500"
-                }`}
-              >
-                {copy.desc}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={storyboardRecipePreviewSrc(id)}
+                alt=""
+                className="h-11 w-11 shrink-0 rounded-lg object-cover"
+              />
+              <span className="min-w-0">
+                <span className="block text-sm font-semibold">{copy.title}</span>
+                <span
+                  className={`mt-0.5 block text-[11px] leading-snug ${
+                    dark ? "text-teal-200/75" : "text-slate-500"
+                  }`}
+                >
+                  {copy.desc}
+                </span>
               </span>
             </button>
           );

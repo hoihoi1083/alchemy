@@ -68,7 +68,10 @@ import type {
   VoicePreviewTrack,
 } from "@/lib/ad-pack-types";
 import type { UserReferenceBrief } from "@/lib/user-reference-brief";
-import type { ContentResearchApplyRef } from "@/lib/content-research-apply";
+import type {
+  ContentResearchApplyRef,
+  PendingContentResearchPick,
+} from "@/lib/content-research-apply";
 import type { VideoTimingManifest } from "@/lib/video-timing-manifest";
 
 export type MusicSource = "library" | "ai";
@@ -254,6 +257,8 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn" | "zh-tw") {
   const [referenceCarouselSlideCount, setReferenceCarouselSlideCount] = useState(5);
   const [contentResearchApplyRef, setContentResearchApplyRef] =
     useState<ContentResearchApplyRef | null>(null);
+  const [pendingContentResearchPick, setPendingContentResearchPick] =
+    useState<PendingContentResearchPick | null>(null);
   const [productVideoPlan, setProductVideoPlan] = useState<ProductVideoPlan | null>(null);
   const [planProductVideoBusy, setPlanProductVideoBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -530,6 +535,8 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn" | "zh-tw") {
     setReferenceCarouselSlideCount,
     contentResearchApplyRef,
     setContentResearchApplyRef,
+    pendingContentResearchPick,
+    setPendingContentResearchPick,
     productVideoPlan,
     setProductVideoPlan,
     planProductVideoBusy,

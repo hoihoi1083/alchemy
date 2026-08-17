@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  buildDesignedPosterImagePrompt,
   buildGamingCoverImagePrompt,
   buildJelly3dImagePrompt,
   buildPromptVariables,
@@ -54,5 +55,26 @@ describe("image poster prompt modes", () => {
     assert.equal(shouldPlanSingleImageAd("gaming-cover"), true);
     assert.equal(shouldPlanSingleImageAd("sports-big-words"), true);
     assert.equal(shouldPlanSingleImageAd("jelly-3d"), false);
+  });
+
+  it("paints designed-poster hook/tagline verbatim and does not invent slogans", () => {
+    const poster = buildDesignedPosterImagePrompt(
+      buildPromptVariables({
+        product: "维他命 C 精华",
+        headline: "sdfasdfsadfasdf",
+        subline: "asdfsadfsadfsadfasdfasdfasdf",
+        offer: "",
+        market: "hk",
+        framing: "auto",
+        artStyle: "realistic",
+      }),
+    );
+    assert.match(poster, /sdfasdfsadfasdf/);
+    assert.match(poster, /asdfsadfsadfsadfasdfasdfasdf/);
+    assert.match(poster, /verbatim/i);
+    assert.match(poster, /Do NOT replace this with the product name/);
+    assert.doesNotMatch(poster, /Invent a short commercial tagline/);
+    assert.doesNotMatch(poster, /Bilingual type stack \(mandatory\)/);
+    assert.doesNotMatch(poster, /English ALL-CAPS serif translation/);
   });
 });

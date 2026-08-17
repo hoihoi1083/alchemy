@@ -42,14 +42,14 @@ import { ReferenceAnalyzeWaitPanel, referenceAnalyzeReady } from "@/components/s
 import { ResearchReelSetupPanel } from "@/components/studio/ResearchReelSetupPanel";
 import { BrandWebsitePanel } from "@/components/studio/BrandWebsitePanel";
 import { useState } from "react";
-import { isStoryboardVideoStyle } from "@/lib/visual-styles";
+import { isStoryboardVideoStyle, getVisualStyle } from "@/lib/visual-styles";
 import {
   h3ShotRecipeToSubpath,
   isH3ShotRecipeMode,
   subpathToH3ShotRecipe,
 } from "@/lib/h3-shot-recipes";
 import { h3ShotModesForPromotion } from "@/lib/recipe-path-ux";
-import { isRecipeOwnedVideoMode } from "@/lib/creative-workflow";
+import { isRecipeOwnedVideoMode, videoModePreviewSrc } from "@/lib/creative-workflow";
 
 type Props = {
   micro: WizardMicroStepValue;
@@ -192,6 +192,7 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
                   }
                   title={m.wizard.sceneReelTitle}
                   description={m.wizard.sceneReelDesc}
+                  previewSrc={getVisualStyle("creative-video").previewSrc}
                   onClick={() => {
                     micro.setVideoSubpath("creative_video");
                     wizard.applyPrimaryPathConceptVideo("creative");
@@ -201,6 +202,7 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
                   active={(micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) === "motion_poster"}
                   title={m.wizard.videoCreativeModes["motion-poster"].title}
                   description={m.wizard.videoCreativeModes["motion-poster"].description}
+                  previewSrc={videoModePreviewSrc("motion-poster")}
                   onClick={() => {
                     micro.setVideoSubpath("motion_poster");
                     wizard.onVideoCreativeModeChange("motion-poster");
@@ -210,6 +212,7 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
                   active={(micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) === "blockbuster"}
                   title={m.wizard.videoCreativeModes.blockbuster.title}
                   description={m.wizard.videoCreativeModes.blockbuster.description}
+                  previewSrc={videoModePreviewSrc("blockbuster")}
                   onClick={() => {
                     micro.setVideoSubpath("blockbuster");
                     wizard.onVideoCreativeModeChange("blockbuster");
@@ -223,6 +226,7 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
                         active={(micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) === sub}
                         title={m.wizard.videoCreativeModes[mode].title}
                         description={m.wizard.videoCreativeModes[mode].description}
+                        previewSrc={videoModePreviewSrc(mode)}
                         onClick={() => {
                           micro.setVideoSubpath(sub);
                           wizard.onVideoCreativeModeChange(mode);
@@ -237,6 +241,7 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
                   active={(micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) === "product_promo"}
                   title={m.wizard.pathQuickTitle}
                   description={m.wizard.pathQuickVideoDesc}
+                  previewSrc={videoModePreviewSrc("product-promo")}
                   onClick={() => {
                     micro.setVideoSubpath("product_promo");
                     wizard.applyPrimaryPathVideoOnly("assistant");
@@ -246,6 +251,7 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
                   active={(micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) === "motion_poster"}
                   title={m.wizard.videoCreativeModes["motion-poster"].title}
                   description={m.wizard.videoCreativeModes["motion-poster"].description}
+                  previewSrc={videoModePreviewSrc("motion-poster")}
                   onClick={() => {
                     micro.setVideoSubpath("motion_poster");
                     wizard.onVideoCreativeModeChange("motion-poster");
@@ -255,6 +261,7 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
                   active={(micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) === "blockbuster"}
                   title={m.wizard.videoCreativeModes.blockbuster.title}
                   description={m.wizard.videoCreativeModes.blockbuster.description}
+                  previewSrc={videoModePreviewSrc("blockbuster")}
                   onClick={() => {
                     micro.setVideoSubpath("blockbuster");
                     wizard.onVideoCreativeModeChange("blockbuster");
@@ -268,6 +275,7 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
                       active={(micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) === sub}
                       title={m.wizard.videoCreativeModes[mode].title}
                       description={m.wizard.videoCreativeModes[mode].description}
+                      previewSrc={videoModePreviewSrc(mode)}
                       onClick={() => {
                         micro.setVideoSubpath(sub);
                         wizard.onVideoCreativeModeChange(mode);
@@ -279,6 +287,7 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
                   active={(micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) === "reference_reel"}
                   title={m.wizard.pathReferenceVideoTitle}
                   description={m.wizard.pathReferenceVideoDesc}
+                  previewSrc={videoModePreviewSrc("reference-concept")}
                   onClick={() => {
                     micro.setVideoSubpath("reference_reel");
                     wizard.onVideoCreativeModeChange("reference-concept");
@@ -503,6 +512,10 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
                 ? "vacuum_inflate"
                 : wizard.videoCreativeMode === "creative-motion"
                 ? "creative_motion"
+                : wizard.videoCreativeMode === "hand-throw-scene"
+                ? "hand_throw_scene"
+                : wizard.videoCreativeMode === "product-explode"
+                ? "product_explode"
                 : wizard.videoCreativeMode === "blockbuster"
                 ? "blockbuster"
                 : h3Subpath
@@ -519,6 +532,8 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
               subpath === "social_drip" ||
               subpath === "vacuum_inflate" ||
               subpath === "creative_motion" ||
+              subpath === "hand_throw_scene" ||
+              subpath === "product_explode" ||
               Boolean(h3Mode);
             micro.setVideoSubpath(subpath as never);
             micro.patchContext(
@@ -536,6 +551,10 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
               wizard.onVideoCreativeModeChange("vacuum-inflate");
             } else if (subpath === "creative_motion") {
               wizard.onVideoCreativeModeChange("creative-motion");
+            } else if (subpath === "hand_throw_scene") {
+              wizard.onVideoCreativeModeChange("hand-throw-scene");
+            } else if (subpath === "product_explode") {
+              wizard.onVideoCreativeModeChange("product-explode");
             } else if (subpath === "blockbuster") {
               wizard.onVideoCreativeModeChange("blockbuster");
             } else if (h3Mode) {
@@ -1031,6 +1050,8 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
           aspectRatio={wizard.imageAspectRatio}
           previewUrl={wizard.imageRefPreviewUrl || wizard.uploadPreviewUrl || null}
           purpleChrome
+          workflowMode={wizard.workflowMode}
+          waitKind="storyboard"
         />
       );
 
@@ -1068,6 +1089,8 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
           aspectRatio={wizard.imageAspectRatio}
           previewUrl={wizard.imageRefPreviewUrl || wizard.uploadPreviewUrl || null}
           purpleChrome
+          workflowMode={wizard.workflowMode}
+          waitKind="image"
         />
       );
 
@@ -1097,6 +1120,8 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
             null
           }
           purpleChrome
+          workflowMode={wizard.workflowMode}
+          waitKind="video"
         />
       );
     }
@@ -1136,22 +1161,34 @@ function ChoiceCard({
   description,
   active,
   onClick,
+  previewSrc,
 }: {
   title: string;
   description: string;
   active: boolean;
   onClick: () => void;
+  previewSrc?: string;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-xl border px-4 py-3 text-left transition ${
+      className={`flex gap-3 overflow-hidden rounded-xl border px-3 py-3 text-left transition ${
         active ? "border-violet-400 bg-violet-50" : "border-slate-200 bg-white hover:border-slate-300"
       }`}
     >
-      <p className="text-sm font-semibold text-slate-900">{title}</p>
-      <p className="mt-1 text-xs text-slate-600">{description}</p>
+      {previewSrc ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={previewSrc}
+          alt=""
+          className="h-12 w-12 shrink-0 rounded-lg object-cover"
+        />
+      ) : null}
+      <span className="min-w-0">
+        <p className="text-sm font-semibold text-slate-900">{title}</p>
+        <p className="mt-1 text-xs text-slate-600">{description}</p>
+      </span>
     </button>
   );
 }
@@ -1308,6 +1345,8 @@ function WaitScreen({
   aspectRatio,
   previewUrl,
   purpleChrome = false,
+  workflowMode = null,
+  waitKind = "image",
 }: {
   busy: boolean;
   message: string;
@@ -1318,6 +1357,8 @@ function WaitScreen({
   previewUrl?: string | null;
   /** Use violet step chrome (image generate waits). */
   purpleChrome?: boolean;
+  workflowMode?: WorkflowMode | null;
+  waitKind?: "image" | "video" | "storyboard";
 }) {
   const { m } = useLocale();
   const shellTitle = title ?? message;
@@ -1339,6 +1380,8 @@ function WaitScreen({
         progress={progressInfo}
         aspectRatio={aspectRatio}
         previewUrl={previewUrl}
+        workflowMode={workflowMode}
+        waitKind={waitKind}
       />
     );
   }

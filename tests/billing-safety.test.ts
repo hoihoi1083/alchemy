@@ -15,6 +15,7 @@ import { FREE_SIGNUP_GRANT_TOKENS } from "../lib/billing/plans";
 import {
   FREE_PACK,
   TOKEN_COST,
+  estimateImageRegenTokens,
   estimateImageTokens,
   estimateVideoTokens,
 } from "../lib/billing/token-costs";
@@ -165,6 +166,29 @@ describe("billing safety — never overcharge", () => {
     assert.equal(
       imageTokenCostFromRequest({ multipartMode: "refine" }),
       TOKEN_COST.image,
+    );
+    assert.equal(
+      estimateImageRegenTokens({ scope: "one", outputMode: "single" }),
+      TOKEN_COST.image,
+    );
+    assert.equal(
+      estimateImageRegenTokens({ scope: "all", outputMode: "ab" }),
+      TOKEN_COST.image_ab,
+    );
+    assert.equal(
+      estimateImageRegenTokens({
+        scope: "one",
+        isStoryboard: true,
+      }),
+      TOKEN_COST.storyboard_scene,
+    );
+    assert.equal(
+      estimateImageRegenTokens({
+        scope: "all",
+        isStoryboard: true,
+        sceneCount: 4,
+      }),
+      estimateImageTokens({ mode: "storyboard", sceneCount: 4 }),
     );
   });
 

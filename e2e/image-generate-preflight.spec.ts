@@ -103,10 +103,9 @@ test.describe("Studio image generate preflight", () => {
 
     await page.getByRole("button", { name: /Generate (image|AI image|polish)/i }).click();
 
-    await expect(page.getByText(/Quality check — your generated image/i)).toBeVisible({
-      timeout: 30_000,
-    });
-    await expect(page.getByText(/AI quality scan/i)).toBeVisible();
+    await expect(page.getByRole("img").first()).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText(/Quality check — your generated image/i)).toHaveCount(0);
+    await expect(page.getByText(/AI quality scan/i)).toHaveCount(0);
     await expect(page.locator(".text-red-300, .text-red-400").filter({ hasText: /failed|error/i })).toHaveCount(0);
   });
 });

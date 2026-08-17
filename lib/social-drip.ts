@@ -22,6 +22,10 @@ export const SOCIAL_DRIP_METAPHOR_IDS = [
 export type SocialDripMetaphorId = (typeof SOCIAL_DRIP_METAPHOR_IDS)[number];
 export type SocialDripMetaphorPick = SocialDripMetaphorId | "auto";
 
+export function socialDripMetaphorPreviewSrc(id: SocialDripMetaphorId): string {
+  return `/images/studio/schemes/social-drip/${id}.png?v=1`;
+}
+
 export type SocialDripCategory =
   | "fnb"
   | "beauty"

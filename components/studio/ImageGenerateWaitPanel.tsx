@@ -8,6 +8,8 @@ import {
 } from "@/components/studio/GenerationWaitPlaceholder";
 import { ImageReviewStepper } from "@/components/studio/ImageReviewStepper";
 import type { ProgressInfo } from "@/hooks/useWizardProgress";
+import { generateWaitPhaseIndex } from "@/lib/studio-phases";
+import type { WorkflowMode } from "@/lib/workflow-mode";
 
 const WAIT_PANEL_CSS = `
 .igw-page {
@@ -77,6 +79,9 @@ type Props = {
   showStepper?: boolean;
   /** Override default “Generate image” title (e.g. video wait). */
   title?: string;
+  workflowMode?: WorkflowMode | null;
+  /** Which generate wait this is — drives path-aware phase highlight. */
+  waitKind?: "image" | "video" | "storyboard";
 };
 
 /**
@@ -90,6 +95,8 @@ export function ImageGenerateWaitPanel({
   previewUrl,
   showStepper = true,
   title,
+  workflowMode = null,
+  waitKind = "image",
 }: Props) {
   const { m } = useLocale();
   const mw = m.microWizard;
@@ -102,7 +109,13 @@ export function ImageGenerateWaitPanel({
     <div className="igw-page w-full min-w-0">
       <style dangerouslySetInnerHTML={{ __html: WAIT_PANEL_CSS }} />
 
-      {showStepper ? <ImageReviewStepper activeIndex={3} /> : null}
+      {showStepper ? (
+        <ImageReviewStepper
+          workflowMode={workflowMode}
+          kind={waitKind === "video" ? "video" : waitKind === "storyboard" ? "storyboard" : "image"}
+          activeIndex={generateWaitPhaseIndex(workflowMode, waitKind)}
+        />
+      ) : null}
 
       <div className={`igw-panel${showStepper ? " mt-3" : ""}`}>
         <div className="igw-panel-body">

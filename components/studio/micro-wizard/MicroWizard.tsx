@@ -12,6 +12,7 @@ import { VideoReviewFooterBar } from "@/components/studio/VideoResultPanel";
 import { referenceAnalyzeReady } from "@/components/studio/micro-wizard/ReferenceAnalyzeWaitPanel";
 import { downloadMediaUrl, downloadMediaUrls } from "@/lib/download-media";
 import type { PromotionMode } from "@/lib/promotion-mode";
+import { estimateImageRegenTokens } from "@/lib/billing/token-costs";
 
 type Props = {
   promotionMode: PromotionMode;
@@ -271,6 +272,22 @@ export function MicroWizard({ promotionMode }: Props) {
       }
       downloadAllBusy={downloadAllBusy}
       generateBusy={wizard.imageBusy || !wizard.canGenerateImage()}
+      generateTokenHint={m.wizard.tokenCostHint.replace(
+        "{n}",
+        String(
+          estimateImageRegenTokens({
+            scope: "all",
+            outputMode: wizard.effectiveImageOutputMode,
+            isStoryboard: wizard.isStoryboardOutput,
+            isCinematic: wizard.isCinematicStitchOutput,
+            sceneCount:
+              wizard.storyboardScenes.length ||
+              wizard.campaignSlides.length ||
+              wizard.imageVariantUrls.length ||
+              1,
+          }),
+        ),
+      )}
     />
   );
 

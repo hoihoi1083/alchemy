@@ -11,6 +11,7 @@ import {
   resolveGeneratedImageResultView,
   type GeneratedImageResultViewKind,
 } from "@/lib/generated-image-result-view";
+import { estimateImageRegenTokens } from "@/lib/billing/token-costs";
 import { storyboardSceneDisplayCopy } from "@/lib/storyboard-scene-copy";
 import { localizeTvcShotRole, tvcShotJobLine } from "@/lib/shot-recipes";
 
@@ -185,26 +186,9 @@ function IconSparkles({ className }: { className?: string }) {
   );
 }
 
-function IconShield({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="M12 3.2 19 6.4v5.1c0 4.35-2.95 8.15-7 9.2-4.05-1.05-7-4.85-7-9.2V6.4L12 3.2Z" />
-      <path d="m9.2 12 1.9 1.9 3.7-3.8" />
-    </svg>
-  );
-}
-
 function CompactAction({
   label,
+  hint,
   onClick,
   disabled,
   busy,
@@ -212,6 +196,7 @@ function CompactAction({
   className = "",
 }: {
   label: string;
+  hint?: string;
   onClick: () => void;
   disabled?: boolean;
   busy?: boolean;
@@ -229,7 +214,10 @@ function CompactAction({
       className={`flex min-h-9 items-center justify-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-[11px] font-medium leading-tight text-violet-700 transition hover:border-violet-300 hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-40 ${className}`}
     >
       {icon}
-      <span className="truncate">{label}</span>
+      <span className="min-w-0 truncate">{label}</span>
+      {hint ? (
+        <span className="shrink-0 text-[10px] font-medium opacity-80">{hint}</span>
+      ) : null}
     </button>
   );
 }
@@ -379,6 +367,22 @@ export function ImageReviewGallery({
   const cellRegenBusy = wizard.carouselSlideRegenerateBusy;
   const canRegenerate =
     wizard.canGenerateImage() && !wizard.imageBusy && cellRegenBusy == null;
+  const regenOneTokens = estimateImageRegenTokens({
+    scope: "one",
+    outputMode: wizard.effectiveImageOutputMode,
+    isStoryboard: view.kind === "storyboard" || wizard.isStoryboardOutput,
+    isCinematic: view.kind === "cinematic" || wizard.isCinematicStitchOutput,
+    sceneCount: items.length,
+  });
+  const regenAllTokens = estimateImageRegenTokens({
+    scope: "all",
+    outputMode: wizard.effectiveImageOutputMode,
+    isStoryboard: view.kind === "storyboard" || wizard.isStoryboardOutput,
+    isCinematic: view.kind === "cinematic" || wizard.isCinematicStitchOutput,
+    sceneCount: items.length,
+  });
+  const regenOneHint = m.wizard.tokenCostHint.replace("{n}", String(regenOneTokens));
+  const regenAllHint = m.wizard.tokenCostHint.replace("{n}", String(regenAllTokens));
 
   function selectItem(index: number, url: string) {
     if (!selectable) return;
@@ -672,6 +676,13 @@ export function ImageReviewGallery({
                             ? m.wizard.storyboardRegeneratingImage
                             : m.wizard.imageReviewRegenerateOneBtn
                         }
+                        hint={
+                          (view.kind === "storyboard" &&
+                            wizard.storyboardSceneRegenerateBusy === item.index) ||
+                          (view.kind === "carousel" && cellRegenBusy === item.index)
+                            ? undefined
+                            : regenOneHint
+                        }
                         disabled={
                           view.kind === "storyboard"
                             ? wizard.storyboardSceneRegenerateBusy !== null
@@ -738,7 +749,10 @@ export function ImageReviewGallery({
             className="inline-flex min-h-10 w-full shrink-0 items-center justify-center gap-2 rounded-xl border border-violet-500 bg-white px-4 py-2 text-sm font-semibold text-violet-700 transition hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
           >
             <IconRefresh className="h-4 w-4" />
-            {m.wizard.imageReviewRegenerateBannerBtn}
+            <span className="flex flex-col items-center leading-tight">
+              <span>{m.wizard.imageReviewRegenerateBannerBtn}</span>
+              <span className="text-[11px] font-medium text-violet-500">{regenAllHint}</span>
+            </span>
           </button>
         </div>
       ) : null}
@@ -750,6 +764,7 @@ export function ImageReviewGallery({
           onGenerateOneMore={isStoryboardReview ? undefined : handleRegenerateAll}
           downloadAllBusy={downloadAllBusy}
           generateBusy={!canRegenerate}
+          generateTokenHint={regenAllHint}
         />
       ) : null}
     </div>
@@ -763,6 +778,7 @@ export function ImageReviewFooterBar({
   onContinue,
   downloadAllBusy,
   generateBusy,
+  generateTokenHint,
   continueDisabled,
   continueDisabledReason,
   backLabel,
@@ -776,6 +792,7 @@ export function ImageReviewFooterBar({
   onContinue?: () => void;
   downloadAllBusy?: boolean;
   generateBusy?: boolean;
+  generateTokenHint?: string;
   continueDisabled?: boolean;
   continueDisabledReason?: string | null;
   backLabel?: string;
@@ -786,25 +803,30 @@ export function ImageReviewFooterBar({
   return (
     <div className="space-y-3 pt-2">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <button
-          type="button"
-          onClick={onBack}
-          className="inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-violet-300 bg-white px-4 py-2.5 text-sm font-medium text-violet-700 hover:bg-violet-50 sm:w-auto"
-        >
-          <svg
-            viewBox="0 0 20 20"
-            className="h-4 w-4"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden
+        <div className="min-w-0 sm:max-w-sm">
+          <button
+            type="button"
+            onClick={onBack}
+            className="inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-violet-300 bg-white px-4 py-2.5 text-sm font-medium text-violet-700 hover:bg-violet-50 sm:w-auto"
           >
-            <path d="M12.5 4.5 7 10l5.5 5.5" />
-          </svg>
-          {backLabel ?? m.wizard.back}
-        </button>
+            <svg
+              viewBox="0 0 20 20"
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+            >
+              <path d="M12.5 4.5 7 10l5.5 5.5" />
+            </svg>
+            {backLabel ?? m.wizard.back}
+          </button>
+          <p className="mt-2 text-[12px] leading-relaxed text-slate-500">
+            {m.wizard.imageReviewBackLibraryNote}
+          </p>
+        </div>
 
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
           <button
@@ -824,7 +846,14 @@ export function ImageReviewFooterBar({
               className="inline-flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-violet-600 bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:border-violet-700 hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
             >
               <IconRefresh className="h-4 w-4" />
-              {m.wizard.imageReviewGenerateOneMore}
+              <span className="flex flex-col items-start leading-tight">
+                <span>{m.wizard.imageReviewGenerateOneMore}</span>
+                {generateTokenHint ? (
+                  <span className="text-[11px] font-medium text-white/80">
+                    {generateTokenHint}
+                  </span>
+                ) : null}
+              </span>
             </button>
           ) : null}
           {onContinue ? (
@@ -852,11 +881,6 @@ export function ImageReviewFooterBar({
           ) : null}
         </div>
       </div>
-
-      <p className="inline-flex items-center gap-1.5 text-[12px] text-slate-500">
-        <IconShield className="h-4 w-4 shrink-0 text-slate-400" />
-        <span>{m.start.secureNote}</span>
-      </p>
     </div>
   );
 }

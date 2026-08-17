@@ -149,7 +149,9 @@ export type VisualStyleDef = {
 };
 
 function visualPreview(id: VisualStyleId): string {
-  return `/images/studio/visual-styles/${id}.png?v=1`;
+  // storyboard-video art refreshed to show multi-scene grid
+  const ver = id === "storyboard-video" ? "2" : "1";
+  return `/images/studio/visual-styles/${id}.png?v=${ver}`;
 }
 
 export const VISUAL_STYLES: VisualStyleDef[] = [

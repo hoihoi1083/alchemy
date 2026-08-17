@@ -21,6 +21,8 @@ export type VideoSubpath =
   | "blockbuster"
   | "vacuum_inflate"
   | "creative_motion"
+  | "hand_throw_scene"
+  | "product_explode"
   | "ecom_orbit"
   | "object_lock"
   | "macro_snap"

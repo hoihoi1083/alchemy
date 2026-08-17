@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   fallbackSingleImagePlan,
+  lockUserOnImageCopy,
   shouldPlanSingleImageAd,
 } from "@/lib/single-image-plan";
 import { buildPromoImagePrompt, buildWizardImagePrompt } from "@/lib/prompt-variables";
@@ -77,5 +78,34 @@ describe("single image planner quality path", () => {
     );
     assert.match(prompt, /SINGLE SOCIAL AD/);
     assert.match(prompt, /visual DNA/i);
+  });
+
+  it("locks latin headline/tagline even if the planner invented Chinese copy", () => {
+    const input = {
+      visualStyleId: "designed-poster" as const,
+      promotionMode: "physical" as const,
+      product: "维他命 C 精华",
+      headline: "sdfasdfsadfasdf",
+      subline: "asdfsadfsadfsadfasdfasdfasdf",
+      promptMarket: "hk" as const,
+      hasProductPhoto: true,
+    };
+    const locked = lockUserOnImageCopy(
+      {
+        role: "cover",
+        theme: "维他命 C 精华",
+        visualDna: "editorial",
+        composition: "hero",
+        title: "维他命 C 精华",
+        body: "唤醒肌肤自然光泽，每日焕新。",
+        takeaway: "",
+      },
+      input,
+    );
+    assert.equal(locked.title, "sdfasdfsadfasdf");
+    assert.equal(locked.body, "asdfsadfsadfsadfasdfasdfasdf");
+    const fallback = fallbackSingleImagePlan(input);
+    assert.equal(fallback.title, "sdfasdfsadfasdf");
+    assert.equal(fallback.body, "asdfsadfsadfsadfasdfasdfasdf");
   });
 });

@@ -20,7 +20,7 @@ import {
   isImagePosterUxStyle,
   type ImagePosterUxStyleId,
 } from "@/lib/recipe-path-ux";
-import { studioPhasesForMode } from "@/lib/studio-phases";
+import { setupContentPhaseIndex, studioPhasesForMode } from "@/lib/studio-phases";
 import { estimateImageTokens } from "@/lib/billing/token-costs";
 import { STORYBOARD_SCENE_COUNTS } from "@/lib/ad-pack-preferences";
 import { CompositionPresetPicker } from "@/components/studio/CompositionPresetPicker";
@@ -175,9 +175,20 @@ const PANEL_CSS = `
 }
 .pg-content-aside {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.55rem;
   flex-shrink: 0;
+  min-width: 0;
+}
+.pg-content-aside-copy {
+  min-width: 0;
+  flex: 1;
+}
+.pg-content-aside .pg-card-title {
+  white-space: normal;
+  writing-mode: horizontal-tb;
+  word-break: keep-all;
+  line-height: 1.35;
 }
 .pg-output-grid {
   display: grid;
@@ -378,7 +389,13 @@ const PANEL_CSS = `
   .pg-content-row--center { align-items: center; }
   .pg-content-aside {
     width: 9.5rem;
+    flex-direction: column;
+    align-items: flex-start;
     padding-top: 0.15rem;
+  }
+  .pg-content-aside-copy {
+    flex: none;
+    width: 100%;
   }
   .pg-content-row--center .pg-content-aside { padding-top: 0; }
   .pg-output-grid {
@@ -1146,7 +1163,10 @@ export function PreGenerateSetupPanel({
   return (
     <div className="pg-page" ref={pageTopRef}>
       <style dangerouslySetInnerHTML={{ __html: PANEL_CSS }} />
-      <PhaseStepper phases={studioPhasesForMode(m.start, wizard.workflowMode)} activeIndex={2} />
+      <PhaseStepper
+        phases={studioPhasesForMode(m.start, wizard.workflowMode)}
+        activeIndex={setupContentPhaseIndex()}
+      />
 
       <div className="mt-4">
         <h2 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
@@ -1484,7 +1504,9 @@ export function PreGenerateSetupPanel({
                   <span className="pg-card-icon">
                     <SectionIcon kind="content" />
                   </span>
-                  <h3 className="pg-card-title">{pg.contentTitle}</h3>
+                  <div className="pg-content-aside-copy">
+                    <h3 className="pg-card-title">{pg.contentTitle}</h3>
+                  </div>
                 </div>
                 <div className="pg-field-grid">
                   {copyFocus ? (
@@ -1677,8 +1699,10 @@ export function PreGenerateSetupPanel({
                     <span className="pg-card-icon">
                       <SectionIcon kind="options" />
                     </span>
+                    <div className="pg-content-aside-copy">
                     <h3 className="pg-card-title">{pg.imageOptionsTitle}</h3>
                     <p className="mt-0.5 text-xs text-slate-500">{pg.storyboardLookBeforePlanHint}</p>
+                  </div>
                   </div>
                   <div className="min-w-0 flex-1 space-y-4">
                     <div className={luxuryFieldWrap(luxuryStoryboard)}>
@@ -1718,22 +1742,22 @@ export function PreGenerateSetupPanel({
                     />
                     <div>
                       <p className="text-xs font-semibold text-slate-700">{pg.aspectLabel}</p>
-                      <div className="mt-2 grid grid-cols-3 gap-2">
+                      <div className="mt-2 grid grid-cols-3 gap-1.5">
                         {IMAGE_ASPECT_RATIOS.map((ratio: ImageAspectRatio) => {
                           const copy = m.wizard.imageAspectRatios[ratio];
                           const selected = wizard.imageAspectRatio === ratio;
                           const frameStyle =
                             ratio === "9:16"
-                              ? { width: 18, height: 32 }
+                              ? { width: 12, height: 21 }
                               : ratio === "4:5"
-                                ? { width: 22, height: 28 }
-                                : { width: 26, height: 26 };
+                                ? { width: 14, height: 18 }
+                                : { width: 16, height: 16 };
                           return (
                             <button
                               key={ratio}
                               type="button"
                               onClick={() => wizard.setImageAspectRatio(ratio)}
-                              className={`relative rounded-xl border px-2 py-3 text-center transition ${
+                              className={`relative rounded-xl border px-2 py-2 text-center transition ${
                                 selected
                                   ? "border-violet-500 bg-violet-50 text-violet-700"
                                   : "border-slate-200 bg-white text-slate-400 hover:border-violet-200"
@@ -1741,7 +1765,7 @@ export function PreGenerateSetupPanel({
                             >
                               {selected ? <CheckBadge /> : null}
                               <span className="pg-aspect-frame block" style={frameStyle} />
-                              <span className="block text-sm font-bold text-slate-900">{ratio}</span>
+                              <span className="block text-xs font-bold text-slate-900">{ratio}</span>
                               <span className="mt-0.5 block text-[10px] leading-snug text-slate-500">
                                 {copy.title}
                               </span>
@@ -1812,8 +1836,10 @@ export function PreGenerateSetupPanel({
                     <span className="pg-card-icon">
                       <SectionIcon kind="output" />
                     </span>
+                    <div className="pg-content-aside-copy">
                     <h3 className="pg-card-title">{pg.storyboardTitle}</h3>
                     <p className="mt-0.5 text-xs text-slate-500">{pg.storyboardHint}</p>
+                  </div>
                   </div>
                   <div className="min-w-0 flex-1 space-y-3">
                     <div>
@@ -2113,7 +2139,9 @@ export function PreGenerateSetupPanel({
                   <span className="pg-card-icon">
                     <SectionIcon kind="output" />
                   </span>
-                  <h3 className="pg-card-title">{pg.outputTypeTitle}</h3>
+                  <div className="pg-content-aside-copy">
+                    <h3 className="pg-card-title">{pg.outputTypeTitle}</h3>
+                  </div>
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="pg-output-grid">
@@ -2187,9 +2215,11 @@ export function PreGenerateSetupPanel({
                   <span className="pg-card-icon">
                     <SectionIcon kind="upload" />
                   </span>
-                  <h3 className="pg-card-title">
+                  <div className="pg-content-aside-copy">
+                    <h3 className="pg-card-title">
                     {isConcept ? pg.productPhotosOptionalTitle : pg.productPhotosTitle}
                   </h3>
+                  </div>
                 </div>
                 <div
                   className={`min-w-0 flex-1 space-y-4${
@@ -2362,7 +2392,9 @@ export function PreGenerateSetupPanel({
                   <span className="pg-card-icon">
                     <SectionIcon kind="options" />
                   </span>
-                  <h3 className="pg-card-title">{pg.imageOptionsTitle}</h3>
+                  <div className="pg-content-aside-copy">
+                    <h3 className="pg-card-title">{pg.imageOptionsTitle}</h3>
+                  </div>
                 </div>
                 <div className="min-w-0 flex-1 space-y-4">
                   <div>

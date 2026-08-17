@@ -35,6 +35,8 @@ export function resolveVideoOutputPresentation(
   if (input.videoCreativeMode === "social-drip") return "animate-keyframe";
   if (input.videoCreativeMode === "vacuum-inflate") return "animate-keyframe";
   if (input.videoCreativeMode === "creative-motion") return "animate-keyframe";
+  if (input.videoCreativeMode === "hand-throw-scene") return "animate-keyframe";
+  if (input.videoCreativeMode === "product-explode") return "animate-keyframe";
   if (input.videoCreativeMode === "blockbuster") return "product-assistant";
   if (isH3ShotRecipeMode(input.videoCreativeMode)) {
     return "product-assistant";

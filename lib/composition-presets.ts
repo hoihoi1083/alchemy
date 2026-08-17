@@ -13,6 +13,10 @@ export const COMPOSITION_PRESET_IDS = ["standard", "fisheye-hero"] as const;
 
 export type CompositionPresetId = (typeof COMPOSITION_PRESET_IDS)[number];
 
+export function compositionPresetPreviewSrc(id: CompositionPresetId): string {
+  return `/images/studio/composition/${id}.png?v=1`;
+}
+
 const FISHEYE_COMPOSITION_TAG = "COMPOSITION_PRESET: fisheye-hero";
 
 const FISHEYE_HERO_CAMERA =

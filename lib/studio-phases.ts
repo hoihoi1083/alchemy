@@ -18,15 +18,45 @@ export function studioPhasesForMode(
   return start.phases;
 }
 
+/** Product / intake / image pre-generate — always “Set up content”. */
+export function setupContentPhaseIndex(): number {
+  return 2;
+}
+
+/**
+ * Pre-video setup rail.
+ * Video-only is still content setup (index 2).
+ * Combined is “Confirm storyboard” after stills (index 3).
+ */
+export function videoSetupPhaseIndex(
+  workflowMode: WorkflowMode | null | undefined,
+): number {
+  return workflowMode === "combined" ? 3 : 2;
+}
+
+/**
+ * Wait screen while fal is generating.
+ * Combined video run is the last phase (“Generate video”);
+ * image / storyboard / video-only generate sit on index 3.
+ */
+export function generateWaitPhaseIndex(
+  workflowMode: WorkflowMode | null | undefined,
+  kind: "image" | "video" | "storyboard" = "image",
+): number {
+  if (kind === "video" && workflowMode === "combined") return 4;
+  return 3;
+}
+
 /**
  * Active phase index for image/storyboard review.
- * Combined storyboard stills = intermediate (not final Done).
+ * Combined stills = “Confirm storyboard”; image-only = “Download & use”.
  */
 export function imageReviewPhaseIndex(
   workflowMode: WorkflowMode | null | undefined,
   opts?: { isStoryboard?: boolean },
 ): number {
-  if (workflowMode === "combined" && opts?.isStoryboard) return 3;
+  void opts;
+  if (workflowMode === "combined") return 3;
   return 4;
 }
 

@@ -35,6 +35,12 @@ import {
   buildVacuumInflateStillPrompt,
 } from "@/lib/vacuum-inflate";
 import {
+  buildHandThrowSceneStillPrompt,
+} from "@/lib/hand-throw-scene";
+import {
+  buildProductExplodeStillPrompt,
+} from "@/lib/product-explode";
+import {
   buildCreativeMotionStillPrompt,
   parseCreativeMotionSchemePick,
   resolveCreativeMotionScheme,
@@ -487,6 +493,16 @@ export async function POST(request: Request) {
         .trim()
         .toLowerCase(),
     );
+    const handThrowEarly = ["1", "true", "yes"].includes(
+      String(formData.get("hand_throw_scene") ?? "")
+        .trim()
+        .toLowerCase(),
+    );
+    const productExplodeEarly = ["1", "true", "yes"].includes(
+      String(formData.get("product_explode") ?? "")
+        .trim()
+        .toLowerCase(),
+    );
     if (
       !hasProduct &&
       !hasStyle &&
@@ -494,7 +510,9 @@ export async function POST(request: Request) {
       !(motionPosterEarly && startPlateUrlEarly) &&
       !socialDripEarly &&
       !vacuumInflateEarly &&
-      !creativeMotionEarly
+      !creativeMotionEarly &&
+      !handThrowEarly &&
+      !productExplodeEarly
     ) {
       return NextResponse.json(
         {
@@ -631,6 +649,16 @@ export async function POST(request: Request) {
         .trim()
         .toLowerCase(),
     );
+    const handThrowScene = ["1", "true", "yes"].includes(
+      String(formData.get("hand_throw_scene") ?? "")
+        .trim()
+        .toLowerCase(),
+    );
+    const productExplode = ["1", "true", "yes"].includes(
+      String(formData.get("product_explode") ?? "")
+        .trim()
+        .toLowerCase(),
+    );
     const posterFrame =
       String(formData.get("motion_poster_frame") ?? "start").trim() === "end"
         ? "end"
@@ -645,6 +673,14 @@ export async function POST(request: Request) {
         : "start";
     const creativeMotionFrame =
       String(formData.get("creative_motion_frame") ?? "start").trim() === "end"
+        ? "end"
+        : "start";
+    const handThrowFrame =
+      String(formData.get("hand_throw_scene_frame") ?? "start").trim() === "end"
+        ? "end"
+        : "start";
+    const productExplodeFrame =
+      String(formData.get("product_explode_frame") ?? "start").trim() === "end"
         ? "end"
         : "start";
     let creativeMotionScheme: CreativeMotionSchemeId = "body-breathe";
@@ -689,6 +725,8 @@ export async function POST(request: Request) {
       !socialDrip &&
       !vacuumInflate &&
       !creativeMotion &&
+      !handThrowScene &&
+      !productExplode &&
       !clientPrompt &&
       (!imageOutputMode || imageOutputMode === "single" || imageOutputMode === "ab") &&
       shouldPlanSingleImageAd(promptMode, imageTextMode);
@@ -762,7 +800,9 @@ export async function POST(request: Request) {
       }
       if (
         ((vacuumInflate && vacuumInflateFrame === "end") ||
-          (creativeMotion && creativeMotionFrame === "end")) &&
+          (creativeMotion && creativeMotionFrame === "end") ||
+          (handThrowScene && handThrowFrame === "end") ||
+          (productExplode && productExplodeFrame === "end")) &&
         startPlateUrl
       ) {
         const plate = await mirrorImageUrlToFalStorage(startPlateUrl, {
@@ -838,6 +878,28 @@ export async function POST(request: Request) {
             aspectRatio: aspectRatioRaw,
             frame: creativeMotionFrame,
           })
+        : handThrowScene
+        ? buildHandThrowSceneStillPrompt({
+            product:
+              productName ||
+              headline ||
+              (promotionMode === "concept"
+                ? "brand landmark architecture"
+                : "product landmark"),
+            conceptMode: promotionMode === "concept",
+            aspectRatio: aspectRatioRaw,
+            frame: handThrowFrame,
+          })
+        : productExplode
+        ? buildProductExplodeStillPrompt({
+            product:
+              productName ||
+              headline ||
+              (promotionMode === "concept" ? "brand device" : "the product"),
+            conceptMode: promotionMode === "concept",
+            aspectRatio: aspectRatioRaw,
+            frame: productExplodeFrame,
+          })
         : motionPoster
         ? posterFrame === "end"
           ? buildMotionPosterEndStillPrompt(vars, {
@@ -870,7 +932,12 @@ export async function POST(request: Request) {
       // Honor explicit client prompts (e.g. storyboard scene regenerate) — do not replace with
       // a generic concept-cinematic rebuild that drops the scene action.
       const finalPrompt = [
-        socialDrip || motionPoster || vacuumInflate || creativeMotion
+        socialDrip ||
+        motionPoster ||
+        vacuumInflate ||
+        creativeMotion ||
+        handThrowScene ||
+        productExplode
           ? builtPrompt
           : singleImagePlan
             ? builtPrompt

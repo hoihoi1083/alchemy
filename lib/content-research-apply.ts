@@ -363,6 +363,14 @@ export type ContentResearchApplyRef = {
   plan: Pick<ContentResearchPlan, "platform" | "platformLabel" | "topic" | "market">;
 };
 
+/** Selected on intake — applied when user clicks Continue. */
+export type PendingContentResearchPick = {
+  angle: ContentAngleCandidate;
+  plan: ContentResearchPlan;
+  promoteProduct?: string;
+  promotionMode: "physical" | "concept";
+};
+
 export async function applyContentAngleToWizard(
   angle: ContentAngleCandidate,
   plan: ContentResearchPlan,

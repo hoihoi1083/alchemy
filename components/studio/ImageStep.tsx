@@ -28,7 +28,6 @@ import {
   luxuryBirthSceneCountOptions,
 } from "@/lib/storyboard-recipes";
 import { QuickFixImagePanel } from "@/components/studio/QuickFixImagePanel";
-import { ImagePostflightPanel } from "@/components/studio/ImagePostflightPanel";
 import { ImagePostGenChecklist } from "@/components/studio/ImagePostGenChecklist";
 import { ShipItPanel } from "@/components/studio/ShipItPanel";
 import { StoryboardShotMap } from "@/components/studio/StoryboardShotMap";
@@ -1045,31 +1044,6 @@ export function ImageStep() {
         className="mx-auto max-h-72 rounded-lg object-contain"
       />
     </div>
-  )}
-
-  {imagePostflight && imageUrl && !useOriginalImage && !isStoryboardOutput && (
-    <ImagePostflightPanel
-      postflight={imagePostflight}
-      visionReview={imageVisionReview}
-      busy={imagePostflightBusy}
-      visionBusy={imageVisionReviewBusy}
-      labels={{
-        title: m.wizard.imagePostflightTitle,
-        resolution: m.wizard.imagePostflightResolution,
-        aspect: m.wizard.imagePostflightAspect,
-        safeForVideo: m.wizard.imagePostflightSafeForVideo,
-        notSafeForVideo: m.wizard.imagePostflightNotSafeForVideo,
-        lowResolution: m.wizard.imagePostflightLowRes,
-        verySmall: m.wizard.imagePostflightVerySmall,
-        analyzing: m.wizard.imagePostflightAnalyzing,
-        visionTitle: m.wizard.imageVisionReviewTitle,
-        visionAnalyzing: m.wizard.imageVisionReviewAnalyzing,
-        visionScore: m.wizard.imageVisionReviewScore,
-        visionSummary: m.wizard.imageVisionReviewSummary,
-        visionIssues: m.wizard.imageVisionReviewIssues,
-        visionPass: m.wizard.imageVisionReviewPass,
-      }}
-    />
   )}
 
   {imageUrl && !useOriginalImage && !isStoryboardOutput && !usesCompositor && (

@@ -146,6 +146,14 @@ import {
 	buildVacuumInflateVideoPrompt,
 } from "@/lib/vacuum-inflate";
 import {
+	HAND_THROW_SCENE_DURATION_SEC,
+	buildHandThrowSceneVideoPrompt,
+} from "@/lib/hand-throw-scene";
+import {
+	PRODUCT_EXPLODE_DURATION_SEC,
+	buildProductExplodeVideoPrompt,
+} from "@/lib/product-explode";
+import {
 	CREATIVE_MOTION_DURATION_SEC,
 	buildCreativeMotionVideoPrompt,
 	parseCreativeMotionSchemePick,
@@ -604,6 +612,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		setReferenceCarouselSlideCount,
 		contentResearchApplyRef,
 		setContentResearchApplyRef,
+		pendingContentResearchPick,
+		setPendingContentResearchPick,
 		productVideoPlan,
 		setProductVideoPlan,
 		planProductVideoBusy,
@@ -707,6 +717,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 	const vacuumInflateEndUrlRef = useRef<string | null>(null);
 	const creativeMotionStillUrlRef = useRef<string | null>(null);
 	const creativeMotionEndUrlRef = useRef<string | null>(null);
+	const handThrowStillUrlRef = useRef<string | null>(null);
+	const handThrowEndUrlRef = useRef<string | null>(null);
+	const productExplodeStillUrlRef = useRef<string | null>(null);
+	const productExplodeEndUrlRef = useRef<string | null>(null);
 	const lastCreativeMotionSchemeRef = useRef<CreativeMotionSchemeId | null>(
 		null,
 	);
@@ -3769,6 +3783,22 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 
 	const creativeMotionCanAutoStill =
 		videoCreativeMode === "creative-motion" &&
+		(Boolean(productPhoto) ||
+			(promotionMode === "concept" &&
+				Boolean(
+					conceptIdea.trim() || headline.trim() || product.trim(),
+				)));
+
+	const handThrowCanAutoStill =
+		videoCreativeMode === "hand-throw-scene" &&
+		(Boolean(productPhoto) ||
+			(promotionMode === "concept" &&
+				Boolean(
+					conceptIdea.trim() || headline.trim() || product.trim(),
+				)));
+
+	const productExplodeCanAutoStill =
+		videoCreativeMode === "product-explode" &&
 		(Boolean(productPhoto) ||
 			(promotionMode === "concept" &&
 				Boolean(
@@ -7804,6 +7834,306 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		return data.videoUrl as string;
 	}
 
+	async function generateHandThrowSceneKeyframe(
+		frame: "start" | "end",
+		startPlateUrl?: string,
+	): Promise<string> {
+		setVideoNote(
+			frame === "end"
+				? m.wizard.handThrowBuildingEnd
+				: m.wizard.handThrowBuildingStill,
+		);
+		setImageJobMeta({
+			kind: "image",
+			startedAt: Date.now(),
+			sceneCount: 1,
+		});
+		try {
+			const fd = new FormData();
+			fd.set("visual_style", visualStyleId);
+			fd.set("art_style", artStyleId);
+			if (brandProfile)
+				fd.set("brand_profile", JSON.stringify(brandProfile));
+			fd.set("brand_kit", JSON.stringify(brandKit));
+			fd.set(
+				"product_name",
+				promotionMode === "concept"
+					? effectivePromoteName ||
+							product.trim() ||
+							conceptIdea.trim()
+					: product.trim(),
+			);
+			fd.set("business", business.trim());
+			fd.set(
+				"headline",
+				headline.trim() || product.trim() || conceptIdea.trim(),
+			);
+			fd.set("subline", subline.trim());
+			fd.set("offer", offer.trim());
+			fd.set("prompt_market", promptMarket);
+			fd.set("subject_framing", subjectFraming);
+			fd.set("prompt_extra", effectivePromptExtra());
+			fd.set("workflow_mode", workflowMode);
+			fd.set("promotion_mode", promotionMode);
+			fd.set("image_text_mode", "textless");
+			fd.set("aspect_ratio", "16:9");
+			fd.set(
+				"endpoint",
+				frame === "end" && startPlateUrl
+					? EDIT_ENDPOINT
+					: productPhoto
+						? EDIT_ENDPOINT
+						: TEXT_ENDPOINT,
+			);
+			fd.set("num_images", "1");
+			fd.set("image_output_mode", "single");
+			fd.set("hand_throw_scene", "1");
+			fd.set("hand_throw_scene_frame", frame);
+			if (frame === "end" && startPlateUrl)
+				fd.set("start_plate_url", startPlateUrl);
+			attachReferenceToForm(fd);
+
+			const res = await fetch("/api/generate-image", {
+				method: "POST",
+				body: fd,
+			});
+			const data = await readGenerateJson(res);
+			if (!res.ok)
+				throw new Error(
+					(data.error as string) || m.errors.polishFailed,
+				);
+			notifyCreditBalance(readCreditBalanceFromResponse(data));
+			const urls = (data.imageUrls as string[] | undefined) ?? [
+				data.imageUrl as string,
+			];
+			const applied = applyGeneratedImages(
+				urls,
+				data.endpoint as string | undefined,
+			);
+			if (!applied) throw new Error(m.errors.imageGenNoUrl);
+			return applied;
+		} finally {
+			setImageJobMeta(null);
+		}
+	}
+
+	async function makeHandThrowSceneVideo(): Promise<string> {
+		handThrowStillUrlRef.current = null;
+		handThrowEndUrlRef.current = null;
+		if (!productPhoto && promotionMode !== "concept") {
+			throw new Error(m.wizard.handThrowNeedKeyframe);
+		}
+		const startUrl = await generateHandThrowSceneKeyframe("start");
+		handThrowStillUrlRef.current = startUrl;
+		const endUrl = await generateHandThrowSceneKeyframe("end", startUrl);
+		handThrowEndUrlRef.current = endUrl;
+		const pair = [startUrl, endUrl].filter(Boolean);
+		if (pair.length) {
+			setImageVariantUrls(pair);
+			setSelectedVariantIndex(0);
+			setImageUrl(startUrl);
+			imageUrlRef.current = startUrl;
+		}
+		setVideoNote(m.wizard.handThrowAnimatingCard);
+		const subject =
+			promotionMode === "concept"
+				? effectivePromoteName ||
+					product.trim() ||
+					conceptIdea.trim() ||
+					business.trim()
+				: product.trim() || business.trim();
+		const fxPrompt = buildHandThrowSceneVideoPrompt({
+			product: subject || "the landmark",
+			conceptMode: promotionMode === "concept",
+			durationSec: HAND_THROW_SCENE_DURATION_SEC,
+		});
+		if (videoPrompt.trim() !== fxPrompt) setVideoPrompt(fxPrompt);
+
+		const fd = new FormData();
+		fd.set("mode", "image");
+		fd.set("promotion_mode", promotionMode);
+		fd.set("prompt", seedancePromptForGenerate(fxPrompt));
+		fd.set("resolution", "480p");
+		fd.set("duration", String(HAND_THROW_SCENE_DURATION_SEC));
+		fd.set("aspect_ratio", "16:9");
+		fd.set("generate_audio", "false");
+		fd.set("motion_strength", "72");
+		fd.set("negative_prompt", negativePrompt);
+		fd.set("avoid_on_screen_text", "true");
+		fd.set("fast", "true");
+		fd.set("hand_throw_scene", "1");
+		fd.set("product_name", subject);
+		fd.set("business", business.trim());
+		fd.set("image_start_url", startUrl);
+		fd.set("image_end_url", endUrl);
+
+		const res = await fetch("/api/generate", { method: "POST", body: fd });
+		const data = await res.json();
+		if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
+		notifyCreditBalance(readCreditBalanceFromResponse(data));
+		const pathNote = data.generationMode
+			? `${m.wizard.videoGenPathLabel}: ${data.generationMode}${data.endpoint ? ` · ${data.endpoint}` : ""}`
+			: "";
+		setVideoNote(
+			[m.wizard.handThrowHint, pathNote, data.note as string | undefined]
+				.filter(Boolean)
+				.join(" · "),
+		);
+		return data.videoUrl as string;
+	}
+
+	async function generateProductExplodeKeyframe(
+		frame: "start" | "end",
+		startPlateUrl?: string,
+	): Promise<string> {
+		setVideoNote(
+			frame === "end"
+				? m.wizard.productExplodeBuildingEnd
+				: m.wizard.productExplodeBuildingStill,
+		);
+		setImageJobMeta({
+			kind: "image",
+			startedAt: Date.now(),
+			sceneCount: 1,
+		});
+		try {
+			const fd = new FormData();
+			fd.set("visual_style", visualStyleId);
+			fd.set("art_style", artStyleId);
+			if (brandProfile)
+				fd.set("brand_profile", JSON.stringify(brandProfile));
+			fd.set("brand_kit", JSON.stringify(brandKit));
+			fd.set(
+				"product_name",
+				promotionMode === "concept"
+					? effectivePromoteName ||
+							product.trim() ||
+							conceptIdea.trim()
+					: product.trim(),
+			);
+			fd.set("business", business.trim());
+			fd.set(
+				"headline",
+				headline.trim() || product.trim() || conceptIdea.trim(),
+			);
+			fd.set("subline", subline.trim());
+			fd.set("offer", offer.trim());
+			fd.set("prompt_market", promptMarket);
+			fd.set("subject_framing", subjectFraming);
+			fd.set("prompt_extra", effectivePromptExtra());
+			fd.set("workflow_mode", workflowMode);
+			fd.set("promotion_mode", promotionMode);
+			fd.set("image_text_mode", "textless");
+			fd.set("aspect_ratio", "16:9");
+			fd.set(
+				"endpoint",
+				frame === "end" && startPlateUrl
+					? EDIT_ENDPOINT
+					: productPhoto
+						? EDIT_ENDPOINT
+						: TEXT_ENDPOINT,
+			);
+			fd.set("num_images", "1");
+			fd.set("image_output_mode", "single");
+			fd.set("product_explode", "1");
+			fd.set("product_explode_frame", frame);
+			if (frame === "end" && startPlateUrl)
+				fd.set("start_plate_url", startPlateUrl);
+			attachReferenceToForm(fd);
+
+			const res = await fetch("/api/generate-image", {
+				method: "POST",
+				body: fd,
+			});
+			const data = await readGenerateJson(res);
+			if (!res.ok)
+				throw new Error(
+					(data.error as string) || m.errors.polishFailed,
+				);
+			notifyCreditBalance(readCreditBalanceFromResponse(data));
+			const urls = (data.imageUrls as string[] | undefined) ?? [
+				data.imageUrl as string,
+			];
+			const applied = applyGeneratedImages(
+				urls,
+				data.endpoint as string | undefined,
+			);
+			if (!applied) throw new Error(m.errors.imageGenNoUrl);
+			return applied;
+		} finally {
+			setImageJobMeta(null);
+		}
+	}
+
+	async function makeProductExplodeVideo(): Promise<string> {
+		productExplodeStillUrlRef.current = null;
+		productExplodeEndUrlRef.current = null;
+		if (!productPhoto && promotionMode !== "concept") {
+			throw new Error(m.wizard.productExplodeNeedKeyframe);
+		}
+		const startUrl = await generateProductExplodeKeyframe("start");
+		productExplodeStillUrlRef.current = startUrl;
+		const endUrl = await generateProductExplodeKeyframe("end", startUrl);
+		productExplodeEndUrlRef.current = endUrl;
+		const pair = [startUrl, endUrl].filter(Boolean);
+		if (pair.length) {
+			setImageVariantUrls(pair);
+			setSelectedVariantIndex(0);
+			setImageUrl(startUrl);
+			imageUrlRef.current = startUrl;
+		}
+		setVideoNote(m.wizard.productExplodeAnimatingCard);
+		const subject =
+			promotionMode === "concept"
+				? effectivePromoteName ||
+					product.trim() ||
+					conceptIdea.trim() ||
+					business.trim()
+				: product.trim() || business.trim();
+		const fxPrompt = buildProductExplodeVideoPrompt({
+			product: subject || "the product",
+			conceptMode: promotionMode === "concept",
+			durationSec: PRODUCT_EXPLODE_DURATION_SEC,
+		});
+		if (videoPrompt.trim() !== fxPrompt) setVideoPrompt(fxPrompt);
+
+		const fd = new FormData();
+		fd.set("mode", "image");
+		fd.set("promotion_mode", promotionMode);
+		fd.set("prompt", seedancePromptForGenerate(fxPrompt));
+		fd.set("resolution", "480p");
+		fd.set("duration", String(PRODUCT_EXPLODE_DURATION_SEC));
+		fd.set("aspect_ratio", "16:9");
+		fd.set("generate_audio", "false");
+		fd.set("motion_strength", "70");
+		fd.set("negative_prompt", negativePrompt);
+		fd.set("avoid_on_screen_text", "true");
+		fd.set("fast", "true");
+		fd.set("product_explode", "1");
+		fd.set("product_name", subject);
+		fd.set("business", business.trim());
+		fd.set("image_start_url", startUrl);
+		fd.set("image_end_url", endUrl);
+
+		const res = await fetch("/api/generate", { method: "POST", body: fd });
+		const data = await res.json();
+		if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
+		notifyCreditBalance(readCreditBalanceFromResponse(data));
+		const pathNote = data.generationMode
+			? `${m.wizard.videoGenPathLabel}: ${data.generationMode}${data.endpoint ? ` · ${data.endpoint}` : ""}`
+			: "";
+		setVideoNote(
+			[
+				m.wizard.productExplodeHint,
+				pathNote,
+				data.note as string | undefined,
+			]
+				.filter(Boolean)
+				.join(" · "),
+		);
+		return data.videoUrl as string;
+	}
+
 	async function makeImageToVideo(
 		imageStartUrlOverride?: string,
 	): Promise<string> {
@@ -8800,6 +9130,12 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				case "creative-motion":
 					url = await makeCreativeMotionVideo();
 					break;
+				case "hand-throw-scene":
+					url = await makeHandThrowSceneVideo();
+					break;
+				case "product-explode":
+					url = await makeProductExplodeVideo();
+					break;
 				case "image-to-video":
 				default:
 					if (
@@ -9110,6 +9446,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			!socialDripCanAutoStill &&
 			!vacuumInflateCanAutoStill &&
 			!creativeMotionCanAutoStill &&
+			!handThrowCanAutoStill &&
+			!productExplodeCanAutoStill &&
 			!blockbusterCanGenerate &&
 			!h3ShotRecipeCanGenerate) ||
 		(isCinematicStitchOutput &&
@@ -9740,6 +10078,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		setReferenceCarouselSlideCount,
 		contentResearchApplyRef,
 		setContentResearchApplyRef,
+		pendingContentResearchPick,
+		setPendingContentResearchPick,
 		usesProductAssistant,
 		usesConceptTextVideo,
 		conceptReferenceR2vReady,

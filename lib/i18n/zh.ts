@@ -133,19 +133,28 @@ export const zh = {
 		stepHint: "揀最啱描述你而家要推廣嘅選項。",
 		physicalTitle: "實體產品",
 		physicalDesc: "有真實貨品可以影相 — 手鏈、食品、護膚、小工具等。",
-		physicalExamples: "例如：手鏈、洗鼻器、水晶、包裝貨品",
-		physicalTags: ["護膚", "家居", "服裝"],
-		conceptTitle: "服務／網站／概念",
-		conceptDesc: "冇實體貨 — 推廣品牌、網站、課程、會員或收費方案。",
-		conceptExamples: "例如：算命網站、瑜伽班、SaaS 試用、三檔方案",
-		conceptTags: ["顧問", "SaaS", "課程"],
+		physicalExamples: "例如：護膚套裝、零食飲料、飾品珠寶、服裝、家居日用",
+		physicalTags: ["護膚", "食品飲料", "飾品珠寶", "服裝", "家居日用"],
+		conceptTitle: "服務／網站／品牌／概念",
+		conceptDesc: "冇實體貨 — 推廣服務、網站、品牌或概念創意。",
+		conceptExamples:
+			"例如：美容美髮、顧問諮詢、網站上線、品牌宣傳、品牌故事、活動概念",
+		conceptTags: [
+			"美容美髮",
+			"顧問諮詢",
+			"網站上線",
+			"品牌宣傳",
+			"品牌故事",
+			"活動概念",
+			"會員課程",
+		],
 		continueLabel: "進入 studio",
 		continueToStep2: "繼續",
 		switchLaterHint: "之後可喺 studio 頂部切換類型。",
 		tipTitle: "應該揀邊個？",
 		tipChoose: "揀",
 		tipPhysical: "—— 如果你有真實貨品可以影相／寄送俾顧客。",
-		tipConcept: "—— 如果你推廣無形服務、網站或概念。",
+		tipConcept: "—— 如果你推廣服務、網站、品牌或概念。",
 		tipNote: "之後隨時可以改",
 		tipNoteBody: "而家未決定都得 — 之後可以喺 Studio 入面再轉。",
 		secureNote: "你嘅資料安全，唔會對外分享。",
@@ -175,14 +184,14 @@ export const zh = {
 			"製作影片",
 		],
 		phaseBodies: [
-			"揀實體產品定服務／概念。",
+			"揀實體產品定服務／網站／品牌／概念。",
 			"只要相片、只要影片，或先圖再片。",
 			"填資料、研究、風格同素材。",
 			"跑相片同／或影片 — 只顯示你條路徑需要嘅步驟。",
 			"檢查、編輯，再匯出適合 IG／FB／TikTok 嘅廣告。",
 		],
-		physicalShort: "有真實貨品可以影相 — 護膚套裝、家居、服裝同更多。",
-		conceptShort: "推廣品牌、網站、服務或概念，唔使實體貨。",
+		physicalShort: "有真實貨品可以影相 — 護膚、食品、飾品、服裝、家居同更多。",
+		conceptShort: "推廣服務、網站、品牌或概念創意，唔使實體貨。",
 		examplesLabel: "例如",
 		templateBanner: "模板：{name} — 實體產品模式",
 		templateBannerHint: "揀下面「實體產品」以用此版型進入精靈。",
@@ -196,7 +205,7 @@ export const zh = {
 		subtitle: "上傳產品圖 · 揀款式 · 出 Reels",
 		subtitleConcept: "品牌文案 · 揀款式 · 出 feed 圖同 Reels",
 		promotionPhysical: "實體產品",
-		promotionConcept: "服務／概念",
+		promotionConcept: "服務／品牌／概念",
 		switchPromotion: "切換類型",
 		homeLink: "返回 Landing",
 		themeToggleLight: "淺色",
@@ -530,19 +539,31 @@ export const zh = {
 				"product-vacuum-inflate-4s": {
 					title: "真空充氣 ~4s",
 					description:
-						"一鍵：癟袋靜圖 → 充氣飽滿靜圖 → Seedance 4 秒過渡。",
-					costHint: "~2 圖 + 4s Seedance · 產品圖",
+						"一鍵：癟袋靜圖 → 充氣飽滿靜圖 → 4 秒视频過渡。",
+					costHint: "~2 圖 + 4s video · 產品圖",
 				},
 				"product-creative-motion-4s": {
 					title: "產品創意動效 ~4s",
 					description:
-						"揀方案卡（爆汁、撕標、碎紙還原…）→ 自動首尾幀 → Seedance 4 秒。",
-					costHint: "~2 圖 + 4s Seedance · 產品圖",
+						"揀方案卡（爆汁、撕標、碎紙還原…）→ 自動首尾幀 → 4 秒视频。",
+					costHint: "~2 圖 + 4s video · 產品圖",
+				},
+				"product-hand-throw-scene-6s": {
+					title: "手拋萬物變實景 ~6s",
+					description:
+						"掌心微縮開頭 → 真實場景結尾 → 約 6 秒拋出過渡。",
+					costHint: "~2 圖 + 6s video · 產品／地標圖",
+				},
+				"product-product-explode-4s": {
+					title: "產品拆解 ~4s",
+					description:
+						"完整棚拍 → 懸浮零件靜圖 → 約 4 秒柔和拆解（風格化，非 CAD）。",
+					costHint: "~2 圖 + 4s video · 產品圖",
 				},
 				"product-ecom-orbit-6s": {
 					title: "電商環繞 ~6s",
 					description:
-						"一張產品圖 → H3 環繞/仰拍/旋轉。身份鎖定的轉台廣告。",
+						"一張產品圖 → 環繞/仰拍/旋轉。身份鎖定的轉台廣告。",
 					costHint: "~6s 單鏡 · 產品圖",
 				},
 				"product-object-lock-6s": {
@@ -572,7 +593,7 @@ export const zh = {
 				"product-imitate-ad-8s": {
 					title: "仿拍這支廣告 ~8s",
 					description:
-						"你的產品圖 + 參考 MP4 → H3 學運鏡，保留你的 SKU。",
+						"你的產品圖 + 參考 MP4 → 學運鏡，保留你的 SKU。",
 					costHint: "~8s · 產品圖 + 參考影片",
 				},
 				"product-neon-on-real-8s": {
@@ -584,35 +605,35 @@ export const zh = {
 				"product-food-bullet-time-6s": {
 					title: "美食子彈時間 ~6s",
 					description:
-						"打卡美食圖 → 飛濺定格靜圖 → H3 鏡頭環繞懸浮食物。",
-					costHint: "~6s · 人+食物生活照（或 Nano Banana）",
+						"打卡美食圖 → 飛濺定格靜圖 → 鏡頭環繞懸浮食物。",
+					costHint: "~6s · 人+食物生活照（或生成靜圖）",
 				},
 				"product-c4d-motion-8s": {
 					title: "C4D 動態視覺 ~8s",
 					description:
 						"黑場品牌開場 → 抽象材質 → 你嘅產品揭幕（Nike 級 C4D 感）。",
-					costHint: "~8s · 產品圖（或 Nano Banana 靜圖）",
+					costHint: "~8s · 產品圖（或生成靜圖）",
 				},
 				"product-h3-showreel-8s": {
-					title: "H3 秀場 ~8s",
+					title: "秀場一鏡 ~8s",
 					description:
 						"產品靜圖 + 參考秀場。方案卡：汽車電影感 · 鍵盤科技 · 抽象變形。允許動能大字，可選 16:9。",
 					costHint: "~8s · 產品圖 + 參考秀場片",
 				},
 				"product-h3-sphere-mg-8s": {
-					title: "H3 球體運動圖形 ~8s",
+					title: "球體運動圖形 ~8s",
 					description:
 						"球體係可複用嘅 MG 英雄 — 水晶／鉻面／液態／霓虹／啞光行星，映射你嘅產品或 Logo。",
-					costHint: "~8s · 產品圖（或 Nano Banana 靜圖）",
+					costHint: "~8s · 產品圖（或生成靜圖）",
 				},
 				"product-h3-movie-title-8s": {
-					title: "H3 電影標題 ~8s",
+					title: "電影標題 ~8s",
 					description:
 						"電影標題卡 + 多格擦除，圍繞你嘅產品。允許設計感大字 — 唔使參考片。",
-					costHint: "~8s · 產品圖（或 Nano Banana 靜圖）",
+					costHint: "~8s · 產品圖（或生成靜圖）",
 				},
 				"product-h3-lifestyle-8s": {
-					title: "H3 生活人物 ~8s",
+					title: "生活人物 ~8s",
 					description:
 						"真人喺咖啡館／街道／居家場景使用產品 — 唔係美妝 MV。",
 					costHint: "~8s · 人+產品生活照（或生成靜圖）",
@@ -639,14 +660,26 @@ export const zh = {
 				"concept-vacuum-inflate-4s": {
 					title: "真空充氣（概念）~4s",
 					description:
-						"Logo／吉祥物作袋身身份 — 癟→充氣靜圖 → Seedance 4 秒。",
-					costHint: "~2 圖 + 4s Seedance · Logo/吉祥物",
+						"Logo／吉祥物作袋身身份 — 癟→充氣靜圖 → 4 秒视频。",
+					costHint: "~2 圖 + 4s video · Logo/吉祥物",
 				},
 				"concept-creative-motion-4s": {
 					title: "創意動效（概念）~4s",
 					description:
-						"方案卡 + Logo／吉祥物鎖定 → 自動首尾幀 → Seedance 4 秒。",
-					costHint: "~2 圖 + 4s Seedance · Logo/吉祥物",
+						"方案卡 + Logo／吉祥物鎖定 → 自動首尾幀 → 4 秒视频。",
+					costHint: "~2 圖 + 4s video · Logo/吉祥物",
+				},
+				"concept-hand-throw-scene-6s": {
+					title: "手拋變實景（概念）~6s",
+					description:
+						"Logo／吉祥物作微縮身份 → 真實場景結尾 → 約 6 秒拋出過渡。",
+					costHint: "~2 圖 + 6s video · Logo/吉祥物",
+				},
+				"concept-product-explode-4s": {
+					title: "產品拆解（概念）~4s",
+					description:
+						"Logo／吉祥物作裝置鎖定 → 懸浮零件靜圖 → 約 4 秒柔和拆解。",
+					costHint: "~2 圖 + 4s video · Logo/吉祥物",
 				},
 				"concept-beauty-mv-10s": {
 					title: "美妝/角色一鏡（概念）~10s",
@@ -657,7 +690,7 @@ export const zh = {
 				"concept-imitate-ad-8s": {
 					title: "仿拍這支廣告（概念）~8s",
 					description:
-						"品牌標誌 + 參考 MP4 → H3 跟運鏡，保留你的身份。",
+						"品牌標誌 + 參考 MP4 → 跟運鏡，保留你的身份。",
 					costHint: "~8s · Logo/吉祥物 + 參考影片",
 				},
 				"concept-neon-on-real-8s": {
@@ -679,25 +712,25 @@ export const zh = {
 					costHint: "~8s · Logo/吉祥物靜圖",
 				},
 				"concept-h3-showreel-8s": {
-					title: "H3 秀場（概念）~8s",
+					title: "秀場一鏡（概念）~8s",
 					description:
 						"Logo／吉祥物 + 參考秀場。概念優先「抽象變形」；汽車／鍵盤卡睇標識是否貼合。可選 16:9。",
 					costHint: "~8s · Logo/吉祥物 + 參考秀場片",
 				},
 				"concept-h3-sphere-mg-8s": {
-					title: "H3 球體運動圖形（概念）~8s",
+					title: "球體運動圖形（概念）~8s",
 					description:
 						"Logo／吉祥物作球體身份 — 啞光行星／霓虹／水晶包裹。唔使參考片。",
 					costHint: "~8s · Logo/吉祥物靜圖",
 				},
 				"concept-h3-movie-title-8s": {
-					title: "H3 電影標題（概念）~8s",
+					title: "電影標題（概念）~8s",
 					description:
 						"Logo／吉祥物進入電影標題卡 + 多格。允許設計感大字。",
 					costHint: "~8s · Logo/吉祥物靜圖",
 				},
 				"concept-h3-lifestyle-8s": {
-					title: "H3 生活人物（概念）~8s",
+					title: "生活人物（概念）~8s",
 					description:
 						"人物＋品牌標識嘅生活場景。最好有生活照（純 Logo 偏弱）。",
 					costHint: "~8s · 人+Logo/吉祥物生活照",
@@ -1241,15 +1274,19 @@ export const zh = {
 			},
 			"video-only": {
 				title: "只要影片",
-				description: "短片廣告 — 分鏡（可預覽）或單圖動態",
-				cardDescription: "用 AI 場景同片段，直接產出可發佈短片。",
-				tags: ["短片", "影片廣告"],
+				description: "單場景連續鏡頭 — 可直接發佈短片",
+				cardDescription:
+					"單場景：由一張產品關鍵圖做連續運鏡短片，適合快速發佈。",
+				tags: ["單場景", "短片", "影片廣告"],
+				sceneBadge: "只得單場景",
 			},
 			combined: {
 				title: "先要相片，再要影片",
-				description: "先出宣傳圖再做片 — 分鏡片或單圖動態",
-				cardDescription: "先出圖、檢查同微調，再變成吸引嘅短片。",
-				tags: ["廣告企劃", "產品故事"],
+				description: "多場景分鏡 — 先確認畫面，再拼接成片",
+				cardDescription:
+					"多場景分鏡：先出多張場景圖確認，再拼接成一條短片。",
+				tags: ["多場景", "分鏡", "動態廣告"],
+				sceneBadge: "多場景分鏡",
 			},
 		},
 		creationPath: {
@@ -1259,8 +1296,8 @@ export const zh = {
 			bestForLabel: "適合：",
 			tipTitle: "應該揀邊條？",
 			tipImage: "適合需要 feed 圖、Carousel 或靜態廣告。",
-			tipVideo: "適合已有靜態圖，或以短片為主嘅流程。",
-			tipCombined: "適合想先確認畫面，再加動態。",
+			tipVideo: "只得單場景 — 適合一張關鍵圖做出連續運鏡短片。",
+			tipCombined: "多場景分鏡 — 適合先確認多張場景圖，再拼接成一條片。",
 			tipNote: "之後隨時可以改",
 			tipNoteBody: "而家未決定都得 — 之後可喺進階工作室再轉。",
 			backToStep1: "返回",
@@ -1480,7 +1517,7 @@ export const zh = {
 			"designed-poster": {
 				title: "設計海報",
 				description:
-					"商業 feed 海報 — 中英字排、圓章、毛筆品類字、食慾／產品主視覺",
+					"商業 feed 海報 — 你填嘅標題＋標語上圖（任何品類，唔限食品）",
 			},
 			"parts-poster": {
 				title: "零件拆解",
@@ -1621,8 +1658,8 @@ export const zh = {
 			"小紅書／IG feed 海報文法 — 產品／場景主視覺＋設計字排（任何品類，唔限食品；唔係白紙目錄 cutout）：",
 		designedPosterTechniqueSteps: [
 			"主視覺攝影 — 左上柔光、淺景深、場景跟呢件產品品類走",
-			"中英字排 — 大中文標題 → 英文全大楷 → 短 script 標語",
-			"圓章＋一個跟產品相符嘅毛筆品類字（例如：數碼／護膚／甜品／課程）",
+			"你填嘅標題＋標語原句上圖（填咩就畫咩）",
+			"細圓章＋可選一個細毛筆品類字 — 裝飾細過你嘅標題",
 			"色調跟產品／場景走 — 統一，唔好彩虹亂撞",
 			"電子／美妝／食品／時裝同概念／服務場景都用得",
 		],
@@ -1649,7 +1686,7 @@ export const zh = {
 			"model-wear": "例如：男士沉穩風、窗邊自然光、唔要價錢字樣…",
 			"info-poster": "例如：美妝清新感、食品天然感、珠寶極簡 pedestal…",
 			"designed-poster":
-				"例如：左上柔光、食慾場景、中英字排、圓章＋毛筆品類字…",
+				"例如：左上柔光、食慾場景、你填嘅標題＋標語、細圓章…",
 			"parts-poster":
 				"例如：深色棚影、幼引線、6 個標註、石墨色調…",
 			"gaming-cover":
@@ -2081,15 +2118,21 @@ export const zh = {
 		conceptWizardTitle: "概念助手（非實體產品）",
 		conceptWizardHint:
 			"填呢 6 格，然後一鍵帶入主標題／副標／優惠同 prompt 方向。",
+		conceptIdeaLabel: "你嘅概念",
 		conceptIdeaPlaceholder:
-			"先用一句講你想推廣嘅概念（例如：世界盃睇波夜訂位推廣）。",
-		conceptAudiencePlaceholder: "受眾：呢條廣告係想同邊類人講？",
-		conceptPainPlaceholder: "痛點：佢哋而家最困擾係咩？",
-		conceptPromisePlaceholder: "承諾：用你服務後可以得到咩結果？",
-		conceptProofPlaceholder: "證據／方法：點解可信？",
-		conceptCtaPlaceholder: "優惠 + 行動：而家想佢哋做咩？",
-		conceptVisualMetaphorPlaceholder:
-			"視覺隱喻：畫面應該出現咩場景／象徵？",
+			"例如：瑜伽會員招募，或護膚品牌煥新",
+		conceptAudienceLabel: "受眾",
+		conceptAudiencePlaceholder: "呢條廣告係想同邊類人講？",
+		conceptPainLabel: "痛點",
+		conceptPainPlaceholder: "佢哋而家最困擾係咩？",
+		conceptPromiseLabel: "承諾",
+		conceptPromisePlaceholder: "用你服務後可以得到咩結果？",
+		conceptProofLabel: "證據／方法",
+		conceptProofPlaceholder: "點解可信？",
+		conceptCtaLabel: "優惠 + 行動",
+		conceptCtaPlaceholder: "而家想佢哋做咩？",
+		conceptVisualMetaphorLabel: "視覺隱喻",
+		conceptVisualMetaphorPlaceholder: "畫面應該出現咩場景／象徵？",
 		conceptAnalyzeBtn: "AI 分析概念",
 		conceptAnalyzeBusy: "AI 分析概念中…",
 		conceptAnalyzeReady: "概念草稿已填入，請檢查後套用到欄位。",
@@ -2492,12 +2535,22 @@ export const zh = {
 			"vacuum-inflate": {
 				title: "真空充氣",
 				description:
-					"自動癟袋→充氣靜圖 + Seedance 4 秒過渡。",
+					"自動癟袋→充氣靜圖 + 4 秒视频過渡。",
 			},
 			"creative-motion": {
 				title: "產品創意動效",
 				description:
-					"揀方案 → 自動首尾幀 → Seedance 4 秒創意動效。",
+					"揀方案 → 自動首尾幀 → 4 秒视频創意動效。",
+			},
+			"hand-throw-scene": {
+				title: "手拋萬物變實景",
+				description:
+					"掌心微縮 → 真實場景尾幀 → 約 6 秒拋出過渡。",
+			},
+			"product-explode": {
+				title: "產品拆解（風格化）",
+				description:
+					"完整棚拍 → 懸浮零件尾幀 → 約 4 秒柔和拆解（非精準 CAD）。",
 			},
 			
 			"ecom-orbit": {
@@ -2546,22 +2599,22 @@ export const zh = {
 					"黑場品牌開場 → 抽象材質 → 產品揭幕（頂級三維動態視覺）。",
 			},
 			"h3-showreel": {
-				title: "H3 秀場",
+				title: "秀場一鏡",
 				description:
 					"主體靜圖 + 參考秀場。方案卡：汽車 · 鍵盤 · 抽象。允許動能大字，可選 16:9。",
 			},
 			"h3-sphere-mg": {
-				title: "H3 球體運動圖形",
+				title: "球體運動圖形",
 				description:
 					"球體係可複用 MG 英雄 — 水晶、鉻面、液態、霓虹或啞光行星，映射產品／Logo。",
 			},
 			"h3-movie-title": {
-				title: "H3 電影標題",
+				title: "電影標題",
 				description:
 					"電影標題卡 + 多格擦除。允許設計感大字；唔使參考片。",
 			},
 			"h3-lifestyle": {
-				title: "H3 生活人物",
+				title: "生活人物",
 				description:
 					"真人喺生活場景使用產品 — 唔係美妝 MV，唔係純靜物。",
 			},
@@ -2605,7 +2658,7 @@ export const zh = {
 			"scene-breathe": { title: "氛圍呼吸", desc: "靜氣 → 定格＋大標題" },
 			"designed-poster": {
 				title: "設計海報",
-				desc: "食慾主視覺 → 中英字排＋圓章＋毛筆字",
+				desc: "主視覺 → 你填嘅標題＋標語上圖",
 			},
 		},
 		motionPosterTypeOverlayNote: "疊字",
@@ -2630,12 +2683,12 @@ export const zh = {
 		blockbusterNeedConceptHero: "請上傳 Logo／吉祥物，或喺品牌套件存好 Logo。",
 		blockbusterAnimating: "正在生成 9 秒單鏡…",
 		
-		h3ShotNeedHero: "可上傳產品圖，或用 Nano Banana 生成靜圖。",
+		h3ShotNeedHero: "可上傳產品圖，或用 AI 生成靜圖。",
 		h3ShotNeedConceptHero:
-			"可上傳 Logo/吉祥物、用品牌套件 Logo，或用 Nano Banana 生成靜圖。",
+			"可上傳 Logo/吉祥物、用品牌套件 Logo，或用 AI 生成靜圖。",
 		h3ShotNeedReferenceVideo:
-			"請上傳參考 MP4（仿拍、霓虹疊實景、H3 秀場必填）。",
-		h3ShotGenerateStillBtn: "生成靜圖（Nano Banana）",
+			"請上傳參考 MP4（仿拍、霓虹疊實景、秀場一鏡必填）。",
+		h3ShotGenerateStillBtn: "生成靜圖",
 		h3ShotConceptHeroTitle: "主體鎖定靜圖",
 		h3ShotPhotoTitle: {
 			"food-bullet-time": "人＋食物照片",
@@ -2643,7 +2696,7 @@ export const zh = {
 		},
 		h3ShotReelHint: {
 			"imitate-ad":
-				"必填：參考廣告 MP4 — H3 只學運鏡／剪輯節奏（唔抄參考品）。",
+				"必填：參考廣告 MP4 — 只學運鏡／剪輯節奏（唔抄參考品）。",
 			"neon-on-real":
 				"必填：真實實景 MP4 — 呢條片係霓虹場景底。",
 			"h3-showreel":
@@ -2651,7 +2704,7 @@ export const zh = {
 		},
 		h3ShotHeroHint: {
 			"ecom-orbit":
-				"必填：上傳產品圖。H3 環繞該 SKU。",
+				"必填：上傳產品圖。環繞該 SKU。",
 			"object-lock":
 				"必填：上傳產品圖。鏡頭黏住該商品。",
 			"macro-snap":
@@ -2667,7 +2720,7 @@ export const zh = {
 			"food-bullet-time":
 				"必填：人+食物打卡照（臉與菜要清楚）。純 Logo 唔夠。",
 			"c4d-motion":
-				"必填：產品圖（概念可用 Logo／吉祥物）。H3 以該主體做黑場 C4D 揭幕。",
+				"必填：產品圖（概念可用 Logo／吉祥物）。以該主體做黑場 C4D 揭幕。",
 			"h3-showreel":
 				"必填：產品或 Logo／吉祥物靜圖作主體鎖定（配下方秀場 MP4）。允許動能大字。",
 			"h3-sphere-mg":
@@ -2675,11 +2728,11 @@ export const zh = {
 			"h3-movie-title":
 				"必填：產品圖（概念可用 Logo／吉祥物）。標題卡＋多格；允許設計感大字。",
 			"h3-lifestyle":
-				"必填：人+產品生活照（臉同產品要清楚）。純 Logo 偏弱 — 可用 Nano Banana 生成生活靜圖。",
+				"必填：人+產品生活照（臉同產品要清楚）。純 Logo 偏弱 — 可用 AI 生成生活靜圖。",
 		},
 		h3ShotHint: {
 			"ecom-orbit":
-				"請先上傳產品圖 — 未上傳前無法按生成。之後 H3 環繞約 6s。",
+				"請先上傳產品圖 — 未上傳前無法按生成。之後 環繞約 6s。",
 			"object-lock":
 				"請先上傳產品圖 — 未上傳前無法按生成。鏡頭黏住商品。",
 			"macro-snap":
@@ -2817,7 +2870,7 @@ export const zh = {
 			"imitate-ad": {
 				need: ["產品圖", "參考 MP4（運鏡語言）"],
 				attention: ["保留你的 SKU — 不複製參考片產品", "運鏡／節奏跟隨參考片"],
-				output: ["約 8 秒仿拍廣告（MiniMax H3）"],
+				output: ["約 8 秒仿拍廣告（single-clip）"],
 			},
 			"neon-on-real": {
 				need: ["真實／參考 MP4", "可選產品／Logo／吉祥物靜圖（霓虹身份）"],
@@ -2828,13 +2881,17 @@ export const zh = {
 				output: ["約 8 秒霓虹疊實景一鏡"],
 			},
 			"food-bullet-time": {
-				need: ["人+食物打卡生活照（臉與菜要清楚）"],
+				need: [
+					"人+食物／飲品打卡生活照（臉與菜要清楚）",
+					"朝鏡頭舉起食物 — 卷餅、碟裝、波霸都得",
+					"單靠 Logo 唔夠 — 畫面要有真實食物",
+				],
 				attention: [
 					"保持同一道菜 — 不要憑空加食材",
-					"目標：飛濺定格＋鏡頭環繞（不是拉絲融化動畫）",
-					"臉部盡量保持可辨",
+					"目標：飛濺定格＋鏡頭向右環繞，人幾乎靜止",
+					"臉部盡量保持可辨；咖啡店／街景背景更佳",
 				],
-				output: ["約 6 秒美食子彈時間／3D 飛濺環繞"],
+				output: ["約 6 秒美食子彈時間／3D 飛濺打卡片"],
 			},
 			"c4d-motion": {
 				need: ["產品圖（概念可用 Logo／吉祥物）", "主體要清晰，方便黑場鎖定"],
@@ -2856,7 +2913,7 @@ export const zh = {
 					"允許設計感動能大字；禁止字幕條／UI",
 					"抽象變形最通用；汽車／鍵盤係專用鏡頭語言",
 				],
-				output: ["約 8 秒 H3 秀場（9:16 或 16:9）"],
+				output: ["約 8 秒 秀場一鏡（9:16 或 16:9）"],
 			},
 			"h3-sphere-mg": {
 				need: [
@@ -2891,7 +2948,11 @@ export const zh = {
 			},
 			"designed-poster": {
 				need: ["產品圖", "標題（畫面主文案）"],
-				attention: ["商業 feed 海報排版", "鎖定單張 — 無 A/B 或 campaign"],
+				attention: [
+					"你填嘅標題＋標語會原句畫上海報",
+					"商業 feed 海報排版",
+					"鎖定單張 — 無 A/B 或 campaign",
+				],
 				output: ["一張設計商業海報靜圖"],
 			},
 			"parts-poster": {
@@ -2916,19 +2977,19 @@ export const zh = {
 			},
 		},
 		h3ShotGenerateStillBusy: {
-			"ecom-orbit": "Nano Banana 產品圖…",
-			"object-lock": "Nano Banana 靜圖…",
-			"macro-snap": "Nano Banana 美食圖…",
-			"luxury-tabletop": "Nano Banana 奢侈品圖…",
-			"beauty-mv": "Nano Banana 人像…",
-			"imitate-ad": "Nano Banana 產品圖…",
-			"neon-on-real": "Nano Banana 霓虹鎖定靜圖…",
-			"food-bullet-time": "Nano Banana 飛濺定格…",
-			"c4d-motion": "Nano Banana 黑場 C4D 靜圖…",
-			"h3-showreel": "Nano Banana 秀場靜圖…",
-			"h3-sphere-mg": "Nano Banana 球體 MG 靜圖…",
-			"h3-movie-title": "Nano Banana 電影標題靜圖…",
-			"h3-lifestyle": "Nano Banana 生活人物靜圖…",
+			"ecom-orbit": "AI 產品圖…",
+			"object-lock": "AI 靜圖…",
+			"macro-snap": "AI 美食圖…",
+			"luxury-tabletop": "AI 奢侈品圖…",
+			"beauty-mv": "AI 人像…",
+			"imitate-ad": "AI 產品圖…",
+			"neon-on-real": "AI 霓虹鎖定靜圖…",
+			"food-bullet-time": "AI 飛濺定格…",
+			"c4d-motion": "AI 黑場 C4D 靜圖…",
+			"h3-showreel": "AI 秀場靜圖…",
+			"h3-sphere-mg": "AI 球體 MG 靜圖…",
+			"h3-movie-title": "AI 電影標題靜圖…",
+			"h3-lifestyle": "AI 生活人物靜圖…",
 		},
 		h3ShotAnimating: {
 			"ecom-orbit": "正在生成電商環繞片…",
@@ -2940,10 +3001,10 @@ export const zh = {
 			"neon-on-real": "正在生成霓虹疊實景…",
 			"food-bullet-time": "正在生成美食子彈時間…",
 			"c4d-motion": "正在生成 C4D 動態視覺…",
-			"h3-showreel": "正在生成 H3 秀場…",
-			"h3-sphere-mg": "正在生成 H3 球體運動圖形…",
-			"h3-movie-title": "正在生成 H3 電影標題…",
-			"h3-lifestyle": "正在生成 H3 生活人物…",
+			"h3-showreel": "正在生成 秀場一鏡…",
+			"h3-sphere-mg": "正在生成 球體運動圖形…",
+			"h3-movie-title": "正在生成 電影標題…",
+			"h3-lifestyle": "正在生成 生活人物…",
 		},
 		socialDripHint:
 			"三分屏迷因：產品 → 假 IG 欄 → 可愛精緻卡通。有嘢垂直落下穿過中間欄。唔係寫實生活廣告。",
@@ -2959,20 +3020,32 @@ export const zh = {
 		socialDripNeedKeyframe: "三分屏請先上傳產品相，或填概念主題。",
 		
 		vacuumInflateHint:
-			"一鍵真空充氣：Nano Banana 生成癟袋同充氣靜圖，再由 Seedance 約 4 秒過渡。請上傳產品包裝圖。",
+			"一鍵真空充氣：AI 生成癟袋同充氣靜圖，再由 約 4 秒影片過渡。請上傳產品包裝圖。",
 		vacuumInflateBuildingStill: "第 1/3 步：癟袋開頭靜圖…",
 		vacuumInflateBuildingEnd: "第 2/3 步：充氣結尾靜圖…",
-		vacuumInflateAnimatingCard: "第 3/3 步：Seedance 充氣過渡中…",
+		vacuumInflateAnimatingCard: "第 3/3 步：充氣過渡中…",
 		vacuumInflateNeedKeyframe: "請先上傳產品圖（概念可用 Logo／吉祥物或主題）。",
 		creativeMotionHint:
-			"產品創意動效：揀方案卡，自動生成首尾幀，再 Seedance 約 4 秒。",
+			"產品創意動效：揀方案卡，自動生成首尾幀，再 約 4 秒影片。",
 		creativeMotionBuildingStill: "第 1/3 步：創意動效開頭靜圖…",
 		creativeMotionBuildingEnd: "第 2/3 步：創意動效結尾靜圖…",
-		creativeMotionAnimatingCard: "第 3/3 步：Seedance 方案過渡中…",
+		creativeMotionAnimatingCard: "第 3/3 步：方案過渡中…",
 		creativeMotionNeedKeyframe: "請先上傳產品圖（概念可用 Logo／吉祥物或主題）。",
+		handThrowHint:
+			"手拋萬物變實景：AI 生成掌心+微縮開頭同真實場景結尾，再由約 6 秒影片過渡。最好有清晰產品／地標圖。",
+		handThrowBuildingStill: "第 1/3 步：掌心微縮開頭靜圖…",
+		handThrowBuildingEnd: "第 2/3 步：真實場景結尾靜圖…",
+		handThrowAnimatingCard: "第 3/3 步：拋出→實景過渡中…",
+		handThrowNeedKeyframe: "請先上傳產品圖（概念可用 Logo／吉祥物或主題）。",
+		productExplodeHint:
+			"風格化產品拆解：完整棚拍 → 懸浮零件靜圖 → 約 4 秒柔和拆解。零件係發明式點綴 — 唔係精準 CAD 內部。",
+		productExplodeBuildingStill: "第 1/3 步：完整產品棚拍靜圖…",
+		productExplodeBuildingEnd: "第 2/3 步：懸浮零件拆解靜圖…",
+		productExplodeAnimatingCard: "第 3/3 步：拆解過渡中…",
+		productExplodeNeedKeyframe: "請先上傳產品圖（概念可用 Logo／吉祥物或主題）。",
 		creativeMotionSchemeTitle: "方案卡",
 		creativeMotionSchemeHint:
-			"同一套首尾幀 Seedance，唔同創意。自動會揀啱嘅——再生成試另一種。",
+			"同一套首尾幀過渡，唔同創意。自動會揀啱嘅——再生成試另一種。",
 		creativeMotionSchemeAuto: "自動 · 啱產品",
 		creativeMotionSchemes: {
 			"juice-burst": { title: "檸檬爆汁", desc: "乾燥產品 → 果汁飛濺開場" },
@@ -3188,7 +3261,7 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 			combined:
 				"預設只上傳產品整靚廣告圖。想跟另一張廣告風格先揀「產品 + 風格參考」。",
 		},
-		imageModelLabel: "相片 AI 模型",
+		imageModelLabel: "圖片品質",
 		imageModels: {
 			"nano-banana-2-edit": {
 				label: "AI 出圖 Edit（預設）",
@@ -3270,6 +3343,8 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 		imageReviewAddLogoBtn: "加 Logo",
 		imageReviewEditCanvasBtn: "喺畫布編輯",
 		imageReviewRegenerateOneBtn: "重新生成",
+		imageReviewBackLibraryNote:
+			"呢張圖已儲存到「我的資料庫」。返回後唔會返到呢一頁，可喺資料庫查看。",
 		sidePanelRequirementsTitle: "必填項目",
 		sidePanelCostTitle: "預計費用",
 		sidePanelTipsTitle: "提示",
@@ -3403,7 +3478,7 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 		planProductVideoBusy: "AI 分析相片中，寫緊動態 prompt…",
 		planProductVideoReady: "動態方案已準備 — 請檢查下方 prompt 再生成",
 		productVideoSituationLabel: "建議場景",
-		productVideoPlanLabel: "動態 Prompt（AI）",
+		productVideoPlanLabel: "動態 Prompt",
 		productVideoPlanHint:
 			"已分析你上傳嘅相；AI 寫好鏡頭同動態。可喺進階修改。",
 		productVideoAssistantPreflight:
@@ -3673,7 +3748,7 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 		},
 		"designed-poster": {
 			name: "設計商業海報",
-			description: "食慾主視覺＋中英字排、圓章、毛筆品類 — 小紅書／IG feed",
+			description: "主視覺＋你填嘅標題同標語 — 小紅書／IG feed",
 		},
 		"parts-poster": {
 			name: "零件拆解海報",
@@ -3760,7 +3835,7 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 		tvcNeedsPaidPlanTitle: "12 秒 TVC 需要付費方案",
 		storyboardEngineChoiceTitle: "單鏡額度唔夠 — 拼接後備 拼接而家用得",
 		storyboardEngineChoiceBody:
-			"單鏡出片 12 秒大約要 {h3} token。你而家有 {balance}。拼接後備 拼接（約 {拼接後備}）係 4 段剪埋，唔係一鏡到底。",
+			"單鏡出片 12 秒大約要 {h3} token。你而家有 {balance}。拼接後備 拼接（約 {kling}）係 4 段剪埋，唔係一鏡到底。",
 		storyboardEngineChoiceH3: "升級用單鏡出片",
 		storyboardEngineChoiceKling: "而家用拼接後備",
 		storyboardCellBlocked:
@@ -3852,7 +3927,7 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 		scriptLabel: "口播講稿（約 10 秒）",
 		scriptPlaceholder: "控制喺約 10 秒內 — 一句 hook + 一個賣點 + CTA。",
 		scriptHint: "10 秒 UGC 建議 1–3 句短句。AI 稿可以再改。",
-		planScript: "AI 寫講稿（AI）",
+		planScript: "AI 寫講稿",
 		planningScript: "寫講稿中…",
 		planScriptHint: "用 AI 根據產品名草稿約 10 秒口播。生成後可以再改。",
 		scriptReady: "AI 講稿已好 — 可改再預聽聲線。",
@@ -4233,7 +4308,7 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 	contentResearch: {
 		title: "AI 平台內容研究",
 		physical: "實體產品",
-		concept: "服務／概念",
+		concept: "服務／品牌／概念",
 		topicPlaceholder: "例如：水晶手鏈送禮指南、洗鼻器…",
 		searchKeywordLabel: "搜尋關鍵字（喺呢個品類搵熱門帖）",
 		searchKeywordPlaceholder: "例如：水晶手串、護膚流程…",
@@ -4246,6 +4321,7 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 		promoteProductRequired:
 			"請先填產品名稱 — 所有文案同圖片都會推廣呢個產品，唔會用參考帖話題。",
 		researchBtn: "即時研究內容",
+		directPostBadge: "快捷入口",
 		directPostTitle: "或貼上你想跟嘅參考帖",
 		directPostHint:
 			"已有目標帖就唔使搜關鍵字 — 支援 xhslink、小紅書 explore 連結、Instagram /p/ 或 /reel/。實體產品請先填上方產品名稱。xhslink 失效時，請喺 App 內「分享 → 複製連結」貼完整連結。",
@@ -4278,14 +4354,19 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 		tiktokImageWarning:
 			"TikTok 只有影片 — 圖文研究請選小紅書或 Instagram，或改選「影片」模式。",
 		useAngle: "用呢個方向",
+		selectAngle: "揀呢個風格",
 		selectedLabel: "已選擇 ✓",
+		selectedContinueHint: "已選擇 — 撳底部「繼續」就會套用呢個風格。",
 		resultTitle: "AI 研究結果（推薦）",
 		resultSubtitle: "根據小紅書、Instagram、TikTok 熱門帖整理。",
+		resultSubtitleForPlatform: (platform: string) =>
+			`根據今次搜尋嘅${platform}熱門帖整理。`,
 		styleSummaryLabel: "風格摘要",
 		toneLabel: "語氣",
 		layoutNotesLabel: "版面重點",
 		viewMoreExamples: "睇更多例子",
 		sourcePlatformsLabel: "來源平台",
+		sourcePlatformLabel: "來源平台",
 		morePlatforms: (count: number) => `+${count} 個`,
 		applyingAngle: "下載參考片並套用中…",
 		applied: "已套用 — 請檢查欄位再繼續。",
@@ -4432,6 +4513,10 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 			hint: "平台研究借排版同風格 — 產品名仍然係你嘅。直接創作會跳過研究，繼續設定。",
 			conceptTitle: "研究風格，定用概念助手。",
 			conceptHint: "平台研究搵排版參考。概念助手直接寫簡報，唔使先研究。",
+			pathOptionsPhysical:
+				"任選一種開始：① 平台研究 · ② 直接創作 · ③ 或喺下面貼參考帖連結。",
+			pathOptionsConcept:
+				"任選一種開始：① 平台研究 · ② 概念助手 · ③ 或貼參考帖 / 遲啲再設。",
 			tabsAriaLabel: "點樣開始",
 			tabResearch: "平台研究",
 			tabDirect: "直接創作",
@@ -4540,7 +4625,7 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 			stylePickerQuickDesc: "以產品為主嘅宣傳圖，唔一定要有模特兒。",
 			stylePickerDesignedLabel: "設計海報",
 			stylePickerDesignedDesc:
-				"商業 feed 海報 — 中英字排、圓章、跟產品品類嘅毛筆字（唔限食品）。",
+				"商業 feed 海報 — 你填嘅標題＋標語上圖（唔限食品）。",
 			stylePickerPartsLabel: "零件拆解",
 			stylePickerPartsDesc:
 				"產品爆炸圖 — 拆開零件並標註說明，一張海報連標題同內容。",
@@ -4587,7 +4672,7 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 				},
 				designed: {
 					title: "呢個方向：重點填「會上海報嘅字」",
-					body: "主標題 = 海報大標題（中英字排）。輔助文案 = 短標語。產品名影響主視覺同毛筆品類字。額外要求寫圓章文案／色調／場景 — 唔好當主標題用。",
+					body: "主標題 = 海報大標題（你填咩就畫咩，唔會換成產品名或亂發明標語）。輔助文案 = 短標語。額外要求只寫色調／場景。",
 					hookLabel: "海報主標題 (hook)",
 					hookPlaceholder: "例如：便攜續航 · All-day power",
 					supportingLabel: "海報標語",
@@ -4873,16 +4958,23 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 		},
 		conceptNameStep: {
 			stepEyebrow: "第 3 步",
-			title: "概念叫咩名？",
-			hint: "為服務或概念改個名 — 下一步會揀研究或概念助手。",
-			label: "概念 / 服務名稱",
+			title: "你嘅概念係咩？",
+			hint: "寫出要推廣嘅服務、品牌、會員或活動概念 — 下一步會揀研究或概念助手。",
+			label: "你嘅概念",
 			labelHint: "繼續前必須填寫",
-			placeholder: "例如：快速批核私人貸款",
+			placeholder: "例如：瑜伽會員招募",
 			examplesLabel: "試下例子",
-			examples: ["快速批核私人貸款", "瑜伽會籍", "SaaS 免費試用"],
+			examples: [
+				"護膚品牌煥新",
+				"瑜伽會員招募",
+				"雙十一閃購",
+				"美白當日預約",
+				"顧問官網發布",
+				"週末早午餐推廣",
+			],
 			tipTitle: "點解要填？",
 			tipBody:
-				"Studio 會用呢個名寫 prompt、簡報同畫面文案，等廣告清楚講你推緊嘅服務或優惠。",
+				"Studio 會用呢個概念寫 prompt、簡報同畫面文案，等廣告清楚講你推緊嘅品牌、會員、優惠或活動。",
 			tipNote: "之後隨時可以改",
 			tipNoteBody: "喺設定或進階工作室都可以再改。",
 		},
@@ -4897,10 +4989,10 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 		conceptSourceResearchTitle: "平台研究",
 		conceptSourceResearchDesc:
 			"搵 trending 排版參考 — 跳過概念助手，之後必須檢查文案。",
-		conceptTopicTitle: "概念名稱",
-		conceptTopicHint: "為服務或概念改個名 — 下一步會揀研究或概念助手。",
-		conceptTopicLabel: "概念 / 服務名稱",
-		conceptTopicPlaceholder: "例如：快速批核私人貸款",
+		conceptTopicTitle: "你嘅概念",
+		conceptTopicHint: "寫出要推廣嘅服務、品牌、會員或活動概念 — 下一步會揀研究或概念助手。",
+		conceptTopicLabel: "你嘅概念",
+		conceptTopicPlaceholder: "例如：瑜伽會員招募",
 		copyEditTitle: "內容與生成設定",
 		copyEditHint: "主標、副標、優惠同可選品牌設定。",
 		brandKitSummary: "品牌設定（可選）",
@@ -4920,7 +5012,7 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 			pick_output: "請揀圖片、影片或兩者。",
 			pick_subject: "請揀實體產品或服務/概念。",
 			pick_intake: "請揀平台研究或直接創作。",
-			complete_research: "請先套用一個研究方向，或改揀直接創作。",
+			complete_research: "請先揀一個研究方向（或貼參考帖），再撳繼續 — 或改揀直接創作。",
 			pick_concept_source: "請揀概念助手或平台研究。",
 			need_pick_angle: "請揀研究貼文或上傳參考。",
 			pick_cinematic_mode: "請揀單場或多場拼接。",

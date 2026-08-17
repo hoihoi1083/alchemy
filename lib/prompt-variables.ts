@@ -506,36 +506,32 @@ export function buildInfoPosterImagePrompt(vars: PromptVariables): string {
  */
 export function buildDesignedPosterImagePrompt(vars: PromptVariables): string {
 	const product = vars.product?.trim() || "the product";
-	const headline = vars.headline?.trim() || product;
+	const headline = vars.headline?.trim() || "";
 	const subline = vars.subline?.trim() || "";
 	const offer = vars.offer?.trim() || "";
-	const bilingual =
-		vars.market === "en"
-			? `Bilingual optional: large English headline "${headline}" + short support line; keep hierarchy clear.`
-			: vars.market === "cn"
-				? `Bilingual type stack (mandatory): large Simplified Chinese title with exact characters from "${headline}" → English ALL-CAPS serif translation under it → short script/italic tagline from support copy. Spell every Chinese character accurately.`
-				: `Bilingual type stack (mandatory): large Traditional Chinese title with exact characters from "${headline}" → English ALL-CAPS serif translation under it → short script/italic tagline from support copy. Spell every Chinese character accurately.`;
 
 	return joinParts(
 		`Create a vertical DESIGNED COMMERCIAL POSTER for ${product} — premium commercial photography with intentional set design matching THIS product category.`,
 		`NOT a blank white catalog cutout. NOT a white IG info-flyer. NOT a crowded Canva collage.`,
 		`CATEGORY LOCK (critical): Infer category from "${product}" and IMAGE 1 (electronics / beauty / F&B / fashion / jewelry / wellness / service…).`,
-		`Set, props, palette, and brush category word MUST match that category. NEVER default to food, dessert, oranges, fruit, or serum/精華液 aesthetics unless the product truly is food or skincare.`,
-		`Examples: power bank/electronics → desk/cable/tech surface, cool or graphite palette, brush word like 數碼／充電／科技 — NOT oranges, NOT 精華液.`,
+		`Set, props, palette, and optional brush category word MUST match that category. NEVER default to food, dessert, oranges, fruit, or serum/精華液 aesthetics unless the product truly is food or skincare.`,
+		`Examples: power bank/electronics → desk/cable/tech surface, cool or graphite palette — NOT oranges, NOT 精華液.`,
 		`Beauty serum → stone/linen + soft botanical. Dessert/F&B → appetite food set. Jewelry → velvet/pedestal.`,
 		`POSTER GRAMMAR (fixed zones, not free collage):`,
 		`1) Hero: keep exact product from IMAGE 1 when attached; fill lower-mid frame; soft key from upper-left; shallow DOF; real material texture (no plastic CGI).`,
 		`2) Palette: derive from the product packaging / material / category mood — cohesive, not rainbow.`,
-		`3) ${bilingual}`,
+		headline
+			? `3) ON-IMAGE TITLE (paint EXACTLY ONCE, verbatim — same letters/script the user typed): "${headline}". Do NOT replace this with the product name "${product}". Do NOT translate it. Do NOT invent an English ALL-CAPS pair or extra bilingual stack the user did not type.`
+			: `3) No user title — a short title using only "${product}" is allowed.`,
 		subline
-			? `Support / tagline copy (exact when Chinese): ${subline}.`
-			: "Invent a short commercial tagline matching the product benefit — keep under 6 words (not a food slogan unless it is food).",
-		`4) Chrome: one circular seal/stamp (small claim or brand cue); ONE large brush/calligraphy category word that names THIS category only — not a wall of stickers.`,
-		offer ? `Optional small offer badge (exact): ${offer}.` : "",
+			? `ON-IMAGE TAGLINE (paint EXACTLY ONCE, verbatim, smaller under the title): "${subline}". Do NOT invent a different slogan.`
+			: `No user tagline — leave the support line empty. Do NOT invent a commercial slogan.`,
+		`4) Chrome (SECONDARY — must not replace or crowd out user title/tagline): one small circular seal as a graphic (no new slogan; at most 1–2 characters taken from the user title if it is Chinese). Optional ONE small brush category word in a corner matching IMAGE 1 category — much smaller than the user title. Never paint a second headline.`,
+		offer ? `Optional small offer badge (exact): "${offer}".` : "No offer line — do not invent prices, CTAs, or extra claims.",
 		vars.business ? `Brand cue may appear in seal or footer: ${vars.business}.` : "",
 		`5) Layout: generous negative space in type zones; hero and type must both read at phone size.`,
 		`6) Quality: no watermark, no social UI, no misspelled characters, no neon gradients, no floating English meta labels (CTA/logo/brand).`,
-		`FORBIDDEN: wrong-category set dressing (fruit/dessert behind electronics; spa serum look for a power bank; fake food when product is tech).`,
+		`FORBIDDEN: wrong-category set dressing (fruit/dessert behind electronics; spa serum look for a power bank; fake food when product is tech); invented slogans; product-name-as-title when a user title exists; extra English translations.`,
 		imageReferenceAnchorBlock(vars),
 		`Remove outdated marketing text from IMAGE 1 only where new poster copy replaces it.`,
 		MARKET_HINTS[vars.market],
@@ -1613,10 +1609,14 @@ function singlePlanBlock(plan: SingleImagePlan): string {
 		plan.theme ? `Theme: ${plan.theme}.` : "",
 		`Art direction (visual DNA): ${plan.visualDna}.`,
 		`Layout: ${plan.composition}.`,
-		plan.title ? `Main hook on image: "${plan.title}".` : "",
-		plan.body ? `Supporting line: ${plan.body}.` : "",
-		plan.takeaway ? `Closing line: ${plan.takeaway}.` : "",
-		"Do NOT paint the English word LOGO, or any fake brand-mark circle/placeholder seal. Skip logo marks unless a real brand logo image is provided. Do NOT invent 立即選購 / Shop Now unless that exact CTA is in the campaign copy above.",
+		plan.title
+			? `Main hook on image (verbatim, paint EXACTLY ONCE — do not substitute the product name): "${plan.title}".`
+			: "",
+		plan.body
+			? `Supporting line (verbatim, paint EXACTLY ONCE): ${plan.body}.`
+			: "",
+		plan.takeaway ? `Closing line (verbatim): ${plan.takeaway}.` : "",
+		"Do NOT invent extra on-image slogans beyond title / supporting / closing above. Do NOT paint the English word LOGO, or any fake brand-mark circle/placeholder seal. Skip logo marks unless a real brand logo image is provided. Do NOT invent 立即選購 / Shop Now unless that exact CTA is in the campaign copy above.",
 	);
 }
 

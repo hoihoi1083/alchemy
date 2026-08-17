@@ -59,17 +59,11 @@ export async function POST(request: Request) {
       usePlaybookOnly,
       mediaFilter: body.mediaFilter === "image" || body.mediaFilter === "video" ? body.mediaFilter : undefined,
     });
-    const filterNote =
-      plan.mediaFilter === "image"
-        ? " · image/carousel posts only"
-        : plan.mediaFilter === "video"
-          ? " · video/reels only"
-          : "";
     const sourceNote =
       plan.researchMode === "live-web"
         ? plan.searchProvider === "justoneapi"
-          ? `${plan.platformLabel} 貼文搜尋 (live search) — ${plan.posts?.length ?? 0} posts · ${plan.candidates.length} directions${filterNote} · AI synthesis`
-          : `Live web research (${plan.searchProvider}) — ${plan.sources?.length ?? 0} sources${filterNote} · AI synthesis`
+          ? `${plan.platformLabel} 貼文搜尋 (live search)`
+          : `Live web research (${plan.searchProvider})`
         : "AI playbook suggestions (no web search)";
     return NextResponse.json({
       plan,

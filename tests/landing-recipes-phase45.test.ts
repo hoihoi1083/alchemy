@@ -13,6 +13,10 @@ import {
 import { IMAGE_TEXT_MODES, imageTextPreviewSrc } from "../lib/image-text-mode";
 import { SUBJECT_FRAMINGS, subjectFramingPreviewSrc } from "../lib/prompt-variables";
 import {
+  VIDEO_CREATIVE_MODES,
+  videoModePreviewSrc,
+} from "../lib/creative-workflow";
+import {
   isLandingRecipeId,
   isImagePosterLandingRecipe,
   landingRecipesForPromotion,
@@ -71,6 +75,8 @@ describe("landing-recipes", () => {
       "product-blockbuster-9s",
       "product-vacuum-inflate-4s",
       "product-creative-motion-4s",
+      "product-hand-throw-scene-6s",
+      "product-product-explode-4s",
       "product-ecom-orbit-6s",
       "product-object-lock-6s",
       "product-macro-snap-6s",
@@ -94,6 +100,8 @@ describe("landing-recipes", () => {
       "concept-blockbuster-9s",
       "concept-vacuum-inflate-4s",
       "concept-creative-motion-4s",
+      "concept-hand-throw-scene-6s",
+      "concept-product-explode-4s",
       "concept-beauty-mv-10s",
       "concept-imitate-ad-8s",
       "concept-neon-on-real-8s",
@@ -311,7 +319,18 @@ describe("video-safe art styles", () => {
 
   it("landing recipes have preview images", () => {
     for (const id of LANDING_RECIPE_IDS) {
-      assert.match(LANDING_RECIPES[id].previewSrc, /\/recipes\//);
+      assert.match(
+        LANDING_RECIPES[id].previewSrc,
+        /\/(recipes|video-modes|visual-styles)\//,
+      );
+    }
+  });
+
+  it("video creative modes use dedicated video-mode thumbs", () => {
+    const srcs = VIDEO_CREATIVE_MODES.map(videoModePreviewSrc);
+    assert.equal(new Set(srcs).size, srcs.length);
+    for (const id of VIDEO_CREATIVE_MODES) {
+      assert.match(videoModePreviewSrc(id), new RegExp(`/video-modes/${id}\\.png`));
     }
   });
 

@@ -19,6 +19,8 @@ export type VideoCreativeMode =
   | "blockbuster"
   | "vacuum-inflate"
   | "creative-motion"
+  | "hand-throw-scene"
+  | "product-explode"
   | "ecom-orbit"
   | "object-lock"
   | "macro-snap"
@@ -48,6 +50,8 @@ export const VIDEO_CREATIVE_MODES: VideoCreativeMode[] = [
   "blockbuster",
   "vacuum-inflate",
   "creative-motion",
+  "hand-throw-scene",
+  "product-explode",
   "ecom-orbit",
   "object-lock",
   "macro-snap",
@@ -65,30 +69,8 @@ export const VIDEO_CREATIVE_MODES: VideoCreativeMode[] = [
   "image-to-video",
 ];
 
-const H3_RECIPE_PREVIEW_ALIAS = new Set<VideoCreativeMode>([
-  "social-drip",
-  "blockbuster",
-  "vacuum-inflate",
-  "creative-motion",
-  "ecom-orbit",
-  "object-lock",
-  "macro-snap",
-  "luxury-tabletop",
-  "beauty-mv",
-  "imitate-ad",
-  "neon-on-real",
-  "food-bullet-time",
-  "c4d-motion",
-  "h3-showreel",
-  "h3-sphere-mg",
-  "h3-movie-title",
-  "h3-lifestyle",
-]);
-
 export function videoModePreviewSrc(id: VideoCreativeMode): string {
-  // H3 shot recipes share motion-poster card art until dedicated preview ships.
-  const file = H3_RECIPE_PREVIEW_ALIAS.has(id) ? "motion-poster" : id;
-  return `/images/studio/video-modes/${file}.png?v=1`;
+  return `/images/studio/video-modes/${id}.png?v=2`;
 }
 
 /** Recipe owns the motion prompt — skip DeepSeek auto-plan. */
@@ -101,6 +83,8 @@ export function isRecipeOwnedVideoMode(
     mode === "blockbuster" ||
     mode === "vacuum-inflate" ||
     mode === "creative-motion" ||
+    mode === "hand-throw-scene" ||
+    mode === "product-explode" ||
     mode === "ecom-orbit" ||
     mode === "object-lock" ||
     mode === "macro-snap" ||
@@ -175,6 +159,8 @@ export function videoModesForGoal(goal: OutputGoal): VideoCreativeMode[] {
       "blockbuster",
       "vacuum-inflate",
       "creative-motion",
+      "hand-throw-scene",
+      "product-explode",
       ...H3_SHOT_PICKER_MODES,
       "social-drip",
       "reference-concept",
@@ -188,6 +174,8 @@ export function videoModesForGoal(goal: OutputGoal): VideoCreativeMode[] {
       "blockbuster",
       "vacuum-inflate",
       "creative-motion",
+      "hand-throw-scene",
+      "product-explode",
       ...H3_SHOT_PICKER_MODES,
       "social-drip",
       "product-promo",
@@ -212,6 +200,8 @@ export function videoModesForStudio(
       "blockbuster",
       "vacuum-inflate",
       "creative-motion",
+      "hand-throw-scene",
+      "product-explode",
       ...h3Modes,
       "social-drip",
       "reference-concept",
@@ -224,6 +214,8 @@ export function videoModesForStudio(
       "blockbuster",
       "vacuum-inflate",
       "creative-motion",
+      "hand-throw-scene",
+      "product-explode",
       ...h3Modes,
       "social-drip",
       "product-promo",

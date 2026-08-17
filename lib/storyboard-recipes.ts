@@ -10,6 +10,10 @@ export const STORYBOARD_RECIPE_IDS = ["classic-tvc", "luxury-birth"] as const;
 
 export type StoryboardRecipeId = (typeof STORYBOARD_RECIPE_IDS)[number];
 
+export function storyboardRecipePreviewSrc(id: StoryboardRecipeId): string {
+  return `/images/studio/schemes/storyboard/${id}.png?v=1`;
+}
+
 /** Luxury birth allows 3 (tight) or 5 (recommended) scenes only. */
 export const LUXURY_BIRTH_SCENE_COUNTS = ["3", "5"] as const;
 

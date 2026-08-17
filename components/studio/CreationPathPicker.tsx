@@ -13,8 +13,8 @@ type Props = {
 
 const PATH_IMAGES: Record<WorkflowMode, string> = {
   "image-only": "/images/landing/start-path-images-only.png?v=4",
-  "video-only": "/images/landing/start-path-videos-only.png?v=4",
-  combined: "/images/landing/start-path-combined.png?v=4",
+  "video-only": "/images/landing/start-path-videos-only.png?v=5",
+  combined: "/images/landing/start-path-combined.png?v=5",
 };
 
 /** Soft purple badge icons under the preview image. */
@@ -131,6 +131,18 @@ const PATH_CSS = `
   object-fit: cover;
   object-position: center;
   display: block;
+}
+.path-scene-badge {
+  position: absolute; left: 0.5rem; bottom: 0.5rem; z-index: 2;
+  display: inline-flex; align-items: center; max-width: calc(100% - 1rem);
+  padding: 0.28rem 0.55rem; border-radius: 9999px;
+  background: rgba(15, 23, 42, 0.78); color: #fff;
+  font-size: 11px; font-weight: 700; line-height: 1.2;
+  letter-spacing: 0.01em; backdrop-filter: blur(6px);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.25);
+}
+.path-type-card.is-selected .path-scene-badge {
+  background: rgba(108, 59, 255, 0.92);
 }
 .path-card-icon {
   display: inline-flex;
@@ -297,6 +309,9 @@ export function CreationPathPicker({
                     </span>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={PATH_IMAGES[id]} alt="" />
+                    {"sceneBadge" in copy && copy.sceneBadge ? (
+                      <span className="path-scene-badge">{copy.sceneBadge}</span>
+                    ) : null}
                   </div>
 
                   <div className="path-card-icon" aria-hidden>
@@ -378,6 +393,18 @@ export function CreationPathPicker({
                     <div className="min-w-0">
                       <p className="text-[13px] font-bold leading-snug text-slate-900">
                         {modes[row.mode].title}
+                        {(() => {
+                          const badge =
+                            "sceneBadge" in modes[row.mode]
+                              ? (modes[row.mode] as { sceneBadge?: string })
+                                  .sceneBadge
+                              : undefined;
+                          return badge ? (
+                            <span className="ml-1.5 inline-flex rounded-full bg-violet-100 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700">
+                              {badge}
+                            </span>
+                          ) : null;
+                        })()}
                       </p>
                       <p className="mt-0.5 text-[12px] leading-snug text-slate-500">
                         {row.body}

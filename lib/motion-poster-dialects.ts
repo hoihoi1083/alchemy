@@ -16,6 +16,12 @@ export const MOTION_POSTER_DIALECT_IDS = [
 export type MotionPosterDialectId = (typeof MOTION_POSTER_DIALECT_IDS)[number];
 export type MotionPosterDialectPick = MotionPosterDialectId | "auto";
 
+export function motionPosterDialectPreviewSrc(
+  id: MotionPosterDialectId,
+): string {
+  return `/images/studio/schemes/motion-poster/${id}.png?v=1`;
+}
+
 export type MotionPosterTone =
   | "fnb"
   | "dessert"

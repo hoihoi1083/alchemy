@@ -96,9 +96,9 @@ export function typographyHintForLocale(
   const verbatim =
     lines.length > 0
       ? locale === "zh-hant"
-        ? ` On-image copy must express this message in Traditional Chinese (convert any Simplified 简体 to Traditional 繁體 before rendering): ${lines.join(" · ")}.`
+        ? ` Paint these on-image lines verbatim (only convert 简体→繁體 if a line already contains Chinese; do NOT translate English/Latin into Chinese; do NOT replace with the product name): ${lines.join(" · ")}.`
         : locale === "zh-hans"
-          ? ` On-image copy must express this message in Simplified Chinese (convert any Traditional 繁體 to Simplified 简体 before rendering — e.g. 精華→精华, 護膚→护肤): ${lines.join(" · ")}.`
+          ? ` Paint these on-image lines verbatim (only convert 繁體→简体 if a line already contains Chinese — e.g. 精華→精华; do NOT translate English/Latin into Chinese; do NOT replace with the product name): ${lines.join(" · ")}.`
           : ` Render ONLY these exact on-image lines (verbatim — do not translate, do not add extra words): ${lines.join(" · ")}.`
       : "";
   if (locale === "en") {
@@ -417,6 +417,18 @@ export function coerceCopyScript(text: string, locale: CopyLocale): string {
   if (!text.trim() || locale === "en") return text;
   if (locale === "zh-hans") return applyPhraseMap(text, HANT_TO_HANS);
   return applyPhraseMap(text, HANS_TO_HANT);
+}
+
+/**
+ * User-typed on-image copy. Keep Latin/English verbatim (never translate to Chinese).
+ * Only 简繁-convert when the line already contains Chinese.
+ */
+export function preserveUserOnImageCopy(text: string, locale: CopyLocale): string {
+  const t = text.trim();
+  if (!t) return t;
+  if (locale === "en") return t;
+  if (!/[\u4e00-\u9fff]/.test(t)) return t;
+  return coerceCopyScript(t, locale);
 }
 
 export function coerceFieldsToScript(

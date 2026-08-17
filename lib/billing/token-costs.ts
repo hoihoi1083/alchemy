@@ -174,6 +174,40 @@ export function estimateImageTokens(opts: {
   return TOKEN_COST.image;
 }
 
+/** Token cost to regenerate one still vs the full current image run. */
+export function estimateImageRegenTokens(opts: {
+  scope: "one" | "all";
+  outputMode?: "single" | "ab" | "campaign" | "teaching-carousel";
+  isStoryboard?: boolean;
+  isCinematic?: boolean;
+  sceneCount?: number;
+}): number {
+  if (opts.scope === "one") {
+    return opts.isStoryboard || opts.isCinematic
+      ? TOKEN_COST.storyboard_scene
+      : TOKEN_COST.image;
+  }
+  if (opts.isStoryboard || opts.isCinematic) {
+    return estimateImageTokens({
+      mode: "storyboard",
+      sceneCount: opts.sceneCount ?? 4,
+    });
+  }
+  const mode = opts.outputMode ?? "single";
+  return estimateImageTokens({
+    mode:
+      mode === "ab"
+        ? "ab"
+        : mode === "campaign"
+          ? "campaign"
+          : mode === "teaching-carousel"
+            ? "teaching_carousel"
+            : "single",
+    numImages: mode === "ab" ? 2 : 1,
+    sceneCount: opts.sceneCount,
+  });
+}
+
 export function cogsUsdForTokens(tokens: number): number {
   return Math.round(tokens * USD_PER_TOKEN * 100) / 100;
 }

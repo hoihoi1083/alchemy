@@ -8,7 +8,7 @@ import { useWizard } from "@/components/studio/WizardContext";
 import type { ConceptSource } from "@/lib/concept-source-state";
 import type { IntakePath } from "@/lib/wizard-micro-steps.types";
 import type { WorkflowMode } from "@/lib/workflow-mode";
-import { studioPhasesForMode } from "@/lib/studio-phases";
+import { setupContentPhaseIndex, studioPhasesForMode } from "@/lib/studio-phases";
 
 type TabId = "research" | "direct";
 
@@ -325,7 +325,10 @@ export function IntakeFuseStep({
       <style dangerouslySetInnerHTML={{ __html: FUSE_CSS }} />
 
       {showPhaseStepper ? (
-        <PhaseStepper phases={studioPhasesForMode(m.start, workflowMode)} activeIndex={2} />
+        <PhaseStepper
+          phases={studioPhasesForMode(m.start, workflowMode)}
+          activeIndex={setupContentPhaseIndex()}
+        />
       ) : null}
 
       <div className="if-panel mt-3">
@@ -340,6 +343,9 @@ export function IntakeFuseStep({
               </h2>
               <p className="mt-1.5 text-sm text-slate-500">
                 {isConcept ? fuse.conceptHint : fuse.hint}
+              </p>
+              <p className="mt-2 rounded-xl border border-violet-100 bg-violet-50/80 px-3 py-2 text-[13px] leading-relaxed text-violet-950">
+                {isConcept ? fuse.pathOptionsConcept : fuse.pathOptionsPhysical}
               </p>
             </div>
             <div className="if-hero-art" aria-hidden>
@@ -361,7 +367,10 @@ export function IntakeFuseStep({
                   role="tab"
                   aria-selected={activeTab === "research"}
                   className={`if-tab${activeTab === "research" ? " is-on" : ""}`}
-                  onClick={onSelectResearch}
+                  onClick={() => {
+                    wizard.setPendingContentResearchPick(null);
+                    onSelectResearch();
+                  }}
                 >
                   <TabIcon kind="research" />
                   {fuse.tabResearch}
@@ -371,7 +380,10 @@ export function IntakeFuseStep({
                   role="tab"
                   aria-selected={activeTab === "direct"}
                   className={`if-tab${activeTab === "direct" ? " is-on" : ""}`}
-                  onClick={onSelectDirect}
+                  onClick={() => {
+                    wizard.setPendingContentResearchPick(null);
+                    onSelectDirect();
+                  }}
                 >
                   <TabIcon kind="direct" />
                   {isConcept ? fuse.tabAssistant : fuse.tabDirect}
@@ -389,6 +401,7 @@ export function IntakeFuseStep({
                   <ContentResearchPanel
                     compact
                     tone="violet"
+                    deferApply
                     hidePromotionModeToggle
                     hidePromoteProduct={!isConcept}
                     defaultTopic={defaultTopic}
@@ -398,6 +411,7 @@ export function IntakeFuseStep({
                     promotionMode={wizard.promotionMode}
                     market={wizard.promptMarket}
                     workflowMode={workflowMode}
+                    onPendingPickChange={wizard.setPendingContentResearchPick}
                     wizard={{
                       setHeadline: wizard.setHeadline,
                       setSubline: wizard.setSubline,

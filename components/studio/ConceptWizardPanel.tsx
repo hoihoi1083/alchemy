@@ -188,6 +188,51 @@ export function ConceptWizardPanel({
   const fieldClass =
     "w-full rounded-xl border border-violet-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/15";
 
+  const detailFields = [
+    {
+      key: "audience",
+      label: m.wizard.conceptAudienceLabel,
+      value: conceptAudience,
+      onChange: setConceptAudience,
+      placeholder: m.wizard.conceptAudiencePlaceholder,
+    },
+    {
+      key: "pain",
+      label: m.wizard.conceptPainLabel,
+      value: conceptPain,
+      onChange: setConceptPain,
+      placeholder: m.wizard.conceptPainPlaceholder,
+    },
+    {
+      key: "promise",
+      label: m.wizard.conceptPromiseLabel,
+      value: conceptPromise,
+      onChange: setConceptPromise,
+      placeholder: m.wizard.conceptPromisePlaceholder,
+    },
+    {
+      key: "proof",
+      label: m.wizard.conceptProofLabel,
+      value: conceptProof,
+      onChange: setConceptProof,
+      placeholder: m.wizard.conceptProofPlaceholder,
+    },
+    {
+      key: "cta",
+      label: m.wizard.conceptCtaLabel,
+      value: conceptCta,
+      onChange: setConceptCta,
+      placeholder: m.wizard.conceptCtaPlaceholder,
+    },
+    {
+      key: "metaphor",
+      label: m.wizard.conceptVisualMetaphorLabel,
+      value: conceptVisualMetaphor,
+      onChange: setConceptVisualMetaphor,
+      placeholder: m.wizard.conceptVisualMetaphorPlaceholder,
+    },
+  ] as const;
+
   return (
     <div className="space-y-3 rounded-xl border border-violet-200 bg-violet-50/50 px-4 py-3.5">
       <p className="text-sm font-semibold text-slate-900">{m.wizard.conceptWizardTitle}</p>
@@ -212,58 +257,49 @@ export function ConceptWizardPanel({
           <p className="mt-2 text-[11px] text-slate-500">{m.wizard.conceptVideoImageOrderHint}</p>
         </div>
       )}
-      <textarea
-        data-coach-id="coach-concept-idea"
-        value={conceptIdea}
-        onChange={(e) => setConceptIdea(e.target.value)}
-        placeholder={m.wizard.conceptIdeaPlaceholder}
-        rows={3}
-        className={fieldClass}
-      />
-      <div className="grid gap-2 sm:grid-cols-2">
+
+      <label className="block space-y-1.5">
+        <span className="text-sm font-medium text-slate-700">
+          {m.wizard.conceptIdeaLabel}
+        </span>
         <textarea
-          value={conceptAudience}
-          onChange={(e) => setConceptAudience(e.target.value)}
-          placeholder={m.wizard.conceptAudiencePlaceholder}
+          data-coach-id="coach-concept-idea"
+          value={conceptIdea}
+          onChange={(e) => setConceptIdea(e.target.value)}
+          placeholder={m.wizard.conceptIdeaPlaceholder}
           rows={2}
           className={fieldClass}
         />
-        <textarea
-          value={conceptPain}
-          onChange={(e) => setConceptPain(e.target.value)}
-          placeholder={m.wizard.conceptPainPlaceholder}
-          rows={2}
-          className={fieldClass}
-        />
-        <textarea
-          value={conceptPromise}
-          onChange={(e) => setConceptPromise(e.target.value)}
-          placeholder={m.wizard.conceptPromisePlaceholder}
-          rows={2}
-          className={fieldClass}
-        />
-        <textarea
-          value={conceptProof}
-          onChange={(e) => setConceptProof(e.target.value)}
-          placeholder={m.wizard.conceptProofPlaceholder}
-          rows={2}
-          className={fieldClass}
-        />
-        <textarea
-          value={conceptCta}
-          onChange={(e) => setConceptCta(e.target.value)}
-          placeholder={m.wizard.conceptCtaPlaceholder}
-          rows={2}
-          className={fieldClass}
-        />
-        <textarea
-          value={conceptVisualMetaphor}
-          onChange={(e) => setConceptVisualMetaphor(e.target.value)}
-          placeholder={m.wizard.conceptVisualMetaphorPlaceholder}
-          rows={2}
-          className={fieldClass}
-        />
+      </label>
+
+      {showHeadlineField ? (
+        <label className="block space-y-1.5">
+          <span className="text-sm font-medium text-slate-700">{m.wizard.headlineLabel}</span>
+          <input
+            data-coach-id="coach-headline"
+            value={headline}
+            onChange={(e) => setHeadline(e.target.value)}
+            placeholder={m.wizard.headlinePlaceholder}
+            className={`${fieldClass} py-2.5`}
+          />
+        </label>
+      ) : null}
+
+      <div className="grid gap-2.5 sm:grid-cols-2">
+        {detailFields.map((field) => (
+          <label key={field.key} className="block space-y-1">
+            <span className="text-xs font-semibold text-slate-700">{field.label}</span>
+            <textarea
+              value={field.value}
+              onChange={(e) => field.onChange(e.target.value)}
+              placeholder={field.placeholder}
+              rows={2}
+              className={fieldClass}
+            />
+          </label>
+        ))}
       </div>
+
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
@@ -288,18 +324,6 @@ export function ConceptWizardPanel({
         </p>
       ) : null}
       <p className="text-[11px] leading-relaxed text-slate-500">{m.wizard.conceptApplyHint}</p>
-      {showHeadlineField ? (
-        <label className="mt-1 block space-y-1.5">
-          <span className="text-sm font-medium text-slate-700">{m.wizard.headlineLabel}</span>
-          <input
-            data-coach-id="coach-headline"
-            value={headline}
-            onChange={(e) => setHeadline(e.target.value)}
-            placeholder={m.wizard.headlinePlaceholder}
-            className={`${fieldClass} py-2.5`}
-          />
-        </label>
-      ) : null}
     </div>
   );
 }

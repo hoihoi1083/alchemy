@@ -76,6 +76,8 @@ export type WizardMicroStepState = {
   promptExtra: string;
   /** True after user applies a research angle / reference post on the intake step. */
   contentResearchApplied: boolean;
+  /** True when an angle is selected but not yet applied (apply runs on Continue). */
+  contentResearchPending: boolean;
   shipItEligible: boolean;
   hasGeneratedImage: boolean;
   /** Combined storyboard: user explicitly approved the 九宫格 stills. */
@@ -236,7 +238,9 @@ function evalWhen(
       ctx.videoSubpath === "motion_poster" ||
       ctx.videoSubpath === "social_drip" ||
       ctx.videoSubpath === "vacuum_inflate" ||
-      ctx.videoSubpath === "creative_motion"
+      ctx.videoSubpath === "creative_motion" ||
+      ctx.videoSubpath === "hand_throw_scene" ||
+      ctx.videoSubpath === "product_explode"
     );
   }
   if (norm === 'videoSubpath === "product_promo"') {
@@ -331,10 +335,14 @@ export function resolvePathId(
       ctx.videoSubpath === "social_drip" ||
       ctx.videoSubpath === "vacuum_inflate" ||
       ctx.videoSubpath === "creative_motion" ||
+      ctx.videoSubpath === "hand_throw_scene" ||
+      ctx.videoSubpath === "product_explode" ||
       state.videoCreativeMode === "motion-poster" ||
       state.videoCreativeMode === "social-drip" ||
       state.videoCreativeMode === "vacuum-inflate" ||
-      state.videoCreativeMode === "creative-motion"
+      state.videoCreativeMode === "creative-motion" ||
+      state.videoCreativeMode === "hand-throw-scene" ||
+      state.videoCreativeMode === "product-explode"
     ) {
       return "concept_combined_motion_poster";
     }
@@ -359,10 +367,14 @@ export function resolvePathId(
       ctx.videoSubpath === "social_drip" ||
       ctx.videoSubpath === "vacuum_inflate" ||
       ctx.videoSubpath === "creative_motion" ||
+      ctx.videoSubpath === "hand_throw_scene" ||
+      ctx.videoSubpath === "product_explode" ||
       state.videoCreativeMode === "motion-poster" ||
       state.videoCreativeMode === "social-drip" ||
       state.videoCreativeMode === "vacuum-inflate" ||
-      state.videoCreativeMode === "creative-motion"
+      state.videoCreativeMode === "creative-motion" ||
+      state.videoCreativeMode === "hand-throw-scene" ||
+      state.videoCreativeMode === "product-explode"
     ) {
       return "product_combined_motion_poster";
     }
@@ -804,16 +816,18 @@ export function canProceedMicroStep(
     if (state.referenceClipLoading || state.researchReelDownloadBusy) {
       return "reel_downloading";
     }
-    // Physical product: Research tab alone is not enough — must apply a direction first.
+    // Physical product: Research tab alone is not enough — must select (or apply) a direction.
+    // Selection can be pending until Continue applies it.
     // Concept uses Research | Assistant with different completion rules.
-    // Unlock when style prompt is set, cover was attached, or apply-ref was written
-    // (product-shot angles may clear promptExtra but still attach the reference).
+    // Unlock when style prompt is set, cover was attached, apply-ref was written,
+    // or a research card is selected pending apply.
     if (
       ctx.promotionMode === "physical" &&
       ctx.intakePath === "research" &&
       !isContentResearchStyleExtra(state.promptExtra) &&
       !state.imageRefPhoto &&
-      !state.contentResearchApplied
+      !state.contentResearchApplied &&
+      !state.contentResearchPending
     ) {
       return "complete_research";
     }
@@ -857,7 +871,9 @@ export function canProceedMicroStep(
       ctx.videoSubpath === "motion_poster" ||
       ctx.videoSubpath === "social_drip" ||
       ctx.videoSubpath === "vacuum_inflate" ||
-      ctx.videoSubpath === "creative_motion";
+      ctx.videoSubpath === "creative_motion" ||
+      ctx.videoSubpath === "hand_throw_scene" ||
+      ctx.videoSubpath === "product_explode";
     // Combined storyboard: scenes already generated — still require 九宫格 approve.
     if (
       ctx.workflowMode === "combined" &&

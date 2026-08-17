@@ -199,6 +199,10 @@ export const H3_SHOWREEL_SCHEME_IDS = [
 export type H3ShowreelSchemeId = (typeof H3_SHOWREEL_SCHEME_IDS)[number];
 export type H3ShowreelSchemePick = H3ShowreelSchemeId | "auto";
 
+export function h3ShowreelSchemePreviewSrc(id: H3ShowreelSchemeId): string {
+  return `/images/studio/schemes/showreel/${id}.png?v=1`;
+}
+
 export function isH3ShowreelSchemeId(
   value: string | null | undefined,
 ): value is H3ShowreelSchemeId {
@@ -309,6 +313,10 @@ export const H3_SPHERE_MG_SCHEME_IDS = [
 ] as const;
 export type H3SphereMgSchemeId = (typeof H3_SPHERE_MG_SCHEME_IDS)[number];
 export type H3SphereMgSchemePick = H3SphereMgSchemeId | "auto";
+
+export function h3SphereMgSchemePreviewSrc(id: H3SphereMgSchemeId): string {
+  return `/images/studio/schemes/sphere-mg/${id}.png?v=1`;
+}
 
 export function isH3SphereMgSchemeId(
   value: string | null | undefined,
@@ -522,7 +530,7 @@ const H3_STILL_DEFAULT: Record<H3ShotRecipeMode, string> = {
   "imitate-ad": "a premium skincare bottle, clean packshot",
   "neon-on-real": "a premium product or brand mark for neon overlay identity",
   "food-bullet-time":
-    "a young East Asian woman holding a loaded sandwich toward camera at an outdoor cafe",
+    "a young East Asian woman smiling at camera holding a loaded wrap/sandwich toward lens at an outdoor cafe, frozen food splash with lettuce and tomatoes suspended mid-air around the wrap",
   "c4d-motion":
     "a premium athletic sneaker, red and black materials, centered on pure black void",
   "h3-showreel":
@@ -634,11 +642,11 @@ export function buildH3ShotRecipePrompt(input: H3ShotPromptInput): string {
 
     case "food-bullet-time":
       return [
-        `美食子弹时间一镜（3D食物飞溅）：严格锁定${img}（${subject}）的人物面孔、服饰、食物种类与摆盘、场景环境；禁止换脸换菜、禁止凭空添加原图没有的食材。`,
-        `画面里食物/酱汁/碎屑已呈高速摄影定格悬浮态：主体几乎冻结，只有镜头在运动。`,
-        `0–1s：从英雄位建立，悬浮食材与飞溅弧清晰可读，人脸尽量清晰。`,
-        `1–5s：镜头缓慢环绕或弧形掠过（约90–180°）悬浮飞溅核心，景深浅，背景有视差；食物保持悬停，不崩散、不落地、不爆炸式飞出画框。`,
-        `5–6s：微推近或收在诱人英雄角，飞溅仍定格，商业美食打卡感。`,
+        `美食子弹时间一镜（3D食物飞溅打卡）：严格锁定${img}（${subject}）的人物面孔、发型服饰、食物/饮品种类与摆盘、场景环境；禁止换脸换菜、禁止凭空添加原图没有的食材或配料。`,
+        `画面已是高速摄影定格：酱汁/碎屑/芝士丝/冰块/珍珠等属于这道食物的元素悬浮在食物周围成弧，人物身姿基本静止，只有镜头在运动。`,
+        `0–1s：英雄位建立 — 人物双手（或单手）把食物/饮品递向镜头，悬浮飞溅清晰可读，人脸尽量清晰，商业美食打卡感。`,
+        `1–5s：以人物为中心向右（或弧形）缓慢环绕慢动作运镜约90–180°，景深浅，背景有视差；食物保持悬停，不崩散落地、不爆炸式飞出画框。`,
+        `5–6s：微推近或收在诱人英雄角，飞溅仍定格，高清升格凝固动态瞬间。`,
         `一镜到底，无切镜、无幻灯片定格、无字幕。`,
         `Negative: ${FOOD_BULLET_TIME_NEGATIVE}`,
       ].join("\n");
@@ -806,10 +814,10 @@ export function buildH3ShotRecipeStillPrompt(input: H3ShotPromptInput): string {
       return [
         "Photoreal commercial still, 9:16, textless, no captions, no watermarks, no UI.",
         lock,
-        "Lifestyle food check-in photo: person holding or presenting the dish toward camera in a real cafe/street setting — face mostly clear and sharp.",
-        "High-speed photography BULLET-TIME FOOD SPLASH freeze: sauces, crumbs, cheese strands, or droplets that BELONG to this dish suspended mid-air in a concentrated arc around the food — weightless float, not explosive scatter.",
-        "Keep exact food types, quantities, and plating logic — do not invent unrelated ingredients.",
-        "Commercial food photography, SLR texture, cinematic daylight, rich layers — ready to animate as @Image1 for a camera orbit around the frozen splash.",
+        "Viral Xiaohongshu food check-in photo: young person smiling at camera, holding a wrap / sandwich / boba cup / plated dish TOWARD the lens with both hands (or one hand for drinks) — face clear and sharp.",
+        "High-speed BULLET-TIME FOOD SPLASH already frozen: sauces, lettuce, crumbs, cheese strands, ice cubes, or boba pearls that BELONG to this dish suspended mid-air in a concentrated arc around the food — weightless float, not explosive scatter off-frame.",
+        "Real cafe / street / restaurant backdrop with shallow depth of field. Keep exact food types and plating — do not invent unrelated ingredients.",
+        "Commercial SLR texture, cinematic daylight, rich layers — ready as @Image1 for a rightward orbit around the frozen splash while the person stays almost still.",
       ].join(" ");
     case "c4d-motion":
       return [

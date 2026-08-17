@@ -7,7 +7,13 @@ import {
   resolveArtStyleId,
   type ArtStyleId,
 } from "@/lib/art-style";
-import { resolveCopyLocale, plannerCopyLanguageRule, rewriteCopyToScript, coerceCopyScript } from "@/lib/copy-locale";
+import {
+  resolveCopyLocale,
+  plannerCopyLanguageRule,
+  rewriteCopyToScript,
+  coerceCopyScript,
+  preserveUserOnImageCopy,
+} from "@/lib/copy-locale";
 import type { PromotionMode } from "@/lib/promotion-mode";
 import type { PromptMarket } from "@/lib/prompt-variables";
 import type { VisualStyleId } from "@/lib/visual-styles";
@@ -102,15 +108,43 @@ export function fallbackSingleImagePlan(input: SingleImagePlanInput): SingleImag
     input.subline,
     input.product,
   );
-  const h = input.headline?.trim() || input.product?.trim() || "Campaign hook";
+  const headline = input.headline?.trim();
+  const h = headline || input.product?.trim() || "Campaign hook";
+  return lockUserOnImageCopy(
+    {
+      role,
+      theme: coerceCopyScript(h, copyLocale),
+      visualDna: defaultVisualDna(input),
+      composition: defaultComposition(input, role),
+      title: headline
+        ? preserveUserOnImageCopy(headline, copyLocale)
+        : coerceCopyScript(h, copyLocale),
+      body: coerceCopyScript(input.subline?.trim() || "", copyLocale),
+      takeaway: coerceCopyScript(input.offer?.trim() || "", copyLocale),
+    },
+    input,
+  );
+}
+
+/** Keep user-typed hook/tagline/offer on the still — planner may only 简繁-fix Chinese. */
+export function lockUserOnImageCopy(
+  plan: SingleImagePlan,
+  input: SingleImagePlanInput,
+): SingleImagePlan {
+  const copyLocale = resolveCopyLocale(
+    input.promptMarket ?? "hk",
+    input.headline,
+    input.subline,
+    input.product,
+  );
+  const headline = input.headline?.trim();
+  const subline = input.subline?.trim();
+  const offer = input.offer?.trim();
   return {
-    role,
-    theme: coerceCopyScript(h, copyLocale),
-    visualDna: defaultVisualDna(input),
-    composition: defaultComposition(input, role),
-    title: coerceCopyScript(h, copyLocale),
-    body: coerceCopyScript(input.subline?.trim() || "", copyLocale),
-    takeaway: coerceCopyScript(input.offer?.trim() || "", copyLocale),
+    ...plan,
+    title: headline ? preserveUserOnImageCopy(headline, copyLocale) : plan.title,
+    body: subline ? preserveUserOnImageCopy(subline, copyLocale) : plan.body,
+    takeaway: offer ? preserveUserOnImageCopy(offer, copyLocale) : plan.takeaway,
   };
 }
 
@@ -124,15 +158,18 @@ function normalizePlan(
     roleRaw === "cta" || roleRaw === "benefit" || roleRaw === "cover"
       ? roleRaw
       : fallback.role;
-  return {
-    role,
-    theme: String(parsed.theme ?? "").trim() || fallback.theme,
-    visualDna: String(parsed.visualDna ?? "").trim() || fallback.visualDna,
-    composition: String(parsed.composition ?? "").trim() || fallback.composition,
-    title: String(parsed.title ?? "").trim() || fallback.title,
-    body: String(parsed.body ?? "").trim() || fallback.body,
-    takeaway: String(parsed.takeaway ?? "").trim() || fallback.takeaway,
-  };
+  return lockUserOnImageCopy(
+    {
+      role,
+      theme: String(parsed.theme ?? "").trim() || fallback.theme,
+      visualDna: String(parsed.visualDna ?? "").trim() || fallback.visualDna,
+      composition: String(parsed.composition ?? "").trim() || fallback.composition,
+      title: String(parsed.title ?? "").trim() || fallback.title,
+      body: String(parsed.body ?? "").trim() || fallback.body,
+      takeaway: String(parsed.takeaway ?? "").trim() || fallback.takeaway,
+    },
+    input,
+  );
 }
 
 function buildPlanPrompt(input: SingleImagePlanInput): string {
@@ -162,6 +199,9 @@ function buildPlanPrompt(input: SingleImagePlanInput): string {
     "- composition: specific layout with a FULL scene (surface, props, lighting, type hierarchy) — NEVER 'centered product on plain white'.",
     "- Prefer magazine / Xiaohongshu feed energy: depth, styled set, layered copy — closer to a teaching cover than a catalog cutout.",
     "- title/body/takeaway: short on-image copy. body must not repeat title. takeaway optional unless offer exists.",
+    "- If Headline is provided, title MUST be that exact string (only 简繁 conversion if it is already Chinese). Never replace it with the product name. Never translate Latin/English into Chinese.",
+    "- If Supporting is provided, body MUST be that exact string (same 简繁-only rule). Never invent a different slogan.",
+    "- If Offer/CTA is provided, takeaway MUST be that exact string.",
     "- Do NOT write 'brand logo', '品牌標誌', 'logo mark', or placeholder logo zones in composition — leave that space empty or use campaign text only. Never instruct painting the English word LOGO.",
     "- Do NOT invent shop-now CTAs (e.g. 立即選購) unless Offer/CTA is provided above.",
     "- Do not invent pricing or fake claims unless provided.",
@@ -210,10 +250,10 @@ export async function planSingleImageAd(input: SingleImagePlanInput): Promise<Si
           role: "system",
           content:
             copyLocale === "en"
-              ? "You plan a single premium social ad still. Output strict JSON only."
+              ? "You plan a single premium social ad still. Output strict JSON only. If Headline/Supporting/Offer are provided, copy them verbatim into title/body/takeaway."
               : copyLocale === "zh-hans"
-                ? "你规划一张高质量社交媒体广告静帧。文案必须全部使用简体中文，禁止繁体。只输出严格 JSON。"
-                : "你規劃一張高質素社交媒體廣告靜幀。文案必須全部使用繁體中文，禁止簡體。只輸出嚴格 JSON。",
+                ? "你规划一张高质量社交媒体广告静帧。theme/visualDna 用简体中文。若用户已填 Headline/Supporting/Offer，title/body/takeaway 必须原样复制（即使是英文或无意义字母），禁止改成产品名或另写广告语。只输出严格 JSON。"
+                : "你規劃一張高質素社交媒體廣告靜幀。theme/visualDna 用繁體中文。若用戶已填 Headline/Supporting/Offer，title/body/takeaway 必須原樣複製（即使是英文或無意義字母），禁止改成產品名或另寫廣告語。只輸出嚴格 JSON。",
         },
         { role: "user", content: buildPlanPrompt(input) },
       ],
@@ -221,7 +261,7 @@ export async function planSingleImageAd(input: SingleImagePlanInput): Promise<Si
     );
     const parsed = parseLlmJsonObject<Partial<SingleImagePlan>>(output, "Single image plan");
     const plan = normalizePlan(parsed, input);
-    if (copyLocale === "en") return plan;
+    if (copyLocale === "en") return lockUserOnImageCopy(plan, input);
     const rewritten = await rewriteCopyToScript(
       {
         theme: plan.theme,
@@ -231,13 +271,16 @@ export async function planSingleImageAd(input: SingleImagePlanInput): Promise<Si
       },
       copyLocale,
     );
-    return {
-      ...plan,
-      theme: rewritten.theme || plan.theme,
-      title: rewritten.title || plan.title,
-      body: rewritten.body || plan.body,
-      takeaway: rewritten.takeaway || plan.takeaway,
-    };
+    return lockUserOnImageCopy(
+      {
+        ...plan,
+        theme: rewritten.theme || plan.theme,
+        title: rewritten.title || plan.title,
+        body: rewritten.body || plan.body,
+        takeaway: rewritten.takeaway || plan.takeaway,
+      },
+      input,
+    );
   } catch {
     return fallbackSingleImagePlan(input);
   }

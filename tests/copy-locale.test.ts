@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   coerceCopyScript,
+  preserveUserOnImageCopy,
   promptMarketFromLocale,
   resolveCopyLocale,
   voiceoverLocaleFromUiLocale,
@@ -24,6 +25,17 @@ describe("UI locale → output language", () => {
     assert.equal(resolveCopyLocale("en", "世界杯觀戰"), "en");
     assert.equal(resolveCopyLocale("cn", "World Cup night"), "zh-hans");
     assert.equal(resolveCopyLocale("hk", "World Cup night"), "zh-hant");
+  });
+
+  it("keeps latin user copy verbatim under zh locale", () => {
+    assert.equal(
+      preserveUserOnImageCopy("sdfasdfsadfasdf", "zh-hant"),
+      "sdfasdfsadfasdf",
+    );
+    assert.equal(
+      preserveUserOnImageCopy("精华护肤", "zh-hant"),
+      "精華護膚",
+    );
   });
 
   it("coerceCopyScript converts mixed teaching titles to one script", () => {

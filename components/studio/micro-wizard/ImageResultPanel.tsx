@@ -3,7 +3,6 @@
 import { useLocale } from "@/components/LocaleProvider";
 import { useWizard } from "@/components/studio/WizardContext";
 import { ImageReviewGallery } from "@/components/studio/ImageReviewGallery";
-import { ImagePostflightPanel } from "@/components/studio/ImagePostflightPanel";
 import { ImageGenerateWaitPanel } from "@/components/studio/ImageGenerateWaitPanel";
 
 type Props = {
@@ -23,6 +22,8 @@ export function ImageResultPanel({ generatingLabel, allowRegenerate = false }: P
         progress={wizard.imageProgressInfo}
         aspectRatio={wizard.imageAspectRatio}
         previewUrl={wizard.imageRefPreviewUrl || wizard.uploadPreviewUrl || null}
+        workflowMode={wizard.workflowMode}
+        waitKind={wizard.isStoryboardOutput ? "storyboard" : "image"}
       />
     );
   }
@@ -50,31 +51,6 @@ export function ImageResultPanel({ generatingLabel, allowRegenerate = false }: P
   return (
     <div className="space-y-4">
       <ImageReviewGallery />
-      {wizard.imagePostflight ? (
-        <ImagePostflightPanel
-          variant="light"
-          postflight={wizard.imagePostflight}
-          visionReview={wizard.imageVisionReview}
-          busy={wizard.imagePostflightBusy}
-          visionBusy={wizard.imageVisionReviewBusy}
-          labels={{
-            title: m.wizard.imagePostflightTitle,
-            resolution: m.wizard.imagePostflightResolution,
-            aspect: m.wizard.imagePostflightAspect,
-            safeForVideo: m.wizard.imagePostflightSafeForVideo,
-            notSafeForVideo: m.wizard.imagePostflightNotSafeForVideo,
-            lowResolution: m.wizard.imagePostflightLowRes,
-            verySmall: m.wizard.imagePostflightVerySmall,
-            analyzing: m.wizard.imagePostflightAnalyzing,
-            visionTitle: m.wizard.imageVisionReviewTitle,
-            visionAnalyzing: m.wizard.imageVisionReviewAnalyzing,
-            visionScore: m.wizard.imageVisionReviewScore,
-            visionSummary: m.wizard.imageVisionReviewSummary,
-            visionIssues: m.wizard.imageVisionReviewIssues,
-            visionPass: m.wizard.imageVisionReviewPass,
-          }}
-        />
-      ) : null}
       {allowRegenerate ? (
         <button
           type="button"

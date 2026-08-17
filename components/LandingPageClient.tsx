@@ -4,7 +4,6 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { LandingHero } from "@/components/landing/LandingHero";
 import { LandingHowItWorks } from "@/components/landing/LandingHowItWorks";
-import { LandingRecipeCards } from "@/components/landing/LandingRecipeCards";
 import { LandingTemplatesShowcase } from "@/components/landing/LandingTemplatesShowcase";
 import { LandingFloatingCta } from "@/components/landing/LandingFloatingCta";
 
@@ -933,7 +932,6 @@ export function LandingPageClient() {
 				<LandingHowItWorks />
 				{SHOW_LANDING_BELOW_HOW ? (
 					<>
-						<LandingRecipeCards />
 						{/* Sections own their Reveal stagger — avoid wrapping whole blocks twice */}
 						<LandingStoryWheel />
 						{/*

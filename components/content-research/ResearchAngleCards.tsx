@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import type { ContentAngleCandidate, ContentPlatform } from "@/lib/content-research-types";
-import { CONTENT_PLATFORMS } from "@/lib/content-research-types";
 import { RESEARCH_ANGLES_PER_PAGE } from "@/lib/content-research-enrich";
 import { videoReadyKind } from "@/lib/content-research-video-ready";
 import { ResearchCoverThumb } from "@/components/content-research/ResearchCoverThumb";
@@ -91,6 +90,8 @@ const REC_CARD_CSS = `
 type ResearchAngleCardsProps = {
   angles: ContentAngleCandidate[];
   platform: ContentPlatform;
+  /** Localized name for the searched platform (shown as sole source). */
+  platformLabel?: string;
   videoOnly?: boolean;
   applyingAngleId?: string | null;
   selectedAngleId?: string | null;
@@ -99,6 +100,8 @@ type ResearchAngleCardsProps = {
   onPick: (angle: ContentAngleCandidate) => void;
   /** Purple fuse chrome — compact recommendation cards. */
   variant?: "classic" | "recommendation";
+  /** Select only — apply happens on wizard Continue. */
+  selectOnly?: boolean;
   labels: {
     scoreLabel: string;
     inspiredBy: string;
@@ -126,14 +129,15 @@ type ResearchAngleCardsProps = {
     layoutNotesLabel?: string;
     viewMoreExamples?: string;
     sourcePlatformsLabel?: string;
-    morePlatforms?: (count: number) => string;
     selectedLabel?: string;
+    selectedContinueHint?: string;
   };
 };
 
 export function ResearchAngleCards({
   angles,
   platform,
+  platformLabel,
   videoOnly,
   applyingAngleId,
   selectedAngleId,
@@ -141,6 +145,7 @@ export function ResearchAngleCards({
   pickDisabledHint,
   onPick,
   variant = "classic",
+  selectOnly = false,
   labels,
 }: ResearchAngleCardsProps) {
   const [page, setPage] = useState(0);
@@ -151,8 +156,6 @@ export function ResearchAngleCards({
     const start = safePage * RESEARCH_ANGLES_PER_PAGE;
     return angles.slice(start, start + RESEARCH_ANGLES_PER_PAGE);
   }, [angles, safePage]);
-
-  const otherPlatformCount = CONTENT_PLATFORMS.length - 1;
 
   if (variant === "recommendation") {
     return (
@@ -441,21 +444,17 @@ export function ResearchAngleCards({
                       </p>
                       <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                         <ResearchPlatformLogo platform={platform} className="h-5 w-5" />
-                        {CONTENT_PLATFORMS.filter((p) => p !== platform)
-                          .slice(0, 2)
-                          .map((p) => (
-                            <ResearchPlatformLogo
-                              key={p}
-                              platform={p}
-                              className="h-5 w-5 opacity-80"
-                            />
-                          ))}
-                        {otherPlatformCount > 2 && labels.morePlatforms ? (
-                          <span className="text-[11px] text-slate-400">
-                            {labels.morePlatforms(otherPlatformCount - 2)}
+                        {platformLabel ? (
+                          <span className="text-[12px] font-semibold text-slate-700">
+                            {platformLabel}
                           </span>
                         ) : null}
                       </div>
+                      {selectOnly && selected && labels.selectedContinueHint ? (
+                        <p className="mt-2 text-[11px] leading-snug text-violet-700">
+                          {labels.selectedContinueHint}
+                        </p>
+                      ) : null}
                     </div>
                   </div>
                 </div>

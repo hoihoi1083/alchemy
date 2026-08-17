@@ -23,6 +23,8 @@ export const LANDING_RECIPE_IDS = [
   "product-blockbuster-9s",
   "product-vacuum-inflate-4s",
   "product-creative-motion-4s",
+  "product-hand-throw-scene-6s",
+  "product-product-explode-4s",
   "product-ecom-orbit-6s",
   "product-object-lock-6s",
   "product-macro-snap-6s",
@@ -44,6 +46,8 @@ export const LANDING_RECIPE_IDS = [
   "concept-blockbuster-9s",
   "concept-vacuum-inflate-4s",
   "concept-creative-motion-4s",
+  "concept-hand-throw-scene-6s",
+  "concept-product-explode-4s",
   "concept-beauty-mv-10s",
   "concept-imitate-ad-8s",
   "concept-neon-on-real-8s",
@@ -76,6 +80,10 @@ export type LandingRecipeDef = {
   duration?: VideoDuration;
 };
 
+function videoModeRecipePreview(mode: string): string {
+  return `/images/studio/video-modes/${mode}.png?v=2`;
+}
+
 function h3ProductRecipe(
   id: LandingRecipeId,
   mode: H3ShotRecipeMode,
@@ -83,7 +91,7 @@ function h3ProductRecipe(
 ): LandingRecipeDef {
   return {
     id,
-    previewSrc: "/images/studio/recipes/product-tvc-12s.png?v=1",
+    previewSrc: videoModeRecipePreview(mode),
     promotionMode: "physical",
     workflowMode: "video-only",
     visualStyleId: "product",
@@ -99,7 +107,7 @@ function h3ConceptRecipe(
 ): LandingRecipeDef {
   return {
     id,
-    previewSrc: "/images/studio/recipes/concept-tvc-12s.png?v=1",
+    previewSrc: videoModeRecipePreview(mode),
     promotionMode: "concept",
     workflowMode: "video-only",
     visualStyleId: "service-promo",
@@ -158,7 +166,7 @@ export const LANDING_RECIPES: Record<LandingRecipeId, LandingRecipeDef> = {
   },
   "product-tvc-12s": {
     id: "product-tvc-12s",
-    previewSrc: "/images/studio/recipes/product-tvc-12s.png?v=1",
+    previewSrc: "/images/studio/visual-styles/storyboard-video.png?v=2",
     promotionMode: "physical",
     workflowMode: "combined",
     visualStyleId: "storyboard-video",
@@ -167,7 +175,7 @@ export const LANDING_RECIPES: Record<LandingRecipeId, LandingRecipeDef> = {
   },
   "product-blockbuster-9s": {
     id: "product-blockbuster-9s",
-    previewSrc: "/images/studio/recipes/product-tvc-12s.png?v=1",
+    previewSrc: videoModeRecipePreview("blockbuster"),
     promotionMode: "physical",
     workflowMode: "video-only",
     visualStyleId: "product",
@@ -176,7 +184,7 @@ export const LANDING_RECIPES: Record<LandingRecipeId, LandingRecipeDef> = {
   },
   "product-vacuum-inflate-4s": {
     id: "product-vacuum-inflate-4s",
-    previewSrc: "/images/studio/recipes/product-tvc-12s.png?v=1",
+    previewSrc: videoModeRecipePreview("vacuum-inflate"),
     promotionMode: "physical",
     workflowMode: "video-only",
     visualStyleId: "product",
@@ -185,11 +193,29 @@ export const LANDING_RECIPES: Record<LandingRecipeId, LandingRecipeDef> = {
   },
   "product-creative-motion-4s": {
     id: "product-creative-motion-4s",
-    previewSrc: "/images/studio/recipes/product-tvc-12s.png?v=1",
+    previewSrc: videoModeRecipePreview("creative-motion"),
     promotionMode: "physical",
     workflowMode: "video-only",
     visualStyleId: "product",
     videoCreativeMode: "creative-motion",
+    duration: "4",
+  },
+  "product-hand-throw-scene-6s": {
+    id: "product-hand-throw-scene-6s",
+    previewSrc: videoModeRecipePreview("hand-throw-scene"),
+    promotionMode: "physical",
+    workflowMode: "video-only",
+    visualStyleId: "product",
+    videoCreativeMode: "hand-throw-scene",
+    duration: "6",
+  },
+  "product-product-explode-4s": {
+    id: "product-product-explode-4s",
+    previewSrc: videoModeRecipePreview("product-explode"),
+    promotionMode: "physical",
+    workflowMode: "video-only",
+    visualStyleId: "product",
+    videoCreativeMode: "product-explode",
     duration: "4",
   },
   "product-ecom-orbit-6s": h3ProductRecipe("product-ecom-orbit-6s", "ecom-orbit", "6"),
@@ -207,10 +233,11 @@ export const LANDING_RECIPES: Record<LandingRecipeId, LandingRecipeDef> = {
     "neon-on-real",
     "8",
   ),
-  "product-food-bullet-time-6s": {
-    ...h3ProductRecipe("product-food-bullet-time-6s", "food-bullet-time", "6"),
-    previewSrc: "/images/studio/recipes/food-bullet-time.jpg?v=1",
-  },
+  "product-food-bullet-time-6s": h3ProductRecipe(
+    "product-food-bullet-time-6s",
+    "food-bullet-time",
+    "6",
+  ),
   "product-c4d-motion-8s": h3ProductRecipe(
     "product-c4d-motion-8s",
     "c4d-motion",
@@ -253,7 +280,7 @@ export const LANDING_RECIPES: Record<LandingRecipeId, LandingRecipeDef> = {
   },
   "concept-tvc-12s": {
     id: "concept-tvc-12s",
-    previewSrc: "/images/studio/recipes/concept-tvc-12s.png?v=1",
+    previewSrc: "/images/studio/visual-styles/storyboard-video.png?v=2",
     promotionMode: "concept",
     workflowMode: "combined",
     visualStyleId: "storyboard-video",
@@ -262,7 +289,7 @@ export const LANDING_RECIPES: Record<LandingRecipeId, LandingRecipeDef> = {
   },
   "concept-blockbuster-9s": {
     id: "concept-blockbuster-9s",
-    previewSrc: "/images/studio/recipes/concept-tvc-12s.png?v=1",
+    previewSrc: videoModeRecipePreview("blockbuster"),
     promotionMode: "concept",
     workflowMode: "video-only",
     visualStyleId: "service-promo",
@@ -271,7 +298,7 @@ export const LANDING_RECIPES: Record<LandingRecipeId, LandingRecipeDef> = {
   },
   "concept-vacuum-inflate-4s": {
     id: "concept-vacuum-inflate-4s",
-    previewSrc: "/images/studio/recipes/concept-tvc-12s.png?v=1",
+    previewSrc: videoModeRecipePreview("vacuum-inflate"),
     promotionMode: "concept",
     workflowMode: "video-only",
     visualStyleId: "service-promo",
@@ -280,11 +307,29 @@ export const LANDING_RECIPES: Record<LandingRecipeId, LandingRecipeDef> = {
   },
   "concept-creative-motion-4s": {
     id: "concept-creative-motion-4s",
-    previewSrc: "/images/studio/recipes/concept-tvc-12s.png?v=1",
+    previewSrc: videoModeRecipePreview("creative-motion"),
     promotionMode: "concept",
     workflowMode: "video-only",
     visualStyleId: "service-promo",
     videoCreativeMode: "creative-motion",
+    duration: "4",
+  },
+  "concept-hand-throw-scene-6s": {
+    id: "concept-hand-throw-scene-6s",
+    previewSrc: videoModeRecipePreview("hand-throw-scene"),
+    promotionMode: "concept",
+    workflowMode: "video-only",
+    visualStyleId: "service-promo",
+    videoCreativeMode: "hand-throw-scene",
+    duration: "6",
+  },
+  "concept-product-explode-4s": {
+    id: "concept-product-explode-4s",
+    previewSrc: videoModeRecipePreview("product-explode"),
+    promotionMode: "concept",
+    workflowMode: "video-only",
+    visualStyleId: "service-promo",
+    videoCreativeMode: "product-explode",
     duration: "4",
   },
   "concept-beauty-mv-10s": h3ConceptRecipe("concept-beauty-mv-10s", "beauty-mv", "10"),
@@ -415,15 +460,25 @@ export function microContextForLandingRecipe(
   }
   if (
     LANDING_RECIPES[recipe].videoCreativeMode === "vacuum-inflate" ||
-    LANDING_RECIPES[recipe].videoCreativeMode === "creative-motion"
+    LANDING_RECIPES[recipe].videoCreativeMode === "creative-motion" ||
+    LANDING_RECIPES[recipe].videoCreativeMode === "hand-throw-scene" ||
+    LANDING_RECIPES[recipe].videoCreativeMode === "product-explode"
   ) {
     const mode = LANDING_RECIPES[recipe].videoCreativeMode;
+    const videoSubpath =
+      mode === "vacuum-inflate"
+        ? "vacuum_inflate"
+        : mode === "creative-motion"
+          ? "creative_motion"
+          : mode === "hand-throw-scene"
+            ? "hand_throw_scene"
+            : "product_explode";
     return {
       promotionMode,
       workflowMode: "video-only",
       intakePath: "direct",
       ...(promotionMode === "concept" ? { conceptSource: "assistant" as const } : {}),
-      videoSubpath: mode === "vacuum-inflate" ? "vacuum_inflate" : "creative_motion",
+      videoSubpath,
     };
   }
   if (isH3ShotLandingRecipe(recipe)) {
