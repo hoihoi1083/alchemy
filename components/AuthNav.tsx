@@ -1,9 +1,10 @@
 "use client";
 
-import { SignInButton, UserButton, useAuth } from "@clerk/nextjs";
+import { UserButton, useAuth } from "@clerk/nextjs";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
+import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { useLocale } from "@/components/LocaleProvider";
 import { CREDITS_EVENT } from "@/lib/credits-client";
 
@@ -52,6 +53,8 @@ function AuthNavBody({ compact = false }: { compact?: boolean }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [balance, setBalance] = useState<number | null>(() => cachedCreditBalance);
+
+  const { openAuthModal } = useAuthModal();
 
   const redirectUrl = useMemo(() => {
     const query = searchParams.toString();
@@ -148,18 +151,17 @@ function AuthNavBody({ compact = false }: { compact?: boolean }) {
   }
 
   return (
-    <SignInButton mode="modal" forceRedirectUrl={redirectUrl}>
-      <button
-        type="button"
-        className={
-          compact
-            ? "rounded-full border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 sm:px-4 sm:py-2 sm:text-sm"
-            : "rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-        }
-      >
-        {m.auth.signIn}
-      </button>
-    </SignInButton>
+    <button
+      type="button"
+      onClick={() => openAuthModal({ mode: "sign-in", redirectUrl })}
+      className={
+        compact
+          ? "rounded-full border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 sm:px-4 sm:py-2 sm:text-sm"
+          : "rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+      }
+    >
+      {m.auth.signIn}
+    </button>
   );
 }
 

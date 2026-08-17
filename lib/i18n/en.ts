@@ -14,11 +14,35 @@ export const en = {
 	},
 	auth: {
 		signIn: "Sign in",
+		signInTab: "Sign In",
+		signUpTab: "Sign Up",
+		signInSubtitle: "Welcome back! Please sign in to continue.",
+		signUpSubtitle: "Create your account — 500 free tokens to start creating.",
 		tokensBalance: "{n} tokens",
 		tokensBalanceTitle: "Your token balance — view plans & top-ups",
 		accountMenu: "Account & billing",
 		libraryMenu: "My library",
 		brandKitMenu: "Brand kit",
+		signupPromoBar: "Sign up to get 500 free tokens",
+		closeModal: "Close",
+		panelTagline: "AI marketing creative workflow",
+		panelFeatures: [
+			{
+				icon: "✦",
+				title: "Beginner-safe defaults",
+				body: "The wizard keeps settings simple by default and avoids common quality mistakes.",
+			},
+			{
+				icon: "▶",
+				title: "Fast draft to final flow",
+				body: "Generate a still first, then animate to video — easier to iterate and control quality.",
+			},
+			{
+				icon: "◫",
+				title: "Built for small business ads",
+				body: "Templates and prompts are tuned for IG/FB reels and practical promotion use-cases.",
+			},
+		],
 	},
 	account: {
 		title: "Account & billing",

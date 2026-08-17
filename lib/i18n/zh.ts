@@ -13,11 +13,35 @@ export const zh = {
 	},
 	auth: {
 		signIn: "登入",
+		signInTab: "登入",
+		signUpTab: "註冊",
+		signInSubtitle: "歡迎回來！請登入你嘅帳戶以繼續。",
+		signUpSubtitle: "建立帳戶 — 註冊即送 500 免費 token。",
 		tokensBalance: "{n} 點數",
 		tokensBalanceTitle: "你的點數餘額 — 查看方案與加購",
 		accountMenu: "帳戶與帳單",
 		libraryMenu: "我的作品庫",
 		brandKitMenu: "品牌套件",
+		signupPromoBar: "註冊即送 500 免費 token",
+		closeModal: "關閉",
+		panelTagline: "AI 營銷創意工作流",
+		panelFeatures: [
+			{
+				icon: "✦",
+				title: "新手友好預設",
+				body: "精靈預設保持簡單，幫你避開常見嘅質量問題。",
+			},
+			{
+				icon: "▶",
+				title: "由草稿到成片更快",
+				body: "先生成靜圖，再動畫成片 — 更容易 iterate、控制質量。",
+			},
+			{
+				icon: "◫",
+				title: "為小生意廣告而生",
+				body: "模板同提示詞針對 IG/FB Reels 同實際推廣場景優化。",
+			},
+		],
 	},
 	account: {
 		title: "帳戶與帳單",

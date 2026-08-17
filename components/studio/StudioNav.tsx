@@ -7,13 +7,9 @@ import { AuthNav } from "@/components/AuthNav";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { ProNavLink } from "@/components/nav/ProNavLink";
 import { useLocale } from "@/components/LocaleProvider";
-import {
-  PRODUCT_LOGO_ALT,
-  PRODUCT_LOGO_SRC,
-  PRODUCT_WORDMARK_ALT,
-  PRODUCT_WORDMARK_BLACK_SRC,
-  PRODUCT_WORDMARK_WHITE_SRC,
-} from "@/lib/brand";
+import { AuthBrandLockup } from "@/components/AuthBrandLockup";
+import { SignUpPromoBar } from "@/components/SignUpPromoBar";
+import { PRODUCT_WORDMARK_ALT } from "@/lib/brand";
 
 type StudioNavProps = {
   /** Optional chips under/ beside brand (e.g. promotion mode). */
@@ -45,32 +41,21 @@ export function StudioNav({ trailing, variant = "light" }: StudioNavProps) {
     : "whitespace-nowrap rounded-lg px-2 py-1.5 text-[12px] font-medium text-violet-700 hover:bg-violet-50 xl:text-[13px]";
 
   return (
-    <header
-      className={
-        dark
-          ? "sticky top-0 z-40 w-full border-b border-white/10 bg-slate-950/70 backdrop-blur-md"
-          : "sticky top-0 z-40 w-full bg-white"
-      }
-    >
+    <div className="sticky top-0 z-40 w-full">
+      <header
+        className={
+          dark
+            ? "w-full border-b border-white/10 bg-slate-950/70 backdrop-blur-md"
+            : "w-full bg-white"
+        }
+      >
       <div className="mx-auto flex w-full max-w-[1440px] items-center gap-2 px-3 py-3 sm:gap-3 sm:px-6 sm:py-3.5 md:px-8">
-        <Link
+        <AuthBrandLockup
           href="/"
-          className="flex min-w-0 shrink-0 items-center gap-2.5 sm:gap-3"
-          aria-label={PRODUCT_WORDMARK_ALT}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={PRODUCT_LOGO_SRC}
-            alt=""
-            className="h-10 w-10 shrink-0 rounded-xl object-contain sm:h-11 sm:w-11"
-          />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={`${dark ? PRODUCT_WORDMARK_WHITE_SRC : PRODUCT_WORDMARK_BLACK_SRC}?v=2`}
-            alt={PRODUCT_LOGO_ALT}
-            className="hidden h-8 w-auto max-w-[12rem] object-contain object-left sm:inline sm:h-9 sm:max-w-[14rem]"
-          />
-        </Link>
+          variant={dark ? "dark" : "light"}
+          ariaLabel={PRODUCT_WORDMARK_ALT}
+          className="min-w-0 shrink-0 [&_img]:h-10 [&_img]:w-10 sm:[&_img]:h-11 sm:[&_img]:w-11 [&_span]:text-lg sm:[&_span]:text-xl"
+        />
 
         {trailing ? (
           <div className="hidden min-w-0 items-center gap-2 md:flex">{trailing}</div>
@@ -190,6 +175,8 @@ export function StudioNav({ trailing, variant = "light" }: StudioNavProps) {
           </div>
         </div>
       ) : null}
-    </header>
+      </header>
+      <SignUpPromoBar />
+    </div>
   );
 }

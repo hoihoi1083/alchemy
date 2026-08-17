@@ -7,12 +7,9 @@ import { AuthNav } from "@/components/AuthNav";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { ProNavLink } from "@/components/nav/ProNavLink";
 import { useLocale } from "@/components/LocaleProvider";
-import {
-	PRODUCT_LOGO_ALT,
-	PRODUCT_LOGO_SRC,
-	PRODUCT_WORDMARK_ALT,
-	PRODUCT_WORDMARK_BLACK_SRC,
-} from "@/lib/brand";
+import { AuthBrandLockup } from "@/components/AuthBrandLockup";
+import { SignUpPromoBar } from "@/components/SignUpPromoBar";
+import { PRODUCT_WORDMARK_ALT } from "@/lib/brand";
 
 /** Home + section anchors + product tool routes. */
 const NAV = [
@@ -30,26 +27,14 @@ export function LandingNav() {
 	const [open, setOpen] = useState(false);
 
 	return (
-		<header className="sticky top-0 z-40 w-full bg-white">
+		<div className="sticky top-0 z-40 w-full">
+			<header className="w-full bg-white">
 			<div className="mx-auto flex w-full max-w-[1440px] items-center gap-2 px-3 py-3 sm:gap-3 sm:px-6 sm:py-3.5 md:px-8">
-				<Link
+				<AuthBrandLockup
 					href="/"
-					className="flex min-w-0 shrink-0 items-center gap-2.5 sm:gap-3"
-					aria-label={PRODUCT_WORDMARK_ALT}
-				>
-					{/* eslint-disable-next-line @next/next/no-img-element */}
-					<img
-						src={PRODUCT_LOGO_SRC}
-						alt=""
-						className="h-10 w-10 shrink-0 rounded-xl object-contain sm:h-11 sm:w-11"
-					/>
-					{/* eslint-disable-next-line @next/next/no-img-element */}
-					<img
-						src={`${PRODUCT_WORDMARK_BLACK_SRC}?v=2`}
-						alt={PRODUCT_LOGO_ALT}
-						className="h-8 w-auto max-w-[12rem] object-contain object-left sm:h-9 sm:max-w-[14rem]"
-					/>
-				</Link>
+					className="min-w-0 shrink-0 [&_img]:h-10 [&_img]:w-10 sm:[&_img]:h-11 sm:[&_img]:w-11 [&_span]:text-lg sm:[&_span]:text-xl"
+					ariaLabel={PRODUCT_WORDMARK_ALT}
+				/>
 
 				<nav className="landing-nav-links ml-8 hidden min-w-0 items-center gap-2.5 xl:ml-12 xl:gap-3.5 lg:flex">
 					{NAV.slice(0, 4).map((item) => (
@@ -130,6 +115,8 @@ export function LandingNav() {
 					</nav>
 				</div>
 			) : null}
-		</header>
+			</header>
+			<SignUpPromoBar />
+		</div>
 	);
 }

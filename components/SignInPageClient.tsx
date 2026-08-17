@@ -1,15 +1,18 @@
 "use client";
 
 import { SignIn } from "@clerk/nextjs";
-import { LanguageToggle } from "@/components/LanguageToggle";
+import { AuthPageShell } from "@/components/auth/AuthPageShell";
+import { clerkAuthAppearance } from "@/lib/clerk-appearance";
 
 export function SignInPageClient() {
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-slate-50 px-4 py-8">
-      <div className="mb-6">
-        <LanguageToggle variant="light" />
-      </div>
-      <SignIn />
-    </main>
-  );
+	return (
+		<AuthPageShell mode="sign-in">
+			<SignIn
+				appearance={clerkAuthAppearance}
+				routing="path"
+				path="/sign-in"
+				signUpUrl="/sign-up"
+			/>
+		</AuthPageShell>
+	);
 }

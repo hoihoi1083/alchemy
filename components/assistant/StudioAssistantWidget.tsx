@@ -2,8 +2,9 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { SignInButton, useAuth } from "@clerk/nextjs";
+import { usePathname, useRouter } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
+import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { AssistantMascotLauncher } from "@/components/assistant/AssistantMascotLauncher";
 import { useLocale } from "@/components/LocaleProvider";
 import { useOptionalWizard } from "@/components/studio/WizardContext";
@@ -184,6 +185,8 @@ function lastUserMessage(msgs: ChatMessage[]): string | undefined {
 
 export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const { openAuthModal } = useAuthModal();
   const { isSignedIn, isLoaded } = useAuth();
   const { m, locale } = useLocale();
   const sa = m.studioAssistant;
@@ -699,14 +702,18 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
             {needsSignIn && (
               <p className="mb-2 text-xs text-violet-700">
                 {sa.signInToChat}{" "}
-                <SignInButton mode="modal">
-                  <button
-                    type="button"
-                    className="font-semibold text-violet-900 underline underline-offset-2"
-                  >
-                    {m.auth.signIn}
-                  </button>
-                </SignInButton>
+                <button
+                  type="button"
+                  onClick={() =>
+                    openAuthModal({
+                      mode: "sign-in",
+                      redirectUrl: pathname || "/",
+                    })
+                  }
+                  className="font-semibold text-violet-900 underline underline-offset-2"
+                >
+                  {m.auth.signIn}
+                </button>
               </p>
             )}
             <div className="flex gap-2">

@@ -2,21 +2,29 @@
 
 import { ClerkProvider } from "@clerk/nextjs";
 import type { ReactNode } from "react";
+import { AuthModalProvider } from "@/components/auth/AuthModalProvider";
 import { GlobalStudioAssistant } from "@/components/assistant/GlobalStudioAssistant";
 import { LocaleProvider, useLocale } from "@/components/LocaleProvider";
 import { MixpanelProvider } from "@/components/MixpanelProvider";
 import { SyncUserOnAuth } from "@/components/SyncUserOnAuth";
+import { clerkAppearance } from "@/lib/clerk-appearance";
 import { clerkLocalizationFor } from "@/lib/clerk-localization";
 
 function ClerkWithLocale({ children }: { children: ReactNode }) {
   const { locale } = useLocale();
 
   return (
-    <ClerkProvider localization={clerkLocalizationFor(locale)} key={locale}>
+    <ClerkProvider
+      appearance={clerkAppearance}
+      localization={clerkLocalizationFor(locale)}
+      key={locale}
+    >
       <SyncUserOnAuth />
       <MixpanelProvider />
-      {children}
-      <GlobalStudioAssistant />
+      <AuthModalProvider>
+        {children}
+        <GlobalStudioAssistant />
+      </AuthModalProvider>
     </ClerkProvider>
   );
 }

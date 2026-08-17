@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* Force landing utilities that Next/Tailwind-dev sometimes drops from the CSS graph. */
-@source inline("max-w-[240px] max-w-[300px] max-w-[340px] max-w-[500px] max-w-[560px] max-w-[860px] max-w-[1120px] h-[170px] md:h-[190px] md:max-w-[340px] lg:max-w-[560px] lg:py-20 py-20 z-[90] z-[100] bg-[#050507]/96");
+@source inline("max-w-[240px] max-w-[300px] max-w-[340px] max-w-[500px] max-w-[560px] max-w-[860px] max-w-[1120px] h-[170px] md:h-[190px] md:max-w-[340px] lg:max-w-[560px] lg:py-20 py-20 z-[90] z-[100] bg-[#050507]/96 w-[50vw] md:w-[50vw] w-[92vw]");
 
 /*
   Brand palette (Alchemy AI Lab)
@@ -632,5 +632,62 @@ footer.site-footer a.site-footer-logo:focus {
   50% {
     transform: translateY(-4px);
   }
+}
+
+/* Branded auth shell — flatten Clerk's inner card so we don't get a box-in-box. */
+.auth-clerk-root .cl-card,
+.auth-clerk-root .cl-cardBox,
+.auth-clerk-root .cl-signIn-root .cl-card,
+.auth-clerk-root .cl-signUp-root .cl-card {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+}
+
+.auth-clerk-root .cl-footer,
+.auth-clerk-root .cl-footerAction,
+.auth-clerk-root .cl-internal-1dauvpw,
+.auth-clerk-root [data-localization-key="footerActionLink"] {
+  display: none !important;
+}
+
+.auth-clerk-root .cl-formButtonPrimary {
+  box-shadow: none !important;
+}
+
+.auth-clerk-root .cl-socialButtons {
+  gap: 0.75rem;
+  padding-top: 1.25rem;
+}
+
+.auth-clerk-root .cl-socialButtonsRoot {
+  padding-top: 1.25rem;
+}
+
+.auth-clerk-root .cl-lastAuthenticationStrategyBadge,
+.auth-clerk-root [class*="lastAuthenticationStrategyBadge"] {
+  display: inline-flex !important;
+  right: 0.5rem !important;
+  top: 0 !important;
+}
+
+.auth-clerk-root .cl-dividerRow {
+  margin: 0.25rem 0;
+}
+
+/* Hide Clerk footer links only — keep "last used" badges on social buttons. */
+.auth-clerk-root .cl-modalCloseButton {
+  display: none !important;
+}
+
+.auth-clerk-root,
+.auth-clerk-root .cl-rootBox,
+.auth-clerk-root .cl-cardBox,
+.auth-clerk-root .cl-signIn-root,
+.auth-clerk-root .cl-signUp-root {
+  width: 100% !important;
+  max-width: none !important;
 }
 

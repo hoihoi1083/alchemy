@@ -13,11 +13,35 @@ export const zhCn = {
   },
   auth: {
     signIn: "登录",
+    signInTab: "登录",
+    signUpTab: "注册",
+    signInSubtitle: "欢迎回来！请登录您的账户以继续。",
+    signUpSubtitle: "创建账户 — 注册即送 500 免费点数。",
     tokensBalance: "{n} 点数",
     tokensBalanceTitle: "你的点数余额 — 查看方案与加购",
     accountMenu: "账户与账单",
     libraryMenu: "我的作品库",
     brandKitMenu: "品牌套件",
+    signupPromoBar: "注册即送 500 免费点数",
+    closeModal: "关闭",
+    panelTagline: "AI 营销创意工作流",
+    panelFeatures: [
+      {
+        icon: "✦",
+        title: "新手友好默认设置",
+        body: "向导默认保持简单，帮你避开常见的质量坑。",
+      },
+      {
+        icon: "▶",
+        title: "从草稿到成片更快",
+        body: "先生成静图，再动画成视频 — 更容易迭代、控制质量。",
+      },
+      {
+        icon: "◫",
+        title: "为小生意广告而生",
+        body: "模板与提示词针对 IG/FB Reels 和实际推广场景优化。",
+      },
+    ],
   },
   account: {
     title: "账户与账单",
