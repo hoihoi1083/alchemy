@@ -73,6 +73,52 @@ export const zhCn = {
       refund: "退款",
       admin_adjust: "调整",
     },
+    team: {
+      title: "企业席位",
+      seatsUsed: "已用席位：{held} / {limit}",
+      seatsUsedHint: "{members} 位成员 · {pending} 个待接受邀请",
+      seatsFull: "席位已满。请先移除成员或撤销邀请，再加入其他人。",
+      invitePlaceholder: "邀请同事邮箱",
+      invite: "邀请",
+      inviteHint: "浏览器允许时会自动复制邀请链接。队友生成会使用团队点数池。",
+      membersTitle: "现有成员",
+      ownerSuffix: "（所有者）",
+      remove: "移除",
+      removeConfirm: "将 {name} 移出团队？对方会失去企业权限，个人作品库仍属于对方。",
+      pendingTitle: "待接受邀请",
+      expires: "于 {date} 到期",
+      resend: "重发",
+      revoke: "撤销",
+      revokeConfirm: "撤销发给 {email} 的邀请？",
+      noPending: "暂时没有待接受邀请。",
+      inviteCreatedCopied: "已发送邀请，链接已复制到剪贴板。",
+      inviteCreatedNoCopy: "已发送邀请。请从邮件复制链接。",
+      inviteCreatedCopiedNoEmail: "已创建邀请，邮件未发出；链接已复制到剪贴板。",
+      inviteCreatedNoEmailNoCopy: "已创建邀请，邮件未发出；请自行复制链接。",
+      inviteResentCopied: "已重发邀请，新链接已复制到剪贴板。",
+      inviteResentNoCopy: "已重发邀请。",
+      inviteFailed: "无法创建邀请。",
+      revokeFailed: "无法撤销邀请。",
+      removeFailed: "无法移除成员。",
+      resendFailed: "无法重发邀请。",
+      memberTitle: "企业团队",
+      memberBody: "你正在使用 {owner} 的 Custom 计划。生成会使用团队点数池。",
+      memberBodyGeneric: "你正在企业团队中。生成会使用团队点数池。",
+      leave: "离开团队",
+      leaveConfirm: "离开此企业团队？你将失去 Custom 计划权限。",
+      leaveFailed: "无法离开团队。",
+      pooledBalance: "团队点数池",
+      inviteAcceptTitle: "团队邀请",
+      inviteAcceptSubtitle: "接受企业席位邀请即可解锁计划权限。",
+      inviteAccepting: "正在接受邀请…",
+      inviteSignIn: "请用受邀邮箱登录以继续。",
+      inviteOk: "已加入席位，你现在拥有企业权限。",
+      inviteGoAccount: "前往账户",
+      inviteBack: "返回账户",
+      inviteMissingToken: "缺少邀请 token。",
+      inviteFailedAccept: "无法接受邀请。",
+      inviteWrongEmail: "此邀请发给另一个邮箱。请退出，再用受邀邮箱登录。",
+    },
   },
   library: {
     title: "我的作品库",
@@ -289,17 +335,49 @@ export const zhCn = {
       { title: "生成和编辑", body: "出图或出片後，再在画布改字、加 Logo、导出尺寸。" },
     ],
     demoModal: {
-      title: "四步出图广告",
-      subtitle: "真实 Studio 操作录影 — 不用写 prompt。",
       close: "关闭示范",
       tryCta: "免费试用 — 做第一张广告",
-      hint: "真实录影 · 已加速 · 点步骤可跳转",
-      steps: [
-        { title: "选产品", body: "从首页开始，选实体产品，然后进入 Studio。" },
-        { title: "只出图", body: "选「只生成图片」— 这次不用出片。" },
-        { title: "产品图 + 标题", body: "填产品名、上传真实产品图，再加一句 hook。" },
-        { title: "生成图片", body: "点生成图片。看成品，再下载或去画布改。" },
-      ],
+      tabsAria: "示范类型",
+      tabs: {
+        image: "出图",
+        storyboard: "分镜",
+        video: "出片",
+      },
+      demos: {
+        image: {
+          title: "四步出图广告",
+          subtitle: "真实 Studio 操作 — 产品图入，静态广告出。",
+          hint: "真实录影 · 点步骤可跳转",
+          steps: [
+            { title: "选产品", body: "选实体产品，然后进入 Studio。" },
+            { title: "只出图", body: "选「只生成图片」— 这次不用出片。" },
+            { title: "产品图 + 标题", body: "填产品名、上传真实产品图，再加一句 hook。" },
+            { title: "生成图片", body: "点生成图片。看成品，再下载或去画布改。" },
+          ],
+        },
+        storyboard: {
+          title: "四步奢侈品分镜",
+          subtitle: "真实 Studio 操作 — AI 研究、分镜静帧，再到奢侈品成片。",
+          hint: "真实录影 · 节奏放慢 · 柔和配乐 · 点步骤可跳转",
+          steps: [
+            { title: "选产品", body: "不再停在首页。选实体产品，再选「先出图再出片」。" },
+            { title: "AI 研究", body: "搜热门帖做版式灵感 — 这是 Alchemy 卖点之一。" },
+            { title: "奢侈品分镜", body: "选 Luxury birth，出大纲，再生成场景静帧。" },
+            { title: "生成视频", body: "确认静帧。成片先定格一镜，再独立全画面播放。" },
+          ],
+        },
+        video: {
+          title: "四步三分屏 drip",
+          subtitle: "只出片路径 — 用产品图做出三格 meme drip（汉堡例子）。",
+          hint: "Studio 操作 + 生成的三分屏成片 · 点步骤可跳转",
+          steps: [
+            { title: "只出片", body: "选实体产品，再选「只生成视频」。" },
+            { title: "Social drip", body: "选三分屏 Social drip — 产品、社交栏、角色反应。" },
+            { title: "产品图", body: "上传清晰包装照（这个汉堡）和短 hook。" },
+            { title: "Drip 成片", body: "生成 — 成片先定格一镜，再独立播放三分屏。" },
+          ],
+        },
+      },
     },
     howDemo: {
       uploadTitle: "参考 · 上传或贴链接",
@@ -428,7 +506,7 @@ export const zhCn = {
     pricingFreeCta: "免费开始",
     pricingProCta: "开始 Pro",
     pricingCustom: "联系我们",
-    pricingCustomHint: "大量点数与自定义上限",
+    pricingCustomHint: "5 个席位，共用点数池",
     tokensTitle: "AI 点数怎么算",
     tokensBody:
       "每个方案显示独立上限：点数全用来出 1K 单图最多几张，或者全用来出 8 秒 480p 视频最多几条。混搭或用更高分辨率会让每件作品用更多点数。",
@@ -590,7 +668,7 @@ export const zhCn = {
 				"product-food-bullet-time-6s": {
 					title: "美食子弹时间 ~6s",
 					description:
-						"打卡美食图 → 飞溅定格静图 → 镜头环绕悬浮食物。",
+						"打卡美食图 → 食物爆裂定格静图 → 镜头环绕飞散层次。",
 					costHint: "~6s · 人+食物生活照（或生成静图）",
 				},
 				"product-c4d-motion-8s": {
@@ -602,13 +680,13 @@ export const zhCn = {
 				"product-h3-showreel-8s": {
 					title: "秀场一镜 ~8s",
 					description:
-						"产品静图 + 参考秀场。方案卡：汽车电影感 · 键盘科技 · 抽象变形。允许动能大字，可选 16:9。",
-					costHint: "~8s · 产品图 + 参考秀场片",
+						"产品静图 + 方案卡（汽车 · 键盘 · 抽象）。允许动能大字，可选 16:9。参考秀场片选填。",
+					costHint: "~8s · 产品图（参考秀场片选填）",
 				},
 				"product-h3-sphere-mg-8s": {
 					title: "球体运动图形 ~8s",
 					description:
-						"球体是可复用的 MG 英雄 — 水晶／铬面／液态／霓虹／哑光行星，映射你的产品或 Logo。",
+						"先球体 MG 世界，再把产品揭出来当英雄。允许动能大字。",
 					costHint: "~8s · 产品图（或生成静图）",
 				},
 				"product-h3-movie-title-8s": {
@@ -669,7 +747,7 @@ export const zhCn = {
 				"concept-food-bullet-time-6s": {
 					title: "美食子弹时间（概念）~6s",
 					description:
-						"餐厅／美食 campaign 子弹时间 — 飞溅定格＋环绕，不必 SKU 包装图。",
+						"餐厅／美食 campaign 子弹时间 — 戏剧性爆裂定格＋环绕，不必 SKU 包装图。",
 					costHint: "~6s · 打卡美食图（或生成静图）",
 				},
 				"concept-c4d-motion-8s": {
@@ -681,8 +759,8 @@ export const zhCn = {
 				"concept-h3-showreel-8s": {
 					title: "秀场一镜（概念）~8s",
 					description:
-						"Logo／吉祥物 + 参考秀场。概念优先「抽象变形」；汽车／键盘卡看标识是否贴合。可选 16:9。",
-					costHint: "~8s · Logo/吉祥物 + 参考秀场片",
+						"Logo／吉祥物 + 方案卡。概念优先「抽象变形」。可选 16:9。参考秀场片选填。",
+					costHint: "~8s · Logo/吉祥物静图（参考秀场片选填）",
 				},
 				"concept-h3-sphere-mg-8s": {
 					title: "球体运动图形（概念）~8s",
@@ -847,7 +925,7 @@ export const zhCn = {
     heroSidebar: ["Upload", "Style", "Layout", "Tone", "BrandKit"],
     navResources: "点数",
 
-    planBlurbCustom: "For enterprise volume",
+    planBlurbCustom: "5 个席位 · 共用点数池",
 
     planBlurbFree: "Try the guided Studio workflow",
 
@@ -1029,7 +1107,7 @@ export const zhCn = {
       },
       {
         q: "适合代理或团队吗？",
-        body: "适合更高产量：Pro 提高每月点数；Master 提供更多点数、2K 图片和 Pro 画布。Custom 可协商企业需求。目前尚未内置多座位团队协作工作区 — 企业需求请联系我们。",
+        body: "支持。Enterprise 在同一个 Custom 计划提供 5 个席位：所有者在账户页邀请队友，各自保留独立作品库，生成使用所有者的共用点数池。请联系我们开通。Pro 和 Master 仍为单人自助计划。",
       },
       {
         q: "什么时候可以买额外点数？",
@@ -1133,28 +1211,35 @@ export const zhCn = {
         ],
       },
       custom: {
-        name: "Custom",
-        description: "企业用量、SSO",
+        name: "Enterprise",
+        description: "团队 5 席，共用一个点数池",
+        badge: "5 席",
+        seatsLabel: "5 席 · 共用点数池",
         features: [
-          "协商 点数 池",
-          "自定义保留和 SLA",
-          "专人 onboarding",
+          "5 个席位（所有者 + 4 位队友）",
+          "生成扣所有者的共用点数池",
+          "各自独立作品库",
+          "所有者可随时邀请、移除、更换席位",
+          "1080p 视频、2K 图片、Pro 画布",
+          "协商点数用量",
           "发票 / PO 付款",
+          "专人 onboarding",
         ],
       },
     },
     comparisonRows: [
-      { feature: "点数", free: "500 · 新注册送一次", standard: "3,000 / 月", pro: "8,000 / 月", master: "16,000 / 月" },
-      { feature: "大约产能", free: "最多 7 张图或 1 条 8 秒 480p", standard: "最多 46 张图或 9 条 8 秒 480p", pro: "最多 123 张图或 24 条 8 秒 480p", master: "最多 246 张图或 48 条 8 秒 480p" },
-      { feature: "图片最高分辨率", free: "最高 1K", standard: "最高 1K", pro: "最高 1K", master: "最高 2K" },
-      { feature: "视频最高分辨率", free: "最高 480p", standard: "最高 720p", pro: "最高 1080p", master: "最高 1080p" },
-      { feature: "平台研究 / 合并流程 / 故事板", free: "✓", standard: "✓", pro: "✓", master: "✓" },
-      { feature: "A/B、Campaign、教学轮播", free: "✓", standard: "✓", pro: "✓", master: "✓" },
-      { feature: "邮件支持", free: "—", standard: "✓", pro: "✓", master: "✓" },
-      { feature: "优先生成", free: "—", standard: "—", pro: "✓", master: "✓" },
-      { feature: "Pro 画布", free: "—", standard: "—", pro: "—", master: "✓" },
-      { feature: "优先支持", free: "—", standard: "—", pro: "—", master: "✓" },
-      { feature: "加购 点数（$10 / 1k）", free: "—", standard: "✓", pro: "✓", master: "✓" },
+      { feature: "点数", free: "500 · 新注册送一次", standard: "3,000 / 月", pro: "8,000 / 月", master: "16,000 / 月", custom: "协商用量" },
+      { feature: "团队席位", free: "1", standard: "1", pro: "1", master: "1", custom: "5 · 共用池" },
+      { feature: "大约产能", free: "最多 7 张图或 1 条 8 秒 480p", standard: "最多 46 张图或 9 条 8 秒 480p", pro: "最多 123 张图或 24 条 8 秒 480p", master: "最多 246 张图或 48 条 8 秒 480p", custom: "按协议用量" },
+      { feature: "图片最高分辨率", free: "最高 1K", standard: "最高 1K", pro: "最高 1K", master: "最高 2K", custom: "最高 2K" },
+      { feature: "视频最高分辨率", free: "最高 480p", standard: "最高 720p", pro: "最高 1080p", master: "最高 1080p", custom: "最高 1080p" },
+      { feature: "平台研究 / 合并流程 / 故事板", free: "✓", standard: "✓", pro: "✓", master: "✓", custom: "✓" },
+      { feature: "A/B、Campaign、教学轮播", free: "✓", standard: "✓", pro: "✓", master: "✓", custom: "✓" },
+      { feature: "邮件支持", free: "—", standard: "✓", pro: "✓", master: "✓", custom: "✓" },
+      { feature: "优先生成", free: "—", standard: "—", pro: "✓", master: "✓", custom: "✓" },
+      { feature: "Pro 画布", free: "—", standard: "—", pro: "—", master: "✓", custom: "✓" },
+      { feature: "优先支持", free: "—", standard: "—", pro: "—", master: "✓", custom: "✓" },
+      { feature: "加购 点数（$10 / 1k）", free: "—", standard: "✓", pro: "✓", master: "✓", custom: "✓" },
     ],
   },
   steps: {
@@ -1757,6 +1842,8 @@ export const zhCn = {
       "参考片模式 此请求被阻挡 — 改用 拼接后备 分镜（每格短视频再拼接）",
     seedanceToMinimaxH3FallbackNote:
       "参考片模式 此请求被阻挡 — 改用 单镜出片（尽量保留参考片运镜）",
+    h3ToSeedanceFallbackNote:
+      "单镜出片暂时未能用 — 已改用 Seedance，并混入音乐库 BGM",
     klingStoryboardClipCount: "片段 × {n}",
     storyboardDurationLabel: "目标片长",
     storyboardDurationHint: "会影响分镜场景数量。改咗片长请重新生成场景图。",
@@ -2380,7 +2467,7 @@ export const zhCn = {
 			"food-bullet-time": {
 				title: "美食子弹时间",
 				description:
-					"打卡美食飞溅定格静图 → 6s 镜头环绕（3D 食物飞溅）。",
+					"打卡美食爆裂定格 → 6s 镜头环绕（3D 食物爆裂）。",
 			},
 			"c4d-motion": {
 				title: "C4D 动态视觉",
@@ -2390,12 +2477,12 @@ export const zhCn = {
 			"h3-showreel": {
 				title: "秀场一镜",
 				description:
-					"主体静图 + 参考秀场。方案卡：汽车 · 键盘 · 抽象。允许动能大字，可选 16:9。",
+					"主体静图 + 方案卡（汽车 · 键盘 · 抽象）。允许动能大字，可选 16:9。参考片选填。",
 			},
 			"h3-sphere-mg": {
 				title: "球体运动图形",
 				description:
-					"球体是可复用 MG 英雄 — 水晶、铬面、液态、霓虹或哑光行星，映射产品／Logo。",
+					"先球体 MG 世界，再把产品揭出来当英雄。允许动能大字。",
 			},
 			"h3-movie-title": {
 				title: "电影标题",
@@ -2466,7 +2553,7 @@ export const zhCn = {
 		h3ShotNeedConceptHero:
 			"可上传 Logo/吉祥物、用品牌套件 Logo，或用 AI 生成静图。",
 		h3ShotNeedReferenceVideo:
-			"请上传参考 MP4（仿拍、霓虹叠实景、秀场一镜必填）。",
+			"请上传参考 MP4（仿拍、霓虹叠实景必填）。",
 		h3ShotGenerateStillBtn: "生成静图",
 		h3ShotConceptHeroTitle: "主体锁定静图",
 		h3ShotPhotoTitle: {
@@ -2479,7 +2566,7 @@ export const zhCn = {
 			"neon-on-real":
 				"必填：真实实景 MP4 — 这条片是霓虹场景底。",
 			"h3-showreel":
-				"必填：参考秀场 MP4 — 提供节奏／运镜语言给单镜。",
+				"选填：上传秀场 MP4 可跟运镜／节奏。不传就由方案卡带一镜。",
 		},
 		h3ShotHeroHint: {
 			"ecom-orbit":
@@ -2501,7 +2588,7 @@ export const zhCn = {
 			"c4d-motion":
 				"必填：产品图（概念可用 Logo／吉祥物）。以该主体做黑场 C4D 揭幕。",
 			"h3-showreel":
-				"必填：产品或 Logo／吉祥物静图作主体锁定（配下方秀场 MP4）。允许动能大字。",
+				"必填：产品或 Logo／吉祥物静图作主体锁定。允许动能大字。秀场 MP4 选填。",
 			"h3-sphere-mg":
 				"必填：产品图（概念可用 Logo／吉祥物）。球体包裹你的身份；不需要参考片。",
 			"h3-movie-title":
@@ -2525,11 +2612,11 @@ export const zhCn = {
 			"neon-on-real":
 				"请上传真实 MP4（必填）。可把 Logo／吉祥物放进「产品照片」作霓虹身份；也可只用品牌包 Logo。霓虹在场景中移动。",
 			"food-bullet-time":
-				"请先上传人+食物打卡照 — 未上传前无法按生成。镜头环绕飞溅定格约 6s。",
+				"请先上传人+食物打卡照 — 未上传前无法按生成。镜头环绕食物爆裂定格约 6s。",
 			"c4d-motion":
 				"请先上传产品图（概念可用 Logo／吉祥物）— 未上传前无法按生成。再做约 8s 黑场 C4D 揭幕。",
 			"h3-showreel":
-				"请上传主体静图 + 参考秀场 MP4 — 两者齐备才能生成。可选 16:9；允许动能大字。",
+				"请先上传主体静图 — 未上传前无法按生成。方案卡带一镜。可选 16:9；允许动能大字。参考片选填。",
 			"h3-sphere-mg":
 				"请先上传产品图（概念可用 Logo／吉祥物）— 未上传前无法按生成。再做约 8s 球体运动图形一镜。",
 			"h3-movie-title":
@@ -2569,7 +2656,7 @@ export const zhCn = {
 		},
 		h3ShowreelSchemeTitle: "秀场方案卡",
 		h3ShowreelSchemeHint:
-			"同一套仿拍秀场 + 动能大字 + 画幅选择 — 不同镜头语言。自动会按产品名匹配。",
+			"方案卡决定运镜语言。参考 MP4 选填 — 想跟某一支片请用「仿拍这支广告」。",
 		h3ShowreelSchemeAuto: "自动 · 适合产品",
 		h3ShowreelSchemes: {
 			"car-cinematic": {
@@ -2587,12 +2674,12 @@ export const zhCn = {
 		},
 		h3SphereMgSchemeTitle: "球体风格",
 		h3SphereMgSchemeHint:
-			"球体是可复用的 MG 英雄 — 产品／Logo 锁定身份。自动会按产品名匹配。",
+			"一颗 C4D 球世界开场，再把产品揭出来。汽车用水晶。不是空白星球。",
 		h3SphereMgSchemeAuto: "自动 · 适合产品",
 		h3SphereMgSchemes: {
 			"crystal-glass": {
 				title: "水晶玻璃",
-				desc: "折射水晶球",
+				desc: "球内可见产品",
 			},
 			"chrome-spin": {
 				title: "铬面旋转",
@@ -2608,7 +2695,7 @@ export const zhCn = {
 			},
 			"matte-planet": {
 				title: "哑光行星",
-				desc: "柔和行星包裹（最通用）",
+				desc: "C4D 哑光圆球（不是地球）",
 			},
 		},
 		recipePathUxTitles: {
@@ -2667,10 +2754,10 @@ export const zhCn = {
 				],
 				attention: [
 					"保持同一道菜 — 不要凭空加食材",
-					"目标：飞溅定格＋镜头向右环绕，人几乎静止",
+					"目标：戏剧性爆裂定格（层次＋碎屑＋酱汁）＋镜头向右环绕，人几乎静止",
 					"脸部尽量保持可辨；咖啡店／街景背景更佳",
 				],
-				output: ["约 6 秒美食子弹时间／3D 飞溅打卡片"],
+				output: ["约 6 秒美食子弹时间／3D 食物爆裂打卡片"],
 			},
 			"c4d-motion": {
 				need: ["产品图（概念可用 Logo／吉祥物）", "主体要清晰，便于黑场锁定"],
@@ -2684,7 +2771,7 @@ export const zhCn = {
 			"h3-showreel": {
 				need: [
 					"产品图（概念可用 Logo／吉祥物）",
-					"参考秀场 MP4（运镜／节奏／景别）",
+					"参考秀场 MP4 选填（运镜／节奏）。不传就由方案卡带一镜",
 				],
 				attention: [
 					"选方案卡：汽车电影感 · 键盘科技 · 抽象变形（自动按产品名）",
@@ -2700,10 +2787,10 @@ export const zhCn = {
 					"清晰主体作球体身份锁定（不需要参考片）",
 				],
 				attention: [
-					"选球体风格：水晶 · 铬面 · 液态 · 霓虹 · 哑光行星",
-					"球体是可复用 MG 英雄 — 产品／Logo 映射其上",
-					"哑光行星最通用；其他是材质专用",
-					"一镜到底连续运动 — 不是硬切蒙太奇",
+					"汽车选水晶 — 先在球内，再把车揭到镜头前",
+					"开场可以是抽象 MG＋动能大字；结尾必须是产品英雄",
+					"不是空白灰星球，不是 NASA 地球",
+					"静图如果只是一颗球，先重做静图再出片",
 				],
 				output: ["约 8 秒球体运动图形一镜"],
 			},
@@ -2798,7 +2885,7 @@ export const zhCn = {
 			"beauty-mv": "AI 人像…",
 			"imitate-ad": "AI 产品图…",
 			"neon-on-real": "AI 霓虹锁定静图…",
-			"food-bullet-time": "AI 飞溅定格…",
+			"food-bullet-time": "AI 食物爆裂定格…",
 			"c4d-motion": "AI 黑场 C4D 静图…",
 			"h3-showreel": "AI 秀场静图…",
 			"h3-sphere-mg": "AI 球体 MG 静图…",
@@ -2852,7 +2939,7 @@ socialDripHint:
 		handThrowAnimatingCard: "第 3/3 步：抛出→实景过渡中…",
 		handThrowNeedKeyframe: "请先上传产品图（概念用 Logo／吉祥物静图 — 单靠文字不够）。",
 		productExplodeHint:
-			"风格化产品拆解：完整棚拍 → 悬浮零件静图 → 约 4 秒柔和拆解。零件是发明式点缀 — 不是精准 CAD 内部。",
+			"完整组装棚拍（耳塞要坐在盒里）→ 零件沿组装轴分开 — 不是耳塞飞出充电盒。约 4 秒过渡。风格化零件，不是精准 CAD。",
 		productExplodeBuildingStill: "第 1/3 步：完整产品棚拍静图…",
 		productExplodeBuildingEnd: "第 2/3 步：悬浮零件拆解静图…",
 		productExplodeAnimatingCard: "第 3/3 步：拆解过渡中…",

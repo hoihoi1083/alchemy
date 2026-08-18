@@ -76,6 +76,52 @@ export const zh = {
 			refund: "退款",
 			admin_adjust: "調整",
 		},
+		team: {
+			title: "企業席位",
+			seatsUsed: "已用席位：{held} / {limit}",
+			seatsUsedHint: "{members} 位成員 · {pending} 個待接受邀請",
+			seatsFull: "席位已滿。請先移除成員或撤銷邀請，再加入其他人。",
+			invitePlaceholder: "邀請同事電郵",
+			invite: "邀請",
+			inviteHint: "瀏覽器允許時會自動複製邀請連結。隊友生成會使用團隊 token 池。",
+			membersTitle: "現有成員",
+			ownerSuffix: "（擁有人）",
+			remove: "移除",
+			removeConfirm: "將 {name} 移出團隊？對方會失去企業權限，個人作品庫仍屬對方。",
+			pendingTitle: "待接受邀請",
+			expires: "於 {date} 到期",
+			resend: "重發",
+			revoke: "撤銷",
+			revokeConfirm: "撤銷發給 {email} 的邀請？",
+			noPending: "暫時沒有待接受邀請。",
+			inviteCreatedCopied: "已發送邀請，連結已複製到剪貼簿。",
+			inviteCreatedNoCopy: "已發送邀請。請從電郵複製連結。",
+			inviteCreatedCopiedNoEmail: "已建立邀請，電郵未送出；連結已複製到剪貼簿。",
+			inviteCreatedNoEmailNoCopy: "已建立邀請，電郵未送出；請自行複製連結。",
+			inviteResentCopied: "已重發邀請，新連結已複製到剪貼簿。",
+			inviteResentNoCopy: "已重發邀請。",
+			inviteFailed: "無法建立邀請。",
+			revokeFailed: "無法撤銷邀請。",
+			removeFailed: "無法移除成員。",
+			resendFailed: "無法重發邀請。",
+			memberTitle: "企業團隊",
+			memberBody: "你而家用緊 {owner} 嘅 Custom 計劃。生成會用團隊 token 池。",
+			memberBodyGeneric: "你而家喺企業團隊。生成會用團隊 token 池。",
+			leave: "離開團隊",
+			leaveConfirm: "離開呢個企業團隊？你會失去 Custom 計劃權限。",
+			leaveFailed: "無法離開團隊。",
+			pooledBalance: "團隊 token 池",
+			inviteAcceptTitle: "團隊邀請",
+			inviteAcceptSubtitle: "接受企業席位邀請即可解鎖計劃權限。",
+			inviteAccepting: "正在接受邀請…",
+			inviteSignIn: "請用受邀電郵登入以繼續。",
+			inviteOk: "已加入席位，你而家有企業權限。",
+			inviteGoAccount: "前往帳戶",
+			inviteBack: "返回帳戶",
+			inviteMissingToken: "缺少邀請 token。",
+			inviteFailedAccept: "無法接受邀請。",
+			inviteWrongEmail: "呢封邀請係發給另一個電郵。請登出，再用受邀電郵登入。",
+		},
 	},
 	library: {
 		title: "我的作品庫",
@@ -331,29 +377,49 @@ export const zh = {
 			},
 		],
 		demoModal: {
-			title: "四步出圖廣告",
-			subtitle: "真實 Studio 操作錄影 — 唔使寫 prompt。",
 			close: "關閉示範",
 			tryCta: "免費試用 — 做第一張廣告",
-			hint: "真實錄影 · 已加速 · 撳步驟可跳轉",
-			steps: [
-				{
-					title: "揀產品",
-					body: "由首頁開始，揀實體產品，然後入 Studio。",
+			tabsAria: "示範類型",
+			tabs: {
+				image: "出圖",
+				storyboard: "分鏡",
+				video: "出片",
+			},
+			demos: {
+				image: {
+					title: "四步出圖廣告",
+					subtitle: "真實 Studio 操作 — 產品相入，靜態廣告出。",
+					hint: "真實錄影 · 撳步驟可跳轉",
+					steps: [
+						{ title: "揀產品", body: "揀實體產品，然後入 Studio。" },
+						{ title: "只出圖", body: "揀「只生成圖片」— 今次唔使出片。" },
+						{ title: "產品相 + 標題", body: "填產品名、上傳真實產品相，再加一句 hook。" },
+						{ title: "生成圖片", body: "撳生成圖片。睇成品，再下載或去畫布改。" },
+					],
 				},
-				{
-					title: "只出圖",
-					body: "揀「只生成圖片」— 今次唔使出片。",
+				storyboard: {
+					title: "四步奢侈品分鏡",
+					subtitle: "真實 Studio 操作 — AI 研究、分鏡靜幀，再到奢侈品成片。",
+					hint: "真實錄影 · 節奏放慢 · 柔和配樂 · 撳步驟可跳轉",
+					steps: [
+						{ title: "揀產品", body: "唔再停喺首頁。揀實體產品，再揀「先出圖再出片」。" },
+						{ title: "AI 研究", body: "搜熱門帖做版式靈感 — 呢個係 Alchemy 賣點之一。" },
+						{ title: "奢侈品分鏡", body: "揀 Luxury birth，出大綱，再生成場景靜幀。" },
+						{ title: "生成影片", body: "確認靜幀。成片先定格一鏡，再獨立全畫面播放。" },
+					],
 				},
-				{
-					title: "產品相 + 標題",
-					body: "填產品名、上傳真實產品相，再加一句 hook。",
+				video: {
+					title: "四步三分屏 drip",
+					subtitle: "只出片路徑 — 用產品相做出三格 meme drip（漢堡例子）。",
+					hint: "Studio 操作 + 生成嘅三分屏成片 · 撳步驟可跳轉",
+					steps: [
+						{ title: "只出片", body: "揀實體產品，再揀「只生成影片」。" },
+						{ title: "Social drip", body: "揀三分屏 Social drip — 產品、社交欄、角色反應。" },
+						{ title: "產品相", body: "上傳清晰包裝照（呢個漢堡）同短 hook。" },
+						{ title: "Drip 成片", body: "生成 — 成片先定格一鏡，再獨立播放三分屏。" },
+					],
 				},
-				{
-					title: "生成圖片",
-					body: "撳生成圖片。睇成品，再下載或去畫布改。",
-				},
-			],
+			},
 		},
 		howDemo: {
 			uploadTitle: "參考 · 上傳或貼連結",
@@ -493,7 +559,7 @@ export const zh = {
 		pricingFreeCta: "免費開始",
 		pricingProCta: "開始 Pro",
 		pricingCustom: "聯絡我們",
-		pricingCustomHint: "大量 token 同自訂上限",
+		pricingCustomHint: "5 個席位，共用 token 池",
 		tokensTitle: "AI Tokens 點計",
 		tokensBody:
 			"每個方案顯示獨立上限：token 全用嚟出 1K 單圖最多幾張，或者全用嚟出 8 秒 480p 片最多幾條。混搭或用更高解像度會令每件作品用多啲 token。",
@@ -661,7 +727,7 @@ export const zh = {
 				"product-food-bullet-time-6s": {
 					title: "美食子彈時間 ~6s",
 					description:
-						"打卡美食圖 → 飛濺定格靜圖 → 鏡頭環繞懸浮食物。",
+						"打卡美食圖 → 食物爆裂定格靜圖 → 鏡頭環繞飛散層次。",
 					costHint: "~6s · 人+食物生活照（或生成靜圖）",
 				},
 				"product-c4d-motion-8s": {
@@ -673,13 +739,13 @@ export const zh = {
 				"product-h3-showreel-8s": {
 					title: "秀場一鏡 ~8s",
 					description:
-						"產品靜圖 + 參考秀場。方案卡：汽車電影感 · 鍵盤科技 · 抽象變形。允許動能大字，可選 16:9。",
-					costHint: "~8s · 產品圖 + 參考秀場片",
+						"產品靜圖 + 方案卡（汽車 · 鍵盤 · 抽象）。允許動能大字，可選 16:9。參考秀場片選填。",
+					costHint: "~8s · 產品圖（參考秀場片選填）",
 				},
 				"product-h3-sphere-mg-8s": {
 					title: "球體運動圖形 ~8s",
 					description:
-						"球體係可複用嘅 MG 英雄 — 水晶／鉻面／液態／霓虹／啞光行星，映射你嘅產品或 Logo。",
+						"先球體 MG 世界，再把產品揭出嚟當英雄。允許動能大字。",
 					costHint: "~8s · 產品圖（或生成靜圖）",
 				},
 				"product-h3-movie-title-8s": {
@@ -758,7 +824,7 @@ export const zh = {
 				"concept-food-bullet-time-6s": {
 					title: "美食子彈時間（概念）~6s",
 					description:
-						"餐廳／美食 campaign 子彈時間 — 飛濺定格＋環繞，唔一定要 SKU 包裝圖。",
+						"餐廳／美食 campaign 子彈時間 — 戲劇性爆裂定格＋環繞，唔一定要 SKU 包裝圖。",
 					costHint: "~6s · 打卡美食圖（或生成靜圖）",
 				},
 				"concept-c4d-motion-8s": {
@@ -770,8 +836,8 @@ export const zh = {
 				"concept-h3-showreel-8s": {
 					title: "秀場一鏡（概念）~8s",
 					description:
-						"Logo／吉祥物 + 參考秀場。概念優先「抽象變形」；汽車／鍵盤卡睇標識是否貼合。可選 16:9。",
-					costHint: "~8s · Logo/吉祥物 + 參考秀場片",
+						"Logo／吉祥物 + 方案卡。概念優先「抽象變形」。可選 16:9。參考秀場片選填。",
+					costHint: "~8s · Logo/吉祥物靜圖（參考秀場片選填）",
 				},
 				"concept-h3-sphere-mg-8s": {
 					title: "球體運動圖形（概念）~8s",
@@ -945,7 +1011,7 @@ export const zh = {
 		heroSidebar: ["Upload", "Style", "Layout", "Tone", "BrandKit"],
 		navResources: "Token",
 
-		planBlurbCustom: "For enterprise volume",
+		planBlurbCustom: "5 個席位 · 共用 token 池",
 
 		planBlurbFree: "Try the guided Studio workflow",
 
@@ -1149,7 +1215,7 @@ export const zh = {
 			},
 			{
 				q: "適合代理或團隊嗎？",
-				body: "適合更高產量：Pro 提高每月 token；Master 提供更多 token、2K 圖片同 Pro 畫布。Custom 可協商企業需求。目前未有內建多座位團隊協作工作區 — 企業需求請聯絡我哋。",
+				body: "支援。Enterprise 喺同一個 Custom 計劃提供 5 個席位：擁有人喺帳戶邀請隊友，各自保留獨立作品庫，生成會用擁有人嘅共用 token 池。請聯絡我哋開通。Pro 同 Master 仍然係單人自助計劃。",
 			},
 			{
 				q: "幾時可以買額外 token？",
@@ -1250,13 +1316,19 @@ export const zh = {
 				],
 			},
 			custom: {
-				name: "Custom",
-				description: "企業用量、SSO",
+				name: "Enterprise",
+				description: "團隊 5 席，共用一個 token 池",
+				badge: "5 席",
+				seatsLabel: "5 席 · 共用 token 池",
 				features: [
-					"協商 token 池",
-					"自訂保留同 SLA",
-					"專人 onboarding",
+					"5 個席位（擁有人 + 4 位隊友）",
+					"生成扣擁有人嘅共用 token 池",
+					"各自獨立作品庫",
+					"擁有人可隨時邀請、移除、更換席位",
+					"1080p 影片、2K 圖片、Pro 畫布",
+					"協商 token 用量",
 					"發票 / PO 付款",
+					"專人 onboarding",
 				],
 			},
 		},
@@ -1267,6 +1339,15 @@ export const zh = {
 				standard: "3,000 / 月",
 				pro: "8,000 / 月",
 				master: "16,000 / 月",
+				custom: "協商用量",
+			},
+			{
+				feature: "團隊席位",
+				free: "1",
+				standard: "1",
+				pro: "1",
+				master: "1",
+				custom: "5 · 共用池",
 			},
 			{
 				feature: "大約產能",
@@ -1274,6 +1355,7 @@ export const zh = {
 				standard: "最多 46 張圖或 9 條 8 秒 480p",
 				pro: "最多 123 張圖或 24 條 8 秒 480p",
 				master: "最多 246 張圖或 48 條 8 秒 480p",
+				custom: "按協議用量",
 			},
 			{
 				feature: "圖片最高解像度",
@@ -1281,6 +1363,7 @@ export const zh = {
 				standard: "最高 1K",
 				pro: "最高 1K",
 				master: "最高 2K",
+				custom: "最高 2K",
 			},
 			{
 				feature: "影片最高解像度",
@@ -1288,6 +1371,7 @@ export const zh = {
 				standard: "最高 720p",
 				pro: "最高 1080p",
 				master: "最高 1080p",
+				custom: "最高 1080p",
 			},
 			{
 				feature: "平台研究 / 合併流程 / 故事板",
@@ -1295,6 +1379,7 @@ export const zh = {
 				standard: "✓",
 				pro: "✓",
 				master: "✓",
+				custom: "✓",
 			},
 			{
 				feature: "A/B、Campaign、教學輪播",
@@ -1302,6 +1387,7 @@ export const zh = {
 				standard: "✓",
 				pro: "✓",
 				master: "✓",
+				custom: "✓",
 			},
 			{
 				feature: "電郵支援",
@@ -1309,6 +1395,7 @@ export const zh = {
 				standard: "✓",
 				pro: "✓",
 				master: "✓",
+				custom: "✓",
 			},
 			{
 				feature: "優先生成",
@@ -1316,6 +1403,7 @@ export const zh = {
 				standard: "—",
 				pro: "✓",
 				master: "✓",
+				custom: "✓",
 			},
 			{
 				feature: "Pro 畫布",
@@ -1323,6 +1411,7 @@ export const zh = {
 				standard: "—",
 				pro: "—",
 				master: "✓",
+				custom: "✓",
 			},
 			{
 				feature: "優先支援",
@@ -1330,6 +1419,7 @@ export const zh = {
 				standard: "—",
 				pro: "—",
 				master: "✓",
+				custom: "✓",
 			},
 			{
 				feature: "加購 token（$10 / 1k）",
@@ -1337,6 +1427,7 @@ export const zh = {
 				standard: "✓",
 				pro: "✓",
 				master: "✓",
+				custom: "✓",
 			},
 		],
 	},
@@ -2016,6 +2107,8 @@ export const zh = {
 			"參考片模式 此請求被阻擋 — 改用 拼接後備 分鏡（每格短片再拼接）",
 		seedanceToMinimaxH3FallbackNote:
 			"參考片模式 此請求被阻擋 — 改用 單鏡出片（盡量保留參考片運鏡）",
+		h3ToSeedanceFallbackNote:
+			"單鏡出片暫時未能用 — 已改用 Seedance，並混入音樂庫 BGM",
 		klingStoryboardClipCount: "片段 × {n}",
 		storyboardDurationLabel: "目標片長",
 		storyboardDurationHint:
@@ -2674,7 +2767,7 @@ export const zh = {
 			"food-bullet-time": {
 				title: "美食子彈時間",
 				description:
-					"打卡美食飛濺定格靜圖 → 6s 鏡頭環繞（3D 食物飛濺）。",
+					"打卡美食爆裂定格 → 6s 鏡頭環繞（3D 食物爆裂）。",
 			},
 			"c4d-motion": {
 				title: "C4D 動態視覺",
@@ -2684,12 +2777,12 @@ export const zh = {
 			"h3-showreel": {
 				title: "秀場一鏡",
 				description:
-					"主體靜圖 + 參考秀場。方案卡：汽車 · 鍵盤 · 抽象。允許動能大字，可選 16:9。",
+					"主體靜圖 + 方案卡（汽車 · 鍵盤 · 抽象）。允許動能大字，可選 16:9。參考片選填。",
 			},
 			"h3-sphere-mg": {
 				title: "球體運動圖形",
 				description:
-					"球體係可複用 MG 英雄 — 水晶、鉻面、液態、霓虹或啞光行星，映射產品／Logo。",
+					"先球體 MG 世界，再把產品揭出嚟當英雄。允許動能大字。",
 			},
 			"h3-movie-title": {
 				title: "電影標題",
@@ -2770,7 +2863,7 @@ export const zh = {
 		h3ShotNeedConceptHero:
 			"可上傳 Logo/吉祥物、用品牌套件 Logo，或用 AI 生成靜圖。",
 		h3ShotNeedReferenceVideo:
-			"請上傳參考 MP4（仿拍、霓虹疊實景、秀場一鏡必填）。",
+			"請上傳參考 MP4（仿拍、霓虹疊實景必填）。",
 		h3ShotGenerateStillBtn: "生成靜圖",
 		h3ShotConceptHeroTitle: "主體鎖定靜圖",
 		h3ShotPhotoTitle: {
@@ -2783,7 +2876,7 @@ export const zh = {
 			"neon-on-real":
 				"必填：真實實景 MP4 — 呢條片係霓虹場景底。",
 			"h3-showreel":
-				"必填：參考秀場 MP4 — 提供節奏／運鏡語言俾單鏡。",
+				"選填：上傳秀場 MP4 可跟運鏡／節奏。唔傳就由方案卡帶一鏡。",
 		},
 		h3ShotHeroHint: {
 			"ecom-orbit":
@@ -2805,7 +2898,7 @@ export const zh = {
 			"c4d-motion":
 				"必填：產品圖（概念可用 Logo／吉祥物）。以該主體做黑場 C4D 揭幕。",
 			"h3-showreel":
-				"必填：產品或 Logo／吉祥物靜圖作主體鎖定（配下方秀場 MP4）。允許動能大字。",
+				"必填：產品或 Logo／吉祥物靜圖作主體鎖定。允許動能大字。秀場 MP4 選填。",
 			"h3-sphere-mg":
 				"必填：產品圖（概念可用 Logo／吉祥物）。球體包裹你嘅身份；唔使參考片。",
 			"h3-movie-title":
@@ -2829,11 +2922,11 @@ export const zh = {
 			"neon-on-real":
 				"請上傳真實 MP4（必填）。可把 Logo／吉祥物放進「產品照片」作霓虹身份；也可只用品牌包 Logo。霓虹在場景中移動。",
 			"food-bullet-time":
-				"請先上傳人+食物打卡照 — 未上傳前無法按生成。鏡頭環繞飛濺定格約 6s。",
+				"請先上傳人+食物打卡照 — 未上傳前無法按生成。鏡頭環繞食物爆裂定格約 6s。",
 			"c4d-motion":
 				"請先上傳產品圖（概念可用 Logo／吉祥物）— 未上傳前無法按生成。再做約 8s 黑場 C4D 揭幕。",
 			"h3-showreel":
-				"請上傳主體靜圖 + 參考秀場 MP4 — 兩者齊備先至生成。可選 16:9；允許動能大字。",
+				"請先上傳主體靜圖 — 未上傳前無法按生成。方案卡帶一鏡。可選 16:9；允許動能大字。參考片選填。",
 			"h3-sphere-mg":
 				"請先上傳產品圖（概念可用 Logo／吉祥物）— 未上傳前無法按生成。再做約 8s 球體運動圖形一鏡。",
 			"h3-movie-title":
@@ -2873,7 +2966,7 @@ export const zh = {
 		},
 		h3ShowreelSchemeTitle: "秀場方案卡",
 		h3ShowreelSchemeHint:
-			"同一套仿拍秀場 + 動能大字 + 畫幅選擇 — 唔同鏡頭語言。自動會按產品名匹配。",
+			"方案卡決定運鏡語言。參考 MP4 選填 — 想跟某一支片請用「仿拍這支廣告」。",
 		h3ShowreelSchemeAuto: "自動 · 啱產品",
 		h3ShowreelSchemes: {
 			"car-cinematic": {
@@ -2891,12 +2984,12 @@ export const zh = {
 		},
 		h3SphereMgSchemeTitle: "球體風格",
 		h3SphereMgSchemeHint:
-			"球體係可複用嘅 MG 英雄 — 產品／Logo 鎖定身份。自動會按產品名匹配。",
+			"一顆 C4D 球世界開場，再把產品揭出嚟。汽車用水晶。唔係空白星球。",
 		h3SphereMgSchemeAuto: "自動 · 啱產品",
 		h3SphereMgSchemes: {
 			"crystal-glass": {
 				title: "水晶玻璃",
-				desc: "折射水晶球",
+				desc: "球內可見產品",
 			},
 			"chrome-spin": {
 				title: "鉻面旋轉",
@@ -2912,7 +3005,7 @@ export const zh = {
 			},
 			"matte-planet": {
 				title: "啞光行星",
-				desc: "柔和行星包裹（最通用）",
+				desc: "C4D 啞光圓球（唔係地球）",
 			},
 		},
 		recipePathUxTitles: {
@@ -2971,10 +3064,10 @@ export const zh = {
 				],
 				attention: [
 					"保持同一道菜 — 不要憑空加食材",
-					"目標：飛濺定格＋鏡頭向右環繞，人幾乎靜止",
+					"目標：戲劇性爆裂定格（層次＋碎屑＋醬汁）＋鏡頭向右環繞，人幾乎靜止",
 					"臉部盡量保持可辨；咖啡店／街景背景更佳",
 				],
-				output: ["約 6 秒美食子彈時間／3D 飛濺打卡片"],
+				output: ["約 6 秒美食子彈時間／3D 食物爆裂打卡片"],
 			},
 			"c4d-motion": {
 				need: ["產品圖（概念可用 Logo／吉祥物）", "主體要清晰，方便黑場鎖定"],
@@ -2988,7 +3081,7 @@ export const zh = {
 			"h3-showreel": {
 				need: [
 					"產品圖（概念可用 Logo／吉祥物）",
-					"參考秀場 MP4（運鏡／節奏／景別）",
+					"參考秀場 MP4 選填（運鏡／節奏）。唔傳就由方案卡帶一鏡",
 				],
 				attention: [
 					"選方案卡：汽車電影感 · 鍵盤科技 · 抽象變形（自動按產品名）",
@@ -3004,10 +3097,10 @@ export const zh = {
 					"清晰主體作球體身份鎖定（唔使參考片）",
 				],
 				attention: [
-					"選球體風格：水晶 · 鉻面 · 液態 · 霓虹 · 啞光行星",
-					"球體係可複用 MG 英雄 — 產品／Logo 映射其上",
-					"啞光行星最通用；其他係材質專用",
-					"一鏡到底連續運動 — 唔係硬切蒙太奇",
+					"汽車選水晶 — 先喺球內，再把車揭到鏡頭前",
+					"開場可以係抽象 MG＋動能大字；結尾必須係產品英雄",
+					"唔係空白灰星球，唔係 NASA 地球",
+					"靜圖如果只係一顆球，先重做靜圖再出片",
 				],
 				output: ["約 8 秒球體運動圖形一鏡"],
 			},
@@ -3102,7 +3195,7 @@ export const zh = {
 			"beauty-mv": "AI 人像…",
 			"imitate-ad": "AI 產品圖…",
 			"neon-on-real": "AI 霓虹鎖定靜圖…",
-			"food-bullet-time": "AI 飛濺定格…",
+			"food-bullet-time": "AI 食物爆裂定格…",
 			"c4d-motion": "AI 黑場 C4D 靜圖…",
 			"h3-showreel": "AI 秀場靜圖…",
 			"h3-sphere-mg": "AI 球體 MG 靜圖…",
@@ -3156,7 +3249,7 @@ export const zh = {
 		handThrowAnimatingCard: "第 3/3 步：拋出→實景過渡中…",
 		handThrowNeedKeyframe: "請先上傳產品圖（概念用 Logo／吉祥物靜圖 — 單靠文字唔夠）。",
 		productExplodeHint:
-			"風格化產品拆解：完整棚拍 → 懸浮零件靜圖 → 約 4 秒柔和拆解。零件係發明式點綴 — 唔係精準 CAD 內部。",
+			"完整組裝棚拍（耳塞要坐喺盒入面）→ 零件沿組裝軸分開 — 唔係耳塞飛出充電盒。約 4 秒過渡。風格化零件，唔係精準 CAD。",
 		productExplodeBuildingStill: "第 1/3 步：完整產品棚拍靜圖…",
 		productExplodeBuildingEnd: "第 2/3 步：懸浮零件拆解靜圖…",
 		productExplodeAnimatingCard: "第 3/3 步：拆解過渡中…",

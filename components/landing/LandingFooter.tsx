@@ -36,7 +36,7 @@ function LandingFooterInner() {
   const productLinks = [
     { label: f.studio, href: "/start" },
     { label: f.how, href: "/#how" },
-    { label: f.watchDemo, onClick: openLandingDemo },
+    { label: f.watchDemo, onClick: () => openLandingDemo() },
     { label: f.pricing, href: "/pricing" },
     { label: f.library, href: "/library" },
     { label: L.proCanvasLink, href: "/pro" },

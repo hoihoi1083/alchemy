@@ -77,6 +77,55 @@ export const en = {
 			refund: "Refund",
 			admin_adjust: "Adjustment",
 		},
+		team: {
+			title: "Enterprise seats",
+			seatsUsed: "Seats used: {held} / {limit}",
+			seatsUsedHint: "{members} members · {pending} pending invites",
+			seatsFull: "All seats are in use. Remove a member or revoke an invite to add someone new.",
+			invitePlaceholder: "Invite teammate email",
+			invite: "Invite",
+			inviteHint:
+				"Invite links copy to the clipboard when the browser allows it. Teammate generations use this team's token pool.",
+			membersTitle: "Active members",
+			ownerSuffix: "(owner)",
+			remove: "Remove",
+			removeConfirm:
+				"Remove {name} from the team? They lose enterprise access. Their personal library stays theirs.",
+			pendingTitle: "Pending invites",
+			expires: "Expires {date}",
+			resend: "Resend",
+			revoke: "Revoke",
+			revokeConfirm: "Revoke the invite to {email}?",
+			noPending: "No pending invites.",
+			inviteCreatedCopied: "Invite sent and link copied to clipboard.",
+			inviteCreatedNoCopy: "Invite sent. Copy the link from email if needed.",
+			inviteCreatedCopiedNoEmail: "Invite created. Email was not sent; link copied to clipboard.",
+			inviteCreatedNoEmailNoCopy: "Invite created. Email was not sent; copy the link from the response if needed.",
+			inviteResentCopied: "Invite resent and refreshed link copied to clipboard.",
+			inviteResentNoCopy: "Invite resent.",
+			inviteFailed: "Failed to create invite.",
+			revokeFailed: "Failed to revoke invite.",
+			removeFailed: "Failed to remove member.",
+			resendFailed: "Failed to resend invite.",
+			memberTitle: "Enterprise team",
+			memberBody: "You are on {owner}'s Custom plan. Generations use the team token pool.",
+			memberBodyGeneric: "You are on an enterprise team. Generations use the team token pool.",
+			leave: "Leave team",
+			leaveConfirm: "Leave this enterprise team? You will lose Custom plan access.",
+			leaveFailed: "Failed to leave team.",
+			pooledBalance: "Team token pool",
+			inviteAcceptTitle: "Team invite",
+			inviteAcceptSubtitle: "Accept your enterprise seat invite to unlock plan entitlements.",
+			inviteAccepting: "Accepting invite…",
+			inviteSignIn: "Sign in with the invited email to continue.",
+			inviteOk: "Seat added successfully. You now have enterprise access.",
+			inviteGoAccount: "Go to account",
+			inviteBack: "Back to account",
+			inviteMissingToken: "Invite token is missing.",
+			inviteFailedAccept: "Failed to accept invite.",
+			inviteWrongEmail:
+				"This invite was sent to a different email address. Sign out and sign in with the invited email.",
+		},
 	},
 	library: {
 		title: "My library",
@@ -370,29 +419,87 @@ export const en = {
 			},
 		],
 		demoModal: {
-			title: "Image ads in 4 steps",
-			subtitle: "A real walkthrough of the studio — no blank prompt required.",
 			close: "Close demo",
 			tryCta: "Try free — create your first ad",
-			hint: "Real studio recording · sped up · click a step to jump",
-			steps: [
-				{
-					title: "Pick a product",
-					body: "Start from the landing, choose Physical product, then continue into Studio.",
+			tabsAria: "Demo type",
+			tabs: {
+				image: "Image",
+				storyboard: "Storyboard",
+				video: "Video",
+			},
+			demos: {
+				image: {
+					title: "Image ads in 4 steps",
+					subtitle: "A real studio walkthrough — product photo in, still ad out.",
+					hint: "Real studio recording · click a step to jump",
+					steps: [
+						{
+							title: "Pick a product",
+							body: "Choose Physical product, then continue into Studio.",
+						},
+						{
+							title: "Images only",
+							body: "Choose Generate images only — skip video for a simple still-ad path.",
+						},
+						{
+							title: "Photo + hook",
+							body: "Name the product, upload a real product shot, and add a short headline.",
+						},
+						{
+							title: "Generate the still",
+							body: "Tap Generate image. Review the result, then download or edit on canvas.",
+						},
+					],
 				},
-				{
-					title: "Images only",
-					body: "Choose Generate images only — skip video for a simple still-ad path.",
+				storyboard: {
+					title: "Luxury storyboard in 4 steps",
+					subtitle:
+						"A real studio walkthrough — AI research, scene stills, then a luxury product video.",
+					hint: "Real studio recording · gentle pace · soft music · click a step to jump",
+					steps: [
+						{
+							title: "Pick a product",
+							body: "Skip the long homepage. Choose Physical product, then Images then video.",
+						},
+						{
+							title: "AI research",
+							body: "Search live posts for layout inspiration — a core Alchemy selling point.",
+						},
+						{
+							title: "Luxury storyboard",
+							body: "Pick Luxury birth, generate the outline, then create the scene stills.",
+						},
+						{
+							title: "Generate the video",
+							body: "Approve the stills. The finished luxury clip holds as a still, then plays full-frame.",
+						},
+					],
 				},
-				{
-					title: "Photo + hook",
-					body: "Name the product, upload a real product shot, and add a short headline.",
+				video: {
+					title: "Social drip video in 4 steps",
+					subtitle:
+						"Video-only path — three-panel meme drip from a product still (burger example).",
+					hint: "Studio walkthrough + the generated 3-panel clip · click a step to jump",
+					steps: [
+						{
+							title: "Video only",
+							body: "Choose Physical product, then Generate video only.",
+						},
+						{
+							title: "Social drip",
+							body: "Pick Social drip (three-panel) — product, social chrome, character reaction.",
+						},
+						{
+							title: "Product still",
+							body: "Upload a clear packshot (this burger) and a short hook.",
+						},
+						{
+							title: "The drip clip",
+							body: "Generate — the finished 3-panel holds as a still, then plays on its own.",
+						},
+					],
 				},
-				{
-					title: "Generate the still",
-					body: "Tap Generate image. Review the result, then download or edit on canvas.",
-				},
-			],
+			},
 		},
 		howDemo: {
 			uploadTitle: "Reference · drop or paste",
@@ -615,12 +722,12 @@ export const en = {
 		pricingFreeCta: "Start Free",
 		pricingProCta: "Start Pro",
 		pricingCustom: "Contact us",
-		pricingCustomHint: "Volume tokens & custom limits",
+		pricingCustomHint: "5 seats and a shared token pool",
 		planBlurbFree: "Try the guided Studio workflow",
 		planBlurbStandard: "For early businesses",
 		planBlurbPro: "For brands & freelancers",
 		planBlurbMaster: "For agencies & teams",
-		planBlurbCustom: "For enterprise volume",
+		planBlurbCustom: "5 seats · shared token pool",
 		planFeaturesFree: [
 			"Guided image & video paths",
 			"500 signup tokens",
@@ -846,7 +953,7 @@ export const en = {
 				"product-food-bullet-time-6s": {
 					title: "Food bullet-time ~6s",
 					description:
-						"Lifestyle food selfie → frozen splash still → camera orbit around the suspended food.",
+						"Lifestyle food selfie → frozen food-burst still → camera orbit around the exploding layers.",
 					costHint: "~6s · person + food photo (or generating still)",
 				},
 				"product-c4d-motion-8s": {
@@ -858,13 +965,13 @@ export const en = {
 				"product-h3-showreel-8s": {
 					title: "showreel ~8s",
 					description:
-						"Hero still + reference MP4. Cards: Car cinematic · Keyboard tech · Abstract morph. Kinetic type OK; optional 16:9.",
-					costHint: "~8s · product photo + reference showreel",
+						"Hero still + style cards (Car · Keyboard · Abstract). Kinetic type OK; optional 16:9. Reference MP4 optional.",
+					costHint: "~8s · product photo (optional showreel MP4)",
 				},
 				"product-h3-sphere-mg-8s": {
 					title: "sphere MG ~8s",
 					description:
-						"Reusable sphere motion-graphics hero — map your product/logo onto crystal, chrome, liquid, neon, or matte planet.",
+						"C4D sphere world first, then your product comes out as the hero. Kinetic type OK.",
 					costHint: "~8s · product photo (or generating still)",
 				},
 				"product-h3-movie-title-8s": {
@@ -918,7 +1025,7 @@ export const en = {
 				"concept-food-bullet-time-6s": {
 					title: "Food bullet-time (concept) ~6s",
 					description:
-						"Cafe / food campaign bullet-time — frozen splash + orbit. Needs a person+food photo (logo alone won’t lock the dish).",
+						"Cafe / food campaign bullet-time — dramatic frozen burst + orbit. Needs a person+food photo (logo alone won’t lock the dish).",
 					costHint: "~6s · lifestyle food photo required",
 				},
 				"concept-c4d-motion-8s": {
@@ -930,8 +1037,8 @@ export const en = {
 				"concept-h3-showreel-8s": {
 					title: "showreel (concept) ~8s",
 					description:
-						"Logo / mascot + reference showreel. Prefer Abstract morph; Car/Keyboard if the mark fits. Optional 16:9; kinetic type OK.",
-					costHint: "~8s · logo/mascot still + reference showreel",
+						"Logo / mascot + style cards. Prefer Abstract morph; Car/Keyboard if the mark fits. Optional 16:9; kinetic type OK. Reference MP4 optional.",
+					costHint: "~8s · logo/mascot still (optional showreel MP4)",
 				},
 				"concept-h3-sphere-mg-8s": {
 					title: "sphere MG (concept) ~8s",
@@ -1202,7 +1309,7 @@ export const en = {
 			},
 			{
 				q: "Does Alchemy support agencies and teams?",
-				body: "For higher volume: Pro raises monthly tokens; Master adds more tokens, 2K images, and Pro canvas. Custom is negotiated for enterprise needs. Built-in multi-seat team workspaces are not included yet — contact us for Custom.",
+				body: "Yes. Enterprise includes 5 seats on one Custom plan: the owner invites teammates from Account, they keep separate libraries, and generations use the owner’s shared token pool. Contact us to enable Enterprise. Pro and Master stay single-seat self-serve plans.",
 			},
 			{
 				q: "When can I buy extra tokens?",
@@ -1303,13 +1410,19 @@ export const en = {
 				],
 			},
 			custom: {
-				name: "Custom",
-				description: "Enterprise volume and SSO",
+				name: "Enterprise",
+				description: "5 seats for your team, one shared token pool",
+				badge: "5 seats",
+				seatsLabel: "5 seats · shared token pool",
 				features: [
-					"Negotiated token pool",
-					"Custom retention & SLA",
-					"Dedicated onboarding",
+					"5 seats (owner + 4 teammates)",
+					"Shared token pool billed to the owner",
+					"Separate personal libraries",
+					"Owner invites, removes, and swaps seats anytime",
+					"1080p video, 2K images, Pro canvas",
+					"Negotiated token volume",
 					"Invoice / PO billing",
+					"Dedicated onboarding",
 				],
 			},
 		},
@@ -1320,6 +1433,15 @@ export const en = {
 				standard: "3,000 / mo",
 				pro: "8,000 / mo",
 				master: "16,000 / mo",
+				custom: "Negotiated pool",
+			},
+			{
+				feature: "Team seats",
+				free: "1",
+				standard: "1",
+				pro: "1",
+				master: "1",
+				custom: "5 · shared pool",
 			},
 			{
 				feature: "Typical output",
@@ -1327,6 +1449,7 @@ export const en = {
 				standard: "Up to 46 images or 9 × 8s 480p",
 				pro: "Up to 123 images or 24 × 8s 480p",
 				master: "Up to 246 images or 48 × 8s 480p",
+				custom: "Volume by agreement",
 			},
 			{
 				feature: "Max image resolution",
@@ -1334,6 +1457,7 @@ export const en = {
 				standard: "Up to 1K",
 				pro: "Up to 1K",
 				master: "Up to 2K",
+				custom: "Up to 2K",
 			},
 			{
 				feature: "Max video resolution",
@@ -1341,6 +1465,7 @@ export const en = {
 				standard: "Up to 720p",
 				pro: "Up to 1080p",
 				master: "Up to 1080p",
+				custom: "Up to 1080p",
 			},
 			{
 				feature: "Research / combined / storyboard",
@@ -1348,6 +1473,7 @@ export const en = {
 				standard: "✓",
 				pro: "✓",
 				master: "✓",
+				custom: "✓",
 			},
 			{
 				feature: "A/B, Campaign, teaching carousel",
@@ -1355,6 +1481,7 @@ export const en = {
 				standard: "✓",
 				pro: "✓",
 				master: "✓",
+				custom: "✓",
 			},
 			{
 				feature: "Email support",
@@ -1362,6 +1489,7 @@ export const en = {
 				standard: "✓",
 				pro: "✓",
 				master: "✓",
+				custom: "✓",
 			},
 			{
 				feature: "Priority generation",
@@ -1369,6 +1497,7 @@ export const en = {
 				standard: "—",
 				pro: "✓",
 				master: "✓",
+				custom: "✓",
 			},
 			{
 				feature: "Pro canvas",
@@ -1376,6 +1505,7 @@ export const en = {
 				standard: "—",
 				pro: "—",
 				master: "✓",
+				custom: "✓",
 			},
 			{
 				feature: "Priority support",
@@ -1383,6 +1513,7 @@ export const en = {
 				standard: "—",
 				pro: "—",
 				master: "✓",
+				custom: "✓",
 			},
 			{
 				feature: "Token top-up ($10 / 1k)",
@@ -1390,6 +1521,7 @@ export const en = {
 				standard: "✓",
 				pro: "✓",
 				master: "✓",
+				custom: "✓",
 			},
 		],
 	},
@@ -2174,6 +2306,8 @@ export const en = {
 			"Primary video mode was blocked — used stitched storyboard (per-scene clips + stitch) instead",
 		seedanceToMinimaxH3FallbackNote:
 			"Primary video mode was blocked — used single-clip video (keeps reference motion when possible)",
+		h3ToSeedanceFallbackNote:
+			"Single-clip video was unavailable — used Seedance and mixed library BGM",
 		klingStoryboardClipCount: "clips × {n}",
 		storyboardDurationLabel: "Target duration",
 		storyboardDurationHint:
@@ -2875,7 +3009,7 @@ export const en = {
 			"food-bullet-time": {
 				title: "Food bullet-time",
 				description:
-					"Person holding food toward camera + frozen splash → 6s rightward orbit (XHS check-in).",
+					"Person holding food toward camera + dramatic frozen burst → 6s orbit (XHS check-in).",
 			},
 			"c4d-motion": {
 				title: "C4D motion visual",
@@ -2885,12 +3019,12 @@ export const en = {
 			"h3-showreel": {
 				title: "showreel",
 				description:
-					"Hero still + reference showreel. Cards: Car · Keyboard · Abstract. Kinetic type OK; optional 16:9.",
+					"Hero still + style cards (Car · Keyboard · Abstract). Kinetic type OK; optional 16:9. MP4 optional.",
 			},
 			"h3-sphere-mg": {
 				title: "sphere MG",
 				description:
-					"Sphere is the reusable MG hero — crystal, chrome, liquid, neon, or matte planet with your product/logo.",
+					"C4D sphere world first, then your product comes out as the hero. Kinetic type OK.",
 			},
 			"h3-movie-title": {
 				title: "movie-title",
@@ -2987,7 +3121,7 @@ export const en = {
 		h3ShotNeedConceptHero:
 			"Upload a logo/mascot, save a Brand kit logo, or generate a still with AI.",
 		h3ShotNeedReferenceVideo:
-			"Upload a reference MP4 (required for imitate-ad, neon-on-real, and showreel).",
+			"Upload a reference MP4 (required for imitate-ad and neon-on-real).",
 		h3ShotGenerateStillBtn: "Generate still",
 		h3ShotConceptHeroTitle: "Hero lock still",
 		h3ShotPhotoTitle: {
@@ -3000,7 +3134,7 @@ export const en = {
 			"neon-on-real":
 				"Required: real footage MP4 — this clip is the neon scene base.",
 			"h3-showreel":
-				"Required: reference showreel MP4 — rhythm / camera language for the one-take.",
+				"Optional: a showreel MP4 to copy camera / rhythm. Otherwise the style card drives the one-take.",
 		},
 		h3ShotHeroHint: {
 			"ecom-orbit":
@@ -3022,9 +3156,9 @@ export const en = {
 			"c4d-motion":
 				"Required: product photo — or logo / mascot still (concept). AI builds a black-void C4D reveal around that subject.",
 			"h3-showreel":
-				"Required: product or logo/mascot still for subject lock (pair with the showreel MP4 below). Kinetic type OK.",
+				"Required: product or logo/mascot still for subject lock. Kinetic type OK. Showreel MP4 is optional.",
 			"h3-sphere-mg":
-				"Required: product photo — or logo / mascot still (concept). Sphere wraps your identity; no reference reel.",
+				"Required: product photo — or logo / mascot still (concept). Sphere world first, then product reveal; kinetic type OK. No reference reel.",
 			"h3-movie-title":
 				"Required: product photo — or logo / mascot still (concept). Title cards + panels; designed type allowed.",
 			"h3-lifestyle":
@@ -3046,11 +3180,11 @@ export const en = {
 			"neon-on-real":
 				"Upload a real MP4 (required). Optional: upload logo or mascot as the neon object identity.",
 			"food-bullet-time":
-				"Upload a person+food check-in photo first — Generate stays off until then. Camera orbits a frozen splash ~6s.",
+				"Upload a person+food check-in photo first — Generate stays off until then. Camera orbits a frozen food burst ~6s.",
 			"c4d-motion":
 				"Upload product or logo/mascot still first — Generate stays off until then. Then ~8s black-void C4D reveal.",
 			"h3-showreel":
-				"Upload hero still + reference showreel MP4 — Generate stays off until both are ready. Optional 16:9; kinetic type allowed.",
+				"Upload a hero still first — Generate stays off until then. Style cards drive the one-take. Optional 16:9; kinetic type allowed. MP4 optional.",
 			"h3-sphere-mg":
 				"Upload product or logo/mascot still first — Generate stays off until then. Then ~8s sphere motion-graphics one-take.",
 			"h3-movie-title":
@@ -3090,7 +3224,7 @@ export const en = {
 		},
 		h3ShowreelSchemeTitle: "Showreel card",
 		h3ShowreelSchemeHint:
-			"Same imitate-ad method + kinetic type + aspect pick — different camera language. Auto picks from your product name.",
+			"Style cards own the camera language. A reference MP4 is optional — use Imitate this ad if you mainly want to copy one specific reel.",
 		h3ShowreelSchemeAuto: "Auto · best fit",
 		h3ShowreelSchemes: {
 			"car-cinematic": {
@@ -3108,12 +3242,12 @@ export const en = {
 		},
 		h3SphereMgSchemeTitle: "Sphere style",
 		h3SphereMgSchemeHint:
-			"Sphere is the reusable MG hero — your product/logo locks identity on or inside it. Auto picks from product name.",
+			"Like an H3 motion-graphics showreel: sphere world first, then the product steps out. Crystal is best for cars. Not a blank planet.",
 		h3SphereMgSchemeAuto: "Auto · best fit",
 		h3SphereMgSchemes: {
 			"crystal-glass": {
 				title: "Crystal glass",
-				desc: "Refractive glass orb",
+				desc: "Product visible inside the orb",
 			},
 			"chrome-spin": {
 				title: "Chrome spin",
@@ -3129,7 +3263,7 @@ export const en = {
 			},
 			"matte-planet": {
 				title: "Matte planet",
-				desc: "Soft planet wrap (most general)",
+				desc: "C4D matte orb (not Earth)",
 			},
 		},
 		recipePathUxTitles: {
@@ -3217,10 +3351,10 @@ export const en = {
 				],
 				attention: [
 					"Keep the same food — do not invent extra ingredients",
-					"Target: frozen splash + rightward orbit while person stays still",
+					"Target: dramatic frozen burst (layers + crumbs + sauce) + rightward orbit; person stays still",
 					"Face should stay readable; cafe/street backdrop preferred",
 				],
-				output: ["~6s food bullet-time / 3D splash check-in clip"],
+				output: ["~6s food bullet-time / 3D food-burst check-in clip"],
 			},
 			"c4d-motion": {
 				need: [
@@ -3237,7 +3371,7 @@ export const en = {
 			"h3-showreel": {
 				need: [
 					"Product photo — or logo / mascot still (concept)",
-					"Reference showreel MP4 (camera / rhythm / beat language)",
+					"Optional: showreel MP4 (camera / rhythm). Skip it — the style card is enough",
 				],
 				attention: [
 					"Pick a card: Car cinematic · Keyboard tech · Abstract morph (Auto from product name)",
@@ -3253,10 +3387,10 @@ export const en = {
 					"Clear hero for sphere identity lock (no reference reel)",
 				],
 				attention: [
-					"Pick a sphere style: Crystal · Chrome · Liquid · Neon · Matte planet",
-					"Sphere is the reusable MG hero — product/logo maps onto it",
-					"Matte planet is the general fit; others are material specialists",
-					"Continuous one-take — not a hard-cut montage",
+					"Cars: pick Crystal — SUV sits inside the glass, then the camera brings it out",
+					"Opening can be abstract MG + kinetic type; the product must still end as the hero",
+					"Not a blank grey planet, not NASA Earth",
+					"Regenerate the still first if the still is only a sphere",
 				],
 				output: ["~8s sphere motion-graphics one-take"],
 			},
@@ -3425,7 +3559,7 @@ export const en = {
 			"beauty-mv": "generating portrait…",
 			"imitate-ad": "generating product still…",
 			"neon-on-real": "Generating neon-lock still…",
-			"food-bullet-time": "Generating splash-freeze still…",
+			"food-bullet-time": "Generating food-burst still…",
 			"c4d-motion": "Generating C4D still…",
 			"h3-showreel": "Generating showreel still…",
 			"h3-sphere-mg": "Generating sphere still…",
@@ -3484,7 +3618,7 @@ export const en = {
 		handThrowNeedKeyframe:
 			"Upload a product photo first (concept: logo/mascot still — text alone is not enough).",
 		productExplodeHint:
-			"Stylized product explode: intact studio hero → floating-parts still → ~4s soft teardown. Parts are invented accents — not accurate CAD internals.",
+			"Intact assembled hero (earbuds stay seated in the case) → exploded parts along assembly axes — not buds flying out of the case. ~4s morph. Stylized parts, not CAD.",
 		productExplodeBuildingStill: "Step 1/3: intact product hero still…",
 		productExplodeBuildingEnd: "Step 2/3: floating-parts explode still…",
 		productExplodeAnimatingCard: "Step 3/3: explode morph…",
