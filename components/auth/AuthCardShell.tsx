@@ -65,9 +65,14 @@ export function AuthCardShell({
 						<AuthBrandLockup href="/" className="[&_img]:h-9 [&_img]:w-9 [&_span]:text-base" />
 					</div>
 					<AuthModeTabs mode={mode} variant={variant} onModeChange={onModeChange} />
-					<p className="mb-4 text-center text-sm leading-relaxed text-slate-500">
+					<p className="mb-2 text-center text-sm leading-relaxed text-slate-500">
 						{subtitle}
 					</p>
+					{mode === "sign-in" ? (
+						<p className="mb-4 text-center text-xs leading-relaxed text-slate-500">
+							{m.auth.signInOAuthHint}
+						</p>
+					) : null}
 					<div className="auth-clerk-root w-full">{children}</div>
 				</div>
 			</div>
@@ -88,9 +93,14 @@ export function AuthCardShell({
 					<AuthBrandLockup className="[&_img]:h-8 [&_img]:w-8 [&_span]:text-sm" />
 				</div>
 				<AuthModeTabs mode={mode} variant={variant} onModeChange={onModeChange} />
-				<p className="mb-3 text-center text-xs leading-relaxed text-slate-500">
+				<p className="mb-2 text-center text-xs leading-relaxed text-slate-500">
 					{subtitle}
 				</p>
+				{mode === "sign-in" ? (
+					<p className="mb-3 text-center text-[11px] leading-relaxed text-slate-500">
+						{m.auth.signInOAuthHint}
+					</p>
+				) : null}
 				<div className="auth-clerk-root min-h-0 w-full pb-2">{children}</div>
 			</div>
 		</div>

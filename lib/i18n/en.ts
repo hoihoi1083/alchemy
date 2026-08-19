@@ -17,6 +17,7 @@ export const en = {
 		signInTab: "Sign In",
 		signUpTab: "Sign Up",
 		signInSubtitle: "Welcome back! Please sign in to continue.",
+		signInOAuthHint: "New here? If you don’t have an Alchemy account yet, click “Sign up”.",
 		signUpSubtitle: "Create your account — 500 free tokens to start creating.",
 		tokensBalance: "{n} tokens",
 		tokensBalanceTitle: "Your token balance — view plans & top-ups",

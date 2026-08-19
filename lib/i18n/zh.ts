@@ -16,6 +16,7 @@ export const zh = {
 		signInTab: "登入",
 		signUpTab: "註冊",
 		signInSubtitle: "歡迎回來！請登入你嘅帳戶以繼續。",
+		signInOAuthHint: "第一次用？如果你未有 Alchemy 帳戶，請按「註冊」。",
 		signUpSubtitle: "建立帳戶 — 註冊即送 500 免費 token。",
 		tokensBalance: "{n} 點數",
 		tokensBalanceTitle: "你的點數餘額 — 查看方案與加購",
