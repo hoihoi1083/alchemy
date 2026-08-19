@@ -38,6 +38,35 @@ const BILLABLE_SUB_STATUSES = new Set<Stripe.Subscription.Status>([
   "past_due",
 ]);
 
+function isNoSuchCustomerError(err: unknown): boolean {
+  const message = err instanceof Error ? err.message : String(err ?? "");
+  if (/No such customer/i.test(message)) return true;
+  if (
+    err &&
+    typeof err === "object" &&
+    "type" in err &&
+    "code" in err &&
+    String((err as { type?: unknown }).type) === "StripeInvalidRequestError" &&
+    String((err as { code?: unknown }).code) === "resource_missing"
+  ) {
+    return true;
+  }
+  return false;
+}
+
+async function clearStaleStripeCustomerForUser(
+  db: Awaited<ReturnType<typeof getDb>>,
+  clerkId: string,
+): Promise<void> {
+  await db.collection<DbUser>("users").updateOne(
+    { clerkId },
+    {
+      $set: { updatedAt: new Date() },
+      $unset: { stripeCustomerId: "", stripeSubscriptionId: "" },
+    },
+  );
+}
+
 async function listBillableSubscriptions(
   stripe: Stripe,
   customerId: string,
@@ -75,13 +104,32 @@ export async function POST(request: Request) {
     const base = appBaseUrl();
     const db = await getDb();
     let user = await db.collection<DbUser>("users").findOne({ clerkId });
-    const stripeCustomerId = await resolveStripeCustomerIdForUser({
+    let stripeCustomerId = await resolveStripeCustomerIdForUser({
       clerkId,
       email: user?.email,
       stripeCustomerId: user?.stripeCustomerId,
     });
     if (stripeCustomerId && stripeCustomerId !== user?.stripeCustomerId) {
       user = await db.collection<DbUser>("users").findOne({ clerkId });
+    }
+
+    if (stripeCustomerId) {
+      try {
+        // Guard against customer IDs from a different/deleted Stripe account.
+        await stripe.customers.retrieve(stripeCustomerId);
+      } catch (err) {
+        if (isNoSuchCustomerError(err)) {
+          console.warn("[stripe] stale stripeCustomerId detected; clearing", {
+            clerkId,
+            stripeCustomerId,
+          });
+          await clearStaleStripeCustomerForUser(db, clerkId);
+          stripeCustomerId = null;
+          user = await db.collection<DbUser>("users").findOne({ clerkId });
+        } else {
+          throw err;
+        }
+      }
     }
 
     if (kind === "topup") {
@@ -147,8 +195,23 @@ export async function POST(request: Request) {
 
     // Already subscribed → switch plan in-place (never stack a second Stripe sub).
     if (stripeCustomerId) {
-      const billable = await listBillableSubscriptions(stripe, stripeCustomerId);
-      if (billable.length > 0) {
+      let billable: Stripe.Subscription[] = [];
+      try {
+        billable = await listBillableSubscriptions(stripe, stripeCustomerId);
+      } catch (err) {
+        if (isNoSuchCustomerError(err)) {
+          console.warn("[stripe] billable-sub lookup hit stale customer; clearing", {
+            clerkId,
+            stripeCustomerId,
+          });
+          await clearStaleStripeCustomerForUser(db, clerkId);
+          stripeCustomerId = null;
+          user = await db.collection<DbUser>("users").findOne({ clerkId });
+        } else {
+          throw err;
+        }
+      }
+      if (stripeCustomerId && billable.length > 0) {
         try {
           const switched = await switchExistingSubscription({
             stripe,
@@ -291,20 +354,45 @@ export async function POST(request: Request) {
       }
     }
 
-    const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
-      line_items: [{ price, quantity: 1 }],
-      success_url: `${base}/pricing?checkout=success&plan=${plan}&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${base}/pricing?checkout=cancel`,
-      client_reference_id: clerkId,
-      customer: stripeCustomerId || undefined,
-      customer_email: stripeCustomerId ? undefined : user?.email || undefined,
-      metadata: { clerkId, kind: "subscription", plan, interval },
-      subscription_data: {
-        metadata: { clerkId, plan, interval },
-      },
-      allow_promotion_codes: true,
-    });
+    let session: Stripe.Checkout.Session;
+    try {
+      session = await stripe.checkout.sessions.create({
+        mode: "subscription",
+        line_items: [{ price, quantity: 1 }],
+        success_url: `${base}/pricing?checkout=success&plan=${plan}&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${base}/pricing?checkout=cancel`,
+        client_reference_id: clerkId,
+        customer: stripeCustomerId || undefined,
+        customer_email: stripeCustomerId ? undefined : user?.email || undefined,
+        metadata: { clerkId, kind: "subscription", plan, interval },
+        subscription_data: {
+          metadata: { clerkId, plan, interval },
+        },
+        allow_promotion_codes: true,
+      });
+    } catch (err) {
+      if (!stripeCustomerId || !isNoSuchCustomerError(err)) throw err;
+      // Last safety net: clear stale id and retry once without explicit customer.
+      console.warn("[stripe] checkout create hit stale customer; retrying without customer", {
+        clerkId,
+        stripeCustomerId,
+      });
+      await clearStaleStripeCustomerForUser(db, clerkId);
+      user = await db.collection<DbUser>("users").findOne({ clerkId });
+      session = await stripe.checkout.sessions.create({
+        mode: "subscription",
+        line_items: [{ price, quantity: 1 }],
+        success_url: `${base}/pricing?checkout=success&plan=${plan}&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${base}/pricing?checkout=cancel`,
+        client_reference_id: clerkId,
+        customer_email: user?.email || undefined,
+        metadata: { clerkId, kind: "subscription", plan, interval },
+        subscription_data: {
+          metadata: { clerkId, plan, interval },
+        },
+        allow_promotion_codes: true,
+      });
+    }
 
     return NextResponse.json({ url: session.url });
   } catch (e: unknown) {
