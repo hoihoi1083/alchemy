@@ -13,7 +13,7 @@ import { materializeMediaInput } from "@/lib/pipeline/local-input";
 import { synthesizeSpeechToFile } from "@/lib/pipeline/tts";
 import { getMediaDurationSeconds } from "@/lib/pipeline/ffmpeg";
 import { mirrorImageUrlToFalStorage } from "@/lib/fal-mirror-media";
-import { chargeTokens, refundTokens } from "@/lib/billing/charge";
+import { chargeTokens, refundTokens, requireTokens } from "@/lib/billing/charge";
 import { clampVideoResolution } from "@/lib/billing/entitlements";
 import { getUserPlan } from "@/lib/billing/get-user-plan";
 import {
@@ -33,9 +33,6 @@ import {
   heygenAvatarVoice,
   HEYGEN_DIGITAL_TWIN_ENDPOINT,
 } from "@/lib/heygen-avatars";
-import { assertCanAfford, InsufficientTokensError, insufficientTokensResponse } from "@/lib/billing/ledger";
-import { isMongoConfigured } from "@/lib/mongodb";
-import { isProductionEnv } from "@/lib/mongodb-production";
 
 export type PresenterSourceMode = "custom-keyframe" | "stock-avatar";
 
@@ -211,21 +208,8 @@ export async function POST(request: Request) {
     estimateHeygenPresenterTokens(preflightSec) +
     (willSynthesizeVoice ? TOKEN_COST.voiceover : 0);
 
-  if (isMongoConfigured()) {
-    try {
-      await assertCanAfford(auth.user.userId, preflightCost);
-    } catch (err) {
-      if (err instanceof InsufficientTokensError) {
-        return NextResponse.json(insufficientTokensResponse(err), { status: 402 });
-      }
-      throw err;
-    }
-  } else if (isProductionEnv()) {
-    return NextResponse.json(
-      { error: "Billing database is required. Set MONGODB_URI before charging tokens." },
-      { status: 503 },
-    );
-  }
+  const preflightBlock = await requireTokens(auth.user.userId, preflightCost);
+  if (preflightBlock) return preflightBlock;
 
   fal.config({ credentials: key });
 

@@ -38,25 +38,33 @@ function isCjkChar(ch: string): boolean {
   return textNeedsCjkFonts(ch);
 }
 
-/** Pick a font that actually has this codepoint (never silent .notdef tofu). */
-function fontForChar(ch: string, bold: boolean): Font {
-  if (/\s/.test(ch)) return loadFont(bold ? "latinBold" : "latin");
-  if (isCjkChar(ch)) {
-    // Always NotoSansTC for CJK — MaShanZheng (headline) misses many marketing glyphs.
-    return loadFont("body");
-  }
-  return loadFont(bold ? "latinBold" : "latin");
+function glyphIsMissing(
+  font: Font,
+  ch: string,
+): boolean {
+  if (!ch.trim()) return false;
+  const glyph = font.charToGlyph(ch);
+  return glyph.index === 0 || glyph.name === ".notdef";
 }
 
-function glyphOrThrow(font: Font, ch: string, roleHint: string) {
-  const glyph = font.charToGlyph(ch);
-  // .notdef is index 0 — hollow boxes on burn.
-  if (ch.trim() && (glyph.index === 0 || glyph.name === ".notdef")) {
-    throw new Error(
-      `Missing glyph for "${ch}" in ${roleHint} font — cannot burn text (would show tofu).`,
-    );
+/** Latin first for ASCII; CJK/fullwidth punctuation falls back to NotoSansTC. */
+function fontsForChar(ch: string, bold: boolean): Font[] {
+  const latin = loadFont(bold ? "latinBold" : "latin");
+  const body = loadFont("body");
+  if (/\s/.test(ch)) return [latin];
+  if (isCjkChar(ch)) return [body, latin];
+  return [latin, body];
+}
+
+function fontAndGlyphOrThrow(ch: string, bold: boolean): { font: Font; glyph: ReturnType<Font["charToGlyph"]> } {
+  const fonts = fontsForChar(ch, bold);
+  for (const font of fonts) {
+    if (glyphIsMissing(font, ch)) continue;
+    return { font, glyph: font.charToGlyph(ch) };
   }
-  return glyph;
+  throw new Error(
+    `Missing glyph for "${ch}" in NotoSans / NotoSansTC — cannot burn text (would show tofu).`,
+  );
 }
 
 function fmtPathNum(n: number, digits = 2): string {
@@ -109,8 +117,7 @@ function layoutLine(
   let x = 0;
   const pathDs: string[] = [];
   for (const ch of text) {
-    const font = fontForChar(ch, bold);
-    const glyph = glyphOrThrow(font, ch, isCjkChar(ch) ? "NotoSansTC" : "NotoSans");
+    const { font, glyph } = fontAndGlyphOrThrow(ch, bold);
     const scale = fontSize / font.unitsPerEm;
     const path = glyph.getPath(x, baselineY, fontSize);
     const d = pathCommandsToD(path.commands);

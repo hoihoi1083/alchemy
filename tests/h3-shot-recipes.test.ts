@@ -8,6 +8,7 @@ import {
   H3_SHOT_RECIPE_DURATION_SEC,
   H3_SHOT_RECIPE_MODES,
   h3ShotRecipeNeedsReel,
+  h3ShotRecipeAcceptsReel,
   h3ShotRecipeNeedsHeroPhoto,
   h3ShotRecipeNeedsLifestyleStill,
   h3ShotRecipeToSubpath,
@@ -16,6 +17,7 @@ import {
   parseH3SphereMgSchemePick,
   resolveH3ShowreelScheme,
   resolveH3SphereMgScheme,
+  h3ShotRecipeAllowsKineticType,
 } from "../lib/h3-shot-recipes";
 import { h3ShotRecipeInputsReady, h3ShotModesForPromotion } from "../lib/recipe-path-ux";
 import { isRecipeOwnedVideoMode } from "../lib/creative-workflow";
@@ -91,7 +93,10 @@ describe("H3 shot recipes", () => {
     }
     assert.equal(h3ShotRecipeNeedsReel("imitate-ad"), true);
     assert.equal(h3ShotRecipeNeedsReel("neon-on-real"), true);
-    assert.equal(h3ShotRecipeNeedsReel("h3-showreel"), true);
+    assert.equal(h3ShotRecipeNeedsReel("h3-showreel"), false);
+    assert.equal(h3ShotRecipeAcceptsReel("h3-showreel"), true);
+    assert.equal(h3ShotRecipeAcceptsReel("imitate-ad"), true);
+    assert.equal(h3ShotRecipeAcceptsReel("c4d-motion"), false);
     assert.equal(h3ShotRecipeNeedsReel("h3-sphere-mg"), false);
     assert.equal(h3ShotRecipeNeedsReel("h3-movie-title"), false);
     assert.equal(h3ShotRecipeNeedsReel("h3-lifestyle"), false);
@@ -123,14 +128,18 @@ describe("H3 shot recipes", () => {
       conceptMode: false,
       product: "cheese sandwich",
     });
-    assert.match(food, /子弹时间|飞溅/);
+    assert.match(food, /子弹时间|飞溅|爆裂/);
     assert.match(food, /cheese sandwich/);
+    assert.match(food, /径向|高潮|碎屑云/);
+    assert.doesNotMatch(food, /不爆炸式飞出画框/);
     const foodStill = buildH3ShotRecipeStillPrompt({
       mode: "food-bullet-time",
       conceptMode: false,
       product: "cheese sandwich",
     });
-    assert.match(foodStill, /BULLET-TIME|splash|Lifestyle/i);
+    assert.match(foodStill, /BULLET-TIME|EXPLOSION|Lifestyle/i);
+    assert.match(foodStill, /radially burst|debris cloud/i);
+    assert.doesNotMatch(foodStill, /not explosive/i);
     const c4d = buildH3ShotRecipePrompt({
       mode: "c4d-motion",
       conceptMode: false,
@@ -146,6 +155,25 @@ describe("H3 shot recipes", () => {
     });
     assert.match(c4dStill, /black void|C4D/i);
     assert.match(c4dStill, /ARC sneakers/);
+    const c4dNameVsPhoto = buildH3ShotRecipePrompt({
+      mode: "c4d-motion",
+      conceptMode: false,
+      product: "便攜電源",
+    });
+    assert.match(c4dNameVsPhoto, /便攜電源/);
+    assert.match(c4dNameVsPhoto, /NAME VS PHOTO/);
+    assert.match(c4dNameVsPhoto, /@Image1/);
+    assert.match(c4dNameVsPhoto, /汽车就是车剪影|必须保持汽车/);
+    assert.match(c4dNameVsPhoto, /power bank or battery brick that is not @Image1/);
+    const c4dStillNameVsPhoto = buildH3ShotRecipeStillPrompt({
+      mode: "c4d-motion",
+      conceptMode: false,
+      product: "便攜電源",
+    });
+    assert.match(c4dStillNameVsPhoto, /IMAGE 1 pixels ARE the only product identity/);
+    assert.match(c4dStillNameVsPhoto, /label only/);
+    assert.doesNotMatch(c4dStillNameVsPhoto, /The hero is exactly 便攜電源/);
+    assert.match(c4dStillNameVsPhoto, /do not replace IMAGE 1 with a generic power bank/i);
     const showreel = buildH3ShotRecipePrompt({
       mode: "h3-showreel",
       conceptMode: false,
@@ -172,6 +200,15 @@ describe("H3 shot recipes", () => {
       showreelScheme: "keyboard-tech",
     });
     assert.match(showreelKb, /Keyboard tech|键帽|RGB/);
+    const showreelNoReel = buildH3ShotRecipePrompt({
+      mode: "h3-showreel",
+      conceptMode: false,
+      product: "NOVA phone",
+      hasReferenceVideo: false,
+      showreelScheme: "abstract-morph",
+    });
+    assert.match(showreelNoReel, /无参考视频|方案卡/);
+    assert.doesNotMatch(showreelNoReel, /@Video1/);
     assert.equal(parseH3ShowreelSchemePick("car-cinematic"), "car-cinematic");
     assert.equal(parseH3ShowreelSchemePick("nope"), "auto");
     assert.equal(
@@ -208,6 +245,10 @@ describe("H3 shot recipes", () => {
       }),
       "matte-planet",
     );
+    assert.equal(
+      resolveH3SphereMgScheme({ pick: "auto", product: "luxury SUV" }),
+      "crystal-glass",
+    );
     const sphere = buildH3ShotRecipePrompt({
       mode: "h3-sphere-mg",
       conceptMode: false,
@@ -217,14 +258,20 @@ describe("H3 shot recipes", () => {
     assert.match(sphere, /球体|Matte planet|哑光/);
     assert.match(sphere, /ARC bottle/);
     assert.match(sphere, /@Image1/);
+    assert.match(sphere, /揭幕|带出来|英雄/);
+    assert.match(sphere, /planet Earth|地球/);
+    assert.match(sphere, /动能大字/);
+    assert.doesNotMatch(sphere, /轨道旁小英雄物/);
+    assert.equal(h3ShotRecipeAllowsKineticType("h3-sphere-mg"), true);
     const sphereStill = buildH3ShotRecipeStillPrompt({
       mode: "h3-sphere-mg",
       conceptMode: false,
       product: "ARC bottle",
       sphereMgScheme: "crystal-glass",
     });
-    assert.match(sphereStill, /crystal|sphere|glass/i);
+    assert.match(sphereStill, /crystal|sphere|glass|orb/i);
     assert.match(sphereStill, /ARC bottle/);
+    assert.match(sphereStill, /INSIDE|miniature|emerge|C4D/i);
     const movieTitle = buildH3ShotRecipePrompt({
       mode: "h3-movie-title",
       conceptMode: false,
@@ -398,7 +445,7 @@ describe("H3 shot recipes", () => {
         hasReferenceVideo: false,
         hasConceptHero: true,
       }),
-      false,
+      true,
     );
     assert.equal(
       h3ShotRecipeInputsReady({

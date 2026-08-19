@@ -50,9 +50,15 @@ export function ensureCompositorFonts(): void {
   }
 }
 
-/** True when text needs CJK glyphs (not coverable by Noto Sans Latin alone). */
+/**
+ * True when text needs CJK / fullwidth glyphs (not coverable by Noto Sans Latin).
+ * Includes CJK punctuation, kana/han, compatibility ideographs, and
+ * fullwidth ASCII like `：` `！` `（` which Latin Noto Sans maps to .notdef.
+ */
 export function textNeedsCjkFonts(text: string): boolean {
-  return /[\u3000-\u303f\u3040-\u30ff\u3400-\u9fff\uf900-\ufaff]/u.test(text);
+  return /[\u3000-\u303f\u3040-\u30ff\u3400-\u9fff\uf900-\ufaff\ufe10-\ufe1f\ufe30-\ufe4f\uff00-\uffef]/u.test(
+    text,
+  );
 }
 
 let cachedAllFontFaceCss: string | null = null;

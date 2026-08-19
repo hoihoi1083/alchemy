@@ -55,7 +55,7 @@ function formatPurchaseDateTime(date: Date): string {
   });
 }
 
-type ReceiptRow = { label: string; value: string; emphasize?: boolean };
+export type ReceiptRow = { label: string; value: string; emphasize?: boolean };
 
 function receiptRowsHtml(rows: ReceiptRow[]): string {
   return rows
@@ -72,7 +72,7 @@ function receiptRowsHtml(rows: ReceiptRow[]): string {
     .join("");
 }
 
-function buildReceiptHtml(opts: {
+export function buildReceiptHtml(opts: {
   eyebrow: string;
   title: string;
   subtitle: string;
@@ -83,8 +83,14 @@ function buildReceiptHtml(opts: {
   siteUrl: string;
   support: string;
   logoContentId: string;
+  ctaLabel?: string;
+  ctaHint?: string;
 }): string {
   const rows = receiptRowsHtml(opts.rows);
+  const ctaLabel = opts.ctaLabel ?? "Open account";
+  const ctaHint = opts.ctaHint
+    ? `<p style="margin:14px 0 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:12px;line-height:1.5;color:#71717a;word-break:break-all;">${opts.ctaHint}</p>`
+    : "";
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -146,7 +152,8 @@ function buildReceiptHtml(opts: {
           </tr>
           <tr>
             <td style="padding:20px 28px 28px;" align="left">
-              <a href="${opts.accountUrl}" style="display:inline-block;background-color:#18181b;color:#ffffff;text-decoration:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;font-weight:600;padding:12px 20px;border-radius:10px;">Open account</a>
+              <a href="${opts.accountUrl}" style="display:inline-block;background-color:#18181b;color:#ffffff;text-decoration:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;font-weight:600;padding:12px 20px;border-radius:10px;">${ctaLabel}</a>
+              ${ctaHint}
             </td>
           </tr>
         </table>

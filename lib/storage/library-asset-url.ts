@@ -19,6 +19,14 @@ export function isLibraryAssetUrl(url: string | null | undefined): boolean {
   }
 }
 
+/** Absolute http(s) or same-origin durable library path — valid canvas / generate media. */
+export function isHttpOrLibraryMediaUrl(url: string | null | undefined): url is string {
+  if (!url?.trim()) return false;
+  const u = url.trim();
+  if (u.startsWith("https://") || u.startsWith("http://")) return true;
+  return isLibraryAssetUrl(u);
+}
+
 export function libraryAssetIdFromUrl(url: string): string | null {
   try {
     const path = url.startsWith("http") ? new URL(url).pathname : url.split("?")[0];

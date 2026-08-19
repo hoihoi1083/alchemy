@@ -50,6 +50,23 @@ describe("glyph path text burn (EN + CJK)", () => {
     assert.ok(ratio > 0.005, `ZH tofu ratio=${ratio}`);
   });
 
+  it("renders Chinese fullwidth colon without throwing tofu", async () => {
+    ensureCompositorFonts();
+    const paths = burnTextSvgPaths({
+      lines: ["產品：一鍵生成"],
+      lineYs: [100],
+      x: 400,
+      anchor: "middle",
+      fontSize: 42,
+      bold: true,
+    });
+    assert.match(paths, /<path /);
+    const svg = `<svg width="800" height="200" xmlns="http://www.w3.org/2000/svg">
+      <rect width="800" height="200" fill="black"/>${paths}</svg>`;
+    const ratio = await brightRatio(Buffer.from(svg));
+    assert.ok(ratio > 0.002, `fullwidth colon tofu ratio=${ratio}`);
+  });
+
   it("burns EN+ZH onto a blank image without tofu", async () => {
     ensureCompositorFonts();
     const base = await sharp({

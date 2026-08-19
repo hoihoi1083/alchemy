@@ -28,8 +28,8 @@ import {
 import { wizardVideoReadyExtraNote } from "@/lib/video-output-presentation";
 import { klingClipDurationForStoryboard } from "@/lib/kling-storyboard-fallback";
 import {
-	useWizardState,
-	type StoryboardDurationPreset,
+  useWizardState,
+  type StoryboardDurationPreset,
 } from "@/hooks/useWizardState";
 import type { StoryboardSceneCount } from "@/lib/ad-pack-preferences";
 import { useWizardProgress } from "@/hooks/useWizardProgress";
@@ -48,45 +48,46 @@ import {
 	voiceoverLocaleFromUiLocale,
 } from "@/lib/copy-locale";
 import {
-	postAddBgm,
-	postAnalyzeBrand,
-	postCampaign,
-	postCompose,
+  postAddBgm,
+  postAnalyzeBrand,
+  postCampaign,
+  postCompose,
 	postBurnImageText,
-	postGenerateImage,
-	postGenerateImageJson,
-	postGenerateVideo,
-	postPlanVideoPrompt,
-	postPlanProductVideo,
-	postStoryboardImages,
+  postGenerateImage,
+  postGenerateImageJson,
+  postGenerateVideo,
+  postPlanVideoPrompt,
+  postPlanProductVideo,
+  postStoryboardImages,
 } from "@/lib/api/wizard-client";
 import type { BgmTrackId } from "@/lib/bgm/tracks";
 import {
-	DEFAULT_IMAGE_INPUT_MODE,
-	type ImageInputMode,
+  DEFAULT_IMAGE_INPUT_MODE,
+  type ImageInputMode,
 } from "@/lib/image-input-mode";
 import {
-	defaultImageModeForGoal,
-	defaultVideoModeForGoal,
-	defaultVideoModeForStudio,
+  defaultImageModeForGoal,
+  defaultVideoModeForGoal,
+  defaultVideoModeForStudio,
 	isRecipeOwnedVideoMode,
-	type ImageCreativeMode,
-	type VideoCreativeMode,
+	recipeUsesSilentSeedance,
+  type ImageCreativeMode,
+  type VideoCreativeMode,
 } from "@/lib/creative-workflow";
 import {
-	buildEndFrameImagePrompt,
-	buildMultiAngleVideoPrompt,
-	buildNegativePrompt,
-	buildPromptVariables,
-	buildReferenceVideoPrompt,
-	buildWizardImagePrompt,
+  buildEndFrameImagePrompt,
+  buildMultiAngleVideoPrompt,
+  buildNegativePrompt,
+  buildPromptVariables,
+  buildReferenceVideoPrompt,
+  buildWizardImagePrompt,
 	buildMotionPosterStillPrompt,
-	buildWizardVideoPrompt,
-	resolveImagePromptMode,
-	buildReferenceVideoNegative,
-	type PromptMarket,
-	type SubjectFraming,
-	type VideoPromptOpts,
+  buildWizardVideoPrompt,
+  resolveImagePromptMode,
+  buildReferenceVideoNegative,
+  type PromptMarket,
+  type SubjectFraming,
+  type VideoPromptOpts,
 } from "@/lib/prompts";
 import {
 	CINEMATIC_CLIP_SEC,
@@ -109,16 +110,16 @@ import {
 	savePromptSnapshot,
 } from "@/lib/prompt-snapshots";
 import {
-	DEFAULT_VIDEO_SETTINGS,
+  DEFAULT_VIDEO_SETTINGS,
 	cameraForMotion,
-	defaultMotionStyleForTemplate,
-	resolveVideoGenerationOpts,
+  defaultMotionStyleForTemplate,
+  resolveVideoGenerationOpts,
 	resolveWizardOutputDurationSec,
 	isExplicitVideoDuration,
-	VIDEO_DURATIONS,
-	videoSettingsForWorkflow,
-	type VideoDuration,
-	type VideoSettings,
+  VIDEO_DURATIONS,
+  videoSettingsForWorkflow,
+  type VideoDuration,
+  type VideoSettings,
 } from "@/lib/video-settings";
 import { capUiVideoResolution } from "@/lib/billing/entitlements";
 import {
@@ -198,6 +199,7 @@ import {
 	H3_SHOT_RECIPE_SETTINGS_DURATION,
 	DEFAULT_MACRO_SNAP_INTENSITY,
 	DEFAULT_H3_SHOWREEL_ASPECT,
+	h3ShotRecipeAcceptsReel,
 	h3ShotRecipeAllowsKineticType,
 	h3ShotRecipeNeedsLifestyleStill,
 	h3ShotRecipeNeedsReel,
@@ -232,27 +234,27 @@ import {
 } from "@/lib/composition-presets";
 import { resolvePlannerDurationSec } from "@/lib/video-duration-planner";
 import {
-	DEFAULT_VISUAL_STYLE,
-	getVisualStyle,
-	isAiPlannedVideoStyle,
-	isBrandVideoStyle,
-	isCreativeVideoStyle,
-	isBrandVisualStyle,
-	isCampaignVisualStyle,
+  DEFAULT_VISUAL_STYLE,
+  getVisualStyle,
+  isAiPlannedVideoStyle,
+  isBrandVideoStyle,
+  isCreativeVideoStyle,
+  isBrandVisualStyle,
+  isCampaignVisualStyle,
 	isLockedSinglePosterStyle,
-	isStoryboardVideoStyle,
+  isStoryboardVideoStyle,
 	isUgcPresenterStyle,
-	isConceptCinematicStyle,
-	isVisualStyleAllowedForWorkflow,
-	mergePromptExtra,
-	visualStylePromptHint,
-	type VisualStyleId,
+  isConceptCinematicStyle,
+  isVisualStyleAllowedForWorkflow,
+  mergePromptExtra,
+  visualStylePromptHint,
+  type VisualStyleId,
 } from "@/lib/visual-styles";
 import {
-	getTemplateConfig,
-	isSlotRequired,
-	templateHasSlot,
-	type TemplateSlotId,
+  getTemplateConfig,
+  isSlotRequired,
+  templateHasSlot,
+  type TemplateSlotId,
 } from "@/lib/template-slots";
 import { getTemplate, type TemplateId } from "@/lib/templates";
 import {
@@ -331,8 +333,8 @@ import {
 } from "@/lib/brand-merge";
 import {
 	analyzeImageUrl,
-	analyzeProductImageFile,
-	type ImageUploadWarning,
+  analyzeProductImageFile,
+  type ImageUploadWarning,
 } from "@/lib/image-upload-quality";
 import {
 	regionsInpaintPrompt,
@@ -346,8 +348,8 @@ import {
 	type ImageVisionReview,
 } from "@/lib/image-vision-gate";
 import {
-	fetchReferenceClipAsFile,
-	type ReferenceClipId,
+  fetchReferenceClipAsFile,
+  type ReferenceClipId,
 } from "@/lib/reference-clips";
 import {
 	brandProfilePromptBlock,
@@ -356,16 +358,16 @@ import {
 import type { CampaignPlan } from "@/lib/campaign-types";
 import type {
 	StoryboardScenePlan,
-	StoryboardSceneResult,
-	VideoStoryboardPlan,
+  StoryboardSceneResult,
+  VideoStoryboardPlan,
 } from "@/lib/video-storyboard-types";
 import {
-	DEFAULT_IMAGE_OUTPUT_MODE,
-	type ImageOutputMode,
+  DEFAULT_IMAGE_OUTPUT_MODE,
+  type ImageOutputMode,
 } from "@/lib/image-output-mode";
 import {
-	defaultImageAspectRatioForWorkflow,
-	type ImageAspectRatio,
+  defaultImageAspectRatioForWorkflow,
+  type ImageAspectRatio,
 } from "@/lib/image-aspect-ratio";
 import type { WorkflowMode, WorkflowStepKey } from "@/lib/workflow-mode";
 import type { CampaignSlide } from "@/hooks/useWizardState";
@@ -383,21 +385,22 @@ import {
 import { isFalCdnUrl, isPipelineFileUrl } from "@/lib/pipeline/safe-url";
 import type { PromotionMode } from "@/lib/promotion-mode";
 import {
-	conceptStyleAllowsTextOnlyImage,
-	conceptStyleRequiresHeadline,
-	visualStyleAllowedForPromotion,
+  conceptStyleAllowsTextOnlyImage,
+  conceptStyleRequiresHeadline,
+  visualStyleAllowedForPromotion,
 } from "@/lib/promotion-styles";
 import {
-	defaultVisualStyleForPromotion,
-	defaultVisualStyleForWorkflow,
+  defaultVisualStyleForPromotion,
+  defaultVisualStyleForWorkflow,
+	studioHref,
 } from "@/lib/promotion-mode";
 
 const EDIT_ENDPOINT = BANANA2_EDIT_ENDPOINT;
 const TEXT_ENDPOINT = BANANA2_TEXT_ENDPOINT;
 
 export function useStudioWizard(promotionMode: PromotionMode) {
-	const { m, locale } = useLocale();
-	const friendlyError = useFriendlyError(m);
+  const { m, locale } = useLocale();
+  const friendlyError = useFriendlyError(m);
 	const { creditBalance, plan } = useUserPlanEntitlements();
 	const capVideoRes = useCallback(
 		(requested: VideoSettings["resolution"] | "720p" | "1080p" | "480p") =>
@@ -407,8 +410,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 	const [storyboardEngineChoice, setStoryboardEngineChoice] =
 		useState<StoryboardEngineChoice | null>(null);
 	const storyboardPreferEngineRef = useRef<StoryboardEnginePrefer>(null);
-	const state = useWizardState(locale);
-	const {
+  const state = useWizardState(locale);
+  const {
 		workflowMode,
 		setWorkflowMode,
 		stepKey,
@@ -693,7 +696,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		setSelectedVoicePreviewId,
 		voicePreviewBusy,
 		setVoicePreviewBusy,
-	} = state;
+  } = state;
 
 	const hasProductPhotoLock = Boolean(
 		productPhoto || persistableMediaUrl(uploadPreviewUrl),
@@ -705,7 +708,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			packagingPhoto,
 	);
 
-	const promotionInitRef = useRef(false);
+  const promotionInitRef = useRef(false);
 	const lastStoryboardVideoDurationSecRef = useRef<number | null>(null);
 	const lastVideoTimingManifestRef = useRef<
 		import("@/lib/video-timing-manifest").VideoTimingManifest | null
@@ -882,75 +885,75 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		);
 	}
 
-	useEffect(() => {
-		if (promotionInitRef.current) return;
-		promotionInitRef.current = true;
-		if (promotionMode === "concept") {
-			setImageAspectRatio("4:5");
-			setImageOutputMode("single");
-			if (workflowMode === "video-only") {
-				setVideoCreativeMode("product-promo");
-			}
-			if (
-				!visualStyleAllowedForPromotion(visualStyleId, "concept") ||
-				!isVisualStyleAllowedForWorkflow(visualStyleId, workflowMode)
-			) {
+  useEffect(() => {
+    if (promotionInitRef.current) return;
+    promotionInitRef.current = true;
+    if (promotionMode === "concept") {
+      setImageAspectRatio("4:5");
+      setImageOutputMode("single");
+      if (workflowMode === "video-only") {
+        setVideoCreativeMode("product-promo");
+      }
+      if (
+        !visualStyleAllowedForPromotion(visualStyleId, "concept") ||
+        !isVisualStyleAllowedForWorkflow(visualStyleId, workflowMode)
+      ) {
 				const next = defaultVisualStyleForWorkflow(
 					"concept",
 					workflowMode,
 				);
-				setVisualStyleId(next);
-				setTemplateId(getVisualStyle(next).templateId);
+        setVisualStyleId(next);
+        setTemplateId(getVisualStyle(next).templateId);
 				setImageInputMode(
 					getTemplateConfig(getVisualStyle(next).templateId)
 						.defaultImageInputMode,
 				);
-			}
-		}
-	}, [promotionMode, visualStyleId, workflowMode, setVideoCreativeMode]);
+      }
+    }
+  }, [promotionMode, visualStyleId, workflowMode, setVideoCreativeMode]);
 
-	useEffect(() => {
+  useEffect(() => {
 		if (promotionMode !== "concept" || workflowMode !== "video-only")
 			return;
-		if (videoCreativeMode === "product-assistant") {
-			setVideoCreativeMode("product-promo");
-		}
-	}, [promotionMode, workflowMode, videoCreativeMode, setVideoCreativeMode]);
+    if (videoCreativeMode === "product-assistant") {
+      setVideoCreativeMode("product-promo");
+    }
+  }, [promotionMode, workflowMode, videoCreativeMode, setVideoCreativeMode]);
 
-	useEffect(() => {
-		setVoicePreviewTracks([]);
-		setSelectedVoicePreviewId(null);
-	}, [voiceoverLocale, setVoicePreviewTracks, setSelectedVoicePreviewId]);
+  useEffect(() => {
+    setVoicePreviewTracks([]);
+    setSelectedVoicePreviewId(null);
+  }, [voiceoverLocale, setVoicePreviewTracks, setSelectedVoicePreviewId]);
 
-	useEffect(() => {
+  useEffect(() => {
 		const timer = window.setInterval(
 			() => setProgressNow(Date.now()),
 			1000,
 		);
-		return () => window.clearInterval(timer);
-	}, [imageBusy, videoBusy, setProgressNow]);
+    return () => window.clearInterval(timer);
+  }, [imageBusy, videoBusy, setProgressNow]);
 
-	const tpl = getTemplate(templateId);
-	const visualStyle = getVisualStyle(visualStyleId);
-	const templateConfig = getTemplateConfig(templateId);
-	const usesCompositor = visualStyle.usesCompositor;
-	const lockedCampaignMode = isCampaignVisualStyle(visualStyleId);
+  const tpl = getTemplate(templateId);
+  const visualStyle = getVisualStyle(visualStyleId);
+  const templateConfig = getTemplateConfig(templateId);
+  const usesCompositor = visualStyle.usesCompositor;
+  const lockedCampaignMode = isCampaignVisualStyle(visualStyleId);
 	const lockedSingleImageMode = isLockedSinglePosterStyle(visualStyleId);
-	const effectiveImageOutputMode: ImageOutputMode = lockedCampaignMode
-		? "campaign"
+  const effectiveImageOutputMode: ImageOutputMode = lockedCampaignMode
+    ? "campaign"
 		: lockedSingleImageMode
 			? "single"
-			: imageOutputMode;
-	const isCampaignOutput = effectiveImageOutputMode === "campaign";
+    : imageOutputMode;
+  const isCampaignOutput = effectiveImageOutputMode === "campaign";
 	const isTeachingCarouselOutput =
 		effectiveImageOutputMode === "teaching-carousel";
-	const isStoryboardOutput = isStoryboardVideoStyle(visualStyleId);
+  const isStoryboardOutput = isStoryboardVideoStyle(visualStyleId);
 	const isUgcPresenterOutput = isUgcPresenterStyle(visualStyleId);
-	const isCinematicStitchOutput =
+  const isCinematicStitchOutput =
 		isConceptCinematicStyle(visualStyleId) && cinematicSceneCount > 1;
-	const isConceptCinematicSingleOutput =
+  const isConceptCinematicSingleOutput =
 		isConceptCinematicStyle(visualStyleId) && cinematicSceneCount === 1;
-	const cinematicStitchReady =
+  const cinematicStitchReady =
 		isConceptCinematicStyle(visualStyleId) &&
 		cinematicSceneCount > 1 &&
 		cinematicScenes.length >= cinematicSceneCount;
@@ -965,34 +968,34 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				),
 		[cinematicSceneCount],
 	);
-	const usesProductAssistant =
-		promotionMode !== "concept" &&
-		videoCreativeMode === "product-assistant" &&
-		!isStoryboardOutput &&
-		!usesCompositor;
-	const conceptTextVideoEligible =
-		promotionMode === "concept" &&
-		workflowMode === "video-only" &&
-		videoCreativeMode === "product-promo" &&
+  const usesProductAssistant =
+    promotionMode !== "concept" &&
+    videoCreativeMode === "product-assistant" &&
+    !isStoryboardOutput &&
+    !usesCompositor;
+  const conceptTextVideoEligible =
+    promotionMode === "concept" &&
+    workflowMode === "video-only" &&
+    videoCreativeMode === "product-promo" &&
 		(isCreativeVideoStyle(visualStyleId) ||
 			isBrandVideoStyle(visualStyleId)) &&
-		!productPhoto &&
-		!imageUrl;
-	const usesConceptTextVideo = conceptTextVideoEligible;
+    !productPhoto &&
+    !imageUrl;
+  const usesConceptTextVideo = conceptTextVideoEligible;
 	const effectiveImageAspectRatio: ImageAspectRatio =
 		isStoryboardOutput ||
 		isCinematicStitchOutput ||
 		isConceptCinematicSingleOutput
-			? "9:16"
-			: imageAspectRatio;
-	const showVideoReferenceSection = videoCreativeMode === "reference-concept";
-	const effectiveImageMode: ImageInputMode =
+    ? "9:16"
+    : imageAspectRatio;
+  const showVideoReferenceSection = videoCreativeMode === "reference-concept";
+  const effectiveImageMode: ImageInputMode =
 		templateId === "custom"
 			? imageInputMode
 			: templateConfig.defaultImageInputMode;
-	const useReferenceVideo =
-		videoCreativeMode === "reference-concept" &&
-		Boolean(referenceAd && referenceIsVideo);
+  const useReferenceVideo =
+    videoCreativeMode === "reference-concept" &&
+    Boolean(referenceAd && referenceIsVideo);
 	const referenceR2vReady =
 		useReferenceVideo &&
 		Boolean(
@@ -1045,7 +1048,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 	const isImageWorkflow =
 		workflowMode === "image-only" || workflowMode === "combined";
 
-	const usesReferenceConceptForImage =
+  const usesReferenceConceptForImage =
 		!isLockedSinglePosterStyle(visualStyleId) &&
 		(imageCreativeMode === "reference-concept" ||
 			Boolean(imageRefPhoto && productPhoto));
@@ -1206,75 +1209,75 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		artStyleId,
 	]);
 
-	const getPromptVars = useCallback(
-		() =>
-			buildPromptVariables({
-				product,
-				business,
-				offer,
+  const getPromptVars = useCallback(
+    () =>
+      buildPromptVariables({
+        product,
+        business,
+        offer,
 				headline: effectiveBrandHeadline(
-					headline,
+        headline,
 					brandKit,
 					brandProfile,
 				),
-				subline,
-				market: promptMarket,
-				framing: subjectFraming,
-				extra: effectivePromptExtra(),
-				artStyle: artStyleId,
+        subline,
+        market: promptMarket,
+        framing: subjectFraming,
+        extra: effectivePromptExtra(),
+        artStyle: artStyleId,
 				imageTextMode,
 				compositionPreset: compositionPresetId,
-			}),
-		[
-			product,
-			business,
-			offer,
-			headline,
-			subline,
-			promptMarket,
-			subjectFraming,
-			effectivePromptExtra,
-			artStyleId,
+      }),
+    [
+      product,
+      business,
+      offer,
+      headline,
+      subline,
+      promptMarket,
+      subjectFraming,
+      effectivePromptExtra,
+      artStyleId,
 			imageTextMode,
 			compositionPresetId,
 			brandKit,
 			brandProfile,
-		],
-	);
+    ],
+  );
 
-	const usesStyleReference =
-		templateHasSlot(templateId, "styleRef") && Boolean(imageRefPhoto);
+  const usesStyleReference =
+    templateHasSlot(templateId, "styleRef") && Boolean(imageRefPhoto);
 	const needsProductUpload = isConceptStoryboardOutput
-		? false
+      ? false
 		: promotionMode === "concept" &&
 			  conceptStyleAllowsTextOnlyImage(visualStyleId)
 			? false
 			: effectiveImageMode === "product-ad" ||
 				effectiveImageMode === "product-style";
 
-	const videoPromptOpts = useCallback((): VideoPromptOpts => {
-		const dual = Boolean(
-			endFrameUrl ||
-			endFramePhoto ||
+  const videoPromptOpts = useCallback((): VideoPromptOpts => {
+    const dual = Boolean(
+      endFrameUrl ||
+        endFramePhoto ||
 			(videoSettings.autoSecondFrame &&
 				videoSettings.creativity !== "subtle"),
-		);
-		return {
-			creativity: videoSettings.creativity,
-			dualFrame: dual,
-			multiAngle: extraAnglePhotos.length > 0,
-		};
-	}, [endFrameUrl, endFramePhoto, videoSettings, extraAnglePhotos.length]);
+    );
+    return {
+      creativity: videoSettings.creativity,
+      dualFrame: dual,
+      multiAngle: extraAnglePhotos.length > 0,
+    };
+  }, [endFrameUrl, endFramePhoto, videoSettings, extraAnglePhotos.length]);
 
-	const useMultiAngleVideo =
-		extraAnglePhotos.length > 0 && Boolean(productPhoto || imageUrl);
+  const useMultiAngleVideo =
+    extraAnglePhotos.length > 0 && Boolean(productPhoto || imageUrl);
 
-	const applyPromptRebuild = useCallback(
-		(id: TemplateId = templateId) => {
-			const pv = getPromptVars();
-			const template = getTemplate(id);
-			const vOpts = videoPromptOpts();
-			setImagePrompt(
+  const applyPromptRebuild = useCallback(
+    (id: TemplateId = templateId) => {
+      const pv = getPromptVars();
+      const template = getTemplate(id);
+      const vOpts = videoPromptOpts();
+      setImagePrompt(
 				videoCreativeMode === "motion-poster"
 					? buildMotionPosterStillPrompt(pv, {
 							conceptMode: promotionMode === "concept",
@@ -1286,12 +1289,12 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 								visualStyleId,
 								imageCreativeMode,
 								{
-									promotionMode,
-									workflowMode,
+            promotionMode,
+            workflowMode,
 								},
 							),
-							brandProfile,
-							visualStyleId,
+          brandProfile,
+          visualStyleId,
 							brandKit,
 						),
 			);
@@ -1317,41 +1320,41 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					}),
 				);
 			} else if (videoCreativeMode === "reference-concept") {
-				setVideoPrompt(buildReferenceVideoPrompt(pv, id));
-			} else if (useMultiAngleVideo) {
-				setVideoPrompt(buildMultiAngleVideoPrompt(pv, vOpts, id));
+        setVideoPrompt(buildReferenceVideoPrompt(pv, id));
+      } else if (useMultiAngleVideo) {
+        setVideoPrompt(buildMultiAngleVideoPrompt(pv, vOpts, id));
 			} else if (
 				isStoryboardVideoStyle(visualStyleId) &&
 				storyboardPlan?.seedancePrompt
 			) {
-				// Keep DeepSeek per-scene Seedance prompt — do not replace with template default.
+        // Keep DeepSeek per-scene Seedance prompt — do not replace with template default.
 			} else if (
 				usesProductAssistant &&
 				productVideoPlan?.seedancePrompt
 			) {
-				// Keep AI video assistant Seedance prompt.
-			} else if (isAiPlannedVideoStyle(visualStyleId)) {
-				// DeepSeek plans videoPrompt — never pre-fill product template (blocks auto-plan).
-			} else if (!videoPrompt.trim()) {
-				setVideoPrompt(buildWizardVideoPrompt(id, pv, vOpts));
-			}
-		},
-		[
-			templateId,
-			visualStyleId,
-			artStyleId,
-			brandProfile,
+        // Keep AI video assistant Seedance prompt.
+      } else if (isAiPlannedVideoStyle(visualStyleId)) {
+        // DeepSeek plans videoPrompt — never pre-fill product template (blocks auto-plan).
+      } else if (!videoPrompt.trim()) {
+        setVideoPrompt(buildWizardVideoPrompt(id, pv, vOpts));
+      }
+    },
+    [
+      templateId,
+      visualStyleId,
+      artStyleId,
+      brandProfile,
 			brandKit,
-			getPromptVars,
-			imageCreativeMode,
-			promotionMode,
-			workflowMode,
-			videoCreativeMode,
-			videoPromptOpts,
-			useMultiAngleVideo,
-			videoPrompt,
-			storyboardPlan,
-			productVideoPlan,
+      getPromptVars,
+      imageCreativeMode,
+      promotionMode,
+      workflowMode,
+      videoCreativeMode,
+      videoPromptOpts,
+      useMultiAngleVideo,
+      videoPrompt,
+      storyboardPlan,
+      productVideoPlan,
 			product,
 			headline,
 			conceptIdea,
@@ -1360,28 +1363,28 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			videoSettings.duration,
 			endFramePhoto,
 			endFrameUrl,
-		],
-	);
+    ],
+  );
 
-	useEffect(() => {
-		if (!productPhoto) {
-			setUploadPreviewUrl(null);
-			return;
-		}
-		const url = URL.createObjectURL(productPhoto);
-		setUploadPreviewUrl(url);
-		return () => URL.revokeObjectURL(url);
-	}, [productPhoto]);
+  useEffect(() => {
+    if (!productPhoto) {
+      setUploadPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(productPhoto);
+    setUploadPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [productPhoto]);
 
-	useEffect(() => {
-		if (!imageRefPhoto) {
-			setImageRefPreviewUrl(null);
-			return;
-		}
-		const url = URL.createObjectURL(imageRefPhoto);
-		setImageRefPreviewUrl(url);
-		return () => URL.revokeObjectURL(url);
-	}, [imageRefPhoto]);
+  useEffect(() => {
+    if (!imageRefPhoto) {
+      setImageRefPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(imageRefPhoto);
+    setImageRefPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [imageRefPhoto]);
 
 	const referenceAnalyzeKey = useMemo(
 		() =>
@@ -1849,53 +1852,53 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		setStoryboardPlan,
 	]);
 
-	useEffect(() => {
-		if (!quickFixLogoFile) {
-			setQuickFixLogoPreviewUrl(null);
-			return;
-		}
-		const url = URL.createObjectURL(quickFixLogoFile);
-		setQuickFixLogoPreviewUrl(url);
-		return () => URL.revokeObjectURL(url);
-	}, [quickFixLogoFile, setQuickFixLogoPreviewUrl]);
+  useEffect(() => {
+    if (!quickFixLogoFile) {
+      setQuickFixLogoPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(quickFixLogoFile);
+    setQuickFixLogoPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [quickFixLogoFile, setQuickFixLogoPreviewUrl]);
 
-	useEffect(() => {
-		if (!endFramePhoto) {
-			setEndFramePreviewUrl(null);
-			return;
-		}
-		const url = URL.createObjectURL(endFramePhoto);
-		setEndFramePreviewUrl(url);
-		return () => URL.revokeObjectURL(url);
-	}, [endFramePhoto]);
+  useEffect(() => {
+    if (!endFramePhoto) {
+      setEndFramePreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(endFramePhoto);
+    setEndFramePreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [endFramePhoto]);
 
-	useEffect(() => {
-		if (!referenceAd) {
-			setReferencePreviewUrl(null);
-			setReferenceIsVideo(false);
-			setRefVideoDurationSec(null);
+  useEffect(() => {
+    if (!referenceAd) {
+      setReferencePreviewUrl(null);
+      setReferenceIsVideo(false);
+      setRefVideoDurationSec(null);
 			setReferenceVideoFalUrl(null);
 			setResearchReelAnalysis(null);
 			setResearchReelAnalyzeNote(null);
-			return;
-		}
-		const url = URL.createObjectURL(referenceAd);
-		setReferencePreviewUrl(url);
-		setReferenceIsVideo(referenceAd.type.startsWith("video/"));
-		return () => URL.revokeObjectURL(url);
-	}, [referenceAd]);
+      return;
+    }
+    const url = URL.createObjectURL(referenceAd);
+    setReferencePreviewUrl(url);
+    setReferenceIsVideo(referenceAd.type.startsWith("video/"));
+    return () => URL.revokeObjectURL(url);
+  }, [referenceAd]);
 
-	useEffect(() => {
-		if (!packagingPhoto) {
-			setPackagingPreviewUrl(null);
-			return;
-		}
-		const url = URL.createObjectURL(packagingPhoto);
-		setPackagingPreviewUrl(url);
-		return () => URL.revokeObjectURL(url);
-	}, [packagingPhoto]);
+  useEffect(() => {
+    if (!packagingPhoto) {
+      setPackagingPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(packagingPhoto);
+    setPackagingPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [packagingPhoto]);
 
-	useEffect(() => {
+  useEffect(() => {
 		if (!sceneFramePhoto) {
 			setSceneFramePreviewUrl(null);
 			return;
@@ -1907,12 +1910,12 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 
 	useEffect(() => {
 		const urls = extraKitPhotos.map((f: File) => URL.createObjectURL(f));
-		setExtraKitPreviewUrls(urls);
+    setExtraKitPreviewUrls(urls);
 		return () => urls.forEach((u: string) => URL.revokeObjectURL(u));
-	}, [extraKitPhotos]);
+  }, [extraKitPhotos]);
 
 	const kitPlanStaleSkipFirstRef = useRef(true);
-	useEffect(() => {
+  useEffect(() => {
 		// Skip initial mount — only warn after the kit actually changes mid-session.
 		if (kitPlanStaleSkipFirstRef.current) {
 			kitPlanStaleSkipFirstRef.current = false;
@@ -1933,31 +1936,31 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		m.wizard.planStaleAfterAssetChange,
 	]);
 
-	useEffect(() => {
-		applyPromptRebuild();
-	}, [
-		templateId,
-		visualStyleId,
-		artStyleId,
-		promotionMode,
-		workflowMode,
-		promptMarket,
-		subjectFraming,
-		promptExtra,
-		product,
-		business,
-		offer,
-		headline,
-		subline,
-		applyPromptRebuild,
-		imageCreativeMode,
-		videoCreativeMode,
-		videoSettings,
-		extraAnglePhotos.length,
-		endFrameUrl,
-		endFramePhoto,
-		brandProfile,
-	]);
+  useEffect(() => {
+    applyPromptRebuild();
+  }, [
+    templateId,
+    visualStyleId,
+    artStyleId,
+    promotionMode,
+    workflowMode,
+    promptMarket,
+    subjectFraming,
+    promptExtra,
+    product,
+    business,
+    offer,
+    headline,
+    subline,
+    applyPromptRebuild,
+    imageCreativeMode,
+    videoCreativeMode,
+    videoSettings,
+    extraAnglePhotos.length,
+    endFrameUrl,
+    endFramePhoto,
+    brandProfile,
+  ]);
 
 	const planAiVideoPrompt = useCallback(async (): Promise<boolean> => {
 		if (planVideoPromptBusy) return false;
@@ -1966,199 +1969,199 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			!creativeVideoBrief.trim() &&
 			!headline.trim()
 		) {
-			setError(m.errors.creativeBriefRequired);
+      setError(m.errors.creativeBriefRequired);
 			return false;
-		}
-		const conceptTextPlan =
-			promotionMode === "concept" &&
-			workflowMode === "video-only" &&
-			videoCreativeMode === "product-promo" &&
-			!productPhoto &&
-			!imageUrl;
-		setPlanVideoPromptBusy(true);
-		setError(null);
-		try {
+    }
+    const conceptTextPlan =
+      promotionMode === "concept" &&
+      workflowMode === "video-only" &&
+      videoCreativeMode === "product-promo" &&
+      !productPhoto &&
+      !imageUrl;
+    setPlanVideoPromptBusy(true);
+    setError(null);
+    try {
 			const outputDurationSec =
 				resolveWizardOutputDurationSec(videoSettings);
-			const useCreativePlanner =
-				isCreativeVideoStyle(visualStyleId) ||
+      const useCreativePlanner =
+        isCreativeVideoStyle(visualStyleId) ||
 				(promotionMode === "concept" &&
 					isBrandVideoStyle(visualStyleId));
-			const res = await fetch("/api/plan-video-prompt", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					mode: useCreativePlanner
-						? "creative"
+      const res = await fetch("/api/plan-video-prompt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: useCreativePlanner
+            ? "creative"
 						: brandProfile?.businessName ||
 							  isBrandVideoStyle(visualStyleId)
-							? "brand"
-							: "product",
-					brandProfile: brandProfile ?? undefined,
-					creativeBrief:
-						creativeVideoBrief.trim() ||
+              ? "brand"
+              : "product",
+          brandProfile: brandProfile ?? undefined,
+          creativeBrief:
+            creativeVideoBrief.trim() ||
 						[
 							headline.trim(),
 							subline.trim(),
 							offer.trim(),
 							conceptIdea.trim(),
 						]
-							.filter(Boolean)
-							.join(" | "),
-					product: product.trim(),
-					business: business.trim(),
-					headline: headline.trim(),
-					subline: subline.trim(),
-					offer: offer.trim(),
+              .filter(Boolean)
+              .join(" | "),
+          product: product.trim(),
+          business: business.trim(),
+          headline: headline.trim(),
+          subline: subline.trim(),
+          offer: offer.trim(),
 					duration: String(outputDurationSec),
-					hasReferenceVideo: useReferenceVideo,
-					textToVideo: conceptTextPlan,
-					promotionMode,
-					hasKeyframe: Boolean(productPhoto || imageUrl),
-					imageVisionNote: conceptImageVisionNote.trim() || undefined,
-					conceptIdea: conceptIdea.trim() || undefined,
+          hasReferenceVideo: useReferenceVideo,
+          textToVideo: conceptTextPlan,
+          promotionMode,
+          hasKeyframe: Boolean(productPhoto || imageUrl),
+          imageVisionNote: conceptImageVisionNote.trim() || undefined,
+          conceptIdea: conceptIdea.trim() || undefined,
 					artStyleId,
 					subjectFraming,
 					promptExtra: effectivePromptExtra(),
-				}),
-			});
-			const data = await res.json();
+        }),
+      });
+      const data = await res.json();
 			if (!res.ok)
 				throw new Error(data.error ?? m.errors.planVideoPromptFailed);
 			notifyCreditBalance(readCreditBalanceFromResponse(data));
-			setVideoPrompt(String(data.videoPrompt ?? ""));
-			const note = [
-				data.sourceNote as string | undefined,
-				data.motionSummary as string | undefined,
-				String(data.productionNotes ?? "").trim() || undefined,
-				m.wizard.planVideoPromptReady,
-			]
-				.filter(Boolean)
-				.join(" — ");
-			setVideoPromptPlanNote(note);
-			setShowAdvancedVideo(true);
+      setVideoPrompt(String(data.videoPrompt ?? ""));
+      const note = [
+        data.sourceNote as string | undefined,
+        data.motionSummary as string | undefined,
+        String(data.productionNotes ?? "").trim() || undefined,
+        m.wizard.planVideoPromptReady,
+      ]
+        .filter(Boolean)
+        .join(" — ");
+      setVideoPromptPlanNote(note);
+      setShowAdvancedVideo(true);
 			aiVideoPromptDurationRef.current = String(outputDurationSec);
-			const suggested = String(data.suggestedHeadline ?? "").trim();
-			if (suggested && !headline.trim()) setHeadline(suggested);
+      const suggested = String(data.suggestedHeadline ?? "").trim();
+      if (suggested && !headline.trim()) setHeadline(suggested);
 			return true;
-		} catch (e: unknown) {
-			setError(friendlyError(e, m.errors.planVideoPromptFailed));
+    } catch (e: unknown) {
+      setError(friendlyError(e, m.errors.planVideoPromptFailed));
 			return false;
-		} finally {
-			setPlanVideoPromptBusy(false);
-		}
-	}, [
+    } finally {
+      setPlanVideoPromptBusy(false);
+    }
+  }, [
 		planVideoPromptBusy,
-		visualStyleId,
-		brandProfile,
-		creativeVideoBrief,
-		conceptImageVisionNote,
-		product,
-		business,
-		headline,
-		subline,
-		offer,
-		templateId,
-		videoSettings,
-		useReferenceVideo,
-		promotionMode,
-		workflowMode,
-		videoCreativeMode,
-		productPhoto,
-		imageUrl,
-		conceptIdea,
+    visualStyleId,
+    brandProfile,
+    creativeVideoBrief,
+    conceptImageVisionNote,
+    product,
+    business,
+    headline,
+    subline,
+    offer,
+    templateId,
+    videoSettings,
+    useReferenceVideo,
+    promotionMode,
+    workflowMode,
+    videoCreativeMode,
+    productPhoto,
+    imageUrl,
+    conceptIdea,
 		artStyleId,
 		subjectFraming,
 		effectivePromptExtra,
-		m.errors.creativeBriefRequired,
-		m.errors.planVideoPromptFailed,
-		m.wizard.planVideoPromptReady,
-	]);
+    m.errors.creativeBriefRequired,
+    m.errors.planVideoPromptFailed,
+    m.wizard.planVideoPromptReady,
+  ]);
 
 	const planProductVideo = useCallback(async (): Promise<boolean> => {
 		if (planProductVideoBusy) return false;
-		if (!productPhoto) {
-			setError(m.errors.needPhoto);
+    if (!productPhoto) {
+      setError(m.errors.needPhoto);
 			return false;
-		}
-		setPlanProductVideoBusy(true);
-		setError(null);
-		try {
-			const vOpts = resolveVideoGenerationOpts(templateId, videoSettings);
-			const slots: string[] = ["hero"];
-			const fd = new FormData();
-			fd.set("hero", productPhoto);
-			if (packagingPhoto) {
-				fd.set("packaging", packagingPhoto);
-				slots.push("packaging");
-			}
-			for (const [i, file] of extraKitPhotos.slice(0, 2).entries()) {
-				fd.set(i === 0 ? "extra1" : "extra2", file);
-				slots.push(i === 0 ? "extra1" : "extra2");
-			}
-			fd.set("slots", slots.join(","));
-			fd.set("visual_style", visualStyleId);
-			fd.set("art_style", artStyleId);
-			fd.set("product_name", product.trim());
-			fd.set("business", business.trim());
-			fd.set("headline", headline.trim());
-			fd.set("subline", subline.trim());
-			fd.set("offer", offer.trim());
+    }
+    setPlanProductVideoBusy(true);
+    setError(null);
+    try {
+      const vOpts = resolveVideoGenerationOpts(templateId, videoSettings);
+      const slots: string[] = ["hero"];
+      const fd = new FormData();
+      fd.set("hero", productPhoto);
+      if (packagingPhoto) {
+        fd.set("packaging", packagingPhoto);
+        slots.push("packaging");
+      }
+      for (const [i, file] of extraKitPhotos.slice(0, 2).entries()) {
+        fd.set(i === 0 ? "extra1" : "extra2", file);
+        slots.push(i === 0 ? "extra1" : "extra2");
+      }
+      fd.set("slots", slots.join(","));
+      fd.set("visual_style", visualStyleId);
+      fd.set("art_style", artStyleId);
+      fd.set("product_name", product.trim());
+      fd.set("business", business.trim());
+      fd.set("headline", headline.trim());
+      fd.set("subline", subline.trim());
+      fd.set("offer", offer.trim());
 			fd.set(
 				"duration",
 				String(resolveWizardOutputDurationSec(videoSettings)),
 			);
-			fd.set("prompt_market", promptMarket);
-			fd.set("subject_framing", subjectFraming);
-			fd.set("prompt_extra", effectivePromptExtra());
-			const data = await postPlanProductVideo(fd);
-			const plan = data.plan;
-			setProductVideoPlan(plan);
-			setVideoPrompt(plan.seedancePrompt);
-			const note = [
-				data.sourceNote as string | undefined,
-				plan.motionSummaryZh,
-				plan.productionNotes,
+      fd.set("prompt_market", promptMarket);
+      fd.set("subject_framing", subjectFraming);
+      fd.set("prompt_extra", effectivePromptExtra());
+      const data = await postPlanProductVideo(fd);
+      const plan = data.plan;
+      setProductVideoPlan(plan);
+      setVideoPrompt(plan.seedancePrompt);
+      const note = [
+        data.sourceNote as string | undefined,
+        plan.motionSummaryZh,
+        plan.productionNotes,
 				plan.situation
 					? `${m.wizard.productVideoSituationLabel}: ${plan.situation}`
 					: undefined,
-				m.wizard.planProductVideoReady,
-			]
-				.filter(Boolean)
-				.join(" — ");
-			setVideoPromptPlanNote(note);
-			setShowAdvancedVideo(true);
+        m.wizard.planProductVideoReady,
+      ]
+        .filter(Boolean)
+        .join(" — ");
+      setVideoPromptPlanNote(note);
+      setShowAdvancedVideo(true);
 			return true;
-		} catch (e: unknown) {
-			setError(friendlyError(e, m.errors.planProductVideoFailed));
+    } catch (e: unknown) {
+      setError(friendlyError(e, m.errors.planProductVideoFailed));
 			return false;
-		} finally {
-			setPlanProductVideoBusy(false);
-		}
-	}, [
+    } finally {
+      setPlanProductVideoBusy(false);
+    }
+  }, [
 		planProductVideoBusy,
-		productPhoto,
-		packagingPhoto,
-		extraKitPhotos,
-		product,
-		business,
-		headline,
-		subline,
-		offer,
-		templateId,
-		videoSettings,
-		visualStyleId,
-		promptMarket,
-		subjectFraming,
-		effectivePromptExtra,
-		m.errors.needPhoto,
-		m.errors.planProductVideoFailed,
-		m.wizard.planProductVideoReady,
-		m.wizard.productVideoSituationLabel,
-		friendlyError,
-	]);
+    productPhoto,
+    packagingPhoto,
+    extraKitPhotos,
+    product,
+    business,
+    headline,
+    subline,
+    offer,
+    templateId,
+    videoSettings,
+    visualStyleId,
+    promptMarket,
+    subjectFraming,
+    effectivePromptExtra,
+    m.errors.needPhoto,
+    m.errors.planProductVideoFailed,
+    m.wizard.planProductVideoReady,
+    m.wizard.productVideoSituationLabel,
+    friendlyError,
+  ]);
 
-	useEffect(() => {
+  useEffect(() => {
 		// Classic VideoStep uses stepKey "video". Micro-wizard stays on "setup" for fused
 		// setup.pre_video — still auto-plan creative/brand motion prompts there.
 		const onClassicVideo = stepKey === "video";
@@ -2166,7 +2169,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			stepKey === "setup" && workflowMode === "video-only";
 		if (!onClassicVideo && !onMicroVideoSetup) return;
 		if (usesCompositor || isStoryboardOutput || isUgcPresenterOutput)
-			return;
+      return;
 		if (isRecipeOwnedVideoMode(videoCreativeMode)) return;
 		if (planVideoPromptBusy) return;
 		if (researchReelAnalysis?.seedancePrompt?.trim()) return;
@@ -2191,34 +2194,34 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 								.join(" — "),
 				);
 			}
-			return;
-		}
-		if (
-			isCreativeVideoStyle(visualStyleId) &&
-			!creativeVideoBrief.trim() &&
-			!headline.trim()
-		) {
-			return;
-		}
-		void planAiVideoPrompt();
-	}, [
-		stepKey,
+      return;
+    }
+    if (
+      isCreativeVideoStyle(visualStyleId) &&
+      !creativeVideoBrief.trim() &&
+      !headline.trim()
+    ) {
+      return;
+    }
+    void planAiVideoPrompt();
+  }, [
+    stepKey,
 		workflowMode,
-		visualStyleId,
-		usesCompositor,
-		isStoryboardOutput,
+    visualStyleId,
+    usesCompositor,
+    isStoryboardOutput,
 		isUgcPresenterOutput,
-		usesProductAssistant,
+    usesProductAssistant,
 		videoCreativeMode,
-		brandProfile?.businessName,
-		creativeVideoBrief,
-		conceptImageVisionNote,
-		videoPrompt,
-		planVideoPromptBusy,
-		videoPromptPlanNote,
-		promotionMode,
-		conceptIdea,
-		planAiVideoPrompt,
+    brandProfile?.businessName,
+    creativeVideoBrief,
+    conceptImageVisionNote,
+    videoPrompt,
+    planVideoPromptBusy,
+    videoPromptPlanNote,
+    promotionMode,
+    conceptIdea,
+    planAiVideoPrompt,
 		researchReelAnalysis?.seedancePrompt,
 		directReferenceR2vReady,
 		useReferenceVideo,
@@ -2235,30 +2238,30 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		const websiteUrl =
 			override?.websiteUrl?.trim() || brandWebsiteUrl.trim();
 		if (!websiteUrl && !brandSocialHint.trim()) {
-			setError(m.errors.brandUrlRequired);
+      setError(m.errors.brandUrlRequired);
 			return null;
-		}
-		setBrandAnalyzeBusy(true);
-		setError(null);
-		setBrandAnalyzeNote(null);
-		try {
+    }
+    setBrandAnalyzeBusy(true);
+    setError(null);
+    setBrandAnalyzeNote(null);
+    try {
 			if (override?.websiteUrl?.trim()) {
 				setBrandWebsiteUrl(override.websiteUrl.trim());
 			}
-			const res = await fetch("/api/analyze-brand", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
+      const res = await fetch("/api/analyze-brand", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
 					websiteUrl: websiteUrl || undefined,
-					socialHint: brandSocialHint.trim() || undefined,
-				}),
-			});
-			const data = await res.json();
+          socialHint: brandSocialHint.trim() || undefined,
+        }),
+      });
+      const data = await res.json();
 			if (!res.ok)
 				throw new Error(data.error ?? m.errors.brandAnalyzeFailed);
 			notifyCreditBalance(readCreditBalanceFromResponse(data));
-			const profile = data.profile as BrandProfile;
-			setBrandProfile(profile);
+      const profile = data.profile as BrandProfile;
+      setBrandProfile(profile);
 			let mergedKit = brandKit;
 			setBrandKit((prev) => {
 				mergedKit = mergeBrandProfileIntoKit(profile, prev);
@@ -2268,149 +2271,149 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			setBrandAnalyzeNote(
 				(data.sourceNote as string) + " — " + profile.summary,
 			);
-			if (profile.businessName) setBusiness(profile.businessName);
+      if (profile.businessName) setBusiness(profile.businessName);
 			const suggested = effectiveBrandHeadline("", mergedKit, profile);
 			if (suggested && !headline.trim()) {
 				setHeadline(suggested);
-			}
-			if (profile.suggestedBullets.length && !subline.trim()) {
-				setSubline(profile.suggestedBullets.join("\n"));
-			}
-			if (profile.adPromptExtra && !promptExtra.trim()) {
-				setPromptExtra(profile.adPromptExtra);
-			}
+      }
+      if (profile.suggestedBullets.length && !subline.trim()) {
+        setSubline(profile.suggestedBullets.join("\n"));
+      }
+      if (profile.adPromptExtra && !promptExtra.trim()) {
+        setPromptExtra(profile.adPromptExtra);
+      }
 			return profile;
-		} catch (e: unknown) {
-			setError(friendlyError(e, m.errors.brandAnalyzeFailed));
+    } catch (e: unknown) {
+      setError(friendlyError(e, m.errors.brandAnalyzeFailed));
 			return null;
-		} finally {
-			setBrandAnalyzeBusy(false);
-		}
-	}
+    } finally {
+      setBrandAnalyzeBusy(false);
+    }
+  }
 
-	function selectVisualStyle(id: VisualStyleId) {
-		const style = getVisualStyle(id);
-		setVisualStyleId(id);
-		setTemplateId(style.templateId);
+  function selectVisualStyle(id: VisualStyleId) {
+    const style = getVisualStyle(id);
+    setVisualStyleId(id);
+    setTemplateId(style.templateId);
 		setImageInputMode(
 			getTemplateConfig(style.templateId).defaultImageInputMode,
 		);
-		if (!isBrandVisualStyle(id)) {
-			setBrandProfile(null);
-			setBrandAnalyzeNote(null);
-		}
-		if (isCampaignVisualStyle(id)) {
-			setImageOutputMode("campaign");
-		}
-		if (isAiPlannedVideoStyle(id)) {
-			setVideoPrompt("");
-			setVideoPromptPlanNote(null);
-		} else {
-			setVideoPromptPlanNote(null);
-		}
-		if (!isCreativeVideoStyle(id)) {
-			setCreativeVideoBrief("");
-		}
-		if (!isStoryboardVideoStyle(id)) {
-			setStoryboardBrief("");
-			setStoryboardPlan(null);
-			setStoryboardScenes([]);
-		} else {
-			setVideoPrompt("");
-		}
-		if (!isConceptCinematicStyle(id)) {
-			setCinematicStitchReel(false);
-			setCinematicReelPlan(null);
-			setCinematicScenes([]);
+    if (!isBrandVisualStyle(id)) {
+      setBrandProfile(null);
+      setBrandAnalyzeNote(null);
+    }
+    if (isCampaignVisualStyle(id)) {
+      setImageOutputMode("campaign");
+    }
+    if (isAiPlannedVideoStyle(id)) {
+      setVideoPrompt("");
+      setVideoPromptPlanNote(null);
+    } else {
+      setVideoPromptPlanNote(null);
+    }
+    if (!isCreativeVideoStyle(id)) {
+      setCreativeVideoBrief("");
+    }
+    if (!isStoryboardVideoStyle(id)) {
+      setStoryboardBrief("");
+      setStoryboardPlan(null);
+      setStoryboardScenes([]);
+    } else {
+      setVideoPrompt("");
+    }
+    if (!isConceptCinematicStyle(id)) {
+      setCinematicStitchReel(false);
+      setCinematicReelPlan(null);
+      setCinematicScenes([]);
 			cinematicLogoIntegratedRef.current = false;
-		}
+    }
 		setVideoSettings((prev: VideoSettings) => ({
-			...prev,
-			motionStyle: defaultMotionStyleForTemplate(style.templateId),
-			...(isStoryboardVideoStyle(id)
-				? {
+      ...prev,
+      motionStyle: defaultMotionStyleForTemplate(style.templateId),
+      ...(isStoryboardVideoStyle(id)
+        ? {
 						resolution: capVideoRes("720p"),
-						creativity: "subtle" as const,
-						autoSecondFrame: false,
-						fast: false,
-					}
-				: {}),
-		}));
-		setCampaignPlan(null);
-		setCampaignSlides([]);
-		applyPromptRebuild(style.templateId);
-	}
+            creativity: "subtle" as const,
+            autoSecondFrame: false,
+            fast: false,
+          }
+        : {}),
+    }));
+    setCampaignPlan(null);
+    setCampaignSlides([]);
+    applyPromptRebuild(style.templateId);
+  }
 
-	async function loadReferenceClip(clipId: ReferenceClipId) {
-		setReferenceClipLoading(true);
-		setError(null);
-		try {
-			const file = await fetchReferenceClipAsFile(clipId);
-			setReferenceAd(file);
-			setSelectedReferenceClipId(clipId);
-		} catch (e: unknown) {
-			setError(friendlyError(e, m.errors.videoFailed));
-		} finally {
-			setReferenceClipLoading(false);
-		}
-	}
+  async function loadReferenceClip(clipId: ReferenceClipId) {
+    setReferenceClipLoading(true);
+    setError(null);
+    try {
+      const file = await fetchReferenceClipAsFile(clipId);
+      setReferenceAd(file);
+      setSelectedReferenceClipId(clipId);
+    } catch (e: unknown) {
+      setError(friendlyError(e, m.errors.videoFailed));
+    } finally {
+      setReferenceClipLoading(false);
+    }
+  }
 
-	function slotFilled(slot: TemplateSlotId): boolean {
-		switch (slot) {
-			case "product":
+  function slotFilled(slot: TemplateSlotId): boolean {
+    switch (slot) {
+      case "product":
 				if (promotionMode === "concept" && isStoryboardOutput) {
 					return Boolean(effectivePromoteName);
 				}
-				return Boolean(product.trim());
-			case "headline":
-				return Boolean(headline.trim());
-			case "subline":
-				return Boolean(subline.trim());
-			case "productPhoto":
+        return Boolean(product.trim());
+      case "headline":
+        return Boolean(headline.trim());
+      case "subline":
+        return Boolean(subline.trim());
+      case "productPhoto":
 				return hasProductPhotoLock;
-			case "styleRef":
-				return Boolean(imageRefPhoto);
-			case "referenceVideo":
-				return Boolean(referenceAd && referenceIsVideo);
-			case "business":
-				return Boolean(business.trim());
-			case "offer":
-				return Boolean(offer.trim());
-			default:
-				return false;
-		}
-	}
+      case "styleRef":
+        return Boolean(imageRefPhoto);
+      case "referenceVideo":
+        return Boolean(referenceAd && referenceIsVideo);
+      case "business":
+        return Boolean(business.trim());
+      case "offer":
+        return Boolean(offer.trim());
+      default:
+        return false;
+    }
+  }
 
-	function templateSlotStatus(): Partial<Record<TemplateSlotId, boolean>> {
-		const out: Partial<Record<TemplateSlotId, boolean>> = {};
-		for (const slot of templateConfig.slots) {
-			out[slot.id] = slotFilled(slot.id);
-		}
-		return out;
-	}
+  function templateSlotStatus(): Partial<Record<TemplateSlotId, boolean>> {
+    const out: Partial<Record<TemplateSlotId, boolean>> = {};
+    for (const slot of templateConfig.slots) {
+      out[slot.id] = slotFilled(slot.id);
+    }
+    return out;
+  }
 
-	function onWorkflowModeChange(mode: WorkflowMode) {
-		setWorkflowMode(mode);
-		setStepKey("setup");
-		setError(null);
-		setImageCreativeMode(defaultImageModeForGoal(mode));
-		setVideoCreativeMode(defaultVideoModeForStudio(promotionMode, mode));
-		setImageOutputMode(
-			mode === "image-only"
-				? promotionMode === "concept"
-					? "single"
-					: "ab"
-				: DEFAULT_IMAGE_OUTPUT_MODE,
-		);
-		setImageAspectRatio(defaultImageAspectRatioForWorkflow(mode));
-		if (mode === "image-only" && promotionMode === "concept") {
+  function onWorkflowModeChange(mode: WorkflowMode) {
+    setWorkflowMode(mode);
+    setStepKey("setup");
+    setError(null);
+    setImageCreativeMode(defaultImageModeForGoal(mode));
+    setVideoCreativeMode(defaultVideoModeForStudio(promotionMode, mode));
+    setImageOutputMode(
+      mode === "image-only"
+        ? promotionMode === "concept"
+          ? "single"
+          : "ab"
+        : DEFAULT_IMAGE_OUTPUT_MODE,
+    );
+    setImageAspectRatio(defaultImageAspectRatioForWorkflow(mode));
+    if (mode === "image-only" && promotionMode === "concept") {
 			setImageInputMode(
 				getTemplateConfig(templateId).defaultImageInputMode,
 			);
-		} else if (mode === "image-only") {
-			setImageInputMode(DEFAULT_IMAGE_INPUT_MODE);
-		}
-		if (mode === "video-only") {
+    } else if (mode === "image-only") {
+      setImageInputMode(DEFAULT_IMAGE_INPUT_MODE);
+    }
+    if (mode === "video-only") {
 			setVideoSettings(
 				videoSettingsForWorkflow("video-only", templateId, plan),
 			);
@@ -2419,10 +2422,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				defaultVisualStyleForWorkflow(promotionMode, mode),
 			);
 			return;
-		}
-		if (mode === "combined") {
+    }
+    if (mode === "combined") {
 			setVideoSettings(videoSettingsForWorkflow("combined", templateId, plan));
-			setUseOriginalImage(false);
+      setUseOriginalImage(false);
 			setShipItMode(false);
 			setImageOutputMode("single");
 			// 圖+片 → storyboard reel (UGC / cinematic keep their own styles).
@@ -2433,11 +2436,11 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				selectVisualStyle("storyboard-video");
 				return;
 			}
-		}
-		if (
-			!isVisualStyleAllowedForWorkflow(visualStyleId, mode) ||
-			!visualStyleAllowedForPromotion(visualStyleId, promotionMode)
-		) {
+    }
+    if (
+      !isVisualStyleAllowedForWorkflow(visualStyleId, mode) ||
+      !visualStyleAllowedForPromotion(visualStyleId, promotionMode)
+    ) {
 			selectVisualStyle(
 				defaultVisualStyleForWorkflow(promotionMode, mode),
 			);
@@ -2475,18 +2478,18 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			| "reference"
 			| "ugc-presenter",
 	) {
-		setError(null);
-		setStepKey("setup");
+    setError(null);
+    setStepKey("setup");
 		if (path === "reference") {
 			setWorkflowMode("image-only");
 			selectVisualStyle("product");
 			setImageCreativeMode("reference-concept");
 			return;
 		}
-		if (path === "quick") {
+    if (path === "quick") {
 			// Image ads stay in the current image workflow — do not force combined/storyboard.
 			if (workflowMode === "video-only") setWorkflowMode("image-only");
-			selectVisualStyle("product");
+      selectVisualStyle("product");
 			setImageCreativeMode("promo-ai");
 			return;
 		}
@@ -2508,18 +2511,18 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		}
 		if (path === "jelly-3d") {
 			applyLockedImagePosterStyle("jelly-3d");
-			return;
-		}
-		if (path === "model") {
+      return;
+    }
+    if (path === "model") {
 			if (workflowMode === "video-only") setWorkflowMode("image-only");
-			selectVisualStyle("model-wear");
+      selectVisualStyle("model-wear");
 			setImageCreativeMode("promo-ai");
 			// Avoid catalog framing killing the model in the prompt.
 			setSubjectFraming((prev) =>
 				prev === "product-only" || prev === "no-people" ? "auto" : prev,
 			);
-			return;
-		}
+      return;
+    }
 		setWorkflowMode("combined");
 		if (path === "ugc-presenter") {
 			selectVisualStyle("ugc-presenter");
@@ -2535,7 +2538,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			return;
 		}
 		// 圖+片 primary paths → storyboard reel (not single-poster animate).
-		selectVisualStyle("storyboard-video");
+    selectVisualStyle("storyboard-video");
 		setVideoSettings(videoSettingsForWorkflow("combined", templateId, plan));
 	}
 
@@ -2550,13 +2553,13 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			| "sports-big-words"
 			| "jelly-3d",
 	) {
-		setError(null);
-		setStepKey("setup");
-		if (workflowMode !== "video-only") {
-			setImageAspectRatio("4:5");
-			setImageOutputMode("single");
-		}
-		if (path === "info") selectVisualStyle("info-poster");
+    setError(null);
+    setStepKey("setup");
+    if (workflowMode !== "video-only") {
+      setImageAspectRatio("4:5");
+      setImageOutputMode("single");
+    }
+    if (path === "info") selectVisualStyle("info-poster");
 		else if (
 			path === "designed" ||
 			path === "gaming-cover" ||
@@ -2571,46 +2574,46 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			setUserReferenceBrief(null);
 			setReferenceAnalyzeNote(null);
 		} else if (path === "brand") selectVisualStyle("brand-fit");
-		else if (path === "pricing") selectVisualStyle("pricing-offer");
-		else selectVisualStyle("website-launch");
-	}
+    else if (path === "pricing") selectVisualStyle("pricing-offer");
+    else selectVisualStyle("website-launch");
+  }
 
-	function applyConceptCinematicWorkflow(stitch: boolean) {
-		setError(null);
-		setWorkflowMode("combined");
-		setStepKey("setup");
-		setVideoCreativeMode("image-to-video");
-		setImageAspectRatio("9:16");
-		setImageOutputMode("single");
+  function applyConceptCinematicWorkflow(stitch: boolean) {
+    setError(null);
+    setWorkflowMode("combined");
+    setStepKey("setup");
+    setVideoCreativeMode("image-to-video");
+    setImageAspectRatio("9:16");
+    setImageOutputMode("single");
 		const count: CinematicSceneCount = stitch ? 3 : 1;
 		setCinematicSceneCount(count);
-		setCinematicStitchReel(stitch);
-		setCinematicReelPlan(null);
-		setCinematicScenes([]);
+    setCinematicStitchReel(stitch);
+    setCinematicReelPlan(null);
+    setCinematicScenes([]);
 		cinematicLogoIntegratedRef.current = false;
-		selectVisualStyle("concept-cinematic");
+    selectVisualStyle("concept-cinematic");
 		setVideoSettings((prev: VideoSettings) => ({
 			...videoSettingsForWorkflow("combined", "creative-video", plan),
-			duration: "8",
+      duration: "8",
 			resolution: capVideoRes("720p"),
 			creativity: CINEMATIC_REEL_VIDEO_CREATIVITY,
 			motionStyle: "gentle-orbit",
-			fast: false,
-			autoSecondFrame: false,
-		}));
-	}
+      fast: false,
+      autoSecondFrame: false,
+    }));
+  }
 
 	function applyPrimaryPathConceptVideo(
 		path: "brand" | "creative" | "cinematic",
 	) {
-		if (path === "cinematic") {
-			applyConceptCinematicWorkflow(false);
-			return;
-		}
-		setError(null);
-		setWorkflowMode("video-only");
+    if (path === "cinematic") {
+      applyConceptCinematicWorkflow(false);
+      return;
+    }
+    setError(null);
+    setWorkflowMode("video-only");
 		setVideoSettings(videoSettingsForWorkflow("video-only", templateId, plan));
-		setStepKey("setup");
+    setStepKey("setup");
 		// Brand site / IG is optional inside 短片製作 — one visual style, not a second card.
 		selectVisualStyle("creative-video");
 		if (referenceAd && referenceIsVideo) {
@@ -2618,11 +2621,11 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		} else {
 			setVideoCreativeMode("product-promo");
 		}
-	}
+  }
 
-	function applyCinematicStitchRecipe() {
-		applyConceptCinematicWorkflow(true);
-	}
+  function applyCinematicStitchRecipe() {
+    applyConceptCinematicWorkflow(true);
+  }
 
 	function onCinematicSceneCountChange(count: CinematicSceneCount) {
 		setCinematicSceneCount(count);
@@ -2634,59 +2637,59 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		setCaptionLines([]);
 	}
 
-	function applyClosestMatchRecipe() {
-		applyConceptCinematicWorkflow(true);
-		setMusicMood("cinematic");
+  function applyClosestMatchRecipe() {
+    applyConceptCinematicWorkflow(true);
+    setMusicMood("cinematic");
 		setMusicSource("library");
 		setVoiceoverEnabled(false);
 		setVoiceoverLocale(voiceoverLocaleFromUiLocale(locale));
 		setCaptionBurnEnabled(false);
-	}
+  }
 
-	function applyQuickTest8sRecipe() {
-		applyConceptCinematicWorkflow(false);
-		setUseOriginalImage(false);
-		setMusicMood("cinematic");
+  function applyQuickTest8sRecipe() {
+    applyConceptCinematicWorkflow(false);
+    setUseOriginalImage(false);
+    setMusicMood("cinematic");
 		setMusicSource("library");
 		setVoiceoverEnabled(false);
 		setVoiceoverLocale(voiceoverLocaleFromUiLocale(locale));
 		setCaptionBurnEnabled(false);
 		setVideoSettings((prev: VideoSettings) => ({
-			...prev,
-			duration: "8",
-			resolution: "480p",
-			fast: true,
-			creativity: "subtle",
-			motionStyle: "static-glow",
-			autoSecondFrame: false,
-		}));
-	}
+      ...prev,
+      duration: "8",
+      resolution: "480p",
+      fast: true,
+      creativity: "subtle",
+      motionStyle: "static-glow",
+      autoSecondFrame: false,
+    }));
+  }
 
-	function applyPrimaryPathVideoOnly(
+  function applyPrimaryPathVideoOnly(
 		path:
 			| "assistant"
 			| "storyboard"
 			| "brand"
 			| "creative"
 			| "ugc-presenter",
-	) {
-		setError(null);
+  ) {
+    setError(null);
 		// UGC needs a talking-head keyframe then HeyGen — use combined image→video, not Seedance video-only.
 		if (path === "ugc-presenter") {
 			applyPrimaryPath("ugc-presenter");
 			return;
 		}
-		setWorkflowMode("video-only");
+    setWorkflowMode("video-only");
 		setVideoSettings(videoSettingsForWorkflow("video-only", templateId, plan));
-		setStepKey("setup");
-		if (path === "assistant") {
-			setVideoCreativeMode("product-assistant");
-			selectVisualStyle("product");
-			return;
-		}
-		setVideoCreativeMode("product-promo");
-		if (path === "storyboard") selectVisualStyle("storyboard-video");
-		else if (path === "brand") selectVisualStyle("brand-video");
+    setStepKey("setup");
+    if (path === "assistant") {
+      setVideoCreativeMode("product-assistant");
+      selectVisualStyle("product");
+      return;
+    }
+    setVideoCreativeMode("product-promo");
+    if (path === "storyboard") selectVisualStyle("storyboard-video");
+    else if (path === "brand") selectVisualStyle("brand-video");
 		else selectVisualStyle("product");
 	}
 
@@ -2724,43 +2727,43 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			applyPrimaryPath("storyboard");
 		}
 		setStepKey("setup");
-	}
+  }
 
-	async function onProductPhotoSelected(file: File | null) {
-		setProductPhoto(file);
-		setImageUrl(null);
-		setImageVariantUrls([]);
-		setSelectedVariantIndex(0);
+  async function onProductPhotoSelected(file: File | null) {
+    setProductPhoto(file);
+    setImageUrl(null);
+    setImageVariantUrls([]);
+    setSelectedVariantIndex(0);
 		motionPosterStillUrlRef.current = null;
 		motionPosterEndUrlRef.current = null;
 		socialDripStillUrlRef.current = null;
 		socialDripEndUrlRef.current = null;
-		setUseOriginalImage(
-			Boolean(file) &&
+    setUseOriginalImage(
+      Boolean(file) &&
 				videoCreativeMode !== "motion-poster" &&
 				videoCreativeMode !== "social-drip" &&
-				(promotionMode === "concept" ||
-					workflowMode === "video-only" ||
-					workflowMode === "combined"),
-		);
-		setError(null);
-		setUploadQualityWarning(null);
-		if (!file) {
-			setConceptImageVisionNote("");
-			return;
-		}
-		try {
-			const quality = await analyzeProductImageFile(file);
-			setUploadQualityWarning(quality.warnings[0] ?? null);
-		} catch {
-			setUploadQualityWarning(null);
-		}
-	}
+        (promotionMode === "concept" ||
+          workflowMode === "video-only" ||
+          workflowMode === "combined"),
+    );
+    setError(null);
+    setUploadQualityWarning(null);
+    if (!file) {
+      setConceptImageVisionNote("");
+      return;
+    }
+    try {
+      const quality = await analyzeProductImageFile(file);
+      setUploadQualityWarning(quality.warnings[0] ?? null);
+    } catch {
+      setUploadQualityWarning(null);
+    }
+  }
 
-	function uploadQualityMessage(warning: ImageUploadWarning): string {
-		if (warning === "very-small") return m.wizard.uploadQualityVerySmall;
-		return m.wizard.uploadQualityLowRes;
-	}
+  function uploadQualityMessage(warning: ImageUploadWarning): string {
+    if (warning === "very-small") return m.wizard.uploadQualityVerySmall;
+    return m.wizard.uploadQualityLowRes;
+  }
 
 	async function refreshImageVisionReview(
 		url: string,
@@ -2975,42 +2978,42 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			.map((u) => normalizeGeneratedImageUrl(u))
 			.filter((u): u is string => Boolean(u));
 		if (!list.length) return null;
-		setCampaignPlan(null);
-		setCampaignSlides([]);
-		setStoryboardPlan(null);
-		setStoryboardScenes([]);
-		setImageVariantUrls(list);
-		setSelectedVariantIndex(0);
-		setImageUrl(list[0]);
+    setCampaignPlan(null);
+    setCampaignSlides([]);
+    setStoryboardPlan(null);
+    setStoryboardScenes([]);
+    setImageVariantUrls(list);
+    setSelectedVariantIndex(0);
+    setImageUrl(list[0]);
 		imageUrlRef.current = list[0];
 		if (videoCreativeMode === "motion-poster") {
 			motionPosterStillUrlRef.current = list[0];
 			if (list[1]) motionPosterEndUrlRef.current = list[1];
 		}
 		setImageGenKey((k: number) => k + 1);
-		setLastImageEndpoint(endpoint ?? null);
-		setUseOriginalImage(false);
-		setQuickFixCredits(1);
+    setLastImageEndpoint(endpoint ?? null);
+    setUseOriginalImage(false);
+    setQuickFixCredits(1);
 		// Postflight/vision QA runs from the imageUrl effect — do not call again here.
-		savePromptSnapshot(
-			createPromptSnapshot({
-				kind: "image",
-				templateId,
-				visualStyleId,
-				imagePrompt,
-				negativePrompt,
-				endpoint,
-			}),
-		);
+    savePromptSnapshot(
+      createPromptSnapshot({
+        kind: "image",
+        templateId,
+        visualStyleId,
+        imagePrompt,
+        negativePrompt,
+        endpoint,
+      }),
+    );
 		return list[0];
-	}
+  }
 
-	function applyGeneratedStoryboard(
-		scenes: StoryboardSceneResult[],
-		plan: VideoStoryboardPlan,
-		seedancePrompt: string,
-		endpoint?: string,
-	) {
+  function applyGeneratedStoryboard(
+    scenes: StoryboardSceneResult[],
+    plan: VideoStoryboardPlan,
+    seedancePrompt: string,
+    endpoint?: string,
+  ) {
 		const hydratedScenes: StoryboardSceneResult[] = [];
 		for (const scene of scenes) {
 			const planScene = plan.scenes.find(
@@ -3033,57 +3036,57 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			setWorkflowMode("combined");
 		}
 		const urls = hydratedScenes.map((s) => s.imageUrl);
-		setStoryboardScenes(hydratedScenes);
-		setStoryboardPlan(plan);
-		setCampaignPlan(null);
-		setCampaignSlides([]);
-		setImageVariantUrls([]);
-		setSelectedVariantIndex(0);
-		setImageUrl(urls[0]);
+    setStoryboardScenes(hydratedScenes);
+    setStoryboardPlan(plan);
+    setCampaignPlan(null);
+    setCampaignSlides([]);
+    setImageVariantUrls([]);
+    setSelectedVariantIndex(0);
+    setImageUrl(urls[0]);
 		setImageGenKey((k: number) => k + 1);
-		setLastImageEndpoint(endpoint ?? null);
-		setUseOriginalImage(false);
-		setVideoPrompt(seedancePrompt);
-		setVideoPromptPlanNote(plan.productionNotes || null);
-		setShowAdvancedVideo(true);
+    setLastImageEndpoint(endpoint ?? null);
+    setUseOriginalImage(false);
+    setVideoPrompt(seedancePrompt);
+    setVideoPromptPlanNote(plan.productionNotes || null);
+    setShowAdvancedVideo(true);
 		const nearest = ["4", "6", "8", "10", "12"].reduce((best, d) => {
-			const bestDiff = Math.abs(Number(best) - plan.totalDurationSec);
-			const nextDiff = Math.abs(Number(d) - plan.totalDurationSec);
-			return nextDiff < bestDiff ? d : best;
+        const bestDiff = Math.abs(Number(best) - plan.totalDurationSec);
+        const nextDiff = Math.abs(Number(d) - plan.totalDurationSec);
+        return nextDiff < bestDiff ? d : best;
 		}, "8") as StoryboardDurationPreset;
-		setStoryboardTrimDuration(nearest);
-		setQuickFixCredits(1);
-		savePromptSnapshot(
-			createPromptSnapshot({
-				kind: "storyboard",
-				templateId,
-				visualStyleId,
-				videoPrompt: seedancePrompt,
-				seedancePrompt,
-				endpoint,
-			}),
-		);
-	}
+    setStoryboardTrimDuration(nearest);
+    setQuickFixCredits(1);
+    savePromptSnapshot(
+      createPromptSnapshot({
+        kind: "storyboard",
+        templateId,
+        visualStyleId,
+        videoPrompt: seedancePrompt,
+        seedancePrompt,
+        endpoint,
+      }),
+    );
+  }
 
 	function normalizeStoryboardIndices(
 		scenes: StoryboardSceneResult[],
 	): StoryboardSceneResult[] {
-		return scenes.map((scene, i) => ({ ...scene, imageIndex: i + 1 }));
-	}
+    return scenes.map((scene, i) => ({ ...scene, imageIndex: i + 1 }));
+  }
 
-	function reorderStoryboardScene(from: number, to: number) {
+  function reorderStoryboardScene(from: number, to: number) {
 		setStoryboardScenes((prev: StoryboardSceneResult[]) => {
 			if (from < 0 || to < 0 || from >= prev.length || to >= prev.length)
 				return prev;
-			const next = [...prev];
-			const [moved] = next.splice(from, 1);
-			next.splice(to, 0, moved);
-			return normalizeStoryboardIndices(next);
-		});
-	}
+      const next = [...prev];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      return normalizeStoryboardIndices(next);
+    });
+  }
 
-	function trimStoryboardDurations(targetSecRaw: StoryboardDurationPreset) {
-		setStoryboardTrimDuration(targetSecRaw);
+  function trimStoryboardDurations(targetSecRaw: StoryboardDurationPreset) {
+    setStoryboardTrimDuration(targetSecRaw);
 		const asVideoDuration =
 			targetSecRaw === "4" ||
 			targetSecRaw === "6" ||
@@ -3093,12 +3096,12 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				? (targetSecRaw as VideoDuration)
 				: ("12" as VideoDuration);
 		setVideoSettings((prev: VideoSettings) => ({
-			...prev,
+      ...prev,
 			duration: asVideoDuration,
-		}));
-		const targetSec = Number(targetSecRaw);
+    }));
+    const targetSec = Number(targetSecRaw);
 		setStoryboardScenes((prev: StoryboardSceneResult[]) => {
-			if (!prev.length) return prev;
+      if (!prev.length) return prev;
 			const originalDurations = prev.map((scene) =>
 				Math.max(1, scene.endSec - scene.startSec),
 			);
@@ -3107,27 +3110,27 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			let assigned = originalDurations.map((d) =>
 				Math.max(1, Math.round((d / totalOriginal) * targetSec)),
 			);
-			let totalAssigned = assigned.reduce((sum, v) => sum + v, 0);
-			while (totalAssigned > targetSec) {
-				const idx = assigned.findIndex((v) => v > 1);
-				if (idx === -1) break;
-				assigned[idx] -= 1;
-				totalAssigned -= 1;
-			}
-			while (totalAssigned < targetSec) {
-				const idx = assigned.indexOf(Math.min(...assigned));
-				assigned[idx] += 1;
-				totalAssigned += 1;
-			}
-			let cursor = 0;
-			return prev.map((scene, i) => {
-				const span = assigned[i] ?? 1;
-				const startSec = cursor;
-				const endSec = cursor + span;
-				cursor = endSec;
-				return { ...scene, startSec, endSec };
-			});
-		});
+      let totalAssigned = assigned.reduce((sum, v) => sum + v, 0);
+      while (totalAssigned > targetSec) {
+        const idx = assigned.findIndex((v) => v > 1);
+        if (idx === -1) break;
+        assigned[idx] -= 1;
+        totalAssigned -= 1;
+      }
+      while (totalAssigned < targetSec) {
+        const idx = assigned.indexOf(Math.min(...assigned));
+        assigned[idx] += 1;
+        totalAssigned += 1;
+      }
+      let cursor = 0;
+      return prev.map((scene, i) => {
+        const span = assigned[i] ?? 1;
+        const startSec = cursor;
+        const endSec = cursor + span;
+        cursor = endSec;
+        return { ...scene, startSec, endSec };
+      });
+    });
 		setStoryboardPlan((prev: VideoStoryboardPlan | null) =>
 			prev ? { ...prev, totalDurationSec: targetSec } : prev,
 		);
@@ -3162,39 +3165,39 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		sceneIndex: number,
 		file: File | null,
 	) {
-		if (!file) return;
-		if (sceneIndex < 0 || sceneIndex >= storyboardScenes.length) return;
-		setStoryboardSceneReplaceBusy(sceneIndex);
-		setError(null);
-		try {
-			const url = URL.createObjectURL(file);
+    if (!file) return;
+    if (sceneIndex < 0 || sceneIndex >= storyboardScenes.length) return;
+    setStoryboardSceneReplaceBusy(sceneIndex);
+    setError(null);
+    try {
+      const url = URL.createObjectURL(file);
 			setStoryboardScenes((prev: StoryboardSceneResult[]) =>
 				prev.map((scene, i) =>
 					i === sceneIndex ? { ...scene, imageUrl: url } : scene,
 				),
 			);
 			setImageGenKey((k: number) => k + 1);
-		} catch (e: unknown) {
-			setError(friendlyError(e, m.errors.storyboardFailed));
-		} finally {
-			setStoryboardSceneReplaceBusy(null);
-		}
-	}
+    } catch (e: unknown) {
+      setError(friendlyError(e, m.errors.storyboardFailed));
+    } finally {
+      setStoryboardSceneReplaceBusy(null);
+    }
+  }
 
 	/** One-click: stamp Brand kit logo centered onto a still (no AI redraw). */
 	async function stampStoryboardSceneLogo(sceneIndex: number) {
-		if (sceneIndex < 0 || sceneIndex >= storyboardScenes.length) return;
+    if (sceneIndex < 0 || sceneIndex >= storyboardScenes.length) return;
 		const freshKit = loadBrandKitFromStorage();
 		const kit = preferNewerBrandKit(brandKit, freshKit);
 		if (!kit.logoUrl?.trim()) {
 			setError(m.errors.brandLogoRequired);
-			return;
-		}
-		const scene = storyboardScenes[sceneIndex];
+      return;
+    }
+    const scene = storyboardScenes[sceneIndex];
 		if (!scene?.imageUrl?.trim()) {
 			setError(m.errors.needKeyframe);
-			return;
-		}
+      return;
+    }
 		setStoryboardSceneRegenerateBusy(sceneIndex);
 		setError(null);
 		try {
@@ -3247,14 +3250,14 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		}
 		const scene = storyboardScenes[sceneIndex];
 		if (!scene) return;
-		const confirmMessage = m.wizard.storyboardRegenerateConfirm.replace(
-			"{scene}",
-			String(scene.imageIndex),
-		);
-		if (!window.confirm(confirmMessage)) return;
+    const confirmMessage = m.wizard.storyboardRegenerateConfirm.replace(
+      "{scene}",
+      String(scene.imageIndex),
+    );
+    if (!window.confirm(confirmMessage)) return;
 
-		setStoryboardSceneRegenerateBusy(sceneIndex);
-		setError(null);
+    setStoryboardSceneRegenerateBusy(sceneIndex);
+    setError(null);
 		let regenPhoto = productPhoto;
 		if (!regenPhoto && !isConceptStoryboardOutput) {
 			regenPhoto = await resolveHydratedProductPhoto();
@@ -3295,9 +3298,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					productionNotes: "",
 				} satisfies VideoStoryboardPlan);
 
-			const fd = new FormData();
-			fd.set("visual_style", visualStyleId);
-			fd.set("art_style", artStyleId);
+      const fd = new FormData();
+      fd.set("visual_style", visualStyleId);
+      fd.set("art_style", artStyleId);
 			fd.set("promotion_mode", promotionMode);
 			if (brandProfile)
 				fd.set("brand_profile", JSON.stringify(brandProfile));
@@ -3309,10 +3312,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					: product.trim(),
 			);
 			if (conceptIdea.trim()) fd.set("concept_idea", conceptIdea.trim());
-			fd.set("business", business.trim());
-			fd.set("headline", headline.trim());
-			fd.set("subline", subline.trim());
-			fd.set("offer", offer.trim());
+      fd.set("business", business.trim());
+      fd.set("headline", headline.trim());
+      fd.set("subline", subline.trim());
+      fd.set("offer", offer.trim());
 			fd.set("storyboard_brief", storyboardBrief.trim());
 			fd.set("duration", storyboardTrimDuration);
 			fd.set(
@@ -3320,9 +3323,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				effectiveStoryboardSceneCount(storyboardRecipeId, storyboardSceneCount),
 			);
 			fd.set("storyboard_recipe", storyboardRecipeId);
-			fd.set("prompt_market", promptMarket);
-			fd.set("subject_framing", subjectFraming);
-			fd.set("prompt_extra", effectivePromptExtra());
+      fd.set("prompt_market", promptMarket);
+      fd.set("subject_framing", subjectFraming);
+      fd.set("prompt_extra", effectivePromptExtra());
 			fd.set("aspect_ratio", effectiveImageAspectRatio);
 			fd.set("image_text_mode", imageTextMode);
 			const needsEdit =
@@ -3363,7 +3366,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			if (!nextUrl) throw new Error(m.errors.imageGenNoUrl);
 
 			setStoryboardScenes((prev: StoryboardSceneResult[]) =>
-				prev.map((s, i) =>
+        prev.map((s, i) =>
 					i === sceneIndex
 						? {
 								...s,
@@ -3371,31 +3374,31 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 								imagePrompt: next?.imagePrompt ?? s.imagePrompt,
 							}
 						: s,
-				),
-			);
-			if (sceneIndex === 0) setImageUrl(nextUrl);
+        ),
+      );
+      if (sceneIndex === 0) setImageUrl(nextUrl);
 			setImageGenKey((k: number) => k + 1);
 			setLastImageEndpoint(
 				(data.endpoint as string | undefined) ?? lastImageEndpoint,
 			);
-		} catch (e: unknown) {
-			setError(friendlyError(e, m.errors.storyboardFailed));
-		} finally {
-			setStoryboardSceneRegenerateBusy(null);
-		}
-	}
+    } catch (e: unknown) {
+      setError(friendlyError(e, m.errors.storyboardFailed));
+    } finally {
+      setStoryboardSceneRegenerateBusy(null);
+    }
+  }
 
-	function applyGeneratedCampaign(
-		slides: Array<{
-			role: string;
-			title: string;
-			headline: string;
-			subline: string;
-			imageUrl: string;
-		}>,
-		plan: CampaignPlan,
-		endpoint?: string,
-	) {
+  function applyGeneratedCampaign(
+    slides: Array<{
+      role: string;
+      title: string;
+      headline: string;
+      subline: string;
+      imageUrl: string;
+    }>,
+    plan: CampaignPlan,
+    endpoint?: string,
+  ) {
 		const hydrated = slides
 			.map((s) => {
 				const imageUrl = normalizeGeneratedImageUrl(s.imageUrl);
@@ -3404,27 +3407,27 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			})
 			.filter((s): s is (typeof slides)[number] => Boolean(s));
 		const urls = hydrated.map((s) => s.imageUrl);
-		if (!urls.length) return;
+    if (!urls.length) return;
 		setCampaignSlides(hydrated);
-		setCampaignPlan(plan);
-		setImageVariantUrls(urls);
-		setSelectedVariantIndex(0);
-		setImageUrl(urls[0]);
+    setCampaignPlan(plan);
+    setImageVariantUrls(urls);
+    setSelectedVariantIndex(0);
+    setImageUrl(urls[0]);
 		setImageGenKey((k: number) => k + 1);
-		setLastImageEndpoint(endpoint ?? null);
-		setUseOriginalImage(false);
-		setQuickFixCredits(1);
-		savePromptSnapshot(
-			createPromptSnapshot({
-				kind: "campaign",
-				templateId,
-				visualStyleId,
-				imagePrompt,
-				negativePrompt,
-				endpoint,
-			}),
-		);
-	}
+    setLastImageEndpoint(endpoint ?? null);
+    setUseOriginalImage(false);
+    setQuickFixCredits(1);
+    savePromptSnapshot(
+      createPromptSnapshot({
+        kind: "campaign",
+        templateId,
+        visualStyleId,
+        imagePrompt,
+        negativePrompt,
+        endpoint,
+      }),
+    );
+  }
 
 	/** Regenerate one A/B variant — keep the other version. */
 	async function regenerateAbVariant(variantIndex: number): Promise<void> {
@@ -3658,24 +3661,24 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		}
 	}
 
-	function campaignSlideLabel(role: string, title: string): string {
-		const roleKey = role as keyof typeof m.wizard.campaignSlideRoles;
-		const roleLabel = m.wizard.campaignSlideRoles[roleKey];
-		return roleLabel ? `${roleLabel} · ${title}` : title;
-	}
+  function campaignSlideLabel(role: string, title: string): string {
+    const roleKey = role as keyof typeof m.wizard.campaignSlideRoles;
+    const roleLabel = m.wizard.campaignSlideRoles[roleKey];
+    return roleLabel ? `${roleLabel} · ${title}` : title;
+  }
 
-	function onImageCreativeModeChange(mode: ImageCreativeMode) {
-		setImageCreativeMode(mode);
-		setImageUrl(null);
-		setImageVariantUrls([]);
-		setSelectedVariantIndex(0);
-		setError(null);
-		applyPromptRebuild();
-	}
+  function onImageCreativeModeChange(mode: ImageCreativeMode) {
+    setImageCreativeMode(mode);
+    setImageUrl(null);
+    setImageVariantUrls([]);
+    setSelectedVariantIndex(0);
+    setError(null);
+    applyPromptRebuild();
+  }
 
-	function onVideoCreativeModeChange(mode: VideoCreativeMode) {
-		setVideoCreativeMode(mode);
-		setError(null);
+  function onVideoCreativeModeChange(mode: VideoCreativeMode) {
+    setVideoCreativeMode(mode);
+    setError(null);
 		if (isRecipeOwnedVideoMode(mode)) {
 			if (
 				isStoryboardVideoStyle(visualStyleId) ||
@@ -3687,21 +3690,21 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				);
 			}
 		}
-		if (mode !== "product-assistant") {
-			setProductVideoPlan(null);
-		}
-		if (mode === "reference-concept") {
+    if (mode !== "product-assistant") {
+      setProductVideoPlan(null);
+    }
+    if (mode === "reference-concept") {
 			setVideoSettings((s: VideoSettings) => ({
-				...s,
+        ...s,
 				resolution: capVideoRes("720p"),
 				duration:
 					s.duration === "auto" || Number(s.duration) > 15
 						? "12"
 						: s.duration,
-				fast: false,
-				autoSecondFrame: false,
-			}));
-		}
+        fast: false,
+        autoSecondFrame: false,
+      }));
+    }
 		if (mode === "motion-poster") {
 			setImageTextMode("textless");
 			setUseOriginalImage(false);
@@ -3732,7 +3735,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		} else if (isH3ShotRecipeMode(mode)) {
 			setWorkflowMode("video-only");
 			setUseOriginalImage(true);
-			if (!h3ShotRecipeNeedsReel(mode)) {
+			if (!h3ShotRecipeAcceptsReel(mode)) {
 				setReferenceAd(null);
 				setReferencePreviewUrl(null);
 				setReferenceIsVideo(false);
@@ -3772,43 +3775,43 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			socialDripEndUrlRef.current = null;
 			socialDripPlanRef.current = null;
 		}
-		applyPromptRebuild();
-	}
+    applyPromptRebuild();
+  }
 
-	function onImageInputModeChange(mode: ImageInputMode) {
-		setImageInputMode(mode);
-		setImageUrl(null);
-		setUseOriginalImage(false);
-		setError(null);
-		if (mode === "describe") {
-			setProductPhoto(null);
-			setImageRefPhoto(null);
-		} else if (mode === "reference") {
-			setProductPhoto(null);
-			setImageRefPhoto(null);
-		} else if (mode === "product-ad") {
-			setImageRefPhoto(null);
-			applyPromptRebuild();
-		}
-	}
+  function onImageInputModeChange(mode: ImageInputMode) {
+    setImageInputMode(mode);
+    setImageUrl(null);
+    setUseOriginalImage(false);
+    setError(null);
+    if (mode === "describe") {
+      setProductPhoto(null);
+      setImageRefPhoto(null);
+    } else if (mode === "reference") {
+      setProductPhoto(null);
+      setImageRefPhoto(null);
+    } else if (mode === "product-ad") {
+      setImageRefPhoto(null);
+      applyPromptRebuild();
+    }
+  }
 
-	const keyframePreview = useOriginalImage
-		? uploadPreviewUrl
+  const keyframePreview = useOriginalImage
+    ? uploadPreviewUrl
 		: (imageUrl ?? uploadPreviewUrl);
 
-	const hasUploadedKeyframe =
+  const hasUploadedKeyframe =
 		hasProductPhotoLock &&
 		(useOriginalImage ||
 			workflowMode === "video-only" ||
 			promotionMode === "concept");
 
-	const hasFinalImage = usesCompositor
-		? Boolean((imageUrl || productPhoto) && headline.trim())
-		: isStoryboardOutput
-			? storyboardScenes.length > 0
-			: isCinematicStitchOutput || cinematicStitchReady
+  const hasFinalImage = usesCompositor
+    ? Boolean((imageUrl || productPhoto) && headline.trim())
+    : isStoryboardOutput
+      ? storyboardScenes.length > 0
+      : isCinematicStitchOutput || cinematicStitchReady
 				? cinematicScenes.length >= cinematicSceneCount
-				: isConceptCinematicSingleOutput
+        : isConceptCinematicSingleOutput
 					? cinematicScenes.length >= 1 ||
 						Boolean(imageUrl || useOriginalImage)
 					: Boolean(
@@ -3898,7 +3901,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		hasLifestyleStill: Boolean(imageUrl || hasProductPhotoLock),
 	});
 
-	const advancedSection: "image" | "video" | "all" =
+  const advancedSection: "image" | "video" | "all" =
 		workflowMode === "image-only"
 			? "image"
 			: workflowMode === "video-only"
@@ -3909,37 +3912,37 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		? m.wizard.ugcPresenter.imageStepIntro
 		: isCinematicStitchOutput
 			? formatCinematicCopy(m.wizard.cinematicStitchImageStepIntro)
-			: isConceptCinematicSingleOutput
-				? m.wizard.conceptCinematicSingleImageStepIntro
+    : isConceptCinematicSingleOutput
+      ? m.wizard.conceptCinematicSingleImageStepIntro
 				: isConceptStoryboardOutput
 					? m.wizard.conceptResearchReelStoryboardImageStepIntro
 					: promotionMode === "concept" &&
 						  workflowMode === "image-only"
-						? m.wizard.conceptSocialImageStepIntro
-						: workflowMode === "image-only"
-							? m.wizard.step2Hints["image-only"]
-							: m.wizard.step2Hints.combined;
+        ? m.wizard.conceptSocialImageStepIntro
+        : workflowMode === "image-only"
+          ? m.wizard.step2Hints["image-only"]
+          : m.wizard.step2Hints.combined;
 
 	const videoStepHint = isUgcPresenterOutput
 		? m.wizard.ugcPresenter.videoStepIntro
 		: cinematicStitchReady || isCinematicStitchOutput
 			? formatCinematicCopy(m.wizard.cinematicStitchVideoStepIntro)
-			: isConceptCinematicSingleOutput
-				? m.wizard.conceptCinematicSingleVideoStepIntro
-				: workflowMode === "video-only"
-					? m.wizard.step3Hints["video-only"]
-					: m.wizard.step3Hints.combined;
+      : isConceptCinematicSingleOutput
+        ? m.wizard.conceptCinematicSingleVideoStepIntro
+      : workflowMode === "video-only"
+        ? m.wizard.step3Hints["video-only"]
+        : m.wizard.step3Hints.combined;
 
-	const estimateStoryboardSceneCount = useCallback((): number => {
+  const estimateStoryboardSceneCount = useCallback((): number => {
 		if (storyboardSceneCount !== "auto")
 			return Number(storyboardSceneCount);
-		const duration = Number(storyboardTrimDuration) || 8;
-		if (duration <= 6) return 4;
-		if (duration <= 10) return 5;
-		return 6;
-	}, [storyboardSceneCount, storyboardTrimDuration]);
+    const duration = Number(storyboardTrimDuration) || 8;
+    if (duration <= 6) return 4;
+    if (duration <= 10) return 5;
+    return 6;
+  }, [storyboardSceneCount, storyboardTrimDuration]);
 
-	const formatEta = useCallback(
+  const formatEta = useCallback(
 		(sec: number): string => {
 			const s = Math.max(1, Math.round(sec));
 			if (s >= 60) {
@@ -4041,28 +4044,28 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 	}
 
 	async function goNextFromSetup() {
-		setError(null);
-		if (isSlotRequired(templateId, "headline") && !headline.trim()) {
-			setError(m.errors.needHeadline);
-			return;
-		}
-		if (
-			isCreativeVideoStyle(visualStyleId) &&
-			isVideoWorkflow &&
-			!creativeVideoBrief.trim() &&
-			!(promotionMode === "concept" && headline.trim())
-		) {
-			setError(m.errors.creativeBriefRequired);
-			return;
-		}
+    setError(null);
+    if (isSlotRequired(templateId, "headline") && !headline.trim()) {
+      setError(m.errors.needHeadline);
+      return;
+    }
+    if (
+      isCreativeVideoStyle(visualStyleId) &&
+      isVideoWorkflow &&
+      !creativeVideoBrief.trim() &&
+      !(promotionMode === "concept" && headline.trim())
+    ) {
+      setError(m.errors.creativeBriefRequired);
+      return;
+    }
 		if (
 			isStoryboardOutput &&
 			promotionMode === "physical" &&
 			!product.trim()
 		) {
-			setError(m.errors.needProductName);
-			return;
-		}
+      setError(m.errors.needProductName);
+      return;
+    }
 		if (isConceptStoryboardOutput && !effectivePromoteName) {
 			setError(m.errors.needHeadline);
 			return;
@@ -4139,9 +4142,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			setError(resolveSetupImageGateMessage(setupImageGate));
 			return;
 		}
-		if (productPhoto && promotionMode === "concept") {
-			setUseOriginalImage(true);
-		}
+    if (productPhoto && promotionMode === "concept") {
+      setUseOriginalImage(true);
+    }
 		if (
 			workflowMode === "video-only" &&
 			!isStoryboardOutput &&
@@ -4160,13 +4163,13 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		} else {
 			setStepKey("image");
 		}
-	}
+  }
 
-	function goBackFromImage() {
-		setStepKey("setup");
-	}
+  function goBackFromImage() {
+    setStepKey("setup");
+  }
 
-	function goBackFromVideo() {
+  function goBackFromVideo() {
 		if (
 			workflowMode === "combined" ||
 			(workflowMode === "video-only" && isStoryboardOutput)
@@ -4182,23 +4185,23 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			return campaignSlides.map((s: CampaignSlide) => s.imageUrl);
 		}
 		return imageVariantUrls;
-	}
+  }
 
-	function applyRefinedImage(
-		url: string,
-		endpoint?: string,
-		slideIndex?: number,
-		slideUrls?: string[],
-	) {
+  function applyRefinedImage(
+    url: string,
+    endpoint?: string,
+    slideIndex?: number,
+    slideUrls?: string[],
+  ) {
 		if (!normalizeGeneratedImageUrl(url)) return;
-		const idx = slideIndex ?? selectedVariantIndex;
+    const idx = slideIndex ?? selectedVariantIndex;
 		const urls = slideUrls ?? refineSlideUrls();
-		setImageUrl(url);
+    setImageUrl(url);
 		setImageGenKey((k: number) => k + 1);
-		setLastImageEndpoint(endpoint ?? null);
-		setUseOriginalImage(false);
+    setLastImageEndpoint(endpoint ?? null);
+    setUseOriginalImage(false);
 		if (urls.length > 1) {
-			setSelectedVariantIndex(idx);
+      setSelectedVariantIndex(idx);
 			setImageVariantUrls(urls.map((u, i) => (i === idx ? url : u)));
 			setCampaignSlides((prev: CampaignSlide[]) =>
 				prev.length > 0
@@ -4206,26 +4209,26 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 							i === idx ? { ...slide, imageUrl: url } : slide,
 						)
 					: prev,
-			);
-		} else {
-			setImageVariantUrls([url]);
-			setSelectedVariantIndex(0);
+      );
+    } else {
+      setImageVariantUrls([url]);
+      setSelectedVariantIndex(0);
 			setCampaignSlides((prev: CampaignSlide[]) => {
-				if (prev.length === 0) return prev;
+        if (prev.length === 0) return prev;
 				return prev.map((slide, i) =>
 					i === idx ? { ...slide, imageUrl: url } : slide,
 				);
-			});
-		}
-	}
+      });
+    }
+  }
 
-	function onQuickFixLogoSelected(file: File | null) {
-		setQuickFixLogoFile(file);
-	}
+  function onQuickFixLogoSelected(file: File | null) {
+    setQuickFixLogoFile(file);
+  }
 
-	function resolveRefineSourceUrl(): string | null {
-		const slideIndex = selectedVariantIndex;
-		const slideSource = campaignSlides[slideIndex]?.imageUrl;
+  function resolveRefineSourceUrl(): string | null {
+    const slideIndex = selectedVariantIndex;
+    const slideSource = campaignSlides[slideIndex]?.imageUrl;
 		const variantSource = imageVariantUrls[slideIndex];
 		const raw =
 			normalizeGeneratedImageUrl(slideSource) ??
@@ -4235,38 +4238,38 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		if (raw.startsWith("http")) return normalizeImageSourceUrl(raw);
 		if (typeof window === "undefined") return raw;
 		return normalizeImageSourceUrl(`${window.location.origin}${raw}`);
-	}
+  }
 
-	async function refineGeneratedImageWithLogo(userNote?: string) {
-		if (!quickFixLogoFile) {
-			setError(m.errors.needQuickFixLogo);
-			return;
-		}
-		const sourceUrl = resolveRefineSourceUrl();
-		if (!sourceUrl) {
-			setError(m.errors.needRefineImage);
-			return;
-		}
+  async function refineGeneratedImageWithLogo(userNote?: string) {
+    if (!quickFixLogoFile) {
+      setError(m.errors.needQuickFixLogo);
+      return;
+    }
+    const sourceUrl = resolveRefineSourceUrl();
+    if (!sourceUrl) {
+      setError(m.errors.needRefineImage);
+      return;
+    }
 
-		const slideIndex = selectedVariantIndex;
-		setError(null);
+    const slideIndex = selectedVariantIndex;
+    setError(null);
 		setImageJobMeta({
 			kind: "image",
 			startedAt: Date.now(),
 			sceneCount: 1,
 		});
-		setImageBusy(true);
-		try {
-			const fd = new FormData();
-			fd.set("mode", "refine-logo");
-			fd.set("source_image_url", sourceUrl);
-			fd.set("logo_image", quickFixLogoFile);
-			fd.set("logo_placement", quickFixLogoPlacement);
-			fd.set("user_note", userNote?.trim() ?? "");
-			fd.set("endpoint", EDIT_ENDPOINT);
-			fd.set("aspect_ratio", "auto");
-			fd.set("num_images", "1");
-			const data = await postGenerateImage(fd);
+    setImageBusy(true);
+    try {
+      const fd = new FormData();
+      fd.set("mode", "refine-logo");
+      fd.set("source_image_url", sourceUrl);
+      fd.set("logo_image", quickFixLogoFile);
+      fd.set("logo_placement", quickFixLogoPlacement);
+      fd.set("user_note", userNote?.trim() ?? "");
+      fd.set("endpoint", EDIT_ENDPOINT);
+      fd.set("aspect_ratio", "auto");
+      fd.set("num_images", "1");
+      const data = await postGenerateImage(fd);
 			const urls = (data.imageUrls ?? [data.imageUrl])
 				.map((u) =>
 					typeof u === "string"
@@ -4274,49 +4277,49 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 						: null,
 				)
 				.filter((u): u is string => Boolean(u));
-			if (!urls.length) throw new Error(m.errors.imageGenNoUrl);
-			applyRefinedImage(
-				urls[0],
-				data.endpoint,
-				slideIndex,
+      if (!urls.length) throw new Error(m.errors.imageGenNoUrl);
+      applyRefinedImage(
+        urls[0],
+        data.endpoint,
+        slideIndex,
 				refineSlideUrls(),
-			);
+      );
 			if (quickFixCredits > 0)
 				setQuickFixCredits((v: number) => Math.max(0, v - 1));
-		} catch (e: unknown) {
-			setError(friendlyError(e, m.errors.refineFailed));
-		} finally {
-			setImageBusy(false);
-			setImageJobMeta(null);
-		}
-	}
+    } catch (e: unknown) {
+      setError(friendlyError(e, m.errors.refineFailed));
+    } finally {
+      setImageBusy(false);
+      setImageJobMeta(null);
+    }
+  }
 
-	async function refineGeneratedImage(userNote: string) {
-		const note = userNote.trim();
-		if (!note) return;
-		const slideIndex = selectedVariantIndex;
-		const sourceUrl = resolveRefineSourceUrl();
-		if (!sourceUrl) {
-			setError(m.errors.needRefineImage);
-			return;
-		}
+  async function refineGeneratedImage(userNote: string) {
+    const note = userNote.trim();
+    if (!note) return;
+    const slideIndex = selectedVariantIndex;
+    const sourceUrl = resolveRefineSourceUrl();
+    if (!sourceUrl) {
+      setError(m.errors.needRefineImage);
+      return;
+    }
 
-		setError(null);
+    setError(null);
 		setImageJobMeta({
 			kind: "image",
 			startedAt: Date.now(),
 			sceneCount: 1,
 		});
-		setImageBusy(true);
-		try {
-			const data = await postGenerateImageJson({
-				mode: "refine",
-				prompt: buildImageRefinePrompt(note),
-				endpoint: EDIT_ENDPOINT,
-				aspect_ratio: "auto",
-				num_images: 1,
-				image_urls: [sourceUrl],
-			});
+    setImageBusy(true);
+    try {
+      const data = await postGenerateImageJson({
+        mode: "refine",
+        prompt: buildImageRefinePrompt(note),
+        endpoint: EDIT_ENDPOINT,
+        aspect_ratio: "auto",
+        num_images: 1,
+        image_urls: [sourceUrl],
+      });
 			const urls = (data.imageUrls ?? [data.imageUrl])
 				.map((u) =>
 					typeof u === "string"
@@ -4324,11 +4327,11 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 						: null,
 				)
 				.filter((u): u is string => Boolean(u));
-			if (!urls.length) throw new Error(m.errors.imageGenNoUrl);
-			applyRefinedImage(
-				urls[0],
-				data.endpoint,
-				slideIndex,
+      if (!urls.length) throw new Error(m.errors.imageGenNoUrl);
+      applyRefinedImage(
+        urls[0],
+        data.endpoint,
+        slideIndex,
 				refineSlideUrls(),
 			);
 			if (quickFixCredits > 0)
@@ -4562,18 +4565,18 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			if (!res.ok) throw new Error(data.error ?? m.errors.refineFailed);
 			notifyCreditBalance(readCreditBalanceFromResponse(data));
 			await applyRefinedImage(data.imageUrl as string);
-		} catch (e: unknown) {
-			setError(friendlyError(e, m.errors.refineFailed));
-		} finally {
-			setImageBusy(false);
-			setImageJobMeta(null);
-		}
-	}
+    } catch (e: unknown) {
+      setError(friendlyError(e, m.errors.refineFailed));
+    } finally {
+      setImageBusy(false);
+      setImageJobMeta(null);
+    }
+  }
 
-	function quickFixImage(requirement: string) {
-		if (imageBusy) return;
-		void refineGeneratedImage(requirement);
-	}
+  function quickFixImage(requirement: string) {
+    if (imageBusy) return;
+    void refineGeneratedImage(requirement);
+  }
 
 	async function refineGeneratedImageWithRegions(regions: ImageEditRegion[]) {
 		const slideIndex = selectedVariantIndex;
@@ -4583,7 +4586,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			return;
 		}
 
-		setError(null);
+    setError(null);
 		setImageJobMeta({
 			kind: "image",
 			startedAt: Date.now(),
@@ -4718,22 +4721,22 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		setQuickFixCredits((v: number) => Math.max(0, v - 1));
 		setError(null);
 		setStepKey("video");
-	}
+  }
 
-	function buildComposeFormData(mode: "image" | "video"): FormData {
-		const fd = new FormData();
-		fd.set("template_id", templateId);
-		fd.set("mode", mode);
-		fd.set("headline", headline.trim());
-		fd.set("subline", subline.trim());
-		fd.set("brand", business.trim());
-		fd.set("signoff", offer.trim());
-		if (productPhoto) fd.set("product_image", productPhoto);
-		if (mode === "video") fd.set("bgm_track", bgmTrack);
-		return fd;
-	}
+  function buildComposeFormData(mode: "image" | "video"): FormData {
+    const fd = new FormData();
+    fd.set("template_id", templateId);
+    fd.set("mode", mode);
+    fd.set("headline", headline.trim());
+    fd.set("subline", subline.trim());
+    fd.set("brand", business.trim());
+    fd.set("signoff", offer.trim());
+    if (productPhoto) fd.set("product_image", productPhoto);
+    if (mode === "video") fd.set("bgm_track", bgmTrack);
+    return fd;
+  }
 
-	function canGenerateImage(): boolean {
+  function canGenerateImage(): boolean {
 		if (
 			promotionMode === "concept" &&
 			videoCreativeMode === "motion-poster"
@@ -4746,8 +4749,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				imageRefPhoto,
 			);
 		}
-		if (usesCompositor) return Boolean(productPhoto && headline.trim());
-		if (isStoryboardOutput) {
+    if (usesCompositor) return Boolean(productPhoto && headline.trim());
+    if (isStoryboardOutput) {
 			if (isConceptStoryboardOutput) {
 				// Align with generateImage(): conceptIdea / headline / product is enough.
 				// Story brief + DeepSeek plan are optional (API plans on the fly). Requiring
@@ -4758,9 +4761,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		}
 		if (isUgcPresenterOutput) {
 			return Boolean(hasProductPhotoLock && product.trim());
-		}
-		if (isCinematicStitchOutput || isConceptCinematicSingleOutput) {
-			return Boolean(
+    }
+    if (isCinematicStitchOutput || isConceptCinematicSingleOutput) {
+      return Boolean(
 				headline.trim() ||
 				creativeVideoBrief.trim() ||
 				product.trim() ||
@@ -4794,7 +4797,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			const hasConceptCopy = Boolean(
 				headline.trim() || conceptIdea.trim() || effectivePromoteName,
 			);
-			if (imageCreativeMode === "reference-concept") {
+      if (imageCreativeMode === "reference-concept") {
 				// Research / style-ref path: need ref + copy; product photo optional.
 				return Boolean(imageRefPhoto) && hasConceptCopy;
 			}
@@ -4806,12 +4809,12 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			visualStyleId === "info-poster" ||
 			isLockedSinglePosterStyle(visualStyleId)
 		) {
+      return Boolean(productPhoto && headline.trim());
+    }
+    if (isBrandVisualStyle(visualStyleId)) {
 			return Boolean(productPhoto && headline.trim());
-		}
-		if (isBrandVisualStyle(visualStyleId)) {
-			return Boolean(productPhoto && headline.trim());
-		}
-		if (imageCreativeMode === "reference-concept") {
+    }
+    if (imageCreativeMode === "reference-concept") {
 			return Boolean(hasProductPhotoLock && imageRefPhoto);
 		}
 		if (effectiveImageMode === "reference") {
@@ -4820,43 +4823,43 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		if (effectiveImageMode === "describe")
 			return imagePrompt.trim().length > 0;
 		return hasProductPhotoLock;
-	}
+  }
 
-	async function composeImage(): Promise<string> {
-		const res = await fetch("/api/compose", {
-			method: "POST",
-			body: buildComposeFormData("image"),
-		});
-		const data = await res.json();
-		if (!res.ok) throw new Error(data.error ?? m.errors.polishFailed);
+  async function composeImage(): Promise<string> {
+    const res = await fetch("/api/compose", {
+      method: "POST",
+      body: buildComposeFormData("image"),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error ?? m.errors.polishFailed);
 		notifyCreditBalance(readCreditBalanceFromResponse(data));
-		return data.imageUrl as string;
-	}
+    return data.imageUrl as string;
+  }
 
-	async function composeVideo(): Promise<string> {
-		const res = await fetch("/api/compose", {
-			method: "POST",
-			body: buildComposeFormData("video"),
-		});
-		const data = await res.json();
-		if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
+  async function composeVideo(): Promise<string> {
+    const res = await fetch("/api/compose", {
+      method: "POST",
+      body: buildComposeFormData("video"),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
 		notifyCreditBalance(readCreditBalanceFromResponse(data));
-		if (data.bgmAdded) setBgmNote(m.wizard.bgmNote);
-		else if (!data.bgmAdded) setBgmNote(m.wizard.bgmFallbackNote);
-		return data.videoUrl as string;
-	}
+    if (data.bgmAdded) setBgmNote(m.wizard.bgmNote);
+    else if (!data.bgmAdded) setBgmNote(m.wizard.bgmFallbackNote);
+    return data.videoUrl as string;
+  }
 
 	async function generateImage(): Promise<string | null> {
-		setError(null);
-		setUseOriginalImage(false);
+    setError(null);
+    setUseOriginalImage(false);
 
-		if (usesCompositor) {
-			if (!headline.trim()) {
-				setError(m.errors.needHeadline);
+    if (usesCompositor) {
+      if (!headline.trim()) {
+        setError(m.errors.needHeadline);
 				return null;
-			}
-			if (!productPhoto) {
-				setError(m.errors.needPhoto);
+      }
+      if (!productPhoto) {
+        setError(m.errors.needPhoto);
 				return null;
 			}
 			setImageJobMeta({
@@ -4864,19 +4867,19 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				startedAt: Date.now(),
 				sceneCount: 1,
 			});
-			setImageBusy(true);
-			try {
+      setImageBusy(true);
+      try {
 				const url = await composeImage();
 				setImageUrl(url);
 				imageUrlRef.current = url;
 				return url;
-			} catch (e: unknown) {
-				setError(friendlyError(e, m.errors.polishFailed));
+      } catch (e: unknown) {
+        setError(friendlyError(e, m.errors.polishFailed));
 				return null;
-			} finally {
-				setImageBusy(false);
-				setImageJobMeta(null);
-			}
+      } finally {
+        setImageBusy(false);
+        setImageJobMeta(null);
+      }
 		}
 
 		if (
@@ -4884,17 +4887,17 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				isLockedSinglePosterStyle(visualStyleId)) &&
 			!headline.trim()
 		) {
-			setError(m.errors.needHeadline);
+      setError(m.errors.needHeadline);
 			return null;
-		}
-		if (isBrandVisualStyle(visualStyleId)) {
-			if (!headline.trim()) {
-				setError(m.errors.needHeadline);
+    }
+    if (isBrandVisualStyle(visualStyleId)) {
+      if (!headline.trim()) {
+        setError(m.errors.needHeadline);
 				return null;
-			}
-		}
+      }
+    }
 
-		if (isStoryboardOutput) {
+    if (isStoryboardOutput) {
 			let storyboardPhoto = productPhoto;
 			if (isConceptStoryboardOutput) {
 				if (!effectivePromoteName) {
@@ -4902,8 +4905,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					return null;
 				}
 			} else {
-				if (!product.trim()) {
-					setError(m.errors.needProductName);
+      if (!product.trim()) {
+        setError(m.errors.needProductName);
 					return null;
 				}
 				if (!storyboardPhoto) {
@@ -4911,17 +4914,17 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					if (storyboardPhoto) setProductPhoto(storyboardPhoto);
 				}
 				if (!storyboardPhoto) {
-					setError(m.errors.needPhoto);
+        setError(m.errors.needPhoto);
 					return null;
 				}
-			}
-			setImageJobMeta({
-				kind: "storyboard",
-				startedAt: Date.now(),
-				sceneCount: estimateStoryboardSceneCount(),
-			});
-			setImageBusy(true);
-			try {
+      }
+      setImageJobMeta({
+        kind: "storyboard",
+        startedAt: Date.now(),
+        sceneCount: estimateStoryboardSceneCount(),
+      });
+      setImageBusy(true);
+      try {
 				// Landing / another tab may have updated the kit — prefer freshest before Mode A/B.
 				const freshKit = loadBrandKitFromStorage();
 				const liveKit = preferNewerBrandKit(brandKit, freshKit);
@@ -4934,9 +4937,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					planForGen: VideoStoryboardPlan | null,
 					sceneIndexes?: number[],
 				) => {
-					const fd = new FormData();
-					fd.set("visual_style", visualStyleId);
-					fd.set("art_style", artStyleId);
+        const fd = new FormData();
+        fd.set("visual_style", visualStyleId);
+      fd.set("art_style", artStyleId);
 					fd.set("promotion_mode", promotionMode);
 					if (brandProfile)
 						fd.set("brand_profile", JSON.stringify(brandProfile));
@@ -4949,17 +4952,17 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					);
 					if (conceptIdea.trim())
 						fd.set("concept_idea", conceptIdea.trim());
-					fd.set("business", business.trim());
-					fd.set("headline", headline.trim());
-					fd.set("subline", subline.trim());
-					fd.set("offer", offer.trim());
-					fd.set("storyboard_brief", storyboardBrief.trim());
-					fd.set("duration", storyboardTrimDuration);
-					fd.set("scene_count", storyboardSceneCount);
-					fd.set("prompt_market", promptMarket);
-					fd.set("subject_framing", subjectFraming);
-					fd.set("prompt_extra", effectivePromptExtra());
-					fd.set("aspect_ratio", effectiveImageAspectRatio);
+        fd.set("business", business.trim());
+        fd.set("headline", headline.trim());
+        fd.set("subline", subline.trim());
+        fd.set("offer", offer.trim());
+        fd.set("storyboard_brief", storyboardBrief.trim());
+        fd.set("duration", storyboardTrimDuration);
+        fd.set("scene_count", storyboardSceneCount);
+        fd.set("prompt_market", promptMarket);
+        fd.set("subject_framing", subjectFraming);
+        fd.set("prompt_extra", effectivePromptExtra());
+        fd.set("aspect_ratio", effectiveImageAspectRatio);
 					fd.set("image_text_mode", imageTextMode);
 					// Sharp logo stamp is post-gen — only need /edit when product/style refs are sent.
 					const needsEdit =
@@ -5055,78 +5058,78 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					);
 				}
 
-				applyGeneratedStoryboard(
+        applyGeneratedStoryboard(
 					[...mergedScenes].sort(
 						(a, b) => a.imageIndex - b.imageIndex,
 					),
 					planForGen,
 					seedancePrompt,
 					endpoint,
-				);
-			} catch (e: unknown) {
-				setError(friendlyError(e, m.errors.storyboardFailed));
-			} finally {
-				setImageBusy(false);
-				setImageJobMeta(null);
-			}
+        );
+      } catch (e: unknown) {
+        setError(friendlyError(e, m.errors.storyboardFailed));
+      } finally {
+        setImageBusy(false);
+        setImageJobMeta(null);
+      }
 			return null;
-		}
+    }
 
 		const cinematicSceneTarget = isConceptCinematicStyle(visualStyleId)
 			? cinematicSceneCount
 			: 0;
-		if (cinematicSceneTarget > 0) {
-			if (
-				!headline.trim() &&
-				!creativeVideoBrief.trim() &&
-				!product.trim() &&
-				!conceptIdea.trim()
-			) {
-				setError(m.errors.creativeBriefRequired);
+    if (cinematicSceneTarget > 0) {
+      if (
+        !headline.trim() &&
+        !creativeVideoBrief.trim() &&
+        !product.trim() &&
+        !conceptIdea.trim()
+      ) {
+        setError(m.errors.creativeBriefRequired);
 				return null;
-			}
-			setImageJobMeta({
-				kind: "cinematic-reel",
-				startedAt: Date.now(),
-				sceneCount: cinematicSceneTarget,
-			});
-			setImageBusy(true);
-			try {
-				const creativeBrief =
-					creativeVideoBrief.trim() ||
+      }
+      setImageJobMeta({
+        kind: "cinematic-reel",
+        startedAt: Date.now(),
+        sceneCount: cinematicSceneTarget,
+      });
+      setImageBusy(true);
+      try {
+        const creativeBrief =
+          creativeVideoBrief.trim() ||
 					[
 						headline.trim(),
 						subline.trim(),
 						offer.trim(),
 						conceptIdea.trim(),
 					]
-						.filter(Boolean)
-						.join(" | ");
-				const planRes = await fetch("/api/plan-cinematic-reel", {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({
-						product: product.trim(),
-						headline: headline.trim(),
-						subline: subline.trim(),
-						business: business.trim(),
-						offer: offer.trim(),
-						creativeBrief,
-						promptExtra: effectivePromptExtra(),
-						promptMarket,
+            .filter(Boolean)
+            .join(" | ");
+        const planRes = await fetch("/api/plan-cinematic-reel", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            product: product.trim(),
+            headline: headline.trim(),
+            subline: subline.trim(),
+            business: business.trim(),
+            offer: offer.trim(),
+            creativeBrief,
+            promptExtra: effectivePromptExtra(),
+            promptMarket,
 						referenceImageNote:
 							conceptImageVisionNote.trim() || undefined,
-						artStyleId,
-						sceneCount: cinematicSceneTarget,
-					}),
-				});
+            artStyleId,
+            sceneCount: cinematicSceneTarget,
+          }),
+        });
 				const planData = await readGenerateJson(planRes);
 				if (!planRes.ok)
 					throw new Error(
 						(planData.error as string) ?? m.errors.storyboardFailed,
 					);
 				const plan = planData.plan as CinematicReelPlan;
-				setCinematicReelPlan(plan);
+        setCinematicReelPlan(plan);
 
 				const freshKit = loadBrandKitFromStorage();
 				const liveKit = preferNewerBrandKit(brandKit, freshKit);
@@ -5134,13 +5137,13 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					brandKitForGeneration(liveKit) ?? liveKit;
 				if (liveKit !== brandKit) setBrandKit(liveKit);
 
-				const genRes = await fetch("/api/generate-cinematic-scenes", {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({
-						plan,
-						aspect_ratio: effectiveImageAspectRatio,
-						art_style: artStyleId,
+        const genRes = await fetch("/api/generate-cinematic-scenes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            plan,
+            aspect_ratio: effectiveImageAspectRatio,
+            art_style: artStyleId,
 						brand_kit: kitForCinematic,
 						// Top-right by default so burned captions at bottom stay clear.
 						logo_placement:
@@ -5148,21 +5151,21 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 							quickFixLogoPlacement === "bottom-left"
 								? "top-right"
 								: quickFixLogoPlacement,
-					}),
-				});
+          }),
+        });
 				const genData = await readGenerateJson(genRes);
 				if (!genRes.ok)
 					throw new Error(
 						(genData.error as string) ?? m.errors.storyboardFailed,
 					);
-				const scenes = genData.scenes as CinematicSceneResult[];
+        const scenes = genData.scenes as CinematicSceneResult[];
 				cinematicLogoIntegratedRef.current = Boolean(
 					genData.logoIntegrated,
 				);
-				setCinematicScenes(scenes);
-				setImageUrl(scenes[0]?.imageUrl ?? null);
-				setImageVariantUrls(scenes.map((s) => s.imageUrl));
-				setSelectedVariantIndex(0);
+        setCinematicScenes(scenes);
+        setImageUrl(scenes[0]?.imageUrl ?? null);
+        setImageVariantUrls(scenes.map((s) => s.imageUrl));
+        setSelectedVariantIndex(0);
 				setLastImageEndpoint(
 					(genData.endpoint as string | undefined) ?? null,
 				);
@@ -5172,24 +5175,24 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				) {
 					setVideoNote(genData.logoNote.trim());
 				}
-				setVideoPrompt(
+        setVideoPrompt(
 					scenes
 						.map((s) => s.videoMotionPrompt)
 						.filter(Boolean)
 						.join(" · "),
-				);
-			} catch (e: unknown) {
-				setError(friendlyError(e, m.errors.storyboardFailed));
-			} finally {
-				setImageBusy(false);
-				setImageJobMeta(null);
-			}
+        );
+      } catch (e: unknown) {
+        setError(friendlyError(e, m.errors.storyboardFailed));
+      } finally {
+        setImageBusy(false);
+        setImageJobMeta(null);
+      }
 			return null;
-		}
+    }
 
-		if (isCampaignOutput) {
-			if (!productPhoto && promotionMode !== "concept") {
-				setError(m.errors.needPhoto);
+    if (isCampaignOutput) {
+      if (!productPhoto && promotionMode !== "concept") {
+        setError(m.errors.needPhoto);
 				return null;
 			}
 			setImageJobMeta({
@@ -5197,27 +5200,27 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				startedAt: Date.now(),
 				sceneCount: referenceCarouselSlideCount,
 			});
-			setImageBusy(true);
-			try {
-				const fd = new FormData();
-				fd.set("visual_style", visualStyleId);
-				fd.set("art_style", artStyleId);
+      setImageBusy(true);
+      try {
+        const fd = new FormData();
+        fd.set("visual_style", visualStyleId);
+      fd.set("art_style", artStyleId);
 				if (brandProfile)
 					fd.set("brand_profile", JSON.stringify(brandProfile));
 				fd.set("brand_kit", JSON.stringify(brandKit));
-				fd.set("product_name", product.trim());
-				fd.set("business", business.trim());
-				fd.set("headline", headline.trim());
-				fd.set("subline", subline.trim());
-				fd.set("offer", offer.trim());
-				fd.set("campaign_theme", campaignTheme.trim());
-				fd.set("prompt_market", promptMarket);
-				fd.set("subject_framing", subjectFraming);
-				fd.set("prompt_extra", effectivePromptExtra());
-				fd.set("promotion_mode", promotionMode);
-				fd.set("aspect_ratio", effectiveImageAspectRatio);
-				if (productPhoto) {
-					fd.set("reference_image", productPhoto);
+        fd.set("product_name", product.trim());
+        fd.set("business", business.trim());
+        fd.set("headline", headline.trim());
+        fd.set("subline", subline.trim());
+        fd.set("offer", offer.trim());
+        fd.set("campaign_theme", campaignTheme.trim());
+        fd.set("prompt_market", promptMarket);
+        fd.set("subject_framing", subjectFraming);
+        fd.set("prompt_extra", effectivePromptExtra());
+        fd.set("promotion_mode", promotionMode);
+        fd.set("aspect_ratio", effectiveImageAspectRatio);
+        if (productPhoto) {
+          fd.set("reference_image", productPhoto);
 				}
 				attachReferenceToForm(fd);
 				fd.set(
@@ -5236,48 +5239,48 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 						(data.error as string) ?? m.errors.campaignFailed,
 					);
 				notifyCreditBalance(readCreditBalanceFromResponse(data));
-				applyGeneratedCampaign(
-					data.slides as Array<{
-						role: string;
-						title: string;
-						headline: string;
-						subline: string;
-						imageUrl: string;
-					}>,
-					data.plan as CampaignPlan,
-					data.endpoint as string | undefined,
-				);
-			} catch (e: unknown) {
-				setError(friendlyError(e, m.errors.campaignFailed));
-			} finally {
-				setImageBusy(false);
-				setImageJobMeta(null);
-			}
+        applyGeneratedCampaign(
+          data.slides as Array<{
+            role: string;
+            title: string;
+            headline: string;
+            subline: string;
+            imageUrl: string;
+          }>,
+          data.plan as CampaignPlan,
+          data.endpoint as string | undefined,
+        );
+      } catch (e: unknown) {
+        setError(friendlyError(e, m.errors.campaignFailed));
+      } finally {
+        setImageBusy(false);
+        setImageJobMeta(null);
+      }
 			return null;
-		}
+    }
 
-		if (isTeachingCarouselOutput) {
+    if (isTeachingCarouselOutput) {
 			setImageJobMeta({
 				kind: "teaching-carousel",
 				startedAt: Date.now(),
 				sceneCount: referenceCarouselSlideCount,
 			});
-			setImageBusy(true);
-			try {
-				const fd = new FormData();
-				fd.set("visual_style", visualStyleId);
-				fd.set("art_style", artStyleId);
+      setImageBusy(true);
+      try {
+        const fd = new FormData();
+        fd.set("visual_style", visualStyleId);
+      fd.set("art_style", artStyleId);
 				fd.set("brand_kit", JSON.stringify(brandKit));
-				fd.set("product_name", product.trim());
-				fd.set("business", business.trim());
-				fd.set("headline", headline.trim());
-				fd.set("subline", subline.trim());
-				fd.set("offer", offer.trim());
-				fd.set("prompt_market", promptMarket);
-				fd.set("subject_framing", subjectFraming);
-				fd.set("prompt_extra", effectivePromptExtra());
-				fd.set("promotion_mode", promotionMode);
-				fd.set("aspect_ratio", effectiveImageAspectRatio);
+        fd.set("product_name", product.trim());
+        fd.set("business", business.trim());
+        fd.set("headline", headline.trim());
+        fd.set("subline", subline.trim());
+        fd.set("offer", offer.trim());
+        fd.set("prompt_market", promptMarket);
+        fd.set("subject_framing", subjectFraming);
+        fd.set("prompt_extra", effectivePromptExtra());
+        fd.set("promotion_mode", promotionMode);
+        fd.set("aspect_ratio", effectiveImageAspectRatio);
 				fd.set("slide_count", String(referenceCarouselSlideCount));
 				// Product kit angles go via attachReferenceToForm → product_angle_images only.
 				// Do not send them as carousel_reference_images (that confuses slide-count prompts).
@@ -5301,43 +5304,43 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 						(data.error as string) ?? m.errors.campaignFailed,
 					);
 				notifyCreditBalance(readCreditBalanceFromResponse(data));
-				applyGeneratedCampaign(
-					data.slides as Array<{
-						role: string;
-						title: string;
-						headline: string;
-						subline: string;
-						imageUrl: string;
-					}>,
-					data.plan as CampaignPlan,
-					data.endpoint as string | undefined,
-				);
-			} catch (e: unknown) {
-				setError(friendlyError(e, m.errors.campaignFailed));
-			} finally {
-				setImageBusy(false);
-				setImageJobMeta(null);
-			}
+        applyGeneratedCampaign(
+          data.slides as Array<{
+            role: string;
+            title: string;
+            headline: string;
+            subline: string;
+            imageUrl: string;
+          }>,
+          data.plan as CampaignPlan,
+          data.endpoint as string | undefined,
+        );
+      } catch (e: unknown) {
+        setError(friendlyError(e, m.errors.campaignFailed));
+      } finally {
+        setImageBusy(false);
+        setImageJobMeta(null);
+      }
 			return null;
-		}
+    }
 
-		if (effectiveImageMode === "describe") {
-			if (!imagePrompt.trim()) {
-				setError(m.errors.needKeyframe);
+    if (effectiveImageMode === "describe") {
+      if (!imagePrompt.trim()) {
+        setError(m.errors.needKeyframe);
 				return null;
-			}
-			setImageBusy(true);
-			try {
-				const res = await fetch("/api/generate-image", {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({
-						prompt: imagePrompt.trim(),
-						endpoint: TEXT_ENDPOINT,
-						aspect_ratio: effectiveImageAspectRatio,
-						num_images: effectiveImageOutputMode === "ab" ? 2 : 1,
-					}),
-				});
+      }
+      setImageBusy(true);
+      try {
+        const res = await fetch("/api/generate-image", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            prompt: imagePrompt.trim(),
+            endpoint: TEXT_ENDPOINT,
+            aspect_ratio: effectiveImageAspectRatio,
+            num_images: effectiveImageOutputMode === "ab" ? 2 : 1,
+          }),
+        });
 				const data = await readGenerateJson(res);
 				if (!res.ok)
 					throw new Error(
@@ -5351,25 +5354,25 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					urls,
 					data.endpoint as string | undefined,
 				);
-			} catch (e: unknown) {
-				setError(friendlyError(e, m.errors.polishFailed));
+      } catch (e: unknown) {
+        setError(friendlyError(e, m.errors.polishFailed));
 				return null;
-			} finally {
-				setImageBusy(false);
-			}
-		}
+      } finally {
+        setImageBusy(false);
+      }
+    }
 
-		const useConceptTextOnly =
-			promotionMode === "concept" &&
-			!productPhoto &&
-			!imageRefPhoto &&
-			conceptStyleAllowsTextOnlyImage(visualStyleId) &&
-			imageCreativeMode !== "reference-concept" &&
-			effectiveImageMode !== "reference";
+    const useConceptTextOnly =
+      promotionMode === "concept" &&
+      !productPhoto &&
+      !imageRefPhoto &&
+      conceptStyleAllowsTextOnlyImage(visualStyleId) &&
+      imageCreativeMode !== "reference-concept" &&
+      effectiveImageMode !== "reference";
 
-		if (useConceptTextOnly) {
+    if (useConceptTextOnly) {
 			if (!headline.trim() && !effectivePromoteName && !business.trim()) {
-				setError(m.errors.needHeadline);
+        setError(m.errors.needHeadline);
 				return null;
 			}
 			setImageJobMeta({
@@ -5377,8 +5380,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				startedAt: Date.now(),
 				sceneCount: 1,
 			});
-			setImageBusy(true);
-			try {
+      setImageBusy(true);
+      try {
 				const fd = new FormData();
 				fd.set("visual_style", visualStyleId);
 				fd.set("art_style", artStyleId);
@@ -5420,8 +5423,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				fd.set("image_output_mode", effectiveImageOutputMode);
 				// No product/style pixels — logo is not auto-added; user adds it later.
 
-				const res = await fetch("/api/generate-image", {
-					method: "POST",
+        const res = await fetch("/api/generate-image", {
+          method: "POST",
 					body: fd,
 				});
 				const data = await readGenerateJson(res);
@@ -5437,18 +5440,18 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					urls,
 					data.endpoint as string | undefined,
 				);
-			} catch (e: unknown) {
-				setError(friendlyError(e, m.errors.polishFailed));
+      } catch (e: unknown) {
+        setError(friendlyError(e, m.errors.polishFailed));
 				return null;
-			} finally {
-				setImageBusy(false);
-				setImageJobMeta(null);
-			}
-		}
+      } finally {
+        setImageBusy(false);
+        setImageJobMeta(null);
+      }
+    }
 
-		if (imageCreativeMode === "reference-concept") {
-			if (!imageRefPhoto) {
-				setError(m.errors.needStyleReference);
+    if (imageCreativeMode === "reference-concept") {
+      if (!imageRefPhoto) {
+        setError(m.errors.needStyleReference);
 				return null;
 			}
 			const styleOnlyRef =
@@ -5457,14 +5460,14 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			if (!productPhoto && promotionMode !== "concept" && !styleOnlyRef) {
 				setError(m.errors.needPhoto);
 				return null;
-			}
-		} else if (effectiveImageMode === "reference") {
-			if (!imageRefPhoto) {
-				setError(m.errors.needReferenceImage);
+      }
+    } else if (effectiveImageMode === "reference") {
+      if (!imageRefPhoto) {
+        setError(m.errors.needReferenceImage);
 				return null;
-			}
+      }
 		} else if (needsProductUpload && !hasProductPhotoLock) {
-			setError(m.errors.needPhoto);
+      setError(m.errors.needPhoto);
 			return null;
 		}
 
@@ -5473,7 +5476,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			startedAt: Date.now(),
 			sceneCount: 1,
 		});
-		setImageBusy(true);
+    setImageBusy(true);
 		trackGenerateStarted("image", {
 			style: visualStyleId,
 			mode: effectiveImageOutputMode,
@@ -5484,14 +5487,14 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				productPhoto &&
 				imageCreativeMode !== "reference-concept"
 			) {
-				setVideoNote(m.wizard.imageRefAutoModeNote);
-			}
-			const fd = new FormData();
-			fd.set("visual_style", visualStyleId);
-			fd.set("art_style", artStyleId);
-			if (brandProfile) {
-				fd.set("brand_profile", JSON.stringify(brandProfile));
-			}
+        setVideoNote(m.wizard.imageRefAutoModeNote);
+      }
+      const fd = new FormData();
+      fd.set("visual_style", visualStyleId);
+      fd.set("art_style", artStyleId);
+      if (brandProfile) {
+        fd.set("brand_profile", JSON.stringify(brandProfile));
+      }
 			fd.set("brand_kit", JSON.stringify(brandKit));
 			fd.set(
 				"product_name",
@@ -5499,24 +5502,24 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					? effectivePromoteName || product.trim()
 					: product.trim(),
 			);
-			fd.set("business", business.trim());
-			fd.set("headline", headline.trim());
-			fd.set("subline", subline.trim());
-			fd.set("offer", offer.trim());
-			fd.set("prompt_market", promptMarket);
-			fd.set("subject_framing", subjectFraming);
-			fd.set("prompt_extra", effectivePromptExtra());
-			fd.set("workflow_mode", workflowMode);
+      fd.set("business", business.trim());
+      fd.set("headline", headline.trim());
+      fd.set("subline", subline.trim());
+      fd.set("offer", offer.trim());
+      fd.set("prompt_market", promptMarket);
+      fd.set("subject_framing", subjectFraming);
+      fd.set("prompt_extra", effectivePromptExtra());
+      fd.set("workflow_mode", workflowMode);
 			fd.set("promotion_mode", promotionMode);
 			fd.set("image_text_mode", imageTextMode);
-			fd.set("aspect_ratio", effectiveImageAspectRatio);
+      fd.set("aspect_ratio", effectiveImageAspectRatio);
 			fd.set(
 				"endpoint",
 				referenceStrategy.sendPixelsToFal
 					? EDIT_ENDPOINT
 					: TEXT_ENDPOINT,
 			);
-			fd.set("num_images", effectiveImageOutputMode === "ab" ? "2" : "1");
+      fd.set("num_images", effectiveImageOutputMode === "ab" ? "2" : "1");
 			fd.set("image_output_mode", effectiveImageOutputMode);
 			if (videoCreativeMode === "motion-poster") {
 				fd.set("motion_poster", "1");
@@ -5539,8 +5542,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				data.imageUrl as string,
 			];
 			if (!urls.some((u) => normalizeGeneratedImageUrl(u))) {
-				throw new Error(m.errors.imageGenNoUrl);
-			}
+        throw new Error(m.errors.imageGenNoUrl);
+      }
 			const applied = applyGeneratedImages(
 				urls,
 				data.endpoint as string | undefined,
@@ -5550,15 +5553,15 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				count: urls.length,
 			});
 			return applied;
-		} catch (e: unknown) {
+    } catch (e: unknown) {
 			trackGenerateFailed("image", { style: visualStyleId });
 			setError(friendlyError(e, m.errors.polishFailed));
 			return null;
-		} finally {
-			setImageBusy(false);
-			setImageJobMeta(null);
-		}
-	}
+    } finally {
+      setImageBusy(false);
+      setImageJobMeta(null);
+    }
+  }
 
 	async function runShipItPipeline() {
 		if (!shipItEligible) {
@@ -5588,33 +5591,33 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		}
 	}
 
-	function useOriginalAsKeyframe() {
-		if (!productPhoto) return;
-		setUseOriginalImage(true);
-		setImageUrl(null);
-		setError(null);
-	}
+  function useOriginalAsKeyframe() {
+    if (!productPhoto) return;
+    setUseOriginalImage(true);
+    setImageUrl(null);
+    setError(null);
+  }
 
-	function finishImageStep() {
-		if (
-			workflowMode === "combined" &&
-			!usesCompositor &&
-			!isStoryboardOutput &&
-			!isCinematicStitchOutput &&
-			!imageUrl &&
-			!(promotionMode === "concept" && useOriginalImage && productPhoto)
-		) {
-			setError(m.errors.needGeneratedImage);
-			return;
-		}
-		if (isStoryboardOutput && storyboardScenes.length === 0) {
-			setError(m.errors.storyboardVideoPromptRequired);
-			return;
-		}
+  function finishImageStep() {
+    if (
+      workflowMode === "combined" &&
+      !usesCompositor &&
+      !isStoryboardOutput &&
+      !isCinematicStitchOutput &&
+      !imageUrl &&
+      !(promotionMode === "concept" && useOriginalImage && productPhoto)
+    ) {
+      setError(m.errors.needGeneratedImage);
+      return;
+    }
+    if (isStoryboardOutput && storyboardScenes.length === 0) {
+      setError(m.errors.storyboardVideoPromptRequired);
+      return;
+    }
 		if (isStoryboardOutput && !storyboardGridApproved) {
 			setError(m.wizard.storyboardApproveRequiredHint);
-			return;
-		}
+      return;
+    }
 		if (
 			(isCinematicStitchOutput || cinematicStitchReady) &&
 			cinematicScenes.length < cinematicSceneCount
@@ -5627,32 +5630,32 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			cinematicScenes.length < 1 &&
 			!imageUrl
 		) {
-			setError(m.errors.needGeneratedImage);
-			return;
-		}
-		if (!hasFinalImage) {
-			setError(
+      setError(m.errors.needGeneratedImage);
+      return;
+    }
+    if (!hasFinalImage) {
+      setError(
 				!usesCompositor &&
 					productPhoto &&
 					!imageUrl &&
 					!useOriginalImage
-					? m.errors.needAiImage
+          ? m.errors.needAiImage
 					: workflowMode === "image-only" &&
 						  effectiveImageMode === "describe"
-						? m.errors.needKeyframe
-						: m.errors.needPhoto,
-			);
-			return;
-		}
-		setError(null);
-		if (
-			workflowMode === "video-only" &&
-			!usesCompositor &&
-			!imageUrl &&
-			productPhoto
-		) {
-			setUseOriginalImage(true);
-		}
+            ? m.errors.needKeyframe
+            : m.errors.needPhoto,
+      );
+      return;
+    }
+    setError(null);
+    if (
+      workflowMode === "video-only" &&
+      !usesCompositor &&
+      !imageUrl &&
+      productPhoto
+    ) {
+      setUseOriginalImage(true);
+    }
 		// Storyboard / cinematic scene stills always continue to video, even if mode drifted to image-only.
 		if (
 			workflowMode === "image-only" &&
@@ -5665,14 +5668,14 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			if (workflowMode === "image-only") setWorkflowMode("combined");
 			setStepKey("video");
 		}
-	}
+  }
 
-	function onReferenceAdFile(file: File | null) {
-		setReferenceAd(file);
-		if (file) {
-			setSelectedReferenceClipId(null);
-			setError(null);
-			if (file.type.startsWith("video/")) {
+  function onReferenceAdFile(file: File | null) {
+    setReferenceAd(file);
+    if (file) {
+      setSelectedReferenceClipId(null);
+      setError(null);
+      if (file.type.startsWith("video/")) {
 				if (workflowMode === "combined") {
 					selectVisualStyle("storyboard-video");
 					setImageAspectRatio("9:16");
@@ -5682,28 +5685,28 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 						setImageInputMode("reference");
 					}
 				}
-				const url = URL.createObjectURL(file);
-				const v = document.createElement("video");
-				v.preload = "metadata";
-				v.onloadedmetadata = () => {
-					URL.revokeObjectURL(url);
-					const dur = v.duration;
-					if (Number.isFinite(dur)) {
-						setRefVideoDurationSec(dur);
-						if (dur > 15.5) {
-							setVideoNote(
+        const url = URL.createObjectURL(file);
+        const v = document.createElement("video");
+        v.preload = "metadata";
+        v.onloadedmetadata = () => {
+          URL.revokeObjectURL(url);
+          const dur = v.duration;
+          if (Number.isFinite(dur)) {
+            setRefVideoDurationSec(dur);
+            if (dur > 15.5) {
+              setVideoNote(
 								m.wizard.referenceVideoTooLong.replace(
 									"{seconds}",
 									String(Math.round(dur)),
 								),
-							);
-						}
-					}
-				};
-				v.src = url;
-			}
-		}
-	}
+              );
+            }
+          }
+        };
+        v.src = url;
+      }
+    }
+  }
 
 	async function ensureReferenceVideoFalUrl(refVideo: File): Promise<string> {
 		if (referenceVideoFalUrl?.startsWith("http"))
@@ -5808,49 +5811,49 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		return { analysis: nextAnalysis, videoPrompt: prompt };
 	}
 
-	async function makeReferenceVideo(refVideo: File): Promise<string> {
+  async function makeReferenceVideo(refVideo: File): Promise<string> {
 		const refined = await refineResearchVideoScriptIfNeeded();
-		const vOpts = resolveVideoGenerationOpts(templateId, videoSettings);
+    const vOpts = resolveVideoGenerationOpts(templateId, videoSettings);
 		const outputDuration =
 			videoSettings.duration === "auto" ||
 			Number(videoSettings.duration) > 15
 				? "8"
 				: String(videoSettings.duration);
 		const refFalUrl = await ensureReferenceVideoFalUrl(refVideo);
-		const fd = new FormData();
-		fd.set("mode", "reference");
+    const fd = new FormData();
+    fd.set("mode", "reference");
 		fd.set("promotion_mode", promotionMode);
-		fd.set(
-			"prompt",
+    fd.set(
+      "prompt",
 			seedancePromptForGenerate(
 				buildResearchR2vPrompt({
 					researchAnalysis: refined.analysis,
 					videoPrompt: refined.videoPrompt,
 					conceptMode: promotionMode === "concept",
 					fallbackPrompt:
-						buildReferenceVideoPrompt(getPromptVars(), templateId) +
-						" Follow @Video1 shot structure and timing as closely as the model allows. Do not apply a generic slow push-in unless @Video1 uses it.",
+        buildReferenceVideoPrompt(getPromptVars(), templateId) +
+          " Follow @Video1 shot structure and timing as closely as the model allows. Do not apply a generic slow push-in unless @Video1 uses it.",
 				}),
 				{ hasReferenceVideo: true },
 			),
-		);
+    );
 		fd.set("reference_video_urls", refFalUrl);
 		const refSec = refVideoDurationSec;
-		if (refSec && Number.isFinite(refSec)) {
-			fd.set("ref_duration_sec", String(refSec));
-		}
-		if (workflowMode === "combined" && imageUrl) {
-			fd.set("image_ref_url", imageUrl);
-		} else if (productPhoto) {
-			fd.append("images", productPhoto);
-		} else if (imageUrl) {
-			fd.set("image_ref_url", imageUrl);
-		}
-		fd.set("resolution", vOpts.resolution);
+    if (refSec && Number.isFinite(refSec)) {
+      fd.set("ref_duration_sec", String(refSec));
+    }
+    if (workflowMode === "combined" && imageUrl) {
+      fd.set("image_ref_url", imageUrl);
+    } else if (productPhoto) {
+      fd.append("images", productPhoto);
+    } else if (imageUrl) {
+      fd.set("image_ref_url", imageUrl);
+    }
+    fd.set("resolution", vOpts.resolution);
 		fd.set("duration", outputDuration);
-		fd.set("aspect_ratio", vOpts.aspectRatio);
+    fd.set("aspect_ratio", vOpts.aspectRatio);
 		fd.set("generate_audio", "false");
-		fd.set("reference_negative_prompt", buildReferenceVideoNegative(tpl));
+    fd.set("reference_negative_prompt", buildReferenceVideoNegative(tpl));
 		fd.set(
 			"avoid_on_screen_text",
 			vOpts.avoidOnScreenText ? "true" : "false",
@@ -5878,8 +5881,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				body: fd,
 			},
 		);
-		const data = await res.json();
-		if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
 		notifyCreditBalance(readCreditBalanceFromResponse(data));
 		const usedFallback =
 			data.generationMode === "kling-storyboard-fallback" ||
@@ -5888,34 +5891,34 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			) ||
 			Boolean(data.seedanceBlockedCode);
 		const pathNote = wizardVideoReadyExtraNote(data);
-		const notes = [
+    const notes = [
 			m.wizard.researchReelCopyingNote,
 			usedFallback
 				? String(data.generationMode ?? "").startsWith("minimax-h3")
 					? m.wizard.seedanceToMinimaxH3FallbackNote
 					: m.wizard.seedanceToKlingFallbackNote
 				: m.wizard.referenceModeNote,
-			pathNote,
-			workflowMode !== "combined" && !productPhoto && imageUrl
-				? m.wizard.videoRefUseProductPhoto
-				: "",
-			data.note as string | undefined,
-		].filter(Boolean);
-		setVideoNote(notes.join(" · "));
-		return data.videoUrl as string;
-	}
+      pathNote,
+      workflowMode !== "combined" && !productPhoto && imageUrl
+        ? m.wizard.videoRefUseProductPhoto
+        : "",
+      data.note as string | undefined,
+    ].filter(Boolean);
+    setVideoNote(notes.join(" · "));
+    return data.videoUrl as string;
+  }
 
-	async function fileFromImageUrl(url: string): Promise<File | null> {
-		try {
-			const res = await fetch(url);
-			const blob = await res.blob();
+  async function fileFromImageUrl(url: string): Promise<File | null> {
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
 			return new File([blob], "keyframe.png", {
 				type: blob.type || "image/png",
 			});
-		} catch {
-			return null;
-		}
-	}
+    } catch {
+      return null;
+    }
+  }
 
 	/** Reopen-from-library: rebuild a File from the durable preview URL. */
 	async function resolveHydratedProductPhoto(): Promise<File | null> {
@@ -5951,10 +5954,11 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		const heroFile = await resolveIdentityHeroFile();
 		if (!heroFile) throw new Error(needMessage);
 		fd.set("endpoint", EDIT_ENDPOINT);
-		attachReferenceToForm(fd);
-		if (!fd.get("reference_image")) {
-			fd.set("reference_image", heroFile);
-		}
+		// FX plates: product photo only — never attach research/style ref (IMAGE 2)
+		// or dual layout-transfer; that swaps SKU when name and photo disagree.
+		fd.set("image_creative_mode", "promo-ai");
+		fd.set("image_mode", "product-ad");
+		fd.set("reference_image", heroFile);
 	}
 
 	/** Same-origin relative paths so the server can materialize library/pipeline assets. */
@@ -6047,34 +6051,34 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		}
 	}
 
-	async function ensureEndFrameUrl(): Promise<string | null> {
-		if (endFrameUrl) return endFrameUrl;
-		if (endFramePhoto || !videoSettings.autoSecondFrame) return null;
-		if (videoSettings.creativity === "subtle") return null;
+  async function ensureEndFrameUrl(): Promise<string | null> {
+    if (endFrameUrl) return endFrameUrl;
+    if (endFramePhoto || !videoSettings.autoSecondFrame) return null;
+    if (videoSettings.creativity === "subtle") return null;
 
-		const ref = imageUrl
-			? await fileFromImageUrl(imageUrl)
-			: (productPhoto ?? null);
-		if (!ref) return null;
+    const ref = imageUrl
+      ? await fileFromImageUrl(imageUrl)
+      : (productPhoto ?? null);
+    if (!ref) return null;
 
-		setVideoPhase("second-frame");
-		const pv = getPromptVars();
-		const fd = new FormData();
-		fd.set("reference_image", ref);
-		fd.set("prompt", buildEndFrameImagePrompt(pv));
+    setVideoPhase("second-frame");
+    const pv = getPromptVars();
+    const fd = new FormData();
+    fd.set("reference_image", ref);
+    fd.set("prompt", buildEndFrameImagePrompt(pv));
 		fd.set("visual_style", visualStyleId);
-		fd.set("product_name", product.trim());
-		fd.set("business", business.trim());
-		fd.set("headline", headline.trim());
-		fd.set("subline", subline.trim());
-		fd.set("offer", offer.trim());
-		fd.set("prompt_market", promptMarket);
-		fd.set("subject_framing", subjectFraming);
-		fd.set("prompt_extra", effectivePromptExtra());
+    fd.set("product_name", product.trim());
+    fd.set("business", business.trim());
+    fd.set("headline", headline.trim());
+    fd.set("subline", subline.trim());
+    fd.set("offer", offer.trim());
+    fd.set("prompt_market", promptMarket);
+    fd.set("subject_framing", subjectFraming);
+    fd.set("prompt_extra", effectivePromptExtra());
 		fd.set("workflow_mode", workflowMode);
-		fd.set("aspect_ratio", tpl.aspectRatio);
-		fd.set("endpoint", EDIT_ENDPOINT);
-		fd.set("num_images", "1");
+    fd.set("aspect_ratio", tpl.aspectRatio);
+    fd.set("endpoint", EDIT_ENDPOINT);
+    fd.set("num_images", "1");
 		if (
 			imageRefPhoto &&
 			referenceStrategy.sendPixelsToFal &&
@@ -6091,18 +6095,18 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			method: "POST",
 			body: fd,
 		});
-		const data = await res.json();
-		if (!res.ok) throw new Error(data.error ?? m.errors.polishFailed);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error ?? m.errors.polishFailed);
 		notifyCreditBalance(readCreditBalanceFromResponse(data));
-		const url = data.imageUrl as string;
-		setEndFrameUrl(url);
-		return url;
-	}
+    const url = data.imageUrl as string;
+    setEndFrameUrl(url);
+    return url;
+  }
 
-	async function makeStoryboardVideo(): Promise<string> {
-		const prompt =
-			videoPrompt.trim() || storyboardPlan?.seedancePrompt?.trim() || "";
-		if (!prompt) throw new Error(m.errors.storyboardVideoPromptRequired);
+  async function makeStoryboardVideo(): Promise<string> {
+    const prompt =
+      videoPrompt.trim() || storyboardPlan?.seedancePrompt?.trim() || "";
+    if (!prompt) throw new Error(m.errors.storyboardVideoPromptRequired);
 
 		const orderedScenes = normalizeStoryboardIndices(storyboardScenes);
 		if (orderedScenes.length < 1) throw new Error(m.errors.needKeyframe);
@@ -6127,7 +6131,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			videoPrompt.trim() ||
 			"";
 
-		const fd = new FormData();
+    const fd = new FormData();
 		fd.set("promotion_mode", promotionMode);
 		fd.set(
 			"theme",
@@ -6360,8 +6364,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			fd.set("locale", voiceoverLocale);
 		}
 		fd.set("talking_style", "expressive");
-		fd.set("resolution", vOpts.resolution);
-		fd.set("aspect_ratio", vOpts.aspectRatio);
+    fd.set("resolution", vOpts.resolution);
+    fd.set("aspect_ratio", vOpts.aspectRatio);
 		fd.set("presenter_mode", presenterSourceMode);
 		if (presenterSourceMode === "stock-avatar") {
 			fd.set("stock_avatar_id", presenterAvatarId);
@@ -6371,27 +6375,27 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			method: "POST",
 			body: fd,
 		});
-		const data = await res.json();
+    const data = await res.json();
 		if (!res.ok) throw new Error(data.error ?? m.errors.ugcPresenterFailed);
 		notifyCreditBalance(readCreditBalanceFromResponse(data));
-		setVideoNote(
-			[
+    setVideoNote(
+      [
 				m.wizard.ugcPresenter.videoPreflight,
-				data.note as string | undefined,
+        data.note as string | undefined,
 				wizardVideoReadyExtraNote(data),
-			]
-				.filter(Boolean)
-				.join(" · "),
-		);
-		return data.videoUrl as string;
-	}
+      ]
+        .filter(Boolean)
+        .join(" · "),
+    );
+    return data.videoUrl as string;
+  }
 
-	async function makeCinematicClipFromImage(
-		imageUrl: string,
-		motionPrompt: string,
+  async function makeCinematicClipFromImage(
+    imageUrl: string,
+    motionPrompt: string,
 		sceneIndex = 1,
 		totalScenes = 1,
-	): Promise<string> {
+  ): Promise<string> {
 		const useBeatRotation =
 			isConceptCinematicStyle(visualStyleId) && totalScenes > 1;
 		const creativity =
@@ -6430,29 +6434,29 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		]
 			.filter(Boolean)
 			.join(" ");
-		const fd = new FormData();
-		fd.set("mode", "image");
+    const fd = new FormData();
+    fd.set("mode", "image");
 		fd.set("prompt", fullPrompt);
-		fd.set("resolution", vOpts.resolution);
-		fd.set("duration", "8");
-		fd.set("aspect_ratio", vOpts.aspectRatio);
-		fd.set("generate_audio", "false");
+    fd.set("resolution", vOpts.resolution);
+    fd.set("duration", "8");
+    fd.set("aspect_ratio", vOpts.aspectRatio);
+    fd.set("generate_audio", "false");
 		fd.set("motion_strength", String(motionStrength));
-		fd.set("camera", vOpts.camera);
-		fd.set("negative_prompt", negativePrompt);
+    fd.set("camera", vOpts.camera);
+    fd.set("negative_prompt", negativePrompt);
 		fd.set(
 			"avoid_on_screen_text",
 			vOpts.avoidOnScreenText ? "true" : "false",
 		);
-		fd.set("fast", vOpts.fast ? "true" : "false");
-		fd.set("image_start_url", imageUrl);
+    fd.set("fast", vOpts.fast ? "true" : "false");
+    fd.set("image_start_url", imageUrl);
 
-		const res = await fetch("/api/generate", { method: "POST", body: fd });
-		const data = await res.json();
-		if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
+    const res = await fetch("/api/generate", { method: "POST", body: fd });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
 		notifyCreditBalance(readCreditBalanceFromResponse(data));
-		return data.videoUrl as string;
-	}
+    return data.videoUrl as string;
+  }
 
 	async function stampBrandLogoOnCinematicScenes(
 		scenes: CinematicSceneResult[],
@@ -6497,31 +6501,31 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		return next;
 	}
 
-	async function makeCinematicStitchVideo(): Promise<string> {
+  async function makeCinematicStitchVideo(): Promise<string> {
 		if (cinematicScenes.length < cinematicSceneCount) {
-			throw new Error(m.errors.storyboardVideoPromptRequired);
-		}
+      throw new Error(m.errors.storyboardVideoPromptRequired);
+    }
 		// Sharp stamp only if Mode B did not already integrate the logo.
 		const scenesForVideo =
 			await stampBrandLogoOnCinematicScenes(cinematicScenes);
-		const clipUrls: string[] = [];
+    const clipUrls: string[] = [];
 		for (const scene of scenesForVideo) {
-			clipUrls.push(
+      clipUrls.push(
 				await makeCinematicClipFromImage(
 					scene.imageUrl,
 					scene.videoMotionPrompt,
 					scene.sceneIndex,
 					scenesForVideo.length,
 				),
-			);
-		}
-		const res = await fetch("/api/stitch-videos", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ video_urls: clipUrls }),
-		});
-		const data = await res.json();
-		if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
+      );
+    }
+    const res = await fetch("/api/stitch-videos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ video_urls: clipUrls }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
 		notifyCreditBalance(readCreditBalanceFromResponse(data));
 		const stitchClipDurations = Array.isArray(data.clipDurations)
 			? (data.clipDurations as number[]).filter(
@@ -6540,41 +6544,41 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			lastVideoTimingManifestRef.current = stitchManifest;
 			setVideoTimingManifest(stitchManifest);
 		}
-		setVideoNote(
-			[
+    setVideoNote(
+      [
 				formatCinematicCopy(m.wizard.cinematicStitchVideoPreflight),
-				`${m.wizard.cinematicStitchClipCount}: ${clipUrls.length}`,
+        `${m.wizard.cinematicStitchClipCount}: ${clipUrls.length}`,
 				brandKitWantsLogo(brandKit)
 					? cinematicLogoIntegratedRef.current
 						? m.wizard.cinematicLogoModeBNote
 						: m.wizard.cinematicLogoStampNote
 					: null,
-				m.wizard.cinematicStitchFfmpegNote,
-				data.note as string | undefined,
-			]
-				.filter(Boolean)
-				.join(" · "),
-		);
-		return data.videoUrl as string;
-	}
+        m.wizard.cinematicStitchFfmpegNote,
+        data.note as string | undefined,
+      ]
+        .filter(Boolean)
+        .join(" · "),
+    );
+    return data.videoUrl as string;
+  }
 
-	async function makeProductAssistantVideo(): Promise<string> {
-		const vOpts = resolveVideoGenerationOpts(templateId, videoSettings);
+  async function makeProductAssistantVideo(): Promise<string> {
+    const vOpts = resolveVideoGenerationOpts(templateId, videoSettings);
 		const prompt = stripReferenceVideoTags(
-			productVideoPlan?.seedancePrompt?.trim() ||
-				videoPrompt.trim() ||
+      productVideoPlan?.seedancePrompt?.trim() ||
+      videoPrompt.trim() ||
 				"",
 		);
-		if (!prompt) throw new Error(m.errors.needProductVideoPlan);
+    if (!prompt) throw new Error(m.errors.needProductVideoPlan);
 
-		const fd = new FormData();
-		fd.set("mode", "reference");
+    const fd = new FormData();
+    fd.set("mode", "reference");
 		fd.set("prompt", seedancePromptForGenerate(prompt));
-		fd.set("resolution", vOpts.resolution);
-		fd.set("duration", vOpts.duration);
-		fd.set("aspect_ratio", vOpts.aspectRatio);
+    fd.set("resolution", vOpts.resolution);
+    fd.set("duration", vOpts.duration);
+    fd.set("aspect_ratio", vOpts.aspectRatio);
 		fd.set("generate_audio", "false");
-		fd.set("negative_prompt", negativePrompt);
+    fd.set("negative_prompt", negativePrompt);
 		fd.set(
 			"avoid_on_screen_text",
 			vOpts.avoidOnScreenText ? "true" : "false",
@@ -6621,12 +6625,12 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				body: fd,
 			},
 		);
-		const data = await res.json();
-		if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
 		notifyCreditBalance(readCreditBalanceFromResponse(data));
 		const pathNote = wizardVideoReadyExtraNote(data);
-		setVideoNote(
-			[
+    setVideoNote(
+      [
 				String(data.generationMode ?? "").startsWith(
 					"minimax-h3-fallback",
 				) ||
@@ -6639,15 +6643,15 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 						: useH3
 							? m.wizard.videoEngineMinimaxH3
 							: m.wizard.productVideoAssistantPreflight,
-				productVideoPlan?.motionSummaryZh,
-				pathNote,
-				data.note as string | undefined,
-			]
-				.filter(Boolean)
-				.join(" · "),
-		);
-		return data.videoUrl as string;
-	}
+        productVideoPlan?.motionSummaryZh,
+        pathNote,
+        data.note as string | undefined,
+      ]
+        .filter(Boolean)
+        .join(" · "),
+    );
+    return data.videoUrl as string;
+  }
 
 	async function generateBlockbusterSceneFrame(): Promise<string | null> {
 		if (sceneFrameBusy) return null;
@@ -7006,9 +7010,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		return data.videoUrl as string;
 	}
 
-	async function makeMultiAngleVideo(): Promise<string> {
-		const vOpts = resolveVideoGenerationOpts(templateId, videoSettings);
-		const pv = getPromptVars();
+  async function makeMultiAngleVideo(): Promise<string> {
+    const vOpts = resolveVideoGenerationOpts(templateId, videoSettings);
+    const pv = getPromptVars();
 		const hasRefVideo = Boolean(referenceAd && referenceIsVideo);
 		const multiAnglePrompt =
 			videoPrompt.trim() ||
@@ -7020,26 +7024,26 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					multiAnglePrompt,
 				].join(" ")
 			: multiAnglePrompt;
-		const fd = new FormData();
-		fd.set("mode", "reference");
-		fd.set(
-			"prompt",
+    const fd = new FormData();
+    fd.set("mode", "reference");
+    fd.set(
+      "prompt",
 			seedancePromptForGenerate(promptWithSpine, {
 				hasReferenceVideo: hasRefVideo,
 			}),
-		);
-		if (referenceAd && referenceIsVideo) fd.append("videos", referenceAd);
-		if (productPhoto) fd.append("images", productPhoto);
-		for (const f of extraAnglePhotos) fd.append("images", f);
-		if (imageUrl) fd.set("image_ref_url", imageUrl);
-		fd.set("resolution", vOpts.resolution);
-		fd.set("duration", vOpts.duration);
-		fd.set("aspect_ratio", vOpts.aspectRatio);
+    );
+    if (referenceAd && referenceIsVideo) fd.append("videos", referenceAd);
+    if (productPhoto) fd.append("images", productPhoto);
+    for (const f of extraAnglePhotos) fd.append("images", f);
+    if (imageUrl) fd.set("image_ref_url", imageUrl);
+    fd.set("resolution", vOpts.resolution);
+    fd.set("duration", vOpts.duration);
+    fd.set("aspect_ratio", vOpts.aspectRatio);
 		fd.set("generate_audio", "false");
-		fd.set("motion_strength", String(vOpts.motionStrength));
+    fd.set("motion_strength", String(vOpts.motionStrength));
 		// Reference MP4 owns camera — do not send template Slow Push In.
 		if (!hasRefVideo) fd.set("camera", vOpts.camera);
-		fd.set("negative_prompt", negativePrompt);
+    fd.set("negative_prompt", negativePrompt);
 		fd.set(
 			"avoid_on_screen_text",
 			vOpts.avoidOnScreenText ? "true" : "false",
@@ -7075,11 +7079,11 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				body: fd,
 			},
 		);
-		const data = await res.json();
-		if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
 		notifyCreditBalance(readCreditBalanceFromResponse(data));
 		const pathNote = wizardVideoReadyExtraNote(data);
-		setVideoNote(
+    setVideoNote(
 			[
 				String(data.generationMode ?? "").startsWith(
 					"minimax-h3-fallback",
@@ -7095,27 +7099,27 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				m.wizard.videoRichMotionNote,
 				data.note as string | undefined,
 			]
-				.filter(Boolean)
-				.join(" · "),
-		);
-		return data.videoUrl as string;
-	}
+        .filter(Boolean)
+        .join(" · "),
+    );
+    return data.videoUrl as string;
+  }
 
-	async function makeTextToVideo(): Promise<string> {
-		if (!videoPrompt.trim()) {
-			throw new Error(m.errors.creativeVideoPromptRequired);
-		}
-		const vOpts = resolveVideoGenerationOpts(templateId, videoSettings);
-		const fd = new FormData();
-		fd.set("mode", "text");
+  async function makeTextToVideo(): Promise<string> {
+    if (!videoPrompt.trim()) {
+      throw new Error(m.errors.creativeVideoPromptRequired);
+    }
+    const vOpts = resolveVideoGenerationOpts(templateId, videoSettings);
+    const fd = new FormData();
+    fd.set("mode", "text");
 		fd.set("prompt", seedancePromptForGenerate(videoPrompt.trim()));
-		fd.set("resolution", vOpts.resolution);
-		fd.set("duration", vOpts.duration);
-		fd.set("aspect_ratio", vOpts.aspectRatio);
+    fd.set("resolution", vOpts.resolution);
+    fd.set("duration", vOpts.duration);
+    fd.set("aspect_ratio", vOpts.aspectRatio);
 		fd.set("generate_audio", "false");
-		fd.set("motion_strength", String(vOpts.motionStrength));
-		fd.set("camera", vOpts.camera);
-		fd.set("negative_prompt", negativePrompt);
+    fd.set("motion_strength", String(vOpts.motionStrength));
+    fd.set("camera", vOpts.camera);
+    fd.set("negative_prompt", negativePrompt);
 		fd.set(
 			"avoid_on_screen_text",
 			vOpts.avoidOnScreenText ? "true" : "false",
@@ -7126,13 +7130,13 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			method: "POST",
 			body: fd,
 		});
-		const data = await res.json();
-		if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
 		notifyCreditBalance(readCreditBalanceFromResponse(data));
 		const pathNote = wizardVideoReadyExtraNote(data);
-		if (pathNote) setVideoNote(pathNote);
-		return data.videoUrl as string;
-	}
+    if (pathNote) setVideoNote(pathNote);
+    return data.videoUrl as string;
+  }
 
 	async function generateMotionPosterKeyframe(
 		dialect: MotionPosterDialectId,
@@ -7694,6 +7698,95 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		}
 	}
 
+	function cloneWizardFormData(src: FormData): FormData {
+		const out = new FormData();
+		src.forEach((value, key) => {
+			out.append(key, value);
+		});
+		return out;
+	}
+
+	/** H3 start→end first (native stereo). Seedance fallback mixes library BGM. */
+	async function generateStartEndFxVideo(input: {
+		fd: FormData;
+		recipeDurationSec: number;
+	}): Promise<{
+		videoUrl: string;
+		usedSeedanceFallback: boolean;
+		data: Record<string, unknown>;
+	}> {
+		const h3Fd = cloneWizardFormData(input.fd);
+		h3Fd.delete("generate_audio");
+		h3Fd.delete("fast");
+		h3Fd.set(
+			"duration",
+			String(Math.max(5, input.recipeDurationSec)),
+		);
+		const h3Res = await fetch("/api/generate-minimax-h3", {
+			method: "POST",
+			body: h3Fd,
+		});
+		const h3Data = (await h3Res.json()) as Record<string, unknown>;
+		const h3Url =
+			typeof h3Data.videoUrl === "string" ? h3Data.videoUrl.trim() : "";
+		if (h3Res.ok && h3Url) {
+			notifyCreditBalance(readCreditBalanceFromResponse(h3Data));
+			return {
+				videoUrl: h3Url,
+				usedSeedanceFallback: false,
+				data: h3Data,
+			};
+		}
+		const h3Error =
+			typeof h3Data.error === "string" ? h3Data.error.trim() : "";
+		if (
+			h3Res.status === 401 ||
+			h3Res.status === 402 ||
+			h3Res.status === 403
+		) {
+			throw new Error(
+				(typeof h3Data.error === "string" && h3Data.error) ||
+					m.errors.videoFailed,
+			);
+		}
+
+		const seedFd = cloneWizardFormData(input.fd);
+		seedFd.set("duration", String(input.recipeDurationSec));
+		seedFd.set("generate_audio", "false");
+		seedFd.set("fast", "true");
+		const seedRes = await fetch("/api/generate", {
+			method: "POST",
+			body: seedFd,
+		});
+		const seedData = (await seedRes.json()) as Record<string, unknown>;
+		const seedUrl =
+			typeof seedData.videoUrl === "string"
+				? seedData.videoUrl.trim()
+				: "";
+		if (!seedRes.ok || !seedUrl) {
+			throw new Error(
+				(typeof seedData.error === "string" && seedData.error) ||
+					(typeof h3Data.error === "string" && h3Data.error) ||
+					m.errors.videoFailed,
+			);
+		}
+		notifyCreditBalance(readCreditBalanceFromResponse(seedData));
+		let url = seedUrl;
+		try {
+			url = await addBgm(url);
+		} catch {
+			setBgmNote(m.wizard.bgmFallbackNote);
+		}
+		return {
+			videoUrl: url,
+			usedSeedanceFallback: true,
+			data: {
+				...seedData,
+				h3FallbackReason: h3Error || `HTTP ${h3Res.status}`,
+			},
+		};
+	}
+
 	async function makeVacuumInflateVideo(): Promise<string> {
 		vacuumInflateStillUrlRef.current = null;
 		vacuumInflateEndUrlRef.current = null;
@@ -7739,28 +7832,33 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		fd.set("resolution", "480p");
 		fd.set("duration", String(VACUUM_INFLATE_DURATION_SEC));
 		fd.set("aspect_ratio", effectiveImageAspectRatio);
-		fd.set("generate_audio", "false");
 		fd.set("motion_strength", "70");
 		fd.set("negative_prompt", negativePrompt);
 		fd.set("avoid_on_screen_text", "true");
-		fd.set("fast", "true");
 		fd.set("vacuum_inflate", "1");
 		fd.set("product_name", subject);
 		fd.set("business", business.trim());
 		fd.set("image_start_url", startUrl);
 		fd.set("image_end_url", endUrl);
 
-		const res = await fetch("/api/generate", { method: "POST", body: fd });
-		const data = await res.json();
-		if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
-		notifyCreditBalance(readCreditBalanceFromResponse(data));
-		const pathNote = wizardVideoReadyExtraNote(data);
+		const fx = await generateStartEndFxVideo({
+			fd,
+			recipeDurationSec: VACUUM_INFLATE_DURATION_SEC,
+		});
+		const pathNote = wizardVideoReadyExtraNote(fx.data);
 		setVideoNote(
-			[m.wizard.vacuumInflateHint, pathNote, data.note as string | undefined]
+			[
+				m.wizard.vacuumInflateHint,
+				fx.usedSeedanceFallback
+					? m.wizard.h3ToSeedanceFallbackNote
+					: m.wizard.videoEngineMinimaxH3,
+				pathNote,
+				typeof fx.data.note === "string" ? fx.data.note : undefined,
+			]
 				.filter(Boolean)
 				.join(" · "),
 		);
-		return data.videoUrl as string;
+		return fx.videoUrl;
 	}
 
 	async function generateCreativeMotionKeyframe(
@@ -7907,11 +8005,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		fd.set("resolution", "480p");
 		fd.set("duration", String(CREATIVE_MOTION_DURATION_SEC));
 		fd.set("aspect_ratio", effectiveImageAspectRatio);
-		fd.set("generate_audio", "false");
 		fd.set("motion_strength", "72");
 		fd.set("negative_prompt", negativePrompt);
 		fd.set("avoid_on_screen_text", "true");
-		fd.set("fast", "true");
 		fd.set("creative_motion", "1");
 		fd.set("creative_motion_scheme", scheme);
 		fd.set("product_name", subject);
@@ -7919,22 +8015,25 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		fd.set("image_start_url", startUrl);
 		fd.set("image_end_url", endUrl);
 
-		const res = await fetch("/api/generate", { method: "POST", body: fd });
-		const data = await res.json();
-		if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
-		notifyCreditBalance(readCreditBalanceFromResponse(data));
-		const pathNote = wizardVideoReadyExtraNote(data);
+		const fx = await generateStartEndFxVideo({
+			fd,
+			recipeDurationSec: CREATIVE_MOTION_DURATION_SEC,
+		});
+		const pathNote = wizardVideoReadyExtraNote(fx.data);
 		setVideoNote(
 			[
 				m.wizard.creativeMotionHint,
 				schemeLabel,
+				fx.usedSeedanceFallback
+					? m.wizard.h3ToSeedanceFallbackNote
+					: m.wizard.videoEngineMinimaxH3,
 				pathNote,
-				data.note as string | undefined,
+				typeof fx.data.note === "string" ? fx.data.note : undefined,
 			]
 				.filter(Boolean)
 				.join(" · "),
 		);
-		return data.videoUrl as string;
+		return fx.videoUrl;
 	}
 
 	async function generateHandThrowSceneKeyframe(
@@ -8060,28 +8159,39 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		fd.set("resolution", "480p");
 		fd.set("duration", String(HAND_THROW_SCENE_DURATION_SEC));
 		fd.set("aspect_ratio", "16:9");
-		fd.set("generate_audio", "false");
 		fd.set("motion_strength", "72");
 		fd.set("negative_prompt", negativePrompt);
 		fd.set("avoid_on_screen_text", "true");
-		fd.set("fast", "true");
 		fd.set("hand_throw_scene", "1");
 		fd.set("product_name", subject);
 		fd.set("business", business.trim());
 		fd.set("image_start_url", startUrl);
 		fd.set("image_end_url", endUrl);
 
-		const res = await fetch("/api/generate", { method: "POST", body: fd });
-		const data = await res.json();
-		if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
-		notifyCreditBalance(readCreditBalanceFromResponse(data));
-		const pathNote = wizardVideoReadyExtraNote(data);
+		const fx = await generateStartEndFxVideo({
+			fd,
+			recipeDurationSec: HAND_THROW_SCENE_DURATION_SEC,
+		});
+		const pathNote = wizardVideoReadyExtraNote(fx.data);
+		const h3Reason =
+			typeof fx.data.h3FallbackReason === "string"
+				? fx.data.h3FallbackReason
+				: "";
 		setVideoNote(
-			[m.wizard.handThrowHint, pathNote, data.note as string | undefined]
+			[
+				m.wizard.handThrowHint,
+				fx.usedSeedanceFallback
+					? [m.wizard.h3ToSeedanceFallbackNote, h3Reason]
+							.filter(Boolean)
+							.join(" — ")
+					: m.wizard.videoEngineMinimaxH3,
+				pathNote,
+				typeof fx.data.note === "string" ? fx.data.note : undefined,
+			]
 				.filter(Boolean)
 				.join(" · "),
 		);
-		return data.videoUrl as string;
+		return fx.videoUrl;
 	}
 
 	async function generateProductExplodeKeyframe(
@@ -8205,61 +8315,69 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		fd.set("promotion_mode", promotionMode);
 		fd.set("prompt", seedancePromptForGenerate(fxPrompt));
 		fd.set("resolution", "480p");
-		fd.set("duration", String(PRODUCT_EXPLODE_DURATION_SEC));
+		// H3 floor is 5s — keep the ~4s teardown, then hold the exploded hero.
+		fd.set("duration", String(Math.max(5, PRODUCT_EXPLODE_DURATION_SEC)));
 		fd.set("aspect_ratio", "16:9");
-		fd.set("generate_audio", "false");
 		fd.set("motion_strength", "70");
 		fd.set("negative_prompt", negativePrompt);
 		fd.set("avoid_on_screen_text", "true");
-		fd.set("fast", "true");
 		fd.set("product_explode", "1");
 		fd.set("product_name", subject);
 		fd.set("business", business.trim());
 		fd.set("image_start_url", startUrl);
 		fd.set("image_end_url", endUrl);
 
-		const res = await fetch("/api/generate", { method: "POST", body: fd });
-		const data = await res.json();
-		if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
-		notifyCreditBalance(readCreditBalanceFromResponse(data));
-		const pathNote = wizardVideoReadyExtraNote(data);
+		const fx = await generateStartEndFxVideo({
+			fd,
+			recipeDurationSec: PRODUCT_EXPLODE_DURATION_SEC,
+		});
+		const pathNote = wizardVideoReadyExtraNote(fx.data);
+		const h3Reason =
+			typeof fx.data.h3FallbackReason === "string"
+				? fx.data.h3FallbackReason
+				: "";
 		setVideoNote(
 			[
 				m.wizard.productExplodeHint,
+				fx.usedSeedanceFallback
+					? [m.wizard.h3ToSeedanceFallbackNote, h3Reason]
+							.filter(Boolean)
+							.join(" — ")
+					: m.wizard.videoEngineMinimaxH3,
 				pathNote,
-				data.note as string | undefined,
+				typeof fx.data.note === "string" ? fx.data.note : undefined,
 			]
 				.filter(Boolean)
 				.join(" · "),
 		);
-		return data.videoUrl as string;
+		return fx.videoUrl;
 	}
 
 	async function makeImageToVideo(
 		imageStartUrlOverride?: string,
 	): Promise<string> {
-		const vOpts = resolveVideoGenerationOpts(templateId, videoSettings);
-		const pv = getPromptVars();
-		const promptOpts = videoPromptOpts();
-		let endUrl: string | null = endFrameUrl;
-		const skipAutoEndFrame =
-			promotionMode === "concept" && isAiPlannedVideoStyle(visualStyleId);
+    const vOpts = resolveVideoGenerationOpts(templateId, videoSettings);
+    const pv = getPromptVars();
+    const promptOpts = videoPromptOpts();
+    let endUrl: string | null = endFrameUrl;
+    const skipAutoEndFrame =
+      promotionMode === "concept" && isAiPlannedVideoStyle(visualStyleId);
 		if (
 			!endUrl &&
 			!endFramePhoto &&
 			videoSettings.autoSecondFrame &&
 			!skipAutoEndFrame
 		) {
-			endUrl = await ensureEndFrameUrl();
-		}
-		const dualFrame = Boolean(endUrl || endFramePhoto);
-		if (dualFrame) promptOpts.dualFrame = true;
+      endUrl = await ensureEndFrameUrl();
+    }
+    const dualFrame = Boolean(endUrl || endFramePhoto);
+    if (dualFrame) promptOpts.dualFrame = true;
 
-		const plannedOnly =
-			promotionMode === "concept" && isAiPlannedVideoStyle(visualStyleId);
-		if (plannedOnly && !videoPrompt.trim()) {
-			throw new Error(m.errors.creativeVideoPromptRequired);
-		}
+    const plannedOnly =
+      promotionMode === "concept" && isAiPlannedVideoStyle(visualStyleId);
+    if (plannedOnly && !videoPrompt.trim()) {
+      throw new Error(m.errors.creativeVideoPromptRequired);
+    }
 		const defaultPrompt = buildWizardVideoPrompt(
 			templateId,
 			pv,
@@ -8267,16 +8385,16 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		);
 		const rawPrompt =
 			videoPrompt.trim() || (plannedOnly ? "" : defaultPrompt);
-		const fd = new FormData();
-		fd.set("mode", "image");
+    const fd = new FormData();
+    fd.set("mode", "image");
 		fd.set("prompt", seedancePromptForGenerate(rawPrompt));
-		fd.set("resolution", vOpts.resolution);
-		fd.set("duration", vOpts.duration);
-		fd.set("aspect_ratio", vOpts.aspectRatio);
+    fd.set("resolution", vOpts.resolution);
+    fd.set("duration", vOpts.duration);
+    fd.set("aspect_ratio", vOpts.aspectRatio);
 		fd.set("generate_audio", "false");
-		fd.set("motion_strength", String(vOpts.motionStrength));
-		fd.set("camera", vOpts.camera);
-		fd.set("negative_prompt", negativePrompt);
+    fd.set("motion_strength", String(vOpts.motionStrength));
+    fd.set("camera", vOpts.camera);
+    fd.set("negative_prompt", negativePrompt);
 		fd.set(
 			"avoid_on_screen_text",
 			vOpts.avoidOnScreenText ? "true" : "false",
@@ -8285,10 +8403,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 
 		const startUrl = imageStartUrlOverride ?? imageUrl;
 		if (startUrl) fd.set("image_start_url", startUrl);
-		else if (productPhoto) fd.set("image_start", productPhoto);
+    else if (productPhoto) fd.set("image_start", productPhoto);
 
-		if (endFramePhoto) fd.set("image_end", endFramePhoto);
-		else if (endUrl) fd.set("image_end_url", endUrl);
+    if (endFramePhoto) fd.set("image_end", endFramePhoto);
+    else if (endUrl) fd.set("image_end_url", endUrl);
 
 		const stillsPlan = resolveVideoEnginePlan({
 			hasReel: false,
@@ -8306,8 +8424,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				body: fd,
 			},
 		);
-		const data = await res.json();
-		if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
 		notifyCreditBalance(readCreditBalanceFromResponse(data));
 		const usedH3Fallback = String(data.generationMode ?? "").startsWith(
 			"minimax-h3-fallback",
@@ -8316,32 +8434,32 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			data.generationMode === "kling-storyboard-fallback" ||
 			(Boolean(data.seedanceBlockedCode) && !usedH3Fallback);
 		const pathNote = wizardVideoReadyExtraNote(data);
-		const notes = [
+    const notes = [
 			usedH3Fallback
 				? m.wizard.seedanceToMinimaxH3FallbackNote
 				: usedKling
 					? m.wizard.seedanceToKlingFallbackNote
 					: null,
-			pathNote,
-			dualFrame ? m.wizard.videoRichMotionNote : undefined,
-			data.note as string | undefined,
+      pathNote,
+      dualFrame ? m.wizard.videoRichMotionNote : undefined,
+      data.note as string | undefined,
 			referenceAd && referenceIsVideo
 				? m.wizard.videoRefIgnoredOnImageMode
 				: "",
-		].filter(Boolean);
-		if (notes.length) setVideoNote(notes.join(" · "));
-		return data.videoUrl as string;
-	}
+    ].filter(Boolean);
+    if (notes.length) setVideoNote(notes.join(" · "));
+    return data.videoUrl as string;
+  }
 
 	function resolveWizardVideoDurationSec(): number {
-		const stitchReady =
+    const stitchReady =
 			isConceptCinematicStyle(visualStyleId) &&
 			cinematicSceneCount > 1 &&
 			cinematicScenes.length >= cinematicSceneCount;
-		const singleCinematicReady =
-			isConceptCinematicStyle(visualStyleId) &&
+    const singleCinematicReady =
+      isConceptCinematicStyle(visualStyleId) &&
 			cinematicSceneCount === 1 &&
-			cinematicScenes.length >= 1;
+      cinematicScenes.length >= 1;
 		return isStoryboardOutput
 			? Number(storyboardTrimDuration) || 8
 			: stitchReady
@@ -8350,7 +8468,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					? CINEMATIC_CLIP_SEC
 					: videoSettings.duration === "auto"
 						? 10
-						: Number(videoSettings.duration) || 10;
+      : Number(videoSettings.duration) || 10;
 	}
 
 	async function fetchAdPackPlan(): Promise<AdPackPlan> {
@@ -8367,229 +8485,229 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		const scenesForPlan =
 			stitchReady || singleCinematicReady
 				? cinematicScenes.map((scene: CinematicSceneResult) => ({
-						imageIndex: scene.sceneIndex,
-						role: scene.role,
-						startSec: scene.startSec,
-						endSec: scene.endSec,
-						sceneDescriptionZh: scene.sceneDescriptionZh,
-						imagePrompt: scene.imagePrompt,
-					}))
+          imageIndex: scene.sceneIndex,
+          role: scene.role,
+          startSec: scene.startSec,
+          endSec: scene.endSec,
+          sceneDescriptionZh: scene.sceneDescriptionZh,
+          imagePrompt: scene.imagePrompt,
+        }))
 				: storyboardScenes.map((scene: StoryboardSceneResult) => ({
-						imageIndex: scene.imageIndex,
-						role: scene.role,
-						startSec: scene.startSec,
-						endSec: scene.endSec,
-						sceneDescriptionZh: scene.sceneDescriptionZh,
-						imagePrompt: scene.imagePrompt ?? scene.role,
-					}));
+          imageIndex: scene.imageIndex,
+          role: scene.role,
+          startSec: scene.startSec,
+          endSec: scene.endSec,
+          sceneDescriptionZh: scene.sceneDescriptionZh,
+          imagePrompt: scene.imagePrompt ?? scene.role,
+        }));
 
-		const res = await fetch("/api/plan-ad-pack", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({
-				product,
-				headline,
-				subline,
-				business,
-				offer,
-				promptMarket,
-				durationSec,
-				brandProfile,
-				videoPrompt,
-				promptExtra: [effectivePromptExtra(), creativeVideoBrief.trim()]
-					.filter(Boolean)
-					.join(" | "),
-				storyboardScenes: scenesForPlan,
-				musicMood,
-			}),
-		});
-		const data = await res.json();
-		if (!res.ok) throw new Error(data.error ?? m.errors.adPackPlanFailed);
+    const res = await fetch("/api/plan-ad-pack", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        product,
+        headline,
+        subline,
+        business,
+        offer,
+        promptMarket,
+        durationSec,
+        brandProfile,
+        videoPrompt,
+        promptExtra: [effectivePromptExtra(), creativeVideoBrief.trim()]
+          .filter(Boolean)
+          .join(" | "),
+        storyboardScenes: scenesForPlan,
+        musicMood,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error ?? m.errors.adPackPlanFailed);
 		notifyCreditBalance(readCreditBalanceFromResponse(data));
-		return data.plan as AdPackPlan;
-	}
+    return data.plan as AdPackPlan;
+  }
 
-	async function ensureSocialPackReady(): Promise<{
-		plan: AdPackPlan | null;
-		captions: CaptionLine[];
-		aiMusicUrl: string | null;
-	}> {
-		const needsPack =
-			voiceoverEnabled || captionBurnEnabled || musicSource === "ai";
-		if (!needsPack) {
+  async function ensureSocialPackReady(): Promise<{
+    plan: AdPackPlan | null;
+    captions: CaptionLine[];
+    aiMusicUrl: string | null;
+  }> {
+    const needsPack =
+      voiceoverEnabled || captionBurnEnabled || musicSource === "ai";
+    if (!needsPack) {
 			return {
 				plan: adPackPlan,
 				captions: captionLines,
 				aiMusicUrl: null,
 			};
-		}
+    }
 
-		let plan = adPackPlan;
-		if (!plan) {
-			plan = await fetchAdPackPlan();
-			setAdPackPlan(plan);
-			setCaptionLines(plan.captionLines ?? []);
-		}
-		const captions = plan.captionLines ?? captionLines;
+    let plan = adPackPlan;
+    if (!plan) {
+      plan = await fetchAdPackPlan();
+      setAdPackPlan(plan);
+      setCaptionLines(plan.captionLines ?? []);
+    }
+    const captions = plan.captionLines ?? captionLines;
 
-		let aiMusicUrl: string | null = null;
-		if (musicSource === "ai") {
+    let aiMusicUrl: string | null = null;
+    if (musicSource === "ai") {
 			const existing = aiMusicTracks.find(
 				(t: AiMusicTrack) => t.id === selectedAiMusicId,
 			);
-			if (existing?.audioUrl) {
-				aiMusicUrl = existing.audioUrl;
-			} else if (plan.music.promptEn?.trim()) {
+      if (existing?.audioUrl) {
+        aiMusicUrl = existing.audioUrl;
+      } else if (plan.music.promptEn?.trim()) {
 				trackGenerateStarted("music", { source: "wizard_pack" });
-				const res = await fetch("/api/generate-music", {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({
-						promptEn: plan.music.promptEn,
-						durationSec: plan.music.durationSec,
-					}),
-				});
-				const data = await res.json();
+        const res = await fetch("/api/generate-music", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            promptEn: plan.music.promptEn,
+            durationSec: plan.music.durationSec,
+          }),
+        });
+        const data = await res.json();
 				if (!res.ok) {
 					trackGenerateFailed("music", { source: "wizard_pack" });
 					throw new Error(data.error ?? m.errors.musicGenerateFailed);
 				}
 				notifyCreditBalance(readCreditBalanceFromResponse(data));
-				const tracks = data.tracks ?? [];
-				setAiMusicTracks(tracks);
-				const firstId = tracks[0]?.id ?? null;
-				setSelectedAiMusicId(firstId);
-				aiMusicUrl = tracks[0]?.audioUrl ?? null;
+        const tracks = data.tracks ?? [];
+        setAiMusicTracks(tracks);
+        const firstId = tracks[0]?.id ?? null;
+        setSelectedAiMusicId(firstId);
+        aiMusicUrl = tracks[0]?.audioUrl ?? null;
 				trackGenerateSuccess("music", {
 					source: "wizard_pack",
 					track_count: tracks.length,
 				});
-			}
-		}
+      }
+    }
 
-		return { plan, captions, aiMusicUrl };
-	}
+    return { plan, captions, aiMusicUrl };
+  }
 
-	async function planAdPackReview() {
-		setAdPackPlanBusy(true);
-		setError(null);
-		try {
-			const plan = await fetchAdPackPlan();
-			setAdPackPlan(plan);
+  async function planAdPackReview() {
+    setAdPackPlanBusy(true);
+    setError(null);
+    try {
+      const plan = await fetchAdPackPlan();
+      setAdPackPlan(plan);
 			setSelectedAdPackHookIndex(0);
-			setCaptionLines(plan.captionLines ?? []);
-			setVoicePreviewTracks([]);
-			setSelectedVoicePreviewId(null);
-			setAdPackReviewOpen(true);
-		} catch (e: unknown) {
-			setError(friendlyError(e, m.errors.adPackPlanFailed));
-		} finally {
-			setAdPackPlanBusy(false);
-		}
-	}
+      setCaptionLines(plan.captionLines ?? []);
+      setVoicePreviewTracks([]);
+      setSelectedVoicePreviewId(null);
+      setAdPackReviewOpen(true);
+    } catch (e: unknown) {
+      setError(friendlyError(e, m.errors.adPackPlanFailed));
+    } finally {
+      setAdPackPlanBusy(false);
+    }
+  }
 
-	async function generateVoicePreviews() {
-		const script =
-			adPackPlan?.voiceoverScript?.trim() ||
-			captionLines
+  async function generateVoicePreviews() {
+    const script =
+      adPackPlan?.voiceoverScript?.trim() ||
+      captionLines
 				.map((l: CaptionLine) => l.text.trim())
-				.filter(Boolean)
-				.join("，");
-		if (!script) {
-			setError(m.wizard.adPack.needVoiceoverScript);
-			return;
-		}
-		setVoicePreviewBusy(true);
-		setError(null);
-		try {
-			const res = await fetch("/api/preview-script-voice", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					script,
-					locale: voiceoverLocale,
-				}),
-			});
-			const data = await res.json();
+        .filter(Boolean)
+        .join("，");
+    if (!script) {
+      setError(m.wizard.adPack.needVoiceoverScript);
+      return;
+    }
+    setVoicePreviewBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/preview-script-voice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          script,
+          locale: voiceoverLocale,
+        }),
+      });
+      const data = await res.json();
 			if (!res.ok)
 				throw new Error(data.error ?? m.errors.voiceoverFailed);
 			notifyCreditBalance(readCreditBalanceFromResponse(data));
-			const tracks = (data.tracks ?? []) as VoicePreviewTrack[];
-			setVoicePreviewTracks(tracks);
-			setSelectedVoicePreviewId(tracks[0]?.id ?? null);
+      const tracks = (data.tracks ?? []) as VoicePreviewTrack[];
+      setVoicePreviewTracks(tracks);
+      setSelectedVoicePreviewId(tracks[0]?.id ?? null);
 			const previewErrors = (data.errors ?? []) as Array<{
 				presetId: string;
 				message: string;
 			}>;
-			if (previewErrors.length > 0) {
-				setVideoNote(
-					m.wizard.adPack.voicePreviewPartial.replace(
-						"{failed}",
-						String(previewErrors.length),
-					),
-				);
-			}
-		} catch (e: unknown) {
-			setError(friendlyError(e, m.errors.voiceoverFailed));
-		} finally {
-			setVoicePreviewBusy(false);
-		}
-	}
+      if (previewErrors.length > 0) {
+        setVideoNote(
+          m.wizard.adPack.voicePreviewPartial.replace(
+            "{failed}",
+            String(previewErrors.length),
+          ),
+        );
+      }
+    } catch (e: unknown) {
+      setError(friendlyError(e, m.errors.voiceoverFailed));
+    } finally {
+      setVoicePreviewBusy(false);
+    }
+  }
 
-	async function generateAiMusicTracks() {
-		const plan = adPackPlan;
-		const promptEn = plan?.music.promptEn?.trim();
-		if (!promptEn || !plan) {
-			setError(m.wizard.adPack.needPlanFirst);
-			return;
-		}
-		setMusicGenerateBusy(true);
-		setError(null);
+  async function generateAiMusicTracks() {
+    const plan = adPackPlan;
+    const promptEn = plan?.music.promptEn?.trim();
+    if (!promptEn || !plan) {
+      setError(m.wizard.adPack.needPlanFirst);
+      return;
+    }
+    setMusicGenerateBusy(true);
+    setError(null);
 		trackGenerateStarted("music", { source: "wizard" });
-		try {
-			const res = await fetch("/api/generate-music", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					promptEn,
-					durationSec: plan.music.durationSec,
-				}),
-			});
-			const data = await res.json();
+    try {
+      const res = await fetch("/api/generate-music", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          promptEn,
+          durationSec: plan.music.durationSec,
+        }),
+      });
+      const data = await res.json();
 			if (!res.ok)
 				throw new Error(data.error ?? m.errors.musicGenerateFailed);
 			notifyCreditBalance(readCreditBalanceFromResponse(data));
-			setAiMusicTracks(data.tracks ?? []);
-			setSelectedAiMusicId(data.tracks?.[0]?.id ?? null);
-			setMusicSource("ai");
+      setAiMusicTracks(data.tracks ?? []);
+      setSelectedAiMusicId(data.tracks?.[0]?.id ?? null);
+      setMusicSource("ai");
 			trackGenerateSuccess("music", {
 				source: "wizard",
 				track_count: (data.tracks ?? []).length,
 			});
-		} catch (e: unknown) {
+    } catch (e: unknown) {
 			trackGenerateFailed("music", { source: "wizard" });
-			setError(friendlyError(e, m.errors.musicGenerateFailed));
-		} finally {
-			setMusicGenerateBusy(false);
-		}
-	}
+      setError(friendlyError(e, m.errors.musicGenerateFailed));
+    } finally {
+      setMusicGenerateBusy(false);
+    }
+  }
 
-	function updateCaptionLine(index: number, patch: Partial<CaptionLine>) {
+  function updateCaptionLine(index: number, patch: Partial<CaptionLine>) {
 		setCaptionLines((prev: CaptionLine[]) =>
-			prev.map((line, i) => (i === index ? { ...line, ...patch } : line)),
-		);
-	}
+      prev.map((line, i) => (i === index ? { ...line, ...patch } : line)),
+    );
+  }
 
-	function addCaptionLine() {
-		const last = captionLines[captionLines.length - 1];
-		const startSec = last ? last.endSec : 0;
+  function addCaptionLine() {
+    const last = captionLines[captionLines.length - 1];
+    const startSec = last ? last.endSec : 0;
 		setCaptionLines((prev: CaptionLine[]) => [
-			...prev,
+      ...prev,
 			{ startSec, endSec: startSec + 2, text: "", position: "bottom" },
-		]);
-	}
+    ]);
+  }
 
-	function removeCaptionLine(index: number) {
+  function removeCaptionLine(index: number) {
 		setCaptionLines((prev: CaptionLine[]) =>
 			prev.filter((_, i) => i !== index),
 		);
@@ -8600,16 +8718,16 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		startSec: number,
 		endSec: number,
 	) {
-		const safeStart = Math.max(0, startSec);
-		const safeEnd = Math.max(safeStart + 0.5, endSec);
+    const safeStart = Math.max(0, startSec);
+    const safeEnd = Math.max(safeStart + 0.5, endSec);
 		setStoryboardScenes((prev: StoryboardSceneResult[]) =>
-			prev.map((scene, i) =>
+      prev.map((scene, i) =>
 				i === index
 					? { ...scene, startSec: safeStart, endSec: safeEnd }
 					: scene,
-			),
-		);
-		if (storyboardPlan) {
+      ),
+    );
+    if (storyboardPlan) {
 			setStoryboardPlan({
 				...storyboardPlan,
 				scenes: storyboardPlan.scenes.map(
@@ -8639,13 +8757,13 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		>,
 	) {
 		if (!storyboardPlan) return;
-		setStoryboardPlan({
-			...storyboardPlan,
-			scenes: storyboardPlan.scenes.map((scene, i) =>
+      setStoryboardPlan({
+        ...storyboardPlan,
+        scenes: storyboardPlan.scenes.map((scene, i) =>
 				i === index ? { ...scene, ...patch } : scene,
-			),
-		});
-	}
+        ),
+      });
+    }
 
 	async function planStoryboard() {
 		if (isConceptStoryboardOutput) {
@@ -8717,68 +8835,68 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		} finally {
 			setPlanStoryboardBusy(false);
 		}
-	}
+  }
 
-	async function dubScriptVoiceIfEnabled(
-		videoUrlIn: string,
-		packOverride?: AdPackPlan | null,
-		captionsOverride?: CaptionLine[],
-	): Promise<string> {
-		if (!voiceoverEnabled) return videoUrlIn;
-		const pack = packOverride ?? adPackPlan;
-		const caps = captionsOverride ?? captionLines;
-		const script =
-			pack?.voiceoverScript?.trim() ||
-			caps
+  async function dubScriptVoiceIfEnabled(
+    videoUrlIn: string,
+    packOverride?: AdPackPlan | null,
+    captionsOverride?: CaptionLine[],
+  ): Promise<string> {
+    if (!voiceoverEnabled) return videoUrlIn;
+    const pack = packOverride ?? adPackPlan;
+    const caps = captionsOverride ?? captionLines;
+    const script =
+      pack?.voiceoverScript?.trim() ||
+      caps
 				.map((l: CaptionLine) => l.text.trim())
-				.filter(Boolean)
-				.join("，");
-		if (!script) {
-			throw new Error(m.wizard.adPack.needVoiceoverScript);
-		}
-		const targetDurationSec =
-			isConceptCinematicSingleOutput || cinematicScenes.length === 1
+        .filter(Boolean)
+        .join("，");
+    if (!script) {
+      throw new Error(m.wizard.adPack.needVoiceoverScript);
+    }
+    const targetDurationSec =
+      isConceptCinematicSingleOutput || cinematicScenes.length === 1
 				? CINEMATIC_CLIP_SEC
 				: isCinematicStitchOutput || cinematicScenes.length > 1
 					? cinematicScenes.length * CINEMATIC_CLIP_SEC
-					: isStoryboardOutput
+          : isStoryboardOutput
 						? lastStoryboardVideoDurationSecRef.current ||
 							Number(storyboardTrimDuration) ||
 							8
-						: videoSettings.duration === "auto"
-							? 10
-							: Number(videoSettings.duration) || 10;
+            : videoSettings.duration === "auto"
+              ? 10
+              : Number(videoSettings.duration) || 10;
 		const selectedPreview = voicePreviewTracks.find(
 			(t: VoicePreviewTrack) => t.id === selectedVoicePreviewId,
 		);
-		const res = await fetch("/api/dub-script-voice", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({
-				video_url: videoUrlIn,
-				script: selectedPreview ? undefined : script,
-				locale: voiceoverLocale,
-				target_duration_sec: targetDurationSec,
-				speech_url: selectedPreview?.audioUrl,
-				voice_preset: selectedPreview?.presetId,
-			}),
-		});
-		const data = await res.json();
-		if (!res.ok) throw new Error(data.error ?? m.errors.voiceoverFailed);
+    const res = await fetch("/api/dub-script-voice", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        video_url: videoUrlIn,
+        script: selectedPreview ? undefined : script,
+        locale: voiceoverLocale,
+        target_duration_sec: targetDurationSec,
+        speech_url: selectedPreview?.audioUrl,
+        voice_preset: selectedPreview?.presetId,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error ?? m.errors.voiceoverFailed);
 		notifyCreditBalance(readCreditBalanceFromResponse(data));
 		setVideoNote((prev: string | undefined) =>
 			[prev, m.wizard.adPack.voiceoverAppliedNote]
 				.filter(Boolean)
 				.join(" · "),
-		);
-		return data.videoUrl as string;
-	}
+    );
+    return data.videoUrl as string;
+  }
 
-	async function burnScriptCaptionsIfEnabled(
-		videoUrlIn: string,
-		captionsOverride?: CaptionLine[],
+  async function burnScriptCaptionsIfEnabled(
+    videoUrlIn: string,
+    captionsOverride?: CaptionLine[],
 		opts?: { force?: boolean },
-	): Promise<string> {
+  ): Promise<string> {
 		let caps = captionsOverride ?? captionLines;
 		const hook = adPackPlan?.hookScript?.trim();
 		const body = adPackPlan?.voiceoverScript?.trim();
@@ -8791,29 +8909,29 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		}
 		if ((!captionBurnEnabled && !opts?.force) || caps.length === 0)
 			return videoUrlIn;
-		const res = await fetch("/api/burn-script-captions", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
+    const res = await fetch("/api/burn-script-captions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({
 				video_url: videoUrlIn,
 				caption_lines: caps,
 			}),
-		});
-		const data = await res.json();
-		if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
 		notifyCreditBalance(readCreditBalanceFromResponse(data));
 		setVideoNote((prev: string | undefined) =>
-			[
-				prev,
-				data.softSubtitles
-					? m.wizard.adPack.captionsSoftTrackNote
-					: m.wizard.adPack.captionsAppliedNote,
-			]
-				.filter(Boolean)
-				.join(" · "),
-		);
-		return data.videoUrl as string;
-	}
+      [
+        prev,
+        data.softSubtitles
+          ? m.wizard.adPack.captionsSoftTrackNote
+          : m.wizard.adPack.captionsAppliedNote,
+      ]
+        .filter(Boolean)
+        .join(" · "),
+    );
+    return data.videoUrl as string;
+  }
 
 	async function addBgm(
 		videoUrlIn: string,
@@ -8822,52 +8940,52 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		const selectedAi = aiMusicTracks.find(
 			(t: AiMusicTrack) => t.id === selectedAiMusicId,
 		);
-		const aiUrl = aiMusicUrlOverride ?? selectedAi?.audioUrl;
+    const aiUrl = aiMusicUrlOverride ?? selectedAi?.audioUrl;
 		const body: {
 			video_url: string;
 			track?: string;
 			music_url?: string;
 			replace_source_audio?: boolean;
 		} = {
-			video_url: videoUrlIn,
+      video_url: videoUrlIn,
 			replace_source_audio: true,
-		};
-		if (musicSource === "ai" && aiUrl) {
-			body.music_url = aiUrl;
-		} else {
-			body.track = bgmTrack;
-		}
+    };
+    if (musicSource === "ai" && aiUrl) {
+      body.music_url = aiUrl;
+    } else {
+      body.track = bgmTrack;
+    }
 
-		const res = await fetch("/api/add-bgm", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify(body),
-		});
-		const data = await res.json();
-		if (res.ok) {
-			setBgmNote(
+    const res = await fetch("/api/add-bgm", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      setBgmNote(
 				musicSource === "ai" && selectedAiMusicId
 					? m.wizard.adPack.aiBgmNote
-					: m.wizard.bgmNote,
-			);
-			return data.videoUrl as string;
-		}
-		if (data.code === "BGM_FILES_MISSING") {
-			setBgmNote(m.wizard.bgmFallbackNote);
-			throw new Error(m.errors.bgmFilesMissing);
-		}
-		throw new Error(data.error ?? m.errors.videoFailed);
-	}
+        : m.wizard.bgmNote,
+      );
+      return data.videoUrl as string;
+    }
+    if (data.code === "BGM_FILES_MISSING") {
+      setBgmNote(m.wizard.bgmFallbackNote);
+      throw new Error(m.errors.bgmFilesMissing);
+    }
+    throw new Error(data.error ?? m.errors.videoFailed);
+  }
 
 	async function generateVideo(opts?: { imageUrlOverride?: string }) {
 		if (
 			promotionMode === "concept" &&
 			videoCreativeMode === "product-assistant"
 		) {
-			setVideoCreativeMode("product-promo");
-			setError(m.errors.conceptVideoAssistantBlocked);
-			return;
-		}
+      setVideoCreativeMode("product-promo");
+      setError(m.errors.conceptVideoAssistantBlocked);
+      return;
+    }
 
 		// Identity lock — physical needs product photo; concept needs idea/headline/still.
 		const conceptIdentityOk =
@@ -8951,11 +9069,11 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			if (!planned) return;
 		}
 
-		const conceptTextVideoReady =
-			conceptTextVideoEligible && Boolean(videoPrompt.trim());
-		// Safety net: if cinematic scenes are ready, force stitch path even if UI toggle drifted.
-		const shouldCinematicStitch =
-			isCinematicStitchOutput ||
+    const conceptTextVideoReady =
+      conceptTextVideoEligible && Boolean(videoPrompt.trim());
+    // Safety net: if cinematic scenes are ready, force stitch path even if UI toggle drifted.
+    const shouldCinematicStitch =
+      isCinematicStitchOutput ||
 			(isConceptCinematicStyle(visualStyleId) &&
 				cinematicSceneCount > 1 &&
 				cinematicScenes.length >= cinematicSceneCount);
@@ -8964,9 +9082,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			storyboardBlocksRecipeVideo(isStoryboardOutput, videoCreativeMode) &&
 			storyboardScenes.length === 0
 		) {
-			setError(m.errors.storyboardVideoPromptRequired);
-			return;
-		}
+      setError(m.errors.storyboardVideoPromptRequired);
+      return;
+    }
 		if (
 			storyboardBlocksRecipeVideo(isStoryboardOutput, videoCreativeMode) &&
 			!storyboardGridApproved
@@ -9046,31 +9164,31 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			cinematicScenes.length < cinematicSceneCount
 		) {
 			setError(formatCinematicCopy(m.errors.cinematicStitchNeedScenes));
-			return;
-		}
-		if (
-			!isStoryboardOutput &&
-			!shouldCinematicStitch &&
-			workflowMode === "combined" &&
-			videoCreativeMode === "image-to-video" &&
-			!imageUrl &&
+      return;
+    }
+    if (
+      !isStoryboardOutput &&
+      !shouldCinematicStitch &&
+      workflowMode === "combined" &&
+      videoCreativeMode === "image-to-video" &&
+      !imageUrl &&
 			!opts?.imageUrlOverride &&
-			!usesCompositor
-		) {
-			setError(m.errors.needGeneratedImage);
-			return;
-		}
+      !usesCompositor
+    ) {
+      setError(m.errors.needGeneratedImage);
+      return;
+    }
 		if (
 			!isStoryboardOutput &&
 			videoCreativeMode === "reference-concept" &&
 			!useReferenceVideo
 		) {
-			setError(m.errors.needReferenceVideo);
-			return;
-		}
-		if (
-			workflowMode === "video-only" &&
-			!usesCompositor &&
+      setError(m.errors.needReferenceVideo);
+      return;
+    }
+    if (
+      workflowMode === "video-only" &&
+      !usesCompositor &&
 			!hasProductPhotoLock &&
 			!conceptTextVideoReady &&
 			!motionPosterCanAutoStill &&
@@ -9080,43 +9198,43 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			!h3ShotRecipeCanGenerate &&
 			!directReferenceR2vReady &&
 			!(isStoryboardOutput && storyboardScenes.length > 0)
-		) {
-			setError(m.errors.needPhoto);
-			return;
-		}
-		if (usesProductAssistant && !productVideoPlan?.seedancePrompt) {
-			setError(m.errors.needProductVideoPlan);
-			return;
-		}
-		if (isBrandVideoStyle(visualStyleId) && !videoPrompt.trim()) {
-			setError(m.errors.brandVideoPromptRequired);
-			return;
-		}
+    ) {
+      setError(m.errors.needPhoto);
+      return;
+    }
+    if (usesProductAssistant && !productVideoPlan?.seedancePrompt) {
+      setError(m.errors.needProductVideoPlan);
+      return;
+    }
+    if (isBrandVideoStyle(visualStyleId) && !videoPrompt.trim()) {
+      setError(m.errors.brandVideoPromptRequired);
+      return;
+    }
 		if (
 			!isRecipeOwnedVideoMode(videoCreativeMode) &&
 			isCreativeVideoStyle(visualStyleId) &&
 			!shouldCinematicStitch &&
 			!videoPrompt.trim()
 		) {
-			setError(m.errors.creativeVideoPromptRequired);
-			return;
-		}
-		if (
+      setError(m.errors.creativeVideoPromptRequired);
+      return;
+    }
+    if (
 			!isRecipeOwnedVideoMode(videoCreativeMode) &&
-			promotionMode === "concept" &&
-			isAiPlannedVideoStyle(visualStyleId) &&
-			!shouldCinematicStitch &&
+      promotionMode === "concept" &&
+      isAiPlannedVideoStyle(visualStyleId) &&
+      !shouldCinematicStitch &&
 			!isConceptCinematicSingleOutput &&
 			!directReferenceR2vReady &&
-			!videoPrompt.trim()
-		) {
-			setError(m.errors.conceptVideoPlanRequired);
-			return;
-		}
-		if (useMultiAngleVideo && !useReferenceVideo) {
-			setError(m.errors.extraAnglesNeedRefVideo);
-			return;
-		}
+      !videoPrompt.trim()
+    ) {
+      setError(m.errors.conceptVideoPlanRequired);
+      return;
+    }
+    if (useMultiAngleVideo && !useReferenceVideo) {
+      setError(m.errors.extraAnglesNeedRefVideo);
+      return;
+    }
 		if (
 			!hasFinalImage &&
 			!opts?.imageUrlOverride &&
@@ -9131,30 +9249,30 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			setError(
 				usesCompositor ? m.errors.needHeadline : m.errors.needKeyframe,
 			);
-			return;
-		}
+      return;
+    }
 
-		setError(null);
-		setBgmNote(undefined);
-		setVideoNote(undefined);
-		setVideoBusy(true);
-		setVideoJobStartedAt(Date.now());
-		setVideoPhase("video");
+    setError(null);
+    setBgmNote(undefined);
+    setVideoNote(undefined);
+    setVideoBusy(true);
+    setVideoJobStartedAt(Date.now());
+    setVideoPhase("video");
 		trackGenerateStarted("video", {
 			style: visualStyleId,
 			creative_mode: videoCreativeMode,
 			workflow: workflowMode,
 		});
 
-		try {
-			let url: string;
+    try {
+      let url: string;
 			let socialPack: Awaited<
 				ReturnType<typeof ensureSocialPackReady>
 			> | null = null;
 			if (isUgcPresenterOutput || captionBurnEnabled) {
-				setVideoPhase("video");
-				socialPack = await ensureSocialPackReady();
-			}
+        setVideoPhase("video");
+        socialPack = await ensureSocialPackReady();
+      }
 
 			const generationKind = resolveVideoGenerationKind({
 				usesCompositor,
@@ -9174,23 +9292,23 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 
 			switch (generationKind) {
 				case "compositor":
-					setVideoPhase("video");
-					url = await composeVideo();
-					setVideoNote(m.wizard.compositorVideoHint);
+        setVideoPhase("video");
+        url = await composeVideo();
+        setVideoNote(m.wizard.compositorVideoHint);
 					break;
 				case "storyboard":
-					url = await makeStoryboardVideo();
+        url = await makeStoryboardVideo();
 					break;
 				case "digital-presenter":
 					url = await makeDigitalPresenterVideo(socialPack?.plan);
 					break;
 				case "cinematic-stitch":
-					url = await makeCinematicStitchVideo();
+        url = await makeCinematicStitchVideo();
 					break;
 				case "concept-cinematic-single": {
 					const stamped =
 						await stampBrandLogoOnCinematicScenes(cinematicScenes);
-					url = await makeCinematicClipFromImage(
+        url = await makeCinematicClipFromImage(
 						stamped[0].imageUrl,
 						stamped[0].videoMotionPrompt,
 						stamped[0].sceneIndex,
@@ -9199,16 +9317,16 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					break;
 				}
 				case "product-assistant":
-					url = await makeProductAssistantVideo();
+        url = await makeProductAssistantVideo();
 					break;
 				case "text-to-video":
-					url = await makeTextToVideo();
+        url = await makeTextToVideo();
 					break;
 				case "reference-r2v":
 					url = await makeReferenceVideo(referenceAd!);
 					break;
 				case "multi-angle-r2v":
-					url = await makeMultiAngleVideo();
+        url = await makeMultiAngleVideo();
 					break;
 				case "motion-poster":
 					// Keep MiniMax H3 native audio — do not replace with library BGM.
@@ -9251,15 +9369,27 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					break;
 				case "image-to-video":
 				default:
-					if (
-						referenceAd &&
-						referenceIsVideo &&
-						videoCreativeMode !== "reference-concept"
-					) {
-						setVideoNote(m.wizard.videoRefIgnoredOnImageMode);
-					}
+        if (
+          referenceAd &&
+          referenceIsVideo &&
+          videoCreativeMode !== "reference-concept"
+        ) {
+          setVideoNote(m.wizard.videoRefIgnoredOnImageMode);
+        }
 					url = await makeImageToVideo(opts?.imageUrlOverride);
 					break;
+			}
+			// H3-first FX keep MiniMax native stereo. Seedance fallback mixes
+			// library BGM inside generateStartEndFxVideo.
+			if (
+				!usesCompositor &&
+				recipeUsesSilentSeedance(generationKind)
+			) {
+				try {
+					url = await addBgm(url);
+				} catch {
+					setBgmNote(m.wizard.bgmFallbackNote);
+				}
 			}
 			if (!usesCompositor) {
 				if (isUgcPresenterOutput) {
@@ -9269,8 +9399,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 							.join(" · "),
 					);
 				}
-				// Clean silent video by default — BGM / voiceover / captions are added later in /captions.
 				// Storyboard: seed lines from scene copy + clip boundaries; burn in /captions (not here).
+				// Silent Seedance FX already mixed BGM above; other paths add audio in /captions.
 				if (isStoryboardOutput) {
 					const videoDurationSec =
 						lastStoryboardVideoDurationSecRef.current ??
@@ -9308,14 +9438,14 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					captionBurnEnabled &&
 					(socialPack?.captions.length ?? captionLines.length) > 0
 				) {
-					setVideoPhase("captions");
+          setVideoPhase("captions");
 					const urlBeforeCaptionBurn = url;
-					try {
+          try {
 						url = await burnScriptCaptionsIfEnabled(
 							url,
 							socialPack?.captions,
 						);
-					} catch {
+          } catch {
 						setVideoNote((prev: string | undefined) =>
 							[prev, m.wizard.adPack.captionBurnSkippedNote]
 								.filter(Boolean)
@@ -9331,7 +9461,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			}
 			// Caption burn used to rewrite to /api/pipeline-files/…; durable outputs
 			// are now /api/library/download/…. Only a leftover fal CDN URL means burn never stuck.
-			const wantsProcessed =
+      const wantsProcessed =
 				!isUgcPresenterOutput &&
 				captionBurnEnabled &&
 				!isStoryboardOutput;
@@ -9341,8 +9471,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				!isLibraryAssetUrl(url) &&
 				!isPipelineFileUrl(url)
 			) {
-				throw new Error(m.errors.postProcessIncomplete);
-			}
+        throw new Error(m.errors.postProcessIncomplete);
+      }
 			if (!isStoryboardOutput) {
 				const dur = resolveWizardVideoDurationSec();
 				if (dur > 0) {
@@ -9355,28 +9485,28 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					setVideoTimingManifest(seedanceManifest);
 				}
 			}
-			setVideoUrl(url);
-			setQuickFixCredits(1);
-			savePromptSnapshot(
-				createPromptSnapshot({
-					kind: "video",
-					templateId,
-					visualStyleId,
-					imagePrompt,
-					videoPrompt,
-					negativePrompt,
-				}),
-			);
+      setVideoUrl(url);
+      setQuickFixCredits(1);
+      savePromptSnapshot(
+        createPromptSnapshot({
+          kind: "video",
+          templateId,
+          visualStyleId,
+          imagePrompt,
+          videoPrompt,
+          negativePrompt,
+        }),
+      );
 			// Micro-wizard keeps stepKey "setup" and advances to done.export → VideoResultPanel.
 			// Classic VideoStep still needs the legacy DoneStep host.
 			if (stepKey !== "setup") {
-				setStepKey("done");
+      setStepKey("done");
 			}
 			trackGenerateSuccess("video", {
 				style: visualStyleId,
 				creative_mode: videoCreativeMode,
 			});
-		} catch (e: unknown) {
+    } catch (e: unknown) {
 			if (e instanceof StoryboardEngineChoiceError) {
 				setStoryboardEngineChoice({
 					balance: e.balance,
@@ -9389,12 +9519,12 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				style: visualStyleId,
 				creative_mode: videoCreativeMode,
 			});
-			setError(friendlyError(e, m.errors.videoFailed));
-		} finally {
-			setVideoBusy(false);
-			setVideoJobStartedAt(null);
-		}
-	}
+      setError(friendlyError(e, m.errors.videoFailed));
+    } finally {
+      setVideoBusy(false);
+      setVideoJobStartedAt(null);
+    }
+  }
 
 	function confirmStoryboardKlingChoice() {
 		storyboardPreferEngineRef.current = "kling";
@@ -9455,7 +9585,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 
 		setImageUrl(media.imageUrl);
 		setImageVariantUrls(media.imageVariantUrls);
-		setSelectedVariantIndex(0);
+    setSelectedVariantIndex(0);
 		setVideoUrl(media.videoUrl);
 		setUploadPreviewUrl(media.uploadPreviewUrl);
 		setImageRefPreviewUrl(media.imageRefPreviewUrl);
@@ -9480,84 +9610,21 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 	}
 
 	function resetProject() {
-		setWorkflowMode("combined");
-		setStepKey("setup");
-		setTemplateId("product-reel");
-		setVisualStyleId(DEFAULT_VISUAL_STYLE);
-		setImageCreativeMode("promo-ai");
-		setVideoCreativeMode("image-to-video");
-		setVideoSettings(DEFAULT_VIDEO_SETTINGS);
-		setEndFrameUrl(null);
-		setEndFramePhoto(null);
-		setExtraAnglePhotos([]);
-		setPackagingPhoto(null);
-		setExtraKitPhotos([]);
-		setProductVideoPlan(null);
-		setSelectedReferenceClipId(null);
-		setImageInputMode(
-			getTemplateConfig("paper-sticker-reel").defaultImageInputMode,
-		);
-		setProduct("");
-		setHeadline("");
-		setSubline("");
-		setBusiness("");
-		setOffer("");
-		setImageUrl(null);
-		setImageVariantUrls([]);
-		setSelectedVariantIndex(0);
-		setImageOutputMode(DEFAULT_IMAGE_OUTPUT_MODE);
-		setImageAspectRatio(defaultImageAspectRatioForWorkflow("combined"));
-		setCampaignTheme("");
-		setCampaignPlan(null);
-		setCampaignSlides([]);
-		setStoryboardBrief("");
-		setStoryboardPlan(null);
-		setStoryboardScenes([]);
-		setStoryboardGridApproved(false);
-		setStoryboardCellsViewed([]);
-		setBrandProfile(null);
-		setBrandAnalyzeNote(null);
-		setCreativeVideoBrief("");
-		setConceptImageVisionNote("");
-		setConceptIdea("");
-		setVideoPromptPlanNote(null);
-		setUploadQualityWarning(null);
-		setUseOriginalImage(false);
-		setVideoUrl(null);
-		setCaptionHandoffVideoUrl(null);
-		setVideoTimingManifest(null);
-		lastVideoTimingManifestRef.current = null;
-		lastStoryboardVideoDurationSecRef.current = null;
-		setVideoNote(undefined);
-		setBgmNote(undefined);
-		setQuickFixCredits(0);
-		setImagePostflight(null);
-		setImageQualityChecklist({
-			productReadable: false,
-			textLegible: false,
-		});
-		setShipItPipelineBusy(false);
-		setProductPhoto(null);
-		setImageRefPhoto(null);
-		setReferenceAd(null);
-		setError(null);
-		setBgmTrack("calm");
-		setPromptMarket(promptMarketFromLocale(locale));
-		setSubjectFraming("auto");
-		setPromptExtra("");
-		setArtStyleId(DEFAULT_ART_STYLE);
-		setVoicePreviewTracks([]);
-		setSelectedVoicePreviewId(null);
-	}
+		// Full reload with fresh=1 so autosave mints a new project id.
+		// In-place state reset kept the previous library card and overwrote it.
+		if (typeof window !== "undefined") {
+			window.location.assign(studioHref(promotionMode));
+		}
+  }
 
-	const bgmOptions: { id: BgmTrackId; label: string }[] = [
-		{ id: "calm", label: m.wizard.bgmCalm },
-		{ id: "upbeat", label: m.wizard.bgmUpbeat },
-		{ id: "warm", label: m.wizard.bgmWarm },
-	];
+  const bgmOptions: { id: BgmTrackId; label: string }[] = [
+    { id: "calm", label: m.wizard.bgmCalm },
+    { id: "upbeat", label: m.wizard.bgmUpbeat },
+    { id: "warm", label: m.wizard.bgmWarm },
+  ];
 
-	const conceptTextVideoReady =
-		conceptTextVideoEligible && Boolean(videoPrompt.trim());
+  const conceptTextVideoReady =
+    conceptTextVideoEligible && Boolean(videoPrompt.trim());
 
 	const continueSetupLabel = isContentResearchReelVideo
 		? m.wizard.continueToSimilarVideo
@@ -9595,7 +9662,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			: null;
 	const imageGenerateDisabledReason = imageGenerateBlockReason();
 
-	const imageFinishLabel =
+  const imageFinishLabel =
 		workflowMode === "image-only" &&
 		!isStoryboardOutput &&
 		!isCinematicStitchOutput &&
@@ -9615,7 +9682,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		return null;
 	})();
 	const shipItVisionBlocked = visionGateBlocksShipIt(imageVisionReview);
-	const videoGenerateDisabled =
+  const videoGenerateDisabled =
 		(promotionMode === "physical" &&
 			videoCreativeMode === "reference-concept" &&
 			!hasProductPhotoLock) ||
@@ -9645,10 +9712,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			!h3ShotRecipeCanGenerate) ||
 		(isCinematicStitchOutput &&
 			cinematicScenes.length < cinematicSceneCount) ||
-		videoBusy ||
+    videoBusy ||
 		sceneFrameBusy ||
 		researchReelAnalyzeBusy ||
-		(promotionMode === "concept" &&
+    (promotionMode === "concept" &&
 			useReferenceVideo &&
 			Boolean(referenceAd) &&
 			!referenceR2vReady &&
@@ -9662,11 +9729,11 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		(isContentResearchPhysicalR2v && !referenceR2vReady) ||
 		(!isRecipeOwnedVideoMode(videoCreativeMode) &&
 			promotionMode === "concept" &&
-			isAiPlannedVideoStyle(visualStyleId) &&
-			!isCinematicStitchOutput &&
-			!isConceptCinematicSingleOutput &&
+      isAiPlannedVideoStyle(visualStyleId) &&
+      !isCinematicStitchOutput &&
+      !isConceptCinematicSingleOutput &&
 			!directReferenceR2vReady &&
-			!videoPrompt.trim()) ||
+      !videoPrompt.trim()) ||
 		(usesProductAssistant &&
 			(!productPhoto || !productVideoPlan?.seedancePrompt)) ||
 		(storyboardBlocksRecipeVideo(isStoryboardOutput, videoCreativeMode) &&
@@ -9841,108 +9908,108 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 	const finalImageSrc =
 		imageUrl ?? (useOriginalImage ? uploadPreviewUrl : null);
 
-	const { imageProgressInfo, videoProgressInfo } = useWizardProgress({
-		imageBusy,
-		videoBusy,
-		imageJobMeta,
-		videoJobStartedAt,
-		progressNow,
-		videoPhase,
-		usesCompositor,
+  const { imageProgressInfo, videoProgressInfo } = useWizardProgress({
+    imageBusy,
+    videoBusy,
+    imageJobMeta,
+    videoJobStartedAt,
+    progressNow,
+    videoPhase,
+    usesCompositor,
 		referenceR2v: useReferenceVideo,
-		labels: {
-			storyboardProgressPlanning: m.wizard.storyboardProgressPlanning,
-			storyboardProgressRendering: m.wizard.storyboardProgressRendering,
-			campaignGenerating: m.wizard.campaignGenerating,
+    labels: {
+      storyboardProgressPlanning: m.wizard.storyboardProgressPlanning,
+      storyboardProgressRendering: m.wizard.storyboardProgressRendering,
+      campaignGenerating: m.wizard.campaignGenerating,
 			campaignProgressPlanning: m.wizard.campaignProgressPlanning,
 			campaignProgressRendering: m.wizard.campaignProgressRendering,
 			teachingCarouselProgressPlanning:
 				m.wizard.teachingCarouselProgressPlanning,
 			teachingCarouselProgressRendering:
 				m.wizard.teachingCarouselProgressRendering,
-			imageGenerating: m.wizard.imageGenerating,
-			progressEta: m.wizard.progressEta,
-		},
-		formatEta,
-	});
+      imageGenerating: m.wizard.imageGenerating,
+      progressEta: m.wizard.progressEta,
+    },
+    formatEta,
+  });
 
-	const imagePreflight = (() => {
-		if (stepKey !== "image" || usesCompositor) return null;
-		const lines: string[] = [];
-		if (isStoryboardOutput) {
+  const imagePreflight = (() => {
+    if (stepKey !== "image" || usesCompositor) return null;
+    const lines: string[] = [];
+    if (isStoryboardOutput) {
 			lines.push(
 				isConceptStoryboardOutput
 					? m.wizard.conceptResearchReelStoryboardImagePreflight
 					: m.wizard.imagePreflightStoryboard,
 			);
-			lines.push(
-				`${m.wizard.videoSettingsDuration}: ${
+      lines.push(
+        `${m.wizard.videoSettingsDuration}: ${
 					videoSettings.duration === "auto"
 						? "auto"
 						: `${videoSettings.duration}s`
-				}`,
-			);
+        }`,
+      );
 		} else if (isUgcPresenterOutput) {
 			lines.push(m.wizard.ugcPresenter.imagePreflight);
-		} else if (isCinematicStitchOutput) {
+    } else if (isCinematicStitchOutput) {
 			lines.push(
 				formatCinematicCopy(m.wizard.imagePreflightCinematicStitch),
 			);
-		} else if (isConceptCinematicSingleOutput) {
-			lines.push(m.wizard.imagePreflightConceptCinematicSingle);
+    } else if (isConceptCinematicSingleOutput) {
+      lines.push(m.wizard.imagePreflightConceptCinematicSingle);
 		} else if (
 			promotionMode === "concept" &&
 			workflowMode === "image-only"
 		) {
-			lines.push(m.wizard.imagePreflightConceptSocial);
-		} else if (isCampaignOutput) {
-			lines.push(m.wizard.imagePreflightCampaign);
+      lines.push(m.wizard.imagePreflightConceptSocial);
+    } else if (isCampaignOutput) {
+      lines.push(m.wizard.imagePreflightCampaign);
 			if (usesReferenceConceptForImage && imageRefPhoto && productPhoto) {
 				lines.push(m.wizard.imagePreflightCampaignReference);
 			}
-		} else if (isTeachingCarouselOutput) {
+    } else if (isTeachingCarouselOutput) {
 			lines.push(
 				m.wizard.imagePreflightTeachingCarousel.replace(
 					"{count}",
 					String(referenceCarouselSlideCount),
 				),
 			);
-		} else if (effectiveImageOutputMode === "ab") {
-			lines.push(m.wizard.imagePreflightAB);
-		} else {
-			lines.push(m.wizard.imagePreflightSingle);
-		}
-		if (!isStoryboardOutput) {
-			lines.push(
+    } else if (effectiveImageOutputMode === "ab") {
+      lines.push(m.wizard.imagePreflightAB);
+    } else {
+      lines.push(m.wizard.imagePreflightSingle);
+    }
+    if (!isStoryboardOutput) {
+      lines.push(
 				m.wizard.imagePreflightAspect.replace(
 					"{ratio}",
 					effectiveImageAspectRatio,
 				),
-			);
-		}
-		lines.push(
+      );
+    }
+    lines.push(
 			m.wizard.quickFixCreditReady.replace(
 				"{tokens}",
 				String(TOKEN_COST.image),
 			),
-		);
-		return lines;
-	})();
+    );
+    return lines;
+  })();
 
-	const videoPreflight = (() => {
-		if (usesCompositor || stepKey !== "video") return null;
-		const vOpts = resolveVideoGenerationOpts(templateId, videoSettings);
-		const refMode =
-			isStoryboardOutput ||
+  const videoPreflight = (() => {
+    if (usesCompositor || stepKey !== "video") return null;
+    const vOpts = resolveVideoGenerationOpts(templateId, videoSettings);
+    const refMode =
+      isStoryboardOutput ||
 			isUgcPresenterOutput ||
-			(videoCreativeMode === "reference-concept" && useReferenceVideo);
-		const autoSecondFrame =
-			!isStoryboardOutput &&
-			!refMode &&
-			!useMultiAngleVideo &&
-			videoSettings.autoSecondFrame &&
-			!endFramePhoto &&
-			!endFrameUrl;
+      (videoCreativeMode === "reference-concept" && useReferenceVideo);
+    const autoSecondFrame =
+      !isStoryboardOutput &&
+      !refMode &&
+      !useMultiAngleVideo &&
+      videoSettings.autoSecondFrame &&
+      !endFramePhoto &&
+      !endFrameUrl;
 		const styleName =
 			m.wizard.visualStyles[
 				visualStyleId as keyof typeof m.wizard.visualStyles
@@ -9952,48 +10019,48 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			: m.wizard.videoPreflightTierQuality;
 		const durationLabel =
 			vOpts.duration === "auto" ? "auto" : `${vOpts.duration}s`;
-		return {
-			refMode,
-			autoSecondFrame,
-			lines: [
-				isStoryboardOutput
-					? m.wizard.storyboardVideoPreflight
+    return {
+      refMode,
+      autoSecondFrame,
+      lines: [
+        isStoryboardOutput
+          ? m.wizard.storyboardVideoPreflight
 					: isUgcPresenterOutput
 						? m.wizard.ugcPresenter.videoPreflight
-						: isCinematicStitchOutput
+          : isCinematicStitchOutput
 							? formatCinematicCopy(
 									m.wizard.cinematicStitchVideoPreflight,
 								)
-							: refMode
+          : refMode
 								? promotionMode === "concept"
 									? m.wizard.videoPreflightModeConceptRef
 									: m.wizard.videoPreflightModeRef
-								: m.wizard.videoPreflightModeProduct,
-				m.wizard.videoPreflightSettings
-					.replace("{resolution}", vOpts.resolution)
-					.replace("{duration}", durationLabel)
-					.replace("{tier}", tier),
-				m.wizard.videoPreflightStyle.replace("{style}", styleName),
-				autoSecondFrame
-					? m.wizard.videoPreflightSecondFrame
-					: refMode
-						? m.wizard.videoPreflightSingleCall
-						: m.wizard.videoPreflightSingleCall,
-				isStoryboardOutput || isAiPlannedVideoStyle(visualStyleId)
+            : m.wizard.videoPreflightModeProduct,
+        m.wizard.videoPreflightSettings
+          .replace("{resolution}", vOpts.resolution)
+          .replace("{duration}", durationLabel)
+          .replace("{tier}", tier),
+        m.wizard.videoPreflightStyle.replace("{style}", styleName),
+        autoSecondFrame
+          ? m.wizard.videoPreflightSecondFrame
+          : refMode
+            ? m.wizard.videoPreflightSingleCall
+            : m.wizard.videoPreflightSingleCall,
+        isStoryboardOutput || isAiPlannedVideoStyle(visualStyleId)
 					? m.wizard.videoPreflightAI
-					: "",
-			].filter(Boolean),
-			costLine: autoSecondFrame
-				? m.wizard.videoPreflightDoubleCall
-				: isStoryboardOutput
+          : "",
+      ].filter(Boolean),
+      costLine: autoSecondFrame
+        ? m.wizard.videoPreflightDoubleCall
+        : isStoryboardOutput
 					? `${m.wizard.klingStoryboardFallbackNote} · ${storyboardScenes.length} scene images`
-					: isCinematicStitchOutput
+          : isCinematicStitchOutput
 						? formatCinematicCopy(m.wizard.cinematicStitchVideoCost)
-						: isAiPlannedVideoStyle(visualStyleId)
+            : isAiPlannedVideoStyle(visualStyleId)
 							? `${m.wizard.videoPreflightSingleCall} ${m.wizard.videoPreflightAI}`
-							: m.wizard.videoPreflightSingleCall,
-		};
-	})();
+              : m.wizard.videoPreflightSingleCall,
+    };
+  })();
 
 	const handoffStartedRef = useRef(false);
 	useEffect(() => {
@@ -10118,53 +10185,53 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		return true;
 	}
 
-	return {
-		addBgm,
-		addCaptionLine,
-		adPackPlan,
-		adPackPlanBusy,
-		adPackReviewOpen,
-		advancedSection,
-		analyzeBrand,
-		applyGeneratedCampaign,
-		applyGeneratedImages,
-		applyGeneratedStoryboard,
-		applyPrimaryPath,
-		applyPrimaryPathConcept,
-		applyPrimaryPathConceptVideo,
-		applyClosestMatchRecipe,
-		applyQuickTest8sRecipe,
-		applyCinematicStitchRecipe,
-		applyPrimaryPathVideoOnly,
-		applyPromptRebuild,
-		promotionMode,
-		bgmNote,
-		bgmOptions,
-		bgmTrack,
+  return {
+    addBgm,
+    addCaptionLine,
+    adPackPlan,
+    adPackPlanBusy,
+    adPackReviewOpen,
+    advancedSection,
+    analyzeBrand,
+    applyGeneratedCampaign,
+    applyGeneratedImages,
+    applyGeneratedStoryboard,
+    applyPrimaryPath,
+    applyPrimaryPathConcept,
+    applyPrimaryPathConceptVideo,
+    applyClosestMatchRecipe,
+    applyQuickTest8sRecipe,
+    applyCinematicStitchRecipe,
+    applyPrimaryPathVideoOnly,
+    applyPromptRebuild,
+    promotionMode,
+    bgmNote,
+    bgmOptions,
+    bgmTrack,
 		videoBgmEnabled,
-		brandAnalyzeBusy,
+    brandAnalyzeBusy,
 		conceptPlanBusy,
 		setConceptPlanBusy,
-		brandAnalyzeNote,
-		brandProfile,
-		brandSocialHint,
-		brandWebsiteUrl,
-		buildComposeFormData,
-		business,
-		campaignPlan,
-		campaignSlideLabel,
-		campaignSlides,
-		campaignTheme,
-		canGenerateImage,
-		composeImage,
-		composeVideo,
-		continueSetupLabel,
+    brandAnalyzeNote,
+    brandProfile,
+    brandSocialHint,
+    brandWebsiteUrl,
+    buildComposeFormData,
+    business,
+    campaignPlan,
+    campaignSlideLabel,
+    campaignSlides,
+    campaignTheme,
+    canGenerateImage,
+    composeImage,
+    composeVideo,
+    continueSetupLabel,
 		effectivePromoteName,
 		setupNextDisabled,
 		setupNextDisabledReason,
 		imageGenerateDisabledReason,
-		creativeVideoBrief,
-		conceptImageVisionNote,
+    creativeVideoBrief,
+    conceptImageVisionNote,
 		userReferenceBrief,
 		referenceStrategy,
 		referenceAnalyzeBusy,
@@ -10178,135 +10245,135 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		isConceptResearchReelStoryboard,
 		isConceptStoryboardOutput,
 		isContentResearchVideoPath,
-		conceptIdea,
-		effectiveImageMode,
-		effectiveImageOutputMode,
-		effectivePromptExtra,
-		endFramePhoto,
-		endFramePreviewUrl,
-		endFrameUrl,
-		ensureEndFrameUrl,
-		error,
-		estimateStoryboardSceneCount,
-		extraAnglePhotos,
-		fileFromImageUrl,
-		finalImageSrc,
-		finishImageStep,
-		formatEta,
-		friendlyError,
-		generateImage,
-		generateAiMusicTracks,
-		generateVoicePreviews,
-		generateVideo,
+    conceptIdea,
+    effectiveImageMode,
+    effectiveImageOutputMode,
+    effectivePromptExtra,
+    endFramePhoto,
+    endFramePreviewUrl,
+    endFrameUrl,
+    ensureEndFrameUrl,
+    error,
+    estimateStoryboardSceneCount,
+    extraAnglePhotos,
+    fileFromImageUrl,
+    finalImageSrc,
+    finishImageStep,
+    formatEta,
+    friendlyError,
+    generateImage,
+    generateAiMusicTracks,
+    generateVoicePreviews,
+    generateVideo,
 		generateBlockbusterSceneFrame,
 		generateH3ShotRecipeStill,
-		getPromptVars,
-		goBackFromImage,
-		goBackFromVideo,
-		goNextFromSetup,
-		hasFinalImage,
+    getPromptVars,
+    goBackFromImage,
+    goBackFromVideo,
+    goNextFromSetup,
+    hasFinalImage,
 		hasProductPhotoLock,
 		hasConceptHeroLock,
-		headline,
-		imageBusy,
-		imageCreativeMode,
-		imageFinishLabel,
-		imageGenKey,
-		imageInputMode,
-		imageJobMeta,
-		imageNextDisabled,
+    headline,
+    imageBusy,
+    imageCreativeMode,
+    imageFinishLabel,
+    imageGenKey,
+    imageInputMode,
+    imageJobMeta,
+    imageNextDisabled,
 		imageNextDisabledReason,
-		imageOutputMode,
-		imageAspectRatio,
-		effectiveImageAspectRatio,
-		imagePreflight,
+    imageOutputMode,
+    imageAspectRatio,
+    effectiveImageAspectRatio,
+    imagePreflight,
 		imagePostflight,
 		imagePostflightBusy,
 		imageVisionReview,
 		imageVisionReviewBusy,
 		imageQualityChecklist,
 		setImageQualityChecklist,
-		imageProgressInfo,
-		imagePrompt,
-		imageRefPhoto,
-		imageRefPreviewUrl,
-		imageStepHint,
-		imageUrl,
-		imageVariantUrls,
-		isCampaignOutput,
-		isTeachingCarouselOutput,
-		isImageWorkflow,
-		isStoryboardOutput,
+    imageProgressInfo,
+    imagePrompt,
+    imageRefPhoto,
+    imageRefPreviewUrl,
+    imageStepHint,
+    imageUrl,
+    imageVariantUrls,
+    isCampaignOutput,
+    isTeachingCarouselOutput,
+    isImageWorkflow,
+    isStoryboardOutput,
 		isUgcPresenterOutput,
-		isCinematicStitchOutput,
-		isConceptCinematicSingleOutput,
-		cinematicStitchReady,
-		cinematicScenes,
-		cinematicReelPlan,
-		cinematicStitchReel,
+    isCinematicStitchOutput,
+    isConceptCinematicSingleOutput,
+    cinematicStitchReady,
+    cinematicScenes,
+    cinematicReelPlan,
+    cinematicStitchReel,
 		setCinematicStitchReel,
 		cinematicSceneCount,
 		setCinematicSceneCount,
 		onCinematicSceneCountChange,
 		formatCinematicCopy,
-		isVideoWorkflow,
-		keyframePreview,
-		lastImageEndpoint,
-		loadReferenceClip,
-		locale,
-		lockedCampaignMode,
+    isVideoWorkflow,
+    keyframePreview,
+    lastImageEndpoint,
+    loadReferenceClip,
+    locale,
+    lockedCampaignMode,
 		lockedSingleImageMode,
-		m,
+    m,
 		makeDigitalPresenterVideo,
-		makeImageToVideo,
-		makeMultiAngleVideo,
-		makeReferenceVideo,
-		makeStoryboardVideo,
-		musicGenerateBusy,
-		musicSource,
-		needsProductUpload,
-		negativePrompt,
-		normalizeStoryboardIndices,
-		offer,
-		onImageCreativeModeChange,
-		onImageInputModeChange,
-		onProductPhotoSelected,
-		onReferenceAdFile,
-		onVideoCreativeModeChange,
-		onWorkflowModeChange,
-		planAdPackReview,
-		planAiVideoPrompt,
-		planProductVideo,
-		planProductVideoBusy,
-		planVideoPromptBusy,
-		productVideoPlan,
-		packagingPhoto,
-		packagingPreviewUrl,
-		extraKitPhotos,
-		extraKitPreviewUrls,
+    makeImageToVideo,
+    makeMultiAngleVideo,
+    makeReferenceVideo,
+    makeStoryboardVideo,
+    musicGenerateBusy,
+    musicSource,
+    needsProductUpload,
+    negativePrompt,
+    normalizeStoryboardIndices,
+    offer,
+    onImageCreativeModeChange,
+    onImageInputModeChange,
+    onProductPhotoSelected,
+    onReferenceAdFile,
+    onVideoCreativeModeChange,
+    onWorkflowModeChange,
+    planAdPackReview,
+    planAiVideoPrompt,
+    planProductVideo,
+    planProductVideoBusy,
+    planVideoPromptBusy,
+    productVideoPlan,
+    packagingPhoto,
+    packagingPreviewUrl,
+    extraKitPhotos,
+    extraKitPreviewUrls,
 		referenceCarouselSlideCount,
 		setReferenceCarouselSlideCount,
 		contentResearchApplyRef,
 		setContentResearchApplyRef,
 		pendingContentResearchPick,
 		setPendingContentResearchPick,
-		usesProductAssistant,
-		usesConceptTextVideo,
+    usesProductAssistant,
+    usesConceptTextVideo,
 		conceptReferenceR2vReady,
 		directReferenceR2vReady,
 		referenceR2vReady,
-		product,
-		productPhoto,
-		progressNow,
-		promptExtra,
-		promptMarket,
-		quickFixCredits,
-		quickFixImage,
-		quickFixLogoFile,
-		quickFixLogoPlacement,
-		quickFixLogoPreviewUrl,
-		quickFixVideo,
-		onQuickFixLogoSelected,
+    product,
+    productPhoto,
+    progressNow,
+    promptExtra,
+    promptMarket,
+    quickFixCredits,
+    quickFixImage,
+    quickFixLogoFile,
+    quickFixLogoPlacement,
+    quickFixLogoPreviewUrl,
+    quickFixVideo,
+    onQuickFixLogoSelected,
 		imagePreOverlayUrl,
 		imageTextMode,
 		setImageTextMode,
@@ -10326,30 +10393,30 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		setBrandKit,
 		restoreImageBeforeTextOverlay,
 		stripImageTextForOverlay,
-		refineGeneratedImageWithLogo,
+    refineGeneratedImageWithLogo,
 		refineGeneratedImageWithRegions,
-		setQuickFixLogoPlacement,
-		removeCaptionLine,
-		refineGeneratedImage,
-		refVideoDurationSec,
-		referenceAd,
-		referenceClipLoading,
-		referenceIsVideo,
-		referencePreviewUrl,
+    setQuickFixLogoPlacement,
+    removeCaptionLine,
+    refineGeneratedImage,
+    refVideoDurationSec,
+    referenceAd,
+    referenceClipLoading,
+    referenceIsVideo,
+    referencePreviewUrl,
 		sceneFramePhoto,
 		setSceneFramePhoto,
 		sceneFramePreviewUrl,
 		sceneFrameUrl,
 		setSceneFrameUrl,
 		sceneFrameBusy,
-		regenerateStoryboardSceneWithAi,
+    regenerateStoryboardSceneWithAi,
 		regenerateCarouselSlide,
 		regenerateAbVariant,
 		stampStoryboardSceneLogo,
-		reorderStoryboardScene,
-		replaceStoryboardSceneImage,
+    reorderStoryboardScene,
+    replaceStoryboardSceneImage,
 		applyProjectSnapshot,
-		resetProject,
+    resetProject,
 		restoreDoneFromResume,
 		runShipItPipeline,
 		shipItEligible,
@@ -10357,167 +10424,167 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		shipItMode,
 		setShipItMode,
 		shipItPipelineBusy,
-		selectVisualStyle,
-		artStyleId,
-		setArtStyleId,
-		selectedReferenceClipId,
-		selectedAiMusicId,
-		selectedVariantIndex,
-		aiMusicTracks,
-		captionBurnEnabled,
+    selectVisualStyle,
+    artStyleId,
+    setArtStyleId,
+    selectedReferenceClipId,
+    selectedAiMusicId,
+    selectedVariantIndex,
+    aiMusicTracks,
+    captionBurnEnabled,
 		captionHandoffVideoUrl,
 		videoTimingManifest,
-		captionLines,
-		setAdPackPlan,
-		setAdPackPlanBusy,
-		setAdPackReviewOpen,
-		setBgmNote,
-		setBgmTrack,
+    captionLines,
+    setAdPackPlan,
+    setAdPackPlanBusy,
+    setAdPackReviewOpen,
+    setBgmNote,
+    setBgmTrack,
 		setVideoBgmEnabled,
-		setCaptionBurnEnabled,
-		setCaptionLines,
-		setMusicSource,
-		setAiMusicTracks,
-		setSelectedAiMusicId,
-		setMusicGenerateBusy,
-		voicePreviewTracks,
-		setVoicePreviewTracks,
-		selectedVoicePreviewId,
-		setSelectedVoicePreviewId,
-		voicePreviewBusy,
-		setVoicePreviewBusy,
-		setBrandAnalyzeBusy,
-		setBrandAnalyzeNote,
-		setBrandProfile,
-		setBrandSocialHint,
-		setBrandWebsiteUrl,
-		setBusiness,
-		setCampaignPlan,
-		setCampaignSlides,
-		setCampaignTheme,
-		setCreativeVideoBrief,
-		setConceptImageVisionNote,
+    setCaptionBurnEnabled,
+    setCaptionLines,
+    setMusicSource,
+    setAiMusicTracks,
+    setSelectedAiMusicId,
+    setMusicGenerateBusy,
+    voicePreviewTracks,
+    setVoicePreviewTracks,
+    selectedVoicePreviewId,
+    setSelectedVoicePreviewId,
+    voicePreviewBusy,
+    setVoicePreviewBusy,
+    setBrandAnalyzeBusy,
+    setBrandAnalyzeNote,
+    setBrandProfile,
+    setBrandSocialHint,
+    setBrandWebsiteUrl,
+    setBusiness,
+    setCampaignPlan,
+    setCampaignSlides,
+    setCampaignTheme,
+    setCreativeVideoBrief,
+    setConceptImageVisionNote,
 		setUserReferenceBrief,
-		setConceptIdea,
-		setEndFramePhoto,
-		setEndFramePreviewUrl,
-		setEndFrameUrl,
-		setError,
-		setExtraAnglePhotos,
-		setExtraKitPhotos,
-		setPackagingPhoto,
-		setHeadline,
-		setImageBusy,
-		setImageCreativeMode,
-		setImageGenKey,
-		setImageInputMode,
-		setImageJobMeta,
-		setImageOutputMode,
-		setImageAspectRatio,
-		setImagePrompt,
-		setImageRefPhoto,
-		setImageRefPreviewUrl,
-		setImageUrl,
-		setImageVariantUrls,
-		setLastImageEndpoint,
-		setNegativePrompt,
-		setOffer,
-		setPlanVideoPromptBusy,
-		setProduct,
-		setProductPhoto,
-		setProgressNow,
-		setPromptExtra,
-		setPromptMarket,
-		setQuickFixCredits,
-		setRefVideoDurationSec,
-		setReferenceAd,
-		setReferenceClipLoading,
-		setReferenceIsVideo,
-		setReferencePreviewUrl,
-		setSelectedReferenceClipId,
-		setSelectedVariantIndex,
-		setShowAdvancedImage,
-		setShowAdvancedSetup,
-		setShowAdvancedSetupPrompts,
-		setShowAdvancedVideo,
-		setStepKey,
-		setStoryboardBrief,
-		setStoryboardPlan,
-		setStoryboardSceneRegenerateBusy,
-		setStoryboardSceneReplaceBusy,
-		setStoryboardScenes,
-		setStoryboardTrimDuration,
-		setSubjectFraming,
-		setSubline,
-		setTemplateId,
-		setUploadPreviewUrl,
-		setUploadQualityWarning,
-		setUseOriginalImage,
-		setVideoBusy,
-		setVideoCreativeMode,
-		setVideoJobStartedAt,
-		setVideoNote,
-		setVideoPhase,
-		setVideoPrompt,
-		setVideoPromptPlanNote,
-		setVideoSettings,
-		setVideoUrl,
-		setVisualStyleId,
-		setWorkflowMode,
-		showAdvancedImage,
-		showAdvancedSetup,
-		showAdvancedSetupPrompts,
-		showAdvancedVideo,
-		showVideoReferenceSection,
-		slotFilled,
-		state,
-		stepKey,
-		storyboardBrief,
-		storyboardPlan,
-		storyboardSceneRegenerateBusy,
+    setConceptIdea,
+    setEndFramePhoto,
+    setEndFramePreviewUrl,
+    setEndFrameUrl,
+    setError,
+    setExtraAnglePhotos,
+    setExtraKitPhotos,
+    setPackagingPhoto,
+    setHeadline,
+    setImageBusy,
+    setImageCreativeMode,
+    setImageGenKey,
+    setImageInputMode,
+    setImageJobMeta,
+    setImageOutputMode,
+    setImageAspectRatio,
+    setImagePrompt,
+    setImageRefPhoto,
+    setImageRefPreviewUrl,
+    setImageUrl,
+    setImageVariantUrls,
+    setLastImageEndpoint,
+    setNegativePrompt,
+    setOffer,
+    setPlanVideoPromptBusy,
+    setProduct,
+    setProductPhoto,
+    setProgressNow,
+    setPromptExtra,
+    setPromptMarket,
+    setQuickFixCredits,
+    setRefVideoDurationSec,
+    setReferenceAd,
+    setReferenceClipLoading,
+    setReferenceIsVideo,
+    setReferencePreviewUrl,
+    setSelectedReferenceClipId,
+    setSelectedVariantIndex,
+    setShowAdvancedImage,
+    setShowAdvancedSetup,
+    setShowAdvancedSetupPrompts,
+    setShowAdvancedVideo,
+    setStepKey,
+    setStoryboardBrief,
+    setStoryboardPlan,
+    setStoryboardSceneRegenerateBusy,
+    setStoryboardSceneReplaceBusy,
+    setStoryboardScenes,
+    setStoryboardTrimDuration,
+    setSubjectFraming,
+    setSubline,
+    setTemplateId,
+    setUploadPreviewUrl,
+    setUploadQualityWarning,
+    setUseOriginalImage,
+    setVideoBusy,
+    setVideoCreativeMode,
+    setVideoJobStartedAt,
+    setVideoNote,
+    setVideoPhase,
+    setVideoPrompt,
+    setVideoPromptPlanNote,
+    setVideoSettings,
+    setVideoUrl,
+    setVisualStyleId,
+    setWorkflowMode,
+    showAdvancedImage,
+    showAdvancedSetup,
+    showAdvancedSetupPrompts,
+    showAdvancedVideo,
+    showVideoReferenceSection,
+    slotFilled,
+    state,
+    stepKey,
+    storyboardBrief,
+    storyboardPlan,
+    storyboardSceneRegenerateBusy,
 		carouselSlideRegenerateBusy,
-		storyboardSceneReplaceBusy,
-		storyboardScenes,
+    storyboardSceneReplaceBusy,
+    storyboardScenes,
 		storyboardGridApproved,
 		setStoryboardGridApproved,
 		storyboardCellsViewed,
 		storyboardAllCellsViewed,
 		markStoryboardCellViewed,
-		storyboardTrimDuration,
-		storyboardSceneCount,
-		musicMood,
-		voiceoverEnabled,
-		voiceoverLocale,
+    storyboardTrimDuration,
+    storyboardSceneCount,
+    musicMood,
+    voiceoverEnabled,
+    voiceoverLocale,
 		setStoryboardSceneCount: setLuxuryAwareSceneCount,
-		setMusicMood,
-		setVoiceoverEnabled,
-		setVoiceoverLocale,
-		subjectFraming,
-		subline,
-		templateConfig,
-		templateId,
-		templateSlotStatus,
-		tpl,
-		trimStoryboardDurations,
+    setMusicMood,
+    setVoiceoverEnabled,
+    setVoiceoverLocale,
+    subjectFraming,
+    subline,
+    templateConfig,
+    templateId,
+    templateSlotStatus,
+    tpl,
+    trimStoryboardDurations,
 		applyKlingStoryboardClipDuration,
-		updateCaptionLine,
-		updateStoryboardSceneTiming,
+    updateCaptionLine,
+    updateStoryboardSceneTiming,
 		updateStoryboardPlanScene,
 		planStoryboard,
 		planStoryboardBusy,
 		setPlanStoryboardBusy,
-		uploadPreviewUrl,
-		uploadQualityMessage,
-		uploadQualityWarning,
-		useMultiAngleVideo,
-		useOriginalAsKeyframe,
-		useOriginalImage,
-		useReferenceVideo,
-		usesCompositor,
-		usesReferenceConceptForImage,
-		usesStyleReference,
-		videoBusy,
-		videoCreativeMode,
+    uploadPreviewUrl,
+    uploadQualityMessage,
+    uploadQualityWarning,
+    useMultiAngleVideo,
+    useOriginalAsKeyframe,
+    useOriginalImage,
+    useReferenceVideo,
+    usesCompositor,
+    usesReferenceConceptForImage,
+    usesStyleReference,
+    videoBusy,
+    videoCreativeMode,
 		motionPosterDialectPick,
 		setMotionPosterDialectPick,
 		macroSnapIntensity,
@@ -10537,26 +10604,26 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		setStoryboardRecipeId,
 		compositionPresetId,
 		setCompositionPresetId,
-		videoGenerateDisabled,
+    videoGenerateDisabled,
 		videoGenerateDisabledReason,
-		videoJobStartedAt,
-		videoNote,
-		videoPhase,
-		videoPreflight,
-		videoProgressInfo,
-		videoPrompt,
-		videoPromptOpts,
-		videoPromptPlanNote,
-		videoSettings,
-		videoStepHint,
-		videoUrl,
-		visualStyle,
-		visualStyleId,
-		workflowMode,
+    videoJobStartedAt,
+    videoNote,
+    videoPhase,
+    videoPreflight,
+    videoProgressInfo,
+    videoPrompt,
+    videoPromptOpts,
+    videoPromptPlanNote,
+    videoSettings,
+    videoStepHint,
+    videoUrl,
+    visualStyle,
+    visualStyleId,
+    workflowMode,
 		storyboardEngineChoice,
 		confirmStoryboardKlingChoice,
 		dismissStoryboardEngineChoice,
-	};
+  };
 }
 
 export type StudioWizardValue = ReturnType<typeof useStudioWizard>;

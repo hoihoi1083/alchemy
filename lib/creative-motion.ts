@@ -1,6 +1,6 @@
 /**
- * Product creative motion (产品创意动效) — Seedance start→end with scheme cards.
- * Pick a gag → auto stills (start + end) → 4s Seedance morph.
+ * Product creative motion (产品创意动效) — MiniMax H3 start→end with scheme cards
+ * (Seedance fallback). Pick a gag → auto stills (start + end) → ~4s morph (H3 floor 5s).
  */
 
 export const CREATIVE_MOTION_DURATION_SEC = 4;
@@ -162,7 +162,7 @@ export function buildCreativeMotionStillPrompt(input: {
     `Identity lock: ${hero} — same shape, logo, colors, materials as the uploaded subject.`,
     `${input.frame.toUpperCase()} frame (${def.label}): ${beat}`,
     NO_TEXT,
-    "Single hero, sharp, studio-grade, ready for start→end Seedance morph.",
+    "Single hero, sharp, studio-grade, ready for start→end morph.",
   ].join(" ");
 }
 

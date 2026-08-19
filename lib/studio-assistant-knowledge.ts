@@ -239,7 +239,7 @@ Plans (typical): Free 500 signup / 480p; Standard 3000/mo 720p; Pro 8000/mo 1080
       "动态视觉",
       "動態視覺",
     ],
-    en: `Nine one-take recipes: e-com orbit, object-locked camera, macro food physics, luxury tabletop+hand, beauty/MV, imitate-this-ad (product still + reference MP4), neon-on-real (real footage + glowing neon drawings), food bullet-time (lifestyle food still with frozen splash → camera orbit), and C4D motion (black-void brand MG → abstract materials → product reveal). Recipe owns the prompt — not a 九宫格 stitch.`,
+    en: `Nine one-take recipes: e-com orbit, object-locked camera, macro food physics, luxury tabletop+hand, beauty/MV, imitate-this-ad (product still + reference MP4), neon-on-real (real footage + glowing neon drawings), food bullet-time (lifestyle food still with dramatic frozen burst → camera orbit), and C4D motion (black-void brand MG → abstract materials → product reveal). Recipe owns the prompt — not a 九宫格 stitch.`,
     zh: `九條單鏡配方：電商環繞、物體鎖定運鏡、微距物理、奢侈品桌面+手、美妝/MV 一鏡、仿拍廣告（產品圖+參考 MP4）、霓虹疊實景（真實影片+發光霓虹線稿）、美食子彈時間（打卡圖飛濺定格→鏡頭環繞）、C4D 動態視覺（黑場品牌開場→抽象材質→產品揭幕）。配方自己寫 prompt，唔係九宮格拼接。`,
   },
   {

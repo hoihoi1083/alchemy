@@ -28,3 +28,4 @@ captions.srt
 # Compositor fonts are vendored in git so Vercel does not fetch them at build.
 .vercel
 .env*
+tsconfig.tsbuildinfo

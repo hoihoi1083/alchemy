@@ -22,6 +22,7 @@ import {
 } from "@/lib/social-drip";
 import { CREATIVE_MOTION_SCHEME_IDS, creativeMotionSchemePreviewSrc } from "@/lib/creative-motion";
 import {
+  h3ShotRecipeAcceptsReel,
   h3ShotRecipeNeedsHeroPhoto,
   h3ShotRecipeNeedsLifestyleStill,
   h3ShotRecipeNeedsReel,
@@ -321,6 +322,9 @@ export function PreVideoSetupPanel({
   const h3ShotMode = !scenesReady ? subpathToH3ShotRecipe(activeSubpath as never) : null;
   const isH3Shot = Boolean(h3ShotMode);
   const needsH3Reel = Boolean(h3ShotMode && h3ShotRecipeNeedsReel(h3ShotMode));
+  const acceptsH3Reel = Boolean(
+    h3ShotMode && h3ShotRecipeAcceptsReel(h3ShotMode),
+  );
   const needsH3Hero = Boolean(
     h3ShotMode && h3ShotRecipeNeedsHeroPhoto(h3ShotMode),
   );
@@ -357,7 +361,7 @@ export function PreVideoSetupPanel({
       isCreativeVideoStyle(wizard.visualStyleId));
   const showBrandWebsite = isSceneReel;
   const showConceptAiPlan = isSceneReel;
-  const showReferenceUpload = isReference || isSceneReel || needsH3Reel;
+  const showReferenceUpload = isReference || isSceneReel || acceptsH3Reel;
   // Product + reference/research still needs @Image1.
   const showProductPhoto = scenesReady ? false : isConcept ? true : !isUgc;
   const highlightH3Hero = !scenesReady && needsH3Hero;
@@ -1714,7 +1718,7 @@ export function PreVideoSetupPanel({
             {showReferenceUpload ? (
               <section
                 className={`pv-card ${
-                  needsH3Reel
+                  acceptsH3Reel
                     ? "border-violet-300 bg-violet-50/50 ring-1 ring-violet-200"
                     : ""
                 }`.trim()}
@@ -1738,12 +1742,12 @@ export function PreVideoSetupPanel({
                             {pv.inVideoBadge}
                           </span>
                         </>
-                      ) : isSceneReel ? (
+                      ) : acceptsH3Reel || isSceneReel ? (
                         <span className="pv-label-opt font-medium">{pv.extraOptional}</span>
                       ) : null}
                     </h3>
                     <p className="mt-0.5 text-xs text-slate-500">
-                      {needsH3Reel && h3ShotMode
+                      {acceptsH3Reel && h3ShotMode
                         ? m.wizard.h3ShotReelHint[
                             h3ShotMode as keyof typeof m.wizard.h3ShotReelHint
                           ] ?? m.wizard.h3ShotHeroHint[h3ShotMode]

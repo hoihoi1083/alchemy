@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import {
   buildVacuumInflateStillPrompt,
   buildVacuumInflateVideoPrompt,
@@ -28,7 +30,10 @@ import {
   LANDING_RECIPES,
   microContextForLandingRecipe,
 } from "../lib/landing-recipes";
-import { isRecipeOwnedVideoMode } from "../lib/creative-workflow";
+import {
+  isRecipeOwnedVideoMode,
+  recipeUsesSilentSeedance,
+} from "../lib/creative-workflow";
 
 describe("vacuum-inflate Seedance recipe", () => {
   it("builds flat→inflated stills and a 4s video prompt", () => {
@@ -116,16 +121,25 @@ describe("hand-throw-scene Seedance recipe", () => {
     });
     assert.match(start, /palm|miniature|MINIATURE/i);
     assert.match(end, /FULL-SCALE|real-world|scenic/i);
-    assert.match(start, /ARC tower/);
-    assert.match(end, /ARC tower/);
-    const video = buildHandThrowSceneVideoPrompt({ product: "ARC tower" });
+    assert.match(start, /IMAGE 1 pixels are the ONLY identity/i);
+    assert.match(start, /never swap category/i);
+    const nameVsPhoto = buildHandThrowSceneStillPrompt({
+      product: "Vitamin C serum",
+      frame: "start",
+    });
+    assert.match(nameVsPhoto, /NAME VS PHOTO/);
+    assert.match(nameVsPhoto, /Vitamin C serum/);
+    assert.match(nameVsPhoto, /@Image1/);
+    assert.doesNotMatch(nameVsPhoto, /MINIATURE model of Vitamin C serum/i);
+    const video = buildHandThrowSceneVideoPrompt({ product: "Vitamin C serum" });
+    assert.match(video, /NAME VS PHOTO/);
     assert.match(video, /Image 1/);
     assert.match(video, /Image 2/);
     assert.match(video, new RegExp(String(HAND_THROW_SCENE_DURATION_SEC)));
   });
 });
 
-describe("product-explode Seedance recipe", () => {
+describe("product-explode H3 recipe", () => {
   it("builds intact → floating-parts stills and a 4s video prompt", () => {
     const start = buildProductExplodeStillPrompt({
       product: "LIMELIGHT buds",
@@ -135,14 +149,34 @@ describe("product-explode Seedance recipe", () => {
       product: "LIMELIGHT buds",
       frame: "end",
     });
-    assert.match(start, /intact|packshot|hero/i);
-    assert.match(end, /explod|floating|parts/i);
+    assert.match(start, /intact|packshot|hero|assembled/i);
+    assert.match(start, /SEATED|wells/i);
+    assert.doesNotMatch(start, /floating slightly above the case/i);
+    assert.match(end, /explod|teardown|assembly axes/i);
+    assert.match(end, /NOT unboxing|empty shell/i);
+    assert.match(end, /never swap to earbuds\/power bank/i);
+    assert.match(end, /liquid-metal|mercury/i);
     assert.match(start, /LIMELIGHT buds/);
     assert.match(end, /LIMELIGHT buds/);
     const video = buildProductExplodeVideoPrompt({ product: "LIMELIGHT buds" });
     assert.match(video, /Image 1/);
     assert.match(video, /Image 2/);
+    assert.match(video, /TEARDOWN|assembly axes/i);
+    assert.match(video, /FORBIDDEN|unboxing|third earbud/i);
     assert.match(video, new RegExp(String(PRODUCT_EXPLODE_DURATION_SEC)));
+    const stillNameVsPhoto = buildProductExplodeStillPrompt({
+      product: "Vitamin C serum",
+      frame: "start",
+    });
+    assert.match(stillNameVsPhoto, /NAME VS PHOTO/);
+    assert.match(stillNameVsPhoto, /Vitamin C serum/);
+    assert.match(stillNameVsPhoto, /@Image1/);
+    assert.doesNotMatch(stillNameVsPhoto, /same Vitamin C serum outer shell/);
+    const endStill = buildProductExplodeStillPrompt({
+      product: "Vitamin C serum",
+      frame: "end",
+    });
+    assert.match(endStill, /never swap to earbuds\/power bank/i);
   });
 });
 
@@ -190,5 +224,42 @@ describe("Seedance fx landing recipes", () => {
       microContextForLandingRecipe("product-product-explode-4s").videoSubpath,
       "product_explode",
     );
+  });
+
+  it("marks H3-first FX as native audio (Seedance fallback mixes BGM in the wizard)", () => {
+    assert.equal(recipeUsesSilentSeedance("product-explode"), false);
+    assert.equal(recipeUsesSilentSeedance("social-drip"), false);
+    assert.equal(recipeUsesSilentSeedance("blockbuster"), false);
+    assert.equal(recipeUsesSilentSeedance("vacuum-inflate"), false);
+    assert.equal(recipeUsesSilentSeedance("creative-motion"), false);
+    assert.equal(recipeUsesSilentSeedance("hand-throw-scene"), false);
+    assert.equal(recipeUsesSilentSeedance("motion-poster"), false);
+    assert.equal(recipeUsesSilentSeedance("h3-lifestyle"), false);
+  });
+
+  it("start-end FX try MiniMax H3 then Seedance fallback", () => {
+    const wizard = readFileSync(
+      join(process.cwd(), "hooks/useStudioWizard.ts"),
+      "utf8",
+    );
+    const helper = wizard.slice(
+      wizard.indexOf("async function generateStartEndFxVideo"),
+      wizard.indexOf("async function makeVacuumInflateVideo"),
+    );
+    assert.match(helper, /generate-minimax-h3/);
+    assert.match(helper, /\/api\/generate"/);
+    assert.match(helper, /addBgm/);
+    assert.match(helper, /401|402|403/);
+    for (const [name, until] of [
+      ["makeVacuumInflateVideo", "async function generateCreativeMotionKeyframe"],
+      ["makeCreativeMotionVideo", "async function generateHandThrowSceneKeyframe"],
+      ["makeHandThrowSceneVideo", "async function generateProductExplodeKeyframe"],
+      ["makeProductExplodeVideo", "async function makeImageToVideo"],
+    ] as const) {
+      const start = wizard.indexOf(`async function ${name}`);
+      const end = wizard.indexOf(until, start);
+      assert.ok(start >= 0 && end > start, name);
+      assert.match(wizard.slice(start, end), /generateStartEndFxVideo/);
+    }
   });
 });

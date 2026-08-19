@@ -1,6 +1,6 @@
 /**
- * Vacuum inflate (真空充气) — Seedance start→end recipe.
- * Auto stills: vacuum-tight wrap → inflated clear bubble → 4s morph.
+ * Vacuum inflate (真空充气) — MiniMax H3 start→end (Seedance fallback).
+ * Auto stills: vacuum-tight wrap → inflated clear bubble → ~4s morph (H3 floor 5s).
  * The uploaded SKU stays the hero (phone stays a phone). The bag/bubble is the effect.
  */
 
@@ -65,7 +65,7 @@ export function buildVacuumInflateStillPrompt(
   ].join(" ");
 }
 
-/** Seedance image-to-video with start + end frames. */
+/** Start→end video prompt (H3 first, Seedance fallback). */
 export function buildVacuumInflateVideoPrompt(input: {
   product: string;
   conceptMode?: boolean;

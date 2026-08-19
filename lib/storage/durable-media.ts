@@ -14,6 +14,7 @@ import type { VideoTimingManifest } from "@/lib/video-timing-manifest";
 import { parseTimingManifest } from "@/lib/video-timing-manifest";
 
 export {
+  isHttpOrLibraryMediaUrl,
   isLibraryAssetUrl,
   libraryAssetIdFromUrl,
   libraryAssetUrl,

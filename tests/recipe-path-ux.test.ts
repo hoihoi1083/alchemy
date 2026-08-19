@@ -77,6 +77,7 @@ describe("identity recipe hero lock", () => {
     assert.match(vacuum, /identityRecipeHeroReady/);
     assert.doesNotMatch(vacuum, /promotionMode !== "concept"/);
     assert.match(wizard, /bindIdentityHeroToKeyframeForm/);
+    assert.match(wizard, /FX plates: product photo only/);
     assert.match(wizard, /resolveHydratedProductPhoto/);
   });
 });

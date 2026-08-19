@@ -3,6 +3,7 @@ import { buildImageRefinePrompt } from "@/lib/image-refine-prompt";
 import { buildCanvasComposePrompt } from "@/lib/pro-canvas-compose";
 import { cameraPromptSuffix } from "@/lib/pro-canvas-camera";
 import type { CanvasImageSource } from "@/lib/pro-canvas-types";
+import { isHttpOrLibraryMediaUrl } from "@/lib/storage/library-asset-url";
 
 export async function uploadCanvasAsset(file: File): Promise<string> {
   const fd = new FormData();
@@ -11,7 +12,7 @@ export async function uploadCanvasAsset(file: File): Promise<string> {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error((data as { error?: string }).error || "Upload failed");
   const url = (data as { url?: string }).url;
-  if (!url?.startsWith("http")) throw new Error("No URL in upload response");
+  if (!isHttpOrLibraryMediaUrl(url)) throw new Error("No URL in upload response");
   return url;
 }
 
@@ -25,7 +26,7 @@ async function resolveSourceUrls(sources: CanvasImageSource[]): Promise<{
     let url: string | undefined;
     if (src.file) {
       url = await uploadCanvasAsset(src.file);
-    } else if (src.url?.startsWith("http")) {
+    } else if (isHttpOrLibraryMediaUrl(src.url)) {
       url = src.url;
     }
     if (url) {
@@ -61,7 +62,7 @@ export async function runCanvasImageNode(opts: {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error((data as { error?: string }).error || "Image generation failed");
     const url = (data as { imageUrl?: string }).imageUrl;
-    if (!url?.startsWith("http")) throw new Error("No image URL in response");
+    if (!isHttpOrLibraryMediaUrl(url)) throw new Error("No image URL in response");
     return url;
   }
 
@@ -81,7 +82,7 @@ export async function runCanvasImageNode(opts: {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error((data as { error?: string }).error || "Image edit failed");
     const url = (data as { imageUrl?: string }).imageUrl;
-    if (!url?.startsWith("http")) throw new Error("No image URL in response");
+    if (!isHttpOrLibraryMediaUrl(url)) throw new Error("No image URL in response");
     return url;
   }
 
@@ -101,7 +102,7 @@ export async function runCanvasImageNode(opts: {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error((data as { error?: string }).error || "Image compose failed");
   const url = (data as { imageUrl?: string }).imageUrl;
-  if (!url?.startsWith("http")) throw new Error("No image URL in response");
+  if (!isHttpOrLibraryMediaUrl(url)) throw new Error("No image URL in response");
   return url;
 }
 
@@ -132,7 +133,7 @@ export async function runCanvasVideoNode(opts: {
   if (!prompt) throw new Error("Enter a video prompt.");
 
   const fd = new FormData();
-  if (opts.imageUrl?.startsWith("http")) {
+  if (isHttpOrLibraryMediaUrl(opts.imageUrl)) {
     fd.set("mode", "image");
     fd.set("image_start_url", opts.imageUrl);
   } else {
@@ -151,7 +152,7 @@ export async function runCanvasVideoNode(opts: {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error((data as { error?: string }).error || "Video generation failed");
   const url = (data as { videoUrl?: string }).videoUrl;
-  if (!url?.startsWith("http")) throw new Error("No video URL in response");
+  if (!isHttpOrLibraryMediaUrl(url)) throw new Error("No video URL in response");
   return url;
 }
 
@@ -205,7 +206,7 @@ export async function runCanvasSpliceNode(opts: {
   videoUrls: string[];
   musicUrl?: string;
 }): Promise<string> {
-  const urls = opts.videoUrls.filter((u) => u.startsWith("http"));
+  const urls = opts.videoUrls.filter((u) => isHttpOrLibraryMediaUrl(u));
   if (urls.length < 1) throw new Error("Connect at least one video node with output.");
 
   let videoUrl: string;
@@ -220,10 +221,10 @@ export async function runCanvasSpliceNode(opts: {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error((data as { error?: string }).error || "Video splice failed");
     videoUrl = (data as { videoUrl?: string }).videoUrl ?? "";
-    if (!videoUrl.startsWith("http")) throw new Error("No video URL from splice");
+    if (!isHttpOrLibraryMediaUrl(videoUrl)) throw new Error("No video URL from splice");
   }
 
-  if (opts.musicUrl?.startsWith("http")) {
+  if (isHttpOrLibraryMediaUrl(opts.musicUrl)) {
     const res = await fetch("/api/add-bgm", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -232,7 +233,7 @@ export async function runCanvasSpliceNode(opts: {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error((data as { error?: string }).error || "Add music failed");
     const withBgm = (data as { videoUrl?: string }).videoUrl;
-    if (withBgm?.startsWith("http")) return withBgm;
+    if (isHttpOrLibraryMediaUrl(withBgm)) return withBgm;
   }
 
   return videoUrl;

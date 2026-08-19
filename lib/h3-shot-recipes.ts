@@ -4,6 +4,7 @@
  */
 
 import type { VideoCreativeMode } from "@/lib/creative-workflow";
+import { nameIsClaimImage1IsObjectLine } from "@/lib/prompt-balance-contract";
 import type { VideoDuration } from "@/lib/video-settings";
 import type { VideoSubpath } from "@/lib/wizard-micro-steps.types";
 
@@ -73,12 +74,14 @@ export const H3_SHOT_RECIPE_NEGATIVE =
   "blurry product, morphing identity, extra people unless specified, UI chrome, " +
   "lab interior, talking head unless beauty-mv, generic slow push-in unless specified";
 
-/** Bullet-time allows frozen splash physics; still forbid slideshow / hard freeze with no camera. */
+/** Bullet-time = dramatic frozen burst + orbit; forbid slideshow / static freeze / timid float. */
 const FOOD_BULLET_TIME_NEGATIVE =
   "on-screen text, subtitles, captions, watermarks, logos invented by the model, " +
   "voiceover, dialogue, lyrics, slideshow still frames, hard cut, jump cut, " +
   "zero camera motion, blurry food, morphing identity, inventing ingredients not in the still, " +
-  "UI chrome, lab interior, talking head, explosive chaotic scatter of food off-frame";
+  "UI chrome, lab interior, talking head, empty hands with the dish gone, " +
+  "food flying completely off-frame so the dish is unreadable, " +
+  "tiny timid float of one or two crumbs, intact sandwich with almost no debris";
 
 /** Showreel allows designed kinetic type — still forbid captions/UI/watermarks. */
 export const H3_SHOWREEL_NEGATIVE =
@@ -142,13 +145,14 @@ export function videoModeToH3ShotRecipe(
   return isH3ShotRecipeMode(mode) ? mode : null;
 }
 
-/** True when this creative mode needs a reference MP4 (imitate-ad / neon-on-real / h3-showreel). */
+/** True when Generate cannot start without a reference MP4 (imitate-ad / neon-on-real). */
 export function h3ShotRecipeNeedsReel(mode: H3ShotRecipeMode): boolean {
-  return (
-    mode === "imitate-ad" ||
-    mode === "neon-on-real" ||
-    mode === "h3-showreel"
-  );
+  return mode === "imitate-ad" || mode === "neon-on-real";
+}
+
+/** True when the recipe can use an optional @Video1 (showreel) or requires one. */
+export function h3ShotRecipeAcceptsReel(mode: H3ShotRecipeMode): boolean {
+  return h3ShotRecipeNeedsReel(mode) || mode === "h3-showreel";
 }
 
 /**
@@ -169,9 +173,13 @@ export function h3ShotRecipeNeedsLifestyleStill(
   return mode === "food-bullet-time" || mode === "h3-lifestyle";
 }
 
-/** Kinetic type / designed masthead words allowed (showreel + movie-title). */
+/** Kinetic type / designed masthead words allowed (showreel, movie-title, sphere MG reveal). */
 export function h3ShotRecipeAllowsKineticType(mode: H3ShotRecipeMode): boolean {
-  return mode === "h3-showreel" || mode === "h3-movie-title";
+  return (
+    mode === "h3-showreel" ||
+    mode === "h3-movie-title" ||
+    mode === "h3-sphere-mg"
+  );
 }
 
 export const H3_SHOWREEL_ASPECTS = ["9:16", "16:9"] as const;
@@ -190,7 +198,7 @@ export function parseH3ShowreelAspect(raw: unknown): H3ShowreelAspect {
     : DEFAULT_H3_SHOWREEL_ASPECT;
 }
 
-/** Showreel style cards — still imitate-ad + kinetic type + aspect pick. */
+/** Showreel style cards own the camera language; @Video1 is optional. */
 export const H3_SHOWREEL_SCHEME_IDS = [
   "car-cinematic",
   "keyboard-tech",
@@ -343,6 +351,13 @@ export function resolveH3SphereMgScheme(input: {
   const text =
     `${input.product ?? ""} ${input.headline ?? ""} ${input.conceptIdea ?? ""}`.toLowerCase();
   if (
+    /car|suv|vehicle|truck|sedan|coupe|汽车|汽車|車|轿车|跑车|休旅/.test(
+      text,
+    )
+  ) {
+    return "crystal-glass";
+  }
+  if (
     /glass|crystal|perfume|serum|skincare|cosmetic|香水|精华|护肤|玻璃|水晶/.test(
       text,
     )
@@ -373,42 +388,52 @@ export function resolveH3SphereMgScheme(input: {
 
 const H3_SPHERE_MG_SCHEME_STILL: Record<H3SphereMgSchemeId, string> = {
   "crystal-glass":
-    "a clear crystal glass sphere on a dark void, product or brand mark readable inside / through refraction",
+    "ONE large crystal glass orb in a dark C4D studio with caustic floor light — photoreal miniature of the uploaded product INSIDE the orb, already readable, ready to emerge",
   "chrome-spin":
-    "a polished chrome mirror sphere on a dark void, product silhouette reflected or wrapped on the surface",
+    "ONE large chrome orb in a dark studio with spin light-streaks — the uploaded product's front face readable on/in the chrome, ready to step out as the hero",
   "liquid-mercury":
-    "a liquid-mercury metal sphere mid-form on a dark void, product colors readable in the fluid",
+    "ONE liquid-mercury orb in a dark studio pool — the uploaded product coalescing in the fluid, silhouette already recognizable",
   "neon-core":
-    "a dark energy sphere with a glowing neon core on a black void, brand colors in the glow",
+    "ONE dark energy orb with neon plasma core — the uploaded product silhouette readable in the core, ready to come forward",
   "matte-planet":
-    "a soft matte planet-like sphere on a dark void, product or logo colors mapped as surface material",
+    "ONE large matte C4D orb on a black void as a STAGE — the uploaded product's front face large on the facing side, about to step off the sphere as the hero (not a blank moon)",
 };
+
+const SPHERE_MG_NEGATIVE =
+  `${H3_SHOT_RECIPE_NEGATIVE}, invent competitor logos, hard cut montage, ` +
+  "busy lifestyle street, talking head, planet Earth, NASA space documentary, continents and clouds on a globe, " +
+  "extra moons, asteroid field, starfield with multiple planets, " +
+  "reshape the SKU into a spherical phone/bottle/watch/car, blank grey moon with no product, " +
+  "bump-map etchings only, unreadable smeared texture, outdoor landscape, stay as only-a-sphere forever";
 
 function sphereMgSchemeBeats(
   scheme: H3SphereMgSchemeId,
   img: string,
   subject: string,
 ): string[] {
-  const lock = `球体是可复用的运动图形英雄；产品／品牌身份严格来自${img}（${subject}）——外形、Logo、配色可映射到球表、球内折射或环绕物，禁止换成另一件商品。`;
+  const lock =
+    `这是 C4D / 运动图形广告（像 MiniMax H3 秀场 MG）：先用风格卡的球体世界开场，再把${img}（${subject}）作为真正英雄揭出来。` +
+    `0–2.5s 可以是抽象球、几何隧道、动能大字；之后镜头必须把上传产品带出来（车头灯+格栅／瓶身／手机／Logo 立刻能认）。` +
+    `禁止整段只剩一颗空白灰球；禁止地球、大陆云层、卫星。允许设计感动能大字，禁止字幕条/UI、禁止发明竞品名。`;
   const sharedClose =
-    `6–8s：收在干净球体英雄位（产品身份仍可读），高光扫过球面；一镜到底，无硬切、无字幕条/UI。`;
-  const neg = `Negative: ${H3_SHOT_RECIPE_NEGATIVE}, invent competitor logos, lose sphere as hero, hard cut montage, busy lifestyle street, talking head`;
+    `5.5–8s：产品占画面英雄位（外形与${img}一致），球体可退成地面反射／光环／背景图形；可留一句动能大字；一镜到底。`;
+  const neg = `Negative: ${SPHERE_MG_NEGATIVE}`;
 
   if (scheme === "crystal-glass") {
     return [
-      `H3 球体运动图形「Crystal glass」：透明水晶玻璃球一镜。${lock}`,
-      `0–1.5s：黑场或极简虚空，玻璃球剪影缓慢旋转，折射高光可读。`,
-      `1.5–6s：镜头绕球或推入球面；${img} 的外形／Logo／配色在球内或折射中逐渐清晰；可有轻雾与焦散。`,
+      `H3 球体运动图形「Crystal glass」：水晶球世界 → 产品揭幕。${lock}`,
+      `0–2s：暗工作室，单颗玻璃球居中，焦散光网；球内已是${img}的写实微缩模型。`,
+      `2–5.5s：镜头推入／绕球，玻璃打开或相机钻进球体，${img} 从球内走到镜头前，车灯/外形变大变清晰。无地球。`,
       sharedClose,
-      `适合香水、护肤、玻璃包装、透明科技感产品；概念 Logo 也可印在球内。`,
+      `适合香水、护肤、玻璃包装、汽车、透明科技感产品。`,
       neg,
     ];
   }
   if (scheme === "chrome-spin") {
     return [
-      `H3 球体运动图形「Chrome spin」：镜面铬球旋转一镜。${lock}`,
-      `0–1.5s：纯黑虚空中铬球缓慢自转，环境反射掠过。`,
-      `1.5–6s：连续旋转／环绕；${img} 身份以反射、贴图或环绕小物体方式可读，铬面不变形丢失品牌色。`,
+      `H3 球体运动图形「Chrome spin」：铬球 MG → 产品揭幕。${lock}`,
+      `0–2s：纯黑工作室铬球高速自转，灯带高光拖影；球面已能认出${img}正面。`,
+      `2–5.5s：铬面裂开／展开／相机越过铬球，${img} 作为三维英雄走出铬世界，身份锁定上传图。`,
       sharedClose,
       `适合金属手机、手表、耳机、硬科技 SKU。`,
       neg,
@@ -416,31 +441,30 @@ function sphereMgSchemeBeats(
   }
   if (scheme === "liquid-mercury") {
     return [
-      `H3 球体运动图形「Liquid mercury」：液态金属球凝聚一镜。${lock}`,
-      `0–1.5s：液滴／汞液在虚空中晃动，尚未成完整球。`,
-      `1.5–6s：流体连续凝聚成球；${img} 配色与轮廓在液体表面浮现并锁定，禁止变成另一 SKU。`,
+      `H3 球体运动图形「Liquid mercury」：汞液凝聚 → 产品揭幕。${lock}`,
+      `0–2s：暗工作室汞液晃动，尚未成完整球；液面已有${img}轮廓。`,
+      `2–5.5s：流体凝聚成球后立刻把${img}从液体里托出成完整三维产品，禁止只剩配色。`,
       sharedClose,
-      `适合液态感包装、护肤水光、运动补给；概念可用品牌色流体。`,
+      `适合液态感包装、护肤水光、运动补给。`,
       neg,
     ];
   }
   if (scheme === "neon-core") {
     return [
-      `H3 球体运动图形「Neon core」：暗球＋霓虹内核一镜。${lock}`,
-      `0–1.5s：暗球呼吸发光，内核脉冲，品牌色预告。`,
-      `1.5–6s：内核能量流转；${img} Logo／外形在光核或球壳上可读；可有轻粒子环。`,
+      `H3 球体运动图形「Neon core」：霓虹内核 → 产品揭幕。${lock}`,
+      `0–2s：暗球＋青／洋红光核脉冲；核内已有${img}剪影。`,
+      `2–5.5s：光核打开，${img} 从能量里走出成为可读产品英雄。不是行星。`,
       sharedClose,
-      `适合电竞、数码、能量饮料、霓虹品牌；概念吉祥物也可作光核剪影。`,
+      `适合电竞、数码、能量饮料、霓虹品牌。`,
       neg,
     ];
   }
-  // matte-planet
   return [
-    `H3 球体运动图形「Matte planet」：哑光行星球一镜。${lock}`,
-    `0–1.5s：柔和哑光球体居中，微重力感缓慢自转。`,
-    `1.5–6s：镜头轻环绕；${img} 配色／Logo 映射为星球表面材质或轨道旁小英雄物，身份始终可辨。`,
+    `H3 球体运动图形「Matte planet」：哑光 C4D 圆球当舞台 → 产品揭幕（不是地球）。${lock}`,
+    `0–2s：黑场一颗哑光圆球，${img}正面已印在朝向镜头的半球（不是月球坑）。`,
+    `2–5.5s：球体当舞台：${img} 从球面走向镜头，成为真正的三维产品；球可留在背景。禁止整段只剩灰球。`,
     sharedClose,
-    `最通用：任意清晰 SKU、瓶装、球鞋、手机，以及概念 Logo／吉祥物。`,
+    `通用：任意清晰 SKU、汽车、瓶装、球鞋、手机，以及概念 Logo。`,
     neg,
   ];
 }
@@ -530,13 +554,13 @@ const H3_STILL_DEFAULT: Record<H3ShotRecipeMode, string> = {
   "imitate-ad": "a premium skincare bottle, clean packshot",
   "neon-on-real": "a premium product or brand mark for neon overlay identity",
   "food-bullet-time":
-    "a young East Asian woman smiling at camera holding a loaded wrap/sandwich toward lens at an outdoor cafe, frozen food splash with lettuce and tomatoes suspended mid-air around the wrap",
+    "a young East Asian woman smiling at camera holding a loaded wrap/sandwich toward lens at an outdoor cafe, high-speed frozen food explosion with bread layers, lettuce, tomatoes, cheese strands and sauce droplets bursting radially around her hands",
   "c4d-motion":
     "a premium athletic sneaker, red and black materials, centered on pure black void",
   "h3-showreel":
     "a premium smartphone, glass and metal, centered on a dark cinematic void",
   "h3-sphere-mg":
-    "a soft matte planet-like sphere on a dark void with subtle brand-colored surface",
+    "ONE large matte C4D clay orb centered on a black studio void, brand-colored albedo — not planet Earth",
   "h3-movie-title":
     "a premium product hero ready for cinematic title cards, dark editorial backdrop",
   "h3-lifestyle":
@@ -563,11 +587,21 @@ function subjectLabel(input: H3ShotPromptInput): string {
   );
 }
 
+/** Uploaded photo is the SKU. Typed name is a caption — never a second product. */
+function h3PhotoIdentityWins(img: string, subject: string): string {
+  return [
+    `身份唯一来源是${img}的像素外形与类别。名称「${subject}」只是标签/卖点文案，禁止按名称发明另一件商品。`,
+    `若名称写便攜電源/电池/电源但${img}是汽车，必须保持汽车，禁止变成移动电源。`,
+    nameIsClaimImage1IsObjectLine(subject),
+  ].join(" ");
+}
+
 /** Continuous one-take prompts — Chinese beats where H3 responds well. */
 export function buildH3ShotRecipePrompt(input: H3ShotPromptInput): string {
   const subject = subjectLabel(input);
   const img = "@Image1";
 
+  const beats = ((): string => {
   switch (input.mode) {
     case "ecom-orbit":
       return [
@@ -642,24 +676,25 @@ export function buildH3ShotRecipePrompt(input: H3ShotPromptInput): string {
 
     case "food-bullet-time":
       return [
-        `美食子弹时间一镜（3D食物飞溅打卡）：严格锁定${img}（${subject}）的人物面孔、发型服饰、食物/饮品种类与摆盘、场景环境；禁止换脸换菜、禁止凭空添加原图没有的食材或配料。`,
-        `画面已是高速摄影定格：酱汁/碎屑/芝士丝/冰块/珍珠等属于这道食物的元素悬浮在食物周围成弧，人物身姿基本静止，只有镜头在运动。`,
-        `0–1s：英雄位建立 — 人物双手（或单手）把食物/饮品递向镜头，悬浮飞溅清晰可读，人脸尽量清晰，商业美食打卡感。`,
-        `1–5s：以人物为中心向右（或弧形）缓慢环绕慢动作运镜约90–180°，景深浅，背景有视差；食物保持悬停，不崩散落地、不爆炸式飞出画框。`,
-        `5–6s：微推近或收在诱人英雄角，飞溅仍定格，高清升格凝固动态瞬间。`,
+        `美食子弹时间一镜（Matrix 级 3D 食物爆裂打卡）：严格锁定${img}（${subject}）的人物面孔、发型服饰、食物/饮品种类与摆盘、场景环境；禁止换脸换菜、禁止凭空添加原图没有的食材或配料。`,
+        `这是商业美食广告的高速摄影高潮：食物在双手间径向爆开成可读的立体碎屑云，不是轻轻飘两三片菜叶。人物身姿基本静止，人脸尽量清晰；镜头绕着爆裂体积运动。`,
+        `0–0.8s：英雄位建立 — 人物把完整食物/饮品递向镜头，商业打卡感，食物身份清晰。`,
+        `0.8–1.8s：戏剧性爆裂高潮 — 该食物的层次沿径向崩开（面包/饼皮、馅料、酱汁液珠、芝士拉丝、碎屑/生菜/冰块/珍珠等属于这道菜的元素），充满双手周围的空气体积；动能强、粒子密、慢动作可读；核心仍握在手里，不要整份飞出画外。`,
+        `1.8–5s：在爆裂最高点冻结成子弹时间：碎屑云保持立体悬停（不是落地、不是消失），镜头以人物为中心向右弧形环绕约 120–180°，运镜比普通环绕更有力，浅景深、背景视差，让 3D 爆裂体积转起来。`,
+        `5–6s：微推近收在最戏剧的凝固瞬间 — 层次分离、酱汁珠与碎屑仍定格在空中，高清升格。`,
         `一镜到底，无切镜、无幻灯片定格、无字幕。`,
         `Negative: ${FOOD_BULLET_TIME_NEGATIVE}`,
       ].join("\n");
 
     case "c4d-motion":
       return [
-        `顶级 C4D / 三维品牌动态视觉一镜：严格锁定${img}（${subject}）外形、材质、Logo 与配色；黑场虚空、金属高光、抽象材质与动能拖影，像 Nike 级运动广告片头，但产品必须是用户上传的这一件。`,
-        `0–1.5s：纯黑背景，居中金属/玻璃质感徽章或产品剪影缓慢呼吸发光，高对比极简开场。`,
-        `1.5–3.5s：镜头连续推入与产品配色相关的抽象微距材质（织物网眼、液态涟漪、半透明胶囊体），光扫过湿润表面；抽象元素服务主产品，不要换成另一件商品。`,
-        `3.5–6s：产品从暗部轮廓以 rim light / 液面涟漪揭幕现身，外形与${img}一致；可做轻动能拖影或重影，但身份不变形。`,
-        `6–8s：环绕或弧形掠过产品，收在纯黑虚空上的干净英雄位，高光扫过边缘。`,
+        `顶级 C4D / 三维品牌动态视觉一镜：严格锁定${img}像素外形、材质、Logo 与配色；名称「${subject}」只用于称呼这件已上传的物体。黑场虚空、金属高光、抽象材质与动能拖影，像 Nike 级运动广告片头，但产品必须是${img}这一件，禁止按名称换成电源/电池/球鞋。`,
+        `0–1.5s：纯黑背景，居中的${img}剪影或金属/玻璃质感外形缓慢呼吸发光 — 开场就必须能辨认${img}的真实类别（汽车就是车剪影，不要变成电源砖或抽象徽章）。`,
+        `1.5–3.5s：镜头连续推入与${img}配色相关的抽象微距材质（织物网眼、液态涟漪、半透明胶囊体），光扫过湿润表面；抽象元素只服务${img}，不要在抽象段换成名称里的另一件商品。`,
+        `3.5–6s：产品从暗部轮廓以 rim light / 液面涟漪揭幕现身，外形必须与${img}一致；可做轻动能拖影或重影，但身份不变形、不换成便攜電源。`,
+        `6–8s：环绕或弧形掠过${img}，收在纯黑虚空上的干净英雄位，高光扫过边缘。`,
         `一镜到底连续运动，无硬切、无字幕、无发明品牌名。商业三维渲染质感。`,
-        `Negative: ${H3_SHOT_RECIPE_NEGATIVE}, invent Nike or competitor logos, wrong sneaker SKU, hard cut montage, bright white studio backdrop, busy lifestyle street`,
+        `Negative: ${H3_SHOT_RECIPE_NEGATIVE}, invent Nike or competitor logos, wrong sneaker SKU, power bank or battery brick that is not @Image1, generic C4D logo badge instead of @Image1 silhouette, hard cut montage, bright white studio backdrop, busy lifestyle street`,
       ].join("\n");
 
     case "h3-showreel":
@@ -712,6 +747,8 @@ export function buildH3ShotRecipePrompt(input: H3ShotPromptInput): string {
         `Negative: ${H3_SHOT_RECIPE_NEGATIVE}, face morph, identity swap, product swap, hard cut montage, studio beauty MV only with no lifestyle context`,
       ].join("\n");
   }
+  })();
+  return `${h3PhotoIdentityWins(img, subject)}\n${beats}`;
 }
 
 /** Nano Banana still — H3 identity lock. Fast path when user has no upload. */
@@ -750,9 +787,13 @@ export function buildH3ShotRecipeStillPrompt(input: H3ShotPromptInput): string {
     : input.conceptMode
       ? "a simple geometric brand mark / cute mascot"
       : fallback;
+  const photoWins =
+    "When IMAGE 1 is attached, IMAGE 1 pixels ARE the only product identity. " +
+    nameIsClaimImage1IsObjectLine(named || undefined) +
+    " Keep IMAGE 1's real category and silhouette (a car stays a car even if the name says 便攜電源 / battery / power bank). Do not restyle IMAGE 1 into a power bank, sneaker, or C4D primitive that only matches the typed name.";
   const lock = named
-    ? `The hero is exactly ${subject}. Keep shape, color, materials. No invented logos or readable fake words.`
-    : `Hero: ${subject}. No invented brand names, no readable fake words.`;
+    ? `${photoWins} Call it "${subject}" as a label only. Keep shape, color, materials of IMAGE 1 when attached. No invented logos or readable fake words.`
+    : `Hero: ${subject}. ${photoWins} No invented brand names, no readable fake words.`;
   const aspect =
     input.mode === "h3-showreel"
       ? parseH3ShowreelAspect(input.showreelAspect)
@@ -815,15 +856,16 @@ export function buildH3ShotRecipeStillPrompt(input: H3ShotPromptInput): string {
         "Photoreal commercial still, 9:16, textless, no captions, no watermarks, no UI.",
         lock,
         "Viral Xiaohongshu food check-in photo: young person smiling at camera, holding a wrap / sandwich / boba cup / plated dish TOWARD the lens with both hands (or one hand for drinks) — face clear and sharp.",
-        "High-speed BULLET-TIME FOOD SPLASH already frozen: sauces, lettuce, crumbs, cheese strands, ice cubes, or boba pearls that BELONG to this dish suspended mid-air in a concentrated arc around the food — weightless float, not explosive scatter off-frame.",
+        "PEAK high-speed BULLET-TIME FOOD EXPLOSION already frozen at maximum drama: the dish's own layers radially burst apart around the hands — bread/wrap sheets, filling, sauce droplets, cheese strands, crumbs, lettuce, ice, or pearls that BELONG to this food. Dense 3D debris cloud filling mid-air (dozens of readable particles, not two timid floating leaves). Core of the dish still gripped; nothing unreadable off-frame.",
         "Real cafe / street / restaurant backdrop with shallow depth of field. Keep exact food types and plating — do not invent unrelated ingredients.",
-        "Commercial SLR texture, cinematic daylight, rich layers — ready as @Image1 for a rightward orbit around the frozen splash while the person stays almost still.",
+        "Commercial SLR texture, cinematic daylight, Matrix-style freeze — ready as @Image1 for a rightward orbit around the frozen explosion while the person stays almost still.",
       ].join(" ");
     case "c4d-motion":
       return [
         ...shared,
-        "Centered product hero on a pure black void, dramatic rim light, metallic / glossy C4D commercial look.",
+        "Centered IMAGE 1 hero on a pure black void, dramatic rim light, metallic / glossy C4D commercial look.",
         "High-contrast dark studio — no street lifestyle, no white seamless e-com backdrop, no readable invented brand words.",
+        "Do not replace IMAGE 1 with a generic power bank, battery brick, or sneaker because of the product name.",
         "Premium brand motion-graphics still ready for abstract → product reveal animation.",
       ].join(" ");
     case "h3-showreel": {
@@ -843,19 +885,20 @@ export function buildH3ShotRecipeStillPrompt(input: H3ShotPromptInput): string {
     case "h3-sphere-mg": {
       const schemeNote =
         sphereMgScheme === "crystal-glass"
-          ? "Crystal glass sphere on a dark void — product or mark readable through refraction."
+          ? "Crystal-glass C4D stage: large glass orb with a photoreal miniature of the uploaded product INSIDE, ready to emerge."
           : sphereMgScheme === "chrome-spin"
-            ? "Polished chrome sphere on a dark void — product silhouette wrapped or reflected."
+            ? "Chrome-spin C4D stage: large chrome orb with the product front face readable, ready to step out as the hero."
             : sphereMgScheme === "liquid-mercury"
-              ? "Liquid-mercury sphere mid-form on a dark void — brand colors in the fluid."
+              ? "Liquid-mercury C4D stage: product silhouette coalescing in the fluid, ready to be lifted out."
               : sphereMgScheme === "neon-core"
-                ? "Dark energy sphere with neon core — brand colors in the glow."
-                : "Soft matte planet-like sphere on a dark void — brand colors as surface material.";
+                ? "Neon-core C4D stage: product silhouette in the plasma core, ready to come forward."
+                : "Matte C4D orb as a STAGE — product front face large on the facing side, about to step off as the hero (not a blank moon).";
       return [
         ...shared,
         schemeNote,
-        "Sphere is the reusable motion-graphics hero; keep product/logo identity readable on or inside the sphere.",
-        "No captions, no UI chrome, pure black void backdrop.",
+        "Motion-graphics still (not a space documentary). Sphere is the opening world; the uploaded product must already be recognizable so the video can bring it OUT.",
+        "Do NOT output a blank grey planet, bump-map etchings only, NASA Earth, or extra moons. Do NOT reshape the SKU into a spherical car/phone.",
+        "Optional empty masthead space for kinetic type later. No captions, no UI chrome.",
       ].join(" ");
     }
     case "h3-movie-title":

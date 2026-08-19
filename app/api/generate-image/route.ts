@@ -50,6 +50,7 @@ import type { PromptMarket, SubjectFraming } from "@/lib/prompt-variables";
 import { defaultEditEndpoint, defaultTextEndpoint, sanitizeImageEndpoint } from "@/lib/image-endpoints";
 import { mirrorImageUrlToFalStorage } from "@/lib/fal-mirror-media";
 import { persistAndDurablize, persistAndDurablizeMany } from "@/lib/storage/durable-media";
+import { isHttpOrLibraryMediaUrl } from "@/lib/storage/library-asset-url";
 import {
   IMAGE_LOGO_REFINE_SYSTEM_PROMPT,
   IMAGE_REFINE_SYSTEM_PROMPT,
@@ -198,7 +199,12 @@ async function runRefineEdit(
   tokenCost?: number;
   resolution?: "1K" | "2K" | "4K";
 }): Promise<NextResponse> {
-  const cost = opts.tokenCost ?? imageTokenCostFromRequest({ multipartMode: "refine" });
+  const cost =
+    opts.tokenCost ??
+    imageTokenCostFromRequest({
+      multipartMode: "refine",
+      numImages: opts.numImages,
+    });
   const charged = await chargeTokens(opts.userId, cost, { kind: "image", mode: "refine" });
   if ("error" in charged) return charged.error;
   const balanceAfter = charged.balanceAfter;
@@ -1027,7 +1033,7 @@ export async function POST(request: Request) {
   );
   const numImages = Math.min(4, Math.max(1, body?.num_images ?? 1));
   const imageUrls = (body?.image_urls ?? []).filter(
-    (u): u is string => typeof u === "string" && u.startsWith("http"),
+    (u): u is string => typeof u === "string" && isHttpOrLibraryMediaUrl(u),
   );
 
   if (!prompt) {

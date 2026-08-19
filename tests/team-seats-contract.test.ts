@@ -45,6 +45,10 @@ describe("team seats contract", () => {
     assert.match(src, /invitedEmail: invite.inviteEmail/);
     assert.match(src, /candidateEmails/);
     assert.match(src, /sendTeamInviteEmail/);
+    const inviteEmail = read("lib/email/team-invite.ts");
+    assert.match(inviteEmail, /buildReceiptHtml/);
+    assert.match(inviteEmail, /cid:alchemy-logo|EMAIL_LOGO_CONTENT_ID/);
+    assert.match(inviteEmail, /Accept invite/);
     assert.match(src, /resendTeamInvite/);
     assert.match(src, /heldSeats: \{ \$lt: seatLimit \}/);
     assert.match(src, /This person is already on the team/);

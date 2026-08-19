@@ -101,6 +101,18 @@ export function isRecipeOwnedVideoMode(
   );
 }
 
+/**
+ * Dual-frame FX run MiniMax H3 first (native stereo). Seedance is fallback
+ * only — that path is silent, so the wizard mixes library BGM after generate.
+ * Always false here so generateVideo does not overlay pads on H3 audio.
+ */
+export function recipeUsesSilentSeedance(
+  mode: string | null | undefined,
+): boolean {
+  if (!mode) return false;
+  return false;
+}
+
 export function imageModePreviewSrc(id: ImageCreativeMode): string {
   return `/images/studio/image-modes/${id}.png?v=1`;
 }

@@ -25,6 +25,8 @@ import { isVideoOutputPathLocked, resolveVideoOutputPresentation } from "@/lib/v
 import { analyzeProductImageFile } from "@/lib/image-upload-quality";
 import {
   isH3ShotRecipeMode,
+  h3ShotRecipeAcceptsReel,
+  h3ShotRecipeNeedsReel,
   MACRO_SNAP_INTENSITIES,
   H3_SHOWREEL_ASPECTS,
   H3_SHOWREEL_SCHEME_IDS,
@@ -477,15 +479,14 @@ export function VideoStep() {
           }}
         />
       </div>
-      {h3ShotMode &&
-      (h3ShotMode === "imitate-ad" ||
-        h3ShotMode === "neon-on-real" ||
-        h3ShotMode === "h3-showreel") ? (
+      {h3ShotMode && h3ShotRecipeAcceptsReel(h3ShotMode) ? (
         <div className="space-y-2 rounded-xl border-2 border-violet-500/50 bg-violet-950/30 p-3">
           <p className="text-sm font-semibold text-violet-100">
             {m.wizard.videoSectionReference}
             <span className="ml-2 rounded-full bg-violet-500/30 px-2 py-0.5 text-[11px] font-semibold text-violet-100">
-              {pv.requiredBadge}
+              {h3ShotRecipeNeedsReel(h3ShotMode)
+                ? pv.requiredBadge
+                : pv.extraOptional}
             </span>
           </p>
           <p className="text-xs text-violet-200/85">

@@ -40,6 +40,8 @@ describe("English caption burn fonts", () => {
   it("detects CJK vs Latin", () => {
     assert.equal(textNeedsCjkFonts("Automate emails"), false);
     assert.equal(textNeedsCjkFonts("一鍵生成宣傳素材"), true);
+    assert.equal(textNeedsCjkFonts("產品：標題"), true);
+    assert.equal(textNeedsCjkFonts("Hello: world"), false);
   });
 
   it("English burns use compact Latin-only CSS (not 12MB CJK embed)", async () => {
