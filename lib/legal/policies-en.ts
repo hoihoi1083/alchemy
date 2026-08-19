@@ -7,7 +7,7 @@ import {
 } from "@/lib/brand";
 import type { LegalBundle } from "@/lib/legal/types";
 
-const contactLine = `${PRODUCT_LEGAL_NAME}. Email: ${PRODUCT_SUPPORT_EMAIL}. Region: ${PRODUCT_LEGAL_REGION}.`;
+const contactLine = `For any questions regarding our services, please contact ${PRODUCT_LEGAL_NAME} by email at ${PRODUCT_SUPPORT_EMAIL}.`;
 
 export const legalEn: LegalBundle = {
   privacy: {
@@ -245,7 +245,7 @@ export const legalEn: LegalBundle = {
       {
         heading: "21. Governing Law",
         paragraphs: [
-          `These Terms are governed by the laws of ${PRODUCT_LEGAL_REGION}, without regard to conflict of law principles. Any disputes will be resolved in the courts located in ${PRODUCT_LEGAL_REGION}, unless applicable law requires otherwise.`,
+          `These Terms are governed by the laws of Hong Kong Special Administrative Region (“HKSAR”). Disputes are subject to the jurisdiction of the courts of HKSAR. Mandatory consumer protection rights under your local law continue to apply.`,
         ],
       },
       {

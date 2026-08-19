@@ -1,3 +1,0 @@
-file '/Users/michaelng/Desktop/alchemy-studio/.tmp/story-fan/scene-1-trim.mp4'
-file '/Users/michaelng/Desktop/alchemy-studio/.tmp/story-fan/scene-2-trim.mp4'
-file '/Users/michaelng/Desktop/alchemy-studio/.tmp/story-fan/scene-3-trim.mp4'

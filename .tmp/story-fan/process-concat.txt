@@ -1,7 +1,0 @@
-file '/Users/michaelng/Desktop/alchemy-studio/.tmp/story-fan/board-hold.mp4'
-file '/Users/michaelng/Desktop/alchemy-studio/.tmp/story-fan/still-flash-1.mp4'
-file '/Users/michaelng/Desktop/alchemy-studio/.tmp/story-fan/still-flash-2.mp4'
-file '/Users/michaelng/Desktop/alchemy-studio/.tmp/story-fan/still-flash-3.mp4'
-file '/Users/michaelng/Desktop/alchemy-studio/.tmp/story-fan/scene-1-trim.mp4'
-file '/Users/michaelng/Desktop/alchemy-studio/.tmp/story-fan/scene-2-trim.mp4'
-file '/Users/michaelng/Desktop/alchemy-studio/.tmp/story-fan/scene-3-trim.mp4'

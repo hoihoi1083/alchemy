@@ -7,7 +7,7 @@ import {
 } from "@/lib/brand";
 import type { LegalBundle } from "@/lib/legal/types";
 
-const contactLine = `${PRODUCT_LEGAL_NAME}。電郵：${PRODUCT_SUPPORT_EMAIL}。地區：${PRODUCT_LEGAL_REGION}。`;
+const contactLine = `如您對我們的服務有任何疑問，請透過電郵與 ${PRODUCT_LEGAL_NAME} 聯絡：${PRODUCT_SUPPORT_EMAIL}。`;
 
 export const legalZh: LegalBundle = {
   privacy: {
@@ -245,7 +245,7 @@ export const legalZh: LegalBundle = {
       {
         heading: "21. 管轄法律",
         paragraphs: [
-          `本條款受 ${PRODUCT_LEGAL_REGION} 的法律管轄，不考慮法律衝突原則。除非適用法律另有規定，任何爭議將由位於 ${PRODUCT_LEGAL_REGION} 的法院解決。`,
+          `本條款受香港特別行政區（“HKSAR”）的法律管轄。因本條款所生或與本條款相關的爭議，應受HKSAR法院的司法管轄。根據您當地法律所享有的強制性消費者保障權利仍持續適用。`,
         ],
       },
       {
