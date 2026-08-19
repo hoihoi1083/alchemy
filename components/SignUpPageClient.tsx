@@ -12,8 +12,8 @@ export function SignUpPageClient() {
 				routing="path"
 				path="/sign-up"
 				signInUrl="/sign-in"
-				fallbackRedirectUrl="/start"
-				forceRedirectUrl="/start"
+				fallbackRedirectUrl="/"
+				forceRedirectUrl="/"
 			/>
 		</AuthPageShell>
 	);
