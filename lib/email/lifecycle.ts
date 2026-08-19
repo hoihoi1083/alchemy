@@ -217,6 +217,11 @@ export async function sendSubscriptionEndedEmail(opts: {
   return sendSimpleEmail({ to: opts.to, subject, html, text, kind: "lifecycle" });
 }
 
+function planDisplayName(plan: string): string {
+  if (plan === "custom") return "Enterprise";
+  return plan.charAt(0).toUpperCase() + plan.slice(1);
+}
+
 /**
  * Downgrade scheduled for period end. Never throws.
  */
@@ -233,10 +238,8 @@ export async function sendDowngradeScheduledEmail(opts: {
     month: "long",
     day: "numeric",
   });
-  const current =
-    opts.currentPlan.charAt(0).toUpperCase() + opts.currentPlan.slice(1);
-  const pending =
-    opts.pendingPlan.charAt(0).toUpperCase() + opts.pendingPlan.slice(1);
+  const current = planDisplayName(opts.currentPlan);
+  const pending = planDisplayName(opts.pendingPlan);
   const subject = `Alchemy downgrade scheduled — ${pending} starts ${dateLabel}`;
   const title = "Downgrade scheduled";
   const bodyHtml = `Your plan will switch from <strong style="color:#18181b;">${current}</strong> to <strong style="color:#18181b;">${pending}</strong> on <strong style="color:#18181b;">${dateLabel}</strong>. Until then you keep your current plan, features, and remaining tokens.`;

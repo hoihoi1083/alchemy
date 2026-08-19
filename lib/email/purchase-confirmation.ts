@@ -39,6 +39,7 @@ export function emailAppBaseUrl(): string {
 
 function planLabel(plan: UserPlan | PaidPlan | undefined): string {
   if (!plan) return "Alchemy";
+  if (plan === "custom") return "Enterprise plan";
   const name = plan.charAt(0).toUpperCase() + plan.slice(1);
   return `${name} plan`;
 }

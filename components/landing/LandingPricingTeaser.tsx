@@ -6,7 +6,6 @@ import { useState } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 import { PLAN_DEFINITIONS } from "@/lib/billing/plans";
 import { pricingCardCapacityItems } from "@/lib/billing/pricing-card-capacity";
-import { PRODUCT_SUPPORT_EMAIL } from "@/lib/brand";
 import {
   trackCheckoutFailed,
   trackCheckoutRedirected,
@@ -16,10 +15,10 @@ import {
 import { Reveal } from "@/components/landing/Reveal";
 
 type Interval = "monthly" | "yearly";
-type PaidPlan = "standard" | "pro" | "master";
+type PaidPlan = "standard" | "pro" | "master" | "custom";
 
 function capacityFor(
-	plan: "free" | "standard" | "pro" | "master",
+	plan: "free" | "standard" | "pro" | "master" | "custom",
 	p: {
 		capacityFreeImages: string;
 		capacityFreeVideos: string;
@@ -204,11 +203,20 @@ export function LandingPricingTeaser() {
 			id: "custom" as const,
 			name: P.plans.custom.name,
 			blurb: P.plans.custom.description,
-			priceLabel: P.contactSales,
-			tokensLabel: null as string | null,
-			capacity: null as ReturnType<typeof capacityFor> | null,
-			features: P.plans.custom.features,
-			cta: P.contactSales,
+			priceLabel:
+				interval === "monthly"
+					? P.plans.custom.monthlyPrice
+					: P.plans.custom.yearlyPrice,
+			listPrice: P.plans.custom.listPrice,
+			saveLabel:
+				interval === "monthly"
+					? P.plans.custom.monthlySave
+					: P.plans.custom.yearlySave,
+			tokensLabel: `${P.plans.custom.tokens} ${P.tokensPerMonth}`,
+			badge: P.plans.custom.badge,
+			capacity: capacityFor("custom", P),
+			features: P.plans.custom.features.slice(1),
+			cta: P.subscribe,
 			popular: false,
 		},
 	];
@@ -271,7 +279,8 @@ export function LandingPricingTeaser() {
 						const busyKey =
 							card.id === "standard" ||
 							card.id === "pro" ||
-							card.id === "master"
+							card.id === "master" ||
+							card.id === "custom"
 								? `${card.id}-${interval}`
 								: null;
 						const isBusy = busyKey != null && busy === busyKey;
@@ -303,6 +312,10 @@ export function LandingPricingTeaser() {
 											<p className="inline-flex rounded-full bg-violet-600 px-2.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">
 												{P.mostPopular}
 											</p>
+										) : "badge" in card && card.badge ? (
+											<p className="inline-flex rounded-full bg-slate-900 px-2.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">
+												{card.badge}
+											</p>
 										) : null}
 									</div>
 									<h3 className="mt-2 text-base font-semibold leading-tight text-slate-900">
@@ -327,8 +340,7 @@ export function LandingPricingTeaser() {
 										</p>
 										<p className="text-2xl font-bold leading-none text-slate-900">
 											{card.priceLabel}
-											{card.id !== "free" &&
-											card.id !== "custom" ? (
+											{card.id !== "free" ? (
 												<span className="text-xs font-medium text-slate-500">
 													{P.perMonth}
 												</span>
@@ -352,8 +364,7 @@ export function LandingPricingTeaser() {
 										<p
 											className={`h-4 text-[10px] leading-4 ${
 												interval === "yearly" &&
-												card.id !== "free" &&
-												card.id !== "custom"
+												card.id !== "free"
 													? "text-slate-400"
 													: "invisible"
 											}`}
@@ -436,23 +447,12 @@ export function LandingPricingTeaser() {
 										>
 											{ctaLabel}
 										</Link>
-									) : card.id === "custom" ? (
-										<a
-											href={`mailto:${PRODUCT_SUPPORT_EMAIL}?subject=Custom%20plan`}
-											className={`block rounded-full px-3 py-2.5 text-center text-xs font-semibold transition ${
-												isActive
-													? "bg-violet-600 text-white hover:bg-violet-500"
-													: "border border-violet-300 text-violet-700 hover:bg-violet-50"
-											}`}
-										>
-											{ctaLabel}
-										</a>
 									) : (
 										<button
 											type="button"
 											disabled={busy != null}
 											onClick={() =>
-												void startCheckout(card.id)
+												void startCheckout(card.id as PaidPlan)
 											}
 											className={`block w-full rounded-full px-3 py-2.5 text-center text-xs font-semibold transition disabled:opacity-60 ${
 												isActive

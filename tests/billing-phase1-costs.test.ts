@@ -11,6 +11,12 @@ describe("billing Phase 1 action costs", () => {
   it("maps generate-image request modes to catalog costs", () => {
     assert.equal(imageTokenCostFromRequest({}), TOKEN_COST.image);
     assert.equal(imageTokenCostFromRequest({ numImages: 2 }), TOKEN_COST.image_ab);
+    assert.equal(imageTokenCostFromRequest({ numImages: 3 }), 195);
+    assert.equal(imageTokenCostFromRequest({ numImages: 4 }), 260);
+    assert.equal(
+      imageTokenCostFromRequest({ multipartMode: "refine", numImages: 3 }),
+      195,
+    );
     assert.equal(
       imageTokenCostFromRequest({ imageOutputMode: "campaign" }),
       TOKEN_COST.campaign,
@@ -28,6 +34,12 @@ describe("billing Phase 1 action costs", () => {
   it("prices storyboard / cinematic by scene count", () => {
     assert.equal(estimateImageTokens({ mode: "storyboard", sceneCount: 4 }), 260);
     assert.equal(estimateImageTokens({ mode: "storyboard", sceneCount: 3 }), 195);
+  });
+
+  it("prices generate-image packs at 65 × count", () => {
+    assert.equal(estimateImageTokens({ numImages: 3 }), 195);
+    assert.equal(estimateImageTokens({ numImages: 4 }), 260);
+    assert.equal(estimateImageTokens({ mode: "ab", numImages: 4 }), TOKEN_COST.image_ab);
   });
 
   it("prices video from resolution + duration", () => {

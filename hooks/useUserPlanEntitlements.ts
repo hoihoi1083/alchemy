@@ -38,10 +38,10 @@ export function useUserPlanEntitlements(): UserPlanEntitlements {
       .then(async (res) => {
         if (!res.ok) return;
         const data = (await res.json()) as {
-          user?: { plan?: string | null; creditBalance?: number | null } | null;
+          user?: { plan?: string | null; effectivePlan?: string | null; creditBalance?: number | null } | null;
         };
         if (cancelled) return;
-        setPlan(normalizeUserPlan(data.user?.plan));
+        setPlan(normalizeUserPlan(data.user?.effectivePlan ?? data.user?.plan));
         setCreditBalance(
           typeof data.user?.creditBalance === "number" ? data.user.creditBalance : 0,
         );
@@ -55,10 +55,10 @@ export function useUserPlanEntitlements(): UserPlanEntitlements {
         .then(async (res) => {
           if (!res.ok) return;
           const data = (await res.json()) as {
-            user?: { plan?: string | null; creditBalance?: number | null } | null;
+            user?: { plan?: string | null; effectivePlan?: string | null; creditBalance?: number | null } | null;
           };
           if (cancelled) return;
-          setPlan(normalizeUserPlan(data.user?.plan));
+          setPlan(normalizeUserPlan(data.user?.effectivePlan ?? data.user?.plan));
           setCreditBalance(
             typeof data.user?.creditBalance === "number" ? data.user.creditBalance : 0,
           );

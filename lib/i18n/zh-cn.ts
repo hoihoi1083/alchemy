@@ -505,8 +505,8 @@ export const zhCn = {
     pricingSubtitle: "真实计划：Free／Standard／Pro／Master／Custom，全部按点数计费。",
     pricingFreeCta: "免费开始",
     pricingProCta: "开始 Pro",
-    pricingCustom: "联系我们",
-    pricingCustomHint: "5 个席位，共用点数池",
+    pricingCustom: "Enterprise",
+    pricingCustomHint: "5 席 · 每月 40,000 点数",
     tokensTitle: "AI 点数怎么算",
     tokensBody:
       "每个方案显示独立上限：点数全用来出 1K 单图最多几张，或者全用来出 8 秒 480p 视频最多几条。混搭或用更高分辨率会让每件作品用更多点数。",
@@ -935,7 +935,7 @@ export const zhCn = {
 
     planBlurbStandard: "For early businesses",
 
-    planFeaturesCustom: ["Custom 点数 volume", "Custom limits", "Dedicated support"],
+    planFeaturesCustom: ["每月 40,000 点数", "5 席 · 共用池", "Pro 画布 + 2K 图片"],
 
     planFeaturesFree: ["Guided image & video paths", "500 signup 点数", "Library downloads"],
 
@@ -948,7 +948,9 @@ export const zhCn = {
     tokenCostVideoDraft: "短视频（约 8 秒）",
     tokenCostVoice: "口播",
     topUpBody: "订阅后可随时加购。",
-    topUpCustom: "自定义 点数",
+    topUpCustom: "自定义点数或计划",
+    topUpCustomCta: "联系我们",
+    topUpCustomMailSubject: "自定义点数或计划",
     topUpTitle: "需要更多 点数？",
 
     tplCapFb: "Facebook 广告",
@@ -1107,7 +1109,7 @@ export const zhCn = {
       },
       {
         q: "适合代理或团队吗？",
-        body: "支持。Enterprise 在同一个 Custom 计划提供 5 个席位：所有者在账户页邀请队友，各自保留独立作品库，生成使用所有者的共用点数池。请联系我们开通。Pro 和 Master 仍为单人自助计划。",
+        body: "支持。在定价页订阅 Enterprise 即有 5 个席位：所有者在账户页邀请队友，各自保留独立作品库，生成使用所有者的共用 40,000 点数池。Pro 和 Master 仍为单人自助计划。",
       },
       {
         q: "什么时候可以买额外点数？",
@@ -1116,7 +1118,7 @@ export const zhCn = {
       {
         q: "如何升级计划？",
         body:
-          "登录后在本定价页选择更高计划（Standard → Pro → Master）并确认即可。升级会从今天起开启新账单期：Stripe 退回旧计划未用时间的差额，再从今天起收取新计划费用 — 我们不会改 Stripe 产品标价。你保留剩余点数，并即时获得新计划完整份额（例如 Standard 3,000 → Master 会再加 16,000）。下次续费从升级日起重新计算（月付／年付取决于你所选计划）。升级不必经过「管理账单」。",
+          "登录后在本定价页选择更高计划（Standard → Pro → Master → Enterprise）并确认即可。升级会从今天起开启新账单期：Stripe 退回旧计划未用时间的差额，再从今天起收取新计划费用 — 我们不会改 Stripe 产品标价。你保留剩余点数，并即时获得新计划完整份额（例如 Standard 3,000 → Master 会再加 16,000）。下次续费从升级日起重新计算（月付／年付取决于你所选计划）。升级不必经过「管理账单」。",
       },
       {
         q: "如何降级计划？",
@@ -1212,25 +1214,31 @@ export const zhCn = {
       },
       custom: {
         name: "Enterprise",
+        listPrice: "$399.99",
+        monthlyPrice: "$249.99",
+        yearlyPrice: "$199.99",
+        monthlySave: "38% off",
+        yearlySave: "50% off",
+        tokens: "40,000",
         description: "团队 5 席，共用一个点数池",
         badge: "5 席",
         seatsLabel: "5 席 · 共用点数池",
         features: [
+          "每月 40,000 点数",
           "5 个席位（所有者 + 4 位队友）",
           "生成扣所有者的共用点数池",
           "各自独立作品库",
           "所有者可随时邀请、移除、更换席位",
           "1080p 视频、2K 图片、Pro 画布",
-          "协商点数用量",
-          "发票 / PO 付款",
-          "专人 onboarding",
+          "优先支持",
+          "可加购点数（$10 / 1k）",
         ],
       },
     },
     comparisonRows: [
-      { feature: "点数", free: "500 · 新注册送一次", standard: "3,000 / 月", pro: "8,000 / 月", master: "16,000 / 月", custom: "协商用量" },
+      { feature: "点数", free: "500 · 新注册送一次", standard: "3,000 / 月", pro: "8,000 / 月", master: "16,000 / 月", custom: "40,000 / 月" },
       { feature: "团队席位", free: "1", standard: "1", pro: "1", master: "1", custom: "5 · 共用池" },
-      { feature: "大约产能", free: "最多 7 张图或 1 条 8 秒 480p", standard: "最多 46 张图或 9 条 8 秒 480p", pro: "最多 123 张图或 24 条 8 秒 480p", master: "最多 246 张图或 48 条 8 秒 480p", custom: "按协议用量" },
+      { feature: "大约产能", free: "最多 7 张图或 1 条 8 秒 480p", standard: "最多 46 张图或 9 条 8 秒 480p", pro: "最多 123 张图或 24 条 8 秒 480p", master: "最多 246 张图或 48 条 8 秒 480p", custom: "最多 615 张图或 121 条 8 秒 480p" },
       { feature: "图片最高分辨率", free: "最高 1K", standard: "最高 1K", pro: "最高 1K", master: "最高 2K", custom: "最高 2K" },
       { feature: "视频最高分辨率", free: "最高 480p", standard: "最高 720p", pro: "最高 1080p", master: "最高 1080p", custom: "最高 1080p" },
       { feature: "平台研究 / 合并流程 / 故事板", free: "✓", standard: "✓", pro: "✓", master: "✓", custom: "✓" },

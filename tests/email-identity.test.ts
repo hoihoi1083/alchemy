@@ -49,6 +49,20 @@ describe("email-identity", () => {
     assert.equal(pickCanonicalUser(a, b).clerkId, "b");
   });
 
+  it("pickCanonicalUser prefers Enterprise over Master when both have Stripe", () => {
+    const a = user({
+      clerkId: "a",
+      stripeCustomerId: "cus_a",
+      plan: "master",
+    });
+    const b = user({
+      clerkId: "b",
+      stripeCustomerId: "cus_b",
+      plan: "custom",
+    });
+    assert.equal(pickCanonicalUser(a, b).clerkId, "b");
+  });
+
   it("pickCanonicalUser prefers higher balance then older", () => {
     const a = user({
       clerkId: "a",

@@ -219,6 +219,20 @@ export const FREE_PACK = {
   buffer: FREE_SIGNUP_GRANT_TOKENS - (TOKEN_COST.image + H3_TOKENS_PER_SEC["480P"] * 8),
 } as const;
 
+/** Nano Banana `/api/generate-image` pack size (JSON + multipart). */
+export const MAX_GENERATE_IMAGE_COUNT = 4;
+
+export function clampGenerateImageCount(n: number | undefined | null): number {
+  const raw = Math.round(Number(n));
+  if (!Number.isFinite(raw)) return 1;
+  return Math.min(MAX_GENERATE_IMAGE_COUNT, Math.max(1, raw));
+}
+
+/** 65 tokens per still — 2 → 130, 3 → 195, 4 → 260. */
+export function imageCountTokenCost(numImages?: number | null): number {
+  return TOKEN_COST.image * clampGenerateImageCount(numImages);
+}
+
 export function estimateTeachingCarouselTokens(slideCount: number): number {
   const n = Math.min(6, Math.max(4, Math.round(slideCount) || 5));
   return TOKEN_COST.plan + TOKEN_COST.image * n;
@@ -232,7 +246,7 @@ export function estimateImageTokens(opts: {
   passesPerScene?: number;
 }): number {
   const mode = opts.mode ?? "single";
-  if (mode === "ab" || (opts.numImages ?? 1) >= 2) return TOKEN_COST.image_ab;
+  if (mode === "ab") return TOKEN_COST.image_ab;
   if (mode === "campaign") return TOKEN_COST.campaign;
   if (mode === "teaching_carousel") {
     return estimateTeachingCarouselTokens(opts.sceneCount ?? 5);
@@ -242,7 +256,7 @@ export function estimateImageTokens(opts: {
     const passes = Math.max(1, opts.passesPerScene ?? 1);
     return TOKEN_COST.storyboard_scene * n * passes;
   }
-  return TOKEN_COST.image;
+  return imageCountTokenCost(opts.numImages);
 }
 
 /** Token cost to regenerate one still vs the full current image run. */
@@ -299,7 +313,7 @@ export const STORYBOARD_LANDING_PACK = {
 
 export type LandingCapacityPlan = Extract<
   UserPlan,
-  "free" | "standard" | "pro" | "master"
+  "free" | "standard" | "pro" | "master" | "custom"
 >;
 
 /** 8s video at the plan’s max resolution (480P / 768P / 2K). */

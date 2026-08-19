@@ -558,8 +558,8 @@ export const zh = {
 			"真實計劃：Free／Standard／Pro／Master／Custom，全部用 Tokens。",
 		pricingFreeCta: "免費開始",
 		pricingProCta: "開始 Pro",
-		pricingCustom: "聯絡我們",
-		pricingCustomHint: "5 個席位，共用 token 池",
+		pricingCustom: "Enterprise",
+		pricingCustomHint: "5 席 · 每月 40,000 token",
 		tokensTitle: "AI Tokens 點計",
 		tokensBody:
 			"每個方案顯示獨立上限：token 全用嚟出 1K 單圖最多幾張，或者全用嚟出 8 秒 480p 片最多幾條。混搭或用更高解像度會令每件作品用多啲 token。",
@@ -1022,9 +1022,9 @@ export const zh = {
 		planBlurbStandard: "For early businesses",
 
 		planFeaturesCustom: [
-			"Custom token volume",
-			"Custom limits",
-			"Dedicated support",
+			"每月 40,000 token",
+			"5 席 · 共用池",
+			"Pro 畫布 + 2K 圖片",
 		],
 
 		planFeaturesFree: [
@@ -1056,7 +1056,9 @@ export const zh = {
 		tokenCostVideoDraft: "短片（約 8 秒）",
 		tokenCostVoice: "口播",
 		topUpBody: "訂閱後可隨時加購。",
-		topUpCustom: "自訂 tokens",
+		topUpCustom: "自訂 token 或計劃",
+		topUpCustomCta: "聯絡我們",
+		topUpCustomMailSubject: "自訂 token 或計劃",
 		topUpTitle: "需要更多 Tokens？",
 
 		tplCapFb: "Facebook 廣告",
@@ -1215,7 +1217,7 @@ export const zh = {
 			},
 			{
 				q: "適合代理或團隊嗎？",
-				body: "支援。Enterprise 喺同一個 Custom 計劃提供 5 個席位：擁有人喺帳戶邀請隊友，各自保留獨立作品庫，生成會用擁有人嘅共用 token 池。請聯絡我哋開通。Pro 同 Master 仍然係單人自助計劃。",
+				body: "支援。喺收費頁訂閱 Enterprise 即有 5 個席位：擁有人喺帳戶邀請隊友，各自保留獨立作品庫，生成會用擁有人嘅共用 40,000 token 池。Pro 同 Master 仍然係單人自助計劃。",
 			},
 			{
 				q: "幾時可以買額外 token？",
@@ -1223,7 +1225,7 @@ export const zh = {
 			},
 			{
 				q: "點樣升級計劃？",
-				body: "登入後喺呢個收費頁揀更高計劃（Standard → Pro → Master）確認即可。升級會由今日起開新帳單期：Stripe 退回舊計劃未用時間嘅差額，再由今日起收新計劃費用 — 我哋唔會改 Stripe 產品標價。你保留剩餘 token，並即時獲得新計劃完整份額（例如 Standard 3,000 → Master 會再加 16,000）。下次續費由升級日起重新計算（月付／年付取決於你揀嘅計劃）。升級唔使經「管理帳單」。",
+				body: "登入後喺呢個收費頁揀更高計劃（Standard → Pro → Master → Enterprise）確認即可。升級會由今日起開新帳單期：Stripe 退回舊計劃未用時間嘅差額，再由今日起收新計劃費用 — 我哋唔會改 Stripe 產品標價。你保留剩餘 token，並即時獲得新計劃完整份額（例如 Standard 3,000 → Master 會再加 16,000）。下次續費由升級日起重新計算（月付／年付取決於你揀嘅計劃）。升級唔使經「管理帳單」。",
 			},
 			{
 				q: "點樣降級計劃？",
@@ -1317,18 +1319,24 @@ export const zh = {
 			},
 			custom: {
 				name: "Enterprise",
+				listPrice: "$399.99",
+				monthlyPrice: "$249.99",
+				yearlyPrice: "$199.99",
+				monthlySave: "38% off",
+				yearlySave: "50% off",
+				tokens: "40,000",
 				description: "團隊 5 席，共用一個 token 池",
 				badge: "5 席",
 				seatsLabel: "5 席 · 共用 token 池",
 				features: [
+					"每月 40,000 token",
 					"5 個席位（擁有人 + 4 位隊友）",
 					"生成扣擁有人嘅共用 token 池",
 					"各自獨立作品庫",
 					"擁有人可隨時邀請、移除、更換席位",
 					"1080p 影片、2K 圖片、Pro 畫布",
-					"協商 token 用量",
-					"發票 / PO 付款",
-					"專人 onboarding",
+					"優先支援",
+					"可加購 token（$10 / 1k）",
 				],
 			},
 		},
@@ -1339,7 +1347,7 @@ export const zh = {
 				standard: "3,000 / 月",
 				pro: "8,000 / 月",
 				master: "16,000 / 月",
-				custom: "協商用量",
+				custom: "40,000 / 月",
 			},
 			{
 				feature: "團隊席位",
@@ -1355,7 +1363,7 @@ export const zh = {
 				standard: "最多 46 張圖或 9 條 8 秒 480p",
 				pro: "最多 123 張圖或 24 條 8 秒 480p",
 				master: "最多 246 張圖或 48 條 8 秒 480p",
-				custom: "按協議用量",
+				custom: "最多 615 張圖或 121 條 8 秒 480p",
 			},
 			{
 				feature: "圖片最高解像度",

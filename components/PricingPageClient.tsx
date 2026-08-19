@@ -11,7 +11,6 @@ import { Reveal } from "@/components/landing/Reveal";
 import { useLocale } from "@/components/LocaleProvider";
 import { PLAN_DEFINITIONS } from "@/lib/billing/plans";
 import { pricingCardCapacityItems } from "@/lib/billing/pricing-card-capacity";
-import { PRODUCT_SUPPORT_EMAIL } from "@/lib/brand";
 import {
   trackCheckoutFailed,
   trackCheckoutRedirected,
@@ -21,7 +20,7 @@ import {
 } from "@/lib/analytics";
 
 type BillingInterval = "monthly" | "yearly";
-type PaidPlanKey = "standard" | "pro" | "master";
+type PaidPlanKey = "standard" | "pro" | "master" | "custom";
 
 const FAQ_PREVIEW_COUNT = 4;
 
@@ -101,7 +100,7 @@ export function PricingPageClient() {
   const [confirmNote, setConfirmNote] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const confirmStarted = useRef(false);
-  const paidPlans: PaidPlanKey[] = ["standard", "pro", "master"];
+  const paidPlans: PaidPlanKey[] = ["standard", "pro", "master", "custom"];
 
   const checkoutStatus = searchParams.get("checkout");
   const checkoutSessionId = searchParams.get("session_id");
@@ -115,11 +114,15 @@ export function PricingPageClient() {
 
   useEffect(() => {
     if (planHighlightDone.current) return;
-    if (highlightPlan !== "master") return;
+    if (highlightPlan !== "master" && highlightPlan !== "custom") return;
     planHighlightDone.current = true;
-    setHoveredId("master");
+    setHoveredId(highlightPlan);
     const t = window.setTimeout(() => {
-      document.getElementById("plan-master")?.scrollIntoView({
+      const el =
+        highlightPlan === "custom"
+          ? document.getElementById("plan-custom")
+          : document.getElementById("plan-master");
+      el?.scrollIntoView({
         behavior: "smooth",
         block: "center",
       });
@@ -163,7 +166,9 @@ export function PricingPageClient() {
               ? p.plans.pro.name
               : pendingPlan === "master"
                 ? p.plans.master.name
-                : pendingPlan ?? "";
+                : pendingPlan === "custom"
+                  ? p.plans.custom.name
+                  : pendingPlan ?? "";
         const dateLabel = pendingAt
           ? new Date(pendingAt).toLocaleDateString(undefined, { dateStyle: "medium" })
           : "—";
@@ -236,7 +241,7 @@ export function PricingPageClient() {
     p.subscriptionDowngradeScheduled,
     p.plans.standard.name,
     p.plans.pro.name,
-    p.plans.master.name,
+    p.plans.custom.name,
     searchParams,
   ]);
 
@@ -302,7 +307,9 @@ export function PricingPageClient() {
                 ? p.plans.pro.name
                 : data.pendingPlan === "master"
                   ? p.plans.master.name
-                  : data.pendingPlan;
+                  : data.pendingPlan === "custom"
+                    ? p.plans.custom.name
+                    : data.pendingPlan;
           const dateLabel = data.pendingEffectiveAt
             ? new Date(data.pendingEffectiveAt).toLocaleDateString(undefined, {
                 dateStyle: "medium",
@@ -398,13 +405,14 @@ export function PricingPageClient() {
       id: "custom" as const,
       name: p.plans.custom.name,
       blurb: p.plans.custom.description,
-      priceLabel: p.contactSales,
-      tokensLabel: null as string | null,
-      capacity: null as
-        | { kind: "images" | "videos"; label: string }[]
-        | null,
-      features: p.plans.custom.features,
-      cta: p.contactSales,
+      priceLabel: interval === "monthly" ? p.plans.custom.monthlyPrice : p.plans.custom.yearlyPrice,
+      listPrice: p.plans.custom.listPrice,
+      saveLabel: interval === "monthly" ? p.plans.custom.monthlySave : p.plans.custom.yearlySave,
+      tokensLabel: `${p.plans.custom.tokens} ${p.tokensPerMonth}`,
+      badge: p.plans.custom.badge,
+      capacity: pricingCardCapacityItems("custom", p),
+      features: p.plans.custom.features.slice(1),
+      cta: p.subscribe,
       popular: false,
     },
     {
@@ -504,7 +512,10 @@ export function PricingPageClient() {
             >
               {cards.map((card, i) => {
                 const busyKey =
-                  card.id === "standard" || card.id === "pro" || card.id === "master"
+                  card.id === "standard" ||
+                  card.id === "pro" ||
+                  card.id === "master" ||
+                  card.id === "custom"
                     ? `${card.id}-${interval}`
                     : card.id === "topup"
                       ? "topup"
@@ -523,7 +534,13 @@ export function PricingPageClient() {
                     className="h-full"
                   >
                     <div
-                      id={card.id === "master" ? "plan-master" : undefined}
+                      id={
+                        card.id === "master"
+                          ? "plan-master"
+                          : card.id === "custom"
+                            ? "plan-custom"
+                            : undefined
+                      }
                       onMouseEnter={() => setHoveredId(card.id)}
                       className={`pricing-plan-card flex h-full min-h-[300px] min-w-0 flex-col rounded-2xl border bg-white p-5 shadow-sm transition duration-200 ${
                         isActive
@@ -538,6 +555,10 @@ export function PricingPageClient() {
                         {card.popular ? (
                           <p className="inline-flex rounded-full bg-violet-600 px-2.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">
                             {p.mostPopular}
+                          </p>
+                        ) : "badge" in card && card.badge ? (
+                          <p className="inline-flex rounded-full bg-slate-900 px-2.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">
+                            {card.badge}
                           </p>
                         ) : null}
                       </div>
@@ -574,7 +595,6 @@ export function PricingPageClient() {
                         >
                           {card.priceLabel}
                           {card.id !== "free" &&
-                          card.id !== "custom" &&
                           card.id !== "topup" ? (
                             <span className="text-xs font-medium text-slate-500">
                               {p.perMonth}
@@ -598,7 +618,6 @@ export function PricingPageClient() {
                           className={`h-4 text-[10px] leading-4 ${
                             interval === "yearly" &&
                             card.id !== "free" &&
-                            card.id !== "custom" &&
                             card.id !== "topup"
                               ? "text-slate-400"
                               : "invisible"
@@ -681,17 +700,6 @@ export function PricingPageClient() {
                         >
                           {ctaLabel}
                         </Link>
-                      ) : card.id === "custom" ? (
-                        <a
-                          href={`mailto:${PRODUCT_SUPPORT_EMAIL}?subject=Custom%20plan`}
-                          className={`block rounded-full px-3 py-2.5 text-center text-xs font-semibold transition ${
-                            isActive
-                              ? "bg-violet-600 text-white hover:bg-violet-500"
-                              : "border border-violet-300 text-violet-700 hover:bg-violet-50"
-                          }`}
-                        >
-                          {ctaLabel}
-                        </a>
                       ) : card.id === "topup" ? (
                         <button
                           type="button"
@@ -747,15 +755,16 @@ export function PricingPageClient() {
             <Reveal delayMs={80} distance={28} scaleFrom={0.98}>
               <div
                 className="mx-auto mt-6 overflow-x-auto rounded-2xl border border-violet-100 bg-white shadow-sm"
-                style={{ maxWidth: "50rem" }}
+                style={{ maxWidth: "62rem" }}
               >
-                <table className="w-full min-w-[480px] table-fixed text-left text-sm">
+                <table className="w-full min-w-[640px] table-fixed text-left text-sm">
                   <colgroup>
-                    <col className="w-[26%]" />
-                    <col className="w-[18.5%]" />
-                    <col className="w-[18.5%]" />
-                    <col className="w-[18.5%]" />
-                    <col className="w-[18.5%]" />
+                    <col className="w-[22%]" />
+                    <col className="w-[15.6%]" />
+                    <col className="w-[15.6%]" />
+                    <col className="w-[15.6%]" />
+                    <col className="w-[15.6%]" />
+                    <col className="w-[15.6%]" />
                   </colgroup>
                   <thead>
                     <tr className="border-b border-violet-100 bg-violet-50/80">
@@ -773,6 +782,9 @@ export function PricingPageClient() {
                       </th>
                       <th className="px-2 py-3 text-center text-sm font-semibold text-slate-700">
                         {p.plans.master.name}
+                      </th>
+                      <th className="px-2 py-3 text-center text-sm font-semibold text-slate-900">
+                        {p.plans.custom.name}
                       </th>
                     </tr>
                   </thead>
@@ -793,6 +805,7 @@ export function PricingPageClient() {
                           {row.pro}
                         </td>
                         <td className="px-2 py-3 text-center text-sm text-slate-600">{row.master}</td>
+                        <td className="px-2 py-3 text-center text-sm font-medium text-slate-800">{row.custom}</td>
                       </tr>
                     ))}
                   </tbody>

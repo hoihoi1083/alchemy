@@ -1,5 +1,6 @@
 import type { ObjectId } from "mongodb";
 import type { UserPlan } from "@/lib/billing/plans";
+import type { PaidPlan } from "@/lib/stripe/prices";
 import type { ProjectSnapshot } from "@/lib/project-snapshot";
 import type { TemplateId } from "@/lib/templates";
 import type { PromotionMode } from "@/lib/promotion-mode";
@@ -28,7 +29,7 @@ export type DbUser = {
    * (usually current period end). Cleared when the lower price takes effect or
    * the user upgrades instead.
    */
-  pendingPlan?: "standard" | "pro" | "master" | null;
+  pendingPlan?: PaidPlan | null;
   pendingPlanInterval?: "monthly" | "yearly" | null;
   pendingPlanEffectiveAt?: Date | null;
   /**
@@ -37,8 +38,54 @@ export type DbUser = {
    */
   supersededBy?: string | null;
   supersededAt?: Date | null;
+  /** Optional backlink for seat-membership lookups. */
+  teamId?: string | null;
+  teamRole?: "owner" | "member" | null;
   createdAt: Date;
   updatedAt: Date;
+};
+
+export type TeamPlan = Extract<UserPlan, "custom" | "master" | "pro" | "standard">;
+
+export type DbTeam = {
+  _id?: ObjectId;
+  teamId: string;
+  ownerClerkId: string;
+  seatLimit: number;
+  /**
+   * Atomic reservation counter: active members + pending invites.
+   * Invite/accept races increment this with `heldSeats < seatLimit`.
+   */
+  heldSeats?: number;
+  plan: TeamPlan;
+  status: "active" | "inactive";
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+export type DbTeamMember = {
+  _id?: ObjectId;
+  teamId: string;
+  clerkId: string;
+  role: "owner" | "member";
+  status: "active" | "removed";
+  createdAt: Date;
+  updatedAt: Date;
+  removedAt?: Date | null;
+};
+
+export type DbTeamInvite = {
+  _id?: ObjectId;
+  teamId: string;
+  inviteEmail: string;
+  inviteEmailNormalized: string;
+  tokenHash: string;
+  invitedBy: string;
+  createdAt: Date;
+  expiresAt: Date;
+  acceptedAt?: Date | null;
+  acceptedByClerkId?: string | null;
+  revokedAt?: Date | null;
 };
 
 export type DbProject = {

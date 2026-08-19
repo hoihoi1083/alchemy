@@ -155,6 +155,8 @@ describe("billing safety — never overcharge", () => {
     // over-pricing UI is safer. Assert exact parity for common modes.
     assert.equal(imageTokenCostFromRequest({ numImages: 1 }), TOKEN_COST.image);
     assert.equal(imageTokenCostFromRequest({ numImages: 2 }), TOKEN_COST.image_ab);
+    assert.equal(imageTokenCostFromRequest({ numImages: 3 }), TOKEN_COST.image * 3);
+    assert.equal(imageTokenCostFromRequest({ numImages: 4 }), TOKEN_COST.image * 4);
     assert.equal(
       imageTokenCostFromRequest({ imageOutputMode: "campaign" }),
       TOKEN_COST.campaign,

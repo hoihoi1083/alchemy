@@ -5,6 +5,7 @@ import { getDb, isMongoConfigured } from "@/lib/mongodb";
 import { requireAppUser } from "@/lib/require-app-user";
 import { getStripe, isStripeConfigured } from "@/lib/stripe/client";
 import { fulfillCheckoutSession } from "@/lib/stripe/fulfill-checkout";
+import { checkoutPaymentCleared } from "@/lib/stripe/payment-cleared";
 
 export const runtime = "nodejs";
 
@@ -14,7 +15,8 @@ export const runtime = "nodejs";
  *
  * POST { sessionId?: string }
  * - with sessionId: fulfill that Checkout Session (must belong to the signed-in user)
- * - without: scan recent paid sessions for the user's Stripe customer (last 48h)
+ * - without: scan recent sessions whose payment has cleared (last 48h).
+ *   `status: complete` is not enough — delayed methods stay unpaid until funds clear.
  */
 export async function POST(request: Request) {
   try {
@@ -107,7 +109,7 @@ export async function POST(request: Request) {
         created: { gte: createdGte },
       });
       for (const session of listed.data) {
-        if (session.payment_status !== "paid" && session.status !== "complete") continue;
+        if (!checkoutPaymentCleared(session)) continue;
         await fulfillIfOwned(session);
       }
     }

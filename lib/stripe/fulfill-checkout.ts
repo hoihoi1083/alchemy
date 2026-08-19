@@ -9,9 +9,11 @@ import type { DbUser } from "@/lib/db/types";
 import { getDb, isMongoConfigured } from "@/lib/mongodb";
 import {
   applyTopUpGrant,
+  attachStripeCustomerWithoutPlanChange,
   findClerkIdByStripeCustomer,
   setUserSubscription,
 } from "@/lib/stripe/billing-sync";
+import { checkoutPaymentCleared } from "@/lib/stripe/payment-cleared";
 import { isPaidPlan, type PaidPlan } from "@/lib/stripe/prices";
 
 function customerId(value: string | Stripe.Customer | Stripe.DeletedCustomer | null): string | null {
@@ -175,7 +177,7 @@ export async function fulfillCheckoutSession(
   const cust = customerId(session.customer);
 
   if (kind === "topup" || session.mode === "payment") {
-    if (session.payment_status !== "paid") {
+    if (!checkoutPaymentCleared(session)) {
       return {
         kind: "topup",
         clerkId,
@@ -221,11 +223,29 @@ export async function fulfillCheckoutSession(
       reason: "missing_plan",
     };
   }
+
+  const subId = subscriptionId(session.subscription);
+  if (!checkoutPaymentCleared(session)) {
+    await attachStripeCustomerWithoutPlanChange({
+      clerkId,
+      stripeCustomerId: cust,
+      stripeSubscriptionId: subId,
+    });
+    return {
+      kind: "subscription",
+      clerkId,
+      granted: false,
+      balanceAfter: null,
+      tokensGranted: 0,
+      reason: "not_paid",
+    };
+  }
+
   await setUserSubscription({
     clerkId,
     plan,
     stripeCustomerId: cust,
-    stripeSubscriptionId: subscriptionId(session.subscription),
+    stripeSubscriptionId: subId,
   });
   // Token grant for subscriptions happens on invoice.paid (idempotent).
   return {

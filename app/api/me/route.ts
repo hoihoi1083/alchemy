@@ -1,7 +1,15 @@
 import { NextResponse } from "next/server";
+import {
+  INTERNAL_UNLIMITED_DISPLAY_BALANCE,
+  isInternalUnlimitedClerkId,
+  isInternalUnlimitedIdentity,
+} from "@/lib/billing/internal-unlimited";
+import { getUserPlan } from "@/lib/billing/get-user-plan";
+import { resolveTokenPayer } from "@/lib/billing/team-payer";
 import type { DbUser } from "@/lib/db/types";
 import { getDb, isMongoConfigured } from "@/lib/mongodb";
 import { requireAppUser } from "@/lib/require-app-user";
+import { getTeamContextForUser } from "@/lib/team/service";
 
 export const runtime = "nodejs";
 
@@ -32,9 +40,42 @@ export async function GET(request: Request) {
     };
   }
 
+  const [effectivePlan, teamMembership, payer] = user
+    ? await Promise.all([
+        getUserPlan(auth.user.userId),
+        getTeamContextForUser(auth.user.userId),
+        resolveTokenPayer(auth.user.userId),
+      ])
+    : [null, null, null];
+
+  let creditBalance = user?.creditBalance ?? null;
+  if (payer?.pooled) {
+    const owner = await db.collection<DbUser>("users").findOne({
+      clerkId: payer.payerClerkId,
+    });
+    creditBalance = owner?.creditBalance ?? 0;
+  }
+  const unlimited = user
+    ? isInternalUnlimitedIdentity({
+        clerkId: auth.user.userId,
+        email: user.emailNormalized ?? user.email,
+      })
+    : isInternalUnlimitedClerkId(auth.user.userId);
+  if (unlimited) {
+    creditBalance = INTERNAL_UNLIMITED_DISPLAY_BALANCE;
+  }
+
   return NextResponse.json({
     ok: true,
-    user,
+    user: user
+      ? {
+          ...user,
+          effectivePlan,
+          creditBalance,
+          ownCreditBalance: user.creditBalance,
+        }
+      : null,
+    teamMembership,
     testWrite,
   });
 }

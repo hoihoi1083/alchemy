@@ -9,11 +9,17 @@ import {
 import {
   estimateH3Tokens,
   estimateVideoTokens,
+  imageCountTokenCost,
   resolveVideoBillingResolution,
   TOKEN_COST,
 } from "@/lib/billing/token-costs";
+import {
+  INTERNAL_UNLIMITED_DISPLAY_BALANCE,
+  isInternalUnlimitedUser,
+} from "@/lib/billing/internal-unlimited";
 import { isMongoConfigured } from "@/lib/mongodb";
 import { isProductionEnv } from "@/lib/mongodb-production";
+import { resolveTokenPayer } from "@/lib/billing/team-payer";
 
 export { resolveVideoBillingResolution, estimateVideoTokens, estimateH3Tokens };
 
@@ -37,12 +43,15 @@ function billingDbUnavailableResponse(): NextResponse {
  */
 export async function requireTokens(clerkId: string, cost: number): Promise<NextResponse | null> {
   if (cost <= 0) return null;
+  if (await isInternalUnlimitedUser(clerkId)) return null;
   if (!isMongoConfigured()) {
     if (isProductionEnv()) return billingDbUnavailableResponse();
     return null;
   }
   try {
-    await assertCanAfford(clerkId, cost);
+    const payer = await resolveTokenPayer(clerkId);
+    if (await isInternalUnlimitedUser(payer.payerClerkId)) return null;
+    await assertCanAfford(payer.payerClerkId, cost);
     return null;
   } catch (err) {
     return (
@@ -64,6 +73,9 @@ export async function chargeTokens(
   if (cost <= 0) {
     return { balanceAfter: null };
   }
+  if (await isInternalUnlimitedUser(clerkId)) {
+    return { balanceAfter: INTERNAL_UNLIMITED_DISPLAY_BALANCE };
+  }
   // Production must never silently skip billing when Mongo is unset.
   if (!isMongoConfigured()) {
     if (isProductionEnv()) {
@@ -72,8 +84,19 @@ export async function chargeTokens(
     return { balanceAfter: null };
   }
   try {
-    const balanceAfter = await consumeTokens(clerkId, cost, {
-      meta: { ...meta, phase: "charge" },
+    const payer = await resolveTokenPayer(clerkId);
+    if (await isInternalUnlimitedUser(payer.payerClerkId)) {
+      return { balanceAfter: INTERNAL_UNLIMITED_DISPLAY_BALANCE };
+    }
+    const balanceAfter = await consumeTokens(payer.payerClerkId, cost, {
+      meta: {
+        ...meta,
+        phase: "charge",
+        actorClerkId: clerkId,
+        billedClerkId: payer.payerClerkId,
+        teamId: payer.teamId,
+        teamPooled: payer.pooled,
+      },
     });
     return { balanceAfter };
   } catch (err) {
@@ -132,8 +155,18 @@ export async function refundTokens(
 ): Promise<number | null> {
   if (!isMongoConfigured() || cost <= 0) return null;
   try {
-    const balanceAfter = await grantTokens(clerkId, cost, "refund", {
-      meta: { ...meta, phase: "refund" },
+    if (await isInternalUnlimitedUser(clerkId)) {
+      return INTERNAL_UNLIMITED_DISPLAY_BALANCE;
+    }
+    const billedClerkId =
+      typeof meta.billedClerkId === "string" && meta.billedClerkId.trim()
+        ? meta.billedClerkId.trim()
+        : (await resolveTokenPayer(clerkId)).payerClerkId;
+    if (await isInternalUnlimitedUser(billedClerkId)) {
+      return INTERNAL_UNLIMITED_DISPLAY_BALANCE;
+    }
+    const balanceAfter = await grantTokens(billedClerkId, cost, "refund", {
+      meta: { ...meta, phase: "refund", billedClerkId },
     });
     if (balanceAfter === null) {
       alertRefundFailure("null_user", clerkId, cost, meta);
@@ -163,12 +196,12 @@ export function imageTokenCostFromRequest(opts: {
   multipartMode?: string | null;
 }): number {
   const mode = opts.multipartMode?.trim() || "";
-  if (mode.startsWith("refine")) return TOKEN_COST.image;
+  if (mode.startsWith("refine")) return imageCountTokenCost(opts.numImages);
   const out = opts.imageOutputMode?.trim() || "";
   if (out === "campaign") return TOKEN_COST.campaign;
   if (out === "teaching-carousel") return TOKEN_COST.teaching_carousel;
-  if (out === "ab" || (opts.numImages ?? 1) >= 2) return TOKEN_COST.image_ab;
-  return TOKEN_COST.image;
+  if (out === "ab") return TOKEN_COST.image_ab;
+  return imageCountTokenCost(opts.numImages);
 }
 
 export function videoTokenCostFromRequest(opts: {

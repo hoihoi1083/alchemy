@@ -30,6 +30,7 @@ run("Billing economics", [join(root, "tests/billing-token-costs.test.ts")]);
 run("Billing Phase 1 costs", [join(root, "tests/billing-phase1-costs.test.ts")]);
 run("Billing safety (overcharge guards)", [join(root, "tests/billing-safety.test.ts")]);
 run("Billing charge/refund smokes", [join(root, "tests/billing-charge-refund-smoke.test.ts")]);
+run("Stripe checkout paid-gate", [join(root, "tests/stripe-checkout-paid-gate.test.ts")]);
 run("i18n key parity", [join(root, "tests/i18n-key-parity.test.ts")]);
 
 if (process.env.BILLING_LIVE?.trim() === "1") {

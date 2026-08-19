@@ -19,6 +19,14 @@ export function normalizeUserPlan(raw: unknown): UserPlan {
   return LEGACY_PLAN_MAP[raw] ?? "free";
 }
 
+/** Client `/api/me` payload: prefer inherited enterprise plan over raw Mongo plan. */
+export function effectivePlanFromUser(user?: {
+  effectivePlan?: string | null;
+  plan?: string | null;
+} | null): UserPlan {
+  return normalizeUserPlan(user?.effectivePlan ?? user?.plan);
+}
+
 export type PlanDefinition = {
   id: UserPlan;
   /** Tokens granted once at signup (Free) or each billing period (paid). */
@@ -99,11 +107,11 @@ export const PLAN_DEFINITIONS: Record<UserPlan, PlanDefinition> = {
   },
   custom: {
     id: "custom",
-    monthlyTokens: 0,
-    grantCogsUsd: 0,
-    listPriceUsd: null,
-    monthlyPriceUsd: null,
-    yearlyPriceUsd: null,
+    monthlyTokens: 40000,
+    grantCogsUsd: 49.38,
+    listPriceUsd: 399.99,
+    monthlyPriceUsd: 249.99,
+    yearlyPriceUsd: 199.99,
     maxVideoResolution: "1080p",
     maxImageResolution: "2K",
     proCanvas: true,

@@ -31,9 +31,11 @@ export function ProNavLink({ className, onClick }: ProNavLinkProps) {
     void fetch("/api/me")
       .then(async (res) => {
         if (!res.ok) return;
-        const data = (await res.json()) as { user?: { plan?: string | null } | null };
+        const data = (await res.json()) as {
+          user?: { plan?: string | null; effectivePlan?: string | null } | null;
+        };
         if (cancelled) return;
-        setHasPro(canUseProCanvas(normalizeUserPlan(data.user?.plan)));
+        setHasPro(canUseProCanvas(normalizeUserPlan(data.user?.effectivePlan ?? data.user?.plan)));
       })
       .catch(() => {
         /* keep pricing fallback */

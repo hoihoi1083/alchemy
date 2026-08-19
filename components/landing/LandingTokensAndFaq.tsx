@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useLocale } from "@/components/LocaleProvider";
 import { FaqExpandToggle } from "@/components/landing/FaqExpandToggle";
 import { Reveal } from "@/components/landing/Reveal";
+import { PRODUCT_SUPPORT_EMAIL } from "@/lib/brand";
 import { TOP_UP_PRICE_USD, TOP_UP_TOKENS } from "@/lib/billing/plans";
 
 const FAQ_PREVIEW_COUNT = 4;
@@ -53,12 +54,12 @@ export function LandingTokensAndFaq() {
 									<span className="font-medium text-slate-800">
 										{L.topUpCustom}
 									</span>
-									<Link
-										href="/pricing"
+									<a
+										href={`mailto:${PRODUCT_SUPPORT_EMAIL}?subject=${encodeURIComponent(L.topUpCustomMailSubject)}`}
 										className="font-semibold text-violet-700 hover:underline"
 									>
-										{L.pricingCustom}
-									</Link>
+										{L.topUpCustomCta}
+									</a>
 								</li>
 							</ul>
 							<Link

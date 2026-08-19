@@ -20,6 +20,7 @@ import {
   fulfillCheckoutSession,
   resolveCheckoutClerkId,
 } from "@/lib/stripe/fulfill-checkout";
+import { subscriptionStatusGrantsPaidEntitlements } from "@/lib/stripe/payment-cleared";
 import { isPaidPlan, planFromPriceId, type PaidPlan } from "@/lib/stripe/prices";
 import { isMongoConfigured } from "@/lib/mongodb";
 
@@ -50,6 +51,21 @@ function subscriptionId(
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   await fulfillCheckoutSession(session);
+}
+
+async function handleCheckoutAsyncPaymentSucceeded(
+  session: Stripe.Checkout.Session,
+) {
+  await fulfillCheckoutSession(session);
+}
+
+async function handleCheckoutAsyncPaymentFailed(
+  session: Stripe.Checkout.Session,
+) {
+  console.info("[stripe] checkout.session.async_payment_failed — plan not unlocked", {
+    sessionId: session.id,
+    paymentStatus: session.payment_status,
+  });
 }
 
 async function handleInvoicePaid(invoice: Stripe.Invoice) {
@@ -320,6 +336,14 @@ async function handleSubscriptionUpdated(
     return;
   }
 
+  if (!subscriptionStatusGrantsPaidEntitlements(sub.status)) {
+    console.info(
+      "[stripe] subscription.updated — skip plan until payment clears",
+      { subscriptionId: sub.id, clerkId, status: sub.status },
+    );
+    return;
+  }
+
   // Payment for an upgrade/switch failed or needs authentication — plan change
   // is NOT applied yet. Do not grant tokens or flip Mongo to the pending price.
   if (sub.pending_update) {
@@ -453,6 +477,16 @@ export async function POST(request: Request) {
     switch (event.type) {
       case "checkout.session.completed":
         await handleCheckoutCompleted(
+          event.data.object as Stripe.Checkout.Session,
+        );
+        break;
+      case "checkout.session.async_payment_succeeded":
+        await handleCheckoutAsyncPaymentSucceeded(
+          event.data.object as Stripe.Checkout.Session,
+        );
+        break;
+      case "checkout.session.async_payment_failed":
+        await handleCheckoutAsyncPaymentFailed(
           event.data.object as Stripe.Checkout.Session,
         );
         break;

@@ -99,6 +99,22 @@ async function createAllIndexes(db: Db): Promise<void> {
   );
   await db.collection("assets").createIndex({ clerkId: 1, createdAt: -1 });
   await db.collection("assets").createIndex({ clerkId: 1, sourceUrl: 1 });
+  await db.collection("teams").createIndex({ teamId: 1 }, { unique: true });
+  await db.collection("teams").createIndex(
+    { ownerClerkId: 1 },
+    { unique: true, partialFilterExpression: { status: "active" } },
+  );
+  await db.collection("team_members").createIndex(
+    { teamId: 1, clerkId: 1 },
+    { unique: true },
+  );
+  await db.collection("team_members").createIndex({ clerkId: 1, status: 1 });
+  await db.collection("team_invites").createIndex({ teamId: 1, createdAt: -1 });
+  await db.collection("team_invites").createIndex(
+    { teamId: 1, inviteEmailNormalized: 1, revokedAt: 1, acceptedAt: 1 },
+    { unique: true, partialFilterExpression: { revokedAt: null, acceptedAt: null } },
+  );
+  await db.collection("team_invites").createIndex({ expiresAt: 1 });
 }
 
 /** Idempotent index ensure — shared by getDb (fire-and-forget) and /api/db-health. */

@@ -12,7 +12,7 @@ export function normalizeEmail(email: string | null | undefined): string | null 
 
 function planRank(plan: UserPlan | string | null | undefined): number {
   const p = normalizeUserPlan(plan);
-  if (p === "free" || p === "custom") return 0;
+  if (p === "free") return 0;
   return paidPlanRank(p as PaidPlan);
 }
 

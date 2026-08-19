@@ -12,6 +12,7 @@ import {
 } from "../lib/billing/entitlements";
 import { PLAN_DEFINITIONS } from "../lib/billing/plans";
 import { videoSettingsForWorkflow } from "../lib/video-settings";
+import { subscriptionStatusGrantsPaidEntitlements } from "../lib/stripe/payment-cleared";
 
 describe("plan entitlements", () => {
   it("clamps free video requests down to 480p", () => {
@@ -65,8 +66,10 @@ describe("plan entitlements", () => {
     assert.equal(canUseProCanvas("standard"), false);
     assert.equal(canUseProCanvas("pro"), false);
     assert.equal(canUseProCanvas("master"), true);
+    assert.equal(canUseProCanvas("custom"), true);
     assert.throws(() => assertProCanvasAllowed("pro"), PlanEntitlementError);
     assert.doesNotThrow(() => assertProCanvasAllowed("master"));
+    assert.doesNotThrow(() => assertProCanvasAllowed("custom"));
   });
 
   it("pricing table matches plan caps", () => {
@@ -77,6 +80,10 @@ describe("plan entitlements", () => {
     assert.equal(PLAN_DEFINITIONS.standard.maxImageResolution, "1K");
     assert.equal(PLAN_DEFINITIONS.pro.maxImageResolution, "1K");
     assert.equal(PLAN_DEFINITIONS.master.maxImageResolution, "2K");
+    assert.equal(PLAN_DEFINITIONS.custom.monthlyTokens, 40000);
+    assert.equal(PLAN_DEFINITIONS.custom.monthlyPriceUsd, 249.99);
+    assert.equal(PLAN_DEFINITIONS.custom.yearlyPriceUsd, 199.99);
+    assert.equal(PLAN_DEFINITIONS.custom.listPriceUsd, 399.99);
   });
 
   it("parses video resolution aliases", () => {
@@ -102,6 +109,11 @@ describe("subscription cancel policy", () => {
       const ended =
         status === "canceled" || status === "unpaid" || status === "incomplete_expired";
       assert.equal(ended, true);
+      assert.equal(subscriptionStatusGrantsPaidEntitlements(status), false);
     }
+  });
+
+  it("does not grant Pro from an incomplete first invoice", () => {
+    assert.equal(subscriptionStatusGrantsPaidEntitlements("incomplete"), false);
   });
 });

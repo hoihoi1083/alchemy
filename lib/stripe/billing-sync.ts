@@ -213,6 +213,49 @@ export async function setUserSubscription(opts: {
     },
     { upsert: true },
   );
+  void import("@/lib/team/service")
+    .then(({ syncOwnerTeamForPlan }) =>
+      syncOwnerTeamForPlan(opts.clerkId, opts.plan),
+    )
+    .catch((err) => {
+      console.error("[billing] syncOwnerTeamForPlan failed", err);
+    });
+}
+
+/**
+ * Persist Stripe ids from an unpaid-but-complete Checkout without flipping plan.
+ * Needed so later invoice.paid / async_payment_succeeded can find the user.
+ */
+export async function attachStripeCustomerWithoutPlanChange(opts: {
+  clerkId: string;
+  stripeCustomerId?: string | null;
+  stripeSubscriptionId?: string | null;
+}): Promise<void> {
+  if (!isMongoConfigured()) return;
+  if (!opts.stripeCustomerId && !opts.stripeSubscriptionId) return;
+  const db = await getDb();
+  const now = new Date();
+  const $set: Partial<DbUser> & { updatedAt: Date } = { updatedAt: now };
+  if (opts.stripeCustomerId) $set.stripeCustomerId = opts.stripeCustomerId;
+  if (opts.stripeSubscriptionId) {
+    $set.stripeSubscriptionId = opts.stripeSubscriptionId;
+  }
+  await db.collection<DbUser>("users").updateOne(
+    { clerkId: opts.clerkId },
+    {
+      $set,
+      $setOnInsert: {
+        clerkId: opts.clerkId,
+        email: null,
+        name: null,
+        imageUrl: null,
+        region: process.env.REGION === "cn" ? "cn" : "hk",
+        creditBalance: 0,
+        createdAt: now,
+      },
+    },
+    { upsert: true },
+  );
 }
 
 export async function clearPaidSubscription(clerkId: string): Promise<void> {
@@ -232,6 +275,11 @@ export async function clearPaidSubscription(clerkId: string): Promise<void> {
       },
     },
   );
+  void import("@/lib/team/service")
+    .then(({ syncOwnerTeamForPlan }) => syncOwnerTeamForPlan(clerkId, "free"))
+    .catch((err) => {
+      console.error("[billing] syncOwnerTeamForPlan failed", err);
+    });
 }
 
 /**
