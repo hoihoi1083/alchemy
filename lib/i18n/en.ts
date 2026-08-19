@@ -85,7 +85,7 @@ export const en = {
 			invitePlaceholder: "Invite teammate email",
 			invite: "Invite",
 			inviteHint:
-				"Invite links copy to the clipboard when the browser allows it. Teammate generations use this team's token pool.",
+				"Invite links copy to the clipboard when the browser allows it. Teammates must open the link signed in as the invited email (not the owner account). Generations use this team's token pool.",
 			membersTitle: "Active members",
 			ownerSuffix: "(owner)",
 			remove: "Remove",
@@ -125,6 +125,11 @@ export const en = {
 			inviteFailedAccept: "Failed to accept invite.",
 			inviteWrongEmail:
 				"This invite was sent to a different email address. Sign out and sign in with the invited email.",
+			inviteWrongEmailFor:
+				"This invite is for {email}. Sign out, then sign in with that address (not the team owner account).",
+			inviteWrongEmailOwner:
+				"You are signed in as the team owner. This invite is for {email}. Sign out and sign in with that address.",
+			inviteSwitchAccount: "Sign out and switch account",
 		},
 	},
 	library: {

@@ -1,16 +1,24 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
+import { useAuth, useClerk } from "@clerk/nextjs";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useLocale } from "@/components/LocaleProvider";
 
+type AcceptErrorBody = {
+  error?: string;
+  invitedEmail?: string | null;
+  ownerSignedIn?: boolean;
+};
+
 export function TeamInviteAcceptPageClient() {
   const { isLoaded, isSignedIn } = useAuth();
+  const { signOut } = useClerk();
   const { m } = useLocale();
   const t = m.account.team;
   const [status, setStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [message, setMessage] = useState("");
+  const [wrongAccount, setWrongAccount] = useState(false);
   const token = useMemo(() => {
     if (typeof window === "undefined") return "";
     return new URL(window.location.href).searchParams.get("token")?.trim() ?? "";
@@ -28,27 +36,54 @@ export function TeamInviteAcceptPageClient() {
       return;
     }
     setStatus("loading");
+    setWrongAccount(false);
     void fetch("/api/team/invites/accept", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token }),
     })
       .then(async (res) => {
-        const data = (await res.json().catch(() => ({}))) as { error?: string };
-        if (!res.ok) throw new Error(data.error ?? t.inviteFailedAccept);
+        const data = (await res.json().catch(() => ({}))) as AcceptErrorBody;
+        if (!res.ok) {
+          const invited = data.invitedEmail?.trim() || "";
+          if (invited) {
+            setWrongAccount(true);
+            throw new Error(
+              data.ownerSignedIn
+                ? t.inviteWrongEmailOwner.replace("{email}", invited)
+                : t.inviteWrongEmailFor.replace("{email}", invited),
+            );
+          }
+          throw new Error(data.error ?? t.inviteFailedAccept);
+        }
         setStatus("ok");
         setMessage(t.inviteOk);
       })
       .catch((err: unknown) => {
         setStatus("error");
         const raw = err instanceof Error ? err.message : t.inviteFailedAccept;
-        setMessage(
-          /different email address/i.test(raw) ? t.inviteWrongEmail : raw,
-        );
+        setMessage(/different email address/i.test(raw) ? t.inviteWrongEmail : raw);
       });
-  }, [isLoaded, isSignedIn, token, t.inviteFailedAccept, t.inviteMissingToken, t.inviteOk, t.inviteWrongEmail]);
+  }, [
+    isLoaded,
+    isSignedIn,
+    token,
+    t.inviteFailedAccept,
+    t.inviteMissingToken,
+    t.inviteOk,
+    t.inviteWrongEmail,
+    t.inviteWrongEmailFor,
+    t.inviteWrongEmailOwner,
+  ]);
 
   const waitingForAuth = !isLoaded || (!isSignedIn && Boolean(token) && status === "idle");
+
+  function switchAccount() {
+    const next = encodeURIComponent(
+      `${window.location.pathname}${window.location.search}`,
+    );
+    void signOut({ redirectUrl: `/sign-in?redirect_url=${next}` });
+  }
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-xl px-6 py-16 text-slate-900">
@@ -72,12 +107,22 @@ export function TeamInviteAcceptPageClient() {
         ) : status === "error" ? (
           <>
             <p className="text-sm text-red-700">{message}</p>
-            <Link
-              href="/account"
-              className="mt-4 inline-block rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-800 hover:bg-slate-50"
-            >
-              {t.inviteBack}
-            </Link>
+            {wrongAccount ? (
+              <button
+                type="button"
+                onClick={switchAccount}
+                className="mt-4 inline-block rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-800 hover:bg-slate-50"
+              >
+                {t.inviteSwitchAccount}
+              </button>
+            ) : (
+              <Link
+                href="/account"
+                className="mt-4 inline-block rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-800 hover:bg-slate-50"
+              >
+                {t.inviteBack}
+              </Link>
+            )}
           </>
         ) : (
           <p className="text-sm text-slate-700">{t.inviteSignIn}</p>

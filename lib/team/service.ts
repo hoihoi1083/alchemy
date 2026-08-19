@@ -13,10 +13,18 @@ const INVITE_EXPIRY_DAYS = 7;
 
 export class TeamError extends Error {
   readonly status: number;
-  constructor(message: string, status = 400) {
+  readonly invitedEmail?: string;
+  readonly ownerSignedIn?: boolean;
+  constructor(
+    message: string,
+    status = 400,
+    opts?: { invitedEmail?: string; ownerSignedIn?: boolean },
+  ) {
     super(message);
     this.name = "TeamError";
     this.status = status;
+    this.invitedEmail = opts?.invitedEmail;
+    this.ownerSignedIn = opts?.ownerSignedIn;
   }
 }
 
@@ -502,7 +510,11 @@ export async function leaveTeam(clerkId: string): Promise<void> {
   await releaseSeat(membership.teamId);
 }
 
-export async function acceptTeamInvite(clerkId: string, token: string): Promise<{ teamId: string }> {
+export async function acceptTeamInvite(
+  clerkId: string,
+  token: string,
+  candidateEmails: string[] = [],
+): Promise<{ teamId: string }> {
   if (!isMongoConfigured()) throw new TeamError("Database is required for team seats.", 503);
   const tokenHash = hashToken(token.trim());
   const db = await getDb();
@@ -515,10 +527,19 @@ export async function acceptTeamInvite(clerkId: string, token: string): Promise<
   if (!invite) throw new TeamError("Invite is invalid or expired.", 404);
 
   const user = await getUserByClerkId(clerkId);
-  const emailNormalized = normalizeEmail(user?.email ?? null);
-  if (!emailNormalized) throw new TeamError("Your account needs a verified email to accept invites.");
-  if (emailNormalized !== invite.inviteEmailNormalized) {
-    throw new TeamError("This invite was sent to a different email address.", 403);
+  const emails = new Set(
+    [user?.email, ...candidateEmails]
+      .map((e) => normalizeEmail(e ?? null))
+      .filter((e): e is string => Boolean(e)),
+  );
+  if (emails.size === 0) {
+    throw new TeamError("Your account needs a verified email to accept invites.");
+  }
+  if (!emails.has(invite.inviteEmailNormalized)) {
+    throw new TeamError("This invite was sent to a different email address.", 403, {
+      invitedEmail: invite.inviteEmail,
+      ownerSignedIn: invite.invitedBy === clerkId,
+    });
   }
 
   const team = await db.collection<DbTeam>("teams").findOne({

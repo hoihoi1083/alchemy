@@ -80,7 +80,8 @@ export const zhTw = {
       seatsFull: "席位已滿。請先移除成員或撤銷邀請，再加入其他人。",
       invitePlaceholder: "邀請同事電子郵件",
       invite: "邀請",
-      inviteHint: "瀏覽器允許時會自動複製邀請連結。隊友生成會使用團隊點數池。",
+      inviteHint:
+        "瀏覽器允許時會自動複製邀請連結。隊友必須用受邀電子郵件登入後開啟連結（不要用擁有者帳號）。生成會使用團隊點數池。",
       membersTitle: "現有成員",
       ownerSuffix: "（擁有人）",
       remove: "移除",
@@ -118,6 +119,11 @@ export const zhTw = {
       inviteMissingToken: "缺少邀請 token。",
       inviteFailedAccept: "無法接受邀請。",
       inviteWrongEmail: "此邀請發給另一個電子郵件。請登出，再用受邀電子郵件登入。",
+      inviteWrongEmailFor:
+        "此邀請發給 {email}。請登出，再用該電子郵件登入（不要用團隊擁有者帳號）。",
+      inviteWrongEmailOwner:
+        "目前登入的是團隊擁有者帳號。此邀請發給 {email}。請登出，再用該電子郵件登入。",
+      inviteSwitchAccount: "登出並切換帳號",
     },
   },
   library: {

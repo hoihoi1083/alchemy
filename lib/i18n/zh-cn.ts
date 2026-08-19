@@ -80,7 +80,8 @@ export const zhCn = {
       seatsFull: "席位已满。请先移除成员或撤销邀请，再加入其他人。",
       invitePlaceholder: "邀请同事邮箱",
       invite: "邀请",
-      inviteHint: "浏览器允许时会自动复制邀请链接。队友生成会使用团队点数池。",
+      inviteHint:
+        "浏览器允许时会自动复制邀请链接。队友必须用受邀邮箱登录后打开链接（不要用所有者账号）。生成会使用团队点数池。",
       membersTitle: "现有成员",
       ownerSuffix: "（所有者）",
       remove: "移除",
@@ -118,6 +119,11 @@ export const zhCn = {
       inviteMissingToken: "缺少邀请 token。",
       inviteFailedAccept: "无法接受邀请。",
       inviteWrongEmail: "此邀请发给另一个邮箱。请退出，再用受邀邮箱登录。",
+      inviteWrongEmailFor:
+        "此邀请发给 {email}。请退出，再用该邮箱登录（不要用团队所有者账号）。",
+      inviteWrongEmailOwner:
+        "当前登录的是团队所有者账号。此邀请发给 {email}。请退出，再用该邮箱登录。",
+      inviteSwitchAccount: "退出并切换账号",
     },
   },
   library: {

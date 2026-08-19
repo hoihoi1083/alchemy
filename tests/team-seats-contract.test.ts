@@ -29,6 +29,10 @@ describe("team seats contract", () => {
       assert.match(src, /TeamError/);
       assert.match(src, /runtime = "nodejs"/);
     }
+    const accept = read("app/api/team/invites/accept/route.ts");
+    assert.match(accept, /currentUser/);
+    assert.match(accept, /invitedEmail/);
+    assert.match(accept, /ownerSignedIn/);
   });
 
   it("service enforces seat-safety guardrails", () => {
@@ -38,6 +42,8 @@ describe("team seats contract", () => {
     assert.match(src, /No seats available/);
     assert.match(src, /Owner cannot remove themselves/);
     assert.match(src, /different email address/);
+    assert.match(src, /invitedEmail: invite.inviteEmail/);
+    assert.match(src, /candidateEmails/);
     assert.match(src, /sendTeamInviteEmail/);
     assert.match(src, /resendTeamInvite/);
     assert.match(src, /heldSeats: \{ \$lt: seatLimit \}/);
