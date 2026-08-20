@@ -2862,9 +2862,10 @@ export const zh = {
 		blockbusterHeroHintConcept:
 			"Logo 或吉祥物。飛出嘅卡片會揭曉呢個——冇上傳就用品牌套件 Logo。",
 		blockbusterPackTitle: "包裝／飛出道具",
-		blockbusterPackHint: "空中複製嘅紙箱或印刷。顏色同 Logo 要同主體一致。",
+		blockbusterPackHint:
+			"上傳品牌紙箱效果最好；留空就用 Brand kit Logo 印喺飛出嘅箱上。",
 		blockbusterPackHintConcept:
-			"品牌卡片、貼紙或 Logo 卡。留空就用 Logo／吉祥物做飛出道具。",
+			"品牌卡片、貼紙。留空就用 Brand kit Logo 做飛出道具。",
 		blockbusterSceneTitle: "場景首幀",
 		blockbusterSceneHint:
 			"貨車上路靜圖＝開場第一幀。請生成黃昏天橋（貨箱堆得過高）。盡量唔好留空。",
@@ -2873,7 +2874,30 @@ export const zh = {
 		blockbusterNeedHero: "請先上傳產品相（概念模式可上傳 Logo／吉祥物）。",
 		blockbusterNeedConceptHero: "請上傳 Logo／吉祥物，或喺品牌套件存好 Logo。",
 		blockbusterAnimating: "正在生成 9 秒單鏡…",
-		
+		blockbusterFinishing: "收尾中：字幕／英雄定格／Logo…",
+		blockbusterFinishFailed: "Blockbuster 收尾失敗，請重試。",
+		blockbusterControlsTitle: "登場設定（類似 Social drip）",
+		blockbusterControlsBadge: "燒進成片",
+		blockbusterControlsHint:
+			"節奏改 AI 一鏡。英雄定格同 Brand kit Logo 喺生成後疊加。字幕請之後自己加。",
+		blockbusterTimingLabel: "故事節奏",
+		blockbusterTimingClassic: {
+			title: "經典",
+			desc: "0–2 貨車 · 2–4 撞擊 · 4–6 浮現 · 6–9 英雄",
+		},
+		blockbusterTimingEarly: {
+			title: "提前揭曉",
+			desc: "箱子更短 · 產品更早 · 英雄更長（面霜罐）",
+		},
+		blockbusterCaptionLabel: "畫面文案（可選）",
+		blockbusterCaptionBadge: "預設關閉",
+		blockbusterCaptionPlaceholder: "一行一句…",
+		blockbusterCaptionHint: "只有勾選先會燒進成片。唔勾選可以之後自己加字幕。",
+		blockbusterBurnCaptionsLabel: "而家燒進字幕（一般保持關閉）",
+		blockbusterHeroHoldLabel: "揭曉後英雄放大 + 約 1.5 秒定格",
+		blockbusterEndLogoLabel:
+			"Brand kit Logo 片尾右下（約 0.8 秒）。冇上傳包裝圖就會用 Logo 印喺飛出嘅箱上。",
+
 		h3ShotNeedHero: "可上傳產品圖，或用 AI 生成靜圖。",
 		h3ShotNeedConceptHero:
 			"可上傳 Logo/吉祥物、用品牌套件 Logo，或用 AI 生成靜圖。",
@@ -3244,6 +3268,40 @@ export const zh = {
 		socialDripMetaphorAuto: "自動 · AI 揀",
 		socialDripNoReferenceNote: "三分屏唔用參考片——版面由呢條 recipe 控制。",
 		socialDripNeedKeyframe: "三分屏請先上傳產品相，或填概念主題。",
+		socialDripChromeTitle: "Instagram 欄（影片中間）",
+		socialDripChromeBadge: "會入片",
+		socialDripChromeHint:
+			"呢兩個欄位會出現喺成片中間嘅假 IG 欄——唔只係 prompt。",
+		socialDripChromePreviewLabel: "預覽",
+		socialDripChromeHandleLabel: "發佈者名稱 (@handle)",
+		socialDripChromeHandlePlaceholder: "alchemy_ai_lab",
+		socialDripChromeCaptionLabel: "欄下 Caption",
+		socialDripChromeCaptionPlaceholder: "可以再芝士一點嗎？",
+		socialDripChromeCaptionLimit: "盡量短——最多 {n} 字（太長會糊）。",
+		socialDripPourControlsTitle: "芝士／倒出樣式",
+		socialDripPourControlsHint:
+			"漢堡／溶芝士：揀「溢喺產品上」，液體由食物層溢出，唔好由底部噴出。",
+		socialDripPourOriginLabel: "液體由邊度出",
+		socialDripPourOrigins: {
+			overflow: {
+				title: "溢喺產品上",
+				desc: "由芝士層／邊緣溢出（漢堡 meme）",
+			},
+			tip: {
+				title: "由瓶嘴／尖端",
+				desc: "只適合樽或擠壓嘴",
+			},
+			center: {
+				title: "中央滴落",
+				desc: "由中間一條幼流",
+			},
+		},
+		socialDripPourAmountLabel: "分量",
+		socialDripPourAmounts: {
+			light: "少",
+			medium: "中",
+			extra: "多",
+		},
 		
 		vacuumInflateHint:
 			"產品必須看得見。用真空膜包住你嘅商品再充氣成透明泡，約 4 秒過渡。相機會留成手機，唔會變成第二種包裝袋。",
@@ -4579,6 +4637,19 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 		researchMediaBoth: "搜尋範圍：全部帖文類型（配合「圖片＋影片」模式）。",
 		tiktokImageWarning:
 			"TikTok 只有影片 — 圖文研究請選小紅書或 Instagram，或改選「影片」模式。",
+		platformSearchHintXhs:
+			"小紅書最適合中文品類詞（如 維他命C精華、護膚流程）— 直接搜筆記，有封面可揀風格。",
+		platformSearchHintIgImage:
+			"Instagram 圖文模式用 hashtag 搜 — 英文標籤最穩（vitaminc、skincare、serum）。",
+		platformSearchHintIgHashtags: (tags: string) => `將搜尋：${tags}`,
+		platformSearchHintIgCjk:
+			"中文品類詞已轉成英文標籤；結果仍少就改打英文或換小紅書。",
+		platformSearchHintIgVideo:
+			"Instagram 影片模式用關鍵詞搜 Reels（中英文都得，如 vitamin c serum）。",
+		platformSearchHintFacebook:
+			"Facebook 用關鍵詞搜公開帖 — 品類詞通常比品牌名易搵參考。",
+		platformSearchHintTiktok:
+			"TikTok 只返回影片 — 用短句關鍵詞（skincare routine、開箱）。",
 		useAngle: "用呢個方向",
 		selectAngle: "揀呢個風格",
 		selectedLabel: "已選擇 ✓",

@@ -229,6 +229,9 @@ function mapInstagramItem(raw: unknown, index: number): ContentResearchPost | nu
   const author = pickString(user?.username, user?.full_name, item.username);
   const versions = asRecord(media.image_versions2);
   const candidates = versions?.candidates;
+  const thumbnailResources = Array.isArray(media.thumbnail_resources)
+    ? media.thumbnail_resources
+    : undefined;
   const sidecar = asRecord(media.edge_sidecar_to_children);
   const sidecarEdges = Array.isArray(sidecar?.edges) ? sidecar.edges : undefined;
   const carouselMedia = Array.isArray(media.carousel_media) ? media.carousel_media : undefined;
@@ -244,6 +247,7 @@ function mapInstagramItem(raw: unknown, index: number): ContentResearchPost | nu
           media.thumbnail_url,
           media.thumbnail_src,
           media.display_url,
+          thumbnailResources,
           media.cover,
           item.cover,
           item.thumbnail,
@@ -253,6 +257,7 @@ function mapInstagramItem(raw: unknown, index: number): ContentResearchPost | nu
     media.thumbnail_url,
     media.thumbnail_src,
     media.display_url,
+    thumbnailResources,
     media.cover,
     item.cover,
     item.thumbnail,
@@ -266,11 +271,15 @@ function mapInstagramItem(raw: unknown, index: number): ContentResearchPost | nu
   );
 
   const typename = pickString(media.__typename);
+  const mediaTypeNum = pickNumber(media.media_type, media.mediaType);
+  const isCarousel =
+    typename.includes("Sidecar") || mediaTypeNum === 8 || Boolean(carouselNodes?.length);
   const isVideo =
-    Boolean(videoUrl) ||
-    media.is_video === true ||
-    typename.includes("Video") ||
-    media.media_type === 2;
+    !isCarousel &&
+    (Boolean(videoUrl) ||
+      media.is_video === true ||
+      typename.includes("Video") ||
+      mediaTypeNum === 2);
 
   const url =
     pickString(media.url, item.url, item.permalink) ||
@@ -582,8 +591,80 @@ export function mapRawPlatformPost(
   return mapper(raw, index);
 }
 
-function hashtagFromKeyword(keyword: string): string {
-  return keyword.trim().replace(/^#/, "").replace(/\s+/g, "").slice(0, 80);
+const IG_HASHTAG_ALIASES: Array<{ re: RegExp; tag: string }> = [
+  { re: /維他命\s*c|维生素\s*c|維生素\s*c/i, tag: "vitaminc" },
+  { re: /精華液|精华液|精華|精华/, tag: "serum" },
+  { re: /美白/, tag: "brightening" },
+  { re: /防曬|防晒/, tag: "sunscreen" },
+  { re: /保濕|保湿/, tag: "moisturizer" },
+  { re: /抗老/, tag: "antiaging" },
+  { re: /護膚|护肤/, tag: "skincare" },
+  { re: /面霜|乳霜/, tag: "cream" },
+  { re: /面膜/, tag: "sheetmask" },
+];
+
+function compactHashtag(value: string): string {
+  return value.replace(/^#/, "").replace(/[^\p{L}\p{N}]/gu, "").slice(0, 80);
+}
+
+/** Instagram hashtag search needs a real tag, not a spaced product phrase. */
+export function instagramHashtagCandidates(keyword: string): string[] {
+  const out: string[] = [];
+  const add = (value: string) => {
+    const tag = compactHashtag(value);
+    if (tag.length >= 2 && !out.includes(tag)) out.push(tag);
+  };
+
+  const raw = keyword.trim();
+  const compactOriginal = compactHashtag(raw.replace(/\s+/g, ""));
+  const latin = (raw.match(/[A-Za-z0-9]+/g) ?? []).filter((part) => part.length >= 2);
+  const mapped = IG_HASHTAG_ALIASES.filter(({ re }) => re.test(raw)).map(({ tag }) => tag);
+  const cjkOnly = /[\u3040-\u30ff\u3400-\u9fff]/.test(compactOriginal) && latin.length === 0;
+
+  if (cjkOnly) {
+    if (mapped.includes("vitaminc") && mapped.includes("serum")) add("vitamincserum");
+    for (const tag of mapped) add(tag);
+    add(compactOriginal);
+    return out.slice(0, 3);
+  }
+
+  add(compactOriginal);
+  if (latin.length) {
+    add(latin.join(""));
+    for (const part of [...latin].sort((a, b) => b.length - a.length)) add(part);
+  }
+  if (mapped.includes("vitaminc") && mapped.includes("serum")) add("vitamincserum");
+  for (const tag of mapped) add(tag);
+
+  return out.slice(0, 3);
+}
+
+async function searchInstagramPosts(
+  keyword: string,
+  limit: number,
+  mediaFilter?: ContentResearchMediaFilter,
+): Promise<{ body: Record<string, unknown>; endpoint: string }> {
+  if (mediaFilter !== "image") {
+    const endpoint = "/api/instagram/search-reels/v1";
+    const body = await fetchJustOneApi(endpoint, { keyword }, "Instagram reels search");
+    return { body, endpoint };
+  }
+
+  const endpoint = "/api/instagram/search-hashtag-posts/v1";
+  let body: Record<string, unknown> | undefined;
+  for (const hashtag of instagramHashtagCandidates(keyword)) {
+    body = await fetchJustOneApi(endpoint, { hashtag }, "Instagram hashtag posts search");
+    const items = flattenSearchItems(body);
+    if (items.length < 1) continue;
+    const imagePosts = mapItems("instagram", items, limit, "image");
+    if (imagePosts.length > 0) return { body, endpoint };
+    const stills = mapItems("instagram", items, limit).filter(
+      (p) => p.mediaType === "image" && Boolean(p.coverImageUrl),
+    );
+    if (stills.length > 0) return { body, endpoint };
+  }
+  if (!body) throw new Error("Instagram hashtag search failed.");
+  return { body, endpoint };
 }
 
 export async function searchPlatformPostsByKeyword(
@@ -616,19 +697,12 @@ export async function searchPlatformPostsByKeyword(
         noteType: mediaFilter === "video" ? "_1" : mediaFilter === "image" ? "_2" : "_0",
       }, "XHS note search");
       break;
-    case "instagram":
-      if (mediaFilter === "image") {
-        endpoint = "/api/instagram/search-hashtag-posts/v1";
-        body = await fetchJustOneApi(
-          endpoint,
-          { hashtag: hashtagFromKeyword(k) },
-          "Instagram hashtag posts search",
-        );
-      } else {
-        endpoint = "/api/instagram/search-reels/v1";
-        body = await fetchJustOneApi(endpoint, { keyword: k }, "Instagram reels search");
-      }
+    case "instagram": {
+      const ig = await searchInstagramPosts(k, limit, mediaFilter);
+      body = ig.body;
+      endpoint = ig.endpoint;
       break;
+    }
     case "tiktok":
       endpoint = "/api/tiktok/search-post/v1";
       body = await fetchJustOneApi(
@@ -651,6 +725,10 @@ export async function searchPlatformPostsByKeyword(
 
   const items = flattenSearchItems(body);
   let posts = mapItems(platform, items, limit, mediaFilter);
+
+  if (posts.length < 1 && platform === "instagram" && mediaFilter === "image") {
+    posts = mapItems(platform, items, limit).filter((p) => Boolean(p.coverImageUrl)).slice(0, limit);
+  }
 
   if (posts.length < 1) {
     const label =

@@ -9,7 +9,7 @@ Without `JUSTONEAPI_TOKEN`, research falls back to **Tavily** (public web snippe
 | Platform | Just One API endpoint | Notes |
 |----------|----------------------|-------|
 | 小紅書 | `/api/xiaohongshu/search-note/v2` | Notes sorted by saves (v1/v3/v5 need separate permission) |
-| Instagram | `/api/instagram/search-reels/v1` | Reels by keyword/hashtag |
+| Instagram | `/api/instagram/search-hashtag-posts/v1` (image) · `/api/instagram/search-reels/v1` (video) | Image search uses hashtag tags (CJK product names are mapped, e.g. 維他命C精華 → `vitamincserum`) |
 | TikTok | `/api/tiktok/search-post/v1` | Videos, `MOST_LIKED`, region HK/CN/US |
 | Facebook | `/api/facebook/search-post/v1` | Public posts by keyword |
 

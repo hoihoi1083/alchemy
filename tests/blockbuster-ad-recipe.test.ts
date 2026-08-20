@@ -25,6 +25,7 @@ describe("blockbuster 3-ref recipe", () => {
       product: "ARC bottle",
       hasPackaging: true,
       hasSceneFrame: true,
+      timing: "classic",
     });
     assert.equal(BLOCKBUSTER_DURATION_SEC, 9);
     assert.match(p, /ONE-TAKE/);
@@ -50,11 +51,39 @@ describe("blockbuster 3-ref recipe", () => {
     const ids = blockbusterImageMap({ hasPackaging: true, hasSceneFrame: true });
     assert.deepEqual(ids, { scene: 1, packaging: 2, hero: 3 });
     assert.match(p, new RegExp(`以@Image${ids.scene}为第一帧`));
-    assert.match(p, new RegExp(`@Image${ids.hero}产品`));
+    assert.match(p, new RegExp(`@Image${ids.hero}照片`));
     assert.deepEqual(
       orderedBlockbusterRefFiles({ hero: "H", packaging: "P", scene: "S" }),
       ["S", "P", "H"],
     );
+  });
+
+  it("early-reveal shortens boxes and lengthens hero", () => {
+    const p = buildBlockbusterVideoPrompt({
+      conceptMode: false,
+      product: "CD Capture cream",
+      hasPackaging: true,
+      hasSceneFrame: true,
+      timing: "early-reveal",
+    });
+    assert.match(p, /0-2s|0–2s|0-2\.5s|2-2\.5s/);
+    assert.match(p, /2\.5-4\.5s|4\.5-9s|2.5/);
+    assert.match(p, /0-2\.5秒严禁/);
+    assert.doesNotMatch(p, /0-4秒严禁/);
+  });
+
+  it("product name is label only — hero photo pixels win", () => {
+    const p = buildBlockbusterVideoPrompt({
+      conceptMode: false,
+      product: "vitamin C serum",
+      hasPackaging: true,
+      hasSceneFrame: true,
+      timing: "early-reveal",
+    });
+    assert.match(p, /称呼仅作标签：vitamin C serum/);
+    assert.match(p, /必须以@Image3照片为准/);
+    assert.match(p, /禁止按品类名改成滴管瓶/);
+    assert.match(p, /inventing a different bottle\/serum\/dropper/);
   });
 
   it("concept reveal uses logo/mascot not a fake SKU", () => {
@@ -159,8 +188,11 @@ describe("blockbuster wizard generate wiring", () => {
     assert.match(fn, /generate-minimax-h3/);
     assert.match(fn, /mode", "reference"/);
     assert.match(fn, /orderedBlockbusterRefFiles/);
+    assert.match(fn, /finish-blockbuster/);
+    assert.match(fn, /parseBlockbusterTiming/);
     assert.doesNotMatch(fn, /generate-kling-storyboard/);
     assert.match(wizard, /case "blockbuster":/);
     assert.match(wizard, /setWorkflowMode\("video-only"\)/);
+    assert.match(wizard, /early-reveal/);
   });
 });

@@ -3118,9 +3118,9 @@ export const en = {
 			"Logo or mascot photo. This pops out of the flying tiles — Brand kit logo is used if you skip this.",
 		blockbusterPackTitle: "Packaging / flying props",
 		blockbusterPackHint:
-			"Box or print that should multiply in the air. Colors and logo must match the hero.",
+			"Upload branded cartons for best results — or leave empty to use Brand kit logo on the flying boxes.",
 		blockbusterPackHintConcept:
-			"Brand tiles, sticker sheet, or logo-on-card. If empty, we reuse the logo/mascot as flying props.",
+			"Brand cards / stickers. Leave empty to use Brand kit logo as flying props.",
 		blockbusterSceneTitle: "Scene first frame",
 		blockbusterSceneHint:
 			"Truck-on-road still — this is the opening frame. Generate a dusk overpass plate (boxes stacked too high). Skip only if you must.",
@@ -3131,6 +3131,30 @@ export const en = {
 		blockbusterNeedConceptHero:
 			"Upload a logo/mascot, or save a logo in Brand kit.",
 		blockbusterAnimating: "Generating 9s one-take clip…",
+		blockbusterFinishing: "Finishing: captions / hero hold / logo…",
+		blockbusterFinishFailed: "Blockbuster finish step failed. Try again.",
+		blockbusterControlsTitle: "Reveal settings (like Social drip)",
+		blockbusterControlsBadge: "On video",
+		blockbusterControlsHint:
+			"Timing changes the AI one-take. Hero hold and Brand kit logo run after generate. Add captions later in Caption Studio if you want.",
+		blockbusterTimingLabel: "Story timing",
+		blockbusterTimingClassic: {
+			title: "Classic",
+			desc: "0–2 truck · 2–4 hit · 4–6 emerge · 6–9 hero",
+		},
+		blockbusterTimingEarly: {
+			title: "Early reveal",
+			desc: "Shorter boxes · product earlier · longer hero (cream jar)",
+		},
+		blockbusterCaptionLabel: "On-screen copy (optional)",
+		blockbusterCaptionBadge: "Off by default",
+		blockbusterCaptionPlaceholder: "One line per row…",
+		blockbusterCaptionHint:
+			"Only burned if you check the box below. Leave unchecked to caption later yourself.",
+		blockbusterBurnCaptionsLabel: "Burn captions now (usually leave off)",
+		blockbusterHeroHoldLabel: "Hero zoom + ~1.5s hold after reveal",
+		blockbusterEndLogoLabel:
+			"Brand kit logo end stamp (bottom-right, ~0.8s). If Packaging is empty, Brand kit logo is also used on the flying boxes.",
 		h3ShotNeedHero: "Upload a product photo, or generate a still with AI.",
 		h3ShotNeedConceptHero:
 			"Upload a logo/mascot, save a Brand kit logo, or generate a still with AI.",
@@ -3610,6 +3634,40 @@ export const en = {
 			"Reference video is disabled for Social drip — layout is owned by this recipe.",
 		socialDripNeedKeyframe:
 			"Add a product photo (or concept topic) first for Social drip.",
+		socialDripChromeTitle: "Instagram bar (middle of video)",
+		socialDripChromeBadge: "On video",
+		socialDripChromeHint:
+			"These two fields appear on the fake IG bar in the finished clip — not just in the prompt.",
+		socialDripChromePreviewLabel: "Preview",
+		socialDripChromeHandleLabel: "Poster name (@handle)",
+		socialDripChromeHandlePlaceholder: "alchemy_ai_lab",
+		socialDripChromeCaptionLabel: "Caption under the bar",
+		socialDripChromeCaptionPlaceholder: "Can we make it cheesier?",
+		socialDripChromeCaptionLimit: "Keep it short — max {n} characters (long text garbles).",
+		socialDripPourControlsTitle: "Cheese / pour look",
+		socialDripPourControlsHint:
+			"For burgers & melted food: use Overflow so liquid spills ON the product, not from under it.",
+		socialDripPourOriginLabel: "Where it leaves the product",
+		socialDripPourOrigins: {
+			overflow: {
+				title: "Overflow on product",
+				desc: "Melt from cheese layer / edges (burger meme)",
+			},
+			tip: {
+				title: "From tip / nozzle",
+				desc: "Bottle or squeeze tip only",
+			},
+			center: {
+				title: "Center drip",
+				desc: "Thin stream from the middle",
+			},
+		},
+		socialDripPourAmountLabel: "How much",
+		socialDripPourAmounts: {
+			light: "Light",
+			medium: "Medium",
+			extra: "Extra",
+		},
 		vacuumInflateHint:
 			"Your product stays the hero. We wrap it in a vacuum film, inflate a clear bubble, then morph ~4s. Phones stay phones — we won’t replace them with a sachet.",
 		vacuumInflateBuildingStill: "Step 1/3: vacuum-flat start still…",
@@ -5072,6 +5130,19 @@ export const en = {
 			"Research scope: all post types (Combined workflow).",
 		tiktokImageWarning:
 			"TikTok is video-only. Use 小紅書 or Instagram for image research, or switch workflow to Video.",
+		platformSearchHintXhs:
+			"Best for Chinese category keywords (e.g. 維他命C精華, 護膚流程) — searches notes with cover cards.",
+		platformSearchHintIgImage:
+			"Instagram image mode searches hashtags — English tags work best (vitaminc, skincare, serum).",
+		platformSearchHintIgHashtags: (tags: string) => `Will search: ${tags}`,
+		platformSearchHintIgCjk:
+			"Chinese phrases are mapped to English tags; if results are thin, try English keywords or switch to 小紅書.",
+		platformSearchHintIgVideo:
+			"Instagram video mode searches Reels by keyword (English or Chinese, e.g. vitamin c serum).",
+		platformSearchHintFacebook:
+			"Facebook uses keyword search — category terms usually beat brand names for references.",
+		platformSearchHintTiktok:
+			"TikTok returns videos only — use short keyword phrases (skincare routine, unboxing).",
 		useAngle: "Use this direction",
 		selectAngle: "Select this style",
 		selectedLabel: "Selected ✓",

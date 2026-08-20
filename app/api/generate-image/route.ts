@@ -719,6 +719,10 @@ export async function POST(request: Request) {
           business,
           conceptMode: promotionMode === "concept",
           pick: parseSocialDripMetaphorPick(formData.get("social_drip_metaphor")),
+          igHandle: String(formData.get("social_drip_ig_handle") ?? ""),
+          igCaption: String(formData.get("social_drip_ig_caption") ?? ""),
+          pourOrigin: String(formData.get("social_drip_pour_origin") ?? ""),
+          pourAmount: String(formData.get("social_drip_pour_amount") ?? ""),
         });
       } else {
         socialDripPlan = normalizeSocialDripPlan(socialDripPlan);

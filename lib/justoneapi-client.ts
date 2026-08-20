@@ -218,11 +218,34 @@ export function pickVideoUrl(...values: unknown[]): string | undefined {
   return undefined;
 }
 
+/** Just One sometimes nests or JSON-stringifies `data`. */
+export function unwrapJustOneData(value: unknown): unknown {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+      try {
+        return unwrapJustOneData(JSON.parse(trimmed) as unknown);
+      } catch {
+        return value;
+      }
+    }
+  }
+  const rec = asRecord(value);
+  if (rec && rec.data !== undefined && rec.hashtag === undefined && rec.items === undefined) {
+    const inner = rec.data;
+    if (inner && inner !== value) return unwrapJustOneData(inner);
+  }
+  return value;
+}
+
 export function flattenSearchItems(payload: unknown): unknown[] {
   const root = asRecord(payload);
   if (!root) return Array.isArray(payload) ? payload : [];
 
-  const data = asRecord(root.data) ?? root;
+  const unwrapped = unwrapJustOneData(root.data ?? root);
+  if (Array.isArray(unwrapped) && unwrapped.length > 0) return unwrapped;
+
+  const data = asRecord(unwrapped) ?? asRecord(root.data) ?? root;
   const nested = asRecord(data.data);
 
   const igHashtag = flattenInstagramHashtagEdges(data);
@@ -263,17 +286,37 @@ export function flattenSearchItems(payload: unknown): unknown[] {
   return [];
 }
 
-/** Instagram hashtag search: data.data.hashtag.edge_hashtag_to_media.edges[].node */
-function flattenInstagramHashtagEdges(data: Record<string, unknown>): unknown[] {
-  const hashtag = asRecord(data.hashtag);
-  const edges = asRecord(hashtag?.edge_hashtag_to_media)?.edges;
+function nodesFromGraphqlEdges(edges: unknown): unknown[] {
   if (!Array.isArray(edges) || edges.length === 0) return [];
   return edges
     .map((edge) => {
-      const node = asRecord(edge)?.node ?? edge;
-      return node ?? null;
+      const rec = asRecord(edge);
+      return rec?.node ?? rec?.media ?? edge;
     })
     .filter(Boolean);
+}
+
+/** Instagram hashtag search GraphQL: top posts + recent media. */
+function flattenInstagramHashtagEdges(data: Record<string, unknown>): unknown[] {
+  const hashtag = asRecord(data.hashtag) ?? data;
+  const buckets = [
+    asRecord(hashtag.edge_hashtag_to_top_posts)?.edges,
+    asRecord(hashtag.edge_hashtag_to_media)?.edges,
+    asRecord(hashtag.edge_hashtag_to_content)?.edges,
+    asRecord(hashtag.media)?.edges,
+    asRecord(hashtag.top)?.edges,
+    asRecord(hashtag.recent)?.edges,
+  ];
+  const seen = new Set<unknown>();
+  const out: unknown[] = [];
+  for (const edges of buckets) {
+    for (const node of nodesFromGraphqlEdges(edges)) {
+      if (seen.has(node)) continue;
+      seen.add(node);
+      out.push(node);
+    }
+  }
+  return out;
 }
 
 function logJustOneApiBillableCall(

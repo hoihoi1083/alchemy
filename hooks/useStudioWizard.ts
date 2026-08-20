@@ -139,12 +139,19 @@ import {
 } from "@/lib/motion-poster-dialects";
 import {
 	SOCIAL_DRIP_METAPHOR_IDS,
+	SOCIAL_DRIP_IG_CAPTION_MAX,
+	applySocialDripUserControls,
 	buildSocialDripVideoPrompt,
 	heuristicSocialDripPlan,
 	normalizeSocialDripPlan,
 	parseSocialDripMetaphorPick,
+	parseSocialDripPourAmount,
+	parseSocialDripPourOrigin,
+	sanitizeSocialDripIgHandle,
 	type SocialDripMetaphorPick,
 	type SocialDripPlan,
+	type SocialDripPourAmount,
+	type SocialDripPourOrigin,
 } from "@/lib/social-drip";
 import {
 	VACUUM_INFLATE_DURATION_SEC,
@@ -187,9 +194,14 @@ import {
 import {
 	BLOCKBUSTER_DURATION_SEC,
 	BLOCKBUSTER_NEGATIVE,
+	BLOCKBUSTER_TIMING_IDS,
 	buildBlockbusterSceneStillPrompt,
 	buildBlockbusterVideoPrompt,
+	defaultBlockbusterCaptionText,
 	orderedBlockbusterRefFiles,
+	parseBlockbusterTiming,
+	type BlockbusterCaptionLang,
+	type BlockbusterTimingId,
 } from "@/lib/blockbuster-ad-recipe";
 import {
 	buildH3ShotRecipePrompt,
@@ -750,6 +762,54 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 	const [socialDripPlanNote, setSocialDripPlanNote] = useState<string | null>(
 		null,
 	);
+	const [socialDripIgHandle, setSocialDripIgHandleState] = useState("");
+	const [socialDripIgCaption, setSocialDripIgCaptionState] = useState("");
+	const [socialDripPourOrigin, setSocialDripPourOriginState] =
+		useState<SocialDripPourOrigin>("overflow");
+	const [socialDripPourAmount, setSocialDripPourAmountState] =
+		useState<SocialDripPourAmount>("medium");
+	const [blockbusterTiming, setBlockbusterTiming] =
+		useState<BlockbusterTimingId>("early-reveal");
+	const [blockbusterCaptionLang, setBlockbusterCaptionLang] =
+		useState<BlockbusterCaptionLang>("en");
+	const [blockbusterCaptionText, setBlockbusterCaptionText] = useState(
+		() => defaultBlockbusterCaptionText("en"),
+	);
+	const [blockbusterBurnCaptions, setBlockbusterBurnCaptions] = useState(false);
+	const [blockbusterEndLogo, setBlockbusterEndLogo] = useState(true);
+	const [blockbusterHeroHold, setBlockbusterHeroHold] = useState(true);
+
+	function setBlockbusterCaptionLangAndPreset(lang: BlockbusterCaptionLang) {
+		setBlockbusterCaptionLang(lang);
+		setBlockbusterCaptionText(defaultBlockbusterCaptionText(lang));
+	}
+
+	function setSocialDripIgHandle(next: string) {
+		setSocialDripIgHandleState(sanitizeSocialDripIgHandle(next));
+		socialDripPlanRef.current = null;
+		setSocialDripPlanNote(null);
+	}
+	function setSocialDripIgCaption(next: string) {
+		setSocialDripIgCaptionState(
+			next.slice(0, SOCIAL_DRIP_IG_CAPTION_MAX),
+		);
+		socialDripPlanRef.current = null;
+		setSocialDripPlanNote(null);
+	}
+	function setSocialDripPourOrigin(next: SocialDripPourOrigin) {
+		setSocialDripPourOriginState(parseSocialDripPourOrigin(next));
+		socialDripStillUrlRef.current = null;
+		socialDripEndUrlRef.current = null;
+		socialDripPlanRef.current = null;
+		setSocialDripPlanNote(null);
+	}
+	function setSocialDripPourAmount(next: SocialDripPourAmount) {
+		setSocialDripPourAmountState(parseSocialDripPourAmount(next));
+		socialDripStillUrlRef.current = null;
+		socialDripEndUrlRef.current = null;
+		socialDripPlanRef.current = null;
+		setSocialDripPlanNote(null);
+	}
 	const vacuumInflateStillUrlRef = useRef<string | null>(null);
 	const vacuumInflateEndUrlRef = useRef<string | null>(null);
 	const creativeMotionStillUrlRef = useRef<string | null>(null);
@@ -6724,12 +6784,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			);
 		}
 		let packFile = packagingPhoto;
-		if (
-			!packFile &&
-			promotionMode === "concept" &&
-			brandKit.logoUrl?.trim() &&
-			productPhoto
-		) {
+		if (!packFile && brandKit.logoUrl?.trim()) {
+			// Brand kit logo as flying packaging / printed-box identity when user
+			// did not upload a dedicated carton still.
 			packFile = await fileFromImageUrl(brandKit.logoUrl.trim());
 		}
 		let sceneFile = sceneFramePhoto;
@@ -6746,6 +6803,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			conceptIdea: conceptIdea.trim(),
 			hasPackaging: Boolean(packFile),
 			hasSceneFrame: Boolean(sceneFile),
+			timing: parseBlockbusterTiming(blockbusterTiming),
 		});
 		setVideoPrompt(prompt);
 		setVideoNote(m.wizard.blockbusterAnimating);
@@ -6782,6 +6840,46 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		const data = await res.json();
 		if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
 		notifyCreditBalance(readCreditBalanceFromResponse(data));
+		let videoUrl = data.videoUrl as string;
+
+		const wantFinish =
+			(blockbusterBurnCaptions && blockbusterCaptionText.trim()) ||
+			blockbusterEndLogo ||
+			blockbusterHeroHold;
+		if (wantFinish && videoUrl) {
+			setVideoNote(m.wizard.blockbusterFinishing);
+			const finishFd = new FormData();
+			finishFd.set("video_url", videoUrl);
+			finishFd.set(
+				"burn_captions",
+				blockbusterBurnCaptions && blockbusterCaptionText.trim()
+					? "1"
+					: "0",
+			);
+			finishFd.set("caption_text", blockbusterCaptionText.trim());
+			finishFd.set("end_logo", blockbusterEndLogo ? "1" : "0");
+			finishFd.set("hero_hold", blockbusterHeroHold ? "1" : "0");
+			const brandLogo = brandKit.logoUrl?.trim();
+			if (blockbusterEndLogo && brandLogo) {
+				finishFd.set("logo_url", brandLogo);
+			}
+			const finishRes = await fetch("/api/finish-blockbuster", {
+				method: "POST",
+				body: finishFd,
+			});
+			const finishData = await finishRes.json();
+			if (!finishRes.ok) {
+				throw new Error(
+					(finishData.error as string) ||
+						m.wizard.blockbusterFinishFailed,
+				);
+			}
+			if (finishData.videoUrl) {
+				videoUrl = finishData.videoUrl as string;
+				notifyCreditBalance(readCreditBalanceFromResponse(finishData));
+			}
+		}
+
 		const pathNote = wizardVideoReadyExtraNote(data);
 		setVideoNote(
 			[
@@ -6793,7 +6891,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				.filter(Boolean)
 				.join(" · "),
 		);
-		return data.videoUrl as string;
+		return videoUrl;
 	}
 
 	async function generateH3ShotRecipeStill(
@@ -7372,17 +7470,27 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 
 	async function resolveSocialDripPlan(): Promise<SocialDripPlan> {
 		const pick = parseSocialDripMetaphorPick(socialDripMetaphorPick);
+		const controls = {
+			igHandle: socialDripIgHandle,
+			igCaption: socialDripIgCaption,
+			pourOrigin: socialDripPourOrigin,
+			pourAmount: socialDripPourAmount,
+		};
 		if (pick !== "auto") {
-			const plan = normalizeSocialDripPlan(
-				heuristicSocialDripPlan({
-					product,
-					conceptIdea,
-					headline,
-					business,
-					brandName: brandProfile?.businessName,
-					conceptMode: promotionMode === "concept",
-					pick,
-				}),
+			const plan = applySocialDripUserControls(
+				normalizeSocialDripPlan(
+					heuristicSocialDripPlan({
+						product,
+						conceptIdea,
+						headline,
+						business,
+						brandName: brandProfile?.businessName,
+						conceptMode: promotionMode === "concept",
+						pick,
+						...controls,
+					}),
+				),
+				controls,
 			);
 			socialDripPlanRef.current = plan;
 			setSocialDripPlanNote(
@@ -7405,6 +7513,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					promotionMode,
 					pick: "auto",
 					locale: promptMarket,
+					igHandle: socialDripIgHandle,
+					igCaption: socialDripIgCaption,
+					pourOrigin: socialDripPourOrigin,
+					pourAmount: socialDripPourAmount,
 				}),
 			});
 			const data = await res.json();
@@ -7413,23 +7525,30 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					(data.error as string) || "Social drip plan failed",
 				);
 			}
-			const plan = normalizeSocialDripPlan(data.plan as SocialDripPlan);
+			const plan = applySocialDripUserControls(
+				normalizeSocialDripPlan(data.plan as SocialDripPlan),
+				controls,
+			);
 			socialDripPlanRef.current = plan;
 			setSocialDripPlanNote(
 				`${plan.metaphorLabel} · ${plan.reason}`,
 			);
 			return plan;
 		} catch {
-			const plan = normalizeSocialDripPlan(
-				heuristicSocialDripPlan({
-					product,
-					conceptIdea,
-					headline,
-					business,
-					brandName: brandProfile?.businessName,
-					conceptMode: promotionMode === "concept",
-					pick: "auto",
-				}),
+			const plan = applySocialDripUserControls(
+				normalizeSocialDripPlan(
+					heuristicSocialDripPlan({
+						product,
+						conceptIdea,
+						headline,
+						business,
+						brandName: brandProfile?.businessName,
+						conceptMode: promotionMode === "concept",
+						pick: "auto",
+						...controls,
+					}),
+				),
+				controls,
 			);
 			socialDripPlanRef.current = plan;
 			setSocialDripPlanNote(
@@ -7497,6 +7616,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			fd.set("social_drip_frame", frame);
 			fd.set("social_drip_metaphor", plan.metaphorId);
 			fd.set("social_drip_plan", JSON.stringify(plan));
+			fd.set("social_drip_ig_handle", plan.igHandle);
+			fd.set("social_drip_ig_caption", plan.igCaption);
+			if (plan.pourOrigin) fd.set("social_drip_pour_origin", plan.pourOrigin);
+			if (plan.pourAmount) fd.set("social_drip_pour_amount", plan.pourAmount);
 			if (frame === "end" && startPlateUrl)
 				fd.set("start_plate_url", startPlateUrl);
 			attachReferenceToForm(fd);
@@ -10598,6 +10721,26 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		socialDripMetaphorPick,
 		setSocialDripMetaphorPick,
 		socialDripPlanNote,
+		socialDripIgHandle,
+		setSocialDripIgHandle,
+		socialDripIgCaption,
+		setSocialDripIgCaption,
+		socialDripPourOrigin,
+		setSocialDripPourOrigin,
+		socialDripPourAmount,
+		setSocialDripPourAmount,
+		blockbusterTiming,
+		setBlockbusterTiming,
+		blockbusterCaptionLang,
+		setBlockbusterCaptionLangAndPreset,
+		blockbusterCaptionText,
+		setBlockbusterCaptionText,
+		blockbusterBurnCaptions,
+		setBlockbusterBurnCaptions,
+		blockbusterEndLogo,
+		setBlockbusterEndLogo,
+		blockbusterHeroHold,
+		setBlockbusterHeroHold,
 		creativeMotionSchemePick,
 		setCreativeMotionSchemePick,
 		storyboardRecipeId,

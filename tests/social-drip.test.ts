@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   assessSocialDripFit,
+  applySocialDripUserControls,
   buildSocialDripStillPrompt,
   buildSocialDripVideoPrompt,
   heuristicSocialDripPlan,
@@ -193,5 +194,45 @@ describe("social-drip metaphors", () => {
     assert.equal(parseSocialDripMetaphorPick("auto"), "auto");
     assert.equal(parseSocialDripMetaphorPick("glow"), "glow");
     assert.equal(parseSocialDripMetaphorPick("nope"), "auto");
+  });
+
+  it("pour defaults to overflow-on-product, not under-bun hose", () => {
+    const plan = heuristicSocialDripPlan({
+      product: "cheeseburger",
+      pick: "pour",
+    });
+    assert.equal(plan.pourOrigin, "overflow");
+    assert.equal(plan.pourAmount, "medium");
+    assert.match(plan.crossingDescription, /OVERFLOW/i);
+    assert.match(plan.crossingDescription, /FORBIDDEN:.*under the bottom bun/i);
+    const still = buildSocialDripStillPrompt({
+      plan,
+      product: "cheeseburger",
+      frame: "end",
+    });
+    assert.match(still, /overflow ON the product/i);
+    assert.match(still, /FORBIDDEN: cheese\/sauce hose starting under/i);
+    const video = buildSocialDripVideoPrompt({
+      plan,
+      product: "cheeseburger",
+      durationSec: 6,
+    });
+    assert.match(video, /overflow ON the product/i);
+  });
+
+  it("honors user IG handle, caption, and pour amount", () => {
+    const plan = applySocialDripUserControls(
+      heuristicSocialDripPlan({ product: "burger", pick: "pour" }),
+      {
+        igHandle: "@MyBrand!!",
+        igCaption: "Can we make it cheesier?",
+        pourOrigin: "overflow",
+        pourAmount: "light",
+      },
+    );
+    assert.equal(plan.igHandle, "MyBrand");
+    assert.equal(plan.igCaption, "Can we make it cheesier?");
+    assert.equal(plan.pourAmount, "light");
+    assert.match(plan.crossingDescription, /50–60%/);
   });
 });

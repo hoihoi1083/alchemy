@@ -23,6 +23,7 @@ import {
   mediaFilterFromWorkflowMode,
   platformMediaMismatch,
 } from "@/lib/content-research-media-filter";
+import { contentResearchSearchHint } from "@/lib/content-research-search-hints";
 import { ResearchPostCards } from "@/components/content-research/ResearchPostCards";
 import { writeStudioAssistantHandoff } from "@/lib/studio-assistant-handoff";
 import { markAssistantReopenAfterNavigate } from "@/lib/studio-assistant-chat-storage";
@@ -104,6 +105,15 @@ export function ContentResearchPanel({
   const [selectedAngleId, setSelectedAngleId] = useState<string | null>(null);
   const mediaFilter = mediaFilterFromWorkflowMode(workflowMode);
   const platformMismatch = platformMediaMismatch(platform, mediaFilter);
+  const searchHint = contentResearchSearchHint(platform, topic, mediaFilter, {
+    xhsKeyword: cr.platformSearchHintXhs,
+    igImageHashtag: cr.platformSearchHintIgImage,
+    igImageHashtagPreview: cr.platformSearchHintIgHashtags,
+    igImageCjkSuggest: cr.platformSearchHintIgCjk,
+    igVideoKeyword: cr.platformSearchHintIgVideo,
+    facebookKeyword: cr.platformSearchHintFacebook,
+    tiktokVideo: cr.platformSearchHintTiktok,
+  });
 
   useEffect(() => {
     setPromotionMode(initialPromotionMode);
@@ -484,6 +494,12 @@ export function ContentResearchPanel({
           violet ? "border-slate-200" : "border-emerald-200"
         }`}
       />
+
+      {searchHint ? (
+        <p className={`text-[11px] leading-relaxed ${violet ? "text-slate-600" : "text-emerald-900/75"}`}>
+          {searchHint}
+        </p>
+      ) : null}
 
       {promotionMode === "physical" && !hidePromoteProduct ? (
         <div className="space-y-1.5">

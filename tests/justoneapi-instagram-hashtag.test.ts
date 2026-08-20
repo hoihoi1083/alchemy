@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { flattenSearchItems } from "../lib/justoneapi-client";
-import { mapRawPlatformPost } from "../lib/justoneapi-platform-search";
+import { instagramHashtagCandidates, mapRawPlatformPost } from "../lib/justoneapi-platform-search";
 
 describe("instagram hashtag search parsing", () => {
   it("flattens edge_hashtag_to_media GraphQL edges", () => {
@@ -44,5 +44,53 @@ describe("instagram hashtag search parsing", () => {
     assert.equal(post.url, "https://www.instagram.com/p/DcIuEH8FPtf/");
     assert.equal(post.likes, 42);
     assert.equal(post.comments, 3);
+  });
+
+  it("flattens stringified data and top-post edges", () => {
+    const inner = {
+      hashtag: {
+        name: "vitaminc",
+        edge_hashtag_to_top_posts: {
+          edges: [
+            {
+              node: {
+                __typename: "GraphSidecar",
+                shortcode: "AbC123",
+                display_url: "https://cdn.example.com/slide.jpg",
+                edge_media_to_caption: {
+                  edges: [{ node: { text: "C serum carousel" } }],
+                },
+              },
+            },
+          ],
+        },
+      },
+    };
+    const items = flattenSearchItems({ code: 0, data: JSON.stringify(inner) });
+    assert.equal(items.length, 1);
+    const post = mapRawPlatformPost("instagram", items[0], 0);
+    assert.ok(post);
+    assert.equal(post.mediaType, "image");
+    assert.equal(post.url, "https://www.instagram.com/p/AbC123/");
+  });
+
+  it("flattens a top-level data array of posts", () => {
+    const items = flattenSearchItems({
+      code: 0,
+      data: [
+        {
+          __typename: "GraphImage",
+          shortcode: "Arr1",
+          display_url: "https://cdn.example.com/a.jpg",
+        },
+      ],
+    });
+    assert.equal(items.length, 1);
+  });
+
+  it("maps CJK product phrases to Instagram hashtags", () => {
+    const tags = instagramHashtagCandidates("維他命 C 精華");
+    assert.ok(tags.includes("vitamincserum") || tags.includes("vitaminc"));
+    assert.equal(tags[0] === "vitamincserum" || tags[0] === "vitaminc", true);
   });
 });

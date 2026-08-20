@@ -2552,9 +2552,10 @@ export const zhCn = {
     blockbusterHeroHintConcept:
       "Logo 或吉祥物。飞出的卡片会揭晓这个——没有上传就用品牌套件 Logo。",
     blockbusterPackTitle: "包装／飞出道具",
-    blockbusterPackHint: "空中复制的纸箱或印刷。颜色和 Logo 要与主体一致。",
+    blockbusterPackHint:
+      "上传品牌纸箱效果最好；留空则用 Brand kit Logo 印在飞出的箱子上。",
     blockbusterPackHintConcept:
-      "品牌卡片、贴纸或 Logo 卡。留空就用 Logo／吉祥物做飞出道具。",
+      "品牌卡片、贴纸。留空就用 Brand kit Logo 做飞出道具。",
     blockbusterSceneTitle: "场景首帧",
     blockbusterSceneHint:
       "货车上路静图＝开场第一帧。请生成黄昏天桥（货箱堆得过高）。尽量不要留空。",
@@ -2563,7 +2564,30 @@ export const zhCn = {
     blockbusterNeedHero: "请先上传产品图（概念模式可上传 Logo／吉祥物）。",
     blockbusterNeedConceptHero: "请上传 Logo／吉祥物，或在品牌套件存好 Logo。",
     blockbusterAnimating: "正在生成 9 秒单镜…",
-    
+		blockbusterFinishing: "收尾中：字幕 / 英雄定格 / Logo…",
+		blockbusterFinishFailed: "Blockbuster 收尾失败，请重试。",
+		blockbusterControlsTitle: "登场设置（类似 Social drip）",
+		blockbusterControlsBadge: "烧进成片",
+		blockbusterControlsHint:
+			"节奏改 AI 一镜。英雄定格与 Brand kit Logo 在生成后叠加。字幕请之后在字幕工作室添加。",
+		blockbusterTimingLabel: "故事节奏",
+		blockbusterTimingClassic: {
+			title: "经典",
+			desc: "0–2 货车 · 2–4 撞击 · 4–6 浮现 · 6–9 英雄",
+		},
+		blockbusterTimingEarly: {
+			title: "提前揭晓",
+			desc: "箱子更短 · 产品更早 · 英雄更长（面霜罐）",
+		},
+		blockbusterCaptionLabel: "画面文案（可选）",
+		blockbusterCaptionBadge: "默认关闭",
+		blockbusterCaptionPlaceholder: "一行一句…",
+		blockbusterCaptionHint: "只有勾选下方才会烧进成片。不勾选可之后自己加字幕。",
+		blockbusterBurnCaptionsLabel: "现在烧进字幕（一般保持关闭）",
+		blockbusterHeroHoldLabel: "揭晓后英雄放大 + 约 1.5 秒定格",
+		blockbusterEndLogoLabel:
+			"Brand kit Logo 片尾右下（约 0.8 秒）。若未上传包装图，Logo 会印在飞出的箱子上。",
+
 		h3ShotNeedHero: "请先上传产品图，或用 AI 生成静图。",
 		h3ShotNeedConceptHero:
 			"可上传 Logo/吉祥物、用品牌套件 Logo，或用 AI 生成静图。",
@@ -2934,6 +2958,40 @@ socialDripHint:
     socialDripMetaphorAuto: "自动 · AI 选",
     socialDripNoReferenceNote: "三分屏不用参考片——版面由此 recipe 控制。",
     socialDripNeedKeyframe: "三分屏请先上传产品图，或填写概念主题。",
+    socialDripChromeTitle: "Instagram 栏（视频中间）",
+    socialDripChromeBadge: "会出现在成片",
+    socialDripChromeHint:
+      "这两个字段会出现在成片中间的假 IG 栏——不只是 prompt。",
+    socialDripChromePreviewLabel: "预览",
+    socialDripChromeHandleLabel: "发布者名称 (@handle)",
+    socialDripChromeHandlePlaceholder: "alchemy_ai_lab",
+    socialDripChromeCaptionLabel: "栏下 Caption",
+    socialDripChromeCaptionPlaceholder: "可以再芝士一点吗？",
+    socialDripChromeCaptionLimit: "尽量短——最多 {n} 字（太长会糊）。",
+    socialDripPourControlsTitle: "芝士 / 倒出样式",
+    socialDripPourControlsHint:
+      "汉堡 / 融化芝士：选「溢在产品上」，液体从食物层溢出，不要从底部喷出。",
+    socialDripPourOriginLabel: "液体从哪里出来",
+    socialDripPourOrigins: {
+      overflow: {
+        title: "溢在产品上",
+        desc: "从芝士层 / 边缘溢出（汉堡 meme）",
+      },
+      tip: {
+        title: "从瓶嘴 / 尖端",
+        desc: "只适合瓶或挤压嘴",
+      },
+      center: {
+        title: "中央滴落",
+        desc: "从中间一条细流",
+      },
+    },
+    socialDripPourAmountLabel: "分量",
+    socialDripPourAmounts: {
+      light: "少",
+      medium: "中",
+      extra: "多",
+    },
     
 		vacuumInflateHint:
 			"产品必须看得见。用真空膜包住你的商品再充气成透明泡，约 4 秒过渡。相机会留成手机，不会变成别的包装袋。",
@@ -4167,6 +4225,19 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
     researchMediaVideo: "搜索范围：只找视频／Reels（配合上方「视频」模式）。",
     researchMediaBoth: "搜索范围：全部帖子类型（配合「图片＋视频」模式）。",
     tiktokImageWarning: "TikTok 只有视频 — 图文研究请选小红书或 Instagram，或改选「视频」模式。",
+    platformSearchHintXhs:
+      "小红书最适合中文品类词（如 维他命C精华、护肤流程）— 直接搜笔记，有封面可选风格。",
+    platformSearchHintIgImage:
+      "Instagram 图文模式用 hashtag 搜索 — 英文标签最稳（vitaminc、skincare、serum）。",
+    platformSearchHintIgHashtags: (tags: string) => `将搜索：${tags}`,
+    platformSearchHintIgCjk:
+      "中文品类词已转成英文标签；若结果仍少，可改打英文或换小红书。",
+    platformSearchHintIgVideo:
+      "Instagram 视频模式用关键词搜 Reels（中英文皆可，如 vitamin c serum）。",
+    platformSearchHintFacebook:
+      "Facebook 用关键词搜公开帖 — 品类词通常比品牌名更容易找到参考。",
+    platformSearchHintTiktok:
+      "TikTok 只返回视频 — 用短句关键词（如 skincare routine、开箱）。",
     useAngle: "选择此风格",
     selectAngle: "选择此风格",
     selectedLabel: "已选择 ✓",

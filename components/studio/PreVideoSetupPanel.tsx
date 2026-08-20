@@ -15,10 +15,16 @@ import { IMAGE_ASPECT_RATIOS, type ImageAspectRatio } from "@/lib/image-aspect-r
 import {
   SOCIAL_DRIP_METAPHOR_IDS,
   SOCIAL_DRIP_METAPHOR_DEFS,
+  SOCIAL_DRIP_POUR_ORIGIN_IDS,
+  SOCIAL_DRIP_POUR_AMOUNT_IDS,
+  SOCIAL_DRIP_IG_CAPTION_MAX,
+  SOCIAL_DRIP_IG_HANDLE_MAX,
   assessSocialDripFit,
   socialDripMetaphorPreviewSrc,
   type SocialDripFitReasonId,
   type SocialDripMetaphorPick,
+  type SocialDripPourAmount,
+  type SocialDripPourOrigin,
 } from "@/lib/social-drip";
 import { CREATIVE_MOTION_SCHEME_IDS, creativeMotionSchemePreviewSrc } from "@/lib/creative-motion";
 import {
@@ -1563,6 +1569,132 @@ export function PreVideoSetupPanel({
               </section>
             ) : null}
 
+            {isSocialDrip ? (
+              <section className="pv-card border-violet-200 bg-violet-50/40">
+                <div className="pv-card-title-row mb-1">
+                  <h3 className="pv-card-title">{m.wizard.socialDripChromeTitle}</h3>
+                  <span className="rounded-full bg-violet-600 px-2 py-0.5 text-[10px] font-semibold text-white">
+                    {m.wizard.socialDripChromeBadge}
+                  </span>
+                </div>
+                <p className="mb-3 text-xs leading-relaxed text-violet-900/80">
+                  {m.wizard.socialDripChromeHint}
+                </p>
+                <div className="mb-3 rounded-xl border border-violet-200 bg-white px-3 py-2.5">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-violet-700">
+                    {m.wizard.socialDripChromePreviewLabel}
+                  </p>
+                  <p className="mt-1 truncate text-sm font-semibold text-slate-900">
+                    @{wizard.socialDripIgHandle.trim() || m.wizard.socialDripChromeHandlePlaceholder}
+                    <span className="ml-1 text-sky-500">✓</span>
+                  </p>
+                  <p className="mt-0.5 truncate text-xs text-slate-600">
+                    {wizard.socialDripIgCaption.trim() ||
+                      m.wizard.socialDripChromeCaptionPlaceholder}
+                  </p>
+                </div>
+                <label className="mb-1 block text-[11px] font-semibold text-slate-700">
+                  {m.wizard.socialDripChromeHandleLabel}
+                </label>
+                <div className="mb-3 flex items-center gap-1.5 rounded-xl border-2 border-violet-300 bg-white px-3 py-2 focus-within:border-violet-500">
+                  <span className="text-sm text-slate-400">@</span>
+                  <input
+                    type="text"
+                    className="min-w-0 flex-1 border-0 bg-transparent text-sm outline-none"
+                    maxLength={SOCIAL_DRIP_IG_HANDLE_MAX}
+                    placeholder={m.wizard.socialDripChromeHandlePlaceholder}
+                    value={wizard.socialDripIgHandle}
+                    onChange={(e) => wizard.setSocialDripIgHandle(e.target.value)}
+                  />
+                </div>
+                <label className="mb-1 block text-[11px] font-semibold text-slate-700">
+                  {m.wizard.socialDripChromeCaptionLabel}
+                </label>
+                <input
+                  type="text"
+                  className="mb-1 w-full rounded-xl border-2 border-violet-300 bg-white px-3 py-2 text-sm outline-none focus:border-violet-500"
+                  maxLength={SOCIAL_DRIP_IG_CAPTION_MAX}
+                  placeholder={m.wizard.socialDripChromeCaptionPlaceholder}
+                  value={wizard.socialDripIgCaption}
+                  onChange={(e) => wizard.setSocialDripIgCaption(e.target.value)}
+                />
+                <p className="text-[10px] text-slate-500">
+                  {m.wizard.socialDripChromeCaptionLimit.replace(
+                    "{n}",
+                    String(SOCIAL_DRIP_IG_CAPTION_MAX),
+                  )}
+                </p>
+              </section>
+            ) : null}
+
+            {isSocialDrip &&
+            (wizard.socialDripMetaphorPick === "pour" ||
+              wizard.socialDripMetaphorPick === "auto") ? (
+              <section className="pv-card">
+                <div className="pv-card-title-row mb-2">
+                  <h3 className="pv-card-title">{m.wizard.socialDripPourControlsTitle}</h3>
+                </div>
+                <p className="mb-3 text-xs text-slate-500">
+                  {m.wizard.socialDripPourControlsHint}
+                </p>
+                <p className="mb-1.5 text-[11px] font-semibold text-slate-700">
+                  {m.wizard.socialDripPourOriginLabel}
+                </p>
+                <div className="mb-3 grid grid-cols-1 gap-1.5 sm:grid-cols-3">
+                  {SOCIAL_DRIP_POUR_ORIGIN_IDS.map((id) => {
+                    const selected = wizard.socialDripPourOrigin === id;
+                    const copy = m.wizard.socialDripPourOrigins[id];
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        className={`rounded-xl border px-2.5 py-2 text-left transition ${
+                          selected
+                            ? "border-violet-500 bg-violet-50"
+                            : "border-slate-200 bg-white hover:border-violet-300"
+                        }`}
+                        onClick={() =>
+                          wizard.setSocialDripPourOrigin(id as SocialDripPourOrigin)
+                        }
+                      >
+                        <span className="block text-[11px] font-semibold text-slate-900">
+                          {copy.title}
+                        </span>
+                        <span className="mt-0.5 block text-[10px] leading-snug text-slate-500">
+                          {copy.desc}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="mb-1.5 text-[11px] font-semibold text-slate-700">
+                  {m.wizard.socialDripPourAmountLabel}
+                </p>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {SOCIAL_DRIP_POUR_AMOUNT_IDS.map((id) => {
+                    const selected = wizard.socialDripPourAmount === id;
+                    const copy = m.wizard.socialDripPourAmounts[id];
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        className={`rounded-xl border px-2 py-2 text-center text-[11px] font-semibold transition ${
+                          selected
+                            ? "border-violet-500 bg-violet-50 text-violet-900"
+                            : "border-slate-200 bg-white text-slate-700 hover:border-violet-300"
+                        }`}
+                        onClick={() =>
+                          wizard.setSocialDripPourAmount(id as SocialDripPourAmount)
+                        }
+                      >
+                        {copy}
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            ) : null}
+
             {isCreativeMotion ? (
               <section className="pv-card">
                 <div className="pv-card-title-row mb-2">
@@ -2062,6 +2194,78 @@ export function PreVideoSetupPanel({
                       ? m.wizard.blockbusterGenerateSceneBusy
                       : m.wizard.blockbusterGenerateSceneBtn}
                   </button>
+                </div>
+              </section>
+            ) : null}
+
+            {isBlockbuster ? (
+              <section className="pv-card border-violet-200 bg-violet-50/40">
+                <div className="pv-card-title-row mb-1">
+                  <h3 className="pv-card-title">{m.wizard.blockbusterControlsTitle}</h3>
+                  <span className="rounded-full bg-violet-600 px-2 py-0.5 text-[10px] font-semibold text-white">
+                    {m.wizard.blockbusterControlsBadge}
+                  </span>
+                </div>
+                <p className="mb-3 text-xs leading-relaxed text-violet-900/80">
+                  {m.wizard.blockbusterControlsHint}
+                </p>
+
+                <p className="mb-1.5 text-[11px] font-semibold text-slate-700">
+                  {m.wizard.blockbusterTimingLabel}
+                </p>
+                <div className="mb-3 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                  {(
+                    [
+                      ["classic", m.wizard.blockbusterTimingClassic],
+                      ["early-reveal", m.wizard.blockbusterTimingEarly],
+                    ] as const
+                  ).map(([id, copy]) => {
+                    const selected = wizard.blockbusterTiming === id;
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        className={`rounded-xl border px-2.5 py-2 text-left transition ${
+                          selected
+                            ? "border-violet-500 bg-white"
+                            : "border-slate-200 bg-white/70 hover:border-violet-300"
+                        }`}
+                        onClick={() => wizard.setBlockbusterTiming(id)}
+                      >
+                        <span className="block text-[11px] font-semibold text-slate-900">
+                          {copy.title}
+                        </span>
+                        <span className="mt-0.5 block text-[10px] leading-snug text-slate-500">
+                          {copy.desc}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="flex items-start gap-2 text-[12px] text-slate-800">
+                    <input
+                      type="checkbox"
+                      className="mt-0.5"
+                      checked={wizard.blockbusterHeroHold}
+                      onChange={(e) =>
+                        wizard.setBlockbusterHeroHold(e.target.checked)
+                      }
+                    />
+                    <span>{m.wizard.blockbusterHeroHoldLabel}</span>
+                  </label>
+                  <label className="flex items-start gap-2 text-[12px] text-slate-800">
+                    <input
+                      type="checkbox"
+                      className="mt-0.5"
+                      checked={wizard.blockbusterEndLogo}
+                      onChange={(e) =>
+                        wizard.setBlockbusterEndLogo(e.target.checked)
+                      }
+                    />
+                    <span>{m.wizard.blockbusterEndLogoLabel}</span>
+                  </label>
                 </div>
               </section>
             ) : null}

@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { requireAppUser } from "@/lib/require-app-user";
 import { assertFreeDeepSeekQuota } from "@/lib/rate-limit-deepseek";
 import {
-  parseSocialDripMetaphorPick,
   planSocialDripMetaphor,
+  parseSocialDripMetaphorPick,
 } from "@/lib/social-drip";
 
 export const runtime = "nodejs";
@@ -25,6 +25,10 @@ export async function POST(request: Request) {
     promotionMode?: "physical" | "concept";
     pick?: string;
     locale?: string;
+    igHandle?: string;
+    igCaption?: string;
+    pourOrigin?: string;
+    pourAmount?: string;
   };
   try {
     body = await request.json();
@@ -53,6 +57,10 @@ export async function POST(request: Request) {
       conceptMode,
       pick: parseSocialDripMetaphorPick(body.pick),
       locale: body.locale,
+      igHandle: body.igHandle,
+      igCaption: body.igCaption,
+      pourOrigin: body.pourOrigin,
+      pourAmount: body.pourAmount,
     });
     return NextResponse.json({
       plan,

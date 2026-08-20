@@ -22,8 +22,93 @@ export const SOCIAL_DRIP_METAPHOR_IDS = [
 export type SocialDripMetaphorId = (typeof SOCIAL_DRIP_METAPHOR_IDS)[number];
 export type SocialDripMetaphorPick = SocialDripMetaphorId | "auto";
 
+/** Where liquid leaves the product (Pour metaphor). */
+export const SOCIAL_DRIP_POUR_ORIGIN_IDS = [
+  "overflow",
+  "tip",
+  "center",
+] as const;
+export type SocialDripPourOrigin = (typeof SOCIAL_DRIP_POUR_ORIGIN_IDS)[number];
+
+/** How much liquid / cheese in the fall column. */
+export const SOCIAL_DRIP_POUR_AMOUNT_IDS = [
+  "light",
+  "medium",
+  "extra",
+] as const;
+export type SocialDripPourAmount = (typeof SOCIAL_DRIP_POUR_AMOUNT_IDS)[number];
+
+export const SOCIAL_DRIP_IG_HANDLE_MAX = 24;
+export const SOCIAL_DRIP_IG_CAPTION_MAX = 40;
+
 export function socialDripMetaphorPreviewSrc(id: SocialDripMetaphorId): string {
   return `/images/studio/schemes/social-drip/${id}.png?v=1`;
+}
+
+export function parseSocialDripPourOrigin(raw: unknown): SocialDripPourOrigin {
+  const v = String(raw ?? "overflow").trim();
+  if (SOCIAL_DRIP_POUR_ORIGIN_IDS.includes(v as SocialDripPourOrigin)) {
+    return v as SocialDripPourOrigin;
+  }
+  return "overflow";
+}
+
+export function parseSocialDripPourAmount(raw: unknown): SocialDripPourAmount {
+  const v = String(raw ?? "medium").trim();
+  if (SOCIAL_DRIP_POUR_AMOUNT_IDS.includes(v as SocialDripPourAmount)) {
+    return v as SocialDripPourAmount;
+  }
+  return "medium";
+}
+
+export function sanitizeSocialDripIgHandle(raw: string): string {
+  return raw
+    .replace(/^@+/, "")
+    .replace(/[^\w.\u4e00-\u9fff]+/g, "_")
+    .replace(/^_|_$/g, "")
+    .slice(0, SOCIAL_DRIP_IG_HANDLE_MAX);
+}
+
+export function sanitizeSocialDripIgCaption(raw: string): string {
+  return raw.trim().slice(0, SOCIAL_DRIP_IG_CAPTION_MAX);
+}
+
+/**
+ * Pour crossing copy — overflow = melt ON the product (burger meme),
+ * never a hose inventing itself under the bottom bun.
+ */
+export function buildPourCrossingDescription(
+  origin: SocialDripPourOrigin,
+  amount: SocialDripPourAmount,
+): string {
+  const vol =
+    amount === "light"
+      ? "about 50–60% volume — thinner readable cascade, funny not gross"
+      : amount === "extra"
+        ? "about 85–90% volume — dense cascade, still appetizing not grotesque"
+        : "about 70% volume — medium cascade, meme-readable";
+
+  if (origin === "tip") {
+    return [
+      `edible liquid / sauce pours from the PRODUCT tip or nozzle only (${vol})`,
+      "one opaque vertical stream crossing IN FRONT OF the Instagram chrome",
+      "FORBIDDEN: inventing an extra squeeze bottle unless the hero IS that bottle",
+    ].join(" — ");
+  }
+  if (origin === "center") {
+    return [
+      `a thin-to-medium edible drip falls from the product centerline (${vol})`,
+      "readable vertical column over the Instagram chrome",
+      "FORBIDDEN: spout under the bottom of the product",
+    ].join(" — ");
+  }
+  // overflow (default for burgers / melted cheese)
+  return [
+    `melted cheese / sauce OVERFLOWS from the cheese layer, patty rim, or top filling ON the product (${vol})`,
+    "cascades over the bun / edges first, THEN falls as a vertical column IN FRONT OF the Instagram chrome",
+    "CRITICAL: origin is ON/between the product layers — viewers must see overflow on the food itself",
+    "FORBIDDEN: inventing a hose or spout under the bottom bun; FORBIDDEN: cheese starting from under the product",
+  ].join(" — ");
 }
 
 export type SocialDripCategory =
@@ -52,6 +137,10 @@ export type SocialDripPlan = {
   igHandle: string;
   /** Fake IG caption under the chrome */
   igCaption: string;
+  /** Pour-only: where liquid leaves the product */
+  pourOrigin?: SocialDripPourOrigin;
+  /** Pour-only: liquid volume */
+  pourAmount?: SocialDripPourAmount;
   /** Why this metaphor was chosen */
   reason: string;
   source: "deepseek" | "heuristic" | "user";
@@ -144,8 +233,7 @@ export const SOCIAL_DRIP_METAPHOR_DEFS: Record<
   pour: {
     label: "Pour / drip",
     categories: ["fnb", "home", "general"],
-    crossingDefault:
-      "thick melted cheese / sauce / syrup column falls from the PRODUCT itself (not from an extra squeeze bottle unless the hero IS a bottle) — one opaque vertical stream, readable over the middle chrome",
+    crossingDefault: buildPourCrossingDescription("overflow", "medium"),
     characterDefault:
       "simple line-art person lying on their BACK, mouth wide open under the stream, looking up joyfully (viral 三分屏 chef-doodle pose)",
     landingDefault:
@@ -278,13 +366,59 @@ export function parseSocialDripMetaphorPick(
 /** Fill missing landing copy when older plans / partial JSON arrive. */
 export function normalizeSocialDripPlan(plan: SocialDripPlan): SocialDripPlan {
   const def = SOCIAL_DRIP_METAPHOR_DEFS[plan.metaphorId] ?? SOCIAL_DRIP_METAPHOR_DEFS.pour;
+  const pourOrigin = parseSocialDripPourOrigin(plan.pourOrigin);
+  const pourAmount = parseSocialDripPourAmount(plan.pourAmount);
+  const crossing =
+    plan.metaphorId === "pour"
+      ? buildPourCrossingDescription(pourOrigin, pourAmount)
+      : plan.crossingDescription?.trim() || def.crossingDefault;
   return {
     ...plan,
     metaphorLabel: plan.metaphorLabel?.trim() || def.label,
-    crossingDescription: plan.crossingDescription?.trim() || def.crossingDefault,
+    crossingDescription: crossing,
     characterBeat: plan.characterBeat?.trim() || def.characterDefault,
     landingDescription: plan.landingDescription?.trim() || def.landingDefault,
+    igHandle: sanitizeSocialDripIgHandle(plan.igHandle || "") || "brand",
+    igCaption:
+      sanitizeSocialDripIgCaption(plan.igCaption || "") || "New drop",
+    pourOrigin: plan.metaphorId === "pour" ? pourOrigin : undefined,
+    pourAmount: plan.metaphorId === "pour" ? pourAmount : undefined,
   };
+}
+
+/**
+ * Apply Studio UI controls (handle / caption / pour origin+amount) onto a plan.
+ * User chrome wins when non-empty.
+ */
+export function applySocialDripUserControls(
+  plan: SocialDripPlan,
+  controls: {
+    igHandle?: string;
+    igCaption?: string;
+    pourOrigin?: SocialDripPourOrigin | string;
+    pourAmount?: SocialDripPourAmount | string;
+  },
+): SocialDripPlan {
+  const handle = sanitizeSocialDripIgHandle(controls.igHandle ?? "");
+  const caption = sanitizeSocialDripIgCaption(controls.igCaption ?? "");
+  const next: SocialDripPlan = {
+    ...plan,
+    igHandle: handle || plan.igHandle,
+    igCaption: caption || plan.igCaption,
+  };
+  if (next.metaphorId === "pour") {
+    next.pourOrigin = parseSocialDripPourOrigin(
+      controls.pourOrigin ?? plan.pourOrigin,
+    );
+    next.pourAmount = parseSocialDripPourAmount(
+      controls.pourAmount ?? plan.pourAmount,
+    );
+    next.crossingDescription = buildPourCrossingDescription(
+      next.pourOrigin,
+      next.pourAmount,
+    );
+  }
+  return normalizeSocialDripPlan(next);
 }
 
 export function inferSocialDripCategory(input: {
@@ -488,6 +622,11 @@ export function heuristicSocialDripPlan(input: {
   brandName?: string;
   conceptMode?: boolean;
   pick?: SocialDripMetaphorPick;
+  /** Optional Studio overrides */
+  igHandle?: string;
+  igCaption?: string;
+  pourOrigin?: SocialDripPourOrigin | string;
+  pourAmount?: SocialDripPourAmount | string;
 }): SocialDripPlan {
   const category = inferSocialDripCategory(input);
   const pick = parseSocialDripMetaphorPick(input.pick);
@@ -505,28 +644,40 @@ export function heuristicSocialDripPlan(input: {
     input.business?.trim() ||
     (input.conceptMode ? input.conceptIdea?.trim() : "") ||
     "brand";
-  const handle = socialDripHandleFromName(handleSource);
+  const handle =
+    sanitizeSocialDripIgHandle(input.igHandle ?? "") ||
+    socialDripHandleFromName(handleSource);
   const caption =
+    sanitizeSocialDripIgCaption(input.igCaption ?? "") ||
     input.headline?.trim() ||
     (input.conceptMode
       ? input.conceptIdea?.trim() || "New drop"
       : `${name} — try it`);
 
-  return {
+  const pourOrigin = parseSocialDripPourOrigin(input.pourOrigin);
+  const pourAmount = parseSocialDripPourAmount(input.pourAmount);
+  const crossingDescription =
+    metaphorId === "pour"
+      ? buildPourCrossingDescription(pourOrigin, pourAmount)
+      : def.crossingDefault;
+
+  return normalizeSocialDripPlan({
     metaphorId,
     category,
     metaphorLabel: def.label,
-    crossingDescription: def.crossingDefault,
+    crossingDescription,
     characterBeat: def.characterDefault,
     landingDescription: def.landingDefault,
     igHandle: handle,
-    igCaption: caption.slice(0, 80),
+    igCaption: caption.slice(0, SOCIAL_DRIP_IG_CAPTION_MAX),
+    pourOrigin: metaphorId === "pour" ? pourOrigin : undefined,
+    pourAmount: metaphorId === "pour" ? pourAmount : undefined,
     reason:
       pick === "auto"
         ? `Heuristic fit for category “${category}”.`
         : "User-selected metaphor.",
     source: pick === "auto" ? "heuristic" : "user",
-  };
+  });
 }
 
 function extractJsonObject(raw: string): Record<string, unknown> | null {
@@ -554,6 +705,10 @@ export async function planSocialDripMetaphor(input: {
   conceptMode?: boolean;
   pick?: SocialDripMetaphorPick;
   locale?: string;
+  igHandle?: string;
+  igCaption?: string;
+  pourOrigin?: SocialDripPourOrigin | string;
+  pourAmount?: SocialDripPourAmount | string;
 }): Promise<SocialDripPlan> {
   const pick = parseSocialDripMetaphorPick(input.pick);
   if (pick !== "auto") {
@@ -576,7 +731,7 @@ Bottom character: 2D outline doodle person (chef/kid), not photoreal, not standi
 
 Pick ONE metaphor id from: ${SOCIAL_DRIP_METAPHOR_IDS.join(", ")}.
 Hard rules by category:
-- F&B → "pour" with open-mouth catch + floor puddle (edible gag OK) onto a cartoon PERSON.
+- F&B → "pour" with open-mouth catch + floor puddle (edible gag OK) onto a cartoon PERSON. For burgers/pizza: cheese must OVERFLOW on the food layers, NOT drip from under the bottom bun.
 - Beauty / skincare → "glow" as a thin serum drip from the dropper TIP onto CHEEKS/skin — mouth CLOSED, NEVER drinking serum, NO furniture blocking the face.
 - Jewelry → sparkle cascade onto hands. Fashion → confetti/fabric. Electronics → energy beam. Wellness → steam/petals.
 - Crossing MUST be a dense vertical fall — FORBIDDEN: wispy light ribbons, soft decorative glow swirls that never cross chrome.
@@ -629,7 +784,7 @@ Return STRICT JSON only:
       ? (categoryRaw as SocialDripCategory)
       : fallback.category;
 
-    return {
+    const planned = normalizeSocialDripPlan({
       metaphorId,
       category,
       metaphorLabel:
@@ -645,15 +800,21 @@ Return STRICT JSON only:
         String(parsed.igHandle ?? "")
           .replace(/^@/, "")
           .trim()
-          .slice(0, 24) || fallback.igHandle,
+          .slice(0, SOCIAL_DRIP_IG_HANDLE_MAX) || fallback.igHandle,
       igCaption:
-        String(parsed.igCaption ?? "").trim().slice(0, 100) ||
+        String(parsed.igCaption ?? "").trim().slice(0, SOCIAL_DRIP_IG_CAPTION_MAX) ||
         fallback.igCaption,
       reason:
         String(parsed.reason ?? "").trim() ||
         "DeepSeek selected metaphor from product/concept.",
       source: "deepseek",
-    };
+    });
+    return applySocialDripUserControls(planned, {
+      igHandle: input.igHandle,
+      igCaption: input.igCaption,
+      pourOrigin: input.pourOrigin,
+      pourAmount: input.pourAmount,
+    });
   } catch {
     return fallback;
   }
@@ -698,7 +859,7 @@ export function buildSocialDripStillPrompt(input: {
   // Short caption on chrome — long slogans warp under H3.
   const chromeCaption = (input.plan.igCaption || input.product)
     .trim()
-    .slice(0, 28);
+    .slice(0, SOCIAL_DRIP_IG_CAPTION_MAX);
 
   const chrome = joinParts(
     "MIDDLE: one thin white Instagram bar (icons sharp, not garbled):",
@@ -715,6 +876,15 @@ export function buildSocialDripStillPrompt(input: {
 
   const noAnnotations =
     "Finished ad only — never paint TOP/MIDDLE/BOTTOM, percentages, arrows, or layout labels. No phone status bar.";
+
+  const pourLock =
+    input.plan.metaphorId === "pour"
+      ? joinParts(
+          `Pour origin lock: ${input.plan.crossingDescription}`,
+          "Show overflow ON the product first (melted cheese/sauce on layers/edges) before the vertical fall.",
+          "FORBIDDEN: cheese/sauce hose starting under the bottom bun or from under the product.",
+        )
+      : false;
 
   if (input.conceptMode) {
     // Concept motion fails when start≈end with 30+ cards already mid-stream.
@@ -750,7 +920,8 @@ export function buildSocialDripStillPrompt(input: {
       chrome,
       character,
       `Crossing: ${input.plan.crossingDescription}`,
-      "START: only the first drip/particles leaving the hero — stream has NOT reached the Instagram bar yet. Floor dry. Doodle waiting.",
+      pourLock,
+      "START: only the first drip/overflow leaving the hero — stream has NOT reached the Instagram bar yet. Floor dry. Doodle waiting.",
       noAnnotations,
     );
   }
@@ -762,7 +933,8 @@ export function buildSocialDripStillPrompt(input: {
     character,
     `Crossing: ${input.plan.crossingDescription}`,
     `Landing: ${input.plan.landingDescription}`,
-    "END: one continuous thick column from product, OVER the Instagram icons, into the doodle landing. No extra props.",
+    pourLock,
+    "END: continuous column from product overflow, OVER the Instagram icons, into the doodle landing. No extra props.",
     noAnnotations,
   );
 }
@@ -783,7 +955,9 @@ export function buildSocialDripVideoPrompt(input: {
     `Animate ONLY the fall: ${input.plan.crossingDescription}`,
     `Payoff: ${input.plan.landingDescription}`,
     `Keep the same line-art person: ${input.plan.characterBeat}`,
-    "Beat: drip leaves product → crosses IN FRONT of the IG bar → lands on the doodle. Do not hide behind the card. Do not skip the middle.",
+    input.plan.metaphorId === "pour"
+      ? "Pour motion: first show overflow ON the product (cheese melting over edges), then the column crosses IN FRONT of the IG bar into the doodle. FORBIDDEN: starting the stream from under the bottom bun."
+      : "Beat: drip leaves product → crosses IN FRONT of the IG bar → lands on the doodle. Do not hide behind the card. Do not skip the middle.",
     input.conceptMode
       ? "Concept motion: animate only a few LARGE cards sliding downward along one centerline — do not morph dozens of tiny shards or invent new text."
       : false,

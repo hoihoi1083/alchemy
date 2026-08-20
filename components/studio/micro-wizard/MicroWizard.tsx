@@ -213,7 +213,9 @@ export function MicroWizard({ promotionMode }: Props) {
           {mw.skip}
         </button>
       ) : null}
-      {currentId === "setup.pre_generate" ? null : (
+      {currentId === "setup.pre_generate" || currentId === "setup.pre_video"
+        ? null
+        : (
         <button
           type="button"
           onClick={goNext}
