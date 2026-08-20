@@ -194,12 +194,13 @@ import {
 import {
 	BLOCKBUSTER_DURATION_SEC,
 	BLOCKBUSTER_NEGATIVE,
-	BLOCKBUSTER_TIMING_IDS,
 	buildBlockbusterSceneStillPrompt,
 	buildBlockbusterVideoPrompt,
 	defaultBlockbusterCaptionText,
 	orderedBlockbusterRefFiles,
+	parseBlockbusterCamera,
 	parseBlockbusterTiming,
+	type BlockbusterCameraId,
 	type BlockbusterCaptionLang,
 	type BlockbusterTimingId,
 } from "@/lib/blockbuster-ad-recipe";
@@ -770,13 +771,24 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		useState<SocialDripPourAmount>("medium");
 	const [blockbusterTiming, setBlockbusterTiming] =
 		useState<BlockbusterTimingId>("early-reveal");
+	const [blockbusterCamera, setBlockbusterCameraState] =
+		useState<BlockbusterCameraId>("behind-truck");
+	function setBlockbusterCamera(next: BlockbusterCameraId) {
+		if (next === blockbusterCamera) return;
+		setBlockbusterCameraState(next);
+		// Views need different first frames — drop the old plate on switch.
+		setSceneFramePhoto(null);
+		setSceneFrameUrl(null);
+		setSceneFramePreviewUrl(null);
+	}
 	const [blockbusterCaptionLang, setBlockbusterCaptionLang] =
 		useState<BlockbusterCaptionLang>("en");
 	const [blockbusterCaptionText, setBlockbusterCaptionText] = useState(
 		() => defaultBlockbusterCaptionText("en"),
 	);
 	const [blockbusterBurnCaptions, setBlockbusterBurnCaptions] = useState(false);
-	const [blockbusterEndLogo, setBlockbusterEndLogo] = useState(true);
+	/** Opt-in: Brand kit logo printed on flying boxes when Packaging is empty. */
+	const [blockbusterEndLogo, setBlockbusterEndLogo] = useState(false);
 	const [blockbusterHeroHold, setBlockbusterHeroHold] = useState(true);
 
 	function setBlockbusterCaptionLangAndPreset(lang: BlockbusterCaptionLang) {
@@ -6719,6 +6731,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		setError(null);
 		setVideoNote(m.wizard.blockbusterGenerateSceneBusy);
 		try {
+			const hasPackagingArt = Boolean(
+				packagingPhoto ||
+					(blockbusterEndLogo && brandKit.logoUrl?.trim()),
+			);
 			const fd = new FormData();
 			fd.set(
 				"prompt",
@@ -6728,6 +6744,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 						product.trim() ||
 						headline.trim() ||
 						conceptIdea.trim(),
+					camera: parseBlockbusterCamera(blockbusterCamera),
+					hasPackaging: hasPackagingArt,
 				}),
 			);
 			fd.set("visual_style", visualStyleId);
@@ -6737,11 +6755,17 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			fd.set("num_images", "1");
 			fd.set("promotion_mode", promotionMode);
 			fd.set("workflow_mode", "video-only");
-			fd.set("product_name", product.trim() || conceptIdea.trim());
-			fd.set("headline", headline.trim());
+			// Do NOT send product name / hero photo — that paints fake SKU art onto boxes.
 			fd.set("endpoint", TEXT_ENDPOINT);
-			if (productPhoto) fd.set("reference_image", productPhoto);
-			if (packagingPhoto) fd.append("product_angle_images", packagingPhoto);
+			// Only lock box print when packaging (or opt-in brand logo) is available.
+			if (packagingPhoto) {
+				fd.append("product_angle_images", packagingPhoto);
+			} else if (blockbusterEndLogo && brandKit.logoUrl?.trim()) {
+				const logoFile = await fileFromImageUrl(
+					brandKit.logoUrl.trim(),
+				);
+				if (logoFile) fd.append("product_angle_images", logoFile);
+			}
 			const res = await fetch("/api/generate-image", {
 				method: "POST",
 				body: fd,
@@ -6784,9 +6808,12 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			);
 		}
 		let packFile = packagingPhoto;
-		if (!packFile && brandKit.logoUrl?.trim()) {
-			// Brand kit logo as flying packaging / printed-box identity when user
-			// did not upload a dedicated carton still.
+		if (
+			!packFile &&
+			blockbusterEndLogo &&
+			brandKit.logoUrl?.trim()
+		) {
+			// Opt-in: Brand kit logo as flying-box print when Packaging is empty.
 			packFile = await fileFromImageUrl(brandKit.logoUrl.trim());
 		}
 		let sceneFile = sceneFramePhoto;
@@ -6796,6 +6823,12 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		if (!sceneFile && sceneFrameUrl?.trim()) {
 			sceneFile = await fileFromImageUrl(sceneFrameUrl.trim());
 		}
+		const camera = parseBlockbusterCamera(blockbusterCamera);
+		// On-bridge: a wrong plate locks reverse truck motion + fake box art.
+		// Prefer prompt-only; behind-truck still benefits from a scene still.
+		if (camera === "on-bridge") {
+			sceneFile = null;
+		}
 		const prompt = buildBlockbusterVideoPrompt({
 			conceptMode: promotionMode === "concept",
 			product: product.trim() || conceptIdea.trim(),
@@ -6804,6 +6837,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			hasPackaging: Boolean(packFile),
 			hasSceneFrame: Boolean(sceneFile),
 			timing: parseBlockbusterTiming(blockbusterTiming),
+			camera,
 		});
 		setVideoPrompt(prompt);
 		setVideoNote(m.wizard.blockbusterAnimating);
@@ -6844,7 +6878,6 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 
 		const wantFinish =
 			(blockbusterBurnCaptions && blockbusterCaptionText.trim()) ||
-			blockbusterEndLogo ||
 			blockbusterHeroHold;
 		if (wantFinish && videoUrl) {
 			setVideoNote(m.wizard.blockbusterFinishing);
@@ -6857,12 +6890,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					: "0",
 			);
 			finishFd.set("caption_text", blockbusterCaptionText.trim());
-			finishFd.set("end_logo", blockbusterEndLogo ? "1" : "0");
+			finishFd.set("end_logo", "0");
 			finishFd.set("hero_hold", blockbusterHeroHold ? "1" : "0");
-			const brandLogo = brandKit.logoUrl?.trim();
-			if (blockbusterEndLogo && brandLogo) {
-				finishFd.set("logo_url", brandLogo);
-			}
 			const finishRes = await fetch("/api/finish-blockbuster", {
 				method: "POST",
 				body: finishFd,
@@ -10731,6 +10760,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		setSocialDripPourAmount,
 		blockbusterTiming,
 		setBlockbusterTiming,
+		blockbusterCamera,
+		setBlockbusterCamera,
 		blockbusterCaptionLang,
 		setBlockbusterCaptionLangAndPreset,
 		blockbusterCaptionText,

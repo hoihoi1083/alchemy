@@ -2126,6 +2126,51 @@ export function PreVideoSetupPanel({
             ) : null}
 
             {isBlockbuster ? (
+              <section className="pv-card border-violet-200 bg-violet-50/40">
+                <div className="pv-card-title-row mb-1">
+                  <h3 className="pv-card-title">{m.wizard.blockbusterCameraLabel}</h3>
+                  <span className="rounded-full bg-violet-600 px-2 py-0.5 text-[10px] font-semibold text-white">
+                    {m.wizard.blockbusterCameraStepBadge}
+                  </span>
+                </div>
+                <p className="mb-3 text-xs leading-relaxed text-violet-900/80">
+                  {wizard.blockbusterCamera === "on-bridge"
+                    ? m.wizard.blockbusterCameraHintBridge
+                    : m.wizard.blockbusterCameraHintBehind}
+                </p>
+                <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                  {(
+                    [
+                      ["behind-truck", m.wizard.blockbusterCameraBehind],
+                      ["on-bridge", m.wizard.blockbusterCameraBridge],
+                    ] as const
+                  ).map(([id, copy]) => {
+                    const selected = wizard.blockbusterCamera === id;
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        className={`rounded-xl border px-2.5 py-2 text-left transition ${
+                          selected
+                            ? "border-violet-500 bg-white"
+                            : "border-slate-200 bg-white/70 hover:border-violet-300"
+                        }`}
+                        onClick={() => wizard.setBlockbusterCamera(id)}
+                      >
+                        <span className="block text-[11px] font-semibold text-slate-900">
+                          {copy.title}
+                        </span>
+                        <span className="mt-0.5 block text-[10px] leading-snug text-slate-500">
+                          {copy.desc}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+            ) : null}
+
+            {isBlockbuster && wizard.blockbusterCamera !== "on-bridge" ? (
               <section className="pv-card">
                 <div className="pv-card-title-row mb-3">
                   <h3 className="pv-card-title">
@@ -2133,7 +2178,9 @@ export function PreVideoSetupPanel({
                     <span className="pv-label-opt font-medium">{pv.extraOptional}</span>
                   </h3>
                 </div>
-                <p className="mb-3 text-xs text-slate-500">{m.wizard.blockbusterSceneHint}</p>
+                <p className="mb-3 text-xs text-slate-500">
+                  {m.wizard.blockbusterSceneHintBehind}
+                </p>
                 <input
                   id={sceneInputId}
                   type="file"

@@ -2863,23 +2863,45 @@ export const zh = {
 			"Logo 或吉祥物。飛出嘅卡片會揭曉呢個——冇上傳就用品牌套件 Logo。",
 		blockbusterPackTitle: "包裝／飛出道具",
 		blockbusterPackHint:
-			"上傳品牌紙箱效果最好；留空就用 Brand kit Logo 印喺飛出嘅箱上。",
+			"上傳品牌紙箱效果最好。亦可留空並勾選下方「Brand kit Logo 印喺箱上」。",
 		blockbusterPackHintConcept:
-			"品牌卡片、貼紙。留空就用 Brand kit Logo 做飛出道具。",
+			"品牌卡片、貼紙。亦可留空並勾選下方「Brand kit Logo 印喺箱上」。",
 		blockbusterSceneTitle: "場景首幀",
 		blockbusterSceneHint:
-			"貨車上路靜圖＝開場第一幀。請生成黃昏天橋（貨箱堆得過高）。盡量唔好留空。",
+			"貨車上路靜圖＝開場第一幀，要匹配上方所選機位。盡量唔好留空。",
+		blockbusterSceneHintBehind:
+			"「貨車後方」可選 — 跟拍車尾，生成或上傳有助鎖定開場。",
+		blockbusterSceneHintBridge:
+			"「天橋上」建議留空 — H3 會緊跟首幀；錯誤首幀易導致倒車、箱子亂印圖案。角度由提示詞控制。",
 		blockbusterGenerateSceneBtn: "生成場景靜圖",
 		blockbusterGenerateSceneBusy: "正在生成天橋靜圖…",
+		blockbusterSceneSkipBridgeNote:
+			"天橋視角成片會忽略場景靜圖。只有需要印花箱子時先上傳包裝圖。",
 		blockbusterNeedHero: "請先上傳產品相（概念模式可上傳 Logo／吉祥物）。",
 		blockbusterNeedConceptHero: "請上傳 Logo／吉祥物，或喺品牌套件存好 Logo。",
 		blockbusterAnimating: "正在生成 9 秒單鏡…",
-		blockbusterFinishing: "收尾中：字幕／英雄定格／Logo…",
+		blockbusterFinishing: "收尾中：字幕／英雄定格…",
 		blockbusterFinishFailed: "Blockbuster 收尾失敗，請重試。",
 		blockbusterControlsTitle: "登場設定（類似 Social drip）",
 		blockbusterControlsBadge: "燒進成片",
 		blockbusterControlsHint:
-			"節奏改 AI 一鏡。英雄定格同 Brand kit Logo 喺生成後疊加。字幕請之後自己加。",
+			"節奏改 AI 一鏡。英雄定格喺生成後疊加。勾選下方先會把 Brand kit Logo 印喺飛出嘅箱上。字幕請之後自己加。",
+		blockbusterCameraLabel: "機位視角",
+		blockbusterCameraStepBadge: "第 1 步",
+		blockbusterCameraBehind: {
+			title: "貨車後方",
+			desc: "跟拍車尾 — 貨車駛向天橋",
+		},
+		blockbusterCameraBridge: {
+			title: "天橋上",
+			desc: "企喺橋俯視公路 — 貨車喺橋下，箱朝鏡頭飛來",
+		},
+		blockbusterCameraHint:
+			"先選機位。切換機位會清空場景靜圖，避免錯配。",
+		blockbusterCameraHintBehind:
+			"下一步：喺下方生成或上傳匹配嘅場景靜圖。切換機位會清空靜圖。",
+		blockbusterCameraHintBridge:
+			"此視角唔用場景靜圖 — 成片只跟提示詞（避免倒車／箱子亂印圖案）。",
 		blockbusterTimingLabel: "故事節奏",
 		blockbusterTimingClassic: {
 			title: "經典",
@@ -2896,7 +2918,7 @@ export const zh = {
 		blockbusterBurnCaptionsLabel: "而家燒進字幕（一般保持關閉）",
 		blockbusterHeroHoldLabel: "揭曉後英雄放大 + 約 1.5 秒定格",
 		blockbusterEndLogoLabel:
-			"Brand kit Logo 片尾右下（約 0.8 秒）。冇上傳包裝圖就會用 Logo 印喺飛出嘅箱上。",
+			"把 Brand kit Logo 印喺飛出嘅箱上（冇上傳包裝圖時）",
 
 		h3ShotNeedHero: "可上傳產品圖，或用 AI 生成靜圖。",
 		h3ShotNeedConceptHero:

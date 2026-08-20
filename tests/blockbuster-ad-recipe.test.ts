@@ -58,6 +58,56 @@ describe("blockbuster 3-ref recipe", () => {
     );
   });
 
+  it("on-bridge view is elevated overpass looking down at the highway", () => {
+    const p = buildBlockbusterVideoPrompt({
+      conceptMode: false,
+      product: "CD Capture cream",
+      hasPackaging: true,
+      hasSceneFrame: true,
+      timing: "early-reveal",
+      camera: "on-bridge",
+    });
+    assert.match(p, /天桥/);
+    assert.match(p, /俯视|高角度/);
+    assert.match(p, /禁止倒车|driving backward/);
+    assert.doesNotMatch(p, /相机始终钉在货车正后方/);
+
+    const s = buildBlockbusterSceneStillPrompt({
+      conceptMode: false,
+      product: "CD Capture cream",
+      camera: "on-bridge",
+      hasPackaging: false,
+    });
+    assert.match(s, /HIGH ANGLE|looking DOWN/i);
+    assert.match(s, /PLAIN blank kraft|NO logos/i);
+    assert.doesNotMatch(s, /BEHIND the truck/);
+    assert.match(s, /NOT reversing|FORWARD/i);
+  });
+
+  it("without packaging, video prompt demands blank boxes", () => {
+    const p = buildBlockbusterVideoPrompt({
+      conceptMode: false,
+      product: "Vitamin C serum",
+      hasPackaging: false,
+      hasSceneFrame: false,
+      timing: "early-reveal",
+      camera: "on-bridge",
+    });
+    assert.match(p, /素面|空白/);
+    assert.match(p, /Vitamin C|假商标/);
+  });
+
+  it("behind-truck remains the default chase cam", () => {
+    const p = buildBlockbusterVideoPrompt({
+      conceptMode: false,
+      product: "ARC bottle",
+      hasPackaging: true,
+      hasSceneFrame: true,
+      timing: "classic",
+    });
+    assert.match(p, /货车正后方/);
+  });
+
   it("early-reveal shortens boxes and lengthens hero", () => {
     const p = buildBlockbusterVideoPrompt({
       conceptMode: false,
@@ -102,16 +152,25 @@ describe("blockbuster 3-ref recipe", () => {
   });
 
   it("scene still is textless truck/overpass plate", () => {
-    const s = buildBlockbusterSceneStillPrompt({
+    const branded = buildBlockbusterSceneStillPrompt({
       conceptMode: false,
       product: "SOLAR tumbler",
+      hasPackaging: true,
     });
-    assert.match(s, /textless/i);
-    assert.match(s, /truck/i);
-    assert.match(s, /overpass|dusk/i);
-    assert.match(s, /SOLAR tumbler/);
-    assert.match(s, /TOO HIGH|scraping/i);
-    assert.match(s, /BEHIND the truck|looking FORWARD/i);
+    assert.match(branded, /textless/i);
+    assert.match(branded, /truck/i);
+    assert.match(branded, /overpass|dusk/i);
+    assert.match(branded, /SOLAR tumbler/);
+    assert.match(branded, /TOO HIGH|scraping/i);
+    assert.match(branded, /BEHIND the truck|looking FORWARD/i);
+
+    const blank = buildBlockbusterSceneStillPrompt({
+      conceptMode: false,
+      product: "SOLAR tumbler",
+      hasPackaging: false,
+    });
+    assert.match(blank, /PLAIN blank kraft/i);
+    assert.doesNotMatch(blank, /SOLAR tumbler/);
   });
 });
 

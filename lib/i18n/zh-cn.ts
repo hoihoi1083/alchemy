@@ -2553,23 +2553,45 @@ export const zhCn = {
       "Logo 或吉祥物。飞出的卡片会揭晓这个——没有上传就用品牌套件 Logo。",
     blockbusterPackTitle: "包装／飞出道具",
     blockbusterPackHint:
-      "上传品牌纸箱效果最好；留空则用 Brand kit Logo 印在飞出的箱子上。",
+      "上传品牌纸箱效果最好。也可留空并勾选下方「Brand kit Logo 印在箱子上」。",
     blockbusterPackHintConcept:
-      "品牌卡片、贴纸。留空就用 Brand kit Logo 做飞出道具。",
+      "品牌卡片、贴纸。也可留空并勾选下方「Brand kit Logo 印在箱子上」。",
     blockbusterSceneTitle: "场景首帧",
     blockbusterSceneHint:
-      "货车上路静图＝开场第一帧。请生成黄昏天桥（货箱堆得过高）。尽量不要留空。",
+      "货车上路静图＝开场第一帧，需匹配上方所选机位。尽量不要留空。",
+    blockbusterSceneHintBehind:
+      "「货车后方」可选 — 跟拍车尾，生成或上传有助于锁定开场。",
+    blockbusterSceneHintBridge:
+      "「天桥上」建议留空 — H3 会紧跟首帧；错误首帧易导致倒车、箱子乱印图案。角度由提示词控制。",
     blockbusterGenerateSceneBtn: "生成场景静图",
     blockbusterGenerateSceneBusy: "正在生成天桥静图…",
+    blockbusterSceneSkipBridgeNote:
+      "天桥视角成片会忽略场景静图。只有需要印花箱子时才上传包装图。",
     blockbusterNeedHero: "请先上传产品图（概念模式可上传 Logo／吉祥物）。",
     blockbusterNeedConceptHero: "请上传 Logo／吉祥物，或在品牌套件存好 Logo。",
     blockbusterAnimating: "正在生成 9 秒单镜…",
-		blockbusterFinishing: "收尾中：字幕 / 英雄定格 / Logo…",
+		blockbusterFinishing: "收尾中：字幕 / 英雄定格…",
 		blockbusterFinishFailed: "Blockbuster 收尾失败，请重试。",
 		blockbusterControlsTitle: "登场设置（类似 Social drip）",
 		blockbusterControlsBadge: "烧进成片",
 		blockbusterControlsHint:
-			"节奏改 AI 一镜。英雄定格与 Brand kit Logo 在生成后叠加。字幕请之后在字幕工作室添加。",
+			"节奏改 AI 一镜。英雄定格在生成后叠加。勾选下方才会把 Brand kit Logo 印在飞出的箱子上。字幕请之后在字幕工作室添加。",
+		blockbusterCameraLabel: "机位视角",
+		blockbusterCameraStepBadge: "第 1 步",
+		blockbusterCameraBehind: {
+			title: "货车后方",
+			desc: "跟拍车尾 — 货车驶向天桥",
+		},
+		blockbusterCameraBridge: {
+			title: "天桥上",
+			desc: "站在桥上俯视公路 — 货车在桥下，箱子朝镜头飞来",
+		},
+		blockbusterCameraHint:
+			"先选机位。切换机位会清空场景静图，避免错配。",
+		blockbusterCameraHintBehind:
+			"下一步：在下方生成或上传匹配的场景静图。切换机位会清空静图。",
+		blockbusterCameraHintBridge:
+			"此视角不用场景静图 — 成片只跟提示词（避免倒车／箱子乱印图案）。",
 		blockbusterTimingLabel: "故事节奏",
 		blockbusterTimingClassic: {
 			title: "经典",
@@ -2586,7 +2608,7 @@ export const zhCn = {
 		blockbusterBurnCaptionsLabel: "现在烧进字幕（一般保持关闭）",
 		blockbusterHeroHoldLabel: "揭晓后英雄放大 + 约 1.5 秒定格",
 		blockbusterEndLogoLabel:
-			"Brand kit Logo 片尾右下（约 0.8 秒）。若未上传包装图，Logo 会印在飞出的箱子上。",
+			"把 Brand kit Logo 印在飞出的箱子上（未上传包装图时）",
 
 		h3ShotNeedHero: "请先上传产品图，或用 AI 生成静图。",
 		h3ShotNeedConceptHero:

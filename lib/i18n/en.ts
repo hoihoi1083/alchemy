@@ -3118,25 +3118,47 @@ export const en = {
 			"Logo or mascot photo. This pops out of the flying tiles — Brand kit logo is used if you skip this.",
 		blockbusterPackTitle: "Packaging / flying props",
 		blockbusterPackHint:
-			"Upload branded cartons for best results — or leave empty to use Brand kit logo on the flying boxes.",
+			"Upload branded cartons for best results. Or leave empty and check “Brand kit logo on boxes” below.",
 		blockbusterPackHintConcept:
-			"Brand cards / stickers. Leave empty to use Brand kit logo as flying props.",
+			"Brand cards / stickers. Or leave empty and check “Brand kit logo on boxes” below.",
 		blockbusterSceneTitle: "Scene first frame",
 		blockbusterSceneHint:
-			"Truck-on-road still — this is the opening frame. Generate a dusk overpass plate (boxes stacked too high). Skip only if you must.",
+			"Truck-on-road still — opening frame for the view you picked above. Skip only if you must.",
+		blockbusterSceneHintBehind:
+			"Optional but helpful for Behind the truck — chase cam behind the trailer. Generate or upload after you pick the view.",
+		blockbusterSceneHintBridge:
+			"Usually skip for On the bridge — H3 follows the plate too tightly (wrong plate → truck reverse + fake box art). Leave empty; the prompt drives the angle.",
 		blockbusterGenerateSceneBtn: "Generate scene plate",
 		blockbusterGenerateSceneBusy: "Generating overpass still…",
+		blockbusterSceneSkipBridgeNote:
+			"On the bridge video ignores the scene plate on purpose. Upload packaging only if you want printed boxes.",
 		blockbusterNeedHero:
 			"Upload a product photo first (or a logo/mascot for concept).",
 		blockbusterNeedConceptHero:
 			"Upload a logo/mascot, or save a logo in Brand kit.",
 		blockbusterAnimating: "Generating 9s one-take clip…",
-		blockbusterFinishing: "Finishing: captions / hero hold / logo…",
+		blockbusterFinishing: "Finishing: captions / hero hold…",
 		blockbusterFinishFailed: "Blockbuster finish step failed. Try again.",
 		blockbusterControlsTitle: "Reveal settings (like Social drip)",
 		blockbusterControlsBadge: "On video",
 		blockbusterControlsHint:
-			"Timing changes the AI one-take. Hero hold and Brand kit logo run after generate. Add captions later in Caption Studio if you want.",
+			"Timing changes the AI one-take. Hero hold runs after generate. Brand kit logo on boxes only if you check it below. Add captions later in Caption Studio if you want.",
+		blockbusterCameraLabel: "Camera view",
+		blockbusterCameraStepBadge: "Step 1",
+		blockbusterCameraBehind: {
+			title: "Behind the truck",
+			desc: "Chase cam from the rear — truck drives away into the overpass",
+		},
+		blockbusterCameraBridge: {
+			title: "On the bridge",
+			desc: "High angle on the overpass looking down at the highway — truck below, boxes fly up at camera",
+		},
+		blockbusterCameraHint:
+			"Pick a view first. Switching view clears any scene plate so it cannot mismatch.",
+		blockbusterCameraHintBehind:
+			"Next: generate or upload a matching scene plate below. Switching view clears the plate.",
+		blockbusterCameraHintBridge:
+			"No scene plate for this view — the AI one-take follows the prompt only (avoids reverse truck / fake box art).",
 		blockbusterTimingLabel: "Story timing",
 		blockbusterTimingClassic: {
 			title: "Classic",
@@ -3154,7 +3176,7 @@ export const en = {
 		blockbusterBurnCaptionsLabel: "Burn captions now (usually leave off)",
 		blockbusterHeroHoldLabel: "Hero zoom + ~1.5s hold after reveal",
 		blockbusterEndLogoLabel:
-			"Brand kit logo end stamp (bottom-right, ~0.8s). If Packaging is empty, Brand kit logo is also used on the flying boxes.",
+			"Brand kit logo on flying boxes (when Packaging is empty)",
 		h3ShotNeedHero: "Upload a product photo, or generate a still with AI.",
 		h3ShotNeedConceptHero:
 			"Upload a logo/mascot, save a Brand kit logo, or generate a still with AI.",
