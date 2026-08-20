@@ -55,6 +55,7 @@ import {
   type RecipePathUxMode,
 } from "@/lib/recipe-path-ux";
 import { videoModePreviewSrc } from "@/lib/creative-workflow";
+import { parseBlockbusterCamera } from "@/lib/blockbuster-ad-recipe";
 
 const PANEL_CSS = `
 .pv-page {
@@ -2170,7 +2171,8 @@ export function PreVideoSetupPanel({
               </section>
             ) : null}
 
-            {isBlockbuster && wizard.blockbusterCamera !== "on-bridge" ? (
+            {isBlockbuster &&
+            parseBlockbusterCamera(wizard.blockbusterCamera) !== "on-bridge" ? (
               <section className="pv-card">
                 <div className="pv-card-title-row mb-3">
                   <h3 className="pv-card-title">
