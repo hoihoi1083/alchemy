@@ -1499,6 +1499,182 @@ export function PreGenerateSetupPanel({
               </section>
             ) : null}
 
+            <section className="pg-card">
+              <div className="pg-content-row">
+                <div className="pg-content-aside">
+                  <span className="pg-card-icon">
+                    <SectionIcon kind="upload" />
+                  </span>
+                  <div className="pg-content-aside-copy">
+                    <h3 className="pg-card-title">
+                    {isConcept ? pg.productPhotosOptionalTitle : pg.productPhotosTitle}
+                  </h3>
+                  </div>
+                </div>
+                <div
+                  className={`min-w-0 flex-1 space-y-4${
+                    luxuryStoryboard ? ` ${LUXURY_FIELD_WRAP_CLASS}` : ""
+                  }${
+                    lockedPosterDirection && !isConcept
+                      ? " rounded-xl border border-violet-300 bg-violet-50/50 p-3 ring-1 ring-violet-200"
+                      : ""
+                  }`}
+                >
+                  <div>
+                    <p className="text-xs font-semibold text-slate-700">
+                      {pg.mainPhotoRowLabel}
+                      {luxuryStoryboard ? (
+                        <LuxuryFieldBadge label={luxuryFieldBadge} />
+                      ) : null}
+                      {isConcept ? (
+                        <span className="ml-1.5 font-medium text-slate-500">
+                          ({pg.mainPhotoOptional})
+                        </span>
+                      ) : (
+                        <>
+                          <span className="pg-label-req" aria-hidden>
+                            *
+                          </span>
+                          <span className="ml-1.5 font-medium text-violet-600">
+                            ({pg.mainPhotoRequired})
+                          </span>
+                          {lockedPosterDirection ? (
+                            <span className="ml-1.5 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700">
+                              {pg.onImageBadge}
+                            </span>
+                          ) : null}
+                        </>
+                      )}
+                    </p>
+                    <input
+                      id={mainInputId}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="sr-only"
+                      onChange={onMainFile}
+                    />
+                    <div className="mt-2 flex flex-wrap gap-2.5">
+                      {mainThumb ? (
+                        <div className="relative h-24 w-24 overflow-hidden rounded-xl border border-violet-400 ring-1 ring-violet-300">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={mainThumb.url} alt="" className="h-full w-full object-cover" />
+                          <span className="absolute left-1 top-1 rounded-md bg-violet-600 px-1.5 py-0.5 text-[9px] font-bold leading-none text-white">
+                            {pg.mainPhotoBadge}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={removeMain}
+                            className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-slate-900/70 text-[10px] text-white"
+                            aria-label={m.wizard.uploadChange}
+                          >
+                            ×
+                          </button>
+                          <label
+                            htmlFor={mainInputId}
+                            className="absolute inset-x-0 bottom-0 cursor-pointer bg-slate-900/55 py-0.5 text-center text-[9px] font-semibold text-white"
+                          >
+                            {m.wizard.uploadChange}
+                          </label>
+                        </div>
+                      ) : (
+                        <label
+                          htmlFor={mainInputId}
+                          className="flex h-24 w-24 shrink-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-violet-300 bg-violet-50/70 px-1 text-center text-[11px] font-semibold text-violet-700 hover:bg-violet-50"
+                        >
+                          <svg
+                            viewBox="0 0 24 24"
+                            className="h-7 w-7"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.7"
+                            aria-hidden
+                          >
+                            <path
+                              d="M7.5 16.2A4.2 4.2 0 0 1 8.2 8a5 5 0 0 1 9.5 1.4 3.4 3.4 0 0 1 .8 6.7"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                            <path
+                              d="M12 19.2V12.4M9.6 14.6 12 12.2l2.4 2.4"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                          {pg.dragDrop}
+                        </label>
+                      )}
+                    </div>
+                    <p className="mt-1.5 text-xs text-slate-500">
+                      {isConcept ? pg.conceptMainPhotoOptionalHint : pg.mainPhotoHint}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-xs font-semibold text-slate-700">
+                      {pg.anglePhotoRowLabel}
+                      <span className="pg-label-opt">({pg.anglePhotoOptional})</span>
+                    </p>
+                    <input
+                      id={angleInputId}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      multiple
+                      className="sr-only"
+                      onChange={onAngleFiles}
+                    />
+                    <div className="mt-2 flex flex-wrap gap-2.5">
+                      {angleThumbs.map((thumb) => (
+                        <div
+                          key={thumb.key}
+                          className="relative h-24 w-24 overflow-hidden rounded-xl border border-slate-200"
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={thumb.url} alt="" className="h-full w-full object-cover" />
+                          <span className="absolute left-1 top-1 rounded-md bg-slate-700/80 px-1.5 py-0.5 text-[9px] font-bold leading-none text-white">
+                            {pg.anglePhotoBadge}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => removeAngle(thumb.key)}
+                            className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-slate-900/70 text-[10px] text-white"
+                            aria-label={m.wizard.uploadChange}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                      <label
+                        htmlFor={angleInputId}
+                        className="flex h-24 w-24 shrink-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-violet-300 bg-violet-50/70 px-1 text-center text-[11px] font-semibold text-violet-700 hover:bg-violet-50"
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          className="h-7 w-7"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.7"
+                          aria-hidden
+                        >
+                          <path
+                            d="M7.5 16.2A4.2 4.2 0 0 1 8.2 8a5 5 0 0 1 9.5 1.4 3.4 3.4 0 0 1 .8 6.7"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          <path
+                            d="M12 19.2V12.4M9.6 14.6 12 12.2l2.4 2.4"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                        {pg.addMore}
+                      </label>
+                    </div>
+                    <p className="mt-1.5 text-xs text-slate-500">{pg.anglePhotoHint}</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
             <section className="pg-card" ref={contentRef}>
               <div className="pg-content-row">
                 <div className="pg-content-aside">
@@ -2212,182 +2388,6 @@ export function PreGenerateSetupPanel({
               </div>
             </section>
             ) : null}
-
-            <section className="pg-card">
-              <div className="pg-content-row">
-                <div className="pg-content-aside">
-                  <span className="pg-card-icon">
-                    <SectionIcon kind="upload" />
-                  </span>
-                  <div className="pg-content-aside-copy">
-                    <h3 className="pg-card-title">
-                    {isConcept ? pg.productPhotosOptionalTitle : pg.productPhotosTitle}
-                  </h3>
-                  </div>
-                </div>
-                <div
-                  className={`min-w-0 flex-1 space-y-4${
-                    luxuryStoryboard ? ` ${LUXURY_FIELD_WRAP_CLASS}` : ""
-                  }${
-                    lockedPosterDirection && !isConcept
-                      ? " rounded-xl border border-violet-300 bg-violet-50/50 p-3 ring-1 ring-violet-200"
-                      : ""
-                  }`}
-                >
-                  <div>
-                    <p className="text-xs font-semibold text-slate-700">
-                      {pg.mainPhotoRowLabel}
-                      {luxuryStoryboard ? (
-                        <LuxuryFieldBadge label={luxuryFieldBadge} />
-                      ) : null}
-                      {isConcept ? (
-                        <span className="ml-1.5 font-medium text-slate-500">
-                          ({pg.mainPhotoOptional})
-                        </span>
-                      ) : (
-                        <>
-                          <span className="pg-label-req" aria-hidden>
-                            *
-                          </span>
-                          <span className="ml-1.5 font-medium text-violet-600">
-                            ({pg.mainPhotoRequired})
-                          </span>
-                          {lockedPosterDirection ? (
-                            <span className="ml-1.5 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700">
-                              {pg.onImageBadge}
-                            </span>
-                          ) : null}
-                        </>
-                      )}
-                    </p>
-                    <input
-                      id={mainInputId}
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      className="sr-only"
-                      onChange={onMainFile}
-                    />
-                    <div className="mt-2 flex flex-wrap gap-2.5">
-                      {mainThumb ? (
-                        <div className="relative h-24 w-24 overflow-hidden rounded-xl border border-violet-400 ring-1 ring-violet-300">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={mainThumb.url} alt="" className="h-full w-full object-cover" />
-                          <span className="absolute left-1 top-1 rounded-md bg-violet-600 px-1.5 py-0.5 text-[9px] font-bold leading-none text-white">
-                            {pg.mainPhotoBadge}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={removeMain}
-                            className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-slate-900/70 text-[10px] text-white"
-                            aria-label={m.wizard.uploadChange}
-                          >
-                            ×
-                          </button>
-                          <label
-                            htmlFor={mainInputId}
-                            className="absolute inset-x-0 bottom-0 cursor-pointer bg-slate-900/55 py-0.5 text-center text-[9px] font-semibold text-white"
-                          >
-                            {m.wizard.uploadChange}
-                          </label>
-                        </div>
-                      ) : (
-                        <label
-                          htmlFor={mainInputId}
-                          className="flex h-24 w-24 shrink-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-violet-300 bg-violet-50/70 px-1 text-center text-[11px] font-semibold text-violet-700 hover:bg-violet-50"
-                        >
-                          <svg
-                            viewBox="0 0 24 24"
-                            className="h-7 w-7"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.7"
-                            aria-hidden
-                          >
-                            <path
-                              d="M7.5 16.2A4.2 4.2 0 0 1 8.2 8a5 5 0 0 1 9.5 1.4 3.4 3.4 0 0 1 .8 6.7"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                            <path
-                              d="M12 19.2V12.4M9.6 14.6 12 12.2l2.4 2.4"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                          {pg.dragDrop}
-                        </label>
-                      )}
-                    </div>
-                    <p className="mt-1.5 text-xs text-slate-500">
-                      {isConcept ? pg.conceptMainPhotoOptionalHint : pg.mainPhotoHint}
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="text-xs font-semibold text-slate-700">
-                      {pg.anglePhotoRowLabel}
-                      <span className="pg-label-opt">({pg.anglePhotoOptional})</span>
-                    </p>
-                    <input
-                      id={angleInputId}
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      multiple
-                      className="sr-only"
-                      onChange={onAngleFiles}
-                    />
-                    <div className="mt-2 flex flex-wrap gap-2.5">
-                      {angleThumbs.map((thumb) => (
-                        <div
-                          key={thumb.key}
-                          className="relative h-24 w-24 overflow-hidden rounded-xl border border-slate-200"
-                        >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={thumb.url} alt="" className="h-full w-full object-cover" />
-                          <span className="absolute left-1 top-1 rounded-md bg-slate-700/80 px-1.5 py-0.5 text-[9px] font-bold leading-none text-white">
-                            {pg.anglePhotoBadge}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => removeAngle(thumb.key)}
-                            className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-slate-900/70 text-[10px] text-white"
-                            aria-label={m.wizard.uploadChange}
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ))}
-                      <label
-                        htmlFor={angleInputId}
-                        className="flex h-24 w-24 shrink-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-violet-300 bg-violet-50/70 px-1 text-center text-[11px] font-semibold text-violet-700 hover:bg-violet-50"
-                      >
-                        <svg
-                          viewBox="0 0 24 24"
-                          className="h-7 w-7"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="1.7"
-                          aria-hidden
-                        >
-                          <path
-                            d="M7.5 16.2A4.2 4.2 0 0 1 8.2 8a5 5 0 0 1 9.5 1.4 3.4 3.4 0 0 1 .8 6.7"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                          <path
-                            d="M12 19.2V12.4M9.6 14.6 12 12.2l2.4 2.4"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                        {pg.addMore}
-                      </label>
-                    </div>
-                    <p className="mt-1.5 text-xs text-slate-500">{pg.anglePhotoHint}</p>
-                  </div>
-                </div>
-              </div>
-            </section>
 
             {!combinedStoryboard ? (
             <section className="pg-card">
