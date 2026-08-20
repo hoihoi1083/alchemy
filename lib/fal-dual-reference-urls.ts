@@ -135,17 +135,38 @@ export function carouselSlideRoleVariationHint(input: {
 }
 
 /**
- * Tip-slide image_urls for first-pass generate — same order as single-slide regen:
- * product (+ style) refs first, generated cover LAST (never IMAGE 1).
+ * Tip-slide image_urls: product (+ style) refs only.
+ * Do not append the generated cover — nano-banana/edit clones cover pixels and only swaps text.
  */
 export function teachingCarouselTipImageUrls(
   baseUrls: string[] | null | undefined,
-  coverUrl: string,
 ): string[] | null {
   if (!baseUrls?.length) return baseUrls ?? null;
-  const cover = coverUrl.trim();
-  if (!cover) return [...baseUrls];
-  return [...baseUrls, cover];
+  return [...baseUrls];
+}
+
+/**
+ * After the cover already used the reference poster: tip slides share look, not that frame.
+ * Stronger than generic variation — layout-transfer otherwise copies IMAGE 2 pose onto every card.
+ */
+export function carouselTipSlideLookFollowHint(input?: {
+  hasStyleReference?: boolean;
+}): string {
+  const parts = [
+    "TIP/SUMMARY SLIDE — FOLLOW SERIES LOOK, NOT THE COVER FRAME:",
+    "The COVER already used the reference poster layout. This slide MUST NOT reuse that same photo, pose, crop, or poster grid with only headline/body swapped.",
+    "Keep the same visual family: palette, lighting softness, photography/illustration medium, and typography energy.",
+  ];
+  if (input?.hasStyleReference !== false) {
+    parts.push(
+      "IMAGE 2 is series look only on this slide — borrow color, light, and type mood. Do NOT copy IMAGE 2's model pose, camera distance, or centered-hero staging (COVER-only).",
+      "OVERRIDE: ignore any 'Staging pose: KEEP' or SCENE ESSAY composition lock for this slide — those apply to the cover only.",
+    );
+  }
+  parts.push(
+    "IMAGE 1 product must still appear clearly. Teach with a NEW crop, angle, or layout (macro, list/tip panel, split, recap).",
+  );
+  return parts.join(" ");
 }
 
 /**

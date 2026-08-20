@@ -60,7 +60,7 @@ export function StudioNav({ trailing, variant = "light" }: StudioNavProps) {
           href="/"
           variant={dark ? "dark" : "light"}
           ariaLabel={PRODUCT_WORDMARK_ALT}
-          className="min-w-0 shrink-0 [&_img]:h-10 [&_img]:w-10 sm:[&_img]:h-11 sm:[&_img]:w-11 [&_span]:text-lg sm:[&_span]:text-xl"
+          className="min-w-0 shrink-0 [&_.brand-mark]:h-10 [&_.brand-mark]:w-10 sm:[&_.brand-mark]:h-11 sm:[&_.brand-mark]:w-11 [&_.brand-wordmark]:h-8 sm:[&_.brand-wordmark]:h-9"
         />
 
         <nav className="landing-nav-links ml-8 hidden min-w-0 flex-nowrap items-center gap-2.5 xl:ml-12 xl:gap-3.5 lg:flex">

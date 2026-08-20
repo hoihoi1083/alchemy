@@ -9,6 +9,7 @@ import {
   buildFalLayoutTransferImageUrls,
   carouselCoverSeriesAnchorHint,
   carouselSlideRoleVariationHint,
+  carouselTipSlideLookFollowHint,
   carouselUniqueCopyHint,
   dualProductIdentityHint,
   teachingCarouselTipImageUrls,
@@ -210,9 +211,11 @@ export async function POST(request: Request) {
   const carouselExtra =
     carouselRefs.length > 0
       ? strategy.kind === "layout-transfer"
-        ? `Reference carousel has ${1 + carouselRefs.length} slides in order — mirror palette, typography rhythm, and layout grid family from IMAGE 2 style reference; each output slide maps to one reference panel/row where possible. IMAGE 1 remains the user product hero on every slide.`
+        ? `Reference carousel has ${1 + carouselRefs.length} slides in order — cover follows IMAGE 2 layout; later output slides map to extra reference panels when present, otherwise share IMAGE 2 palette/type/light with a NEW composition. IMAGE 1 remains the user product hero on every slide.`
         : `Reference carousel has ${1 + carouselRefs.length} slides in order — match palette, typography rhythm, and pacing (style-only; distinct layout per output slide).`
-      : "";
+      : strategy.kind === "layout-transfer"
+        ? "Single style reference: COVER follows IMAGE 2 poster layout; tip/summary slides share IMAGE 2 look only (palette, light, type) with a NEW composition each — never four copies of the same frame."
+        : "";
   const promptExtra = [promptExtraRaw, strategyBlock, carouselExtra].filter(Boolean).join(" | ");
   const referenceImageMode = strategy.referenceImageMode;
   const endpointRaw = (formData.get("endpoint") as string | null)?.trim() || null;
@@ -235,8 +238,6 @@ export async function POST(request: Request) {
   const existingPlan = parseExistingTeachingPlan(
     (formData.get("existing_plan") as string | null)?.trim() || "",
   );
-  const seriesCoverUrl =
-    (formData.get("series_cover_url") as string | null)?.trim() || "";
   const isSingleSlideRegen =
     regenerateSlideIndex != null &&
     Number.isInteger(regenerateSlideIndex) &&
@@ -405,16 +406,19 @@ export async function POST(request: Request) {
 
     if (isSingleSlideRegen) {
       const target = plan.slides[regenerateSlideIndex!]!;
-      const urls =
-        regenerateSlideIndex! > 0 && seriesCoverUrl.startsWith("http") && imageUrlsForFal?.length
-          ? [...imageUrlsForFal, seriesCoverUrl]
-          : imageUrlsForFal;
+      const isTipRegen = regenerateSlideIndex! > 0;
+      const urls = imageUrlsForFal;
       const hints = [
         dualHint,
-        regenerateSlideIndex! > 0 && seriesCoverUrl.startsWith("http")
+        isTipRegen
           ? carouselCoverSeriesAnchorHint({
               hasProductPhoto: hasProduct,
-              pixelAnchor: Boolean(imageUrlsForFal?.length),
+              pixelAnchor: false,
+            })
+          : "",
+        isTipRegen
+          ? carouselTipSlideLookFollowHint({
+              hasStyleReference: hasStyle || Boolean(imageUrlsForFal && imageUrlsForFal.length > 1),
             })
           : "",
         carouselUniqueCopyHint(target),
@@ -457,14 +461,11 @@ export async function POST(request: Request) {
     const coverSlide = ordered[0];
     const restSlides = ordered.slice(1);
 
-    // Cover-first only when tip slides can safely use the cover as a *secondary*
-    // style cue (after product/style refs). Attaching the cover as the ONLY
-    // image_url makes nano-banana/edit clone cover pixels + cover text.
+    // Cover follows reference pixels. Tip slides keep product (+ style) refs but
+    // never the generated cover — cover-as-image_url clones the same photo + swapped text.
     let slideResults: SlideOut[];
     if (coverSlide && restSlides.length > 0) {
       const baseUrls = imageUrlsForFal?.length ? imageUrlsForFal : null;
-      // Cover LAST after product/style refs — same as single-slide regen. Dual layout-transfer
-      // used to skip this, so first-pass tips invented a charger while regen brought IMAGE 1 back.
 
       if (baseUrls?.length) {
         const coverOut = await generateOneSlide(coverSlide, baseUrls, [
@@ -477,15 +478,19 @@ export async function POST(request: Request) {
             modelWear,
           }),
         ]);
-        const tipUrls = teachingCarouselTipImageUrls(baseUrls, coverOut.imageUrl);
+        const tipUrls = teachingCarouselTipImageUrls(baseUrls);
         const coverHint = carouselCoverSeriesAnchorHint({
           hasProductPhoto: hasProduct,
-          pixelAnchor: true,
+          pixelAnchor: false,
+        });
+        const lookHint = carouselTipSlideLookFollowHint({
+          hasStyleReference: hasStyle || baseUrls.length > 1,
         });
         const restOut = await mapPool(restSlides, TIP_SLIDE_CONCURRENCY, (slide) =>
           generateOneSlide(slide, tipUrls, [
             dualHint,
             coverHint,
+            brief?.carouselSlides?.[slide.index - 1] ? "" : lookHint,
             carouselUniqueCopyHint(slide),
             carouselSlideRoleVariationHint({
               role: slide.role,

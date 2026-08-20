@@ -1075,6 +1075,7 @@ export function buildTeachingCarouselSlideImagePrompt(
 	}
 	if (referenceConcept) {
 		const ref = options?.carouselSlideRef;
+		const isCoverSlide = slide.role === "cover" || slide.index <= 1;
 		const refBlock = ref
 			? joinParts(
 					`Reference slide ${ref.index} layout (match this slide's staging): ${ref.composition || ref.layoutStyle}.`,
@@ -1085,6 +1086,11 @@ export function buildTeachingCarouselSlideImagePrompt(
 						: "",
 				)
 			: "";
+		const layoutTransferLine = ref
+			? "LAYOUT TRANSFER: IMAGE 1 = user product hero; IMAGE 2 = style reference. Match this slide's mapped reference panel — swap in IMAGE 1 product and user brief copy only."
+			: isCoverSlide
+				? "LAYOUT TRANSFER COVER: IMAGE 1 = user product hero; IMAGE 2 = style reference. Replicate IMAGE 2 ad design grammar on this COVER — same grid/list/panel structure, component types, typography hierarchy, and staging pose type; swap in IMAGE 1 product and user brief copy only."
+				: "LAYOUT TRANSFER TIP: IMAGE 1 = user product hero; IMAGE 2 = series look only (palette, lighting, typography, medium). Do NOT replicate IMAGE 2's exact pose, crop, or poster layout — that is COVER-only. New composition for this teaching card.";
 		const seriesBlock = joinParts(
 			artStyleMandatoryLead(slideVars.artStyle),
 			`TEACHING CAROUSEL (${totalSlides} slides — slide ${slide.index}/${totalSlides}).`,
@@ -1094,7 +1100,7 @@ export function buildTeachingCarouselSlideImagePrompt(
 			slide.composition ? `Layout note: ${slide.composition}.` : "",
 			refBlock,
 			seriesLock,
-			"LAYOUT TRANSFER: IMAGE 1 = user product hero; IMAGE 2 = style reference. Replicate IMAGE 2 ad design grammar on this slide — same grid/list/panel structure, component types, and typography hierarchy; swap in IMAGE 1 product and user brief copy only.",
+			layoutTransferLine,
 			productLock,
 		);
 		return withLogo(
@@ -1103,6 +1109,8 @@ export function buildTeachingCarouselSlideImagePrompt(
 				buildReferenceConceptImagePrompt(slideVars, {
 					shopStyleHint: shopHint,
 					brandProfile,
+					seriesSlideRole: isCoverSlide ? "cover" : "tip",
+					mappedCarouselSlide: Boolean(ref),
 				}),
 				carouselSlideAvoidClause(
 					slideVars.framing,
@@ -2139,10 +2147,16 @@ export function buildReferenceConceptImagePrompt(
 		/** When analyze-reference brief is in vars.extra — skip LAYER A/B/C essay. */
 		structuredReferenceBrief?: boolean;
 		aspectRatio?: string;
+		/** Teaching carousel: cover follows IMAGE 2 layout; tip slides share look only. */
+		seriesSlideRole?: "cover" | "tip";
+		/** When true, this slide maps to a specific reference carousel panel. */
+		mappedCarouselSlide?: boolean;
 	},
 ): string {
 	const product = vars.product?.trim() || "the product";
 	const aspect = options?.aspectRatio?.trim() || "9:16";
+	const tipLookOnly =
+		options?.seriesSlideRole === "tip" && !options?.mappedCarouselSlide;
 	const campaignCopy = joinParts(
 		vars.business ? `Brand: ${vars.business}` : undefined,
 		vars.headline ? `Headline: ${vars.headline}` : undefined,
@@ -2150,8 +2164,9 @@ export function buildReferenceConceptImagePrompt(
 		vars.offer ? `Offer: ${vars.offer}` : undefined,
 	);
 	const copyHint = promoTypographyHint(vars, { layoutTransferDual: true });
-	const framingHint =
-		vars.framing === "auto"
+	const framingHint = tipLookOnly
+		? "Staging: NEW crop/pose/layout for this teaching slide — do not reuse IMAGE 2's or the cover's centered-hero pose. Held/shown item must be IMAGE 1's exact product."
+		: vars.framing === "auto"
 			? "Staging: adapt IMAGE 2's pose type (hand / wrist / flat lay / pedestal) but the held/shown item must be IMAGE 1's exact product — never IMAGE 2's item. Face out of frame when hands appear."
 			: FRAMING_IMAGE[vars.framing];
 	const shopBlock = joinParts(
@@ -2182,8 +2197,12 @@ export function buildReferenceConceptImagePrompt(
 			artStyleMandatoryLead(vars.artStyle),
 			`Two images. Create ONE new ${aspect} marketing still for ${product}.`,
 			`IMAGE 1 = user's product hero (mascot/SKU to keep exactly). IMAGE 2 = layout/style reference only — never show IMAGE 2's product as the hero.`,
-			`Transform IMAGE 1 into an ad that borrows IMAGE 2's layout rhythm, graphic component types, typography hierarchy, and staging pose type. Adapt background and lighting to suit IMAGE 1. Do not copy IMAGE 2 logos, wordmarks, or selling lines.`,
-			`If SCENE ESSAY appears below, treat it as the set / lighting / composition screenplay. IMAGE 1 pixels still win for the hero. IMAGE 2 pixels still win for layout.`,
+			tipLookOnly
+				? `Borrow IMAGE 2's palette, lighting mood, and typography energy only. Do NOT copy IMAGE 2's layout, pose, or poster grid — invent a NEW teaching-card composition. SCENE ESSAY / staging KEEP apply to the cover only.`
+				: `Transform IMAGE 1 into an ad that borrows IMAGE 2's layout rhythm, graphic component types, typography hierarchy, and staging pose type. Adapt background and lighting to suit IMAGE 1. Do not copy IMAGE 2 logos, wordmarks, or selling lines.`,
+			tipLookOnly
+				? `If SCENE ESSAY appears below, use it for palette / lighting / medium only — not composition. IMAGE 1 pixels still win for the hero.`
+				: `If SCENE ESSAY appears below, treat it as the set / lighting / composition screenplay. IMAGE 1 pixels still win for the hero. IMAGE 2 pixels still win for layout.`,
 			`CRITICAL: The hero subject must be recognizable as IMAGE 1 (same character/product). If IMAGE 1 is a 3D mascot/character, keep that mascot — do not replace it with jewelry, bottles, or other items from IMAGE 2.`,
 			`Never paint the English word LOGO, BRAND, or CTA. Never invent a circular brand-mark / seal / placeholder logo. If IMAGE 2 has a logo zone, leave that area empty or fill only with campaign copy lines above — do not invent 立即選購 / Shop Now unless that exact phrase is in the campaign copy.`,
 			shopBlock,
@@ -2205,7 +2224,9 @@ export function buildReferenceConceptImagePrompt(
 		`HOW TO USE THE TWO IMAGES:`,
 		`IMAGE 1 = the user's real product/mascot photo — this is the ONLY allowed hero subject. Preserve exact identity (shape, materials, character design).`,
 		`IMAGE 2 = reference ad for layout/style ONLY — borrow design grammar; REPLACE IMAGE 2's product with IMAGE 1.`,
-		`LAYER A — KEEP from IMAGE 2 (design language): layout structure, composition rhythm, graphic component types (badges, frames, accent shapes), typography hierarchy style, and staging pose type (hand / wrist / flat lay / circle hero).`,
+		tipLookOnly
+			? `LAYER A — KEEP from IMAGE 2 (look only): color palette, lighting softness, typography energy, art medium. Do NOT keep IMAGE 2's layout structure or staging pose.`
+			: `LAYER A — KEEP from IMAGE 2 (design language): layout structure, composition rhythm, graphic component types (badges, frames, accent shapes), typography hierarchy style, and staging pose type (hand / wrist / flat lay / circle hero).`,
 		`LAYER B — ADAPT (venue and light): background, venue, surface, and lighting should suit IMAGE 1's product colors and the shop/campaign mood.`,
 		`LAYER C — REPLACE (content): hero must be IMAGE 1's exact item. All readable copy from the campaign brief below — never reuse IMAGE 2 product names, selling lines, or on-image text. Do not copy IMAGE 2 logos, wordmarks, store names, @handles, or watermarks.`,
 		`If the campaign product name disagrees with IMAGE 1 pixels, trust IMAGE 1 for product category, shape, and materials.`,

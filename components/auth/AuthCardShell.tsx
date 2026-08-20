@@ -62,7 +62,10 @@ export function AuthCardShell({
 				<AuthPanelFeatures />
 				<div className="relative flex min-w-0 flex-1 flex-col overflow-y-auto px-6 py-8 sm:px-8 sm:py-10">
 					<div className="mb-5 flex justify-center">
-						<AuthBrandLockup href="/" className="[&_img]:h-9 [&_img]:w-9 [&_span]:text-base" />
+						<AuthBrandLockup
+							href="/"
+							className="[&_.brand-mark]:h-9 [&_.brand-mark]:w-9 [&_.brand-wordmark]:h-7"
+						/>
 					</div>
 					<AuthModeTabs mode={mode} variant={variant} onModeChange={onModeChange} />
 					<p className="mb-2 text-center text-sm leading-relaxed text-slate-500">
@@ -90,7 +93,7 @@ export function AuthCardShell({
 
 			<div style={MODAL_FORM_STYLE} className="auth-modal-form-panel relative flex flex-col">
 				<div className="mb-3 flex justify-center">
-					<AuthBrandLockup className="[&_img]:h-8 [&_img]:w-8 [&_span]:text-sm" />
+					<AuthBrandLockup className="[&_.brand-mark]:h-8 [&_.brand-mark]:w-8 [&_.brand-wordmark]:h-6" />
 				</div>
 				<AuthModeTabs mode={mode} variant={variant} onModeChange={onModeChange} />
 				<p className="mb-2 text-center text-xs leading-relaxed text-slate-500">

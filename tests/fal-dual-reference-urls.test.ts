@@ -6,6 +6,7 @@ import {
   carouselProductHeroLock,
   carouselSlideRoleVariationHint,
   carouselSeriesConsistencyLock,
+  carouselTipSlideLookFollowHint,
   carouselUniqueCopyHint,
   dualProductIdentityHint,
   teachingCarouselTipImageUrls,
@@ -98,18 +99,24 @@ describe("dual reference layout-transfer (research OR manual style upload)", () 
     assert.match(lock, /charger|power station|快速充電/i);
   });
 
-  it("first-pass tip urls match regen: product/style first, cover last", () => {
+  it("first-pass tip urls are product/style refs only — no cover pixels", () => {
     assert.deepEqual(
-      teachingCarouselTipImageUrls(
-        ["url:product.jpg", "url:style.jpg"],
-        "url:cover.jpg",
-      ),
-      ["url:product.jpg", "url:style.jpg", "url:cover.jpg"],
+      teachingCarouselTipImageUrls(["url:product.jpg", "url:style.jpg"]),
+      ["url:product.jpg", "url:style.jpg"],
     );
-    assert.equal(teachingCarouselTipImageUrls(null, "url:cover.jpg"), null);
-    assert.deepEqual(teachingCarouselTipImageUrls(["url:product.jpg"], ""), [
+    assert.equal(teachingCarouselTipImageUrls(null), null);
+    assert.deepEqual(teachingCarouselTipImageUrls(["url:product.jpg"]), [
       "url:product.jpg",
     ]);
+  });
+
+  it("tip look-follow hint keeps series style but forbids cloning cover/IMAGE 2 pose", () => {
+    const hint = carouselTipSlideLookFollowHint({ hasStyleReference: true });
+    assert.match(hint, /FOLLOW SERIES LOOK, NOT THE COVER FRAME/);
+    assert.match(hint, /IMAGE 2 is series look only/i);
+    assert.match(hint, /COVER-only|cover only/i);
+    assert.match(hint, /Staging pose: KEEP/i);
+    assert.doesNotMatch(hint, /LAST image in image_urls/);
   });
 
   it("tip slide variation forbids inventing a charger to illustrate the tip", () => {

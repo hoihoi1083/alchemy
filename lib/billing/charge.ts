@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import {
   assertCanAfford,
   consumeTokens,
+  getUserBalance,
   grantTokens,
   insufficientTokensResponse,
   InsufficientTokensError,
@@ -22,6 +23,26 @@ import { isProductionEnv } from "@/lib/mongodb-production";
 import { resolveTokenPayer } from "@/lib/billing/team-payer";
 
 export { resolveVideoBillingResolution, estimateVideoTokens, estimateH3Tokens };
+
+/**
+ * Balance for storyboard video pre-flight. Internal unlimited accounts
+ * display 999,999 and skip debit — but Mongo may still hold a leftover
+ * free-grant row. Affordability must use the display wallet, not that row.
+ */
+export async function getAffordabilityBalance(
+  clerkId: string,
+): Promise<number | null> {
+  if (await isInternalUnlimitedUser(clerkId)) {
+    return INTERNAL_UNLIMITED_DISPLAY_BALANCE;
+  }
+  if (!isMongoConfigured()) return null;
+  const payer = await resolveTokenPayer(clerkId);
+  if (await isInternalUnlimitedUser(payer.payerClerkId)) {
+    return INTERNAL_UNLIMITED_DISPLAY_BALANCE;
+  }
+  const wallet = await getUserBalance(payer.payerClerkId);
+  return wallet?.balance ?? null;
+}
 
 export function billingErrorResponse(err: unknown): NextResponse | null {
   if (err instanceof InsufficientTokensError) {

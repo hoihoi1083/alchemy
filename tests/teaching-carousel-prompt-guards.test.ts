@@ -4,6 +4,7 @@ import {
   buildTeachingCarouselSlideImagePrompt,
   buildCarouselImageNegativePrompt,
 } from "../lib/prompt-variables";
+import { USER_REFERENCE_LAYOUT_TRANSFER_MARKER } from "../lib/user-reference-brief";
 import { buildTeachingCarouselPlanPromptForTest } from "../lib/teaching-carousel-plan";
 
 const vars = {
@@ -182,5 +183,75 @@ describe("concept teaching carousel prompt guards", () => {
     );
     assert.match(prompt, /MODEL WEAR|real person/i);
     assert.match(prompt, /SERIES MODEL-WEAR LOCK|wearing or using/i);
+  });
+
+  it("layout-transfer cover follows IMAGE 2; tip slides share look only", () => {
+    const layoutVars = {
+      ...vars,
+      extra: `${USER_REFERENCE_LAYOUT_TRANSFER_MARKER}: lifestyle serum poster`,
+    };
+    const cover = buildTeachingCarouselSlideImagePrompt(
+      layoutVars,
+      { theme: "維他命 C 精華", visualDna: "lifestyle serum poster" },
+      {
+        index: 1,
+        role: "cover",
+        title: "維他命 C 精華 | 必看攻略",
+        body: "選購要點",
+        takeaway: "",
+        composition: "Centered hero, product at chest",
+      },
+      4,
+      "promo-ai",
+      null,
+      "clone",
+      {
+        referenceConcept: true,
+        hasProductPhoto: true,
+        productName: "維他命 C 精華",
+      },
+    );
+    assert.match(cover, /LAYOUT TRANSFER COVER/);
+    assert.match(cover, /Replicate IMAGE 2 ad design grammar on this COVER/i);
+    assert.match(cover, /IMAGE 2 pixels still win for layout/);
+
+    const tip = buildTeachingCarouselSlideImagePrompt(
+      layoutVars,
+      { theme: "維他命 C 精華", visualDna: "lifestyle serum poster" },
+      {
+        index: 2,
+        role: "point",
+        title: "選購要點：濃度與穩定性",
+        body: "濃度不是越高越好",
+        takeaway: "",
+        composition: "Macro of bottle with tip list",
+      },
+      4,
+      "promo-ai",
+      null,
+      "clone",
+      {
+        referenceConcept: true,
+        hasProductPhoto: true,
+        productName: "維他命 C 精華",
+      },
+    );
+    assert.match(tip, /LAYOUT TRANSFER TIP/);
+    assert.match(tip, /COVER-only|cover only/i);
+    assert.match(tip, /look only|palette, lighting/i);
+    assert.doesNotMatch(tip, /Replicate IMAGE 2 ad design grammar on this COVER/);
+    assert.doesNotMatch(tip, /IMAGE 2 pixels still win for layout/);
+
+    const plan = buildTeachingCarouselPlanPromptForTest({
+      visualStyleId: "product",
+      product: "維他命 C 精華",
+      headline: "必看攻略",
+      hasProductPhoto: true,
+      referenceStrategyKind: "layout-transfer",
+      promptMarket: "hk",
+    });
+    assert.match(plan, /ONLY the cover mirrors that poster/i);
+    assert.match(plan, /DISTINCT composition/i);
+    assert.doesNotMatch(plan, /Mirror IMAGE 2 design grammar on every slide/);
   });
 });

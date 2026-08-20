@@ -289,10 +289,13 @@ function buildPlanPrompt(input: PlanInput): string {
   const conceptRules =
     layoutTransferRef
       ? [
-          "- LAYOUT TRANSFER: IMAGE 1 = user product hero; IMAGE 2 = style/layout reference. Mirror IMAGE 2 design grammar on every slide — same layout family as the reference (numbered list rows, grid panels, icon bands, cover structure).",
-          "- visualDna MUST match IMAGE 2 reference: layout grid type, color palette, typography hierarchy, component shapes — hero subject always IMAGE 1.",
-          "- Each slide = one panel/row/section of the IMAGE 2 layout template filled with IMAGE 1 product and user copy — do NOT invent unrelated editorial card layouts.",
-          "- Cover slide uses reference cover structure; middle slides follow reference list/grid rhythm; final slide uses reference recap/CTA band style.",
+          "- LAYOUT TRANSFER: IMAGE 1 = user product hero; IMAGE 2 = style/layout reference.",
+          "- COVER (slide 1) uses IMAGE 2 poster structure — layout, staging pose type, typography hierarchy. Hero subject is always IMAGE 1.",
+          "- visualDna MUST match IMAGE 2: color palette, lighting/medium, typography energy — shared across the series.",
+          hasCarouselVision
+            ? "- Extra reference carousel frames exist — map output slide N to reference slide N layout/staging."
+            : "- SINGLE reference poster: ONLY the cover mirrors that poster. Middle/summary slides MUST describe a DISTINCT composition (macro, new crop, tip list panel, recap) — NEVER repeat the cover's centered-hero pose with swapped text.",
+          "- Tip/summary slides stay in the same visual family as IMAGE 2 (palette, light, type) but are sibling cards, not four copies of the cover.",
           "- All on-image copy about the user's product only — never zodiac/星座/其他品牌 or wording from the reference post.",
           "- Do NOT copy reference logos, watermarks, or exact Chinese characters from IMAGE 2.",
           ...carouselVisionRules,
@@ -356,7 +359,7 @@ function buildPlanPrompt(input: PlanInput): string {
             : [];
   return [
     layoutTransferRef
-      ? "Create a teaching/info carousel — LAYOUT TRANSFER: IMAGE 1 product hero + IMAGE 2 reference design grammar/grid; user's product and copy on every slide."
+      ? "Create a teaching/info carousel — LAYOUT TRANSFER: cover follows IMAGE 2 poster; later slides share IMAGE 2 look (palette/type/light) with a NEW composition each. IMAGE 1 product + user copy on every slide."
       : styleOnlyRef
       ? contentResearchRef
         ? "Create a teaching/info carousel — match reference visual style and slide pacing, promote the user's product (NOT the reference post topic), distinct layout on every slide."

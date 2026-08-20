@@ -72,8 +72,15 @@ describe("internal unlimited allowlist", () => {
     const charge = readFileSync(join(root, "lib/billing/charge.ts"), "utf8");
     const plan = readFileSync(join(root, "lib/billing/get-user-plan.ts"), "utf8");
     const me = readFileSync(join(root, "app/api/me/route.ts"), "utf8");
+    const kling = readFileSync(
+      join(root, "app/api/generate-kling-storyboard/route.ts"),
+      "utf8",
+    );
     assert.match(charge, /isInternalUnlimitedUser/);
+    assert.match(charge, /getAffordabilityBalance/);
     assert.match(plan, /INTERNAL_UNLIMITED_PLAN/);
     assert.match(me, /INTERNAL_UNLIMITED_DISPLAY_BALANCE/);
+    assert.match(kling, /getAffordabilityBalance/);
+    assert.doesNotMatch(kling, /getUserBalance\(/);
   });
 });

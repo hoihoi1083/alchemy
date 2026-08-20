@@ -1,8 +1,10 @@
 import Link from "next/link";
 import {
-	PRODUCT_LOGO_ALT,
 	PRODUCT_LOGO_SRC,
 	PRODUCT_NAME,
+	PRODUCT_WORDMARK_ALT,
+	PRODUCT_WORDMARK_BLACK_SRC,
+	PRODUCT_WORDMARK_WHITE_SRC,
 } from "@/lib/brand";
 
 type AuthBrandLockupProps = {
@@ -14,15 +16,17 @@ type AuthBrandLockupProps = {
 	ariaLabel?: string;
 };
 
-/** Flask icon + Alchemy AI Lab wordmark. */
+/** Flask mark + stacked Alchemy / AI Lab wordmark (same asset as landing float CTA / footer). */
 export function AuthBrandLockup({
 	variant = "light",
 	className = "",
 	href,
-	ariaLabel = PRODUCT_LOGO_ALT,
+	ariaLabel = PRODUCT_WORDMARK_ALT,
 }: AuthBrandLockupProps) {
-	const textClass =
-		variant === "dark" ? "text-white" : "text-slate-900";
+	const wordmarkSrc =
+		variant === "dark"
+			? `${PRODUCT_WORDMARK_WHITE_SRC}?v=2`
+			: `${PRODUCT_WORDMARK_BLACK_SRC}?v=2`;
 
 	const inner = (
 		<>
@@ -30,17 +34,18 @@ export function AuthBrandLockup({
 			<img
 				src={PRODUCT_LOGO_SRC}
 				alt=""
-				className="h-10 w-10 shrink-0 object-contain"
+				className="brand-mark h-10 w-10 shrink-0 object-contain"
 			/>
-			<span
-				className={`text-lg font-bold leading-tight tracking-tight ${textClass}`}
-			>
-				{PRODUCT_NAME}
-			</span>
+			{/* eslint-disable-next-line @next/next/no-img-element */}
+			<img
+				src={wordmarkSrc}
+				alt={PRODUCT_NAME}
+				className="brand-wordmark h-8 w-auto max-w-[9.5rem] object-contain object-left sm:h-9 sm:max-w-[11rem]"
+			/>
 		</>
 	);
 
-	const base = `inline-flex items-center gap-3 ${className}`;
+	const base = `inline-flex items-center gap-2.5 sm:gap-3 ${className}`;
 
 	if (href) {
 		return (
@@ -50,5 +55,9 @@ export function AuthBrandLockup({
 		);
 	}
 
-	return <div className={base}>{inner}</div>;
+	return (
+		<div className={base} aria-label={ariaLabel}>
+			{inner}
+		</div>
+	);
 }

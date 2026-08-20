@@ -2,11 +2,11 @@ import { fal } from "@fal-ai/client";
 import { NextResponse } from "next/server";
 import {
   chargeTokens,
+  getAffordabilityBalance,
   refundTokens,
   h3TokenCostFromRequest,
   videoTokenCostFromRequest,
 } from "@/lib/billing/charge";
-import { getUserBalance } from "@/lib/billing/ledger";
 import { getUserPlan } from "@/lib/billing/get-user-plan";
 import { clampVideoResolution } from "@/lib/billing/entitlements";
 import { isStoryboardGridApprovedFlag } from "@/lib/kling-storyboard-fallback";
@@ -179,9 +179,8 @@ export async function POST(request: Request) {
     totalDurationSec,
     { clipCount: sourceCount },
   );
-  const wallet = await getUserBalance(clerkId);
   const afford = evaluateStoryboardVideoAffordability({
-    balance: wallet?.balance ?? null,
+    balance: await getAffordabilityBalance(clerkId),
     hasReel: expectsReel,
     allowKling: enginePlan.allowKling,
     klingCanHitDuration: klingCanHit,
