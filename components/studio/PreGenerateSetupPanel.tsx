@@ -938,6 +938,7 @@ export function PreGenerateSetupPanel({
     combinedStoryboard &&
     isLuxuryBirthRecipe(wizard.storyboardRecipeId) &&
     !isConcept;
+  const highlightCopyFields = !luxuryStoryboard;
   const luxuryFieldBadge = m.wizard.storyboardLuxuryFieldBadge;
   const luxuryFieldLabels = {
     storyboardBrief: m.wizard.storyboardBriefLabel,
@@ -1506,6 +1507,9 @@ export function PreGenerateSetupPanel({
                   </span>
                   <div className="pg-content-aside-copy">
                     <h3 className="pg-card-title">{pg.contentTitle}</h3>
+                    <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                      {pg.copyPresetHint}
+                    </p>
                   </div>
                 </div>
                 <div className="pg-field-grid">
@@ -1568,7 +1572,7 @@ export function PreGenerateSetupPanel({
                     className={
                       luxuryStoryboard
                         ? LUXURY_FIELD_WRAP_CLASS
-                        : emphasizeHook
+                        : highlightCopyFields || emphasizeHook
                           ? "rounded-xl border border-violet-300 bg-violet-50/60 p-3 ring-1 ring-violet-200"
                           : undefined
                     }
@@ -1584,7 +1588,7 @@ export function PreGenerateSetupPanel({
                       </span>
                       {luxuryStoryboard ? (
                         <LuxuryFieldBadge label={luxuryFieldBadge} />
-                      ) : copyFocus || emphasizeHook ? (
+                      ) : copyFocus || emphasizeHook || highlightCopyFields ? (
                         <span className="ml-1.5 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700">
                           {pg.onImageBadge}
                         </span>
@@ -1605,7 +1609,7 @@ export function PreGenerateSetupPanel({
                   </label>
                   <label
                     className={
-                      emphasizeSupporting
+                      highlightCopyFields || emphasizeSupporting
                         ? "rounded-xl border border-violet-300 bg-violet-50/60 p-3 ring-1 ring-violet-200"
                         : undefined
                     }
@@ -1614,7 +1618,7 @@ export function PreGenerateSetupPanel({
                       {supportingLabel}
                       {luxuryStoryboard ? (
                         <LuxuryFieldBadge label={luxuryFieldBadge} />
-                      ) : emphasizeSupporting ? (
+                      ) : emphasizeSupporting || highlightCopyFields ? (
                         <span className="ml-1.5 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700">
                           {pg.onImageBadge}
                         </span>

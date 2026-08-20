@@ -4463,6 +4463,8 @@ socialDripFitTitle: "這個格式可以／不可以做什麼",
       extraLabel: "額外要求",
       extraOptional: "（選填）",
       onImageBadge: "會出現在圖上",
+      copyPresetHint:
+        "這兩格請改成你自己的文案，會印在圖上。不改就用目前預填文字（研究角度或預設模板）。",
       conceptCopyFocus: {
         info: {
           title: "這個方向：重點填「賣點條列」",

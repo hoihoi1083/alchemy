@@ -5409,6 +5409,8 @@ export const en = {
 			extraLabel: "Extra requirements",
 			extraOptional: "(optional)",
 			onImageBadge: "Shows on the image",
+			copyPresetHint:
+				"Edit these — they print on the image. If you leave them, we keep this preset copy (from research or a default template).",
 			conceptCopyFocus: {
 				info: {
 					title: "For this direction: fill selling-point bullets",
