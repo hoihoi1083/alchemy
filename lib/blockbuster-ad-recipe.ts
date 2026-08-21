@@ -7,9 +7,10 @@
  *   scene plate → packaging → hero. Hero must not open the clip.
  *
  * Camera views:
- *   behind-truck — follow car behind the trailer (current default)
- *   on-bridge — elevated POV on the overpass looking DOWN at the highway /
- *               truck below (railing in frame); not eye-level head-on underpass
+ *   behind-truck — follow car behind the trailer (default)
+ *   on-bridge — on the overpass, truck ONCOMING under the span (cab toward camera)
+ *   bridge-down-road — on the overpass looking DOWN THE HIGHWAY vanishing point;
+ *                      truck drives AWAY; boxes float up into frame (viral ref look)
  */
 
 import type { CaptionLine } from "@/lib/ad-pack-types";
@@ -27,7 +28,11 @@ export function parseBlockbusterTiming(raw: unknown): BlockbusterTimingId {
   return "classic";
 }
 
-export const BLOCKBUSTER_CAMERA_IDS = ["behind-truck", "on-bridge"] as const;
+export const BLOCKBUSTER_CAMERA_IDS = [
+  "behind-truck",
+  "on-bridge",
+  "bridge-down-road",
+] as const;
 export type BlockbusterCameraId = (typeof BLOCKBUSTER_CAMERA_IDS)[number];
 
 export function parseBlockbusterCamera(raw: unknown): BlockbusterCameraId {
@@ -36,6 +41,13 @@ export function parseBlockbusterCamera(raw: unknown): BlockbusterCameraId {
     return v as BlockbusterCameraId;
   }
   return "behind-truck";
+}
+
+/** Elevated bridge POVs skip the scene plate (prompt-only). */
+export function isBlockbusterElevatedBridgeCamera(
+  camera: BlockbusterCameraId,
+): boolean {
+  return camera === "on-bridge" || camera === "bridge-down-road";
 }
 
 export const BLOCKBUSTER_NEGATIVE =
@@ -57,7 +69,7 @@ export type BlockbusterPromptInput = {
   hasSceneFrame: boolean;
   /** classic = original 0-2 / 2-4 / 4-6 / 6-9; early-reveal = tighter boxes, longer hero */
   timing?: BlockbusterTimingId;
-  /** behind-truck = chase from rear; on-bridge = elevated overpass looking down at road */
+  /** behind-truck | on-bridge (oncoming) | bridge-down-road (vanishing-point) */
   camera?: BlockbusterCameraId;
 };
 
@@ -161,13 +173,22 @@ function cameraLockLines(input: {
   sceneTag: string | null;
 }): { orbit: string; openLock: string } {
   const { camera, sceneTag } = input;
+  if (camera === "bridge-down-road") {
+    return {
+      orbit:
+        "全片一条连续长镜头、同一机位轨道：相机钉在人行天桥／立交桥护栏旁，高角度顺着公路纵深往远处看（vanishing point 在画面中轴），像手机站在桥上拍前方路面。护栏可出现在画面近景边缘。光流连续。时间码只标故事阶段，不是分镜切点。禁止硬切、幻灯片、跳切、闪帧、机位瞬移、突然变焦。禁止切到路面跟拍，禁止变成迎面车头大灯冲镜头，禁止钻到桥洞里平视。货车必须沿车道正常向前开走（背对／侧背对桥上镜头驶向远方，禁止倒车）。速度只允许光学渐变（撞击后平滑减速）。画面中不要出现拍摄者本人。",
+      openLock: sceneTag
+        ? `以${sceneTag}为构图参考（可微调）：机位在天桥上顺着公路往远处看；桥下货车背对镜头沿车道向前驶离（可见车尾／车顶／货箱），正常前进禁止倒车。锁定同一白天城市／郊区公路与护栏。`
+        : "开场必须是人行天桥上顺着公路纵深俯视：护栏近景，多车道公路向远处延伸。一辆满载货车在桥下背对镜头向前驶去（可见车尾／车顶与过高货箱），正常前进禁止倒车。白天晴朗、手机纪实感。禁止迎面车头冲镜头，禁止路面后方跟拍，不要用产品棚拍开场。",
+    };
+  }
   if (camera === "on-bridge") {
     return {
       orbit:
-        "全片一条连续长镜头、同一机位轨道：相机钉在人行天桥／立交桥护栏旁，高角度俯视桥下多车道公路（像真人站在桥上往下看）。护栏可出现在画面近景边缘。光流连续。时间码只标故事阶段，不是分镜切点。禁止硬切、幻灯片、跳切、闪帧、机位瞬移、突然变焦。禁止切到路面跟拍车尾，禁止平视迎面车头钻桥洞。货车必须沿车道正常向前开（禁止倒车、禁止整车倒退靠近镜头）。速度只允许光学渐变（撞击后平滑减速），禁止突然升格冻帧。画面中不要出现拍摄者本人。",
+        "全片一条连续长镜头、同一机位轨道：相机钉在人行天桥／立交桥护栏旁，高角度俯视桥洞下方，望向迎面驶来的公路（车头朝镜头）。护栏可出现在画面近景边缘；画面上方可看到桥底结构。光流连续。时间码只标故事阶段，不是分镜切点。禁止硬切、幻灯片、跳切、闪帧、机位瞬移、突然变焦。禁止切到货车正后方跟拍，禁止变成顺着公路只看车尾驶离的视角。货车必须沿车道正常向前开（迎面靠近，禁止倒车）。速度只允许光学渐变（撞击后平滑减速）。画面中不要出现拍摄者本人。",
       openLock: sceneTag
-        ? `以${sceneTag}为构图参考（可微调），机位仍在天桥上俯视桥下公路。货车沿车道向前驶向／驶过桥底（正常前进，禁止倒车）。俯视可见车顶与过高货箱。锁定同一白天城市道路与护栏，不要换成别的地点。`
-        : "开场必须是人行天桥上的高角度俯视：护栏近景，桥下多车道公路。一辆满载货车从较远处沿车道向前驶来／驶向桥底（正常前进，禁止倒车）。货箱堆得过高，即将擦到桥底。白天、晴朗。禁止平视迎面车头钻桥洞，禁止路面后方跟拍，不要用产品棚拍开场。",
+        ? `以${sceneTag}为构图参考（可微调）：机位在天桥上，望向桥下迎面驶来的货车（车头／车灯朝镜头），货箱过高即将擦到桥底。正常前进禁止倒车。锁定同一白天公路与护栏。`
+        : "开场必须是人行天桥上俯视迎面货车：护栏近景，桥下多车道，货车车头朝镜头驶向／钻入桥底（正常前进，禁止倒车）。货箱堆得过高，即将擦到桥底。白天晴朗。禁止只拍车尾驶离，禁止路面后方跟拍，不要用产品棚拍开场。",
     };
   }
   return {
@@ -188,17 +209,33 @@ function storyBeatsFor(input: {
   const { camera, timing, cargo, revealObject } = input;
   const early = timing === "early-reveal";
 
+  if (camera === "bridge-down-road") {
+    return early
+      ? [
+          `0-2s：同一天桥机位顺着公路纵深持续观看。桥下满载${cargo}的货车背对镜头沿车道向前驶向远方／前方桥底（正常前进，禁止倒车）。俯视可见车尾、车顶与过高货箱，顶层几乎要擦到前方桥底。箱子随车轻微晃动。路面车流运动模糊连续。`,
+          `2-2.5s：行驶途中直接撞击（压缩碰撞段），不要先停再撞、不要切机位、不要倒车。货车向前钻过前方桥底时，最上层箱子与桥底剧烈撞击——错位、倾覆，大量纸箱立刻向上方、朝桥上镜头炸开飞来，铺满公路纵深前景（从路面飞向桥上视角）。货车继续向前驶离变远，不要凭空消失、不要倒退。带运动模糊。`,
+          `2.5-4.5s：镜头不停不切；仍在天桥机位略微前推／稳住。速度平滑放慢。货车在远处继续向前驶离。箱子在公路上方空中翻滚漂浮朝镜头飞来、层层占满前景（像产品展示悬浮在公路上）。一箱在飞的过程中打开，内部爆出暖金光晕，${revealObject}，从打开的箱中边飞边浮现，不要突然出现在画面中心。`,
+          `4.5-9s：同一镜头极慢前推，浅景深，${revealObject}，在打开的箱中／箱旁升起并轻轻转动，长时间占画面中心成为真正 Hero（约一半片长），边缘强光晕。周围箱子继续在公路上方缓慢翻转漂浮。背景仍是公路 vanishing point 与天桥护栏，自然虚化。禁止定格、禁止Hold。`,
+        ]
+      : [
+          `0-2s：同一天桥机位顺着公路纵深持续观看。桥下满载${cargo}的货车背对镜头沿车道向前驶向远方／前方桥底（正常前进，禁止倒车）。俯视可见车尾、车顶与过高货箱，顶层几乎要擦到前方桥底。箱子随车轻微晃动。路面车流运动模糊连续。`,
+          `2-4s：行驶途中直接撞击，不要先停再撞、不要切机位、不要倒车。货车向前钻过前方桥底时，最上层箱子与桥底剧烈撞击——错位、倾覆，大量纸箱立刻向上方、朝桥上镜头炸开飞来，铺满公路纵深前景。货车继续向前驶离变远，不要凭空消失、不要倒退。带运动模糊。尘土、纸屑可以有，画面仍干净高级。`,
+          `4-6s：镜头不停不切、不降机、不瞬移；仍在天桥机位略微前推。速度平滑放慢。货车在远处继续向前驶离。几十只箱子在公路上方继续朝镜头翻滚漂浮、占满前景。一箱在飞的过程中打开（不要停在空中），内部爆出暖金光晕，${revealObject}，从打开的箱中边飞边浮现，不要突然出现在画面中心。`,
+          `6-9s：同一镜头极慢前推，浅景深，直到最后一帧仍在微动。${revealObject}，在打开的箱中／箱旁升起并轻轻转动，占画面中心，边缘强光晕。周围箱子继续在公路上方缓慢翻转漂浮。背景仍是公路 vanishing point 与天桥护栏，自然虚化。禁止定格、禁止Hold。`,
+        ];
+  }
+
   if (camera === "on-bridge") {
     return early
       ? [
-          `0-2s：同一天桥俯视机位持续观看。桥下公路上，满载${cargo}的货车从较远处沿车道向前驶向桥底（正常前进，禁止倒车、禁止整车倒退靠近镜头）。俯视可见车顶与过高货箱，顶层几乎要擦到桥底。箱子随车轻微晃动。路面车流运动模糊连续。`,
-          `2-2.5s：行驶途中直接撞击（压缩碰撞段），不要先停再撞、不要切机位、不要倒车。货车向前钻过天桥下方时，最上层箱子与桥底剧烈撞击——错位、倾覆，大量纸箱立刻向上方、朝桥上镜头炸开飞来（从路面飞向桥上视角）。货车继续向前驶离变远，不要凭空消失、不要倒退。带运动模糊。`,
+          `0-2s：同一天桥俯视机位持续观看。桥下公路上，满载${cargo}的货车车头朝镜头从较远处向前驶来／驶向桥底（正常前进，禁止倒车、禁止整车倒退）。货箱顶层几乎要擦到桥底。箱子随车轻微晃动。路面车流运动模糊连续。`,
+          `2-2.5s：行驶途中直接撞击（压缩碰撞段），不要先停再撞、不要切机位、不要倒车。货车迎面钻过天桥下方时，最上层箱子与桥底剧烈撞击——错位、倾覆，大量纸箱立刻向上方、朝桥上镜头炸开飞来。货车继续向前穿过驶离，不要凭空消失、不要倒退。带运动模糊。`,
           `2.5-4.5s：镜头不停不切；仍在天桥俯视机位略微前推／稳住。速度平滑放慢。货车在桥下远处继续向前驶离。箱子在空中翻滚朝镜头飞来、占满前景。一箱在飞的过程中打开，内部爆出暖金光晕，${revealObject}，从打开的箱中边飞边浮现，不要突然出现在画面中心。`,
           `4.5-9s：同一镜头极慢前推，浅景深，${revealObject}，升起并轻轻转动，长时间占画面中心成为真正 Hero（约一半片长），边缘强光晕。周围箱子继续缓慢翻转坠落。背景仍是桥下公路与天桥护栏，自然虚化。禁止定格、禁止Hold。`,
         ]
       : [
-          `0-2s：同一天桥俯视机位持续观看。桥下公路上，满载${cargo}的货车从较远处沿车道向前驶向桥底（正常前进，禁止倒车、禁止整车倒退靠近镜头）。俯视可见车顶与过高货箱，顶层几乎要擦到桥底。箱子随车轻微晃动。路面车流运动模糊连续。`,
-          `2-4s：行驶途中直接撞击，不要先停再撞、不要切机位、不要倒车。货车向前钻过天桥下方时，最上层箱子与桥底剧烈撞击——错位、倾覆，大量纸箱立刻向上方、朝桥上镜头炸开飞来（从路面飞向桥上视角）。货车继续向前驶离变远，不要凭空消失、不要倒退。带运动模糊。尘土、纸屑可以有，画面仍干净高级。`,
+          `0-2s：同一天桥俯视机位持续观看。桥下公路上，满载${cargo}的货车车头朝镜头从较远处向前驶来／驶向桥底（正常前进，禁止倒车、禁止整车倒退）。货箱顶层几乎要擦到桥底。箱子随车轻微晃动。路面车流运动模糊连续。`,
+          `2-4s：行驶途中直接撞击，不要先停再撞、不要切机位、不要倒车。货车迎面钻过天桥下方时，最上层箱子与桥底剧烈撞击——错位、倾覆，大量纸箱立刻向上方、朝桥上镜头炸开飞来。货车继续向前穿过驶离，不要凭空消失、不要倒退。带运动模糊。尘土、纸屑可以有，画面仍干净高级。`,
           `4-6s：镜头不停不切、不降机、不瞬移；仍在天桥俯视机位略微前推。速度平滑放慢。货车在桥下远处继续向前驶离。几十只箱子继续朝镜头翻滚飞来、占满前景。一箱在飞的过程中打开（不要停在空中），内部爆出暖金光晕，${revealObject}，从打开的箱中边飞边浮现，不要突然出现在画面中心。`,
           `6-9s：同一镜头极慢前推，浅景深，直到最后一帧仍在微动。${revealObject}，升起并轻轻转动，占画面中心，边缘强光晕。周围箱子继续缓慢翻转坠落。背景仍是桥下公路与天桥护栏，自然虚化。禁止定格、禁止Hold。`,
         ];
@@ -260,7 +297,13 @@ export function buildBlockbusterVideoPrompt(input: BlockbusterPromptInput): stri
       : "空中纸箱必须是素面空白（无Logo、无文字、无产品照片印刷）。箱子要多、要密，占满画面。禁止自创 Vitamin C／瓶身图案／假商标。",
     ...storyBeats,
     "音效：货车引擎、纸箱撞击、空气呼啸、开盒、产品出现轻微能量音。无旁白、无配乐、无字幕。",
-    `FORBIDDEN: freeze-frame, pause between beats, hold frame, still hero lock, jump cut, camera teleport, snap zoom, truck reversing / driving backward toward camera, truck vanishing, product pop-in, second location, tutorial steps, lab/desk opening, fake SKU swap, inventing a different bottle/serum/dropper/ampoule instead of the exact ${heroTag} photo, invented letters on boxes, watermarks, showing the hero before ${timing === "early-reveal" ? "2.5s" : "4s"}${camera === "on-bridge" ? ", switching to behind-the-truck chase cam, eye-level head-on truck headlights under the bridge" : ", switching to on-bridge elevated POV"}.`,
+    `FORBIDDEN: freeze-frame, pause between beats, hold frame, still hero lock, jump cut, camera teleport, snap zoom, truck reversing / driving backward toward camera, truck vanishing, product pop-in, second location, tutorial steps, lab/desk opening, fake SKU swap, inventing a different bottle/serum/dropper/ampoule instead of the exact ${heroTag} photo, invented letters on boxes, watermarks, showing the hero before ${timing === "early-reveal" ? "2.5s" : "4s"}${
+      camera === "bridge-down-road"
+        ? ", switching to behind-the-truck chase cam, switching to oncoming cab-at-camera bridge POV"
+        : camera === "on-bridge"
+          ? ", switching to behind-the-truck chase cam, switching to down-the-road vanishing-point bridge POV"
+          : ", switching to on-bridge or bridge-down-road elevated POV"
+    }.`,
   ];
 
   return beats.filter(Boolean).join("\n");
@@ -282,14 +325,29 @@ export function buildBlockbusterSceneStillPrompt(input: {
         : `trailer stacked TOO HIGH with branded boxes matching ${input.product.trim() || "the product"} packaging colors — top layer almost scraping the overpass underside`
       : "trailer stacked TOO HIGH with PLAIN blank kraft cardboard boxes only — NO logos, NO text, NO product photos, NO vitamin/serum artwork on any box face";
 
+  if (camera === "bridge-down-road") {
+    return [
+      "Photoreal cinematic 9:16 FIRST FRAME, textless.",
+      "Camera ON a pedestrian overpass / bridge, HIGH ANGLE looking DOWN THE HIGHWAY along the vanishing point (road stretches away into the distance).",
+      "Railing may sit in the near edge of frame. Daylight, phone-documentary commercial look.",
+      `A semi-truck on the highway BELOW drives AWAY from camera (rear / roof of trailer visible — NOT oncoming headlights). ${cargo}.`,
+      "Tall load almost scraping a farther overpass underside — beat BEFORE boxes smash and explode UP toward the bridge camera, floating over the road.",
+      "NOT behind-the-truck chase cam, NOT eye-level underpass headlights.",
+      "Architecture: city or suburban highway, trees, road signs, traffic. No people, no photographer, no UI, no captions, no watermarks, no product beauty shot.",
+      "Boxes must stay blank kraft cardboard with zero readable branding.",
+      "Locked composition, ready to animate.",
+    ].join(" ");
+  }
+
   if (camera === "on-bridge") {
     return [
       "Photoreal cinematic 9:16 FIRST FRAME, textless.",
-      "Camera ON a pedestrian overpass / bridge, HIGH ANGLE looking DOWN at the multi-lane highway below (railing may sit in the near edge of frame).",
-      "Daylight, commercial look. Elevated bridge POV — NOT eye-level underpass headlights, NOT behind-the-truck chase cam.",
-      `A semi-truck on the highway BELOW drives FORWARD toward / under THIS overpass (normal forward motion — NOT reversing). ${cargo}.`,
-      "Show roof and tall load from above; load almost scraping the bridge underside — beat BEFORE boxes smash upward toward the bridge camera.",
-      "Architecture: city buildings, road signs, traffic. No people, no photographer, no UI, no captions, no watermarks, no product beauty shot.",
+      "Camera ON a pedestrian overpass / bridge, HIGH ANGLE looking at ONCOMING traffic under THIS overpass (cab / headlights toward camera).",
+      "Railing may sit in the near edge of frame; bridge underside may frame the top. Daylight, commercial look.",
+      `A semi-truck on the highway BELOW drives FORWARD toward / under THIS overpass (normal forward motion — NOT reversing, NOT driving away with only the rear visible). ${cargo}.`,
+      "Show cab facing camera and tall load almost scraping the bridge underside — beat BEFORE boxes smash upward toward the bridge camera.",
+      "NOT behind-the-truck chase cam, NOT down-the-road vanishing-point truck-away shot.",
+      "Architecture: city highway, road signs, traffic. No people, no photographer, no UI, no captions, no watermarks, no product beauty shot.",
       "Boxes must stay blank kraft cardboard with zero readable branding.",
       "Locked composition, ready to animate.",
     ].join(" ");

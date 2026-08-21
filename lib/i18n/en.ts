@@ -3150,15 +3150,19 @@ export const en = {
 			desc: "Chase cam from the rear — truck drives away into the overpass",
 		},
 		blockbusterCameraBridge: {
-			title: "On the bridge",
-			desc: "High angle on the overpass looking down at the highway — truck below, boxes fly up at camera",
+			title: "On the bridge (oncoming)",
+			desc: "High angle — truck cab toward you under the overpass, boxes fly up",
+		},
+		blockbusterCameraBridgeDownRoad: {
+			title: "Bridge looking down the road",
+			desc: "High angle down the highway — truck drives away, boxes float up over the road",
 		},
 		blockbusterCameraHint:
 			"Pick a view first. Switching view clears any scene plate so it cannot mismatch.",
 		blockbusterCameraHintBehind:
 			"Next: generate or upload a matching scene plate below. Switching view clears the plate.",
 		blockbusterCameraHintBridge:
-			"No scene plate for this view — the AI one-take follows the prompt only (avoids reverse truck / fake box art).",
+			"No scene plate for bridge views — the AI one-take follows the prompt only (avoids reverse truck / fake box art).",
 		blockbusterTimingLabel: "Story timing",
 		blockbusterTimingClassic: {
 			title: "Classic",

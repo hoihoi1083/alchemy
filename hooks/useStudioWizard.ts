@@ -197,6 +197,7 @@ import {
 	buildBlockbusterSceneStillPrompt,
 	buildBlockbusterVideoPrompt,
 	defaultBlockbusterCaptionText,
+	isBlockbusterElevatedBridgeCamera,
 	orderedBlockbusterRefFiles,
 	parseBlockbusterCamera,
 	parseBlockbusterTiming,
@@ -6824,9 +6825,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			sceneFile = await fileFromImageUrl(sceneFrameUrl.trim());
 		}
 		const camera = parseBlockbusterCamera(blockbusterCamera);
-		// On-bridge: a wrong plate locks reverse truck motion + fake box art.
-		// Prefer prompt-only; behind-truck still benefits from a scene still.
-		if (camera === "on-bridge") {
+		// Elevated bridge POVs: wrong plate locks reverse motion + fake box art.
+		if (isBlockbusterElevatedBridgeCamera(camera)) {
 			sceneFile = null;
 		}
 		const prompt = buildBlockbusterVideoPrompt({

@@ -2893,15 +2893,19 @@ export const zh = {
 			desc: "跟拍車尾 — 貨車駛向天橋",
 		},
 		blockbusterCameraBridge: {
-			title: "天橋上",
-			desc: "企喺橋俯視公路 — 貨車喺橋下，箱朝鏡頭飛來",
+			title: "天橋上（迎面）",
+			desc: "高角度 — 車頭朝鏡頭鑽橋底，箱向上飛來",
+		},
+		blockbusterCameraBridgeDownRoad: {
+			title: "天橋俯視公路",
+			desc: "順著公路睇遠處 — 貨車駛離，箱喺公路上方漂浮飛來",
 		},
 		blockbusterCameraHint:
 			"先選機位。切換機位會清空場景靜圖，避免錯配。",
 		blockbusterCameraHintBehind:
 			"下一步：喺下方生成或上傳匹配嘅場景靜圖。切換機位會清空靜圖。",
 		blockbusterCameraHintBridge:
-			"此視角唔用場景靜圖 — 成片只跟提示詞（避免倒車／箱子亂印圖案）。",
+			"天橋視角唔用場景靜圖 — 成片只跟提示詞（避免倒車／箱子亂印圖案）。",
 		blockbusterTimingLabel: "故事節奏",
 		blockbusterTimingClassic: {
 			title: "經典",

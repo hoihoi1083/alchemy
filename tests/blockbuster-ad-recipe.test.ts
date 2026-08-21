@@ -58,19 +58,20 @@ describe("blockbuster 3-ref recipe", () => {
     );
   });
 
-  it("on-bridge view is elevated overpass looking down at the highway", () => {
+  it("on-bridge is oncoming cab under the overpass", () => {
     const p = buildBlockbusterVideoPrompt({
       conceptMode: false,
       product: "CD Capture cream",
       hasPackaging: true,
-      hasSceneFrame: true,
+      hasSceneFrame: false,
       timing: "early-reveal",
       camera: "on-bridge",
     });
     assert.match(p, /天桥/);
-    assert.match(p, /俯视|高角度/);
+    assert.match(p, /车头朝镜头|迎面/);
     assert.match(p, /禁止倒车|driving backward/);
     assert.doesNotMatch(p, /相机始终钉在货车正后方/);
+    assert.doesNotMatch(p, /vanishing point|顺着公路纵深/);
 
     const s = buildBlockbusterSceneStillPrompt({
       conceptMode: false,
@@ -78,10 +79,33 @@ describe("blockbuster 3-ref recipe", () => {
       camera: "on-bridge",
       hasPackaging: false,
     });
-    assert.match(s, /HIGH ANGLE|looking DOWN/i);
-    assert.match(s, /PLAIN blank kraft|NO logos/i);
+    assert.match(s, /ONCOMING|cab \/ headlights toward camera/i);
     assert.doesNotMatch(s, /BEHIND the truck/);
-    assert.match(s, /NOT reversing|FORWARD/i);
+  });
+
+  it("bridge-down-road looks along the highway with truck driving away", () => {
+    const p = buildBlockbusterVideoPrompt({
+      conceptMode: false,
+      product: "CD Capture cream",
+      hasPackaging: false,
+      hasSceneFrame: false,
+      timing: "early-reveal",
+      camera: "bridge-down-road",
+    });
+    assert.match(p, /vanishing point|顺着公路纵深/);
+    assert.match(p, /背对镜头|车尾/);
+    assert.match(p, /素面|空白/);
+    assert.doesNotMatch(p, /车头朝镜头/);
+
+    const s = buildBlockbusterSceneStillPrompt({
+      conceptMode: false,
+      product: "CD Capture cream",
+      camera: "bridge-down-road",
+      hasPackaging: false,
+    });
+    assert.match(s, /DOWN THE HIGHWAY|vanishing point/i);
+    assert.match(s, /drives AWAY|rear \/ roof/i);
+    assert.match(s, /PLAIN blank kraft/i);
   });
 
   it("without packaging, video prompt demands blank boxes", () => {

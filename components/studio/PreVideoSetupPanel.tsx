@@ -55,7 +55,7 @@ import {
   type RecipePathUxMode,
 } from "@/lib/recipe-path-ux";
 import { videoModePreviewSrc } from "@/lib/creative-workflow";
-import { parseBlockbusterCamera } from "@/lib/blockbuster-ad-recipe";
+import { parseBlockbusterCamera, isBlockbusterElevatedBridgeCamera } from "@/lib/blockbuster-ad-recipe";
 
 const PANEL_CSS = `
 .pv-page {
@@ -2135,15 +2135,18 @@ export function PreVideoSetupPanel({
                   </span>
                 </div>
                 <p className="mb-3 text-xs leading-relaxed text-violet-900/80">
-                  {wizard.blockbusterCamera === "on-bridge"
+                  {isBlockbusterElevatedBridgeCamera(
+                    parseBlockbusterCamera(wizard.blockbusterCamera),
+                  )
                     ? m.wizard.blockbusterCameraHintBridge
                     : m.wizard.blockbusterCameraHintBehind}
                 </p>
-                <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-3">
                   {(
                     [
                       ["behind-truck", m.wizard.blockbusterCameraBehind],
                       ["on-bridge", m.wizard.blockbusterCameraBridge],
+                      ["bridge-down-road", m.wizard.blockbusterCameraBridgeDownRoad],
                     ] as const
                   ).map(([id, copy]) => {
                     const selected = wizard.blockbusterCamera === id;
@@ -2172,7 +2175,9 @@ export function PreVideoSetupPanel({
             ) : null}
 
             {isBlockbuster &&
-            parseBlockbusterCamera(wizard.blockbusterCamera) !== "on-bridge" ? (
+            !isBlockbusterElevatedBridgeCamera(
+              parseBlockbusterCamera(wizard.blockbusterCamera),
+            ) ? (
               <section className="pv-card">
                 <div className="pv-card-title-row mb-3">
                   <h3 className="pv-card-title">
