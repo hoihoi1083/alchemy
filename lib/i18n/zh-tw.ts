@@ -2588,7 +2588,7 @@ export const zhTw = {
 		},
 		blockbusterCameraBridgeDownRoad: {
 			title: "天橋俯視公路",
-			desc: "順著公路往遠處看 — 貨車駛離，箱子在公路上方漂浮飛來",
+			desc: "站在橋頂順著公路往下看 — 貨車迎面駛來，箱子在公路上方漂浮飛來",
 		},
 		blockbusterCameraHint:
 			"先選機位。切換機位會清空場景靜圖，避免錯配。",

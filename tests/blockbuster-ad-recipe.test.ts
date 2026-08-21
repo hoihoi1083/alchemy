@@ -83,7 +83,7 @@ describe("blockbuster 3-ref recipe", () => {
     assert.doesNotMatch(s, /BEHIND the truck/);
   });
 
-  it("bridge-down-road looks along the highway with truck driving away", () => {
+  it("bridge-down-road is bridge-top looking down with truck coming toward camera", () => {
     const p = buildBlockbusterVideoPrompt({
       conceptMode: false,
       product: "CD Capture cream",
@@ -92,10 +92,11 @@ describe("blockbuster 3-ref recipe", () => {
       timing: "early-reveal",
       camera: "bridge-down-road",
     });
-    assert.match(p, /vanishing point|顺着公路纵深/);
-    assert.match(p, /背对镜头|车尾/);
+    assert.match(p, /vanishing point|顺着公路纵深|桥顶/);
+    assert.match(p, /迎面驶来|车头朝/);
+    assert.match(p, /严禁切到|车厢内|车内/);
     assert.match(p, /素面|空白/);
-    assert.doesNotMatch(p, /车头朝镜头/);
+    assert.doesNotMatch(p, /背对镜头沿车道向前驶去/);
 
     const s = buildBlockbusterSceneStillPrompt({
       conceptMode: false,
@@ -103,8 +104,9 @@ describe("blockbuster 3-ref recipe", () => {
       camera: "bridge-down-road",
       hasPackaging: false,
     });
-    assert.match(s, /DOWN THE HIGHWAY|vanishing point/i);
-    assert.match(s, /drives AWAY|rear \/ roof/i);
+    assert.match(s, /ON TOP|bridge deck|vanishing point/i);
+    assert.match(s, /COMING TOWARD|cab \/ front toward camera/i);
+    assert.match(s, /NOT camera sitting on the truck bed/i);
     assert.match(s, /PLAIN blank kraft/i);
   });
 

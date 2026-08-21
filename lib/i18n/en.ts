@@ -3155,7 +3155,7 @@ export const en = {
 		},
 		blockbusterCameraBridgeDownRoad: {
 			title: "Bridge looking down the road",
-			desc: "High angle down the highway — truck drives away, boxes float up over the road",
+			desc: "From the bridge top down the highway — truck comes toward you, boxes float up over the road",
 		},
 		blockbusterCameraHint:
 			"Pick a view first. Switching view clears any scene plate so it cannot mismatch.",
