@@ -16,6 +16,8 @@ export type UserPlanEntitlements = {
   maxVideoResolution: VideoResolutionCap;
   maxImageResolution: ImageResolutionCap;
   creditBalance: number | null;
+  /** False while signed-in /api/me is in flight (avoids Free false-gates). */
+  planReady: boolean;
 };
 
 /**
@@ -23,17 +25,24 @@ export type UserPlanEntitlements = {
  * Falls back to free until /api/me returns.
  */
 export function useUserPlanEntitlements(): UserPlanEntitlements {
-  const { isSignedIn } = useAuth();
+  const { isSignedIn, isLoaded } = useAuth();
   const [plan, setPlan] = useState<UserPlan>("free");
   const [creditBalance, setCreditBalance] = useState<number | null>(null);
+  const [planReady, setPlanReady] = useState(false);
 
   useEffect(() => {
+    if (!isLoaded) {
+      setPlanReady(false);
+      return;
+    }
     if (!isSignedIn) {
       setPlan("free");
       setCreditBalance(null);
+      setPlanReady(true);
       return;
     }
     let cancelled = false;
+    setPlanReady(false);
     void fetch("/api/me")
       .then(async (res) => {
         if (!res.ok) return;
@@ -48,6 +57,9 @@ export function useUserPlanEntitlements(): UserPlanEntitlements {
       })
       .catch(() => {
         /* keep free defaults */
+      })
+      .finally(() => {
+        if (!cancelled) setPlanReady(true);
       });
 
     const onCredits = () => {
@@ -70,12 +82,13 @@ export function useUserPlanEntitlements(): UserPlanEntitlements {
       cancelled = true;
       window.removeEventListener(CREDITS_EVENT, onCredits);
     };
-  }, [isSignedIn]);
+  }, [isSignedIn, isLoaded]);
 
   return {
     plan,
     maxVideoResolution: videoCapForPlan(plan),
     maxImageResolution: imageCapForPlan(plan),
     creditBalance,
+    planReady,
   };
 }

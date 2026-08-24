@@ -38,6 +38,15 @@ function EditImagePageContent() {
           <p className="mx-auto mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
             {t.subtitle}
           </p>
+          <p className="mt-3 text-center text-xs text-slate-500">
+            Trying Canva-style AI layers?{" "}
+            <a
+              href="/edit-image-2"
+              className="font-medium text-violet-300 underline-offset-2 hover:text-violet-200 hover:underline"
+            >
+              Open edit-image-2 (test)
+            </a>
+          </p>
         </header>
 
         <ImageCanvasStudioClient />

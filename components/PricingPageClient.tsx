@@ -4,12 +4,15 @@ import Link from "next/link";
 import { useAuth } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { PlanGateDialog } from "@/components/billing/PlanGateDialog";
 import { FaqExpandToggle } from "@/components/landing/FaqExpandToggle";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { Reveal } from "@/components/landing/Reveal";
 import { useLocale } from "@/components/LocaleProvider";
+import { useUserPlanEntitlements } from "@/hooks/useUserPlanEntitlements";
 import { PLAN_DEFINITIONS } from "@/lib/billing/plans";
+import { planMeetsMinimum } from "@/lib/billing/plan-gates";
 import { pricingCardCapacityItems } from "@/lib/billing/pricing-card-capacity";
 import {
   trackCheckoutFailed,
@@ -20,7 +23,7 @@ import {
 } from "@/lib/analytics";
 
 type BillingInterval = "monthly" | "yearly";
-type PaidPlanKey = "standard" | "pro" | "master" | "custom";
+type PaidPlanKey = "light" | "standard" | "pro" | "master" | "custom";
 
 const FAQ_PREVIEW_COUNT = 4;
 
@@ -85,7 +88,7 @@ const PRICING_LAYOUT_CSS = `
   .pricing-page-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
 }
 @media (min-width: 1100px) {
-  .pricing-page-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .pricing-page-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); }
 }
 `;
 
@@ -93,14 +96,17 @@ export function PricingPageClient() {
   const { m } = useLocale();
   const p = m.pricing;
   const { isSignedIn, isLoaded } = useAuth();
+  const { plan, planReady } = useUserPlanEntitlements();
   const searchParams = useSearchParams();
   const [interval, setInterval] = useState<BillingInterval>("monthly");
   const [busy, setBusy] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [confirmNote, setConfirmNote] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [topUpGateOpen, setTopUpGateOpen] = useState(false);
   const confirmStarted = useRef(false);
-  const paidPlans: PaidPlanKey[] = ["standard", "pro", "master", "custom"];
+  const paidPlans: PaidPlanKey[] = ["light", "standard", "pro", "master", "custom"];
+  const canTopUp = planReady && planMeetsMinimum(plan, "light");
 
   const checkoutStatus = searchParams.get("checkout");
   const checkoutSessionId = searchParams.get("session_id");
@@ -301,7 +307,9 @@ export function PricingPageClient() {
         });
         if (data.deferred && data.pendingPlan) {
           const planName =
-            data.pendingPlan === "standard"
+            data.pendingPlan === "light"
+              ? p.plans.light.name
+              : data.pendingPlan === "standard"
               ? p.plans.standard.name
               : data.pendingPlan === "pro"
                 ? p.plans.pro.name
@@ -360,6 +368,19 @@ export function PricingPageClient() {
       capacity: pricingCardCapacityItems("free", p),
       features: p.plans.free.features.slice(1),
       cta: p.getStarted,
+      popular: false,
+    },
+    {
+      id: "light" as const,
+      name: p.plans.light.name,
+      blurb: p.plans.light.description,
+      priceLabel: interval === "monthly" ? p.plans.light.monthlyPrice : p.plans.light.yearlyPrice,
+      listPrice: p.plans.light.listPrice,
+      saveLabel: interval === "monthly" ? p.plans.light.monthlySave : p.plans.light.yearlySave,
+      tokensLabel: `${p.plans.light.tokens} ${p.tokensPerMonth}`,
+      capacity: pricingCardCapacityItems("light", p),
+      features: p.plans.light.features.slice(1),
+      cta: p.subscribe,
       popular: false,
     },
     {
@@ -512,6 +533,7 @@ export function PricingPageClient() {
             >
               {cards.map((card, i) => {
                 const busyKey =
+                  card.id === "light" ||
                   card.id === "standard" ||
                   card.id === "pro" ||
                   card.id === "master" ||
@@ -704,7 +726,13 @@ export function PricingPageClient() {
                         <button
                           type="button"
                           disabled={busy != null}
-                          onClick={() => void startCheckout({ kind: "topup" })}
+                          onClick={() => {
+                            if (isSignedIn && planReady && !canTopUp) {
+                              setTopUpGateOpen(true);
+                              return;
+                            }
+                            void startCheckout({ kind: "topup" });
+                          }}
                           className={`block w-full rounded-full px-3 py-2.5 text-center text-xs font-semibold transition disabled:opacity-60 ${
                             isActive
                               ? "bg-violet-600 text-white hover:bg-violet-500"
@@ -775,6 +803,9 @@ export function PricingPageClient() {
                         {p.plans.free.name}
                       </th>
                       <th className="px-2 py-3 text-center text-sm font-semibold text-slate-700">
+                        {p.plans.light.name}
+                      </th>
+                      <th className="px-2 py-3 text-center text-sm font-semibold text-slate-700">
                         {p.plans.standard.name}
                       </th>
                       <th className="bg-violet-100/70 px-2 py-3 text-center text-sm font-semibold text-violet-800">
@@ -800,6 +831,9 @@ export function PricingPageClient() {
                           {row.feature}
                         </td>
                         <td className="px-2 py-3 text-center text-sm text-slate-600">{row.free}</td>
+                        <td className="px-2 py-3 text-center text-sm text-slate-600">
+                          {"light" in row ? row.light : "—"}
+                        </td>
                         <td className="px-2 py-3 text-center text-sm text-slate-600">{row.standard}</td>
                         <td className="bg-violet-50/50 px-2 py-3 text-center text-sm font-medium text-violet-900">
                           {row.pro}
@@ -854,6 +888,12 @@ export function PricingPageClient() {
       </div>
 
       <LandingFooter />
+      <PlanGateDialog
+        open={topUpGateOpen}
+        onClose={() => setTopUpGateOpen(false)}
+        requiredPlan="light"
+        featureLabel={p.topUpTitle}
+      />
     </main>
   );
 }

@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import { deleteAssetForUser, getAssetForUser } from "@/lib/db/assets";
+import { deleteAssetForUser, getAssetAccessibleToUser } from "@/lib/db/assets";
 import { isMongoReady, mongoRequiredErrorMessage } from "@/lib/mongodb-production";
 import { requireAppUser } from "@/lib/require-app-user";
 import { deleteR2Object, getR2ObjectBytes, signR2GetUrl } from "@/lib/storage/r2";
+import { getActiveTeamMembership } from "@/lib/team/service";
 
 export const runtime = "nodejs";
 
@@ -36,7 +37,12 @@ export async function GET(request: Request, context: RouteContext) {
   }
 
   const { id } = await context.params;
-  const asset = await getAssetForUser(auth.user.userId, id);
+  const membership = await getActiveTeamMembership(auth.user.userId);
+  const asset = await getAssetAccessibleToUser(
+    auth.user.userId,
+    id,
+    membership?.teamId ?? null,
+  );
   if (!asset) {
     return NextResponse.json({ error: "Asset not found." }, { status: 404 });
   }

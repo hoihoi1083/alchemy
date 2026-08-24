@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { chargeTokens, refundTokens } from "@/lib/billing/charge";
 import { clampImageResolution } from "@/lib/billing/entitlements";
 import { getUserPlan } from "@/lib/billing/get-user-plan";
+import { planMeetsMinimum } from "@/lib/billing/plan-gates";
 import { TOKEN_COST } from "@/lib/billing/token-costs";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import {
@@ -107,6 +108,19 @@ function parseExistingCampaignPlan(raw: string): CampaignPlan | null {
 export async function POST(request: Request) {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
+
+  const userPlan = await getUserPlan(auth.user.userId);
+  if (!planMeetsMinimum(userPlan, "standard")) {
+    return NextResponse.json(
+      {
+        error: "Campaign mode requires Standard plan or above.",
+        code: "PLAN_ENTITLEMENT",
+        requiredPlan: "standard",
+        hint: "campaign_needs_standard",
+      },
+      { status: 403 },
+    );
+  }
 
   const key = process.env.FAL_KEY?.trim();
   if (!key) {
@@ -241,8 +255,11 @@ export async function POST(request: Request) {
   );
 
   const tokenCost = isSingleSlideRegen ? TOKEN_COST.image : TOKEN_COST.campaign;
+  const requestedImageRes =
+    (formData.get("resolution") as string | null)?.trim() || null;
   const { resolution: imageResolution } = clampImageResolution(
-    await getUserPlan(auth.user.userId),
+    userPlan,
+    requestedImageRes,
   );
 
   let plan: CampaignPlan;

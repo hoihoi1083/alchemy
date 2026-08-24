@@ -29,6 +29,10 @@
     "test": "tsx scripts/test-all.ts",
     "test:unit": "tsx --test tests/*.test.ts",
     "test:billing": "tsx scripts/test-billing-safety.ts",
+    "test:pro-trial": "tsx --test tests/pro-trial-billing.test.ts",
+    "test:pro-trial:smoke": "tsx scripts/stripe-pro-trial-smoke.ts",
+    "audit:stripe-prices": "tsx scripts/audit-stripe-prices.ts",
+    "migrate:stripe-prices": "tsx scripts/migrate-stripe-prices-hard.ts",
     "test:live": "tsx scripts/test-all.ts --live",
     "test:live:quick": "tsx scripts/test-all.ts --live --quick",
     "test:generate": "tsx scripts/test-generate-pipeline-smoke.ts",
@@ -43,6 +47,7 @@
     "test:captions": "tsx scripts/test-caption-studio-smoke.ts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "test:e2e:pro-trial": "tsx e2e/helpers/reset-pro-trial-user.ts && playwright test e2e/pro-trial-cancel.spec.ts",
     "setup:secrets": "tsx scripts/setup-prod-secrets.ts",
     "setup:sentry-alert": "tsx scripts/setup-sentry-alert.ts"
   },

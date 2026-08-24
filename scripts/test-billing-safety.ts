@@ -31,6 +31,7 @@ run("Billing Phase 1 costs", [join(root, "tests/billing-phase1-costs.test.ts")])
 run("Billing safety (overcharge guards)", [join(root, "tests/billing-safety.test.ts")]);
 run("Billing charge/refund smokes", [join(root, "tests/billing-charge-refund-smoke.test.ts")]);
 run("Stripe checkout paid-gate", [join(root, "tests/stripe-checkout-paid-gate.test.ts")]);
+run("Pro trial billing contracts", [join(root, "tests/pro-trial-billing.test.ts")]);
 run("i18n key parity", [join(root, "tests/i18n-key-parity.test.ts")]);
 
 if (process.env.BILLING_LIVE?.trim() === "1") {
@@ -54,7 +55,7 @@ Rules verified:
   • Success charges catalog cost exactly once
   • Insufficient balance blocks with 0 charge
   • Free logo stamp = 0
-  • Signup grant is idempotent (500 once)
+  • Signup grant is idempotent (300 once)
   • Balance never goes negative
   • Concurrent settle cannot overdraw
   • API routes: require before settle; no settle in catch

@@ -145,8 +145,10 @@ describe("storyboard route + wizard wiring", () => {
     );
     assert.match(src, /showEnginePicker \?/);
     assert.doesNotMatch(src, /motionPoster \? null/);
-    assert.match(src, /allowedResolutions\.map/);
-    assert.doesNotMatch(src, /VIDEO_RESOLUTION_CAPS\.map/);
+    assert.match(src, /VIDEO_RESOLUTION_CAPS\.map/);
+    assert.match(src, /canUseVideoResolution/);
+    assert.match(src, /PlanGateDialog/);
+    assert.doesNotMatch(src, /allowedResolutions\.map/);
   });
 });
 

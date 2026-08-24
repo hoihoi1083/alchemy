@@ -132,14 +132,14 @@ Three workflows in studio: image-only (posts), video-only (clip from upload or t
       "點數",
       "方案",
     ],
-    en: `Tokens ≈ pay-per-use. Free signup grant is 500 tokens once (not a monthly refill).
+    en: `Tokens ≈ pay-per-use. Free signup grant is 300 tokens once (not a monthly refill). When balance is low, Free users can start a 7-day monthly Pro trial (card required) for +700 tokens + Pro features; after 7 days Pro is charged unless canceled in Account. All tokens expire 6 months after grant (oldest first).
 Rough costs: 1 still ≈ 65 tokens; 4 storyboard stills ≈ 260; 8s video ≈ 328 at 480p (Free) or ≈ 520 at 720p; 6s motion poster ≈ 390; 12s at 480p ≈ 492; stitched fallback 4×5s ≈ 1136.
-Free 500 covers about 1 image + 1× 8s 480p video. 4-still + 12s TVC still needs a paid plan.
-Plans (typical): Free 500 signup / 480p; Standard 3000/mo 720p; Pro 8000/mo 1080p; Master 16000/mo + Pro canvas. Paid can top up 1000 tokens. See /pricing. Estimates only.`,
-    zh: `Tokens ≈ 按次計費。免費註冊一次送 500（唔係每月自動再送）。
-大約：1 張靜圖 ≈ 65；4 格分鏡 ≈ 260；8 秒影片 Free 480p ≈ 328，Standard 720p ≈ 520；6 秒動態海報 ≈ 390；12 秒 480p ≈ 492；拼接後備 4×5 秒 ≈ 1136。
-500 夠大概 1 圖 + 1 條 8 秒 480p 片。4 格 + 12 秒 TVC 仍然要付費方案。
-方案大約：Free 註冊 500／480p；Standard 每月 3000／720p；Pro 8000／1080p；Master 16000 + Pro 畫布。付費可加購 1000 tokens。詳情 /pricing。數字係估算。`,
+300 is for trying the workflow; bigger video jobs need the Pro trial or a paid plan.
+Plans (typical): Free 300 signup / 480p; Light 3000/mo 480p; Standard 8000/mo 720p; Pro 16000/mo 1080p; Master 28000/mo + Pro canvas; Enterprise 40000 + 3 seats. Paid can top up 1000 tokens. See /pricing. Estimates only.`,
+    zh: `Tokens ≈ 按次計費。免費註冊一次送 300（唔係每月自動再送）。餘額不足可開 7 日 Pro 試用（要綁卡）多送 700 + Pro 功能；7 日後扣月費 Pro，可喺帳戶取消。所有 Token 由發放日起 6 個月有效（先用舊嘅）。
+大約：1 張靜圖 ≈ 65；4 格分鏡 ≈ 260；8 秒影片 Free 480p ≈ 328，Light 720p ≈ 520；6 秒動態海報 ≈ 390；12 秒 480p ≈ 492；拼接後備 4×5 秒 ≈ 1136。
+300 用來試流程；大片要試用或付費方案。
+方案大約：Free 註冊 300／480p；Light 每月 3000／480p；Standard 8000／720p；Pro 16000／1080p；Master 28000 + Pro 畫布；Enterprise 40000 + 3 席。付費可加購 1000 tokens。詳情 /pricing。數字係估算。`,
   },
   {
     id: "video-engines",

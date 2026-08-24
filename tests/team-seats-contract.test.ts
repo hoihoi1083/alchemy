@@ -22,11 +22,14 @@ describe("team seats contract", () => {
       "app/api/team/invites/accept/route.ts",
       "app/api/team/members/remove/route.ts",
       "app/api/team/leave/route.ts",
+      "app/api/team/library/route.ts",
     ];
     for (const rel of routes) {
       const src = read(rel);
       assert.match(src, /requireAppUser/);
-      assert.match(src, /TeamError/);
+      if (!rel.endsWith("library/route.ts")) {
+        assert.match(src, /TeamError/);
+      }
       assert.match(src, /runtime = "nodejs"/);
     }
     const accept = read("app/api/team/invites/accept/route.ts");
@@ -37,7 +40,7 @@ describe("team seats contract", () => {
 
   it("service enforces seat-safety guardrails", () => {
     const src = read("lib/team/service.ts");
-    assert.match(src, /DEFAULT_TEAM_SEAT_LIMIT = 5/);
+    assert.match(src, /DEFAULT_TEAM_SEAT_LIMIT = 3/);
     assert.match(src, /Owner cannot invite their own email/);
     assert.match(src, /No seats available/);
     assert.match(src, /Owner cannot remove themselves/);
@@ -55,6 +58,7 @@ describe("team seats contract", () => {
     assert.match(src, /parseInviteObjectId/);
     assert.match(src, /syncOwnerTeamForPlan/);
     assert.match(src, /leaveTeam/);
+    assert.match(src, /clearTeamSharedAssetsForTeam/);
   });
 
   it("rejects malformed invite ids with 400", () => {
@@ -105,13 +109,13 @@ describe("team seats contract", () => {
     assert.equal(canUseProCanvas("custom"), true);
   });
 
-  it("pricing surfaces the 5-seat enterprise card", () => {
+  it("pricing surfaces the 3-seat enterprise card", () => {
     const en = read("lib/i18n/en.ts");
     assert.match(en, /name: "Enterprise"/);
     assert.match(en, /tokens: "40,000"/);
     assert.match(en, /monthlyPrice: "\$249\.99"/);
     assert.match(en, /yearlyPrice: "\$199\.99"/);
-    assert.match(en, /5 seats \(owner \+ 4 teammates\)/);
+    assert.match(en, /3 seats \(owner \+ 2 teammates\)/);
     assert.match(en, /Shared token pool billed to the owner/);
     const pricing = read("components/PricingPageClient.tsx");
     assert.match(pricing, /pricingCardCapacityItems\("custom"/);

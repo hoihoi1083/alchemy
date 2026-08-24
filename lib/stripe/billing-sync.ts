@@ -21,7 +21,7 @@ import type { BillingInterval, PaidPlan } from "@/lib/stripe/prices";
 export async function grantTokensOnce(
   clerkId: string,
   amount: number,
-  reason: "subscription_grant" | "topup",
+  reason: "subscription_grant" | "topup" | "trial_bonus",
   ref: string,
   meta?: Record<string, unknown>,
 ): Promise<{ granted: boolean; balanceAfter: number | null }> {
@@ -258,9 +258,34 @@ export async function attachStripeCustomerWithoutPlanChange(opts: {
   );
 }
 
+/**
+ * Mark Pro trial as consumed. Never cleared on cancel — one trial per account.
+ */
+export async function markProTrialUsed(
+  clerkId: string,
+  opts?: { proTrialEndsAt?: Date | null },
+): Promise<void> {
+  if (!isMongoConfigured()) return;
+  const db = await getDb();
+  await db.collection<DbUser>("users").updateOne(
+    { clerkId },
+    {
+      $set: {
+        hasUsedProTrial: true,
+        ...(opts && "proTrialEndsAt" in opts
+          ? { proTrialEndsAt: opts.proTrialEndsAt ?? null }
+          : {}),
+        updatedAt: new Date(),
+      },
+    },
+    { upsert: false },
+  );
+}
+
 export async function clearPaidSubscription(clerkId: string): Promise<void> {
   if (!isMongoConfigured()) return;
   const db = await getDb();
+  // Do not clear hasUsedProTrial — trial is one-time even after cancel.
   await db.collection<DbUser>("users").updateOne(
     { clerkId },
     {
@@ -271,6 +296,7 @@ export async function clearPaidSubscription(clerkId: string): Promise<void> {
         pendingPlan: null,
         pendingPlanInterval: null,
         pendingPlanEffectiveAt: null,
+        proTrialEndsAt: null,
         updatedAt: new Date(),
       },
     },
@@ -472,11 +498,8 @@ export async function applyTopUpGrant(opts: {
       { $set: { stripeCustomerId: opts.stripeCustomerId, updatedAt: new Date() } },
     );
   }
-  const user = await db.collection<DbUser>("users").findOne({ clerkId: opts.clerkId });
-  const plan = normalizeUserPlan(user?.plan);
-  if (!PLAN_DEFINITIONS[plan].canTopUp) {
-    console.warn("[stripe] top-up refused — user not on paid plan", opts.clerkId, plan);
-    return { granted: false, balanceAfter: user?.creditBalance ?? null };
-  }
+  // Checkout API already blocks Free top-ups before Stripe charges.
+  // Do not re-check plan here: user may cancel Pro trial between pay and webhook
+  // (plan flips to free) — they already paid and must receive tokens.
   return grantTokensOnce(opts.clerkId, TOP_UP_TOKENS, "topup", opts.ref, opts.meta);
 }

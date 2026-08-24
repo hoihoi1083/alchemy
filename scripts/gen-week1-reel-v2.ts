@@ -12,6 +12,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fal } from "@fal-ai/client";
 import { burnCaptionsOverlay } from "../lib/pipeline/caption-overlay-burn";
+import { resolveCaptionBurnStyle } from "../lib/caption-burn-styles";
 import type { CaptionLine } from "../lib/ad-pack-types";
 import { concatVideos, downloadToFile } from "../lib/pipeline/ffmpeg";
 
@@ -283,7 +284,7 @@ async function buildLang(lang: Lang, refs: Record<string, string>): Promise<stri
       throw new Error("CJK caption burn failed");
     }
   } else {
-    await burnCaptionsOverlay(raw, CAPTIONS[lang], out, capDir, "classic");
+    await burnCaptionsOverlay(raw, CAPTIONS[lang], out, capDir, resolveCaptionBurnStyle("classic"));
   }
   console.log(`✓ ${out}`);
   return out;

@@ -185,7 +185,7 @@ export const legalEn: LegalBundle = {
       {
         heading: "11. Fees, Credits and Subscriptions",
         paragraphs: [
-          `${PRODUCT_NAME} may offer free services, paid subscriptions, credit packages, enterprise plans or usage-based billing. Paid features may include AI image generation, AI video generation, prompt generation, storyboard generation, premium templates, advanced editing tools, high-resolution exports, commercial usage features and team or agency features. Credits may be consumed when users generate, regenerate, export or process content. Unused credits may expire according to the plan or offer shown at purchase.`,
+          `${PRODUCT_NAME} may offer free services, paid subscriptions, credit packages, enterprise plans or usage-based billing. Paid features may include AI image generation, AI video generation, prompt generation, storyboard generation, premium templates, advanced editing tools, high-resolution exports, commercial usage features and team or agency features. Credits may be consumed when users generate, regenerate, export or process content. Unused credits may expire according to the plan or offer shown at purchase (currently six months from grant, spending oldest credits first).`,
         ],
       },
       {
@@ -276,9 +276,11 @@ export const legalEn: LegalBundle = {
         ],
       },
       {
-        heading: "2. Free Trials",
+        heading: "2. Free Trials and Signup Credits",
         paragraphs: [
-          `${PRODUCT_NAME} may offer free trials, free credits, limited previews or early access campaigns. Free trials help users evaluate the service before purchasing. We may modify, limit or discontinue free trials at any time. Abuse of free trials, including creating multiple accounts to obtain additional free usage, may result in account suspension.`,
+          `${PRODUCT_NAME} may offer free trials, free signup credits, limited previews or early access campaigns. New Free accounts may receive a one-time signup credit grant (currently 300 tokens) that does not renew monthly.`,
+          `The optional 7-day Pro trial requires a valid payment card. During the trial you receive bonus tokens and Pro-tier features. If you cancel during the trial in Account before the trial ends, Pro features end immediately, remaining tokens stay on your account, and you are not charged the Pro subscription fee. If you do not cancel, the trial converts to a paid monthly Pro subscription and billing continues under Stripe.`,
+          `We may modify, limit or discontinue free trials or signup grants at any time. Abuse of trials, including creating multiple accounts to obtain additional free usage, may result in account suspension.`,
         ],
       },
       {
@@ -317,7 +319,9 @@ export const legalEn: LegalBundle = {
       {
         heading: "8. Subscription Cancellation",
         paragraphs: [
-          "You may cancel your subscription at any time through account settings or by contacting support. Cancellation stops future renewal. It does not automatically refund previous payments unless the refund request meets this Refund Policy or applicable law requires otherwise. After cancellation, you may continue to access paid features until the end of the current billing period, unless otherwise stated.",
+          "You may cancel your subscription at any time through account settings or by contacting support. Cancellation stops future renewal. It does not automatically refund previous payments unless the refund request meets this Refund Policy or applicable law requires otherwise.",
+          "For paid subscriptions, after you schedule cancellation you may continue to access paid features until the end of the current billing period, unless otherwise stated.",
+          "If you cancel during an active 7-day Pro trial before it converts to paid, Pro features end immediately while unused tokens remain on your account.",
         ],
       },
       {

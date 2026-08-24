@@ -1,10 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { PlanGateDialog } from "@/components/billing/PlanGateDialog";
 import { useLocale } from "@/components/LocaleProvider";
 import { useUserPlanEntitlements } from "@/hooks/useUserPlanEntitlements";
 import {
+  canUseVideoResolution,
+  minPlanForVideoResolution,
+} from "@/lib/billing/plan-gates";
+import {
+  VIDEO_RESOLUTION_CAPS,
   videoResolutionsForPlan,
   type VideoResolutionCap,
 } from "@/lib/billing/entitlements";
@@ -63,6 +69,8 @@ export function VideoSettingsPanel({
 }: Props) {
   const { m } = useLocale();
   const { plan, maxVideoResolution } = useUserPlanEntitlements();
+  const [gateOpen, setGateOpen] = useState(false);
+  const [gateRes, setGateRes] = useState<VideoResolutionCap>("720p");
   const dark = variant === "dark";
   const tone = accent ?? (setup ? "violet" : "emerald");
   const compactMode = compact || setup || motionPoster;
@@ -74,7 +82,6 @@ export function VideoSettingsPanel({
         : VIDEO_DURATIONS
   );
   const allowedResolutions = videoResolutionsForPlan(plan).map(asVideoResolution);
-  const showUpgradeHint = maxVideoResolution !== "1080p";
   const linkClass =
     tone === "violet"
       ? dark
@@ -142,18 +149,36 @@ export function VideoSettingsPanel({
           {m.wizard.videoSettingsResolution}
         </p>
         <div className="flex flex-wrap gap-2">
-          {allowedResolutions.map((r) => (
-            <button
-              key={r}
-              type="button"
-              onClick={() => onChange({ ...value, resolution: r })}
-              className={`rounded-full px-4 py-2 text-sm font-medium ${pillClass(value.resolution === r, dark, tone)}`}
-            >
-              {r}
-            </button>
-          ))}
+          {VIDEO_RESOLUTION_CAPS.map((r) => {
+            const allowed = canUseVideoResolution(plan, r);
+            const selected = value.resolution === r;
+            return (
+              <button
+                key={r}
+                type="button"
+                onClick={() => {
+                  if (!allowed) {
+                    setGateRes(r);
+                    setGateOpen(true);
+                    return;
+                  }
+                  onChange({ ...value, resolution: r });
+                }}
+                aria-disabled={!allowed}
+                className={`rounded-full px-4 py-2 text-sm font-medium ${
+                  !allowed
+                    ? dark
+                      ? "cursor-not-allowed border border-dashed border-slate-600 text-slate-500 opacity-70"
+                      : "cursor-not-allowed border border-dashed border-slate-300 text-slate-400 opacity-80"
+                    : pillClass(selected, dark, tone)
+                }`}
+              >
+                {r}
+              </button>
+            );
+          })}
         </div>
-        {showUpgradeHint ? (
+        {maxVideoResolution !== "1080p" ? (
           <p className={dark ? "mt-2 text-xs text-slate-400" : "mt-2 text-xs text-slate-500"}>
             {m.wizard.videoResolutionPlanHint.replace("{max}", maxVideoResolution)}{" "}
             <Link href="/pricing" className={linkClass}>
@@ -162,6 +187,13 @@ export function VideoSettingsPanel({
           </p>
         ) : null}
       </div>
+
+      <PlanGateDialog
+        open={gateOpen}
+        onClose={() => setGateOpen(false)}
+        requiredPlan={minPlanForVideoResolution(gateRes)}
+        featureLabel={gateRes}
+      />
 
       <div>
         <p

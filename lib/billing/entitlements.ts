@@ -27,6 +27,8 @@ export function imageCapForPlan(plan: UserPlan): ImageResolutionCap {
 }
 
 export const VIDEO_RESOLUTION_CAPS: VideoResolutionCap[] = ["480p", "720p", "1080p"];
+/** Studio UI offers 1K / 2K (4K reserved; no plan currently unlocks it). */
+export const IMAGE_RESOLUTION_CAPS: ImageResolutionCap[] = ["1K", "2K"];
 const ALL_IMAGE_CAPS: ImageResolutionCap[] = ["1K", "2K", "4K"];
 
 /** Resolutions the UI may offer for this plan (inclusive of lower tiers). */

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 
 type WizardErrorBannerProps = {
@@ -27,10 +28,32 @@ export function WizardErrorBanner({
   onDismiss,
 }: WizardErrorBannerProps) {
   const { m } = useLocale();
+  const [trialBusy, setTrialBusy] = useState(false);
+  const [trialError, setTrialError] = useState<string | null>(null);
   const insufficient = isInsufficientTokensMessage(message, m.errors.insufficientTokens);
   const tvcPaid =
     message.trim() === m.errors.tvcNeedsPaidPlan.trim() ||
     /12s single-clip|12 秒單鏡|12 秒单镜/i.test(message);
+
+  async function startProTrial() {
+    setTrialError(null);
+    setTrialBusy(true);
+    try {
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind: "pro_trial" }),
+      });
+      const data = (await res.json()) as { url?: string; error?: string };
+      if (!res.ok || !data.url) {
+        throw new Error(data.error ?? m.errors.proTrialStartError);
+      }
+      window.location.href = data.url;
+    } catch (e) {
+      setTrialError(e instanceof Error ? e.message : m.errors.proTrialStartError);
+      setTrialBusy(false);
+    }
+  }
 
   if (insufficient || tvcPaid) {
     return (
@@ -50,7 +73,25 @@ export function WizardErrorBanner({
           <p className="mt-2 text-sm text-slate-600">
             {tvcPaid ? m.errors.tvcNeedsPaidPlan : m.errors.insufficientTokens}
           </p>
+          {!tvcPaid ? (
+            <p className="mt-3 rounded-xl border border-violet-100 bg-violet-50/80 px-3 py-2 text-sm text-violet-900">
+              {m.errors.proTrialOfferBody}
+            </p>
+          ) : null}
+          {trialError ? (
+            <p className="mt-2 text-sm text-red-600">{trialError}</p>
+          ) : null}
           <div className="mt-5 flex flex-wrap items-center gap-3">
+            {!tvcPaid ? (
+              <button
+                type="button"
+                disabled={trialBusy}
+                onClick={() => void startProTrial()}
+                className="inline-flex rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-50"
+              >
+                {trialBusy ? m.errors.proTrialStarting : m.errors.proTrialCta}
+              </button>
+            ) : null}
             <Link
               href="/pricing"
               className="inline-flex rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500"
@@ -78,23 +119,19 @@ export function WizardErrorBanner({
       : "rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800";
 
   const notCharged = message.includes(m.errors.tokensNotCharged);
-  const primary = notCharged
-    ? message.replace(m.errors.tokensNotCharged, "").trim()
-    : message;
 
   return (
     <div className={classes} role="alert">
-      <p>{primary}</p>
-      {notCharged ? (
-        <p
-          className={
-            variant === "dark"
-              ? "mt-1.5 text-xs font-medium text-emerald-300/90"
-              : "mt-1.5 text-xs font-medium text-emerald-800"
-          }
+      <p>{message}</p>
+      {notCharged ? null : null}
+      {onDismiss ? (
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="mt-2 text-xs font-medium underline opacity-80"
         >
-          {m.errors.tokensNotCharged}
-        </p>
+          {m.errors.insufficientTokensDismiss}
+        </button>
       ) : null}
     </div>
   );

@@ -12,6 +12,8 @@ import {
 import { upgradeTokenGrantAmount } from "../lib/stripe/billing-sync";
 
 const ENV_KEYS = [
+  "STRIPE_PRICE_LIGHT_MONTHLY",
+  "STRIPE_PRICE_LIGHT_YEARLY",
   "STRIPE_PRICE_STANDARD_MONTHLY",
   "STRIPE_PRICE_STANDARD_YEARLY",
   "STRIPE_PRICE_PRO_MONTHLY",
@@ -47,6 +49,7 @@ function setEnv(map: Partial<Record<(typeof ENV_KEYS)[number], string>>) {
 
 describe("stripe price mapping", () => {
   it("validates plan and interval helpers", () => {
+    assert.equal(isPaidPlan("light"), true);
     assert.equal(isPaidPlan("pro"), true);
     assert.equal(isPaidPlan("custom"), true);
     assert.equal(isPaidPlan("free"), false);
@@ -56,6 +59,8 @@ describe("stripe price mapping", () => {
 
   it("resolves env price ids and reverse-maps them", () => {
     setEnv({
+      STRIPE_PRICE_LIGHT_MONTHLY: "price_light_m",
+      STRIPE_PRICE_LIGHT_YEARLY: "price_light_y",
       STRIPE_PRICE_STANDARD_MONTHLY: "price_std_m",
       STRIPE_PRICE_STANDARD_YEARLY: "price_std_y",
       STRIPE_PRICE_PRO_MONTHLY: "price_pro_m",
@@ -67,6 +72,7 @@ describe("stripe price mapping", () => {
       STRIPE_PRICE_TOPUP: "price_top",
     });
 
+    assert.equal(priceIdForPlan("light", "monthly"), "price_light_m");
     assert.equal(priceIdForPlan("standard", "monthly"), "price_std_m");
     assert.equal(priceIdForPlan("pro", "yearly"), "price_pro_y");
     assert.equal(priceIdForPlan("custom", "monthly"), "price_ent_m");
@@ -86,6 +92,8 @@ describe("stripe price mapping", () => {
     assert.ok(paidPlanRank("custom") > paidPlanRank("master"));
     assert.ok(paidPlanRank("master") > paidPlanRank("pro"));
     assert.ok(paidPlanRank("pro") > paidPlanRank("standard"));
+    assert.ok(paidPlanRank("standard") > paidPlanRank("light"));
+    assert.equal(comparePaidPlans("light", "pro"), "upgrade");
     assert.equal(comparePaidPlans("standard", "master"), "upgrade");
     assert.equal(comparePaidPlans("master", "custom"), "upgrade");
     assert.equal(comparePaidPlans("custom", "master"), "downgrade");
@@ -96,10 +104,11 @@ describe("stripe price mapping", () => {
   });
 
   it("grants full new-plan tokens on upgrade cycle reset", () => {
-    assert.equal(upgradeTokenGrantAmount("standard", "master"), 16000);
-    assert.equal(upgradeTokenGrantAmount("pro", "master"), 16000);
+    assert.equal(upgradeTokenGrantAmount("light", "standard"), 8000);
+    assert.equal(upgradeTokenGrantAmount("standard", "master"), 28000);
+    assert.equal(upgradeTokenGrantAmount("pro", "master"), 28000);
     assert.equal(upgradeTokenGrantAmount("master", "custom"), 40000);
-    assert.equal(upgradeTokenGrantAmount("standard", "pro"), 8000);
+    assert.equal(upgradeTokenGrantAmount("standard", "pro"), 16000);
     assert.equal(upgradeTokenGrantAmount("master", "standard"), 0);
     assert.equal(upgradeTokenGrantAmount("pro", "pro"), 0);
   });

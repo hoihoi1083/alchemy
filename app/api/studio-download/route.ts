@@ -1,6 +1,6 @@
 import { promises as fs } from "fs";
 import { NextResponse } from "next/server";
-import { getAssetForUser } from "@/lib/db/assets";
+import { getAssetAccessibleToUser } from "@/lib/db/assets";
 import { archiveRemoteImageToPipeline } from "@/lib/pipeline/archive-image";
 import { assertJobOwnedBy } from "@/lib/pipeline/job-owner";
 import { PIPELINE_FILES } from "@/lib/pipeline/local-input";
@@ -13,6 +13,7 @@ import {
 } from "@/lib/storage/durable-media";
 import { persistUserAsset } from "@/lib/storage/persist-asset";
 import { getR2ObjectBytes } from "@/lib/storage/r2";
+import { getActiveTeamMembership } from "@/lib/team/service";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -69,7 +70,12 @@ async function readLibraryBytes(
 ): Promise<{ data: Buffer; contentType: string } | null> {
   const id = libraryAssetIdFromUrl(raw);
   if (!id) return null;
-  const asset = await getAssetForUser(clerkId, id);
+  const membership = await getActiveTeamMembership(clerkId);
+  const asset = await getAssetAccessibleToUser(
+    clerkId,
+    id,
+    membership?.teamId ?? null,
+  );
   if (!asset) return null;
   try {
     const obj = await getR2ObjectBytes(asset.r2Key);

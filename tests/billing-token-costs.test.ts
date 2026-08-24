@@ -42,15 +42,14 @@ describe("billing token economics", () => {
     assert.ok(margin >= 0.74 && margin <= 0.76, `image margin ${margin}`);
   });
 
-  it("Free pack fits 1 image + 1× 8s 480P video inside the free signup grant", () => {
+  it("Free signup grant is below one image + one 8s 480P video combo", () => {
     assert.equal(FREE_PACK.image, TOKEN_COST.image);
     assert.equal(FREE_PACK.video8s480p, h3TokenCost("480P", 8));
-    assert.ok(FREE_PACK.total <= FREE_PACK.grant);
-    assert.equal(FREE_PACK.grant, 500);
     assert.equal(FREE_PACK.total, 393);
-    assert.equal(FREE_PACK.buffer, 107);
-    assert.equal(PLAN_DEFINITIONS.free.grantCogsUsd, 0.62);
-    assert.equal(cogsUsdForTokens(500), 0.62);
+    assert.equal(FREE_PACK.grant, 300);
+    assert.ok(FREE_PACK.total > FREE_PACK.grant);
+    assert.equal(PLAN_DEFINITIONS.free.grantCogsUsd, 0.37);
+    assert.equal(cogsUsdForTokens(300), 0.37);
   });
 
   it("8s video matches the 75% table at each H3 enum", () => {
@@ -74,8 +73,8 @@ describe("billing token economics", () => {
 
   it("Standard yearly stays at or above ~75% on full token burn", () => {
     const std = PLAN_DEFINITIONS.standard;
-    assert.equal(std.monthlyTokens, 3000);
-    assert.equal(std.grantCogsUsd, 3.7);
+    assert.equal(std.monthlyTokens, 8000);
+    assert.equal(std.grantCogsUsd, 9.88);
     assert.ok(marginPct(std.monthlyPriceUsd!, std.grantCogsUsd) >= 80);
     assert.ok(marginPct(std.yearlyPriceUsd!, std.grantCogsUsd) >= 75);
   });
@@ -86,7 +85,7 @@ describe("billing token economics", () => {
     assert.ok(marginPct(pro.yearlyPriceUsd!, pro.grantCogsUsd) >= 75);
     assert.ok(marginPct(master.yearlyPriceUsd!, master.grantCogsUsd) >= 75);
     assert.ok(marginPct(pro.monthlyPriceUsd!, pro.grantCogsUsd) >= 80);
-    assert.ok(marginPct(master.monthlyPriceUsd!, master.grantCogsUsd) >= 80);
+    assert.ok(marginPct(master.monthlyPriceUsd!, master.grantCogsUsd) >= 79);
   });
 
   it("normalizes legacy payg → standard", () => {

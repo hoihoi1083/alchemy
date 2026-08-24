@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useAuth } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
+import { PlanGateDialog } from "@/components/billing/PlanGateDialog";
 import { useLocale } from "@/components/LocaleProvider";
 import { canUseProCanvas } from "@/lib/billing/entitlements";
 import { normalizeUserPlan } from "@/lib/billing/plans";
@@ -14,12 +15,13 @@ type ProNavLinkProps = {
   onClick?: () => void;
 };
 
-/** Header Pro canvas — Master plan unlocks /pro; others land on pricing with Master highlighted. */
+/** Header Pro canvas — Master+ unlocks /pro; others see upgrade dialog. */
 export function ProNavLink({ className, onClick }: ProNavLinkProps) {
   const { m } = useLocale();
   const L = m.landing;
   const { isSignedIn, isLoaded } = useAuth();
   const [hasPro, setHasPro] = useState(false);
+  const [gateOpen, setGateOpen] = useState(false);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -48,9 +50,38 @@ export function ProNavLink({ className, onClick }: ProNavLinkProps) {
   const href = hasPro ? "/pro" : PRICING_MASTER_PLAN_HREF;
   const label = hasPro ? L.navProCanvasUnlocked : L.navProCanvas;
 
+  if (hasPro) {
+    return (
+      <Link href={href} className={className} onClick={onClick}>
+        {label}
+      </Link>
+    );
+  }
+
   return (
-    <Link href={href} className={className} onClick={onClick} title={hasPro ? undefined : L.navProCanvas}>
-      {label}
-    </Link>
+    <>
+      <button
+        type="button"
+        className={className}
+        onClick={(e) => {
+          onClick?.();
+          if (isSignedIn) {
+            e.preventDefault();
+            setGateOpen(true);
+          } else {
+            window.location.href = href;
+          }
+        }}
+        title={L.navProCanvas}
+      >
+        {label}
+      </button>
+      <PlanGateDialog
+        open={gateOpen}
+        onClose={() => setGateOpen(false)}
+        requiredPlan="master"
+        featureLabel={L.navProCanvas}
+      />
+    </>
   );
 }

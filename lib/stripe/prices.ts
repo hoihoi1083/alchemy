@@ -1,11 +1,11 @@
 import { PLAN_DEFINITIONS, type UserPlan } from "@/lib/billing/plans";
 
-export type PaidPlan = "standard" | "pro" | "master" | "custom";
+export type PaidPlan = "light" | "standard" | "pro" | "master" | "custom";
 export type BillingInterval = "monthly" | "yearly";
 
-export type CheckoutKind = "subscription" | "topup";
+export type CheckoutKind = "subscription" | "topup" | "pro_trial";
 
-const PAID_PLANS: PaidPlan[] = ["standard", "pro", "master", "custom"];
+const PAID_PLANS: PaidPlan[] = ["light", "standard", "pro", "master", "custom"];
 
 function envPrice(name: string): string | null {
   const v = process.env[name]?.trim();
@@ -54,10 +54,11 @@ export function monthlyTokensForPlan(plan: UserPlan): number {
 
 /** Higher number = higher tier (used to decide upgrade vs downgrade). */
 export function paidPlanRank(plan: PaidPlan): number {
-  if (plan === "standard") return 1;
-  if (plan === "pro") return 2;
-  if (plan === "master") return 3;
-  return 4; // custom / Enterprise
+  if (plan === "light") return 1;
+  if (plan === "standard") return 2;
+  if (plan === "pro") return 3;
+  if (plan === "master") return 4;
+  return 5; // custom / Enterprise
 }
 
 export type PlanChangeKind = "upgrade" | "downgrade" | "lateral";

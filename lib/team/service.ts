@@ -1,6 +1,10 @@
 import crypto from "crypto";
 import { randomUUID } from "crypto";
 import { ObjectId } from "mongodb";
+import {
+  clearTeamSharedAssetsForTeam,
+  clearTeamSharedAssetsForUser,
+} from "@/lib/db/assets";
 import { normalizeUserPlan, type UserPlan } from "@/lib/billing/plans";
 import type { DbTeam, DbTeamInvite, DbTeamMember, DbUser } from "@/lib/db/types";
 import { normalizeEmail } from "@/lib/db/email-identity";
@@ -8,7 +12,7 @@ import { emailAppBaseUrl } from "@/lib/email/purchase-confirmation";
 import { getDb, isMongoConfigured } from "@/lib/mongodb";
 import { sendTeamInviteEmail } from "@/lib/email/team-invite";
 
-const DEFAULT_TEAM_SEAT_LIMIT = 5;
+const DEFAULT_TEAM_SEAT_LIMIT = 3;
 const INVITE_EXPIRY_DAYS = 7;
 
 export class TeamError extends Error {
@@ -248,10 +252,19 @@ export async function syncOwnerTeamForPlan(
   if (!isMongoConfigured()) return;
   if (normalizeUserPlan(plan) === "custom") return;
   const db = await getDb();
+  const activeTeams = await db
+    .collection<DbTeam>("teams")
+    .find({ ownerClerkId, status: "active" })
+    .project({ teamId: 1 })
+    .toArray();
+  if (activeTeams.length === 0) return;
   await db.collection<DbTeam>("teams").updateMany(
     { ownerClerkId, status: "active" },
     { $set: { status: "inactive", updatedAt: new Date() } },
   );
+  for (const team of activeTeams) {
+    await clearTeamSharedAssetsForTeam(team.teamId);
+  }
 }
 
 export async function getTeamDashboardForOwner(ownerClerkId: string): Promise<TeamDashboard> {
@@ -470,6 +483,8 @@ export async function removeTeamMember(ownerClerkId: string, memberClerkId: stri
   if (memberClerkId === ownerClerkId) {
     throw new TeamError("Owner cannot remove themselves from the team.", 400);
   }
+  // Unshare before seat removal so a failed cleanup cannot leave orphan shares.
+  await clearTeamSharedAssetsForUser(team.teamId, memberClerkId);
   const res = await db.collection<DbTeamMember>("team_members").updateOne(
     {
       teamId: team.teamId,
@@ -494,6 +509,8 @@ export async function leaveTeam(clerkId: string): Promise<void> {
     throw new TeamError("Owner cannot leave the team. Remove members instead.", 400);
   }
   const db = await getDb();
+  // Unshare before seat removal so a failed cleanup cannot leave orphan shares.
+  await clearTeamSharedAssetsForUser(membership.teamId, clerkId);
   const res = await db.collection<DbTeamMember>("team_members").updateOne(
     {
       teamId: membership.teamId,

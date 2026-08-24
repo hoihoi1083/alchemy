@@ -3,8 +3,14 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { LandingNav } from "@/components/landing/LandingNav";
+import { PlanGateDialog } from "@/components/billing/PlanGateDialog";
 import { useLocale } from "@/components/LocaleProvider";
+import { useUserPlanEntitlements } from "@/hooks/useUserPlanEntitlements";
 import { FREE_SIGNUP_GRANT_TOKENS } from "@/lib/billing/plans";
+import {
+  canUseTemplate,
+  minPlanForTemplate,
+} from "@/lib/billing/plan-gates";
 import { isTemplateId } from "@/lib/template-pref";
 import { studioHref, type PromotionMode } from "@/lib/promotion-mode";
 
@@ -595,12 +601,14 @@ function StartPageBody() {
   const { m } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { plan, planReady } = useUserPlanEntitlements();
   const templateRaw = searchParams.get("template");
   const templateId = isTemplateId(templateRaw) ? templateRaw : null;
   const templateCopy = templateId ? m.templates[templateId] : null;
   const isWelcome = searchParams.get("welcome") === "1";
   const [showWelcome, setShowWelcome] = useState(isWelcome);
   const [selected, setSelected] = useState<PromotionMode>("physical");
+  const [gateOpen, setGateOpen] = useState(false);
 
   useEffect(() => {
     setShowWelcome(isWelcome);
@@ -852,7 +860,18 @@ function StartPageBody() {
             </p>
             <button
               type="button"
-              onClick={() => router.push(continueHref)}
+              onClick={() => {
+                if (
+                  templateId &&
+                  selected === "physical" &&
+                  planReady &&
+                  !canUseTemplate(plan, templateId)
+                ) {
+                  setGateOpen(true);
+                  return;
+                }
+                router.push(continueHref);
+              }}
               className="start-continue-btn inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl px-8 py-3 text-[14px] font-semibold text-white sm:w-auto"
             >
               {m.start.continueToStep2}
@@ -872,6 +891,14 @@ function StartPageBody() {
           </div>
         </div>
       </section>
+      {templateId ? (
+        <PlanGateDialog
+          open={gateOpen}
+          onClose={() => setGateOpen(false)}
+          requiredPlan={minPlanForTemplate(templateId)}
+          featureLabel={m.templates[templateId].name}
+        />
+      ) : null}
     </main>
   );
 }

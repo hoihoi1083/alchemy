@@ -1,7 +1,9 @@
 import type Stripe from "stripe";
 import {
+  PRO_TRIAL_BONUS_TOKENS,
   TOP_UP_PRICE_USD,
   TOP_UP_TOKENS,
+  normalizeUserPlan,
 } from "@/lib/billing/plans";
 import { sendPurchaseConfirmationEmail } from "@/lib/email/purchase-confirmation";
 import { resolvePurchaseEmail } from "@/lib/email/resolve-user-email";
@@ -11,10 +13,105 @@ import {
   applyTopUpGrant,
   attachStripeCustomerWithoutPlanChange,
   findClerkIdByStripeCustomer,
+  grantTokensOnce,
+  markProTrialUsed,
   setUserSubscription,
 } from "@/lib/stripe/billing-sync";
 import { checkoutPaymentCleared } from "@/lib/stripe/payment-cleared";
 import { isPaidPlan, type PaidPlan } from "@/lib/stripe/prices";
+import { getStripe } from "@/lib/stripe/client";
+
+const BILLABLE_SUB_STATUSES = new Set<Stripe.Subscription.Status>([
+  "active",
+  "trialing",
+  "past_due",
+]);
+
+function proTrialBonusRef(clerkId: string): string {
+  return `pro_trial_bonus_${clerkId}`;
+}
+
+async function hasProTrialBonusGranted(clerkId: string): Promise<boolean> {
+  if (!isMongoConfigured()) return false;
+  const db = await getDb();
+  const ref = proTrialBonusRef(clerkId);
+  const existing = await db.collection("credit_transactions").findOne({ ref });
+  return Boolean(existing);
+}
+
+/**
+ * Re-validate at fulfill time (webhook / confirm may run after checkout API checks).
+ * Idempotent retries are allowed when +700 was already granted for this clerkId.
+ */
+async function assertProTrialFulfillEligible(opts: {
+  clerkId: string;
+  stripeCustomerId: string | null;
+  subscriptionId: string | null;
+}): Promise<{ ok: true; idempotent: boolean } | { ok: false; reason: string }> {
+  const idempotent = await hasProTrialBonusGranted(opts.clerkId);
+  if (idempotent) {
+    return { ok: true, idempotent: true };
+  }
+
+  if (!isMongoConfigured()) {
+    return { ok: false, reason: "trial_not_eligible_no_db" };
+  }
+
+  const db = await getDb();
+  const user = await db.collection<DbUser>("users").findOne({ clerkId: opts.clerkId });
+  if (!user) {
+    return { ok: false, reason: "trial_not_eligible_no_user" };
+  }
+
+  if (normalizeUserPlan(user.plan) !== "free") {
+    return { ok: false, reason: "trial_not_eligible_plan" };
+  }
+  if (user.hasUsedProTrial) {
+    return { ok: false, reason: "trial_already_used" };
+  }
+
+  if (!opts.subscriptionId) {
+    return { ok: false, reason: "trial_not_eligible_no_sub" };
+  }
+
+  try {
+    const stripe = getStripe();
+    if (opts.stripeCustomerId) {
+      const listed = await stripe.subscriptions.list({
+        customer: opts.stripeCustomerId,
+        status: "all",
+        limit: 20,
+      });
+      const otherBillable = listed.data.filter(
+        (s) =>
+          BILLABLE_SUB_STATUSES.has(s.status) && s.id !== opts.subscriptionId,
+      );
+      if (otherBillable.length > 0) {
+        return { ok: false, reason: "trial_not_eligible_existing_sub" };
+      }
+    }
+    const sub = await stripe.subscriptions.retrieve(opts.subscriptionId);
+    if (sub.status !== "trialing") {
+      return { ok: false, reason: "trial_not_trialing" };
+    }
+  } catch (err) {
+    console.warn("[stripe] pro_trial fulfill eligibility check failed", err);
+    return { ok: false, reason: "trial_eligibility_check_failed" };
+  }
+
+  return { ok: true, idempotent: false };
+}
+
+async function readTrialEndsAt(subId: string | null): Promise<Date | null> {
+  if (!subId) return null;
+  try {
+    const sub = await getStripe().subscriptions.retrieve(subId);
+    if (sub.trial_end) return new Date(sub.trial_end * 1000);
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
 
 function customerId(value: string | Stripe.Customer | Stripe.DeletedCustomer | null): string | null {
   if (!value) return null;
@@ -238,6 +335,88 @@ export async function fulfillCheckoutSession(
       balanceAfter: null,
       tokensGranted: 0,
       reason: "not_paid",
+    };
+  }
+
+  // Pro trial: grant +700 first, then unlock Pro; full monthly tokens on first paid invoice.
+  if (kind === "pro_trial") {
+    const eligibility = await assertProTrialFulfillEligible({
+      clerkId,
+      stripeCustomerId: cust,
+      subscriptionId: subId,
+    });
+    if (!eligibility.ok) {
+      console.warn("[stripe] pro_trial fulfill rejected", {
+        sessionId: session.id,
+        clerkId,
+        reason: eligibility.reason,
+      });
+      await attachStripeCustomerWithoutPlanChange({
+        clerkId,
+        stripeCustomerId: cust,
+        stripeSubscriptionId: subId,
+      });
+      return {
+        kind: "subscription",
+        clerkId,
+        granted: false,
+        balanceAfter: null,
+        tokensGranted: 0,
+        reason: eligibility.reason,
+      };
+    }
+
+    const bonusRef = proTrialBonusRef(clerkId);
+    const bonus = await grantTokensOnce(
+      clerkId,
+      PRO_TRIAL_BONUS_TOKENS,
+      "trial_bonus",
+      bonusRef,
+      { sessionId: session.id, plan: "pro" },
+    );
+
+    const bonusAlreadyThere = eligibility.idempotent || (await hasProTrialBonusGranted(clerkId));
+    if (!bonus.granted && !bonusAlreadyThere) {
+      console.error("[stripe] pro_trial bonus grant failed — plan not upgraded", {
+        sessionId: session.id,
+        clerkId,
+      });
+      await attachStripeCustomerWithoutPlanChange({
+        clerkId,
+        stripeCustomerId: cust,
+        stripeSubscriptionId: subId,
+      });
+      return {
+        kind: "subscription",
+        clerkId,
+        granted: false,
+        balanceAfter: bonus.balanceAfter,
+        tokensGranted: 0,
+        reason: "trial_bonus_failed",
+      };
+    }
+
+    const trialEndsAt = await readTrialEndsAt(subId);
+    await setUserSubscription({
+      clerkId,
+      plan: "pro",
+      stripeCustomerId: cust,
+      stripeSubscriptionId: subId,
+      planRenewsAt: trialEndsAt,
+    });
+    await markProTrialUsed(clerkId, { proTrialEndsAt: trialEndsAt });
+
+    return {
+      kind: "subscription",
+      clerkId,
+      granted: bonus.granted,
+      balanceAfter: bonus.balanceAfter,
+      tokensGranted: bonus.granted ? PRO_TRIAL_BONUS_TOKENS : 0,
+      reason: bonus.granted
+        ? "pro_trial_started"
+        : bonusAlreadyThere
+          ? "pro_trial_synced"
+          : "pro_trial_partial",
     };
   }
 

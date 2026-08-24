@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
-import { PLAN_DEFINITIONS, normalizeUserPlan } from "@/lib/billing/plans";
+import { PLAN_DEFINITIONS, normalizeUserPlan, PRO_TRIAL_DAYS } from "@/lib/billing/plans";
 import { resolveStripeCustomerIdForUser } from "@/lib/db/email-identity";
 import type { DbUser } from "@/lib/db/types";
 import {
@@ -27,7 +27,7 @@ import { switchExistingSubscription } from "@/lib/stripe/switch-subscription";
 export const runtime = "nodejs";
 
 type Body = {
-  kind?: "subscription" | "topup";
+  kind?: "subscription" | "topup" | "pro_trial";
   plan?: string;
   interval?: string;
 };
@@ -98,7 +98,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
     }
 
-    const kind = body.kind === "topup" ? "topup" : "subscription";
+    const kind =
+      body.kind === "topup"
+        ? "topup"
+        : body.kind === "pro_trial"
+          ? "pro_trial"
+          : "subscription";
     const clerkId = auth.user.userId;
     const stripe = getStripe();
     const base = appBaseUrl();
@@ -130,6 +135,60 @@ export async function POST(request: Request) {
           throw err;
         }
       }
+    }
+
+    if (kind === "pro_trial") {
+      const plan = normalizeUserPlan(user?.plan);
+      if (plan !== "free") {
+        return NextResponse.json(
+          { error: "Pro trial is only for Free accounts." },
+          { status: 403 },
+        );
+      }
+      if (user?.hasUsedProTrial) {
+        return NextResponse.json(
+          { error: "You already used the Pro trial." },
+          { status: 403 },
+        );
+      }
+      if (stripeCustomerId) {
+        const billable = await listBillableSubscriptions(stripe, stripeCustomerId);
+        if (billable.length > 0) {
+          return NextResponse.json(
+            { error: "You already have an active subscription." },
+            { status: 409 },
+          );
+        }
+      }
+      const price = priceIdForPlan("pro", "monthly");
+      if (!price) {
+        return NextResponse.json(
+          { error: "Missing Stripe price for Pro monthly (trial)." },
+          { status: 503 },
+        );
+      }
+      const session = await stripe.checkout.sessions.create({
+        mode: "subscription",
+        line_items: [{ price, quantity: 1 }],
+        success_url: `${base}/pricing?checkout=success&kind=pro_trial&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${base}/pricing?checkout=cancel`,
+        client_reference_id: clerkId,
+        customer: stripeCustomerId || undefined,
+        customer_email: stripeCustomerId ? undefined : user?.email || undefined,
+        metadata: {
+          clerkId,
+          kind: "pro_trial",
+          plan: "pro",
+          interval: "monthly",
+        },
+        subscription_data: {
+          trial_period_days: PRO_TRIAL_DAYS,
+          metadata: { clerkId, plan: "pro", interval: "monthly", kind: "pro_trial" },
+        },
+        payment_method_collection: "always",
+        allow_promotion_codes: true,
+      });
+      return NextResponse.json({ url: session.url });
     }
 
     if (kind === "topup") {

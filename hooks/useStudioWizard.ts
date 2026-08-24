@@ -121,7 +121,7 @@ import {
   type VideoDuration,
   type VideoSettings,
 } from "@/lib/video-settings";
-import { capUiVideoResolution } from "@/lib/billing/entitlements";
+import { capUiVideoResolution, imageCapForPlan } from "@/lib/billing/entitlements";
 import {
 	physicalVideoOnlyNeedsUploadedPhoto,
 	resolveVideoGenerationKind,
@@ -564,6 +564,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		setSelectedVariantIndex,
 		imageOutputMode,
 		setImageOutputMode,
+		imageResolution,
+		setImageResolution,
 		imageAspectRatio,
 		setImageAspectRatio,
 		campaignTheme,
@@ -740,6 +742,16 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			return { ...prev, resolution: next };
 		});
 	}, [capVideoRes, setVideoSettings]);
+	useEffect(() => {
+		setImageResolution((prev) => {
+			const max = imageCapForPlan(plan);
+			const next = max === "4K" ? "2K" : max;
+			// Keep lower selection if still allowed
+			if (prev === "1K") return prev;
+			if (prev === "2K" && (max === "2K" || max === "4K")) return prev;
+			return next;
+		});
+	}, [plan, setImageResolution]);
 	/** Designed 動態海報 still only — never treat a leftover packshot / raw upload as the H3 start. */
 	const motionPosterStillUrlRef = useRef<string | null>(null);
 	const motionPosterEndUrlRef = useRef<string | null>(null);
@@ -1210,6 +1222,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			if (!lockedPoster) {
 				appendReferenceFormFields(fd);
 			}
+			fd.set("resolution", imageResolution);
 		},
 		[
 			visualStyleId,
@@ -1220,6 +1233,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			effectiveImageMode,
 			referenceStrategy.sendPixelsToFal,
 			appendReferenceFormFields,
+			imageResolution,
 		],
 	);
 
@@ -2708,7 +2722,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		cinematicLogoIntegratedRef.current = false;
 		setAdPackPlan(null);
 		setCaptionLines([]);
-	}
+  }
 
   function applyClosestMatchRecipe() {
     applyConceptCinematicWorkflow(true);
@@ -3732,7 +3746,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		} finally {
 			setCarouselSlideRegenerateBusy(null);
 		}
-	}
+  }
 
   function campaignSlideLabel(role: string, title: string): string {
     const roleKey = role as keyof typeof m.wizard.campaignSlideRoles;
@@ -3847,7 +3861,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			socialDripStillUrlRef.current = null;
 			socialDripEndUrlRef.current = null;
 			socialDripPlanRef.current = null;
-		}
+    }
     applyPromptRebuild();
   }
 
@@ -4213,8 +4227,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		});
 		if (setupImageGate) {
 			setError(resolveSetupImageGateMessage(setupImageGate));
-			return;
-		}
+      return;
+    }
     if (productPhoto && promotionMode === "concept") {
       setUseOriginalImage(true);
     }
@@ -5661,8 +5675,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			setError(friendlyError(e, m.errors.videoFailed));
 		} finally {
 			setShipItPipelineBusy(false);
-		}
-	}
+    }
+  }
 
   function useOriginalAsKeyframe() {
     if (!productPhoto) return;
@@ -5882,7 +5896,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			setResearchReelAnalyzeNote(beats);
 		}
 		return { analysis: nextAnalysis, videoPrompt: prompt };
-	}
+  }
 
   async function makeReferenceVideo(refVideo: File): Promise<string> {
 		const refined = await refineResearchVideoScriptIfNeeded();
@@ -6121,8 +6135,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 						.trim()
 						.slice(0, 160) || m.errors.videoFailed,
 			};
-		}
-	}
+    }
+  }
 
   async function ensureEndFrameUrl(): Promise<string | null> {
     if (endFrameUrl) return endFrameUrl;
@@ -6572,7 +6586,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		setImageUrl(next[0]?.imageUrl ?? null);
 		setImageVariantUrls(next.map((s) => s.imageUrl));
 		return next;
-	}
+  }
 
   async function makeCinematicStitchVideo(): Promise<string> {
 		if (cinematicScenes.length < cinematicSceneCount) {
@@ -7128,14 +7142,14 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			[
 				m.wizard.h3ShotHint[mode],
 				useH3 ? m.wizard.videoEngineMinimaxH3 : undefined,
-				pathNote,
-				data.note as string | undefined,
-			]
-				.filter(Boolean)
-				.join(" · "),
-		);
-		return data.videoUrl as string;
-	}
+        pathNote,
+        data.note as string | undefined,
+      ]
+        .filter(Boolean)
+        .join(" · "),
+    );
+    return data.videoUrl as string;
+  }
 
   async function makeMultiAngleVideo(): Promise<string> {
     const vOpts = resolveVideoGenerationOpts(templateId, videoSettings);
@@ -9219,7 +9233,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		if (usesProductAssistant && !productVideoPlan?.seedancePrompt) {
 			const planned = await planProductVideo();
 			if (!planned) return;
-		}
+    }
 
     const conceptTextVideoReady =
       conceptTextVideoEligible && Boolean(videoPrompt.trim());
@@ -9636,7 +9650,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					lastVideoTimingManifestRef.current = seedanceManifest;
 					setVideoTimingManifest(seedanceManifest);
 				}
-			}
+      }
       setVideoUrl(url);
       setQuickFixCredits(1);
       savePromptSnapshot(
@@ -10242,6 +10256,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				analyzeBrand,
 				setPromptExtra,
 				setImageOutputMode,
+				setImageResolution,
 				setImageAspectRatio,
 				setCampaignTheme,
 				selectVisualStyle,
@@ -10436,6 +10451,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     imageNextDisabled,
 		imageNextDisabledReason,
     imageOutputMode,
+    imageResolution,
     imageAspectRatio,
     effectiveImageAspectRatio,
     imagePreflight,
@@ -10632,6 +10648,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     setImageInputMode,
     setImageJobMeta,
     setImageOutputMode,
+    setImageResolution,
     setImageAspectRatio,
     setImagePrompt,
     setImageRefPhoto,

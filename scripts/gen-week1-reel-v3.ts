@@ -13,6 +13,7 @@ import path from "node:path";
 import { fal } from "@fal-ai/client";
 import sharp from "sharp";
 import { burnCaptionsOverlay } from "../lib/pipeline/caption-overlay-burn";
+import { resolveCaptionBurnStyle } from "../lib/caption-burn-styles";
 import type { CaptionLine } from "../lib/ad-pack-types";
 import { concatVideos, downloadToFile } from "../lib/pipeline/ffmpeg";
 
@@ -24,7 +25,7 @@ const OUT_ROOT = path.join(
   "Alchemy Week 1 Marketing",
   "Reel 1",
 );
-const WORK = path.join(process.cwd(), ".tmp/week1-reel-v3");
+const WORK = path.join(process.cwd(), ".tmp/week1-reel-v5");
 const LOCKUP_W = path.join(
   process.env.HOME ?? "",
   "Desktop/alchemy-carousel-v2/alchemy-lockup-white.png",
@@ -33,9 +34,18 @@ const LOCKUP_B = path.join(
   process.env.HOME ?? "",
   "Desktop/alchemy-carousel-v2/alchemy-lockup-black.png",
 );
+/** Desktop multi-angle mascot pack — primary hero for identity lock. */
 const MASCOT = path.join(
-  process.cwd(),
-  "public/images/landing/alchemy-flask-mascot-center.png",
+  process.env.HOME ?? "",
+  "Desktop/mascot-angles/mascot-front-hero.jpg",
+);
+const MASCOT_THINK = path.join(
+  process.env.HOME ?? "",
+  "Desktop/mascot-angles/mascot-expr-thinking.jpg",
+);
+const MASCOT_POINT = path.join(
+  process.env.HOME ?? "",
+  "Desktop/mascot-angles/mascot-pointing.jpg",
 );
 
 /** Match original ability-reel look: clean light UI, soft violet, flat 2D. */
@@ -167,8 +177,8 @@ function sceneDefs(lang: Lang): Array<{
     {
       id: "08-cta",
       prompt: L
-        ? `${STYLE} CLEAN end card only. Exact IMAGE 1 Alchemy flask mascot (cute crystalline flask with eyes) large and centered — keep identity. Soft purple-white gradient, NO phone mock, NO dashboards, NO feature list. Large Chinese headline:「一张照片，完整 campaign」. Soft line below:「试试 Alchemy →」. Do NOT draw any Alchemy logo or wordmark — leave bottom-right empty for lockup composite.`
-        : `${STYLE} CLEAN end card only. Exact IMAGE 1 Alchemy flask mascot (cute crystalline flask with eyes) large and centered — keep identity. Soft purple-white gradient, NO phone mock, NO dashboards, NO feature list. Large headline: "One photo. Full campaign." Soft line below: "Try Alchemy →". Do NOT draw any Alchemy logo or wordmark — leave bottom-right empty for lockup composite.`,
+        ? `${STYLE} CLEAN end card only. Exact IMAGE 1 / IMAGE 2 / IMAGE 3 Alchemy flask mascot from multiple angles (cute crystalline flask with eyes + goggles) — keep identity, prefer front hero pose. Soft purple-white gradient, NO phone mock, NO dashboards, NO feature list. Large Chinese headline:「一张照片，完整 campaign」. Soft line below:「试试 Alchemy →」. Do NOT draw any Alchemy logo or wordmark — leave bottom-right empty for lockup composite.`
+        : `${STYLE} CLEAN end card only. Exact IMAGE 1 / IMAGE 2 / IMAGE 3 Alchemy flask mascot from multiple angles (cute crystalline flask with eyes + goggles) — keep identity, prefer front hero pose. Soft purple-white gradient, NO phone mock, NO dashboards, NO feature list. Large headline: "One photo. Full campaign." Soft line below: "Try Alchemy →". Do NOT draw any Alchemy logo or wordmark — leave bottom-right empty for lockup composite.`,
       editRefs: ["mascot"],
       stampLockup: "black",
     },
@@ -243,7 +253,9 @@ async function genStill(
   let result;
   if (scene.editRefs?.length) {
     const urls: string[] = [];
-    if (scene.editRefs.includes("mascot")) urls.push(refs.mascot);
+    if (scene.editRefs.includes("mascot")) {
+      urls.push(refs.mascot, refs.mascotThink, refs.mascotPoint);
+    }
     if (scene.editRefs.includes("style")) urls.push(refs.style);
     result = await fal.subscribe("fal-ai/nano-banana-2/edit", {
       input: {
@@ -251,12 +263,18 @@ async function genStill(
         image_urls: urls,
         aspect_ratio: "9:16",
         num_images: 1,
+        resolution: "2K",
       },
       logs: true,
     });
   } else {
     result = await fal.subscribe("fal-ai/nano-banana-2", {
-      input: { prompt: scene.prompt, aspect_ratio: "9:16", num_images: 1 },
+      input: {
+        prompt: scene.prompt,
+        aspect_ratio: "9:16",
+        num_images: 1,
+        resolution: "2K",
+      },
       logs: true,
     });
   }
@@ -288,7 +306,7 @@ async function genH3Clip(
       prompt,
       reference_image_urls: refs,
       duration,
-      resolution: "768P",
+      resolution: "768P", // H3 allows only 480P | 768P | 2K | 4K (not 1080P)
       aspect_ratio: "9:16",
     },
     logs: true,
@@ -337,8 +355,8 @@ async function buildLang(lang: Lang, refs: Record<string, string>): Promise<stri
   mkdirSync(capDir, { recursive: true });
   const out =
     lang === "en"
-      ? path.join(OUT_ROOT, "week1-reel-v3-en.mp4")
-      : path.join(OUT_ROOT, "week1-reel-v3-zh-cn.mp4");
+      ? path.join(OUT_ROOT, "week1-reel-v5-en.mp4")
+      : path.join(OUT_ROOT, "week1-reel-v5-zh-cn.mp4");
   if (lang === "zh") {
     const py = path.join(process.cwd(), "scripts/burn-reel-captions-cjk.py");
     const r = spawnSync("python3", [py, raw, out], { encoding: "utf8" });
@@ -347,7 +365,7 @@ async function buildLang(lang: Lang, refs: Record<string, string>): Promise<stri
       throw new Error("CJK caption burn failed");
     }
   } else {
-    await burnCaptionsOverlay(raw, CAPTIONS[lang], out, capDir, "classic");
+    await burnCaptionsOverlay(raw, CAPTIONS[lang], out, capDir, resolveCaptionBurnStyle("classic"));
   }
   console.log(`✓ ${out}`);
   return out;
@@ -364,15 +382,34 @@ async function main() {
   mkdirSync(WORK, { recursive: true });
   mkdirSync(OUT_ROOT, { recursive: true });
 
-  const styleRef = path.join(WORK, "refs/orig-01.jpg");
-  if (!existsSync(MASCOT) || !existsSync(LOCKUP_B) || !existsSync(styleRef)) {
-    console.error("Missing mascot / lockup / style ref", { MASCOT, LOCKUP_B, styleRef });
+  const styleRef = path.join(
+    process.cwd(),
+    ".tmp/week1-reel-v3/refs/orig-01.jpg",
+  );
+  if (
+    !existsSync(MASCOT) ||
+    !existsSync(MASCOT_THINK) ||
+    !existsSync(MASCOT_POINT) ||
+    !existsSync(LOCKUP_B) ||
+    !existsSync(styleRef)
+  ) {
+    console.error("Missing mascot / lockup / style ref", {
+      MASCOT,
+      MASCOT_THINK,
+      MASCOT_POINT,
+      LOCKUP_B,
+      styleRef,
+    });
     process.exit(1);
   }
 
-  console.log("Uploading brand refs (flask mascot + original style frame)…");
+  console.log(
+    "Uploading brand refs (mascot-angles hero/think/point + original H3 style frame)…",
+  );
   const refs = {
-    mascot: await uploadLocal(MASCOT, "image/png"),
+    mascot: await uploadLocal(MASCOT, "image/jpeg"),
+    mascotThink: await uploadLocal(MASCOT_THINK, "image/jpeg"),
+    mascotPoint: await uploadLocal(MASCOT_POINT, "image/jpeg"),
     style: await uploadLocal(styleRef, "image/jpeg"),
   };
 
@@ -381,11 +418,12 @@ async function main() {
     : [((argValue("--lang") ?? "en") as Lang)];
 
   writeFileSync(
-    path.join(OUT_ROOT, "week1-reel-v3-storyboard.json"),
+    path.join(OUT_ROOT, "week1-reel-v5-storyboard.json"),
     JSON.stringify(
       {
-        source: "vFG4ZDUst20x_jsoCPD6j_7ATeKS0l.mp4",
-        mascot: "alchemy-flask-mascot-center.png",
+        quality_target: "vFG4ZDUst20x_jsoCPD6j_7ATeKS0l.mp4",
+        pipeline: "fal-ai/nano-banana-2 (+/edit) → minimax/h3/reference-to-video @1080P → caption burn",
+        mascot: "Desktop/mascot-angles/*.jpg",
         lockup: "alchemy-carousel-v2/alchemy-lockup-*.png",
         beats: CAPTIONS,
         langs,

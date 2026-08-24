@@ -27,6 +27,7 @@ describe("plan entitlements", () => {
 
   it("lists only plan-allowed video resolutions for UI", () => {
     assert.deepEqual(videoResolutionsForPlan("free"), ["480p"]);
+    assert.deepEqual(videoResolutionsForPlan("light"), ["480p"]);
     assert.deepEqual(videoResolutionsForPlan("standard"), ["480p", "720p"]);
     assert.deepEqual(videoResolutionsForPlan("pro"), ["480p", "720p", "1080p"]);
   });
@@ -74,6 +75,7 @@ describe("plan entitlements", () => {
 
   it("pricing table matches plan caps", () => {
     assert.equal(PLAN_DEFINITIONS.free.maxVideoResolution, "480p");
+    assert.equal(PLAN_DEFINITIONS.light.maxVideoResolution, "480p");
     assert.equal(PLAN_DEFINITIONS.standard.maxVideoResolution, "720p");
     assert.equal(PLAN_DEFINITIONS.pro.maxVideoResolution, "1080p");
     assert.equal(PLAN_DEFINITIONS.free.maxImageResolution, "1K");

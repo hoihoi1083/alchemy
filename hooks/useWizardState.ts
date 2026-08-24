@@ -40,6 +40,7 @@ import {
   DEFAULT_VIDEO_SETTINGS,
   type VideoSettings,
 } from "@/lib/video-settings";
+import type { ImageResolutionCap } from "@/lib/billing/entitlements";
 import type {
   CinematicReelPlan,
   CinematicSceneResult,
@@ -206,6 +207,8 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn" | "zh-tw") {
   const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
   const [imageOutputMode, setImageOutputMode] =
     useState<ImageOutputMode>(DEFAULT_IMAGE_OUTPUT_MODE);
+  const [imageResolution, setImageResolution] =
+    useState<ImageResolutionCap>("1K");
   const [imageAspectRatio, setImageAspectRatio] = useState<ImageAspectRatio>(() =>
     defaultImageAspectRatioForWorkflow("combined"),
   );
@@ -453,6 +456,8 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn" | "zh-tw") {
     setSelectedVariantIndex,
     imageOutputMode,
     setImageOutputMode,
+    imageResolution,
+    setImageResolution,
     imageAspectRatio,
     setImageAspectRatio,
     campaignTheme,

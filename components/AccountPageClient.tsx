@@ -16,9 +16,12 @@ type MeUser = {
   plan?: UserPlan | string | null;
   effectivePlan?: UserPlan | string | null;
   planRenewsAt?: string | Date | null;
-  pendingPlan?: "standard" | "pro" | "master" | "custom" | null;
+  pendingPlan?: "light" | "standard" | "pro" | "master" | "custom" | null;
   pendingPlanEffectiveAt?: string | Date | null;
   stripeCustomerId?: string | null;
+  stripeSubscriptionId?: string | null;
+  hasUsedProTrial?: boolean;
+  proTrialEndsAt?: string | Date | null;
   email?: string | null;
   name?: string | null;
 };
@@ -92,6 +95,7 @@ export function AccountPageClient() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [portalBusy, setPortalBusy] = useState(false);
+  const [cancelBusy, setCancelBusy] = useState(false);
   const [team, setTeam] = useState<TeamDashboard | null>(null);
   const [teamMembership, setTeamMembership] = useState<TeamMembershipSummary | null>(null);
   const [teamError, setTeamError] = useState<string | null>(null);
@@ -173,10 +177,38 @@ export function AccountPageClient() {
     }
   }
 
+  async function cancelSubscription() {
+    const planNow = ((user?.effectivePlan ?? user?.plan) as UserPlan) || "free";
+    const trialLikely =
+      planNow === "pro" &&
+      Boolean(user?.proTrialEndsAt) &&
+      new Date(user!.proTrialEndsAt as string).getTime() > Date.now();
+    const ok = window.confirm(
+      trialLikely ? a.cancelConfirmTrial : a.cancelConfirmPaid,
+    );
+    if (!ok) return;
+    setCancelBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/stripe/cancel-subscription", { method: "POST" });
+      const data = (await res.json()) as { ok?: boolean; message?: string; error?: string };
+      if (!res.ok) throw new Error(data.error ?? a.cancelError);
+      setError(null);
+      window.alert(data.message ?? a.cancelSuccess);
+      window.dispatchEvent(new Event(CREDITS_EVENT));
+      window.location.reload();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : a.cancelError);
+      setCancelBusy(false);
+    }
+  }
+
   const teamCopy = a.team;
   const planKey = ((user?.effectivePlan ?? user?.plan) as UserPlan) || "free";
   const planLabel =
-    planKey === "standard"
+    planKey === "light"
+      ? m.pricing.plans.light.name
+      : planKey === "standard"
       ? m.pricing.plans.standard.name
       : planKey === "pro"
         ? m.pricing.plans.pro.name
@@ -199,7 +231,9 @@ export function AccountPageClient() {
 
   const pendingPlanKey = user?.pendingPlan ?? null;
   const pendingPlanLabel =
-    pendingPlanKey === "standard"
+    pendingPlanKey === "light"
+      ? m.pricing.plans.light.name
+      : pendingPlanKey === "standard"
       ? m.pricing.plans.standard.name
       : pendingPlanKey === "pro"
         ? m.pricing.plans.pro.name
@@ -435,6 +469,20 @@ export function AccountPageClient() {
                 >
                   {portalBusy ? a.portalRedirecting : a.manageBilling}
                 </button>
+                {user?.stripeSubscriptionId ? (
+                  <button
+                    type="button"
+                    onClick={() => void cancelSubscription()}
+                    disabled={cancelBusy}
+                    className="rounded-full border border-red-200 bg-white px-5 py-2.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
+                  >
+                    {cancelBusy
+                      ? a.cancelBusy
+                      : planKey === "pro" && user?.proTrialEndsAt
+                        ? a.cancelTrial
+                        : a.cancelSubscription}
+                  </button>
+                ) : null}
                 <Link
                   href="/pricing"
                   className="rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-medium text-slate-800 hover:bg-slate-50"
@@ -448,6 +496,20 @@ export function AccountPageClient() {
                   {m.auth.libraryMenu}
                 </Link>
               </div>
+              {user?.proTrialEndsAt && planKey === "pro" ? (
+                <p className="mt-3 text-xs text-violet-700">
+                  {a.trialActiveNote.replace(
+                    "{date}",
+                    formatDate(
+                      typeof user.proTrialEndsAt === "string"
+                        ? user.proTrialEndsAt
+                        : new Date(user.proTrialEndsAt).toISOString(),
+                      locale,
+                    ),
+                  )}
+                </p>
+              ) : null}
+              <p className="mt-2 text-xs text-slate-500">{a.tokenExpiryNote}</p>
               {!user?.stripeCustomerId ? (
                 <p className="mt-3 text-xs text-slate-500">{a.portalNeedSubscribe}</p>
               ) : null}

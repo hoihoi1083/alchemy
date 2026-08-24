@@ -4,6 +4,7 @@ import { useLocale } from "@/components/LocaleProvider";
 import { useWizard } from "@/components/studio/WizardContext";
 import { WorkflowModePicker } from "@/components/WorkflowModePicker";
 import { ImageOutputModePicker } from "@/components/ImageOutputModePicker";
+import { ImageResolutionPanel } from "@/components/ImageResolutionPanel";
 import { ArtStylePicker } from "@/components/ArtStylePicker";
 import { CompositionPresetPicker } from "@/components/studio/CompositionPresetPicker";
 import { ImageAspectRatioPicker } from "@/components/ImageAspectRatioPicker";
@@ -624,6 +625,13 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
             forVideoKeyframe={wizard.workflowMode === "combined"}
             includeTeachingCarousel={wizard.workflowMode === "image-only"}
           />
+          <div className="mt-4">
+            <ImageResolutionPanel
+              value={wizard.imageResolution}
+              onChange={wizard.setImageResolution}
+              accent="violet"
+            />
+          </div>
           {wizard.imageOutputMode === "teaching-carousel" ? (
             <label className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-700">
               <span className="font-medium">{m.wizard.teachingCarouselSlideCountLabel}</span>
@@ -934,6 +942,13 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
                 forVideoKeyframe={wizard.workflowMode === "combined"}
                 includeTeachingCarousel={wizard.workflowMode === "image-only"}
               />
+              <div className="mt-4">
+                <ImageResolutionPanel
+                  value={wizard.imageResolution}
+                  onChange={wizard.setImageResolution}
+                  accent="violet"
+                />
+              </div>
             </div>
           ) : null}
           {wizard.headline.trim() || wizard.subline.trim() ? (

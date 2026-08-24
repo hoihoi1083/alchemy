@@ -1,10 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useAuth } from "@clerk/nextjs";
 import { useState } from "react";
 import { useLocale } from "@/components/LocaleProvider";
-import { PLAN_DEFINITIONS } from "@/lib/billing/plans";
 import { pricingCardCapacityItems } from "@/lib/billing/pricing-card-capacity";
 import {
   trackCheckoutFailed,
@@ -15,10 +13,10 @@ import {
 import { Reveal } from "@/components/landing/Reveal";
 
 type Interval = "monthly" | "yearly";
-type PaidPlan = "standard" | "pro" | "master" | "custom";
+type PaidPlan = "light" | "standard" | "pro" | "master" | "custom";
 
 function capacityFor(
-	plan: "free" | "standard" | "pro" | "master" | "custom",
+	plan: "free" | "light" | "standard" | "pro" | "master" | "custom",
 	p: {
 		capacityFreeImages: string;
 		capacityFreeVideos: string;
@@ -132,14 +130,22 @@ export function LandingPricingTeaser() {
 
 	const cards = [
 		{
-			id: "free" as const,
-			name: P.plans.free.name,
-			blurb: P.plans.free.description,
-			priceLabel: P.freeForever,
-			tokensLabel: `${PLAN_DEFINITIONS.free.monthlyTokens.toLocaleString()} ${P.tokensOnce}`,
-			capacity: capacityFor("free", P),
-			features: P.plans.free.features.slice(1),
-			cta: P.getStarted,
+			id: "light" as const,
+			name: P.plans.light.name,
+			blurb: P.plans.light.description,
+			priceLabel:
+				interval === "monthly"
+					? P.plans.light.monthlyPrice
+					: P.plans.light.yearlyPrice,
+			listPrice: P.plans.light.listPrice,
+			saveLabel:
+				interval === "monthly"
+					? P.plans.light.monthlySave
+					: P.plans.light.yearlySave,
+			tokensLabel: `${P.plans.light.tokens} ${P.tokensPerMonth}`,
+			capacity: capacityFor("light", P),
+			features: P.plans.light.features.slice(1),
+			cta: P.subscribe,
 			popular: false,
 		},
 		{
@@ -277,6 +283,7 @@ export function LandingPricingTeaser() {
 				>
 					{cards.map((card, i) => {
 						const busyKey =
+							card.id === "light" ||
 							card.id === "standard" ||
 							card.id === "pro" ||
 							card.id === "master" ||
@@ -340,11 +347,9 @@ export function LandingPricingTeaser() {
 										</p>
 										<p className="text-2xl font-bold leading-none text-slate-900">
 											{card.priceLabel}
-											{card.id !== "free" ? (
-												<span className="text-xs font-medium text-slate-500">
-													{P.perMonth}
-												</span>
-											) : null}
+											<span className="text-xs font-medium text-slate-500">
+												{P.perMonth}
+											</span>
 										</p>
 										<p
 											className={`mt-0.5 flex h-5 items-center ${
@@ -363,8 +368,7 @@ export function LandingPricingTeaser() {
 										</p>
 										<p
 											className={`h-4 text-[10px] leading-4 ${
-												interval === "yearly" &&
-												card.id !== "free"
+												interval === "yearly"
 													? "text-slate-400"
 													: "invisible"
 											}`}
@@ -436,18 +440,6 @@ export function LandingPricingTeaser() {
 									</ul>
 
 									<div className="mt-5 shrink-0">
-									{card.id === "free" ? (
-										<Link
-											href="/start"
-											className={`block rounded-full px-3 py-2.5 text-center text-xs font-semibold transition ${
-												isActive
-													? "bg-violet-600 text-white hover:bg-violet-500"
-													: "border border-violet-300 text-violet-700 hover:bg-violet-50"
-											}`}
-										>
-											{ctaLabel}
-										</Link>
-									) : (
 										<button
 											type="button"
 											disabled={busy != null}
@@ -462,7 +454,6 @@ export function LandingPricingTeaser() {
 										>
 											{ctaLabel}
 										</button>
-									)}
 									</div>
 								</div>
 							</Reveal>

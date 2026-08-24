@@ -11,6 +11,7 @@ import { estimatePricingCardCapacity } from "@/lib/billing/pricing-card-capacity
 
 const CAPACITY_PLANS: LandingCapacityPlan[] = [
 	"free",
+	"light",
 	"standard",
 	"pro",
 	"master",
@@ -108,6 +109,7 @@ export function PlanTokenCapacityGrid({
 
 	const planName = (id: LandingCapacityPlan): string => {
 		if (id === "free") return P.plans.free.name;
+		if (id === "light") return P.plans.light.name;
 		if (id === "standard") return P.plans.standard.name;
 		if (id === "pro") return P.plans.pro.name;
 		return P.plans.master.name;

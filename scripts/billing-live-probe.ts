@@ -45,8 +45,10 @@ async function main() {
     });
 
     const granted = await ensureSignupGrant(CLERK_ID);
-    if (granted !== 500) {
-      throw new Error(`Expected signup grant 500, got ${granted}`);
+    if (granted !== FREE_SIGNUP_GRANT_TOKENS) {
+      throw new Error(
+        `Expected signup grant ${FREE_SIGNUP_GRANT_TOKENS}, got ${granted}`,
+      );
     }
     const again = await ensureSignupGrant(CLERK_ID);
     if (again !== null) {
@@ -93,14 +95,18 @@ async function main() {
       .filter((t) => t.reason === "signup_grant")
       .reduce((s, t) => s + Number(t.delta), 0);
 
-    if (grantedSum !== 500) throw new Error(`Grant ledger sum ${grantedSum} != 500`);
-    if (consumed !== 500) throw new Error(`Consume ledger sum ${consumed} != 500`);
+    if (grantedSum !== FREE_SIGNUP_GRANT_TOKENS) {
+      throw new Error(`Grant ledger sum ${grantedSum} != ${FREE_SIGNUP_GRANT_TOKENS}`);
+    }
+    if (consumed !== FREE_SIGNUP_GRANT_TOKENS) {
+      throw new Error(`Consume ledger sum ${consumed} != ${FREE_SIGNUP_GRANT_TOKENS}`);
+    }
 
     const final = await getUserBalance(CLERK_ID);
     if (final?.balance !== 0) throw new Error(`Final balance ${final?.balance} != 0`);
 
     console.log("Live probe OK:");
-    console.log(`  signup grant: 500 (once)`);
+    console.log(`  signup grant: ${FREE_SIGNUP_GRANT_TOKENS} (once)`);
     console.log(`  consumed total: ${consumed}`);
     console.log(`  final balance: 0`);
     console.log(`  ledger rows: ${txs.length}`);

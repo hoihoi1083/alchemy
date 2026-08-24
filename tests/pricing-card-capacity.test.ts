@@ -21,20 +21,24 @@ describe("estimatePricingCardCapacity", () => {
     assert.equal(TOKEN_COST.image, 65);
 
     const free = estimatePricingCardCapacity("free");
-    assert.equal(free.images, 7);
-    assert.equal(free.videos8s, 1);
+    assert.equal(free.images, 4);
+    assert.equal(free.videos8s, 0);
+
+    const light = estimatePricingCardCapacity("light");
+    assert.equal(light.images, 46);
+    assert.equal(light.videos8s, 9);
 
     const standard = estimatePricingCardCapacity("standard");
-    assert.equal(standard.images, 46);
-    assert.equal(standard.videos8s, 9);
+    assert.equal(standard.images, 123);
+    assert.equal(standard.videos8s, 24);
 
     const pro = estimatePricingCardCapacity("pro");
-    assert.equal(pro.images, 123);
-    assert.equal(pro.videos8s, 24);
+    assert.equal(pro.images, 246);
+    assert.equal(pro.videos8s, 48);
 
     const master = estimatePricingCardCapacity("master");
-    assert.equal(master.images, 246);
-    assert.equal(master.videos8s, 48);
+    assert.equal(master.images, 430);
+    assert.equal(master.videos8s, 85);
   });
 });
 
@@ -42,11 +46,11 @@ describe("pricingCardCapacityItems", () => {
   it("prefixes counts with Up to at 1K / 480p", () => {
     assert.deepEqual(
       pricingCardCapacityItems("free", copy).map((i) => i.label),
-      ["Up to 7 single images", "Up to 1 × 8s 480p videos"],
+      ["Up to 4 single images", "Up to 0 × 8s 480p videos"],
     );
     assert.deepEqual(
       pricingCardCapacityItems("pro", copy).map((i) => i.label),
-      ["Up to 123 single images", "Up to 24 × 8s 480p videos"],
+      ["Up to 246 single images", "Up to 48 × 8s 480p videos"],
     );
   });
 });

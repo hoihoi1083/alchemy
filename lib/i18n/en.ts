@@ -1,30 +1,30 @@
 import type { TemplateId } from "@/lib/templates";
 
 export const en = {
-	meta: {
+  meta: {
 		title: "Alchemy AI Lab",
 		description:
 			"Make social ads from your product photo — add BGM and captions when you want",
-	},
-	lang: {
-		en: "English",
+  },
+  lang: {
+    en: "English",
 		zh: "繁體中文（香港）",
 		"zh-cn": "简体中文",
 		"zh-tw": "繁體中文（台灣）",
-	},
-	auth: {
-		signIn: "Sign in",
+  },
+  auth: {
+    signIn: "Sign in",
 		signInTab: "Sign In",
 		signUpTab: "Sign Up",
 		signInSubtitle: "Welcome back! Please sign in to continue.",
 		signInOAuthHint: "New here? If you don’t have an Alchemy account yet, click “Sign up”.",
-		signUpSubtitle: "Create your account — 500 free tokens to start creating.",
+		signUpSubtitle: "Create your account — 300 free tokens to start creating.",
 		tokensBalance: "{n} tokens",
 		tokensBalanceTitle: "Your token balance — view plans & top-ups",
 		accountMenu: "Account & billing",
 		libraryMenu: "My library",
 		brandKitMenu: "Brand kit",
-		signupPromoBar: "Sign up to get 500 free tokens",
+		signupPromoBar: "Sign up to get 300 free tokens",
 		closeModal: "Close",
 		panelTagline: "AI marketing creative workflow",
 		panelFeatures: [
@@ -73,11 +73,24 @@ export const en = {
 		reasons: {
 			signup_grant: "Free signup tokens",
 			subscription_grant: "Subscription tokens",
+			trial_bonus: "Pro trial bonus tokens",
 			topup: "Token top-up",
 			consume: "Generation spend",
 			refund: "Refund",
 			admin_adjust: "Adjustment",
+			expire: "Expired tokens",
 		},
+		cancelSubscription: "Cancel subscription",
+		cancelTrial: "Cancel Pro trial",
+		cancelBusy: "Canceling…",
+		cancelConfirmTrial:
+			"Cancel your Pro trial now? Pro features end immediately. Remaining tokens stay on your account.",
+		cancelConfirmPaid:
+			"Cancel renewal? You keep paid access until the end of the current billing period.",
+		cancelSuccess: "Subscription updated.",
+		cancelError: "Could not cancel. Try Manage billing or contact support.",
+		trialActiveNote: "Pro trial active — cancels or converts on {date}.",
+		tokenExpiryNote: "Tokens expire 6 months after they are granted. Oldest tokens are used first.",
 		team: {
 			title: "Enterprise seats",
 			seatsUsed: "Seats used: {held} / {limit}",
@@ -133,6 +146,12 @@ export const en = {
 			inviteSwitchAccount: "Sign out and switch account",
 		},
 	},
+	planGate: {
+		title: "Upgrade to unlock",
+		body: "{feature} is available on {plan} and above.",
+		cta: "View {plan} on Pricing",
+		dismiss: "Not now",
+	},
 	library: {
 		title: "My library",
 		subtitle:
@@ -166,6 +185,16 @@ export const en = {
 		download: "Download",
 		editCaptions: "Edit captions",
 		editImage: "Edit image",
+		teamFolderTitle: "Team folder",
+		teamFolderSubtitle:
+			"Files shared with your Enterprise seats. Personal libraries stay private until you share.",
+		teamFolderEmpty: "Nothing shared yet. Use “Share with team” on a saved file.",
+		shareWithTeam: "Share with team",
+		unshareFromTeam: "Remove from team",
+		sharing: "Updating…",
+		sharedBadge: "Shared",
+		sharedByLabel: "Shared by {name}",
+		shareFailed: "Could not update team sharing.",
 	},
 	footer: {
 		tagline:
@@ -205,9 +234,9 @@ export const en = {
 		saveSaving: "Saving…",
 		saveSaved: "Saved ✓",
 		saveError: "Save failed",
-	},
-	start: {
-		title: "What are you promoting?",
+  },
+  start: {
+    title: "What are you promoting?",
 		subtitle:
 			"Pick one path — we’ll tailor the studio, styles, and required fields.",
 		heroSubtitle:
@@ -241,9 +270,9 @@ export const en = {
 			"Campaign idea",
 			"Membership",
 		],
-		continueLabel: "Continue to studio",
+    continueLabel: "Continue to studio",
 		continueToStep2: "Continue",
-		switchLaterHint: "You can switch mode anytime from the studio header.",
+    switchLaterHint: "You can switch mode anytime from the studio header.",
 		tipTitle: "Which option should I pick?",
 		tipChoose: "Choose",
 		tipPhysical:
@@ -305,37 +334,37 @@ export const en = {
 		welcomeTitle: "Welcome — you’re in!",
 		welcomeBody:
 			"You’ve received {n} free tokens to start creating. Pick a path below and make your first ad.",
-	},
-	header: {
+  },
+  header: {
 		badge: "Easy mode · IG / FB reels · add music later",
 		title: "Alchemy AI Lab studio",
-		subtitle: "Upload product · pick a style · get Reels",
-		subtitleConcept: "Brand copy · pick a style · get feed posts & reels",
-		promotionPhysical: "Physical product",
+    subtitle: "Upload product · pick a style · get Reels",
+    subtitleConcept: "Brand copy · pick a style · get feed posts & reels",
+    promotionPhysical: "Physical product",
 		promotionConcept: "Service / brand / concept",
-		switchPromotion: "Switch type",
-		homeLink: "Back to landing",
-		themeToggleLight: "Light",
-		themeToggleDark: "Dark",
-		proLink: "Pro canvas",
+    switchPromotion: "Switch type",
+    homeLink: "Back to landing",
+    themeToggleLight: "Light",
+    themeToggleDark: "Dark",
+    proLink: "Pro canvas",
 		captionsLink: "Caption & audio studio",
 		imageCanvasLink: "Image text & logo studio",
-	},
-	landing: {
+  },
+  landing: {
 		badge: "AI marketing content platform",
 		titleBefore: "Create marketing content ",
 		titleHighlight: "without",
 		titleAfter: " writing prompts.",
 		title: "Create marketing content without writing prompts.",
-		subtitle:
+    subtitle:
 			"Upload a product image or paste a reference link. Alchemy AI analyzes the style, creates editable prompts and storyboards, then generates ready-to-use ads, images and reels in 5 mins.",
-		openStudio: "Open Studio",
-		startCreating: "Start Creating",
+    openStudio: "Open Studio",
+    startCreating: "Start Creating",
 		tryFree: "Try Free",
 		floatingCta: "Start now",
 		ctaPrimary: "Try Free — Create Your First Ad",
 		ctaSecondary: "Watch Demo",
-		howItWorks: "How It Works",
+    howItWorks: "How It Works",
 		navHome: "Home",
 		navProduct: "Product",
 		navTemplates: "Templates",
@@ -728,38 +757,42 @@ export const en = {
 		pricingFreeCta: "Start Free",
 		pricingProCta: "Start Pro",
 		pricingCustom: "Enterprise",
-		pricingCustomHint: "5 seats · 40,000 tokens / month",
+		pricingCustomHint: "3 seats · 40,000 tokens / month",
 		planBlurbFree: "Try the guided Studio workflow",
-		planBlurbStandard: "For early businesses",
-		planBlurbPro: "For brands & freelancers",
-		planBlurbMaster: "For agencies & teams",
-		planBlurbCustom: "5 seats · shared token pool",
+		planBlurbLight: "Weekly posting for SMB owners",
+		planBlurbStandard: "Growing brands and freelancers",
+		planBlurbPro: "Agencies and power users",
+		planBlurbMaster: "High-volume creators",
+		planBlurbCustom: "3 seats · shared token pool",
 		planFeaturesFree: [
 			"Guided image & video paths",
-			"500 signup tokens",
-			"Library downloads",
+			"300 signup tokens",
+			"480p video · 1K images",
+		],
+		planFeaturesLight: [
+			"3,000 tokens / month",
+			"480p video · 1K images",
+			"Email support · top-ups",
 		],
 		planFeaturesStandard: [
-			"3,000 tokens / month",
-			"720p video",
-			"Token top-ups",
+			"8,000 tokens / month",
+			"720p video · 1K images",
+			"Campaign mode · top-ups",
 		],
 		planFeaturesPro: [
-			"8,000 tokens / month",
-			"1080p video",
-			"Priority generation",
-			"High-res exports",
+			"16,000 tokens / month",
+			"1080p video · 1K images",
+			"Campaign · 1080p templates",
 		],
 		planFeaturesMaster: [
-			"16,000 tokens / month",
-			"Pro canvas",
+			"28,000 tokens / month",
+			"2K images · Pro canvas",
 			"Priority support",
-			"2K images",
 		],
 		planFeaturesCustom: [
 			"40,000 tokens / month",
-			"5 seats · shared pool",
-			"Pro canvas + 2K images",
+			"3 seats · shared pool",
+			"Team folder · Pro canvas · 2K",
 		],
 		tokensTitle: "How AI Tokens Work",
 		tokensBody:
@@ -789,7 +822,7 @@ export const en = {
 		finalTitle: "Ready to create agency-like content?",
 		finalBody: "Join marketers and businesses creating better ads, faster.",
 		finalImageAlt: "Alchemy studio creatives and product asset preview",
-		proCanvasLink: "Pro canvas",
+    proCanvasLink: "Pro canvas",
 		captionsLink: "Caption, BGM & voice for any video",
 		imageCanvasLink: "Add text & logo to any image",
 		ugcLink: "Try UGC talking presenter",
@@ -1087,68 +1120,68 @@ export const en = {
 
 			},
 		},
-		templatesBadge: "Templates",
-		templatesTitle: "Start from a marketing template",
-		templatesSubtitle:
+    templatesBadge: "Templates",
+    templatesTitle: "Start from a marketing template",
+    templatesSubtitle:
 			"Scenario cards — pick one, then follow the guided wizard (upload → image → video).",
-		useTemplate: "Use in wizard",
+    useTemplate: "Use in wizard",
 		templateOutputImage: "Image post",
 		templateOutputVideo: "Video reel",
 		howInlineIntro: "Four steps from reference to published creative.",
 		howReadMore: "Full guide →",
-		demoItems: [
-			"Product photo input",
-			"Style + prompt guidance",
-			"Storyboard scenes",
+    demoItems: [
+      "Product photo input",
+      "Style + prompt guidance",
+      "Storyboard scenes",
 			"video output",
-		],
-		steps: [
-			{
-				no: "01",
-				title: "Analyze product",
-				body: "Use product details and optional brand context.",
-			},
-			{
-				no: "02",
-				title: "Generate creatives",
-				body: "Create lifestyle images or storyboard scenes.",
-			},
-			{
-				no: "03",
-				title: "Refine to final video",
+    ],
+    steps: [
+      {
+        no: "01",
+        title: "Analyze product",
+        body: "Use product details and optional brand context.",
+      },
+      {
+        no: "02",
+        title: "Generate creatives",
+        body: "Create lifestyle images or storyboard scenes.",
+      },
+      {
+        no: "03",
+        title: "Refine to final video",
 				body: "Use guided prompt + video generation for final reel.",
-			},
-		],
-		quickStart: {
-			quickAd: "Start Quick Ad",
-			storyboard: "Start Storyboard Reel",
-		},
-		highlightsTitle: "Why this workflow works",
-		highlights: [
-			{
-				title: "Beginner-safe defaults",
-				body: "The wizard keeps settings simple by default and avoids common quality mistakes.",
-			},
-			{
-				title: "Fast draft to final flow",
-				body: "Generate still first, then animate to video — easier to iterate and control quality.",
-			},
-			{
-				title: "Built for small business ads",
-				body: "Templates and prompts are tuned for IG/FB reels and practical promotion use-cases.",
-			},
-		],
-		sampleTitle: "Typical output path",
-		sampleTimeline: [
-			"Upload product photo + fill headline",
-			"Generate image or storyboard scene pack",
-			"Review prompt and click generate video",
-			"Download clean MP4 for CapCut/Premiere",
-		],
-		faqTitle: "FAQ",
+      },
+    ],
+    quickStart: {
+      quickAd: "Start Quick Ad",
+      storyboard: "Start Storyboard Reel",
+    },
+    highlightsTitle: "Why this workflow works",
+    highlights: [
+      {
+        title: "Beginner-safe defaults",
+        body: "The wizard keeps settings simple by default and avoids common quality mistakes.",
+      },
+      {
+        title: "Fast draft to final flow",
+        body: "Generate still first, then animate to video — easier to iterate and control quality.",
+      },
+      {
+        title: "Built for small business ads",
+        body: "Templates and prompts are tuned for IG/FB reels and practical promotion use-cases.",
+      },
+    ],
+    sampleTitle: "Typical output path",
+    sampleTimeline: [
+      "Upload product photo + fill headline",
+      "Generate image or storyboard scene pack",
+      "Review prompt and click generate video",
+      "Download clean MP4 for CapCut/Premiere",
+    ],
+    faqTitle: "FAQ",
 		faqShowMore: "Show more questions",
 		faqShowLess: "Show fewer questions",
-		faq: [
+    faq: [
 			{
 				q: "What is Alchemy AI Lab?",
 				a: "Alchemy AI Lab is an AI marketing studio that helps brands create product ads, social posts, storyboards, and short videos — without writing complex prompts.",
@@ -1173,22 +1206,22 @@ export const en = {
 				q: "Can I create short videos?",
 				a: "Yes. You can generate video directly, or use a storyboard-first path to review scenes before the final clip.",
 			},
-			{
-				q: "How long does one run take?",
-				a: "Quick image: ~10-30s. Storyboard image pack: ~2-5 min. Video: usually ~1-3 min depending on queue and duration.",
-			},
-			{
+      {
+        q: "How long does one run take?",
+        a: "Quick image: ~10-30s. Storyboard image pack: ~2-5 min. Video: usually ~1-3 min depending on queue and duration.",
+      },
+      {
 				q: "Will regenerating cost extra tokens?",
 				a: "Yes. Every AI regenerate call (image, scene, or video) is a new generation and uses tokens again.",
 			},
 			{
 				q: "How many free tokens do I get?",
-				a: "New accounts get 500 tokens once (not a monthly refill) — usually enough for 1 promotional image plus 1× 8s 480p video. See Pricing for plans and top-ups.",
-			},
-			{
-				q: "Do I need to upload reference videos?",
-				a: "No. Reference MP4 is optional. Use it only when you want to mimic motion/style from an existing ad.",
-			},
+				a: "New accounts get 300 tokens once (not a monthly refill). When you run low, you can start a 7-day Pro trial (card required) for extra tokens and Pro features — details on Pricing. See Pricing for plans and top-ups.",
+      },
+      {
+        q: "Do I need to upload reference videos?",
+        a: "No. Reference MP4 is optional. Use it only when you want to mimic motion/style from an existing ad.",
+      },
 			{
 				q: "Is everything storyboard-first?",
 				a: "No. Video-only paths generate video directly. Storyboard stills are used on image→video (combined) paths.",
@@ -1285,11 +1318,15 @@ export const en = {
 		faq: [
 			{
 				q: "How do AI Tokens work?",
-				body: "Tokens measure billable AI usage in the studio. Harder jobs (longer video, higher resolution, storyboard packs) use more tokens. Each paid step shows the cost before you generate.",
+				body: "Tokens measure billable AI usage in the studio. Harder jobs (longer video, higher resolution, storyboard packs) use more tokens. Each paid step shows the cost before you generate. Tokens expire 6 months after they are granted; oldest tokens are used first.",
 			},
 			{
 				q: "How many free tokens do new accounts get?",
-				body: "New signups receive 500 tokens once — not a monthly refill. That usually covers 1 promotional image plus 1× 8s 480p video. Upgrade or top up when you need more.",
+				body: "New signups receive 300 tokens once — not a monthly refill. That is enough to try the workflow. When your balance is too low for a job, you can start a 7-day Pro trial (card required).",
+			},
+			{
+				q: "What is the 7-day Pro trial?",
+				body: "If you are on Free and need more tokens, confirm the trial and add a card in Stripe Checkout. You immediately get +700 tokens and Pro plan features for 7 days. After 7 days we charge monthly Pro and add the full Pro monthly token allotment. Cancel anytime during the trial in Account — Pro features end immediately; leftover tokens stay. Trial is monthly Pro only (not yearly). One trial per account.",
 			},
 			{
 				q: "What are AI Tokens used for?",
@@ -1297,7 +1334,11 @@ export const en = {
 			},
 			{
 				q: "What happens when I run out of tokens?",
-				body: "Generation is blocked until you top up or upgrade. You’ll see a clear warning before each run.",
+				body: "Generation is blocked until you start the Pro trial (Free users), upgrade, or top up (paid plans). You’ll see a clear warning before each run.",
+			},
+			{
+				q: "Do tokens expire?",
+				body: "Yes. Every grant (signup, trial bonus, subscription, top-up, refund) expires 6 months after it is added. We always spend your oldest tokens first. Balances you already had when this rule launched keep their amount and expire 6 months from the launch migration date.",
 			},
 			{
 				q: "How many images or videos can I create with each plan?",
@@ -1305,7 +1346,7 @@ export const en = {
 			},
 			{
 				q: "Do failed generations charge tokens?",
-				body: "If an AI job fails after charge, we refund that run’s tokens to your balance. You are not meant to pay for a failed generation.",
+				body: "If an AI job fails after charge, we refund that run’s tokens to your balance. You are not meant to pay for a failed generation. Refunded tokens also expire 6 months from the refund date.",
 			},
 			{
 				q: "Can I use Alchemy-generated content commercially?",
@@ -1317,44 +1358,46 @@ export const en = {
 			},
 			{
 				q: "Does Alchemy support agencies and teams?",
-				body: "Yes. Subscribe to Enterprise for 5 seats on one plan: the owner invites teammates from Account, they keep separate libraries, and generations use the owner’s shared 40,000-token pool. Pro and Master stay single-seat self-serve plans.",
+				body: "Yes. Subscribe to Enterprise for 3 seats on one plan: the owner invites teammates from Account, they keep separate personal libraries (and can opt files into a shared Team folder), and generations use the owner’s shared 40,000-token pool. Light, Standard, Pro, and Master stay single-seat self-serve plans.",
 			},
 			{
 				q: "When can I buy extra tokens?",
-				body: "After you subscribe to any paid plan. Free users upgrade first, then buy top-ups as needed.",
+				body: "After you subscribe to any paid plan (including during/after Pro trial once paid). Free users start a trial or upgrade first, then buy top-ups as needed. Top-ups expire in 6 months like other tokens.",
 			},
 			{
 				q: "How do I upgrade my plan?",
-				body: "On this Pricing page (signed in), choose a higher plan (Standard → Pro → Master → Enterprise) and confirm. Upgrade starts a new billing period today: Stripe credits unused time on your current plan and charges the new plan from today — we do not change Stripe product list prices. You keep remaining tokens and receive the full new plan allotment immediately (for example Standard 3,000 → Master adds 16,000 on top). Your next renewal moves forward from the upgrade (monthly or yearly, matching the plan you chose). You don’t need Manage billing to upgrade.",
+				body: "On this Pricing page (signed in), choose a higher plan (Light → Standard → Pro → Master → Enterprise) and confirm. Upgrade starts a new billing period today: Stripe credits unused time on your current plan and charges the new plan from today. You keep remaining tokens and receive the full new plan allotment immediately. Your next renewal moves forward from the upgrade.",
 			},
 			{
 				q: "How do I downgrade my plan?",
-				body: "On this Pricing page, choose a lower plan. Downgrades are scheduled for your next billing date — you keep your current plan, features, and remaining tokens until then. The lower price and plan token allotment start on the next cycle. This avoids paying a lower price while still using a higher-tier plan mid-cycle. Manage billing is for cancel / payment methods, not for picking a lower plan.",
+				body: "On this Pricing page, choose a lower plan. Downgrades are scheduled for your next billing date — you keep your current plan, features, and remaining tokens until then. The lower price and plan token allotment start on the next cycle.",
 			},
 			{
 				q: "Where do I change or cancel my subscription?",
-				body: "Upgrade or schedule a downgrade on this Pricing page while signed in. Cancel renewal or update cards in Manage billing (Stripe Customer Portal). After cancel, paid access continues until the end of the current period.",
+				body: "Upgrade or schedule a downgrade on this Pricing page while signed in. Cancel a Pro trial or schedule paid cancel from Account, or use Manage billing (Stripe Customer Portal) for cards and invoices. During trial, cancel ends Pro features immediately and keeps leftover tokens. After a paid cancel, access continues until the end of the current period.",
+			},
+			{
+				q: "How does payment work?",
+				body: "Subscriptions and top-ups are billed securely via Stripe (card, Apple Pay, Google Pay, Link where available). Monthly Pro trial requires a card on file and charges after 7 days unless you cancel. WeChat Pay and Alipay are not available for subscription Checkout.",
 			},
 		],
 		footnote:
-			"Prices in USD. Video resolution and duration affect token cost. Paid via Stripe. Upgrade on Pricing starts a new plan month today; downgrades take effect next cycle. Cancel from Manage billing.",
+			"Prices in USD. Tokens expire after 6 months (oldest first). Video resolution and duration affect token cost. Paid via Stripe. Free: 300 signup tokens. Optional 7-day monthly Pro trial (+700 tokens) when you run low. Upgrade on Pricing starts a new plan month today; downgrades take effect next cycle. Cancel trial or renewal from Account / Manage billing.",
 		plans: {
 			free: {
 				name: "Free",
 				description: "Try the full guided workflow",
 				features: [
-					"500 tokens (1 image + 1× 8s 480p video)",
+					"300 tokens once at signup",
 					"Guided wizard + templates",
-					"Up to 480p video",
-					"Up to 1K images",
-					"Platform research",
+					"Video up to 480p · images up to 1K",
+					"Platform research · storyboard",
+					"A/B & teaching carousel",
 					"Image → video combined flow",
-					"Storyboard mode",
-					"A/B, Campaign, and teaching carousel",
 				],
 			},
-			standard: {
-				name: "Standard",
+			light: {
+				name: "Light",
 				listPrice: "$29.99",
 				monthlyPrice: "$19.99",
 				yearlyPrice: "$14.99",
@@ -1365,56 +1408,64 @@ export const en = {
 				features: [
 					"3,000 tokens / month",
 					"Guided wizard + templates",
-					"Up to 720p video",
-					"Up to 1K images",
-					"Platform research",
-					"Image → video combined flow",
-					"Storyboard mode",
-					"A/B, Campaign, and teaching carousel",
+					"Video up to 480p · images up to 1K",
+					"Platform research · storyboard · A/B & teaching carousel",
 					"Email support",
+					"Token top-ups ($10 / 1k)",
 				],
 			},
-			pro: {
-				name: "Pro",
+			standard: {
+				name: "Standard",
 				listPrice: "$79.99",
 				monthlyPrice: "$49.99",
 				yearlyPrice: "$39.99",
 				monthlySave: "38% off",
 				yearlySave: "50% off",
 				tokens: "8,000",
-				description: "Agencies and power users",
+				description: "Growing brands and freelancers",
 				features: [
 					"8,000 tokens / month",
 					"Guided wizard + templates",
-					"Up to 1080p video",
-					"Up to 1K images",
-					"Platform research",
-					"Image → video combined flow",
-					"Storyboard mode",
-					"A/B, Campaign, and teaching carousel",
-					"Priority generation",
+					"Video up to 720p · images up to 1K",
+					"Campaign mode · multi-scene templates",
+					"Platform research · storyboard · A/B & teaching carousel",
+					"Email support · token top-ups",
+				],
+			},
+			pro: {
+				name: "Pro",
+				listPrice: "$159.99",
+				monthlyPrice: "$99.99",
+				yearlyPrice: "$79.99",
+				monthlySave: "38% off",
+				yearlySave: "50% off",
+				tokens: "16,000",
+				description: "Agencies and power users",
+				features: [
+					"16,000 tokens / month",
+					"Guided wizard + templates",
+					"Video up to 1080p · images up to 1K",
+					"Campaign mode · 1080p templates",
+					"Platform research · storyboard · A/B & teaching carousel",
+					"Email support · token top-ups",
 				],
 			},
 			master: {
 				name: "Master",
-				listPrice: "$159.99",
-				monthlyPrice: "$99.99",
-				yearlyPrice: "$79.00",
-				monthlySave: "38% off",
+				listPrice: "$279.99",
+				monthlyPrice: "$169.99",
+				yearlyPrice: "$139.99",
+				monthlySave: "39% off",
 				yearlySave: "50% off",
-				tokens: "16,000",
+				tokens: "28,000",
 				description: "Teams with high volume",
 				features: [
-					"16,000 tokens / month",
+					"28,000 tokens / month",
 					"Guided wizard + templates",
-					"Up to 1080p video",
-					"Up to 2K images",
-					"Platform research",
-					"Image → video combined flow",
-					"Storyboard mode",
-					"A/B, Campaign, and teaching carousel",
+					"Video up to 1080p · images up to 2K",
+					"Campaign mode · storyboard · A/B & teaching carousel",
 					"Pro canvas",
-					"Priority support",
+					"Email support · token top-ups · priority support",
 				],
 			},
 			custom: {
@@ -1425,49 +1476,53 @@ export const en = {
 				monthlySave: "38% off",
 				yearlySave: "50% off",
 				tokens: "40,000",
-				description: "5 seats for your team, one shared token pool",
-				badge: "5 seats",
-				seatsLabel: "5 seats · shared token pool",
+				description: "3 seats for your team, one shared token pool",
+				badge: "3 seats",
+				seatsLabel: "3 seats · shared token pool",
 				features: [
 					"40,000 tokens / month",
-					"5 seats (owner + 4 teammates)",
+					"3 seats (owner + 2 teammates)",
 					"Shared token pool billed to the owner",
 					"Separate personal libraries",
-					"Owner invites, removes, and swaps seats anytime",
-					"1080p video, 2K images, Pro canvas",
-					"Priority support",
-					"Token top-ups ($10 / 1k)",
+					"Video up to 1080p · images up to 2K · Pro canvas",
+					"Campaign · storyboard · A/B & teaching carousel",
+					"Team folder — share selected files with seats",
+					"Priority support · token top-ups ($10 / 1k)",
 				],
 			},
 		},
 		comparisonRows: [
 			{
 				feature: "Tokens",
-				free: "500 once / signup",
-				standard: "3,000 / mo",
-				pro: "8,000 / mo",
-				master: "16,000 / mo",
+				free: "300 once / signup",
+				light: "3,000 / mo",
+				standard: "8,000 / mo",
+				pro: "16,000 / mo",
+				master: "28,000 / mo",
 				custom: "40,000 / mo",
 			},
 			{
 				feature: "Team seats",
 				free: "1",
+				light: "1",
 				standard: "1",
 				pro: "1",
 				master: "1",
-				custom: "5 · shared pool",
+				custom: "3 · shared pool",
 			},
 			{
 				feature: "Typical output",
-				free: "Up to 7 images or 1 × 8s 480p",
-				standard: "Up to 46 images or 9 × 8s 480p",
-				pro: "Up to 123 images or 24 × 8s 480p",
-				master: "Up to 246 images or 48 × 8s 480p",
+				free: "Try the workflow",
+				light: "Up to 46 images or 9 × 8s 480p",
+				standard: "Up to 123 images or 24 × 8s 480p",
+				pro: "Up to 246 images or 48 × 8s 480p",
+				master: "Up to 430 images or 85 × 8s 480p",
 				custom: "Up to 615 images or 121 × 8s 480p",
 			},
 			{
 				feature: "Max image resolution",
 				free: "Up to 1K",
+				light: "Up to 1K",
 				standard: "Up to 1K",
 				pro: "Up to 1K",
 				master: "Up to 2K",
@@ -1476,6 +1531,7 @@ export const en = {
 			{
 				feature: "Max video resolution",
 				free: "Up to 480p",
+				light: "Up to 480p",
 				standard: "Up to 720p",
 				pro: "Up to 1080p",
 				master: "Up to 1080p",
@@ -1484,14 +1540,25 @@ export const en = {
 			{
 				feature: "Research / combined / storyboard",
 				free: "✓",
+				light: "✓",
 				standard: "✓",
 				pro: "✓",
 				master: "✓",
 				custom: "✓",
 			},
 			{
-				feature: "A/B, Campaign, teaching carousel",
+				feature: "A/B & teaching carousel",
 				free: "✓",
+				light: "✓",
+				standard: "✓",
+				pro: "✓",
+				master: "✓",
+				custom: "✓",
+			},
+			{
+				feature: "Campaign mode",
+				free: "—",
+				light: "—",
 				standard: "✓",
 				pro: "✓",
 				master: "✓",
@@ -1500,15 +1567,8 @@ export const en = {
 			{
 				feature: "Email support",
 				free: "—",
+				light: "✓",
 				standard: "✓",
-				pro: "✓",
-				master: "✓",
-				custom: "✓",
-			},
-			{
-				feature: "Priority generation",
-				free: "—",
-				standard: "—",
 				pro: "✓",
 				master: "✓",
 				custom: "✓",
@@ -1516,6 +1576,7 @@ export const en = {
 			{
 				feature: "Pro canvas",
 				free: "—",
+				light: "—",
 				standard: "—",
 				pro: "—",
 				master: "✓",
@@ -1524,6 +1585,7 @@ export const en = {
 			{
 				feature: "Priority support",
 				free: "—",
+				light: "—",
 				standard: "—",
 				pro: "—",
 				master: "✓",
@@ -1532,38 +1594,39 @@ export const en = {
 			{
 				feature: "Token top-up ($10 / 1k)",
 				free: "—",
+				light: "✓",
 				standard: "✓",
 				pro: "✓",
 				master: "✓",
 				custom: "✓",
 			},
-		],
-	},
-	steps: {
-		setup: "Setup",
-		image: "Image",
-		video: "Video",
-		done: "Done",
-	},
-	wizard: {
+    ],
+  },
+  steps: {
+    setup: "Setup",
+    image: "Image",
+    video: "Video",
+    done: "Done",
+  },
+  wizard: {
 		workflowLabel: "What do you want to create?",
-		workflowModes: {
-			"image-only": {
+    workflowModes: {
+      "image-only": {
 				title: "Generate images only",
 				description: "High-quality promo stills — download PNG",
 				cardDescription:
 					"Generate high-quality promo images for social posts, product shots, and static ads.",
 				tags: ["Social posts", "Product display", "Static ads"],
-			},
-			"video-only": {
+      },
+      "video-only": {
 				title: "Generate video only",
 				description: "One continuous scene — ready-to-publish short video",
 				cardDescription:
 					"One continuous scene from your product still — AI camera moves for a short clip you can publish right away.",
 				tags: ["One scene", "Short video", "Video ads"],
 				sceneBadge: "One scene only",
-			},
-			combined: {
+      },
+      combined: {
 				title: "Generate images, then video",
 				description:
 					"Multi-scene storyboard — approve stills, then stitch into video",
@@ -1753,28 +1816,28 @@ export const en = {
 					"Keyframe ready → Step 3 animates presenter with your script",
 				confidence:
 					"Best for bracelet/UGC-style talking ads — not video generation motion",
-			},
-		},
-		visualStyleLabel: "Visual style",
+      },
+    },
+    visualStyleLabel: "Visual style",
 		visualStyleHint:
 			"Style auto-applies lighting and mood — works for any product category",
-		visualStyleHintVideoOnly:
-			"Video-only: hides info poster, brand image, and campaign styles (for when you already have a still).",
-		visualStyleHintCombined:
+    visualStyleHintVideoOnly:
+      "Video-only: hides info poster, brand image, and campaign styles (for when you already have a still).",
+    visualStyleHintCombined:
 			"Image + video: still then motion. “Storyboard reel” = AI plans scenes → multiple images → one video generation clip.",
-		styleModeLabel: "Style set",
-		styleModeSimple: "Show fewer (recommended)",
-		styleModeAll: "Show all styles",
-		artStyleLabel: "Art direction (keyframes)",
+    styleModeLabel: "Style set",
+    styleModeSimple: "Show fewer (recommended)",
+    styleModeAll: "Show all styles",
+    artStyleLabel: "Art direction (keyframes)",
 		artStyleVideoSafeHint:
 			"Video-safe grades only (film / digicam flash / Chinese cinematic / cinematic). Look changes grade, not the story. @Video1 still owns spine when a reference reel is attached.",
-		artStyleHint:
+    artStyleHint:
 			"Controls AI image keyframe look — video generation only adds motion. For manga/watercolor/3D, the whole frame (including text) uses that medium; text-heavy product ads work best with concept cinematic or realistic.",
-		artStyles: {
-			realistic: {
-				title: "Realistic photo",
-				description: "Live-action commercial photography (default)",
-			},
+    artStyles: {
+      realistic: {
+        title: "Realistic photo",
+        description: "Live-action commercial photography (default)",
+      },
 			cinematic: {
 				title: "Cinematic TVC",
 				description:
@@ -1794,46 +1857,46 @@ export const en = {
 				description:
 					"Misty mountains, poetic light, photoreal product in a classical Chinese mood",
 			},
-			"anime-2d": {
-				title: "2D anime",
-				description: "Japanese cel-shaded illustration",
-			},
-			"cartoon-3d": {
-				title: "3D cartoon",
-				description: "Pixar-style 3D animated render",
-			},
-			"comic-webtoon": {
-				title: "Comic / webtoon",
-				description: "Bold outlines, flat cel shading",
-			},
-			watercolor: {
-				title: "Watercolor",
-				description: "Soft hand-painted illustration",
-			},
-		},
-		styleAutoAppliedLabel: "Auto-applied style:",
-		visualStyles: {
-			product: {
-				title: "Clean product",
+      "anime-2d": {
+        title: "2D anime",
+        description: "Japanese cel-shaded illustration",
+      },
+      "cartoon-3d": {
+        title: "3D cartoon",
+        description: "Pixar-style 3D animated render",
+      },
+      "comic-webtoon": {
+        title: "Comic / webtoon",
+        description: "Bold outlines, flat cel shading",
+      },
+      watercolor: {
+        title: "Watercolor",
+        description: "Soft hand-painted illustration",
+      },
+    },
+    styleAutoAppliedLabel: "Auto-applied style:",
+    visualStyles: {
+      product: {
+        title: "Clean product",
 				description:
 					"Studio / lifestyle product shot — any SKU (default)",
-			},
-			"dark-premium": {
-				title: "Dark premium",
+      },
+      "dark-premium": {
+        title: "Dark premium",
 				description:
 					"Dark mood, gold accents — jewelry, watches, skincare, gifts",
-			},
-			"warm-shop": {
-				title: "Warm shop promo",
-				description: "Friendly local business / offer vibe",
-			},
-			"model-wear": {
-				title: "Model wearing / using",
+      },
+      "warm-shop": {
+        title: "Warm shop promo",
+        description: "Friendly local business / offer vibe",
+      },
+      "model-wear": {
+        title: "Model wearing / using",
 				description:
 					"Product photo → photorealistic lifestyle model ad (on wrist, demo use, etc.)",
-			},
-			"info-poster": {
-				title: "Premium info poster",
+      },
+      "info-poster": {
+        title: "Premium info poster",
 				description:
 					"White-bg single-theme selling points — anti-generic-AI layout (IG technique)",
 			},
@@ -1861,131 +1924,131 @@ export const en = {
 				title: "Jelly 3D",
 				description:
 					"Real product/mascot stays locked — headline becomes IG jelly/glass 3D type",
-			},
-			"brand-fit": {
-				title: "Brand style analysis",
+      },
+      "brand-fit": {
+        title: "Brand style analysis",
 				description:
 					"Paste website / IG → AI analyzes brand, then matching ads",
-			},
-			"brand-campaign": {
-				title: "Brand analysis + campaign set",
+      },
+      "brand-campaign": {
+        title: "Brand analysis + campaign set",
 				description:
 					"Analyze brand → 3 linked posts (hero / selling points / offer)",
-			},
-			"brand-video": {
+      },
+      "brand-video": {
 				title: "Brand motion video",
 				description:
 					"Analyze site / social → AI writes a motion prompt (how the reel moves)",
-			},
-			"creative-video": {
+      },
+      "creative-video": {
 				title: "Creative motion brief",
 				description:
 					"Describe your Reel idea → AI writes a motion prompt (camera / pacing)",
-			},
-			"concept-cinematic": {
-				title: "Concept cinematic reel",
+      },
+      "concept-cinematic": {
+        title: "Concept cinematic reel",
 				description:
 					"Dramatic short-film look for concept stories, PSA, and viral-style clips",
-			},
-			"storyboard-video": {
-				title: "Storyboard reel",
-				description:
+      },
+      "storyboard-video": {
+        title: "Storyboard reel",
+        description:
 					"AI story per product → AI image scene stills → one video generation @Image video",
 			},
 			"ugc-presenter": {
 				title: "UGC digital presenter",
 				description:
 					"Product keyframe → digital presenter talking-head lip-sync (like viral UGC product demos)",
-			},
-			"paper-layout": {
-				title: "Fixed paper layout (legacy)",
+      },
+      "paper-layout": {
+        title: "Fixed paper layout (legacy)",
 				description:
 					"Exact text on template — not full AI scene generation",
-			},
-			"service-promo": {
-				title: "Professional service",
+      },
+      "service-promo": {
+        title: "Professional service",
 				description:
 					"Consulting, courses, memberships — trust-led, no product packshot",
-			},
-			"pricing-offer": {
-				title: "Pricing & offer",
-				description: "Plans, packages, promos — CTA + benefit bullets",
-			},
-			"website-launch": {
-				title: "Website / app launch",
-				description: "URL or app promo — device/browser mockup mood",
-			},
-		},
-		visualStyleHints: {
+      },
+      "pricing-offer": {
+        title: "Pricing & offer",
+        description: "Plans, packages, promos — CTA + benefit bullets",
+      },
+      "website-launch": {
+        title: "Website / app launch",
+        description: "URL or app promo — device/browser mockup mood",
+      },
+    },
+    visualStyleHints: {
 			product:
 				"Clean commercial product photo — studio or bright lifestyle, any physical product",
-			"dark-premium":
-				"Dark luxury mood with gold highlights — not only crystals; jewelry, watches, skincare, gifts",
+      "dark-premium":
+        "Dark luxury mood with gold highlights — not only crystals; jewelry, watches, skincare, gifts",
 			"warm-shop":
 				"Warm inviting shop mood; emphasize business name and offer",
-			"model-wear":
-				"Upload product photo → AI generates a model wearing/using it — adapts to product type, not a fixed template",
-			"info-poster": "",
+      "model-wear":
+        "Upload product photo → AI generates a model wearing/using it — adapts to product type, not a fixed template",
+      "info-poster": "",
 			"designed-poster": "",
 			"parts-poster": "",
 			"gaming-cover": "",
 			"sports-big-words": "",
 			"jelly-3d": "",
-			"brand-fit": "",
-			"brand-campaign": "",
-			"brand-video": "",
-			"creative-video": "",
-			"concept-cinematic":
-				"Cinematic concept video look — dramatic light, depth, emotional pacing, no on-screen text.",
-			"storyboard-video":
+      "brand-fit": "",
+      "brand-campaign": "",
+      "brand-video": "",
+      "creative-video": "",
+      "concept-cinematic":
+        "Cinematic concept video look — dramatic light, depth, emotional pacing, no on-screen text.",
+      "storyboard-video":
 				"Photorealistic multi-scene reel — AI adapts scenes to your product category, not a fixed template",
 			"ugc-presenter":
 				"UGC talking-head keyframe + digital presenter lip-sync — best for bracelet/jewelry demo reels like viral 數字人 ads",
-			"paper-layout": "",
-			"service-promo":
-				"Service marketing — typography-led trust design, not a product hero shot",
+      "paper-layout": "",
+      "service-promo":
+        "Service marketing — typography-led trust design, not a product hero shot",
 			"pricing-offer":
 				"Pricing / offer card — clear CTA; only use prices from your offer field",
 			"website-launch":
 				"Launch promo — app or website mockup mood; logo/screenshot optional",
-		},
-		brandVideoIntro:
+    },
+    brandVideoIntro:
 			"Paste your site or IG @handle. AI analyzes the brand, then writes a motion prompt (camera + mood — not spoken script). Optional product photo for the Reel.",
-		modelWearIntro:
-			"Upload a product photo — AI generates a photorealistic 9:16 lifestyle ad with a model wearing or using the product. Bracelets go on wrist; devices show real use. Use Advanced framing to control face vs hands-only.",
-		creativeVideoIntro:
+    modelWearIntro:
+      "Upload a product photo — AI generates a photorealistic 9:16 lifestyle ad with a model wearing or using the product. Bracelets go on wrist; devices show real use. Use Advanced framing to control face vs hands-only.",
+    creativeVideoIntro:
 			"Describe your short video in plain language (e.g. kung fu fight then drink the product). AI writes a motion prompt for how the reel should move — not a spoken voiceover. Optional product photo or keyframe.",
-		creativeBriefLabel: "Creative video brief (required)",
-		creativeBriefPlaceholder:
-			"e.g. Hero faces five opponents in kung fu, wins, then drinks the energy drink — cinematic, fast pace",
-		brandCampaignIntro:
+    creativeBriefLabel: "Creative video brief (required)",
+    creativeBriefPlaceholder:
+      "e.g. Hero faces five opponents in kung fu, wins, then drinks the energy drink — cinematic, fast pace",
+    brandCampaignIntro:
 			"After brand analysis, AI plans 3 linked posts, then generates each — same brand DNA, different message per slide.",
-		brandFitTitle: "Brand style analysis (optional)",
+    brandFitTitle: "Brand style analysis (optional)",
 		brandFitTitleRequired: "Brand style analysis (optional)",
-		brandFitIntro:
+    brandFitIntro:
 			"Optional: paste your site or IG @handle. AI can extract colors and tone. Skip if you don’t have a website — continue with your copy and product photo.",
-		brandAnalyzeOptionalIntro:
+    brandAnalyzeOptionalIntro:
 			"Optional: analyze a website or social profile so prompts stay on-brand. No website? Skip and continue.",
 		brandWebsiteLabel: "Brand website (optional)",
-		brandWebsitePlaceholder: "https://yourshop.com",
-		brandSocialLabel: "Social profile (optional)",
-		brandSocialPlaceholder: "@yourbrand or IG profile URL",
-		brandAnalyzeBtn: "Analyze brand",
-		brandAnalyzeBusy: "Analyzing…",
-		infoPosterTechniqueTitle: "IG info-poster technique (built in)",
-		infoPosterTechniqueIntro:
-			"Do not cram all copy on one image. This workflow builds a premium white-background info graphic:",
-		infoPosterTechniqueSteps: [
-			"Product category — infer from name and photo (beauty, jewelry, food…)",
-			"Selling points — one bullet per line in subline, max 3–4",
-			"Simplified copy — headline covers ONE theme only",
-			"Single topic per image — one message per still",
-			"Category visuals — subtle props/colors for the category",
-			"Premium white style — bright white, airy layout, not dark AI look",
-			"Quality check — avoid overcrowded text and generic template frames",
-		],
-		infoPosterBulletsPlaceholder:
-			"One selling point per line, e.g.:\nBoost daily energy\nEasy to wear\nSubtle premium look",
+    brandWebsitePlaceholder: "https://yourshop.com",
+    brandSocialLabel: "Social profile (optional)",
+    brandSocialPlaceholder: "@yourbrand or IG profile URL",
+    brandAnalyzeBtn: "Analyze brand",
+    brandAnalyzeBusy: "Analyzing…",
+    infoPosterTechniqueTitle: "IG info-poster technique (built in)",
+    infoPosterTechniqueIntro:
+      "Do not cram all copy on one image. This workflow builds a premium white-background info graphic:",
+    infoPosterTechniqueSteps: [
+      "Product category — infer from name and photo (beauty, jewelry, food…)",
+      "Selling points — one bullet per line in subline, max 3–4",
+      "Simplified copy — headline covers ONE theme only",
+      "Single topic per image — one message per still",
+      "Category visuals — subtle props/colors for the category",
+      "Premium white style — bright white, airy layout, not dark AI look",
+      "Quality check — avoid overcrowded text and generic template frames",
+    ],
+    infoPosterBulletsPlaceholder:
+      "One selling point per line, e.g.:\nBoost daily energy\nEasy to wear\nSubtle premium look",
 		designedPosterTechniqueTitle: "Designed commercial poster (built in)",
 		designedPosterTechniqueIntro:
 			"XHS/IG feed poster grammar — product/scene hero plus designed type chrome (any category — not food-only, not a blank catalog cutout):",
@@ -2010,10 +2073,10 @@ export const en = {
 		],
 		partsPosterPartsPlaceholder:
 			"One part callout per line, e.g.:\nBattery — all-day charge\nShell — matte grip\nChip — fast charge IC",
-		requirementsLabel: "Extra requirements (optional)",
+    requirementsLabel: "Extra requirements (optional)",
 		requirementsPlaceholder:
 			"e.g. soft daylight, no hands, streetwear vibe…",
-		requirementsPlaceholders: {
+    requirementsPlaceholders: {
 			product:
 				"e.g. food photography, white backdrop, fresh skincare look, streetwear…",
 			"dark-premium":
@@ -2042,8 +2105,8 @@ export const en = {
 				"Optional extra motion/mood notes — main prompt comes from brand analysis",
 			"creative-video":
 				"Creative brief is above; add extra motion/mood notes here if needed",
-			"concept-cinematic":
-				"e.g. dramatic rim light, fantasy hall, cinematic lens, emotional suspense, no logos or UI overlays",
+      "concept-cinematic":
+        "e.g. dramatic rim light, fantasy hall, cinematic lens, emotional suspense, no logos or UI overlays",
 			"storyboard-video":
 				"e.g. photorealistic, soft light, show product in use, no prices…",
 			"ugc-presenter":
@@ -2056,11 +2119,11 @@ export const en = {
 				"e.g. highlight middle tier, soft gradient, no invented prices…",
 			"website-launch":
 				"e.g. app mockup on phone, clean SaaS UI, launch countdown mood…",
-		},
-		campaignThemeLabel: "Campaign theme (optional)",
+    },
+    campaignThemeLabel: "Campaign theme (optional)",
 		campaignThemePlaceholder:
 			"e.g. grand opening 3-post series, new product benefits…",
-		imageOutputModeLabel: "How many images?",
+    imageOutputModeLabel: "How many images?",
 		imageOutputModeHint:
 			"Campaign generates 3 linked posts (~3× image API cost + AI planning)",
 		imageOutputModeHintDesignedPoster:
@@ -2068,42 +2131,42 @@ export const en = {
 		imageKeyframeModeLabel: "Keyframe count",
 		imageKeyframeModeHint:
 			"Image→video only needs 1 keyframe to animate (optional A/B pick). Not storyboard — use Image-only for Campaign / teaching carousel.",
-		imageOutputModes: {
-			single: {
-				title: "Single image",
-				description: "One promo still (default)",
-			},
-			ab: {
-				title: "A / B versions",
-				description: "Two variations — pick your favorite",
-			},
-			campaign: {
-				title: "Campaign set",
-				description: "3 linked posts — hero, selling points, offer",
-			},
-			"teaching-carousel": {
-				title: "Teaching carousel",
+    imageOutputModes: {
+      single: {
+        title: "Single image",
+        description: "One promo still (default)",
+      },
+      ab: {
+        title: "A / B versions",
+        description: "Two variations — pick your favorite",
+      },
+      campaign: {
+        title: "Campaign set",
+        description: "3 linked posts — hero, selling points, offer",
+      },
+      "teaching-carousel": {
+        title: "Teaching carousel",
 				description: "4–6 educational slides — cover, points, recap",
-			},
-		},
-		imageAspectRatioLabel: "Post size (aspect ratio)",
+      },
+    },
+    imageAspectRatioLabel: "Post size (aspect ratio)",
 		imageAspectRatioHint:
 			"1K output. Pick 4:5 for IG/FB feed; 9:16 for Reels/Stories; 1:1 for square posts.",
-		imageAspectRatios: {
-			"9:16": {
-				title: "9:16 Reels / Stories",
-				description: "Vertical video frame · ~768×1365 px @ 1K",
-			},
-			"4:5": {
-				title: "4:5 Feed portrait",
-				description: "IG/FB feed default · ~928×1152 px @ 1K",
-			},
-			"1:1": {
-				title: "1:1 Square",
-				description: "Square feed / carousel · ~1024×1024 px @ 1K",
-			},
-		},
-		imagePreflightAspect: "Size: {ratio} @ 1K",
+    imageAspectRatios: {
+      "9:16": {
+        title: "9:16 Reels / Stories",
+        description: "Vertical video frame · ~768×1365 px @ 1K",
+      },
+      "4:5": {
+        title: "4:5 Feed portrait",
+        description: "IG/FB feed default · ~928×1152 px @ 1K",
+      },
+      "1:1": {
+        title: "1:1 Square",
+        description: "Square feed / carousel · ~1024×1024 px @ 1K",
+      },
+    },
+    imagePreflightAspect: "Size: {ratio} @ 1K",
 		imagePostflightTitle: "Quality check — your generated image",
 		imagePostflightResolution: "{width}×{height} pixels (1K generation)",
 		imagePostflightAspect: "Aspect: {ratio}",
@@ -2145,27 +2208,27 @@ export const en = {
 			"One click: generate image (if needed), then video with library background music.",
 		shipItUnsupported:
 			"Ship-it works for standard product image→video only. Switch to expert mode for storyboard, presenter, or concept paths.",
-		campaignPlanLabel: "Campaign outline",
-		campaignGenerating: "Planning and generating campaign set… (~1–3 min)",
+    campaignPlanLabel: "Campaign outline",
+    campaignGenerating: "Planning and generating campaign set… (~1–3 min)",
 		campaignProgressPlanning: "Planning campaign outline…",
 		campaignProgressRendering:
 			"Generating campaign slide {current}/{total}…",
 		teachingCarouselProgressPlanning: "Planning teaching carousel slides…",
 		teachingCarouselProgressRendering:
 			"Generating carousel slide {current}/{total}… (~2–4 min total)",
-		storyboardBriefLabel: "Story / style notes (optional)",
-		storyboardBriefPlaceholder:
-			"e.g. photorealistic, soft light; show nasal washer in use; no prices; hands OK, no face…",
-		storyboardIntro:
+    storyboardBriefLabel: "Story / style notes (optional)",
+    storyboardBriefPlaceholder:
+      "e.g. photorealistic, soft light; show nasal washer in use; no prices; hands OK, no face…",
+    storyboardIntro:
 			"AI plans scenes for your product category (jewelry, devices, skincare, etc.) and writes a video generation @Image storyboard prompt — not a fixed bracelet template.",
 		storyboardGenerating:
 			"Planning storyboard and generating scene images… (~2–5 min)",
 		storyboardProgressPlanning: "Planning storyboard with AI…",
 		storyboardProgressRendering:
 			"Generating scene images {current}/{total}…",
-		progressEta: "ETA ~{seconds}s",
+    progressEta: "ETA ~{seconds}s",
 		progressEtaMinutes: "ETA ~{minutes} min",
-		storyboardPlanLabel: "Storyboard plan",
+    storyboardPlanLabel: "Storyboard plan",
 		storyboardPlanReviewHint:
 			"Generate a AI outline first, edit any odd scenes, then create the stills.",
 		storyboardRecipeTitle: "Storyboard recipe",
@@ -2294,8 +2357,8 @@ export const en = {
 		videoEngineMinimaxH3: "Single-clip video (faces / product lock)",
 		videoEngineHint:
 			"Simple studio picks the mode: reference-reel when you attach a research reel, single-clip for stills and posters. Stitched fallback is stills-only backup.",
-		storyboardSceneLabel: "Scene",
-		storyboardVideoIntro:
+    storyboardSceneLabel: "Scene",
+    storyboardVideoIntro:
 			"These stills are locked into the video. Regen a bad cell in review — generating will not invent a better ad. With a research reel: we copy that spine, then single-clip video. Stills only: single-clip first, stitched fallback if that fails.",
 		storyboardVideoPreflight:
 			"Reel: reference-reel → single-clip. Stills: single-clip → stitched fallback",
@@ -2321,9 +2384,9 @@ export const en = {
 		seedanceToMinimaxH3FallbackNote:
 			"Primary video mode was blocked — used single-clip video (keeps reference motion when possible)",
 		h3ToSeedanceFallbackNote:
-			"Single-clip video was unavailable — used Seedance and mixed library BGM",
+			"Single-clip video was unavailable — used alternate video mode and mixed library BGM",
 		klingStoryboardClipCount: "clips × {n}",
-		storyboardDurationLabel: "Target duration",
+    storyboardDurationLabel: "Target duration",
 		storyboardDurationHint:
 			"Affects how many scenes are planned. Regenerate scene images if you change this.",
 		storyboardAllScenesHint:
@@ -2333,17 +2396,17 @@ export const en = {
 			"Scene scripts ready — open Caption studio to edit timing, voice, and burn",
 		storyboardAllScenesImageHint:
 			"Every scene is used in the video — do not pick a “version” below.",
-		storyboardTrimDurationLabel: "Trim duration preset",
-		storyboardSceneCountLabel: "Scene count",
-		storyboardSceneCountAuto: "Auto",
-		storyboardSceneCountHint:
+    storyboardTrimDurationLabel: "Trim duration preset",
+    storyboardSceneCountLabel: "Scene count",
+    storyboardSceneCountAuto: "Auto",
+    storyboardSceneCountHint:
 			"Duration sets video length (synced to Step 3). Scene count controls how many stills AI plans.",
 		storyboardEditorHint:
 			"Mini editor: reorder scenes, replace one image, then regenerate video in-app.",
-		storyboardMoveUpBtn: "Move up",
-		storyboardMoveDownBtn: "Move down",
-		storyboardReplaceImageBtn: "Replace image",
-		storyboardRegenerateAiBtn: "Regenerate with AI",
+    storyboardMoveUpBtn: "Move up",
+    storyboardMoveDownBtn: "Move down",
+    storyboardReplaceImageBtn: "Replace image",
+    storyboardRegenerateAiBtn: "Regenerate with AI",
 		storyboardRegenerateAiCostHint:
 			"Charged as a new scene image run (2× tokens if brand logo is on).",
 		storyboardStampLogoBtn: "Stamp brand logo",
@@ -2352,15 +2415,15 @@ export const en = {
 			"Stamps your Brand kit logo as a corner badge (no AI redraw, no charge).",
 		storyboardStampLogoCornerHint:
 			"Stamps your Brand kit logo as a corner badge (no AI redraw, no charge).",
-		storyboardReplacingImage: "Replacing…",
-		storyboardRegeneratingImage: "Regenerating…",
-		storyboardRegenerateConfirm:
+    storyboardReplacingImage: "Replacing…",
+    storyboardRegeneratingImage: "Regenerating…",
+    storyboardRegenerateConfirm:
 			"Regenerate Scene {scene} with AI now? This is a new generation and charges again.",
-		storyboardKeyframeSectionTitle: "Storyboard refs (@Image1…@ImageN)",
+    storyboardKeyframeSectionTitle: "Storyboard refs (@Image1…@ImageN)",
 		storyboardPromptLabel: "video generation storyboard prompt",
 		storyboardPromptHint:
 			"AI tagged each scene as @Image1, @Image2… Review before generating video.",
-		storyboardPromptEditLabel: "Edit storyboard prompt (advanced)",
+    storyboardPromptEditLabel: "Edit storyboard prompt (advanced)",
 		ugcPresenter: {
 			setupIntro:
 				"Step 2: AI image builds a talking-head keyframe with your product. Step 3: digital presenter lip-syncs your ad-pack script (~$0.10/s). Plan ad pack + preview voice before generating video.",
@@ -2379,26 +2442,26 @@ export const en = {
 			needAdPackHint:
 				"Open Ad pack on this step — plan script (and preview voice) before generating.",
 		},
-		primaryPathsTitle: "Primary creation paths",
+    primaryPathsTitle: "Primary creation paths",
 		primaryPathsHint:
 			"Start with one of these 2 paths. More styles are under Advanced.",
-		videoPathsTitle: "Video creation paths",
+    videoPathsTitle: "Video creation paths",
 		videoPathsHint:
 			"Pick how to make your Reel — photo → motion prompt, or follow a reference reel.",
-		videoAssistantStepHint:
+    videoAssistantStepHint:
 			"AI Video Assistant selected — continue to Step 3 to upload product, packaging, and angle photos; AI will analyze and write the motion prompt.",
-		primaryPathsShortcutNote:
-			"These are quick shortcuts. In Advanced you can still pick the same style with more options.",
+    primaryPathsShortcutNote:
+      "These are quick shortcuts. In Advanced you can still pick the same style with more options.",
 		primaryPathsHiddenResearchHint:
 			"Content research already set your reference layout and output mode — add your product photo and copy, then continue.",
-		pathQuickTitle: "Quick Ad",
-		pathQuickDesc: "Fast image/video ad for most products.",
+    pathQuickTitle: "Quick Ad",
+    pathQuickDesc: "Fast image/video ad for most products.",
 		pathQuickVideoDesc:
 			"One product photo + AI writes a motion prompt → short silent promo reel (add BGM/captions later).",
-		pathModelTitle: "Model Wear/Use",
+    pathModelTitle: "Model Wear/Use",
 		pathModelDesc:
 			"Shortcut to model-wear style (also available in Advanced).",
-		pathStoryboardTitle: "Storyboard Reel",
+    pathStoryboardTitle: "Storyboard Reel",
 		pathStoryboardDesc: "AI plans multi-scene story and video.",
 		pathUgcPresenterTitle: "UGC digital presenter",
 		pathUgcPresenterDesc:
@@ -2415,57 +2478,57 @@ export const en = {
 		contentResearchSectionTitle: "Content research (optional)",
 		contentResearchSectionHint:
 			"Find trending posts for layout inspiration — skip if you already have a reference.",
-		conceptPathsTitle: "Main concept paths",
+    conceptPathsTitle: "Main concept paths",
 		conceptPathsHint:
 			"For services, websites, and offers — not product packshots.",
-		conceptVideoPathsTitle: "Concept video paths",
-		conceptVideoPathsHint:
-			"Same concept brief powers the video — no product photo required. Pick a style, apply fields, then continue to video.",
+    conceptVideoPathsTitle: "Concept video paths",
+    conceptVideoPathsHint:
+      "Same concept brief powers the video — no product photo required. Pick a style, apply fields, then continue to video.",
 		closestMatchRecipeTitle:
 			"Closest-match recipe (cinematic social style)",
-		closestMatchRecipeHint:
+    closestMatchRecipeHint:
 			"Image → video workflow: 3 AI keyframes, 3 video generation clips stitched (~24s). Clean silent video — add BGM and captions on Done.",
-		closestMatchRecipeApply: "Apply closest-match recipe",
-		closestMatchRecipeApplied: "Closest-match recipe applied",
-		quickTest8sRecipeTitle: "8s test recipe (lower cost)",
-		quickTest8sRecipeHint:
+    closestMatchRecipeApply: "Apply closest-match recipe",
+    closestMatchRecipeApplied: "Closest-match recipe applied",
+    quickTest8sRecipeTitle: "8s test recipe (lower cost)",
+    quickTest8sRecipeHint:
 			"Single keyframe + one 8s video generation clip (480p fast). Clean silent video — add BGM and captions on Done. ~1/3 the cost of the 24s stitch.",
-		quickTest8sRecipeApply: "Apply 8s test recipe",
-		quickTest8sRecipeApplied: "8s test recipe applied",
-		conceptCinematicPathsTitle: "Concept cinematic reel (image → video)",
-		conceptCinematicPathsHint:
+    quickTest8sRecipeApply: "Apply 8s test recipe",
+    quickTest8sRecipeApplied: "8s test recipe applied",
+    conceptCinematicPathsTitle: "Concept cinematic reel (image → video)",
+    conceptCinematicPathsHint:
 			"Generate a still keyframe first, then animate with video generation. Best quality for viral cinematic Reels — not pure text-to-video.",
-		conceptCinematicSingleTitle: "Single scene (~8s)",
+    conceptCinematicSingleTitle: "Single scene (~8s)",
 		conceptCinematicSingleDesc:
 			"One keyframe + one clip — quick cinematic hook.",
-		conceptCinematicSingleImageStepIntro:
-			"8s cinematic mode: click “Generate cinematic keyframe” to plan 1 scene + 1 keyframe (no product photo).",
-		conceptCinematicSingleOutputTitle: "Output: 1 cinematic keyframe",
-		conceptCinematicSingleOutputDesc:
+    conceptCinematicSingleImageStepIntro:
+      "8s cinematic mode: click “Generate cinematic keyframe” to plan 1 scene + 1 keyframe (no product photo).",
+    conceptCinematicSingleOutputTitle: "Output: 1 cinematic keyframe",
+    conceptCinematicSingleOutputDesc:
 			"AI plans the scene and video generation motion prompt, then generates one 9:16 keyframe.",
-		conceptCinematicSingleNoPosterHint:
-			"⚠️ Keyframe = cinematic scene (bar, people, mood) — NOT a product poster. Copy is added later via captions/voiceover, not baked into the image.",
-		conceptSocialImageStepIntro:
-			"Concept social post: AI builds a bold IG/FB creative with your hook and CTA woven into the layout — not a plain white infographic poster.",
-		conceptSocialImageHint:
-			"Tip: run Analyze concept on Setup first. Use “People / body in shot” below to control model faces.",
-		conceptCarouselModeHint:
+    conceptCinematicSingleNoPosterHint:
+      "⚠️ Keyframe = cinematic scene (bar, people, mood) — NOT a product poster. Copy is added later via captions/voiceover, not baked into the image.",
+    conceptSocialImageStepIntro:
+      "Concept social post: AI builds a bold IG/FB creative with your hook and CTA woven into the layout — not a plain white infographic poster.",
+    conceptSocialImageHint:
+      "Tip: run Analyze concept on Setup first. Use “People / body in shot” below to control model faces.",
+    conceptCarouselModeHint:
 			"Teaching carousel = multi-card tips. With a reference upload in concept mode, we match topic + colors/typography only (style-only) — each slide gets a new layout, not a clone of your reference.",
-		conceptNoStyleMemoryHint:
-			"Each generation is independent — the AI does not remember which image you liked last time. For consistent style, use “Reference concept” or describe the look in Advanced settings.",
-		conceptCinematicSingleGenerateBtn: "Generate cinematic keyframe",
+    conceptNoStyleMemoryHint:
+      "Each generation is independent — the AI does not remember which image you liked last time. For consistent style, use “Reference concept” or describe the look in Advanced settings.",
+    conceptCinematicSingleGenerateBtn: "Generate cinematic keyframe",
 		conceptCinematicSingleGenerating:
 			"Planning scene and generating keyframe…",
-		imagePreflightConceptCinematicSingle:
+    imagePreflightConceptCinematicSingle:
 			"8s cinematic: AI plans 1 scene + 1 keyframe.",
-		imagePreflightConceptSocial:
-			"Concept social post: bold IG/FB creative with hook and CTA in the layout — not a white infographic poster.",
-		conceptCinematicSingleVideoStepIntro:
+    imagePreflightConceptSocial:
+      "Concept social post: bold IG/FB creative with hook and CTA in the layout — not a white infographic poster.",
+    conceptCinematicSingleVideoStepIntro:
 			"8s reel: click “Generate full reel” for 1 video generation clip (clean silent video — add BGM/captions on Done).",
-		conceptCinematicSingleGenerateVideoBtn: "Generate full reel (8s)",
-		conceptCinematicSingleSceneReady: "Keyframe ready — 0–8s",
-		conceptCinematicSingleRecipeSteps: [
-			"1) Fill concept in Setup, Step 2 click “Generate cinematic keyframe”.",
+    conceptCinematicSingleGenerateVideoBtn: "Generate full reel (8s)",
+    conceptCinematicSingleSceneReady: "Keyframe ready — 0–8s",
+    conceptCinematicSingleRecipeSteps: [
+      "1) Fill concept in Setup, Step 2 click “Generate cinematic keyframe”.",
 			"2) Step 3 click “Generate full reel” — clean silent video generation clip.",
 			"3) On Done: download, or open caption & audio studio for BGM and wording.",
 		],
@@ -2477,17 +2540,17 @@ export const en = {
 		cinematicSceneCountTotalHint: "≈ {totalSec}s total",
 		cinematicSceneCountHint:
 			"AI plans one script beat per scene. Each clip is 8s; more scenes = faster pacing and higher cost.",
-		imagePreflightCinematicStitch:
+    imagePreflightCinematicStitch:
 			"Cinematic stitch: AI plans {count} scenes, then {count} keyframe images (~{count}× image cost).",
-		cinematicReelPlanLabel: "Reel theme",
-		cinematicStitchImageStepIntro:
+    cinematicReelPlanLabel: "Reel theme",
+    cinematicStitchImageStepIntro:
 			"{count}-scene stitch: one click plans and generates {count} keyframes (~{totalSec}s reel). No product photo needed.",
 		cinematicStitchOutputTitle: "Output: {count} keyframes",
-		cinematicStitchOutputDesc:
+    cinematicStitchOutputDesc:
 			"AI writes one beat per scene. Change scene count above before generating — each scene gets its own still + video generation clip.",
 		cinematicStitchGenerateBtn: "Generate {count} keyframes",
-		cinematicStitchGenerating: "Planning scenes and generating keyframes…",
-		cinematicStitchImageHint:
+    cinematicStitchGenerating: "Planning scenes and generating keyframes…",
+    cinematicStitchImageHint:
 			"Continue to video — we will generate {count} video generation clips and stitch them into one reel.",
 		cinematicStitchVideoPreflight:
 			"{count}-scene cinematic stitch: {count} image-to-video clips + local stitch",
@@ -2499,34 +2562,34 @@ export const en = {
 			"When “Use brand logo on video stills” is on, each video keyframe gets your Brand kit logo (AI picks natural placement).",
 		cinematicLogoStampHint:
 			"Upload your logo in Brand kit, then turn on “Use brand logo on video stills”. Regenerate video stills to apply. For images, use Edit image instead.",
-		cinematicStitchWorkflowOrder:
+    cinematicStitchWorkflowOrder:
 			"Order: {count} video generation clips → local stitch. Add BGM and captions later on Done. Script/music auto-plan is optional in Ad pack / caption studio.",
 		cinematicStitchVideoCost:
 			"{count} video generations + stitch (higher cost than single clip)",
-		cinematicStitchClipCount: "Clips stitched",
-		cinematicStitchRecipeSteps: [
+    cinematicStitchClipCount: "Clips stitched",
+    cinematicStitchRecipeSteps: [
 			"1) Fill concept on Setup, pick scene count, generate keyframes on Step 2.",
 			"2) On Step 3 click Generate full reel — video generation clips + stitch (silent).",
 			"3) On Done: download clean MP4, or open caption & audio studio.",
-		],
-		cinematicStitchVideoStepIntro:
+    ],
+    cinematicStitchVideoStepIntro:
 			"{count}-scene stitch: Generate full reel runs {count} video generation clips + stitch (BGM/captions optional after).",
 		cinematicStitchGenerateVideoBtn:
 			"Generate full reel ({count}-scene stitch)",
 		cinematicStitchScenesReady:
 			"{ready}/{count} scene keyframes ready — all {count} will be stitched",
-		conceptVideoSameBriefHint:
-			"Video mode uses the same concept fields. Upload a reference image first (optional), then AI analyze — then continue to video.",
-		conceptVideoImageLabel: "Reference image for video (optional)",
-		conceptVideoImageHint:
-			"Your poster, illustration, or photo — AI will read it and plan how to animate it.",
-		conceptVideoImageOrderHint:
+    conceptVideoSameBriefHint:
+      "Video mode uses the same concept fields. Upload a reference image first (optional), then AI analyze — then continue to video.",
+    conceptVideoImageLabel: "Reference image for video (optional)",
+    conceptVideoImageHint:
+      "Your poster, illustration, or photo — AI will read it and plan how to animate it.",
+    conceptVideoImageOrderHint:
 			"If you have your own image: upload here first, then run AI concept analysis so AI knows what is in the frame.",
-		conceptWizardTitle: "Concept Wizard (for non-physical offers)",
-		conceptWizardHint:
-			"Fill these 6 blocks, then auto-apply to headline/subline/offer and prompt direction.",
+    conceptWizardTitle: "Concept Wizard (for non-physical offers)",
+    conceptWizardHint:
+      "Fill these 6 blocks, then auto-apply to headline/subline/offer and prompt direction.",
 		conceptIdeaLabel: "Your concept",
-		conceptIdeaPlaceholder:
+    conceptIdeaPlaceholder:
 			"e.g. Yoga membership drive, or skincare brand relaunch",
 		conceptAudienceLabel: "Audience",
 		conceptAudiencePlaceholder: "Who should this ad speak to?",
@@ -2539,26 +2602,26 @@ export const en = {
 		conceptCtaLabel: "Offer + action",
 		conceptCtaPlaceholder: "What should they do now?",
 		conceptVisualMetaphorLabel: "Visual metaphor",
-		conceptVisualMetaphorPlaceholder:
+    conceptVisualMetaphorPlaceholder:
 			"What scene or symbolic visual should appear?",
-		conceptAnalyzeBtn: "AI analyze concept",
+    conceptAnalyzeBtn: "AI analyze concept",
 		conceptAnalyzeBusy: "AI analyzing concept…",
 		conceptAnalyzeReady:
 			"Concept draft filled. Review and apply to fields.",
-		conceptApplyBtn: "Apply concept to fields",
-		conceptApplyHint:
-			"Applies promise to headline, pain+proof to subline, CTA to offer, and audience/metaphor to extra requirements.",
-		pathInfoTitle: "Info / education",
-		pathInfoDesc: "Bullet benefits, how-it-works — IG feed friendly.",
-		pathBrandTitle: "Brand / website",
-		pathBrandDesc: "Analyze site or social → on-brand prompts.",
-		pathPricingTitle: "Pricing / offer",
-		pathPricingDesc: "Plans, packages, limited promos + CTA.",
-		pathWebsiteTitle: "Website / app",
-		pathWebsiteDesc: "Launch promo — logo or screenshot optional.",
-		imagePreflightTitle: "Before generating image",
-		imagePreflightSingle: "Single image generation call.",
-		imagePreflightAB: "A/B mode: 2 image generations (about 2x cost).",
+    conceptApplyBtn: "Apply concept to fields",
+    conceptApplyHint:
+      "Applies promise to headline, pain+proof to subline, CTA to offer, and audience/metaphor to extra requirements.",
+    pathInfoTitle: "Info / education",
+    pathInfoDesc: "Bullet benefits, how-it-works — IG feed friendly.",
+    pathBrandTitle: "Brand / website",
+    pathBrandDesc: "Analyze site or social → on-brand prompts.",
+    pathPricingTitle: "Pricing / offer",
+    pathPricingDesc: "Plans, packages, limited promos + CTA.",
+    pathWebsiteTitle: "Website / app",
+    pathWebsiteDesc: "Launch promo — logo or screenshot optional.",
+    imagePreflightTitle: "Before generating image",
+    imagePreflightSingle: "Single image generation call.",
+    imagePreflightAB: "A/B mode: 2 image generations (about 2x cost).",
 		imagePreflightCampaign:
 			"Campaign set: 3 linked images + planning call.",
 		imagePreflightCampaignReference:
@@ -2681,41 +2744,41 @@ export const en = {
 			"Preview every scene still before video — pick duration and scene count, then generate. Your headline/concept copy drives each frame (no product photo required).",
 		conceptResearchReelStoryboardImagePreflight:
 			"Concept storyboard: reference visual style + your topic/copy — no product photo. Reference cover drives the look.",
-		quickFixTitle: "Quick fix (minor issues)",
-		quickFixImageHint:
+    quickFixTitle: "Quick fix (minor issues)",
+    quickFixImageHint:
 			"Describe what to fix — we edit the image you selected above. For text, say exactly what wording, size, or style you want.",
-		quickFixEditingSlide: "Editing: {label}",
+    quickFixEditingSlide: "Editing: {label}",
 		quickFixVideoHint:
 			"Apply one tip note, then regenerate video — regenerating uses video tokens (not free).",
-		quickFixRealism: "Improve realism",
-		quickFixText: "Remove text/logo",
-		quickFixLighting: "Adjust lighting",
-		quickFixLogoTitle: "Change / add logo",
+    quickFixRealism: "Improve realism",
+    quickFixText: "Remove text/logo",
+    quickFixLighting: "Adjust lighting",
+    quickFixLogoTitle: "Change / add logo",
 		quickFixLogoHint:
 			"Upload a PNG (transparent background works best). We composite it onto your selected image.",
-		quickFixLogoUploadBtn: "Upload logo",
-		quickFixLogoChangeBtn: "Change logo file",
-		quickFixLogoPlacementLabel: "Logo placement",
-		quickFixLogoNoteLabel: "Extra note (optional)",
+    quickFixLogoUploadBtn: "Upload logo",
+    quickFixLogoChangeBtn: "Change logo file",
+    quickFixLogoPlacementLabel: "Logo placement",
+    quickFixLogoNoteLabel: "Extra note (optional)",
 		quickFixLogoNotePlaceholder:
 			"e.g. Smaller logo, do not cover the product",
-		quickFixLogoApplyBtn: "Apply logo",
-		quickFixLogoPlacements: {
-			"bottom-right": "Bottom right",
-			"bottom-left": "Bottom left",
-			"top-right": "Top right",
-			"top-left": "Top left",
-			center: "Center",
-			replace: "Replace existing logo",
-		},
-		quickFixCustomLabel: "Or describe the problem",
+    quickFixLogoApplyBtn: "Apply logo",
+    quickFixLogoPlacements: {
+      "bottom-right": "Bottom right",
+      "bottom-left": "Bottom left",
+      "top-right": "Top right",
+      "top-left": "Top left",
+      center: "Center",
+      replace: "Replace existing logo",
+    },
+    quickFixCustomLabel: "Or describe the problem",
 		quickFixCustomPlaceholder:
 			"e.g. Make the headline larger and bold, or change text to “Summer Sale”",
-		quickFixApplyBtn: "Apply fix",
-		quickFixRefining: "Applying fix…",
-		quickFixLessMotion: "Less motion",
-		quickFixNoFace: "No face",
-		quickFixMinor: "Fix minor artifacts",
+    quickFixApplyBtn: "Apply fix",
+    quickFixRefining: "Applying fix…",
+    quickFixLessMotion: "Less motion",
+    quickFixNoFace: "No face",
+    quickFixMinor: "Fix minor artifacts",
 		quickFixCreditReady:
 			"AI quick fixes use image tokens (~{tokens} each) — same as a normal image generation.",
 		quickFixCreditUsed:
@@ -2870,83 +2933,83 @@ export const en = {
 			addLogoToCanvas: "Add brand logo",
 			clearLogo: "Remove logo",
 		},
-		pickCampaignSlideLabel: "Pick one to continue (or download all)",
+    pickCampaignSlideLabel: "Pick one to continue (or download all)",
 		pickTeachingCarouselSlideLabel:
 			"Teaching carousel — pick one to preview (download all)",
 		carouselSlideCountLabel: "slides",
-		campaignSlideRoles: {
-			hero: "Hero",
-			"selling-points": "Selling points",
-			offer: "Offer",
-		},
-		imageCreativeLabel: "How should we create your image?",
-		imageCreativeModes: {
-			"promo-ai": {
-				title: "AI promo image",
-				description:
-					"Product photo + your brief → style inferred from product and copy (not a fixed template)",
-			},
-			"reference-concept": {
-				title: "Inspired by reference",
-				description:
-					"Keep reference layout and design elements; venue and lighting fit your product/shop; your headline copy",
-			},
-		},
-		imageRefConceptLabel: "Reference ad (design guide)",
-		imageRefConceptHint:
-			"Upload an ad design you like — AI keeps layout, decorative elements, and product pose; venue and lighting adapt to your product/shop; use your own headline/subline.",
-		imageRefConceptActiveHint:
-			"Keeps reference design language (layout, components, in-hand/flat-lay pose) + your product photo + your copy. Venue, background, and lighting adjust for your product and shop — reference wording is not copied.",
-		referenceConceptOverridesStyle:
-			"Reference mode: design follows the reference ad; venue, lighting, and background fit your product and visual style (e.g. dark premium affects mood only). Pick “hands only” if the reference shows hands.",
+    campaignSlideRoles: {
+      hero: "Hero",
+      "selling-points": "Selling points",
+      offer: "Offer",
+    },
+    imageCreativeLabel: "How should we create your image?",
+    imageCreativeModes: {
+      "promo-ai": {
+        title: "AI promo image",
+        description:
+          "Product photo + your brief → style inferred from product and copy (not a fixed template)",
+      },
+      "reference-concept": {
+        title: "Inspired by reference",
+        description:
+          "Keep reference layout and design elements; venue and lighting fit your product/shop; your headline copy",
+      },
+    },
+    imageRefConceptLabel: "Reference ad (design guide)",
+    imageRefConceptHint:
+      "Upload an ad design you like — AI keeps layout, decorative elements, and product pose; venue and lighting adapt to your product/shop; use your own headline/subline.",
+    imageRefConceptActiveHint:
+      "Keeps reference design language (layout, components, in-hand/flat-lay pose) + your product photo + your copy. Venue, background, and lighting adjust for your product and shop — reference wording is not copied.",
+    referenceConceptOverridesStyle:
+      "Reference mode: design follows the reference ad; venue, lighting, and background fit your product and visual style (e.g. dark premium affects mood only). Pick “hands only” if the reference shows hands.",
 		referenceConceptStyleOnlyHint:
 			"Style reference uploaded — the image is sent to AI image to match the reference visual style and layout grammar; headlines and scene content use YOUR topic (can be totally unrelated to the reference).",
 		referenceOptionalCopyHint:
 			"Reference sets layout and style. Headline and subline are prefilled from research rewrites — edit anytime; leave blank for a minimal product still.",
-		imageRefAutoModeNote:
-			"Reference ad detected — generating with “Inspired by reference” (not a plain product polish).",
-		uploadPreviewLabel: "Your upload (not generated yet)",
-		aiImageResultLabel: "AI generated result",
-		originalImageLabel: "Using original photo (no AI)",
-		videoCreativeLabel: "How should we create your video?",
-		conceptVideoCreativeLabel: "How should we create your concept video?",
-		conceptVideoCreativeMode: {
-			title: "Concept video (from brief)",
-			description:
+    imageRefAutoModeNote:
+      "Reference ad detected — generating with “Inspired by reference” (not a plain product polish).",
+    uploadPreviewLabel: "Your upload (not generated yet)",
+    aiImageResultLabel: "AI generated result",
+    originalImageLabel: "Using original photo (no AI)",
+    videoCreativeLabel: "How should we create your video?",
+    conceptVideoCreativeLabel: "How should we create your concept video?",
+    conceptVideoCreativeMode: {
+      title: "Concept video (from brief)",
+      description:
 				"Uses your Concept Wizard copy — no product photo. Write the AI motion prompt first, then generate.",
-		},
-		conceptVideoStepIntro:
+    },
+    conceptVideoStepIntro:
 			"Concept mode: your anti-fight / PSA / service message becomes the video brief. Use “Concept video”, write the motion prompt, then generate — skip product uploads.",
 		conceptVideoPromptSectionTitle: "AI motion prompt (from your concept)",
-		conceptVideoPromptSectionHint:
+    conceptVideoPromptSectionHint:
 			"No keyframe needed — video generation runs from text. Tap “AI write motion prompt” above first.",
-		conceptVideoPromptPending:
+    conceptVideoPromptPending:
 			"Tap “AI write motion prompt” above — your Concept Wizard copy will become the motion brief.",
-		conceptVideoReferenceModeTitle: "Reference clip mode",
-		conceptVideoReferenceModeHint:
-			"Optional: upload a reference MP4 to match pacing. Concept copy still guides the message.",
-		conceptVideoUseReferenceInstead: "Use a reference clip instead",
-		conceptVideoBackToBrief: "Back to concept video (from brief)",
-		conceptVideoKeyframeFromSetup:
-			"Using your Step 1 reference image as @Image1 — AI will animate this still while keeping your concept message.",
+    conceptVideoReferenceModeTitle: "Reference clip mode",
+    conceptVideoReferenceModeHint:
+      "Optional: upload a reference MP4 to match pacing. Concept copy still guides the message.",
+    conceptVideoUseReferenceInstead: "Use a reference clip instead",
+    conceptVideoBackToBrief: "Back to concept video (from brief)",
+    conceptVideoKeyframeFromSetup:
+      "Using your Step 1 reference image as @Image1 — AI will animate this still while keeping your concept message.",
 		conceptVideoRefKeyframeReady:
 			"Reference reel analyzed — generates from @Video1 motion. No product photo needed.",
-		cinematicRecipeTitle: "Concept cinematic recipe (recommended flow)",
-		cinematicRecipeSteps: [
-			"1) On Step 2, generate a cinematic keyframe (or upload a reference still).",
+    cinematicRecipeTitle: "Concept cinematic recipe (recommended flow)",
+    cinematicRecipeSteps: [
+      "1) On Step 2, generate a cinematic keyframe (or upload a reference still).",
 			"2) On Video, tap “AI write motion prompt” for camera / pacing text.",
-			"3) Click Plan script & music, then pick one AI music track.",
-			"4) Generate video — image → video with optional voice + subtitle burn.",
-		],
-		conceptAnalyzeApplied: "Fields applied — continue to video when ready.",
-		videoCreativeModes: {
-			"product-assistant": {
+      "3) Click Plan script & music, then pick one AI music track.",
+      "4) Generate video — image → video with optional voice + subtitle burn.",
+    ],
+    conceptAnalyzeApplied: "Fields applied — continue to video when ready.",
+    videoCreativeModes: {
+      "product-assistant": {
 				title: "video assistant",
 				description:
 					"Upload product + packaging + angles → AI analyzes photos → situational video generation reel",
-			},
-			"product-promo": {
-				title: "Product promo video",
+      },
+      "product-promo": {
+        title: "Product promo video",
 				description:
 					"Animate your product / keyframe — smooth commercial motion",
 			},
@@ -3051,13 +3114,13 @@ export const en = {
 					"Person using your product in a lifestyle scene — not beauty MV, not packshot-only.",
 			},
 
-			"reference-concept": {
-				title: "Inspired by reference video",
+      "reference-concept": {
+        title: "Inspired by reference video",
 				description:
 					"Your product + reference MP4 → motion & edit concept (not a clone)",
-			},
-			"image-to-video": {
-				title: "Image → video",
+      },
+      "image-to-video": {
+        title: "Image → video",
 				description:
 					"Use the AI image from Step 2 — best for full image-then-video flow",
 			},
@@ -3127,7 +3190,7 @@ export const en = {
 		blockbusterSceneHintBehind:
 			"Optional but helpful for Behind the truck — chase cam behind the trailer. Generate or upload after you pick the view.",
 		blockbusterSceneHintBridge:
-			"Usually skip for On the bridge — H3 follows the plate too tightly (wrong plate → truck reverse + fake box art). Leave empty; the prompt drives the angle.",
+			"Usually skip for On the bridge — video follows the plate too tightly (wrong plate → truck reverse + fake box art). Leave empty; the prompt drives the angle.",
 		blockbusterGenerateSceneBtn: "Generate scene plate",
 		blockbusterGenerateSceneBusy: "Generating overpass still…",
 		blockbusterSceneSkipBridgeNote:
@@ -3306,7 +3369,7 @@ export const en = {
 		},
 		h3SphereMgSchemeTitle: "Sphere style",
 		h3SphereMgSchemeHint:
-			"Like an H3 motion-graphics showreel: sphere world first, then the product steps out. Crystal is best for cars. Not a blank planet.",
+			"Like a motion-graphics showreel: sphere world first, then the product steps out. Crystal is best for cars. Not a blank planet.",
 		h3SphereMgSchemeAuto: "Auto · best fit",
 		h3SphereMgSchemes: {
 			"crystal-glass": {
@@ -3811,7 +3874,7 @@ export const en = {
 			fabric: { title: "Fabric fall", desc: "Ribbon falls straight down — soft goods" },
 			petals: { title: "Petals", desc: "Dense petal cascade — wellness & concept" },
 		},
-		videoSettingsTitle: "Video settings",
+    videoSettingsTitle: "Video settings",
 		videoReferenceOutputSettingsTitle: "Output length & quality",
 		videoReferenceOutputSettingsHint:
 			"Reference reel sets motion and pacing — pick how long and sharp the generated clip should be.",
@@ -3821,117 +3884,120 @@ export const en = {
 		videoSettingsResolution: "Resolution",
 		videoResolutionPlanHint: "Your plan includes up to {max}.",
 		videoResolutionUpgradeLink: "Upgrade for higher resolution",
-		videoSettingsDuration: "Duration",
-		videoSettingsMotion: "Camera / motion",
-		videoSettingsCreativity: "Motion energy",
-		videoCreativityLevels: {
-			subtle: "Soft — gentle zoom",
-			lively: "Lively — varied motion (recommended)",
-			cinematic: "Cinematic — multi-beat TVC feel",
-		},
+		imageSettingsResolution: "Image resolution",
+		imageResolutionPlanHint: "Your plan includes up to {max}.",
+		imageResolutionUpgradeLink: "Upgrade for 2K images",
+    videoSettingsDuration: "Duration",
+    videoSettingsMotion: "Camera / motion",
+    videoSettingsCreativity: "Motion energy",
+    videoCreativityLevels: {
+      subtle: "Soft — gentle zoom",
+      lively: "Lively — varied motion (recommended)",
+      cinematic: "Cinematic — multi-beat TVC feel",
+    },
 		videoAutoSecondFrame:
 			"Auto-create a second scene (one upload → richer video)",
-		videoAutoSecondFrameHint:
+    videoAutoSecondFrameHint:
 			"AI makes an alternate angle (e.g. on wrist) as the end frame so video generation can move between two looks — not just zoom.",
-		extraAnglesLabel: "Extra product angles (optional)",
+    extraAnglesLabel: "Extra product angles (optional)",
 		extraAnglesHint:
 			"2–3 photos of the same item — more dynamic motion via multi-angle mode",
-		extraAnglesCta: "Add angle photos",
-		endFrameLabel: "Closing frame (optional)",
-		endFrameHint: "Override auto — upload your own second shot",
-		videoRichMotionNote:
-			"Using lively motion + second frame for a more interesting clip than zoom-only.",
-		videoWearVarietyTitle: "Want more variety or on-body wearing?",
-		videoWearVarietyTips: [
-			"Reference-video mode: motion follows @Video1 — if the clip has no hands, the output usually won’t add them.",
-			"For on-wrist / in-hand: pick a reference MP4 with hands; use raw product photo as @Image1 (static ad keyframes are harder); set advanced framing to hands only.",
-			"For more variety: use Lively or Cinematic creativity; or switch to Product promo + enable auto second frame (still life → on wrist).",
-			"You can also generate an on-wrist still as the end frame, or add to the video prompt: gentle hand lifts bracelet onto wrist, face never shown.",
-			"Full-face models are not supported — hands, feet, or torso only (no identifiable face).",
-		],
-		videoSettingsFast: "Fast mode (lower cost, draft quality)",
-		videoDurationAuto: "Auto",
-		videoMotionStyles: {
-			"slow-push": "Slow push-in",
-			"gentle-orbit": "Gentle orbit",
-			"static-glow": "Subtle shimmer (locked)",
-			"pull-out": "Slow pull-out",
-		},
-		preGenerate: {
-			title: "Before you generate (no need to learn every setting)",
+    extraAnglesCta: "Add angle photos",
+    endFrameLabel: "Closing frame (optional)",
+    endFrameHint: "Override auto — upload your own second shot",
+    videoRichMotionNote:
+      "Using lively motion + second frame for a more interesting clip than zoom-only.",
+    videoWearVarietyTitle: "Want more variety or on-body wearing?",
+    videoWearVarietyTips: [
+      "Reference-video mode: motion follows @Video1 — if the clip has no hands, the output usually won’t add them.",
+      "For on-wrist / in-hand: pick a reference MP4 with hands; use raw product photo as @Image1 (static ad keyframes are harder); set advanced framing to hands only.",
+      "For more variety: use Lively or Cinematic creativity; or switch to Product promo + enable auto second frame (still life → on wrist).",
+      "You can also generate an on-wrist still as the end frame, or add to the video prompt: gentle hand lifts bracelet onto wrist, face never shown.",
+      "Full-face models are not supported — hands, feet, or torso only (no identifiable face).",
+    ],
+    videoSettingsFast: "Fast mode (lower cost, draft quality)",
+    videoDurationAuto: "Auto",
+    videoMotionStyles: {
+      "slow-push": "Slow push-in",
+      "gentle-orbit": "Gentle orbit",
+      "static-glow": "Subtle shimmer (locked)",
+      "pull-out": "Slow pull-out",
+    },
+    preGenerate: {
+      title: "Before you generate (no need to learn every setting)",
 			hint: "AI filled the idea — check these 3 things, then tap Generate full Reel.",
-			keyframeLabel: "Keyframe",
-			keyframeReady: "Ready",
-			keyframeMissing: "Generate keyframe in Step 2 first",
+      keyframeLabel: "Keyframe",
+      keyframeReady: "Ready",
+      keyframeMissing: "Generate keyframe in Step 2 first",
 			keyframeConceptRefReady:
 				"Reference MP4 analyzed — ready to generate (no product photo)",
 			keyframeConceptStoryboardReady:
 				"Scene stills ready — preview above before generating video",
-			motionLabel: "Motion",
-			audioLabel: "Audio",
-			voiceOn: "Voiceover on",
-			voiceOff: "Voiceover off",
-			captionsOn: "Captions burn on",
-			captionsOff: "Captions off",
-			aiMusic: "AI music",
+      motionLabel: "Motion",
+      audioLabel: "Audio",
+      voiceOn: "Voiceover on",
+      voiceOff: "Voiceover off",
+      captionsOn: "Captions burn on",
+      captionsOff: "Captions off",
+      aiMusic: "AI music",
 			downloadTip:
 				"Download the final MP4 from Done — not the raw *_video.mp4 file.",
 			stableMotionBtn: "Stable camera (minimal motion)",
 			cinematicMotionBtn: "Cinematic motion (recommended)",
-			adPackBtn: "Voice, music & captions →",
-			advancedHint:
+      adPackBtn: "Voice, music & captions →",
+      advancedHint:
 				"Cinematic reel defaults to orbit / push / pull camera moves. Use stable only if you want a near-static clip.",
-		},
-		step1Title: "Step 1 — Output & product info",
+    },
+    step1Title: "Step 1 — Output & product info",
 		step1Hint:
 			"Choose image, video, or both. Fill product details — AI builds from your inputs.",
-		setupHints: {
-			"image-only":
-				"Next: create an image by describing it, from one reference photo, or from your product + a style reference.",
-			"video-only":
-				"Next: upload your product still (for @Image1), then optionally a reference ad MP4 to copy motion (@Video1).",
-			combined:
+    setupHints: {
+      "image-only":
+        "Next: create an image by describing it, from one reference photo, or from your product + a style reference.",
+      "video-only":
+        "Next: upload your product still (for @Image1), then optionally a reference ad MP4 to copy motion (@Video1).",
+      combined:
 				"Next: AI image from your product, then video — reference ad MP4 optional on the video step.",
-		},
-		setupCallouts: {
+    },
+    setupCallouts: {
 			"image-only":
 				"Image workflow — no video step. Choose how to create the photo on the next screen.",
 			"video-only":
 				"Video workflow — video generation + BGM. Upload product photo + reference ad MP4 on the next screen.",
 			combined:
 				"Full ad — generate/polish image first, then animate it. Reference MP4 copies motion like before.",
-		},
-		imageInputLabel: "How do you want to create the image?",
-		imageInputModes: {
-			"product-ad": {
-				title: "Product → ad (recommended)",
-				description:
-					"Upload your product photo only — AI keeps your item and makes a clean, premium ad image (no style reference)",
-			},
-			"product-style": {
-				title: "Product + style reference",
-				description:
-					"Upload product + a second reference image to copy that ad’s layout, lighting, and mood",
-			},
-			describe: {
-				title: "Describe only",
+    },
+    imageInputLabel: "How do you want to create the image?",
+    imageInputModes: {
+      "product-ad": {
+        title: "Product → ad (recommended)",
+        description:
+          "Upload your product photo only — AI keeps your item and makes a clean, premium ad image (no style reference)",
+      },
+      "product-style": {
+        title: "Product + style reference",
+        description:
+          "Upload product + a second reference image to copy that ad’s layout, lighting, and mood",
+      },
+      describe: {
+        title: "Describe only",
 				description:
 					"No upload — write what you want in the prompt (use product name from Step 1)",
-			},
-			reference: {
-				title: "Reference image only",
+      },
+      reference: {
+        title: "Reference image only",
 				description:
 					"Upload one ad/photo — AI matches its look for your product description",
-			},
-		},
-		videoSectionKeyframe: "1. Keyframe (@Image1)",
-		videoSectionReference: "2. Reference ad — copy motion (@Video1)",
-		videoSectionBgm: "3. Background music",
-		continueNext: "Continue",
+      },
+    },
+    videoSectionKeyframe: "1. Keyframe (@Image1)",
+    videoSectionReference: "2. Reference ad — copy motion (@Video1)",
+    videoSectionBgm: "3. Background music",
+    continueNext: "Continue",
 		continueToImage: "Continue",
 		continueToVideo: "Continue",
 		approveGenerateVideoBtn: "Approve & generate video",
-		finishImage: "Finish → Download",
+    finishImage: "Finish → Download",
 		mobileVideoBusy: "Generation in progress — wait for it to finish.",
 		mobileVideoNeedPrompt:
 			"Write or confirm the motion prompt before generating.",
@@ -3939,65 +4005,65 @@ export const en = {
 			"Analyze the photo and write a motion prompt first (product assistant).",
 		mobileVideoBlocked: "Complete the steps above before generating video.",
 		step2Title: "Step 2 — Promotional image",
-		step2Hint:
-			"Upload your product photo. AI generates a new ad image — or applies a reference concept if you chose that mode.",
-		step2Hints: {
+    step2Hint:
+      "Upload your product photo. AI generates a new ad image — or applies a reference concept if you chose that mode.",
+    step2Hints: {
 			"image-only":
 				"Pick one of three ways below, then generate. Download when done — no video.",
-			combined:
-				"Default: upload product only for a clean ad image. Use “Product + style reference” only if you want to copy another ad’s look.",
-		},
+      combined:
+        "Default: upload product only for a clean ad image. Use “Product + style reference” only if you want to copy another ad’s look.",
+    },
 		imageModelLabel: "Image quality",
-		imageModels: {
-			"nano-banana-2-edit": {
+    imageModels: {
+      "nano-banana-2-edit": {
 				label: "AI image Edit (default)",
-				hint: "Upload product photo → AI designs a new ad, keeps your item",
-			},
-			"nano-banana-edit": {
+        hint: "Upload product photo → AI designs a new ad, keeps your item",
+      },
+      "nano-banana-edit": {
 				label: "AI image Edit (legacy)",
-				hint: "Upload product photo → AI polishes it, keeps your item",
-			},
-			"nano-banana": {
+        hint: "Upload product photo → AI polishes it, keeps your item",
+      },
+      "nano-banana": {
 				label: "AI image — text only",
-				hint: "No upload needed — describe product in Step 1 name + prompt",
-			},
-			"nano-banana-pro-edit": {
+        hint: "No upload needed — describe product in Step 1 name + prompt",
+      },
+      "nano-banana-pro-edit": {
 				label: "AI image Pro Edit (advanced)",
-				hint: "Higher quality edit — needs product photo upload",
-			},
-		},
-		twoVariantsLabel: "Generate 2 versions at once",
+        hint: "Higher quality edit — needs product photo upload",
+      },
+    },
+    twoVariantsLabel: "Generate 2 versions at once",
 		twoVariantsHint:
 			"Two images from the same settings — pick your favorite (~2× API cost)",
-		pickVariantLabel: "Pick a version to continue",
-		variantA: "Version A",
-		variantB: "Version B",
+    pickVariantLabel: "Pick a version to continue",
+    variantA: "Version A",
+    variantB: "Version B",
 		exactTextHint:
 			"Need exact on-image Chinese text? AI images often misspell words.",
-		exactTextCta: "Use paper + sticker template → exact headline on layout",
-		uploadQualityLowRes:
-			"Photo resolution is a bit low (800×800+ recommended) — you can still generate, but fine product detail may be soft.",
-		uploadQualityVerySmall:
-			"Photo is very small (under 512px) — please upload a clearer product shot.",
-		imageRefLabel: "Style reference image (photo, optional)",
-		imageRefHint:
-			"For image AI only — layout/lighting/mood. Not the video MP4 reference (that is on the Video step).",
-		styleRefPromptActive:
-			"Style reference detected — prompt switched to match your reference image (composition, lighting, overlays). Regenerate to apply.",
-		productAdHint:
-			"AI designs a promo still from your headline/subline/offer — same product, plus ad copy and a polished background. No reference image needed.",
-		imageRefCta: "Choose reference image",
-		imageRefChange: "Change reference",
-		videoKeyframeLabel: "Keyframe image",
+    exactTextCta: "Use paper + sticker template → exact headline on layout",
+    uploadQualityLowRes:
+      "Photo resolution is a bit low (800×800+ recommended) — you can still generate, but fine product detail may be soft.",
+    uploadQualityVerySmall:
+      "Photo is very small (under 512px) — please upload a clearer product shot.",
+    imageRefLabel: "Style reference image (photo, optional)",
+    imageRefHint:
+      "For image AI only — layout/lighting/mood. Not the video MP4 reference (that is on the Video step).",
+    styleRefPromptActive:
+      "Style reference detected — prompt switched to match your reference image (composition, lighting, overlays). Regenerate to apply.",
+    productAdHint:
+      "AI designs a promo still from your headline/subline/offer — same product, plus ad copy and a polished background. No reference image needed.",
+    imageRefCta: "Choose reference image",
+    imageRefChange: "Change reference",
+    videoKeyframeLabel: "Keyframe image",
 		videoKeyframeHint:
 			"The still image video generation will animate (your photo or a generated image)",
-		downloadImage: "Download image",
-		imageDoneTitle: "Your image is ready",
+    downloadImage: "Download image",
+    imageDoneTitle: "Your image is ready",
 		imageDoneHint:
 			"Download the PNG. You can start a video workflow separately if needed.",
-		generateImageBtn: "Generate image",
+    generateImageBtn: "Generate image",
 		storyboardGenerateScenesBtn: "Generate storyboard scenes",
-		regenerateImageBtn: "Regenerate image",
+    regenerateImageBtn: "Regenerate image",
 		tokenCostHint: "Uses ~{n} tokens",
 		imageReviewRegenerateHint: "Not happy?",
 		imageReviewRegenerateLink: "Regenerate",
@@ -4077,68 +4143,68 @@ export const en = {
 		videoReviewRegenerateBannerBtn: "Regenerate video",
 		videoReviewGenerateOneMore: "Generate one more",
 
-		useOriginalBtn: "Use my upload as-is (skip to video)",
-		useOriginalImageOnlyBtn: "Use my upload as-is (no AI)",
-		imageReadyHint: "Happy with this image? Continue to make the video.",
+    useOriginalBtn: "Use my upload as-is (skip to video)",
+    useOriginalImageOnlyBtn: "Use my upload as-is (no AI)",
+    imageReadyHint: "Happy with this image? Continue to make the video.",
 		imageReadyHintCombined:
 			"This image becomes @Image1 for video — continue when you’re happy.",
-		combinedVideoKeyframeCallout:
+    combinedVideoKeyframeCallout:
 			"Your Step 2 promo still is video generation @Image1 (image-to-video). To copy reference motion, switch to “Inspired by reference video”.",
-		combinedCreativeImageHint:
-			"Generate a promo still here that matches your creative brief — the video step animates this image.",
-		combinedRefKeyframeNote:
+    combinedCreativeImageHint:
+      "Generate a promo still here that matches your creative brief — the video step animates this image.",
+    combinedRefKeyframeNote:
 			"Reference mode: use your raw product photo as @Image1 (not the ad still) so video generation can match @Video1 motion.",
-		step3Title: "Step 3 — Video (AI motion)",
-		step3Hint:
+    step3Title: "Step 3 — Video (AI motion)",
+    step3Hint:
 			"video generation animates your image. Optional: upload a reference ad MP4 to copy its motion (@Image1 + @Video1).",
-		step3Hints: {
-			"video-only":
+    step3Hints: {
+      "video-only":
 				"Default: video assistant — upload product (+ packaging / angles), analyze, then generate. Or switch to product promo / reference MP4.",
-			combined:
-				"Your image from Step 2 is @Image1. Add a reference ad MP4 below to copy motion — same as before.",
-		},
-		generateVideoBtn: "Generate video",
-		step4Title: "Step 4 — Your ad is ready",
+      combined:
+        "Your image from Step 2 is @Image1. Add a reference ad MP4 below to copy motion — same as before.",
+    },
+    generateVideoBtn: "Generate video",
+    step4Title: "Step 4 — Your ad is ready",
 		step4Hint:
 			"Download the clean silent MP4, or open audio & caption studio to add BGM and wording.",
 		videoDoneEmptyTitle: "No video yet",
 		videoDoneEmptyHint:
 			"Generation did not finish. Go back and try again — or use a product-only photo / skip a reference reel that shows people.",
 		videoDoneEmptyBack: "Back to video step",
-		uploadLabel: "Product photo",
-		uploadLabelConcept: "Hero image (optional)",
-		uploadHint: "JPG, PNG or WEBP · clear photo of your product works best",
+    uploadLabel: "Product photo",
+    uploadLabelConcept: "Hero image (optional)",
+    uploadHint: "JPG, PNG or WEBP · clear photo of your product works best",
 		uploadHintConcept:
 			"Logo, app screenshot, or brand graphic — optional; copy-only also works",
-		uploadCta: "Tap to choose photo",
-		uploadChange: "Change photo",
-		referenceLabel: "Reference ad video (MP4)",
-		referenceHint:
-			"Upload a short MP4 ad you want to copy. AI will put your product (@Image1) into similar motion/style as @Video1.",
+    uploadCta: "Tap to choose photo",
+    uploadChange: "Change photo",
+    referenceLabel: "Reference ad video (MP4)",
+    referenceHint:
+      "Upload a short MP4 ad you want to copy. AI will put your product (@Image1) into similar motion/style as @Video1.",
 		referenceVideoOnlyHint:
 			"MP4 or MOV · optional but recommended to copy motion from a real ad",
-		needKeyframeGoBack:
-			"No keyframe yet — go Back, generate an image (or use your upload), then return here.",
-		referenceImageOnlyHint:
-			"You uploaded an image — for AI motion matching, upload a video reference (MP4).",
+    needKeyframeGoBack:
+      "No keyframe yet — go Back, generate an image (or use your upload), then return here.",
+    referenceImageOnlyHint:
+      "You uploaded an image — for AI motion matching, upload a video reference (MP4).",
 		referenceModeNote:
 			"Used reference-to-video: your product photo + reference ad.",
-		referenceModeActive:
-			"Reference video detected — AI uses your keyframe as @Image1 and matches @Video1 motion.",
-		referenceVideoTooLong:
+    referenceModeActive:
+      "Reference video detected — AI uses your keyframe as @Image1 and matches @Video1 motion.",
+    referenceVideoTooLong:
 			"Reference is ~{seconds}s — video generation only uses the first 2–15s. Trim an 8–12s highlight in CapCut before upload for a closer match.",
-		referenceVideoTips:
-			"Reference tips: ① Trim to 8–12s (not a full 30s reel) ② Product photo must match the item in the ad ③ Avoid screen recordings (IG buttons) ④ Use “Inspired by reference video” + 720p.",
-		videoRefAutoModeNote:
-			"Reference MP4 detected — using “Inspired by reference video” (not image-to-video, which ignores your clip).",
-		videoRefProductMismatch:
+    referenceVideoTips:
+      "Reference tips: ① Trim to 8–12s (not a full 30s reel) ② Product photo must match the item in the ad ③ Avoid screen recordings (IG buttons) ④ Use “Inspired by reference video” + 720p.",
+    videoRefAutoModeNote:
+      "Reference MP4 detected — using “Inspired by reference video” (not image-to-video, which ignores your clip).",
+    videoRefProductMismatch:
 			"Reference shows hands/stringing — use your raw product photo as @Image1 (not the generated ad still) so video generation can match motion.",
-		videoRefUseProductPhoto:
-			"Tip: using the AI ad still as @Image1 — upload the raw product photo instead for better motion match.",
+    videoRefUseProductPhoto:
+      "Tip: using the AI ad still as @Image1 — upload the raw product photo instead for better motion match.",
 		videoGenPathLabel: "video generation path",
-		videoRefIgnoredOnImageMode:
-			"Reference MP4 uploaded but mode is “Product motion” — it will be ignored. Switch to “Inspired by reference video” to match the clip.",
-		videoPreflightTitle: "Pre-flight check",
+    videoRefIgnoredOnImageMode:
+      "Reference MP4 uploaded but mode is “Product motion” — it will be ignored. Switch to “Inspired by reference video” to match the clip.",
+    videoPreflightTitle: "Pre-flight check",
 		videoPreflightModeProduct:
 			"Mode: product image → video (image-to-video)",
 		videoPreflightModeRef:
@@ -4147,11 +4213,11 @@ export const en = {
 			"Mode: reference MP4 (concept R2V) — follow @Video1 motion, no product photo",
 		videoPreflightSettings:
 			"Quality {resolution} · duration {duration} · {tier}",
-		videoPreflightTierFast: "Fast draft (cheaper)",
-		videoPreflightTierQuality: "Standard quality",
-		videoPreflightStyle: "Visual style: {style}",
-		videoPreflightSecondFrame:
-			"Will call image API once for an auto second frame (~extra image cost) — turn off “Auto-create a second scene” to save",
+    videoPreflightTierFast: "Fast draft (cheaper)",
+    videoPreflightTierQuality: "Standard quality",
+    videoPreflightStyle: "Visual style: {style}",
+    videoPreflightSecondFrame:
+      "Will call image API once for an auto second frame (~extra image cost) — turn off “Auto-create a second scene” to save",
 		videoPreflightSingleCall:
 			"Expected: 1× video + local BGM (no extra image)",
 		videoPreflightDoubleCall: "Expected: 1× image + 1× video + BGM",
@@ -4166,22 +4232,22 @@ export const en = {
 			"Output length changed — tap “AI write motion prompt” to refresh (your current script is kept).",
 		planStaleAfterAssetChange:
 			"Product photos changed — re-run AI plan if the motion script should match the new kit.",
-		productVideoKitTitle: "Product photo kit",
-		productVideoKitHint:
+    productVideoKitTitle: "Product photo kit",
+    productVideoKitHint:
 			"Upload hero product (required), packaging, or extra angles — AI vision reads all photos, then writes a motion prompt.",
-		productVideoHeroLabel: "Hero product (@Image1)",
-		productVideoHeroHint: "Main product shot — required",
-		productVideoPackagingLabel: "Packaging / box (optional)",
+    productVideoHeroLabel: "Hero product (@Image1)",
+    productVideoHeroHint: "Main product shot — required",
+    productVideoPackagingLabel: "Packaging / box (optional)",
 		productVideoPackagingHint:
 			"Retail box or package — @Image2 if uploaded",
-		productVideoExtraLabel: "Extra angles (optional)",
+    productVideoExtraLabel: "Extra angles (optional)",
 		productVideoExtraHint:
 			"Up to 2 more photos — detail, back, in-use context",
 		planProductVideoBtn: "Analyze photo & write motion prompt",
 		planProductVideoBusy: "AI analyzing photo & writing motion prompt…",
 		planProductVideoReady:
 			"Motion plan ready — review the prompt below, then generate",
-		productVideoSituationLabel: "Suggested setting",
+    productVideoSituationLabel: "Suggested setting",
 		productVideoPlanLabel: "Motion prompt",
 		productVideoPlanHint:
 			"Vision analyzed your uploads; AI wrote camera + motion plan. Edit in advanced if needed.",
@@ -4193,55 +4259,55 @@ export const en = {
 			"Upload a hero product photo first, then tap “Analyze photo & write motion prompt”.",
 		storyboardVideoNeedScenesHint:
 			"Go back to step 2 and generate storyboard scene images first.",
-		videoKeyframeProductLabel: "Product / keyframe photo (@Image1)",
-		videoKeyframeProductHint:
-			"Required. Your product or still — used as @Image1. With a reference MP4, AI matches @Video1 motion.",
-		referenceCta: "Tap to choose reference ad",
+    videoKeyframeProductLabel: "Product / keyframe photo (@Image1)",
+    videoKeyframeProductHint:
+      "Required. Your product or still — used as @Image1. With a reference MP4, AI matches @Video1 motion.",
+    referenceCta: "Tap to choose reference ad",
 		referenceChange: "Change video",
-		productLabel: "Product name (optional)",
+    productLabel: "Product name (optional)",
 		productLabelRequired: "Product name",
-		productPlaceholder: "e.g. goldstone bracelet",
-		businessLabel: "Shop name",
-		businessPlaceholder: "e.g. Lucky Crystal HK",
-		offerLabel: "Offer (optional)",
-		offerPlaceholder: "e.g. 20% off this week",
-		bgmLabel: "Background music",
-		bgmCalm: "Calm",
-		bgmUpbeat: "Upbeat",
-		bgmWarm: "Warm",
+    productPlaceholder: "e.g. goldstone bracelet",
+    businessLabel: "Shop name",
+    businessPlaceholder: "e.g. Lucky Crystal HK",
+    offerLabel: "Offer (optional)",
+    offerPlaceholder: "e.g. 20% off this week",
+    bgmLabel: "Background music",
+    bgmCalm: "Calm",
+    bgmUpbeat: "Upbeat",
+    bgmWarm: "Warm",
 		bgmNone: "No music",
-		phaseSecondFrame: "Creating a second scene for richer motion…",
-		phaseVideo: "Making your video…",
-		phaseBgm: "Adding background music…",
-		phaseVoiceover: "Adding spoken voiceover…",
-		phaseCaptions: "Burning on-screen captions…",
-		imageGenerating: "Generating image…",
+    phaseSecondFrame: "Creating a second scene for richer motion…",
+    phaseVideo: "Making your video…",
+    phaseBgm: "Adding background music…",
+    phaseVoiceover: "Adding spoken voiceover…",
+    phaseCaptions: "Burning on-screen captions…",
+    imageGenerating: "Generating image…",
 		generationWaitHint:
 			"Hang tight — your creative is rendering in this frame.",
 		imageGenerateNotReady:
 			"Finish the reference image, headline, and other required fields above before generating.",
 		download: "Download video (no BGM, no captions)",
-		downloadEditPack: "Download CapCut edit pack (JSON)",
-		subtitles: "Add subtitles (advanced)",
-		newProject: "Make another ad",
-		back: "Back",
-		advanced: "Advanced options",
-		advancedWorkflow: "Advanced: output type & visual style",
-		advancedPrompts: "Advanced: AI prompt text",
+    downloadEditPack: "Download CapCut edit pack (JSON)",
+    subtitles: "Add subtitles (advanced)",
+    newProject: "Make another ad",
+    back: "Back",
+    advanced: "Advanced options",
+    advancedWorkflow: "Advanced: output type & visual style",
+    advancedPrompts: "Advanced: AI prompt text",
 		advancedHint:
 			"Pick variables below — prompts update automatically. You can still edit the text.",
-		marketLabel: "Look & market style",
-		framingLabel: "People / body in shot",
+    marketLabel: "Look & market style",
+    framingLabel: "People / body in shot",
 		framingPickerHint:
 			"Control whether a model face appears — for dating/service concepts, try hands-only or no people.",
-		imageAdvancedLabel: "Advanced (framing / prompts)",
-		extraLabel: "Extra instructions (optional)",
-		extraPlaceholder: "e.g. gold bangle on wrist, outdoor daylight",
-		promptPreview: "AI prompts (editable)",
-		resetPrompts: "Reset from options",
-		imagePromptLabel: "Image polish prompt",
-		videoPromptLabel: "Video motion prompt",
-		promptMarkets: {
+    imageAdvancedLabel: "Advanced (framing / prompts)",
+    extraLabel: "Extra instructions (optional)",
+    extraPlaceholder: "e.g. gold bangle on wrist, outdoor daylight",
+    promptPreview: "AI prompts (editable)",
+    resetPrompts: "Reset from options",
+    imagePromptLabel: "Image polish prompt",
+    videoPromptLabel: "Video motion prompt",
+    promptMarkets: {
 			hk: {
 				label: "Hong Kong / Cantonese market",
 				hint: "HK visual style — copy language follows your English/Chinese brief",
@@ -4258,8 +4324,8 @@ export const en = {
 				label: "English / international",
 				hint: "Clean western retail look",
 			},
-		},
-		promptFramings: {
+    },
+    promptFramings: {
 			auto: {
 				label: "Auto (template default)",
 				hint: "Uses the style you picked above",
@@ -4268,39 +4334,39 @@ export const en = {
 				label: "Product only — no people",
 				hint: "Hero product shot, nobody in frame",
 			},
-			"hands-only": {
-				label: "Hands only — no face",
-				hint: "Hands holding or wearing product; face never shown",
-			},
-			"legs-feet": {
-				label: "Legs & feet only",
-				hint: "For shoes, socks, leggings — cropped above knee, no face",
-			},
-			"torso-no-face": {
-				label: "Body / torso — no face",
-				hint: "Arms or torso OK; face must be out of frame",
-			},
+      "hands-only": {
+        label: "Hands only — no face",
+        hint: "Hands holding or wearing product; face never shown",
+      },
+      "legs-feet": {
+        label: "Legs & feet only",
+        hint: "For shoes, socks, leggings — cropped above knee, no face",
+      },
+      "torso-no-face": {
+        label: "Body / torso — no face",
+        hint: "Arms or torso OK; face must be out of frame",
+      },
 			"no-people": {
 				label: "Strict — no people at all",
 				hint: "Product and background only",
 			},
-		},
-		retry: "Try again",
-		bgmNote: "BGM added from your music library.",
+    },
+    retry: "Try again",
+    bgmNote: "BGM added from your music library.",
 		bgmFallbackNote:
 			"Library BGM not found — used soft AI music instead. Run: npm run setup:bgm",
-		adPack: {
-			title: "Ad pack — script, captions & music",
+    adPack: {
+      title: "Ad pack — script, captions & music",
 			intro: "AI plans your hook, timed captions, and BGM style before video. Review and edit each part, then generate.",
-			planCta: "Plan script & music",
-			planning: "Planning…",
-			reviewTitle: "Review your ad pack",
+      planCta: "Plan script & music",
+      planning: "Planning…",
+      reviewTitle: "Review your ad pack",
 			reviewHint:
 				"Edit any section or regenerate the full plan before generating video.",
-			regenerateAll: "Regenerate plan",
-			scriptSection: "Script & captions",
-			burnCaptions: "Burn captions onto video",
-			hookLabel: "Hook",
+      regenerateAll: "Regenerate plan",
+      scriptSection: "Script & captions",
+      burnCaptions: "Burn captions onto video",
+      hookLabel: "Hook",
 			hookPickerLabel: "Pick a hook",
 			hookPickerHint:
 				"Three different angles — updates voiceover and captions (hook top-center, product line bottom-center).",
@@ -4309,27 +4375,27 @@ export const en = {
 				"Voiceover script — spoken after video (AI TTS)",
 			voiceoverEmptyHint:
 				"Voiceover script is empty — dub will be skipped. Fill below or use “Fill from captions”.",
-			voiceoverFromCaptionsBtn: "Fill voiceover from captions",
-			speakVoiceover: "Speak voiceover (mix over BGM)",
-			voiceoverHint:
-				"Generate voice previews below (male/female). Selected voice is mixed over BGM on final export.",
-			voiceSection: "Voice preview",
-			voicePreviewHint:
-				"Listen and pick a voice before generating video. Re-generate after editing script or locale. English voices work best with English script.",
+      voiceoverFromCaptionsBtn: "Fill voiceover from captions",
+      speakVoiceover: "Speak voiceover (mix over BGM)",
+      voiceoverHint:
+        "Generate voice previews below (male/female). Selected voice is mixed over BGM on final export.",
+      voiceSection: "Voice preview",
+      voicePreviewHint:
+        "Listen and pick a voice before generating video. Re-generate after editing script or locale. English voices work best with English script.",
 			voicePreviewPartial:
 				"{failed} voice preview(s) failed — available tracks are still playable.",
-			generateVoice: "Generate voice previews",
-			generatingVoice: "Generating voices…",
-			voicePresets: {
-				"hk-female-pro": "Female — professional",
-				"hk-male-warm": "Male — warm",
-				"cn-female": "Female",
-				"cn-male": "Male",
-				"en-female": "Female",
-				"en-male": "Male",
-			},
-			voiceLocales: { hk: "粵語", en: "English", cn: "普通话" },
-			timingLabel: "Timing",
+      generateVoice: "Generate voice previews",
+      generatingVoice: "Generating voices…",
+      voicePresets: {
+        "hk-female-pro": "Female — professional",
+        "hk-male-warm": "Male — warm",
+        "cn-female": "Female",
+        "cn-male": "Male",
+        "en-female": "Female",
+        "en-male": "Male",
+      },
+      voiceLocales: { hk: "粵語", en: "English", cn: "普通话" },
+      timingLabel: "Timing",
 			positionLabel: "Position",
 			positionOptions: {
 				top: "Top center",
@@ -4342,137 +4408,137 @@ export const en = {
 			},
 			multilineHint:
 				"Press Enter for a second line in the same position and time slot.",
-			addCaption: "+ Add caption line",
+      addCaption: "+ Add caption line",
 			removeCaption: "Remove caption line",
-			timelineSection: "Scene timeline",
-			sceneLabel: "Scene {n}",
-			startSec: "Start (s)",
-			endSec: "End (s)",
-			musicSection: "Background music",
-			musicMoodLabel: "Music mood (guides AI planner)",
-			musicMoods: {
-				auto: "Auto",
-				warm: "Warm lifestyle",
-				upbeat: "Upbeat energy",
-				premium: "Premium minimal",
-				cinematic: "Cinematic",
-			},
-			aiStyleLabel: "AI style",
-			libraryMusic: "Music library",
-			aiMusic: "AI-generated",
-			generateMusic: "Generate 3 AI tracks",
-			generatingMusic: "Generating music…",
-			trackLabel: "Track {label}",
-			selected: "Selected",
-			selectTrack: "Select",
-			needPlanFirst: "Plan the ad pack first to get an AI music prompt.",
-			aiBgmNote: "AI-generated BGM mixed into your video.",
-			captionsAppliedNote: "On-screen captions burned from your script.",
-			captionsSoftTrackNote:
-				"Captions added as a subtitle track (toggle CC in your player if not visible).",
+      timelineSection: "Scene timeline",
+      sceneLabel: "Scene {n}",
+      startSec: "Start (s)",
+      endSec: "End (s)",
+      musicSection: "Background music",
+      musicMoodLabel: "Music mood (guides AI planner)",
+      musicMoods: {
+        auto: "Auto",
+        warm: "Warm lifestyle",
+        upbeat: "Upbeat energy",
+        premium: "Premium minimal",
+        cinematic: "Cinematic",
+      },
+      aiStyleLabel: "AI style",
+      libraryMusic: "Music library",
+      aiMusic: "AI-generated",
+      generateMusic: "Generate 3 AI tracks",
+      generatingMusic: "Generating music…",
+      trackLabel: "Track {label}",
+      selected: "Selected",
+      selectTrack: "Select",
+      needPlanFirst: "Plan the ad pack first to get an AI music prompt.",
+      aiBgmNote: "AI-generated BGM mixed into your video.",
+      captionsAppliedNote: "On-screen captions burned from your script.",
+      captionsSoftTrackNote:
+        "Captions added as a subtitle track (toggle CC in your player if not visible).",
 			captionBurnSkippedNote:
 				"Caption burn failed — showing video with BGM only. You can still download it.",
-			voiceoverAppliedNote: "Spoken voiceover mixed over BGM.",
+      voiceoverAppliedNote: "Spoken voiceover mixed over BGM.",
 			voiceoverSkippedNote:
 				"Voiceover failed — video kept with BGM only. Check service credentials.",
 			needVoiceoverScript:
 				"Add a voiceover script or caption lines first.",
-		},
-		adStyleLabel: "What kind of ad?",
+    },
+    adStyleLabel: "What kind of ad?",
 		adStyleHint:
 			"Pick the closest match — ~80–90% on first try when you use the suggested path.",
-		moreOptionsLabel: "More options (output type)",
-		adStyles: {
-			"paper-sticker": {
-				title: "Paper note + sticker Reels",
+    moreOptionsLabel: "More options (output type)",
+    adStyles: {
+      "paper-sticker": {
+        title: "Paper note + sticker Reels",
 				description:
 					"Fixed IG layout — your exact headline & bullets. Best text accuracy.",
-			},
-			"product-showcase": {
-				title: "Product showcase Reels",
+      },
+      "product-showcase": {
+        title: "Product showcase Reels",
 				description:
 					"Clean AI product shot + gentle motion. Works for any product.",
-			},
-			"copy-reference-ad": {
-				title: "Copy a reference ad",
+      },
+      "copy-reference-ad": {
+        title: "Copy a reference ad",
 				description:
 					"Pick a sample motion clip + your product photo. Closest to real ads.",
-			},
-			"shop-promo": {
-				title: "Shop / offer promo",
+      },
+      "shop-promo": {
+        title: "Shop / offer promo",
 				description:
 					"Store, service or limited-time offer — warm promo vibe.",
-			},
-		},
-		referenceClipLibraryLabel: "Sample motion clips (built-in)",
+      },
+    },
+    referenceClipLibraryLabel: "Sample motion clips (built-in)",
 		referenceClipLibraryHint:
 			"Tap one to use as @Video1 — or upload your own MP4 below.",
-		referenceClipsMissing:
+    referenceClipsMissing:
 			"Optional built-in motion samples are not installed. Use a research reel or upload your own reference MP4 below — that is the main path.",
-		videoGenerateDisabledHint:
-			"Upload a product photo in the keyframe section, or go back to Step 2 to generate or confirm your image.",
-		referenceClips: {
-			"product-push-in": "Slow push-in",
-			"gentle-orbit": "Gentle orbit",
-			"cozy-lifestyle": "Cozy lifestyle",
-		},
-		adTemplateLabel: "Choose ad template",
-		templateChecklistLabel: "Template components",
-		templateSlotRequired: "required",
+    videoGenerateDisabledHint:
+      "Upload a product photo in the keyframe section, or go back to Step 2 to generate or confirm your image.",
+    referenceClips: {
+      "product-push-in": "Slow push-in",
+      "gentle-orbit": "Gentle orbit",
+      "cozy-lifestyle": "Cozy lifestyle",
+    },
+    adTemplateLabel: "Choose ad template",
+    templateChecklistLabel: "Template components",
+    templateSlotRequired: "required",
 		templateSlotNextStep: "next step",
-		templateImageModeLocked: "Image mode is fixed for this template.",
-		headlineLabel: "Headline (main hook)",
-		headlinePlaceholder: "e.g. How I prep a month of content in 2 hours",
-		sublineLabel: "Subline (optional)",
-		sublinePlaceholder: "e.g. The secret to 10× efficiency",
-		sublineBulletsLabel: "Bullet points (one per line)",
+    templateImageModeLocked: "Image mode is fixed for this template.",
+    headlineLabel: "Headline (main hook)",
+    headlinePlaceholder: "e.g. How I prep a month of content in 2 hours",
+    sublineLabel: "Subline (optional)",
+    sublinePlaceholder: "e.g. The secret to 10× efficiency",
+    sublineBulletsLabel: "Bullet points (one per line)",
 		sublineBulletsPlaceholder: "Benefit one\nBenefit two\nBenefit three",
-		brandLabel: "Brand / handle",
+    brandLabel: "Brand / handle",
 		brandPlaceholder: "your brand",
-		signoffLabel: "Sign-off (optional)",
-		signoffPlaceholder: "從略",
-		compositorCallout:
-			"This template uses a fixed IG layout — your headline, bullets, and brand are placed exactly. AI is not used for the layout.",
-		compositorImageHint:
-			"Upload your product photo. We cut it into a circular sticker and compose the paper note with your text.",
-		compositorImageBtn: "Build ad image",
-		compositorRegenerateImageBtn: "Rebuild image",
-		compositorVideoHint:
+    signoffLabel: "Sign-off (optional)",
+    signoffPlaceholder: "從略",
+    compositorCallout:
+      "This template uses a fixed IG layout — your headline, bullets, and brand are placed exactly. AI is not used for the layout.",
+    compositorImageHint:
+      "Upload your product photo. We cut it into a circular sticker and compose the paper note with your text.",
+    compositorImageBtn: "Build ad image",
+    compositorRegenerateImageBtn: "Rebuild image",
+    compositorVideoHint:
 			"Builds a 6-second reel: slow zoom, paper float, sparkle twinkle, plus BGM. No external video API.",
-		compositorVideoBtn: "Build reel video",
-		compositorPhaseRender: "Rendering frames…",
-		templateSlots: {
-			product: "Product name",
-			headline: "Headline",
-			subline: "Subline",
-			productPhoto: "Product photo",
-			styleRef: "Style reference image",
-			referenceVideo: "Reference ad MP4",
-			business: "Shop name",
-			offer: "Offer",
-		},
-	},
-	templates: {
-		"paper-sticker-reel": {
-			name: "Paper + sticker reel",
+    compositorVideoBtn: "Build reel video",
+    compositorPhaseRender: "Rendering frames…",
+    templateSlots: {
+      product: "Product name",
+      headline: "Headline",
+      subline: "Subline",
+      productPhoto: "Product photo",
+      styleRef: "Style reference image",
+      referenceVideo: "Reference ad MP4",
+      business: "Shop name",
+      offer: "Offer",
+    },
+  },
+  templates: {
+    "paper-sticker-reel": {
+      name: "Paper + sticker reel",
 			description:
 				"Fixed IG paper layout — your text + product sticker, image & animated reel",
-		},
-		"product-reel": {
-			name: "Product showcase",
-			description: "Clean hero product shot with gentle motion",
-		},
-		"crystal-promo": {
-			name: "Dark premium",
+    },
+    "product-reel": {
+      name: "Product showcase",
+      description: "Clean hero product shot with gentle motion",
+    },
+    "crystal-promo": {
+      name: "Dark premium",
 			description:
 				"Dark luxury look with gold accents — not only crystals",
-		},
-		"shop-promo": {
-			name: "Shop promo",
-			description: "Storefront, service or limited-time offer",
-		},
-		"info-poster": {
-			name: "Premium info poster",
+    },
+    "shop-promo": {
+      name: "Shop promo",
+      description: "Storefront, service or limited-time offer",
+    },
+    "info-poster": {
+      name: "Premium info poster",
 			description:
 				"White IG info graphic — single theme, tight copy, category visuals",
 		},
@@ -4500,78 +4566,83 @@ export const en = {
 			name: "Jelly 3D poster",
 			description:
 				"Minimal glossy translucent 3D hero — soft shadow, sparse brand type",
-		},
-		"brand-fit": {
-			name: "Brand style analysis",
-			description: "Ads matched to website/social brand DNA",
-		},
-		"brand-campaign": {
-			name: "Brand campaign set",
-			description: "Analyze brand → 3 linked posts",
-		},
-		"brand-video": {
+    },
+    "brand-fit": {
+      name: "Brand style analysis",
+      description: "Ads matched to website/social brand DNA",
+    },
+    "brand-campaign": {
+      name: "Brand campaign set",
+      description: "Analyze brand → 3 linked posts",
+    },
+    "brand-video": {
 			name: "Brand motion video",
 			description: "AI writes a motion prompt from brand cues",
-		},
-		"creative-video": {
+    },
+    "creative-video": {
 			name: "Creative motion brief",
 			description: "Describe idea → AI writes motion prompt",
-		},
-		"storyboard-video": {
-			name: "Storyboard reel",
+    },
+    "storyboard-video": {
+      name: "Storyboard reel",
 			description:
 				"AI storyboard → scene images → one video generation clip",
 		},
 		"ugc-presenter-reel": {
 			name: "UGC digital presenter",
 			description: "Talking-head keyframe → digital presenter lip-sync",
-		},
-		"model-wear-reel": {
-			name: "Model lifestyle wear",
-			description: "Product photo → photorealistic model lifestyle ad",
-		},
-		testimonial: {
-			name: "Customer style",
-			description: "Warm lifestyle look for reviews",
-		},
-		"service-promo": {
-			name: "Service promo",
+    },
+    "model-wear-reel": {
+      name: "Model lifestyle wear",
+      description: "Product photo → photorealistic model lifestyle ad",
+    },
+    testimonial: {
+      name: "Customer style",
+      description: "Warm lifestyle look for reviews",
+    },
+    "service-promo": {
+      name: "Service promo",
 			description:
 				"Trust-led layout for classes, consulting, or memberships",
-		},
-		"pricing-offer": {
-			name: "Pricing / offer",
-			description: "Plans, packages, or limited promos with clear CTA",
-		},
-		"website-launch": {
-			name: "Website / app launch",
-			description: "Launch graphic — logo or screenshot optional",
-		},
-		custom: {
-			name: "Custom",
-			description: "Pick your own components and prompts",
-		},
-	} satisfies Record<TemplateId, { name: string; description: string }>,
-	errors: {
+    },
+    "pricing-offer": {
+      name: "Pricing / offer",
+      description: "Plans, packages, or limited promos with clear CTA",
+    },
+    "website-launch": {
+      name: "Website / app launch",
+      description: "Launch graphic — logo or screenshot optional",
+    },
+    custom: {
+      name: "Custom",
+      description: "Pick your own components and prompts",
+    },
+  } satisfies Record<TemplateId, { name: string; description: string }>,
+  errors: {
 		polishFailed:
 			"Could not enhance your photo. Try again or turn on fast mode.",
-		videoFailed: "Video creation failed. Please try again.",
+    videoFailed: "Video creation failed. Please try again.",
 		requestTooLarge:
 			"Request too large for the server (often too many / too big scene images). Try fewer scenes or regenerate stills, then generate video again.",
-		network: "Network error. Check your internet connection and try again.",
-		serviceUnavailable:
-			"Image and video generation is temporarily unavailable. Please try again later.",
+    network: "Network error. Check your internet connection and try again.",
+    serviceUnavailable:
+      "Image and video generation is temporarily unavailable. Please try again later.",
 		planningUnavailable:
 			"AI planning is temporarily unavailable. Please try again later.",
-		deepSeekBalanceEmpty:
+    deepSeekBalanceEmpty:
 			"AI planning is temporarily unavailable. Please try again later.",
 		insufficientTokens:
-			"Not enough tokens for this generation. Open Pricing to upgrade or top up, then try again.",
+			"Not enough tokens for this generation. Start a 7-day Pro trial, or open Pricing to upgrade / top up.",
 		insufficientTokensTitle: "Out of tokens",
 		insufficientTokensCta: "View plans & top up",
 		insufficientTokensDismiss: "Close",
+		proTrialOfferBody:
+			"Add a card to unlock +700 tokens and Pro features for 7 days. After 7 days we charge monthly Pro unless you cancel in Account.",
+		proTrialCta: "Start 7-day Pro trial",
+		proTrialStarting: "Opening Stripe…",
+		proTrialStartError: "Could not start Pro trial. Try Pricing or contact support.",
 		tvcNeedsPaidPlan:
-			"This video needs more tokens than the free grant. Free covers about 1 image + 1× 8s 480p video. Upgrade on Pricing, or use stitched fallback if it fits your balance.",
+			"This video needs more tokens than the free grant. Start the Pro trial or upgrade on Pricing, or use stitched fallback if it fits your balance.",
 		tvcNeedsPaidPlanTitle: "12s TVC needs a paid plan",
 		storyboardEngineChoiceTitle:
 			"Single-clip video needs more tokens — stitched fallback fits now",
@@ -4582,8 +4653,8 @@ export const en = {
 		storyboardCellBlocked:
 			"This scene was blocked by the safety filter. Tap regen on this cell — same product, no faces, no brand text.",
 		tokensNotCharged: "You weren’t charged for this attempt.",
-		timeout: "The request took too long. Please try again.",
-		seedanceSensitive:
+    timeout: "The request took too long. Please try again.",
+    seedanceSensitive:
 			"video generation blocked this clip (violence/combat filter). Use calmer wording: no weapons, opponents, or standoffs — figures at rest, peaceful pause. A combat-looking reference image can also trigger this.",
 		falContentPolicy:
 			"video generation blocked this media (people / private-info filter). We can retry with per-scene animation + stitch—if auto-switch fails, tap Generate video again.",
@@ -4591,9 +4662,9 @@ export const en = {
 			"storyboard fallback failed. Try again or use stills without faces.",
 		klingDurationUnreachable:
 			"This duration can’t be hit with stitched fallback (5s min per still). Retry single-clip mode or pick 12s.",
-		needPhoto: "Please upload a product photo first.",
-		needReferenceImage: "Please upload a reference image first.",
-		needHeadline: "Please enter a headline for this template.",
+    needPhoto: "Please upload a product photo first.",
+    needReferenceImage: "Please upload a reference image first.",
+    needHeadline: "Please enter a headline for this template.",
 		needKeyframe:
 			"Generate an image or choose “use my upload as-is” before making video.",
 		needStyleReference:
@@ -4616,14 +4687,14 @@ export const en = {
 			"Batch export failed. Try again or download the main image.",
 		videoVariantsBatchUnsupported:
 			"Parallel variant videos work for image→video only (not storyboard or presenter).",
-		needQuickFixLogo: "Upload a logo image first.",
+    needQuickFixLogo: "Upload a logo image first.",
 		needAiImage:
 			"Tap Generate image — do not continue with only your raw upload.",
-		brandUrlRequired: "Enter a brand website or social handle.",
+    brandUrlRequired: "Enter a brand website or social handle.",
 		brandAnalyzeFailed:
 			"Brand analysis failed — check the URL and try again.",
-		campaignFailed: "Campaign generation failed. Please try again.",
-		storyboardFailed: "Storyboard generation failed. Please try again.",
+    campaignFailed: "Campaign generation failed. Please try again.",
+    storyboardFailed: "Storyboard generation failed. Please try again.",
 		storyboardSceneImagesMissing:
 			"Could not load all storyboard scene images ({got}/{expected}). Re-generate the missing still, then try video again.",
 		brandLogoRequired: "Upload a logo in Brand kit first.",
@@ -4631,43 +4702,43 @@ export const en = {
 			"Generate storyboard scene images in Step 2 first.",
 		cinematicStitchNeedScenes:
 			"Generate {count} scene keyframes in Step 2 before continuing to video.",
-		needProductName: "Product name is required for storyboard planning.",
+    needProductName: "Product name is required for storyboard planning.",
 		needProductNameSetup: "Enter a product name before continuing.",
-		extraAnglesNeedRefVideo:
-			"Multi-angle mode needs a reference MP4 too (use “Inspired by reference video”).",
+    extraAnglesNeedRefVideo:
+      "Multi-angle mode needs a reference MP4 too (use “Inspired by reference video”).",
 		brandVideoPromptRequired:
 			"Analyze brand first, then tap “AI write motion prompt”.",
-		creativeBriefRequired: "Fill in the creative video brief first.",
+    creativeBriefRequired: "Fill in the creative video brief first.",
 		creativeVideoPromptRequired:
 			"Tap “AI write motion prompt” and review the prompt below first.",
 		planVideoPromptFailed:
 			"Video prompt planning failed. Please try again.",
 		planProductVideoFailed:
 			"Product video planning failed. Check photos and try again.",
-		adPackPlanFailed: "Ad pack planning failed. Try again.",
+    adPackPlanFailed: "Ad pack planning failed. Try again.",
 		musicGenerateFailed:
 			"AI music generation failed. Try again or pick library music.",
 		voiceoverFailed:
 			"Voiceover dub failed. Check service credentials or disable spoken voiceover.",
 		ugcPresenterFailed:
 			"Digital presenter video failed. Check service credentials and try again.",
-		postProcessIncomplete:
+    postProcessIncomplete:
 			"Post-process incomplete — final file is still a raw CDN clip (not saved to library). Regenerate; check stitching / caption burn if it persists.",
-		bgmFilesMissing:
-			"Background music files missing. Use AI music or run npm run setup:bgm.",
-		planConceptFailed: "Concept analysis failed. Please try again.",
-		conceptVideoAssistantBlocked:
-			"AI Video Assistant is for physical products only. Concept mode uses Concept video from your brief.",
+    bgmFilesMissing:
+      "Background music files missing. Use AI music or run npm run setup:bgm.",
+    planConceptFailed: "Concept analysis failed. Please try again.",
+    conceptVideoAssistantBlocked:
+      "AI Video Assistant is for physical products only. Concept mode uses Concept video from your brief.",
 		conceptIdentityRequired:
 			"Add a concept idea, headline, or concept still before generating video.",
-		conceptVideoPlanRequired:
+    conceptVideoPlanRequired:
 			"AI is writing the motion prompt — wait a few seconds, or tap “AI write motion prompt”.",
 		needProductVideoPlan:
 			"Tap “Analyze photo & write motion prompt” first.",
 		researchReelAnalyzeFailed:
 			"Reference reel analysis failed — try again or pick another post.",
-		brandAnalyzeRequired: "Tap Analyze brand first.",
-	},
+    brandAnalyzeRequired: "Tap Analyze brand first.",
+  },
 	ugcStudio: {
 		badge: "Standalone tool · digital presenter lip-sync",
 		title: "UGC talking presenter",
@@ -5935,37 +6006,37 @@ export const en = {
 		doneTitle: "Export",
 		doneHint: "Continue to download and share your ad.",
 	},
-	pro: {
-		back: "← Home",
-		backStudio: "Guided wizard",
-		title: "Pro canvas",
-		subtitle:
-			"Lumina-style node canvas: add nodes, wire refs with @, run each step or Run all.",
-		costHint:
+  pro: {
+    back: "← Home",
+    backStudio: "Guided wizard",
+    title: "Pro canvas",
+    subtitle:
+      "Lumina-style node canvas: add nodes, wire refs with @, run each step or Run all.",
+    costHint:
 			"Pro uses Token billing at pay-per-use rates (not Lumina subscription pricing). Each run costs API credits on your service credentials.",
 		mobileDesktopOnly:
 			"Pro canvas is built for desktop — use a tablet in landscape or a computer for the best experience. The guided wizard at /studio works on phones.",
-		steps: [
-			"1. Add upload / image nodes — set @aliases (e.g. Ava, Outfit)",
-			"2. Optional camera angle node between image and video",
-			"3. Script or text-to-video nodes; splice clips + audio at the end",
-		],
-		addNode: "Add node",
-		addResource: "Add resource",
-		queueTitle: "Task queue",
-		runAll: "Run all",
-		running: "Running…",
-		queueEmpty: "Add nodes, then Run all",
-		nodeLabels: {
-			text: "Text",
-			image: "Image",
-			audio: "Audio",
-			video: "Image-to-video",
-			textVideo: "Text-to-video",
-			splice: "Video splice",
-			script: "Script planning",
-			camera: "Camera angle",
-			upload: "Upload",
-		},
-	},
+    steps: [
+      "1. Add upload / image nodes — set @aliases (e.g. Ava, Outfit)",
+      "2. Optional camera angle node between image and video",
+      "3. Script or text-to-video nodes; splice clips + audio at the end",
+    ],
+    addNode: "Add node",
+    addResource: "Add resource",
+    queueTitle: "Task queue",
+    runAll: "Run all",
+    running: "Running…",
+    queueEmpty: "Add nodes, then Run all",
+    nodeLabels: {
+      text: "Text",
+      image: "Image",
+      audio: "Audio",
+      video: "Image-to-video",
+      textVideo: "Text-to-video",
+      splice: "Video splice",
+      script: "Script planning",
+      camera: "Camera angle",
+      upload: "Upload",
+    },
+  },
 } as const;

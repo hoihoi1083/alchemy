@@ -17,13 +17,13 @@ export const zhCn = {
     signUpTab: "注册",
     signInSubtitle: "欢迎回来！请登录您的账户以继续。",
     signInOAuthHint: "第一次使用？如果你还没有 Alchemy 账户，请点击“注册”。",
-    signUpSubtitle: "创建账户 — 注册即送 500 免费点数。",
+    signUpSubtitle: "创建账户 — 注册即送 300 免费点数。",
     tokensBalance: "{n} 点数",
     tokensBalanceTitle: "你的点数余额 — 查看方案与加购",
     accountMenu: "账户与账单",
     libraryMenu: "我的作品库",
     brandKitMenu: "品牌套件",
-    signupPromoBar: "注册即送 500 免费点数",
+    signupPromoBar: "注册即送 300 免费点数",
     closeModal: "关闭",
     panelTagline: "AI 营销创意工作流",
     panelFeatures: [
@@ -55,6 +55,15 @@ export const zhCn = {
     renewsLabel: "下次续费",
     pendingDowngradeLabel: "已排程降级",
     pendingDowngradeBody: "将于 {date} 改为 {plan}。在此之前仍享用当前计划。",
+    cancelSubscription: "取消订阅",
+    cancelTrial: "取消 Pro 试用",
+    cancelBusy: "取消中…",
+    cancelConfirmTrial: "确定取消 Pro 试用？Pro 功能立即结束，剩余点数保留。",
+    cancelConfirmPaid: "确定取消续订？当前周期结束前仍可使用付费功能。",
+    cancelSuccess: "订阅已更新。",
+    cancelError: "无法取消，请使用管理账单或联系支持。",
+    trialActiveNote: "Pro 试用中 — {date} 结束或转为付费。",
+    tokenExpiryNote: "点数自发放日起 6 个月有效，先用较早获得的点数。",
     manageBilling: "管理账单",
     portalRedirecting: "正在打开 Stripe…",
     portalError: "无法打开账单页面。",
@@ -69,10 +78,12 @@ export const zhCn = {
     reasons: {
       signup_grant: "免费注册点数",
       subscription_grant: "订阅点数",
+      trial_bonus: "Pro 试用赠送点数",
       topup: "点数加购",
       consume: "生成扣费",
       refund: "退款",
       admin_adjust: "调整",
+      expire: "过期点数",
     },
     team: {
       title: "企业席位",
@@ -127,6 +138,12 @@ export const zhCn = {
       inviteSwitchAccount: "退出并切换账号",
     },
   },
+  planGate: {
+    title: "升级以解锁",
+    body: "{feature} 适用于 {plan} 及以上方案。",
+    cta: "在定价页查看 {plan}",
+    dismiss: "暂不",
+  },
   library: {
     title: "我的作品库",
     subtitle:
@@ -159,6 +176,16 @@ export const zhCn = {
     download: "下载",
     editCaptions: "加字幕／配音",
     editImage: "编辑图片",
+    teamFolderTitle: "团队文件夹",
+    teamFolderSubtitle:
+      "与企业席位共享的文件。个人作品库默认私密，分享后才会出现在这里。",
+    teamFolderEmpty: "暂无共享文件。在已保存文件上点击「分享到团队」。",
+    shareWithTeam: "分享到团队",
+    unshareFromTeam: "取消团队分享",
+    sharing: "更新中…",
+    sharedBadge: "已分享",
+    sharedByLabel: "由 {name} 分享",
+    shareFailed: "无法更新团队分享。",
   },
   footer: {
     tagline: "任何想法，几分钟变成停滑吸睛内容 — 图片、视频和 Reels 一次完成。",
@@ -355,7 +382,7 @@ export const zhCn = {
           title: "四步出图广告",
           subtitle: "真实 Studio 操作 — 产品图入，静态广告出。",
           hint: "真实录影 · 点步骤可跳转",
-          steps: [
+    steps: [
             { title: "选产品", body: "选实体产品，然后进入 Studio。" },
             { title: "只出图", body: "选「只生成图片」— 这次不用出片。" },
             { title: "产品图 + 标题", body: "填产品名、上传真实产品图，再加一句 hook。" },
@@ -509,11 +536,11 @@ export const zhCn = {
       { title: "地产", body: "重点賣点圖同由静帧做成短视频。" },
       { title: "金融／SaaS", body: "清晰 offer 海報同品牌片，不乱发明价格。" },
     ],
-    pricingSubtitle: "真实计划：Free／Standard／Pro／Master／Custom，全部按点数计费。",
+    pricingSubtitle: "免费开始。需要更多 AI 点数、模板、视频和品牌工作流时再升级。",
     pricingFreeCta: "免费开始",
     pricingProCta: "开始 Pro",
     pricingCustom: "Enterprise",
-    pricingCustomHint: "5 席 · 每月 40,000 点数",
+    pricingCustomHint: "3 席 · 每月 40,000 点数",
     tokensTitle: "AI 点数怎么算",
     tokensBody:
       "每个方案显示独立上限：点数全用来出 1K 单图最多几张，或者全用来出 8 秒 480p 视频最多几条。混搭或用更高分辨率会让每件作品用更多点数。",
@@ -885,7 +912,7 @@ export const zhCn = {
       },
       {
         q: "新注册送多少免费点数？",
-        a: "新账户一次性赠送 500 点数（不会每月自动再送），够 1 张宣传图 + 1 条 8 秒 480p 视频。详情见定价页。",
+        a: "新账户一次性赠送 300 点数（不会每月自动再送）。点数不足时可开启 7 天 Pro 试用（需绑卡）获得额外点数和 Pro 功能 — 详情见定价页。",
       },
       {
         q: "一定要上传参考视频吗？",
@@ -932,25 +959,29 @@ export const zhCn = {
     heroSidebar: ["Upload", "Style", "Layout", "Tone", "BrandKit"],
     navResources: "点数",
 
-    planBlurbCustom: "5 个席位 · 共用点数池",
+    planBlurbCustom: "3 个席位 · 共用点数池",
 
-    planBlurbFree: "Try the guided Studio workflow",
+    planBlurbFree: "试用引导式 Studio 工作流",
 
-    planBlurbMaster: "For agencies & teams",
+    planBlurbLight: "每周出帖的中小企业主",
 
-    planBlurbPro: "For brands & freelancers",
+    planBlurbMaster: "高产量创作者",
 
-    planBlurbStandard: "For early businesses",
+    planBlurbPro: "代理与重度用户",
 
-    planFeaturesCustom: ["每月 40,000 点数", "5 席 · 共用池", "Pro 画布 + 2K 图片"],
+    planBlurbStandard: "成长中的品牌与自由职业者",
 
-    planFeaturesFree: ["Guided image & video paths", "500 signup 点数", "Library downloads"],
+    planFeaturesCustom: ["每月 40,000 点数", "3 席 · 共用池", "团队文件夹 · Pro 画布 · 2K"],
 
-    planFeaturesMaster: ["16,000 点数 / month", "Pro canvas", "Priority support", "2K images"],
+    planFeaturesFree: ["引导式图片与视频路径", "注册送 300 点数", "480p 视频 · 1K 图片"],
 
-    planFeaturesPro: ["8,000 点数 / month", "1080p video", "Priority generation", "High-res exports"],
+    planFeaturesLight: ["每月 3,000 点数", "480p 视频 · 1K 图片", "邮件支持 · 可加购"],
 
-    planFeaturesStandard: ["3,000 点数 / month", "720p video", "点数 top-ups"],
+    planFeaturesMaster: ["每月 28,000 点数", "2K 图片 · Pro 画布", "优先支持"],
+
+    planFeaturesPro: ["每月 16,000 点数", "1080p 视频 · 1K 图片", "Campaign · 1080p 模板"],
+
+    planFeaturesStandard: ["每月 8,000 点数", "720p 视频 · 1K 图片", "Campaign 模式 · 可加购"],
     pricingSaveBadge: "省高达 50%",
     tokenCostVideoDraft: "短视频（约 8 秒）",
     tokenCostVoice: "口播",
@@ -1084,11 +1115,15 @@ export const zhCn = {
     faq: [
       {
         q: "点数怎么计算？",
-        body: "点数用于计量工作室中需计费的 AI 用量。任务越复杂（更长视频、更高清晰度、分镜组）消耗越多。每次付费步骤生成前都会显示预计消耗。",
+        body: "点数用于计量工作室中需计费的 AI 用量。任务越复杂（更长视频、更高清晰度、分镜组）消耗越多。每次付费步骤生成前都会显示预计消耗。点数自发放日起 6 个月有效，优先消耗较早获得的点数。",
       },
       {
         q: "新注册送多少免费点数？",
-        body: "新账户一次性赠送 500 点数，不会每月自动再送。够 1 张宣传图 + 1 条 8 秒 480p 视频。需要更多请升级或加购。",
+        body: "新账户一次性赠送 300 点数，不会每月自动再送。够试用工作流。点数不足时可开启 7 天 Pro 试用（需绑卡）。",
+      },
+      {
+        q: "什么是 7 天 Pro 试用？",
+        body: "免费用户在点数不足时可确认试用并在 Stripe 绑卡。立即获得 +700 点数和 Pro 功能 7 天。7 天后若未取消将收取月付 Pro 费用并发放完整 Pro 每月点数。试用期间可在账户页随时取消 — Pro 功能立即结束，剩余点数保留。试用仅限月付 Pro（不含年付），每账户一次。",
       },
       {
         q: "点数用在哪些地方？",
@@ -1096,7 +1131,11 @@ export const zhCn = {
       },
       {
         q: "点数用完了怎么办？",
-        body: "会阻止生成，直到你加购或升级。每次运行前都会有清楚提示。",
+        body: "会阻止生成，直到你开启 Pro 试用（免费用户）、升级或加购（付费计划）。每次运行前都会有清楚提示。",
+      },
+      {
+        q: "点数会过期吗？",
+        body: "会。每笔发放（注册、试用赠送、订阅、加购、退款）自到账日起 6 个月有效。我们始终优先消耗较早获得的点数。此规则上线前已有的余额保留原数量，自迁移日起 6 个月过期。",
       },
       {
         q: "每个计划大概能做多少图或视频？",
@@ -1104,7 +1143,7 @@ export const zhCn = {
       },
       {
         q: "生成失败会扣点数吗？",
-        body: "若 AI 任务在扣费后失败，我们会把该次运行扣除的点数退回余额。失败的生成不应被计费。",
+        body: "若 AI 任务在扣费后失败，我们会把该次运行扣除的点数退回余额。失败的生成不应被计费。退回的点数同样自退回日起 6 个月有效。",
       },
       {
         q: "生成内容可以商用吗？",
@@ -1116,16 +1155,16 @@ export const zhCn = {
       },
       {
         q: "适合代理或团队吗？",
-        body: "支持。在定价页订阅 Enterprise 即有 5 个席位：所有者在账户页邀请队友，各自保留独立作品库，生成使用所有者的共用 40,000 点数池。Pro 和 Master 仍为单人自助计划。",
+        body: "支持。订阅 Enterprise 即有 3 个席位：所有者在账户页邀请队友，各自保留独立作品库（可选择分享文件到团队文件夹），生成使用所有者的共用 40,000 点数池。Light、Standard、Pro 和 Master 仍为单人自助计划。",
       },
       {
         q: "什么时候可以买额外点数？",
-        body: "订阅任何付费计划之后。免费用户需先升级。",
+        body: "订阅任何付费计划之后（含 Pro 试用转为付费后）。免费用户需先开启试用或升级，再按需加购。加购点数同样 6 个月有效。",
       },
       {
         q: "如何升级计划？",
         body:
-          "登录后在本定价页选择更高计划（Standard → Pro → Master → Enterprise）并确认即可。升级会从今天起开启新账单期：Stripe 退回旧计划未用时间的差额，再从今天起收取新计划费用 — 我们不会改 Stripe 产品标价。你保留剩余点数，并即时获得新计划完整份额（例如 Standard 3,000 → Master 会再加 16,000）。下次续费从升级日起重新计算（月付／年付取决于你所选计划）。升级不必经过「管理账单」。",
+          "登录后在本定价页选择更高计划（Light → Standard → Pro → Master → Enterprise）并确认。升级会从今天起开启新账单期：Stripe 退回旧计划未用时间的差额，再从今天起收取新计划费用。你保留剩余点数，并即时获得新计划完整份额。下次续费从升级日起重新计算。",
       },
       {
         q: "如何降级计划？",
@@ -1135,28 +1174,30 @@ export const zhCn = {
       {
         q: "在哪里改计划或取消订阅？",
         body:
-          "升级或排程降级：登录后在定价页操作。取消续订或更新付款方式：使用「管理账单」（Stripe）。取消后，当前周期结束前仍可使用付费功能。",
+          "升级或排程降级：登录后在定价页操作。取消 Pro 试用或排程取消续订：在账户页操作，或使用「管理账单」（Stripe）管理信用卡和发票。试用期间取消会立即结束 Pro 功能并保留剩余点数。付费取消后，当前周期结束前仍可使用付费功能。",
+      },
+      {
+        q: "如何付款？",
+        body: "订阅和加购通过 Stripe 安全结账（信用卡、Apple Pay、Google Pay、Link，视地区可用）。月付 Pro 试用需绑卡，7 天后未取消将自动扣款。订阅 Checkout 不支持微信支付和支付宝。",
       },
     ],
     footnote:
-      "价格以美元计。视频分辨率和片长会影响点数。通过 Stripe 付款。在定价页升级会从今天起开启新计划月；降级从下个周期生效。取消请用「管理账单」。",
+      "价格以美元计。点数自发放日起 6 个月有效（先用较早获得的点数）。视频分辨率和片长会影响点数消耗。通过 Stripe 付款。免费：注册送 300 点数。点数不足时可选择 7 天月付 Pro 试用（+700 点数）。在定价页升级会从今天起开启新计划月；降级从下个周期生效。取消试用或续订请前往账户 / 管理账单。",
     plans: {
       free: {
         name: "免费",
         description: "试用完整引导流程",
         features: [
-          "500 点数（1 张图 + 1 条 8 秒 480p 视频）",
+          "注册一次 300 点数",
           "引导精灵 + 模板",
-          "视频最高 480p",
-          "图片最高 1K",
-          "平台研究",
+          "视频最高 480p · 图片最高 1K",
+          "平台研究 · 故事板",
+          "A/B 与教学轮播",
           "图片→视频合并流程",
-          "故事板模式",
-          "A/B、Campaign 模式、教学轮播",
         ],
       },
-      standard: {
-        name: "Standard",
+      light: {
+        name: "Light",
         listPrice: "$29.99",
         monthlyPrice: "$19.99",
         yearlyPrice: "$14.99",
@@ -1167,56 +1208,65 @@ export const zhCn = {
         features: [
           "3,000 点数 / 月",
           "引导精灵 + 模板",
-          "视频最高 720p",
-          "图片最高 1K",
-          "平台研究",
-          "图片→视频合并流程",
-          "故事板模式",
-          "A/B、Campaign 模式、教学轮播",
+          "视频最高 480p · 图片最高 1K",
+          "平台研究 · 故事板 · A/B 与教学轮播",
           "邮件支持",
+          "可加购点数（$10 / 1k）",
         ],
       },
-      pro: {
-        name: "Pro",
+
+      standard: {
+        name: "Standard",
         listPrice: "$79.99",
         monthlyPrice: "$49.99",
         yearlyPrice: "$39.99",
         monthlySave: "省 38%",
         yearlySave: "省 50%",
         tokens: "8,000",
-        description: "代理和重度用户",
+        description: "成长中的品牌与自由职业者",
         features: [
           "8,000 点数 / 月",
           "引导精灵 + 模板",
-          "视频最高 1080p",
-          "图片最高 1K",
-          "平台研究",
-          "图片→视频合并流程",
-          "故事板模式",
-          "A/B、Campaign 模式、教学轮播",
-          "优先生成",
+          "视频最高 720p · 图片最高 1K",
+          "Campaign 模式 · 多场景模板",
+          "平台研究 · 故事板 · A/B 与教学轮播",
+          "邮件支持 · 可加购点数",
+        ],
+      },
+      pro: {
+        name: "Pro",
+        listPrice: "$159.99",
+        monthlyPrice: "$99.99",
+        yearlyPrice: "$79.99",
+        monthlySave: "省 38%",
+        yearlySave: "省 50%",
+        tokens: "16,000",
+        description: "代理和重度用户",
+        features: [
+          "16,000 点数 / 月",
+          "引导精灵 + 模板",
+          "视频最高 1080p · 图片最高 1K",
+          "Campaign 模式 · 1080p 模板",
+          "平台研究 · 故事板 · A/B 与教学轮播",
+          "邮件支持 · 可加购点数",
         ],
       },
       master: {
         name: "Master",
-        listPrice: "$159.99",
-        monthlyPrice: "$99.99",
-        yearlyPrice: "$79.00",
-        monthlySave: "省 38%",
+        listPrice: "$279.99",
+        monthlyPrice: "$169.99",
+        yearlyPrice: "$139.99",
+        monthlySave: "省 39%",
         yearlySave: "省 50%",
-        tokens: "16,000",
+        tokens: "28,000",
         description: "高产量团队",
         features: [
-          "16,000 点数 / 月",
+          "28,000 点数 / 月",
           "引导精灵 + 模板",
-          "视频最高 1080p",
-          "图片最高 2K",
-          "平台研究",
-          "图片→视频合并流程",
-          "故事板模式",
-          "A/B、Campaign 模式、教学轮播",
+          "视频最高 1080p · 图片最高 2K",
+          "Campaign 模式 · 故事板 · A/B 与教学轮播",
           "Pro 画布",
-          "优先支持",
+          "邮件支持 · 可加购 · 优先支持",
         ],
       },
       custom: {
@@ -1224,37 +1274,37 @@ export const zhCn = {
         listPrice: "$399.99",
         monthlyPrice: "$249.99",
         yearlyPrice: "$199.99",
-        monthlySave: "38% off",
-        yearlySave: "50% off",
+        monthlySave: "省 38%",
+        yearlySave: "省 50%",
         tokens: "40,000",
-        description: "团队 5 席，共用一个点数池",
-        badge: "5 席",
-        seatsLabel: "5 席 · 共用点数池",
+        description: "团队 3 席，共用一个点数池",
+        badge: "3 席",
+        seatsLabel: "3 席 · 共用点数池",
         features: [
           "每月 40,000 点数",
-          "5 个席位（所有者 + 4 位队友）",
+          "3 个席位（所有者 + 2 位队友）",
           "生成扣所有者的共用点数池",
           "各自独立作品库",
-          "所有者可随时邀请、移除、更换席位",
-          "1080p 视频、2K 图片、Pro 画布",
-          "优先支持",
-          "可加购点数（$10 / 1k）",
+          "视频最高 1080p · 图片最高 2K · Pro 画布",
+          "Campaign · 故事板 · A/B 与教学轮播",
+          "团队文件夹 — 可分享所选文件给席位",
+          "优先支持 · 可加购点数（$10 / 1k）",
         ],
       },
     },
     comparisonRows: [
-      { feature: "点数", free: "500 · 新注册送一次", standard: "3,000 / 月", pro: "8,000 / 月", master: "16,000 / 月", custom: "40,000 / 月" },
-      { feature: "团队席位", free: "1", standard: "1", pro: "1", master: "1", custom: "5 · 共用池" },
-      { feature: "大约产能", free: "最多 7 张图或 1 条 8 秒 480p", standard: "最多 46 张图或 9 条 8 秒 480p", pro: "最多 123 张图或 24 条 8 秒 480p", master: "最多 246 张图或 48 条 8 秒 480p", custom: "最多 615 张图或 121 条 8 秒 480p" },
-      { feature: "图片最高分辨率", free: "最高 1K", standard: "最高 1K", pro: "最高 1K", master: "最高 2K", custom: "最高 2K" },
-      { feature: "视频最高分辨率", free: "最高 480p", standard: "最高 720p", pro: "最高 1080p", master: "最高 1080p", custom: "最高 1080p" },
-      { feature: "平台研究 / 合并流程 / 故事板", free: "✓", standard: "✓", pro: "✓", master: "✓", custom: "✓" },
-      { feature: "A/B、Campaign、教学轮播", free: "✓", standard: "✓", pro: "✓", master: "✓", custom: "✓" },
-      { feature: "邮件支持", free: "—", standard: "✓", pro: "✓", master: "✓", custom: "✓" },
-      { feature: "优先生成", free: "—", standard: "—", pro: "✓", master: "✓", custom: "✓" },
-      { feature: "Pro 画布", free: "—", standard: "—", pro: "—", master: "✓", custom: "✓" },
-      { feature: "优先支持", free: "—", standard: "—", pro: "—", master: "✓", custom: "✓" },
-      { feature: "加购 点数（$10 / 1k）", free: "—", standard: "✓", pro: "✓", master: "✓", custom: "✓" },
+      { feature: "点数", free: "注册一次 300", light: "3,000 / 月", standard: "8,000 / 月", pro: "16,000 / 月", master: "28,000 / 月", custom: "40,000 / 月" },
+      { feature: "团队席位", free: "1", light: "1", standard: "1", pro: "1", master: "1", custom: "3 · 共用池" },
+      { feature: "大约产能", free: "试用工作流", light: "最多 46 张图或 9 条 8 秒 480p", standard: "最多 123 张图或 24 条 8 秒 480p", pro: "最多 246 张图或 48 条 8 秒 480p", master: "最多 430 张图或 85 条 8 秒 480p", custom: "最多 615 张图或 121 条 8 秒 480p" },
+      { feature: "图片最高分辨率", free: "最高 1K", light: "最高 1K", standard: "最高 1K", pro: "最高 1K", master: "最高 2K", custom: "最高 2K" },
+      { feature: "视频最高分辨率", free: "最高 480p", light: "最高 480p", standard: "最高 720p", pro: "最高 1080p", master: "最高 1080p", custom: "最高 1080p" },
+      { feature: "平台研究 / 合并流程 / 故事板", free: "✓", light: "✓", standard: "✓", pro: "✓", master: "✓", custom: "✓" },
+      { feature: "A/B 与教学轮播", free: "✓", light: "✓", standard: "✓", pro: "✓", master: "✓", custom: "✓" },
+      { feature: "Campaign 模式", free: "—", light: "—", standard: "✓", pro: "✓", master: "✓", custom: "✓" },
+      { feature: "邮件支持", free: "—", light: "✓", standard: "✓", pro: "✓", master: "✓", custom: "✓" },
+      { feature: "Pro 画布", free: "—", light: "—", standard: "—", pro: "—", master: "✓", custom: "✓" },
+      { feature: "优先支持", free: "—", light: "—", standard: "—", pro: "—", master: "✓", custom: "✓" },
+      { feature: "加购 点数（$10 / 1k）", free: "—", light: "✓", standard: "✓", pro: "✓", master: "✓", custom: "✓" },
     ],
   },
   steps: {
@@ -1858,7 +1908,7 @@ export const zhCn = {
     seedanceToMinimaxH3FallbackNote:
       "参考片模式 此请求被阻挡 — 改用 单镜出片（尽量保留参考片运镜）",
     h3ToSeedanceFallbackNote:
-      "单镜出片暂时未能用 — 已改用 Seedance，并混入音乐库 BGM",
+      "单镜出片暂时未能用 — 已改用备用视频模式，并混入音乐库 BGM",
     klingStoryboardClipCount: "片段 × {n}",
     storyboardDurationLabel: "目标片长",
     storyboardDurationHint: "会影响分镜场景数量。改咗片长请重新生成场景图。",
@@ -2508,8 +2558,8 @@ export const zhCn = {
 				title: "生活人物",
 				description:
 					"真人在生活场景使用产品 — 不是美妆 MV，不是纯静物。",
-			},
-"reference-concept": {
+      },
+      "reference-concept": {
         title: "跟参考视频概念",
         description: "产品 + 参考 MP4 → 跟运镜同剪辑概念（唔系逐格复制）",
       },
@@ -2562,7 +2612,7 @@ export const zhCn = {
     blockbusterSceneHintBehind:
       "「货车后方」可选 — 跟拍车尾，生成或上传有助于锁定开场。",
     blockbusterSceneHintBridge:
-      "「天桥上」建议留空 — H3 会紧跟首帧；错误首帧易导致倒车、箱子乱印图案。角度由提示词控制。",
+      "「天桥上」建议留空 — 视频会紧跟首帧；错误首帧易导致倒车、箱子乱印图案。角度由提示词控制。",
     blockbusterGenerateSceneBtn: "生成场景静图",
     blockbusterGenerateSceneBusy: "正在生成天桥静图…",
     blockbusterSceneSkipBridgeNote:
@@ -3143,6 +3193,9 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
     videoSettingsResolution: "解像度",
     videoResolutionPlanHint: "你当前方案最高 {max}。",
     videoResolutionUpgradeLink: "升级以解锁更高分辨率",
+    imageSettingsResolution: "图片分辨率",
+    imageResolutionPlanHint: "你当前方案最高 {max}。",
+    imageResolutionUpgradeLink: "升级以解锁 2K 图片",
     videoSettingsDuration: "片长",
     videoSettingsMotion: "镜头 / 动态",
     videoSettingsCreativity: "动态丰富度",
@@ -3765,6 +3818,10 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
     insufficientTokensTitle: "点数 已用完",
     insufficientTokensCta: "查看方案与加购",
     insufficientTokensDismiss: "关闭",
+    proTrialOfferBody: "填写银行卡后可获得 +700 点数，并解锁 Pro 功能 7 天。试用期内可在账户页取消。",
+    proTrialCta: "开启 7 天 Pro 试用",
+    proTrialStarting: "正在打开 Stripe…",
+    proTrialStartError: "无法开启 Pro 试用。",
     tvcNeedsPaidPlan:
       "这条视频比免费额度贵。免费大约够 1 张图 + 1 条 8 秒 480p 视频。请到 Pricing 升级，或者余额够就用 拼接后备。",
     tvcNeedsPaidPlanTitle: "12 秒 TVC 需要付费方案",

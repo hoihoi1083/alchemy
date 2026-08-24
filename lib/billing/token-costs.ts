@@ -210,7 +210,7 @@ export function estimateH3Tokens(opts: {
   return output + refVideo + extraImgs * TOKEN_COST.image;
 }
 
-/** Free pack promise: 1 image + 1× 8s 480P video + buffer. */
+/** Free pack: signup grant is intentionally smaller than a full image+video combo. */
 export const FREE_PACK = {
   image: TOKEN_COST.image, // 65
   video8s480p: H3_TOKENS_PER_SEC["480P"] * 8, // 328
@@ -313,7 +313,7 @@ export const STORYBOARD_LANDING_PACK = {
 
 export type LandingCapacityPlan = Extract<
   UserPlan,
-  "free" | "standard" | "pro" | "master" | "custom"
+  "free" | "light" | "standard" | "pro" | "master" | "custom"
 >;
 
 /** 8s video at the plan’s max resolution (480P / 768P / 2K). */

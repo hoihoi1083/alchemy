@@ -12,6 +12,7 @@ import {
   clearPaidSubscriptionIfNoActiveSub,
   findClerkIdByStripeCustomer,
   grantPlanUpgradeDelta,
+  markProTrialUsed,
   setUserSubscription,
   tokensForPaidPlan,
 } from "@/lib/stripe/billing-sync";
@@ -22,7 +23,8 @@ import {
 } from "@/lib/stripe/fulfill-checkout";
 import { subscriptionStatusGrantsPaidEntitlements } from "@/lib/stripe/payment-cleared";
 import { isPaidPlan, planFromPriceId, type PaidPlan } from "@/lib/stripe/prices";
-import { isMongoConfigured } from "@/lib/mongodb";
+import type { DbUser } from "@/lib/db/types";
+import { getDb, isMongoConfigured } from "@/lib/mongodb";
 
 export const runtime = "nodejs";
 
@@ -203,6 +205,44 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
     return;
   }
 
+  // Skip full monthly grant only for the $0 trial *setup* invoice.
+  // $0 renewals (e.g. 100% promo) must still grant the allotment.
+  const amountPaidCents =
+    typeof invoice.amount_paid === "number" ? invoice.amount_paid : 0;
+  const isTrialSetupInvoice =
+    amountPaidCents <= 0 && invoice.billing_reason === "subscription_create";
+  if (isTrialSetupInvoice) {
+    await setUserSubscription({
+      clerkId,
+      plan,
+      stripeCustomerId: cust,
+      stripeSubscriptionId: subId,
+      planRenewsAt: renewsAt,
+    });
+    // Trialing Pro checkout — consume the one-time trial even if fulfill raced.
+    if (plan === "pro" && subId) {
+      try {
+        const sub = await getStripe().subscriptions.retrieve(subId);
+        if (sub.status === "trialing" || sub.metadata?.kind === "pro_trial") {
+          await markProTrialUsed(clerkId, {
+            proTrialEndsAt: sub.trial_end
+              ? new Date(sub.trial_end * 1000)
+              : renewsAt,
+          });
+        }
+      } catch (err) {
+        console.warn("[stripe] markProTrialUsed on $0 trial invoice failed", err);
+      }
+    }
+    console.info("[stripe] invoice.paid — skip token grant for $0 trial setup invoice", {
+      invoiceId: invoice.id,
+      clerkId,
+      plan,
+      billingReason: invoice.billing_reason,
+    });
+    return;
+  }
+
   const result = await applySubscriptionGrant({
     clerkId,
     plan,
@@ -213,8 +253,17 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
     meta: {
       invoiceId: invoice.id,
       billingReason: invoice.billing_reason,
+      amountPaidCents,
     },
   });
+
+  if (isMongoConfigured()) {
+    const db = await getDb();
+    await db.collection<DbUser>("users").updateOne(
+      { clerkId },
+      { $set: { proTrialEndsAt: null, updatedAt: new Date() } },
+    );
+  }
 
   if (invoice.billing_reason === "subscription_cycle") {
     await setUserSubscription({
@@ -404,6 +453,16 @@ async function handleSubscriptionUpdated(
   }
 
   const pendingStillActive = Boolean(pendingPlan && pendingPlan !== plan);
+
+  // Pro trial subscription appeared (fulfill may have raced/failed) — consume one-time trial.
+  if (
+    sub.status === "trialing" &&
+    (sub.metadata?.kind === "pro_trial" || plan === "pro")
+  ) {
+    await markProTrialUsed(clerkId, {
+      proTrialEndsAt: sub.trial_end ? new Date(sub.trial_end * 1000) : null,
+    });
+  }
 
   await setUserSubscription({
     clerkId,

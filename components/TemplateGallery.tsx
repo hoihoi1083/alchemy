@@ -1,7 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
+import { PlanGateDialog } from "@/components/billing/PlanGateDialog";
 import { useLocale } from "@/components/LocaleProvider";
+import { useUserPlanEntitlements } from "@/hooks/useUserPlanEntitlements";
+import { canUseTemplate, minPlanForTemplate } from "@/lib/billing/plan-gates";
 import { TEMPLATES, type TemplateId } from "@/lib/templates";
 import { startHref } from "@/lib/promotion-mode";
 import { templateGalleryOutput } from "@/lib/template-gallery-meta";
@@ -17,6 +21,9 @@ const FEATURED: TemplateId[] = [
 
 export function TemplateGallery() {
   const { m } = useLocale();
+  const { plan } = useUserPlanEntitlements();
+  const [gateOpen, setGateOpen] = useState(false);
+  const [gateTemplate, setGateTemplate] = useState<TemplateId>("product-reel");
   const cards = TEMPLATES.filter((t) => FEATURED.includes(t.id));
 
   return (
@@ -35,34 +42,76 @@ export function TemplateGallery() {
             const output = templateGalleryOutput(tpl.id);
             const outputLabel =
               output === "video" ? m.landing.templateOutputVideo : m.landing.templateOutputImage;
-            return (
-              <Link
-                key={tpl.id}
-                href={startHref(tpl.id)}
-                className="group rounded-2xl border border-slate-200 bg-slate-50 p-5 text-left transition hover:border-emerald-400 hover:shadow-md"
-              >
+            const allowed = canUseTemplate(plan, tpl.id);
+            const required = minPlanForTemplate(tpl.id);
+            const planName =
+              required === "custom"
+                ? m.pricing.plans.custom.name
+                : m.pricing.plans[required].name;
+
+            const inner = (
+              <>
                 <div className="flex items-start justify-between gap-2">
                   <p className="text-2xl">{tpl.icon}</p>
-                  <span
-                    className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
-                      output === "video"
-                        ? "bg-violet-100 text-violet-800"
-                        : "bg-cyan-100 text-cyan-900"
-                    }`}
-                  >
-                    {outputLabel}
-                  </span>
+                  <div className="flex shrink-0 flex-col items-end gap-1">
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                        output === "video"
+                          ? "bg-violet-100 text-violet-800"
+                          : "bg-cyan-100 text-cyan-900"
+                      }`}
+                    >
+                      {outputLabel}
+                    </span>
+                    {!allowed && required !== "free" ? (
+                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-900">
+                        {planName}+
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
                 <h3 className="mt-3 font-semibold text-slate-900">{copy.name}</h3>
                 <p className="mt-2 text-sm text-slate-600">{copy.description}</p>
                 <p className="mt-4 text-xs font-semibold text-emerald-700 group-hover:text-emerald-800">
                   {m.landing.useTemplate} →
                 </p>
-              </Link>
+              </>
+            );
+
+            if (allowed) {
+              return (
+                <Link
+                  key={tpl.id}
+                  href={startHref(tpl.id)}
+                  className="group rounded-2xl border border-slate-200 bg-slate-50 p-5 text-left transition hover:border-emerald-400 hover:shadow-md"
+                >
+                  {inner}
+                </Link>
+              );
+            }
+
+            return (
+              <button
+                key={tpl.id}
+                type="button"
+                onClick={() => {
+                  setGateTemplate(tpl.id);
+                  setGateOpen(true);
+                }}
+                className="group w-full rounded-2xl border border-dashed border-slate-300 bg-slate-50/80 p-5 text-left transition hover:border-violet-300 hover:shadow-md"
+              >
+                {inner}
+              </button>
             );
           })}
         </div>
       </div>
+      <PlanGateDialog
+        open={gateOpen}
+        onClose={() => setGateOpen(false)}
+        requiredPlan={minPlanForTemplate(gateTemplate)}
+        featureLabel={m.templates[gateTemplate].name}
+      />
     </section>
   );
 }

@@ -1,7 +1,10 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { PlanGateDialog } from "@/components/billing/PlanGateDialog";
 import { useLocale } from "@/components/LocaleProvider";
+import { useUserPlanEntitlements } from "@/hooks/useUserPlanEntitlements";
+import { planMeetsMinimum } from "@/lib/billing/plan-gates";
 import {
   imageOutputPreviewSrc,
   type ImageOutputMode,
@@ -34,6 +37,9 @@ export function ImageOutputModePicker({
   accent = "emerald",
 }: Props) {
   const { m } = useLocale();
+  const { plan } = useUserPlanEntitlements();
+  const [gateOpen, setGateOpen] = useState(false);
+  const campaignAllowed = planMeetsMinimum(plan, "standard");
   const locked = Boolean(lockedCampaign || lockedSingle);
   const options: ImageOutputMode[] = useMemo(() => {
     if (lockedCampaign) return ["campaign"];
@@ -46,8 +52,12 @@ export function ImageOutputModePicker({
   useEffect(() => {
     if (!options.includes(value)) {
       onChange(options[0] ?? "single");
+      return;
     }
-  }, [onChange, options, value]);
+    if (value === "campaign" && !campaignAllowed && !lockedCampaign) {
+      onChange("single");
+    }
+  }, [campaignAllowed, lockedCampaign, onChange, options, value]);
 
   const selectedClass =
     accent === "violet"
@@ -73,16 +83,28 @@ export function ImageOutputModePicker({
       >
         {options.map((mode) => {
           const copy = m.wizard.imageOutputModes[mode];
+          const modeLocked =
+            mode === "campaign" && !campaignAllowed && !lockedCampaign;
           return (
             <button
               key={mode}
               type="button"
-              onClick={() => !locked && onChange(mode)}
+              onClick={() => {
+                if (locked) return;
+                if (modeLocked) {
+                  setGateOpen(true);
+                  return;
+                }
+                onChange(mode);
+              }}
               disabled={locked}
+              aria-disabled={locked || modeLocked}
               className={`overflow-hidden rounded-xl border text-left transition ${
-                value === mode
-                  ? selectedClass
-                  : "border-slate-200 bg-white hover:border-slate-300"
+                modeLocked
+                  ? "cursor-pointer border-dashed border-slate-300 bg-slate-50/80 opacity-90"
+                  : value === mode
+                    ? selectedClass
+                    : "border-slate-200 bg-white hover:border-slate-300"
               } ${locked ? "cursor-default" : ""}`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -94,11 +116,22 @@ export function ImageOutputModePicker({
               <span className="block p-3">
                 <span className="block text-sm font-semibold text-slate-900">{copy.title}</span>
                 <span className="mt-1 block text-xs text-slate-600">{copy.description}</span>
+                {modeLocked ? (
+                  <span className="mt-1 block text-[10px] font-semibold text-amber-800">
+                    {m.pricing.plans.standard.name}+
+                  </span>
+                ) : null}
               </span>
             </button>
           );
         })}
       </div>
+      <PlanGateDialog
+        open={gateOpen}
+        onClose={() => setGateOpen(false)}
+        requiredPlan="standard"
+        featureLabel={m.wizard.imageOutputModes.campaign.title}
+      />
     </div>
   );
 }

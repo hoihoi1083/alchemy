@@ -14,16 +14,18 @@ export default async function ProPage() {
     redirect(`/sign-in?redirect_url=${encodeURIComponent("/pro")}`);
   }
 
-  if (isMongoConfigured()) {
-    try {
-      const plan = await getUserPlan(session.userId);
-      assertProCanvasAllowed(plan);
-    } catch (err) {
-      if (err instanceof PlanEntitlementError) {
-        redirect("/pricing?plan=master&feature=pro-canvas");
-      }
-      throw err;
+  if (!isMongoConfigured()) {
+    redirect("/pricing?plan=master&feature=pro-canvas");
+  }
+
+  try {
+    const plan = await getUserPlan(session.userId);
+    assertProCanvasAllowed(plan);
+  } catch (err) {
+    if (err instanceof PlanEntitlementError) {
+      redirect("/pricing?plan=master&feature=pro-canvas");
     }
+    throw err;
   }
 
   return <ProPageClient />;

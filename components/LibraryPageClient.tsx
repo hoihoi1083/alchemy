@@ -39,6 +39,13 @@ type AssetRow = {
   createdAt: string;
   downloadUrl: string;
   previewUrl: string;
+  teamShared?: boolean;
+};
+
+type TeamAssetRow = AssetRow & {
+  sharedAt?: string;
+  isMine?: boolean;
+  sharedByLabel?: string;
 };
 
 function formatDate(iso: string, locale: string): string {
@@ -187,9 +194,12 @@ export function LibraryPageClient() {
   const { isSignedIn, isLoaded } = useAuth();
   const [projects, setProjects] = useState<ProjectRow[]>([]);
   const [assets, setAssets] = useState<AssetRow[]>([]);
+  const [teamAssets, setTeamAssets] = useState<TeamAssetRow[]>([]);
+  const [teamFolderAvailable, setTeamFolderAvailable] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [sharingId, setSharingId] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<
     { type: "project" | "asset"; id: string } | null
   >(null);
@@ -198,9 +208,10 @@ export function LibraryPageClient() {
     setError(null);
     setLoading(true);
     try {
-      const [projRes, assetRes] = await Promise.all([
+      const [projRes, assetRes, teamRes] = await Promise.all([
         fetch("/api/projects"),
         fetch("/api/library/assets"),
+        fetch("/api/team/library"),
       ]);
       if (projRes.status === 401 || assetRes.status === 401) {
         window.location.href = `/sign-in?redirect_url=${encodeURIComponent("/library")}`;
@@ -221,12 +232,28 @@ export function LibraryPageClient() {
               : new Date(p.createdAt as unknown as Date).toISOString(),
         })),
       );
+      let folderOk = false;
       if (assetRes.ok) {
-        const aData = (await assetRes.json()) as { assets?: AssetRow[] };
+        const aData = (await assetRes.json()) as {
+          assets?: AssetRow[];
+          teamFolderAvailable?: boolean;
+        };
         setAssets(aData.assets ?? []);
+        folderOk = Boolean(aData.teamFolderAvailable);
       } else {
         setAssets([]);
       }
+      if (teamRes.ok) {
+        const tData = (await teamRes.json()) as {
+          available?: boolean;
+          assets?: TeamAssetRow[];
+        };
+        folderOk = folderOk || Boolean(tData.available);
+        setTeamAssets(tData.assets ?? []);
+      } else {
+        setTeamAssets([]);
+      }
+      setTeamFolderAvailable(folderOk);
     } catch (e) {
       setError(e instanceof Error ? e.message : L.loadError);
     } finally {
@@ -270,11 +297,45 @@ export function LibraryPageClient() {
         const res = await fetch(`/api/library/download/${id}`, { method: "DELETE" });
         if (!res.ok) throw new Error(L.loadError);
         setAssets((prev) => prev.filter((a) => a.id !== id));
+        setTeamAssets((prev) => prev.filter((a) => a.id !== id));
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : L.loadError);
     } finally {
       setDeletingId(null);
+    }
+  }
+
+  async function toggleTeamShare(assetId: string, shared: boolean) {
+    setSharingId(assetId);
+    setError(null);
+    try {
+      const res = await fetch(`/api/library/assets/${assetId}/share`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ shared }),
+      });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(data.error || L.shareFailed);
+      }
+      setAssets((prev) =>
+        prev.map((a) => (a.id === assetId ? { ...a, teamShared: shared } : a)),
+      );
+      // Refresh team folder so labels/order stay accurate.
+      const teamRes = await fetch("/api/team/library");
+      if (teamRes.ok) {
+        const tData = (await teamRes.json()) as {
+          available?: boolean;
+          assets?: TeamAssetRow[];
+        };
+        if (tData.available) setTeamFolderAvailable(true);
+        setTeamAssets(tData.assets ?? []);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : L.shareFailed);
+    } finally {
+      setSharingId(null);
     }
   }
 
@@ -331,6 +392,11 @@ export function LibraryPageClient() {
                           <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-slate-700">
                             {assetBadge(a.kind)}
                           </span>
+                          {a.teamShared ? (
+                            <span className="absolute right-3 top-3 rounded-full bg-emerald-600/90 px-2 py-0.5 text-[10px] font-medium text-white">
+                              {L.sharedBadge}
+                            </span>
+                          ) : null}
                         </div>
                         <div className="flex flex-1 flex-col gap-3 p-4">
                           <div>
@@ -374,6 +440,20 @@ export function LibraryPageClient() {
                             >
                               {L.openMedia}
                             </a>
+                            {teamFolderAvailable ? (
+                              <button
+                                type="button"
+                                disabled={sharingId === a.id}
+                                onClick={() => void toggleTeamShare(a.id, !a.teamShared)}
+                                className="rounded-full border border-emerald-300 px-3 py-1.5 text-xs font-medium text-emerald-800 hover:bg-emerald-50 disabled:opacity-50"
+                              >
+                                {sharingId === a.id
+                                  ? L.sharing
+                                  : a.teamShared
+                                    ? L.unshareFromTeam
+                                    : L.shareWithTeam}
+                              </button>
+                            ) : null}
                             <button
                               type="button"
                               disabled={deletingId === a.id}
@@ -390,6 +470,81 @@ export function LibraryPageClient() {
                 </ul>
               )}
             </section>
+
+            {teamFolderAvailable ? (
+              <section className="mt-14">
+                <h2 className="text-xl font-semibold tracking-tight">{L.teamFolderTitle}</h2>
+                <p className="mt-1 max-w-2xl text-sm text-slate-600">{L.teamFolderSubtitle}</p>
+                {teamAssets.length === 0 ? (
+                  <p className="mt-6 rounded-xl border border-dashed border-slate-200 px-5 py-8 text-center text-sm text-slate-500">
+                    {L.teamFolderEmpty}
+                  </p>
+                ) : (
+                  <ul className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                    {teamAssets.map((a) => {
+                      const isVideo = a.kind === "video" || a.kind === "voiceover";
+                      const isAudio = a.kind === "audio";
+                      const thumbKind = isVideo ? "video" : isAudio ? "audio" : "image";
+                      return (
+                        <li
+                          key={`team-${a.id}`}
+                          className="flex flex-col overflow-hidden rounded-2xl border border-emerald-100 bg-white"
+                        >
+                          <div className="relative aspect-[4/5] bg-slate-100">
+                            <MediaThumb
+                              src={a.previewUrl}
+                              kind={thumbKind}
+                              fallbackLabel={L.noMedia}
+                            />
+                            <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-slate-700">
+                              {assetBadge(a.kind)}
+                            </span>
+                          </div>
+                          <div className="flex flex-1 flex-col gap-3 p-4">
+                            <div>
+                              <h3 className="truncate text-sm font-semibold text-slate-900">
+                                {a.name || assetBadge(a.kind)}
+                              </h3>
+                              <p className="mt-1 text-xs text-slate-500">
+                                {a.sharedByLabel
+                                  ? L.sharedByLabel.replace("{name}", a.sharedByLabel)
+                                  : null}
+                              </p>
+                            </div>
+                            <div className="mt-auto flex flex-wrap gap-2">
+                              <a
+                                href={a.downloadUrl}
+                                className="rounded-full bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800"
+                              >
+                                {L.download}
+                              </a>
+                              <a
+                                href={a.previewUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="rounded-full border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                              >
+                                {L.openMedia}
+                              </a>
+                              {a.isMine ? (
+                                <button
+                                  type="button"
+                                  disabled={sharingId === a.id}
+                                  onClick={() => void toggleTeamShare(a.id, false)}
+                                  className="rounded-full border border-emerald-300 px-3 py-1.5 text-xs font-medium text-emerald-800 hover:bg-emerald-50 disabled:opacity-50"
+                                >
+                                  {sharingId === a.id ? L.sharing : L.unshareFromTeam}
+                                </button>
+                              ) : null}
+                            </div>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </section>
+            ) : null}
 
             <section className="mt-14">
               <h2 className="text-xl font-semibold tracking-tight">{L.projectsTitle}</h2>

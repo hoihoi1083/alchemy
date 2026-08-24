@@ -11,7 +11,7 @@ import { comparePaidPlans } from "../lib/stripe/prices";
 describe("stripe upgrade payment safety invariants", () => {
   it("only upgrades grant full new-plan tokens; downgrades/lateral grant 0", () => {
     assert.equal(comparePaidPlans("standard", "master"), "upgrade");
-    assert.equal(upgradeTokenGrantAmount("standard", "master"), 16000);
+    assert.equal(upgradeTokenGrantAmount("standard", "master"), 28000);
 
     assert.equal(comparePaidPlans("master", "standard"), "downgrade");
     assert.equal(upgradeTokenGrantAmount("master", "standard"), 0);
@@ -21,10 +21,10 @@ describe("stripe upgrade payment safety invariants", () => {
   });
 
   it("upgrade grant is full allotment (not a delta) so cycle-reset matches charge", () => {
-    // Standard 3k → Master 16k must add 16k (keep leftover), not 13k delta.
-    assert.equal(upgradeTokenGrantAmount("standard", "master"), 16000);
-    assert.equal(upgradeTokenGrantAmount("pro", "master"), 16000);
-    assert.equal(upgradeTokenGrantAmount("standard", "pro"), 8000);
+    // Standard 8k → Master 28k must add 28k (keep leftover), not 20k delta.
+    assert.equal(upgradeTokenGrantAmount("standard", "master"), 28000);
+    assert.equal(upgradeTokenGrantAmount("pro", "master"), 28000);
+    assert.equal(upgradeTokenGrantAmount("standard", "pro"), 16000);
   });
 
   it("documents required Stripe update flags for upgrades", () => {

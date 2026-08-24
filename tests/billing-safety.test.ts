@@ -65,7 +65,7 @@ describe("billing safety — never overcharge", () => {
     assert.equal(w.consumeCount("u1"), 0);
   });
 
-  it("Free pack journey: 1 image + 1× 8s 480p never exceeds grant", () => {
+  it("Free pack journey: signup grant covers light try; video needs more tokens", () => {
     const w = new MemoryWallet();
     w.seed({ clerkId: "u1", creditBalance: 0, plan: "free" });
     assert.equal(w.ensureSignupGrant("u1"), FREE_SIGNUP_GRANT_TOKENS);
@@ -82,10 +82,11 @@ describe("billing safety — never overcharge", () => {
       workSucceeded: true,
     });
 
-    assert.equal(image.charged + video.charged, FREE_PACK.total);
-    assert.equal(w.balance("u1"), FREE_PACK.grant - FREE_PACK.total);
+    assert.equal(image.charged, FREE_PACK.image);
+    assert.equal(video.blocked, true);
+    assert.equal(video.charged, 0);
+    assert.equal(w.balance("u1"), FREE_PACK.grant - FREE_PACK.image);
     assert.ok((w.balance("u1") ?? 0) >= 0);
-    assert.equal(w.totalConsumed("u1"), FREE_PACK.total);
   });
 
   it("balance never goes negative under sequential jobs", () => {

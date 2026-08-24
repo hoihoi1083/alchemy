@@ -16,11 +16,28 @@ export type DbUser = {
   name: string | null;
   imageUrl: string | null;
   region: "hk" | "cn";
-  /** Studio tokens (1,000 ≈ USD 3.30 COGS). */
+  /** Studio tokens (sum of non-expired batch remainders; mirrored for fast reads). */
   creditBalance: number;
+  /**
+   * FIFO token batches. Each grant adds a batch that expires after 6 months.
+   * Missing/empty + creditBalance > 0 is migrated once to a legacy batch.
+   */
+  tokenBatches?: Array<{
+    id: string;
+    remaining: number;
+    grantedAt: Date;
+    expiresAt: Date;
+    source: string;
+  }>;
+  /** Set when legacy balance was converted into tokenBatches. */
+  tokenBatchesMigratedAt?: Date | null;
   plan: UserPlan;
   /** Set once when Free signup grant is applied. */
   signupGrantAt?: Date | null;
+  /** True after user starts (or completes) the one-time Pro trial. */
+  hasUsedProTrial?: boolean;
+  /** When the current Pro trial ends (Stripe trial_end), if trialing. */
+  proTrialEndsAt?: Date | null;
   stripeCustomerId?: string | null;
   stripeSubscriptionId?: string | null;
   planRenewsAt?: Date | null;
@@ -45,7 +62,10 @@ export type DbUser = {
   updatedAt: Date;
 };
 
-export type TeamPlan = Extract<UserPlan, "custom" | "master" | "pro" | "standard">;
+export type TeamPlan = Extract<
+  UserPlan,
+  "custom" | "master" | "pro" | "standard" | "light"
+>;
 
 export type DbTeam = {
   _id?: ObjectId;
@@ -129,5 +149,13 @@ export type DbAsset = {
   sizeBytes?: number | null;
   /** Scene-cut timing for videos (captions cut markers). */
   timingManifest?: import("@/lib/video-timing-manifest").VideoTimingManifest | null;
+  /**
+   * Enterprise team folder: when true, other active seats on `teamId`
+   * can preview/download. Personal library stays private unless shared.
+   */
+  teamShared?: boolean;
+  teamId?: string | null;
+  sharedAt?: Date | null;
+  sharedByClerkId?: string | null;
   createdAt: Date;
 };

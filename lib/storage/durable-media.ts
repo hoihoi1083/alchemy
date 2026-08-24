@@ -158,6 +158,7 @@ export async function persistAndDurablizeMany(input: {
 /**
  * Read bytes for a durable `/api/library/download/:id` URL from R2.
  * Requires `clerkId` so rematerialization cannot cross user accounts.
+ * Enterprise teammates may read assets shared to their active team folder.
  */
 export async function readLibraryAssetMedia(
   url: string,
@@ -167,9 +168,15 @@ export async function readLibraryAssetMedia(
   if (!id || !clerkId.trim()) return null;
   if (!isMongoConfigured() || !isR2Configured()) return null;
 
-  const { getAssetForUser } = await import("@/lib/db/assets");
+  const { getAssetAccessibleToUser } = await import("@/lib/db/assets");
+  const { getActiveTeamMembership } = await import("@/lib/team/service");
   const { getR2ObjectBytes } = await import("@/lib/storage/r2");
-  const asset = await getAssetForUser(clerkId.trim(), id);
+  const membership = await getActiveTeamMembership(clerkId.trim());
+  const asset = await getAssetAccessibleToUser(
+    clerkId.trim(),
+    id,
+    membership?.teamId ?? null,
+  );
   if (!asset?.r2Key) return null;
   const obj = await getR2ObjectBytes(asset.r2Key);
   if (!obj) return null;
