@@ -668,12 +668,14 @@ export function resolveMicroSteps(
     return finish(ids);
   }
 
-  // 圖+片 (except UGC / cinematic / motion-poster escape): always evaluate steps as storyboard-video so
+  // 圖+片 (except UGC / cinematic / recipe / Quick Ad): always evaluate steps as storyboard-video so
   // DeepSeek scene planning + scene confirm never disappear after restore/HMR.
   let resolveState = state;
   if (
     effectiveCtx.workflowMode === "combined" &&
     !isRecipeOwnedVideoMode(state.videoCreativeMode) &&
+    state.videoCreativeMode !== "product-assistant" &&
+    state.videoCreativeMode !== "reference-concept" &&
     !isUgcPresenterStyle(state.visualStyleId) &&
     state.visualStyleId !== "concept-cinematic" &&
     (pathId === "product_combined" ||

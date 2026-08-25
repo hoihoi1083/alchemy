@@ -21,6 +21,7 @@ import type {
 import type { WorkflowMode } from "@/lib/workflow-mode";
 import { setupContentPhaseIndex, studioPhasesForMode } from "@/lib/studio-phases";
 import type { VisualStyleId } from "@/lib/visual-styles";
+import type { VideoSubpath } from "@/lib/wizard-micro-steps.types";
 import { useState } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 import { ContentResearchPanel } from "@/components/content-research/ContentResearchPanel";
@@ -35,6 +36,10 @@ type Props = {
   onTemplateModeChange?: (mode: "template" | "direct" | null) => void;
   /** Controlled from micro ctx — survives Back/remount. */
   selectedTemplateMode?: "template" | "direct" | null;
+  /** Selected video recipe (video / combined Template tab). */
+  selectedVideoSubpath?: VideoSubpath | null;
+  /** Video / combined: apply shot-recipe style from Template tab. */
+  onSelectVideoStyle?: (subpath: VideoSubpath) => void;
   /**
    * Leaving Research for Template/Direct — clear reel routing so video setup
    * does not keep expecting a research reference reel.
@@ -303,6 +308,8 @@ export function IntakeFuseStep({
   onSelectDirect,
   onTemplateModeChange,
   selectedTemplateMode = null,
+  selectedVideoSubpath = null,
+  onSelectVideoStyle,
   onLeaveResearchPath,
   isConcept,
   workflowMode,
@@ -409,6 +416,12 @@ export function IntakeFuseStep({
   function onSelectTemplateStyle(styleId: VisualStyleId) {
     onTemplateModeChange?.("template");
     wizard.selectVisualStyle(styleId);
+    onSelectDirect();
+  }
+
+  function onSelectVideoRecipe(subpath: VideoSubpath) {
+    onTemplateModeChange?.("template");
+    onSelectVideoStyle?.(subpath);
     onSelectDirect();
   }
 
@@ -581,8 +594,10 @@ export function IntakeFuseStep({
                     workflowMode={workflowMode}
                     isConcept={isConcept}
                     selectedMode={templateMode}
+                    selectedVideoSubpath={selectedVideoSubpath}
                     onSelectDirect={onSelectDirectBlank}
                     onSelectTemplateStyle={onSelectTemplateStyle}
+                    onSelectVideoStyle={onSelectVideoRecipe}
                   />
                   {templateMode ? (
                     isConcept ? (

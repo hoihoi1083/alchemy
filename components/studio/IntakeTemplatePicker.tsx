@@ -4,10 +4,12 @@ import { useState } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 import { useWizard } from "@/components/studio/WizardContext";
 import {
-  getVisualStyle,
-  visualStylesForWorkflow,
-  type VisualStyleId,
-} from "@/lib/visual-styles";
+  buildIntakeTemplateCards,
+  intakeShowsVideoRecipes,
+  type IntakeTemplateCard,
+} from "@/lib/intake-template-styles";
+import type { VisualStyleId } from "@/lib/visual-styles";
+import type { VideoSubpath } from "@/lib/wizard-micro-steps.types";
 import type { WorkflowMode } from "@/lib/workflow-mode";
 
 type Props = {
@@ -15,28 +17,79 @@ type Props = {
   isConcept: boolean;
   /** Direct = blank / no preset template. */
   selectedMode: "template" | "direct" | null;
+  /** Selected video recipe subpath (video / combined). */
+  selectedVideoSubpath?: VideoSubpath | null;
   onSelectDirect: () => void;
   onSelectTemplateStyle: (styleId: VisualStyleId) => void;
+  /** Video / combined: pick a shot-recipe style. */
+  onSelectVideoStyle?: (subpath: VideoSubpath) => void;
 };
 
 export function IntakeTemplatePicker({
   workflowMode,
   isConcept,
   selectedMode,
+  selectedVideoSubpath = null,
   onSelectDirect,
   onSelectTemplateStyle,
+  onSelectVideoStyle,
 }: Props) {
   const { m } = useLocale();
   const wizard = useWizard();
   const fuse = m.microWizard.intakeFuse;
-  const styles = visualStylesForWorkflow(
+  const showVideoRecipes = intakeShowsVideoRecipes(workflowMode);
+
+  const cards = buildIntakeTemplateCards({
     workflowMode,
-    isConcept ? "concept" : "physical",
-  );
-  const styleLabels = m.wizard.visualStyles as Record<
-    string,
-    { title?: string; name?: string; description?: string }
-  >;
+    isConcept,
+    copy: {
+      pathQuickTitle: m.wizard.pathQuickTitle,
+      pathQuickVideoDesc: m.wizard.pathQuickVideoDesc,
+      pathReferenceVideoTitle: m.wizard.pathReferenceVideoTitle,
+      pathReferenceVideoDesc: m.wizard.pathReferenceVideoDesc,
+      sceneReelTitle: m.wizard.sceneReelTitle,
+      sceneReelDesc: m.wizard.sceneReelDesc,
+      videoCreativeModes: m.wizard.videoCreativeModes as Record<
+        string,
+        { title: string; description: string }
+      >,
+      visualStyles: m.wizard.visualStyles as Record<
+        string,
+        { title?: string; name?: string; description?: string }
+      >,
+    },
+  });
+
+  function isCardSelected(card: IntakeTemplateCard): boolean {
+    if (selectedMode !== "template") return false;
+    if (card.kind === "video") {
+      return selectedVideoSubpath === card.videoSubpath;
+    }
+    return wizard.visualStyleId === card.visualStyleId;
+  }
+
+  function onPickCard(card: IntakeTemplateCard) {
+    if (card.kind === "video" && card.videoSubpath && onSelectVideoStyle) {
+      onSelectVideoStyle(card.videoSubpath);
+      return;
+    }
+    if (card.kind === "visual" && card.visualStyleId) {
+      onSelectTemplateStyle(card.visualStyleId);
+    }
+  }
+
+  const selectedLabel = (() => {
+    if (selectedMode !== "template") return null;
+    if (showVideoRecipes && selectedVideoSubpath) {
+      const hit = cards.find((c) => c.videoSubpath === selectedVideoSubpath);
+      return hit?.title ?? selectedVideoSubpath;
+    }
+    if (!showVideoRecipes && wizard.visualStyleId) {
+      const hit = cards.find((c) => c.visualStyleId === wizard.visualStyleId);
+      return hit?.title ?? wizard.visualStyleId;
+    }
+    return null;
+  })();
 
   return (
     <div className="space-y-3">
@@ -44,7 +97,7 @@ export function IntakeTemplatePicker({
         {fuse.templateIntro}
       </p>
 
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <button
           type="button"
           onClick={onSelectDirect}
@@ -62,51 +115,57 @@ export function IntakeTemplatePicker({
           </p>
         </button>
 
-        {styles.slice(0, 11).map((style) => {
-          const label =
-            styleLabels[style.id]?.title ??
-            styleLabels[style.id]?.name ??
-            style.id;
-          const on =
-            selectedMode === "template" && wizard.visualStyleId === style.id;
+        {cards.map((card) => {
+          const on = isCardSelected(card);
           return (
             <button
-              key={style.id}
+              key={card.id}
               type="button"
-              onClick={() => onSelectTemplateStyle(style.id)}
-              className={`overflow-hidden rounded-xl border text-left transition ${
+              onClick={() => onPickCard(card)}
+              className={`flex items-start gap-2.5 overflow-hidden rounded-xl border p-2.5 text-left transition ${
                 on
-                  ? "border-violet-600 ring-1 ring-violet-200"
-                  : "border-slate-200 hover:border-slate-300"
+                  ? "border-violet-600 bg-violet-50 ring-1 ring-violet-200"
+                  : "border-slate-200 bg-white hover:border-slate-300"
               }`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={style.previewSrc}
+                src={card.previewSrc}
                 alt=""
-                className="aspect-square w-full object-cover bg-slate-100"
+                className="h-14 w-14 shrink-0 rounded-lg object-cover bg-slate-100"
               />
-              <div className="px-2.5 py-2">
-                <p className="truncate text-[12px] font-semibold text-slate-900">
-                  {style.icon} {label}
-                </p>
-              </div>
+              <span className="min-w-0">
+                <span className="block text-[13px] font-semibold text-slate-900">
+                  {card.title}
+                </span>
+                {card.description ? (
+                  <span className="mt-0.5 block text-[11px] leading-snug text-slate-500 line-clamp-2">
+                    {card.description}
+                  </span>
+                ) : null}
+              </span>
             </button>
           );
         })}
       </div>
 
-      {selectedMode === "template" && wizard.visualStyleId ? (
+      {selectedLabel ? (
         <p className="text-[12px] text-violet-800">
-          {fuse.templateSelectedNote.replace(
-            "{name}",
-            styleLabels[wizard.visualStyleId]?.title ??
-              styleLabels[wizard.visualStyleId]?.name ??
-              getVisualStyle(wizard.visualStyleId).id,
-          )}
+          {fuse.templateSelectedNote.replace("{name}", selectedLabel)}
         </p>
       ) : null}
     </div>
+  );
+}
+
+const ON_CREATIVE_FIELD_CLASS =
+  "block rounded-xl border border-violet-300 bg-violet-50/60 p-3 ring-1 ring-violet-200";
+
+function OnCreativeBadge({ label }: { label: string }) {
+  return (
+    <span className="ml-1.5 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700">
+      {label}
+    </span>
   );
 }
 
@@ -117,6 +176,12 @@ export function ProductBriefAssistantPanel() {
   const fuse = m.microWizard.intakeFuse;
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+
+  const isVideoWorkflow =
+    wizard.workflowMode === "video-only" || wizard.workflowMode === "combined";
+  const onCreativeBadge = isVideoWorkflow
+    ? m.microWizard.preVideoSetup.inVideoBadge
+    : m.microWizard.preGenerateSetup.onImageBadge;
 
   async function fillWithAi() {
     if (!wizard.product.trim()) {
@@ -167,7 +232,7 @@ export function ProductBriefAssistantPanel() {
   }
 
   return (
-    <div className="space-y-3 rounded-xl border border-violet-100 bg-violet-50/50 p-3">
+    <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <p className="text-[13px] font-bold text-slate-900">
@@ -187,10 +252,11 @@ export function ProductBriefAssistantPanel() {
         </button>
       </div>
 
-      <label className="block">
+      <label className={ON_CREATIVE_FIELD_CLASS}>
         <span className="mb-1 block text-[12px] font-semibold text-slate-700">
           {fuse.copyHookLabel}
           <span className="text-violet-600"> *</span>
+          <OnCreativeBadge label={onCreativeBadge} />
         </span>
         <input
           className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
@@ -199,9 +265,10 @@ export function ProductBriefAssistantPanel() {
           placeholder={fuse.copyHookPlaceholder}
         />
       </label>
-      <label className="block">
+      <label className={ON_CREATIVE_FIELD_CLASS}>
         <span className="mb-1 block text-[12px] font-semibold text-slate-700">
           {fuse.copySublineLabel}
+          <OnCreativeBadge label={onCreativeBadge} />
         </span>
         <input
           className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
@@ -210,9 +277,10 @@ export function ProductBriefAssistantPanel() {
           placeholder={fuse.copySublinePlaceholder}
         />
       </label>
-      <label className="block">
+      <label className={ON_CREATIVE_FIELD_CLASS}>
         <span className="mb-1 block text-[12px] font-semibold text-slate-700">
           {fuse.copyOfferLabel}
+          <OnCreativeBadge label={onCreativeBadge} />
         </span>
         <input
           className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"

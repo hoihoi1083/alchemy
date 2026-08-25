@@ -32,6 +32,7 @@ import { ImageResultPanel } from "@/components/studio/micro-wizard/ImageResultPa
 import { VideoOutputSourceCard } from "@/components/studio/VideoOutputSourceCard";
 import { ProductNameStep } from "@/components/studio/ProductNameStep";
 import { IntakeFuseStep, intakeTabFromPending } from "@/components/studio/IntakeFuseStep";
+import { applyIntakeVideoStyle } from "@/lib/apply-intake-video-style";
 import { PreGenerateSetupPanel } from "@/components/studio/PreGenerateSetupPanel";
 import { PreVideoSetupPanel } from "@/components/studio/PreVideoSetupPanel";
 import { VideoResultPanel } from "@/components/studio/VideoResultPanel";
@@ -334,6 +335,19 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
             });
           }}
           selectedTemplateMode={micro.ctx.intakeTemplateMode ?? null}
+          selectedVideoSubpath={
+            (micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) ?? null
+          }
+          onSelectVideoStyle={(subpath) => {
+            applyIntakeVideoStyle(subpath, {
+              isConcept: true,
+              wizard,
+              setVideoSubpath: (sub) => {
+                micro.setVideoSubpath(sub);
+                micro.patchContext({ videoSubpath: sub });
+              },
+            });
+          }}
         />
       );
 
@@ -381,6 +395,19 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
             });
           }}
           selectedTemplateMode={micro.ctx.intakeTemplateMode ?? null}
+          selectedVideoSubpath={
+            (micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) ?? null
+          }
+          onSelectVideoStyle={(subpath) => {
+            applyIntakeVideoStyle(subpath, {
+              isConcept,
+              wizard,
+              setVideoSubpath: (sub) => {
+                micro.setVideoSubpath(sub);
+                micro.patchContext({ videoSubpath: sub });
+              },
+            });
+          }}
         />
       );
     }
@@ -478,9 +505,11 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
       return (
         <PreGenerateSetupPanel
           showStylePicker={
-            // Template/Direct already chose style on Step 4 — avoid duplicate picker.
-            // Research may still refine art style here.
-            micro.ctx.intakePath === "research" &&
+            // Research locks layout from the selected card — don't offer a competing
+            // "creation direction" that overrides it. Template already chose a style
+            // on Step 4. Blank Direct still needs a direction here.
+            micro.ctx.intakePath === "direct" &&
+            micro.ctx.intakeTemplateMode === "direct" &&
             micro.ctx.workflowMode !== "combined"
           }
           showReferenceUpload={micro.ctx.intakePath === "direct"}

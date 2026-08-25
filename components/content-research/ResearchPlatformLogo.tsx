@@ -1,92 +1,85 @@
-"use client";
-
-import { useId } from "react";
-import type { ContentPlatform } from "@/lib/content-research-types";
+import type { ContentResearchPlatform } from "@/lib/content-research-types";
 
 type Props = {
-  platform: ContentPlatform;
+  platform: ContentResearchPlatform;
   className?: string;
 };
 
-/** Official-style platform marks for the research picker. */
-export function ResearchPlatformLogo({ platform, className = "h-6 w-6" }: Props) {
-  const uid = useId().replace(/:/g, "");
-
+/** Brand-colored marks for research platform chips (not generic letter tiles). */
+export function ResearchPlatformLogo({ platform, className = "h-5 w-5" }: Props) {
   if (platform === "xiaohongshu") {
     return (
-      <svg viewBox="0 0 32 32" className={className} aria-hidden>
-        <rect width="32" height="32" rx="7" fill="#FF2442" />
-        <text
-          x="16"
-          y="20"
-          textAnchor="middle"
-          fill="#fff"
-          fontSize="9"
-          fontWeight="800"
-          fontFamily="system-ui, -apple-system, Segoe UI, sans-serif"
-        >
-          RED
-        </text>
-      </svg>
+      // eslint-disable-next-line @next/next/no-img-element -- small static brand mark
+      <img
+        src="/images/landing/platform-xhs.png"
+        alt=""
+        width={28}
+        height={28}
+        className={`${className} rounded-[22%] object-cover`}
+        decoding="async"
+      />
     );
   }
 
   if (platform === "instagram") {
-    const gid = `ig-${uid}`;
     return (
-      <svg viewBox="0 0 32 32" className={className} aria-hidden>
+      <svg className={className} viewBox="0 0 24 24" aria-hidden>
         <defs>
-          <radialGradient id={gid} cx="30%" cy="107%" r="150%">
+          <radialGradient id="ig" cx="30%" cy="107%" r="150%">
             <stop offset="0%" stopColor="#fdf497" />
+            <stop offset="5%" stopColor="#fdf497" />
             <stop offset="45%" stopColor="#fd5949" />
             <stop offset="60%" stopColor="#d6249f" />
             <stop offset="90%" stopColor="#285AEB" />
           </radialGradient>
         </defs>
-        <rect width="32" height="32" rx="8" fill={`url(#${gid})`} />
-        <rect
-          x="8"
-          y="8"
-          width="16"
-          height="16"
-          rx="5"
-          fill="none"
-          stroke="#fff"
-          strokeWidth="2"
-        />
-        <circle cx="16" cy="16" r="4" fill="none" stroke="#fff" strokeWidth="2" />
-        <circle cx="21.2" cy="10.8" r="1.35" fill="#fff" />
+        <rect width="24" height="24" rx="6" fill="url(#ig)" />
+        <rect x="5.5" y="5.5" width="13" height="13" rx="4" fill="none" stroke="#fff" strokeWidth="1.75" />
+        <circle cx="12" cy="12" r="3.25" fill="none" stroke="#fff" strokeWidth="1.75" />
+        <circle cx="16.35" cy="7.65" r="1.15" fill="#fff" />
       </svg>
     );
   }
 
   if (platform === "tiktok") {
     return (
-      <svg viewBox="0 0 32 32" className={className} aria-hidden>
-        <rect width="32" height="32" rx="8" fill="#000" />
+      <svg className={className} viewBox="0 0 24 24" aria-hidden>
+        <rect width="24" height="24" rx="6" fill="#010101" />
         <path
           fill="#25F4EE"
-          d="M20.4 9.2c.85 1.7 2.35 3 4.2 3.5v2.55c-1.45-.1-2.8-.6-3.9-1.4v6.15c0 3.35-2.75 6.1-6.1 6.1S8.5 23.35 8.5 20c0-3.35 2.75-6.1 6.1-6.1.45 0 .9.05 1.3.15v2.75c-.4-.15-.85-.2-1.3-.2-1.85 0-3.35 1.5-3.35 3.35S14.1 23.3 16 23.3s3.35-1.5 3.35-3.35V9.2h1.05Z"
+          d="M14.2 6.2c.55 1.55 1.7 2.8 3.3 3.25v2.15c-1.15-.05-2.2-.4-3.15-1v4.85c0 2.55-2.05 4.55-4.6 4.55S5.15 18 5.15 15.45 7.2 10.9 9.75 10.9c.3 0 .6.05.9.1v2.25c-.25-.1-.55-.15-.9-.15-1.35 0-2.45 1.1-2.45 2.45s1.1 2.45 2.45 2.45 2.45-1.1 2.45-2.45V6.2h2z"
         />
         <path
           fill="#FE2C55"
-          d="M19.1 7.9c.85 1.7 2.35 3 4.2 3.5v2.55c-1.45-.1-2.8-.6-3.9-1.4.05 2.2.1 5.1.1 7.45 0 3.55-2.55 6.5-5.95 7.05 2.15-.75 3.7-2.8 3.7-5.2 0-2.55-.05-5.65-.15-8.25.7.6 1.55 1 2.5 1.2V7.9h-.5Z"
+          d="M14.55 5.85c.55 1.55 1.7 2.8 3.3 3.25v2.15c-1.15-.05-2.2-.4-3.15-1v4.85c0 2.55-2.05 4.55-4.6 4.55S5.5 17.65 5.5 15.1s2.05-4.55 4.6-4.55c.3 0 .6.05.9.1v2.25c-.25-.1-.55-.15-.9-.15-1.35 0-2.45 1.1-2.45 2.45s1.1 2.45 2.45 2.45 2.45-1.1 2.45-2.45V5.85h2z"
+          opacity="0.9"
         />
         <path
           fill="#fff"
-          d="M19.75 8.55c.85 1.7 2.35 3 4.2 3.5v2.55c-1.45-.1-2.8-.6-3.9-1.4v6.15c0 3.35-2.75 6.1-6.1 6.1S7.85 22.7 7.85 19.35c0-3.35 2.75-6.1 6.1-6.1.45 0 .9.05 1.3.15v2.75c-.4-.15-.85-.2-1.3-.2-1.85 0-3.35 1.5-3.35 3.35s1.5 3.35 3.35 3.35 3.35-1.5 3.35-3.35V8.55h1.45Z"
+          d="M14 6.5c.55 1.55 1.7 2.8 3.3 3.25v1.55c-1.15-.05-2.2-.4-3.15-1v4.85c0 2.55-2.05 4.55-4.6 4.55S5 17.7 5 15.15 7.05 10.6 9.6 10.6c.3 0 .6.05.9.1v1.65c-.25-.1-.55-.15-.9-.15-1.35 0-2.45 1.1-2.45 2.45s1.1 2.45 2.45 2.45 2.45-1.1 2.45-2.45V6.5H14z"
+        />
+      </svg>
+    );
+  }
+
+  if (platform === "facebook") {
+    return (
+      <svg className={className} viewBox="0 0 24 24" aria-hidden>
+        <rect width="24" height="24" rx="6" fill="#1877F2" />
+        <path
+          fill="#fff"
+          d="M15.6 12.75h-2.1v7.5H10.5v-7.5H8.85V10.2H10.5V8.55c0-1.65.75-4.2 4.2-4.2h2.55v2.85h-1.8c-.45 0-1.05.15-1.05 1.2v1.8h2.85l-.45 2.55z"
         />
       </svg>
     );
   }
 
   return (
-    <svg viewBox="0 0 32 32" className={className} aria-hidden>
-      <circle cx="16" cy="16" r="16" fill="#1877F2" />
-      <path
-        fill="#fff"
-        d="M17.6 24.8v-7.7h2.55l.4-2.95h-2.95v-1.9c0-.85.25-1.45 1.5-1.45h1.6V8.2c-.3-.05-1.25-.15-2.35-.15-2.35 0-3.95 1.4-3.95 3.95v2.2h-2.65v2.95h2.65v7.7h3.2Z"
-      />
+    <svg className={className} viewBox="0 0 24 24" aria-hidden>
+      <rect width="24" height="24" rx="6" fill="#0f172a" />
+      <circle cx="12" cy="12" r="5.5" fill="none" stroke="#94a3b8" strokeWidth="1.5" />
+      <path d="M12 6.5v11M6.5 12h11" stroke="#94a3b8" strokeWidth="1.5" />
+      <ellipse cx="12" cy="12" rx="2.5" ry="5.5" fill="none" stroke="#94a3b8" strokeWidth="1.25" />
     </svg>
   );
 }

@@ -2971,11 +2971,18 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- snap when locked poster style
 	}, [visualStyleId, imageOutputMode, imageCreativeMode, imageRefPhoto, userReferenceBrief, referenceAnalyzeNote]);
 
-	// Hard lock: 圖+片 (except UGC / cinematic / motion-poster escape) must stay on storyboard-video.
+	// Hard lock: 圖+片 (except UGC / cinematic / recipe / Quick Ad) must stay on storyboard-video.
 	// Prevents drift into 單圖動態 / 教學輪播 / 一鍵出片 after research or mode sync.
 	useEffect(() => {
 		if (workflowMode !== "combined") return;
 		if (isRecipeOwnedVideoMode(videoCreativeMode)) return;
+		// Step 4 Template → Quick Ad (product-assistant) must not be forced into storyboard.
+		if (
+			videoCreativeMode === "product-assistant" ||
+			videoCreativeMode === "reference-concept"
+		) {
+			return;
+		}
 		if (
 			isUgcPresenterStyle(visualStyleId) ||
 			isConceptCinematicStyle(visualStyleId)

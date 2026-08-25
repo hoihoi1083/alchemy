@@ -5484,12 +5484,12 @@ export const en = {
 			},
 			templateTipTitle: "Template or Direct",
 			templateTipIntro:
-				"Pick a preset layout, or Direct (no template). Then let the assistant fill your copy fields.",
+				"Pick a style preset, or Direct (no template). Then let the assistant fill your copy fields.",
 			templateIntro:
-				"Choose a template filtered by your output type, or Direct to write freely without a preset.",
+				"Template = the style you want. For video, pick a shot recipe (Quick Ad, Blockbuster…). For image, pick a look. Or use Direct with no preset.",
 			templateDirectTitle: "Direct (no template)",
 			templateDirectBody: "Blank layout — fill hook and supporting copy with the assistant.",
-			templatePickHint: "Select a template or Direct above, then fill your copy fields.",
+			templatePickHint: "Select a style template or Direct above, then fill your copy fields.",
 			templateSelectedNote: "Selected: {name}",
 			switchPathConfirm:
 				"Switching clears the other path — research pick or template choice, plus the copy fields on this step. Continue?",
@@ -5513,7 +5513,8 @@ export const en = {
 			researchAdaptFailed: "Could not adapt copy. You can edit the fields manually.",
 			researchAdaptNeedProduct: "Add your product or concept name so we can remap the copy.",
 			productAssistTitle: "Product assistant",
-			productAssistHint: "AI fills hook, supporting copy, and CTA from your product name.",
+			productAssistHint:
+				"AI fills hook, supporting copy, and CTA from your product name. Highlighted fields print on the image or video.",
 			productAssistCta: "AI fill",
 			productAssistBusy: "Writing…",
 			productAssistDone: "Draft filled — edit before Continue.",

@@ -817,7 +817,7 @@ export function PreGenerateSetupPanel({
   generateLabel?: string;
   /** Shown above the generate CTA (e.g. wait for reference analysis). */
   generateBlockMessage?: string | null;
-  /** Direct path: quick ad vs model-wear (affects visualStyleId / prompts). */
+  /** Blank Direct path: quick ad vs model-wear / poster directions. Hidden for research + template. */
   showStylePicker?: boolean;
   /** Direct path: optional user reference image (triggers analyze + dual-ref). */
   showReferenceUpload?: boolean;
