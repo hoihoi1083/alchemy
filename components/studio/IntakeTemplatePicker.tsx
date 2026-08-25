@@ -5,9 +5,11 @@ import { useLocale } from "@/components/LocaleProvider";
 import { useWizard } from "@/components/studio/WizardContext";
 import {
   buildIntakeTemplateCards,
+  intakeShowsStoryboardRecipes,
   intakeShowsVideoRecipes,
   type IntakeTemplateCard,
 } from "@/lib/intake-template-styles";
+import type { StoryboardRecipeId } from "@/lib/storyboard-recipes";
 import type { VisualStyleId } from "@/lib/visual-styles";
 import type { VideoSubpath } from "@/lib/wizard-micro-steps.types";
 import type { WorkflowMode } from "@/lib/workflow-mode";
@@ -17,12 +19,14 @@ type Props = {
   isConcept: boolean;
   /** Direct = blank / no preset template. */
   selectedMode: "template" | "direct" | null;
-  /** Selected video recipe subpath (video / combined). */
+  /** Selected video recipe subpath (video-only). */
   selectedVideoSubpath?: VideoSubpath | null;
   onSelectDirect: () => void;
   onSelectTemplateStyle: (styleId: VisualStyleId) => void;
-  /** Video / combined: pick a shot-recipe style. */
+  /** Video-only: pick a shot-recipe style. */
   onSelectVideoStyle?: (subpath: VideoSubpath) => void;
+  /** Combined / storyboard: pick Classic TVC or Luxury birth. */
+  onSelectStoryboardRecipe?: (recipeId: StoryboardRecipeId) => void;
 };
 
 export function IntakeTemplatePicker({
@@ -33,11 +37,13 @@ export function IntakeTemplatePicker({
   onSelectDirect,
   onSelectTemplateStyle,
   onSelectVideoStyle,
+  onSelectStoryboardRecipe,
 }: Props) {
   const { m } = useLocale();
   const wizard = useWizard();
   const fuse = m.microWizard.intakeFuse;
   const showVideoRecipes = intakeShowsVideoRecipes(workflowMode);
+  const showStoryboardRecipes = intakeShowsStoryboardRecipes(workflowMode);
 
   const cards = buildIntakeTemplateCards({
     workflowMode,
@@ -57,6 +63,10 @@ export function IntakeTemplatePicker({
         string,
         { title?: string; name?: string; description?: string }
       >,
+      storyboardRecipes: m.wizard.storyboardRecipes as Record<
+        string,
+        { title: string; desc: string }
+      >,
     },
   });
 
@@ -65,12 +75,23 @@ export function IntakeTemplatePicker({
     if (card.kind === "video") {
       return selectedVideoSubpath === card.videoSubpath;
     }
+    if (card.kind === "storyboard") {
+      return wizard.storyboardRecipeId === card.storyboardRecipeId;
+    }
     return wizard.visualStyleId === card.visualStyleId;
   }
 
   function onPickCard(card: IntakeTemplateCard) {
     if (card.kind === "video" && card.videoSubpath && onSelectVideoStyle) {
       onSelectVideoStyle(card.videoSubpath);
+      return;
+    }
+    if (
+      card.kind === "storyboard" &&
+      card.storyboardRecipeId &&
+      onSelectStoryboardRecipe
+    ) {
+      onSelectStoryboardRecipe(card.storyboardRecipeId);
       return;
     }
     if (card.kind === "visual" && card.visualStyleId) {
@@ -84,7 +105,13 @@ export function IntakeTemplatePicker({
       const hit = cards.find((c) => c.videoSubpath === selectedVideoSubpath);
       return hit?.title ?? selectedVideoSubpath;
     }
-    if (!showVideoRecipes && wizard.visualStyleId) {
+    if (showStoryboardRecipes) {
+      const hit = cards.find(
+        (c) => c.storyboardRecipeId === wizard.storyboardRecipeId,
+      );
+      return hit?.title ?? wizard.storyboardRecipeId;
+    }
+    if (wizard.visualStyleId) {
       const hit = cards.find((c) => c.visualStyleId === wizard.visualStyleId);
       return hit?.title ?? wizard.visualStyleId;
     }

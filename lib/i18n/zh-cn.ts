@@ -4536,7 +4536,7 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
       templateTipTitle: "模板或直接创作",
       templateTipIntro: "选风格预设，或「直接创作」（无模板）。再用助手填写文案栏位。",
       templateIntro:
-        "模板＝你想要的风格。纯视频选运镜配方（快速广告、大片级出场…）；图片或故事分镜（图+片）选画面风格。也可选直接创作。",
+        "模板＝你想要的风格。纯视频选运镜配方（快速广告、大片级出场…）；故事分镜（图+片）选经典 TVC 或豪华诞生；纯图片选画面风格。也可选直接创作。",
       templateDirectTitle: "直接创作（无模板）",
       templateDirectBody: "空白排版 — 用助手填写主标题与辅助文案。",
       templatePickHint: "请先在上方选风格模板或直接创作，再填写文案。",

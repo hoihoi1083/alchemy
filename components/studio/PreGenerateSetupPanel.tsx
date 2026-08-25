@@ -989,6 +989,14 @@ export function PreGenerateSetupPanel({
     m.wizard.visualStyles[
       wizard.visualStyleId as keyof typeof m.wizard.visualStyles
     ];
+  const storyboardRecipeLabel =
+    m.wizard.storyboardRecipes[
+      wizard.storyboardRecipeId as keyof typeof m.wizard.storyboardRecipes
+    ];
+  const isCombinedStoryboardTemplate =
+    wizard.workflowMode === "combined" &&
+    intakePath === "direct" &&
+    intakeTemplateMode === "template";
   const intakeStyleName =
     intakePath === "research"
       ? (() => {
@@ -1004,17 +1012,21 @@ export function PreGenerateSetupPanel({
             "";
           return title ? `${platform} · ${title}` : platform;
         })()
-      : visualStyleLabel?.title ??
-        visualStyleLabel?.name ??
-        getVisualStyle(wizard.visualStyleId).id.replace(/-/g, " ");
+      : isCombinedStoryboardTemplate
+        ? storyboardRecipeLabel?.title ?? wizard.storyboardRecipeId
+        : visualStyleLabel?.title ??
+          visualStyleLabel?.name ??
+          getVisualStyle(wizard.visualStyleId).id.replace(/-/g, " ");
   const intakePreviewSrc =
     intakePath === "research"
       ? researchRef?.angle.sourceCoverImageUrl?.trim() ||
         researchRef?.angle.sourceImageUrls?.[0]?.trim() ||
         null
-      : intakePath === "direct" && intakeTemplateMode === "template"
-        ? getVisualStyle(wizard.visualStyleId).previewSrc
-        : null;
+      : isCombinedStoryboardTemplate
+        ? `/images/studio/schemes/storyboard/${wizard.storyboardRecipeId}.png?v=1`
+        : intakePath === "direct" && intakeTemplateMode === "template"
+          ? getVisualStyle(wizard.visualStyleId).previewSrc
+          : null;
 
   // If research already applied but hook/subline were left blank (stale session /
   // older concept branch), backfill the same way product research does.

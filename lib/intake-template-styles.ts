@@ -1,8 +1,8 @@
 /**
  * Step 4 Template tab options — "template" means the style the user wants.
  * Video-only → shot recipes (Quick Ad, Blockbuster, H3 paths…).
- * Image-only + combined (storyboard 圖+片) → look styles for stills
- *   (excluding paper-layout + storyboard-video card; combined IS the storyboard path).
+ * Combined (storyboard 圖+片) → narrative storyboard recipes (Classic TVC, Luxury birth).
+ * Image-only → look styles (excluding paper-layout + storyboard-video card).
  */
 
 import { videoModePreviewSrc } from "@/lib/creative-workflow";
@@ -11,6 +11,11 @@ import {
 } from "@/lib/h3-shot-recipes";
 import { h3ShotModesForPromotion } from "@/lib/recipe-path-ux";
 import type { PromotionMode } from "@/lib/promotion-mode";
+import {
+  STORYBOARD_RECIPE_IDS,
+  storyboardRecipePreviewSrc,
+  type StoryboardRecipeId,
+} from "@/lib/storyboard-recipes";
 import {
   getVisualStyle,
   visualStylesForWorkflow,
@@ -41,9 +46,10 @@ export type IntakeTemplateCard = {
   title: string;
   description: string;
   previewSrc: string;
-  kind: "visual" | "video";
+  kind: "visual" | "video" | "storyboard";
   visualStyleId?: VisualStyleId;
   videoSubpath?: VideoSubpath;
+  storyboardRecipeId?: StoryboardRecipeId;
 };
 
 export type IntakeTemplateCopy = {
@@ -58,11 +64,17 @@ export type IntakeTemplateCopy = {
     string,
     { title?: string; name?: string; description?: string }
   >;
+  storyboardRecipes: Record<string, { title: string; desc: string }>;
 };
 
-/** Shot recipes only for pure video — combined/storyboard uses look styles for scene stills. */
+/** Shot recipes only for pure video. */
 export function intakeShowsVideoRecipes(workflowMode: WorkflowMode): boolean {
   return workflowMode === "video-only";
+}
+
+/** Narrative recipes for 圖+片 / storyboard path. */
+export function intakeShowsStoryboardRecipes(workflowMode: WorkflowMode): boolean {
+  return workflowMode === "combined";
 }
 
 export function intakeImageVisualStyleIds(
@@ -77,6 +89,27 @@ export function intakeImageVisualStyleIds(
         promotionMode !== "physical" ||
         !INTAKE_TEMPLATE_EXCLUDED_PHYSICAL_IMAGE.has(id),
     );
+}
+
+/** Combined Template — Classic TVC (+ Luxury birth for physical). */
+export function buildStoryboardTemplateCards(
+  copy: IntakeTemplateCopy,
+  isConcept: boolean,
+): IntakeTemplateCard[] {
+  const ids = isConcept
+    ? STORYBOARD_RECIPE_IDS.filter((id) => id !== "luxury-birth")
+    : [...STORYBOARD_RECIPE_IDS];
+  return ids.map((id) => {
+    const label = copy.storyboardRecipes[id];
+    return {
+      id,
+      kind: "storyboard" as const,
+      storyboardRecipeId: id,
+      title: label?.title ?? id,
+      description: label?.desc ?? "",
+      previewSrc: storyboardRecipePreviewSrc(id),
+    };
+  });
 }
 
 /** Product video recipe cards — same set as PreVideoSetupPanel productStyleOptions. */
@@ -275,6 +308,9 @@ export function buildIntakeTemplateCards(input: {
     return isConcept
       ? buildConceptVideoTemplateCards(copy)
       : buildProductVideoTemplateCards(copy);
+  }
+  if (intakeShowsStoryboardRecipes(workflowMode)) {
+    return buildStoryboardTemplateCards(copy, isConcept);
   }
 
   const promotionMode = isConcept ? "concept" : "physical";

@@ -348,6 +348,10 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
               },
             });
           }}
+          onSelectStoryboardRecipe={(recipeId) => {
+            wizard.setStoryboardRecipeId(recipeId);
+            wizard.applyPrimaryPath("storyboard");
+          }}
         />
       );
 
@@ -407,6 +411,10 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
                 micro.patchContext({ videoSubpath: sub });
               },
             });
+          }}
+          onSelectStoryboardRecipe={(recipeId) => {
+            wizard.setStoryboardRecipeId(recipeId);
+            wizard.applyPrimaryPath("storyboard");
           }}
         />
       );

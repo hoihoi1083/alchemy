@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import {
   buildIntakeTemplateCards,
   intakeImageVisualStyleIds,
+  intakeShowsStoryboardRecipes,
   intakeShowsVideoRecipes,
   INTAKE_TEMPLATE_EXCLUDED_VISUAL_STYLES,
 } from "@/lib/intake-template-styles";
@@ -43,6 +44,10 @@ const copyStub = {
     "paper-layout": { title: "Paper", description: "Paper" },
     "storyboard-video": { title: "Storyboard", description: "SB" },
   },
+  storyboardRecipes: {
+    "classic-tvc": { title: "Classic TVC", desc: "Flexible scenes" },
+    "luxury-birth": { title: "Luxury birth", desc: "Product birth arc" },
+  },
 };
 
 describe("intake-template-styles", () => {
@@ -50,6 +55,9 @@ describe("intake-template-styles", () => {
     assert.equal(intakeShowsVideoRecipes("video-only"), true);
     assert.equal(intakeShowsVideoRecipes("combined"), false);
     assert.equal(intakeShowsVideoRecipes("image-only"), false);
+    assert.equal(intakeShowsStoryboardRecipes("combined"), true);
+    assert.equal(intakeShowsStoryboardRecipes("video-only"), false);
+    assert.equal(intakeShowsStoryboardRecipes("image-only"), false);
   });
 
   it("excludes paper/storyboard and product-only brand/UGC from image Template", () => {
@@ -80,17 +88,29 @@ describe("intake-template-styles", () => {
     assert.ok(!cards.some((c) => c.id === "storyboard-video"));
   });
 
-  it("builds combined/storyboard Template as look styles, not shot recipes", () => {
+  it("builds combined/storyboard Template as narrative recipes, not image looks", () => {
     const cards = buildIntakeTemplateCards({
       workflowMode: "combined",
       isConcept: false,
       copy: copyStub,
     });
-    assert.ok(cards.every((c) => c.kind === "visual"));
-    assert.ok(cards.some((c) => c.id === "product"));
+    assert.ok(cards.every((c) => c.kind === "storyboard"));
+    assert.ok(cards.some((c) => c.id === "classic-tvc"));
+    assert.ok(cards.some((c) => c.id === "luxury-birth"));
+    assert.ok(!cards.some((c) => c.id === "product"));
     assert.ok(!cards.some((c) => c.id === "product_promo"));
     assert.ok(!cards.some((c) => c.id === "blockbuster"));
-    assert.ok(!cards.some((c) => c.id === "ugc-presenter"));
+  });
+
+  it("hides luxury-birth from concept combined Template", () => {
+    const cards = buildIntakeTemplateCards({
+      workflowMode: "combined",
+      isConcept: true,
+      copy: copyStub,
+    });
+    assert.ok(cards.every((c) => c.kind === "storyboard"));
+    assert.ok(cards.some((c) => c.id === "classic-tvc"));
+    assert.ok(!cards.some((c) => c.id === "luxury-birth"));
   });
 
   it("builds image Template cards without paper/storyboard/UGC/brand", () => {
