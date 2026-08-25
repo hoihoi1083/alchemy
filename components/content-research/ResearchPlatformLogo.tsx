@@ -1,7 +1,7 @@
-import type { ContentResearchPlatform } from "@/lib/content-research-types";
+import type { ContentPlatform } from "@/lib/content-research-types";
 
 type Props = {
-  platform: ContentResearchPlatform;
+  platform: ContentPlatform;
   className?: string;
 };
 
