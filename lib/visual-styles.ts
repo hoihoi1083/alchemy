@@ -149,8 +149,15 @@ export type VisualStyleDef = {
 };
 
 function visualPreview(id: VisualStyleId): string {
-  // storyboard-video art refreshed to show multi-scene grid
-  const ver = id === "storyboard-video" ? "2" : "1";
+  // Cache-bust when swapping duplicate / refreshed art.
+  const ver =
+    id === "storyboard-video"
+      ? "2"
+      : id === "designed-poster"
+        ? "2"
+        : id === "info-poster"
+          ? "2"
+          : "1";
   return `/images/studio/visual-styles/${id}.png?v=${ver}`;
 }
 
@@ -180,7 +187,7 @@ export const VISUAL_STYLES: VisualStyleDef[] = [
     templateId: "shop-promo",
     usesCompositor: false,
     promptHint:
-      "Warm inviting local-shop promotional mood: cozy lighting, approachable retail atmosphere. Emphasize shop name and offer when provided.",
+      "Warm inviting local-shop promotional mood: cozy lighting, approachable retail atmosphere. Emphasize shop name and offer when provided. Keep the exact subject from IMAGE 1 — never invent a catalog product from the product name alone.",
   },
   {
     id: "model-wear",

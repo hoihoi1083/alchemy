@@ -4,6 +4,10 @@ import { useState } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 import { useWizard } from "@/components/studio/WizardContext";
 import {
+  conceptCopyFieldEmphasis,
+  resolveConceptCopyFocus,
+} from "@/lib/concept-copy-focus";
+import {
   buildIntakeTemplateCards,
   intakeShowsStoryboardRecipes,
   intakeShowsVideoRecipes,
@@ -187,6 +191,7 @@ export function IntakeTemplatePicker({
 
 const ON_CREATIVE_FIELD_CLASS =
   "block rounded-xl border border-violet-300 bg-violet-50/60 p-3 ring-1 ring-violet-200";
+const QUIET_FIELD_CLASS = "block";
 
 function OnCreativeBadge({ label }: { label: string }) {
   return (
@@ -201,6 +206,7 @@ export function ProductBriefAssistantPanel() {
   const { m } = useLocale();
   const wizard = useWizard();
   const fuse = m.microWizard.intakeFuse;
+  const pg = m.microWizard.preGenerateSetup;
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
 
@@ -208,7 +214,31 @@ export function ProductBriefAssistantPanel() {
     wizard.workflowMode === "video-only" || wizard.workflowMode === "combined";
   const onCreativeBadge = isVideoWorkflow
     ? m.microWizard.preVideoSetup.inVideoBadge
-    : m.microWizard.preGenerateSetup.onImageBadge;
+    : pg.onImageBadge;
+
+  // Same labels as Step 5 Content details for the selected template.
+  const copyFocus = resolveConceptCopyFocus(
+    wizard.visualStyleId,
+    pg.conceptCopyFocus,
+  );
+  const emphasis = conceptCopyFieldEmphasis(wizard.visualStyleId);
+  const hookLabel =
+    (copyFocus && "hookLabel" in copyFocus && copyFocus.hookLabel) ||
+    pg.hookLabel;
+  const supportingLabel = copyFocus?.supportingLabel ?? pg.supportingLabel;
+  const offerLabel =
+    (copyFocus && "offerLabel" in copyFocus && copyFocus.offerLabel) ||
+    pg.offerLabel;
+  const hookPlaceholder =
+    (copyFocus && "hookPlaceholder" in copyFocus && copyFocus.hookPlaceholder) ||
+    fuse.copyHookPlaceholder;
+  const supportingPlaceholder =
+    copyFocus?.supportingPlaceholder ?? fuse.copySublinePlaceholder;
+  const offerPlaceholder =
+    (copyFocus &&
+      "offerPlaceholder" in copyFocus &&
+      copyFocus.offerPlaceholder) ||
+    fuse.copyOfferPlaceholder;
 
   async function fillWithAi() {
     if (!wizard.product.trim()) {
@@ -268,6 +298,13 @@ export function ProductBriefAssistantPanel() {
           <p className="mt-0.5 text-[12px] text-slate-500">
             {fuse.productAssistHint}
           </p>
+          {copyFocus ? (
+            <p className="mt-1 text-[11px] leading-snug text-violet-800">
+              <span className="font-semibold">{copyFocus.title}</span>
+              {" — "}
+              {copyFocus.body}
+            </p>
+          ) : null}
         </div>
         <button
           type="button"
@@ -279,41 +316,49 @@ export function ProductBriefAssistantPanel() {
         </button>
       </div>
 
-      <label className={ON_CREATIVE_FIELD_CLASS}>
+      <label className={emphasis.hook ? ON_CREATIVE_FIELD_CLASS : QUIET_FIELD_CLASS}>
         <span className="mb-1 block text-[12px] font-semibold text-slate-700">
-          {fuse.copyHookLabel}
+          {hookLabel}
           <span className="text-violet-600"> *</span>
-          <OnCreativeBadge label={onCreativeBadge} />
+          {emphasis.hook ? <OnCreativeBadge label={onCreativeBadge} /> : null}
         </span>
         <input
           className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
           value={wizard.headline}
           onChange={(e) => wizard.setHeadline(e.target.value)}
-          placeholder={fuse.copyHookPlaceholder}
+          placeholder={hookPlaceholder}
         />
       </label>
-      <label className={ON_CREATIVE_FIELD_CLASS}>
+      <label
+        className={
+          emphasis.supporting ? ON_CREATIVE_FIELD_CLASS : QUIET_FIELD_CLASS
+        }
+      >
         <span className="mb-1 block text-[12px] font-semibold text-slate-700">
-          {fuse.copySublineLabel}
-          <OnCreativeBadge label={onCreativeBadge} />
+          {supportingLabel}
+          {emphasis.supporting ? (
+            <OnCreativeBadge label={onCreativeBadge} />
+          ) : null}
         </span>
         <input
           className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
           value={wizard.subline}
           onChange={(e) => wizard.setSubline(e.target.value)}
-          placeholder={fuse.copySublinePlaceholder}
+          placeholder={supportingPlaceholder}
         />
       </label>
-      <label className={ON_CREATIVE_FIELD_CLASS}>
+      <label
+        className={emphasis.offer ? ON_CREATIVE_FIELD_CLASS : QUIET_FIELD_CLASS}
+      >
         <span className="mb-1 block text-[12px] font-semibold text-slate-700">
-          {fuse.copyOfferLabel}
-          <OnCreativeBadge label={onCreativeBadge} />
+          {offerLabel}
+          {emphasis.offer ? <OnCreativeBadge label={onCreativeBadge} /> : null}
         </span>
         <input
           className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
           value={wizard.offer}
           onChange={(e) => wizard.setOffer(e.target.value)}
-          placeholder={fuse.copyOfferPlaceholder}
+          placeholder={offerPlaceholder}
         />
       </label>
       {note ? <p className="text-xs text-emerald-800">{note}</p> : null}

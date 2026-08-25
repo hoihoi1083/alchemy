@@ -215,7 +215,7 @@ function buildPlanPrompt(input: SingleImagePlanInput): string {
       ? "- Extra requirements may include a style reference — match palette/typography mood, invent a fresh layout."
       : "",
     input.hasProductPhoto
-      ? "- User attaches a product photo as IMAGE 1 — keep that exact product as hero, but redesign the environment around it (no seamless white leftover)."
+      ? "- User attaches IMAGE 1 — keep that EXACT subject as hero (person or product in the pixels). Product NAME is claim/copy only — never invent a different SKU (e.g. do not turn a person photo into a serum bottle because the name says 精華). Redesign the environment around IMAGE 1 (no seamless white leftover)."
       : "",
     "",
     `Visual style: ${input.visualStyleId}`,

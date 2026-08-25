@@ -5567,6 +5567,17 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			return null;
 		}
 
+		// Library reopen may only keep a preview URL — rebuild a File before fal upload.
+		let productPhotoForGen = productPhoto;
+		if (!productPhotoForGen && hasProductPhotoLock) {
+			productPhotoForGen = await resolveHydratedProductPhoto();
+			if (productPhotoForGen) setProductPhoto(productPhotoForGen);
+		}
+		if (needsProductUpload && !productPhotoForGen && !hasProductPhotoLock) {
+			setError(m.errors.needPhoto);
+			return null;
+		}
+
 		setImageJobMeta({
 			kind: "image",
 			startedAt: Date.now(),
@@ -5580,7 +5591,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		try {
 			if (
 				imageRefPhoto &&
-				productPhoto &&
+				productPhotoForGen &&
 				imageCreativeMode !== "reference-concept"
 			) {
         setVideoNote(m.wizard.imageRefAutoModeNote);
@@ -5611,7 +5622,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       fd.set("aspect_ratio", effectiveImageAspectRatio);
 			fd.set(
 				"endpoint",
-				referenceStrategy.sendPixelsToFal
+				referenceStrategy.sendPixelsToFal || Boolean(productPhotoForGen)
 					? EDIT_ENDPOINT
 					: TEXT_ENDPOINT,
 			);
@@ -5623,6 +5634,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				fd.set("image_text_mode", "textless");
 			}
 			attachReferenceToForm(fd);
+			if (productPhotoForGen && !fd.get("reference_image")) {
+				fd.set("reference_image", productPhotoForGen);
+			}
 
 			const res = await fetch("/api/generate-image", {
 				method: "POST",

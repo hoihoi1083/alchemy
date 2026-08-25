@@ -1896,14 +1896,14 @@ export const en = {
 					"Product photo → photorealistic lifestyle model ad (on wrist, demo use, etc.)",
       },
       "info-poster": {
-        title: "Premium info poster",
+        title: "Selling-points info graphic",
 				description:
-					"White-bg single-theme selling points — anti-generic-AI layout (IG technique)",
+					"Clean white layout with product + icon bullet list — not a big-type ad poster",
 			},
 			"designed-poster": {
-				title: "Designed poster",
+				title: "Commercial designed poster",
 				description:
-					"Commercial feed poster — your title + tagline on a styled product hero (any category, not food-only)",
+					"Feed ad poster — big title + tagline + seal on a styled hero (not a white info checklist)",
 			},
 			"parts-poster": {
 				title: "Parts breakdown",
@@ -3163,7 +3163,7 @@ export const en = {
 				desc: "Still air → settle + masthead",
 			},
 			"designed-poster": {
-				title: "Designed poster",
+				title: "Commercial designed poster",
 				desc: "Styled hero → your title + tagline on the poster",
 			},
 		},
@@ -4538,7 +4538,7 @@ export const en = {
       description: "Storefront, service or limited-time offer",
     },
     "info-poster": {
-      name: "Premium info poster",
+      name: "Selling-points info graphic",
 			description:
 				"White IG info graphic — single theme, tight copy, category visuals",
 		},
@@ -5488,16 +5488,16 @@ export const en = {
 			templateIntro:
 				"Template = the style you want. Video-only: shot recipes (Quick Ad, Blockbuster…). Storyboard (圖+片): Classic TVC or Luxury birth. Image-only: pick a look. Or use Direct with no preset.",
 			templateDirectTitle: "Direct (no template)",
-			templateDirectBody: "Blank layout — fill hook and supporting copy with the assistant.",
+			templateDirectBody: "Blank layout — fill big word / headline and support line with the assistant.",
 			templatePickHint: "Select a style template or Direct above, then fill your copy fields.",
 			templateSelectedNote: "Selected: {name}",
 			switchPathConfirm:
 				"Switching clears the other path — research pick or template choice, plus the copy fields on this step. Continue?",
 			researchSelectedBanner:
 				"Selected: {title} · {platform} · style will apply on Continue",
-			copyHookLabel: "Hook (headline)",
+			copyHookLabel: "Big word / headline",
 			copyHookPlaceholder: "Catchy main line for the ad",
-			copySublineLabel: "Supporting copy",
+			copySublineLabel: "Support line",
 			copySublinePlaceholder: "Benefits, proof, or secondary line",
 			copyOfferLabel: "Offer / CTA",
 			copyOfferPlaceholder: "Optional promo or call to action",
@@ -5514,7 +5514,7 @@ export const en = {
 			researchAdaptNeedProduct: "Add your product or concept name so we can remap the copy.",
 			productAssistTitle: "Product assistant",
 			productAssistHint:
-				"AI fills hook, supporting copy, and CTA from your product name. Highlighted fields print on the image or video.",
+				"AI fills big word / headline, support line, and CTA from your product name. Highlighted fields print on the image or video.",
 			productAssistCta: "AI fill",
 			productAssistBusy: "Writing…",
 			productAssistDone: "Draft filled — edit before Continue.",
@@ -5597,7 +5597,7 @@ export const en = {
 			stylePickerQuickLabel: "Direct creation",
 			stylePickerQuickDesc:
 				"Product-focused promo image — no model required.",
-			stylePickerDesignedLabel: "Designed poster",
+			stylePickerDesignedLabel: "Commercial designed poster",
 			stylePickerDesignedDesc:
 				"Commercial feed poster — your title + tagline on a styled product hero (any category, not food-only).",
 			stylePickerPartsLabel: "Parts breakdown",
@@ -5633,8 +5633,8 @@ export const en = {
 			briefTone: "Tone",
 			briefKeyMessage: "Key message",
 			contentTitle: "Content details",
-			hookLabel: "Main hook",
-			supportingLabel: "Supporting copy",
+			hookLabel: "Big word / headline",
+			supportingLabel: "Support line",
 			offerLabel: "Offer / CTA",
 			extraLabel: "Extra requirements",
 			extraOptional: "(optional)",
@@ -5655,7 +5655,7 @@ export const en = {
 				designed: {
 					title: "For this direction: fill on-poster type",
 					body: "Hook = the exact big title painted on the poster. Supporting = the exact tagline under it. We paint what you type — we won’t swap in the product name or invent extra slogans. Extra requirements = palette / set mood only.",
-					hookLabel: "Poster title (hook)",
+					hookLabel: "Poster title",
 					hookPlaceholder: "e.g. 便攜續航 · All-day power",
 					supportingLabel: "Poster tagline",
 					supportingPlaceholder:
@@ -5664,7 +5664,7 @@ export const en = {
 				parts: {
 					title: "For this direction: fill title + part callouts",
 					body: "Hook = poster title. Supporting copy = one short part description per line — they become labeled callouts on the exploded diagram. Extra requirements = lighting, part count, background mood.",
-					hookLabel: "Poster title (hook)",
+					hookLabel: "Poster title",
 					hookPlaceholder: "e.g. 內在結構 · Inside the build",
 					supportingLabel: "Part callouts (one per line)",
 					supportingPlaceholder:
@@ -5673,7 +5673,7 @@ export const en = {
 				"gaming-cover": {
 					title: "For gaming cover: fill the cover title",
 					body: "Hook becomes the large in-world cover title. Upload is the hero / SKU identity lock. Supporting = HUD taglines. Extra = set / lighting only.",
-					hookLabel: "Cover title (hook)",
+					hookLabel: "Cover title",
 					hookPlaceholder: "e.g. CHALLENGE · 決戰",
 					supportingLabel: "HUD / support lines",
 					supportingPlaceholder: "Short gaming taglines (optional)",
@@ -5726,7 +5726,7 @@ export const en = {
 			mainPhotoRowLabel: "Main product photo",
 			mainPhotoRequired: "Required",
 			mainPhotoHint:
-				"Clear front-facing product shot — this drives product identity in the output.",
+				"Clear front-facing product shot — this drives product identity in the output. For a person lifestyle photo, prefer Model wear / use.",
 			anglePhotoRowLabel: "Other angles",
 			anglePhotoOptional: "Optional",
 			anglePhotoHint:
@@ -5829,8 +5829,8 @@ export const en = {
 			referenceVideoHintConcept:
 				"Optional — we follow motion/edit feel, not a frame copy. Concept reels can skip a product photo.",
 			contentTitle: "Content details",
-			hookLabel: "Main hook",
-			supportingLabel: "Supporting copy",
+			hookLabel: "Big word / headline",
+			supportingLabel: "Support line",
 			extraLabel: "Extra motion notes",
 			extraOptional: "(optional)",
 			onImageBadge: "Shows on end frame",
@@ -5841,7 +5841,7 @@ export const en = {
 			motionPosterCopyFocus: {
 				title: "For motion poster: fill the end-frame title",
 				body: "Start still is textless. End still paints your hook as a large masthead (plus optional supporting line). Product photo is required — it is the hero. Extra notes = lighting / set only, not the title.",
-				hookLabel: "End-frame title (hook)",
+				hookLabel: "End-frame title",
 				hookPlaceholder: "e.g. 便攜續航 · All-day power",
 				supportingLabel: "End-frame support line",
 				supportingPlaceholder: "Short line under the masthead (optional)",

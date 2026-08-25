@@ -28,14 +28,15 @@ import type { WorkflowMode } from "@/lib/workflow-mode";
 export const INTAKE_TEMPLATE_EXCLUDED_VISUAL_STYLES = new Set<VisualStyleId>([
   "paper-layout",
   "storyboard-video",
+  /** Video talking-head path — never an image Template look. */
+  "ugc-presenter",
 ]);
 
 /**
- * Product (physical) image Template — hide video/brand paths that belong
- * elsewhere (UGC = video; brand-fit / brand-campaign = brand-analysis flows).
+ * Product (physical) image Template — hide brand paths that belong
+ * elsewhere (brand-fit / brand-campaign = brand-analysis flows).
  */
 export const INTAKE_TEMPLATE_EXCLUDED_PHYSICAL_IMAGE = new Set<VisualStyleId>([
-  "ugc-presenter",
   "brand-fit",
   "brand-campaign",
 ]);

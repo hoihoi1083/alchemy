@@ -287,15 +287,16 @@ function brandPromptExtras(
 function imageReferenceAnchorBlock(vars: PromptVariables): string {
 	const label = vars.product?.trim() || "the uploaded product";
 	return joinParts(
-		"CRITICAL — IMAGE 1 PIXELS ARE THE PRODUCT",
-		`IMAGE 1 is the uploaded photo. The object IN THE PIXELS is the hero — not a stock item inferred from the name "${label}".`,
-		`"${label}" is a marketing CLAIM / caption only. Whatever category the name implies, keep the object that is actually in IMAGE 1 pixels. Never invent a substitute SKU.`,
-		"The output MUST clearly show the same item as IMAGE 1 (shape, materials, color, packaging).",
-		"Do NOT replace IMAGE 1 with an unrelated stock scene or a different product category.",
+		"CRITICAL — IMAGE 1 PIXELS ARE THE PRODUCT / HERO",
+		`IMAGE 1 is the uploaded photo. Whatever is visibly IN THE PIXELS is the hero — not a stock item invented from the name "${label}".`,
+		`"${label}" is a marketing CLAIM / caption only. If the name sounds like skincare, electronics, food, etc., IGNORE that category guess when IMAGE 1 shows something else.`,
+		"The output MUST clearly show the same subject as IMAGE 1 (same person, same packaging, same shape, materials, color).",
+		"Do NOT replace IMAGE 1 with an unrelated stock scene or a different product category (e.g. do NOT invent a serum bottle, gadget, or food prop that is not in IMAGE 1).",
+		"If IMAGE 1 shows a person / lifestyle scene: keep that person (or the visible product they hold) as the hero. Restage them into the campaign setting — do not swap in a catalog product cutout.",
 		"If IMAGE 1 is a graphic, poster, or app/UI screenshot: keep the same visual content and layout as the hero — polish lighting and integrate campaign copy; do not swap in unrelated products.",
 		"If IMAGE 1 is a physical product photo: preserve the exact item — colors, materials, shape, packaging, label details.",
 		"You MUST redesign the SETTING around IMAGE 1 — build surfaces, props, soft shadows, depth of field, and atmosphere. Do NOT keep a blank seamless white/cream studio backdrop from the upload.",
-		"Never change the product identity from IMAGE 1 — only the environment, lighting, and typography around it.",
+		"Never change the product / subject identity from IMAGE 1 — only the environment, lighting, and typography around it.",
 	);
 }
 
@@ -1904,14 +1905,28 @@ export function buildPromoImagePrompt(
 			: referenceImageMode === "style-only"
 				? "Replace ALL on-image text with the campaign copy below — never copy text, logos, or SKUs from IMAGE 1."
 				: "Text-to-image: invent a fitting hero subject and set from the campaign brief — no uploaded IMAGE 1.";
+	const heroLead =
+		referenceImageMode === "clone"
+			? illustrated
+				? `Restage IMAGE 1 as an ILLUSTRATED social ad — keep the exact subject from IMAGE 1; campaign name "${product}" is caption only.`
+				: `Restage IMAGE 1 into a finished vertical social advertisement — IMAGE 1 pixels are the hero; campaign name "${product}" is caption / claim only (never invent a different SKU).`
+			: illustrated
+				? `Create a brand-new vertical social media ILLUSTRATION/ad for ${product} — art medium only.`
+				: `Create a brand-new vertical social media advertisement for ${product}.`;
+	const textlessLead =
+		referenceImageMode === "clone"
+			? illustrated
+				? `Restage IMAGE 1 as an ILLUSTRATION scene — keep IMAGE 1 subject; no readable text.`
+				: `Restage IMAGE 1 into a vertical product/lifestyle scene — keep IMAGE 1 subject; campaign name "${product}" is mood only.`
+			: illustrated
+				? `Create a brand-new vertical social media ILLUSTRATION scene for ${product} — art medium only, no readable text.`
+				: `Create a brand-new vertical social media product scene for ${product}.`;
 	if (vars.imageTextMode === "textless") {
 		return joinParts(
 			artStyleMandatoryLead(vars.artStyle),
 			composition.blocks?.camera ?? "",
 			refBlock,
-			illustrated
-				? `Create a brand-new vertical social media ILLUSTRATION scene for ${product} — art medium only, no readable text.`
-				: `Create a brand-new vertical social media product scene for ${product}.`,
+			textlessLead,
 			brandPromptExtras(brandProfile, brandKit),
 			vars.business ? `Brand / shop: ${vars.business}.` : "",
 			theme
@@ -1937,9 +1952,7 @@ export function buildPromoImagePrompt(
 		composition.blocks?.camera ?? "",
 		refBlock,
 		plan ? singlePlanBlock(plan) : "",
-		illustrated
-			? `Create a brand-new vertical social media ILLUSTRATION/ad for ${product} — entire composition in the chosen art medium.`
-			: `Create a brand-new vertical social media advertisement for ${product}.`,
+		heroLead,
 		brandPromptExtras(brandProfile, brandKit),
 		vars.business ? `Brand / shop: ${vars.business}.` : "",
 		!plan && theme ? `Campaign message: ${theme}.` : "",
@@ -1951,7 +1964,9 @@ export function buildPromoImagePrompt(
 				: promoArtDirectionHint(vars),
 		illustrated
 			? `Design a complete illustrated social ad: stylized hero scene, props, color palette, AND marketing typography rendered in the same art medium.`
-			: `Design a complete social ad: product hero, intentional scene, lighting, props, color grade, AND integrated marketing typography.`,
+			: referenceImageMode === "clone"
+				? `Design a complete social ad around the IMAGE 1 subject: intentional scene, lighting, props, color grade, AND integrated marketing typography — do not invent a catalog product that is not in IMAGE 1.`
+				: `Design a complete social ad: product hero, intentional scene, lighting, props, color grade, AND integrated marketing typography.`,
 		artStyleImageClause(vars.artStyle),
 		promoTypographyHint(
 			plan

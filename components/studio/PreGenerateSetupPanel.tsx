@@ -11,6 +11,10 @@ import {
   type ArtStyleId,
 } from "@/lib/art-style";
 import { copyFieldsFromAngle } from "@/lib/content-research-promote";
+import {
+  conceptCopyFocusKeyForStyle,
+  resolveConceptCopyFocus,
+} from "@/lib/concept-copy-focus";
 import { IMAGE_ASPECT_RATIOS, type ImageAspectRatio } from "@/lib/image-aspect-ratio";
 import { imageOutputPreviewSrc, type ImageOutputMode } from "@/lib/image-output-mode";
 import { imageTextPreviewSrc, type ImageTextMode } from "@/lib/image-text-mode";
@@ -104,6 +108,61 @@ const PANEL_CSS = `
   height: 100%;
   object-fit: cover;
   display: block;
+}
+/* Step 4 intake summary — keep thumb tiny so copy never collapses to 1-char columns */
+.pg-intake-summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  max-width: 42rem;
+  margin-top: 0.75rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.75rem;
+  border: 1px solid #ddd6fe;
+  background: rgba(245, 243, 255, 0.85);
+  color: #2e1065;
+  font-size: 0.875rem;
+}
+.pg-intake-thumb {
+  flex: 0 0 3.25rem;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(196, 181, 253, 0.8);
+  background: #fff;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+.pg-intake-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.pg-intake-summary-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.pg-intake-summary-body ul {
+  margin: 0.35rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  color: rgba(76, 29, 149, 0.9);
+}
+@media (max-width: 479px) {
+  .pg-intake-summary {
+    flex-direction: column;
+  }
+  .pg-intake-thumb {
+    flex-basis: 3.25rem;
+  }
 }
 .pg-brief-summary {
   min-width: 0;
@@ -876,20 +935,7 @@ export function PreGenerateSetupPanel({
   const hasReference = Boolean(wizard.imageRefPhoto);
   /** Reference layout transfer overrides model-wear staging — lock to product path. */
   const modelWearLockedByReference = effectiveShowStylePicker && !isConcept && hasReference;
-  const conceptPath =
-    wizard.visualStyleId === "info-poster"
-      ? "info"
-      : wizard.visualStyleId === "brand-fit"
-        ? "brand"
-        : wizard.visualStyleId === "pricing-offer"
-          ? "pricing"
-          : wizard.visualStyleId === "website-launch"
-            ? "website"
-            : wizard.visualStyleId === "designed-poster"
-              ? "designed"
-              : wizard.visualStyleId === "jelly-3d"
-                ? "jelly-3d"
-                : null;
+  const conceptPath = conceptCopyFocusKeyForStyle(wizard.visualStyleId);
   const showConceptShopFields =
     isConcept &&
     (wizard.visualStyleId === "pricing-offer" ||
@@ -903,22 +949,10 @@ export function PreGenerateSetupPanel({
     isGamingCover ||
     isSportsBigWords ||
     isJelly3d;
-  const copyFocus = isPartsDirection
-    ? pg.conceptCopyFocus.parts
-    : isDesignedDirection
-      ? pg.conceptCopyFocus.designed
-      : isGamingCover
-        ? pg.conceptCopyFocus["gaming-cover"]
-        : isSportsBigWords
-          ? pg.conceptCopyFocus["sports-big-words"]
-          : isJelly3d
-            ? pg.conceptCopyFocus["jelly-3d"]
-            : conceptPath === "info" ||
-                conceptPath === "brand" ||
-                conceptPath === "pricing" ||
-                conceptPath === "website"
-              ? pg.conceptCopyFocus[conceptPath]
-              : null;
+  const copyFocus = resolveConceptCopyFocus(
+    wizard.visualStyleId,
+    pg.conceptCopyFocus,
+  );
   const supportingLabel = copyFocus?.supportingLabel ?? pg.supportingLabel;
   const supportingPlaceholder =
     copyFocus?.supportingPlaceholder ??
@@ -1238,18 +1272,16 @@ export function PreGenerateSetupPanel({
         <p className="mt-1.5 max-w-2xl text-sm text-slate-500">{setupHint}</p>
 
         {intakePath ? (
-          <div className="mt-3 flex max-w-2xl gap-3 rounded-xl border border-violet-200 bg-violet-50/80 px-3.5 py-3 text-sm text-violet-950">
+          <div className="pg-intake-summary">
             {intakePreviewSrc ? (
-              // eslint-disable-next-line @next/next/no-img-element -- small summary thumb
-              <img
-                src={intakePreviewSrc}
-                alt=""
-                className="h-[4.5rem] w-[4.5rem] shrink-0 rounded-lg border border-violet-200/80 bg-white object-cover shadow-sm"
-              />
+              <div className="pg-intake-thumb" aria-hidden>
+                {/* eslint-disable-next-line @next/next/no-img-element -- small summary thumb */}
+                <img src={intakePreviewSrc} alt="" />
+              </div>
             ) : null}
-            <div className="min-w-0 flex-1">
-              <p className="font-semibold">{pg.fromIntakeTitle}</p>
-              <ul className="mt-1.5 space-y-1 text-[13px] leading-snug text-violet-900/90">
+            <div className="pg-intake-summary-body">
+              <p className="font-semibold text-violet-950">{pg.fromIntakeTitle}</p>
+              <ul>
                 <li>
                   {intakePath === "research"
                     ? pg.fromIntakePathResearch

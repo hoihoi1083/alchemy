@@ -60,7 +60,7 @@ describe("intake-template-styles", () => {
     assert.equal(intakeShowsStoryboardRecipes("image-only"), false);
   });
 
-  it("excludes paper/storyboard and product-only brand/UGC from image Template", () => {
+  it("excludes paper/storyboard/UGC and product-only brand from image Template", () => {
     const ids = intakeImageVisualStyleIds("image-only", "physical");
     assert.ok(!ids.includes("paper-layout"));
     assert.ok(!ids.includes("storyboard-video"));
@@ -72,6 +72,12 @@ describe("intake-template-styles", () => {
     assert.ok(ids.includes("designed-poster"));
     assert.ok(INTAKE_TEMPLATE_EXCLUDED_VISUAL_STYLES.has("paper-layout"));
     assert.ok(INTAKE_TEMPLATE_EXCLUDED_VISUAL_STYLES.has("storyboard-video"));
+    assert.ok(INTAKE_TEMPLATE_EXCLUDED_VISUAL_STYLES.has("ugc-presenter"));
+  });
+
+  it("hides UGC from concept image Template too", () => {
+    const ids = intakeImageVisualStyleIds("image-only", "concept");
+    assert.ok(!ids.includes("ugc-presenter"));
   });
 
   it("builds product video Template cards with Quick Ad first", () => {

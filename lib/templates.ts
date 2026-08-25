@@ -138,7 +138,7 @@ export const TEMPLATES: MarketingTemplate[] = [
   },
   {
     id: "info-poster",
-    name: "Premium info poster",
+    name: "Selling-points info graphic",
     description:
       "White-background IG info graphic — single theme, simplified copy, category visuals (anti-generic-AI layout).",
     icon: "📋",
@@ -161,7 +161,7 @@ export const TEMPLATES: MarketingTemplate[] = [
   },
   {
     id: "designed-poster",
-    name: "Designed commercial poster",
+    name: "Commercial designed poster",
     description:
       "Commercial feed poster — bilingual type, circular seal, brush category matched to product (any category).",
     icon: "🪧",
