@@ -2,7 +2,9 @@ import type { ContentPlatform, ContentResearchPost } from "@/lib/content-researc
 import {
   asRecord,
   fetchJustOneApi,
+  flattenSearchItems,
   hasJustOneApiConfigured,
+  pickString,
 } from "@/lib/justoneapi-client";
 import { finalizeXhsPost, xhsCoverUrlLooksFetchable } from "@/lib/research-cover-url";
 import {
@@ -14,6 +16,7 @@ import {
   detectPlatformFromPostUrl,
   directPostUrlSupported,
   extractPostRefFromUrl,
+  facebookPostRefFromUrl,
   normalizePostUrlInput,
   resolvePostUrl,
   xhsShareHintsFromUrl,
@@ -77,11 +80,11 @@ async function fetchXhsPostByNoteId(noteId: string, canonicalUrl: string): Promi
 
   if (lastEmpty) {
     throw new Error(
-      "小紅書 API returned empty note data (COLLECT FAILED or link expired). Wait a moment and try again, or copy the full xiaohongshu.com/explore/… link from the app.",
+      "RedNote API returned empty note data (COLLECT FAILED or link expired). Wait a moment and try again, or copy the full xiaohongshu.com/explore/… link from the app.",
     );
   }
 
-  throw new Error("Could not parse this Xiaohongshu note. Try the full xiaohongshu.com link.");
+  throw new Error("Could not parse this RedNote note. Try the full xiaohongshu.com link.");
 }
 
 async function fetchInstagramPostByCode(code: string, canonicalUrl: string): Promise<ContentResearchPost> {
@@ -103,6 +106,122 @@ async function fetchInstagramPostByCode(code: string, canonicalUrl: string): Pro
   return { ...post, url: post.url || canonicalUrl, platform: "instagram" };
 }
 
+function facebookIdsEqual(a: string, b: string): boolean {
+  return a.trim().toLowerCase() === b.trim().toLowerCase();
+}
+
+function facebookPostMatchesRef(
+  post: ContentResearchPost,
+  opts: { postId?: string; canonicalUrl: string },
+): boolean {
+  if (opts.postId) {
+    if (facebookIdsEqual(post.id, opts.postId)) return true;
+    if (post.url.toLowerCase().includes(opts.postId.toLowerCase())) return true;
+  }
+  const a = post.url.replace(/\/$/, "").split("?")[0].toLowerCase();
+  const b = opts.canonicalUrl.replace(/\/$/, "").split("?")[0].toLowerCase();
+  return Boolean(a && b && a === b);
+}
+
+function extractFacebookProfileId(body: Record<string, unknown>): string | null {
+  const data = asRecord(body.data) ?? body;
+  return (
+    pickString(
+      data.profileId,
+      data.profile_id,
+      data.id,
+      asRecord(data.profile)?.id,
+      asRecord(data.user)?.id,
+    ) || null
+  );
+}
+
+function extractFacebookCursor(body: Record<string, unknown>): string {
+  const data = asRecord(body.data) ?? body;
+  return pickString(
+    data.cursor,
+    data.next_cursor,
+    data.nextCursor,
+    asRecord(data.paging)?.cursors
+      ? pickString(
+          asRecord(asRecord(data.paging)?.cursors)?.after,
+          asRecord(data.paging)?.next,
+        )
+      : "",
+    asRecord(data.paging)?.next,
+  );
+}
+
+async function resolveFacebookProfileId(opts: {
+  profileId?: string;
+  profilePath?: string;
+}): Promise<string | null> {
+  if (opts.profileId) return opts.profileId;
+  if (!opts.profilePath) return null;
+  const body = await fetchJustOneApi(
+    "/api/facebook/get-profile-id/v1",
+    { url: opts.profilePath },
+    "Facebook profile id by URL",
+  );
+  return extractFacebookProfileId(asRecord(body) ?? {});
+}
+
+/**
+ * Just One has no Facebook get-post-by-url. Resolve profile id, then scan
+ * get-profile-posts pages for a matching post id / permalink.
+ */
+async function fetchFacebookPostByUrl(canonicalUrl: string): Promise<ContentResearchPost> {
+  const ref = facebookPostRefFromUrl(canonicalUrl);
+  const profileId = await resolveFacebookProfileId({
+    profileId: ref.profileId,
+    profilePath: ref.profilePath,
+  });
+
+  if (!profileId) {
+    throw new Error(
+      "Could not read this Facebook link. Paste a public post URL that includes the page id, e.g. facebook.com/{pageId}/posts/… or /videos/… (share/p short links often omit the page).",
+    );
+  }
+
+  let cursor = "";
+  let fallback: ContentResearchPost | null = null;
+
+  for (let page = 0; page < 4; page++) {
+    const params: Record<string, string> = { profileId };
+    if (cursor) params.cursor = cursor;
+    const body = await fetchJustOneApi(
+      "/api/facebook/get-profile-posts/v1",
+      params,
+      "Facebook profile posts by URL",
+    );
+    const items = flattenSearchItems(body);
+    for (let i = 0; i < items.length; i++) {
+      const mapped = mapRawPlatformPost("facebook", items[i], i);
+      if (!mapped) continue;
+      const normalized = {
+        ...mapped,
+        url: mapped.url || canonicalUrl,
+        platform: "facebook" as const,
+      };
+      if (!fallback && (normalized.coverImageUrl || normalized.title)) {
+        fallback = normalized;
+      }
+      if (facebookPostMatchesRef(normalized, { postId: ref.postId, canonicalUrl })) {
+        return normalized;
+      }
+    }
+    cursor = extractFacebookCursor(asRecord(body) ?? {});
+    if (!cursor || items.length < 1) break;
+  }
+
+  // Profile root URL with no specific post — return the top public post.
+  if (!ref.postId && fallback) return fallback;
+
+  throw new Error(
+    "Could not find this Facebook post on the public page feed. Confirm the post is public, or use keyword search.",
+  );
+}
+
 export async function fetchResearchPostByUrl(
   rawUrl: string,
   opts?: {
@@ -122,13 +241,11 @@ export async function fetchResearchPostByUrl(
   const resolved = await resolvePostUrl(normalized);
   const platform = opts?.platform ?? detectPlatformFromPostUrl(resolved);
   if (!platform) {
-    throw new Error("Unrecognized post link — use 小紅書, Instagram, TikTok, or Facebook URLs.");
+    throw new Error("Unrecognized post link — use RedNote, Instagram, TikTok, or Facebook URLs.");
   }
   if (!directPostUrlSupported(platform)) {
     throw new Error(
-      platform === "tiktok"
-        ? "TikTok direct links are not supported yet — use keyword search, or paste the video file in Studio."
-        : "Facebook direct links are not supported yet — use keyword search for Facebook.",
+      "TikTok direct links are not supported yet — use keyword search, or paste the video file in Studio.",
     );
   }
 
@@ -138,10 +255,12 @@ export async function fetchResearchPostByUrl(
   if (platform === "xiaohongshu") {
     if (!ref.noteId) {
       throw new Error(
-        "Could not read this 小紅書 link. Open the post in the app → Share → Copy link, and paste the full xiaohongshu.com link (xhslink sometimes only opens the homepage).",
+        "Could not read this RedNote link. Open the post in the app → Share → Copy link, and paste the full xiaohongshu.com link (xhslink sometimes only opens the homepage).",
       );
     }
     post = await fetchXhsPostByNoteId(ref.noteId, resolved);
+  } else if (platform === "facebook") {
+    post = await fetchFacebookPostByUrl(resolved);
   } else {
     if (!ref.igCode) {
       throw new Error("Could not read this Instagram link. Use a /p/ or /reel/ URL.");

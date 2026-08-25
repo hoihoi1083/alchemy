@@ -36,7 +36,7 @@ import {
 } from "@/lib/content-research-types";
 
 const PLATFORM_LABELS: Record<ContentPlatform, string> = {
-  xiaohongshu: "小紅書 (Xiaohongshu)",
+  xiaohongshu: "RedNote",
   instagram: "Instagram",
   tiktok: "TikTok",
   facebook: "Facebook",
@@ -46,7 +46,7 @@ function platformPlaybook(platform: ContentPlatform): string {
   switch (platform) {
     case "xiaohongshu":
       return [
-        "小紅書: soft lifestyle product shots, low-saturation edu carousels, save-worthy tips, search-friendly keywords.",
+        "RedNote: soft lifestyle product shots, low-saturation edu carousels, save-worthy tips, search-friendly keywords.",
         "Hooks often promise a gift guide, styling hack, or「避雷」checklist. CTA: 收藏這篇.",
         "Preferred formats: teaching-carousel, single-image lifestyle, campaign series.",
       ].join(" ");
@@ -63,7 +63,10 @@ function platformPlaybook(platform: ContentPlatform): string {
     case "facebook":
       return [
         "Facebook: clear benefit headline, trust/proof, slightly longer copy OK, offer-friendly CTAs.",
-        "Mix of single promo image and 3-slide campaign.",
+        "Hooks: problem→solution, social proof (reviews/ratings), before/after, limited-time offer.",
+        "Formats: single promo image, short Reel/video testimonial, 3-slide campaign carousel.",
+        "Trust signals matter — mention reviews, certifications, or local credibility when relevant.",
+        "Facebook Reels compete with short-form video: keep hooks in the first 2 seconds when format is reel.",
       ].join(" ");
   }
 }
@@ -214,7 +217,7 @@ function ensureMinLiveAngles(plan: ContentResearchPlan): ContentResearchPlan {
   if (topPicks.length < RESEARCH_ANGLES_PER_PAGE) {
     throw new Error(
       plan.mediaFilter === "video"
-        ? "小紅書有影片結果，但湊唔夠 3 個可用角度。試較闊關鍵字，或直接用貼文連結搜尋。"
+        ? "RedNote 有影片結果，但湊唔夠 3 個可用角度。試較闊關鍵字，或直接用貼文連結搜尋。"
         : "Could not extract enough content angles from web results. Try a different keyword.",
     );
   }

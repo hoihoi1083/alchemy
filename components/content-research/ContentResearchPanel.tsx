@@ -11,11 +11,11 @@ import {
 import type { ResearchRefAttachResult } from "@/lib/content-research-apply-refs";
 import { enrichAngleVideoFromPlan } from "@/lib/content-research-angle-video";
 import {
-  CONTENT_PLATFORMS,
   type ContentAngleCandidate,
   type ContentPlatform,
   type ContentResearchPlan,
 } from "@/lib/content-research-types";
+import { researchUiPlatforms } from "@/lib/wizard-intake-contract";
 import { ResearchAngleCards } from "@/components/content-research/ResearchAngleCards";
 import { ResearchPlatformLogo } from "@/components/content-research/ResearchPlatformLogo";
 import { displayResearchAngles } from "@/lib/content-research-enrich";
@@ -104,6 +104,7 @@ export function ContentResearchPanel({
   const [applyingAngleId, setApplyingAngleId] = useState<string | null>(null);
   const [selectedAngleId, setSelectedAngleId] = useState<string | null>(null);
   const mediaFilter = mediaFilterFromWorkflowMode(workflowMode);
+  const researchPlatforms = researchUiPlatforms(workflowMode);
   const platformMismatch = platformMediaMismatch(platform, mediaFilter);
   const searchHint = contentResearchSearchHint(platform, topic, mediaFilter, {
     xhsKeyword: cr.platformSearchHintXhs,
@@ -114,6 +115,12 @@ export function ContentResearchPanel({
     facebookKeyword: cr.platformSearchHintFacebook,
     tiktokVideo: cr.platformSearchHintTiktok,
   });
+
+  useEffect(() => {
+    if (!(researchPlatforms as readonly string[]).includes(platform)) {
+      setPlatform("xiaohongshu");
+    }
+  }, [platform, researchPlatforms]);
 
   useEffect(() => {
     setPromotionMode(initialPromotionMode);
@@ -411,9 +418,11 @@ export function ContentResearchPanel({
             <p className="mt-0.5 text-[12px] leading-relaxed text-slate-500">{cr.platformsHint}</p>
           ) : null}
         </div>
-        <div className={violet ? "grid grid-cols-2 gap-2.5" : "flex flex-wrap gap-2"}>
-          {CONTENT_PLATFORMS.map((p) => {
+        <div className={violet ? "grid grid-cols-2 gap-2.5 sm:grid-cols-3" : "flex flex-wrap gap-2"}>
+          {researchPlatforms.map((p) => {
             const on = platform === p;
+            const preferred = p === "xiaohongshu" || p === "instagram";
+            const secondary = p === "facebook";
             if (violet) {
               return (
                 <button
@@ -421,19 +430,32 @@ export function ContentResearchPanel({
                   type="button"
                   onClick={() => setPlatform(p)}
                   aria-pressed={on}
-                  className={`flex min-h-[3.25rem] min-w-0 items-center gap-2.5 rounded-xl border px-3.5 py-3 text-left transition ${
+                  className={`relative flex min-h-[3.25rem] min-w-0 items-center gap-2.5 rounded-xl border px-3.5 py-3 text-left transition ${
                     on
                       ? "border-violet-600 bg-violet-50 shadow-[0_0_0_1px_rgba(108,59,255,0.12)]"
-                      : "border-slate-200/90 bg-white hover:border-slate-300"
+                      : preferred
+                        ? "border-violet-200/90 bg-white hover:border-violet-300"
+                        : "border-slate-200/90 bg-white hover:border-slate-300"
                   }`}
                 >
                   <ResearchPlatformLogo platform={p} className="h-7 w-7 shrink-0" />
-                  <span
-                    className={`min-w-0 flex-1 truncate text-[13px] font-semibold leading-snug ${
-                      on ? "text-violet-700" : "text-slate-800"
-                    }`}
-                  >
-                    {cr.platforms[p]}
+                  <span className="min-w-0 flex-1">
+                    <span
+                      className={`block truncate text-[13px] font-semibold leading-snug ${
+                        on ? "text-violet-700" : "text-slate-800"
+                      }`}
+                    >
+                      {cr.platforms[p]}
+                    </span>
+                    {preferred ? (
+                      <span className="mt-0.5 block text-[10px] font-semibold uppercase tracking-wide text-violet-600">
+                        {cr.platformPreferredBadge}
+                      </span>
+                    ) : secondary ? (
+                      <span className="mt-0.5 block text-[10px] font-medium text-slate-500">
+                        {cr.platformSecondaryBadge}
+                      </span>
+                    ) : null}
                   </span>
                   <span
                     className={`flex h-5 w-5 shrink-0 items-center justify-center border ${
@@ -465,6 +487,15 @@ export function ContentResearchPanel({
               >
                 <ResearchPlatformLogo platform={p} className="h-4 w-4" />
                 {cr.platforms[p]}
+                {preferred ? (
+                  <span
+                    className={`rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide ${
+                      on ? "bg-white/20 text-white" : "bg-violet-100 text-violet-700"
+                    }`}
+                  >
+                    {cr.platformPreferredBadge}
+                  </span>
+                ) : null}
               </button>
             );
           })}
@@ -606,6 +637,25 @@ export function ContentResearchPanel({
                         {cr.researchHiddenNoCover.replace("{count}", String(hiddenWithoutCover))}
                       </p>
                     )}
+                    {angles.length === 0 ? (
+                      <div className="rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-3 text-[13px] text-amber-950">
+                        <p className="font-semibold">
+                          {cr.noResultsTitle.replace("{platform}", platformName)}
+                        </p>
+                        <p className="mt-1 leading-snug text-amber-900/90">
+                          {cr.noResultsBody}
+                        </p>
+                        <p className="mt-1.5 text-[12px] leading-snug text-amber-800">
+                          {plan.platform === "instagram"
+                            ? cr.noResultsHintIg
+                            : plan.platform === "facebook"
+                              ? cr.noResultsHintFb
+                              : plan.platform === "tiktok"
+                                ? cr.noResultsHintTiktok
+                                : cr.noResultsHintXhs}
+                        </p>
+                      </div>
+                    ) : (
                     <ResearchAngleCards
                       key={`${plan.topic}-${plan.platform}`}
                       angles={angles}
@@ -650,6 +700,7 @@ export function ContentResearchPanel({
                         selectedContinueHint: cr.selectedContinueHint,
                       }}
                     />
+                    )}
                   </>
                 );
               })()}

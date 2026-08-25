@@ -40,7 +40,7 @@ describe("research enrich + display angles", () => {
     });
     const plan: ContentResearchPlan = {
       platform: "xiaohongshu",
-      platformLabel: "小紅書",
+      platformLabel: "RedNote",
       topic: "水晶手串",
       summary: "",
       researchMode: "live-web",

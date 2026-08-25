@@ -44,11 +44,9 @@ export function clearConceptResearchState(wizard: ConceptSourceWizardApi): void 
   wizard.setPromptExtra((prev) => stripContentResearchStyleExtra(prev));
 }
 
-/** User chose 平台研究 — drop concept-assistant copy extras; keep conceptIdea as topic anchor. */
+/** User chose 平台研究 — drop concept-assistant prompt extras; keep remapped copy. */
 export function clearConceptAssistantState(wizard: ConceptSourceWizardApi): void {
   wizard.setPromptExtra((prev) => stripConceptAssistantPromptExtra(stripContentResearchStyleExtra(prev)));
   wizard.setCreativeVideoBrief("");
-  wizard.setHeadline("");
-  wizard.setSubline("");
-  wizard.setOffer("");
+  // Do not clear headline/subline/offer — research adapt fills those on Step 3.
 }

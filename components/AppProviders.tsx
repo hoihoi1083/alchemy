@@ -17,6 +17,8 @@ function ClerkWithLocale({ children }: { children: ReactNode }) {
     <ClerkProvider
       appearance={clerkAppearance}
       localization={clerkLocalizationFor(locale)}
+      signInUrl="/sign-in"
+      signUpUrl="/sign-up"
       key={locale}
     >
       <SyncUserOnAuth />

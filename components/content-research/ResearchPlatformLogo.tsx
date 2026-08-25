@@ -21,11 +21,11 @@ export function ResearchPlatformLogo({ platform, className = "h-6 w-6" }: Props)
           y="20"
           textAnchor="middle"
           fill="#fff"
-          fontSize="8"
+          fontSize="9"
           fontWeight="800"
-          fontFamily="PingFang SC, Hiragino Sans GB, Microsoft YaHei, Noto Sans SC, system-ui, sans-serif"
+          fontFamily="system-ui, -apple-system, Segoe UI, sans-serif"
         >
-          小红书
+          RED
         </text>
       </svg>
     );

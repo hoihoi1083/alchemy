@@ -26,7 +26,7 @@ function buildPinnedPlan(post: ContentResearchPost) {
   };
   return attachSourcePostsToPlan({
     platform: post.platform,
-    platformLabel: "小紅書",
+    platformLabel: "RedNote",
     topic: "黑曜石",
     summary: `Pinned: ${post.title}`,
     researchMode: "live-web",

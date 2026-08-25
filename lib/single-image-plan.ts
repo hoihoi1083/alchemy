@@ -197,7 +197,7 @@ function buildPlanPrompt(input: SingleImagePlanInput): string {
     "- role=cover: bold hook; role=benefit: one selling idea; role=cta: clear action line.",
     "- visualDna: one sentence shared art direction (palette, lighting, photography vs illustration, typography mood).",
     "- composition: specific layout with a FULL scene (surface, props, lighting, type hierarchy) — NEVER 'centered product on plain white'.",
-    "- Prefer magazine / Xiaohongshu feed energy: depth, styled set, layered copy — closer to a teaching cover than a catalog cutout.",
+    "- Prefer magazine / RedNote feed energy: depth, styled set, layered copy — closer to a teaching cover than a catalog cutout.",
     "- title/body/takeaway: short on-image copy. body must not repeat title. takeaway optional unless offer exists.",
     "- If Headline is provided, title MUST be that exact string (only 简繁 conversion if it is already Chinese). Never replace it with the product name. Never translate Latin/English into Chinese.",
     "- If Supporting is provided, body MUST be that exact string (same 简繁-only rule). Never invent a different slogan.",

@@ -663,7 +663,7 @@ function buildReelStoryboardPlanPrompt(input: {
           "- visualDirection JSON field: echo Reference visual direction above (render medium, palette, meme/cinematic energy) — locked aesthetic for ALL scenes.",
           "- theme JSON field: user's campaign message/topic ONLY — never the reference post topic.",
           "- imagePrompt: English 9:16 still. MATCH reference reel visual style family and layout grammar for this beat; REPLACE hero subject and props with imagery for the USER topic.",
-          "- Do NOT default to generic photorealistic 小红书 lifestyle if reference is cartoon/3D/meme/illustrated.",
+          "- Do NOT default to generic photorealistic RedNote lifestyle if reference is cartoon/3D/meme/illustrated.",
         ]
       : input.imageTextMode === "integrated"
         ? [

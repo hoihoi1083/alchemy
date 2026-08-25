@@ -53,7 +53,8 @@ function classifyTrafficSource(opts: {
   const source = (opts.utmSource ?? "").toLowerCase();
   const medium = (opts.utmMedium ?? "").toLowerCase();
 
-  // Explicit campaign tags (best for IG / 小红书 / TikTok / 抖音 in-app browsers).
+  // Explicit campaign tags (best for IG / RedNote / TikTok / 抖音 in-app browsers).
+  // Still match Chinese 小红书 in referrers from the China app.
   if (
     source.includes("instagram") ||
     source === "ig" ||

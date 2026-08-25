@@ -10,7 +10,7 @@ describe("reel video analysis prompts", () => {
       headline: "粉晶魅力",
       subline: "天然能量",
       offer: "",
-      promptExtra: "Style reference (小紅書)",
+      promptExtra: "Style reference (RedNote)",
       market: "hk",
       sourceDurationSec: 180,
       referenceClipSec: 15,

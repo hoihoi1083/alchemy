@@ -9,9 +9,9 @@ describe("wizardPromoteName", () => {
         promotionMode: "concept",
         product: "",
         headline: "2026年韓國最新規定！",
-        conceptIdea: "5天韓國旅行行程 — 小紅書 style",
+        conceptIdea: "5天韓國旅行行程 — RedNote style",
       }),
-      "5天韓國旅行行程 — 小紅書 style",
+      "5天韓國旅行行程 — RedNote style",
     );
   });
 

@@ -5,6 +5,7 @@ import { useAuth } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { PlanGateDialog } from "@/components/billing/PlanGateDialog";
+import { PricingComparisonSection } from "@/components/billing/PricingComparisonSection";
 import { FaqExpandToggle } from "@/components/landing/FaqExpandToggle";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { LandingNav } from "@/components/landing/LandingNav";
@@ -459,7 +460,7 @@ export function PricingPageClient() {
       <div className="flex flex-1 flex-col">
         {/* Plans — landing-style header + cards */}
         <section className="w-full bg-white">
-          <div className="mx-auto w-full max-w-[1440px] px-5 py-8 md:px-8 md:py-10">
+          <div className="mx-auto w-full max-w-[1440px] px-4 py-8 sm:px-5 md:px-8 md:py-10">
             {checkoutStatus === "success" ? (
               <div className="mb-5 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-900">
                 {confirmNote ?? p.checkoutSuccess}
@@ -488,7 +489,7 @@ export function PricingPageClient() {
 
             <Reveal>
               <div className="mx-auto max-w-3xl text-center">
-                <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl md:text-[2.75rem] md:leading-[1.15]">
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl md:text-4xl md:leading-[1.15]">
                   {p.titleBefore}
                   <br />
                   <span className="text-violet-600">{p.titleHighlight}</span>
@@ -770,9 +771,8 @@ export function PricingPageClient() {
           </div>
         </section>
 
-        {/* Compare — constrained table width */}
         <section className="border-t border-slate-100 bg-white">
-          <div className="mx-auto w-full max-w-5xl px-5 py-10 md:px-8 md:py-12">
+          <div className="marketing-page mx-auto w-full max-w-7xl px-4 py-10 sm:px-5 md:px-8 md:py-12">
             <Reveal>
               <div className="mx-auto max-w-xl text-center">
                 <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
@@ -781,70 +781,11 @@ export function PricingPageClient() {
               </div>
             </Reveal>
             <Reveal delayMs={80} distance={28} scaleFrom={0.98}>
-              <div
-                className="mx-auto mt-6 overflow-x-auto rounded-2xl border border-violet-100 bg-white shadow-sm"
-                style={{ maxWidth: "62rem" }}
-              >
-                <table className="w-full min-w-[640px] table-fixed text-left text-sm">
-                  <colgroup>
-                    <col className="w-[22%]" />
-                    <col className="w-[15.6%]" />
-                    <col className="w-[15.6%]" />
-                    <col className="w-[15.6%]" />
-                    <col className="w-[15.6%]" />
-                    <col className="w-[15.6%]" />
-                  </colgroup>
-                  <thead>
-                    <tr className="border-b border-violet-100 bg-violet-50/80">
-                      <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 sm:px-4">
-                        {p.compareFeature}
-                      </th>
-                      <th className="px-2 py-3 text-center text-sm font-semibold text-slate-700">
-                        {p.plans.free.name}
-                      </th>
-                      <th className="px-2 py-3 text-center text-sm font-semibold text-slate-700">
-                        {p.plans.light.name}
-                      </th>
-                      <th className="px-2 py-3 text-center text-sm font-semibold text-slate-700">
-                        {p.plans.standard.name}
-                      </th>
-                      <th className="bg-violet-100/70 px-2 py-3 text-center text-sm font-semibold text-violet-800">
-                        {p.plans.pro.name}
-                      </th>
-                      <th className="px-2 py-3 text-center text-sm font-semibold text-slate-700">
-                        {p.plans.master.name}
-                      </th>
-                      <th className="px-2 py-3 text-center text-sm font-semibold text-slate-900">
-                        {p.plans.custom.name}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {p.comparisonRows.map((row, i) => (
-                      <tr
-                        key={row.feature}
-                        className={`border-b border-slate-100 last:border-0 ${
-                          i % 2 === 0 ? "bg-white" : "bg-slate-50/40"
-                        }`}
-                      >
-                        <td className="px-3 py-3 text-sm font-medium leading-snug text-slate-800 sm:px-4">
-                          {row.feature}
-                        </td>
-                        <td className="px-2 py-3 text-center text-sm text-slate-600">{row.free}</td>
-                        <td className="px-2 py-3 text-center text-sm text-slate-600">
-                          {"light" in row ? row.light : "—"}
-                        </td>
-                        <td className="px-2 py-3 text-center text-sm text-slate-600">{row.standard}</td>
-                        <td className="bg-violet-50/50 px-2 py-3 text-center text-sm font-medium text-violet-900">
-                          {row.pro}
-                        </td>
-                        <td className="px-2 py-3 text-center text-sm text-slate-600">{row.master}</td>
-                        <td className="px-2 py-3 text-center text-sm font-medium text-slate-800">{row.custom}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <PricingComparisonSection
+                compareFeature={p.compareFeature}
+                plans={p.plans}
+                rows={p.comparisonRows}
+              />
             </Reveal>
           </div>
         </section>
@@ -867,7 +808,7 @@ export function PricingPageClient() {
           </div>
         </section>
 
-        <section className="mx-auto w-full max-w-[1440px] px-5 py-10 md:px-8">
+        <section className="mx-auto w-full max-w-[1440px] px-4 py-10 sm:px-5 md:px-8">
           <Reveal>
             <div className="flex flex-wrap items-center justify-center gap-3">
               <Link

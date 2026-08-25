@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, type ChangeEvent } from "react";
+import { useEffect, useId, useRef, useState, type ChangeEvent } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 import { BrandWebsitePanel } from "@/components/studio/BrandWebsitePanel";
 import { StoryboardShotMap } from "@/components/studio/StoryboardShotMap";
@@ -809,6 +809,8 @@ export function PreGenerateSetupPanel({
   showStylePicker = false,
   showReferenceUpload = false,
   combinedStoryboard = false,
+  intakePath = null,
+  intakeTemplateMode = null,
 }: {
   onGenerate?: () => void;
   generateDisabled?: boolean;
@@ -821,6 +823,9 @@ export function PreGenerateSetupPanel({
   showReferenceUpload?: boolean;
   /** 圖+片: fuse storyboard brief; hide single-image output modes. */
   combinedStoryboard?: boolean;
+  /** From micro ctx — drives the “already set from Step 4” summary. */
+  intakePath?: "research" | "direct" | null;
+  intakeTemplateMode?: "template" | "direct" | null;
 } = {}) {
   const { m } = useLocale();
   const wizard = useWizard();
@@ -832,6 +837,9 @@ export function PreGenerateSetupPanel({
   const angleInputId = useId();
   const showBrandWebsite = requiresBrandProfileForImages(wizard.visualStyleId);
   const effectiveShowStylePicker = showStylePicker && !combinedStoryboard;
+  /** Step 3 now owns copy; collapse fields here when already filled. */
+  const copyFilledFromIntake = Boolean(wizard.headline.trim());
+  const [expandCopyFields, setExpandCopyFields] = useState(!copyFilledFromIntake);
 
   // Entering this fused setup step should start at the top (router uses scroll: false).
   useEffect(() => {
@@ -1170,7 +1178,10 @@ export function PreGenerateSetupPanel({
       />
 
       <div className="mt-4">
-        <h2 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+        <p className="text-[14px] font-bold tracking-[0.12em] text-violet-600 sm:text-[15px]">
+          {pg.stepEyebrow}
+        </p>
+        <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
           {pg.titleBefore}{" "}
           <span className="relative inline-block text-violet-600">
             {pg.titleAccent}
@@ -1181,6 +1192,56 @@ export function PreGenerateSetupPanel({
           </span>
         </h2>
         <p className="mt-1.5 max-w-2xl text-sm text-slate-500">{setupHint}</p>
+
+        {intakePath ? (
+          <div className="mt-3 max-w-2xl rounded-xl border border-violet-200 bg-violet-50/80 px-3.5 py-3 text-sm text-violet-950">
+            <p className="font-semibold">{pg.fromIntakeTitle}</p>
+            <ul className="mt-1.5 space-y-1 text-[13px] leading-snug text-violet-900/90">
+              <li>
+                {intakePath === "research"
+                  ? pg.fromIntakePathResearch
+                  : intakeTemplateMode === "template"
+                    ? pg.fromIntakePathTemplate
+                    : pg.fromIntakePathDirect}
+              </li>
+              <li>
+                {pg.fromIntakeStyle.replace(
+                  "{name}",
+                  (() => {
+                    if (intakePath === "research") {
+                      const ref = wizard.contentResearchApplyRef;
+                      const platform =
+                        ref?.plan.platformLabel ||
+                        (ref?.plan.platform
+                          ? m.contentResearch.platforms[ref.plan.platform]
+                          : null) ||
+                        "research";
+                      const title =
+                        ref?.angle.title?.trim() ||
+                        ref?.angle.hook?.trim() ||
+                        "";
+                      return title ? `${platform} · ${title}` : platform;
+                    }
+                    return getVisualStyle(wizard.visualStyleId).id.replace(
+                      /-/g,
+                      " ",
+                    );
+                  })(),
+                )}
+              </li>
+              {wizard.headline.trim() ? (
+                <li>
+                  {pg.fromIntakeHeadline.replace("{text}", wizard.headline.trim())}
+                </li>
+              ) : null}
+              <li className="font-medium text-violet-800">
+                {!isConcept && !wizard.hasProductPhotoLock
+                  ? pg.fromIntakeNeedPhoto
+                  : pg.fromIntakeReadyMaterials}
+              </li>
+            </ul>
+          </div>
+        ) : null}
 
         <div className="pg-layout">
           <div className="pg-stack">
@@ -1684,10 +1745,47 @@ export function PreGenerateSetupPanel({
                   <div className="pg-content-aside-copy">
                     <h3 className="pg-card-title">{pg.contentTitle}</h3>
                     <p className="mt-1 text-xs leading-relaxed text-slate-500">
-                      {pg.copyPresetHint}
+                      {copyFilledFromIntake && !expandCopyFields
+                        ? pg.copyCollapsedHint
+                        : pg.copyPresetHint}
                     </p>
+                    {copyFilledFromIntake ? (
+                      <button
+                        type="button"
+                        className="mt-2 text-xs font-semibold text-violet-700 hover:underline"
+                        onClick={() => setExpandCopyFields((v) => !v)}
+                      >
+                        {expandCopyFields ? pg.hideCopyFields : pg.changeBrief}
+                      </button>
+                    ) : null}
                   </div>
                 </div>
+                {!expandCopyFields && copyFilledFromIntake ? (
+                  <div className="min-w-0 flex-1 space-y-2 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-sm">
+                    <p>
+                      <span className="font-semibold text-slate-700">
+                        {pg.hookLabel}:
+                      </span>{" "}
+                      <span className="text-slate-600">{wizard.headline}</span>
+                    </p>
+                    {wizard.subline.trim() ? (
+                      <p>
+                        <span className="font-semibold text-slate-700">
+                          {pg.supportingLabel}:
+                        </span>{" "}
+                        <span className="text-slate-600">{wizard.subline}</span>
+                      </p>
+                    ) : null}
+                    {wizard.offer.trim() ? (
+                      <p>
+                        <span className="font-semibold text-slate-700">
+                          {pg.offerLabel}:
+                        </span>{" "}
+                        <span className="text-slate-600">{wizard.offer}</span>
+                      </p>
+                    ) : null}
+                  </div>
+                ) : (
                 <div className="pg-field-grid">
                   {copyFocus ? (
                     <div className="rounded-xl border border-violet-200 bg-violet-50 px-3.5 py-3 text-sm text-violet-950 sm:col-span-full">
@@ -1869,6 +1967,7 @@ export function PreGenerateSetupPanel({
                     <p className="pg-count">{wizard.promptExtra.length}</p>
                   </label>
                 </div>
+                )}
               </div>
             </section>
 

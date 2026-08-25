@@ -30,7 +30,10 @@ import type { ImageInputMode } from "@/lib/image-input-mode";
 import type { VisualStyleId } from "@/lib/visual-styles";
 import type { WorkflowMode } from "@/lib/workflow-mode";
 import { resolveReelResearchRouting } from "@/lib/content-research-reel-routing";
-import { mergeResearchIdeaRemapIntoPromptExtra } from "@/lib/research-idea-remap";
+import {
+  mergeResearchIdeaRemapIntoPromptExtra,
+  stripResearchIdeaRemapBlock,
+} from "@/lib/research-idea-remap";
 import {
   DEFAULT_TEACHING_CAROUSEL_SLIDE_COUNT,
   MAX_TEACHING_CAROUSEL_SLIDE_COUNT,
@@ -371,6 +374,19 @@ export type PendingContentResearchPick = {
   promotionMode: "physical" | "concept";
 };
 
+/** Options for deferred Continue apply (after Step 4 remap / edits). */
+export type ApplyContentAngleOptions = {
+  /**
+   * Keep remapped/edited hook fields from the intake panel instead of
+   * regenerating deterministic copy from the angle.
+   */
+  preserveCopy?: {
+    headline: string;
+    subline: string;
+    offer: string;
+  };
+};
+
 export async function applyContentAngleToWizard(
   angle: ContentAngleCandidate,
   plan: ContentResearchPlan,
@@ -379,6 +395,7 @@ export async function applyContentAngleToWizard(
   promoteProduct?: string,
   refDeps?: ResearchRefDeps,
   userWorkflowMode?: WorkflowMode,
+  options?: ApplyContentAngleOptions,
 ): Promise<ContentAngleApplyResult & { researchRef?: ContentResearchApplyRef }> {
   const patch = wizardPatchForAngle(angle, plan, promotionMode, promoteProduct, userWorkflowMode);
   const imageUrls =
@@ -386,9 +403,23 @@ export async function applyContentAngleToWizard(
     (angle.sourceCoverImageUrl ? [angle.sourceCoverImageUrl] : undefined);
   const imageCount = imageUrls?.length ?? 0;
 
-  wizard.setHeadline(patch.headline);
-  wizard.setSubline(patch.subline);
-  if (patch.offer) wizard.setOffer(patch.offer);
+  const preserved = options?.preserveCopy;
+  const effectiveCopy = preserved
+    ? {
+        // Prefer remapped/edited hook; fall back to angle patch if hook empty.
+        headline: preserved.headline.trim() || patch.headline,
+        subline: preserved.subline,
+        // Always write offer from preserved fields (including "") so CTA doesn't stick.
+        offer: preserved.offer,
+      }
+    : {
+        headline: patch.headline,
+        subline: patch.subline,
+        offer: patch.offer ?? "",
+      };
+  wizard.setHeadline(effectiveCopy.headline);
+  wizard.setSubline(effectiveCopy.subline);
+  wizard.setOffer(effectiveCopy.offer);
   if (promotionMode === "concept") {
     if (patch.conceptIdea.trim()) {
       wizard.setConceptIdea(patch.conceptIdea);
@@ -399,7 +430,31 @@ export async function applyContentAngleToWizard(
   if (patch.product) wizard.setProduct(patch.product);
   wizard.setPromptExtra((prev) => {
     const withoutPriorResearch = stripContentResearchStyleExtra(prev);
-    return [withoutPriorResearch.trim(), patch.promptExtra].filter(Boolean).join(" | ");
+    let researchExtra = patch.promptExtra;
+    // Keep RESEARCH IDEA REMAP aligned with the copy users just approved.
+    if (preserved && /RESEARCH IDEA REMAP/i.test(researchExtra)) {
+      const productOrConcept = (
+        promoteProduct?.trim() ||
+        (promotionMode === "concept" ? patch.conceptIdea : patch.product) ||
+        ""
+      ).trim();
+      researchExtra = mergeResearchIdeaRemapIntoPromptExtra(
+        stripResearchIdeaRemapBlock(researchExtra),
+        {
+          promotionMode,
+          productOrConcept: productOrConcept || "user subject",
+          headline: effectiveCopy.headline,
+          subline: effectiveCopy.subline,
+          offer: effectiveCopy.offer,
+          referenceHook: angle.hook,
+          referenceTitle: angle.sourceTitle ?? angle.title,
+          referenceStructure: [angle.format, angle.whyItWorks]
+            .filter(Boolean)
+            .join(" · "),
+        },
+      );
+    }
+    return [withoutPriorResearch.trim(), researchExtra].filter(Boolean).join(" | ");
   });
   if (patch.workflowMode && wizard.onWorkflowModeChange && patch.resolvedFormat !== "reel") {
     // Never demote 圖+片 research into image-only / teaching-carousel.
@@ -435,8 +490,14 @@ export async function applyContentAngleToWizard(
     angle.sourceVideoUrl,
   );
 
+  // Drop prior research media before attach so a failed new fetch cannot keep
+  // the previous angle's cover/reel paired with the new angle's copy.
+  wizard.setImageRefPhoto?.(null);
+  wizard.onReferenceAdFile?.(null);
+  wizard.setExtraKitPhotos?.([]);
+
   if (!loadVideo) {
-    wizard.onReferenceAdFile?.(null);
+    // already cleared above
   }
 
   let refs: ResearchRefAttachResult = {

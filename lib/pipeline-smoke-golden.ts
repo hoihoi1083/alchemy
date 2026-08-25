@@ -84,7 +84,7 @@ const GOLDEN_VARS = {
   market: "en" as const,
   framing: "auto" as const,
   extra:
-    "Style reference (Xiaohongshu). Borrow ONLY layout rhythm and palette. All copy about Madagascar pink crystal bracelet. Do NOT copy reference subject matter.",
+    "Style reference (RedNote). Borrow ONLY layout rhythm and palette. All copy about Madagascar pink crystal bracelet. Do NOT copy reference subject matter.",
 };
 
 export type GoldenPromptResult = {

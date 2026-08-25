@@ -152,7 +152,7 @@ def build_doc() -> Document:
     # --- Search ---
     doc.add_heading("2. Content search (market research)", level=1)
     doc.add_paragraph(
-        "Users search 小紅書 / Instagram / TikTok / Facebook by keyword, or paste a direct post URL. "
+        "Users search RedNote / Instagram / TikTok / Facebook by keyword, or paste a direct post URL. "
         "The system fetches trending posts, then an LLM synthesises angles and can auto-fill the wizard."
     )
     add_table(
@@ -190,7 +190,7 @@ def build_doc() -> Document:
     # --- Image ---
     doc.add_heading("3. Image generation", level=1)
     doc.add_paragraph(
-        "Social ad images for IG / Facebook / 小紅書. Includes single image, A/B variants, "
+        "Social ad images for IG / Facebook / RedNote. Includes single image, A/B variants, "
         "3-slide campaign sets, and 4-card teaching carousels. Planning step uses a small LLM call."
     )
     add_table(
@@ -299,7 +299,7 @@ def build_doc() -> Document:
     # --- Video ---
     doc.add_heading("5. Video generation", level=1)
     doc.add_paragraph(
-        "Short-form Reels / 小紅書 video from a keyframe image, storyboard scenes, or reference clip. "
+        "Short-form Reels / RedNote video from a keyframe image, storyboard scenes, or reference clip. "
         "Optional AI music, Cantonese voiceover, and burned-in captions (local ffmpeg — no extra API)."
     )
     add_table(

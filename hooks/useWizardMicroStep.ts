@@ -108,6 +108,7 @@ function wizardStateSnapshot(wizard: StudioWizardValue): WizardMicroStepState {
     promptExtra: wizard.promptExtra,
     contentResearchApplied: Boolean(wizard.contentResearchApplyRef),
     contentResearchPending: Boolean(wizard.pendingContentResearchPick),
+    researchRemapBusy: Boolean(wizard.researchRemapBusy),
     shipItEligible: wizard.shipItEligible,
     hasGeneratedImage: Boolean(
       wizard.imageUrl ||
@@ -160,6 +161,22 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
   const [pendingConceptSource, setPendingConceptSource] = useState<ConceptSource | undefined>();
   const [pendingVideoSubpath, setPendingVideoSubpath] = useState<VideoSubpath | undefined>();
   const autoAdvancedRef = useRef<string | null>(null);
+  /** Prevents double Continue / stale media when a research apply is in flight. */
+  const researchApplyInFlightRef = useRef(false);
+  const researchApplyGenRef = useRef(0);
+  /** Live pending angle id — async goNext must not trust a stale React closure. */
+  const pendingResearchAngleIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const id = wizard.pendingContentResearchPick?.angle?.id ?? null;
+    const prev = pendingResearchAngleIdRef.current;
+    pendingResearchAngleIdRef.current = id;
+    // Re-pick while apply A is running: invalidate A and unlock Continue for B.
+    if (researchApplyInFlightRef.current && id !== prev) {
+      researchApplyGenRef.current += 1;
+      researchApplyInFlightRef.current = false;
+    }
+  }, [wizard.pendingContentResearchPick]);
 
   useEffect(() => {
     if (!freshEntry) return;
@@ -363,6 +380,7 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
       wizard.promptExtra,
       wizard.contentResearchApplyRef,
       wizard.pendingContentResearchPick,
+      wizard.researchRemapBusy,
       wizard.product,
       wizard.headline,
       wizard.subline,
@@ -648,6 +666,9 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
         };
 
         let nextCtx: MicroWizardContext = { ...ctx, intakePath };
+        if (intakePath === "research") {
+          nextCtx = { ...nextCtx, intakeTemplateMode: undefined };
+        }
         if (wizard.promotionMode === "concept" && conceptSource) {
           if (conceptSource === "assistant") clearConceptResearchState(wizardApi);
           else clearConceptAssistantState(wizardApi);
@@ -712,10 +733,20 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
       };
 
       const pick = wizard.pendingContentResearchPick;
-      if (intakePath === "research" && pick && !wizard.contentResearchApplyRef) {
+      // Any pending pick must apply (including same angle re-select after Back).
+      const needsResearchApply = intakePath === "research" && Boolean(pick);
+      if (needsResearchApply && pick) {
+        if (researchApplyInFlightRef.current) return;
+        researchApplyInFlightRef.current = true;
+        const applyToken = ++researchApplyGenRef.current;
+        const angleIdAtStart = pick.angle.id;
         void (async () => {
           try {
             const angleToApply = enrichAngleVideoFromPlan(pick.angle, pick.plan);
+            const promoteLive =
+              pick.promotionMode === "concept"
+                ? wizard.conceptIdea.trim() || pick.promoteProduct
+                : wizard.product.trim() || pick.promoteProduct;
             await applyContentAngleToWizard(
               angleToApply,
               pick.plan,
@@ -744,15 +775,45 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
                 setReferenceClipLoading: wizard.setReferenceClipLoading,
                 setError: wizard.setError,
               },
-              pick.promoteProduct,
+              promoteLive,
               undefined,
               wizard.workflowMode,
+              {
+                // Step 4 Adapt panel (and user edits) are the copy source of truth.
+                preserveCopy: {
+                  headline: wizard.headline,
+                  subline: wizard.subline,
+                  offer: wizard.offer,
+                },
+              },
             );
+            // Stale apply: pick changed or gen invalidated while A was downloading.
+            if (applyToken !== researchApplyGenRef.current) {
+              wizard.setImageRefPhoto(null);
+              wizard.onReferenceAdFile(null);
+              wizard.setExtraKitPhotos([]);
+              wizard.setContentResearchApplyRef(null);
+              return;
+            }
+            const liveAngleId = pendingResearchAngleIdRef.current;
+            if (liveAngleId && liveAngleId !== angleIdAtStart) {
+              wizard.setImageRefPhoto(null);
+              wizard.onReferenceAdFile(null);
+              wizard.setExtraKitPhotos([]);
+              wizard.setContentResearchApplyRef(null);
+              return;
+            }
             wizard.setPendingContentResearchPick(null);
             wizard.setError(null);
             finishIntakeAdvance();
           } catch (e: unknown) {
-            wizard.setError(e instanceof Error ? e.message : "Research apply failed.");
+            if (applyToken === researchApplyGenRef.current) {
+              wizard.setError(e instanceof Error ? e.message : "Research apply failed.");
+            }
+          } finally {
+            if (applyToken === researchApplyGenRef.current) {
+              researchApplyInFlightRef.current = false;
+            }
           }
         })();
         return;

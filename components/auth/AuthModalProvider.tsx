@@ -95,6 +95,8 @@ function AuthModalOverlay({
 						<SignIn
 							key="sign-in"
 							appearance={clerkAuthAppearance}
+							routing="hash"
+							signUpUrl="/sign-up"
 							forceRedirectUrl={redirectUrl}
 							fallbackRedirectUrl={redirectUrl}
 						/>
@@ -102,8 +104,10 @@ function AuthModalOverlay({
 						<SignUp
 							key="sign-up"
 							appearance={clerkAuthAppearance}
-							forceRedirectUrl="/"
-							fallbackRedirectUrl="/"
+							routing="hash"
+							signInUrl="/sign-in"
+							forceRedirectUrl={redirectUrl}
+							fallbackRedirectUrl={redirectUrl}
 						/>
 					)}
 				</AuthCardShell>

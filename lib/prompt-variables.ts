@@ -139,14 +139,14 @@ export type PromptVariables = {
 const MARKET_HINTS: Record<PromptMarket, string> = {
 	hk: "Hong Kong local boutique aesthetic, modern Asian urban lifestyle, premium but approachable. All on-image marketing copy in Traditional Chinese (繁體中文).",
 	tw: "Taiwan lifestyle aesthetic, soft natural tones, friendly local brand feel. All on-image marketing copy in Traditional Chinese (繁體中文).",
-	cn: "Mainland China Xiaohongshu/Douyin social creative — designed editorial feed post with atmosphere and props, not a blank catalog cutout. All on-image marketing copy in Simplified Chinese (简体中文) ONLY — never Traditional 繁體.",
+	cn: "Mainland China RedNote/Douyin social creative — designed editorial feed post with atmosphere and props, not a blank catalog cutout. All on-image marketing copy in Simplified Chinese (简体中文) ONLY — never Traditional 繁體.",
 	en: "International English-market commercial style, clean premium western retail look with intentional art direction. All on-image marketing copy in English only.",
 };
 
 const MARKET_HINTS_TEXTLESS: Record<PromptMarket, string> = {
 	hk: "Hong Kong local boutique aesthetic, modern Asian urban lifestyle, premium but approachable. Atmosphere only — no writing.",
 	tw: "Taiwan lifestyle aesthetic, soft natural tones, friendly local brand feel. Atmosphere only — no writing.",
-	cn: "Mainland China Xiaohongshu/Douyin social creative — designed editorial atmosphere and props, not a blank catalog cutout. Atmosphere only — no writing.",
+	cn: "Mainland China RedNote/Douyin social creative — designed editorial atmosphere and props, not a blank catalog cutout. Atmosphere only — no writing.",
 	en: "International English-market commercial style, clean premium western retail look with intentional art direction. Atmosphere only — no writing.",
 };
 

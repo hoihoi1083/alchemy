@@ -122,7 +122,7 @@ export const legalEn: LegalBundle = {
         heading: `1. About ${PRODUCT_NAME}`,
         paragraphs: [
           `${PRODUCT_NAME} is an AI marketing content platform that helps users generate and edit marketing materials, including images, videos, prompts, storyboards, captions, social media posts, product visuals, service advertisements and related creative assets.`,
-          "The platform may allow users to upload product images, upload brand logos, paste public post links or website links, use reference images for style analysis, generate editable prompts, generate captions and marketing copy, generate storyboards before video generation, generate images or videos, edit generated content and export content for platforms such as Instagram, Xiaohongshu, Facebook, TikTok, YouTube and other channels.",
+          "The platform may allow users to upload product images, upload brand logos, paste public post links or website links, use reference images for style analysis, generate editable prompts, generate captions and marketing copy, generate storyboards before video generation, generate images or videos, edit generated content and export content for platforms such as Instagram, RedNote, Facebook, TikTok, YouTube and other channels.",
         ],
       },
       {

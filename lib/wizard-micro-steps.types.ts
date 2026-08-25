@@ -108,6 +108,11 @@ export type MicroWizardContext = {
   /** Concept image/combined: assistant brief OR platform research — not both. */
   conceptSource?: ConceptSource;
   intakePath?: IntakePath;
+  /**
+   * Template tab only: user chose a preset (`template`) or Direct blank (`direct`).
+   * Cleared when switching to Research so Continue cannot skip the pick.
+   */
+  intakeTemplateMode?: "template" | "direct";
   videoSubpath?: VideoSubpath;
   combinedStyle?: CombinedStyle;
   imageOutputMode?: ImageOutputMode;

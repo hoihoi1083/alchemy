@@ -188,55 +188,55 @@ const CARDS: Card[] = [
     prompt: `Vertical 3:4 Facebook new launch ad. Sleek gadget-like cream jar on reflective surface, modern tech-beauty light. ${TEXT_RULE}`,
   },
 
-  // —— 小红书 / RedNote ——
+  // —— RedNote / RedNote ——
   {
     id: "xhs-haul",
     tab: "xhs",
     titleKey: "tplCardXhsHaul",
     captionKey: "tplCapXhs",
-    prompt: `Vertical 3:4 Xiaohongshu-style beauty haul flat-lay. Multiple mini skincare bottles on soft pink cloth, soft daylight UGC aesthetic. ${TEXT_RULE}`,
+    prompt: `Vertical 3:4 RedNote-style beauty haul flat-lay. Multiple mini skincare bottles on soft pink cloth, soft daylight UGC aesthetic. ${TEXT_RULE}`,
   },
   {
     id: "xhs-ootd",
     tab: "xhs",
     titleKey: "tplCardXhsOotd",
     captionKey: "tplCapXhs",
-    prompt: `Vertical 3:4 Xiaohongshu OOTD aesthetic. Soft outfit and shoes on wooden floor near window light, lifestyle UGC. ${TEXT_RULE}`,
+    prompt: `Vertical 3:4 RedNote OOTD aesthetic. Soft outfit and shoes on wooden floor near window light, lifestyle UGC. ${TEXT_RULE}`,
   },
   {
     id: "xhs-foodie",
     tab: "xhs",
     titleKey: "tplCardXhsFoodie",
     captionKey: "tplCapXhs",
-    prompt: `Vertical 3:4 Xiaohongshu foodie post. Aesthetic dessert plate and latte on marble cafe table, warm soft light. ${TEXT_RULE}`,
+    prompt: `Vertical 3:4 RedNote foodie post. Aesthetic dessert plate and latte on marble cafe table, warm soft light. ${TEXT_RULE}`,
   },
   {
     id: "xhs-desk",
     tab: "xhs",
     titleKey: "tplCardXhsDesk",
     captionKey: "tplCapXhs",
-    prompt: `Vertical 3:4 Xiaohongshu desk setup. Clean aesthetic desk with notebook, candle, and plant, soft natural light. ${TEXT_RULE}`,
+    prompt: `Vertical 3:4 RedNote desk setup. Clean aesthetic desk with notebook, candle, and plant, soft natural light. ${TEXT_RULE}`,
   },
   {
     id: "xhs-skincare",
     tab: "xhs",
     titleKey: "tplCardXhsSkincare",
     captionKey: "tplCapXhs",
-    prompt: `Vertical 3:4 Xiaohongshu skincare routine mirror selfie vibe (no face), hands holding serum bottle, soft bathroom light. ${TEXT_RULE}`,
+    prompt: `Vertical 3:4 RedNote skincare routine mirror selfie vibe (no face), hands holding serum bottle, soft bathroom light. ${TEXT_RULE}`,
   },
   {
     id: "xhs-home",
     tab: "xhs",
     titleKey: "tplCardXhsHome",
     captionKey: "tplCapXhs",
-    prompt: `Vertical 3:4 Xiaohongshu home aesthetic. Cozy corner with throw blanket, vase, and candle, soft evening light. ${TEXT_RULE}`,
+    prompt: `Vertical 3:4 RedNote home aesthetic. Cozy corner with throw blanket, vase, and candle, soft evening light. ${TEXT_RULE}`,
   },
   {
     id: "xhs-travel",
     tab: "xhs",
     titleKey: "tplCardXhsTravel",
     captionKey: "tplCapXhs",
-    prompt: `Vertical 3:4 Xiaohongshu travel lifestyle. Coffee cup and camera on hotel windowsill overlooking soft city bokeh. ${TEXT_RULE}`,
+    prompt: `Vertical 3:4 RedNote travel lifestyle. Coffee cup and camera on hotel windowsill overlooking soft city bokeh. ${TEXT_RULE}`,
   },
 
   // —— Reels / Video ——

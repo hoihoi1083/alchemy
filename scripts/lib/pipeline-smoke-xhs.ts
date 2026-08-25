@@ -50,7 +50,7 @@ function smokeStyleExtra(): string {
   };
   const plan: ContentResearchPlan = {
     platform: "xiaohongshu",
-    platformLabel: "小紅書",
+    platformLabel: "RedNote",
     topic: SMOKE_SCENARIO.searchTopic,
     summary: "smoke",
     researchMode: "playbook",

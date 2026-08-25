@@ -43,7 +43,7 @@ const JOBS: Job[] = [
   { id: "fb-offer", src: "scenario-ecommerce.png", position: "centre", grade: { brightness: 1.06 } },
   { id: "fb-bundle", src: "landing-before-after-studio.png", position: "centre" },
   { id: "fb-launch", src: "landing-hero-after-crop.png", position: "centre" },
-  // 小红书 (7)
+  // RedNote (7)
   { id: "xhs-haul", src: "tpl-card-03-new-arrival.jpg", position: "centre" },
   { id: "xhs-ootd", src: "landing-hero-wide.png", position: "east", grade: { saturation: 1.05 } },
   { id: "xhs-foodie", src: "scenario-food.png", position: "centre" },

@@ -855,7 +855,7 @@ export function buildH3ShotRecipeStillPrompt(input: H3ShotPromptInput): string {
       return [
         "Photoreal commercial still, 9:16, textless, no captions, no watermarks, no UI.",
         lock,
-        "Viral Xiaohongshu food check-in photo: young person smiling at camera, holding a wrap / sandwich / boba cup / plated dish TOWARD the lens with both hands (or one hand for drinks) — face clear and sharp.",
+        "Viral RedNote food check-in photo: young person smiling at camera, holding a wrap / sandwich / boba cup / plated dish TOWARD the lens with both hands (or one hand for drinks) — face clear and sharp.",
         "PEAK high-speed BULLET-TIME FOOD EXPLOSION already frozen at maximum drama: the dish's own layers radially burst apart around the hands — bread/wrap sheets, filling, sauce droplets, cheese strands, crumbs, lettuce, ice, or pearls that BELONG to this food. Dense 3D debris cloud filling mid-air (dozens of readable particles, not two timid floating leaves). Core of the dish still gripped; nothing unreadable off-frame.",
         "Real cafe / street / restaurant backdrop with shallow depth of field. Keep exact food types and plating — do not invent unrelated ingredients.",
         "Commercial SLR texture, cinematic daylight, Matrix-style freeze — ready as @Image1 for a rightward orbit around the frozen explosion while the person stays almost still.",

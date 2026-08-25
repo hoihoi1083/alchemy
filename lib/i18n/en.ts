@@ -321,7 +321,7 @@ export const en = {
 			"Images only, video only, or images then video.",
 			"Add product details, assets, and visual style.",
 			"AI generates images and/or video from your setup.",
-			"Download creatives for Xiaohongshu, Instagram, Facebook, and TikTok.",
+			"Download creatives for RedNote, Instagram, Facebook, and TikTok.",
 		],
 		physicalShort:
 			"Real products you can photograph — skincare, food, jewelry, apparel, home goods, and more.",
@@ -427,7 +427,7 @@ export const en = {
 			},
 			{
 				title: "Ready for ads in minutes",
-				body: "Generate scroll-stopping stills for IG, Facebook, TikTok, and 小红书 — then tweak on canvas.",
+				body: "Generate scroll-stopping stills for IG, Facebook, TikTok, and RedNote — then tweak on canvas.",
 			},
 		],
 		transformCta: "Transform my product",
@@ -603,7 +603,7 @@ export const en = {
 				title: "Add Diagram",
 				body: "Explain benefits, pricing or steps",
 			},
-			{ title: "Export Sizes", body: "IG, FB, 小红书, TikTok & more" },
+			{ title: "Export Sizes", body: "IG, FB, RedNote, TikTok & more" },
 		],
 		storyboardBadge: "Storyboard mode",
 		storyboardTitle: "Storyboard mode — plan scenes, then ship video",
@@ -643,7 +643,7 @@ export const en = {
 		tplFormatsLabel: "Supported formats",
 		tplPlatformIg: "Instagram",
 		tplPlatformFb: "Facebook",
-		tplPlatformXhs: "小红书",
+		tplPlatformXhs: "RedNote",
 		tplPlatformTiktok: "TikTok",
 		tplPlatformX: "X",
 		tplFormatImage: "Image",
@@ -680,7 +680,7 @@ export const en = {
 		tplTabProduct: "Product Ads",
 		tplTabInstagram: "Instagram",
 		tplTabFacebook: "Facebook Ads",
-		tplTabXhs: "小红书",
+		tplTabXhs: "RedNote",
 		tplTabVideo: "Reels / Video",
 		tplTabService: "Service Business",
 		tplCardSkincare: "Skincare Ad",
@@ -691,7 +691,7 @@ export const en = {
 		tplCardHero: "Product Hero",
 		tplCapIg: "Instagram Post",
 		tplCapFb: "Facebook Ad",
-		tplCapXhs: "Xiaohongshu Post",
+		tplCapXhs: "RedNote Post",
 		tplCapReel: "Reels / Video",
 		tplCapService: "Service Business",
 		tplCapProduct: "Product Ad",
@@ -1200,7 +1200,7 @@ export const en = {
 			},
 			{
 				q: "What content can I create?",
-				a: "Product ads, sale banners, new-arrival posts, Instagram/Facebook creatives, Xiaohongshu (RedNote) posts, Reels, service promos, testimonials, teaching carousels, and more.",
+				a: "Product ads, sale banners, new-arrival posts, Instagram/Facebook creatives, RedNote posts, Reels, service promos, testimonials, teaching carousels, and more.",
 			},
 			{
 				q: "Can I create short videos?",
@@ -1354,7 +1354,7 @@ export const en = {
 			},
 			{
 				q: "Which platforms are supported?",
-				body: "Export sizes cover common Instagram, Facebook, TikTok, Xiaohongshu (RedNote), YouTube Shorts, and general web/social ad ratios. Publishing to each network is done from your own accounts.",
+				body: "Export sizes cover common Instagram, Facebook, TikTok, RedNote, YouTube Shorts, and general web/social ad ratios. Publishing to each network is done from your own accounts.",
 			},
 			{
 				q: "Does Alchemy support agencies and teams?",
@@ -5185,7 +5185,10 @@ export const en = {
 			"Search keyword (find trending posts in this category)",
 		searchKeywordPlaceholder: "e.g. crystal bracelet, skincare routine…",
 		platformsLabel: "Search platforms",
-		platformsHint: "Select a platform to research trending content.",
+		platformsHint:
+			"Prefer RedNote or Instagram for still-ad layouts. Facebook works too when the post has a clear public cover.",
+		platformPreferredBadge: "Preferred",
+		platformSecondaryBadge: "Also OK",
 		promoteProductLabel: "Your product to promote",
 		promoteProductPlaceholder: "e.g. Madagascar rose quartz bracelet",
 		promoteProductHint:
@@ -5196,10 +5199,10 @@ export const en = {
 		directPostBadge: "Shortcut",
 		directPostTitle: "Or paste a post you want to match",
 		directPostHint:
-			"Already have a target post? Paste the link — skip keyword search. Supports xhslink, Xiaohongshu explore links, and Instagram /p/ or /reel/. In physical mode, fill product name above first. If xhslink fails, copy the full link from the app (Share → Copy link).",
+			"Already have a target post? Paste the link — skip keyword search. Supports xhslink, RedNote explore links, Instagram /p/ or /reel/, and public Facebook post/video URLs (facebook.com/{pageId}/posts/… or /videos/…). In physical mode, fill product name above first. If xhslink fails, copy the full link from the app (Share → Copy link).",
 		directPostUrlLabel: "Reference post link",
 		directPostUrlPlaceholder:
-			"e.g. http://xhslink.com/o/… or https://www.instagram.com/reel/…",
+			"e.g. http://xhslink.com/o/… · instagram.com/reel/… · facebook.com/{id}/posts/…",
 		directPostBtn: "Use this post",
 		postUrlRequired: "Paste a post link first.",
 		directPostFailed: "Could not load this post. Check the link is public.",
@@ -5226,18 +5229,18 @@ export const en = {
 		researchMediaBoth:
 			"Research scope: all post types (Combined workflow).",
 		tiktokImageWarning:
-			"TikTok is video-only. Use 小紅書 or Instagram for image research, or switch workflow to Video.",
+			"TikTok is video-only. Use RedNote or Instagram for image research, or switch workflow to Video.",
 		platformSearchHintXhs:
 			"Best for Chinese category keywords (e.g. 維他命C精華, 護膚流程) — searches notes with cover cards.",
 		platformSearchHintIgImage:
 			"Instagram image mode searches hashtags — English tags work best (vitaminc, skincare, serum).",
 		platformSearchHintIgHashtags: (tags: string) => `Will search: ${tags}`,
 		platformSearchHintIgCjk:
-			"Chinese phrases are mapped to English tags; if results are thin, try English keywords or switch to 小紅書.",
+			"Chinese phrases are mapped to English tags; if results are thin, try English keywords or switch to RedNote.",
 		platformSearchHintIgVideo:
 			"Instagram video mode searches Reels by keyword (English or Chinese, e.g. vitamin c serum).",
 		platformSearchHintFacebook:
-			"Facebook uses keyword search — category terms usually beat brand names for references.",
+			"Backup option: paste a public /posts/ or /videos/ URL, or search by keyword. Prefer RedNote or Instagram first for still-ad layouts.",
 		platformSearchHintTiktok:
 			"TikTok returns videos only — use short keyword phrases (skincare routine, unboxing).",
 		useAngle: "Use this direction",
@@ -5246,7 +5249,7 @@ export const en = {
 		selectedContinueHint: "Selected — click Continue below to apply this style.",
 		resultTitle: "AI Research Result (Recommendation)",
 		resultSubtitle:
-			"Based on trending posts from Xiaohongshu, Instagram, TikTok.",
+			"Based on trending posts from RedNote, Instagram, and Facebook.",
 		resultSubtitleForPlatform: (platform: string) =>
 			`Based on trending ${platform} posts from this search.`,
 		styleSummaryLabel: "Style Summary",
@@ -5283,6 +5286,17 @@ export const en = {
 			"Copy and output mode applied (carousel / single, etc.) — visual reference image missing. Upload a reference or pick another angle before generating.",
 		researchHiddenNoCover:
 			"Hidden {count} posts whose covers could not be loaded.",
+		noResultsTitle: "No usable posts on {platform}",
+		noResultsBody:
+			"Try different keywords, or switch platform. Prefer RedNote or Instagram for still ads.",
+		noResultsHintIg:
+			"Instagram often works better with English hashtags than Chinese phrases.",
+		noResultsHintFb:
+			"Try a category keyword, or paste a public facebook.com/…/posts/… or /videos/… URL.",
+		noResultsHintXhs:
+			"Try a more specific Chinese category (e.g. 維他命C精華, 護膚).",
+		noResultsHintTiktok:
+			"Use short English keyword phrases (skincare routine, unboxing).",
 		appliedContinue:
 			"Angle applied — check headline and output mode, then continue to Step 2.",
 		scoreLabel: "Fit",
@@ -5298,7 +5312,7 @@ export const en = {
 		openNote: "Open original post",
 		noCover: "No cover",
 		platforms: {
-			xiaohongshu: "小紅書",
+			xiaohongshu: "RedNote",
 			instagram: "Instagram",
 			tiktok: "TikTok",
 			facebook: "Facebook",
@@ -5413,32 +5427,33 @@ export const en = {
 		intakeDirectTitle: "Direct create",
 		intakeDirectDesc: "Skip research — optional reference upload only.",
 		intakeFuse: {
-			stepEyebrow: "STEP 3",
-			title: "Research a style, or create directly.",
-			hint: "Platform research borrows layout and style — your product name stays yours. Direct skips research and continues setup.",
-			conceptTitle: "Research a style, or use Concept assistant.",
+			stepEyebrow: "STEP 4",
+			title: "Research a style, or pick a template.",
+			hint: "Research borrows layout from trending posts — rewritten for your product. Template skips research and uses a preset (or blank Direct).",
+			conceptTitle: "Research a style, or pick a template.",
 			conceptHint:
-				"Platform research finds layout references. Concept assistant writes your brief without research.",
+				"Research finds layout references. Template + Concept assistant fills your brief without research.",
 			pathOptionsPhysical:
-				"Pick one path: ① Platform research · ② Direct create · ③ Or paste a reference post link below.",
+				"Pick one path only: ① Platform research · ② Template (includes Direct). Switching clears the other path.",
 			pathOptionsConcept:
-				"Pick one path: ① Platform research · ② Concept assistant · ③ Or paste a reference post link / continue later.",
+				"Pick one path only: ① Platform research · ② Template + Concept assistant. Switching clears the other path.",
 			tabsAriaLabel: "How to start",
 			tabResearch: "Platform research",
+			tabTemplate: "Template",
 			tabDirect: "Direct create",
 			tabAssistant: "Concept assistant",
 			pickTabHint:
-				"Pick a tab to continue — research or create directly.",
+				"Pick a tab to continue — research or template (not both).",
 			tipTitle: "Reference the style, not the content.",
 			tipIntro:
-				"AI analyzes layout, tone, color, and composition — not the exact content or brand.",
+				"AI analyzes layout, tone, color, and composition — not the exact content or brand. Prefer RedNote or Instagram for still ads. Facebook is a backup when you have a clear public cover or post link.",
 			tip1: {
 				title: "Better results",
 				body: "Be specific with keywords so research finds posts closer to your look.",
 			},
 			tip2: {
-				title: "Multiple platforms",
-				body: "Try another platform if results feel off — each feed has different styles.",
+				title: "Start with RedNote / Instagram",
+				body: "Those feeds usually give the cleanest still-ad layouts. Switch to Facebook only if RedNote/IG results feel off or you already have a public FB post URL.",
 			},
 			tip3: {
 				title: "Style over content",
@@ -5461,29 +5476,66 @@ export const en = {
 			},
 			assistantTip2: {
 				title: "Fine-tune on the next page",
-				body: "Creative direction, optional reference, and output format all live on one setup screen.",
+				body: "Style, size, resolution, and image count live on the next setup screen.",
 			},
 			assistantTip3: {
 				title: "You can edit later",
-				body: "Headline and copy can still be changed on the setup page.",
+				body: "Headline and copy can still be tweaked on the setup page if needed.",
 			},
+			templateTipTitle: "Template or Direct",
+			templateTipIntro:
+				"Pick a preset layout, or Direct (no template). Then let the assistant fill your copy fields.",
+			templateIntro:
+				"Choose a template filtered by your output type, or Direct to write freely without a preset.",
+			templateDirectTitle: "Direct (no template)",
+			templateDirectBody: "Blank layout — fill hook and supporting copy with the assistant.",
+			templatePickHint: "Select a template or Direct above, then fill your copy fields.",
+			templateSelectedNote: "Selected: {name}",
+			switchPathConfirm:
+				"Switching clears the other path — research pick or template choice, plus the copy fields on this step. Continue?",
+			researchSelectedBanner:
+				"Selected: {title} · {platform} · style will apply on Continue",
+			copyHookLabel: "Hook (headline)",
+			copyHookPlaceholder: "Catchy main line for the ad",
+			copySublineLabel: "Supporting copy",
+			copySublinePlaceholder: "Benefits, proof, or secondary line",
+			copyOfferLabel: "Offer / CTA",
+			copyOfferPlaceholder: "Optional promo or call to action",
+			researchAdaptTitle: "Rewrite copy for your product",
+			researchAdaptProvenance:
+				"Inspired by: {post} · rewritten for: {product}",
+			researchAdaptProductFallbackProduct: "your product",
+			researchAdaptProductFallbackConcept: "your concept",
+			researchAdaptHint:
+				"We keep the post’s direction and rewrite hook, audience, and copy for your product or concept.",
+			researchAdaptBusy: "Adapting…",
+			researchAdaptDone: "Copy adapted — edit anything before Continue.",
+			researchAdaptFailed: "Could not adapt copy. You can edit the fields manually.",
+			researchAdaptNeedProduct: "Add your product or concept name so we can remap the copy.",
+			productAssistTitle: "Product assistant",
+			productAssistHint: "AI fills hook, supporting copy, and CTA from your product name.",
+			productAssistCta: "AI fill",
+			productAssistBusy: "Writing…",
+			productAssistDone: "Draft filled — edit before Continue.",
+			productAssistFailed: "Could not fill product brief.",
+			productAssistNeedProduct: "Enter a product name first.",
 			directTitle: "Skip research for now",
 			directBody:
-				"Next you’ll pick direct creation or model-wear, optionally upload a reference, then use the same setup page as after research.",
+				"Next you’ll pick style, size, and resolution on the setup page.",
 			directBullets: [
 				"No platform search required",
-				"Choose direct creation or model wear/use",
-				"Optional reference upload on the next setup page",
+				"Choose a template or Direct above",
+				"Fill copy here, then style settings next",
 			],
 			videoDirectBody:
-				"Next you’ll pick a video direction (product motion, reference reel, or UGC), then set copy, product photo, and duration on one setup page.",
+				"Next you’ll set duration and resolution on the setup page after filling copy here.",
 			videoDirectBullets: [
 				"No platform search required",
-				"Product motion: photo → short video (fastest)",
-				"Duration and resolution show estimated tokens",
+				"Template or Direct, then assistant fill",
+				"Duration and resolution show estimated tokens next",
 			],
 			assistantIntro:
-				"Describe your offer — AI fills headline and visual direction. Platform research is skipped.",
+				"After picking a template (or Direct), describe your offer — AI fills headline and visual direction.",
 		},
 		primaryStyleTitle: "Pick a creative direction",
 		primaryStyleHint:
@@ -5511,11 +5563,19 @@ export const en = {
 			tipNoteBody: "Change it anytime in Setup or Advanced studio.",
 		},
 		preGenerateSetup: {
-			stepEyebrow: "STEP 4",
+			stepEyebrow: "STEP 5",
 			titleBefore: "Set your",
 			titleAccent: "content and materials",
 			title: "Set your content and materials",
 			hint: "Add content details, upload product images, choose output type and style.",
+			fromIntakeTitle: "Already set from Step 4",
+			fromIntakePathResearch: "Path: Platform research",
+			fromIntakePathTemplate: "Path: Template",
+			fromIntakePathDirect: "Path: Direct (no template)",
+			fromIntakeStyle: "Style / reference: {name}",
+			fromIntakeHeadline: "Hook: {text}",
+			fromIntakeNeedPhoto: "Still needed: product photo",
+			fromIntakeReadyMaterials: "Review materials below, then generate.",
 			directHint:
 				"Choose quick ad or model-wear, optionally add a reference image, then set content and product photos — same setup as after research.",
 			conceptHint:
@@ -5574,11 +5634,15 @@ export const en = {
 			contentTitle: "Content details",
 			hookLabel: "Main hook",
 			supportingLabel: "Supporting copy",
+			offerLabel: "Offer / CTA",
 			extraLabel: "Extra requirements",
 			extraOptional: "(optional)",
 			onImageBadge: "Shows on the image",
 			copyPresetHint:
 				"Edit these — they print on the image. If you leave them, we keep this preset copy (from research or a default template).",
+			copyCollapsedHint:
+				"Copy was set in Step 4. Expand to edit.",
+			hideCopyFields: "Hide copy fields",
 			conceptCopyFocus: {
 				info: {
 					title: "For this direction: fill selling-point bullets",
@@ -5945,9 +6009,10 @@ export const en = {
 		blockReasons: {
 			pick_output: "Pick image, video, or both to continue.",
 			pick_subject: "Pick physical product or concept to continue.",
-			pick_intake: "Pick research or direct create.",
+			pick_intake: "Pick Research or Template to continue.",
 			complete_research:
-				"Select a research direction (or paste a post), then Continue — or switch to Direct create.",
+				"Blocked: pick a research card (or paste a post URL) — or switch to Template.",
+			pick_template: "Blocked: pick a template or Direct, then fill your hook.",
 			pick_concept_source: "Pick concept assistant or platform research.",
 			need_pick_angle: "Pick a research post or upload a reference.",
 			pick_cinematic_mode: "Pick single scene or multi-scene stitch.",
@@ -5968,7 +6033,8 @@ export const en = {
 			brand_analyzing: "Wait for brand analysis to finish.",
 			reel_analyzing: "Wait for reel analysis to finish.",
 			reel_downloading: "Downloading reference reel from research…",
-			need_headline: "Add a headline or concept idea.",
+			research_adapting: "Wait: rewriting copy for your product…",
+			need_headline: "Blocked: add a hook (headline) before Continue.",
 			image_busy: "Wait for image generation to finish.",
 			image_not_ready: "Wait for the generated image to appear.",
 			need_storyboard_approve:

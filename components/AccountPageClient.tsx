@@ -412,8 +412,8 @@ export function AccountPageClient() {
     <main className="min-h-screen bg-white text-slate-900">
       <LandingNav />
 
-      <div className="mx-auto max-w-3xl px-6 pb-28 pt-8">
-        <h1 className="text-3xl font-semibold tracking-tight">{a.title}</h1>
+      <div className="marketing-page mx-auto max-w-3xl px-4 pb-28 pt-6 sm:px-5 sm:pt-8">
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{a.title}</h1>
         <p className="mt-2 text-sm text-slate-600">{a.subtitle}</p>
 
         {error ? (
@@ -426,7 +426,7 @@ export function AccountPageClient() {
           <p className="mt-10 text-sm text-slate-500">{a.loading}</p>
         ) : (
           <>
-            <section className="mt-10 rounded-2xl border border-slate-200 bg-slate-50 p-6">
+            <section className="mt-10 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-6">
               <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{a.planLabel}</p>
@@ -516,7 +516,7 @@ export function AccountPageClient() {
             </section>
 
             {teamMembership?.role === "member" && !team ? (
-              <section className="mt-10 rounded-2xl border border-slate-200 bg-white p-6">
+              <section className="mt-10 rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
                 <h2 className="text-xl font-semibold tracking-tight">{teamCopy.memberTitle}</h2>
                 <p className="mt-2 text-sm text-slate-600">
                   {teamMembership.ownerLabel
@@ -540,7 +540,7 @@ export function AccountPageClient() {
             ) : null}
 
             {team ? (
-              <section className="mt-10 rounded-2xl border border-slate-200 bg-white p-6">
+              <section className="mt-10 rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
                 <div className="flex flex-wrap items-end justify-between gap-3">
                   <div>
                     <h2 className="text-xl font-semibold tracking-tight">{teamCopy.title}</h2>
@@ -595,7 +595,7 @@ export function AccountPageClient() {
                     {team.members.map((member) => {
                       const label = member.name || member.email || member.clerkId;
                       return (
-                      <li key={member.clerkId} className="flex items-center justify-between gap-3 px-4 py-3">
+                      <li key={member.clerkId} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="min-w-0">
                           <p className="truncate text-sm font-medium text-slate-900">
                             {label}
@@ -608,7 +608,7 @@ export function AccountPageClient() {
                             type="button"
                             onClick={() => void removeMember(member.clerkId, label)}
                             disabled={Boolean(teamBusy)}
-                            className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                            className="w-full shrink-0 rounded-lg border border-slate-300 px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 disabled:opacity-60 sm:w-auto"
                           >
                             {teamCopy.remove}
                           </button>

@@ -1,6 +1,6 @@
 # Social platform post search (Just One API)
 
-Alchemy Studio searches **live posts** on 小紅書, Instagram, TikTok, and Facebook — with cover images, likes, and saves — then synthesizes content angles with DeepSeek.
+Alchemy Studio searches **live posts** on RedNote, Instagram, TikTok, and Facebook — with cover images, likes, and saves — then synthesizes content angles with DeepSeek.
 
 Without `JUSTONEAPI_TOKEN`, research falls back to **Tavily** (public web snippets only, no cover cards).
 
@@ -8,10 +8,10 @@ Without `JUSTONEAPI_TOKEN`, research falls back to **Tavily** (public web snippe
 
 | Platform | Just One API endpoint | Notes |
 |----------|----------------------|-------|
-| 小紅書 | `/api/xiaohongshu/search-note/v2` | Notes sorted by saves (v1/v3/v5 need separate permission) |
+| RedNote | `/api/xiaohongshu/search-note/v2` | Notes sorted by saves (v1/v3/v5 need separate permission) |
 | Instagram | `/api/instagram/search-hashtag-posts/v1` (image) · `/api/instagram/search-reels/v1` (video) | Image search uses hashtag tags (CJK product names are mapped, e.g. 維他命C精華 → `vitamincserum`) |
 | TikTok | `/api/tiktok/search-post/v1` | Videos, `MOST_LIKED`, region HK/CN/US |
-| Facebook | `/api/facebook/search-post/v1` | Public posts by keyword |
+| Facebook | `/api/facebook/search-post/v1` + `/api/facebook/get-profile-posts/v1` | Keyword search with covers; paste public post URLs (resolved via profile posts) |
 
 Same token for all platforms — no extra registration per platform.
 
@@ -58,7 +58,7 @@ You still need **`DEEPSEEK_API_KEY`** for angle synthesis. Keep **`TAVILY_API_KE
 npm run dev
 ```
 
-In **Studio → Step 1** (or the content research panel), pick any platform (小紅書 / Instagram / TikTok / Facebook), enter a topic, and click **即時研究內容**.
+In **Studio → Step 1** (or the content research panel), pick any platform (RedNote / Instagram / TikTok / Facebook), enter a topic, and click **即時研究內容**.
 
 You should see:
 
@@ -71,7 +71,7 @@ You should see:
 
 | Step | Approx. cost |
 |------|----------------|
-| Just One API search (any platform) | Per-endpoint price in dashboard (小紅書 search often ~¥0.08–0.12/call) |
+| Just One API search (any platform) | Per-endpoint price in dashboard (RedNote search often ~¥0.08–0.12/call) |
 | DeepSeek synthesis | ~$0.001–0.01 per run |
 | Tavily fallback (if used) | ~3 credits (~$0.02–0.05) |
 
@@ -113,7 +113,7 @@ At ~¥0.10/search, **$5 (~¥36) ≈ 350 UI searches** — if balance vanished af
 ## 6. Security notes
 
 - **Do not** commit `.env.local` or paste tokens in chat.
-- **Do not** use your personal 小紅書 cookie in production — vendor APIs maintain access for you.
+- **Do not** use your personal RedNote cookie in production — vendor APIs maintain access for you.
 - Rotate keys if exposed.
 
 ---

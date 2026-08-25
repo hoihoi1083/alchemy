@@ -350,8 +350,8 @@ export function LibraryPageClient() {
     <main className="min-h-screen bg-white text-slate-900">
       <LandingNav />
 
-      <div className="mx-auto max-w-5xl px-6 pb-28 pt-8">
-        <h1 className="text-3xl font-semibold tracking-tight">{L.title}</h1>
+      <div className="marketing-page mx-auto max-w-5xl px-4 pb-28 pt-6 sm:px-5 sm:pt-8">
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{L.title}</h1>
         <p className="mt-2 max-w-2xl text-sm text-slate-600">{L.subtitle}</p>
         <p className="mt-2 text-xs text-slate-500">{L.linkExpiredHint}</p>
 
@@ -407,7 +407,7 @@ export function LibraryPageClient() {
                               {L.updatedLabel} {formatDate(a.createdAt, locale)}
                             </p>
                           </div>
-                          <div className="mt-auto flex flex-wrap gap-2">
+                          <div className="mt-auto grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
                             {(a.kind === "video" || a.kind === "voiceover") && (
                               <Link
                                 href={`/captions?video=${encodeURIComponent(a.downloadUrl)}`}
@@ -511,7 +511,7 @@ export function LibraryPageClient() {
                                   : null}
                               </p>
                             </div>
-                            <div className="mt-auto flex flex-wrap gap-2">
+                            <div className="mt-auto grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
                               <a
                                 href={a.downloadUrl}
                                 className="rounded-full bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800"

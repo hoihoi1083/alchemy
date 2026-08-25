@@ -82,6 +82,8 @@ export type WizardMicroStepState = {
   contentResearchApplied: boolean;
   /** True when an angle is selected but not yet applied (apply runs on Continue). */
   contentResearchPending: boolean;
+  /** True while DeepSeek remaps research hook/subline/offer for the product. */
+  researchRemapBusy: boolean;
   shipItEligible: boolean;
   hasGeneratedImage: boolean;
   /** Combined storyboard: user explicitly approved the 九宫格 stills. */
@@ -837,13 +839,11 @@ export function canProceedMicroStep(
     if (state.referenceClipLoading || state.researchReelDownloadBusy) {
       return "reel_downloading";
     }
-    // Physical product: Research tab alone is not enough — must select (or apply) a direction.
+    // Research: tab alone is not enough — must select (or apply) a direction.
     // Selection can be pending until Continue applies it.
-    // Concept uses Research | Assistant with different completion rules.
     // Unlock when style prompt is set, cover was attached, apply-ref was written,
     // or a research card is selected pending apply.
     if (
-      ctx.promotionMode === "physical" &&
       ctx.intakePath === "research" &&
       !isContentResearchStyleExtra(state.promptExtra) &&
       !state.imageRefPhoto &&
@@ -851,6 +851,19 @@ export function canProceedMicroStep(
       !state.contentResearchPending
     ) {
       return "complete_research";
+    }
+    // Do not leave while remapped copy is still streaming (would keep raw reference hook).
+    if (ctx.intakePath === "research" && state.researchRemapBusy) {
+      return "research_adapting";
+    }
+    // After a research pick, require remapped/seeded hook before leaving intake.
+    if (ctx.intakePath === "research" && !state.headline.trim()) {
+      return "need_headline";
+    }
+    // Template tab: must pick a preset or Direct, then have a hook.
+    if (ctx.intakePath === "direct") {
+      if (!ctx.intakeTemplateMode) return "pick_template";
+      if (!state.headline.trim()) return "need_headline";
     }
   }
   if (id === "route.concept_source" && !ctx.conceptSource) return "pick_concept_source";

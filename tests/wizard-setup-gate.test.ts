@@ -10,7 +10,7 @@ describe("wizard setup → image gate", () => {
     promotionMode: "concept" as const,
     workflowMode: "image-only" as const,
     promptExtra:
-      "Style reference (小紅書). MATCH reference visual style: render medium (3D/cartoon/photo/UGC/meme), layout grammar, palette, typography mood, edit energy, and scene staging type — output should feel like the same ad/video family. REPLACE with user campaign. Do NOT copy: reference post title",
+      "Style reference (RedNote). MATCH reference visual style: render medium (3D/cartoon/photo/UGC/meme), layout grammar, palette, typography mood, edit energy, and scene staging type — output should feel like the same ad/video family. REPLACE with user campaign. Do NOT copy: reference post title",
     effectivePromoteName: "男生戴水晶",
     hasReferenceImage: true,
     referenceAnalyzeBusy: false,

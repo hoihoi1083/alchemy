@@ -1058,7 +1058,7 @@ On mount:
 
 | If user already has… | Then on angle apply… |
 |----------------------|----------------------|
-| `conceptIdea` set | **Keep** `conceptIdea` as anchor; do **not** overwrite with `${topic} — 小紅書 style` unless empty |
+| `conceptIdea` set | **Keep** `conceptIdea` as anchor; do **not** overwrite with `${topic} — RedNote style` unless empty |
 | Promote target | Use `conceptIdea` in `copyFieldsFromAngle` as `promoteProduct` |
 | `headline` / `subline` | Rewrite for promote target + angle **format**; **never** paste raw `angle.hook` when it matches reference engagement/topic |
 | `promptExtra` | Keep style-only block (unchanged) |

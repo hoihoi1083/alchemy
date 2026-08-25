@@ -43,7 +43,7 @@ export const reelAngle: ContentAngleCandidate = {
 
 export const xhsPlan: ContentResearchPlan = {
   platform: "xiaohongshu",
-  platformLabel: "小紅書",
+  platformLabel: "RedNote",
   topic: SEARCH_TOPIC,
   summary: "水晶手串類熱門帖",
   researchMode: "live-web",

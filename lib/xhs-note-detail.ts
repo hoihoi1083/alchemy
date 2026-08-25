@@ -70,7 +70,7 @@ export async function fetchXhsNoteDetailForVideo(
 
   if (lastError) {
     throw new Error(
-      `小紅書影片解析失敗（${lastError}）。請再試一次，或用 App 複製完整貼文連結。`,
+      `RedNote影片解析失敗（${lastError}）。請再試一次，或用 App 複製完整貼文連結。`,
     );
   }
   return undefined;

@@ -262,6 +262,7 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn" | "zh-tw") {
     useState<ContentResearchApplyRef | null>(null);
   const [pendingContentResearchPick, setPendingContentResearchPick] =
     useState<PendingContentResearchPick | null>(null);
+  const [researchRemapBusy, setResearchRemapBusy] = useState(false);
   const [productVideoPlan, setProductVideoPlan] = useState<ProductVideoPlan | null>(null);
   const [planProductVideoBusy, setPlanProductVideoBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -542,6 +543,8 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn" | "zh-tw") {
     setContentResearchApplyRef,
     pendingContentResearchPick,
     setPendingContentResearchPick,
+    researchRemapBusy,
+    setResearchRemapBusy,
     productVideoPlan,
     setProductVideoPlan,
     planProductVideoBusy,

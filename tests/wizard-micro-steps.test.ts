@@ -52,6 +52,8 @@ function baseState(overrides: Partial<WizardMicroStepState> = {}): WizardMicroSt
     videoUrl: null,
     promptExtra: "",
     contentResearchApplied: false,
+    contentResearchPending: false,
+    researchRemapBusy: false,
     shipItEligible: false,
     hasGeneratedImage: false,
     storyboardGridApproved: false,
@@ -65,7 +67,12 @@ function baseState(overrides: Partial<WizardMicroStepState> = {}): WizardMicroSt
 
 const PATH_CONTEXTS: Record<MicroWizardPathId, MicroWizardContext> = {
   product_image_research: { promotionMode: "physical", workflowMode: "image-only", intakePath: "research" },
-  product_image_direct: { promotionMode: "physical", workflowMode: "image-only", intakePath: "direct" },
+  product_image_direct: {
+    promotionMode: "physical",
+    workflowMode: "image-only",
+    intakePath: "direct",
+    intakeTemplateMode: "direct",
+  },
   concept_image_research: {
     promotionMode: "concept",
     workflowMode: "image-only",
@@ -77,6 +84,7 @@ const PATH_CONTEXTS: Record<MicroWizardPathId, MicroWizardContext> = {
     workflowMode: "image-only",
     intakePath: "direct",
     conceptSource: "assistant",
+    intakeTemplateMode: "direct",
   },
   product_video_research_reel: { promotionMode: "physical", workflowMode: "video-only", intakePath: "research" },
   product_video_direct: {
@@ -1552,7 +1560,7 @@ describe("wizard v2 parity audit", () => {
     ]);
   });
 
-  it("physical intake blocks continue until research applied or direct chosen", () => {
+  it("physical intake blocks continue until research applied or template+hook chosen", () => {
     const physical = { promotionMode: "physical" as const, workflowMode: "image-only" as const };
     assert.equal(
       canProceedMicroStep("route.intake", physical, baseState(physical)),
@@ -1564,7 +1572,23 @@ describe("wizard v2 parity audit", () => {
         { ...physical, intakePath: "direct" },
         baseState(physical),
       ),
+      "pick_template",
+    );
+    assert.equal(
+      canProceedMicroStep(
+        "route.intake",
+        { ...physical, intakePath: "direct", intakeTemplateMode: "direct" },
+        baseState(physical),
+      ),
       null,
+    );
+    assert.equal(
+      canProceedMicroStep(
+        "route.intake",
+        { ...physical, intakePath: "direct", intakeTemplateMode: "template" },
+        baseState({ ...physical, headline: "" }),
+      ),
+      "need_headline",
     );
     assert.equal(
       canProceedMicroStep(
@@ -1581,7 +1605,7 @@ describe("wizard v2 parity audit", () => {
         baseState({
           ...physical,
           promptExtra:
-            "Style reference (小紅書). MATCH reference visual style: layout — Do NOT copy reference subject matter.",
+            "Style reference (RedNote). MATCH reference visual style: layout — Do NOT copy reference subject matter.",
         }),
       ),
       null,
@@ -1602,9 +1626,33 @@ describe("wizard v2 parity audit", () => {
       ),
       null,
     );
+    assert.equal(
+      canProceedMicroStep(
+        "route.intake",
+        { ...physical, intakePath: "research" },
+        baseState({
+          ...physical,
+          contentResearchPending: true,
+          headline: "",
+        }),
+      ),
+      "need_headline",
+    );
+    assert.equal(
+      canProceedMicroStep(
+        "route.intake",
+        { ...physical, intakePath: "research" },
+        baseState({
+          ...physical,
+          contentResearchPending: true,
+          researchRemapBusy: true,
+        }),
+      ),
+      "research_adapting",
+    );
   });
 
-  it("concept intake only requires a path tab (assistant rules differ)", () => {
+  it("concept research also requires a pick and hook (same as product)", () => {
     const concept = {
       promotionMode: "concept" as const,
       workflowMode: "image-only" as const,
@@ -1613,6 +1661,18 @@ describe("wizard v2 parity audit", () => {
     };
     assert.equal(
       canProceedMicroStep("route.intake", concept, baseState({ promotionMode: "concept" })),
+      "complete_research",
+    );
+    assert.equal(
+      canProceedMicroStep(
+        "route.intake",
+        concept,
+        baseState({
+          promotionMode: "concept",
+          contentResearchPending: true,
+          headline: "Adapted hook",
+        }),
+      ),
       null,
     );
   });

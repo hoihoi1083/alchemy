@@ -56,7 +56,7 @@ export type ContentResearchSource = {
   snippet: string;
 };
 
-/** Visual post card from live platform search (e.g. Xiaohongshu via Just One API). */
+/** Visual post card from live platform search (e.g. RedNote via Just One API). */
 export type ContentResearchPost = {
   id: string;
   title: string;
@@ -71,6 +71,8 @@ export type ContentResearchPost = {
   author?: string;
   likes?: number;
   collects?: number;
+  /** Facebook shares (engagement analogue to XHS collects). */
+  shares?: number;
   comments?: number;
   platform: ContentPlatform;
 };

@@ -82,7 +82,7 @@ describe("research-idea-remap", () => {
 
   it("refreshContentResearchPromptExtra keeps RESEARCH IDEA REMAP", () => {
     const style =
-      "Style reference (小紅書) | Match reference visual style family and layout grammar. Do NOT copy reference subject matter.";
+      "Style reference (RedNote) | Match reference visual style family and layout grammar. Do NOT copy reference subject matter.";
     const withRemap = mergeResearchIdeaRemapIntoPromptExtra(style, {
       promotionMode: "physical",
       productOrConcept: "Alchemy sunscreen",
@@ -106,7 +106,7 @@ describe("research-idea-remap", () => {
       withRemap,
       {
         angle,
-        plan: { platformLabel: "小紅書", topic: "sunscreen", market: "hk" },
+        plan: { platformLabel: "RedNote", topic: "sunscreen", market: "hk" },
       },
       "physical",
       { product: "Alchemy sunscreen", headline: "SPF50", conceptIdea: "" },

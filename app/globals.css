@@ -74,6 +74,17 @@ body {
   overflow-x: hidden;
 }
 
+/* Shared marketing/account/library page gutters + safe areas on notched phones. */
+.marketing-page {
+  padding-left: max(1rem, env(safe-area-inset-left, 0px));
+  padding-right: max(1rem, env(safe-area-inset-right, 0px));
+  padding-bottom: max(7rem, calc(env(safe-area-inset-bottom, 0px) + 4rem));
+}
+
+.compare-table-scroll {
+  scrollbar-width: thin;
+}
+
 .studio-light input,
 .studio-light textarea {
   background: #ffffff !important;

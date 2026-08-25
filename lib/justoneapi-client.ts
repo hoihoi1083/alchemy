@@ -82,6 +82,8 @@ export function pickImageUrl(...values: unknown[]): string | undefined {
         rec.thumbnailUrl,
         rec.image_url,
         rec.imageUrl,
+        // Facebook album_preview entries often use { image: "https://…" }.
+        typeof rec.image === "string" ? rec.image : "",
         rec.src,
         rec.uri,
         rec.picture,

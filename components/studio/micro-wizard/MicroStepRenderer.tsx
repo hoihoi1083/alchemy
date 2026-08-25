@@ -316,11 +316,24 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
           onSelectResearch={() => {
             micro.setConceptSource("research" as ConceptSource);
             micro.setIntakePath("research" as IntakePath);
+            micro.patchContext({ intakeTemplateMode: undefined });
           }}
           onSelectDirect={() => {
             micro.setConceptSource("assistant" as ConceptSource);
             micro.setIntakePath("direct" as IntakePath);
           }}
+          onLeaveResearchPath={() => {
+            const defaultSub =
+              wizard.promotionMode === "concept" ? "creative_video" : "product_promo";
+            micro.setVideoSubpath(defaultSub as never);
+            micro.patchContext({ videoSubpath: defaultSub as never });
+          }}
+          onTemplateModeChange={(mode) => {
+            micro.patchContext({
+              intakeTemplateMode: mode ?? undefined,
+            });
+          }}
+          selectedTemplateMode={micro.ctx.intakeTemplateMode ?? null}
         />
       );
 
@@ -342,6 +355,7 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
               micro.setConceptSource("research" as ConceptSource);
             }
             micro.setIntakePath("research" as IntakePath);
+            micro.patchContext({ intakeTemplateMode: undefined });
           }}
           onSelectDirect={() => {
             if (isConcept) {
@@ -349,6 +363,24 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
             }
             micro.setIntakePath("direct" as IntakePath);
           }}
+          onLeaveResearchPath={() => {
+            if (
+              micro.ctx.workflowMode === "video-only" ||
+              micro.ctx.workflowMode === "combined" ||
+              wizard.workflowMode === "video-only" ||
+              wizard.workflowMode === "combined"
+            ) {
+              const defaultSub = isConcept ? "creative_video" : "product_promo";
+              micro.setVideoSubpath(defaultSub as never);
+              micro.patchContext({ videoSubpath: defaultSub as never });
+            }
+          }}
+          onTemplateModeChange={(mode) => {
+            micro.patchContext({
+              intakeTemplateMode: mode ?? undefined,
+            });
+          }}
+          selectedTemplateMode={micro.ctx.intakeTemplateMode ?? null}
         />
       );
     }
@@ -446,9 +478,14 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
       return (
         <PreGenerateSetupPanel
           showStylePicker={
-            micro.ctx.intakePath === "direct" && micro.ctx.workflowMode !== "combined"
+            // Template/Direct already chose style on Step 4 — avoid duplicate picker.
+            // Research may still refine art style here.
+            micro.ctx.intakePath === "research" &&
+            micro.ctx.workflowMode !== "combined"
           }
           showReferenceUpload={micro.ctx.intakePath === "direct"}
+          intakePath={micro.ctx.intakePath ?? null}
+          intakeTemplateMode={micro.ctx.intakeTemplateMode ?? null}
           combinedStoryboard={
             micro.ctx.workflowMode === "combined" &&
             isStoryboardVideoStyle(wizard.visualStyleId) &&

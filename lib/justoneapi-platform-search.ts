@@ -372,69 +372,143 @@ function mapTiktokItem(raw: unknown, index: number): ContentResearchPost | null 
   };
 }
 
+function sumFacebookReactions(reactions: unknown): number | undefined {
+  const rec = asRecord(reactions);
+  if (!rec) return undefined;
+  // Prefer explicit total when present.
+  const total = pickNumber(rec.total_count, rec.count, asRecord(rec.summary)?.total_count);
+  if (typeof total === "number") return total;
+  let sum = 0;
+  let any = false;
+  for (const v of Object.values(rec)) {
+    if (typeof v === "number" && Number.isFinite(v)) {
+      sum += v;
+      any = true;
+    }
+  }
+  return any ? sum : undefined;
+}
+
+/**
+ * Just One Facebook search returns a flat post object with fields like
+ * `video_thumbnail`, `reactions_count`, `reshare_count` — not Graph API
+ * `full_picture` / `reaction_count`. Map those first so covers hydrate.
+ */
 function mapFacebookItem(raw: unknown, index: number): ContentResearchPost | null {
   const item = asRecord(raw);
   if (!item) return null;
 
   const post = asRecord(item.post) ?? asRecord(item.node) ?? item;
-  const actor = asRecord(post.actor) ?? asRecord(post.author) ?? asRecord(item.actor);
+  const actor =
+    asRecord(post.actor) ??
+    asRecord(post.author) ??
+    asRecord(item.author) ??
+    asRecord(item.actor);
 
-  const title = pickString(post.message, post.text, post.title, item.message, item.text, item.title);
-  const author = pickString(actor?.name, post.author_name, item.author);
+  const title = pickString(
+    post.message,
+    post.text,
+    post.title,
+    item.message,
+    item.text,
+    item.title,
+  );
+  const author = pickString(
+    actor?.name,
+    post.author_name,
+    item.author_name,
+    typeof item.author === "string" ? item.author : "",
+  );
   const postId = pickString(post.post_id, post.id, item.post_id, item.id);
 
-  const attachmentData = asRecord(post.attachments)?.data ?? asRecord(item.attachments)?.data;
+  const albumPreview = post.album_preview ?? item.album_preview;
   const imageUrls = pickImageUrlsFromList(
-    attachmentData,
+    albumPreview,
+    post.image,
+    item.image,
     post.media,
     item.media,
+    asRecord(post.attachments)?.data,
+    asRecord(item.attachments)?.data,
     post.full_picture,
     post.picture,
-    post.image,
-    post.thumbnail,
-    item.image,
-    item.thumbnail,
     item.full_picture,
     item.picture,
   );
   const coverImageUrl =
+    pickImageUrl(post.video_thumbnail, item.video_thumbnail) ??
     imageUrls[0] ??
     pickImageUrl(
       post.full_picture,
       post.picture,
+      post.image,
+      item.image,
       asRecord(post.media)?.image,
       asRecord(item.media)?.image,
       item.full_picture,
     );
-  const videoUrl = pickVideoUrl(
-    asRecord(post.attachments)?.data,
-    post.source,
-    post.video,
-    item.video,
-  );
+  if (coverImageUrl && !imageUrls.includes(coverImageUrl)) {
+    imageUrls.unshift(coverImageUrl);
+  }
 
-  const url = pickString(post.url, post.permalink_url, item.url, item.link) ||
+  const videoUrl = pickVideoUrl(
+    asRecord(post.video_files)?.video_hd_file,
+    asRecord(post.video_files)?.video_sd_file,
+    asRecord(item.video_files)?.video_hd_file,
+    asRecord(item.video_files)?.video_sd_file,
+    asRecord(post.attachments)?.data,
+    // Prefer real media files over facebook.com/.../videos/... page URLs.
+    typeof post.video === "string" && /\.(mp4|m3u8)(\?|$)/i.test(post.video)
+      ? post.video
+      : undefined,
+    typeof item.video === "string" && /\.(mp4|m3u8)(\?|$)/i.test(item.video)
+      ? item.video
+      : undefined,
+  );
+  const looksLikeVideo = Boolean(videoUrl);
+
+  const url =
+    pickString(post.url, post.permalink_url, item.url, item.link) ||
     (postId ? `https://www.facebook.com/${postId}` : "");
 
-  if (!title && !url) return null;
+  if (!title && !url && !coverImageUrl) return null;
 
   return {
     id: postId || `fb-${index + 1}`,
-    title: title.slice(0, 80) || `Post ${index + 1}`,
+    title: (title || `Post ${index + 1}`).slice(0, 80),
     url,
-    snippet: title.slice(0, 400),
+    snippet: (title || "").slice(0, 400),
     coverImageUrl,
-    imageUrls: imageUrls.length > 1 ? imageUrls : undefined,
+    imageUrls: imageUrls.length > 1 ? imageUrls : imageUrls.length === 1 ? imageUrls : undefined,
     videoUrl,
-    mediaType: videoUrl ? "video" : "image",
+    mediaType: looksLikeVideo ? "video" : "image",
     author: author || undefined,
     likes: pickNumber(
+      post.reactions_count,
+      item.reactions_count,
       post.reaction_count,
       post.likes,
-      asRecord(post.reactions)?.summary,
+      sumFacebookReactions(post.reactions),
+      sumFacebookReactions(item.reactions),
+      asRecord(asRecord(post.reactions)?.summary)?.total_count,
       item.likes,
     ),
-    comments: pickNumber(post.comment_count, post.comments, item.comment_count),
+    shares: pickNumber(
+      post.reshare_count,
+      item.reshare_count,
+      post.share_count,
+      post.shares_count,
+      asRecord(post.shares)?.count,
+      item.share_count,
+      item.shares,
+    ),
+    comments: pickNumber(
+      post.comments_count,
+      item.comments_count,
+      post.comment_count,
+      post.comments,
+      item.comment_count,
+    ),
     platform: "facebook",
   };
 }
@@ -512,7 +586,13 @@ const XHS_COVER_HYDRATE_PATHS = [
 const MAX_XHS_COVER_HYDRATE = 3;
 
 function postEngagementScore(post: ContentResearchPost): number {
-  return (post.collects ?? 0) * 2 + (post.likes ?? 0) + (post.comments ?? 0);
+  // XHS collects and FB shares are the strongest save/amplify signals.
+  return (
+    (post.collects ?? 0) * 2 +
+    (post.shares ?? 0) * 2 +
+    (post.likes ?? 0) +
+    (post.comments ?? 0)
+  );
 }
 
 async function upgradeXhsPostCover(post: ContentResearchPost): Promise<ContentResearchPost> {
@@ -677,7 +757,7 @@ export async function searchPlatformPostsByKeyword(
   const mismatch = platformMediaMismatch(platform, mediaFilter);
   if (mismatch === "tiktok-image") {
     throw new Error(
-      "TikTok search returns videos only. Pick 小紅書 or Instagram for image research, or switch workflow to Video.",
+      "TikTok search returns videos only. Pick RedNote or Instagram for image research, or switch workflow to Video.",
     );
   }
 
@@ -719,12 +799,31 @@ export async function searchPlatformPostsByKeyword(
       break;
     case "facebook":
       endpoint = "/api/facebook/search-post/v1";
-      body = await fetchJustOneApi(endpoint, { keyword: k }, "Facebook post search");
+      body = await fetchJustOneApi(
+        endpoint,
+        {
+          keyword: k,
+          // Prefer engaged posts when the provider accepts these hints.
+          sort: "MOST_LIKED",
+          ...(mediaFilter === "video"
+            ? { mediaType: "video" }
+            : mediaFilter === "image"
+              ? { mediaType: "image" }
+              : {}),
+        },
+        "Facebook post search",
+      );
       break;
   }
 
   const items = flattenSearchItems(body);
   let posts = mapItems(platform, items, limit, mediaFilter);
+
+  if (platform === "facebook") {
+    posts = [...posts].sort(
+      (a, b) => postEngagementScore(b) - postEngagementScore(a),
+    );
+  }
 
   if (posts.length < 1 && platform === "instagram" && mediaFilter === "image") {
     posts = mapItems(platform, items, limit).filter((p) => Boolean(p.coverImageUrl)).slice(0, limit);

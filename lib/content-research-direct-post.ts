@@ -17,7 +17,7 @@ import { promoteProductName } from "@/lib/content-research-promote";
 import type { PromptMarket } from "@/lib/prompt-variables";
 
 const PLATFORM_LABELS: Record<ContentPlatform, string> = {
-  xiaohongshu: "小紅書 (Xiaohongshu)",
+  xiaohongshu: "RedNote",
   instagram: "Instagram",
   tiktok: "TikTok",
   facebook: "Facebook",

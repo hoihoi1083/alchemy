@@ -203,7 +203,16 @@ export function MicroWizard({ promotionMode }: Props) {
   );
 
   const continueButtons = (
-    <div className="flex shrink-0 flex-wrap gap-2">
+    <div className="flex shrink-0 flex-col items-end gap-1.5">
+      {blockMessage &&
+      isPurpleChrome &&
+      currentId !== "setup.pre_generate" &&
+      currentId !== "setup.pre_video" ? (
+        <p className="max-w-[16rem] text-right text-[11px] font-medium leading-snug text-violet-800">
+          {blockMessage}
+        </p>
+      ) : null}
+      <div className="flex flex-wrap justify-end gap-2">
       {isSkippable ? (
         <button
           type="button"
@@ -241,6 +250,7 @@ export function MicroWizard({ promotionMode }: Props) {
           </svg>
         </button>
       )}
+      </div>
     </div>
   );
 

@@ -229,7 +229,7 @@ export function LandingPricingTeaser() {
 
 	return (
 		<section id="pricing" className="w-full bg-transparent">
-			<div className="mx-auto w-full max-w-[1440px] px-5 py-12 md:px-8 md:py-14">
+			<div className="mx-auto w-full max-w-[1440px] px-4 py-12 sm:px-5 md:px-8 md:py-14">
 				<div className="landing-pricing-header flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
 					<Reveal>
 						<div className="max-w-xl">

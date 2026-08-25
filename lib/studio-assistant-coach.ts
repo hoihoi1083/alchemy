@@ -206,7 +206,7 @@ export function buildCoachReply(
             "Reply next on Setup.",
           ].join("\n")
         : [
-            "第一步：跟參考廣告排版出圖（小紅書／IG 風格）— Image 步上傳參考圖 + 產品相，再生成。",
+            "第一步：跟參考廣告排版出圖（RedNote／IG 風格）— Image 步上傳參考圖 + 產品相，再生成。",
             link ?? "",
             "到 Setup 回覆 下一步。",
           ].join("\n");
@@ -483,7 +483,7 @@ export function buildCoachReply(
             ].join("\n")
           : [
               "呢步 — **上傳參考排版圖**（出圖步頂部參考區）。",
-              "用小紅書封面、競品帖或廣告截圖 — 跟排版，唔係抄佢哋產品。",
+              "用RedNote封面、競品帖或廣告截圖 — 跟排版，唔係抄佢哋產品。",
               "再喺下面上傳你嘅產品相。兩張都上傳後回覆 下一步。",
             ].join("\n"),
       );

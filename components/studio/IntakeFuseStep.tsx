@@ -1,22 +1,46 @@
 "use client";
 
+import { ConceptWizardPanel } from "@/components/studio/ConceptWizardPanel";
+import {
+  IntakeTemplatePicker,
+  ProductBriefAssistantPanel,
+} from "@/components/studio/IntakeTemplatePicker";
+import { ResearchAdaptCopyPanel } from "@/components/studio/ResearchAdaptCopyPanel";
+import { useWizard } from "@/components/studio/WizardContext";
+import { stripContentResearchStyleExtra } from "@/lib/content-research-promote";
+import { stripConceptAssistantPromptExtra } from "@/lib/concept-source-state";
+import {
+  intakeTabFromPath,
+  runIntakeTabSwitch,
+  type IntakeTabId,
+} from "@/lib/wizard-intake-contract";
+import type {
+  ConceptSource,
+  IntakePath,
+} from "@/lib/wizard-micro-steps.types";
+import type { WorkflowMode } from "@/lib/workflow-mode";
+import { setupContentPhaseIndex, studioPhasesForMode } from "@/lib/studio-phases";
+import type { VisualStyleId } from "@/lib/visual-styles";
 import { useState } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 import { ContentResearchPanel } from "@/components/content-research/ContentResearchPanel";
-import { ConceptWizardPanel } from "@/components/studio/ConceptWizardPanel";
-import { useWizard } from "@/components/studio/WizardContext";
-import type { ConceptSource } from "@/lib/concept-source-state";
-import type { IntakePath } from "@/lib/wizard-micro-steps.types";
-import type { WorkflowMode } from "@/lib/workflow-mode";
-import { setupContentPhaseIndex, studioPhasesForMode } from "@/lib/studio-phases";
 
-type TabId = "research" | "direct";
+type TabId = IntakeTabId;
 
 type Props = {
   activeTab: TabId | null;
   onSelectResearch: () => void;
   onSelectDirect: () => void;
-  /** Concept mode: Direct tab is Concept assistant. */
+  /** Persist Template vs Direct blank so Continue can gate on a real pick. */
+  onTemplateModeChange?: (mode: "template" | "direct" | null) => void;
+  /** Controlled from micro ctx — survives Back/remount. */
+  selectedTemplateMode?: "template" | "direct" | null;
+  /**
+   * Leaving Research for Template/Direct — clear reel routing so video setup
+   * does not keep expecting a research reference reel.
+   */
+  onLeaveResearchPath?: () => void;
+  /** Concept mode: Template tab uses Concept assistant after template pick. */
   isConcept: boolean;
   workflowMode: WorkflowMode;
   showPhaseStepper?: boolean;
@@ -108,11 +132,6 @@ const FUSE_CSS = `
   display: flex; align-items: center; justify-content: center;
   width: 1.5rem; height: 1.5rem; margin-top: 0.1rem; color: #6c3bff; flex-shrink: 0;
 }
-.if-tip-bullet {
-  display: flex; align-items: center; justify-content: center;
-  width: 1.5rem; height: 1.5rem; margin-top: 0.1rem; border-radius: 9999px;
-  background: #6c3bff; color: #fff; flex-shrink: 0; line-height: 0;
-}
 .if-tabs {
   display: grid; grid-template-columns: 1fr 1fr; gap: 0;
   width: 100%; border-bottom: 1px solid #e2e8f0; margin: 0 0 0.15rem;
@@ -142,9 +161,6 @@ const FUSE_CSS = `
 @media (max-width: 639px) {
   .if-tab { font-size: 13px; gap: 0.4rem; padding: 0.7rem 0.35rem 0.85rem; }
   .if-tab::after { left: 8%; right: 8%; }
-}
-.if-direct-card {
-  border-radius: 1rem; border: 1px solid #ede9fe; background: #faf8ff; padding: 1rem;
 }
 @media (min-width: 768px) {
   .if-panel-body { padding: 1.35rem 1.5rem 1.5rem; }
@@ -242,7 +258,7 @@ function TipFeatureIcon({ kind }: { kind: "timer" | "globe" | "link" }) {
   );
 }
 
-function TabIcon({ kind }: { kind: "research" | "direct" }) {
+function TabIcon({ kind }: { kind: "research" | "template" }) {
   if (kind === "research") {
     return (
       <svg
@@ -273,8 +289,10 @@ function TabIcon({ kind }: { kind: "research" | "direct" }) {
       strokeLinejoin="round"
       aria-hidden
     >
-      <path d="M10 13a5 5 0 0 0 7.07 0l1.4-1.4a5 5 0 1 0-7.07-7.07L10.5 5.4" />
-      <path d="M14 11a5 5 0 0 0-7.07 0L5.5 12.4a5 5 0 0 0 7.07 7.07L13.5 18.6" />
+      <rect x="3.5" y="3.5" width="7" height="7" rx="1.2" />
+      <rect x="13.5" y="3.5" width="7" height="7" rx="1.2" />
+      <rect x="3.5" y="13.5" width="7" height="7" rx="1.2" />
+      <rect x="13.5" y="13.5" width="7" height="7" rx="1.2" />
     </svg>
   );
 }
@@ -283,6 +301,9 @@ export function IntakeFuseStep({
   activeTab,
   onSelectResearch,
   onSelectDirect,
+  onTemplateModeChange,
+  selectedTemplateMode = null,
+  onLeaveResearchPath,
   isConcept,
   workflowMode,
   showPhaseStepper = true,
@@ -291,6 +312,8 @@ export function IntakeFuseStep({
   const wizard = useWizard();
   const fuse = m.microWizard.intakeFuse;
   const [researchNote, setResearchNote] = useState<string | null>(null);
+  // Controlled from micro ctx so Back/remount stays in sync with Continue gate.
+  const templateMode = selectedTemplateMode;
 
   const promoteTarget = isConcept
     ? wizard.conceptIdea.trim() || wizard.effectivePromoteName
@@ -300,7 +323,7 @@ export function IntakeFuseStep({
     : wizard.business.trim() || wizard.product.trim();
 
   const tipItems =
-    isConcept && activeTab === "direct"
+    activeTab === "template"
       ? [
           { ...fuse.assistantTip1, icon: "timer" as const },
           { ...fuse.assistantTip2, icon: "globe" as const },
@@ -316,9 +339,78 @@ export function IntakeFuseStep({
         ];
 
   const tipTitle =
-    isConcept && activeTab === "direct" ? fuse.assistantTipTitle : fuse.tipTitle;
+    activeTab === "template" ? fuse.templateTipTitle : fuse.tipTitle;
   const tipIntro =
-    isConcept && activeTab === "direct" ? fuse.assistantTipIntro : fuse.tipIntro;
+    activeTab === "template" ? fuse.templateTipIntro : fuse.tipIntro;
+
+  function clearResearchPayload() {
+    wizard.setPendingContentResearchPick(null);
+    wizard.setContentResearchApplyRef(null);
+    wizard.setResearchRemapBusy(false);
+    wizard.setImageRefPhoto(null);
+    wizard.setExtraKitPhotos([]);
+    wizard.onReferenceAdFile(null);
+    wizard.setUserReferenceBrief(null);
+    wizard.setImageCreativeMode("promo-ai");
+    // Drop reference-reel creative mode so Template isn't stuck needing a reel.
+    // Always product-promo — concept + product-assistant is blocked at generate.
+    if (wizard.videoCreativeMode === "reference-concept") {
+      wizard.onVideoCreativeModeChange("product-promo");
+    }
+    wizard.setPromptExtra((prev) => stripContentResearchStyleExtra(prev));
+    // Drop research-seeded copy so Template path starts clean.
+    wizard.setHeadline("");
+    wizard.setSubline("");
+    wizard.setOffer("");
+    onLeaveResearchPath?.();
+  }
+
+  function clearTemplatePayload() {
+    onTemplateModeChange?.(null);
+    wizard.setTemplateId("custom");
+    // Drop template/assistant copy so Research path starts clean.
+    wizard.setHeadline("");
+    wizard.setSubline("");
+    wizard.setOffer("");
+    // Strip both research style blocks and concept-assistant extras.
+    wizard.setPromptExtra((prev) =>
+      stripConceptAssistantPromptExtra(stripContentResearchStyleExtra(prev)),
+    );
+  }
+
+  function selectTab(next: TabId) {
+    // Re-clicking the active tab must not wipe adapted copy / media.
+    if (activeTab === next) return;
+    const switchingAway = activeTab != null && activeTab !== next;
+    const hasResearchPick = Boolean(wizard.pendingContentResearchPick);
+    const hasTemplatePick = templateMode != null;
+    if (
+      switchingAway &&
+      ((activeTab === "research" && hasResearchPick) ||
+        (activeTab === "template" && hasTemplatePick))
+    ) {
+      const ok = window.confirm(fuse.switchPathConfirm);
+      if (!ok) return;
+    }
+    runIntakeTabSwitch(next, {
+      clearResearch: clearResearchPayload,
+      clearTemplate: clearTemplatePayload,
+    });
+    if (next === "research") onSelectResearch();
+    else onSelectDirect();
+  }
+
+  function onSelectDirectBlank() {
+    onTemplateModeChange?.("direct");
+    wizard.setTemplateId("custom");
+    onSelectDirect();
+  }
+
+  function onSelectTemplateStyle(styleId: VisualStyleId) {
+    onTemplateModeChange?.("template");
+    wizard.selectVisualStyle(styleId);
+    onSelectDirect();
+  }
 
   return (
     <div className="if-page -mx-1 sm:mx-0">
@@ -367,10 +459,7 @@ export function IntakeFuseStep({
                   role="tab"
                   aria-selected={activeTab === "research"}
                   className={`if-tab${activeTab === "research" ? " is-on" : ""}`}
-                  onClick={() => {
-                    wizard.setPendingContentResearchPick(null);
-                    onSelectResearch();
-                  }}
+                  onClick={() => selectTab("research")}
                 >
                   <TabIcon kind="research" />
                   {fuse.tabResearch}
@@ -378,15 +467,12 @@ export function IntakeFuseStep({
                 <button
                   type="button"
                   role="tab"
-                  aria-selected={activeTab === "direct"}
-                  className={`if-tab${activeTab === "direct" ? " is-on" : ""}`}
-                  onClick={() => {
-                    wizard.setPendingContentResearchPick(null);
-                    onSelectDirect();
-                  }}
+                  aria-selected={activeTab === "template"}
+                  className={`if-tab${activeTab === "template" ? " is-on" : ""}`}
+                  onClick={() => selectTab("template")}
                 >
-                  <TabIcon kind="direct" />
-                  {isConcept ? fuse.tabAssistant : fuse.tabDirect}
+                  <TabIcon kind="template" />
+                  {fuse.tabTemplate}
                 </button>
               </div>
 
@@ -406,12 +492,26 @@ export function IntakeFuseStep({
                     hidePromoteProduct={!isConcept}
                     defaultTopic={defaultTopic}
                     promoteProduct={promoteTarget}
-                    onPromoteProductChange={isConcept ? wizard.setConceptIdea : wizard.setProduct}
+                    onPromoteProductChange={
+                      isConcept ? wizard.setConceptIdea : wizard.setProduct
+                    }
                     syncTopicFromProduct={false}
                     promotionMode={wizard.promotionMode}
                     market={wizard.promptMarket}
                     workflowMode={workflowMode}
-                    onPendingPickChange={wizard.setPendingContentResearchPick}
+                    onPendingPickChange={(pick) => {
+                      if (pick) {
+                        // Any pick (including same angle after Back) must re-apply
+                        // cover/style on Continue — drop prior apply + media now.
+                        wizard.setContentResearchApplyRef(null);
+                        wizard.setImageRefPhoto(null);
+                        wizard.onReferenceAdFile(null);
+                        wizard.setExtraKitPhotos([]);
+                      } else {
+                        wizard.setContentResearchApplyRef(null);
+                      }
+                      wizard.setPendingContentResearchPick(pick);
+                    }}
                     wizard={{
                       setHeadline: wizard.setHeadline,
                       setSubline: wizard.setSubline,
@@ -428,7 +528,8 @@ export function IntakeFuseStep({
                       setImageCreativeMode: wizard.setImageCreativeMode,
                       onImageInputModeChange: wizard.onImageInputModeChange,
                       setExtraKitPhotos: wizard.setExtraKitPhotos,
-                      setReferenceCarouselSlideCount: wizard.setReferenceCarouselSlideCount,
+                      setReferenceCarouselSlideCount:
+                        wizard.setReferenceCarouselSlideCount,
                       setContentResearchApplyRef: wizard.setContentResearchApplyRef,
                       setCinematicSceneCount: wizard.onCinematicSceneCountChange,
                       onVideoCreativeModeChange: wizard.onVideoCreativeModeChange,
@@ -436,9 +537,37 @@ export function IntakeFuseStep({
                       setError: wizard.setError,
                     }}
                     onApplied={(_angle, _plan, result) => {
-                      setResearchNote(result?.message ?? m.studioAssistant.actionApplied);
+                      setResearchNote(
+                        result?.message ?? m.studioAssistant.actionApplied,
+                      );
                       if (result?.refs.videoAttached) wizard.setError(null);
                     }}
+                  />
+                  {wizard.pendingContentResearchPick ? (
+                    <p className="rounded-xl border border-violet-200 bg-violet-50 px-3 py-2.5 text-[13px] leading-snug text-violet-950">
+                      {fuse.researchSelectedBanner
+                        .replace(
+                          "{title}",
+                          wizard.pendingContentResearchPick.angle.title?.trim() ||
+                            wizard.pendingContentResearchPick.angle.hook?.trim() ||
+                            m.contentResearch.platforms[
+                              wizard.pendingContentResearchPick.plan.platform
+                            ] ||
+                            "—",
+                        )
+                        .replace(
+                          "{platform}",
+                          m.contentResearch.platforms[
+                            wizard.pendingContentResearchPick.plan.platform
+                          ] ??
+                            wizard.pendingContentResearchPick.plan.platformLabel,
+                        )}
+                    </p>
+                  ) : null}
+                  <ResearchAdaptCopyPanel
+                    pendingPick={wizard.pendingContentResearchPick}
+                    promoteTarget={promoteTarget}
+                    isConcept={isConcept}
                   />
                   {researchNote ? (
                     <p className="text-xs text-emerald-800">{researchNote}</p>
@@ -446,34 +575,31 @@ export function IntakeFuseStep({
                 </div>
               ) : null}
 
-              {activeTab === "direct" && !isConcept ? (
-                <div className="if-direct-card space-y-3">
-                  <h3 className="text-[15px] font-bold text-slate-900">{fuse.directTitle}</h3>
-                  <p className="text-[13px] leading-relaxed text-slate-600">
-                    {workflowMode === "video-only" ? fuse.videoDirectBody : fuse.directBody}
-                  </p>
-                  <ul className="space-y-2">
-                    {(workflowMode === "video-only"
-                      ? fuse.videoDirectBullets
-                      : fuse.directBullets
-                    ).map((line) => (
-                      <li key={line} className="if-tip-row">
-                        <span className="if-tip-bullet" aria-hidden>
-                          <svg viewBox="0 0 20 20" className="h-3 w-3" fill="currentColor">
-                            <path d="M8.2 13.6 4.9 10.3l1.2-1.2 2.1 2.1 5-5.1 1.2 1.2-6.2 6.3Z" />
-                          </svg>
-                        </span>
-                        <p className="text-[13px] text-slate-700">{line}</p>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
-
-              {activeTab === "direct" && isConcept ? (
-                <div className="space-y-2">
-                  <p className="text-[13px] text-slate-600">{fuse.assistantIntro}</p>
-                  <ConceptWizardPanel showHeadlineField />
+              {activeTab === "template" ? (
+                <div className="space-y-4">
+                  <IntakeTemplatePicker
+                    workflowMode={workflowMode}
+                    isConcept={isConcept}
+                    selectedMode={templateMode}
+                    onSelectDirect={onSelectDirectBlank}
+                    onSelectTemplateStyle={onSelectTemplateStyle}
+                  />
+                  {templateMode ? (
+                    isConcept ? (
+                      <div className="space-y-2">
+                        <p className="text-[13px] text-slate-600">
+                          {fuse.assistantIntro}
+                        </p>
+                        <ConceptWizardPanel showHeadlineField />
+                      </div>
+                    ) : (
+                      <ProductBriefAssistantPanel />
+                    )
+                  ) : (
+                    <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-[13px] text-slate-600">
+                      {fuse.templatePickHint}
+                    </p>
+                  )}
                 </div>
               ) : null}
             </div>
@@ -507,7 +633,9 @@ export function IntakeFuseStep({
                     </span>
                     <div className="min-w-0 pt-0.5">
                       <p className="text-[13px] font-bold text-slate-900">{item.title}</p>
-                      <p className="mt-0.5 text-[12px] leading-snug text-slate-500">{item.body}</p>
+                      <p className="mt-0.5 text-[12px] leading-snug text-slate-500">
+                        {item.body}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -528,7 +656,9 @@ export function IntakeFuseStep({
                   </svg>
                 </span>
                 <div className="min-w-0">
-                  <p className="text-[13px] font-bold text-slate-900">{fuse.tipSecure.title}</p>
+                  <p className="text-[13px] font-bold text-slate-900">
+                    {fuse.tipSecure.title}
+                  </p>
                   <p className="mt-0.5 text-[12px] leading-snug text-slate-500">
                     {fuse.tipSecure.body}
                   </p>
@@ -550,14 +680,13 @@ export function intakeTabFromPending(args: {
   pendingConceptSource?: ConceptSource;
   conceptSource?: ConceptSource | null;
 }): TabId | null {
-  const { isConcept, pendingIntakePath, intakePath, pendingConceptSource, conceptSource } = args;
+  const { isConcept, pendingIntakePath, intakePath, pendingConceptSource, conceptSource } =
+    args;
   if (isConcept) {
     const source = pendingConceptSource ?? conceptSource ?? null;
     if (source === "research") return "research";
-    if (source === "assistant") return "direct";
+    if (source === "assistant") return "template";
   }
   const path = pendingIntakePath ?? intakePath ?? null;
-  if (path === "research") return "research";
-  if (path === "direct") return "direct";
-  return null;
+  return intakeTabFromPath(path);
 }

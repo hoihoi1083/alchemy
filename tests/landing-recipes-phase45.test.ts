@@ -183,6 +183,8 @@ describe("landing-recipes", () => {
       videoUrl: null,
       promptExtra: "",
       contentResearchApplied: false,
+      contentResearchPending: false,
+      researchRemapBusy: false,
       shipItEligible: false,
       hasGeneratedImage: false,
       storyboardGridApproved: false,

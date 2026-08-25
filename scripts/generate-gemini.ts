@@ -82,7 +82,7 @@ async function main() {
   
   fal.config({ credentials: process.env.FAL_KEY });
   
-  const baseStyle = "A highly aesthetic Xiaohongshu (Little Red Book) style social media post graphic, elegant and minimalistic. High quality typography and clean layout. Center the text nicely.";
+  const baseStyle = "A highly aesthetic RedNote (RedNote) style social media post graphic, elegant and minimalistic. High quality typography and clean layout. Center the text nicely.";
   
   // Set 1: Crystal Beginner Guide (6 images)
   const set1 = [
