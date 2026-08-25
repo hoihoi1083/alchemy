@@ -984,6 +984,38 @@ export function PreGenerateSetupPanel({
         ? pg.directHint
         : pg.hint;
 
+  const researchRef = wizard.contentResearchApplyRef;
+  const visualStyleLabel =
+    m.wizard.visualStyles[
+      wizard.visualStyleId as keyof typeof m.wizard.visualStyles
+    ];
+  const intakeStyleName =
+    intakePath === "research"
+      ? (() => {
+          const platform =
+            researchRef?.plan.platformLabel ||
+            (researchRef?.plan.platform
+              ? m.contentResearch.platforms[researchRef.plan.platform]
+              : null) ||
+            "research";
+          const title =
+            researchRef?.angle.title?.trim() ||
+            researchRef?.angle.hook?.trim() ||
+            "";
+          return title ? `${platform} · ${title}` : platform;
+        })()
+      : visualStyleLabel?.title ??
+        visualStyleLabel?.name ??
+        getVisualStyle(wizard.visualStyleId).id.replace(/-/g, " ");
+  const intakePreviewSrc =
+    intakePath === "research"
+      ? researchRef?.angle.sourceCoverImageUrl?.trim() ||
+        researchRef?.angle.sourceImageUrls?.[0]?.trim() ||
+        null
+      : intakePath === "direct" && intakeTemplateMode === "template"
+        ? getVisualStyle(wizard.visualStyleId).previewSrc
+        : null;
+
   // If research already applied but hook/subline were left blank (stale session /
   // older concept branch), backfill the same way product research does.
   const researchCopyBackfillKeyRef = useRef<string | null>(null);
@@ -1194,52 +1226,41 @@ export function PreGenerateSetupPanel({
         <p className="mt-1.5 max-w-2xl text-sm text-slate-500">{setupHint}</p>
 
         {intakePath ? (
-          <div className="mt-3 max-w-2xl rounded-xl border border-violet-200 bg-violet-50/80 px-3.5 py-3 text-sm text-violet-950">
-            <p className="font-semibold">{pg.fromIntakeTitle}</p>
-            <ul className="mt-1.5 space-y-1 text-[13px] leading-snug text-violet-900/90">
-              <li>
-                {intakePath === "research"
-                  ? pg.fromIntakePathResearch
-                  : intakeTemplateMode === "template"
-                    ? pg.fromIntakePathTemplate
-                    : pg.fromIntakePathDirect}
-              </li>
-              <li>
-                {pg.fromIntakeStyle.replace(
-                  "{name}",
-                  (() => {
-                    if (intakePath === "research") {
-                      const ref = wizard.contentResearchApplyRef;
-                      const platform =
-                        ref?.plan.platformLabel ||
-                        (ref?.plan.platform
-                          ? m.contentResearch.platforms[ref.plan.platform]
-                          : null) ||
-                        "research";
-                      const title =
-                        ref?.angle.title?.trim() ||
-                        ref?.angle.hook?.trim() ||
-                        "";
-                      return title ? `${platform} · ${title}` : platform;
-                    }
-                    return getVisualStyle(wizard.visualStyleId).id.replace(
-                      /-/g,
-                      " ",
-                    );
-                  })(),
-                )}
-              </li>
-              {wizard.headline.trim() ? (
+          <div className="mt-3 flex max-w-2xl gap-3 rounded-xl border border-violet-200 bg-violet-50/80 px-3.5 py-3 text-sm text-violet-950">
+            {intakePreviewSrc ? (
+              // eslint-disable-next-line @next/next/no-img-element -- small summary thumb
+              <img
+                src={intakePreviewSrc}
+                alt=""
+                className="h-[4.5rem] w-[4.5rem] shrink-0 rounded-lg border border-violet-200/80 bg-white object-cover shadow-sm"
+              />
+            ) : null}
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold">{pg.fromIntakeTitle}</p>
+              <ul className="mt-1.5 space-y-1 text-[13px] leading-snug text-violet-900/90">
                 <li>
-                  {pg.fromIntakeHeadline.replace("{text}", wizard.headline.trim())}
+                  {intakePath === "research"
+                    ? pg.fromIntakePathResearch
+                    : intakeTemplateMode === "template"
+                      ? pg.fromIntakePathTemplate
+                      : pg.fromIntakePathDirect}
                 </li>
-              ) : null}
-              <li className="font-medium text-violet-800">
-                {!isConcept && !wizard.hasProductPhotoLock
-                  ? pg.fromIntakeNeedPhoto
-                  : pg.fromIntakeReadyMaterials}
-              </li>
-            </ul>
+                <li>{pg.fromIntakeStyle.replace("{name}", intakeStyleName)}</li>
+                {wizard.headline.trim() ? (
+                  <li>
+                    {pg.fromIntakeHeadline.replace(
+                      "{text}",
+                      wizard.headline.trim(),
+                    )}
+                  </li>
+                ) : null}
+                <li className="font-medium text-violet-800">
+                  {!isConcept && !wizard.hasProductPhotoLock
+                    ? pg.fromIntakeNeedPhoto
+                    : pg.fromIntakeReadyMaterials}
+                </li>
+              </ul>
+            </div>
           </div>
         ) : null}
 

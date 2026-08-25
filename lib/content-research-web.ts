@@ -145,10 +145,10 @@ function isJustOneGatewayOutage(error: string): boolean {
 function formatJustOneApiFallbackWarning(platform: ContentPlatform, error: string): string {
   const lower = error.toLowerCase();
   if (isJustOneGatewayOutage(error)) {
-    return `Just One API 伺服器暫時故障（HTTP 502 / nginx）— 呢個係 Just One 端問題，唔係本 app。已改用公開網頁搜尋（無 RedNote 貼文封面）。請等 10–30 分鐘再試，或聯繫 Just One API 客服。`;
+    return `Just One API 伺服器暫時故障（HTTP 502 / nginx）— 呢個係 Just One 端問題，唔係本 app。已改用公開網頁搜尋（無小紅書貼文封面）。請等 10–30 分鐘再試，或聯繫 Just One API 客服。`;
   }
   if (lower.includes("permission") || lower.includes("600")) {
-    return `Just One API 未開通 ${platform} 搜尋權限（code 600，不是餘額問題）。你已有充值也仍會出現此錯誤 — 請到 dashboard 的 API 列表開通「RedNote note search」等 endpoint，或聯繫客服開通。目前改用公開網頁搜尋，無貼文封面。`;
+    return `Just One API 未開通 ${platform} 搜尋權限（code 600，不是餘額問題）。你已有充值也仍會出現此錯誤 — 請到 dashboard 的 API 列表開通「小紅書 note search」等 endpoint，或聯繫客服開通。目前改用公開網頁搜尋，無貼文封面。`;
   }
   if (lower.includes("balance") || lower.includes("601")) {
     return `Just One API 餘額不足（code 601）— 請到 dashboard 充值。目前改用公開網頁搜尋，無貼文封面。`;
@@ -157,7 +157,7 @@ function formatJustOneApiFallbackWarning(platform: ContentPlatform, error: strin
     return `Just One API token 用量上限已滿（code 602）— 請在 dashboard 提高 token 預算。目前改用公開網頁搜尋，無貼文封面。`;
   }
   if (/collect failed|send request again/i.test(error)) {
-    return `Just One API RedNote 採集暫時失敗（${error}）— 通常係短暫限流，請等 30 秒再搜尋；已改用公開網頁搜尋，無貼文封面。`;
+    return `Just One API 小紅書採集暫時失敗（${error}）— 通常係短暫限流，請等 30 秒再搜尋；已改用公開網頁搜尋，無貼文封面。`;
   }
   return `Just One API 失敗（${error}）— 已改用公開網頁搜尋，無貼文封面。`;
 }

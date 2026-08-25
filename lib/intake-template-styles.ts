@@ -1,7 +1,8 @@
 /**
  * Step 4 Template tab options — "template" means the style the user wants.
- * Video / combined → shot recipes (Quick Ad, Blockbuster, H3 paths…).
- * Image-only → look styles, excluding paper-layout + storyboard-video.
+ * Video-only → shot recipes (Quick Ad, Blockbuster, H3 paths…).
+ * Image-only + combined (storyboard 圖+片) → look styles for stills
+ *   (excluding paper-layout + storyboard-video card; combined IS the storyboard path).
  */
 
 import { videoModePreviewSrc } from "@/lib/creative-workflow";
@@ -22,6 +23,16 @@ import type { WorkflowMode } from "@/lib/workflow-mode";
 export const INTAKE_TEMPLATE_EXCLUDED_VISUAL_STYLES = new Set<VisualStyleId>([
   "paper-layout",
   "storyboard-video",
+]);
+
+/**
+ * Product (physical) image Template — hide video/brand paths that belong
+ * elsewhere (UGC = video; brand-fit / brand-campaign = brand-analysis flows).
+ */
+export const INTAKE_TEMPLATE_EXCLUDED_PHYSICAL_IMAGE = new Set<VisualStyleId>([
+  "ugc-presenter",
+  "brand-fit",
+  "brand-campaign",
 ]);
 
 export type IntakeTemplateCard = {
@@ -49,8 +60,9 @@ export type IntakeTemplateCopy = {
   >;
 };
 
+/** Shot recipes only for pure video — combined/storyboard uses look styles for scene stills. */
 export function intakeShowsVideoRecipes(workflowMode: WorkflowMode): boolean {
-  return workflowMode === "video-only" || workflowMode === "combined";
+  return workflowMode === "video-only";
 }
 
 export function intakeImageVisualStyleIds(
@@ -59,7 +71,12 @@ export function intakeImageVisualStyleIds(
 ): VisualStyleId[] {
   return visualStylesForWorkflow(workflowMode, promotionMode)
     .map((s) => s.id)
-    .filter((id) => !INTAKE_TEMPLATE_EXCLUDED_VISUAL_STYLES.has(id));
+    .filter((id) => !INTAKE_TEMPLATE_EXCLUDED_VISUAL_STYLES.has(id))
+    .filter(
+      (id) =>
+        promotionMode !== "physical" ||
+        !INTAKE_TEMPLATE_EXCLUDED_PHYSICAL_IMAGE.has(id),
+    );
 }
 
 /** Product video recipe cards — same set as PreVideoSetupPanel productStyleOptions. */

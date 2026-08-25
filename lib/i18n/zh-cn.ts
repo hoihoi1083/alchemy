@@ -354,7 +354,7 @@ export const zhCn = {
       },
       {
         title: "几分钟就出广告位",
-        body: "做出适合 IG、Facebook、TikTok、RedNote的静帧，再在画布微调。",
+        body: "做出适合 IG、Facebook、TikTok、小红书的静帧，再在画布微调。",
       },
     ],
     transformCta: "帮我变产品图",
@@ -896,7 +896,7 @@ export const zhCn = {
       },
       {
         q: "可以创作哪些内容？",
-        a: "产品广告、促销横幅、上新帖、Instagram／Facebook 素材、RedNote 帖子、Reels 短视频、服务推广、评价口碑、教学轮播等。",
+        a: "产品广告、促销横幅、上新帖、Instagram／Facebook 素材、小红书 帖子、Reels 短视频、服务推广、评价口碑、教学轮播等。",
       },
       {
         q: "可以做短视频吗？",
@@ -949,7 +949,7 @@ export const zhCn = {
       { title: "添加文字", body: "完美标题、CTA 与文案" },
       { title: "添加 Logo", body: "保持品牌一致" },
       { title: "添加图表", body: "讲解卖点、价格或步骤" },
-      { title: "导出尺寸", body: "IG、FB、RedNote、TikTok 等" },
+      { title: "导出尺寸", body: "IG、FB、小红书、TikTok 等" },
     ],
 
     canvasMockTitle: "未命名设计",
@@ -993,7 +993,7 @@ export const zhCn = {
 
     tplCapFb: "Facebook 广告",
     tplCapIg: "Instagram 帖子",
-    tplCapXhs: "RedNote 帖子",
+    tplCapXhs: "小红书 帖子",
     tplCapProduct: "产品广告",
     tplCapReel: "Reels / 视频",
     tplCapService: "服务业",
@@ -1005,7 +1005,7 @@ export const zhCn = {
     tplCardSunscreen: "促销优惠",
     tplPlatformIg: "Instagram",
     tplPlatformFb: "Facebook",
-    tplPlatformXhs: "RedNote",
+    tplPlatformXhs: "小红书",
     tplPlatformTiktok: "TikTok",
     tplPlatformX: "X",
     tplFormatImage: "图片",
@@ -1040,7 +1040,7 @@ export const zhCn = {
     tplAdRealEstate: "楼盘导览片 — 将概念直接导出",
     tplTabFacebook: "Facebook Ads",
     tplTabInstagram: "Instagram",
-    tplTabXhs: "RedNote",
+    tplTabXhs: "小红书",
   },
 
   pricing: {
@@ -1151,7 +1151,7 @@ export const zhCn = {
       },
       {
         q: "支持哪些平台？",
-        body: "导出尺寸覆盖常见 Instagram、Facebook、TikTok、RedNote、YouTube Shorts 及一般网站／社交广告比例。各平台发布需在你自己的账号完成。",
+        body: "导出尺寸覆盖常见 Instagram、Facebook、TikTok、小红书、YouTube Shorts 及一般网站／社交广告比例。各平台发布需在你自己的账号完成。",
       },
       {
         q: "适合代理或团队吗？",
@@ -1360,7 +1360,7 @@ export const zhCn = {
       nextStepsUnset: [
         { title: "设置内容", body: "填写产品信息、上传素材并选择视觉风格。", icon: "setup" },
         { title: "生成素材", body: "AI 将根据你的设置生成图片或视频。", icon: "generate" },
-        { title: "下载使用", body: "下载适用于RedNote、Instagram、Facebook 和 TikTok 的素材。", icon: "done" },
+        { title: "下载使用", body: "下载适用于小红书、Instagram、Facebook 和 TikTok 的素材。", icon: "done" },
       ],
       nextStepsImage: [
         { title: "设置内容", body: "填写内容信息并上传产品图片。", icon: "setup" },
@@ -1646,7 +1646,7 @@ export const zhCn = {
     infoPosterBulletsPlaceholder: "每行一个卖点，例如：\n招财聚气\n日常配戴百搭\n低调有质感",
     designedPosterTechniqueTitle: "设计商业海报（已内建）",
     designedPosterTechniqueIntro:
-      "RedNote／IG feed 海报文法 — 产品／场景主视觉＋设计字排（任何品类，不限食品；不是白底目录 cutout）：",
+      "小红书／IG feed 海报文法 — 产品／场景主视觉＋设计字排（任何品类，不限食品；不是白底目录 cutout）：",
     designedPosterTechniqueSteps: [
       "主视觉摄影 — 左上柔光、浅景深、场景跟这件产品品类走",
       "你填的标题＋标语原句上图（填什么就画什么）",
@@ -3737,7 +3737,7 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
     },
     "designed-poster": {
       name: "设计商业海报",
-      description: "主视觉＋你填的标题和标语 — RedNote／IG feed",
+      description: "主视觉＋你填的标题和标语 — 小红书／IG feed",
     },
     "parts-poster": {
       name: "零件拆解海报",
@@ -4275,7 +4275,7 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
     searchKeywordPlaceholder: "例如：水晶手串、护肤流程…",
     platformsLabel: "搜索平台",
     platformsHint:
-      "静图广告优先用 RedNote 或 Instagram。Facebook 也可，适合有清晰公开封面的帖。",
+      "静图广告优先用 小红书 或 Instagram。Facebook 也可，适合有清晰公开封面的帖。",
     platformPreferredBadge: "推荐",
     platformSecondaryBadge: "可用",
     promoteProductLabel: "你要推广的产品",
@@ -4287,7 +4287,7 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
     directPostBadge: "快捷入口",
     directPostTitle: "或粘贴你想跟的参考帖",
     directPostHint:
-      "已有目标帖就不用搜关键词 — 支持 xhslink、RedNote explore、Instagram /p/ 或 /reel/、以及公开 Facebook 帖／视频链接（facebook.com/{pageId}/posts/… 或 /videos/…）。实体产品请先填上方产品名称。xhslink 失效时，请在 App 内「分享 → 复制链接」粘贴完整链接。",
+      "已有目标帖就不用搜关键词 — 支持 xhslink、小红书 explore、Instagram /p/ 或 /reel/、以及公开 Facebook 帖／视频链接（facebook.com/{pageId}/posts/… 或 /videos/…）。实体产品请先填上方产品名称。xhslink 失效时，请在 App 内「分享 → 复制链接」粘贴完整链接。",
     directPostUrlLabel: "参考帖链接",
     directPostUrlPlaceholder: "例如 xhslink / Instagram reel / facebook.com/{id}/posts/…",
     directPostBtn: "用这篇帖",
@@ -4295,7 +4295,7 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
     directPostFailed: "无法加载此帖，请确认链接公开有效。",
     busy: "搜索网页并分析中…",
     failed: "内容研究失败，请重试。",
-    searchCooldown: "RedNote API 需要冷却 — 请等 {seconds} 秒再搜索。",
+    searchCooldown: "小红书 API 需要冷却 — 请等 {seconds} 秒再搜索。",
     topicRequired: "请先输入搜索关键词。",
     topPicksTitle: "为你改写的 3 个方向（参考爆款）",
     inspiredBy: "参考爆款",
@@ -4310,18 +4310,18 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
     researchMediaImage: "搜索范围：只找图文／轮播帖（配合上方「图片」模式）。",
     researchMediaVideo: "搜索范围：只找视频／Reels（配合上方「视频」模式）。",
     researchMediaBoth: "搜索范围：全部帖子类型（配合「图片＋视频」模式）。",
-    tiktokImageWarning: "TikTok 只有视频 — 图文研究请选RedNote或 Instagram，或改选「视频」模式。",
+    tiktokImageWarning: "TikTok 只有视频 — 图文研究请选小红书或 Instagram，或改选「视频」模式。",
     platformSearchHintXhs:
-      "RedNote最适合中文品类词（如 维他命C精华、护肤流程）— 直接搜笔记，有封面可选风格。",
+      "小红书最适合中文品类词（如 维他命C精华、护肤流程）— 直接搜笔记，有封面可选风格。",
     platformSearchHintIgImage:
       "Instagram 图文模式用 hashtag 搜索 — 英文标签最稳（vitaminc、skincare、serum）。",
     platformSearchHintIgHashtags: (tags: string) => `将搜索：${tags}`,
     platformSearchHintIgCjk:
-      "中文品类词已转成英文标签；若结果仍少，可改打英文或换RedNote。",
+      "中文品类词已转成英文标签；若结果仍少，可改打英文或换小红书。",
     platformSearchHintIgVideo:
       "Instagram 视频模式用关键词搜 Reels（中英文皆可，如 vitamin c serum）。",
     platformSearchHintFacebook:
-      "备选：可贴公开 /posts/ 或 /videos/ 链接，或用关键词搜。静图广告请优先试 RedNote 或 Instagram。",
+      "备选：可贴公开 /posts/ 或 /videos/ 链接，或用关键词搜。静图广告请优先试 小红书 或 Instagram。",
     platformSearchHintTiktok:
       "TikTok 只返回视频 — 用短句关键词（如 skincare routine、开箱）。",
     useAngle: "选择此风格",
@@ -4329,7 +4329,7 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
     selectedLabel: "已选择 ✓",
     selectedContinueHint: "已选择 — 点底部「继续」即可套用此风格。",
     resultTitle: "AI 研究结果（推荐）",
-    resultSubtitle: "根据 RedNote、Instagram、Facebook 热门帖整理。",
+    resultSubtitle: "根据 小红书、Instagram、Facebook 热门帖整理。",
     resultSubtitleForPlatform: (platform: string) =>
       `根据本次搜索的${platform}热门帖整理。`,
     styleSummaryLabel: "风格摘要",
@@ -4365,7 +4365,7 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
     researchHiddenNoCover: "已隐藏 {count} 个无法加载封面的帖子。",
     noResultsTitle: "在 {platform} 没有可用帖子",
     noResultsBody:
-      "换个关键词，或换平台。静图广告优先试 RedNote 或 Instagram。",
+      "换个关键词，或换平台。静图广告优先试 小红书 或 Instagram。",
     noResultsHintIg: "Instagram 用英文标签通常比中文短语更好出结果。",
     noResultsHintFb:
       "可试品类关键词，或粘贴公开的 facebook.com/…/posts/…、/videos/… 链接。",
@@ -4498,7 +4498,7 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
       pickTabHint: "先选一个分页再继续 — 研究或模板（不可同时）。",
       tipTitle: "参考风格，不抄內容。",
       tipIntro:
-        "AI 会分析排版、语气、色调和构图 — 不会抄帖子內容或品牌。静图广告优先 RedNote／Instagram。Facebook 作备选（需清晰公开封面或帖链接）。",
+        "AI 会分析排版、语气、色调和构图 — 不会抄帖子內容或品牌。静图广告优先 小红书／Instagram。Facebook 作备选（需清晰公开封面或帖链接）。",
       tip1: {
         title: "效果更好",
         body: "关键词写得具體一点，研究结果会更接近你想要的风格。",
@@ -4536,7 +4536,7 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
       templateTipTitle: "模板或直接创作",
       templateTipIntro: "选风格预设，或「直接创作」（无模板）。再用助手填写文案栏位。",
       templateIntro:
-        "模板＝你想要的风格。视频选运镜配方（快速广告、大片级出场…）；图片选画面风格。也可选直接创作。",
+        "模板＝你想要的风格。纯视频选运镜配方（快速广告、大片级出场…）；图片或故事分镜（图+片）选画面风格。也可选直接创作。",
       templateDirectTitle: "直接创作（无模板）",
       templateDirectBody: "空白排版 — 用助手填写主标题与辅助文案。",
       templatePickHint: "请先在上方选风格模板或直接创作，再填写文案。",

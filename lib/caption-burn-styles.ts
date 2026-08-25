@@ -43,7 +43,7 @@ export const CAPTION_STYLE_PRESETS: Record<
   },
   "xhs-bold": {
     labelEn: "XHS bold yellow headline",
-    labelZh: "RedNote bold yellow title",
+    labelZh: "小紅書 bold yellow title",
     fill: "#FFE566",
     stroke: "#1a1a1a",
     fontWeight: 800,

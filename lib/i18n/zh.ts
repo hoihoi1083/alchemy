@@ -384,7 +384,7 @@ export const zh = {
 			},
 			{
 				title: "幾分鐘就出廣告位",
-				body: "做出適合 IG、Facebook、TikTok、RedNote嘅靜態圖，再喺畫布微調。",
+				body: "做出適合 IG、Facebook、TikTok、小紅書嘅靜態圖，再喺畫布微調。",
 			},
 		],
 		transformCta: "幫我變產品圖",
@@ -988,7 +988,7 @@ export const zh = {
 			},
 			{
 				q: "可以整啲咩內容？",
-				a: "產品廣告、促銷橫額、上新帖、Instagram／Facebook 素材、RedNote 帖文、Reels 短片、服務推廣、評價口碑、教學輪播等。",
+				a: "產品廣告、促銷橫額、上新帖、Instagram／Facebook 素材、小紅書 帖文、Reels 短片、服務推廣、評價口碑、教學輪播等。",
 			},
 			{
 				q: "可以整短片嗎？",
@@ -1035,7 +1035,7 @@ export const zh = {
 			{ title: "加文字", body: "完美標題、CTA 同文案" },
 			{ title: "加 Logo", body: "保持品牌一致" },
 			{ title: "加圖表", body: "講解賣點、價錢或步驟" },
-			{ title: "導出尺寸", body: "IG、FB、RedNote、TikTok 等" },
+			{ title: "導出尺寸", body: "IG、FB、小紅書、TikTok 等" },
 		],
 
 		canvasMockTitle: "未命名設計",
@@ -1103,7 +1103,7 @@ export const zh = {
 
 		tplCapFb: "Facebook 廣告",
 		tplCapIg: "Instagram 帖文",
-		tplCapXhs: "RedNote 帖文",
+		tplCapXhs: "小紅書 帖文",
 		tplCapProduct: "產品廣告",
 		tplCapReel: "Reels / 影片",
 		tplCapService: "服務業",
@@ -1115,7 +1115,7 @@ export const zh = {
 		tplCardSunscreen: "促銷優惠",
 		tplPlatformIg: "Instagram",
 		tplPlatformFb: "Facebook",
-		tplPlatformXhs: "RedNote",
+		tplPlatformXhs: "小紅書",
 		tplPlatformTiktok: "TikTok",
 		tplPlatformX: "X",
 		tplFormatImage: "圖片",
@@ -1150,7 +1150,7 @@ export const zh = {
 		tplAdRealEstate: "樓盤導覽片 — 將概念直接導出",
 		tplTabFacebook: "Facebook Ads",
 		tplTabInstagram: "Instagram",
-		tplTabXhs: "RedNote",
+		tplTabXhs: "小紅書",
 	},
 
 	pricing: {
@@ -1261,7 +1261,7 @@ export const zh = {
 			},
 			{
 				q: "支援邊啲平台？",
-				body: "導出尺寸覆蓋常見 Instagram、Facebook、TikTok、RedNote、YouTube Shorts 同一般網站／社交廣告比例。各平台發佈要喺你自己嘅帳號完成。",
+				body: "導出尺寸覆蓋常見 Instagram、Facebook、TikTok、小紅書、YouTube Shorts 同一般網站／社交廣告比例。各平台發佈要喺你自己嘅帳號完成。",
 			},
 			{
 				q: "適合代理或團隊嗎？",
@@ -1907,7 +1907,7 @@ export const zh = {
 			"每行一個賣點，例如：\n招財聚氣\n日常配戴百搭\n低調有質感",
 		designedPosterTechniqueTitle: "設計商業海報（已內建）",
 		designedPosterTechniqueIntro:
-			"RedNote／IG feed 海報文法 — 產品／場景主視覺＋設計字排（任何品類，唔限食品；唔係白紙目錄 cutout）：",
+			"小紅書／IG feed 海報文法 — 產品／場景主視覺＋設計字排（任何品類，唔限食品；唔係白紙目錄 cutout）：",
 		designedPosterTechniqueSteps: [
 			"主視覺攝影 — 左上柔光、淺景深、場景跟呢件產品品類走",
 			"你填嘅標題＋標語原句上圖（填咩就畫咩）",
@@ -4124,7 +4124,7 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 		},
 		"designed-poster": {
 			name: "設計商業海報",
-			description: "主視覺＋你填嘅標題同標語 — RedNote／IG feed",
+			description: "主視覺＋你填嘅標題同標語 — 小紅書／IG feed",
 		},
 		"parts-poster": {
 			name: "零件拆解海報",
@@ -4694,7 +4694,7 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 		searchKeywordPlaceholder: "例如：水晶手串、護膚流程…",
 		platformsLabel: "搜尋平台",
 		platformsHint:
-			"靜圖廣告優先用 RedNote 或 Instagram。Facebook 亦可，適合有清晰公開封面嘅帖。",
+			"靜圖廣告優先用 小紅書 或 Instagram。Facebook 亦可，適合有清晰公開封面嘅帖。",
 		platformPreferredBadge: "推薦",
 		platformSecondaryBadge: "可用",
 		promoteProductLabel: "你要推廣嘅產品",
@@ -4707,7 +4707,7 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 		directPostBadge: "快捷入口",
 		directPostTitle: "或貼上你想跟嘅參考帖",
 		directPostHint:
-			"已有目標帖就唔使搜關鍵字 — 支援 xhslink、RedNote explore、Instagram /p/ 或 /reel/、同公開 Facebook 帖／片連結（facebook.com/{pageId}/posts/… 或 /videos/…）。實體產品請先填上方產品名稱。xhslink 失效時，請喺 App 內「分享 → 複製連結」貼完整連結。",
+			"已有目標帖就唔使搜關鍵字 — 支援 xhslink、小紅書 explore、Instagram /p/ 或 /reel/、同公開 Facebook 帖／片連結（facebook.com/{pageId}/posts/… 或 /videos/…）。實體產品請先填上方產品名稱。xhslink 失效時，請喺 App 內「分享 → 複製連結」貼完整連結。",
 		directPostUrlLabel: "參考帖連結",
 		directPostUrlPlaceholder:
 			"例如 xhslink / Instagram reel / facebook.com/{id}/posts/…",
@@ -4716,7 +4716,7 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 		directPostFailed: "無法載入此帖，請確認連結公開有效。",
 		busy: "搜尋網頁並分析中…",
 		failed: "內容研究失敗，請再試。",
-		searchCooldown: "RedNote API 需要冷卻 — 請等 {seconds} 秒再搜尋。",
+		searchCooldown: "小紅書 API 需要冷卻 — 請等 {seconds} 秒再搜尋。",
 		topicRequired: "請先輸入搜尋關鍵字。",
 		topPicksTitle: "為你改寫嘅 3 個方向（參考爆款）",
 		inspiredBy: "參考爆款",
@@ -4735,18 +4735,18 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 			"搜尋範圍：只找影片／Reels（配合上方「影片」模式）。",
 		researchMediaBoth: "搜尋範圍：全部帖文類型（配合「圖片＋影片」模式）。",
 		tiktokImageWarning:
-			"TikTok 只有影片 — 圖文研究請選RedNote或 Instagram，或改選「影片」模式。",
+			"TikTok 只有影片 — 圖文研究請選小紅書或 Instagram，或改選「影片」模式。",
 		platformSearchHintXhs:
-			"RedNote最適合中文品類詞（如 維他命C精華、護膚流程）— 直接搜筆記，有封面可揀風格。",
+			"小紅書最適合中文品類詞（如 維他命C精華、護膚流程）— 直接搜筆記，有封面可揀風格。",
 		platformSearchHintIgImage:
 			"Instagram 圖文模式用 hashtag 搜 — 英文標籤最穩（vitaminc、skincare、serum）。",
 		platformSearchHintIgHashtags: (tags: string) => `將搜尋：${tags}`,
 		platformSearchHintIgCjk:
-			"中文品類詞已轉成英文標籤；結果仍少就改打英文或換RedNote。",
+			"中文品類詞已轉成英文標籤；結果仍少就改打英文或換小紅書。",
 		platformSearchHintIgVideo:
 			"Instagram 影片模式用關鍵詞搜 Reels（中英文都得，如 vitamin c serum）。",
 		platformSearchHintFacebook:
-			"備選：可貼公開 /posts/ 或 /videos/ 連結，或用關鍵詞搜。靜圖廣告請優先試 RedNote 或 Instagram。",
+			"備選：可貼公開 /posts/ 或 /videos/ 連結，或用關鍵詞搜。靜圖廣告請優先試 小紅書 或 Instagram。",
 		platformSearchHintTiktok:
 			"TikTok 只返回影片 — 用短句關鍵詞（skincare routine、開箱）。",
 		useAngle: "用呢個方向",
@@ -4754,7 +4754,7 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 		selectedLabel: "已選擇 ✓",
 		selectedContinueHint: "已選擇 — 撳底部「繼續」就會套用呢個風格。",
 		resultTitle: "AI 研究結果（推薦）",
-		resultSubtitle: "根據 RedNote、Instagram、Facebook 熱門帖整理。",
+		resultSubtitle: "根據 小紅書、Instagram、Facebook 熱門帖整理。",
 		resultSubtitleForPlatform: (platform: string) =>
 			`根據今次搜尋嘅${platform}熱門帖整理。`,
 		styleSummaryLabel: "風格摘要",
@@ -4791,7 +4791,7 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 		researchHiddenNoCover: "已隱藏 {count} 個無法載入封面嘅帖文。",
 		noResultsTitle: "喺 {platform} 冇可用帖",
 		noResultsBody:
-			"換個關鍵詞，或者換平台。靜圖廣告優先試 RedNote 或 Instagram。",
+			"換個關鍵詞，或者換平台。靜圖廣告優先試 小紅書 或 Instagram。",
 		noResultsHintIg: "Instagram 用英文標籤通常好過中文短語。",
 		noResultsHintFb:
 			"可試品類關鍵詞，或者貼公開 facebook.com/…/posts/…、/videos/… 連結。",
@@ -4929,7 +4929,7 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
       pickTabHint: "先選一個分頁再繼續 — 研究或模板（唔可以同時）。",
       tipTitle: "參考風格，不抄內容。",
       tipIntro:
-        "AI 會分析排版、語氣、色調和構圖 — 唔會抄帖子內容或品牌。靜圖廣告優先 RedNote／Instagram。Facebook 作備選（要清晰公開封面或帖連結）。",
+        "AI 會分析排版、語氣、色調和構圖 — 唔會抄帖子內容或品牌。靜圖廣告優先 小紅書／Instagram。Facebook 作備選（要清晰公開封面或帖連結）。",
       tip1: {
         title: "效果更好",
         body: "關鍵詞寫得具體一點，研究結果會更接近你想要的風格。",
@@ -4967,7 +4967,7 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
       templateTipTitle: "模板或直接創作",
       templateTipIntro: "選風格預設，或「直接創作」（無模板）。再用助手填寫文案欄位。",
       templateIntro:
-        "模板＝你想要的風格。影片選運鏡配方（快速廣告、大片級出場…）；圖片選畫面風格。也可選直接創作。",
+        "模板＝你想要的風格。純影片選運鏡配方（快速廣告、大片級出場…）；圖片或故事分鏡（圖+片）選畫面風格。也可選直接創作。",
       templateDirectTitle: "直接創作（無模板）",
       templateDirectBody: "空白排版 — 用助手填寫主標題與輔助文案。",
       templatePickHint: "請先在上方選風格模板或直接創作，再填寫文案。",

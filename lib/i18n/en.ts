@@ -5486,7 +5486,7 @@ export const en = {
 			templateTipIntro:
 				"Pick a style preset, or Direct (no template). Then let the assistant fill your copy fields.",
 			templateIntro:
-				"Template = the style you want. For video, pick a shot recipe (Quick Ad, Blockbuster…). For image, pick a look. Or use Direct with no preset.",
+				"Template = the style you want. Video-only: pick a shot recipe (Quick Ad, Blockbuster…). Image or storyboard (圖+片): pick a look for the stills. Or use Direct with no preset.",
 			templateDirectTitle: "Direct (no template)",
 			templateDirectBody: "Blank layout — fill hook and supporting copy with the assistant.",
 			templatePickHint: "Select a style template or Direct above, then fill your copy fields.",

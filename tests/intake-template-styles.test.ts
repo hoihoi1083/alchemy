@@ -46,17 +46,22 @@ const copyStub = {
 };
 
 describe("intake-template-styles", () => {
-  it("uses video recipes for video-only and combined", () => {
+  it("uses video recipes only for video-only (not combined/storyboard)", () => {
     assert.equal(intakeShowsVideoRecipes("video-only"), true);
-    assert.equal(intakeShowsVideoRecipes("combined"), true);
+    assert.equal(intakeShowsVideoRecipes("combined"), false);
     assert.equal(intakeShowsVideoRecipes("image-only"), false);
   });
 
-  it("excludes paper-layout and storyboard-video from image Template cards", () => {
+  it("excludes paper/storyboard and product-only brand/UGC from image Template", () => {
     const ids = intakeImageVisualStyleIds("image-only", "physical");
     assert.ok(!ids.includes("paper-layout"));
     assert.ok(!ids.includes("storyboard-video"));
+    assert.ok(!ids.includes("ugc-presenter"));
+    assert.ok(!ids.includes("brand-fit"));
+    assert.ok(!ids.includes("brand-campaign"));
     assert.ok(ids.includes("product"));
+    assert.ok(ids.includes("info-poster"));
+    assert.ok(ids.includes("designed-poster"));
     assert.ok(INTAKE_TEMPLATE_EXCLUDED_VISUAL_STYLES.has("paper-layout"));
     assert.ok(INTAKE_TEMPLATE_EXCLUDED_VISUAL_STYLES.has("storyboard-video"));
   });
@@ -75,7 +80,20 @@ describe("intake-template-styles", () => {
     assert.ok(!cards.some((c) => c.id === "storyboard-video"));
   });
 
-  it("builds image Template cards without paper/storyboard", () => {
+  it("builds combined/storyboard Template as look styles, not shot recipes", () => {
+    const cards = buildIntakeTemplateCards({
+      workflowMode: "combined",
+      isConcept: false,
+      copy: copyStub,
+    });
+    assert.ok(cards.every((c) => c.kind === "visual"));
+    assert.ok(cards.some((c) => c.id === "product"));
+    assert.ok(!cards.some((c) => c.id === "product_promo"));
+    assert.ok(!cards.some((c) => c.id === "blockbuster"));
+    assert.ok(!cards.some((c) => c.id === "ugc-presenter"));
+  });
+
+  it("builds image Template cards without paper/storyboard/UGC/brand", () => {
     const cards = buildIntakeTemplateCards({
       workflowMode: "image-only",
       isConcept: false,
@@ -84,6 +102,9 @@ describe("intake-template-styles", () => {
     assert.ok(cards.every((c) => c.kind === "visual"));
     assert.ok(!cards.some((c) => c.id === "paper-layout"));
     assert.ok(!cards.some((c) => c.id === "storyboard-video"));
+    assert.ok(!cards.some((c) => c.id === "ugc-presenter"));
+    assert.ok(!cards.some((c) => c.id === "brand-fit"));
+    assert.ok(!cards.some((c) => c.id === "brand-campaign"));
   });
 });
 

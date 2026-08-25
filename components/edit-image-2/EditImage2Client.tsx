@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Stage,
@@ -8,20 +9,41 @@ import {
   Transformer,
   Text as KonvaText,
   Rect,
+  Circle,
+  Line,
 } from "react-konva";
 import type Konva from "konva";
 import type { Stage as StageType } from "konva/lib/Stage";
+import {
+  DEFAULT_BRAND_KIT,
+  hydrateBrandKitFromCloud,
+  loadBrandKitFromStorage,
+  type BrandKit,
+} from "@/lib/brand-kit";
+import {
+  blurPunchBackground,
+  buildBrushMaskCanvas,
+  cutoutFromSourceAndMask,
+  dataUrlToBlob,
+  loadImage,
+  type BrushStroke,
+} from "@/lib/edit-image-2-brush-cutout";
+import { isLibraryAssetUrl } from "@/lib/storage/library-asset-url";
+
+type ShapeKind = "rect" | "capsule" | "circle";
 
 type DecLayer = {
   id: string;
-  kind: "text" | "object";
+  kind: "text" | "object" | "logo" | "shape";
   label: string;
   text: string;
   xPct: number;
   yPct: number;
   wPct: number;
   hPct: number;
+  /** Cutout / logo bitmap — empty for live text & shapes. */
   cropDataUrl: string;
+  shapeKind?: ShapeKind;
   editText?: string;
   useLiveText?: boolean;
   visible?: boolean;
@@ -62,11 +84,23 @@ function useHtmlImage(url: string | null) {
   return img;
 }
 
+async function resolveLogoDisplayUrl(url: string): Promise<{ displayUrl: string; revoke: string | null }> {
+  if (isLibraryAssetUrl(url) || url.includes("/api/library/download/")) {
+    const res = await fetch(url, { credentials: "include", cache: "no-store" });
+    if (!res.ok) throw new Error("Could not load brand logo");
+    const blob = await res.blob();
+    const revoke = URL.createObjectURL(blob);
+    return { displayUrl: revoke, revoke };
+  }
+  return { displayUrl: url, revoke: null };
+}
+
 function LayerSprite({
   layer,
   stageW,
   stageH,
   selected,
+  interactive,
   onSelect,
   onChange,
 }: {
@@ -74,20 +108,45 @@ function LayerSprite({
   stageW: number;
   stageH: number;
   selected: boolean;
+  /** False while brush-cutout mode is active. */
+  interactive: boolean;
   onSelect: () => void;
   onChange: (patch: Partial<DecLayer>) => void;
 }) {
-  const img = useHtmlImage(layer.cropDataUrl);
+  const img = useHtmlImage(
+    layer.kind === "shape" || (layer.kind === "text" && layer.useLiveText)
+      ? null
+      : layer.cropDataUrl || null,
+  );
   const imageRef = useRef<Konva.Image>(null);
   const textRef = useRef<Konva.Text>(null);
+  const rectRef = useRef<Konva.Rect>(null);
+  const circleRef = useRef<Konva.Circle>(null);
   const trRef = useRef<Konva.Transformer>(null);
 
+  const activeNode = () => {
+    if (layer.kind === "shape" && layer.shapeKind === "circle") return circleRef.current;
+    if (layer.kind === "shape") return rectRef.current;
+    if (layer.kind === "text" && layer.useLiveText) return textRef.current;
+    return imageRef.current;
+  };
+
   useEffect(() => {
-    const node = layer.useLiveText ? textRef.current : imageRef.current;
+    const node = activeNode();
     if (!selected || !trRef.current || !node) return;
     trRef.current.nodes([node]);
     trRef.current.getLayer()?.batchDraw();
-  }, [selected, layer.useLiveText, layer.visible, img, layer.fontSize, layer.fill]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- activeNode reads layer refs
+  }, [
+    selected,
+    layer.useLiveText,
+    layer.visible,
+    layer.kind,
+    layer.shapeKind,
+    img,
+    layer.fontSize,
+    layer.fill,
+  ]);
 
   if (layer.visible === false) return null;
 
@@ -95,8 +154,9 @@ function LayerSprite({
   const y = (layer.yPct / 100) * stageH;
   const w = (layer.wPct / 100) * stageW;
   const h = (layer.hPct / 100) * stageH;
-  const draggable = !layer.locked;
+  const draggable = interactive && !layer.locked;
   const fontSize = layer.fontSize ?? Math.max(12, h * 0.72);
+  const fill = layer.fill ?? (layer.kind === "shape" ? "#8b5cf6" : "#111827");
 
   const onDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
     const n = e.target;
@@ -107,7 +167,7 @@ function LayerSprite({
   };
 
   const onTransformEnd = () => {
-    const n = layer.useLiveText ? textRef.current : imageRef.current;
+    const n = activeNode();
     if (!n) return;
     const scaleX = n.scaleX();
     const scaleY = n.scaleY();
@@ -119,45 +179,91 @@ function LayerSprite({
       wPct: ((n.width() * scaleX) / stageW) * 100,
       hPct: ((n.height() * scaleY) / stageH) * 100,
     };
-    if (layer.useLiveText) {
+    if (layer.kind === "text" && layer.useLiveText) {
       next.fontSize = Math.max(8, fontSize * scaleY);
     }
     onChange(next);
   };
 
+  const common = {
+    id: layer.id,
+    draggable,
+    listening: interactive,
+    onClick: onSelect,
+    onTap: onSelect,
+    onDragEnd,
+    onTransformEnd,
+  };
+
   return (
     <>
-      {layer.kind === "text" && layer.useLiveText ? (
+      {layer.kind === "shape" && layer.shapeKind === "circle" ? (
+        <Circle
+          ref={circleRef}
+          x={x + w / 2}
+          y={y + h / 2}
+          radius={Math.min(w, h) / 2}
+          fill={fill}
+          id={layer.id}
+          draggable={draggable}
+          listening={interactive}
+          onClick={onSelect}
+          onTap={onSelect}
+          onDragEnd={(e) => {
+            const n = e.target as Konva.Circle;
+            const r = n.radius();
+            onChange({
+              xPct: ((n.x() - r) / stageW) * 100,
+              yPct: ((n.y() - r) / stageH) * 100,
+            });
+          }}
+          onTransformEnd={() => {
+            const n = circleRef.current;
+            if (!n) return;
+            const scaleX = n.scaleX();
+            n.scaleX(1);
+            n.scaleY(1);
+            const r = n.radius() * scaleX;
+            onChange({
+              xPct: ((n.x() - r) / stageW) * 100,
+              yPct: ((n.y() - r) / stageH) * 100,
+              wPct: ((r * 2) / stageW) * 100,
+              hPct: ((r * 2) / stageH) * 100,
+            });
+          }}
+        />
+      ) : layer.kind === "shape" ? (
+        <Rect
+          ref={rectRef}
+          x={x}
+          y={y}
+          width={w}
+          height={h}
+          cornerRadius={layer.shapeKind === "capsule" ? Math.min(w, h) / 2 : 4}
+          fill={fill}
+          {...common}
+        />
+      ) : layer.kind === "text" && layer.useLiveText ? (
         <KonvaText
           ref={textRef}
-          id={layer.id}
           x={x}
           y={y}
           width={w}
           text={layer.editText ?? layer.text}
           fontSize={fontSize}
           fontStyle={layer.fontBold === false ? "normal" : "bold"}
-          fill={layer.fill ?? "#111827"}
-          draggable={draggable}
-          onClick={onSelect}
-          onTap={onSelect}
-          onDragEnd={onDragEnd}
-          onTransformEnd={onTransformEnd}
+          fill={fill}
+          {...common}
         />
       ) : img ? (
         <KonvaImage
           ref={imageRef}
-          id={layer.id}
           x={x}
           y={y}
           image={img}
           width={w}
           height={h}
-          draggable={draggable}
-          onClick={onSelect}
-          onTap={onSelect}
-          onDragEnd={onDragEnd}
-          onTransformEnd={onTransformEnd}
+          {...common}
         />
       ) : (
         <Rect
@@ -168,12 +274,13 @@ function LayerSprite({
           stroke="#a78bfa"
           dash={[4, 4]}
           draggable={draggable}
+          listening={interactive}
           onClick={onSelect}
           onTap={onSelect}
           onDragEnd={onDragEnd}
         />
       )}
-      {selected && (
+      {selected && interactive && (
         <Transformer
           ref={trRef}
           rotateEnabled={false}
@@ -195,16 +302,19 @@ function ToolBtn({
   onClick,
   disabled,
   active,
+  title,
 }: {
   label: string;
   onClick: () => void;
   disabled?: boolean;
   active?: boolean;
+  title?: string;
 }) {
   return (
     <button
       type="button"
       disabled={disabled}
+      title={title}
       onClick={onClick}
       className={`rounded-md px-2.5 py-1.5 text-xs font-medium disabled:opacity-40 ${
         active
@@ -215,6 +325,13 @@ function ToolBtn({
       {label}
     </button>
   );
+}
+
+function kindDotClass(kind: DecLayer["kind"]) {
+  if (kind === "text") return "bg-sky-400";
+  if (kind === "logo") return "bg-emerald-400";
+  if (kind === "shape") return "bg-fuchsia-400";
+  return "bg-amber-400";
 }
 
 export function EditImage2Client() {
@@ -228,10 +345,31 @@ export function EditImage2Client() {
   const [historyIndex, setHistoryIndex] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [stageSize, setStageSize] = useState({ w: 720, h: 720 });
+  const [brandKit, setBrandKit] = useState<BrandKit>(() =>
+    typeof window !== "undefined" ? loadBrandKitFromStorage() : DEFAULT_BRAND_KIT,
+  );
+  const [logoBusy, setLogoBusy] = useState(false);
+  const [brushMode, setBrushMode] = useState(false);
+  const [brushSize, setBrushSize] = useState(28);
+  const [brushLines, setBrushLines] = useState<BrushStroke[]>([]);
+  const [brushBusy, setBrushBusy] = useState(false);
+  const drawingRef = useRef(false);
 
   const layers = history[historyIndex] ?? [];
   const bgImg = useHtmlImage(result?.backgroundDataUrl ?? null);
   const selected = layers.find((l) => l.id === selectedId) ?? null;
+  const canEdit = Boolean(result);
+  const hasBrandLogo = Boolean(brandKit.logoUrl?.trim());
+
+  useEffect(() => {
+    let cancelled = false;
+    void hydrateBrandKitFromCloud().then((kit) => {
+      if (!cancelled) setBrandKit(kit);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const commitLayers = useCallback(
     (next: DecLayer[] | ((prev: DecLayer[]) => DecLayer[])) => {
@@ -296,6 +434,8 @@ export function EditImage2Client() {
     setHistory([[]]);
     setHistoryIndex(0);
     setSelectedId(null);
+    setBrushMode(false);
+    setBrushLines([]);
     setBusy("upload");
     try {
       const fd = new FormData();
@@ -335,6 +475,177 @@ export function EditImage2Client() {
 
   function patchLayer(id: string, patch: Partial<DecLayer>) {
     commitLayers((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)));
+  }
+
+  function pushLayer(layer: DecLayer) {
+    commitLayers((prev) => [...prev, layer]);
+    setSelectedId(layer.id);
+  }
+
+  function addTextLayer() {
+    if (!canEdit) return;
+    const n = layers.length;
+    pushLayer({
+      id: crypto.randomUUID(),
+      kind: "text",
+      label: "New text",
+      text: "New text",
+      editText: "New text",
+      useLiveText: true,
+      cropDataUrl: "",
+      xPct: 12 + (n % 5) * 4,
+      yPct: 18 + (n % 5) * 6,
+      wPct: 55,
+      hPct: 8,
+      visible: true,
+      locked: false,
+      fontBold: true,
+      fontSize: 28,
+      fill: "#111827",
+    });
+  }
+
+  function addShapeLayer(shapeKind: ShapeKind) {
+    if (!canEdit) return;
+    const n = layers.length;
+    const square = shapeKind === "circle";
+    pushLayer({
+      id: crypto.randomUUID(),
+      kind: "shape",
+      shapeKind,
+      label: shapeKind,
+      text: "",
+      cropDataUrl: "",
+      xPct: 20 + (n % 4) * 5,
+      yPct: 25 + (n % 4) * 5,
+      wPct: square ? 18 : 36,
+      hPct: square ? 18 : shapeKind === "capsule" ? 8 : 14,
+      visible: true,
+      locked: false,
+      fill: shapeKind === "capsule" ? "#8b5cf6" : "#a78bfa",
+    });
+  }
+
+  async function addBrandLogoLayer() {
+    if (!canEdit || !brandKit.logoUrl?.trim()) return;
+    setLogoBusy(true);
+    setError(null);
+    let revoke: string | null = null;
+    try {
+      const resolved = await resolveLogoDisplayUrl(brandKit.logoUrl.trim());
+      revoke = resolved.revoke;
+      const img = new window.Image();
+      if (!resolved.displayUrl.startsWith("blob:") && !resolved.displayUrl.startsWith("data:")) {
+        img.crossOrigin = "anonymous";
+      }
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error("Logo failed to load"));
+        img.src = resolved.displayUrl;
+      });
+      const aspect = img.naturalWidth / Math.max(1, img.naturalHeight);
+      const wPct = 18;
+      const hPct = wPct / aspect;
+      // Keep a durable data URL on the layer when we fetched a blob.
+      let cropDataUrl = resolved.displayUrl;
+      if (revoke) {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(img, 0, 0);
+          cropDataUrl = canvas.toDataURL("image/png");
+        }
+      }
+      pushLayer({
+        id: crypto.randomUUID(),
+        kind: "logo",
+        label: "Brand logo",
+        text: "",
+        cropDataUrl,
+        xPct: 78,
+        yPct: 86,
+        wPct,
+        hPct: Math.min(22, hPct),
+        visible: true,
+        locked: false,
+      });
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Could not add brand logo");
+    } finally {
+      if (revoke) URL.revokeObjectURL(revoke);
+      setLogoBusy(false);
+    }
+  }
+
+  async function createLayerFromBrush() {
+    if (!canEdit || !result || brushLines.length === 0) {
+      setError("Paint over the missed area first.");
+      return;
+    }
+    setBrushBusy(true);
+    setError(null);
+    try {
+      const mask = buildBrushMaskCanvas(
+        brushLines,
+        brushSize,
+        stageSize.w,
+        stageSize.h,
+        result.width,
+        result.height,
+      );
+      const sourceImg = await loadImage(result.backgroundDataUrl);
+      const cut = cutoutFromSourceAndMask(sourceImg, mask);
+      if (!cut) {
+        setError("Brush area is empty — paint a bit more.");
+        return;
+      }
+
+      pushLayer({
+        id: crypto.randomUUID(),
+        kind: "object",
+        label: "Brush cutout",
+        text: "",
+        cropDataUrl: cut.cropDataUrl,
+        xPct: cut.xPct,
+        yPct: cut.yPct,
+        wPct: cut.wPct,
+        hPct: cut.hPct,
+        visible: true,
+        locked: false,
+      });
+
+      // Heal the hole on the background (FLUX erase), blur fallback if it fails.
+      let nextBg = result.backgroundDataUrl;
+      try {
+        const fd = new FormData();
+        fd.set("image_file", dataUrlToBlob(result.backgroundDataUrl), "bg.png");
+        fd.set("mask_image", dataUrlToBlob(mask.toDataURL("image/png")), "mask.png");
+        fd.set("inpaint_mode", "erase");
+        const res = await fetch("/api/inpaint-image", { method: "POST", body: fd });
+        const json = (await res.json()) as { imageUrl?: string; error?: string };
+        if (!res.ok || !json.imageUrl) throw new Error(json.error || "Erase failed");
+        nextBg = json.imageUrl;
+      } catch {
+        nextBg = await blurPunchBackground(result.backgroundDataUrl, cut.bbox);
+      }
+
+      setResult((prev) => (prev ? { ...prev, backgroundDataUrl: nextBg } : prev));
+      setBrushLines([]);
+      setBrushMode(false);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Brush cutout failed");
+    } finally {
+      setBrushBusy(false);
+    }
+  }
+
+  function brushPointerPos(stage: StageType | null): { x: number; y: number } | null {
+    if (!stage) return null;
+    const pos = stage.getPointerPosition();
+    if (!pos) return null;
+    return { x: pos.x, y: pos.y };
   }
 
   function duplicateSelected() {
@@ -390,14 +701,15 @@ export function EditImage2Client() {
     () =>
       [...layers].reverse().map((l, revI) => {
         const i = layers.length - 1 - revI;
-        return {
-          ...l,
-          title:
-            l.kind === "text"
-              ? `Text: ${(l.editText || l.text || l.label).slice(0, 28)}`
-              : `Object: ${l.label.slice(0, 28)}`,
-          stackIndex: i,
-        };
+        const title =
+          l.kind === "text"
+            ? `Text: ${(l.editText || l.text || l.label).slice(0, 28)}`
+            : l.kind === "logo"
+              ? `Logo: ${l.label.slice(0, 28)}`
+              : l.kind === "shape"
+                ? `Shape: ${l.shapeKind ?? l.label}`
+                : `Object: ${l.label.slice(0, 28)}`;
+        return { ...l, title, stackIndex: i };
       }),
     [layers],
   );
@@ -411,7 +723,8 @@ export function EditImage2Client() {
         </h1>
         <p className="mx-auto mt-2 max-w-2xl text-sm text-slate-400">
           Canva-style: OCR + SAM cutouts, then <strong className="font-medium text-slate-300">FLUX erase</strong>{" "}
-          heals the background — move text and the hole should look like real scene, not blur.
+          heals the background — move text and the hole should look like real scene, not blur. Add your own
+          text, shapes, or Brand Kit logo on top.
         </p>
       </header>
 
@@ -457,55 +770,62 @@ export function EditImage2Client() {
         </p>
       )}
 
-      {/* Canva-like text toolbar */}
-      {selected?.kind === "text" && (
+      {/* Canva-like text / shape toolbar */}
+      {selected && (selected.kind === "text" || selected.kind === "shape") && (
         <div className="mx-auto flex w-full max-w-3xl flex-wrap items-center justify-center gap-2 rounded-xl border border-white/10 bg-slate-900/80 px-3 py-2">
-          <ToolBtn
-            label="Live text"
-            active={!!selected.useLiveText}
-            onClick={() =>
-              patchLayer(selected.id, { useLiveText: !selected.useLiveText })
-            }
-          />
-          <label className="flex items-center gap-1 text-xs text-slate-300">
-            Size
-            <input
-              type="number"
-              min={8}
-              max={200}
-              className="w-14 rounded border border-white/15 bg-black/40 px-1 py-0.5"
-              value={Math.round(
-                selected.fontSize ??
-                  Math.max(12, (selected.hPct / 100) * stageSize.h * 0.72),
-              )}
-              onChange={(e) =>
-                patchLayer(selected.id, {
-                  fontSize: Number(e.target.value) || 16,
-                  useLiveText: true,
-                })
-              }
-            />
-          </label>
+          {selected.kind === "text" ? (
+            <>
+              <ToolBtn
+                label="Live text"
+                active={!!selected.useLiveText}
+                onClick={() =>
+                  patchLayer(selected.id, { useLiveText: !selected.useLiveText })
+                }
+              />
+              <label className="flex items-center gap-1 text-xs text-slate-300">
+                Size
+                <input
+                  type="number"
+                  min={8}
+                  max={200}
+                  className="w-14 rounded border border-white/15 bg-black/40 px-1 py-0.5"
+                  value={Math.round(
+                    selected.fontSize ??
+                      Math.max(12, (selected.hPct / 100) * stageSize.h * 0.72),
+                  )}
+                  onChange={(e) =>
+                    patchLayer(selected.id, {
+                      fontSize: Number(e.target.value) || 16,
+                      useLiveText: true,
+                    })
+                  }
+                />
+              </label>
+              <ToolBtn
+                label="Bold"
+                active={selected.fontBold !== false}
+                onClick={() =>
+                  patchLayer(selected.id, {
+                    fontBold: selected.fontBold === false,
+                    useLiveText: true,
+                  })
+                }
+              />
+            </>
+          ) : null}
           <label className="flex items-center gap-1 text-xs text-slate-300">
             Color
             <input
               type="color"
-              value={selected.fill ?? "#111827"}
+              value={selected.fill ?? (selected.kind === "shape" ? "#8b5cf6" : "#111827")}
               onChange={(e) =>
-                patchLayer(selected.id, { fill: e.target.value, useLiveText: true })
+                patchLayer(selected.id, {
+                  fill: e.target.value,
+                  ...(selected.kind === "text" ? { useLiveText: true } : {}),
+                })
               }
             />
           </label>
-          <ToolBtn
-            label="Bold"
-            active={selected.fontBold !== false}
-            onClick={() =>
-              patchLayer(selected.id, {
-                fontBold: selected.fontBold === false,
-                useLiveText: true,
-              })
-            }
-          />
         </div>
       )}
 
@@ -521,8 +841,56 @@ export function EditImage2Client() {
                 ref={stageRef}
                 width={stageSize.w}
                 height={stageSize.h}
+                style={{ cursor: brushMode ? "crosshair" : "default" }}
                 onMouseDown={(e) => {
+                  if (brushMode) {
+                    drawingRef.current = true;
+                    const pos = brushPointerPos(e.target.getStage());
+                    if (pos) setBrushLines((prev) => [...prev, [pos.x, pos.y]]);
+                    return;
+                  }
                   if (e.target === e.target.getStage()) setSelectedId(null);
+                }}
+                onMousemove={(e) => {
+                  if (!brushMode || !drawingRef.current) return;
+                  const pos = brushPointerPos(e.target.getStage());
+                  if (!pos) return;
+                  setBrushLines((prev) => {
+                    const next = [...prev];
+                    const last = next[next.length - 1];
+                    if (!last) return prev;
+                    next[next.length - 1] = last.concat([pos.x, pos.y]);
+                    return next;
+                  });
+                }}
+                onMouseup={() => {
+                  drawingRef.current = false;
+                }}
+                onMouseLeave={() => {
+                  drawingRef.current = false;
+                }}
+                onTouchStart={(e) => {
+                  if (!brushMode) return;
+                  e.evt.preventDefault();
+                  drawingRef.current = true;
+                  const pos = brushPointerPos(e.target.getStage());
+                  if (pos) setBrushLines((prev) => [...prev, [pos.x, pos.y]]);
+                }}
+                onTouchMove={(e) => {
+                  if (!brushMode || !drawingRef.current) return;
+                  e.evt.preventDefault();
+                  const pos = brushPointerPos(e.target.getStage());
+                  if (!pos) return;
+                  setBrushLines((prev) => {
+                    const next = [...prev];
+                    const last = next[next.length - 1];
+                    if (!last) return prev;
+                    next[next.length - 1] = last.concat([pos.x, pos.y]);
+                    return next;
+                  });
+                }}
+                onTouchEnd={() => {
+                  drawingRef.current = false;
                 }}
               >
                 <Layer>
@@ -540,11 +908,26 @@ export function EditImage2Client() {
                       layer={layer}
                       stageW={stageSize.w}
                       stageH={stageSize.h}
-                      selected={layer.id === selectedId}
+                      selected={!brushMode && layer.id === selectedId}
+                      interactive={!brushMode}
                       onSelect={() => setSelectedId(layer.id)}
                       onChange={(patch) => patchLayer(layer.id, patch)}
                     />
                   ))}
+                  {brushMode &&
+                    brushLines.map((pts, i) => (
+                      <Line
+                        key={`brush-${i}`}
+                        points={pts}
+                        stroke="#c4b5fd"
+                        strokeWidth={brushSize}
+                        opacity={0.55}
+                        lineCap="round"
+                        lineJoin="round"
+                        tension={0.2}
+                        listening={false}
+                      />
+                    ))}
                 </Layer>
               </Stage>
             </div>
@@ -556,7 +939,105 @@ export function EditImage2Client() {
           <p className="text-[11px] text-slate-500">
             ⌘Z undo · ⌘⇧Z redo · Delete removes · drag on canvas
           </p>
-          <ul className="max-h-[380px] space-y-1 overflow-auto text-sm">
+
+          <div className="space-y-2 rounded-xl border border-white/10 bg-black/20 p-2.5">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+              Add layer
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              <ToolBtn label="Text" onClick={addTextLayer} disabled={!canEdit || brushMode} />
+              <ToolBtn
+                label={logoBusy ? "Logo…" : "Brand logo"}
+                onClick={() => void addBrandLogoLayer()}
+                disabled={!canEdit || !hasBrandLogo || logoBusy || brushMode}
+                title={
+                  hasBrandLogo
+                    ? "Add logo from Brand Kit"
+                    : "Upload a logo on Brand Kit first"
+                }
+              />
+              <ToolBtn
+                label="Rect"
+                onClick={() => addShapeLayer("rect")}
+                disabled={!canEdit || brushMode}
+              />
+              <ToolBtn
+                label="Capsule"
+                onClick={() => addShapeLayer("capsule")}
+                disabled={!canEdit || brushMode}
+              />
+              <ToolBtn
+                label="Circle"
+                onClick={() => addShapeLayer("circle")}
+                disabled={!canEdit || brushMode}
+              />
+            </div>
+            {!hasBrandLogo ? (
+              <p className="text-[11px] text-slate-500">
+                No brand logo yet —{" "}
+                <Link href="/brand-kit" className="text-violet-300 hover:underline">
+                  open Brand Kit
+                </Link>{" "}
+                to upload one.
+              </p>
+            ) : (
+              <p className="text-[11px] text-slate-500">Brand Kit logo ready to place.</p>
+            )}
+
+            <div className="space-y-1.5 border-t border-white/10 pt-2">
+              <ToolBtn
+                label={brushMode ? "Brush on" : "Brush cutout"}
+                active={brushMode}
+                disabled={!canEdit || brushBusy}
+                onClick={() => {
+                  setBrushMode((v) => !v);
+                  if (brushMode) setBrushLines([]);
+                  setSelectedId(null);
+                }}
+                title="Paint a missed object, then turn it into a movable layer"
+              />
+              {brushMode ? (
+                <>
+                  <label className="flex items-center gap-2 text-[11px] text-slate-300">
+                    Size
+                    <input
+                      type="range"
+                      min={10}
+                      max={64}
+                      value={brushSize}
+                      onChange={(e) => setBrushSize(Number(e.target.value))}
+                      className="flex-1"
+                    />
+                    <span className="w-6 tabular-nums text-slate-500">{brushSize}</span>
+                  </label>
+                  <div className="flex flex-wrap gap-1.5">
+                    <ToolBtn
+                      label="Undo stroke"
+                      disabled={brushLines.length === 0 || brushBusy}
+                      onClick={() => setBrushLines((prev) => prev.slice(0, -1))}
+                    />
+                    <ToolBtn
+                      label="Clear"
+                      disabled={brushLines.length === 0 || brushBusy}
+                      onClick={() => setBrushLines([])}
+                    />
+                    <ToolBtn
+                      label={brushBusy ? "Cutting…" : "Make layer"}
+                      disabled={brushLines.length === 0 || brushBusy}
+                      active
+                      onClick={() => void createLayerFromBrush()}
+                    />
+                  </div>
+                  <p className="text-[11px] leading-snug text-slate-500">
+                    Paint over what OCR/SAM missed on the background. Make layer cuts it out and
+                    heals the hole (uses 1 image credit when erase succeeds).
+                  </p>
+                </>
+              ) : null}
+            </div>
+          </div>
+
+          <ul className="max-h-[320px] space-y-1 overflow-auto text-sm">
             {layerList.map((l) => (
               <li key={l.id}>
                 <button
@@ -568,11 +1049,7 @@ export function EditImage2Client() {
                       : "text-slate-300 hover:bg-white/5"
                   }`}
                 >
-                  <span
-                    className={`h-2 w-2 shrink-0 rounded-full ${
-                      l.kind === "text" ? "bg-sky-400" : "bg-amber-400"
-                    }`}
-                  />
+                  <span className={`h-2 w-2 shrink-0 rounded-full ${kindDotClass(l.kind)}`} />
                   <span className="truncate">{l.title}</span>
                 </button>
               </li>
