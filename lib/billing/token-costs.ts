@@ -50,6 +50,12 @@ export const TOKEN_COST = {
   inpaint: 41,
   /** ffmpeg caption burn + R2 persist — CPU/storage, not fal; flat processing fee. */
   caption_burn: 8,
+  /** edit-image-2 Florence OCR + object detect (no generative erase). */
+  smart_layers_detect: 8,
+  /** BiRefNet matte on a single layer crop. */
+  smart_layers_matte: 5,
+  /** Local ring-fill heal (no FLUX). Generative erase uses estimateInpaintTokens. */
+  smart_layers_heal: 3,
 } as const;
 
 /** Tokens for FLUX Fill — bill by rounded megapixels when known. */

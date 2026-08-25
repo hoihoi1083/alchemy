@@ -58,6 +58,21 @@ export function buildBrushMaskCanvas(
   return canvas;
 }
 
+/** Scale/crop a mask canvas to match target width/height. */
+export function normalizeMaskToSize(
+  mask: HTMLCanvasElement,
+  targetW: number,
+  targetH: number,
+): HTMLCanvasElement {
+  if (mask.width === targetW && mask.height === targetH) return mask;
+  const out = document.createElement("canvas");
+  out.width = targetW;
+  out.height = targetH;
+  const ctx = out.getContext("2d")!;
+  ctx.drawImage(mask, 0, 0, targetW, targetH);
+  return out;
+}
+
 export type BrushCutoutResult = {
   cropDataUrl: string;
   xPct: number;
@@ -68,44 +83,33 @@ export type BrushCutoutResult = {
   bbox: { left: number; top: number; width: number; height: number };
 };
 
-/** Extract painted pixels from source; transparent elsewhere; crop to bbox. */
+/** Extract painted pixels via destination-in; crop to bbox. */
 export function cutoutFromSourceAndMask(
   source: HTMLImageElement | HTMLCanvasElement,
   mask: HTMLCanvasElement,
 ): BrushCutoutResult | null {
   const imgW = "naturalWidth" in source ? source.naturalWidth : source.width;
   const imgH = "naturalHeight" in source ? source.naturalHeight : source.height;
-  if (!imgW || !imgH || mask.width !== imgW || mask.height !== imgH) return null;
+  if (!imgW || !imgH) return null;
 
-  const srcCanvas = document.createElement("canvas");
-  srcCanvas.width = imgW;
-  srcCanvas.height = imgH;
-  const sctx = srcCanvas.getContext("2d")!;
-  sctx.drawImage(source, 0, 0);
+  const normMask = normalizeMaskToSize(mask, imgW, imgH);
 
-  const src = sctx.getImageData(0, 0, imgW, imgH);
-  const mctx = mask.getContext("2d")!;
-  const maskData = mctx.getImageData(0, 0, imgW, imgH);
+  const canvas = document.createElement("canvas");
+  canvas.width = imgW;
+  canvas.height = imgH;
+  const ctx = canvas.getContext("2d")!;
+  ctx.drawImage(source, 0, 0, imgW, imgH);
+  ctx.globalCompositeOperation = "destination-in";
+  ctx.drawImage(normMask, 0, 0);
+  ctx.globalCompositeOperation = "source-over";
 
+  const data = ctx.getImageData(0, 0, imgW, imgH);
   let minX = imgW;
   let minY = imgH;
   let maxX = -1;
   let maxY = -1;
-  const out = sctx.createImageData(imgW, imgH);
-
-  for (let i = 0; i < src.data.length; i += 4) {
-    const covered = maskData.data[i]! > 128;
-    if (!covered) {
-      out.data[i] = 0;
-      out.data[i + 1] = 0;
-      out.data[i + 2] = 0;
-      out.data[i + 3] = 0;
-      continue;
-    }
-    out.data[i] = src.data[i]!;
-    out.data[i + 1] = src.data[i + 1]!;
-    out.data[i + 2] = src.data[i + 2]!;
-    out.data[i + 3] = src.data[i + 3]!;
+  for (let i = 0; i < data.data.length; i += 4) {
+    if (data.data[i + 3]! < 16) continue;
     const px = (i / 4) % imgW;
     const py = Math.floor(i / 4 / imgW);
     if (px < minX) minX = px;
@@ -122,15 +126,10 @@ export function cutoutFromSourceAndMask(
   const width = Math.min(imgW - left, maxX - minX + 1 + pad * 2);
   const height = Math.min(imgH - top, maxY - minY + 1 + pad * 2);
 
-  const full = document.createElement("canvas");
-  full.width = imgW;
-  full.height = imgH;
-  full.getContext("2d")!.putImageData(out, 0, 0);
-
   const crop = document.createElement("canvas");
   crop.width = width;
   crop.height = height;
-  crop.getContext("2d")!.drawImage(full, left, top, width, height, 0, 0, width, height);
+  crop.getContext("2d")!.drawImage(canvas, left, top, width, height, 0, 0, width, height);
 
   return {
     cropDataUrl: crop.toDataURL("image/png"),
@@ -142,7 +141,7 @@ export function cutoutFromSourceAndMask(
   };
 }
 
-/** Local fallback when FLUX erase is unavailable — blur the masked bbox on the background. */
+/** Local fallback — mild blur only (heavy blur looked like a broken slab). */
 export async function blurPunchBackground(
   backgroundDataUrl: string,
   bbox: { left: number; top: number; width: number; height: number },
@@ -157,20 +156,57 @@ export async function blurPunchBackground(
   ctx.drawImage(img, 0, 0);
 
   const { left, top, width, height } = bbox;
+  // Sample average colour from a ring around the hole
+  const ring = Math.max(4, Math.round(Math.min(width, height) * 0.1));
+  const sample = document.createElement("canvas");
+  const sw = Math.min(w, width + ring * 2);
+  const sh = Math.min(h, height + ring * 2);
+  const sx = Math.max(0, left - ring);
+  const sy = Math.max(0, top - ring);
+  sample.width = sw;
+  sample.height = sh;
+  const sctx = sample.getContext("2d")!;
+  sctx.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+  const data = sctx.getImageData(0, 0, sw, sh).data;
+  let r = 0;
+  let g = 0;
+  let b = 0;
+  let n = 0;
+  const holeL = left - sx;
+  const holeT = top - sy;
+  for (let y = 0; y < sh; y++) {
+    for (let x = 0; x < sw; x++) {
+      if (x >= holeL && x < holeL + width && y >= holeT && y < holeT + height) continue;
+      const i = (y * sw + x) * 4;
+      r += data[i]!;
+      g += data[i + 1]!;
+      b += data[i + 2]!;
+      n += 1;
+    }
+  }
+  ctx.fillStyle = n
+    ? `rgb(${Math.round(r / n)},${Math.round(g / n)},${Math.round(b / n)})`
+    : "#f3f4f6";
+  ctx.fillRect(left, top, width, height);
+
+  // Very light soft edge
   const patch = document.createElement("canvas");
   patch.width = width;
   patch.height = height;
   const pctx = patch.getContext("2d")!;
-  pctx.filter = "blur(18px)";
+  pctx.filter = "blur(4px)";
   pctx.drawImage(img, left, top, width, height, 0, 0, width, height);
+  ctx.globalAlpha = 0.3;
   ctx.drawImage(patch, left, top);
+  ctx.globalAlpha = 1;
   return canvas.toDataURL("image/jpeg", 0.92);
 }
 
 export function loadImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new window.Image();
-    if (!url.startsWith("blob:") && !url.startsWith("data:")) {
+    // Relative same-origin URLs (proxy) need cookies — skip crossOrigin there.
+    if (/^https?:\/\//i.test(url)) {
       img.crossOrigin = "anonymous";
     }
     img.onload = () => resolve(img);
@@ -186,4 +222,65 @@ export function dataUrlToBlob(dataUrl: string): Blob {
   const bytes = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
   return new Blob([bytes], { type: mime });
+}
+
+/** Same-origin proxy so Konva export is not CORS-tainted. */
+export function canvasDisplayUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  if (url.startsWith("data:") || url.startsWith("blob:") || url.startsWith("/")) return url;
+  if (/^https?:\/\//i.test(url)) {
+    return `/api/proxy-canvas-image?url=${encodeURIComponent(url)}`;
+  }
+  return url;
+}
+
+/** Sample dominant opaque colour + rough boldness from a crop for live text. */
+export async function sampleTextStyleFromCrop(
+  cropUrl: string,
+): Promise<{ fill: string; fontBold: boolean }> {
+  try {
+    const img = await loadImage(canvasDisplayUrl(cropUrl) ?? cropUrl);
+    const w = Math.min(64, img.naturalWidth);
+    const h = Math.min(64, img.naturalHeight);
+    if (!w || !h) return { fill: "#111827", fontBold: true };
+    const c = document.createElement("canvas");
+    c.width = w;
+    c.height = h;
+    const ctx = c.getContext("2d")!;
+    ctx.drawImage(img, 0, 0, w, h);
+    const data = ctx.getImageData(0, 0, w, h).data;
+    let r = 0;
+    let g = 0;
+    let b = 0;
+    let n = 0;
+    let dark = 0;
+    let light = 0;
+    for (let i = 0; i < data.length; i += 4) {
+      const a = data[i + 3]!;
+      if (a < 80) continue;
+      const rr = data[i]!;
+      const gg = data[i + 1]!;
+      const bb = data[i + 2]!;
+      const lum = 0.2126 * rr + 0.7152 * gg + 0.0722 * bb;
+      // Skip near-white / near-bg
+      if (lum > 245 || lum < 12) continue;
+      r += rr;
+      g += gg;
+      b += bb;
+      n += 1;
+      if (lum < 128) dark += 1;
+      else light += 1;
+    }
+    if (n < 8) return { fill: "#111827", fontBold: true };
+    const toHex = (v: number) =>
+      Math.max(0, Math.min(255, Math.round(v)))
+        .toString(16)
+        .padStart(2, "0");
+    const fill = `#${toHex(r / n)}${toHex(g / n)}${toHex(b / n)}`;
+    // Heuristic: more dark pixels → bold ink
+    const fontBold = dark >= light * 0.55;
+    return { fill, fontBold };
+  } catch {
+    return { fill: "#111827", fontBold: true };
+  }
 }

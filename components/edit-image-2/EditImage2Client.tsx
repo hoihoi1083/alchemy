@@ -23,8 +23,8 @@ import {
 import {
   blurPunchBackground,
   buildBrushMaskCanvas,
+  canvasDisplayUrl,
   cutoutFromSourceAndMask,
-  dataUrlToBlob,
   loadImage,
   type BrushStroke,
 } from "@/lib/edit-image-2-brush-cutout";
@@ -43,6 +43,8 @@ type DecLayer = {
   hPct: number;
   /** Cutout / logo bitmap — empty for live text & shapes. */
   cropDataUrl: string;
+  cropUrl?: string;
+  bbox?: { left: number; top: number; width: number; height: number };
   shapeKind?: ShapeKind;
   editText?: string;
   useLiveText?: boolean;
@@ -56,8 +58,10 @@ type DecLayer = {
 type DecomposeResult = {
   width: number;
   height: number;
-  backgroundDataUrl: string;
+  backgroundDataUrl?: string;
+  backgroundUrl?: string;
   layers: DecLayer[];
+  warning?: string;
   debug?: {
     textDetected: number;
     objectsDetected: number;
@@ -68,6 +72,10 @@ type DecomposeResult = {
 
 const HISTORY_MAX = 40;
 
+function layerBitmapUrl(layer: DecLayer): string | null {
+  return canvasDisplayUrl(layer.cropUrl || layer.cropDataUrl || null);
+}
+
 function useHtmlImage(url: string | null) {
   const [img, setImg] = useState<HTMLImageElement | null>(null);
   useEffect(() => {
@@ -76,7 +84,11 @@ function useHtmlImage(url: string | null) {
       return;
     }
     const el = new window.Image();
-    el.crossOrigin = "anonymous";
+    // Same-origin proxy (/api/...) must keep cookies for Clerk auth — do not
+    // set crossOrigin on relative URLs or img loads 401 and layers never appear.
+    if (/^https?:\/\//i.test(url)) {
+      el.crossOrigin = "anonymous";
+    }
     el.onload = () => setImg(el);
     el.onerror = () => setImg(null);
     el.src = url;
@@ -116,7 +128,7 @@ function LayerSprite({
   const img = useHtmlImage(
     layer.kind === "shape" || (layer.kind === "text" && layer.useLiveText)
       ? null
-      : layer.cropDataUrl || null,
+      : layerBitmapUrl(layer),
   );
   const imageRef = useRef<Konva.Image>(null);
   const textRef = useRef<Konva.Text>(null);
@@ -343,6 +355,8 @@ export function EditImage2Client() {
   const [result, setResult] = useState<DecomposeResult | null>(null);
   const [history, setHistory] = useState<DecLayer[][]>([[]]);
   const [historyIndex, setHistoryIndex] = useState(0);
+  const historyIndexRef = useRef(0);
+  historyIndexRef.current = historyIndex;
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [stageSize, setStageSize] = useState({ w: 720, h: 720 });
   const [brandKit, setBrandKit] = useState<BrandKit>(() =>
@@ -354,9 +368,12 @@ export function EditImage2Client() {
   const [brushLines, setBrushLines] = useState<BrushStroke[]>([]);
   const [brushBusy, setBrushBusy] = useState(false);
   const drawingRef = useRef(false);
+  const originalBgRef = useRef<string | null>(null);
 
   const layers = history[historyIndex] ?? [];
-  const bgImg = useHtmlImage(result?.backgroundDataUrl ?? null);
+  const backgroundUrl =
+    result?.backgroundUrl || result?.backgroundDataUrl || null;
+  const bgImg = useHtmlImage(canvasDisplayUrl(backgroundUrl));
   const selected = layers.find((l) => l.id === selectedId) ?? null;
   const canEdit = Boolean(result);
   const hasBrandLogo = Boolean(brandKit.logoUrl?.trim());
@@ -374,22 +391,33 @@ export function EditImage2Client() {
   const commitLayers = useCallback(
     (next: DecLayer[] | ((prev: DecLayer[]) => DecLayer[])) => {
       setHistory((h) => {
-        const cur = h[historyIndex] ?? [];
+        const idx = historyIndexRef.current;
+        const cur = h[idx] ?? [];
         const resolved = typeof next === "function" ? next(cur) : next;
-        const trimmed = h.slice(0, historyIndex + 1);
+        const trimmed = h.slice(0, idx + 1);
         const stacked = [...trimmed, resolved].slice(-HISTORY_MAX);
-        setHistoryIndex(stacked.length - 1);
+        const newIndex = stacked.length - 1;
+        historyIndexRef.current = newIndex;
+        setHistoryIndex(newIndex);
         return stacked;
       });
     },
-    [historyIndex],
+    [],
   );
 
   const undo = useCallback(() => {
-    setHistoryIndex((i) => Math.max(0, i - 1));
+    setHistoryIndex((i) => {
+      const next = Math.max(0, i - 1);
+      historyIndexRef.current = next;
+      return next;
+    });
   }, []);
   const redo = useCallback(() => {
-    setHistoryIndex((i) => Math.min(history.length - 1, i + 1));
+    setHistoryIndex((i) => {
+      const next = Math.min(history.length - 1, i + 1);
+      historyIndexRef.current = next;
+      return next;
+    });
   }, [history.length]);
 
   const fitStage = useCallback((iw: number, ih: number) => {
@@ -401,6 +429,13 @@ export function EditImage2Client() {
 
   useEffect(() => {
     if (result) fitStage(result.width, result.height);
+  }, [result, fitStage]);
+
+  useEffect(() => {
+    if (!result) return;
+    const onResize = () => fitStage(result.width, result.height);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
   }, [result, fitStage]);
 
   useEffect(() => {
@@ -433,39 +468,65 @@ export function EditImage2Client() {
     setResult(null);
     setHistory([[]]);
     setHistoryIndex(0);
+    historyIndexRef.current = 0;
     setSelectedId(null);
     setBrushMode(false);
     setBrushLines([]);
     setBusy("upload");
     try {
+      if (file.size > 25 * 1024 * 1024) throw new Error("Image too large (max 25 MB).");
+      if (file.type && !file.type.startsWith("image/")) {
+        throw new Error("Please choose an image file.");
+      }
       const fd = new FormData();
       fd.set("file", file);
       const up = await fetch("/api/upload-canvas-asset", { method: "POST", body: fd });
       const upJson = (await up.json()) as { url?: string; error?: string };
       if (!up.ok || !upJson.url) throw new Error(upJson.error || "Upload failed");
       setSourceUrl(upJson.url);
+      originalBgRef.current = upJson.url;
 
       setBusy("decompose");
       const dec = await fetch("/api/decompose-image-layers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        // heal+sam default on server — punch holes so drag does not leave ghosts
         body: JSON.stringify({ image_url: upJson.url }),
       });
-      const decJson = (await dec.json()) as DecomposeResult & { error?: string };
+      const decJson = (await dec.json()) as DecomposeResult & {
+        error?: string;
+        warning?: string;
+      };
       if (!dec.ok) throw new Error(decJson.error || "Decompose failed");
-      setResult(decJson);
-      const seeded = (decJson.layers ?? []).map((l) => ({
-        ...l,
-        editText: l.text,
-        useLiveText: false,
-        visible: true,
-        locked: false,
-        fontBold: true,
-        fill: "#111827",
-      }));
+
+      const bg =
+        decJson.backgroundUrl || decJson.backgroundDataUrl || upJson.url;
+      const seeded = (decJson.layers ?? []).map((l) => {
+        const crop = l.cropUrl || l.cropDataUrl || "";
+        return {
+          ...l,
+          cropUrl: crop,
+          cropDataUrl: crop,
+          editText: l.text,
+          useLiveText: false,
+          visible: true,
+          locked: false,
+          fontBold: true,
+          fill: "#111827",
+        };
+      });
+
+      setResult({ ...decJson, backgroundUrl: bg, backgroundDataUrl: bg, layers: seeded });
       setHistory([seeded]);
       setHistoryIndex(0);
+      historyIndexRef.current = 0;
       if (seeded[0]) setSelectedId(seeded[0].id);
+      if (!seeded.length) {
+        setError(
+          decJson.warning ||
+            "No layers detected. Try Brush cutout to lift regions manually.",
+        );
+      }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Something failed");
     } finally {
@@ -587,15 +648,17 @@ export function EditImage2Client() {
     setBrushBusy(true);
     setError(null);
     try {
+      const bgUrl = result.backgroundUrl || result.backgroundDataUrl;
+      if (!bgUrl) throw new Error("No background image.");
+      const sourceImg = await loadImage(canvasDisplayUrl(bgUrl) ?? bgUrl);
       const mask = buildBrushMaskCanvas(
         brushLines,
         brushSize,
         stageSize.w,
         stageSize.h,
-        result.width,
-        result.height,
+        sourceImg.naturalWidth || result.width,
+        sourceImg.naturalHeight || result.height,
       );
-      const sourceImg = await loadImage(result.backgroundDataUrl);
       const cut = cutoutFromSourceAndMask(sourceImg, mask);
       if (!cut) {
         setError("Brush area is empty — paint a bit more.");
@@ -608,6 +671,8 @@ export function EditImage2Client() {
         label: "Brush cutout",
         text: "",
         cropDataUrl: cut.cropDataUrl,
+        cropUrl: cut.cropDataUrl,
+        bbox: cut.bbox,
         xPct: cut.xPct,
         yPct: cut.yPct,
         wPct: cut.wPct,
@@ -616,22 +681,31 @@ export function EditImage2Client() {
         locked: false,
       });
 
-      // Heal the hole on the background (FLUX erase), blur fallback if it fails.
-      let nextBg = result.backgroundDataUrl;
+      let nextBg = bgUrl;
       try {
-        const fd = new FormData();
-        fd.set("image_file", dataUrlToBlob(result.backgroundDataUrl), "bg.png");
-        fd.set("mask_image", dataUrlToBlob(mask.toDataURL("image/png")), "mask.png");
-        fd.set("inpaint_mode", "erase");
-        const res = await fetch("/api/inpaint-image", { method: "POST", body: fd });
-        const json = (await res.json()) as { imageUrl?: string; error?: string };
-        if (!res.ok || !json.imageUrl) throw new Error(json.error || "Erase failed");
-        nextBg = json.imageUrl;
+        if (bgUrl.startsWith("http")) {
+          const healRes = await fetch("/api/layer-heal", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              background_url: bgUrl,
+              hole: cut.bbox,
+              mode: "local",
+            }),
+          });
+          const healJson = (await healRes.json()) as { backgroundUrl?: string };
+          if (!healRes.ok || !healJson.backgroundUrl) throw new Error("heal failed");
+          nextBg = healJson.backgroundUrl;
+        } else {
+          throw new Error("local");
+        }
       } catch {
-        nextBg = await blurPunchBackground(result.backgroundDataUrl, cut.bbox);
+        nextBg = await blurPunchBackground(canvasDisplayUrl(bgUrl) ?? bgUrl, cut.bbox);
       }
 
-      setResult((prev) => (prev ? { ...prev, backgroundDataUrl: nextBg } : prev));
+      setResult((prev) =>
+        prev ? { ...prev, backgroundUrl: nextBg, backgroundDataUrl: nextBg } : prev,
+      );
       setBrushLines([]);
       setBrushMode(false);
     } catch (e: unknown) {
@@ -722,9 +796,9 @@ export function EditImage2Client() {
           AI smart layers
         </h1>
         <p className="mx-auto mt-2 max-w-2xl text-sm text-slate-400">
-          Canva-style: OCR + SAM cutouts, then <strong className="font-medium text-slate-300">FLUX erase</strong>{" "}
-          heals the background — move text and the hole should look like real scene, not blur. Add your own
-          text, shapes, or Brand Kit logo on top.
+          Upload a marketing still — we detect text and objects, punch holes in the
+          plate, and give you movable layers. Click a layer, then drag. Brush cutout
+          for anything OCR missed.
         </p>
       </header>
 
@@ -738,7 +812,7 @@ export function EditImage2Client() {
           {busy === "upload"
             ? "Uploading…"
             : busy === "decompose"
-              ? "Analyzing… (OCR + SAM + erase)"
+              ? "Analyzing… (detect + cutout)"
               : "Upload image"}
         </button>
         <input

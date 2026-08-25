@@ -1,6 +1,16 @@
 import { fal } from "@fal-ai/client";
 import { NextResponse } from "next/server";
 import sharp from "sharp";
+import { chargeTokens, refundTokens } from "@/lib/billing/charge";
+import { TOKEN_COST } from "@/lib/billing/token-costs";
+import {
+  iou,
+  nmsBoxes,
+  parseBoxes,
+  toPixelBox,
+  type LayerBox,
+} from "@/lib/edit-image-2-boxes";
+import { localRingFill } from "@/lib/edit-image-2-local-heal";
 import { requireAppUser } from "@/lib/require-app-user";
 
 export const runtime = "nodejs";
@@ -12,91 +22,27 @@ export type DecomposedLayer = {
   id: string;
   kind: "text" | "object";
   label: string;
-  /** OCR text when kind=text */
   text: string;
-  /** Normalized 0–100 */
   xPct: number;
   yPct: number;
   wPct: number;
   hPct: number;
-  /** Cropped RGBA PNG as data URL for canvas overlay */
-  cropDataUrl: string;
+  /** Cropped PNG URL (fal storage or data URL fallback). */
+  cropUrl: string;
+  /** @deprecated Prefer cropUrl — kept for older clients. */
+  cropDataUrl?: string;
+  /** Pixel bbox on the source image (for lazy matte/heal). */
+  bbox: { left: number; top: number; width: number; height: number };
+  /** False until first drag lifts the layer. */
+  lifted: boolean;
 };
 
-type Box = {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  label: string;
-  kind: "text" | "object";
-};
-
-function asNum(v: unknown): number | null {
-  if (typeof v === "number" && Number.isFinite(v)) return v;
-  if (typeof v === "string" && v.trim() && Number.isFinite(Number(v))) return Number(v);
-  return null;
+async function uploadPng(buf: Buffer, name: string): Promise<string> {
+  return fal.storage.upload(new File([new Uint8Array(buf)], name, { type: "image/png" }));
 }
 
-function parseBoxes(raw: unknown, kind: "text" | "object"): Box[] {
-  if (!raw || typeof raw !== "object") return [];
-  const root = raw as Record<string, unknown>;
-  const results = (root.results ?? root) as Record<string, unknown>;
-  const list =
-    (Array.isArray(results.quad_boxes) && results.quad_boxes) ||
-    (Array.isArray(results.bboxes) && results.bboxes) ||
-    (Array.isArray(root.quad_boxes) && root.quad_boxes) ||
-    (Array.isArray(root.bboxes) && root.bboxes) ||
-    [];
-
-  const out: Box[] = [];
-  for (const item of list) {
-    if (!item || typeof item !== "object") continue;
-    const row = item as Record<string, unknown>;
-    const x = asNum(row.x);
-    const y = asNum(row.y);
-    const w = asNum(row.w);
-    const h = asNum(row.h);
-    const label = typeof row.label === "string" ? row.label.trim() : "";
-    if (x == null || y == null || w == null || h == null) continue;
-    if (w < 4 || h < 4) continue;
-    out.push({ x, y, w, h, label: label || (kind === "text" ? "Text" : "Object"), kind });
-  }
-  return out;
-}
-
-/** Florence sometimes returns normalized 0–1 or pixel coords. */
-function toPixelBox(
-  box: Box,
-  imgW: number,
-  imgH: number,
-): { left: number; top: number; width: number; height: number } {
-  let { x, y, w, h } = box;
-  // Heuristic: if all coords look normalized
-  if (x <= 1.5 && y <= 1.5 && w <= 1.5 && h <= 1.5) {
-    x *= imgW;
-    y *= imgH;
-    w *= imgW;
-    h *= imgH;
-  }
-  const left = Math.max(0, Math.floor(x));
-  const top = Math.max(0, Math.floor(y));
-  const width = Math.max(1, Math.min(imgW - left, Math.ceil(w)));
-  const height = Math.max(1, Math.min(imgH - top, Math.ceil(h)));
-  return { left, top, width, height };
-}
-
-function iou(
-  a: { left: number; top: number; width: number; height: number },
-  b: { left: number; top: number; width: number; height: number },
-): number {
-  const x1 = Math.max(a.left, b.left);
-  const y1 = Math.max(a.top, b.top);
-  const x2 = Math.min(a.left + a.width, b.left + b.width);
-  const y2 = Math.min(a.top + a.height, b.top + b.height);
-  const inter = Math.max(0, x2 - x1) * Math.max(0, y2 - y1);
-  const union = a.width * a.height + b.width * b.height - inter;
-  return union > 0 ? inter / union : 0;
+async function uploadJpeg(buf: Buffer, name: string): Promise<string> {
+  return fal.storage.upload(new File([new Uint8Array(buf)], name, { type: "image/jpeg" }));
 }
 
 export async function POST(request: Request) {
@@ -109,16 +55,45 @@ export async function POST(request: Request) {
   }
   fal.config({ credentials: key });
 
-  let body: { image_url?: string };
+  let body: {
+    image_url?: string;
+    heal?: boolean | string;
+    sam?: boolean | string;
+  };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON." }, { status: 400 });
   }
+
   const imageUrl = body.image_url?.trim();
   if (!imageUrl || !/^https?:\/\//i.test(imageUrl)) {
     return NextResponse.json({ error: "image_url (https) is required." }, { status: 400 });
   }
+
+  const truthy = (v: unknown) =>
+    v === true || ["1", "true", "yes"].includes(String(v ?? "").trim().toLowerCase());
+
+  // Body flags preferred; URL query kept as fallback for older callers.
+  // Default ON (original working editor): heal holes + light SAM so layers can
+  // move without leaving a duplicate ghost on the plate.
+  const url = new URL(request.url);
+  const resolveFlag = (bodyVal: unknown, queryKey: string, defaultOn: boolean) => {
+    if (bodyVal !== undefined && bodyVal !== null && String(bodyVal).trim() !== "") {
+      return truthy(bodyVal);
+    }
+    const q = url.searchParams.get(queryKey);
+    if (q !== null && q !== "") return truthy(q);
+    return defaultOn;
+  };
+  const wantSam = resolveFlag(body.sam, "sam", true);
+  const wantHeal = resolveFlag(body.heal, "heal", true);
+
+  const tokenCost = TOKEN_COST.smart_layers_detect;
+  const charged = await chargeTokens(auth.user.userId, tokenCost, {
+    kind: "smart_layers_detect",
+  });
+  if ("error" in charged) return charged.error;
 
   try {
     const [ocrRes, objRes, imgRes] = await Promise.all([
@@ -134,42 +109,52 @@ export async function POST(request: Request) {
     ]);
 
     if (!imgRes.ok) {
-      return NextResponse.json({ error: `Failed to download image (${imgRes.status}).` }, { status: 502 });
+      throw new Error(`Failed to download image (${imgRes.status}).`);
     }
     const imgBuf = Buffer.from(await imgRes.arrayBuffer());
     const meta = await sharp(imgBuf).metadata();
     const imgW = meta.width ?? 0;
     const imgH = meta.height ?? 0;
-    if (!imgW || !imgH) {
-      return NextResponse.json({ error: "Could not read image size." }, { status: 502 });
-    }
+    if (!imgW || !imgH) throw new Error("Could not read image size.");
 
     const textBoxes = parseBoxes(ocrRes.data, "text");
     const objectBoxes = parseBoxes(objRes.data, "object").filter((b) => {
-      // skip generic huge "whole image" detections
       const px = toPixelBox(b, imgW, imgH);
       return px.width * px.height < imgW * imgH * 0.85;
     });
 
-    // Prefer text; drop objects that heavily overlap text regions
-    const textPx = textBoxes.map((b) => ({ box: b, px: toPixelBox(b, imgW, imgH) }));
-    const objectPx = objectBoxes
-      .map((b) => ({ box: b, px: toPixelBox(b, imgW, imgH) }))
-      .filter(({ px }) => !textPx.some((t) => iou(t.px, px) > 0.45));
+    const textPx = textBoxes.map((b) => ({
+      box: b,
+      px: toPixelBox(b, imgW, imgH),
+      score: b.score,
+    }));
 
-    // Largest objects first — better product/hero cutouts
+    // Drop objects that heavily overlap text; then object-vs-object NMS
+    const objectCandidates = objectBoxes
+      .map((b) => ({ box: b, px: toPixelBox(b, imgW, imgH), score: b.score }))
+      .filter(({ px }) => !textPx.some((t) => iou(t.px, px) > 0.45));
+    const objectPx = nmsBoxes(objectCandidates, 0.55);
+
+    // Largest objects first for ranking; stack order later: objects under, text on top
     const objectRanked = [...objectPx].sort(
       (a, b) => b.px.width * b.px.height - a.px.width * a.px.height,
     );
-    const selected = [...textPx.slice(0, 24), ...objectRanked.slice(0, 10)];
+    const selected: Array<{
+      box: LayerBox;
+      px: { left: number; top: number; width: number; height: number };
+      score: number;
+    }> = [
+      ...objectRanked.slice(0, 10),
+      ...textPx.slice(0, 24),
+    ];
 
-    /** SAM2 cutout for top objects (transparent PNG) — Canva-like freeform layers. */
     async function samCutout(px: {
       left: number;
       top: number;
       width: number;
       height: number;
     }): Promise<Buffer | null> {
+      if (!wantSam) return null;
       try {
         const pad = 4;
         const x_min = Math.max(0, px.left - pad);
@@ -185,12 +170,11 @@ export async function POST(request: Request) {
           },
           logs: false,
         });
-        const url = (sam.data as { image?: { url?: string } })?.image?.url;
-        if (!url) return null;
-        const res = await fetch(url, { cache: "no-store" });
+        const samUrl = (sam.data as { image?: { url?: string } })?.image?.url;
+        if (!samUrl) return null;
+        const res = await fetch(samUrl, { cache: "no-store" });
         if (!res.ok) return null;
         const full = Buffer.from(await res.arrayBuffer());
-        // Crop masked full-frame back to bbox
         return sharp(full)
           .extract({
             left: px.left,
@@ -210,15 +194,14 @@ export async function POST(request: Request) {
     let samRefined = 0;
     const holeRects: Array<{ left: number; top: number; width: number; height: number }> = [];
 
-    // Refine at most 5 largest objects with SAM (latency budget)
     const samBudget = new Set(
       objectRanked.slice(0, 5).map((o) => `${o.px.left},${o.px.top},${o.px.width},${o.px.height}`),
     );
 
     for (const { box, px } of selected) {
       let crop: Buffer;
-      const key = `${px.left},${px.top},${px.width},${px.height}`;
-      if (box.kind === "object" && samBudget.has(key)) {
+      const boxKey = `${px.left},${px.top},${px.width},${px.height}`;
+      if (box.kind === "object" && samBudget.has(boxKey)) {
         const cut = await samCutout(px);
         if (cut) {
           crop = cut;
@@ -246,7 +229,6 @@ export async function POST(request: Request) {
           .toBuffer();
       }
 
-      // Slightly expand erase region so text edges don't ghost
       const pad = Math.max(4, Math.round(Math.min(px.width, px.height) * 0.06));
       holeRects.push({
         left: Math.max(0, px.left - pad),
@@ -255,6 +237,7 @@ export async function POST(request: Request) {
         height: Math.min(imgH - Math.max(0, px.top - pad), px.height + pad * 2),
       });
 
+      const cropUrl = await uploadPng(crop, `layer-${layers.length}.png`);
       layers.push({
         id: crypto.randomUUID(),
         kind: box.kind,
@@ -264,80 +247,106 @@ export async function POST(request: Request) {
         yPct: (px.top / imgH) * 100,
         wPct: (px.width / imgW) * 100,
         hPct: (px.height / imgH) * 100,
-        cropDataUrl: `data:image/png;base64,${crop.toString("base64")}`,
+        cropUrl,
+        bbox: { left: px.left, top: px.top, width: px.width, height: px.height },
+        lifted: wantHeal || Boolean(wantSam && box.kind === "object" && samBudget.has(boxKey)),
       });
     }
 
-    // Clean background: FLUX Erase all layer holes (not blur) so move/export has no smudge
-    let backgroundDataUrl: string;
-    let backgroundMode: "erase" | "blur-fallback" = "erase";
-    try {
-      const maskSvg = [
-        `<svg xmlns="http://www.w3.org/2000/svg" width="${imgW}" height="${imgH}">`,
-        `<rect width="100%" height="100%" fill="#000"/>`,
-        ...holeRects.map(
-          (r) =>
-            `<rect x="${r.left}" y="${r.top}" width="${r.width}" height="${r.height}" fill="#fff"/>`,
-        ),
-        `</svg>`,
-      ].join("");
-      const maskPng = await sharp(Buffer.from(maskSvg)).png().toBuffer();
-      const sourcePng = await sharp(imgBuf).png().toBuffer();
+    const originalJpeg = await sharp(imgBuf).jpeg({ quality: 92 }).toBuffer();
+    let backgroundUrl = await uploadJpeg(originalJpeg, "background-original.jpg");
+    let backgroundMode: "original" | "erase" | "local-heal" = "original";
 
-      const [falImageUrl, maskUrl] = await Promise.all([
-        fal.storage.upload(new Blob([new Uint8Array(sourcePng)], { type: "image/png" })),
-        fal.storage.upload(new Blob([new Uint8Array(maskPng)], { type: "image/png" })),
-      ]);
-
-      const erase = await fal.subscribe(ERASE_ENDPOINT, {
-        input: {
-          image_url: falImageUrl,
-          mask_url: maskUrl,
-          dilate_pixels: 10,
-        },
-        logs: false,
-      });
-      const erasedUrl = (erase.data as { images?: Array<{ url?: string }> })?.images?.[0]?.url;
-      if (!erasedUrl) throw new Error("Erase returned no image");
-      const erasedRes = await fetch(erasedUrl, { cache: "no-store" });
-      if (!erasedRes.ok) throw new Error(`Erase download ${erasedRes.status}`);
-      const erasedBuf = Buffer.from(await erasedRes.arrayBuffer());
-      const backgroundBuf = await sharp(erasedBuf).jpeg({ quality: 92 }).toBuffer();
-      backgroundDataUrl = `data:image/jpeg;base64,${backgroundBuf.toString("base64")}`;
-    } catch (eraseErr) {
-      console.warn("[decompose-image-layers] FLUX erase failed, blur fallback:", eraseErr);
-      backgroundMode = "blur-fallback";
-      const holeComposites: sharp.OverlayOptions[] = [];
-      for (const r of holeRects) {
-        const patch = await sharp(imgBuf)
-          .extract({ left: r.left, top: r.top, width: r.width, height: r.height })
-          .blur(28)
-          .modulate({ brightness: 1.02 })
-          .png()
-          .toBuffer();
-        holeComposites.push({ input: patch, left: r.left, top: r.top });
+    // Batch heal only when explicitly requested — default is lazy heal on first drag.
+    if (wantHeal && holeRects.length > 0) {
+      try {
+        let healed: Buffer = imgBuf;
+        for (const r of holeRects) {
+          healed = Buffer.from(await localRingFill(healed, r, imgW, imgH));
+        }
+        // Re-encode once
+        const jpeg = await sharp(healed).jpeg({ quality: 92 }).toBuffer();
+        backgroundUrl = await uploadJpeg(jpeg, "background-healed.jpg");
+        backgroundMode = "local-heal";
+      } catch (localErr) {
+        console.warn("[decompose-image-layers] local heal failed, trying erase:", localErr);
+        try {
+          const maskSvg = [
+            `<svg xmlns="http://www.w3.org/2000/svg" width="${imgW}" height="${imgH}">`,
+            `<rect width="100%" height="100%" fill="#000"/>`,
+            ...holeRects.map(
+              (r) =>
+                `<rect x="${r.left}" y="${r.top}" width="${r.width}" height="${r.height}" fill="#fff"/>`,
+            ),
+            `</svg>`,
+          ].join("");
+          const maskPng = await sharp(Buffer.from(maskSvg)).png().toBuffer();
+          const sourcePng = await sharp(imgBuf).png().toBuffer();
+          const [falImageUrl, maskUrl] = await Promise.all([
+            uploadPng(sourcePng, "erase-src.png"),
+            uploadPng(maskPng, "erase-mask.png"),
+          ]);
+          const erase = await fal.subscribe(ERASE_ENDPOINT, {
+            input: {
+              image_url: falImageUrl,
+              mask_url: maskUrl,
+              dilate_pixels: 10,
+            },
+            logs: false,
+          });
+          const erasedUrl = (erase.data as { images?: Array<{ url?: string }> })?.images?.[0]
+            ?.url;
+          if (!erasedUrl) throw new Error("Erase returned no image");
+          const erasedRes = await fetch(erasedUrl, { cache: "no-store" });
+          if (!erasedRes.ok) throw new Error(`Erase download ${erasedRes.status}`);
+          const erasedBuf = Buffer.from(await erasedRes.arrayBuffer());
+          backgroundUrl = await uploadJpeg(
+            await sharp(erasedBuf).jpeg({ quality: 92 }).toBuffer(),
+            "background-erase.jpg",
+          );
+          backgroundMode = "erase";
+        } catch (eraseErr) {
+          console.warn("[decompose-image-layers] heal failed, keeping original:", eraseErr);
+          backgroundMode = "original";
+        }
       }
-      const backgroundBuf = await sharp(imgBuf)
-        .composite(holeComposites)
-        .jpeg({ quality: 90 })
-        .toBuffer();
-      backgroundDataUrl = `data:image/jpeg;base64,${backgroundBuf.toString("base64")}`;
+    }
+
+    if (layers.length === 0) {
+      console.warn("[decompose-image-layers] 0 layers detected", {
+        textDetected: textBoxes.length,
+        objectsDetected: objectBoxes.length,
+      });
     }
 
     return NextResponse.json({
       width: imgW,
       height: imgH,
       layerCount: layers.length,
-      backgroundDataUrl,
+      backgroundUrl,
+      /** @deprecated Prefer backgroundUrl */
+      backgroundDataUrl: backgroundUrl,
       layers,
+      warning:
+        layers.length === 0
+          ? "No text or objects detected. Try Brush cutout to lift regions manually."
+          : undefined,
+      tokensCharged: tokenCost,
+      creditBalance: charged.balanceAfter,
       debug: {
         textDetected: textBoxes.length,
         objectsDetected: objectBoxes.length,
         samRefined,
         backgroundMode,
+        wantSam,
+        wantHeal,
       },
     });
   } catch (e: unknown) {
+    await refundTokens(auth.user.userId, tokenCost, {
+      kind: "smart_layers_detect",
+      reason: "decompose_failed",
+    });
     const message = e instanceof Error ? e.message : "Decompose failed.";
     console.error("[decompose-image-layers]", e);
     return NextResponse.json({ error: message }, { status: 502 });
