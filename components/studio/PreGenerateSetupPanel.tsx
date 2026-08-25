@@ -1049,7 +1049,6 @@ export function PreGenerateSetupPanel({
       : isCombinedStoryboardTemplate
         ? storyboardRecipeLabel?.title ?? wizard.storyboardRecipeId
         : visualStyleLabel?.title ??
-          visualStyleLabel?.name ??
           getVisualStyle(wizard.visualStyleId).id.replace(/-/g, " ");
   const intakePreviewSrc =
     intakePath === "research"
