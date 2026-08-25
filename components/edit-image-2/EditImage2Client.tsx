@@ -842,7 +842,7 @@ export function EditImage2Client() {
                 width={stageSize.w}
                 height={stageSize.h}
                 style={{ cursor: brushMode ? "crosshair" : "default" }}
-                onMouseDown={(e) => {
+                onMouseDown={(e: Konva.KonvaEventObject<MouseEvent>) => {
                   if (brushMode) {
                     drawingRef.current = true;
                     const pos = brushPointerPos(e.target.getStage());
@@ -851,7 +851,7 @@ export function EditImage2Client() {
                   }
                   if (e.target === e.target.getStage()) setSelectedId(null);
                 }}
-                onMousemove={(e) => {
+                onMousemove={(e: Konva.KonvaEventObject<MouseEvent>) => {
                   if (!brushMode || !drawingRef.current) return;
                   const pos = brushPointerPos(e.target.getStage());
                   if (!pos) return;
@@ -869,14 +869,14 @@ export function EditImage2Client() {
                 onMouseLeave={() => {
                   drawingRef.current = false;
                 }}
-                onTouchStart={(e) => {
+                onTouchStart={(e: Konva.KonvaEventObject<TouchEvent>) => {
                   if (!brushMode) return;
                   e.evt.preventDefault();
                   drawingRef.current = true;
                   const pos = brushPointerPos(e.target.getStage());
                   if (pos) setBrushLines((prev) => [...prev, [pos.x, pos.y]]);
                 }}
-                onTouchMove={(e) => {
+                onTouchMove={(e: Konva.KonvaEventObject<TouchEvent>) => {
                   if (!brushMode || !drawingRef.current) return;
                   e.evt.preventDefault();
                   const pos = brushPointerPos(e.target.getStage());
