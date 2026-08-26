@@ -10,8 +10,10 @@ import {
   buildFalLayoutTransferImageUrls,
   carouselCoverSeriesAnchorHint,
   carouselSlideRoleVariationHint,
+  carouselTipSlideLookFollowHint,
   carouselUniqueCopyHint,
   dualProductIdentityHint,
+  teachingCarouselTipImageUrls,
 } from "@/lib/fal-dual-reference-urls";
 import type { BrandProfile } from "@/lib/brand-profile";
 import type { CampaignPlan, CampaignSlidePlan } from "@/lib/campaign-types";
@@ -285,6 +287,7 @@ export async function POST(request: Request) {
                 ? "style-only"
                 : "none",
           promptExtra,
+          carouselSlides: brief?.carouselSlides,
         });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Campaign planning failed.";
@@ -383,6 +386,7 @@ export async function POST(request: Request) {
             visualStyleId: visualStyle,
             referenceConcept: strategy.useReferenceConceptPrompts,
             referenceImageMode: strategy.referenceImageMode,
+            carouselSlideRef: brief?.carouselSlides?.[i],
             brandKit,
             hasProductPhoto: hasProduct,
             productName: productName,
@@ -422,17 +426,24 @@ export async function POST(request: Request) {
 
     if (isSingleSlideRegen) {
       const target = plan.slides[regenerateSlideIndex!]!;
+      const avoidCoverPixelAnchor = strategy.kind === "style-only";
       const urls =
         regenerateSlideIndex! > 0 &&
         seriesCoverUrl.startsWith("http") &&
-        baseImageUrlsForFal?.length
+        baseImageUrlsForFal?.length &&
+        !avoidCoverPixelAnchor
           ? [...baseImageUrlsForFal, seriesCoverUrl]
           : baseImageUrlsForFal;
       const hints = slideHints(target, regenerateSlideIndex!, [
         regenerateSlideIndex! > 0 && seriesCoverUrl.startsWith("http")
           ? carouselCoverSeriesAnchorHint({
               hasProductPhoto: hasProduct,
-              pixelAnchor: true,
+              pixelAnchor: !avoidCoverPixelAnchor,
+            })
+          : "",
+        regenerateSlideIndex! > 0 && avoidCoverPixelAnchor
+          ? carouselTipSlideLookFollowHint({
+              hasStyleReference: hasStyle || (baseImageUrlsForFal?.length ?? 0) > 1,
             })
           : "",
       ]);
@@ -465,6 +476,9 @@ export async function POST(request: Request) {
     }
 
     let slides: SlideOut[];
+    // Style-only / research: tip slides keep product (+ style) refs but never the
+    // generated cover — cover-as-image_url clones the same bottle crop + swapped text.
+    const avoidCoverPixelAnchor = strategy.kind === "style-only";
     if (baseImageUrlsForFal?.length && plan.slides.length > 1) {
       const coverOut = await generateOneSlide(
         plan.slides[0]!,
@@ -472,18 +486,28 @@ export async function POST(request: Request) {
         baseImageUrlsForFal,
         slideHints(plan.slides[0]!, 0),
       );
-      const anchoredUrls = [...baseImageUrlsForFal, coverOut.imageUrl];
+      const tipUrls = avoidCoverPixelAnchor
+        ? teachingCarouselTipImageUrls(baseImageUrlsForFal)
+        : [...baseImageUrlsForFal, coverOut.imageUrl];
       const coverHint = carouselCoverSeriesAnchorHint({
         hasProductPhoto: hasProduct,
-        pixelAnchor: true,
+        pixelAnchor: !avoidCoverPixelAnchor,
       });
+      const lookHint = avoidCoverPixelAnchor
+        ? carouselTipSlideLookFollowHint({
+            hasStyleReference: hasStyle || (baseImageUrlsForFal?.length ?? 0) > 1,
+          })
+        : "";
       const restOut = await Promise.all(
         plan.slides.slice(1).map((slide, offset) =>
           generateOneSlide(
             slide,
             offset + 1,
-            anchoredUrls,
-            slideHints(slide, offset + 1, [coverHint]),
+            tipUrls,
+            slideHints(slide, offset + 1, [
+              coverHint,
+              brief?.carouselSlides?.[offset + 1] ? "" : lookHint,
+            ]),
           ),
         ),
       );

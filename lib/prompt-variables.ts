@@ -1748,6 +1748,24 @@ export function buildCampaignSlideImagePrompt(
 	const shopHint = options?.visualStyleId
 		? getVisualStyle(options.visualStyleId).promptHint
 		: "";
+	const carouselRef = options?.carouselSlideRef;
+	const carouselRefBlock = carouselRef
+		? joinParts(
+				`Reference frame ${carouselRef.index} layout (match this slide's staging): ${carouselRef.composition || carouselRef.layoutStyle}.`,
+				carouselRef.stagingPose ? `Staging: ${carouselRef.stagingPose}.` : "",
+				carouselRef.mood ? `Mood/light: ${carouselRef.mood}.` : "",
+				carouselRef.typographyStyle
+					? `Typography: ${carouselRef.typographyStyle}.`
+					: "",
+			)
+		: "";
+	const styleLedLayout =
+		referenceImageMode === "style-only" || Boolean(carouselRef);
+	const layoutNote = slide.composition
+		? styleLedLayout
+			? `Layout: ${slide.composition}. Keep IMAGE 1 product clearly visible as the hero — use a designed social-card structure (title band, bullets/proof, CTA area) around the product; do NOT only swap text on the same centered bottle crop.`
+			: `Layout note (secondary to IMAGE 1): ${slide.composition}.`
+		: "";
 	const campaignBlock = joinParts(
 		artStyleMandatoryLead(slideVars.artStyle),
 		!referenceConcept
@@ -1760,15 +1778,14 @@ export function buildCampaignSlideImagePrompt(
 		`LINKED CAMPAIGN (${totalSlides} posts — image ${slideIndex + 1}/${totalSlides}).`,
 		plan.theme ? `Campaign theme: ${plan.theme}.` : "",
 		`This slide: ${slide.title} [${slide.role}].`,
-		slide.composition
-			? `Layout note (secondary to IMAGE 1): ${slide.composition}.`
-			: "",
+		layoutNote,
+		carouselRefBlock,
 		`Shared series styling (colors, typography, mood — same on every slide): ${plan.visualDna}.`,
 		seriesLock,
 		referenceConcept
 			? "Keep IMAGE 2 ad design language on every slide — vary headline, layout role, and slide copy only; IMAGE 1 product must appear on every slide."
 			: referenceImageMode === "style-only"
-				? "Match IMAGE 1 palette, typography mood, and infographic/edu aesthetic on every slide — distinct layout role and copy per slide; never copy reference on-image text."
+				? "Match IMAGE 1 palette, typography mood, and infographic/edu aesthetic on every slide — distinct layout role and copy per slide; product stays visible; never copy reference on-image text."
 				: referenceImageMode === "clone"
 					? "Each slide varies headline/message and layout role only — IMAGE 1 subject must stay recognizable on every slide."
 					: "Each slide varies headline/message and layout role only — keep one consistent campaign art direction across all slides.",

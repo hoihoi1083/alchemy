@@ -182,6 +182,15 @@ export function h3ShotRecipeAllowsKineticType(mode: H3ShotRecipeMode): boolean {
   );
 }
 
+/**
+ * True when H3 frames stay textless (no burned captions / no user headline on pixels).
+ * Headline/subline/offer may still guide mood in planning — they are not painted on the video.
+ * Kinetic-type recipes may paint designed masthead words.
+ */
+export function h3ShotRecipeIsTextlessFrames(mode: H3ShotRecipeMode): boolean {
+  return !h3ShotRecipeAllowsKineticType(mode);
+}
+
 export const H3_SHOWREEL_ASPECTS = ["9:16", "16:9"] as const;
 export type H3ShowreelAspect = (typeof H3_SHOWREEL_ASPECTS)[number];
 export const DEFAULT_H3_SHOWREEL_ASPECT: H3ShowreelAspect = "16:9";

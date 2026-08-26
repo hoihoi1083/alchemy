@@ -7,12 +7,45 @@ import { parseLlmJsonObject } from "@/lib/parse-llm-json";
 import { isContentResearchStyleExtra } from "@/lib/content-research-promote";
 import {
   USER_REFERENCE_MARKER,
+  carouselSlidesPlannerBlock,
   isInfographicLikeBrief,
   isLayoutTransferReferenceExtra,
   isPhotographicReferenceBrief,
   isStyleOnlyReferenceExtra,
+  type CarouselSlideReferenceBrief,
 } from "@/lib/user-reference-brief";
 import { getVisualStyle, type VisualStyleId } from "@/lib/visual-styles";
+
+function applyCampaignCarouselCompositions(
+  plan: CampaignPlan,
+  carouselSlides?: CarouselSlideReferenceBrief[],
+): CampaignPlan {
+  if (!carouselSlides?.length) return plan;
+  const sharedDna = [
+    plan.visualDna,
+    carouselSlides[0]?.colorPalette ? `Palette: ${carouselSlides[0].colorPalette}` : "",
+    carouselSlides[0]?.typographyStyle ? `Type: ${carouselSlides[0].typographyStyle}` : "",
+    carouselSlides[0]?.mood ? `Mood: ${carouselSlides[0].mood}` : "",
+  ]
+    .filter(Boolean)
+    .join(". ");
+  return {
+    ...plan,
+    visualDna: sharedDna || plan.visualDna,
+    slides: plan.slides.map((s, i) => {
+      const ref = carouselSlides[i];
+      if (!ref) return s;
+      return {
+        ...s,
+        composition:
+          ref.composition ||
+          [ref.layoutStyle, ref.stagingPose].filter(Boolean).join(" — ") ||
+          String(s.composition ?? "").trim() ||
+          s.composition,
+      };
+    }),
+  };
+}
 
 function emptyCampaignPlan(): CampaignPlan {
   return {
@@ -142,10 +175,10 @@ function applyCampaignFallbacks(
               : "Offer slide — IMAGE 1 product + IMAGE 2 design language with CTA / offer badge area"
           : input.hasStyleReference
             ? i === 0
-              ? "Hero slide — match reference palette/typography; new cover layout with main hook headline"
+              ? "Hero slide — match reference palette/typography; product-led cover with designed title band"
               : i === 1
-                ? "Selling-points slide — same reference visual family; distinct bullet/feature layout (not same grid as hero)"
-                : "Offer slide — same reference visual family; CTA / recap band with distinct composition"
+                ? "Selling-points slide — edu/info card layout (title + short bullets/proof chips) around the SAME product; distinct from hero — not another centered bottle with swapped text"
+                : "Offer slide — CTA / recap card in the same visual family; product still visible; distinct composition from hero and selling-points"
             : i === 0
               ? "Hero slide — IMAGE 1 content centered and dominant, brand-matched lighting"
               : i === 1
@@ -182,6 +215,8 @@ function buildPlanPrompt(input: {
   hasProductPhoto?: boolean;
   referenceStrategyKind?: "layout-transfer" | "style-only" | "none";
   promptExtra?: string;
+  /** Per-frame layout/staging from research / carousel vision (teaching strength). */
+  carouselSlides?: CarouselSlideReferenceBrief[];
 }): string {
   const style = getVisualStyle(input.visualStyleId);
   const brandBlock = input.brandProfile?.businessName
@@ -206,6 +241,15 @@ function buildPlanPrompt(input: {
   const photoStyleRef =
     styleOnlyRef && isPhotographicReferenceBrief(input.promptExtra ?? "");
   const infographicRef = hasUserReference && isInfographicLikeBrief(input.promptExtra ?? "");
+  const hasCarouselVision = Boolean(input.carouselSlides?.length);
+  const carouselVisionRules = hasCarouselVision
+    ? [
+        `- Reference carousel vision analyzed ${input.carouselSlides!.length} frames — map campaign slide N to reference frame N layout/staging.`,
+        carouselSlidesPlannerBlock(input.carouselSlides),
+        "- visualDna MUST describe the SHARED reference look (palette, typography, mood) across all 3 campaign slides.",
+        "- Each slide.composition MUST follow the matching reference frame layout when available — still keep the user's product as the visible hero.",
+      ]
+    : [];
 
   const referenceRules = layoutTransferRef
     ? [
@@ -213,32 +257,40 @@ function buildPlanPrompt(input: {
         "- visualDna MUST match reference: layout grid type, color palette, typography hierarchy from USER REFERENCE.",
         "- Each slide = one campaign role (hero / selling points / offer) filled with USER copy — do NOT invent unrelated editorial layouts.",
         "- All on-image copy about the user's product only — never reuse reference poster wording.",
+        ...carouselVisionRules,
       ]
     : photoStyleRef
       ? [
           "- User reference is PHOTOGRAPHIC — match soft natural light, real product textures, integrated on-image typography matching the copy language.",
           "- visualDna: photorealistic lifestyle product photography like USER REFERENCE.",
           "- Each slide.composition: photo-led with distinct layout per slide — NO cartoon icons or flat clipart badges.",
+          ...carouselVisionRules,
         ]
       : styleOnlyRef
         ? contentResearchRef
           ? [
-              "- Content research reference: borrow VISUAL STYLE only — promote the user's product on every slide.",
-              "- visualDna: color palette, typography mood, icon/photo style from reference — each slide gets a DIFFERENT layout.",
+              "- Content research reference: borrow VISUAL STYLE, typography rhythm, and frame pacing — promote the user's product on every slide.",
+              "- visualDna: color palette, typography mood, icon/photo style from reference — each slide gets a DIFFERENT designed layout.",
+              "- Hero: product-led cover. Selling-points: edu/info card energy (title band + short bullets / proof) around the SAME product. Offer: distinct CTA layout.",
+              "- Prefer designed social-card structure (clear hierarchy, optional small icons or proof chips) over three nearly identical bottle heroes with only text swapped.",
               "- Never copy reference topic (星座/时政/其他品牌) — user headline/subline only.",
+              ...carouselVisionRules,
             ]
           : [
               "- User uploaded a STYLE reference — match palette, typography mood, and infographic/edu aesthetic from USER REFERENCE.",
               "- visualDna MUST mirror reference: layout grid type, color palette, typography treatment from USER REFERENCE block.",
-              "- Each slide = distinct campaign layout (hero / bullets / CTA) in the same visual family — do NOT paste the same reference grid on every card.",
+              "- Each slide = distinct campaign layout (hero / edu selling-points card / CTA) in the same visual family — do NOT paste the same reference grid on every card.",
+              "- Prefer designed social-card structure (title band, bullets/proof, CTA area) around the product — not three identical bottle heroes with only text swapped.",
               "- Spread user headline/subline across slides — never copy reference on-image Chinese text.",
+              ...carouselVisionRules,
             ]
         : input.promotionMode === "concept" && hasUserReference && infographicRef
           ? [
               "- User uploaded a reference infographic. Plan slides with the SAME visual style family and edu/info lane.",
               "- visualDna MUST mirror reference palette, typography, and component shapes from USER REFERENCE.",
+              ...carouselVisionRules,
             ]
-          : [];
+          : carouselVisionRules;
 
   return [
     "Plan a 3-image social ad CAMPAIGN for a small business. Return a single JSON object only.",
@@ -319,6 +371,7 @@ type PlanInput = {
   hasProductPhoto?: boolean;
   referenceStrategyKind?: "layout-transfer" | "style-only" | "none";
   promptExtra?: string;
+  carouselSlides?: CarouselSlideReferenceBrief[];
 };
 
 function fallbackInput(input: PlanInput) {
@@ -352,6 +405,7 @@ export async function planCampaign(input: PlanInput): Promise<CampaignPlan> {
           hasStyleReference: input.referenceStrategyKind === "style-only",
           referenceStrategyKind: input.referenceStrategyKind,
           promptExtra: input.promptExtra?.trim() || "",
+          carouselSlides: input.carouselSlides,
           ...fb,
         }),
       },
@@ -369,12 +423,15 @@ export async function planCampaign(input: PlanInput): Promise<CampaignPlan> {
     basePlan = emptyCampaignPlan();
   }
 
-  const plan = applyCampaignFallbacks(basePlan, {
-    ...fb,
-    hasReferenceLayout: input.hasReferenceLayout,
-    hasStyleReference: input.referenceStrategyKind === "style-only",
-    modelWear: input.visualStyleId === "model-wear",
-  });
+  const plan = applyCampaignCarouselCompositions(
+    applyCampaignFallbacks(basePlan, {
+      ...fb,
+      hasReferenceLayout: input.hasReferenceLayout,
+      hasStyleReference: input.referenceStrategyKind === "style-only",
+      modelWear: input.visualStyleId === "model-wear",
+    }),
+    input.carouselSlides,
+  );
 
   if (!plan.slides.every((s) => s.headline.trim())) {
     throw new Error("Could not plan campaign slides. Try adding a headline or campaign theme.");

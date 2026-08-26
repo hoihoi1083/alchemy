@@ -18,6 +18,7 @@ import {
   resolveH3ShowreelScheme,
   resolveH3SphereMgScheme,
   h3ShotRecipeAllowsKineticType,
+  h3ShotRecipeIsTextlessFrames,
 } from "../lib/h3-shot-recipes";
 import { h3ShotRecipeInputsReady, h3ShotModesForPromotion } from "../lib/recipe-path-ux";
 import { isRecipeOwnedVideoMode } from "../lib/creative-workflow";
@@ -107,6 +108,11 @@ describe("H3 shot recipes", () => {
     assert.equal(h3ShotRecipeNeedsHeroPhoto("c4d-motion"), true);
     assert.equal(h3ShotRecipeNeedsLifestyleStill("h3-lifestyle"), true);
     assert.equal(h3ShotRecipeNeedsLifestyleStill("food-bullet-time"), true);
+    assert.equal(h3ShotRecipeIsTextlessFrames("food-bullet-time"), true);
+    assert.equal(h3ShotRecipeIsTextlessFrames("h3-lifestyle"), true);
+    assert.equal(h3ShotRecipeIsTextlessFrames("c4d-motion"), true);
+    assert.equal(h3ShotRecipeIsTextlessFrames("h3-movie-title"), false);
+    assert.equal(h3ShotRecipeIsTextlessFrames("h3-showreel"), false);
     assert.equal(h3ShotRecipeNeedsLifestyleStill("c4d-motion"), false);
     const imitate = buildH3ShotRecipePrompt({
       mode: "imitate-ad",

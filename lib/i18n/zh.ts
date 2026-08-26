@@ -4994,7 +4994,18 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
       productAssistTitle: "產品助手",
       productAssistHint:
         "依產品名稱自動填寫大字／標題、輔助句與 CTA。高亮欄位會出現喺圖或影片上。",
+      productAssistTextlessHint:
+        "依產品名稱自動填寫標題、輔助句與 CTA。此影片風格畫面無字 — 欄位只作氣氛指引（要字幕可之後喺字幕工作室加上）。",
+      productAssistTextlessImageHint:
+        "依產品名稱自動填寫標題、輔助句與 CTA。無字底圖模式 — 欄位只作氣氛指引（之後可喺畫布加字）。",
+      productAssistEndStillHint:
+        "依產品名稱自動填寫標題與輔助句。文字會印喺片尾靜幀（動態過程無字）。",
+      productAssistIgCaptionHint:
+        "依產品名稱自動填寫標題（用作短 IG 文案）。輔助句／CTA 只作氣氛指引。",
       productAssistCta: "AI 幫我想",
+      onEndStillBadge: "會出現喺片尾靜幀",
+      igCaptionBadge: "IG 文案",
+      moodOnlyBadge: "只作指引",
       productAssistBusy: "撰寫中…",
       productAssistDone: "草稿已填入 — 繼續前可再編輯。",
       productAssistFailed: "無法填寫產品簡報。",

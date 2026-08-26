@@ -5515,7 +5515,18 @@ export const en = {
 			productAssistTitle: "Product assistant",
 			productAssistHint:
 				"AI fills big word / headline, support line, and CTA from your product name. Highlighted fields print on the image or video.",
+			productAssistTextlessHint:
+				"AI fills headline, support line, and CTA from your product name. This video style stays textless — fields guide mood only (add captions later in Captions if you want words).",
+			productAssistTextlessImageHint:
+				"AI fills headline, support line, and CTA. Textless image mode — fields guide mood only; add words later in the canvas editor.",
+			productAssistEndStillHint:
+				"AI fills headline and support line. They print on the end still (not during the motion).",
+			productAssistIgCaptionHint:
+				"AI fills the hook used as a short IG-style caption on the still. Supporting / CTA are mood only.",
 			productAssistCta: "AI fill",
+			onEndStillBadge: "Shows on end still",
+			igCaptionBadge: "IG caption",
+			moodOnlyBadge: "Mood only",
 			productAssistBusy: "Writing…",
 			productAssistDone: "Draft filled — edit before Continue.",
 			productAssistFailed: "Could not fill product brief.",

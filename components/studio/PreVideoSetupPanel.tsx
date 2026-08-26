@@ -55,6 +55,7 @@ import {
   type RecipePathUxMode,
 } from "@/lib/recipe-path-ux";
 import { videoModePreviewSrc } from "@/lib/creative-workflow";
+import { resolveCreativeCopyFieldHints } from "@/lib/creative-copy-field-hints";
 import { parseBlockbusterCamera, isBlockbusterElevatedBridgeCamera } from "@/lib/blockbuster-ad-recipe";
 
 const PANEL_CSS = `
@@ -352,6 +353,34 @@ export function PreVideoSetupPanel({
     !isH3Shot;
   const isQuickAssistant =
     !scenesReady && !isConcept && activeSubpath === "product_promo";
+  const copyHints = resolveCreativeCopyFieldHints({
+    workflowMode: wizard.workflowMode,
+    visualStyleId: wizard.visualStyleId,
+    videoCreativeMode: wizard.videoCreativeMode,
+    imageTextMode: wizard.imageTextMode,
+    imageOutputMode: wizard.imageOutputMode,
+  });
+  const fuse = m.microWizard.intakeFuse;
+  function videoCopyBadgeLabel(
+    kind: (typeof copyHints.badge)["hook"],
+  ): string | null {
+    if (kind === "on-end-still") return fuse.onEndStillBadge;
+    if (kind === "ig-caption") return fuse.igCaptionBadge;
+    if (kind === "on-image") return pv.onImageBadge;
+    if (kind === "on-video") return pv.inVideoBadge;
+    if (kind === "mood-only") return fuse.moodOnlyBadge;
+    return null;
+  }
+  const hookCopyBadge = videoCopyBadgeLabel(copyHints.badge.hook);
+  const supportingCopyBadge = videoCopyBadgeLabel(copyHints.badge.supporting);
+  const copyPanelHint =
+    copyHints.hintKind === "textless-video"
+      ? fuse.productAssistTextlessHint
+      : copyHints.hintKind === "end-still"
+        ? fuse.productAssistEndStillHint
+        : copyHints.hintKind === "ig-caption"
+          ? fuse.productAssistIgCaptionHint
+          : null;
   const showCreativeBrief =
     isSceneReel ||
     (!scenesReady &&
@@ -953,7 +982,14 @@ export function PreVideoSetupPanel({
                     <path d="M8 7V5h8v2" strokeLinecap="round" />
                   </svg>
                 </span>
-                <h3 className="pv-card-title">{pv.contentTitle}</h3>
+                <div className="min-w-0">
+                  <h3 className="pv-card-title">{pv.contentTitle}</h3>
+                  {copyPanelHint && !isMotionPoster ? (
+                    <p className="mt-0.5 text-xs leading-relaxed text-slate-500">
+                      {copyPanelHint}
+                    </p>
+                  ) : null}
+                </div>
               </div>
               <div className="pv-field-grid">
                 {isMotionPoster ? (
@@ -1238,7 +1274,7 @@ export function PreVideoSetupPanel({
                 )}
                 <label
                   className={`${isConcept ? "sm:col-span-2" : ""} ${
-                    isMotionPoster
+                    copyHints.emphasize.hook
                       ? "rounded-xl border border-violet-300 bg-violet-50/60 p-3 ring-1 ring-violet-200"
                       : ""
                   }`.trim()}
@@ -1254,9 +1290,15 @@ export function PreVideoSetupPanel({
                     ) : (
                       <span className="pv-label-opt">{pv.extraOptional}</span>
                     )}
-                    {isMotionPoster ? (
-                      <span className="ml-1.5 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700">
-                        {pv.onImageBadge}
+                    {hookCopyBadge ? (
+                      <span
+                        className={
+                          copyHints.badge.hook === "mood-only"
+                            ? "ml-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600"
+                            : "ml-1.5 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700"
+                        }
+                      >
+                        {hookCopyBadge}
                       </span>
                     ) : null}
                   </span>
@@ -1273,7 +1315,7 @@ export function PreVideoSetupPanel({
                 </label>
                 <label
                   className={`sm:col-span-2 ${
-                    isMotionPoster
+                    copyHints.emphasize.supporting
                       ? "rounded-xl border border-violet-300 bg-violet-50/60 p-3 ring-1 ring-violet-200"
                       : ""
                   }`.trim()}
@@ -1282,9 +1324,15 @@ export function PreVideoSetupPanel({
                     {isMotionPoster
                       ? pv.motionPosterCopyFocus.supportingLabel
                       : pv.supportingLabel}
-                    {isMotionPoster ? (
-                      <span className="ml-1.5 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700">
-                        {pv.onImageBadge}
+                    {supportingCopyBadge ? (
+                      <span
+                        className={
+                          copyHints.badge.supporting === "mood-only"
+                            ? "ml-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600"
+                            : "ml-1.5 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700"
+                        }
+                      >
+                        {supportingCopyBadge}
                       </span>
                     ) : null}
                   </span>

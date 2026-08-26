@@ -4,9 +4,12 @@ import { useState } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 import { useWizard } from "@/components/studio/WizardContext";
 import {
-  conceptCopyFieldEmphasis,
   resolveConceptCopyFocus,
 } from "@/lib/concept-copy-focus";
+import {
+  resolveCreativeCopyFieldHints,
+  type CopyFieldBadgeKind,
+} from "@/lib/creative-copy-field-hints";
 import {
   buildIntakeTemplateCards,
   intakeShowsStoryboardRecipes,
@@ -193,9 +196,21 @@ const ON_CREATIVE_FIELD_CLASS =
   "block rounded-xl border border-violet-300 bg-violet-50/60 p-3 ring-1 ring-violet-200";
 const QUIET_FIELD_CLASS = "block";
 
-function OnCreativeBadge({ label }: { label: string }) {
+function OnCreativeBadge({
+  label,
+  quiet,
+}: {
+  label: string;
+  quiet?: boolean;
+}) {
   return (
-    <span className="ml-1.5 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700">
+    <span
+      className={
+        quiet
+          ? "ml-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600"
+          : "ml-1.5 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700"
+      }
+    >
       {label}
     </span>
   );
@@ -207,21 +222,44 @@ export function ProductBriefAssistantPanel() {
   const wizard = useWizard();
   const fuse = m.microWizard.intakeFuse;
   const pg = m.microWizard.preGenerateSetup;
+  const pv = m.microWizard.preVideoSetup;
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
 
-  const isVideoWorkflow =
-    wizard.workflowMode === "video-only" || wizard.workflowMode === "combined";
-  const onCreativeBadge = isVideoWorkflow
-    ? m.microWizard.preVideoSetup.inVideoBadge
-    : pg.onImageBadge;
+  const copyHints = resolveCreativeCopyFieldHints({
+    workflowMode: wizard.workflowMode,
+    visualStyleId: wizard.visualStyleId,
+    videoCreativeMode: wizard.videoCreativeMode,
+    imageTextMode: wizard.imageTextMode,
+    imageOutputMode: wizard.imageOutputMode,
+  });
 
-  // Same labels as Step 5 Content details for the selected template.
+  function badgeLabel(kind: CopyFieldBadgeKind): string | null {
+    if (!kind) return null;
+    if (kind === "on-image") return pg.onImageBadge;
+    if (kind === "on-video") return pv.inVideoBadge;
+    if (kind === "on-end-still") return fuse.onEndStillBadge;
+    if (kind === "ig-caption") return fuse.igCaptionBadge;
+    if (kind === "mood-only") return fuse.moodOnlyBadge;
+    return null;
+  }
+
+  const panelHint =
+    copyHints.hintKind === "textless-video"
+      ? fuse.productAssistTextlessHint
+      : copyHints.hintKind === "textless-image"
+        ? fuse.productAssistTextlessImageHint
+        : copyHints.hintKind === "end-still"
+          ? fuse.productAssistEndStillHint
+          : copyHints.hintKind === "ig-caption"
+            ? fuse.productAssistIgCaptionHint
+            : fuse.productAssistHint;
+
   const copyFocus = resolveConceptCopyFocus(
     wizard.visualStyleId,
     pg.conceptCopyFocus,
   );
-  const emphasis = conceptCopyFieldEmphasis(wizard.visualStyleId);
+  const emphasis = copyHints.emphasize;
   const hookLabel =
     (copyFocus && "hookLabel" in copyFocus && copyFocus.hookLabel) ||
     pg.hookLabel;
@@ -239,6 +277,10 @@ export function ProductBriefAssistantPanel() {
       "offerPlaceholder" in copyFocus &&
       copyFocus.offerPlaceholder) ||
     fuse.copyOfferPlaceholder;
+
+  const hookBadge = badgeLabel(copyHints.badge.hook);
+  const supportingBadge = badgeLabel(copyHints.badge.supporting);
+  const offerBadge = badgeLabel(copyHints.badge.offer);
 
   async function fillWithAi() {
     if (!wizard.product.trim()) {
@@ -295,10 +337,8 @@ export function ProductBriefAssistantPanel() {
           <p className="text-[13px] font-bold text-slate-900">
             {fuse.productAssistTitle}
           </p>
-          <p className="mt-0.5 text-[12px] text-slate-500">
-            {fuse.productAssistHint}
-          </p>
-          {copyFocus ? (
+          <p className="mt-0.5 text-[12px] text-slate-500">{panelHint}</p>
+          {copyFocus && copyHints.hintKind === "prints" ? (
             <p className="mt-1 text-[11px] leading-snug text-violet-800">
               <span className="font-semibold">{copyFocus.title}</span>
               {" — "}
@@ -320,7 +360,12 @@ export function ProductBriefAssistantPanel() {
         <span className="mb-1 block text-[12px] font-semibold text-slate-700">
           {hookLabel}
           <span className="text-violet-600"> *</span>
-          {emphasis.hook ? <OnCreativeBadge label={onCreativeBadge} /> : null}
+          {hookBadge ? (
+            <OnCreativeBadge
+              label={hookBadge}
+              quiet={copyHints.badge.hook === "mood-only"}
+            />
+          ) : null}
         </span>
         <input
           className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
@@ -336,8 +381,11 @@ export function ProductBriefAssistantPanel() {
       >
         <span className="mb-1 block text-[12px] font-semibold text-slate-700">
           {supportingLabel}
-          {emphasis.supporting ? (
-            <OnCreativeBadge label={onCreativeBadge} />
+          {supportingBadge ? (
+            <OnCreativeBadge
+              label={supportingBadge}
+              quiet={copyHints.badge.supporting === "mood-only"}
+            />
           ) : null}
         </span>
         <input
@@ -352,7 +400,12 @@ export function ProductBriefAssistantPanel() {
       >
         <span className="mb-1 block text-[12px] font-semibold text-slate-700">
           {offerLabel}
-          {emphasis.offer ? <OnCreativeBadge label={onCreativeBadge} /> : null}
+          {offerBadge ? (
+            <OnCreativeBadge
+              label={offerBadge}
+              quiet={copyHints.badge.offer === "mood-only"}
+            />
+          ) : null}
         </span>
         <input
           className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"

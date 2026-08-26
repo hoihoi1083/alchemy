@@ -137,7 +137,9 @@ export function inferWizardFromPost(
       visualStyleId = promotionMode === "concept" ? "brand-campaign" : "product";
       formatLabel = count > 1 ? `Campaign · ${count} images` : "Campaign series";
       referenceNote =
-        count > 1 ? `Reference post has ${count} promo frames — adapt series structure for your product.` : undefined;
+        count > 1
+          ? `Reference post is a ${count}-image promo series — match palette, typography rhythm, and frame pacing (style-only; distinct layout per campaign slide; keep user product as hero).`
+          : undefined;
       break;
     case "model-wear":
       imageOutputMode = "single";

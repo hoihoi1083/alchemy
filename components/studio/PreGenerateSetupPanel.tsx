@@ -18,6 +18,7 @@ import {
 import { IMAGE_ASPECT_RATIOS, type ImageAspectRatio } from "@/lib/image-aspect-ratio";
 import { imageOutputPreviewSrc, type ImageOutputMode } from "@/lib/image-output-mode";
 import { imageTextPreviewSrc, type ImageTextMode } from "@/lib/image-text-mode";
+import { resolveCreativeCopyFieldHints } from "@/lib/creative-copy-field-hints";
 import type { UserReferenceBrief } from "@/lib/user-reference-brief";
 import { getVisualStyle, requiresBrandProfileForImages } from "@/lib/visual-styles";
 import {
@@ -889,6 +890,7 @@ export function PreGenerateSetupPanel({
   const { m } = useLocale();
   const wizard = useWizard();
   const pg = m.microWizard.preGenerateSetup;
+  const fuse = m.microWizard.intakeFuse;
   const isConcept = wizard.promotionMode === "concept";
   const contentRef = useRef<HTMLElement | null>(null);
   const pageTopRef = useRef<HTMLDivElement | null>(null);
@@ -980,7 +982,26 @@ export function PreGenerateSetupPanel({
     combinedStoryboard &&
     isLuxuryBirthRecipe(wizard.storyboardRecipeId) &&
     !isConcept;
-  const highlightCopyFields = !luxuryStoryboard;
+  const copyHints = resolveCreativeCopyFieldHints({
+    workflowMode: wizard.workflowMode,
+    visualStyleId: wizard.visualStyleId,
+    videoCreativeMode: wizard.videoCreativeMode,
+    imageTextMode: wizard.imageTextMode,
+    imageOutputMode: wizard.imageOutputMode,
+  });
+  const printsOnImage = copyHints.hintKind === "prints";
+  const highlightCopyFields = !luxuryStoryboard && printsOnImage;
+  const showHookOnImageBadge =
+    !luxuryStoryboard &&
+    printsOnImage &&
+    (copyHints.emphasize.hook || emphasizeHook || highlightCopyFields);
+  const showSupportingOnImageBadge =
+    !luxuryStoryboard &&
+    printsOnImage &&
+    (copyHints.emphasize.supporting || emphasizeSupporting || highlightCopyFields);
+  const showOfferOnImageBadge =
+    !luxuryStoryboard && printsOnImage && (copyHints.emphasize.offer || emphasizeOffer);
+  const showMoodOnlyBadge = !luxuryStoryboard && !printsOnImage;
   const luxuryFieldBadge = m.wizard.storyboardLuxuryFieldBadge;
   const luxuryFieldLabels = {
     storyboardBrief: m.wizard.storyboardBriefLabel,
@@ -1809,9 +1830,11 @@ export function PreGenerateSetupPanel({
                   <div className="pg-content-aside-copy">
                     <h3 className="pg-card-title">{pg.contentTitle}</h3>
                     <p className="mt-1 text-xs leading-relaxed text-slate-500">
-                      {copyFilledFromIntake && !expandCopyFields
-                        ? pg.copyCollapsedHint
-                        : pg.copyPresetHint}
+                      {showMoodOnlyBadge
+                        ? fuse.productAssistTextlessImageHint
+                        : copyFilledFromIntake && !expandCopyFields
+                          ? pg.copyCollapsedHint
+                          : pg.copyPresetHint}
                     </p>
                     {copyFilledFromIntake ? (
                       <button
@@ -1910,7 +1933,7 @@ export function PreGenerateSetupPanel({
                     className={
                       luxuryStoryboard
                         ? LUXURY_FIELD_WRAP_CLASS
-                        : highlightCopyFields || emphasizeHook
+                        : showHookOnImageBadge
                           ? "rounded-xl border border-violet-300 bg-violet-50/60 p-3 ring-1 ring-violet-200"
                           : undefined
                     }
@@ -1926,9 +1949,13 @@ export function PreGenerateSetupPanel({
                       </span>
                       {luxuryStoryboard ? (
                         <LuxuryFieldBadge label={luxuryFieldBadge} />
-                      ) : copyFocus || emphasizeHook || highlightCopyFields ? (
+                      ) : showHookOnImageBadge ? (
                         <span className="ml-1.5 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700">
                           {pg.onImageBadge}
+                        </span>
+                      ) : showMoodOnlyBadge ? (
+                        <span className="ml-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
+                          {fuse.moodOnlyBadge}
                         </span>
                       ) : null}
                     </span>
@@ -1947,7 +1974,7 @@ export function PreGenerateSetupPanel({
                   </label>
                   <label
                     className={
-                      highlightCopyFields || emphasizeSupporting
+                      showSupportingOnImageBadge
                         ? "rounded-xl border border-violet-300 bg-violet-50/60 p-3 ring-1 ring-violet-200"
                         : undefined
                     }
@@ -1956,9 +1983,13 @@ export function PreGenerateSetupPanel({
                       {supportingLabel}
                       {luxuryStoryboard ? (
                         <LuxuryFieldBadge label={luxuryFieldBadge} />
-                      ) : emphasizeSupporting || highlightCopyFields ? (
+                      ) : showSupportingOnImageBadge ? (
                         <span className="ml-1.5 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700">
                           {pg.onImageBadge}
+                        </span>
+                      ) : showMoodOnlyBadge ? (
+                        <span className="ml-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
+                          {fuse.moodOnlyBadge}
                         </span>
                       ) : null}
                     </span>
@@ -1989,16 +2020,20 @@ export function PreGenerateSetupPanel({
                       </label>
                       <label
                         className={
-                          emphasizeOffer
+                          showOfferOnImageBadge
                             ? "rounded-xl border border-violet-300 bg-violet-50/60 p-3 ring-1 ring-violet-200"
                             : undefined
                         }
                       >
                         <span className="pg-label">
                           {offerLabel}
-                          {emphasizeOffer ? (
+                          {showOfferOnImageBadge ? (
                             <span className="ml-1.5 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700">
                               {pg.onImageBadge}
+                            </span>
+                          ) : showMoodOnlyBadge ? (
+                            <span className="ml-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
+                              {fuse.moodOnlyBadge}
                             </span>
                           ) : (
                             <span className="pg-label-opt">{pg.extraOptional}</span>

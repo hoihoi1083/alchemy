@@ -37,7 +37,7 @@ describe("campaign style-only reference prompts", () => {
       artStyle: "realistic",
     });
     const mode = resolveImagePromptMode("product", "promo-ai", {
-      promotionMode: "concept",
+      promotionMode: "physical",
       workflowMode: "image-only",
     });
     const prompt = buildCampaignSlideImagePrompt(
@@ -57,9 +57,104 @@ describe("campaign style-only reference prompts", () => {
       false,
       { referenceImageMode: "style-only" },
     );
-    assert.match(prompt, /STYLE-ONLY REFERENCE/i);
+    assert.match(prompt, /STYLE-ONLY REFERENCE|Match IMAGE 1 palette/i);
     assert.match(prompt, /手串佩戴有講究/);
-    assert.doesNotMatch(prompt, /IMAGE 1 IS MANDATORY.*hero subject/s);
+    assert.match(prompt, /Layout:/);
+    assert.match(prompt, /designed social-card structure/i);
+    assert.doesNotMatch(prompt, /Layout note \(secondary to IMAGE 1\)/);
+  });
+
+  it("campaign slide prompt injects research carousel frame refs", () => {
+    const vars = buildPromptVariables({
+      product: "維他命 C 精華",
+      business: "",
+      headline: "3 個月真實變化",
+      subline: "半臉實驗",
+      offer: "",
+      market: "hk",
+      framing: "auto",
+      artStyle: "realistic",
+    });
+    const mode = resolveImagePromptMode("product", "promo-ai", {
+      promotionMode: "physical",
+      workflowMode: "image-only",
+    });
+    const prompt = buildCampaignSlideImagePrompt(
+      vars,
+      {
+        role: "selling-points",
+        title: "賣點",
+        headline: "半臉實驗數據",
+        subline: "細紋下降",
+        composition: "Edu tip card with product",
+      },
+      { theme: "維C", visualDna: "clean clinical skincare" },
+      mode,
+      null,
+      1,
+      3,
+      true,
+      {
+        referenceImageMode: "style-only",
+        hasProductPhoto: true,
+        productName: "維他命 C 精華",
+        carouselSlideRef: {
+          index: 2,
+          sceneSummary: "Scientific tip card",
+          layoutStyle: "title top, proof chips, product bottom",
+          colorPalette: "white orange",
+          typographyStyle: "bold sans headline",
+          mood: "bright clinical",
+          composition: "Scientific tip card",
+          stagingPose: "product lower third",
+        },
+      },
+    );
+    assert.match(prompt, /Reference frame 2 layout/i);
+    assert.match(prompt, /Scientific tip card|title top/i);
+    assert.match(prompt, /Typography: bold sans headline/i);
+  });
+
+  it("campaign planner research path asks for designed layouts and carousel vision", () => {
+    const prompt = buildCampaignPlanPromptForTest({
+      visualStyleId: "product",
+      campaignTheme: "",
+      product: "維他命 C 精華",
+      business: "",
+      headline: "3 個月真實變化",
+      subline: "半臉實驗",
+      offer: "留言獲取連結",
+      hasProductPhoto: true,
+      hasStyleReference: true,
+      referenceStrategyKind: "style-only",
+      promptExtra:
+        "Style reference (Instagram): clean clinical. Match visual style / layout energy only — promote user product. Do NOT copy reference subject matter.",
+      carouselSlides: [
+        {
+          index: 1,
+          sceneSummary: "Hero cover",
+          layoutStyle: "hero cover",
+          colorPalette: "white purple",
+          typographyStyle: "bold sans",
+          mood: "fresh",
+          composition: "Centered product with big hook",
+          stagingPose: "centered bottle",
+        },
+        {
+          index: 2,
+          sceneSummary: "Edu tip",
+          layoutStyle: "edu tip",
+          colorPalette: "white orange",
+          typographyStyle: "editorial",
+          mood: "clinical",
+          composition: "Title + body + product",
+          stagingPose: "product lower third",
+        },
+      ],
+    });
+    assert.match(prompt, /designed social-card|edu\/info card|edu selling-points/i);
+    assert.match(prompt, /Reference carousel vision|map campaign slide N/i);
+    assert.match(prompt, /Centered product with big hook|Title \+ body/i);
   });
 
   it("campaign planner treats typed name as claim when product photo is present", () => {

@@ -4563,7 +4563,18 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
       productAssistTitle: "产品助手",
       productAssistHint:
         "依产品名称自动填写大字／标题、辅助句与 CTA。高亮栏位会出现在图或视频上。",
+      productAssistTextlessHint:
+        "依产品名称自动填写标题、辅助句与 CTA。此影片风格画面无字 — 栏位只作气氛指引（要字幕可之后在字幕工作室加上）。",
+      productAssistTextlessImageHint:
+        "依产品名称自动填写标题、辅助句与 CTA。无字底图模式 — 栏位只作气氛指引（之后可在画布加字）。",
+      productAssistEndStillHint:
+        "依产品名称自动填写标题与辅助句。文字会印在片尾静帧（动态过程无字）。",
+      productAssistIgCaptionHint:
+        "依产品名称自动填写标题（用作短 IG 文案）。辅助句／CTA 只作气氛指引。",
       productAssistCta: "AI 帮我想",
+      onEndStillBadge: "会出现在片尾静帧",
+      igCaptionBadge: "IG 文案",
+      moodOnlyBadge: "只作指引",
       productAssistBusy: "撰写中…",
       productAssistDone: "草稿已填入 — 继续前可再编辑。",
       productAssistFailed: "无法填写产品簡报。",
