@@ -11,10 +11,12 @@ import type { WorkflowMode } from "@/lib/workflow-mode";
 import type { CarouselSlideReferenceBrief } from "@/lib/user-reference-brief";
 import { stripContentResearchStyleExtra } from "@/lib/content-research-promote";
 import {
+	USER_REFERENCE_COMPOSITION_REMAP_MARKER,
 	USER_REFERENCE_LAYOUT_TRANSFER_MARKER,
 	USER_REFERENCE_MARKER,
 	USER_REFERENCE_STYLE_ONLY_MARKER,
 	type UserReferenceBrief,
+	userReferenceCompositionRemapPromptBlock,
 	userReferenceLayoutTransferPromptBlock,
 	userReferenceStyleOnlyPromptBlock,
 } from "@/lib/user-reference-brief";
@@ -23,7 +25,8 @@ export function promptExtraHasUserReferenceMarker(extra: string): boolean {
 	return (
 		extra.includes(USER_REFERENCE_MARKER) ||
 		extra.includes(USER_REFERENCE_STYLE_ONLY_MARKER) ||
-		extra.includes(USER_REFERENCE_LAYOUT_TRANSFER_MARKER)
+		extra.includes(USER_REFERENCE_LAYOUT_TRANSFER_MARKER) ||
+		extra.includes(USER_REFERENCE_COMPOSITION_REMAP_MARKER)
 	);
 }
 
@@ -51,6 +54,7 @@ export type ReferenceStrategyKind =
 	| "none"
 	| "style-only"
 	| "layout-transfer"
+	| "composition-remap"
 	| "product-clone"
 	| "mood-only";
 
@@ -85,6 +89,11 @@ export type ResolveReferenceStrategyInput = {
 	hasReferenceUpload: boolean;
 	hasProductPhoto: boolean;
 	hasReferenceBrief: boolean;
+	/**
+	 * Opt-in: keep reference board grammar and remap topic/subjects/copy.
+	 * Single / A-B only — campaign & teaching carousel keep existing strategies.
+	 */
+	preferCompositionRemap?: boolean;
 };
 
 const LAYER_LABELS: Record<keyof ReferenceLayerPlan, string> = {
@@ -114,6 +123,16 @@ export function resolveReferenceLayers(
 				onImageText: "replace",
 				moodLighting: "adapt",
 				stagingPose: "keep",
+			};
+		case "composition-remap":
+			return {
+				layoutGrammar: "keep",
+				visualStyle: "keep",
+				contentLane: "replace",
+				subjects: "replace",
+				onImageText: "replace",
+				moodLighting: "adapt",
+				stagingPose: "adapt",
 			};
 		case "style-only":
 			return {
@@ -164,22 +183,31 @@ export function resolveReferenceStrategy(
 	const kind = pickStrategyKind(input);
 	const layers = resolveReferenceLayers(kind);
 	const useDualImage =
-		kind === "layout-transfer" &&
-		input.hasReferenceUpload &&
-		input.hasProductPhoto;
-	const sendPixelsToFal =
 		kind === "layout-transfer"
-			? useDualImage
-			: kind === "product-clone" && input.hasProductPhoto
-				? true
-				: (kind === "style-only" || kind === "mood-only") &&
-					input.hasReferenceUpload;
+			? input.hasReferenceUpload && input.hasProductPhoto
+			: kind === "composition-remap"
+				? // Concept boards: shell-only. Product photo dual only for physical SKU insert.
+					input.promotionMode === "physical" &&
+					input.hasReferenceUpload &&
+					input.hasProductPhoto
+				: false;
+	const sendPixelsToFal =
+		kind === "composition-remap"
+			? input.hasReferenceUpload
+			: kind === "layout-transfer"
+				? useDualImage
+				: kind === "product-clone" && input.hasProductPhoto
+					? true
+					: (kind === "style-only" || kind === "mood-only") &&
+						input.hasReferenceUpload;
 	const referenceImageMode: ReferenceImageMode =
-		kind === "style-only" || kind === "mood-only"
-			? "style-only"
-			: kind === "product-clone" || kind === "layout-transfer"
-				? "clone"
-				: "none";
+		kind === "composition-remap"
+			? "composition-remap"
+			: kind === "style-only" || kind === "mood-only"
+				? "style-only"
+				: kind === "product-clone" || kind === "layout-transfer"
+					? "clone"
+					: "none";
 
 	return {
 		kind,
@@ -187,6 +215,7 @@ export function resolveReferenceStrategy(
 		useDualImage,
 		sendPixelsToFal,
 		referenceImageMode,
+		// Dedicated composition-remap prompt — never reuse layout-transfer dual path.
 		useReferenceConceptPrompts: kind === "layout-transfer",
 	};
 }
@@ -198,6 +227,14 @@ function pickStrategyKind(
 
 	if (isConceptCinematicStyle(input.visualStyleId)) {
 		return hasRef ? "mood-only" : "none";
+	}
+
+	if (
+		input.preferCompositionRemap &&
+		hasRef &&
+		(input.imageOutputMode === "single" || input.imageOutputMode === "ab")
+	) {
+		return "composition-remap";
 	}
 
 	if (!hasRef) {
@@ -250,6 +287,9 @@ export function referenceStrategyPromptBlock(
 	strategy: ReferenceStrategy,
 ): string {
 	if (!brief) return "";
+	if (strategy.kind === "composition-remap") {
+		return userReferenceCompositionRemapPromptBlock(brief, strategy.layers);
+	}
 	if (strategy.kind === "layout-transfer") {
 		return userReferenceLayoutTransferPromptBlock(brief, strategy.layers);
 	}
@@ -347,6 +387,7 @@ export function resolveStrategyFromFormData(input: {
 	hasStyleRef: boolean;
 	hasProductRef: boolean;
 	referenceBrief?: UserReferenceBrief | null;
+	preferCompositionRemap?: boolean;
 }): ReferenceStrategy {
 	return resolveReferenceStrategy({
 		promotionMode: input.promotionMode,
@@ -356,6 +397,7 @@ export function resolveStrategyFromFormData(input: {
 		hasReferenceUpload: input.hasStyleRef,
 		hasProductPhoto: input.hasProductRef,
 		hasReferenceBrief: Boolean(input.referenceBrief),
+		preferCompositionRemap: input.preferCompositionRemap,
 	});
 }
 
@@ -385,6 +427,11 @@ export function parseStrategyFromFormData(formData: FormData): {
 	const brief = parseReferenceBriefJson(
 		(formData.get("reference_brief") as string | null)?.trim(),
 	);
+	const preferCompositionRemap = ["1", "true", "yes"].includes(
+		String(formData.get("prefer_composition_remap") ?? "")
+			.trim()
+			.toLowerCase(),
+	);
 	return {
 		strategy: resolveStrategyFromFormData({
 			promotionMode,
@@ -394,6 +441,7 @@ export function parseStrategyFromFormData(formData: FormData): {
 			hasStyleRef: hasStyle,
 			hasProductRef: hasProduct,
 			referenceBrief: brief,
+			preferCompositionRemap,
 		}),
 		brief,
 	};

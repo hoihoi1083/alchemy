@@ -330,6 +330,7 @@ import {
 	sanitizeStoryboardSeedancePrompt,
 } from "@/lib/reel-reference-brief";
 import {
+	USER_REFERENCE_COMPOSITION_REMAP_MARKER,
 	USER_REFERENCE_LAYOUT_TRANSFER_MARKER,
 	USER_REFERENCE_MARKER,
 	USER_REFERENCE_STYLE_ONLY_MARKER,
@@ -453,6 +454,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		setArtStyleId,
 		imageCreativeMode,
 		setImageCreativeMode,
+		preferCompositionRemap,
+		setPreferCompositionRemap,
 		videoCreativeMode,
 		setVideoCreativeMode,
 		videoSettings,
@@ -1184,6 +1187,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					!isLockedSinglePosterStyle(visualStyleId) &&
 					(Boolean(userReferenceBrief) ||
 						Boolean(conceptImageVisionNote.trim())),
+				preferCompositionRemap:
+					!isLockedSinglePosterStyle(visualStyleId) &&
+					preferCompositionRemap,
 			}),
 		[
 			promotionMode,
@@ -1195,6 +1201,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			productPhoto,
 			userReferenceBrief,
 			conceptImageVisionNote,
+			preferCompositionRemap,
+			hasProductPhotoLock,
 		],
 	);
 
@@ -1205,8 +1213,16 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			if (userReferenceBrief) {
 				fd.set("reference_brief", JSON.stringify(userReferenceBrief));
 			}
+			if (preferCompositionRemap) {
+				fd.set("prefer_composition_remap", "1");
+			}
 		},
-		[effectiveImageOutputMode, promotionMode, userReferenceBrief],
+		[
+			effectiveImageOutputMode,
+			promotionMode,
+			userReferenceBrief,
+			preferCompositionRemap,
+		],
 	);
 
 	const attachReferenceToForm = useCallback(
@@ -1296,6 +1312,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			!base.includes(USER_REFERENCE_MARKER) &&
 			!base.includes(USER_REFERENCE_STYLE_ONLY_MARKER) &&
 			!base.includes(USER_REFERENCE_LAYOUT_TRANSFER_MARKER) &&
+			!base.includes(USER_REFERENCE_COMPOSITION_REMAP_MARKER) &&
 			!isContentResearchStyleExtra(base)
 				? [base, legacyRef, reelBlock].filter(Boolean).join(" | ")
 				: [base, reelBlock].filter(Boolean).join(" | ");
@@ -1534,6 +1551,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		imageCreativeMode,
 		productPhoto,
 		effectiveImageOutputMode,
+		preferCompositionRemap,
 	});
 	referenceAnalyzeContextRef.current = {
 		conceptIdea,
@@ -1548,6 +1566,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		imageCreativeMode,
 		productPhoto,
 		effectiveImageOutputMode,
+		preferCompositionRemap,
 	};
 
 	const lastCompletedReferenceAnalyzeKeyRef = useRef<string | null>(null);
@@ -1609,6 +1628,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				fd.set("subline", ctx.subline.trim());
 				fd.set("product", ctx.product.trim());
 				fd.set("prompt_extra", promptForAnalyze);
+				if (ctx.preferCompositionRemap) {
+					fd.set("prefer_composition_remap", "1");
+				}
 				// Do NOT send extraKitPhotos as carousel_reference_images.
 				// Kit slots are optional product angles, not research style slides — sending
 				// them forced N sequential Bagel calls and polluted carousel vision.
@@ -2591,10 +2613,20 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			| "jelly-3d"
 			| "storyboard"
 			| "reference"
-			| "ugc-presenter",
+			| "ugc-presenter"
+			| "remap",
 	) {
     setError(null);
     setStepKey("setup");
+		if (path === "remap") {
+			if (workflowMode === "video-only") setWorkflowMode("image-only");
+			selectVisualStyle("product");
+			setImageOutputMode("single");
+			setImageCreativeMode("reference-concept");
+			setPreferCompositionRemap(true);
+			return;
+		}
+		setPreferCompositionRemap(false);
 		if (path === "reference") {
 			setWorkflowMode("image-only");
 			selectVisualStyle("product");
@@ -2666,7 +2698,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			| "designed"
 			| "gaming-cover"
 			| "sports-big-words"
-			| "jelly-3d",
+			| "jelly-3d"
+			| "remap",
 	) {
     setError(null);
     setStepKey("setup");
@@ -2674,6 +2707,14 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       setImageAspectRatio("4:5");
       setImageOutputMode("single");
     }
+		if (path === "remap") {
+			selectVisualStyle("info-poster");
+			setImageOutputMode("single");
+			setImageCreativeMode("reference-concept");
+			setPreferCompositionRemap(true);
+			return;
+		}
+		setPreferCompositionRemap(false);
     if (path === "info") selectVisualStyle("info-poster");
 		else if (
 			path === "designed" ||
@@ -3456,7 +3497,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				(Boolean(imageRefPhoto?.size) &&
 					(referenceStrategy.kind === "style-only" ||
 						referenceStrategy.kind === "mood-only" ||
-						referenceStrategy.kind === "layout-transfer"));
+						referenceStrategy.kind === "layout-transfer" ||
+						referenceStrategy.kind === "composition-remap"));
 			fd.set("endpoint", needsEdit ? EDIT_ENDPOINT : TEXT_ENDPOINT);
 			fd.set("storyboard_plan", JSON.stringify(planForGen));
 			fd.set("scene_indexes", String(scene.imageIndex));
@@ -4259,6 +4301,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			visualStyleId,
 			hasProductPhoto: hasProductPhotoLock,
 			isStoryboardOutput,
+			preferCompositionRemap,
 		});
 		if (setupImageGate) {
 			setError(resolveSetupImageGateMessage(setupImageGate));
@@ -5093,7 +5136,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 						(Boolean(imageRefPhoto?.size) &&
 							(referenceStrategy.kind === "style-only" ||
 								referenceStrategy.kind === "mood-only" ||
-								referenceStrategy.kind === "layout-transfer"));
+								referenceStrategy.kind === "layout-transfer" ||
+								referenceStrategy.kind === "composition-remap"));
 					fd.set(
 						"endpoint",
 						needsEdit ? EDIT_ENDPOINT : TEXT_ENDPOINT,
@@ -5578,6 +5622,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			}
 			const styleOnlyRef =
 				referenceStrategy.kind === "style-only" ||
+				referenceStrategy.kind === "composition-remap" ||
 				isContentResearchStyleExtra(promptExtra);
 			if (!productPhoto && promotionMode !== "concept" && !styleOnlyRef) {
 				setError(m.errors.needPhoto);
@@ -9830,6 +9875,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					visualStyleId,
 					hasProductPhoto: hasProductPhotoLock,
 					isStoryboardOutput,
+					preferCompositionRemap,
 				})
 			: null;
 	const setupReferenceDurationGateReason =
@@ -10462,6 +10508,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     headline,
     imageBusy,
     imageCreativeMode,
+    preferCompositionRemap,
+    setPreferCompositionRemap,
     imageFinishLabel,
     imageGenKey,
     imageInputMode,

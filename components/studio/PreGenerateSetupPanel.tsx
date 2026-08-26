@@ -38,6 +38,10 @@ import {
 import { LUXURY_FIELD_WRAP_CLASS, luxuryFieldWrap } from "@/lib/storyboard-luxury-fields";
 import { PlanGateDialog } from "@/components/billing/PlanGateDialog";
 import { useUserPlanEntitlements } from "@/hooks/useUserPlanEntitlements";
+
+/** Dedicated thumb for 版面改寫 — not the info-poster bottle. */
+const COMPOSITION_REMAP_PREVIEW_SRC =
+  "/images/studio/visual-styles/composition-remap.png";
 import { planMeetsMinimum } from "@/lib/billing/plan-gates";
 
 const PANEL_CSS = `
@@ -939,7 +943,9 @@ export function PreGenerateSetupPanel({
     isGamingCover ||
     isSportsBigWords ||
     isJelly3d;
-  const isQuickAd = !isModelWear && !isLockedPosterStyle;
+  const isQuickAd =
+    !isModelWear && !isLockedPosterStyle && !wizard.preferCompositionRemap;
+  const isCompositionRemap = Boolean(wizard.preferCompositionRemap);
   const hasReference = Boolean(wizard.imageRefPhoto);
   /** Reference layout transfer overrides model-wear staging — lock to product path. */
   const modelWearLockedByReference = effectiveShowStylePicker && !isConcept && hasReference;
@@ -1159,7 +1165,8 @@ export function PreGenerateSetupPanel({
       | "parts"
       | "gaming-cover"
       | "sports-big-words"
-      | "jelly-3d",
+      | "jelly-3d"
+      | "remap",
   ) {
     if (path === "model" && hasReference) return;
     wizard.applyPrimaryPath(path);
@@ -1173,7 +1180,7 @@ export function PreGenerateSetupPanel({
     ) {
       return;
     }
-    if (wizard.imageRefPhoto) {
+    if (path === "remap" || wizard.imageRefPhoto) {
       wizard.setImageCreativeMode("reference-concept");
     }
   }
@@ -1187,7 +1194,8 @@ export function PreGenerateSetupPanel({
       | "designed"
       | "gaming-cover"
       | "sports-big-words"
-      | "jelly-3d",
+      | "jelly-3d"
+      | "remap",
   ) {
     wizard.applyPrimaryPathConcept(path);
     if (
@@ -1198,7 +1206,7 @@ export function PreGenerateSetupPanel({
     ) {
       return;
     }
-    if (wizard.imageRefPhoto) {
+    if (path === "remap" || wizard.imageRefPhoto) {
       wizard.setImageCreativeMode("reference-concept");
     }
   }
@@ -1370,6 +1378,12 @@ export function PreGenerateSetupPanel({
                       [
                         ["info", m.wizard.pathInfoTitle, m.wizard.pathInfoDesc, "info-poster"],
                         [
+                          "remap",
+                          pg.stylePickerRemapLabel,
+                          pg.stylePickerRemapDesc,
+                          "info-poster",
+                        ],
+                        [
                           "designed",
                           pg.stylePickerDesignedLabel,
                           pg.stylePickerDesignedDesc,
@@ -1408,7 +1422,10 @@ export function PreGenerateSetupPanel({
                         ],
                       ] as const
                     ).map(([path, title, desc, styleId]) => {
-                      const selected = wizard.visualStyleId === styleId;
+                      const selected =
+                        path === "remap"
+                          ? isCompositionRemap
+                          : wizard.visualStyleId === styleId && !isCompositionRemap;
                       return (
                         <button
                           key={path}
@@ -1435,7 +1452,11 @@ export function PreGenerateSetupPanel({
                           ) : null}
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
-                            src={getVisualStyle(styleId).previewSrc}
+                            src={
+                              path === "remap"
+                                ? COMPOSITION_REMAP_PREVIEW_SRC
+                                : getVisualStyle(styleId).previewSrc
+                            }
                             alt=""
                             className="pg-output-thumb"
                           />
@@ -1457,6 +1478,13 @@ export function PreGenerateSetupPanel({
                           pg.stylePickerQuickDesc,
                           "product",
                           isQuickAd,
+                        ],
+                        [
+                          "remap",
+                          pg.stylePickerRemapLabel,
+                          pg.stylePickerRemapDesc,
+                          "product",
+                          isCompositionRemap,
                         ],
                         [
                           "designed",
@@ -1535,7 +1563,11 @@ export function PreGenerateSetupPanel({
                           ) : null}
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
-                            src={getVisualStyle(styleId).previewSrc}
+                            src={
+                              path === "remap"
+                                ? COMPOSITION_REMAP_PREVIEW_SRC
+                                : getVisualStyle(styleId).previewSrc
+                            }
                             alt=""
                             className="pg-output-thumb"
                           />
@@ -1566,10 +1598,20 @@ export function PreGenerateSetupPanel({
               </section>
             ) : null}
 
-            {showReferenceForDirection ? (
+            {showReferenceForDirection || isCompositionRemap ? (
               <FusedReferenceCard
-                title={pg.referenceUploadTitle}
-                hint={isConcept ? pg.conceptReferenceUploadHint : pg.referenceUploadHint}
+                title={
+                  isCompositionRemap
+                    ? pg.stylePickerRemapReferenceTitle
+                    : pg.referenceUploadTitle
+                }
+                hint={
+                  isCompositionRemap
+                    ? pg.stylePickerRemapReferenceHint
+                    : isConcept
+                      ? pg.conceptReferenceUploadHint
+                      : pg.referenceUploadHint
+                }
                 briefSummaryTitle={pg.briefSummaryTitle}
                 noReference={pg.noReference}
                 changeLabel={m.wizard.referenceChange}

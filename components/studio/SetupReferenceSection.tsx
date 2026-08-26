@@ -27,6 +27,7 @@ export function SetupReferenceSection({
     referenceAnalyzeBusy,
     referenceAnalyzeNote,
     referenceStrategy,
+    preferCompositionRemap,
     researchReelAnalysis,
     researchReelAnalyzeBusy,
     researchReelAnalyzeNote,
@@ -80,7 +81,9 @@ export function SetupReferenceSection({
           ) : null}
           {isConcept && imageRefPhoto && !productPhoto ? (
             <p className="rounded-lg border border-cyan-200 bg-cyan-50 px-3 py-2 text-xs text-cyan-900">
-              {m.wizard.referenceConceptStyleOnlyHint}
+              {preferCompositionRemap
+                ? m.wizard.referenceCompositionRemapHint
+                : m.wizard.referenceConceptStyleOnlyHint}
             </p>
           ) : null}
         </>

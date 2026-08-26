@@ -24,6 +24,7 @@ const STRATEGY_LABEL_KEY: Record<
 	none: "none",
 	"style-only": "styleOnly",
 	"layout-transfer": "layoutTransfer",
+	"composition-remap": "compositionRemap",
 	"product-clone": "productClone",
 	"mood-only": "moodOnly",
 };

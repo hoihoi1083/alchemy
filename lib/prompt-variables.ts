@@ -334,7 +334,40 @@ function imageStyleOnlyConceptReferenceBlock(): string {
 	);
 }
 
-export type ReferenceImageMode = "none" | "clone" | "style-only";
+export type ReferenceImageMode =
+	| "none"
+	| "clone"
+	| "style-only"
+	| "composition-remap";
+
+function imageCompositionRemapReferenceBlock(dualProduct: boolean): string {
+	const shellLock = joinParts(
+		"BOARD TRACE (mandatory — match IMAGE 1 structure, do not redesign):",
+		"1) Same overall poster grid and white/clean infographic ground as IMAGE 1.",
+		"2) One central hero figure in the SAME seat/pose zone as IMAGE 1's hub (new original person fitting the user topic — never the reference celebrity).",
+		"3) Surrounding support people in the SAME spoke positions (~same count) with dashed/thin leader lines to role callout chips.",
+		"4) Left stacked large metric/stat cards in the SAME column slots (new numbers + loan/topic labels from user copy).",
+		"5) Right icon + stat stack in the SAME column slots.",
+		"6) Bottom tip/footer band: icon row and/or numbered insights 01/02/03 + brand/CTA zone — same bands, new wording.",
+		"FORBIDDEN layouts unless IMAGE 1 already is that layout: outdoor product packshot, power bank/camping gear hero, phone UI collage, fork-in-the-road metaphor poster, empty lifestyle stock scene.",
+	);
+	if (dualProduct) {
+		return joinParts(
+			"COMPOSITION REMAP — IMAGE 1 = composition SHELL (board grammar). IMAGE 2 = optional SKU only.",
+			shellLock,
+			"If IMAGE 2 is a product photo: place that exact SKU small in the hub props zone (held / on table near the hero) — do NOT turn the whole poster into an IMAGE 2 packshot.",
+			"REPLACE all IMAGE 1 celebrities, logos, wordmarks, and readable text with the user's topic and campaign copy.",
+			thirdPartyBrandGuardBlock(),
+		);
+	}
+	return joinParts(
+		"COMPOSITION REMAP — IMAGE 1 is the composition SHELL (the only layout source).",
+		shellLock,
+		"REPLACE every person, role, prop theme, number, and on-image line with the user's concept and campaign copy below.",
+		"Do NOT invent a generic lifestyle collage or a new layout family. Do NOT keep celebrity likenesses, club marks, or reference wording.",
+		thirdPartyBrandGuardBlock(),
+	);
+}
 
 function referenceBlockForMode(
 	mode: ReferenceImageMode,
@@ -343,6 +376,9 @@ function referenceBlockForMode(
 	opts?: { conceptSingle?: boolean },
 ): string {
 	if (mode === "clone") return imageReferenceAnchorBlock(vars);
+	if (mode === "composition-remap") {
+		return imageCompositionRemapReferenceBlock(false);
+	}
 	if (mode === "style-only") {
 		return opts?.conceptSingle
 			? imageStyleOnlyConceptReferenceBlock()
@@ -736,6 +772,7 @@ import type { SingleImagePlan } from "@/lib/single-image-plan";
 export type ImagePromptMode =
 	| "promo-ai"
 	| "reference-concept"
+	| "composition-remap"
 	| "info-poster"
 	| "designed-poster"
 	| "parts-poster"
@@ -1392,6 +1429,8 @@ export function buildWizardImagePrompt(
 		hasReferenceImage?: boolean;
 		/** style-only = palette/mood from IMAGE 1, not product lock. */
 		referenceImageMode?: ReferenceImageMode;
+		/** Composition remap with product photo as IMAGE 1 + ref shell as IMAGE 2. */
+		compositionRemapDual?: boolean;
 	},
 ): string {
 	const brandLogoImageIndex = promptOptions?.brandLogoImageIndex ?? null;
@@ -1420,6 +1459,21 @@ export function buildWizardImagePrompt(
 					structuredReferenceBrief:
 						promptOptions?.structuredReferenceBrief,
 					aspectRatio: promptOptions?.aspectRatio,
+				}),
+				plan ? singlePlanBlock(plan) : "",
+				carouselSlideAvoidClause(
+					vars.framing,
+					vars.artStyle ?? DEFAULT_ART_STYLE,
+				),
+			),
+		);
+	}
+	if (mode === "composition-remap") {
+		return withLogo(
+			joinParts(
+				buildCompositionRemapImagePrompt(vars, {
+					aspectRatio: promptOptions?.aspectRatio,
+					dualProduct: Boolean(promptOptions?.compositionRemapDual),
 				}),
 				plan ? singlePlanBlock(plan) : "",
 				carouselSlideAvoidClause(
@@ -2167,6 +2221,72 @@ export function buildMotionPosterEndStillPrompt(
 		MARKET_HINTS[vars.market],
 		FRAMING_IMAGE[vars.framing],
 		`${aspect} finished designed poster still. No watermarks, no English meta labels, no hashtag clutter.`,
+	);
+}
+
+/**
+ * Keep reference board grammar (hub/spokes/panels/chips); remap topic, subjects, and copy.
+ * Single IMAGE 1 shell when concept-only; dual product+shell when dualProduct.
+ */
+export function buildCompositionRemapImagePrompt(
+	vars: PromptVariables,
+	options?: {
+		aspectRatio?: string;
+		dualProduct?: boolean;
+	},
+): string {
+	const topic =
+		vars.product?.trim() ||
+		vars.headline?.trim() ||
+		"the user's campaign topic";
+	const aspect = options?.aspectRatio?.trim() || "4:5";
+	const dual = Boolean(options?.dualProduct);
+	const campaignCopy = joinParts(
+		vars.business ? `Brand: ${vars.business}` : undefined,
+		vars.headline ? `Headline: ${vars.headline}` : undefined,
+		vars.subline ? `Subline: ${vars.subline}` : undefined,
+		vars.offer ? `Offer / CTA: ${vars.offer}` : undefined,
+	);
+	const copyHint = promoTypographyHint(vars, {
+		layoutTransferDual: dual,
+	});
+
+	if (dual) {
+		return joinParts(
+			artStyleMandatoryLead(vars.artStyle),
+			`Two images. Create ONE new ${aspect} composition-remap INFRASTRUCTURE BOARD for ${topic}.`,
+			imageCompositionRemapReferenceBlock(true),
+			`CRITICAL: IMAGE 1 pixels win for PANEL GEOMETRY / board machine. IMAGE 2 (if any) is only a small SKU insert — never the full-scene hero.`,
+			campaignCopy
+				? `Campaign copy (all on-image text): ${campaignCopy}.`
+				: `No user headline — use "${topic}" as the only masthead; invent support lines only from the topic, never from IMAGE 1.`,
+			"IMAGE 1 text is FORBIDDEN to paint — wipe every reference character and replace with user campaign copy only.",
+			artStyleImageClause(vars.artStyle),
+			copyHint,
+			marketChineseScriptBlock(vars.market),
+			MARKET_HINTS[vars.market],
+			artStyleAvoidTail(vars.artStyle),
+			vars.extra,
+			`${aspect} dense social INFRASTRUCTURE infographic still (hub + spokes + metric cards), sharp focus, no watermark.`,
+		);
+	}
+
+	return joinParts(
+		artStyleMandatoryLead(vars.artStyle),
+		`Create ONE new ${aspect} composition-remap INFRASTRUCTURE BOARD for ${topic}.`,
+		imageCompositionRemapReferenceBlock(false),
+		`CRITICAL: Trace IMAGE 1's board machine. Output must be recognizably the SAME poster skeleton with a new topic — not a loosely related ad.`,
+		campaignCopy
+			? `Campaign copy (all on-image text): ${campaignCopy}.`
+			: `No user headline — use "${topic}" as the only masthead; invent support lines only from the topic, never from IMAGE 1.`,
+		"IMAGE 1 text is FORBIDDEN to paint — wipe every reference character and replace with user campaign copy only.",
+		artStyleImageClause(vars.artStyle),
+		copyHint,
+		marketChineseScriptBlock(vars.market),
+		MARKET_HINTS[vars.market],
+		artStyleAvoidTail(vars.artStyle),
+		vars.extra,
+		`${aspect} dense social INFRASTRUCTURE infographic still (hub + spokes + metric cards), sharp focus, no watermark.`,
 	);
 }
 

@@ -1,6 +1,25 @@
 import { nameIsClaimImage1IsObjectLine } from "@/lib/prompt-balance-contract";
 
 /**
+ * Composition remap: IMAGE 1 = composition shell (reference board).
+ * Optional IMAGE 2 = product/SKU to place only in the hub zone — never packshot-first.
+ */
+export async function buildFalCompositionRemapImageUrls(input: {
+  upload: (file: File) => Promise<string>;
+  styleRef: File | null;
+  productRef?: File | null;
+}): Promise<string[]> {
+  const urls: string[] = [];
+  if (input.styleRef) {
+    urls.push(await input.upload(input.styleRef));
+  }
+  if (input.productRef) {
+    urls.push(await input.upload(input.productRef));
+  }
+  return urls;
+}
+
+/**
  * Build fal `image_urls` for physical product + style reference.
  *
  * nano-banana /edit treats the FIRST image as the primary subject to transform.

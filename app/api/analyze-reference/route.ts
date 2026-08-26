@@ -169,6 +169,12 @@ export async function POST(request: Request) {
 			}
 		}
 
+		const preferCompositionRemap = ["1", "true", "yes"].includes(
+			String(formData.get("prefer_composition_remap") ?? "")
+				.trim()
+				.toLowerCase(),
+		);
+
 		const strategy = resolveReferenceStrategy({
 			promotionMode,
 			imageOutputMode,
@@ -177,6 +183,7 @@ export async function POST(request: Request) {
 			hasReferenceUpload: true,
 			hasProductPhoto,
 			hasReferenceBrief: true,
+			preferCompositionRemap,
 		});
 
 		return NextResponse.json({

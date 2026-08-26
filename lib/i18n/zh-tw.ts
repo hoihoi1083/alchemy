@@ -2175,6 +2175,7 @@ export const zhTw = {
       none: "無參考",
       styleOnly: "風格跟參考（送圖）",
       layoutTransfer: "排版轉移（參考 + 產品）",
+      compositionRemap: "版面改寫（保留構圖語法）",
       productClone: "產品圖美化",
       moodOnly: "氛圍／動態 only",
     },
@@ -2402,6 +2403,8 @@ export const zhTw = {
       "參考圖模式：設計跟參考廣告；場地、光線、背景配合產品同畫面風格（例如暗黑精品隻影響光線氛圍）。進階可揀「只出手」若參考圖繫上手佩戴。",
     referenceConceptStyleOnlyHint:
       "已上傳風格參考 — 會把參考圖送給 AI 出圖，跟參考影片的視覺風格與排版語法；主標/副標與場景內容用你自己的主題（可以與參考影片完全不同）。",
+    referenceCompositionRemapHint:
+      "版面改寫：保留參考圖構圖語法（中心、放射、callout、數據 chip、footer），換成你的主題、角色同文案。借貸／服務板請不要上傳產品圖 — 有產品圖會偏向 packshot。",
     referenceOptionalCopyHint:
       "參考圖負責排版與風格。主標、副標會用研究「為你改寫」預填，你可隨時修改；留空則生成簡潔產品圖。",
     imageRefAutoModeNote:
@@ -4647,6 +4650,12 @@ socialDripFitTitle: "這個格式可以／不可以做什麼",
         "每個選項會改排版提示 — 賣點資訊圖、商業設計海報、品牌風格、方案優惠卡、或網站上線。",
       stylePickerQuickLabel: "直接創作",
       stylePickerQuickDesc: "以產品為主的宣傳圖，不一定要有模特。",
+      stylePickerRemapLabel: "版面改寫",
+      stylePickerRemapDesc:
+        "保留參考圖板式（中心、callout、面板），換成你的主題、人物同文案。適合單張。需要上傳參考圖。",
+      stylePickerRemapReferenceTitle: "構圖參考圖（必填）",
+      stylePickerRemapReferenceHint:
+        "上傳你想改寫的資訊圖／海報（例如中心人物+周圍團隊）。概念／服務主題請不要上傳產品圖 — 會保留面板幾何，換成主角同圖上文案。產品圖只適合將 SKU 放進中心區。",
       stylePickerDesignedLabel: "商業設計海報",
       stylePickerDesignedDesc: "商業 feed 海報 — 你填的標題＋標語上圖（不限食品）。",
       stylePickerPartsLabel: "零件拆解",

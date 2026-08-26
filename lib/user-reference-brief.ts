@@ -43,12 +43,17 @@ export const USER_REFERENCE_MARKER = "USER REFERENCE (match content + style)";
 export const USER_REFERENCE_STYLE_ONLY_MARKER = "USER REFERENCE (style only)";
 export const USER_REFERENCE_LAYOUT_TRANSFER_MARKER =
 	"USER REFERENCE (layout transfer — do NOT copy subjects or reference copy)";
+export const USER_REFERENCE_COMPOSITION_REMAP_MARKER =
+	"USER REFERENCE (composition remap — KEEP board grammar, REPLACE topic/subjects/copy)";
 
 const STYLE_ONLY_TAIL =
 	"Match topic lane and visual style family ONLY — each carousel slide must use a distinct layout; never clone the reference poster structure or duplicate the same hero graphic.";
 
 const LAYOUT_TRANSFER_TAIL =
 	"IMAGE 1 = user product hero (keep exactly). IMAGE 2 = style/layout reference only — borrow IMAGE 2 design grammar (layout rhythm, component types, typography hierarchy, staging pose type); never show IMAGE 2's product as hero. All readable copy from user brief. IMAGE 2 is another company's post — do NOT copy its logos, wordmarks, store names, sponsor marks, @handles, watermarks, or original selling lines. Background and lighting may adapt to suit IMAGE 1.";
+
+const COMPOSITION_REMAP_TAIL =
+	"Treat the reference as a composition SHELL you must TRACE: KEEP hub-and-spoke geometry (one central hero person + surrounding support people), dashed leader-line role callouts, left stacked metric cards, right icon/stat column, tip/footer band with numbered insights, type hierarchy, and information density. REPLACE every subject, role label, number, and readable line with the user's topic and campaign copy. Wipe celebrity likenesses, reference logos, wordmarks, and all reference on-image text. FORBIDDEN: inventing a new poster family (outdoor product packshot, camping gear hero, phone-app collage, fork-in-the-road metaphor, generic lifestyle) unless IMAGE 1 already uses that exact structure.";
 
 const CLONE_TAIL =
 	"Generate in the same content lane and visual style family as this reference — do not genericize into unrelated stock marketing.";
@@ -340,6 +345,72 @@ export function userReferenceLayoutTransferPromptBlock(
 	return parts.join(" ");
 }
 
+/** Keep reference board grammar; remap topic/subjects/copy (concept or product). */
+export function userReferenceCompositionRemapPromptBlock(
+	brief: UserReferenceBrief,
+	layers: {
+		layoutGrammar: string;
+		visualStyle: string;
+		contentLane: string;
+		subjects: string;
+		onImageText: string;
+		moodLighting: string;
+		stagingPose: string;
+	},
+): string {
+	const parts = [`${USER_REFERENCE_COMPOSITION_REMAP_MARKER}:`];
+	if (brief.userConceptIdea)
+		parts.push(`User idea: ${brief.userConceptIdea}`);
+	if (brief.userHeadline && brief.userHeadline !== brief.userConceptIdea) {
+		parts.push(`User headline: ${brief.userHeadline}`);
+	}
+	if (brief.userSubline) parts.push(`User points: ${brief.userSubline}`);
+	if (brief.layoutStyle)
+		parts.push(`KEEP layout grammar: ${brief.layoutStyle}`);
+	if (brief.colorPalette)
+		parts.push(`Reference colors (adapt if needed): ${brief.colorPalette}`);
+	if (brief.typographyStyle)
+		parts.push(`KEEP typography hierarchy: ${brief.typographyStyle}`);
+	if (brief.contentType) parts.push(`Reference format: ${brief.contentType}`);
+	if (brief.mood) parts.push(`Mood cue (adapt): ${brief.mood}`);
+	if (brief.optimizedScenePrompt || brief.sceneEssay) {
+		parts.push(
+			`SCENE ESSAY (remap subjects + copy onto the same board machine — keep panel geometry): ${brief.optimizedScenePrompt || brief.sceneEssay}`,
+		);
+	}
+	if (brief.subjects) {
+		parts.push(
+			`Reference subjects/roles (REPLACE with original characters fitting the user topic — same ROLE slots only): ${brief.subjects}`,
+		);
+	}
+	if (brief.visibleText) {
+		const clipped = brief.visibleText.trim().slice(0, 280);
+		parts.push(
+			`FORBIDDEN ON-IMAGE TEXT from reference (do not paint or paraphrase): ${clipped}`,
+		);
+	}
+	if (brief.topic || brief.contentSummary) {
+		parts.push(
+			`Reference topic (DO NOT keep as headlines): ${[brief.topic, brief.contentSummary].filter(Boolean).join(" — ")}`,
+		);
+	}
+	const layerHints = [
+		layerActionHint("Layout", layers.layoutGrammar),
+		layerActionHint("Visual style", layers.visualStyle),
+		layerActionHint("Topic", layers.contentLane),
+		layerActionHint("Hero subject", layers.subjects),
+		layerActionHint("On-image text", layers.onImageText),
+		layerActionHint("Mood/light", layers.moodLighting),
+		layerActionHint("Staging pose", layers.stagingPose),
+	].filter(Boolean) as string[];
+	parts.push(...layerHints);
+	parts.push(COMPOSITION_REMAP_TAIL);
+	parts.push(
+		"Avoid real celebrity likenesses — fill role slots with original characters or the user's product only.",
+	);
+	return parts.join(" ");
+}
+
 /** Teaching carousel: topic + palette + typography mood — not layout clone. */
 export function userReferenceStyleOnlyPromptBlock(
 	brief: UserReferenceBrief,
@@ -421,6 +492,12 @@ export function isLayoutTransferReferenceExtra(
 	extra: string | undefined,
 ): boolean {
 	return Boolean(extra?.includes(USER_REFERENCE_LAYOUT_TRANSFER_MARKER));
+}
+
+export function isCompositionRemapReferenceExtra(
+	extra: string | undefined,
+): boolean {
+	return Boolean(extra?.includes(USER_REFERENCE_COMPOSITION_REMAP_MARKER));
 }
 
 export function mergeUserReferenceBrief(

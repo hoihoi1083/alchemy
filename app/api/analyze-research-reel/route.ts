@@ -133,6 +133,7 @@ export async function POST(request: Request) {
           framing: subjectFraming,
           referenceStrategyKind:
             referenceStrategyKind === "layout-transfer" ||
+            referenceStrategyKind === "composition-remap" ||
             referenceStrategyKind === "style-only" ||
             referenceStrategyKind === "product-clone" ||
             referenceStrategyKind === "mood-only"

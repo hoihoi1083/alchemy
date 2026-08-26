@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  buildFalCompositionRemapImageUrls,
   buildFalLayoutTransferImageUrls,
   carouselCoverSeriesAnchorHint,
   carouselProductHeroLock,
@@ -64,6 +65,17 @@ describe("dual reference layout-transfer (research OR manual style upload)", () 
       "url:user-angle.jpg",
     ]);
     assert.deepEqual(uploaded, urls);
+  });
+
+  it("composition remap orders fal urls: shell first, optional SKU second", async () => {
+    const style = new File([new Uint8Array([1])], "cr7-board.jpg");
+    const product = new File([new Uint8Array([2])], "sku.jpg");
+    const urls = await buildFalCompositionRemapImageUrls({
+      upload: async (f) => `url:${f.name}`,
+      styleRef: style,
+      productRef: product,
+    });
+    assert.deepEqual(urls, ["url:cr7-board.jpg", "url:sku.jpg"]);
   });
 
   it("dual identity hint protects IMAGE 1 product against IMAGE 2 style", () => {

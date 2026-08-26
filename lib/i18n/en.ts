@@ -2714,6 +2714,7 @@ export const en = {
 			none: "No reference",
 			styleOnly: "Match reference style (pixels)",
 			layoutTransfer: "Layout transfer (reference + product)",
+			compositionRemap: "Composition remap (keep board grammar)",
 			productClone: "Product photo polish",
 			moodOnly: "Mood & motion only",
 		},
@@ -2964,6 +2965,8 @@ export const en = {
       "Reference mode: design follows the reference ad; venue, lighting, and background fit your product and visual style (e.g. dark premium affects mood only). Pick “hands only” if the reference shows hands.",
 		referenceConceptStyleOnlyHint:
 			"Style reference uploaded — the image is sent to AI image to match the reference visual style and layout grammar; headlines and scene content use YOUR topic (can be totally unrelated to the reference).",
+		referenceCompositionRemapHint:
+			"Composition remap: we keep the reference board grammar (hub, spokes, callouts, stats chips, footer) and swap in your topic, roles, and copy. For loan/service boards, leave product photo empty — a product upload turns the model toward packshots.",
 		referenceOptionalCopyHint:
 			"Reference sets layout and style. Headline and subline are prefilled from research rewrites — edit anytime; leave blank for a minimal product still.",
     imageRefAutoModeNote:
@@ -5621,6 +5624,12 @@ export const en = {
 			stylePickerQuickLabel: "Direct creation",
 			stylePickerQuickDesc:
 				"Product-focused promo image — no model required.",
+			stylePickerRemapLabel: "Composition remap",
+			stylePickerRemapDesc:
+				"Keep the reference board layout (hub, callouts, panels) — swap topic, people, and copy. Best for single posters. Needs a reference image.",
+			stylePickerRemapReferenceTitle: "Composition reference (required)",
+			stylePickerRemapReferenceHint:
+				"Upload the board you want to remake (e.g. hub-and-spoke infographic). For concept/service topics, skip product photo — we keep panel geometry and replace subjects + on-image text. A product photo is only for placing your SKU into the hub zone.",
 			stylePickerDesignedLabel: "Commercial designed poster",
 			stylePickerDesignedDesc:
 				"Commercial feed poster — your title + tagline on a styled product hero (any category, not food-only).",

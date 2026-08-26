@@ -2,6 +2,7 @@ import { fal } from "@fal-ai/client";
 import { formatFalGenerationError } from "@/lib/fal-errors";
 import { NextResponse } from "next/server";
 import {
+  buildFalCompositionRemapImageUrls,
   buildFalLayoutTransferImageUrls,
   dualProductIdentityHint,
 } from "@/lib/fal-dual-reference-urls";
@@ -545,7 +546,8 @@ export async function POST(request: Request) {
     let brief = parsedBrief;
     if (
       !motionPosterEarly &&
-      strategy.kind === "layout-transfer" &&
+      (strategy.kind === "layout-transfer" ||
+        strategy.kind === "composition-remap") &&
       brief &&
       (productName || headline)
     ) {
@@ -628,11 +630,14 @@ export async function POST(request: Request) {
     const brandKitRaw = (formData.get("brand_kit") as string | null)?.trim() || "";
     const brandKit = brandKitEarly ?? (brandKitRaw ? parseBrandKit(JSON.parse(brandKitRaw)) : null);
 
-    const promptMode = resolveImagePromptMode(
-      visualStyle,
-      useReferenceConcept ? "reference-concept" : creativeMode,
-      { promotionMode, workflowMode },
-    );
+    const promptMode =
+      strategy.kind === "composition-remap"
+        ? ("composition-remap" as const)
+        : resolveImagePromptMode(
+            visualStyle,
+            useReferenceConcept ? "reference-concept" : creativeMode,
+            { promotionMode, workflowMode },
+          );
 
     const imageOutputMode = (formData.get("image_output_mode") as string | null)?.trim() || "";
     const motionPoster = ["1", "true", "yes"].includes(
@@ -776,7 +781,19 @@ export async function POST(request: Request) {
     try {
       const imageUrls: string[] = [];
       if (strategy.sendPixelsToFal) {
-        if (useReferenceConcept && dualImage) {
+        if (strategy.kind === "composition-remap" && hasStyle) {
+          imageUrls.push(
+            ...(await buildFalCompositionRemapImageUrls({
+              upload: (f) => fal.storage.upload(f),
+              styleRef: styleRef as File,
+              // Concept: shell only. Physical dual: optional SKU as IMAGE 2.
+              productRef:
+                strategy.useDualImage && hasProduct
+                  ? (reference as File)
+                  : null,
+            })),
+          );
+        } else if (useReferenceConcept && dualImage) {
           imageUrls.push(
             ...(await buildFalLayoutTransferImageUrls({
               upload: (f) => fal.storage.upload(f),
@@ -846,11 +863,13 @@ export async function POST(request: Request) {
       }
 
       const angleHint =
-        useReferenceConcept && dualImage && hasProduct && hasStyle
-          ? dualProductIdentityHint(productAngleFiles.length > 0)
-          : hasProduct && productAngleFiles.length > 0
-            ? dualProductIdentityHint(true)
-            : "";
+        strategy.kind === "composition-remap"
+          ? ""
+          : useReferenceConcept && dualImage && hasProduct && hasStyle
+            ? dualProductIdentityHint(productAngleFiles.length > 0)
+            : hasProduct && productAngleFiles.length > 0
+              ? dualProductIdentityHint(true)
+              : "";
 
       const motionPosterDialectPick = parseMotionPosterDialectPick(
         formData.get("motion_poster_dialect"),
@@ -938,6 +957,7 @@ export async function POST(request: Request) {
               singleImagePlan,
               hasReferenceImage: hasProduct || hasStyle,
               referenceImageMode: strategy.referenceImageMode,
+              compositionRemapDual: strategy.useDualImage,
             },
           );
       // Prefer server-built prompt when we ran the single-still planner (teaching-quality DNA).

@@ -41,6 +41,7 @@ export function evaluateProceedToImageGate(input: {
   visualStyleId: VisualStyleId;
   hasProductPhoto: boolean;
   isStoryboardOutput: boolean;
+  preferCompositionRemap?: boolean;
 }): SetupImageGateReason | null {
   if (!proceedsToImageStep(input.workflowMode, input.isStoryboardOutput)) {
     return null;
@@ -60,6 +61,20 @@ export function evaluateProceedToImageGate(input: {
     !input.effectivePromoteName.trim()
   ) {
     return "need_product_name";
+  }
+
+  if (input.preferCompositionRemap) {
+    if (!input.effectivePromoteName.trim()) {
+      return input.promotionMode === "concept"
+        ? "need_headline"
+        : "need_product_name";
+    }
+    if (!input.hasReferenceImage) {
+      return "need_reference_image";
+    }
+    if (input.referenceAnalyzeBusy) {
+      return "reference_analyzing";
+    }
   }
 
   const researchImage = isContentResearchImagePath(
