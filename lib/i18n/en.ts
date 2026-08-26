@@ -3336,6 +3336,19 @@ export const en = {
 				desc: "Dramatic break + heavy pour",
 			},
 		},
+		foodBulletArcTitle: "Food bullet story",
+		foodBulletArcHint:
+			"Classic freezes on the mid-air explosion. 3-beat promo ends on a clean complete plate again.",
+		foodBulletArc: {
+			classic: {
+				title: "Classic freeze",
+				desc: "Dense explosion → orbit → freeze mid-air (~6s)",
+			},
+			"hero-plate": {
+				title: "3-beat → hero plate",
+				desc: "Static → lighter explosion → clean finished plate (~8s)",
+			},
+		},
 		h3ShowreelAspectTitle: "Showreel aspect",
 		h3ShowreelAspectHint:
 			"9:16 for feeds; 16:9 for landscape / presentation showreels. Default 16:9.",
@@ -4653,7 +4666,7 @@ export const en = {
 		storyboardCellBlocked:
 			"This scene was blocked by the safety filter. Tap regen on this cell — same product, no faces, no brand text.",
 		tokensNotCharged: "You weren’t charged for this attempt.",
-    timeout: "The request took too long. Please try again.",
+    timeout: "The request took too long (video can take 6–10 minutes). Please try again.",
     seedanceSensitive:
 			"video generation blocked this clip (violence/combat filter). Use calmer wording: no weapons, opponents, or standoffs — figures at rest, peaceful pause. A combat-looking reference image can also trigger this.",
 		falContentPolicy:
@@ -5928,6 +5941,10 @@ export const en = {
 			stylePickerTitle: "How to make this video",
 			stylePickerHint:
 				"AI writes the motion prompt from your photo, or a reference/research reel supplies the motion plan.",
+			styleCollapsedHint:
+				"Template selected — expand only if you want a different path.",
+			changeStylePicker: "Change template",
+			hideStylePicker: "Hide templates",
 			referenceHint:
 				"Upload a reference MP4 (analyzed for motion). For products, also upload your product photo as @Image1, then generate.",
 			ugcHint:

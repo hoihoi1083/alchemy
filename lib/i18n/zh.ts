@@ -3079,6 +3079,19 @@ export const zh = {
 				desc: "戲劇性掰開 + 大量湧出",
 			},
 		},
+		foodBulletArcTitle: "美食子彈時間劇情",
+		foodBulletArcHint:
+			"「經典」停在半空爆裂定格。「三拍回盤」會回到乾淨完整成品畫面。",
+		foodBulletArc: {
+			classic: {
+				title: "經典定格",
+				desc: "密爆裂 → 環繞 → 停半空（約 6 秒）",
+			},
+			"hero-plate": {
+				title: "三拍 → 完整擺盤",
+				desc: "靜物 → 少量爆裂 → 乾淨成品（約 8 秒）",
+			},
+		},
 		h3ShowreelAspectTitle: "秀場畫幅",
 		h3ShowreelAspectHint:
 			"9:16 適合資訊流；16:9 適合橫屏／演示秀場。預設 16:9。",
@@ -4221,7 +4234,7 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 		storyboardCellBlocked:
 			"呢格被安全過濾擋住。撳呢格重新生成 — 同一個產品，唔好有臉同品牌字。",
 		tokensNotCharged: "今次嘗試冇扣 Token。",
-		timeout: "請求逾時，請再試。",
+		timeout: "請求逾時（影片有時要 6–10 分鐘）。請再試。",
 		seedanceSensitive:
 			"影片生成 拒絕呢條片（暴力／打鬥過濾）。請用較溫和字眼：唔好 weapons、opponent、standoff — 改為 figures at rest、peaceful pause。參考圖似打鬥都會觸發。",
 		falContentPolicy:
@@ -5387,6 +5400,9 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 			stylePickerTitle: "點樣做呢條短片",
 			stylePickerHint:
 				"AI 按產品相寫動態 prompt，或者跟參考／研究短片嘅運鏡方案。",
+			styleCollapsedHint: "已選模板 — 想換先展開。",
+			changeStylePicker: "更換模板",
+			hideStylePicker: "收起模板",
 			referenceHint:
 				"上傳參考 MP4（會分析運鏡）。產品短片仲要上傳產品相做 @Image1，再生成。",
 			ugcHint: "UGC 要先出對嘴關鍵幀 — 繼續去設定 presenter 短片。",

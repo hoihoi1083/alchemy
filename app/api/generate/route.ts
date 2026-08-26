@@ -102,7 +102,8 @@ function formatFalError(e: unknown): string {
 }
 
 export const runtime = "nodejs";
-export const maxDuration = 300;
+/** Seedance / long video jobs can exceed 5 minutes under load. */
+export const maxDuration = 800;
 
 type Mode = "text" | "image" | "reference";
 

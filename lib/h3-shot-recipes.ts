@@ -494,6 +494,32 @@ export function parseMacroSnapIntensity(raw: unknown): MacroSnapIntensity {
     : DEFAULT_MACRO_SNAP_INTENSITY;
 }
 
+/**
+ * food-bullet-time narrative arc.
+ * - classic: Matrix freeze ends on the mid-air explosion
+ * - hero-plate: Static → lighter explosion → clean finished plate again
+ */
+export const FOOD_BULLET_ARCS = ["classic", "hero-plate"] as const;
+export type FoodBulletArc = (typeof FOOD_BULLET_ARCS)[number];
+export const DEFAULT_FOOD_BULLET_ARC: FoodBulletArc = "classic";
+
+export function isFoodBulletArc(
+  value: string | null | undefined,
+): value is FoodBulletArc {
+  return (FOOD_BULLET_ARCS as readonly string[]).includes(value ?? "");
+}
+
+export function parseFoodBulletArc(raw: unknown): FoodBulletArc {
+  return isFoodBulletArc(String(raw ?? "").trim())
+    ? (String(raw).trim() as FoodBulletArc)
+    : DEFAULT_FOOD_BULLET_ARC;
+}
+
+/** Seconds for generate POST — hero-plate needs more time for a clear third beat. */
+export function foodBulletDurationSec(arc: FoodBulletArc): number {
+  return arc === "hero-plate" ? 8 : 6;
+}
+
 export type H3ShotPromptInput = {
   mode: H3ShotRecipeMode;
   conceptMode: boolean;
@@ -503,6 +529,8 @@ export type H3ShotPromptInput = {
   hasReferenceVideo?: boolean;
   /** macro-snap only — crack/drip strength. Default strong. */
   macroSnapIntensity?: MacroSnapIntensity;
+  /** food-bullet-time only — classic freeze vs 3-beat return to plate. */
+  foodBulletArc?: FoodBulletArc;
   /** h3-showreel only — 9:16 feed or 16:9 landscape showreel. */
   showreelAspect?: H3ShowreelAspect;
   /** h3-showreel only — style card. Resolved before prompt build. */
@@ -510,6 +538,35 @@ export type H3ShotPromptInput = {
   /** h3-sphere-mg only — sphere MG style card. */
   sphereMgScheme?: H3SphereMgSchemeId;
 };
+
+function foodBulletTimeBeats(
+  img: string,
+  subject: string,
+  arc: FoodBulletArc,
+): string[] {
+  if (arc === "hero-plate") {
+    return [
+      `美食促销三拍一镜（Static → Explosion → Hero Plate）：严格锁定${img}（${subject}）人物面孔、发型服饰、食物种类与摆盘、场景；禁止换脸换菜。`,
+      `明确做成 3 Beat 商业短片，不是停在半空碎屑高潮：`,
+      `Beat 1 · Static Product Shot（0–1.8s）：干净完整成品静物建立 — 完整摆盘/完整食物清晰可读，人物可递向镜头但食物必须是完整未拆状态；商业打卡感、留白干净。`,
+      `Beat 2 · Ingredient Explosion（1.8–4.5s）：中等强度、克制的食材爆裂 — 只飞散少量属于这道菜的元素（约 6–12 颗可读碎屑/酱珠/叶菜），径向散开；比经典子弹时间更稀疏，禁止密到看不清主体。核心仍握在手里。`,
+      `Beat 3 · Final Hero Plate（4.5–8s）：必须回到非常干净的完整成品画面 — 碎屑收回/重组/落回完整摆盘，最后定格在整盘/整份清晰英雄位（像菜单主图），浅景深、无半空碎屑云遮挡；禁止停在爆炸最高点结束。`,
+      `一镜到底，无切镜、无字幕。镜头可轻推或短弧，但第三拍必须是完整成品。`,
+      `Negative: ${FOOD_BULLET_TIME_NEGATIVE}, end on mid-air debris only, never reassemble the plate, dense debris wall hiding the food, incomplete plated hero at the end`,
+    ];
+  }
+
+  return [
+    `美食子弹时间一镜（Matrix 级 3D 食物爆裂打卡）：严格锁定${img}（${subject}）的人物面孔、发型服饰、食物/饮品种类与摆盘、场景环境；禁止换脸换菜、禁止凭空添加原图没有的食材或配料。`,
+    `这是商业美食广告的高速摄影高潮：食物在双手间径向爆开成可读的立体碎屑云，不是轻轻飘两三片菜叶。人物身姿基本静止，人脸尽量清晰；镜头绕着爆裂体积运动。`,
+    `0–0.8s：英雄位建立 — 人物把完整食物/饮品递向镜头，商业打卡感，食物身份清晰。`,
+    `0.8–1.8s：戏剧性爆裂高潮 — 该食物的层次沿径向崩开（面包/饼皮、馅料、酱汁液珠、芝士拉丝、碎屑/生菜/冰块/珍珠等属于这道菜的元素），充满双手周围的空气体积；动能强、粒子密、慢动作可读；核心仍握在手里，不要整份飞出画外。`,
+    `1.8–5s：在爆裂最高点冻结成子弹时间：碎屑云保持立体悬停（不是落地、不是消失），镜头以人物为中心向右弧形环绕约 120–180°，运镜比普通环绕更有力，浅景深、背景视差，让 3D 爆裂体积转起来。`,
+    `5–6s：微推近收在最戏剧的凝固瞬间 — 层次分离、酱汁珠与碎屑仍定格在空中，高清升格。`,
+    `一镜到底，无切镜、无幻灯片定格、无字幕。`,
+    `Negative: ${FOOD_BULLET_TIME_NEGATIVE}`,
+  ];
+}
 
 function macroSnapPhysicsBeats(
   img: string,
@@ -684,16 +741,11 @@ export function buildH3ShotRecipePrompt(input: H3ShotPromptInput): string {
       ].join("\n");
 
     case "food-bullet-time":
-      return [
-        `美食子弹时间一镜（Matrix 级 3D 食物爆裂打卡）：严格锁定${img}（${subject}）的人物面孔、发型服饰、食物/饮品种类与摆盘、场景环境；禁止换脸换菜、禁止凭空添加原图没有的食材或配料。`,
-        `这是商业美食广告的高速摄影高潮：食物在双手间径向爆开成可读的立体碎屑云，不是轻轻飘两三片菜叶。人物身姿基本静止，人脸尽量清晰；镜头绕着爆裂体积运动。`,
-        `0–0.8s：英雄位建立 — 人物把完整食物/饮品递向镜头，商业打卡感，食物身份清晰。`,
-        `0.8–1.8s：戏剧性爆裂高潮 — 该食物的层次沿径向崩开（面包/饼皮、馅料、酱汁液珠、芝士拉丝、碎屑/生菜/冰块/珍珠等属于这道菜的元素），充满双手周围的空气体积；动能强、粒子密、慢动作可读；核心仍握在手里，不要整份飞出画外。`,
-        `1.8–5s：在爆裂最高点冻结成子弹时间：碎屑云保持立体悬停（不是落地、不是消失），镜头以人物为中心向右弧形环绕约 120–180°，运镜比普通环绕更有力，浅景深、背景视差，让 3D 爆裂体积转起来。`,
-        `5–6s：微推近收在最戏剧的凝固瞬间 — 层次分离、酱汁珠与碎屑仍定格在空中，高清升格。`,
-        `一镜到底，无切镜、无幻灯片定格、无字幕。`,
-        `Negative: ${FOOD_BULLET_TIME_NEGATIVE}`,
-      ].join("\n");
+      return foodBulletTimeBeats(
+        img,
+        subject,
+        parseFoodBulletArc(input.foodBulletArc),
+      ).join("\n");
 
     case "c4d-motion":
       return [
@@ -860,7 +912,17 @@ export function buildH3ShotRecipeStillPrompt(input: H3ShotPromptInput): string {
         "Clean hero packshot or logo mark on a simple dark backdrop, ready for neon overlay identity.",
         "Optional @Image1 lock for neon-on-real — the real scene comes from the reference MP4.",
       ].join(" ");
-    case "food-bullet-time":
+    case "food-bullet-time": {
+      const arc = parseFoodBulletArc(input.foodBulletArc);
+      if (arc === "hero-plate") {
+        return [
+          "Photoreal commercial still, 9:16, textless, no captions, no watermarks, no UI.",
+          lock,
+          "Food promo keyframe for a 3-beat plate return: young person with a COMPLETE, CLEAN plated dish / wrap / drink held toward camera — fully assembled, menu-hero plating, no mid-air debris.",
+          "Face clear; food identity sharp and fully intact. Cafe / restaurant backdrop, shallow depth of field.",
+          "This still locks the Final Hero Plate look — explosion happens only in video, then must return to this clean complete plate.",
+        ].join(" ");
+      }
       return [
         "Photoreal commercial still, 9:16, textless, no captions, no watermarks, no UI.",
         lock,
@@ -869,6 +931,7 @@ export function buildH3ShotRecipeStillPrompt(input: H3ShotPromptInput): string {
         "Real cafe / street / restaurant backdrop with shallow depth of field. Keep exact food types and plating — do not invent unrelated ingredients.",
         "Commercial SLR texture, cinematic daylight, Matrix-style freeze — ready as @Image1 for a rightward orbit around the frozen explosion while the person stays almost still.",
       ].join(" ");
+    }
     case "c4d-motion":
       return [
         ...shared,

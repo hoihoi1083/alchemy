@@ -37,7 +37,7 @@ import {
 	allStoryboardCellsViewed,
 	retainStoryboardCellViewed,
 } from "@/lib/storyboard-cell-review";
-import { apiGetBlob } from "@/lib/api/studio-api";
+import { apiGetBlob, parseStudioApiJson } from "@/lib/api/studio-api";
 import {
 	trackGenerateFailed,
 	trackGenerateStarted,
@@ -212,7 +212,9 @@ import {
 	H3_SHOT_RECIPE_NEGATIVE,
 	H3_SHOT_RECIPE_SETTINGS_DURATION,
 	DEFAULT_MACRO_SNAP_INTENSITY,
+	DEFAULT_FOOD_BULLET_ARC,
 	DEFAULT_H3_SHOWREEL_ASPECT,
+	foodBulletDurationSec,
 	h3ShotRecipeAcceptsReel,
 	h3ShotRecipeAllowsKineticType,
 	h3ShotRecipeNeedsLifestyleStill,
@@ -223,6 +225,7 @@ import {
 	parseH3SphereMgSchemePick,
 	resolveH3ShowreelScheme,
 	resolveH3SphereMgScheme,
+	type FoodBulletArc,
 	type H3ShotRecipeMode,
 	type H3ShowreelAspect,
 	type H3ShowreelSchemePick,
@@ -416,6 +419,20 @@ export function useStudioWizard(promotionMode: PromotionMode) {
   const { m, locale } = useLocale();
   const friendlyError = useFriendlyError(m);
 	const { creditBalance, plan } = useUserPlanEntitlements();
+
+	async function readGenerateJson(
+		res: Response,
+	): Promise<Record<string, unknown>> {
+		const data = await parseStudioApiJson(res);
+		if (data.code === "TIMEOUT") {
+			return { ...data, error: m.errors.timeout };
+		}
+		if (data.code === "REQUEST_TOO_LARGE") {
+			return { ...data, error: m.errors.requestTooLarge };
+		}
+		return data;
+	}
+
 	const capVideoRes = useCallback(
 		(requested: VideoSettings["resolution"] | "720p" | "1080p" | "480p") =>
 			capUiVideoResolution(plan, requested),
@@ -764,6 +781,15 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		useState<MotionPosterDialectPick>("auto");
 	const [macroSnapIntensity, setMacroSnapIntensity] =
 		useState<MacroSnapIntensity>(DEFAULT_MACRO_SNAP_INTENSITY);
+	const [foodBulletArc, setFoodBulletArcState] =
+		useState<FoodBulletArc>(DEFAULT_FOOD_BULLET_ARC);
+	function setFoodBulletArc(next: FoodBulletArc) {
+		setFoodBulletArcState(next);
+		setVideoSettings((s: VideoSettings) => ({
+			...s,
+			duration: String(foodBulletDurationSec(next)) as VideoSettings["duration"],
+		}));
+	}
 	const [h3ShowreelAspect, setH3ShowreelAspect] =
 		useState<H3ShowreelAspect>(DEFAULT_H3_SHOWREEL_ASPECT);
 	const [h3ShowreelSchemePick, setH3ShowreelSchemePick] =
@@ -5991,8 +6017,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				body: fd,
 			},
 		);
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
+    const data = await readGenerateJson(res);
+    if (!res.ok) throw new Error((data.error as string) ?? m.errors.videoFailed);
 		notifyCreditBalance(readCreditBalanceFromResponse(data));
 		const usedFallback =
 			data.generationMode === "kling-storyboard-fallback" ||
@@ -6119,49 +6145,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		return urls.length + fileCount;
 	}
 
-	async function readGenerateJson(
-		res: Response,
-	): Promise<Record<string, unknown>> {
-		const text = await res.text();
-		if (!text.trim()) return {};
-		try {
-			return JSON.parse(text) as Record<string, unknown>;
-		} catch {
-			if (
-				res.status === 413 ||
-				/request entity too large|payload too large|entity too large/i.test(
-					text,
-				)
-			) {
-				return {
-					error: m.errors.requestTooLarge,
-					code: "REQUEST_TOO_LARGE",
-				};
-			}
-			if (
-				res.status === 504 ||
-				res.status === 524 ||
-				/function.?invocation.?timeout|an error occurred|took too long|gateway timeout/i.test(
-					text,
-				)
-			) {
-				return {
-					error: m.errors.timeout,
-					code: "TIMEOUT",
-				};
-			}
-			return {
-				error:
-					text
-						.replace(/<[^>]+>/g, " ")
-						.replace(/\s+/g, " ")
-						.trim()
-						.slice(0, 160) || m.errors.videoFailed,
-			};
-    }
-  }
-
-  async function ensureEndFrameUrl(): Promise<string | null> {
+	async function ensureEndFrameUrl(): Promise<string | null> {
     if (endFrameUrl) return endFrameUrl;
     if (endFramePhoto || !videoSettings.autoSecondFrame) return null;
     if (videoSettings.creativity === "subtle") return null;
@@ -6735,8 +6719,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				body: fd,
 			},
 		);
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
+    const data = await readGenerateJson(res);
+    if (!res.ok) throw new Error((data.error as string) ?? m.errors.videoFailed);
 		notifyCreditBalance(readCreditBalanceFromResponse(data));
 		const pathNote = wizardVideoReadyExtraNote(data);
     setVideoNote(
@@ -6908,8 +6892,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			useH3 ? "/api/generate-minimax-h3" : "/api/generate",
 			{ method: "POST", body: fd },
 		);
-		const data = await res.json();
-		if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
+		const data = await readGenerateJson(res);
+		if (!res.ok) throw new Error((data.error as string) ?? m.errors.videoFailed);
 		notifyCreditBalance(readCreditBalanceFromResponse(data));
 		let videoUrl = data.videoUrl as string;
 
@@ -6997,6 +6981,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					product: product.trim() || conceptIdea.trim(),
 					headline: headline.trim(),
 					conceptIdea: conceptIdea.trim(),
+					foodBulletArc:
+						mode === "food-bullet-time" ? foodBulletArc : undefined,
 					showreelAspect:
 						mode === "h3-showreel" ? h3ShowreelAspect : undefined,
 					showreelScheme,
@@ -7106,6 +7092,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			hasReferenceVideo: Boolean(referenceAd && referenceIsVideo),
 			macroSnapIntensity:
 				mode === "macro-snap" ? macroSnapIntensity : undefined,
+			foodBulletArc:
+				mode === "food-bullet-time" ? foodBulletArc : undefined,
 			showreelAspect: mode === "h3-showreel" ? showreelAspect : undefined,
 			showreelScheme,
 			sphereMgScheme,
@@ -7119,7 +7107,14 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		fd.set("promotion_mode", promotionMode);
 		fd.set("prompt", prompt);
 		fd.set("resolution", vOpts.resolution);
-		fd.set("duration", String(H3_SHOT_RECIPE_DURATION_SEC[mode]));
+		fd.set(
+			"duration",
+			String(
+				mode === "food-bullet-time"
+					? foodBulletDurationSec(foodBulletArc)
+					: H3_SHOT_RECIPE_DURATION_SEC[mode],
+			),
+		);
 		fd.set("aspect_ratio", showreelAspect);
 		fd.set("generate_audio", "false");
 		fd.set(
@@ -7157,8 +7152,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			useH3 ? "/api/generate-minimax-h3" : "/api/generate",
 			{ method: "POST", body: fd },
 		);
-		const data = await res.json();
-		if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
+		const data = await readGenerateJson(res);
+		if (!res.ok) throw new Error((data.error as string) ?? m.errors.videoFailed);
 		notifyCreditBalance(readCreditBalanceFromResponse(data));
 		const pathNote = wizardVideoReadyExtraNote(data);
 		setVideoNote(
@@ -7243,8 +7238,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				body: fd,
 			},
 		);
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
+    const data = await readGenerateJson(res);
+    if (!res.ok) throw new Error((data.error as string) ?? m.errors.videoFailed);
 		notifyCreditBalance(readCreditBalanceFromResponse(data));
 		const pathNote = wizardVideoReadyExtraNote(data);
     setVideoNote(
@@ -7294,8 +7289,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			method: "POST",
 			body: fd,
 		});
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
+    const data = await readGenerateJson(res);
+    if (!res.ok) throw new Error((data.error as string) ?? m.errors.videoFailed);
 		notifyCreditBalance(readCreditBalanceFromResponse(data));
 		const pathNote = wizardVideoReadyExtraNote(data);
     if (pathNote) setVideoNote(pathNote);
@@ -7518,8 +7513,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			method: "POST",
 			body: fd,
 		});
-		const data = await res.json();
-		if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
+		const data = await readGenerateJson(res);
+		if (!res.ok) throw new Error((data.error as string) ?? m.errors.videoFailed);
 		notifyCreditBalance(readCreditBalanceFromResponse(data));
 		const pathNote = wizardVideoReadyExtraNote(data);
 		setVideoNote(
@@ -7792,8 +7787,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			method: "POST",
 			body: fd,
 		});
-		const data = await res.json();
-		if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
+		const data = await readGenerateJson(res);
+		if (!res.ok) throw new Error((data.error as string) ?? m.errors.videoFailed);
 		notifyCreditBalance(readCreditBalanceFromResponse(data));
 		const pathNote = wizardVideoReadyExtraNote(data);
 		setVideoNote(
@@ -7915,7 +7910,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			method: "POST",
 			body: h3Fd,
 		});
-		const h3Data = (await h3Res.json()) as Record<string, unknown>;
+		const h3Data = await readGenerateJson(h3Res);
 		const h3Url =
 			typeof h3Data.videoUrl === "string" ? h3Data.videoUrl.trim() : "";
 		if (h3Res.ok && h3Url) {
@@ -7947,7 +7942,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			method: "POST",
 			body: seedFd,
 		});
-		const seedData = (await seedRes.json()) as Record<string, unknown>;
+		const seedData = await readGenerateJson(seedRes);
 		const seedUrl =
 			typeof seedData.videoUrl === "string"
 				? seedData.videoUrl.trim()
@@ -8613,8 +8608,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				body: fd,
 			},
 		);
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
+    const data = await readGenerateJson(res);
+    if (!res.ok) throw new Error((data.error as string) ?? m.errors.videoFailed);
 		notifyCreditBalance(readCreditBalanceFromResponse(data));
 		const usedH3Fallback = String(data.generationMode ?? "").startsWith(
 			"minimax-h3-fallback",
@@ -10783,6 +10778,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		setMotionPosterDialectPick,
 		macroSnapIntensity,
 		setMacroSnapIntensity,
+		foodBulletArc,
+		setFoodBulletArc,
 		h3ShowreelAspect,
 		setH3ShowreelAspect,
 		h3ShowreelSchemePick,

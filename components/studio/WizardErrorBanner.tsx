@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { PlanGateDialog } from "@/components/billing/PlanGateDialog";
 import { useLocale } from "@/components/LocaleProvider";
+import type { UserPlan } from "@/lib/billing/plans";
 
 type WizardErrorBannerProps = {
   message: string;
@@ -22,6 +24,33 @@ function isInsufficientTokensMessage(message: string, localized: string): boolea
   );
 }
 
+function parsePlanGateFromError(message: string): {
+  requiredPlan: UserPlan;
+  isCampaign: boolean;
+} | null {
+  const text = message.trim();
+  if (!text) return null;
+  const lower = text.toLowerCase();
+  const looksLikePlanGate =
+    lower.includes("plan_entitlement") ||
+    /requires\s+.+\s+plan/i.test(text) ||
+    /需要.+方案/.test(text) ||
+    /需要.+计划/.test(text) ||
+    /campaign mode requires/i.test(text);
+  if (!looksLikePlanGate) return null;
+
+  let requiredPlan: UserPlan = "standard";
+  if (/master/i.test(text) || /大師|大师/.test(text)) requiredPlan = "master";
+  else if (/\bpro\b/i.test(text) || /專業|专业/.test(text)) requiredPlan = "pro";
+  else if (/light/i.test(text) || /輕量|轻量/.test(text)) requiredPlan = "light";
+  else if (/standard|標準|标准/.test(text)) requiredPlan = "standard";
+
+  return {
+    requiredPlan,
+    isCampaign: /campaign/i.test(text) || /企劃|企划|系列/.test(text),
+  };
+}
+
 export function WizardErrorBanner({
   message,
   variant = "light",
@@ -34,6 +63,10 @@ export function WizardErrorBanner({
   const tvcPaid =
     message.trim() === m.errors.tvcNeedsPaidPlan.trim() ||
     /12s single-clip|12 秒單鏡|12 秒单镜/i.test(message);
+  const planGate = parsePlanGateFromError(message);
+  const notChargedNote = message.includes(m.errors.tokensNotCharged)
+    ? m.errors.tokensNotCharged
+    : null;
 
   async function startProTrial() {
     setTrialError(null);
@@ -53,6 +86,22 @@ export function WizardErrorBanner({
       setTrialError(e instanceof Error ? e.message : m.errors.proTrialStartError);
       setTrialBusy(false);
     }
+  }
+
+  if (planGate) {
+    return (
+      <PlanGateDialog
+        open
+        onClose={() => onDismiss?.()}
+        requiredPlan={planGate.requiredPlan}
+        featureLabel={
+          planGate.isCampaign
+            ? m.wizard.imageOutputModes.campaign.title
+            : m.planGate.title
+        }
+        note={notChargedNote}
+      />
+    );
   }
 
   if (insufficient || tvcPaid) {
@@ -118,12 +167,9 @@ export function WizardErrorBanner({
       ? "rounded-xl border border-red-900/60 bg-red-950/40 px-4 py-3 text-sm text-red-200"
       : "rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800";
 
-  const notCharged = message.includes(m.errors.tokensNotCharged);
-
   return (
     <div className={classes} role="alert">
       <p>{message}</p>
-      {notCharged ? null : null}
       {onDismiss ? (
         <button
           type="button"

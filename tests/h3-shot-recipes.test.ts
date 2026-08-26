@@ -5,6 +5,7 @@ import { join } from "node:path";
 import {
   buildH3ShotRecipePrompt,
   buildH3ShotRecipeStillPrompt,
+  foodBulletDurationSec,
   H3_SHOT_RECIPE_DURATION_SEC,
   H3_SHOT_RECIPE_MODES,
   h3ShotRecipeNeedsReel,
@@ -138,6 +139,17 @@ describe("H3 shot recipes", () => {
     assert.match(food, /cheese sandwich/);
     assert.match(food, /径向|高潮|碎屑云/);
     assert.doesNotMatch(food, /不爆炸式飞出画框/);
+    const foodHero = buildH3ShotRecipePrompt({
+      mode: "food-bullet-time",
+      conceptMode: false,
+      product: "steak plate",
+      foodBulletArc: "hero-plate",
+    });
+    assert.match(foodHero, /3 Beat|Static Product Shot|Final Hero Plate|完整成品/);
+    assert.match(foodHero, /少量|6–12|稀疏/);
+    assert.match(foodHero, /必须回到|干净的完整成品|Hero Plate/);
+    assert.equal(foodBulletDurationSec("hero-plate"), 8);
+    assert.equal(foodBulletDurationSec("classic"), 6);
     const foodStill = buildH3ShotRecipeStillPrompt({
       mode: "food-bullet-time",
       conceptMode: false,
@@ -146,6 +158,14 @@ describe("H3 shot recipes", () => {
     assert.match(foodStill, /BULLET-TIME|EXPLOSION|Lifestyle/i);
     assert.match(foodStill, /radially burst|debris cloud/i);
     assert.doesNotMatch(foodStill, /not explosive/i);
+    const foodHeroStill = buildH3ShotRecipeStillPrompt({
+      mode: "food-bullet-time",
+      conceptMode: false,
+      product: "steak plate",
+      foodBulletArc: "hero-plate",
+    });
+    assert.match(foodHeroStill, /COMPLETE|CLEAN plated|Final Hero Plate/i);
+    assert.doesNotMatch(foodHeroStill, /PEAK high-speed BULLET-TIME/i);
     const c4d = buildH3ShotRecipePrompt({
       mode: "c4d-motion",
       conceptMode: false,

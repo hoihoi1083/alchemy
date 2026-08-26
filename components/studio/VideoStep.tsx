@@ -28,10 +28,12 @@ import {
   h3ShotRecipeAcceptsReel,
   h3ShotRecipeNeedsReel,
   MACRO_SNAP_INTENSITIES,
+  FOOD_BULLET_ARCS,
   H3_SHOWREEL_ASPECTS,
   H3_SHOWREEL_SCHEME_IDS,
   H3_SPHERE_MG_SCHEME_IDS,
   type MacroSnapIntensity,
+  type FoodBulletArc,
   type H3ShowreelAspect,
   type H3ShowreelSchemePick,
   type H3SphereMgSchemePick,
@@ -41,7 +43,7 @@ import type { CinematicSceneResult } from "@/lib/cinematic-reel-types";
 import type { StoryboardSceneResult } from "@/lib/video-storyboard-types";
 
 export function VideoStep() {
-  const { applyPromptRebuild, bgmOptions, bgmTrack, brandProfile, cinematicScenes, cinematicSceneCount, cinematicStitchReady, conceptReferenceR2vReady, directReferenceR2vReady, creativeVideoBrief, endFramePhoto, endFramePreviewUrl, endFrameUrl, error, extraAnglePhotos, extraKitPhotos, extraKitPreviewUrls, formatCinematicCopy, generateVideo, goBackFromVideo, hasFinalImage, headline, imageAspectRatio, imagePrompt, imageUrl, isCinematicStitchOutput, isConceptCinematicSingleOutput, isStoryboardOutput, isUgcPresenterOutput, keyframePreview, loadReferenceClip, m, onReferenceAdFile, onVideoCreativeModeChange, packagingPhoto, packagingPreviewUrl, planAiVideoPrompt, planProductVideo, planProductVideoBusy, planVideoPromptBusy, presenterAvatarId, presenterSourceMode, productPhoto, productVideoPlan, promotionMode, promptExtra, promptMarket, referenceAd, referenceClipLoading, referenceIsVideo, referencePreviewUrl, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, selectedReferenceClipId, setBgmTrack, setConceptImageVisionNote, setEndFramePhoto, setEndFrameUrl, setError, setExtraAnglePhotos, setExtraKitPhotos, setPackagingPhoto, setImagePrompt, setImageUrl, setPresenterAvatarId, setPresenterSourceMode, setProductPhoto, setPromptExtra, setPromptMarket, setShowAdvancedVideo, setSubjectFraming, setUploadQualityWarning, setUseOriginalImage, setVideoPrompt, setVideoSettings, shipItMode, showAdvancedVideo, showVideoReferenceSection, storyboardScenes, storyboardTrimDuration, subjectFraming, templateId, templateSlotStatus, uploadPreviewUrl, useReferenceVideo, usesCompositor, usesConceptTextVideo, usesProductAssistant, videoBusy, videoCreativeMode, motionPosterDialectPick, setMotionPosterDialectPick, macroSnapIntensity, setMacroSnapIntensity, h3ShowreelAspect, setH3ShowreelAspect, h3ShowreelSchemePick, setH3ShowreelSchemePick, h3SphereMgSchemePick, setH3SphereMgSchemePick, videoGenerateDisabled, videoGenerateDisabledReason, videoPhase, videoPreflight, videoProgressInfo, videoPrompt, videoPromptPlanNote, videoSettings, videoStepHint, visualStyleId, workflowMode } = useWizard();
+  const { applyPromptRebuild, bgmOptions, bgmTrack, brandProfile, cinematicScenes, cinematicSceneCount, cinematicStitchReady, conceptReferenceR2vReady, directReferenceR2vReady, creativeVideoBrief, endFramePhoto, endFramePreviewUrl, endFrameUrl, error, extraAnglePhotos, extraKitPhotos, extraKitPreviewUrls, formatCinematicCopy, generateVideo, goBackFromVideo, hasFinalImage, headline, imageAspectRatio, imagePrompt, imageUrl, isCinematicStitchOutput, isConceptCinematicSingleOutput, isStoryboardOutput, isUgcPresenterOutput, keyframePreview, loadReferenceClip, m, onReferenceAdFile, onVideoCreativeModeChange, packagingPhoto, packagingPreviewUrl, planAiVideoPrompt, planProductVideo, planProductVideoBusy, planVideoPromptBusy, presenterAvatarId, presenterSourceMode, productPhoto, productVideoPlan, promotionMode, promptExtra, promptMarket, referenceAd, referenceClipLoading, referenceIsVideo, referencePreviewUrl, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, selectedReferenceClipId, setBgmTrack, setConceptImageVisionNote, setEndFramePhoto, setEndFrameUrl, setError, setExtraAnglePhotos, setExtraKitPhotos, setPackagingPhoto, setImagePrompt, setImageUrl, setPresenterAvatarId, setPresenterSourceMode, setProductPhoto, setPromptExtra, setPromptMarket, setShowAdvancedVideo, setSubjectFraming, setUploadQualityWarning, setUseOriginalImage, setVideoPrompt, setVideoSettings, shipItMode, showAdvancedVideo, showVideoReferenceSection, storyboardScenes, storyboardTrimDuration, subjectFraming, templateId, templateSlotStatus, uploadPreviewUrl, useReferenceVideo, usesCompositor, usesConceptTextVideo, usesProductAssistant, videoBusy, videoCreativeMode, motionPosterDialectPick, setMotionPosterDialectPick, macroSnapIntensity, setMacroSnapIntensity, foodBulletArc, setFoodBulletArc, h3ShowreelAspect, setH3ShowreelAspect, h3ShowreelSchemePick, setH3ShowreelSchemePick, h3SphereMgSchemePick, setH3SphereMgSchemePick, videoGenerateDisabled, videoGenerateDisabledReason, videoPhase, videoPreflight, videoProgressInfo, videoPrompt, videoPromptPlanNote, videoSettings, videoStepHint, visualStyleId, workflowMode } = useWizard();
   const isConcept = promotionMode === "concept";
   const outputDurationSec = resolveWizardOutputDurationSec(videoSettings);
   const videoTokenCost = isStoryboardOutput
@@ -299,6 +301,52 @@ export function VideoStep() {
                     }
                   >
                     {m.wizard.macroSnapIntensity[level].desc}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+      {h3ShotMode === "food-bullet-time" ? (
+        <div className="rounded-lg border border-cyan-500/30 bg-slate-950/40 px-3 py-3">
+          <p className="text-xs font-semibold text-cyan-100">
+            {m.wizard.foodBulletArcTitle}
+          </p>
+          <p className="mt-1 text-[11px] text-cyan-200/80">
+            {m.wizard.foodBulletArcHint}
+          </p>
+          <div
+            className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-2"
+            role="radiogroup"
+            aria-label={m.wizard.foodBulletArcTitle}
+          >
+            {FOOD_BULLET_ARCS.map((arc) => {
+              const active = foodBulletArc === arc;
+              return (
+                <button
+                  key={arc}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => setFoodBulletArc(arc as FoodBulletArc)}
+                  className={
+                    active
+                      ? "rounded-lg bg-cyan-500 px-2.5 py-2 text-left text-xs font-semibold text-slate-950"
+                      : "rounded-lg border border-cyan-500/40 bg-slate-900/60 px-2.5 py-2 text-left text-xs font-medium text-cyan-100 hover:bg-cyan-950/50"
+                  }
+                >
+                  <span className="block">
+                    {m.wizard.foodBulletArc[arc].title}
+                  </span>
+                  <span
+                    className={
+                      active
+                        ? "mt-0.5 block text-[10px] font-normal text-slate-800"
+                        : "mt-0.5 block text-[10px] font-normal text-cyan-200/70"
+                    }
+                  >
+                    {m.wizard.foodBulletArc[arc].desc}
                   </span>
                 </button>
               );

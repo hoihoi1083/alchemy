@@ -11,6 +11,8 @@ type PlanGateDialogProps = {
   requiredPlan: UserPlan;
   /** Short feature label, e.g. "1080p video" or template name */
   featureLabel: string;
+  /** Optional extra line (e.g. tokens were not charged). */
+  note?: string | null;
 };
 
 function planDisplayName(
@@ -34,6 +36,7 @@ export function PlanGateDialog({
   onClose,
   requiredPlan,
   featureLabel,
+  note,
 }: PlanGateDialogProps) {
   const { m } = useLocale();
   if (!open) return null;
@@ -67,6 +70,11 @@ export function PlanGateDialog({
             .replace("{feature}", featureLabel)
             .replace("{plan}", planName)}
         </p>
+        {note?.trim() ? (
+          <p className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+            {note.trim()}
+          </p>
+        ) : null}
         <div className="mt-5 flex flex-wrap gap-2">
           <Link
             href={`/pricing?plan=${requiredPlan === "custom" ? "custom" : requiredPlan}`}

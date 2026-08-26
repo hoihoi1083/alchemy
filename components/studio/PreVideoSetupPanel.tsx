@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, type ChangeEvent } from "react";
+import { useEffect, useId, useState, type ChangeEvent } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 import { VideoSettingsPanel } from "@/components/VideoSettingsPanel";
 import { BrandWebsitePanel } from "@/components/studio/BrandWebsitePanel";
@@ -36,6 +36,7 @@ import {
   isH3ShotRecipeMode,
   subpathToH3ShotRecipe,
   MACRO_SNAP_INTENSITIES,
+  FOOD_BULLET_ARCS,
   H3_SHOWREEL_ASPECTS,
   H3_SHOWREEL_SCHEME_IDS,
   H3_SPHERE_MG_SCHEME_IDS,
@@ -43,6 +44,7 @@ import {
   h3SphereMgSchemePreviewSrc,
   type H3ShotRecipeMode,
   type MacroSnapIntensity,
+  type FoodBulletArc,
   type H3ShowreelAspect,
   type H3ShowreelSchemePick,
   type H3SphereMgSchemePick,
@@ -169,6 +171,77 @@ const PANEL_CSS = `
 @media (min-width: 640px) {
   .pv-style-grid { grid-template-columns: 1fr 1fr; }
 }
+.pv-style-summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 0.75rem;
+  border: 1px solid #ddd6fe;
+  background: rgba(245, 243, 255, 0.85);
+  color: #2e1065;
+}
+.pv-style-summary-thumb {
+  flex: 0 0 3.5rem;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(196, 181, 253, 0.8);
+  background: #fff;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+.pv-style-summary-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.pv-style-summary-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.pv-style-summary-body strong {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #2e1065;
+}
+.pv-style-summary-body span {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: rgba(76, 29, 149, 0.88);
+}
+.pv-path-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid #ddd6fe;
+  background: #f5f3ff;
+  padding: 0.85rem 0.95rem;
+  color: #2e1065;
+  font-size: 0.875rem;
+}
+.pv-path-banner-thumb {
+  flex: 0 0 3.5rem;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(196, 181, 253, 0.85);
+  background: #fff;
+  overflow: hidden;
+}
+.pv-path-banner-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.pv-path-banner-body { flex: 1 1 auto; min-width: 0; }
 @media (max-width: 639px) {
   .pv-phase-label { display: none; }
   .pv-phase-item.is-active .pv-phase-label {
@@ -265,6 +338,7 @@ export function PreVideoSetupPanel({
   const { m } = useLocale();
   const wizard = useWizard();
   const pv = m.microWizard.preVideoSetup;
+  const [expandStylePicker, setExpandStylePicker] = useState(false);
   const mainInputId = useId();
   const endFrameInputId = useId();
   const packInputId = useId();
@@ -768,6 +842,23 @@ export function PreVideoSetupPanel({
   ];
 
   const styleOptions = isConcept ? conceptStyleOptions : productStyleOptions;
+  const selectedStyleOpt =
+    styleOptions.find((opt) => {
+      if (isConcept) {
+        if (opt.id === "social_drip") return isSocialDrip;
+        if (opt.id === "vacuum_inflate") return isVacuumInflate;
+        if (opt.id === "creative_motion") return isCreativeMotion;
+        if (opt.id === "hand_throw_scene") return isHandThrow;
+        if (opt.id === "product_explode") return isProductExplode;
+        if (opt.id === "motion_poster") return isMotionPoster;
+        if (opt.id === "blockbuster") return isBlockbuster;
+        const optH3 = subpathToH3ShotRecipe(opt.id as never);
+        if (optH3) return h3ShotMode === optH3;
+        return isSceneReel;
+      }
+      return activeSubpath === opt.id;
+    }) ?? null;
+  const stylePickerCollapsed = Boolean(selectedStyleOpt) && !expandStylePicker;
 
   const setupHint = scenesReady
     ? pv.scenesReadyHint
@@ -919,11 +1010,38 @@ export function PreVideoSetupPanel({
                     <path d="M4 7h16M4 12h10M4 17h14" strokeLinecap="round" />
                   </svg>
                 </span>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <h3 className="pv-card-title">{pv.stylePickerTitle}</h3>
-                  <p className="mt-0.5 text-xs text-slate-500">{pv.stylePickerHint}</p>
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    {stylePickerCollapsed
+                      ? pv.styleCollapsedHint
+                      : pv.stylePickerHint}
+                  </p>
+                  {selectedStyleOpt ? (
+                    <button
+                      type="button"
+                      className="mt-1.5 text-xs font-semibold text-violet-700 hover:underline"
+                      onClick={() => setExpandStylePicker((v) => !v)}
+                    >
+                      {expandStylePicker
+                        ? pv.hideStylePicker
+                        : pv.changeStylePicker}
+                    </button>
+                  ) : null}
                 </div>
               </div>
+              {stylePickerCollapsed && selectedStyleOpt ? (
+                <div className="pv-style-summary">
+                  <div className="pv-style-summary-thumb" aria-hidden>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={selectedStyleOpt.previewSrc} alt="" />
+                  </div>
+                  <div className="pv-style-summary-body">
+                    <strong>{selectedStyleOpt.title}</strong>
+                    <span>{selectedStyleOpt.desc}</span>
+                  </div>
+                </div>
+              ) : (
               <div className="pv-style-grid">
                 {styleOptions.map((opt) => {
                   const selected = isConcept
@@ -949,7 +1067,10 @@ export function PreVideoSetupPanel({
                     <button
                       key={opt.id}
                       type="button"
-                      onClick={() => onPickVideoSubpath?.(opt.id)}
+                      onClick={() => {
+                        onPickVideoSubpath?.(opt.id);
+                        setExpandStylePicker(false);
+                      }}
                       className={`pv-output-card${selected ? " is-selected" : ""}`}
                     >
                       {selected ? (
@@ -969,6 +1090,7 @@ export function PreVideoSetupPanel({
                   );
                 })}
               </div>
+              )}
             </section>
             )}
 
@@ -993,15 +1115,30 @@ export function PreVideoSetupPanel({
               </div>
               <div className="pv-field-grid">
                 {isMotionPoster ? (
-                  <div className="rounded-xl border border-violet-200 bg-violet-50 px-3.5 py-3 text-sm text-violet-950 sm:col-span-2">
-                    <p className="font-semibold">{pv.motionPosterCopyFocus.title}</p>
-                    <p className="mt-1 text-xs leading-relaxed text-violet-900/90">
-                      {pv.motionPosterCopyFocus.body}
-                    </p>
+                  <div className="pv-path-banner sm:col-span-2">
+                    {selectedStyleOpt?.previewSrc ? (
+                      <div className="pv-path-banner-thumb" aria-hidden>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={selectedStyleOpt.previewSrc} alt="" />
+                      </div>
+                    ) : null}
+                    <div className="pv-path-banner-body">
+                      <p className="font-semibold">{pv.motionPosterCopyFocus.title}</p>
+                      <p className="mt-1 text-xs leading-relaxed text-violet-900/90">
+                        {pv.motionPosterCopyFocus.body}
+                      </p>
+                    </div>
                   </div>
                 ) : null}
                 {recipeUxId ? (
-                  <div className="rounded-xl border border-violet-200 bg-violet-50 px-3.5 py-3 text-sm text-violet-950 sm:col-span-2">
+                  <div className="pv-path-banner sm:col-span-2">
+                    {selectedStyleOpt?.previewSrc ? (
+                      <div className="pv-path-banner-thumb" aria-hidden>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={selectedStyleOpt.previewSrc} alt="" />
+                      </div>
+                    ) : null}
+                    <div className="pv-path-banner-body">
                     <p className="font-semibold">
                       {h3ShotMode
                         ? `${pv.h3PathFocusLead}: ${m.wizard.videoCreativeModes[h3ShotMode].title}`
@@ -1072,6 +1209,54 @@ export function PreVideoSetupPanel({
                                   }
                                 >
                                   {m.wizard.macroSnapIntensity[level].desc}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : null}
+                    {h3ShotMode === "food-bullet-time" ? (
+                      <div className="mt-3 border-t border-violet-200/80 pt-3">
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-700">
+                          {m.wizard.foodBulletArcTitle}
+                        </p>
+                        <p className="mt-1 text-xs leading-relaxed text-violet-900/90">
+                          {m.wizard.foodBulletArcHint}
+                        </p>
+                        <div
+                          className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-2"
+                          role="radiogroup"
+                          aria-label={m.wizard.foodBulletArcTitle}
+                        >
+                          {FOOD_BULLET_ARCS.map((arc) => {
+                            const active = wizard.foodBulletArc === arc;
+                            return (
+                              <button
+                                key={arc}
+                                type="button"
+                                role="radio"
+                                aria-checked={active}
+                                onClick={() =>
+                                  wizard.setFoodBulletArc(arc as FoodBulletArc)
+                                }
+                                className={
+                                  active
+                                    ? "rounded-lg bg-violet-600 px-2.5 py-2 text-left text-xs font-semibold text-white"
+                                    : "rounded-lg border border-violet-200 bg-white px-2.5 py-2 text-left text-xs font-medium text-violet-800 hover:bg-violet-50"
+                                }
+                              >
+                                <span className="block">
+                                  {m.wizard.foodBulletArc[arc].title}
+                                </span>
+                                <span
+                                  className={
+                                    active
+                                      ? "mt-0.5 block text-[10px] font-normal text-violet-100"
+                                      : "mt-0.5 block text-[10px] font-normal text-violet-600/80"
+                                  }
+                                >
+                                  {m.wizard.foodBulletArc[arc].desc}
                                 </span>
                               </button>
                             );
@@ -1239,6 +1424,7 @@ export function PreVideoSetupPanel({
                         </div>
                       </div>
                     ) : null}
+                    </div>
                   </div>
                 ) : null}
                 {isConcept ? (

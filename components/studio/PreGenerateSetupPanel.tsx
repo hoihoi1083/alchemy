@@ -36,6 +36,9 @@ import {
   luxuryBirthSceneCountOptions,
 } from "@/lib/storyboard-recipes";
 import { LUXURY_FIELD_WRAP_CLASS, luxuryFieldWrap } from "@/lib/storyboard-luxury-fields";
+import { PlanGateDialog } from "@/components/billing/PlanGateDialog";
+import { useUserPlanEntitlements } from "@/hooks/useUserPlanEntitlements";
+import { planMeetsMinimum } from "@/lib/billing/plan-gates";
 
 const PANEL_CSS = `
 .pg-page {
@@ -891,6 +894,9 @@ export function PreGenerateSetupPanel({
   const wizard = useWizard();
   const pg = m.microWizard.preGenerateSetup;
   const fuse = m.microWizard.intakeFuse;
+  const { plan } = useUserPlanEntitlements();
+  const campaignAllowed = planMeetsMinimum(plan, "standard");
+  const [campaignGateOpen, setCampaignGateOpen] = useState(false);
   const isConcept = wizard.promotionMode === "concept";
   const contentRef = useRef<HTMLElement | null>(null);
   const pageTopRef = useRef<HTMLDivElement | null>(null);
@@ -1266,6 +1272,21 @@ export function PreGenerateSetupPanel({
     : wizard.lockedSingleImageMode
       ? ["single"]
       : ["single", "ab", "campaign", "teaching-carousel"];
+
+  useEffect(() => {
+    if (
+      wizard.effectiveImageOutputMode === "campaign" &&
+      !campaignAllowed &&
+      !wizard.lockedCampaignMode
+    ) {
+      wizard.setImageOutputMode("single");
+    }
+  }, [
+    campaignAllowed,
+    wizard.effectiveImageOutputMode,
+    wizard.lockedCampaignMode,
+    wizard.setImageOutputMode,
+  ]);
 
   return (
     <div className="pg-page" ref={pageTopRef}>
@@ -2528,18 +2549,27 @@ export function PreGenerateSetupPanel({
                       const selected = wizard.effectiveImageOutputMode === mode;
                       const outputLocked =
                         wizard.lockedCampaignMode || wizard.lockedSingleImageMode;
+                      const modeLocked =
+                        mode === "campaign" &&
+                        !campaignAllowed &&
+                        !wizard.lockedCampaignMode;
                       return (
                         <button
                           key={mode}
                           type="button"
                           onClick={() => {
                             if (outputLocked) return;
+                            if (modeLocked) {
+                              setCampaignGateOpen(true);
+                              return;
+                            }
                             wizard.setImageOutputMode(mode);
                           }}
                           disabled={outputLocked}
+                          aria-disabled={outputLocked || modeLocked}
                           className={`pg-output-card${selected ? " is-selected" : ""}${
                             outputLocked ? " cursor-default" : ""
-                          }`}
+                          }${modeLocked ? " opacity-90" : ""}`}
                         >
                           {selected ? <CheckBadge /> : null}
                           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -2551,11 +2581,22 @@ export function PreGenerateSetupPanel({
                           <span className="pg-output-copy">
                             <strong>{copy.title}</strong>
                             <span>{copy.description}</span>
+                            {modeLocked ? (
+                              <span className="mt-1 block text-[10px] font-semibold text-amber-800">
+                                {m.pricing.plans.standard.name}+
+                              </span>
+                            ) : null}
                           </span>
                         </button>
                       );
                     })}
                   </div>
+                  <PlanGateDialog
+                    open={campaignGateOpen}
+                    onClose={() => setCampaignGateOpen(false)}
+                    requiredPlan="standard"
+                    featureLabel={m.wizard.imageOutputModes.campaign.title}
+                  />
                   {wizard.lockedSingleImageMode ? (
                     <p className="mt-2 text-xs leading-relaxed text-slate-500">
                       {m.wizard.imageOutputModeHintDesignedPoster}

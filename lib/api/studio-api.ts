@@ -41,6 +41,15 @@ async function parseJsonResponse(res: Response): Promise<unknown> {
   }
 }
 
+/** Safe JSON parse for studio generate APIs (handles gateway timeout plain-text bodies). */
+export async function parseStudioApiJson(
+  res: Response,
+): Promise<Record<string, unknown>> {
+  const data = await parseJsonResponse(res);
+  if (data && typeof data === "object") return data as Record<string, unknown>;
+  return {};
+}
+
 function extractErrorMessage(data: unknown, status: number): string {
   if (data && typeof data === "object" && "error" in data) {
     const err = (data as { error?: unknown }).error;

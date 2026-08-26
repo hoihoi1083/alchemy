@@ -25,7 +25,8 @@ import {
 import { adaptScriptForMinimaxH3 } from "@/lib/video-engine-prompt-adapters";
 
 export const runtime = "nodejs";
-export const maxDuration = 300;
+/** H3 reference-to-video often runs 5–7+ minutes on fal; Pro/Enterprise allow up to 800s. */
+export const maxDuration = 800;
 
 type Mode = "text" | "image" | "reference";
 
@@ -216,7 +217,14 @@ export async function POST(request: Request) {
       });
     }
 
+    const startedAt = Date.now();
+    console.info(
+      `[generate-minimax-h3] start mode=${mode} endpoint=${endpoint} duration=${duration}s resolution=${resolution}`,
+    );
     const result = await fal.subscribe(endpoint, { input, logs: true });
+    console.info(
+      `[generate-minimax-h3] fal done in ${((Date.now() - startedAt) / 1000).toFixed(1)}s mode=${mode}`,
+    );
     const videoUrl = extractVideoUrl(result.data);
     if (!videoUrl) {
       throw new Error("Video generation returned no output.");
