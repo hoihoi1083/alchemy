@@ -1599,6 +1599,7 @@ export function PreGenerateSetupPanel({
             ) : null}
 
             {showReferenceForDirection || isCompositionRemap ? (
+              <>
               <FusedReferenceCard
                 title={
                   isCompositionRemap
@@ -1628,6 +1629,27 @@ export function PreGenerateSetupPanel({
                 summaryRows={summaryRows}
                 onFile={onReferenceFile}
               />
+              {isCompositionRemap ? (
+                <label className="mt-2 flex cursor-pointer items-start gap-3 rounded-xl border border-violet-200 bg-violet-50/80 px-3 py-3 text-sm text-violet-950">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-violet-300 text-violet-600 focus:ring-violet-500"
+                    checked={Boolean(wizard.compositionRemapKeepHero)}
+                    onChange={(e) =>
+                      wizard.setCompositionRemapKeepHero(e.target.checked)
+                    }
+                  />
+                  <span>
+                    <span className="font-semibold">
+                      {pg.stylePickerRemapKeepHeroLabel}
+                    </span>
+                    <span className="mt-0.5 block text-xs text-violet-800/90">
+                      {pg.stylePickerRemapKeepHeroHint}
+                    </span>
+                  </span>
+                </label>
+              ) : null}
+              </>
             ) : showReferenceBrief && !isDesignedPoster && !isPartsPoster ? (
               <section className="pg-card">
                 <div className="pg-card-head">

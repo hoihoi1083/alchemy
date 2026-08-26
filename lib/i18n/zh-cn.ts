@@ -4666,6 +4666,9 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
       stylePickerRemapReferenceTitle: "构图参考图（必填）",
       stylePickerRemapReferenceHint:
         "上传你想改写的资讯图／海报（例如中心人物+周围团队）。概念／服务主题请不要上传产品图 — 会保留面板几何，换成主角和图上文案。产品图只适合把 SKU 放进中心区。",
+      stylePickerRemapKeepHeroLabel: "保留参考图中心人物",
+      stylePickerRemapKeepHeroHint:
+        "保留中心主角（参考图里你的英雄／代言人）。周围团队、数据和文案仍会换成你的主题。默认关闭。",
       stylePickerDesignedLabel: "商业设计海报",
       stylePickerDesignedDesc: "商业 feed 海报 — 你填的标题＋标语上图（不限食品）。",
       stylePickerPartsLabel: "零件拆解",

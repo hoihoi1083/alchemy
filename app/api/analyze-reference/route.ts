@@ -174,6 +174,11 @@ export async function POST(request: Request) {
 				.trim()
 				.toLowerCase(),
 		);
+		const compositionRemapKeepHero = ["1", "true", "yes"].includes(
+			String(formData.get("composition_remap_keep_hero") ?? "")
+				.trim()
+				.toLowerCase(),
+		);
 
 		const strategy = resolveReferenceStrategy({
 			promotionMode,
@@ -184,6 +189,7 @@ export async function POST(request: Request) {
 			hasProductPhoto,
 			hasReferenceBrief: true,
 			preferCompositionRemap,
+			compositionRemapKeepHero,
 		});
 
 		return NextResponse.json({

@@ -94,6 +94,8 @@ export type ResolveReferenceStrategyInput = {
 	 * Single / A-B only — campaign & teaching carousel keep existing strategies.
 	 */
 	preferCompositionRemap?: boolean;
+	/** Composition remap only: keep the hub / main character from the reference. */
+	compositionRemapKeepHero?: boolean;
 };
 
 const LAYER_LABELS: Record<keyof ReferenceLayerPlan, string> = {
@@ -112,6 +114,7 @@ export function layerPlanLabels(): typeof LAYER_LABELS {
 
 export function resolveReferenceLayers(
 	kind: ReferenceStrategyKind,
+	opts?: { compositionRemapKeepHero?: boolean },
 ): ReferenceLayerPlan {
 	switch (kind) {
 		case "layout-transfer":
@@ -129,7 +132,7 @@ export function resolveReferenceLayers(
 				layoutGrammar: "keep",
 				visualStyle: "keep",
 				contentLane: "replace",
-				subjects: "replace",
+				subjects: opts?.compositionRemapKeepHero ? "keep" : "replace",
 				onImageText: "replace",
 				moodLighting: "adapt",
 				stagingPose: "adapt",
@@ -181,7 +184,10 @@ export function resolveReferenceStrategy(
 	input: ResolveReferenceStrategyInput,
 ): ReferenceStrategy {
 	const kind = pickStrategyKind(input);
-	const layers = resolveReferenceLayers(kind);
+	const layers = resolveReferenceLayers(kind, {
+		compositionRemapKeepHero:
+			kind === "composition-remap" && Boolean(input.compositionRemapKeepHero),
+	});
 	const useDualImage =
 		kind === "layout-transfer"
 			? input.hasReferenceUpload && input.hasProductPhoto
@@ -288,7 +294,9 @@ export function referenceStrategyPromptBlock(
 ): string {
 	if (!brief) return "";
 	if (strategy.kind === "composition-remap") {
-		return userReferenceCompositionRemapPromptBlock(brief, strategy.layers);
+		return userReferenceCompositionRemapPromptBlock(brief, strategy.layers, {
+			keepHero: strategy.layers.subjects === "keep",
+		});
 	}
 	if (strategy.kind === "layout-transfer") {
 		return userReferenceLayoutTransferPromptBlock(brief, strategy.layers);
@@ -388,6 +396,7 @@ export function resolveStrategyFromFormData(input: {
 	hasProductRef: boolean;
 	referenceBrief?: UserReferenceBrief | null;
 	preferCompositionRemap?: boolean;
+	compositionRemapKeepHero?: boolean;
 }): ReferenceStrategy {
 	return resolveReferenceStrategy({
 		promotionMode: input.promotionMode,
@@ -398,6 +407,7 @@ export function resolveStrategyFromFormData(input: {
 		hasProductPhoto: input.hasProductRef,
 		hasReferenceBrief: Boolean(input.referenceBrief),
 		preferCompositionRemap: input.preferCompositionRemap,
+		compositionRemapKeepHero: input.compositionRemapKeepHero,
 	});
 }
 
@@ -432,6 +442,11 @@ export function parseStrategyFromFormData(formData: FormData): {
 			.trim()
 			.toLowerCase(),
 	);
+	const compositionRemapKeepHero = ["1", "true", "yes"].includes(
+		String(formData.get("composition_remap_keep_hero") ?? "")
+			.trim()
+			.toLowerCase(),
+	);
 	return {
 		strategy: resolveStrategyFromFormData({
 			promotionMode,
@@ -442,6 +457,7 @@ export function parseStrategyFromFormData(formData: FormData): {
 			hasProductRef: hasProduct,
 			referenceBrief: brief,
 			preferCompositionRemap,
+			compositionRemapKeepHero,
 		}),
 		brief,
 	};

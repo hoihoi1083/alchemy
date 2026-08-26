@@ -122,6 +122,8 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn" | "zh-tw") {
   const [imageCreativeMode, setImageCreativeMode] =
     useState<ImageCreativeMode>("promo-ai");
   const [preferCompositionRemap, setPreferCompositionRemap] = useState(false);
+  const [compositionRemapKeepHero, setCompositionRemapKeepHero] =
+    useState(false);
   const [videoCreativeMode, setVideoCreativeMode] =
     useState<VideoCreativeMode>("image-to-video");
   const [videoSettings, setVideoSettings] = useState<VideoSettings>(DEFAULT_VIDEO_SETTINGS);
@@ -330,6 +332,8 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn" | "zh-tw") {
     setImageCreativeMode,
     preferCompositionRemap,
     setPreferCompositionRemap,
+    compositionRemapKeepHero,
+    setCompositionRemapKeepHero,
     videoCreativeMode,
     setVideoCreativeMode,
     videoSettings,

@@ -5630,6 +5630,9 @@ export const en = {
 			stylePickerRemapReferenceTitle: "Composition reference (required)",
 			stylePickerRemapReferenceHint:
 				"Upload the board you want to remake (e.g. hub-and-spoke infographic). For concept/service topics, skip product photo — we keep panel geometry and replace subjects + on-image text. A product photo is only for placing your SKU into the hub zone.",
+			stylePickerRemapKeepHeroLabel: "Keep main character from reference",
+			stylePickerRemapKeepHeroHint:
+				"Keep the central hub person (your hero / spokesperson in the reference). Still remaps surrounding team, metrics, and on-image copy. Off by default.",
 			stylePickerDesignedLabel: "Commercial designed poster",
 			stylePickerDesignedDesc:
 				"Commercial feed poster — your title + tagline on a styled product hero (any category, not food-only).",

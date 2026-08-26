@@ -340,13 +340,19 @@ export type ReferenceImageMode =
 	| "style-only"
 	| "composition-remap";
 
-function imageCompositionRemapReferenceBlock(dualProduct: boolean): string {
+function imageCompositionRemapReferenceBlock(
+	dualProduct: boolean,
+	keepHero: boolean,
+): string {
+	const hubLine = keepHero
+		? "2) KEEP the central hub person from IMAGE 1 exactly (face, body, pose, outfit) — user's hero character from the reference. Do not swap them for a different person."
+		: "2) One central hero figure in the SAME seat/pose zone as IMAGE 1's hub (new original person fitting the user topic — never keep a celebrity likeness unless the user opted to keep the hub hero).";
 	const shellLock = joinParts(
 		"BOARD TRACE (mandatory — match IMAGE 1 structure, do not redesign):",
 		"1) Same overall poster grid and white/clean infographic ground as IMAGE 1.",
-		"2) One central hero figure in the SAME seat/pose zone as IMAGE 1's hub (new original person fitting the user topic — never the reference celebrity).",
-		"3) Surrounding support people in the SAME spoke positions (~same count) with dashed/thin leader lines to role callout chips.",
-		"4) Left stacked large metric/stat cards in the SAME column slots (new numbers + loan/topic labels from user copy).",
+		hubLine,
+		"3) Surrounding support people in the SAME spoke positions (~same count) with dashed/thin leader lines to role callout chips — REPLACE these people/roles for the user topic.",
+		"4) Left stacked large metric/stat cards in the SAME column slots (new numbers + labels from user copy).",
 		"5) Right icon + stat stack in the SAME column slots.",
 		"6) Bottom tip/footer band: icon row and/or numbered insights 01/02/03 + brand/CTA zone — same bands, new wording.",
 		"FORBIDDEN layouts unless IMAGE 1 already is that layout: outdoor product packshot, power bank/camping gear hero, phone UI collage, fork-in-the-road metaphor poster, empty lifestyle stock scene.",
@@ -356,15 +362,17 @@ function imageCompositionRemapReferenceBlock(dualProduct: boolean): string {
 			"COMPOSITION REMAP — IMAGE 1 = composition SHELL (board grammar). IMAGE 2 = optional SKU only.",
 			shellLock,
 			"If IMAGE 2 is a product photo: place that exact SKU small in the hub props zone (held / on table near the hero) — do NOT turn the whole poster into an IMAGE 2 packshot.",
-			"REPLACE all IMAGE 1 celebrities, logos, wordmarks, and readable text with the user's topic and campaign copy.",
+			"REPLACE all IMAGE 1 logos, wordmarks, and readable text with the user's topic and campaign copy.",
 			thirdPartyBrandGuardBlock(),
 		);
 	}
 	return joinParts(
 		"COMPOSITION REMAP — IMAGE 1 is the composition SHELL (the only layout source).",
 		shellLock,
-		"REPLACE every person, role, prop theme, number, and on-image line with the user's concept and campaign copy below.",
-		"Do NOT invent a generic lifestyle collage or a new layout family. Do NOT keep celebrity likenesses, club marks, or reference wording.",
+		keepHero
+			? "REPLACE surrounding cast, props themes for spokes, numbers, and on-image lines with the user's concept and campaign copy — KEEP hub hero identity."
+			: "REPLACE every person, role, prop theme, number, and on-image line with the user's concept and campaign copy below.",
+		"Do NOT invent a generic lifestyle collage or a new layout family. Do NOT keep reference logos/wordmarks or reference wording.",
 		thirdPartyBrandGuardBlock(),
 	);
 }
@@ -377,7 +385,7 @@ function referenceBlockForMode(
 ): string {
 	if (mode === "clone") return imageReferenceAnchorBlock(vars);
 	if (mode === "composition-remap") {
-		return imageCompositionRemapReferenceBlock(false);
+		return imageCompositionRemapReferenceBlock(false, false);
 	}
 	if (mode === "style-only") {
 		return opts?.conceptSingle
@@ -1431,6 +1439,8 @@ export function buildWizardImagePrompt(
 		referenceImageMode?: ReferenceImageMode;
 		/** Composition remap with product photo as IMAGE 1 + ref shell as IMAGE 2. */
 		compositionRemapDual?: boolean;
+		/** Keep hub / main character from the composition reference. */
+		compositionRemapKeepHero?: boolean;
 	},
 ): string {
 	const brandLogoImageIndex = promptOptions?.brandLogoImageIndex ?? null;
@@ -1474,6 +1484,7 @@ export function buildWizardImagePrompt(
 				buildCompositionRemapImagePrompt(vars, {
 					aspectRatio: promptOptions?.aspectRatio,
 					dualProduct: Boolean(promptOptions?.compositionRemapDual),
+					keepHero: Boolean(promptOptions?.compositionRemapKeepHero),
 				}),
 				plan ? singlePlanBlock(plan) : "",
 				carouselSlideAvoidClause(
@@ -2233,6 +2244,7 @@ export function buildCompositionRemapImagePrompt(
 	options?: {
 		aspectRatio?: string;
 		dualProduct?: boolean;
+		keepHero?: boolean;
 	},
 ): string {
 	const topic =
@@ -2241,6 +2253,7 @@ export function buildCompositionRemapImagePrompt(
 		"the user's campaign topic";
 	const aspect = options?.aspectRatio?.trim() || "4:5";
 	const dual = Boolean(options?.dualProduct);
+	const keepHero = Boolean(options?.keepHero);
 	const campaignCopy = joinParts(
 		vars.business ? `Brand: ${vars.business}` : undefined,
 		vars.headline ? `Headline: ${vars.headline}` : undefined,
@@ -2255,8 +2268,8 @@ export function buildCompositionRemapImagePrompt(
 		return joinParts(
 			artStyleMandatoryLead(vars.artStyle),
 			`Two images. Create ONE new ${aspect} composition-remap INFRASTRUCTURE BOARD for ${topic}.`,
-			imageCompositionRemapReferenceBlock(true),
-			`CRITICAL: IMAGE 1 pixels win for PANEL GEOMETRY / board machine. IMAGE 2 (if any) is only a small SKU insert — never the full-scene hero.`,
+			imageCompositionRemapReferenceBlock(true, keepHero),
+			`CRITICAL: IMAGE 1 pixels win for PANEL GEOMETRY / board machine${keepHero ? " and hub hero identity" : ""}. IMAGE 2 (if any) is only a small SKU insert — never the full-scene hero.`,
 			campaignCopy
 				? `Campaign copy (all on-image text): ${campaignCopy}.`
 				: `No user headline — use "${topic}" as the only masthead; invent support lines only from the topic, never from IMAGE 1.`,
@@ -2274,8 +2287,8 @@ export function buildCompositionRemapImagePrompt(
 	return joinParts(
 		artStyleMandatoryLead(vars.artStyle),
 		`Create ONE new ${aspect} composition-remap INFRASTRUCTURE BOARD for ${topic}.`,
-		imageCompositionRemapReferenceBlock(false),
-		`CRITICAL: Trace IMAGE 1's board machine. Output must be recognizably the SAME poster skeleton with a new topic — not a loosely related ad.`,
+		imageCompositionRemapReferenceBlock(false, keepHero),
+		`CRITICAL: Trace IMAGE 1's board machine. Output must be recognizably the SAME poster skeleton with a new topic — not a loosely related ad.${keepHero ? " Keep the hub person identity from IMAGE 1." : ""}`,
 		campaignCopy
 			? `Campaign copy (all on-image text): ${campaignCopy}.`
 			: `No user headline — use "${topic}" as the only masthead; invent support lines only from the topic, never from IMAGE 1.`,

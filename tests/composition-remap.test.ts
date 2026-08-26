@@ -92,6 +92,33 @@ describe("composition-remap strategy", () => {
     });
     assert.equal(s.kind, "style-only");
   });
+
+  it("keep-hero option keeps subjects layer and updates prompts", () => {
+    const s = resolveReferenceStrategy({
+      promotionMode: "concept",
+      imageOutputMode: "single",
+      visualStyleId: "info-poster",
+      imageCreativeMode: "reference-concept",
+      hasReferenceUpload: true,
+      hasProductPhoto: false,
+      hasReferenceBrief: true,
+      preferCompositionRemap: true,
+      compositionRemapKeepHero: true,
+    });
+    assert.equal(s.kind, "composition-remap");
+    assert.equal(s.layers.subjects, "keep");
+    assert.equal(s.layers.contentLane, "replace");
+    assert.equal(s.layers.onImageText, "replace");
+
+    const prompt = buildCompositionRemapImagePrompt(
+      buildPromptVariables({
+        product: "借貸服務",
+        headline: "圍繞你嘅團隊",
+      }),
+      { aspectRatio: "4:5", keepHero: true },
+    );
+    assert.match(prompt, /KEEP the central hub person/i);
+  });
 });
 
 describe("composition-remap prompts", () => {

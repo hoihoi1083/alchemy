@@ -53,7 +53,13 @@ const LAYOUT_TRANSFER_TAIL =
 	"IMAGE 1 = user product hero (keep exactly). IMAGE 2 = style/layout reference only — borrow IMAGE 2 design grammar (layout rhythm, component types, typography hierarchy, staging pose type); never show IMAGE 2's product as hero. All readable copy from user brief. IMAGE 2 is another company's post — do NOT copy its logos, wordmarks, store names, sponsor marks, @handles, watermarks, or original selling lines. Background and lighting may adapt to suit IMAGE 1.";
 
 const COMPOSITION_REMAP_TAIL =
-	"Treat the reference as a composition SHELL you must TRACE: KEEP hub-and-spoke geometry (one central hero person + surrounding support people), dashed leader-line role callouts, left stacked metric cards, right icon/stat column, tip/footer band with numbered insights, type hierarchy, and information density. REPLACE every subject, role label, number, and readable line with the user's topic and campaign copy. Wipe celebrity likenesses, reference logos, wordmarks, and all reference on-image text. FORBIDDEN: inventing a new poster family (outdoor product packshot, camping gear hero, phone-app collage, fork-in-the-road metaphor, generic lifestyle) unless IMAGE 1 already uses that exact structure.";
+	"Treat the reference as a composition SHELL you must TRACE: KEEP hub-and-spoke geometry (one central hero person + surrounding support people), dashed leader-line role callouts, left stacked metric cards, right icon/stat column, tip/footer band with numbered insights, type hierarchy, and information density. REPLACE surrounding support people, role labels, numbers, and readable lines with the user's topic and campaign copy. Wipe reference logos, wordmarks, and all reference on-image text. FORBIDDEN: inventing a new poster family (outdoor product packshot, camping gear hero, phone-app collage, fork-in-the-road metaphor, generic lifestyle) unless IMAGE 1 already uses that exact structure.";
+
+const COMPOSITION_REMAP_REPLACE_HERO_TAIL =
+	"REPLACE the central hub person with an original character fitting the user topic — do not keep celebrity likenesses from the reference.";
+
+const COMPOSITION_REMAP_KEEP_HERO_TAIL =
+	"KEEP the central hub person from IMAGE 1 (face, body, pose, outfit identity) — this is the user's chosen hero character from the reference. Do NOT replace them with a different person. Still REPLACE surrounding support cast, callout roles, metrics, and all readable reference text.";
 
 const CLONE_TAIL =
 	"Generate in the same content lane and visual style family as this reference — do not genericize into unrelated stock marketing.";
@@ -357,7 +363,9 @@ export function userReferenceCompositionRemapPromptBlock(
 		moodLighting: string;
 		stagingPose: string;
 	},
+	opts?: { keepHero?: boolean },
 ): string {
+	const keepHero = Boolean(opts?.keepHero) || layers.subjects === "keep";
 	const parts = [`${USER_REFERENCE_COMPOSITION_REMAP_MARKER}:`];
 	if (brief.userConceptIdea)
 		parts.push(`User idea: ${brief.userConceptIdea}`);
@@ -375,12 +383,16 @@ export function userReferenceCompositionRemapPromptBlock(
 	if (brief.mood) parts.push(`Mood cue (adapt): ${brief.mood}`);
 	if (brief.optimizedScenePrompt || brief.sceneEssay) {
 		parts.push(
-			`SCENE ESSAY (remap subjects + copy onto the same board machine — keep panel geometry): ${brief.optimizedScenePrompt || brief.sceneEssay}`,
+			keepHero
+				? `SCENE ESSAY (keep hub hero identity; remap surrounding cast + copy onto the same board machine): ${brief.optimizedScenePrompt || brief.sceneEssay}`
+				: `SCENE ESSAY (remap subjects + copy onto the same board machine — keep panel geometry): ${brief.optimizedScenePrompt || brief.sceneEssay}`,
 		);
 	}
 	if (brief.subjects) {
 		parts.push(
-			`Reference subjects/roles (REPLACE with original characters fitting the user topic — same ROLE slots only): ${brief.subjects}`,
+			keepHero
+				? `Hub hero from reference (KEEP identity): ${brief.subjects}. Surrounding roles: REPLACE with original supporting cast fitting the user topic.`
+				: `Reference subjects/roles (REPLACE with original characters fitting the user topic — same ROLE slots only): ${brief.subjects}`,
 		);
 	}
 	if (brief.visibleText) {
@@ -406,7 +418,9 @@ export function userReferenceCompositionRemapPromptBlock(
 	parts.push(...layerHints);
 	parts.push(COMPOSITION_REMAP_TAIL);
 	parts.push(
-		"Avoid real celebrity likenesses — fill role slots with original characters or the user's product only.",
+		keepHero
+			? COMPOSITION_REMAP_KEEP_HERO_TAIL
+			: COMPOSITION_REMAP_REPLACE_HERO_TAIL,
 	);
 	return parts.join(" ");
 }

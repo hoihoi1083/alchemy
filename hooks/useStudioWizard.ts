@@ -456,6 +456,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		setImageCreativeMode,
 		preferCompositionRemap,
 		setPreferCompositionRemap,
+		compositionRemapKeepHero,
+		setCompositionRemapKeepHero,
 		videoCreativeMode,
 		setVideoCreativeMode,
 		videoSettings,
@@ -1190,6 +1192,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				preferCompositionRemap:
 					!isLockedSinglePosterStyle(visualStyleId) &&
 					preferCompositionRemap,
+				compositionRemapKeepHero:
+					!isLockedSinglePosterStyle(visualStyleId) &&
+					preferCompositionRemap &&
+					compositionRemapKeepHero,
 			}),
 		[
 			promotionMode,
@@ -1202,6 +1208,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			userReferenceBrief,
 			conceptImageVisionNote,
 			preferCompositionRemap,
+			compositionRemapKeepHero,
 			hasProductPhotoLock,
 		],
 	);
@@ -1216,12 +1223,16 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			if (preferCompositionRemap) {
 				fd.set("prefer_composition_remap", "1");
 			}
+			if (preferCompositionRemap && compositionRemapKeepHero) {
+				fd.set("composition_remap_keep_hero", "1");
+			}
 		},
 		[
 			effectiveImageOutputMode,
 			promotionMode,
 			userReferenceBrief,
 			preferCompositionRemap,
+			compositionRemapKeepHero,
 		],
 	);
 
@@ -1552,6 +1563,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		productPhoto,
 		effectiveImageOutputMode,
 		preferCompositionRemap,
+		compositionRemapKeepHero,
 	});
 	referenceAnalyzeContextRef.current = {
 		conceptIdea,
@@ -1567,6 +1579,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		productPhoto,
 		effectiveImageOutputMode,
 		preferCompositionRemap,
+		compositionRemapKeepHero,
 	};
 
 	const lastCompletedReferenceAnalyzeKeyRef = useRef<string | null>(null);
@@ -1630,6 +1643,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				fd.set("prompt_extra", promptForAnalyze);
 				if (ctx.preferCompositionRemap) {
 					fd.set("prefer_composition_remap", "1");
+				}
+				if (ctx.preferCompositionRemap && ctx.compositionRemapKeepHero) {
+					fd.set("composition_remap_keep_hero", "1");
 				}
 				// Do NOT send extraKitPhotos as carousel_reference_images.
 				// Kit slots are optional product angles, not research style slides — sending
@@ -2627,6 +2643,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			return;
 		}
 		setPreferCompositionRemap(false);
+		setCompositionRemapKeepHero(false);
 		if (path === "reference") {
 			setWorkflowMode("image-only");
 			selectVisualStyle("product");
@@ -2715,6 +2732,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			return;
 		}
 		setPreferCompositionRemap(false);
+		setCompositionRemapKeepHero(false);
     if (path === "info") selectVisualStyle("info-poster");
 		else if (
 			path === "designed" ||
@@ -10510,6 +10528,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     imageCreativeMode,
     preferCompositionRemap,
     setPreferCompositionRemap,
+    compositionRemapKeepHero,
+    setCompositionRemapKeepHero,
     imageFinishLabel,
     imageGenKey,
     imageInputMode,

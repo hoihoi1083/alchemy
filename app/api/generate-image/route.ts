@@ -958,6 +958,7 @@ export async function POST(request: Request) {
               hasReferenceImage: hasProduct || hasStyle,
               referenceImageMode: strategy.referenceImageMode,
               compositionRemapDual: strategy.useDualImage,
+              compositionRemapKeepHero: strategy.layers.subjects === "keep",
             },
           );
       // Prefer server-built prompt when we ran the single-still planner (teaching-quality DNA).
