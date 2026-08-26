@@ -18,6 +18,7 @@ import {
   parseH3SphereMgSchemePick,
   resolveH3ShowreelScheme,
   resolveH3SphereMgScheme,
+  resolveH3LogoMgScheme,
   h3ShotRecipeAllowsKineticType,
   h3ShotRecipeIsTextlessFrames,
 } from "../lib/h3-shot-recipes";
@@ -64,6 +65,7 @@ describe("H3 shot recipes", () => {
       "c4d-motion",
       "h3-showreel",
       "h3-sphere-mg",
+      "h3-logo-mg",
       "h3-movie-title",
       "h3-lifestyle",
     ]);
@@ -80,7 +82,7 @@ describe("H3 shot recipes", () => {
       assert.match(p, /SOLAR tumbler/);
       assert.match(
         p,
-        /一镜|环绕|锁定|仿拍|霓虹|子弹|飞溅|C4D|三维|黑场|秀场|球体|标题|多格|生活/,
+        /一镜|环绕|锁定|仿拍|霓虹|子弹|飞溅|C4D|三维|黑场|秀场|球体|标题|多格|生活|Logo|标识|演绎/,
       );
       assert.equal(typeof H3_SHOT_RECIPE_DURATION_SEC[mode], "number");
       const still = buildH3ShotRecipeStillPrompt({
@@ -298,6 +300,34 @@ describe("H3 shot recipes", () => {
     assert.match(sphereStill, /crystal|sphere|glass|orb/i);
     assert.match(sphereStill, /ARC bottle/);
     assert.match(sphereStill, /INSIDE|miniature|emerge|C4D/i);
+    assert.equal(
+      resolveH3LogoMgScheme({ pick: "auto", product: "chrome luxury watch" }),
+      "chrome-type",
+    );
+    assert.equal(
+      resolveH3LogoMgScheme({ pick: "auto", conceptMode: true }),
+      "glass-ui",
+    );
+    assert.equal(h3ShotRecipeAllowsKineticType("h3-logo-mg"), true);
+    const logoMg = buildH3ShotRecipePrompt({
+      mode: "h3-logo-mg",
+      conceptMode: true,
+      product: "NERO",
+      logoMgScheme: "glass-ui",
+    });
+    assert.match(logoMg, /Logo|标识|演绎|玻璃/);
+    assert.match(logoMg, /NERO/);
+    assert.match(logoMg, /@Image1/);
+    assert.match(logoMg, /一镜/);
+    const logoStill = buildH3ShotRecipeStillPrompt({
+      mode: "h3-logo-mg",
+      conceptMode: true,
+      product: "NERO",
+      logoMgScheme: "chrome-type",
+    });
+    assert.match(logoStill, /16:9/);
+    assert.match(logoStill, /chrome|iridescent|3D|wordmark/i);
+    assert.match(logoStill, /NERO/);
     const movieTitle = buildH3ShotRecipePrompt({
       mode: "h3-movie-title",
       conceptMode: false,
@@ -569,6 +599,7 @@ describe("H3 shot recipes", () => {
       ["product-c4d-motion-8s", "c4d-motion", "c4d_motion"],
       ["product-h3-showreel-8s", "h3-showreel", "h3_showreel"],
       ["product-h3-sphere-mg-8s", "h3-sphere-mg", "h3_sphere_mg"],
+      ["product-h3-logo-mg-8s", "h3-logo-mg", "h3_logo_mg"],
       ["product-h3-movie-title-8s", "h3-movie-title", "h3_movie_title"],
       ["product-h3-lifestyle-8s", "h3-lifestyle", "h3_lifestyle"],
       ["concept-beauty-mv-10s", "beauty-mv", "beauty_mv"],
@@ -577,6 +608,7 @@ describe("H3 shot recipes", () => {
       ["concept-c4d-motion-8s", "c4d-motion", "c4d_motion"],
       ["concept-h3-showreel-8s", "h3-showreel", "h3_showreel"],
       ["concept-h3-sphere-mg-8s", "h3-sphere-mg", "h3_sphere_mg"],
+      ["concept-h3-logo-mg-8s", "h3-logo-mg", "h3_logo_mg"],
       ["concept-h3-movie-title-8s", "h3-movie-title", "h3_movie_title"],
     ] as const;
     for (const [id, mode, subpath] of cases) {
@@ -603,6 +635,7 @@ describe("H3 shot recipe wizard wiring", () => {
     assert.match(wizard, /case "c4d-motion":/);
     assert.match(wizard, /case "h3-showreel":/);
     assert.match(wizard, /case "h3-sphere-mg":/);
+    assert.match(wizard, /case "h3-logo-mg":/);
     assert.match(wizard, /case "h3-movie-title":/);
     assert.match(wizard, /case "h3-lifestyle":/);
     assert.match(wizard, /makeH3ShotRecipeVideo/);
@@ -618,6 +651,8 @@ describe("H3 shot recipe wizard wiring", () => {
     assert.match(fn, /H3_SHOWREEL_NEGATIVE|h3ShotRecipeAllowsKineticType|h3ShowreelAspect/);
     assert.match(fn, /resolveH3ShowreelScheme|h3ShowreelSchemePick/);
     assert.match(fn, /resolveH3SphereMgScheme|h3SphereMgSchemePick/);
+    assert.match(fn, /resolveH3LogoMgScheme|h3LogoMgSchemePick/);
+    assert.match(fn, /H3_LOGO_MG_NEGATIVE/);
     assert.match(fn, /reference_images/);
     assert.match(fn, /mode !== "neon-on-real"/);
     assert.doesNotMatch(fn, /generate-kling-storyboard/);

@@ -40,14 +40,17 @@ import {
   H3_SHOWREEL_ASPECTS,
   H3_SHOWREEL_SCHEME_IDS,
   H3_SPHERE_MG_SCHEME_IDS,
+  H3_LOGO_MG_SCHEME_IDS,
   h3ShowreelSchemePreviewSrc,
   h3SphereMgSchemePreviewSrc,
+  h3LogoMgSchemePreviewSrc,
   type H3ShotRecipeMode,
   type MacroSnapIntensity,
   type FoodBulletArc,
   type H3ShowreelAspect,
   type H3ShowreelSchemePick,
   type H3SphereMgSchemePick,
+  type H3LogoMgSchemePick,
 } from "@/lib/h3-shot-recipes";
 import {
   h3ShotModesForPromotion,
@@ -1315,6 +1318,64 @@ export function PreVideoSetupPanel({
                                 />
                                 <span className="min-w-0 text-[11px] font-semibold leading-snug text-violet-950">
                                   {m.wizard.h3SphereMgSchemes[id].title}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : null}
+                    {h3ShotMode === "h3-logo-mg" ? (
+                      <div className="mt-3 border-t border-violet-200/80 pt-3">
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-700">
+                          {m.wizard.h3LogoMgSchemeTitle}
+                        </p>
+                        <p className="mt-1 text-xs leading-relaxed text-violet-900/90">
+                          {m.wizard.h3LogoMgSchemeHint}
+                        </p>
+                        <div className="mt-2 grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+                          <button
+                            type="button"
+                            className={`flex items-center gap-2 rounded-xl border px-2 py-1.5 text-left ${
+                              wizard.h3LogoMgSchemePick === "auto"
+                                ? "border-2 border-violet-600 bg-violet-50"
+                                : "border border-violet-200 bg-white hover:border-violet-400"
+                            }`}
+                            onClick={() => wizard.setH3LogoMgSchemePick("auto")}
+                          >
+                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-[10px] font-semibold text-violet-800">
+                              Auto
+                            </span>
+                            <span className="min-w-0 text-[11px] font-semibold text-violet-950">
+                              {m.wizard.h3LogoMgSchemeAuto}
+                            </span>
+                          </button>
+                          {H3_LOGO_MG_SCHEME_IDS.map((id) => {
+                            const active = wizard.h3LogoMgSchemePick === id;
+                            return (
+                              <button
+                                key={id}
+                                type="button"
+                                title={m.wizard.h3LogoMgSchemes[id].desc}
+                                className={`flex items-center gap-2 rounded-xl border px-2 py-1.5 text-left ${
+                                  active
+                                    ? "border-2 border-violet-600 bg-violet-50"
+                                    : "border border-violet-200 bg-white hover:border-violet-400"
+                                }`}
+                                onClick={() =>
+                                  wizard.setH3LogoMgSchemePick(
+                                    id as H3LogoMgSchemePick,
+                                  )
+                                }
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={h3LogoMgSchemePreviewSrc(id)}
+                                  alt=""
+                                  className="h-10 w-10 shrink-0 rounded-lg object-cover"
+                                />
+                                <span className="min-w-0 text-[11px] font-semibold leading-snug text-violet-950">
+                                  {m.wizard.h3LogoMgSchemes[id].title}
                                 </span>
                               </button>
                             );

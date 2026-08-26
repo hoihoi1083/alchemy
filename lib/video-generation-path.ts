@@ -33,6 +33,7 @@ export type VideoGenerationKind =
   | "c4d-motion"
   | "h3-showreel"
   | "h3-sphere-mg"
+  | "h3-logo-mg"
   | "h3-movie-title"
   | "h3-lifestyle"
   | "image-to-video";

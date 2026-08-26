@@ -20,6 +20,7 @@ export const H3_SHOT_RECIPE_MODES = [
   "c4d-motion",
   "h3-showreel",
   "h3-sphere-mg",
+  "h3-logo-mg",
   "h3-movie-title",
   "h3-lifestyle",
 ] as const;
@@ -48,6 +49,7 @@ export const H3_SHOT_RECIPE_SETTINGS_DURATION: Record<
   "c4d-motion": "8",
   "h3-showreel": "8",
   "h3-sphere-mg": "8",
+  "h3-logo-mg": "8",
   "h3-movie-title": "8",
   "h3-lifestyle": "8",
 };
@@ -64,6 +66,7 @@ export const H3_SHOT_RECIPE_DURATION_SEC: Record<H3ShotRecipeMode, number> = {
   "c4d-motion": 8,
   "h3-showreel": 8,
   "h3-sphere-mg": 8,
+  "h3-logo-mg": 8,
   "h3-movie-title": 8,
   "h3-lifestyle": 8,
 };
@@ -108,6 +111,7 @@ const MODE_TO_SUBPATH: Record<H3ShotRecipeMode, VideoSubpath> = {
   "c4d-motion": "c4d_motion",
   "h3-showreel": "h3_showreel",
   "h3-sphere-mg": "h3_sphere_mg",
+  "h3-logo-mg": "h3_logo_mg",
   "h3-movie-title": "h3_movie_title",
   "h3-lifestyle": "h3_lifestyle",
 };
@@ -124,6 +128,7 @@ const SUBPATH_TO_MODE: Partial<Record<VideoSubpath, H3ShotRecipeMode>> = {
   c4d_motion: "c4d-motion",
   h3_showreel: "h3-showreel",
   h3_sphere_mg: "h3-sphere-mg",
+  h3_logo_mg: "h3-logo-mg",
   h3_movie_title: "h3-movie-title",
   h3_lifestyle: "h3-lifestyle",
 };
@@ -173,12 +178,13 @@ export function h3ShotRecipeNeedsLifestyleStill(
   return mode === "food-bullet-time" || mode === "h3-lifestyle";
 }
 
-/** Kinetic type / designed masthead words allowed (showreel, movie-title, sphere MG reveal). */
+/** Kinetic type / designed masthead words allowed (showreel, movie-title, sphere/logo MG). */
 export function h3ShotRecipeAllowsKineticType(mode: H3ShotRecipeMode): boolean {
   return (
     mode === "h3-showreel" ||
     mode === "h3-movie-title" ||
-    mode === "h3-sphere-mg"
+    mode === "h3-sphere-mg" ||
+    mode === "h3-logo-mg"
   );
 }
 
@@ -478,6 +484,151 @@ function sphereMgSchemeBeats(
   ];
 }
 
+/**
+ * 3D logo 演绎 — bright glass/chrome brand MG (not dark sphere void).
+ * Style cards mirror RedNote Minimax H3 logo-interpretation demos.
+ */
+export const H3_LOGO_MG_SCHEME_IDS = [
+  "glass-ui",
+  "chrome-type",
+  "ribbon-peel",
+  "pin-field",
+] as const;
+export type H3LogoMgSchemeId = (typeof H3_LOGO_MG_SCHEME_IDS)[number];
+export type H3LogoMgSchemePick = H3LogoMgSchemeId | "auto";
+
+export function h3LogoMgSchemePreviewSrc(id: H3LogoMgSchemeId): string {
+  return `/images/studio/schemes/logo-mg/${id}.png?v=1`;
+}
+
+export function isH3LogoMgSchemeId(
+  value: string | null | undefined,
+): value is H3LogoMgSchemeId {
+  return (H3_LOGO_MG_SCHEME_IDS as readonly string[]).includes(value ?? "");
+}
+
+export function parseH3LogoMgSchemePick(raw: unknown): H3LogoMgSchemePick {
+  const s = String(raw ?? "").trim();
+  if (s === "auto" || !s) return "auto";
+  return isH3LogoMgSchemeId(s) ? s : "auto";
+}
+
+export function resolveH3LogoMgScheme(input: {
+  pick: H3LogoMgSchemePick;
+  product?: string;
+  headline?: string;
+  conceptIdea?: string;
+  conceptMode?: boolean;
+}): H3LogoMgSchemeId {
+  if (input.pick !== "auto") return input.pick;
+  const text =
+    `${input.product ?? ""} ${input.headline ?? ""} ${input.conceptIdea ?? ""}`.toLowerCase();
+  if (
+    /ribbon|peel|paper|card|折紙|折纸|纸带|絲帶|丝带|翻页|揭頁/.test(text)
+  ) {
+    return "ribbon-peel";
+  }
+  if (
+    /pin|particle|dot|grid|badge|button|針|针|粒子|圆点|圓點|徽章|按钮/.test(
+      text,
+    )
+  ) {
+    return "pin-field";
+  }
+  if (
+    /chrome|metal|metallic|iridescent|gloss|luxury|watch|铬|金屬|金属|镜面|鏡面|炫彩|字标|字標/.test(
+      text,
+    )
+  ) {
+    return "chrome-type";
+  }
+  if (
+    /glass|ui|saas|app|tech|dashboard|frost|玻璃|毛玻璃|界面|仪表|儀表|科技/.test(
+      text,
+    )
+  ) {
+    return "glass-ui";
+  }
+  // Default: bright glass UI logo card — closest to the reference demo.
+  return "glass-ui";
+}
+
+const H3_LOGO_MG_SCHEME_STILL: Record<H3LogoMgSchemeId, string> = {
+  "glass-ui":
+    "Bright glassmorphic C4D stage: floating frosted UI panels and iridescent spheres around a centered white card that already shows the uploaded logo/wordmark crisply readable",
+  "chrome-type":
+    "Clean soft-gradient studio: thick chrome / iridescent 3D extruded letters or mark matching the uploaded logo, pearlescent highlights, ready for logo hero animation",
+  "ribbon-peel":
+    "Vibrant blue-orange gradient void: a curling white paper/ribbon surface already carrying the uploaded logo or brand icons, mid-peel pose ready to animate",
+  "pin-field":
+    "Bright off-white stage: dense wave of glossy colored pin/button dots forming or framing the uploaded logo silhouette, soft shadows, premium MG still",
+};
+
+/** Logo MG allows the uploaded mark as designed type — still forbid captions/UI. */
+export const H3_LOGO_MG_NEGATIVE =
+  "subtitles, captions, watermarks, UI chrome overlays, voiceover, dialogue, lyrics, " +
+  "slideshow, hard cut montage, jump cut, freeze-frame, blurry logo, morphing identity, " +
+  "inventing a different brand mark, copy competitor logos, talking head, dark black void Nike intro, " +
+  "planet Earth, busy lifestyle street";
+
+const LOGO_MG_PROMPT_NEGATIVE =
+  `${H3_LOGO_MG_NEGATIVE}, invent competitor logos, hard cut montage, ` +
+  "dark black-void Nike intro only, blank grey sphere forever, NASA Earth, talking head interview";
+
+function logoMgSchemeBeats(
+  scheme: H3LogoMgSchemeId,
+  img: string,
+  subject: string,
+): string[] {
+  const lock =
+    `这是 Minimax H3 风格「3D Logo 演绎」品牌运动图形：严格锁定${img}（${subject}）的 Logo／字标／吉祥物外形、配色与可读性。` +
+    `明亮高级 C4D／玻璃／金属质感，不是黑场球鞋片头，不是电商环绕。` +
+    `上传标识必须始终可辨认；允许把标识做成三维字／浮雕卡／材质变形，禁止换成另一品牌名。` +
+    `允许设计感动能大字（仅服务本标识），禁止字幕条／仿社交 UI 覆盖层。`;
+  const sharedClose =
+    `5.5–8s：收在干净英雄位，${img} 标识清晰居中可读；可留轻动能光扫；一镜到底连续运动。`;
+  const neg = `Negative: ${LOGO_MG_PROMPT_NEGATIVE}`;
+
+  if (scheme === "chrome-type") {
+    return [
+      `H3 三维 Logo 演绎「Chrome type」：镜面／炫彩立体字标英雄。${lock}`,
+      `0–2s：柔和浅色渐变背景，粗体立体金属／虹彩字母或标识缓慢旋转呼吸，高光扫过。`,
+      `2–5.5s：镜头轻推或弧形掠过立体字标，材质从哑光到高光铬面／珍珠渐变；外形必须与${img}一致。`,
+      sharedClose,
+      `适合字标、几何 Logo、奢侈／科技品牌。`,
+      neg,
+    ];
+  }
+  if (scheme === "ribbon-peel") {
+    return [
+      `H3 三维 Logo 演绎「Ribbon peel」：白色丝带／纸面卷曲揭幕。${lock}`,
+      `0–2s：蓝橙渐变虚空，白色丝带／纸面已印有${img}标识或品牌图形，开始卷曲。`,
+      `2–5.5s：丝带连续翻卷／揭开，标识随曲面运动仍可读，最终展平或停在英雄角度。`,
+      sharedClose,
+      `适合扁平 Logo、图标系统、活动视觉。`,
+      neg,
+    ];
+  }
+  if (scheme === "pin-field") {
+    return [
+      `H3 三维 Logo 演绎「Pin field」：亮色立体钉／圆点粒子场。${lock}`,
+      `0–2s：浅色台面，密集彩色光泽钉／按钮波纹起伏；整体轮廓暗示${img}。`,
+      `2–5.5s：粒子场波浪运动，逐渐聚成或托出可读的${img}标识英雄形。`,
+      sharedClose,
+      `适合抽象 Logo、点阵品牌、年轻科技感。`,
+      neg,
+    ];
+  }
+  return [
+    `H3 三维 Logo 演绎「Glass UI」：毛玻璃界面世界 → 标识卡英雄。${lock}`,
+    `0–2s：明亮玻璃拟态工作室，半透明面板、虹彩球体；中央白色圆角卡已清晰印有${img}标识。`,
+    `2–5.5s：镜头缓推／轻环绕浮岛 UI，玻璃折射与景深变化；标识卡始终是主角，禁止换成别的品牌名。`,
+    sharedClose,
+    `通用默认：任意清晰 Logo／字标／吉祥物，以及产品包装上的品牌标。`,
+    neg,
+  ];
+}
+
 export const MACRO_SNAP_INTENSITIES = ["weak", "medium", "strong"] as const;
 export type MacroSnapIntensity = (typeof MACRO_SNAP_INTENSITIES)[number];
 export const DEFAULT_MACRO_SNAP_INTENSITY: MacroSnapIntensity = "strong";
@@ -537,6 +688,8 @@ export type H3ShotPromptInput = {
   showreelScheme?: H3ShowreelSchemeId;
   /** h3-sphere-mg only — sphere MG style card. */
   sphereMgScheme?: H3SphereMgSchemeId;
+  /** h3-logo-mg only — 3D logo 演绎 style card. */
+  logoMgScheme?: H3LogoMgSchemeId;
 };
 
 function foodBulletTimeBeats(
@@ -627,6 +780,8 @@ const H3_STILL_DEFAULT: Record<H3ShotRecipeMode, string> = {
     "a premium smartphone, glass and metal, centered on a dark cinematic void",
   "h3-sphere-mg":
     "ONE large matte C4D clay orb centered on a black studio void, brand-colored albedo — not planet Earth",
+  "h3-logo-mg":
+    "a crisp brand logo or wordmark on a bright glassmorphic C4D stage, white card hero, ready for 3D logo MG",
   "h3-movie-title":
     "a premium product hero ready for cinematic title cards, dark editorial backdrop",
   "h3-lifestyle":
@@ -787,6 +942,20 @@ export function buildH3ShotRecipePrompt(input: H3ShotPromptInput): string {
         subject,
       ).join("\n");
 
+    case "h3-logo-mg":
+      return logoMgSchemeBeats(
+        input.logoMgScheme ??
+          resolveH3LogoMgScheme({
+            pick: "auto",
+            product: input.product,
+            headline: input.headline,
+            conceptIdea: input.conceptIdea,
+            conceptMode: input.conceptMode,
+          }),
+        img,
+        subject,
+      ).join("\n");
+
     case "h3-movie-title":
       return [
         `H3 电影标题／多格一镜：严格锁定${img}（${subject}）外形、材质、Logo 与配色。`,
@@ -837,12 +1006,25 @@ export function buildH3ShotRecipeStillPrompt(input: H3ShotPromptInput): string {
           conceptMode: input.conceptMode,
         }))
       : null;
+  const logoMgScheme =
+    input.mode === "h3-logo-mg"
+      ? (input.logoMgScheme ??
+        resolveH3LogoMgScheme({
+          pick: "auto",
+          product: input.product,
+          headline: input.headline,
+          conceptIdea: input.conceptIdea,
+          conceptMode: input.conceptMode,
+        }))
+      : null;
   const fallback =
     input.mode === "h3-showreel" && showreelScheme
       ? H3_SHOWREEL_SCHEME_STILL[showreelScheme]
       : input.mode === "h3-sphere-mg" && sphereMgScheme
         ? H3_SPHERE_MG_SCHEME_STILL[sphereMgScheme]
-        : H3_STILL_DEFAULT[input.mode];
+        : input.mode === "h3-logo-mg" && logoMgScheme
+          ? H3_LOGO_MG_SCHEME_STILL[logoMgScheme]
+          : H3_STILL_DEFAULT[input.mode];
   const subject = named
     ? `${named}${input.conceptMode ? " logo or mascot" : ""}`
     : input.conceptMode
@@ -858,7 +1040,9 @@ export function buildH3ShotRecipeStillPrompt(input: H3ShotPromptInput): string {
   const aspect =
     input.mode === "h3-showreel"
       ? parseH3ShowreelAspect(input.showreelAspect)
-      : "9:16";
+      : input.mode === "h3-logo-mg"
+        ? "16:9"
+        : "9:16";
 
   const shared = [
     `Photoreal commercial still, ${aspect}, textless, no captions, no watermarks, no UI.`,
@@ -971,6 +1155,23 @@ export function buildH3ShotRecipeStillPrompt(input: H3ShotPromptInput): string {
         "Motion-graphics still (not a space documentary). Sphere is the opening world; the uploaded product must already be recognizable so the video can bring it OUT.",
         "Do NOT output a blank grey planet, bump-map etchings only, NASA Earth, or extra moons. Do NOT reshape the SKU into a spherical car/phone.",
         "Optional empty masthead space for kinetic type later. No captions, no UI chrome.",
+      ].join(" ");
+    }
+    case "h3-logo-mg": {
+      const schemeNote =
+        logoMgScheme === "chrome-type"
+          ? "Chrome / iridescent 3D extruded wordmark or mark matching the uploaded logo, soft gradient studio, pearlescent highlights."
+          : logoMgScheme === "ribbon-peel"
+            ? "Curling white ribbon/paper already carrying the uploaded logo, vibrant blue-orange gradient void."
+            : logoMgScheme === "pin-field"
+              ? "Wave of glossy colored pins/buttons framing or forming the uploaded logo silhouette on a bright stage."
+              : "Bright glassmorphic C4D stage: frosted UI panels + iridescent spheres around a white card with the uploaded logo crisply readable.";
+      return [
+        ...shared,
+        schemeNote,
+        "3D logo interpretation still — the uploaded mark IS the hero (not a dark sphere void, not a packshot orbit).",
+        "Keep logo geometry and colors locked; no invented competitor brands; no readable fake words beyond the mark.",
+        "Ready for bright motion-graphics logo animation as @Image1.",
       ].join(" ");
     }
     case "h3-movie-title":

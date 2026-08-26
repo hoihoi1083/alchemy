@@ -34,6 +34,7 @@ export type VideoSubpath =
   | "c4d_motion"
   | "h3_showreel"
   | "h3_sphere_mg"
+  | "h3_logo_mg"
   | "h3_movie_title"
   | "h3_lifestyle"
   | "reference_reel"

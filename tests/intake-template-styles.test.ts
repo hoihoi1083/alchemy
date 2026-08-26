@@ -35,6 +35,7 @@ const copyStub = {
     "c4d-motion": { title: "C4D", description: "C4" },
     "h3-showreel": { title: "Showreel", description: "SR" },
     "h3-sphere-mg": { title: "Sphere", description: "SP" },
+    "h3-logo-mg": { title: "Logo MG", description: "LM" },
     "h3-movie-title": { title: "Movie title", description: "MT" },
     "h3-lifestyle": { title: "Lifestyle", description: "LS" },
   },

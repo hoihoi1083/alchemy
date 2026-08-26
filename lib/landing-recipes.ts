@@ -36,6 +36,7 @@ export const LANDING_RECIPE_IDS = [
   "product-c4d-motion-8s",
   "product-h3-showreel-8s",
   "product-h3-sphere-mg-8s",
+  "product-h3-logo-mg-8s",
   "product-h3-movie-title-8s",
   "product-h3-lifestyle-8s",
   "product-gaming-cover",
@@ -54,6 +55,7 @@ export const LANDING_RECIPE_IDS = [
   "concept-c4d-motion-8s",
   "concept-h3-showreel-8s",
   "concept-h3-sphere-mg-8s",
+  "concept-h3-logo-mg-8s",
   "concept-h3-movie-title-8s",
   "concept-gaming-cover",
   "concept-sports-big-words",
@@ -253,6 +255,11 @@ export const LANDING_RECIPES: Record<LandingRecipeId, LandingRecipeDef> = {
     "h3-sphere-mg",
     "8",
   ),
+  "product-h3-logo-mg-8s": h3ProductRecipe(
+    "product-h3-logo-mg-8s",
+    "h3-logo-mg",
+    "8",
+  ),
   "product-h3-movie-title-8s": h3ProductRecipe(
     "product-h3-movie-title-8s",
     "h3-movie-title",
@@ -352,6 +359,11 @@ export const LANDING_RECIPES: Record<LandingRecipeId, LandingRecipeDef> = {
   "concept-h3-sphere-mg-8s": h3ConceptRecipe(
     "concept-h3-sphere-mg-8s",
     "h3-sphere-mg",
+    "8",
+  ),
+  "concept-h3-logo-mg-8s": h3ConceptRecipe(
+    "concept-h3-logo-mg-8s",
+    "h3-logo-mg",
     "8",
   ),
   "concept-h3-movie-title-8s": h3ConceptRecipe(

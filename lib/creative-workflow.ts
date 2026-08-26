@@ -32,6 +32,7 @@ export type VideoCreativeMode =
   | "c4d-motion"
   | "h3-showreel"
   | "h3-sphere-mg"
+  | "h3-logo-mg"
   | "h3-movie-title"
   | "h3-lifestyle"
   | "reference-concept"
@@ -63,6 +64,7 @@ export const VIDEO_CREATIVE_MODES: VideoCreativeMode[] = [
   "c4d-motion",
   "h3-showreel",
   "h3-sphere-mg",
+  "h3-logo-mg",
   "h3-movie-title",
   "h3-lifestyle",
   "reference-concept",
@@ -96,6 +98,7 @@ export function isRecipeOwnedVideoMode(
     mode === "c4d-motion" ||
     mode === "h3-showreel" ||
     mode === "h3-sphere-mg" ||
+    mode === "h3-logo-mg" ||
     mode === "h3-movie-title" ||
     mode === "h3-lifestyle"
   );
@@ -149,6 +152,7 @@ const H3_SHOT_PICKER_MODES: VideoCreativeMode[] = [
   "c4d-motion",
   "h3-showreel",
   "h3-sphere-mg",
+  "h3-logo-mg",
   "h3-movie-title",
   "h3-lifestyle",
 ];

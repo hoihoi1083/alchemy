@@ -1015,6 +1015,12 @@ export const en = {
 						"C4D sphere world first, then your product comes out as the hero. Kinetic type OK.",
 					costHint: "~8s · product photo (or generating still)",
 				},
+				"product-h3-logo-mg-8s": {
+					title: "3D logo MG ~8s",
+					description:
+						"Upload a logo → bright glass / chrome / ribbon 3D logo interpretation. Minimax H3 brand bumper.",
+					costHint: "~8s · logo or packshot with readable mark",
+				},
 				"product-h3-movie-title-8s": {
 					title: "movie-title ~8s",
 					description:
@@ -1085,6 +1091,12 @@ export const en = {
 					title: "sphere MG (concept) ~8s",
 					description:
 						"Logo / mascot as sphere identity — matte planet / neon / crystal wrap. No reference reel required.",
+					costHint: "~8s · logo/mascot still",
+				},
+				"concept-h3-logo-mg-8s": {
+					title: "3D logo MG (concept) ~8s",
+					description:
+						"Upload logo → bright glass UI / chrome type / ribbon / pin-field 3D interpretation. Premium brand bumper.",
 					costHint: "~8s · logo/mascot still",
 				},
 				"concept-h3-movie-title-8s": {
@@ -3106,6 +3118,11 @@ export const en = {
 				description:
 					"C4D sphere world first, then your product comes out as the hero. Kinetic type OK.",
 			},
+			"h3-logo-mg": {
+				title: "3D logo MG",
+				description:
+					"Bright glass / chrome logo interpretation — upload mark → premium brand bumper.",
+			},
 			"h3-movie-title": {
 				title: "movie-title",
 				description:
@@ -3289,6 +3306,8 @@ export const en = {
 				"Required: product or logo/mascot still for subject lock. Kinetic type OK. Showreel MP4 is optional.",
 			"h3-sphere-mg":
 				"Required: product photo — or logo / mascot still (concept). Sphere world first, then product reveal; kinetic type OK. No reference reel.",
+			"h3-logo-mg":
+				"Required: logo / wordmark still (preferred) — or packshot with a readable brand mark. Bright 3D logo interpretation; no reference reel.",
 			"h3-movie-title":
 				"Required: product photo — or logo / mascot still (concept). Title cards + panels; designed type allowed.",
 			"h3-lifestyle":
@@ -3317,6 +3336,8 @@ export const en = {
 				"Upload a hero still first — Generate stays off until then. Style cards drive the one-take. Optional 16:9; kinetic type allowed. MP4 optional.",
 			"h3-sphere-mg":
 				"Upload product or logo/mascot still first — Generate stays off until then. Then ~8s sphere motion-graphics one-take.",
+			"h3-logo-mg":
+				"Upload a logo/wordmark first — Generate stays off until then. Pick a style card (glass / chrome / ribbon / pins). ~8s 16:9 brand bumper.",
 			"h3-movie-title":
 				"Upload product or logo/mascot still first — Generate stays off until then. Then ~8s title-card / multi-panel one-take.",
 			"h3-lifestyle":
@@ -3407,6 +3428,28 @@ export const en = {
 			"matte-planet": {
 				title: "Matte planet",
 				desc: "C4D matte orb (not Earth)",
+			},
+		},
+		h3LogoMgSchemeTitle: "Logo MG style",
+		h3LogoMgSchemeHint:
+			"Bright 3D logo interpretation (not dark sphere void). Glass UI is the default RedNote-style look.",
+		h3LogoMgSchemeAuto: "Auto · best fit",
+		h3LogoMgSchemes: {
+			"glass-ui": {
+				title: "Glass UI",
+				desc: "Frosted panels + logo card",
+			},
+			"chrome-type": {
+				title: "Chrome type",
+				desc: "Metallic 3D wordmark",
+			},
+			"ribbon-peel": {
+				title: "Ribbon peel",
+				desc: "Curling paper / ribbon",
+			},
+			"pin-field": {
+				title: "Pin field",
+				desc: "Glossy pin / dot wave",
 			},
 		},
 		recipePathUxTitles: {
@@ -3536,6 +3579,19 @@ export const en = {
 					"Regenerate the still first if the still is only a sphere",
 				],
 				output: ["~8s sphere motion-graphics one-take"],
+			},
+			"h3-logo-mg": {
+				need: [
+					"Logo / wordmark PNG (preferred) — or packshot with a readable brand mark",
+					"Clear silhouette and colors for identity lock",
+				],
+				attention: [
+					"Pick a card: Glass UI · Chrome type · Ribbon peel · Pin field",
+					"Bright glass/chrome look — not the dark sphere MG path",
+					"Your uploaded mark stays locked — no invented competitor logos",
+					"Output is 16:9 brand bumper (~8s)",
+				],
+				output: ["~8s 16:9 3D logo interpretation one-take"],
 			},
 			"h3-movie-title": {
 				need: [
@@ -3706,6 +3762,7 @@ export const en = {
 			"c4d-motion": "Generating C4D still…",
 			"h3-showreel": "Generating showreel still…",
 			"h3-sphere-mg": "Generating sphere still…",
+			"h3-logo-mg": "Generating logo MG still…",
 			"h3-movie-title": "Generating title still…",
 			"h3-lifestyle": "generating lifestyle still…",
 		},
@@ -3721,6 +3778,7 @@ export const en = {
 			"c4d-motion": "Generating C4D motion visual…",
 			"h3-showreel": "Generating showreel…",
 			"h3-sphere-mg": "Generating sphere MG…",
+			"h3-logo-mg": "Generating 3D logo MG…",
 			"h3-movie-title": "Generating movie-title…",
 			"h3-lifestyle": "Generating lifestyle…",
 		},

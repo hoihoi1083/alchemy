@@ -782,6 +782,12 @@ export const zh = {
 						"先球體 MG 世界，再把產品揭出嚟當英雄。允許動能大字。",
 					costHint: "~8s · 產品圖（或生成靜圖）",
 				},
+				"product-h3-logo-mg-8s": {
+					title: "3D Logo 演繹 ~8s",
+					description:
+						"上傳 Logo → 明亮玻璃／鉻面／絲帶三維演繹。Minimax H3 品牌片頭。",
+					costHint: "~8s · Logo 或帶清晰標識嘅包裝圖",
+				},
 				"product-h3-movie-title-8s": {
 					title: "電影標題 ~8s",
 					description:
@@ -877,6 +883,12 @@ export const zh = {
 					title: "球體運動圖形（概念）~8s",
 					description:
 						"Logo／吉祥物作球體身份 — 啞光行星／霓虹／水晶包裹。唔使參考片。",
+					costHint: "~8s · Logo/吉祥物靜圖",
+				},
+				"concept-h3-logo-mg-8s": {
+					title: "3D Logo 演繹（概念）~8s",
+					description:
+						"上傳 Logo → 明亮玻璃界面／鉻字／絲帶／粒子釘場三維演繹。品牌片頭。",
 					costHint: "~8s · Logo/吉祥物靜圖",
 				},
 				"concept-h3-movie-title-8s": {
@@ -2865,6 +2877,11 @@ export const zh = {
 				description:
 					"先球體 MG 世界，再把產品揭出嚟當英雄。允許動能大字。",
 			},
+			"h3-logo-mg": {
+				title: "3D Logo 演繹",
+				description:
+					"明亮玻璃／鉻面 Logo 演繹 — 上傳標識 → 品牌片頭。",
+			},
 			"h3-movie-title": {
 				title: "電影標題",
 				description:
@@ -3032,6 +3049,8 @@ export const zh = {
 				"必填：產品或 Logo／吉祥物靜圖作主體鎖定。允許動能大字。秀場 MP4 選填。",
 			"h3-sphere-mg":
 				"必填：產品圖（概念可用 Logo／吉祥物）。球體包裹你嘅身份；唔使參考片。",
+			"h3-logo-mg":
+				"必填：Logo／字標靜圖（優先）— 或帶清晰品牌標嘅包裝圖。明亮三維 Logo 演繹；唔使參考片。",
 			"h3-movie-title":
 				"必填：產品圖（概念可用 Logo／吉祥物）。標題卡＋多格；允許設計感大字。",
 			"h3-lifestyle":
@@ -3060,6 +3079,8 @@ export const zh = {
 				"請先上傳主體靜圖 — 未上傳前無法按生成。方案卡帶一鏡。可選 16:9；允許動能大字。參考片選填。",
 			"h3-sphere-mg":
 				"請先上傳產品圖（概念可用 Logo／吉祥物）— 未上傳前無法按生成。再做約 8s 球體運動圖形一鏡。",
+			"h3-logo-mg":
+				"請先上傳 Logo／字標 — 未上傳前無法按生成。選風格卡（玻璃／鉻字／絲帶／粒子）。約 8s 16:9 品牌片頭。",
 			"h3-movie-title":
 				"請先上傳產品圖（概念可用 Logo／吉祥物）— 未上傳前無法按生成。再做約 8s 電影標題／多格一鏡。",
 			"h3-lifestyle":
@@ -3150,6 +3171,28 @@ export const zh = {
 			"matte-planet": {
 				title: "啞光行星",
 				desc: "C4D 啞光圓球（唔係地球）",
+			},
+		},
+		h3LogoMgSchemeTitle: "Logo 演繹風格",
+		h3LogoMgSchemeHint:
+			"明亮三維 Logo 演繹（唔係黑場球體）。預設玻璃界面最接近小紅書演示。",
+		h3LogoMgSchemeAuto: "自動 · 適合標識",
+		h3LogoMgSchemes: {
+			"glass-ui": {
+				title: "玻璃界面",
+				desc: "毛玻璃面板 + 標識卡",
+			},
+			"chrome-type": {
+				title: "鉻面立體字",
+				desc: "金屬／炫彩 3D 字標",
+			},
+			"ribbon-peel": {
+				title: "絲帶揭幕",
+				desc: "白色紙帶／絲帶捲曲",
+			},
+			"pin-field": {
+				title: "粒子釘場",
+				desc: "彩色光澤釘／圓點波",
 			},
 		},
 		recipePathUxTitles: {
@@ -3248,6 +3291,19 @@ export const zh = {
 				],
 				output: ["約 8 秒球體運動圖形一鏡"],
 			},
+			"h3-logo-mg": {
+				need: [
+					"Logo／字標 PNG（優先）— 或帶清晰品牌標嘅包裝圖",
+					"清晰外形與配色以便身份鎖定",
+				],
+				attention: [
+					"選方案卡：玻璃界面 · 鉻面立體字 · 絲帶揭幕 · 粒子釘場",
+					"明亮玻璃／鉻面風格 — 唔係黑場球體 MG",
+					"上傳標識保持鎖定 — 唔發明競品 Logo",
+					"輸出為約 8 秒 16:9 品牌片頭",
+				],
+				output: ["約 8 秒 16:9 三維 Logo 演繹一鏡"],
+			},
 			"h3-movie-title": {
 				need: ["產品圖（概念可用 Logo／吉祥物）", "清晰主體作標題卡鎖定"],
 				attention: [
@@ -3343,6 +3399,7 @@ export const zh = {
 			"c4d-motion": "AI 黑場 C4D 靜圖…",
 			"h3-showreel": "AI 秀場靜圖…",
 			"h3-sphere-mg": "AI 球體 MG 靜圖…",
+			"h3-logo-mg": "AI Logo 演繹靜圖…",
 			"h3-movie-title": "AI 電影標題靜圖…",
 			"h3-lifestyle": "AI 生活人物靜圖…",
 		},
@@ -3358,6 +3415,7 @@ export const zh = {
 			"c4d-motion": "正在生成 C4D 動態視覺…",
 			"h3-showreel": "正在生成 秀場一鏡…",
 			"h3-sphere-mg": "正在生成 球體運動圖形…",
+			"h3-logo-mg": "正在生成 3D Logo 演繹…",
 			"h3-movie-title": "正在生成 電影標題…",
 			"h3-lifestyle": "正在生成 生活人物…",
 		},
