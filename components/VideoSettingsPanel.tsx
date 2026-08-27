@@ -31,6 +31,8 @@ type Props = {
   setup?: boolean;
   /** Reference-reel paths: require explicit seconds before analyze (hide auto). */
   hideAutoDuration?: boolean;
+  /** Storyboard confirm: only resolution (duration locked to trim picker). */
+  resolutionOnly?: boolean;
   /**
    * Motion poster: only short durations (4/6/8). Hides auto + long TVC lengths.
    * Implies compact (no creativity / motion-style chrome).
@@ -62,6 +64,7 @@ export function VideoSettingsPanel({
   compact = false,
   setup = false,
   hideAutoDuration = false,
+  resolutionOnly = false,
   motionPoster = false,
   showEnginePicker = false,
   variant = "light",
@@ -195,6 +198,7 @@ export function VideoSettingsPanel({
         featureLabel={gateRes}
       />
 
+      {!resolutionOnly ? (
       <div>
         <p
           className={
@@ -216,8 +220,9 @@ export function VideoSettingsPanel({
           ))}
         </div>
       </div>
+      ) : null}
 
-      {!compactMode && (
+      {!compactMode && !resolutionOnly && (
         <>
       <div>
         <p className="mb-2 text-xs font-medium text-slate-600">{m.wizard.videoSettingsCreativity}</p>
@@ -280,7 +285,7 @@ export function VideoSettingsPanel({
         </>
       )}
 
-      {showEnginePicker ? (
+      {showEnginePicker && !resolutionOnly ? (
       <div>
         <p className={`mb-2 text-xs font-medium ${dark ? "text-slate-400" : "text-slate-600"}`}>
           {m.wizard.videoEngineLabel}
@@ -312,6 +317,7 @@ export function VideoSettingsPanel({
       </div>
       ) : null}
 
+      {!resolutionOnly ? (
       <label
         className={`flex cursor-pointer items-center gap-3 text-sm ${
           dark ? "text-slate-300" : "text-slate-700"
@@ -325,6 +331,7 @@ export function VideoSettingsPanel({
         />
         {m.wizard.videoSettingsFast}
       </label>
+      ) : null}
     </div>
   );
 }

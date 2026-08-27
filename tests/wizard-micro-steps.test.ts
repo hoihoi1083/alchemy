@@ -678,6 +678,21 @@ describe("wizard v2 parity audit", () => {
           headline: "",
         }),
       ),
+      null,
+    );
+    assert.equal(
+      canProceedMicroStep(
+        "setup.pre_video",
+        ctx,
+        baseState({
+          workflowMode: "video-only",
+          promotionMode: "concept",
+          visualStyleId: "creative-video",
+          conceptIdea: "",
+          creativeVideoBrief: "",
+          headline: "",
+        }),
+      ),
       "need_creative_brief",
     );
   });

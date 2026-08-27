@@ -47,7 +47,8 @@ import {
 } from "@/lib/video-engine-router";
 
 export const runtime = "nodejs";
-export const maxDuration = 300;
+/** H3 storyboard R2V often runs 5–10+ min on fal (12s × 4 stills). Match /api/generate-minimax-h3. */
+export const maxDuration = 800;
 
 function referenceVideoRequiredResponse() {
   return NextResponse.json(

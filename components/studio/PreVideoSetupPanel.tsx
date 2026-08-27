@@ -471,6 +471,7 @@ export function PreVideoSetupPanel({
       !isReference &&
       !isUgc &&
       !isMotionPoster &&
+      !isImpactPoster &&
       !isSocialDrip &&
       !isVacuumInflate &&
       !isCreativeMotion &&
@@ -479,6 +480,13 @@ export function PreVideoSetupPanel({
       !isBlockbuster &&
       !isH3Shot &&
       isCreativeVideoStyle(wizard.visualStyleId));
+  /** Impact / motion poster: type on end still is optional — product/concept name is enough. */
+  const headlineOptional =
+    isImpactPoster ||
+    isMotionPoster ||
+    copyHints.badge.hook === "mood-only" ||
+    showCreativeBrief ||
+    isUgc;
   const showBrandWebsite = isSceneReel;
   const showConceptAiPlan = isSceneReel;
   const showReferenceUpload = isReference || isSceneReel || acceptsH3Reel;
@@ -1566,12 +1574,12 @@ export function PreVideoSetupPanel({
                     {isMotionPoster
                       ? pv.motionPosterCopyFocus.hookLabel
                       : pv.hookLabel}
-                    {!showCreativeBrief && !isUgc ? (
+                    {headlineOptional ? (
+                      <span className="pv-label-opt">{pv.extraOptional}</span>
+                    ) : (
                       <span className="pv-label-req" aria-hidden>
                         *
                       </span>
-                    ) : (
-                      <span className="pv-label-opt">{pv.extraOptional}</span>
                     )}
                     {hookCopyBadge ? (
                       <span
@@ -2850,9 +2858,22 @@ export function PreVideoSetupPanel({
                   </div>
                 </div>
                 {scenesReady ? (
-                  <p className="pv-cost mt-1">
-                    {pv.costLabel.replace("{n}", String(tokenEstimate))}
-                  </p>
+                  <>
+                    <VideoSettingsPanel
+                      compact
+                      setup
+                      resolutionOnly
+                      accent="violet"
+                      value={wizard.videoSettings}
+                      onChange={wizard.setVideoSettings}
+                    />
+                    <p className="mt-3 text-xs leading-relaxed text-slate-500">
+                      {pv.klingSettingsHint}
+                    </p>
+                    <p className="pv-cost mt-3">
+                      {pv.costLabel.replace("{n}", String(tokenEstimate))}
+                    </p>
+                  </>
                 ) : (
                   <>
                     <VideoSettingsPanel

@@ -968,10 +968,11 @@ export function canProceedMicroStep(
       return "need_visual_lock";
     }
     if (
-      !isRecipeOwnedVideoMode(state.videoCreativeMode) &&
+      !recipeOwnedOnVideo &&
       isCreativeVideoStyle(state.visualStyleId) &&
       !state.creativeVideoBrief.trim() &&
-      !state.headline.trim()
+      !state.headline.trim() &&
+      !state.conceptIdea.trim()
     ) {
       return "need_creative_brief";
     }
@@ -988,8 +989,15 @@ export function canProceedMicroStep(
       return "need_product_name";
     }
   }
-  if (id === "copy.creative_brief" && !state.creativeVideoBrief.trim()) {
-    return "need_creative_brief";
+  if (id === "copy.creative_brief") {
+    if (isRecipeOwnedVideoMode(state.videoCreativeMode)) return null;
+    if (
+      !state.creativeVideoBrief.trim() &&
+      !state.headline.trim() &&
+      !state.conceptIdea.trim()
+    ) {
+      return "need_creative_brief";
+    }
   }
   if (id === "asset.reference_video") {
     // Never hard-block. Image research posts have no reel; combined storyboard

@@ -130,6 +130,12 @@ export function SetupStep() {
     if (conceptBrief && (workflowMode === "video-only" || workflowMode === "combined")) {
       setCreativeVideoBrief(conceptBrief);
     }
+    setError(null);
+    return {
+      creativeBrief: conceptBrief,
+      headline: nextHeadline,
+      conceptIdea: conceptIdea.trim(),
+    };
   }
   async function analyzeConceptWithAi() {
     setConceptPlanBusy(true);
@@ -192,7 +198,7 @@ export function SetupStep() {
       if (productPhoto && (workflowMode === "video-only" || workflowMode === "combined")) {
         setUseOriginalImage(true);
       }
-      applyConceptWizard(
+      const applied = applyConceptWizard(
         {
           audience: draft.audience,
           painPoint: draft.painPoint,
@@ -209,7 +215,11 @@ export function SetupStep() {
           .join(" — "),
       );
       if (workflowMode === "video-only") {
-        await planAiVideoPrompt();
+        await planAiVideoPrompt({
+          creativeBrief: applied.creativeBrief,
+          headline: applied.headline,
+          conceptIdea: applied.conceptIdea,
+        });
       }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : m.errors.planConceptFailed);

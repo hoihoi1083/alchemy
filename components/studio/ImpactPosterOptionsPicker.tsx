@@ -4,6 +4,7 @@ import { useLocale } from "@/components/LocaleProvider";
 import {
   IMPACT_POSTER_EFFECT_IDS,
   IMPACT_POSTER_TONE_IDS,
+  IMPACT_POSTER_TONE_SWATCHES,
   impactPosterEffectPreviewSrc,
   impactPosterTonePreviewSrc,
   type ImpactPosterEffectPick,
@@ -13,36 +14,38 @@ import {
 const CSS = `
 .ipp-grid {
   display: grid;
-  gap: 0.5rem;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.4rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
-@media (min-width: 480px) {
-  .ipp-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (min-width: 640px) {
+  .ipp-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 }
 .ipp-card {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 0.35rem;
-  border-radius: 0.85rem;
+  gap: 0.25rem;
+  border-radius: 0.65rem;
   border: 1.5px solid #e2e8f0;
   background: #fff;
-  padding: 0.45rem 0.45rem 0.55rem;
+  padding: 0.3rem 0.3rem 0.4rem;
   text-align: left;
   transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
   cursor: pointer;
+  min-width: 0;
 }
 .ipp-card:hover { border-color: #ddd6fe; }
 .ipp-card.is-selected {
   border-color: #6c3bff;
   background: #faf5ff;
-  box-shadow: 0 0 0 3px rgba(108, 59, 255, 0.12);
+  box-shadow: 0 0 0 2px rgba(108, 59, 255, 0.14);
 }
 .ipp-preview {
+  position: relative;
   width: 100%;
-  aspect-ratio: 1 / 1;
-  border-radius: 0.5rem;
+  aspect-ratio: 16 / 10;
+  border-radius: 0.4rem;
   overflow: hidden;
   background: #f1f5f9;
 }
@@ -52,15 +55,42 @@ const CSS = `
   height: 100%;
   object-fit: cover;
 }
+.ipp-swatch {
+  position: absolute;
+  left: 0.3rem;
+  bottom: 0.3rem;
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.55);
+}
+.ipp-swatch i {
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.35);
+}
 .ipp-title {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: 700;
   line-height: 1.2;
   color: #0f172a;
 }
 .ipp-desc {
-  font-size: 0.6rem;
-  line-height: 1.3;
+  font-size: 0.58rem;
+  line-height: 1.25;
+  color: #64748b;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ipp-section-hint {
+  margin-bottom: 0.5rem;
+  font-size: 0.7rem;
+  line-height: 1.4;
   color: #64748b;
 }
 `;
@@ -74,6 +104,7 @@ function OptionGrid({
   onChange,
   labels,
   previewSrc,
+  swatches,
 }: {
   autoLabel: string;
   autoSelected: boolean;
@@ -83,6 +114,7 @@ function OptionGrid({
   onChange: (id: string) => void;
   labels: Record<string, { title: string; desc: string }>;
   previewSrc: (id: string) => string;
+  swatches?: Record<string, readonly string[]>;
 }) {
   return (
     <div className="ipp-grid" role="listbox">
@@ -99,6 +131,7 @@ function OptionGrid({
       {ids.map((id) => {
         const selected = value === id;
         const copy = labels[id];
+        const chips = swatches?.[id];
         return (
           <button
             key={id}
@@ -112,6 +145,13 @@ function OptionGrid({
             <span className="ipp-preview">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={previewSrc(id)} alt="" />
+              {chips?.length ? (
+                <span className="ipp-swatch" aria-hidden>
+                  {chips.map((c) => (
+                    <i key={c} style={{ background: c }} />
+                  ))}
+                </span>
+              ) : null}
             </span>
             <span className="ipp-title">{copy?.title ?? id}</span>
             <span className="ipp-desc">{copy?.desc}</span>
@@ -138,13 +178,11 @@ export function ImpactPosterOptionsPicker({
   const effects = m.wizard.impactPosterEffects;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
       <div>
         <h3 className="pv-card-title">{m.wizard.impactPosterToneTitle}</h3>
-        <p className="mb-3 text-xs text-slate-500">
-          {m.wizard.impactPosterToneHint}
-        </p>
+        <p className="ipp-section-hint">{m.wizard.impactPosterToneHint}</p>
         <OptionGrid
           autoLabel={m.wizard.impactPosterToneAuto}
           autoSelected={tone === "auto"}
@@ -156,13 +194,12 @@ export function ImpactPosterOptionsPicker({
           previewSrc={(id) =>
             impactPosterTonePreviewSrc(id as (typeof IMPACT_POSTER_TONE_IDS)[number])
           }
+          swatches={IMPACT_POSTER_TONE_SWATCHES}
         />
       </div>
       <div>
         <h3 className="pv-card-title">{m.wizard.impactPosterEffectTitle}</h3>
-        <p className="mb-3 text-xs text-slate-500">
-          {m.wizard.impactPosterEffectHint}
-        </p>
+        <p className="ipp-section-hint">{m.wizard.impactPosterEffectHint}</p>
         <OptionGrid
           autoLabel={m.wizard.impactPosterEffectAuto}
           autoSelected={effect === "auto"}

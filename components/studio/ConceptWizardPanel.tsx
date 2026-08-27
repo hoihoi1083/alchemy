@@ -83,6 +83,7 @@ export function ConceptWizardPanel({
     ]
       .filter(Boolean)
       .join(". ");
+    setError(null);
     if (nextHeadline) setHeadline(nextHeadline);
     if (nextSubline) setSubline(nextSubline);
     if (nextOffer) setOffer(nextOffer);
@@ -103,6 +104,11 @@ export function ConceptWizardPanel({
     if (conceptBrief && (workflowMode === "video-only" || workflowMode === "combined")) {
       setCreativeVideoBrief(conceptBrief);
     }
+    return {
+      creativeBrief: conceptBrief,
+      headline: nextHeadline,
+      conceptIdea: conceptIdea.trim(),
+    };
   }
 
   async function analyzeConceptWithAi() {
@@ -159,7 +165,7 @@ export function ConceptWizardPanel({
       if (productPhoto && (workflowMode === "video-only" || workflowMode === "combined")) {
         setUseOriginalImage(true);
       }
-      applyConceptWizard(
+      const applied = applyConceptWizard(
         {
           audience: draft.audience,
           painPoint: draft.painPoint,
@@ -175,8 +181,14 @@ export function ConceptWizardPanel({
           .filter(Boolean)
           .join(" — "),
       );
+      // Pass applied copy as overrides — React setState is async; without this,
+      // planAiVideoPrompt still sees empty brief and throws「創意影片描述」.
       if (workflowMode === "video-only") {
-        await planAiVideoPrompt();
+        await planAiVideoPrompt({
+          creativeBrief: applied.creativeBrief,
+          headline: applied.headline,
+          conceptIdea: applied.conceptIdea,
+        });
       }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : m.errors.planConceptFailed);

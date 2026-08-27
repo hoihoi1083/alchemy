@@ -3243,48 +3243,48 @@ export const en = {
 		motionPosterDialectAuto: "Auto · best fit",
 		impactPosterHint:
 			"High-impact 大透视 poster video: product thrusts toward camera with punch VFX. Stronger motion than Motion poster.",
-		impactPosterToneTitle: "Tone",
+		impactPosterToneTitle: "Tone (color world)",
 		impactPosterToneHint:
-			"Color/mood of the poster world. Auto infers from product name.",
+			"Locks the whole plate’s palette: Fiery = orange/red heat; Premium = gold/black luxury; Cyber = purple/cyan neon. Different tones must look clearly different.",
 		impactPosterToneAuto: "Auto · best fit",
 		impactPosterTones: {
 			fiery: {
 				title: "Fiery",
-				desc: "Orange/red heat · snack / spicy energy",
+				desc: "Orange/red fire · snack / spicy",
 			},
 			rugged: {
 				title: "Rugged",
-				desc: "Dust & grit · bike / outdoor power",
+				desc: "Olive/brown dust · outdoor / trail",
 			},
 			premium: {
 				title: "Premium",
-				desc: "Gold polish · headphones / luxury",
+				desc: "Gold/black luxury · headphones / jewelry",
 			},
 			cyber: {
 				title: "Cyber",
-				desc: "Neon purple/cyan · tech / sound future",
+				desc: "Purple/cyan neon · tech / gaming",
 			},
 		},
-		impactPosterEffectTitle: "Impact effect",
+		impactPosterEffectTitle: "Impact effect (how it explodes)",
 		impactPosterEffectHint:
-			"VFX grammar that punches the product — changes stills and motion strength.",
+			"Separate from tone: effect only changes the VFX shape — glass shards, god-rays, debris, or lightning. Same product + different effects should move differently.",
 		impactPosterEffectAuto: "Auto · match tone",
 		impactPosterEffects: {
 			"shatter-burst": {
 				title: "Shatter burst",
-				desc: "Radial shards explode behind the hero",
+				desc: "Glass shards explode radially",
 			},
 			"energy-rays": {
 				title: "Energy rays",
-				desc: "God-rays / sound shafts from behind",
+				desc: "Long god-rays / sound shafts behind",
 			},
 			"debris-splash": {
 				title: "Debris splash",
-				desc: "Crumbs / dirt / parts fly at camera",
+				desc: "Dirt / parts fly toward camera",
 			},
 			"lightning-pulse": {
 				title: "Lightning pulse",
-				desc: "Electric arcs + neon bloom",
+				desc: "Forked electric arcs + neon bloom",
 			},
 		},
 		impactPosterBuildingStill: "Step 1/3: impact-poster start still…",

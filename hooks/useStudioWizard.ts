@@ -2207,12 +2207,31 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     brandProfile,
   ]);
 
-	const planAiVideoPrompt = useCallback(async (): Promise<boolean> => {
+	const planAiVideoPrompt = useCallback(async (opts?: {
+		creativeBrief?: string;
+		headline?: string;
+		conceptIdea?: string;
+	}): Promise<boolean> => {
 		if (planVideoPromptBusy) return false;
+		// Recipe modes own their prompts — skip DeepSeek creative brief planner.
+		if (isRecipeOwnedVideoMode(videoCreativeMode)) return true;
+		const brief =
+			(opts?.creativeBrief ?? creativeVideoBrief).trim() ||
+			[
+				(opts?.headline ?? headline).trim(),
+				subline.trim(),
+				offer.trim(),
+				(opts?.conceptIdea ?? conceptIdea).trim(),
+			]
+				.filter(Boolean)
+				.join(" | ");
+		const hook = (opts?.headline ?? headline).trim();
+		const idea = (opts?.conceptIdea ?? conceptIdea).trim();
 		if (
 			isCreativeVideoStyle(visualStyleId) &&
-			!creativeVideoBrief.trim() &&
-			!headline.trim()
+			!brief &&
+			!hook &&
+			!idea
 		) {
       setError(m.errors.creativeBriefRequired);
 			return false;
@@ -2243,19 +2262,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
               ? "brand"
               : "product",
           brandProfile: brandProfile ?? undefined,
-          creativeBrief:
-            creativeVideoBrief.trim() ||
-						[
-							headline.trim(),
-							subline.trim(),
-							offer.trim(),
-							conceptIdea.trim(),
-						]
-              .filter(Boolean)
-              .join(" | "),
+          creativeBrief: brief,
           product: product.trim(),
           business: business.trim(),
-          headline: headline.trim(),
+          headline: hook,
           subline: subline.trim(),
           offer: offer.trim(),
 					duration: String(outputDurationSec),
@@ -2264,7 +2274,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
           promotionMode,
           hasKeyframe: Boolean(productPhoto || imageUrl),
           imageVisionNote: conceptImageVisionNote.trim() || undefined,
-          conceptIdea: conceptIdea.trim() || undefined,
+          conceptIdea: idea || undefined,
 					artStyleId,
 					subjectFraming,
 					promptExtra: effectivePromptExtra(),
@@ -2287,7 +2297,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       setShowAdvancedVideo(true);
 			aiVideoPromptDurationRef.current = String(outputDurationSec);
       const suggested = String(data.suggestedHeadline ?? "").trim();
-      if (suggested && !headline.trim()) setHeadline(suggested);
+      if (suggested && !hook) setHeadline(suggested);
 			return true;
     } catch (e: unknown) {
       setError(friendlyError(e, m.errors.planVideoPromptFailed));
@@ -4349,10 +4359,12 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       return;
     }
     if (
+      !isRecipeOwnedVideoMode(videoCreativeMode) &&
       isCreativeVideoStyle(visualStyleId) &&
       isVideoWorkflow &&
       !creativeVideoBrief.trim() &&
-      !(promotionMode === "concept" && headline.trim())
+      !headline.trim() &&
+      !(promotionMode === "concept" && conceptIdea.trim())
     ) {
       setError(m.errors.creativeBriefRequired);
       return;
@@ -6476,6 +6488,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		fd.set("expected_scene_count", String(scenes.length));
 		fd.set("storyboard_grid_approved", storyboardGridApproved ? "1" : "0");
 		fd.set("image_text_mode", imageTextMode);
+		fd.set("resolution", capVideoRes(videoSettings.resolution));
 		if (storyboardPreferEngineRef.current) {
 			fd.set("prefer_engine", storyboardPreferEngineRef.current);
 		}

@@ -36,6 +36,17 @@ export function impactPosterEffectPreviewSrc(id: ImpactPosterEffectId): string {
   return `/images/studio/schemes/impact-poster/effect-${id}.png?v=1`;
 }
 
+/** UI color chips so tone cards read as palette worlds, not product photos. */
+export const IMPACT_POSTER_TONE_SWATCHES: Record<
+  ImpactPosterToneId,
+  readonly string[]
+> = {
+  fiery: ["#ff6a00", "#ff2d2d", "#1a0500"],
+  rugged: ["#6b7c3a", "#8b5a2b", "#1c1917"],
+  premium: ["#d4af37", "#f5e6c8", "#0a0a0a"],
+  cyber: ["#a855f7", "#22d3ee", "#020617"],
+};
+
 export type ImpactPosterToneDef = {
   id: ImpactPosterToneId;
   /** Palette + atmosphere for stills/video */
@@ -57,7 +68,8 @@ export const IMPACT_POSTER_TONES: Record<ImpactPosterToneId, ImpactPosterToneDef
     fiery: {
       id: "fiery",
       look:
-        "Fiery maximalist commercial: deep black void, molten orange/red rim light, embers and heat haze. Spicy/snack energy — high saturation.",
+        "FIERY palette LOCK — molten ORANGE / RED / ember rim light only on a deep black void. Heat haze, chili energy, snack-ad saturation. " +
+        "FORBIDDEN in this tone: champagne gold luxury, cool blue, purple neon cyber, muted earth dust.",
       keywords: [
         "chip",
         "chips",
@@ -79,7 +91,8 @@ export const IMPACT_POSTER_TONES: Record<ImpactPosterToneId, ImpactPosterToneDef
     rugged: {
       id: "rugged",
       look:
-        "Rugged action commercial: earthy greens/browns/black, dust, grit, low dramatic angle. Outdoor / bike / gear power.",
+        "RUGGED palette LOCK — earthy OLIVE / BROWN / charcoal, dust and grit, low dramatic angle. Outdoor / bike / gear power. " +
+        "FORBIDDEN: orange fire snack look, gold jewelry polish, purple neon.",
       keywords: [
         "bike",
         "bicycle",
@@ -100,7 +113,8 @@ export const IMPACT_POSTER_TONES: Record<ImpactPosterToneId, ImpactPosterToneDef
     premium: {
       id: "premium",
       look:
-        "Premium luxury commercial: deep black, soft gold and warm speculars, elegant particle glitter. Hi-fi / jewelry / headphone polish.",
+        "PREMIUM palette LOCK — deep BLACK + soft GOLD / champagne speculars only, elegant glitter dust. Hi-fi / jewelry polish. " +
+        "FORBIDDEN: orange/red fire, chili snack energy, purple/cyan cyber neon, dusty outdoor grit.",
       keywords: [
         "headphone",
         "earbud",
@@ -120,7 +134,8 @@ export const IMPACT_POSTER_TONES: Record<ImpactPosterToneId, ImpactPosterToneDef
     cyber: {
       id: "cyber",
       look:
-        "Cyber / neon commercial: black void, electric purple + cyan neon, iridescent metal, UI-like glow rings. Tech / sound-future energy.",
+        "CYBER palette LOCK — black void + electric PURPLE + CYAN neon only, iridescent metal, UI glow rings. Tech / sound-future. " +
+        "FORBIDDEN: warm gold luxury, orange fire, olive outdoor grit.",
       keywords: [
         "tech",
         "neon",
@@ -146,21 +161,21 @@ export const IMPACT_POSTER_EFFECTS: Record<
   "shatter-burst": {
     id: "shatter-burst",
     startVfx:
-      "Product almost frontal, calm; sharp shard silhouettes implied but NOT yet exploded — tension before impact.",
+      "Product almost frontal, calm; sharp glass/shard silhouettes implied but NOT yet exploded — tension before impact.",
     endVfx:
-      "Same product THRUST toward camera with exaggerated 大透视 / wide-angle hero; jagged glowing shards burst radially behind and around it; strong rim light.",
+      "Same product THRUST toward camera with exaggerated 大透视; JAGGED glowing SHARDS burst radially (shatter glass look) — NOT soft god-rays, NOT dirt splash, NOT lightning arcs.",
     videoLead:
-      "Animate a violent shatter-burst impact: product lunges toward camera with large-perspective thrust while glowing shards explode outward; settle into the typed end frame.",
+      "Animate a violent SHATTER-BURST only: product lunges toward camera while glowing shards explode outward like broken glass; do NOT morph into soft god-rays or lightning.",
     motionStrength: 86,
   },
   "energy-rays": {
     id: "energy-rays",
     startVfx:
-      "Product centered, moody; faint concentric glow rings on the floor — rays not yet fired.",
+      "Product centered, moody; faint concentric floor rings — rays not yet fired.",
     endVfx:
-      "Same product closer / tilted; god-rays or sound-energy shafts erupt from behind; floating micro icons optional; bold integrated type.",
+      "Same product closer / tilted; long GOD-RAYS / sound-energy SHAFTS erupt from behind the product — soft volumetric beams, NOT jagged shards, NOT debris, NOT lightning forks.",
     videoLead:
-      "Animate energy rays erupting behind the product while it pushes toward camera; rings pulse; settle into typed end frame.",
+      "Animate ENERGY RAYS / god-ray shafts erupting behind the product while it pushes toward camera; rings pulse; do NOT use shatter shards or lightning bolts.",
     motionStrength: 82,
   },
   "debris-splash": {
@@ -168,9 +183,9 @@ export const IMPACT_POSTER_EFFECTS: Record<
     startVfx:
       "Product low-angle hero, environment quiet — crumbs/dirt/parts hinted only at edges.",
     endVfx:
-      "Same product huge in frame (大透视); debris / crumbs / dirt / related particles fly TOWARD camera around the locked product.",
+      "Same product huge in frame (大透视); particulate DEBRIS / crumbs / dirt / related parts fly TOWARD camera around the locked product — NOT radial glass shards, NOT god-rays, NOT neon lightning.",
     videoLead:
-      "Animate a debris splash flying toward camera around the locked product with aggressive perspective push; settle into typed end.",
+      "Animate a DEBRIS SPLASH flying toward camera around the locked product with aggressive perspective push; keep particles chunky (dirt/parts), not glass shards or light rays.",
     motionStrength: 84,
   },
   "lightning-pulse": {
@@ -178,9 +193,9 @@ export const IMPACT_POSTER_EFFECTS: Record<
     startVfx:
       "Product floating; dark void; tiny spark arcs only — storm not yet peaked.",
     endVfx:
-      "Same product with crackling lightning / electric pulses radiating; neon bloom; bold type layered behind or beside product.",
+      "Same product with crackling LIGHTNING forks / electric pulses radiating; neon bloom — NOT orange fire shards, NOT soft gold god-rays, NOT dirt debris.",
     videoLead:
-      "Animate lightning pulses and neon bloom while the product thrusts and turns; settle into typed end frame.",
+      "Animate LIGHTNING PULSES and neon bloom while the product thrusts and turns; forks of electricity only — no shatter shards, no dirt splash, no soft god-rays.",
     motionStrength: 88,
   },
 };
@@ -297,21 +312,23 @@ export function buildImpactPosterStillPrompt(input: {
     : `exact uploaded product “${input.product}” — shape, materials, logos locked`;
   const typeLine =
     input.frame === "end"
-      ? `LARGE integrated 3D masthead type from headline “${(input.headline || input.product).trim()}”${
-          input.subline?.trim() ? ` / sub “${input.subline.trim()}”` : ""
-        } — bold commercial lettering layered IN the scene (often behind or beside the product), not a tiny caption.`
+      ? input.headline?.trim()
+        ? `LARGE integrated 3D masthead type from headline “${input.headline.trim()}”${
+            input.subline?.trim() ? ` / sub “${input.subline.trim()}”` : ""
+          } — bold commercial lettering layered IN the scene (often behind or beside the product), not a tiny caption.`
+        : "ZERO readable marketing text — textless hero plate (no invented brand slogans)."
       : "ZERO readable marketing text, logos invented, or watermarks — textless plate.";
 
   const beat = input.frame === "end" ? effect.endVfx : effect.startVfx;
 
   return [
     `Photoreal 大透视 IMPACT POSTER still, ${ar}, high-impact commercial plate.`,
-    tone.look,
+    `TONE WORLD (must dominate the whole plate): ${tone.look}`,
+    `VFX BEAT (${effect.id}): ${beat}`,
     `Hero: ${subject}.`,
-    beat,
     "Composition: exaggerated wide / low perspective so the product feels massive and thrusting toward camera. Dark void or moody studio. Product is the only SKU.",
     typeLine,
-    "FORBIDDEN: flat catalog packshot, soft lifestyle montage, Social drip 三分屏, inventing a different product.",
+    "FORBIDDEN: flat catalog packshot, soft lifestyle montage, Social drip 三分屏, inventing a different product, mixing another tone's palette.",
   ].join(" ");
 }
 
