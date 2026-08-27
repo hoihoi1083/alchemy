@@ -1,3 +1,8 @@
+import {
+  coerceFieldsToScript,
+  plannerOutputLanguageRule,
+  resolveCopyLocale,
+} from "@/lib/copy-locale";
 import { callDeepSeekChat } from "@/lib/deepseek-client";
 import { parseLlmJsonObject } from "@/lib/parse-llm-json";
 import type { PromptMarket } from "@/lib/prompts";
@@ -24,13 +29,24 @@ type RemapInput = {
   existingOffer?: string;
 };
 
-function normalizeDraft(parsed: Partial<ResearchCopyRemapDraft>): ResearchCopyRemapDraft {
-  return {
+function normalizeDraft(
+  parsed: Partial<ResearchCopyRemapDraft>,
+  market: PromptMarket,
+): ResearchCopyRemapDraft {
+  const raw = {
     headline: String(parsed.headline ?? "").trim(),
     subline: String(parsed.subline ?? "").trim(),
     offer: String(parsed.offer ?? "").trim(),
     audience: String(parsed.audience ?? "").trim(),
     topic: String(parsed.topic ?? "").trim(),
+  };
+  const coerced = coerceFieldsToScript(raw, resolveCopyLocale(market));
+  return {
+    headline: coerced.headline ?? "",
+    subline: coerced.subline ?? "",
+    offer: coerced.offer ?? "",
+    audience: coerced.audience ?? "",
+    topic: coerced.topic ?? "",
   };
 }
 
@@ -42,19 +58,13 @@ export async function remapResearchCopyToSubject(
   input: RemapInput,
 ): Promise<ResearchCopyRemapDraft> {
   const market = input.market ?? "hk";
-  const lang =
-    market === "en"
-      ? "English"
-      : market === "cn"
-        ? "Simplified Chinese"
-        : "Traditional Chinese (Hong Kong / Taiwan)";
 
   const subjectLabel =
     input.promotionMode === "concept" ? "concept / service" : "product";
 
   const system = [
     "You adapt viral social-post STRUCTURE into original ad copy for the user's brand.",
-    `Write ALL fields in ${lang}.`,
+    plannerOutputLanguageRule(market),
     "Return ONLY JSON with keys: headline, subline, offer, audience, topic.",
     "headline = hook rewritten for the USER subject (not the reference brand).",
     "subline = supporting points (can join with · or |).",
@@ -65,6 +75,7 @@ export async function remapResearchCopyToSubject(
   ].join("\n");
 
   const user = [
+    `Market: ${market}`,
     `User ${subjectLabel}: ${input.productOrConcept}`,
     input.referenceTitle ? `Reference title (structure only): ${input.referenceTitle}` : "",
     input.referenceHook ? `Reference hook (structure only): ${input.referenceHook}` : "",
@@ -78,6 +89,7 @@ export async function remapResearchCopyToSubject(
     input.existingHeadline ? `Draft headline: ${input.existingHeadline}` : "",
     input.existingSubline ? `Draft subline: ${input.existingSubline}` : "",
     input.existingOffer ? `Draft offer: ${input.existingOffer}` : "",
+    "Rewrite for the user subject using the reference structure only.",
   ]
     .filter(Boolean)
     .join("\n");
@@ -93,5 +105,5 @@ export async function remapResearchCopyToSubject(
     raw,
     "Research copy remap",
   );
-  return normalizeDraft(parsed ?? {});
+  return normalizeDraft(parsed ?? {}, market);
 }

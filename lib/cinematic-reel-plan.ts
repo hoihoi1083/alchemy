@@ -24,12 +24,12 @@ export type { CinematicSceneCount } from "@/lib/cinematic-scene-config";
 
 function localeHint(market: PromptMarket): string {
   if (market === "hk" || market === "tw") {
-    return "sceneDescriptionZh in Traditional Chinese; imagePrompt and videoMotionPrompt in English.";
+    return "sceneDescriptionZh / title / theme in Traditional Chinese (follow UI market, not user input language); imagePrompt and videoMotionPrompt in English.";
   }
   if (market === "cn") {
-    return "sceneDescriptionZh in Simplified Chinese; imagePrompt and videoMotionPrompt in English.";
+    return "sceneDescriptionZh / title / theme in Simplified Chinese (follow UI market, not user input language); imagePrompt and videoMotionPrompt in English.";
   }
-  return "sceneDescriptionZh in English; imagePrompt and videoMotionPrompt in English.";
+  return "sceneDescriptionZh / title / theme in English (follow UI market, not user input language); imagePrompt and videoMotionPrompt in English.";
 }
 
 function ensureCinematicImagePrompt(prompt: string, artStyleId: ArtStyleId = "realistic"): string {

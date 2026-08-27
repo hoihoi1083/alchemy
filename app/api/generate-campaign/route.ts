@@ -288,6 +288,7 @@ export async function POST(request: Request) {
                 : "none",
           promptExtra,
           carouselSlides: brief?.carouselSlides,
+          market: promptMarket,
         });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Campaign planning failed.";

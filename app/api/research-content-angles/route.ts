@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { isContentPlatform, planContentResearch } from "@/lib/content-research-plan";
 import { requireAppUser } from "@/lib/require-app-user";
 import { assertFreeDeepSeekQuota } from "@/lib/rate-limit-deepseek";
-import type { PromptMarket } from "@/lib/prompt-variables";
+import { asPromptMarket, type PromptMarket } from "@/lib/prompt-variables";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -46,10 +46,7 @@ export async function POST(request: Request) {
     const plan = await planContentResearch({
       topic,
       platform,
-      market:
-        body.market === "hk" || body.market === "cn" || body.market === "en"
-          ? body.market
-          : "hk",
+      market: asPromptMarket(body.market) ?? "hk",
       promotionMode:
         body.promotionMode === "physical" || body.promotionMode === "concept"
           ? body.promotionMode

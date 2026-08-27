@@ -2,8 +2,14 @@ import type { BrandProfile } from "@/lib/brand-profile";
 import { brandProfilePromptBlock } from "@/lib/brand-profile";
 import type { CampaignPlan, CampaignSlidePlan } from "@/lib/campaign-types";
 import { CAMPAIGN_SLIDE_COUNT } from "@/lib/campaign-types";
+import {
+  coerceFieldsToScript,
+  plannerOutputLanguageRule,
+  resolveCopyLocale,
+} from "@/lib/copy-locale";
 import { callDeepSeekChat } from "@/lib/deepseek-client";
 import { parseLlmJsonObject } from "@/lib/parse-llm-json";
+import type { PromptMarket } from "@/lib/prompt-variables";
 import { isContentResearchStyleExtra } from "@/lib/content-research-promote";
 import {
   USER_REFERENCE_MARKER,
@@ -217,6 +223,7 @@ function buildPlanPrompt(input: {
   promptExtra?: string;
   /** Per-frame layout/staging from research / carousel vision (teaching strength). */
   carouselSlides?: CarouselSlideReferenceBrief[];
+  market?: PromptMarket;
 }): string {
   const style = getVisualStyle(input.visualStyleId);
   const brandBlock = input.brandProfile?.businessName
@@ -320,8 +327,8 @@ function buildPlanPrompt(input: {
         ? "- composition: per-slide layout note — follow USER REFERENCE visual family; distinct layout per slide."
         : "- composition: per-slide layout note — coordinated series with DISTINCT camera crop / staging per slide (never 'same hero photo with different text')",
     ...referenceRules,
-    "- HK/TW market: ALL Chinese copy in Traditional Chinese (繁體) — never Simplified (简体), even if reference material uses 简体",
-    "- CN market: Simplified Chinese (简体) only",
+    `- ${plannerOutputLanguageRule(input.market || "hk")}`,
+    "- theme, slide.title, slide.headline, and slide.subline are ALL user-facing — apply the language rule to every field.",
     input.promotionMode === "concept" && !styleOnlyRef && !infographicRef
       ? "- CONCEPT campaign: editorial IG series with cinematic lifestyle or product-in-scene photos — NOT white infographic posters or classroom edu slides."
       : "",
@@ -332,6 +339,7 @@ function buildPlanPrompt(input: {
       ? "- Offer slide: ONE CTA line only — do not repeat the same phrase as headline and subline."
       : "",
     "",
+    `Market: ${input.market || "hk"}`,
     `Visual style preset: ${style.id} — ${style.promptHint || "general product ad"}`,
     input.campaignTheme ? `User campaign brief: ${input.campaignTheme}` : "",
     input.product
@@ -372,6 +380,7 @@ type PlanInput = {
   referenceStrategyKind?: "layout-transfer" | "style-only" | "none";
   promptExtra?: string;
   carouselSlides?: CarouselSlideReferenceBrief[];
+  market?: PromptMarket;
 };
 
 function fallbackInput(input: PlanInput) {
@@ -388,6 +397,7 @@ function fallbackInput(input: PlanInput) {
 
 export async function planCampaign(input: PlanInput): Promise<CampaignPlan> {
   const fb = fallbackInput(input);
+  const market = input.market || "hk";
   const outputText = await callDeepSeekChat(
     [
       {
@@ -406,6 +416,7 @@ export async function planCampaign(input: PlanInput): Promise<CampaignPlan> {
           referenceStrategyKind: input.referenceStrategyKind,
           promptExtra: input.promptExtra?.trim() || "",
           carouselSlides: input.carouselSlides,
+          market,
           ...fb,
         }),
       },
@@ -422,6 +433,28 @@ export async function planCampaign(input: PlanInput): Promise<CampaignPlan> {
     // DeepSeek sometimes returns broken JSON — still generate from brand/user copy.
     basePlan = emptyCampaignPlan();
   }
+
+  const locale = resolveCopyLocale(market);
+  basePlan = {
+    ...basePlan,
+    theme: coerceFieldsToScript({ theme: basePlan.theme }, locale).theme ?? basePlan.theme,
+    slides: basePlan.slides.map((s) => {
+      const coerced = coerceFieldsToScript(
+        {
+          title: s.title,
+          headline: s.headline,
+          subline: s.subline,
+        },
+        locale,
+      );
+      return {
+        ...s,
+        title: coerced.title ?? s.title,
+        headline: coerced.headline ?? s.headline,
+        subline: coerced.subline ?? s.subline,
+      };
+    }),
+  };
 
   const plan = applyCampaignCarouselCompositions(
     applyCampaignFallbacks(basePlan, {

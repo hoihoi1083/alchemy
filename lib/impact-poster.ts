@@ -29,11 +29,11 @@ export type ImpactPosterEffectPick = ImpactPosterEffectId | "auto";
 export type ImpactPosterFrame = "start" | "end";
 
 export function impactPosterTonePreviewSrc(id: ImpactPosterToneId): string {
-  return `/images/studio/schemes/impact-poster/tone-${id}.png?v=1`;
+  return `/images/studio/schemes/impact-poster/tone-${id}.png?v=2`;
 }
 
 export function impactPosterEffectPreviewSrc(id: ImpactPosterEffectId): string {
-  return `/images/studio/schemes/impact-poster/effect-${id}.png?v=1`;
+  return `/images/studio/schemes/impact-poster/effect-${id}.png?v=2`;
 }
 
 /** UI color chips so tone cards read as palette worlds, not product photos. */

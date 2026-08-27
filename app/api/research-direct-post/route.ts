@@ -3,7 +3,7 @@ import { planContentResearchFromDirectPost } from "@/lib/content-research-direct
 import { detectPlatformFromPostUrl, normalizePostUrlInput } from "@/lib/content-research-post-url";
 import { isContentPlatform } from "@/lib/content-research-plan";
 import { requireAppUser } from "@/lib/require-app-user";
-import type { PromptMarket } from "@/lib/prompt-variables";
+import { asPromptMarket, type PromptMarket } from "@/lib/prompt-variables";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -48,10 +48,7 @@ export async function POST(request: Request) {
       postUrl,
       topic: body.topic?.trim() || body.product?.trim(),
       product: body.product?.trim(),
-      market:
-        body.market === "hk" || body.market === "cn" || body.market === "en"
-          ? body.market
-          : "hk",
+      market: asPromptMarket(body.market) ?? "hk",
       promotionMode:
         body.promotionMode === "physical" || body.promotionMode === "concept"
           ? body.promotionMode

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAppUser } from "@/lib/require-app-user";
 import { assertFreeDeepSeekQuota } from "@/lib/rate-limit-deepseek";
 import { planProductBrief } from "@/lib/product-brief-plan";
-import type { PromptMarket } from "@/lib/prompts";
+import { asPromptMarket } from "@/lib/prompts";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -25,10 +25,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "product is required" }, { status: 400 });
   }
 
-  const market =
-    body.market === "hk" || body.market === "cn" || body.market === "en"
-      ? (body.market as PromptMarket)
-      : undefined;
+  const market = asPromptMarket(body.market);
   const workflowMode =
     body.workflowMode === "image-only" ||
     body.workflowMode === "video-only" ||

@@ -1,7 +1,7 @@
 import { callDeepSeekChat } from "@/lib/deepseek-client";
 import {
   resolveCopyLocale,
-  plannerCopyLanguageRule,
+  plannerOutputLanguageRule,
   rewriteCopyToScript,
   coerceCopyScript,
   copyNeedsLocaleRewrite,
@@ -334,12 +334,6 @@ function buildPlaybookPrompt(input: {
   business?: string;
   mediaFilter?: ContentResearchMediaFilter;
 }): string {
-  const copyLocale = resolveCopyLocale(
-    input.market,
-    input.topic,
-    input.product,
-    input.business,
-  );
   return [
     "You are a social content strategist for SMB brands. Return JSON only — no markdown.",
     "Generate proven content ANGLES (templates) — NOT from live web data.",
@@ -351,7 +345,7 @@ function buildPlaybookPrompt(input: {
     "- candidates: exactly 10 distinct angles for the topic on this platform",
     "- topPicks: best 3 from candidates (copy full objects, highest score)",
     "- format: teaching-carousel | single-image | campaign | reel | model-wear",
-    `- Copy language: ${plannerCopyLanguageRule(copyLocale)}`,
+    `- Copy language: ${plannerOutputLanguageRule(input.market)}`,
     "- NEVER paste Facebook/Instagram English titles into Chinese markets (or Chinese titles into English) — translate and adapt title/hook/bullets/cta to Copy language",
     "- sourceTitle may keep the original post language for citation; title/hook/bullets/cta/scriptOutline MUST follow Copy language only — no EN+中文 mix",
     `- Platform playbook: ${platformPlaybook(input.platform)}`,
@@ -380,12 +374,6 @@ function buildLiveWebPrompt(input: {
   angleCount?: number;
   mediaFilter?: ContentResearchMediaFilter;
 }): string {
-  const copyLocale = resolveCopyLocale(
-    input.market,
-    input.topic,
-    input.product,
-    input.business,
-  );
   const angleCount = input.angleCount ?? (input.postsBlock ? RESEARCH_LIVE_ANGLE_COUNT : 6);
   return [
     "You analyze REAL web search snippets from social platforms. Return JSON only.",
@@ -405,7 +393,7 @@ function buildLiveWebPrompt(input: {
     "- whyItWorks: cite what you saw in search results (format, hook style, engagement pattern)",
     "- Do NOT invent viral claims without snippet evidence",
     "- format: teaching-carousel | single-image | campaign | reel | model-wear",
-    `- Copy language: ${plannerCopyLanguageRule(copyLocale)}`,
+    `- Copy language: ${plannerOutputLanguageRule(input.market)}`,
     "- NEVER paste Facebook/Instagram English titles into Chinese markets (or Chinese titles into English) — translate and adapt title/hook/bullets/cta to Copy language",
     "- sourceTitle may keep the original post language for citation; title/hook/bullets/cta/scriptOutline MUST follow Copy language only — no EN+中文 mix",
     `- Platform: ${PLATFORM_LABELS[input.platform]}`,

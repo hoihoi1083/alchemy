@@ -7,7 +7,7 @@ import {
 	conceptImageVisionBlock,
 } from "@/lib/concept-image-vision";
 import { planConceptWizard } from "@/lib/concept-wizard-plan";
-import type { PromptMarket } from "@/lib/prompts";
+import { asPromptMarket, type PromptMarket } from "@/lib/prompts";
 import {
 	briefFromConceptVision,
 	briefFromUserTextOnly,
@@ -48,12 +48,7 @@ function parseConceptBody(fd: FormData): ConceptRequest {
 			fd.get("workflowMode") === "image-only"
 				? (fd.get("workflowMode") as ConceptRequest["workflowMode"])
 				: undefined,
-		market:
-			fd.get("market") === "hk" ||
-			fd.get("market") === "cn" ||
-			fd.get("market") === "en"
-				? (fd.get("market") as PromptMarket)
-				: undefined,
+		market: asPromptMarket(fd.get("market")),
 	};
 }
 
@@ -98,7 +93,11 @@ export async function POST(request: Request) {
 				);
 			}
 		} else {
-			body = await request.json();
+			const raw = (await request.json()) as ConceptRequest;
+			body = {
+				...raw,
+				market: asPromptMarket(raw.market),
+			};
 			userReferenceBrief = briefFromUserTextOnly({
 				conceptIdea: body.conceptIdea,
 				headline: body.headline,

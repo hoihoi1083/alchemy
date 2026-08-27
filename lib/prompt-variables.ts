@@ -109,6 +109,22 @@ export type SubjectFraming =
 
 export const PROMPT_MARKETS: PromptMarket[] = ["hk", "tw", "cn", "en"];
 
+/** Parse a market id from form/JSON; returns undefined when missing/invalid. */
+export function asPromptMarket(value: unknown): PromptMarket | undefined {
+	const v = String(value ?? "").trim();
+	return (PROMPT_MARKETS as readonly string[]).includes(v)
+		? (v as PromptMarket)
+		: undefined;
+}
+
+/** Parse a market id with a fallback (default hk). */
+export function parsePromptMarket(
+	value: unknown,
+	fallback: PromptMarket = "hk",
+): PromptMarket {
+	return asPromptMarket(value) ?? fallback;
+}
+
 export const SUBJECT_FRAMINGS: SubjectFraming[] = [
 	"auto",
 	"product-only",

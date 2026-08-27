@@ -14,8 +14,17 @@ import {
 } from "@/lib/studio-assistant-surface";
 import type { StudioAssistantSnapshot } from "@/lib/studio-assistant-types";
 
-function langLine(_locale: Locale): string {
-  return "Reply in the SAME language as the user's latest message (English → English; 中文 → 繁體 or 简体 per locale setting if user wrote Chinese).";
+function langLine(locale: Locale): string {
+  if (locale === "en") {
+    return "Reply in English only — match the website UI language, not the language of the user's typed message.";
+  }
+  if (locale === "zh-cn") {
+    return "用简体中文回复 — 跟随网站界面语言，不要跟随用户输入的语种（即使用户用英文或繁体输入，仍用简体）。";
+  }
+  if (locale === "zh-tw") {
+    return "用繁體中文（台灣用語）回覆 — 跟隨網站介面語言，不要跟隨使用者輸入的語種。";
+  }
+  return "用繁體中文（香港用語）回覆 — 跟隨網站介面語言，不要跟隨使用者輸入的語種。";
 }
 
 function askFormatRule(): string {

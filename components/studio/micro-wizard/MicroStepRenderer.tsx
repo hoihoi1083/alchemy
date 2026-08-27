@@ -521,7 +521,12 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
             micro.ctx.intakeTemplateMode === "direct" &&
             micro.ctx.workflowMode !== "combined"
           }
-          showReferenceUpload={micro.ctx.intakePath === "direct"}
+          showReferenceUpload={
+            // Template already chose the look on Step 4 — optional style-ref is noise.
+            // Blank Direct still offers a reference ad upload here.
+            micro.ctx.intakePath === "direct" &&
+            micro.ctx.intakeTemplateMode !== "template"
+          }
           intakePath={micro.ctx.intakePath ?? null}
           intakeTemplateMode={micro.ctx.intakeTemplateMode ?? null}
           combinedStoryboard={

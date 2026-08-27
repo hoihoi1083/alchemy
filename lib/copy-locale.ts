@@ -129,6 +129,23 @@ export function plannerCopyLanguageRule(locale: CopyLocale): string {
 }
 
 /**
+ * Strong rule for AI planners: output language follows website UI market,
+ * never mirrors the language of the user's typed input.
+ */
+export function plannerOutputLanguageRule(market: PromptMarket): string {
+  const locale = resolveCopyLocale(market);
+  const label = copyLocaleLabel(locale);
+  return [
+    `CRITICAL — All user-facing copy fields MUST be written in ${label} because the website UI market is "${market}".`,
+    "Do NOT mirror the language of the user's typed input.",
+    "If the user wrote English but the UI market is Chinese, still write Chinese.",
+    "If the user wrote Chinese but the UI market is English, still write English.",
+    "If the user wrote Traditional Chinese but market is cn, write Simplified (and vice versa for hk/tw).",
+    plannerCopyLanguageRule(locale),
+  ].join(" ");
+}
+
+/**
  * Common marketing Traditional → Simplified mappings (safety net when LLM rewrite misses a slide).
  * Not a full OpenCC table — covers high-frequency promo characters that cause mixed 简繁 ads.
  */

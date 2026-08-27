@@ -1,3 +1,8 @@
+import {
+  coerceFieldsToScript,
+  plannerOutputLanguageRule,
+  resolveCopyLocale,
+} from "@/lib/copy-locale";
 import { callDeepSeekChat } from "@/lib/deepseek-client";
 import { parseLlmJsonObject } from "@/lib/parse-llm-json";
 import type { PromptMarket } from "@/lib/prompts";
@@ -32,14 +37,26 @@ type PlanConceptInput = {
   hasReferenceImage?: boolean;
 };
 
-function normalizeDraft(parsed: Partial<ConceptWizardDraft>): ConceptWizardDraft {
-  return {
+function normalizeDraft(
+  parsed: Partial<ConceptWizardDraft>,
+  market: PromptMarket = "hk",
+): ConceptWizardDraft {
+  const raw = {
     audience: String(parsed.audience ?? "").trim(),
     painPoint: String(parsed.painPoint ?? "").trim(),
     promise: String(parsed.promise ?? "").trim(),
     proof: String(parsed.proof ?? "").trim(),
     cta: String(parsed.cta ?? "").trim(),
     visualMetaphor: String(parsed.visualMetaphor ?? "").trim(),
+  };
+  const coerced = coerceFieldsToScript(raw, resolveCopyLocale(market));
+  return {
+    audience: coerced.audience ?? "",
+    painPoint: coerced.painPoint ?? "",
+    promise: coerced.promise ?? "",
+    proof: coerced.proof ?? "",
+    cta: coerced.cta ?? "",
+    visualMetaphor: coerced.visualMetaphor ?? "",
   };
 }
 
@@ -166,7 +183,8 @@ function buildConceptPrompt(input: PlanConceptInput): string {
     allowAppFraming
       ? ""
       : "- Avoid terms like app, download, interface, dashboard, signup, or mobile screen in promise/cta/metaphor.",
-    "- Respect provided language market context.",
+    `- ${plannerOutputLanguageRule(input.market || "hk")}`,
+    "- Fields audience, painPoint, promise, proof, cta, visualMetaphor are ALL user-facing — apply the language rule to every field.",
     "",
     `Market: ${input.market || "hk"}`,
     `Workflow: ${input.workflowMode || "image-only"}`,
@@ -209,6 +227,7 @@ export async function planConceptWizard(
 
   return normalizeDraft(
     parseLlmJsonObject<Partial<ConceptWizardDraft>>(outputText, "Concept wizard plan"),
+    input.market || "hk",
   );
 }
 

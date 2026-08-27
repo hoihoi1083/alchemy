@@ -16,6 +16,8 @@ export {
   resolveImagePromptMode,
   type ImagePromptContext,
   PROMPT_MARKETS,
+  asPromptMarket,
+  parsePromptMarket,
   SUBJECT_FRAMINGS,
   type PromptMarket,
   type PromptVariables,

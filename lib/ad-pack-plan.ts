@@ -11,12 +11,12 @@ import { layoutHookSplitCaptions } from "@/lib/ad-pack-hook-captions";
 
 function localeHint(market: PromptMarket): string {
   if (market === "hk" || market === "tw") {
-    return "Write caption text in Traditional Chinese (繁體中文). Keep lines short for mobile Reels.";
+    return "Write hookScript, voiceoverScript, and caption text in Traditional Chinese (繁體中文). Follow the UI market language — do NOT mirror the language of user-typed fields. Keep lines short for mobile Reels.";
   }
   if (market === "cn") {
-    return "Write caption text in Simplified Chinese (简体中文). Keep lines short for mobile Reels.";
+    return "Write hookScript, voiceoverScript, and caption text in Simplified Chinese (简体中文). Follow the UI market language — do NOT mirror the language of user-typed fields. Keep lines short for mobile Reels.";
   }
-  return "Write caption text in English. Keep lines short for mobile Reels.";
+  return "Write hookScript, voiceoverScript, and caption text in English. Follow the UI market language — do NOT mirror the language of user-typed fields. Keep lines short for mobile Reels.";
 }
 
 function trimVoiceover(script: string, durationSec: number): string {

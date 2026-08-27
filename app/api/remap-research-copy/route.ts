@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAppUser } from "@/lib/require-app-user";
 import { assertFreeDeepSeekQuota } from "@/lib/rate-limit-deepseek";
 import { remapResearchCopyToSubject } from "@/lib/research-copy-remap";
-import type { PromptMarket } from "@/lib/prompts";
+import { asPromptMarket } from "@/lib/prompts";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -30,10 +30,7 @@ export async function POST(request: Request) {
 
   const promotionMode =
     body.promotionMode === "concept" ? "concept" : "physical";
-  const market =
-    body.market === "hk" || body.market === "cn" || body.market === "en"
-      ? (body.market as PromptMarket)
-      : undefined;
+  const market = asPromptMarket(body.market);
 
   const bullets = Array.isArray(body.referenceBullets)
     ? body.referenceBullets.map((b) => String(b).trim()).filter(Boolean)

@@ -1,3 +1,8 @@
+import {
+  coerceFieldsToScript,
+  plannerOutputLanguageRule,
+  resolveCopyLocale,
+} from "@/lib/copy-locale";
 import { callDeepSeekChat } from "@/lib/deepseek-client";
 import { parseLlmJsonObject } from "@/lib/parse-llm-json";
 import type { PromptMarket } from "@/lib/prompts";
@@ -22,12 +27,22 @@ type PlanProductBriefInput = {
   templateHint?: string;
 };
 
-function normalizeDraft(parsed: Partial<ProductBriefDraft>): ProductBriefDraft {
-  return {
+function normalizeDraft(
+  parsed: Partial<ProductBriefDraft>,
+  market: PromptMarket,
+): ProductBriefDraft {
+  const raw = {
     headline: String(parsed.headline ?? "").trim(),
     subline: String(parsed.subline ?? "").trim(),
     offer: String(parsed.offer ?? "").trim(),
     notes: String(parsed.notes ?? "").trim(),
+  };
+  const coerced = coerceFieldsToScript(raw, resolveCopyLocale(market));
+  return {
+    headline: coerced.headline ?? "",
+    subline: coerced.subline ?? "",
+    offer: coerced.offer ?? "",
+    notes: coerced.notes ?? "",
   };
 }
 
@@ -35,16 +50,10 @@ export async function planProductBrief(
   input: PlanProductBriefInput,
 ): Promise<ProductBriefDraft> {
   const market = input.market ?? "hk";
-  const lang =
-    market === "en"
-      ? "English"
-      : market === "cn"
-        ? "Simplified Chinese"
-        : "Traditional Chinese (Hong Kong / Taiwan)";
 
   const system = [
     "You are a performance-marketing copywriter for short social ads.",
-    `Write ALL fields in ${lang}.`,
+    plannerOutputLanguageRule(market),
     "Return ONLY a JSON object with keys: headline, subline, offer, notes.",
     "headline = scroll-stopping hook (max ~18 words).",
     "subline = 1–2 supporting benefits or proof lines.",
@@ -54,6 +63,7 @@ export async function planProductBrief(
   ].join("\n");
 
   const user = [
+    `Market: ${market}`,
     input.product ? `Product: ${input.product}` : "",
     input.business ? `Business: ${input.business}` : "",
     input.visualStyleId ? `Visual style id: ${input.visualStyleId}` : "",
@@ -79,5 +89,5 @@ export async function planProductBrief(
     raw,
     "Product brief plan",
   );
-  return normalizeDraft(parsed ?? {});
+  return normalizeDraft(parsed, market);
 }

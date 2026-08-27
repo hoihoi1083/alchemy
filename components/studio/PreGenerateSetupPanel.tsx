@@ -1156,7 +1156,10 @@ export function PreGenerateSetupPanel({
   ]);
 
   const showReferenceForDirection =
-    showReferenceUpload && !isLockedPosterStyle;
+    showReferenceUpload &&
+    !isLockedPosterStyle &&
+    // Landing/template already locked the recipe — skip optional style-ref clutter.
+    !isCombinedStoryboardTemplate;
 
   function pickCreationDirection(
     path:
@@ -2161,143 +2164,6 @@ export function PreGenerateSetupPanel({
                 <div className="pg-content-row">
                   <div className="pg-content-aside">
                     <span className="pg-card-icon">
-                      <SectionIcon kind="options" />
-                    </span>
-                    <div className="pg-content-aside-copy">
-                    <h3 className="pg-card-title">{pg.imageOptionsTitle}</h3>
-                    <p className="mt-0.5 text-xs text-slate-500">{pg.storyboardLookBeforePlanHint}</p>
-                  </div>
-                  </div>
-                  <div className="min-w-0 flex-1 space-y-4">
-                    <div className={luxuryFieldWrap(luxuryStoryboard)}>
-                      <p className="text-xs font-semibold text-slate-700">
-                        {pg.styleLabel}
-                        {luxuryStoryboard ? (
-                          <LuxuryFieldBadge label={luxuryFieldBadge} />
-                        ) : null}
-                      </p>
-                      <div className="pg-style-row">
-                        {artStyleIdsForPicker({
-                          videoSafeOnly: wizard.workflowMode !== "image-only",
-                        }).map((id: ArtStyleId) => {
-                          const def = getArtStyle(id);
-                          const copy = m.wizard.artStyles[id];
-                          const selected = wizard.artStyleId === id;
-                          return (
-                            <button
-                              key={id}
-                              type="button"
-                              onClick={() => wizard.setArtStyleId(id)}
-                              className={`pg-style-card${selected ? " is-selected" : ""}`}
-                            >
-                              {selected ? <CheckBadge /> : null}
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img src={def.previewSrc} alt="" />
-                              <span>{copy.title}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                    <CompositionPresetPicker
-                      artStyleId={wizard.artStyleId}
-                      value={wizard.compositionPresetId}
-                      onChange={wizard.setCompositionPresetId}
-                    />
-                    <div>
-                      <p className="text-xs font-semibold text-slate-700">{pg.aspectLabel}</p>
-                      <div className="mt-2 grid grid-cols-3 gap-1.5">
-                        {IMAGE_ASPECT_RATIOS.map((ratio: ImageAspectRatio) => {
-                          const copy = m.wizard.imageAspectRatios[ratio];
-                          const selected = wizard.imageAspectRatio === ratio;
-                          const frameStyle =
-                            ratio === "9:16"
-                              ? { width: 12, height: 21 }
-                              : ratio === "4:5"
-                                ? { width: 14, height: 18 }
-                                : { width: 16, height: 16 };
-                          return (
-                            <button
-                              key={ratio}
-                              type="button"
-                              onClick={() => wizard.setImageAspectRatio(ratio)}
-                              className={`relative rounded-xl border px-2 py-2 text-center transition ${
-                                selected
-                                  ? "border-violet-500 bg-violet-50 text-violet-700"
-                                  : "border-slate-200 bg-white text-slate-400 hover:border-violet-200"
-                              }`}
-                            >
-                              {selected ? <CheckBadge /> : null}
-                              <span className="pg-aspect-frame block" style={frameStyle} />
-                              <span className="block text-xs font-bold text-slate-900">{ratio}</span>
-                              <span className="mt-0.5 block text-[10px] leading-snug text-slate-500">
-                                {copy.title}
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-slate-700">{pg.textModeLabel}</p>
-                      <p className="mt-0.5 text-[11px] text-slate-500">{pg.storyboardTextModeHint}</p>
-                      <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                        {(
-                          [
-                            [
-                              "textless",
-                              m.wizard.imageTextModeTextless,
-                              m.wizard.imageTextModeTextlessHint,
-                            ],
-                            [
-                              "integrated",
-                              m.wizard.imageTextModeIntegrated,
-                              m.wizard.imageTextModeIntegratedHint,
-                            ],
-                          ] as Array<[ImageTextMode, string, string]>
-                        ).map(([mode, title, hint]) => {
-                          const selected = wizard.imageTextMode === mode;
-                          return (
-                            <button
-                              key={mode}
-                              type="button"
-                              onClick={() => wizard.setImageTextMode(mode)}
-                              className={`relative flex items-start gap-3 rounded-xl border px-3 py-3 text-left transition ${
-                                selected
-                                  ? "border-violet-500 bg-violet-50"
-                                  : "border-slate-200 bg-white hover:border-violet-200"
-                              }`}
-                            >
-                              {selected ? <CheckBadge /> : null}
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                src={imageTextPreviewSrc(mode)}
-                                alt=""
-                                className="h-16 w-16 shrink-0 rounded-lg object-cover"
-                              />
-                              <span className="min-w-0 pr-4">
-                                <span className="block text-sm font-semibold text-slate-900">
-                                  {title}
-                                </span>
-                                <span className="mt-0.5 block text-[11px] text-slate-500">
-                                  {hint}
-                                </span>
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </section>
-            ) : null}
-
-            {combinedStoryboard ? (
-              <section className="pg-card">
-                <div className="pg-content-row">
-                  <div className="pg-content-aside">
-                    <span className="pg-card-icon">
                       <SectionIcon kind="output" />
                     </span>
                     <div className="pg-content-aside-copy">
@@ -2591,6 +2457,143 @@ export function PreGenerateSetupPanel({
                         ))}
                       </div>
                     ) : null}
+                  </div>
+                </div>
+              </section>
+            ) : null}
+
+            {combinedStoryboard ? (
+              <section className="pg-card">
+                <div className="pg-content-row">
+                  <div className="pg-content-aside">
+                    <span className="pg-card-icon">
+                      <SectionIcon kind="options" />
+                    </span>
+                    <div className="pg-content-aside-copy">
+                    <h3 className="pg-card-title">{pg.imageOptionsTitle}</h3>
+                    <p className="mt-0.5 text-xs text-slate-500">{pg.storyboardLookBeforePlanHint}</p>
+                  </div>
+                  </div>
+                  <div className="min-w-0 flex-1 space-y-4">
+                    <div className={luxuryFieldWrap(luxuryStoryboard)}>
+                      <p className="text-xs font-semibold text-slate-700">
+                        {pg.styleLabel}
+                        {luxuryStoryboard ? (
+                          <LuxuryFieldBadge label={luxuryFieldBadge} />
+                        ) : null}
+                      </p>
+                      <div className="pg-style-row">
+                        {artStyleIdsForPicker({
+                          videoSafeOnly: wizard.workflowMode !== "image-only",
+                        }).map((id: ArtStyleId) => {
+                          const def = getArtStyle(id);
+                          const copy = m.wizard.artStyles[id];
+                          const selected = wizard.artStyleId === id;
+                          return (
+                            <button
+                              key={id}
+                              type="button"
+                              onClick={() => wizard.setArtStyleId(id)}
+                              className={`pg-style-card${selected ? " is-selected" : ""}`}
+                            >
+                              {selected ? <CheckBadge /> : null}
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={def.previewSrc} alt="" />
+                              <span>{copy.title}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <CompositionPresetPicker
+                      artStyleId={wizard.artStyleId}
+                      value={wizard.compositionPresetId}
+                      onChange={wizard.setCompositionPresetId}
+                    />
+                    <div>
+                      <p className="text-xs font-semibold text-slate-700">{pg.aspectLabel}</p>
+                      <div className="mt-2 grid grid-cols-3 gap-1.5">
+                        {IMAGE_ASPECT_RATIOS.map((ratio: ImageAspectRatio) => {
+                          const copy = m.wizard.imageAspectRatios[ratio];
+                          const selected = wizard.imageAspectRatio === ratio;
+                          const frameStyle =
+                            ratio === "9:16"
+                              ? { width: 12, height: 21 }
+                              : ratio === "4:5"
+                                ? { width: 14, height: 18 }
+                                : { width: 16, height: 16 };
+                          return (
+                            <button
+                              key={ratio}
+                              type="button"
+                              onClick={() => wizard.setImageAspectRatio(ratio)}
+                              className={`relative rounded-xl border px-2 py-2 text-center transition ${
+                                selected
+                                  ? "border-violet-500 bg-violet-50 text-violet-700"
+                                  : "border-slate-200 bg-white text-slate-400 hover:border-violet-200"
+                              }`}
+                            >
+                              {selected ? <CheckBadge /> : null}
+                              <span className="pg-aspect-frame block" style={frameStyle} />
+                              <span className="block text-xs font-bold text-slate-900">{ratio}</span>
+                              <span className="mt-0.5 block text-[10px] leading-snug text-slate-500">
+                                {copy.title}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-slate-700">{pg.textModeLabel}</p>
+                      <p className="mt-0.5 text-[11px] text-slate-500">{pg.storyboardTextModeHint}</p>
+                      <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                        {(
+                          [
+                            [
+                              "textless",
+                              m.wizard.imageTextModeTextless,
+                              m.wizard.imageTextModeTextlessHint,
+                            ],
+                            [
+                              "integrated",
+                              m.wizard.imageTextModeIntegrated,
+                              m.wizard.imageTextModeIntegratedHint,
+                            ],
+                          ] as Array<[ImageTextMode, string, string]>
+                        ).map(([mode, title, hint]) => {
+                          const selected = wizard.imageTextMode === mode;
+                          return (
+                            <button
+                              key={mode}
+                              type="button"
+                              onClick={() => wizard.setImageTextMode(mode)}
+                              className={`relative flex items-start gap-3 rounded-xl border px-3 py-3 text-left transition ${
+                                selected
+                                  ? "border-violet-500 bg-violet-50"
+                                  : "border-slate-200 bg-white hover:border-violet-200"
+                              }`}
+                            >
+                              {selected ? <CheckBadge /> : null}
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={imageTextPreviewSrc(mode)}
+                                alt=""
+                                className="h-16 w-16 shrink-0 rounded-lg object-cover"
+                              />
+                              <span className="min-w-0 pr-4">
+                                <span className="block text-sm font-semibold text-slate-900">
+                                  {title}
+                                </span>
+                                <span className="mt-0.5 block text-[11px] text-slate-500">
+                                  {hint}
+                                </span>
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </section>

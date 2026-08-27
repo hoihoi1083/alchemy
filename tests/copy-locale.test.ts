@@ -6,6 +6,7 @@ import {
   promptMarketFromLocale,
   resolveCopyLocale,
   voiceoverLocaleFromUiLocale,
+  plannerOutputLanguageRule,
 } from "@/lib/copy-locale";
 
 describe("UI locale → output language", () => {
@@ -13,6 +14,7 @@ describe("UI locale → output language", () => {
     assert.equal(promptMarketFromLocale("en"), "en");
     assert.equal(promptMarketFromLocale("zh-cn"), "cn");
     assert.equal(promptMarketFromLocale("zh"), "hk");
+    assert.equal(promptMarketFromLocale("zh-tw"), "tw");
   });
 
   it("maps website language to voiceover locale", () => {
@@ -25,6 +27,16 @@ describe("UI locale → output language", () => {
     assert.equal(resolveCopyLocale("en", "世界杯觀戰"), "en");
     assert.equal(resolveCopyLocale("cn", "World Cup night"), "zh-hans");
     assert.equal(resolveCopyLocale("hk", "World Cup night"), "zh-hant");
+    assert.equal(resolveCopyLocale("tw", "World Cup night"), "zh-hant");
+  });
+
+  it("plannerOutputLanguageRule forces UI market over input language", () => {
+    const cn = plannerOutputLanguageRule("cn");
+    assert.match(cn, /Simplified Chinese/);
+    assert.match(cn, /Do NOT mirror/);
+    const en = plannerOutputLanguageRule("en");
+    assert.match(en, /English/);
+    assert.match(en, /Do NOT mirror/);
   });
 
   it("keeps latin user copy verbatim under zh locale", () => {
