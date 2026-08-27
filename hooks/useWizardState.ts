@@ -55,6 +55,7 @@ import {
 } from "@/lib/visual-styles";
 import { DEFAULT_ART_STYLE, type ArtStyleId } from "@/lib/art-style";
 import type { ResearchReelAnalysis } from "@/lib/reel-analysis-types";
+import type { ContentPlatform } from "@/lib/content-research-types";
 import type { WorkflowMode, WorkflowStepKey } from "@/lib/workflow-mode";
 import type {
   MusicMood,
@@ -236,6 +237,11 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn" | "zh-tw") {
   const [referenceIsVideo, setReferenceIsVideo] = useState(false);
   const [refVideoDurationSec, setRefVideoDurationSec] = useState<number | null>(null);
   const [referenceVideoFalUrl, setReferenceVideoFalUrl] = useState<string | null>(null);
+  const [referenceResearchCdnUrl, setReferenceResearchCdnUrl] = useState<string | null>(
+    null,
+  );
+  const [referenceResearchPlatform, setReferenceResearchPlatform] =
+    useState<ContentPlatform | null>(null);
   const [researchReelAnalysis, setResearchReelAnalysis] = useState<ResearchReelAnalysis | null>(
     null,
   );
@@ -502,6 +508,10 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn" | "zh-tw") {
     setRefVideoDurationSec,
     referenceVideoFalUrl,
     setReferenceVideoFalUrl,
+    referenceResearchCdnUrl,
+    setReferenceResearchCdnUrl,
+    referenceResearchPlatform,
+    setReferenceResearchPlatform,
     researchReelAnalysis,
     setResearchReelAnalysis,
     researchReelAnalyzeBusy,

@@ -6,6 +6,8 @@ import { ensureFfmpeg, getFfmpegPath, getMediaDurationSeconds } from "@/lib/pipe
 export const SEEDANCE_MAX_REFERENCE_SEC = 15;
 /** MiniMax H3 rejects refs at/over 15.0s — keep a safety margin under fal's check. */
 export const MINIMAX_MAX_REFERENCE_SEC = 14.5;
+/** Stay under Vercel ~4.5MB multipart body when the browser re-uploads a clip. */
+export const VERCEL_SAFE_REFERENCE_BYTES = Math.floor(3.5 * 1024 * 1024);
 const DIGEST_SEGMENT_COUNT = 5;
 
 /** Start times (seconds) for a montage that samples hook → middle → payoff across a long reel. */
@@ -103,6 +105,73 @@ export async function buildSeedanceReferenceClip(
   } finally {
     await rm(workDir, { recursive: true, force: true });
   }
+}
+
+/**
+ * Re-encode a prepared reference clip when it is still too large for Vercel uploads.
+ * Scales to max 720p and raises CRF — motion beats are preserved, fine detail may soften.
+ */
+export async function compressReferenceClipIfNeeded(
+  input: Buffer,
+  maxBytes = VERCEL_SAFE_REFERENCE_BYTES,
+): Promise<{ buffer: Buffer; compressed: boolean }> {
+  if (input.byteLength <= maxBytes) {
+    return { buffer: input, compressed: false };
+  }
+  await ensureFfmpeg();
+  const workDir = await mkdtemp(path.join(tmpdir(), "ref-compress-"));
+  const inputPath = path.join(workDir, "input.mp4");
+  const outputPath = path.join(workDir, "output.mp4");
+  try {
+    await writeFile(inputPath, input);
+    const { spawn } = await import("child_process");
+    await new Promise<void>((resolve, reject) => {
+      const args = [
+        "-y",
+        "-i",
+        inputPath,
+        "-vf",
+        "scale='min(1280,iw)':-2",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "veryfast",
+        "-crf",
+        "28",
+        "-c:a",
+        "aac",
+        "-b:a",
+        "96k",
+        "-movflags",
+        "+faststart",
+        outputPath,
+      ];
+      const child = spawn(getFfmpegPath(), args, { stdio: ["ignore", "pipe", "pipe"] });
+      let stderr = "";
+      child.stderr.on("data", (c: Buffer) => {
+        stderr += c.toString();
+      });
+      child.on("error", reject);
+      child.on("close", (code) => {
+        if (code === 0) resolve();
+        else reject(new Error(`ffmpeg compress failed (${code}): ${stderr.slice(-400)}`));
+      });
+    });
+    const buffer = await readFile(outputPath);
+    return { buffer, compressed: true };
+  } finally {
+    await rm(workDir, { recursive: true, force: true });
+  }
+}
+
+/** Trim + optional compress — safe for wizard download and analyze fallbacks. */
+export async function buildWizardResearchReferenceClip(
+  input: Buffer,
+  maxSec = MINIMAX_MAX_REFERENCE_SEC,
+): Promise<SeedanceReferenceClipResult & { buffer: Buffer }> {
+  const clip = await buildSeedanceReferenceClip(input, maxSec);
+  const compressed = await compressReferenceClipIfNeeded(clip.buffer);
+  return { ...clip, buffer: compressed.buffer };
 }
 
 /** @deprecated Use buildSeedanceReferenceClip — kept for callers expecting trim-only API. */

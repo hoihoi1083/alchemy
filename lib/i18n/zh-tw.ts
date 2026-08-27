@@ -607,10 +607,37 @@ export const zhTw = {
             "兩張靜圖（無字 → 有字）再交 單鏡出片 中間過渡，產品同字一起動。不是多分鏡故事板。",
           costHint: "約 2 圖 + 1 段短片 · 免費額度夠",
         },
+        "product-impact-poster-6s": {
+          title: "衝擊海報約 6 秒",
+          description:
+            "大透視產品衝擊：更強衝鏡 + 碎裂／射線／碎屑／閃電。可選調性與特效。",
+          costHint: "約 2 張靜圖 + 6 秒 H3 · 產品圖",
+        },
         "product-tvc-12s": {
           title: "產品 TVC 約 12 秒",
           description: "4 拍分鏡：開場 → 微距 → 環繞 → 生活／收束。",
           costHint: "約 4 張靜幀 + 12 秒高級影片 — 要付費 · 拼接後備 拼接或夠免費額",
+        },
+        "product-premium-punch-15s": {
+          title: "衝擊廣告 TVC 約 15 秒",
+          description: "衝擊分鏡：懸念 → 細節 → 英雄衝擊（耳機浮空／車頭正對）→ CTA。",
+          costHint: "約 6 張靜幀 + 15 秒分鏡片 · 要產品圖",
+        },
+        "product-cinematic-assemble-15s": {
+          title: "動作組裝約 15 秒",
+          description:
+            "動作片式產品組裝：原料開場 → 零件雨 → 組裝高潮 → 成品英雄（披薩／耳機／車）。",
+          costHint: "約 6 張靜幀 + 15 秒分鏡 · 成品產品圖",
+        },
+        "product-studio-type-15s": {
+          title: "棚拍字體 TVC 約 15 秒",
+          description: "灰棚黑白銀 + 立體大字卡片 — 品牌／店鋪／產品氣質。",
+          costHint: "約 6 張靜幀 + 15 秒分鏡 · 產品圖或品牌名",
+        },
+        "product-brand-warp-12s": {
+          title: "品牌扭曲約 12 秒",
+          description: "扭曲隧道 → 霓虹字 → 玻璃圖示 → 鉻字 Logo。品牌／Logo／店鋪。",
+          costHint: "約 4 張靜幀 + 12 秒分鏡 · Logo 或品牌名",
         },
         "concept-motion-poster": {
           title: "概念動態海報",
@@ -618,10 +645,30 @@ export const zhTw = {
             "兩張場景靜圖（無字 → 有字）+ 影片過渡，按服務／想法揀動態。不要 SKU 包裝特寫。",
           costHint: "約 2 張 AI 靜圖 + 1 段短片 · 免費額度夠",
         },
+        "concept-impact-poster-6s": {
+          title: "衝擊海報（概念）約 6 秒",
+          description: "同一套大透視衝擊過渡，適合品牌／店鋪 — 建議 Logo 或主題靜圖。",
+          costHint: "約 2 張靜圖 + 6 秒 H3 · Logo 或品牌靜圖",
+        },
         "concept-tvc-12s": {
           title: "概念 TVC 約 12 秒",
           description: "服務／想法 4 拍分鏡：開場 → 隱喻 → 環繞 → 收束。",
           costHint: "約 4 張靜幀 + 12 秒高級影片 — 要付費 · 拼接後備 拼接或夠免費額",
+        },
+        "concept-premium-punch-15s": {
+          title: "衝擊廣告（概念）約 15 秒",
+          description: "服務／概念衝擊分鏡 — 無產品圖較弱；建議用產品模式。",
+          costHint: "約 6 張靜幀 + 15 秒 · 建議產品圖",
+        },
+        "concept-studio-type-15s": {
+          title: "棚拍字體（概念）約 15 秒",
+          description: "灰棚立體字推品牌／店鋪／服務 — 不需要 SKU。",
+          costHint: "約 6 張靜幀 + 15 秒 · 品牌或店名",
+        },
+        "concept-brand-warp-12s": {
+          title: "品牌扭曲（概念）約 12 秒",
+          description: "扭曲 → 霓虹字 → 玻璃圖示 → 鉻字 Logo。適合品牌／Logo／店鋪。",
+          costHint: "約 4 張靜幀 + 12 秒 · Logo 或品牌名",
         },
         "product-blockbuster-9s": {
           title: "大片級出場 約 9 秒",
@@ -1857,6 +1904,22 @@ export const zhTw = {
         title: "豪華誕生",
         desc: "產品包裝圖 · 抽象 → 隱喻 → reveal · 3 或 5 場",
       },
+      "premium-punch": {
+        title: "衝擊廣告",
+        desc: "衝擊商業片 · 懸念 → 細節 → 英雄衝擊鏡 · 4 或 6 場（耳機浮空／車頭正對）",
+      },
+      "cinematic-assemble": {
+        title: "動作組裝",
+        desc: "動作片式逐步做出產品 · 披薩／耳機／車 · 4 或 6 場",
+      },
+      "studio-type": {
+        title: "棚拍字體",
+        desc: "灰棚 + 立體大字 · 品牌／店鋪／產品氣質 · 4 或 6 場",
+      },
+      "brand-warp": {
+        title: "品牌扭曲",
+        desc: "扭曲 → 霓虹字 → 玻璃圖示 → 鉻字 Logo · 品牌／店鋪 · 4 或 6 場",
+      },
     },
     compositionPresetLabel: "構圖",
     compositionPresetHint:
@@ -2125,6 +2188,14 @@ export const zhTw = {
       "參考短影片已分析 — 已按鏡頭節奏寫好 影片生成 提示；生成時會用精華蒙太奇 + 你的產品照。",
     referenceVideoAnalyzing: "正在分析你上傳的參考短影片…",
     researchReelAnalyzing: "正在分析參考短影片並排分鏡…",
+    researchReelAnalyzePhase: {
+      fetch: "正在拉取並讀取參考短影片…",
+      frames: "正在抽幀並辨識畫面風格…",
+      plan: "正在根據短影片寫運鏡方案…",
+      storyboard: "正在規劃分鏡場景…",
+      prepare: "正在準備短片供影片生成…",
+    },
+    researchReelAnalyzeEtaHint: "通常約 2–3 分鐘，較長的 reel 可能更久。",
     researchReelAnalyzeFirstHint: "等參考短影片分鏡分析完成，或上傳產品照片後再繼續。",
     referenceR2vDurationHint:
       "長片會自動做 15 秒精華蒙太奇（開場+中段+結尾）給 影片生成；分析會看整條片。輸出 6 秒是完整小廣告節奏，不是隻抄前 15 秒。",
@@ -2468,6 +2539,11 @@ export const zhTw = {
         description:
           "開頭無字靜圖 + 結尾有字靜圖 → 影片過渡。不是普通產品 I2V。",
       },
+      "impact-poster": {
+        title: "衝擊海報",
+        description:
+          "大透視衝擊海報 — 更強產品衝鏡 + 粒子特效。可選調性與特效 → 約 6 秒。",
+      },
       "social-drip": {
         title: "三分屏 Social drip",
         description:
@@ -2590,6 +2666,28 @@ export const zhTw = {
     motionPosterDialectHint:
       "同一套即夢首尾幀，不同節奏（出字、3D 卡、視差、倒液…）。自動會揀合適的——再生成試另一種。",
     motionPosterDialectAuto: "自動 · 適合產品",
+    impactPosterHint: "大透視衝擊海報：產品衝向鏡頭 + 強特效。比動態海報更猛。",
+    impactPosterToneTitle: "調性",
+    impactPosterToneHint: "海報世界的色彩／氣質。自動會根據產品名推斷。",
+    impactPosterToneAuto: "自動 · 最合適",
+    impactPosterTones: {
+      fiery: { title: "火辣", desc: "橙紅熱感 · 零食／辣味" },
+      rugged: { title: "粗獷", desc: "塵土砂礫 · 山地／戶外" },
+      premium: { title: "高端", desc: "金色質感 · 耳機／奢品" },
+      cyber: { title: "賽博", desc: "霓虹紫青 · 科技／未來聲" },
+    },
+    impactPosterEffectTitle: "衝擊特效",
+    impactPosterEffectHint: "改變靜幀與運動強度的 VFX 語法。",
+    impactPosterEffectAuto: "自動 · 匹配調性",
+    impactPosterEffects: {
+      "shatter-burst": { title: "碎裂爆發", desc: "鋒利碎片徑向炸開" },
+      "energy-rays": { title: "能量射線", desc: "背後神光／聲波" },
+      "debris-splash": { title: "碎屑飛濺", desc: "屑／土／零件衝向鏡頭" },
+      "lightning-pulse": { title: "閃電脈衝", desc: "電弧 + 霓虹爆閃" },
+    },
+    impactPosterBuildingStill: "步驟 1/3：衝擊海報首幀…",
+    impactPosterBuildingEnd: "步驟 2/3：衝擊海報有字尾幀…",
+    impactPosterAnimating: "步驟 3/3：衝擊過渡…",
     motionPosterDialects: {
       "card-warp": { title: "3D 卡片", desc: "平面開頭 → 卡紙彎曲＋大標題" },
       "kinetic-type": { title: "文字揭幕", desc: "無字遠景 → 拉近＋大字" },
@@ -3042,6 +3140,11 @@ export const zhTw = {
 				need: ["產品圖（產品）— 或 Logo／主題 + 可選靜圖（概念）", "結尾海報要用的標題"],
 				attention: ["兩張設計靜圖：無字開頭 → 有字結尾", "產品和字一起過渡 — 不是分鏡"],
 				output: ["約 2 張靜圖 + 1 段短過渡"],
+			},
+			"impact-poster": {
+				need: ["產品圖（產品）— 或 Logo／主題靜圖（概念）", "結尾衝擊海報要用的標題"],
+				attention: ["選調性 + 衝擊特效（或自動）", "比動態海報更強的產品衝鏡 — 大透視衝擊"],
+				output: ["約 2 張靜圖 + 6 秒高衝擊過渡"],
 			},
 			"social-drip": {
 				need: ["產品圖（產品）— 或主題／靜圖（概念）", "穿越隱喻（或自動）"],

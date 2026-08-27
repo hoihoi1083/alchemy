@@ -5,6 +5,11 @@ import { TOKEN_COST } from "@/lib/billing/token-costs";
 import { requireAppUser } from "@/lib/require-app-user";
 import { analyzeResearchReelFromVideo } from "@/lib/reel-video-analysis";
 import { researchReelAnalysisPromptBlock } from "@/lib/reel-analysis-types";
+import {
+  resolveResearchReelVideoBytes,
+  uploadPreparedResearchReferenceClip,
+} from "@/lib/research-reel-analyze-input";
+import type { ContentPlatform } from "@/lib/content-research-types";
 import { planVideoStoryboardFromReelAnalysis } from "@/lib/video-storyboard-plan";
 import type { PromptMarket, SubjectFraming } from "@/lib/prompt-variables";
 import { isPromotionMode } from "@/lib/promotion-mode";
@@ -16,7 +21,8 @@ import { parseBrandKit } from "@/lib/brand-kit";
 import { parseImageTextMode } from "@/lib/image-text-mode";
 
 export const runtime = "nodejs";
-export const maxDuration = 180;
+/** CDN fetch + Florence frames + DeepSeek (+ storyboard) + prepare/upload clip. */
+export const maxDuration = 300;
 
 export async function POST(request: Request) {
   const auth = await requireAppUser();
@@ -38,8 +44,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid form data." }, { status: 400 });
   }
 
-  const video = formData.get("reference_video");
-  if (!(video instanceof File) || video.size === 0) {
+  const videoFile = formData.get("reference_video");
+  const referenceVideoUrl = String(formData.get("reference_video_url") ?? "").trim();
+  const referencePlatform = String(formData.get("reference_platform") ?? "").trim() as
+    | ContentPlatform
+    | "";
+
+  if (
+    !(videoFile instanceof File && videoFile.size > 0) &&
+    !referenceVideoUrl
+  ) {
     return NextResponse.json({ error: "Upload a reference reel MP4." }, { status: 400 });
   }
 
@@ -99,9 +113,13 @@ export async function POST(request: Request) {
   if ("error" in charged) return charged.error;
 
   try {
-    const buffer = Buffer.from(await video.arrayBuffer());
+    const resolved = await resolveResearchReelVideoBytes({
+      referenceVideoUrl: referenceVideoUrl || null,
+      platform: referencePlatform || null,
+      referenceVideo: videoFile instanceof File ? videoFile : null,
+    });
     const result = await analyzeResearchReelFromVideo({
-      videoBytes: buffer,
+      videoBytes: resolved.bytes,
       product,
       headline,
       subline,
@@ -111,6 +129,18 @@ export async function POST(request: Request) {
       outputDurationSec,
       conceptMode: promotionMode === "concept",
     });
+
+    let preparedClip:
+      | Awaited<ReturnType<typeof uploadPreparedResearchReferenceClip>>
+      | undefined;
+    try {
+      preparedClip = await uploadPreparedResearchReferenceClip(resolved.bytes);
+    } catch (prepErr: unknown) {
+      console.warn(
+        "[analyze-research-reel] reference clip prepare failed:",
+        prepErr instanceof Error ? prepErr.message : prepErr,
+      );
+    }
 
     let storyboardPlan:
       | Awaited<ReturnType<typeof planVideoStoryboardFromReelAnalysis>>
@@ -170,10 +200,15 @@ export async function POST(request: Request) {
       analysis: result.analysis,
       ...(storyboardPlan ? { storyboardPlan } : {}),
       ...(storyboardPlanError ? { storyboardPlanError } : {}),
-      referenceVideoUrl: result.referenceVideoUrl,
-      referenceDigestMontage: result.referenceDigestMontage,
-      sourceDurationSec: result.sourceDurationSec,
-      referenceDurationSec: result.referenceDurationSec,
+      referenceVideoUrl: preparedClip?.videoUrl ?? null,
+      referenceDigestMontage:
+        preparedClip?.referenceDigestMontage ?? result.referenceDigestMontage,
+      sourceDurationSec:
+        preparedClip?.sourceDurationSec ?? result.sourceDurationSec,
+      referenceDurationSec:
+        preparedClip?.referenceDurationSec ?? result.referenceDurationSec,
+      preparedReferenceBytes: preparedClip?.preparedBytes ?? null,
+      analyzeSource: resolved.source,
       styleReferenceFrameUrl: result.styleReferenceFrameUrl ?? null,
       promptBlock: researchReelAnalysisPromptBlock(result.analysis),
       tokensCharged: tokenCost,

@@ -606,10 +606,37 @@ export const zhCn = {
             "两张静图（无字 → 有字）再交 单镜出片 中间过渡，产品和字一起动。不是多分镜故事板。",
           costHint: "约 2 图 + 1 段短片 · 免费额度够",
         },
+        "product-impact-poster-6s": {
+          title: "冲击海报约 6 秒",
+          description:
+            "大透视产品冲击：更强冲镜 + 碎裂／射线／碎屑／闪电。可选调性与特效。",
+          costHint: "约 2 张静图 + 6 秒 H3 · 产品图",
+        },
         "product-tvc-12s": {
           title: "产品 TVC 约 12 秒",
           description: "4 拍分镜：开场 → 微距 → 环绕 → 生活／收束。",
           costHint: "约 4 张静帧 + 12 秒高級影片 — 要付费 · 拼接后备 拼接或够免费额",
+        },
+        "product-premium-punch-15s": {
+          title: "冲击广告 TVC 约 15 秒",
+          description: "冲击分镜：悬念 → 细节 → 英雄冲击（耳机浮空／车头正对）→ CTA。",
+          costHint: "约 6 张静帧 + 15 秒分镜片 · 要产品图",
+        },
+        "product-cinematic-assemble-15s": {
+          title: "动作组装约 15 秒",
+          description:
+            "动作片式产品组装：原料开场 → 零件雨 → 组装高潮 → 成品英雄（披萨／耳机／车）。",
+          costHint: "约 6 张静帧 + 15 秒分镜 · 成品产品图",
+        },
+        "product-studio-type-15s": {
+          title: "棚拍字体 TVC 约 15 秒",
+          description: "灰棚黑白银 + 立体大字卡片 — 品牌／店铺／产品气质。",
+          costHint: "约 6 张静帧 + 15 秒分镜 · 产品图或品牌名",
+        },
+        "product-brand-warp-12s": {
+          title: "品牌扭曲约 12 秒",
+          description: "扭曲隧道 → 霓虹字 → 玻璃图标 → 铬字 Logo。品牌／Logo／店铺。",
+          costHint: "约 4 张静帧 + 12 秒分镜 · Logo 或品牌名",
         },
         "concept-motion-poster": {
           title: "概念动态海报",
@@ -617,10 +644,30 @@ export const zhCn = {
             "两张场景静图（无字 → 有字）+ 视频过渡，按服务／想法选动态。不要 SKU 包装特写。",
           costHint: "约 2 张 AI 静图 + 1 段短片 · 免费额度够",
         },
+        "concept-impact-poster-6s": {
+          title: "冲击海报（概念）约 6 秒",
+          description: "同一套大透视冲击过渡，适合品牌／店铺 — 建议 Logo 或主题静图。",
+          costHint: "约 2 张静图 + 6 秒 H3 · Logo 或品牌静图",
+        },
         "concept-tvc-12s": {
           title: "概念 TVC 约 12 秒",
           description: "服务／想法 4 拍分镜：开场 → 隐喻 → 环绕 → 收束。",
           costHint: "约 4 张静帧 + 12 秒高級影片 — 要付费 · 拼接后备 拼接或够免费额",
+        },
+        "concept-premium-punch-15s": {
+          title: "冲击广告（概念）约 15 秒",
+          description: "服务／概念冲击分镜 — 无产品图较弱；建议用产品模式。",
+          costHint: "约 6 张静帧 + 15 秒 · 建议产品图",
+        },
+        "concept-studio-type-15s": {
+          title: "棚拍字体（概念）约 15 秒",
+          description: "灰棚立体字推品牌／店铺／服务 — 不需要 SKU。",
+          costHint: "约 6 张静帧 + 15 秒 · 品牌或店名",
+        },
+        "concept-brand-warp-12s": {
+          title: "品牌扭曲（概念）约 12 秒",
+          description: "扭曲 → 霓虹字 → 玻璃图标 → 铬字 Logo。适合品牌／Logo／店铺。",
+          costHint: "约 4 张静帧 + 12 秒 · Logo 或品牌名",
         },
         "product-blockbuster-9s": {
           title: "大片级出场 约 9 秒",
@@ -1867,6 +1914,22 @@ export const zhCn = {
         title: "豪华诞生",
         desc: "产品包装图 · 抽象 → 隐喻 → reveal · 3 或 5 场",
       },
+      "premium-punch": {
+        title: "冲击广告",
+        desc: "冲击商业片 · 悬念 → 细节 → 英雄冲击镜 · 4 或 6 场（耳机浮空／车头正对）",
+      },
+      "cinematic-assemble": {
+        title: "动作组装",
+        desc: "动作片式逐步做出产品 · 披萨／耳机／车 · 4 或 6 场",
+      },
+      "studio-type": {
+        title: "棚拍字体",
+        desc: "灰棚 + 立体大字 · 品牌／店铺／产品气质 · 4 或 6 场",
+      },
+      "brand-warp": {
+        title: "品牌扭曲",
+        desc: "扭曲 → 霓虹字 → 玻璃图标 → 铬字 Logo · 品牌／店铺 · 4 或 6 场",
+      },
     },
     compositionPresetLabel: "构图",
     compositionPresetHint:
@@ -2135,6 +2198,14 @@ export const zhCn = {
       "参考短视频已分析 — 已按镜头节奏写好 视频生成 提示；生成时会用精华蒙太奇 + 你的产品照。",
     referenceVideoAnalyzing: "正在分析你上传的参考短视频…",
     researchReelAnalyzing: "正在分析参考短视频并排分镜…",
+    researchReelAnalyzePhase: {
+      fetch: "正在拉取并读取参考短视频…",
+      frames: "正在抽帧并识别画面风格…",
+      plan: "正在根据短视频写运镜方案…",
+      storyboard: "正在规划分镜场景…",
+      prepare: "正在准备短片供视频生成…",
+    },
+    researchReelAnalyzeEtaHint: "通常约 2–3 分钟，较长的 reel 可能更久。",
     researchReelAnalyzeFirstHint: "等参考短视频分镜分析完成，或上传产品照片后再继续。",
     referenceR2vDurationHint:
       "长片会自动做 15 秒精华蒙太奇（开场+中段+结尾）给 视频生成；分析会看整条片。输出 6 秒是完整小广告节奏，不是只抄前 15 秒。",
@@ -2478,6 +2549,11 @@ export const zhCn = {
         description:
           "开头无字静图 + 结尾有字静图 → 视频过渡。不是普通产品 I2V。",
       },
+      "impact-poster": {
+        title: "冲击海报",
+        description:
+          "大透视冲击海报 — 更强产品冲镜 + 粒子特效。可选调性与特效 → 约 6 秒。",
+      },
       "social-drip": {
         title: "三分屏 Social drip",
         description:
@@ -2600,6 +2676,28 @@ export const zhCn = {
     motionPosterDialectHint:
       "同一套首尾帧，不同节奏（出字、3D 卡、视差、倒液…）。自动会选合适的——再生成试另一种。",
     motionPosterDialectAuto: "自动 · 适合产品",
+    impactPosterHint: "大透视冲击海报：产品冲向镜头 + 强特效。比动态海报更猛。",
+    impactPosterToneTitle: "调性",
+    impactPosterToneHint: "海报世界的色彩／气质。自动会根据产品名推断。",
+    impactPosterToneAuto: "自动 · 最合适",
+    impactPosterTones: {
+      fiery: { title: "火辣", desc: "橙红热感 · 零食／辣味" },
+      rugged: { title: "粗犷", desc: "尘土砂砾 · 山地／户外" },
+      premium: { title: "高端", desc: "金色质感 · 耳机／奢品" },
+      cyber: { title: "赛博", desc: "霓虹紫青 · 科技／未来声" },
+    },
+    impactPosterEffectTitle: "冲击特效",
+    impactPosterEffectHint: "改变静帧与运动强度的 VFX 语法。",
+    impactPosterEffectAuto: "自动 · 匹配调性",
+    impactPosterEffects: {
+      "shatter-burst": { title: "碎裂爆发", desc: "锋利碎片径向炸开" },
+      "energy-rays": { title: "能量射线", desc: "背后神光／声波" },
+      "debris-splash": { title: "碎屑飞溅", desc: "屑／土／零件冲向镜头" },
+      "lightning-pulse": { title: "闪电脉冲", desc: "电弧 + 霓虹爆闪" },
+    },
+    impactPosterBuildingStill: "步骤 1/3：冲击海报首帧…",
+    impactPosterBuildingEnd: "步骤 2/3：冲击海报有字尾帧…",
+    impactPosterAnimating: "步骤 3/3：冲击过渡…",
     motionPosterDialects: {
       "card-warp": { title: "3D 卡片", desc: "平面开头 → 卡纸弯曲＋大标题" },
       "kinetic-type": { title: "文字揭幕", desc: "无字远景 → 拉近＋大字" },
@@ -3052,6 +3150,11 @@ export const zhCn = {
 				need: ["产品图（产品）— 或 Logo／主题 + 可选静图（概念）", "结尾海报要用的标题"],
 				attention: ["两张设计静图：无字开头 → 有字结尾", "产品和字一起过渡 — 不是分镜"],
 				output: ["约 2 张静图 + 1 段短过渡"],
+			},
+			"impact-poster": {
+				need: ["产品图（产品）— 或 Logo／主题静图（概念）", "结尾冲击海报要用的标题"],
+				attention: ["选调性 + 冲击特效（或自动）", "比动态海报更强的产品冲镜 — 大透视冲击"],
+				output: ["约 2 张静图 + 6 秒高冲击过渡"],
 			},
 			"social-drip": {
 				need: ["产品图（产品）— 或主题／静图（概念）", "穿越隐喻（或自动）"],
@@ -5156,8 +5259,12 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
     videoSubpathHint: "由产品照写动态方案，或跟参考短视频运镜。",
     refVideoTitle: "参考短视频（MP4）",
     refVideoHint: "有 reel／短视频先上传；图文研究帖可跳过（用参考图 + 分镜即可）。",
+    refVideoTitleResearch: "参考 reel（此路径必填）",
+    refVideoHintResearch:
+      "视频研究会跟 @Video1 运镜。选帖后会自动下载；仅下载失败时再手动上传。分析在服务器读取完整 reel（大文件也可）。",
     refVideoTitleOptional: "参考短视频（选填）",
-    refVideoHintOptional: "图文帖不用上传 MP4 — 会自动跳过。有 reel 再上传会跟节奏排分镜。",
+    refVideoHintOptional:
+      "仅图文／轮播研究 — 不必上传 MP4，参考图 + 分镜即可。想加强节奏匹配时可再上传 reel。",
     extraKitTitle: "产品照片套装",
     extraKitHint: "AI 视频助手可选：包装和角度图。",
     bgmTitle: "背景音乐",

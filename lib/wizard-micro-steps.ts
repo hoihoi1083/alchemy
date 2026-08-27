@@ -242,6 +242,7 @@ function evalWhen(
   if (norm === 'videoSubpath === "motion_poster"') {
     return (
       ctx.videoSubpath === "motion_poster" ||
+      ctx.videoSubpath === "impact_poster" ||
       ctx.videoSubpath === "social_drip" ||
       ctx.videoSubpath === "vacuum_inflate" ||
       ctx.videoSubpath === "creative_motion" ||
@@ -338,12 +339,14 @@ export function resolvePathId(
 
     if (
       ctx.videoSubpath === "motion_poster" ||
+      ctx.videoSubpath === "impact_poster" ||
       ctx.videoSubpath === "social_drip" ||
       ctx.videoSubpath === "vacuum_inflate" ||
       ctx.videoSubpath === "creative_motion" ||
       ctx.videoSubpath === "hand_throw_scene" ||
       ctx.videoSubpath === "product_explode" ||
       state.videoCreativeMode === "motion-poster" ||
+      state.videoCreativeMode === "impact-poster" ||
       state.videoCreativeMode === "social-drip" ||
       state.videoCreativeMode === "vacuum-inflate" ||
       state.videoCreativeMode === "creative-motion" ||
@@ -370,12 +373,14 @@ export function resolvePathId(
     }
     if (
       ctx.videoSubpath === "motion_poster" ||
+      ctx.videoSubpath === "impact_poster" ||
       ctx.videoSubpath === "social_drip" ||
       ctx.videoSubpath === "vacuum_inflate" ||
       ctx.videoSubpath === "creative_motion" ||
       ctx.videoSubpath === "hand_throw_scene" ||
       ctx.videoSubpath === "product_explode" ||
       state.videoCreativeMode === "motion-poster" ||
+      state.videoCreativeMode === "impact-poster" ||
       state.videoCreativeMode === "social-drip" ||
       state.videoCreativeMode === "vacuum-inflate" ||
       state.videoCreativeMode === "creative-motion" ||
@@ -905,6 +910,7 @@ export function canProceedMicroStep(
       Boolean(subpathToH3ShotRecipe(ctx.videoSubpath)) ||
       ctx.videoSubpath === "blockbuster" ||
       ctx.videoSubpath === "motion_poster" ||
+      ctx.videoSubpath === "impact_poster" ||
       ctx.videoSubpath === "social_drip" ||
       ctx.videoSubpath === "vacuum_inflate" ||
       ctx.videoSubpath === "creative_motion" ||

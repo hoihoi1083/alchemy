@@ -49,7 +49,7 @@ describe("composition-remap strategy", () => {
     assert.equal(s.useReferenceConceptPrompts, false);
   });
 
-  it("concept + product photo + prefer remap → shell-only (ignore product dual)", () => {
+  it("concept + product photo + prefer remap → dual composition-remap (use uploaded SKU)", () => {
     const s = resolveReferenceStrategy({
       promotionMode: "concept",
       imageOutputMode: "single",
@@ -61,7 +61,7 @@ describe("composition-remap strategy", () => {
       preferCompositionRemap: true,
     });
     assert.equal(s.kind, "composition-remap");
-    assert.equal(s.useDualImage, false);
+    assert.equal(s.useDualImage, true);
     assert.equal(s.referenceImageMode, "composition-remap");
   });
 
@@ -172,7 +172,7 @@ describe("composition-remap prompts", () => {
     assert.doesNotMatch(prompt, /IMAGE 2 = optional SKU/i);
   });
 
-  it("dual-product prompt keeps shell as IMAGE 1 not packshot-first", () => {
+  it("dual-product prompt keeps shell as IMAGE 1 and hard-locks IMAGE 2 SKU", () => {
     const prompt = buildCompositionRemapImagePrompt(
       buildPromptVariables({
         product: "Aura Bracelet",
@@ -181,9 +181,10 @@ describe("composition-remap prompts", () => {
       { aspectRatio: "4:5", dualProduct: true },
     );
     assert.match(prompt, /IMAGE 1 = composition SHELL/i);
-    assert.match(prompt, /optional SKU/i);
+    assert.match(prompt, /USER PRODUCT PHOTO|PRODUCT PIXEL LOCK|IMAGE 2 pixels win for PRODUCT/i);
     assert.match(prompt, /BOARD TRACE/i);
     assert.doesNotMatch(prompt, /IMAGE 1 = user product hero/i);
+    assert.doesNotMatch(prompt, /optional SKU/i);
   });
 });
 

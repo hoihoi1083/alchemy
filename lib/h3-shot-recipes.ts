@@ -213,6 +213,16 @@ export function parseH3ShowreelAspect(raw: unknown): H3ShowreelAspect {
     : DEFAULT_H3_SHOWREEL_ASPECT;
 }
 
+/** Still aspect for Nano Banana — square lock plate for logo/mascot MG (H3 ref-safe). */
+export function resolveH3ShotStillAspectRatio(
+  mode: H3ShotRecipeMode,
+  showreelAspect?: H3ShowreelAspect | string | null,
+): H3ShowreelAspect | "1:1" | "9:16" {
+  if (mode === "h3-showreel") return parseH3ShowreelAspect(showreelAspect);
+  if (mode === "h3-logo-mg" || mode === "h3-sphere-mg") return "1:1";
+  return "9:16";
+}
+
 /** Showreel style cards own the camera language; @Video1 is optional. */
 export const H3_SHOWREEL_SCHEME_IDS = [
   "car-cinematic",
@@ -1037,12 +1047,7 @@ export function buildH3ShotRecipeStillPrompt(input: H3ShotPromptInput): string {
   const lock = named
     ? `${photoWins} Call it "${subject}" as a label only. Keep shape, color, materials of IMAGE 1 when attached. No invented logos or readable fake words.`
     : `Hero: ${subject}. ${photoWins} No invented brand names, no readable fake words.`;
-  const aspect =
-    input.mode === "h3-showreel"
-      ? parseH3ShowreelAspect(input.showreelAspect)
-      : input.mode === "h3-logo-mg"
-        ? "16:9"
-        : "9:16";
+  const aspect = resolveH3ShotStillAspectRatio(input.mode, input.showreelAspect);
 
   const shared = [
     `Photoreal commercial still, ${aspect}, textless, no captions, no watermarks, no UI.`,

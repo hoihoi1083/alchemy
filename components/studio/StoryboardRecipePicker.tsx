@@ -4,6 +4,7 @@ import { useLocale } from "@/components/LocaleProvider";
 import {
   STORYBOARD_RECIPE_IDS,
   isLuxuryBirthRecipe,
+  isProductFirstStoryboardRecipe,
   storyboardRecipePreviewSrc,
   type StoryboardRecipeId,
 } from "@/lib/storyboard-recipes";
@@ -20,7 +21,7 @@ export function StoryboardRecipePicker({
   onChange: (id: StoryboardRecipeId) => void;
   variant?: "light" | "dark";
   fieldLabels?: Parameters<typeof StoryboardLuxuryStoryDrivers>[0]["fieldLabels"];
-  /** Luxury birth is product-first; hide for concept workflows. */
+  /** Product-first recipes (Luxury birth / Premium punch); hide for concept workflows. */
   showLuxuryBirth?: boolean;
 }) {
   const { m } = useLocale();
@@ -28,7 +29,7 @@ export function StoryboardRecipePicker({
   const dark = variant === "dark";
   const recipeIds = showLuxuryBirth
     ? STORYBOARD_RECIPE_IDS
-    : STORYBOARD_RECIPE_IDS.filter((id) => id !== "luxury-birth");
+    : STORYBOARD_RECIPE_IDS.filter((id) => !isProductFirstStoryboardRecipe(id));
 
   return (
     <div className="space-y-2">

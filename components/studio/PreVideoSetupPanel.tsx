@@ -10,6 +10,7 @@ import { storyboardSceneDisplayCopy } from "@/lib/storyboard-scene-copy";
 import { studioPhasesForMode, videoSetupPhaseIndex } from "@/lib/studio-phases";
 import { isCreativeVideoStyle, getVisualStyle } from "@/lib/visual-styles";
 import { MotionPosterDialectPicker } from "@/components/studio/MotionPosterDialectPicker";
+import { ImpactPosterOptionsPicker } from "@/components/studio/ImpactPosterOptionsPicker";
 import { ArtStylePicker } from "@/components/ArtStylePicker";
 import { IMAGE_ASPECT_RATIOS, type ImageAspectRatio } from "@/lib/image-aspect-ratio";
 import {
@@ -356,6 +357,8 @@ export function PreVideoSetupPanel({
   /** Landing recipe / creative mode already chose motion poster — keep it. */
   const prefersMotionPoster =
     !scenesReady && wizard.videoCreativeMode === "motion-poster";
+  const prefersImpactPoster =
+    !scenesReady && wizard.videoCreativeMode === "impact-poster";
   const prefersSocialDrip =
     !scenesReady && wizard.videoCreativeMode === "social-drip";
   const prefersVacuumInflate =
@@ -391,6 +394,8 @@ export function PreVideoSetupPanel({
       ? "social_drip"
       : prefersMotionPoster
       ? "motion_poster"
+      : prefersImpactPoster
+      ? "impact_poster"
       : prefersReference
         ? "reference_reel"
         : isConcept
@@ -398,6 +403,7 @@ export function PreVideoSetupPanel({
           : "product_promo");
   const isReference = !scenesReady && !isConcept && activeSubpath === "reference_reel";
   const isMotionPoster = !scenesReady && activeSubpath === "motion_poster";
+  const isImpactPoster = !scenesReady && activeSubpath === "impact_poster";
   const isSocialDrip = !scenesReady && activeSubpath === "social_drip";
   const isVacuumInflate = !scenesReady && activeSubpath === "vacuum_inflate";
   const isCreativeMotion = !scenesReady && activeSubpath === "creative_motion";
@@ -421,6 +427,7 @@ export function PreVideoSetupPanel({
     !scenesReady &&
     isConcept &&
     !isMotionPoster &&
+    !isImpactPoster &&
     !isSocialDrip &&
     !isVacuumInflate &&
     !isCreativeMotion &&
@@ -511,6 +518,10 @@ export function PreVideoSetupPanel({
       onPickVideoSubpath("motion_poster");
       return;
     }
+    if (isImpactPoster && wizard.videoCreativeMode !== "impact-poster") {
+      onPickVideoSubpath("impact_poster");
+      return;
+    }
     if (isSocialDrip && wizard.videoCreativeMode !== "social-drip") {
       onPickVideoSubpath("social_drip");
       return;
@@ -564,6 +575,10 @@ export function PreVideoSetupPanel({
       onPickVideoSubpath("motion_poster");
       return;
     }
+    if (prefersImpactPoster) {
+      onPickVideoSubpath("impact_poster");
+      return;
+    }
     if (!prefersReference) return;
     onPickVideoSubpath("reference_reel");
   }, [
@@ -571,6 +586,7 @@ export function PreVideoSetupPanel({
     videoSubpath,
     prefersReference,
     prefersMotionPoster,
+    prefersImpactPoster,
     prefersSocialDrip,
     prefersVacuumInflate,
     prefersCreativeMotion,
@@ -581,6 +597,7 @@ export function PreVideoSetupPanel({
     h3ShotMode,
     isBlockbuster,
     isMotionPoster,
+    isImpactPoster,
     isSocialDrip,
     isVacuumInflate,
     isCreativeMotion,
@@ -638,19 +655,23 @@ export function PreVideoSetupPanel({
       ? [pv.conceptTip1, pv.conceptTip2, pv.conceptTip3]
       : isReference
         ? [pv.refTip1, pv.refTip2, pv.tip3]
-        : recipeUxId
+          : recipeUxId
           ? [
               {
                 title: m.wizard.recipePathUxTitles.need,
-                body: m.wizard.recipePathUx[recipeUxId].need.join(" · "),
+                body: (m.wizard.recipePathUx[recipeUxId]?.need ?? []).join(" · "),
               },
               {
                 title: m.wizard.recipePathUxTitles.attention,
-                body: m.wizard.recipePathUx[recipeUxId].attention.join(" · "),
+                body: (m.wizard.recipePathUx[recipeUxId]?.attention ?? []).join(
+                  " · ",
+                ),
               },
               {
                 title: m.wizard.recipePathUxTitles.output,
-                body: m.wizard.recipePathUx[recipeUxId].output.join(" · "),
+                body: (m.wizard.recipePathUx[recipeUxId]?.output ?? []).join(
+                  " · ",
+                ),
               },
             ]
           : isSocialDrip
@@ -738,6 +759,12 @@ export function PreVideoSetupPanel({
       previewSrc: videoModePreviewSrc("motion-poster"),
     },
     {
+      id: "impact_poster",
+      title: m.wizard.videoCreativeModes["impact-poster"].title,
+      desc: m.wizard.videoCreativeModes["impact-poster"].description,
+      previewSrc: videoModePreviewSrc("impact-poster"),
+    },
+    {
       id: "blockbuster",
       title: m.wizard.videoCreativeModes.blockbuster.title,
       desc: m.wizard.videoCreativeModes.blockbuster.description,
@@ -801,6 +828,12 @@ export function PreVideoSetupPanel({
       previewSrc: videoModePreviewSrc("motion-poster"),
     },
     {
+      id: "impact_poster",
+      title: m.wizard.videoCreativeModes["impact-poster"].title,
+      desc: m.wizard.videoCreativeModes["impact-poster"].description,
+      previewSrc: videoModePreviewSrc("impact-poster"),
+    },
+    {
       id: "blockbuster",
       title: m.wizard.videoCreativeModes.blockbuster.title,
       desc: m.wizard.videoCreativeModes.blockbuster.description,
@@ -854,6 +887,7 @@ export function PreVideoSetupPanel({
         if (opt.id === "hand_throw_scene") return isHandThrow;
         if (opt.id === "product_explode") return isProductExplode;
         if (opt.id === "motion_poster") return isMotionPoster;
+        if (opt.id === "impact_poster") return isImpactPoster;
         if (opt.id === "blockbuster") return isBlockbuster;
         const optH3 = subpathToH3ShotRecipe(opt.id as never);
         if (optH3) return h3ShotMode === optH3;
@@ -1060,6 +1094,8 @@ export function PreVideoSetupPanel({
                               ? isProductExplode
                       : opt.id === "motion_poster"
                         ? isMotionPoster
+                        : opt.id === "impact_poster"
+                          ? isImpactPoster
                         : opt.id === "blockbuster"
                           ? isBlockbuster
                           : subpathToH3ShotRecipe(opt.id as never)
@@ -1153,7 +1189,7 @@ export function PreVideoSetupPanel({
                       {m.wizard.recipePathUxTitles.need}
                     </p>
                     <ul className="mt-1 list-disc space-y-0.5 pl-4 text-xs leading-relaxed text-violet-900/90">
-                      {m.wizard.recipePathUx[recipeUxId].need.map((line) => (
+                      {(m.wizard.recipePathUx[recipeUxId]?.need ?? []).map((line) => (
                         <li key={line}>{line}</li>
                       ))}
                     </ul>
@@ -1161,7 +1197,7 @@ export function PreVideoSetupPanel({
                       {m.wizard.recipePathUxTitles.attention}
                     </p>
                     <ul className="mt-1 list-disc space-y-0.5 pl-4 text-xs leading-relaxed text-violet-900/90">
-                      {m.wizard.recipePathUx[recipeUxId].attention.map((line) => (
+                      {(m.wizard.recipePathUx[recipeUxId]?.attention ?? []).map((line) => (
                         <li key={line}>{line}</li>
                       ))}
                     </ul>
@@ -1169,7 +1205,7 @@ export function PreVideoSetupPanel({
                       {m.wizard.recipePathUxTitles.output}
                     </p>
                     <ul className="mt-1 list-disc space-y-0.5 pl-4 text-xs leading-relaxed text-violet-900/90">
-                      {m.wizard.recipePathUx[recipeUxId].output.map((line) => (
+                      {(m.wizard.recipePathUx[recipeUxId]?.output ?? []).map((line) => (
                         <li key={line}>{line}</li>
                       ))}
                     </ul>
@@ -1706,6 +1742,17 @@ export function PreVideoSetupPanel({
                 <MotionPosterDialectPicker
                   value={wizard.motionPosterDialectPick}
                   onChange={wizard.setMotionPosterDialectPick}
+                />
+              </section>
+            ) : null}
+
+            {isImpactPoster ? (
+              <section className="pv-card">
+                <ImpactPosterOptionsPicker
+                  tone={wizard.impactPosterTonePick}
+                  effect={wizard.impactPosterEffectPick}
+                  onToneChange={wizard.setImpactPosterTonePick}
+                  onEffectChange={wizard.setImpactPosterEffectPick}
                 />
               </section>
             ) : null}

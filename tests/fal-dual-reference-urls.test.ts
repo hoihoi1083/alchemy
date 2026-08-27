@@ -9,6 +9,7 @@ import {
   carouselSeriesConsistencyLock,
   carouselTipSlideLookFollowHint,
   carouselUniqueCopyHint,
+  compositionRemapProductIdentityHint,
   dualProductIdentityHint,
   teachingCarouselTipImageUrls,
 } from "../lib/fal-dual-reference-urls";
@@ -67,7 +68,7 @@ describe("dual reference layout-transfer (research OR manual style upload)", () 
     assert.deepEqual(uploaded, urls);
   });
 
-  it("composition remap orders fal urls: shell first, optional SKU second", async () => {
+  it("composition remap orders fal urls: shell first, product SKU second", async () => {
     const style = new File([new Uint8Array([1])], "cr7-board.jpg");
     const product = new File([new Uint8Array([2])], "sku.jpg");
     const urls = await buildFalCompositionRemapImageUrls({
@@ -76,6 +77,13 @@ describe("dual reference layout-transfer (research OR manual style upload)", () 
       productRef: product,
     });
     assert.deepEqual(urls, ["url:cr7-board.jpg", "url:sku.jpg"]);
+  });
+
+  it("composition remap product identity hint locks IMAGE 2 SKU", () => {
+    const hint = compositionRemapProductIdentityHint();
+    assert.match(hint, /IMAGE 2/);
+    assert.match(hint, /exact product/i);
+    assert.match(hint, /do not invent/i);
   });
 
   it("dual identity hint protects IMAGE 1 product against IMAGE 2 style", () => {

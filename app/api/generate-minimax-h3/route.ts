@@ -23,6 +23,8 @@ import {
   seedancePromptToMinimaxH3,
 } from "@/lib/minimax-h3-run";
 import { adaptScriptForMinimaxH3 } from "@/lib/video-engine-prompt-adapters";
+import { formatFalGenerationError } from "@/lib/fal-errors";
+import { ensureMinimaxH3FalImageUrl } from "@/lib/minimax-h3-image-guard";
 
 export const runtime = "nodejs";
 /** H3 reference-to-video often runs 5–7+ minutes on fal; Pro/Enterprise allow up to 800s. */
@@ -151,6 +153,7 @@ export async function POST(request: Request) {
         clerkId: auth.user.userId,
         refresh: true,
       });
+      imageUrl = await ensureMinimaxH3FalImageUrl(imageUrl);
       input.image_url = imageUrl;
       let endUrl =
         (formData.get("image_end_url") as string | null)?.trim() || "";
@@ -163,6 +166,7 @@ export async function POST(request: Request) {
           clerkId: auth.user.userId,
           refresh: true,
         });
+        endUrl = await ensureMinimaxH3FalImageUrl(endUrl);
         input.end_image_url = endUrl;
       }
       input.prompt = adaptScriptForMinimaxH3({
@@ -202,9 +206,13 @@ export async function POST(request: Request) {
       }
       if (refImages.length) {
         input.reference_image_urls = await Promise.all(
-          refImages.slice(0, 9).map((u) =>
-            mirrorImageUrlToFalStorage(u, { clerkId: auth.user.userId, refresh: true }),
-          ),
+          refImages.slice(0, 9).map(async (u) => {
+            const mirrored = await mirrorImageUrlToFalStorage(u, {
+              clerkId: auth.user.userId,
+              refresh: true,
+            });
+            return ensureMinimaxH3FalImageUrl(mirrored);
+          }),
         );
       }
       if (refVideos.length) {
@@ -315,7 +323,8 @@ export async function POST(request: Request) {
       kind: "minimax_h3",
       reason: "generation_failed",
     });
-    const message = e instanceof Error ? e.message : "Video generation failed.";
+    const message = formatFalGenerationError(e, "Video generation failed.");
+    console.error("[generate-minimax-h3] failed:", message);
     return NextResponse.json({ error: message }, { status: 502 });
   }
 }

@@ -174,6 +174,19 @@ import {
 	type CreativeMotionSchemePick,
 } from "@/lib/creative-motion";
 import {
+	IMPACT_POSTER_DURATION_SEC,
+	buildImpactPosterVideoPrompt,
+	impactPosterMotionStrength,
+	parseImpactPosterEffectPick,
+	parseImpactPosterTonePick,
+	resolveImpactPosterEffect,
+	resolveImpactPosterTone,
+	type ImpactPosterEffectId,
+	type ImpactPosterEffectPick,
+	type ImpactPosterToneId,
+	type ImpactPosterTonePick,
+} from "@/lib/impact-poster";
+import {
 	consumeLandingRecipe,
 	isBlockbusterLandingRecipe,
 	isH3ShotLandingRecipe,
@@ -224,6 +237,7 @@ import {
 	parseH3ShowreelSchemePick,
 	parseH3SphereMgSchemePick,
 	parseH3LogoMgSchemePick,
+	resolveH3ShotStillAspectRatio,
 	resolveH3ShowreelScheme,
 	resolveH3SphereMgScheme,
 	resolveH3LogoMgScheme,
@@ -242,7 +256,11 @@ import { h3ShotRecipeInputsReady, identityRecipeHeroReady, isIdentityVideoRecipe
 import {
 	STORYBOARD_RECIPES,
 	coerceLuxuryBirthSceneCount,
+	coerceFourOrSixSceneCount,
 	effectiveStoryboardSceneCount,
+	fourOrSixDurationForSceneCount,
+	isFourOrSixCoupledRecipe,
+	isBrandWarpRecipe,
 	isLuxuryBirthRecipe,
 	luxuryBirthDurationForSceneCount,
 	resolveStoryboardRecipeId,
@@ -628,6 +646,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		setRefVideoDurationSec,
 		referenceVideoFalUrl,
 		setReferenceVideoFalUrl,
+		referenceResearchCdnUrl,
+		setReferenceResearchCdnUrl,
+		referenceResearchPlatform,
+		setReferenceResearchPlatform,
 		researchReelAnalysis,
 		setResearchReelAnalysis,
 		researchReelAnalyzeBusy,
@@ -887,6 +909,13 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 	);
 	const [creativeMotionSchemePick, setCreativeMotionSchemePickState] =
 		useState<CreativeMotionSchemePick>("auto");
+	const impactPosterStillUrlRef = useRef<string | null>(null);
+	const impactPosterEndUrlRef = useRef<string | null>(null);
+	const lastImpactPosterEffectRef = useRef<ImpactPosterEffectId | null>(null);
+	const [impactPosterTonePick, setImpactPosterTonePickState] =
+		useState<ImpactPosterTonePick>("auto");
+	const [impactPosterEffectPick, setImpactPosterEffectPickState] =
+		useState<ImpactPosterEffectPick>("auto");
 	const [storyboardRecipeId, setStoryboardRecipeIdState] =
 		useState<StoryboardRecipeId>("classic-tvc");
 	const [compositionPresetId, setCompositionPresetId] =
@@ -906,18 +935,44 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			onReferenceAdFile(null);
 			return;
 		}
+		if (isFourOrSixCoupledRecipe(id)) {
+			const currentCount = isBrandWarpRecipe(id)
+				? storyboardSceneCount === "6"
+					? "6"
+					: "4"
+				: storyboardSceneCount === "4"
+					? "4"
+					: "6";
+			setStoryboardSceneCount(currentCount);
+			setStoryboardTrimDuration(
+				String(
+					fourOrSixDurationForSceneCount(currentCount),
+				) as typeof storyboardTrimDuration,
+			);
+			return;
+		}
 		if (storyboardRecipeForbidsReference(id)) {
 			onReferenceAdFile(null);
 		}
+		void def;
 	}
 
-	/** Wrapper used by UI — auto-couples duration when Luxury birth is active. */
+	/** Wrapper used by UI — auto-couples duration when Luxury birth / Premium punch is active. */
 	function setLuxuryAwareSceneCount(next: StoryboardSceneCount) {
 		setStoryboardSceneCount(next);
 		if (isLuxuryBirthRecipe(storyboardRecipeId)) {
 			const coerced = coerceLuxuryBirthSceneCount(next);
 			setStoryboardTrimDuration(
 				String(luxuryBirthDurationForSceneCount(coerced)) as typeof storyboardTrimDuration,
+			);
+		} else if (isFourOrSixCoupledRecipe(storyboardRecipeId)) {
+			const coerced = isBrandWarpRecipe(storyboardRecipeId)
+				? next === "6"
+					? "6"
+					: "4"
+				: coerceFourOrSixSceneCount(next);
+			setStoryboardTrimDuration(
+				String(fourOrSixDurationForSceneCount(coerced)) as typeof storyboardTrimDuration,
 			);
 		}
 	}
@@ -949,6 +1004,26 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			if (prev !== next) {
 				creativeMotionStillUrlRef.current = null;
 				creativeMotionEndUrlRef.current = null;
+			}
+			return next;
+		});
+	}
+
+	function setImpactPosterTonePick(next: ImpactPosterTonePick) {
+		setImpactPosterTonePickState((prev) => {
+			if (prev !== next) {
+				impactPosterStillUrlRef.current = null;
+				impactPosterEndUrlRef.current = null;
+			}
+			return next;
+		});
+	}
+
+	function setImpactPosterEffectPick(next: ImpactPosterEffectPick) {
+		setImpactPosterEffectPickState((prev) => {
+			if (prev !== next) {
+				impactPosterStillUrlRef.current = null;
+				impactPosterEndUrlRef.current = null;
 			}
 			return next;
 		});
@@ -1775,7 +1850,16 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			);
 			try {
 				const fd = new FormData();
-				fd.set("reference_video", videoFile);
+				const cdnUrl = referenceResearchCdnUrl?.trim() ?? "";
+				if (cdnUrl) {
+					fd.set("reference_video_url", cdnUrl);
+					fd.set(
+						"reference_platform",
+						referenceResearchPlatform ?? "tiktok",
+					);
+				} else {
+					fd.set("reference_video", videoFile);
+				}
 				fd.set("product_name", promoteName);
 				fd.set("promotion_mode", promotionMode);
 				fd.set("conceptIdea", conceptIdea.trim());
@@ -1923,6 +2007,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			setImageRefPhoto,
 			setImageCreativeMode,
 			referenceVideoAnalyzeIncludesStoryboard,
+			referenceResearchCdnUrl,
+			referenceResearchPlatform,
 			setReferenceVideoFalUrl,
 			setRefVideoDurationSec,
 			videoSettings,
@@ -2894,9 +2980,13 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				autoSecondFrame: lockH3 ? false : s.autoSecondFrame,
 				videoEngine: lockH3 ? "minimax-h3" : s.videoEngine,
 			}));
-			if (isTvc) {
-				setStoryboardTrimDuration("12");
-			}
+		}
+		if (def.storyboardRecipeId) {
+			setStoryboardRecipeId(def.storyboardRecipeId);
+		} else if (isTvc && def.duration && def.duration !== "auto") {
+			setStoryboardTrimDuration(
+				def.duration as typeof storyboardTrimDuration,
+			);
 		}
 		if (isImagePoster) {
 			setVideoCreativeMode("product-promo");
@@ -3906,6 +3996,19 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				motionStyle: "gentle-orbit",
 				videoEngine: "minimax-h3",
 			}));
+		} else if (mode === "impact-poster") {
+			setImageTextMode("textless");
+			setUseOriginalImage(false);
+			setVideoSettings((s: VideoSettings) => ({
+				...s,
+				duration:
+					s.duration === "auto" || Number(s.duration) > 8
+						? "6"
+						: s.duration,
+				autoSecondFrame: false,
+				motionStyle: "slow-push",
+				videoEngine: "minimax-h3",
+			}));
 		} else if (mode === "blockbuster") {
 			setWorkflowMode("video-only");
 			setUseOriginalImage(true);
@@ -4037,6 +4140,14 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			hasProductPhoto: hasProductPhotoLock,
 			hasConceptHero: hasConceptHeroLock,
 		});
+
+	const impactPosterCanAutoStill =
+		videoCreativeMode === "impact-poster" &&
+		(hasProductPhotoLock ||
+			(promotionMode === "concept" &&
+				Boolean(
+					conceptIdea.trim() || headline.trim() || product.trim(),
+				)));
 
 	const handThrowCanAutoStill =
 		videoCreativeMode === "hand-throw-scene" &&
@@ -5877,6 +5988,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 
   function onReferenceAdFile(file: File | null) {
     setReferenceAd(file);
+    if (!file) {
+      setReferenceResearchCdnUrl(null);
+      setReferenceResearchPlatform(null);
+    }
     if (file) {
       setSelectedReferenceClipId(null);
       setError(null);
@@ -5911,6 +6026,14 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         v.src = url;
       }
     }
+  }
+
+  function setReferenceResearchCdn(input: {
+    url: string | null;
+    platform: import("@/lib/content-research-types").ContentPlatform | null;
+  }) {
+    setReferenceResearchCdnUrl(input.url);
+    setReferenceResearchPlatform(input.platform);
   }
 
 	async function ensureReferenceVideoFalUrl(refVideo: File): Promise<string> {
@@ -7072,13 +7195,13 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			fd.set("visual_style", visualStyleId);
 			fd.set("art_style", artStyleId);
 			fd.set("image_text_mode", "textless");
+			fd.set("h3_shot_still", "true");
 			fd.set(
 				"aspect_ratio",
-				mode === "h3-showreel"
-					? parseH3ShowreelAspect(h3ShowreelAspect)
-					: mode === "h3-logo-mg"
-						? "16:9"
-						: "9:16",
+				resolveH3ShotStillAspectRatio(
+					mode,
+					mode === "h3-showreel" ? h3ShowreelAspect : undefined,
+				),
 			);
 			fd.set("num_images", "1");
 			fd.set("promotion_mode", promotionMode);
@@ -8130,6 +8253,208 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		setVideoNote(
 			[
 				m.wizard.vacuumInflateHint,
+				fx.usedSeedanceFallback
+					? m.wizard.h3ToSeedanceFallbackNote
+					: m.wizard.videoEngineMinimaxH3,
+				pathNote,
+				typeof fx.data.note === "string" ? fx.data.note : undefined,
+			]
+				.filter(Boolean)
+				.join(" · "),
+		);
+		return fx.videoUrl;
+	}
+
+	async function generateImpactPosterKeyframe(
+		tone: ImpactPosterToneId,
+		effect: ImpactPosterEffectId,
+		frame: "start" | "end",
+		startPlateUrl?: string,
+	): Promise<string> {
+		setVideoNote(
+			frame === "end"
+				? m.wizard.impactPosterBuildingEnd
+				: m.wizard.impactPosterBuildingStill,
+		);
+		setImageJobMeta({
+			kind: "image",
+			startedAt: Date.now(),
+			sceneCount: 1,
+		});
+		try {
+			const fd = new FormData();
+			fd.set("visual_style", visualStyleId);
+			fd.set("art_style", artStyleId);
+			if (brandProfile)
+				fd.set("brand_profile", JSON.stringify(brandProfile));
+			fd.set("brand_kit", JSON.stringify(brandKit));
+			fd.set(
+				"product_name",
+				promotionMode === "concept"
+					? effectivePromoteName ||
+							product.trim() ||
+							conceptIdea.trim()
+					: product.trim(),
+			);
+			fd.set("business", business.trim());
+			fd.set(
+				"headline",
+				headline.trim() || product.trim() || conceptIdea.trim(),
+			);
+			fd.set("subline", subline.trim());
+			fd.set("offer", offer.trim());
+			fd.set("prompt_market", promptMarket);
+			fd.set("subject_framing", subjectFraming);
+			fd.set("prompt_extra", effectivePromptExtra());
+			fd.set("workflow_mode", workflowMode);
+			fd.set("promotion_mode", promotionMode);
+			fd.set(
+				"image_text_mode",
+				frame === "end" ? "integrated" : "textless",
+			);
+			fd.set("aspect_ratio", effectiveImageAspectRatio);
+			fd.set(
+				"endpoint",
+				frame === "end" && startPlateUrl
+					? EDIT_ENDPOINT
+					: productPhoto
+						? EDIT_ENDPOINT
+						: TEXT_ENDPOINT,
+			);
+			fd.set("num_images", "1");
+			fd.set("image_output_mode", "single");
+			fd.set("impact_poster", "1");
+			fd.set("impact_poster_frame", frame);
+			fd.set("impact_poster_tone", tone);
+			fd.set("impact_poster_effect", effect);
+			if (frame === "end" && startPlateUrl)
+				fd.set("start_plate_url", startPlateUrl);
+			attachReferenceToForm(fd);
+
+			const res = await fetch("/api/generate-image", {
+				method: "POST",
+				body: fd,
+			});
+			const data = await readGenerateJson(res);
+			if (!res.ok)
+				throw new Error(
+					(data.error as string) || m.errors.polishFailed,
+				);
+			notifyCreditBalance(readCreditBalanceFromResponse(data));
+			const urls = (data.imageUrls as string[] | undefined) ?? [
+				data.imageUrl as string,
+			];
+			const applied = applyGeneratedImages(
+				urls,
+				data.endpoint as string | undefined,
+			);
+			if (!applied) throw new Error(m.errors.imageGenNoUrl);
+			return applied;
+		} finally {
+			setImageJobMeta(null);
+		}
+	}
+
+	async function makeImpactPosterVideo(
+		imageStartUrlOverride?: string,
+	): Promise<string> {
+		const tone = resolveImpactPosterTone({
+			pick: parseImpactPosterTonePick(impactPosterTonePick),
+			product,
+			headline,
+			subline,
+			extra: promptExtra,
+			conceptIdea,
+		});
+		const effect = resolveImpactPosterEffect({
+			pick: parseImpactPosterEffectPick(impactPosterEffectPick),
+			tone,
+			excludeId:
+				impactPosterEffectPick === "auto"
+					? lastImpactPosterEffectRef.current
+					: null,
+		});
+		lastImpactPosterEffectRef.current = effect;
+
+		let startUrl =
+			imageStartUrlOverride?.trim() ||
+			impactPosterStillUrlRef.current ||
+			"";
+		if (!startUrl) {
+			startUrl = await generateImpactPosterKeyframe(tone, effect, "start");
+		}
+		impactPosterStillUrlRef.current = startUrl;
+
+		let endUrl = impactPosterEndUrlRef.current || "";
+		if (!endUrl) {
+			endUrl = await generateImpactPosterKeyframe(
+				tone,
+				effect,
+				"end",
+				startUrl,
+			);
+		}
+		impactPosterEndUrlRef.current = endUrl;
+
+		const pair = [startUrl, endUrl].filter(Boolean);
+		if (pair.length) {
+			setImageVariantUrls(pair);
+			setSelectedVariantIndex(0);
+			setImageUrl(startUrl);
+			imageUrlRef.current = startUrl;
+		}
+
+		const toneLabel = m.wizard.impactPosterTones[tone]?.title ?? tone;
+		const effectLabel =
+			m.wizard.impactPosterEffects[effect]?.title ?? effect;
+		setVideoNote(
+			`${m.wizard.impactPosterAnimating} · ${toneLabel} · ${effectLabel}`,
+		);
+
+		const subject =
+			promotionMode === "concept"
+				? effectivePromoteName ||
+					product.trim() ||
+					conceptIdea.trim() ||
+					business.trim()
+				: product.trim() || business.trim();
+		const fxPrompt = buildImpactPosterVideoPrompt({
+			tone,
+			effect,
+			product: subject || "the product",
+			conceptMode: promotionMode === "concept",
+			durationSec: IMPACT_POSTER_DURATION_SEC,
+		});
+		if (videoPrompt.trim() !== fxPrompt) setVideoPrompt(fxPrompt);
+
+		const fd = new FormData();
+		fd.set("mode", "image");
+		fd.set("promotion_mode", promotionMode);
+		fd.set("prompt", seedancePromptForGenerate(fxPrompt));
+		fd.set("resolution", "480p");
+		fd.set("duration", String(IMPACT_POSTER_DURATION_SEC));
+		fd.set("aspect_ratio", effectiveImageAspectRatio);
+		fd.set("motion_strength", String(impactPosterMotionStrength(effect)));
+		fd.set("negative_prompt", negativePrompt);
+		fd.set("avoid_on_screen_text", "true");
+		fd.set("impact_poster", "1");
+		fd.set("impact_poster_tone", tone);
+		fd.set("impact_poster_effect", effect);
+		fd.set("product_name", subject);
+		fd.set("business", business.trim());
+		fd.set("image_start_url", startUrl);
+		fd.set("image_end_url", endUrl);
+
+		const fx = await generateStartEndFxVideo({
+			fd,
+			recipeDurationSec: IMPACT_POSTER_DURATION_SEC,
+		});
+		const pathNote = wizardVideoReadyExtraNote(fx.data);
+		setVideoNote(
+			[
+				m.wizard.impactPosterHint,
+				toneLabel,
+				effectLabel,
 				fx.usedSeedanceFallback
 					? m.wizard.h3ToSeedanceFallbackNote
 					: m.wizard.videoEngineMinimaxH3,
@@ -9613,6 +9938,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					// Keep MiniMax H3 native audio — do not replace with library BGM.
 					url = await makeMotionPosterVideo(opts?.imageUrlOverride);
 					break;
+				case "impact-poster":
+					url = await makeImpactPosterVideo(opts?.imageUrlOverride);
+					break;
 				case "blockbuster":
 					url = await makeBlockbusterVideo();
 					break;
@@ -9986,6 +10314,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			!conceptTextVideoReady &&
 			!directReferenceR2vReady &&
 			!motionPosterCanAutoStill &&
+			!impactPosterCanAutoStill &&
 			!socialDripCanAutoStill &&
 			!vacuumInflateCanAutoStill &&
 			!creativeMotionCanAutoStill &&
@@ -10628,6 +10957,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     onImageInputModeChange,
     onProductPhotoSelected,
     onReferenceAdFile,
+    setReferenceResearchCdn,
     onVideoCreativeModeChange,
     onWorkflowModeChange,
     planAdPackReview,
@@ -10918,6 +11248,11 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		setBlockbusterHeroHold,
 		creativeMotionSchemePick,
 		setCreativeMotionSchemePick,
+		impactPosterTonePick,
+		setImpactPosterTonePick,
+		impactPosterEffectPick,
+		setImpactPosterEffectPick,
+		impactPosterCanAutoStill,
 		storyboardRecipeId,
 		setStoryboardRecipeId,
 		compositionPresetId,

@@ -20,7 +20,74 @@ export const PROGRESS_ESTIMATES = {
   videoReferenceR2vSec: 420,
   videoCompositorSec: 38,
   videoSecondFrameExtraSec: 18,
+  /**
+   * Research reel analyze — fetch + frames + DeepSeek (+ optional storyboard) + prepare clip.
+   * Soft UI ETA; server maxDuration is 300s.
+   */
+  researchReelAnalyzeSec: 120,
+  researchReelAnalyzeWithStoryboardSec: 150,
 } as const;
+
+export type ResearchReelAnalyzePhaseId =
+  | "fetch"
+  | "frames"
+  | "plan"
+  | "storyboard"
+  | "prepare";
+
+/** Phase boundaries as fractions of total analyze ETA. */
+const RESEARCH_REEL_PHASES: {
+  id: ResearchReelAnalyzePhaseId;
+  endFrac: number;
+  storyboardOnly?: boolean;
+}[] = [
+  { id: "fetch", endFrac: 0.22 },
+  { id: "frames", endFrac: 0.48 },
+  { id: "plan", endFrac: 0.72 },
+  { id: "storyboard", endFrac: 0.88, storyboardOnly: true },
+  { id: "prepare", endFrac: 1 },
+];
+
+export function estimateResearchReelAnalyzeTotalSec(withStoryboard: boolean): number {
+  return withStoryboard
+    ? PROGRESS_ESTIMATES.researchReelAnalyzeWithStoryboardSec
+    : PROGRESS_ESTIMATES.researchReelAnalyzeSec;
+}
+
+export function researchReelAnalyzeProgress(
+  elapsedSec: number,
+  withStoryboard: boolean,
+): {
+  phase: ResearchReelAnalyzePhaseId;
+  pct: number;
+  remainingSec: number;
+  totalSec: number;
+} {
+  const totalSec = estimateResearchReelAnalyzeTotalSec(withStoryboard);
+  const phases = RESEARCH_REEL_PHASES.filter(
+    (p) => !p.storyboardOnly || withStoryboard,
+  );
+  // Re-normalize endFrac across active phases so storyboard-less path still fills 0→1.
+  const last = phases[phases.length - 1]!;
+  const scale = last.endFrac > 0 ? 1 / last.endFrac : 1;
+  let phase: ResearchReelAnalyzePhaseId = phases[0]!.id;
+  for (const p of phases) {
+    const endSec = totalSec * p.endFrac * scale;
+    phase = p.id;
+    if (elapsedSec < endSec) break;
+  }
+  const rawPct = Math.round((elapsedSec / totalSec) * 100);
+  const pct =
+    elapsedSec >= totalSec
+      ? Math.min(97, 90 + Math.min(7, Math.floor((elapsedSec - totalSec) / 20)))
+      : Math.min(97, Math.max(8, rawPct));
+  return {
+    phase,
+    pct,
+    remainingSec: estimateRemainingSec(totalSec, elapsedSec),
+    totalSec,
+  };
+}
 
 export function estimateImageJobTotalSec(meta: ImageJobMeta): number {
   switch (meta.kind) {

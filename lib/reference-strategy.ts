@@ -192,10 +192,8 @@ export function resolveReferenceStrategy(
 		kind === "layout-transfer"
 			? input.hasReferenceUpload && input.hasProductPhoto
 			: kind === "composition-remap"
-				? // Concept boards: shell-only. Product photo dual only for physical SKU insert.
-					input.promotionMode === "physical" &&
-					input.hasReferenceUpload &&
-					input.hasProductPhoto
+				? // Any mode: if the user uploaded a product photo, lock that SKU as IMAGE 2.
+					input.hasReferenceUpload && input.hasProductPhoto
 				: false;
 	const sendPixelsToFal =
 		kind === "composition-remap"

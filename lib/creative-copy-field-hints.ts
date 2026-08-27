@@ -104,7 +104,7 @@ export function resolveCreativeCopyFieldHints(input: {
 
   // --- Video / recipe modes first (combined stills+video still need accurate video truth) ---
   if (isVideoWorkflow && videoMode) {
-    if (videoMode === "motion-poster") {
+    if (videoMode === "motion-poster" || videoMode === "impact-poster") {
       return fromRoles(
         {
           hook: "on-end-still",

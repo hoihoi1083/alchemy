@@ -74,7 +74,12 @@ describe("landing-recipes", () => {
     assert.equal(conceptTvc.storyboardSceneCount, "4");
     assert.deepEqual(landingRecipesForPromotion("physical"), [
       "motion-poster",
+      "product-impact-poster-6s",
       "product-tvc-12s",
+      "product-premium-punch-15s",
+      "product-cinematic-assemble-15s",
+      "product-studio-type-15s",
+      "product-brand-warp-12s",
       "product-blockbuster-9s",
       "product-vacuum-inflate-4s",
       "product-creative-motion-4s",
@@ -100,7 +105,11 @@ describe("landing-recipes", () => {
     ]);
     assert.deepEqual(landingRecipesForPromotion("concept"), [
       "concept-motion-poster",
+      "concept-impact-poster-6s",
       "concept-tvc-12s",
+      "concept-premium-punch-15s",
+      "concept-studio-type-15s",
+      "concept-brand-warp-12s",
       "concept-blockbuster-9s",
       "concept-vacuum-inflate-4s",
       "concept-creative-motion-4s",

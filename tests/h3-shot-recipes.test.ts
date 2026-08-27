@@ -91,7 +91,7 @@ describe("H3 shot recipes", () => {
         product: "SOLAR tumbler",
         showreelAspect: mode === "h3-showreel" ? "9:16" : undefined,
       });
-      assert.match(still, /9:16|16:9/);
+      assert.match(still, /9:16|16:9|1:1/);
       assert.match(still, /textless/i);
       assert.match(still, /SOLAR tumbler/);
     }
@@ -325,7 +325,7 @@ describe("H3 shot recipes", () => {
       product: "NERO",
       logoMgScheme: "chrome-type",
     });
-    assert.match(logoStill, /16:9/);
+    assert.match(logoStill, /1:1/);
     assert.match(logoStill, /chrome|iridescent|3D|wordmark/i);
     assert.match(logoStill, /NERO/);
     const movieTitle = buildH3ShotRecipePrompt({
@@ -644,6 +644,8 @@ describe("H3 shot recipe wizard wiring", () => {
     assert.ok(start > 0 && end > start);
     const fn = wizard.slice(start, end);
     assert.match(wizard, /async function generateH3ShotRecipeStill/);
+    assert.match(wizard, /h3_shot_still/);
+    assert.match(wizard, /resolveH3ShotStillAspectRatio/);
     assert.match(wizard, /buildH3ShotRecipeStillPrompt/);
     assert.match(fn, /generateH3ShotRecipeStill/);
     assert.match(fn, /generate-minimax-h3/);

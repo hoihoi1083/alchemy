@@ -48,6 +48,7 @@ export function resolveVideoOutputPresentation(
   if (input.workflowMode === "image-only") return null;
   if (input.usesCompositor) return "animate-keyframe";
   if (input.videoCreativeMode === "motion-poster") return "animate-keyframe";
+  if (input.videoCreativeMode === "impact-poster") return "animate-keyframe";
   if (input.videoCreativeMode === "social-drip") return "animate-keyframe";
   if (input.videoCreativeMode === "vacuum-inflate") return "animate-keyframe";
   if (input.videoCreativeMode === "creative-motion") return "animate-keyframe";

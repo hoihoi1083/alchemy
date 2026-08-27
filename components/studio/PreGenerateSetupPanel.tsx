@@ -33,6 +33,7 @@ import { StoryboardRecipePicker } from "@/components/studio/StoryboardRecipePick
 import { LuxuryFieldBadge } from "@/components/studio/StoryboardLuxuryStoryDrivers";
 import {
   isLuxuryBirthRecipe,
+  isProductFirstStoryboardRecipe,
   luxuryBirthSceneCountOptions,
 } from "@/lib/storyboard-recipes";
 import { LUXURY_FIELD_WRAP_CLASS, luxuryFieldWrap } from "@/lib/storyboard-luxury-fields";
@@ -1026,7 +1027,7 @@ export function PreGenerateSetupPanel({
   };
 
   useEffect(() => {
-    if (isConcept && isLuxuryBirthRecipe(wizard.storyboardRecipeId)) {
+    if (isConcept && isProductFirstStoryboardRecipe(wizard.storyboardRecipeId)) {
       wizard.setStoryboardRecipeId("classic-tvc");
     }
   }, [isConcept, wizard.storyboardRecipeId, wizard.setStoryboardRecipeId]);

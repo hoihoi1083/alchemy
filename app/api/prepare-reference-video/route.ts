@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { requireAppUser } from "@/lib/require-app-user";
 import {
   buildSeedanceReferenceClip,
+  compressReferenceClipIfNeeded,
   MINIMAX_MAX_REFERENCE_SEC,
 } from "@/lib/reference-video-prepare";
 
@@ -42,10 +43,11 @@ export async function POST(request: Request) {
     // Cap under 15.0s — MiniMax H3 rejects reference_video_urls at/over 15s
     // (that limit is the REFERENCE clip, not the user's chosen output length).
     const clip = await buildSeedanceReferenceClip(raw, MINIMAX_MAX_REFERENCE_SEC);
+    const compressed = await compressReferenceClipIfNeeded(clip.buffer);
 
     return NextResponse.json({
       videoUrl: await fal.storage.upload(
-        new File([new Uint8Array(clip.buffer)], "reference-clip.mp4", {
+        new File([new Uint8Array(compressed.buffer)], "reference-clip.mp4", {
           type: "video/mp4",
         }),
       ),
@@ -53,7 +55,8 @@ export async function POST(request: Request) {
       trimmed: clip.digestMontage || clip.sourceDurationSec > MINIMAX_MAX_REFERENCE_SEC,
       digestMontage: clip.digestMontage,
       sourceDurationSec: clip.sourceDurationSec,
-      bytes: clip.buffer.byteLength,
+      bytes: compressed.buffer.byteLength,
+      compressed: compressed.compressed,
     });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Reference video prep failed.";

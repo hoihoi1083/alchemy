@@ -13,6 +13,7 @@ import { h3ShotModesForPromotion } from "@/lib/recipe-path-ux";
 import type { PromotionMode } from "@/lib/promotion-mode";
 import {
   STORYBOARD_RECIPE_IDS,
+  isProductFirstStoryboardRecipe,
   storyboardRecipePreviewSrc,
   type StoryboardRecipeId,
 } from "@/lib/storyboard-recipes";
@@ -98,7 +99,7 @@ export function buildStoryboardTemplateCards(
   isConcept: boolean,
 ): IntakeTemplateCard[] {
   const ids = isConcept
-    ? STORYBOARD_RECIPE_IDS.filter((id) => id !== "luxury-birth")
+    ? STORYBOARD_RECIPE_IDS.filter((id) => !isProductFirstStoryboardRecipe(id))
     : [...STORYBOARD_RECIPE_IDS];
   return ids.map((id) => {
     const label = copy.storyboardRecipes[id];
@@ -134,6 +135,14 @@ export function buildProductVideoTemplateCards(
       title: modes["motion-poster"].title,
       description: modes["motion-poster"].description,
       previewSrc: videoModePreviewSrc("motion-poster"),
+    },
+    {
+      id: "impact_poster",
+      kind: "video",
+      videoSubpath: "impact_poster",
+      title: modes["impact-poster"].title,
+      description: modes["impact-poster"].description,
+      previewSrc: videoModePreviewSrc("impact-poster"),
     },
     {
       id: "blockbuster",
@@ -232,6 +241,14 @@ export function buildConceptVideoTemplateCards(
       title: modes["motion-poster"].title,
       description: modes["motion-poster"].description,
       previewSrc: videoModePreviewSrc("motion-poster"),
+    },
+    {
+      id: "impact_poster",
+      kind: "video",
+      videoSubpath: "impact_poster",
+      title: modes["impact-poster"].title,
+      description: modes["impact-poster"].description,
+      previewSrc: videoModePreviewSrc("impact-poster"),
     },
     {
       id: "blockbuster",

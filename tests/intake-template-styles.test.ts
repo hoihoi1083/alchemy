@@ -48,6 +48,10 @@ const copyStub = {
   storyboardRecipes: {
     "classic-tvc": { title: "Classic TVC", desc: "Flexible scenes" },
     "luxury-birth": { title: "Luxury birth", desc: "Product birth arc" },
+    "premium-punch": { title: "Premium punch", desc: "Punch commercial" },
+    "cinematic-assemble": { title: "Cinematic assemble", desc: "Action build" },
+    "studio-type": { title: "Studio type", desc: "Monochrome type" },
+    "brand-warp": { title: "Brand warp", desc: "Warp logo MG" },
   },
 };
 
@@ -104,6 +108,10 @@ describe("intake-template-styles", () => {
     assert.ok(cards.every((c) => c.kind === "storyboard"));
     assert.ok(cards.some((c) => c.id === "classic-tvc"));
     assert.ok(cards.some((c) => c.id === "luxury-birth"));
+    assert.ok(cards.some((c) => c.id === "premium-punch"));
+    assert.ok(cards.some((c) => c.id === "cinematic-assemble"));
+    assert.ok(cards.some((c) => c.id === "studio-type"));
+    assert.ok(cards.some((c) => c.id === "brand-warp"));
     assert.ok(!cards.some((c) => c.id === "product"));
     assert.ok(!cards.some((c) => c.id === "product_promo"));
     assert.ok(!cards.some((c) => c.id === "blockbuster"));
@@ -118,6 +126,10 @@ describe("intake-template-styles", () => {
     assert.ok(cards.every((c) => c.kind === "storyboard"));
     assert.ok(cards.some((c) => c.id === "classic-tvc"));
     assert.ok(!cards.some((c) => c.id === "luxury-birth"));
+    assert.ok(!cards.some((c) => c.id === "premium-punch"));
+    assert.ok(!cards.some((c) => c.id === "cinematic-assemble"));
+    assert.ok(cards.some((c) => c.id === "studio-type"));
+    assert.ok(cards.some((c) => c.id === "brand-warp"));
   });
 
   it("builds image Template cards without paper/storyboard/UGC/brand", () => {

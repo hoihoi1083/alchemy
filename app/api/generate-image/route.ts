@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import {
   buildFalCompositionRemapImageUrls,
   buildFalLayoutTransferImageUrls,
+  compositionRemapProductIdentityHint,
   dualProductIdentityHint,
 } from "@/lib/fal-dual-reference-urls";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
@@ -47,10 +48,20 @@ import {
   resolveCreativeMotionScheme,
   type CreativeMotionSchemeId,
 } from "@/lib/creative-motion";
+import {
+  buildImpactPosterStillPrompt,
+  parseImpactPosterEffectPick,
+  parseImpactPosterTonePick,
+  resolveImpactPosterEffect,
+  resolveImpactPosterTone,
+  type ImpactPosterEffectId,
+  type ImpactPosterToneId,
+} from "@/lib/impact-poster";
 import type { PromptMarket, SubjectFraming } from "@/lib/prompt-variables";
 import { defaultEditEndpoint, defaultTextEndpoint, sanitizeImageEndpoint } from "@/lib/image-endpoints";
 import { mirrorImageUrlToFalStorage } from "@/lib/fal-mirror-media";
 import { persistAndDurablize, persistAndDurablizeMany } from "@/lib/storage/durable-media";
+import { persistMinimaxH3ReadyImages, ensureMinimaxH3ImageFile } from "@/lib/minimax-h3-image-guard";
 import { isHttpOrLibraryMediaUrl } from "@/lib/storage/library-asset-url";
 import {
   IMAGE_LOGO_REFINE_SYSTEM_PROMPT,
@@ -500,6 +511,11 @@ export async function POST(request: Request) {
         .trim()
         .toLowerCase(),
     );
+    const impactPosterEarly = ["1", "true", "yes"].includes(
+      String(formData.get("impact_poster") ?? "")
+        .trim()
+        .toLowerCase(),
+    );
     const handThrowEarly = ["1", "true", "yes"].includes(
       String(formData.get("hand_throw_scene") ?? "")
         .trim()
@@ -518,6 +534,7 @@ export async function POST(request: Request) {
       !socialDripEarly &&
       !vacuumInflateEarly &&
       !creativeMotionEarly &&
+      !impactPosterEarly &&
       !handThrowEarly &&
       !productExplodeEarly
     ) {
@@ -574,6 +591,11 @@ export async function POST(request: Request) {
 
     const aspectRatioRaw = (formData.get("aspect_ratio") as string | null)?.trim() || "9:16";
     const aspectRatio = aspectRatioForApi(aspectRatioRaw);
+    const h3ShotStill = ["1", "true", "yes"].includes(
+      String(formData.get("h3_shot_still") ?? "")
+        .trim()
+        .toLowerCase(),
+    );
     const numImages = parseNumImages((formData.get("num_images") as string | null)?.trim() ?? "1");
 
     const useReferenceConcept = strategy.useReferenceConceptPrompts;
@@ -660,6 +682,11 @@ export async function POST(request: Request) {
         .trim()
         .toLowerCase(),
     );
+    const impactPoster = ["1", "true", "yes"].includes(
+      String(formData.get("impact_poster") ?? "")
+        .trim()
+        .toLowerCase(),
+    );
     const handThrowScene = ["1", "true", "yes"].includes(
       String(formData.get("hand_throw_scene") ?? "")
         .trim()
@@ -686,6 +713,10 @@ export async function POST(request: Request) {
       String(formData.get("creative_motion_frame") ?? "start").trim() === "end"
         ? "end"
         : "start";
+    const impactPosterFrame =
+      String(formData.get("impact_poster_frame") ?? "start").trim() === "end"
+        ? "end"
+        : "start";
     const handThrowFrame =
       String(formData.get("hand_throw_scene_frame") ?? "start").trim() === "end"
         ? "end"
@@ -702,9 +733,27 @@ export async function POST(request: Request) {
         headline,
       });
     }
+    let impactPosterTone: ImpactPosterToneId = "premium";
+    let impactPosterEffect: ImpactPosterEffectId = "energy-rays";
+    if (impactPoster) {
+      impactPosterTone = resolveImpactPosterTone({
+        pick: parseImpactPosterTonePick(formData.get("impact_poster_tone")),
+        product: productName,
+        headline,
+        subline,
+        extra: promptExtra,
+      });
+      impactPosterEffect = resolveImpactPosterEffect({
+        pick: parseImpactPosterEffectPick(formData.get("impact_poster_effect")),
+        tone: impactPosterTone,
+      });
+    }
     const startPlateUrl = (formData.get("start_plate_url") as string | null)?.trim() || "";
     if (motionPoster) {
       vars.imageTextMode = posterFrame === "end" ? "integrated" : "textless";
+    }
+    if (impactPoster) {
+      vars.imageTextMode = impactPosterFrame === "end" ? "integrated" : "textless";
     }
     let socialDripPlan: SocialDripPlan | null = null;
     if (socialDrip) {
@@ -737,6 +786,7 @@ export async function POST(request: Request) {
     // Never override specialized client prompts (end-frame, storyboard scene regen, advanced paste).
     const wantSinglePlan =
       !motionPoster &&
+      !impactPoster &&
       !socialDrip &&
       !vacuumInflate &&
       !creativeMotion &&
@@ -786,7 +836,7 @@ export async function POST(request: Request) {
             ...(await buildFalCompositionRemapImageUrls({
               upload: (f) => fal.storage.upload(f),
               styleRef: styleRef as File,
-              // Concept: shell only. Physical dual: optional SKU as IMAGE 2.
+              // Physical or concept: attach product when present (shell-first dual).
               productRef:
                 strategy.useDualImage && hasProduct
                   ? (reference as File)
@@ -803,7 +853,10 @@ export async function POST(request: Request) {
             })),
           );
         } else if (hasProduct) {
-          imageUrls.push(await fal.storage.upload(reference as File));
+          const refFile = h3ShotStill
+            ? await ensureMinimaxH3ImageFile(reference as File)
+            : (reference as File);
+          imageUrls.push(await fal.storage.upload(refFile));
           for (const angle of productAngleFiles) {
             imageUrls.push(await fal.storage.upload(angle));
           }
@@ -812,6 +865,13 @@ export async function POST(request: Request) {
         }
       }
       if (motionPoster && posterFrame === "end" && startPlateUrl) {
+        const plate = await mirrorImageUrlToFalStorage(startPlateUrl, {
+          clerkId: auth.user.userId,
+          refresh: true,
+        });
+        imageUrls.splice(0, imageUrls.length, plate);
+      }
+      if (impactPoster && impactPosterFrame === "end" && startPlateUrl) {
         const plate = await mirrorImageUrlToFalStorage(startPlateUrl, {
           clerkId: auth.user.userId,
           refresh: true,
@@ -863,13 +923,15 @@ export async function POST(request: Request) {
       }
 
       const angleHint =
-        strategy.kind === "composition-remap"
-          ? ""
-          : useReferenceConcept && dualImage && hasProduct && hasStyle
-            ? dualProductIdentityHint(productAngleFiles.length > 0)
-            : hasProduct && productAngleFiles.length > 0
-              ? dualProductIdentityHint(true)
-              : "";
+        strategy.kind === "composition-remap" && strategy.useDualImage
+          ? compositionRemapProductIdentityHint()
+          : strategy.kind === "composition-remap"
+            ? ""
+            : useReferenceConcept && dualImage && hasProduct && hasStyle
+              ? dualProductIdentityHint(productAngleFiles.length > 0)
+              : hasProduct && productAngleFiles.length > 0
+                ? dualProductIdentityHint(true)
+                : "";
 
       const motionPosterDialectPick = parseMotionPosterDialectPick(
         formData.get("motion_poster_dialect"),
@@ -908,6 +970,20 @@ export async function POST(request: Request) {
             conceptMode: promotionMode === "concept",
             aspectRatio: aspectRatioRaw,
             frame: creativeMotionFrame,
+          })
+        : impactPoster
+        ? buildImpactPosterStillPrompt({
+            tone: impactPosterTone,
+            effect: impactPosterEffect,
+            product:
+              productName ||
+              headline ||
+              (promotionMode === "concept" ? "brand mark" : "the product"),
+            headline,
+            subline,
+            conceptMode: promotionMode === "concept",
+            aspectRatio: aspectRatioRaw,
+            frame: impactPosterFrame,
           })
         : handThrowScene
         ? buildHandThrowSceneStillPrompt({
@@ -962,11 +1038,13 @@ export async function POST(request: Request) {
             },
           );
       // Prefer server-built prompt when we ran the single-still planner (teaching-quality DNA).
-      // Honor explicit client prompts (e.g. storyboard scene regenerate) — do not replace with
-      // a generic concept-cinematic rebuild that drops the scene action.
+      // Composition remap / layout-transfer: server has dual shell+SKU strategy — never trust a
+      // stale client prompt that was rebuilt without compositionRemapDual / product lock.
+      // Honor explicit client prompts (e.g. storyboard scene regenerate) for other paths.
       const finalPrompt = [
         socialDrip ||
         motionPoster ||
+        impactPoster ||
         vacuumInflate ||
         creativeMotion ||
         handThrowScene ||
@@ -974,9 +1052,12 @@ export async function POST(request: Request) {
           ? builtPrompt
           : singleImagePlan
             ? builtPrompt
-            : clientPrompt
-              ? clientPrompt
-              : builtPrompt,
+            : strategy.kind === "composition-remap" ||
+                strategy.kind === "layout-transfer"
+              ? builtPrompt
+              : clientPrompt
+                ? clientPrompt
+                : builtPrompt,
         angleHint,
       ]
         .filter(Boolean)
@@ -1009,13 +1090,20 @@ export async function POST(request: Request) {
 
       await trackUsage(auth.user.userId, "image");
       const archived = await archiveOutputUrls(request, outUrls, auth.user.userId);
-      const durable = await persistAndDurablizeMany({
-        clerkId: auth.user.userId,
-        kind: "image",
-        sourceUrls: outUrls,
-        fallbackUrls: archived,
-        prompt: finalPrompt.slice(0, 500),
-      });
+      const durable = h3ShotStill
+        ? await persistMinimaxH3ReadyImages({
+            clerkId: auth.user.userId,
+            sourceUrls: outUrls,
+            fallbackUrls: archived,
+            prompt: finalPrompt.slice(0, 500),
+          })
+        : await persistAndDurablizeMany({
+            clerkId: auth.user.userId,
+            kind: "image",
+            sourceUrls: outUrls,
+            fallbackUrls: archived,
+            prompt: finalPrompt.slice(0, 500),
+          });
       return NextResponse.json({
         imageUrl: durable[0],
         imageUrls: durable,

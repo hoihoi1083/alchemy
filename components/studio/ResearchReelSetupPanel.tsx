@@ -114,6 +114,11 @@ export function ResearchReelSetupPanel({ onReferenceVideo }: Props) {
               : researchReelAnalyzeNote || researchReelAnalysis?.productionNotesZh || "—"}
           </span>
         </li>
+        {researchReelAnalyzeBusy ? (
+          <li className="text-[11px] text-violet-800/90">
+            {m.wizard.researchReelAnalyzeEtaHint}
+          </li>
+        ) : null}
         {isConcept ? (
           <li className="flex items-start gap-2">
             <span aria-hidden>{headline.trim() || conceptIdea.trim() ? "✓" : "○"}</span>

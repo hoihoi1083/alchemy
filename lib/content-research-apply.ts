@@ -349,6 +349,10 @@ export type ContentAngleWizardApi = {
   onImageInputModeChange?: (mode: ImageInputMode) => void;
   onVideoCreativeModeChange?: (mode: VideoCreativeMode) => void;
   onReferenceAdFile?: (file: File | null) => void;
+  setReferenceResearchCdn?: (input: {
+    url: string | null;
+    platform: import("@/lib/content-research-types").ContentPlatform | null;
+  }) => void;
   setReferenceCarouselSlideCount?: (count: number) => void;
   setCinematicSceneCount?: (count: 1 | 2 | 3 | 4 | 5 | 6) => void;
   setContentResearchApplyRef?: (ref: ContentResearchApplyRef | null) => void;
@@ -494,6 +498,7 @@ export async function applyContentAngleToWizard(
   // the previous angle's cover/reel paired with the new angle's copy.
   wizard.setImageRefPhoto?.(null);
   wizard.onReferenceAdFile?.(null);
+  wizard.setReferenceResearchCdn?.({ url: null, platform: null });
   wizard.setExtraKitPhotos?.([]);
 
   if (!loadVideo) {
@@ -530,6 +535,7 @@ export async function applyContentAngleToWizard(
         onImageInputModeChange: wizard.onImageInputModeChange,
         onVideoCreativeModeChange: wizard.onVideoCreativeModeChange,
         onReferenceAdFile: wizard.onReferenceAdFile,
+        setReferenceResearchCdn: wizard.setReferenceResearchCdn,
         setReferenceCarouselSlideCount: wizard.setReferenceCarouselSlideCount,
         setReferenceClipLoading: wizard.setReferenceClipLoading,
       },

@@ -19,7 +19,12 @@ import {
 
 export const LANDING_RECIPE_IDS = [
   "motion-poster",
+  "product-impact-poster-6s",
   "product-tvc-12s",
+  "product-premium-punch-15s",
+  "product-cinematic-assemble-15s",
+  "product-studio-type-15s",
+  "product-brand-warp-12s",
   "product-blockbuster-9s",
   "product-vacuum-inflate-4s",
   "product-creative-motion-4s",
@@ -43,7 +48,11 @@ export const LANDING_RECIPE_IDS = [
   "product-sports-big-words",
   "product-jelly-3d",
   "concept-motion-poster",
+  "concept-impact-poster-6s",
   "concept-tvc-12s",
+  "concept-premium-punch-15s",
+  "concept-studio-type-15s",
+  "concept-brand-warp-12s",
   "concept-blockbuster-9s",
   "concept-vacuum-inflate-4s",
   "concept-creative-motion-4s",
@@ -78,6 +87,8 @@ export type LandingRecipeDef = {
   visualStyleId: VisualStyleId;
   videoCreativeMode?: VideoCreativeMode;
   storyboardSceneCount?: StoryboardSceneCount;
+  /** When set, wizard locks StoryboardRecipePicker to this narrative recipe. */
+  storyboardRecipeId?: import("@/lib/storyboard-recipes").StoryboardRecipeId;
   /** Suggested output duration string for video settings. */
   duration?: VideoDuration;
 };
@@ -166,6 +177,15 @@ export const LANDING_RECIPES: Record<LandingRecipeId, LandingRecipeDef> = {
     videoCreativeMode: "motion-poster",
     duration: "6",
   },
+  "product-impact-poster-6s": {
+    id: "product-impact-poster-6s",
+    previewSrc: videoModeRecipePreview("impact-poster"),
+    promotionMode: "physical",
+    workflowMode: "video-only",
+    visualStyleId: "product",
+    videoCreativeMode: "impact-poster",
+    duration: "6",
+  },
   "product-tvc-12s": {
     id: "product-tvc-12s",
     previewSrc: "/images/studio/visual-styles/storyboard-video.png?v=2",
@@ -173,6 +193,47 @@ export const LANDING_RECIPES: Record<LandingRecipeId, LandingRecipeDef> = {
     workflowMode: "combined",
     visualStyleId: "storyboard-video",
     storyboardSceneCount: String(DEFAULT_STORYBOARD_SCENE_COUNT) as StoryboardSceneCount,
+    storyboardRecipeId: "classic-tvc",
+    duration: "12",
+  },
+  "product-premium-punch-15s": {
+    id: "product-premium-punch-15s",
+    previewSrc: "/images/studio/recipes/premium-punch.png?v=1",
+    promotionMode: "physical",
+    workflowMode: "combined",
+    visualStyleId: "storyboard-video",
+    storyboardSceneCount: "6",
+    storyboardRecipeId: "premium-punch",
+    duration: "12",
+  },
+  "product-cinematic-assemble-15s": {
+    id: "product-cinematic-assemble-15s",
+    previewSrc: "/images/studio/recipes/cinematic-assemble.png?v=1",
+    promotionMode: "physical",
+    workflowMode: "combined",
+    visualStyleId: "storyboard-video",
+    storyboardSceneCount: "6",
+    storyboardRecipeId: "cinematic-assemble",
+    duration: "12",
+  },
+  "product-studio-type-15s": {
+    id: "product-studio-type-15s",
+    previewSrc: "/images/studio/recipes/studio-type.png?v=1",
+    promotionMode: "physical",
+    workflowMode: "combined",
+    visualStyleId: "storyboard-video",
+    storyboardSceneCount: "6",
+    storyboardRecipeId: "studio-type",
+    duration: "12",
+  },
+  "product-brand-warp-12s": {
+    id: "product-brand-warp-12s",
+    previewSrc: "/images/studio/recipes/brand-warp.png?v=1",
+    promotionMode: "physical",
+    workflowMode: "combined",
+    visualStyleId: "storyboard-video",
+    storyboardSceneCount: "4",
+    storyboardRecipeId: "brand-warp",
     duration: "12",
   },
   "product-blockbuster-9s": {
@@ -285,6 +346,15 @@ export const LANDING_RECIPES: Record<LandingRecipeId, LandingRecipeDef> = {
     videoCreativeMode: "motion-poster",
     duration: "6",
   },
+  "concept-impact-poster-6s": {
+    id: "concept-impact-poster-6s",
+    previewSrc: videoModeRecipePreview("impact-poster"),
+    promotionMode: "concept",
+    workflowMode: "video-only",
+    visualStyleId: "service-promo",
+    videoCreativeMode: "impact-poster",
+    duration: "6",
+  },
   "concept-tvc-12s": {
     id: "concept-tvc-12s",
     previewSrc: "/images/studio/visual-styles/storyboard-video.png?v=2",
@@ -292,6 +362,37 @@ export const LANDING_RECIPES: Record<LandingRecipeId, LandingRecipeDef> = {
     workflowMode: "combined",
     visualStyleId: "storyboard-video",
     storyboardSceneCount: String(DEFAULT_STORYBOARD_SCENE_COUNT) as StoryboardSceneCount,
+    storyboardRecipeId: "classic-tvc",
+    duration: "12",
+  },
+  "concept-premium-punch-15s": {
+    id: "concept-premium-punch-15s",
+    previewSrc: "/images/studio/recipes/premium-punch.png?v=1",
+    promotionMode: "concept",
+    workflowMode: "combined",
+    visualStyleId: "storyboard-video",
+    storyboardSceneCount: "6",
+    storyboardRecipeId: "premium-punch",
+    duration: "12",
+  },
+  "concept-studio-type-15s": {
+    id: "concept-studio-type-15s",
+    previewSrc: "/images/studio/recipes/studio-type.png?v=1",
+    promotionMode: "concept",
+    workflowMode: "combined",
+    visualStyleId: "storyboard-video",
+    storyboardSceneCount: "6",
+    storyboardRecipeId: "studio-type",
+    duration: "12",
+  },
+  "concept-brand-warp-12s": {
+    id: "concept-brand-warp-12s",
+    previewSrc: "/images/studio/recipes/brand-warp.png?v=1",
+    promotionMode: "concept",
+    workflowMode: "combined",
+    visualStyleId: "storyboard-video",
+    storyboardSceneCount: "4",
+    storyboardRecipeId: "brand-warp",
     duration: "12",
   },
   "concept-blockbuster-9s": {
@@ -520,6 +621,14 @@ export function microContextForLandingRecipe(
       workflowMode: "video-only",
       intakePath: "direct",
       videoSubpath: "motion_poster",
+    };
+  }
+  if (LANDING_RECIPES[recipe].videoCreativeMode === "impact-poster") {
+    return {
+      promotionMode,
+      workflowMode: "video-only",
+      intakePath: "direct",
+      videoSubpath: "impact_poster",
     };
   }
   return {

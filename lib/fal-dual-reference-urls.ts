@@ -2,8 +2,19 @@ import { nameIsClaimImage1IsObjectLine } from "@/lib/prompt-balance-contract";
 
 /**
  * Composition remap: IMAGE 1 = composition shell (reference board).
- * Optional IMAGE 2 = product/SKU to place only in the hub zone — never packshot-first.
+ * IMAGE 2 (when present) = user's product photo — mandatory SKU identity in hub props.
+ * Shell stays first so layout wins; product is never packshot-first.
  */
+
+/** Extra identity lock when composition-remap dual pixels are attached. */
+export function compositionRemapProductIdentityHint(): string {
+  return [
+    "COMPOSITION REMAP PRODUCT LOCK: IMAGE 2 is the user's exact product photo.",
+    "Every bottle/pack/SKU on the output board must match IMAGE 2 pixels (shape, materials, colors, cap).",
+    "Do not invent a different product from the topic name. Hub hero may hold IMAGE 2; floor/table props near the hub must also be IMAGE 2.",
+    "IMAGE 1 remains board geometry only — never copy IMAGE 1's original product props.",
+  ].join(" ");
+}
 export async function buildFalCompositionRemapImageUrls(input: {
   upload: (file: File) => Promise<string>;
   styleRef: File | null;

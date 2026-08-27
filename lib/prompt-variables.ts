@@ -359,9 +359,12 @@ function imageCompositionRemapReferenceBlock(
 	);
 	if (dualProduct) {
 		return joinParts(
-			"COMPOSITION REMAP — IMAGE 1 = composition SHELL (board grammar). IMAGE 2 = optional SKU only.",
+			"COMPOSITION REMAP — IMAGE 1 = composition SHELL (board grammar). IMAGE 2 = USER PRODUCT PHOTO (mandatory identity).",
 			shellLock,
-			"If IMAGE 2 is a product photo: place that exact SKU small in the hub props zone (held / on table near the hero) — do NOT turn the whole poster into an IMAGE 2 packshot.",
+			"PRODUCT PIXEL LOCK (IMAGE 2): Every product bottle/pack/SKU on the board MUST be IMAGE 2's exact photographed item — same silhouette, materials, colors, cap, label geometry.",
+			"Place IMAGE 2 in hub prop slots (held by the hub hero and/or on the floor/table near them) at readable size — still a board, not a packshot takeover.",
+			"FORBIDDEN: inventing a different bottle, dropper, serum jar, or packaging from the topic name (e.g. do not draw a generic amber Vit C dropper if IMAGE 2 is a black pump bottle).",
+			"Topic/headline words are COPY ONLY — they must not redesign the product shape.",
 			"REPLACE all IMAGE 1 logos, wordmarks, and readable text with the user's topic and campaign copy.",
 			thirdPartyBrandGuardBlock(),
 		);
@@ -2269,7 +2272,7 @@ export function buildCompositionRemapImagePrompt(
 			artStyleMandatoryLead(vars.artStyle),
 			`Two images. Create ONE new ${aspect} composition-remap INFRASTRUCTURE BOARD for ${topic}.`,
 			imageCompositionRemapReferenceBlock(true, keepHero),
-			`CRITICAL: IMAGE 1 pixels win for PANEL GEOMETRY / board machine${keepHero ? " and hub hero identity" : ""}. IMAGE 2 (if any) is only a small SKU insert — never the full-scene hero.`,
+			`CRITICAL: IMAGE 1 pixels win for PANEL GEOMETRY / board machine${keepHero ? " and hub hero identity" : ""}. IMAGE 2 pixels win for PRODUCT IDENTITY — every SKU on the board must be IMAGE 2, never a topic-invented bottle.`,
 			campaignCopy
 				? `Campaign copy (all on-image text): ${campaignCopy}.`
 				: `No user headline — use "${topic}" as the only masthead; invent support lines only from the topic, never from IMAGE 1.`,

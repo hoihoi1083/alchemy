@@ -869,6 +869,12 @@ export const en = {
 						"2 stills (no type → typed poster) then video morphs product + words. Not a multi-scene storyboard.",
 					costHint: "~2 images + 1 short clip · fits free grant",
 				},
+				"product-impact-poster-6s": {
+					title: "Impact poster ~6s",
+					description:
+						"大透视 product punch: stronger thrust + shatter/rays/debris/lightning. Pick tone + effect.",
+					costHint: "~2 stills + 6s H3 · product photo",
+				},
 				"product-tvc-12s": {
 					title: "Product TVC ~12s",
 					description:
@@ -876,11 +882,41 @@ export const en = {
 					costHint:
 						"~4 stills + 12s single-clip — paid plan · stitched fallback may fit free",
 				},
+				"product-premium-punch-15s": {
+					title: "Premium punch TVC ~15s",
+					description:
+						"Punch commercial storyboard: tease → detail → hero punch (AirPods float / car frontal) → CTA.",
+					costHint: "~6 stills + 15s storyboard clip · product packshot required",
+				},
+				"product-cinematic-assemble-15s": {
+					title: "Cinematic assemble ~15s",
+					description:
+						"Action-movie product build: raw start → parts rain → assemble climax → finished hero (pizza / tech / auto).",
+					costHint: "~6 stills + 15s storyboard · finished product photo",
+				},
+				"product-studio-type-15s": {
+					title: "Studio type TVC ~15s",
+					description:
+						"Monochrome editorial studio with large 3D type cards — brand, shop, or product hero vibe.",
+					costHint: "~6 stills + 15s storyboard · packshot or brand name",
+				},
+				"product-brand-warp-12s": {
+					title: "Brand warp ~12s",
+					description:
+						"Warp tunnel → neon type → glass icons → chrome logo endcard. Logo / shop / brand identity.",
+					costHint: "~4 stills + 12s storyboard · logo or brand name",
+				},
 				"concept-motion-poster": {
 					title: "Concept motion poster",
 					description:
 						"2 scene stills (no type → typed) + Video morphs a service-fit motion. No SKU packshot.",
 					costHint: "~2 AI stills + 1 short clip · fits free grant",
+				},
+				"concept-impact-poster-6s": {
+					title: "Impact poster (concept) ~6s",
+					description:
+						"Same 大透视 punch morph for brand / shop — logo or topic still preferred.",
+					costHint: "~2 stills + 6s H3 · logo or brand still",
 				},
 				"concept-tvc-12s": {
 					title: "Concept TVC ~12s",
@@ -888,6 +924,24 @@ export const en = {
 						"4-beat storyboard for a service / idea: establish → metaphor → orbit → payoff.",
 					costHint:
 						"~4 stills + 12s single-clip — paid plan · stitched fallback may fit free",
+				},
+				"concept-premium-punch-15s": {
+					title: "Premium punch (concept) ~15s",
+					description:
+						"Punch storyboard for a service idea — weaker without a packshot; prefer product mode.",
+					costHint: "~6 stills + 15s storyboard · prefer product packshot",
+				},
+				"concept-studio-type-15s": {
+					title: "Studio type (concept) ~15s",
+					description:
+						"Monochrome studio + 3D type for brand / shop / service — no SKU required.",
+					costHint: "~6 stills + 15s storyboard · brand or shop name",
+				},
+				"concept-brand-warp-12s": {
+					title: "Brand warp (concept) ~12s",
+					description:
+						"Warp → neon type → glass icons → chrome logo. Best for brand / logo / shop promos.",
+					costHint: "~4 stills + 12s storyboard · logo or brand name",
 				},
 				"product-blockbuster-9s": {
 					title: "Blockbuster entrance ~9s",
@@ -2312,6 +2366,22 @@ export const en = {
 				title: "Luxury birth",
 				desc: "Product packshot · abstract → metaphor → reveal · 3 or 5 scenes",
 			},
+			"premium-punch": {
+				title: "Premium punch",
+				desc: "Punch commercial · tease → detail → hero punch · 4 or 6 scenes (AirPods float / car frontal)",
+			},
+			"cinematic-assemble": {
+				title: "Cinematic assemble",
+				desc: "Action-movie build · step-by-step make the product · pizza / AirPods / car · 4 or 6 scenes",
+			},
+			"studio-type": {
+				title: "Studio type",
+				desc: "Monochrome studio + 3D type cards · brand / shop / product vibe · 4 or 6 scenes",
+			},
+			"brand-warp": {
+				title: "Brand warp",
+				desc: "Warp → neon type → glass icons → chrome logo · brand / logo / shop · 4 or 6 scenes",
+			},
 		},
 		compositionPresetLabel: "Composition",
 		compositionPresetHint:
@@ -2654,6 +2724,15 @@ export const en = {
 		referenceVideoAnalyzing: "Analyzing your reference video…",
 		researchReelAnalyzing:
 			"Analyzing reference reel and planning storyboard…",
+		researchReelAnalyzePhase: {
+			fetch: "Fetching and reading the reference reel…",
+			frames: "Sampling shots and reading visual style…",
+			plan: "Writing motion brief from the reel…",
+			storyboard: "Planning storyboard scenes…",
+			prepare: "Preparing a short clip for video generation…",
+		},
+		researchReelAnalyzeEtaHint:
+			"Usually ~2–3 minutes. Long reels may take longer.",
 		researchReelAnalyzeFirstHint:
 			"Wait for reel storyboard analysis, or upload a product photo first.",
 		referenceR2vDurationHint:
@@ -3033,6 +3112,11 @@ export const en = {
 				description:
 					"Start still (no type) + end still (with type) → Video morphs. Not a normal product I2V.",
 			},
+			"impact-poster": {
+				title: "Impact poster",
+				description:
+					"大透视 punch poster — stronger product thrust + particle impact. Tone + effect options → ~6s morph.",
+			},
 			"social-drip": {
 				title: "Social drip (three-panel)",
 				description:
@@ -3157,6 +3241,55 @@ export const en = {
 		motionPosterDialectHint:
 			"Same start→end morph method, different beat (type reveal, 3D card, parallax, pour…). Auto picks a fit — generate again to try another.",
 		motionPosterDialectAuto: "Auto · best fit",
+		impactPosterHint:
+			"High-impact 大透视 poster video: product thrusts toward camera with punch VFX. Stronger motion than Motion poster.",
+		impactPosterToneTitle: "Tone",
+		impactPosterToneHint:
+			"Color/mood of the poster world. Auto infers from product name.",
+		impactPosterToneAuto: "Auto · best fit",
+		impactPosterTones: {
+			fiery: {
+				title: "Fiery",
+				desc: "Orange/red heat · snack / spicy energy",
+			},
+			rugged: {
+				title: "Rugged",
+				desc: "Dust & grit · bike / outdoor power",
+			},
+			premium: {
+				title: "Premium",
+				desc: "Gold polish · headphones / luxury",
+			},
+			cyber: {
+				title: "Cyber",
+				desc: "Neon purple/cyan · tech / sound future",
+			},
+		},
+		impactPosterEffectTitle: "Impact effect",
+		impactPosterEffectHint:
+			"VFX grammar that punches the product — changes stills and motion strength.",
+		impactPosterEffectAuto: "Auto · match tone",
+		impactPosterEffects: {
+			"shatter-burst": {
+				title: "Shatter burst",
+				desc: "Radial shards explode behind the hero",
+			},
+			"energy-rays": {
+				title: "Energy rays",
+				desc: "God-rays / sound shafts from behind",
+			},
+			"debris-splash": {
+				title: "Debris splash",
+				desc: "Crumbs / dirt / parts fly at camera",
+			},
+			"lightning-pulse": {
+				title: "Lightning pulse",
+				desc: "Electric arcs + neon bloom",
+			},
+		},
+		impactPosterBuildingStill: "Step 1/3: impact-poster start still…",
+		impactPosterBuildingEnd: "Step 2/3: impact-poster typed end…",
+		impactPosterAnimating: "Step 3/3: impact morph…",
 		motionPosterDialects: {
 			"card-warp": {
 				title: "3D card",
@@ -3726,6 +3859,17 @@ export const en = {
 					"Video morphs product + words together — not a storyboard",
 				],
 				output: ["~2 stills + 1 short morph clip"],
+			},
+			"impact-poster": {
+				need: [
+					"Product photo (product) — or logo/topic still (concept)",
+					"Headline for the typed end punch poster",
+				],
+				attention: [
+					"Pick tone + impact effect (or Auto)",
+					"Stronger product thrust than Motion poster — 大透视 punch",
+				],
+				output: ["~2 stills + 6s high-impact morph"],
 			},
 			"social-drip": {
 				need: [
@@ -6157,9 +6301,12 @@ export const en = {
 		refVideoTitle: "Reference video (MP4)",
 		refVideoHint:
 			"Upload a reel if you have one; skip for image posts (style images + storyboard are enough).",
+		refVideoTitleResearch: "Reference reel (required for this path)",
+		refVideoHintResearch:
+			"Video research copies motion from @Video1. We auto-download from your pick — upload here only if download failed. Analysis uses the full reel on our server (large files OK).",
 		refVideoTitleOptional: "Reference video (optional)",
 		refVideoHintOptional:
-			"Image posts don't need an MP4 — this step auto-skips. Upload a reel only if you want rhythm matching.",
+			"Image / carousel research only — no MP4 needed. Style images + storyboard are enough. Upload a reel only if you want extra rhythm matching.",
 		extraKitTitle: "Product photo kit",
 		extraKitHint:
 			"Optional packaging and angle photos for video assistant.",

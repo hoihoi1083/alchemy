@@ -1,6 +1,9 @@
 import type { ContentPlatform } from "@/lib/content-research-types";
 import { fetchResearchImagesAsFiles } from "@/lib/fetch-research-cover";
-import { fetchResearchVideoAsFile } from "@/lib/fetch-research-video";
+import {
+  fetchResearchVideoAsFile,
+  fetchResearchVideoPrepared,
+} from "@/lib/fetch-research-video";
 import { resolveResearchPostVideo } from "@/lib/resolve-research-video";
 
 export type ResearchRefWizard = {
@@ -10,6 +13,11 @@ export type ResearchRefWizard = {
   onImageInputModeChange?: (mode: "reference" | "product-ad" | "describe") => void;
   onVideoCreativeModeChange: (mode: "reference-concept") => void;
   onReferenceAdFile: (file: File | null) => void;
+  /** CDN URL — analyze uses server fetch so the browser never re-uploads 50MB. */
+  setReferenceResearchCdn?: (input: {
+    url: string | null;
+    platform: ContentPlatform | null;
+  }) => void;
   setReferenceCarouselSlideCount?: (count: number) => void;
   /** Drives wait.reel_download + blocks intake Continue while research MP4 fetches. */
   setReferenceClipLoading?: (busy: boolean) => void;
@@ -18,6 +26,7 @@ export type ResearchRefWizard = {
 export type ResearchRefDeps = {
   fetchResearchImagesAsFiles: typeof fetchResearchImagesAsFiles;
   fetchResearchVideoAsFile: typeof fetchResearchVideoAsFile;
+  fetchResearchVideoPrepared?: typeof fetchResearchVideoPrepared;
   resolveResearchPostVideo: typeof resolveResearchPostVideo;
 };
 
@@ -31,6 +40,7 @@ export type ResearchRefAttachResult = {
 const defaultDeps: ResearchRefDeps = {
   fetchResearchImagesAsFiles,
   fetchResearchVideoAsFile,
+  fetchResearchVideoPrepared,
   resolveResearchPostVideo,
 };
 
@@ -107,14 +117,32 @@ export async function applyResearchPostReferences(
   wizard.setReferenceClipLoading?.(true);
   let videoFile: File | null = null;
   try {
-    [videoFile] = await Promise.all([
-      deps.fetchResearchVideoAsFile(
+    const prepared = await deps.fetchResearchVideoPrepared?.(
+      videoUrl,
+      input.platform,
+      `${input.platform}-reference.mp4`,
+    );
+    if (prepared) {
+      videoFile = prepared.file;
+      wizard.setReferenceResearchCdn?.({
+        url: prepared.sourceUrl,
+        platform: prepared.platform,
+      });
+    } else {
+      const legacy = await deps.fetchResearchVideoAsFile(
         videoUrl,
         input.platform,
         `${input.platform}-reference.mp4`,
-      ),
-      attachCoverImages(),
-    ]);
+      );
+      videoFile = legacy;
+      if (legacy) {
+        wizard.setReferenceResearchCdn?.({
+          url: videoUrl,
+          platform: input.platform,
+        });
+      }
+    }
+    await attachCoverImages();
   } finally {
     wizard.setReferenceClipLoading?.(false);
   }

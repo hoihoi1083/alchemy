@@ -339,6 +339,10 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
       wizard.onVideoCreativeModeChange("motion-poster");
       return;
     }
+    if (sub === "impact_poster" && wizard.videoCreativeMode !== "impact-poster") {
+      wizard.onVideoCreativeModeChange("impact-poster");
+      return;
+    }
     if (sub === "social_drip" && wizard.videoCreativeMode !== "social-drip") {
       wizard.onVideoCreativeModeChange("social-drip");
       return;
@@ -772,6 +776,7 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
                 setCinematicSceneCount: wizard.onCinematicSceneCountChange,
                 onVideoCreativeModeChange: wizard.onVideoCreativeModeChange,
                 onReferenceAdFile: wizard.onReferenceAdFile,
+                setReferenceResearchCdn: wizard.setReferenceResearchCdn,
                 setReferenceClipLoading: wizard.setReferenceClipLoading,
                 setError: wizard.setError,
               },

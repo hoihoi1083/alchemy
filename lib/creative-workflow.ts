@@ -15,6 +15,7 @@ export type VideoCreativeMode =
   | "product-assistant"
   | "product-promo"
   | "motion-poster"
+  | "impact-poster"
   | "social-drip"
   | "blockbuster"
   | "vacuum-inflate"
@@ -47,6 +48,7 @@ export const VIDEO_CREATIVE_MODES: VideoCreativeMode[] = [
   "product-assistant",
   "product-promo",
   "motion-poster",
+  "impact-poster",
   "social-drip",
   "blockbuster",
   "vacuum-inflate",
@@ -81,6 +83,7 @@ export function isRecipeOwnedVideoMode(
 ): boolean {
   return (
     mode === "motion-poster" ||
+    mode === "impact-poster" ||
     mode === "social-drip" ||
     mode === "blockbuster" ||
     mode === "vacuum-inflate" ||
@@ -172,6 +175,7 @@ export function videoModesForGoal(goal: OutputGoal): VideoCreativeMode[] {
     return [
       "image-to-video",
       "motion-poster",
+      "impact-poster",
       "blockbuster",
       "vacuum-inflate",
       "creative-motion",
@@ -187,6 +191,7 @@ export function videoModesForGoal(goal: OutputGoal): VideoCreativeMode[] {
     return [
       "product-assistant",
       "motion-poster",
+      "impact-poster",
       "blockbuster",
       "vacuum-inflate",
       "creative-motion",
@@ -213,6 +218,7 @@ export function videoModesForStudio(
     return [
       "product-promo",
       "motion-poster",
+      "impact-poster",
       "blockbuster",
       "vacuum-inflate",
       "creative-motion",
@@ -227,6 +233,7 @@ export function videoModesForStudio(
     return [
       "image-to-video",
       "motion-poster",
+      "impact-poster",
       "blockbuster",
       "vacuum-inflate",
       "creative-motion",

@@ -46,6 +46,9 @@ export function applyIntakeVideoStyle(
     case "motion_poster":
       wizard.onVideoCreativeModeChange("motion-poster");
       return;
+    case "impact_poster":
+      wizard.onVideoCreativeModeChange("impact-poster");
+      return;
     case "blockbuster":
       wizard.onVideoCreativeModeChange("blockbuster");
       return;

@@ -52,6 +52,7 @@ export type IdentityVideoUxMode = (typeof IDENTITY_VIDEO_UX_MODES)[number];
 export const VIDEO_RECIPE_UX_MODES = [
   ...IDENTITY_VIDEO_UX_MODES,
   "motion-poster",
+  "impact-poster",
   "social-drip",
   "blockbuster",
 ] as const;

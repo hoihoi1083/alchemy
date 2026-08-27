@@ -16,6 +16,7 @@ export type VideoGenerationKind =
   | "multi-angle-r2v"
   | "digital-presenter"
   | "motion-poster"
+  | "impact-poster"
   | "social-drip"
   | "blockbuster"
   | "vacuum-inflate"
@@ -61,6 +62,9 @@ export function resolveVideoGenerationKind(
   // Motion poster / social drip are single-clip recipes — win over storyboard lock.
   if (input.videoCreativeMode === "motion-poster") {
     return "motion-poster";
+  }
+  if (input.videoCreativeMode === "impact-poster") {
+    return "impact-poster";
   }
   if (input.videoCreativeMode === "social-drip") {
     return "social-drip";

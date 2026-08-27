@@ -43,8 +43,9 @@ import { AdPackReviewPanel } from "@/components/studio/AdPackReviewPanel";
 import { ReferenceAnalyzeWaitPanel, referenceAnalyzeReady } from "@/components/studio/micro-wizard/ReferenceAnalyzeWaitPanel";
 import { ResearchReelSetupPanel } from "@/components/studio/ResearchReelSetupPanel";
 import { BrandWebsitePanel } from "@/components/studio/BrandWebsitePanel";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { isStoryboardVideoStyle, getVisualStyle } from "@/lib/visual-styles";
+import { researchReelAnalyzeProgress } from "@/lib/generation-progress-estimates";
 import {
   h3ShotRecipeToSubpath,
   isH3ShotRecipeMode,
@@ -837,9 +838,18 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
       );
 
     case "asset.reference_video":
-      // Image research / combined storyboard: this step auto-skips when no MP4.
+      // Image carousel research: optional enrichment. Video research: required if download failed.
       return (
-        <ReferenceVideoStep wizard={wizard} m={m} mw={mw} optional />
+        <ReferenceVideoStep
+          wizard={wizard}
+          m={m}
+          mw={mw}
+          optional={
+            wizard.workflowMode === "image-only" ||
+            (wizard.workflowMode === "combined" &&
+              !wizard.isContentResearchVideoPath)
+          }
+        />
       );
 
     case "asset.brand_website":
@@ -1070,54 +1080,14 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
       const downloading = wizard.referenceClipLoading;
       const analyzing = wizard.researchReelAnalyzeBusy;
       return (
-        <ScreenShell
-          title={
-            downloading
-              ? mw.reelDownloading
-              : needDuration
-                ? m.wizard.researchReelPickDurationFirst
-                : m.wizard.researchReelAnalyzing
-          }
-          hint={
-            needDuration
-              ? m.wizard.researchReelSetupIntro
-              : m.wizard.researchReelAnalyzeFirstHint
-          }
-        >
-          {wizard.referencePreviewUrl && wizard.referenceIsVideo ? (
-            <video
-              src={wizard.referencePreviewUrl}
-              className="mx-auto max-h-28 w-full max-w-[14rem] rounded-lg border border-violet-200 bg-black object-contain"
-              muted
-              playsInline
-              controls
-            />
-          ) : null}
-          {needDuration ? (
-            <div className="rounded-xl border border-violet-200 bg-violet-50/80 p-3">
-              <VideoSettingsPanel
-                compact
-                setup
-                hideAutoDuration
-                value={wizard.videoSettings}
-                onChange={wizard.setVideoSettings}
-              />
-            </div>
-          ) : null}
-          <WaitScreen
-            busy={downloading || analyzing}
-            message={
-              downloading
-                ? mw.reelDownloading
-                : analyzing
-                  ? m.wizard.researchReelAnalyzing
-                  : (wizard.researchReelAnalyzeNote ?? mw.analyzing)
-            }
-          />
-          {!downloading && !analyzing && wizard.researchReelAnalyzeNote ? (
-            <p className="text-xs text-emerald-800">{wizard.researchReelAnalyzeNote}</p>
-          ) : null}
-        </ScreenShell>
+        <ReelAnalyzeWaitStep
+          wizard={wizard}
+          m={m}
+          mw={mw}
+          needDuration={needDuration}
+          downloading={downloading}
+          analyzing={analyzing}
+        />
       );
     }
 
@@ -1366,11 +1336,20 @@ function ReferenceVideoStep({
   optional?: boolean;
 }) {
   const outputDurationExplicit = wizard.videoSettings.duration !== "auto";
-  const title = optional ? mw.refVideoTitleOptional : mw.refVideoTitle;
-  const hint = optional ? mw.refVideoHintOptional : mw.refVideoHint;
+  const title = optional
+    ? mw.refVideoTitleOptional
+    : wizard.isContentResearchVideoPath
+      ? mw.refVideoTitleResearch
+      : mw.refVideoTitle;
+  const hint = optional
+    ? mw.refVideoHintOptional
+    : wizard.isContentResearchVideoPath
+      ? mw.refVideoHintResearch
+      : mw.refVideoHint;
 
   function handleReferenceVideo(file: File | null) {
     if (file) {
+      wizard.setReferenceResearchCdn({ url: null, platform: null });
       wizard.onVideoCreativeModeChange("reference-concept");
       wizard.onImageCreativeModeChange("reference-concept");
       if (wizard.promotionMode === "concept") wizard.onImageInputModeChange("reference");
@@ -1422,6 +1401,112 @@ function ReferenceVideoStep({
           <p className="text-emerald-800/90">{m.wizard.setupReferenceVideoNonStoryboardHint}</p>
         ) : null}
       </div>
+    </ScreenShell>
+  );
+}
+
+function ReelAnalyzeWaitStep({
+  wizard,
+  m,
+  mw,
+  needDuration,
+  downloading,
+  analyzing,
+}: {
+  wizard: ReturnType<typeof useWizard>;
+  m: ReturnType<typeof useLocale>["m"];
+  mw: ReturnType<typeof useLocale>["m"]["microWizard"];
+  needDuration: boolean;
+  downloading: boolean;
+  analyzing: boolean;
+}) {
+  const [elapsedSec, setElapsedSec] = useState(0);
+  const withStoryboard = Boolean(wizard.isStoryboardOutput);
+
+  useEffect(() => {
+    if (!analyzing) {
+      setElapsedSec(0);
+      return;
+    }
+    setElapsedSec(0);
+    const started = Date.now();
+    const id = window.setInterval(() => {
+      setElapsedSec(Math.max(1, Math.floor((Date.now() - started) / 1000)));
+    }, 500);
+    return () => window.clearInterval(id);
+  }, [analyzing]);
+
+  const progress = analyzing
+    ? researchReelAnalyzeProgress(elapsedSec, withStoryboard)
+    : null;
+  const phaseMessage =
+    progress && m.wizard.researchReelAnalyzePhase
+      ? m.wizard.researchReelAnalyzePhase[progress.phase]
+      : m.wizard.researchReelAnalyzing;
+  const eta =
+    progress && wizard.formatEta
+      ? wizard.formatEta(progress.remainingSec)
+      : "";
+
+  return (
+    <ScreenShell
+      title={
+        downloading
+          ? mw.reelDownloading
+          : needDuration
+            ? m.wizard.researchReelPickDurationFirst
+            : phaseMessage
+      }
+      hint={
+        needDuration
+          ? m.wizard.researchReelSetupIntro
+          : analyzing
+            ? m.wizard.researchReelAnalyzeEtaHint
+            : m.wizard.researchReelAnalyzeFirstHint
+      }
+    >
+      {wizard.referencePreviewUrl && wizard.referenceIsVideo ? (
+        <video
+          src={wizard.referencePreviewUrl}
+          className="mx-auto max-h-28 w-full max-w-[14rem] rounded-lg border border-violet-200 bg-black object-contain"
+          muted
+          playsInline
+          controls
+        />
+      ) : null}
+      {needDuration ? (
+        <div className="rounded-xl border border-violet-200 bg-violet-50/80 p-3">
+          <VideoSettingsPanel
+            compact
+            setup
+            hideAutoDuration
+            value={wizard.videoSettings}
+            onChange={wizard.setVideoSettings}
+          />
+        </div>
+      ) : null}
+      <WaitScreen
+        busy={downloading || analyzing}
+        message={
+          downloading
+            ? mw.reelDownloading
+            : analyzing
+              ? phaseMessage
+              : (wizard.researchReelAnalyzeNote ?? mw.analyzing)
+        }
+        progress={
+          analyzing && progress
+            ? {
+                label: phaseMessage,
+                pct: progress.pct,
+                eta,
+              }
+            : null
+        }
+      />
+      {!downloading && !analyzing && wizard.researchReelAnalyzeNote ? (
+        <p className="text-xs text-emerald-800">{wizard.researchReelAnalyzeNote}</p>
+      ) : null}
     </ScreenShell>
   );
 }

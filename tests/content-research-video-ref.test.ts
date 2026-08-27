@@ -257,6 +257,8 @@ describe("applyContentAngleToWizard reel reference", () => {
     const videoFile = mockVideoFile("xiaohongshu-reference.mp4");
     const videoModes: string[] = [];
     let referenceAd: File | null = null;
+    let researchCdn: { url: string | null; platform: string | null } | null =
+      null;
 
     const { patch, refs } = await applyContentAngleToWizard(
       reelAngle,
@@ -278,10 +280,18 @@ describe("applyContentAngleToWizard reel reference", () => {
         onReferenceAdFile: (file) => {
           referenceAd = file;
         },
+        setReferenceResearchCdn: (input) => {
+          researchCdn = input;
+        },
       },
       PROMOTE_PRODUCT,
       {
         fetchResearchImagesAsFiles: async () => [],
+        fetchResearchVideoPrepared: async (url, platform) => ({
+          file: videoFile,
+          sourceUrl: url,
+          platform,
+        }),
         fetchResearchVideoAsFile: async (url, platform, filename) => {
           assert.equal(url, reelAngle.sourceVideoUrl);
           assert.equal(platform, xhsPlan.platform);
@@ -297,6 +307,7 @@ describe("applyContentAngleToWizard reel reference", () => {
     assert.equal(patch.workflowMode, "video-only");
     assert.deepEqual(videoModes, ["reference-concept"]);
     assert.equal(referenceAd, videoFile);
+    assert.equal(researchCdn?.url, reelAngle.sourceVideoUrl);
     assert.equal(refs.videoAttached, true);
   });
 

@@ -17,6 +17,7 @@ export type ConceptSource = "assistant" | "research";
 export type VideoSubpath =
   | "product_promo"
   | "motion_poster"
+  | "impact_poster"
   | "social_drip"
   | "blockbuster"
   | "vacuum_inflate"
