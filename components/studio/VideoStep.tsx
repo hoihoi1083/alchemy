@@ -696,7 +696,7 @@ export function VideoStep() {
       </p>
       <button
         type="button"
-        onClick={planAiVideoPrompt}
+        onClick={() => void planAiVideoPrompt()}
         disabled={
           planVideoPromptBusy ||
           (isCreativeVideoStyle(visualStyleId) &&
