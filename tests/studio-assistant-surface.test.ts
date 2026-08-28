@@ -50,7 +50,7 @@ describe("studio-assistant-surface", () => {
     assert.equal(getNextStudioCoachTask(caps, { userText: "help" }), "guide-captions");
 
     const pro = buildDefaultAssistantSnapshot("pro");
-    assert.equal(detectStudioCoachMode(pro), "pro-canvas");
-    assert.equal(getNextStudioCoachTask(pro), "guide-pro");
+    assert.equal(detectStudioCoachMode(pro), "ultra-canvas");
+    assert.equal(getNextStudioCoachTask(pro), "guide-ultra-canvas");
   });
 });

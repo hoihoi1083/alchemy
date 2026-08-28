@@ -238,7 +238,7 @@ export const en = {
 		pricing: "Pricing & tokens",
 		how: "How it works",
 		watchDemo: "Watch demo",
-		proCanvas: "Pro canvas",
+		ultraCanvas: "Ultra canvas",
 		accountTitle: "Account",
 		library: "My library",
 		account: "Account & billing",
@@ -379,7 +379,7 @@ export const en = {
     homeLink: "Back to landing",
     themeToggleLight: "Light",
     themeToggleDark: "Dark",
-    proLink: "Pro canvas",
+    ultraCanvasLink: "Ultra canvas",
 		captionsLink: "Caption & audio studio",
 		imageCanvasLink: "Image text & logo studio",
   },
@@ -414,9 +414,9 @@ export const en = {
 		toolkitHubBadge: "Your toolkit",
 		toolkitHubTitle: "Creation toolkit",
 		toolkitHubSubtitle:
-			"Brand kit, image editor, captions, and Pro canvas — ready out of the box.",
-		navProCanvas: "Pro Canvas (need master plan)",
-		navProCanvasUnlocked: "Pro Canvas",
+			"Brand kit, image editor, captions, and Ultra canvas — ready out of the box.",
+		navUltraCanvas: "Ultra Canvas (need master plan)",
+		navUltraCanvasUnlocked: "Ultra Canvas",
 		heroTrust: [
 			"No prompt needed",
 			"Storyboard first",
@@ -819,13 +819,13 @@ export const en = {
 		],
 		planFeaturesMaster: [
 			"28,000 tokens / month",
-			"2K images · Pro canvas",
+			"2K images · Ultra canvas",
 			"Priority support",
 		],
 		planFeaturesCustom: [
 			"40,000 tokens / month",
 			"3 seats · shared pool",
-			"Team folder · Pro canvas · 2K",
+			"Team folder · Ultra canvas · 2K",
 		],
 		tokensTitle: "How AI Tokens Work",
 		tokensBody:
@@ -855,7 +855,7 @@ export const en = {
 		finalTitle: "Ready to create agency-like content?",
 		finalBody: "Join marketers and businesses creating better ads, faster.",
 		finalImageAlt: "Alchemy studio creatives and product asset preview",
-    proCanvasLink: "Pro canvas",
+    ultraCanvasNavLink: "Ultra canvas",
 		captionsLink: "Caption, BGM & voice for any video",
 		imageCanvasLink: "Add text & logo to any image",
 		ugcLink: "Try UGC talking presenter",
@@ -869,7 +869,7 @@ export const en = {
 		brandKitCta: "Continue to studio",
 		toolsTitle: "More ways to create",
 		toolsSubtitle:
-			"Brand kit, image editor, captions, and Pro canvas — ready out of the box.",
+			"Brand kit, image editor, captions, and Ultra canvas — ready out of the box.",
 		toolsOpenCta: "Open",
 		toolBrandTitle: "Brand kit",
 		toolBrandDesc:
@@ -878,10 +878,10 @@ export const en = {
 		toolEditDesc: "Add headlines, logos, and polish on any still image.",
 		toolCaptionsTitle: "Captions & audio",
 		toolCaptionsDesc: "Burn subtitles, background music, and voiceover onto any MP4.",
-		toolProTitle: "Pro canvas",
-		toolProDesc: "Node-based workflow for power users.",
+		toolUltraCanvasTitle: "Ultra canvas",
+		toolUltraCanvasDesc: "Node-based workflow for power users.",
 		toolStartDesc: "Open the wizard and create your first ad in minutes.",
-		proMasterBadge: "Master plan",
+		ultraCanvasMasterBadge: "Master plan",
 		visualCaptionsLink: "Visual subtitle lab (beta)",
 		recipes: {
 			badge: "1-tap recipes",
@@ -1380,8 +1380,8 @@ export const en = {
 		checkoutSuccess:
 			"Payment received. Tokens will appear in your balance within a few seconds — refresh if needed.",
 		checkoutCanceled: "Checkout canceled. No charge was made.",
-		proCanvasUpgradeHint:
-			"Pro Canvas is included on the Master plan. Select Master below to unlock the node workflow.",
+		ultraCanvasUpgradeHint:
+			"Ultra Canvas is included on the Master plan. Select Master below to unlock the node workflow.",
 		checkoutError:
 			"Could not start checkout. Try again or contact support.",
 		paymentIncomplete:
@@ -1563,7 +1563,7 @@ export const en = {
 					"Guided wizard + templates",
 					"Video up to 1080p · images up to 2K",
 					"Campaign mode · storyboard · A/B & teaching carousel",
-					"Pro canvas",
+					"Ultra canvas",
 					"Email support · token top-ups · priority support",
 				],
 			},
@@ -1583,7 +1583,7 @@ export const en = {
 					"3 seats (owner + 2 teammates)",
 					"Shared token pool billed to the owner",
 					"Separate personal libraries",
-					"Video up to 1080p · images up to 2K · Pro canvas",
+					"Video up to 1080p · images up to 2K · Ultra canvas",
 					"Campaign · storyboard · A/B & teaching carousel",
 					"Team folder — share selected files with seats",
 					"Priority support · token top-ups ($10 / 1k)",
@@ -1673,7 +1673,7 @@ export const en = {
 				custom: "✓",
 			},
 			{
-				feature: "Pro canvas",
+				feature: "Ultra canvas",
 				free: "—",
 				light: "—",
 				standard: "—",
@@ -5601,7 +5601,7 @@ export const en = {
 		welcomeCaptions:
 			"You're in caption studio. Import any MP4 — I'll help with timed lines, BGM, voice, then burn. No need to regenerate the video.",
 		welcomePro:
-			"Pro canvas — connect Upload → Image → Video nodes. Ask me the order or cost before you run. Pay-per-use tokens.",
+			"Ultra canvas — connect Upload → Image → Video nodes. Ask me the order or cost before you run. Pay-per-use tokens.",
 		welcomeBrandKit:
 			"Brand kit — upload logo and colors once. Ask me whether to stamp the logo on storyboard stills.",
 		welcomeLibrary:
@@ -5609,7 +5609,7 @@ export const en = {
 		welcomeUgc:
 			"UGC studio — tell me the product and vibe (unboxing, review, street). For storyboard ads, say so and I'll send you to /studio.",
 		welcomeSite:
-			"Hi — ask how Alchemy works, or I can open the wizard, image editor, captions, Pro canvas, or brand kit.",
+			"Hi — ask how Alchemy works, or I can open the wizard, image editor, captions, Ultra canvas, or brand kit.",
 		shortLabel: "Ask AI",
 		openingStudio: "Opening the studio with your setup — one moment…",
 		studioContinued:
@@ -6369,16 +6369,16 @@ export const en = {
 		doneTitle: "Export",
 		doneHint: "Continue to download and share your ad.",
 	},
-  pro: {
+  ultraCanvas: {
     back: "← Home",
     backStudio: "Guided wizard",
-    title: "Pro canvas",
+    title: "Ultra canvas",
     subtitle:
-      "Lumina-style node canvas: add nodes, wire refs with @, run each step or Run all.",
+      "Ultra canvas — Lumina-style node workflow: add nodes, wire refs with @, run each step or Run all.",
     costHint:
-			"Pro uses Token billing at pay-per-use rates (not Lumina subscription pricing). Each run costs API credits on your service credentials.",
+			"Ultra canvas uses Token billing at pay-per-use rates (not Lumina subscription pricing). Each run costs API credits on your service credentials.",
 		mobileDesktopOnly:
-			"Pro canvas is built for desktop — use a tablet in landscape or a computer for the best experience. The guided wizard at /studio works on phones.",
+			"Ultra canvas is built for desktop — use a tablet in landscape or a computer for the best experience. The guided wizard at /studio works on phones.",
     steps: [
       "1. Add upload / image nodes — set @aliases (e.g. Ava, Outfit)",
       "2. Optional camera angle node between image and video",

@@ -483,8 +483,8 @@ def build_doc() -> Document:
             ["Light", "3,000/mo", "480p", "1K"],
             ["Standard", "8,000/mo", "720p", "1K"],
             ["Pro", "16,000/mo", "1080p", "1K"],
-            ["Master", "28,000/mo", "1080p", "2K + Pro canvas"],
-            ["Custom (Enterprise)", "40,000/mo", "1080p", "2K + Pro canvas"],
+            ["Master", "28,000/mo", "1080p", "2K + Ultra canvas"],
+            ["Custom (Enterprise)", "40,000/mo", "1080p", "2K + Ultra canvas"],
         ],
     )
 

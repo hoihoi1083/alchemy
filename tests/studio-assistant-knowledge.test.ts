@@ -25,7 +25,7 @@ describe("assistant turn mode", () => {
       ),
       "guide",
     );
-    assert.equal(detectAssistantTurnMode("Pro 畫布同 wizard 有咩分別"), "ask");
+    assert.equal(detectAssistantTurnMode("Ultra 畫布同 wizard 有咩分別"), "ask");
   });
 
   it("treats make-something phrasing as guide", () => {

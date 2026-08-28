@@ -228,7 +228,7 @@ export const zhCn = {
     pricing: "方案与点数",
     how: "使用方式",
     watchDemo: "观看示范",
-    proCanvas: "专业画布",
+    ultraCanvas: "Ultra 画布",
     accountTitle: "账户",
     library: "我的作品库",
     account: "账户与账单",
@@ -323,7 +323,7 @@ export const zhCn = {
     homeLink: "返回首页",
     themeToggleLight: "浅色",
     themeToggleDark: "深色",
-    proLink: "Pro 智能画布",
+    ultraCanvasLink: "Ultra 画布",
     captionsLink: "字幕与音频工作室",
     imageCanvasLink: "图片加字工作室",
   },
@@ -356,9 +356,9 @@ export const zhCn = {
     navToolkit: "工具箱",
     toolkitHubBadge: "创作工具",
     toolkitHubTitle: "创作工具箱",
-    toolkitHubSubtitle: "品牌套件、改图、字幕与 Pro 画布 — 开箱即用。",
-    navProCanvas: "Pro 画布（需 Master 计划）",
-    navProCanvasUnlocked: "Pro 画布",
+    toolkitHubSubtitle: "品牌套件、改图、字幕与 Ultra 画布 — 开箱即用。",
+    navUltraCanvas: "Ultra 画布（需 Master 计划）",
+    navUltraCanvasUnlocked: "Ultra 画布",
     heroTrust: ["不用空白 prompt", "先分镜再出片", "产品与概念都行", "AI 市场研究"],
     heroImageAlt: "产品相和 AI 风格分析",
     heroMascotAlt: "Alchemy 可爱烧瓶伙伴（护目镜）— 移动鼠标就会看不同方向",
@@ -595,7 +595,7 @@ export const zhCn = {
     finalTitle: "準備做好似代理的内容？",
     finalBody: "免费开始，上传一张产品照片，几分钟出第一个广告。",
     finalImageAlt: "Alchemy 工作室创作与产品素材预览",
-    proCanvasLink: "Pro 智能画布",
+    ultraCanvasNavLink: "Ultra 画布",
     captionsLink: "为任何视频加字幕、BGM 同口播",
     imageCanvasLink: "為任何图片加字和 Logo",
     ugcLink: "試 UGC 数字人口播",
@@ -607,7 +607,7 @@ export const zhCn = {
     brandKitLogoTip: "提示：接近正方形、Logo 占画面大部分、约 512–1024px。",
     brandKitCta: "继续去工作室",
     toolsTitle: "更多创作工具",
-    toolsSubtitle: "品牌套件、图片编辑、字幕和 Pro 画布 — 开箱即用。",
+    toolsSubtitle: "品牌套件、图片编辑、字幕和 Ultra 画布 — 开箱即用。",
     toolsOpenCta: "打开",
     toolBrandTitle: "品牌套件",
     toolBrandDesc: "一次保存 Logo 和品牌色 — 每条广告都能复用。",
@@ -615,10 +615,10 @@ export const zhCn = {
     toolEditDesc: "为任意静图加标题、Logo 和精修效果。",
     toolCaptionsTitle: "字幕与音频",
     toolCaptionsDesc: "为任意 MP4 烧录字幕、背景音乐和配音。",
-    toolProTitle: "Pro 智能画布",
-    toolProDesc: "节点式进阶工作流，适合高阶用户。",
+    toolUltraCanvasTitle: "Ultra 画布",
+    toolUltraCanvasDesc: "节点式进阶工作流，适合高阶用户。",
     toolStartDesc: "打开向导，几分钟内做出第一条广告。",
-    proMasterBadge: "Master 方案",
+    ultraCanvasMasterBadge: "Master 方案",
     visualCaptionsLink: "视觉字幕实验室（Beta）",
     recipes: {
       badge: "一键配方",
@@ -1064,13 +1064,13 @@ export const zhCn = {
 
     planBlurbStandard: "成长中的品牌与自由职业者",
 
-    planFeaturesCustom: ["每月 40,000 点数", "3 席 · 共用池", "团队文件夹 · Pro 画布 · 2K"],
+    planFeaturesCustom: ["每月 40,000 点数", "3 席 · 共用池", "团队文件夹 · Ultra 画布 · 2K"],
 
     planFeaturesFree: ["引导式图片与视频路径", "注册送 300 点数", "480p 视频 · 1K 图片"],
 
     planFeaturesLight: ["每月 3,000 点数", "480p 视频 · 1K 图片", "邮件支持 · 可加购"],
 
-    planFeaturesMaster: ["每月 28,000 点数", "2K 图片 · Pro 画布", "优先支持"],
+    planFeaturesMaster: ["每月 28,000 点数", "2K 图片 · Ultra 画布", "优先支持"],
 
     planFeaturesPro: ["每月 16,000 点数", "1080p 视频 · 1K 图片", "Campaign · 1080p 模板"],
 
@@ -1175,7 +1175,7 @@ export const zhCn = {
     checkoutRedirecting: "正在前往 Stripe…",
     checkoutSuccess: "付款成功。点数 几秒内到账 — 如未更新请刷新。",
     checkoutCanceled: "已取消结账，未收费。",
-    proCanvasUpgradeHint: "Pro 画布包含在 Master 计划。请选择下方 Master 计划以解锁节点画布。",
+    ultraCanvasUpgradeHint: "Ultra 画布包含在 Master 计划。请选择下方 Master 计划以解锁节点画布。",
     checkoutError: "无法开始结账。请重试，或联系支持。",
     paymentIncomplete:
       "付款未成功。请在「管理账单」更新信用卡后再试升级。你原来的计划没有更改。",
@@ -1358,7 +1358,7 @@ export const zhCn = {
           "引导精灵 + 模板",
           "视频最高 1080p · 图片最高 2K",
           "Campaign 模式 · 故事板 · A/B 与教学轮播",
-          "Pro 画布",
+          "Ultra 画布",
           "邮件支持 · 可加购 · 优先支持",
         ],
       },
@@ -1378,7 +1378,7 @@ export const zhCn = {
           "3 个席位（所有者 + 2 位队友）",
           "生成扣所有者的共用点数池",
           "各自独立作品库",
-          "视频最高 1080p · 图片最高 2K · Pro 画布",
+          "视频最高 1080p · 图片最高 2K · Ultra 画布",
           "Campaign · 故事板 · A/B 与教学轮播",
           "团队文件夹 — 可分享所选文件给席位",
           "优先支持 · 可加购点数（$10 / 1k）",
@@ -1395,7 +1395,7 @@ export const zhCn = {
       { feature: "A/B 与教学轮播", free: "✓", light: "✓", standard: "✓", pro: "✓", master: "✓", custom: "✓" },
       { feature: "Campaign 模式", free: "—", light: "—", standard: "✓", pro: "✓", master: "✓", custom: "✓" },
       { feature: "邮件支持", free: "—", light: "✓", standard: "✓", pro: "✓", master: "✓", custom: "✓" },
-      { feature: "Pro 画布", free: "—", light: "—", standard: "—", pro: "—", master: "✓", custom: "✓" },
+      { feature: "Ultra 画布", free: "—", light: "—", standard: "—", pro: "—", master: "✓", custom: "✓" },
       { feature: "优先支持", free: "—", light: "—", standard: "—", pro: "—", master: "✓", custom: "✓" },
       { feature: "加购 点数（$10 / 1k）", free: "—", light: "✓", standard: "✓", pro: "✓", master: "✓", custom: "✓" },
     ],
@@ -4636,7 +4636,7 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
     welcomeCaptions:
       "你现在在字幕工作室。导入任何 MP4 — 我帮你改时间轴字幕、BGM、配音，再烧录。不用重新出片。",
     welcomePro:
-      "Pro 画布 — 把 Upload → Image → Video 节点接好。跑之前可以问我顺序和成本。按次 token 计费。",
+      "Ultra 画布 — 把 Upload → Image → Video 节点接好。跑之前可以问我顺序和成本。按次 token 计费。",
     welcomeBrandKit:
       "品牌套件 — 上传一次 logo 和品牌色。分镜静帧要不要盖 logo 可以问我。",
     welcomeLibrary:
@@ -4644,7 +4644,7 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
     welcomeUgc:
       "UGC 工作室 — 告诉我产品和感觉（开箱、评价、街拍）。要分镜广告就说，我带你去 /studio。",
     welcomeSite:
-      "你好 — 可以问 Alchemy 怎么用，或者我帮你打开 wizard、修图、字幕、Pro 画布或品牌套件。",
+      "你好 — 可以问 Alchemy 怎么用，或者我帮你打开 wizard、修图、字幕、Ultra 画布或品牌套件。",
     shortLabel: "问 AI",
     openingStudio: "正在打开工作室并套用设置…",
     studioContinued: "你已进入 studio — 对话会保留。回复 下一步 继续 Step 2。",
@@ -5328,15 +5328,15 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
     doneTitle: "导出",
     doneHint: "继续下载和分享广告。",
   },
-  pro: {
+  ultraCanvas: {
     back: "← 首页",
     backStudio: "引导向导",
-    title: "Pro 智能画布",
-    subtitle: "Lumina 式节点画布：添加节点、用 @ 引用素材、逐步或一次运行。",
+    title: "Ultra 画布",
+    subtitle: "Ultra 画布 — Lumina 式节点工作流：添加节点、用 @ 引用素材、逐步或一次运行。",
     costHint:
-      "Pro 使用 系統 按次收费（不是 Lumina 订阅价）。每次运行会消耗你 service credentials 的 API 额度。",
+      "Ultra 画布使用 系統 按次收费（不是 Lumina 订阅价）。每次运行会消耗你 service credentials 的 API 额度。",
     mobileDesktopOnly:
-      "Pro 画布适合桌面使用 — 手机请用横屏平板或电脑；日常出片可用 /studio 向导（支持手机）。",
+      "Ultra 画布适合桌面使用 — 手机请用横屏平板或电脑；日常出片可用 /studio 向导（支持手机）。",
     steps: [
       "1. 添加上传／图片节点 — 设 @别名（如 Ava、Outfit）",
       "2. 可选：图片与视频之间加相机角度节点",

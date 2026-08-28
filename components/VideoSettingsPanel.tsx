@@ -38,7 +38,7 @@ type Props = {
    * Implies compact (no creativity / motion-style chrome).
    */
   motionPoster?: boolean;
-  /** /pro only — simple /studio hides Seedance vs H3; router picks the engine. */
+  /** /ultra only — simple /studio hides Seedance vs H3; router picks the engine. */
   showEnginePicker?: boolean;
   variant?: "light" | "dark";
   /** Fused violet setup uses violet; classic video step keeps emerald. */

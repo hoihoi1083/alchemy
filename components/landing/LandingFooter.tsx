@@ -39,7 +39,7 @@ function LandingFooterInner() {
     { label: f.watchDemo, onClick: () => openLandingDemo() },
     { label: f.pricing, href: "/pricing" },
     { label: f.library, href: "/library" },
-    { label: L.proCanvasLink, href: "/pro" },
+    { label: L.ultraCanvasNavLink, href: "/ultra" },
   ];
 
   const legalLinks = [

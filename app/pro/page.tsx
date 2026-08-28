@@ -1,32 +1,7 @@
-import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { ProPageClient } from "@/components/ProPageClient";
-import {
-  assertProCanvasAllowed,
-  PlanEntitlementError,
-} from "@/lib/billing/entitlements";
-import { getUserPlan } from "@/lib/billing/get-user-plan";
-import { isMongoConfigured } from "@/lib/mongodb";
+import { ULTRA_CANVAS_PATH } from "@/lib/ultra-canvas-path";
 
-export default async function ProPage() {
-  const session = await auth();
-  if (!session.userId) {
-    redirect(`/sign-in?redirect_url=${encodeURIComponent("/pro")}`);
-  }
-
-  if (!isMongoConfigured()) {
-    redirect("/pricing?plan=master&feature=pro-canvas");
-  }
-
-  try {
-    const plan = await getUserPlan(session.userId);
-    assertProCanvasAllowed(plan);
-  } catch (err) {
-    if (err instanceof PlanEntitlementError) {
-      redirect("/pricing?plan=master&feature=pro-canvas");
-    }
-    throw err;
-  }
-
-  return <ProPageClient />;
+/** Legacy /pro URL — permanent redirect to Ultra canvas. */
+export default function ProPageRedirect() {
+  redirect(ULTRA_CANVAS_PATH);
 }

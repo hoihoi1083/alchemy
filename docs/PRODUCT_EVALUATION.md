@@ -2,7 +2,7 @@
 
 *Planning notes + current status. Re-read when deciding what to build next.*
 
-**Last revised: 2026-07-27** — auth, Stripe tokens, library, captions, edit-image, Pro canvas, and legal are **in code**. Gaps below are launch polish / ops, not “SaaS not started.”
+**Last revised: 2026-07-27** — auth, Stripe tokens, library, captions, edit-image, Ultra canvas, and legal are **in code**. Gaps below are launch polish / ops, not “SaaS not started.”
 
 ---
 
@@ -11,7 +11,7 @@
 | Area | Status |
 |------|--------|
 | Guided wizard (`/studio`) | ✅ |
-| Pro canvas (`/pro`) | ✅ |
+| Ultra canvas (`/ultra`) | ✅ |
 | Captions (`/captions`) | ✅ (large uploads need R2) |
 | Edit image (`/edit-image`) | ✅ |
 | Library / projects (Mongo + R2) | ✅ |
@@ -31,7 +31,7 @@
 
 ## 1. What you had (`seadance-video`) — technical reality
 
-Original app = **working internal studio**. Alchemy Studio is the **public-facing product** fork (wizard + templates + `/pro`).
+Original app = **working internal studio**. Alchemy Studio is the **public-facing product** fork (wizard + templates + `/ultra`).
 
 | Area | Old app | Alchemy Studio |
 |------|---------|----------------|
@@ -104,7 +104,7 @@ Templates remain **saved configuration** (prompts, ratio, duration, motion). Exp
 
 ```
 Home → Studio wizard (default)
-     → Pro canvas (power users)
+     → Ultra canvas (power users)
      → Library / Captions / Edit image
      → Pricing (tokens)
 ```
@@ -147,7 +147,7 @@ Home → Studio wizard (default)
 | 6–8 sec Seedance fast 480p | ~$1.45–1.90 |
 | 10 sec 720p standard | ~$3+ |
 
-Charge **token / plan prices**, not raw API passthrough. Pro canvas uses the same token billing.
+Charge **token / plan prices**, not raw API passthrough. Ultra canvas uses the same token billing.
 
 ---
 

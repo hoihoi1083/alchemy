@@ -17,8 +17,8 @@ export function ProPageClient() {
             <img src={PRODUCT_LOGO_SRC} alt={PRODUCT_LOGO_ALT} className="h-8 w-8 rounded-lg object-contain" />
             <div>
               <p className="text-xs font-medium text-slate-400">{PRODUCT_NAME}</p>
-              <h1 className="text-lg font-semibold">{m.pro.title}</h1>
-              <p className="text-xs text-slate-400">{m.pro.subtitle}</p>
+              <h1 className="text-lg font-semibold">{m.ultraCanvas.title}</h1>
+              <p className="text-xs text-slate-400">{m.ultraCanvas.subtitle}</p>
             </div>
           </Link>
           <div className="flex items-center gap-3">
@@ -27,27 +27,27 @@ export function ProPageClient() {
               href="/start"
               className="rounded-full border border-slate-600 px-4 py-2 text-xs font-medium text-slate-200 hover:bg-slate-800"
             >
-              {m.pro.backStudio}
+              {m.ultraCanvas.backStudio}
             </Link>
             <Link
               href="/"
               className="rounded-full border border-slate-600 px-4 py-2 text-xs font-medium text-slate-200 hover:bg-slate-800"
             >
-              {m.pro.back}
+              {m.ultraCanvas.back}
             </Link>
           </div>
         </div>
 
         <p className="mb-4 rounded-xl border border-amber-900/50 bg-amber-950/30 px-4 py-3 text-xs text-amber-100/90 md:hidden">
-          {m.pro.mobileDesktopOnly}
+          {m.ultraCanvas.mobileDesktopOnly}
         </p>
 
         <p className="mb-4 rounded-xl border border-amber-900/50 bg-amber-950/30 px-4 py-3 text-xs text-amber-100/90">
-          {m.pro.costHint}
+          {m.ultraCanvas.costHint}
         </p>
 
         <ol className="mb-4 grid gap-2 text-xs text-slate-400 sm:grid-cols-3">
-          {m.pro.steps.map((step) => (
+          {m.ultraCanvas.steps.map((step) => (
             <li key={step} className="rounded-lg border border-slate-800 bg-slate-900/50 px-3 py-2">
               {step}
             </li>

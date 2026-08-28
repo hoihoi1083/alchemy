@@ -33,9 +33,9 @@ function askFormatRule(): string {
     "Answer the user's question about Alchemy using 【Product knowledge】 + current context only.",
     "If knowledge does not cover it, say you don't know. Never invent features, buttons, prices, or engines.",
     "Do NOT force Step 1 or studio-action links unless they clearly ask to start making something now.",
-    "Real paths you may mention as markdown: [/](/) [/start](/start) [/studio](/studio) [/captions](/captions) [/edit-image](/edit-image) [/pro](/pro) [/brand-kit](/brand-kit) [/library](/library) [/ugc](/ugc) [/pricing](/pricing).",
+    "Real paths you may mention as markdown: [/](/) [/start](/start) [/studio](/studio) [/captions](/captions) [/edit-image](/edit-image) [/ultra](/ultra) [/brand-kit](/brand-kit) [/library](/library) [/ugc](/ugc) [/pricing](/pricing).",
     "Homepage finishable video-recipe cards are HIDDEN — do not tell users to click them.",
-    "Ask-AI launcher is landing-only (small logo). Hidden on studio, captions, edit-image, brand-kit, pricing, pro, and all other pages.",
+    "Ask-AI launcher is landing-only (small logo). Hidden on studio, captions, edit-image, brand-kit, pricing, Ultra canvas, and all other pages.",
     "Plain text; no **.",
   ].join("\n");
 }
@@ -67,7 +67,7 @@ export function getStudioAssistantFacts(locale: Locale): string {
     return `
 【Alchemy 硬事實 — 唔好同下面知識庫矛盾】
 - 免寫 Prompt；Tokens 按次。免費註冊一次 500。
-- /start：實體 vs 概念。/studio 引導 wizard。/captions 燒字幕。/edit-image 修圖。/pro 節點畫布（Master）。
+- /start：實體 vs 概念。/studio 引導 wizard。/captions 燒字幕。/edit-image 修圖。/ultra Ultra 畫布（Master）。
 - 分鏡 TVC 無參考片：先單鏡出片（一鏡）；額度唔夠先問拼接後備。有參考 MP4：參考片模式。
 - 12 秒 480p ≈ 492 tokens（免費 500 純出片幾乎用晒）；4 格靜圖 + 12 秒仍然要付費。拼接後備 4×5s ≈ 1136 都要付費。
 - 首頁「可完成影片配方」卡已隱藏。問 AI 只喺首頁細 Logo；其他頁關閉。
@@ -76,7 +76,7 @@ export function getStudioAssistantFacts(locale: Locale): string {
   return `
 【Alchemy hard facts — do not contradict knowledge below】
 - Prompt-free; tokens pay-per-use. Free signup grant 500 once.
-- /start: physical vs concept. /studio guided wizard. /captions burn-in. /edit-image retouch. /pro node canvas (Master).
+- /start: physical vs concept. /studio guided wizard. /captions burn-in. /edit-image retouch. /ultra Ultra canvas (Master).
 - Stills TVC without reference MP4: single-clip video first (one take); offer stitched fallback if single-clip does not fit. Reference reel: reference-reel mode.
 - 12s at 480p ≈ 492 tokens (free 500 barely covers video-only); 4 stills + 12s TVC still needs paid. Stitched fallback 4×5s ≈ 1136 also needs paid.
 - Homepage finishable recipe cards are hidden. Ask-AI is landing-only (small logo); off everywhere else.
@@ -96,7 +96,7 @@ export function formatSnapshotForPrompt(
 
   return [
     "【User's current context】",
-    `surface: ${snapshot.surface} (landing/start/site=marketing pages; studio=wizard; edit-image/captions/pro/brand-kit/library/ugc=standalone tools)`,
+    `surface: ${snapshot.surface} (landing/start/site=marketing pages; studio=wizard; edit-image/captions/ultra/brand-kit/library/ugc=standalone tools)`,
     snapshot.promotionMode
       ? `promotionMode: ${snapshot.promotionMode}`
       : "promotionMode: not chosen yet",
@@ -203,7 +203,7 @@ export function buildStudioAssistantSystemPrompt(
             "- Real product / product photo / image post → [Open product image studio](studio-action:open-physical-studio) — NOT setup-website-reel.",
             "- Website / service / concept video → setup-website-reel or open-concept-studio.",
             "- Static website launch image → website-launch-image.",
-            "- Edit / retouch → open-edit-image. Captions → open-captions. Canvas → open-pro.",
+            "- Edit / retouch → open-edit-image. Captions → open-captions. Ultra canvas → open-ultra-canvas.",
             "Never route a physical product image post to concept 8s Reel.",
           ].join("\n")
         : turnMode === "guide"

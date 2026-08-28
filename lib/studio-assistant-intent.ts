@@ -27,7 +27,7 @@ export function detectStudioAssistantIntent(text: string): StudioAssistantIntent
   if (/caption|subtitle|字幕|燒錄|烧录|加字/.test(text) && !/video|影片|视频|reel/i.test(text)) {
     return "captions_only";
   }
-  if (/\/pro\b|pro canvas|節點|节点|node canvas|畫布|画布/.test(text)) {
+  if (/\/ultra\b|\/pro\b|ultra canvas|pro canvas|Ultra 畫布|Ultra 画布|節點|节点|node canvas|畫布|画布/.test(text)) {
     return "pro_canvas";
   }
   if (isReferenceAdRequest(text)) {

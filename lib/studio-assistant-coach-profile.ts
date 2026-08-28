@@ -30,10 +30,10 @@ export type CoachTaskKind =
   | "route-concept-studio"
   | "route-captions"
   | "route-edit-image"
-  | "route-pro-canvas"
+  | "route-ultra-canvas"
   | "guide-edit-image"
   | "guide-captions"
-  | "guide-pro"
+  | "guide-ultra-canvas"
   | "guide-brand-kit"
   | "guide-library"
   | "guide-ugc"
@@ -146,7 +146,7 @@ export function landingRoute(
     return "route-edit-image";
   }
   if (intent === "captions_only") return "route-captions";
-  if (intent === "pro_canvas") return "route-pro-canvas";
+  if (intent === "pro_canvas") return "route-ultra-canvas";
   if (/storyboard|分鏡|分镜|multi.?scene|多場|多场/i.test(t)) return "route-storyboard";
   if (intent === "reference_ad") return "route-reference-ad";
   if (intent === "physical_image_post" || (isPhysicalProductRequest(t) && wantsImageOnlyPost(t))) {
@@ -393,7 +393,7 @@ export function getNextStudioCoachTask(
     case "captions":
       return "guide-captions";
     case "pro":
-      return "guide-pro";
+      return "guide-ultra-canvas";
     case "brand-kit":
       return "guide-brand-kit";
     case "library":
@@ -431,7 +431,7 @@ export function getNextStudioCoachTask(
 export function pathLabel(snapshot: StudioAssistantSnapshot, isZh: boolean): string {
   if (snapshot.surface === "edit-image") return isZh ? "修圖工作室" : "Image editor";
   if (snapshot.surface === "captions") return isZh ? "字幕工作室" : "Caption studio";
-  if (snapshot.surface === "pro") return isZh ? "Pro 節點畫布" : "Pro canvas";
+  if (snapshot.surface === "pro") return isZh ? "Ultra 節點畫布" : "Ultra canvas";
   if (snapshot.surface === "brand-kit") return isZh ? "品牌套件" : "Brand kit";
   if (snapshot.surface === "library") return isZh ? "作品庫" : "Library";
   if (snapshot.surface === "ugc") return isZh ? "UGC 工作室" : "UGC studio";

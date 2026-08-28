@@ -8,7 +8,7 @@
 
 | Path | Role |
 |------|------|
-| `~/Desktop/alchemy-studio` | **This repo** — wizard + Lumina-style templates + `/pro` canvas |
+| `~/Desktop/alchemy-studio` | **This repo** — wizard + Lumina-style templates + `/ultra` canvas |
 | `~/Desktop/ai-marketing-studio` | Stable parent app — merge back carefully when features are proven |
 | `~/Desktop/seadance-video` | Original power-user studio — do not break |
 
@@ -18,7 +18,7 @@
 |-------|-----|
 | `/` landing | Template gallery (scenario cards) |
 | `/studio` | Guided step-by-step wizard (SMB default) |
-| `/pro` | Node canvas: upload → Nano Banana image → Seedance video (`@xyflow/react`) |
+| `/ultra` | Ultra canvas: upload → Nano Banana image → Seedance video (`@xyflow/react`) |
 
 ---
 
@@ -27,7 +27,7 @@
 | File | Purpose |
 |------|---------|
 | `components/TemplateGallery.tsx` | Landing template cards |
-| `components/pro/ProCanvas.tsx` | Pro canvas board |
+| `components/pro/ProCanvas.tsx` | Ultra canvas board |
 | `components/pro/nodes/*` | Upload / image / video nodes |
 | `lib/pro-canvas-runner.ts` | Calls existing generate APIs from canvas |
 
@@ -37,13 +37,13 @@
 
 - Next.js 15, React 19, Tailwind 4, Clerk
 - fal.ai — `nano-banana-2/edit`, `seedance-2.0` (+ `/fast`)
-- Pro canvas: `@xyflow/react`
+- Ultra canvas: `@xyflow/react`
 
 ---
 
 ## Rules
 
-1. Keep **simple mode default** on `/studio`; hide expert fields unless `/pro`.
-2. Pro canvas runs **pay-per-use fal** — show cost hint; do not promise Lumina subscription pricing.
+1. Keep **simple mode default** on `/studio`; hide expert fields unless `/ultra`.
+2. Ultra canvas runs **pay-per-use fal** — show cost hint; do not promise Lumina subscription pricing.
 3. Do not delete or refactor `seadance-video` unless user asks.
 4. After changes: `npm run build` in **alchemy-studio**.

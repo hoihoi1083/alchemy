@@ -23,7 +23,7 @@ export type StudioCoachMode =
   | "concept-storyboard"
   | "edit-image"
   | "captions"
-  | "pro-canvas"
+  | "ultra-canvas"
   | "brand-kit"
   | "library"
   | "ugc";
@@ -35,7 +35,7 @@ export function detectStudioCoachMode(snapshot: StudioAssistantSnapshot): Studio
     case "captions":
       return "captions";
     case "pro":
-      return "pro-canvas";
+      return "ultra-canvas";
     case "brand-kit":
       return "brand-kit";
     case "library":

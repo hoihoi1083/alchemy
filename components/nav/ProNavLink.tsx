@@ -8,14 +8,16 @@ import { useLocale } from "@/components/LocaleProvider";
 import { canUseProCanvas } from "@/lib/billing/entitlements";
 import { normalizeUserPlan } from "@/lib/billing/plans";
 
-export const PRICING_MASTER_PLAN_HREF = "/pricing?plan=master&feature=pro-canvas";
+import { PRICING_ULTRA_CANVAS_HREF, ULTRA_CANVAS_PATH } from "@/lib/ultra-canvas-path";
+
+export const PRICING_MASTER_PLAN_HREF = PRICING_ULTRA_CANVAS_HREF;
 
 type ProNavLinkProps = {
   className?: string;
   onClick?: () => void;
 };
 
-/** Header Pro canvas — Master+ unlocks /pro; others see upgrade dialog. */
+/** Header Ultra canvas — Master+ unlocks /ultra; others see upgrade dialog. */
 export function ProNavLink({ className, onClick }: ProNavLinkProps) {
   const { m } = useLocale();
   const L = m.landing;
@@ -47,8 +49,8 @@ export function ProNavLink({ className, onClick }: ProNavLinkProps) {
     };
   }, [isLoaded, isSignedIn]);
 
-  const href = hasPro ? "/pro" : PRICING_MASTER_PLAN_HREF;
-  const label = hasPro ? L.navProCanvasUnlocked : L.navProCanvas;
+  const href = hasPro ? ULTRA_CANVAS_PATH : PRICING_MASTER_PLAN_HREF;
+  const label = hasPro ? L.navUltraCanvasUnlocked : L.navUltraCanvas;
 
   if (hasPro) {
     return (
@@ -72,7 +74,7 @@ export function ProNavLink({ className, onClick }: ProNavLinkProps) {
             window.location.href = href;
           }
         }}
-        title={L.navProCanvas}
+        title={L.navUltraCanvas}
       >
         {label}
       </button>
@@ -80,7 +82,7 @@ export function ProNavLink({ className, onClick }: ProNavLinkProps) {
         open={gateOpen}
         onClose={() => setGateOpen(false)}
         requiredPlan="master"
-        featureLabel={L.navProCanvas}
+        featureLabel={L.navUltraCanvas}
       />
     </>
   );

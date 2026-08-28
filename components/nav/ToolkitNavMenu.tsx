@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { PlanGateDialog } from "@/components/billing/PlanGateDialog";
 import { useLocale } from "@/components/LocaleProvider";
 import { NavHoverMenu, type NavHoverMenuItem } from "@/components/nav/NavHoverMenu";
-import { PRICING_MASTER_PLAN_HREF } from "@/components/nav/ProNavLink";
+import { PRICING_ULTRA_CANVAS_HREF, ULTRA_CANVAS_PATH } from "@/lib/ultra-canvas-path";
 import { canUseProCanvas } from "@/lib/billing/entitlements";
 import { normalizeUserPlan } from "@/lib/billing/plans";
 
@@ -46,7 +46,7 @@ function useProCanvasAccess() {
   return { hasPro, isSignedIn, isLoaded };
 }
 
-/** Desktop: Toolkit hover flyout — brand kit, edit-image, captions, Pro canvas, Start creating. */
+/** Desktop: Toolkit hover flyout — brand kit, edit-image, captions, Ultra canvas, Start creating. */
 export function ToolkitNavMenu({ variant = "light", triggerClassName }: ToolkitNavMenuProps) {
   const { m } = useLocale();
   const L = m.landing;
@@ -58,23 +58,23 @@ export function ToolkitNavMenu({ variant = "light", triggerClassName }: ToolkitN
     const proItem: NavHoverMenuItem = hasPro
       ? {
           id: "pro",
-          href: "/pro",
-          label: L.toolProTitle,
-          description: L.toolProDesc,
+          href: ULTRA_CANVAS_PATH,
+          label: L.toolUltraCanvasTitle,
+          description: L.toolUltraCanvasDesc,
           icon: "pro",
         }
       : {
           id: "pro",
-          label: L.toolProTitle,
-          description: L.toolProDesc,
+          label: L.toolUltraCanvasTitle,
+          description: L.toolUltraCanvasDesc,
           icon: "pro",
-          badge: L.proMasterBadge,
+          badge: L.ultraCanvasMasterBadge,
           onClick: (e) => {
             e.preventDefault();
             if (isSignedIn) {
               setGateOpen(true);
             } else {
-              window.location.href = PRICING_MASTER_PLAN_HREF;
+              window.location.href = PRICING_ULTRA_CANVAS_HREF;
             }
           },
         };
@@ -150,7 +150,7 @@ export function ToolkitNavMenu({ variant = "light", triggerClassName }: ToolkitN
         open={gateOpen}
         onClose={() => setGateOpen(false)}
         requiredPlan="master"
-        featureLabel={L.navProCanvas}
+        featureLabel={L.navUltraCanvas}
       />
     </>
   );
@@ -178,7 +178,7 @@ export function ToolkitNavMobileLinks({
     ? "rounded-lg py-2 pl-6 pr-3 text-sm text-slate-300 hover:bg-white/10 hover:text-white"
     : "rounded-lg py-2 pl-6 pr-3 text-sm text-slate-600 hover:bg-violet-50 hover:text-violet-800";
 
-  const proHref = hasPro ? "/pro" : PRICING_MASTER_PLAN_HREF;
+  const proHref = hasPro ? ULTRA_CANVAS_PATH : PRICING_ULTRA_CANVAS_HREF;
   const startLabel = isSignedIn ? L.startCreating : L.tryFree;
 
   return (
@@ -197,7 +197,7 @@ export function ToolkitNavMobileLinks({
       </Link>
       {hasPro ? (
         <Link href={proHref} className={subClass} onClick={onNavigate}>
-          {L.toolProTitle}
+          {L.toolUltraCanvasTitle}
         </Link>
       ) : (
         <button
@@ -209,9 +209,9 @@ export function ToolkitNavMobileLinks({
             else window.location.href = proHref;
           }}
         >
-          {L.toolProTitle}
+          {L.toolUltraCanvasTitle}
           <span className="ml-2 rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-violet-700">
-            {L.proMasterBadge}
+            {L.ultraCanvasMasterBadge}
           </span>
         </button>
       )}
@@ -230,7 +230,7 @@ export function ToolkitNavMobileLinks({
         open={gateOpen}
         onClose={() => setGateOpen(false)}
         requiredPlan="master"
-        featureLabel={L.navProCanvas}
+        featureLabel={L.navUltraCanvas}
       />
     </>
   );

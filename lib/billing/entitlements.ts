@@ -114,7 +114,7 @@ export class PlanEntitlementError extends Error {
 export function assertProCanvasAllowed(plan: UserPlan): void {
   if (!canUseProCanvas(plan)) {
     throw new PlanEntitlementError(
-      "Pro canvas requires the Master plan. Upgrade on Pricing to unlock.",
+      "Ultra canvas requires the Master plan. Upgrade on Pricing to unlock.",
     );
   }
 }

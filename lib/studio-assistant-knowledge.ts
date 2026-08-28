@@ -53,7 +53,7 @@ export const ASSISTANT_KNOWLEDGE: AssistantKnowledgeChunk[] = [
       "start",
       "captions",
       "edit",
-      "pro",
+      "ultra",
       "library",
       "brand",
       "ugc",
@@ -65,7 +65,7 @@ export const ASSISTANT_KNOWLEDGE: AssistantKnowledgeChunk[] = [
 - /studio — guided wizard (default simple mode). Ask-AI launcher is OFF here.
 - /captions — burn subtitles / BGM / voice on any MP4. Ask-AI OFF.
 - /edit-image — clean, add text/logo, export. Ask-AI OFF.
-- /pro — node canvas (Upload → image → video). Master plan. Pay-per-use tokens.
+- /ultra — Ultra canvas (Upload → image → video). Master plan. Pay-per-use tokens.
 - /brand-kit — save logo & colors.
 - /library — past generations.
 - /ugc — talking presenter.
@@ -77,7 +77,7 @@ Ask-AI is a small logo on the landing page only. It is hidden on every other pag
 - /studio — 引導式 wizard（預設簡單模式）。呢頁冇問 AI 浮掣。
 - /captions — 任何 MP4 燒字幕／BGM／配音。冇問 AI。
 - /edit-image — 清雜物、加字／Logo、匯出。冇問 AI。
-- /pro — 節點畫布（上傳→圖→片）。Master 方案。按次 token。
+- /ultra — Ultra 畫布（上傳→圖→片）。Master 方案。按次 token。
 - /brand-kit — 儲 Logo 同顏色。
 - /library — 作品庫。
 - /ugc — 數字人口播。
@@ -135,11 +135,11 @@ Three workflows in studio: image-only (posts), video-only (clip from upload or t
     en: `Tokens ≈ pay-per-use. Free signup grant is 300 tokens once (not a monthly refill). When balance is low, Free users can start a 7-day monthly Pro trial (card required) for +700 tokens + Pro features; after 7 days Pro is charged unless canceled in Account. All tokens expire 6 months after grant (oldest first).
 Rough costs: 1 still ≈ 65 tokens; 4 storyboard stills ≈ 260; 8s video ≈ 328 at 480p (Free) or ≈ 520 at 720p; 6s motion poster ≈ 390; 12s at 480p ≈ 492; stitched fallback 4×5s ≈ 1136.
 300 is for trying the workflow; bigger video jobs need the Pro trial or a paid plan.
-Plans (typical): Free 300 signup / 480p; Light 3000/mo 480p; Standard 8000/mo 720p; Pro 16000/mo 1080p; Master 28000/mo + Pro canvas; Enterprise 40000 + 3 seats. Paid can top up 1000 tokens. See /pricing. Estimates only.`,
+Plans (typical): Free 300 signup / 480p; Light 3000/mo 480p; Standard 8000/mo 720p; Pro 16000/mo 1080p; Master 28000/mo + Ultra canvas; Enterprise 40000 + 3 seats. Paid can top up 1000 tokens. See /pricing. Estimates only.`,
     zh: `Tokens ≈ 按次計費。免費註冊一次送 300（唔係每月自動再送）。餘額不足可開 7 日 Pro 試用（要綁卡）多送 700 + Pro 功能；7 日後扣月費 Pro，可喺帳戶取消。所有 Token 由發放日起 6 個月有效（先用舊嘅）。
 大約：1 張靜圖 ≈ 65；4 格分鏡 ≈ 260；8 秒影片 Free 480p ≈ 328，Light 720p ≈ 520；6 秒動態海報 ≈ 390；12 秒 480p ≈ 492；拼接後備 4×5 秒 ≈ 1136。
 300 用來試流程；大片要試用或付費方案。
-方案大約：Free 註冊 300／480p；Light 每月 3000／480p；Standard 8000／720p；Pro 16000／1080p；Master 28000 + Pro 畫布；Enterprise 40000 + 3 席。付費可加購 1000 tokens。詳情 /pricing。數字係估算。`,
+方案大約：Free 註冊 300／480p；Light 每月 3000／480p；Standard 8000／720p；Pro 16000／1080p；Master 28000 + Ultra 畫布；Enterprise 40000 + 3 席。付費可加購 1000 tokens。詳情 /pricing。數字係估算。`,
   },
   {
     id: "video-engines",
@@ -303,10 +303,12 @@ Plans (typical): Free 300 signup / 480p; Light 3000/mo 480p; Standard 8000/mo 72
     zh: `/captions：匯入任何 MP4 → 改時間軸字幕 → 可加 BGM／配音 → 燒錄。唔會重新生成條片。/edit-image：上傳或作品庫 → 清除（inpaint）→ 排版（字／Logo）→ 匯出。兩頁都冇問 AI；用導航打開，或喺首頁問 AI 話你要字幕／修圖。`,
   },
   {
-    id: "pro-tools",
-    title: "Pro canvas, brand kit, library, UGC",
+    id: "ultra-tools",
+    title: "Ultra canvas, brand kit, library, UGC",
     keywords: [
-      "pro",
+      "ultra",
+      "ultra-canvas",
+      "ultra canvas",
       "canvas",
       "node",
       "brand-kit",
@@ -322,8 +324,8 @@ Plans (typical): Free 300 signup / 480p; Light 3000/mo 480p; Standard 8000/mo 72
       "作品库",
       "口播",
     ],
-    en: `/pro is a node canvas (upload → AI image → video). Pay-per-use tokens, Master plan — not Lumina subscription pricing. /brand-kit saves logo/colors for stills. /library stores outputs; reopen in editor or captions. /ugc is a talking presenter, separate from storyboard TVC.`,
-    zh: `/pro 係節點畫布（上傳→ AI 圖→ 片），按次 token，Master 方案 — 唔係 Lumina 訂閱價。/brand-kit 存 Logo／色。/library 存成品，可再開去修圖或字幕。/ugc 係口播數字人，同分鏡 TVC 分開。`,
+    en: `/ultra is the Ultra canvas (upload → AI image → video). Pay-per-use tokens, Master plan — not Lumina subscription pricing. /brand-kit saves logo/colors for stills. /library stores outputs; reopen in editor or captions. /ugc is a talking presenter, separate from storyboard TVC.`,
+    zh: `/ultra 係 Ultra 畫布（上傳→ AI 圖→ 片），按次 token，Master 方案 — 唔係 Lumina 訂閱價。/brand-kit 存 Logo／色。/library 存成品，可再開去修圖或字幕。/ugc 係口播數字人，同分鏡 TVC 分開。`,
   },
   {
     id: "how-to-start",

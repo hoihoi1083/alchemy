@@ -128,8 +128,8 @@ function defaultNodeData(kind: ProCanvasNodeKind, label: string): ProCanvasNodeD
 function ProCanvasBoard() {
   const { m } = useLocale();
   const starter = useMemo(
-    () => createProCanvasStarter(m.pro.nodeLabels),
-    [m.pro.nodeLabels],
+    () => createProCanvasStarter(m.ultraCanvas.nodeLabels),
+    [m.ultraCanvas.nodeLabels],
   );
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>(starter.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(starter.edges);
@@ -467,7 +467,7 @@ function ProCanvasBoard() {
     (kind: ProCanvasNodeKind) => {
       nodeCounter += 1;
       const id = `${kind}-${nodeCounter}`;
-      const labels = m.pro.nodeLabels as Record<string, string>;
+      const labels = m.ultraCanvas.nodeLabels as Record<string, string>;
       const label = labels[kind] ?? kind;
       const newNode: Node = {
         id,
@@ -477,7 +477,7 @@ function ProCanvasBoard() {
       };
       setNodes((nds) => [...nds, newNode]);
     },
-    [m.pro.nodeLabels, setNodes],
+    [m.ultraCanvas.nodeLabels, setNodes],
   );
 
   const actions = useMemo(
@@ -512,9 +512,9 @@ function ProCanvasBoard() {
   );
 
   const paletteLabels = {
-    addNode: m.pro.addNode,
-    addResource: m.pro.addResource,
-    ...(m.pro.nodeLabels as Record<string, string>),
+    addNode: m.ultraCanvas.addNode,
+    addResource: m.ultraCanvas.addResource,
+    ...(m.ultraCanvas.nodeLabels as Record<string, string>),
   };
 
   return (
@@ -525,10 +525,10 @@ function ProCanvasBoard() {
           items={queue}
           running={runningAll}
           labels={{
-            title: m.pro.queueTitle,
-            runAll: m.pro.runAll,
-            running: m.pro.running,
-            empty: m.pro.queueEmpty,
+            title: m.ultraCanvas.queueTitle,
+            runAll: m.ultraCanvas.runAll,
+            running: m.ultraCanvas.running,
+            empty: m.ultraCanvas.queueEmpty,
           }}
           onRunAll={runAll}
         />

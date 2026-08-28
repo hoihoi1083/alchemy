@@ -2,7 +2,7 @@
 
 Check off items as you complete them. Tell AI in a new chat: *"Continue Phase X from docs/ROADMAP.md"*.
 
-**Status (2026-07):** Auth, token billing (Stripe), library (Mongo + R2), captions, edit-image, Pro canvas, legal pages, and transactional email are **shipped**. Remaining work is polish, ops, and launch.
+**Status (2026-07):** Auth, token billing (Stripe), library (Mongo + R2), captions, edit-image, Ultra canvas, legal pages, and transactional email are **shipped**. Remaining work is polish, ops, and launch.
 
 ---
 
@@ -38,7 +38,7 @@ Check off items as you complete them. Tell AI in a new chat: *"Continue Phase X 
 
 ## Phase 4 — Pro + post-gen tools ✅ (core)
 
-- [x] `/pro` node canvas (upload → image → video)
+- [x] `/ultra` Ultra canvas (upload → image → video)
 - [x] `/captions` burn / soft captions (R2 for large uploads)
 - [x] `/edit-image` Konva canvas + library handoff
 - [x] Hide `/captions/visual` + `/ugc` unless `NEXT_PUBLIC_ENABLE_BETA_SURFACES=1`

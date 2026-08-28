@@ -282,10 +282,10 @@ const OTHER: MatrixCase[] = [
   },
   {
     id: "pro-en",
-    message: "use /pro node canvas",
+    message: "use /ultra Ultra canvas",
     expectIntent: "pro_canvas",
-    expectTask: "route-pro-canvas",
-    expectAction: "studio-action:open-pro",
+    expectTask: "route-ultra-canvas",
+    expectAction: "studio-action:open-ultra-canvas",
     expectFastPath: true,
   },
   {

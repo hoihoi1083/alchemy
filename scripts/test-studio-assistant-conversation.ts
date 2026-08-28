@@ -226,9 +226,9 @@ const FLOWS: FlowDef[] = [
     steps: [],
   },
   {
-    id: "pro-canvas",
-    opening: "use /pro node canvas",
-    expectLandingTask: "route-pro-canvas",
+    id: "ultra-canvas",
+    opening: "use /ultra Ultra canvas",
+    expectLandingTask: "route-ultra-canvas",
     studio: snap({ surface: "landing" }),
     steps: [],
   },

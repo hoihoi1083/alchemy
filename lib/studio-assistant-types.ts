@@ -76,6 +76,7 @@ export type StudioAssistantActionId =
   | "website-launch-image"
   | "open-captions"
   | "open-edit-image"
+  | "open-ultra-canvas"
   | "open-pro"
   | "open-brand-kit"
   | "open-library"

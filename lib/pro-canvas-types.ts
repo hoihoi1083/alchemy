@@ -114,7 +114,7 @@ export type AddableNodeType = {
   group: "node" | "resource";
 };
 
-/** Ordered image input for Pro canvas generation (matches @mention slot order). */
+/** Ordered image input for Ultra canvas generation (matches @mention slot order). */
 export type CanvasImageSource = {
   nodeId: string;
   alias: string;

@@ -62,7 +62,7 @@ describe("plan entitlements", () => {
     assert.equal(clampImageResolution("master", "4K").resolution, "2K");
   });
 
-  it("gates Pro canvas to master/custom only", () => {
+  it("gates Ultra canvas to master/custom only", () => {
     assert.equal(canUseProCanvas("free"), false);
     assert.equal(canUseProCanvas("standard"), false);
     assert.equal(canUseProCanvas("pro"), false);

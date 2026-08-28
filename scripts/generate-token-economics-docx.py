@@ -131,7 +131,7 @@ PLANS = [
         "cogs": "$19.75",
         "price": "$99.99 / mo",
         "margin": "~80%",
-        "notes": "1080p video · 2K images · Pro canvas",
+        "notes": "1080p video · 2K images · Ultra canvas",
     },
     {
         "name": "",
@@ -155,7 +155,7 @@ PLANS = [
         "cogs": "—",
         "price": "Contact sales",
         "margin": "—",
-        "notes": "Enterprise · 1080p · 2K · Pro canvas",
+        "notes": "Enterprise · 1080p · 2K · Ultra canvas",
     },
     {
         "name": "Token top-up",
@@ -431,7 +431,7 @@ def build_doc() -> Document:
         f"Top-up: ${TOP_UP_PRICE_USD} → {TOP_UP_TOKENS:,} tokens; available only after any paid subscription.",
         "Failed AI jobs: tokens deducted before the generation call; refundTokens() on failure (atomic ledger).",
         "UI: show estimated token cost before Generate; block when balance < cost (402).",
-        "Resolution caps: Free 480p/1K · Standard 720p/1K · Pro 1080p/1K · Master 1080p/2K + Pro canvas.",
+        "Resolution caps: Free 480p/1K · Standard 720p/1K · Pro 1080p/1K · Master 1080p/2K + Ultra canvas.",
         "Mongo plan enum: free | standard | pro | master | custom (legacy payg → standard).",
         "Content research (JustOne / Tavily): operator API cost only — not token-charged to users today.",
         "First quick refine per finished image job: still billed as TOKEN_COST.image (65) — no free credit in ledger.",

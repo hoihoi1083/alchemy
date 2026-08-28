@@ -24,11 +24,11 @@ const TOOLS = [
 		src: "/images/landing/tool-icon-captions.png?v=2",
 	},
 	{
-		href: "/pro",
-		titleKey: "toolProTitle" as const,
-		descKey: "toolProDesc" as const,
+		href: "/ultra",
+		titleKey: "toolUltraCanvasTitle" as const,
+		descKey: "toolUltraCanvasDesc" as const,
 		src: "/images/landing/tool-icon-pro.png?v=2",
-		badgeKey: "proMasterBadge" as const,
+		badgeKey: "ultraCanvasMasterBadge" as const,
 	},
 ] as const;
 

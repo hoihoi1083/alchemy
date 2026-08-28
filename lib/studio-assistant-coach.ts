@@ -100,10 +100,10 @@ export function actionLinkForTask(task: CoachTaskKind, en: boolean): string | nu
       return en
         ? "[Open image editor](studio-action:open-edit-image)"
         : "[開啟修圖工作室](studio-action:open-edit-image)";
-    case "route-pro-canvas":
+    case "route-ultra-canvas":
       return en
-        ? "[Open Pro canvas](studio-action:open-pro)"
-        : "[開啟 Pro 畫布](studio-action:open-pro)";
+        ? "[Open Ultra canvas](studio-action:open-ultra-canvas)"
+        : "[開啟 Ultra 畫布](studio-action:open-ultra-canvas)";
     case "analyze-brand":
     case "analyze-brand-before-image":
       return en
@@ -257,13 +257,13 @@ export function buildCoachReply(
           ].join("\n")
         : ["第一步：修圖 — 上傳或從作品庫揀圖 → 清雜物 → 排版 → 匯出。", link ?? ""].join("\n");
 
-    case "route-pro-canvas":
+    case "route-ultra-canvas":
       return en
         ? [
-            "Step 1: Power-user node canvas — upload → AI image → reference-reel video video. Pay-per-use tokens.",
+            "Step 1: Ultra canvas — upload → AI image → reference-reel video. Pay-per-use tokens.",
             link ?? "",
           ].join("\n")
-        : ["第一步：進階節點畫布 — 上傳 → 出圖 → 出片。按次 token 計費。", link ?? ""].join("\n");
+        : ["第一步：Ultra 畫布 — 上傳 → 出圖 → 出片。按次 token 計費。", link ?? ""].join("\n");
 
     case "guide-edit-image":
       return en
@@ -283,10 +283,10 @@ export function buildCoachReply(
           ? "片已載入。第一步 — 改時間軸字幕，然後可加 BGM／配音，最後燒錄。風格、時間、口播直接問我。"
           : "第一步 — 匯入 MP4（作品庫或上傳）。然後改字幕文案 → 可選 BGM／配音 → 燒錄。唔使重新出片。";
 
-    case "guide-pro":
+    case "guide-ultra-canvas":
       return en
-        ? "You are on Pro canvas. Step 1 — add an Upload node, connect to Image (AI), then Video (reference-reel video). Pay-per-use tokens — check the cost hint before run."
-        : "你喺 Pro 畫布。第一步 — 加 Upload 節點，接到 Image（AI），再接 Video（reference-reel video）。按次 token 計費，跑之前睇成本提示。";
+        ? "You are on Ultra canvas. Step 1 — add an Upload node, connect to Image (AI), then Video (reference-reel video). Pay-per-use tokens — check the cost hint before run."
+        : "你喺 Ultra 畫布。第一步 — 加 Upload 節點，接到 Image（AI），再接 Video（reference-reel video）。按次 token 計費，跑之前睇成本提示。";
 
     case "guide-brand-kit":
       return en
@@ -631,8 +631,8 @@ export function buildCoachReply(
     case "done-download":
       return step(
         en
-          ? "Done — download from Done step, or [Caption studio](/captions) for burn-in edits, or [/pro](/pro) for node workflows."
-          : "完成 — 喺完成步下載，或去 [字幕工具](/captions) 改燒錄字幕，進階用 [/pro](/pro)。",
+          ? "Done — download from Done step, or [Caption studio](/captions) for burn-in edits, or [/ultra](/ultra) for Ultra canvas workflows."
+          : "完成 — 喺完成步下載，或去 [字幕工具](/captions) 改燒錄字幕，進階用 [/ultra](/ultra) Ultra 畫布。",
       );
 
     default:

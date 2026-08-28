@@ -1,4 +1,4 @@
-/** Multi-reference compose prompts for Pro canvas → nano-banana-2/edit */
+/** Multi-reference compose prompts for Ultra canvas → nano-banana-2/edit */
 
 export const IMAGE_CANVAS_COMPOSE_SYSTEM_PROMPT = [
   "You are a precise image compositor for marketing creatives.",

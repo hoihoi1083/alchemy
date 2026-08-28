@@ -15,6 +15,7 @@ import { useUserPlanEntitlements } from "@/hooks/useUserPlanEntitlements";
 import { PLAN_DEFINITIONS } from "@/lib/billing/plans";
 import { planMeetsMinimum } from "@/lib/billing/plan-gates";
 import { pricingCardCapacityItems } from "@/lib/billing/pricing-card-capacity";
+import { isUltraCanvasFeatureParam } from "@/lib/ultra-canvas-path";
 import {
   trackCheckoutFailed,
   trackCheckoutRedirected,
@@ -529,9 +530,9 @@ export function PricingPageClient() {
                 {checkoutError}
               </div>
             ) : null}
-            {featureParam === "pro-canvas" && highlightPlan === "master" ? (
+            {isUltraCanvasFeatureParam(featureParam) && highlightPlan === "master" ? (
               <div className="mb-5 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-900">
-                {p.proCanvasUpgradeHint}
+                {p.ultraCanvasUpgradeHint}
               </div>
             ) : null}
 

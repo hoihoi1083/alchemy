@@ -63,7 +63,7 @@ describe("internal unlimited allowlist", () => {
     assert.equal(isInternalUnlimitedEmail("ops@alchemyailab.com"), false);
   });
 
-  it("grants Master entitlements (Pro canvas) for allowlisted accounts", () => {
+  it("grants Master entitlements (Ultra canvas) for allowlisted accounts", () => {
     assert.equal(INTERNAL_UNLIMITED_PLAN, "master");
     assert.equal(canUseProCanvas(INTERNAL_UNLIMITED_PLAN), true);
   });

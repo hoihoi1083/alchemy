@@ -108,11 +108,11 @@ const CASES: Case[] = [
     expectReplyIncludes: ["studio-action:open-captions"],
   },
   {
-    name: "landing pro canvas",
+    name: "landing Ultra canvas",
     snapshot: snap({ surface: "landing" }),
-    userText: "use /pro node canvas",
-    expectTask: "route-pro-canvas",
-    expectReplyIncludes: ["studio-action:open-pro"],
+    userText: "use /ultra Ultra canvas",
+    expectTask: "route-ultra-canvas",
+    expectReplyIncludes: ["studio-action:open-ultra-canvas"],
   },
   {
     name: "studio concept cinematic — fill concept first (no URL required)",

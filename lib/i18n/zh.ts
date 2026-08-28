@@ -232,7 +232,7 @@ export const zh = {
 		pricing: "方案與 tokens",
 		how: "運作方式",
 		watchDemo: "觀看示範",
-		proCanvas: "專業畫布",
+		ultraCanvas: "Ultra 畫布",
 		accountTitle: "帳戶",
 		library: "我的作品庫",
 		account: "帳戶與帳單",
@@ -348,7 +348,7 @@ export const zh = {
 		homeLink: "返回 Landing",
 		themeToggleLight: "淺色",
 		themeToggleDark: "深色",
-		proLink: "Pro 智能畫布",
+		ultraCanvasLink: "Ultra 畫布",
 		captionsLink: "字幕同音頻工作室",
 		imageCanvasLink: "圖片加字工作室",
 	},
@@ -381,9 +381,9 @@ export const zh = {
 		navToolkit: "工具箱",
 		toolkitHubBadge: "創作工具",
 		toolkitHubTitle: "創作工具箱",
-		toolkitHubSubtitle: "品牌套件、改圖、字幕同 Pro 畫布 — 開箱即用。",
-		navProCanvas: "Pro 畫布（需 Master 方案）",
-		navProCanvasUnlocked: "Pro 畫布",
+		toolkitHubSubtitle: "品牌套件、改圖、字幕同 Ultra 畫布 — 開箱即用。",
+		navUltraCanvas: "Ultra 畫布（需 Master 方案）",
+		navUltraCanvasUnlocked: "Ultra 畫布",
 		heroTrust: [
 			"唔使空白 prompt",
 			"先分鏡再出片",
@@ -648,7 +648,7 @@ export const zh = {
 		finalTitle: "準備做好似代理嘅內容？",
 		finalBody: "免費開始，上傳一張產品相，幾分鐘出第一隻廣告。",
 		finalImageAlt: "Alchemy 工作室創作同產品素材預覽",
-		proCanvasLink: "Pro 智能畫布",
+		ultraCanvasNavLink: "Ultra 畫布",
 		captionsLink: "為任何影片加字幕、BGM 同口播",
 		imageCanvasLink: "為任何圖片加字同 Logo",
 		ugcLink: "試 UGC 數字人口播",
@@ -660,7 +660,7 @@ export const zh = {
 		brandKitLogoTip: "提示：接近正方形、Logo 佔畫面大部分、約 512–1024px。",
 		brandKitCta: "繼續去工作室",
 		toolsTitle: "更多創作工具",
-		toolsSubtitle: "品牌套件、圖片編輯、字幕同 Pro 畫布 — 開箱即用。",
+		toolsSubtitle: "品牌套件、圖片編輯、字幕同 Ultra 畫布 — 開箱即用。",
 		toolsOpenCta: "打開",
 		toolBrandTitle: "品牌套件",
 		toolBrandDesc:
@@ -669,10 +669,10 @@ export const zh = {
 		toolEditDesc: "為任意靜圖加標題、Logo 同精修效果。",
 		toolCaptionsTitle: "字幕同音頻",
 		toolCaptionsDesc: "為任意 MP4 燒錄字幕、背景音樂同配音。",
-		toolProTitle: "Pro 智能畫布",
-		toolProDesc: "節點式進階工作流，適合高階用戶。",
+		toolUltraCanvasTitle: "Ultra 畫布",
+		toolUltraCanvasDesc: "節點式進階工作流，適合高階用戶。",
 		toolStartDesc: "開啟向導，幾分鐘內做出第一條廣告。",
-		proMasterBadge: "Master 方案",
+		ultraCanvasMasterBadge: "Master 方案",
 		visualCaptionsLink: "視覺字幕實驗室（Beta）",
 		recipes: {
 			badge: "一鍵配方",
@@ -1152,7 +1152,7 @@ export const zh = {
 		planFeaturesCustom: [
 			"每月 40,000 token",
 			"3 席 · 共用池",
-			"團隊資料夾 · Pro 畫布 · 2K",
+			"團隊資料夾 · Ultra 畫布 · 2K",
 		],
 
 		planFeaturesFree: [
@@ -1169,7 +1169,7 @@ export const zh = {
 
 		planFeaturesMaster: [
 			"28,000 token / 月",
-			"2K 圖片 · Pro 畫布",
+			"2K 圖片 · Ultra 畫布",
 			"優先支援",
 		],
 
@@ -1284,7 +1284,7 @@ export const zh = {
 		checkoutRedirecting: "正前往 Stripe…",
 		checkoutSuccess: "付款成功。Token 幾秒內會入帳 — 如未更新請重新整理。",
 		checkoutCanceled: "已取消結帳，未有收費。",
-		proCanvasUpgradeHint: "Pro 畫布包含喺 Master 方案。請揀下面 Master 方案先可以解鎖節點畫布。",
+		ultraCanvasUpgradeHint: "Ultra 畫布包含喺 Master 方案。請揀下面 Master 方案先可以解鎖節點畫布。",
 		checkoutError: "無法開始結帳。請再試，或聯絡支援。",
 		paymentIncomplete:
 			"付款未成功。請喺「管理帳單」更新信用卡後再試升級。你原本嘅計劃未有更改。",
@@ -1463,7 +1463,7 @@ export const zh = {
 					"引導精靈 + 模板",
 					"影片最高 1080p · 圖片最高 2K",
 					"Campaign 模式 · 分鏡／故事板 · A/B 同教學輪播",
-					"Pro 畫布",
+					"Ultra 畫布",
 					"電郵支援 · 可加購 · 優先支援",
 				],
 			},
@@ -1483,7 +1483,7 @@ export const zh = {
 					"3 個席位（擁有人 + 2 位隊友）",
 					"生成扣擁有人嘅共用 token 池",
 					"各自獨立作品庫",
-					"影片最高 1080p · 圖片最高 2K · Pro 畫布",
+					"影片最高 1080p · 圖片最高 2K · Ultra 畫布",
 					"Campaign · 分鏡／故事板 · A/B 同教學輪播",
 					"團隊資料夾 — 可分享已選檔案畀席位",
 					"優先支援 · 可加購 token（$10 / 1k）",
@@ -1573,7 +1573,7 @@ export const zh = {
 				custom: "✓",
 			},
 			{
-				feature: "Pro 畫布",
+				feature: "Ultra 畫布",
 				free: "—",
 				light: "—",
 				standard: "—",
@@ -5061,7 +5061,7 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 		welcomeCaptions:
 			"你而家喺字幕工作室。匯入任何 MP4 — 我幫你改時間軸字幕、BGM、配音，再燒錄。唔使重新出片。",
 		welcomePro:
-			"Pro 畫布 — 將 Upload → Image → Video 節點接好。跑之前可以問我順序同成本。按次 token 計費。",
+			"Ultra 畫布 — 將 Upload → Image → Video 節點接好。跑之前可以問我順序同成本。按次 token 計費。",
 		welcomeBrandKit:
 			"品牌套件 — 上傳一次 logo 同品牌色。分鏡靜幀要唔要蓋 logo 可以問我。",
 		welcomeLibrary:
@@ -5069,7 +5069,7 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 		welcomeUgc:
 			"UGC 工作室 — 話我知產品同感覺（開箱、評價、街拍）。要分鏡廣告就同我講，我帶你去 /studio。",
 		welcomeSite:
-			"你好 — 可以問 Alchemy 點用，或者我幫你開 wizard、修圖、字幕、Pro 畫布或品牌套件。",
+			"你好 — 可以問 Alchemy 點用，或者我幫你開 wizard、修圖、字幕、Ultra 畫布或品牌套件。",
 		shortLabel: "問 AI",
 		openingStudio: "正在開啟工作室並套用設定…",
 		studioContinued:
@@ -5770,16 +5770,16 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 		doneTitle: "匯出",
 		doneHint: "繼續下載同分享廣告。",
 	},
-	pro: {
+	ultraCanvas: {
 		back: "← 首頁",
 		backStudio: "引導精靈",
-		title: "Pro 智能畫布",
+		title: "Ultra 畫布",
 		subtitle:
-			"Lumina 式節點畫布：新增節點、用 @ 引用素材、逐步或一次運行。",
+			"Ultra 畫布 — Lumina 式節點工作流：新增節點、用 @ 引用素材、逐步或一次運行。",
 		costHint:
-			"Pro 使用 系統 按次收費（唔係 Lumina 訂閱價）。每次運行會消耗你 service credentials 嘅 API 額度。",
+			"Ultra 畫布使用 系統 按次收費（唔係 Lumina 訂閱價）。每次運行會消耗你 service credentials 嘅 API 額度。",
 		mobileDesktopOnly:
-			"Pro 畫布適合桌面使用 — 手機請用橫屏平板或電腦；日常出片可用 /studio 嚮導（支援手機）。",
+			"Ultra 畫布適合桌面使用 — 手機請用橫屏平板或電腦；日常出片可用 /studio 嚮導（支援手機）。",
 		steps: [
 			"1. 新增上傳／圖片節點 — 設 @別名（例如 Ava、Outfit）",
 			"2. 可選：圖片同影片之間加相機角度節點",

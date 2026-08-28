@@ -14,7 +14,7 @@ const LANDING_ACTION_BY_TASK: Partial<Record<CoachTaskKind, string>> = {
   "route-concept-studio": "open-concept-studio",
   "route-captions": "open-captions",
   "route-edit-image": "open-edit-image",
-  "route-pro-canvas": "open-pro",
+  "route-ultra-canvas": "open-ultra-canvas",
 };
 
 function escapeRe(s: string): string {

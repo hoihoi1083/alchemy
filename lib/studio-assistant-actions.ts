@@ -242,8 +242,9 @@ export function runStudioAssistantAction(
     case "open-edit-image":
       return goPath("/edit-image", context);
 
+    case "open-ultra-canvas":
     case "open-pro":
-      return goPath("/pro", context);
+      return goPath("/ultra", context);
 
     case "open-brand-kit":
       return goPath("/brand-kit", context);
@@ -281,6 +282,7 @@ export function parseStudioAssistantActionId(
     "website-launch-image",
     "open-captions",
     "open-edit-image",
+    "open-ultra-canvas",
     "open-pro",
     "open-brand-kit",
     "open-library",
@@ -311,6 +313,7 @@ export function actionNavigatesAway(actionId: StudioAssistantActionId): boolean 
     actionId === "open-storyboard-studio" ||
     actionId === "open-captions" ||
     actionId === "open-edit-image" ||
+    actionId === "open-ultra-canvas" ||
     actionId === "open-pro" ||
     actionId === "open-brand-kit" ||
     actionId === "open-library" ||
