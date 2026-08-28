@@ -5755,6 +5755,9 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 		refVideoTitle: "參考短片（MP4）",
 		refVideoHint:
 			"有 reel／短片先上傳；圖文研究帖可跳過（用參考圖 + 分鏡即可）。",
+		refVideoTitleResearch: "參考 reel（此路徑必填）",
+		refVideoHintResearch:
+			"影片研究會跟 @Video1 運鏡。揀帖後會自動下載；僅下載失敗時再手動上傳。分析喺伺服器讀完整 reel（大檔都得）。",
 		refVideoTitleOptional: "參考短片（選填）",
 		refVideoHintOptional:
 			"圖文帖唔使上傳 MP4 — 會自動跳過。有 reel 先上傳會跟節奏排分鏡。",
