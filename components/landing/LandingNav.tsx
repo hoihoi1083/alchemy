@@ -5,8 +5,7 @@ import { useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { AuthNav } from "@/components/AuthNav";
 import { LanguageToggle } from "@/components/LanguageToggle";
-import { CanvaNavMenu, CanvaNavMobileLinks } from "@/components/nav/CanvaNavMenu";
-import { ProNavLink } from "@/components/nav/ProNavLink";
+import { ToolkitNavMenu, ToolkitNavMobileLinks } from "@/components/nav/ToolkitNavMenu";
 import { useLocale } from "@/components/LocaleProvider";
 import { AuthBrandLockup } from "@/components/AuthBrandLockup";
 import { SignUpPromoBar } from "@/components/SignUpPromoBar";
@@ -47,8 +46,7 @@ export function LandingNav() {
 							{L[item.key]}
 						</Link>
 					))}
-					<CanvaNavMenu />
-					<ProNavLink className="whitespace-nowrap text-[12px] font-medium text-slate-600 hover:text-violet-700 xl:text-[13px]" />
+					<ToolkitNavMenu />
 				</nav>
 
 				<div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
@@ -90,11 +88,7 @@ export function LandingNav() {
 								{L[item.key]}
 							</Link>
 						))}
-						<CanvaNavMobileLinks onNavigate={() => setOpen(false)} />
-						<ProNavLink
-							className="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-violet-50 hover:text-violet-700"
-							onClick={() => setOpen(false)}
-						/>
+						<ToolkitNavMobileLinks onNavigate={() => setOpen(false)} />
 						<Link
 							href="/start"
 							className="mt-1 rounded-full bg-violet-600 px-4 py-2.5 text-center text-sm font-semibold text-white"

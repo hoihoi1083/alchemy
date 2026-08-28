@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { LandingFloatingCta } from "@/components/landing/LandingFloatingCta";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { useLocale } from "@/components/LocaleProvider";
+import { transactionLabel } from "@/lib/billing/transaction-label";
 import type { CreditReason } from "@/lib/billing/ledger";
 import type { UserPlan } from "@/lib/billing/plans";
 import { CREDITS_EVENT } from "@/lib/credits-client";
@@ -252,8 +253,8 @@ export function AccountPageClient() {
         )
       : null;
 
-  function reasonLabel(reason: CreditReason): string {
-    return a.reasons[reason] ?? reason;
+  function rowLabel(reason: CreditReason, meta: Record<string, unknown> | null): string {
+    return transactionLabel(reason, meta, a.reasons, a.consumeKinds);
   }
 
   async function copyText(text: string): Promise<boolean> {
@@ -674,7 +675,9 @@ export function AccountPageClient() {
                     return (
                       <li key={row.id} className="flex items-start justify-between gap-4 px-5 py-4">
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-slate-900">{reasonLabel(row.reason)}</p>
+                          <p className="text-sm font-medium text-slate-900">
+                            {rowLabel(row.reason, row.meta)}
+                          </p>
                           <p className="mt-1 text-xs text-slate-500">{formatDate(row.createdAt, locale)}</p>
                           {typeof row.meta?.invoiceId === "string" ? (
                             <p className="mt-1 text-[11px] text-slate-400">

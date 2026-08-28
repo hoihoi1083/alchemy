@@ -217,7 +217,7 @@ function ensureMinLiveAngles(plan: ContentResearchPlan): ContentResearchPlan {
   if (topPicks.length < RESEARCH_ANGLES_PER_PAGE) {
     throw new Error(
       plan.mediaFilter === "video"
-        ? "小紅書 有影片結果，但湊唔夠 3 個可用角度。試較闊關鍵字，或直接用貼文連結搜尋。"
+        ? "Found video posts but could not build 3 usable angles. Try a broader keyword, or paste a post link directly."
         : "Could not extract enough content angles from web results. Try a different keyword.",
     );
   }

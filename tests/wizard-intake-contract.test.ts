@@ -13,7 +13,6 @@ describe("wizard-intake-contract", () => {
     assert.deepEqual([...RESEARCH_UI_PLATFORMS], [
       "xiaohongshu",
       "instagram",
-      "facebook",
     ]);
   });
 
@@ -24,7 +23,6 @@ describe("wizard-intake-contract", () => {
     assert.deepEqual([...researchUiPlatforms("video-only")], [
       "xiaohongshu",
       "instagram",
-      "facebook",
       "tiktok",
     ]);
   });

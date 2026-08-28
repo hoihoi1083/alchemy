@@ -201,9 +201,5 @@ export function extractPostRefFromUrl(
 }
 
 export function directPostUrlSupported(platform: ContentPlatform): boolean {
-  return (
-    platform === "xiaohongshu" ||
-    platform === "instagram" ||
-    platform === "facebook"
-  );
+  return platform === "xiaohongshu" || platform === "instagram";
 }

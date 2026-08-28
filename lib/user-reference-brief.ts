@@ -446,6 +446,11 @@ export function userReferenceStyleOnlyPromptBlock(
 		);
 	}
 	if (brief.contentType) parts.push(`Format: ${brief.contentType}`);
+	if (brief.subjects) {
+		parts.push(
+			`Setting / cast family (original characters, same roles & environment — keep this world, never clone faces): ${brief.subjects}`,
+		);
+	}
 	if (brief.layoutStyle) {
 		parts.push(
 			`Layout inspiration (vary every slide): ${brief.layoutStyle}`,

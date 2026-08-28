@@ -49,7 +49,7 @@ import { mapPool } from "@/lib/async-pool";
 import { formatFalGenerationError } from "@/lib/fal-errors";
 import {
   isFalContentPolicyThrowable,
-  looksLikeSpaOrBeautyBrief,
+  looksLikeSpaClinicServiceBrief,
   saferSameSceneStillPrompt,
   softenStoryboardStillPromptForModeration,
   spaSafeStillFallbackPrompt,
@@ -206,7 +206,7 @@ export async function POST(request: Request) {
   const aspectRatio = aspectRatioForApi(
     (formData.get("aspect_ratio") as string | null)?.trim() || "9:16",
   );
-  const spaBeautyBrief = looksLikeSpaOrBeautyBrief(
+  const spaClinicBrief = looksLikeSpaClinicServiceBrief(
     productName,
     headline,
     conceptIdea,
@@ -215,9 +215,10 @@ export async function POST(request: Request) {
     storyboardBrief,
     promptExtraRaw,
   );
-  // Spa/beauty concept: style-ref face photos often trip fal input filters — use text-to-image.
+  // Only drop style-ref for true spa clinic / facial-service ads (face filter risk).
+  // Lifestyle skincare posts must keep the selected reference pixels.
   const forceConceptTextOnly =
-    conceptStoryboardNoProduct && spaBeautyBrief && !hasProduct;
+    conceptStoryboardNoProduct && spaClinicBrief && !hasProduct;
   // Endpoint resolved after we know whether pixels will actually be uploaded (below).
   // Client often sends /edit whenever a research style File exists in React state; if that
   // File is missing/empty on the server, honoring /edit with no image_urls → fal 422
@@ -238,7 +239,7 @@ export async function POST(request: Request) {
     market: promptMarket,
     framing: subjectFraming,
     extra: softenStoryboardStillPromptForModeration(promptExtra, {
-      spaBeautyBrief,
+      spaBeautyBrief: spaClinicBrief,
     }),
     artStyle: artStyleId,
   });
@@ -451,7 +452,7 @@ export async function POST(request: Request) {
             result = await subscribe(saferPrompt, false);
           } catch (secondErr) {
             if (!isFalContentPolicyThrowable(secondErr)) throw secondErr;
-            if (spaBeautyBrief) {
+            if (spaClinicBrief) {
               const safePrompt = spaSafeStillFallbackPrompt({
                 theme: plan.theme || productName || headline,
                 role: scene.role,

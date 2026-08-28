@@ -630,7 +630,7 @@ const LANDING_LAYOUT_CSS = `
 
 /* Wide desktop — pricing 5-up + taller hero */
 @media (min-width: 1440px) {
-  .landing-pricing-grid { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; }
+  .landing-pricing-grid { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; }
   .landing-hero-video { object-position: center 50% !important; }
 }
 

@@ -36,6 +36,12 @@ describe("billing Phase 1 action costs", () => {
     assert.equal(estimateImageTokens({ mode: "storyboard", sceneCount: 3 }), 195);
   });
 
+  it("prices teaching carousel by slide count", () => {
+    assert.equal(estimateImageTokens({ mode: "teaching_carousel", sceneCount: 4 }), 265);
+    assert.equal(estimateImageTokens({ mode: "teaching_carousel", sceneCount: 5 }), 330);
+    assert.equal(estimateImageTokens({ mode: "teaching_carousel", sceneCount: 6 }), 395);
+  });
+
   it("prices generate-image packs at 65 × count", () => {
     assert.equal(estimateImageTokens({ numImages: 3 }), 195);
     assert.equal(estimateImageTokens({ numImages: 4 }), 260);

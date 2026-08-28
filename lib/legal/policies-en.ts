@@ -286,7 +286,7 @@ export const legalEn: LegalBundle = {
       {
         heading: "3. Subscription Refunds",
         paragraphs: [
-          "If you purchase a paid subscription and have not used any paid features, consumed credits, generated premium content, exported premium assets or accessed paid services, you may request a refund within 14 calendar days of the initial purchase.",
+          "If you purchase a paid subscription and have not used any paid features, consumed credits, generated premium content, exported premium assets or accessed paid services, you may request a refund within 7 calendar days of the initial purchase.",
           "Once paid features or credits have been used, the subscription fee is generally non-refundable.",
           "Examples of usage that may make a subscription non-refundable include generating images, generating videos, generating or regenerating storyboards, generating premium prompts, using premium templates, exporting high-resolution assets, removing watermark, using premium editing tools or using paid AI processing credits.",
         ],
@@ -294,7 +294,7 @@ export const legalEn: LegalBundle = {
       {
         heading: "4. Credit Package Refunds",
         paragraphs: [
-          "Credit packages, generation credits or usage-based balances are refundable only if the request is made within 14 calendar days of purchase and no credits from that package have been used. Partially used credit packages are generally non-refundable.",
+          "Credit packages, generation credits or usage-based balances are refundable only if the request is made within 7 calendar days of purchase and no credits from that package have been used. Partially used credit packages are generally non-refundable.",
         ],
       },
       {

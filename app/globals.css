@@ -209,7 +209,7 @@ footer.site-footer a.site-footer-logo:focus {
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
   .landing-pricing-grid {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
   .landing-nav-links {
     display: flex !important;

@@ -8,11 +8,10 @@ import type { IntakePath } from "@/lib/wizard-micro-steps.types";
 import type { ContentPlatform } from "@/lib/content-research-types";
 import type { WorkflowMode } from "@/lib/workflow-mode";
 
-/** Image research: RedNote / IG / Facebook. TikTok is video-only — include when workflow needs video. */
+/** Image research: RedNote / IG. TikTok is video-only — include when workflow needs video. */
 export const RESEARCH_IMAGE_PLATFORMS: readonly ContentPlatform[] = [
   "xiaohongshu",
   "instagram",
-  "facebook",
 ] as const;
 
 /** Platforms shown in research UI for the current workflow. */

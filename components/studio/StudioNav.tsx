@@ -5,8 +5,7 @@ import { useState, type ReactNode } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { AuthNav } from "@/components/AuthNav";
 import { LanguageToggle } from "@/components/LanguageToggle";
-import { CanvaNavMenu, CanvaNavMobileLinks } from "@/components/nav/CanvaNavMenu";
-import { ProNavLink } from "@/components/nav/ProNavLink";
+import { ToolkitNavMenu, ToolkitNavMobileLinks } from "@/components/nav/ToolkitNavMenu";
 import { useLocale } from "@/components/LocaleProvider";
 import { AuthBrandLockup } from "@/components/AuthBrandLockup";
 import { SignUpPromoBar } from "@/components/SignUpPromoBar";
@@ -22,7 +21,7 @@ type StudioNavProps = {
 /**
  * Focused studio chrome — logo + core tools + tokens/language/user.
  * Avoids full marketing LandingNav links that pull attention off the wizard.
- * Canvas hover flyout (edit-image + captions) matches landing nav.
+ * Toolkit hover flyout matches landing nav.
  */
 export function StudioNav({ trailing, variant = "light" }: StudioNavProps) {
   const { m } = useLocale();
@@ -69,11 +68,10 @@ export function StudioNav({ trailing, variant = "light" }: StudioNavProps) {
               {item.label}
             </Link>
           ))}
-          <CanvaNavMenu variant={dark ? "dark" : "light"} triggerClassName={navLinkClass} />
+          <ToolkitNavMenu variant={dark ? "dark" : "light"} triggerClassName={navLinkClass} />
           <Link href="/pricing" className={pricingClass}>
             {L.navResources}
           </Link>
-          <ProNavLink className={navLinkClass} />
         </nav>
 
         <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
@@ -134,7 +132,7 @@ export function StudioNav({ trailing, variant = "light" }: StudioNavProps) {
                 {item.label}
               </Link>
             ))}
-            <CanvaNavMobileLinks
+            <ToolkitNavMobileLinks
               variant={dark ? "dark" : "light"}
               onNavigate={() => setOpen(false)}
             />
@@ -145,7 +143,6 @@ export function StudioNav({ trailing, variant = "light" }: StudioNavProps) {
             >
               {L.navResources}
             </Link>
-            <ProNavLink className={mobileLinkClass} onClick={() => setOpen(false)} />
             <div
               className={
                 dark

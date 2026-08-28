@@ -25,6 +25,10 @@ import {
 } from "@/lib/content-research-media-filter";
 import { contentResearchSearchHint } from "@/lib/content-research-search-hints";
 import { ResearchPostCards } from "@/components/content-research/ResearchPostCards";
+import {
+  localizeResearchWarning,
+  researchSourceNote,
+} from "@/lib/content-research-ui-messages";
 import { writeStudioAssistantHandoff } from "@/lib/studio-assistant-handoff";
 import { markAssistantReopenAfterNavigate } from "@/lib/studio-assistant-chat-storage";
 import { studioHref } from "@/lib/promotion-mode";
@@ -183,8 +187,18 @@ export function ContentResearchPanel({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? cr.failed);
       setPlan(data.plan as ContentResearchPlan);
-      setNote(String(data.sourceNote ?? ""));
-      setWarning(data.researchWarning ? String(data.researchWarning) : null);
+      setNote(
+        researchSourceNote(data.plan as ContentResearchPlan, cr, "keyword"),
+      );
+      setWarning(
+        data.researchWarning
+          ? localizeResearchWarning(
+              String(data.researchWarning),
+              cr,
+              platform,
+            )
+          : null,
+      );
       sessionStorage.setItem(LAST_RESEARCH_AT_KEY, String(Date.now()));
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : cr.failed);
@@ -229,8 +243,18 @@ export function ContentResearchPanel({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? cr.directPostFailed);
       setPlan(data.plan as ContentResearchPlan);
-      setNote(String(data.sourceNote ?? ""));
-      setWarning(data.researchWarning ? String(data.researchWarning) : null);
+      setNote(
+        researchSourceNote(data.plan as ContentResearchPlan, cr, "direct-post"),
+      );
+      setWarning(
+        data.researchWarning
+          ? localizeResearchWarning(
+              String(data.researchWarning),
+              cr,
+              platform,
+            )
+          : null,
+      );
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : cr.directPostFailed);
     } finally {
@@ -422,7 +446,6 @@ export function ContentResearchPanel({
           {researchPlatforms.map((p) => {
             const on = platform === p;
             const preferred = p === "xiaohongshu" || p === "instagram";
-            const secondary = p === "facebook";
             if (violet) {
               return (
                 <button
@@ -450,10 +473,6 @@ export function ContentResearchPanel({
                     {preferred ? (
                       <span className="mt-0.5 block text-[10px] font-semibold uppercase tracking-wide text-violet-600">
                         {cr.platformPreferredBadge}
-                      </span>
-                    ) : secondary ? (
-                      <span className="mt-0.5 block text-[10px] font-medium text-slate-500">
-                        {cr.platformSecondaryBadge}
                       </span>
                     ) : null}
                   </span>

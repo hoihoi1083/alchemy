@@ -38,19 +38,26 @@ describe("storyboard cell review (stills are the product)", () => {
     assert.match(wizard, /const rawPrompt = posterPrompt/);
   });
 
-  it("combined storyboard: look + text mode before plan; poster hides picker", () => {
+  it("combined storyboard: content → storyboard plan → look/text after plan", () => {
     const root = process.cwd();
     const src = readFileSync(
       join(root, "components/studio/PreGenerateSetupPanel.tsx"),
       "utf8",
     );
+    const contentAt = src.indexOf("pg.contentTitle");
+    const storyboardAt = src.indexOf("pg.storyboardTitle");
+    const planAt = src.indexOf("void wizard.planStoryboard()");
     const lookAt = src.indexOf("pg.storyboardLookBeforePlanHint");
     const textHintAt = src.indexOf("pg.storyboardTextModeHint");
-    const planAt = src.indexOf("void wizard.planStoryboard()");
-    assert.ok(lookAt > 0 && lookAt < planAt, "style picker must sit above 生成分鏡大綱");
+    assert.ok(contentAt > 0 && contentAt < storyboardAt, "內容詳情 above 分鏡影片");
+    assert.ok(storyboardAt > 0 && storyboardAt < planAt, "分鏡影片 card wraps 生成分鏡大綱");
     assert.ok(
-      textHintAt > lookAt && textHintAt < planAt,
-      "有字/無字 picker sits on the look card before 生成分鏡大綱",
+      planAt > 0 && lookAt > planAt,
+      "圖片選項 (look) sits below 生成分鏡大綱 — after content + storyboard",
+    );
+    assert.ok(
+      textHintAt > lookAt,
+      "有字/無字 picker sits on the look card with aspect/style",
     );
     assert.match(src, /videoCreativeMode !== "motion-poster"/);
     assert.match(src, /!combinedStoryboard \? \(/);

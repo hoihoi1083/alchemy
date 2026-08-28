@@ -3,6 +3,8 @@ import { isContentPlatform, planContentResearch } from "@/lib/content-research-p
 import { requireAppUser } from "@/lib/require-app-user";
 import { assertFreeDeepSeekQuota } from "@/lib/rate-limit-deepseek";
 import { asPromptMarket, type PromptMarket } from "@/lib/prompt-variables";
+import { researchUiPlatforms } from "@/lib/wizard-intake-contract";
+import type { ContentPlatform } from "@/lib/content-research-types";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -40,6 +42,11 @@ export async function POST(request: Request) {
   if (!isContentPlatform(platform)) {
     return NextResponse.json({ error: "Pick a supported platform." }, { status: 400 });
   }
+  const workflowMode = body.mediaFilter === "video" ? "video-only" : "image-only";
+  const allowed = researchUiPlatforms(workflowMode);
+  if (!allowed.includes(platform as ContentPlatform)) {
+    return NextResponse.json({ error: "Pick a supported platform." }, { status: 400 });
+  }
 
   try {
     const usePlaybookOnly = Boolean(body.usePlaybookOnly);
@@ -59,7 +66,7 @@ export async function POST(request: Request) {
     const sourceNote =
       plan.researchMode === "live-web"
         ? plan.searchProvider === "justoneapi"
-          ? `${plan.platformLabel} 貼文搜尋 (live search)`
+          ? `${plan.platformLabel} post search (live)`
           : `Live web research (${plan.searchProvider})`
         : "AI playbook suggestions (no web search)";
     return NextResponse.json({

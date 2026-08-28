@@ -279,6 +279,7 @@ export async function POST(request: Request) {
 
     const charged = await chargeTokens(auth.user.userId, tokenCost, {
       kind: isSingleSlideRegen ? "image" : "teaching_carousel",
+      ...(isSingleSlideRegen ? {} : { slideCount }),
     });
     if ("error" in charged) return charged.error;
     chargedBalance = charged.balanceAfter;

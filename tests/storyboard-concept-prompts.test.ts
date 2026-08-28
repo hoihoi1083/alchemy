@@ -226,6 +226,30 @@ describe("concept vs product storyboard prompts", () => {
     assert.ok(/CONCEPT VIDEO STORYBOARD/i.test(text));
     assert.ok(/English only|MUST be in English/i.test(text));
     assert.ok(!/edit from user's product photo/i.test(text));
+    assert.match(text, /Spa facial demo|spa beauty/i);
+  });
+
+  it("concept planner with reference locks look bible to selected post (no spa invent)", () => {
+    const text = buildStoryboardPlanPromptForTest({
+      product: "skincare brand relaunch",
+      business: "",
+      headline: "Everything you knew about skincare might be wrong",
+      subline: "Educational · Myth-busting",
+      offer: "",
+      storyboardBrief: "",
+      durationSec: 8,
+      market: "en",
+      framing: "auto",
+      styleHint: "",
+      conceptMode: true,
+      referenceStrategyKind: "style-only",
+      promptExtra:
+        "USER REFERENCE (style only): Format: lifestyle-photo | Colors: warm home daylight | Mood: casual, approachable | Setting / cast family: woman with glasses at home table",
+    });
+    assert.match(text, /REFERENCE LOCK/i);
+    assert.match(text, /lookBible MUST echo/i);
+    assert.match(text, /Do NOT invent spa clinic/i);
+    assert.doesNotMatch(text, /Spa facial demo scenes MAY show people/);
   });
 
   it("softenStoryboardStillPromptForModeration rewrites face close-ups without spa for non-spa briefs", () => {

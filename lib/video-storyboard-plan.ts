@@ -310,6 +310,23 @@ function buildPlanPrompt(input: {
     !forbidRef && isContentResearchStyleExtra(input.promptExtra);
 
   if (conceptMode) {
+    const hasReferenceNotes = Boolean(
+      input.promptExtra?.includes("USER REFERENCE") ||
+        input.referenceStrategyKind === "style-only" ||
+        input.referenceStrategyKind === "mood-only" ||
+        input.referenceStrategyKind === "layout-transfer",
+    );
+    const spaClinicAsk = /\bspa\b|美容院|水療|treatment\s+bed|esthetician|facial\s+(spa|treatment|massage)|60[- ]?minute\s+facial/i.test(
+      [
+        input.product,
+        input.headline,
+        input.subline,
+        input.storyboardBrief,
+        input.promptExtra,
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    );
     return [
       `Plan a ${artStyleId === "realistic" ? "photorealistic" : "stylized"} CONCEPT VIDEO STORYBOARD (service / idea short — product photo optional) for per-still clips then stitch.`,
       "Return ONE JSON object only — no markdown fences.",
@@ -320,19 +337,41 @@ function buildPlanPrompt(input: {
       "CONCEPT ADAPTATION:",
       `- Campaign topic: ${input.product}.`,
       "- Scenes show the SERVICE / EXPERIENCE / IDEA — atmosphere, hands, tools, room, silhouette — not a SKU product catalog.",
-      "- If the user brief asks for extreme face close-ups or mask-on-skin macros: use tasteful MID-SHOTS of guest + therapist instead (faces OK soft/partial).",
-      "- Spa facial demo scenes MAY show people (guest + therapist) — do not plan empty rooms for 'treatment in progress' beats.",
+      hasReferenceNotes
+        ? [
+            "REFERENCE LOCK (user selected this post/image — stay close):",
+            "- lookBible MUST echo Style / reference notes: Colors → palette, Mood → lighting mood, Format/Content lane → materials & setting family.",
+            "- visualDirection MUST describe the REFERENCE look (home lifestyle, cafe, clinic, etc. as stated) — never invent a different location genre.",
+            "- Scene settings MUST stay in the same environment family as the reference (e.g. home / everyday lifestyle stays home — do NOT switch to spa clinic, hotel suite, or luxury wellness catalog unless the reference notes say so).",
+            "- Cast: original characters in the SAME roles / vibe as the reference (e.g. casual woman at home → same vibe). Do not clone faces; do not replace with therapist/spa-guest unless the brief asks for spa service.",
+            "- TVC roles still apply for pacing (establish → detail → payoff) but each beat must look like a variation OF THE REFERENCE world, not a new industry.",
+          ].join("\n")
+        : "",
+      spaClinicAsk
+        ? [
+            "- If the user brief asks for extreme face close-ups or mask-on-skin macros: use tasteful MID-SHOTS of guest + therapist instead (faces OK soft/partial).",
+            "- Spa facial demo scenes MAY show people (guest + therapist) — do not plan empty rooms for 'treatment in progress' beats.",
+          ].join("\n")
+        : [
+            "- Prefer the setting family implied by the user brief / reference (home, street, office, cafe, etc.).",
+            "- Do NOT invent spa clinic, treatment bed, therapist, or luxury wellness catalog staging unless the user brief explicitly asks for spa/facial service.",
+          ].join("\n"),
       "",
       ...productIdentityContractLines({ conceptMode: true }),
       "",
       ...seedanceSafePlannerRules().map((line) =>
-        line.includes("NO photorealistic human faces")
+        spaClinicAsk && line.includes("NO photorealistic human faces")
           ? "Prefer tasteful mid-shots; avoid extreme photoreal face fill-frame / skin macros that fail content filters. Soft faces OK for spa beauty ads."
-          : line,
+          : line.includes("NO photorealistic human faces")
+            ? "Prefer tasteful mid-shots; avoid extreme photoreal face fill-frame that fails content filters."
+            : line,
       ),
       "",
       sceneCountLine,
       ...bibleAndRoles,
+      hasReferenceNotes
+        ? "- lookBible should echo Style / reference notes (palette/light/materials/setting) — grade lock for ALL stills; do not invent a new medium or location genre."
+        : "",
       "- Each scene gets ONE still (imageIndex 1…N in timeline order).",
       ...storyboardTypePlannerLines(
         input.imageTextMode === "integrated",

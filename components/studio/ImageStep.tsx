@@ -70,7 +70,9 @@ export function ImageStep() {
       ? Number(cinematicSceneCount) || 4
       : isStoryboardOutput
         ? storyboardSceneEstimate
-        : Number(storyboardSceneCount) || 4,
+        : effectiveImageOutputMode === "teaching-carousel"
+          ? referenceCarouselSlideCount
+          : Number(storyboardSceneCount) || 4,
     passesPerScene: logoModeAPasses,
   });
   const isConceptSocialImage =

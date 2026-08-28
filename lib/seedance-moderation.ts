@@ -102,6 +102,24 @@ export function conceptServiceStillSafetyClause(): string {
   ].join(" ");
 }
 
+/** Concept lifestyle / non-clinic stills — no spa guest/therapist bias. */
+export function conceptLifestyleStillSafetyClause(): string {
+  return [
+    "Lifestyle still safety: mid-shot commercial framing preferred.",
+    "People OK as original characters in the reference setting family — avoid extreme face fill-frame that trips content filters.",
+    "Do not invent spa clinic, therapist, or treatment-bed staging.",
+  ].join(" ");
+}
+
+/** Pick safety clause: spa clinic ads get guest/therapist; lifestyle refs stay therapist-free. */
+export function conceptStillSafetyClause(opts?: {
+  spaClinicBrief?: boolean;
+}): string {
+  return opts?.spaClinicBrief
+    ? conceptServiceStillSafetyClause()
+    : conceptLifestyleStillSafetyClause();
+}
+
 export function seedanceSafePlannerRules(): string[] {
   return [...SEEDANCE_SAFE_STILL_RULES];
 }
@@ -135,6 +153,43 @@ export function looksLikeSpaOrBeautyBrief(...samples: (string | undefined)[]): b
     return true;
   }
   if (/\bspa\s+towel\b|\btowel[- ]wrapped\b|\bwarm\s+(?:spa\s+)?towel\b/i.test(joined)) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Stricter: real spa clinic / facial-service ads (not bare "skincare" lifestyle posts).
+ * Used to drop style-ref pixels (face filter risk) and to allow spa-lexicon softeners.
+ */
+export function looksLikeSpaClinicServiceBrief(
+  ...samples: (string | undefined)[]
+): boolean {
+  const joined = samples.filter(Boolean).join("\n").toLowerCase();
+  if (!joined.trim()) return false;
+  if (
+    /\bspa\b|esthetician|aesthetician|treatment\s+bed|spa\s+room|spa\s+clinic|美容院|水療|面部護理|護膚院/i.test(
+      joined,
+    )
+  ) {
+    return true;
+  }
+  // Require facial + service context — bare "facial tips" lifestyle titles must NOT match.
+  if (
+    /\bfacial\s+(spa|treatment|massage|mask|demo|service)\b|\b(spa\s+)?facial\s+spa\b|\b60[- ]?minute\s+facial\b/i.test(
+      joined,
+    )
+  ) {
+    return true;
+  }
+  if (
+    /\b(facial\s+)?massage\s+(therapy|treatment|room|table)\b|\bspa\s+massage\b|\bfacial\s+treatment\b/i.test(
+      joined,
+    )
+  ) {
+    return true;
+  }
+  if (/\bserum\s+ritual\b/i.test(joined)) {
     return true;
   }
   return false;
@@ -213,7 +268,9 @@ export function softenStoryboardStillPromptForModeration(
   opts?: { spaBeautyBrief?: boolean },
 ): string {
   let out = prompt.trim();
-  const spa = opts?.spaBeautyBrief ?? looksLikeSpaOrBeautyBrief(out);
+  // Spa-lexicon softeners invent "spa guest / therapist" — only when brief is a clinic service.
+  const spa =
+    opts?.spaBeautyBrief ?? looksLikeSpaClinicServiceBrief(out);
   const list = spa
     ? [
         ...SPA_BEAUTY_STILL_SOFTEN,
@@ -240,7 +297,7 @@ export function saferSameSceneStillPrompt(vars: {
   theme?: string;
   productName?: string;
 }): string {
-  const spaBeautyBrief = looksLikeSpaOrBeautyBrief(
+  const spaBeautyBrief = looksLikeSpaClinicServiceBrief(
     vars.originalPrompt,
     vars.productName,
     vars.theme,

@@ -523,9 +523,15 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
           }
           showReferenceUpload={
             // Template already chose the look on Step 4 — optional style-ref is noise.
-            // Blank Direct still offers a reference ad upload here.
+            // Combined storyboard recipes also lock the look — hide ref there too.
+            // Blank Direct (non-storyboard) still offers a reference ad upload here.
             micro.ctx.intakePath === "direct" &&
-            micro.ctx.intakeTemplateMode !== "template"
+            micro.ctx.intakeTemplateMode !== "template" &&
+            !(
+              micro.ctx.workflowMode === "combined" &&
+              isStoryboardVideoStyle(wizard.visualStyleId) &&
+              !isRecipeOwnedVideoMode(wizard.videoCreativeMode)
+            )
           }
           intakePath={micro.ctx.intakePath ?? null}
           intakeTemplateMode={micro.ctx.intakeTemplateMode ?? null}

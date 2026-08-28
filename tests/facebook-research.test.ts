@@ -111,8 +111,9 @@ describe("facebook post URL refs", () => {
     );
   });
 
-  it("enables Facebook direct post URLs", () => {
-    assert.equal(directPostUrlSupported("facebook"), true);
+  it("disables Facebook direct post URLs for research", () => {
+    assert.equal(directPostUrlSupported("facebook"), false);
     assert.equal(directPostUrlSupported("tiktok"), false);
+    assert.equal(directPostUrlSupported("instagram"), true);
   });
 });

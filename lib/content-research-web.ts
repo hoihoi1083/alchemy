@@ -2,6 +2,7 @@ import { RESEARCH_POSTS_FETCH_LIMIT } from "@/lib/content-research-enrich";
 import { hasJustOneApiConfigured } from "@/lib/justoneapi-client";
 import { searchPlatformPostsByKeyword } from "@/lib/justoneapi-platform-search";
 import type { ContentPlatform, ContentResearchMediaFilter, ContentResearchPost } from "@/lib/content-research-types";
+import { researchWarningCode } from "@/lib/content-research-ui-messages";
 import type { PromptMarket } from "@/lib/prompt-variables";
 import { webSearch, webSearchApiKey, type WebSearchResult } from "@/lib/web-search";
 
@@ -145,21 +146,21 @@ function isJustOneGatewayOutage(error: string): boolean {
 function formatJustOneApiFallbackWarning(platform: ContentPlatform, error: string): string {
   const lower = error.toLowerCase();
   if (isJustOneGatewayOutage(error)) {
-    return `Just One API 伺服器暫時故障（HTTP 502 / nginx）— 呢個係 Just One 端問題，唔係本 app。已改用公開網頁搜尋（無小紅書貼文封面）。請等 10–30 分鐘再試，或聯繫 Just One API 客服。`;
+    return researchWarningCode("justone_gateway");
   }
   if (lower.includes("permission") || lower.includes("600")) {
-    return `Just One API 未開通 ${platform} 搜尋權限（code 600，不是餘額問題）。你已有充值也仍會出現此錯誤 — 請到 dashboard 的 API 列表開通「小紅書 note search」等 endpoint，或聯繫客服開通。目前改用公開網頁搜尋，無貼文封面。`;
+    return researchWarningCode("justone_permission");
   }
   if (lower.includes("balance") || lower.includes("601")) {
-    return `Just One API 餘額不足（code 601）— 請到 dashboard 充值。目前改用公開網頁搜尋，無貼文封面。`;
+    return researchWarningCode("justone_balance");
   }
   if (lower.includes("602") || lower.includes("budget")) {
-    return `Just One API token 用量上限已滿（code 602）— 請在 dashboard 提高 token 預算。目前改用公開網頁搜尋，無貼文封面。`;
+    return researchWarningCode("justone_budget");
   }
   if (/collect failed|send request again/i.test(error)) {
-    return `Just One API 小紅書採集暫時失敗（${error}）— 通常係短暫限流，請等 30 秒再搜尋；已改用公開網頁搜尋，無貼文封面。`;
+    return researchWarningCode("justone_rate_limit");
   }
-  return `Just One API 失敗（${error}）— 已改用公開網頁搜尋，無貼文封面。`;
+  return researchWarningCode("justone_generic");
 }
 
 export async function fetchPlatformWebResearch(
@@ -175,7 +176,7 @@ export async function fetchPlatformWebResearch(
       const msg = e instanceof Error ? e.message : String(e);
       if (mediaFilter === "video") {
         throw new Error(
-          `影片搜尋暫時失敗（${msg}）。請再搜尋一次 — 影片模式必須用平台 API 取得 MP4，唔可以用網頁後備搜尋。`,
+          `Video search failed (${msg}). Try again — video mode needs the platform API for MP4; web fallback cannot download reels.`,
         );
       }
       if (!webSearchApiKey()) throw e;
@@ -189,7 +190,7 @@ export async function fetchPlatformWebResearch(
   }
   if (mediaFilter === "video") {
     throw new Error(
-      "影片模式需要設定 JUSTONEAPI_TOKEN — 網頁搜尋無法下載參考 MP4。",
+      "Video research needs JUSTONEAPI_TOKEN — web search cannot download reference MP4.",
     );
   }
   return fetchTavilyResearch(topic, platform);

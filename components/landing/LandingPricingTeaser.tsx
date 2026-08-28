@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useAuth } from "@clerk/nextjs";
 import { useState } from "react";
 import { useLocale } from "@/components/LocaleProvider";
+import { PLAN_DEFINITIONS } from "@/lib/billing/plans";
 import { pricingCardCapacityItems } from "@/lib/billing/pricing-card-capacity";
 import {
   trackCheckoutFailed,
@@ -129,6 +131,17 @@ export function LandingPricingTeaser() {
 	}
 
 	const cards = [
+		{
+			id: "free" as const,
+			name: P.plans.free.name,
+			blurb: P.plans.free.description,
+			priceLabel: P.freeForever,
+			tokensLabel: `${PLAN_DEFINITIONS.free.monthlyTokens.toLocaleString()} ${P.tokensOnce}`,
+			capacity: capacityFor("free", P),
+			features: P.plans.free.features.slice(1),
+			cta: P.getStarted,
+			popular: false,
+		},
 		{
 			id: "light" as const,
 			name: P.plans.light.name,
@@ -314,7 +327,7 @@ export function LandingPricingTeaser() {
 											: "border-white/80 ring-0"
 									}`}
 								>
-									<div className="flex h-5 shrink-0 items-center">
+									<div className="flex h-5 shrink-0 items-center overflow-hidden">
 										{card.popular ? (
 											<p className="inline-flex rounded-full bg-violet-600 px-2.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">
 												{P.mostPopular}
@@ -325,16 +338,16 @@ export function LandingPricingTeaser() {
 											</p>
 										) : null}
 									</div>
-									<h3 className="mt-2 text-base font-semibold leading-tight text-slate-900">
+									<h3 className="mt-2 h-10 shrink-0 text-base font-semibold leading-5 text-slate-900 line-clamp-2">
 										{card.name}
 									</h3>
-									<p className="mt-1 min-h-[2.5rem] text-[11px] leading-snug text-slate-500 line-clamp-2">
+									<p className="mt-1 h-12 shrink-0 text-[11px] leading-4 text-slate-500 line-clamp-3">
 										{card.blurb}
 									</p>
 
-									<div className="mt-4 flex min-h-[4.75rem] flex-col justify-start">
+									<div className="mt-4 flex h-[5.25rem] shrink-0 flex-col justify-start">
 										<p
-											className={`h-4 text-[11px] leading-4 ${
+											className={`h-4 shrink-0 text-[11px] leading-4 ${
 												"listPrice" in card &&
 												card.listPrice
 													? "text-slate-400 line-through"
@@ -345,14 +358,18 @@ export function LandingPricingTeaser() {
 												? card.listPrice
 												: "—"}
 										</p>
-										<p className="text-2xl font-bold leading-none text-slate-900">
-											{card.priceLabel}
-											<span className="text-xs font-medium text-slate-500">
-												{P.perMonth}
+										<p className="flex h-8 shrink-0 items-end text-2xl font-bold leading-none text-slate-900">
+											<span className="truncate">
+												{card.priceLabel}
+												{card.id !== "free" ? (
+													<span className="text-xs font-medium text-slate-500">
+														{P.perMonth}
+													</span>
+												) : null}
 											</span>
 										</p>
 										<p
-											className={`mt-0.5 flex h-5 items-center ${
+											className={`mt-0.5 flex h-5 shrink-0 items-center ${
 												"saveLabel" in card && card.saveLabel
 													? ""
 													: "invisible"
@@ -367,7 +384,7 @@ export function LandingPricingTeaser() {
 											)}
 										</p>
 										<p
-											className={`h-4 text-[10px] leading-4 ${
+											className={`h-4 shrink-0 truncate text-[10px] leading-4 ${
 												interval === "yearly"
 													? "text-slate-400"
 													: "invisible"
@@ -378,7 +395,7 @@ export function LandingPricingTeaser() {
 									</div>
 
 									<p
-										className={`mt-2 min-h-[1.25rem] text-xs font-medium leading-5 ${
+										className={`mt-2 h-5 shrink-0 truncate text-xs font-medium leading-5 ${
 											card.tokensLabel
 												? "text-violet-700"
 												: "invisible"
@@ -387,7 +404,7 @@ export function LandingPricingTeaser() {
 										{card.tokensLabel ?? "—"}
 									</p>
 
-									<ul className="mt-3 min-h-[5.5rem] space-y-2 border-b border-dashed border-slate-200 pb-3">
+									<ul className="mt-3 flex h-[4.75rem] shrink-0 flex-col justify-start gap-2 overflow-hidden border-b border-dashed border-slate-200 pb-3">
 										{card.capacity && card.capacity.length > 0 ? (
 											card.capacity.map((item) => (
 												<li
@@ -408,7 +425,7 @@ export function LandingPricingTeaser() {
 															</svg>
 														)}
 													</span>
-													{item.label}
+													<span className="line-clamp-2 min-w-0">{item.label}</span>
 												</li>
 											))
 										) : (
@@ -440,20 +457,33 @@ export function LandingPricingTeaser() {
 									</ul>
 
 									<div className="mt-5 shrink-0">
-										<button
-											type="button"
-											disabled={busy != null}
-											onClick={() =>
-												void startCheckout(card.id as PaidPlan)
-											}
-											className={`block w-full rounded-full px-3 py-2.5 text-center text-xs font-semibold transition disabled:opacity-60 ${
-												isActive
-													? "bg-violet-600 text-white hover:bg-violet-500"
-													: "border border-violet-300 text-violet-700 hover:bg-violet-50"
-											}`}
-										>
-											{ctaLabel}
-										</button>
+										{card.id === "free" ? (
+											<Link
+												href="/start"
+												className={`block w-full rounded-full px-3 py-2.5 text-center text-xs font-semibold transition ${
+													isActive
+														? "bg-violet-600 text-white hover:bg-violet-500"
+														: "border border-violet-300 text-violet-700 hover:bg-violet-50"
+												}`}
+											>
+												{ctaLabel}
+											</Link>
+										) : (
+											<button
+												type="button"
+												disabled={busy != null}
+												onClick={() =>
+													void startCheckout(card.id as PaidPlan)
+												}
+												className={`block w-full rounded-full px-3 py-2.5 text-center text-xs font-semibold transition disabled:opacity-60 ${
+													isActive
+														? "bg-violet-600 text-white hover:bg-violet-500"
+														: "border border-violet-300 text-violet-700 hover:bg-violet-50"
+												}`}
+											>
+												{ctaLabel}
+											</button>
+										)}
 									</div>
 								</div>
 							</Reveal>

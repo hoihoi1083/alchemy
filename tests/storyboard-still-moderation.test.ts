@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  looksLikeSpaClinicServiceBrief,
   looksLikeSpaOrBeautyBrief,
   saferSameSceneStillPrompt,
   spaSafeStillFallbackPrompt,
@@ -35,6 +36,20 @@ describe("storyboard still policy fallback", () => {
       role: "establish",
     });
     assert.match(spa, /spa marketing still/i);
+  });
+
+  it("spa clinic gate excludes lifestyle skincare posts", () => {
+    assert.equal(
+      looksLikeSpaClinicServiceBrief(
+        "skincare brand relaunch",
+        "Everything you knew about skincare might be wrong",
+        "lifestyle-photo, casual home",
+      ),
+      false,
+    );
+    assert.equal(looksLikeSpaOrBeautyBrief("skincare brand relaunch", "護膚"), true);
+    assert.equal(looksLikeSpaClinicServiceBrief("facial spa", "60-minute facial"), true);
+    assert.equal(looksLikeSpaClinicServiceBrief("美容院面部護理"), true);
   });
 
   it("safer retry softens face close-ups without inventing spa for jewelry", () => {

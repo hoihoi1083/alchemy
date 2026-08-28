@@ -1158,7 +1158,8 @@ export function PreGenerateSetupPanel({
   const showReferenceForDirection =
     showReferenceUpload &&
     !isLockedPosterStyle &&
-    // Landing/template already locked the recipe — skip optional style-ref clutter.
+    // Storyboard recipes already define the look — optional style-ref is noise.
+    !combinedStoryboard &&
     !isCombinedStoryboardTemplate;
 
   function pickCreationDirection(
@@ -2898,19 +2899,29 @@ export function PreGenerateSetupPanel({
                   {m.wizard.tokenCostHint.replace(
                     "{n}",
                     String(
-                      estimateImageTokens({
-                        mode:
-                          wizard.workflowMode === "combined" || wizard.isStoryboardOutput
-                            ? "storyboard"
-                            : wizard.effectiveImageOutputMode === "ab"
-                              ? "ab"
-                              : wizard.effectiveImageOutputMode === "campaign"
-                                ? "campaign"
-                                : wizard.effectiveImageOutputMode === "teaching-carousel"
-                                  ? "teaching_carousel"
-                                  : "single",
-                        sceneCount: wizard.storyboardScenes.length || 4,
-                      }),
+                      (() => {
+                        const isStoryboard =
+                          wizard.workflowMode === "combined" || wizard.isStoryboardOutput;
+                        const isTeachingCarousel =
+                          wizard.effectiveImageOutputMode === "teaching-carousel";
+                        const mode = isStoryboard
+                          ? "storyboard"
+                          : wizard.effectiveImageOutputMode === "ab"
+                            ? "ab"
+                            : wizard.effectiveImageOutputMode === "campaign"
+                              ? "campaign"
+                              : isTeachingCarousel
+                                ? "teaching_carousel"
+                                : "single";
+                        return estimateImageTokens({
+                          mode,
+                          sceneCount: isTeachingCarousel
+                            ? wizard.referenceCarouselSlideCount
+                            : isStoryboard
+                              ? wizard.storyboardScenes.length || 4
+                              : undefined,
+                        });
+                      })(),
                     ),
                   )}
                 </p>

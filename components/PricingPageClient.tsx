@@ -37,39 +37,63 @@ function PricingFaqList({
   showMore: string;
   showLess: string;
 }) {
-  const [expanded, setExpanded] = useState(false);
-  const visible = expanded ? items : items.slice(0, FAQ_PREVIEW_COUNT);
+  const [listExpanded, setListExpanded] = useState(false);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const visible = listExpanded ? items : items.slice(0, FAQ_PREVIEW_COUNT);
   const canToggle = items.length > FAQ_PREVIEW_COUNT;
 
   return (
     <>
       <div className="mt-6 space-y-3">
-        {visible.map((item, i) => (
-          <Reveal key={item.q} delayMs={i * 60} distance={28} scaleFrom={0.98}>
-            <details className="group rounded-2xl border border-violet-200/80 bg-white p-4 shadow-sm open:border-violet-400 open:bg-violet-50/60 open:shadow-md open:shadow-violet-100/60">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-semibold text-slate-900 marker:content-none [&::-webkit-details-marker]:hidden">
-                <span className="min-w-0 text-sm sm:text-[15px]">{item.q}</span>
-                <span
-                  className="inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-bold leading-none text-violet-700 transition group-open:rotate-45 group-open:bg-violet-600 group-open:text-white"
-                  style={{ width: 28, height: 28 }}
-                  aria-hidden
+        {visible.map((item, i) => {
+          const open = openFaq === i;
+          return (
+            <Reveal key={item.q} delayMs={i * 60} distance={28} scaleFrom={0.98}>
+              <div
+                className={`rounded-2xl border bg-white p-4 shadow-sm transition ${
+                  open
+                    ? "border-violet-400 bg-violet-50/60 shadow-md shadow-violet-100/60"
+                    : "border-violet-200/80"
+                }`}
+              >
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-between gap-3 text-left font-semibold text-slate-900"
+                  onClick={() => setOpenFaq(open ? null : i)}
+                  aria-expanded={open}
                 >
-                  +
-                </span>
-              </summary>
-              <p className="mt-3 border-t border-violet-100 pt-3 text-sm leading-relaxed text-slate-600">
-                {item.body}
-              </p>
-            </details>
-          </Reveal>
-        ))}
+                  <span className="min-w-0 text-sm sm:text-[15px]">{item.q}</span>
+                  <span
+                    className={`inline-flex size-7 shrink-0 items-center justify-center rounded-full text-sm font-bold leading-none transition ${
+                      open
+                        ? "rotate-45 bg-violet-600 text-white"
+                        : "bg-violet-100 text-violet-700"
+                    }`}
+                    style={{ width: 28, height: 28 }}
+                    aria-hidden
+                  >
+                    +
+                  </span>
+                </button>
+                {open ? (
+                  <p className="mt-3 border-t border-violet-100 pt-3 text-sm leading-relaxed text-slate-600">
+                    {item.body}
+                  </p>
+                ) : null}
+              </div>
+            </Reveal>
+          );
+        })}
       </div>
       {canToggle ? (
         <FaqExpandToggle
-          expanded={expanded}
+          expanded={listExpanded}
           showMore={showMore}
           showLess={showLess}
-          onToggle={() => setExpanded((v) => !v)}
+          onToggle={() => {
+            setListExpanded((v) => !v);
+            if (listExpanded) setOpenFaq(null);
+          }}
         />
       ) : null}
     </>
@@ -82,6 +106,10 @@ const PRICING_LAYOUT_CSS = `
   grid-template-columns: 1fr;
   gap: 0.75rem;
 }
+.pricing-plan-card {
+  display: flex;
+  flex-direction: column;
+}
 @media (min-width: 640px) {
   .pricing-page-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
@@ -89,7 +117,27 @@ const PRICING_LAYOUT_CSS = `
   .pricing-page-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
 }
 @media (min-width: 1100px) {
-  .pricing-page-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .pricing-page-grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    /* badge | title | blurb | price | tokens | capacity | features | cta */
+    grid-template-rows: auto auto auto auto auto auto minmax(3.5rem, 1fr) auto;
+  }
+  .pricing-plan-cell {
+    display: grid;
+    grid-template-rows: subgrid;
+    grid-row: span 8;
+    min-height: 0;
+  }
+  .pricing-plan-card {
+    display: grid;
+    grid-template-rows: subgrid;
+    grid-row: span 8;
+    height: 100%;
+    min-height: 0;
+  }
+  .pricing-plan-card .pricing-zone-features {
+    flex: unset;
+  }
 }
 `;
 
@@ -554,7 +602,7 @@ export function PricingPageClient() {
                     delayMs={i * 90}
                     distance={44}
                     scaleFrom={0.94}
-                    className="h-full"
+                    className="pricing-plan-cell h-full"
                   >
                     <div
                       id={
@@ -565,7 +613,7 @@ export function PricingPageClient() {
                             : undefined
                       }
                       onMouseEnter={() => setHoveredId(card.id)}
-                      className={`pricing-plan-card flex h-full min-h-[300px] min-w-0 flex-col rounded-2xl border bg-white p-5 shadow-sm transition duration-200 ${
+                      className={`pricing-plan-card h-full min-h-[300px] min-w-0 rounded-2xl border bg-white p-5 shadow-sm transition duration-200 ${
                         isActive
                           ? "border-violet-400 ring-2 ring-violet-200"
                           : isTopup
@@ -573,8 +621,8 @@ export function PricingPageClient() {
                             : "border-slate-200 ring-0"
                       }`}
                     >
-                      {/* Zone: badge — same height on every card */}
-                      <div className="flex h-5 shrink-0 items-center">
+                      {/* Zone 1: badge — fixed so titles share a baseline */}
+                      <div className="flex h-5 shrink-0 items-center overflow-hidden">
                         {card.popular ? (
                           <p className="inline-flex rounded-full bg-violet-600 px-2.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">
                             {p.mostPopular}
@@ -586,22 +634,25 @@ export function PricingPageClient() {
                         ) : null}
                       </div>
 
-                      {/* Zone: name + blurb */}
+                      {/* Zone 2: name — 2-line lock (EN “Need more tokens?” / ZH wrap) */}
                       <h2
-                        className={`mt-2 text-base font-semibold leading-tight ${
+                        className={`mt-2 h-10 shrink-0 text-base font-semibold leading-5 line-clamp-2 ${
                           isTopup ? "text-violet-700" : "text-slate-900"
                         }`}
                       >
                         {card.name}
                       </h2>
-                      <p className="mt-1 min-h-[2.5rem] text-[11px] leading-snug text-slate-500 line-clamp-2">
+
+                      {/* Zone 3: blurb — exactly 2 lines in every locale */}
+                      {/* Zone 3: blurb — 3-line lock so EN/ZH top-up copy can fully show */}
+                      <p className="mt-1 h-12 shrink-0 text-[11px] leading-4 text-slate-500 line-clamp-3">
                         {card.blurb}
                       </p>
 
-                      {/* Zone: price — reserved rows keep baselines aligned */}
-                      <div className="mt-4 flex min-h-[4.75rem] flex-col justify-start">
+                      {/* Zone 4: price — same reserved rows on free / paid / top-up */}
+                      <div className="mt-4 flex h-[5.25rem] shrink-0 flex-col justify-start">
                         <p
-                          className={`h-4 text-[11px] leading-4 ${
+                          className={`h-4 shrink-0 text-[11px] leading-4 ${
                             "listPrice" in card && card.listPrice
                               ? "text-slate-400 line-through"
                               : "invisible"
@@ -612,21 +663,24 @@ export function PricingPageClient() {
                             : "—"}
                         </p>
                         <p
-                          className={`text-2xl font-bold leading-none ${
+                          className={`flex h-8 shrink-0 items-end text-2xl font-bold leading-none ${
                             isTopup ? "text-violet-800" : "text-slate-900"
                           }`}
                         >
-                          {card.priceLabel}
-                          {card.id !== "free" &&
-                          card.id !== "topup" ? (
-                            <span className="text-xs font-medium text-slate-500">
-                              {p.perMonth}
-                            </span>
-                          ) : null}
+                          <span className="truncate">
+                            {card.priceLabel}
+                            {card.id !== "free" && card.id !== "topup" ? (
+                              <span className="text-xs font-medium text-slate-500">
+                                {p.perMonth}
+                              </span>
+                            ) : null}
+                          </span>
                         </p>
                         <p
-                          className={`mt-0.5 flex h-5 items-center ${
-                            "saveLabel" in card && card.saveLabel ? "" : "invisible"
+                          className={`mt-0.5 flex h-5 shrink-0 items-center ${
+                            "saveLabel" in card && card.saveLabel
+                              ? ""
+                              : "invisible"
                           }`}
                         >
                           {"saveLabel" in card && card.saveLabel ? (
@@ -638,7 +692,7 @@ export function PricingPageClient() {
                           )}
                         </p>
                         <p
-                          className={`h-4 text-[10px] leading-4 ${
+                          className={`h-4 shrink-0 truncate text-[10px] leading-4 ${
                             interval === "yearly" &&
                             card.id !== "free" &&
                             card.id !== "topup"
@@ -650,17 +704,17 @@ export function PricingPageClient() {
                         </p>
                       </div>
 
-                      {/* Zone: tokens */}
+                      {/* Zone 5: tokens */}
                       <p
-                        className={`mt-2 min-h-[1.25rem] text-xs font-medium leading-5 ${
+                        className={`mt-2 h-5 shrink-0 truncate text-xs font-medium leading-5 ${
                           card.tokensLabel ? "text-violet-700" : "invisible"
                         }`}
                       >
                         {card.tokensLabel ?? "—"}
                       </p>
 
-                      {/* Zone: capacity (images / 8s videos) */}
-                      <ul className="mt-3 min-h-[5.5rem] space-y-2 border-b border-dashed border-slate-200 pb-3">
+                      {/* Zone 6: capacity */}
+                      <ul className="mt-3 flex h-[4.75rem] shrink-0 flex-col justify-start gap-2 overflow-hidden border-b border-dashed border-slate-200 pb-3">
                         {card.capacity && card.capacity.length > 0 ? (
                           card.capacity.map((item) => (
                             <li
@@ -681,7 +735,7 @@ export function PricingPageClient() {
                                   </svg>
                                 )}
                               </span>
-                              {item.label}
+                              <span className="line-clamp-2 min-w-0">{item.label}</span>
                             </li>
                           ))
                         ) : (
@@ -698,8 +752,8 @@ export function PricingPageClient() {
                         )}
                       </ul>
 
-                      {/* Zone: feature checklist — grows; CTA stays pinned */}
-                      <ul className="mt-3 flex-1 space-y-2">
+                      {/* Zone 7: feature checklist — grows; CTA stays pinned */}
+                      <ul className="pricing-zone-features mt-3 flex-1 space-y-2">
                         {card.features.map((f) => (
                           <li
                             key={f}
@@ -711,6 +765,7 @@ export function PricingPageClient() {
                         ))}
                       </ul>
 
+                      {/* Zone 8: CTA */}
                       <div className="mt-5 shrink-0">
                       {card.id === "free" ? (
                         <Link

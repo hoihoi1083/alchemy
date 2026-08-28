@@ -210,11 +210,10 @@ describe("research apply expectations", () => {
 });
 
 describe("research platform expectations by workflow", () => {
-  it("image-only: RedNote IG Facebook, no TikTok", () => {
+  it("image-only: RedNote and Instagram, no TikTok", () => {
     assert.deepEqual([...researchUiPlatforms("image-only")], [
       "xiaohongshu",
       "instagram",
-      "facebook",
     ]);
   });
 

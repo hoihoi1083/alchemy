@@ -34,8 +34,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Paste a post link first." }, { status: 400 });
   }
 
-  const platformOverride = String(body.platform ?? "").trim();
   const detected = detectPlatformFromPostUrl(postUrl);
+  if (detected === "facebook") {
+    return NextResponse.json(
+      { error: "Facebook post links are not supported for research." },
+      { status: 400 },
+    );
+  }
+  const platformOverride = String(body.platform ?? "").trim();
   if (platformOverride && isContentPlatform(platformOverride) && detected && platformOverride !== detected) {
     return NextResponse.json(
       { error: `Link looks like ${detected}, but ${platformOverride} is selected. Clear platform or match the link.` },
