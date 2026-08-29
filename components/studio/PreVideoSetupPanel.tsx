@@ -326,6 +326,8 @@ export function PreVideoSetupPanel({
   generateDisabled = false,
   generateLabel,
   generateBlockMessage,
+  onBrowseContinue,
+  browseContinueLabel,
   videoSubpath,
   onPickVideoSubpath,
   scenesReady = false,
@@ -334,6 +336,9 @@ export function PreVideoSetupPanel({
   generateDisabled?: boolean;
   generateLabel?: string;
   generateBlockMessage?: string | null;
+  /** When a video already exists — jump to export without regenerating. */
+  onBrowseContinue?: () => void;
+  browseContinueLabel?: string;
   videoSubpath?: string;
   onPickVideoSubpath?: (subpath: string) => void;
   /** 圖+片 after storyboard review — keyframes ready; hide motion-path picker. */
@@ -942,17 +947,36 @@ export function PreVideoSetupPanel({
           {generateBlockMessage}
         </p>
       ) : null}
-      <button
-        type="button"
-        onClick={onGenerate}
-        disabled={generateDisabled}
-        className="pv-generate-btn"
-      >
-        {generateLabel ?? (isUgc ? pv.ugcContinueLabel : m.wizard.approveGenerateVideoBtn)}
-        <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2">
-          <path d="M7.5 4.5 13 10l-5.5 5.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
+      {onBrowseContinue ? (
+        <button type="button" onClick={onBrowseContinue} className="pv-generate-btn">
+          {browseContinueLabel ?? pv.browseContinueExport}
+          <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2">
+            <path d="M7.5 4.5 13 10l-5.5 5.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      ) : null}
+      {onGenerate ? (
+        <button
+          type="button"
+          onClick={onGenerate}
+          disabled={generateDisabled}
+          className={
+            onBrowseContinue
+              ? "rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+              : "pv-generate-btn"
+          }
+        >
+          {generateLabel ?? (isUgc ? pv.ugcContinueLabel : m.wizard.approveGenerateVideoBtn)}
+          {!onBrowseContinue ? (
+            <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2">
+              <path d="M7.5 4.5 13 10l-5.5 5.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          ) : null}
+        </button>
+      ) : null}
+      {onBrowseContinue ? (
+        <p className="text-xs leading-relaxed text-slate-500">{pv.browseContinueHint}</p>
+      ) : null}
     </>
   );
 
@@ -3029,11 +3053,13 @@ export function PreVideoSetupPanel({
               </span>
               <p className="text-xs leading-relaxed text-slate-600">{pv.secureNote}</p>
             </div>
-            {onGenerate ? <div className="pv-desktop-generate flex flex-col gap-2.5">{generateBlock}</div> : null}
+            {onGenerate || onBrowseContinue ? (
+              <div className="pv-desktop-generate flex flex-col gap-2.5">{generateBlock}</div>
+            ) : null}
           </aside>
         </div>
 
-        {onGenerate ? (
+        {onGenerate || onBrowseContinue ? (
           <div className="pv-mobile-cta md:hidden">{generateBlock}</div>
         ) : null}
       </div>

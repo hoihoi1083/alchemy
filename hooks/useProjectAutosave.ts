@@ -50,7 +50,7 @@ export function useProjectAutosave(
   opts?: { startFresh?: boolean },
 ) {
   const startFresh = opts?.startFresh ?? false;
-  const { isSignedIn } = useAuth();
+  const { isSignedIn, isLoaded } = useAuth();
   const [projectId, setProjectId] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [hydrateStatus, setHydrateStatus] = useState<"pending" | "ready" | "error">("pending");
@@ -61,7 +61,12 @@ export function useProjectAutosave(
   applyRef.current = wizard.applyProjectSnapshot;
 
   useEffect(() => {
-    if (!isSignedIn || initRef.current) return;
+    if (!isLoaded) return;
+    if (!isSignedIn) {
+      setHydrateStatus("ready");
+      return;
+    }
+    if (initRef.current) return;
     initRef.current = true;
 
     void (async () => {
@@ -122,7 +127,7 @@ export function useProjectAutosave(
         setHydrateStatus("ready");
       }
     })();
-  }, [isSignedIn, promotionMode, startFresh]);
+  }, [isLoaded, isSignedIn, promotionMode, startFresh]);
 
   useEffect(() => {
     if (!isSignedIn || !projectId || hydrateStatus !== "ready") return;

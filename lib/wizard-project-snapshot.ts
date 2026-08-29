@@ -84,7 +84,14 @@ export function snapshotFromWizard(
       storyboardPlan: wizard.storyboardPlan,
       adPackPlan: wizard.adPackPlan,
       contentResearchPlan: null,
-      selectedResearchAngleId: null,
+      selectedResearchAngleId: wizard.contentResearchApplyRef?.angle?.id ?? null,
+      // Text + CDN URLs only — never image/video bytes (user can re-fetch from post).
+      contentResearchApplyRef: wizard.contentResearchApplyRef
+        ? {
+            angle: wizard.contentResearchApplyRef.angle,
+            plan: wizard.contentResearchApplyRef.plan,
+          }
+        : null,
     },
     media: {
       imageUrl: persistableMediaUrl(wizard.imageUrl),

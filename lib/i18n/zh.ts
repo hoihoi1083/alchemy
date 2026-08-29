@@ -247,7 +247,7 @@ export const zh = {
 	},
 	studio: {
 		loadingTitle: "正在載入 studio…",
-		loadingHint: "還原推廣模式同精靈版面。",
+		loadingHint: "還原你嘅專案 — 會直接去你上次嘅步驟。",
 		errorTitle: "Studio 出現錯誤",
 		errorBody: "精靈流程遇到問題。你可以重試，或返回模式選擇。",
 		errorRetry: "重試",
@@ -5289,6 +5289,12 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 			fromIntakeHeadline: "主標：{text}",
 			fromIntakeNeedPhoto: "仲需要：產品相",
 			fromIntakeReadyMaterials: "核對下面素材之後就可以生成。",
+			browseContinueScenes: "繼續睇場景圖",
+			browseContinueImage: "繼續下一步",
+			browseContinueHint:
+				"想改設定就先改，再按重新生成；想睇已有成品就直接繼續，唔使再扣 Token。",
+			regenerateScenes: "重新生成場景",
+			regenerateImage: "重新生成圖片",
 			directHint:
 				"揀直接創作或模特兒佩戴、可選上傳參考圖，再填內容同產品相 — 同研究路徑揀完後嘅設定一樣。",
 			conceptHint:
@@ -5342,6 +5348,21 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 				"上傳版式／風格參考，AI 會分析並借構圖。只有產品相同文案都可以出圖。",
 			referenceRemove: "移除",
 			referenceTitle: "參考創意簡報",
+			researchRefTitle: "研究參考帖",
+			researchRefHint:
+				"呢個風格來自研究帖。我哋唔會存參考圖檔 — 想再出圖跟同一參考，可以打開原帖或重新下載封面。",
+			researchRefOpenPost: "打開原帖",
+			researchRefRedownload: "重新下載參考圖",
+			researchRefRedownloadAgain: "再下載一次參考圖",
+			researchRefRedownloading: "下載中…",
+			researchRefRedownloadFailed:
+				"下載封面失敗。請打開原帖自行存圖再上傳，或者稍後再試。",
+			researchRefManualUpload: "手動上傳封面",
+			researchRefMissingNote:
+				"呢次未載入參考圖。想雙參考出圖，請先重新下載。",
+			localRefMissingTitle: "本機參考圖未保存",
+			localRefMissingHint:
+				"你之前係本機上傳嘅參考圖。我哋唔會存檔 — 想跟同一風格再出圖，請喺下面重新上傳。",
 			changeBrief: "改簡報",
 			noReference: "未有參考",
 			briefSummaryTitle: "簡報分析摘要",
@@ -5511,6 +5532,10 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 				"場景圖已準備 — 會用 單鏡出片 一次出一條片（全部靜幀）。字幕之後再加。",
 			scenesReadyTitle: "分鏡場景已準備",
 			scenesReadyBody: "呢啲靜態圖會合成一條短片 短片。壞格請先重產嗰格。",
+			browseContinueExport: "繼續去匯出",
+			browseContinueHint:
+				"想改設定就先改，再按重新生成；想睇已有影片就直接繼續，唔使再扣 Token。",
+			regenerateVideo: "重新生成影片",
 			assistantHint:
 				"上傳產品相 → AI 寫動態 prompt → 檢查後再生成（無聲片；字幕之後再加）。",
 			assistantTitle: "AI 動態 Prompt",

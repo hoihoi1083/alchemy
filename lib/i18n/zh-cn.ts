@@ -243,7 +243,7 @@ export const zhCn = {
   },
   studio: {
     loadingTitle: "正在加载 studio…",
-    loadingHint: "还原推广模式和向导布局。",
+    loadingHint: "还原你的项目 — 会直接打开你上次的步骤。",
     errorTitle: "Studio 出现错误",
     errorBody: "向导流程遇到问题。你可以重试，或返回模式选择。",
     errorRetry: "重试",
@@ -4858,6 +4858,12 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
       fromIntakeHeadline: "主标：{text}",
       fromIntakeNeedPhoto: "还需要：产品照片",
       fromIntakeReadyMaterials: "核对下方素材后即可生成。",
+      browseContinueScenes: "继续查看场景图",
+      browseContinueImage: "继续下一步",
+      browseContinueHint:
+        "想改设置就先改，再点重新生成；想看已有成品就直接继续，不用再扣 Token。",
+      regenerateScenes: "重新生成场景",
+      regenerateImage: "重新生成图片",
       directHint:
         "选择直接创作或模特佩戴、可选上传参考图，再填内容和产品照 — 与研究路径选完后的设置相同。",
       conceptHint:
@@ -4908,6 +4914,21 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
         "上传版式／风格参考，AI 会分析并借构图。只有产品照和文案也可以出图。",
       referenceRemove: "移除",
       referenceTitle: "参考创意简报",
+      researchRefTitle: "研究参考帖",
+      researchRefHint:
+        "这个风格来自研究帖。我们不存参考图文件 — 想再出图跟同一参考，可打开原帖或重新下载封面。",
+      researchRefOpenPost: "打开原帖",
+      researchRefRedownload: "重新下载参考图",
+      researchRefRedownloadAgain: "再下载一次参考图",
+      researchRefRedownloading: "下载中…",
+      researchRefRedownloadFailed:
+        "下载封面失败。请打开原帖自行存图再上传，或稍后再试。",
+      researchRefManualUpload: "手动上传封面",
+      researchRefMissingNote:
+        "本次未加载参考图。想双参考出图，请先重新下载。",
+      localRefMissingTitle: "本地参考图未保存",
+      localRefMissingHint:
+        "你之前是从本机上传的参考图。我们不存文件 — 想跟同一风格再出图，请在下方重新上传。",
       changeBrief: "改简报",
       noReference: "暂无参考",
       briefSummaryTitle: "简报分析摘要",
@@ -5077,6 +5098,10 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
         "场景图已准备 — 会用 单镜出片 一次出一条片（全部静帧）。字幕之后再加。",
       scenesReadyTitle: "分镜场景已准备",
       scenesReadyBody: "这些静帧会合成一条短片 短片。坏格请先重产那一格。",
+      browseContinueExport: "继续去导出",
+      browseContinueHint:
+        "想改设置就先改，再点重新生成；想看已有视频就直接继续，不用再扣 Token。",
+      regenerateVideo: "重新生成视频",
       assistantHint:
         "上传产品照 → AI 写动态 prompt → 检查后再生成（无声片；字幕之后再加）。",
       assistantTitle: "AI 动态 Prompt",

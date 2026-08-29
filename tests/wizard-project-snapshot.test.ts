@@ -78,6 +78,28 @@ describe("snapshotFromWizard media URLs", () => {
         },
       ],
       captionLines: [],
+      contentResearchApplyRef: {
+        angle: {
+          id: "a1",
+          title: "Angle",
+          hook: "H",
+          scriptOutline: "",
+          format: "single-image",
+          formatLabel: "Single",
+          whyItWorks: "",
+          bulletPoints: [],
+          cta: "",
+          score: 1,
+          sourceUrl: "https://www.xiaohongshu.com/explore/abc",
+          sourceCoverImageUrl: "https://cdn.example.com/cover.jpg",
+        },
+        plan: {
+          platform: "xiaohongshu",
+          platformLabel: "小紅書",
+          topic: "tea",
+          market: "hk",
+        },
+      },
     } as unknown as StudioWizardValue;
 
     const snap = snapshotFromWizard(wizard, "concept");
@@ -90,6 +112,15 @@ describe("snapshotFromWizard media URLs", () => {
     assert.deepEqual(snap.media.storyboardSceneUrls, [
       "/api/library/download/bbbbbbbbbbbbbbbbbbbbbbbb?inline=1",
     ]);
+    assert.equal(snap.plans.selectedResearchAngleId, "a1");
+    assert.equal(
+      snap.plans.contentResearchApplyRef?.angle.sourceUrl,
+      "https://www.xiaohongshu.com/explore/abc",
+    );
+    assert.equal(
+      snap.plans.contentResearchApplyRef?.angle.sourceCoverImageUrl,
+      "https://cdn.example.com/cover.jpg",
+    );
   });
 });
 

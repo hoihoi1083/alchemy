@@ -541,6 +541,16 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
             !isRecipeOwnedVideoMode(wizard.videoCreativeMode)
           }
           onGenerate={micro.goNext}
+          onBrowseContinue={
+            micro.hasExistingScenes || micro.hasExistingImage
+              ? micro.browseContinueExisting
+              : undefined
+          }
+          browseContinueLabel={
+            micro.hasExistingScenes
+              ? m.microWizard.preGenerateSetup.browseContinueScenes
+              : m.microWizard.preGenerateSetup.browseContinueImage
+          }
           generateDisabled={
             Boolean(micro.blockReason) ||
             Boolean(wizard.imageGenerateDisabledReason) ||
@@ -550,9 +560,13 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
             wizard.planStoryboardBusy
           }
           generateLabel={
-            micro.ctx.workflowMode === "combined"
-              ? m.wizard.storyboardGenerateScenesBtn
-              : m.wizard.generateImageBtn
+            micro.hasExistingScenes || micro.hasExistingImage
+              ? micro.ctx.workflowMode === "combined"
+                ? m.microWizard.preGenerateSetup.regenerateScenes
+                : m.microWizard.preGenerateSetup.regenerateImage
+              : micro.ctx.workflowMode === "combined"
+                ? m.wizard.storyboardGenerateScenesBtn
+                : m.wizard.generateImageBtn
           }
           generateBlockMessage={
             micro.blockReason
@@ -580,10 +594,18 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
         <PreVideoSetupPanel
           scenesReady={scenesReady}
           onGenerate={micro.goNext}
+          onBrowseContinue={
+            micro.hasExistingVideo ? micro.browseContinueExisting : undefined
+          }
+          browseContinueLabel={m.microWizard.preVideoSetup.browseContinueExport}
           generateDisabled={
             Boolean(micro.blockReason) || Boolean(wizard.videoGenerateDisabledReason)
           }
-          generateLabel={m.wizard.approveGenerateVideoBtn}
+          generateLabel={
+            micro.hasExistingVideo
+              ? m.microWizard.preVideoSetup.regenerateVideo
+              : m.wizard.approveGenerateVideoBtn
+          }
           generateBlockMessage={
             micro.blockReason
               ? (mw.blockReasons[micro.blockReason as keyof typeof mw.blockReasons] ??

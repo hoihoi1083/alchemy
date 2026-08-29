@@ -12,7 +12,7 @@ import { WizardMobileBar } from "@/components/studio/WizardMobileBar";
 import { StoryboardEngineChoiceDialog } from "@/components/studio/StoryboardEngineChoiceDialog";
 import { MongoRequiredBanner } from "@/components/MongoRequiredBanner";
 import { SaveStatusBadge } from "@/components/studio/SaveStatusBadge";
-import { WizardProvider, useWizard } from "@/components/studio/WizardContext";
+import { WizardProvider, useWizard, useHydrateStatus } from "@/components/studio/WizardContext";
 import { useLocale } from "@/components/LocaleProvider";
 import {
   isWizardV2Enabled,
@@ -55,6 +55,7 @@ function StudioWizardContent({
     confirmStoryboardKlingChoice,
     dismissStoryboardEngineChoice,
   } = useWizard();
+  const hydrateStatus = useHydrateStatus();
 
   const showMicroSetup = v2 && stepKey === "setup";
 
@@ -70,6 +71,19 @@ function StudioWizardContent({
     }
     setStepKey("setup");
   }, [v2, stepKey, videoUrl, workflowMode, setStepKey]);
+
+  if (hydrateStatus === "pending") {
+    return (
+      <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 px-4 py-16 text-center">
+        <div
+          className="h-9 w-9 animate-spin rounded-full border-2 border-violet-400 border-t-transparent"
+          aria-hidden
+        />
+        <p className="text-base font-semibold text-slate-800">{m.studio.loadingTitle}</p>
+        <p className="max-w-sm text-sm text-slate-500">{m.studio.loadingHint}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 pb-4 md:space-y-6 md:pb-0">

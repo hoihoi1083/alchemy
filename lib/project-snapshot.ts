@@ -2,6 +2,7 @@ import type { AdPackPlan, CaptionLine } from "@/lib/ad-pack-types";
 import type { ArtStyleId } from "@/lib/art-style";
 import type { BrandProfile } from "@/lib/brand-profile";
 import type { CampaignPlan } from "@/lib/campaign-types";
+import type { ContentResearchApplyRef } from "@/lib/content-research-apply";
 import type { ContentResearchPlan } from "@/lib/content-research-types";
 import type { ImageCreativeMode, VideoCreativeMode } from "@/lib/creative-workflow";
 import type { ImageAspectRatio } from "@/lib/image-aspect-ratio";
@@ -65,6 +66,11 @@ export type ProjectPlans = {
   adPackPlan: AdPackPlan | null;
   contentResearchPlan: ContentResearchPlan | null;
   selectedResearchAngleId: string | null;
+  /**
+   * Research post metadata only (URLs + copy) — not image bytes.
+   * Lets Library reopen show the post link and re-fetch the cover on demand.
+   */
+  contentResearchApplyRef: ContentResearchApplyRef | null;
 };
 
 export type ProjectMediaUrls = {
@@ -135,6 +141,7 @@ export const EMPTY_PROJECT_SNAPSHOT = (promotionMode: PromotionMode): ProjectSna
     adPackPlan: null,
     contentResearchPlan: null,
     selectedResearchAngleId: null,
+    contentResearchApplyRef: null,
   },
   media: {
     imageUrl: null,

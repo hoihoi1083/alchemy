@@ -243,7 +243,7 @@ export const zhTw = {
   },
   studio: {
     loadingTitle: "正在載入 studio…",
-    loadingHint: "還原推廣模式和嚮導佈局。",
+    loadingHint: "還原你的專案 — 會直接打開你上次的步驟。",
     errorTitle: "Studio 出現錯誤",
     errorBody: "嚮導流程遇到問題。你可以重試，或返回模式選擇。",
     errorRetry: "重試",
@@ -4848,6 +4848,12 @@ socialDripFitTitle: "這個格式可以／不可以做什麼",
       fromIntakeHeadline: "主標：{text}",
       fromIntakeNeedPhoto: "還需要：產品照片",
       fromIntakeReadyMaterials: "核對下方素材後即可生成。",
+      browseContinueScenes: "繼續查看場景圖",
+      browseContinueImage: "繼續下一步",
+      browseContinueHint:
+        "想改設定就先改，再點重新生成；想看已有成品就直接繼續，不用再扣 Token。",
+      regenerateScenes: "重新生成場景",
+      regenerateImage: "重新生成圖片",
       directHint:
         "選擇直接創作或模特佩戴、可選上傳參考圖，再填內容和產品照 — 與研究路徑選完後的設定相同。",
       conceptHint:
@@ -4898,6 +4904,21 @@ socialDripFitTitle: "這個格式可以／不可以做什麼",
         "上傳版式／風格參考，AI 會分析並借構圖。只有產品照和文案也可以出圖。",
       referenceRemove: "移除",
       referenceTitle: "參考創意簡報",
+      researchRefTitle: "研究參考帖",
+      researchRefHint:
+        "這個風格來自研究帖。我們不存參考圖檔 — 想再出圖跟同一參考，可打開原帖或重新下載封面。",
+      researchRefOpenPost: "打開原帖",
+      researchRefRedownload: "重新下載參考圖",
+      researchRefRedownloadAgain: "再下載一次參考圖",
+      researchRefRedownloading: "下載中…",
+      researchRefRedownloadFailed:
+        "下載封面失敗。請打開原帖自行存圖再上傳，或稍後再試。",
+      researchRefManualUpload: "手動上傳封面",
+      researchRefMissingNote:
+        "本次未載入參考圖。想雙參考出圖，請先重新下載。",
+      localRefMissingTitle: "本機參考圖未保存",
+      localRefMissingHint:
+        "你之前是從本機上傳的參考圖。我們不存檔 — 想跟同一風格再出圖，請在下方重新上傳。",
       changeBrief: "改簡報",
       noReference: "暫無參考",
       briefSummaryTitle: "簡報分析摘要",
@@ -5067,6 +5088,10 @@ socialDripFitTitle: "這個格式可以／不可以做什麼",
         "場景圖已準備 — 會用 單鏡出片 一次出一條片（全部靜幀）。字幕之後再加。",
       scenesReadyTitle: "分鏡場景已準備",
       scenesReadyBody: "這些靜幀會合成一條短片 短片。壞格請先重產那一格。",
+      browseContinueExport: "繼續去匯出",
+      browseContinueHint:
+        "想改設定就先改，再點重新生成；想看已有影片就直接繼續，不用再扣 Token。",
+      regenerateVideo: "重新生成影片",
       assistantHint:
         "上傳產品照 → AI 寫動態 prompt → 檢查後再生成（無聲片；字幕之後再加）。",
       assistantTitle: "AI 動態 Prompt",

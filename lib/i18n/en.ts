@@ -253,7 +253,7 @@ export const en = {
 	},
 	studio: {
 		loadingTitle: "Loading your studio…",
-		loadingHint: "Restoring your promotion mode and wizard layout.",
+		loadingHint: "Restoring your project — opening the step you left off.",
 		errorTitle: "Studio hit an error",
 		errorBody:
 			"Something went wrong in the wizard. You can try again or go back to mode selection.",
@@ -5857,6 +5857,12 @@ export const en = {
 			fromIntakeHeadline: "Hook: {text}",
 			fromIntakeNeedPhoto: "Still needed: product photo",
 			fromIntakeReadyMaterials: "Review materials below, then generate.",
+			browseContinueScenes: "Continue to scenes",
+			browseContinueImage: "Continue to next step",
+			browseContinueHint:
+				"Edit fields above if you want, then regenerate — or continue to your existing output without spending tokens.",
+			regenerateScenes: "Regenerate scenes",
+			regenerateImage: "Regenerate image",
 			directHint:
 				"Choose quick ad or model-wear, optionally add a reference image, then set content and product photos — same setup as after research.",
 			conceptHint:
@@ -5913,6 +5919,21 @@ export const en = {
 				"Upload a layout or style reference. AI analyzes it and borrows composition — skip if you only have product + copy.",
 			referenceRemove: "Remove",
 			referenceTitle: "Reference creative brief",
+			researchRefTitle: "Research reference post",
+			researchRefHint:
+				"This look came from a research post. We don’t store the image file — open the post or re-download the cover when you want to regenerate with the same reference.",
+			researchRefOpenPost: "Open original post",
+			researchRefRedownload: "Download reference again",
+			researchRefRedownloadAgain: "Re-download reference",
+			researchRefRedownloading: "Downloading…",
+			researchRefRedownloadFailed:
+				"Couldn’t download the cover. Open the post and save the image, then upload it below — or try again later.",
+			researchRefManualUpload: "Upload cover manually",
+			researchRefMissingNote:
+				"Reference image isn’t loaded in this session. Re-download before regenerating if you want dual-reference style.",
+			localRefMissingTitle: "Local reference not saved",
+			localRefMissingHint:
+				"You uploaded a reference from your device earlier. We don’t store that file — re-upload it here if you want the same look when regenerating.",
 			changeBrief: "Change brief",
 			noReference: "No reference",
 			briefSummaryTitle: "Brief analysis summary",
@@ -6087,6 +6108,10 @@ export const en = {
 			scenesReadyTitle: "Storyboard scenes ready",
 			scenesReadyBody:
 				"These stills become one video clip. Regen a bad cell first if needed.",
+			browseContinueExport: "Continue to export",
+			browseContinueHint:
+				"Edit settings above if you want, then regenerate — or continue to your existing video without spending tokens.",
+			regenerateVideo: "Regenerate video",
 			assistantHint:
 				"Upload a product photo → AI writes a motion prompt → review it → generate (silent reel; captions later).",
 			assistantTitle: "AI motion prompt",

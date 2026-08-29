@@ -8,8 +8,12 @@ import type { PromotionMode } from "@/lib/promotion-mode";
 const WizardContext = createContext<StudioWizardValue | null>(null);
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
+type HydrateStatus = "pending" | "ready" | "error";
 
-const AutosaveContext = createContext<{ saveStatus: SaveStatus }>({ saveStatus: "idle" });
+const AutosaveContext = createContext<{
+  saveStatus: SaveStatus;
+  hydrateStatus: HydrateStatus;
+}>({ saveStatus: "idle", hydrateStatus: "pending" });
 
 function WizardAutosaveBridge({
   promotionMode,
@@ -21,8 +25,12 @@ function WizardAutosaveBridge({
   children: ReactNode;
 }) {
   const wizard = useWizard();
-  const { saveStatus } = useProjectAutosave(wizard, promotionMode, { startFresh });
-  return <AutosaveContext.Provider value={{ saveStatus }}>{children}</AutosaveContext.Provider>;
+  const { saveStatus, hydrateStatus } = useProjectAutosave(wizard, promotionMode, { startFresh });
+  return (
+    <AutosaveContext.Provider value={{ saveStatus, hydrateStatus }}>
+      {children}
+    </AutosaveContext.Provider>
+  );
 }
 
 export function WizardProvider({
@@ -58,4 +66,8 @@ export function useOptionalWizard(): StudioWizardValue | null {
 
 export function useSaveStatus(): SaveStatus {
   return useContext(AutosaveContext).saveStatus;
+}
+
+export function useHydrateStatus(): HydrateStatus {
+  return useContext(AutosaveContext).hydrateStatus;
 }

@@ -123,39 +123,86 @@ function wizardStateSnapshot(wizard: StudioWizardValue): WizardMicroStepState {
   };
 }
 
+type ResumeBootstrap = {
+  ctx: MicroWizardContext;
+  stepIndex: number;
+  /** True when no pending library jump (fresh, no hint, or already applied). */
+  resumeApplied: boolean;
+};
+
+/** Apply library resume hint on first paint so MicroWizard never flashes step 0. */
+function bootstrapMicroFromResume(
+  promotionMode: PromotionMode,
+  wizard: StudioWizardValue,
+  freshEntry: boolean,
+): ResumeBootstrap {
+  if (freshEntry) {
+    clearStoredContext();
+    clearProjectResumeHint();
+  }
+
+  const stored = readStoredContext();
+  const sameMode = !stored.promotionMode || stored.promotionMode === promotionMode;
+  const recipeId = peekLandingRecipe();
+  const recipeMicro = recipeId
+    ? microContextForLandingRecipe(recipeId, promotionMode)
+    : null;
+  const hint = freshEntry ? null : peekProjectResumeHint();
+
+  const ctx: MicroWizardContext = {
+    ...defaultMicroContext(promotionMode),
+    ...(recipeMicro ?? (sameMode && !freshEntry ? stored : {})),
+    ...(hint?.microContext ?? {}),
+    promotionMode,
+  };
+
+  if (recipeId && !hint?.targetMicroStep) {
+    return {
+      ctx,
+      stepIndex: resumeStepIndex(resolveMicroSteps(ctx, wizardStateSnapshot(wizard))),
+      resumeApplied: true,
+    };
+  }
+
+  if (!hint) {
+    return { ctx, stepIndex: 0, resumeApplied: true };
+  }
+
+  const hasScenes = wizard.storyboardScenes.length > 0;
+  const hasVideo = Boolean(wizard.videoUrl);
+  const hasImage = Boolean(wizard.imageUrl || wizard.campaignSlides.length > 0);
+  const target = hint.targetMicroStep;
+  const readyForTarget =
+    !target ||
+    (target === "image.review" && hasScenes) ||
+    (target === "done.export" && hasVideo) ||
+    (target === "setup.pre_video" && (hasImage || hasScenes));
+
+  if (!readyForTarget || !target) {
+    return { ctx, stepIndex: 0, resumeApplied: !target };
+  }
+
+  const steps = resolveMicroSteps(ctx, wizardStateSnapshot(wizard));
+  let idx = steps.findIndex((s) => s.id === target);
+  if (idx < 0 && hasScenes) {
+    idx = steps.findIndex((s) => s.id === "image.review");
+  }
+  consumeProjectResumeHint();
+  return {
+    ctx,
+    stepIndex: idx >= 0 ? idx : 0,
+    resumeApplied: true,
+  };
+}
+
 export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: PromotionMode) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const freshEntry = searchParams.get("fresh") === "1";
 
-  const [ctx, setCtx] = useState<MicroWizardContext>(() => {
-    if (freshEntry) {
-      clearStoredContext();
-      clearProjectResumeHint();
-    }
-    const stored = readStoredContext();
-    const sameMode = !stored.promotionMode || stored.promotionMode === promotionMode;
-    const recipeId = peekLandingRecipe();
-    const recipeMicro = recipeId
-      ? microContextForLandingRecipe(recipeId, promotionMode)
-      : null;
-    return {
-      ...defaultMicroContext(promotionMode),
-      ...(recipeMicro ?? (sameMode && !freshEntry ? stored : {})),
-      promotionMode,
-    };
-  });
-  const [stepIndex, setStepIndex] = useState(() => {
-    const recipeId = peekLandingRecipe();
-    if (!recipeId) return 0;
-    const recipeMicro = microContextForLandingRecipe(recipeId, promotionMode);
-    const initial = {
-      ...defaultMicroContext(promotionMode),
-      ...recipeMicro,
-      promotionMode,
-    };
-    return resumeStepIndex(resolveMicroSteps(initial, wizardStateSnapshot(wizard)));
-  });
+  const [boot] = useState(() => bootstrapMicroFromResume(promotionMode, wizard, freshEntry));
+  const [ctx, setCtx] = useState<MicroWizardContext>(() => boot.ctx);
+  const [stepIndex, setStepIndex] = useState(() => boot.stepIndex);
   const [finishedSetup, setFinishedSetup] = useState(false);
   const [pendingIntakePath, setPendingIntakePath] = useState<IntakePath | undefined>();
   const [pendingConceptSource, setPendingConceptSource] = useState<ConceptSource | undefined>();
@@ -190,7 +237,7 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     storeContext(ctx);
   }, [ctx]);
 
-  const projectResumeDoneRef = useRef(freshEntry);
+  const projectResumeDoneRef = useRef(boot.resumeApplied);
   const projectResumeCtxSeededRef = useRef(false);
 
   // Open Studio hydrate: restore micro routing + jump to review/done when media exists.
@@ -230,15 +277,12 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     const target = consumed.targetMicroStep;
     if (!target) return;
 
-    const t = window.setTimeout(() => {
-      const nextSteps = resolveMicroSteps(nextCtx, wizardStateSnapshot(wizard));
-      let idx = nextSteps.findIndex((s) => s.id === target);
-      if (idx < 0 && hasScenes) {
-        idx = nextSteps.findIndex((s) => s.id === "image.review");
-      }
-      if (idx >= 0) setStepIndex(idx);
-    }, 0);
-    return () => window.clearTimeout(t);
+    const nextSteps = resolveMicroSteps(nextCtx, wizardStateSnapshot(wizard));
+    let idx = nextSteps.findIndex((s) => s.id === target);
+    if (idx < 0 && hasScenes) {
+      idx = nextSteps.findIndex((s) => s.id === "image.review");
+    }
+    if (idx >= 0) setStepIndex(idx);
   }, [
     freshEntry,
     promotionMode,
@@ -1256,6 +1300,52 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     return () => window.clearTimeout(t);
   }, [blockReason, currentId, goNext, stepIndex]);
 
+  const hasExistingScenes = wizard.storyboardScenes.length > 0;
+  const hasExistingImage =
+    Boolean(wizard.imageUrl) ||
+    wizard.campaignSlides.length > 0 ||
+    hasExistingScenes;
+  const hasExistingVideo = Boolean(wizard.videoUrl);
+
+  const jumpToStepId = useCallback(
+    (id: string) => {
+      const idx = steps.findIndex((s) => s.id === id);
+      if (idx < 0) return;
+      autoAdvancedRef.current = null;
+      setStepIndex(idx);
+    },
+    [steps],
+  );
+
+  /** Library browse: return to existing output without spending tokens. */
+  const browseContinueExisting = useCallback(() => {
+    if (currentId === "setup.pre_generate" || currentId === "image.generate") {
+      if (hasExistingScenes) {
+        jumpToStepId("image.review");
+        return;
+      }
+      if (hasExistingImage) {
+        const preVideo = steps.findIndex((s) => s.id === "setup.pre_video");
+        if (preVideo >= 0) {
+          autoAdvancedRef.current = null;
+          setStepIndex(preVideo);
+          return;
+        }
+      }
+      return;
+    }
+    if ((currentId === "setup.pre_video" || currentId === "video.generate") && hasExistingVideo) {
+      jumpToStepId("done.export");
+    }
+  }, [
+    currentId,
+    hasExistingImage,
+    hasExistingScenes,
+    hasExistingVideo,
+    jumpToStepId,
+    steps,
+  ]);
+
   return {
     ctx,
     patchContext,
@@ -1279,6 +1369,11 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     isSkippable: Boolean(currentStep?.skippable),
     finishedSetup,
     canGoBack: stepIndex > 0 || finishedSetup,
+    hasExistingScenes,
+    hasExistingImage,
+    hasExistingVideo,
+    browseContinueExisting,
+    jumpToStepId,
   };
 }
 

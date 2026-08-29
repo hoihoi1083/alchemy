@@ -10187,7 +10187,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		setImageOutputMode(settings.imageOutputMode);
 		setImageAspectRatio(settings.imageAspectRatio);
 		setImageInputMode(settings.imageInputMode);
-		setStepKey(settings.stepKey);
+		// Micro wizard is the resume shell — avoid flashing classic Image/Video steps
+		// from older snapshots that stored stepKey mid-flow.
+		setStepKey("setup");
 
 		setImagePrompt(prompts.imagePrompt);
 		setVideoPrompt(prompts.videoPrompt);
@@ -10198,6 +10200,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		setCampaignPlan(plans.campaignPlan);
 		setStoryboardPlan(plans.storyboardPlan);
 		setAdPackPlan(plans.adPackPlan);
+		setContentResearchApplyRef(plans.contentResearchApplyRef ?? null);
 
 		const scenes = storyboardScenesFromSnapshot(snapshot);
 		const slides = campaignSlidesFromSnapshot(snapshot);
