@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { assertPlatformResearchAllowed } from "@/lib/billing/assert-platform-research";
 import { requireAppUser } from "@/lib/require-app-user";
 import { CONTENT_PLATFORMS, type ContentPlatform } from "@/lib/content-research-types";
 import { resolvePostVideoUrl } from "@/lib/justoneapi-resolve-video";
@@ -9,6 +10,8 @@ export const maxDuration = 120;
 export async function POST(request: Request) {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
+  const gated = await assertPlatformResearchAllowed(auth.user.userId);
+  if (gated) return gated;
 
   let body: { platform?: string; postId?: string; postUrl?: string };
   try {

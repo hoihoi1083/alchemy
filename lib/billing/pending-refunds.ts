@@ -1,5 +1,5 @@
 import type { ObjectId } from "mongodb";
-import { grantTokens } from "@/lib/billing/ledger";
+import { grantTokensOnce } from "@/lib/stripe/billing-sync";
 import { getDb, isMongoConfigured } from "@/lib/mongodb";
 
 export type PendingRefundStatus = "pending" | "processing" | "completed" | "failed";
@@ -110,8 +110,8 @@ async function releaseRefundReplayClaim(
 
 /**
  * Retry queued refunds (e.g. after transient Mongo errors). Safe to call on /api/me.
- * Each row is claimed pending→processing before grantTokens so concurrent replays
- * cannot double-credit the same refund.
+ * Each row is claimed pending→processing before grant. Concurrent replays cannot both
+ * claim the same row; grantTokensOnce(ref) makes crash-after-credit + stale-retry safe.
  */
 export async function processPendingRefundsForBilledUser(
   billedClerkId: string,
@@ -126,17 +126,28 @@ export async function processPendingRefundsForBilledUser(
     const row = await claimNextPendingRefund(billedClerkId);
     if (!row) break;
 
+    const refundRef = `pending_refund_${String(row._id)}`;
     try {
-      const balanceAfter = await grantTokens(row.billedClerkId, row.amount, "refund", {
-        meta: { ...row.meta, phase: "refund", pendingRefund: true, pendingRefundId: String(row._id) },
-      });
+      const { balanceAfter } = await grantTokensOnce(
+        row.billedClerkId,
+        row.amount,
+        "refund",
+        refundRef,
+        {
+          ...row.meta,
+          phase: "refund",
+          pendingRefund: true,
+          pendingRefundId: String(row._id),
+        },
+      );
+      // balanceAfter set on fresh grant OR prior idempotent grant (crash mid-mark).
       if (balanceAfter !== null) {
         await markRefundReplayCompleted(row._id);
         completed += 1;
       } else {
         await releaseRefundReplayClaim(
           row._id,
-          "grantTokens returned null (user row missing)",
+          "grantTokensOnce returned null (user row missing)",
         );
       }
     } catch (err) {

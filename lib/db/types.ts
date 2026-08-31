@@ -19,6 +19,11 @@ export type DbUser = {
   /** Studio tokens (sum of non-expired batch remainders; mirrored for fast reads). */
   creditBalance: number;
   /**
+   * Bumped on every wallet mutation (grant/consume/prune). Used as CAS token so
+   * a stale consume cannot overwrite a concurrent grant's tokenBatches.
+   */
+  walletRevision?: number;
+  /**
    * FIFO token batches. Each grant adds a batch that expires after 6 months.
    * Missing/empty + creditBalance > 0 is migrated once to a legacy batch.
    */

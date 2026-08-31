@@ -1,7 +1,6 @@
 import { fal } from "@fal-ai/client";
 import { NextResponse } from "next/server";
-import { chargeTokens, refundTokens } from "@/lib/billing/charge";
-import { TOKEN_COST } from "@/lib/billing/token-costs";
+import { assertPlatformResearchAllowed } from "@/lib/billing/assert-platform-research";
 import { requireAppUser } from "@/lib/require-app-user";
 import type { ResearchReelAnalysis } from "@/lib/reel-analysis-types";
 import { refineResearchVideoScript } from "@/lib/video-script-refine";
@@ -14,11 +13,13 @@ export const maxDuration = 120;
 
 /**
  * Fuse reel analysis + product photo + exact duration into a better DeepSeek video script.
- * Called before research R2V generate (and optionally when duration changes).
+ * Included with Standard+ Platform research (no token charge).
  */
 export async function POST(request: Request) {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
+  const gated = await assertPlatformResearchAllowed(auth.user.userId);
+  if (gated) return gated;
 
   let formData: FormData;
   try {
@@ -61,13 +62,6 @@ export async function POST(request: Request) {
   const conceptMode =
     isPromotionMode(promotionModeRaw) && promotionModeRaw === "concept";
 
-  const tokenCost = TOKEN_COST.plan;
-  const charged = await chargeTokens(auth.user.userId, tokenCost, {
-    kind: "refine_research_video_script",
-    durationSec,
-  });
-  if ("error" in charged) return charged.error;
-
   try {
     let productVisionNote = "";
     const productFile = formData.get("product_photo") as File | null;
@@ -102,14 +96,9 @@ export async function POST(request: Request) {
     return NextResponse.json({
       ...refined,
       durationSec,
-      tokensCharged: tokenCost,
-      creditBalance: charged.balanceAfter,
+      tokensCharged: 0,
     });
   } catch (e: unknown) {
-    await refundTokens(auth.user.userId, tokenCost, {
-      kind: "refine_research_video_script",
-      reason: "refine_failed",
-    });
     const message = e instanceof Error ? e.message : "Script refine failed.";
     return NextResponse.json({ error: message }, { status: 502 });
   }

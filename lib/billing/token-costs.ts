@@ -268,7 +268,7 @@ export function estimateImageTokens(opts: {
 /** Token cost to regenerate one still vs the full current image run. */
 export function estimateImageRegenTokens(opts: {
   scope: "one" | "all";
-  outputMode?: "single" | "ab" | "campaign" | "teaching-carousel";
+  outputMode?: "single" | "ab" | "campaign" | "carousel" | "teaching-carousel";
   isStoryboard?: boolean;
   isCinematic?: boolean;
   sceneCount?: number;
@@ -289,7 +289,7 @@ export function estimateImageRegenTokens(opts: {
     mode:
       mode === "ab"
         ? "ab"
-        : mode === "campaign"
+        : mode === "campaign" || mode === "carousel"
           ? "campaign"
           : mode === "teaching-carousel"
             ? "teaching_carousel"

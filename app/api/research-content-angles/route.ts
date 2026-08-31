@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import { getUserPlan } from "@/lib/billing/get-user-plan";
-import { planMeetsMinimum } from "@/lib/billing/plan-gates";
-import { isContentPlatform, planContentResearch } from "@/lib/content-research-plan";
+import { assertPlatformResearchAllowed } from "@/lib/billing/assert-platform-research";
 import { requireAppUser } from "@/lib/require-app-user";
+import { isContentPlatform, planContentResearch } from "@/lib/content-research-plan";
 import { assertFreeDeepSeekQuota } from "@/lib/rate-limit-deepseek";
 import { asPromptMarket, type PromptMarket } from "@/lib/prompt-variables";
 import { researchUiPlatforms } from "@/lib/wizard-intake-contract";
@@ -25,18 +24,8 @@ type ResearchBody = {
 export async function POST(request: Request) {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
-  const userPlan = await getUserPlan(auth.user.userId);
-  if (!planMeetsMinimum(userPlan, "standard")) {
-    return NextResponse.json(
-      {
-        error: "Platform research requires Standard plan or above.",
-        code: "PLAN_ENTITLEMENT",
-        requiredPlan: "standard",
-        hint: "research_needs_standard",
-      },
-      { status: 403 },
-    );
-  }
+  const gated = await assertPlatformResearchAllowed(auth.user.userId);
+  if (gated) return gated;
   const quota = await assertFreeDeepSeekQuota(auth.user.userId);
   if (!quota.ok) return quota.response;
 

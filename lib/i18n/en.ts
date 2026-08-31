@@ -1465,7 +1465,7 @@ export const en = {
 			},
 			{
 				q: "What are AI Tokens used for?",
-				body: "Tokens are charged for image generation, storyboard scenes, video generation, planning/brief steps, and some analysis jobs (for example research-reel analysis). Costs are shown before you run.",
+				body: "Tokens are charged for image generation, storyboard scenes, video generation, and planning/brief steps. Platform research (Standard+) — including reel analysis and script refine — does not consume tokens. Costs are shown before you run paid jobs.",
 			},
 			{
 				q: "What happens when I run out of tokens?",
@@ -2859,13 +2859,13 @@ export const en = {
 		researchReelUploadMp4Hint:
 			"Search auto-download or upload your own MP4/MOV — either works; we analyze style and pacing the same way",
 		researchReelPickDurationFirst:
-			"Pick an output duration above (not Auto) before reference analysis — the reel plan and video generation billing use this length.",
+			"Pick an output duration above (not Auto) before reference analysis — the reel plan uses this length; video generation tokens are billed later.",
 		researchReelReanalyzeForDuration:
 			"Duration changed — re-analyzing reference reel…",
 		researchReelStatusOutputDuration:
-			"Output duration selected (for analyze & billing)",
+			"Output duration selected (analyze is free on Standard+; video generation uses this length)",
 		researchReelStatusOutputDurationMissing:
-			"Pick output duration (4–12s) first — reference can be long; your billable length is what you choose here",
+			"Pick output duration (4–12s) first — reference can be long; later video cost uses what you choose here",
 		setupReferenceVideoTitle: "Reference reel (optional)",
 		setupReferenceVideoIntro:
 			"Upload a reference ad MP4 on Step 1 to analyze style and edit rhythm before scene generation. Skip if you prefer product photo + AI assistant or text-only video with no reference.",

@@ -91,7 +91,6 @@ async function createAllIndexes(db: Db): Promise<void> {
     { emailNormalized: 1 },
     { unique: true },
   );
-  await db.collection("connection_tests").createIndex({ createdAt: -1 });
   // Drop Stripe idempotency locks after 90 days.
   await db.collection("billing_event_locks").createIndex(
     { createdAt: 1 },
@@ -169,4 +168,15 @@ export async function ensureIndexes(): Promise<void> {
   if (!uri) return;
   const db = await getDb();
   await indexesOnce(db);
+}
+
+/** Test-only: close cached client so a new MONGODB_URI can connect. */
+export async function resetMongoForTests(): Promise<void> {
+  if (globalForMongo.mongoClient) {
+    await globalForMongo.mongoClient.close().catch(() => {});
+  }
+  globalForMongo.mongoClient = undefined;
+  globalForMongo.mongoDb = undefined;
+  globalForMongo.indexesOnce = undefined;
+  globalForMongo.indexesFailedAt = undefined;
 }

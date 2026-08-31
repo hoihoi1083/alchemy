@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { assertPlatformResearchAllowed } from "@/lib/billing/assert-platform-research";
 import { requireAppUser } from "@/lib/require-app-user";
 import { hostMatchesAllowlist } from "@/lib/pipeline/safe-url";
 import { toBrowserJpegBuffer } from "@/lib/xhs-image-browser";
@@ -102,6 +103,8 @@ async function fetchUpstreamImage(raw: string, referer: string): Promise<Respons
 export async function GET(request: Request) {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
+  const gated = await assertPlatformResearchAllowed(auth.user.userId);
+  if (gated) return gated;
 
   const { searchParams } = new URL(request.url);
   const raw = searchParams.get("url")?.trim();

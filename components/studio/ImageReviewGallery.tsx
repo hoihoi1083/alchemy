@@ -911,11 +911,11 @@ function OutputModeIcon({
   mode,
   className,
 }: {
-  mode: "single" | "ab" | "campaign" | "teaching-carousel";
+  mode: "single" | "ab" | "campaign" | "teaching-carousel" | "carousel";
   className?: string;
 }) {
   if (mode === "ab") return <IconModeAb className={className} />;
-  if (mode === "campaign") return <IconModeCarousel className={className} />;
+  if (mode === "campaign" || mode === "carousel") return <IconModeCarousel className={className} />;
   if (mode === "teaching-carousel") return <IconModeEducational className={className} />;
   return <IconModeSingle className={className} />;
 }

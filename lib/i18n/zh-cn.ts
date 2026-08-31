@@ -1254,7 +1254,7 @@ export const zhCn = {
       },
       {
         q: "点数用在哪些地方？",
-        body: "用于图片生成、分镜场景、视频生成、规划／简报步骤，以及部分分析任务（例如研究短视频分析）。费用会在运行前显示。",
+        body: "用于图片生成、分镜场景、视频生成、规划／简报步骤。平台研究（Standard 及以上）——包括短视频分析与文案优化——不消耗点数。付费任务会在运行前显示费用。",
       },
       {
         q: "点数用完了怎么办？",
@@ -2319,7 +2319,7 @@ export const zhCn = {
     researchReelPickDurationFirst:
       "请先在上方选输出片长（不要留「自动」），参考视频分析与 视频生成 出片才会按这个长度规划。",
     researchReelReanalyzeForDuration: "片长已改 — 重新分析参考视频…",
-    researchReelStatusOutputDuration: "输出片长已选（分析与计费用）",
+    researchReelStatusOutputDuration: "输出片长已选（Standard+ 分析不扣点；后续视频生成按此长度计费）",
     researchReelStatusOutputDurationMissing:
       "请先选输出片长（4–12 秒）— 参考视频可以很长，出片长度以此处为准",
     setupReferenceVideoTitle: "参考短视频（选填）",

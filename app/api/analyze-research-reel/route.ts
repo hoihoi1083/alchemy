@@ -1,9 +1,8 @@
 import { fal } from "@fal-ai/client";
 import { NextResponse } from "next/server";
-import { chargeTokens, refundTokens } from "@/lib/billing/charge";
+import { assertPlatformResearchAllowed } from "@/lib/billing/assert-platform-research";
 import { getUserPlan } from "@/lib/billing/get-user-plan";
 import { planMeetsMinimum } from "@/lib/billing/plan-gates";
-import { TOKEN_COST } from "@/lib/billing/token-costs";
 import { requireAppUser } from "@/lib/require-app-user";
 import { analyzeResearchReelFromVideo } from "@/lib/reel-video-analysis";
 import { researchReelAnalysisPromptBlock } from "@/lib/reel-analysis-types";
@@ -26,9 +25,15 @@ export const runtime = "nodejs";
 /** CDN fetch + Florence frames + DeepSeek (+ storyboard) + prepare/upload clip. */
 export const maxDuration = 300;
 
+/**
+ * Platform research reel analysis — included with Standard+ (no token charge).
+ * Optional storyboard plan still requires Pro+ entitlement (no tokens either).
+ */
 export async function POST(request: Request) {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
+  const gated = await assertPlatformResearchAllowed(auth.user.userId);
+  if (gated) return gated;
   const userPlan = await getUserPlan(auth.user.userId);
   const canPlanStoryboard = planMeetsMinimum(userPlan, "pro");
 
@@ -106,18 +111,8 @@ export async function POST(request: Request) {
       : 8;
   const wantStoryboardPlan =
     String(formData.get("plan_storyboard") ?? "true").trim() !== "false";
-  // Storyboard planning is Pro+ (same as /api/plan-storyboard). Reel analysis itself stays open.
+  // Storyboard planning is Pro+ (same as /api/plan-storyboard). Analysis itself is Standard+.
   const planStoryboard = wantStoryboardPlan && canPlanStoryboard;
-
-  // fal vision (~image-class) + DeepSeek plan(s). Bill before vendor spend.
-  const tokenCost =
-    TOKEN_COST.image + TOKEN_COST.plan + (planStoryboard ? TOKEN_COST.plan : 0);
-  const charged = await chargeTokens(auth.user.userId, tokenCost, {
-    kind: "research_reel",
-    planStoryboard,
-    storyboardPlanSkippedForPlan: wantStoryboardPlan && !canPlanStoryboard,
-  });
-  if ("error" in charged) return charged.error;
 
   try {
     const resolved = await resolveResearchReelVideoBytes({
@@ -198,10 +193,6 @@ export async function POST(request: Request) {
         storyboardPlanError =
           planErr instanceof Error ? planErr.message : "Storyboard plan failed.";
         console.warn("[analyze-research-reel] storyboard plan failed:", storyboardPlanError);
-        await refundTokens(auth.user.userId, TOKEN_COST.plan, {
-          kind: "research_reel",
-          reason: "storyboard_plan_failed",
-        });
       }
     }
 
@@ -220,14 +211,9 @@ export async function POST(request: Request) {
       analyzeSource: resolved.source,
       styleReferenceFrameUrl: result.styleReferenceFrameUrl ?? null,
       promptBlock: researchReelAnalysisPromptBlock(result.analysis),
-      tokensCharged: tokenCost,
-      creditBalance: charged.balanceAfter,
+      tokensCharged: 0,
     });
   } catch (e: unknown) {
-    await refundTokens(auth.user.userId, tokenCost, {
-      kind: "research_reel",
-      reason: "analysis_failed",
-    });
     const message = e instanceof Error ? e.message : "Reel analysis failed.";
     console.error("[analyze-research-reel] failed:", message);
     const status =

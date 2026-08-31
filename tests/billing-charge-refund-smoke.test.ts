@@ -136,7 +136,6 @@ describe("billing smoke — fail → refund (source + wallet)", () => {
     "app/api/dub-script-voice/route.ts",
     "app/api/generate-storyboard-video/route.ts",
     "app/api/postprocess/route.ts",
-    "app/api/analyze-research-reel/route.ts",
   ];
 
   it("each paid route refunds in a catch path", () => {

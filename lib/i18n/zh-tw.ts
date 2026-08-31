@@ -1244,7 +1244,7 @@ export const zhTw = {
       },
       {
         q: "點數用在哪些地方？",
-        body: "用於圖片產生、分鏡場景、影片產生、規劃／簡報步驟，以及部分分析任務（例如研究短影片分析）。費用會在執行前顯示。",
+        body: "用於圖片產生、分鏡場景、影片產生、規劃／簡報步驟。平台研究（Standard 及以上）——包括短影片分析與文案優化——不消耗點數。付費任務會在執行前顯示費用。",
       },
       {
         q: "點數用完了怎麼辦？",
@@ -2309,7 +2309,7 @@ export const zhTw = {
     researchReelPickDurationFirst:
       "請先在上方選輸出片長（不要留「自動」），參考影片分析與 影片生成 出片才會按這個長度規劃。",
     researchReelReanalyzeForDuration: "片長已改 — 重新分析參考影片…",
-    researchReelStatusOutputDuration: "輸出片長已選（分析與計費用）",
+    researchReelStatusOutputDuration: "輸出片長已選（Standard+ 分析不扣點；後續影片產生按此長度計費）",
     researchReelStatusOutputDurationMissing:
       "請先選輸出片長（4–12 秒）— 參考影片可以很長，出片長度以此處為準",
     setupReferenceVideoTitle: "參考短影片（選填）",

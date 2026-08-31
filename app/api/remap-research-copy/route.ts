@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { assertPlatformResearchAllowed } from "@/lib/billing/assert-platform-research";
 import { requireAppUser } from "@/lib/require-app-user";
 import { assertFreeDeepSeekQuota } from "@/lib/rate-limit-deepseek";
 import { remapResearchCopyToSubject } from "@/lib/research-copy-remap";
@@ -10,6 +11,8 @@ export const maxDuration = 60;
 export async function POST(request: Request) {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
+  const gated = await assertPlatformResearchAllowed(auth.user.userId);
+  if (gated) return gated;
   const quota = await assertFreeDeepSeekQuota(auth.user.userId);
   if (!quota.ok) return quota.response;
 

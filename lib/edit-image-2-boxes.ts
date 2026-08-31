@@ -169,7 +169,10 @@ export function parseBoxes(raw: unknown, kind: "text" | "object"): LayerBox[] {
 
     if (!coords) return;
     const { x, y, w, h } = coords;
-    if (w < 4 || h < 4) return;
+    if (!(w > 0 && h > 0)) return;
+    // Pixel boxes: drop dust (<4px). Normalized 0–1 boxes stay (toPixelBox scales later).
+    const looksNormalized = x <= 1.5 && y <= 1.5 && w <= 1.5 && h <= 1.5;
+    if (!looksNormalized && (w < 4 || h < 4)) return;
     out.push({
       x,
       y,

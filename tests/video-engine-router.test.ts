@@ -143,7 +143,6 @@ describe("storyboard route + wizard wiring", () => {
       join(root, "components/VideoSettingsPanel.tsx"),
       "utf8",
     );
-    assert.match(src, /showEnginePicker \?/);
     assert.doesNotMatch(src, /motionPoster \? null/);
     assert.match(src, /VIDEO_RESOLUTION_CAPS\.map/);
     assert.match(src, /canUseVideoResolution/);

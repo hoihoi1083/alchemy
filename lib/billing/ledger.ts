@@ -49,6 +49,8 @@ export class InsufficientTokensError extends Error {
   }
 }
 
+const WALLET_CAS_ATTEMPTS = 12;
+
 function sumRemaining(batches: TokenBatch[]): number {
   return batches.reduce((s, b) => s + Math.max(0, b.remaining), 0);
 }
@@ -72,64 +74,118 @@ function normalizeBatches(raw: unknown): TokenBatch[] {
   return raw.map(asBatch).filter((b): b is TokenBatch => b != null && b.remaining > 0);
 }
 
+function readWalletRevision(user: Pick<DbUser, "walletRevision">): number {
+  return typeof user.walletRevision === "number" && Number.isFinite(user.walletRevision)
+    ? user.walletRevision
+    : 0;
+}
+
+/** Match documents at a given revision (missing field ≡ 0 for legacy rows). */
+function walletRevisionFilter(revision: number): Record<string, unknown> {
+  if (revision === 0) {
+    return {
+      $or: [{ walletRevision: 0 }, { walletRevision: { $exists: false } }],
+    };
+  }
+  return { walletRevision: revision };
+}
+
+function deductFromBatches(
+  batches: TokenBatch[],
+  cost: number,
+  now: Date,
+): { nextBatches: TokenBatch[]; left: number } {
+  let left = cost;
+  const nextBatches: TokenBatch[] = [];
+  const ordered = [...batches].sort(
+    (a, b) =>
+      a.expiresAt.getTime() - b.expiresAt.getTime() ||
+      a.grantedAt.getTime() - b.grantedAt.getTime(),
+  );
+
+  for (const b of ordered) {
+    if (b.expiresAt.getTime() <= now.getTime()) continue;
+    if (left <= 0) {
+      nextBatches.push(b);
+      continue;
+    }
+    const take = Math.min(b.remaining, left);
+    left -= take;
+    const remaining = b.remaining - take;
+    if (remaining > 0) nextBatches.push({ ...b, remaining });
+  }
+  return { nextBatches, left };
+}
+
 /**
  * Convert legacy single balance into one 6‑month batch (once).
  * Drop expired batch remainders and resync creditBalance.
+ * Uses walletRevision CAS so a concurrent grant is not wiped.
  */
 async function migrateAndPruneBatches(
   clerkId: string,
 ): Promise<{ balance: number; batches: TokenBatch[] } | null> {
   if (!isMongoConfigured()) return null;
   const db = await getDb();
-  const user = await db.collection<DbUser>("users").findOne({ clerkId });
-  if (!user) return null;
 
-  const now = new Date();
-  let batches = normalizeBatches(user.tokenBatches);
-  let dirty = false;
-  const balance = Math.max(0, user.creditBalance ?? 0);
+  for (let attempt = 0; attempt < WALLET_CAS_ATTEMPTS; attempt++) {
+    const user = await db.collection<DbUser>("users").findOne({ clerkId });
+    if (!user) return null;
 
-  if (!user.tokenBatchesMigratedAt) {
-    if (batches.length === 0 && balance > 0) {
-      batches = [
-        {
-          id: randomUUID(),
-          remaining: balance,
-          grantedAt: now,
-          expiresAt: tokenExpiresAt(now),
-          source: "legacy_migration",
-        },
-      ];
-    }
-    dirty = true;
-  }
+    const now = new Date();
+    let batches = normalizeBatches(user.tokenBatches);
+    let dirty = false;
+    const balance = Math.max(0, user.creditBalance ?? 0);
+    const revision = readWalletRevision(user);
 
-  const alive: TokenBatch[] = [];
-  let expiredAmt = 0;
-  for (const b of batches) {
-    if (b.expiresAt.getTime() <= now.getTime()) {
-      expiredAmt += b.remaining;
-      dirty = true;
-    } else if (b.remaining > 0) {
-      alive.push(b);
-    } else {
+    if (!user.tokenBatchesMigratedAt) {
+      if (batches.length === 0 && balance > 0) {
+        batches = [
+          {
+            id: randomUUID(),
+            remaining: balance,
+            grantedAt: now,
+            expiresAt: tokenExpiresAt(now),
+            source: "legacy_migration",
+          },
+        ];
+      }
       dirty = true;
     }
-  }
 
-  const nextBalance = sumRemaining(alive);
-  if (dirty || nextBalance !== balance || !user.tokenBatchesMigratedAt) {
-    await db.collection<DbUser>("users").updateOne(
-      { clerkId },
+    const alive: TokenBatch[] = [];
+    let expiredAmt = 0;
+    for (const b of batches) {
+      if (b.expiresAt.getTime() <= now.getTime()) {
+        expiredAmt += b.remaining;
+        dirty = true;
+      } else if (b.remaining > 0) {
+        alive.push(b);
+      } else {
+        dirty = true;
+      }
+    }
+
+    const nextBalance = sumRemaining(alive);
+    if (!dirty && nextBalance === balance && user.tokenBatchesMigratedAt) {
+      return { balance: nextBalance, batches: alive };
+    }
+
+    const result = await db.collection<DbUser>("users").findOneAndUpdate(
+      { clerkId, ...walletRevisionFilter(revision) },
       {
         $set: {
           creditBalance: nextBalance,
           tokenBatches: alive,
           tokenBatchesMigratedAt: user.tokenBatchesMigratedAt ?? now,
+          walletRevision: revision + 1,
           updatedAt: now,
         },
       },
+      { returnDocument: "after" },
     );
+    if (!result) continue; // concurrent wallet write — retry
+
     if (expiredAmt > 0) {
       await db.collection<CreditTransaction>("credit_transactions").insertOne({
         clerkId,
@@ -140,9 +196,14 @@ async function migrateAndPruneBatches(
         createdAt: now,
       });
     }
+    return { balance: nextBalance, batches: alive };
   }
 
-  return { balance: nextBalance, batches: alive };
+  // Exhausted CAS — return best-effort read (caller may retry).
+  const user = await db.collection<DbUser>("users").findOne({ clerkId });
+  if (!user) return null;
+  const batches = normalizeBatches(user.tokenBatches);
+  return { balance: Math.max(0, user.creditBalance ?? 0), batches };
 }
 
 export async function getUserBalance(clerkId: string): Promise<{
@@ -183,6 +244,7 @@ export async function assertCanAfford(clerkId: string, cost: number): Promise<nu
 
 /**
  * Atomically deduct tokens (oldest batch first).
+ * Retries on walletRevision CAS conflict so concurrent grants are not overwritten.
  */
 export async function consumeTokens(
   clerkId: string,
@@ -190,69 +252,68 @@ export async function consumeTokens(
   opts?: { ref?: string; meta?: Record<string, unknown> },
 ): Promise<number | null> {
   if (!isMongoConfigured() || cost <= 0) return null;
-  await migrateAndPruneBatches(clerkId);
   const db = await getDb();
-  const user = await db.collection<DbUser>("users").findOne({ clerkId });
-  if (!user || (user.creditBalance ?? 0) < cost) {
-    throw new InsufficientTokensError(user?.creditBalance ?? 0, cost);
-  }
-
-  let left = cost;
   const now = new Date();
-  const nextBatches: TokenBatch[] = [];
-  const ordered = normalizeBatches(user.tokenBatches).sort(
-    (a, b) => a.expiresAt.getTime() - b.expiresAt.getTime() || a.grantedAt.getTime() - b.grantedAt.getTime(),
-  );
 
-  for (const b of ordered) {
-    if (b.expiresAt.getTime() <= now.getTime()) continue;
-    if (left <= 0) {
-      nextBatches.push(b);
+  for (let attempt = 0; attempt < WALLET_CAS_ATTEMPTS; attempt++) {
+    await migrateAndPruneBatches(clerkId);
+    const user = await db.collection<DbUser>("users").findOne({ clerkId });
+    if (!user || (user.creditBalance ?? 0) < cost) {
+      throw new InsufficientTokensError(user?.creditBalance ?? 0, cost);
+    }
+
+    const revision = readWalletRevision(user);
+    const { nextBatches, left } = deductFromBatches(
+      normalizeBatches(user.tokenBatches),
+      cost,
+      now,
+    );
+    if (left > 0) {
+      throw new InsufficientTokensError(user.creditBalance ?? 0, cost);
+    }
+
+    const balanceAfter = sumRemaining(nextBatches);
+    const result = await db.collection<DbUser>("users").findOneAndUpdate(
+      {
+        clerkId,
+        creditBalance: { $gte: cost },
+        ...walletRevisionFilter(revision),
+      },
+      {
+        $set: {
+          creditBalance: balanceAfter,
+          tokenBatches: nextBatches,
+          tokenBatchesMigratedAt: user.tokenBatchesMigratedAt ?? now,
+          walletRevision: revision + 1,
+          updatedAt: now,
+        },
+      },
+      { returnDocument: "after" },
+    );
+    if (!result) {
+      // Lost CAS (grant/refund/other consume) or balance raced below cost — retry.
       continue;
     }
-    const take = Math.min(b.remaining, left);
-    left -= take;
-    const remaining = b.remaining - take;
-    if (remaining > 0) nextBatches.push({ ...b, remaining });
+
+    await db.collection<CreditTransaction>("credit_transactions").insertOne({
+      clerkId,
+      delta: -cost,
+      reason: "consume",
+      ...(opts?.ref ? { ref: opts.ref } : {}),
+      ...(opts?.meta ? { meta: opts.meta } : {}),
+      balanceAfter: result.creditBalance ?? 0,
+      createdAt: now,
+    });
+    return result.creditBalance ?? 0;
   }
 
-  if (left > 0) {
-    throw new InsufficientTokensError(user.creditBalance ?? 0, cost);
-  }
-
-  const balanceAfter = sumRemaining(nextBatches);
-  const result = await db.collection<DbUser>("users").findOneAndUpdate(
-    { clerkId, creditBalance: { $gte: cost } },
-    {
-      $set: {
-        creditBalance: balanceAfter,
-        tokenBatches: nextBatches,
-        tokenBatchesMigratedAt: user.tokenBatchesMigratedAt ?? now,
-        updatedAt: now,
-      },
-    },
-    { returnDocument: "after" },
-  );
-  if (!result) {
-    const bal = await getUserBalance(clerkId);
-    throw new InsufficientTokensError(bal?.balance ?? 0, cost);
-  }
-
-  await db.collection<CreditTransaction>("credit_transactions").insertOne({
-    clerkId,
-    delta: -cost,
-    reason: "consume",
-    ...(opts?.ref ? { ref: opts.ref } : {}),
-    ...(opts?.meta ? { meta: opts.meta } : {}),
-    balanceAfter: result.creditBalance ?? 0,
-    createdAt: now,
-  });
-  return result.creditBalance ?? 0;
+  const bal = await getUserBalance(clerkId);
+  throw new InsufficientTokensError(bal?.balance ?? 0, cost);
 }
 
 /**
  * Credit tokens (signup, subscription, top-up, trial, refund, admin).
- * Adds a 6‑month FIFO batch.
+ * Adds a 6‑month FIFO batch. Bumps walletRevision so concurrent consumes CAS-fail.
  */
 export async function grantTokens(
   clerkId: string,
@@ -275,7 +336,7 @@ export async function grantTokens(
   const result = await db.collection<DbUser>("users").findOneAndUpdate(
     { clerkId },
     {
-      $inc: { creditBalance: amount },
+      $inc: { creditBalance: amount, walletRevision: 1 },
       $push: { tokenBatches: batch },
       $set: {
         updatedAt: now,
@@ -291,7 +352,9 @@ export async function grantTokens(
     delta: amount,
     reason,
     ...(opts?.ref ? { ref: opts.ref } : {}),
-    ...(opts?.meta ? { meta: { ...opts.meta, batchId: batch.id, expiresAt: batch.expiresAt } } : { meta: { batchId: batch.id, expiresAt: batch.expiresAt } }),
+    ...(opts?.meta
+      ? { meta: { ...opts.meta, batchId: batch.id, expiresAt: batch.expiresAt } }
+      : { meta: { batchId: batch.id, expiresAt: batch.expiresAt } }),
     balanceAfter,
     createdAt: now,
   });

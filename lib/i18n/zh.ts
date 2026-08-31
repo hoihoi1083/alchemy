@@ -1363,7 +1363,7 @@ export const zh = {
 			},
 			{
 				q: "Token 用喺邊啲位？",
-				body: "用喺圖片生成、分鏡場景、影片生成、規劃／簡報步驟，以及部分分析任務（例如研究短片分析）。費用會喺運行前顯示。",
+				body: "用喺圖片生成、分鏡場景、影片生成、規劃／簡報步驟。平台研究（Standard 或以上）——包括研究短片分析同文案優化——唔扣 token。收費任務會喺運行前顯示費用。",
 			},
 			{
 				q: "Token 用晒會點？",
@@ -2626,7 +2626,7 @@ export const zh = {
 		researchReelPickDurationFirst:
 			"請先喺上方揀輸出片長（唔好留「自動」），參考片分析同 影片生成 出片先會按呢個長度規劃。",
 		researchReelReanalyzeForDuration: "片長已改 — 重新分析參考片…",
-		researchReelStatusOutputDuration: "輸出片長已揀（分析同計費用）",
+		researchReelStatusOutputDuration: "輸出片長已揀（Standard+ 分析唔扣 token；之後出片先按呢個長度計費）",
 		researchReelStatusOutputDurationMissing:
 			"請先揀輸出片長（4–12 秒）— 參考片可以好長，出片長度以呢度為準",
 		setupReferenceVideoTitle: "參考短片（選填）",

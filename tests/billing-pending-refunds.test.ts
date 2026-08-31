@@ -19,6 +19,39 @@ describe("generate-image carousel gate", () => {
   });
 });
 
+describe("platform research Standard+ gate + free for entitled", () => {
+  const researchRoutes = [
+    "app/api/research-content-angles/route.ts",
+    "app/api/research-direct-post/route.ts",
+    "app/api/research-resolve-video/route.ts",
+    "app/api/research-post-video/route.ts",
+    "app/api/research-post-image/route.ts",
+    "app/api/remap-research-copy/route.ts",
+    "app/api/analyze-research-reel/route.ts",
+    "app/api/refine-research-video-script/route.ts",
+  ];
+
+  it("every research route asserts Standard+", () => {
+    for (const rel of researchRoutes) {
+      const src = read(rel);
+      assert.match(
+        src,
+        /assertPlatformResearchAllowed/,
+        `${rel} missing Standard+ gate`,
+      );
+    }
+  });
+
+  it("analyze + refine do not charge tokens", () => {
+    const analyze = read("app/api/analyze-research-reel/route.ts");
+    const refine = read("app/api/refine-research-video-script/route.ts");
+    assert.doesNotMatch(analyze, /chargeTokens/);
+    assert.doesNotMatch(refine, /chargeTokens/);
+    assert.match(analyze, /tokensCharged:\s*0/);
+    assert.match(refine, /tokensCharged:\s*0/);
+  });
+});
+
 describe("billing pending refunds", () => {
   it("records and atomically replays failed refunds", () => {
     const src = read("lib/billing/pending-refunds.ts");
@@ -29,6 +62,8 @@ describe("billing pending refunds", () => {
     assert.match(src, /status: "processing"/);
     assert.match(src, /findOneAndUpdate/);
     assert.match(src, /claimNextPendingRefund/);
+    assert.match(src, /grantTokensOnce/);
+    assert.match(src, /pending_refund_/);
     assert.match(src, /markRefundReplayCompleted/);
     assert.match(src, /releaseRefundReplayClaim/);
   });

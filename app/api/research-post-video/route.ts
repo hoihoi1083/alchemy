@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { assertPlatformResearchAllowed } from "@/lib/billing/assert-platform-research";
 import { requireAppUser } from "@/lib/require-app-user";
 import type { ContentPlatform } from "@/lib/content-research-types";
 import {
@@ -19,6 +20,8 @@ export const maxDuration = 180;
 export async function GET(request: Request) {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
+  const gated = await assertPlatformResearchAllowed(auth.user.userId);
+  if (gated) return gated;
 
   const { searchParams } = new URL(request.url);
   const raw = searchParams.get("url")?.trim();

@@ -184,7 +184,7 @@ export function PricingPageClient() {
       });
     }, 120);
     return () => window.clearTimeout(t);
-  }, [highlightPlan]);
+  }, [highlightPlan, p.plans.master.name, p.plans.custom.name]);
 
   useEffect(() => {
     if (!isLoaded || !isSignedIn) return;

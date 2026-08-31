@@ -14,7 +14,7 @@ import { getTeamContextForUser } from "@/lib/team/service";
 
 export const runtime = "nodejs";
 
-export async function GET(request: Request) {
+export async function GET() {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
 
@@ -24,22 +24,6 @@ export async function GET(request: Request) {
 
   const db = await getDb();
   const user = await db.collection<DbUser>("users").findOne({ clerkId: auth.user.userId });
-
-  const { searchParams } = new URL(request.url);
-  let testWrite: { collection: string; id: string } | null = null;
-
-  if (searchParams.get("test") === "1") {
-    const inserted = await db.collection("connection_tests").insertOne({
-      clerkId: auth.user.userId,
-      message: "Alchemy AI Lab database test",
-      source: "GET /api/me?test=1",
-      createdAt: new Date(),
-    });
-    testWrite = {
-      collection: "connection_tests",
-      id: String(inserted.insertedId),
-    };
-  }
 
   const [effectivePlan, teamMembership, payer] = user
     ? await Promise.all([
@@ -83,6 +67,5 @@ export async function GET(request: Request) {
         }
       : null,
     teamMembership,
-    testWrite,
   });
 }
