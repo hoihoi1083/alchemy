@@ -94,8 +94,8 @@ export const en = {
 			teaching_carousel: "Teaching carousel",
 			teaching_carousel_slides: "Teaching carousel ({count} slides)",
 			video: "Video generation",
-			minimax_h3: "Video generation (MiniMax H3)",
-			kling_storyboard_fallback: "Storyboard video (Kling)",
+			minimax_h3: "Video generation",
+			kling_storyboard_fallback: "Storyboard video (stitched)",
 			digital_presenter: "Digital presenter video",
 			cinematic_scenes: "Cinematic scene images",
 			caption_burn: "Caption burn-in",
@@ -940,7 +940,7 @@ export const en = {
 					title: "Impact poster ~6s",
 					description:
 						"大透视 product punch: stronger thrust + shatter/rays/debris/lightning. Pick tone + effect.",
-					costHint: "~2 stills + 6s H3 · product photo",
+					costHint: "~2 stills + 6s video · product photo",
 				},
 				"product-tvc-12s": {
 					title: "Product TVC ~12s",
@@ -983,7 +983,7 @@ export const en = {
 					title: "Impact poster (concept) ~6s",
 					description:
 						"Same 大透视 punch morph for brand / shop — logo or topic still preferred.",
-					costHint: "~2 stills + 6s H3 · logo or brand still",
+					costHint: "~2 stills + 6s video · logo or brand still",
 				},
 				"concept-tvc-12s": {
 					title: "Concept TVC ~12s",
@@ -1139,7 +1139,7 @@ export const en = {
 				"product-h3-logo-mg-8s": {
 					title: "3D logo MG ~8s",
 					description:
-						"Upload a logo → bright glass / chrome / ribbon 3D logo interpretation. Minimax H3 brand bumper.",
+						"Upload a logo → bright glass / chrome / ribbon 3D logo interpretation. Brand bumper.",
 					costHint: "~8s · logo or packshot with readable mark",
 				},
 				"product-h3-movie-title-8s": {

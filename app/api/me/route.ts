@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   INTERNAL_UNLIMITED_DISPLAY_BALANCE,
+  INTERNAL_UNLIMITED_PLAN,
   isInternalUnlimitedClerkId,
   isInternalUnlimitedIdentity,
 } from "@/lib/billing/internal-unlimited";
@@ -25,7 +26,7 @@ export async function GET() {
   const db = await getDb();
   const user = await db.collection<DbUser>("users").findOne({ clerkId: auth.user.userId });
 
-  const [effectivePlan, teamMembership, payer] = user
+  const [resolvedPlan, teamMembership, payer] = user
     ? await Promise.all([
         getUserPlan(auth.user.userId),
         getTeamContextForUser(auth.user.userId),
@@ -46,9 +47,12 @@ export async function GET() {
         email: user.emailNormalized ?? user.email,
       })
     : isInternalUnlimitedClerkId(auth.user.userId);
+  // Backdoor: balance + Master entitlements must stay in lockstep. Never show
+  // 999,999 tokens while UI gates still think the account is Free/Pro.
   if (unlimited) {
     creditBalance = INTERNAL_UNLIMITED_DISPLAY_BALANCE;
   }
+  const effectivePlan = unlimited ? INTERNAL_UNLIMITED_PLAN : resolvedPlan;
 
   if (payer && !unlimited) {
     void processPendingRefundsForBilledUser(payer.payerClerkId).catch(() => {
@@ -61,6 +65,8 @@ export async function GET() {
     user: user
       ? {
           ...user,
+          // Override Mongo `plan` too — some clients read `.plan` not `.effectivePlan`.
+          plan: unlimited ? INTERNAL_UNLIMITED_PLAN : user.plan,
           effectivePlan,
           creditBalance,
           ownCreditBalance: user.creditBalance,

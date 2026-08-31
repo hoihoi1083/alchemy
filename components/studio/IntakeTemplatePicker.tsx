@@ -54,8 +54,8 @@ export function IntakeTemplatePicker({
 }: Props) {
   const { m } = useLocale();
   const wizard = useWizard();
-  const { plan } = useUserPlanEntitlements();
-  const storyboardAllowed = canUseStoryboard(plan);
+  const { plan, planReady } = useUserPlanEntitlements();
+  const storyboardAllowed = !planReady || canUseStoryboard(plan);
   const [storyboardGateOpen, setStoryboardGateOpen] = useState(false);
   const fuse = m.microWizard.intakeFuse;
   const showVideoRecipes = intakeShowsVideoRecipes(workflowMode);

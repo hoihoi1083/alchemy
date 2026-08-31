@@ -102,8 +102,8 @@ export const zh = {
 			teaching_carousel: "教學輪播圖",
 			teaching_carousel_slides: "教學輪播圖（{count} 張）",
 			video: "影片生成",
-			minimax_h3: "影片生成（MiniMax H3）",
-			kling_storyboard_fallback: "分鏡影片（Kling）",
+			minimax_h3: "影片生成",
+			kling_storyboard_fallback: "分鏡影片（拼接）",
 			digital_presenter: "數碼主持影片",
 			cinematic_scenes: "電影感場景圖",
 			caption_burn: "字幕燒錄",
@@ -729,7 +729,7 @@ export const zh = {
 					title: "衝擊海報約 6 秒",
 					description:
 						"大透視產品衝擊：更強衝鏡 + 碎裂／射線／碎屑／閃電。可揀調性同特效。",
-					costHint: "約 2 張靜圖 + 6 秒 H3 · 產品圖",
+					costHint: "約 2 張靜圖 + 6 秒影片 · 產品圖",
 				},
 				"product-tvc-12s": {
 					title: "產品 TVC 約 12 秒",
@@ -766,7 +766,7 @@ export const zh = {
 				"concept-impact-poster-6s": {
 					title: "衝擊海報（概念）約 6 秒",
 					description: "同一套大透視衝擊過渡，適合品牌／店鋪 — 建議 Logo 或主題靜圖。",
-					costHint: "約 2 張靜圖 + 6 秒 H3 · Logo 或品牌靜圖",
+					costHint: "約 2 張靜圖 + 6 秒影片 · Logo 或品牌靜圖",
 				},
 				"concept-tvc-12s": {
 					title: "概念 TVC 約 12 秒",
@@ -896,7 +896,7 @@ export const zh = {
 				"product-h3-logo-mg-8s": {
 					title: "3D Logo 演繹 ~8s",
 					description:
-						"上傳 Logo → 明亮玻璃／鉻面／絲帶三維演繹。Minimax H3 品牌片頭。",
+						"上傳 Logo → 明亮玻璃／鉻面／絲帶三維演繹。品牌片頭。",
 					costHint: "~8s · Logo 或帶清晰標識嘅包裝圖",
 				},
 				"product-h3-movie-title-8s": {

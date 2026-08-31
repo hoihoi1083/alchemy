@@ -80,6 +80,8 @@ describe("internal unlimited allowlist", () => {
     assert.match(charge, /getAffordabilityBalance/);
     assert.match(plan, /INTERNAL_UNLIMITED_PLAN/);
     assert.match(me, /INTERNAL_UNLIMITED_DISPLAY_BALANCE/);
+    assert.match(me, /INTERNAL_UNLIMITED_PLAN/);
+    assert.match(me, /plan: unlimited \? INTERNAL_UNLIMITED_PLAN/);
     assert.match(kling, /getAffordabilityBalance/);
     assert.doesNotMatch(kling, /getUserBalance\(/);
   });

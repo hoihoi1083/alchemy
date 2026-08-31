@@ -276,8 +276,9 @@ export function CreationPathPicker({
   const { m } = useLocale();
   const cp = m.wizard.creationPath;
   const modes = m.wizard.workflowModes;
-  const { plan } = useUserPlanEntitlements();
-  const storyboardAllowed = canUseStoryboard(plan);
+  const { plan, planReady } = useUserPlanEntitlements();
+  // Until /api/me returns, plan defaults to free — don't false-gate Master/backdoor.
+  const storyboardAllowed = !planReady || canUseStoryboard(plan);
   const [storyboardGateOpen, setStoryboardGateOpen] = useState(false);
 
   return (
@@ -308,6 +309,7 @@ export function CreationPathPicker({
                   key={id}
                   type="button"
                   onClick={() => {
+                    if (!planReady) return;
                     if (modeLocked) {
                       setStoryboardGateOpen(true);
                       return;

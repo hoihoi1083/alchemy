@@ -99,8 +99,8 @@ export const zhCn = {
       teaching_carousel: "教学轮播图",
       teaching_carousel_slides: "教学轮播图（{count} 张）",
       video: "视频生成",
-      minimax_h3: "视频生成（MiniMax H3）",
-      kling_storyboard_fallback: "分镜视频（Kling）",
+      minimax_h3: "视频生成",
+      kling_storyboard_fallback: "分镜视频（拼接）",
       digital_presenter: "数字主持视频",
       cinematic_scenes: "电影感场景图",
       caption_burn: "字幕烧录",
@@ -675,7 +675,7 @@ export const zhCn = {
           title: "冲击海报约 6 秒",
           description:
             "大透视产品冲击：更强冲镜 + 碎裂／射线／碎屑／闪电。可选调性与特效。",
-          costHint: "约 2 张静图 + 6 秒 H3 · 产品图",
+          costHint: "约 2 张静图 + 6 秒视频 · 产品图",
         },
         "product-tvc-12s": {
           title: "产品 TVC 约 12 秒",
@@ -712,7 +712,7 @@ export const zhCn = {
         "concept-impact-poster-6s": {
           title: "冲击海报（概念）约 6 秒",
           description: "同一套大透视冲击过渡，适合品牌／店铺 — 建议 Logo 或主题静图。",
-          costHint: "约 2 张静图 + 6 秒 H3 · Logo 或品牌静图",
+          costHint: "约 2 张静图 + 6 秒视频 · Logo 或品牌静图",
         },
         "concept-tvc-12s": {
           title: "概念 TVC 约 12 秒",
@@ -838,7 +838,7 @@ export const zhCn = {
 				"product-h3-logo-mg-8s": {
 					title: "3D Logo 演绎 ~8s",
 					description:
-						"上传 Logo → 明亮玻璃／铬面／丝带三维演绎。Minimax H3 品牌片头。",
+						"上传 Logo → 明亮玻璃／铬面／丝带三维演绎。品牌片头。",
 					costHint: "~8s · Logo 或带清晰标识的包装图",
 				},
 				"product-h3-movie-title-8s": {
