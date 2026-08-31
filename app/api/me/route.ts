@@ -6,6 +6,7 @@ import {
 } from "@/lib/billing/internal-unlimited";
 import { getUserPlan } from "@/lib/billing/get-user-plan";
 import { resolveTokenPayer } from "@/lib/billing/team-payer";
+import { processPendingRefundsForBilledUser } from "@/lib/billing/pending-refunds";
 import type { DbUser } from "@/lib/db/types";
 import { getDb, isMongoConfigured } from "@/lib/mongodb";
 import { requireAppUser } from "@/lib/require-app-user";
@@ -63,6 +64,12 @@ export async function GET(request: Request) {
     : isInternalUnlimitedClerkId(auth.user.userId);
   if (unlimited) {
     creditBalance = INTERNAL_UNLIMITED_DISPLAY_BALANCE;
+  }
+
+  if (payer && !unlimited) {
+    void processPendingRefundsForBilledUser(payer.payerClerkId).catch(() => {
+      /* background replay — non-fatal */
+    });
   }
 
   return NextResponse.json({

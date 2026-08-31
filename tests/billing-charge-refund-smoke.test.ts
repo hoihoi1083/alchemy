@@ -97,12 +97,19 @@ describe("billing smoke — invalid before charge (source contract)", () => {
     );
   });
 
-  it("refundTokens alerts on failure (Sentry) including null grant path", () => {
+  it("refundTokens retries, alerts on failure, and queues pending refunds", () => {
     const src = readRoute("lib/billing/charge.ts");
     assert.match(src, /refundTokens failed/);
     assert.match(src, /captureException|captureMessage/);
     assert.match(src, /refund_failed/);
     assert.match(src, /billing_refund_null|null_user/);
+    assert.match(src, /REFUND_RETRY_ATTEMPTS/);
+    assert.match(src, /recordPendingRefund/);
+    const pending = readRoute("lib/billing/pending-refunds.ts");
+    assert.match(pending, /billing_pending_refunds/);
+    assert.match(pending, /processPendingRefundsForBilledUser/);
+    const me = readRoute("app/api/me/route.ts");
+    assert.match(me, /processPendingRefundsForBilledUser/);
   });
 
   it("generate-storyboard-video: counts images and charges before fal upload", () => {

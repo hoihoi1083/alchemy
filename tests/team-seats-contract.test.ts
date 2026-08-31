@@ -57,6 +57,8 @@ describe("team seats contract", () => {
     assert.match(src, /This person is already on the team/);
     assert.match(src, /parseInviteObjectId/);
     assert.match(src, /syncOwnerTeamForPlan/);
+    assert.match(src, /deactivateEnterpriseTeam/);
+    assert.match(src, /teamId: null, teamRole: null/);
     assert.match(src, /leaveTeam/);
     assert.match(src, /clearTeamSharedAssetsForTeam/);
   });
@@ -77,6 +79,8 @@ describe("team seats contract", () => {
     assert.match(src, /membership\.ownerClerkId/);
     assert.match(src, /owner\?\.plan/);
     assert.match(src, /syncOwnerTeamForPlan/);
+    assert.match(src, /deactivateEnterpriseTeam/);
+    assert.match(src, /teamId: null, teamRole: null/);
     assert.match(src, /ownerPlan !== "custom"/);
   });
 

@@ -255,16 +255,60 @@ export async function syncOwnerTeamForPlan(
   const activeTeams = await db
     .collection<DbTeam>("teams")
     .find({ ownerClerkId, status: "active" })
-    .project({ teamId: 1 })
     .toArray();
   if (activeTeams.length === 0) return;
-  await db.collection<DbTeam>("teams").updateMany(
-    { ownerClerkId, status: "active" },
-    { $set: { status: "inactive", updatedAt: new Date() } },
-  );
+
   for (const team of activeTeams) {
-    await clearTeamSharedAssetsForTeam(team.teamId);
+    await deactivateEnterpriseTeam(team);
   }
+}
+
+/** Owner downgrade: unshare, remove members, revoke invites, mark team inactive. */
+async function deactivateEnterpriseTeam(team: DbTeam): Promise<void> {
+  const db = await getDb();
+  const teamId = team.teamId;
+  const now = new Date();
+
+  const pendingInvites = await db
+    .collection<DbTeamInvite>("team_invites")
+    .find({
+      teamId,
+      acceptedAt: null,
+      revokedAt: null,
+    })
+    .toArray();
+  for (const invite of pendingInvites) {
+    await db.collection<DbTeamInvite>("team_invites").updateOne(
+      { _id: invite._id },
+      { $set: { revokedAt: now } },
+    );
+    await releaseSeat(teamId);
+  }
+
+  const members = await db
+    .collection<DbTeamMember>("team_members")
+    .find({ teamId, status: "active" })
+    .toArray();
+  for (const member of members) {
+    if (member.clerkId === team.ownerClerkId) continue;
+    await clearTeamSharedAssetsForUser(teamId, member.clerkId);
+    await db.collection<DbTeamMember>("team_members").updateOne(
+      { teamId, clerkId: member.clerkId, status: "active" },
+      { $set: { status: "removed", removedAt: now, updatedAt: now } },
+    );
+    await db.collection<DbUser>("users").updateOne(
+      { clerkId: member.clerkId },
+      { $set: { teamId: null, teamRole: null, updatedAt: now } },
+    );
+    await releaseSeat(teamId);
+  }
+
+  await clearTeamSharedAssetsForTeam(teamId);
+
+  await db.collection<DbTeam>("teams").updateOne(
+    { teamId },
+    { $set: { status: "inactive", heldSeats: 1, updatedAt: now } },
+  );
 }
 
 export async function getTeamDashboardForOwner(ownerClerkId: string): Promise<TeamDashboard> {

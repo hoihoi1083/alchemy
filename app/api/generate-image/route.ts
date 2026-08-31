@@ -15,6 +15,7 @@ import {
 } from "@/lib/billing/charge";
 import { clampImageResolution } from "@/lib/billing/entitlements";
 import { getUserPlan } from "@/lib/billing/get-user-plan";
+import { planMeetsMinimum } from "@/lib/billing/plan-gates";
 import type { BrandProfile } from "@/lib/brand-profile";
 import { parseBrandKit } from "@/lib/brand-kit";
 import { archiveImageWithLogoFile } from "@/lib/brand-logo-composite";
@@ -662,6 +663,23 @@ export async function POST(request: Request) {
           );
 
     const imageOutputMode = (formData.get("image_output_mode") as string | null)?.trim() || "";
+    if (
+      imageOutputMode === "campaign" ||
+      imageOutputMode === "teaching-carousel"
+    ) {
+      const userPlan = await getUserPlan(auth.user.userId);
+      if (!planMeetsMinimum(userPlan, "standard")) {
+        return NextResponse.json(
+          {
+            error: "Carousel requires Standard plan or above.",
+            code: "PLAN_ENTITLEMENT",
+            requiredPlan: "standard",
+            hint: "carousel_needs_standard",
+          },
+          { status: 403 },
+        );
+      }
+    }
     const motionPoster = ["1", "true", "yes"].includes(
       String(formData.get("motion_poster") ?? "")
         .trim()

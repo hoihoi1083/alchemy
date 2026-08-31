@@ -21,8 +21,16 @@ import {
 import { isMongoConfigured } from "@/lib/mongodb";
 import { isProductionEnv } from "@/lib/mongodb-production";
 import { resolveTokenPayer } from "@/lib/billing/team-payer";
+import { recordPendingRefund } from "@/lib/billing/pending-refunds";
 
 export { resolveVideoBillingResolution, estimateVideoTokens, estimateH3Tokens };
+
+const REFUND_RETRY_ATTEMPTS = 3;
+const REFUND_RETRY_BASE_MS = 120;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 /**
  * Balance for storyboard video pre-flight. Internal unlimited accounts
@@ -165,9 +173,7 @@ function alertRefundFailure(
 
 /**
  * Refund tokens after a failed generation that was already charged.
- * Best-effort — never throws to the caller. Logs + Sentry on failure so ops
- * can catch "charged with no refund" wallet leaks (including grantTokens null
- * when the Mongo user row is missing).
+ * Retries transient failures, queues persistent failures for later replay.
  */
 export async function refundTokens(
   clerkId: string,
@@ -175,28 +181,57 @@ export async function refundTokens(
   meta: Record<string, unknown>,
 ): Promise<number | null> {
   if (!isMongoConfigured() || cost <= 0) return null;
-  try {
-    if (await isInternalUnlimitedUser(clerkId)) {
-      return INTERNAL_UNLIMITED_DISPLAY_BALANCE;
-    }
-    const billedClerkId =
-      typeof meta.billedClerkId === "string" && meta.billedClerkId.trim()
-        ? meta.billedClerkId.trim()
-        : (await resolveTokenPayer(clerkId)).payerClerkId;
-    if (await isInternalUnlimitedUser(billedClerkId)) {
-      return INTERNAL_UNLIMITED_DISPLAY_BALANCE;
-    }
-    const balanceAfter = await grantTokens(billedClerkId, cost, "refund", {
-      meta: { ...meta, phase: "refund", billedClerkId },
-    });
-    if (balanceAfter === null) {
-      alertRefundFailure("null_user", clerkId, cost, meta);
-    }
-    return balanceAfter;
-  } catch (err) {
-    alertRefundFailure("throw", clerkId, cost, meta, err);
-    return null;
+  if (await isInternalUnlimitedUser(clerkId)) {
+    return INTERNAL_UNLIMITED_DISPLAY_BALANCE;
   }
+
+  const billedClerkId =
+    typeof meta.billedClerkId === "string" && meta.billedClerkId.trim()
+      ? meta.billedClerkId.trim()
+      : (await resolveTokenPayer(clerkId)).payerClerkId;
+
+  if (await isInternalUnlimitedUser(billedClerkId)) {
+    return INTERNAL_UNLIMITED_DISPLAY_BALANCE;
+  }
+
+  const refundMeta = { ...meta, phase: "refund", billedClerkId };
+
+  for (let attempt = 1; attempt <= REFUND_RETRY_ATTEMPTS; attempt++) {
+    try {
+      const balanceAfter = await grantTokens(billedClerkId, cost, "refund", {
+        meta: refundMeta,
+      });
+      if (balanceAfter !== null) return balanceAfter;
+      if (attempt < REFUND_RETRY_ATTEMPTS) {
+        await sleep(REFUND_RETRY_BASE_MS * attempt);
+        continue;
+      }
+      alertRefundFailure("null_user", clerkId, cost, meta);
+      await recordPendingRefund({
+        actorClerkId: clerkId,
+        billedClerkId,
+        amount: cost,
+        meta: refundMeta,
+        errorKind: "null_user",
+      });
+      return null;
+    } catch (err) {
+      if (attempt >= REFUND_RETRY_ATTEMPTS) {
+        alertRefundFailure("throw", clerkId, cost, meta, err);
+        await recordPendingRefund({
+          actorClerkId: clerkId,
+          billedClerkId,
+          amount: cost,
+          meta: refundMeta,
+          errorKind: "throw",
+          lastError: err instanceof Error ? err.message : String(err),
+        });
+        return null;
+      }
+      await sleep(REFUND_RETRY_BASE_MS * attempt);
+    }
+  }
+  return null;
 }
 
 /**
