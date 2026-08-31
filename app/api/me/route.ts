@@ -15,6 +15,40 @@ import { getTeamContextForUser } from "@/lib/team/service";
 
 export const runtime = "nodejs";
 
+/** Client-safe subset of DbUser — never spread the full Mongo document. */
+function publicMeUser(
+  user: DbUser,
+  opts: {
+    plan: DbUser["plan"];
+    effectivePlan: string | null;
+    creditBalance: number | null;
+  },
+) {
+  return {
+    clerkId: user.clerkId,
+    email: user.email,
+    name: user.name,
+    imageUrl: user.imageUrl,
+    region: user.region,
+    plan: opts.plan,
+    effectivePlan: opts.effectivePlan,
+    creditBalance: opts.creditBalance,
+    ownCreditBalance: user.creditBalance,
+    planRenewsAt: user.planRenewsAt ?? null,
+    pendingPlan: user.pendingPlan ?? null,
+    pendingPlanInterval: user.pendingPlanInterval ?? null,
+    pendingPlanEffectiveAt: user.pendingPlanEffectiveAt ?? null,
+    stripeCustomerId: user.stripeCustomerId ?? null,
+    stripeSubscriptionId: user.stripeSubscriptionId ?? null,
+    hasUsedProTrial: user.hasUsedProTrial ?? false,
+    proTrialEndsAt: user.proTrialEndsAt ?? null,
+    teamId: user.teamId ?? null,
+    teamRole: user.teamRole ?? null,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+  };
+}
+
 export async function GET() {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
@@ -63,14 +97,11 @@ export async function GET() {
   return NextResponse.json({
     ok: true,
     user: user
-      ? {
-          ...user,
-          // Override Mongo `plan` too — some clients read `.plan` not `.effectivePlan`.
+      ? publicMeUser(user, {
           plan: unlimited ? INTERNAL_UNLIMITED_PLAN : user.plan,
           effectivePlan,
           creditBalance,
-          ownCreditBalance: user.creditBalance,
-        }
+        })
       : null,
     teamMembership,
   });

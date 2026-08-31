@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { useAuth } from "@clerk/nextjs";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { PlanGateDialog } from "@/components/billing/PlanGateDialog";
 import { useLocale } from "@/components/LocaleProvider";
 import { NavHoverMenu, type NavHoverMenuItem } from "@/components/nav/NavHoverMenu";
 import { PRICING_ULTRA_CANVAS_HREF, ULTRA_CANVAS_PATH } from "@/lib/ultra-canvas-path";
+import { useUserPlanEntitlements } from "@/hooks/useUserPlanEntitlements";
 import { canUseProCanvas } from "@/lib/billing/entitlements";
-import { normalizeUserPlan } from "@/lib/billing/plans";
 
 type ToolkitNavMenuProps = {
   variant?: "light" | "dark";
@@ -17,40 +17,17 @@ type ToolkitNavMenuProps = {
 
 function useProCanvasAccess() {
   const { isSignedIn, isLoaded } = useAuth();
-  const [hasPro, setHasPro] = useState(false);
-
-  useEffect(() => {
-    if (!isLoaded) return;
-    if (!isSignedIn) {
-      setHasPro(false);
-      return;
-    }
-    let cancelled = false;
-    void fetch("/api/me")
-      .then(async (res) => {
-        if (!res.ok) return;
-        const data = (await res.json()) as {
-          user?: { plan?: string | null; effectivePlan?: string | null } | null;
-        };
-        if (cancelled) return;
-        setHasPro(canUseProCanvas(normalizeUserPlan(data.user?.effectivePlan ?? data.user?.plan)));
-      })
-      .catch(() => {
-        /* keep pricing fallback */
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [isLoaded, isSignedIn]);
-
-  return { hasPro, isSignedIn, isLoaded };
+  const { plan, planReady } = useUserPlanEntitlements();
+  // Optimistic unlock while plan loads — /ultra page still server-gates Master.
+  const hasPro = Boolean(isSignedIn) && (!planReady || canUseProCanvas(plan));
+  return { hasPro, isSignedIn, isLoaded, planReady };
 }
 
 /** Desktop: Toolkit hover flyout — brand kit, edit-image, captions, Ultra canvas, Start creating. */
 export function ToolkitNavMenu({ variant = "light", triggerClassName }: ToolkitNavMenuProps) {
   const { m } = useLocale();
   const L = m.landing;
-  const { hasPro, isSignedIn } = useProCanvasAccess();
+  const { hasPro, isSignedIn, planReady } = useProCanvasAccess();
   const [gateOpen, setGateOpen] = useState(false);
   const dark = variant === "dark";
 
@@ -72,6 +49,7 @@ export function ToolkitNavMenu({ variant = "light", triggerClassName }: ToolkitN
           onClick: (e) => {
             e.preventDefault();
             if (isSignedIn) {
+              if (!planReady) return;
               setGateOpen(true);
             } else {
               window.location.href = PRICING_ULTRA_CANVAS_HREF;
@@ -110,7 +88,7 @@ export function ToolkitNavMenu({ variant = "light", triggerClassName }: ToolkitN
       },
       proItem,
     ];
-  }, [L, hasPro, isSignedIn]);
+  }, [L, hasPro, isSignedIn, planReady]);
 
   const startLabel = isSignedIn ? L.startCreating : L.tryFree;
 
@@ -173,7 +151,7 @@ export function ToolkitNavMobileLinks({
 }) {
   const { m } = useLocale();
   const L = m.landing;
-  const { hasPro, isSignedIn } = useProCanvasAccess();
+  const { hasPro, isSignedIn, planReady } = useProCanvasAccess();
   const [gateOpen, setGateOpen] = useState(false);
   const dark = variant === "dark";
 
@@ -215,8 +193,10 @@ export function ToolkitNavMobileLinks({
           className={`${subClass} w-full text-left`}
           onClick={() => {
             onNavigate?.();
-            if (isSignedIn) setGateOpen(true);
-            else window.location.href = proHref;
+            if (isSignedIn) {
+              if (!planReady) return;
+              setGateOpen(true);
+            } else window.location.href = proHref;
           }}
         >
           {L.toolUltraCanvasTitle}

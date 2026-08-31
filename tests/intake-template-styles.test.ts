@@ -18,6 +18,7 @@ const copyStub = {
   sceneReelDesc: "Concept reel",
   videoCreativeModes: {
     "motion-poster": { title: "Motion poster", description: "MP" },
+    "impact-poster": { title: "Impact poster", description: "IP" },
     blockbuster: { title: "Blockbuster", description: "BB" },
     "vacuum-inflate": { title: "Vacuum", description: "VI" },
     "creative-motion": { title: "Creative motion", description: "CM" },

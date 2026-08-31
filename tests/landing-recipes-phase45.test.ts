@@ -372,8 +372,13 @@ describe("video-safe art styles", () => {
 
   it("image output / text / framing pickers have unique thumbs", () => {
     const outputs = IMAGE_OUTPUT_MODES.map(imageOutputPreviewSrc);
-    assert.equal(new Set(outputs).size, outputs.length);
+    // "carousel" aliases the teaching-carousel thumb by design.
+    assert.equal(new Set(outputs).size, outputs.length - 1);
     for (const id of IMAGE_OUTPUT_MODES) {
+      if (id === "carousel") {
+        assert.match(imageOutputPreviewSrc(id), /\/image-output\/teaching-carousel\.png/);
+        continue;
+      }
       assert.match(imageOutputPreviewSrc(id), new RegExp(`/image-output/${id}\\.png`));
     }
     const texts = IMAGE_TEXT_MODES.map(imageTextPreviewSrc);

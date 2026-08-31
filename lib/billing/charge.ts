@@ -3,12 +3,14 @@ import {
   assertCanAfford,
   consumeTokens,
   getUserBalance,
-  grantTokens,
   insufficientTokensResponse,
   InsufficientTokensError,
 } from "@/lib/billing/ledger";
+import { buildRefundRef } from "@/lib/billing/refund-ref";
+import { grantTokensOnce } from "@/lib/stripe/billing-sync";
 import {
   estimateH3Tokens,
+  estimateTeachingCarouselTokens,
   estimateVideoTokens,
   imageCountTokenCost,
   resolveVideoBillingResolution,
@@ -194,13 +196,23 @@ export async function refundTokens(
     return INTERNAL_UNLIMITED_DISPLAY_BALANCE;
   }
 
-  const refundMeta = { ...meta, phase: "refund", billedClerkId };
+  const refundMeta = {
+    ...meta,
+    phase: "refund",
+    billedClerkId,
+    actorClerkId: clerkId,
+  };
+  const refundRef = buildRefundRef(billedClerkId, cost, refundMeta);
 
   for (let attempt = 1; attempt <= REFUND_RETRY_ATTEMPTS; attempt++) {
     try {
-      const balanceAfter = await grantTokens(billedClerkId, cost, "refund", {
-        meta: refundMeta,
-      });
+      const { balanceAfter } = await grantTokensOnce(
+        billedClerkId,
+        cost,
+        "refund",
+        refundRef,
+        refundMeta,
+      );
       if (balanceAfter !== null) return balanceAfter;
       if (attempt < REFUND_RETRY_ATTEMPTS) {
         await sleep(REFUND_RETRY_BASE_MS * attempt);
@@ -250,14 +262,27 @@ export function imageTokenCostFromRequest(opts: {
   numImages?: number;
   imageOutputMode?: string | null;
   multipartMode?: string | null;
+  /** Optional slide count when mode is carousel / teaching-carousel. */
+  slideCount?: number | null;
 }): number {
   const mode = opts.multipartMode?.trim() || "";
   if (mode.startsWith("refine")) return imageCountTokenCost(opts.numImages);
   const out = opts.imageOutputMode?.trim() || "";
   if (out === "campaign") return TOKEN_COST.campaign;
-  if (out === "teaching-carousel") return TOKEN_COST.teaching_carousel;
+  // Unified UI mode "carousel" + legacy teaching-carousel — never fall back to single-image price.
+  if (out === "teaching-carousel" || out === "carousel") {
+    const n = Number(opts.slideCount);
+    if (Number.isFinite(n) && n > 0) {
+      return estimateTeachingCarouselTokens(n);
+    }
+    return TOKEN_COST.teaching_carousel;
+  }
   if (out === "ab") return TOKEN_COST.image_ab;
   return imageCountTokenCost(opts.numImages);
+}
+
+export function seedanceEndpointUsesFastTier(endpoint: string): boolean {
+  return /\/fast(?:\/|$)/.test(endpoint.trim());
 }
 
 export function videoTokenCostFromRequest(opts: {
@@ -266,6 +291,20 @@ export function videoTokenCostFromRequest(opts: {
   duration: "auto" | number;
 }): number {
   return estimateVideoTokens(opts);
+}
+
+/** Bill from the resolved fal endpoint — not the client `fast` flag alone. */
+export function videoTokenCostFromSeedanceEndpoint(opts: {
+  resolution: string;
+  duration: "auto" | number;
+  endpoint: string;
+}): number {
+  const fast = seedanceEndpointUsesFastTier(opts.endpoint);
+  return estimateVideoTokens({
+    resolution: opts.resolution,
+    fast,
+    duration: opts.duration,
+  });
 }
 
 export function h3TokenCostFromRequest(opts: {

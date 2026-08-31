@@ -8,7 +8,8 @@
  * Operator COGS of granted tokens ≈ 25% of Master yearly revenue
  * → 1,000 tokens ≈ USD 1.23 fal.
  *
- * Free signup grant covers 1× 1K image + 1× 8s 480P video with buffer.
+ * Free signup grant is intentionally smaller than a full 1K image + 8s 480p
+ * H3 clip (see FREE_PACK) — enough for a short trial, not a full combo run.
  */
 import {
   FREE_SIGNUP_GRANT_TOKENS,

@@ -15,7 +15,7 @@ type WorkflowCase = {
   angle: typeof zodiacCarouselAngle;
   promoteProduct: string;
   expectWorkflow: "image-only" | "video-only";
-  expectOutput: "teaching-carousel" | "single" | "campaign" | undefined;
+  expectOutput: "carousel" | "teaching-carousel" | "single" | "campaign" | undefined;
   expectRefs: "images" | "video";
 };
 
@@ -25,7 +25,7 @@ const WORKFLOWS: WorkflowCase[] = [
     angle: zodiacCarouselAngle,
     promoteProduct: PROMOTE_PRODUCT,
     expectWorkflow: "image-only",
-    expectOutput: "teaching-carousel",
+    expectOutput: "carousel",
     expectRefs: "images",
   },
   {

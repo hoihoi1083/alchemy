@@ -21,7 +21,7 @@ const FEATURED: TemplateId[] = [
 
 export function TemplateGallery() {
   const { m } = useLocale();
-  const { plan } = useUserPlanEntitlements();
+  const { plan, planReady } = useUserPlanEntitlements();
   const [gateOpen, setGateOpen] = useState(false);
   const [gateTemplate, setGateTemplate] = useState<TemplateId>("product-reel");
   const cards = TEMPLATES.filter((t) => FEATURED.includes(t.id));
@@ -42,7 +42,8 @@ export function TemplateGallery() {
             const output = templateGalleryOutput(tpl.id);
             const outputLabel =
               output === "video" ? m.landing.templateOutputVideo : m.landing.templateOutputImage;
-            const allowed = canUseTemplate(plan, tpl.id);
+            // Until plan loads, treat as allowed so we don't flash lock badges.
+            const allowed = !planReady || canUseTemplate(plan, tpl.id);
             const required = minPlanForTemplate(tpl.id);
             const planName =
               required === "custom"
@@ -63,7 +64,7 @@ export function TemplateGallery() {
                     >
                       {outputLabel}
                     </span>
-                    {!allowed && required !== "free" ? (
+                    {planReady && !allowed && required !== "free" ? (
                       <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-900">
                         {planName}+
                       </span>
@@ -95,6 +96,7 @@ export function TemplateGallery() {
                 key={tpl.id}
                 type="button"
                 onClick={() => {
+                  if (!planReady) return;
                   setGateTemplate(tpl.id);
                   setGateOpen(true);
                 }}

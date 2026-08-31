@@ -328,8 +328,8 @@ export function IntakeFuseStep({
   const { m } = useLocale();
   const wizard = useWizard();
   const fuse = m.microWizard.intakeFuse;
-  const { plan } = useUserPlanEntitlements();
-  const researchAllowed = canUsePlatformResearch(plan);
+  const { plan, planReady } = useUserPlanEntitlements();
+  const researchAllowed = !planReady || canUsePlatformResearch(plan);
   const [researchGateOpen, setResearchGateOpen] = useState(false);
   const [researchNote, setResearchNote] = useState<string | null>(null);
   // Controlled from micro ctx so Back/remount stays in sync with Continue gate.
@@ -401,7 +401,7 @@ export function IntakeFuseStep({
   function selectTab(next: TabId) {
     // Re-clicking the active tab must not wipe adapted copy / media.
     if (activeTab === next) return;
-    if (next === "research" && !researchAllowed) {
+    if (next === "research" && planReady && !researchAllowed) {
       setResearchGateOpen(true);
       return;
     }

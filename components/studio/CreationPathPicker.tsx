@@ -309,7 +309,9 @@ export function CreationPathPicker({
                   key={id}
                   type="button"
                   onClick={() => {
-                    if (!planReady) return;
+                    // Only block the gated combined card while plan loads;
+                    // free image/video paths stay selectable immediately.
+                    if (id === "combined" && !planReady) return;
                     if (modeLocked) {
                       setStoryboardGateOpen(true);
                       return;

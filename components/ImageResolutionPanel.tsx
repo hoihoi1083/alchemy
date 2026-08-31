@@ -47,7 +47,7 @@ export function ImageResolutionPanel({
   variant = "light",
 }: Props) {
   const { m } = useLocale();
-  const { plan, maxImageResolution } = useUserPlanEntitlements();
+  const { plan, maxImageResolution, planReady } = useUserPlanEntitlements();
   const [gateOpen, setGateOpen] = useState(false);
   const [gateRes, setGateRes] = useState<ImageResolutionCap>("2K");
   const dark = variant === "dark";
@@ -61,11 +61,12 @@ export function ImageResolutionPanel({
         : "font-medium text-emerald-700 underline-offset-2 hover:underline";
 
   useEffect(() => {
+    if (!planReady) return;
     if (!canUseImageResolution(plan, value)) {
       onChange(maxImageResolution === "4K" ? "2K" : maxImageResolution);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- clamp when plan drifts
-  }, [maxImageResolution, plan, value]);
+  }, [maxImageResolution, plan, planReady, value]);
 
   return (
     <div>
@@ -80,13 +81,14 @@ export function ImageResolutionPanel({
       </p>
       <div className="flex flex-wrap gap-2">
         {IMAGE_RESOLUTION_CAPS.map((r) => {
-          const allowed = canUseImageResolution(plan, r);
+          const allowed = !planReady || canUseImageResolution(plan, r);
           const selected = value === r;
           return (
             <button
               key={r}
               type="button"
               onClick={() => {
+                if (!planReady) return;
                 if (!allowed) {
                   setGateRes(r);
                   setGateOpen(true);
@@ -107,7 +109,7 @@ export function ImageResolutionPanel({
           );
         })}
       </div>
-      {maxImageResolution === "1K" ? (
+      {planReady && maxImageResolution === "1K" ? (
         <p className={dark ? "mt-2 text-xs text-slate-400" : "mt-2 text-xs text-slate-500"}>
           {m.wizard.imageResolutionPlanHint.replace("{max}", maxImageResolution)}{" "}
           <Link href="/pricing?plan=master" className={linkClass}>

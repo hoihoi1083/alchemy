@@ -23,7 +23,7 @@ describe("content-research-infer", () => {
     const inferred = inferWizardFromPost(post, "physical");
     assert.equal(inferred.imageOutputMode, "teaching-carousel");
     assert.equal(inferred.workflowMode, "image-only");
-    assert.equal(inferred.carouselSlideCount, 6);
+    assert.equal(inferred.carouselSlideCount, 7);
     assert.ok(inferred.referenceNote?.includes("style-only"));
   });
 

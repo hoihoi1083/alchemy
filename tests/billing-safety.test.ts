@@ -167,6 +167,10 @@ describe("billing safety — never overcharge", () => {
       TOKEN_COST.teaching_carousel,
     );
     assert.equal(
+      imageTokenCostFromRequest({ imageOutputMode: "carousel" }),
+      TOKEN_COST.teaching_carousel,
+    );
+    assert.equal(
       imageTokenCostFromRequest({ multipartMode: "refine" }),
       TOKEN_COST.image,
     );

@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
+import { getUserPlan } from "@/lib/billing/get-user-plan";
+import { planMeetsMinimum } from "@/lib/billing/plan-gates";
 import { getDb, isMongoConfigured } from "@/lib/mongodb";
 
 /**
  * Soft daily quota for free DeepSeek routes (plans / assistant / research).
  * Does NOT charge tokens — DeepSeek planning stays free by product choice.
+ *
+ * Paid plans (Light+) are unlimited. Free users stay capped to control COGS.
  */
 export async function assertFreeDeepSeekQuota(
   clerkId: string,
@@ -18,6 +22,14 @@ export async function assertFreeDeepSeekQuota(
 
   // Local / no Mongo: skip (dev convenience). Production always has Mongo.
   if (!isMongoConfigured()) return { ok: true };
+
+  // Paid subscribers: unlimited planning (product policy).
+  try {
+    const plan = await getUserPlan(id);
+    if (planMeetsMinimum(plan, "light")) return { ok: true };
+  } catch {
+    /* fall through to free quota if plan lookup fails */
+  }
 
   const limitRaw = Number(process.env.DEEPSEEK_DAILY_LIMIT);
   const limit = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.floor(limitRaw) : 80;

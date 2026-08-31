@@ -51,9 +51,11 @@ export function ImageOutputModePicker({
   accent = "emerald",
 }: Props) {
   const { m } = useLocale();
-  const { plan } = useUserPlanEntitlements();
+  const { plan, planReady } = useUserPlanEntitlements();
   const [gateOpen, setGateOpen] = useState(false);
-  const carouselAllowed = canUseCarousel(plan) || Boolean(lockedCampaign);
+  // Until /api/me returns, don't false-lock carousel for paid users.
+  const carouselAllowed =
+    !planReady || canUseCarousel(plan) || Boolean(lockedCampaign);
   const locked = Boolean(lockedCampaign || lockedSingle);
   const options: ImageOutputMode[] = useMemo(() => {
     if (lockedCampaign) return ["carousel"];
@@ -65,14 +67,15 @@ export function ImageOutputModePicker({
   const uiValue: ImageOutputMode = isCarouselUiSelected(value) ? "carousel" : value;
 
   useEffect(() => {
-    if (!options.includes(uiValue)) {
-      onChange(options[0] ?? "single");
-      return;
-    }
+    if (!planReady) return;
     if (uiValue === "carousel" && !carouselAllowed && !lockedCampaign) {
       onChange("single");
+      return;
     }
-  }, [carouselAllowed, lockedCampaign, onChange, options, uiValue]);
+    if (!options.includes(uiValue)) {
+      onChange(options[0] ?? "single");
+    }
+  }, [carouselAllowed, lockedCampaign, onChange, options, planReady, uiValue]);
 
   const selectedClass =
     accent === "violet"
@@ -106,6 +109,7 @@ export function ImageOutputModePicker({
               type="button"
               onClick={() => {
                 if (locked) return;
+                if (!planReady) return;
                 if (modeLocked) {
                   setGateOpen(true);
                   return;

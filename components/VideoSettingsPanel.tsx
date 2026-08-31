@@ -71,7 +71,7 @@ export function VideoSettingsPanel({
   accent,
 }: Props) {
   const { m } = useLocale();
-  const { plan, maxVideoResolution } = useUserPlanEntitlements();
+  const { plan, maxVideoResolution, planReady } = useUserPlanEntitlements();
   const [gateOpen, setGateOpen] = useState(false);
   const [gateRes, setGateRes] = useState<VideoResolutionCap>("720p");
   const dark = variant === "dark";
@@ -103,11 +103,12 @@ export function VideoSettingsPanel({
       : "size-4 rounded border-slate-600";
 
   useEffect(() => {
+    if (!planReady) return;
     if (!allowedResolutions.includes(value.resolution)) {
       onChange({ ...value, resolution: asVideoResolution(maxVideoResolution) });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- clamp only when plan/selection drifts
-  }, [maxVideoResolution, value.resolution]);
+  }, [maxVideoResolution, planReady, value.resolution]);
 
   useEffect(() => {
     if (!motionPoster) return;
@@ -153,13 +154,14 @@ export function VideoSettingsPanel({
         </p>
         <div className="flex flex-wrap gap-2">
           {VIDEO_RESOLUTION_CAPS.map((r) => {
-            const allowed = canUseVideoResolution(plan, r);
+            const allowed = !planReady || canUseVideoResolution(plan, r);
             const selected = value.resolution === r;
             return (
               <button
                 key={r}
                 type="button"
                 onClick={() => {
+                  if (!planReady) return;
                   if (!allowed) {
                     setGateRes(r);
                     setGateOpen(true);
@@ -181,7 +183,7 @@ export function VideoSettingsPanel({
             );
           })}
         </div>
-        {maxVideoResolution !== "1080p" ? (
+        {planReady && maxVideoResolution !== "1080p" ? (
           <p className={dark ? "mt-2 text-xs text-slate-400" : "mt-2 text-xs text-slate-500"}>
             {m.wizard.videoResolutionPlanHint.replace("{max}", maxVideoResolution)}{" "}
             <Link href="/pricing" className={linkClass}>

@@ -4,7 +4,7 @@ import {
   chargeTokens,
   refundTokens,
   h3TokenCostFromRequest,
-  videoTokenCostFromRequest,
+  videoTokenCostFromSeedanceEndpoint,
 } from "@/lib/billing/charge";
 import { clampVideoResolution } from "@/lib/billing/entitlements";
 import { getUserPlan } from "@/lib/billing/get-user-plan";
@@ -246,7 +246,7 @@ export async function POST(request: Request) {
   const promptRaw = (formData.get("prompt") as string)?.trim() ?? "";
   const prompt = softenSeedancePromptForModeration(promptRaw);
   const reelExpectedEarly = formDataExpectsReferenceVideo(formData, prompt);
-  const fast = reelExpectedEarly ? false : formData.get("fast") === "true";
+  const fastHint = reelExpectedEarly ? false : formData.get("fast") === "true";
   const resolutionBase = (formData.get("resolution") as string) || "480p";
   const resolutionOverride =
     (formData.get("resolution_override") as string | null)?.trim() || "";
@@ -361,12 +361,17 @@ export async function POST(request: Request) {
   const duration = parseDuration((formData.get("duration") as string) || "auto");
   const plan = await getUserPlan(auth.user.userId);
   const { resolution } = clampVideoResolution(plan, requestedResolution);
-  const tokenCost = videoTokenCostFromRequest({ resolution, fast, duration });
+  const billedEndpoint = endpointFor(mode, fastHint, formData);
+  const tokenCost = videoTokenCostFromSeedanceEndpoint({
+    resolution,
+    duration,
+    endpoint: billedEndpoint,
+  });
   const charged = await chargeTokens(auth.user.userId, tokenCost, {
     kind: "video",
     mode,
     resolution,
-    fast,
+    endpoint: billedEndpoint,
     duration,
   });
   if ("error" in charged) return charged.error;
@@ -413,7 +418,7 @@ export async function POST(request: Request) {
   try {
     if (mode === "text") {
       const { result, usedDurationFallback } = await subscribeWithDurationFallback(
-        endpointFor("text", fast, formData),
+        endpointFor("text", fastHint, formData),
         common,
       );
       const videoUrl = extractVideoUrl(result.data);
@@ -434,7 +439,7 @@ export async function POST(request: Request) {
         seed: result.data.seed,
         requestId: result.requestId,
         generationMode: "text-to-video",
-        endpoint: endpointFor("text", fast, formData),
+        endpoint: billedEndpoint,
         tokensCharged: tokenCost,
         creditBalance: balanceAfter,
         ...(usedDurationFallback
@@ -471,7 +476,7 @@ export async function POST(request: Request) {
         ...(endUrl ? { end_image_url: endUrl } : {}),
       };
       const { result, usedDurationFallback } = await subscribeWithDurationFallback(
-        endpointFor("image", fast, formData),
+        endpointFor("image", fastHint, formData),
         imageInput,
       );
       const videoUrl = extractVideoUrl(result.data);
@@ -492,7 +497,7 @@ export async function POST(request: Request) {
         seed: result.data.seed,
         requestId: result.requestId,
         generationMode: "image-to-video",
-        endpoint: endpointFor("image", fast, formData),
+        endpoint: billedEndpoint,
         tokensCharged: tokenCost,
         creditBalance: balanceAfter,
         ...(usedDurationFallback
@@ -581,7 +586,7 @@ export async function POST(request: Request) {
       ...(audio_urls?.length ? { audio_urls } : {}),
     };
     const { result, usedDurationFallback } = await subscribeWithDurationFallback(
-      endpointFor("reference", fast, formData),
+      endpointFor("reference", fastHint, formData),
       referenceInput,
     );
     const videoUrl = extractVideoUrl(result.data);
@@ -613,7 +618,7 @@ export async function POST(request: Request) {
       seed: result.data.seed,
       requestId: result.requestId,
       generationMode: "reference-to-video",
-      endpoint: endpointFor("reference", fast, formData),
+      endpoint: billedEndpoint,
       referenceVideoCount: videoUrlsFinal?.length ?? nonEmptyVideos.length,
       referenceImageCount: imageUrlsFinal?.length ?? 0,
       tokensCharged: tokenCost,

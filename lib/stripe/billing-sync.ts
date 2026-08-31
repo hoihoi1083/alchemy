@@ -21,7 +21,12 @@ import type { BillingInterval, PaidPlan } from "@/lib/stripe/prices";
 export async function grantTokensOnce(
   clerkId: string,
   amount: number,
-  reason: "subscription_grant" | "topup" | "trial_bonus" | "refund",
+  reason:
+    | "subscription_grant"
+    | "topup"
+    | "trial_bonus"
+    | "refund"
+    | "admin_adjust",
   ref: string,
   meta?: Record<string, unknown>,
 ): Promise<{ granted: boolean; balanceAfter: number | null }> {

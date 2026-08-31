@@ -19,6 +19,16 @@ describe("generate-image carousel gate", () => {
   });
 });
 
+describe("generate-image ultra compose gate", () => {
+  it("blocks JSON compose mode below Master (Ultra canvas)", () => {
+    const route = read("app/api/generate-image/route.ts");
+    const helper = read("lib/billing/assert-pro-canvas.ts");
+    assert.match(route, /apiMode === "compose"/);
+    assert.match(route, /assertProCanvasAllowedForUser/);
+    assert.match(helper, /ultra_canvas_needs_master/);
+  });
+});
+
 describe("platform research Standard+ gate + free for entitled", () => {
   const researchRoutes = [
     "app/api/research-content-angles/route.ts",

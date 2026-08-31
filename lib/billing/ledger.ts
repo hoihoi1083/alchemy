@@ -314,6 +314,9 @@ export async function consumeTokens(
 /**
  * Credit tokens (signup, subscription, top-up, trial, refund, admin).
  * Adds a 6‑month FIFO batch. Bumps walletRevision so concurrent consumes CAS-fail.
+ *
+ * When `ref` is set, claims the ledger row first (unique index) so crash/retry
+ * cannot double-credit the wallet.
  */
 export async function grantTokens(
   clerkId: string,
@@ -325,13 +328,92 @@ export async function grantTokens(
   await migrateAndPruneBatches(clerkId);
   const db = await getDb();
   const now = new Date();
-  const batch: TokenBatch = {
+  const txCol = db.collection<CreditTransaction>("credit_transactions");
+
+  let batch: TokenBatch = {
     id: randomUUID(),
     remaining: amount,
     grantedAt: now,
     expiresAt: tokenExpiresAt(now),
     source: reason,
   };
+
+  if (opts?.ref) {
+    const existing = await txCol.findOne({ ref: opts.ref });
+    if (
+      existing &&
+      typeof existing.balanceAfter === "number" &&
+      existing.balanceAfter >= 0 &&
+      existing.meta?.grantPending !== true
+    ) {
+      return existing.balanceAfter;
+    }
+
+    if (existing?.meta?.grantPending === true) {
+      const pendingBatchId =
+        typeof existing.meta?.batchId === "string" ? existing.meta.batchId : null;
+      if (pendingBatchId) {
+        batch = {
+          ...batch,
+          id: pendingBatchId,
+        };
+      }
+      const user = await db.collection<DbUser>("users").findOne({ clerkId });
+      const alreadyCredited = Boolean(
+        user?.tokenBatches?.some((b) => b.id === batch.id),
+      );
+      if (alreadyCredited && user) {
+        const balanceAfter = user.creditBalance ?? 0;
+        await txCol.updateOne(
+          { ref: opts.ref },
+          {
+            $set: {
+              balanceAfter,
+              meta: {
+                ...(opts.meta ?? {}),
+                batchId: batch.id,
+                expiresAt: batch.expiresAt,
+                grantPending: false,
+              },
+            },
+          },
+        );
+        return balanceAfter;
+      }
+    } else {
+      try {
+        await txCol.insertOne({
+          clerkId,
+          delta: amount,
+          reason,
+          ref: opts.ref,
+          balanceAfter: -1,
+          createdAt: now,
+          meta: {
+            ...(opts.meta ?? {}),
+            batchId: batch.id,
+            expiresAt: batch.expiresAt,
+            grantPending: true,
+          },
+        });
+      } catch (err) {
+        const code =
+          err && typeof err === "object" && "code" in err
+            ? Number((err as { code?: unknown }).code)
+            : 0;
+        if (code !== 11000) throw err;
+        const raced = await txCol.findOne({ ref: opts.ref });
+        if (
+          raced &&
+          typeof raced.balanceAfter === "number" &&
+          raced.balanceAfter >= 0 &&
+          raced.meta?.grantPending !== true
+        ) {
+          return raced.balanceAfter;
+        }
+      }
+    }
+  }
 
   const result = await db.collection<DbUser>("users").findOneAndUpdate(
     { clerkId },
@@ -345,19 +427,65 @@ export async function grantTokens(
     },
     { returnDocument: "after" },
   );
-  if (!result) return null;
+  if (!result) {
+    if (opts?.ref) {
+      await txCol
+        .deleteOne({ ref: opts.ref, "meta.grantPending": true })
+        .catch(() => undefined);
+    }
+    return null;
+  }
   const balanceAfter = result.creditBalance ?? 0;
-  await db.collection<CreditTransaction>("credit_transactions").insertOne({
-    clerkId,
-    delta: amount,
-    reason,
-    ...(opts?.ref ? { ref: opts.ref } : {}),
-    ...(opts?.meta
-      ? { meta: { ...opts.meta, batchId: batch.id, expiresAt: batch.expiresAt } }
-      : { meta: { batchId: batch.id, expiresAt: batch.expiresAt } }),
-    balanceAfter,
-    createdAt: now,
-  });
+  const finalizedMeta = {
+    ...(opts?.meta ? opts.meta : {}),
+    batchId: batch.id,
+    expiresAt: batch.expiresAt,
+    grantPending: false,
+  };
+
+  if (opts?.ref) {
+    const updated = await txCol.updateOne(
+      { ref: opts.ref },
+      {
+        $set: {
+          balanceAfter,
+          meta: finalizedMeta,
+        },
+      },
+    );
+    if (updated.matchedCount === 0) {
+      try {
+        await txCol.insertOne({
+          clerkId,
+          delta: amount,
+          reason,
+          ref: opts.ref,
+          meta: finalizedMeta,
+          balanceAfter,
+          createdAt: now,
+        });
+      } catch (err) {
+        const code =
+          err && typeof err === "object" && "code" in err
+            ? Number((err as { code?: unknown }).code)
+            : 0;
+        if (code === 11000) {
+          const raced = await txCol.findOne({ ref: opts.ref });
+          return (raced?.balanceAfter as number | undefined) ?? balanceAfter;
+        }
+        throw err;
+      }
+    }
+  } else {
+    await txCol.insertOne({
+      clerkId,
+      delta: amount,
+      reason,
+      ...(opts?.meta ? { meta: finalizedMeta } : { meta: { batchId: batch.id, expiresAt: batch.expiresAt } }),
+      balanceAfter,
+      createdAt: now,
+    });
+  }
   return balanceAfter;
 }
 

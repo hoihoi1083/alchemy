@@ -26,6 +26,26 @@ import {
 
 type BillingInterval = "monthly" | "yearly";
 type PaidPlanKey = "light" | "standard" | "pro" | "master" | "custom";
+type ScrollablePlanId =
+  | "free"
+  | "light"
+  | "standard"
+  | "pro"
+  | "master"
+  | "custom";
+
+const SCROLLABLE_PLAN_IDS = new Set<ScrollablePlanId>([
+  "free",
+  "light",
+  "standard",
+  "pro",
+  "master",
+  "custom",
+]);
+
+function planCardDomId(planId: ScrollablePlanId): string {
+  return `plan-${planId}`;
+}
 
 const FAQ_PREVIEW_COUNT = 4;
 
@@ -170,15 +190,14 @@ export function PricingPageClient() {
 
   useEffect(() => {
     if (planHighlightDone.current) return;
-    if (highlightPlan !== "master" && highlightPlan !== "custom") return;
+    if (!highlightPlan || !SCROLLABLE_PLAN_IDS.has(highlightPlan as ScrollablePlanId)) {
+      return;
+    }
     planHighlightDone.current = true;
-    setHoveredId(highlightPlan);
+    const planId = highlightPlan as ScrollablePlanId;
+    setHoveredId(planId);
     const t = window.setTimeout(() => {
-      const el =
-        highlightPlan === "custom"
-          ? document.getElementById("plan-custom")
-          : document.getElementById("plan-master");
-      el?.scrollIntoView({
+      document.getElementById(planCardDomId(planId))?.scrollIntoView({
         behavior: "smooth",
         block: "center",
       });
@@ -598,7 +617,14 @@ export function PricingPageClient() {
                       : null;
                 const isBusy = busyKey != null && busy === busyKey;
                 const ctaLabel = isBusy ? p.checkoutRedirecting : card.cta;
-                const isActive = hoveredId === card.id || (hoveredId === null && card.popular);
+                const isCurrentPlan =
+                  planReady &&
+                  isSignedIn &&
+                  card.id !== "topup" &&
+                  plan === card.id;
+                const isActive =
+                  hoveredId === card.id ||
+                  (hoveredId === null && (isCurrentPlan || card.popular));
                 const isTopup = card.id === "topup";
 
                 return (
@@ -611,11 +637,9 @@ export function PricingPageClient() {
                   >
                     <div
                       id={
-                        card.id === "master"
-                          ? "plan-master"
-                          : card.id === "custom"
-                            ? "plan-custom"
-                            : undefined
+                        SCROLLABLE_PLAN_IDS.has(card.id as ScrollablePlanId)
+                          ? planCardDomId(card.id as ScrollablePlanId)
+                          : undefined
                       }
                       onMouseEnter={() => setHoveredId(card.id)}
                       className={`pricing-plan-card h-full min-h-[300px] min-w-0 rounded-2xl border bg-white p-5 shadow-sm transition duration-200 ${
@@ -628,7 +652,11 @@ export function PricingPageClient() {
                     >
                       {/* Zone 1: badge — fixed so titles share a baseline */}
                       <div className="flex h-5 shrink-0 items-center overflow-hidden">
-                        {card.popular ? (
+                        {isCurrentPlan ? (
+                          <p className="inline-flex rounded-full bg-emerald-600 px-2.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">
+                            {p.currentPlanBadge}
+                          </p>
+                        ) : card.popular ? (
                           <p className="inline-flex rounded-full bg-violet-600 px-2.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">
                             {p.mostPopular}
                           </p>

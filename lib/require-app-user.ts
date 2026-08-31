@@ -1,5 +1,6 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { verifiedEmailFromClerkUser } from "@/lib/clerk-verified-email";
 import { ensureUser, recordUsage } from "@/lib/db/users";
 import { isMongoConfigured } from "@/lib/mongodb";
 
@@ -29,7 +30,7 @@ export async function requireAppUser(): Promise<RequireAppUserResult> {
       const clerkUser = await currentUser();
       await ensureUser({
         clerkId: userId,
-        email: clerkUser?.emailAddresses[0]?.emailAddress ?? null,
+        email: verifiedEmailFromClerkUser(clerkUser),
         name: clerkUser?.fullName ?? null,
         imageUrl: clerkUser?.imageUrl ?? null,
       });

@@ -34,6 +34,8 @@ describe("billing smoke — invalid before charge (source contract)", () => {
     const chargeAt = firstIndex(src, /await chargeTokens\(/);
     assert.ok(validateMarker >= 0, "missing validate-before-charge comment");
     assert.ok(chargeAt > validateMarker, "chargeTokens must follow validation");
+    assert.match(src, /videoTokenCostFromSeedanceEndpoint/);
+    assert.match(src, /billedEndpoint/);
     // Common invalid paths return 400 in the pre-charge block
     const preCharge = src.slice(0, chargeAt);
     assert.match(preCharge, /status:\s*400/);
@@ -100,6 +102,8 @@ describe("billing smoke — invalid before charge (source contract)", () => {
   it("refundTokens retries, alerts on failure, and queues pending refunds", () => {
     const src = readRoute("lib/billing/charge.ts");
     assert.match(src, /refundTokens failed/);
+    assert.match(src, /grantTokensOnce/);
+    assert.match(src, /buildRefundRef/);
     assert.match(src, /captureException|captureMessage/);
     assert.match(src, /refund_failed/);
     assert.match(src, /billing_refund_null|null_user/);

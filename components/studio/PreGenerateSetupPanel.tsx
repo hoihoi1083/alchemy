@@ -907,8 +907,9 @@ export function PreGenerateSetupPanel({
   const wizard = useWizard();
   const pg = m.microWizard.preGenerateSetup;
   const fuse = m.microWizard.intakeFuse;
-  const { plan } = useUserPlanEntitlements();
-  const carouselAllowed = canUseCarousel(plan) || wizard.lockedCampaignMode;
+  const { plan, planReady } = useUserPlanEntitlements();
+  const carouselAllowed =
+    !planReady || canUseCarousel(plan) || wizard.lockedCampaignMode;
   const [carouselGateOpen, setCarouselGateOpen] = useState(false);
   const [researchRefBusy, setResearchRefBusy] = useState(false);
   const [researchRefError, setResearchRefError] = useState<string | null>(null);
@@ -1350,6 +1351,7 @@ export function PreGenerateSetupPanel({
       : ["single", "ab", "carousel"];
 
   useEffect(() => {
+    if (!planReady) return;
     if (
       isCarouselUiSelected(wizard.imageOutputMode) &&
       !carouselAllowed &&
@@ -1359,6 +1361,7 @@ export function PreGenerateSetupPanel({
     }
   }, [
     carouselAllowed,
+    planReady,
     wizard.imageOutputMode,
     wizard.lockedCampaignMode,
     wizard.setImageOutputMode,
@@ -2772,6 +2775,7 @@ export function PreGenerateSetupPanel({
                           type="button"
                           onClick={() => {
                             if (outputLocked) return;
+                            if (!planReady) return;
                             if (modeLocked) {
                               setCarouselGateOpen(true);
                               return;

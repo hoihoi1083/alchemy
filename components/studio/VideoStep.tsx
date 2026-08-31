@@ -18,7 +18,7 @@ import {
   GenerationWaitPlaceholder,
   waitAspectFromString,
 } from "@/components/studio/GenerationWaitPlaceholder";
-import { estimateH3Tokens } from "@/lib/billing/token-costs";
+import { estimateH3Tokens, estimateVideoTokens } from "@/lib/billing/token-costs";
 import { storyboardSceneDisplayCopy } from "@/lib/storyboard-scene-copy";
 import { isBrandVideoStyle, isCreativeVideoStyle, isStoryboardVideoStyle } from "@/lib/visual-styles";
 import { isVideoOutputPathLocked, resolveVideoOutputPresentation } from "@/lib/video-output-presentation";
@@ -40,6 +40,10 @@ import {
   type H3SphereMgSchemePick,
   type H3LogoMgSchemePick,
 } from "@/lib/h3-shot-recipes";
+import {
+  isFaceHeavyVideoJob,
+  resolveVideoEnginePlan,
+} from "@/lib/video-engine-router";
 import { resolveWizardOutputDurationSec } from "@/lib/video-settings";
 import type { CinematicSceneResult } from "@/lib/cinematic-reel-types";
 import type { StoryboardSceneResult } from "@/lib/video-storyboard-types";
@@ -48,15 +52,36 @@ export function VideoStep() {
   const { applyPromptRebuild, bgmOptions, bgmTrack, brandProfile, cinematicScenes, cinematicSceneCount, cinematicStitchReady, conceptReferenceR2vReady, directReferenceR2vReady, creativeVideoBrief, endFramePhoto, endFramePreviewUrl, endFrameUrl, error, extraAnglePhotos, extraKitPhotos, extraKitPreviewUrls, formatCinematicCopy, generateVideo, goBackFromVideo, hasFinalImage, headline, imageAspectRatio, imagePrompt, imageUrl, isCinematicStitchOutput, isConceptCinematicSingleOutput, isStoryboardOutput, isUgcPresenterOutput, keyframePreview, loadReferenceClip, m, onReferenceAdFile, onVideoCreativeModeChange, packagingPhoto, packagingPreviewUrl, planAiVideoPrompt, planProductVideo, planProductVideoBusy, planVideoPromptBusy, presenterAvatarId, presenterSourceMode, productPhoto, productVideoPlan, promotionMode, promptExtra, promptMarket, referenceAd, referenceClipLoading, referenceIsVideo, referencePreviewUrl, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, selectedReferenceClipId, setBgmTrack, setConceptImageVisionNote, setEndFramePhoto, setEndFrameUrl, setError, setExtraAnglePhotos, setExtraKitPhotos, setPackagingPhoto, setImagePrompt, setImageUrl, setPresenterAvatarId, setPresenterSourceMode, setProductPhoto, setPromptExtra, setPromptMarket, setShowAdvancedVideo, setSubjectFraming, setUploadQualityWarning, setUseOriginalImage, setVideoPrompt, setVideoSettings, shipItMode, showAdvancedVideo, showVideoReferenceSection, storyboardScenes, storyboardTrimDuration, subjectFraming, templateId, templateSlotStatus, uploadPreviewUrl, useReferenceVideo, usesCompositor, usesConceptTextVideo, usesProductAssistant, videoBusy, videoCreativeMode, motionPosterDialectPick, setMotionPosterDialectPick, macroSnapIntensity, setMacroSnapIntensity, foodBulletArc, setFoodBulletArc, h3ShowreelAspect, setH3ShowreelAspect, h3ShowreelSchemePick, setH3ShowreelSchemePick, h3SphereMgSchemePick, setH3SphereMgSchemePick, h3LogoMgSchemePick, setH3LogoMgSchemePick, videoGenerateDisabled, videoGenerateDisabledReason, videoPhase, videoPreflight, videoProgressInfo, videoPrompt, videoPromptPlanNote, videoSettings, videoStepHint, visualStyleId, workflowMode } = useWizard();
   const isConcept = promotionMode === "concept";
   const outputDurationSec = resolveWizardOutputDurationSec(videoSettings);
-  const videoTokenCost = isStoryboardOutput
-    ? estimateH3Tokens({
-        resolution: videoSettings.resolution,
-        duration: Number(storyboardTrimDuration) || 8,
-      })
-    : estimateH3Tokens({
-        resolution: videoSettings.resolution,
-        duration: outputDurationSec,
-      });
+  const durationForCost = isStoryboardOutput
+    ? Number(storyboardTrimDuration) || 8
+    : outputDurationSec;
+  // Match generateVideo routing: Seedance reel path bills ~3× H3 — never show H3 when Seedance will run.
+  const videoEnginePlan = resolveVideoEnginePlan({
+    motionPoster:
+      videoCreativeMode === "motion-poster" ||
+      videoCreativeMode === "impact-poster",
+    socialDrip: videoCreativeMode === "social-drip",
+    blockbuster: videoCreativeMode === "blockbuster",
+    h3ShotRecipe: isH3ShotRecipeMode(videoCreativeMode),
+    hasReel: Boolean(referenceAd && referenceIsVideo),
+    faceHeavy: isFaceHeavyVideoJob({
+      visualStyleId,
+      videoCreativeMode,
+      subjectFraming,
+    }),
+    storyboard: isStoryboardOutput,
+  });
+  const videoTokenCost =
+    videoEnginePlan.firstEngine === "seedance"
+      ? estimateVideoTokens({
+          resolution: videoSettings.resolution,
+          fast: false,
+          duration: durationForCost,
+        })
+      : estimateH3Tokens({
+          resolution: videoSettings.resolution,
+          duration: durationForCost,
+        });
   const pv = m.microWizard.preVideoSetup;
   const showCinematicStitch = isCinematicStitchOutput || cinematicStitchReady;
   const showConceptCinematicSingle =

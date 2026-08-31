@@ -23,7 +23,7 @@ export const GOLDEN_PROMPT_CASES: GoldenPromptCase[] = [
     promotionMode: "physical",
     workflowMode: "image-only",
     imageCreativeMode: "promo-ai",
-    expectedInPrompt: ["pink crystal bracelet", "social media", "9:16"],
+    expectedInPrompt: ["pink crystal bracelet", "marketing", "9:16"],
     mustNotContain: ["水瓶座", "zodiac"],
   },
   {

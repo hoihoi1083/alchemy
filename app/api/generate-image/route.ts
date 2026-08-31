@@ -13,6 +13,7 @@ import {
   chargeTokens,
   refundTokens,
 } from "@/lib/billing/charge";
+import { assertProCanvasAllowedForUser } from "@/lib/billing/assert-pro-canvas";
 import { clampImageResolution } from "@/lib/billing/entitlements";
 import { getUserPlan } from "@/lib/billing/get-user-plan";
 import { planMeetsMinimum } from "@/lib/billing/plan-gates";
@@ -665,7 +666,8 @@ export async function POST(request: Request) {
     const imageOutputMode = (formData.get("image_output_mode") as string | null)?.trim() || "";
     if (
       imageOutputMode === "campaign" ||
-      imageOutputMode === "teaching-carousel"
+      imageOutputMode === "teaching-carousel" ||
+      imageOutputMode === "carousel"
     ) {
       const userPlan = await getUserPlan(auth.user.userId);
       if (!planMeetsMinimum(userPlan, "standard")) {
@@ -829,15 +831,20 @@ export async function POST(request: Request) {
       });
     }
 
+    const slideCountRaw = Number(
+      (formData.get("slide_count") as string | null)?.trim() || "",
+    );
     const tokenCost = imageTokenCostFromRequest({
       numImages,
       imageOutputMode,
+      slideCount: Number.isFinite(slideCountRaw) ? slideCountRaw : null,
     });
     const charged = await chargeTokens(auth.user.userId, tokenCost, {
       kind: "image",
       mode: "generate",
       numImages,
       imageOutputMode,
+      slideCount: Number.isFinite(slideCountRaw) ? slideCountRaw : undefined,
     });
     if ("error" in charged) return charged.error;
     const balanceAfter = charged.balanceAfter;
@@ -1158,6 +1165,10 @@ export async function POST(request: Request) {
   const endpoint = sanitizeImageEndpoint(body?.endpoint, defaultTextEndpoint());
   const apiMode = body?.mode?.trim();
   const isCompose = apiMode === "compose";
+  if (isCompose) {
+    const gated = await assertProCanvasAllowedForUser(auth.user.userId);
+    if (gated) return gated;
+  }
   const isRefine = apiMode === "refine" || (!isCompose && (body?.image_urls?.length ?? 0) > 0);
   const aspectRatio = aspectRatioForApi(
     body?.aspect_ratio?.trim() || (isRefine ? "auto" : "9:16"),

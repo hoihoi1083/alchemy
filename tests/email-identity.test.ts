@@ -81,6 +81,12 @@ describe("email-identity", () => {
     assert.equal(pickCanonicalUser(a, b).clerkId, "a");
   });
 
+  it("requireAppUser only syncs verified Clerk emails into Mongo", () => {
+    const src = readFileSync(join(process.cwd(), "lib/require-app-user.ts"), "utf8");
+    assert.match(src, /verifiedEmailFromClerkUser/);
+    assert.equal(src.includes("emailAddresses[0]"), false);
+  });
+
   it("ensureUser blocks free signup grant re-claim by email", () => {
     const src = readFileSync(join(process.cwd(), "lib/db/users.ts"), "utf8");
     assert.match(src, /emailAlreadyClaimedSignupGrant/);
@@ -99,5 +105,23 @@ describe("email-identity", () => {
     assert.match(src, /tryReserveSignupGrantForEmail/);
     assert.match(src, /signup_grant_claims/);
     assert.match(src, /signupGrantCarried/);
+  });
+
+  it("email merge atomically clears donor tokenBatches and uses grantTokensOnce", () => {
+    const src = readFileSync(
+      join(process.cwd(), "lib/db/email-identity.ts"),
+      "utf8",
+    );
+    assert.match(src, /grantTokensOnce/);
+    assert.match(src, /tokenBatches:\s*\[\]/);
+    assert.match(src, /emailNormalized:\s*""/);
+    assert.match(src, /returnDocument:\s*"before"/);
+    assert.equal(src.includes('from "@/lib/billing/ledger"'), false);
+  });
+
+  it("ensureUser does not clear supersededBy when merged into another clerkId", () => {
+    const src = readFileSync(join(process.cwd(), "lib/db/users.ts"), "utf8");
+    assert.match(src, /keepSuperseded/);
+    assert.match(src, /supersededBy !== input\.clerkId/);
   });
 });

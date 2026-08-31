@@ -445,7 +445,7 @@ const TEXT_ENDPOINT = BANANA2_TEXT_ENDPOINT;
 export function useStudioWizard(promotionMode: PromotionMode) {
   const { m, locale } = useLocale();
   const friendlyError = useFriendlyError(m);
-	const { creditBalance, plan } = useUserPlanEntitlements();
+	const { creditBalance, plan, planReady } = useUserPlanEntitlements();
 
 	async function readGenerateJson(
 		res: Response,
@@ -792,13 +792,15 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		imageUrlRef.current = imageUrl;
 	}, [imageUrl]);
 	useEffect(() => {
+		if (!planReady) return;
 		setVideoSettings((prev) => {
 			const next = capVideoRes(prev.resolution);
 			if (next === prev.resolution) return prev;
 			return { ...prev, resolution: next };
 		});
-	}, [capVideoRes, setVideoSettings]);
+	}, [capVideoRes, planReady, setVideoSettings]);
 	useEffect(() => {
+		if (!planReady) return;
 		setImageResolution((prev) => {
 			const max = imageCapForPlan(plan);
 			const next = max === "4K" ? "2K" : max;
@@ -807,7 +809,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			if (prev === "2K" && (max === "2K" || max === "4K")) return prev;
 			return next;
 		});
-	}, [plan, setImageResolution]);
+	}, [plan, planReady, setImageResolution]);
 	/** Designed 動態海報 still only — never treat a leftover packshot / raw upload as the H3 start. */
 	const motionPosterStillUrlRef = useRef<string | null>(null);
 	const motionPosterEndUrlRef = useRef<string | null>(null);

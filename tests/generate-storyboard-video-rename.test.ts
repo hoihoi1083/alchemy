@@ -18,14 +18,16 @@ describe("generate-storyboard-video route rename", () => {
     assert.match(src, /runKlingStoryboardFallback/);
   });
 
-  it("legacy /api/generate-kling-storyboard re-exports the canonical handler", () => {
+  it("legacy /api/generate-kling-storyboard wraps the canonical handler with local segment config", () => {
     const alias = readFileSync(
       join(root, "app/api/generate-kling-storyboard/route.ts"),
       "utf8",
     );
     assert.match(alias, /generate-storyboard-video\/route/);
-    assert.match(alias, /\bPOST\b/);
-    assert.doesNotMatch(alias, /export async function POST/);
+    assert.match(alias, /export async function POST/);
+    assert.match(alias, /export const runtime/);
+    assert.match(alias, /export const maxDuration/);
+    assert.doesNotMatch(alias, /export\s*\{[^}]*\bruntime\b/);
   });
 
   it("wizard calls the renamed endpoint", () => {

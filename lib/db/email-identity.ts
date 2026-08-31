@@ -1,8 +1,8 @@
-import { grantTokens } from "@/lib/billing/ledger";
 import { normalizeUserPlan, type UserPlan } from "@/lib/billing/plans";
 import type { DbUser } from "@/lib/db/types";
 import { getDb, isMongoConfigured } from "@/lib/mongodb";
 import { paidPlanRank, type PaidPlan } from "@/lib/stripe/prices";
+import { grantTokensOnce } from "@/lib/stripe/billing-sync";
 
 /** Lowercase + trim. Empty → null. */
 export function normalizeEmail(email: string | null | undefined): string | null {
@@ -172,17 +172,53 @@ export async function mergeEmailDuplicatesInto(opts: {
     const takeBilling =
       !survivor.stripeCustomerId && Boolean(other.stripeCustomerId);
 
-    const donorBal = Math.max(0, other.creditBalance ?? 0);
     const now = new Date();
+    const mergeRef = `email_merge_${other.clerkId}_to_${opts.clerkId}`;
 
-    // Free unique stripeCustomerId index before adopting onto survivor.
-    // Must $unset (not null) — sparse unique indexes still index null.
-    await db.collection<DbUser>("users").updateOne(
-      { clerkId: other.clerkId },
+    // Atomically claim the donor wallet before crediting the survivor.
+    // Clears tokenBatches so migrateAndPruneBatches cannot resurrect the balance.
+    // Unsets emailNormalized so a later login cannot collide on the unique index.
+    const claimedDonor = await db.collection<DbUser>("users").findOneAndUpdate(
       {
-        $unset: { stripeCustomerId: "", stripeSubscriptionId: "" },
-        $set: { updatedAt: now },
+        clerkId: other.clerkId,
+        $or: [{ supersededBy: null }, { supersededBy: { $exists: false } }],
       },
+      {
+        $set: {
+          plan: "free",
+          creditBalance: 0,
+          tokenBatches: [],
+          tokenBatchesMigratedAt: now,
+          planRenewsAt: null,
+          pendingPlan: null,
+          pendingPlanInterval: null,
+          pendingPlanEffectiveAt: null,
+          supersededBy: opts.clerkId,
+          supersededAt: now,
+          updatedAt: now,
+        },
+        $unset: {
+          stripeCustomerId: "",
+          stripeSubscriptionId: "",
+          emailNormalized: "",
+        },
+      },
+      { returnDocument: "before" },
+    );
+
+    if (!claimedDonor) {
+      // Another request already superseded this donor.
+      continue;
+    }
+
+    const batchSum = (claimedDonor.tokenBatches ?? []).reduce(
+      (sum, b) => sum + Math.max(0, b.remaining ?? 0),
+      0,
+    );
+    const donorBal = Math.max(
+      0,
+      claimedDonor.creditBalance ?? 0,
+      batchSum,
     );
 
     if (takeBilling && other.stripeCustomerId) {
@@ -221,13 +257,16 @@ export async function mergeEmailDuplicatesInto(opts: {
 
     if (donorBal > 0) {
       try {
-        await grantTokens(opts.clerkId, donorBal, "admin_adjust", {
-          ref: `email_merge_${other.clerkId}_to_${opts.clerkId}`,
-          meta: {
+        await grantTokensOnce(
+          opts.clerkId,
+          donorBal,
+          "admin_adjust",
+          mergeRef,
+          {
             source: "email_identity_merge",
             fromClerkId: other.clerkId,
           },
-        });
+        );
       } catch (err) {
         console.error("[users] email merge token transfer failed", {
           from: other.clerkId,
@@ -237,23 +276,6 @@ export async function mergeEmailDuplicatesInto(opts: {
         });
       }
     }
-
-    await db.collection<DbUser>("users").updateOne(
-      { clerkId: other.clerkId },
-      {
-        $set: {
-          plan: "free",
-          creditBalance: 0,
-          planRenewsAt: null,
-          pendingPlan: null,
-          pendingPlanInterval: null,
-          pendingPlanEffectiveAt: null,
-          supersededBy: opts.clerkId,
-          supersededAt: now,
-          updatedAt: now,
-        },
-      },
-    );
 
     mergedFrom.push(other.clerkId);
     survivor =

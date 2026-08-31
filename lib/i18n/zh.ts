@@ -709,12 +709,12 @@ export const zh = {
 			badge: "一鍵配方",
 			title: "可完成嘅影片配方",
 			subtitle:
-				"產品同概念同一套兩條路。動態海報免費額度夠用。12 秒 單鏡出片 TVC 需要付費方案。",
+				"產品同概念同一套兩條路。動態海報＝2 張靜圖 + 短片。免費額度最多約 1 張圖 + 約 5 秒 480p（或約 4 張靜圖）。12 秒 TVC 要付費方案。",
 			cta: "用呢個配方",
 			physicalGroup: "產品",
 			conceptGroup: "概念／服務",
 			tvcPaidHint:
-				"4 格靜圖 + 12 秒片要付費方案（約 752 token）。免費額度大概夠 1 張圖 + 1 條 8 秒 480p 片。",
+				"4 格靜圖 + 12 秒片要付費方案（約 752 token）。免費額度（300）最多約 1 張圖 + 約 5 秒 480p，或約 4 張靜圖 — 唔夠完整 2 圖 + 短片。",
 			needPrefix: "需要",
 			tvcNeedPhysical: "產品圖 + 產品名稱",
 			tvcNeedConcept: "標題或概念 idea",
@@ -723,7 +723,8 @@ export const zh = {
 					title: "動態海報",
 					description:
 						"兩張靜圖（無字 → 有字）再交 單鏡出片 中間過渡，產品同字一齊郁。唔係多分鏡故事板。",
-					costHint: "約 2 圖 + 1 段短片 · 免費額度夠",
+					costHint:
+						"約 2 張靜圖 + 短片 · 免費最多約 1 張圖 + 約 5 秒 480p（或約 4 張靜圖）",
 				},
 				"product-impact-poster-6s": {
 					title: "衝擊海報約 6 秒",
@@ -761,7 +762,8 @@ export const zh = {
 					title: "概念動態海報",
 					description:
 						"兩張場景靜圖（無字 → 有字）+ 影片過渡，按服務／想法揀動態。唔使 SKU 包裝特寫。",
-					costHint: "約 2 張 AI 靜圖 + 1 段短片 · 免費額度夠",
+					costHint:
+						"約 2 張 AI 靜圖 + 短片 · 免費最多約 1 張圖 + 約 5 秒 480p（或約 4 張靜圖）",
 				},
 				"concept-impact-poster-6s": {
 					title: "衝擊海報（概念）約 6 秒",
@@ -1299,6 +1301,7 @@ export const zh = {
 		capacityFreeVideos: "最多 {n} 條 8 秒 480p 片",
 		capacityStoryboardsFeature: "約 {n} 條分鏡短片（約 {sec} 秒）",
 		mostPopular: "最受歡迎",
+		currentPlanBadge: "目前方案",
 		getStarted: "開始使用",
 		subscribe: "訂閱",
 		contactSales: "聯絡我們",
@@ -4301,7 +4304,7 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 				"字幕燒錄失敗 — 已顯示加咗 BGM 嘅影片，你仍可下載。",
 			voiceoverAppliedNote: "已混入口播旁白。",
 			voiceoverSkippedNote:
-				"口播失敗 — 保留 BGM 版本。請檢查 service credentials。",
+				"口播失敗 — 保留 BGM 版本。請稍後再試或聯絡支援。",
 			needVoiceoverScript: "請先填口播文案或字幕行。",
 		},
 		adStyleLabel: "你想做邊種廣告？",
@@ -4485,7 +4488,7 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 		proTrialStarting: "正在開啟 Stripe…",
 		proTrialStartError: "無法開始 Pro 試用。",
 		tvcNeedsPaidPlan:
-			"呢條片比免費額度貴。免費大概夠 1 張圖 + 1 條 8 秒 480p 片。請到 Pricing 升級，或者餘額夠就用 拼接後備。",
+			"呢條片比免費額度貴。免費最多約 1 張圖 + 約 5 秒 480p（或約 4 張靜圖）。請到 Pricing 升級，或者餘額夠就用 拼接後備。",
 		tvcNeedsPaidPlanTitle: "12 秒 TVC 需要付費方案",
 		storyboardEngineChoiceTitle: "單鏡額度唔夠 — 拼接後備 拼接而家用得",
 		storyboardEngineChoiceBody:
@@ -4545,9 +4548,9 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 		adPackPlanFailed: "廣告包規劃失敗，請再試。",
 		musicGenerateFailed: "AI 音樂生成失敗，請再試或揀音樂庫。",
 		voiceoverFailed:
-			"口播合成失敗。請檢查 service credentials 或關閉口播。",
+			"口播合成失敗。請稍後再試，或關閉口播。",
 		ugcPresenterFailed:
-			"數字人影片生成失敗。請檢查 service credentials 後再試。",
+			"數字人影片生成失敗。請稍後再試或聯絡支援。",
 		postProcessIncomplete:
 			"後製未完成 — 最終仍係未處理嘅 CDN 原片（未成功寫入本機／圖庫）。請重新生成；如持續失敗請檢查拼接／字幕燒錄。",
 		bgmFilesMissing:
@@ -5862,9 +5865,9 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 		backStudio: "引導精靈",
 		title: "Ultra 畫布",
 		subtitle:
-			"Ultra 畫布 — Lumina 式節點工作流：新增節點、用 @ 引用素材、逐步或一次運行。",
+			"節點工作流：新增節點、用 @ 引用素材、逐步或一次運行。",
 		costHint:
-			"Ultra 畫布使用 系統 按次收費（唔係 Lumina 訂閱價）。每次運行會消耗你 service credentials 嘅 API 額度。",
+			"Ultra 畫布按次扣 Token。每次出圖或出片會從你嘅 Alchemy Token 餘額扣除。",
 		mobileDesktopOnly:
 			"Ultra 畫布適合桌面使用 — 手機請用橫屏平板或電腦；日常出片可用 /studio 嚮導（支援手機）。",
 		steps: [

@@ -10,15 +10,18 @@ import type { TextVideoNodeData } from "@/lib/pro-canvas-types";
 
 export function TextVideoNode({ id, data }: NodeProps & { data: TextVideoNodeData }) {
   const { runTextVideoNode, updateNodeData, nodes } = useProCanvasActions();
-  const { plan, maxVideoResolution } = useUserPlanEntitlements();
-  const allowedResolutions = videoResolutionsForPlan(plan);
+  const { plan, maxVideoResolution, planReady } = useUserPlanEntitlements();
+  const allowedResolutions = planReady
+    ? videoResolutionsForPlan(plan)
+    : videoResolutionsForPlan("master");
 
   useEffect(() => {
+    if (!planReady) return;
     const allowed = videoResolutionsForPlan(plan);
     if (!allowed.includes(data.resolution)) {
       updateNodeData(id, { resolution: maxVideoResolution });
     }
-  }, [plan, data.resolution, id, maxVideoResolution, updateNodeData]);
+  }, [plan, planReady, data.resolution, id, maxVideoResolution, updateNodeData]);
 
   return (
     <div className="w-72 rounded-xl border border-slate-600 bg-slate-900 p-3 shadow-lg">

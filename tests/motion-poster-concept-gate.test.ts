@@ -100,6 +100,6 @@ describe("concept motion-poster unblock + recipe lock", () => {
       "utf8",
     );
     assert.match(src, /showEnginePicker = false/);
-    assert.match(src, /showEnginePicker \?/);
+    assert.match(src, /showEnginePicker &&/);
   });
 });

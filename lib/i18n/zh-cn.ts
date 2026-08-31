@@ -655,12 +655,12 @@ export const zhCn = {
       badge: "一键配方",
       title: "可完成的视频配方",
       subtitle:
-        "产品和概念同一套两条路。动态海报免费额度够用。12 秒 单镜出片 TVC 需要付费方案。",
+        "产品和概念同一套两条路。动态海报＝2 张静图 + 短片。免费额度最多约 1 张图 + 约 5 秒 480p（或约 4 张静图）。12 秒 TVC 需要付费方案。",
       cta: "用这个配方",
       physicalGroup: "产品",
       conceptGroup: "概念／服务",
       tvcPaidHint:
-        "4 格静图 + 12 秒片需要付费方案（约 752 token）。免费额度大约够 1 张图 + 1 条 8 秒 480p 视频。",
+        "4 格静图 + 12 秒片需要付费方案（约 752 token）。免费额度（300）最多约 1 张图 + 约 5 秒 480p，或约 4 张静图 — 不够完整 2 图 + 短片。",
       needPrefix: "需要",
       tvcNeedPhysical: "产品图 + 产品名称",
       tvcNeedConcept: "标题或概念 idea",
@@ -669,7 +669,8 @@ export const zhCn = {
           title: "动态海报",
           description:
             "两张静图（无字 → 有字）再交 单镜出片 中间过渡，产品和字一起动。不是多分镜故事板。",
-          costHint: "约 2 图 + 1 段短片 · 免费额度够",
+          costHint:
+            "约 2 张静图 + 短片 · 免费最多约 1 张图 + 约 5 秒 480p（或约 4 张静图）",
         },
         "product-impact-poster-6s": {
           title: "冲击海报约 6 秒",
@@ -707,7 +708,8 @@ export const zhCn = {
           title: "概念动态海报",
           description:
             "两张场景静图（无字 → 有字）+ 视频过渡，按服务／想法选动态。不要 SKU 包装特写。",
-          costHint: "约 2 张 AI 静图 + 1 段短片 · 免费额度够",
+          costHint:
+            "约 2 张 AI 静图 + 短片 · 免费最多约 1 张图 + 约 5 秒 480p（或约 4 张静图）",
         },
         "concept-impact-poster-6s": {
           title: "冲击海报（概念）约 6 秒",
@@ -1190,6 +1192,7 @@ export const zhCn = {
     capacityFreeVideos: "最多 {n} 条 8 秒 480p 视频",
     capacityStoryboardsFeature: "约 {n} 条分镜视频（约 {sec} 秒）",
     mostPopular: "最受欢迎",
+    currentPlanBadge: "当前方案",
     getStarted: "开始使用",
     subscribe: "订阅",
     contactSales: "联系我们",
@@ -3913,7 +3916,7 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
       captionsSoftTrackNote: "字幕已加入为字幕轨 — 播放器开 CC 才会看到。",
       captionBurnSkippedNote: "字幕烧录失败 — 已显示加了 BGM 的视频，你仍可下载。",
       voiceoverAppliedNote: "已混入口播旁白。",
-      voiceoverSkippedNote: "口播失败 — 保留 BGM 版本。请检查 service credentials。",
+      voiceoverSkippedNote: "口播失败 — 保留 BGM 版本。请稍后重试或联系支持。",
       needVoiceoverScript: "请先填口播文案或字幕行。",
     },
     adStyleLabel: "你想做边种广告？",
@@ -4090,7 +4093,7 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
     proTrialStarting: "正在打开 Stripe…",
     proTrialStartError: "无法开启 Pro 试用。",
     tvcNeedsPaidPlan:
-      "这条视频比免费额度贵。免费大约够 1 张图 + 1 条 8 秒 480p 视频。请到 Pricing 升级，或者余额够就用 拼接后备。",
+      "这条视频比免费额度贵。免费最多约 1 张图 + 约 5 秒 480p（或约 4 张静图）。请到 Pricing 升级，或者余额够就用 拼接后备。",
     tvcNeedsPaidPlanTitle: "12 秒 TVC 需要付费方案",
     storyboardEngineChoiceTitle: "单镜额度不够 — 拼接后备 拼接现在可用",
     storyboardEngineChoiceBody:
@@ -4144,8 +4147,8 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
     planProductVideoFailed: "产品视频规划失败，请检查照片再试。",
     adPackPlanFailed: "广告包规划失败，请再试。",
     musicGenerateFailed: "AI 音乐生成失败，请再试或选音乐库。",
-    voiceoverFailed: "口播合成失败。请检查 service credentials 或关闭口播。",
-    ugcPresenterFailed: "数字人视频生成失败。请检查 service credentials 后重试。",
+    voiceoverFailed: "口播合成失败。请稍后重试，或关闭口播。",
+    ugcPresenterFailed: "数字人视频生成失败。请稍后重试或联系支持。",
     postProcessIncomplete:
       "后制未完成 — 最终仍是未处理的 CDN 原片（未成功写入图库）。请重新生成；如持续失败请检查拼接／字幕烧录。",
     bgmFilesMissing:
@@ -5411,9 +5414,9 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
     back: "← 首页",
     backStudio: "引导向导",
     title: "Ultra 画布",
-    subtitle: "Ultra 画布 — Lumina 式节点工作流：添加节点、用 @ 引用素材、逐步或一次运行。",
+    subtitle: "节点工作流：添加节点、用 @ 引用素材、逐步或一次运行。",
     costHint:
-      "Ultra 画布使用 系統 按次收费（不是 Lumina 订阅价）。每次运行会消耗你 service credentials 的 API 额度。",
+      "Ultra 画布按次扣 Token。每次出图或出片会从你的 Alchemy Token 余额扣除。",
     mobileDesktopOnly:
       "Ultra 画布适合桌面使用 — 手机请用横屏平板或电脑；日常出片可用 /studio 向导（支持手机）。",
     steps: [

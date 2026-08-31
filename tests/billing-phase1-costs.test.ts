@@ -26,6 +26,10 @@ describe("billing Phase 1 action costs", () => {
       TOKEN_COST.teaching_carousel,
     );
     assert.equal(
+      imageTokenCostFromRequest({ imageOutputMode: "carousel" }),
+      TOKEN_COST.teaching_carousel,
+    );
+    assert.equal(
       imageTokenCostFromRequest({ multipartMode: "refine-logo" }),
       TOKEN_COST.image,
     );

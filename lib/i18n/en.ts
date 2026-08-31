@@ -920,12 +920,12 @@ export const en = {
 			badge: "1-tap recipes",
 			title: "Finishable video recipes",
 			subtitle:
-				"Same two walks for product and concept. Motion poster fits the free grant. 12s single-clip TVC needs a paid plan.",
+				"Same two walks for product and concept. Motion poster = 2 stills + short clip. Free grant max ≈ 1 still + ~5s 480p (or ~4 stills). 12s TVC needs a paid plan.",
 			cta: "Start this recipe",
 			physicalGroup: "Product",
 			conceptGroup: "Concept / service",
 			tvcPaidHint:
-				"4 stills + 12s video needs a paid plan (~752 tokens). Free grant covers about 1 image + 1× 8s 480p video.",
+				"4 stills + 12s video needs a paid plan (~752 tokens). Free grant (300) max ≈ 1 still + ~5s 480p, or ~4 stills — not a full 2-still + video run.",
 			needPrefix: "Need",
 			tvcNeedPhysical: "Product photo + product name",
 			tvcNeedConcept: "Headline or concept idea",
@@ -934,7 +934,8 @@ export const en = {
 					title: "Motion poster",
 					description:
 						"2 stills (no type → typed poster) then video morphs product + words. Not a multi-scene storyboard.",
-					costHint: "~2 images + 1 short clip · fits free grant",
+					costHint:
+						"~2 stills + short clip · free max ≈ 1 still + ~5s 480p (or ~4 stills)",
 				},
 				"product-impact-poster-6s": {
 					title: "Impact poster ~6s",
@@ -977,7 +978,8 @@ export const en = {
 					title: "Concept motion poster",
 					description:
 						"2 scene stills (no type → typed) + Video morphs a service-fit motion. No SKU packshot.",
-					costHint: "~2 AI stills + 1 short clip · fits free grant",
+					costHint:
+						"~2 AI stills + short clip · free max ≈ 1 still + ~5s 480p (or ~4 stills)",
 				},
 				"concept-impact-poster-6s": {
 					title: "Impact poster (concept) ~6s",
@@ -1396,6 +1398,7 @@ export const en = {
 		capacityFreeVideos: "Up to {n} × 8s 480p videos",
 		capacityStoryboardsFeature: "~{n} storyboard reels (~{sec}s)",
 		mostPopular: "Most popular",
+		currentPlanBadge: "Current plan",
 		getStarted: "Get started",
 		subscribe: "Subscribe",
 		contactSales: "Contact us",
@@ -4756,7 +4759,7 @@ export const en = {
 				"Caption burn failed — showing video with BGM only. You can still download it.",
       voiceoverAppliedNote: "Spoken voiceover mixed over BGM.",
 			voiceoverSkippedNote:
-				"Voiceover failed — video kept with BGM only. Check service credentials.",
+				"Voiceover failed — video kept with BGM only. Please try again or contact support.",
 			needVoiceoverScript:
 				"Add a voiceover script or caption lines first.",
     },
@@ -5035,9 +5038,9 @@ export const en = {
 		musicGenerateFailed:
 			"AI music generation failed. Try again or pick library music.",
 		voiceoverFailed:
-			"Voiceover dub failed. Check service credentials or disable spoken voiceover.",
+			"Voiceover dub failed. Please try again, or disable spoken voiceover.",
 		ugcPresenterFailed:
-			"Digital presenter video failed. Check service credentials and try again.",
+			"Digital presenter video failed. Please try again or contact support.",
     postProcessIncomplete:
 			"Post-process incomplete — final file is still a raw CDN clip (not saved to library). Regenerate; check stitching / caption burn if it persists.",
     bgmFilesMissing:
@@ -6464,9 +6467,9 @@ export const en = {
     backStudio: "Guided wizard",
     title: "Ultra canvas",
     subtitle:
-      "Ultra canvas — Lumina-style node workflow: add nodes, wire refs with @, run each step or Run all.",
+      "Node workflow: add nodes, wire refs with @, run each step or Run all.",
     costHint:
-			"Ultra canvas uses Token billing at pay-per-use rates (not Lumina subscription pricing). Each run costs API credits on your service credentials.",
+			"Ultra canvas uses pay-per-use Token billing. Each image or video run deducts from your Alchemy token balance.",
 		mobileDesktopOnly:
 			"Ultra canvas is built for desktop — use a tablet in landscape or a computer for the best experience. The guided wizard at /studio works on phones.",
     steps: [

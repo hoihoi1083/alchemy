@@ -99,7 +99,8 @@ describe("team seats contract", () => {
     const hook = read("hooks/useUserPlanEntitlements.ts");
     assert.match(hook, /effectivePlan \?\? data\.user\?\.plan/);
     const nav = read("components/nav/ProNavLink.tsx");
-    assert.match(nav, /effectivePlan \?\? data\.user\?\.plan/);
+    assert.match(nav, /useUserPlanEntitlements/);
+    assert.match(nav, /canUseProCanvas\(plan\)/);
     const account = read("components/AccountPageClient.tsx");
     assert.match(account, /teamMembership/);
     assert.match(account, /\/api\/team\/leave/);
