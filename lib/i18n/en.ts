@@ -188,7 +188,7 @@ export const en = {
 	library: {
 		title: "My library",
 		subtitle:
-			"Your saved generations and studio projects — previews and downloads use permanent copies when available.",
+			"Switch tabs to browse permanent files, resume studio projects, or open your team folder.",
 		loading: "Loading library…",
 		loadError: "Could not load your library.",
 		empty: "No projects yet. Create something in the studio and it will show up here.",
@@ -198,11 +198,13 @@ export const en = {
 		downloadVideo: "Download video",
 		openMedia: "Open",
 		delete: "Delete",
-		deleteConfirm: "Delete this project? This cannot be undone.",
+		deleteConfirm: "Delete this item? This cannot be undone.",
+		deleteCancel: "Cancel",
+		deleteConfirmBtn: "Delete",
 		deleting: "Deleting…",
 		noMedia: "No saved media yet",
 		linkExpiredHint:
-			"Older projects may still use expired temporary links — use Saved files below, or regenerate. New outputs are stored permanently.",
+			"Older projects may still use expired temporary links — open the Saved files tab, or regenerate. New outputs are stored permanently.",
 		updatedLabel: "Updated",
 		imageBadge: "Image",
 		videoBadge: "Video",
@@ -213,6 +215,13 @@ export const en = {
 		savedFilesEmpty:
 			"No saved files yet. New generations are copied here automatically.",
 		projectsTitle: "Projects",
+		projectsSubtitle:
+			"Wizard sessions you can reopen in studio — named from product, concept, or headline. Tap a card to continue.",
+		highlightNewVersion: "New version",
+		resumeChipExport: "Opens at export",
+		resumeChipScenes: "Opens at scenes",
+		resumeChipImage: "Opens at image",
+		resumeChipSetup: "Opens at setup",
 		audioBadge: "Audio",
 		voiceoverBadge: "Voiceover",
 		download: "Download",
@@ -251,9 +260,31 @@ export const en = {
 		paymentsNote: "Secure payments via Stripe — Visa, Mastercard, Apple Pay, Google Pay, Alipay & WeChat Pay",
 		rights: "All rights reserved.",
 	},
-	studio: {
+		studio: {
 		loadingTitle: "Loading your studio…",
-		loadingHint: "Restoring your project — opening the step you left off.",
+		loadingHint: "Restoring your project and opening the best matching step.",
+		hydrateErrorTitle: "Couldn’t restore this project",
+		hydrateErrorBody:
+			"We couldn’t load your saved project. Nothing was overwritten. Try again or return to the library.",
+		hydrateErrorTimeout: "Restoring took too long. Check your connection and try again.",
+		hydrateErrorLibrary: "Back to library",
+		resumeBannerTitle: "Browsing a saved project",
+		resumeBannerLibrary: "Library",
+		regenForksHint:
+			"Edits save to this project. Regenerate uses tokens and saves a new card — previous outputs stay on the old card.",
+		forkCreatedTitle: "New version created",
+		forkCreatedBody:
+			"You're on a new project card. The previous card in your library is unchanged.",
+		forkCreatedDismiss: "Got it",
+		forkCreatedLibraryLink: "View in library",
+		phaseStepper: {
+			ariaLabel: "Project steps",
+			setup: "Setup",
+			image: "Image",
+			video: "Video",
+			export: "Export",
+			hint: "Tap a completed step to review inputs and results. Regenerate creates a new project.",
+		},
 		errorTitle: "Studio hit an error",
 		errorBody:
 			"Something went wrong in the wizard. You can try again or go back to mode selection.",
@@ -590,13 +621,13 @@ export const en = {
 			imageLabel: "Image",
 			readyEdit: "Ready to edit on canvas",
 		},
-		refTitle: "Reference style. Your brand.",
+		refTitle: "Reference style. Brand + content.",
 		refBody:
-			"Paste a post or Reel you like. Alchemy reads layout, color palette, lighting, and tone — then applies that visual system to your product or concept without copying the original content, so the result still feels like your brand.",
+			"Choose a post or Reel you like. Alchemy identifies layout, color palette, lighting, and tone — then suggests how to apply it to your product or concept without copying the original content, so the result is your brand + content.",
 		refCardLabel: "Reference style",
 		refFeatureItems: [
 			{
-				title: "Read the style DNA",
+				title: "Identify style DNA",
 				body: "We extract layout, color, lighting, and tone — not the reference’s copy or product.",
 			},
 			{
@@ -791,7 +822,7 @@ export const en = {
 		pricingProCta: "Start Pro",
 		pricingCustom: "Enterprise",
 		pricingCustomHint: "3 seats · 40,000 tokens / month",
-		planBlurbFree: "Try the guided Studio workflow",
+		planBlurbFree: "Try guided image and video paths",
 		planBlurbLight: "Weekly posting for SMB owners",
 		planBlurbStandard: "Growing brands and freelancers",
 		planBlurbPro: "Professional Users and Creative Genius",
@@ -810,22 +841,22 @@ export const en = {
 		planFeaturesStandard: [
 			"8,000 tokens / month",
 			"720p video · 1K images",
-			"Campaign mode · top-ups",
+			"Platform research · Carousel · top-ups",
 		],
 		planFeaturesPro: [
 			"16,000 tokens / month",
 			"1080p video · 1K images",
-			"Campaign · 1080p templates",
+			"Storyboard · research · Carousel",
 		],
 		planFeaturesMaster: [
 			"28,000 tokens / month",
 			"2K images · Ultra canvas",
-			"Priority support",
+			"Everything in Pro · priority support",
 		],
 		planFeaturesCustom: [
 			"40,000 tokens / month",
 			"3 seats · shared pool",
-			"Team folder · Ultra canvas · 2K",
+			"Everything in Master · team folder",
 		],
 		tokensTitle: "How AI Tokens Work",
 		tokensBody:
@@ -874,6 +905,8 @@ export const en = {
 		toolBrandTitle: "Brand kit",
 		toolBrandDesc:
 			"Save your logo and brand colors once — reuse on every ad.",
+		toolLibraryTitle: "My library",
+		toolLibraryDesc: "Saved files, projects, and team folder — continue or download.",
 		toolEditTitle: "Edit image",
 		toolEditDesc: "Add headlines, logos, and polish on any still image.",
 		toolCaptionsTitle: "Captions & audio",
@@ -1379,6 +1412,9 @@ export const en = {
 		checkoutRedirecting: "Redirecting to Stripe…",
 		checkoutSuccess:
 			"Payment received. Tokens will appear in your balance within a few seconds — refresh if needed.",
+		checkoutSuccessGranted: "(+{granted} · balance {balance})",
+		checkoutSuccessBalance: "(balance {balance})",
+		compareScrollHint: "← scroll →",
 		checkoutCanceled: "Checkout canceled. No charge was made.",
 		ultraCanvasUpgradeHint:
 			"Ultra Canvas is included on the Master plan. Select Master below to unlock the node workflow.",
@@ -1485,14 +1521,13 @@ export const en = {
 		plans: {
 			free: {
 				name: "Free",
-				description: "Try the full guided workflow",
+				description: "Try guided image and video paths",
 				features: [
 					"300 tokens once at signup",
-					"Guided wizard + templates",
+					"Guided wizard + starter templates",
 					"Video up to 480p · images up to 1K",
-					"Platform research · storyboard",
-					"A/B & teaching carousel",
-					"Image → video combined flow",
+					"A/B image variants",
+					"Image-only and video-only paths",
 				],
 			},
 			light: {
@@ -1506,9 +1541,9 @@ export const en = {
 				description: "SMB owners posting weekly",
 				features: [
 					"3,000 tokens / month",
-					"Guided wizard + templates",
+					"Guided wizard + more templates",
 					"Video up to 480p · images up to 1K",
-					"Platform research · storyboard · A/B & teaching carousel",
+					"A/B image variants",
 					"Email support",
 					"Token top-ups ($10 / 1k)",
 				],
@@ -1524,10 +1559,10 @@ export const en = {
 				description: "Growing brands and freelancers",
 				features: [
 					"8,000 tokens / month",
-					"Guided wizard + templates",
+					"Guided wizard + more templates",
 					"Video up to 720p · images up to 1K",
-					"Campaign mode · multi-scene templates",
-					"Platform research · storyboard · A/B & teaching carousel",
+					"Platform research · Carousel (3–7 slides)",
+					"A/B image variants",
 					"Email support · token top-ups",
 				],
 			},
@@ -1542,10 +1577,10 @@ export const en = {
 				description: "Professional Users and Creative Genius",
 				features: [
 					"16,000 tokens / month",
-					"Guided wizard + templates",
+					"Guided wizard + full template catalog",
 					"Video up to 1080p · images up to 1K",
-					"Campaign mode · 1080p templates",
-					"Platform research · storyboard · A/B & teaching carousel",
+					"Storyboard · Platform research · Carousel",
+					"A/B image variants",
 					"Email support · token top-ups",
 				],
 			},
@@ -1560,9 +1595,9 @@ export const en = {
 				description: "Power users with high volume creative and business use",
 				features: [
 					"28,000 tokens / month",
-					"Guided wizard + templates",
+					"Guided wizard + full template catalog",
 					"Video up to 1080p · images up to 2K",
-					"Campaign mode · storyboard · A/B & teaching carousel",
+					"Storyboard · Platform research · Carousel",
 					"Ultra canvas",
 					"Email support · token top-ups · priority support",
 				],
@@ -1584,7 +1619,7 @@ export const en = {
 					"Shared token pool billed to the owner",
 					"Separate personal libraries",
 					"Video up to 1080p · images up to 2K · Ultra canvas",
-					"Campaign · storyboard · A/B & teaching carousel",
+					"Storyboard · Platform research · Carousel",
 					"Team folder — share selected files with seats",
 					"Priority support · token top-ups ($10 / 1k)",
 				],
@@ -1611,7 +1646,7 @@ export const en = {
 			},
 			{
 				feature: "Typical output",
-				free: "Try the workflow",
+				free: "Try image & video paths",
 				light: "Up to 46 images or 9 × 8s 480p",
 				standard: "Up to 123 images or 24 × 8s 480p",
 				pro: "Up to 246 images or 48 × 8s 480p",
@@ -1637,7 +1672,25 @@ export const en = {
 				custom: "Up to 1080p",
 			},
 			{
-				feature: "Research / combined / storyboard",
+				feature: "Platform research",
+				free: "—",
+				light: "—",
+				standard: "✓",
+				pro: "✓",
+				master: "✓",
+				custom: "✓",
+			},
+			{
+				feature: "Storyboard",
+				free: "—",
+				light: "—",
+				standard: "—",
+				pro: "✓",
+				master: "✓",
+				custom: "✓",
+			},
+			{
+				feature: "A/B",
 				free: "✓",
 				light: "✓",
 				standard: "✓",
@@ -1646,16 +1699,7 @@ export const en = {
 				custom: "✓",
 			},
 			{
-				feature: "A/B & teaching carousel",
-				free: "✓",
-				light: "✓",
-				standard: "✓",
-				pro: "✓",
-				master: "✓",
-				custom: "✓",
-			},
-			{
-				feature: "Campaign mode",
+				feature: "Carousel",
 				free: "—",
 				light: "—",
 				standard: "✓",
@@ -2243,10 +2287,31 @@ export const en = {
         title: "Campaign set",
         description: "3 linked posts — hero, selling points, offer",
       },
+      carousel: {
+        title: "Carousel",
+        description: "3–7 linked slides — promo series or teaching tips",
+      },
       "teaching-carousel": {
         title: "Teaching carousel",
 				description: "4–6 educational slides — cover, points, recap",
       },
+    },
+    carouselSettings: {
+      intentLabel: "Carousel type",
+      intentHint: "Promo = 3-slide sales series. Teaching = cover, tips, and recap.",
+      intentTeaching: {
+        title: "Teaching tips",
+        description: "Cover → teaching points → summary (your current setup)",
+      },
+      intentPromo: {
+        title: "Product promo",
+        description: "Hero → selling points → offer / CTA (3 slides)",
+      },
+      slideCountLabel: "How many slides?",
+      slideCountOption: "{count} slides",
+      slideCountHint:
+        "5 slides works well (cover → 3 tips → recap). More slides = deeper tutorial.",
+      promoSlideCountNote: "Product promo uses a fixed 3-slide sales arc.",
     },
     imageAspectRatioLabel: "Post size (aspect ratio)",
 		imageAspectRatioHint:
@@ -5696,7 +5761,7 @@ export const en = {
 		intakeDirectTitle: "Direct create",
 		intakeDirectDesc: "Skip research — optional reference upload only.",
 		intakeFuse: {
-			stepEyebrow: "STEP 4",
+			stepEyebrow: "STEP 3",
 			title: "Research a style, or pick a template.",
 			hint: "Research borrows layout from trending posts — rewritten for your product. Template skips research and uses a preset (or blank Direct).",
 			conceptTitle: "Research a style, or pick a template.",
@@ -5844,12 +5909,12 @@ export const en = {
 			tipNoteBody: "Change it anytime in Setup or Advanced studio.",
 		},
 		preGenerateSetup: {
-			stepEyebrow: "STEP 5",
+			stepEyebrow: "STEP 3",
 			titleBefore: "Set your",
 			titleAccent: "content and materials",
 			title: "Set your content and materials",
 			hint: "Add content details, upload product images, choose output type and style.",
-			fromIntakeTitle: "Already set from Step 4",
+			fromIntakeTitle: "Creation path set",
 			fromIntakePathResearch: "Path: Platform research",
 			fromIntakePathTemplate: "Path: Template",
 			fromIntakePathDirect: "Path: Direct (no template)",
@@ -5858,7 +5923,7 @@ export const en = {
 			fromIntakeNeedPhoto: "Still needed: product photo",
 			fromIntakeReadyMaterials: "Review materials below, then generate.",
 			browseContinueScenes: "Continue to scenes",
-			browseContinueImage: "Continue to next step",
+			browseContinueImage: "Continue to image review",
 			browseContinueHint:
 				"Edit fields above if you want, then regenerate — or continue to your existing output without spending tokens.",
 			regenerateScenes: "Regenerate scenes",
@@ -5952,7 +6017,7 @@ export const en = {
 			copyPresetHint:
 				"Edit these — they print on the image. If you leave them, we keep this preset copy (from research or a default template).",
 			copyCollapsedHint:
-				"Copy was set in Step 4. Expand to edit.",
+				"Copy was already set with your creation path. Expand to edit.",
 			hideCopyFields: "Hide copy fields",
 			conceptCopyFocus: {
 				info: {

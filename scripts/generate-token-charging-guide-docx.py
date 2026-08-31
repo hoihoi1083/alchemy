@@ -306,13 +306,13 @@ def build_doc() -> Document:
             ],
             [
                 "Storyboard video (primary)",
-                "POST /api/generate-kling-storyboard",
+                "POST /api/generate-storyboard-video",
                 "H3 or Seedance",
                 "Tries MiniMax H3 or Seedance R2V first based on balance/engine",
             ],
             [
                 "Storyboard video (Kling fallback)",
-                "POST /api/generate-kling-storyboard",
+                "POST /api/generate-storyboard-video",
                 f"{KLING_5S}–{KLING_10S} × scenes",
                 "Stitched Kling I2V per scene if H3/Seedance unavailable",
             ],
@@ -376,7 +376,7 @@ def build_doc() -> Document:
         [
             ["POST /api/generate", "Seedance", "113–553 × sec (4–15s)", "video"],
             ["POST /api/generate-minimax-h3", "MiniMax H3", "41–130 × sec", "minimax_h3"],
-            ["POST /api/generate-kling-storyboard", "H3 / Seedance / Kling", "See §5", "minimax_h3 / video / kling_storyboard_fallback"],
+            ["POST /api/generate-storyboard-video", "H3 / Seedance / Kling", "See §5", "minimax_h3 / video / kling_storyboard_fallback"],
             ["POST /api/generate-digital-presenter", "HeyGen + optional TTS", "82×sec + 13 voice", "digital_presenter"],
         ],
     )
@@ -431,7 +431,7 @@ def build_doc() -> Document:
         ("POST /api/generate-cinematic-scenes", "Image", "65×scenes", "cinematic_scenes"),
         ("POST /api/generate", "Video", "Seedance per-sec", "video"),
         ("POST /api/generate-minimax-h3", "Video", "H3 per-sec", "minimax_h3"),
-        ("POST /api/generate-kling-storyboard", "Video", "H3/Seedance/Kling", "minimax_h3 / video / kling_storyboard_fallback"),
+        ("POST /api/generate-storyboard-video", "Video", "H3/Seedance/Kling", "minimax_h3 / video / kling_storyboard_fallback"),
         ("POST /api/generate-digital-presenter", "Video", "HeyGen per-sec + voice", "digital_presenter"),
         ("POST /api/generate-music", "Audio", "82", "music"),
         ("POST /api/preview-script-voice", "Audio", "13", "voiceover"),

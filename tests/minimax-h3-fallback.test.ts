@@ -99,7 +99,7 @@ describe("MiniMax H3 Seedance fallback helpers", () => {
 
   it("storyboard stills path tries MiniMax H3 before Kling stitch", () => {
     const src = readFileSync(
-      join(process.cwd(), "app/api/generate-kling-storyboard/route.ts"),
+      join(process.cwd(), "app/api/generate-storyboard-video/route.ts"),
       "utf8",
     );
     assert.ok(src.includes("runMinimaxH3Fallback"));

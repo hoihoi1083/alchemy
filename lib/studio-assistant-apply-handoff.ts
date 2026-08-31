@@ -26,7 +26,26 @@ export async function applyStudioAssistantHandoff(
       [prev.trim(), handoff.promptExtra!.trim()].filter(Boolean).join(" | "),
     );
   }
-  if (handoff.imageOutputMode) wizard.setImageOutputMode(handoff.imageOutputMode);
+  if (handoff.imageOutputMode) {
+    const legacy =
+      handoff.imageOutputMode === "campaign"
+        ? { mode: "carousel" as const, intent: "promo" as const, slideCount: 3 }
+        : handoff.imageOutputMode === "teaching-carousel"
+          ? {
+              mode: "carousel" as const,
+              intent: "teaching" as const,
+              slideCount: handoff.referenceCarouselSlideCount ?? 5,
+            }
+          : null;
+    if (legacy) {
+      wizard.setImageOutputMode(legacy.mode);
+      wizard.setCarouselIntent(legacy.intent);
+      wizard.setReferenceCarouselSlideCount(legacy.slideCount);
+    } else {
+      wizard.setImageOutputMode(handoff.imageOutputMode);
+    }
+  }
+  if (handoff.carouselIntent) wizard.setCarouselIntent(handoff.carouselIntent);
   if (handoff.imageAspectRatio) wizard.setImageAspectRatio(handoff.imageAspectRatio);
   if (handoff.campaignTheme) wizard.setCampaignTheme(handoff.campaignTheme);
   if (handoff.workflowMode) wizard.onWorkflowModeChange(handoff.workflowMode);

@@ -73,7 +73,7 @@ describe("internal unlimited allowlist", () => {
     const plan = readFileSync(join(root, "lib/billing/get-user-plan.ts"), "utf8");
     const me = readFileSync(join(root, "app/api/me/route.ts"), "utf8");
     const kling = readFileSync(
-      join(root, "app/api/generate-kling-storyboard/route.ts"),
+      join(root, "app/api/generate-storyboard-video/route.ts"),
       "utf8",
     );
     assert.match(charge, /isInternalUnlimitedUser/);

@@ -81,6 +81,13 @@ export function ToolkitNavMenu({ variant = "light", triggerClassName }: ToolkitN
 
     return [
       {
+        id: "library",
+        href: "/library?tab=projects",
+        label: L.toolLibraryTitle,
+        description: L.toolLibraryDesc,
+        icon: "library",
+      },
+      {
         id: "brand-kit",
         href: "/brand-kit",
         label: L.toolBrandTitle,
@@ -185,6 +192,9 @@ export function ToolkitNavMobileLinks({
     <>
       <Link href="/#tools" className={itemClass} onClick={onNavigate}>
         {L.navToolkit}
+      </Link>
+      <Link href="/library?tab=projects" className={subClass} onClick={onNavigate}>
+        {L.toolLibraryTitle}
       </Link>
       <Link href="/brand-kit" className={subClass} onClick={onNavigate}>
         {L.toolBrandTitle}

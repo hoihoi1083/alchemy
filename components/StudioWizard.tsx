@@ -12,8 +12,9 @@ import { WizardMobileBar } from "@/components/studio/WizardMobileBar";
 import { StoryboardEngineChoiceDialog } from "@/components/studio/StoryboardEngineChoiceDialog";
 import { MongoRequiredBanner } from "@/components/MongoRequiredBanner";
 import { SaveStatusBadge } from "@/components/studio/SaveStatusBadge";
-import { WizardProvider, useWizard, useHydrateStatus } from "@/components/studio/WizardContext";
+import { WizardProvider, useWizard, useHydrateStatus, useHydrateError } from "@/components/studio/WizardContext";
 import { useLocale } from "@/components/LocaleProvider";
+import Link from "next/link";
 import {
   isWizardV2Enabled,
   MICRO_RESUME_DONE_KEY,
@@ -56,6 +57,7 @@ function StudioWizardContent({
     dismissStoryboardEngineChoice,
   } = useWizard();
   const hydrateStatus = useHydrateStatus();
+  const hydrateError = useHydrateError();
 
   const showMicroSetup = v2 && stepKey === "setup";
 
@@ -81,6 +83,34 @@ function StudioWizardContent({
         />
         <p className="text-base font-semibold text-slate-800">{m.studio.loadingTitle}</p>
         <p className="max-w-sm text-sm text-slate-500">{m.studio.loadingHint}</p>
+      </div>
+    );
+  }
+
+  if (hydrateStatus === "error") {
+    return (
+      <div className="flex min-h-[40vh] flex-col items-center justify-center gap-4 px-4 py-16 text-center">
+        <p className="text-base font-semibold text-slate-800">{m.studio.hydrateErrorTitle}</p>
+        <p className="max-w-sm text-sm text-slate-500">
+          {hydrateError === "timeout"
+            ? m.studio.hydrateErrorTimeout
+            : m.studio.hydrateErrorBody}
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-slate-800"
+          >
+            {m.studio.errorRetry}
+          </button>
+          <Link
+            href="/library?tab=projects"
+            className="rounded-full border border-slate-300 px-5 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            {m.studio.hydrateErrorLibrary}
+          </Link>
+        </div>
       </div>
     );
   }

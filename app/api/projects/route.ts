@@ -3,7 +3,7 @@ import { requireAppUser } from "@/lib/require-app-user";
 import { isMongoReady, mongoRequiredErrorMessage } from "@/lib/mongodb-production";
 import { createProject, listProjectsForUser } from "@/lib/db/projects";
 import type { ProjectSnapshot } from "@/lib/project-snapshot";
-import { EMPTY_PROJECT_SNAPSHOT } from "@/lib/project-snapshot";
+import { EMPTY_PROJECT_SNAPSHOT, projectDisplayName } from "@/lib/project-snapshot";
 import { isPromotionMode, type PromotionMode } from "@/lib/promotion-mode";
 
 export const runtime = "nodejs";
@@ -55,8 +55,8 @@ export async function POST(request: Request) {
   const project = await createProject({
     clerkId: auth.user.userId,
     name:
-      body?.name ??
-      (snapshot.inputs.product || snapshot.inputs.headline || "New project"),
+      body?.name?.trim() ||
+      projectDisplayName(snapshot.inputs, "New project"),
     snapshot,
   });
 

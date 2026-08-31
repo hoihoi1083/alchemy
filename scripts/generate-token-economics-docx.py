@@ -472,7 +472,7 @@ def build_doc() -> Document:
         "lib/billing/entitlements.ts — max video/image resolution per plan",
         "lib/db/types.ts — UserPlan, creditBalance, signupGrantAt, Stripe fields",
         "app/api/generate-image/route.ts, app/api/generate/route.ts — primary deduct paths",
-        "app/api/generate-kling-storyboard/route.ts — storyboard video billing",
+        "app/api/generate-storyboard-video/route.ts — storyboard video billing",
         "tests/billing-token-costs.test.ts — economics unit tests",
     ]
     for loc in locs:

@@ -13,9 +13,27 @@ import {
   storePromotionMode,
   studioHref,
 } from "@/lib/promotion-mode";
-import { ACTIVE_PROJECT_STORAGE_KEY } from "@/lib/wizard-project-snapshot";
+import {
+  ACTIVE_PROJECT_STORAGE_KEY,
+  projectResumeSurfaceLabel,
+} from "@/lib/wizard-project-snapshot";
+import { markBrowseSession, resolveLibraryHighlightProjectId } from "@/lib/project-browse";
 
 const ACTIVE_PROJECT_KEY = ACTIVE_PROJECT_STORAGE_KEY;
+const LIBRARY_TAB_KEY = "alchemy-library-tab";
+
+type LibraryTab = "files" | "projects" | "team";
+
+function readInitialLibraryTab(): LibraryTab {
+  if (typeof window === "undefined") return "projects";
+  const fromUrl = new URLSearchParams(window.location.search).get("tab");
+  if (fromUrl === "files" || fromUrl === "projects" || fromUrl === "team") {
+    return fromUrl;
+  }
+  const raw = window.sessionStorage.getItem(LIBRARY_TAB_KEY);
+  if (raw === "files" || raw === "projects" || raw === "team") return raw;
+  return "projects";
+}
 
 type ProjectRow = {
   id: string;
@@ -196,6 +214,7 @@ export function LibraryPageClient() {
   const [assets, setAssets] = useState<AssetRow[]>([]);
   const [teamAssets, setTeamAssets] = useState<TeamAssetRow[]>([]);
   const [teamFolderAvailable, setTeamFolderAvailable] = useState(false);
+  const [activeTab, setActiveTab] = useState<LibraryTab>("projects");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -203,6 +222,45 @@ export function LibraryPageClient() {
   const [pendingDelete, setPendingDelete] = useState<
     { type: "project" | "asset"; id: string } | null
   >(null);
+  const [highlightProjectId, setHighlightProjectId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setActiveTab(readInitialLibraryTab());
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const id = resolveLibraryHighlightProjectId(params.get("highlight"));
+    if (id) {
+      setHighlightProjectId(id);
+      params.delete("highlight");
+      const qs = params.toString();
+      const next = qs ? `${window.location.pathname}?${qs}` : window.location.pathname;
+      window.history.replaceState({}, "", next);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!highlightProjectId) return;
+    const t = window.setTimeout(() => setHighlightProjectId(null), 12000);
+    return () => window.clearTimeout(t);
+  }, [highlightProjectId]);
+
+  useEffect(() => {
+    if (activeTab === "team" && !teamFolderAvailable && !loading) {
+      setActiveTab("projects");
+      window.sessionStorage.setItem(LIBRARY_TAB_KEY, "projects");
+    }
+  }, [activeTab, teamFolderAvailable, loading]);
+
+  function selectTab(tab: LibraryTab) {
+    if (tab === "team" && !teamFolderAvailable) return;
+    setActiveTab(tab);
+    window.sessionStorage.setItem(LIBRARY_TAB_KEY, tab);
+    const url = new URL(window.location.href);
+    url.searchParams.set("tab", tab);
+    window.history.replaceState({}, "", url.pathname + url.search);
+  }
 
   const load = useCallback(async () => {
     setError(null);
@@ -272,12 +330,21 @@ export function LibraryPageClient() {
 
   function openInStudio(projectId: string, mode: string) {
     window.localStorage.setItem(ACTIVE_PROJECT_KEY, projectId);
+    markBrowseSession(projectId);
+    const projectQs = `project=${encodeURIComponent(projectId)}&from=library`;
     if (isPromotionMode(mode)) {
       storePromotionMode(mode);
-      window.location.href = `/studio?mode=${mode}`;
+      window.location.href = `/studio?mode=${mode}&${projectQs}`;
       return;
     }
-    window.location.href = "/studio";
+    window.location.href = `/studio?${projectQs}`;
+  }
+
+  function resumeChipLabel(surface: "export" | "scenes" | "image" | "setup"): string {
+    if (surface === "export") return L.resumeChipExport;
+    if (surface === "scenes") return L.resumeChipScenes;
+    if (surface === "image") return L.resumeChipImage;
+    return L.resumeChipSetup;
   }
   async function confirmPendingDelete() {
     if (!pendingDelete) return;
@@ -365,9 +432,58 @@ export function LibraryPageClient() {
           <p className="mt-10 text-sm text-slate-500">{L.loading}</p>
         ) : (
           <>
-            <section className="mt-10">
-              <h2 className="text-xl font-semibold tracking-tight">{L.savedFilesTitle}</h2>
-              <p className="mt-1 max-w-2xl text-sm text-slate-600">{L.savedFilesSubtitle}</p>
+            <div
+              className="mt-8 flex flex-wrap gap-1 border-b border-slate-200"
+              role="tablist"
+              aria-label={L.title}
+            >
+              {(
+                [
+                  { id: "files" as const, label: L.savedFilesTitle, count: assets.length },
+                  { id: "projects" as const, label: L.projectsTitle, count: projects.length },
+                  ...(teamFolderAvailable
+                    ? [
+                        {
+                          id: "team" as const,
+                          label: L.teamFolderTitle,
+                          count: teamAssets.length,
+                        },
+                      ]
+                    : []),
+                ] as const
+              ).map((tab) => {
+                const selected = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={selected}
+                    onClick={() => selectTab(tab.id)}
+                    className={
+                      selected
+                        ? "-mb-px border-b-2 border-slate-900 px-3 py-2.5 text-sm font-semibold text-slate-900"
+                        : "-mb-px border-b-2 border-transparent px-3 py-2.5 text-sm font-medium text-slate-500 hover:text-slate-800"
+                    }
+                  >
+                    {tab.label}
+                    <span
+                      className={
+                        selected
+                          ? "ml-1.5 text-xs font-medium text-slate-500"
+                          : "ml-1.5 text-xs font-medium text-slate-400"
+                      }
+                    >
+                      {tab.count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {activeTab === "files" ? (
+            <section className="mt-8" role="tabpanel">
+              <p className="max-w-2xl text-sm text-slate-600">{L.savedFilesSubtitle}</p>
               {assets.length === 0 ? (
                 <p className="mt-6 rounded-xl border border-dashed border-slate-200 px-5 py-8 text-center text-sm text-slate-500">
                   {L.savedFilesEmpty}
@@ -470,11 +586,11 @@ export function LibraryPageClient() {
                 </ul>
               )}
             </section>
+            ) : null}
 
-            {teamFolderAvailable ? (
-              <section className="mt-14">
-                <h2 className="text-xl font-semibold tracking-tight">{L.teamFolderTitle}</h2>
-                <p className="mt-1 max-w-2xl text-sm text-slate-600">{L.teamFolderSubtitle}</p>
+            {activeTab === "team" && teamFolderAvailable ? (
+              <section className="mt-8" role="tabpanel">
+                <p className="max-w-2xl text-sm text-slate-600">{L.teamFolderSubtitle}</p>
                 {teamAssets.length === 0 ? (
                   <p className="mt-6 rounded-xl border border-dashed border-slate-200 px-5 py-8 text-center text-sm text-slate-500">
                     {L.teamFolderEmpty}
@@ -546,8 +662,9 @@ export function LibraryPageClient() {
               </section>
             ) : null}
 
-            <section className="mt-14">
-              <h2 className="text-xl font-semibold tracking-tight">{L.projectsTitle}</h2>
+            {activeTab === "projects" ? (
+            <section className="mt-8" role="tabpanel">
+              <p className="max-w-2xl text-sm text-slate-600">{L.projectsSubtitle}</p>
               {projects.length === 0 ? (
                 <div className="mt-6 rounded-2xl border border-dashed border-slate-200 px-6 py-14 text-center">
                   <p className="text-sm text-slate-600">{L.empty}</p>
@@ -564,7 +681,23 @@ export function LibraryPageClient() {
               const media = resolveProjectMedia(p, assets);
               const hasImage = isMediaUrl(media.imageUrl);
               const hasVideo = isMediaUrl(media.videoUrl);
-              const thumb = hasImage ? media.imageUrl : hasVideo ? media.videoUrl : null;
+              const hasScenes = assets.some(
+                (a) => a.projectId === p.id && a.kind === "image" && (a.name ?? "").includes("scene"),
+              );
+              const resumeSurface = projectResumeSurfaceLabel({
+                videoUrl: hasVideo ? media.videoUrl : null,
+                imageUrl: hasImage ? media.imageUrl : null,
+                hasScenes,
+              });
+              // Prefer video thumb when export is the reopen target.
+              const thumb =
+                hasVideo && resumeSurface === "export"
+                  ? media.videoUrl
+                  : hasImage
+                    ? media.imageUrl
+                    : hasVideo
+                      ? media.videoUrl
+                      : null;
               const safeName = (p.name || "project").replace(/[^\w.-]+/g, "_").slice(0, 48);
               const downloadImageUrl =
                 assets.find((a) => a.projectId === p.id && a.kind === "image")?.downloadUrl ??
@@ -576,19 +709,35 @@ export function LibraryPageClient() {
               return (
                 <li
                   key={p.id}
-                  className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white"
+                  className={`flex flex-col overflow-hidden rounded-2xl border bg-white transition hover:shadow-sm ${
+                    highlightProjectId === p.id
+                      ? "border-violet-500 ring-2 ring-violet-300 ring-offset-2"
+                      : "border-slate-200 hover:border-slate-300"
+                  }`}
                 >
-                  <div className="relative aspect-[4/5] bg-slate-100">
-                    {hasImage ? (
-                      <MediaThumb src={media.imageUrl!} kind="image" fallbackLabel={L.noMedia} />
-                    ) : hasVideo ? (
-                      <MediaThumb src={media.videoUrl!} kind="video" fallbackLabel={L.noMedia} />
+                  <button
+                    type="button"
+                    onClick={() => openInStudio(p.id, p.promotionMode)}
+                    className="relative aspect-[4/5] w-full bg-slate-100 text-left"
+                  >
+                    {thumb && isMediaUrl(thumb) && (hasVideo && thumb === media.videoUrl) ? (
+                      <MediaThumb src={thumb} kind="video" fallbackLabel={L.noMedia} />
+                    ) : thumb && isMediaUrl(thumb) ? (
+                      <MediaThumb src={thumb} kind="image" fallbackLabel={L.noMedia} />
                     ) : (
                       <div className="flex h-full items-center justify-center px-4 text-center text-sm text-slate-400">
                         {L.noMedia}
                       </div>
                     )}
                     <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
+                      {highlightProjectId === p.id ? (
+                        <span className="rounded-full bg-violet-600 px-2 py-0.5 text-[10px] font-medium text-white">
+                          {L.highlightNewVersion}
+                        </span>
+                      ) : null}
+                      <span className="rounded-full bg-violet-600/90 px-2 py-0.5 text-[10px] font-medium text-white">
+                        {resumeChipLabel(resumeSurface)}
+                      </span>
                       {hasImage ? (
                         <span className="rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-medium text-slate-700">
                           {L.imageBadge}
@@ -600,7 +749,10 @@ export function LibraryPageClient() {
                         </span>
                       ) : null}
                     </div>
-                  </div>
+                    <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/50 to-transparent px-3 pb-3 pt-8 text-xs font-medium text-white">
+                      {L.openStudio}
+                    </span>
+                  </button>
 
                   <div className="flex flex-1 flex-col gap-3 p-4">
                     <div>
@@ -630,7 +782,7 @@ export function LibraryPageClient() {
                       ) : null}
                       {hasImage && downloadImageUrl ? (
                         <Link
-                          href={`/edit-image?image=${encodeURIComponent(downloadImageUrl)}&returnTo=${encodeURIComponent("/library")}`}
+                          href={`/edit-image?image=${encodeURIComponent(downloadImageUrl)}&returnTo=${encodeURIComponent("/library?tab=projects")}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="rounded-full bg-cyan-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-cyan-500"
@@ -682,6 +834,7 @@ export function LibraryPageClient() {
           </ul>
               )}
             </section>
+            ) : null}
           </>
         )}
       </div>
@@ -695,7 +848,7 @@ export function LibraryPageClient() {
         >
           <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-5 shadow-lg">
             <p id="library-delete-title" className="text-sm text-slate-800">
-              {L.deleteConfirm}
+                {L.deleteConfirm}
             </p>
             <div className="mt-5 flex justify-end gap-2">
               <button
@@ -703,14 +856,14 @@ export function LibraryPageClient() {
                 onClick={() => setPendingDelete(null)}
                 className="rounded-full border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
               >
-                Cancel
+                {L.deleteCancel}
               </button>
               <button
                 type="button"
                 onClick={() => void confirmPendingDelete()}
                 className="rounded-full bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
               >
-                Confirm
+                {L.deleteConfirmBtn}
               </button>
             </div>
           </div>

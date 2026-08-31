@@ -89,7 +89,7 @@
     "wait.video_generate",
     "done.export"
   ],
-  "outputFormatChoices": ["single", "ab", "campaign", "teaching-carousel"],
+  "outputFormatChoices": ["single", "ab", "carousel"],
   "paths": {
     "product_image_research": {
       "id": "product_image_research",

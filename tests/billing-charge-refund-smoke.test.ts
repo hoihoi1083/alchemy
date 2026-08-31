@@ -105,8 +105,8 @@ describe("billing smoke — invalid before charge (source contract)", () => {
     assert.match(src, /billing_refund_null|null_user/);
   });
 
-  it("generate-kling-storyboard: counts images and charges before fal upload", () => {
-    const src = readRoute("app/api/generate-kling-storyboard/route.ts");
+  it("generate-storyboard-video: counts images and charges before fal upload", () => {
+    const src = readRoute("app/api/generate-storyboard-video/route.ts");
     const countAt = firstIndex(src, /countKlingFallbackImageSources\(/);
     const chargeAt = firstIndex(src, /await chargeTokens\(/);
     const uploadAt = firstIndex(src, /await collectKlingFallbackImageUrls\(/);
@@ -125,7 +125,7 @@ describe("billing smoke — fail → refund (source + wallet)", () => {
     "app/api/generate-storyboard-images/route.ts",
     "app/api/add-bgm/route.ts",
     "app/api/dub-script-voice/route.ts",
-    "app/api/generate-kling-storyboard/route.ts",
+    "app/api/generate-storyboard-video/route.ts",
     "app/api/postprocess/route.ts",
     "app/api/analyze-research-reel/route.ts",
   ];

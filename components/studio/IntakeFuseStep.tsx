@@ -26,6 +26,12 @@ import type { VideoSubpath } from "@/lib/wizard-micro-steps.types";
 import { useState } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 import { ContentResearchPanel } from "@/components/content-research/ContentResearchPanel";
+import { PlanGateDialog } from "@/components/billing/PlanGateDialog";
+import { useUserPlanEntitlements } from "@/hooks/useUserPlanEntitlements";
+import {
+  canUsePlatformResearch,
+  minPlanForFeature,
+} from "@/lib/billing/plan-gates";
 
 type TabId = IntakeTabId;
 
@@ -322,6 +328,9 @@ export function IntakeFuseStep({
   const { m } = useLocale();
   const wizard = useWizard();
   const fuse = m.microWizard.intakeFuse;
+  const { plan } = useUserPlanEntitlements();
+  const researchAllowed = canUsePlatformResearch(plan);
+  const [researchGateOpen, setResearchGateOpen] = useState(false);
   const [researchNote, setResearchNote] = useState<string | null>(null);
   // Controlled from micro ctx so Back/remount stays in sync with Continue gate.
   const templateMode = selectedTemplateMode;
@@ -392,6 +401,10 @@ export function IntakeFuseStep({
   function selectTab(next: TabId) {
     // Re-clicking the active tab must not wipe adapted copy / media.
     if (activeTab === next) return;
+    if (next === "research" && !researchAllowed) {
+      setResearchGateOpen(true);
+      return;
+    }
     const switchingAway = activeTab != null && activeTab !== next;
     const hasResearchPick = Boolean(wizard.pendingContentResearchPick);
     const hasTemplatePick = templateMode != null;
@@ -481,11 +494,19 @@ export function IntakeFuseStep({
                   type="button"
                   role="tab"
                   aria-selected={activeTab === "research"}
-                  className={`if-tab${activeTab === "research" ? " is-on" : ""}`}
+                  aria-disabled={!researchAllowed}
+                  className={`if-tab${activeTab === "research" ? " is-on" : ""}${
+                    !researchAllowed ? " opacity-70" : ""
+                  }`}
                   onClick={() => selectTab("research")}
                 >
                   <TabIcon kind="research" />
                   {fuse.tabResearch}
+                  {!researchAllowed ? (
+                    <span className="ml-1 text-[10px] font-semibold text-amber-800">
+                      {m.pricing.plans.standard.name}+
+                    </span>
+                  ) : null}
                 </button>
                 <button
                   type="button"
@@ -694,11 +715,15 @@ export function IntakeFuseStep({
           </div>
         </div>
       </div>
+      <PlanGateDialog
+        open={researchGateOpen}
+        onClose={() => setResearchGateOpen(false)}
+        requiredPlan={minPlanForFeature("platform_research")}
+        featureLabel={fuse.tabResearch}
+      />
     </div>
   );
 }
-
-/** Helpers for MicroStepRenderer tab wiring. */
 export function intakeTabFromPending(args: {
   isConcept: boolean;
   pendingIntakePath?: IntakePath;

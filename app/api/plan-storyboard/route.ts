@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { getUserPlan } from "@/lib/billing/get-user-plan";
+import { planMeetsMinimum } from "@/lib/billing/plan-gates";
 import { requireAppUser } from "@/lib/require-app-user";
 import { assertFreeDeepSeekQuota } from "@/lib/rate-limit-deepseek";
 import type { PromptMarket, SubjectFraming } from "@/lib/prompt-variables";
@@ -21,6 +23,18 @@ export const maxDuration = 90;
 export async function POST(request: Request) {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
+  const userPlan = await getUserPlan(auth.user.userId);
+  if (!planMeetsMinimum(userPlan, "pro")) {
+    return NextResponse.json(
+      {
+        error: "Storyboard requires Pro plan or above.",
+        code: "PLAN_ENTITLEMENT",
+        requiredPlan: "pro",
+        hint: "storyboard_needs_pro",
+      },
+      { status: 403 },
+    );
+  }
   const quota = await assertFreeDeepSeekQuota(auth.user.userId);
   if (!quota.ok) return quota.response;
 

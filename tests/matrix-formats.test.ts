@@ -11,17 +11,24 @@ const EXPECTED: Record<
   {
     workflow?: "image-only" | "video-only";
     output: string;
+    carouselIntent?: "promo" | "teaching";
     hasImages?: boolean;
     hasVideo?: boolean;
   }
 > = {
   "teaching-carousel": {
     workflow: "image-only",
-    output: "teaching-carousel",
+    output: "carousel",
+    carouselIntent: "teaching" as const,
     hasImages: true,
   },
   "single-image": { workflow: "image-only", output: "single", hasImages: true },
-  campaign: { workflow: "image-only", output: "campaign", hasImages: true },
+  campaign: {
+    workflow: "image-only",
+    output: "carousel",
+    carouselIntent: "promo" as const,
+    hasImages: true,
+  },
   reel: { workflow: "video-only", output: "single", hasVideo: true },
   "model-wear": { workflow: "image-only", output: "single", hasImages: true },
 };
@@ -36,6 +43,9 @@ describe("all angle formats — handoff wiring", () => {
 
       if (exp.workflow) assert.equal(handoff.workflowMode, exp.workflow);
       assert.equal(handoff.imageOutputMode, exp.output);
+      if (exp.carouselIntent) {
+        assert.equal(handoff.carouselIntent, exp.carouselIntent);
+      }
       assert.equal(handoff.product, PROMOTE_PRODUCT);
 
       if (exp.hasImages) {

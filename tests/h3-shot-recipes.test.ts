@@ -657,7 +657,7 @@ describe("H3 shot recipe wizard wiring", () => {
     assert.match(fn, /H3_LOGO_MG_NEGATIVE/);
     assert.match(fn, /reference_images/);
     assert.match(fn, /mode !== "neon-on-real"/);
-    assert.doesNotMatch(fn, /generate-kling-storyboard/);
+    assert.doesNotMatch(fn, /generate-storyboard-video|generate-kling-storyboard/);
     const genStart = wizard.indexOf("async function generateVideo");
     const genGate = wizard.slice(
       genStart,

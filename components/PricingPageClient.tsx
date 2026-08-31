@@ -274,12 +274,14 @@ export function PricingPageClient() {
         if (granted > 0) {
           setConfirmNote(
             bal != null
-              ? `${p.checkoutSuccess} (+${granted} · balance ${bal})`
+              ? `${p.checkoutSuccess} ${p.checkoutSuccessGranted.replace("{granted}", String(granted)).replace("{balance}", String(bal))}`
               : p.checkoutSuccess,
           );
         } else {
           setConfirmNote(
-            bal != null ? `${p.checkoutSuccess} (balance ${bal})` : p.checkoutSuccess,
+            bal != null
+              ? `${p.checkoutSuccess} ${p.checkoutSuccessBalance.replace("{balance}", String(bal))}`
+              : p.checkoutSuccess,
           );
         }
       } catch {
@@ -293,6 +295,8 @@ export function PricingPageClient() {
     checkoutSessionId,
     p.checkoutError,
     p.checkoutSuccess,
+    p.checkoutSuccessGranted,
+    p.checkoutSuccessBalance,
     p.subscriptionUpgraded,
     p.subscriptionDowngradeScheduled,
     p.plans.standard.name,
@@ -839,6 +843,7 @@ export function PricingPageClient() {
             <Reveal delayMs={80} distance={28} scaleFrom={0.98}>
               <PricingComparisonSection
                 compareFeature={p.compareFeature}
+                compareScrollHint={p.compareScrollHint}
                 plans={p.plans}
                 rows={p.comparisonRows}
               />

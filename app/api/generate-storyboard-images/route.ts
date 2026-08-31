@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { chargeTokens, refundTokens } from "@/lib/billing/charge";
 import { clampImageResolution } from "@/lib/billing/entitlements";
 import { getUserPlan } from "@/lib/billing/get-user-plan";
+import { planMeetsMinimum } from "@/lib/billing/plan-gates";
 import { estimateImageTokens, TOKEN_COST } from "@/lib/billing/token-costs";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import { parseStoryboardSceneCount } from "@/lib/ad-pack-preferences";
@@ -102,6 +103,18 @@ function parseDurationSec(raw: string): number {
 export async function POST(request: Request) {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
+  const userPlan = await getUserPlan(auth.user.userId);
+  if (!planMeetsMinimum(userPlan, "pro")) {
+    return NextResponse.json(
+      {
+        error: "Storyboard requires Pro plan or above.",
+        code: "PLAN_ENTITLEMENT",
+        requiredPlan: "pro",
+        hint: "storyboard_needs_pro",
+      },
+      { status: 403 },
+    );
+  }
 
   const key = process.env.FAL_KEY?.trim();
   if (!key) {

@@ -94,6 +94,7 @@ function CompareValue({
 
 type PricingComparisonSectionProps = {
   compareFeature: string;
+  compareScrollHint?: string;
   plans: Record<ComparePlanKey, { name: string }>;
   rows: readonly ComparisonRow[];
 };
@@ -101,6 +102,7 @@ type PricingComparisonSectionProps = {
 /** Desktop table + mobile plan picker — shared by /pricing. */
 export function PricingComparisonSection({
   compareFeature,
+  compareScrollHint = "← scroll →",
   plans,
   rows,
 }: PricingComparisonSectionProps) {
@@ -237,7 +239,7 @@ export function PricingComparisonSection({
         </table>
       </div>
       <p className="mt-2 hidden text-center text-[11px] text-slate-400 md:block lg:hidden">
-        ← scroll →
+        {compareScrollHint}
       </p>
     </div>
   );

@@ -1,6 +1,7 @@
 import type { PromotionMode } from "@/lib/promotion-mode";
 import { storePromotionMode } from "@/lib/promotion-mode";
 import type { ImageAspectRatio } from "@/lib/image-aspect-ratio";
+import type { CarouselIntent } from "@/lib/carousel-output";
 import type { ImageOutputMode } from "@/lib/image-output-mode";
 import type { VisualStyleId } from "@/lib/visual-styles";
 import type { WorkflowMode } from "@/lib/workflow-mode";
@@ -32,6 +33,7 @@ export type StudioAssistantHandoff = {
   campaignGoal?: string;
   assistantNote?: string;
   imageOutputMode?: ImageOutputMode;
+  carouselIntent?: CarouselIntent;
   visualStyleId?: VisualStyleId;
   workflowMode?: WorkflowMode;
   imageAspectRatio?: ImageAspectRatio;

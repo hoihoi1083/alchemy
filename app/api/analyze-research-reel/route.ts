@@ -1,6 +1,8 @@
 import { fal } from "@fal-ai/client";
 import { NextResponse } from "next/server";
 import { chargeTokens, refundTokens } from "@/lib/billing/charge";
+import { getUserPlan } from "@/lib/billing/get-user-plan";
+import { planMeetsMinimum } from "@/lib/billing/plan-gates";
 import { TOKEN_COST } from "@/lib/billing/token-costs";
 import { requireAppUser } from "@/lib/require-app-user";
 import { analyzeResearchReelFromVideo } from "@/lib/reel-video-analysis";
@@ -27,6 +29,8 @@ export const maxDuration = 300;
 export async function POST(request: Request) {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
+  const userPlan = await getUserPlan(auth.user.userId);
+  const canPlanStoryboard = planMeetsMinimum(userPlan, "pro");
 
   const key = process.env.FAL_KEY?.trim();
   if (!key) {
@@ -100,8 +104,10 @@ export async function POST(request: Request) {
     Number.isFinite(outputDurationRaw) && outputDurationRaw >= 4 && outputDurationRaw <= 15
       ? Math.round(outputDurationRaw)
       : 8;
-  const planStoryboard =
+  const wantStoryboardPlan =
     String(formData.get("plan_storyboard") ?? "true").trim() !== "false";
+  // Storyboard planning is Pro+ (same as /api/plan-storyboard). Reel analysis itself stays open.
+  const planStoryboard = wantStoryboardPlan && canPlanStoryboard;
 
   // fal vision (~image-class) + DeepSeek plan(s). Bill before vendor spend.
   const tokenCost =
@@ -109,6 +115,7 @@ export async function POST(request: Request) {
   const charged = await chargeTokens(auth.user.userId, tokenCost, {
     kind: "research_reel",
     planStoryboard,
+    storyboardPlanSkippedForPlan: wantStoryboardPlan && !canPlanStoryboard,
   });
   if ("error" in charged) return charged.error;
 
@@ -146,7 +153,9 @@ export async function POST(request: Request) {
       | Awaited<ReturnType<typeof planVideoStoryboardFromReelAnalysis>>
       | undefined;
     let storyboardPlanError: string | undefined;
-    if (planStoryboard) {
+    if (wantStoryboardPlan && !canPlanStoryboard) {
+      storyboardPlanError = "Storyboard requires Pro plan or above.";
+    } else if (planStoryboard) {
       try {
         storyboardPlan = await planVideoStoryboardFromReelAnalysis({
           analysis: result.analysis,

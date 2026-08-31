@@ -49,6 +49,14 @@ function StudioPageContent() {
     const fromUrl = searchParams.get("mode");
     const template = searchParams.get("template");
     const recipe = searchParams.get("recipe");
+    const project = searchParams.get("project")?.trim();
+    if (project) {
+      try {
+        window.localStorage.setItem("alchemy-active-project-id", project);
+      } catch {
+        /* ignore */
+      }
+    }
 
     if (template && isTemplateId(template)) {
       // Wait for /api/me so Master users aren't falsely gated as Free.

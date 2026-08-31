@@ -7,6 +7,7 @@ import type { ContentResearchPlan } from "@/lib/content-research-types";
 import type { ImageCreativeMode, VideoCreativeMode } from "@/lib/creative-workflow";
 import type { ImageAspectRatio } from "@/lib/image-aspect-ratio";
 import type { ImageInputMode } from "@/lib/image-input-mode";
+import type { CarouselIntent } from "@/lib/carousel-output";
 import type { ImageOutputMode } from "@/lib/image-output-mode";
 import type { PromotionMode } from "@/lib/promotion-mode";
 import type { PromptMarket, SubjectFraming } from "@/lib/prompt-variables";
@@ -16,6 +17,13 @@ import type { UserReferenceBrief } from "@/lib/user-reference-brief";
 import type { VideoStoryboardPlan } from "@/lib/video-storyboard-types";
 import type { VisualStyleId } from "@/lib/visual-styles";
 import type { WorkflowMode, WorkflowStepKey } from "@/lib/workflow-mode";
+import type {
+  CombinedStyle,
+  ConceptSource,
+  IntakePath,
+  MicroStepId,
+  VideoSubpath,
+} from "@/lib/wizard-micro-steps.types";
 
 /** Serializable wizard state — no File blobs; URLs only for media. */
 export type ProjectInputs = {
@@ -46,6 +54,7 @@ export type ProjectSettings = {
   imageCreativeMode: ImageCreativeMode;
   videoCreativeMode: VideoCreativeMode;
   imageOutputMode: ImageOutputMode;
+  carouselIntent?: CarouselIntent;
   imageAspectRatio: ImageAspectRatio;
   imageInputMode: ImageInputMode;
   stepKey: WorkflowStepKey;
@@ -88,6 +97,16 @@ export type ProjectOutputs = {
   captionLines: CaptionLine[];
 };
 
+/** Micro-wizard cursor so Library → Studio can reopen the same surface. */
+export type ProjectResumeCursor = {
+  microStepId?: MicroStepId | null;
+  intakePath?: IntakePath | null;
+  intakeTemplateMode?: "template" | "direct" | null;
+  conceptSource?: ConceptSource | null;
+  videoSubpath?: VideoSubpath | null;
+  combinedStyle?: CombinedStyle | null;
+};
+
 export type ProjectSnapshot = {
   version: 1;
   inputs: ProjectInputs;
@@ -96,7 +115,26 @@ export type ProjectSnapshot = {
   plans: ProjectPlans;
   media: ProjectMediaUrls;
   outputs: ProjectOutputs;
+  /** Optional — older projects omit this. */
+  resume?: ProjectResumeCursor | null;
 };
+
+/**
+ * Human label for library / autosave.
+ * Product first, then concept idea (concept mode), then headline.
+ */
+export function projectDisplayName(
+  inputs: Pick<ProjectInputs, "product" | "conceptIdea" | "headline"> | null | undefined,
+  fallback = "Untitled project",
+): string {
+  const product = inputs?.product?.trim() ?? "";
+  if (product) return product;
+  const concept = inputs?.conceptIdea?.trim() ?? "";
+  if (concept) return concept;
+  const headline = inputs?.headline?.trim() ?? "";
+  if (headline) return headline;
+  return fallback;
+}
 
 export const EMPTY_PROJECT_SNAPSHOT = (promotionMode: PromotionMode): ProjectSnapshot => ({
   version: 1,
@@ -154,4 +192,5 @@ export const EMPTY_PROJECT_SNAPSHOT = (promotionMode: PromotionMode): ProjectSna
     carouselSlideUrls: [],
   },
   outputs: { captionLines: [] },
+  resume: null,
 });

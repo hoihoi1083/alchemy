@@ -240,7 +240,7 @@ export function imageCountTokenCost(numImages?: number | null): number {
 }
 
 export function estimateTeachingCarouselTokens(slideCount: number): number {
-  const n = Math.min(6, Math.max(4, Math.round(slideCount) || 5));
+  const n = Math.min(7, Math.max(3, Math.round(slideCount) || 5));
   return TOKEN_COST.plan + TOKEN_COST.image * n;
 }
 

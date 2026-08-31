@@ -13,7 +13,15 @@ import {
   clearProjectResumeHint,
   consumeProjectResumeHint,
   peekProjectResumeHint,
+  rememberLastMicroStep,
+  resumeTargetReady,
+  resolveResumeStepIndex,
+  WIZARD_V2_CONTEXT_KEY,
 } from "@/lib/wizard-project-snapshot";
+import {
+  preferredMicroStepForPhase,
+  type ProjectPhase,
+} from "@/lib/project-browse";
 import {
   canProceedMicroStep,
   defaultMicroContext,
@@ -48,7 +56,7 @@ import {
 import { applyContentAngleToWizard } from "@/lib/content-research-apply";
 import { enrichAngleVideoFromPlan } from "@/lib/content-research-angle-video";
 
-const CTX_KEY = "wizardV2Context";
+const CTX_KEY = WIZARD_V2_CONTEXT_KEY;
 
 function readStoredContext(): Partial<MicroWizardContext> {
   if (typeof window === "undefined") return {};
@@ -172,25 +180,19 @@ function bootstrapMicroFromResume(
   const hasVideo = Boolean(wizard.videoUrl);
   const hasImage = Boolean(wizard.imageUrl || wizard.campaignSlides.length > 0);
   const target = hint.targetMicroStep;
-  const readyForTarget =
-    !target ||
-    (target === "image.review" && hasScenes) ||
-    (target === "done.export" && hasVideo) ||
-    (target === "setup.pre_video" && (hasImage || hasScenes));
+  const mediaState = { hasScenes, hasVideo, hasImage };
+  const readyForTarget = resumeTargetReady(target, mediaState);
 
   if (!readyForTarget || !target) {
     return { ctx, stepIndex: 0, resumeApplied: !target };
   }
 
   const steps = resolveMicroSteps(ctx, wizardStateSnapshot(wizard));
-  let idx = steps.findIndex((s) => s.id === target);
-  if (idx < 0 && hasScenes) {
-    idx = steps.findIndex((s) => s.id === "image.review");
-  }
+  const idx = resolveResumeStepIndex(steps, target, mediaState);
   consumeProjectResumeHint();
   return {
     ctx,
-    stepIndex: idx >= 0 ? idx : 0,
+    stepIndex: idx,
     resumeApplied: true,
   };
 }
@@ -249,11 +251,8 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     const hasScenes = wizard.storyboardScenes.length > 0;
     const hasVideo = Boolean(wizard.videoUrl);
     const hasImage = Boolean(wizard.imageUrl || wizard.campaignSlides.length > 0);
-    const readyForTarget =
-      !hint.targetMicroStep ||
-      (hint.targetMicroStep === "image.review" && hasScenes) ||
-      (hint.targetMicroStep === "done.export" && hasVideo) ||
-      (hint.targetMicroStep === "setup.pre_video" && (hasImage || hasScenes));
+    const mediaState = { hasScenes, hasVideo, hasImage };
+    const readyForTarget = resumeTargetReady(hint.targetMicroStep, mediaState);
 
     if (!readyForTarget) {
       if (hint.microContext && !projectResumeCtxSeededRef.current) {
@@ -278,10 +277,7 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     if (!target) return;
 
     const nextSteps = resolveMicroSteps(nextCtx, wizardStateSnapshot(wizard));
-    let idx = nextSteps.findIndex((s) => s.id === target);
-    if (idx < 0 && hasScenes) {
-      idx = nextSteps.findIndex((s) => s.id === "image.review");
-    }
+    const idx = resolveResumeStepIndex(nextSteps, target, mediaState);
     if (idx >= 0) setStepIndex(idx);
   }, [
     freshEntry,
@@ -807,6 +803,7 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
                 setProduct: wizard.setProduct,
                 setPromptExtra: wizard.setPromptExtra,
                 setImageOutputMode: wizard.setImageOutputMode,
+                setCarouselIntent: wizard.setCarouselIntent,
                 setImageAspectRatio: wizard.setImageAspectRatio,
                 setCampaignTheme: wizard.setCampaignTheme,
                 selectVisualStyle: wizard.selectVisualStyle,
@@ -1317,6 +1314,15 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     [steps],
   );
 
+  const jumpToPhase = useCallback(
+    (phase: ProjectPhase) => {
+      const target = preferredMicroStepForPhase(phase, steps, wizard);
+      if (!target) return;
+      jumpToStepId(target);
+    },
+    [jumpToStepId, steps, wizard],
+  );
+
   /** Library browse: return to existing output without spending tokens. */
   const browseContinueExisting = useCallback(() => {
     if (currentId === "setup.pre_generate" || currentId === "image.generate") {
@@ -1325,13 +1331,39 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
         return;
       }
       if (hasExistingImage) {
+        // Image-only graphs: review (or export) — never require setup.pre_video.
+        const review = steps.findIndex((s) => s.id === "image.review");
+        if (review >= 0) {
+          autoAdvancedRef.current = null;
+          setStepIndex(review);
+          return;
+        }
         const preVideo = steps.findIndex((s) => s.id === "setup.pre_video");
         if (preVideo >= 0) {
           autoAdvancedRef.current = null;
           setStepIndex(preVideo);
           return;
         }
+        const exportIdx = steps.findIndex((s) => s.id === "done.export");
+        if (exportIdx >= 0) {
+          autoAdvancedRef.current = null;
+          setStepIndex(exportIdx);
+        }
       }
+      return;
+    }
+    if (currentId === "image.review") {
+      if (hasExistingVideo) {
+        const preVideo = steps.findIndex((s) => s.id === "setup.pre_video");
+        if (preVideo >= 0) {
+          autoAdvancedRef.current = null;
+          setStepIndex(preVideo);
+          return;
+        }
+        jumpToStepId("done.export");
+        return;
+      }
+      jumpToStepId("done.export");
       return;
     }
     if ((currentId === "setup.pre_video" || currentId === "video.generate") && hasExistingVideo) {
@@ -1345,6 +1377,10 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     jumpToStepId,
     steps,
   ]);
+
+  useEffect(() => {
+    if (currentId) rememberLastMicroStep(currentId);
+  }, [currentId]);
 
   return {
     ctx,
@@ -1374,6 +1410,7 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     hasExistingVideo,
     browseContinueExisting,
     jumpToStepId,
+    jumpToPhase,
   };
 }
 

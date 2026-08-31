@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { chargeTokens, refundTokens } from "@/lib/billing/charge";
 import { clampImageResolution } from "@/lib/billing/entitlements";
 import { getUserPlan } from "@/lib/billing/get-user-plan";
+import { planMeetsMinimum } from "@/lib/billing/plan-gates";
 import { estimateTeachingCarouselTokens, TOKEN_COST } from "@/lib/billing/token-costs";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import {
@@ -136,6 +137,19 @@ function parseExistingTeachingPlan(raw: string): TeachingCarouselPlan | null {
 export async function POST(request: Request) {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
+
+  const userPlan = await getUserPlan(auth.user.userId);
+  if (!planMeetsMinimum(userPlan, "standard")) {
+    return NextResponse.json(
+      {
+        error: "Carousel requires Standard plan or above.",
+        code: "PLAN_ENTITLEMENT",
+        requiredPlan: "standard",
+        hint: "carousel_needs_standard",
+      },
+      { status: 403 },
+    );
+  }
 
   const key = process.env.FAL_KEY?.trim();
   if (!key) {

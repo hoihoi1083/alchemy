@@ -1,5 +1,5 @@
 import type { AssetKind } from "@/lib/db/types";
-import type { ProjectSnapshot } from "@/lib/project-snapshot";
+import { projectDisplayName, type ProjectSnapshot } from "@/lib/project-snapshot";
 import { persistUserAsset } from "@/lib/storage/persist-asset";
 import { isR2Configured } from "@/lib/storage/r2";
 
@@ -37,10 +37,7 @@ export async function mirrorProjectMedia(
   snapshot: ProjectSnapshot,
 ): Promise<void> {
   if (!isR2Configured()) return;
-  const baseName =
-    snapshot.inputs.product?.trim() ||
-    snapshot.inputs.headline?.trim() ||
-    "Project";
+  const baseName = projectDisplayName(snapshot.inputs, "Project");
   const items = collectSnapshotMedia(snapshot, baseName);
   if (items.length === 0) return;
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useWizard } from "@/components/studio/WizardContext";
 import type { StoryboardDurationPreset } from "@/hooks/useWizardState";
 import type { StoryboardSceneCount } from "@/lib/ad-pack-preferences";
@@ -32,6 +33,9 @@ import { QuickFixImagePanel } from "@/components/studio/QuickFixImagePanel";
 import { ImagePostGenChecklist } from "@/components/studio/ImagePostGenChecklist";
 import { ShipItPanel } from "@/components/studio/ShipItPanel";
 import { StoryboardShotMap } from "@/components/studio/StoryboardShotMap";
+import { PlanGateDialog } from "@/components/billing/PlanGateDialog";
+import { useUserPlanEntitlements } from "@/hooks/useUserPlanEntitlements";
+import { canUseStoryboard, minPlanForFeature } from "@/lib/billing/plan-gates";
 import { estimateImageTokens } from "@/lib/billing/token-costs";
 import { isBrandVideoStyle, isCreativeVideoStyle, isBrandVisualStyle, isStoryboardVideoStyle, isAiPlannedVideoStyle } from "@/lib/visual-styles";
 import { CINEMATIC_SCENE_COUNTS, type CinematicSceneCount } from "@/lib/cinematic-scene-config";
@@ -40,7 +44,10 @@ import type { CinematicSceneResult } from "@/lib/cinematic-reel-types";
 import type { StoryboardSceneResult } from "@/lib/video-storyboard-types";
 
 export function ImageStep() {
-  const { applyPromptRebuild, artStyleId, campaignPlan, campaignSlideLabel, campaignSlides, campaignTheme, canGenerateImage, cinematicReelPlan, cinematicSceneCount, cinematicScenes, compositionPresetId, effectiveImageMode, effectiveImageOutputMode, error, finishImageStep, formatCinematicCopy, generateImage, goBackFromImage, headline, imageAspectRatio, imageBusy, imageCreativeMode, imageFinishLabel, imageGenKey, imageGenerateDisabledReason, imageInputMode, imageNextDisabled, imageOutputMode, imagePostflight, imagePostflightBusy, imagePreflight, imageProgressInfo, imagePrompt, imageQualityChecklist, imageRefPhoto, imageRefPreviewUrl, imageResolution, imageStepHint, imageTextMode, imageUrl, imageVariantUrls, imageVisionReview, imageVisionReviewBusy, isCampaignOutput, isCinematicStitchOutput, isConceptCinematicSingleOutput, isConceptStoryboardOutput, isStoryboardOutput, lastImageEndpoint, lockedCampaignMode, lockedSingleImageMode, m, needsProductUpload, onCinematicSceneCountChange, onImageCreativeModeChange, onImageInputModeChange, onProductPhotoSelected, planStoryboard, planStoryboardBusy, product, productPhoto, promotionMode, promptExtra, promptMarket, referenceAd, referenceAnalyzeBusy, referenceAnalyzeNote, referenceCarouselSlideCount, referenceIsVideo, referenceStrategy, regenerateStoryboardSceneWithAi, stampStoryboardSceneLogo, brandKit, reorderStoryboardScene, replaceStoryboardSceneImage, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, runShipItPipeline, selectVisualStyle, selectedVariantIndex, setArtStyleId, setCampaignPlan, setCampaignSlides, setCampaignTheme, setCompositionPresetId, setImageAspectRatio, setImageGenKey, setImageOutputMode, setImageResolution, setImagePrompt, setImageRefPhoto, setImageQualityChecklist, setImageTextMode, setImageUrl, setImageVariantUrls, setPromptExtra, setPromptMarket, setError, setReferenceCarouselSlideCount, setSelectedVariantIndex, setShipItMode, setShowAdvancedImage, setStoryboardBrief, setStoryboardPlan, setStoryboardRecipeId, setStoryboardSceneCount, setSubjectFraming, setVideoPrompt, shipItEligible, shipItMode, shipItPipelineBusy, shipItVisionBlocked, showAdvancedImage, storyboardBrief, storyboardPlan, storyboardRecipeId, storyboardSceneCount, storyboardSceneRegenerateBusy, storyboardSceneReplaceBusy, storyboardScenes, storyboardGridApproved, setStoryboardGridApproved, storyboardCellsViewed, storyboardAllCellsViewed, markStoryboardCellViewed, storyboardTrimDuration, subjectFraming, templateId, templateSlotStatus, trimStoryboardDurations, updateStoryboardPlanScene, uploadPreviewUrl, uploadQualityMessage, uploadQualityWarning, useOriginalAsKeyframe, useOriginalImage, userReferenceBrief, useReferenceVideo, usesCompositor, videoCreativeMode, videoPrompt, visualStyle, visualStyleId, workflowMode } = useWizard();
+  const { applyPromptRebuild, artStyleId, campaignPlan, campaignSlideLabel, campaignSlides, campaignTheme, canGenerateImage, carouselIntent, cinematicReelPlan, cinematicSceneCount, cinematicScenes, compositionPresetId, effectiveImageMode, effectiveImageOutputMode, error, finishImageStep, formatCinematicCopy, generateImage, goBackFromImage, headline, imageAspectRatio, imageBusy, imageCreativeMode, imageFinishLabel, imageGenKey, imageGenerateDisabledReason, imageInputMode, imageNextDisabled, imageOutputMode, imagePostflight, imagePostflightBusy, imagePreflight, imageProgressInfo, imagePrompt, imageQualityChecklist, imageRefPhoto, imageRefPreviewUrl, imageResolution, imageStepHint, imageTextMode, imageUrl, imageVariantUrls, imageVisionReview, imageVisionReviewBusy, isCampaignOutput, isCinematicStitchOutput, isConceptCinematicSingleOutput, isConceptStoryboardOutput, isStoryboardOutput, lastImageEndpoint, lockedCampaignMode, lockedSingleImageMode, m, needsProductUpload, onCinematicSceneCountChange, onImageCreativeModeChange, onImageInputModeChange, onProductPhotoSelected, planStoryboard, planStoryboardBusy, product, productPhoto, promotionMode, promptExtra, promptMarket, referenceAd, referenceAnalyzeBusy, referenceAnalyzeNote, referenceCarouselSlideCount, referenceIsVideo, referenceStrategy, regenerateStoryboardSceneWithAi, stampStoryboardSceneLogo, brandKit, reorderStoryboardScene, replaceStoryboardSceneImage, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, runShipItPipeline, selectVisualStyle, selectedVariantIndex, setArtStyleId, setCampaignPlan, setCampaignSlides, setCampaignTheme, setCarouselIntent, setCompositionPresetId, setImageAspectRatio, setImageGenKey, setImageOutputMode, setImageResolution, setImagePrompt, setImageRefPhoto, setImageQualityChecklist, setImageTextMode, setImageUrl, setImageVariantUrls, setPromptExtra, setPromptMarket, setError, setReferenceCarouselSlideCount, setSelectedVariantIndex, setShipItMode, setShowAdvancedImage, setStoryboardBrief, setStoryboardPlan, setStoryboardRecipeId, setStoryboardSceneCount, setSubjectFraming, setVideoPrompt, shipItEligible, shipItMode, shipItPipelineBusy, shipItVisionBlocked, showAdvancedImage, storyboardBrief, storyboardPlan, storyboardRecipeId, storyboardSceneCount, storyboardSceneRegenerateBusy, storyboardSceneReplaceBusy, storyboardScenes, storyboardGridApproved, setStoryboardGridApproved, storyboardCellsViewed, storyboardAllCellsViewed, markStoryboardCellViewed, storyboardTrimDuration, subjectFraming, templateId, templateSlotStatus, trimStoryboardDurations, updateStoryboardPlanScene, uploadPreviewUrl, uploadQualityMessage, uploadQualityWarning, useOriginalAsKeyframe, useOriginalImage, userReferenceBrief, useReferenceVideo, usesCompositor, videoCreativeMode, videoPrompt, visualStyle, visualStyleId, workflowMode } = useWizard();
+  const { plan } = useUserPlanEntitlements();
+  const storyboardAllowed = canUseStoryboard(plan);
+  const [storyboardGateOpen, setStoryboardGateOpen] = useState(false);
   const isConcept = promotionMode === "concept";
   const luxuryStoryboard = isLuxuryBirthRecipe(storyboardRecipeId) && !isConcept;
   const luxurySceneOptions = luxuryBirthSceneCountOptions();
@@ -204,11 +211,26 @@ export function ImageStep() {
       <p className="mt-2 text-amber-100/90">{m.wizard.imageStepReferenceReelNeedStoryboardHint}</p>
       <button
         type="button"
-        onClick={() => selectVisualStyle("storyboard-video")}
+        onClick={() => {
+          if (!storyboardAllowed) {
+            setStoryboardGateOpen(true);
+            return;
+          }
+          selectVisualStyle("storyboard-video");
+        }}
         className="mt-3 rounded-lg bg-amber-600 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-500"
       >
         {m.wizard.imageStepReferenceReelSwitchStoryboardBtn}
+        {!storyboardAllowed ? (
+          <span className="ml-1.5 opacity-90">({m.pricing.plans.pro.name}+)</span>
+        ) : null}
       </button>
+      <PlanGateDialog
+        open={storyboardGateOpen}
+        onClose={() => setStoryboardGateOpen(false)}
+        requiredPlan={minPlanForFeature("storyboard")}
+        featureLabel={m.wizard.visualStyles["storyboard-video"].title}
+      />
     </div>
   )}
 
@@ -357,30 +379,10 @@ export function ImageStep() {
   {isConceptSocialImage && (
     <div className="rounded-2xl border border-cyan-800/50 bg-cyan-950/25 p-4 space-y-2">
       <p className="text-xs text-cyan-200/90">{m.wizard.conceptSocialImageHint}</p>
-      {(effectiveImageOutputMode === "teaching-carousel" || effectiveImageOutputMode === "campaign") && (
-        <p className="text-xs text-cyan-200/80">{m.wizard.conceptCarouselModeHint}</p>
-      )}
-      <p className="text-xs text-slate-400">{m.wizard.conceptNoStyleMemoryHint}</p>
-    </div>
-  )}
-
   {effectiveImageOutputMode === "teaching-carousel" && (
-    <div className="rounded-2xl border border-emerald-800/50 bg-emerald-950/25 p-4">
-      <label className="flex flex-wrap items-center gap-3 text-sm text-emerald-100">
-        <span className="font-medium">{m.wizard.teachingCarouselSlideCountLabel}</span>
-        <select
-          value={referenceCarouselSlideCount}
-          onChange={(e) => setReferenceCarouselSlideCount(Number(e.target.value))}
-          className="rounded-lg border border-emerald-700 bg-slate-900 px-3 py-1.5 text-sm text-emerald-50"
-        >
-          {[4, 5, 6].map((n) => (
-            <option key={n} value={n}>
-              {m.wizard.teachingCarouselSlideCountOption.replace("{count}", String(n))}
-            </option>
-          ))}
-        </select>
-      </label>
-      <p className="mt-2 text-[11px] text-emerald-200/80">{m.wizard.teachingCarouselSlideCountHint}</p>
+    <p className="text-xs text-cyan-200/80">{m.wizard.conceptCarouselModeHint}</p>
+  )}
+      <p className="text-xs text-slate-400">{m.wizard.conceptNoStyleMemoryHint}</p>
     </div>
   )}
 
@@ -415,7 +417,11 @@ export function ImageStep() {
   {!usesCompositor && !isStoryboardOutput && !isCinematicStitchOutput && !isConceptCinematicSingleOutput && effectiveImageMode !== "describe" && !shipItMode && (
     <div data-coach-id="coach-image-output-mode">
     <ImageOutputModePicker
-      value={effectiveImageOutputMode}
+      value={imageOutputMode}
+      carouselIntent={carouselIntent}
+      onCarouselIntentChange={setCarouselIntent}
+      carouselSlideCount={referenceCarouselSlideCount}
+      onCarouselSlideCountChange={setReferenceCarouselSlideCount}
       includeTeachingCarousel={isConcept}
       onChange={(mode) => {
         setImageOutputMode(mode);

@@ -21,7 +21,8 @@ describe("content-research-apply handoff", () => {
     assert.equal(handoff.product, PROMOTE_PRODUCT);
     assert.ok(handoff.headline?.includes(PROMOTE_PRODUCT));
     assert.ok(!handoff.headline?.includes("水瓶座"));
-    assert.equal(handoff.imageOutputMode, "teaching-carousel");
+    assert.equal(handoff.imageOutputMode, "carousel");
+    assert.equal(handoff.carouselIntent, "teaching");
     assert.equal(handoff.workflowMode, "image-only");
     assert.ok(handoff.referencePostImageUrls?.length === 8);
     assert.ok(isContentResearchStyleExtra(handoff.promptExtra));
@@ -181,7 +182,8 @@ describe("content-research-apply handoff", () => {
       PROMOTE_PRODUCT,
     );
     assert.equal(handoff.campaignTheme, `${PROMOTE_PRODUCT} series`);
-    assert.equal(handoff.imageOutputMode, "campaign");
+    assert.equal(handoff.imageOutputMode, "carousel");
+    assert.equal(handoff.carouselIntent, "promo");
   });
 
   it("teaching-carousel with stray videoUrl stays image-only under combined picker", () => {

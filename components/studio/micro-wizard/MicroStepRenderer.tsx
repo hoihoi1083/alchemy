@@ -727,11 +727,16 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
         >
           <ImageOutputModePicker
             value={wizard.imageOutputMode}
-            onChange={wizard.setImageOutputMode}
+            carouselIntent={wizard.carouselIntent}
+            onCarouselIntentChange={wizard.setCarouselIntent}
+            carouselSlideCount={wizard.referenceCarouselSlideCount}
+            onCarouselSlideCountChange={wizard.setReferenceCarouselSlideCount}
             lockedCampaign={wizard.lockedCampaignMode}
             lockedSingle={wizard.lockedSingleImageMode}
             forVideoKeyframe={wizard.workflowMode === "combined"}
             includeTeachingCarousel={wizard.workflowMode === "image-only"}
+            onChange={wizard.setImageOutputMode}
+            accent="violet"
           />
           <div className="mt-4">
             <ImageResolutionPanel
@@ -740,25 +745,6 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
               accent="violet"
             />
           </div>
-          {wizard.imageOutputMode === "teaching-carousel" ? (
-            <label className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-700">
-              <span className="font-medium">{m.wizard.teachingCarouselSlideCountLabel}</span>
-              <select
-                value={wizard.referenceCarouselSlideCount}
-                onChange={(e) => wizard.setReferenceCarouselSlideCount(Number(e.target.value))}
-                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm"
-              >
-                {[4, 5, 6].map((n) => (
-                  <option key={n} value={n}>
-                    {m.wizard.teachingCarouselSlideCountOption.replace("{count}", String(n))}
-                  </option>
-                ))}
-              </select>
-              <span className="w-full text-xs text-slate-500">
-                {m.wizard.teachingCarouselSlideCountHint}
-              </span>
-            </label>
-          ) : null}
         </ScreenShell>
       );
 
@@ -1053,6 +1039,10 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
             <div className="rounded-xl border border-cyan-100 bg-cyan-50/50 px-4 py-4">
               <ImageOutputModePicker
                 value={wizard.imageOutputMode}
+                carouselIntent={wizard.carouselIntent}
+                onCarouselIntentChange={wizard.setCarouselIntent}
+                carouselSlideCount={wizard.referenceCarouselSlideCount}
+                onCarouselSlideCountChange={wizard.setReferenceCarouselSlideCount}
                 onChange={wizard.setImageOutputMode}
                 lockedCampaign={wizard.lockedCampaignMode}
                 lockedSingle={wizard.lockedSingleImageMode}

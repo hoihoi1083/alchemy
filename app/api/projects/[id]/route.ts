@@ -3,6 +3,7 @@ import { requireAppUser } from "@/lib/require-app-user";
 import { isMongoReady, mongoRequiredErrorMessage } from "@/lib/mongodb-production";
 import { deleteProject, getProjectForUser, updateProject } from "@/lib/db/projects";
 import type { ProjectSnapshot } from "@/lib/project-snapshot";
+import { projectDisplayName } from "@/lib/project-snapshot";
 import { mirrorProjectMedia } from "@/lib/storage/mirror-project-media";
 
 export const runtime = "nodejs";
@@ -56,7 +57,9 @@ export async function PATCH(request: Request, context: RouteContext) {
   }
 
   const project = await updateProject(auth.user.userId, id, {
-    name: body.name,
+    name:
+      body.name?.trim() ||
+      (body.snapshot ? projectDisplayName(body.snapshot.inputs) : undefined),
     snapshot: body.snapshot,
   });
   if (!project) {

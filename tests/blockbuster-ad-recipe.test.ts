@@ -275,7 +275,7 @@ describe("blockbuster wizard generate wiring", () => {
     assert.match(fn, /orderedBlockbusterRefFiles/);
     assert.match(fn, /finish-blockbuster/);
     assert.match(fn, /parseBlockbusterTiming/);
-    assert.doesNotMatch(fn, /generate-kling-storyboard/);
+    assert.doesNotMatch(fn, /generate-storyboard-video|generate-kling-storyboard/);
     assert.match(wizard, /case "blockbuster":/);
     assert.match(wizard, /setWorkflowMode\("video-only"\)/);
     assert.match(wizard, /early-reveal/);

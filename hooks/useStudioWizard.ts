@@ -406,6 +406,10 @@ import {
   type ImageOutputMode,
 } from "@/lib/image-output-mode";
 import {
+	legacyImageOutputModeToCarousel,
+	resolveEffectiveImageOutputMode,
+} from "@/lib/carousel-output";
+import {
   defaultImageAspectRatioForWorkflow,
   type ImageAspectRatio,
 } from "@/lib/image-aspect-ratio";
@@ -608,6 +612,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		setSelectedVariantIndex,
 		imageOutputMode,
 		setImageOutputMode,
+		carouselIntent,
+		setCarouselIntent,
 		imageResolution,
 		setImageResolution,
 		imageAspectRatio,
@@ -1138,11 +1144,13 @@ export function useStudioWizard(promotionMode: PromotionMode) {
   const usesCompositor = visualStyle.usesCompositor;
   const lockedCampaignMode = isCampaignVisualStyle(visualStyleId);
 	const lockedSingleImageMode = isLockedSinglePosterStyle(visualStyleId);
-  const effectiveImageOutputMode: ImageOutputMode = lockedCampaignMode
-    ? "campaign"
-		: lockedSingleImageMode
-			? "single"
-    : imageOutputMode;
+  const effectiveImageOutputMode: ImageOutputMode = resolveEffectiveImageOutputMode({
+    imageOutputMode,
+    carouselIntent,
+    carouselSlideCount: referenceCarouselSlideCount,
+    lockedCampaignMode,
+    lockedSingleImageMode,
+  });
   const isCampaignOutput = effectiveImageOutputMode === "campaign";
 	const isTeachingCarouselOutput =
 		effectiveImageOutputMode === "teaching-carousel";
@@ -2558,7 +2566,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       setBrandAnalyzeNote(null);
     }
     if (isCampaignVisualStyle(id)) {
-      setImageOutputMode("campaign");
+      setImageOutputMode("carousel");
+      setCarouselIntent("promo");
+      setReferenceCarouselSlideCount(3);
     }
     if (isAiPlannedVideoStyle(id)) {
       setVideoPrompt("");
@@ -3525,6 +3535,25 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		}
 	}
 
+	async function forkBeforePaidRegenerate(
+		hasExistingOutput: boolean,
+	): Promise<boolean> {
+		try {
+			const { maybeForkProjectBeforeRegenerate } = await import(
+				"@/lib/project-browse"
+			);
+			await maybeForkProjectBeforeRegenerate(hasExistingOutput);
+			return true;
+		} catch (e: unknown) {
+			setError(
+				e instanceof Error && e.message === "fork_failed"
+					? "Could not save as a new project before regenerating. Try again."
+					: friendlyError(e, m.errors.polishFailed),
+			);
+			return false;
+		}
+	}
+
 	async function regenerateStoryboardSceneWithAi(sceneIndex: number) {
 		if (sceneIndex < 0 || sceneIndex >= storyboardScenes.length) return;
 		if (
@@ -3552,6 +3581,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		}
 		if (!regenPhoto && !isConceptStoryboardOutput) {
 			setError(m.errors.needPhoto);
+			setStoryboardSceneRegenerateBusy(null);
+			return;
+		}
+		if (!(await forkBeforePaidRegenerate(true))) {
 			setStoryboardSceneRegenerateBusy(null);
 			return;
 		}
@@ -3730,6 +3763,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			);
 			return;
 		}
+		if (!(await forkBeforePaidRegenerate(true))) return;
 
 		setImageBusy(true);
 		setError(null);
@@ -3855,6 +3889,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		const apiPath = useTeaching
 			? "/api/generate-teaching-carousel"
 			: "/api/generate-campaign";
+
+		if (!(await forkBeforePaidRegenerate(true))) return;
 
 		setCarouselSlideRegenerateBusy(slideIndex);
 		setError(null);
@@ -5165,6 +5201,14 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     setError(null);
     setUseOriginalImage(false);
 
+		const hasExistingImageOutput = Boolean(
+			imageUrlRef.current ||
+				imageUrl ||
+				storyboardScenes.length > 0 ||
+				campaignSlides.length > 0 ||
+				cinematicScenes.length > 0,
+		);
+
     if (usesCompositor) {
       if (!headline.trim()) {
         setError(m.errors.needHeadline);
@@ -5172,6 +5216,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       }
       if (!productPhoto) {
         setError(m.errors.needPhoto);
+				return null;
+			}
+			if (!(await forkBeforePaidRegenerate(hasExistingImageOutput))) {
 				return null;
 			}
 			setImageJobMeta({
@@ -5230,6 +5277,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					return null;
 				}
       }
+			if (!(await forkBeforePaidRegenerate(hasExistingImageOutput))) {
+				return null;
+			}
       setImageJobMeta({
         kind: "storyboard",
         startedAt: Date.now(),
@@ -5401,6 +5451,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         setError(m.errors.creativeBriefRequired);
 				return null;
       }
+			if (!(await forkBeforePaidRegenerate(hasExistingImageOutput))) {
+				return null;
+			}
       setImageJobMeta({
         kind: "cinematic-reel",
         startedAt: Date.now(),
@@ -5508,6 +5561,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         setError(m.errors.needPhoto);
 				return null;
 			}
+			if (!(await forkBeforePaidRegenerate(hasExistingImageOutput))) {
+				return null;
+			}
 			setImageJobMeta({
 				kind: "campaign",
 				startedAt: Date.now(),
@@ -5573,6 +5629,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     }
 
     if (isTeachingCarouselOutput) {
+			if (!(await forkBeforePaidRegenerate(hasExistingImageOutput))) {
+				return null;
+			}
 			setImageJobMeta({
 				kind: "teaching-carousel",
 				startedAt: Date.now(),
@@ -5642,6 +5701,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         setError(m.errors.needKeyframe);
 				return null;
       }
+			if (!(await forkBeforePaidRegenerate(hasExistingImageOutput))) {
+				return null;
+			}
       setImageBusy(true);
       try {
         const res = await fetch("/api/generate-image", {
@@ -5686,6 +5748,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     if (useConceptTextOnly) {
 			if (!headline.trim() && !effectivePromoteName && !business.trim()) {
         setError(m.errors.needHeadline);
+				return null;
+			}
+			if (!(await forkBeforePaidRegenerate(hasExistingImageOutput))) {
 				return null;
 			}
 			setImageJobMeta({
@@ -5793,6 +5858,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		}
 		if (needsProductUpload && !productPhotoForGen && !hasProductPhotoLock) {
 			setError(m.errors.needPhoto);
+			return null;
+		}
+
+		if (!(await forkBeforePaidRegenerate(hasExistingImageOutput))) {
 			return null;
 		}
 
@@ -6520,7 +6589,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			}
 		}
 
-		const res = await fetch("/api/generate-kling-storyboard", {
+		const res = await fetch("/api/generate-storyboard-video", {
 			method: "POST",
 			body: fd,
 		});
@@ -9606,6 +9675,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       return;
     }
 
+		const hasExistingVideoOutput = Boolean(videoUrl);
+
 		// Identity lock — physical needs product photo; concept needs idea/headline/still.
 		const conceptIdentityOk =
 			Boolean(conceptIdea.trim()) ||
@@ -9874,6 +9945,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     setError(null);
     setBgmNote(undefined);
     setVideoNote(undefined);
+		if (!(await forkBeforePaidRegenerate(hasExistingVideoOutput))) {
+			return;
+		}
     setVideoBusy(true);
     setVideoJobStartedAt(Date.now());
     setVideoPhase("video");
@@ -10184,7 +10258,17 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		setTemplateId(settings.templateId);
 		setImageCreativeMode(settings.imageCreativeMode);
 		setVideoCreativeMode(settings.videoCreativeMode);
-		setImageOutputMode(settings.imageOutputMode);
+		const legacyCarousel = legacyImageOutputModeToCarousel(settings.imageOutputMode);
+		if (legacyCarousel) {
+			setImageOutputMode(legacyCarousel.mode);
+			setCarouselIntent(legacyCarousel.intent);
+			setReferenceCarouselSlideCount(legacyCarousel.slideCount);
+		} else {
+			setImageOutputMode(settings.imageOutputMode);
+			if (settings.carouselIntent) {
+				setCarouselIntent(settings.carouselIntent);
+			}
+		}
 		setImageAspectRatio(settings.imageAspectRatio);
 		setImageInputMode(settings.imageInputMode);
 		// Micro wizard is the resume shell — avoid flashing classic Image/Video steps
@@ -10917,6 +11001,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     imageNextDisabled,
 		imageNextDisabledReason,
     imageOutputMode,
+    carouselIntent,
+    setCarouselIntent,
     imageResolution,
     imageAspectRatio,
     effectiveImageAspectRatio,

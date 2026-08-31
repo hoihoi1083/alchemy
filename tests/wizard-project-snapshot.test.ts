@@ -195,9 +195,28 @@ describe("wizardFromSnapshot helpers", () => {
     assert.equal(shouldBlockEmptyOverwrite(empty, JSON.stringify(rich)), true);
     assert.equal(shouldBlockEmptyOverwrite(rich, JSON.stringify(empty)), false);
     assert.equal(shouldBlockEmptyOverwrite(empty, "__remote_unknown__"), true);
+    assert.equal(shouldBlockEmptyOverwrite(rich, "__remote_unknown__"), true);
   });
 
-  it("resume hint lands on image.review when scenes exist", () => {
+  it("resume hint prefers export when video exists even with scenes", () => {
+    const snap = EMPTY_PROJECT_SNAPSHOT("physical");
+    snap.settings.workflowMode = "combined";
+    snap.settings.visualStyleId = "storyboard-video";
+    snap.media.storyboardSceneUrls = ["https://cdn.example.com/a.png"];
+    snap.media.videoUrl = "https://cdn.example.com/out.mp4";
+    const hint = buildProjectResumeHint(snap);
+    assert.equal(hint.targetMicroStep, "done.export");
+  });
+
+  it("resume hint lands on image.review for image-only stills", () => {
+    const snap = EMPTY_PROJECT_SNAPSHOT("physical");
+    snap.settings.workflowMode = "image-only";
+    snap.media.imageUrl = "https://cdn.example.com/still.png";
+    const hint = buildProjectResumeHint(snap);
+    assert.equal(hint.targetMicroStep, "image.review");
+  });
+
+  it("resume hint lands on image.review when scenes exist without video", () => {
     const snap = EMPTY_PROJECT_SNAPSHOT("physical");
     snap.settings.workflowMode = "combined";
     snap.settings.visualStyleId = "storyboard-video";
@@ -207,6 +226,12 @@ describe("wizardFromSnapshot helpers", () => {
     assert.equal(hint.microContext.workflowMode, "combined");
     assert.equal(hint.microContext.combinedStyle, "storyboard");
     assert.equal(hint.microContext.intakePath, "direct");
+  });
+
+  it("failed hydrate marker always blocks overwrite", () => {
+    const rich = EMPTY_PROJECT_SNAPSHOT("physical");
+    rich.inputs.product = "Tea";
+    assert.equal(shouldBlockEmptyOverwrite(rich, "__remote_unknown__"), true);
   });
 
   it("clearProjectResumeHint removes session resume payload", () => {

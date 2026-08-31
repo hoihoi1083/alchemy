@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { getUserPlan } from "@/lib/billing/get-user-plan";
+import { planMeetsMinimum } from "@/lib/billing/plan-gates";
 import { planContentResearchFromDirectPost } from "@/lib/content-research-direct-post";
 import { detectPlatformFromPostUrl, normalizePostUrlInput } from "@/lib/content-research-post-url";
 import { isContentPlatform } from "@/lib/content-research-plan";
@@ -21,6 +23,18 @@ type DirectPostBody = {
 export async function POST(request: Request) {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
+  const userPlan = await getUserPlan(auth.user.userId);
+  if (!planMeetsMinimum(userPlan, "standard")) {
+    return NextResponse.json(
+      {
+        error: "Platform research requires Standard plan or above.",
+        code: "PLAN_ENTITLEMENT",
+        requiredPlan: "standard",
+        hint: "research_needs_standard",
+      },
+      { status: 403 },
+    );
+  }
 
   let body: DirectPostBody;
   try {

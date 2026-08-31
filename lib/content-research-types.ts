@@ -1,4 +1,5 @@
 import type { ImageAspectRatio } from "@/lib/image-aspect-ratio";
+import type { CarouselIntent } from "@/lib/carousel-output";
 import type { ImageOutputMode } from "@/lib/image-output-mode";
 import type { PromptMarket } from "@/lib/prompt-variables";
 import type { VisualStyleId } from "@/lib/visual-styles";
@@ -126,6 +127,7 @@ export type ContentAngleWizardPatch = {
   product: string;
   promptExtra: string;
   imageOutputMode: ImageOutputMode;
+  carouselIntent?: CarouselIntent;
   visualStyleId?: VisualStyleId;
   workflowMode?: WorkflowMode;
   imageAspectRatio?: ImageAspectRatio;

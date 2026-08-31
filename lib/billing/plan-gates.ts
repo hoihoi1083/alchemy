@@ -21,6 +21,9 @@ export type PlanGateFeature =
   | "email_support"
   | "top_up"
   | "campaign_mode"
+  | "carousel_mode"
+  | "platform_research"
+  | "storyboard"
   | "template";
 
 export function planRank(plan: UserPlan): number {
@@ -63,12 +66,28 @@ export function minPlanForFeature(feature: PlanGateFeature): UserPlan {
     case "top_up":
       return "light";
     case "campaign_mode":
+    case "carousel_mode":
+    case "platform_research":
       return "standard";
+    case "storyboard":
+      return "pro";
     case "template":
       return "free";
     default:
       return "free";
   }
+}
+
+export function canUseCarousel(plan: UserPlan): boolean {
+  return planMeetsMinimum(plan, minPlanForFeature("carousel_mode"));
+}
+
+export function canUsePlatformResearch(plan: UserPlan): boolean {
+  return planMeetsMinimum(plan, minPlanForFeature("platform_research"));
+}
+
+export function canUseStoryboard(plan: UserPlan): boolean {
+  return planMeetsMinimum(plan, minPlanForFeature("storyboard"));
 }
 
 export function canUseVideoResolution(plan: UserPlan, res: VideoResolutionCap): boolean {
@@ -94,7 +113,7 @@ export const TEMPLATE_MIN_PLAN: Partial<Record<TemplateId, UserPlan>> = {
   "testimonial": "light",
   "pricing-offer": "light",
   "brand-campaign": "standard",
-  "storyboard-video": "standard",
+  "storyboard-video": "pro",
   "parts-poster": "standard",
   "creative-video": "pro",
   "brand-video": "pro",

@@ -126,6 +126,7 @@ const FFMPEG_API_ROUTES = [
   "/api/burn-visual-captions",
   "/api/compose",
   "/api/dub-script-voice",
+  "/api/generate-storyboard-video",
   "/api/generate-kling-storyboard",
   "/api/postprocess",
   "/api/prepare-reference-video",

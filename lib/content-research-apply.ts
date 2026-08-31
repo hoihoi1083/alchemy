@@ -80,12 +80,12 @@ function patchFromAngleFormat(
 
   switch (format) {
     case "teaching-carousel":
-      imageOutputMode = "teaching-carousel";
+      imageOutputMode = "carousel";
       visualStyleId = promotionMode === "concept" ? "info-poster" : "product";
       workflowMode = "image-only";
       break;
     case "campaign":
-      imageOutputMode = "campaign";
+      imageOutputMode = "carousel";
       visualStyleId = promotionMode === "concept" ? "brand-campaign" : "product";
       workflowMode = "image-only";
       break;
@@ -258,6 +258,12 @@ function wizardPatchForAngle(
       (angle.format === "campaign" || format === "campaign")
         ? `${productName} series`
         : undefined,
+    carouselIntent:
+      format === "campaign"
+        ? "promo"
+        : format === "teaching-carousel"
+          ? "teaching"
+          : undefined,
     carouselSlideCount: combinedLocksStoryboard
       ? undefined
       : format === "teaching-carousel"
@@ -302,6 +308,7 @@ export function buildContentAngleHandoff(
     campaignGoal: patch.conceptIdea,
     promptExtra: patch.promptExtra,
     imageOutputMode: patch.imageOutputMode,
+    carouselIntent: patch.carouselIntent,
     visualStyleId: patch.visualStyleId,
     workflowMode:
       patch.resolvedFormat === "reel" ? userWorkflowMode ?? "video-only" : patch.workflowMode,
@@ -339,6 +346,7 @@ export type ContentAngleWizardApi = {
   setProduct: (v: string) => void;
   setPromptExtra: (v: string | ((prev: string) => string)) => void;
   setImageOutputMode: (v: ImageOutputMode) => void;
+  setCarouselIntent?: (v: import("@/lib/carousel-output").CarouselIntent) => void;
   setImageAspectRatio?: (v: ImageAspectRatio) => void;
   setCampaignTheme?: (v: string) => void;
   selectVisualStyle?: (id: VisualStyleId) => void;
@@ -472,6 +480,9 @@ export async function applyContentAngleToWizard(
     wizard.setImageAspectRatio?.("9:16");
   } else {
     wizard.setImageOutputMode(patch.imageOutputMode);
+    if (patch.carouselIntent && wizard.setCarouselIntent) {
+      wizard.setCarouselIntent(patch.carouselIntent);
+    }
     if (patch.imageAspectRatio && wizard.setImageAspectRatio) {
       wizard.setImageAspectRatio(patch.imageAspectRatio);
     }

@@ -83,7 +83,7 @@ describe("storyboard approve gate (per-cell + checkbox, no regen-all skip)", () 
 
   it("API rejects video before charge unless storyboard_grid_approved", () => {
     const src = readFileSync(
-      join(root, "app/api/generate-kling-storyboard/route.ts"),
+      join(root, "app/api/generate-storyboard-video/route.ts"),
       "utf8",
     );
     const approveAt = src.indexOf("isStoryboardGridApprovedFlag");

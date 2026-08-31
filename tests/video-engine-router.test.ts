@@ -90,7 +90,7 @@ describe("storyboard route + wizard wiring", () => {
 
   it("reel path is Seedance R2V then H3 then REFERENCE_VIDEO_REQUIRED (no Kling)", () => {
     const src = readFileSync(
-      join(root, "app/api/generate-kling-storyboard/route.ts"),
+      join(root, "app/api/generate-storyboard-video/route.ts"),
       "utf8",
     );
     assert.match(src, /runSeedanceStoryboardR2v/);
@@ -116,7 +116,7 @@ describe("storyboard route + wizard wiring", () => {
 
   it("storyboard Seedance uses the plan-clamped resolution, not hardcoded 1080p", () => {
     const src = readFileSync(
-      join(root, "app/api/generate-kling-storyboard/route.ts"),
+      join(root, "app/api/generate-storyboard-video/route.ts"),
       "utf8",
     );
     assert.match(src, /clampVideoResolution/);

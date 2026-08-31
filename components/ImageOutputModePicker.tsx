@@ -1,10 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { CarouselOutputSettings } from "@/components/CarouselOutputSettings";
 import { PlanGateDialog } from "@/components/billing/PlanGateDialog";
 import { useLocale } from "@/components/LocaleProvider";
 import { useUserPlanEntitlements } from "@/hooks/useUserPlanEntitlements";
-import { planMeetsMinimum } from "@/lib/billing/plan-gates";
+import { isCarouselUiSelected } from "@/lib/carousel-output";
+import type { CarouselIntent } from "@/lib/carousel-output";
+import {
+  canUseCarousel,
+  minPlanForFeature,
+} from "@/lib/billing/plan-gates";
 import {
   imageOutputPreviewSrc,
   type ImageOutputMode,
@@ -13,6 +19,10 @@ import {
 type Props = {
   value: ImageOutputMode;
   onChange: (mode: ImageOutputMode) => void;
+  carouselIntent: CarouselIntent;
+  onCarouselIntentChange: (intent: CarouselIntent) => void;
+  carouselSlideCount: number;
+  onCarouselSlideCountChange: (count: number) => void;
   lockedCampaign?: boolean;
   /** Designed poster etc. — only a finished single still makes sense. */
   lockedSingle?: boolean;
@@ -30,6 +40,10 @@ type Props = {
 export function ImageOutputModePicker({
   value,
   onChange,
+  carouselIntent,
+  onCarouselIntentChange,
+  carouselSlideCount,
+  onCarouselSlideCountChange,
   lockedCampaign,
   lockedSingle,
   forVideoKeyframe = false,
@@ -39,25 +53,26 @@ export function ImageOutputModePicker({
   const { m } = useLocale();
   const { plan } = useUserPlanEntitlements();
   const [gateOpen, setGateOpen] = useState(false);
-  const campaignAllowed = planMeetsMinimum(plan, "standard");
+  const carouselAllowed = canUseCarousel(plan) || Boolean(lockedCampaign);
   const locked = Boolean(lockedCampaign || lockedSingle);
   const options: ImageOutputMode[] = useMemo(() => {
-    if (lockedCampaign) return ["campaign"];
+    if (lockedCampaign) return ["carousel"];
     if (lockedSingle) return ["single"];
     if (forVideoKeyframe) return ["single", "ab"];
-    if (includeTeachingCarousel) return ["single", "ab", "campaign", "teaching-carousel"];
-    return ["single", "ab", "campaign"];
-  }, [forVideoKeyframe, includeTeachingCarousel, lockedCampaign, lockedSingle]);
+    return ["single", "ab", "carousel"];
+  }, [forVideoKeyframe, lockedCampaign, lockedSingle]);
+
+  const uiValue: ImageOutputMode = isCarouselUiSelected(value) ? "carousel" : value;
 
   useEffect(() => {
-    if (!options.includes(value)) {
+    if (!options.includes(uiValue)) {
       onChange(options[0] ?? "single");
       return;
     }
-    if (value === "campaign" && !campaignAllowed && !lockedCampaign) {
+    if (uiValue === "carousel" && !carouselAllowed && !lockedCampaign) {
       onChange("single");
     }
-  }, [campaignAllowed, lockedCampaign, onChange, options, value]);
+  }, [carouselAllowed, lockedCampaign, onChange, options, uiValue]);
 
   const selectedClass =
     accent === "violet"
@@ -78,13 +93,13 @@ export function ImageOutputModePicker({
       </p>
       <div
         className={`grid gap-2 sm:grid-cols-2 ${
-          options.length > 2 ? "lg:grid-cols-4" : ""
+          options.length > 2 ? "lg:grid-cols-3" : ""
         }`}
       >
         {options.map((mode) => {
           const copy = m.wizard.imageOutputModes[mode];
-          const modeLocked =
-            mode === "campaign" && !campaignAllowed && !lockedCampaign;
+          const modeLocked = mode === "carousel" && !carouselAllowed && !lockedCampaign;
+          const selected = uiValue === mode;
           return (
             <button
               key={mode}
@@ -96,13 +111,19 @@ export function ImageOutputModePicker({
                   return;
                 }
                 onChange(mode);
+                if (mode === "carousel") {
+                  if (lockedCampaign || !includeTeachingCarousel) {
+                    onCarouselIntentChange("promo");
+                    onCarouselSlideCountChange(3);
+                  }
+                }
               }}
               disabled={locked}
               aria-disabled={locked || modeLocked}
               className={`overflow-hidden rounded-xl border text-left transition ${
                 modeLocked
                   ? "cursor-pointer border-dashed border-slate-300 bg-slate-50/80 opacity-90"
-                  : value === mode
+                  : selected
                     ? selectedClass
                     : "border-slate-200 bg-white hover:border-slate-300"
               } ${locked ? "cursor-default" : ""}`}
@@ -126,11 +147,22 @@ export function ImageOutputModePicker({
           );
         })}
       </div>
+      {uiValue === "carousel" && !locked && carouselAllowed ? (
+        <CarouselOutputSettings
+          intent={carouselIntent}
+          slideCount={carouselSlideCount}
+          onIntentChange={onCarouselIntentChange}
+          onSlideCountChange={onCarouselSlideCountChange}
+          allowTeachingIntent={includeTeachingCarousel}
+          promoAllowed={carouselAllowed}
+          accent={accent}
+        />
+      ) : null}
       <PlanGateDialog
         open={gateOpen}
         onClose={() => setGateOpen(false)}
-        requiredPlan="standard"
-        featureLabel={m.wizard.imageOutputModes.campaign.title}
+        requiredPlan={minPlanForFeature("carousel_mode")}
+        featureLabel={m.wizard.imageOutputModes.carousel.title}
       />
     </div>
   );

@@ -1,6 +1,10 @@
 "use client";
 
+import { useState } from "react";
+import { PlanGateDialog } from "@/components/billing/PlanGateDialog";
 import { useLocale } from "@/components/LocaleProvider";
+import { useUserPlanEntitlements } from "@/hooks/useUserPlanEntitlements";
+import { canUseStoryboard, minPlanForFeature } from "@/lib/billing/plan-gates";
 import type { WorkflowMode } from "@/lib/workflow-mode";
 import { studioPhasesForMode } from "@/lib/studio-phases";
 
@@ -272,6 +276,9 @@ export function CreationPathPicker({
   const { m } = useLocale();
   const cp = m.wizard.creationPath;
   const modes = m.wizard.workflowModes;
+  const { plan } = useUserPlanEntitlements();
+  const storyboardAllowed = canUseStoryboard(plan);
+  const [storyboardGateOpen, setStoryboardGateOpen] = useState(false);
 
   return (
     <div className="path-page -mx-1 sm:mx-0">
@@ -295,13 +302,28 @@ export function CreationPathPicker({
             {MODES.map((id) => {
               const copy = modes[id];
               const selected = value === id;
+              const modeLocked = id === "combined" && !storyboardAllowed;
               return (
                 <button
                   key={id}
                   type="button"
-                  onClick={() => onChange(id)}
-                  className={`path-type-card ${selected ? "is-selected" : ""}`}
+                  onClick={() => {
+                    if (modeLocked) {
+                      setStoryboardGateOpen(true);
+                      return;
+                    }
+                    onChange(id);
+                  }}
+                  className={`path-type-card ${selected ? "is-selected" : ""}${
+                    modeLocked ? " opacity-90" : ""
+                  }`}
                   aria-pressed={selected}
+                  aria-disabled={modeLocked}
+                  style={
+                    modeLocked
+                      ? { borderStyle: "dashed", borderColor: "#cbd5e1" }
+                      : undefined
+                  }
                 >
                   <div className="path-card-preview">
                     <span className="path-type-check" aria-hidden>
@@ -325,6 +347,11 @@ export function CreationPathPicker({
                       }`}
                     >
                       {copy.title}
+                      {modeLocked ? (
+                        <span className="ml-1.5 text-[11px] font-semibold text-amber-800">
+                          {m.pricing.plans.pro.name}+
+                        </span>
+                      ) : null}
                     </h3>
                     <p className="mt-1 text-[12px] leading-relaxed text-slate-500 sm:text-[13px]">
                       {copy.cardDescription}
@@ -433,6 +460,12 @@ export function CreationPathPicker({
           </div>
         </div>
       </div>
+      <PlanGateDialog
+        open={storyboardGateOpen}
+        onClose={() => setStoryboardGateOpen(false)}
+        requiredPlan={minPlanForFeature("storyboard")}
+        featureLabel={modes.combined.title}
+      />
     </div>
   );
 }

@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 import { useLocale } from "@/components/LocaleProvider";
+import { PlanGateDialog } from "@/components/billing/PlanGateDialog";
 import { useWizard } from "@/components/studio/WizardContext";
+import { useUserPlanEntitlements } from "@/hooks/useUserPlanEntitlements";
+import {
+  canUseStoryboard,
+  minPlanForFeature,
+} from "@/lib/billing/plan-gates";
 import {
   resolveConceptCopyFocus,
 } from "@/lib/concept-copy-focus";
@@ -48,6 +54,9 @@ export function IntakeTemplatePicker({
 }: Props) {
   const { m } = useLocale();
   const wizard = useWizard();
+  const { plan } = useUserPlanEntitlements();
+  const storyboardAllowed = canUseStoryboard(plan);
+  const [storyboardGateOpen, setStoryboardGateOpen] = useState(false);
   const fuse = m.microWizard.intakeFuse;
   const showVideoRecipes = intakeShowsVideoRecipes(workflowMode);
   const showStoryboardRecipes = intakeShowsStoryboardRecipes(workflowMode);
@@ -98,10 +107,18 @@ export function IntakeTemplatePicker({
       card.storyboardRecipeId &&
       onSelectStoryboardRecipe
     ) {
+      if (!storyboardAllowed) {
+        setStoryboardGateOpen(true);
+        return;
+      }
       onSelectStoryboardRecipe(card.storyboardRecipeId);
       return;
     }
     if (card.kind === "visual" && card.visualStyleId) {
+      if (card.visualStyleId === "storyboard-video" && !storyboardAllowed) {
+        setStoryboardGateOpen(true);
+        return;
+      }
       onSelectTemplateStyle(card.visualStyleId);
     }
   }
@@ -151,15 +168,21 @@ export function IntakeTemplatePicker({
 
         {cards.map((card) => {
           const on = isCardSelected(card);
+          const storyboardLocked =
+            (card.kind === "storyboard" || card.visualStyleId === "storyboard-video") &&
+            !storyboardAllowed;
           return (
             <button
               key={card.id}
               type="button"
+              aria-disabled={storyboardLocked}
               onClick={() => onPickCard(card)}
               className={`flex items-start gap-2.5 overflow-hidden rounded-xl border p-2.5 text-left transition ${
-                on
-                  ? "border-violet-600 bg-violet-50 ring-1 ring-violet-200"
-                  : "border-slate-200 bg-white hover:border-slate-300"
+                storyboardLocked
+                  ? "cursor-pointer border-dashed border-slate-300 bg-slate-50/80 opacity-90"
+                  : on
+                    ? "border-violet-600 bg-violet-50 ring-1 ring-violet-200"
+                    : "border-slate-200 bg-white hover:border-slate-300"
               }`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -177,6 +200,11 @@ export function IntakeTemplatePicker({
                     {card.description}
                   </span>
                 ) : null}
+                {storyboardLocked ? (
+                  <span className="mt-1 block text-[10px] font-semibold text-amber-800">
+                    {m.pricing.plans.pro.name}+
+                  </span>
+                ) : null}
               </span>
             </button>
           );
@@ -188,6 +216,12 @@ export function IntakeTemplatePicker({
           {fuse.templateSelectedNote.replace("{name}", selectedLabel)}
         </p>
       ) : null}
+      <PlanGateDialog
+        open={storyboardGateOpen}
+        onClose={() => setStoryboardGateOpen(false)}
+        requiredPlan={minPlanForFeature("storyboard")}
+        featureLabel={m.wizard.visualStyles["storyboard-video"].title}
+      />
     </div>
   );
 }

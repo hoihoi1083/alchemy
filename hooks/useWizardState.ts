@@ -18,6 +18,7 @@ import {
   defaultImageAspectRatioForWorkflow,
   type ImageAspectRatio,
 } from "@/lib/image-aspect-ratio";
+import type { CarouselIntent } from "@/lib/carousel-output";
 import {
   DEFAULT_IMAGE_OUTPUT_MODE,
   type ImageOutputMode,
@@ -211,6 +212,7 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn" | "zh-tw") {
   const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
   const [imageOutputMode, setImageOutputMode] =
     useState<ImageOutputMode>(DEFAULT_IMAGE_OUTPUT_MODE);
+  const [carouselIntent, setCarouselIntent] = useState<CarouselIntent>("teaching");
   const [imageResolution, setImageResolution] =
     useState<ImageResolutionCap>("1K");
   const [imageAspectRatio, setImageAspectRatio] = useState<ImageAspectRatio>(() =>
@@ -470,6 +472,8 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn" | "zh-tw") {
     setSelectedVariantIndex,
     imageOutputMode,
     setImageOutputMode,
+    carouselIntent,
+    setCarouselIntent,
     imageResolution,
     setImageResolution,
     imageAspectRatio,

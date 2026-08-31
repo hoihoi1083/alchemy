@@ -180,7 +180,8 @@ function parseSnapshot(raw: unknown): StudioAssistantSnapshot | null {
       s.imageOutputMode === "single" ||
       s.imageOutputMode === "ab" ||
       s.imageOutputMode === "campaign" ||
-      s.imageOutputMode === "teaching-carousel"
+      s.imageOutputMode === "teaching-carousel" ||
+      s.imageOutputMode === "carousel"
         ? s.imageOutputMode
         : "single",
     imageCreativeMode:

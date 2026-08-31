@@ -38,9 +38,11 @@ import {
   luxuryBirthSceneCountOptions,
 } from "@/lib/storyboard-recipes";
 import { LUXURY_FIELD_WRAP_CLASS, luxuryFieldWrap } from "@/lib/storyboard-luxury-fields";
+import { CarouselOutputSettings } from "@/components/CarouselOutputSettings";
 import { PlanGateDialog } from "@/components/billing/PlanGateDialog";
 import { useUserPlanEntitlements } from "@/hooks/useUserPlanEntitlements";
-import { planMeetsMinimum } from "@/lib/billing/plan-gates";
+import { canUseCarousel, minPlanForFeature } from "@/lib/billing/plan-gates";
+import { isCarouselUiSelected } from "@/lib/carousel-output";
 
 /** Dedicated thumb for 版面改寫 — not the info-poster bottle. */
 const COMPOSITION_REMAP_PREVIEW_SRC =
@@ -906,8 +908,8 @@ export function PreGenerateSetupPanel({
   const pg = m.microWizard.preGenerateSetup;
   const fuse = m.microWizard.intakeFuse;
   const { plan } = useUserPlanEntitlements();
-  const campaignAllowed = planMeetsMinimum(plan, "standard");
-  const [campaignGateOpen, setCampaignGateOpen] = useState(false);
+  const carouselAllowed = canUseCarousel(plan) || wizard.lockedCampaignMode;
+  const [carouselGateOpen, setCarouselGateOpen] = useState(false);
   const [researchRefBusy, setResearchRefBusy] = useState(false);
   const [researchRefError, setResearchRefError] = useState<string | null>(null);
   const isConcept = wizard.promotionMode === "concept";
@@ -1342,22 +1344,22 @@ export function PreGenerateSetupPanel({
   }
 
   const outputModes: ImageOutputMode[] = wizard.lockedCampaignMode
-    ? ["campaign"]
+    ? ["carousel"]
     : wizard.lockedSingleImageMode
       ? ["single"]
-      : ["single", "ab", "campaign", "teaching-carousel"];
+      : ["single", "ab", "carousel"];
 
   useEffect(() => {
     if (
-      wizard.effectiveImageOutputMode === "campaign" &&
-      !campaignAllowed &&
+      isCarouselUiSelected(wizard.imageOutputMode) &&
+      !carouselAllowed &&
       !wizard.lockedCampaignMode
     ) {
       wizard.setImageOutputMode("single");
     }
   }, [
-    campaignAllowed,
-    wizard.effectiveImageOutputMode,
+    carouselAllowed,
+    wizard.imageOutputMode,
     wizard.lockedCampaignMode,
     wizard.setImageOutputMode,
   ]);
@@ -2754,12 +2756,15 @@ export function PreGenerateSetupPanel({
                   <div className="pg-output-grid">
                     {outputModes.map((mode) => {
                       const copy = m.wizard.imageOutputModes[mode];
-                      const selected = wizard.effectiveImageOutputMode === mode;
+                      const selected =
+                        mode === "carousel"
+                          ? isCarouselUiSelected(wizard.imageOutputMode)
+                          : wizard.imageOutputMode === mode;
                       const outputLocked =
                         wizard.lockedCampaignMode || wizard.lockedSingleImageMode;
                       const modeLocked =
-                        mode === "campaign" &&
-                        !campaignAllowed &&
+                        mode === "carousel" &&
+                        !carouselAllowed &&
                         !wizard.lockedCampaignMode;
                       return (
                         <button
@@ -2768,16 +2773,20 @@ export function PreGenerateSetupPanel({
                           onClick={() => {
                             if (outputLocked) return;
                             if (modeLocked) {
-                              setCampaignGateOpen(true);
+                              setCarouselGateOpen(true);
                               return;
                             }
                             wizard.setImageOutputMode(mode);
+                            if (mode === "carousel" && wizard.lockedCampaignMode) {
+                              wizard.setCarouselIntent("promo");
+                              wizard.setReferenceCarouselSlideCount(3);
+                            }
                           }}
                           disabled={outputLocked}
                           aria-disabled={outputLocked || modeLocked}
                           className={`pg-output-card${selected ? " is-selected" : ""}${
                             outputLocked ? " cursor-default" : ""
-                          }${modeLocked ? " opacity-90" : ""}`}
+                          }${modeLocked ? " opacity-90 border-dashed" : ""}`}
                         >
                           {selected ? <CheckBadge /> : null}
                           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -2800,36 +2809,29 @@ export function PreGenerateSetupPanel({
                     })}
                   </div>
                   <PlanGateDialog
-                    open={campaignGateOpen}
-                    onClose={() => setCampaignGateOpen(false)}
-                    requiredPlan="standard"
-                    featureLabel={m.wizard.imageOutputModes.campaign.title}
+                    open={carouselGateOpen}
+                    onClose={() => setCarouselGateOpen(false)}
+                    requiredPlan={minPlanForFeature("carousel_mode")}
+                    featureLabel={m.wizard.imageOutputModes.carousel.title}
                   />
                   {wizard.lockedSingleImageMode ? (
                     <p className="mt-2 text-xs leading-relaxed text-slate-500">
                       {m.wizard.imageOutputModeHintDesignedPoster}
                     </p>
                   ) : null}
-                  {wizard.effectiveImageOutputMode === "teaching-carousel" ? (
-                    <label className="mt-3 flex flex-wrap items-center gap-3 text-sm text-slate-700">
-                      <span className="font-medium">{m.wizard.teachingCarouselSlideCountLabel}</span>
-                      <select
-                        value={wizard.referenceCarouselSlideCount}
-                        onChange={(e) =>
-                          wizard.setReferenceCarouselSlideCount(Number(e.target.value))
-                        }
-                        className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm"
-                      >
-                        {[4, 5, 6].map((n) => (
-                          <option key={n} value={n}>
-                            {m.wizard.teachingCarouselSlideCountOption.replace(
-                              "{count}",
-                              String(n),
-                            )}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
+                  {isCarouselUiSelected(wizard.imageOutputMode) &&
+                  carouselAllowed &&
+                  !wizard.lockedCampaignMode &&
+                  !wizard.lockedSingleImageMode ? (
+                    <CarouselOutputSettings
+                      intent={wizard.carouselIntent}
+                      slideCount={wizard.referenceCarouselSlideCount}
+                      onIntentChange={wizard.setCarouselIntent}
+                      onSlideCountChange={wizard.setReferenceCarouselSlideCount}
+                      allowTeachingIntent={isConcept}
+                      promoAllowed={carouselAllowed}
+                      compact
+                    />
                   ) : null}
                 </div>
               </div>

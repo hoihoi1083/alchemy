@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useLocale } from "@/components/LocaleProvider";
 import { useWizard } from "@/components/studio/WizardContext";
 import { useWizardMicroStep } from "@/hooks/useWizardMicroStep";
@@ -13,6 +13,16 @@ import { referenceAnalyzeReady } from "@/components/studio/micro-wizard/Referenc
 import { downloadMediaUrl, downloadMediaUrls } from "@/lib/download-media";
 import type { PromotionMode } from "@/lib/promotion-mode";
 import { estimateImageRegenTokens } from "@/lib/billing/token-costs";
+import { wasOpenedFromLibrary } from "@/lib/wizard-project-snapshot";
+import {
+  clearLibraryBrowseSession,
+  FORK_SUCCESS_PARAM,
+  phaseForMicroStep,
+  shouldShowPhaseStepper,
+} from "@/lib/project-browse";
+import { useActiveProjectMeta } from "@/components/studio/WizardContext";
+import { ProjectPhaseStepper } from "@/components/studio/ProjectPhaseStepper";
+import Link from "next/link";
 
 type Props = {
   promotionMode: PromotionMode;
@@ -24,7 +34,21 @@ export function MicroWizard({ promotionMode }: Props) {
   const { m } = useLocale();
   const mw = m.microWizard;
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [downloadAllBusy, setDownloadAllBusy] = useState(false);
+  const [showForkBanner, setShowForkBanner] = useState(false);
+  const { projectName, projectId } = useActiveProjectMeta();
+  const fromLibrary = wasOpenedFromLibrary();
+
+  useEffect(() => {
+    if (searchParams.get(FORK_SUCCESS_PARAM) === "1") {
+      setShowForkBanner(true);
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete(FORK_SUCCESS_PARAM);
+      const qs = params.toString();
+      router.replace(qs ? `/studio?${qs}` : "/studio", { scroll: false });
+    }
+  }, [router, searchParams]);
 
   const {
     currentStep,
@@ -112,6 +136,11 @@ export function MicroWizard({ promotionMode }: Props) {
 
   const onBack = () => {
     if (isCreationPath && !canGoBack) {
+      if (fromLibrary) {
+        clearLibraryBrowseSession();
+        router.push("/library?tab=projects");
+        return;
+      }
       router.push("/start");
       return;
     }
@@ -324,6 +353,65 @@ export function MicroWizard({ promotionMode }: Props) {
             : "pb-28 md:pb-0"
       }`}
     >
+      {showForkBanner ? (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+          <p className="min-w-0">
+            <span className="font-semibold">{m.studio.forkCreatedTitle}</span>
+            <span className="mt-0.5 block text-[11px] font-normal text-emerald-800">
+              {m.studio.forkCreatedBody}
+            </span>
+          </p>
+          <div className="flex shrink-0 flex-wrap items-center gap-3">
+            {projectId ? (
+              <Link
+                href={`/library?tab=projects&highlight=${encodeURIComponent(projectId)}`}
+                className="text-xs font-medium text-emerald-800 underline-offset-2 hover:underline"
+              >
+                {m.studio.forkCreatedLibraryLink}
+              </Link>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => setShowForkBanner(false)}
+              className="text-xs font-medium text-emerald-800 underline-offset-2 hover:underline"
+            >
+              {m.studio.forkCreatedDismiss}
+            </button>
+          </div>
+        </div>
+      ) : null}
+      {fromLibrary || shouldShowPhaseStepper(wizard) ? (
+        <div className="space-y-2">
+          {fromLibrary ? (
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-violet-100 bg-violet-50/80 px-3 py-2 text-sm">
+              <p className="min-w-0 text-violet-900">
+                <span className="font-semibold">{m.studio.resumeBannerTitle}</span>
+                {projectName ? (
+                  <span className="text-violet-700"> · {projectName}</span>
+                ) : null}
+                <span className="mt-0.5 block text-[11px] font-normal text-violet-600">
+                  {m.studio.regenForksHint}
+                </span>
+              </p>
+              <Link
+                href="/library?tab=projects"
+                onClick={() => clearLibraryBrowseSession()}
+                className="shrink-0 text-xs font-medium text-violet-700 underline-offset-2 hover:underline"
+              >
+                {m.studio.resumeBannerLibrary}
+              </Link>
+            </div>
+          ) : null}
+          {shouldShowPhaseStepper(wizard) ? (
+            <ProjectPhaseStepper
+              workflowMode={wizard.workflowMode}
+              currentPhase={phaseForMicroStep(currentId)}
+              wizard={wizard}
+              onSelectPhase={micro.jumpToPhase}
+            />
+          ) : null}
+        </div>
+      ) : null}
       {!hideLegacyProgress && currentStep ? (
         <div className="flex items-center justify-between gap-3 text-xs text-slate-500">
           <span>

@@ -154,7 +154,8 @@ export function resolveCreativeCopyFieldHints(input: {
   if (isImageWorkflow) {
     if (
       input.imageOutputMode === "campaign" ||
-      input.imageOutputMode === "teaching-carousel"
+      input.imageOutputMode === "teaching-carousel" ||
+      input.imageOutputMode === "carousel"
     ) {
       return fromRoles(
         {
