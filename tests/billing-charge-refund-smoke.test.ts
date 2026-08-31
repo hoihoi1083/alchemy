@@ -108,6 +108,8 @@ describe("billing smoke — invalid before charge (source contract)", () => {
     const pending = readRoute("lib/billing/pending-refunds.ts");
     assert.match(pending, /billing_pending_refunds/);
     assert.match(pending, /processPendingRefundsForBilledUser/);
+    assert.match(pending, /findOneAndUpdate/);
+    assert.match(pending, /status: "processing"/);
     const me = readRoute("app/api/me/route.ts");
     assert.match(me, /processPendingRefundsForBilledUser/);
   });

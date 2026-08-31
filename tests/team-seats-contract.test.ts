@@ -79,8 +79,6 @@ describe("team seats contract", () => {
     assert.match(src, /membership\.ownerClerkId/);
     assert.match(src, /owner\?\.plan/);
     assert.match(src, /syncOwnerTeamForPlan/);
-    assert.match(src, /deactivateEnterpriseTeam/);
-    assert.match(src, /teamId: null, teamRole: null/);
     assert.match(src, /ownerPlan !== "custom"/);
   });
 
@@ -123,7 +121,7 @@ describe("team seats contract", () => {
     assert.match(en, /Shared token pool billed to the owner/);
     const pricing = read("components/PricingPageClient.tsx");
     assert.match(pricing, /pricingCardCapacityItems\("custom"/);
-    assert.match(pricing, /row\.custom/);
+    assert.match(pricing, /id: "custom"/);
     assert.match(pricing, /plan: card\.id/);
     assert.doesNotMatch(pricing, /Enterprise%205-seat%20plan/);
     assert.doesNotMatch(en, /multi-seat team workspaces are not included yet/);

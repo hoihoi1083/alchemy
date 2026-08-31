@@ -17,6 +17,8 @@ const isPublicRoute = createRouteMatcher([
   "/twitter-image(.*)",
   // Stripe webhooks have no Clerk session — verified via stripe-signature.
   "/api/stripe/webhook(.*)",
+  // Vercel Cron — verified via CRON_SECRET in the route handler.
+  "/api/cron/replay-pending-refunds(.*)",
 ]);
 
 /** Beta/orphan surfaces — hidden unless NEXT_PUBLIC_ENABLE_BETA_SURFACES=1 */

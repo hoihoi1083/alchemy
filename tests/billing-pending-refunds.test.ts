@@ -20,10 +20,23 @@ describe("generate-image carousel gate", () => {
 });
 
 describe("billing pending refunds", () => {
-  it("records and replays failed refunds", () => {
+  it("records and atomically replays failed refunds", () => {
     const src = read("lib/billing/pending-refunds.ts");
     assert.match(src, /recordPendingRefund/);
     assert.match(src, /processPendingRefundsForBilledUser/);
+    assert.match(src, /processAllPendingRefunds/);
     assert.match(src, /status: "pending"/);
+    assert.match(src, /status: "processing"/);
+    assert.match(src, /findOneAndUpdate/);
+    assert.match(src, /claimNextPendingRefund/);
+    assert.match(src, /markRefundReplayCompleted/);
+    assert.match(src, /releaseRefundReplayClaim/);
+  });
+
+  it("cron route sweeps all pending refunds with CRON_SECRET", () => {
+    const src = read("app/api/cron/replay-pending-refunds/route.ts");
+    assert.match(src, /processAllPendingRefunds/);
+    assert.match(src, /CRON_SECRET/);
+    assert.match(src, /Bearer \$\{secret\}/);
   });
 });
