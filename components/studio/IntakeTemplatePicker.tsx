@@ -55,7 +55,8 @@ export function IntakeTemplatePicker({
   const { m } = useLocale();
   const wizard = useWizard();
   const { plan, planReady } = useUserPlanEntitlements();
-  const storyboardAllowed = !planReady || canUseStoryboard(plan);
+  const storyboardLoading = !planReady;
+  const storyboardAllowed = planReady && canUseStoryboard(plan);
   const [storyboardGateOpen, setStoryboardGateOpen] = useState(false);
   const fuse = m.microWizard.intakeFuse;
   const showVideoRecipes = intakeShowsVideoRecipes(workflowMode);
@@ -107,6 +108,7 @@ export function IntakeTemplatePicker({
       card.storyboardRecipeId &&
       onSelectStoryboardRecipe
     ) {
+      if (storyboardLoading) return;
       if (!storyboardAllowed) {
         setStoryboardGateOpen(true);
         return;
@@ -115,9 +117,12 @@ export function IntakeTemplatePicker({
       return;
     }
     if (card.kind === "visual" && card.visualStyleId) {
-      if (card.visualStyleId === "storyboard-video" && !storyboardAllowed) {
-        setStoryboardGateOpen(true);
-        return;
+      if (card.visualStyleId === "storyboard-video") {
+        if (storyboardLoading) return;
+        if (!storyboardAllowed) {
+          setStoryboardGateOpen(true);
+          return;
+        }
       }
       onSelectTemplateStyle(card.visualStyleId);
     }
@@ -168,17 +173,19 @@ export function IntakeTemplatePicker({
 
         {cards.map((card) => {
           const on = isCardSelected(card);
+          const storyboardCard =
+            card.kind === "storyboard" || card.visualStyleId === "storyboard-video";
           const storyboardLocked =
-            (card.kind === "storyboard" || card.visualStyleId === "storyboard-video") &&
-            !storyboardAllowed;
+            storyboardCard && planReady && !storyboardAllowed;
+          const storyboardPending = storyboardCard && storyboardLoading;
           return (
             <button
               key={card.id}
               type="button"
-              aria-disabled={storyboardLocked}
+              aria-disabled={storyboardLocked || storyboardPending}
               onClick={() => onPickCard(card)}
               className={`flex items-start gap-2.5 overflow-hidden rounded-xl border p-2.5 text-left transition ${
-                storyboardLocked
+                storyboardLocked || storyboardPending
                   ? "cursor-pointer border-dashed border-slate-300 bg-slate-50/80 opacity-90"
                   : on
                     ? "border-violet-600 bg-violet-50 ring-1 ring-violet-200"
@@ -200,7 +207,11 @@ export function IntakeTemplatePicker({
                     {card.description}
                   </span>
                 ) : null}
-                {storyboardLocked ? (
+                {storyboardPending ? (
+                  <span className="mt-1 block text-[10px] font-semibold text-slate-500">
+                    {m.account.checkingPlan}
+                  </span>
+                ) : storyboardLocked ? (
                   <span className="mt-1 block text-[10px] font-semibold text-amber-800">
                     {m.pricing.plans.pro.name}+
                   </span>

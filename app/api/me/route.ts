@@ -1,3 +1,4 @@
+import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import {
   INTERNAL_UNLIMITED_DISPLAY_BALANCE,
@@ -50,21 +51,34 @@ function publicMeUser(
 }
 
 export async function GET() {
-  const auth = await requireAppUser();
-  if (!auth.ok) return auth.response;
-
   if (!isMongoConfigured()) {
     return NextResponse.json({ error: "MONGODB_URI is not set" }, { status: 503 });
   }
 
+  const { userId } = await auth();
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const db = await getDb();
-  const user = await db.collection<DbUser>("users").findOne({ clerkId: auth.user.userId });
+  let user = await db.collection<DbUser>("users").findOne({ clerkId: userId });
+
+  // First-time users still need Clerk profile sync + signup grant.
+  // Existing rows skip currentUser()/ensureUser — that round-trip was ~3–5s
+  // and ran on every plan-gate mount.
+  if (!user) {
+    const provisioned = await requireAppUser();
+    if (!provisioned.ok) return provisioned.response;
+    user = await db.collection<DbUser>("users").findOne({ clerkId: userId });
+  }
+
+  const authUserId = userId;
 
   const [resolvedPlan, teamMembership, payer] = user
     ? await Promise.all([
-        getUserPlan(auth.user.userId),
-        getTeamContextForUser(auth.user.userId),
-        resolveTokenPayer(auth.user.userId),
+        getUserPlan(authUserId),
+        getTeamContextForUser(authUserId),
+        resolveTokenPayer(authUserId),
       ])
     : [null, null, null];
 
@@ -77,10 +91,10 @@ export async function GET() {
   }
   const unlimited = user
     ? isInternalUnlimitedIdentity({
-        clerkId: auth.user.userId,
+        clerkId: authUserId,
         email: user.emailNormalized ?? user.email,
       })
-    : isInternalUnlimitedClerkId(auth.user.userId);
+    : isInternalUnlimitedClerkId(authUserId);
   // Backdoor: balance + Master entitlements must stay in lockstep. Never show
   // 999,999 tokens while UI gates still think the account is Free/Pro.
   if (unlimited) {

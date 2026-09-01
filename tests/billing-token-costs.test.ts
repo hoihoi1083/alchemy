@@ -15,6 +15,7 @@ import {
   VIDEO_TOKENS_PER_SEC,
   cogsUsdForTokens,
   estimateH3Tokens,
+  estimateSocialDripTokens,
   h3BillingResolutionForPlan,
   h3TokenCost,
   tokensForFalUsd,
@@ -63,6 +64,16 @@ describe("billing token economics", () => {
     assert.equal(h3BillingResolutionForPlan("standard"), "768P");
     assert.equal(h3BillingResolutionForPlan("pro"), "2K");
     assert.equal(h3TokenCost("480P", 12), 492);
+  });
+
+  it("Social drip preflight totals 2 stills + H3 video", () => {
+    assert.equal(
+      estimateSocialDripTokens({ resolution: "480p", duration: 8 }),
+      TOKEN_COST.image * 2 + 328,
+    );
+    assert.ok(
+      estimateSocialDripTokens({ resolution: "480p", duration: 8 }) > FREE_PACK.grant,
+    );
   });
 
   it("Seedance 8s is priced so we do not lose money vs fal", () => {

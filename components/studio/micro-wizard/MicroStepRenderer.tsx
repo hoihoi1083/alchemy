@@ -19,6 +19,7 @@ import { VideoCreativeModePicker } from "@/components/VideoCreativeModePicker";
 import type { WorkflowMode } from "@/lib/workflow-mode";
 import type { ConceptSource } from "@/lib/concept-source-state";
 import type { IntakePath, MicroStepId } from "@/lib/wizard-micro-steps.types";
+import { wantsResearchVideoReference } from "@/lib/content-research-infer";
 import type { WizardMicroStepValue } from "@/hooks/useWizardMicroStep";
 import { ShipItPanel } from "@/components/studio/ShipItPanel";
 import { ConceptWizardPanel } from "@/components/studio/ConceptWizardPanel";
@@ -590,9 +591,22 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
       const h3Subpath = isH3ShotRecipeMode(wizard.videoCreativeMode)
         ? h3ShotRecipeToSubpath(wizard.videoCreativeMode)
         : null;
+      const researchApply = wizard.contentResearchApplyRef;
+      const researchVideoSubpath =
+        wizard.videoCreativeMode === "reference-concept" ||
+        Boolean(wizard.researchReelAnalysis?.seedancePrompt?.trim()) ||
+        (researchApply &&
+          wantsResearchVideoReference(
+            researchApply.angle.format,
+            researchApply.angle.sourceImageUrls?.length ?? 0,
+            researchApply.angle.sourceVideoUrl,
+          ))
+          ? "reference_reel"
+          : null;
       return (
         <PreVideoSetupPanel
           scenesReady={scenesReady}
+          intakePath={micro.ctx.intakePath ?? null}
           onGenerate={micro.goNext}
           onBrowseContinue={
             micro.hasExistingVideo ? micro.browseContinueExisting : undefined
@@ -631,7 +645,8 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
                 ? h3Subpath
                 : wizard.videoCreativeMode === "motion-poster"
                 ? "motion_poster"
-                : (micro.pendingVideoSubpath ?? micro.ctx.videoSubpath)
+                : researchVideoSubpath
+                ?? (micro.pendingVideoSubpath ?? micro.ctx.videoSubpath)
           }
           onPickVideoSubpath={(subpath) => {
             const h3Mode = subpathToH3ShotRecipe(subpath as never);

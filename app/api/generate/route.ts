@@ -1,3 +1,4 @@
+import type { UserPlan } from "@/lib/billing/plans";
 import { fal, ApiError, ValidationError } from "@fal-ai/client";
 import { NextResponse } from "next/server";
 import {
@@ -212,6 +213,125 @@ function applyAdvancedGuidance(prompt: string, opts: {
   return `${prompt}\n\nAdditional constraints:\n${guidance.join("\n")}`;
 }
 
+function hasReferenceVideoInput(
+  mode: Mode,
+  formData: FormData,
+  refVideoFiles: File[],
+  directVideoUrls: string[],
+): boolean {
+  if (mode !== "reference") return false;
+  const single = (formData.get("reference_video_url") as string | null)?.trim();
+  return (
+    refVideoFiles.length > 0 || directVideoUrls.length > 0 || Boolean(single)
+  );
+}
+
+async function runReferenceVideoViaH3(input: {
+  clerkId: string;
+  formData: FormData;
+  prompt: string;
+  duration: "auto" | number;
+  plan: UserPlan;
+  requestedResolution: string;
+  aspectRatio: string;
+  refDurationSec?: number;
+}): Promise<NextResponse> {
+  const durationSec = clampMinimaxH3Duration(
+    input.duration === "auto" ? 8 : input.duration,
+  );
+  const h3Resolution = clampMinimaxH3ResolutionForPlan(
+    input.plan,
+    normalizeMinimaxH3Resolution(input.requestedResolution),
+  );
+  const refSec =
+    input.refDurationSec && input.refDurationSec > 0
+      ? Math.min(15, Math.round(input.refDurationSec))
+      : durationSec;
+
+  const { imageUrls, videoUrls } = await collectMinimaxH3FallbackMedia(
+    input.formData,
+    { clerkId: input.clerkId },
+  );
+  if (videoUrls.length < 1) {
+    return NextResponse.json(
+      {
+        error:
+          "Reference video (@Video1) was required but could not be prepared. Upload an MP4 and retry.",
+        code: "REFERENCE_VIDEO_REQUIRED",
+      },
+      { status: 400 },
+    );
+  }
+
+  const h3Cost = h3TokenCostFromRequest({
+    duration: durationSec,
+    resolution: h3Resolution,
+    referenceVideoSec: refSec,
+    extraReferenceImages: Math.max(0, imageUrls.length - 5),
+  });
+  const charged = await chargeTokens(input.clerkId, h3Cost, {
+    kind: "minimax_h3",
+    mode: "reference",
+    via: "generate_reference_h3_primary",
+    duration: durationSec,
+  });
+  if ("error" in charged) return charged.error;
+
+  try {
+    console.info(
+      `[api/generate] MiniMax H3 reference-to-video (${imageUrls.length} image(s), ${videoUrls.length} video(s))`,
+    );
+    const h3Prompt = adaptScriptForMinimaxH3({
+      seedancePrompt: input.prompt,
+      imageCount: imageUrls.length,
+      videoCount: videoUrls.length,
+    });
+    const h3 = await runMinimaxH3Fallback({
+      clerkId: input.clerkId,
+      prompt: h3Prompt,
+      durationSec,
+      aspectRatio: input.aspectRatio === "auto" ? "9:16" : input.aspectRatio,
+      resolution: h3Resolution,
+      imageUrls,
+      videoUrls,
+    });
+    await trackUsage(input.clerkId, "video");
+    const durableVideoUrl = await persistAndDurablize({
+      clerkId: input.clerkId,
+      kind: "video",
+      sourceUrl: h3.videoUrl,
+      fallbackUrl: h3.videoUrl,
+      prompt: input.prompt.slice(0, 500),
+      timingManifest: buildSingleClipManifest(durationSec, {
+        source: "seedance",
+        engine: "unknown",
+        timingSource: "reported",
+      }),
+    });
+    return NextResponse.json({
+      videoUrl: durableVideoUrl,
+      generationMode: h3.generationMode,
+      endpoint: h3.endpoint,
+      referenceImageCount: imageUrls.length,
+      referenceVideoCount: videoUrls.length,
+      tokensCharged: h3Cost,
+      creditBalance: charged.balanceAfter,
+      note: "Reference-reel video — MiniMax H3 (reference motion clip + product still).",
+    });
+  } catch (e: unknown) {
+    await refundTokens(input.clerkId, h3Cost, {
+      kind: "minimax_h3",
+      reason: "generation_failed",
+      via: "generate_reference_h3_primary",
+    });
+    console.error("[api/generate] MiniMax H3 reference-to-video failed", e);
+    return NextResponse.json(
+      { error: formatFalError(e) },
+      { status: 502 },
+    );
+  }
+}
+
 export async function POST(request: Request) {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
@@ -360,6 +480,41 @@ export async function POST(request: Request) {
 
   const duration = parseDuration((formData.get("duration") as string) || "auto");
   const plan = await getUserPlan(auth.user.userId);
+  const referenceMatch = mode === "reference";
+  const refDurationSec = Number(
+    (formData.get("ref_duration_sec") as string | null)?.trim() || "",
+  );
+  const effectiveNegative = referenceMatch
+    ? (formData.get("reference_negative_prompt") as string | null)?.trim() ||
+      negativePrompt
+    : negativePrompt;
+  const skipTemplateCamera =
+    referenceMatch ||
+    promptHasVideo1(prompt) ||
+    promptAlreadySpecifiesCamera(prompt);
+  const guidedPrompt = applyAdvancedGuidance(prompt, {
+    camera: skipTemplateCamera ? undefined : camera,
+    motionStrength: referenceMatch || promptHasVideo1(prompt) ? undefined : motionStrength,
+    negativePrompt: effectiveNegative,
+    avoidOnScreenText,
+    skipCamera: skipTemplateCamera,
+  });
+
+  if (
+    hasReferenceVideoInput(mode, formData, refVideoFiles, directVideoUrlsEarly)
+  ) {
+    return runReferenceVideoViaH3({
+      clerkId: auth.user.userId,
+      formData,
+      prompt: guidedPrompt,
+      duration,
+      plan,
+      requestedResolution,
+      aspectRatio,
+      refDurationSec: Number.isFinite(refDurationSec) ? refDurationSec : undefined,
+    });
+  }
+
   const { resolution } = clampVideoResolution(plan, requestedResolution);
   const billedEndpoint = endpointFor(mode, fastHint, formData);
   const tokenCost = videoTokenCostFromSeedanceEndpoint({
@@ -377,30 +532,11 @@ export async function POST(request: Request) {
   if ("error" in charged) return charged.error;
   const balanceAfter = charged.balanceAfter;
 
-  const referenceMatch = mode === "reference";
-  const refDurationSec = Number(
-    (formData.get("ref_duration_sec") as string | null)?.trim() || "",
-  );
   const refTooLong =
     referenceMatch && Number.isFinite(refDurationSec) && refDurationSec > 15.5;
-  const effectiveNegative = referenceMatch
-    ? (formData.get("reference_negative_prompt") as string | null)?.trim() ||
-      negativePrompt
-    : negativePrompt;
-
-  const skipTemplateCamera =
-    referenceMatch ||
-    promptHasVideo1(prompt) ||
-    promptAlreadySpecifiesCamera(prompt);
 
   const common = {
-    prompt: applyAdvancedGuidance(prompt, {
-      camera: skipTemplateCamera ? undefined : camera,
-      motionStrength: referenceMatch || promptHasVideo1(prompt) ? undefined : motionStrength,
-      negativePrompt: effectiveNegative,
-      avoidOnScreenText,
-      skipCamera: skipTemplateCamera,
-    }),
+    prompt: guidedPrompt,
     resolution,
     duration: durationForFal(duration),
     aspect_ratio: aspectRatio as

@@ -1,15 +1,15 @@
 /**
  * A vs B video stack — one bit: does this Generate include a research MP4?
  *
- * B (reel): Seedance R2V quality → MiniMax H3 → stop. Never Kling.
+ * B (reel): MiniMax H3 R2V first (cheaper than Seedance R2V on fal). Never Kling.
  * A stills TVC (九宫格): MiniMax H3 → Kling stitch only if no reel.
  * Hunt I2V / poster / product-assistant: H3 only — Kling is a multi-still parachute.
- * Face-heavy + reel: skip Seedance (likely 422) → H3 + reel → stop.
+ * Face-heavy + reel: same H3 R2V stack (Seedance often 422 on faces).
  */
 
 export type VideoEnginePlan = {
   firstEngine: "seedance" | "minimax-h3";
-  /** Reel path is always quality Seedance — never /fast. */
+  /** Unused on reel path (H3-only); kept for API shape. */
   seedanceFast: boolean;
   allowKling: boolean;
   stack: "b-reel" | "a-stills" | "a-poster" | "a-reel-faces";
@@ -87,7 +87,7 @@ export function resolveVideoEnginePlan(input: {
   }
   if (input.hasReel) {
     return {
-      firstEngine: "seedance",
+      firstEngine: "minimax-h3",
       seedanceFast: false,
       allowKling: false,
       stack: "b-reel",

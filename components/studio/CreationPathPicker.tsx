@@ -277,8 +277,9 @@ export function CreationPathPicker({
   const cp = m.wizard.creationPath;
   const modes = m.wizard.workflowModes;
   const { plan, planReady } = useUserPlanEntitlements();
-  // Until /api/me returns, plan defaults to free — don't false-gate Master/backdoor.
-  const storyboardAllowed = !planReady || canUseStoryboard(plan);
+  // Loading ≠ locked: never show "Pro+" until /api/me returns (avoids false-gating paid users).
+  const storyboardLoading = !planReady;
+  const storyboardAllowed = planReady && canUseStoryboard(plan);
   const [storyboardGateOpen, setStoryboardGateOpen] = useState(false);
 
   return (
@@ -303,15 +304,15 @@ export function CreationPathPicker({
             {MODES.map((id) => {
               const copy = modes[id];
               const selected = value === id;
-              const modeLocked = id === "combined" && !storyboardAllowed;
+              const modeLocked = id === "combined" && !storyboardAllowed && !storyboardLoading;
+              const modeLoading = id === "combined" && storyboardLoading;
               return (
                 <button
                   key={id}
                   type="button"
                   onClick={() => {
-                    // Only block the gated combined card while plan loads;
-                    // free image/video paths stay selectable immediately.
-                    if (id === "combined" && !planReady) return;
+                    // Image/video stay selectable immediately.
+                    if (id === "combined" && storyboardLoading) return;
                     if (modeLocked) {
                       setStoryboardGateOpen(true);
                       return;
@@ -319,12 +320,12 @@ export function CreationPathPicker({
                     onChange(id);
                   }}
                   className={`path-type-card ${selected ? "is-selected" : ""}${
-                    modeLocked ? " opacity-90" : ""
+                    modeLocked || modeLoading ? " opacity-90" : ""
                   }`}
                   aria-pressed={selected}
-                  aria-disabled={modeLocked}
+                  aria-disabled={modeLocked || modeLoading}
                   style={
-                    modeLocked
+                    modeLocked || modeLoading
                       ? { borderStyle: "dashed", borderColor: "#cbd5e1" }
                       : undefined
                   }
@@ -351,7 +352,11 @@ export function CreationPathPicker({
                       }`}
                     >
                       {copy.title}
-                      {modeLocked ? (
+                      {modeLoading ? (
+                        <span className="ml-1.5 text-[11px] font-semibold text-slate-500">
+                          {m.account.checkingPlan}
+                        </span>
+                      ) : modeLocked ? (
                         <span className="ml-1.5 text-[11px] font-semibold text-amber-800">
                           {m.pricing.plans.pro.name}+
                         </span>

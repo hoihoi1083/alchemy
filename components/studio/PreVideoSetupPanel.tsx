@@ -4,8 +4,13 @@ import { useEffect, useId, useState, type ChangeEvent } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 import { VideoSettingsPanel } from "@/components/VideoSettingsPanel";
 import { BrandWebsitePanel } from "@/components/studio/BrandWebsitePanel";
+import { BrowseResumeActions } from "@/components/studio/BrowseResumeActions";
+import { ResearchReferencePostCard } from "@/components/studio/ResearchReferencePostCard";
 import { useWizard } from "@/components/studio/WizardContext";
-import { estimateH3Tokens } from "@/lib/billing/token-costs";
+import { estimateVideoPipelineTokens } from "@/lib/billing/estimate-job-tokens";
+import { wantsResearchVideoReference } from "@/lib/content-research-infer";
+import type { IntakePath } from "@/lib/wizard-micro-steps.types";
+import type { VideoGenerationKind } from "@/lib/video-generation-path";
 import { storyboardSceneDisplayCopy } from "@/lib/storyboard-scene-copy";
 import { studioPhasesForMode, videoSetupPhaseIndex } from "@/lib/studio-phases";
 import { isCreativeVideoStyle, getVisualStyle } from "@/lib/visual-styles";
@@ -13,8 +18,7 @@ import { MotionPosterDialectPicker } from "@/components/studio/MotionPosterDiale
 import { ImpactPosterOptionsPicker } from "@/components/studio/ImpactPosterOptionsPicker";
 import { ArtStylePicker } from "@/components/ArtStylePicker";
 import { IMAGE_ASPECT_RATIOS, type ImageAspectRatio } from "@/lib/image-aspect-ratio";
-import {
-  SOCIAL_DRIP_METAPHOR_IDS,
+import {  SOCIAL_DRIP_METAPHOR_IDS,
   SOCIAL_DRIP_METAPHOR_DEFS,
   SOCIAL_DRIP_POUR_ORIGIN_IDS,
   SOCIAL_DRIP_POUR_AMOUNT_IDS,
@@ -331,6 +335,7 @@ export function PreVideoSetupPanel({
   videoSubpath,
   onPickVideoSubpath,
   scenesReady = false,
+  intakePath = null,
 }: {
   onGenerate?: () => void;
   generateDisabled?: boolean;
@@ -343,10 +348,12 @@ export function PreVideoSetupPanel({
   onPickVideoSubpath?: (subpath: string) => void;
   /** 圖+片 after storyboard review — keyframes ready; hide motion-path picker. */
   scenesReady?: boolean;
+  intakePath?: IntakePath | null;
 } = {}) {
   const { m } = useLocale();
   const wizard = useWizard();
   const pv = m.microWizard.preVideoSetup;
+  const pg = m.microWizard.preGenerateSetup;
   const [expandStylePicker, setExpandStylePicker] = useState(false);
   const mainInputId = useId();
   const endFrameInputId = useId();
@@ -354,11 +361,31 @@ export function PreVideoSetupPanel({
   const sceneInputId = useId();
   const refVideoInputId = useId();
   const isConcept = wizard.promotionMode === "concept";
+  const researchApply = wizard.contentResearchApplyRef;
+  const researchRefStrings = {
+    researchRefTitle: pg.researchRefTitle,
+    researchRefHint: pg.researchRefHint,
+    researchRefOpenPost: pg.researchRefOpenPost,
+    researchRefRedownload: pg.researchRefRedownload,
+    researchRefRedownloadAgain: pg.researchRefRedownloadAgain,
+    researchRefRedownloading: pg.researchRefRedownloading,
+    researchRefRedownloadFailed: pg.researchRefRedownloadFailed,
+    researchRefMissingNote: pg.researchRefMissingNote,
+  };
+  const researchWantsVideo = researchApply
+    ? wantsResearchVideoReference(
+        researchApply.angle.format,
+        researchApply.angle.sourceImageUrls?.length ?? 0,
+        researchApply.angle.sourceVideoUrl,
+      )
+    : false;
   /** Research / R2V already chose reference — do not default into 快速廣告. */
   const prefersReference =
     !scenesReady &&
     (wizard.videoCreativeMode === "reference-concept" ||
-      Boolean(wizard.researchReelAnalysis?.seedancePrompt?.trim()));
+      researchWantsVideo ||
+      Boolean(wizard.researchReelAnalysis?.seedancePrompt?.trim()) ||
+      Boolean(wizard.referenceAd && wizard.referenceIsVideo));
   /** Landing recipe / creative mode already chose motion poster — keep it. */
   const prefersMotionPoster =
     !scenesReady && wizard.videoCreativeMode === "motion-poster";
@@ -555,7 +582,15 @@ export function PreVideoSetupPanel({
       onPickVideoSubpath("product_explode");
       return;
     }
-    if (videoSubpath) return;
+    const researchLocksReel =
+      prefersReference &&
+      videoSubpath !== "reference_reel" &&
+      (wizard.videoCreativeMode === "reference-concept" || researchWantsVideo);
+    if (videoSubpath && !researchLocksReel) return;
+    if (researchLocksReel) {
+      onPickVideoSubpath("reference_reel");
+      return;
+    }
     if (prefersVacuumInflate) {
       onPickVideoSubpath("vacuum_inflate");
       return;
@@ -598,6 +633,7 @@ export function PreVideoSetupPanel({
     onPickVideoSubpath,
     videoSubpath,
     prefersReference,
+    researchWantsVideo,
     prefersMotionPoster,
     prefersImpactPoster,
     prefersSocialDrip,
@@ -652,15 +688,56 @@ export function PreVideoSetupPanel({
   const durationRaw = wizard.videoSettings.duration;
   const durationNum =
     durationRaw === "auto" ? 8 : typeof durationRaw === "number" ? durationRaw : Number(durationRaw) || 8;
-  const tokenEstimate = scenesReady
-    ? estimateH3Tokens({
-        resolution: wizard.videoSettings.resolution,
-        duration: Number(wizard.storyboardTrimDuration) || 8,
-      })
-    : estimateH3Tokens({
-        resolution: wizard.videoSettings.resolution,
-        duration: durationRaw === "auto" ? "auto" : durationNum,
-      });
+  const pipelineKind: VideoGenerationKind = scenesReady
+    ? "storyboard"
+    : isSocialDrip
+      ? "social-drip"
+      : isMotionPoster
+        ? "motion-poster"
+        : isImpactPoster
+          ? "impact-poster"
+          : isVacuumInflate
+            ? "vacuum-inflate"
+            : isCreativeMotion
+              ? "creative-motion"
+              : isHandThrow
+                ? "hand-throw-scene"
+                : isProductExplode
+                  ? "product-explode"
+                  : isBlockbuster
+                    ? "blockbuster"
+                    : h3ShotMode
+                      ? (h3ShotMode as VideoGenerationKind)
+                      : isReference
+                        ? "reference-r2v"
+                        : isUgc
+                          ? "digital-presenter"
+                          : "image-to-video";
+  const dualFrame =
+    pipelineKind === "social-drip" ||
+    pipelineKind === "motion-poster" ||
+    pipelineKind === "impact-poster" ||
+    pipelineKind === "vacuum-inflate" ||
+    pipelineKind === "creative-motion" ||
+    pipelineKind === "hand-throw-scene" ||
+    pipelineKind === "product-explode";
+  const tokenEstimate = estimateVideoPipelineTokens({
+    kind: pipelineKind,
+    resolution: wizard.videoSettings.resolution,
+    durationSec: scenesReady
+      ? Number(wizard.storyboardTrimDuration) || 12
+      : durationRaw === "auto"
+        ? 6
+        : durationNum,
+    willGenerateStills: dualFrame
+      ? true
+      : isH3ShotRecipeMode(wizard.videoCreativeMode)
+        ? !wizard.productPhoto
+        : false,
+    sceneCount: scenesReady
+      ? wizard.storyboardScenes.length || 4
+      : undefined,
+  });
 
   const tips = scenesReady
     ? [pv.klingTip1, pv.klingTip2, pv.klingTip3]
@@ -940,42 +1017,44 @@ export function PreVideoSetupPanel({
               ? pv.assistantHint
               : pv.hint;
 
-  const generateBlock = (
+  const generateBlock = onBrowseContinue ? (
+    <BrowseResumeActions
+      continueLabel={browseContinueLabel ?? pv.browseContinueExport}
+      regenerateLabel={
+        generateLabel ?? (isUgc ? pv.ugcContinueLabel : m.wizard.approveGenerateVideoBtn)
+      }
+      hint={m.microWizard.resumeCta.hint}
+      onContinue={onBrowseContinue}
+      onRegenerate={onGenerate}
+      regenerateDisabled={generateDisabled}
+      primaryClassName="pv-generate-btn"
+      blockMessage={
+        generateBlockMessage ? (
+          <p className="rounded-xl border border-violet-200 bg-violet-50 px-3 py-2.5 text-sm text-violet-900">
+            {generateBlockMessage}
+          </p>
+        ) : null
+      }
+    />
+  ) : (
     <>
       {generateBlockMessage ? (
         <p className="rounded-xl border border-violet-200 bg-violet-50 px-3 py-2.5 text-sm text-violet-900">
           {generateBlockMessage}
         </p>
       ) : null}
-      {onBrowseContinue ? (
-        <button type="button" onClick={onBrowseContinue} className="pv-generate-btn">
-          {browseContinueLabel ?? pv.browseContinueExport}
-          <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2">
-            <path d="M7.5 4.5 13 10l-5.5 5.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
-      ) : null}
       {onGenerate ? (
         <button
           type="button"
           onClick={onGenerate}
           disabled={generateDisabled}
-          className={
-            onBrowseContinue
-              ? "rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-              : "pv-generate-btn"
-          }
+          className="pv-generate-btn"
         >
           {generateLabel ?? (isUgc ? pv.ugcContinueLabel : m.wizard.approveGenerateVideoBtn)}
-          {!onBrowseContinue ? (
-            <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2">
-              <path d="M7.5 4.5 13 10l-5.5 5.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          ) : null}
+          <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2">
+            <path d="M7.5 4.5 13 10l-5.5 5.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </button>
-      ) : null}
-      {onBrowseContinue ? (
-        <p className="text-xs leading-relaxed text-slate-500">{pv.browseContinueHint}</p>
       ) : null}
     </>
   );
@@ -1000,6 +1079,38 @@ export function PreVideoSetupPanel({
           </span>
         </h2>
         <p className="mt-1.5 max-w-2xl text-sm text-slate-500">{setupHint}</p>
+
+        {intakePath === "research" && researchApply ? (
+          <div className="mt-4 flex gap-3 rounded-2xl border border-violet-200 bg-violet-50/60 p-3">
+            {researchApply.angle.sourceCoverImageUrl ||
+            researchApply.angle.sourceImageUrls?.[0] ? (
+              <div className="h-16 w-12 shrink-0 overflow-hidden rounded-lg border border-violet-200 bg-white">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={
+                    researchApply.angle.sourceCoverImageUrl ||
+                    researchApply.angle.sourceImageUrls?.[0] ||
+                    ""
+                  }
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            ) : null}
+            <div className="min-w-0 text-sm">
+              <p className="font-semibold text-violet-950">{pg.fromIntakeTitle}</p>
+              <p className="text-violet-900">{pg.fromIntakePathResearch}</p>
+              <p className="mt-0.5 truncate text-violet-800">
+                {pg.fromIntakeStyle.replace(
+                  "{name}",
+                  researchApply.angle.title?.trim() ||
+                    researchApply.angle.hook?.trim() ||
+                    researchApply.plan.platformLabel,
+                )}
+              </p>
+            </div>
+          </div>
+        ) : null}
 
         <div className="pv-layout">
           <div className="pv-stack">
@@ -1167,6 +1278,13 @@ export function PreVideoSetupPanel({
 
             {!scenesReady ? (
             <>
+            {researchApply ? (
+              <ResearchReferencePostCard
+                researchApply={researchApply}
+                wizard={wizard}
+                strings={researchRefStrings}
+              />
+            ) : null}
             <section className="pv-card">
               <div className="pv-card-title-row mb-3">
                 <span className="pv-card-icon" aria-hidden>

@@ -21,10 +21,20 @@ import {
 } from "@/lib/credits-client";
 import {
 	estimateH3Tokens,
+	estimateImageRegenTokens,
+	estimateInpaintTokens,
 	estimateKlingStoryboardTokens,
+	estimateSocialDripTokens,
 	h3BillingResolutionForPlan,
+	TOKEN_COST,
 	videoTokenCost,
 } from "@/lib/billing/token-costs";
+import {
+	cannotAfford,
+	estimateImageJobTokens,
+	estimateVideoPipelineTokens,
+	insufficientTokensMessage,
+} from "@/lib/billing/estimate-job-tokens";
 import { wizardVideoReadyExtraNote } from "@/lib/video-output-presentation";
 import { klingClipDurationForStoryboard } from "@/lib/kling-storyboard-fallback";
 import {
@@ -300,7 +310,6 @@ import {
 	BANANA2_EDIT_ENDPOINT,
 	BANANA2_TEXT_ENDPOINT,
 } from "@/lib/image-endpoints";
-import { TOKEN_COST } from "@/lib/billing/token-costs";
 import { loadBrandKitFromStorage, preferNewerBrandKit } from "@/lib/brand-kit";
 import {
 	buildImageRefinePrompt,
@@ -318,6 +327,7 @@ import {
 	stripContentResearchStyleExtra,
 } from "@/lib/content-research-promote";
 import { buildResearchR2vPrompt } from "@/lib/research-r2v-prompt";
+import { buildH3ReferenceReelProductPrompt } from "@/lib/h3-product-swap-prompt";
 import { wizardPromoteName } from "@/lib/wizard-promote-name";
 import {
 	evaluateProceedToImageGate,
@@ -446,6 +456,21 @@ export function useStudioWizard(promotionMode: PromotionMode) {
   const { m, locale } = useLocale();
   const friendlyError = useFriendlyError(m);
 	const { creditBalance, plan, planReady } = useUserPlanEntitlements();
+
+	/** Client preflight: block before any fal call when balance is known and too low. */
+	function blockIfCannotAfford(required: number): boolean {
+		if (!cannotAfford(creditBalance, required)) return false;
+		setError(
+			insufficientTokensMessage(required, creditBalance as number),
+		);
+		return true;
+	}
+
+	function storyboardImagePassesPerScene(): number {
+		return Boolean(brandKit?.useBrandLogo && brandKit?.logoUrl?.trim())
+			? 2
+			: 1;
+	}
 
 	async function readGenerateJson(
 		res: Response,
@@ -1252,6 +1277,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		Boolean(referenceAd && effectivePromoteName) &&
 		isExplicitVideoDuration(videoSettings.duration);
 	const referenceVideoAnalyzeIncludesStoryboard = isStoryboardOutput;
+	/** Image still plan when storyboard + research cover — reel path owns plan when MP4 present. */
+	const referenceImageAnalyzeIncludesStoryboard =
+		isStoryboardOutput &&
+		!(useReferenceVideo && referenceAd && referenceIsVideo && shouldAnalyzeReferenceVideo);
 	const isVideoWorkflow =
 		workflowMode === "video-only" || workflowMode === "combined";
 	const isImageWorkflow =
@@ -1655,6 +1684,17 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		effectiveImageOutputMode,
 		preferCompositionRemap,
 		compositionRemapKeepHero,
+		referenceImageAnalyzeIncludesStoryboard,
+		storyboardSceneCount,
+		videoSettings,
+		workflowMode,
+		artStyleId,
+		subjectFraming,
+		offer,
+		business,
+		promptMarket,
+		imageTextMode,
+		referenceStrategyKind: "" as string,
 	});
 	referenceAnalyzeContextRef.current = {
 		conceptIdea,
@@ -1671,6 +1711,17 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		effectiveImageOutputMode,
 		preferCompositionRemap,
 		compositionRemapKeepHero,
+		referenceImageAnalyzeIncludesStoryboard,
+		storyboardSceneCount,
+		videoSettings,
+		workflowMode,
+		artStyleId,
+		subjectFraming,
+		offer,
+		business,
+		promptMarket,
+		imageTextMode,
+		referenceStrategyKind: referenceStrategy.kind,
 	};
 
 	const lastCompletedReferenceAnalyzeKeyRef = useRef<string | null>(null);
@@ -1738,6 +1789,22 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				if (ctx.preferCompositionRemap && ctx.compositionRemapKeepHero) {
 					fd.set("composition_remap_keep_hero", "1");
 				}
+				if (ctx.referenceImageAnalyzeIncludesStoryboard) {
+					fd.set("plan_storyboard", "true");
+					fd.set("workflow_mode", ctx.workflowMode);
+					fd.set("scene_count", ctx.storyboardSceneCount);
+					fd.set(
+						"output_duration_sec",
+						String(resolveWizardOutputDurationSec(ctx.videoSettings)),
+					);
+					fd.set("prompt_market", ctx.promptMarket);
+					fd.set("art_style", ctx.artStyleId);
+					fd.set("subject_framing", ctx.subjectFraming);
+					fd.set("offer", ctx.offer.trim());
+					fd.set("business", ctx.business.trim());
+					fd.set("reference_strategy_kind", ctx.referenceStrategyKind);
+					fd.set("image_text_mode", ctx.imageTextMode);
+				}
 				// Do NOT send extraKitPhotos as carousel_reference_images.
 				// Kit slots are optional product angles, not research style slides — sending
 				// them forced N sequential Bagel calls and polluted carousel vision.
@@ -1755,15 +1822,34 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				const brief = data.brief as UserReferenceBrief;
 				setUserReferenceBrief(brief);
 				setPromptExtra((prev) => stripContentResearchStyleExtra(prev));
-				const slideCount = Number(data.carouselSlideCount) || 1;
-				setReferenceAnalyzeNote(
-					slideCount > 1
-						? m.wizard.referenceCarouselBriefAnalyzed.replace(
-								"{count}",
-								String(slideCount),
-							)
-						: m.wizard.referenceBriefAnalyzed,
-				);
+				if (data.storyboardPlan) {
+					const plan = data.storyboardPlan as VideoStoryboardPlan;
+					setStoryboardPlan(plan);
+					const sp = sanitizeStoryboardSeedancePrompt(plan.seedancePrompt);
+					if (sp) setVideoPrompt(sp);
+					if (plan.totalDurationSec) {
+						const dur = String(
+							Math.min(15, Math.max(4, Math.round(plan.totalDurationSec))),
+						);
+						setStoryboardTrimDuration(dur as StoryboardDurationPreset);
+					}
+					setReferenceAnalyzeNote(m.wizard.researchStoryboardPlanReady);
+				} else if (
+					typeof data.storyboardPlanError === "string" &&
+					data.storyboardPlanError
+				) {
+					setReferenceAnalyzeNote(data.storyboardPlanError);
+				} else {
+					const slideCount = Number(data.carouselSlideCount) || 1;
+					setReferenceAnalyzeNote(
+						slideCount > 1
+							? m.wizard.referenceCarouselBriefAnalyzed.replace(
+									"{count}",
+									String(slideCount),
+								)
+							: m.wizard.referenceBriefAnalyzed,
+					);
+				}
 			} catch (e: unknown) {
 				if (
 					desiredReferenceAnalyzeKeyRef.current === runKey &&
@@ -3590,6 +3676,14 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			setStoryboardSceneRegenerateBusy(null);
 			return;
 		}
+		if (
+			blockIfCannotAfford(
+				TOKEN_COST.storyboard_scene * storyboardImagePassesPerScene(),
+			)
+		) {
+			setStoryboardSceneRegenerateBusy(null);
+			return;
+		}
 		try {
 			const freshKit = loadBrandKitFromStorage();
 			const liveKit = preferNewerBrandKit(brandKit, freshKit);
@@ -3644,7 +3738,11 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				"scene_count",
 				effectiveStoryboardSceneCount(storyboardRecipeId, storyboardSceneCount),
 			);
-			fd.set("storyboard_recipe", storyboardRecipeId);
+			if (contentResearchApplyRef) {
+				fd.set("research_adapted", "1");
+			} else {
+				fd.set("storyboard_recipe", storyboardRecipeId);
+			}
       fd.set("prompt_market", promptMarket);
       fd.set("subject_framing", subjectFraming);
       fd.set("prompt_extra", effectivePromptExtra());
@@ -3766,6 +3864,17 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			return;
 		}
 		if (!(await forkBeforePaidRegenerate(true))) return;
+
+		if (
+			blockIfCannotAfford(
+				estimateImageRegenTokens({
+					scope: "one",
+					outputMode: effectiveImageOutputMode,
+				}),
+			)
+		) {
+			return;
+		}
 
 		setImageBusy(true);
 		setError(null);
@@ -3893,6 +4002,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			: "/api/generate-campaign";
 
 		if (!(await forkBeforePaidRegenerate(true))) return;
+
+		if (blockIfCannotAfford(TOKEN_COST.image)) return;
 
 		setCarouselSlideRegenerateBusy(slideIndex);
 		setError(null);
@@ -4825,6 +4936,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			setError(m.errors.needRefineImage);
 			return;
 		}
+		if (blockIfCannotAfford(estimateInpaintTokens(1))) return;
 		setError(null);
 		setImageJobMeta({
 			kind: "image",
@@ -4882,6 +4994,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			setError(m.errors.needRefineImage);
 			return;
 		}
+		if (blockIfCannotAfford(estimateInpaintTokens(1))) return;
 		setError(null);
 		setImageJobMeta({
 			kind: "image",
@@ -5210,6 +5323,35 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				campaignSlides.length > 0 ||
 				cinematicScenes.length > 0,
 		);
+
+		// Preflight image job cost before any fal call.
+		{
+			const isStoryboard =
+				workflowMode === "combined" || isStoryboardOutput;
+			const out = effectiveImageOutputMode;
+			const imageCost = estimateImageJobTokens({
+				mode: isStoryboard
+					? "storyboard"
+					: out === "teaching-carousel" || out === "carousel"
+						? "teaching_carousel"
+						: out === "ab"
+							? "ab"
+							: out === "campaign"
+								? "campaign"
+								: "single",
+				sceneCount: isStoryboard
+					? estimateStoryboardSceneCount()
+					: out === "teaching-carousel" || out === "carousel"
+						? referenceCarouselSlideCount
+						: undefined,
+				numImages:
+					out === "ab" ? 2 : out === "campaign" ? 3 : 1,
+				passesPerScene: isStoryboard
+					? storyboardImagePassesPerScene()
+					: 1,
+			});
+			if (blockIfCannotAfford(imageCost)) return null;
+		}
 
     if (usesCompositor) {
       if (!headline.trim()) {
@@ -6231,35 +6373,69 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				? "8"
 				: String(videoSettings.duration);
 		const refFalUrl = await ensureReferenceVideoFalUrl(refVideo);
+		const reelPlan = resolveVideoEnginePlan({
+			hasReel: true,
+			faceHeavy: isFaceHeavyVideoJob({
+				visualStyleId,
+				videoCreativeMode,
+				subjectFraming,
+			}),
+		});
+		const useH3 = reelPlan.firstEngine === "minimax-h3";
+		const heroProduct = await resolveHydratedProductPhoto();
+		const promoteName = wizardPromoteName({
+			promotionMode,
+			product,
+			headline,
+			conceptIdea,
+		});
     const fd = new FormData();
     fd.set("mode", "reference");
 		fd.set("promotion_mode", promotionMode);
-    fd.set(
-      "prompt",
-			seedancePromptForGenerate(
-				buildResearchR2vPrompt({
-					researchAnalysis: refined.analysis,
-					videoPrompt: refined.videoPrompt,
-					conceptMode: promotionMode === "concept",
-					fallbackPrompt:
-        buildReferenceVideoPrompt(getPromptVars(), templateId) +
-          " Follow @Video1 shot structure and timing as closely as the model allows. Do not apply a generic slow push-in unless @Video1 uses it.",
-				}),
-				{ hasReferenceVideo: true },
-			),
-    );
+		const seedanceR2vPrompt = buildResearchR2vPrompt({
+			researchAnalysis: refined.analysis,
+			videoPrompt: refined.videoPrompt,
+			conceptMode: promotionMode === "concept",
+			fallbackPrompt:
+				buildReferenceVideoPrompt(getPromptVars(), templateId) +
+				" Follow @Video1 shot structure and timing as closely as the model allows. Do not apply a generic slow push-in unless @Video1 uses it.",
+		});
+		const h3ProductSwap =
+			useH3 && Boolean(heroProduct) && promotionMode !== "concept";
+		fd.set(
+			"prompt",
+			h3ProductSwap
+				? buildH3ReferenceReelProductPrompt({
+						durationSec: Number(outputDuration) || 6,
+						productName: promoteName,
+						motionSummary:
+							refined.analysis?.motionSummary?.trim() ||
+							refined.videoPrompt,
+					})
+				: seedancePromptForGenerate(seedanceR2vPrompt, {
+						hasReferenceVideo: true,
+					}),
+		);
 		fd.set("reference_video_urls", refFalUrl);
 		const refSec = refVideoDurationSec;
     if (refSec && Number.isFinite(refSec)) {
       fd.set("ref_duration_sec", String(refSec));
     }
-    if (workflowMode === "combined" && imageUrl) {
-      fd.set("image_ref_url", imageUrl);
-    } else if (productPhoto) {
-      fd.append("images", productPhoto);
-    } else if (imageUrl) {
-      fd.set("image_ref_url", imageUrl);
-    }
+		if (useH3) {
+			if (heroProduct) {
+				fd.append("reference_images", heroProduct);
+			} else if (workflowMode === "combined" && imageUrl) {
+				fd.set("image_start_url", imageUrl);
+			} else if (imageUrl) {
+				fd.set("image_start_url", imageUrl);
+			}
+		} else if (workflowMode === "combined" && imageUrl) {
+			fd.set("image_ref_url", imageUrl);
+		} else if (heroProduct) {
+			fd.append("images", heroProduct);
+		} else if (imageUrl) {
+			fd.set("image_ref_url", imageUrl);
+		}
     fd.set("resolution", vOpts.resolution);
 		fd.set("duration", outputDuration);
     fd.set("aspect_ratio", vOpts.aspectRatio);
@@ -6269,21 +6445,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			"avoid_on_screen_text",
 			vOpts.avoidOnScreenText ? "true" : "false",
 		);
-		const reelPlan = resolveVideoEnginePlan({
-			hasReel: true,
-			faceHeavy: isFaceHeavyVideoJob({
-				visualStyleId,
-				videoCreativeMode,
-				subjectFraming,
-			}),
-		});
 		fd.set("fast", reelPlan.seedanceFast ? "true" : "false");
 
-		const useH3 = reelPlan.firstEngine === "minimax-h3";
 		if (useH3) {
 			fd.set("reference_video_url", refFalUrl);
-			if (productPhoto) fd.append("reference_images", productPhoto);
-			else if (imageUrl) fd.set("image_start_url", imageUrl);
 		}
 		const res = await fetch(
 			useH3 ? "/api/generate-minimax-h3" : "/api/generate",
@@ -6308,7 +6473,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				? String(data.generationMode ?? "").startsWith("minimax-h3")
 					? m.wizard.seedanceToMinimaxH3FallbackNote
 					: m.wizard.seedanceToKlingFallbackNote
-				: m.wizard.referenceModeNote,
+				: useH3
+					? m.wizard.videoEngineMinimaxH3
+					: m.wizard.referenceModeNote,
       pathNote,
       workflowMode !== "combined" && !productPhoto && imageUrl
         ? m.wizard.videoRefUseProductPhoto
@@ -7535,6 +7702,11 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		}
 
 		const useH3 = multiPlan.firstEngine === "minimax-h3";
+		if (useH3 && hasRefVideo && referenceAd) {
+			const refFalUrl = await ensureReferenceVideoFalUrl(referenceAd);
+			fd.set("reference_video_url", refFalUrl);
+			if (imageUrl && !productPhoto) fd.set("image_start_url", imageUrl);
+		}
 		const res = await fetch(
 			useH3 ? "/api/generate-minimax-h3" : "/api/generate",
 			{
@@ -7557,7 +7729,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					: data.generationMode === "kling-storyboard-fallback" ||
 						  data.seedanceBlockedCode
 						? m.wizard.seedanceToKlingFallbackNote
-						: null,
+						: useH3 && hasRefVideo
+							? m.wizard.videoEngineMinimaxH3
+							: null,
 				pathNote,
 				m.wizard.videoRichMotionNote,
 				data.note as string | undefined,
@@ -8017,6 +8191,23 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		imageStartUrlOverride?: string,
 	): Promise<string> {
 		const plan = await resolveSocialDripPlan();
+		const vOptsEarly = resolveVideoGenerationOpts(templateId, videoSettings);
+		const durationSecEarly = resolvePlannerDurationSec(
+			String(vOptsEarly.duration),
+			6,
+		);
+		const socialDripCost = estimateSocialDripTokens({
+			resolution: vOptsEarly.resolution,
+			duration: Math.min(8, Math.max(5, durationSecEarly)),
+		});
+		if (blockIfCannotAfford(socialDripCost)) {
+			throw new Error(
+				insufficientTokensMessage(
+					socialDripCost,
+					creditBalance as number,
+				),
+			);
+		}
 		// Always rebuild start/end stills for the latest pour contract — never reuse
 		// a previous decorative-glow plate that blocks the drip gag.
 		socialDripStillUrlRef.current = null;
@@ -9497,7 +9688,15 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				"scene_count",
 				effectiveStoryboardSceneCount(storyboardRecipeId, storyboardSceneCount),
 			);
-			fd.set("storyboard_recipe", storyboardRecipeId);
+			if (contentResearchApplyRef) {
+				fd.set("research_adapted", "1");
+			} else {
+				if (contentResearchApplyRef) {
+				fd.set("research_adapted", "1");
+			} else {
+				fd.set("storyboard_recipe", storyboardRecipeId);
+			}
+			}
 			fd.set("prompt_market", promptMarket);
 			fd.set("subject_framing", subjectFraming);
 			fd.set("prompt_extra", effectivePromptExtra());
@@ -9818,6 +10017,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				h3Cost: estimateH3Tokens({
 					duration: Math.min(15, Math.max(5, totalSec)),
 					resolution: h3BillingResolutionForPlan(plan),
+					referenceVideoSec: hasReel
+						? Math.min(15, Math.max(5, totalSec))
+						: 0,
 				}),
 				klingCost: estimateKlingStoryboardTokens(sceneCount, clipDur),
 				seedanceCost: videoTokenCost(
@@ -9984,6 +10186,46 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				hasReferenceAd: Boolean(referenceAd),
 				useMultiAngleVideo,
 			});
+
+			// Preflight total job cost (stills inside the job + video) before any fal call.
+			{
+				const vOpts = resolveVideoGenerationOpts(templateId, videoSettings);
+				const durationSec = resolvePlannerDurationSec(
+					String(vOpts.duration),
+					generationKind === "storyboard" ? 12 : 6,
+				);
+				const dualFrameRecipe =
+					generationKind === "social-drip" ||
+					generationKind === "motion-poster" ||
+					generationKind === "impact-poster" ||
+					generationKind === "vacuum-inflate" ||
+					generationKind === "creative-motion" ||
+					generationKind === "hand-throw-scene" ||
+					generationKind === "product-explode";
+				const willGenerateStills = dualFrameRecipe
+					? true
+					: isH3ShotRecipeMode(generationKind)
+						? !productPhoto && promotionMode === "concept"
+						: false;
+				const pipelineCost = estimateVideoPipelineTokens({
+					kind: generationKind,
+					resolution: vOpts.resolution,
+					durationSec:
+						generationKind === "storyboard"
+							? Number(storyboardTrimDuration) || 12
+							: durationSec,
+					willGenerateStills,
+					sceneCount:
+						generationKind === "storyboard"
+							? storyboardScenes.length || 4
+							: generationKind === "cinematic-stitch"
+								? cinematicSceneCount
+								: undefined,
+				});
+				if (blockIfCannotAfford(pipelineCost)) {
+					return;
+				}
+			}
 
 			switch (generationKind) {
 				case "compositor":

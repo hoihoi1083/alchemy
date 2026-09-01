@@ -9,6 +9,14 @@ export function deepSeekApiKey(): string | null {
   return key;
 }
 
+/** Strip lone UTF-16 surrogates — JSON.stringify emits \\uDDxx escapes DeepSeek rejects. */
+export function sanitizeDeepSeekMessageText(text: string): string {
+  return text.replace(
+    /(?:[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF])/gu,
+    "",
+  );
+}
+
 export function parseDeepSeekErrorMessage(raw: string, status: number): string {
   try {
     const parsed = JSON.parse(raw) as { error?: { message?: string } };
@@ -61,6 +69,11 @@ export async function callDeepSeekChat(
     );
   }
 
+  const sanitizedMessages = messages.map((m) => ({
+    ...m,
+    content: sanitizeDeepSeekMessageText(m.content),
+  }));
+
   const variants = deepSeekVariants(options);
   let lastRaw = "";
   let lastStatus = 0;
@@ -69,7 +82,7 @@ export async function callDeepSeekChat(
     const variant = variants[attempt];
     const body: Record<string, unknown> = {
       model: variant.model,
-      messages,
+      messages: sanitizedMessages,
       temperature: options.temperature ?? 0.4,
       max_tokens: options.max_tokens ?? 1200,
       stream: false,

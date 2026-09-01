@@ -272,6 +272,7 @@ export async function POST(request: Request) {
       }
       if (stripeCustomerId && billable.length > 0) {
         try {
+          let switchTokensGranted = 0;
           const switched = await switchExistingSubscription({
             stripe,
             clerkId,
@@ -332,6 +333,7 @@ export async function POST(request: Request) {
                 });
               }
               if (upgrade.delta > 0) {
+                switchTokensGranted = upgrade.delta;
                 await notifyUpgradeReceiptOnce({
                   clerkId,
                   subscriptionId: switched.subscriptionId,
@@ -369,6 +371,8 @@ export async function POST(request: Request) {
             });
           }
 
+          const refreshedUser = await db.collection<DbUser>("users").findOne({ clerkId });
+
           return NextResponse.json({
             updated: true,
             deferred: switched.effective === "next_cycle",
@@ -379,6 +383,8 @@ export async function POST(request: Request) {
             pendingInterval: switched.pendingInterval,
             pendingEffectiveAt: switched.pendingEffectiveAt?.toISOString() ?? null,
             subscriptionId: switched.subscriptionId,
+            tokensGranted: switchTokensGranted,
+            creditBalance: refreshedUser?.creditBalance ?? 0,
           });
         } catch (e: unknown) {
           const message = e instanceof Error ? e.message : "Could not update subscription.";

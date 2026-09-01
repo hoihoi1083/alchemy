@@ -75,6 +75,18 @@ export function adaptScriptForMinimaxH3(opts: {
     result = `${missing.join(" ")} ${result}`.trim();
   }
 
+  // MiniMax H3 weights reference-video pixels heavily — spell roles explicitly (Seedance R2V does not need this).
+  if (opts.videoCount > 0 && opts.imageCount > 0) {
+    const swapLock =
+      "REFERENCE ROLES (mandatory): Video 1 = camera path, cut rhythm, hand motion, and scene pacing ONLY. " +
+      "Do NOT copy the product object, color, shape, ports, or packaging from Video 1. " +
+      "Image 1 = the ONLY product on screen — match Image 1 pixels exactly. " +
+      "If Video 1 shows a different gadget, keep Video 1 shots and replace every product with Image 1.";
+    if (!/Video 1 = camera path|ONLY product on screen/i.test(result)) {
+      result = `${swapLock} ${result}`.trim();
+    }
+  }
+
   if (opts.preserveOnScreenType) {
     if (!/KINETIC TYPE|type may fade|ride the card/i.test(result)) {
       result = `${result} Silent video: no speech. Keep poster wording identical. Type may fade in, slide, or track a 3D paper/card warp. Do not change letters or invent new logos.`;

@@ -33,9 +33,29 @@ describe("stripe upgrade payment safety invariants", () => {
       billing_cycle_anchor: "now",
       proration_behavior: "always_invoice",
       payment_behavior: "pending_if_incomplete",
+      // Also sync subscription PM → customer invoice default before update
+      // (Checkout often leaves customer.invoice_settings.default_payment_method null).
+      syncCustomerDefaultPaymentMethod: true,
     } as const;
     assert.equal(requiredUpgradeFlags.billing_cycle_anchor, "now");
     assert.equal(requiredUpgradeFlags.proration_behavior, "always_invoice");
     assert.equal(requiredUpgradeFlags.payment_behavior, "pending_if_incomplete");
+    assert.equal(requiredUpgradeFlags.syncCustomerDefaultPaymentMethod, true);
+  });
+
+  it("clears cancel_at_period_end before pending_if_incomplete upgrade", () => {
+    const { readFileSync } = require("node:fs") as typeof import("node:fs");
+    const { join } = require("node:path") as typeof import("node:path");
+    const src = readFileSync(
+      join(process.cwd(), "lib/stripe/switch-subscription.ts"),
+      "utf8",
+    );
+    assert.match(src, /clearCancelAtPeriodEndIfSet/);
+    assert.match(src, /await clearCancelAtPeriodEndIfSet\(stripe, primary\)/);
+    const upgradeBlock = src.slice(
+      src.indexOf("payment_behavior: \"pending_if_incomplete\""),
+      src.indexOf("expand: [\"latest_invoice\"") + 80,
+    );
+    assert.doesNotMatch(upgradeBlock, /cancel_at_period_end/);
   });
 });

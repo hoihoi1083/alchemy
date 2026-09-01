@@ -127,6 +127,15 @@ export async function collectKlingFallbackImageUrls(
   }
   await pushRemote(formData.get("image_start_url") as string | null);
 
+  for (const f of formData.getAll("reference_images") as File[]) {
+    if (!f || f.size <= 0) continue;
+    try {
+      addFalUrl(await fal.storage.upload(f));
+    } catch {
+      /* skip */
+    }
+  }
+
   for (const f of formData.getAll("images") as File[]) {
     if (!f || f.size <= 0) continue;
     try {

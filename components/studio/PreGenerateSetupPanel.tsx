@@ -3,6 +3,8 @@
 import { useEffect, useId, useRef, useState, type ChangeEvent } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 import { BrandWebsitePanel } from "@/components/studio/BrandWebsitePanel";
+import { BrowseResumeActions } from "@/components/studio/BrowseResumeActions";
+import { ResearchReferencePostCard } from "@/components/studio/ResearchReferencePostCard";
 import { StoryboardShotMap } from "@/components/studio/StoryboardShotMap";
 import { useWizard } from "@/components/studio/WizardContext";
 import {
@@ -11,7 +13,6 @@ import {
   type ArtStyleId,
 } from "@/lib/art-style";
 import { copyFieldsFromAngle } from "@/lib/content-research-promote";
-import { applyResearchPostReferences } from "@/lib/content-research-apply-refs";
 import {
   conceptCopyFocusKeyForStyle,
   resolveConceptCopyFocus,
@@ -27,10 +28,11 @@ import {
   type ImagePosterUxStyleId,
 } from "@/lib/recipe-path-ux";
 import { setupContentPhaseIndex, studioPhasesForMode } from "@/lib/studio-phases";
-import { estimateImageTokens } from "@/lib/billing/token-costs";
+import { estimateImageJobTokens } from "@/lib/billing/estimate-job-tokens";
 import { STORYBOARD_SCENE_COUNTS } from "@/lib/ad-pack-preferences";
 import { CompositionPresetPicker } from "@/components/studio/CompositionPresetPicker";
 import { StoryboardRecipePicker } from "@/components/studio/StoryboardRecipePicker";
+import { ResearchStoryboardModeSummary } from "@/components/studio/ResearchStoryboardModeSummary";
 import { LuxuryFieldBadge } from "@/components/studio/StoryboardLuxuryStoryDrivers";
 import {
   isLuxuryBirthRecipe,
@@ -911,8 +913,6 @@ export function PreGenerateSetupPanel({
   const carouselAllowed =
     !planReady || canUseCarousel(plan) || wizard.lockedCampaignMode;
   const [carouselGateOpen, setCarouselGateOpen] = useState(false);
-  const [researchRefBusy, setResearchRefBusy] = useState(false);
-  const [researchRefError, setResearchRefError] = useState<string | null>(null);
   const isConcept = wizard.promotionMode === "concept";
   const contentRef = useRef<HTMLElement | null>(null);
   const pageTopRef = useRef<HTMLDivElement | null>(null);
@@ -1064,6 +1064,8 @@ export function PreGenerateSetupPanel({
         : pg.hint;
 
   const researchRef = wizard.contentResearchApplyRef;
+  const lockStoryboardRecipeForResearch =
+    intakePath === "research" && Boolean(researchRef);
   const visualStyleLabel =
     m.wizard.visualStyles[
       wizard.visualStyleId as keyof typeof m.wizard.visualStyles
@@ -1244,57 +1246,22 @@ export function PreGenerateSetupPanel({
   }
 
   const researchApply = wizard.contentResearchApplyRef;
-  const researchPostUrl = researchApply?.angle?.sourceUrl?.trim() || "";
-  const researchCoverUrl =
-    researchApply?.angle?.sourceCoverImageUrl ||
-    researchApply?.angle?.sourceImageUrls?.[0] ||
-    "";
-  const canRedownloadResearchRef = Boolean(
-    researchApply && (researchCoverUrl || researchPostUrl),
-  );
-  const researchRefMissing = Boolean(researchApply && !wizard.imageRefPhoto);
+  const researchRefStrings = {
+    researchRefTitle: pg.researchRefTitle,
+    researchRefHint: pg.researchRefHint,
+    researchRefOpenPost: pg.researchRefOpenPost,
+    researchRefRedownload: pg.researchRefRedownload,
+    researchRefRedownloadAgain: pg.researchRefRedownloadAgain,
+    researchRefRedownloading: pg.researchRefRedownloading,
+    researchRefRedownloadFailed: pg.researchRefRedownloadFailed,
+    researchRefMissingNote: pg.researchRefMissingNote,
+    researchRefManualUpload: pg.researchRefManualUpload,
+  };
   const localRefMissing =
     !researchApply &&
     !wizard.imageRefPhoto &&
     (Boolean(wizard.userReferenceBrief) ||
       wizard.imageCreativeMode === "reference-concept");
-
-  async function redownloadResearchReference() {
-    if (!researchApply || researchRefBusy) return;
-    setResearchRefError(null);
-    setResearchRefBusy(true);
-    try {
-      const angle = researchApply.angle;
-      const imageUrls =
-        angle.sourceImageUrls ??
-        (angle.sourceCoverImageUrl ? [angle.sourceCoverImageUrl] : undefined);
-      const result = await applyResearchPostReferences(
-        {
-          platform: researchApply.plan.platform,
-          promotionMode: wizard.promotionMode,
-          imageUrls,
-          coverUrl: angle.sourceCoverImageUrl,
-          postUrl: angle.sourceUrl,
-          postId: angle.id,
-          loadVideo: false,
-        },
-        {
-          setImageCreativeMode: wizard.setImageCreativeMode,
-          setImageRefPhoto: wizard.setImageRefPhoto,
-          onImageInputModeChange: wizard.onImageInputModeChange,
-          onVideoCreativeModeChange: wizard.onVideoCreativeModeChange,
-          onReferenceAdFile: wizard.onReferenceAdFile,
-        },
-      );
-      if (!result.coverAttached) {
-        setResearchRefError(pg.researchRefRedownloadFailed);
-      }
-    } catch {
-      setResearchRefError(pg.researchRefRedownloadFailed);
-    } finally {
-      setResearchRefBusy(false);
-    }
-  }
 
   const summaryRows = briefSummaryRows(
     brief,
@@ -1430,6 +1397,17 @@ export function PreGenerateSetupPanel({
 
         <div className="pg-layout">
           <div className="pg-stack">
+            {researchApply ? (
+              <ResearchReferencePostCard
+                researchApply={researchApply}
+                wizard={wizard}
+                cardClassName="pg-card"
+                titleClassName="pg-card-title"
+                strings={researchRefStrings}
+                manualUploadLabel={pg.researchRefManualUpload}
+                onManualUpload={onReferenceFile}
+              />
+            ) : null}
             {effectiveShowStylePicker ? (
               <section className="pg-card">
                 <div className="pg-card-title-row">
@@ -1665,73 +1643,6 @@ export function PreGenerateSetupPanel({
                   <p className="mt-2 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-xs leading-relaxed text-violet-900">
                     {pg.stylePickerModelLockedNote}
                   </p>
-                ) : null}
-              </section>
-            ) : null}
-
-            {researchApply ? (
-              <section className="pg-card">
-                <div className="pg-card-head">
-                  <h3 className="pg-card-title">{pg.researchRefTitle}</h3>
-                </div>
-                <p className="mt-1 text-sm text-slate-600">{pg.researchRefHint}</p>
-                {researchApply.angle.sourceTitle || researchApply.angle.title ? (
-                  <p className="mt-2 text-sm font-medium text-slate-800">
-                    {researchApply.angle.sourceTitle || researchApply.angle.title}
-                  </p>
-                ) : null}
-                <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-                  {researchPostUrl ? (
-                    <a
-                      href={researchPostUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center rounded-xl border border-violet-300 bg-violet-50 px-4 py-2.5 text-sm font-semibold text-violet-900 hover:bg-violet-100"
-                    >
-                      {pg.researchRefOpenPost}
-                    </a>
-                  ) : null}
-                  {canRedownloadResearchRef ? (
-                    <button
-                      type="button"
-                      onClick={() => void redownloadResearchReference()}
-                      disabled={researchRefBusy}
-                      className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {researchRefBusy
-                        ? pg.researchRefRedownloading
-                        : researchRefMissing
-                          ? pg.researchRefRedownload
-                          : pg.researchRefRedownloadAgain}
-                    </button>
-                  ) : null}
-                </div>
-                {researchRefMissing ? (
-                  <p className="mt-2 text-xs leading-relaxed text-amber-800">
-                    {pg.researchRefMissingNote}
-                  </p>
-                ) : null}
-                {researchRefError ? (
-                  <p className="mt-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">
-                    {researchRefError}
-                  </p>
-                ) : null}
-                {researchRefMissing ? (
-                  <div className="mt-3">
-                    <label className="inline-flex cursor-pointer items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100">
-                      {pg.researchRefManualUpload}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="sr-only"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0] ?? null;
-                          e.target.value = "";
-                          if (file) onReferenceFile(file);
-                        }}
-                      />
-                    </label>
-                  </div>
                 ) : null}
               </section>
             ) : null}
@@ -2321,12 +2232,16 @@ export function PreGenerateSetupPanel({
                       <p className="mb-1 text-xs font-medium text-slate-600">
                         {m.wizard.storyboardRecipeTitle}
                       </p>
-                      <StoryboardRecipePicker
-                        value={wizard.storyboardRecipeId}
-                        onChange={wizard.setStoryboardRecipeId}
-                        fieldLabels={luxuryFieldLabels}
-                        showLuxuryBirth={!isConcept}
-                      />
+                      {lockStoryboardRecipeForResearch ? (
+                        <ResearchStoryboardModeSummary />
+                      ) : (
+                        <StoryboardRecipePicker
+                          value={wizard.storyboardRecipeId}
+                          onChange={wizard.setStoryboardRecipeId}
+                          fieldLabels={luxuryFieldLabels}
+                          showLuxuryBirth={!isConcept}
+                        />
+                      )}
                     </div>
                     <label
                       className={luxuryFieldWrap(
@@ -3058,13 +2973,28 @@ export function PreGenerateSetupPanel({
                               : isTeachingCarousel
                                 ? "teaching_carousel"
                                 : "single";
-                        return estimateImageTokens({
+                        const logoPasses =
+                          isStoryboard &&
+                          Boolean(
+                            wizard.brandKit?.useBrandLogo &&
+                              wizard.brandKit?.logoUrl?.trim(),
+                          )
+                            ? 2
+                            : 1;
+                        return estimateImageJobTokens({
                           mode,
                           sceneCount: isTeachingCarousel
                             ? wizard.referenceCarouselSlideCount
                             : isStoryboard
                               ? wizard.storyboardScenes.length || 4
                               : undefined,
+                          numImages:
+                            wizard.effectiveImageOutputMode === "ab"
+                              ? 2
+                              : wizard.effectiveImageOutputMode === "campaign"
+                                ? 3
+                                : 1,
+                          passesPerScene: logoPasses,
                         });
                       })(),
                     ),
@@ -3136,46 +3066,38 @@ export function PreGenerateSetupPanel({
               <p className="text-xs leading-relaxed text-slate-600">{pg.secureNote}</p>
             </div>
             {onGenerate || onBrowseContinue ? (
-              <div className="pg-desktop-generate flex flex-col gap-2.5">
-                {generateBlockMessage ? (
-                  <p className="rounded-xl border border-violet-200 bg-violet-50 px-3 py-2.5 text-sm text-violet-900">
-                    {generateBlockMessage}
-                  </p>
-                ) : null}
+              <div className="pg-desktop-generate">
                 {onBrowseContinue ? (
-                  <button
-                    type="button"
-                    onClick={onBrowseContinue}
-                    className="pg-generate-btn"
-                  >
-                    {browseContinueLabel ?? pg.browseContinueScenes}
-                    <svg
-                      viewBox="0 0 20 20"
-                      className="h-4 w-4"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      aria-hidden
-                    >
-                      <path d="M7.5 4.5 13 10l-5.5 5.5" />
-                    </svg>
-                  </button>
-                ) : null}
-                {onGenerate ? (
-                  <button
-                    type="button"
-                    onClick={onGenerate}
-                    disabled={generateDisabled}
-                    className={
-                      onBrowseContinue
-                        ? "rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-                        : "pg-generate-btn"
+                  <BrowseResumeActions
+                    continueLabel={browseContinueLabel ?? pg.browseContinueScenes}
+                    regenerateLabel={generateLabel ?? m.wizard.generateImageBtn}
+                    hint={m.microWizard.resumeCta.hint}
+                    onContinue={onBrowseContinue}
+                    onRegenerate={onGenerate}
+                    regenerateDisabled={generateDisabled}
+                    primaryClassName="pg-generate-btn"
+                    blockMessage={
+                      generateBlockMessage ? (
+                        <p className="rounded-xl border border-violet-200 bg-violet-50 px-3 py-2.5 text-sm text-violet-900">
+                          {generateBlockMessage}
+                        </p>
+                      ) : null
                     }
-                  >
-                    {generateLabel ?? m.wizard.generateImageBtn}
-                    {!onBrowseContinue ? (
+                  />
+                ) : onGenerate ? (
+                  <div className="flex flex-col gap-2.5">
+                    {generateBlockMessage ? (
+                      <p className="rounded-xl border border-violet-200 bg-violet-50 px-3 py-2.5 text-sm text-violet-900">
+                        {generateBlockMessage}
+                      </p>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={onGenerate}
+                      disabled={generateDisabled}
+                      className="pg-generate-btn"
+                    >
+                      {generateLabel ?? m.wizard.generateImageBtn}
                       <svg
                         viewBox="0 0 20 20"
                         className="h-4 w-4"
@@ -3188,11 +3110,8 @@ export function PreGenerateSetupPanel({
                       >
                         <path d="M7.5 4.5 13 10l-5.5 5.5" />
                       </svg>
-                    ) : null}
-                  </button>
-                ) : null}
-                {onBrowseContinue ? (
-                  <p className="text-xs leading-relaxed text-slate-500">{pg.browseContinueHint}</p>
+                    </button>
+                  </div>
                 ) : null}
               </div>
             ) : null}
@@ -3201,41 +3120,37 @@ export function PreGenerateSetupPanel({
 
         {onGenerate || onBrowseContinue ? (
           <div className="pg-mobile-cta">
-            {generateBlockMessage ? (
-              <p className="rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-sm text-violet-900">
-                {generateBlockMessage}
-              </p>
-            ) : null}
             {onBrowseContinue ? (
-              <button type="button" onClick={onBrowseContinue} className="pg-generate-btn">
-                {browseContinueLabel ?? pg.browseContinueScenes}
-                <svg
-                  viewBox="0 0 20 20"
-                  className="h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden
-                >
-                  <path d="M7.5 4.5 13 10l-5.5 5.5" />
-                </svg>
-              </button>
-            ) : null}
-            {onGenerate ? (
-              <button
-                type="button"
-                onClick={onGenerate}
-                disabled={generateDisabled}
-                className={
-                  onBrowseContinue
-                    ? "mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-                    : "pg-generate-btn"
+              <BrowseResumeActions
+                continueLabel={browseContinueLabel ?? pg.browseContinueScenes}
+                regenerateLabel={generateLabel ?? m.wizard.generateImageBtn}
+                hint={m.microWizard.resumeCta.hint}
+                onContinue={onBrowseContinue}
+                onRegenerate={onGenerate}
+                regenerateDisabled={generateDisabled}
+                primaryClassName="pg-generate-btn"
+                blockMessage={
+                  generateBlockMessage ? (
+                    <p className="rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-sm text-violet-900">
+                      {generateBlockMessage}
+                    </p>
+                  ) : null
                 }
-              >
-                {generateLabel ?? m.wizard.generateImageBtn}
-                {!onBrowseContinue ? (
+              />
+            ) : onGenerate ? (
+              <div className="flex flex-col gap-2">
+                {generateBlockMessage ? (
+                  <p className="rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-sm text-violet-900">
+                    {generateBlockMessage}
+                  </p>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={onGenerate}
+                  disabled={generateDisabled}
+                  className="pg-generate-btn"
+                >
+                  {generateLabel ?? m.wizard.generateImageBtn}
                   <svg
                     viewBox="0 0 20 20"
                     className="h-4 w-4"
@@ -3248,11 +3163,8 @@ export function PreGenerateSetupPanel({
                   >
                     <path d="M7.5 4.5 13 10l-5.5 5.5" />
                   </svg>
-                ) : null}
-              </button>
-            ) : null}
-            {onBrowseContinue ? (
-              <p className="mt-2 text-xs leading-relaxed text-slate-500">{pg.browseContinueHint}</p>
+                </button>
+              </div>
             ) : null}
           </div>
         ) : null}

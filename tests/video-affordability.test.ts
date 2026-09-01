@@ -63,9 +63,21 @@ describe("evaluateStoryboardVideoAffordability", () => {
         ...base,
         balance: 896,
         hasReel: true,
-        firstEngine: "seedance",
+        firstEngine: "minimax-h3",
       }),
       { action: "upgrade", balance: 896, required: 1140 },
+    );
+  });
+
+  it("runs H3 on reel path when balance covers it", () => {
+    assert.deepEqual(
+      evaluateStoryboardVideoAffordability({
+        ...base,
+        balance: 2000,
+        hasReel: true,
+        firstEngine: "minimax-h3",
+      }),
+      { action: "run-h3" },
     );
   });
 

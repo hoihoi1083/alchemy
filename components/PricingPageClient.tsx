@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useAuth } from "@clerk/nextjs";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { PlanGateDialog } from "@/components/billing/PlanGateDialog";
 import { PricingComparisonSection } from "@/components/billing/PricingComparisonSection";
 import { FaqExpandToggle } from "@/components/landing/FaqExpandToggle";
@@ -12,6 +12,7 @@ import { LandingNav } from "@/components/landing/LandingNav";
 import { Reveal } from "@/components/landing/Reveal";
 import { useLocale } from "@/components/LocaleProvider";
 import { useUserPlanEntitlements } from "@/hooks/useUserPlanEntitlements";
+import { notifyCreditBalance } from "@/lib/credits-client";
 import { PLAN_DEFINITIONS } from "@/lib/billing/plans";
 import { planMeetsMinimum } from "@/lib/billing/plan-gates";
 import { pricingCardCapacityItems } from "@/lib/billing/pricing-card-capacity";
@@ -166,7 +167,7 @@ export function PricingPageClient() {
   const { m } = useLocale();
   const p = m.pricing;
   const { isSignedIn, isLoaded } = useAuth();
-  const { plan, planReady } = useUserPlanEntitlements();
+  const { plan, planReady, refreshPlan } = useUserPlanEntitlements();
   const searchParams = useSearchParams();
   const [interval, setInterval] = useState<BillingInterval>("monthly");
   const [busy, setBusy] = useState<string | null>(null);
@@ -187,6 +188,13 @@ export function PricingPageClient() {
   const intervalParam = searchParams.get("interval");
   const autoCheckoutStarted = useRef(false);
   const planHighlightDone = useRef(false);
+
+  const syncBillingAfterCheckout = useCallback((creditBalance?: number | null) => {
+    if (typeof creditBalance === "number" && Number.isFinite(creditBalance)) {
+      notifyCreditBalance(creditBalance);
+    }
+    refreshPlan();
+  }, [refreshPlan]);
 
   useEffect(() => {
     if (planHighlightDone.current) return;
@@ -231,6 +239,7 @@ export function PricingPageClient() {
 
     // In-place plan switch (no Checkout Session) — show upgrade/downgrade note from query.
     if (searchParams.get("updated") === "1" && !checkoutSessionId) {
+      syncBillingAfterCheckout();
       if (searchParams.get("deferred") === "1") {
         const pendingPlan = searchParams.get("pendingPlan");
         const pendingAt = searchParams.get("pendingAt");
@@ -290,6 +299,7 @@ export function PricingPageClient() {
         }
         const granted = typeof data.tokensGranted === "number" ? data.tokensGranted : 0;
         const bal = typeof data.creditBalance === "number" ? data.creditBalance : null;
+        syncBillingAfterCheckout(bal);
         if (granted > 0) {
           setConfirmNote(
             bal != null
@@ -322,6 +332,8 @@ export function PricingPageClient() {
     p.plans.pro.name,
     p.plans.custom.name,
     searchParams,
+    refreshPlan,
+    syncBillingAfterCheckout,
   ]);
 
   async function startCheckout(body: Record<string, string>) {
@@ -355,6 +367,8 @@ export function PricingPageClient() {
         deferred?: boolean;
         pendingPlan?: string | null;
         pendingEffectiveAt?: string | null;
+        creditBalance?: number;
+        tokensGranted?: number;
       } = {};
       try {
         data = raw
@@ -366,6 +380,8 @@ export function PricingPageClient() {
               deferred?: boolean;
               pendingPlan?: string | null;
               pendingEffectiveAt?: string | null;
+              creditBalance?: number;
+              tokensGranted?: number;
             })
           : {};
       } catch {
@@ -378,6 +394,7 @@ export function PricingPageClient() {
           updated_in_place: true,
           source: "pricing",
         });
+        syncBillingAfterCheckout(data.creditBalance);
         if (data.deferred && data.pendingPlan) {
           const planName =
             data.pendingPlan === "light"
@@ -402,7 +419,19 @@ export function PricingPageClient() {
               .replace("{date}", dateLabel),
           );
         } else {
-          setConfirmNote(p.subscriptionUpgraded);
+          const granted =
+            typeof data.tokensGranted === "number" ? data.tokensGranted : 0;
+          const bal =
+            typeof data.creditBalance === "number" ? data.creditBalance : null;
+          if (granted > 0 && bal != null) {
+            setConfirmNote(
+              `${p.subscriptionUpgraded} ${p.checkoutSuccessGranted
+                .replace("{granted}", String(granted))
+                .replace("{balance}", String(bal))}`,
+            );
+          } else {
+            setConfirmNote(p.subscriptionUpgraded);
+          }
         }
         setBusy(null);
         return;

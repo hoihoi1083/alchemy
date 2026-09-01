@@ -44,6 +44,12 @@ import {
   subpathToH3ShotRecipe,
 } from "@/lib/h3-shot-recipes";
 import {
+  decideImageGenerateWait,
+  decideVideoGenerateWait,
+  type ImageGenWaitGuard,
+  type VideoGenWaitGuard,
+} from "@/lib/wizard-image-wait-guard";
+import {
   WIZARD_CLASSIC_VALUE,
   WIZARD_V2_QUERY_FLAG,
   MICRO_RESUME_DONE_KEY,
@@ -215,6 +221,9 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
   const researchApplyGenRef = useRef(0);
   /** Live pending angle id — async goNext must not trust a stale React closure. */
   const pendingResearchAngleIdRef = useRef<string | null>(null);
+  /** Prevents flashing image.review with stale output while a regen is starting. */
+  const imageGenGuardRef = useRef<ImageGenWaitGuard | null>(null);
+  const videoGenGuardRef = useRef<VideoGenWaitGuard | null>(null);
 
   useEffect(() => {
     const id = wizard.pendingContentResearchPick?.angle?.id ?? null;
@@ -644,6 +653,7 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
         wizard.setError(wizard.m.wizard.storyboardPlanReviewHint);
         return;
       }
+      imageGenGuardRef.current = { imageGenKey: wizard.imageGenKey };
       void wizard.generateImage();
       autoAdvancedRef.current = null;
       setStepIndex((i) => i + 1);
@@ -651,6 +661,7 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     }
 
     if (currentId === "setup.pre_video") {
+      videoGenGuardRef.current = { videoUrl: wizard.videoUrl };
       void wizard.generateVideo();
       autoAdvancedRef.current = null;
       setStepIndex((i) => i + 1);
@@ -669,6 +680,7 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     }
 
     if (currentId === "video.generate") {
+      videoGenGuardRef.current = { videoUrl: wizard.videoUrl };
       void wizard.generateVideo();
       autoAdvancedRef.current = null;
       setStepIndex((i) => i + 1);
@@ -1179,24 +1191,34 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
 
   useEffect(() => {
     if (currentId !== "wait.image_generate") return;
-    if (wizard.imageBusy) return;
-    if (!wizard.imageUrl) {
-      // Mirror video wait: on failure, return to fused setup so user can retry.
-      if (wizard.error) {
-        const genIdx = steps.findIndex(
-          (s) => s.id === "setup.pre_generate" || s.id === "image.generate",
-        );
-        if (genIdx >= 0 && stepIndex !== genIdx) {
-          autoAdvancedRef.current = null;
-          setStepIndex(genIdx);
-        }
+
+    const decision = decideImageGenerateWait({
+      guard: imageGenGuardRef.current,
+      imageGenKey: wizard.imageGenKey,
+      imageBusy: wizard.imageBusy,
+      hasImageOutput: Boolean(wizard.imageUrl),
+      error: wizard.error,
+    });
+    if (decision === "busy" || decision === "hold_stale" || decision === "not_ready") {
+      return;
+    }
+    if (decision === "fail_back") {
+      const genIdx = steps.findIndex(
+        (s) => s.id === "setup.pre_generate" || s.id === "image.generate",
+      );
+      if (genIdx >= 0 && stepIndex !== genIdx) {
+        autoAdvancedRef.current = null;
+        imageGenGuardRef.current = null;
+        setStepIndex(genIdx);
       }
       return;
     }
+
     if (blockReason) return;
     const key = `wait.image_generate-${stepIndex}-${wizard.imageUrl}`;
     if (autoAdvancedRef.current === key) return;
     autoAdvancedRef.current = key;
+    imageGenGuardRef.current = null;
     goNext();
   }, [
     blockReason,
@@ -1206,32 +1228,44 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     steps,
     wizard.error,
     wizard.imageBusy,
+    wizard.imageGenKey,
     wizard.imageUrl,
   ]);
 
   useEffect(() => {
     if (currentId !== "wait.storyboard_generate") return;
-    if (wizard.imageBusy) return;
+
     const hasScenes =
       Boolean(wizard.imageUrl) ||
       wizard.cinematicScenes.length > 0 ||
       wizard.storyboardScenes.length > 0;
-    if (!hasScenes) {
-      if (wizard.error) {
-        const genIdx = steps.findIndex(
-          (s) => s.id === "setup.pre_generate" || s.id === "image.storyboard_scenes",
-        );
-        if (genIdx >= 0 && stepIndex !== genIdx) {
-          autoAdvancedRef.current = null;
-          setStepIndex(genIdx);
-        }
+    const decision = decideImageGenerateWait({
+      guard: imageGenGuardRef.current,
+      imageGenKey: wizard.imageGenKey,
+      imageBusy: wizard.imageBusy,
+      hasImageOutput: hasScenes,
+      error: wizard.error,
+    });
+    if (decision === "busy" || decision === "hold_stale" || decision === "not_ready") {
+      return;
+    }
+    if (decision === "fail_back") {
+      const genIdx = steps.findIndex(
+        (s) => s.id === "setup.pre_generate" || s.id === "image.storyboard_scenes",
+      );
+      if (genIdx >= 0 && stepIndex !== genIdx) {
+        autoAdvancedRef.current = null;
+        imageGenGuardRef.current = null;
+        setStepIndex(genIdx);
       }
       return;
     }
+
     if (blockReason) return;
     const key = `wait.storyboard_generate-${stepIndex}`;
     if (autoAdvancedRef.current === key) return;
     autoAdvancedRef.current = key;
+    imageGenGuardRef.current = null;
     goNext();
   }, [
     blockReason,
@@ -1242,30 +1276,40 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     wizard.cinematicScenes.length,
     wizard.error,
     wizard.imageBusy,
+    wizard.imageGenKey,
     wizard.imageUrl,
     wizard.storyboardScenes.length,
   ]);
 
   useEffect(() => {
     if (currentId !== "wait.video_generate") return;
-    if (wizard.videoBusy) return;
-    if (!wizard.videoUrl) {
-      // Failed or cancelled — return to fused setup (or legacy generate) so the user can retry.
-      if (wizard.error) {
-        const genIdx = steps.findIndex(
-          (s) => s.id === "setup.pre_video" || s.id === "video.generate",
-        );
-        if (genIdx >= 0 && stepIndex !== genIdx) {
-          autoAdvancedRef.current = null;
-          setStepIndex(genIdx);
-        }
+
+    const decision = decideVideoGenerateWait({
+      guard: videoGenGuardRef.current,
+      videoBusy: wizard.videoBusy,
+      videoUrl: wizard.videoUrl,
+      error: wizard.error,
+    });
+    if (decision === "busy" || decision === "hold_stale" || decision === "not_ready") {
+      return;
+    }
+    if (decision === "fail_back") {
+      const genIdx = steps.findIndex(
+        (s) => s.id === "setup.pre_video" || s.id === "video.generate",
+      );
+      if (genIdx >= 0 && stepIndex !== genIdx) {
+        autoAdvancedRef.current = null;
+        videoGenGuardRef.current = null;
+        setStepIndex(genIdx);
       }
       return;
     }
+
     if (blockReason) return;
     const key = `wait.video_generate-${stepIndex}-${wizard.videoUrl}`;
     if (autoAdvancedRef.current === key) return;
     autoAdvancedRef.current = key;
+    videoGenGuardRef.current = null;
     goNext();
   }, [
     blockReason,

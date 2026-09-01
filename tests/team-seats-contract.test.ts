@@ -96,8 +96,9 @@ describe("team seats contract", () => {
   });
 
   it("client UI uses inherited effectivePlan", () => {
-    const hook = read("hooks/useUserPlanEntitlements.ts");
-    assert.match(hook, /effectivePlan \?\? data\.user\?\.plan/);
+    const provider = read("components/UserPlanProvider.tsx");
+    assert.match(provider, /effectivePlan \?\? data\.user\.plan/);
+    assert.match(provider, /fetchSharedMe|\/api\/me/);
     const nav = read("components/nav/ProNavLink.tsx");
     assert.match(nav, /useUserPlanEntitlements/);
     assert.match(nav, /canUseProCanvas\(plan\)/);

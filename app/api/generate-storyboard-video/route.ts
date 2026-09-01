@@ -63,7 +63,7 @@ function referenceVideoRequiredResponse() {
 
 /**
  * Storyboard video orchestrator (H3 / Seedance / Kling stitch fallback).
- * - Reel (B): Seedance R2V quality → MiniMax H3 → 422. Never Kling. Never I2V.
+ * - Reel (B): MiniMax H3 R2V → 422. Never Seedance. Never Kling. Never I2V.
  * - Face-heavy + reel: H3 + reel → 422.
  * - Stills only (A): MiniMax H3 → Kling stitch if H3 fails (and duration is hittable).
  *
@@ -234,7 +234,7 @@ export async function POST(request: Request) {
   }
 
   const skipToKling = afford.action === "run-kling";
-  const runSeedanceFirst = afford.action === "run-seedance";
+  const runSeedanceFirst = afford.action === "run-seedance" && !expectsReel;
   const firstCost = runSeedanceFirst ? seedanceCost : h3Cost;
   const firstKind = runSeedanceFirst ? "video" : "minimax_h3";
   let firstCharged: { balanceAfter: number | null } = { balanceAfter: null };

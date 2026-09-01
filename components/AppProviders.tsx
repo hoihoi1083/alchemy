@@ -7,6 +7,7 @@ import { GlobalStudioAssistant } from "@/components/assistant/GlobalStudioAssist
 import { LocaleProvider, useLocale } from "@/components/LocaleProvider";
 import { MixpanelProvider } from "@/components/MixpanelProvider";
 import { SyncUserOnAuth } from "@/components/SyncUserOnAuth";
+import { UserPlanProvider } from "@/components/UserPlanProvider";
 import { clerkAppearance } from "@/lib/clerk-appearance";
 import { clerkLocalizationFor } from "@/lib/clerk-localization";
 
@@ -21,12 +22,14 @@ function ClerkWithLocale({ children }: { children: ReactNode }) {
       signUpUrl="/sign-up"
       key={locale}
     >
-      <SyncUserOnAuth />
-      <MixpanelProvider />
-      <AuthModalProvider>
-        {children}
-        <GlobalStudioAssistant />
-      </AuthModalProvider>
+      <UserPlanProvider>
+        <SyncUserOnAuth />
+        <MixpanelProvider />
+        <AuthModalProvider>
+          {children}
+          <GlobalStudioAssistant />
+        </AuthModalProvider>
+      </UserPlanProvider>
     </ClerkProvider>
   );
 }

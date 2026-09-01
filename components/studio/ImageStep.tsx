@@ -24,6 +24,7 @@ import {
 import { ArtStylePicker } from "@/components/ArtStylePicker";
 import { CompositionPresetPicker } from "@/components/studio/CompositionPresetPicker";
 import { StoryboardRecipePicker } from "@/components/studio/StoryboardRecipePicker";
+import { ResearchStoryboardModeSummary } from "@/components/studio/ResearchStoryboardModeSummary";
 import { ImageTextModePicker } from "@/components/studio/ImageTextModePicker";
 import {
   isLuxuryBirthRecipe,
@@ -36,7 +37,7 @@ import { StoryboardShotMap } from "@/components/studio/StoryboardShotMap";
 import { PlanGateDialog } from "@/components/billing/PlanGateDialog";
 import { useUserPlanEntitlements } from "@/hooks/useUserPlanEntitlements";
 import { canUseStoryboard, minPlanForFeature } from "@/lib/billing/plan-gates";
-import { estimateImageTokens } from "@/lib/billing/token-costs";
+import { estimateImageJobTokens } from "@/lib/billing/estimate-job-tokens";
 import { isBrandVideoStyle, isCreativeVideoStyle, isBrandVisualStyle, isStoryboardVideoStyle, isAiPlannedVideoStyle } from "@/lib/visual-styles";
 import { CINEMATIC_SCENE_COUNTS, type CinematicSceneCount } from "@/lib/cinematic-scene-config";
 import type { CampaignSlide } from "@/hooks/useWizardState";
@@ -44,9 +45,11 @@ import type { CinematicSceneResult } from "@/lib/cinematic-reel-types";
 import type { StoryboardSceneResult } from "@/lib/video-storyboard-types";
 
 export function ImageStep() {
-  const { applyPromptRebuild, artStyleId, campaignPlan, campaignSlideLabel, campaignSlides, campaignTheme, canGenerateImage, carouselIntent, cinematicReelPlan, cinematicSceneCount, cinematicScenes, compositionPresetId, effectiveImageMode, effectiveImageOutputMode, error, finishImageStep, formatCinematicCopy, generateImage, goBackFromImage, headline, imageAspectRatio, imageBusy, imageCreativeMode, imageFinishLabel, imageGenKey, imageGenerateDisabledReason, imageInputMode, imageNextDisabled, imageOutputMode, imagePostflight, imagePostflightBusy, imagePreflight, imageProgressInfo, imagePrompt, imageQualityChecklist, imageRefPhoto, imageRefPreviewUrl, imageResolution, imageStepHint, imageTextMode, imageUrl, imageVariantUrls, imageVisionReview, imageVisionReviewBusy, isCampaignOutput, isCinematicStitchOutput, isConceptCinematicSingleOutput, isConceptStoryboardOutput, isStoryboardOutput, lastImageEndpoint, lockedCampaignMode, lockedSingleImageMode, m, needsProductUpload, onCinematicSceneCountChange, onImageCreativeModeChange, onImageInputModeChange, onProductPhotoSelected, planStoryboard, planStoryboardBusy, product, productPhoto, promotionMode, promptExtra, promptMarket, referenceAd, referenceAnalyzeBusy, referenceAnalyzeNote, referenceCarouselSlideCount, referenceIsVideo, referenceStrategy, regenerateStoryboardSceneWithAi, stampStoryboardSceneLogo, brandKit, reorderStoryboardScene, replaceStoryboardSceneImage, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, runShipItPipeline, selectVisualStyle, selectedVariantIndex, setArtStyleId, setCampaignPlan, setCampaignSlides, setCampaignTheme, setCarouselIntent, setCompositionPresetId, setImageAspectRatio, setImageGenKey, setImageOutputMode, setImageResolution, setImagePrompt, setImageRefPhoto, setImageQualityChecklist, setImageTextMode, setImageUrl, setImageVariantUrls, setPromptExtra, setPromptMarket, setError, setReferenceCarouselSlideCount, setSelectedVariantIndex, setShipItMode, setShowAdvancedImage, setStoryboardBrief, setStoryboardPlan, setStoryboardRecipeId, setStoryboardSceneCount, setSubjectFraming, setVideoPrompt, shipItEligible, shipItMode, shipItPipelineBusy, shipItVisionBlocked, showAdvancedImage, storyboardBrief, storyboardPlan, storyboardRecipeId, storyboardSceneCount, storyboardSceneRegenerateBusy, storyboardSceneReplaceBusy, storyboardScenes, storyboardGridApproved, setStoryboardGridApproved, storyboardCellsViewed, storyboardAllCellsViewed, markStoryboardCellViewed, storyboardTrimDuration, subjectFraming, templateId, templateSlotStatus, trimStoryboardDurations, updateStoryboardPlanScene, uploadPreviewUrl, uploadQualityMessage, uploadQualityWarning, useOriginalAsKeyframe, useOriginalImage, userReferenceBrief, useReferenceVideo, usesCompositor, videoCreativeMode, videoPrompt, visualStyle, visualStyleId, workflowMode } = useWizard();
+  const { applyPromptRebuild, artStyleId, campaignPlan, campaignSlideLabel, campaignSlides, campaignTheme, canGenerateImage, carouselIntent, cinematicReelPlan, cinematicSceneCount, cinematicScenes, compositionPresetId, contentResearchApplyRef, effectiveImageMode, effectiveImageOutputMode, error, finishImageStep, formatCinematicCopy, generateImage, goBackFromImage, headline, imageAspectRatio, imageBusy, imageCreativeMode, imageFinishLabel, imageGenKey, imageGenerateDisabledReason, imageInputMode, imageNextDisabled, imageOutputMode, imagePostflight, imagePostflightBusy, imagePreflight, imageProgressInfo, imagePrompt, imageQualityChecklist, imageRefPhoto, imageRefPreviewUrl, imageResolution, imageStepHint, imageTextMode, imageUrl, imageVariantUrls, imageVisionReview, imageVisionReviewBusy, isCampaignOutput, isCinematicStitchOutput, isConceptCinematicSingleOutput, isConceptStoryboardOutput, isStoryboardOutput, lastImageEndpoint, lockedCampaignMode, lockedSingleImageMode, m, needsProductUpload, onCinematicSceneCountChange, onImageCreativeModeChange, onImageInputModeChange, onProductPhotoSelected, planStoryboard, planStoryboardBusy, product, productPhoto, promotionMode, promptExtra, promptMarket, referenceAd, referenceAnalyzeBusy, referenceAnalyzeNote, referenceCarouselSlideCount, referenceIsVideo, referenceStrategy, regenerateStoryboardSceneWithAi, stampStoryboardSceneLogo, brandKit, reorderStoryboardScene, replaceStoryboardSceneImage, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, runShipItPipeline, selectVisualStyle, selectedVariantIndex, setArtStyleId, setCampaignPlan, setCampaignSlides, setCampaignTheme, setCarouselIntent, setCompositionPresetId, setImageAspectRatio, setImageGenKey, setImageOutputMode, setImageResolution, setImagePrompt, setImageRefPhoto, setImageQualityChecklist, setImageTextMode, setImageUrl, setImageVariantUrls, setPromptExtra, setPromptMarket, setError, setReferenceCarouselSlideCount, setSelectedVariantIndex, setShipItMode, setShowAdvancedImage, setStoryboardBrief, setStoryboardPlan, setStoryboardRecipeId, setStoryboardSceneCount, setSubjectFraming, setVideoPrompt, shipItEligible, shipItMode, shipItPipelineBusy, shipItVisionBlocked, showAdvancedImage, storyboardBrief, storyboardPlan, storyboardRecipeId, storyboardSceneCount, storyboardSceneRegenerateBusy, storyboardSceneReplaceBusy, storyboardScenes, storyboardGridApproved, setStoryboardGridApproved, storyboardCellsViewed, storyboardAllCellsViewed, markStoryboardCellViewed, storyboardTrimDuration, subjectFraming, templateId, templateSlotStatus, trimStoryboardDurations, updateStoryboardPlanScene, uploadPreviewUrl, uploadQualityMessage, uploadQualityWarning, useOriginalAsKeyframe, useOriginalImage, userReferenceBrief, useReferenceVideo, usesCompositor, videoCreativeMode, videoPrompt, visualStyle, visualStyleId, workflowMode } = useWizard();
+  const lockStoryboardRecipeForResearch = Boolean(contentResearchApplyRef);
   const { plan, planReady } = useUserPlanEntitlements();
-  const storyboardAllowed = !planReady || canUseStoryboard(plan);
+  const storyboardLoading = !planReady;
+  const storyboardAllowed = planReady && canUseStoryboard(plan);
   const [storyboardGateOpen, setStoryboardGateOpen] = useState(false);
   const isConcept = promotionMode === "concept";
   const luxuryStoryboard = isLuxuryBirthRecipe(storyboardRecipeId) && !isConcept;
@@ -62,7 +65,7 @@ export function ImageStep() {
   })();
   const logoModeAPasses =
     isStoryboardOutput && Boolean(brandKit?.useBrandLogo && brandKit?.logoUrl?.trim()) ? 2 : 1;
-  const imageTokenCost = estimateImageTokens({
+  const imageTokenCost = estimateImageJobTokens({
     mode: isStoryboardOutput || isCinematicStitchOutput
       ? "storyboard"
       : effectiveImageOutputMode === "ab"
@@ -212,16 +215,20 @@ export function ImageStep() {
       <button
         type="button"
         onClick={() => {
+          if (storyboardLoading) return;
           if (!storyboardAllowed) {
             setStoryboardGateOpen(true);
             return;
           }
           selectVisualStyle("storyboard-video");
         }}
-        className="mt-3 rounded-lg bg-amber-600 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-500"
+        className="mt-3 rounded-lg bg-amber-600 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-500 disabled:opacity-60"
+        disabled={storyboardLoading}
       >
         {m.wizard.imageStepReferenceReelSwitchStoryboardBtn}
-        {!storyboardAllowed ? (
+        {storyboardLoading ? (
+          <span className="ml-1.5 opacity-90">({m.account.checkingPlan})</span>
+        ) : !storyboardAllowed ? (
           <span className="ml-1.5 opacity-90">({m.pricing.plans.pro.name}+)</span>
         ) : null}
       </button>
@@ -463,12 +470,16 @@ export function ImageStep() {
       <h3 className="mb-2 text-xs font-semibold text-teal-100">
         {m.wizard.storyboardRecipeTitle}
       </h3>
-      <StoryboardRecipePicker
-        value={storyboardRecipeId}
-        onChange={setStoryboardRecipeId}
-        variant="dark"
-        showLuxuryBirth={!isConcept}
-      />
+      {lockStoryboardRecipeForResearch ? (
+        <ResearchStoryboardModeSummary variant="dark" />
+      ) : (
+        <StoryboardRecipePicker
+          value={storyboardRecipeId}
+          onChange={setStoryboardRecipeId}
+          variant="dark"
+          showLuxuryBirth={!isConcept}
+        />
+      )}
       <div className="mt-3 flex flex-wrap items-center gap-3">
         {luxuryStoryboard ? (
           /* Luxury birth — scene count only, duration auto-coupled */
@@ -749,6 +760,11 @@ export function ImageStep() {
           : isCampaignOutput
           ? m.wizard.campaignGenerating
           : m.wizard.imageGenerating
+        : isStoryboardOutput && storyboardScenes.length > 0
+          ? m.microWizard.preGenerateSetup.regenerateScenes
+          : (isCampaignOutput || isCinematicStitchOutput) &&
+              (campaignSlides.length > 0 || cinematicScenes.length > 0)
+            ? m.microWizard.preGenerateSetup.regenerateImage
         : imageUrl
           ? usesCompositor
             ? m.wizard.compositorRegenerateImageBtn
@@ -759,6 +775,8 @@ export function ImageStep() {
               ? formatCinematicCopy(m.wizard.cinematicStitchGenerateBtn)
               : isConceptCinematicSingleOutput
                 ? m.wizard.conceptCinematicSingleGenerateBtn
+              : isStoryboardOutput
+                ? m.wizard.storyboardGenerateScenesBtn
               : m.wizard.generateImageBtn}
     </button>
     {needsProductUpload &&

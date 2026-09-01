@@ -19,6 +19,8 @@ import path from "path";
 import { buildSingleClipManifest } from "@/lib/video-timing-manifest";
 import {
   clampMinimaxH3ResolutionForPlan,
+  collectH3ReferenceImageUrls,
+  ensureMinimaxReferenceVideoUrls,
   normalizeMinimaxH3Resolution,
   seedancePromptToMinimaxH3,
 } from "@/lib/minimax-h3-run";
@@ -115,10 +117,19 @@ export async function POST(request: Request) {
     }
   }
   const extraReferenceImages = Math.max(0, Math.min(9, refImageCount) - 5);
+  const refDurationRaw = Number(
+    (formData.get("ref_duration_sec") as string | null)?.trim() || "",
+  );
+  const referenceVideoSec =
+    expectsRefVideo
+      ? refDurationRaw > 0
+        ? Math.min(15, Math.round(refDurationRaw))
+        : duration
+      : 0;
   const tokenCost = h3TokenCostFromRequest({
     duration,
     resolution,
-    referenceVideoSec: expectsRefVideo ? duration : 0,
+    referenceVideoSec,
     extraReferenceImages,
   });
 
@@ -179,20 +190,9 @@ export async function POST(request: Request) {
     }
 
     if (mode === "reference") {
-      const refImages: string[] = [];
-      const imageFile = formData.get("image_start") as File | null;
-      if (imageFile && imageFile.size > 0) {
-        refImages.push(await fal.storage.upload(imageFile));
-      }
-      const startUrl = (formData.get("image_start_url") as string | null)?.trim();
-      if (startUrl) refImages.push(startUrl);
-      for (const f of formData.getAll("reference_images") as File[]) {
-        if (f && f.size > 0) refImages.push(await fal.storage.upload(f));
-      }
-      // Wizard product-assistant / Seedance-shaped clients send `images`.
-      for (const f of formData.getAll("images") as File[]) {
-        if (f && f.size > 0) refImages.push(await fal.storage.upload(f));
-      }
+      const refImages = await collectH3ReferenceImageUrls(formData, {
+        clerkId: auth.user.userId,
+      });
       const refVideos: string[] = [];
       const refVideo = formData.get("reference_video") as File | null;
       if (refVideo && refVideo.size > 0) {
@@ -204,25 +204,25 @@ export async function POST(request: Request) {
       if (!refImages.length && !refVideos.length) {
         throw new Error("Reference mode needs at least one image or video.");
       }
+      const trimmedVideos = await ensureMinimaxReferenceVideoUrls(
+        refVideos.slice(0, 3),
+      );
       if (refImages.length) {
         input.reference_image_urls = await Promise.all(
-          refImages.slice(0, 9).map(async (u) => {
-            const mirrored = await mirrorImageUrlToFalStorage(u, {
-              clerkId: auth.user.userId,
-              refresh: true,
-            });
-            return ensureMinimaxH3FalImageUrl(mirrored);
-          }),
+          refImages.map((u) => ensureMinimaxH3FalImageUrl(u)),
         );
       }
-      if (refVideos.length) {
-        input.reference_video_urls = refVideos.slice(0, 3);
+      if (trimmedVideos.length) {
+        input.reference_video_urls = trimmedVideos;
       }
       input.prompt = adaptScriptForMinimaxH3({
         seedancePrompt: prompt,
         imageCount: refImages.length,
-        videoCount: refVideos.length,
+        videoCount: trimmedVideos.length,
       });
+      console.info(
+        `[generate-minimax-h3] reference refs: ${refImages.length} image(s), ${trimmedVideos.length} video(s)`,
+      );
     }
 
     const startedAt = Date.now();

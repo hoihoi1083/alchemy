@@ -25,10 +25,10 @@ describe("video engine router (A vs B)", () => {
     assert.equal(plan.seedanceFast, false);
   });
 
-  it("reel without faces is B: Seedance quality first, no Kling", () => {
+  it("reel without faces is B: MiniMax H3 R2V first, no Kling", () => {
     const plan = resolveVideoEnginePlan({ hasReel: true, faceHeavy: false });
     assert.equal(plan.stack, "b-reel");
-    assert.equal(plan.firstEngine, "seedance");
+    assert.equal(plan.firstEngine, "minimax-h3");
     assert.equal(plan.seedanceFast, false);
     assert.equal(plan.allowKling, false);
   });
@@ -88,20 +88,19 @@ describe("video engine router (A vs B)", () => {
 describe("storyboard route + wizard wiring", () => {
   const root = process.cwd();
 
-  it("reel path is Seedance R2V then H3 then REFERENCE_VIDEO_REQUIRED (no Kling)", () => {
+  it("reel path is H3 R2V then REFERENCE_VIDEO_REQUIRED (no Seedance, no Kling)", () => {
     const src = readFileSync(
       join(root, "app/api/generate-storyboard-video/route.ts"),
       "utf8",
     );
-    assert.match(src, /runSeedanceStoryboardR2v/);
     assert.match(src, /runMinimaxH3Fallback/);
     assert.match(src, /REFERENCE_VIDEO_REQUIRED/);
     assert.match(src, /expectsReel \|\| !enginePlan\.allowKling/);
-    const seedanceAt = src.indexOf("Seedance R2V first");
-    const h3After = src.indexOf("MiniMax H3 failed after Seedance");
+    assert.match(src, /run-seedance.*!expectsReel/);
+    const h3At = src.indexOf("MiniMax H3 first");
     const klingAt = src.indexOf("Kling fallback");
-    assert.ok(seedanceAt > 0 && h3After > seedanceAt);
-    assert.ok(klingAt > h3After);
+    assert.ok(h3At > 0);
+    assert.ok(klingAt > h3At);
     assert.match(src, /KLING_DURATION_UNREACHABLE/);
   });
 
@@ -133,9 +132,13 @@ describe("storyboard route + wizard wiring", () => {
     assert.match(wizard, /makeImageToVideo[\s\S]*hasReel: false/);
   });
 
-  it("/api/generate forces quality Seedance when a reel is attached", () => {
+  it("/api/generate routes reference MP4 to MiniMax H3 before Seedance billing", () => {
     const src = readFileSync(join(root, "app/api/generate/route.ts"), "utf8");
-    assert.match(src, /reelExpectedEarly \? false : formData\.get\("fast"\)/);
+    assert.match(src, /runReferenceVideoViaH3/);
+    assert.match(src, /hasReferenceVideoInput/);
+    const h3Branch = src.indexOf("runReferenceVideoViaH3");
+    const seedanceCharge = src.indexOf("videoTokenCostFromSeedanceEndpoint");
+    assert.ok(h3Branch > 0 && seedanceCharge > h3Branch);
   });
 
   it("simple VideoSettingsPanel hides engine picker", () => {

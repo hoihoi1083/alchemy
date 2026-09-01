@@ -58,16 +58,6 @@ export function evaluateStoryboardVideoAffordability(input: {
     input.allowKling && input.klingCanHitDuration && !input.hasReel;
 
   if (input.hasReel) {
-    if (input.firstEngine === "seedance") {
-      if (canAfford(balance, input.seedanceCost)) return { action: "run-seedance" };
-      if (canAfford(balance, input.h3Cost)) return { action: "run-h3" };
-      if (balance == null) return { action: "run-seedance" };
-      return {
-        action: "upgrade",
-        balance,
-        required: Math.min(input.seedanceCost, input.h3Cost),
-      };
-    }
     if (canAfford(balance, input.h3Cost)) return { action: "run-h3" };
     if (balance == null) return { action: "run-h3" };
     return { action: "upgrade", balance, required: input.h3Cost };

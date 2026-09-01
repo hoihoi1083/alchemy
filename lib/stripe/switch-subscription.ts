@@ -170,6 +170,48 @@ async function scheduleDowngradeAtPeriodEnd(opts: {
   };
 }
 
+async function ensureCustomerDefaultPaymentMethod(
+  stripe: Stripe,
+  customerId: string,
+  sub: Stripe.Subscription,
+): Promise<string | null> {
+  const fromSub =
+    typeof sub.default_payment_method === "string"
+      ? sub.default_payment_method
+      : sub.default_payment_method?.id ?? null;
+  if (!fromSub) return null;
+
+  try {
+    const customer = await stripe.customers.retrieve(customerId);
+    if ("deleted" in customer && customer.deleted) return fromSub;
+    const current = customer.invoice_settings?.default_payment_method;
+    const currentId =
+      typeof current === "string" ? current : current?.id ?? null;
+    if (currentId === fromSub) return fromSub;
+    await stripe.customers.update(customerId, {
+      invoice_settings: { default_payment_method: fromSub },
+    });
+  } catch (e: unknown) {
+    console.warn(
+      "[stripe] could not sync customer default_payment_method",
+      customerId,
+      e instanceof Error ? e.message : e,
+    );
+  }
+  return fromSub;
+}
+
+/** Stripe rejects cancel_at_period_end on the same update as pending_if_incomplete. */
+async function clearCancelAtPeriodEndIfSet(
+  stripe: Stripe,
+  sub: Stripe.Subscription,
+): Promise<void> {
+  if (!sub.cancel_at_period_end) return;
+  await stripe.subscriptions.update(sub.id, {
+    cancel_at_period_end: false,
+  });
+}
+
 async function applyImmediatePlanChange(opts: {
   stripe: Stripe;
   clerkId: string;
@@ -201,6 +243,20 @@ async function applyImmediatePlanChange(opts: {
   // Drop any deferred downgrade so the upgrade (or lateral switch) wins now.
   await releaseScheduleIfAny(stripe, primary);
 
+  const customerId =
+    typeof primary.customer === "string"
+      ? primary.customer
+      : primary.customer?.id;
+  // Sync PM onto the customer only — do NOT pass default_payment_method on the
+  // subscription.update when payment_behavior=pending_if_incomplete (Stripe
+  // rejects unsupported params and our catch was mislabeling that as a card decline).
+  if (customerId) {
+    await ensureCustomerDefaultPaymentMethod(stripe, customerId, primary);
+  }
+
+  // Same restriction as default_payment_method — clear in a separate call first.
+  await clearCancelAtPeriodEndIfSet(stripe, primary);
+
   // Money-critical:
   // - always_invoice → create + attempt payment on the proration/cycle-reset invoice now
   // - pending_if_incomplete → do NOT apply the plan change if payment fails / needs action
@@ -222,8 +278,7 @@ async function applyImmediatePlanChange(opts: {
       ...(resetBillingCycle ? { billing_cycle_anchor: "now" as const } : {}),
       proration_behavior: "always_invoice",
       payment_behavior: "pending_if_incomplete",
-      cancel_at_period_end: false,
-      expand: ["latest_invoice"],
+      expand: ["latest_invoice", "latest_invoice.payment_intent"],
     });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
@@ -231,9 +286,18 @@ async function applyImmediatePlanChange(opts: {
       e && typeof e === "object" && "code" in e
         ? String((e as { code?: unknown }).code ?? "")
         : "";
+    const type =
+      e && typeof e === "object" && "type" in e
+        ? String((e as { type?: unknown }).type ?? "")
+        : "";
+    // Do not treat StripeInvalidRequestError (bad params) as a card decline.
+    if (type === "StripeInvalidRequestError") {
+      console.error("[stripe] upgrade invalid request:", msg);
+      throw e;
+    }
     if (
-      /card|declined|insufficient|authentication|payment|incomplete/i.test(msg) ||
-      /card_declined|payment_intent|authentication_required/i.test(code)
+      /card|declined|insufficient|authentication_required|incomplete/i.test(msg) ||
+      /card_declined|authentication_required/i.test(code)
     ) {
       const err = new Error(
         "PAYMENT_INCOMPLETE: Card was declined or needs authentication. Update your card in Manage billing, then try the upgrade again.",
@@ -245,6 +309,11 @@ async function applyImmediatePlanChange(opts: {
   }
 
   if (updated.pending_update) {
+    console.warn("[stripe] upgrade left pending_update", {
+      subscriptionId: updated.id,
+      clerkId,
+      plan,
+    });
     const err = new Error(
       "PAYMENT_INCOMPLETE: Card was declined or needs authentication. Update your card in Manage billing, then try the upgrade again.",
     );
@@ -253,13 +322,27 @@ async function applyImmediatePlanChange(opts: {
   }
 
   const latestInvoice = updated.latest_invoice;
-  const invoiceStatus =
-    latestInvoice && typeof latestInvoice !== "string"
-      ? latestInvoice.status
+  const invoiceObj =
+    latestInvoice && typeof latestInvoice !== "string" ? latestInvoice : null;
+  const invoiceStatus = invoiceObj?.status ?? null;
+  type InvoiceWithExpandedPi = Stripe.Invoice & {
+    payment_intent?: Stripe.PaymentIntent | string | null;
+  };
+  const expandedInvoice = invoiceObj as InvoiceWithExpandedPi | null;
+  const pi =
+    expandedInvoice?.payment_intent &&
+    typeof expandedInvoice.payment_intent !== "string"
+      ? expandedInvoice.payment_intent
       : null;
   // open / uncollectible means we did not collect — treat as failure (should be rare
   // with pending_if_incomplete, but belt-and-suspenders for money safety).
   if (invoiceStatus === "open" || invoiceStatus === "uncollectible") {
+    console.warn("[stripe] upgrade invoice unpaid", {
+      subscriptionId: updated.id,
+      invoiceStatus,
+      paymentIntentStatus: pi?.status ?? null,
+      lastError: pi?.last_payment_error?.message ?? null,
+    });
     const err = new Error(
       "PAYMENT_INCOMPLETE: Upgrade invoice was not paid. Update your card in Manage billing, then try again.",
     );

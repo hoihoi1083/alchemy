@@ -214,6 +214,23 @@ export function storyboardTvcRolesPlannerLines(preferSceneCount: number): string
   ];
 }
 
+/**
+ * Research / reference-adapted storyboard — mirror reference beats instead of
+ * forcing generic TVC product grammar over the reference layout.
+ */
+export function storyboardReferenceAdaptedRolesPlannerLines(
+  preferSceneCount: number,
+): string[] {
+  return [
+    `Prefer EXACTLY ${preferSceneCount} scenes unless the user forced another count.`,
+    "- Map beats to the REFERENCE layout/pacing — opening → mid → close from the reference, not a stock TVC macro→orbit→payoff arc.",
+    "- role field: use reference-beat names (hook, detail, recap, cta) when they match; TVC roles only when the reference is clearly TVC.",
+    "- lightingEn (required): English lighting echoing THIS reference beat — not a generic studio key on every scene.",
+    "- cameraMotionEn (required): English camera echoing THIS reference beat — not slow push-in on every scene.",
+    "- Do NOT override reference layout family with unrelated product-photography staging.",
+  ];
+}
+
 export type MotionPosterPromptInput = {
   product: string;
   headline?: string;

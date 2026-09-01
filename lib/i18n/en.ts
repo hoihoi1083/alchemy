@@ -50,6 +50,7 @@ export const en = {
 		subtitle:
 			"Your plan, token balance, and credit history. Manage card and invoices in Stripe when needed.",
 		loading: "Loading account…",
+		checkingPlan: "Checking plan…",
 		loadError: "Could not load account.",
 		planLabel: "Current plan",
 		balanceLabel: "Token balance",
@@ -2401,6 +2402,11 @@ export const en = {
 		storyboardRecipeTitle: "Storyboard recipe",
 		storyboardRecipeHint:
 			"Classic flexible TVC, or luxury product birth (physical SKU recommended). No Social drip chrome.",
+		researchStoryboardMode: {
+			title: "Research-adapted storyboard",
+			body: "Pacing and layout follow your reference post. Recipe presets are locked on this path — edit the outline or brief below if needed.",
+		},
+		researchStoryboardPlanReady: "Reference analyzed — storyboard outline ready.",
 		storyboardRecipeLuxuryNoRefHint:
 			"No reference reel. Pick 3 scenes (tight) or 5 scenes (recommended). Default video: single-clip mode.",
 		storyboardRecipeLuxuryDrivers: {
@@ -4382,7 +4388,7 @@ export const en = {
 			"Download the PNG. You can start a video workflow separately if needed.",
     generateImageBtn: "Generate image",
 		storyboardGenerateScenesBtn: "Generate storyboard scenes",
-    regenerateImageBtn: "Regenerate image",
+    regenerateImageBtn: "Generate new image",
 		tokenCostHint: "Uses ~{n} tokens",
 		imageReviewRegenerateHint: "Not happy?",
 		imageReviewRegenerateLink: "Regenerate",
@@ -4821,7 +4827,7 @@ export const en = {
     compositorImageHint:
       "Upload your product photo. We cut it into a circular sticker and compose the paper note with your text.",
     compositorImageBtn: "Build ad image",
-    compositorRegenerateImageBtn: "Rebuild image",
+    compositorRegenerateImageBtn: "Rebuild new image",
     compositorVideoHint:
 			"Builds a 6-second reel: slow zoom, paper float, sparkle twinkle, plus BGM. No external video API.",
     compositorVideoBtn: "Build reel video",
@@ -5714,6 +5720,12 @@ export const en = {
 		skip: "Skip",
 		classicLink: "Advanced studio",
 		footerHint: "Need all options?",
+		/** Dual CTA when user goes back after image / storyboard / video generation. */
+		resumeCta: {
+			freeBadge: "No extra tokens",
+			paidBadge: "Uses tokens",
+			hint: "Purple: open what you already made (no charge). White: generate a new one from the settings above (uses tokens).",
+		},
 		outputGoalTitle: "What do you want to create?",
 		outputGoalHint:
 			"Pick image, video, or both — you can change this later in Advanced studio.",
@@ -5925,12 +5937,12 @@ export const en = {
 			fromIntakeHeadline: "Hook: {text}",
 			fromIntakeNeedPhoto: "Still needed: product photo",
 			fromIntakeReadyMaterials: "Review materials below, then generate.",
-			browseContinueScenes: "Continue to scenes",
-			browseContinueImage: "Continue to image review",
+			browseContinueScenes: "View existing scenes →",
+			browseContinueImage: "View existing image →",
 			browseContinueHint:
-				"Edit fields above if you want, then regenerate — or continue to your existing output without spending tokens.",
-			regenerateScenes: "Regenerate scenes",
-			regenerateImage: "Regenerate image",
+				"Purple: open what you already made (no tokens). White: generate new output from the settings above (uses tokens).",
+			regenerateScenes: "Generate new scenes",
+			regenerateImage: "Generate new image",
 			directHint:
 				"Choose quick ad or model-wear, optionally add a reference image, then set content and product photos — same setup as after research.",
 			conceptHint:
@@ -6176,10 +6188,10 @@ export const en = {
 			scenesReadyTitle: "Storyboard scenes ready",
 			scenesReadyBody:
 				"These stills become one video clip. Regen a bad cell first if needed.",
-			browseContinueExport: "Continue to export",
+			browseContinueExport: "View existing video →",
 			browseContinueHint:
-				"Edit settings above if you want, then regenerate — or continue to your existing video without spending tokens.",
-			regenerateVideo: "Regenerate video",
+				"Purple: open the video you already made (no tokens). White: generate a new video from the settings above (uses tokens).",
+			regenerateVideo: "Generate new video",
 			assistantHint:
 				"Upload a product photo → AI writes a motion prompt → review it → generate (silent reel; captions later).",
 			assistantTitle: "AI motion prompt",

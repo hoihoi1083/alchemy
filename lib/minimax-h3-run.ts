@@ -2,7 +2,6 @@ import { fal } from "@fal-ai/client";
 import { videoCapForPlan } from "@/lib/billing/entitlements";
 import type { UserPlan } from "@/lib/billing/plans";
 import { mirrorImageUrlToFalStorage } from "@/lib/fal-mirror-media";
-import { collectKlingFallbackImageUrls } from "@/lib/kling-storyboard-run";
 import {
   buildSeedanceReferenceClip,
   MINIMAX_MAX_REFERENCE_SEC,
@@ -94,6 +93,67 @@ export function formDataExpectsReferenceVideo(formData: FormData, prompt?: strin
   return false;
 }
 
+/**
+ * H3 reference-to-video image order: product stills first (Image 1), scene/layout
+ * plates last. generate-minimax-h3 previously put image_start_url before
+ * reference_images, making the product Image 2.
+ */
+export async function collectH3ReferenceImageUrls(
+  formData: FormData,
+  opts: { clerkId: string },
+): Promise<string[]> {
+  const urls: string[] = [];
+  const seen = new Set<string>();
+  const mirrorOpts = { clerkId: opts.clerkId, refresh: true as const };
+
+  const addFalUrl = (falUrl: string) => {
+    if (!falUrl || seen.has(falUrl)) return;
+    seen.add(falUrl);
+    urls.push(falUrl);
+  };
+
+  const pushRemote = async (raw: string | null | undefined) => {
+    const trimmed = raw?.trim();
+    if (!trimmed || seen.has(trimmed)) return;
+    seen.add(trimmed);
+    try {
+      addFalUrl(await mirrorImageUrlToFalStorage(trimmed, mirrorOpts));
+    } catch {
+      /* skip */
+    }
+  };
+
+  const pushFile = async (f: File | null) => {
+    if (!f || f.size <= 0) return;
+    try {
+      addFalUrl(await fal.storage.upload(f));
+    } catch {
+      /* skip */
+    }
+  };
+
+  for (const f of formData.getAll("reference_images") as File[]) {
+    await pushFile(f);
+  }
+  for (const f of formData.getAll("images") as File[]) {
+    await pushFile(f);
+  }
+
+  const directRefUrls = (formData.get("reference_image_urls") as string | null)
+    ?.trim()
+    .split(/[\n,]+/)
+    .map((u) => u.trim())
+    .filter(Boolean);
+  for (const u of directRefUrls ?? []) await pushRemote(u);
+
+  await pushRemote(formData.get("image_ref_url") as string | null);
+
+  await pushFile(formData.get("image_start") as File | null);
+  await pushRemote(formData.get("image_start_url") as string | null);
+
+  return urls.slice(0, 9);
+}
+
 /** Collect reference video URLs/files from Seedance generate FormData. */
 export async function collectMinimaxH3FallbackVideoUrls(
   formData: FormData,
@@ -117,21 +177,26 @@ export async function collectMinimaxH3FallbackVideoUrls(
   const single = (formData.get("reference_video_url") as string | null)?.trim();
   if (single) add(single);
 
+  const uploadReferenceClip = async (f: File) => {
+    // Trim before upload — fal MiniMax rejects reference_video_urls over 15s
+    // (this is the REFERENCE clip length, not the user's output duration).
+    const raw = Buffer.from(await f.arrayBuffer());
+    const clip = await buildSeedanceReferenceClip(raw, MINIMAX_MAX_REFERENCE_SEC);
+    add(
+      await fal.storage.upload(
+        new File([new Uint8Array(clip.buffer)], "reference-clip.mp4", {
+          type: "video/mp4",
+        }),
+      ),
+    );
+  };
+
   for (const key of ["reference_video", "video"] as const) {
     const f = formData.get(key) as File | null;
-    if (f && f.size > 0) {
-      // Trim before upload — fal MiniMax rejects reference_video_urls over 15s
-      // (this is the REFERENCE clip length, not the user's output duration).
-      const raw = Buffer.from(await f.arrayBuffer());
-      const clip = await buildSeedanceReferenceClip(raw, MINIMAX_MAX_REFERENCE_SEC);
-      add(
-        await fal.storage.upload(
-          new File([new Uint8Array(clip.buffer)], "reference-clip.mp4", {
-            type: "video/mp4",
-          }),
-        ),
-      );
-    }
+    if (f && f.size > 0) await uploadReferenceClip(f);
+  }
+  for (const f of formData.getAll("videos") as File[]) {
+    if (f && f.size > 0) await uploadReferenceClip(f);
   }
 
   return urls.slice(0, 3);
@@ -272,7 +337,7 @@ export async function collectMinimaxH3FallbackMedia(
   opts: { clerkId: string },
 ): Promise<{ imageUrls: string[]; videoUrls: string[] }> {
   const [imageUrls, videoUrls] = await Promise.all([
-    collectKlingFallbackImageUrls(formData, { clerkId: opts.clerkId }),
+    collectH3ReferenceImageUrls(formData, opts),
     collectMinimaxH3FallbackVideoUrls(formData),
   ]);
   return { imageUrls, videoUrls };

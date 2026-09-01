@@ -409,7 +409,7 @@ function buildLiveWebPrompt(input: {
       : "",
     input.postsBlock ?? "",
     input.postsBlock ? "" : "",
-    "=== WEB SEARCH SNIPPETS (real results) ===",
+    input.webBlock ? "=== WEB SEARCH SNIPPETS (real results) ===" : "",
     input.webBlock,
   ]
     .filter(Boolean)
@@ -503,19 +503,18 @@ async function planContentResearchLive(input: {
   const postLimit = bundle.posts?.length
     ? Math.min(bundle.posts.length, RESEARCH_POSTS_FETCH_LIMIT)
     : 8;
-  const webBlock =
-    bundle.posts && bundle.posts.length > 0
-      ? formatPostsForPrompt(bundle.posts.slice(0, postLimit))
-      : formatWebSnippetsForPrompt(bundle.results.slice(0, 8));
+  const hasPosts = Boolean(bundle.posts && bundle.posts.length > 0);
+  const webBlock = hasPosts
+    ? ""
+    : formatWebSnippetsForPrompt(bundle.results.slice(0, 8));
   const parsed = await callResearchPlanner(
     "You synthesize social content angles from real web search snippets. Return compact valid JSON only — escape quotes inside strings.",
     buildLiveWebPrompt({
       ...input,
       webBlock,
-      postsBlock:
-        bundle.posts && bundle.posts.length > 0
-          ? formatPostsForPrompt(bundle.posts.slice(0, postLimit))
-          : undefined,
+      postsBlock: hasPosts
+        ? formatPostsForPrompt(bundle.posts!.slice(0, postLimit))
+        : undefined,
       angleCount:
         bundle.posts && bundle.posts.length > 0 ? RESEARCH_LIVE_ANGLE_COUNT : 6,
     }),

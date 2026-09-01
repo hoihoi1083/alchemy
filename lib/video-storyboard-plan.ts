@@ -14,8 +14,8 @@ import type { ReferenceStrategyKind } from "@/lib/reference-strategy";
 import { parseLlmJsonObject } from "@/lib/parse-llm-json";
 import { productIdentityContractLines } from "@/lib/prompt-balance-contract";
 import { isStoryboardStructureLabel } from "@/lib/prompt-variables";
-import type { ResearchReelAnalysis } from "@/lib/reel-analysis-types";
-import { pinStoryboardPlanToReelAnalysis } from "@/lib/reel-reference-brief";
+import type { ResearchImageReferenceAnalysis } from "@/lib/image-reference-storyboard";
+import { pinStoryboardPlanToImageReference } from "@/lib/image-reference-storyboard";
 import type { SubjectFraming } from "@/lib/prompt-variables";
 import type { StoryboardSceneCount } from "@/lib/ad-pack-preferences";
 import { artStylePlannerHint, resolveArtStyleId, type ArtStyleId } from "@/lib/art-style";
@@ -37,6 +37,7 @@ import {
   coerceTvcShotRole,
   normalizeLookBible,
   storyboardLookBiblePlannerLines,
+  storyboardReferenceAdaptedRolesPlannerLines,
   storyboardTvcRolesPlannerLines,
   tvcRolesForSceneCount,
 } from "@/lib/shot-recipes";
@@ -47,6 +48,17 @@ import {
   storyboardRecipePlannerLines,
   type StoryboardRecipeId,
 } from "@/lib/storyboard-recipes";
+import type { ResearchReelAnalysis } from "@/lib/reel-analysis-types";
+import { pinStoryboardPlanToReelAnalysis } from "@/lib/reel-reference-brief";
+
+function storyboardRolesPlannerLines(
+  preferSceneCount: number,
+  researchAdapted: boolean,
+): string[] {
+  return researchAdapted
+    ? storyboardReferenceAdaptedRolesPlannerLines(preferSceneCount)
+    : storyboardTvcRolesPlannerLines(preferSceneCount);
+}
 
 function sceneCountForDuration(durationSec: number): { min: number; max: number } {
   // Prefer 4-beat TVC (九宫格 review) for typical Reel lengths.
@@ -265,6 +277,8 @@ function buildPlanPrompt(input: {
   useBrandLogo?: boolean;
   imageTextMode?: ImageTextMode;
   storyboardRecipeId?: StoryboardRecipeId;
+  /** Skip TVC recipe lines — reference/content-research adapted storyboard. */
+  researchAdapted?: boolean;
 }): string {
   const recipeId = resolveStoryboardRecipeId(input.storyboardRecipeId);
   const forbidRef = storyboardRecipeForbidsReference(recipeId);
@@ -285,15 +299,6 @@ function buildPlanPrompt(input: {
   const sceneJsonShape =
     '{"imageIndex":1,"role":"establish","startSec":0,"endSec":2,"sceneDescriptionZh":"","onImageCopyZh":"","imagePrompt":"","cameraMotionEn":"","lightingEn":"","productPlacementZh":"","punchLineZh":""}';
   const planJsonShape = `{"title":"","theme":"","visualDirection":"","lookBible":{"palette":"","lighting":"","materials":"","negatives":""},"totalDurationSec":0,"scenes":[${sceneJsonShape}],"seedancePrompt":"","productionNotes":""}`;
-  const bibleAndRoles = [
-    ...storyboardLookBiblePlannerLines(),
-    ...storyboardTvcRolesPlannerLines(
-      effectiveCount !== "auto"
-        ? Number(effectiveCount)
-        : DEFAULT_STORYBOARD_SCENE_COUNT,
-    ),
-    ...recipeLines,
-  ];
   const brandBlock = input.brandProfile?.businessName
     ? brandProfilePromptBlock(input.brandProfile)
     : "";
@@ -301,21 +306,45 @@ function buildPlanPrompt(input: {
   const artStyleId = resolveArtStyleId(input.artStyleId);
   const artHint = artStylePlannerHint(artStyleId);
   const conceptMode = Boolean(input.conceptMode);
+  const contentResearchRef =
+    !forbidRef && isContentResearchStyleExtra(input.promptExtra);
+  const hasReferenceNotes = Boolean(
+    contentResearchRef ||
+      input.promptExtra?.includes("USER REFERENCE") ||
+      input.referenceStrategyKind === "style-only" ||
+      input.referenceStrategyKind === "mood-only" ||
+      input.referenceStrategyKind === "layout-transfer",
+  );
+  const researchAdapted = Boolean(input.researchAdapted) || hasReferenceNotes;
+  const preferRoleCount =
+    effectiveCount !== "auto"
+      ? Number(effectiveCount)
+      : DEFAULT_STORYBOARD_SCENE_COUNT;
+  const bibleAndRoles = [
+    ...storyboardLookBiblePlannerLines(),
+    ...storyboardRolesPlannerLines(preferRoleCount, researchAdapted),
+    ...(researchAdapted ? [] : recipeLines),
+  ];
   const layoutTransferRef =
     !forbidRef &&
     !conceptMode &&
     (input.referenceStrategyKind === "layout-transfer" ||
       isLayoutTransferReferenceExtra(input.promptExtra));
-  const contentResearchRef =
-    !forbidRef && isContentResearchStyleExtra(input.promptExtra);
+  const conceptLayoutShellRef =
+    !forbidRef &&
+    conceptMode &&
+    hasReferenceNotes;
 
   if (conceptMode) {
-    const hasReferenceNotes = Boolean(
-      input.promptExtra?.includes("USER REFERENCE") ||
-        input.referenceStrategyKind === "style-only" ||
-        input.referenceStrategyKind === "mood-only" ||
-        input.referenceStrategyKind === "layout-transfer",
-    );
+    const conceptLayoutRules = conceptLayoutShellRef
+      ? [
+          "CONCEPT LAYOUT SHELL (reference still — not product swap):",
+          "- Reference cover = layout shell only: grid, typography bands, palette, render medium, mood.",
+          "- Scene CONTENT + on-image copy = user's campaign topic — never the reference post topic.",
+          "- imagePrompt: English 9:16 still matching reference layout grammar; replace subjects/props with imagery for the USER topic.",
+          "- Do NOT default to generic photoreal office/TVC if reference is lifestyle, meme, illustrated, or carousel.",
+        ]
+      : [];
     const spaClinicAsk = /\bspa\b|美容院|水療|treatment\s+bed|esthetician|facial\s+(spa|treatment|massage)|60[- ]?minute\s+facial/i.test(
       [
         input.product,
@@ -344,9 +373,10 @@ function buildPlanPrompt(input: {
             "- visualDirection MUST describe the REFERENCE look (home lifestyle, cafe, clinic, etc. as stated) — never invent a different location genre.",
             "- Scene settings MUST stay in the same environment family as the reference (e.g. home / everyday lifestyle stays home — do NOT switch to spa clinic, hotel suite, or luxury wellness catalog unless the reference notes say so).",
             "- Cast: original characters in the SAME roles / vibe as the reference (e.g. casual woman at home → same vibe). Do not clone faces; do not replace with therapist/spa-guest unless the brief asks for spa service.",
-            "- TVC roles still apply for pacing (establish → detail → payoff) but each beat must look like a variation OF THE REFERENCE world, not a new industry.",
+            "- Match reference beat pacing — each scene must look like a variation OF THE REFERENCE world, not a new industry or stock TVC.",
           ].join("\n")
         : "",
+      ...conceptLayoutRules,
       spaClinicAsk
         ? [
             "- If the user brief asks for extreme face close-ups or mask-on-skin macros: use tasteful MID-SHOTS of guest + therapist instead (faces OK soft/partial).",
@@ -468,7 +498,7 @@ function buildPlanPrompt(input: {
       plannerCopyLanguageRule(resolveCopyLocale((input.market as PromptMarket) || "hk")),
     ),
     "- onImageCopyZh: consumer headline/CTA for THIS scene only. NEVER use production labels: 開場亮點, 行動呼籲, 中段, arrows (→), or storyboard role names.",
-      "- cameraMotionEn: English camera motion ONLY for this scene — match TVC role, not a generic slow push-in for every beat.",
+      "- cameraMotionEn: English camera motion ONLY for this scene — echo reference beat when research is active, not a generic slow push-in.",
       "- lightingEn: English lighting ONLY for this scene (side key, rim, backlight, etc.).",
       "- productPlacementZh: where the product/concept sits in frame (market language).",
       "- punchLineZh: optional spoken/caption line for this beat (burn later via /captions).",
@@ -534,6 +564,8 @@ export type PlanStoryboardInput = {
   imageTextMode?: ImageTextMode;
   /** classic-tvc (default) or luxury-birth (locked 3-beat, no reference). */
   storyboardRecipeId?: StoryboardRecipeId;
+  /** Reference/content-research path — skip narrative recipe lines. */
+  researchAdapted?: boolean;
 };
 
 /** @internal Exported for unit tests — storyboard planner prompt text. */
@@ -620,6 +652,7 @@ export async function planVideoStoryboard(
           useBrandLogo: input.useBrandLogo,
           imageTextMode: input.imageTextMode,
           storyboardRecipeId: recipeId,
+          researchAdapted: input.researchAdapted,
         }),
       },
     ],
@@ -745,7 +778,7 @@ function buildReelStoryboardPlanPrompt(input: {
     "- visualDirection in JSON must describe the REFERENCE reel look (from Reference visual direction above), not a generic stock aesthetic.",
     ...storyboardLookBiblePlannerLines(),
     "- lookBible should echo Reference visual direction (palette/light/materials) — grade lock for ALL stills; do not invent a new medium.",
-    ...storyboardTvcRolesPlannerLines(preferCount),
+    ...storyboardReferenceAdaptedRolesPlannerLines(preferCount),
     heroLine,
     input.conceptMode
       ? ""
@@ -889,4 +922,251 @@ export async function planVideoStoryboardFromReelAnalysis(
     input.subline?.trim() ||
     "";
   return pinStoryboardPlanToReelAnalysis(plan, input.analysis, topic);
+}
+
+function buildImageReferenceStoryboardPlanPrompt(input: {
+  analysis: ResearchImageReferenceAnalysis;
+  product: string;
+  business: string;
+  headline: string;
+  subline: string;
+  offer: string;
+  promptExtra: string;
+  durationSec: number;
+  sceneCountTarget?: StoryboardSceneCount;
+  market: string;
+  layoutTransfer: boolean;
+  conceptLayoutShell: boolean;
+  artStyleId: ArtStyleId;
+  conceptMode?: boolean;
+  useBrandLogo?: boolean;
+  imageTextMode?: ImageTextMode;
+}): string {
+  const { min, max } = sceneCountForDuration(input.durationSec);
+  const beatBlock = input.analysis.beats
+    .map(
+      (b) =>
+        `Ref beat ${b.index}: ${b.sceneSummary}. Layout: ${b.layoutStyle}. Motion: ${b.motionHint}. Reference subjects (DO NOT copy): ${b.subjects}.`,
+    )
+    .join("\n");
+
+  const sceneCountLine =
+    input.sceneCountTarget && input.sceneCountTarget !== "auto"
+      ? `Scene count: EXACTLY ${input.sceneCountTarget} scenes for ~${input.durationSec}s total.`
+      : input.analysis.source === "carousel"
+        ? `Scene count: prefer one scene per carousel slide (${input.analysis.beats.length} beats) up to ${max} for ~${input.durationSec}s.`
+        : `Scene count: ${min}–${max} scenes for ~${input.durationSec}s. Expand the reference cover into storyboard beats while keeping the SAME layout family.`;
+
+  const layoutRules = input.layoutTransfer
+    ? [
+        "LAYOUT TRANSFER: IMAGE 1 = user product hero; reference still = layout shell.",
+        "- Each scene imagePrompt: dual-image edit — keep IMAGE 1 product identity; borrow reference ad layout family.",
+      ]
+    : input.conceptLayoutShell
+      ? [
+          "CONCEPT LAYOUT SHELL: reference still = layout/mood shell only — not product swap.",
+          "- imagePrompt: match reference layout grammar + palette; hero/subjects promote USER topic.",
+          "- Do NOT default to generic photoreal office/TVC if reference is lifestyle, meme, or illustrated.",
+        ]
+      : input.conceptMode
+        ? [
+            "- visualDirection: echo reference still look (render medium, palette, layout family).",
+            "- theme: user campaign topic ONLY — never the reference post topic.",
+          ]
+        : input.imageTextMode === "integrated"
+          ? [
+              "- imagePrompt: English 9:16 still from user's product photo with on-image copy from onImageCopyZh.",
+            ]
+          : ["- imagePrompt: English 9:16 photoreal still from user's product photo — no readable text."];
+
+  const adaptLine = input.conceptMode
+    ? "Plan a VIDEO STORYBOARD adapted from the REFERENCE STILL below for the user's concept/message short."
+    : "Plan a VIDEO STORYBOARD adapted from the REFERENCE STILL below for the user's product.";
+
+  const heroLine = input.conceptMode
+    ? "- Scene CONTENT (on-image copy) = user's headline/concept — reference post topic is irrelevant."
+    : "- All hero content = the exact object in IMAGE 1 (uploaded photo). Name is claim only.";
+
+  const preferCount =
+    input.sceneCountTarget && input.sceneCountTarget !== "auto"
+      ? Number(input.sceneCountTarget)
+      : Math.max(
+          min,
+          Math.min(
+            max,
+            input.analysis.beats.length > 1
+              ? input.analysis.beats.length
+              : DEFAULT_STORYBOARD_SCENE_COUNT,
+          ),
+        );
+
+  const sceneJsonShape =
+    '{"imageIndex":1,"role":"establish","startSec":0,"endSec":2,"sceneDescriptionZh":"","onImageCopyZh":"","imagePrompt":"","cameraMotionEn":"","lightingEn":"","productPlacementZh":"","punchLineZh":""}';
+  const planJsonShape = `{"title":"","theme":"","visualDirection":"","lookBible":{"palette":"","lighting":"","materials":"","negatives":""},"totalDurationSec":0,"scenes":[${sceneJsonShape}],"seedancePrompt":"","productionNotes":""}`;
+
+  return [
+    adaptLine,
+    "Return ONE JSON object only — no markdown fences.",
+    "",
+    planJsonShape,
+    "",
+    "Rules:",
+    "- Map reference layout beats to storyboard scenes — opening → mid → close from the reference, not a stock TVC arc.",
+    "- Match reference palette, typography bands, render medium, and staging — NOT reference faces, brands, or post topic.",
+    "- visualDirection must describe the REFERENCE still look — not generic stock aesthetic.",
+    ...storyboardLookBiblePlannerLines(),
+    "- lookBible should echo Reference visual direction — grade lock for ALL stills.",
+    ...storyboardReferenceAdaptedRolesPlannerLines(preferCount),
+    heroLine,
+    input.conceptMode
+      ? ""
+      : "- Never infer SKU from product name — stage IMAGE 1's object in every scene.",
+    sceneCountLine,
+    "- Each scene = ONE still (imageIndex 1…N).",
+    ...layoutRules,
+    ...storyboardTypePlannerLines(
+      input.imageTextMode === "integrated",
+      plannerCopyLanguageRule(resolveCopyLocale((input.market as PromptMarket) || "hk")),
+    ),
+    "- sceneDescriptionZh: one line for the user UI.",
+    "- cameraMotionEn / lightingEn: English only — echo reference beat, not generic push-in every scene.",
+    "- productPlacementZh: where product/concept sits in frame.",
+    "- punchLineZh: optional caption line for this beat.",
+    `- onImageCopyZh: consumer ad copy for THIS scene. ${plannerCopyLanguageRule(resolveCopyLocale((input.market as PromptMarket) || "hk"))}`,
+    "",
+    ...productIdentityContractLines({
+      hasReferenceVideo: false,
+      conceptMode: Boolean(input.conceptMode),
+    }),
+    "",
+    ...endCardLogoPlannerRules(input.useBrandLogo),
+    "",
+    "seedancePrompt (English — motion plan notes):",
+    `- 9:16 ${input.conceptMode ? "concept" : "product"} short, ~${input.durationSec}s.`,
+    "- One block per scene: Scene N [start-end s]: <role> — English camera + lighting for that beat.",
+    input.imageTextMode === "integrated"
+      ? "- Keep planned on-image type on stills."
+      : "- Textless frames; captions via /captions.",
+    "",
+    `Reference visual direction: ${input.analysis.visualDirection || "follow analyzed still"}`,
+    `Reference layout family: ${input.analysis.layoutFamily}`,
+    `Reference motion hints: ${input.analysis.motionSummary}`,
+    "",
+    "Analyzed reference still beats:",
+    beatBlock,
+    "",
+    input.product ? `User product/topic: ${input.product}` : "",
+    input.headline ? `Headline: ${input.headline}` : "",
+    input.subline ? `Selling points: ${input.subline}` : "",
+    input.offer ? `Offer/CTA: ${input.offer}` : "",
+    input.promptExtra
+      ? `Campaign notes (TOPIC/copy only — do NOT override reference look): ${input.promptExtra}`
+      : "",
+    `Target duration: ${input.durationSec}s.`,
+    ...videoDurationPlannerBlock(input.durationSec, { hasReferenceVideo: false }),
+    "Look/grade: match Reference visual direction + lookBible.",
+    "productionNotes: research-adapted storyboard from reference still.",
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+export type PlanImageReferenceStoryboardInput = {
+  analysis: ResearchImageReferenceAnalysis;
+  product: string;
+  business?: string;
+  headline?: string;
+  subline?: string;
+  offer?: string;
+  promptExtra?: string;
+  durationSec?: number;
+  sceneCountTarget?: StoryboardSceneCount;
+  market?: string;
+  artStyleId?: ArtStyleId;
+  referenceStrategyKind?: ReferenceStrategyKind;
+  promotionMode?: "physical" | "concept";
+  useBrandLogo?: boolean;
+  imageTextMode?: ImageTextMode;
+};
+
+/** @internal Exported for unit tests. */
+export function buildImageReferenceStoryboardPlanPromptForTest(
+  input: Parameters<typeof buildImageReferenceStoryboardPlanPrompt>[0],
+): string {
+  return buildImageReferenceStoryboardPlanPrompt(input);
+}
+
+/** Build a storyboard plan from analyzed reference still(s) — product + concept, image research path. */
+export async function planVideoStoryboardFromImageReference(
+  input: PlanImageReferenceStoryboardInput,
+): Promise<VideoStoryboardPlan> {
+  const product = input.product?.trim() || "";
+  if (!product) {
+    throw new Error("Product name is required for image reference storyboard planning.");
+  }
+
+  const durationSec = Math.min(
+    15,
+    Math.max(4, Number(input.durationSec) || 8),
+  );
+  const artStyleId = resolveArtStyleId(input.artStyleId);
+  const conceptMode = input.promotionMode === "concept";
+  const layoutTransfer =
+    !conceptMode &&
+    (input.referenceStrategyKind === "layout-transfer" ||
+      isLayoutTransferReferenceExtra(input.promptExtra));
+  const conceptLayoutShell =
+    conceptMode &&
+    (input.referenceStrategyKind === "layout-transfer" ||
+      input.referenceStrategyKind === "style-only" ||
+      input.referenceStrategyKind === "mood-only" ||
+      isContentResearchStyleExtra(input.promptExtra));
+
+  const outputText = await callDeepSeekChat(
+    [
+      {
+        role: "system",
+        content: conceptMode
+          ? "You are a performance marketing storyboard director. Adapt a reference still into a concept/message storyboard. Output valid JSON only."
+          : "You are a performance marketing storyboard director. Adapt a reference still into a product storyboard. Output valid JSON only.",
+      },
+      {
+        role: "user",
+        content: buildImageReferenceStoryboardPlanPrompt({
+          analysis: input.analysis,
+          product,
+          business: input.business?.trim() || "",
+          headline: input.headline?.trim() || "",
+          subline: input.subline?.trim() || "",
+          offer: input.offer?.trim() || "",
+          promptExtra: input.promptExtra?.trim() || "",
+          durationSec,
+          sceneCountTarget: input.sceneCountTarget,
+          market: input.market || "hk",
+          layoutTransfer,
+          conceptLayoutShell,
+          artStyleId,
+          conceptMode,
+          useBrandLogo: input.useBrandLogo,
+          imageTextMode: input.imageTextMode,
+        }),
+      },
+    ],
+    { temperature: 0.45, max_tokens: 4500, jsonObject: true },
+  );
+
+  const plan = normalizeStoryboardPlan(
+    parseLlmJsonObject<Partial<VideoStoryboardPlan>>(
+      outputText,
+      "Image reference storyboard plan",
+    ),
+    durationSec,
+    input.sceneCountTarget,
+  );
+  const topic =
+    input.headline?.trim() ||
+    input.product ||
+    input.subline?.trim() ||
+    "";
+  return pinStoryboardPlanToImageReference(plan, input.analysis, topic);
 }

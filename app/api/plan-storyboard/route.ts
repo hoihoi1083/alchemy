@@ -16,6 +16,7 @@ import { isPromotionMode } from "@/lib/promotion-mode";
 import { wizardPromoteName } from "@/lib/wizard-promote-name";
 import { parseImageTextMode } from "@/lib/image-text-mode";
 import { resolveStoryboardRecipeId } from "@/lib/storyboard-recipes";
+import { isContentResearchStyleExtra } from "@/lib/content-research-promote";
 
 export const runtime = "nodejs";
 export const maxDuration = 90;
@@ -94,6 +95,12 @@ export async function POST(request: Request) {
   );
   const styleHint = mergePromptExtra(visualStyle, promptExtra);
   const { strategy } = parseStrategyFromFormData(formData);
+  const researchAdapted =
+    String(formData.get("research_adapted") ?? "").trim() === "1" ||
+    isContentResearchStyleExtra(promptExtra);
+  const storyboardRecipeForPlan = researchAdapted
+    ? ("classic-tvc" as const)
+    : storyboardRecipeId;
 
   let brandProfile: BrandProfile | null = null;
   const brandProfileRaw = (formData.get("brand_profile") as string | null)?.trim() || "";
@@ -136,7 +143,8 @@ export async function POST(request: Request) {
       useBrandLogo,
       conceptMode: promotionMode === "concept",
       imageTextMode: parseImageTextMode(formData.get("image_text_mode") as string | null),
-      storyboardRecipeId,
+      storyboardRecipeId: storyboardRecipeForPlan,
+      researchAdapted,
     });
     return NextResponse.json({ plan, seedancePrompt: plan.seedancePrompt });
   } catch (e: unknown) {

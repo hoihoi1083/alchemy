@@ -6,6 +6,7 @@ import {
   ensureSeedanceReferenceTags,
   friendlyAutoFallbackNote,
 } from "../lib/video-engine-prompt-adapters";
+import { buildH3ReferenceReelProductPrompt } from "../lib/h3-product-swap-prompt";
 
 const DEEPSEEK_SCRIPT = [
   "UGC-style review video, cozy home setting.",
@@ -50,6 +51,29 @@ describe("video-engine-prompt-adapters (auto Seedance→H3→Kling)", () => {
     });
     assert.match(h3, /Keep poster wording|Type may fade|KINETIC TYPE/i);
     assert.doesNotMatch(h3, /Do not invent on-screen text/);
+  });
+
+  it("H3 reel product swap prompt locks Image 1 and strips reel SKU role", () => {
+    const prompt = buildH3ReferenceReelProductPrompt({
+      durationSec: 6,
+      productName: "Portable power bank",
+      motionSummary: "Quick handheld cuts",
+    });
+    assert.match(prompt, /Image 1 is the ONLY on-screen product/i);
+    assert.match(prompt, /Video 1 is camera path/i);
+    assert.match(prompt, /Quick handheld cuts/);
+    assert.doesNotMatch(prompt, /@Video1|@Image1/);
+  });
+
+  it("MiniMax R2V prepends explicit product-swap roles when video + image", () => {
+    const h3 = adaptScriptForMinimaxH3({
+      seedancePrompt: DEEPSEEK_SCRIPT,
+      imageCount: 1,
+      videoCount: 1,
+    });
+    assert.match(h3, /Video 1 = camera path/i);
+    assert.match(h3, /Image 1 = the ONLY product/i);
+    assert.match(h3, /Do NOT copy the product object/i);
   });
 
   it("MiniMax gets Image/Video grammar + same timed beats", () => {

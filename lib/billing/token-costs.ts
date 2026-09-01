@@ -217,6 +217,17 @@ export function estimateH3Tokens(opts: {
   return output + refVideo + extraImgs * TOKEN_COST.image;
 }
 
+/**
+ * Social drip pipeline: start still + end still + H3 start→end video.
+ * Preflight with this total so we never burn still tokens then fail on video.
+ */
+export function estimateSocialDripTokens(opts: {
+  resolution: string;
+  duration: "auto" | number;
+}): number {
+  return TOKEN_COST.image * 2 + estimateH3Tokens(opts);
+}
+
 /** Free pack: signup grant is intentionally smaller than a full image+video combo. */
 export const FREE_PACK = {
   image: TOKEN_COST.image, // 65
