@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { TeamInviteAcceptPageClient } from "@/components/TeamInviteAcceptPageClient";
 
 export const metadata: Metadata = {
@@ -7,6 +8,10 @@ export const metadata: Metadata = {
 };
 
 export default function TeamInvitePage() {
-  return <TeamInviteAcceptPageClient />;
+  return (
+    <Suspense fallback={null}>
+      <TeamInviteAcceptPageClient />
+    </Suspense>
+  );
 }
 

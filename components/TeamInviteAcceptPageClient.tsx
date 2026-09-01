@@ -1,7 +1,8 @@
 "use client";
 
 import { useAuth, useClerk } from "@clerk/nextjs";
-import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useLocale } from "@/components/LocaleProvider";
 
@@ -16,13 +17,11 @@ export function TeamInviteAcceptPageClient() {
   const { signOut } = useClerk();
   const { m } = useLocale();
   const t = m.account.team;
+  const searchParams = useSearchParams();
   const [status, setStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [message, setMessage] = useState("");
   const [wrongAccount, setWrongAccount] = useState(false);
-  const token = useMemo(() => {
-    if (typeof window === "undefined") return "";
-    return new URL(window.location.href).searchParams.get("token")?.trim() ?? "";
-  }, []);
+  const token = searchParams.get("token")?.trim() ?? "";
 
   useEffect(() => {
     if (!isLoaded) return;
