@@ -35,6 +35,7 @@ export type VideoCreativeMode =
   | "h3-showreel"
   | "h3-sphere-mg"
   | "h3-logo-mg"
+  | "h3-triangle-light-mg"
   | "h3-movie-title"
   | "h3-lifestyle"
   | "reference-concept"
@@ -69,6 +70,7 @@ export const VIDEO_CREATIVE_MODES: VideoCreativeMode[] = [
   "h3-showreel",
   "h3-sphere-mg",
   "h3-logo-mg",
+  "h3-triangle-light-mg",
   "h3-movie-title",
   "h3-lifestyle",
   "reference-concept",
@@ -105,9 +107,21 @@ export function isRecipeOwnedVideoMode(
     mode === "h3-showreel" ||
     mode === "h3-sphere-mg" ||
     mode === "h3-logo-mg" ||
+    mode === "h3-triangle-light-mg" ||
     mode === "h3-movie-title" ||
     mode === "h3-lifestyle"
   );
+}
+
+/**
+ * Timed / beat recipes must not offer duration "auto".
+ * Auto is only a silent fallback (planner/API), which misleads users into
+ * thinking the model picks length. Freeform product-promo / I2V may keep auto.
+ */
+export function videoModeHidesAutoDuration(
+  mode: string | null | undefined,
+): boolean {
+  return isRecipeOwnedVideoMode(mode);
 }
 
 /**
@@ -159,6 +173,7 @@ const H3_SHOT_PICKER_MODES: VideoCreativeMode[] = [
   "h3-showreel",
   "h3-sphere-mg",
   "h3-logo-mg",
+  "h3-triangle-light-mg",
   "h3-movie-title",
   "h3-lifestyle",
 ];

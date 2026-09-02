@@ -66,6 +66,7 @@ describe("H3 shot recipes", () => {
       "h3-showreel",
       "h3-sphere-mg",
       "h3-logo-mg",
+      "h3-triangle-light-mg",
       "h3-movie-title",
       "h3-lifestyle",
     ]);
@@ -600,6 +601,7 @@ describe("H3 shot recipes", () => {
       ["product-h3-showreel-8s", "h3-showreel", "h3_showreel"],
       ["product-h3-sphere-mg-8s", "h3-sphere-mg", "h3_sphere_mg"],
       ["product-h3-logo-mg-8s", "h3-logo-mg", "h3_logo_mg"],
+      ["product-h3-triangle-light-mg-10s", "h3-triangle-light-mg", "h3_triangle_light_mg"],
       ["product-h3-movie-title-8s", "h3-movie-title", "h3_movie_title"],
       ["product-h3-lifestyle-8s", "h3-lifestyle", "h3_lifestyle"],
       ["concept-beauty-mv-10s", "beauty-mv", "beauty_mv"],
@@ -609,6 +611,7 @@ describe("H3 shot recipes", () => {
       ["concept-h3-showreel-8s", "h3-showreel", "h3_showreel"],
       ["concept-h3-sphere-mg-8s", "h3-sphere-mg", "h3_sphere_mg"],
       ["concept-h3-logo-mg-8s", "h3-logo-mg", "h3_logo_mg"],
+      ["concept-h3-triangle-light-mg-10s", "h3-triangle-light-mg", "h3_triangle_light_mg"],
       ["concept-h3-movie-title-8s", "h3-movie-title", "h3_movie_title"],
     ] as const;
     for (const [id, mode, subpath] of cases) {
@@ -636,6 +639,7 @@ describe("H3 shot recipe wizard wiring", () => {
     assert.match(wizard, /case "h3-showreel":/);
     assert.match(wizard, /case "h3-sphere-mg":/);
     assert.match(wizard, /case "h3-logo-mg":/);
+    assert.match(wizard, /case "h3-triangle-light-mg":/);
     assert.match(wizard, /case "h3-movie-title":/);
     assert.match(wizard, /case "h3-lifestyle":/);
     assert.match(wizard, /makeH3ShotRecipeVideo/);

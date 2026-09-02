@@ -53,7 +53,7 @@ import {
   subpathToH3ShotRecipe,
 } from "@/lib/h3-shot-recipes";
 import { h3ShotModesForPromotion } from "@/lib/recipe-path-ux";
-import { isRecipeOwnedVideoMode, videoModePreviewSrc } from "@/lib/creative-workflow";
+import { isRecipeOwnedVideoMode, videoModeHidesAutoDuration, videoModePreviewSrc } from "@/lib/creative-workflow";
 
 type Props = {
   micro: WizardMicroStepValue;
@@ -866,7 +866,8 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
             hideAutoDuration={
               wizard.isContentResearchVideoPath ||
               wizard.videoCreativeMode === "reference-concept" ||
-              Boolean(wizard.referenceAd && wizard.referenceIsVideo)
+              Boolean(wizard.referenceAd && wizard.referenceIsVideo) ||
+              videoModeHidesAutoDuration(wizard.videoCreativeMode)
             }
             value={wizard.videoSettings}
             onChange={wizard.setVideoSettings}

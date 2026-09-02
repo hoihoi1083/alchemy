@@ -21,6 +21,7 @@ export const H3_SHOT_RECIPE_MODES = [
   "h3-showreel",
   "h3-sphere-mg",
   "h3-logo-mg",
+  "h3-triangle-light-mg",
   "h3-movie-title",
   "h3-lifestyle",
 ] as const;
@@ -50,6 +51,7 @@ export const H3_SHOT_RECIPE_SETTINGS_DURATION: Record<
   "h3-showreel": "8",
   "h3-sphere-mg": "8",
   "h3-logo-mg": "8",
+  "h3-triangle-light-mg": "10",
   "h3-movie-title": "8",
   "h3-lifestyle": "8",
 };
@@ -67,6 +69,7 @@ export const H3_SHOT_RECIPE_DURATION_SEC: Record<H3ShotRecipeMode, number> = {
   "h3-showreel": 8,
   "h3-sphere-mg": 8,
   "h3-logo-mg": 8,
+  "h3-triangle-light-mg": 10,
   "h3-movie-title": 8,
   "h3-lifestyle": 8,
 };
@@ -112,6 +115,7 @@ const MODE_TO_SUBPATH: Record<H3ShotRecipeMode, VideoSubpath> = {
   "h3-showreel": "h3_showreel",
   "h3-sphere-mg": "h3_sphere_mg",
   "h3-logo-mg": "h3_logo_mg",
+  "h3-triangle-light-mg": "h3_triangle_light_mg",
   "h3-movie-title": "h3_movie_title",
   "h3-lifestyle": "h3_lifestyle",
 };
@@ -129,6 +133,7 @@ const SUBPATH_TO_MODE: Partial<Record<VideoSubpath, H3ShotRecipeMode>> = {
   h3_showreel: "h3-showreel",
   h3_sphere_mg: "h3-sphere-mg",
   h3_logo_mg: "h3-logo-mg",
+  h3_triangle_light_mg: "h3-triangle-light-mg",
   h3_movie_title: "h3-movie-title",
   h3_lifestyle: "h3-lifestyle",
 };
@@ -184,7 +189,8 @@ export function h3ShotRecipeAllowsKineticType(mode: H3ShotRecipeMode): boolean {
     mode === "h3-showreel" ||
     mode === "h3-movie-title" ||
     mode === "h3-sphere-mg" ||
-    mode === "h3-logo-mg"
+    mode === "h3-logo-mg" ||
+    mode === "h3-triangle-light-mg"
   );
 }
 
@@ -219,7 +225,8 @@ export function resolveH3ShotStillAspectRatio(
   showreelAspect?: H3ShowreelAspect | string | null,
 ): H3ShowreelAspect | "1:1" | "9:16" {
   if (mode === "h3-showreel") return parseH3ShowreelAspect(showreelAspect);
-  if (mode === "h3-logo-mg" || mode === "h3-sphere-mg") return "1:1";
+  if (mode === "h3-logo-mg" || mode === "h3-sphere-mg" || mode === "h3-triangle-light-mg")
+    return "1:1";
   return "9:16";
 }
 
@@ -639,6 +646,141 @@ function logoMgSchemeBeats(
   ];
 }
 
+/**
+ * Triangle light MG / 三角光品牌片头 — frosted triangles + orange caustics + kinetic type.
+ * Inspired by LIGHTME “三角光 / 流动的三角符号” demos. Concept-first brand bumper.
+ * Schemes: Exhibit (gallery title cards) vs Flow (flowing symbols → product film).
+ */
+export const H3_TRIANGLE_LIGHT_MG_SCHEME_IDS = ["exhibit", "flow"] as const;
+export type H3TriangleLightMgSchemeId =
+  (typeof H3_TRIANGLE_LIGHT_MG_SCHEME_IDS)[number];
+export type H3TriangleLightMgSchemePick = H3TriangleLightMgSchemeId | "auto";
+
+/** Duration pills for this recipe (no auto). */
+export const H3_TRIANGLE_LIGHT_MG_DURATION_OPTIONS = ["10", "12"] as const;
+
+export function clampTriangleLightMgDurationSec(
+  raw: string | number | null | undefined,
+): number {
+  if (raw === "auto" || raw == null || raw === "") return 10;
+  const n = typeof raw === "number" ? raw : Number(raw);
+  if (!Number.isFinite(n)) return 10;
+  return Math.round(n) >= 12 ? 12 : 10;
+}
+
+export function triangleLightMgDurationOptions(): VideoDuration[] {
+  return [...H3_TRIANGLE_LIGHT_MG_DURATION_OPTIONS];
+}
+
+export function h3TriangleLightMgSchemePreviewSrc(
+  id: H3TriangleLightMgSchemeId,
+): string {
+  return `/images/studio/schemes/triangle-light-mg/${id}.png?v=1`;
+}
+
+export function isH3TriangleLightMgSchemeId(
+  value: string | null | undefined,
+): value is H3TriangleLightMgSchemeId {
+  return (H3_TRIANGLE_LIGHT_MG_SCHEME_IDS as readonly string[]).includes(
+    value ?? "",
+  );
+}
+
+export function parseH3TriangleLightMgSchemePick(
+  raw: unknown,
+): H3TriangleLightMgSchemePick {
+  const s = String(raw ?? "").trim();
+  if (s === "auto" || !s) return "auto";
+  return isH3TriangleLightMgSchemeId(s) ? s : "auto";
+}
+
+export function resolveH3TriangleLightMgScheme(input: {
+  pick: H3TriangleLightMgSchemePick;
+  product?: string;
+  headline?: string;
+  conceptIdea?: string;
+  conceptMode?: boolean;
+}): H3TriangleLightMgSchemeId {
+  if (input.pick !== "auto") return input.pick;
+  const text =
+    `${input.product ?? ""} ${input.headline ?? ""} ${input.conceptIdea ?? ""}`.toLowerCase();
+  if (
+    /flow|fluid|liquid|mapping|spiral|流动|流動|丝带|絲帶|螺旋|映射/.test(text)
+  ) {
+    return "flow";
+  }
+  if (
+    /exhibit|gallery|art|tvc|museum|展|艺术|藝術|展览|展覽|三角光/.test(text)
+  ) {
+    return "exhibit";
+  }
+  // Default: exhibit — closest to the “phone becomes art gallery” demo.
+  return "exhibit";
+}
+
+const H3_TRIANGLE_LIGHT_MG_SCHEME_STILL: Record<
+  H3TriangleLightMgSchemeId,
+  string
+> = {
+  exhibit:
+    "Dark void C4D stage: frosted translucent triangular glass prisms catching warm orange-gold caustic light; a crisp brand mark / logo card already readable at center, ready for kinetic title animation",
+  flow:
+    "Dark void with soft amber gradient: layered frosted rounded triangles drifting in warm light rays; uploaded logo silhouette faintly formed by the glass shapes, premium abstract MG still",
+};
+
+/** Triangle light allows designed kinetic titles — still forbid captions/UI. */
+export const H3_TRIANGLE_LIGHT_MG_NEGATIVE =
+  "subtitles, captions, watermarks, UI chrome overlays, voiceover, dialogue, lyrics, " +
+  "slideshow, hard cut montage, jump cut, freeze-frame, blurry logo, morphing identity, " +
+  "inventing a different brand mark, copy competitor logos, talking head, lifestyle street, " +
+  "product packshot orbit, SKU walk, grocery shelf, daylight beach";
+
+const TRIANGLE_LIGHT_MG_PROMPT_NEGATIVE =
+  `${H3_TRIANGLE_LIGHT_MG_NEGATIVE}, invent competitor logos, hard cut montage, ` +
+  "packshot turntable, person walking with product, CAD explode teardown";
+
+function triangleLightMgSchemeBeats(
+  scheme: H3TriangleLightMgSchemeId,
+  img: string,
+  subject: string,
+  durationSec: number,
+): string[] {
+  const sec = clampTriangleLightMgDurationSec(durationSec);
+  const t1 = sec <= 10 ? "2.5" : "3";
+  const t2 = sec <= 10 ? "5.5" : "6.5";
+  const t3 = sec <= 10 ? "8" : "9.5";
+  const tEnd = String(sec);
+  const lock =
+    `这是 Minimax H3「三角光品牌片头」：严格锁定${img}（${subject}）的 Logo／字标／吉祥物外形、配色与可读性。` +
+    `黑场／暗场 + 毛玻璃三角棱镜 + 橙金焦散光线；允许设计感动能大字（仅服务本品牌），禁止字幕条／仿社交 UI。` +
+    `不是电商环绕、不是生活场景走秀、不是产品拆解。` +
+    `Exact runtime ${sec}s — fit all beats; do not invent extra acts.`;
+  const sharedClose =
+    `${t3}–${tEnd}s：收束到品牌锁 — ${img} 标识清晰居中，可叠中文品牌名与英文副标（仅当用户已提供）；橙金光扫；一镜到底。`;
+  const neg = `Negative: ${TRIANGLE_LIGHT_MG_PROMPT_NEGATIVE}`;
+
+  if (scheme === "flow") {
+    return [
+      `H3 三角光「Flow」：流动三角符号 → 动能标题 → 品牌锁。${lock}`,
+      `0–${t1}s：暗场暖色，多层毛玻璃圆角三角缓慢漂浮／折射橙金光线。`,
+      `${t1}–${t2}s：动能标题卡（可用 MAPPING / PRODUCT FILM 类设计大字，或用户品牌英文）+ 光迹环绕；三角网格／螺旋金属通道掠过。`,
+      `${t2}–${t3}s：光柱／网格开口，${img} 标识作为英雄浮出，材质为三角切面晶体／金属。`,
+      sharedClose,
+      `适合科技／创意工作室／抽象字标品牌。`,
+      neg,
+    ];
+  }
+  return [
+    `H3 三角光「Exhibit」：三角光艺术展 → 动能标题 → 品牌锁。${lock}`,
+    `0–${t1}s：黑场中心一团三角光晶体／玻璃棱镜发光，像手机秒变艺术展。`,
+    `${t1}–${t2}s：动能标题框（可用 3D / TVC 类设计大字，或用户品牌英文）浮于三角玻璃场；金属三角网格掠过；镜头轻推。`,
+    `${t2}–${t3}s：晶体重组为可读的${img} 标识／几何徽章，橙金高光扫过切面。`,
+    sharedClose,
+    `通用默认：任意清晰 Logo／字标／吉祥物品牌片头。`,
+    neg,
+  ];
+}
+
 export const MACRO_SNAP_INTENSITIES = ["weak", "medium", "strong"] as const;
 export type MacroSnapIntensity = (typeof MACRO_SNAP_INTENSITIES)[number];
 export const DEFAULT_MACRO_SNAP_INTENSITY: MacroSnapIntensity = "strong";
@@ -700,6 +842,10 @@ export type H3ShotPromptInput = {
   sphereMgScheme?: H3SphereMgSchemeId;
   /** h3-logo-mg only — 3D logo 演绎 style card. */
   logoMgScheme?: H3LogoMgSchemeId;
+  /** h3-triangle-light-mg only — 三角光 Exhibit / Flow. */
+  triangleLightMgScheme?: H3TriangleLightMgSchemeId;
+  /** Optional runtime override (triangle-light 10/12). */
+  durationSec?: number;
 };
 
 function foodBulletTimeBeats(
@@ -792,6 +938,8 @@ const H3_STILL_DEFAULT: Record<H3ShotRecipeMode, string> = {
     "ONE large matte C4D clay orb centered on a black studio void, brand-colored albedo — not planet Earth",
   "h3-logo-mg":
     "a crisp brand logo or wordmark on a bright glassmorphic C4D stage, white card hero, ready for 3D logo MG",
+  "h3-triangle-light-mg":
+    "a crisp brand logo or wordmark among frosted triangular glass prisms on a dark void, warm orange caustic light, ready for triangle-light brand MG",
   "h3-movie-title":
     "a premium product hero ready for cinematic title cards, dark editorial backdrop",
   "h3-lifestyle":
@@ -966,6 +1114,21 @@ export function buildH3ShotRecipePrompt(input: H3ShotPromptInput): string {
         subject,
       ).join("\n");
 
+    case "h3-triangle-light-mg":
+      return triangleLightMgSchemeBeats(
+        input.triangleLightMgScheme ??
+          resolveH3TriangleLightMgScheme({
+            pick: "auto",
+            product: input.product,
+            headline: input.headline,
+            conceptIdea: input.conceptIdea,
+            conceptMode: input.conceptMode,
+          }),
+        img,
+        subject,
+        input.durationSec ?? H3_SHOT_RECIPE_DURATION_SEC["h3-triangle-light-mg"],
+      ).join("\n");
+
     case "h3-movie-title":
       return [
         `H3 电影标题／多格一镜：严格锁定${img}（${subject}）外形、材质、Logo 与配色。`,
@@ -1027,6 +1190,17 @@ export function buildH3ShotRecipeStillPrompt(input: H3ShotPromptInput): string {
           conceptMode: input.conceptMode,
         }))
       : null;
+  const triangleLightMgScheme =
+    input.mode === "h3-triangle-light-mg"
+      ? (input.triangleLightMgScheme ??
+        resolveH3TriangleLightMgScheme({
+          pick: "auto",
+          product: input.product,
+          headline: input.headline,
+          conceptIdea: input.conceptIdea,
+          conceptMode: input.conceptMode,
+        }))
+      : null;
   const fallback =
     input.mode === "h3-showreel" && showreelScheme
       ? H3_SHOWREEL_SCHEME_STILL[showreelScheme]
@@ -1034,7 +1208,9 @@ export function buildH3ShotRecipeStillPrompt(input: H3ShotPromptInput): string {
         ? H3_SPHERE_MG_SCHEME_STILL[sphereMgScheme]
         : input.mode === "h3-logo-mg" && logoMgScheme
           ? H3_LOGO_MG_SCHEME_STILL[logoMgScheme]
-          : H3_STILL_DEFAULT[input.mode];
+          : input.mode === "h3-triangle-light-mg" && triangleLightMgScheme
+            ? H3_TRIANGLE_LIGHT_MG_SCHEME_STILL[triangleLightMgScheme]
+            : H3_STILL_DEFAULT[input.mode];
   const subject = named
     ? `${named}${input.conceptMode ? " logo or mascot" : ""}`
     : input.conceptMode
@@ -1177,6 +1353,19 @@ export function buildH3ShotRecipeStillPrompt(input: H3ShotPromptInput): string {
         "3D logo interpretation still — the uploaded mark IS the hero (not a dark sphere void, not a packshot orbit).",
         "Keep logo geometry and colors locked; no invented competitor brands; no readable fake words beyond the mark.",
         "Ready for bright motion-graphics logo animation as @Image1.",
+      ].join(" ");
+    }
+    case "h3-triangle-light-mg": {
+      const schemeNote =
+        triangleLightMgScheme === "flow"
+          ? "Dark amber void: layered frosted rounded triangles drifting in warm caustic light, uploaded logo silhouette faintly formed by glass shapes."
+          : "Dark void C4D exhibit: frosted triangular glass prisms with warm orange-gold caustics; brand mark / logo card crisply readable at center.";
+      return [
+        ...shared,
+        schemeNote,
+        "Triangle-light brand MG still — dark void + glass triangles + caustic light; the uploaded mark IS the hero.",
+        "Not a packshot orbit, not lifestyle, not bright glass-UI logo card. Keep mark locked; no competitor brands.",
+        "Ready for kinetic title + brand-lock animation as @Image1.",
       ].join(" ");
     }
     case "h3-movie-title":

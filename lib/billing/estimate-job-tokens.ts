@@ -26,9 +26,17 @@ export function cannotAfford(
   return balance < required;
 }
 
-/** Clamp used by most H3 start→end recipe videos. */
+/** Clamp used by most H3 start→end recipe videos (short morphs ≤8s). */
 export function clampRecipeVideoDurationSec(sec: number): number {
   return Math.min(8, Math.max(5, Math.round(sec) || 6));
+}
+
+/** Bullet-elevate may run 8 / 10 / 12 — do not squash into the 5–8 morph clamp. */
+export function clampBulletElevateEstimateDurationSec(sec: number): number {
+  const n = Math.round(sec) || 10;
+  if (n <= 8) return 8;
+  if (n <= 10) return 10;
+  return 12;
 }
 
 export type EstimateVideoPipelineOpts = {
@@ -69,12 +77,20 @@ export function estimateVideoPipelineTokens(
     case "vacuum-inflate":
     case "creative-motion":
     case "hand-throw-scene":
-    case "product-explode":
-    case "bullet-product-elevate": {
+    case "product-explode": {
       // Start (+ often end) still then H3 start→end.
       const h3 = estimateH3Tokens({
         resolution: opts.resolution,
         duration: recipeDuration,
+      });
+      return (genStills ? still * 2 : 0) + h3;
+    }
+
+    case "bullet-product-elevate": {
+      const elevDur = clampBulletElevateEstimateDurationSec(opts.durationSec);
+      const h3 = estimateH3Tokens({
+        resolution: opts.resolution,
+        duration: elevDur,
       });
       return (genStills ? still * 2 : 0) + h3;
     }
@@ -98,6 +114,19 @@ export function estimateVideoPipelineTokens(
     case "h3-showreel":
     case "h3-sphere-mg":
     case "h3-logo-mg":
+    case "h3-triangle-light-mg": {
+      const elevDur =
+        opts.kind === "h3-triangle-light-mg"
+          ? opts.durationSec >= 12
+            ? 12
+            : 10
+          : recipeDuration;
+      const h3 = estimateH3Tokens({
+        resolution: opts.resolution,
+        duration: elevDur,
+      });
+      return (genStills ? still : 0) + h3;
+    }
     case "h3-movie-title":
     case "h3-lifestyle": {
       // Concept paths may mint one hero still first.

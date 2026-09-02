@@ -8,6 +8,7 @@ import { BrowseResumeActions } from "@/components/studio/BrowseResumeActions";
 import { ResearchReferencePostCard } from "@/components/studio/ResearchReferencePostCard";
 import { useWizard } from "@/components/studio/WizardContext";
 import { estimateVideoPipelineTokens } from "@/lib/billing/estimate-job-tokens";
+import { bulletProductElevateDurationOptions } from "@/lib/bullet-product-elevate";
 import { wantsResearchVideoReference } from "@/lib/content-research-infer";
 import type { IntakePath } from "@/lib/wizard-micro-steps.types";
 import type { VideoGenerationKind } from "@/lib/video-generation-path";
@@ -46,9 +47,12 @@ import {
   H3_SHOWREEL_SCHEME_IDS,
   H3_SPHERE_MG_SCHEME_IDS,
   H3_LOGO_MG_SCHEME_IDS,
+  H3_TRIANGLE_LIGHT_MG_SCHEME_IDS,
   h3ShowreelSchemePreviewSrc,
   h3SphereMgSchemePreviewSrc,
   h3LogoMgSchemePreviewSrc,
+  h3TriangleLightMgSchemePreviewSrc,
+  triangleLightMgDurationOptions,
   type H3ShotRecipeMode,
   type MacroSnapIntensity,
   type FoodBulletArc,
@@ -56,6 +60,7 @@ import {
   type H3ShowreelSchemePick,
   type H3SphereMgSchemePick,
   type H3LogoMgSchemePick,
+  type H3TriangleLightMgSchemePick,
 } from "@/lib/h3-shot-recipes";
 import {
   h3ShotModesForPromotion,
@@ -64,7 +69,7 @@ import {
   isVideoRecipeUxMode,
   type RecipePathUxMode,
 } from "@/lib/recipe-path-ux";
-import { videoModePreviewSrc } from "@/lib/creative-workflow";
+import { videoModeHidesAutoDuration, videoModePreviewSrc } from "@/lib/creative-workflow";
 import { resolveCreativeCopyFieldHints } from "@/lib/creative-copy-field-hints";
 import { parseBlockbusterCamera, isBlockbusterElevatedBridgeCamera } from "@/lib/blockbuster-ad-recipe";
 
@@ -717,7 +722,13 @@ export function PreVideoSetupPanel({
 
   const durationRaw = wizard.videoSettings.duration;
   const durationNum =
-    durationRaw === "auto" ? 8 : typeof durationRaw === "number" ? durationRaw : Number(durationRaw) || 8;
+    durationRaw === "auto"
+      ? isBulletElevate
+        ? 10
+        : 8
+      : typeof durationRaw === "number"
+        ? durationRaw
+        : Number(durationRaw) || (isBulletElevate ? 10 : 8);
   const pipelineKind: VideoGenerationKind = scenesReady
     ? "storyboard"
     : isSocialDrip
@@ -760,7 +771,9 @@ export function PreVideoSetupPanel({
     durationSec: scenesReady
       ? Number(wizard.storyboardTrimDuration) || 12
       : durationRaw === "auto"
-        ? 6
+        ? isBulletElevate
+          ? 10
+          : 6
         : durationNum,
     willGenerateStills: dualFrame
       ? true
@@ -1622,6 +1635,67 @@ export function PreVideoSetupPanel({
                                 />
                                 <span className="min-w-0 text-[11px] font-semibold leading-snug text-violet-950">
                                   {m.wizard.h3LogoMgSchemes[id].title}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : null}
+                    {h3ShotMode === "h3-triangle-light-mg" ? (
+                      <div className="mt-3 border-t border-violet-200/80 pt-3">
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-700">
+                          {m.wizard.h3TriangleLightMgSchemeTitle}
+                        </p>
+                        <p className="mt-1 text-xs leading-relaxed text-violet-900/90">
+                          {m.wizard.h3TriangleLightMgSchemeHint}
+                        </p>
+                        <div className="mt-2 grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+                          <button
+                            type="button"
+                            className={`flex items-center gap-2 rounded-xl border px-2 py-1.5 text-left ${
+                              wizard.h3TriangleLightMgSchemePick === "auto"
+                                ? "border-2 border-violet-600 bg-violet-50"
+                                : "border border-violet-200 bg-white hover:border-violet-400"
+                            }`}
+                            onClick={() =>
+                              wizard.setH3TriangleLightMgSchemePick("auto")
+                            }
+                          >
+                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-[10px] font-semibold text-violet-800">
+                              Auto
+                            </span>
+                            <span className="min-w-0 text-[11px] font-semibold text-violet-950">
+                              {m.wizard.h3TriangleLightMgSchemeAuto}
+                            </span>
+                          </button>
+                          {H3_TRIANGLE_LIGHT_MG_SCHEME_IDS.map((id) => {
+                            const active =
+                              wizard.h3TriangleLightMgSchemePick === id;
+                            return (
+                              <button
+                                key={id}
+                                type="button"
+                                title={m.wizard.h3TriangleLightMgSchemes[id].desc}
+                                className={`flex items-center gap-2 rounded-xl border px-2 py-1.5 text-left ${
+                                  active
+                                    ? "border-2 border-violet-600 bg-violet-50"
+                                    : "border border-violet-200 bg-white hover:border-violet-400"
+                                }`}
+                                onClick={() =>
+                                  wizard.setH3TriangleLightMgSchemePick(
+                                    id as H3TriangleLightMgSchemePick,
+                                  )
+                                }
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={h3TriangleLightMgSchemePreviewSrc(id)}
+                                  alt=""
+                                  className="h-10 w-10 shrink-0 rounded-lg object-cover"
+                                />
+                                <span className="min-w-0 text-[11px] font-semibold leading-snug text-violet-950">
+                                  {m.wizard.h3TriangleLightMgSchemes[id].title}
                                 </span>
                               </button>
                             );
@@ -3093,6 +3167,17 @@ export function PreVideoSetupPanel({
                       compact
                       setup
                       motionPoster={isMotionPoster}
+                      hideAutoDuration={
+                        videoModeHidesAutoDuration(wizard.videoCreativeMode) ||
+                        isExplosionUnboxStyle(wizard.visualStyleId)
+                      }
+                      durationAllowlist={
+                        isBulletElevate
+                          ? bulletProductElevateDurationOptions()
+                          : h3ShotMode === "h3-triangle-light-mg"
+                            ? triangleLightMgDurationOptions()
+                            : undefined
+                      }
                       accent="violet"
                       value={wizard.videoSettings}
                       onChange={wizard.setVideoSettings}

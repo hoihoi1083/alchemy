@@ -830,11 +830,11 @@ export const zh = {
 						"完整棚拍 → 懸浮零件靜圖 → 約 4 秒柔和拆解（風格化，非 CAD）。",
 					costHint: "~2 圖 + 4s video · 產品圖",
 				},
-				"product-bullet-elevate-8s": {
-					title: "子彈時間產品升格 ~8s",
+				"product-bullet-elevate-10s": {
+					title: "子彈時間產品升格 ~10s",
 					description:
 						"模特行走 → 絲線轉折 → 產品懸浮環繞 → 回落。生活方式 + 產品圖。",
-					costHint: "~2 圖 + 8s video · 產品／生活方式圖",
+					costHint: "~2 圖 + 10s video · 產品／生活方式圖",
 				},
 				"product-ecom-orbit-6s": {
 					title: "電商環繞 ~6s",
@@ -855,10 +855,10 @@ export const zh = {
 					costHint: "~6s 單鏡 · 美食/材質圖",
 				},
 				"product-luxury-tabletop-8s": {
-					title: "奢侈品桌面+手 ~8s",
+					title: "奢侈品桌面+手 ~10s",
 					description:
 						"大理石桌面，手指輕觸或打開產品，一鏡到底。",
-					costHint: "~8s 單鏡 · 產品圖",
+					costHint: "~10s 單鏡 · 產品圖",
 				},
 				"product-beauty-mv-10s": {
 					title: "美妝/角色一鏡 MV ~10s",
@@ -867,16 +867,16 @@ export const zh = {
 					costHint: "~10s 單鏡 · 人像/角色圖",
 				},
 				"product-imitate-ad-8s": {
-					title: "仿拍這支廣告 ~8s",
+					title: "仿拍這支廣告 ~10s",
 					description:
 						"你的產品圖 + 參考 MP4 → 學運鏡，保留你的 SKU。",
-					costHint: "~8s · 產品圖 + 參考影片",
+					costHint: "~10s · 產品圖 + 參考影片",
 				},
 				"product-neon-on-real-8s": {
-					title: "霓虹疊實景 ~8s",
+					title: "霓虹疊實景 ~10s",
 					description:
 						"你的真實影片 + 發光霓虹線稿（動物、符號）在場景裡遊走。",
-					costHint: "~8s · 真實 MP4（可選產品靜圖）",
+					costHint: "~10s · 真實 MP4（可選產品靜圖）",
 				},
 				"product-food-bullet-time-6s": {
 					title: "美食子彈時間 ~6s",
@@ -885,40 +885,46 @@ export const zh = {
 					costHint: "~6s · 人+食物生活照（或生成靜圖）",
 				},
 				"product-c4d-motion-8s": {
-					title: "C4D 動態視覺 ~8s",
+					title: "C4D 動態視覺 ~10s",
 					description:
 						"黑場品牌開場 → 抽象材質 → 你嘅產品揭幕（Nike 級 C4D 感）。",
-					costHint: "~8s · 產品圖（或生成靜圖）",
+					costHint: "~10s · 產品圖（或生成靜圖）",
 				},
 				"product-h3-showreel-8s": {
-					title: "秀場一鏡 ~8s",
+					title: "秀場一鏡 ~10s",
 					description:
 						"產品靜圖 + 方案卡（汽車 · 鍵盤 · 抽象）。允許動能大字，可選 16:9。參考秀場片選填。",
-					costHint: "~8s · 產品圖（參考秀場片選填）",
+					costHint: "~10s · 產品圖（參考秀場片選填）",
 				},
 				"product-h3-sphere-mg-8s": {
-					title: "球體運動圖形 ~8s",
+					title: "球體運動圖形 ~10s",
 					description:
 						"先球體 MG 世界，再把產品揭出嚟當英雄。允許動能大字。",
-					costHint: "~8s · 產品圖（或生成靜圖）",
+					costHint: "~10s · 產品圖（或生成靜圖）",
 				},
 				"product-h3-logo-mg-8s": {
-					title: "3D Logo 演繹 ~8s",
+					title: "3D Logo 演繹 ~10s",
 					description:
 						"上傳 Logo → 明亮玻璃／鉻面／絲帶三維演繹。品牌片頭。",
-					costHint: "~8s · Logo 或帶清晰標識嘅包裝圖",
+					costHint: "~10s · Logo 或帶清晰標識嘅包裝圖",
+				},
+				"product-h3-triangle-light-mg-10s": {
+					title: "三角光品牌片頭 ~10s",
+					description:
+						"毛玻璃三角 + 橙金焦散 + 動能標題 → 品牌鎖。Exhibit／Flow 風格卡。",
+					costHint: "~10–12 秒 16:9 · Logo + 品牌名",
 				},
 				"product-h3-movie-title-8s": {
-					title: "電影標題 ~8s",
+					title: "電影標題 ~10s",
 					description:
 						"電影標題卡 + 多格擦除，圍繞你嘅產品。允許設計感大字 — 唔使參考片。",
-					costHint: "~8s · 產品圖（或生成靜圖）",
+					costHint: "~10s · 產品圖（或生成靜圖）",
 				},
 				"product-h3-lifestyle-8s": {
-					title: "生活人物 ~8s",
+					title: "生活人物 ~10s",
 					description:
 						"真人喺咖啡館／街道／居家場景使用產品 — 唔係美妝 MV。",
-					costHint: "~8s · 人+產品生活照（或生成靜圖）",
+					costHint: "~10s · 人+產品生活照（或生成靜圖）",
 				},
 				"product-gaming-cover": {
 					title: "電競封面",
@@ -952,10 +958,10 @@ export const zh = {
 					costHint: "~2 圖 + 4s video · Logo/吉祥物",
 				},
 				"concept-explosion-unbox-8s": {
-					title: "AI 爆炸開箱 ~8s",
+					title: "AI 爆炸開箱 ~10s",
 					description:
 						"主題盒震動打開 → 房間組裝 → 道具飄浮。純文字出片 — 只填主題。",
-					costHint: "~8s 單片 · 主題（唔使產品相）",
+					costHint: "~10s 單片 · 主題（唔使產品相）",
 				},
 				"concept-hand-throw-scene-6s": {
 					title: "手拋變實景（概念）~6s",
@@ -969,11 +975,11 @@ export const zh = {
 						"Logo／吉祥物作裝置鎖定 → 懸浮零件靜圖 → 約 4 秒柔和拆解。",
 					costHint: "~2 圖 + 4s video · Logo/吉祥物",
 				},
-				"concept-bullet-elevate-8s": {
-					title: "子彈時間升格（概念）~8s",
+				"concept-bullet-elevate-10s": {
+					title: "子彈時間升格（概念）~10s",
 					description:
 						"Logo／吉祥物生活方式行走 → 絲線轉折 → 懸浮環繞 → 回落。",
-					costHint: "~2 圖 + 8s video · Logo/吉祥物",
+					costHint: "~2 圖 + 10s video · Logo/吉祥物",
 				},
 				"concept-beauty-mv-10s": {
 					title: "美妝/角色一鏡（概念）~10s",
@@ -982,16 +988,16 @@ export const zh = {
 					costHint: "~10s 單鏡 · Logo/吉祥物",
 				},
 				"concept-imitate-ad-8s": {
-					title: "仿拍這支廣告（概念）~8s",
+					title: "仿拍這支廣告（概念）~10s",
 					description:
 						"品牌標誌 + 參考 MP4 → 跟運鏡，保留你的身份。",
-					costHint: "~8s · Logo/吉祥物 + 參考影片",
+					costHint: "~10s · Logo/吉祥物 + 參考影片",
 				},
 				"concept-neon-on-real-8s": {
-					title: "霓虹疊實景（概念）~8s",
+					title: "霓虹疊實景（概念）~10s",
 					description:
 						"真實影片 + 霓虹動物/符號在場景中移動 — 可選 Logo 鎖定。",
-					costHint: "~8s · 真實 MP4（可選 Logo 靜圖）",
+					costHint: "~10s · 真實 MP4（可選 Logo 靜圖）",
 				},
 				"concept-food-bullet-time-6s": {
 					title: "美食子彈時間（概念）~6s",
@@ -1000,40 +1006,46 @@ export const zh = {
 					costHint: "~6s · 打卡美食圖（或生成靜圖）",
 				},
 				"concept-c4d-motion-8s": {
-					title: "C4D 動態視覺（概念）~8s",
+					title: "C4D 動態視覺（概念）~10s",
 					description:
 						"Logo／吉祥物黑場開場 → 抽象 CGI 材質 → 身份鎖定揭幕。品牌級動態視覺。",
-					costHint: "~8s · Logo/吉祥物靜圖",
+					costHint: "~10s · Logo/吉祥物靜圖",
 				},
 				"concept-h3-showreel-8s": {
-					title: "秀場一鏡（概念）~8s",
+					title: "秀場一鏡（概念）~10s",
 					description:
 						"Logo／吉祥物 + 方案卡。概念優先「抽象變形」。可選 16:9。參考秀場片選填。",
-					costHint: "~8s · Logo/吉祥物靜圖（參考秀場片選填）",
+					costHint: "~10s · Logo/吉祥物靜圖（參考秀場片選填）",
 				},
 				"concept-h3-sphere-mg-8s": {
-					title: "球體運動圖形（概念）~8s",
+					title: "球體運動圖形（概念）~10s",
 					description:
 						"Logo／吉祥物作球體身份 — 啞光行星／霓虹／水晶包裹。唔使參考片。",
-					costHint: "~8s · Logo/吉祥物靜圖",
+					costHint: "~10s · Logo/吉祥物靜圖",
 				},
 				"concept-h3-logo-mg-8s": {
-					title: "3D Logo 演繹（概念）~8s",
+					title: "3D Logo 演繹（概念）~10s",
 					description:
 						"上傳 Logo → 明亮玻璃界面／鉻字／絲帶／粒子釘場三維演繹。品牌片頭。",
-					costHint: "~8s · Logo/吉祥物靜圖",
+					costHint: "~10s · Logo/吉祥物靜圖",
+				},
+				"concept-h3-triangle-light-mg-10s": {
+					title: "三角光品牌片頭（概念）~10s",
+					description:
+						"Logo + 品牌名 → 暗場三角光片頭。Exhibit／Flow。",
+					costHint: "~10–12 秒 16:9 · Logo + 品牌名",
 				},
 				"concept-h3-movie-title-8s": {
-					title: "電影標題（概念）~8s",
+					title: "電影標題（概念）~10s",
 					description:
 						"Logo／吉祥物進入電影標題卡 + 多格。允許設計感大字。",
-					costHint: "~8s · Logo/吉祥物靜圖",
+					costHint: "~10s · Logo/吉祥物靜圖",
 				},
 				"concept-h3-lifestyle-8s": {
-					title: "生活人物（概念）~8s",
+					title: "生活人物（概念）~10s",
 					description:
 						"人物＋品牌標識嘅生活場景。最好有生活照（純 Logo 偏弱）。",
-					costHint: "~8s · 人+Logo/吉祥物生活照",
+					costHint: "~10s · 人+Logo/吉祥物生活照",
 				},
 				"concept-gaming-cover": {
 					title: "電競封面（概念）",
@@ -1966,7 +1978,7 @@ export const zh = {
 					"用文字描述你想拍嘅 Reel → AI 寫動態 prompt（運鏡／節奏）",
 			},
 			"explosion-unbox": {
-				title: "AI 爆炸開箱 ~8s",
+				title: "AI 爆炸開箱 ~10s",
 				description:
 					"主題盒打開 → 房間組裝 → 道具飄浮。純文字出片，唔使產品相。",
 			},
@@ -2053,7 +2065,7 @@ export const zh = {
 			briefHint: "進階：可改鏡頭、光線或元素。description 請配合你嘅主題。",
 			planNote: "由主題 + brief 文字出片 — 唔經出圖。此模板需 Pro 方案。",
 			videoStepIntro:
-				"爆炸開箱 prompt 已在 Setup 填好。直接 Generate ~8s 純文字出片 — 唔使關鍵幀。",
+				"爆炸開箱 prompt 已在 Setup 填好。直接 Generate ~10s 純文字出片 — 唔使關鍵幀。",
 		},
 		creativeBriefLabel: "創意影片描述（必填）",
 		creativeBriefPlaceholder:
@@ -3049,7 +3061,7 @@ export const zh = {
 			"bullet-product-elevate": {
 				title: "子彈時間產品升格",
 				description:
-					"生活方式行走 → 絲線轉折 → 產品懸浮環繞 → 回落。約 8 秒一鏡。",
+					"生活方式行走 → 絲線轉折 → 產品懸浮環繞 → 回落。預設 10 秒（8/10/12）一鏡。",
 			},
 			"ecom-orbit": {
 				title: "電商環繞",
@@ -3110,6 +3122,11 @@ export const zh = {
 				title: "3D Logo 演繹",
 				description:
 					"明亮玻璃／鉻面 Logo 演繹 — 上傳標識 → 品牌片頭。",
+			},
+"h3-triangle-light-mg": {
+				title: "三角光品牌片頭",
+				description:
+					"毛玻璃三角 + 焦散光線 + 動能大字 → 品牌鎖。Exhibit／Flow 兩卡。",
 			},
 			"h3-movie-title": {
 				title: "電影標題",
@@ -3304,6 +3321,8 @@ export const zh = {
 				"必填：產品圖（概念可用 Logo／吉祥物）。球體包裹你嘅身份；唔使參考片。",
 			"h3-logo-mg":
 				"必填：Logo／字標靜圖（優先）— 或帶清晰品牌標嘅包裝圖。明亮三維 Logo 演繹；唔使參考片。",
+			"h3-triangle-light-mg":
+				"上傳 Logo／字標 + 品牌中英文名。包裝圖僅當標識清晰可讀時可用。",
 			"h3-movie-title":
 				"必填：產品圖（概念可用 Logo／吉祥物）。標題卡＋多格；允許設計感大字。",
 			"h3-lifestyle":
@@ -3334,6 +3353,8 @@ export const zh = {
 				"請先上傳產品圖（概念可用 Logo／吉祥物）— 未上傳前無法按生成。再做約 8s 球體運動圖形一鏡。",
 			"h3-logo-mg":
 				"請先上傳 Logo／字標 — 未上傳前無法按生成。選風格卡（玻璃／鉻字／絲帶／粒子）。約 8s 16:9 品牌片頭。",
+			"h3-triangle-light-mg":
+				"三角光品牌片頭 · Exhibit／Flow · 約 10–12 秒 · 允許動能大字。",
 			"h3-movie-title":
 				"請先上傳產品圖（概念可用 Logo／吉祥物）— 未上傳前無法按生成。再做約 8s 電影標題／多格一鏡。",
 			"h3-lifestyle":
@@ -3448,6 +3469,20 @@ export const zh = {
 				desc: "彩色光澤釘／圓點波",
 			},
 		},
+		h3TriangleLightMgSchemeTitle: "三角光風格",
+		h3TriangleLightMgSchemeHint:
+			"同一暗場三角方言 — Exhibit（藝術展標題）或 Flow（流動符號）。自動會挑合適卡。",
+		h3TriangleLightMgSchemeAuto: "自動 · 最佳匹配",
+		h3TriangleLightMgSchemes: {
+			exhibit: {
+				title: "Exhibit",
+				desc: "三角光藝術展 — 玻璃三角 → 動能 3D/TVC 標題 → 品牌鎖",
+			},
+			flow: {
+				title: "Flow",
+				desc: "流動三角 — 柔光稜鏡漂浮 → 映射／片頭能量 → 品牌鎖",
+			},
+		},
 		recipePathUxTitles: {
 			need: "你需要",
 			attention: "請注意",
@@ -3557,6 +3592,11 @@ export const zh = {
 				],
 				output: ["約 8 秒 16:9 三維 Logo 演繹一鏡"],
 			},
+			"h3-triangle-light-mg": {
+				need: ["Logo／字標（優先）+ 品牌名（中／英）", "清晰輪廓與配色以便身份鎖定"],
+				attention: ["選 Exhibit（藝術展標題）或 Flow（流動符號）", "暗場三角玻璃焦散 — 不是電商環繞", "允許動能大字；上傳標識始終鎖定", "輸出 16:9 品牌片頭（10／12 秒）"],
+				output: ["約 10–12 秒 16:9 三角光品牌片頭"],
+			},
 			"h3-movie-title": {
 				need: ["產品圖（概念可用 Logo／吉祥物）", "清晰主體作標題卡鎖定"],
 				attention: [
@@ -3626,8 +3666,8 @@ export const zh = {
 			},
 			"bullet-product-elevate": {
 				need: ["產品／生活方式圖（概念可用 Logo／吉祥物靜圖）", "清晰主體輪廓以便身份鎖定"],
-				attention: ["行走 → 轉折 → 子彈時間環繞 → 回落（約 8 秒）", "唔係棚拍拆解 — 生活方式一鏡"],
-				output: ["約 2 張靜圖 + 8 秒子彈時間升格片"],
+				attention: ["行走 → 轉折 → 子彈時間環繞 → 回落（8/10/12 秒）", "唔係棚拍拆解 — 生活方式一鏡"],
+				output: ["約 2 張靜圖 + 8–12 秒子彈時間升格片"],
 			},
 			"motion-poster": {
 				need: ["產品圖（產品）— 或 Logo／主題 + 可選靜圖（概念）", "結尾海報要用嘅標題"],
@@ -3663,6 +3703,7 @@ export const zh = {
 			"h3-showreel": "AI 秀場靜圖…",
 			"h3-sphere-mg": "AI 球體 MG 靜圖…",
 			"h3-logo-mg": "AI Logo 演繹靜圖…",
+			"h3-triangle-light-mg": "正在生成三角光靜圖…",
 			"h3-movie-title": "AI 電影標題靜圖…",
 			"h3-lifestyle": "AI 生活人物靜圖…",
 		},
@@ -3679,6 +3720,7 @@ export const zh = {
 			"h3-showreel": "正在生成 秀場一鏡…",
 			"h3-sphere-mg": "正在生成 球體運動圖形…",
 			"h3-logo-mg": "正在生成 3D Logo 演繹…",
+			"h3-triangle-light-mg": "正在生成三角光品牌片頭…",
 			"h3-movie-title": "正在生成 電影標題…",
 			"h3-lifestyle": "正在生成 生活人物…",
 		},
@@ -3754,7 +3796,7 @@ export const zh = {
 		productExplodeAnimatingCard: "第 3/3 步：拆解過渡中…",
 		productExplodeNeedKeyframe: "請先上傳產品圖（概念用 Logo／吉祥物靜圖 — 單靠文字唔夠）。",
 		bulletProductElevateHint:
-			"生活方式行走 → 絲線轉折 → 產品懸浮子彈時間 → 回落。需清晰產品或生活方式圖（約 8 秒）。",
+			"生活方式行走 → 絲線轉折 → 產品懸浮子彈時間 → 回落。需清晰產品或生活方式圖（預設 10 秒；可選 8/10/12）。",
 		bulletProductElevateBuildingStill: "第 1/3 步：生活方式行走首幀…",
 		bulletProductElevateBuildingEnd: "第 2/3 步：子彈時間定格尾幀…",
 		bulletProductElevateAnimatingCard: "第 3/3 步：子彈時間升格過渡…",

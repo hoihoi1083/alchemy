@@ -21,6 +21,7 @@ import { ShipItPanel } from "@/components/studio/ShipItPanel";
 import { WizardErrorBanner } from "@/components/studio/WizardErrorBanner";
 import { VideoOutputSourceCard } from "@/components/studio/VideoOutputSourceCard";
 import { isContentResearchStyleExtra } from "@/lib/content-research-promote";
+import { videoModeHidesAutoDuration } from "@/lib/creative-workflow";
 
 export function SetupStep() {
   const { advancedSection, analyzeBrand, applyClosestMatchRecipe, applyPrimaryPath, applyPrimaryPathConcept, applyPrimaryPathConceptVideo, applyPrimaryPathVideoOnly, applyPromptRebuild, applyQuickTest8sRecipe, artStyleId, compositionPresetId, brandAnalyzeBusy, brandAnalyzeNote, brandSocialHint, brandWebsiteUrl, business, cinematicSceneCount, conceptIdea, conceptPlanBusy, setConceptPlanBusy, continueSetupLabel, effectivePromoteName, effectivePromptExtra, setupNextDisabled, setupNextDisabledReason, creativeVideoBrief, error, goNextFromSetup, headline, imageCreativeMode, imagePrompt, isConceptStoryboardOutput, isContentResearchVideoPath, isStoryboardOutput, lockedCampaignMode, m, offer, onCinematicSceneCountChange, onImageInputModeChange, onProductPhotoSelected, onImageCreativeModeChange, onReferenceAdFile, onVideoCreativeModeChange, onWorkflowModeChange, planAiVideoPrompt, product, productPhoto, promotionMode, promptExtra, promptMarket, referenceAd, referenceIsVideo, referencePreviewUrl, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, runShipItPipeline, selectVisualStyle, setArtStyleId, setCompositionPresetId, setBrandKit, setBrandSocialHint, setBrandWebsiteUrl, setBusiness, setCampaignTheme, setConceptIdea, setConceptImageVisionNote, setCreativeVideoBrief, setError, setExtraKitPhotos, setHeadline, setImageAspectRatio, setImageCreativeMode, setImageOutputMode, setImagePrompt, setImageRefPhoto, setOffer, setProduct, setPromptExtra, setPromptMarket, setReferenceCarouselSlideCount, setContentResearchApplyRef, setShipItMode, setShowAdvancedSetup, setShowAdvancedSetupPrompts, setStoryboardBrief, setSubjectFraming, setSubline, setUserReferenceBrief, setUseOriginalImage, setVideoPrompt, setVideoSettings, shipItEligible, shipItVisionBlocked, shipItMode, shipItPipelineBusy, showAdvancedSetup, showAdvancedSetupPrompts, storyboardBrief, subjectFraming, subline, templateId, templateSlotStatus, uploadPreviewUrl, usesCompositor, usesReferenceConceptForImage, videoCreativeMode, videoPrompt, videoSettings, visualStyleId, workflowMode } = useWizard();
@@ -44,6 +45,10 @@ export function SetupStep() {
     (isContentResearchVideoPath ||
       videoCreativeMode === "reference-concept" ||
       Boolean(referenceAd && referenceIsVideo));
+  const hideAutoDuration =
+    referenceReelOutputDurationRequired ||
+    videoModeHidesAutoDuration(videoCreativeMode) ||
+    isExplosionUnboxStyle(visualStyleId);
   const outputDurationExplicit = videoSettings.duration !== "auto";
 
   function handleSetupReferenceVideo(file: File | null) {
@@ -341,7 +346,7 @@ export function SetupStep() {
       <VideoSettingsPanel
         compact
         setup
-        hideAutoDuration={referenceReelOutputDurationRequired}
+        hideAutoDuration={hideAutoDuration}
         value={videoSettings}
         onChange={setVideoSettings}
       />

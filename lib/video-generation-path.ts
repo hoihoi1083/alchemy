@@ -36,6 +36,7 @@ export type VideoGenerationKind =
   | "h3-showreel"
   | "h3-sphere-mg"
   | "h3-logo-mg"
+  | "h3-triangle-light-mg"
   | "h3-movie-title"
   | "h3-lifestyle"
   | "image-to-video";

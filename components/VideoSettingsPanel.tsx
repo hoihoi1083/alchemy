@@ -18,6 +18,7 @@ import { VIDEO_CREATIVITY_LEVELS } from "@/lib/video-creativity";
 import {
   VIDEO_DURATIONS,
   VIDEO_MOTION_STYLES,
+  type VideoDuration,
   type VideoResolution,
   type VideoSettings,
 } from "@/lib/video-settings";
@@ -38,6 +39,11 @@ type Props = {
    * Implies compact (no creativity / motion-style chrome).
    */
   motionPoster?: boolean;
+  /**
+   * Restrict duration pills to this allowlist (e.g. bullet-elevate 8/10/12).
+   * When set, hides options outside the list (including auto unless listed).
+   */
+  durationAllowlist?: VideoDuration[];
   /** /ultra only — simple /studio hides Seedance vs H3; router picks the engine. */
   showEnginePicker?: boolean;
   variant?: "light" | "dark";
@@ -66,6 +72,7 @@ export function VideoSettingsPanel({
   hideAutoDuration = false,
   resolutionOnly = false,
   motionPoster = false,
+  durationAllowlist,
   showEnginePicker = false,
   variant = "light",
   accent,
@@ -78,11 +85,13 @@ export function VideoSettingsPanel({
   const tone = accent ?? (setup ? "violet" : "emerald");
   const compactMode = compact || setup || motionPoster;
   const durationOptions = (
-    motionPoster
-      ? VIDEO_DURATIONS.filter((d) => d === "4" || d === "6" || d === "8")
-      : hideAutoDuration
-        ? VIDEO_DURATIONS.filter((d) => d !== "auto")
-        : VIDEO_DURATIONS
+    durationAllowlist && durationAllowlist.length > 0
+      ? VIDEO_DURATIONS.filter((d) => durationAllowlist.includes(d))
+      : motionPoster
+        ? VIDEO_DURATIONS.filter((d) => d === "4" || d === "6" || d === "8")
+        : hideAutoDuration
+          ? VIDEO_DURATIONS.filter((d) => d !== "auto")
+          : VIDEO_DURATIONS
   );
   const allowedResolutions = videoResolutionsForPlan(plan).map(asVideoResolution);
   const linkClass =
@@ -118,6 +127,30 @@ export function VideoSettingsPanel({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- clamp poster duration once when mode engages
   }, [motionPoster, value.duration]);
+
+  useEffect(() => {
+    if (!durationAllowlist || durationAllowlist.length === 0) return;
+    if (!durationAllowlist.includes(value.duration)) {
+      onChange({
+        ...value,
+        duration: durationAllowlist.includes("10")
+          ? "10"
+          : durationAllowlist[0]!,
+        autoSecondFrame: false,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- clamp allowlist once when mode engages
+  }, [durationAllowlist?.join(","), value.duration]);
+
+  useEffect(() => {
+    // Timed recipes / reference paths: never leave a silent "auto" selected.
+    if (durationAllowlist && durationAllowlist.length > 0) return;
+    if (motionPoster) return;
+    if (!hideAutoDuration) return;
+    if (value.duration !== "auto") return;
+    onChange({ ...value, duration: "8", autoSecondFrame: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- clamp auto once when hide engages
+  }, [hideAutoDuration, value.duration]);
 
   return (
     <div

@@ -20,8 +20,10 @@ import {
   waitAspectFromString,
 } from "@/components/studio/GenerationWaitPlaceholder";
 import { estimateH3Tokens } from "@/lib/billing/token-costs";
+import { bulletProductElevateDurationOptions } from "@/lib/bullet-product-elevate";
+import { videoModeHidesAutoDuration } from "@/lib/creative-workflow";
 import { storyboardSceneDisplayCopy } from "@/lib/storyboard-scene-copy";
-import { isBrandVideoStyle, isCreativeVideoStyle, isStoryboardVideoStyle } from "@/lib/visual-styles";
+import { isBrandVideoStyle, isCreativeVideoStyle, isExplosionUnboxStyle, isStoryboardVideoStyle } from "@/lib/visual-styles";
 import { isVideoOutputPathLocked, resolveVideoOutputPresentation } from "@/lib/video-output-presentation";
 import { analyzeProductImageFile } from "@/lib/image-upload-quality";
 import {
@@ -34,19 +36,22 @@ import {
   H3_SHOWREEL_SCHEME_IDS,
   H3_SPHERE_MG_SCHEME_IDS,
   H3_LOGO_MG_SCHEME_IDS,
+  H3_TRIANGLE_LIGHT_MG_SCHEME_IDS,
+  triangleLightMgDurationOptions,
   type MacroSnapIntensity,
   type FoodBulletArc,
   type H3ShowreelAspect,
   type H3ShowreelSchemePick,
   type H3SphereMgSchemePick,
   type H3LogoMgSchemePick,
+  type H3TriangleLightMgSchemePick,
 } from "@/lib/h3-shot-recipes";
 import { resolveWizardOutputDurationSec } from "@/lib/video-settings";
 import type { CinematicSceneResult } from "@/lib/cinematic-reel-types";
 import type { StoryboardSceneResult } from "@/lib/video-storyboard-types";
 
 export function VideoStep() {
-  const { applyPromptRebuild, bgmOptions, bgmTrack, brandProfile, cinematicScenes, cinematicSceneCount, cinematicStitchReady, conceptReferenceR2vReady, directReferenceR2vReady, creativeVideoBrief, endFramePhoto, endFramePreviewUrl, endFrameUrl, error, extraAnglePhotos, extraKitPhotos, extraKitPreviewUrls, formatCinematicCopy, generateVideo, goBackFromVideo, hasFinalImage, headline, imageAspectRatio, imagePrompt, imageUrl, isCinematicStitchOutput, isConceptCinematicSingleOutput, isStoryboardOutput, isUgcPresenterOutput, keyframePreview, loadReferenceClip, m, onReferenceAdFile, onVideoCreativeModeChange, packagingPhoto, packagingPreviewUrl, planAiVideoPrompt, planProductVideo, planProductVideoBusy, planVideoPromptBusy, presenterAvatarId, presenterSourceMode, productPhoto, productVideoPlan, promotionMode, promptExtra, promptMarket, referenceAd, referenceClipLoading, referenceIsVideo, referencePreviewUrl, refVideoDurationSec, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, selectedReferenceClipId, setBgmTrack, setConceptImageVisionNote, setEndFramePhoto, setEndFrameUrl, setError, setExtraAnglePhotos, setExtraKitPhotos, setPackagingPhoto, setImagePrompt, setImageUrl, setPresenterAvatarId, setPresenterSourceMode, setProductPhoto, setPromptExtra, setPromptMarket, setShowAdvancedVideo, setSubjectFraming, setUploadQualityWarning, setUseOriginalImage, setVideoPrompt, setVideoSettings, shipItMode, showAdvancedVideo, showVideoReferenceSection, storyboardScenes, storyboardTrimDuration, subjectFraming, templateId, templateSlotStatus, uploadPreviewUrl, useReferenceVideo, usesCompositor, usesConceptTextVideo, usesProductAssistant, videoBusy, videoCreativeMode, motionPosterDialectPick, setMotionPosterDialectPick, macroSnapIntensity, setMacroSnapIntensity, foodBulletArc, setFoodBulletArc, h3ShowreelAspect, setH3ShowreelAspect, h3ShowreelSchemePick, setH3ShowreelSchemePick, h3SphereMgSchemePick, setH3SphereMgSchemePick, h3LogoMgSchemePick, setH3LogoMgSchemePick, videoGenerateDisabled, videoGenerateDisabledReason, videoPhase, videoPreflight, videoProgressInfo, videoPrompt, videoPromptPlanNote, videoSettings, videoStepHint, visualStyleId, workflowMode } = useWizard();
+  const { applyPromptRebuild, bgmOptions, bgmTrack, brandProfile, cinematicScenes, cinematicSceneCount, cinematicStitchReady, conceptReferenceR2vReady, directReferenceR2vReady, creativeVideoBrief, endFramePhoto, endFramePreviewUrl, endFrameUrl, error, extraAnglePhotos, extraKitPhotos, extraKitPreviewUrls, formatCinematicCopy, generateVideo, goBackFromVideo, hasFinalImage, headline, imageAspectRatio, imagePrompt, imageUrl, isCinematicStitchOutput, isConceptCinematicSingleOutput, isStoryboardOutput, isUgcPresenterOutput, keyframePreview, loadReferenceClip, m, onReferenceAdFile, onVideoCreativeModeChange, packagingPhoto, packagingPreviewUrl, planAiVideoPrompt, planProductVideo, planProductVideoBusy, planVideoPromptBusy, presenterAvatarId, presenterSourceMode, productPhoto, productVideoPlan, promotionMode, promptExtra, promptMarket, referenceAd, referenceClipLoading, referenceIsVideo, referencePreviewUrl, refVideoDurationSec, researchReelAnalysis, researchReelAnalyzeBusy, researchReelAnalyzeNote, selectedReferenceClipId, setBgmTrack, setConceptImageVisionNote, setEndFramePhoto, setEndFrameUrl, setError, setExtraAnglePhotos, setExtraKitPhotos, setPackagingPhoto, setImagePrompt, setImageUrl, setPresenterAvatarId, setPresenterSourceMode, setProductPhoto, setPromptExtra, setPromptMarket, setShowAdvancedVideo, setSubjectFraming, setUploadQualityWarning, setUseOriginalImage, setVideoPrompt, setVideoSettings, shipItMode, showAdvancedVideo, showVideoReferenceSection, storyboardScenes, storyboardTrimDuration, subjectFraming, templateId, templateSlotStatus, uploadPreviewUrl, useReferenceVideo, usesCompositor, usesConceptTextVideo, usesProductAssistant, videoBusy, videoCreativeMode, motionPosterDialectPick, setMotionPosterDialectPick, macroSnapIntensity, setMacroSnapIntensity, foodBulletArc, setFoodBulletArc, h3ShowreelAspect, setH3ShowreelAspect, h3ShowreelSchemePick, setH3ShowreelSchemePick, h3SphereMgSchemePick, setH3SphereMgSchemePick, h3LogoMgSchemePick, setH3LogoMgSchemePick, h3TriangleLightMgSchemePick, setH3TriangleLightMgSchemePick, videoGenerateDisabled, videoGenerateDisabledReason, videoPhase, videoPreflight, videoProgressInfo, videoPrompt, videoPromptPlanNote, videoSettings, videoStepHint, visualStyleId, workflowMode } = useWizard();
   const isConcept = promotionMode === "concept";
   const outputDurationSec = resolveWizardOutputDurationSec(videoSettings);
   const durationForCost = isStoryboardOutput
@@ -87,6 +92,7 @@ export function VideoStep() {
     !usesCompositor && useReferenceVideo && !isStoryboardOutput;
   const isMotionPoster = videoCreativeMode === "motion-poster";
   const isBlockbuster = videoCreativeMode === "blockbuster";
+  const isBulletElevate = videoCreativeMode === "bullet-product-elevate";
   const h3ShotMode = isH3ShotRecipeMode(videoCreativeMode)
     ? videoCreativeMode
     : null;
@@ -449,6 +455,51 @@ export function VideoStep() {
           </div>
         </div>
       ) : null}
+      {h3ShotMode === "h3-triangle-light-mg" ? (
+        <div className="rounded-lg border border-cyan-500/30 bg-slate-950/40 px-3 py-3">
+          <p className="text-xs font-semibold text-cyan-100">
+            {m.wizard.h3TriangleLightMgSchemeTitle}
+          </p>
+          <p className="mt-1 text-[11px] text-cyan-200/80">
+            {m.wizard.h3TriangleLightMgSchemeHint}
+          </p>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            <button
+              type="button"
+              className={
+                h3TriangleLightMgSchemePick === "auto"
+                  ? "rounded-lg bg-cyan-500 px-2.5 py-1.5 text-xs font-semibold text-slate-950"
+                  : "rounded-lg border border-cyan-500/40 bg-slate-900/60 px-2.5 py-1.5 text-xs font-medium text-cyan-100 hover:bg-cyan-950/50"
+              }
+              onClick={() => setH3TriangleLightMgSchemePick("auto")}
+            >
+              {m.wizard.h3TriangleLightMgSchemeAuto}
+            </button>
+            {H3_TRIANGLE_LIGHT_MG_SCHEME_IDS.map((id) => {
+              const active = h3TriangleLightMgSchemePick === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  title={m.wizard.h3TriangleLightMgSchemes[id].desc}
+                  className={
+                    active
+                      ? "rounded-lg bg-cyan-500 px-2.5 py-1.5 text-xs font-semibold text-slate-950"
+                      : "rounded-lg border border-cyan-500/40 bg-slate-900/60 px-2.5 py-1.5 text-xs font-medium text-cyan-100 hover:bg-cyan-950/50"
+                  }
+                  onClick={() =>
+                    setH3TriangleLightMgSchemePick(
+                      id as H3TriangleLightMgSchemePick,
+                    )
+                  }
+                >
+                  {m.wizard.h3TriangleLightMgSchemes[id].title}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
       {h3ShotMode === "h3-showreel" ? (
         <div className="rounded-lg border border-cyan-500/30 bg-slate-950/40 px-3 py-3">
           <p className="text-xs font-semibold text-cyan-100">
@@ -665,7 +716,18 @@ export function VideoStep() {
       value={videoSettings}
       onChange={setVideoSettings}
       motionPoster={isMotionPoster}
-      compact={isMotionPoster}
+      hideAutoDuration={
+        videoModeHidesAutoDuration(videoCreativeMode) ||
+        isExplosionUnboxStyle(visualStyleId)
+      }
+      durationAllowlist={
+        isBulletElevate
+          ? bulletProductElevateDurationOptions()
+          : videoCreativeMode === "h3-triangle-light-mg"
+            ? triangleLightMgDurationOptions()
+            : undefined
+      }
+      compact={isMotionPoster || isBulletElevate}
     />
   )}
 

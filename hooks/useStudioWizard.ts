@@ -178,6 +178,7 @@ import {
 import {
 	BULLET_PRODUCT_ELEVATE_DURATION_SEC,
 	buildBulletProductElevateVideoPrompt,
+	clampBulletProductElevateDurationSec,
 } from "@/lib/bullet-product-elevate";
 import {
 	CREATIVE_MOTION_DURATION_SEC,
@@ -251,20 +252,25 @@ import {
 	parseH3ShowreelSchemePick,
 	parseH3SphereMgSchemePick,
 	parseH3LogoMgSchemePick,
+	parseH3TriangleLightMgSchemePick,
 	resolveH3ShotStillAspectRatio,
 	resolveH3ShowreelScheme,
 	resolveH3SphereMgScheme,
 	resolveH3LogoMgScheme,
+	resolveH3TriangleLightMgScheme,
+	clampTriangleLightMgDurationSec,
 	type FoodBulletArc,
 	type H3ShotRecipeMode,
 	type H3ShowreelAspect,
 	type H3ShowreelSchemePick,
 	type H3SphereMgSchemePick,
 	type H3LogoMgSchemePick,
+	type H3TriangleLightMgSchemePick,
 	type MacroSnapIntensity,
 	H3_SHOWREEL_NEGATIVE,
 	H3_MOVIE_TITLE_NEGATIVE,
 	H3_LOGO_MG_NEGATIVE,
+	H3_TRIANGLE_LIGHT_MG_NEGATIVE,
 } from "@/lib/h3-shot-recipes";
 import { h3ShotRecipeInputsReady, identityRecipeHeroReady, isIdentityVideoRecipeMode } from "@/lib/recipe-path-ux";
 import {
@@ -871,6 +877,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		useState<H3SphereMgSchemePick>("auto");
 	const [h3LogoMgSchemePick, setH3LogoMgSchemePick] =
 		useState<H3LogoMgSchemePick>("auto");
+	const [h3TriangleLightMgSchemePick, setH3TriangleLightMgSchemePick] =
+		useState<H3TriangleLightMgSchemePick>("auto");
 	const socialDripStillUrlRef = useRef<string | null>(null);
 	const socialDripEndUrlRef = useRef<string | null>(null);
 	const socialDripPlanRef = useRef<SocialDripPlan | null>(null);
@@ -3031,6 +3039,14 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		if (path === "explosion-unbox") {
 			selectVisualStyle("explosion-unbox");
 			setVideoCreativeMode("product-promo");
+			setVideoSettings((prev: VideoSettings) => ({
+				...prev,
+				duration:
+					prev.duration === "auto" || Number(prev.duration) > 12
+						? "8"
+						: prev.duration,
+				autoSecondFrame: false,
+			}));
 			return;
 		}
 		selectVisualStyle(path === "brand" ? "brand-video" : "creative-video");
@@ -4231,6 +4247,38 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				duration: "8",
 				autoSecondFrame: false,
 				motionStyle: "slow-push",
+				videoEngine: "minimax-h3",
+			}));
+		} else if (mode === "bullet-product-elevate") {
+			setWorkflowMode("video-only");
+			setUseOriginalImage(true);
+			setVideoSettings((s: VideoSettings) => {
+				const allowed = new Set(["8", "10", "12"]);
+				const nextDur = allowed.has(String(s.duration))
+					? (String(s.duration) as "8" | "10" | "12")
+					: String(BULLET_PRODUCT_ELEVATE_DURATION_SEC);
+				return {
+					...s,
+					duration: nextDur as VideoSettings["duration"],
+					autoSecondFrame: false,
+					motionStyle: "slow-push",
+					videoEngine: "minimax-h3",
+				};
+			});
+		} else if (
+			mode === "vacuum-inflate" ||
+			mode === "creative-motion" ||
+			mode === "hand-throw-scene" ||
+			mode === "product-explode"
+		) {
+			const locked =
+				mode === "hand-throw-scene"
+					? "6"
+					: ("4" as VideoSettings["duration"]);
+			setVideoSettings((s: VideoSettings) => ({
+				...s,
+				duration: locked as VideoSettings["duration"],
+				autoSecondFrame: false,
 				videoEngine: "minimax-h3",
 			}));
 		} else if (isH3ShotRecipeMode(mode)) {
@@ -7490,6 +7538,18 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 							conceptMode: promotionMode === "concept",
 						})
 					: undefined;
+			const triangleLightMgScheme =
+				mode === "h3-triangle-light-mg"
+					? resolveH3TriangleLightMgScheme({
+							pick: parseH3TriangleLightMgSchemePick(
+								h3TriangleLightMgSchemePick,
+							),
+							product: product.trim() || conceptIdea.trim(),
+							headline: headline.trim(),
+							conceptIdea: conceptIdea.trim(),
+							conceptMode: promotionMode === "concept",
+						})
+					: undefined;
 			const fd = new FormData();
 			fd.set(
 				"prompt",
@@ -7506,6 +7566,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					showreelScheme,
 					sphereMgScheme,
 					logoMgScheme,
+					triangleLightMgScheme,
 				}),
 			);
 			fd.set("visual_style", visualStyleId);
@@ -7583,7 +7644,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		const showreelAspect =
 			mode === "h3-showreel"
 				? parseH3ShowreelAspect(h3ShowreelAspect)
-				: mode === "h3-logo-mg"
+				: mode === "h3-logo-mg" || mode === "h3-triangle-light-mg"
 					? "16:9"
 					: "9:16";
 		const showreelScheme =
@@ -7616,6 +7677,24 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 						conceptMode: promotionMode === "concept",
 					})
 				: undefined;
+		const triangleLightMgScheme =
+			mode === "h3-triangle-light-mg"
+				? resolveH3TriangleLightMgScheme({
+						pick: parseH3TriangleLightMgSchemePick(
+							h3TriangleLightMgSchemePick,
+						),
+						product: product.trim() || conceptIdea.trim(),
+						headline: headline.trim(),
+						conceptIdea: conceptIdea.trim(),
+						conceptMode: promotionMode === "concept",
+					})
+				: undefined;
+		const durationSec =
+			mode === "food-bullet-time"
+				? foodBulletDurationSec(foodBulletArc)
+				: mode === "h3-triangle-light-mg"
+					? clampTriangleLightMgDurationSec(videoSettings.duration)
+					: H3_SHOT_RECIPE_DURATION_SEC[mode];
 		const prompt = buildH3ShotRecipePrompt({
 			mode,
 			conceptMode: promotionMode === "concept",
@@ -7631,6 +7710,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			showreelScheme,
 			sphereMgScheme,
 			logoMgScheme,
+			triangleLightMgScheme,
+			durationSec,
 		});
 		setVideoPrompt(prompt);
 		setVideoNote(m.wizard.h3ShotAnimating[mode]);
@@ -7641,14 +7722,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		fd.set("promotion_mode", promotionMode);
 		fd.set("prompt", prompt);
 		fd.set("resolution", vOpts.resolution);
-		fd.set(
-			"duration",
-			String(
-				mode === "food-bullet-time"
-					? foodBulletDurationSec(foodBulletArc)
-					: H3_SHOT_RECIPE_DURATION_SEC[mode],
-			),
-		);
+		fd.set("duration", String(durationSec));
 		fd.set("aspect_ratio", showreelAspect);
 		fd.set("generate_audio", "false");
 		fd.set(
@@ -7659,7 +7733,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					? H3_MOVIE_TITLE_NEGATIVE
 					: mode === "h3-logo-mg"
 						? H3_LOGO_MG_NEGATIVE
-						: H3_SHOT_RECIPE_NEGATIVE,
+						: mode === "h3-triangle-light-mg"
+							? H3_TRIANGLE_LIGHT_MG_NEGATIVE
+							: H3_SHOT_RECIPE_NEGATIVE,
 		);
 		fd.set(
 			"avoid_on_screen_text",
@@ -9411,10 +9487,13 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					conceptIdea.trim() ||
 					business.trim()
 				: product.trim() || business.trim();
+		const durationSec = clampBulletProductElevateDurationSec(
+			videoSettings.duration,
+		);
 		const fxPrompt = buildBulletProductElevateVideoPrompt({
 			product: subject || "the product",
 			conceptMode: promotionMode === "concept",
-			durationSec: BULLET_PRODUCT_ELEVATE_DURATION_SEC,
+			durationSec,
 		});
 		if (videoPrompt.trim() !== fxPrompt) setVideoPrompt(fxPrompt);
 
@@ -9423,7 +9502,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		fd.set("promotion_mode", promotionMode);
 		fd.set("prompt", seedancePromptForGenerate(fxPrompt));
 		fd.set("resolution", "480p");
-		fd.set("duration", String(BULLET_PRODUCT_ELEVATE_DURATION_SEC));
+		fd.set("duration", String(durationSec));
 		fd.set("aspect_ratio", "9:16");
 		fd.set("motion_strength", "74");
 		fd.set("negative_prompt", negativePrompt);
@@ -9436,7 +9515,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 
 		const fx = await generateStartEndFxVideo({
 			fd,
-			recipeDurationSec: BULLET_PRODUCT_ELEVATE_DURATION_SEC,
+			recipeDurationSec: durationSec,
 		});
 		const pathNote = wizardVideoReadyExtraNote(fx.data);
 		const h3Reason =
@@ -10514,6 +10593,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				case "h3-showreel":
 				case "h3-sphere-mg":
 				case "h3-logo-mg":
+				case "h3-triangle-light-mg":
 				case "h3-movie-title":
 				case "h3-lifestyle":
 					url = await makeH3ShotRecipeVideo(
@@ -11799,6 +11879,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		setH3SphereMgSchemePick,
 		h3LogoMgSchemePick,
 		setH3LogoMgSchemePick,
+		h3TriangleLightMgSchemePick,
+		setH3TriangleLightMgSchemePick,
 		socialDripMetaphorPick,
 		setSocialDripMetaphorPick,
 		socialDripPlanNote,

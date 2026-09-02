@@ -37,6 +37,7 @@ export type VideoSubpath =
   | "h3_showreel"
   | "h3_sphere_mg"
   | "h3_logo_mg"
+  | "h3_triangle_light_mg"
   | "h3_movie_title"
   | "h3_lifestyle"
   | "reference_reel"

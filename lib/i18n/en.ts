@@ -874,7 +874,7 @@ export const en = {
 		tokenCostImage: "Image creation",
 		tokenCostStoryboard: "Storyboard pack",
 		tokenCostMusic: "Music bed",
-		tokenCostVideoDraft: "Short video (~8s)",
+		tokenCostVideoDraft: "Short video (8/10/12s)",
 		tokenCostVoice: "Voiceover",
 		tokensVideoNote:
 			"Counted at 1K stills and 8s 480p video (lowest settings). Higher resolution, longer clips, more scenes, and logo passes use more tokens.",
@@ -1043,11 +1043,11 @@ export const en = {
 						"Intact studio hero → floating-parts still → ~4s soft teardown (stylized, not CAD).",
 					costHint: "~2 images + 4s video · product photo",
 				},
-				"product-bullet-elevate-8s": {
-					title: "Bullet-time product elevate ~8s",
+				"product-bullet-elevate-10s": {
+					title: "Bullet-time product elevate ~10s",
 					description:
 						"Model walk → silk twist → floating products orbit → settle. Lifestyle + product photo.",
-					costHint: "~2 images + 8s video · product / lifestyle photo",
+					costHint: "~2 images + 10s video · product / lifestyle photo",
 				},
 				"concept-blockbuster-9s": {
 					title: "Blockbuster logo/mascot ~9s",
@@ -1068,10 +1068,10 @@ export const en = {
 					costHint: "~2 images + 4s video · logo/mascot",
 				},
 				"concept-explosion-unbox-8s": {
-					title: "AI explosion unbox ~8s",
+					title: "AI explosion unbox ~10s",
 					description:
 						"Themed box shakes open → room assembles → props float. Text-to-video — theme only.",
-					costHint: "~8s single clip · theme (no product photo)",
+					costHint: "~10s single clip · theme (no product photo)",
 				},
 				"concept-hand-throw-scene-6s": {
 					title: "Hand throw → scene (concept) ~6s",
@@ -1085,11 +1085,11 @@ export const en = {
 						"Logo/mascot as device lock → floating-parts still → ~4s soft teardown.",
 					costHint: "~2 images + 4s video · logo/mascot",
 				},
-				"concept-bullet-elevate-8s": {
-					title: "Bullet-time elevate (concept) ~8s",
+				"concept-bullet-elevate-10s": {
+					title: "Bullet-time elevate (concept) ~10s",
 					description:
 						"Logo/mascot lifestyle walk → silk twist → floating orbit → settle.",
-					costHint: "~2 images + 8s video · logo/mascot",
+					costHint: "~2 images + 10s video · logo/mascot",
 				},
 				"product-ecom-orbit-6s": {
 					title: "E-com orbit ~6s",
@@ -1110,10 +1110,10 @@ export const en = {
 					costHint: "~6s single clip · food or texture still",
 				},
 				"product-luxury-tabletop-8s": {
-					title: "Luxury tabletop + hand ~8s",
+					title: "Luxury tabletop + hand ~10s",
 					description:
 						"Marble / silk tabletop, finger touch or open the product, one continuous take.",
-					costHint: "~8s single clip · product photo",
+					costHint: "~10s single clip · product photo",
 				},
 				"product-beauty-mv-10s": {
 					title: "Beauty / MV one-take ~10s",
@@ -1122,16 +1122,16 @@ export const en = {
 					costHint: "~10s single clip · face or character still",
 				},
 				"product-imitate-ad-8s": {
-					title: "Imitate this ad ~8s",
+					title: "Imitate this ad ~10s",
 					description:
 						"Your product still + a reference MP4 → copies camera language, keeps your SKU.",
-					costHint: "~8s · product photo + reference video",
+					costHint: "~10s · product photo + reference video",
 				},
 				"product-neon-on-real-8s": {
-					title: "Neon on real ~8s",
+					title: "Neon on real ~10s",
 					description:
 						"Your real footage + glowing neon drawings (animals, marks) that move through the scene.",
-					costHint: "~8s · real MP4 (+ optional product still)",
+					costHint: "~10s · real MP4 (+ optional product still)",
 				},
 				"product-food-bullet-time-6s": {
 					title: "Food bullet-time ~6s",
@@ -1140,40 +1140,46 @@ export const en = {
 					costHint: "~6s · person + food photo (or generating still)",
 				},
 				"product-c4d-motion-8s": {
-					title: "C4D motion visual ~8s",
+					title: "C4D motion visual ~10s",
 					description:
 						"Black-void brand MG: metallic open → abstract materials → your product reveal (Nike-style C4D).",
-					costHint: "~8s · product photo (or generating still)",
+					costHint: "~10s · product photo (or generating still)",
 				},
 				"product-h3-showreel-8s": {
-					title: "showreel ~8s",
+					title: "showreel ~10s",
 					description:
 						"Hero still + style cards (Car · Keyboard · Abstract). Kinetic type OK; optional 16:9. Reference MP4 optional.",
-					costHint: "~8s · product photo (optional showreel MP4)",
+					costHint: "~10s · product photo (optional showreel MP4)",
 				},
 				"product-h3-sphere-mg-8s": {
-					title: "sphere MG ~8s",
+					title: "sphere MG ~10s",
 					description:
 						"C4D sphere world first, then your product comes out as the hero. Kinetic type OK.",
-					costHint: "~8s · product photo (or generating still)",
+					costHint: "~10s · product photo (or generating still)",
 				},
 				"product-h3-logo-mg-8s": {
-					title: "3D logo MG ~8s",
+					title: "3D logo MG ~10s",
 					description:
 						"Upload a logo → bright glass / chrome / ribbon 3D logo interpretation. Brand bumper.",
-					costHint: "~8s · logo or packshot with readable mark",
+					costHint: "~10s · logo or packshot with readable mark",
+				},
+				"product-h3-triangle-light-mg-10s": {
+					title: "Triangle light MG ~10s",
+					description:
+						"Frosted triangles + orange caustics + kinetic titles → brand lock. Exhibit / Flow schemes.",
+					costHint: "~10–12s 16:9 · logo + brand name",
 				},
 				"product-h3-movie-title-8s": {
-					title: "movie-title ~8s",
+					title: "movie-title ~10s",
 					description:
 						"Cinematic title cards + multi-panel wipes around your product. Designed type allowed — no reference reel.",
-					costHint: "~8s · product photo (or generating still)",
+					costHint: "~10s · product photo (or generating still)",
 				},
 				"product-h3-lifestyle-8s": {
-					title: "lifestyle person ~8s",
+					title: "lifestyle person ~10s",
 					description:
 						"Person using your product in a real lifestyle scene — cafe, street, home. Not beauty MV.",
-					costHint: "~8s · person + product photo (or generate still)",
+					costHint: "~10s · person + product photo (or generate still)",
 				},
 				"product-gaming-cover": {
 					title: "Gaming cover",
@@ -1200,16 +1206,16 @@ export const en = {
 					costHint: "~10s single clip · logo/mascot still",
 				},
 				"concept-imitate-ad-8s": {
-					title: "Imitate this ad (concept) ~8s",
+					title: "Imitate this ad (concept) ~10s",
 					description:
 						"Brand mark + reference MP4 → follows the reel’s camera, keeps your identity.",
-					costHint: "~8s · logo/mascot + reference video",
+					costHint: "~10s · logo/mascot + reference video",
 				},
 				"concept-neon-on-real-8s": {
-					title: "Neon on real (concept) ~8s",
+					title: "Neon on real (concept) ~10s",
 					description:
 						"Real footage + neon animals/marks that move through the scene — optional logo lock.",
-					costHint: "~8s · real MP4 (+ optional logo still)",
+					costHint: "~10s · real MP4 (+ optional logo still)",
 				},
 				"concept-food-bullet-time-6s": {
 					title: "Food bullet-time (concept) ~6s",
@@ -1218,40 +1224,46 @@ export const en = {
 					costHint: "~6s · lifestyle food photo required",
 				},
 				"concept-c4d-motion-8s": {
-					title: "C4D motion visual (concept) ~8s",
+					title: "C4D motion visual (concept) ~10s",
 					description:
 						"Logo / mascot on black void → abstract CGI textures → identity-locked reveal. Premium brand MG.",
-					costHint: "~8s · logo/mascot still",
+					costHint: "~10s · logo/mascot still",
 				},
 				"concept-h3-showreel-8s": {
-					title: "showreel (concept) ~8s",
+					title: "showreel (concept) ~10s",
 					description:
 						"Logo / mascot + style cards. Prefer Abstract morph; Car/Keyboard if the mark fits. Optional 16:9; kinetic type OK. Reference MP4 optional.",
-					costHint: "~8s · logo/mascot still (optional showreel MP4)",
+					costHint: "~10s · logo/mascot still (optional showreel MP4)",
 				},
 				"concept-h3-sphere-mg-8s": {
-					title: "sphere MG (concept) ~8s",
+					title: "sphere MG (concept) ~10s",
 					description:
 						"Logo / mascot as sphere identity — matte planet / neon / crystal wrap. No reference reel required.",
-					costHint: "~8s · logo/mascot still",
+					costHint: "~10s · logo/mascot still",
 				},
 				"concept-h3-logo-mg-8s": {
-					title: "3D logo MG (concept) ~8s",
+					title: "3D logo MG (concept) ~10s",
 					description:
 						"Upload logo → bright glass UI / chrome type / ribbon / pin-field 3D interpretation. Premium brand bumper.",
-					costHint: "~8s · logo/mascot still",
+					costHint: "~10s · logo/mascot still",
+				},
+				"concept-h3-triangle-light-mg-10s": {
+					title: "Triangle light MG (concept) ~10s",
+					description:
+						"Logo + brand name → dark void triangle-light brand intro. Exhibit / Flow.",
+					costHint: "~10–12s 16:9 · logo + brand name",
 				},
 				"concept-h3-movie-title-8s": {
-					title: "movie-title (concept) ~8s",
+					title: "movie-title (concept) ~10s",
 					description:
 						"Logo / mascot in cinematic title cards + multi-panel. Designed type allowed.",
-					costHint: "~8s · logo/mascot still",
+					costHint: "~10s · logo/mascot still",
 				},
 				"concept-h3-lifestyle-8s": {
-					title: "lifestyle (concept) ~8s",
+					title: "lifestyle (concept) ~10s",
 					description:
 						"Person + brand mark in a lifestyle scene. Prefer a lifestyle photo (logo alone is weak).",
-					costHint: "~8s · person + logo/mascot lifestyle still",
+					costHint: "~10s · person + logo/mascot lifestyle still",
 				},
 				"concept-gaming-cover": {
 					title: "Gaming cover (concept)",
@@ -2116,7 +2128,7 @@ export const en = {
 					"Dramatic short-film look for concept stories, PSA, and viral-style clips",
       },
       "explosion-unbox": {
-        title: "AI explosion unbox ~8s",
+        title: "AI explosion unbox ~10s",
         description:
           "Themed box opens → room assembles → props float. Text-to-video — no product photo.",
       },
@@ -2209,7 +2221,7 @@ export const en = {
       planNote:
         "Text-to-video from your theme + brief — no image step. Pro plan for this template.",
       videoStepIntro:
-        "Your explosion-unbox prompt is ready from Setup. Generate an ~8s text-to-video clip — no keyframe needed.",
+        "Your explosion-unbox prompt is ready from Setup. Generate an ~10s text-to-video clip — no keyframe needed.",
     },
     creativeBriefLabel: "Creative video brief (required)",
     creativeBriefPlaceholder:
@@ -2735,7 +2747,7 @@ export const en = {
     conceptCinematicPathsTitle: "Concept cinematic reel (image → video)",
     conceptCinematicPathsHint:
 			"Generate a still keyframe first, then animate with video generation. Best quality for viral cinematic Reels — not pure text-to-video.",
-    conceptCinematicSingleTitle: "Single scene (~8s)",
+    conceptCinematicSingleTitle: "Single scene (8/10/12s)",
 		conceptCinematicSingleDesc:
 			"One keyframe + one clip — quick cinematic hook.",
     conceptCinematicSingleImageStepIntro:
@@ -3305,7 +3317,7 @@ export const en = {
 			"bullet-product-elevate": {
 				title: "Bullet-time product elevate",
 				description:
-					"Lifestyle walk → silk twist → floating SKUs orbit → settle. ~8s one-take.",
+					"Lifestyle walk → silk twist → floating SKUs orbit → settle. Default ~10s (8/10/12).",
 			},
 			"ecom-orbit": {
 				title: "E-com orbit",
@@ -3366,6 +3378,11 @@ export const en = {
 				title: "3D logo MG",
 				description:
 					"Bright glass / chrome logo interpretation — upload mark → premium brand bumper.",
+			},
+			"h3-triangle-light-mg": {
+				title: "Triangle light MG",
+				description:
+					"三角光品牌片头 — frosted triangles + caustics + kinetic type → brand lock. Exhibit / Flow.",
 			},
 			"h3-movie-title": {
 				title: "movie-title",
@@ -3601,6 +3618,8 @@ export const en = {
 				"Required: product photo — or logo / mascot still (concept). Sphere world first, then product reveal; kinetic type OK. No reference reel.",
 			"h3-logo-mg":
 				"Required: logo / wordmark still (preferred) — or packshot with a readable brand mark. Bright 3D logo interpretation; no reference reel.",
+			"h3-triangle-light-mg":
+				"Required: logo / wordmark + brand name (CN/EN). Packshot only if the mark is clearly readable.",
 			"h3-movie-title":
 				"Required: product photo — or logo / mascot still (concept). Title cards + panels; designed type allowed.",
 			"h3-lifestyle":
@@ -3614,7 +3633,7 @@ export const en = {
 			"macro-snap":
 				"Upload a food/texture photo first — Generate stays off until then. Then drips / crumbs / break.",
 			"luxury-tabletop":
-				"Upload product or premium logo still first — Generate stays off until then. Then hand + tabletop ~8s.",
+				"Upload product or premium logo still first — Generate stays off until then. Then hand + tabletop ~10s.",
 			"beauty-mv":
 				"Upload a face/character photo first — Generate stays off until then. Then MV orbit ~10s.",
 			"imitate-ad":
@@ -3624,17 +3643,19 @@ export const en = {
 			"food-bullet-time":
 				"Upload a person+food check-in photo first — Generate stays off until then. Camera orbits a frozen food burst ~6s.",
 			"c4d-motion":
-				"Upload product or logo/mascot still first — Generate stays off until then. Then ~8s black-void C4D reveal.",
+				"Upload product or logo/mascot still first — Generate stays off until then. Then ~10s black-void C4D reveal.",
 			"h3-showreel":
 				"Upload a hero still first — Generate stays off until then. Style cards drive the one-take. Optional 16:9; kinetic type allowed. MP4 optional.",
 			"h3-sphere-mg":
-				"Upload product or logo/mascot still first — Generate stays off until then. Then ~8s sphere motion-graphics one-take.",
+				"Upload product or logo/mascot still first — Generate stays off until then. Then ~10s sphere motion-graphics one-take.",
 			"h3-logo-mg":
-				"Upload a logo/wordmark first — Generate stays off until then. Pick a style card (glass / chrome / ribbon / pins). ~8s 16:9 brand bumper.",
+				"Upload a logo/wordmark first — Generate stays off until then. Pick a style card (glass / chrome / ribbon / pins). ~10s 16:9 brand bumper.",
+			"h3-triangle-light-mg":
+				"Triangle-light brand bumper · Exhibit / Flow · ~10–12s · kinetic type OK.",
 			"h3-movie-title":
-				"Upload product or logo/mascot still first — Generate stays off until then. Then ~8s title-card / multi-panel one-take.",
+				"Upload product or logo/mascot still first — Generate stays off until then. Then ~10s title-card / multi-panel one-take.",
 			"h3-lifestyle":
-				"Upload a person+product lifestyle photo first — Generate stays off until then. Then ~8s lifestyle one-take.",
+				"Upload a person+product lifestyle photo first — Generate stays off until then. Then ~10s lifestyle one-take.",
 		},
 		macroSnapIntensityTitle: "Crack & drip strength",
 		macroSnapIntensityHint:
@@ -3663,7 +3684,7 @@ export const en = {
 			},
 			"hero-plate": {
 				title: "3-beat → hero plate",
-				desc: "Static → lighter explosion → clean finished plate (~8s)",
+				desc: "Static → lighter explosion → clean finished plate (8/10/12s)",
 			},
 		},
 		h3ShowreelAspectTitle: "Showreel aspect",
@@ -3745,6 +3766,20 @@ export const en = {
 				desc: "Glossy pin / dot wave",
 			},
 		},
+		h3TriangleLightMgSchemeTitle: "Triangle light style",
+		h3TriangleLightMgSchemeHint:
+			"Same dark-void triangle dialect — Exhibit (gallery titles) or Flow (flowing symbols). Auto picks a fit.",
+		h3TriangleLightMgSchemeAuto: "Auto · best fit",
+		h3TriangleLightMgSchemes: {
+			exhibit: {
+				title: "Exhibit",
+				desc: "三角光艺术展 — glass triangles → kinetic 3D/TVC titles → brand lock",
+			},
+			flow: {
+				title: "Flow",
+				desc: "流动三角 — soft prism float → MAPPING/PRODUCT FILM energy → brand lock",
+			},
+		},
 		recipePathUxTitles: {
 			need: "What you need",
 			attention: "Pay attention",
@@ -3790,7 +3825,7 @@ export const en = {
 					"Luxury materials and mark stay locked",
 					"One elegant hand interaction",
 				],
-				output: ["~8s tabletop luxury one-take"],
+				output: ["~10s tabletop luxury one-take"],
 			},
 			"beauty-mv": {
 				need: ["Face or mascot / character still"],
@@ -3809,7 +3844,7 @@ export const en = {
 					"Your subject stays — reference product is not copied",
 					"Camera / rhythm follow the reel",
 				],
-				output: ["~8s imitate-ad clip on single-clip"],
+				output: ["~10s imitate-ad clip on single-clip"],
 			},
 			"neon-on-real": {
 				need: [
@@ -3820,7 +3855,7 @@ export const en = {
 					"Real scene stays — neon is overlay, not a full CGI replace",
 					"Upload a logo/mascot to shape the neon object; skip still for generic neon marks",
 				],
-				output: ["~8s neon-on-real one-take"],
+				output: ["~10s neon-on-real one-take"],
 			},
 			"food-bullet-time": {
 				need: [
@@ -3845,7 +3880,7 @@ export const en = {
 					"Dark void + abstract materials serve YOUR product, not a Nike clone",
 					"Continuous one-take — not a hard-cut montage",
 				],
-				output: ["~8s C4D / brand motion-graphics one-take"],
+				output: ["~10s C4D / brand motion-graphics one-take"],
 			},
 			"h3-showreel": {
 				need: [
@@ -3858,7 +3893,7 @@ export const en = {
 					"Kinetic / designed type allowed; no captions or UI chrome",
 					"Abstract morph is the general fit; Car/Keyboard are specialist looks",
 				],
-				output: ["~8s showreel (9:16 or 16:9)"],
+				output: ["~10s showreel (9:16 or 16:9)"],
 			},
 			"h3-sphere-mg": {
 				need: [
@@ -3871,7 +3906,7 @@ export const en = {
 					"Not a blank grey planet, not NASA Earth",
 					"Regenerate the still first if the still is only a sphere",
 				],
-				output: ["~8s sphere motion-graphics one-take"],
+				output: ["~10s sphere motion-graphics one-take"],
 			},
 			"h3-logo-mg": {
 				need: [
@@ -3882,9 +3917,22 @@ export const en = {
 					"Pick a card: Glass UI · Chrome type · Ribbon peel · Pin field",
 					"Bright glass/chrome look — not the dark sphere MG path",
 					"Your uploaded mark stays locked — no invented competitor logos",
-					"Output is 16:9 brand bumper (~8s)",
+					"Output is 16:9 brand bumper (8/10/12s)",
 				],
-				output: ["~8s 16:9 3D logo interpretation one-take"],
+				output: ["~10s 16:9 3D logo interpretation one-take"],
+			},
+			"h3-triangle-light-mg": {
+				need: [
+					"Logo / wordmark PNG (preferred) + brand name (CN and/or EN)",
+					"Clear silhouette and colors for identity lock",
+				],
+				attention: [
+					"Pick Exhibit (art gallery titles) or Flow (flowing symbols)",
+					"Dark void + frosted triangles + orange caustics — not packshot orbit",
+					"Kinetic titles OK; uploaded mark stays locked",
+					"Output is 16:9 brand bumper (10/12s)",
+				],
+				output: ["~10–12s 16:9 triangle-light brand intro"],
 			},
 			"h3-movie-title": {
 				need: [
@@ -3896,7 +3944,7 @@ export const en = {
 					"Your subject stays locked across panels",
 					"No reference reel — use imitate-ad if you have an example MP4",
 				],
-				output: ["~8s movie-title / multi-panel one-take"],
+				output: ["~10s movie-title / multi-panel one-take"],
 			},
 			"h3-lifestyle": {
 				need: [
@@ -3908,7 +3956,7 @@ export const en = {
 					"Keep the same person and product identity",
 					"Natural cafe / street / home context works best",
 				],
-				output: ["~8s lifestyle person one-take"],
+				output: ["~10s lifestyle person one-take"],
 			},
 			"designed-poster": {
 				need: [
@@ -4015,10 +4063,10 @@ export const en = {
 					"Clear hero silhouette for identity lock",
 				],
 				attention: [
-					"Walk → twist → bullet-time orbit → settle (~8s)",
+					"Walk → twist → bullet-time orbit → settle (8/10/12s)",
 					"Not studio teardown explode — lifestyle one-take",
 				],
-				output: ["~2 stills + 8s bullet-time elevate clip"],
+				output: ["~2 stills + 8–12s bullet-time elevate clip"],
 			},
 			"motion-poster": {
 				need: [
@@ -4078,6 +4126,7 @@ export const en = {
 			"h3-showreel": "Generating showreel still…",
 			"h3-sphere-mg": "Generating sphere still…",
 			"h3-logo-mg": "Generating logo MG still…",
+			"h3-triangle-light-mg": "Generating triangle-light still…",
 			"h3-movie-title": "Generating title still…",
 			"h3-lifestyle": "generating lifestyle still…",
 		},
@@ -4094,6 +4143,7 @@ export const en = {
 			"h3-showreel": "Generating showreel…",
 			"h3-sphere-mg": "Generating sphere MG…",
 			"h3-logo-mg": "Generating 3D logo MG…",
+			"h3-triangle-light-mg": "Animating triangle-light brand MG…",
 			"h3-movie-title": "Generating movie-title…",
 			"h3-lifestyle": "Generating lifestyle…",
 		},
@@ -4175,7 +4225,7 @@ export const en = {
 		productExplodeNeedKeyframe:
 			"Upload a product photo first (concept: logo/mascot still — text alone is not enough).",
 		bulletProductElevateHint:
-			"Lifestyle walk → silk twist → floating products in bullet-time → settle. Needs a clear product or lifestyle photo (~8s).",
+			"Lifestyle walk → silk twist → floating products in bullet-time → settle. Needs a clear product or lifestyle photo (default 10s; pick 8/10/12).",
 		bulletProductElevateBuildingStill: "Step 1/3: lifestyle walk start still…",
 		bulletProductElevateBuildingEnd: "Step 2/3: bullet-time freeze end still…",
 		bulletProductElevateAnimatingCard: "Step 3/3: bullet-time elevate morph…",
