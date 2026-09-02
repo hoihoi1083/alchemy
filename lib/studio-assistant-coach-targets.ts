@@ -3,6 +3,7 @@ import type { CoachTaskKind } from "@/lib/studio-assistant-coach-profile";
 /** DOM ids — use data-coach-id on wizard controls */
 export const COACH_TARGET = {
   landingAction: "coach-landing-action",
+  workflowMode: "coach-workflow-mode",
   brandWebsite: "coach-brand-website",
   analyzeBrand: "coach-analyze-brand",
   conceptIdea: "coach-concept-idea",
@@ -41,6 +42,8 @@ export function coachTaskToTargetId(task: CoachTaskKind): CoachTargetId | null {
       return COACH_TARGET.productName;
     case "choose-visual-style":
       return COACH_TARGET.visualStylePaths;
+    case "choose-workflow-mode":
+      return COACH_TARGET.workflowMode;
     case "choose-image-output":
       return COACH_TARGET.imageOutputMode;
     case "enter-brand-url":

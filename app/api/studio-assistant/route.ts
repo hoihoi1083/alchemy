@@ -255,14 +255,14 @@ export async function POST(request: Request) {
   const detectedUrl =
     extractUrlFromMessages(messages) || snapshot.brandWebsiteUrl.trim() || undefined;
   const intent = detectStudioAssistantIntent(lastUser.content);
-  const turnMode = detectAssistantTurnMode(lastUser.content, intent);
+  const turnMode =
+    snapshot.surface === "studio"
+      ? "ask"
+      : detectAssistantTurnMode(lastUser.content, intent);
   const previousCoachTask =
     typeof body.previousCoachTask === "string"
       ? (body.previousCoachTask as CoachTaskKind)
       : null;
-
-  const quota = await assertFreeDeepSeekQuota(auth.user.userId);
-  if (!quota.ok) return quota.response;
 
   const meta = {
     fastPath: false,
@@ -298,6 +298,9 @@ export async function POST(request: Request) {
       meta: { ...meta, fastPath: true, coachTask: finalized.coachTask },
     });
   }
+
+  const quota = await assertFreeDeepSeekQuota(auth.user.userId);
+  if (!quota.ok) return quota.response;
 
   const sitePreview = detectedUrl ? await loadSitePreview(detectedUrl) : "";
   const knowledgeChunks = retrieveAssistantKnowledge(lastUser.content, {

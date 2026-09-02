@@ -41,20 +41,6 @@ const WAIT_PANEL_CSS = `
   line-height: 1.5;
   color: #64748b;
 }
-.igw-progress-track {
-  height: 0.5rem;
-  width: 100%;
-  border-radius: 9999px;
-  background: #f5f3ff;
-  overflow: hidden;
-}
-.igw-progress-fill {
-  height: 100%;
-  border-radius: 9999px;
-  background: #6c3bff;
-  box-shadow: 0 0 0 1px rgba(108,59,255,0.08);
-  transition: width 0.4s ease;
-}
 @media (max-width: 639px) {
   .igw-page { margin-left: 0; margin-right: 0; }
   .igw-panel { border-radius: 1rem; }
@@ -100,10 +86,6 @@ export function ImageGenerateWaitPanel({
 }: Props) {
   const { m } = useLocale();
   const mw = m.microWizard;
-  const pct =
-    progress && typeof progress.pct === "number"
-      ? Math.max(0, Math.min(100, Math.round(progress.pct)))
-      : null;
 
   return (
     <div className="igw-page w-full min-w-0">
@@ -128,6 +110,7 @@ export function ImageGenerateWaitPanel({
           <div className="mt-3 min-w-0 sm:mt-4">
             <GenerationWaitPlaceholder
               message={progress?.label?.trim() || message}
+              hint={m.wizard.generationWaitHint}
               aspectRatio={waitAspectFromString(
                 typeof aspectRatio === "string" ? aspectRatio : aspectRatio ?? undefined,
               )}
@@ -136,20 +119,6 @@ export function ImageGenerateWaitPanel({
               compact
             />
           </div>
-
-          {pct != null ? (
-            <div className="mt-3 space-y-2 sm:mt-4">
-              <div className="igw-progress-track" aria-hidden>
-                <div className="igw-progress-fill" style={{ width: `${pct}%` }} />
-              </div>
-              <p className="text-center text-[11px] font-medium text-violet-700 sm:text-xs">
-                {pct}%
-                {progress?.eta ? (
-                  <span className="font-normal text-slate-500"> · {progress.eta}</span>
-                ) : null}
-              </p>
-            </div>
-          ) : null}
         </div>
       </div>
     </div>

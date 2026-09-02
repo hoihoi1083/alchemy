@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import type { ProgressInfo } from "@/hooks/useWizardProgress";
+import { GenerationProgressBar } from "@/components/studio/GenerationProgressBar";
 
 export type WaitAspectRatio = "9:16" | "4:5" | "1:1" | "16:9" | "auto";
 
@@ -60,12 +61,23 @@ const WAIT_FRAME_CSS = `
   background: linear-gradient(to top, #1a1528, rgba(26, 21, 40, 0.9), transparent);
   padding: 2.5rem 0.85rem 0.85rem;
 }
+.gen-wait-fade--with-bar {
+  padding-bottom: 3.65rem;
+}
+.gen-wait-progress {
+  position: absolute;
+  inset-inline: 0.65rem;
+  bottom: 0.65rem;
+  z-index: 3;
+}
 @media (min-width: 640px) {
   .gen-wait-frame { height: 240px; border-radius: 1rem; }
   .gen-wait-frame--compact { height: 220px; }
   .gen-wait-logo { height: 3.5rem; width: 3.5rem; }
   .gen-wait-msg { font-size: 14px; }
   .gen-wait-fade { padding: 3rem 1rem 1rem; }
+  .gen-wait-fade--with-bar { padding-bottom: 3.85rem; }
+  .gen-wait-progress { inset-inline: 0.75rem; bottom: 0.75rem; }
 }
 @media (min-width: 1024px) {
   .gen-wait-frame { height: 300px; border-radius: 1.15rem; }
@@ -113,6 +125,7 @@ export function GenerationWaitPlaceholder({
   message,
   hint,
   previewUrl,
+  progress,
   className = "",
   compact = false,
 }: GenerationWaitPlaceholderProps) {
@@ -211,10 +224,16 @@ export function GenerationWaitPlaceholder({
     };
   }, []);
 
+  const pct =
+    progress && typeof progress.pct === "number"
+      ? Math.max(0, Math.min(100, Math.round(progress.pct)))
+      : null;
+
   return (
+    <div className={className.trim() || undefined}>
     <div
       ref={frameRef}
-      className={`gen-wait-frame${compact ? " gen-wait-frame--compact" : ""} ${className}`.trim()}
+      className={`gen-wait-frame${compact ? " gen-wait-frame--compact" : ""}`.trim()}
     >
       <style dangerouslySetInnerHTML={{ __html: WAIT_FRAME_CSS }} />
 
@@ -232,10 +251,22 @@ export function GenerationWaitPlaceholder({
         <img src="/alchemy-logo.png" alt="" className="gen-wait-logo" />
       </div>
 
-      <div className="gen-wait-fade">
+      <div className={`gen-wait-fade${pct != null ? " gen-wait-fade--with-bar" : ""}`.trim()}>
         <p className="gen-wait-msg">{message}</p>
         {hint ? <p className="gen-wait-hint">{hint}</p> : null}
       </div>
+
+      {pct != null ? (
+        <div className="gen-wait-progress">
+          <GenerationProgressBar
+            embedded
+            label={progress?.label?.trim() || message}
+            sublabel={progress?.eta || hint}
+            pct={pct}
+          />
+        </div>
+      ) : null}
+    </div>
     </div>
   );
 }

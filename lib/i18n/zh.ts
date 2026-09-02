@@ -5144,7 +5144,7 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 		shortLabel: "問 AI",
 		openingStudio: "正在開啟工作室並套用設定…",
 		studioContinued:
-			"你已入 studio — 對話會保留。回覆 下一步 繼續 Step 2。",
+			"已開工作室 — 跟嗰頁步驟（揀出圖／出片／圖+片，再 Continue）。Tokens 或工具可以喺呢度再問。",
 		placeholder: "例如：免費 300 token 夠唔夠 12 秒 Reel？或者：Ultra 畫布做產品主圖…",
 		thinking: "諗緊…",
 		send: "發送",

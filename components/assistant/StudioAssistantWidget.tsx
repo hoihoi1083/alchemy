@@ -45,6 +45,7 @@ import { readCaptionHandoff } from "@/lib/caption-studio-draft";
 import { IMAGE_CANVAS_DRAFT_KEY } from "@/lib/image-canvas-studio-draft";
 import { isSafeAssistantPath } from "@/lib/studio-assistant-allowed-paths";
 import { isCoachContinueReply } from "@/lib/studio-assistant-continue";
+import { extractCampaignHint } from "@/lib/studio-assistant-coach";
 
 type ChatMessage = StudioAssistantMessage & { _id?: string };
 
@@ -320,7 +321,10 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
       }
       const url = resolvePendingUrl() ?? undefined;
       const wizardApi = surface === "studio" ? wizard : null;
-      const campaignMessage = opts?.campaignMessage ?? lastUserMessage(messages);
+      const campaignMessage =
+        opts?.campaignMessage ??
+        (extractCampaignHint(messages.map(({ role, content }) => ({ role, content }))) ||
+          lastUserMessage(messages));
 
       if (actionNavigatesAway(parsed) && surface !== "studio") {
         const note =

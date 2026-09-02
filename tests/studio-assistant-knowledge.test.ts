@@ -75,6 +75,13 @@ describe("assistant knowledge retrieve", () => {
     );
   });
 
+  it("disables coach fast-path inside studio", () => {
+    const snap = buildDefaultAssistantSnapshot("studio");
+    snap.promotionMode = "concept";
+    assert.equal(tryStudioAssistantFastPath("next", snap, "en"), null);
+    assert.equal(tryStudioAssistantFastPath("下一步", snap, "zh"), null);
+  });
+
   it("ask system prompt includes knowledge and not Step-1-only coach", () => {
     const snap = buildDefaultAssistantSnapshot("landing");
     const prompt = buildStudioAssistantSystemPrompt("en", snap, {

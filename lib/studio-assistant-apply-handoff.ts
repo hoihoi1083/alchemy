@@ -1,9 +1,8 @@
 import type { StudioAssistantHandoff } from "@/lib/studio-assistant-handoff";
 import { applyResearchPostReferences } from "@/lib/content-research-apply-refs";
-import { initialCoachTaskAfterHandoff } from "@/lib/studio-assistant-handoff-coach";
-import { dispatchCoachSpotlight } from "@/lib/studio-assistant-spotlight-bus";
 import type { StudioWizardValue } from "@/hooks/useStudioWizard";
 import { requestMicroWizardRestart } from "@/lib/wizard-micro-steps.types";
+import { seedMicroWizardContextFromHandoff } from "@/lib/wizard-project-snapshot";
 
 export async function applyStudioAssistantHandoff(
   handoff: StudioAssistantHandoff,
@@ -112,16 +111,12 @@ export async function applyStudioAssistantHandoff(
       break;
   }
 
+  seedMicroWizardContextFromHandoff(handoff);
   requestMicroWizardRestart();
   wizard.setStepKey("setup");
   wizard.setError(null);
 
   if (handoff.analyzeBrand && handoff.brandWebsiteUrl) {
     await wizard.analyzeBrand({ websiteUrl: handoff.brandWebsiteUrl });
-  }
-
-  const spotlightTask = initialCoachTaskAfterHandoff(handoff);
-  if (spotlightTask && typeof window !== "undefined") {
-    window.setTimeout(() => dispatchCoachSpotlight(spotlightTask), 400);
   }
 }

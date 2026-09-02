@@ -1,8 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { CoachSpotlightOverlay } from "@/components/assistant/CoachSpotlightOverlay";
-import { StudioAssistantWidget } from "@/components/assistant/StudioAssistantWidget";
 import { ProCanvas } from "@/components/pro/ProCanvas";
 import { StudioNav } from "@/components/studio/StudioNav";
 import { useLocale } from "@/components/LocaleProvider";
@@ -58,8 +56,6 @@ export function ProPageClient() {
 
         <ProCanvas />
       </div>
-      <StudioAssistantWidget surface="pro" />
-      <CoachSpotlightOverlay />
     </main>
   );
 }

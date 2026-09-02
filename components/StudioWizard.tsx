@@ -3,8 +3,6 @@
 import { Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { StepIndicator } from "@/components/StepIndicator";
-import { CoachSpotlightOverlay } from "@/components/assistant/CoachSpotlightOverlay";
-import { StudioAssistantWidget } from "@/components/assistant/StudioAssistantWidget";
 import { DoneStep } from "@/components/studio/DoneStep";
 import { ImageStep } from "@/components/studio/ImageStep";
 import { SetupStep } from "@/components/studio/SetupStep";
@@ -190,8 +188,6 @@ function StudioWizardShell({
   return (
     <WizardProvider promotionMode={promotionMode} startFresh={startFresh}>
       <StudioWizardContent promotionMode={promotionMode} theme={theme} />
-      <CoachSpotlightOverlay />
-      <StudioAssistantWidget surface="studio" />
     </WizardProvider>
   );
 }

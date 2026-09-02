@@ -9,6 +9,7 @@ import {
   clearConceptAssistantState,
   clearConceptResearchState,
 } from "@/lib/concept-source-state";
+import { readStudioAssistantHandoff } from "@/lib/studio-assistant-handoff";
 import {
   clearProjectResumeHint,
   consumeProjectResumeHint,
@@ -150,9 +151,11 @@ function bootstrapMicroFromResume(
   wizard: StudioWizardValue,
   freshEntry: boolean,
 ): ResumeBootstrap {
+  const pendingHandoff = freshEntry ? readStudioAssistantHandoff() : null;
   if (freshEntry) {
-    clearStoredContext();
     clearProjectResumeHint();
+    // Assistant handoff seeds micro ctx before navigate — do not wipe it here.
+    if (!pendingHandoff) clearStoredContext();
   }
 
   const stored = readStoredContext();
@@ -163,9 +166,12 @@ function bootstrapMicroFromResume(
     : null;
   const hint = freshEntry ? null : peekProjectResumeHint();
 
+  const useStoredCtx =
+    !recipeMicro && sameMode && (!freshEntry || Boolean(pendingHandoff));
+
   const ctx: MicroWizardContext = {
     ...defaultMicroContext(promotionMode),
-    ...(recipeMicro ?? (sameMode && !freshEntry ? stored : {})),
+    ...(recipeMicro ?? (useStoredCtx ? stored : {})),
     ...(hint?.microContext ?? {}),
     promotionMode,
   };
@@ -481,7 +487,11 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     if (!reset) return;
     setFinishedSetup(false);
     setStepIndex(0);
-  }, [wizard.workflowMode, wizard.visualStyleId, wizard.stepKey, steps.length]);
+    const stored = readStoredContext();
+    if (stored.workflowMode || stored.intakePath || stored.conceptSource) {
+      setCtx((prev) => ({ ...prev, ...stored, promotionMode }));
+    }
+  }, [wizard.workflowMode, wizard.visualStyleId, wizard.stepKey, steps.length, promotionMode]);
 
   useEffect(() => {
     if (stepIndex >= steps.length && steps.length > 0) {

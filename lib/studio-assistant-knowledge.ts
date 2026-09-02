@@ -64,51 +64,51 @@ export const ASSISTANT_KNOWLEDGE: AssistantKnowledgeChunk[] = [
     en: `Main places:
 - / landing — marketing site, template cards, pricing teaser. Finishable “video recipe” cards are hidden for now.
 - /start — pick physical product vs concept/service, then enter studio.
-- /studio — guided wizard (default simple mode). Studio coach assistant panel is ON here (step-by-step help).
+- /studio — guided wizard (default simple mode). No chat assistant — follow the cards and Continue on screen.
 - /captions — burn subtitles / BGM / voice on any MP4. No assistant panel.
 - /edit-image — clean, add text/logo, export. No assistant panel.
-- /ultra — Ultra canvas (Upload → image → video). Master plan. Pay-per-use tokens. Studio coach assistant ON (Ultra canvas guide).
+- /ultra — Ultra canvas (Upload → image → video). Master plan. Pay-per-use tokens. No assistant panel.
 - /brand-kit — save logo & colors.
 - /library — past generations.
 - /ugc — talking presenter.
 - /pricing /account — plans, tokens, Stripe.
-Ask-AI launcher (small logo) is on the landing page. The same coach also opens inside /studio and /ultra. It is hidden on captions, edit-image, brand-kit, pricing, and other tool pages.`,
+Ask-AI mascot is on the landing page only. Use action buttons here to open /studio with the right path. No step-by-step coach inside the wizard.`,
     zh: `主要頁面：
 - / 首頁 — 介紹、模板卡、收費預覽。首頁「可完成影片配方」卡而家隱藏。
 - /start — 揀實體產品 vs 概念／服務，再入工作室。
-- /studio — 引導式 wizard（預設簡單模式）。呢頁有工作室導覽助理面板。
+- /studio — 引導式 wizard（預設簡單模式）。冇聊天助理 — 跟屏幕卡片同 Continue。
 - /captions — 任何 MP4 燒字幕／BGM／配音。冇助理面板。
 - /edit-image — 清雜物、加字／Logo、匯出。冇助理面板。
-- /ultra — Ultra 畫布（上傳→圖→片）。Master 方案。按次 token。有工作室導覽助理（Ultra 畫布指引）。
+- /ultra — Ultra 畫布（上傳→圖→片）。Master 方案。按次 token。冇助理面板。
 - /brand-kit — 儲 Logo 同顏色。
 - /library — 作品庫。
 - /ugc — 數字人口播。
 - /pricing /account — 方案、Tokens、Stripe。
-問 AI 細 Logo 喺首頁；/studio 同 /ultra 都有同款導覽助理。/captions、/edit-image、/brand-kit 等工具頁冇。`,
+問 AI 只喺首頁；用下面掣開工作室。wizard 內無逐步教學。`,
     zhCn: `主要页面：
 - / 首页 — 介绍、模板卡、收费预览。首页「可完成影片配方」卡已隐藏。
 - /start — 选实体产品 vs 概念／服务，再进工作室。
-- /studio — 引导式 wizard（默认简单模式）。此页有工作室导览助理面板。
+- /studio — 引导式 wizard（默认简单模式）。无聊天助理 — 跟屏幕卡片和 Continue。
 - /captions — 任何 MP4 烧字幕／BGM／配音。无助理面板。
 - /edit-image — 清杂物、加字／Logo、导出。无助理面板。
-- /ultra — Ultra 画布（上传→图→片）。Master 方案。按次 token。有工作室导览助理（Ultra 画布指引）。
+- /ultra — Ultra 画布（上传→图→片）。Master 方案。按次 token。无助理面板。
 - /brand-kit — 存 Logo 与颜色。
 - /library — 作品库。
 - /ugc — 数字人口播。
 - /pricing /account — 方案、Tokens、Stripe。
-问 AI 小 Logo 在首页；/studio 和 /ultra 都有同款导览助理。/captions、/edit-image、/brand-kit 等工具页没有。`,
+问 AI 只在首页；用下方按钮开工作室。wizard 内无逐步教学。`,
     zhTw: `主要頁面：
 - / 首頁 — 介紹、模板卡、收費預覽。首頁「可完成影片配方」卡已隱藏。
 - /start — 選實體產品 vs 概念／服務，再進工作室。
-- /studio — 引導式 wizard（預設簡單模式）。此頁有工作室導覽助理面板。
+- /studio — 引導式 wizard（預設簡單模式）。無聊天助理 — 跟螢幕卡片同 Continue。
 - /captions — 任何 MP4 燒字幕／BGM／配音。無助理面板。
 - /edit-image — 清雜物、加字／Logo、匯出。無助理面板。
-- /ultra — Ultra 畫布（上傳→圖→片）。Master 方案。按次 token。有工作室導覽助理（Ultra 畫布指引）。
+- /ultra — Ultra 畫布（上傳→圖→片）。Master 方案。按次 token。無助理面板。
 - /brand-kit — 儲 Logo 與顏色。
 - /library — 作品庫。
 - /ugc — 數位人口播。
 - /pricing /account — 方案、Tokens、Stripe。
-問 AI 小 Logo 在首頁；/studio 和 /ultra 都有同款導覽助理。/captions、/edit-image、/brand-kit 等工具頁沒有。`,
+問 AI 只在首頁；用下方按鈕開工作室。wizard 內無逐步教學。`,
   },
   {
     id: "modes-workflows",
@@ -130,9 +130,9 @@ Ask-AI launcher (small logo) is on the landing page. The same coach also opens i
       "模式",
     ],
     en: `Two promotion modes: physical (you have a real SKU photo) vs concept (service, class, website, idea — no packshot required).
-Three workflows in studio: image-only (posts), video-only (clip from upload or text), combined (make stills then animate). Combined storyboard is the usual short TVC path. Studio uses a micro-step wizard (not a dump of every expert field).`,
+Three workflows in studio: image-only (posts), video-only (clip from upload or text), combined (make stills then animate). Combined storyboard is the usual short TVC path. Studio uses a micro-step wizard on screen — no in-chat step coach.`,
     zh: `兩種推廣：實體（有真實產品相）vs 概念（服務、課程、網站、想法 — 唔使包裝特寫）。
-三種流程：只出圖、只出片、圖→片。圖+片分鏡係常見短 TVC。Studio 用微步驟 wizard，唔會一次攤晒專家欄。`,
+三種流程：只出圖、只出片、圖→片。圖+片分鏡係常見短 TVC。Studio 用微步驟 wizard 跟屏幕做 — 冇 chat 逐步教學。`,
   },
   {
     id: "tokens",

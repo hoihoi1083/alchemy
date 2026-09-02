@@ -46,6 +46,35 @@ function readSessionMicroContext(): Partial<MicroWizardContext> {
   }
 }
 
+/** Micro funnel state for the studio assistant coach (client-only). */
+export function readMicroWizardContextForAssistant(): {
+  microStepId: MicroStepId | null;
+  microCtxWorkflowMode: MicroWizardContext["workflowMode"] | null;
+} {
+  const ctx = readSessionMicroContext();
+  return {
+    microStepId: readLastMicroStepId(),
+    microCtxWorkflowMode: ctx.workflowMode ?? null,
+  };
+}
+
+export function seedMicroWizardContextFromHandoff(
+  handoff: import("@/lib/studio-assistant-handoff").StudioAssistantHandoff,
+): void {
+  if (typeof window === "undefined") return;
+  try {
+    const prev = readSessionMicroContext();
+    const next: Partial<MicroWizardContext> = {
+      ...prev,
+      promotionMode: handoff.promotionMode,
+    };
+    if (handoff.workflowMode) next.workflowMode = handoff.workflowMode;
+    window.sessionStorage.setItem(WIZARD_V2_CONTEXT_KEY, JSON.stringify(next));
+  } catch {
+    /* ignore quota */
+  }
+}
+
 function readLastMicroStepId(): MicroStepId | null {
   if (typeof window === "undefined") return null;
   try {

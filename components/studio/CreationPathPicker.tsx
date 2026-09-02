@@ -300,7 +300,7 @@ export function CreationPathPicker({
           </h2>
           <p className="mt-1.5 text-sm text-slate-500">{cp.hint}</p>
 
-          <div className="path-select-grid">
+          <div className="path-select-grid" data-coach-id="coach-workflow-mode">
             {MODES.map((id) => {
               const copy = modes[id];
               const selected = value === id;

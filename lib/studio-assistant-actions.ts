@@ -15,6 +15,8 @@ import type { StudioAssistantHandoffRecipe } from "@/lib/studio-assistant-handof
 import { writeStudioAssistantHandoff } from "@/lib/studio-assistant-handoff";
 import { studioHref } from "@/lib/promotion-mode";
 import { requestMicroWizardRestart } from "@/lib/wizard-micro-steps.types";
+import type { WorkflowMode } from "@/lib/workflow-mode";
+import { seedMicroWizardContextFromHandoff } from "@/lib/wizard-project-snapshot";
 
 function stayOnMicroSetup(wizard: StudioWizardValue) {
   requestMicroWizardRestart();
@@ -54,6 +56,7 @@ function goStudio(
   handoff: Parameters<typeof writeStudioAssistantHandoff>[0],
 ): boolean {
   writeStudioAssistantHandoff(handoff);
+  seedMicroWizardContextFromHandoff(handoff);
   markAssistantReopenAfterNavigate();
   const path = studioHref(mode);
   if (context.navigate) {
@@ -76,6 +79,16 @@ function physicalHandoffRecipe(context: StudioAssistantActionContext): StudioAss
   return "physical-quick";
 }
 
+/** Concept handoff: preselect workflow when the user asked for video/reel (not image-only). */
+function conceptHandoffWorkflow(context: StudioAssistantActionContext): WorkflowMode | undefined {
+  const msg = context.campaignMessage ?? "";
+  if (!msg.trim()) return undefined;
+  if (wantsImageOnlyPost(msg)) return "image-only";
+  if (/storyboard|分鏡|分镜|multi.?scene|多場|多场/i.test(msg)) return "combined";
+  if (/video|reel|影片|视频|短片|廣告|广告|\bad\b/i.test(msg)) return "combined";
+  return undefined;
+}
+
 export function runStudioAssistantAction(
   actionId: StudioAssistantActionId,
   wizard: StudioWizardValue | null,
@@ -90,6 +103,7 @@ export function runStudioAssistantAction(
       return goStudio("concept", context, {
         promotionMode: "concept",
         brandWebsiteUrl: url,
+        workflowMode: conceptHandoffWorkflow(context),
         ...fields,
         assistantNote: "concept",
       });

@@ -5,6 +5,7 @@ import type { ImageOutputMode } from "@/lib/image-output-mode";
 import type { ImageCreativeMode } from "@/lib/creative-workflow";
 import type { CoachTaskKind } from "@/lib/studio-assistant-coach-profile";
 import type { WorkflowMode, WorkflowStepKey } from "@/lib/workflow-mode";
+import type { MicroStepId } from "@/lib/wizard-micro-steps.types";
 import type { Locale } from "@/lib/i18n";
 
 export type AssistantSurface =
@@ -61,6 +62,10 @@ export type StudioAssistantSnapshot = {
   hasCaptionSource?: boolean;
   /** Client-side: coach micro-steps user acknowledged with 下一步 */
   coachAck?: CoachTaskKind[];
+  /** Current micro-wizard screen (v2 funnel). Legacy stepKey stays "setup" during routing. */
+  microStepId?: MicroStepId | null;
+  /** Workflow mode the user confirmed on route.output_goal (micro ctx — not wizard default). */
+  microCtxWorkflowMode?: WorkflowMode | null;
 };
 
 export type StudioAssistantRequest = {

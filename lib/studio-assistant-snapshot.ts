@@ -2,11 +2,14 @@ import type { StudioWizardValue } from "@/hooks/useStudioWizard";
 import type { ImageOutputMode } from "@/lib/image-output-mode";
 import type { AssistantSurface, StudioAssistantSnapshot } from "@/lib/studio-assistant-types";
 import { getVisualStyle } from "@/lib/visual-styles";
+import { readMicroWizardContextForAssistant } from "@/lib/wizard-project-snapshot";
 
 export function buildStudioAssistantSnapshot(
   w: StudioWizardValue,
   surface: AssistantSurface = "studio",
 ): StudioAssistantSnapshot {
+  const micro =
+    typeof window !== "undefined" ? readMicroWizardContextForAssistant() : null;
   return {
     surface,
     promotionMode: w.promotionMode,
@@ -37,5 +40,7 @@ export function buildStudioAssistantSnapshot(
     imageOutputMode: w.imageOutputMode as ImageOutputMode,
     imageCreativeMode: w.imageCreativeMode,
     hasStyleReference: Boolean(w.imageRefPhoto),
+    microStepId: micro?.microStepId ?? null,
+    microCtxWorkflowMode: micro?.microCtxWorkflowMode ?? null,
   };
 }

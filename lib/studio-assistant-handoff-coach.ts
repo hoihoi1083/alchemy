@@ -6,6 +6,7 @@ import {
   nextTaskFromSequence,
   setupSequenceForMode,
 } from "@/lib/studio-assistant-coach-modes";
+import { microOutputGoalPending, nextMicroStepCoachTask } from "@/lib/studio-assistant-coach-profile";
 
 function handoffToSnapshot(handoff: StudioAssistantHandoff): StudioAssistantSnapshot {
   const imageOnlyRecipe =
@@ -48,6 +49,8 @@ function handoffToSnapshot(handoff: StudioAssistantHandoff): StudioAssistantSnap
     imageCreativeMode:
       handoff.recipe === "reference-ad-layout" ? "reference-concept" : undefined,
     coachAck: [],
+    microStepId: handoff.workflowMode ? null : "route.output_goal",
+    microCtxWorkflowMode: handoff.workflowMode ?? null,
   };
 }
 
@@ -67,6 +70,9 @@ export function initialCoachTaskAfterHandoff(handoff: StudioAssistantHandoff): C
   }
 
   const snapshot = handoffToSnapshot(handoff);
+  const microTask = nextMicroStepCoachTask(snapshot);
+  if (microTask) return microTask;
+
   const mode = detectStudioCoachMode(snapshot);
   const sequenced = nextTaskFromSequence(setupSequenceForMode(mode, snapshot), snapshot);
   if (sequenced) return sequenced;

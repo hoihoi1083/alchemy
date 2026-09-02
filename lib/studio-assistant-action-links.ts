@@ -62,9 +62,12 @@ function mapUnknownSlug(slug: string): StudioAssistantActionId | null {
   if (/storyboard|分鏡|分镜/.test(s)) return "open-storyboard-studio";
   if (/reference|參考|参考|对标|對標|xhs|小紅|小红|layout/.test(s)) return "open-reference-ad-studio";
   if (/physical|product|實體|实体/.test(s)) return "open-physical-studio";
-  if (/concept|studio|open|設定|设置|campaign|world|cup|reel|setup|website|8s|8秒/.test(s)) {
-    return "setup-website-reel";
+  if (/open-concept|concept-studio|concept studio/.test(s)) return "open-concept-studio";
+  if (/concept|campaign/.test(s) && !/website|reel|8s|8秒|setup/.test(s)) {
+    return "open-concept-studio";
   }
+  if (/reel|setup|website|8s|8秒/.test(s)) return "setup-website-reel";
+  if (/studio|open|設定|设置|world|cup/.test(s)) return "open-concept-studio";
   return null;
 }
 

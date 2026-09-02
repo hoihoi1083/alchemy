@@ -4,6 +4,7 @@
  */
 export { JobProgressBar } from "./JobProgressBar";
 export { GenerationWaitPlaceholder } from "./GenerationWaitPlaceholder";
+export { GenerationProgressBar } from "./GenerationProgressBar";
 export { WizardErrorBanner } from "./WizardErrorBanner";
 export { WizardMobileBar } from "./WizardMobileBar";
 export { WizardProvider, useWizard } from "./WizardContext";

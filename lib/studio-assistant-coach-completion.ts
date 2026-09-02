@@ -8,6 +8,7 @@ import { coachRepeatPreambleZh, coachZh, coachUsesEnglish } from "@/lib/studio-a
 /** Guidance steps — user can reply 下一步 to confirm they read (default choices OK). */
 const GUIDANCE_TASKS = new Set<CoachTaskKind>([
   "choose-visual-style",
+  "choose-workflow-mode",
   "choose-image-output",
   "analyze-concept-ai",
   "upload-concept-reference-photo",
@@ -51,6 +52,11 @@ export function isCoachTaskComplete(
       return (
         isCoachTaskAcked(task, snapshot.coachAck) ||
         snapshot.visualStyleId !== "product"
+      );
+    case "choose-workflow-mode":
+      return (
+        isCoachTaskAcked(task, snapshot.coachAck) ||
+        Boolean(snapshot.microCtxWorkflowMode)
       );
     case "choose-image-output":
       return (

@@ -285,12 +285,14 @@ export function buildCoachReply(
     case "route-concept-studio":
       return en
         ? [
-            "Step 1: Concept / service promo — open concept studio to pick mode and fill your brief.",
+            "Step 1 — open concept studio. On the wizard page pick **Generate images, then video** for a concept video ad (or video only for one scene), then tap Continue.",
             link ?? "[Open concept studio](studio-action:open-concept-studio)",
+            "There is no step coach inside /studio — follow the cards on screen.",
           ].join("\n")
         : [
-            "第一步：概念／服務推廣 — 開概念工作室揀模式同填簡介。",
+            "第一步 — 開概念工作室。下一頁揀 **先出圖再出片** 做概念影片廣告（或只出片做單場景），再按 Continue。",
             link ?? "[開啟概念工作室](studio-action:open-concept-studio)",
+            "入咗 /studio 冇逐步 chat 教學 — 跟畫面卡片就得。",
           ].join("\n");
 
     case "route-captions":
@@ -386,13 +388,17 @@ export function buildCoachReply(
       return step(
         en
           ? [
-              "Step 1 — paste URL in Setup field Brand website (品牌網站).",
+              snapshot.microStepId === "asset.brand_website"
+                ? "Step — paste your brand website URL in the field on this screen."
+                : "Step — paste URL in the Brand website (品牌網站) field in Setup.",
               url ? `Use: ${url}` : "Full https://… required.",
               "Analyze brand only works after URL is in that box.",
               "Reply next when pasted.",
             ].join("\n")
           : [
-              "第一步 — 喺 Setup **「品牌網站（建議）」** 貼網址。",
+              snapshot.microStepId === "asset.brand_website"
+                ? "呢步 — 喺而家畫面嘅品牌網站欄貼網址。"
+                : "第一步 — 喺 Setup **「品牌網站（建議）」** 貼網址。",
               url ? `請貼：${url}` : "要完整 https://…",
               "貼入欄位後先可以「分析品牌」。",
               "貼好回覆 下一步。",
@@ -436,6 +442,31 @@ export function buildCoachReply(
               "• 分鏡 Reel — 多場景圖 → stitched fallback 影片（字幕之後加）",
               "進階區有更多風格。",
               "揀好回覆 下一步。",
+            ].join("\n"),
+      );
+
+    case "choose-workflow-mode":
+      return step(
+        en
+          ? [
+              "Step 2 — **Choose how to create** (three cards on screen now):",
+              "• Generate images only — static posts and product shots",
+              "• Generate video only — one continuous motion clip",
+              "• Generate images, then video — storyboard stills → short reel (best for ads)",
+              snapshot.promotionMode === "concept"
+                ? "For a concept/service video ad, pick **Generate images, then video** (or video only for one scene)."
+                : "Pick the card that matches your goal.",
+              "Tap a card, then reply next (or tap Continue).",
+            ].join("\n")
+          : [
+              "第二步 — **揀點樣創作**（而家畫面三張卡片）：",
+              "• 只出圖 — 社交帖、產品圖",
+              "• 只出片 — 一條連續動態短片",
+              "• 先出圖再出片 — 分鏡圖 → 短片（廣告最常用）",
+              snapshot.promotionMode === "concept"
+                ? "概念／服務廣告建議揀 **先出圖再出片**（或只出片做單場景）。"
+                : "揀符合目標嘅卡片。",
+              "揀好卡片，回覆 下一步（或按 Continue）。",
             ].join("\n"),
       );
 

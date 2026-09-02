@@ -5687,7 +5687,7 @@ export const en = {
 		shortLabel: "Ask AI",
 		openingStudio: "Opening the studio with your setup — one moment…",
 		studioContinued:
-			"You're in the studio now — your chat history is kept here. Reply next or 下一步 for Step 2.",
+			"Studio opened — follow the steps on that page (pick image / video / both, then Continue). Ask me here anytime about tokens or tools.",
 		placeholder: "e.g. Free grant cover a 12s reel? Or: open Ultra canvas for product hero…",
 		thinking: "Thinking…",
 		send: "Send",

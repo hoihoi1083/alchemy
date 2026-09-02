@@ -67,6 +67,8 @@ export function tryStudioAssistantFastPath(
 ): string | null {
   const trimmed = userText.trim();
   if (trimmed.length < 2) return null;
+  // In-studio step coaching is disabled — wizard UI only. Landing keeps Q&A + action buttons.
+  if (snapshot.surface === "studio") return null;
   if (detectAssistantTurnMode(trimmed, intent) === "ask") return null;
 
   const resolvedIntent = intent ?? detectStudioAssistantIntent(trimmed);

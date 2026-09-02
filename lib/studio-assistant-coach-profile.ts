@@ -9,6 +9,7 @@ import {
 import type { StudioAssistantSnapshot } from "@/lib/studio-assistant-types";
 import { isSlotRequired, setupSlotsFor } from "@/lib/template-slots";
 import type { TemplateSlotId } from "@/lib/template-slots";
+import type { MicroStepId } from "@/lib/wizard-micro-steps.types";
 import {
   getVisualStyle,
   isBrandVideoStyle,
@@ -52,6 +53,7 @@ export type CoachTaskKind =
   | "fill-storyboard-brief"
   | "fill-creative-video-brief"
   | "choose-visual-style"
+  | "choose-workflow-mode"
   | "choose-image-output"
   | "upload-product-photo"
   | "upload-style-reference"
@@ -180,6 +182,61 @@ export function needsBrandUrlField(
   return brandWebsiteRecommended(snapshot);
 }
 
+export function microOutputGoalPending(snapshot: StudioAssistantSnapshot): boolean {
+  return (
+    snapshot.microStepId === "route.output_goal" &&
+    !snapshot.microCtxWorkflowMode
+  );
+}
+
+const MICRO_ROUTING_STEPS = new Set<MicroStepId>([
+  "entry.start",
+  "route.output_goal",
+  "route.subject",
+  "route.intake",
+  "route.concept_source",
+  "route.primary_style",
+  "route.video_subpath",
+  "route.combined_style",
+  "route.cinematic_mode",
+  "cinematic.scene_count",
+]);
+
+/** Coach tasks for wizard v2 micro screens before legacy Setup fields apply. */
+export function nextMicroStepCoachTask(
+  snapshot: StudioAssistantSnapshot,
+): CoachTaskKind | null {
+  const id = snapshot.microStepId;
+  if (!id) return null;
+
+  if (microOutputGoalPending(snapshot)) {
+    return "choose-workflow-mode";
+  }
+
+  switch (id) {
+    case "identity.concept_topic":
+    case "identity.concept":
+      if (!snapshot.conceptIdea.trim() && !snapshot.headline.trim()) {
+        return "fill-concept";
+      }
+      return "continue-setup";
+    case "identity.product_name":
+      if (!snapshot.product.trim()) return "fill-product-name";
+      return "continue-setup";
+    case "asset.brand_website":
+      if (!snapshot.brandWebsiteUrl.trim()) return "enter-brand-url";
+      return null;
+    default:
+      break;
+  }
+
+  if (MICRO_ROUTING_STEPS.has(id)) {
+    return "continue-setup";
+  }
+
+  return null;
+}
+
 function nextPhysicalSetupTask(snapshot: StudioAssistantSnapshot): CoachTaskKind | null {
   const ack = (task: CoachTaskKind) => isCoachTaskAcked(task, snapshot.coachAck);
   const style = snapshot.visualStyleId;
@@ -209,6 +266,9 @@ function nextSetupTask(
   snapshot: StudioAssistantSnapshot,
   detectedUrl?: string,
 ): CoachTaskKind {
+  const microTask = nextMicroStepCoachTask(snapshot);
+  if (microTask) return microTask;
+
   const style = snapshot.visualStyleId;
   const isConcept = snapshot.promotionMode === "concept";
   const isPhysical = snapshot.promotionMode === "physical";
@@ -444,7 +504,14 @@ export function pathLabel(snapshot: StudioAssistantSnapshot, isZh: boolean): str
   if (snapshot.surface === "library") return isZh ? "作品庫" : "Library";
   if (snapshot.surface === "ugc") return isZh ? "UGC 工作室" : "UGC studio";
 
-  const { visualStyleId: id, workflowMode: wf, promotionMode: pm } = snapshot;
+  if (microOutputGoalPending(snapshot)) {
+    return isZh
+      ? "工作室 · 揀出圖／出片／圖+片"
+      : "Studio · pick image, video, or both";
+  }
+
+  const { visualStyleId: id, promotionMode: pm } = snapshot;
+  const wf = snapshot.microCtxWorkflowMode ?? snapshot.workflowMode;
   const stitch = isCinematicStitch(snapshot);
   if (isZh) {
     if (id === "storyboard-video") {

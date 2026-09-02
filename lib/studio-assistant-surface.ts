@@ -39,7 +39,7 @@ export function isLandingLikeSurface(surface: AssistantSurface): boolean {
 
 /** Dark glow / canvas pages — logo-only launcher disappears without chrome. */
 export function usesDarkAssistantChrome(surface: AssistantSurface): boolean {
-  return surface !== "landing" && surface !== "start";
+  return surface !== "landing" && surface !== "start" && surface !== "studio";
 }
 
 export function assistantSurfaceFromPathname(pathname: string): AssistantSurface | null {
