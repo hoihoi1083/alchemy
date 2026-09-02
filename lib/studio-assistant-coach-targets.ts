@@ -20,6 +20,7 @@ export const COACH_TARGET = {
   continueImage: "coach-continue-image",
   adPack: "coach-ad-pack",
   generateVideo: "coach-generate-video",
+  ultraPanel: "coach-ultra-panel",
 } as const;
 
 export type CoachTargetId = (typeof COACH_TARGET)[keyof typeof COACH_TARGET];
@@ -77,6 +78,8 @@ export function coachTaskToTargetId(task: CoachTaskKind): CoachTargetId | null {
     case "generate-cinematic-video":
     case "generate-creative-video":
       return COACH_TARGET.generateVideo;
+    case "guide-ultra-canvas":
+      return COACH_TARGET.ultraPanel;
     default:
       return null;
   }

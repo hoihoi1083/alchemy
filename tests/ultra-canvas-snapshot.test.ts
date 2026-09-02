@@ -45,4 +45,24 @@ describe("ultra-canvas-snapshot", () => {
     const snap = serializeUltraCanvasSnapshot(nodes, [], 1);
     assert.equal((snap.nodes[0]?.data as { previewUrl?: string }).previewUrl, undefined);
   });
+
+  it("strips busy and error flags on save", () => {
+    const nodes: Node[] = [
+      {
+        id: "img-1",
+        type: "image",
+        position: { x: 0, y: 0 },
+        data: {
+          kind: "image",
+          label: "Image",
+          prompt: "test",
+          busy: true,
+          error: "Something failed",
+        },
+      },
+    ];
+    const snap = serializeUltraCanvasSnapshot(nodes, [], 1);
+    assert.equal((snap.nodes[0]?.data as { busy?: boolean }).busy, undefined);
+    assert.equal((snap.nodes[0]?.data as { error?: string }).error, undefined);
+  });
 });

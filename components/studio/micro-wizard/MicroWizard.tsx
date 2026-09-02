@@ -250,6 +250,13 @@ export function MicroWizard({ promotionMode }: Props) {
           type="button"
           onClick={goNext}
           disabled={Boolean(blockReason) || Boolean(generateBlockedReason)}
+          data-coach-id={
+            currentId === "image.review"
+              ? "coach-continue-image"
+              : currentId === "video.generate"
+                ? "coach-generate-video"
+                : "coach-continue-setup"
+          }
           className={`inline-flex items-center gap-1.5 rounded-xl px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-40 ${
             analyzeReady
               ? "bg-violet-600 ring-4 ring-violet-300/50 animate-pulse hover:bg-violet-700"

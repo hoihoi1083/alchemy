@@ -47,7 +47,7 @@ const LANDING_TASKS = new Set<CoachTaskKind>([
 
 const STUDIO_LINK_TASKS = new Set<CoachTaskKind>(["analyze-brand", "analyze-brand-before-image"]);
 
-function mapUnknownSlug(slug: string): StudioAssistantActionId {
+function mapUnknownSlug(slug: string): StudioAssistantActionId | null {
   const s = slug.toLowerCase().replace(/_/g, "-");
   if (VALID_SET.has(s)) return s as StudioAssistantActionId;
   if (/edit.?image|inpaint|修圖|修图|改圖|改图/.test(s)) return "open-edit-image";
@@ -65,7 +65,7 @@ function mapUnknownSlug(slug: string): StudioAssistantActionId {
   if (/concept|studio|open|設定|设置|campaign|world|cup|reel|setup|website|8s|8秒/.test(s)) {
     return "setup-website-reel";
   }
-  return "setup-website-reel";
+  return null;
 }
 
 export function normalizeAssistantActionLinks(text: string): string {
@@ -73,9 +73,11 @@ export function normalizeAssistantActionLinks(text: string): string {
     /\[([^\]]+)\]\(studio-action:([^)]+)\)/gi,
     (full, label: string, slug: string) => {
       const trimmed = slug.trim();
-      const id = VALID_SET.has(trimmed)
-        ? (trimmed as StudioAssistantActionId)
-        : mapUnknownSlug(trimmed);
+      if (VALID_SET.has(trimmed)) {
+        return `[${label}](studio-action:${trimmed})`;
+      }
+      const id = mapUnknownSlug(trimmed);
+      if (!id) return label;
       return `[${label}](studio-action:${id})`;
     },
   );

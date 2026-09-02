@@ -1,4 +1,5 @@
 import type { StudioAssistantIntent } from "@/lib/studio-assistant-intent";
+import { isCoachContinueReply } from "@/lib/studio-assistant-continue";
 
 /** Ask = product Q&A from knowledge. Guide = coach a make-something path. */
 export type AssistantTurnMode = "ask" | "guide";
@@ -18,9 +19,7 @@ export function detectAssistantTurnMode(
 ): AssistantTurnMode {
   const t = text.trim();
   if (!t) return "ask";
-  if (
-    /^(下一步|next(?: step)?|continue|繼續|继续|然後|然后|好|好了|ok|done)[\s!.?。]*$/i.test(t)
-  ) {
+  if (isCoachContinueReply(t)) {
     return "guide";
   }
 

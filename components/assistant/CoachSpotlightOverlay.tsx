@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 import type { CoachTaskKind } from "@/lib/studio-assistant-coach-profile";
 import { coachTaskToTargetId } from "@/lib/studio-assistant-coach-targets";
@@ -25,14 +25,21 @@ function measureTarget(targetId: string): Rect | null {
   };
 }
 
+function targetInsideAssistantPanel(targetId: string): boolean {
+  const el = document.querySelector(`[data-coach-id="${targetId}"]`);
+  return Boolean(el?.closest("[data-studio-assistant-panel]"));
+}
+
 export function CoachSpotlightOverlay() {
   const { m } = useLocale();
   const [task, setTask] = useState<CoachTaskKind | null>(null);
   const [rect, setRect] = useState<Rect | null>(null);
+  const scrolledTaskRef = useRef<CoachTaskKind | null>(null);
 
   const dismiss = useCallback(() => {
     setTask(null);
     setRect(null);
+    scrolledTaskRef.current = null;
   }, []);
 
   const refresh = useCallback((activeTask: CoachTaskKind | null) => {
@@ -49,8 +56,9 @@ export function CoachSpotlightOverlay() {
     let attempts = 0;
     const tryMeasure = () => {
       const el = document.querySelector(`[data-coach-id="${targetId}"]`);
-      if (attempts === 0) {
+      if (scrolledTaskRef.current !== activeTask) {
         el?.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+        scrolledTaskRef.current = activeTask;
       }
       const r = measureTarget(targetId);
       if (r) {
@@ -65,12 +73,13 @@ export function CoachSpotlightOverlay() {
       }
     };
 
-    window.setTimeout(tryMeasure, attempts === 0 ? 200 : 0);
+    window.setTimeout(tryMeasure, 200);
   }, []);
 
   useEffect(
     () =>
       subscribeCoachSpotlight((next) => {
+        if (!next) scrolledTaskRef.current = null;
         setTask(next);
         refresh(next);
       }),
@@ -79,14 +88,16 @@ export function CoachSpotlightOverlay() {
 
   useEffect(() => {
     if (!task) return;
-    const onLayout = () => refresh(task);
-    window.addEventListener("resize", onLayout);
-    window.addEventListener("scroll", onLayout, true);
-    return () => {
-      window.removeEventListener("resize", onLayout);
-      window.removeEventListener("scroll", onLayout, true);
+    const targetId = coachTaskToTargetId(task);
+    if (!targetId) return;
+
+    const onResize = () => {
+      const r = measureTarget(targetId);
+      if (r) setRect(r);
     };
-  }, [task, refresh]);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [task]);
 
   useEffect(() => {
     if (!task) return;
@@ -106,16 +117,20 @@ export function CoachSpotlightOverlay() {
 
   if (!task || !rect) return null;
 
+  const insidePanel = targetInsideAssistantPanel(coachTaskToTargetId(task)!);
+  const dimZ = insidePanel ? "z-[180]" : "z-[88]";
+  const ringZ = insidePanel ? "z-[210]" : "z-[102]";
+  const dismissZ = insidePanel ? "z-[211]" : "z-[103]";
+
   return (
     <>
-      {/* Visual dim only — clicks pass through to the form underneath */}
       <div
-        className="pointer-events-none fixed inset-0 z-[88] bg-slate-900/45"
+        className={`pointer-events-none fixed inset-0 ${dimZ} bg-slate-900/45`}
         role="presentation"
         aria-hidden
       />
       <div
-        className="pointer-events-none fixed z-[102] rounded-xl ring-4 ring-violet-400 animate-pulse"
+        className={`pointer-events-none fixed ${ringZ} rounded-xl ring-4 ring-violet-400 animate-pulse`}
         style={{
           top: rect.top,
           left: rect.left,
@@ -126,7 +141,7 @@ export function CoachSpotlightOverlay() {
       <button
         type="button"
         onClick={dismiss}
-        className="pointer-events-auto fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] left-1/2 z-[103] -translate-x-1/2 rounded-full border border-violet-300 bg-violet-950/90 px-4 py-2.5 text-xs font-medium text-violet-100 shadow-lg hover:bg-violet-900 md:bottom-6"
+        className={`pointer-events-auto fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] left-1/2 ${dismissZ} -translate-x-1/2 rounded-full border border-violet-300 bg-violet-950/90 px-4 py-2.5 text-xs font-medium text-violet-100 shadow-lg hover:bg-violet-900 md:bottom-6`}
       >
         {m.studioAssistant.spotlightDismiss}
       </button>

@@ -68,6 +68,34 @@ export function upstreamNodes(nodeId: string, nodes: Node[], edges: Edge[]): Nod
   return ids.map((id) => nodes.find((n) => n.id === id)).filter((n): n is Node => !!n);
 }
 
+/** Stable clip/source order: top-to-bottom, then left-to-right on the canvas. */
+export function sortNodesByCanvasPosition(nodes: Node[]): Node[] {
+  return [...nodes].sort(
+    (a, b) => a.position.y - b.position.y || a.position.x - b.position.x,
+  );
+}
+
+export function upstreamNodesSorted(nodeId: string, nodes: Node[], edges: Edge[]): Node[] {
+  return sortNodesByCanvasPosition(upstreamNodes(nodeId, nodes, edges));
+}
+
+export function nodeHasRunnableOutput(node: Node): boolean {
+  const data = node.data as ProCanvasNodeData;
+  if (data.kind === "image" || data.kind === "camera") {
+    return isHttpOrLibraryMediaUrl(imageUrlFromNode(node));
+  }
+  if (data.kind === "video" || data.kind === "textVideo" || data.kind === "splice") {
+    return isHttpOrLibraryMediaUrl(videoUrlFromNode(node));
+  }
+  if (data.kind === "script") {
+    return Boolean((data as ScriptNodeData).scenePrompts?.length);
+  }
+  if (data.kind === "audio") {
+    return isHttpOrLibraryMediaUrl(audioUrlFromNode(node));
+  }
+  return false;
+}
+
 /** Walk upstream graph recursively (for modifier nodes). */
 export function allUpstreamNodes(
   nodeId: string,

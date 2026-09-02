@@ -1046,6 +1046,7 @@ export function PreVideoSetupPanel({
       {onGenerate ? (
         <button
           type="button"
+          data-coach-id="coach-generate-video"
           onClick={onGenerate}
           disabled={generateDisabled}
           className="pv-generate-btn"

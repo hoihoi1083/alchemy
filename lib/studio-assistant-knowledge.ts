@@ -170,6 +170,10 @@ Plans (typical): Free 300 signup / 480p; Light 3000/mo 480p; Standard 8000/mo 72
 大约：1 张静图 ≈ 65；4 格分镜 ≈ 260；8 秒视频 Free 480p ≈ 328，Standard 720p ≈ 520；6 秒动态海报 ≈ 390（720p）；12 秒 480p ≈ 492；拼接后备 4×5 秒 ≈ 1136。
 300 用来试流程；大片要试用或付费方案。
 方案大约：Free 注册 300／480p；Light 每月 3000／480p；Standard 8000／720p；Pro 16000／1080p；Master 28000 + Ultra 画布；Enterprise 40000 + 3 席。付费可加购 1000 tokens。详情 /pricing。数字是估算。`,
+    zhTw: `Tokens ≈ 按次計費。免費註冊一次送 300（唔係每月自動再送）。餘額不足可開 7 日 Pro 試用（要綁卡）多送 700 + Pro 功能；7 日後扣月費 Pro，可喺帳戶取消。所有 Token 由發放日起 6 個月有效（先用舊嘅）。
+大約：1 張靜圖 ≈ 65；4 格分鏡 ≈ 260；8 秒影片 Free 480p ≈ 328，Standard 720p ≈ 520；6 秒動態海報 ≈ 390（720p）；12 秒 480p ≈ 492；拼接後備 4×5 秒 ≈ 1136。
+300 用來試流程；大片要試用或付費方案。
+方案大約：Free 註冊 300／480p；Light 每月 3000／480p；Standard 8000／720p；Pro 16000／1080p；Master 28000 + Ultra 畫布；Enterprise 40000 + 3 席。付費可加購 1000 tokens。詳情 /pricing。數字係估算。`,
   },
   {
     id: "plan-gates",
@@ -192,6 +196,7 @@ Plans (typical): Free 300 signup / 480p; Light 3000/mo 480p; Standard 8000/mo 72
     en: `Feature gates (minimum plan): Ultra canvas /pro_canvas → Master; storyboard multi-scene TVC → Pro; platform content research & teaching carousel → Standard; 720p video → Standard; 1080p → Pro. Free tier: 480p, 300 signup tokens. Always mention the gate when routing to a locked feature.`,
     zh: `功能門檻（最低方案）：Ultra 畫布 → Master；分鏡 storyboard TVC → Pro；平台內容研究同教學輪播 → Standard；720p 影片 → Standard；1080p → Pro。Free：480p、註冊 300 tokens。帶去鎖定功能時要講明門檻。`,
     zhCn: `功能门槛（最低方案）：Ultra 画布 → Master；分镜 storyboard TVC → Pro；平台内容研究和教学轮播 → Standard；720p 视频 → Standard；1080p → Pro。Free：480p、注册 300 tokens。带去锁定功能时要说明门槛。`,
+    zhTw: `功能門檻（最低方案）：Ultra 畫布 → Master；分鏡 storyboard TVC → Pro；平台內容研究同教學輪播 → Standard；720p 影片 → Standard；1080p → Pro。Free：480p、註冊 300 tokens。帶去鎖定功能時要講明門檻。`,
   },
   {
     id: "video-engines",

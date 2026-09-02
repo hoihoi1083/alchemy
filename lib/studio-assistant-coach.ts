@@ -12,6 +12,15 @@ import {
   getNextStudioCoachTask,
   pathLabel,
 } from "@/lib/studio-assistant-coach-profile";
+import {
+  coachContinueOnSetup,
+  coachContinueSetupShort,
+  coachModeLine,
+  coachPathLine,
+  coachUsesEnglish,
+  coachZh,
+} from "@/lib/studio-assistant-coach-copy";
+import { isCoachContinueReply } from "@/lib/studio-assistant-continue";
 import { isStoryboardVideoStyle } from "@/lib/visual-styles";
 
 export type { CoachTaskKind } from "@/lib/studio-assistant-coach-profile";
@@ -55,10 +64,7 @@ function suggestConceptPaste(hint: string, url?: string): string {
   return "Describe feature name, audience, and 2–3 selling points for captions/voiceover.";
 }
 
-function isEnglish(locale: Locale, userText?: string): boolean {
-  if (userText && /^[\x00-\x7F\s]+$/.test(userText.trim())) return true;
-  return locale === "en";
-}
+export { coachUsesEnglish } from "@/lib/studio-assistant-coach-copy";
 
 export function actionLinkForTask(task: CoachTaskKind, en: boolean): string | null {
   switch (task) {
@@ -145,7 +151,7 @@ export function buildCoachReply(
     previousCoachTask?: CoachTaskKind | null;
   },
 ): string {
-  const en = isEnglish(locale, opts?.userText);
+  const en = coachUsesEnglish(locale);
   const url = snapshot.brandWebsiteUrl.trim() || opts?.detectedUrl?.trim() || "";
   const hint = opts?.campaignHint ?? "";
   const link = actionLinkForTask(task, en);
@@ -160,10 +166,8 @@ export function buildCoachReply(
       opts?.userText,
       opts?.previousCoachTask ?? null,
     );
-    const modeLine = en ? `Mode: ${mode}` : `模式：${mode}`;
-    const pathLine = en ? `Current path: ${pathLabel(snapshot, false)}` : `目前路線：${path}`;
-    const header = [pathLine, modeLine].join("\n");
-    const preamble = repeat ? coachRepeatPreamble(task, snapshot, en) : "";
+    const header = [coachPathLine(locale, path), coachModeLine(locale, mode)].join("\n");
+    const preamble = repeat ? coachRepeatPreamble(task, snapshot, locale) : "";
     const prefix = coachStepPrefix(task, snapshot, en);
     const numberedBody = body.replace(
       /^(Step —|Step \d+ —|Step \d+|第一步[：: —]|第\d+步[：: —]|呢步 —)/,
@@ -182,9 +186,11 @@ export function buildCoachReply(
             link ?? "",
             "Reply next once you are on Setup.",
           ].join("\n")
-        : ["第一步：網站／概念影片 — 8 秒電影感 Reel + 字幕。", link ?? "", "入到 Setup 後回覆 下一步。"].join(
-            "\n",
-          );
+        : [
+            "第一步：網站／概念影片 — 8 秒電影感 Reel + 字幕。",
+            link ?? "",
+            coachContinueOnSetup(locale),
+          ].join("\n");
 
     case "route-website-image":
       return en
@@ -193,7 +199,7 @@ export function buildCoachReply(
             link ?? "",
             "Reply next on Setup.",
           ].join("\n")
-        : ["第一步：網站上線靜態 mockup 圖（只出圖）。", link ?? "", "到 Setup 回覆 下一步。"].join("\n");
+        : ["第一步：網站上線靜態 mockup 圖（只出圖）。", link ?? "", coachContinueSetupShort(locale)].join("\n");
 
     case "route-cinematic-stitch":
       return en
@@ -202,7 +208,7 @@ export function buildCoachReply(
             link ?? "",
             "Reply next on Setup.",
           ].join("\n")
-        : ["第一步：多場景電影感拼接（約 24 秒）講多個賣點。", link ?? "", "到 Setup 回覆 下一步。"].join("\n");
+        : ["第一步：多場景電影感拼接（約 24 秒）講多個賣點。", link ?? "", coachContinueSetupShort(locale)].join("\n");
 
     case "route-physical-image-post":
       return en
@@ -212,9 +218,14 @@ export function buildCoachReply(
             "Reply next once you are on Setup.",
           ].join("\n")
         : [
-            "第一步：實體產品圖文帖（只出圖）。上傳產品相 → 出圖。唔係概念片／8 秒 Reel。",
+            coachZh(
+              locale,
+              "第一步：實體產品圖文帖（只出圖）。上傳產品相 → 出圖。唔係概念片／8 秒 Reel。",
+              "第一步：实体产品图文帖（只出图）。上传产品图 → 出图。不是概念片／8 秒 Reel。",
+              "第一步：實體產品圖文帖（只出圖）。上傳產品圖 → 出圖。不是概念片／8 秒 Reel。",
+            ),
             link ?? "",
-            "到 Setup 回覆 下一步。",
+            coachContinueSetupShort(locale),
           ].join("\n");
 
     case "route-reference-ad":
@@ -225,9 +236,14 @@ export function buildCoachReply(
             "Reply next on Setup.",
           ].join("\n")
         : [
-            "第一步：跟參考廣告排版出圖（小紅書／IG 風格）— Image 步上傳參考圖 + 產品相，再生成。",
+            coachZh(
+              locale,
+              "第一步：跟參考廣告排版出圖（小紅書／IG 風格）— Image 步上傳參考圖 + 產品相，再生成。",
+              "第一步：跟参考广告排版出图（小红书／IG 风格）— Image 步上传参考图 + 产品图，再生成。",
+              "第一步：跟參考廣告排版出圖（小紅書／IG 風格）— Image 步上傳參考圖 + 產品圖，再生成。",
+            ),
             link ?? "",
-            "到 Setup 回覆 下一步。",
+            coachContinueSetupShort(locale),
           ].join("\n");
 
     case "route-physical-product":
@@ -237,7 +253,16 @@ export function buildCoachReply(
             link ?? "",
             "Reply next on Setup.",
           ].join("\n")
-        : ["第一步：實體產品 — 上傳產品相 → 出圖 → 出片。", link ?? "", "到 Setup 回覆 下一步。"].join("\n");
+        : coachZh(
+            locale,
+            "第一步：實體產品 — 上傳產品相 → 出圖 → 出片。",
+            "第一步：实体产品 — 上传产品图 → 出图 → 出片。",
+            "第一步：實體產品 — 上傳產品圖 → 出圖 → 出片。",
+          ) +
+          "\n" +
+          (link ?? "") +
+          "\n" +
+          coachContinueSetupShort(locale);
 
     case "route-storyboard":
       return en
@@ -246,7 +271,16 @@ export function buildCoachReply(
             link ?? "",
             "Reply next on Setup.",
           ].join("\n")
-        : ["第一步：產品分鏡 — 多場景圖 → stitched fallback 影片（畫面無字；字幕用 /captions）。", link ?? "", "到 Setup 回覆 下一步。"].join("\n");
+        : [
+            coachZh(
+              locale,
+              "第一步：產品分鏡 — 多場景圖 → stitched fallback 影片（畫面無字；字幕用 /captions）。",
+              "第一步：产品分镜 — 多场景图 → stitched fallback 视频（画面无字；字幕用 /captions）。",
+              "第一步：產品分鏡 — 多場景圖 → stitched fallback 影片（畫面無字；字幕用 /captions）。",
+            ),
+            link ?? "",
+            coachContinueSetupShort(locale),
+          ].join("\n");
 
     case "route-concept-studio":
       return en
@@ -321,7 +355,12 @@ export function buildCoachReply(
     case "guide-ultra-canvas":
       return en
         ? "You are on Ultra canvas. Step 1 — pick a template (Product hero / Script to film) or add Upload → Image → Video. Wire modifier nodes (lighting, background) upstream. Use @aliases for refs. Save boards with ⌘S. Pay-per-use tokens — check badges before Run."
-        : "你喺 Ultra 畫布。第一步 — 揀模板（產品主圖／劇本成片）或加 Upload→Image→Video。修飾節點（燈光、背景）接上游。用 @ 引用素材。⌘S 儲存畫布。按次 token — Run 之前睇徽章。";
+        : coachZh(
+            locale,
+            "你喺 Ultra 畫布。第一步 — 揀模板（產品主圖／劇本成片）或加 Upload→Image→Video。修飾節點（燈光、背景）接上游。用 @ 引用素材。⌘S 儲存畫布。按次 token — Run 之前睇徽章。",
+            "你在 Ultra 画布。第一步 — 选模板（产品主图／剧本成片）或加 Upload→Image→Video。修饰节点（灯光、背景）接上游。用 @ 引用素材。⌘S 保存画布。按次 token — Run 之前看徽章。",
+            "你在 Ultra 畫布。第一步 — 選模板（產品主圖／劇本成片）或加 Upload→Image→Video。修飾節點（燈光、背景）接上游。用 @ 引用素材。⌘S 儲存畫布。按次 token — Run 之前看徽章。",
+          );
 
     case "guide-brand-kit":
       return en
@@ -671,7 +710,9 @@ export function buildCoachReply(
       );
 
     default:
-      return en ? "Reply next when this step is done." : "搞掂呢步後回覆 下一步。";
+      return en
+        ? "Reply next when this step is done."
+        : coachZh(locale, "搞掂呢步後回覆 下一步。", "完成这一步后回复 下一步。", "完成這一步後回覆 下一步。");
   }
 }
 
@@ -738,7 +779,7 @@ export function formatCoachChecklistForPrompt(
 
 export function shouldUseCoachFastPath(userText: string): boolean {
   const t = userText.trim();
-  if (/^(下一步|next|continue|繼續|继续|然後|然后|done|ok|好|好了)[\s!.?]*$/i.test(t)) {
+  if (isCoachContinueReply(t)) {
     return true;
   }
   return /教我|填寫|填写|概念|分鏡|分镜|storyboard|headline|產品|产品|how to fill|teach me|what.?next|下一步做|接下来|接下來/i.test(

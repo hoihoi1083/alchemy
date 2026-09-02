@@ -704,6 +704,7 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
       return (
         <ScreenShell title={m.wizard.creativeBriefLabel} hint={m.wizard.creativeVideoIntro}>
           <textarea
+            data-coach-id="coach-creative-video-brief"
             value={wizard.creativeVideoBrief}
             onChange={(e) => wizard.setCreativeVideoBrief(e.target.value)}
             placeholder={m.wizard.creativeBriefPlaceholder}
@@ -740,7 +741,8 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
               : m.wizard.imageOutputModeHint
           }
         >
-          <ImageOutputModePicker
+          <div data-coach-id="coach-image-output-mode">
+            <ImageOutputModePicker
             value={wizard.imageOutputMode}
             carouselIntent={wizard.carouselIntent}
             onCarouselIntentChange={wizard.setCarouselIntent}
@@ -759,6 +761,7 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
               onChange={wizard.setImageResolution}
               accent="violet"
             />
+          </div>
           </div>
         </ScreenShell>
       );
@@ -912,6 +915,7 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
       return (
         <ScreenShell title={m.wizard.storyboardBriefLabel} hint={m.wizard.storyboardIntro}>
           <textarea
+            data-coach-id="coach-storyboard-brief"
             value={wizard.storyboardBrief}
             onChange={(e) => wizard.setStoryboardBrief(e.target.value)}
             placeholder={m.wizard.storyboardBriefPlaceholder}
@@ -1103,11 +1107,13 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
     case "video.generate":
       return (
         <ScreenShell title={mw.generateVideoTitle} hint={mw.generateVideoHint}>
-          {wizard.videoGenerateDisabledReason ? (
-            <p className="text-sm text-amber-800">{wizard.videoGenerateDisabledReason}</p>
-          ) : (
-            <p className="text-sm text-slate-600">{mw.generateVideoFooterHint}</p>
-          )}
+          <div data-coach-id="coach-generate-video">
+            {wizard.videoGenerateDisabledReason ? (
+              <p className="text-sm text-amber-800">{wizard.videoGenerateDisabledReason}</p>
+            ) : (
+              <p className="text-sm text-slate-600">{mw.generateVideoFooterHint}</p>
+            )}
+          </div>
         </ScreenShell>
       );
 

@@ -43,6 +43,8 @@ import type {
 import { ContentResearchPanel } from "@/components/content-research/ContentResearchPanel";
 import { readCaptionHandoff } from "@/lib/caption-studio-draft";
 import { IMAGE_CANVAS_DRAFT_KEY } from "@/lib/image-canvas-studio-draft";
+import { isSafeAssistantPath } from "@/lib/studio-assistant-allowed-paths";
+import { isCoachContinueReply } from "@/lib/studio-assistant-continue";
 
 type ChatMessage = StudioAssistantMessage & { _id?: string };
 
@@ -147,7 +149,7 @@ function renderMessageContent(
           {label}
         </button>,
       );
-    } else if (href.startsWith("/")) {
+    } else if (href.startsWith("/") && isSafeAssistantPath(href)) {
       out.push(
         <Link
           key={`l-${key++}`}
@@ -200,6 +202,7 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
   const scrollRef = useRef<HTMLDivElement>(null);
   const typingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const typingMsgIdRef = useRef<string | null>(null);
+  const pendingFullReplyRef = useRef<string>("");
   const pendingUrlRef = useRef<string | null>(null);
   const lastCoachTaskRef = useRef<CoachTaskKind | null>(null);
   const [coachAckTick, setCoachAckTick] = useState(0);
@@ -400,11 +403,26 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
     });
   }, [loading, surface, sa]);
 
+  const flushActiveTyping = useCallback(() => {
+    const msgId = typingMsgIdRef.current;
+    const full = pendingFullReplyRef.current;
+    if (msgId && full) {
+      if (typingTimerRef.current) clearInterval(typingTimerRef.current);
+      setMessages((prev) =>
+        prev.map((msg) => (msg._id === msgId ? { ...msg, content: full } : msg)),
+      );
+    }
+    typingMsgIdRef.current = null;
+    pendingFullReplyRef.current = "";
+  }, []);
+
   const send = useCallback(async () => {
     const trimmed = input.trim();
     if (!trimmed || loading) return;
 
-    if (/^(下一步|next|continue|繼續|继续)$/i.test(trimmed) && lastCoachTaskRef.current) {
+    flushActiveTyping();
+
+    if (isCoachContinueReply(trimmed) && lastCoachTaskRef.current) {
       if (shouldAckCoachTaskOnNext(lastCoachTaskRef.current, snapshot)) {
         ackCoachTask(lastCoachTaskRef.current);
         setCoachAckTick((t) => t + 1);
@@ -452,6 +470,9 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
       if (res.status === 401) {
         throw new Error("unauthorized");
       }
+      if (res.status === 429) {
+        throw new Error("quota_exceeded");
+      }
       if (!data.success) {
         throw new Error(data.error || "request failed");
       }
@@ -468,6 +489,7 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
       lastCoachTaskRef.current = coachTask ?? null;
 
       const full = String(data.reply || "");
+      pendingFullReplyRef.current = full;
       const msgId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
       typingMsgIdRef.current = msgId;
 
@@ -491,6 +513,7 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
         );
         if (i >= full.length) {
           if (typingTimerRef.current) clearInterval(typingTimerRef.current);
+          pendingFullReplyRef.current = "";
           if (coachTask && shouldShowSpotlight(coachTask)) {
             window.setTimeout(() => dispatchCoachSpotlight(coachTask), 80);
           }
@@ -504,12 +527,14 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
       const content =
         err instanceof Error && err.message === "unauthorized"
           ? sa.signInToChat
-          : sa.errorNetwork;
+          : err instanceof Error && err.message === "quota_exceeded"
+            ? sa.quotaExceeded
+            : sa.errorNetwork;
       setMessages((prev) => [...prev, { role: "assistant", content }]);
     } finally {
       setLoading(false);
     }
-  }, [input, loading, messages, locale, snapshot, sa.errorNetwork, sa.signInToChat, needsSignIn]);
+  }, [flushActiveTyping, input, loading, messages, locale, snapshot, sa.errorNetwork, sa.quotaExceeded, sa.signInToChat, needsSignIn]);
 
   const wizardStepKey = wizard?.stepKey;
   const studioMobileBarVisible =
@@ -522,6 +547,8 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
       : surface === "landing"
         ? // Match LandingFloatingCta bottom so mascot sits level with “立即開始”
           "max(1.25rem, calc(env(safe-area-inset-bottom) + 0.75rem))"
+        : surface === "pro"
+          ? "max(1.25rem, env(safe-area-inset-bottom))"
         : surface === "captions"
           ? "max(calc(5.25rem + env(safe-area-inset-bottom)), 6rem)"
         : studioMobileBarVisible
@@ -532,6 +559,7 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
 
   return (
     <div
+      data-studio-assistant-root
       className="pointer-events-none fixed z-[200] flex flex-col items-end gap-3"
       style={{
         bottom: launcherBottom,
@@ -542,6 +570,7 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
     >
       {open && (
         <div
+          data-studio-assistant-panel
           className="pointer-events-auto flex max-h-[min(72vh,520px)] w-[min(100vw-1.5rem,400px)] animate-in fade-in slide-in-from-bottom-4 flex-col overflow-hidden rounded-2xl border border-violet-200/80 bg-white shadow-2xl shadow-violet-900/10 ring-1 ring-black/5 duration-200"
           role="dialog"
           aria-label={sa.dialogLabel}
@@ -669,7 +698,8 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
               <button
                 type="button"
                 onClick={() => setShowContentResearch((v) => !v)}
-                className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+                disabled={needsSignIn}
+                className={`rounded-full border px-3 py-1.5 text-xs font-medium transition disabled:opacity-40 ${
                   showContentResearch
                     ? "border-emerald-500 bg-emerald-100 text-emerald-950"
                     : "border-emerald-300 bg-emerald-50 text-emerald-900 hover:bg-emerald-100"
@@ -679,27 +709,30 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
               </button>
               <button
                 type="button"
+                disabled={needsSignIn}
                 onClick={() =>
                   void handleAction("open-physical-studio", {
                     campaignMessage:
                       "I want a post with images about my product",
                   })
                 }
-                className="rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-900 transition hover:bg-emerald-100"
+                className="rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-900 transition hover:bg-emerald-100 disabled:opacity-40"
               >
                 {sa.chipProductImagePost}
               </button>
               <button
                 type="button"
+                disabled={needsSignIn}
                 onClick={() => void handleAction("open-ultra-canvas")}
-                className="rounded-full border border-fuchsia-300 bg-fuchsia-50 px-3 py-1.5 text-xs font-medium text-fuchsia-900 transition hover:bg-fuchsia-100"
+                className="rounded-full border border-fuchsia-300 bg-fuchsia-50 px-3 py-1.5 text-xs font-medium text-fuchsia-900 transition hover:bg-fuchsia-100 disabled:opacity-40"
               >
                 {sa.chipUltraCanvas}
               </button>
               <button
                 type="button"
+                disabled={needsSignIn}
                 onClick={() => void handleAction("setup-website-reel")}
-                className="rounded-full border border-violet-300 bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-800 transition hover:bg-violet-100"
+                className="rounded-full border border-violet-300 bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-800 transition hover:bg-violet-100 disabled:opacity-40"
               >
                 {sa.chipSetupWebsite}
               </button>

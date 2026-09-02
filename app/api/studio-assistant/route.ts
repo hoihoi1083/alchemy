@@ -54,7 +54,11 @@ function finalizeAssistantReply(
   },
 ): { reply: string; coachTask: CoachTaskKind | null } {
   if (opts.turnMode === "ask") {
-    return { reply, coachTask: null };
+    const askReply = reply
+      .replace(/\[([^\]]+)\]\(studio-action:[^)]+\)/gi, "$1")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+    return { reply: askReply, coachTask: null };
   }
   const coachTask = getNextStudioCoachTask(snapshot, {
     intent,
@@ -209,8 +213,6 @@ async function loadSitePreview(url: string): Promise<string> {
 export async function POST(request: Request) {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
-  const quota = await assertFreeDeepSeekQuota(auth.user.userId);
-  if (!quota.ok) return quota.response;
 
   let body: {
     messages?: unknown;
@@ -252,13 +254,8 @@ export async function POST(request: Request) {
 
   const detectedUrl =
     extractUrlFromMessages(messages) || snapshot.brandWebsiteUrl.trim() || undefined;
-  const sitePreview = detectedUrl ? await loadSitePreview(detectedUrl) : "";
   const intent = detectStudioAssistantIntent(lastUser.content);
   const turnMode = detectAssistantTurnMode(lastUser.content, intent);
-  const knowledgeChunks = retrieveAssistantKnowledge(lastUser.content, {
-    locale: knowledgeLocaleFromApp(locale),
-    limit: turnMode === "ask" ? 6 : 4,
-  });
   const previousCoachTask =
     typeof body.previousCoachTask === "string"
       ? (body.previousCoachTask as CoachTaskKind)
@@ -270,10 +267,9 @@ export async function POST(request: Request) {
     intent,
     turnMode,
     surface: snapshot.surface,
-    knowledgeIds: knowledgeChunks.map((c) => c.id),
+    knowledgeIds: [] as string[],
   };
 
-  // Only ultra-short utility queries skip the LLM (e.g. "next step" on studio).
   const fast = tryStudioAssistantFastPath(
     lastUser.content,
     snapshot,
@@ -299,6 +295,16 @@ export async function POST(request: Request) {
       meta: { ...meta, fastPath: true, coachTask: finalized.coachTask },
     });
   }
+
+  const quota = await assertFreeDeepSeekQuota(auth.user.userId);
+  if (!quota.ok) return quota.response;
+
+  const sitePreview = detectedUrl ? await loadSitePreview(detectedUrl) : "";
+  const knowledgeChunks = retrieveAssistantKnowledge(lastUser.content, {
+    locale: knowledgeLocaleFromApp(locale),
+    limit: turnMode === "ask" ? 6 : 4,
+  });
+  meta.knowledgeIds = knowledgeChunks.map((c) => c.id);
 
   try {
     const systemContent = buildStudioAssistantSystemPrompt(locale, snapshot, {

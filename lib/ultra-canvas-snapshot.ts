@@ -47,6 +47,8 @@ export function serializeUltraCanvasSnapshot(
       if ("videoUrl" in data && !isPersistableUrl(data.videoUrl)) {
         delete (data as { videoUrl?: string }).videoUrl;
       }
+      delete (data as { busy?: boolean }).busy;
+      delete (data as { error?: string }).error;
       return {
         id: n.id,
         type: n.type ?? "default",

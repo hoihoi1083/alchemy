@@ -32,9 +32,11 @@ export function detectStudioAssistantIntent(text: string): StudioAssistantIntent
     return "brand_kit";
   }
   if (
-    /\/pricing\b|how much|price|pricing|價錢|价钱|多少钱|多少錢|方案|月費|月费|yearly|annual/i.test(
+    /\/pricing\b|how much|price|pricing|價錢|价钱|多少钱|多少錢|月費|月费|yearly|annual|訂閱|订阅|付费方案|付費方案|upgrade.*plan|plan.*upgrade/i.test(
       text,
-    )
+    ) ||
+    (/方案/.test(text) &&
+      /價|价|plan|pricing|token|upgrade|訂閱|订阅|月費|月费|收費|收费/i.test(text))
   ) {
     return "pricing";
   }
@@ -44,13 +46,17 @@ export function detectStudioAssistantIntent(text: string): StudioAssistantIntent
   if (/\/ugc\b|ugc studio|talking presenter|口播|数字人|數字人|presenter video/i.test(text)) {
     return "ugc";
   }
-  if (/caption|subtitle|字幕|燒錄|烧录|加字/.test(text)) {
+  if (/caption|subtitle|字幕|燒錄|烧录|加字幕/.test(text)) {
     const wantsFreshGeneration =
       /generate|make|create|出.*新|生成.*视频|生成.*影片|重新出片/i.test(text) &&
       !/import|匯入|导入|existing|已有|my video|我的.*片|uploaded|已上传|已上傳/i.test(text);
     if (!wantsFreshGeneration) return "captions_only";
   }
-  if (/\/ultra\b|\/pro\b|ultra canvas|pro canvas|Ultra 畫布|Ultra 画布|節點|节点|node canvas|畫布|画布/.test(text)) {
+  if (
+    /\/ultra\b|\/pro\b|ultra canvas|pro canvas|Ultra 畫布|Ultra 画布|節點|节点|node canvas|node workflow|畫布工作|画布工作/i.test(
+      text,
+    )
+  ) {
     return "pro_canvas";
   }
   if (isReferenceAdRequest(text)) {

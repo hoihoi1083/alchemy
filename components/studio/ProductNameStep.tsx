@@ -227,7 +227,7 @@ export function ProductNameStep({
               <label className="block">
                 <span className="sr-only">{pn.label}</span>
                 <input
-                  data-coach-id={isConcept ? "coach-concept" : "coach-product"}
+                  data-coach-id={isConcept ? "coach-concept" : "coach-product-name"}
                   value={value}
                   onChange={(e) => onChange(e.target.value)}
                   placeholder={pn.placeholder}

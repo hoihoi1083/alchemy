@@ -5,6 +5,9 @@ import type { AddableNodeType } from "@/lib/pro-canvas-types";
 type Props = {
   labels: Record<string, string>;
   onAdd: (kind: AddableNodeType["kind"]) => void;
+  disabled?: boolean;
+  className?: string;
+  onClose?: () => void;
 };
 
 const ADDABLE: AddableNodeType[] = [
@@ -23,21 +26,42 @@ const ADDABLE: AddableNodeType[] = [
   { kind: "brand", label: "Brand kit", group: "resource" },
 ];
 
-export function AddNodePalette({ labels, onAdd }: Props) {
+export function AddNodePalette({
+  labels,
+  onAdd,
+  disabled = false,
+  className = "",
+  onClose,
+}: Props) {
   const nodes = ADDABLE.filter((a) => a.group === "node");
   const modifiers = ADDABLE.filter((a) => a.group === "modifier");
   const resources = ADDABLE.filter((a) => a.group === "resource");
 
   return (
-    <div className="absolute left-3 top-3 z-10 w-52 rounded-xl border border-cyan-500/20 bg-slate-900/95 p-3 shadow-[0_0_32px_rgba(34,211,238,0.08)] backdrop-blur">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-300/90">
-        {labels.addNode}
-      </p>
+    <div
+      className={`w-52 rounded-xl border border-cyan-500/20 bg-slate-900/95 p-3 shadow-[0_0_32px_rgba(34,211,238,0.08)] backdrop-blur ${className}`}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-300/90">
+          {labels.addNode}
+        </p>
+        {onClose ? (
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded px-1.5 py-0.5 text-xs text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        ) : null}
+      </div>
       <div className="mt-2 space-y-1">
         {nodes.map((item) => (
           <button
             key={item.kind}
             type="button"
+            disabled={disabled}
             onClick={() => onAdd(item.kind)}
             className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs text-slate-200 transition hover:bg-cyan-950/40 hover:text-cyan-100"
           >
@@ -54,6 +78,7 @@ export function AddNodePalette({ labels, onAdd }: Props) {
           <button
             key={item.kind}
             type="button"
+            disabled={disabled}
             onClick={() => onAdd(item.kind)}
             className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs text-slate-200 transition hover:bg-amber-950/30 hover:text-amber-100"
           >
@@ -70,6 +95,7 @@ export function AddNodePalette({ labels, onAdd }: Props) {
           <button
             key={item.kind}
             type="button"
+            disabled={disabled}
             onClick={() => onAdd(item.kind)}
             className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs text-slate-200 transition hover:bg-slate-800"
           >

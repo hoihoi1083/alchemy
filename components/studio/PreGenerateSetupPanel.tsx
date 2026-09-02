@@ -3093,6 +3093,7 @@ export function PreGenerateSetupPanel({
                     ) : null}
                     <button
                       type="button"
+                      data-coach-id="coach-generate-image"
                       onClick={onGenerate}
                       disabled={generateDisabled}
                       className="pg-generate-btn"
@@ -3146,6 +3147,7 @@ export function PreGenerateSetupPanel({
                 ) : null}
                 <button
                   type="button"
+                  data-coach-id="coach-generate-image"
                   onClick={onGenerate}
                   disabled={generateDisabled}
                   className="pg-generate-btn"

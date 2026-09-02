@@ -12,7 +12,7 @@ export function GlobalStudioAssistant() {
   const pathname = usePathname() || "/";
   const surface = assistantSurfaceFromPathname(pathname);
 
-  if (!surface) return null;
+  if (surface !== "landing") return null;
 
   return (
     <>

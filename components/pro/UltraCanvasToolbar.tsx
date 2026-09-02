@@ -21,10 +21,12 @@ type Props = {
   saveSuccessAt?: number | null;
   loading: boolean;
   boardError?: string | null;
+  navDisabled?: boolean;
   onBoardNameChange: (name: string) => void;
   onSave: () => void;
   onNew: () => void;
   onLoad: (id: string) => void;
+  onDelete: (id: string) => void;
   onUndo: () => void;
   onRedo: () => void;
   onLoadTemplate: (id: UltraCanvasTemplateId) => void;
@@ -37,10 +39,12 @@ export function UltraCanvasToolbar({
   saveSuccessAt,
   loading,
   boardError,
+  navDisabled = false,
   onBoardNameChange,
   onSave,
   onNew,
   onLoad,
+  onDelete,
   onUndo,
   onRedo,
   onLoadTemplate,
@@ -101,7 +105,7 @@ export function UltraCanvasToolbar({
         </button>
         <button
           type="button"
-          disabled={loading}
+          disabled={loading || navDisabled}
           onClick={onNew}
           className="rounded-lg border border-slate-600 px-3 py-1.5 text-xs font-medium text-slate-200 hover:bg-slate-800 disabled:opacity-40"
         >
@@ -110,7 +114,7 @@ export function UltraCanvasToolbar({
         <div className="relative">
           <button
             type="button"
-            disabled={loading}
+            disabled={loading || navDisabled}
             onClick={() => {
               setListOpen((v) => !v);
               setTplOpen(false);
@@ -128,22 +132,42 @@ export function UltraCanvasToolbar({
                 <p className="px-2 py-2 text-xs text-slate-500">{tb.emptyBoards}</p>
               ) : (
                 boards.map((b) => (
-                  <button
+                  <div
                     key={b.id}
-                    type="button"
-                    onClick={() => {
-                      setListOpen(false);
-                      onLoad(b.id);
-                    }}
-                    className={`flex w-full flex-col rounded-lg px-2 py-1.5 text-left text-xs hover:bg-slate-800 ${
-                      b.id === boardId ? "bg-violet-950/60 text-violet-200" : "text-slate-200"
+                    className={`flex items-center gap-1 rounded-lg hover:bg-slate-800 ${
+                      b.id === boardId ? "bg-violet-950/60" : ""
                     }`}
                   >
-                    <span className="font-medium">{b.name}</span>
-                    <span className="text-[10px] text-slate-500">
-                      {tb.nodeCount.replace("{n}", String(b.nodeCount))}
-                    </span>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setListOpen(false);
+                        onLoad(b.id);
+                      }}
+                      className={`min-w-0 flex-1 flex-col rounded-lg px-2 py-1.5 text-left text-xs hover:bg-slate-800 ${
+                        b.id === boardId ? "text-violet-200" : "text-slate-200"
+                      }`}
+                    >
+                      <span className="font-medium">{b.name}</span>
+                      <span className="text-[10px] text-slate-500">
+                        {tb.nodeCount.replace("{n}", String(b.nodeCount))}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      title={tb.deleteBoard}
+                      aria-label={tb.deleteBoard}
+                      disabled={navDisabled}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(b.id);
+                        void refreshBoards();
+                      }}
+                      className="shrink-0 rounded px-2 py-1 text-[10px] text-red-400 hover:bg-red-950/50"
+                    >
+                      ✕
+                    </button>
+                  </div>
                 ))
               )}
             </div>
@@ -152,7 +176,7 @@ export function UltraCanvasToolbar({
         <div className="relative">
           <button
             type="button"
-            disabled={loading}
+            disabled={loading || navDisabled}
             onClick={() => {
               setTplOpen((v) => !v);
               setListOpen(false);

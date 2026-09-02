@@ -1,6 +1,9 @@
 import type { CoachTaskKind } from "@/lib/studio-assistant-coach-profile";
+import type { Locale } from "@/lib/i18n";
 import type { StudioAssistantSnapshot } from "@/lib/studio-assistant-types";
 import { isCoachTaskAcked } from "@/lib/studio-assistant-coach-progress";
+import { isCoachContinueReply } from "@/lib/studio-assistant-continue";
+import { coachRepeatPreambleZh, coachZh, coachUsesEnglish } from "@/lib/studio-assistant-coach-copy";
 
 /** Guidance steps — user can reply 下一步 to confirm they read (default choices OK). */
 const GUIDANCE_TASKS = new Set<CoachTaskKind>([
@@ -81,73 +84,111 @@ export function isCoachTaskComplete(
 export function coachTaskMissingReason(
   task: CoachTaskKind,
   snapshot: StudioAssistantSnapshot,
-  en: boolean,
+  locale: Locale,
 ): string {
+  const en = coachUsesEnglish(locale);
   switch (task) {
     case "fill-product-name":
       return en
         ? "Product name is still empty in Setup."
-        : "Setup 嘅產品名稱仍然係空白。";
+        : coachZh(
+            locale,
+            "Setup 嘅產品名稱仍然係空白。",
+            "Setup 的产品名称仍是空白。",
+            "Setup 的產品名稱仍是空白。",
+          );
     case "fill-concept":
       return en
         ? "Concept description (概念描述) is still empty."
-        : "概念描述仍然未填。";
+        : coachZh(locale, "概念描述仍然未填。", "概念描述仍未填写。", "概念描述仍未填寫。");
     case "enter-brand-url":
       return en
         ? "Brand website URL is not in the Setup field yet."
-        : "品牌網站欄位仍然未貼網址。";
+        : coachZh(
+            locale,
+            "品牌網站欄位仍然未貼網址。",
+            "品牌网站栏位仍未粘贴网址。",
+            "品牌網站欄位仍未貼上網址。",
+          );
     case "upload-product-photo":
       return en
         ? "No product photo uploaded yet — use the upload zone in Setup or Image step."
-        : "仍然未上傳產品相 — 請用 Setup 或出圖步嘅上傳區。";
+        : coachZh(
+            locale,
+            "仍然未上傳產品相 — 請用 Setup 或出圖步嘅上傳區。",
+            "仍未上传产品图 — 请用 Setup 或出图步的上传区。",
+            "仍未上傳產品圖 — 請用 Setup 或出圖步的上傳區。",
+          );
     case "upload-style-reference":
       return en
         ? "No style reference uploaded yet — use the reference layout zone at the top of the Image step."
-        : "仍然未上傳參考排版圖 — 請用出圖步頂部參考區。";
+        : coachZh(
+            locale,
+            "仍然未上傳參考排版圖 — 請用出圖步頂部參考區。",
+            "仍未上传参考排版图 — 请用出图步顶部参考区。",
+            "仍未上傳參考排版圖 — 請用出圖步頂部參考區。",
+          );
     case "analyze-brand":
     case "analyze-brand-before-image":
       return en
         ? "Brand not analyzed yet — click Analyze brand after URL is pasted."
-        : "仍未分析品牌 — 貼好網址後要按「分析品牌」。";
+        : coachZh(
+            locale,
+            "仍未分析品牌 — 貼好網址後要按「分析品牌」。",
+            "仍未分析品牌 — 贴好网址后要按「分析品牌」。",
+            "仍未分析品牌 — 貼好網址後要按「分析品牌」。",
+          );
     case "fill-storyboard-brief":
       return en
         ? "Storyboard brief is still empty."
-        : "分鏡簡述仍然未填。";
+        : coachZh(locale, "分鏡簡述仍然未填。", "分镜简述仍未填写。", "分鏡簡述仍未填寫。");
     case "fill-headline":
-      return en ? "Headline is still empty." : "主標題仍然空白。";
+      return en
+        ? "Headline is still empty."
+        : coachZh(locale, "主標題仍然空白。", "主标题仍是空白。", "主標題仍是空白。");
     case "fill-creative-video-brief":
       return en
         ? "Creative video brief is still empty."
-        : "影片創意簡述仍然未填。";
+        : coachZh(locale, "影片創意簡述仍然未填。", "影片创意简述仍未填写。", "影片創意簡述仍未填寫。");
     case "generate-image":
       return en
         ? "Image not generated yet — click Generate image."
-        : "仍未出圖 — 請按「生成圖片」。";
+        : coachZh(locale, "仍未出圖 — 請按「生成圖片」。", "仍未出图 — 请按「生成图片」。", "仍未出圖 — 請按「生成圖片」。");
     case "generate-cinematic-keyframe":
       return en
         ? "Cinematic keyframe not generated yet."
-        : "仍未生成電影感關鍵幀。";
+        : coachZh(locale, "仍未生成電影感關鍵幀。", "仍未生成电影感关键帧。", "仍未生成電影感關鍵幀。");
     case "generate-cinematic-scenes":
       return en
         ? `Cinematic scenes incomplete (${snapshot.cinematicScenesCount}/${snapshot.cinematicSceneCount}).`
-        : `電影場景未齊（${snapshot.cinematicScenesCount}/${snapshot.cinematicSceneCount}）。`;
+        : coachZh(
+            locale,
+            `電影場景未齊（${snapshot.cinematicScenesCount}/${snapshot.cinematicSceneCount}）。`,
+            `电影场景未齐（${snapshot.cinematicScenesCount}/${snapshot.cinematicSceneCount}）。`,
+            `電影場景未齊（${snapshot.cinematicScenesCount}/${snapshot.cinematicSceneCount}）。`,
+          );
     case "generate-storyboard-scenes":
       return en
         ? "Storyboard scene images not generated yet."
-        : "仍未生成分鏡場景圖。";
+        : coachZh(locale, "仍未生成分鏡場景圖。", "仍未生成分镜场景图。", "仍未生成分鏡場景圖。");
     case "generate-video":
     case "generate-cinematic-video":
     case "generate-creative-video":
     case "generate-storyboard-video":
-      return en ? "Video not generated yet." : "仍未生成影片。";
+      return en ? "Video not generated yet." : coachZh(locale, "仍未生成影片。", "仍未生成视频。", "仍未生成影片。");
     case "continue-setup":
       return en
         ? "You are still on Setup — click Continue at the bottom."
-        : "你仍然喺 Setup — 請按底部「繼續」。";
+        : coachZh(
+            locale,
+            "你仍然喺 Setup — 請按底部「繼續」。",
+            "你仍在 Setup — 请按底部「继续」。",
+            "你仍在 Setup — 請按底部「繼續」。",
+          );
   }
   return en
     ? "This step is not finished yet."
-    : "呢一步仍然未完成。";
+    : coachZh(locale, "呢一步仍然未完成。", "这一步仍未完成。", "這一步仍未完成。");
 }
 
 export function shouldAckCoachTaskOnNext(
@@ -164,7 +205,7 @@ export function isCoachRepeatTurn(
   userText?: string,
   previousTask?: CoachTaskKind | null,
 ): boolean {
-  if (!/^(下一步|next|continue|繼續|继续)$/i.test(userText?.trim() ?? "")) {
+  if (!isCoachContinueReply(userText?.trim() ?? "")) {
     return false;
   }
   if (previousTask !== task) return false;
@@ -175,10 +216,8 @@ export function isCoachRepeatTurn(
 export function coachRepeatPreamble(
   task: CoachTaskKind,
   snapshot: StudioAssistantSnapshot,
-  en: boolean,
+  locale: Locale,
 ): string {
-  const reason = coachTaskMissingReason(task, snapshot, en);
-  return en
-    ? `⏳ Still on this step — you replied "next" but it is not done yet.\nReason: ${reason}\n\n`
-    : `⏳ 仍然係呢一步 — 你回覆了「下一步」，但尚未完成。\n原因：${reason}\n\n`;
+  const reason = coachTaskMissingReason(task, snapshot, locale);
+  return coachRepeatPreambleZh(locale, reason);
 }

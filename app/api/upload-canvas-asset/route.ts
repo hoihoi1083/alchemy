@@ -1,12 +1,29 @@
 import { fal } from "@fal-ai/client";
 import { NextResponse } from "next/server";
+import { assertProCanvasAllowedForUser } from "@/lib/billing/assert-pro-canvas";
 import { requireAppUser } from "@/lib/require-app-user";
+import { persistAndDurablize } from "@/lib/storage/durable-media";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const MAX_IMAGE_BYTES = 25 * 1024 * 1024; // 25 MB
 const MAX_AUDIO_BYTES = 20 * 1024 * 1024; // 20 MB
+const MAX_UPLOADS_PER_HOUR = 60;
+
+const uploadCounts = new Map<string, { count: number; resetAt: number }>();
+
+function checkUploadRate(clerkId: string): boolean {
+  const now = Date.now();
+  const row = uploadCounts.get(clerkId);
+  if (!row || now > row.resetAt) {
+    uploadCounts.set(clerkId, { count: 1, resetAt: now + 60 * 60 * 1000 });
+    return true;
+  }
+  if (row.count >= MAX_UPLOADS_PER_HOUR) return false;
+  row.count += 1;
+  return true;
+}
 
 const ALLOWED_IMAGE_MIME = new Set([
   "image/jpeg",
@@ -52,6 +69,16 @@ export async function POST(request: Request) {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
 
+  const gated = await assertProCanvasAllowedForUser(auth.user.userId);
+  if (gated) return gated;
+
+  if (!checkUploadRate(auth.user.userId)) {
+    return NextResponse.json(
+      { error: "Upload rate limit reached — try again in an hour." },
+      { status: 429 },
+    );
+  }
+
   const key = process.env.FAL_KEY?.trim();
   if (!key) {
     return NextResponse.json({ error: "FAL_KEY is not configured." }, { status: 503 });
@@ -90,8 +117,15 @@ export async function POST(request: Request) {
   }
 
   try {
-    const url = await fal.storage.upload(file);
-    return NextResponse.json({ url, kind });
+    const falUrl = await fal.storage.upload(file);
+    const durableUrl = await persistAndDurablize({
+      clerkId: auth.user.userId,
+      kind: kind === "image" ? "image" : "audio",
+      sourceUrl: falUrl,
+      fallbackUrl: falUrl,
+      name: file.name || null,
+    });
+    return NextResponse.json({ url: durableUrl, kind });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : "Upload failed.";
     return NextResponse.json({ error: message }, { status: 502 });
