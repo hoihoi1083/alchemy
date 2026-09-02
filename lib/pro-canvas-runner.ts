@@ -8,6 +8,15 @@ import {
   DEFAULT_ULTRA_IMAGE_PRO,
   type UltraImageProControls,
 } from "@/lib/ultra-pro-controls";
+import {
+  notifyCreditBalance,
+  readCreditBalanceFromResponse,
+} from "@/lib/credits-client";
+
+function syncCreditsFromResponse(data: unknown): void {
+  const balance = readCreditBalanceFromResponse(data);
+  if (balance != null) notifyCreditBalance(balance);
+}
 
 export async function uploadCanvasAsset(file: File): Promise<string> {
   const fd = new FormData();
@@ -80,6 +89,7 @@ export async function runCanvasImageNode(opts: CanvasImageRunOpts): Promise<stri
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error((data as { error?: string }).error || "Image generation failed");
+    syncCreditsFromResponse(data);
     const url = (data as { imageUrl?: string }).imageUrl;
     if (!isHttpOrLibraryMediaUrl(url)) throw new Error("No image URL in response");
     return url;
@@ -100,6 +110,7 @@ export async function runCanvasImageNode(opts: CanvasImageRunOpts): Promise<stri
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error((data as { error?: string }).error || "Image edit failed");
+    syncCreditsFromResponse(data);
     const url = (data as { imageUrl?: string }).imageUrl;
     if (!isHttpOrLibraryMediaUrl(url)) throw new Error("No image URL in response");
     return url;
@@ -120,6 +131,7 @@ export async function runCanvasImageNode(opts: CanvasImageRunOpts): Promise<stri
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error((data as { error?: string }).error || "Image compose failed");
+  syncCreditsFromResponse(data);
   const url = (data as { imageUrl?: string }).imageUrl;
   if (!isHttpOrLibraryMediaUrl(url)) throw new Error("No image URL in response");
   return url;
@@ -181,6 +193,7 @@ export async function runCanvasVideoNode(opts: CanvasVideoRunOpts): Promise<stri
   const res = await fetch("/api/generate", { method: "POST", body: fd });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error((data as { error?: string }).error || "Video generation failed");
+  syncCreditsFromResponse(data);
   const url = (data as { videoUrl?: string }).videoUrl;
   if (!isHttpOrLibraryMediaUrl(url)) throw new Error("No video URL in response");
   return url;
@@ -258,6 +271,7 @@ export async function runCanvasSpliceNode(opts: {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error((data as { error?: string }).error || "Add music failed");
+    syncCreditsFromResponse(data);
     const withBgm = (data as { videoUrl?: string }).videoUrl;
     if (isHttpOrLibraryMediaUrl(withBgm)) return withBgm;
   }

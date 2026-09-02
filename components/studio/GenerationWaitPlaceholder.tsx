@@ -20,6 +20,13 @@ const BEAT_HZ = 4;
 const BEAT_CYCLE = 8;
 
 const WAIT_FRAME_CSS = `
+.gen-wait-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  width: 100%;
+  min-width: 0;
+}
 .gen-wait-frame {
   position: relative;
   width: 100%;
@@ -61,23 +68,13 @@ const WAIT_FRAME_CSS = `
   background: linear-gradient(to top, #1a1528, rgba(26, 21, 40, 0.9), transparent);
   padding: 2.5rem 0.85rem 0.85rem;
 }
-.gen-wait-fade--with-bar {
-  padding-bottom: 3.65rem;
-}
-.gen-wait-progress {
-  position: absolute;
-  inset-inline: 0.65rem;
-  bottom: 0.65rem;
-  z-index: 3;
-}
 @media (min-width: 640px) {
+  .gen-wait-stack { gap: 0.75rem; }
   .gen-wait-frame { height: 240px; border-radius: 1rem; }
   .gen-wait-frame--compact { height: 220px; }
   .gen-wait-logo { height: 3.5rem; width: 3.5rem; }
   .gen-wait-msg { font-size: 14px; }
   .gen-wait-fade { padding: 3rem 1rem 1rem; }
-  .gen-wait-fade--with-bar { padding-bottom: 3.85rem; }
-  .gen-wait-progress { inset-inline: 0.75rem; bottom: 0.75rem; }
 }
 @media (min-width: 1024px) {
   .gen-wait-frame { height: 300px; border-radius: 1.15rem; }
@@ -119,7 +116,7 @@ function spawnStar(preferOuter = true): Star {
 
 /**
  * Full-width dark wait card: centered logo + fine dots + status at bottom.
- * Height scales with viewport (phone → laptop).
+ * Progress bar sits below the card on the light page surface.
  */
 export function GenerationWaitPlaceholder({
   message,
@@ -230,43 +227,39 @@ export function GenerationWaitPlaceholder({
       : null;
 
   return (
-    <div className={className.trim() || undefined}>
-    <div
-      ref={frameRef}
-      className={`gen-wait-frame${compact ? " gen-wait-frame--compact" : ""}`.trim()}
-    >
+    <div className={`gen-wait-stack${className ? ` ${className}` : ""}`.trim()}>
       <style dangerouslySetInnerHTML={{ __html: WAIT_FRAME_CSS }} />
+      <div
+        ref={frameRef}
+        className={`gen-wait-frame${compact ? " gen-wait-frame--compact" : ""}`.trim()}
+      >
+        {previewUrl ? (
+          <img
+            src={previewUrl}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover opacity-15 blur-[1px]"
+          />
+        ) : null}
 
-      {previewUrl ? (
-        <img
-          src={previewUrl}
-          alt=""
-          className="absolute inset-0 h-full w-full object-cover opacity-15 blur-[1px]"
-        />
-      ) : null}
+        <canvas ref={canvasRef} className="absolute inset-0 block h-full w-full" aria-hidden />
 
-      <canvas ref={canvasRef} className="absolute inset-0 block h-full w-full" aria-hidden />
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <img src="/alchemy-logo.png" alt="" className="gen-wait-logo" />
+        </div>
 
-      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-        <img src="/alchemy-logo.png" alt="" className="gen-wait-logo" />
-      </div>
-
-      <div className={`gen-wait-fade${pct != null ? " gen-wait-fade--with-bar" : ""}`.trim()}>
-        <p className="gen-wait-msg">{message}</p>
-        {hint ? <p className="gen-wait-hint">{hint}</p> : null}
+        <div className="gen-wait-fade">
+          <p className="gen-wait-msg">{message}</p>
+          {hint ? <p className="gen-wait-hint">{hint}</p> : null}
+        </div>
       </div>
 
       {pct != null ? (
-        <div className="gen-wait-progress">
-          <GenerationProgressBar
-            embedded
-            label={progress?.label?.trim() || message}
-            sublabel={progress?.eta || hint}
-            pct={pct}
-          />
-        </div>
+        <GenerationProgressBar
+          label={progress?.label?.trim() || message}
+          sublabel={progress?.eta || undefined}
+          pct={pct}
+        />
       ) : null}
-    </div>
     </div>
   );
 }

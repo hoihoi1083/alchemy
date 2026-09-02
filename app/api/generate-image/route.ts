@@ -45,6 +45,9 @@ import {
   buildProductExplodeStillPrompt,
 } from "@/lib/product-explode";
 import {
+  buildBulletProductElevateStillPrompt,
+} from "@/lib/bullet-product-elevate";
+import {
   buildCreativeMotionStillPrompt,
   parseCreativeMotionSchemePick,
   resolveCreativeMotionScheme,
@@ -528,6 +531,11 @@ export async function POST(request: Request) {
         .trim()
         .toLowerCase(),
     );
+    const bulletElevateEarly = ["1", "true", "yes"].includes(
+      String(formData.get("bullet_product_elevate") ?? "")
+        .trim()
+        .toLowerCase(),
+    );
     if (
       !hasProduct &&
       !hasStyle &&
@@ -538,7 +546,8 @@ export async function POST(request: Request) {
       !creativeMotionEarly &&
       !impactPosterEarly &&
       !handThrowEarly &&
-      !productExplodeEarly
+      !productExplodeEarly &&
+      !bulletElevateEarly
     ) {
       return NextResponse.json(
         {
@@ -717,6 +726,11 @@ export async function POST(request: Request) {
         .trim()
         .toLowerCase(),
     );
+    const bulletProductElevate = ["1", "true", "yes"].includes(
+      String(formData.get("bullet_product_elevate") ?? "")
+        .trim()
+        .toLowerCase(),
+    );
     const posterFrame =
       String(formData.get("motion_poster_frame") ?? "start").trim() === "end"
         ? "end"
@@ -743,6 +757,11 @@ export async function POST(request: Request) {
         : "start";
     const productExplodeFrame =
       String(formData.get("product_explode_frame") ?? "start").trim() === "end"
+        ? "end"
+        : "start";
+    const bulletProductElevateFrame =
+      String(formData.get("bullet_product_elevate_frame") ?? "start").trim() ===
+      "end"
         ? "end"
         : "start";
     let creativeMotionScheme: CreativeMotionSchemeId = "body-breathe";
@@ -812,6 +831,7 @@ export async function POST(request: Request) {
       !creativeMotion &&
       !handThrowScene &&
       !productExplode &&
+      !bulletProductElevate &&
       !clientPrompt &&
       (!imageOutputMode || imageOutputMode === "single" || imageOutputMode === "ab") &&
       shouldPlanSingleImageAd(promptMode, imageTextMode);
@@ -914,7 +934,8 @@ export async function POST(request: Request) {
         ((vacuumInflate && vacuumInflateFrame === "end") ||
           (creativeMotion && creativeMotionFrame === "end") ||
           (handThrowScene && handThrowFrame === "end") ||
-          (productExplode && productExplodeFrame === "end")) &&
+          (productExplode && productExplodeFrame === "end") ||
+          (bulletProductElevate && bulletProductElevateFrame === "end")) &&
         startPlateUrl
       ) {
         const plate = await mirrorImageUrlToFalStorage(startPlateUrl, {
@@ -1032,6 +1053,16 @@ export async function POST(request: Request) {
             aspectRatio: aspectRatioRaw,
             frame: productExplodeFrame,
           })
+        : bulletProductElevate
+        ? buildBulletProductElevateStillPrompt({
+            product:
+              productName ||
+              headline ||
+              (promotionMode === "concept" ? "brand hero product" : "the product"),
+            conceptMode: promotionMode === "concept",
+            aspectRatio: aspectRatioRaw,
+            frame: bulletProductElevateFrame,
+          })
         : motionPoster
         ? posterFrame === "end"
           ? buildMotionPosterEndStillPrompt(vars, {
@@ -1073,7 +1104,8 @@ export async function POST(request: Request) {
         vacuumInflate ||
         creativeMotion ||
         handThrowScene ||
-        productExplode
+        productExplode ||
+        bulletProductElevate
           ? builtPrompt
           : singleImagePlan
             ? builtPrompt

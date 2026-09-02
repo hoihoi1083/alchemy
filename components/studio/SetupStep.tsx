@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useWizard } from "@/components/studio/WizardContext";
+import { WizardStepHelpPanel } from "@/components/studio/WizardStepHelpPanel";
 import { WorkflowModePicker } from "@/components/WorkflowModePicker";
 import { VisualStylePicker } from "@/components/VisualStylePicker";
 import { ArtStylePicker } from "@/components/ArtStylePicker";
@@ -9,7 +10,7 @@ import { CompositionPresetPicker } from "@/components/studio/CompositionPresetPi
 import { TemplateSlotChecklist } from "@/components/TemplateSlotChecklist";
 import { AdvancedPromptPanel } from "@/components/AdvancedPromptPanel";
 import { isSlotRequired, templateHasSlot } from "@/lib/template-slots";
-import { isBrandVideoStyle, isCreativeVideoStyle, isBrandVisualStyle, isStoryboardVideoStyle, isUgcPresenterStyle, isAiPlannedVideoStyle, visualStylePromptHint } from "@/lib/visual-styles";
+import { isBrandVideoStyle, isCreativeVideoStyle, isBrandVisualStyle, isStoryboardVideoStyle, isUgcPresenterStyle, isAiPlannedVideoStyle, isExplosionUnboxStyle, visualStylePromptHint } from "@/lib/visual-styles";
 import { UploadZone } from "@/components/UploadZone";
 import { ReferenceUploadZone } from "@/components/ReferenceUploadZone";
 import { ContentResearchPanel } from "@/components/content-research/ContentResearchPanel";
@@ -246,6 +247,8 @@ export function SetupStep() {
     </h2>
     <p className="mt-2 text-[15px] leading-relaxed text-slate-600">{m.wizard.step1Hint}</p>
   </div>
+
+  <WizardStepHelpPanel step="setup" />
 
   <WorkflowModePicker value={workflowMode} onChange={onWorkflowModeChange} />
 
@@ -512,6 +515,22 @@ export function SetupStep() {
     {isConceptVideoOnly ? (
       <>
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={() => applyPrimaryPathConceptVideo("explosion-unbox")}
+          className={`rounded-xl border px-3 py-3 text-left sm:col-span-2 ${
+            visualStyleId === "explosion-unbox"
+              ? "border-violet-400 bg-violet-50 ring-2 ring-violet-300/60"
+              : "border-slate-200 bg-white"
+          }`}
+        >
+          <p className="text-sm font-semibold text-slate-900">
+            {m.wizard.visualStyles["explosion-unbox"].title}
+          </p>
+          <p className="mt-1 text-xs text-slate-600">
+            {m.wizard.visualStyles["explosion-unbox"].description}
+          </p>
+        </button>
         <button
           type="button"
           onClick={() => applyPrimaryPathConceptVideo("creative")}
@@ -831,7 +850,8 @@ export function SetupStep() {
       {isConceptVideoOnly && (
         <p className="text-xs font-medium text-cyan-800">{m.wizard.conceptVideoSameBriefHint}</p>
       )}
-      {(isConceptVideoOnly || workflowMode === "combined" || workflowMode === "image-only") && (
+      {(isConceptVideoOnly || workflowMode === "combined" || workflowMode === "image-only") &&
+        !isExplosionUnboxStyle(visualStyleId) && (
         <div
           className="rounded-lg border border-indigo-200 bg-white/80 p-3"
           data-coach-id="coach-product-photo"
@@ -852,10 +872,17 @@ export function SetupStep() {
         data-coach-id="coach-concept-idea"
         value={conceptIdea}
         onChange={(e) => setConceptIdea(e.target.value)}
-        placeholder={m.wizard.conceptIdeaPlaceholder}
+        placeholder={
+          isExplosionUnboxStyle(visualStyleId)
+            ? m.wizard.explosionUnbox.themePlaceholder
+            : m.wizard.conceptIdeaPlaceholder
+        }
         rows={3}
         className="w-full rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm text-slate-900"
       />
+      {isExplosionUnboxStyle(visualStyleId) ? (
+        <p className="text-[11px] text-indigo-900/80">{m.wizard.explosionUnbox.themeHint}</p>
+      ) : null}
       <div className="grid gap-2 sm:grid-cols-2">
         <textarea
           value={conceptAudience}
@@ -1019,7 +1046,31 @@ export function SetupStep() {
     </div>
   )}
 
-  {!usesCompositor && isCreativeVideoStyle(visualStyleId) && (
+  {!usesCompositor && isExplosionUnboxStyle(visualStyleId) && (
+    <div className="space-y-3 rounded-xl border border-amber-900/40 bg-gradient-to-br from-amber-950/40 via-orange-950/30 to-violet-950/40 px-4 py-3">
+      <p className="text-sm font-semibold text-amber-50">{m.wizard.visualStyles["explosion-unbox"].title}</p>
+      <p className="text-xs text-amber-100/90">{m.wizard.explosionUnbox.intro}</p>
+      <ol className="list-decimal space-y-1 pl-4 text-xs text-amber-100/85">
+        {m.wizard.explosionUnbox.steps.map((step) => (
+          <li key={step}>{step}</li>
+        ))}
+      </ol>
+      <label className="block text-xs font-medium text-amber-100">
+        {m.wizard.explosionUnbox.briefLabel}
+      </label>
+      <textarea
+        data-coach-id="coach-creative-video-brief"
+        value={creativeVideoBrief}
+        onChange={(e) => setCreativeVideoBrief(e.target.value)}
+        placeholder={m.wizard.explosionUnbox.briefPlaceholder}
+        rows={8}
+        className="w-full rounded-lg border border-amber-800/50 bg-slate-950/80 px-3 py-2 font-mono text-[11px] leading-relaxed text-amber-50"
+      />
+      <p className="text-[11px] text-amber-200/80">{m.wizard.explosionUnbox.briefHint}</p>
+    </div>
+  )}
+
+  {!usesCompositor && isCreativeVideoStyle(visualStyleId) && !isExplosionUnboxStyle(visualStyleId) && (
     <div className="space-y-3 rounded-xl border border-sky-900/50 bg-sky-950/30 px-4 py-3">
       <p className="text-sm font-semibold text-sky-50">{m.wizard.visualStyles["creative-video"].title}</p>
       <p className="text-xs text-sky-100/90">{m.wizard.creativeVideoIntro}</p>

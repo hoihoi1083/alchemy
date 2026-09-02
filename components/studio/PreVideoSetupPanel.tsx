@@ -13,7 +13,7 @@ import type { IntakePath } from "@/lib/wizard-micro-steps.types";
 import type { VideoGenerationKind } from "@/lib/video-generation-path";
 import { storyboardSceneDisplayCopy } from "@/lib/storyboard-scene-copy";
 import { studioPhasesForMode, videoSetupPhaseIndex } from "@/lib/studio-phases";
-import { isCreativeVideoStyle, getVisualStyle } from "@/lib/visual-styles";
+import { isCreativeVideoStyle, getVisualStyle, isExplosionUnboxStyle } from "@/lib/visual-styles";
 import { MotionPosterDialectPicker } from "@/components/studio/MotionPosterDialectPicker";
 import { ImpactPosterOptionsPicker } from "@/components/studio/ImpactPosterOptionsPicker";
 import { ArtStylePicker } from "@/components/ArtStylePicker";
@@ -401,6 +401,8 @@ export function PreVideoSetupPanel({
     !scenesReady && wizard.videoCreativeMode === "hand-throw-scene";
   const prefersProductExplode =
     !scenesReady && wizard.videoCreativeMode === "product-explode";
+  const prefersBulletElevate =
+    !scenesReady && wizard.videoCreativeMode === "bullet-product-elevate";
   const prefersBlockbuster =
     !scenesReady && wizard.videoCreativeMode === "blockbuster";
   const prefersH3Shot =
@@ -408,6 +410,8 @@ export function PreVideoSetupPanel({
   const preferredH3Subpath = prefersH3Shot
     ? h3ShotRecipeToSubpath(wizard.videoCreativeMode as H3ShotRecipeMode)
     : null;
+  const prefersExplosionUnbox =
+    !scenesReady && isExplosionUnboxStyle(wizard.visualStyleId);
   const activeSubpath =
     videoSubpath ??
     (prefersBlockbuster
@@ -422,6 +426,8 @@ export function PreVideoSetupPanel({
       ? "hand_throw_scene"
       : prefersProductExplode
       ? "product_explode"
+      : prefersBulletElevate
+      ? "bullet_product_elevate"
       : prefersSocialDrip
       ? "social_drip"
       : prefersMotionPoster
@@ -430,6 +436,8 @@ export function PreVideoSetupPanel({
       ? "impact_poster"
       : prefersReference
         ? "reference_reel"
+        : prefersExplosionUnbox
+          ? "explosion_unbox"
         : isConcept
           ? "creative_video"
           : "product_promo");
@@ -441,6 +449,11 @@ export function PreVideoSetupPanel({
   const isCreativeMotion = !scenesReady && activeSubpath === "creative_motion";
   const isHandThrow = !scenesReady && activeSubpath === "hand_throw_scene";
   const isProductExplode = !scenesReady && activeSubpath === "product_explode";
+  const isBulletElevate =
+    !scenesReady && activeSubpath === "bullet_product_elevate";
+  const isExplosionUnbox =
+    !scenesReady &&
+    (activeSubpath === "explosion_unbox" || prefersExplosionUnbox);
   const isBlockbuster = !scenesReady && activeSubpath === "blockbuster";
   const h3ShotMode = !scenesReady ? subpathToH3ShotRecipe(activeSubpath as never) : null;
   const isH3Shot = Boolean(h3ShotMode);
@@ -465,6 +478,8 @@ export function PreVideoSetupPanel({
     !isCreativeMotion &&
     !isHandThrow &&
     !isProductExplode &&
+    !isBulletElevate &&
+    !isExplosionUnbox &&
     !isBlockbuster &&
     !isH3Shot;
   const isQuickAssistant =
@@ -509,6 +524,7 @@ export function PreVideoSetupPanel({
       !isCreativeMotion &&
       !isHandThrow &&
       !isProductExplode &&
+      !isBulletElevate &&
       !isBlockbuster &&
       !isH3Shot &&
       isCreativeVideoStyle(wizard.visualStyleId));
@@ -582,6 +598,13 @@ export function PreVideoSetupPanel({
       onPickVideoSubpath("product_explode");
       return;
     }
+    if (
+      isBulletElevate &&
+      wizard.videoCreativeMode !== "bullet-product-elevate"
+    ) {
+      onPickVideoSubpath("bullet_product_elevate");
+      return;
+    }
     const researchLocksReel =
       prefersReference &&
       videoSubpath !== "reference_reel" &&
@@ -605,6 +628,10 @@ export function PreVideoSetupPanel({
     }
     if (prefersProductExplode) {
       onPickVideoSubpath("product_explode");
+      return;
+    }
+    if (prefersBulletElevate) {
+      onPickVideoSubpath("bullet_product_elevate");
       return;
     }
     if (prefersSocialDrip) {
@@ -641,6 +668,7 @@ export function PreVideoSetupPanel({
     prefersCreativeMotion,
     prefersHandThrow,
     prefersProductExplode,
+    prefersBulletElevate,
     prefersBlockbuster,
     preferredH3Subpath,
     h3ShotMode,
@@ -652,6 +680,7 @@ export function PreVideoSetupPanel({
     isCreativeMotion,
     isHandThrow,
     isProductExplode,
+    isBulletElevate,
     activeSubpath,
     wizard.videoCreativeMode,
   ]);
@@ -667,6 +696,7 @@ export function PreVideoSetupPanel({
     if (wizard.videoCreativeMode === "creative-motion") return;
     if (wizard.videoCreativeMode === "hand-throw-scene") return;
     if (wizard.videoCreativeMode === "product-explode") return;
+    if (wizard.videoCreativeMode === "bullet-product-elevate") return;
     if (wizard.videoCreativeMode === "blockbuster") return;
     if (isH3ShotRecipeMode(wizard.videoCreativeMode)) return;
     if (wizard.videoCreativeMode === "product-assistant") return;
@@ -704,6 +734,8 @@ export function PreVideoSetupPanel({
                 ? "hand-throw-scene"
                 : isProductExplode
                   ? "product-explode"
+                  : isBulletElevate
+                    ? "bullet-product-elevate"
                   : isBlockbuster
                     ? "blockbuster"
                     : h3ShotMode
@@ -720,7 +752,8 @@ export function PreVideoSetupPanel({
     pipelineKind === "vacuum-inflate" ||
     pipelineKind === "creative-motion" ||
     pipelineKind === "hand-throw-scene" ||
-    pipelineKind === "product-explode";
+    pipelineKind === "product-explode" ||
+    pipelineKind === "bullet-product-elevate";
   const tokenEstimate = estimateVideoPipelineTokens({
     kind: pipelineKind,
     resolution: wizard.videoSettings.resolution,
@@ -884,6 +917,12 @@ export function PreVideoSetupPanel({
       desc: m.wizard.videoCreativeModes["product-explode"].description,
       previewSrc: videoModePreviewSrc("product-explode"),
     },
+    {
+      id: "bullet_product_elevate",
+      title: m.wizard.videoCreativeModes["bullet-product-elevate"].title,
+      desc: m.wizard.videoCreativeModes["bullet-product-elevate"].description,
+      previewSrc: videoModePreviewSrc("bullet-product-elevate"),
+    },
     ...h3ShotModesForPromotion("physical").map((mode) => ({
       id: h3ShotRecipeToSubpath(mode),
       title: m.wizard.videoCreativeModes[mode].title,
@@ -910,6 +949,12 @@ export function PreVideoSetupPanel({
       title: m.wizard.sceneReelTitle,
       desc: m.wizard.sceneReelDesc,
       previewSrc: getVisualStyle("creative-video").previewSrc,
+    },
+    {
+      id: "explosion_unbox",
+      title: m.wizard.visualStyles["explosion-unbox"].title,
+      desc: m.wizard.visualStyles["explosion-unbox"].description,
+      previewSrc: getVisualStyle("explosion-unbox").previewSrc,
     },
     {
       id: "motion_poster",
@@ -953,6 +998,12 @@ export function PreVideoSetupPanel({
       desc: m.wizard.videoCreativeModes["product-explode"].description,
       previewSrc: videoModePreviewSrc("product-explode"),
     },
+    {
+      id: "bullet_product_elevate",
+      title: m.wizard.videoCreativeModes["bullet-product-elevate"].title,
+      desc: m.wizard.videoCreativeModes["bullet-product-elevate"].description,
+      previewSrc: videoModePreviewSrc("bullet-product-elevate"),
+    },
     ...h3ShotModesForPromotion("concept").map((mode) => ({
       id: h3ShotRecipeToSubpath(mode),
       title: m.wizard.videoCreativeModes[mode].title,
@@ -976,6 +1027,8 @@ export function PreVideoSetupPanel({
         if (opt.id === "creative_motion") return isCreativeMotion;
         if (opt.id === "hand_throw_scene") return isHandThrow;
         if (opt.id === "product_explode") return isProductExplode;
+        if (opt.id === "bullet_product_elevate") return isBulletElevate;
+        if (opt.id === "explosion_unbox") return isExplosionUnbox;
         if (opt.id === "motion_poster") return isMotionPoster;
         if (opt.id === "impact_poster") return isImpactPoster;
         if (opt.id === "blockbuster") return isBlockbuster;
@@ -999,6 +1052,8 @@ export function PreVideoSetupPanel({
         ? m.wizard.handThrowHint
         : isProductExplode
         ? m.wizard.productExplodeHint
+        : isBulletElevate
+        ? m.wizard.bulletProductElevateHint
         : isSocialDrip
         ? m.wizard.socialDripHint
         : isBlockbuster
@@ -1236,6 +1291,10 @@ export function PreVideoSetupPanel({
                             ? isHandThrow
                             : opt.id === "product_explode"
                               ? isProductExplode
+                            : opt.id === "bullet_product_elevate"
+                              ? isBulletElevate
+                            : opt.id === "explosion_unbox"
+                              ? isExplosionUnbox
                       : opt.id === "motion_poster"
                         ? isMotionPoster
                         : opt.id === "impact_poster"
@@ -2273,6 +2332,17 @@ export function PreVideoSetupPanel({
                 </h3>
                 <p className="mt-1 text-xs leading-relaxed text-slate-500">
                   {m.wizard.productExplodeHint}
+                </p>
+              </section>
+            ) : null}
+
+            {isBulletElevate ? (
+              <section className="pv-card">
+                <h3 className="pv-card-title">
+                  {m.wizard.videoCreativeModes["bullet-product-elevate"].title}
+                </h3>
+                <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                  {m.wizard.bulletProductElevateHint}
                 </p>
               </section>
             ) : null}

@@ -416,6 +416,13 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     }
     if (sub === "product_explode" && wizard.videoCreativeMode !== "product-explode") {
       wizard.onVideoCreativeModeChange("product-explode");
+      return;
+    }
+    if (
+      sub === "bullet_product_elevate" &&
+      wizard.videoCreativeMode !== "bullet-product-elevate"
+    ) {
+      wizard.onVideoCreativeModeChange("bullet-product-elevate");
     }
   }, [ctx.videoSubpath, wizard.videoCreativeMode, wizard.onVideoCreativeModeChange]);
 

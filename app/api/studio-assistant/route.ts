@@ -1,3 +1,4 @@
+import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { callDeepSeekChat } from "@/lib/deepseek-client";
 import { fetchWebsiteText } from "@/lib/brand-analyze";
@@ -211,8 +212,7 @@ async function loadSitePreview(url: string): Promise<string> {
 }
 
 export async function POST(request: Request) {
-  const auth = await requireAppUser();
-  if (!auth.ok) return auth.response;
+  const { userId } = await auth();
 
   let body: {
     messages?: unknown;
@@ -235,6 +235,11 @@ export async function POST(request: Request) {
       { success: false, error: "Invalid assistant snapshot." },
       { status: 400 },
     );
+  }
+
+  if (snapshot.surface === "studio" && !userId) {
+    const auth = await requireAppUser();
+    if (!auth.ok) return auth.response;
   }
 
   if (messages.length === 0) {
@@ -299,7 +304,23 @@ export async function POST(request: Request) {
     });
   }
 
-  const quota = await assertFreeDeepSeekQuota(auth.user.userId);
+  if (!userId) {
+    const anonReply =
+      locale === "en"
+        ? "Sign in for open-ended Q&A (tokens, pricing, engines). Quick routes still work — try “help me make a product reel”, “explosion unbox video”, or tap a chip above."
+        : locale === "zh-cn"
+          ? "登录后可问额度、方案和引擎等开放问题。快捷路径仍可用 — 试试「帮我出产品短片」「爆炸开箱视频」，或点上方按钮。"
+          : locale === "zh-tw"
+            ? "登入後可問額度、方案和引擎等開放問題。快捷路徑仍可用 — 試試「幫我出產品短片」「爆炸開箱影片」，或點上方按鈕。"
+            : "登入後可問額度、方案同引擎等開放問題。快捷路徑仍可用 — 試「幫我出產品 Reel」「爆炸開箱片」，或撳上面掣。";
+    return NextResponse.json({
+      success: true,
+      reply: anonReply,
+      meta: { ...meta, fastPath: true, anonAskBlocked: true },
+    });
+  }
+
+  const quota = await assertFreeDeepSeekQuota(userId);
   if (!quota.ok) return quota.response;
 
   const sitePreview = detectedUrl ? await loadSitePreview(detectedUrl) : "";

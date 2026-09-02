@@ -773,6 +773,12 @@ export const zhTw = {
 						"完整棚拍 → 懸浮零件靜圖 → 約 4 秒柔和拆解（風格化，非 CAD）。",
 					costHint: "~2 圖 + 4s video · 產品圖",
 				},
+				"product-bullet-elevate-8s": {
+					title: "子彈時間產品升格 ~8s",
+					description:
+						"模特行走 → 絲線轉折 → 產品懸浮環繞 → 回落。生活方式 + 產品圖。",
+					costHint: "~2 圖 + 8s video · 產品／生活方式圖",
+				},
 				"product-ecom-orbit-6s": {
 					title: "電商環繞 ~6s",
 					description:
@@ -870,6 +876,12 @@ export const zhTw = {
 						"方案卡 + Logo／吉祥物鎖定 → 自動首尾幀 → 4 秒视频。",
 					costHint: "~2 圖 + 4s video · Logo/吉祥物",
 				},
+				"concept-explosion-unbox-8s": {
+					title: "AI 爆炸開箱 ~8s",
+					description:
+						"主題盒震動打開 → 房間組裝 → 道具飄浮。純文字出片 — 只填主題。",
+					costHint: "~8s 單片 · 主題（不需產品圖）",
+				},
 				"concept-hand-throw-scene-6s": {
 					title: "手拋變實景（概念）~6s",
 					description:
@@ -881,6 +893,12 @@ export const zhTw = {
 					description:
 						"Logo／吉祥物作裝置鎖定 → 懸浮零件靜圖 → 約 4 秒柔和拆解。",
 					costHint: "~2 圖 + 4s video · Logo/吉祥物",
+				},
+				"concept-bullet-elevate-8s": {
+					title: "子彈時間升格（概念）~8s",
+					description:
+						"Logo／吉祥物生活方式行走 → 絲線轉折 → 懸浮環繞 → 回落。",
+					costHint: "~2 圖 + 8s video · Logo/吉祥物",
 				},
 				"concept-beauty-mv-10s": {
 					title: "美妝/角色一鏡（概念）~10s",
@@ -1675,6 +1693,10 @@ export const zhTw = {
         title: "創意動態簡報",
         description: "用文字描述你想拍的 Reel → AI 寫動態 prompt（運鏡／節奏）",
       },
+      "explosion-unbox": {
+        title: "AI 爆炸開箱 ~8s",
+        description: "主題盒打開 → 房間組裝 → 道具飄浮。純文字出片，不需產品圖。",
+      },
       "concept-cinematic": {
         title: "概念電影感短影片",
         description: "概念故事 / 公益訊息 / 病毒感短影片，偏電影感畫面",
@@ -1720,6 +1742,8 @@ export const zhTw = {
       "brand-campaign": "",
       "brand-video": "",
       "creative-video": "",
+      "explosion-unbox":
+        "病毒感開箱 Reel — 主題盒打開、房間組裝、道具飄浮。純文字出片，不需產品圖。",
       "concept-cinematic": "概念電影感風格：戲劇光影、景深、情緒節奏，避免畫面內文字。",
       "storyboard-video":
         "似真商業片：AI 按你件貨類型規劃場景（手鍊、洗鼻器、護膚等），唔會固定手鍊模板",
@@ -1736,6 +1760,22 @@ export const zhTw = {
       "上傳產品相，AI 會生成似真模特兒佩戴或使用產品嘅 9:16 廣告圖。手鍊／手串會上手；洗鼻器等會示範用法。進階可揀「主體取景」控制露臉或隻手。",
     creativeVideoIntro:
       "用文字描述你想拍的短影片（例如：功夫對打後飲能量飲品）。AI 會寫動態 prompt（鏡頭怎麼動 — 不是口播）。產品照或關鍵圖選填。",
+    explosionUnbox: {
+      intro:
+        "選主題 — 蜘蛛人臥室、麥當勞、Tom & Jerry、你的品牌。我們會預填電影感 JSON brief，可再改。不需產品圖。",
+      steps: [
+        "輸入主題（蜘蛛人、麥當勞、你的品牌）",
+        "檢查或修改 JSON brief",
+        "直接出片 — 跳過出圖步驟",
+      ],
+      themePlaceholder: "例如：蜘蛛人臥室、麥當勞、Tom & Jerry",
+      themeHint: "只改主題 — 開箱、組裝、飄浮效果沿用同一套配方。",
+      briefLabel: "爆炸開箱 brief（JSON）",
+      briefPlaceholder:
+        '{\n  "description": "Cinematic fixed wide-angle shot...",\n  "style": "cinematic, vivid, warm undertones",\n  ...\n}',
+      briefHint: "進階：可改鏡頭、光線或元素。description 請配合你的主題。",
+      planNote: "由主題 + brief 文字出片 — 不經出圖。此模板需 Pro 方案。",
+    },
     creativeBriefLabel: "創意影片描述（必填）",
     creativeBriefPlaceholder:
       "例如：開場一人對五人功夫對峙，打贏後拿起能量飲品喝一口 — 電影感、節奏快",
@@ -1805,6 +1845,8 @@ export const zhTw = {
       "brand-campaign": "可填 campaign 主題，例如：春季新品三張圖講清功效",
       "brand-video": "分析後會自動寫動態 prompt；可補充運鏡或氛圍要求",
       "creative-video": "上面已填創意描述；呢度可補充運鏡或氛圍",
+      "explosion-unbox":
+        "主題在上面；可改 JSON brief 或補充運鏡 — 不需產品圖",
       "concept-cinematic": "例如：戲劇邊緣光、奇幻大廳、電影鏡頭感、情緒張力、不要 logo 和 UI 字樣",
       "storyboard-video": "例如：似真拍攝、柔和光線、示範用法、不要價錢…",
       "ugc-presenter": "例如：溫馨書房、女主播、手腕示範手鍊、粵語 UGC 感…",
@@ -2671,7 +2713,11 @@ export const zhTw = {
 				description:
 					"完整棚拍 → 懸浮零件尾幀 → 約 4 秒柔和拆解（非精準 CAD）。",
 			},
-      
+			"bullet-product-elevate": {
+				title: "子彈時間產品升格",
+				description:
+					"生活方式行走 → 絲線轉折 → 產品懸浮環繞 → 回落。約 8 秒一鏡。",
+			},
 			"ecom-orbit": {
 				title: "電商環繞",
 				description:
@@ -3235,6 +3281,11 @@ export const zhTw = {
 				attention: ["風格化懸浮零件 — 不是精準 CAD 內部", "完整主角 → 拆解靜圖 → 短拆解片"],
 				output: ["約 2 張靜圖 + 4 秒風格化拆解過渡"],
 			},
+			"bullet-product-elevate": {
+				need: ["產品／生活方式圖（概念可用 Logo／吉祥物靜圖）", "清晰主體輪廓以便身份鎖定"],
+				attention: ["行走 → 轉折 → 子彈時間環繞 → 回落（約 8 秒）", "不是棚拍拆解 — 生活方式一鏡"],
+				output: ["約 2 張靜圖 + 8 秒子彈時間升格片"],
+			},
 			"motion-poster": {
 				need: ["產品圖（產品）— 或 Logo／主題 + 可選靜圖（概念）", "結尾海報要用的標題"],
 				attention: ["兩張設計靜圖：無字開頭 → 有字結尾", "產品和字一起過渡 — 不是分鏡"],
@@ -3359,6 +3410,13 @@ socialDripHint:
 		productExplodeBuildingEnd: "第 2/3 步：懸浮零件拆解靜圖…",
 		productExplodeAnimatingCard: "第 3/3 步：拆解過渡中…",
 		productExplodeNeedKeyframe: "請先上傳產品圖（概念用 Logo／吉祥物靜圖 — 單靠文字不夠）。",
+		bulletProductElevateHint:
+			"生活方式行走 → 絲線轉折 → 產品懸浮子彈時間 → 回落。需清晰產品或生活方式圖（約 8 秒）。",
+		bulletProductElevateBuildingStill: "第 1/3 步：生活方式行走首幀…",
+		bulletProductElevateBuildingEnd: "第 2/3 步：子彈時間定格尾幀…",
+		bulletProductElevateAnimatingCard: "第 3/3 步：子彈時間升格過渡…",
+		bulletProductElevateNeedKeyframe:
+			"請先上傳產品圖（概念用 Logo／吉祥物靜圖 — 單靠文字不夠）。",
 		creativeMotionSchemeTitle: "方案卡",
 		creativeMotionSchemeHint:
 			"同一套首尾幀過渡，不同創意。自動會選合適的——再生成試另一種。",
@@ -4037,6 +4095,10 @@ socialDripFitTitle: "這個格式可以／不可以做什麼",
       name: "創意動態簡報",
       description: "描述創意 → AI 寫動態 prompt",
     },
+    "explosion-unbox-reel": {
+      name: "AI 爆炸開箱",
+      description: "主題盒打開 → 房間組裝 → 道具飄浮。由主題文字出片。",
+    },
     "storyboard-video": {
       name: "故事分鏡片",
       description: "AI 分鏡 → 多張場景圖 → 影片生成 一條片",
@@ -4701,13 +4763,14 @@ socialDripFitTitle: "這個格式可以／不可以做什麼",
     shortLabel: "問 AI",
     openingStudio: "正在打開工作室並套用設定…",
     studioContinued:
-      "已開工作室 — 請跟嗰頁步驟（揀出圖／出片／圖+片，再按 Continue）。Tokens 或工具問題可以喺呢度再問。",
+      "已開工作室 — 請跟該頁卡片（選出圖／出片／圖+片，再按 Continue）。要問 tokens 或工具，回首頁再問即可。",
     placeholder: "例如：免費 300 token 夠不夠 12 秒 Reel？或者：Ultra 畫布做產品主圖…",
     thinking: "思考中…",
     send: "發送",
     close: "關閉",
     spotlightDismiss: "知道了 — 關閉提示",
-    signInToChat: "請先登入使用工作室導覽 — 登入後再發送訊息。",
+    signInToChat:
+      "登入可儲存專案與生成作品 — 不登入也可以在這裡提問。",
     openLauncher: "打開工作室助理",
     dialogLabel: "工作室助理對話",
     errorNetwork: "連接有點不穩，請稍後再試。",
@@ -5451,6 +5514,7 @@ socialDripFitTitle: "這個格式可以／不可以做什麼",
     imagePromptPlaceholder: "描述廣告圖片… 用 @ 引用多圖素材",
     runImage: "生成圖片",
     tokenBadge: "{n} tok",
+    scriptPlanBadge: "方案配額",
     nodeLabels: {
       text: "文字",
       image: "圖片",

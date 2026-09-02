@@ -45,7 +45,7 @@ import { ReferenceAnalyzeWaitPanel, referenceAnalyzeReady } from "@/components/s
 import { ResearchReelSetupPanel } from "@/components/studio/ResearchReelSetupPanel";
 import { BrandWebsitePanel } from "@/components/studio/BrandWebsitePanel";
 import { useEffect, useState } from "react";
-import { isStoryboardVideoStyle, getVisualStyle } from "@/lib/visual-styles";
+import { isStoryboardVideoStyle, getVisualStyle, isExplosionUnboxStyle } from "@/lib/visual-styles";
 import { researchReelAnalyzeProgress } from "@/lib/generation-progress-estimates";
 import {
   h3ShotRecipeToSubpath,
@@ -639,8 +639,12 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
                 ? "hand_throw_scene"
                 : wizard.videoCreativeMode === "product-explode"
                 ? "product_explode"
+                : wizard.videoCreativeMode === "bullet-product-elevate"
+                ? "bullet_product_elevate"
                 : wizard.videoCreativeMode === "blockbuster"
                 ? "blockbuster"
+                : isExplosionUnboxStyle(wizard.visualStyleId)
+                ? "explosion_unbox"
                 : h3Subpath
                 ? h3Subpath
                 : wizard.videoCreativeMode === "motion-poster"
@@ -658,6 +662,8 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
               subpath === "creative_motion" ||
               subpath === "hand_throw_scene" ||
               subpath === "product_explode" ||
+              subpath === "bullet_product_elevate" ||
+              subpath === "explosion_unbox" ||
               Boolean(h3Mode);
             micro.setVideoSubpath(subpath as never);
             micro.patchContext(
@@ -679,12 +685,16 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
               wizard.onVideoCreativeModeChange("hand-throw-scene");
             } else if (subpath === "product_explode") {
               wizard.onVideoCreativeModeChange("product-explode");
+            } else if (subpath === "bullet_product_elevate") {
+              wizard.onVideoCreativeModeChange("bullet-product-elevate");
             } else if (subpath === "blockbuster") {
               wizard.onVideoCreativeModeChange("blockbuster");
             } else if (h3Mode) {
               wizard.onVideoCreativeModeChange(h3Mode);
             } else if (subpath === "reference_reel") {
               wizard.onVideoCreativeModeChange("reference-concept");
+            } else if (subpath === "explosion_unbox") {
+              wizard.applyPrimaryPathConceptVideo("explosion-unbox");
             } else if (subpath === "creative_video" || subpath === "brand_video") {
               wizard.applyPrimaryPathConceptVideo("creative");
             }

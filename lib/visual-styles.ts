@@ -21,6 +21,7 @@ export type VisualStyleId =
   | "brand-video"
   | "creative-video"
   | "concept-cinematic"
+  | "explosion-unbox"
   | "storyboard-video"
   | "model-wear"
   | "ugc-presenter"
@@ -47,6 +48,10 @@ export function isStoryboardVideoStyle(id: VisualStyleId): boolean {
 
 export function isUgcPresenterStyle(id: VisualStyleId): boolean {
   return id === "ugc-presenter";
+}
+
+export function isExplosionUnboxStyle(id: VisualStyleId): boolean {
+  return id === "explosion-unbox";
 }
 
 export function isConceptCinematicStyle(id: VisualStyleId): boolean {
@@ -104,11 +109,13 @@ const IMAGE_FIRST_VISUAL_STYLE_IDS = new Set<VisualStyleId>([
 const VIDEO_FIRST_VISUAL_STYLE_IDS = new Set<VisualStyleId>([
   "brand-video",
   "creative-video",
+  "explosion-unbox",
 ]);
 
 /** Combined workflow only — cinematic keyframe → video stitch. */
 const COMBINED_ONLY_VISUAL_STYLE_IDS = new Set<VisualStyleId>([
   "concept-cinematic",
+  "explosion-unbox",
 ]);
 
 export function isVisualStyleAllowedForWorkflow(
@@ -300,6 +307,15 @@ export const VISUAL_STYLES: VisualStyleDef[] = [
     usesCompositor: false,
     promptHint:
       "Cinematic concept short: dramatic rim light, shallow depth of field, rich atmosphere, expressive camera movement, no on-screen text, trailer-like emotional pacing.",
+  },
+  {
+    id: "explosion-unbox",
+    icon: "📦✨",
+    previewSrc: visualPreview("explosion-unbox"),
+    templateId: "explosion-unbox-reel",
+    usesCompositor: false,
+    promptHint:
+      "AI explosion unbox: fixed wide angle, sealed themed box opens, room assembles, props float in zero-gravity — text-to-video, no on-screen text.",
   },
   {
     id: "storyboard-video",

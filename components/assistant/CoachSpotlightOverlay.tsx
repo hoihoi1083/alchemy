@@ -1,5 +1,9 @@
 "use client";
 
+/**
+ * Dormant — see lib/dormant-coach/README.md. Wizard uses WizardStepHelpPanel instead.
+ * Re-mount from GlobalStudioAssistant when in-page spotlight returns.
+ */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 import type { CoachTaskKind } from "@/lib/studio-assistant-coach-profile";

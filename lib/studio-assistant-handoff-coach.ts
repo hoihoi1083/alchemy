@@ -54,7 +54,7 @@ function handoffToSnapshot(handoff: StudioAssistantHandoff): StudioAssistantSnap
   };
 }
 
-/** First wizard field to spotlight after assistant opens studio from landing. */
+/** @deprecated In-studio spotlight coach is dormant (landing-only assistant). Kept for tests / re-enable. */
 export function initialCoachTaskAfterHandoff(handoff: StudioAssistantHandoff): CoachTaskKind | null {
   if (handoff.recipe === "8s-website-reel" || handoff.recipe === "concept-cinematic") {
     if (handoff.conceptIdea?.trim()) {

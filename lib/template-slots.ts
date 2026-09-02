@@ -263,6 +263,17 @@ export const TEMPLATE_CONFIG: Record<TemplateId, AdTemplateConfig> = {
       { id: "referenceVideo", onSetup: false, required: false },
     ],
   },
+  "explosion-unbox-reel": {
+    defaultImageInputMode: "describe",
+    slots: [
+      { id: "product", onSetup: true, required: false },
+      { id: "headline", onSetup: true, required: false },
+      { id: "subline", onSetup: true, required: false },
+      { id: "business", onSetup: true, required: false },
+      { id: "productPhoto", onSetup: false, required: false },
+      { id: "referenceVideo", onSetup: false, required: false },
+    ],
+  },
 };
 
 export function getTemplateConfig(id: TemplateId): AdTemplateConfig {

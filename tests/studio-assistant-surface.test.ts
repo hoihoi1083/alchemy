@@ -6,6 +6,7 @@ import { buildDefaultAssistantSnapshot } from "../lib/studio-assistant-default-s
 import {
   assistantSurfaceFromPathname,
   isLandingLikeSurface,
+  isStudioAssistantMounted,
   isToolAssistantSurface,
   usesDarkAssistantChrome,
 } from "../lib/studio-assistant-surface";
@@ -20,6 +21,7 @@ describe("studio-assistant-surface", () => {
     assert.equal(assistantSurfaceFromPathname("/captions"), null);
     assert.equal(assistantSurfaceFromPathname("/captions/visual"), null);
     assert.equal(assistantSurfaceFromPathname("/pro"), null);
+    assert.equal(assistantSurfaceFromPathname("/ultra"), null);
     assert.equal(assistantSurfaceFromPathname("/brand-kit"), null);
     assert.equal(assistantSurfaceFromPathname("/library"), null);
     assert.equal(assistantSurfaceFromPathname("/ugc"), null);
@@ -28,6 +30,14 @@ describe("studio-assistant-surface", () => {
     assert.equal(assistantSurfaceFromPathname("/account"), null);
     assert.equal(assistantSurfaceFromPathname("/sign-in"), null);
     assert.equal(assistantSurfaceFromPathname("/sign-up/sso"), null);
+  });
+
+  it("mounts assistant on landing only", () => {
+    assert.equal(isStudioAssistantMounted("/"), true);
+    assert.equal(isStudioAssistantMounted("/studio"), false);
+    assert.equal(isStudioAssistantMounted("/studio/preview"), false);
+    assert.equal(isStudioAssistantMounted("/ultra"), false);
+    assert.equal(isStudioAssistantMounted("/captions"), false);
   });
 
   it("uses dark launcher chrome on tool pages", () => {

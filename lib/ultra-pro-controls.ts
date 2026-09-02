@@ -169,17 +169,17 @@ export function estimateCanvasImageTokens(): number {
 }
 
 export function estimateCanvasScriptTokens(): number {
-  return TOKEN_COST.plan;
+  return 0;
 }
 
-export function estimateCanvasSpliceTokens(opts: {
-  videoCount: number;
-  hasMusic: boolean;
-}): number {
-  let total = 0;
-  if (opts.videoCount > 1) total += TOKEN_COST.bgm;
-  if (opts.hasMusic) total += TOKEN_COST.bgm;
-  return total;
+/** Script planning uses DeepSeek plan quota, not token debit. */
+export function canvasScriptUsesPlanQuota(): boolean {
+  return true;
+}
+
+export function estimateCanvasSpliceTokens(opts: { hasMusic: boolean }): number {
+  // Stitch is free; BGM mix via /api/add-bgm charges when audio is connected.
+  return opts.hasMusic ? TOKEN_COST.bgm : 0;
 }
 
 export function estimateCanvasVideoTokens(opts: {

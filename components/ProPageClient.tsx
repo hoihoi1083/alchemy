@@ -1,9 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { ProCanvas } from "@/components/pro/ProCanvas";
 import { StudioNav } from "@/components/studio/StudioNav";
 import { useLocale } from "@/components/LocaleProvider";
+
+function ProCanvasFromQuery() {
+  const searchParams = useSearchParams();
+  return <ProCanvas initialTemplate={searchParams.get("template")} />;
+}
 
 function UltraCanvasBadge() {
   const { m } = useLocale();
@@ -54,7 +61,9 @@ export function ProPageClient() {
           ))}
         </ol>
 
-        <ProCanvas />
+        <Suspense fallback={<ProCanvas />}>
+          <ProCanvasFromQuery />
+        </Suspense>
       </div>
     </main>
   );

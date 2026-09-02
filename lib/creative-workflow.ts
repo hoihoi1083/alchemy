@@ -22,6 +22,7 @@ export type VideoCreativeMode =
   | "creative-motion"
   | "hand-throw-scene"
   | "product-explode"
+  | "bullet-product-elevate"
   | "ecom-orbit"
   | "object-lock"
   | "macro-snap"
@@ -55,6 +56,7 @@ export const VIDEO_CREATIVE_MODES: VideoCreativeMode[] = [
   "creative-motion",
   "hand-throw-scene",
   "product-explode",
+  "bullet-product-elevate",
   "ecom-orbit",
   "object-lock",
   "macro-snap",
@@ -90,6 +92,7 @@ export function isRecipeOwnedVideoMode(
     mode === "creative-motion" ||
     mode === "hand-throw-scene" ||
     mode === "product-explode" ||
+    mode === "bullet-product-elevate" ||
     mode === "ecom-orbit" ||
     mode === "object-lock" ||
     mode === "macro-snap" ||
@@ -181,6 +184,7 @@ export function videoModesForGoal(goal: OutputGoal): VideoCreativeMode[] {
       "creative-motion",
       "hand-throw-scene",
       "product-explode",
+      "bullet-product-elevate",
       ...H3_SHOT_PICKER_MODES,
       "social-drip",
       "reference-concept",
@@ -197,6 +201,7 @@ export function videoModesForGoal(goal: OutputGoal): VideoCreativeMode[] {
       "creative-motion",
       "hand-throw-scene",
       "product-explode",
+      "bullet-product-elevate",
       ...H3_SHOT_PICKER_MODES,
       "social-drip",
       "product-promo",
@@ -224,6 +229,7 @@ export function videoModesForStudio(
       "creative-motion",
       "hand-throw-scene",
       "product-explode",
+      "bullet-product-elevate",
       ...h3Modes,
       "social-drip",
       "reference-concept",
@@ -239,6 +245,7 @@ export function videoModesForStudio(
       "creative-motion",
       "hand-throw-scene",
       "product-explode",
+      "bullet-product-elevate",
       ...h3Modes,
       "social-drip",
       "product-promo",

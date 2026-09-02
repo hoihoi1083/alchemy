@@ -772,6 +772,12 @@ export const zhCn = {
 						"完整棚拍 → 悬浮零件静图 → 约 4 秒柔和拆解（风格化，非 CAD）。",
 					costHint: "~2 图 + 4s video · 产品图",
 				},
+				"product-bullet-elevate-8s": {
+					title: "子弹时间产品升格 ~8s",
+					description:
+						"模特行走 → 丝线转折 → 产品悬浮环绕 → 回落。生活方式 + 产品图。",
+					costHint: "~2 图 + 8s video · 产品／生活方式图",
+				},
 				"product-ecom-orbit-6s": {
 					title: "电商环绕 ~6s",
 					description:
@@ -869,6 +875,12 @@ export const zhCn = {
 						"方案卡 + Logo／吉祥物锁定 → 自动首尾帧 → 4 秒视频。",
 					costHint: "~2 图 + 4s video · Logo/吉祥物",
 				},
+				"concept-explosion-unbox-8s": {
+					title: "AI 爆炸开箱 ~8s",
+					description:
+						"主题盒震动打开 → 房间组装 → 道具漂浮。纯文字出片 — 只填主题。",
+					costHint: "~8s 单片 · 主题（无需产品图）",
+				},
 				"concept-hand-throw-scene-6s": {
 					title: "手抛变实景（概念）~6s",
 					description:
@@ -880,6 +892,12 @@ export const zhCn = {
 					description:
 						"Logo／吉祥物作装置锁定 → 悬浮零件静图 → 约 4 秒柔和拆解。",
 					costHint: "~2 图 + 4s video · Logo/吉祥物",
+				},
+				"concept-bullet-elevate-8s": {
+					title: "子弹时间升格（概念）~8s",
+					description:
+						"Logo／吉祥物生活方式行走 → 丝线转折 → 悬浮环绕 → 回落。",
+					costHint: "~2 图 + 8s video · Logo/吉祥物",
 				},
 				"concept-beauty-mv-10s": {
 					title: "美妆/角色一镜（概念）~10s",
@@ -1685,6 +1703,10 @@ export const zhCn = {
         title: "创意动态简报",
         description: "用文字描述你想拍的 Reel → AI 写动态 prompt（运镜／节奏）",
       },
+      "explosion-unbox": {
+        title: "AI 爆炸开箱 ~8s",
+        description: "主题盒打开 → 房间组装 → 道具漂浮。纯文字出片，无需产品图。",
+      },
       "concept-cinematic": {
         title: "概念电影感短视频",
         description: "概念故事 / 公益讯息 / 病毒感短视频，偏电影感画面",
@@ -1730,6 +1752,8 @@ export const zhCn = {
       "brand-campaign": "",
       "brand-video": "",
       "creative-video": "",
+      "explosion-unbox":
+        "病毒感开箱 Reel — 主题盒打开、房间组装、道具漂浮。纯文字出片，无需产品图。",
       "concept-cinematic": "概念电影感风格：戏剧光影、景深、情绪节奏，避免画面内文字。",
       "storyboard-video":
         "似真商业片：AI 按你件货类型规划场景（手链、洗鼻器、护肤等），唔会固定手链模板",
@@ -1746,6 +1770,24 @@ export const zhCn = {
       "上传产品相，AI 会生成似真模特儿佩戴或使用产品嘅 9:16 广告图。手链／手串会上手；洗鼻器等会示范用法。进阶可拣「主体取景」控制露脸或只手。",
     creativeVideoIntro:
       "用文字描述你想拍的短视频（例如：功夫对打后饮能量饮品）。AI 会写动态 prompt（镜头怎么动 — 不是口播）。产品照或关键图选填。",
+    explosionUnbox: {
+      intro:
+        "选主题 — 蜘蛛侠卧室、麦当劳、Tom & Jerry、你的品牌。我们会预填电影感 JSON brief，可再改。无需产品图。",
+      steps: [
+        "输入主题（蜘蛛侠、麦当劳、你的品牌）",
+        "检查或修改 JSON brief",
+        "直接出片 — 跳过出图步骤",
+      ],
+      themePlaceholder: "例如：蜘蛛侠卧室、麦当劳、Tom & Jerry",
+      themeHint: "只改主题 — 开箱、组装、漂浮效果沿用同一套配方。",
+      briefLabel: "爆炸开箱 brief（JSON）",
+      briefPlaceholder:
+        '{\n  "description": "Cinematic fixed wide-angle shot...",\n  "style": "cinematic, vivid, warm undertones",\n  ...\n}',
+      briefHint: "进阶：可改镜头、光线或元素。description 请配合你的主题。",
+      planNote: "由主题 + brief 文字出片 — 不经出图。此模板需 Pro 方案。",
+      videoStepIntro:
+        "爆炸开箱 prompt 已在 Setup 填好。直接 Generate ~8s 纯文字出片 — 无需关键帧。",
+    },
     creativeBriefLabel: "创意视频描述（必填）",
     creativeBriefPlaceholder:
       "例如：开场一人对五人功夫对峙，打赢后拿起能量饮品喝一口 — 电影感、节奏快",
@@ -1815,6 +1857,8 @@ export const zhCn = {
       "brand-campaign": "可填 campaign 主题，例如：春季新品三张图讲清功效",
       "brand-video": "分析后会自动写动态 prompt；可补充运镜或氛围要求",
       "creative-video": "上面已填创意描述；呢度可补充运镜或氛围",
+      "explosion-unbox":
+        "主题在上面；可改 JSON brief 或补充运镜 — 无需产品图",
       "concept-cinematic": "例如：戏剧边缘光、奇幻大厅、电影镜头感、情绪张力、不要 logo 和 UI 字样",
       "storyboard-video": "例如：似真拍摄、柔和光线、示范用法、不要价钱…",
       "ugc-presenter": "例如：温馨书房、女主播、手腕示范手链、粤语 UGC 感…",
@@ -2681,7 +2725,11 @@ export const zhCn = {
 				description:
 					"完整棚拍 → 悬浮零件尾帧 → 约 4 秒柔和拆解（非精准 CAD）。",
 			},
-      
+			"bullet-product-elevate": {
+				title: "子弹时间产品升格",
+				description:
+					"生活方式行走 → 丝线转折 → 产品悬浮环绕 → 回落。约 8 秒一镜。",
+			},
 			"ecom-orbit": {
 				title: "电商环绕",
 				description:
@@ -3245,6 +3293,11 @@ export const zhCn = {
 				attention: ["风格化悬浮零件 — 不是精准 CAD 内部", "完整主角 → 拆解静图 → 短拆解片"],
 				output: ["约 2 张静图 + 4 秒风格化拆解过渡"],
 			},
+			"bullet-product-elevate": {
+				need: ["产品／生活方式图（概念可用 Logo／吉祥物静图）", "清晰主体轮廓以便身份锁定"],
+				attention: ["行走 → 转折 → 子弹时间环绕 → 回落（约 8 秒）", "不是棚拍拆解 — 生活方式一镜"],
+				output: ["约 2 张静图 + 8 秒子弹时间升格片"],
+			},
 			"motion-poster": {
 				need: ["产品图（产品）— 或 Logo／主题 + 可选静图（概念）", "结尾海报要用的标题"],
 				attention: ["两张设计静图：无字开头 → 有字结尾", "产品和字一起过渡 — 不是分镜"],
@@ -3369,6 +3422,13 @@ socialDripHint:
 		productExplodeBuildingEnd: "第 2/3 步：悬浮零件拆解静图…",
 		productExplodeAnimatingCard: "第 3/3 步：拆解过渡中…",
 		productExplodeNeedKeyframe: "请先上传产品图（概念用 Logo／吉祥物静图 — 单靠文字不够）。",
+		bulletProductElevateHint:
+			"生活方式行走 → 丝线转折 → 产品悬浮子弹时间 → 回落。需清晰产品或生活方式图（约 8 秒）。",
+		bulletProductElevateBuildingStill: "第 1/3 步：生活方式行走首帧…",
+		bulletProductElevateBuildingEnd: "第 2/3 步：子弹时间定格尾帧…",
+		bulletProductElevateAnimatingCard: "第 3/3 步：子弹时间升格过渡…",
+		bulletProductElevateNeedKeyframe:
+			"请先上传产品图（概念用 Logo／吉祥物静图 — 单靠文字不够）。",
 		creativeMotionSchemeTitle: "方案卡",
 		creativeMotionSchemeHint:
 			"同一套首尾帧过渡，不同创意。自动会选合适的——再生成试另一种。",
@@ -3529,6 +3589,57 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
     },
     step1Title: "步骤 1 — 输出类型同产品资料",
     step1Hint: "拣只生成图片、只生成视频、定两样都要。填好产品资料，AI 跟住做。",
+    stepHelp: {
+      setupTitle: "这步怎么做",
+      videoTitle: "出片步骤",
+      noChatCoachNote:
+        "跟着画面卡片做 — 工作室无 chat 导览。开始前可在首页问 AI 助手。",
+      setupExplosionUnboxSteps: [
+        "输入主题（蜘蛛侠、麦当劳、你的品牌）。",
+        "检查 JSON brief — 进阶再改。",
+        "继续 — 跳过出图 — 下一步 Generate video。",
+      ],
+      setupConceptVideoSteps: [
+        "选概念出片路径或描述想法。",
+        "填概念／动态 brief。",
+        "继续出片 — 多数概念路径不需要产品图。",
+      ],
+      setupVideoOnlySteps: [
+        "上传清晰产品图（实物片必需）。",
+        "选填：参考广告 MP4。",
+        "继续到出片步骤。",
+      ],
+      setupImageOnlySteps: [
+        "描述产品或概念。",
+        "选视觉风格并填栏位。",
+        "继续出图。",
+      ],
+      setupCombinedSteps: [
+        "填产品和标题。",
+        "选风格，选填品牌分析。",
+        "继续 — 先图后片。",
+      ],
+      videoExplosionUnboxSteps: [
+        "Prompt 已由主题填好 — 可再改。",
+        "看 token 成本后 Generate video。",
+        "完成后下载或去字幕工作室。",
+      ],
+      videoConceptSteps: [
+        "空白就点 AI 写 motion prompt。",
+        "检查时长和引擎。",
+        "Generate video — 纯文字路径跳过出图。",
+      ],
+      videoStoryboardSteps: [
+        "规划分镜 → 出场景图 → 出片。",
+        "留意每场 token。",
+        "准备好就 Generate。",
+      ],
+      videoPhysicalSteps: [
+        "确认产品 still 和 motion prompt。",
+        "Generate video — 每次扣 token。",
+        "可选：字幕、BGM。",
+      ],
+    },
     setupHints: {
       "image-only": "下一步：用文字描述、一张参考图、或产品相+风格参考图来整图片。",
       "video-only": "下一步：上传产品静态图（@Image1），可选参考广告 MP4 跟运镜（@Video1）。",
@@ -4046,6 +4157,10 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
     "creative-video": {
       name: "创意动态简报",
       description: "描述创意 → AI 写动态 prompt",
+    },
+    "explosion-unbox-reel": {
+      name: "AI 爆炸开箱",
+      description: "主题盒打开 → 房间组装 → 道具漂浮。由主题文字出片。",
     },
     "storyboard-video": {
       name: "故事分镜片",
@@ -4711,13 +4826,14 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
     shortLabel: "问 AI",
     openingStudio: "正在打开工作室并套用设置…",
     studioContinued:
-      "已开工作室 — 请跟该页步骤（选出图／出片／图+片，再按 Continue）。tokens 或工具问题可以在这里再问。",
+      "已开工作室 — 请跟该页卡片（选出图／出片／图+片，再按 Continue）。要问 tokens 或工具，回首页再问即可。",
     placeholder: "例如：免费 300 token 够不够 12 秒 Reel？或者：Ultra 画布做产品主图…",
     thinking: "思考中…",
     send: "发送",
     close: "关闭",
     spotlightDismiss: "知道了 — 关闭提示",
-    signInToChat: "请先登录使用工作室导览 — 登录后再发送消息。",
+    signInToChat:
+      "登录可保存项目和生成作品 — 不登录也可以在这里提问。",
     openLauncher: "打开工作室助理",
     dialogLabel: "工作室助理对话",
     errorNetwork: "连接有点不稳，请稍后再试。",
@@ -5446,6 +5562,9 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
     running: "运行中…",
     queueEmpty: "添加节点后点「全部运行」",
     runAllEmpty: "没有可运行节点 — 请添加图片、视频、剧本或音频节点。",
+    runAllConfirmTitle: "全部运行？",
+    runAllConfirm:
+      "将按顺序运行 {nodes} 个节点 — 预估 ~{tokens} tokens。剧本规划用方案配额（不扣 token）。继续？",
     queueSkipped: "已跳过（上游失败）",
     discardConfirm: "放弃此画布上未保存的更改？",
     discardConfirmTitle: "放弃更改？",
@@ -5462,6 +5581,7 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
     imagePromptPlaceholder: "描述广告图片… 用 @ 引用多图素材",
     runImage: "生成图片",
     tokenBadge: "{n} tok",
+    scriptPlanBadge: "方案配额",
     nodeLabels: {
       text: "文字",
       image: "图片",
@@ -5588,6 +5708,18 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
       productHero: {
         name: "产品主图",
         desc: "上传 → 灯光 → 图片 → 视频 → 拼接",
+      },
+      explosionUnbox: {
+        name: "AI 爆炸开箱",
+        desc: "纯文字出片 — 主题盒打开、房间组装、道具漂浮",
+      },
+      conceptTextVideo: {
+        name: "概念文字出片",
+        desc: "单一 text-to-video 节点 — 改 prompt 再运行",
+      },
+      brandMotionReel: {
+        name: "品牌动态 Reel",
+        desc: "剧本规划 → 文字生视频 → 拼接",
       },
       ugcReel: {
         name: "UGC 短视频",

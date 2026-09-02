@@ -1043,6 +1043,12 @@ export const en = {
 						"Intact studio hero → floating-parts still → ~4s soft teardown (stylized, not CAD).",
 					costHint: "~2 images + 4s video · product photo",
 				},
+				"product-bullet-elevate-8s": {
+					title: "Bullet-time product elevate ~8s",
+					description:
+						"Model walk → silk twist → floating products orbit → settle. Lifestyle + product photo.",
+					costHint: "~2 images + 8s video · product / lifestyle photo",
+				},
 				"concept-blockbuster-9s": {
 					title: "Blockbuster logo/mascot ~9s",
 					description:
@@ -1061,6 +1067,12 @@ export const en = {
 						"Scheme cards on a logo/mascot lock → auto start/end → 4s video gag.",
 					costHint: "~2 images + 4s video · logo/mascot",
 				},
+				"concept-explosion-unbox-8s": {
+					title: "AI explosion unbox ~8s",
+					description:
+						"Themed box shakes open → room assembles → props float. Text-to-video — theme only.",
+					costHint: "~8s single clip · theme (no product photo)",
+				},
 				"concept-hand-throw-scene-6s": {
 					title: "Hand throw → scene (concept) ~6s",
 					description:
@@ -1072,6 +1084,12 @@ export const en = {
 					description:
 						"Logo/mascot as device lock → floating-parts still → ~4s soft teardown.",
 					costHint: "~2 images + 4s video · logo/mascot",
+				},
+				"concept-bullet-elevate-8s": {
+					title: "Bullet-time elevate (concept) ~8s",
+					description:
+						"Logo/mascot lifestyle walk → silk twist → floating orbit → settle.",
+					costHint: "~2 images + 8s video · logo/mascot",
 				},
 				"product-ecom-orbit-6s": {
 					title: "E-com orbit ~6s",
@@ -2097,6 +2115,11 @@ export const en = {
 				description:
 					"Dramatic short-film look for concept stories, PSA, and viral-style clips",
       },
+      "explosion-unbox": {
+        title: "AI explosion unbox ~8s",
+        description:
+          "Themed box opens → room assembles → props float. Text-to-video — no product photo.",
+      },
       "storyboard-video": {
         title: "Storyboard reel",
         description:
@@ -2145,6 +2168,8 @@ export const en = {
       "brand-campaign": "",
       "brand-video": "",
       "creative-video": "",
+      "explosion-unbox":
+        "Viral unbox reel — themed box opens, room assembles, props float. Text-to-video only; no product photo.",
       "concept-cinematic":
         "Cinematic concept video look — dramatic light, depth, emotional pacing, no on-screen text.",
       "storyboard-video":
@@ -2165,6 +2190,27 @@ export const en = {
       "Upload a product photo — AI generates a photorealistic 9:16 lifestyle ad with a model wearing or using the product. Bracelets go on wrist; devices show real use. Use Advanced framing to control face vs hands-only.",
     creativeVideoIntro:
 			"Describe your short video in plain language (e.g. kung fu fight then drink the product). AI writes a motion prompt for how the reel should move — not a spoken voiceover. Optional product photo or keyframe.",
+    explosionUnbox: {
+      intro:
+        "Pick a theme — Spider-Man bedroom, McDonald’s, Tom & Jerry, your brand. We pre-fill a cinematic JSON brief; you can edit it. No product photo needed.",
+      steps: [
+        "Enter your theme (Spider-Man, McDonald’s, your brand)",
+        "Review or edit the JSON brief",
+        "Generate video — no product photo step",
+      ],
+      themePlaceholder: "e.g. Spider-Man bedroom, McDonald’s, Tom & Jerry",
+      themeHint:
+        "Only the theme changes — box, room assembly, and floating props stay the same recipe.",
+      briefLabel: "Explosion unbox brief (JSON)",
+      briefPlaceholder:
+        '{\n  "description": "Cinematic fixed wide-angle shot...",\n  "style": "cinematic, vivid, warm undertones",\n  ...\n}',
+      briefHint:
+        "Advanced: edit camera, lighting, or elements. Keep description aligned with your theme.",
+      planNote:
+        "Text-to-video from your theme + brief — no image step. Pro plan for this template.",
+      videoStepIntro:
+        "Your explosion-unbox prompt is ready from Setup. Generate an ~8s text-to-video clip — no keyframe needed.",
+    },
     creativeBriefLabel: "Creative video brief (required)",
     creativeBriefPlaceholder:
       "e.g. Hero faces five opponents in kung fu, wins, then drinks the energy drink — cinematic, fast pace",
@@ -2252,6 +2298,8 @@ export const en = {
 				"Optional extra motion/mood notes — main prompt comes from brand analysis",
 			"creative-video":
 				"Creative brief is above; add extra motion/mood notes here if needed",
+      "explosion-unbox":
+        "Theme is above; tweak JSON brief or add motion notes — no product photo needed",
       "concept-cinematic":
         "e.g. dramatic rim light, fantasy hall, cinematic lens, emotional suspense, no logos or UI overlays",
 			"storyboard-video":
@@ -3254,6 +3302,11 @@ export const en = {
 				description:
 					"Studio hero → floating-parts end still → ~4s soft teardown (not CAD-accurate).",
 			},
+			"bullet-product-elevate": {
+				title: "Bullet-time product elevate",
+				description:
+					"Lifestyle walk → silk twist → floating SKUs orbit → settle. ~8s one-take.",
+			},
 			"ecom-orbit": {
 				title: "E-com orbit",
 				description:
@@ -3956,6 +4009,17 @@ export const en = {
 				],
 				output: ["~2 stills + 4s stylized explode morph"],
 			},
+			"bullet-product-elevate": {
+				need: [
+					"Product / lifestyle photo — or logo / mascot still (concept)",
+					"Clear hero silhouette for identity lock",
+				],
+				attention: [
+					"Walk → twist → bullet-time orbit → settle (~8s)",
+					"Not studio teardown explode — lifestyle one-take",
+				],
+				output: ["~2 stills + 8s bullet-time elevate clip"],
+			},
 			"motion-poster": {
 				need: [
 					"Product photo (product) — or logo/topic + optional still (concept)",
@@ -4109,6 +4173,13 @@ export const en = {
 		productExplodeBuildingEnd: "Step 2/3: floating-parts explode still…",
 		productExplodeAnimatingCard: "Step 3/3: explode morph…",
 		productExplodeNeedKeyframe:
+			"Upload a product photo first (concept: logo/mascot still — text alone is not enough).",
+		bulletProductElevateHint:
+			"Lifestyle walk → silk twist → floating products in bullet-time → settle. Needs a clear product or lifestyle photo (~8s).",
+		bulletProductElevateBuildingStill: "Step 1/3: lifestyle walk start still…",
+		bulletProductElevateBuildingEnd: "Step 2/3: bullet-time freeze end still…",
+		bulletProductElevateAnimatingCard: "Step 3/3: bullet-time elevate morph…",
+		bulletProductElevateNeedKeyframe:
 			"Upload a product photo first (concept: logo/mascot still — text alone is not enough).",
 		creativeMotionSchemeTitle: "Scheme card",
 		creativeMotionSchemeHint:
@@ -4276,6 +4347,62 @@ export const en = {
     step1Title: "Step 1 — Output & product info",
 		step1Hint:
 			"Choose image, video, or both. Fill product details — AI builds from your inputs.",
+    stepHelp: {
+      setupTitle: "How this step works",
+      videoTitle: "Video step — what to do",
+      noChatCoachNote:
+        "Follow the cards on this page — no in-studio chat coach. Use the homepage assistant before you start if you need routing help.",
+      setupExplosionUnboxSteps: [
+        "Enter your theme (Spider-Man, McDonald's, your brand).",
+        "Review the JSON brief — edit only if you want advanced control.",
+        "Continue — skips image — then Generate video on the next step.",
+      ],
+      setupConceptVideoSteps: [
+        "Pick a concept video path or describe your idea.",
+        "Fill the concept / motion brief fields.",
+        "Continue to video — no product photo required for most concept paths.",
+      ],
+      setupVideoOnlySteps: [
+        "Upload a clear product photo (required for physical video).",
+        "Optional: reference ad MP4 for motion style.",
+        "Continue to the video step to generate.",
+      ],
+      setupImageOnlySteps: [
+        "Describe your product or concept.",
+        "Pick a visual style and fill template slots.",
+        "Continue to generate your image.",
+      ],
+      setupCombinedSteps: [
+        "Fill product + headline fields.",
+        "Choose visual style and optional brand analysis.",
+        "Continue — image first, then video.",
+      ],
+      videoExplosionUnboxSteps: [
+        "Prompt is pre-filled from your theme — edit if needed.",
+        "Check token cost, then Generate video.",
+        "Download or open in caption studio when done.",
+      ],
+      videoConceptSteps: [
+        "Use AI write motion prompt if the field is empty.",
+        "Review duration and engine settings.",
+        "Generate video — text-to-video skips the image step.",
+      ],
+      videoStoryboardSteps: [
+        "Plan storyboard scenes, generate scene stills, then video.",
+        "Watch token badges — each scene adds cost.",
+        "Generate the reel when all scenes are ready.",
+      ],
+      videoPhysicalSteps: [
+        "Confirm product still and motion prompt.",
+        "Generate video — charged per run.",
+        "Optional: captions, BGM, or stitch on later steps.",
+      ],
+      videoCombinedSteps: [
+        "Review keyframe from Step 2.",
+        "Generate video from image + motion prompt.",
+        "Export or continue to captions when happy.",
+      ],
+    },
     setupHints: {
       "image-only":
         "Next: create an image by describing it, from one reference photo, or from your product + a style reference.",
@@ -4907,6 +5034,11 @@ export const en = {
     "creative-video": {
 			name: "Creative motion brief",
 			description: "Describe idea → AI writes motion prompt",
+    },
+    "explosion-unbox-reel": {
+      name: "AI explosion unbox",
+      description:
+        "Themed box opens → room builds → floating props. Text-to-video from your theme.",
     },
     "storyboard-video": {
       name: "Storyboard reel",
@@ -5667,7 +5799,7 @@ export const en = {
 		welcome:
 			"Hi! Ask me how Alchemy works (tokens, pages, single clip vs stitch), or tell me what you want to make and I'll open the right path.",
 		welcomeLanding:
-			"Hi! Ask about Alchemy — tokens, guided wizard vs Ultra canvas vs captions vs edit-image, what fits the free 300-token grant. Or say what you want to promote and I'll open the right path.",
+			"Hi! Ask about Alchemy — tokens, guided wizard vs Ultra canvas, explosion unbox, captions. No sign-in needed to chat here. Or say what you want to promote and I'll open the right path.",
 		welcomeStart:
 			"Not sure physical vs concept? Describe your goal or paste a URL — I'll tell you which card to pick and what to type in the studio.",
 		welcomeEditImage:
@@ -5687,14 +5819,14 @@ export const en = {
 		shortLabel: "Ask AI",
 		openingStudio: "Opening the studio with your setup — one moment…",
 		studioContinued:
-			"Studio opened — follow the steps on that page (pick image / video / both, then Continue). Ask me here anytime about tokens or tools.",
+			"Studio opened — follow the cards on that page (pick image / video / both, then Continue). Return to the homepage anytime to ask about tokens or tools.",
 		placeholder: "e.g. Free grant cover a 12s reel? Or: open Ultra canvas for product hero…",
 		thinking: "Thinking…",
 		send: "Send",
 		close: "Close",
 		spotlightDismiss: "Got it — hide spotlight",
 		signInToChat:
-			"Sign in to use the studio guide — then send your message again.",
+			"Sign in for saved projects and generation — you can still ask questions here without an account.",
 		openLauncher: "Open studio assistant",
 		dialogLabel: "Studio assistant chat",
 		errorNetwork: "Connection hiccup — please try again in a moment.",
@@ -6500,6 +6632,9 @@ export const en = {
     running: "Running…",
     queueEmpty: "Add nodes, then Run all",
     runAllEmpty: "No runnable nodes — add image, video, script, or audio nodes first.",
+    runAllConfirmTitle: "Run all nodes?",
+    runAllConfirm:
+      "This will run {nodes} node(s) in order — estimated ~{tokens} tokens total. Script planning uses plan quota (not tokens). Continue?",
     queueSkipped: "Skipped (upstream failed)",
     discardConfirm: "Discard unsaved changes on this board?",
     discardConfirmTitle: "Discard changes?",
@@ -6516,6 +6651,7 @@ export const en = {
     imagePromptPlaceholder: "Describe the ad image… use @refs for multi-image",
     runImage: "Run image",
     tokenBadge: "{n} tok",
+    scriptPlanBadge: "plan quota",
     nodeLabels: {
       text: "Text",
       image: "Image",
@@ -6642,6 +6778,18 @@ export const en = {
       productHero: {
         name: "Product hero",
         desc: "Upload → lighting → image → video → splice",
+      },
+      explosionUnbox: {
+        name: "AI explosion unbox",
+        desc: "Text-to-video — themed box opens, room assembles, props float",
+      },
+      conceptTextVideo: {
+        name: "Concept text-to-video",
+        desc: "Single text-to-video node — edit prompt and run",
+      },
+      brandMotionReel: {
+        name: "Brand motion reel",
+        desc: "Script plan → text-to-video → splice",
       },
       ugcReel: {
         name: "UGC reel",

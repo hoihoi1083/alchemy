@@ -2,9 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useAuth } from "@clerk/nextjs";
-import { useAuthModal } from "@/components/auth/AuthModalProvider";
+import { useRouter } from "next/navigation";
 import { AssistantMascotLauncher } from "@/components/assistant/AssistantMascotLauncher";
 import { useLocale } from "@/components/LocaleProvider";
 import { useOptionalWizard } from "@/components/studio/WizardContext";
@@ -29,8 +27,6 @@ import {
   readCoachAck,
 } from "@/lib/studio-assistant-coach-progress";
 import { shouldAckCoachTaskOnNext } from "@/lib/studio-assistant-coach-completion";
-import { dispatchCoachSpotlight } from "@/lib/studio-assistant-spotlight-bus";
-import { shouldShowSpotlight } from "@/lib/studio-assistant-coach-targets";
 import type { CoachTaskKind } from "@/lib/studio-assistant-coach-profile";
 import {
   isLandingLikeSurface,
@@ -188,9 +184,6 @@ function lastUserMessage(msgs: ChatMessage[]): string | undefined {
 
 export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }) {
   const router = useRouter();
-  const pathname = usePathname();
-  const { openAuthModal } = useAuthModal();
-  const { isSignedIn, isLoaded } = useAuth();
   const { m, locale } = useLocale();
   const sa = m.studioAssistant;
   const wizard = useOptionalWizard();
@@ -209,8 +202,6 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
   const [coachAckTick, setCoachAckTick] = useState(0);
   const [showContentResearch, setShowContentResearch] = useState(false);
 
-  /** API requires auth on every surface — block input until signed in. */
-  const needsSignIn = isLoaded && !isSignedIn;
   const showQuickChips = isLandingLikeSurface(surface);
   const darkChrome = usesDarkAssistantChrome(surface);
 
@@ -448,14 +439,6 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
     setInput("");
     setMessages((prev) => [...prev, userMsg]);
 
-    if (needsSignIn) {
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: sa.signInToChat },
-      ]);
-      return;
-    }
-
     setLoading(true);
 
     try {
@@ -493,40 +476,7 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
       lastCoachTaskRef.current = coachTask ?? null;
 
       const full = String(data.reply || "");
-      pendingFullReplyRef.current = full;
-      const msgId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-      typingMsgIdRef.current = msgId;
-
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: "", _id: msgId },
-      ]);
-
-      if (typingTimerRef.current) clearInterval(typingTimerRef.current);
-
-      let i = 0;
-      const step = () => {
-        if (typingMsgIdRef.current !== msgId) {
-          if (typingTimerRef.current) clearInterval(typingTimerRef.current);
-          return;
-        }
-        i += Math.max(1, Math.floor(full.length / 120));
-        const slice = full.slice(0, i);
-        setMessages((prev) =>
-          prev.map((msg) => (msg._id === msgId ? { ...msg, content: slice } : msg)),
-        );
-        if (i >= full.length) {
-          if (typingTimerRef.current) clearInterval(typingTimerRef.current);
-          pendingFullReplyRef.current = "";
-          if (coachTask && shouldShowSpotlight(coachTask)) {
-            window.setTimeout(() => dispatchCoachSpotlight(coachTask), 80);
-          }
-          return;
-        }
-      };
-
-      typingTimerRef.current = setInterval(step, 20);
-      step();
+      setMessages((prev) => [...prev, { role: "assistant", content: full }]);
     } catch (err) {
       const content =
         err instanceof Error && err.message === "unauthorized"
@@ -538,7 +488,7 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
     } finally {
       setLoading(false);
     }
-  }, [flushActiveTyping, input, loading, messages, locale, snapshot, sa.errorNetwork, sa.quotaExceeded, sa.signInToChat, needsSignIn]);
+  }, [flushActiveTyping, input, loading, messages, locale, snapshot, sa.errorNetwork, sa.quotaExceeded, sa.signInToChat, surface, wizard]);
 
   const wizardStepKey = wizard?.stepKey;
   const studioMobileBarVisible =
@@ -702,8 +652,7 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
               <button
                 type="button"
                 onClick={() => setShowContentResearch((v) => !v)}
-                disabled={needsSignIn}
-                className={`rounded-full border px-3 py-1.5 text-xs font-medium transition disabled:opacity-40 ${
+                className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
                   showContentResearch
                     ? "border-emerald-500 bg-emerald-100 text-emerald-950"
                     : "border-emerald-300 bg-emerald-50 text-emerald-900 hover:bg-emerald-100"
@@ -713,51 +662,31 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
               </button>
               <button
                 type="button"
-                disabled={needsSignIn}
                 onClick={() =>
                   void handleAction("open-physical-studio", {
                     campaignMessage:
                       "I want a post with images about my product",
                   })
                 }
-                className="rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-900 transition hover:bg-emerald-100 disabled:opacity-40"
+                className="rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-900 transition hover:bg-emerald-100"
               >
                 {sa.chipProductImagePost}
               </button>
               <button
                 type="button"
-                disabled={needsSignIn}
                 onClick={() => void handleAction("open-ultra-canvas")}
-                className="rounded-full border border-fuchsia-300 bg-fuchsia-50 px-3 py-1.5 text-xs font-medium text-fuchsia-900 transition hover:bg-fuchsia-100 disabled:opacity-40"
+                className="rounded-full border border-fuchsia-300 bg-fuchsia-50 px-3 py-1.5 text-xs font-medium text-fuchsia-900 transition hover:bg-fuchsia-100"
               >
                 {sa.chipUltraCanvas}
               </button>
               <button
                 type="button"
-                disabled={needsSignIn}
                 onClick={() => void handleAction("setup-website-reel")}
-                className="rounded-full border border-violet-300 bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-800 transition hover:bg-violet-100 disabled:opacity-40"
+                className="rounded-full border border-violet-300 bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-800 transition hover:bg-violet-100"
               >
                 {sa.chipSetupWebsite}
               </button>
             </div>
-            )}
-            {needsSignIn && (
-              <p className="mb-2 text-xs text-violet-700">
-                {sa.signInToChat}{" "}
-                <button
-                  type="button"
-                  onClick={() =>
-                    openAuthModal({
-                      mode: "sign-in",
-                      redirectUrl: pathname || "/",
-                    })
-                  }
-                  className="font-semibold text-violet-900 underline underline-offset-2"
-                >
-                  {m.auth.signIn}
-                </button>
-              </p>
             )}
             <div className="flex gap-2">
               <input
@@ -770,15 +699,15 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
                     void send();
                   }
                 }}
-                placeholder={needsSignIn ? sa.signInToChat : sa.placeholder}
+                placeholder={sa.placeholder}
                 className="min-w-0 flex-1 rounded-full border border-violet-200 bg-violet-50/50 px-4 py-2.5 text-sm outline-none ring-violet-400/30 focus:border-violet-500 focus:ring-2"
-                disabled={loading || needsSignIn}
+                disabled={loading}
                 maxLength={2000}
               />
               <button
                 type="button"
                 onClick={() => void send()}
-                disabled={loading || needsSignIn || !input.trim()}
+                disabled={loading || !input.trim()}
                 className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-violet-600 text-white transition hover:bg-violet-700 disabled:opacity-40"
                 aria-label={sa.send}
               >

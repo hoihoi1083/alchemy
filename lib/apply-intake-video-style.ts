@@ -11,7 +11,9 @@ export type IntakeVideoStyleWizardApi = {
   applyPrimaryPathVideoOnly: (
     path: "assistant" | "storyboard" | "brand" | "creative" | "ugc-presenter",
   ) => void;
-  applyPrimaryPathConceptVideo: (path: "creative" | "brand") => void;
+  applyPrimaryPathConceptVideo: (
+    path: "creative" | "brand" | "explosion-unbox",
+  ) => void;
   onVideoCreativeModeChange: (mode: VideoCreativeMode) => void;
 };
 
@@ -39,6 +41,9 @@ export function applyIntakeVideoStyle(
     case "creative_video":
       if (isConcept) wizard.applyPrimaryPathConceptVideo("creative");
       return;
+    case "explosion_unbox":
+      if (isConcept) wizard.applyPrimaryPathConceptVideo("explosion-unbox");
+      return;
     case "brand_video":
       if (isConcept) wizard.applyPrimaryPathConceptVideo("brand");
       else wizard.applyPrimaryPathVideoOnly("brand");
@@ -63,6 +68,9 @@ export function applyIntakeVideoStyle(
       return;
     case "product_explode":
       wizard.onVideoCreativeModeChange("product-explode");
+      return;
+    case "bullet_product_elevate":
+      wizard.onVideoCreativeModeChange("bullet-product-elevate");
       return;
     case "social_drip":
       wizard.onVideoCreativeModeChange("social-drip");

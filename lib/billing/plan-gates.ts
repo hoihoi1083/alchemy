@@ -125,6 +125,7 @@ export const TEMPLATE_MIN_PLAN: Partial<Record<TemplateId, UserPlan>> = {
   "jelly-3d": "pro",
   "brand-fit": "pro",
   "website-launch": "pro",
+  "explosion-unbox-reel": "pro",
 };
 
 export function minPlanForTemplate(templateId: TemplateId): UserPlan {

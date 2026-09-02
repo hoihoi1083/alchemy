@@ -247,7 +247,8 @@ function evalWhen(
       ctx.videoSubpath === "vacuum_inflate" ||
       ctx.videoSubpath === "creative_motion" ||
       ctx.videoSubpath === "hand_throw_scene" ||
-      ctx.videoSubpath === "product_explode"
+      ctx.videoSubpath === "product_explode" ||
+      ctx.videoSubpath === "bullet_product_elevate"
     );
   }
   if (norm === 'videoSubpath === "product_promo"') {
@@ -345,13 +346,15 @@ export function resolvePathId(
       ctx.videoSubpath === "creative_motion" ||
       ctx.videoSubpath === "hand_throw_scene" ||
       ctx.videoSubpath === "product_explode" ||
+      ctx.videoSubpath === "bullet_product_elevate" ||
       state.videoCreativeMode === "motion-poster" ||
       state.videoCreativeMode === "impact-poster" ||
       state.videoCreativeMode === "social-drip" ||
       state.videoCreativeMode === "vacuum-inflate" ||
       state.videoCreativeMode === "creative-motion" ||
       state.videoCreativeMode === "hand-throw-scene" ||
-      state.videoCreativeMode === "product-explode"
+      state.videoCreativeMode === "product-explode" ||
+      state.videoCreativeMode === "bullet-product-elevate"
     ) {
       return "concept_combined_motion_poster";
     }
@@ -379,13 +382,15 @@ export function resolvePathId(
       ctx.videoSubpath === "creative_motion" ||
       ctx.videoSubpath === "hand_throw_scene" ||
       ctx.videoSubpath === "product_explode" ||
+      ctx.videoSubpath === "bullet_product_elevate" ||
       state.videoCreativeMode === "motion-poster" ||
       state.videoCreativeMode === "impact-poster" ||
       state.videoCreativeMode === "social-drip" ||
       state.videoCreativeMode === "vacuum-inflate" ||
       state.videoCreativeMode === "creative-motion" ||
       state.videoCreativeMode === "hand-throw-scene" ||
-      state.videoCreativeMode === "product-explode"
+      state.videoCreativeMode === "product-explode" ||
+      state.videoCreativeMode === "bullet-product-elevate"
     ) {
       return "product_combined_motion_poster";
     }
@@ -817,7 +822,8 @@ function identitySubpath(sub: string | undefined): boolean {
     sub === "vacuum_inflate" ||
     sub === "creative_motion" ||
     sub === "hand_throw_scene" ||
-    sub === "product_explode"
+    sub === "product_explode" ||
+    sub === "bullet_product_elevate"
   );
 }
 
@@ -915,7 +921,8 @@ export function canProceedMicroStep(
       ctx.videoSubpath === "vacuum_inflate" ||
       ctx.videoSubpath === "creative_motion" ||
       ctx.videoSubpath === "hand_throw_scene" ||
-      ctx.videoSubpath === "product_explode";
+      ctx.videoSubpath === "product_explode" ||
+      ctx.videoSubpath === "bullet_product_elevate";
     // Combined storyboard: scenes already generated — still require 九宫格 approve.
     if (
       ctx.workflowMode === "combined" &&

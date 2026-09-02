@@ -141,6 +141,7 @@ export function resolveCreativeCopyFieldHints(input: {
       videoMode === "creative-motion" ||
       videoMode === "hand-throw-scene" ||
       videoMode === "product-explode" ||
+      videoMode === "bullet-product-elevate" ||
       videoMode === "product-assistant" ||
       videoMode === "product-promo" ||
       videoMode === "image-to-video" ||

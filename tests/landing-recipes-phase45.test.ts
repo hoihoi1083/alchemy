@@ -85,6 +85,7 @@ describe("landing-recipes", () => {
       "product-creative-motion-4s",
       "product-hand-throw-scene-6s",
       "product-product-explode-4s",
+      "product-bullet-elevate-8s",
       "product-ecom-orbit-6s",
       "product-object-lock-6s",
       "product-macro-snap-6s",
@@ -115,6 +116,7 @@ describe("landing-recipes", () => {
       "concept-creative-motion-4s",
       "concept-hand-throw-scene-6s",
       "concept-product-explode-4s",
+      "concept-bullet-elevate-8s",
       "concept-beauty-mv-10s",
       "concept-imitate-ad-8s",
       "concept-neon-on-real-8s",
@@ -126,6 +128,7 @@ describe("landing-recipes", () => {
       "concept-gaming-cover",
       "concept-sports-big-words",
       "concept-jelly-3d",
+      "concept-explosion-unbox-8s",
     ]);
   });
 

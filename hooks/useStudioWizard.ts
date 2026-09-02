@@ -176,6 +176,10 @@ import {
 	buildProductExplodeVideoPrompt,
 } from "@/lib/product-explode";
 import {
+	BULLET_PRODUCT_ELEVATE_DURATION_SEC,
+	buildBulletProductElevateVideoPrompt,
+} from "@/lib/bullet-product-elevate";
+import {
 	CREATIVE_MOTION_DURATION_SEC,
 	buildCreativeMotionVideoPrompt,
 	parseCreativeMotionSchemePick,
@@ -294,11 +298,16 @@ import {
   isStoryboardVideoStyle,
 	isUgcPresenterStyle,
   isConceptCinematicStyle,
+  isExplosionUnboxStyle,
   isVisualStyleAllowedForWorkflow,
   mergePromptExtra,
   visualStylePromptHint,
   type VisualStyleId,
 } from "@/lib/visual-styles";
+import {
+  extractExplosionUnboxTheme,
+  prefillExplosionUnboxFields,
+} from "@/lib/explosion-unbox-prompt";
 import {
   getTemplateConfig,
   isSlotRequired,
@@ -937,6 +946,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 	const handThrowEndUrlRef = useRef<string | null>(null);
 	const productExplodeStillUrlRef = useRef<string | null>(null);
 	const productExplodeEndUrlRef = useRef<string | null>(null);
+	const bulletElevateStillUrlRef = useRef<string | null>(null);
+	const bulletElevateEndUrlRef = useRef<string | null>(null);
 	const lastCreativeMotionSchemeRef = useRef<CreativeMotionSchemeId | null>(
 		null,
 	);
@@ -1212,6 +1223,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     workflowMode === "video-only" &&
     videoCreativeMode === "product-promo" &&
 		(isCreativeVideoStyle(visualStyleId) ||
+			isExplosionUnboxStyle(visualStyleId) ||
 			isBrandVideoStyle(visualStyleId)) &&
     !productPhoto &&
     !imageUrl;
@@ -2309,8 +2321,27 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		conceptIdea?: string;
 	}): Promise<boolean> => {
 		if (planVideoPromptBusy) return false;
-		// Recipe modes own their prompts — skip DeepSeek creative brief planner.
 		if (isRecipeOwnedVideoMode(videoCreativeMode)) return true;
+
+		if (isExplosionUnboxStyle(visualStyleId)) {
+			const theme = extractExplosionUnboxTheme({
+				conceptIdea: opts?.conceptIdea ?? conceptIdea,
+				headline: opts?.headline ?? headline,
+				business,
+				product,
+			});
+			const pack = prefillExplosionUnboxFields(theme);
+			setConceptIdea(pack.conceptIdea);
+			setCreativeVideoBrief(pack.creativeVideoBrief);
+			setVideoPrompt(pack.videoPrompt);
+			setVideoPromptPlanNote(m.wizard.explosionUnbox.planNote);
+			setShowAdvancedVideo(true);
+			aiVideoPromptDurationRef.current = String(
+				resolveWizardOutputDurationSec(videoSettings),
+			);
+			return true;
+		}
+
 		const brief =
 			(opts?.creativeBrief ?? creativeVideoBrief).trim() ||
 			[
@@ -2324,7 +2355,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		const hook = (opts?.headline ?? headline).trim();
 		const idea = (opts?.conceptIdea ?? conceptIdea).trim();
 		if (
-			isCreativeVideoStyle(visualStyleId) &&
+			(isCreativeVideoStyle(visualStyleId) || isExplosionUnboxStyle(visualStyleId)) &&
 			!brief &&
 			!hook &&
 			!idea
@@ -2548,7 +2579,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       return;
     }
     if (
-      isCreativeVideoStyle(visualStyleId) &&
+      (isCreativeVideoStyle(visualStyleId) || isExplosionUnboxStyle(visualStyleId)) &&
       !creativeVideoBrief.trim() &&
       !headline.trim()
     ) {
@@ -2664,8 +2695,17 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     } else {
       setVideoPromptPlanNote(null);
     }
-    if (!isCreativeVideoStyle(id)) {
+    if (!isCreativeVideoStyle(id) && !isExplosionUnboxStyle(id)) {
       setCreativeVideoBrief("");
+    }
+    if (isExplosionUnboxStyle(id)) {
+      const pack = prefillExplosionUnboxFields(
+        extractExplosionUnboxTheme({ conceptIdea, headline, business, product }),
+      );
+      setConceptIdea(pack.conceptIdea);
+      setCreativeVideoBrief(pack.creativeVideoBrief);
+      setVideoPrompt(pack.videoPrompt);
+      setVideoPromptPlanNote(m.wizard.explosionUnbox.planNote);
     }
     if (!isStoryboardVideoStyle(id)) {
       setStoryboardBrief("");
@@ -2978,7 +3018,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
   }
 
 	function applyPrimaryPathConceptVideo(
-		path: "brand" | "creative" | "cinematic",
+		path: "brand" | "creative" | "cinematic" | "explosion-unbox",
 	) {
     if (path === "cinematic") {
       applyConceptCinematicWorkflow(false);
@@ -2988,8 +3028,12 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     setWorkflowMode("video-only");
 		setVideoSettings(videoSettingsForWorkflow("video-only", templateId, plan));
     setStepKey("setup");
-		// Brand site / IG is optional inside 短片製作 — one visual style, not a second card.
-		selectVisualStyle("creative-video");
+		if (path === "explosion-unbox") {
+			selectVisualStyle("explosion-unbox");
+			setVideoCreativeMode("product-promo");
+			return;
+		}
+		selectVisualStyle(path === "brand" ? "brand-video" : "creative-video");
 		if (referenceAd && referenceIsVideo) {
 			setVideoCreativeMode("reference-concept");
 		} else {
@@ -3095,6 +3139,13 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			setStoryboardTrimDuration(
 				def.duration as typeof storyboardTrimDuration,
 			);
+		}
+		if (def.visualStyleId === "explosion-unbox") {
+			const pack = prefillExplosionUnboxFields();
+			setConceptIdea(pack.conceptIdea);
+			setCreativeVideoBrief(pack.creativeVideoBrief);
+			setVideoPrompt(pack.videoPrompt);
+			setVideoPromptPlanNote(m.wizard.explosionUnbox.planNote);
 		}
 		if (isImagePoster) {
 			setVideoCreativeMode("product-promo");
@@ -4324,6 +4375,14 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			hasConceptHero: hasConceptHeroLock,
 		});
 
+	const bulletElevateCanAutoStill =
+		videoCreativeMode === "bullet-product-elevate" &&
+		identityRecipeHeroReady({
+			promotionMode,
+			hasProductPhoto: hasProductPhotoLock,
+			hasConceptHero: hasConceptHeroLock,
+		});
+
 	const blockbusterCanGenerate =
 		videoCreativeMode === "blockbuster" &&
 		(hasProductPhotoLock ||
@@ -4333,7 +4392,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		vacuumInflateCanAutoStill ||
 		creativeMotionCanAutoStill ||
 		handThrowCanAutoStill ||
-		productExplodeCanAutoStill;
+		productExplodeCanAutoStill ||
+		bulletElevateCanAutoStill;
 
 	function identityNeedKeyframeError(): string {
 		if (promotionMode === "concept") return m.wizard.h3ShotNeedConceptHero;
@@ -4345,6 +4405,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		}
 		if (videoCreativeMode === "product-explode") {
 			return m.wizard.productExplodeNeedKeyframe;
+		}
+		if (videoCreativeMode === "bullet-product-elevate") {
+			return m.wizard.bulletProductElevateNeedKeyframe;
 		}
 		return m.wizard.creativeMotionNeedKeyframe;
 	}
@@ -4383,6 +4446,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 
 	const videoStepHint = isUgcPresenterOutput
 		? m.wizard.ugcPresenter.videoStepIntro
+		: isExplosionUnboxStyle(visualStyleId)
+			? m.wizard.explosionUnbox.videoStepIntro
 		: cinematicStitchReady || isCinematicStitchOutput
 			? formatCinematicCopy(m.wizard.cinematicStitchVideoStepIntro)
       : isConceptCinematicSingleOutput
@@ -4509,7 +4574,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     }
     if (
       !isRecipeOwnedVideoMode(videoCreativeMode) &&
-      isCreativeVideoStyle(visualStyleId) &&
+      (isCreativeVideoStyle(visualStyleId) || isExplosionUnboxStyle(visualStyleId)) &&
       isVideoWorkflow &&
       !creativeVideoBrief.trim() &&
       !headline.trim() &&
@@ -9234,6 +9299,167 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		return fx.videoUrl;
 	}
 
+	async function generateBulletProductElevateKeyframe(
+		frame: "start" | "end",
+		startPlateUrl?: string,
+	): Promise<string> {
+		setVideoNote(
+			frame === "end"
+				? m.wizard.bulletProductElevateBuildingEnd
+				: m.wizard.bulletProductElevateBuildingStill,
+		);
+		setImageJobMeta({
+			kind: "image",
+			startedAt: Date.now(),
+			sceneCount: 1,
+		});
+		try {
+			const fd = new FormData();
+			fd.set("visual_style", visualStyleId);
+			fd.set("art_style", artStyleId);
+			if (brandProfile)
+				fd.set("brand_profile", JSON.stringify(brandProfile));
+			fd.set("brand_kit", JSON.stringify(brandKit));
+			fd.set(
+				"product_name",
+				promotionMode === "concept"
+					? effectivePromoteName ||
+							product.trim() ||
+							conceptIdea.trim()
+					: product.trim(),
+			);
+			fd.set("business", business.trim());
+			fd.set(
+				"headline",
+				headline.trim() || product.trim() || conceptIdea.trim(),
+			);
+			fd.set("subline", subline.trim());
+			fd.set("offer", offer.trim());
+			fd.set("prompt_market", promptMarket);
+			fd.set("subject_framing", subjectFraming);
+			fd.set("prompt_extra", effectivePromptExtra());
+			fd.set("workflow_mode", workflowMode);
+			fd.set("promotion_mode", promotionMode);
+			fd.set("image_text_mode", "textless");
+			fd.set("aspect_ratio", "9:16");
+			fd.set("num_images", "1");
+			fd.set("image_output_mode", "single");
+			fd.set("bullet_product_elevate", "1");
+			fd.set("bullet_product_elevate_frame", frame);
+			if (frame === "end" && startPlateUrl)
+				fd.set("start_plate_url", startPlateUrl);
+			await bindIdentityHeroToKeyframeForm(
+				fd,
+				m.wizard.bulletProductElevateNeedKeyframe,
+			);
+
+			const res = await fetch("/api/generate-image", {
+				method: "POST",
+				body: fd,
+			});
+			const data = await readGenerateJson(res);
+			if (!res.ok)
+				throw new Error(
+					(data.error as string) || m.errors.polishFailed,
+				);
+			notifyCreditBalance(readCreditBalanceFromResponse(data));
+			const urls = (data.imageUrls as string[] | undefined) ?? [
+				data.imageUrl as string,
+			];
+			const applied = applyGeneratedImages(
+				urls,
+				data.endpoint as string | undefined,
+			);
+			if (!applied) throw new Error(m.errors.imageGenNoUrl);
+			return applied;
+		} finally {
+			setImageJobMeta(null);
+		}
+	}
+
+	async function makeBulletProductElevateVideo(): Promise<string> {
+		bulletElevateStillUrlRef.current = null;
+		bulletElevateEndUrlRef.current = null;
+		if (
+			!identityRecipeHeroReady({
+				promotionMode,
+				hasProductPhoto: hasProductPhotoLock,
+				hasConceptHero: hasConceptHeroLock,
+			})
+		) {
+			throw new Error(m.wizard.bulletProductElevateNeedKeyframe);
+		}
+		const startUrl = await generateBulletProductElevateKeyframe("start");
+		bulletElevateStillUrlRef.current = startUrl;
+		const endUrl = await generateBulletProductElevateKeyframe(
+			"end",
+			startUrl,
+		);
+		bulletElevateEndUrlRef.current = endUrl;
+		const pair = [startUrl, endUrl].filter(Boolean);
+		if (pair.length) {
+			setImageVariantUrls(pair);
+			setSelectedVariantIndex(0);
+			setImageUrl(startUrl);
+			imageUrlRef.current = startUrl;
+		}
+		setVideoNote(m.wizard.bulletProductElevateAnimatingCard);
+		const subject =
+			promotionMode === "concept"
+				? effectivePromoteName ||
+					product.trim() ||
+					conceptIdea.trim() ||
+					business.trim()
+				: product.trim() || business.trim();
+		const fxPrompt = buildBulletProductElevateVideoPrompt({
+			product: subject || "the product",
+			conceptMode: promotionMode === "concept",
+			durationSec: BULLET_PRODUCT_ELEVATE_DURATION_SEC,
+		});
+		if (videoPrompt.trim() !== fxPrompt) setVideoPrompt(fxPrompt);
+
+		const fd = new FormData();
+		fd.set("mode", "image");
+		fd.set("promotion_mode", promotionMode);
+		fd.set("prompt", seedancePromptForGenerate(fxPrompt));
+		fd.set("resolution", "480p");
+		fd.set("duration", String(BULLET_PRODUCT_ELEVATE_DURATION_SEC));
+		fd.set("aspect_ratio", "9:16");
+		fd.set("motion_strength", "74");
+		fd.set("negative_prompt", negativePrompt);
+		fd.set("avoid_on_screen_text", "true");
+		fd.set("bullet_product_elevate", "1");
+		fd.set("product_name", subject);
+		fd.set("business", business.trim());
+		fd.set("image_start_url", startUrl);
+		fd.set("image_end_url", endUrl);
+
+		const fx = await generateStartEndFxVideo({
+			fd,
+			recipeDurationSec: BULLET_PRODUCT_ELEVATE_DURATION_SEC,
+		});
+		const pathNote = wizardVideoReadyExtraNote(fx.data);
+		const h3Reason =
+			typeof fx.data.h3FallbackReason === "string"
+				? fx.data.h3FallbackReason
+				: "";
+		setVideoNote(
+			[
+				m.wizard.bulletProductElevateHint,
+				fx.usedSeedanceFallback
+					? [m.wizard.h3ToSeedanceFallbackNote, h3Reason]
+							.filter(Boolean)
+							.join(" — ")
+					: m.wizard.videoEngineMinimaxH3,
+				pathNote,
+				typeof fx.data.note === "string" ? fx.data.note : undefined,
+			]
+				.filter(Boolean)
+				.join(" · "),
+		);
+		return fx.videoUrl;
+	}
+
 	async function makeImageToVideo(
 		imageStartUrlOverride?: string,
 	): Promise<string> {
@@ -10201,7 +10427,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					generationKind === "vacuum-inflate" ||
 					generationKind === "creative-motion" ||
 					generationKind === "hand-throw-scene" ||
-					generationKind === "product-explode";
+					generationKind === "product-explode" ||
+					generationKind === "bullet-product-elevate";
 				const willGenerateStills = dualFrameRecipe
 					? true
 					: isH3ShotRecipeMode(generationKind)
@@ -10307,6 +10534,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					break;
 				case "product-explode":
 					url = await makeProductExplodeVideo();
+					break;
+				case "bullet-product-elevate":
+					url = await makeBulletProductElevateVideo();
 					break;
 				case "image-to-video":
 				default:
@@ -10763,6 +10993,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					? m.wizard.handThrowNeedKeyframe
 					: videoCreativeMode === "product-explode"
 						? m.wizard.productExplodeNeedKeyframe
+						: videoCreativeMode === "bullet-product-elevate"
+							? m.wizard.bulletProductElevateNeedKeyframe
 						: m.wizard.creativeMotionNeedKeyframe;
 		}
 		if (

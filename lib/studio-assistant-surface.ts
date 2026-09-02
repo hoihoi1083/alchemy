@@ -17,9 +17,9 @@ export function isAssistantSurface(raw: unknown): raw is AssistantSurface {
   return typeof raw === "string" && (ASSISTANT_SURFACES as readonly string[]).includes(raw);
 }
 
-export function shouldHideAssistant(pathname: string): boolean {
-  const path = pathname.split("?")[0] || "/";
-  return path !== "/" && path !== "";
+/** True when the global mascot assistant widget should render (landing only). */
+export function isStudioAssistantMounted(pathname: string): boolean {
+  return assistantSurfaceFromPathname(pathname) === "landing";
 }
 
 export function isToolAssistantSurface(surface: AssistantSurface): boolean {
@@ -46,5 +46,6 @@ export function assistantSurfaceFromPathname(pathname: string): AssistantSurface
   const path = pathname.split("?")[0] || "/";
   if (path === "/" || path === "") return "landing";
   if (path === "/studio" || path.startsWith("/studio/")) return "studio";
+  if (path === "/ultra" || path.startsWith("/ultra/")) return null;
   return null;
 }

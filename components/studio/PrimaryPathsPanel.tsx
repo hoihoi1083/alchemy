@@ -88,6 +88,13 @@ export function PrimaryPathsPanel({ variant, showCinematicExtras = false }: Prop
       {variant === "concept-video" ? (
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
           <PathButton
+            active={visualStyleId === "explosion-unbox"}
+            title={m.wizard.visualStyles["explosion-unbox"].title}
+            description={m.wizard.visualStyles["explosion-unbox"].description}
+            previewSrc={getVisualStyle("explosion-unbox").previewSrc}
+            onClick={() => applyPrimaryPathConceptVideo("explosion-unbox")}
+          />
+          <PathButton
             active={visualStyleId === "creative-video"}
             title={m.wizard.visualStyles["creative-video"].title}
             description={m.wizard.visualStyles["creative-video"].description}

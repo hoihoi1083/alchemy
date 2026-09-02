@@ -23,6 +23,7 @@ export type TemplateId =
   | "service-promo"
   | "pricing-offer"
   | "website-launch"
+  | "explosion-unbox-reel"
   | "custom";
 
 export type MarketingTemplate = {
@@ -512,6 +513,27 @@ export const TEMPLATES: MarketingTemplate[] = [
       "Gentle motion on launch promo, subtle UI glow, stable camera, no on-screen platform watermarks",
     negativePrompt:
       "social media UI overlay, instagram buttons, speech, voiceover, watermark, blurry text, low quality",
+  },
+  {
+    id: "explosion-unbox-reel",
+    name: "AI explosion unbox reel",
+    description:
+      "Viral unboxing effect — themed box opens, room assembles, props float (text-to-video, no product photo).",
+    icon: "📦✨",
+    aspectRatio: "9:16",
+    duration: "8",
+    fast: true,
+    resolution: "480p",
+    motionStrength: 32,
+    camera: "Static Locked Shot",
+    avoidOnScreenText: true,
+    generateAudio: true,
+    imagePromptTemplate: "Keyframe for {{headline}} explosion-unbox scene — {{conceptIdea}}",
+    imageEditPromptTemplate: "Themed room assembly scene for {{headline}}.",
+    videoPromptTemplate:
+      "Cinematic fixed wide-angle. Sealed themed box shakes and opens; furniture and props assemble into a bright room, then lift and float in a playful zero-gravity burst. Theme: {{conceptIdea}}. No on-screen text.",
+    negativePrompt:
+      "on-screen text, subtitles, logo, watermark, speech, voiceover, dialogue, lyrics, shaky handheld, blurry, low quality",
   },
   {
     id: "custom",

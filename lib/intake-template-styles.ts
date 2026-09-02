@@ -184,6 +184,14 @@ export function buildProductVideoTemplateCards(
       description: modes["product-explode"].description,
       previewSrc: videoModePreviewSrc("product-explode"),
     },
+    {
+      id: "bullet_product_elevate",
+      kind: "video",
+      videoSubpath: "bullet_product_elevate",
+      title: modes["bullet-product-elevate"].title,
+      description: modes["bullet-product-elevate"].description,
+      previewSrc: videoModePreviewSrc("bullet-product-elevate"),
+    },
   ];
 
   for (const mode of h3ShotModesForPromotion("physical")) {
@@ -233,6 +241,15 @@ export function buildConceptVideoTemplateCards(
       title: copy.sceneReelTitle,
       description: copy.sceneReelDesc,
       previewSrc: getVisualStyle("creative-video").previewSrc,
+    },
+    {
+      id: "explosion_unbox",
+      kind: "video",
+      videoSubpath: "explosion_unbox",
+      title:
+        copy.visualStyles["explosion-unbox"]?.title ?? "AI explosion unbox ~8s",
+      description: copy.visualStyles["explosion-unbox"]?.description ?? "",
+      previewSrc: getVisualStyle("explosion-unbox").previewSrc,
     },
     {
       id: "motion_poster",
@@ -289,6 +306,14 @@ export function buildConceptVideoTemplateCards(
       title: modes["product-explode"].title,
       description: modes["product-explode"].description,
       previewSrc: videoModePreviewSrc("product-explode"),
+    },
+    {
+      id: "bullet_product_elevate",
+      kind: "video",
+      videoSubpath: "bullet_product_elevate",
+      title: modes["bullet-product-elevate"].title,
+      description: modes["bullet-product-elevate"].description,
+      previewSrc: videoModePreviewSrc("bullet-product-elevate"),
     },
   ];
 

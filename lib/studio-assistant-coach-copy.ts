@@ -11,21 +11,38 @@ export function coachZh(locale: Locale, hk: string, cn: string, tw: string): str
   return hk;
 }
 
-export function coachContinueOnSetup(locale: Locale): string {
+/** Footer after a landing action button that opens /studio (no in-studio chat coach). */
+export function coachLandingAfterStudioAction(locale: Locale): string {
   return coachUsesEnglish(locale)
-    ? "Reply next once you are on Setup."
+    ? "Click the button above — then follow the wizard cards on the next page. (No chat coach in /studio.)"
     : coachZh(
         locale,
-        "入到 Setup 後回覆 下一步。",
-        "进入 Setup 后回复 下一步。",
-        "進入 Setup 後回覆 下一步。",
+        "按上面掣 — 下一頁跟畫面卡片就得（/studio 冇逐步 chat）。",
+        "点上面按钮 — 下一页跟画面卡片即可（/studio 无逐步 chat）。",
+        "按上面按鈕 — 下一頁跟畫面卡片即可（/studio 無逐步 chat）。",
       );
 }
 
-export function coachContinueSetupShort(locale: Locale): string {
+/** Footer after a landing action button that opens a standalone tool page. */
+export function coachLandingAfterToolAction(locale: Locale): string {
   return coachUsesEnglish(locale)
-    ? "Reply next on Setup."
-    : coachZh(locale, "到 Setup 回覆 下一步。", "到 Setup 回复 下一步。", "到 Setup 回覆 下一步。");
+    ? "Click the button above to open that tool."
+    : coachZh(
+        locale,
+        "按上面掣開啟工具。",
+        "点上面按钮打开工具。",
+        "按上面按鈕開啟工具。",
+      );
+}
+
+/** @deprecated Dormant — in-studio step coach disabled; use coachLandingAfterStudioAction. */
+export function coachContinueOnSetup(locale: Locale): string {
+  return coachLandingAfterStudioAction(locale);
+}
+
+/** @deprecated Dormant — in-studio step coach disabled; use coachLandingAfterStudioAction. */
+export function coachContinueSetupShort(locale: Locale): string {
+  return coachLandingAfterStudioAction(locale);
 }
 
 export function coachModeLine(locale: Locale, mode: string): string {

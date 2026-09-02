@@ -44,6 +44,7 @@ export const IDENTITY_VIDEO_UX_MODES = [
   "creative-motion",
   "hand-throw-scene",
   "product-explode",
+  "bullet-product-elevate",
 ] as const;
 
 export type IdentityVideoUxMode = (typeof IDENTITY_VIDEO_UX_MODES)[number];

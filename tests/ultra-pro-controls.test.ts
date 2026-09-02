@@ -3,7 +3,10 @@ import { describe, it } from "node:test";
 import {
   appendUltraProToPrompt,
   DEFAULT_ULTRA_IMAGE_PRO,
+  canvasScriptUsesPlanQuota,
   estimateCanvasImageTokens,
+  estimateCanvasScriptTokens,
+  estimateCanvasSpliceTokens,
   estimateCanvasVideoTokens,
 } from "../lib/ultra-pro-controls";
 
@@ -41,5 +44,15 @@ describe("ultra-pro-controls", () => {
     assert.ok(
       estimateCanvasVideoTokens({ resolution: "480p", duration: "8", fast: true }) > 0,
     );
+  });
+
+  it("splice stitch is free; BGM mix charges only when audio connected", () => {
+    assert.equal(estimateCanvasSpliceTokens({ hasMusic: false }), 0);
+    assert.equal(estimateCanvasSpliceTokens({ hasMusic: true }), 5);
+  });
+
+  it("script plan uses plan quota not tokens", () => {
+    assert.equal(estimateCanvasScriptTokens(), 0);
+    assert.equal(canvasScriptUsesPlanQuota(), true);
   });
 });

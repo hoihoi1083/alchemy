@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Background,
   Controls,
@@ -35,6 +35,11 @@ import { TextVideoNode } from "@/components/pro/nodes/TextVideoNode";
 import { UploadNode } from "@/components/pro/nodes/UploadNode";
 import { VideoNode } from "@/components/pro/nodes/VideoNode";
 import { useLocale } from "@/components/LocaleProvider";
+import { useUserPlanEntitlements } from "@/hooks/useUserPlanEntitlements";
+import {
+  cannotAfford,
+  insufficientTokensMessage,
+} from "@/lib/billing/estimate-job-tokens";
 import { cameraPromptSuffix } from "@/lib/pro-canvas-camera";
 import {
   audioUrlFromNode,
@@ -61,8 +66,10 @@ import {
 } from "@/lib/pro-canvas-modifiers";
 import {
   createUltraCanvasTemplate,
+  ULTRA_CANVAS_TEMPLATE_IDS,
   type UltraCanvasTemplateId,
 } from "@/lib/ultra-canvas-templates";
+import { estimateRunAllTokens } from "@/lib/ultra-canvas-run-all";
 import {
   deserializeUltraCanvasSnapshot,
   serializeUltraCanvasSnapshot,
@@ -70,8 +77,10 @@ import {
 import {
   DEFAULT_ULTRA_IMAGE_PRO,
   DEFAULT_ULTRA_VIDEO_PRO,
+  estimateCanvasSpliceTokens,
   videoProFromNodeData,
 } from "@/lib/ultra-pro-controls";
+import { shouldBlockUltraCanvasSave, tryAcquireRunAllLatch } from "@/lib/ultra-canvas-guards";
 import { isHttpOrLibraryMediaUrl } from "@/lib/storage/library-asset-url";
 import {
   runCanvasCameraNode,
@@ -183,8 +192,11 @@ function defaultNodeData(kind: ProCanvasNodeKind, label: string): ProCanvasNodeD
   }
 }
 
-function ProCanvasBoard() {
+function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }) {
   const { m } = useLocale();
+  const { creditBalance, planReady } = useUserPlanEntitlements();
+  const templateLoadedRef = useRef(false);
+  const [dirtyTick, setDirtyTick] = useState(0);
   const starter = useMemo(
     () => createProCanvasStarter(m.ultraCanvas.nodeLabels),
     [m.ultraCanvas.nodeLabels],
@@ -256,6 +268,7 @@ function ProCanvasBoard() {
     uploadFiles.current.clear();
     audioFiles.current.clear();
     setRunningAll(false);
+    runningAllRef.current = false;
     setQueue([]);
   }, []);
 
@@ -281,6 +294,7 @@ function ProCanvasBoard() {
 
   const markDirty = useCallback(() => {
     dirtyRef.current = true;
+    setDirtyTick((t) => t + 1);
   }, []);
 
   const askConfirm = useCallback(
@@ -1080,92 +1094,153 @@ function ProCanvasBoard() {
     ],
   );
 
+  const persistLocalAssetsBeforeSave = useCallback(async () => {
+    const patches = new Map<string, Record<string, unknown>>();
+    const uploads = [...uploadFiles.current.entries()];
+    const audios = [...audioFiles.current.entries()];
+    for (const [nodeId, file] of uploads) {
+      const url = await uploadCanvasAsset(file);
+      uploadFiles.current.delete(nodeId);
+      const patch = { previewUrl: url, fileName: file.name, error: undefined };
+      patches.set(nodeId, patch);
+      updateNodeData(nodeId, patch);
+    }
+    for (const [nodeId, file] of audios) {
+      const url = await uploadCanvasAsset(file);
+      audioFiles.current.delete(nodeId);
+      const patch = { audioUrl: url, fileName: file.name, error: undefined };
+      patches.set(nodeId, patch);
+      updateNodeData(nodeId, patch);
+    }
+    return patches;
+  }, [updateNodeData]);
+
   const stopRunAll = useCallback(() => {
     runAllAbortRef.current?.abort();
   }, []);
 
+  const executeRunAllLoop = useCallback(
+    async (pending: Node[], abort: AbortController) => {
+      const items: TaskQueueItem[] = pending.map((n) => ({
+        nodeId: n.id,
+        label: runnableLabel(n),
+        status: "pending",
+      }));
+      setQueue(items);
+      setRunningAll(true);
+      setBoardError(null);
+
+      for (let i = 0; i < pending.length; i++) {
+        if (abort.signal.aborted) break;
+        const n = pending[i]!;
+        setQueue((q) =>
+          q.map((item) => (item.nodeId === n.id ? { ...item, status: "running" } : item)),
+        );
+        try {
+          await runNode(n.id);
+          if (abort.signal.aborted) break;
+          setQueue((q) =>
+            q.map((item) =>
+              item.nodeId === n.id ? { ...item, status: "done", error: undefined } : item,
+            ),
+          );
+        } catch (e: unknown) {
+          if (abort.signal.aborted) break;
+          const message = e instanceof Error ? e.message : "Failed";
+          const failedId = n.id;
+          setQueue((q) =>
+            q.map((item) => {
+              if (item.nodeId === failedId) {
+                return { ...item, status: "error", error: message };
+              }
+              if (item.status === "pending") {
+                return { ...item, status: "error", error: m.ultraCanvas.queueSkipped };
+              }
+              return item;
+            }),
+          );
+          break;
+        }
+      }
+      if (abort.signal.aborted) {
+        setQueue((q) =>
+          q.map((item) =>
+            item.status === "pending" || item.status === "running"
+              ? { ...item, status: "error", error: m.ultraCanvas.runCancelled }
+              : item,
+          ),
+        );
+      }
+      setRunningAll(false);
+      runningAllRef.current = false;
+      runAllAbortRef.current = null;
+      markDirty();
+      if (dirtyRef.current) {
+        void saveBoardRef.current?.();
+      }
+    },
+    [markDirty, m.ultraCanvas.queueSkipped, m.ultraCanvas.runCancelled, runNode],
+  );
+
   const runAll = useCallback(async () => {
-    if (boardBusy) {
+    if (boardBusy || !tryAcquireRunAllLatch(runningAllRef.current)) {
       setBoardError(m.ultraCanvas.busyNavBlocked);
       return;
     }
-    runAllAbortRef.current?.abort();
-    const abort = new AbortController();
-    runAllAbortRef.current = abort;
 
     const allNodes = getLiveNodes();
     const allEdges = getLiveEdges();
     const { sorted, error: orderError } = runnableExecutionOrder(allNodes, allEdges);
     if (orderError) {
       setBoardError(orderError);
-      runAllAbortRef.current = null;
       return;
     }
     const pending = sorted.filter((n) => !nodeHasRunnableOutput(n));
     if (pending.length === 0) {
       setBoardError(m.ultraCanvas.runAllEmpty);
-      runAllAbortRef.current = null;
       return;
     }
-    const items: TaskQueueItem[] = pending.map((n) => ({
-      nodeId: n.id,
-      label: runnableLabel(n),
-      status: "pending",
-    }));
-    setQueue(items);
-    setRunningAll(true);
-    setBoardError(null);
 
-    for (let i = 0; i < pending.length; i++) {
-      if (abort.signal.aborted) break;
-      const n = pending[i]!;
-      setQueue((q) =>
-        q.map((item) => (item.nodeId === n.id ? { ...item, status: "running" } : item)),
-      );
-      try {
-        await runNode(n.id);
-        if (abort.signal.aborted) break;
-        setQueue((q) =>
-          q.map((item) => (item.nodeId === n.id ? { ...item, status: "done", error: undefined } : item)),
-        );
-      } catch (e: unknown) {
-        if (abort.signal.aborted) break;
-        const message = e instanceof Error ? e.message : "Failed";
-        const failedId = n.id;
-        setQueue((q) =>
-          q.map((item) => {
-            if (item.nodeId === failedId) {
-              return { ...item, status: "error", error: message };
-            }
-            if (item.status === "pending") {
-              return { ...item, status: "error", error: m.ultraCanvas.queueSkipped };
-            }
-            return item;
-          }),
-        );
-        break;
-      }
+    const totalTokens = estimateRunAllTokens(allNodes, allEdges);
+    if (planReady && cannotAfford(creditBalance, totalTokens)) {
+      setBoardError(insufficientTokensMessage(totalTokens, creditBalance as number));
+      return;
     }
-    if (abort.signal.aborted) {
-      setQueue((q) =>
-        q.map((item) =>
-          item.status === "pending" || item.status === "running"
-            ? { ...item, status: "error", error: m.ultraCanvas.runCancelled }
-            : item,
-        ),
-      );
-    }
-    setRunningAll(false);
-    runAllAbortRef.current = null;
+
+    const confirmMsg = m.ultraCanvas.runAllConfirm
+      .replace("{nodes}", String(pending.length))
+      .replace("{tokens}", String(totalTokens));
+
+    askConfirm(m.ultraCanvas.runAllConfirmTitle, confirmMsg, () => {
+      void (async () => {
+        runningAllRef.current = true;
+        runAllAbortRef.current?.abort();
+        const abort = new AbortController();
+        runAllAbortRef.current = abort;
+        try {
+          await persistLocalAssetsBeforeSave();
+        } catch (e: unknown) {
+          setBoardError(e instanceof Error ? e.message : "Upload failed.");
+          runningAllRef.current = false;
+          runAllAbortRef.current = null;
+          return;
+        }
+        await executeRunAllLoop(pending, abort);
+      })();
+    });
   }, [
+    askConfirm,
     boardBusy,
+    creditBalance,
+    executeRunAllLoop,
     getLiveEdges,
     getLiveNodes,
     m.ultraCanvas.busyNavBlocked,
-    m.ultraCanvas.queueSkipped,
+    m.ultraCanvas.runAllConfirm,
+    m.ultraCanvas.runAllConfirmTitle,
     m.ultraCanvas.runAllEmpty,
-    m.ultraCanvas.runCancelled,
-    runNode,
+    persistLocalAssetsBeforeSave,
+    planReady,
   ]);
 
   const addNode = useCallback(
@@ -1207,28 +1282,11 @@ function ProCanvasBoard() {
     });
   }, [tryDiscardThen, m.ultraCanvas.nodeLabels, resetCanvasRuntime, resetHistory, setEdges, setNodes]);
 
-  const persistLocalAssetsBeforeSave = useCallback(async () => {
-    const patches = new Map<string, Record<string, unknown>>();
-    const uploads = [...uploadFiles.current.entries()];
-    const audios = [...audioFiles.current.entries()];
-    for (const [nodeId, file] of uploads) {
-      const url = await uploadCanvasAsset(file);
-      uploadFiles.current.delete(nodeId);
-      const patch = { previewUrl: url, fileName: file.name, error: undefined };
-      patches.set(nodeId, patch);
-      updateNodeData(nodeId, patch);
-    }
-    for (const [nodeId, file] of audios) {
-      const url = await uploadCanvasAsset(file);
-      audioFiles.current.delete(nodeId);
-      const patch = { audioUrl: url, fileName: file.name, error: undefined };
-      patches.set(nodeId, patch);
-      updateNodeData(nodeId, patch);
-    }
-    return patches;
-  }, [updateNodeData]);
-
   const saveBoard = useCallback(async () => {
+    if (shouldBlockUltraCanvasSave(boardBusy)) {
+      setBoardError(m.ultraCanvas.busyNavBlocked);
+      return;
+    }
     setSaving(true);
     setBoardError(null);
     try {
@@ -1267,7 +1325,7 @@ function ProCanvasBoard() {
     } finally {
       setSaving(false);
     }
-  }, [boardId, boardName, getLiveEdges, getLiveNodes, persistLocalAssetsBeforeSave]);
+  }, [boardBusy, boardId, boardName, getLiveEdges, getLiveNodes, m.ultraCanvas.busyNavBlocked, persistLocalAssetsBeforeSave]);
 
   const deleteBoard = useCallback(
     (id: string) => {
@@ -1398,6 +1456,35 @@ function ProCanvasBoard() {
   saveBoardRef.current = saveBoard;
 
   useEffect(() => {
+    if (templateLoadedRef.current) return;
+    const raw = initialTemplate?.trim();
+    if (!raw || !ULTRA_CANVAS_TEMPLATE_IDS.includes(raw as UltraCanvasTemplateId)) return;
+    templateLoadedRef.current = true;
+    loadTemplate(raw as UltraCanvasTemplateId);
+  }, [initialTemplate, loadTemplate]);
+
+  useEffect(() => {
+    if (!dirtyRef.current || boardBusy || saving) return;
+    const timer = setTimeout(() => {
+      if (dirtyRef.current && !boardBusy && !saving) {
+        void saveBoardRef.current?.();
+      }
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [boardBusy, dirtyTick, saving]);
+
+  useEffect(() => {
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (dirtyRef.current && !boardBusy) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [boardBusy, dirtyTick]);
+
+  useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
       const typing =
@@ -1437,10 +1524,20 @@ function ProCanvasBoard() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [deleteSelectedNodes, duplicateSelectedNodes, redo, undo]);
 
+  const estimateSpliceTokenCost = useCallback(
+    (nodeId: string) => {
+      const upstream = upstreamNodesSorted(nodeId, getLiveNodes(), getLiveEdges());
+      const hasMusic = upstream.some((n) => (n.data as ProCanvasNodeData).kind === "audio");
+      return estimateCanvasSpliceTokens({ hasMusic });
+    },
+    [getLiveEdges, getLiveNodes],
+  );
+
   const actions = useMemo(
     () => ({
       nodes,
       boardBusy,
+      estimateSpliceTokenCost,
       onUploadFile,
       onUploadAudio,
       onPickLibraryImage,
@@ -1459,6 +1556,7 @@ function ProCanvasBoard() {
     }),
     [
       boardBusy,
+      estimateSpliceTokenCost,
       nodes,
       onUploadFile,
       onUploadAudio,
@@ -1617,10 +1715,10 @@ function ProCanvasBoard() {
   );
 }
 
-export function ProCanvas() {
+export function ProCanvas({ initialTemplate }: { initialTemplate?: string | null } = {}) {
   return (
     <ReactFlowProvider>
-      <ProCanvasBoard />
+      <ProCanvasBoard initialTemplate={initialTemplate} />
     </ReactFlowProvider>
   );
 }

@@ -1,5 +1,6 @@
 import type { Edge, Node } from "@xyflow/react";
 import type { ProCanvasNodeData } from "@/lib/pro-canvas-types";
+import { buildExplosionUnboxVideoPrompt, EXPLOSION_UNBOX_DEFAULT_THEME } from "@/lib/explosion-unbox-prompt";
 import { DEFAULT_ULTRA_IMAGE_PRO, DEFAULT_ULTRA_VIDEO_PRO } from "@/lib/ultra-pro-controls";
 import {
   DEFAULT_BACKGROUND_MOD_PRESET,
@@ -11,7 +12,10 @@ export type UltraCanvasTemplateId =
   | "productHero"
   | "ugcReel"
   | "carouselStill"
-  | "scriptToFilm";
+  | "scriptToFilm"
+  | "explosionUnbox"
+  | "conceptTextVideo"
+  | "brandMotionReel";
 
 type NodeLabels = Record<string, string>;
 
@@ -194,11 +198,84 @@ export function createUltraCanvasTemplate(
         ],
       };
     }
+    case "explosionUnbox": {
+      const textVideo = labels.textVideo ?? "Text-to-video";
+      const theme = EXPLOSION_UNBOX_DEFAULT_THEME;
+      return {
+        nodeCounterSeed: 1,
+        nodes: [
+          node("tpl-tv", "textVideo", 120, 140, {
+            kind: "textVideo",
+            label: textVideo,
+            prompt: buildExplosionUnboxVideoPrompt(theme),
+            duration: "8",
+            resolution: "480p",
+            fast: true,
+            aspectRatio: "9:16",
+            generateAudio: true,
+          }),
+        ],
+        edges: [],
+      };
+    }
+    case "conceptTextVideo": {
+      const textVideo = labels.textVideo ?? "Text-to-video";
+      return {
+        nodeCounterSeed: 1,
+        nodes: [
+          node("tpl-tv", "textVideo", 120, 140, {
+            kind: "textVideo",
+            label: textVideo,
+            prompt:
+              "Cinematic concept reel — dramatic lighting, emotional pacing, no on-screen text. Describe your theme here.",
+            duration: "8",
+            resolution: "480p",
+            fast: true,
+            aspectRatio: "9:16",
+            generateAudio: true,
+          }),
+        ],
+        edges: [],
+      };
+    }
+    case "brandMotionReel": {
+      const script = labels.script ?? "Script planning";
+      const textVideo = labels.textVideo ?? "Text-to-video";
+      const splice = labels.splice ?? "Video splice";
+      return {
+        nodeCounterSeed: 3,
+        nodes: [
+          node("tpl-script", "script", 60, 120, {
+            kind: "script",
+            label: script,
+            brief: "Brand motion reel — hook, product story, CTA. Vertical 9:16, no on-screen text.",
+          }),
+          node("tpl-tv", "textVideo", 360, 120, {
+            kind: "textVideo",
+            label: textVideo,
+            prompt: "",
+            sceneIndex: 0,
+            duration: "8",
+            resolution: "480p",
+            fast: true,
+            aspectRatio: "9:16",
+          }),
+          node("tpl-splice", "splice", 660, 120, { kind: "splice", label: splice }),
+        ],
+        edges: [
+          edge("e-sc-tv", "tpl-script", "tpl-tv"),
+          edge("e-tv-sp", "tpl-tv", "tpl-splice"),
+        ],
+      };
+    }
   }
 }
 
 export const ULTRA_CANVAS_TEMPLATE_IDS: UltraCanvasTemplateId[] = [
   "productHero",
+  "explosionUnbox",
+  "conceptTextVideo",
+  "brandMotionReel",
   "ugcReel",
   "carouselStill",
   "scriptToFilm",

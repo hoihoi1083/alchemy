@@ -23,6 +23,7 @@ export type VideoGenerationKind =
   | "creative-motion"
   | "hand-throw-scene"
   | "product-explode"
+  | "bullet-product-elevate"
   | "ecom-orbit"
   | "object-lock"
   | "macro-snap"
@@ -83,6 +84,9 @@ export function resolveVideoGenerationKind(
   }
   if (input.videoCreativeMode === "product-explode") {
     return "product-explode";
+  }
+  if (input.videoCreativeMode === "bullet-product-elevate") {
+    return "bullet-product-elevate";
   }
   if (isH3ShotRecipeMode(input.videoCreativeMode)) {
     return input.videoCreativeMode;

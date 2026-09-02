@@ -1,23 +1,17 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { CoachSpotlightOverlay } from "@/components/assistant/CoachSpotlightOverlay";
 import { StudioAssistantWidget } from "@/components/assistant/StudioAssistantWidget";
-import { assistantSurfaceFromPathname } from "@/lib/studio-assistant-surface";
+import { isStudioAssistantMounted } from "@/lib/studio-assistant-surface";
 
 /**
- * Landing + studio AI assistant (logo launcher).
+ * Landing-only AI assistant (mascot launcher).
+ * In-studio step coach and CoachSpotlightOverlay are dormant — wizard cards coach on /studio.
  */
 export function GlobalStudioAssistant() {
   const pathname = usePathname() || "/";
-  const surface = assistantSurfaceFromPathname(pathname);
 
-  if (surface !== "landing") return null;
+  if (!isStudioAssistantMounted(pathname)) return null;
 
-  return (
-    <>
-      <CoachSpotlightOverlay />
-      <StudioAssistantWidget surface={surface} />
-    </>
-  );
+  return <StudioAssistantWidget surface="landing" />;
 }

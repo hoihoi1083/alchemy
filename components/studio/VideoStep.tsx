@@ -12,6 +12,7 @@ import { AdvancedPromptPanel } from "@/components/AdvancedPromptPanel";
 import { AdPackReviewPanel } from "@/components/studio/AdPackReviewPanel";
 import { ConceptPreGeneratePanel } from "@/components/studio/ConceptPreGeneratePanel";
 import { PresenterAvatarPicker } from "@/components/studio/PresenterAvatarPicker";
+import { WizardStepHelpPanel } from "@/components/studio/WizardStepHelpPanel";
 import { WizardErrorBanner } from "@/components/studio/WizardErrorBanner";
 import { VideoOutputSourceCard } from "@/components/studio/VideoOutputSourceCard";
 import {
@@ -101,6 +102,8 @@ export function VideoStep() {
       {usesCompositor ? m.wizard.compositorVideoHint : videoStepHint}
     </p>
   </div>
+
+  <WizardStepHelpPanel step="video" />
 
   <VideoOutputSourceCard variant="video" />
 

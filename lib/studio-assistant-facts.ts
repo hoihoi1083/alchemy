@@ -100,7 +100,7 @@ export function getStudioAssistantFacts(locale: Locale): string {
 - /start: physical vs concept. /studio guided wizard (no chat assistant — follow on-screen steps). /captions burn-in. /edit-image retouch. /ultra Ultra canvas (Master).
 - Stills TVC without reference MP4: single-clip video first (one take); offer stitched fallback if single-clip does not fit. Reference reel: reference-reel mode.
 - 12s at 480p ≈ 492 tokens (free 300 does not cover video-only); 4 stills + 12s TVC still needs paid. Stitched fallback 4×5s ≈ 1136 also needs paid.
-- Homepage finishable recipe cards are hidden. Ask-AI mascot on landing; chat reopens in /studio after handoff (mascot only). No assistant on /ultra, captions, edit-image, or other tool pages.
+- Homepage finishable recipe cards are hidden. Ask-AI mascot on landing only; no assistant on /studio, /ultra, captions, edit-image, or other tool pages.
 `.trim();
 }
 

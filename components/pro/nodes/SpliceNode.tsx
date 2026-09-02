@@ -6,13 +6,13 @@ import { ExportToLibraryButton } from "@/components/pro/ExportToLibraryButton";
 import { ProNodeShell } from "@/components/pro/ProNodeShell";
 import { useProCanvasActions } from "@/components/pro/ProCanvasActions";
 import { useLocale } from "@/components/LocaleProvider";
-import { estimateCanvasSpliceTokens } from "@/lib/ultra-pro-controls";
 import type { SpliceNodeData } from "@/lib/pro-canvas-types";
 
 export function SpliceNode({ id, data }: NodeProps & { data: SpliceNodeData }) {
-  const { runSpliceNode, updateNodeData, boardBusy } = useProCanvasActions();
+  const { runSpliceNode, updateNodeData, boardBusy, estimateSpliceTokenCost } =
+    useProCanvasActions();
   const { m } = useLocale();
-  const tokenCost = useMemo(() => estimateCanvasSpliceTokens({ videoCount: 2, hasMusic: true }), []);
+  const tokenCost = useMemo(() => estimateSpliceTokenCost(id), [estimateSpliceTokenCost, id]);
 
   return (
     <ProNodeShell accent="cyan" label={data.label} sourceHandle targetHandle>

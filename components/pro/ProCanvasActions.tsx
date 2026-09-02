@@ -21,6 +21,7 @@ export type ProCanvasActions = {
   runAudioNode: (nodeId: string) => Promise<void>;
   runSpliceNode: (nodeId: string) => Promise<void>;
   runNode: (nodeId: string) => Promise<void>;
+  estimateSpliceTokenCost: (nodeId: string) => number;
   updateNodeData: (nodeId: string, patch: Record<string, unknown>) => void;
 };
 

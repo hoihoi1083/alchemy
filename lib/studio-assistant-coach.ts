@@ -13,8 +13,8 @@ import {
   pathLabel,
 } from "@/lib/studio-assistant-coach-profile";
 import {
-  coachContinueOnSetup,
-  coachContinueSetupShort,
+  coachLandingAfterStudioAction,
+  coachLandingAfterToolAction,
   coachModeLine,
   coachPathLine,
   coachUsesEnglish,
@@ -23,6 +23,11 @@ import {
 import { isCoachContinueReply } from "@/lib/studio-assistant-continue";
 import { isStoryboardVideoStyle } from "@/lib/visual-styles";
 
+/**
+ * Coach reply builder. Landing fast-path uses route-* / guide-* tasks below.
+ * Wizard field tasks (fill-headline, choose-workflow-mode, …) are dormant while
+ * in-studio chat coach is disabled — kept for tests and a possible re-enable.
+ */
 export type { CoachTaskKind } from "@/lib/studio-assistant-coach-profile";
 export { getNextStudioCoachTask, pathLabel } from "@/lib/studio-assistant-coach-profile";
 
@@ -184,12 +189,12 @@ export function buildCoachReply(
         ? [
             "Step 1: Website / concept video — 8s cinematic Reel + captions.",
             link ?? "",
-            "Reply next once you are on Setup.",
+            coachLandingAfterStudioAction(locale),
           ].join("\n")
         : [
             "第一步：網站／概念影片 — 8 秒電影感 Reel + 字幕。",
             link ?? "",
-            coachContinueOnSetup(locale),
+            coachLandingAfterStudioAction(locale),
           ].join("\n");
 
     case "route-website-image":
@@ -197,25 +202,25 @@ export function buildCoachReply(
         ? [
             "Step 1: Static website launch mockup (image-only, no video UI clone).",
             link ?? "",
-            "Reply next on Setup.",
+            coachLandingAfterStudioAction(locale),
           ].join("\n")
-        : ["第一步：網站上線靜態 mockup 圖（只出圖）。", link ?? "", coachContinueSetupShort(locale)].join("\n");
+        : ["第一步：網站上線靜態 mockup 圖（只出圖）。", link ?? "", coachLandingAfterStudioAction(locale)].join("\n");
 
     case "route-cinematic-stitch":
       return en
         ? [
             "Step 1: Multi-scene cinematic stitch (~24s) for feature tours.",
             link ?? "",
-            "Reply next on Setup.",
+            coachLandingAfterStudioAction(locale),
           ].join("\n")
-        : ["第一步：多場景電影感拼接（約 24 秒）講多個賣點。", link ?? "", coachContinueSetupShort(locale)].join("\n");
+        : ["第一步：多場景電影感拼接（約 24 秒）講多個賣點。", link ?? "", coachLandingAfterStudioAction(locale)].join("\n");
 
     case "route-physical-image-post":
       return en
         ? [
             "Step 1: Product image post (physical · image-only). Upload product photo → generate images. Not concept / not 8s Reel.",
             link ?? "",
-            "Reply next once you are on Setup.",
+            coachLandingAfterStudioAction(locale),
           ].join("\n")
         : [
             coachZh(
@@ -225,7 +230,7 @@ export function buildCoachReply(
               "第一步：實體產品圖文帖（只出圖）。上傳產品圖 → 出圖。不是概念片／8 秒 Reel。",
             ),
             link ?? "",
-            coachContinueSetupShort(locale),
+            coachLandingAfterStudioAction(locale),
           ].join("\n");
 
     case "route-reference-ad":
@@ -233,7 +238,7 @@ export function buildCoachReply(
         ? [
             "Step 1: Copy a reference ad layout (XHS / IG style) — upload style reference + your product photo on the Image step, then generate.",
             link ?? "",
-            "Reply next on Setup.",
+            coachLandingAfterStudioAction(locale),
           ].join("\n")
         : [
             coachZh(
@@ -243,7 +248,7 @@ export function buildCoachReply(
               "第一步：跟參考廣告排版出圖（小紅書／IG 風格）— Image 步上傳參考圖 + 產品圖，再生成。",
             ),
             link ?? "",
-            coachContinueSetupShort(locale),
+            coachLandingAfterStudioAction(locale),
           ].join("\n");
 
     case "route-physical-product":
@@ -251,7 +256,7 @@ export function buildCoachReply(
         ? [
             "Step 1: Physical product — upload photo → image → video Reel.",
             link ?? "",
-            "Reply next on Setup.",
+            coachLandingAfterStudioAction(locale),
           ].join("\n")
         : coachZh(
             locale,
@@ -262,14 +267,14 @@ export function buildCoachReply(
           "\n" +
           (link ?? "") +
           "\n" +
-          coachContinueSetupShort(locale);
+          coachLandingAfterStudioAction(locale);
 
     case "route-storyboard":
       return en
         ? [
             "Step 1: Product storyboard — multi-scene stills → stitched fallback video (textless frames; captions via /captions).",
             link ?? "",
-            "Reply next on Setup.",
+            coachLandingAfterStudioAction(locale),
           ].join("\n")
         : [
             coachZh(
@@ -279,7 +284,7 @@ export function buildCoachReply(
               "第一步：產品分鏡 — 多場景圖 → stitched fallback 影片（畫面無字；字幕用 /captions）。",
             ),
             link ?? "",
-            coachContinueSetupShort(locale),
+            coachLandingAfterStudioAction(locale),
           ].join("\n");
 
     case "route-concept-studio":
@@ -287,54 +292,56 @@ export function buildCoachReply(
         ? [
             "Step 1 — open concept studio. On the wizard page pick **Generate images, then video** for a concept video ad (or video only for one scene), then tap Continue.",
             link ?? "[Open concept studio](studio-action:open-concept-studio)",
-            "There is no step coach inside /studio — follow the cards on screen.",
+            coachLandingAfterStudioAction(locale),
           ].join("\n")
         : [
             "第一步 — 開概念工作室。下一頁揀 **先出圖再出片** 做概念影片廣告（或只出片做單場景），再按 Continue。",
             link ?? "[開啟概念工作室](studio-action:open-concept-studio)",
-            "入咗 /studio 冇逐步 chat 教學 — 跟畫面卡片就得。",
+            coachLandingAfterStudioAction(locale),
           ].join("\n");
 
     case "route-captions":
       return en
-        ? ["Step 1: Burn captions on any MP4 — no regeneration needed.", link ?? ""].join("\n")
-        : ["第一步：任何 MP4 燒錄字幕 — 唔使重新出片。", link ?? ""].join("\n");
+        ? ["Step 1: Burn captions on any MP4 — no regeneration needed.", link ?? "", coachLandingAfterToolAction(locale)].join("\n")
+        : ["第一步：任何 MP4 燒錄字幕 — 唔使重新出片。", link ?? "", coachLandingAfterToolAction(locale)].join("\n");
 
     case "route-edit-image":
       return en
         ? [
             "Step 1: Image editor — upload or pick from library → clean (inpaint) → design layers → export.",
             link ?? "",
+            coachLandingAfterToolAction(locale),
           ].join("\n")
-        : ["第一步：修圖 — 上傳或從作品庫揀圖 → 清雜物 → 排版 → 匯出。", link ?? ""].join("\n");
+        : ["第一步：修圖 — 上傳或從作品庫揀圖 → 清雜物 → 排版 → 匯出。", link ?? "", coachLandingAfterToolAction(locale)].join("\n");
 
     case "route-ultra-canvas":
       return en
         ? [
             "Step 1: Ultra canvas (Master plan) — templates or upload → AI image → video. Pay-per-use tokens.",
             link ?? "",
+            coachLandingAfterToolAction(locale),
           ].join("\n")
-        : ["第一步：Ultra 畫布（Master 方案）— 模板或上傳 → 出圖 → 出片。按次 token。", link ?? ""].join("\n");
+        : ["第一步：Ultra 畫布（Master 方案）— 模板或上傳 → 出圖 → 出片。按次 token。", link ?? "", coachLandingAfterToolAction(locale)].join("\n");
 
     case "route-brand-kit":
       return en
-        ? ["Step 1: Upload logo + brand colors once for storyboard stills.", link ?? ""].join("\n")
-        : ["第一步：上傳 logo 同品牌色，分鏡靜圖可選蓋 logo。", link ?? ""].join("\n");
+        ? ["Step 1: Upload logo + brand colors once for storyboard stills.", link ?? "", coachLandingAfterToolAction(locale)].join("\n")
+        : ["第一步：上傳 logo 同品牌色，分鏡靜圖可選蓋 logo。", link ?? "", coachLandingAfterToolAction(locale)].join("\n");
 
     case "route-pricing":
       return en
-        ? ["Plans and token costs — see pricing for USD/month and feature gates.", link ?? ""].join("\n")
-        : ["方案同 token 價格 — 去 pricing 睇月費同功能門檻。", link ?? ""].join("\n");
+        ? ["Plans and token costs — see pricing for USD/month and feature gates.", link ?? "", coachLandingAfterToolAction(locale)].join("\n")
+        : ["方案同 token 價格 — 去 pricing 睇月費同功能門檻。", link ?? "", coachLandingAfterToolAction(locale)].join("\n");
 
     case "route-library":
       return en
-        ? ["Step 1: Your saved outputs — reopen in editor, captions, or download.", link ?? ""].join("\n")
-        : ["第一步：已存成品 — 可再開修圖／字幕或下載。", link ?? ""].join("\n");
+        ? ["Step 1: Your saved outputs — reopen in editor, captions, or download.", link ?? "", coachLandingAfterToolAction(locale)].join("\n")
+        : ["第一步：已存成品 — 可再開修圖／字幕或下載。", link ?? "", coachLandingAfterToolAction(locale)].join("\n");
 
     case "route-ugc":
       return en
-        ? ["Step 1: UGC talking presenter — product + vibe (unboxing, review).", link ?? ""].join("\n")
-        : ["第一步：UGC 口播 — 話我知產品同感覺（開箱、評價）。", link ?? ""].join("\n");
+        ? ["Step 1: UGC talking presenter — product + vibe (unboxing, review).", link ?? "", coachLandingAfterToolAction(locale)].join("\n")
+        : ["第一步：UGC 口播 — 話我知產品同感覺（開箱、評價）。", link ?? "", coachLandingAfterToolAction(locale)].join("\n");
 
     case "guide-edit-image":
       return en

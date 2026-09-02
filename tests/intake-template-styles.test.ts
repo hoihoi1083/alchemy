@@ -24,6 +24,7 @@ const copyStub = {
     "creative-motion": { title: "Creative motion", description: "CM" },
     "hand-throw-scene": { title: "Hand throw", description: "HT" },
     "product-explode": { title: "Explode", description: "PE" },
+    "bullet-product-elevate": { title: "Bullet elevate", description: "BT" },
     "social-drip": { title: "Social drip", description: "SD" },
     "ecom-orbit": { title: "Ecom orbit", description: "EO" },
     "object-lock": { title: "Object lock", description: "OL" },
@@ -45,6 +46,10 @@ const copyStub = {
     "dark-premium": { title: "Dark premium", description: "Dark" },
     "paper-layout": { title: "Paper", description: "Paper" },
     "storyboard-video": { title: "Storyboard", description: "SB" },
+    "explosion-unbox": {
+      title: "AI explosion unbox ~8s",
+      description: "Themed box opens → room assembles",
+    },
   },
   storyboardRecipes: {
     "classic-tvc": { title: "Classic TVC", desc: "Flexible scenes" },
@@ -84,6 +89,20 @@ describe("intake-template-styles", () => {
   it("hides UGC from concept image Template too", () => {
     const ids = intakeImageVisualStyleIds("image-only", "concept");
     assert.ok(!ids.includes("ugc-presenter"));
+  });
+
+  it("builds concept video Template cards with explosion unbox", () => {
+    const cards = buildIntakeTemplateCards({
+      workflowMode: "video-only",
+      isConcept: true,
+      copy: copyStub,
+    });
+    const explosion = cards.find((c) => c.id === "explosion_unbox");
+    assert.ok(explosion);
+    assert.equal(explosion?.kind, "video");
+    assert.equal(explosion?.videoSubpath, "explosion_unbox");
+    assert.equal(explosion?.title, "AI explosion unbox ~8s");
+    assert.ok(!cards.some((c) => c.id === "product_promo"));
   });
 
   it("builds product video Template cards with Quick Ad first", () => {
@@ -177,5 +196,21 @@ describe("apply-intake-video-style", () => {
     });
     assert.deepEqual(setSub, ["blockbuster"]);
     assert.ok(calls.includes("mode:blockbuster"));
+  });
+
+  it("maps explosion unbox concept subpath", () => {
+    const calls: string[] = [];
+    const setSub: string[] = [];
+    applyIntakeVideoStyle("explosion_unbox", {
+      isConcept: true,
+      setVideoSubpath: (s) => setSub.push(s),
+      wizard: {
+        applyPrimaryPathVideoOnly: (p) => calls.push(`videoOnly:${p}`),
+        applyPrimaryPathConceptVideo: (p) => calls.push(`concept:${p}`),
+        onVideoCreativeModeChange: (m) => calls.push(`mode:${m}`),
+      },
+    });
+    assert.deepEqual(setSub, ["explosion_unbox"]);
+    assert.ok(calls.includes("concept:explosion-unbox"));
   });
 });

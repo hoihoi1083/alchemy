@@ -3,7 +3,7 @@
 import { ProNodeShell } from "@/components/pro/ProNodeShell";
 import { useProCanvasActions } from "@/components/pro/ProCanvasActions";
 import { useLocale } from "@/components/LocaleProvider";
-import { estimateCanvasScriptTokens } from "@/lib/ultra-pro-controls";
+import { canvasScriptUsesPlanQuota } from "@/lib/ultra-pro-controls";
 import type { ScriptNodeData } from "@/lib/pro-canvas-types";
 import type { NodeProps } from "@xyflow/react";
 
@@ -11,7 +11,7 @@ export function ScriptNode({ id, data }: NodeProps & { data: ScriptNodeData }) {
   const { runScriptNode, spawnSceneNodes, spawnScenePipeline, updateNodeData, boardBusy } =
     useProCanvasActions();
   const { m } = useLocale();
-  const tokenCost = estimateCanvasScriptTokens();
+  const usesPlanQuota = canvasScriptUsesPlanQuota();
   const sceneCount = data.scenePrompts?.length ?? 0;
 
   return (
@@ -29,9 +29,9 @@ export function ScriptNode({ id, data }: NodeProps & { data: ScriptNodeData }) {
         className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-rose-600 to-pink-600 px-3 py-1.5 text-xs font-semibold text-white shadow-[0_0_16px_rgba(244,63,94,0.2)] disabled:opacity-40"
       >
         {data.busy ? m.ultraCanvas.running : m.ultraCanvas.runScript}
-        {!data.busy ? (
+        {!data.busy && usesPlanQuota ? (
           <span className="rounded-full bg-black/25 px-1.5 py-0.5 text-[10px] font-medium">
-            {m.ultraCanvas.tokenBadge.replace("{n}", String(tokenCost))}
+            {m.ultraCanvas.scriptPlanBadge}
           </span>
         ) : null}
       </button>

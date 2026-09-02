@@ -23,6 +23,7 @@ export const CONCEPT_ONLY_VISUAL_STYLE_IDS = new Set<VisualStyleId>([
   "pricing-offer",
   "website-launch",
   "concept-cinematic",
+  "explosion-unbox",
 ]);
 
 /** Works well for both physical goods and non-physical promos. */
@@ -66,7 +67,7 @@ export function visualStylesForPromotion(
 }
 
 export function conceptPrimaryVisualStyleIds(): VisualStyleId[] {
-  return ["brand-fit", "service-promo", "pricing-offer", "website-launch", "concept-cinematic"];
+  return ["brand-fit", "service-promo", "pricing-offer", "website-launch", "concept-cinematic", "explosion-unbox"];
 }
 
 export function physicalPrimaryVisualStyleIds(): VisualStyleId[] {

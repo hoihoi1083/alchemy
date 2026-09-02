@@ -69,7 +69,8 @@ export function estimateVideoPipelineTokens(
     case "vacuum-inflate":
     case "creative-motion":
     case "hand-throw-scene":
-    case "product-explode": {
+    case "product-explode":
+    case "bullet-product-elevate": {
       // Start (+ often end) still then H3 start→end.
       const h3 = estimateH3Tokens({
         resolution: opts.resolution,

@@ -30,6 +30,7 @@ export const LANDING_RECIPE_IDS = [
   "product-creative-motion-4s",
   "product-hand-throw-scene-6s",
   "product-product-explode-4s",
+  "product-bullet-elevate-8s",
   "product-ecom-orbit-6s",
   "product-object-lock-6s",
   "product-macro-snap-6s",
@@ -58,6 +59,7 @@ export const LANDING_RECIPE_IDS = [
   "concept-creative-motion-4s",
   "concept-hand-throw-scene-6s",
   "concept-product-explode-4s",
+  "concept-bullet-elevate-8s",
   "concept-beauty-mv-10s",
   "concept-imitate-ad-8s",
   "concept-neon-on-real-8s",
@@ -69,6 +71,7 @@ export const LANDING_RECIPE_IDS = [
   "concept-gaming-cover",
   "concept-sports-big-words",
   "concept-jelly-3d",
+  "concept-explosion-unbox-8s",
 ] as const;
 
 export type LandingRecipeId = (typeof LANDING_RECIPE_IDS)[number];
@@ -281,6 +284,15 @@ export const LANDING_RECIPES: Record<LandingRecipeId, LandingRecipeDef> = {
     videoCreativeMode: "product-explode",
     duration: "4",
   },
+  "product-bullet-elevate-8s": {
+    id: "product-bullet-elevate-8s",
+    previewSrc: videoModeRecipePreview("bullet-product-elevate"),
+    promotionMode: "physical",
+    workflowMode: "video-only",
+    visualStyleId: "product",
+    videoCreativeMode: "bullet-product-elevate",
+    duration: "8",
+  },
   "product-ecom-orbit-6s": h3ProductRecipe("product-ecom-orbit-6s", "ecom-orbit", "6"),
   "product-object-lock-6s": h3ProductRecipe("product-object-lock-6s", "object-lock", "6"),
   "product-macro-snap-6s": h3ProductRecipe("product-macro-snap-6s", "macro-snap", "6"),
@@ -440,6 +452,15 @@ export const LANDING_RECIPES: Record<LandingRecipeId, LandingRecipeDef> = {
     videoCreativeMode: "product-explode",
     duration: "4",
   },
+  "concept-bullet-elevate-8s": {
+    id: "concept-bullet-elevate-8s",
+    previewSrc: videoModeRecipePreview("bullet-product-elevate"),
+    promotionMode: "concept",
+    workflowMode: "video-only",
+    visualStyleId: "service-promo",
+    videoCreativeMode: "bullet-product-elevate",
+    duration: "8",
+  },
   "concept-beauty-mv-10s": h3ConceptRecipe("concept-beauty-mv-10s", "beauty-mv", "10"),
   "concept-imitate-ad-8s": h3ConceptRecipe("concept-imitate-ad-8s", "imitate-ad", "8"),
   "concept-neon-on-real-8s": h3ConceptRecipe(
@@ -478,6 +499,14 @@ export const LANDING_RECIPES: Record<LandingRecipeId, LandingRecipeDef> = {
     "sports-big-words",
   ),
   "concept-jelly-3d": imageConceptRecipe("concept-jelly-3d", "jelly-3d"),
+  "concept-explosion-unbox-8s": {
+    id: "concept-explosion-unbox-8s",
+    previewSrc: "/images/studio/visual-styles/explosion-unbox.png?v=1",
+    promotionMode: "concept",
+    workflowMode: "video-only",
+    visualStyleId: "explosion-unbox",
+    duration: "8",
+  },
 };
 
 export function isMotionPosterLandingRecipe(id: LandingRecipeId): boolean {
@@ -545,6 +574,15 @@ export function microContextForLandingRecipe(
   recipe: LandingRecipeId,
   promotionMode: PromotionMode = LANDING_RECIPES[recipe].promotionMode,
 ): MicroWizardContext {
+  if (recipe === "concept-explosion-unbox-8s") {
+    return {
+      promotionMode,
+      workflowMode: "video-only",
+      intakePath: "direct",
+      conceptSource: "assistant",
+      videoSubpath: "explosion_unbox",
+    };
+  }
   if (recipe === "concept-motion-poster") {
     return {
       promotionMode,
@@ -575,7 +613,8 @@ export function microContextForLandingRecipe(
     LANDING_RECIPES[recipe].videoCreativeMode === "vacuum-inflate" ||
     LANDING_RECIPES[recipe].videoCreativeMode === "creative-motion" ||
     LANDING_RECIPES[recipe].videoCreativeMode === "hand-throw-scene" ||
-    LANDING_RECIPES[recipe].videoCreativeMode === "product-explode"
+    LANDING_RECIPES[recipe].videoCreativeMode === "product-explode" ||
+    LANDING_RECIPES[recipe].videoCreativeMode === "bullet-product-elevate"
   ) {
     const mode = LANDING_RECIPES[recipe].videoCreativeMode;
     const videoSubpath =
@@ -585,6 +624,8 @@ export function microContextForLandingRecipe(
           ? "creative_motion"
           : mode === "hand-throw-scene"
             ? "hand_throw_scene"
+            : mode === "bullet-product-elevate"
+              ? "bullet_product_elevate"
             : "product_explode";
     return {
       promotionMode,

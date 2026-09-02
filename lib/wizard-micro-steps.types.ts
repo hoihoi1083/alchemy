@@ -24,6 +24,7 @@ export type VideoSubpath =
   | "creative_motion"
   | "hand_throw_scene"
   | "product_explode"
+  | "bullet_product_elevate"
   | "ecom_orbit"
   | "object_lock"
   | "macro_snap"
@@ -43,7 +44,8 @@ export type VideoSubpath =
   | "ugc_presenter"
   | "storyboard_video"
   | "creative_video"
-  | "brand_video";
+  | "brand_video"
+  | "explosion_unbox";
 
 /** Concept combined: cinematic stitch vs animate keyframe */
 /** Combined 圖+片: storyboard (分鏡) is the only shipped style; cinematic = single 8s only. */
