@@ -48,11 +48,30 @@ export function UltraLibraryPicker({ open, onClose, onPick, kind = "image" }: Pr
     if (open) void load();
   }, [load, open]);
 
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-      <div className="flex max-h-[80vh] w-full max-w-lg flex-col rounded-2xl border border-violet-500/30 bg-slate-950 shadow-[0_0_48px_rgba(139,92,246,0.2)]">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+      role="presentation"
+      onClick={onClose}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={lp.title}
+        className="flex max-h-[80vh] w-full max-w-lg flex-col rounded-2xl border border-violet-500/30 bg-slate-950 shadow-[0_0_48px_rgba(139,92,246,0.2)]"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
           <h3 className="text-sm font-semibold text-violet-200">{lp.title}</h3>
           <button

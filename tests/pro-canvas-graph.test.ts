@@ -58,4 +58,14 @@ describe("pro-canvas-graph", () => {
     const err = findMissingImageSources("img", "Show @Pack", nodes, [], () => undefined);
     assert.match(err ?? "", /Re-attach/);
   });
+
+  it("detects missing connected upload without @mention", () => {
+    const nodes = [
+      node("up", "upload", { label: "Pack", previewUrl: "blob:abc" }),
+      node("img", "image", { label: "Image", prompt: "Hero shot" }),
+    ];
+    const edges: Edge[] = [{ id: "e1", source: "up", target: "img" }];
+    const err = findMissingImageSources("img", "Hero shot", nodes, edges, () => undefined);
+    assert.match(err ?? "", /connected source/);
+  });
 });

@@ -136,8 +136,8 @@ describe("storyboard route + wizard wiring", () => {
     const src = readFileSync(join(root, "app/api/generate/route.ts"), "utf8");
     assert.match(src, /runReferenceVideoViaH3/);
     assert.match(src, /hasReferenceVideoInput/);
-    const h3Branch = src.indexOf("runReferenceVideoViaH3");
-    const seedanceCharge = src.indexOf("videoTokenCostFromSeedanceEndpoint");
+    const h3Branch = src.indexOf("return runReferenceVideoViaH3");
+    const seedanceCharge = src.indexOf("const tokenCost = videoTokenCostFromSeedanceEndpoint");
     assert.ok(h3Branch > 0 && seedanceCharge > h3Branch);
   });
 

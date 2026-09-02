@@ -189,19 +189,59 @@ export function findMissingImageSources(
   edges: Edge[],
   getFile?: (id: string) => File | undefined,
 ): string | null {
-  const sources = collectOrderedImageSources(nodeId, prompt, nodes, edges, getFile);
+  const connected = upstreamNodes(nodeId, nodes, edges);
   const mentioned = mentionedNodesInOrder(prompt, nodes);
-  for (const src of mentioned) {
-    const hasFile = Boolean(getFile?.(src.id));
-    const url = imageUrlFromNode(src);
-    const durable = isHttpOrLibraryMediaUrl(url);
-    if (!hasFile && !durable) {
-      const label = (src.data as ProCanvasNodeData).label;
-      return `Re-attach or upload source for @${nodeAlias(src)} (${label}) before running.`;
+  const orderedNodes: Node[] = [];
+  const seen = new Set<string>();
+  for (const n of mentioned) {
+    if (!seen.has(n.id)) {
+      seen.add(n.id);
+      orderedNodes.push(n);
     }
   }
-  if (sources.length === 0 && mentioned.length > 0) {
-    return "Image sources for @mentions are missing — re-upload or pick from library.";
+  for (const n of connected) {
+    if (!seen.has(n.id)) {
+      seen.add(n.id);
+      orderedNodes.push(n);
+    }
+  }
+
+  for (const src of orderedNodes) {
+    const data = src.data as ProCanvasNodeData;
+    const label = data.label;
+    const file = getFile?.(src.id);
+    const url = imageUrlFromNode(src);
+    const durable = isHttpOrLibraryMediaUrl(url);
+    const isMentioned = mentioned.some((n) => n.id === src.id);
+
+    if (data.kind === "upload") {
+      if (!file && !durable) {
+        const alias = nodeAlias(src);
+        return isMentioned
+          ? `Re-attach or upload source for @${alias} (${label}) before running.`
+          : `Upload or pick from library for connected source (${label}) before running.`;
+      }
+      continue;
+    }
+
+    if (data.kind === "brand" && (isMentioned || connected.some((n) => n.id === src.id))) {
+      if (!durable) {
+        return `Brand node (${label}) needs a logo — open brand kit or upload.`;
+      }
+      continue;
+    }
+
+    if ((data.kind === "image" || data.kind === "camera") && isMentioned && !durable) {
+      const alias = nodeAlias(src);
+      return `Run or connect output for @${alias} (${label}) before running.`;
+    }
+  }
+
+  if (mentioned.length > 0) {
+    const sources = collectOrderedImageSources(nodeId, prompt, nodes, edges, getFile);
+    if (sources.length === 0) {
+      return "Image sources for @mentions are missing — re-upload or pick from library.";
+    }
   }
   return null;
 }

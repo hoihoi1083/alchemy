@@ -18,6 +18,7 @@ type Props = {
   boardName: string;
   boardId: string | null;
   saving: boolean;
+  saveSuccessAt?: number | null;
   loading: boolean;
   boardError?: string | null;
   onBoardNameChange: (name: string) => void;
@@ -33,6 +34,7 @@ export function UltraCanvasToolbar({
   boardName,
   boardId,
   saving,
+  saveSuccessAt,
   loading,
   boardError,
   onBoardNameChange,
@@ -50,6 +52,17 @@ export function UltraCanvasToolbar({
   const [listOpen, setListOpen] = useState(false);
   const [tplOpen, setTplOpen] = useState(false);
   const [listError, setListError] = useState<string | null>(null);
+  const [savedTick, setSavedTick] = useState(0);
+  const showSaved =
+    saveSuccessAt != null && Date.now() - saveSuccessAt < 2500 && !saving && !boardError;
+
+  useEffect(() => {
+    if (saveSuccessAt == null) return;
+    const msLeft = 2500 - (Date.now() - saveSuccessAt);
+    if (msLeft <= 0) return;
+    const t = window.setTimeout(() => setSavedTick((n) => n + 1), msLeft);
+    return () => window.clearTimeout(t);
+  }, [saveSuccessAt, savedTick]);
 
   const refreshBoards = useCallback(async () => {
     try {
@@ -187,6 +200,11 @@ export function UltraCanvasToolbar({
       <p className="rounded-lg border border-slate-800/80 bg-slate-950/80 px-2.5 py-1 text-[10px] text-slate-500">
         {tb.shortcuts}
       </p>
+      {showSaved ? (
+        <p className="rounded-lg border border-emerald-500/30 bg-emerald-950/40 px-2.5 py-1 text-xs text-emerald-300">
+          {tb.saved}
+        </p>
+      ) : null}
       {boardError ? (
         <p className="rounded-lg border border-red-500/30 bg-red-950/40 px-2.5 py-1 text-xs text-red-300">
           {boardError}

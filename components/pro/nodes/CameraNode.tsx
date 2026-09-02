@@ -1,11 +1,15 @@
 "use client";
 
 import { Handle, Position, type NodeProps } from "@xyflow/react";
+import { useLocale } from "@/components/LocaleProvider";
 import { useProCanvasActions } from "@/components/pro/ProCanvasActions";
 import { CAMERA_PRESET_OPTIONS } from "@/lib/pro-canvas-camera";
 import type { CameraNodeData } from "@/lib/pro-canvas-types";
 
 export function CameraNode({ id, data }: NodeProps & { data: CameraNodeData }) {
+  const { m } = useLocale();
+  const uc = m.ultraCanvas;
+  const cn = uc.cameraNode;
   const { runCameraNode, updateNodeData } = useProCanvasActions();
 
   return (
@@ -14,11 +18,11 @@ export function CameraNode({ id, data }: NodeProps & { data: CameraNodeData }) {
       <input
         value={data.alias ?? ""}
         onChange={(e) => updateNodeData(id, { alias: e.target.value })}
-        placeholder="Alias for @mention"
+        placeholder={uc.aliasPlaceholder}
         className="mb-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-0.5 text-[10px] text-slate-300"
       />
       <p className="text-xs font-semibold uppercase tracking-wide text-cyan-400">{data.label}</p>
-      <label className="mt-2 block text-[10px] text-slate-400">Preset</label>
+      <label className="mt-2 block text-[10px] text-slate-400">{cn.preset}</label>
       <select
         value={data.preset}
         onChange={(e) => updateNodeData(id, { preset: e.target.value as CameraNodeData["preset"] })}
@@ -32,7 +36,7 @@ export function CameraNode({ id, data }: NodeProps & { data: CameraNodeData }) {
       </select>
       <div className="mt-2 space-y-2">
         <label className="block text-[10px] text-slate-400">
-          Spin {data.spin}°
+          {cn.spin} {data.spin}°
           <input
             type="range"
             min={-180}
@@ -43,7 +47,7 @@ export function CameraNode({ id, data }: NodeProps & { data: CameraNodeData }) {
           />
         </label>
         <label className="block text-[10px] text-slate-400">
-          Tilt {data.tilt}°
+          {cn.tilt} {data.tilt}°
           <input
             type="range"
             min={0}
@@ -54,7 +58,7 @@ export function CameraNode({ id, data }: NodeProps & { data: CameraNodeData }) {
           />
         </label>
         <label className="block text-[10px] text-slate-400">
-          Zoom
+          {cn.zoom}
           <input
             type="range"
             min={0}
@@ -68,7 +72,7 @@ export function CameraNode({ id, data }: NodeProps & { data: CameraNodeData }) {
       <textarea
         value={data.promptExtra}
         onChange={(e) => updateNodeData(id, { promptExtra: e.target.value })}
-        placeholder="Extra camera prompt…"
+        placeholder={cn.promptExtra}
         className="mt-2 h-12 w-full resize-none rounded-lg border border-slate-600 bg-slate-950 px-2 py-1.5 text-xs text-white"
       />
       <button
@@ -77,7 +81,7 @@ export function CameraNode({ id, data }: NodeProps & { data: CameraNodeData }) {
         onClick={() => runCameraNode(id)}
         className="mt-2 w-full rounded-lg bg-cyan-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40"
       >
-        {data.busy ? "Generating…" : "Apply camera"}
+        {data.busy ? cn.generating : cn.apply}
       </button>
       {data.imageUrl && (
         <img src={data.imageUrl} alt="" className="mt-2 max-h-36 w-full rounded-lg object-contain" />

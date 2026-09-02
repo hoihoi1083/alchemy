@@ -733,15 +733,15 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
                     void send();
                   }
                 }}
-                placeholder={sa.placeholder}
+                placeholder={needsSignIn ? sa.signInToChat : sa.placeholder}
                 className="min-w-0 flex-1 rounded-full border border-violet-200 bg-violet-50/50 px-4 py-2.5 text-sm outline-none ring-violet-400/30 focus:border-violet-500 focus:ring-2"
-                disabled={loading}
+                disabled={loading || needsSignIn}
                 maxLength={2000}
               />
               <button
                 type="button"
                 onClick={() => void send()}
-                disabled={loading || !input.trim()}
+                disabled={loading || needsSignIn || !input.trim()}
                 className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-violet-600 text-white transition hover:bg-violet-700 disabled:opacity-40"
                 aria-label={sa.send}
               >

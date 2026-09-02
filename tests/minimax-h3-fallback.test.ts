@@ -111,18 +111,21 @@ describe("MiniMax H3 Seedance fallback helpers", () => {
   });
 
   it("H3 reference mode accepts wizard `images` as well as reference_images", () => {
-    const src = readFileSync(
+    const src = readFileSync(join(process.cwd(), "lib/minimax-h3-run.ts"), "utf8");
+    assert.match(src, /getAll\("reference_images"\)/);
+    assert.match(src, /getAll\("images"\)/);
+
+    const routeSrc = readFileSync(
       join(process.cwd(), "app/api/generate-minimax-h3/route.ts"),
       "utf8",
     );
-    assert.match(src, /getAll\("reference_images"\)/);
-    assert.match(src, /getAll\("images"\)/);
+    assert.match(routeSrc, /collectH3ReferenceImageUrls/);
     // H3 always returns native stereo — do not send Seedance generate_audio.
-    assert.doesNotMatch(src, /generate_audio/);
-    assert.match(src, /burnMotionPosterTypeOverlay/);
-    assert.match(src, /!hasEndFrame/);
-    assert.match(src, /preserveOnScreenType: Boolean\(endUrl\)/);
-    assert.match(src, /motion_poster_dialect/);
+    assert.doesNotMatch(routeSrc, /generate_audio/);
+    assert.match(routeSrc, /burnMotionPosterTypeOverlay/);
+    assert.match(routeSrc, /!hasEndFrame/);
+    assert.match(routeSrc, /preserveOnScreenType: Boolean\(endUrl\)/);
+    assert.match(routeSrc, /motion_poster_dialect/);
   });
 
   it("detects @Video1 / reference MP4 as required spine", () => {

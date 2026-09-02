@@ -196,6 +196,7 @@ function ProCanvasBoard() {
   const [boardId, setBoardId] = useState<string | null>(null);
   const [boardName, setBoardName] = useState("Untitled board");
   const [saving, setSaving] = useState(false);
+  const [saveSuccessAt, setSaveSuccessAt] = useState<number | null>(null);
   const [loadingBoard, setLoadingBoard] = useState(false);
   const [boardError, setBoardError] = useState<string | null>(null);
   const historyRef = useRef<CanvasSnapshot[]>([]);
@@ -445,17 +446,40 @@ function ProCanvasBoard() {
     [collectImageInputs, getEdges, getNode, getNodes, m.errors.tokensNotCharged, updateNodeData],
   );
 
+  const ensureUpstreamImageUrl = useCallback(
+    async (upstream: Node[]): Promise<string> => {
+      for (const n of upstream) {
+        const url = imageUrlFromNode(n);
+        if (isHttpOrLibraryMediaUrl(url)) return url;
+
+        const kind = (n.data as ProCanvasNodeData).kind;
+        if (kind === "upload") {
+          const file = uploadFiles.current.get(n.id);
+          if (file) {
+            const uploaded = await uploadCanvasAsset(file);
+            uploadFiles.current.delete(n.id);
+            updateNodeData(n.id, { previewUrl: uploaded, error: undefined });
+            return uploaded;
+          }
+        }
+      }
+      throw new Error(
+        "Connect an image node with output, or upload a source image first.",
+      );
+    },
+    [updateNodeData],
+  );
+
   const runCameraNode = useCallback(
     async (nodeId: string) => {
       const node = getNode(nodeId);
       if (!node) return;
       const data = node.data as CameraNodeData;
       const upstream = upstreamNodes(nodeId, getNodes(), getEdges());
-        const sourceUrl = upstream.map(imageUrlFromNode).find((u) => isHttpOrLibraryMediaUrl(u));
 
       updateNodeData(nodeId, { busy: true, error: undefined });
       try {
-        if (!sourceUrl) throw new Error("Connect an image node with output first.");
+        const sourceUrl = await ensureUpstreamImageUrl(upstream);
         const suffix = cameraPromptSuffix(data);
         const imageUrl = await runCanvasCameraNode({ sourceUrl, cameraSuffix: suffix });
         updateNodeData(nodeId, { imageUrl, busy: false });
@@ -470,7 +494,7 @@ function ProCanvasBoard() {
         throw e;
       }
     },
-    [getEdges, getNode, getNodes, m.errors.tokensNotCharged, updateNodeData],
+    [ensureUpstreamImageUrl, getEdges, getNode, getNodes, m.errors.tokensNotCharged, updateNodeData],
   );
 
   const runVideoNode = useCallback(
@@ -481,7 +505,6 @@ function ProCanvasBoard() {
       const allNodes = getNodes();
       const allEdges = getEdges();
       const upstream = upstreamNodes(nodeId, allNodes, allEdges);
-      const imageUrl = upstream.map(imageUrlFromNode).find((u) => isHttpOrLibraryMediaUrl(u));
       const prompt = resolveCanvasVideoPrompt({
         nodeId,
         basePrompt: data.prompt,
@@ -492,7 +515,7 @@ function ProCanvasBoard() {
 
       updateNodeData(nodeId, { busy: true, error: undefined });
       try {
-        if (!imageUrl) throw new Error("Connect an image or camera node with output.");
+        const imageUrl = await ensureUpstreamImageUrl(upstream);
         const videoUrl = await runCanvasVideoNode({
           imageUrl,
           prompt,
@@ -510,7 +533,7 @@ function ProCanvasBoard() {
         throw e;
       }
     },
-    [getEdges, getNode, getNodes, m.errors.tokensNotCharged, updateNodeData],
+    [ensureUpstreamImageUrl, getEdges, getNode, getNodes, m.errors.tokensNotCharged, updateNodeData],
   );
 
   const runTextVideoNode = useCallback(
@@ -575,7 +598,7 @@ function ProCanvasBoard() {
           data: {
             kind: "textVideo",
             label: `${baseLabel} ${i + 1}`,
-            prompt: scenePrompt,
+            prompt: "",
             sceneIndex: i,
             duration: DEFAULT_ULTRA_VIDEO_PRO.duration,
             resolution: DEFAULT_ULTRA_VIDEO_PRO.resolution,
@@ -822,6 +845,10 @@ function ProCanvasBoard() {
       setBoardError(orderError);
       return;
     }
+    if (sorted.length === 0) {
+      setBoardError(m.ultraCanvas.runAllEmpty);
+      return;
+    }
     const items: TaskQueueItem[] = sorted.map((n) => ({
       nodeId: n.id,
       label: runnableLabel(n),
@@ -842,16 +869,23 @@ function ProCanvasBoard() {
         );
       } catch (e: unknown) {
         const message = e instanceof Error ? e.message : "Failed";
+        const failedId = n.id;
         setQueue((q) =>
-          q.map((item) =>
-            item.nodeId === n.id ? { ...item, status: "error", error: message } : item,
-          ),
+          q.map((item) => {
+            if (item.nodeId === failedId) {
+              return { ...item, status: "error", error: message };
+            }
+            if (item.status === "pending") {
+              return { ...item, status: "error", error: m.ultraCanvas.queueSkipped };
+            }
+            return item;
+          }),
         );
         break;
       }
     }
     setRunningAll(false);
-  }, [getEdges, getNodes, runNode]);
+  }, [getEdges, getNodes, m.ultraCanvas.queueSkipped, m.ultraCanvas.runAllEmpty, runNode]);
 
   const addNode = useCallback(
     (kind: ProCanvasNodeKind) => {
@@ -937,6 +971,7 @@ function ProCanvasBoard() {
         }
         setBoardId((data as { id?: string }).id ?? null);
       }
+      setSaveSuccessAt(Date.now());
     } catch (e: unknown) {
       setBoardError(e instanceof Error ? e.message : "Save failed.");
     } finally {
@@ -1099,11 +1134,12 @@ function ProCanvasBoard() {
           }}
         />
         <AddNodePalette labels={paletteLabels} onAdd={addNode} />
-        <div className="absolute right-3 top-3 z-10 flex w-56 max-w-[min(100%,32rem)] flex-col items-stretch gap-2">
+        <div className="absolute right-3 top-3 z-10 flex w-[min(100%,32rem)] flex-col items-stretch gap-2">
           <UltraCanvasToolbar
             boardName={boardName}
             boardId={boardId}
             saving={saving}
+            saveSuccessAt={saveSuccessAt}
             loading={loadingBoard}
             boardError={boardError}
             onBoardNameChange={setBoardName}
