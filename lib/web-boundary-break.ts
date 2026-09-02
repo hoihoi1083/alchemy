@@ -1,26 +1,24 @@
 /**
  * Web boundary break (打破网页边界) — MiniMax H3 start→end (Seedance fallback).
  * Model reaches through a fake shopping-site UI to grab the product.
- * Schemes: Shelf reach · Hold through. Duration 8/10 (default 10).
+ * Schemes: Shelf reach · Hold through. Duration 8/10 (default 8).
  *
- * Quality notes (from failed phone SKU runs):
- * - Never hardcode perfume — lock product category to IMAGE 1.
- * - Keep UI chrome minimal (thin nav) so H3 does not invent gibberish letters.
- * - Z-order is the gag: body behind nav, arm + product in front of nav.
+ * Reference (105821): ONE locked composite — torso behind thin nav, arm+product
+ * in front, row of SKUs below. Motion is micro (reach / lift), not a scene morph.
  */
 
 import type { VideoDuration } from "@/lib/video-settings";
 import { nameIsClaimImage1IsObjectLine } from "@/lib/prompt-balance-contract";
 
 export const WEB_BOUNDARY_BREAK_DURATION_OPTIONS = ["8", "10"] as const;
-export const WEB_BOUNDARY_BREAK_DURATION_SEC = 10;
+export const WEB_BOUNDARY_BREAK_DURATION_SEC = 8;
 
 export function clampWebBoundaryBreakDurationSec(
   raw: string | number | null | undefined,
 ): number {
-  if (raw === "auto" || raw == null || raw === "") return 10;
+  if (raw === "auto" || raw == null || raw === "") return 8;
   const n = typeof raw === "number" ? raw : Number(raw);
-  if (!Number.isFinite(n)) return 10;
+  if (!Number.isFinite(n)) return 8;
   return Math.round(n) <= 8 ? 8 : 10;
 }
 
@@ -67,14 +65,21 @@ export function resolveWebBoundaryBreakScheme(input: {
   if (input.pick !== "auto") return input.pick;
   const text =
     `${input.product ?? ""} ${input.headline ?? ""} ${input.conceptIdea ?? ""}`.toLowerCase();
-  if (/hold|through|close.?up|手持|穿过|举起|特写/.test(text)) {
-    return "hold-through";
-  }
   if (/shelf|reach|grab|nav|网页|货架|伸手|拿起/.test(text)) {
     return "shelf-reach";
   }
-  // Default: hold-through — clearer z-order for H3 than a long reach morph.
+  if (/hold|through|close.?up|手持|穿过|举起|特写/.test(text)) {
+    return "hold-through";
+  }
+  // Default hold-through — smallest start/end delta for H3.
   return "hold-through";
+}
+
+/** Hold-through uses one plate for H3 stereo — end equals start (micro-motion only). */
+export function webBoundaryBreakUsesSinglePlate(
+  scheme: WebBoundaryBreakSchemeId,
+): boolean {
+  return scheme === "hold-through";
 }
 
 export type WebBoundaryBreakFrame = "start" | "end";
@@ -84,60 +89,143 @@ type SchemeDef = {
   label: string;
   startStill: string;
   endStill: string;
+  endPlateEdit: string;
   videoLead: string;
 };
 
-/** Shared set-dressing — keep chrome sparse so models do not invent junk glyphs. */
-const UI_CHROME =
-  "ONE thin white website NAV BAR only across mid-frame (like a website header sticker). " +
-  "Prefer blank bar + simple icons (search / bag) OR exactly: COLLECTION  BRAND  SEARCH  ACCOUNT in clean sans-serif. " +
-  "No product-card grids, no price tags, no ADD TO CART rows, no tooltips, no floating labels.";
+export const WEB_BOUNDARY_NAV_LABEL_MAX = 18;
+
+/** Uppercase nav token — same spirit as Social drip's sanitized IG handle. */
+export function sanitizeWebBoundaryNavLabel(raw: string): string {
+  const t = raw.trim().replace(/\s+/g, " ");
+  if (!t) return "";
+  const cleaned = t.replace(/[^\w\s\u4e00-\u9fff-]/g, "").trim();
+  if (!cleaned) return "";
+  return cleaned.slice(0, WEB_BOUNDARY_NAV_LABEL_MAX).toUpperCase();
+}
+
+export type WebBoundaryNavLabels = {
+  left: string;
+  brand: string;
+  search: string;
+  account: string;
+};
+
+/** Derive fixed nav copy — business name is the center brand slot (fill Business in wizard). */
+export function resolveWebBoundaryNavLabels(input: {
+  business?: string;
+  headline?: string;
+}): WebBoundaryNavLabels {
+  const business = sanitizeWebBoundaryNavLabel(input.business ?? "");
+  const headline = sanitizeWebBoundaryNavLabel(input.headline ?? "");
+  const brand = business || headline || "BRAND";
+  const left =
+    business && headline && headline !== brand ? headline : "COLLECTION";
+  return {
+    left,
+    brand,
+    search: "SEARCH",
+    account: "ACCOUNT",
+  };
+}
+
+function formatNavBarWords(labels: WebBoundaryNavLabels): string {
+  return `${labels.left}  ${labels.brand}  ${labels.search}  ${labels.account}`;
+}
+
+/** Sparse nav like the 105821 reference — spell exact tokens, never invent gibberish. */
+function buildWebBoundaryNavChrome(input: {
+  business?: string;
+  headline?: string;
+}): string {
+  const labels = resolveWebBoundaryNavLabels(input);
+  const words = formatNavBarWords(labels);
+  return (
+    "ONE thin white website NAV BAR across mid-frame only. " +
+    `Exact words in clean sans-serif uppercase: ${words}. ` +
+    "Spell these four labels exactly — no other English on the bar, no lorem ipsum, no random words. " +
+    "No second nav row, no product cards above the bar, no price tags, no ADD TO CART rows."
+  );
+}
+
+function optionalStyleHint(extra?: string): string {
+  const t = extra?.trim().slice(0, 140);
+  return t ? `Optional mood (keep nav gag + z-order locked): ${t}.` : "";
+}
+
+const SHELF =
+  "Below the bar: clean white shelf with 3–4 identical copies of the IMAGE 1 product in one tidy row — " +
+  "exact category/silhouette of IMAGE 1 (power bank stays power bank; phone stays phone; never perfume unless IMAGE 1 is perfume).";
 
 const Z_ORDER =
-  "Z-ORDER IS THE ENTIRE GAG: model torso/shoulders stay BEHIND the nav bar; " +
-  "forearm + hand + product are a FOREGROUND sticker IN FRONT OF the nav bar " +
-  "(the bar must be visually occluded by the arm/product where they overlap). " +
-  "NEVER let the arm slip behind/under the nav bar. Occlusion test: covering the bar must still leave the hand/product visible on top.";
+  "Z-ORDER GAG: model torso/shoulders BEHIND the nav bar; forearm + hand + hero product IN FRONT OF the nav bar " +
+  "(bar is occluded where arm/product overlap). Arm never dives under the bar.";
+
+const MODEL_LOCK =
+  "Reuse the EXACT person from IMAGE 1 when a person is present (face, hair, outfit). Do NOT cast a different model. " +
+  "If IMAGE 1 is product-only, use one consistent young adult model for both frames.";
+
+const END_EDIT_LOCK =
+  "START PLATE EDIT ONLY: keep the same camera, background, nav bar position, shelf layout, model identity, and every SKU except the hero hand motion. " +
+  "Change ONLY the right hand + one product by a few centimeters — no new people, no new products, no new UI.";
+
+function schemeStillBeat(
+  def: Pick<SchemeDef, "startStill" | "endStill" | "endPlateEdit">,
+  frame: WebBoundaryBreakFrame,
+  editingStartPlate: boolean,
+): string {
+  if (frame === "end" && editingStartPlate) return def.endPlateEdit;
+  return frame === "end" ? def.endStill : def.startStill;
+}
 
 const SCHEMES: Record<WebBoundaryBreakSchemeId, SchemeDef> = {
   "shelf-reach": {
     id: "shelf-reach",
     label: "Shelf reach",
     startStill:
-      "Chest-up model (lock face/hair/outfit from IMAGE 1 when present; else a clean young adult model) on soft grey studio, looking down. " +
-      `${UI_CHROME} ` +
-      "Below the bar: clean white shelf with 3–4 identical IMAGE 1 products in a tidy row — " +
-      "exact category of IMAGE 1 (power bank stays power bank; phone stays phone; bottle stays bottle). " +
-      `${Z_ORDER} ` +
-      "START: right arm already crossing IN FRONT of the nav bar, fingertips just reaching toward a shelf product — not yet lifting. Anatomically correct hand.",
+      "Chest-up on soft grey studio, model looking down at the shelf. " +
+      "{NAV} {SHELF} {Z_ORDER} {MODEL_LOCK} " +
+      "START: right hand just crossed IN FRONT of the nav bar, fingertips reaching toward one shelf product — not lifted yet.",
     endStill:
-      "Same model, same thin nav bar, same shelf of IMAGE 1 products. " +
-      `${Z_ORDER} ` +
-      "END: hand lifts ONE matching IMAGE 1 product clearly IN FRONT of the nav bar toward camera. No extra UI. Soft studio light.",
+      "{Z_ORDER} END: same composition — hand lifts ONE matching IMAGE 1 product a few cm IN FRONT of the nav bar toward camera.",
+    endPlateEdit:
+      "{END_EDIT} Lift the same hand and ONE shelf product slightly higher toward camera; everything else unchanged.",
     videoLead:
-      "Keep nav bar FIXED. Entire clip: arm+product stay IN FRONT of the nav (never dive behind it). " +
-      "0–3s: reach pose in front of bar. 3–7s: grasp shelf product and lift through the UI. 7–ends: hold product in front of bar. Continuous morph.",
+      "Locked tripod. Locked layout for the whole clip. Micro-motion ONLY: hand reaches then lifts ONE shelf product through the nav bar. " +
+      "0–4s: reach in front of bar. 4–8s: grasp and lift 5–10cm. Same person, same SKU row, same nav labels — no scene change.",
   },
   "hold-through": {
     id: "hold-through",
     label: "Hold through",
     startStill:
-      "Chest-up model (lock face from IMAGE 1 when present) on soft grey studio. " +
-      `${UI_CHROME} ` +
-      `${Z_ORDER} ` +
-      "Already holding ONE IMAGE 1 product IN FRONT of the nav bar (torso behind). Optional soft shelf of matching products below. No price cards. Correct hands.",
+      "Chest-up on soft grey studio. " +
+      "{NAV} {Z_ORDER} {MODEL_LOCK} " +
+      "Already holding ONE IMAGE 1 product IN FRONT of the nav bar. Optional matching shelf below. No price cards.",
     endStill:
-      "Closer push-in of the same hold-through: IMAGE 1 product sharp IN FRONT of the thin nav bar, model softly behind, shallow DOF. Same chrome only.",
+      "Same hold-through — product and hand still IN FRONT of nav; optional 5% push-in toward camera only.",
+    endPlateEdit:
+      "{END_EDIT} Optional tiny push-in — product still IN FRONT of nav; do not change person or category.",
     videoLead:
-      "Nav bar FIXED. Product+hand stay IN FRONT of nav for the whole clip. Soft push-in / slight lift toward camera. No hard cuts.",
+      "Locked tripod and locked composition. Hold-through gag: product+hand stay IN FRONT of nav the entire clip. " +
+      "Only a subtle push-in / 5cm product lift — same person, same product category, same nav labels. No morph, no cut.",
   },
 };
 
+function expandSchemeTokens(
+  beat: string,
+  input: { business?: string; headline?: string },
+): string {
+  return beat
+    .replace("{NAV}", buildWebBoundaryNavChrome(input))
+    .replace("{SHELF}", SHELF)
+    .replace("{Z_ORDER}", Z_ORDER)
+    .replace("{MODEL_LOCK}", MODEL_LOCK)
+    .replace("{END_EDIT}", END_EDIT_LOCK);
+}
+
 const PLATE_RULES =
-  "Core gag ONLY: 打破网页边界 / break the webpage boundary — body behind UI, limb+product in front of UI. " +
-  "Do NOT invent a different product category than IMAGE 1. " +
-  "Illegible / melted / gibberish letters are FORBIDDEN. " +
-  "No captions, watermarks, subtitles, social-app chrome, or competitor brand words.";
+  "打破网页边界 — body behind UI, limb+product in front of UI. Keep IMAGE 1 product category. " +
+  "No gibberish letters, captions, watermarks, or social-app chrome.";
 
 function subject(input: { product: string; conceptMode?: boolean }): string {
   return (
@@ -148,61 +236,99 @@ function subject(input: { product: string; conceptMode?: boolean }): string {
 
 function photoLock(hero: string): string {
   return [
-    "IMAGE 1 is the identity lock for the model (face/hair/outfit when a person is present) AND the product silhouette when the product is visible in IMAGE 1.",
+    "IMAGE 1 locks model identity (when present) AND product silhouette/category.",
     nameIsClaimImage1IsObjectLine(hero || undefined),
     hero
-      ? `Call the product "${hero}" as a label only — keep IMAGE 1's real category (a phone stays a phone; a perfume bottle stays perfume; never swap categories).`
-      : "Keep IMAGE 1's exact product category and materials.",
-    "If IMAGE 1 shows a person holding the product, preserve both identities.",
+      ? `Label "${hero}" only — never swap category (power bank stays power bank; phone stays phone).`
+      : "Keep IMAGE 1 exact product category and materials.",
+    "If IMAGE 1 shows person + product, preserve both.",
   ].join(" ");
 }
 
 export function buildWebBoundaryBreakStillPrompt(input: {
   scheme: WebBoundaryBreakSchemeId;
   product: string;
+  business?: string;
+  headline?: string;
+  promptExtra?: string;
   conceptMode?: boolean;
   aspectRatio?: string;
   frame: WebBoundaryBreakFrame;
+  /** True when Nano Banana receives the start plate as first ref (end keyframe path). */
+  editingStartPlate?: boolean;
 }): string {
   const def = SCHEMES[input.scheme];
   const hero = subject(input);
   const ar = input.aspectRatio?.trim() || "3:4";
-  const beat = input.frame === "end" ? def.endStill : def.startStill;
+  const isEndEdit = input.frame === "end" && input.editingStartPlate;
+  const beat = expandSchemeTokens(
+    schemeStillBeat(def, input.frame, isEndEdit),
+    { business: input.business, headline: input.headline },
+  );
+  const navWords = formatNavBarWords(
+    resolveWebBoundaryNavLabels({
+      business: input.business,
+      headline: input.headline,
+    }),
+  );
   return [
-    `Photoreal luxury e-commerce creative still, ${ar}, soft grey studio, sharp commercial photography.`,
+    `Photoreal luxury e-commerce still, ${ar}, soft grey studio, commercial photography.`,
     photoLock(hero),
     `${input.frame.toUpperCase()} frame (${def.label}): ${beat}`,
+    isEndEdit
+      ? "Treat IMAGE 1 / start plate as ground truth — inpaint-level edit only."
+      : "Single composition ready for subtle start→end morph.",
+    `Nav bar must read exactly: ${navWords}.`,
+    optionalStyleHint(input.promptExtra),
     PLATE_RULES,
-    "Single composition, ready for start→end morph with locked layout.",
   ].join(" ");
 }
 
 export function buildWebBoundaryBreakVideoPrompt(input: {
   scheme: WebBoundaryBreakSchemeId;
   product: string;
+  business?: string;
+  headline?: string;
+  promptExtra?: string;
   conceptMode?: boolean;
   durationSec?: number;
+  singlePlate?: boolean;
 }): string {
   const def = SCHEMES[input.scheme];
   const hero = subject(input);
   const sec = clampWebBoundaryBreakDurationSec(input.durationSec);
+  const navWords = formatNavBarWords(
+    resolveWebBoundaryNavLabels({
+      business: input.business,
+      headline: input.headline,
+    }),
+  );
+  const stereoNote = input.singlePlate
+    ? "Image 1 and Image 2 are the SAME locked composite — animate micro-motion only."
+    : "Continuous morph from Image 1 (start) to Image 2 (end) with MINIMAL delta.";
   return [
-    `Web-boundary-break creative ad, ${sec}s, continuous morph from Image 1 (start) to Image 2 (end).`,
+    `Web-boundary-break ad, ${sec}s. ${stereoNote}`,
     `Scheme: ${def.label}. ${def.videoLead}`,
     nameIsClaimImage1IsObjectLine(hero),
-    "CRITICAL: forearm + hand + product stay IN FRONT of the nav bar for the whole clip — never pass behind/under the bar.",
-    "Keep the thin website nav bar and shelf layout STABLE — only the arm/product motion changes.",
-    "No hard cuts, no slideshow, no subtitle bars, no gibberish letters, no inventing a different SKU category than Image 1.",
+    `Nav labels stay exactly: ${navWords} — do not rewrite or garble the bar text.`,
+    "CRITICAL: same person and same product category for the entire clip — never morph into a different face, gender, outfit, or SKU.",
+    "CRITICAL: forearm + hand + product stay IN FRONT of the nav bar — never pass behind/under the bar.",
+    "Locked nav bar and shelf layout. No hard cuts, no montage, no camera orbit, no zoom into a new scene.",
+    optionalStyleHint(input.promptExtra),
+    "No gibberish letters, no perfume unless Image 1 is perfume, no fashion reel energy.",
   ].join(" ");
 }
 
 export const WEB_BOUNDARY_BREAK_NEGATIVE =
   "subtitles, captions, watermarks, hard cut montage, jump cut, freeze-frame, " +
-  "blurry product, morphing identity, invent competitor brands, talking head vlog, " +
+  "blurry product, morphing identity, different person, gender swap, age change, new outfit, " +
+  "invent competitor brands, talking head vlog, fashion montage, rapid scene change, " +
   "meme three-panel drip, palm miniature throw, dark triangle-light void, " +
   "garbled text, illegible letters, melted typography, random glyphs, lorem ipsum junk, " +
   "crowded product cards, price tags under every SKU, multiple ADD TO CART buttons, " +
-  "floating tooltips, UI popovers, social-app chrome, extra nav bars, " +
-  "extra fingers, melted hands, arm behind the shelf incorrectly, " +
-  "arm diving behind the nav bar, arm under the UI bar, wrong occlusion, " +
-  "forcing perfume bottles when the upload is not perfume";
+  "floating tooltips, UI popovers, social-app chrome, extra nav bars, spinning camera, " +
+  "extra fingers, melted hands, arm diving behind the nav bar, arm under the UI bar, wrong occlusion, " +
+  "forcing perfume bottles when the upload is not perfume, morph into different product category";
+
+/** H3 motion strength 0–100 — keep low so layout stays locked. */
+export const WEB_BOUNDARY_BREAK_MOTION_STRENGTH = 46;

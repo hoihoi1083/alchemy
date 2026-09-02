@@ -1083,9 +1083,14 @@ export async function POST(request: Request) {
               productName ||
               headline ||
               (promotionMode === "concept" ? "brand beauty product" : "the product"),
+            business,
+            headline,
+            promptExtra,
             conceptMode: promotionMode === "concept",
             aspectRatio: aspectRatioRaw || "3:4",
             frame: webBoundaryFrame,
+            editingStartPlate:
+              webBoundaryFrame === "end" && Boolean(startPlateUrl),
           })
         : productExplode
         ? buildProductExplodeStillPrompt({

@@ -4379,7 +4379,7 @@ export const en = {
 		handThrowNeedKeyframe:
 			"Upload a product photo first (concept: logo/mascot still — text alone is not enough).",
 		webBoundaryHint:
-			"打破网页边界 — model reaches through a fake shopping UI to grab your product. ~8–10s · Shelf reach / Hold through.",
+			"打破网页边界 — model reaches through a fake shopping UI to grab your product. ~8–10s · Shelf reach / Hold through. Fill Business for the nav brand name (e.g. SOCIAL DRIP).",
 		webBoundarySchemeTitle: "Boundary-break style",
 		webBoundarySchemeHint:
 			"Same web-UI gag — Shelf reach (grab from product row) or Hold through (product already through the bar).",

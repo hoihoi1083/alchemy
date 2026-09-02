@@ -3588,7 +3588,7 @@ socialDripHint:
 		handThrowAnimatingCard: "第 3/3 步：抛出→实景过渡中…",
 		handThrowNeedKeyframe: "请先上传产品图（概念用 Logo／吉祥物静图 — 单靠文字不够）。",
 		webBoundaryHint:
-			"打破网页边界 — 模特穿过假想购物网页拿起产品。~8–10秒 · 货架伸手／穿栏手持。",
+			"打破网页边界 — 模特穿过假想购物网页拿起产品。~8–10秒 · 货架伸手／穿栏手持。填写「品牌/商家」可控制导航栏品牌名（如 SOCIAL DRIP）。",
 		webBoundarySchemeTitle: "边界突破风格",
 		webBoundarySchemeHint:
 			"同一网页 UI 玩法 — 货架伸手（从货架拿起）或 穿栏手持（产品已穿过导航栏）。",

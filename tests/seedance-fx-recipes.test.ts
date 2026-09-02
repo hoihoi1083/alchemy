@@ -228,7 +228,7 @@ describe("Seedance fx landing recipes", () => {
     );
   });
 
-  it("marks H3-first FX as native audio (Seedance fallback mixes BGM in the wizard)", () => {
+  it("marks H3-first FX — BGM mixed inside generateStartEndFxVideo (H3 + Seedance)", () => {
     assert.equal(recipeUsesSilentSeedance("product-explode"), false);
     assert.equal(recipeUsesSilentSeedance("social-drip"), false);
     assert.equal(recipeUsesSilentSeedance("blockbuster"), false);

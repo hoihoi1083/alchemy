@@ -134,9 +134,10 @@ export function videoModeHidesAutoDuration(
 }
 
 /**
- * Dual-frame FX run MiniMax H3 first (native stereo). Seedance is fallback
- * only — that path is silent, so the wizard mixes library BGM after generate.
- * Always false here so generateVideo does not overlay pads on H3 audio.
+ * Dual-frame FX run MiniMax H3 first, then mix library BGM (H3 start→end is often
+ * near-silent because adaptScript enforces no speech). Seedance fallback is silent
+ * too — generateStartEndFxVideo mixes BGM for both paths.
+ * Always false here so generateVideo does not double-mix BGM.
  */
 export function recipeUsesSilentSeedance(
   mode: string | null | undefined,

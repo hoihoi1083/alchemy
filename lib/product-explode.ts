@@ -2,7 +2,7 @@
  * Stylized product explode (产品拆解动效) — MiniMax H3 start→end (Seedance fallback).
  * Start: intact assembled packshot.
  * End: exploded teardown along assembly axes — not unboxing.
- * Video: parts travel along those axes (~4–5s). H3 native stereo; library BGM only if Seedance runs.
+ * Video: parts travel along those axes (~4–5s). Library BGM mixed after H3 or Seedance fallback.
  *
  * Honest UX: stylized shells + simple geometric internals — not CAD-accurate PCBs.
  */

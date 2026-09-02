@@ -173,11 +173,13 @@ import {
 } from "@/lib/hand-throw-scene";
 import {
 	WEB_BOUNDARY_BREAK_DURATION_SEC,
+	WEB_BOUNDARY_BREAK_MOTION_STRENGTH,
 	WEB_BOUNDARY_BREAK_NEGATIVE,
 	buildWebBoundaryBreakVideoPrompt,
 	clampWebBoundaryBreakDurationSec,
 	parseWebBoundaryBreakSchemePick,
 	resolveWebBoundaryBreakScheme,
+	webBoundaryBreakUsesSinglePlate,
 	type WebBoundaryBreakSchemeId,
 	type WebBoundaryBreakSchemePick,
 } from "@/lib/web-boundary-break";
@@ -8649,7 +8651,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		return out;
 	}
 
-	/** H3 start→end first (native stereo). Seedance fallback mixes library BGM. */
+	/** H3 start→end first; mix library BGM after (H3 often ships near-silent audio). Seedance fallback does the same. */
 	async function generateStartEndFxVideo(input: {
 		fd: FormData;
 		recipeDurationSec: number;
@@ -8674,8 +8676,14 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			typeof h3Data.videoUrl === "string" ? h3Data.videoUrl.trim() : "";
 		if (h3Res.ok && h3Url) {
 			notifyCreditBalance(readCreditBalanceFromResponse(h3Data));
+			let url = h3Url;
+			try {
+				url = await addBgm(url);
+			} catch {
+				setBgmNote(m.wizard.bgmFallbackNote);
+			}
 			return {
-				videoUrl: h3Url,
+				videoUrl: url,
 				usedSeedanceFallback: false,
 				data: h3Data,
 			};
@@ -9440,11 +9448,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		}
 		const startUrl = await generateWebBoundaryBreakKeyframe(scheme, "start");
 		webBoundaryStillUrlRef.current = startUrl;
-		const endUrl = await generateWebBoundaryBreakKeyframe(
-			scheme,
-			"end",
-			startUrl,
-		);
+		const singlePlate = webBoundaryBreakUsesSinglePlate(scheme);
+		const endUrl = singlePlate
+			? startUrl
+			: await generateWebBoundaryBreakKeyframe(scheme, "end", startUrl);
 		webBoundaryEndUrlRef.current = endUrl;
 		const pair = [startUrl, endUrl].filter(Boolean);
 		if (pair.length) {
@@ -9471,8 +9478,12 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		const fxPrompt = buildWebBoundaryBreakVideoPrompt({
 			scheme,
 			product: subject || "the product",
+			business: business.trim(),
+			headline: headline.trim() || product.trim() || conceptIdea.trim(),
+			promptExtra: effectivePromptExtra(),
 			conceptMode: promotionMode === "concept",
 			durationSec,
+			singlePlate,
 		});
 		if (videoPrompt.trim() !== fxPrompt) setVideoPrompt(fxPrompt);
 
@@ -9483,7 +9494,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		fd.set("resolution", "480p");
 		fd.set("duration", String(durationSec));
 		fd.set("aspect_ratio", "9:16");
-		fd.set("motion_strength", "72");
+		fd.set("motion_strength", String(WEB_BOUNDARY_BREAK_MOTION_STRENGTH));
 		fd.set(
 			"negative_prompt",
 			`${negativePrompt}, ${WEB_BOUNDARY_BREAK_NEGATIVE}`,
