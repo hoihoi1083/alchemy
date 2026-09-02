@@ -7,11 +7,15 @@ export type ProCanvasActions = {
   nodes: Node[];
   onUploadFile: (nodeId: string, file: File) => void;
   onUploadAudio: (nodeId: string, file: File) => void;
+  onPickLibraryImage: (nodeId: string, previewUrl: string, fileName: string) => void;
+  onPickLibraryAudio: (nodeId: string, previewUrl: string, fileName: string) => void;
   runImageNode: (nodeId: string) => Promise<void>;
   runVideoNode: (nodeId: string) => Promise<void>;
   runTextVideoNode: (nodeId: string) => Promise<void>;
   runCameraNode: (nodeId: string) => Promise<void>;
   runScriptNode: (nodeId: string) => Promise<void>;
+  spawnSceneNodes: (scriptNodeId: string) => void;
+  spawnScenePipeline: (scriptNodeId: string) => void;
   runAudioNode: (nodeId: string) => Promise<void>;
   runSpliceNode: (nodeId: string) => Promise<void>;
   runNode: (nodeId: string) => Promise<void>;

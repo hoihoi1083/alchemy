@@ -20,6 +20,7 @@ export const STUDIO_ACTION_IDS: StudioAssistantActionId[] = [
   "open-brand-kit",
   "open-library",
   "open-ugc",
+  "open-pricing",
   "setup-website-reel",
   "analyze-brand",
   "open-concept-studio",
@@ -81,7 +82,7 @@ export function normalizeAssistantActionLinks(text: string): string {
 }
 
 export function replyHasValidActionLink(text: string): boolean {
-  return /\[([^\]]+)\]\(studio-action:(setup-website-reel|analyze-brand|open-concept-studio|open-physical-studio|open-reference-ad-studio|open-storyboard-studio|apply-cinematic-stitch|website-launch-image|open-captions|open-edit-image|open-ultra-canvas|open-pro|open-brand-kit|open-library|open-ugc|apply-8s-recipe|concept-cinematic)\)/i.test(
+  return /\[([^\]]+)\]\(studio-action:(setup-website-reel|analyze-brand|open-concept-studio|open-physical-studio|open-reference-ad-studio|open-storyboard-studio|apply-cinematic-stitch|website-launch-image|open-captions|open-edit-image|open-ultra-canvas|open-pro|open-brand-kit|open-library|open-ugc|open-pricing|apply-8s-recipe|concept-cinematic)\)/i.test(
     text,
   );
 }

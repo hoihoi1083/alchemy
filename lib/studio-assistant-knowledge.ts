@@ -3,7 +3,7 @@
  * Not the Git repo — shipped product only. Retrieve-on-ask; never invent features.
  */
 
-export type KnowledgeLocale = "en" | "zh";
+export type KnowledgeLocale = "en" | "zh" | "zh-cn";
 
 export type AssistantKnowledgeChunk = {
   id: string;
@@ -11,6 +11,7 @@ export type AssistantKnowledgeChunk = {
   keywords: string[];
   en: string;
   zh: string;
+  zhCn?: string;
 };
 
 export const ASSISTANT_KNOWLEDGE: AssistantKnowledgeChunk[] = [
@@ -137,9 +138,35 @@ Rough costs: 1 still ≈ 65 tokens; 4 storyboard stills ≈ 260; 8s video ≈ 32
 300 is for trying the workflow; bigger video jobs need the Pro trial or a paid plan.
 Plans (typical): Free 300 signup / 480p; Light 3000/mo 480p; Standard 8000/mo 720p; Pro 16000/mo 1080p; Master 28000/mo + Ultra canvas; Enterprise 40000 + 3 seats. Paid can top up 1000 tokens. See /pricing. Estimates only.`,
     zh: `Tokens ≈ 按次計費。免費註冊一次送 300（唔係每月自動再送）。餘額不足可開 7 日 Pro 試用（要綁卡）多送 700 + Pro 功能；7 日後扣月費 Pro，可喺帳戶取消。所有 Token 由發放日起 6 個月有效（先用舊嘅）。
-大約：1 張靜圖 ≈ 65；4 格分鏡 ≈ 260；8 秒影片 Free 480p ≈ 328，Light 720p ≈ 520；6 秒動態海報 ≈ 390；12 秒 480p ≈ 492；拼接後備 4×5 秒 ≈ 1136。
+大約：1 張靜圖 ≈ 65；4 格分鏡 ≈ 260；8 秒影片 Free 480p ≈ 328，Standard 720p ≈ 520；6 秒動態海報 ≈ 390（720p）；12 秒 480p ≈ 492；拼接後備 4×5 秒 ≈ 1136。
 300 用來試流程；大片要試用或付費方案。
 方案大約：Free 註冊 300／480p；Light 每月 3000／480p；Standard 8000／720p；Pro 16000／1080p；Master 28000 + Ultra 畫布；Enterprise 40000 + 3 席。付費可加購 1000 tokens。詳情 /pricing。數字係估算。`,
+    zhCn: `Tokens ≈ 按次计费。免费注册一次送 300（不是每月自动再送）。余额不足可开 7 日 Pro 试用（要绑卡）多送 700 + Pro 功能；7 日后扣月费 Pro，可在账户取消。所有 Token 自发放日起 6 个月有效（先用旧的）。
+大约：1 张静图 ≈ 65；4 格分镜 ≈ 260；8 秒视频 Free 480p ≈ 328，Standard 720p ≈ 520；6 秒动态海报 ≈ 390（720p）；12 秒 480p ≈ 492；拼接后备 4×5 秒 ≈ 1136。
+300 用来试流程；大片要试用或付费方案。
+方案大约：Free 注册 300／480p；Light 每月 3000／480p；Standard 8000／720p；Pro 16000／1080p；Master 28000 + Ultra 画布；Enterprise 40000 + 3 席。付费可加购 1000 tokens。详情 /pricing。数字是估算。`,
+  },
+  {
+    id: "plan-gates",
+    title: "Plan feature gates",
+    keywords: [
+      "gate",
+      "minimum plan",
+      "master",
+      "standard",
+      "pro plan",
+      "upgrade",
+      "storyboard",
+      "research",
+      "carousel",
+      "門檻",
+      "门槛",
+      "方案限制",
+      "需要什麼方案",
+    ],
+    en: `Feature gates (minimum plan): Ultra canvas /pro_canvas → Master; storyboard multi-scene TVC → Pro; platform content research & teaching carousel → Standard; 720p video → Standard; 1080p → Pro. Free tier: 480p, 300 signup tokens. Always mention the gate when routing to a locked feature.`,
+    zh: `功能門檻（最低方案）：Ultra 畫布 → Master；分鏡 storyboard TVC → Pro；平台內容研究同教學輪播 → Standard；720p 影片 → Standard；1080p → Pro。Free：480p、註冊 300 tokens。帶去鎖定功能時要講明門檻。`,
+    zhCn: `功能门槛（最低方案）：Ultra 画布 → Master；分镜 storyboard TVC → Pro；平台内容研究和教学轮播 → Standard；720p 视频 → Standard；1080p → Pro。Free：480p、注册 300 tokens。带去锁定功能时要说明门槛。`,
   },
   {
     id: "video-engines",
@@ -324,8 +351,9 @@ Plans (typical): Free 300 signup / 480p; Light 3000/mo 480p; Standard 8000/mo 72
       "作品库",
       "口播",
     ],
-    en: `/ultra is the Ultra canvas (upload → AI image → video). Pay-per-use tokens, Master plan — not Lumina subscription pricing. /brand-kit saves logo/colors for stills. /library stores outputs; reopen in editor or captions. /ugc is a talking presenter, separate from storyboard TVC.`,
-    zh: `/ultra 係 Ultra 畫布（上傳→ AI 圖→ 片），按次 token，Master 方案 — 唔係 Lumina 訂閱價。/brand-kit 存 Logo／色。/library 存成品，可再開去修圖或字幕。/ugc 係口播數字人，同分鏡 TVC 分開。`,
+    en: `/ultra is the Ultra canvas — a node workflow for power users: upload/library → AI image (pro controls: aspect, lighting, background) → video or text-to-video nodes, optional lighting/background/grade modifier nodes, brand kit @brand refs, script→scene pipelines, audio BGM, splice, save/load boards, templates, undo/redo. Pay-per-use tokens on Master plan — not Lumina subscription pricing. Export outputs to /library; open finished clips in /captions. /brand-kit saves logo/colors. /ugc is talking presenter, separate from storyboard TVC.`,
+    zh: `/ultra 係 Ultra 畫布 — 節點工作流俾進階用戶：上傳／作品庫→ AI 圖（專業控制：比例、燈光、背景）→ 片或文字生片節點，可加燈光／背景／風格修飾節點、品牌 @brand 引用、劇本→分鏡流水線、音訊 BGM、拼接、儲存／載入畫布、模板、撤銷／重做。Master 方案按次 token — 唔係 Lumina 訂閱價。成品可存 /library，再去 /captions。/brand-kit 存 Logo／色。/ugc 係口播，同分鏡 TVC 分開。`,
+    zhCn: `/ultra 是 Ultra 画布 — 节点工作流给进阶用户：上传／作品库→ AI 图（专业控制：比例、灯光、背景）→ 视频或文字生视频节点，可加灯光／背景／风格修饰节点、品牌 @brand 引用、剧本→分镜流水线、音频 BGM、拼接、保存／加载画布、模板、撤销／重做。Master 方案按次 token — 不是 Lumina 订阅价。成品可存 /library，再去 /captions。/brand-kit 存 Logo／色。/ugc 是口播，与分镜 TVC 分开。`,
   },
   {
     id: "how-to-start",
@@ -344,8 +372,9 @@ Plans (typical): Free 300 signup / 480p; Light 3000/mo 480p; Standard 8000/mo 72
       "開始",
       "开始",
     ],
-    en: `Sign in → /start (physical vs concept) or a landing template card → /studio. Fill the micro-steps, generate stills, review, then video. For captions/retouch after export, use /captions or /edit-image. Do not tell users to click homepage “finishable video recipe” cards — they are hidden. Deep-links like /studio?recipe= still work if someone has the URL.`,
-    zh: `登入 → /start（實體 vs 概念）或首頁模板卡 → /studio。跟微步驟、出靜圖、檢視、再出片。之後字幕／修圖用 /captions 或 /edit-image。唔好叫用戶撳首頁「可完成影片配方」卡 — 而家隱藏。有人有 /studio?recipe= 深鏈仍然得。`,
+    en: `Sign in → /start (physical vs concept) or a landing showcase card → /studio. Fill the micro-steps, generate stills, review, then video. For captions/retouch after export, use /captions or /edit-image. Homepage showcase cards link to /start (not direct /studio). Hidden finishable recipe cards are not on the homepage. Deep-links like /studio?recipe= still work if someone has the URL.`,
+    zh: `登入 → /start（實體 vs 概念）或首頁展示卡 → /studio。跟微步驟、出靜圖、檢視、再出片。之後字幕／修圖用 /captions 或 /edit-image。首頁展示卡去 /start（唔係直接 /studio）。隱藏嘅 finishable recipe 卡唔喺首頁。有人有 /studio?recipe= 深鏈仍然得。`,
+    zhCn: `登录 → /start（实体 vs 概念）或首页展示卡 → /studio。跟微步骤、出静图、检视、再出片。之后字幕／修图用 /captions 或 /edit-image。首页展示卡去 /start（不是直接 /studio）。隐藏的 finishable recipe 卡不在首页。有人有 /studio?recipe= 深链仍然可用。`,
   },
   {
     id: "safety-spa",
@@ -434,11 +463,17 @@ export function formatKnowledgeForPrompt(
 ): string {
   if (chunks.length === 0) return "";
   const body = chunks
-    .map((c) => `### ${c.title}\n${locale === "zh" ? c.zh : c.en}`)
+    .map((c) => {
+      const text =
+        locale === "en" ? c.en : locale === "zh-cn" ? (c.zhCn ?? c.zh) : c.zh;
+      return `### ${c.title}\n${text}`;
+    })
     .join("\n\n");
   return `【Product knowledge — answer ONLY from this + user context. If missing, say you don't know. Do not invent buttons, prices, engines, or hidden homepage recipe cards.】\n${body}`;
 }
 
 export function knowledgeLocaleFromApp(locale: string): KnowledgeLocale {
-  return locale === "en" ? "en" : "zh";
+  if (locale === "en") return "en";
+  if (locale === "zh-cn") return "zh-cn";
+  return "zh";
 }

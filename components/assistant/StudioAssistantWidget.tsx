@@ -205,10 +205,9 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
   const [coachAckTick, setCoachAckTick] = useState(0);
   const [showContentResearch, setShowContentResearch] = useState(false);
 
-  /** Soft gate outside the wizard — API requires auth on every surface. */
-  const needsSignIn = surface !== "studio" && isLoaded && !isSignedIn;
-  const hasUserTyped = messages.some((msg) => msg.role === "user");
-  const showQuickChips = isLandingLikeSurface(surface) && hasUserTyped;
+  /** API requires auth on every surface — block input until signed in. */
+  const needsSignIn = isLoaded && !isSignedIn;
+  const showQuickChips = isLandingLikeSurface(surface);
   const darkChrome = usesDarkAssistantChrome(surface);
 
   const snapshot = useMemo(() => {
@@ -689,6 +688,13 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
                 className="rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-900 transition hover:bg-emerald-100"
               >
                 {sa.chipProductImagePost}
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleAction("open-ultra-canvas")}
+                className="rounded-full border border-fuchsia-300 bg-fuchsia-50 px-3 py-1.5 text-xs font-medium text-fuchsia-900 transition hover:bg-fuchsia-100"
+              >
+                {sa.chipUltraCanvas}
               </button>
               <button
                 type="button"

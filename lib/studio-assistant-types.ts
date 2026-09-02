@@ -81,6 +81,7 @@ export type StudioAssistantActionId =
   | "open-brand-kit"
   | "open-library"
   | "open-ugc"
+  | "open-pricing"
   | "setup-website-reel"
   | "analyze-brand"
   | "open-concept-studio"

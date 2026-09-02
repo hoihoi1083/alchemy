@@ -1,6 +1,7 @@
 import type { Edge, Node } from "@xyflow/react";
 import type {
   AudioNodeData,
+  BrandNodeData,
   CameraNodeData,
   CanvasImageSource,
   ImageNodeData,
@@ -11,8 +12,27 @@ import type {
   UploadNodeData,
   VideoNodeData,
 } from "@/lib/pro-canvas-types";
+import { appendModifierSuffix, backgroundModClause, gradeModClause, lightingModClause } from "@/lib/pro-canvas-modifiers";
+import { isHttpOrLibraryMediaUrl } from "@/lib/storage/library-asset-url";
+
+function escapeRegexAlias(alias: string): string {
+  return alias.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function aliasMentionRegex(alias: string): RegExp {
+  return new RegExp(`@${escapeRegexAlias(alias)}(?=\\s|$|[^\\w])`, "gi");
+}
+
+export type TopoSortResult = {
+  sorted: Node[];
+  hasCycle: boolean;
+};
 
 export function topoSortNodes(nodes: Node[], edges: Edge[]): Node[] {
+  return topoSortNodesDetailed(nodes, edges).sorted;
+}
+
+export function topoSortNodesDetailed(nodes: Node[], edges: Edge[]): TopoSortResult {
   const inDegree = new Map<string, number>();
   const adj = new Map<string, string[]>();
   for (const n of nodes) {
@@ -37,12 +57,55 @@ export function topoSortNodes(nodes: Node[], edges: Edge[]): Node[] {
       }
     }
   }
-  return sorted.length === nodes.length ? sorted : nodes;
+  return {
+    sorted: sorted.length === nodes.length ? sorted : nodes,
+    hasCycle: sorted.length !== nodes.length,
+  };
 }
 
 export function upstreamNodes(nodeId: string, nodes: Node[], edges: Edge[]): Node[] {
   const ids = edges.filter((e) => e.target === nodeId).map((e) => e.source);
   return ids.map((id) => nodes.find((n) => n.id === id)).filter((n): n is Node => !!n);
+}
+
+/** Walk upstream graph recursively (for modifier nodes). */
+export function allUpstreamNodes(
+  nodeId: string,
+  nodes: Node[],
+  edges: Edge[],
+  visited = new Set<string>(),
+): Node[] {
+  const direct = upstreamNodes(nodeId, nodes, edges);
+  const result: Node[] = [];
+  for (const n of direct) {
+    if (visited.has(n.id)) continue;
+    visited.add(n.id);
+    result.push(n);
+    result.push(...allUpstreamNodes(n.id, nodes, edges, visited));
+  }
+  return result;
+}
+
+export function collectUpstreamModifierSuffix(
+  nodeId: string,
+  nodes: Node[],
+  edges: Edge[],
+): string {
+  const parts: string[] = [];
+  for (const n of allUpstreamNodes(nodeId, nodes, edges)) {
+    const data = n.data as ProCanvasNodeData;
+    if (data.kind === "lighting") {
+      const clause = lightingModClause(data);
+      if (clause) parts.push(`Lighting: ${clause}`);
+    } else if (data.kind === "background") {
+      const clause = backgroundModClause(data);
+      if (clause) parts.push(`Background: ${clause}`);
+    } else if (data.kind === "grade") {
+      const clause = gradeModClause(data);
+      if (clause) parts.push(clause);
+    }
+  }
+  return parts.filter(Boolean).join("\n\n");
 }
 
 export function nodeAlias(node: Node): string {
@@ -63,11 +126,91 @@ export function resolveMentions(text: string, nodes: Node[]): string {
   let out = text;
   for (const n of nodes) {
     const alias = nodeAlias(n);
-    const re = new RegExp(`@${alias}\\b`, "gi");
+    const re = aliasMentionRegex(alias);
     const data = n.data as ProCanvasNodeData;
     out = out.replace(re, data.label);
   }
   return out;
+}
+
+/** Nodes that can supply image refs when @mentioned. */
+function isMentionImageSource(node: Node): boolean {
+  const kind = (node.data as ProCanvasNodeData).kind;
+  return kind === "upload" || kind === "image" || kind === "camera" || kind === "brand";
+}
+
+function promptForMentionDeps(node: Node): string {
+  const data = node.data as ProCanvasNodeData;
+  if (data.kind === "image") return (data as ImageNodeData).prompt;
+  if (data.kind === "video") return (data as VideoNodeData).prompt;
+  if (data.kind === "textVideo") return (data as TextVideoNodeData).prompt;
+  return "";
+}
+
+/** Extra edges so @mentioned sources run before dependents in Run all. */
+export function mentionDependencyEdges(nodes: Node[], edges: Edge[]): Edge[] {
+  const synthetic: Edge[] = [];
+  for (const n of nodes) {
+    if (!isRunnableNode(n)) continue;
+    const prompt = promptForMentionDeps(n);
+    if (!prompt.trim()) continue;
+    for (const src of mentionedNodesInOrder(prompt, nodes)) {
+      if (src.id === n.id || !isMentionImageSource(src)) continue;
+      synthetic.push({
+        id: `mention-${src.id}-${n.id}`,
+        source: src.id,
+        target: n.id,
+      });
+    }
+  }
+  const seen = new Set(edges.map((e) => `${e.source}->${e.target}`));
+  return [
+    ...edges,
+    ...synthetic.filter((e) => !seen.has(`${e.source}->${e.target}`)),
+  ];
+}
+
+export function runnableExecutionOrder(
+  nodes: Node[],
+  edges: Edge[],
+): { sorted: Node[]; error?: string } {
+  const combined = mentionDependencyEdges(nodes, edges);
+  const { sorted, hasCycle } = topoSortNodesDetailed(nodes, combined);
+  if (hasCycle) {
+    return { sorted: [], error: "Circular dependency — check node connections and @mentions." };
+  }
+  return { sorted: sorted.filter(isRunnableNode) };
+}
+
+export function findMissingImageSources(
+  nodeId: string,
+  prompt: string,
+  nodes: Node[],
+  edges: Edge[],
+  getFile?: (id: string) => File | undefined,
+): string | null {
+  const sources = collectOrderedImageSources(nodeId, prompt, nodes, edges, getFile);
+  const mentioned = mentionedNodesInOrder(prompt, nodes);
+  for (const src of mentioned) {
+    const hasFile = Boolean(getFile?.(src.id));
+    const url = imageUrlFromNode(src);
+    const durable = isHttpOrLibraryMediaUrl(url);
+    if (!hasFile && !durable) {
+      const label = (src.data as ProCanvasNodeData).label;
+      return `Re-attach or upload source for @${nodeAlias(src)} (${label}) before running.`;
+    }
+  }
+  if (sources.length === 0 && mentioned.length > 0) {
+    return "Image sources for @mentions are missing — re-upload or pick from library.";
+  }
+  return null;
+}
+
+export function uploadNodeNeedsAsset(node: Node, getFile?: (id: string) => File | undefined): boolean {
+  const data = node.data as ProCanvasNodeData;
+  if (data.kind !== "upload") return false;
+  const url = (data as UploadNodeData).previewUrl;
+  return !getFile?.(node.id) && !isHttpOrLibraryMediaUrl(url);
 }
 
 export function mentionedNodeIds(text: string, nodes: Node[]): string[] {
@@ -79,7 +222,7 @@ export function mentionedNodesInOrder(text: string, nodes: Node[]): Node[] {
   const matches: { index: number; node: Node }[] = [];
   for (const n of nodes) {
     const alias = nodeAlias(n);
-    const re = new RegExp(`@${alias.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "gi");
+    const re = aliasMentionRegex(alias);
     let match: RegExpExecArray | null;
     while ((match = re.exec(text)) !== null) {
       matches.push({ index: match.index, node: n });
@@ -131,7 +274,7 @@ export function collectOrderedImageSources(
 
     if (file) {
       sources.push({ nodeId: src.id, alias, file });
-    } else if (url?.startsWith("http")) {
+    } else if (url && isHttpOrLibraryMediaUrl(url)) {
       sources.push({ nodeId: src.id, alias, url });
     }
   }
@@ -140,7 +283,14 @@ export function collectOrderedImageSources(
 
 export function imageUrlFromNode(node: Node): string | undefined {
   const data = node.data as ProCanvasNodeData;
-  if (data.kind === "upload") return (data as UploadNodeData).previewUrl;
+  if (data.kind === "upload") {
+    const url = (data as UploadNodeData).previewUrl;
+    if (isHttpOrLibraryMediaUrl(url)) return url;
+    return url;
+  }
+  if (data.kind === "brand") {
+    return (data as BrandNodeData).logoUrl;
+  }
   if (data.kind === "image" || data.kind === "camera") {
     return (data as ImageNodeData | CameraNodeData).imageUrl;
   }
@@ -162,6 +312,68 @@ export function textFromNode(node: Node): string | undefined {
   return undefined;
 }
 
+/** Merge script scene prompts, upstream text, and @mentions for video nodes. */
+export function resolveCanvasVideoPrompt(opts: {
+  nodeId: string;
+  basePrompt: string;
+  sceneIndex?: number;
+  nodes: Node[];
+  edges: Edge[];
+}): string {
+  let prompt = opts.basePrompt.trim();
+  const upstream = upstreamNodes(opts.nodeId, opts.nodes, opts.edges);
+  const script = upstream.find((n) => (n.data as ProCanvasNodeData).kind === "script");
+  if (script) {
+    const scenes = (script.data as ScriptNodeData).scenePrompts ?? [];
+    if (opts.sceneIndex != null && scenes[opts.sceneIndex]) {
+      const sceneLine = scenes[opts.sceneIndex]!.trim();
+      prompt = prompt ? `${sceneLine}\n\n${prompt}` : sceneLine;
+    } else if (!prompt && scenes.length) {
+      prompt = scenes.join("\n\n");
+    }
+  }
+  const texts = upstream
+    .map(textFromNode)
+    .filter((t): t is string => !!t?.trim() && t.trim() !== prompt);
+  const merged = [prompt, ...texts].filter(Boolean).join("\n\n");
+  const withMentions = resolveMentions(merged, opts.nodes);
+  const modifiers = collectUpstreamModifierSuffix(opts.nodeId, opts.nodes, opts.edges);
+  return appendModifierSuffix(withMentions, modifiers);
+}
+
+/** Merge script scenes, text, @mentions, and upstream modifier nodes for image prompts. */
+export function resolveCanvasImagePrompt(opts: {
+  nodeId: string;
+  basePrompt: string;
+  sceneIndex?: number;
+  nodes: Node[];
+  edges: Edge[];
+}): string {
+  let prompt = opts.basePrompt.trim();
+  const upstream = upstreamNodes(opts.nodeId, opts.nodes, opts.edges);
+  const script = upstream.find((n) => (n.data as ProCanvasNodeData).kind === "script");
+  if (script) {
+    const scenes = (script.data as ScriptNodeData).scenePrompts ?? [];
+    if (opts.sceneIndex != null && scenes[opts.sceneIndex]) {
+      const sceneLine = scenes[opts.sceneIndex]!.trim();
+      prompt = prompt ? `${sceneLine}\n\n${prompt}` : sceneLine;
+    }
+  }
+  const texts = upstream
+    .map(textFromNode)
+    .filter((t): t is string => !!t?.trim() && t.trim() !== prompt);
+  const merged = [prompt, ...texts].filter(Boolean).join("\n\n");
+  const withMentions = resolveMentions(merged, opts.nodes);
+  const modifiers = collectUpstreamModifierSuffix(opts.nodeId, opts.nodes, opts.edges);
+  return appendModifierSuffix(withMentions, modifiers);
+}
+
+export function scriptScenePromptsFromNode(node: Node): string[] {
+  const data = node.data as ProCanvasNodeData;
+  if (data.kind !== "script") return [];
+  return (data as ScriptNodeData).scenePrompts ?? [];
+}
+
 export function audioUrlFromNode(node: Node): string | undefined {
   const data = node.data as ProCanvasNodeData;
   if (data.kind === "audio") return (data as AudioNodeData).audioUrl;
@@ -170,7 +382,14 @@ export function audioUrlFromNode(node: Node): string | undefined {
 
 export function isRunnableNode(node: Node): boolean {
   const kind = (node.data as ProCanvasNodeData).kind;
-  return kind !== "upload" && kind !== "text";
+  return (
+    kind !== "upload" &&
+    kind !== "text" &&
+    kind !== "lighting" &&
+    kind !== "background" &&
+    kind !== "grade" &&
+    kind !== "brand"
+  );
 }
 
 export function runnableLabel(node: Node): string {

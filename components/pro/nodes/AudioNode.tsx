@@ -1,45 +1,67 @@
 "use client";
 
-import { Handle, Position, type NodeProps } from "@xyflow/react";
+import { useState } from "react";
+import type { NodeProps } from "@xyflow/react";
+import { ProNodeShell } from "@/components/pro/ProNodeShell";
+import { UltraLibraryPicker } from "@/components/pro/UltraLibraryPicker";
 import { useProCanvasActions } from "@/components/pro/ProCanvasActions";
+import { useLocale } from "@/components/LocaleProvider";
 import type { AudioNodeData } from "@/lib/pro-canvas-types";
 
 export function AudioNode({ id, data }: NodeProps & { data: AudioNodeData }) {
-  const { onUploadAudio, runAudioNode, updateNodeData } = useProCanvasActions();
+  const { onUploadAudio, onPickLibraryAudio, runAudioNode, updateNodeData } = useProCanvasActions();
+  const { m } = useLocale();
+  const an = m.ultraCanvas.audioNode;
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   return (
-    <div className="w-64 rounded-xl border border-slate-600 bg-slate-900 p-3 shadow-lg">
-      <input
-        value={data.alias ?? ""}
-        onChange={(e) => updateNodeData(id, { alias: e.target.value })}
-        placeholder="Alias for @mention"
-        className="mb-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-0.5 text-[10px] text-slate-300"
-      />
-      <p className="text-xs font-semibold uppercase tracking-wide text-amber-400">{data.label}</p>
-      <label className="mt-2 block cursor-pointer rounded-lg border border-dashed border-slate-500 px-3 py-4 text-center text-xs text-slate-300 hover:border-amber-500">
-        {data.fileName || "Upload MP3 / WAV"}
-        <input
-          type="file"
-          accept="audio/*"
-          className="hidden"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) onUploadAudio(id, file);
-            e.target.value = "";
-          }}
-        />
-      </label>
-      {data.audioUrl && <audio src={data.audioUrl} controls className="mt-2 w-full" />}
-      <button
-        type="button"
-        disabled={data.busy}
-        onClick={() => runAudioNode(id)}
-        className="mt-2 w-full rounded-lg bg-amber-700 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40"
+    <>
+      <ProNodeShell
+        accent="amber"
+        label={data.label}
+        sourceHandle
+        targetHandle={false}
+        alias={data.alias}
+        onAliasChange={(alias) => updateNodeData(id, { alias })}
+        aliasPlaceholder={m.ultraCanvas.aliasPlaceholder}
       >
-        {data.busy ? "Uploading…" : "Upload to cloud"}
-      </button>
-      {data.error && <p className="mt-2 text-xs text-red-400">{data.error}</p>}
-      <Handle type="source" position={Position.Right} className="!bg-amber-500" />
-    </div>
+        <label className="block cursor-pointer rounded-lg border border-dashed border-amber-500/30 bg-amber-950/10 px-3 py-4 text-center text-xs text-slate-300 transition hover:border-amber-400/50 hover:bg-amber-950/20">
+          {data.fileName || an.uploadPlaceholder}
+          <input
+            type="file"
+            accept="audio/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) onUploadAudio(id, file);
+              e.target.value = "";
+            }}
+          />
+        </label>
+        <button
+          type="button"
+          onClick={() => setPickerOpen(true)}
+          className="mt-2 w-full rounded-lg border border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 hover:border-amber-500/40 hover:text-amber-200"
+        >
+          {m.ultraCanvas.pickFromLibrary}
+        </button>
+        {data.audioUrl ? <audio src={data.audioUrl} controls className="mt-2 w-full" /> : null}
+        <button
+          type="button"
+          disabled={data.busy}
+          onClick={() => runAudioNode(id)}
+          className="mt-2 w-full rounded-lg bg-gradient-to-r from-amber-600 to-orange-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40"
+        >
+          {data.busy ? an.uploading : an.uploadCloud}
+        </button>
+        {data.error ? <p className="mt-2 text-xs text-red-400">{data.error}</p> : null}
+      </ProNodeShell>
+      <UltraLibraryPicker
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        kind="audio"
+        onPick={({ previewUrl, name }) => onPickLibraryAudio(id, previewUrl, name)}
+      />
+    </>
   );
 }

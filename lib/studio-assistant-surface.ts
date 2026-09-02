@@ -45,5 +45,6 @@ export function usesDarkAssistantChrome(surface: AssistantSurface): boolean {
 export function assistantSurfaceFromPathname(pathname: string): AssistantSurface | null {
   const path = pathname.split("?")[0] || "/";
   if (path === "/" || path === "") return "landing";
+  if (path === "/studio" || path.startsWith("/studio/")) return "studio";
   return null;
 }

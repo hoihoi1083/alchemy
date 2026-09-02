@@ -62,8 +62,11 @@ function isEnglish(locale: Locale, userText?: string): boolean {
 
 export function actionLinkForTask(task: CoachTaskKind, en: boolean): string | null {
   switch (task) {
-    case "route-website-reel":
     case "route-concept-studio":
+      return en
+        ? "[Open concept studio](studio-action:open-concept-studio)"
+        : "[開啟概念工作室](studio-action:open-concept-studio)";
+    case "route-website-reel":
       return en
         ? "[Set up & open studio](studio-action:setup-website-reel)"
         : "[一鍵設定並進入工作室](studio-action:setup-website-reel)";
@@ -104,6 +107,22 @@ export function actionLinkForTask(task: CoachTaskKind, en: boolean): string | nu
       return en
         ? "[Open Ultra canvas](studio-action:open-ultra-canvas)"
         : "[開啟 Ultra 畫布](studio-action:open-ultra-canvas)";
+    case "route-brand-kit":
+      return en
+        ? "[Open brand kit](studio-action:open-brand-kit)"
+        : "[開啟品牌套件](studio-action:open-brand-kit)";
+    case "route-pricing":
+      return en
+        ? "[View pricing](studio-action:open-pricing)"
+        : "[查看方案價格](studio-action:open-pricing)";
+    case "route-library":
+      return en
+        ? "[Open library](studio-action:open-library)"
+        : "[開啟作品庫](studio-action:open-library)";
+    case "route-ugc":
+      return en
+        ? "[Open UGC studio](studio-action:open-ugc)"
+        : "[開啟 UGC 工作室](studio-action:open-ugc)";
     case "analyze-brand":
     case "analyze-brand-before-image":
       return en
@@ -232,16 +251,12 @@ export function buildCoachReply(
     case "route-concept-studio":
       return en
         ? [
-            "Step 1: Concept / service promo — pick concept mode in studio.",
-            "[Open concept studio](studio-action:open-concept-studio)",
-            "Or for 8s Reel:",
-            link ?? "",
+            "Step 1: Concept / service promo — open concept studio to pick mode and fill your brief.",
+            link ?? "[Open concept studio](studio-action:open-concept-studio)",
           ].join("\n")
         : [
-            "第一步：概念／服務推廣 — 開概念工作室。",
-            "[開啟概念工作室](studio-action:open-concept-studio)",
-            "或者 8 秒 Reel：",
-            link ?? "",
+            "第一步：概念／服務推廣 — 開概念工作室揀模式同填簡介。",
+            link ?? "[開啟概念工作室](studio-action:open-concept-studio)",
           ].join("\n");
 
     case "route-captions":
@@ -260,10 +275,30 @@ export function buildCoachReply(
     case "route-ultra-canvas":
       return en
         ? [
-            "Step 1: Ultra canvas — upload → AI image → reference-reel video. Pay-per-use tokens.",
+            "Step 1: Ultra canvas (Master plan) — templates or upload → AI image → video. Pay-per-use tokens.",
             link ?? "",
           ].join("\n")
-        : ["第一步：Ultra 畫布 — 上傳 → 出圖 → 出片。按次 token 計費。", link ?? ""].join("\n");
+        : ["第一步：Ultra 畫布（Master 方案）— 模板或上傳 → 出圖 → 出片。按次 token。", link ?? ""].join("\n");
+
+    case "route-brand-kit":
+      return en
+        ? ["Step 1: Upload logo + brand colors once for storyboard stills.", link ?? ""].join("\n")
+        : ["第一步：上傳 logo 同品牌色，分鏡靜圖可選蓋 logo。", link ?? ""].join("\n");
+
+    case "route-pricing":
+      return en
+        ? ["Plans and token costs — see pricing for USD/month and feature gates.", link ?? ""].join("\n")
+        : ["方案同 token 價格 — 去 pricing 睇月費同功能門檻。", link ?? ""].join("\n");
+
+    case "route-library":
+      return en
+        ? ["Step 1: Your saved outputs — reopen in editor, captions, or download.", link ?? ""].join("\n")
+        : ["第一步：已存成品 — 可再開修圖／字幕或下載。", link ?? ""].join("\n");
+
+    case "route-ugc":
+      return en
+        ? ["Step 1: UGC talking presenter — product + vibe (unboxing, review).", link ?? ""].join("\n")
+        : ["第一步：UGC 口播 — 話我知產品同感覺（開箱、評價）。", link ?? ""].join("\n");
 
     case "guide-edit-image":
       return en
@@ -285,8 +320,8 @@ export function buildCoachReply(
 
     case "guide-ultra-canvas":
       return en
-        ? "You are on Ultra canvas. Step 1 — add an Upload node, connect to Image (AI), then Video (reference-reel video). Pay-per-use tokens — check the cost hint before run."
-        : "你喺 Ultra 畫布。第一步 — 加 Upload 節點，接到 Image（AI），再接 Video（reference-reel video）。按次 token 計費，跑之前睇成本提示。";
+        ? "You are on Ultra canvas. Step 1 — pick a template (Product hero / Script to film) or add Upload → Image → Video. Wire modifier nodes (lighting, background) upstream. Use @aliases for refs. Save boards with ⌘S. Pay-per-use tokens — check badges before Run."
+        : "你喺 Ultra 畫布。第一步 — 揀模板（產品主圖／劇本成片）或加 Upload→Image→Video。修飾節點（燈光、背景）接上游。用 @ 引用素材。⌘S 儲存畫布。按次 token — Run 之前睇徽章。";
 
     case "guide-brand-kit":
       return en

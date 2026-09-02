@@ -6,7 +6,7 @@ import { StudioAssistantWidget } from "@/components/assistant/StudioAssistantWid
 import { assistantSurfaceFromPathname } from "@/lib/studio-assistant-surface";
 
 /**
- * Landing-only AI assistant (logo launcher). Hidden on every other route.
+ * Landing + studio AI assistant (logo launcher).
  */
 export function GlobalStudioAssistant() {
   const pathname = usePathname() || "/";

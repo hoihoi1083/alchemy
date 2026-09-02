@@ -12,12 +12,14 @@ export function ProPageClient() {
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,#0f172a_0%,#020617_55%,#000_100%)] text-slate-100">
       <div className="mx-auto max-w-7xl px-4 py-6">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-violet-500/15 bg-slate-900/40 px-4 py-3 backdrop-blur">
           <Link href="/" className="flex items-center gap-3 hover:opacity-90">
-            <img src={PRODUCT_LOGO_SRC} alt={PRODUCT_LOGO_ALT} className="h-8 w-8 rounded-lg object-contain" />
+            <img src={PRODUCT_LOGO_SRC} alt={PRODUCT_LOGO_ALT} className="h-8 w-8 rounded-lg object-contain ring-1 ring-violet-500/30" />
             <div>
-              <p className="text-xs font-medium text-slate-400">{PRODUCT_NAME}</p>
-              <h1 className="text-lg font-semibold">{m.ultraCanvas.title}</h1>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-300/80">{PRODUCT_NAME}</p>
+              <h1 className="bg-gradient-to-r from-violet-200 to-cyan-200 bg-clip-text text-lg font-semibold text-transparent">
+                {m.ultraCanvas.title}
+              </h1>
               <p className="text-xs text-slate-400">{m.ultraCanvas.subtitle}</p>
             </div>
           </Link>
@@ -48,7 +50,7 @@ export function ProPageClient() {
 
         <ol className="mb-4 grid gap-2 text-xs text-slate-400 sm:grid-cols-3">
           {m.ultraCanvas.steps.map((step) => (
-            <li key={step} className="rounded-lg border border-slate-800 bg-slate-900/50 px-3 py-2">
+            <li key={step} className="rounded-lg border border-slate-800/80 bg-slate-900/40 px-3 py-2 backdrop-blur">
               {step}
             </li>
           ))}

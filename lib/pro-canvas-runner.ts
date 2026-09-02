@@ -1,9 +1,13 @@
 import { BANANA2_EDIT_ENDPOINT, BANANA2_TEXT_ENDPOINT } from "@/lib/image-endpoints";
 import { buildImageRefinePrompt } from "@/lib/image-refine-prompt";
 import { buildCanvasComposePrompt } from "@/lib/pro-canvas-compose";
-import { cameraPromptSuffix } from "@/lib/pro-canvas-camera";
 import type { CanvasImageSource } from "@/lib/pro-canvas-types";
 import { isHttpOrLibraryMediaUrl } from "@/lib/storage/library-asset-url";
+import {
+  appendUltraProToPrompt,
+  DEFAULT_ULTRA_IMAGE_PRO,
+  type UltraImageProControls,
+} from "@/lib/ultra-pro-controls";
 
 export async function uploadCanvasAsset(file: File): Promise<string> {
   const fd = new FormData();
@@ -37,26 +41,41 @@ async function resolveSourceUrls(sources: CanvasImageSource[]): Promise<{
   return { urls, aliases };
 }
 
-export async function runCanvasImageNode(opts: {
+export type CanvasImageRunOpts = {
   sources: CanvasImageSource[];
   prompt: string;
   /** Single-image reframe / small edit (camera node). */
   refine?: boolean;
-}): Promise<string> {
+  pro?: Partial<UltraImageProControls>;
+};
+
+function resolveImagePro(pro?: Partial<UltraImageProControls>): UltraImageProControls {
+  return { ...DEFAULT_ULTRA_IMAGE_PRO, ...pro };
+}
+
+export async function runCanvasImageNode(opts: CanvasImageRunOpts): Promise<string> {
   const rawPrompt = opts.prompt.trim();
   if (!rawPrompt) throw new Error("Enter an image prompt.");
 
+  const pro = resolveImagePro(opts.pro);
+  const enhancedPrompt = appendUltraProToPrompt(rawPrompt, pro);
   const { urls, aliases } = await resolveSourceUrls(opts.sources);
+
+  const jsonBase = {
+    aspect_ratio: pro.aspectRatio,
+    resolution: pro.resolution,
+    art_style: pro.artStyleId,
+    num_images: 1,
+  };
 
   if (urls.length === 0) {
     const res = await fetch("/api/generate-image", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        prompt: rawPrompt,
+        ...jsonBase,
+        prompt: enhancedPrompt,
         endpoint: BANANA2_TEXT_ENDPOINT,
-        aspect_ratio: "9:16",
-        num_images: 1,
       }),
     });
     const data = await res.json().catch(() => ({}));
@@ -71,11 +90,11 @@ export async function runCanvasImageNode(opts: {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        ...jsonBase,
         mode: "refine",
-        prompt: buildImageRefinePrompt(rawPrompt),
+        prompt: buildImageRefinePrompt(enhancedPrompt),
         endpoint: BANANA2_EDIT_ENDPOINT,
         aspect_ratio: "auto",
-        num_images: 1,
         image_urls: urls,
       }),
     });
@@ -86,16 +105,16 @@ export async function runCanvasImageNode(opts: {
     return url;
   }
 
-  const composePrompt = buildCanvasComposePrompt(rawPrompt, aliases);
+  const composePrompt = buildCanvasComposePrompt(enhancedPrompt, aliases);
   const res = await fetch("/api/generate-image", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
+      ...jsonBase,
       mode: "compose",
       prompt: composePrompt,
       endpoint: BANANA2_EDIT_ENDPOINT,
-      aspect_ratio: urls.length > 1 ? "auto" : "9:16",
-      num_images: 1,
+      aspect_ratio: urls.length > 1 ? "auto" : pro.aspectRatio,
       image_urls: urls,
     }),
   });
@@ -121,16 +140,24 @@ export async function runCanvasCameraNode(opts: {
   });
 }
 
-export async function runCanvasVideoNode(opts: {
+import {
+  appendUltraVideoProToPrompt,
+  type UltraVideoProControls,
+  videoProFromPartial,
+} from "@/lib/ultra-pro-controls";
+
+export type CanvasVideoRunOpts = {
   imageUrl?: string;
   prompt: string;
-  camera: string;
-  duration: string;
-  resolution: "480p" | "720p" | "1080p";
-  fast: boolean;
-}): Promise<string> {
-  const prompt = opts.prompt.trim();
-  if (!prompt) throw new Error("Enter a video prompt.");
+  pro?: Partial<UltraVideoProControls>;
+  /** Text-to-video uses static camera internally. */
+  textOnly?: boolean;
+};
+
+export async function runCanvasVideoNode(opts: CanvasVideoRunOpts): Promise<string> {
+  const pro = videoProFromPartial(opts.pro);
+  const prompt = appendUltraVideoProToPrompt(opts.prompt, pro.artStyleId);
+  if (!prompt.trim()) throw new Error("Enter a video prompt.");
 
   const fd = new FormData();
   if (isHttpOrLibraryMediaUrl(opts.imageUrl)) {
@@ -140,13 +167,16 @@ export async function runCanvasVideoNode(opts: {
     fd.set("mode", "text");
   }
   fd.set("prompt", prompt);
-  fd.set("fast", opts.fast ? "true" : "false");
-  fd.set("resolution", opts.resolution);
-  fd.set("duration", opts.duration);
-  fd.set("aspect_ratio", "9:16");
-  fd.set("camera", opts.camera);
+  fd.set("fast", pro.fast ? "true" : "false");
+  fd.set("resolution", pro.resolution);
+  fd.set("duration", pro.duration);
+  fd.set("aspect_ratio", pro.aspectRatio);
+  fd.set("camera", opts.textOnly ? "Static Locked Shot" : pro.camera);
   fd.set("avoid_on_screen_text", "true");
-  fd.set("generate_audio", "false");
+  fd.set("generate_audio", pro.generateAudio ? "true" : "false");
+  if (pro.motionStrength != null) {
+    fd.set("motion_strength", String(pro.motionStrength));
+  }
 
   const res = await fetch("/api/generate", { method: "POST", body: fd });
   const data = await res.json().catch(() => ({}));
@@ -158,16 +188,12 @@ export async function runCanvasVideoNode(opts: {
 
 export async function runCanvasTextVideoNode(opts: {
   prompt: string;
-  duration: string;
-  resolution: "480p" | "720p" | "1080p";
-  fast: boolean;
+  pro?: Partial<UltraVideoProControls>;
 }): Promise<string> {
   return runCanvasVideoNode({
     prompt: opts.prompt,
-    camera: "Static Locked Shot",
-    duration: opts.duration,
-    resolution: opts.resolution,
-    fast: opts.fast,
+    pro: { ...opts.pro, camera: "Static Locked Shot" },
+    textOnly: true,
   });
 }
 

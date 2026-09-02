@@ -255,13 +255,15 @@ export function runStudioAssistantAction(
     case "open-ugc":
       return goPath("/ugc", context);
 
+    case "open-pricing":
+      return goPath("/pricing", context);
+
     default:
       return false;
   }
 }
 
 function goPath(path: string, context: StudioAssistantActionContext): boolean {
-  markAssistantReopenAfterNavigate();
   if (context.navigate) {
     context.navigate(path);
   } else if (typeof window !== "undefined") {
@@ -287,6 +289,7 @@ export function parseStudioAssistantActionId(
     "open-brand-kit",
     "open-library",
     "open-ugc",
+    "open-pricing",
     "setup-website-reel",
     "analyze-brand",
     "open-concept-studio",
@@ -318,6 +321,7 @@ export function actionNavigatesAway(actionId: StudioAssistantActionId): boolean 
     actionId === "open-brand-kit" ||
     actionId === "open-library" ||
     actionId === "open-ugc" ||
+    actionId === "open-pricing" ||
     actionId === "setup-website-reel" ||
     actionId === "analyze-brand"
   );

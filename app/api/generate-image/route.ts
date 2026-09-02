@@ -1156,6 +1156,8 @@ export async function POST(request: Request) {
         prompt?: string;
         endpoint?: string;
         aspect_ratio?: string;
+        resolution?: "1K" | "2K" | "4K";
+        art_style?: string;
         num_images?: number;
         image_urls?: string[];
         mode?: string;
@@ -1177,6 +1179,8 @@ export async function POST(request: Request) {
   const imageUrls = (body?.image_urls ?? []).filter(
     (u): u is string => typeof u === "string" && isHttpOrLibraryMediaUrl(u),
   );
+  const artStyleId = resolveArtStyleId(body?.art_style?.trim());
+  const requestedResolution = body?.resolution?.trim() as "1K" | "2K" | "4K" | undefined;
 
   if (!prompt) {
     return NextResponse.json(
@@ -1195,9 +1199,11 @@ export async function POST(request: Request) {
   const jsonCost = imageTokenCostFromRequest({ numImages });
 
   if (imageUrls.length > 0) {
-    const systemPrompt = isCompose
+    const baseSystem = isCompose
       ? IMAGE_CANVAS_COMPOSE_SYSTEM_PROMPT
       : IMAGE_REFINE_SYSTEM_PROMPT;
+    const styleSystem = artStyleSystemPrompt(artStyleId);
+    const systemPrompt = styleSystem ? `${baseSystem}\n\n${styleSystem}` : baseSystem;
     return await runRefineEdit(request, {
       endpoint,
       prompt,
@@ -1208,6 +1214,7 @@ export async function POST(request: Request) {
       userId: auth.user.userId,
       refineSources: imageUrls,
       tokenCost: jsonCost,
+      resolution: requestedResolution,
     });
   }
 
@@ -1219,8 +1226,16 @@ export async function POST(request: Request) {
   const balanceAfter = charged.balanceAfter;
 
   try {
+    const plan = await getUserPlan(auth.user.userId);
+    const { resolution: imageResolution } = clampImageResolution(plan, requestedResolution ?? null);
+    const styleSystem = artStyleSystemPrompt(artStyleId);
     const result = await fal.subscribe(endpoint, {
-      input: { prompt, aspect_ratio: aspectRatio, num_images: numImages },
+      input: {
+        ...banana2Input(prompt, [], aspectRatio, numImages, {
+          systemPrompt: styleSystem,
+          resolution: imageResolution,
+        }),
+      },
       logs: true,
     });
     const outUrls = extractImageUrls(result.data);

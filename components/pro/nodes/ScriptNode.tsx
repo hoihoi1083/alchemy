@@ -1,37 +1,81 @@
 "use client";
 
-import { Handle, Position, type NodeProps } from "@xyflow/react";
+import { ProNodeShell } from "@/components/pro/ProNodeShell";
 import { useProCanvasActions } from "@/components/pro/ProCanvasActions";
+import { useLocale } from "@/components/LocaleProvider";
+import { estimateCanvasScriptTokens } from "@/lib/ultra-pro-controls";
 import type { ScriptNodeData } from "@/lib/pro-canvas-types";
+import type { NodeProps } from "@xyflow/react";
 
 export function ScriptNode({ id, data }: NodeProps & { data: ScriptNodeData }) {
-  const { runScriptNode, updateNodeData } = useProCanvasActions();
+  const { runScriptNode, spawnSceneNodes, spawnScenePipeline, updateNodeData } =
+    useProCanvasActions();
+  const { m } = useLocale();
+  const tokenCost = estimateCanvasScriptTokens();
+  const sceneCount = data.scenePrompts?.length ?? 0;
 
   return (
-    <div className="w-72 rounded-xl border border-slate-600 bg-slate-900 p-3 shadow-lg">
-      <Handle type="target" position={Position.Left} className="!bg-pink-500" />
-      <p className="text-xs font-semibold uppercase tracking-wide text-pink-400">{data.label}</p>
+    <ProNodeShell accent="rose" label={data.label} targetHandle sourceHandle>
       <textarea
         value={data.brief}
         onChange={(e) => updateNodeData(id, { brief: e.target.value })}
-        placeholder="Creative brief for script / scenes…"
-        className="mt-2 h-20 w-full resize-none rounded-lg border border-slate-600 bg-slate-950 px-2 py-1.5 text-xs text-white placeholder:text-slate-500"
+        placeholder={m.ultraCanvas.scriptBriefPlaceholder}
+        className="h-20 w-full resize-none rounded-lg border border-slate-700/80 bg-slate-950/80 px-2 py-1.5 text-xs text-white placeholder:text-slate-600 focus:border-rose-500/40 focus:outline-none"
       />
       <button
         type="button"
         disabled={data.busy}
         onClick={() => runScriptNode(id)}
-        className="mt-2 w-full rounded-lg bg-pink-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40"
+        className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-rose-600 to-pink-600 px-3 py-1.5 text-xs font-semibold text-white shadow-[0_0_16px_rgba(244,63,94,0.2)] disabled:opacity-40"
       >
-        {data.busy ? "Planning…" : "Plan script"}
+        {data.busy ? m.ultraCanvas.running : m.ultraCanvas.runScript}
+        {!data.busy ? (
+          <span className="rounded-full bg-black/25 px-1.5 py-0.5 text-[10px] font-medium">
+            {m.ultraCanvas.tokenBadge.replace("{n}", String(tokenCost))}
+          </span>
+        ) : null}
       </button>
-      {data.scriptText && (
-        <pre className="mt-2 max-h-32 overflow-y-auto whitespace-pre-wrap rounded-lg bg-slate-950 p-2 text-[10px] text-slate-300">
+      {sceneCount > 0 ? (
+        <>
+          <button
+            type="button"
+            onClick={() => spawnSceneNodes(id)}
+            className="mt-2 w-full rounded-lg border border-rose-500/40 bg-rose-950/30 px-3 py-1.5 text-xs font-medium text-rose-200 hover:bg-rose-950/50"
+          >
+            {m.ultraCanvas.spawnScenes.replace("{n}", String(sceneCount))}
+          </button>
+          <button
+            type="button"
+            onClick={() => spawnScenePipeline(id)}
+            className="mt-1.5 w-full rounded-lg border border-violet-500/40 bg-violet-950/30 px-3 py-1.5 text-xs font-medium text-violet-200 hover:bg-violet-950/50"
+          >
+            {m.ultraCanvas.spawnPipeline.replace("{n}", String(sceneCount))}
+          </button>
+        </>
+      ) : null}
+      {data.scriptText ? (
+        <pre className="mt-2 max-h-32 overflow-y-auto whitespace-pre-wrap rounded-lg bg-slate-950/80 p-2 text-[10px] text-slate-300 ring-1 ring-slate-800">
           {data.scriptText}
         </pre>
-      )}
-      {data.error && <p className="mt-2 text-xs text-red-400">{data.error}</p>}
-      <Handle type="source" position={Position.Right} className="!bg-pink-500" />
-    </div>
+      ) : null}
+      {data.scenePrompts?.length ? (
+        <ul className="mt-2 space-y-1">
+          {data.scenePrompts.map((scene, i) => (
+            <li
+              key={i}
+              className="rounded-md border border-slate-800 bg-slate-950/60 px-2 py-1 text-[10px] text-slate-400"
+            >
+              <span className="font-semibold text-rose-300/90">
+                {m.ultraCanvas.scriptSceneLabel.replace("{n}", String(i + 1))}
+              </span>
+              {" — "}
+              {scene.slice(0, 80)}
+              {scene.length > 80 ? "…" : ""}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {data.error ? <p className="mt-2 text-xs text-red-400">{data.error}</p> : null}
+    </ProNodeShell>
   );
 }

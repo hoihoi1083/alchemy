@@ -14,8 +14,8 @@ describe("studio-assistant-surface", () => {
   it("maps every public route to a surface or hide", () => {
     assert.equal(assistantSurfaceFromPathname("/"), "landing");
     assert.equal(assistantSurfaceFromPathname("/start"), null);
-    assert.equal(assistantSurfaceFromPathname("/studio"), null);
-    assert.equal(assistantSurfaceFromPathname("/studio/"), null);
+    assert.equal(assistantSurfaceFromPathname("/studio"), "studio");
+    assert.equal(assistantSurfaceFromPathname("/studio/"), "studio");
     assert.equal(assistantSurfaceFromPathname("/edit-image"), null);
     assert.equal(assistantSurfaceFromPathname("/captions"), null);
     assert.equal(assistantSurfaceFromPathname("/captions/visual"), null);

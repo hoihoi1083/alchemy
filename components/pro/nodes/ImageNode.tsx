@@ -1,45 +1,84 @@
 "use client";
 
-import { Handle, Position, type NodeProps } from "@xyflow/react";
+import { useMemo } from "react";
+import type { NodeProps } from "@xyflow/react";
+import { ExportToLibraryButton } from "@/components/pro/ExportToLibraryButton";
+import { ProControlFields } from "@/components/pro/ProControlFields";
+import { ProNodeShell } from "@/components/pro/ProNodeShell";
 import { useProCanvasActions } from "@/components/pro/ProCanvasActions";
 import { MentionInput } from "@/components/pro/MentionInput";
+import { useLocale } from "@/components/LocaleProvider";
 import type { ImageNodeData } from "@/lib/pro-canvas-types";
+import {
+  DEFAULT_ULTRA_IMAGE_PRO,
+  estimateCanvasImageTokens,
+  type UltraImageProControls,
+} from "@/lib/ultra-pro-controls";
+
+function imageProFromData(data: ImageNodeData): UltraImageProControls {
+  return {
+    aspectRatio: data.aspectRatio ?? DEFAULT_ULTRA_IMAGE_PRO.aspectRatio,
+    resolution: data.resolution ?? DEFAULT_ULTRA_IMAGE_PRO.resolution,
+    artStyleId: data.artStyleId ?? DEFAULT_ULTRA_IMAGE_PRO.artStyleId,
+    lightingPreset: data.lightingPreset ?? DEFAULT_ULTRA_IMAGE_PRO.lightingPreset,
+    lightingCustom: data.lightingCustom,
+    backgroundPreset: data.backgroundPreset ?? DEFAULT_ULTRA_IMAGE_PRO.backgroundPreset,
+    backgroundCustom: data.backgroundCustom,
+  };
+}
 
 export function ImageNode({ id, data }: NodeProps & { data: ImageNodeData }) {
   const { runImageNode, updateNodeData, nodes } = useProCanvasActions();
+  const { m } = useLocale();
+  const tokenCost = useMemo(() => estimateCanvasImageTokens(), []);
+  const pro = imageProFromData(data);
 
   return (
-    <div className="w-72 rounded-xl border border-slate-600 bg-slate-900 p-3 shadow-lg">
-      <Handle type="target" position={Position.Left} className="!bg-violet-500" />
-      <input
-        value={data.alias ?? ""}
-        onChange={(e) => updateNodeData(id, { alias: e.target.value })}
-        placeholder="Alias for @mention (e.g. Ava)"
-        className="mb-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-0.5 text-[10px] text-slate-300"
-      />
-      <p className="text-xs font-semibold uppercase tracking-wide text-sky-400">{data.label}</p>
+    <ProNodeShell
+      accent="sky"
+      label={data.label}
+      alias={data.alias}
+      onAliasChange={(alias) => updateNodeData(id, { alias })}
+      aliasPlaceholder={m.ultraCanvas.aliasPlaceholder}
+    >
       <MentionInput
         nodeId={id}
         nodes={nodes}
         value={data.prompt}
         onChange={(prompt) => updateNodeData(id, { prompt })}
-        placeholder="Describe the ad image… use @refs for multi-image"
+        placeholder={m.ultraCanvas.imagePromptPlaceholder}
         rows={4}
-        className="mt-2 h-20 w-full resize-none rounded-lg border border-slate-600 bg-slate-950 px-2 py-1.5 text-xs text-white placeholder:text-slate-500"
+        className="h-20 w-full resize-none rounded-lg border border-slate-700/80 bg-slate-950/80 px-2 py-1.5 text-xs text-white placeholder:text-slate-600 focus:border-sky-500/40 focus:outline-none"
+      />
+      <ProControlFields
+        value={pro}
+        onChange={(patch) => updateNodeData(id, patch)}
       />
       <button
         type="button"
         disabled={data.busy}
         onClick={() => runImageNode(id)}
-        className="mt-2 w-full rounded-lg bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40"
+        className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-sky-600 to-cyan-600 px-3 py-1.5 text-xs font-semibold text-white shadow-[0_0_16px_rgba(56,189,248,0.25)] disabled:opacity-40"
       >
-        {data.busy ? "Generating…" : "Run image"}
+        {data.busy ? m.ultraCanvas.running : m.ultraCanvas.runImage}
+        {!data.busy ? (
+          <span className="rounded-full bg-black/25 px-1.5 py-0.5 text-[10px] font-medium">
+            {m.ultraCanvas.tokenBadge.replace("{n}", String(tokenCost))}
+          </span>
+        ) : null}
       </button>
-      {data.imageUrl && (
-        <img src={data.imageUrl} alt="" className="mt-2 max-h-36 w-full rounded-lg object-contain" />
-      )}
-      {data.error && <p className="mt-2 text-xs text-red-400">{data.error}</p>}
-      <Handle type="source" position={Position.Right} className="!bg-violet-500" />
-    </div>
+      {data.imageUrl ? (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={data.imageUrl} alt="" className="mt-2 max-h-36 w-full rounded-lg object-contain ring-1 ring-slate-700/80" />
+          <ExportToLibraryButton
+            url={data.imageUrl}
+            kind="image"
+            onExported={(libraryUrl) => updateNodeData(id, { imageUrl: libraryUrl })}
+          />
+        </>
+      ) : null}
+      {data.error ? <p className="mt-2 text-xs text-red-400">{data.error}</p> : null}
+    </ProNodeShell>
   );
 }

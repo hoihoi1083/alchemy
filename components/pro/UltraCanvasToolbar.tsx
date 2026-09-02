@@ -1,0 +1,197 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import { useLocale } from "@/components/LocaleProvider";
+import {
+  ULTRA_CANVAS_TEMPLATE_IDS,
+  type UltraCanvasTemplateId,
+} from "@/lib/ultra-canvas-templates";
+
+type BoardSummary = {
+  id: string;
+  name: string;
+  updatedAt: string;
+  nodeCount: number;
+};
+
+type Props = {
+  boardName: string;
+  boardId: string | null;
+  saving: boolean;
+  loading: boolean;
+  boardError?: string | null;
+  onBoardNameChange: (name: string) => void;
+  onSave: () => void;
+  onNew: () => void;
+  onLoad: (id: string) => void;
+  onUndo: () => void;
+  onRedo: () => void;
+  onLoadTemplate: (id: UltraCanvasTemplateId) => void;
+};
+
+export function UltraCanvasToolbar({
+  boardName,
+  boardId,
+  saving,
+  loading,
+  boardError,
+  onBoardNameChange,
+  onSave,
+  onNew,
+  onLoad,
+  onUndo,
+  onRedo,
+  onLoadTemplate,
+}: Props) {
+  const { m } = useLocale();
+  const tb = m.ultraCanvas.toolbar;
+  const tpl = m.ultraCanvas.templates;
+  const [boards, setBoards] = useState<BoardSummary[]>([]);
+  const [listOpen, setListOpen] = useState(false);
+  const [tplOpen, setTplOpen] = useState(false);
+  const [listError, setListError] = useState<string | null>(null);
+
+  const refreshBoards = useCallback(async () => {
+    try {
+      const res = await fetch("/api/ultra-canvas");
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error((data as { error?: string }).error || "Failed to list boards.");
+      }
+      setBoards((data as { boards?: BoardSummary[] }).boards ?? []);
+      setListError(null);
+    } catch (e: unknown) {
+      setListError(e instanceof Error ? e.message : "Failed to list boards.");
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshBoards();
+  }, [refreshBoards, boardId]);
+
+  return (
+    <div className="flex w-full flex-col items-stretch gap-2">
+      <div className="flex w-full flex-wrap items-center justify-end gap-2 rounded-xl border border-violet-500/25 bg-slate-900/95 p-2 shadow-[0_0_32px_rgba(139,92,246,0.12)] backdrop-blur">
+        <input
+          value={boardName}
+          onChange={(e) => onBoardNameChange(e.target.value)}
+          placeholder={tb.boardNamePlaceholder}
+          className="min-w-[8rem] flex-1 rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-xs text-slate-100 placeholder:text-slate-600 focus:border-violet-500/50 focus:outline-none"
+        />
+        <button
+          type="button"
+          disabled={saving || loading}
+          onClick={onSave}
+          className="rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40"
+        >
+          {saving ? tb.saving : boardId ? tb.save : tb.saveAs}
+        </button>
+        <button
+          type="button"
+          disabled={loading}
+          onClick={onNew}
+          className="rounded-lg border border-slate-600 px-3 py-1.5 text-xs font-medium text-slate-200 hover:bg-slate-800 disabled:opacity-40"
+        >
+          {tb.newBoard}
+        </button>
+        <div className="relative">
+          <button
+            type="button"
+            disabled={loading}
+            onClick={() => {
+              setListOpen((v) => !v);
+              setTplOpen(false);
+              void refreshBoards();
+            }}
+            className="rounded-lg border border-slate-600 px-3 py-1.5 text-xs font-medium text-slate-200 hover:bg-slate-800 disabled:opacity-40"
+          >
+            {tb.load}
+          </button>
+          {listOpen ? (
+            <div className="absolute right-0 top-full z-20 mt-1 w-56 rounded-xl border border-slate-700 bg-slate-950 p-1 shadow-xl">
+              {listError ? (
+                <p className="px-2 py-2 text-xs text-red-400">{listError}</p>
+              ) : boards.length === 0 ? (
+                <p className="px-2 py-2 text-xs text-slate-500">{tb.emptyBoards}</p>
+              ) : (
+                boards.map((b) => (
+                  <button
+                    key={b.id}
+                    type="button"
+                    onClick={() => {
+                      setListOpen(false);
+                      onLoad(b.id);
+                    }}
+                    className={`flex w-full flex-col rounded-lg px-2 py-1.5 text-left text-xs hover:bg-slate-800 ${
+                      b.id === boardId ? "bg-violet-950/60 text-violet-200" : "text-slate-200"
+                    }`}
+                  >
+                    <span className="font-medium">{b.name}</span>
+                    <span className="text-[10px] text-slate-500">
+                      {tb.nodeCount.replace("{n}", String(b.nodeCount))}
+                    </span>
+                  </button>
+                ))
+              )}
+            </div>
+          ) : null}
+        </div>
+        <div className="relative">
+          <button
+            type="button"
+            disabled={loading}
+            onClick={() => {
+              setTplOpen((v) => !v);
+              setListOpen(false);
+            }}
+            className="rounded-lg border border-violet-500/40 bg-violet-950/40 px-3 py-1.5 text-xs font-medium text-violet-200 hover:bg-violet-950/60 disabled:opacity-40"
+          >
+            {tb.templates}
+          </button>
+          {tplOpen ? (
+            <div className="absolute right-0 top-full z-20 mt-1 w-56 rounded-xl border border-slate-700 bg-slate-950 p-1 shadow-xl">
+              {ULTRA_CANVAS_TEMPLATE_IDS.map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => {
+                    setTplOpen(false);
+                    onLoadTemplate(id);
+                  }}
+                  className="flex w-full flex-col rounded-lg px-2 py-1.5 text-left text-xs text-slate-200 hover:bg-slate-800"
+                >
+                  <span className="font-medium">{tpl[id].name}</span>
+                  <span className="text-[10px] text-slate-500">{tpl[id].desc}</span>
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
+        <button
+          type="button"
+          onClick={onUndo}
+          title={tb.undo}
+          className="rounded-lg border border-slate-600 px-2.5 py-1.5 text-xs font-medium text-slate-200 hover:bg-slate-800"
+        >
+          ↶
+        </button>
+        <button
+          type="button"
+          onClick={onRedo}
+          title={tb.redo}
+          className="rounded-lg border border-slate-600 px-2.5 py-1.5 text-xs font-medium text-slate-200 hover:bg-slate-800"
+        >
+          ↷
+        </button>
+      </div>
+      <p className="rounded-lg border border-slate-800/80 bg-slate-950/80 px-2.5 py-1 text-[10px] text-slate-500">
+        {tb.shortcuts}
+      </p>
+      {boardError ? (
+        <p className="rounded-lg border border-red-500/30 bg-red-950/40 px-2.5 py-1 text-xs text-red-300">
+          {boardError}
+        </p>
+      ) : null}
+    </div>
+  );
+}

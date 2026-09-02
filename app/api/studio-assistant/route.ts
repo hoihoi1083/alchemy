@@ -84,7 +84,7 @@ function finalizeAssistantReply(
 const MAX_MESSAGES = 14;
 
 function parseLocale(raw: unknown): Locale {
-  if (raw === "zh" || raw === "zh-cn" || raw === "en") return raw;
+  if (raw === "zh" || raw === "zh-cn" || raw === "zh-tw" || raw === "en") return raw;
   return "en";
 }
 

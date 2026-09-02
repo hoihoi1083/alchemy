@@ -27,6 +27,10 @@ const LANDING_INTENTS = new Set<StudioAssistantIntent>([
   "edit_image",
   "reference_ad",
   "pro_canvas",
+  "brand_kit",
+  "pricing",
+  "library",
+  "ugc",
 ]);
 
 export function shouldUseLandingCoachFastPath(

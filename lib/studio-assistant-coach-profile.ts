@@ -31,6 +31,10 @@ export type CoachTaskKind =
   | "route-captions"
   | "route-edit-image"
   | "route-ultra-canvas"
+  | "route-brand-kit"
+  | "route-pricing"
+  | "route-library"
+  | "route-ugc"
   | "guide-edit-image"
   | "guide-captions"
   | "guide-ultra-canvas"
@@ -145,6 +149,10 @@ export function landingRoute(
   if (intent === "edit_image" || /edit.?image|修圖|修图|改圖|改图|inpaint|去水印/.test(t)) {
     return "route-edit-image";
   }
+  if (intent === "brand_kit") return "route-brand-kit";
+  if (intent === "pricing") return "route-pricing";
+  if (intent === "library") return "route-library";
+  if (intent === "ugc") return "route-ugc";
   if (intent === "captions_only") return "route-captions";
   if (intent === "pro_canvas") return "route-ultra-canvas";
   if (/storyboard|分鏡|分镜|multi.?scene|多場|多场/i.test(t)) return "route-storyboard";

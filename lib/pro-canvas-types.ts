@@ -1,3 +1,12 @@
+import type { ArtStyleId } from "@/lib/art-style";
+import type { ImageResolutionCap } from "@/lib/billing/entitlements";
+import type { ImageAspectRatio } from "@/lib/image-aspect-ratio";
+import type {
+  UltraBackgroundPreset,
+  UltraLightingPreset,
+  UltraVideoAspectRatio,
+} from "@/lib/ultra-pro-controls";
+
 export type ProCanvasNodeKind =
   | "upload"
   | "image"
@@ -7,7 +16,11 @@ export type ProCanvasNodeKind =
   | "camera"
   | "script"
   | "splice"
-  | "textVideo";
+  | "textVideo"
+  | "lighting"
+  | "background"
+  | "grade"
+  | "brand";
 
 export type CanvasNodeBase = {
   label: string;
@@ -27,6 +40,14 @@ export type ImageNodeData = CanvasNodeBase & {
   kind: "image";
   prompt: string;
   imageUrl?: string;
+  aspectRatio?: ImageAspectRatio;
+  resolution?: ImageResolutionCap;
+  artStyleId?: ArtStyleId;
+  lightingPreset?: UltraLightingPreset;
+  lightingCustom?: string;
+  backgroundPreset?: UltraBackgroundPreset;
+  backgroundCustom?: string;
+  sceneIndex?: number;
 };
 
 export type VideoNodeData = CanvasNodeBase & {
@@ -37,6 +58,25 @@ export type VideoNodeData = CanvasNodeBase & {
   resolution: "480p" | "720p" | "1080p";
   fast: boolean;
   videoUrl?: string;
+  sceneIndex?: number;
+  aspectRatio?: UltraVideoAspectRatio;
+  generateAudio?: boolean;
+  artStyleId?: ArtStyleId;
+  motionStrength?: number;
+};
+
+export type TextVideoNodeData = CanvasNodeBase & {
+  kind: "textVideo";
+  prompt: string;
+  duration: string;
+  resolution: "480p" | "720p" | "1080p";
+  fast: boolean;
+  videoUrl?: string;
+  sceneIndex?: number;
+  aspectRatio?: UltraVideoAspectRatio;
+  generateAudio?: boolean;
+  artStyleId?: ArtStyleId;
+  motionStrength?: number;
 };
 
 export type TextNodeData = CanvasNodeBase & {
@@ -81,13 +121,28 @@ export type SpliceNodeData = CanvasNodeBase & {
   videoUrl?: string;
 };
 
-export type TextVideoNodeData = CanvasNodeBase & {
-  kind: "textVideo";
-  prompt: string;
-  duration: string;
-  resolution: "480p" | "720p" | "1080p";
-  fast: boolean;
-  videoUrl?: string;
+export type LightingModNodeData = CanvasNodeBase & {
+  kind: "lighting";
+  preset: UltraLightingPreset;
+  custom?: string;
+};
+
+export type BackgroundModNodeData = CanvasNodeBase & {
+  kind: "background";
+  preset: UltraBackgroundPreset;
+  custom?: string;
+};
+
+export type GradeModNodeData = CanvasNodeBase & {
+  kind: "grade";
+  artStyleId: ArtStyleId;
+};
+
+export type BrandNodeData = CanvasNodeBase & {
+  kind: "brand";
+  logoUrl?: string;
+  tagline?: string;
+  primaryColor?: string;
 };
 
 export type ProCanvasNodeData =
@@ -99,7 +154,11 @@ export type ProCanvasNodeData =
   | CameraNodeData
   | ScriptNodeData
   | SpliceNodeData
-  | TextVideoNodeData;
+  | TextVideoNodeData
+  | LightingModNodeData
+  | BackgroundModNodeData
+  | GradeModNodeData
+  | BrandNodeData;
 
 export type TaskQueueItem = {
   nodeId: string;
@@ -111,10 +170,9 @@ export type TaskQueueItem = {
 export type AddableNodeType = {
   kind: ProCanvasNodeKind;
   label: string;
-  group: "node" | "resource";
+  group: "node" | "resource" | "modifier";
 };
 
-/** Ordered image input for Ultra canvas generation (matches @mention slot order). */
 export type CanvasImageSource = {
   nodeId: string;
   alias: string;
