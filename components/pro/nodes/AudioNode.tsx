@@ -9,7 +9,8 @@ import { useLocale } from "@/components/LocaleProvider";
 import type { AudioNodeData } from "@/lib/pro-canvas-types";
 
 export function AudioNode({ id, data }: NodeProps & { data: AudioNodeData }) {
-  const { onUploadAudio, onPickLibraryAudio, runAudioNode, updateNodeData } = useProCanvasActions();
+  const { onUploadAudio, onPickLibraryAudio, runAudioNode, updateNodeData, boardBusy } =
+    useProCanvasActions();
   const { m } = useLocale();
   const an = m.ultraCanvas.audioNode;
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -48,7 +49,7 @@ export function AudioNode({ id, data }: NodeProps & { data: AudioNodeData }) {
         {data.audioUrl ? <audio src={data.audioUrl} controls className="mt-2 w-full" /> : null}
         <button
           type="button"
-          disabled={data.busy}
+          disabled={data.busy || boardBusy}
           onClick={() => runAudioNode(id)}
           className="mt-2 w-full rounded-lg bg-gradient-to-r from-amber-600 to-orange-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40"
         >

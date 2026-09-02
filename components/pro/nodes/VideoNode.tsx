@@ -15,7 +15,7 @@ import {
 } from "@/lib/ultra-pro-controls";
 
 export function VideoNode({ id, data }: NodeProps & { data: VideoNodeData }) {
-  const { runVideoNode, updateNodeData, nodes } = useProCanvasActions();
+  const { runVideoNode, updateNodeData, nodes, boardBusy } = useProCanvasActions();
   const { m } = useLocale();
   const pro = videoProFromNodeData(data);
   const tokenCost = useMemo(
@@ -51,7 +51,7 @@ export function VideoNode({ id, data }: NodeProps & { data: VideoNodeData }) {
       />
       <button
         type="button"
-        disabled={data.busy}
+        disabled={data.busy || boardBusy}
         onClick={() => runVideoNode(id)}
         className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 py-1.5 text-xs font-semibold text-white shadow-[0_0_16px_rgba(139,92,246,0.25)] disabled:opacity-40"
       >

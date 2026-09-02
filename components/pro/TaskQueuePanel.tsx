@@ -14,9 +14,17 @@ type Props = {
   };
   onRunAll: () => void;
   onStopRun: () => void;
+  runAllDisabled?: boolean;
 };
 
-export function TaskQueuePanel({ items, running, labels, onRunAll, onStopRun }: Props) {
+export function TaskQueuePanel({
+  items,
+  running,
+  labels,
+  onRunAll,
+  onStopRun,
+  runAllDisabled = false,
+}: Props) {
   return (
     <div className="w-full rounded-xl border border-slate-700 bg-slate-900/95 p-3 shadow-xl backdrop-blur">
       <div className="flex items-center justify-between gap-2">
@@ -38,6 +46,7 @@ export function TaskQueuePanel({ items, running, labels, onRunAll, onStopRun }: 
           <button
             type="button"
             onClick={onRunAll}
+            disabled={runAllDisabled}
             className="rounded-lg bg-emerald-600 px-2 py-1 text-[10px] font-semibold text-white disabled:opacity-40"
           >
             {labels.runAll}

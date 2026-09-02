@@ -35,7 +35,7 @@ function askFormatRule(): string {
     "Do NOT force Step 1 or studio-action links unless they clearly ask to start making something now.",
     "Real paths you may mention as markdown: [/](/) [/start](/start) [/studio](/studio) [/captions](/captions) [/edit-image](/edit-image) [/ultra](/ultra) [/brand-kit](/brand-kit) [/library](/library) [/ugc](/ugc) [/pricing](/pricing).",
     "Homepage finishable video-recipe cards are HIDDEN — do not tell users to click them.",
-    "Ask-AI launcher is on the landing page (small logo). The same studio coach panel also opens on /studio. Hidden on captions, edit-image, brand-kit, pricing, Ultra canvas, and other tool pages.",
+    "Ask-AI launcher is on the landing page (small logo). The same studio coach panel also opens on /studio and /ultra. Hidden on captions, edit-image, brand-kit, pricing, and other tool pages.",
     "Plain text; no **.",
   ].join("\n");
 }
@@ -69,7 +69,7 @@ export function getStudioAssistantFacts(locale: Locale): string {
 - /start：实体 vs 概念。/studio 引导 wizard（内有导览助理）。/captions 烧字幕。/edit-image 修图。/ultra Ultra 画布（Master）。
 - 分镜 TVC 无参考片：先单镜出片（一镜）；额度不够再问拼接后备。有参考 MP4：参考片模式。
 - 12 秒 480p ≈ 492 tokens（免费 300 纯出片不够）；4 格静图 + 12 秒仍然要付费。拼接后备 4×5s ≈ 1136 都要付费。
-- 首页「可完成影片配方」卡已隐藏。问 AI 小 Logo 在首页；/studio 内也有导览助理；/captions、/edit-image、/ultra 等工具页没有。
+- 首页「可完成影片配方」卡已隐藏。问 AI 小 Logo 在首页；/studio 和 /ultra 都有导览助理；/captions、/edit-image 等工具页没有。
 `.trim();
   }
   if (locale === "zh-tw") {
@@ -79,7 +79,7 @@ export function getStudioAssistantFacts(locale: Locale): string {
 - /start：實體 vs 概念。/studio 引導 wizard（內有導覽助理）。/captions 燒字幕。/edit-image 修圖。/ultra Ultra 畫布（Master）。
 - 分鏡 TVC 無參考片：先單鏡出片（一鏡）；額度不夠再問拼接後備。有參考 MP4：參考片模式。
 - 12 秒 480p ≈ 492 tokens（免費 300 純出片不夠）；4 格靜圖 + 12 秒仍然要付費。拼接後備 4×5s ≈ 1136 都要付費。
-- 首頁「可完成影片配方」卡已隱藏。問 AI 小 Logo 在首頁；/studio 內也有導覽助理；/captions、/edit-image、/ultra 等工具頁沒有。
+- 首頁「可完成影片配方」卡已隱藏。問 AI 小 Logo 在首頁；/studio 和 /ultra 都有導覽助理；/captions、/edit-image 等工具頁沒有。
 `.trim();
   }
   if (locale === "zh") {
@@ -89,7 +89,7 @@ export function getStudioAssistantFacts(locale: Locale): string {
 - /start：實體 vs 概念。/studio 引導 wizard（內有導覽助理）。/captions 燒字幕。/edit-image 修圖。/ultra Ultra 畫布（Master）。
 - 分鏡 TVC 無參考片：先單鏡出片（一鏡）；額度唔夠先問拼接後備。有參考 MP4：參考片模式。
 - 12 秒 480p ≈ 492 tokens（免費 300 純出片唔夠）；4 格靜圖 + 12 秒仍然要付費。拼接後備 4×5s ≈ 1136 都要付費。
-- 首頁「可完成影片配方」卡已隱藏。問 AI 細 Logo 喺首頁；/studio 入面都有導覽助理；/captions、/edit-image、/ultra 等工具頁冇。
+- 首頁「可完成影片配方」卡已隱藏。問 AI 細 Logo 喺首頁；/studio 同 /ultra 都有導覽助理；/captions、/edit-image 等工具頁冇。
 `.trim();
   }
   return `
@@ -98,7 +98,7 @@ export function getStudioAssistantFacts(locale: Locale): string {
 - /start: physical vs concept. /studio guided wizard (coach panel ON). /captions burn-in. /edit-image retouch. /ultra Ultra canvas (Master).
 - Stills TVC without reference MP4: single-clip video first (one take); offer stitched fallback if single-clip does not fit. Reference reel: reference-reel mode.
 - 12s at 480p ≈ 492 tokens (free 300 does not cover video-only); 4 stills + 12s TVC still needs paid. Stitched fallback 4×5s ≈ 1136 also needs paid.
-- Homepage finishable recipe cards are hidden. Ask-AI launcher on landing; same coach panel on /studio. Off on captions, edit-image, ultra, and other tool pages.
+- Homepage finishable recipe cards are hidden. Ask-AI launcher on landing; same coach panel on /studio and /ultra. Off on captions, edit-image, and other tool pages.
 `.trim();
 }
 

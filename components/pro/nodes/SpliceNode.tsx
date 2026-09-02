@@ -10,7 +10,7 @@ import { estimateCanvasSpliceTokens } from "@/lib/ultra-pro-controls";
 import type { SpliceNodeData } from "@/lib/pro-canvas-types";
 
 export function SpliceNode({ id, data }: NodeProps & { data: SpliceNodeData }) {
-  const { runSpliceNode, updateNodeData } = useProCanvasActions();
+  const { runSpliceNode, updateNodeData, boardBusy } = useProCanvasActions();
   const { m } = useLocale();
   const tokenCost = useMemo(() => estimateCanvasSpliceTokens({ videoCount: 2, hasMusic: true }), []);
 
@@ -19,7 +19,7 @@ export function SpliceNode({ id, data }: NodeProps & { data: SpliceNodeData }) {
       <p className="text-[10px] text-slate-400">{m.ultraCanvas.spliceHint}</p>
       <button
         type="button"
-        disabled={data.busy}
+        disabled={data.busy || boardBusy}
         onClick={() => runSpliceNode(id)}
         className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-cyan-600 to-teal-600 px-3 py-1.5 text-xs font-semibold text-white shadow-[0_0_16px_rgba(34,211,238,0.2)] disabled:opacity-40"
       >

@@ -10,7 +10,7 @@ export function CameraNode({ id, data }: NodeProps & { data: CameraNodeData }) {
   const { m } = useLocale();
   const uc = m.ultraCanvas;
   const cn = uc.cameraNode;
-  const { runCameraNode, updateNodeData } = useProCanvasActions();
+  const { runCameraNode, updateNodeData, boardBusy } = useProCanvasActions();
 
   return (
     <div className="w-80 rounded-xl border border-slate-600 bg-slate-900 p-3 shadow-lg">
@@ -77,7 +77,7 @@ export function CameraNode({ id, data }: NodeProps & { data: CameraNodeData }) {
       />
       <button
         type="button"
-        disabled={data.busy}
+        disabled={data.busy || boardBusy}
         onClick={() => runCameraNode(id)}
         className="mt-2 w-full rounded-lg bg-cyan-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40"
       >

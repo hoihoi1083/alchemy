@@ -261,6 +261,9 @@ export async function POST(request: Request) {
       ? (body.previousCoachTask as CoachTaskKind)
       : null;
 
+  const quota = await assertFreeDeepSeekQuota(auth.user.userId);
+  if (!quota.ok) return quota.response;
+
   const meta = {
     fastPath: false,
     detectedUrl: detectedUrl ?? null,
@@ -295,9 +298,6 @@ export async function POST(request: Request) {
       meta: { ...meta, fastPath: true, coachTask: finalized.coachTask },
     });
   }
-
-  const quota = await assertFreeDeepSeekQuota(auth.user.userId);
-  if (!quota.ok) return quota.response;
 
   const sitePreview = detectedUrl ? await loadSitePreview(detectedUrl) : "";
   const knowledgeChunks = retrieveAssistantKnowledge(lastUser.content, {

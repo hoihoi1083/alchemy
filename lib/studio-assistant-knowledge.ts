@@ -67,48 +67,48 @@ export const ASSISTANT_KNOWLEDGE: AssistantKnowledgeChunk[] = [
 - /studio — guided wizard (default simple mode). Studio coach assistant panel is ON here (step-by-step help).
 - /captions — burn subtitles / BGM / voice on any MP4. No assistant panel.
 - /edit-image — clean, add text/logo, export. No assistant panel.
-- /ultra — Ultra canvas (Upload → image → video). Master plan. Pay-per-use tokens. No assistant panel.
+- /ultra — Ultra canvas (Upload → image → video). Master plan. Pay-per-use tokens. Studio coach assistant ON (Ultra canvas guide).
 - /brand-kit — save logo & colors.
 - /library — past generations.
 - /ugc — talking presenter.
 - /pricing /account — plans, tokens, Stripe.
-Ask-AI launcher (small logo) is on the landing page. The same coach also opens inside /studio. It is hidden on captions, edit-image, ultra, brand-kit, pricing, and other tool pages.`,
+Ask-AI launcher (small logo) is on the landing page. The same coach also opens inside /studio and /ultra. It is hidden on captions, edit-image, brand-kit, pricing, and other tool pages.`,
     zh: `主要頁面：
 - / 首頁 — 介紹、模板卡、收費預覽。首頁「可完成影片配方」卡而家隱藏。
 - /start — 揀實體產品 vs 概念／服務，再入工作室。
 - /studio — 引導式 wizard（預設簡單模式）。呢頁有工作室導覽助理面板。
 - /captions — 任何 MP4 燒字幕／BGM／配音。冇助理面板。
 - /edit-image — 清雜物、加字／Logo、匯出。冇助理面板。
-- /ultra — Ultra 畫布（上傳→圖→片）。Master 方案。按次 token。冇助理面板。
+- /ultra — Ultra 畫布（上傳→圖→片）。Master 方案。按次 token。有工作室導覽助理（Ultra 畫布指引）。
 - /brand-kit — 儲 Logo 同顏色。
 - /library — 作品庫。
 - /ugc — 數字人口播。
 - /pricing /account — 方案、Tokens、Stripe。
-問 AI 細 Logo 喺首頁；/studio 入面都有同款導覽助理。/captions、/edit-image、/ultra 等工具頁冇。`,
+問 AI 細 Logo 喺首頁；/studio 同 /ultra 都有同款導覽助理。/captions、/edit-image、/brand-kit 等工具頁冇。`,
     zhCn: `主要页面：
 - / 首页 — 介绍、模板卡、收费预览。首页「可完成影片配方」卡已隐藏。
 - /start — 选实体产品 vs 概念／服务，再进工作室。
 - /studio — 引导式 wizard（默认简单模式）。此页有工作室导览助理面板。
 - /captions — 任何 MP4 烧字幕／BGM／配音。无助理面板。
 - /edit-image — 清杂物、加字／Logo、导出。无助理面板。
-- /ultra — Ultra 画布（上传→图→片）。Master 方案。按次 token。无助理面板。
+- /ultra — Ultra 画布（上传→图→片）。Master 方案。按次 token。有工作室导览助理（Ultra 画布指引）。
 - /brand-kit — 存 Logo 与颜色。
 - /library — 作品库。
 - /ugc — 数字人口播。
 - /pricing /account — 方案、Tokens、Stripe。
-问 AI 小 Logo 在首页；/studio 内也有同款导览助理。/captions、/edit-image、/ultra 等工具页没有。`,
+问 AI 小 Logo 在首页；/studio 和 /ultra 都有同款导览助理。/captions、/edit-image、/brand-kit 等工具页没有。`,
     zhTw: `主要頁面：
 - / 首頁 — 介紹、模板卡、收費預覽。首頁「可完成影片配方」卡已隱藏。
 - /start — 選實體產品 vs 概念／服務，再進工作室。
 - /studio — 引導式 wizard（預設簡單模式）。此頁有工作室導覽助理面板。
 - /captions — 任何 MP4 燒字幕／BGM／配音。無助理面板。
 - /edit-image — 清雜物、加字／Logo、匯出。無助理面板。
-- /ultra — Ultra 畫布（上傳→圖→片）。Master 方案。按次 token。無助理面板。
+- /ultra — Ultra 畫布（上傳→圖→片）。Master 方案。按次 token。有工作室導覽助理（Ultra 畫布指引）。
 - /brand-kit — 儲 Logo 與顏色。
 - /library — 作品庫。
 - /ugc — 數位人口播。
 - /pricing /account — 方案、Tokens、Stripe。
-問 AI 小 Logo 在首頁；/studio 內也有同款導覽助理。/captions、/edit-image、/ultra 等工具頁沒有。`,
+問 AI 小 Logo 在首頁；/studio 和 /ultra 都有同款導覽助理。/captions、/edit-image、/brand-kit 等工具頁沒有。`,
   },
   {
     id: "modes-workflows",

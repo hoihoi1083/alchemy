@@ -8,7 +8,7 @@ import type { ScriptNodeData } from "@/lib/pro-canvas-types";
 import type { NodeProps } from "@xyflow/react";
 
 export function ScriptNode({ id, data }: NodeProps & { data: ScriptNodeData }) {
-  const { runScriptNode, spawnSceneNodes, spawnScenePipeline, updateNodeData } =
+  const { runScriptNode, spawnSceneNodes, spawnScenePipeline, updateNodeData, boardBusy } =
     useProCanvasActions();
   const { m } = useLocale();
   const tokenCost = estimateCanvasScriptTokens();
@@ -24,7 +24,7 @@ export function ScriptNode({ id, data }: NodeProps & { data: ScriptNodeData }) {
       />
       <button
         type="button"
-        disabled={data.busy}
+        disabled={data.busy || boardBusy}
         onClick={() => runScriptNode(id)}
         className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-rose-600 to-pink-600 px-3 py-1.5 text-xs font-semibold text-white shadow-[0_0_16px_rgba(244,63,94,0.2)] disabled:opacity-40"
       >
@@ -39,6 +39,7 @@ export function ScriptNode({ id, data }: NodeProps & { data: ScriptNodeData }) {
         <>
           <button
             type="button"
+            disabled={boardBusy}
             onClick={() => spawnSceneNodes(id)}
             className="mt-2 w-full rounded-lg border border-rose-500/40 bg-rose-950/30 px-3 py-1.5 text-xs font-medium text-rose-200 hover:bg-rose-950/50"
           >
@@ -46,6 +47,7 @@ export function ScriptNode({ id, data }: NodeProps & { data: ScriptNodeData }) {
           </button>
           <button
             type="button"
+            disabled={boardBusy}
             onClick={() => spawnScenePipeline(id)}
             className="mt-1.5 w-full rounded-lg border border-violet-500/40 bg-violet-950/30 px-3 py-1.5 text-xs font-medium text-violet-200 hover:bg-violet-950/50"
           >

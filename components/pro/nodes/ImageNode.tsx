@@ -28,7 +28,7 @@ function imageProFromData(data: ImageNodeData): UltraImageProControls {
 }
 
 export function ImageNode({ id, data }: NodeProps & { data: ImageNodeData }) {
-  const { runImageNode, updateNodeData, nodes } = useProCanvasActions();
+  const { runImageNode, updateNodeData, nodes, boardBusy } = useProCanvasActions();
   const { m } = useLocale();
   const tokenCost = useMemo(() => estimateCanvasImageTokens(), []);
   const pro = imageProFromData(data);
@@ -56,7 +56,7 @@ export function ImageNode({ id, data }: NodeProps & { data: ImageNodeData }) {
       />
       <button
         type="button"
-        disabled={data.busy}
+        disabled={data.busy || boardBusy}
         onClick={() => runImageNode(id)}
         className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-sky-600 to-cyan-600 px-3 py-1.5 text-xs font-semibold text-white shadow-[0_0_16px_rgba(56,189,248,0.25)] disabled:opacity-40"
       >

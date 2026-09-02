@@ -5,6 +5,8 @@ import type { Node } from "@xyflow/react";
 
 export type ProCanvasActions = {
   nodes: Node[];
+  /** True while Run all or any node generation is in flight. */
+  boardBusy: boolean;
   onUploadFile: (nodeId: string, file: File) => void;
   onUploadAudio: (nodeId: string, file: File) => void;
   onPickLibraryImage: (nodeId: string, previewUrl: string, fileName: string) => void;

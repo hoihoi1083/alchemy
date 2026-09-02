@@ -221,6 +221,7 @@ function ProCanvasBoard() {
   const edgesRef = useRef<Edge[]>(starter.edges);
   const runAllAbortRef = useRef<AbortController | null>(null);
   const canvasSessionRef = useRef(0);
+  const runningAllRef = useRef(false);
   const historyDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dirtyRef = useRef(false);
 
@@ -230,6 +231,23 @@ function ProCanvasBoard() {
       nodes.some((n) => Boolean((n.data as ProCanvasNodeData).busy)),
     [nodes, runningAll],
   );
+
+  useEffect(() => {
+    runningAllRef.current = runningAll;
+  }, [runningAll]);
+
+  /** Block starting a single-node run while Run all or another node is busy. */
+  const guardSingleRunStart = useCallback((): boolean => {
+    if (runningAllRef.current) return false;
+    if (
+      nodesRef.current.some((n) =>
+        Boolean((n.data as ProCanvasNodeData).busy),
+      )
+    ) {
+      return false;
+    }
+    return true;
+  }, []);
 
   const resetCanvasRuntime = useCallback(() => {
     canvasSessionRef.current += 1;
@@ -554,6 +572,7 @@ function ProCanvasBoard() {
 
   const runImageNode = useCallback(
     async (nodeId: string) => {
+      if (!runningAllRef.current && !guardSingleRunStart()) return;
       const session = canvasSessionRef.current;
       const node = getLiveNode(nodeId);
       if (!node) return;
@@ -607,7 +626,7 @@ function ProCanvasBoard() {
         throw e;
       }
     },
-    [collectImageInputs, getLiveEdges, getLiveNode, getLiveNodes, m.errors.tokensNotCharged, updateNodeData],
+    [collectImageInputs, getLiveEdges, getLiveNode, getLiveNodes, guardSingleRunStart, m.errors.tokensNotCharged, updateNodeData],
   );
 
   const ensureUpstreamImageUrl = useCallback(
@@ -636,6 +655,7 @@ function ProCanvasBoard() {
 
   const runCameraNode = useCallback(
     async (nodeId: string) => {
+      if (!runningAllRef.current && !guardSingleRunStart()) return;
       const session = canvasSessionRef.current;
       const node = getLiveNode(nodeId);
       if (!node) return;
@@ -668,6 +688,7 @@ function ProCanvasBoard() {
 
   const runVideoNode = useCallback(
     async (nodeId: string) => {
+      if (!runningAllRef.current && !guardSingleRunStart()) return;
       const session = canvasSessionRef.current;
       const node = getLiveNode(nodeId);
       if (!node) return;
@@ -712,6 +733,7 @@ function ProCanvasBoard() {
 
   const runTextVideoNode = useCallback(
     async (nodeId: string) => {
+      if (!runningAllRef.current && !guardSingleRunStart()) return;
       const session = canvasSessionRef.current;
       const node = getLiveNode(nodeId);
       if (!node) return;
@@ -891,6 +913,7 @@ function ProCanvasBoard() {
 
   const runScriptNode = useCallback(
     async (nodeId: string) => {
+      if (!runningAllRef.current && !guardSingleRunStart()) return;
       const session = canvasSessionRef.current;
       const node = getLiveNode(nodeId);
       if (!node) return;
@@ -921,6 +944,7 @@ function ProCanvasBoard() {
 
   const runAudioNode = useCallback(
     async (nodeId: string) => {
+      if (!runningAllRef.current && !guardSingleRunStart()) return;
       const session = canvasSessionRef.current;
       const file = audioFiles.current.get(nodeId);
       if (!file) {
@@ -948,6 +972,7 @@ function ProCanvasBoard() {
 
   const runSpliceNode = useCallback(
     async (nodeId: string) => {
+      if (!runningAllRef.current && !guardSingleRunStart()) return;
       const session = canvasSessionRef.current;
       const allNodes = getLiveNodes();
       const upstream = upstreamNodesSorted(nodeId, allNodes, getLiveEdges());
@@ -1060,6 +1085,10 @@ function ProCanvasBoard() {
   }, []);
 
   const runAll = useCallback(async () => {
+    if (boardBusy) {
+      setBoardError(m.ultraCanvas.busyNavBlocked);
+      return;
+    }
     runAllAbortRef.current?.abort();
     const abort = new AbortController();
     runAllAbortRef.current = abort;
@@ -1129,8 +1158,10 @@ function ProCanvasBoard() {
     setRunningAll(false);
     runAllAbortRef.current = null;
   }, [
+    boardBusy,
     getLiveEdges,
     getLiveNodes,
+    m.ultraCanvas.busyNavBlocked,
     m.ultraCanvas.queueSkipped,
     m.ultraCanvas.runAllEmpty,
     m.ultraCanvas.runCancelled,
@@ -1409,6 +1440,7 @@ function ProCanvasBoard() {
   const actions = useMemo(
     () => ({
       nodes,
+      boardBusy,
       onUploadFile,
       onUploadAudio,
       onPickLibraryImage,
@@ -1426,6 +1458,7 @@ function ProCanvasBoard() {
       updateNodeData,
     }),
     [
+      boardBusy,
       nodes,
       onUploadFile,
       onUploadAudio,
@@ -1539,6 +1572,7 @@ function ProCanvasBoard() {
               }}
               onRunAll={runAll}
               onStopRun={stopRunAll}
+              runAllDisabled={boardBusy}
             />
           }
         />
