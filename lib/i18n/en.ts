@@ -3432,8 +3432,6 @@ export const en = {
 				description:
 					"Black-void brand MG → abstract materials → product reveal (premium C4D showreel).",
 			},
-			"h3-design-studio-mg":
-				"Required: logo / wordmark + brand letters (EN preferred). Design-desk glass showreel — not pure type-rise.",
 			"h3-showreel": {
 				title: "showreel",
 				description:
@@ -3702,6 +3700,8 @@ export const en = {
 				"Required: logo / wordmark + brand name (CN/EN). Packshot only if the mark is clearly readable.",
 			"h3-glass-type-mg":
 				"Required: logo / wordmark + brand letters (EN preferred). Bright glass type — not dark triangle-light.",
+			"h3-design-studio-mg":
+				"Required: logo / wordmark + brand letters (EN preferred). Design-desk glass showreel — not pure type-rise.",
 			"h3-movie-title":
 				"Required: product photo — or logo / mascot still (concept). Title cards + panels; designed type allowed.",
 			"h3-lifestyle":

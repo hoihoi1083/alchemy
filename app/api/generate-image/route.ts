@@ -776,7 +776,7 @@ export async function POST(request: Request) {
       String(formData.get("web_boundary_break_frame") ?? "start").trim() === "end"
         ? "end"
         : "start";
-    webBoundaryScheme: WebBoundaryBreakSchemeId = "hold-through";
+    let webBoundaryScheme: WebBoundaryBreakSchemeId = "hold-through";
     if (webBoundaryBreak) {
       webBoundaryScheme = resolveWebBoundaryBreakScheme({
         pick: parseWebBoundaryBreakSchemePick(
