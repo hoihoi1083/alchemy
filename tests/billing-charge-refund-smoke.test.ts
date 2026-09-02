@@ -31,7 +31,9 @@ describe("billing smoke — invalid before charge (source contract)", () => {
   it("generate: validates mode inputs before chargeTokens", () => {
     const src = readRoute("app/api/generate/route.ts");
     const validateMarker = src.indexOf("Validate mode inputs BEFORE charging");
-    const chargeAt = firstIndex(src, /await chargeTokens\(/);
+    const chargeAt = src.indexOf(
+      "const charged = await chargeTokens(auth.user.userId, tokenCost",
+    );
     assert.ok(validateMarker >= 0, "missing validate-before-charge comment");
     assert.ok(chargeAt > validateMarker, "chargeTokens must follow validation");
     assert.match(src, /videoTokenCostFromSeedanceEndpoint/);
