@@ -177,6 +177,14 @@ export function buildProductVideoTemplateCards(
       previewSrc: videoModePreviewSrc("hand-throw-scene"),
     },
     {
+      id: "web_boundary_break",
+      kind: "video",
+      videoSubpath: "web_boundary_break",
+      title: modes["web-boundary-break"].title,
+      description: modes["web-boundary-break"].description,
+      previewSrc: videoModePreviewSrc("web-boundary-break"),
+    },
+    {
       id: "product_explode",
       kind: "video",
       videoSubpath: "product_explode",
@@ -298,6 +306,14 @@ export function buildConceptVideoTemplateCards(
       title: modes["hand-throw-scene"].title,
       description: modes["hand-throw-scene"].description,
       previewSrc: videoModePreviewSrc("hand-throw-scene"),
+    },
+    {
+      id: "web_boundary_break",
+      kind: "video",
+      videoSubpath: "web_boundary_break",
+      title: modes["web-boundary-break"].title,
+      description: modes["web-boundary-break"].description,
+      previewSrc: videoModePreviewSrc("web-boundary-break"),
     },
     {
       id: "product_explode",

@@ -22,6 +22,8 @@ export const H3_SHOT_RECIPE_MODES = [
   "h3-sphere-mg",
   "h3-logo-mg",
   "h3-triangle-light-mg",
+  "h3-glass-type-mg",
+  "h3-design-studio-mg",
   "h3-movie-title",
   "h3-lifestyle",
 ] as const;
@@ -52,6 +54,8 @@ export const H3_SHOT_RECIPE_SETTINGS_DURATION: Record<
   "h3-sphere-mg": "8",
   "h3-logo-mg": "8",
   "h3-triangle-light-mg": "10",
+  "h3-glass-type-mg": "12",
+  "h3-design-studio-mg": "12",
   "h3-movie-title": "8",
   "h3-lifestyle": "8",
 };
@@ -70,6 +74,8 @@ export const H3_SHOT_RECIPE_DURATION_SEC: Record<H3ShotRecipeMode, number> = {
   "h3-sphere-mg": 8,
   "h3-logo-mg": 8,
   "h3-triangle-light-mg": 10,
+  "h3-glass-type-mg": 12,
+  "h3-design-studio-mg": 12,
   "h3-movie-title": 8,
   "h3-lifestyle": 8,
 };
@@ -116,6 +122,8 @@ const MODE_TO_SUBPATH: Record<H3ShotRecipeMode, VideoSubpath> = {
   "h3-sphere-mg": "h3_sphere_mg",
   "h3-logo-mg": "h3_logo_mg",
   "h3-triangle-light-mg": "h3_triangle_light_mg",
+  "h3-glass-type-mg": "h3_glass_type_mg",
+  "h3-design-studio-mg": "h3_design_studio_mg",
   "h3-movie-title": "h3_movie_title",
   "h3-lifestyle": "h3_lifestyle",
 };
@@ -134,6 +142,8 @@ const SUBPATH_TO_MODE: Partial<Record<VideoSubpath, H3ShotRecipeMode>> = {
   h3_sphere_mg: "h3-sphere-mg",
   h3_logo_mg: "h3-logo-mg",
   h3_triangle_light_mg: "h3-triangle-light-mg",
+  h3_glass_type_mg: "h3-glass-type-mg",
+  h3_design_studio_mg: "h3-design-studio-mg",
   h3_movie_title: "h3-movie-title",
   h3_lifestyle: "h3-lifestyle",
 };
@@ -190,7 +200,9 @@ export function h3ShotRecipeAllowsKineticType(mode: H3ShotRecipeMode): boolean {
     mode === "h3-movie-title" ||
     mode === "h3-sphere-mg" ||
     mode === "h3-logo-mg" ||
-    mode === "h3-triangle-light-mg"
+    mode === "h3-triangle-light-mg" ||
+    mode === "h3-glass-type-mg" ||
+    mode === "h3-design-studio-mg"
   );
 }
 
@@ -225,7 +237,13 @@ export function resolveH3ShotStillAspectRatio(
   showreelAspect?: H3ShowreelAspect | string | null,
 ): H3ShowreelAspect | "1:1" | "9:16" {
   if (mode === "h3-showreel") return parseH3ShowreelAspect(showreelAspect);
-  if (mode === "h3-logo-mg" || mode === "h3-sphere-mg" || mode === "h3-triangle-light-mg")
+  if (
+    mode === "h3-logo-mg" ||
+    mode === "h3-sphere-mg" ||
+    mode === "h3-triangle-light-mg" ||
+    mode === "h3-glass-type-mg" ||
+    mode === "h3-design-studio-mg"
+  )
     return "1:1";
   return "9:16";
 }
@@ -781,6 +799,269 @@ function triangleLightMgSchemeBeats(
   ];
 }
 
+/**
+ * Glass type MG / 透明3D立体字 — bright studio translucent extruded letters
+ * with mini diorama fills + optional cursor click. MiniMax Design H3 tutorial.
+ * Schemes: Click reveal (deboss → ripple) vs Type parade (isometric wordmark).
+ */
+export const H3_GLASS_TYPE_MG_SCHEME_IDS = ["click-reveal", "type-parade"] as const;
+export type H3GlassTypeMgSchemeId =
+  (typeof H3_GLASS_TYPE_MG_SCHEME_IDS)[number];
+export type H3GlassTypeMgSchemePick = H3GlassTypeMgSchemeId | "auto";
+
+export const H3_GLASS_TYPE_MG_DURATION_OPTIONS = ["10", "12"] as const;
+
+export function clampGlassTypeMgDurationSec(
+  raw: string | number | null | undefined,
+): number {
+  if (raw === "auto" || raw == null || raw === "") return 12;
+  const n = typeof raw === "number" ? raw : Number(raw);
+  if (!Number.isFinite(n)) return 12;
+  return Math.round(n) <= 10 ? 10 : 12;
+}
+
+export function glassTypeMgDurationOptions(): VideoDuration[] {
+  return [...H3_GLASS_TYPE_MG_DURATION_OPTIONS];
+}
+
+export function h3GlassTypeMgSchemePreviewSrc(id: H3GlassTypeMgSchemeId): string {
+  return `/images/studio/schemes/glass-type-mg/${id}.png?v=1`;
+}
+
+export function isH3GlassTypeMgSchemeId(
+  value: string | null | undefined,
+): value is H3GlassTypeMgSchemeId {
+  return (H3_GLASS_TYPE_MG_SCHEME_IDS as readonly string[]).includes(value ?? "");
+}
+
+export function parseH3GlassTypeMgSchemePick(
+  raw: unknown,
+): H3GlassTypeMgSchemePick {
+  const s = String(raw ?? "").trim();
+  if (s === "auto" || !s) return "auto";
+  return isH3GlassTypeMgSchemeId(s) ? s : "auto";
+}
+
+export function resolveH3GlassTypeMgScheme(input: {
+  pick: H3GlassTypeMgSchemePick;
+  product?: string;
+  headline?: string;
+  conceptIdea?: string;
+  conceptMode?: boolean;
+}): H3GlassTypeMgSchemeId {
+  if (input.pick !== "auto") return input.pick;
+  const text =
+    `${input.product ?? ""} ${input.headline ?? ""} ${input.conceptIdea ?? ""}`.toLowerCase();
+  if (
+    /parade|isometric|wordmark|google|design|字标游行|立体字|字阵|字列/.test(
+      text,
+    )
+  ) {
+    return "type-parade";
+  }
+  if (/click|cursor|deboss|ripple|点击|光标|压印|涟漪|透明3d/.test(text)) {
+    return "click-reveal";
+  }
+  // Default: click-reveal — matches the tutorial opening gag.
+  return "click-reveal";
+}
+
+const H3_GLASS_TYPE_MG_SCHEME_STILL: Record<H3GlassTypeMgSchemeId, string> = {
+  "click-reveal":
+    "Bright off-white matte studio: soft debossed brand initials on a sand-textured plane, translucent blue 3D cursor mid-click with concentric ripples, ready for transparent glass type to rise",
+  "type-parade":
+    "Bright light-gray studio: thick translucent rainbow glass 3D letters spelling the brand wordmark in isometric line, each letter filled with tiny colorful diorama objects, soft shadows, commercial MG still",
+};
+
+export const H3_GLASS_TYPE_MG_NEGATIVE =
+  "subtitles, captions, watermarks, UI chrome overlays, voiceover, dialogue, lyrics, " +
+  "slideshow, hard cut montage, jump cut, freeze-frame, blurry logo, morphing identity, " +
+  "inventing a different brand mark, copy competitor logos, talking head, dark black void, " +
+  "triangle caustic dark stage, lifestyle street, packshot orbit, SKU walk";
+
+const GLASS_TYPE_MG_PROMPT_NEGATIVE =
+  `${H3_GLASS_TYPE_MG_NEGATIVE}, invent competitor logos, hard cut montage, ` +
+  "dark Nike intro void, frosted triangle prism dark gallery only";
+
+function glassTypeMgSchemeBeats(
+  scheme: H3GlassTypeMgSchemeId,
+  img: string,
+  subject: string,
+  durationSec: number,
+): string[] {
+  const sec = clampGlassTypeMgDurationSec(durationSec);
+  const t1 = sec <= 10 ? "2.5" : "3";
+  const t2 = sec <= 10 ? "5.5" : "7";
+  const t3 = sec <= 10 ? "8" : "10";
+  const tEnd = String(sec);
+  const lock =
+    `这是 Minimax H3「透明3D立体字」商业动效：严格锁定${img}（${subject}）的 Logo／字标外形与可读性。` +
+    `明亮浅灰／米白工作室（不是黑场三角光）；厚实半透明玻璃／树脂立体字，字内可有微型场景／物件（设计工具、UI 面板、色板等），禁止发明竞品名。` +
+    `允许设计感动能大字与 3D 光标，禁止字幕条／仿社交 UI。` +
+    `Exact runtime ${sec}s — fit all beats; do not invent extra acts.`;
+  const sharedClose =
+    `${t3}–${tEnd}s：收在干净英雄字标位 — 透明立体字完整可读，轻阴影，可叠小字副标（仅用户已提供的品牌英文／中文）；一镜到底。`;
+  const neg = `Negative: ${GLASS_TYPE_MG_PROMPT_NEGATIVE}`;
+
+  if (scheme === "type-parade") {
+    return [
+      `H3 透明3D立体字「Type parade」：等距彩色玻璃字列游行。${lock}`,
+      `0–${t1}s：明亮浅灰台面，厚实半透明立体字母斜向排列（用用户品牌英文／字标拆成可读字母），每字内嵌微型彩色物件。`,
+      `${t1}–${t2}s：镜头沿字列轻推／侧滑，折射与软阴影变化；字母可轻微呼吸／旋转，外形必须服务${img}身份。`,
+      `${t2}–${t3}s：字列收束为完整品牌字标英雄构图，标识清晰。`,
+      sharedClose,
+      `适合英文品牌名、工作室字标、作品集片头。`,
+      neg,
+    ];
+  }
+  return [
+    `H3 透明3D立体字「Click reveal」：压印平面 → 光标点击涟漪 → 透明立体字升起。${lock}`,
+    `0–${t1}s：米白磨砂平面，${img} 标识以轻压印／凹印轮廓出现；半透明蓝色 3D 光标移向点击点。`,
+    `${t1}–${t2}s：光标点击，同心涟漪扩散；压印处升起厚实半透明彩色立体字／字标（字内可有微型设计物件）。`,
+    `${t2}–${t3}s：立体字排成可读品牌字标（如用户英文名），光标可掠过；玻璃折射清晰。`,
+    sharedClose,
+    `通用默认：任意清晰 Logo／字标品牌商业动效。`,
+    neg,
+  ];
+}
+
+/**
+ * Design studio MG / 设计台玻璃品牌片 — FORM|COLOR|MOTION desk showreel:
+ * drafting mat, form study (pillow→sphere→letter), glass wordmark + UI panels → moodboard lock.
+ * Schemes: Form study vs Brand desk. Distinct from transparent-type (105857) and logo-mg cards.
+ */
+export const H3_DESIGN_STUDIO_MG_SCHEME_IDS = ["form-study", "brand-desk"] as const;
+export type H3DesignStudioMgSchemeId =
+  (typeof H3_DESIGN_STUDIO_MG_SCHEME_IDS)[number];
+export type H3DesignStudioMgSchemePick = H3DesignStudioMgSchemeId | "auto";
+
+export const H3_DESIGN_STUDIO_MG_DURATION_OPTIONS = ["10", "12"] as const;
+
+export function clampDesignStudioMgDurationSec(
+  raw: string | number | null | undefined,
+): number {
+  if (raw === "auto" || raw == null || raw === "") return 12;
+  const n = typeof raw === "number" ? raw : Number(raw);
+  if (!Number.isFinite(n)) return 12;
+  return Math.round(n) <= 10 ? 10 : 12;
+}
+
+export function designStudioMgDurationOptions(): VideoDuration[] {
+  return [...H3_DESIGN_STUDIO_MG_DURATION_OPTIONS];
+}
+
+export function h3DesignStudioMgSchemePreviewSrc(
+  id: H3DesignStudioMgSchemeId,
+): string {
+  return `/images/studio/schemes/design-studio-mg/${id}.png?v=1`;
+}
+
+export function isH3DesignStudioMgSchemeId(
+  value: string | null | undefined,
+): value is H3DesignStudioMgSchemeId {
+  return (H3_DESIGN_STUDIO_MG_SCHEME_IDS as readonly string[]).includes(
+    value ?? "",
+  );
+}
+
+export function parseH3DesignStudioMgSchemePick(
+  raw: unknown,
+): H3DesignStudioMgSchemePick {
+  const s = String(raw ?? "").trim();
+  if (s === "auto" || !s) return "auto";
+  return isH3DesignStudioMgSchemeId(s) ? s : "auto";
+}
+
+export function resolveH3DesignStudioMgScheme(input: {
+  pick: H3DesignStudioMgSchemePick;
+  product?: string;
+  headline?: string;
+  conceptIdea?: string;
+  conceptMode?: boolean;
+}): H3DesignStudioMgSchemeId {
+  if (input.pick !== "auto") return input.pick;
+  const text =
+    `${input.product ?? ""} ${input.headline ?? ""} ${input.conceptIdea ?? ""}`.toLowerCase();
+  if (
+    /desk|moodboard|portfolio|showreel|studio|grid|ui panel|设计台|作品集|情绪板|品牌台/.test(
+      text,
+    )
+  ) {
+    return "brand-desk";
+  }
+  if (
+    /form|sphere|geode|pillow|morph|cursor|form study|造型|球体|形态/.test(text)
+  ) {
+    return "form-study";
+  }
+  // Default: form-study — matches the tutorial opening gag.
+  return "form-study";
+}
+
+const H3_DESIGN_STUDIO_MG_SCHEME_STILL: Record<
+  H3DesignStudioMgSchemeId,
+  string
+> = {
+  "form-study":
+    "Bright drafting-table studio: soft translucent orange-to-purple glass pillow form with tiny FORM|COLOR|MOTION type, blue 3D cursor mid-click on a white technical mat with faint grid circles, ready for form-study morph",
+  "brand-desk":
+    "Bright modern design studio desk: thick iridescent glass 3D brand wordmark (orange→purple), frosted UI panels and a chrome sphere beside it, soft daylight, ready for brand-desk showreel",
+};
+
+export const H3_DESIGN_STUDIO_MG_NEGATIVE =
+  "subtitles, captions, watermarks, UI chrome overlays, voiceover, dialogue, lyrics, " +
+  "slideshow, hard cut montage, jump cut, freeze-frame, blurry logo, morphing identity, " +
+  "inventing a different brand mark, copy competitor logos, talking head, dark black void, " +
+  "triangle caustic dark stage, lifestyle street, packshot orbit, SKU walk, " +
+  "deboss-only transparent type rise without design desk context";
+
+const DESIGN_STUDIO_MG_PROMPT_NEGATIVE =
+  `${H3_DESIGN_STUDIO_MG_NEGATIVE}, invent competitor logos, hard cut montage, ` +
+  "dark Nike intro void, frosted triangle prism dark gallery only, isometric letter parade only";
+
+function designStudioMgSchemeBeats(
+  scheme: H3DesignStudioMgSchemeId,
+  img: string,
+  subject: string,
+  durationSec: number,
+): string[] {
+  const sec = clampDesignStudioMgDurationSec(durationSec);
+  const t1 = sec <= 10 ? "2.5" : "3";
+  const t2 = sec <= 10 ? "5.5" : "7";
+  const t3 = sec <= 10 ? "8" : "10";
+  const tEnd = String(sec);
+  const lock =
+    `这是 Minimax H3「设计台玻璃品牌片」商业动效：严格锁定${img}（${subject}）的 Logo／字标外形与可读性。` +
+    `明亮设计工作室／绘图台（不是黑场三角光，也不是单纯压印立体字）；半透明橙→紫玻璃材质、3D 光标、UI 面板／色板道具允许。` +
+    `允许设计感动能大字（FORM/COLOR/MOTION、TYPE/VISUAL 等）与作品集情绪，禁止字幕条／仿社交 UI、禁止发明竞品名。` +
+    `Exact runtime ${sec}s — fit all beats; do not invent extra acts.`;
+  const sharedClose =
+    `${t3}–${tEnd}s：收在干净英雄字标／作品集片头位 — 玻璃品牌字标完整可读，可叠小字副标（仅用户已提供品牌名／SHOWREEL 年号类设计字）；一镜到底。`;
+  const neg = `Negative: ${DESIGN_STUDIO_MG_PROMPT_NEGATIVE}`;
+
+  if (scheme === "brand-desk") {
+    return [
+      `H3 设计台玻璃「Brand desk」：玻璃字标 + UI 面板 → 情绪板网格 → 品牌锁。${lock}`,
+      `0–${t1}s：明亮工作室台面，厚实半透明橙紫玻璃立体字标（${img}）立于桌上，旁有磨砂 UI 面板／色板／铬球。`,
+      `${t1}–${t2}s：镜头轻推／侧滑，玻璃折射变化；可掠过 3D 光标；面板轻微浮起，身份始终服务${img}。`,
+      `${t2}–${t3}s：切到／推入设计情绪板网格（多格玻璃卡 + 中央字标），光标可点选边角变换手柄。`,
+      sharedClose,
+      `适合工作室字标、设计品牌、作品集／showreel 片头。`,
+      neg,
+    ];
+  }
+  return [
+    `H3 设计台玻璃「Form study」：软垫形 → 球体剖切 → 立体字母 → 品牌锁。${lock}`,
+    `0–${t1}s：白色绘图台／切割垫（淡网格同心圆），橙紫半透明玻璃软垫形／枕头形，可出现 FORM|COLOR|MOTION 小字；蓝 3D 光标点击。`,
+    `${t1}–${t2}s：形态研究 — 哑光球体纹理 → 剖开露出霓虹晶体内核 → 过渡为虹彩立体字母（服务${img}外形）。`,
+    `${t2}–${t3}s：字母收束为可读玻璃品牌字标，旁可有色板／尺子虚化道具。`,
+    sharedClose,
+    `通用默认：任意清晰 Logo／字标的设计台片头。`,
+    neg,
+  ];
+}
+
+
 export const MACRO_SNAP_INTENSITIES = ["weak", "medium", "strong"] as const;
 export type MacroSnapIntensity = (typeof MACRO_SNAP_INTENSITIES)[number];
 export const DEFAULT_MACRO_SNAP_INTENSITY: MacroSnapIntensity = "strong";
@@ -844,7 +1125,11 @@ export type H3ShotPromptInput = {
   logoMgScheme?: H3LogoMgSchemeId;
   /** h3-triangle-light-mg only — 三角光 Exhibit / Flow. */
   triangleLightMgScheme?: H3TriangleLightMgSchemeId;
-  /** Optional runtime override (triangle-light 10/12). */
+  /** h3-glass-type-mg only — 透明3D立体字 Click / Parade. */
+  glassTypeMgScheme?: H3GlassTypeMgSchemeId;
+  /** h3-design-studio-mg only — Form study / Brand desk. */
+  designStudioMgScheme?: H3DesignStudioMgSchemeId;
+  /** Optional runtime override (triangle-light / glass-type 10/12). */
   durationSec?: number;
 };
 
@@ -940,6 +1225,10 @@ const H3_STILL_DEFAULT: Record<H3ShotRecipeMode, string> = {
     "a crisp brand logo or wordmark on a bright glassmorphic C4D stage, white card hero, ready for 3D logo MG",
   "h3-triangle-light-mg":
     "a crisp brand logo or wordmark among frosted triangular glass prisms on a dark void, warm orange caustic light, ready for triangle-light brand MG",
+  "h3-glass-type-mg":
+    "thick translucent rainbow glass 3D brand letters on a bright off-white studio plane with soft shadows and a blue 3D cursor, ready for transparent type MG",
+  "h3-design-studio-mg":
+    "iridescent orange-to-purple glass brand wordmark on a bright drafting-table design studio desk with UI panels and a blue 3D cursor, ready for design-studio MG",
   "h3-movie-title":
     "a premium product hero ready for cinematic title cards, dark editorial backdrop",
   "h3-lifestyle":
@@ -1129,6 +1418,36 @@ export function buildH3ShotRecipePrompt(input: H3ShotPromptInput): string {
         input.durationSec ?? H3_SHOT_RECIPE_DURATION_SEC["h3-triangle-light-mg"],
       ).join("\n");
 
+    case "h3-glass-type-mg":
+      return glassTypeMgSchemeBeats(
+        input.glassTypeMgScheme ??
+          resolveH3GlassTypeMgScheme({
+            pick: "auto",
+            product: input.product,
+            headline: input.headline,
+            conceptIdea: input.conceptIdea,
+            conceptMode: input.conceptMode,
+          }),
+        img,
+        subject,
+        input.durationSec ?? H3_SHOT_RECIPE_DURATION_SEC["h3-glass-type-mg"],
+      ).join("\n");
+
+    case "h3-design-studio-mg":
+      return designStudioMgSchemeBeats(
+        input.designStudioMgScheme ??
+          resolveH3DesignStudioMgScheme({
+            pick: "auto",
+            product: input.product,
+            headline: input.headline,
+            conceptIdea: input.conceptIdea,
+            conceptMode: input.conceptMode,
+          }),
+        img,
+        subject,
+        input.durationSec ?? H3_SHOT_RECIPE_DURATION_SEC["h3-design-studio-mg"],
+      ).join("\n");
+
     case "h3-movie-title":
       return [
         `H3 电影标题／多格一镜：严格锁定${img}（${subject}）外形、材质、Logo 与配色。`,
@@ -1201,6 +1520,28 @@ export function buildH3ShotRecipeStillPrompt(input: H3ShotPromptInput): string {
           conceptMode: input.conceptMode,
         }))
       : null;
+  const glassTypeMgScheme =
+    input.mode === "h3-glass-type-mg"
+      ? (input.glassTypeMgScheme ??
+        resolveH3GlassTypeMgScheme({
+          pick: "auto",
+          product: input.product,
+          headline: input.headline,
+          conceptIdea: input.conceptIdea,
+          conceptMode: input.conceptMode,
+        }))
+      : null;
+  const designStudioMgScheme =
+    input.mode === "h3-design-studio-mg"
+      ? (input.designStudioMgScheme ??
+        resolveH3DesignStudioMgScheme({
+          pick: "auto",
+          product: input.product,
+          headline: input.headline,
+          conceptIdea: input.conceptIdea,
+          conceptMode: input.conceptMode,
+        }))
+      : null;
   const fallback =
     input.mode === "h3-showreel" && showreelScheme
       ? H3_SHOWREEL_SCHEME_STILL[showreelScheme]
@@ -1210,7 +1551,11 @@ export function buildH3ShotRecipeStillPrompt(input: H3ShotPromptInput): string {
           ? H3_LOGO_MG_SCHEME_STILL[logoMgScheme]
           : input.mode === "h3-triangle-light-mg" && triangleLightMgScheme
             ? H3_TRIANGLE_LIGHT_MG_SCHEME_STILL[triangleLightMgScheme]
-            : H3_STILL_DEFAULT[input.mode];
+            : input.mode === "h3-glass-type-mg" && glassTypeMgScheme
+              ? H3_GLASS_TYPE_MG_SCHEME_STILL[glassTypeMgScheme]
+              : input.mode === "h3-design-studio-mg" && designStudioMgScheme
+                ? H3_DESIGN_STUDIO_MG_SCHEME_STILL[designStudioMgScheme]
+                : H3_STILL_DEFAULT[input.mode];
   const subject = named
     ? `${named}${input.conceptMode ? " logo or mascot" : ""}`
     : input.conceptMode
@@ -1366,6 +1711,32 @@ export function buildH3ShotRecipeStillPrompt(input: H3ShotPromptInput): string {
         "Triangle-light brand MG still — dark void + glass triangles + caustic light; the uploaded mark IS the hero.",
         "Not a packshot orbit, not lifestyle, not bright glass-UI logo card. Keep mark locked; no competitor brands.",
         "Ready for kinetic title + brand-lock animation as @Image1.",
+      ].join(" ");
+    }
+    case "h3-glass-type-mg": {
+      const schemeNote =
+        glassTypeMgScheme === "type-parade"
+          ? "Bright studio: thick translucent rainbow glass 3D letters spelling the brand wordmark in isometric line, tiny colorful diorama objects inside each letter."
+          : "Bright off-white matte studio: soft debossed brand mark on a textured plane, translucent blue 3D cursor mid-click with concentric ripples.";
+      return [
+        ...shared,
+        schemeNote,
+        "Transparent 3D commercial type still — bright studio glass letters (not dark triangle-light void).",
+        "Keep uploaded mark / brand letters locked; no competitor brands; no subtitle bars.",
+        "Ready for transparent glass-type kinetic animation as @Image1.",
+      ].join(" ");
+    }
+    case "h3-design-studio-mg": {
+      const schemeNote =
+        designStudioMgScheme === "brand-desk"
+          ? "Bright design studio desk: iridescent orange-to-purple glass brand wordmark with frosted UI panels and chrome sphere accents."
+          : "Bright drafting table: translucent orange-to-purple glass pillow form + blue 3D cursor on a technical mat, ready to morph into a brand letter.";
+      return [
+        ...shared,
+        schemeNote,
+        "Design-studio glass brand still — drafting desk / showreel energy (not dark triangle-light, not pure type-rise).",
+        "Keep uploaded mark / brand letters locked; no competitor brands; no subtitle bars.",
+        "Ready for design-studio kinetic animation as @Image1.",
       ].join(" ");
     }
     case "h3-movie-title":

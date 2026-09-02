@@ -22,6 +22,7 @@ export type VideoGenerationKind =
   | "vacuum-inflate"
   | "creative-motion"
   | "hand-throw-scene"
+  | "web-boundary-break"
   | "product-explode"
   | "bullet-product-elevate"
   | "ecom-orbit"
@@ -37,6 +38,8 @@ export type VideoGenerationKind =
   | "h3-sphere-mg"
   | "h3-logo-mg"
   | "h3-triangle-light-mg"
+  | "h3-glass-type-mg"
+  | "h3-design-studio-mg"
   | "h3-movie-title"
   | "h3-lifestyle"
   | "image-to-video";
@@ -82,6 +85,9 @@ export function resolveVideoGenerationKind(
   }
   if (input.videoCreativeMode === "hand-throw-scene") {
     return "hand-throw-scene";
+  }
+  if (input.videoCreativeMode === "web-boundary-break") {
+    return "web-boundary-break";
   }
   if (input.videoCreativeMode === "product-explode") {
     return "product-explode";

@@ -445,7 +445,6 @@ export function ContentResearchPanel({
         <div className={violet ? "grid grid-cols-2 gap-2.5 sm:grid-cols-3" : "flex flex-wrap gap-2"}>
           {researchPlatforms.map((p) => {
             const on = platform === p;
-            const preferred = p === "xiaohongshu" || p === "instagram";
             if (violet) {
               return (
                 <button
@@ -456,9 +455,7 @@ export function ContentResearchPanel({
                   className={`relative flex min-h-[3.25rem] min-w-0 items-center gap-2.5 rounded-xl border px-3.5 py-3 text-left transition ${
                     on
                       ? "border-violet-600 bg-violet-50 shadow-[0_0_0_1px_rgba(108,59,255,0.12)]"
-                      : preferred
-                        ? "border-violet-200/90 bg-white hover:border-violet-300"
-                        : "border-slate-200/90 bg-white hover:border-slate-300"
+                      : "border-slate-200/90 bg-white hover:border-slate-300"
                   }`}
                 >
                   <ResearchPlatformLogo platform={p} className="h-7 w-7 shrink-0" />
@@ -470,11 +467,6 @@ export function ContentResearchPanel({
                     >
                       {cr.platforms[p]}
                     </span>
-                    {preferred ? (
-                      <span className="mt-0.5 block text-[10px] font-semibold uppercase tracking-wide text-violet-600">
-                        {cr.platformPreferredBadge}
-                      </span>
-                    ) : null}
                   </span>
                   <span
                     className={`flex h-5 w-5 shrink-0 items-center justify-center border ${
@@ -506,15 +498,6 @@ export function ContentResearchPanel({
               >
                 <ResearchPlatformLogo platform={p} className="h-4 w-4" />
                 {cr.platforms[p]}
-                {preferred ? (
-                  <span
-                    className={`rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide ${
-                      on ? "bg-white/20 text-white" : "bg-violet-100 text-violet-700"
-                    }`}
-                  >
-                    {cr.platformPreferredBadge}
-                  </span>
-                ) : null}
               </button>
             );
           })}

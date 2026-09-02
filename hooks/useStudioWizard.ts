@@ -172,6 +172,16 @@ import {
 	buildHandThrowSceneVideoPrompt,
 } from "@/lib/hand-throw-scene";
 import {
+	WEB_BOUNDARY_BREAK_DURATION_SEC,
+	WEB_BOUNDARY_BREAK_NEGATIVE,
+	buildWebBoundaryBreakVideoPrompt,
+	clampWebBoundaryBreakDurationSec,
+	parseWebBoundaryBreakSchemePick,
+	resolveWebBoundaryBreakScheme,
+	type WebBoundaryBreakSchemeId,
+	type WebBoundaryBreakSchemePick,
+} from "@/lib/web-boundary-break";
+import {
 	PRODUCT_EXPLODE_DURATION_SEC,
 	buildProductExplodeVideoPrompt,
 } from "@/lib/product-explode";
@@ -253,12 +263,18 @@ import {
 	parseH3SphereMgSchemePick,
 	parseH3LogoMgSchemePick,
 	parseH3TriangleLightMgSchemePick,
+	parseH3GlassTypeMgSchemePick,
+	parseH3DesignStudioMgSchemePick,
 	resolveH3ShotStillAspectRatio,
 	resolveH3ShowreelScheme,
 	resolveH3SphereMgScheme,
 	resolveH3LogoMgScheme,
 	resolveH3TriangleLightMgScheme,
+	resolveH3GlassTypeMgScheme,
+	resolveH3DesignStudioMgScheme,
 	clampTriangleLightMgDurationSec,
+	clampGlassTypeMgDurationSec,
+	clampDesignStudioMgDurationSec,
 	type FoodBulletArc,
 	type H3ShotRecipeMode,
 	type H3ShowreelAspect,
@@ -266,11 +282,15 @@ import {
 	type H3SphereMgSchemePick,
 	type H3LogoMgSchemePick,
 	type H3TriangleLightMgSchemePick,
+	type H3GlassTypeMgSchemePick,
+	type H3DesignStudioMgSchemePick,
 	type MacroSnapIntensity,
 	H3_SHOWREEL_NEGATIVE,
 	H3_MOVIE_TITLE_NEGATIVE,
 	H3_LOGO_MG_NEGATIVE,
 	H3_TRIANGLE_LIGHT_MG_NEGATIVE,
+	H3_GLASS_TYPE_MG_NEGATIVE,
+	H3_DESIGN_STUDIO_MG_NEGATIVE,
 } from "@/lib/h3-shot-recipes";
 import { h3ShotRecipeInputsReady, identityRecipeHeroReady, isIdentityVideoRecipeMode } from "@/lib/recipe-path-ux";
 import {
@@ -879,6 +899,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		useState<H3LogoMgSchemePick>("auto");
 	const [h3TriangleLightMgSchemePick, setH3TriangleLightMgSchemePick] =
 		useState<H3TriangleLightMgSchemePick>("auto");
+	const [h3GlassTypeMgSchemePick, setH3GlassTypeMgSchemePick] =
+		useState<H3GlassTypeMgSchemePick>("auto");
+	const [h3DesignStudioMgSchemePick, setH3DesignStudioMgSchemePick] =
+		useState<H3DesignStudioMgSchemePick>("auto");
 	const socialDripStillUrlRef = useRef<string | null>(null);
 	const socialDripEndUrlRef = useRef<string | null>(null);
 	const socialDripPlanRef = useRef<SocialDripPlan | null>(null);
@@ -952,6 +976,16 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 	const creativeMotionEndUrlRef = useRef<string | null>(null);
 	const handThrowStillUrlRef = useRef<string | null>(null);
 	const handThrowEndUrlRef = useRef<string | null>(null);
+	const webBoundaryStillUrlRef = useRef<string | null>(null);
+	const webBoundaryEndUrlRef = useRef<string | null>(null);
+	const lastWebBoundarySchemeRef = useRef<WebBoundaryBreakSchemeId | null>(
+		null,
+	);
+	const [webBoundarySchemePick, setWebBoundarySchemePickState] =
+		useState<WebBoundaryBreakSchemePick>("auto");
+	function setWebBoundarySchemePick(next: WebBoundaryBreakSchemePick) {
+		setWebBoundarySchemePickState(parseWebBoundaryBreakSchemePick(next));
+	}
 	const productExplodeStillUrlRef = useRef<string | null>(null);
 	const productExplodeEndUrlRef = useRef<string | null>(null);
 	const bulletElevateStillUrlRef = useRef<string | null>(null);
@@ -4265,6 +4299,20 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					videoEngine: "minimax-h3",
 				};
 			});
+		} else if (mode === "web-boundary-break") {
+			setVideoSettings((s: VideoSettings) => {
+				const allowed = new Set(["8", "10"]);
+				const nextDur = allowed.has(String(s.duration))
+					? (String(s.duration) as "8" | "10")
+					: String(WEB_BOUNDARY_BREAK_DURATION_SEC);
+				return {
+					...s,
+					duration: nextDur as VideoSettings["duration"],
+					autoSecondFrame: false,
+					motionStyle: "slow-push",
+					videoEngine: "minimax-h3",
+				};
+			});
 		} else if (
 			mode === "vacuum-inflate" ||
 			mode === "creative-motion" ||
@@ -4415,6 +4463,14 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			hasConceptHero: hasConceptHeroLock,
 		});
 
+	const webBoundaryCanAutoStill =
+		videoCreativeMode === "web-boundary-break" &&
+		identityRecipeHeroReady({
+			promotionMode,
+			hasProductPhoto: hasProductPhotoLock,
+			hasConceptHero: hasConceptHeroLock,
+		});
+
 	const productExplodeCanAutoStill =
 		videoCreativeMode === "product-explode" &&
 		identityRecipeHeroReady({
@@ -4440,6 +4496,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		vacuumInflateCanAutoStill ||
 		creativeMotionCanAutoStill ||
 		handThrowCanAutoStill ||
+		webBoundaryCanAutoStill ||
 		productExplodeCanAutoStill ||
 		bulletElevateCanAutoStill;
 
@@ -4450,6 +4507,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		}
 		if (videoCreativeMode === "hand-throw-scene") {
 			return m.wizard.handThrowNeedKeyframe;
+		}
+		if (videoCreativeMode === "web-boundary-break") {
+			return m.wizard.webBoundaryNeedKeyframe;
 		}
 		if (videoCreativeMode === "product-explode") {
 			return m.wizard.productExplodeNeedKeyframe;
@@ -7550,6 +7610,30 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 							conceptMode: promotionMode === "concept",
 						})
 					: undefined;
+			const glassTypeMgScheme =
+				mode === "h3-glass-type-mg"
+					? resolveH3GlassTypeMgScheme({
+							pick: parseH3GlassTypeMgSchemePick(
+								h3GlassTypeMgSchemePick,
+							),
+							product: product.trim() || conceptIdea.trim(),
+							headline: headline.trim(),
+							conceptIdea: conceptIdea.trim(),
+							conceptMode: promotionMode === "concept",
+						})
+					: undefined;
+			const designStudioMgScheme =
+				mode === "h3-design-studio-mg"
+					? resolveH3DesignStudioMgScheme({
+							pick: parseH3DesignStudioMgSchemePick(
+								h3DesignStudioMgSchemePick,
+							),
+							product: product.trim() || conceptIdea.trim(),
+							headline: headline.trim(),
+							conceptIdea: conceptIdea.trim(),
+							conceptMode: promotionMode === "concept",
+						})
+					: undefined;
 			const fd = new FormData();
 			fd.set(
 				"prompt",
@@ -7567,6 +7651,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					sphereMgScheme,
 					logoMgScheme,
 					triangleLightMgScheme,
+					glassTypeMgScheme,
+					designStudioMgScheme,
 				}),
 			);
 			fd.set("visual_style", visualStyleId);
@@ -7644,7 +7730,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		const showreelAspect =
 			mode === "h3-showreel"
 				? parseH3ShowreelAspect(h3ShowreelAspect)
-				: mode === "h3-logo-mg" || mode === "h3-triangle-light-mg"
+				: mode === "h3-logo-mg" ||
+					  mode === "h3-triangle-light-mg" ||
+					  mode === "h3-glass-type-mg" ||
+					  mode === "h3-design-studio-mg"
 					? "16:9"
 					: "9:16";
 		const showreelScheme =
@@ -7689,12 +7778,40 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 						conceptMode: promotionMode === "concept",
 					})
 				: undefined;
+		const glassTypeMgScheme =
+			mode === "h3-glass-type-mg"
+				? resolveH3GlassTypeMgScheme({
+						pick: parseH3GlassTypeMgSchemePick(
+							h3GlassTypeMgSchemePick,
+						),
+						product: product.trim() || conceptIdea.trim(),
+						headline: headline.trim(),
+						conceptIdea: conceptIdea.trim(),
+						conceptMode: promotionMode === "concept",
+					})
+				: undefined;
+		const designStudioMgScheme =
+			mode === "h3-design-studio-mg"
+				? resolveH3DesignStudioMgScheme({
+						pick: parseH3DesignStudioMgSchemePick(
+							h3DesignStudioMgSchemePick,
+						),
+						product: product.trim() || conceptIdea.trim(),
+						headline: headline.trim(),
+						conceptIdea: conceptIdea.trim(),
+						conceptMode: promotionMode === "concept",
+					})
+				: undefined;
 		const durationSec =
 			mode === "food-bullet-time"
 				? foodBulletDurationSec(foodBulletArc)
 				: mode === "h3-triangle-light-mg"
 					? clampTriangleLightMgDurationSec(videoSettings.duration)
-					: H3_SHOT_RECIPE_DURATION_SEC[mode];
+					: mode === "h3-glass-type-mg"
+						? clampGlassTypeMgDurationSec(videoSettings.duration)
+						: mode === "h3-design-studio-mg"
+							? clampDesignStudioMgDurationSec(videoSettings.duration)
+							: H3_SHOT_RECIPE_DURATION_SEC[mode];
 		const prompt = buildH3ShotRecipePrompt({
 			mode,
 			conceptMode: promotionMode === "concept",
@@ -7711,6 +7828,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			sphereMgScheme,
 			logoMgScheme,
 			triangleLightMgScheme,
+			glassTypeMgScheme,
+			designStudioMgScheme,
 			durationSec,
 		});
 		setVideoPrompt(prompt);
@@ -7735,7 +7854,11 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 						? H3_LOGO_MG_NEGATIVE
 						: mode === "h3-triangle-light-mg"
 							? H3_TRIANGLE_LIGHT_MG_NEGATIVE
-							: H3_SHOT_RECIPE_NEGATIVE,
+							: mode === "h3-glass-type-mg"
+								? H3_GLASS_TYPE_MG_NEGATIVE
+								: mode === "h3-design-studio-mg"
+									? H3_DESIGN_STUDIO_MG_NEGATIVE
+									: H3_SHOT_RECIPE_NEGATIVE,
 		);
 		fd.set(
 			"avoid_on_screen_text",
@@ -9216,6 +9339,191 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		return fx.videoUrl;
 	}
 
+	async function generateWebBoundaryBreakKeyframe(
+		scheme: WebBoundaryBreakSchemeId,
+		frame: "start" | "end",
+		startPlateUrl?: string,
+	): Promise<string> {
+		setVideoNote(
+			frame === "end"
+				? m.wizard.webBoundaryBuildingEnd
+				: m.wizard.webBoundaryBuildingStill,
+		);
+		setImageJobMeta({
+			kind: "image",
+			startedAt: Date.now(),
+			sceneCount: 1,
+		});
+		try {
+			const fd = new FormData();
+			fd.set("visual_style", visualStyleId);
+			fd.set("art_style", artStyleId);
+			if (brandProfile)
+				fd.set("brand_profile", JSON.stringify(brandProfile));
+			fd.set("brand_kit", JSON.stringify(brandKit));
+			fd.set(
+				"product_name",
+				promotionMode === "concept"
+					? effectivePromoteName ||
+							product.trim() ||
+							conceptIdea.trim()
+					: product.trim(),
+			);
+			fd.set("business", business.trim());
+			fd.set(
+				"headline",
+				headline.trim() || product.trim() || conceptIdea.trim(),
+			);
+			fd.set("subline", subline.trim());
+			fd.set("offer", offer.trim());
+			fd.set("prompt_market", promptMarket);
+			fd.set("subject_framing", subjectFraming);
+			fd.set("prompt_extra", effectivePromptExtra());
+			fd.set("workflow_mode", workflowMode);
+			fd.set("promotion_mode", promotionMode);
+			fd.set("image_text_mode", "textless");
+			fd.set("aspect_ratio", "3:4");
+			fd.set("num_images", "1");
+			fd.set("image_output_mode", "single");
+			fd.set("web_boundary_break", "1");
+			fd.set("web_boundary_break_frame", frame);
+			fd.set("web_boundary_break_scheme", scheme);
+			if (frame === "end" && startPlateUrl)
+				fd.set("start_plate_url", startPlateUrl);
+			await bindIdentityHeroToKeyframeForm(
+				fd,
+				m.wizard.webBoundaryNeedKeyframe,
+			);
+
+			const res = await fetch("/api/generate-image", {
+				method: "POST",
+				body: fd,
+			});
+			const data = await readGenerateJson(res);
+			if (!res.ok)
+				throw new Error(
+					(data.error as string) || m.errors.polishFailed,
+				);
+			notifyCreditBalance(readCreditBalanceFromResponse(data));
+			const urls = (data.imageUrls as string[] | undefined) ?? [
+				data.imageUrl as string,
+			];
+			const applied = applyGeneratedImages(
+				urls,
+				data.endpoint as string | undefined,
+			);
+			if (!applied) throw new Error(m.errors.imageGenNoUrl);
+			return applied;
+		} finally {
+			setImageJobMeta(null);
+		}
+	}
+
+	async function makeWebBoundaryBreakVideo(): Promise<string> {
+		const scheme = resolveWebBoundaryBreakScheme({
+			pick: parseWebBoundaryBreakSchemePick(webBoundarySchemePick),
+			product,
+			headline,
+			conceptIdea,
+		});
+		lastWebBoundarySchemeRef.current = scheme;
+		webBoundaryStillUrlRef.current = null;
+		webBoundaryEndUrlRef.current = null;
+		if (
+			!identityRecipeHeroReady({
+				promotionMode,
+				hasProductPhoto: hasProductPhotoLock,
+				hasConceptHero: hasConceptHeroLock,
+			})
+		) {
+			throw new Error(m.wizard.webBoundaryNeedKeyframe);
+		}
+		const startUrl = await generateWebBoundaryBreakKeyframe(scheme, "start");
+		webBoundaryStillUrlRef.current = startUrl;
+		const endUrl = await generateWebBoundaryBreakKeyframe(
+			scheme,
+			"end",
+			startUrl,
+		);
+		webBoundaryEndUrlRef.current = endUrl;
+		const pair = [startUrl, endUrl].filter(Boolean);
+		if (pair.length) {
+			setImageVariantUrls(pair);
+			setSelectedVariantIndex(0);
+			setImageUrl(startUrl);
+			imageUrlRef.current = startUrl;
+		}
+		const schemeLabel =
+			m.wizard.webBoundarySchemes[scheme]?.title ?? scheme;
+		setVideoNote(
+			`${m.wizard.webBoundaryAnimatingCard} · ${schemeLabel}`,
+		);
+		const subject =
+			promotionMode === "concept"
+				? effectivePromoteName ||
+					product.trim() ||
+					conceptIdea.trim() ||
+					business.trim()
+				: product.trim() || business.trim();
+		const durationSec = clampWebBoundaryBreakDurationSec(
+			videoSettings.duration,
+		);
+		const fxPrompt = buildWebBoundaryBreakVideoPrompt({
+			scheme,
+			product: subject || "the product",
+			conceptMode: promotionMode === "concept",
+			durationSec,
+		});
+		if (videoPrompt.trim() !== fxPrompt) setVideoPrompt(fxPrompt);
+
+		const fd = new FormData();
+		fd.set("mode", "image");
+		fd.set("promotion_mode", promotionMode);
+		fd.set("prompt", seedancePromptForGenerate(fxPrompt));
+		fd.set("resolution", "480p");
+		fd.set("duration", String(durationSec));
+		fd.set("aspect_ratio", "9:16");
+		fd.set("motion_strength", "72");
+		fd.set(
+			"negative_prompt",
+			`${negativePrompt}, ${WEB_BOUNDARY_BREAK_NEGATIVE}`,
+		);
+		fd.set("avoid_on_screen_text", "true");
+		fd.set("web_boundary_break", "1");
+		fd.set("web_boundary_break_scheme", scheme);
+		fd.set("product_name", subject);
+		fd.set("business", business.trim());
+		fd.set("image_start_url", startUrl);
+		fd.set("image_end_url", endUrl);
+
+		const fx = await generateStartEndFxVideo({
+			fd,
+			recipeDurationSec: durationSec,
+		});
+		const pathNote = wizardVideoReadyExtraNote(fx.data);
+		const h3Reason =
+			typeof fx.data.h3FallbackReason === "string"
+				? fx.data.h3FallbackReason
+				: "";
+		setVideoNote(
+			[
+				m.wizard.webBoundaryHint,
+				schemeLabel,
+				fx.usedSeedanceFallback
+					? [m.wizard.h3ToSeedanceFallbackNote, h3Reason]
+							.filter(Boolean)
+							.join(" — ")
+					: m.wizard.videoEngineMinimaxH3,
+				pathNote,
+				typeof fx.data.note === "string" ? fx.data.note : undefined,
+			]
+				.filter(Boolean)
+				.join(" · "),
+		);
+		return fx.videoUrl;
+	}
+
+
 	async function generateProductExplodeKeyframe(
 		frame: "start" | "end",
 		startPlateUrl?: string,
@@ -10506,6 +10814,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					generationKind === "vacuum-inflate" ||
 					generationKind === "creative-motion" ||
 					generationKind === "hand-throw-scene" ||
+					generationKind === "web-boundary-break" ||
 					generationKind === "product-explode" ||
 					generationKind === "bullet-product-elevate";
 				const willGenerateStills = dualFrameRecipe
@@ -10594,6 +10903,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				case "h3-sphere-mg":
 				case "h3-logo-mg":
 				case "h3-triangle-light-mg":
+				case "h3-glass-type-mg":
+				case "h3-design-studio-mg":
 				case "h3-movie-title":
 				case "h3-lifestyle":
 					url = await makeH3ShotRecipeVideo(
@@ -10611,6 +10922,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					break;
 				case "hand-throw-scene":
 					url = await makeHandThrowSceneVideo();
+					break;
+				case "web-boundary-break":
+					url = await makeWebBoundaryBreakVideo();
 					break;
 				case "product-explode":
 					url = await makeProductExplodeVideo();
@@ -10973,6 +11287,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			!vacuumInflateCanAutoStill &&
 			!creativeMotionCanAutoStill &&
 			!handThrowCanAutoStill &&
+			!webBoundaryCanAutoStill &&
 			!productExplodeCanAutoStill &&
 			!blockbusterCanGenerate &&
 			!h3ShotRecipeCanGenerate) ||
@@ -11071,6 +11386,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				? m.wizard.vacuumInflateNeedKeyframe
 				: videoCreativeMode === "hand-throw-scene"
 					? m.wizard.handThrowNeedKeyframe
+					: videoCreativeMode === "web-boundary-break"
+						? m.wizard.webBoundaryNeedKeyframe
 					: videoCreativeMode === "product-explode"
 						? m.wizard.productExplodeNeedKeyframe
 						: videoCreativeMode === "bullet-product-elevate"
@@ -11881,6 +12198,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		setH3LogoMgSchemePick,
 		h3TriangleLightMgSchemePick,
 		setH3TriangleLightMgSchemePick,
+		h3GlassTypeMgSchemePick,
+		setH3GlassTypeMgSchemePick,
+		h3DesignStudioMgSchemePick,
+		setH3DesignStudioMgSchemePick,
 		socialDripMetaphorPick,
 		setSocialDripMetaphorPick,
 		socialDripPlanNote,
@@ -11906,6 +12227,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		setBlockbusterEndLogo,
 		blockbusterHeroHold,
 		setBlockbusterHeroHold,
+		webBoundarySchemePick,
+		setWebBoundarySchemePick,
 		creativeMotionSchemePick,
 		setCreativeMotionSchemePick,
 		impactPosterTonePick,

@@ -637,6 +637,8 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
                 ? "creative_motion"
                 : wizard.videoCreativeMode === "hand-throw-scene"
                 ? "hand_throw_scene"
+                : wizard.videoCreativeMode === "web-boundary-break"
+                ? "web_boundary_break"
                 : wizard.videoCreativeMode === "product-explode"
                 ? "product_explode"
                 : wizard.videoCreativeMode === "bullet-product-elevate"
@@ -661,6 +663,7 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
               subpath === "vacuum_inflate" ||
               subpath === "creative_motion" ||
               subpath === "hand_throw_scene" ||
+              subpath === "web_boundary_break" ||
               subpath === "product_explode" ||
               subpath === "bullet_product_elevate" ||
               subpath === "explosion_unbox" ||
@@ -683,6 +686,8 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
               wizard.onVideoCreativeModeChange("creative-motion");
             } else if (subpath === "hand_throw_scene") {
               wizard.onVideoCreativeModeChange("hand-throw-scene");
+            } else if (subpath === "web_boundary_break") {
+              wizard.onVideoCreativeModeChange("web-boundary-break");
             } else if (subpath === "product_explode") {
               wizard.onVideoCreativeModeChange("product-explode");
             } else if (subpath === "bullet_product_elevate") {

@@ -29,6 +29,7 @@ export const LANDING_RECIPE_IDS = [
   "product-vacuum-inflate-4s",
   "product-creative-motion-4s",
   "product-hand-throw-scene-6s",
+  "product-web-boundary-break-10s",
   "product-product-explode-4s",
   "product-bullet-elevate-10s",
   "product-ecom-orbit-6s",
@@ -44,6 +45,8 @@ export const LANDING_RECIPE_IDS = [
   "product-h3-sphere-mg-8s",
   "product-h3-logo-mg-8s",
   "product-h3-triangle-light-mg-10s",
+  "product-h3-glass-type-mg-12s",
+  "product-h3-design-studio-mg-12s",
   "product-h3-movie-title-8s",
   "product-h3-lifestyle-8s",
   "product-gaming-cover",
@@ -59,6 +62,7 @@ export const LANDING_RECIPE_IDS = [
   "concept-vacuum-inflate-4s",
   "concept-creative-motion-4s",
   "concept-hand-throw-scene-6s",
+  "concept-web-boundary-break-10s",
   "concept-product-explode-4s",
   "concept-bullet-elevate-10s",
   "concept-beauty-mv-10s",
@@ -69,6 +73,8 @@ export const LANDING_RECIPE_IDS = [
   "concept-h3-sphere-mg-8s",
   "concept-h3-logo-mg-8s",
   "concept-h3-triangle-light-mg-10s",
+  "concept-h3-glass-type-mg-12s",
+  "concept-h3-design-studio-mg-12s",
   "concept-h3-movie-title-8s",
   "concept-gaming-cover",
   "concept-sports-big-words",
@@ -277,6 +283,15 @@ export const LANDING_RECIPES: Record<LandingRecipeId, LandingRecipeDef> = {
     videoCreativeMode: "hand-throw-scene",
     duration: "6",
   },
+  "product-web-boundary-break-10s": {
+    id: "product-web-boundary-break-10s",
+    previewSrc: videoModeRecipePreview("web-boundary-break"),
+    promotionMode: "physical",
+    workflowMode: "video-only",
+    visualStyleId: "product",
+    videoCreativeMode: "web-boundary-break",
+    duration: "10",
+  },
   "product-product-explode-4s": {
     id: "product-product-explode-4s",
     previewSrc: videoModeRecipePreview("product-explode"),
@@ -339,6 +354,16 @@ export const LANDING_RECIPES: Record<LandingRecipeId, LandingRecipeDef> = {
     "product-h3-triangle-light-mg-10s",
     "h3-triangle-light-mg",
     "10",
+  ),
+  "product-h3-glass-type-mg-12s": h3ProductRecipe(
+    "product-h3-glass-type-mg-12s",
+    "h3-glass-type-mg",
+    "12",
+  ),
+  "product-h3-design-studio-mg-12s": h3ProductRecipe(
+    "product-h3-design-studio-mg-12s",
+    "h3-design-studio-mg",
+    "12",
   ),
   "product-h3-movie-title-8s": h3ProductRecipe(
     "product-h3-movie-title-8s",
@@ -450,6 +475,15 @@ export const LANDING_RECIPES: Record<LandingRecipeId, LandingRecipeDef> = {
     videoCreativeMode: "hand-throw-scene",
     duration: "6",
   },
+  "concept-web-boundary-break-10s": {
+    id: "concept-web-boundary-break-10s",
+    previewSrc: videoModeRecipePreview("web-boundary-break"),
+    promotionMode: "concept",
+    workflowMode: "video-only",
+    visualStyleId: "service-promo",
+    videoCreativeMode: "web-boundary-break",
+    duration: "10",
+  },
   "concept-product-explode-4s": {
     id: "concept-product-explode-4s",
     previewSrc: videoModeRecipePreview("product-explode"),
@@ -499,6 +533,16 @@ export const LANDING_RECIPES: Record<LandingRecipeId, LandingRecipeDef> = {
     "concept-h3-triangle-light-mg-10s",
     "h3-triangle-light-mg",
     "10",
+  ),
+  "concept-h3-glass-type-mg-12s": h3ConceptRecipe(
+    "concept-h3-glass-type-mg-12s",
+    "h3-glass-type-mg",
+    "12",
+  ),
+  "concept-h3-design-studio-mg-12s": h3ConceptRecipe(
+    "concept-h3-design-studio-mg-12s",
+    "h3-design-studio-mg",
+    "12",
   ),
   "concept-h3-movie-title-8s": h3ConceptRecipe(
     "concept-h3-movie-title-8s",
@@ -625,6 +669,7 @@ export function microContextForLandingRecipe(
     LANDING_RECIPES[recipe].videoCreativeMode === "vacuum-inflate" ||
     LANDING_RECIPES[recipe].videoCreativeMode === "creative-motion" ||
     LANDING_RECIPES[recipe].videoCreativeMode === "hand-throw-scene" ||
+    LANDING_RECIPES[recipe].videoCreativeMode === "web-boundary-break" ||
     LANDING_RECIPES[recipe].videoCreativeMode === "product-explode" ||
     LANDING_RECIPES[recipe].videoCreativeMode === "bullet-product-elevate"
   ) {
@@ -636,6 +681,8 @@ export function microContextForLandingRecipe(
           ? "creative_motion"
           : mode === "hand-throw-scene"
             ? "hand_throw_scene"
+            : mode === "web-boundary-break"
+              ? "web_boundary_break"
             : mode === "bullet-product-elevate"
               ? "bullet_product_elevate"
             : "product_explode";

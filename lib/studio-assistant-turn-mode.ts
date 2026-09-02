@@ -25,8 +25,8 @@ export function detectAssistantTurnMode(
 
   const wantsGuide =
     GUIDE_START.test(t) ||
-    /how (do i|to) (make|create|start|open|use|generate)/i.test(t) ||
-    /點(樣|樣可以)?(出|做|開始|開)/.test(t);
+    /how (can i|do i|to) (make|create|start|open|use|generate)/i.test(t) ||
+    /點(樣|样可以)?(出|做|開始|开|開)/.test(t);
   const wantsAsk = ASK_STRONG.test(t) || ASK_TOPIC.test(t) || /[?？]/.test(t);
 
   if (

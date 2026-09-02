@@ -26,7 +26,8 @@ import type { StudioAssistantIntent } from "@/lib/studio-assistant-intent";
 import { enforceLandingCoachAction } from "@/lib/studio-assistant-enforce-coach";
 import { extractUrlFromMessages } from "@/lib/studio-assistant-url";
 import { requireAppUser } from "@/lib/require-app-user";
-import { assertFreeDeepSeekQuota } from "@/lib/rate-limit-deepseek";
+import { assertAnonymousDeepSeekQuota, assertFreeDeepSeekQuota } from "@/lib/rate-limit-deepseek";
+import { clientKeyFromRequest } from "@/lib/request-client-key";
 import { isAssistantSurface } from "@/lib/studio-assistant-surface";
 import type {
   AssistantSurface,
@@ -84,6 +85,14 @@ function finalizeAssistantReply(
     userWritesEnglish(lastUserContent),
   );
   return { reply: out, coachTask };
+}
+
+function anonymousQuotaKey(request: Request): string {
+  const key = clientKeyFromRequest(request);
+  if (key === "anon:unknown" && process.env.NODE_ENV === "development") {
+    return "anon:dev-local";
+  }
+  return key;
 }
 
 const MAX_MESSAGES = 14;
@@ -305,23 +314,12 @@ export async function POST(request: Request) {
   }
 
   if (!userId) {
-    const anonReply =
-      locale === "en"
-        ? "Sign in for open-ended Q&A (tokens, pricing, engines). Quick routes still work — try “help me make a product reel”, “explosion unbox video”, or tap a chip above."
-        : locale === "zh-cn"
-          ? "登录后可问额度、方案和引擎等开放问题。快捷路径仍可用 — 试试「帮我出产品短片」「爆炸开箱视频」，或点上方按钮。"
-          : locale === "zh-tw"
-            ? "登入後可問額度、方案和引擎等開放問題。快捷路徑仍可用 — 試試「幫我出產品短片」「爆炸開箱影片」，或點上方按鈕。"
-            : "登入後可問額度、方案同引擎等開放問題。快捷路徑仍可用 — 試「幫我出產品 Reel」「爆炸開箱片」，或撳上面掣。";
-    return NextResponse.json({
-      success: true,
-      reply: anonReply,
-      meta: { ...meta, fastPath: true, anonAskBlocked: true },
-    });
+    const quota = await assertAnonymousDeepSeekQuota(anonymousQuotaKey(request));
+    if (!quota.ok) return quota.response;
+  } else {
+    const quota = await assertFreeDeepSeekQuota(userId);
+    if (!quota.ok) return quota.response;
   }
-
-  const quota = await assertFreeDeepSeekQuota(userId);
-  if (!quota.ok) return quota.response;
 
   const sitePreview = detectedUrl ? await loadSitePreview(detectedUrl) : "";
   const knowledgeChunks = retrieveAssistantKnowledge(lastUser.content, {

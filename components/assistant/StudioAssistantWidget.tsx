@@ -453,15 +453,17 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
         }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
       if (res.status === 401) {
         throw new Error("unauthorized");
       }
       if (res.status === 429) {
         throw new Error("quota_exceeded");
       }
-      if (!data.success) {
-        throw new Error(data.error || "request failed");
+      if (!data?.success) {
+        throw new Error(
+          typeof data?.error === "string" ? data.error : "request failed",
+        );
       }
 
       const detected = data.meta?.detectedUrl;

@@ -134,6 +134,7 @@ describe("bullet-product-elevate recipe", () => {
         "vacuum-inflate": { title: "VI", description: "d" },
         "creative-motion": { title: "CM", description: "d" },
         "hand-throw-scene": { title: "HT", description: "d" },
+        "web-boundary-break": { title: "WB", description: "d" },
         "product-explode": { title: "PE", description: "d" },
         "bullet-product-elevate": {
           title: "Bullet elevate",
@@ -151,8 +152,9 @@ describe("bullet-product-elevate recipe", () => {
         "c4d-motion": { title: "C4", description: "d" },
         "h3-showreel": { title: "SR", description: "d" },
         "h3-sphere-mg": { title: "SP", description: "d" },
+        "h3-glass-type-mg": { title: "Glass type", description: "GT" },
+    "h3-design-studio-mg": { title: "Design studio", description: "DS" },
         "h3-triangle-light-mg": { title: "Triangle light", description: "TL" },
-        "h3-triangle-light-mg": { title: "TL", description: "d" },
         "h3-logo-mg": { title: "LM", description: "d" },
         "h3-movie-title": { title: "MT", description: "d" },
         "h3-lifestyle": { title: "LS", description: "d" },

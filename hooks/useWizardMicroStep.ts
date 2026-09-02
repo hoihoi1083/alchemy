@@ -410,6 +410,9 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
       wizard.onVideoCreativeModeChange("creative-motion");
       return;
     }
+    if (sub === "web_boundary_break" && wizard.videoCreativeMode !== "web-boundary-break") {
+      wizard.onVideoCreativeModeChange("web-boundary-break");
+    }
     if (sub === "hand_throw_scene" && wizard.videoCreativeMode !== "hand-throw-scene") {
       wizard.onVideoCreativeModeChange("hand-throw-scene");
       return;

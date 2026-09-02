@@ -12,6 +12,7 @@ import {
   estimateVideoTokens,
   TOKEN_COST,
 } from "@/lib/billing/token-costs";
+import { clampWebBoundaryBreakDurationSec } from "@/lib/web-boundary-break";
 
 export function insufficientTokensMessage(need: number, have: number): string {
   return `Not enough tokens. Need ${need}, have ${have}.`;
@@ -86,6 +87,15 @@ export function estimateVideoPipelineTokens(
       return (genStills ? still * 2 : 0) + h3;
     }
 
+    case "web-boundary-break": {
+      const wbDur = clampWebBoundaryBreakDurationSec(opts.durationSec);
+      const h3 = estimateH3Tokens({
+        resolution: opts.resolution,
+        duration: wbDur,
+      });
+      return (genStills ? still * 2 : 0) + h3;
+    }
+
     case "bullet-product-elevate": {
       const elevDur = clampBulletElevateEstimateDurationSec(opts.durationSec);
       const h3 = estimateH3Tokens({
@@ -114,13 +124,18 @@ export function estimateVideoPipelineTokens(
     case "h3-showreel":
     case "h3-sphere-mg":
     case "h3-logo-mg":
-    case "h3-triangle-light-mg": {
+    case "h3-triangle-light-mg":
+    case "h3-glass-type-mg":
+    case "h3-design-studio-mg": {
       const elevDur =
-        opts.kind === "h3-triangle-light-mg"
-          ? opts.durationSec >= 12
+        opts.kind === "h3-glass-type-mg" ||
+        opts.kind === "h3-design-studio-mg"
+          ? opts.durationSec <= 10
+            ? 10
+            : 12
+          : opts.durationSec >= 12
             ? 12
-            : 10
-          : recipeDuration;
+            : 10;
       const h3 = estimateH3Tokens({
         resolution: opts.resolution,
         duration: elevDur,

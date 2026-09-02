@@ -42,6 +42,12 @@ import {
   buildHandThrowSceneStillPrompt,
 } from "@/lib/hand-throw-scene";
 import {
+  buildWebBoundaryBreakStillPrompt,
+  parseWebBoundaryBreakSchemePick,
+  resolveWebBoundaryBreakScheme,
+  type WebBoundaryBreakSchemeId,
+} from "@/lib/web-boundary-break";
+import {
   buildProductExplodeStillPrompt,
 } from "@/lib/product-explode";
 import {
@@ -526,6 +532,11 @@ export async function POST(request: Request) {
         .trim()
         .toLowerCase(),
     );
+    const webBoundaryEarly = ["1", "true", "yes"].includes(
+      String(formData.get("web_boundary_break") ?? "")
+        .trim()
+        .toLowerCase(),
+    );
     const productExplodeEarly = ["1", "true", "yes"].includes(
       String(formData.get("product_explode") ?? "")
         .trim()
@@ -546,6 +557,7 @@ export async function POST(request: Request) {
       !creativeMotionEarly &&
       !impactPosterEarly &&
       !handThrowEarly &&
+      !webBoundaryEarly &&
       !productExplodeEarly &&
       !bulletElevateEarly
     ) {
@@ -721,6 +733,11 @@ export async function POST(request: Request) {
         .trim()
         .toLowerCase(),
     );
+    const webBoundaryBreak = ["1", "true", "yes"].includes(
+      String(formData.get("web_boundary_break") ?? "")
+        .trim()
+        .toLowerCase(),
+    );
     const productExplode = ["1", "true", "yes"].includes(
       String(formData.get("product_explode") ?? "")
         .trim()
@@ -755,6 +772,20 @@ export async function POST(request: Request) {
       String(formData.get("hand_throw_scene_frame") ?? "start").trim() === "end"
         ? "end"
         : "start";
+    const webBoundaryFrame =
+      String(formData.get("web_boundary_break_frame") ?? "start").trim() === "end"
+        ? "end"
+        : "start";
+    webBoundaryScheme: WebBoundaryBreakSchemeId = "hold-through";
+    if (webBoundaryBreak) {
+      webBoundaryScheme = resolveWebBoundaryBreakScheme({
+        pick: parseWebBoundaryBreakSchemePick(
+          formData.get("web_boundary_break_scheme"),
+        ),
+        product: productName,
+        headline,
+      });
+    }
     const productExplodeFrame =
       String(formData.get("product_explode_frame") ?? "start").trim() === "end"
         ? "end"
@@ -830,6 +861,7 @@ export async function POST(request: Request) {
       !vacuumInflate &&
       !creativeMotion &&
       !handThrowScene &&
+      !webBoundaryBreak &&
       !productExplode &&
       !bulletProductElevate &&
       !clientPrompt &&
@@ -934,6 +966,7 @@ export async function POST(request: Request) {
         ((vacuumInflate && vacuumInflateFrame === "end") ||
           (creativeMotion && creativeMotionFrame === "end") ||
           (handThrowScene && handThrowFrame === "end") ||
+          (webBoundaryBreak && webBoundaryFrame === "end") ||
           (productExplode && productExplodeFrame === "end") ||
           (bulletProductElevate && bulletProductElevateFrame === "end")) &&
         startPlateUrl
@@ -1043,6 +1076,17 @@ export async function POST(request: Request) {
             aspectRatio: aspectRatioRaw,
             frame: handThrowFrame,
           })
+        : webBoundaryBreak
+        ? buildWebBoundaryBreakStillPrompt({
+            scheme: webBoundaryScheme,
+            product:
+              productName ||
+              headline ||
+              (promotionMode === "concept" ? "brand beauty product" : "the product"),
+            conceptMode: promotionMode === "concept",
+            aspectRatio: aspectRatioRaw || "3:4",
+            frame: webBoundaryFrame,
+          })
         : productExplode
         ? buildProductExplodeStillPrompt({
             product:
@@ -1104,6 +1148,7 @@ export async function POST(request: Request) {
         vacuumInflate ||
         creativeMotion ||
         handThrowScene ||
+        webBoundaryBreak ||
         productExplode ||
         bulletProductElevate
           ? builtPrompt

@@ -34,6 +34,12 @@ import {  SOCIAL_DRIP_METAPHOR_IDS,
 } from "@/lib/social-drip";
 import { CREATIVE_MOTION_SCHEME_IDS, creativeMotionSchemePreviewSrc } from "@/lib/creative-motion";
 import {
+  WEB_BOUNDARY_BREAK_SCHEME_IDS,
+  webBoundaryBreakDurationOptions,
+  webBoundaryBreakSchemePreviewSrc,
+  type WebBoundaryBreakSchemePick,
+} from "@/lib/web-boundary-break";
+import {
   h3ShotRecipeAcceptsReel,
   h3ShotRecipeNeedsHeroPhoto,
   h3ShotRecipeNeedsLifestyleStill,
@@ -48,11 +54,17 @@ import {
   H3_SPHERE_MG_SCHEME_IDS,
   H3_LOGO_MG_SCHEME_IDS,
   H3_TRIANGLE_LIGHT_MG_SCHEME_IDS,
+  H3_GLASS_TYPE_MG_SCHEME_IDS,
+  H3_DESIGN_STUDIO_MG_SCHEME_IDS,
   h3ShowreelSchemePreviewSrc,
   h3SphereMgSchemePreviewSrc,
   h3LogoMgSchemePreviewSrc,
   h3TriangleLightMgSchemePreviewSrc,
+  h3GlassTypeMgSchemePreviewSrc,
+  h3DesignStudioMgSchemePreviewSrc,
   triangleLightMgDurationOptions,
+  glassTypeMgDurationOptions,
+  designStudioMgDurationOptions,
   type H3ShotRecipeMode,
   type MacroSnapIntensity,
   type FoodBulletArc,
@@ -61,6 +73,8 @@ import {
   type H3SphereMgSchemePick,
   type H3LogoMgSchemePick,
   type H3TriangleLightMgSchemePick,
+  type H3GlassTypeMgSchemePick,
+  type H3DesignStudioMgSchemePick,
 } from "@/lib/h3-shot-recipes";
 import {
   h3ShotModesForPromotion,
@@ -404,6 +418,8 @@ export function PreVideoSetupPanel({
     !scenesReady && wizard.videoCreativeMode === "creative-motion";
   const prefersHandThrow =
     !scenesReady && wizard.videoCreativeMode === "hand-throw-scene";
+  const prefersWebBoundary =
+    !scenesReady && wizard.videoCreativeMode === "web-boundary-break";
   const prefersProductExplode =
     !scenesReady && wizard.videoCreativeMode === "product-explode";
   const prefersBulletElevate =
@@ -429,6 +445,8 @@ export function PreVideoSetupPanel({
       ? "creative_motion"
       : prefersHandThrow
       ? "hand_throw_scene"
+      : prefersWebBoundary
+      ? "web_boundary_break"
       : prefersProductExplode
       ? "product_explode"
       : prefersBulletElevate
@@ -453,6 +471,7 @@ export function PreVideoSetupPanel({
   const isVacuumInflate = !scenesReady && activeSubpath === "vacuum_inflate";
   const isCreativeMotion = !scenesReady && activeSubpath === "creative_motion";
   const isHandThrow = !scenesReady && activeSubpath === "hand_throw_scene";
+  const isWebBoundary = !scenesReady && activeSubpath === "web_boundary_break";
   const isProductExplode = !scenesReady && activeSubpath === "product_explode";
   const isBulletElevate =
     !scenesReady && activeSubpath === "bullet_product_elevate";
@@ -482,6 +501,7 @@ export function PreVideoSetupPanel({
     !isVacuumInflate &&
     !isCreativeMotion &&
     !isHandThrow &&
+    !isWebBoundary &&
     !isProductExplode &&
     !isBulletElevate &&
     !isExplosionUnbox &&
@@ -595,6 +615,9 @@ export function PreVideoSetupPanel({
       onPickVideoSubpath("creative_motion");
       return;
     }
+    if (isWebBoundary && wizard.videoCreativeMode !== "web-boundary-break") {
+      onPickVideoSubpath("web_boundary_break");
+    }
     if (isHandThrow && wizard.videoCreativeMode !== "hand-throw-scene") {
       onPickVideoSubpath("hand_throw_scene");
       return;
@@ -626,6 +649,9 @@ export function PreVideoSetupPanel({
     if (prefersCreativeMotion) {
       onPickVideoSubpath("creative_motion");
       return;
+    }
+    if (prefersWebBoundary) {
+      onPickVideoSubpath("web_boundary_break");
     }
     if (prefersHandThrow) {
       onPickVideoSubpath("hand_throw_scene");
@@ -672,6 +698,7 @@ export function PreVideoSetupPanel({
     prefersVacuumInflate,
     prefersCreativeMotion,
     prefersHandThrow,
+    prefersWebBoundary,
     prefersProductExplode,
     prefersBulletElevate,
     prefersBlockbuster,
@@ -684,6 +711,7 @@ export function PreVideoSetupPanel({
     isVacuumInflate,
     isCreativeMotion,
     isHandThrow,
+    isWebBoundary,
     isProductExplode,
     isBulletElevate,
     activeSubpath,
@@ -925,6 +953,12 @@ export function PreVideoSetupPanel({
       previewSrc: videoModePreviewSrc("hand-throw-scene"),
     },
     {
+      id: "web_boundary_break",
+      title: m.wizard.videoCreativeModes["web-boundary-break"].title,
+      desc: m.wizard.videoCreativeModes["web-boundary-break"].description,
+      previewSrc: videoModePreviewSrc("web-boundary-break"),
+    },
+    {
       id: "product_explode",
       title: m.wizard.videoCreativeModes["product-explode"].title,
       desc: m.wizard.videoCreativeModes["product-explode"].description,
@@ -1006,6 +1040,12 @@ export function PreVideoSetupPanel({
       previewSrc: videoModePreviewSrc("hand-throw-scene"),
     },
     {
+      id: "web_boundary_break",
+      title: m.wizard.videoCreativeModes["web-boundary-break"].title,
+      desc: m.wizard.videoCreativeModes["web-boundary-break"].description,
+      previewSrc: videoModePreviewSrc("web-boundary-break"),
+    },
+    {
       id: "product_explode",
       title: m.wizard.videoCreativeModes["product-explode"].title,
       desc: m.wizard.videoCreativeModes["product-explode"].description,
@@ -1039,6 +1079,7 @@ export function PreVideoSetupPanel({
         if (opt.id === "vacuum_inflate") return isVacuumInflate;
         if (opt.id === "creative_motion") return isCreativeMotion;
         if (opt.id === "hand_throw_scene") return isHandThrow;
+        if (opt.id === "web_boundary_break") return isWebBoundary;
         if (opt.id === "product_explode") return isProductExplode;
         if (opt.id === "bullet_product_elevate") return isBulletElevate;
         if (opt.id === "explosion_unbox") return isExplosionUnbox;
@@ -1061,6 +1102,8 @@ export function PreVideoSetupPanel({
         ? m.wizard.vacuumInflateHint
         : isCreativeMotion
         ? m.wizard.creativeMotionHint
+        : isWebBoundary
+        ? m.wizard.webBoundaryHint
         : isHandThrow
         ? m.wizard.handThrowHint
         : isProductExplode
@@ -1302,6 +1345,8 @@ export function PreVideoSetupPanel({
                           ? isCreativeMotion
                           : opt.id === "hand_throw_scene"
                             ? isHandThrow
+                            : opt.id === "web_boundary_break"
+                              ? isWebBoundary
                             : opt.id === "product_explode"
                               ? isProductExplode
                             : opt.id === "bullet_product_elevate"
@@ -1703,7 +1748,130 @@ export function PreVideoSetupPanel({
                         </div>
                       </div>
                     ) : null}
+                    {h3ShotMode === "h3-glass-type-mg" ? (
+                      <div className="mt-3 border-t border-violet-200/80 pt-3">
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-700">
+                          {m.wizard.h3GlassTypeMgSchemeTitle}
+                        </p>
+                        <p className="mt-1 text-xs leading-relaxed text-violet-900/90">
+                          {m.wizard.h3GlassTypeMgSchemeHint}
+                        </p>
+                        <div className="mt-2 grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+                          <button
+                            type="button"
+                            className={`flex items-center gap-2 rounded-xl border px-2 py-1.5 text-left ${
+                              wizard.h3GlassTypeMgSchemePick === "auto"
+                                ? "border-2 border-violet-600 bg-violet-50"
+                                : "border border-violet-200 bg-white hover:border-violet-400"
+                            }`}
+                            onClick={() =>
+                              wizard.setH3GlassTypeMgSchemePick("auto")
+                            }
+                          >
+                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-[10px] font-semibold text-violet-800">
+                              Auto
+                            </span>
+                            <span className="min-w-0 text-[11px] font-semibold text-violet-950">
+                              {m.wizard.h3GlassTypeMgSchemeAuto}
+                            </span>
+                          </button>
+                          {H3_GLASS_TYPE_MG_SCHEME_IDS.map((id) => {
+                            const active =
+                              wizard.h3GlassTypeMgSchemePick === id;
+                            return (
+                              <button
+                                key={id}
+                                type="button"
+                                title={m.wizard.h3GlassTypeMgSchemes[id].desc}
+                                className={`flex items-center gap-2 rounded-xl border px-2 py-1.5 text-left ${
+                                  active
+                                    ? "border-2 border-violet-600 bg-violet-50"
+                                    : "border border-violet-200 bg-white hover:border-violet-400"
+                                }`}
+                                onClick={() =>
+                                  wizard.setH3GlassTypeMgSchemePick(
+                                    id as H3GlassTypeMgSchemePick,
+                                  )
+                                }
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={h3GlassTypeMgSchemePreviewSrc(id)}
+                                  alt=""
+                                  className="h-10 w-10 shrink-0 rounded-lg object-cover"
+                                />
+                                <span className="min-w-0 text-[11px] font-semibold leading-snug text-violet-950">
+                                  {m.wizard.h3GlassTypeMgSchemes[id].title}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : null}
+                    {h3ShotMode === "h3-design-studio-mg" ? (
+                      <div className="mt-3 border-t border-violet-200/80 pt-3">
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-700">
+                          {m.wizard.h3DesignStudioMgSchemeTitle}
+                        </p>
+                        <p className="mt-1 text-xs leading-relaxed text-violet-900/90">
+                          {m.wizard.h3DesignStudioMgSchemeHint}
+                        </p>
+                        <div className="mt-2 grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+                          <button
+                            type="button"
+                            className={`flex items-center gap-2 rounded-xl border px-2 py-1.5 text-left ${
+                              wizard.h3DesignStudioMgSchemePick === "auto"
+                                ? "border-2 border-violet-600 bg-violet-50"
+                                : "border border-violet-200 bg-white hover:border-violet-400"
+                            }`}
+                            onClick={() =>
+                              wizard.setH3DesignStudioMgSchemePick("auto")
+                            }
+                          >
+                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-[10px] font-semibold text-violet-800">
+                              Auto
+                            </span>
+                            <span className="min-w-0 text-[11px] font-semibold text-violet-950">
+                              {m.wizard.h3DesignStudioMgSchemeAuto}
+                            </span>
+                          </button>
+                          {H3_DESIGN_STUDIO_MG_SCHEME_IDS.map((id) => {
+                            const active =
+                              wizard.h3DesignStudioMgSchemePick === id;
+                            return (
+                              <button
+                                key={id}
+                                type="button"
+                                title={m.wizard.h3DesignStudioMgSchemes[id].desc}
+                                className={`flex items-center gap-2 rounded-xl border px-2 py-1.5 text-left ${
+                                  active
+                                    ? "border-2 border-violet-600 bg-violet-50"
+                                    : "border border-violet-200 bg-white hover:border-violet-400"
+                                }`}
+                                onClick={() =>
+                                  wizard.setH3DesignStudioMgSchemePick(
+                                    id as H3DesignStudioMgSchemePick,
+                                  )
+                                }
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={h3DesignStudioMgSchemePreviewSrc(id)}
+                                  alt=""
+                                  className="h-10 w-10 shrink-0 rounded-lg object-cover"
+                                />
+                                <span className="min-w-0 text-[11px] font-semibold leading-snug text-violet-950">
+                                  {m.wizard.h3DesignStudioMgSchemes[id].title}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ) : null}
                     {h3ShotMode === "h3-showreel" ? (
+
                       <div className="mt-3 border-t border-violet-200/80 pt-3">
                         <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-700">
                           {m.wizard.h3ShowreelSchemeTitle}
@@ -2395,6 +2563,67 @@ export function PreVideoSetupPanel({
                 </h3>
                 <p className="mt-1 text-xs leading-relaxed text-slate-500">
                   {m.wizard.handThrowHint}
+                </p>
+              </section>
+            ) : null}
+
+            {isWebBoundary ? (
+              <section className="pv-card">
+                <div className="pv-card-title-row mb-2">
+                  <h3 className="pv-card-title">{m.wizard.webBoundarySchemeTitle}</h3>
+                </div>
+                <p className="mb-3 text-xs text-slate-500">{m.wizard.webBoundarySchemeHint}</p>
+                <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+                  <button
+                    type="button"
+                    className={`flex items-center gap-2 rounded-xl border px-2 py-1.5 text-left transition ${
+                      wizard.webBoundarySchemePick === "auto"
+                        ? "border-violet-500 bg-violet-50"
+                        : "border-slate-200 bg-white hover:border-violet-300"
+                    }`}
+                    onClick={() => wizard.setWebBoundarySchemePick("auto")}
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-[10px] font-semibold leading-tight text-slate-700">
+                      Auto
+                    </span>
+                    <span className="min-w-0 text-[11px] font-semibold text-slate-800">
+                      {m.wizard.webBoundarySchemeAuto}
+                    </span>
+                  </button>
+                  {WEB_BOUNDARY_BREAK_SCHEME_IDS.map((id) => {
+                    const selected = wizard.webBoundarySchemePick === id;
+                    const title = m.wizard.webBoundarySchemes[id]?.title ?? id;
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        title={m.wizard.webBoundarySchemes[id]?.desc}
+                        className={`flex items-center gap-2 rounded-xl border px-2 py-1.5 text-left transition ${
+                          selected
+                            ? "border-violet-500 bg-violet-50"
+                            : "border-slate-200 bg-white hover:border-violet-300"
+                        }`}
+                        onClick={() =>
+                          wizard.setWebBoundarySchemePick(
+                            id as WebBoundaryBreakSchemePick,
+                          )
+                        }
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={webBoundaryBreakSchemePreviewSrc(id)}
+                          alt=""
+                          className="h-10 w-10 shrink-0 rounded-lg object-cover"
+                        />
+                        <span className="min-w-0 text-[11px] font-semibold leading-snug text-slate-800">
+                          {title}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="mt-3 text-xs leading-relaxed text-slate-500">
+                  {m.wizard.webBoundaryHint}
                 </p>
               </section>
             ) : null}
@@ -3174,9 +3403,15 @@ export function PreVideoSetupPanel({
                       durationAllowlist={
                         isBulletElevate
                           ? bulletProductElevateDurationOptions()
+                          : isWebBoundary
+                            ? webBoundaryBreakDurationOptions()
                           : h3ShotMode === "h3-triangle-light-mg"
                             ? triangleLightMgDurationOptions()
-                            : undefined
+                            : h3ShotMode === "h3-glass-type-mg"
+                              ? glassTypeMgDurationOptions()
+                              : h3ShotMode === "h3-design-studio-mg"
+                                ? designStudioMgDurationOptions()
+                                : undefined
                       }
                       accent="violet"
                       value={wizard.videoSettings}

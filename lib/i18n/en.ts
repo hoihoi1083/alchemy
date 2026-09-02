@@ -1037,6 +1037,12 @@ export const en = {
 						"Palm + miniature start → real scenic end → ~6s throw morph.",
 					costHint: "~2 images + 6s video · product / landmark photo",
 				},
+				"product-web-boundary-break-10s": {
+					title: "Web boundary break ~10s",
+					description:
+						"Model reaches through a fake shopping-site UI to grab your product. Shelf reach / Hold through.",
+					costHint: "~2 images + 8–10s video · model + product photo",
+				},
 				"product-product-explode-4s": {
 					title: "Product explode ~4s",
 					description:
@@ -1078,6 +1084,12 @@ export const en = {
 					description:
 						"Logo/mascot as miniature identity → real scenic end → ~6s throw morph.",
 					costHint: "~2 images + 6s video · logo/mascot",
+				},
+				"concept-web-boundary-break-10s": {
+					title: "Web boundary break (concept) ~10s",
+					description:
+						"Person + product still → break the webpage boundary gag. Shelf reach / Hold through.",
+					costHint: "~2 images + 8–10s video · person/product still",
 				},
 				"concept-product-explode-4s": {
 					title: "Product explode (concept) ~4s",
@@ -1169,6 +1181,18 @@ export const en = {
 						"Frosted triangles + orange caustics + kinetic titles → brand lock. Exhibit / Flow schemes.",
 					costHint: "~10–12s 16:9 · logo + brand name",
 				},
+				"product-h3-glass-type-mg-12s": {
+					title: "Transparent 3D type ~12s",
+					description:
+						"Bright glass letters with diorama fills + cursor click. Click reveal / Type parade.",
+					costHint: "~10–12s 16:9 · logo + brand letters",
+				},
+				"product-h3-design-studio-mg-12s": {
+					title: "Design studio glass ~12s",
+					description:
+						"FORM|COLOR|MOTION desk showreel — form study → glass wordmark → moodboard lock. Form study / Brand desk.",
+					costHint: "~10–12s 16:9 · logo + brand letters",
+				},
 				"product-h3-movie-title-8s": {
 					title: "movie-title ~10s",
 					description:
@@ -1251,6 +1275,18 @@ export const en = {
 					title: "Triangle light MG (concept) ~10s",
 					description:
 						"Logo + brand name → dark void triangle-light brand intro. Exhibit / Flow.",
+					costHint: "~10–12s 16:9 · logo + brand name",
+				},
+				"concept-h3-glass-type-mg-12s": {
+					title: "Transparent 3D type (concept) ~12s",
+					description:
+						"Logo + brand name → bright translucent 3D type bumper. Click / Parade.",
+					costHint: "~10–12s 16:9 · logo + brand name",
+				},
+				"concept-h3-design-studio-mg-12s": {
+					title: "Design studio glass (concept) ~12s",
+					description:
+						"Logo + brand → drafting-desk glass showreel. Form study / Brand desk.",
 					costHint: "~10–12s 16:9 · logo + brand name",
 				},
 				"concept-h3-movie-title-8s": {
@@ -1707,6 +1743,33 @@ export const en = {
 			},
 			{
 				feature: "A/B",
+				free: "✓",
+				light: "✓",
+				standard: "✓",
+				pro: "✓",
+				master: "✓",
+				custom: "✓",
+			},
+			{
+				feature: "Brand kit",
+				free: "✓",
+				light: "✓",
+				standard: "✓",
+				pro: "✓",
+				master: "✓",
+				custom: "✓",
+			},
+			{
+				feature: "Edit image",
+				free: "✓",
+				light: "✓",
+				standard: "✓",
+				pro: "✓",
+				master: "✓",
+				custom: "✓",
+			},
+			{
+				feature: "Captions",
 				free: "✓",
 				light: "✓",
 				standard: "✓",
@@ -3309,6 +3372,11 @@ export const en = {
 				description:
 					"Palm + miniature → real scenic end frame → ~6s throw morph.",
 			},
+			"web-boundary-break": {
+				title: "Web boundary break",
+				description:
+					"打破网页边界 — model reaches through fake site UI to grab your product. Shelf reach / Hold through.",
+			},
 			"product-explode": {
 				title: "Product explode (stylized)",
 				description:
@@ -3364,6 +3432,8 @@ export const en = {
 				description:
 					"Black-void brand MG → abstract materials → product reveal (premium C4D showreel).",
 			},
+			"h3-design-studio-mg":
+				"Required: logo / wordmark + brand letters (EN preferred). Design-desk glass showreel — not pure type-rise.",
 			"h3-showreel": {
 				title: "showreel",
 				description:
@@ -3383,6 +3453,16 @@ export const en = {
 				title: "Triangle light MG",
 				description:
 					"三角光品牌片头 — frosted triangles + caustics + kinetic type → brand lock. Exhibit / Flow.",
+			},
+			"h3-glass-type-mg": {
+				title: "Transparent 3D type",
+				description:
+					"透明3D立体字 — bright glass letters + cursor click → brand lock. Click / Parade.",
+			},
+			"h3-design-studio-mg": {
+				title: "Design studio glass",
+				description:
+					"设计台玻璃片头 — drafting desk form study → glass wordmark showreel. Form study / Brand desk.",
 			},
 			"h3-movie-title": {
 				title: "movie-title",
@@ -3620,6 +3700,8 @@ export const en = {
 				"Required: logo / wordmark still (preferred) — or packshot with a readable brand mark. Bright 3D logo interpretation; no reference reel.",
 			"h3-triangle-light-mg":
 				"Required: logo / wordmark + brand name (CN/EN). Packshot only if the mark is clearly readable.",
+			"h3-glass-type-mg":
+				"Required: logo / wordmark + brand letters (EN preferred). Bright glass type — not dark triangle-light.",
 			"h3-movie-title":
 				"Required: product photo — or logo / mascot still (concept). Title cards + panels; designed type allowed.",
 			"h3-lifestyle":
@@ -3652,6 +3734,10 @@ export const en = {
 				"Upload a logo/wordmark first — Generate stays off until then. Pick a style card (glass / chrome / ribbon / pins). ~10s 16:9 brand bumper.",
 			"h3-triangle-light-mg":
 				"Triangle-light brand bumper · Exhibit / Flow · ~10–12s · kinetic type OK.",
+			"h3-glass-type-mg":
+				"Transparent 3D type bumper · Click / Parade · ~10–12s · kinetic type OK.",
+			"h3-design-studio-mg":
+				"Design studio glass bumper · Form study / Brand desk · ~10–12s · kinetic type OK.",
 			"h3-movie-title":
 				"Upload product or logo/mascot still first — Generate stays off until then. Then ~10s title-card / multi-panel one-take.",
 			"h3-lifestyle":
@@ -3778,6 +3864,34 @@ export const en = {
 			flow: {
 				title: "Flow",
 				desc: "流动三角 — soft prism float → MAPPING/PRODUCT FILM energy → brand lock",
+			},
+		},
+		h3GlassTypeMgSchemeTitle: "Transparent type style",
+		h3GlassTypeMgSchemeHint:
+			"Same bright glass-letter dialect — Click reveal (deboss + cursor) or Type parade (isometric wordmark).",
+		h3GlassTypeMgSchemeAuto: "Auto · best fit",
+		h3GlassTypeMgSchemes: {
+			"click-reveal": {
+				title: "Click reveal",
+				desc: "Deboss plane → cursor click ripples → glass letters rise",
+			},
+			"type-parade": {
+				title: "Type parade",
+				desc: "Isometric rainbow glass letters with mini diorama fills",
+			},
+		},
+		h3DesignStudioMgSchemeTitle: "Design studio style",
+		h3DesignStudioMgSchemeHint:
+			"Bright drafting-desk showreel — Form study (pillow→sphere→letter) or Brand desk (glass wordmark + moodboard).",
+		h3DesignStudioMgSchemeAuto: "Auto · best fit",
+		h3DesignStudioMgSchemes: {
+			"form-study": {
+				title: "Form study",
+				desc: "Pillow → geode sphere → iridescent letter → brand lock",
+			},
+			"brand-desk": {
+				title: "Brand desk",
+				desc: "Glass wordmark + UI panels → moodboard grid → lock",
 			},
 		},
 		recipePathUxTitles: {
@@ -3934,6 +4048,34 @@ export const en = {
 				],
 				output: ["~10–12s 16:9 triangle-light brand intro"],
 			},
+			"h3-glass-type-mg": {
+				need: [
+					"Logo / wordmark + brand name letters (EN works best)",
+					"Clear silhouette for identity lock",
+				],
+				attention: [
+					"Pick Click reveal (deboss + cursor) or Type parade (isometric letters)",
+					"Bright studio glass type — not dark triangle-light void",
+					"Kinetic titles / cursor OK; uploaded mark stays locked",
+					"Output is 16:9 brand bumper (10/12s)",
+				],
+				output: ["~10–12s 16:9 transparent 3D type intro"],
+			},
+			"h3-design-studio-mg": {
+				need: [
+					"Logo / wordmark + brand name letters (EN works best)",
+					"Clear silhouette for identity lock",
+				],
+				attention: [
+					"Pick Form study (morph) or Brand desk (moodboard)",
+					"Bright design desk — not dark triangle-light, not pure type-rise",
+					"Kinetic titles / cursor OK; uploaded mark stays locked",
+				],
+				output: [
+					"~10–12s 16:9 design-studio glass brand bumper",
+					"Form study or brand-desk moodboard → brand lock",
+				],
+			},
 			"h3-movie-title": {
 				need: [
 					"Product photo — or logo / mascot still (concept)",
@@ -4046,6 +4188,21 @@ export const en = {
 				],
 				output: ["~2 stills + 6s throw → real-scene morph"],
 			},
+			"web-boundary-break": {
+				need: [
+					"Model photo (face clear) + product photo",
+					"Luxury / beauty SKUs work best",
+				],
+				attention: [
+					"Pick Shelf reach or Hold through",
+					"Fake website nav stays; arm + product cross in front",
+					"Upload locks identity — no invented competitor brands",
+				],
+				output: [
+					"~8–10s vertical creative ad",
+					"Start→end morph: reach through web UI → brand hold",
+				],
+			},
 			"product-explode": {
 				need: [
 					"Product photo — or logo / mascot still (concept)",
@@ -4127,6 +4284,8 @@ export const en = {
 			"h3-sphere-mg": "Generating sphere still…",
 			"h3-logo-mg": "Generating logo MG still…",
 			"h3-triangle-light-mg": "Generating triangle-light still…",
+			"h3-glass-type-mg": "Generating glass-type still…",
+			"h3-design-studio-mg": "Generating design-studio still…",
 			"h3-movie-title": "Generating title still…",
 			"h3-lifestyle": "generating lifestyle still…",
 		},
@@ -4144,6 +4303,8 @@ export const en = {
 			"h3-sphere-mg": "Generating sphere MG…",
 			"h3-logo-mg": "Generating 3D logo MG…",
 			"h3-triangle-light-mg": "Animating triangle-light brand MG…",
+			"h3-glass-type-mg": "Animating transparent 3D type MG…",
+			"h3-design-studio-mg": "Animating design-studio glass MG…",
 			"h3-movie-title": "Generating movie-title…",
 			"h3-lifestyle": "Generating lifestyle…",
 		},
@@ -4217,6 +4378,27 @@ export const en = {
 		handThrowAnimatingCard: "Step 3/3: throw → real scene morph…",
 		handThrowNeedKeyframe:
 			"Upload a product photo first (concept: logo/mascot still — text alone is not enough).",
+		webBoundaryHint:
+			"打破网页边界 — model reaches through a fake shopping UI to grab your product. ~8–10s · Shelf reach / Hold through.",
+		webBoundarySchemeTitle: "Boundary-break style",
+		webBoundarySchemeHint:
+			"Same web-UI gag — Shelf reach (grab from product row) or Hold through (product already through the bar).",
+		webBoundarySchemeAuto: "Auto · best fit",
+		webBoundarySchemes: {
+			"shelf-reach": {
+				title: "Shelf reach",
+				desc: "Reach down across the nav bar and lift the hero bottle",
+			},
+			"hold-through": {
+				title: "Hold through",
+				desc: "Product already through the UI — soft push-in close-up",
+			},
+		},
+		webBoundaryBuildingStill: "Step 1/2: web-boundary start still…",
+		webBoundaryBuildingEnd: "Step 2/2: web-boundary end still…",
+		webBoundaryAnimatingCard: "Animating web boundary break…",
+		webBoundaryNeedKeyframe:
+			"Upload a model photo (with product if possible) first — Generate stays off until then.",
 		productExplodeHint:
 			"Intact assembled hero (earbuds stay seated in the case) → exploded parts along assembly axes — not buds flying out of the case. ~4s morph. Stylized parts, not CAD.",
 		productExplodeBuildingStill: "Step 1/3: intact product hero still…",
@@ -5694,8 +5876,6 @@ export const en = {
 		platformsLabel: "Search platforms",
 		platformsHint:
 			"RedNote and Instagram give the cleanest still-ad layouts for research.",
-		platformPreferredBadge: "Preferred",
-		platformSecondaryBadge: "Also OK",
 		promoteProductLabel: "Your product to promote",
 		promoteProductPlaceholder: "e.g. Madagascar rose quartz bracelet",
 		promoteProductHint:

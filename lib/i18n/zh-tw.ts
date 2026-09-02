@@ -767,6 +767,12 @@ export const zhTw = {
 						"掌心微縮開頭 → 真實場景結尾 → 約 6 秒拋出過渡。",
 					costHint: "~2 圖 + 6s video · 產品／地標圖",
 				},
+				"product-web-boundary-break-10s": {
+					title: "打破網頁邊界 ~10s",
+					description:
+						"模特伸手穿過假想購物網頁拿起產品。貨架伸手／穿欄手持。",
+					costHint: "~2 張靜圖 + 8–10秒 · 模特 + 產品圖",
+				},
 				"product-product-explode-4s": {
 					title: "產品拆解 ~4s",
 					description:
@@ -857,6 +863,18 @@ export const zhTw = {
 						"毛玻璃三角 + 橙金焦散 + 動能標題 → 品牌鎖。Exhibit／Flow 風格卡。",
 					costHint: "~10–12 秒 16:9 · Logo + 品牌名",
 				},
+				"product-h3-glass-type-mg-12s": {
+					title: "透明3D立體字 ~12s",
+					description:
+						"明亮玻璃立體字 + 字内微缩場景 + 光標点击。Click／Parade。",
+					costHint: "~10–12 秒 16:9 · Logo + 品牌字母",
+				},
+				"product-h3-design-studio-mg-12s": {
+					title: "設計台玻璃片頭 ~12s",
+					description:
+						"FORM|COLOR|MOTION 設計台 — 形態研究 → 玻璃字標 → 情緒板鎖。Form study／Brand desk。",
+					costHint: "~10–12秒 16:9 · Logo + 品牌字母",
+				},
 				"product-h3-movie-title-8s": {
 					title: "電影標題 ~10s",
 					description:
@@ -893,6 +911,12 @@ export const zhTw = {
 					description:
 						"Logo／吉祥物作微縮身份 → 真實場景結尾 → 約 6 秒拋出過渡。",
 					costHint: "~2 圖 + 6s video · Logo/吉祥物",
+				},
+				"concept-web-boundary-break-10s": {
+					title: "打破網頁邊界（概念）~10s",
+					description:
+						"人物 + 產品靜圖 → 打破網頁邊界創意。貨架伸手／穿欄手持。",
+					costHint: "~2 張靜圖 + 8–10秒 · 人物／產品靜圖",
 				},
 				"concept-product-explode-4s": {
 					title: "產品拆解（概念）~4s",
@@ -959,6 +983,18 @@ export const zhTw = {
 					description:
 						"Logo + 品牌名 → 暗場三角光片頭。Exhibit／Flow。",
 					costHint: "~10–12 秒 16:9 · Logo + 品牌名",
+				},
+				"concept-h3-glass-type-mg-12s": {
+					title: "透明3D立體字（概念）~12s",
+					description:
+						"Logo + 品牌名 → 明亮透明立體字片頭。Click／Parade。",
+					costHint: "~10–12 秒 16:9 · Logo + 品牌名",
+				},
+				"concept-h3-design-studio-mg-12s": {
+					title: "設計台玻璃片頭（概念）~12s",
+					description:
+						"Logo + 品牌名 → 設計台玻璃作品集片頭。Form study／Brand desk。",
+					costHint: "~10–12秒 16:9 · Logo + 品牌名",
 				},
 				"concept-h3-movie-title-8s": {
 					title: "電影標題（概念）~10s",
@@ -1449,6 +1485,9 @@ export const zhTw = {
       { feature: "圖片最高分辨率", free: "最高 1K", light: "最高 1K", standard: "最高 1K", pro: "最高 1K", master: "最高 2K", custom: "最高 2K" },
       { feature: "影片最高分辨率", free: "最高 480p", light: "最高 480p", standard: "最高 720p", pro: "最高 1080p", master: "最高 1080p", custom: "最高 1080p" },
       { feature: "A/B", free: "✓", light: "✓", standard: "✓", pro: "✓", master: "✓", custom: "✓" },
+      { feature: "品牌套件", free: "✓", light: "✓", standard: "✓", pro: "✓", master: "✓", custom: "✓" },
+      { feature: "圖片編輯", free: "✓", light: "✓", standard: "✓", pro: "✓", master: "✓", custom: "✓" },
+      { feature: "字幕", free: "✓", light: "✓", standard: "✓", pro: "✓", master: "✓", custom: "✓" },
       { feature: "平台研究", free: "—", light: "—", standard: "✓", pro: "✓", master: "✓", custom: "✓" },
       { feature: "輪播", free: "—", light: "—", standard: "✓", pro: "✓", master: "✓", custom: "✓" },
       { feature: "故事板", free: "—", light: "—", standard: "—", pro: "✓", master: "✓", custom: "✓" },
@@ -2720,6 +2759,11 @@ export const zhTw = {
 				description:
 					"掌心微縮 → 真實場景尾幀 → 約 6 秒拋出過渡。",
 			},
+			"web-boundary-break": {
+				title: "打破網頁邊界",
+				description:
+					"模特穿過假想購物網頁拿起產品。貨架伸手／穿欄手持。",
+			},
 			"product-explode": {
 				title: "產品拆解（風格化）",
 				description:
@@ -2790,10 +2834,20 @@ export const zhTw = {
 				description:
 					"明亮玻璃／鉻面 Logo 演繹 — 上傳標識 → 品牌片頭。",
 			},
-"h3-triangle-light-mg": {
+			"h3-triangle-light-mg": {
 				title: "三角光品牌片頭",
 				description:
 					"毛玻璃三角 + 焦散光線 + 動能大字 → 品牌鎖。Exhibit／Flow 兩卡。",
+			},
+			"h3-glass-type-mg": {
+				title: "透明3D立體字",
+				description:
+					"明亮玻璃立體字 + 光標點擊 → 品牌鎖。Click／Parade 兩卡。",
+			},
+			"h3-design-studio-mg": {
+				title: "設計台玻璃片頭",
+				description:
+					"設計台形態研究 → 玻璃字標作品集片頭。Form study／Brand desk。",
 			},
 			"h3-movie-title": {
 				title: "電影標題",
@@ -2980,6 +3034,10 @@ export const zhTw = {
 				"必填：Logo／字標靜圖（優先）— 或帶清晰品牌標的包裝圖。明亮三維 Logo 演繹；不需要參考片。",
 			"h3-triangle-light-mg":
 				"上傳 Logo／字標 + 品牌中英文名。包裝圖僅當標識清晰可讀時可用。",
+			"h3-glass-type-mg":
+				"上傳 Logo／字標 + 品牌字母（英文更佳）。明亮玻璃立體字 — 不是暗場三角光。",
+			"h3-design-studio-mg":
+				"需要：Logo／字標 + 品牌字母（英文更佳）。設計台玻璃片頭 — 不是單純立體字升起。",
 			"h3-movie-title":
 				"必填：產品圖（概念可用 Logo／吉祥物）。標題卡＋多格；允許設計感大字。",
 			"h3-lifestyle":
@@ -3012,6 +3070,10 @@ export const zhTw = {
 				"請先上傳 Logo／字標 — 未上傳前無法按生成。選風格卡（玻璃／鉻字／絲帶／粒子）。約 8s 16:9 品牌片頭。",
 			"h3-triangle-light-mg":
 				"三角光品牌片頭 · Exhibit／Flow · 約 10–12 秒 · 允許動能大字。",
+			"h3-glass-type-mg":
+				"透明3D立體字片頭 · Click／Parade · 約 10–12 秒 · 允许动能大字。",
+			"h3-design-studio-mg":
+				"設計台玻璃片頭 · Form study／Brand desk · ~10–12秒 · 可用動能大字。",
 			"h3-movie-title":
 				"請先上傳產品圖（概念可用 Logo／吉祥物）— 未上傳前無法按生成。再做約 8s 電影標題／多格一鏡。",
 			"h3-lifestyle":
@@ -3140,6 +3202,34 @@ export const zhTw = {
 				desc: "流動三角 — 柔光稜鏡漂浮 → 映射／片頭能量 → 品牌鎖",
 			},
 		},
+		h3GlassTypeMgSchemeTitle: "透明立體字風格",
+		h3GlassTypeMgSchemeHint:
+			"同一明亮玻璃字方言 — Click reveal（壓印+光標）或 Type parade（等距字列）。",
+		h3GlassTypeMgSchemeAuto: "自動 · 最佳匹配",
+		h3GlassTypeMgSchemes: {
+			"click-reveal": {
+				title: "Click reveal",
+				desc: "壓印平面 → 光標点击漣漪 → 玻璃字升起",
+			},
+			"type-parade": {
+				title: "Type parade",
+				desc: "等距彩虹玻璃字母，字内微型場景",
+			},
+		},
+		h3DesignStudioMgSchemeTitle: "設計台風格",
+		h3DesignStudioMgSchemeHint:
+			"明亮繪圖台片頭 — Form study（軟墊→球體→字母）或 Brand desk（玻璃字標 + 情緒板）。",
+		h3DesignStudioMgSchemeAuto: "自動 · 最佳匹配",
+		h3DesignStudioMgSchemes: {
+			"form-study": {
+				title: "Form study",
+				desc: "軟墊形 → 剖切球體 → 虹彩字母 → 品牌鎖",
+			},
+			"brand-desk": {
+				title: "Brand desk",
+				desc: "玻璃字標 + UI 面板 → 情緒板網格 → 鎖",
+			},
+		},
 		recipePathUxTitles: {
 			need: "你需要",
 			attention: "請注意",
@@ -3254,6 +3344,26 @@ export const zhTw = {
 				attention: ["選 Exhibit（藝術展標題）或 Flow（流動符號）", "暗場三角玻璃焦散 — 不是電商環繞", "允許動能大字；上傳標識始終鎖定", "輸出 16:9 品牌片頭（10／12 秒）"],
 				output: ["約 10–12 秒 16:9 三角光品牌片頭"],
 			},
+			"h3-glass-type-mg": {
+				need: ["Logo／字標 + 品牌字母（英文更佳）", "清晰輪廓以便身份鎖定"],
+				attention: ["選 Click reveal（壓印+光標）或 Type parade（等距字列）", "明亮工作室玻璃字 — 不是暗場三角光", "允许动能大字／光標；上傳標识始终鎖定", "輸出 16:9 品牌片頭（10／12 秒）"],
+				output: ["約 10–12 秒 16:9 透明3D立體字片頭"],
+			},
+			"h3-design-studio-mg": {
+				need: [
+					"Logo／字標 + 品牌字母（英文更佳）",
+					"清晰外形以便身份鎖定",
+				],
+				attention: [
+					"選 Form study（形態）或 Brand desk（情緒板）",
+					"明亮設計台 — 不是黑場三角光，也不是單純立體字升起",
+					"可用動能大字／光標；上傳標識保持鎖定",
+				],
+				output: [
+					"~10–12秒 16:9 設計台玻璃品牌片頭",
+					"形態研究或品牌台情緒板 → 品牌鎖",
+				],
+			},
 			"h3-movie-title": {
 				need: ["產品圖（概念可用 Logo／吉祥物）", "清晰主體作標題卡鎖定"],
 				attention: [
@@ -3316,6 +3426,21 @@ export const zhTw = {
 				attention: ["從掌心到實景結尾都是同一個主體", "約 6 秒拋出過渡 — 不是多分鏡拼接"],
 				output: ["約 2 張靜圖 + 6 秒拋出→實景過渡"],
 			},
+			"web-boundary-break": {
+				need: [
+					"模特圖（臉清晰）+ 產品圖",
+					"美妝／香水類最適合",
+				],
+				attention: [
+					"選 貨架伸手 或 穿欄手持",
+					"假網頁導航保持；手臂＋產品穿到 UI 前方",
+					"上傳鎖定身份 — 禁止發明競品",
+				],
+				output: [
+					"~8–10秒豎版創意廣告",
+					"起止靜圖 morph：穿過網頁 → 手持產品",
+				],
+			},
 			"product-explode": {
 				need: ["產品圖（概念可用 Logo／吉祥物靜圖）", "棚拍可讀的主體（不要太細 crop）"],
 				attention: ["風格化懸浮零件 — 不是精準 CAD 內部", "完整主角 → 拆解靜圖 → 短拆解片"],
@@ -3361,6 +3486,8 @@ export const zhTw = {
 			"h3-sphere-mg": "AI 球體 MG 靜圖…",
 			"h3-logo-mg": "AI Logo 演繹靜圖…",
 			"h3-triangle-light-mg": "正在生成三角光靜圖…",
+			"h3-glass-type-mg": "正在生成透明立體字静图…",
+			"h3-design-studio-mg": "正在生成設計台静图…",
 			"h3-movie-title": "AI 電影標題靜圖…",
 			"h3-lifestyle": "AI 生活人物靜圖…",
 		},
@@ -3378,6 +3505,8 @@ export const zhTw = {
 			"h3-sphere-mg": "正在生成 球體運動圖形…",
 			"h3-logo-mg": "正在生成 3D Logo 演繹…",
 			"h3-triangle-light-mg": "正在生成三角光品牌片頭…",
+			"h3-glass-type-mg": "正在生成透明3D立體字…",
+			"h3-design-studio-mg": "正在生成設計台玻璃片頭…",
 			"h3-movie-title": "正在生成 電影標題…",
 			"h3-lifestyle": "正在生成 生活人物…",
 		},
@@ -3446,6 +3575,27 @@ socialDripHint:
 		handThrowBuildingEnd: "第 2/3 步：真實場景結尾靜圖…",
 		handThrowAnimatingCard: "第 3/3 步：拋出→實景過渡中…",
 		handThrowNeedKeyframe: "請先上傳產品圖（概念用 Logo／吉祥物靜圖 — 單靠文字不夠）。",
+		webBoundaryHint:
+			"打破網頁邊界 — 模特穿過假想購物網頁拿起產品。~8–10秒 · 貨架伸手／穿欄手持。",
+		webBoundarySchemeTitle: "邊界突破風格",
+		webBoundarySchemeHint:
+			"同一網頁 UI 玩法 — 貨架伸手（從貨架拿起）或 穿欄手持（產品已穿過導航欄）。",
+		webBoundarySchemeAuto: "自動 · 最佳匹配",
+		webBoundarySchemes: {
+			"shelf-reach": {
+				title: "貨架伸手",
+				desc: "手穿過導航欄，從貨架拿起產品",
+			},
+			"hold-through": {
+				title: "穿欄手持",
+				desc: "產品已穿過 UI — 輕推近景手持",
+			},
+		},
+		webBoundaryBuildingStill: "第 1/2 步：網頁邊界起始靜圖…",
+		webBoundaryBuildingEnd: "第 2/2 步：網頁邊界結束靜圖…",
+		webBoundaryAnimatingCard: "正在生成打破網頁邊界…",
+		webBoundaryNeedKeyframe:
+			"請先上傳模特圖（最好帶產品）— 未上傳前無法按生成。",
 		productExplodeHint:
 			"完整組裝棚拍（耳塞要坐在盒裡）→ 零件沿組裝軸分開 — 不是耳塞飛出充電盒。約 4 秒過渡。風格化零件，不是精準 CAD。",
 		productExplodeBuildingStill: "第 1/3 步：完整產品棚拍靜圖…",
@@ -4646,8 +4796,6 @@ socialDripFitTitle: "這個格式可以／不可以做什麼",
     platformsLabel: "搜索平臺",
     platformsHint:
       "小紅書與 Instagram 的靜圖廣告研究效果最好。",
-    platformPreferredBadge: "推薦",
-    platformSecondaryBadge: "可用",
     promoteProductLabel: "你要推廣的產品",
     promoteProductPlaceholder: "例如：馬達加斯加粉水晶手鍊",
     promoteProductHint:

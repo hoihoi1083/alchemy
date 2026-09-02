@@ -66,6 +66,9 @@ export function applyIntakeVideoStyle(
     case "hand_throw_scene":
       wizard.onVideoCreativeModeChange("hand-throw-scene");
       return;
+    case "web_boundary_break":
+      wizard.onVideoCreativeModeChange("web-boundary-break");
+      return;
     case "product_explode":
       wizard.onVideoCreativeModeChange("product-explode");
       return;

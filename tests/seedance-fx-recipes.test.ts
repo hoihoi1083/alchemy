@@ -186,10 +186,12 @@ describe("Seedance fx landing recipes", () => {
       "product-vacuum-inflate-4s",
       "product-creative-motion-4s",
       "product-hand-throw-scene-6s",
+      "product-web-boundary-break-10s",
       "product-product-explode-4s",
       "concept-vacuum-inflate-4s",
       "concept-creative-motion-4s",
       "concept-hand-throw-scene-6s",
+      "concept-web-boundary-break-10s",
       "concept-product-explode-4s",
     ] as const) {
       assert.equal(isLandingRecipeId(id), true);
@@ -233,6 +235,7 @@ describe("Seedance fx landing recipes", () => {
     assert.equal(recipeUsesSilentSeedance("vacuum-inflate"), false);
     assert.equal(recipeUsesSilentSeedance("creative-motion"), false);
     assert.equal(recipeUsesSilentSeedance("hand-throw-scene"), false);
+    assert.equal(recipeUsesSilentSeedance("web-boundary-break"), false);
     assert.equal(recipeUsesSilentSeedance("motion-poster"), false);
     assert.equal(recipeUsesSilentSeedance("h3-lifestyle"), false);
   });

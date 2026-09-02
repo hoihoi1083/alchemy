@@ -52,6 +52,7 @@ describe("identity recipe hero lock", () => {
 
   it("Need-card modes include morph recipes + posters + H3", () => {
     assert.equal(isVideoRecipeUxMode("hand-throw-scene"), true);
+    assert.equal(isVideoRecipeUxMode("web-boundary-break"), true);
     assert.equal(isVideoRecipeUxMode("motion-poster"), true);
     assert.equal(isVideoRecipeUxMode("blockbuster"), true);
     assert.equal(isRecipePathUxMode("ecom-orbit"), true);

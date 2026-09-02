@@ -43,6 +43,7 @@ export const IDENTITY_VIDEO_UX_MODES = [
   "vacuum-inflate",
   "creative-motion",
   "hand-throw-scene",
+  "web-boundary-break",
   "product-explode",
   "bullet-product-elevate",
 ] as const;

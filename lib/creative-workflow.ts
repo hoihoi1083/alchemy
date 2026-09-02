@@ -21,6 +21,7 @@ export type VideoCreativeMode =
   | "vacuum-inflate"
   | "creative-motion"
   | "hand-throw-scene"
+  | "web-boundary-break"
   | "product-explode"
   | "bullet-product-elevate"
   | "ecom-orbit"
@@ -36,6 +37,8 @@ export type VideoCreativeMode =
   | "h3-sphere-mg"
   | "h3-logo-mg"
   | "h3-triangle-light-mg"
+  | "h3-glass-type-mg"
+  | "h3-design-studio-mg"
   | "h3-movie-title"
   | "h3-lifestyle"
   | "reference-concept"
@@ -56,6 +59,7 @@ export const VIDEO_CREATIVE_MODES: VideoCreativeMode[] = [
   "vacuum-inflate",
   "creative-motion",
   "hand-throw-scene",
+  "web-boundary-break",
   "product-explode",
   "bullet-product-elevate",
   "ecom-orbit",
@@ -71,6 +75,8 @@ export const VIDEO_CREATIVE_MODES: VideoCreativeMode[] = [
   "h3-sphere-mg",
   "h3-logo-mg",
   "h3-triangle-light-mg",
+  "h3-glass-type-mg",
+  "h3-design-studio-mg",
   "h3-movie-title",
   "h3-lifestyle",
   "reference-concept",
@@ -78,7 +84,7 @@ export const VIDEO_CREATIVE_MODES: VideoCreativeMode[] = [
 ];
 
 export function videoModePreviewSrc(id: VideoCreativeMode): string {
-  return `/images/studio/video-modes/${id}.png?v=3`;
+  return `/images/studio/video-modes/${id}.png?v=4`;
 }
 
 /** Recipe owns the motion prompt — skip DeepSeek auto-plan. */
@@ -93,6 +99,7 @@ export function isRecipeOwnedVideoMode(
     mode === "vacuum-inflate" ||
     mode === "creative-motion" ||
     mode === "hand-throw-scene" ||
+    mode === "web-boundary-break" ||
     mode === "product-explode" ||
     mode === "bullet-product-elevate" ||
     mode === "ecom-orbit" ||
@@ -108,6 +115,8 @@ export function isRecipeOwnedVideoMode(
     mode === "h3-sphere-mg" ||
     mode === "h3-logo-mg" ||
     mode === "h3-triangle-light-mg" ||
+    mode === "h3-glass-type-mg" ||
+    mode === "h3-design-studio-mg" ||
     mode === "h3-movie-title" ||
     mode === "h3-lifestyle"
   );
@@ -174,6 +183,8 @@ const H3_SHOT_PICKER_MODES: VideoCreativeMode[] = [
   "h3-sphere-mg",
   "h3-logo-mg",
   "h3-triangle-light-mg",
+  "h3-glass-type-mg",
+  "h3-design-studio-mg",
   "h3-movie-title",
   "h3-lifestyle",
 ];
@@ -198,6 +209,7 @@ export function videoModesForGoal(goal: OutputGoal): VideoCreativeMode[] {
       "vacuum-inflate",
       "creative-motion",
       "hand-throw-scene",
+      "web-boundary-break",
       "product-explode",
       "bullet-product-elevate",
       ...H3_SHOT_PICKER_MODES,
@@ -215,6 +227,7 @@ export function videoModesForGoal(goal: OutputGoal): VideoCreativeMode[] {
       "vacuum-inflate",
       "creative-motion",
       "hand-throw-scene",
+      "web-boundary-break",
       "product-explode",
       "bullet-product-elevate",
       ...H3_SHOT_PICKER_MODES,
@@ -243,6 +256,7 @@ export function videoModesForStudio(
       "vacuum-inflate",
       "creative-motion",
       "hand-throw-scene",
+      "web-boundary-break",
       "product-explode",
       "bullet-product-elevate",
       ...h3Modes,
@@ -259,6 +273,7 @@ export function videoModesForStudio(
       "vacuum-inflate",
       "creative-motion",
       "hand-throw-scene",
+      "web-boundary-break",
       "product-explode",
       "bullet-product-elevate",
       ...h3Modes,

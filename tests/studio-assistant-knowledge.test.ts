@@ -38,6 +38,10 @@ describe("assistant turn mode", () => {
     );
     assert.equal(detectAssistantTurnMode("教我出一條產品片"), "guide");
     assert.equal(detectAssistantTurnMode("Help me build a post for my product launch"), "guide");
+    assert.equal(
+      detectAssistantTurnMode("how can i generate a ad material"),
+      "guide",
+    );
   });
 });
 

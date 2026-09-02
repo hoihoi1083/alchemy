@@ -247,6 +247,7 @@ function evalWhen(
       ctx.videoSubpath === "vacuum_inflate" ||
       ctx.videoSubpath === "creative_motion" ||
       ctx.videoSubpath === "hand_throw_scene" ||
+      ctx.videoSubpath === "web_boundary_break" ||
       ctx.videoSubpath === "product_explode" ||
       ctx.videoSubpath === "bullet_product_elevate"
     );
@@ -345,6 +346,7 @@ export function resolvePathId(
       ctx.videoSubpath === "vacuum_inflate" ||
       ctx.videoSubpath === "creative_motion" ||
       ctx.videoSubpath === "hand_throw_scene" ||
+      ctx.videoSubpath === "web_boundary_break" ||
       ctx.videoSubpath === "product_explode" ||
       ctx.videoSubpath === "bullet_product_elevate" ||
       state.videoCreativeMode === "motion-poster" ||
@@ -353,6 +355,7 @@ export function resolvePathId(
       state.videoCreativeMode === "vacuum-inflate" ||
       state.videoCreativeMode === "creative-motion" ||
       state.videoCreativeMode === "hand-throw-scene" ||
+      state.videoCreativeMode === "web-boundary-break" ||
       state.videoCreativeMode === "product-explode" ||
       state.videoCreativeMode === "bullet-product-elevate"
     ) {
@@ -381,6 +384,7 @@ export function resolvePathId(
       ctx.videoSubpath === "vacuum_inflate" ||
       ctx.videoSubpath === "creative_motion" ||
       ctx.videoSubpath === "hand_throw_scene" ||
+      ctx.videoSubpath === "web_boundary_break" ||
       ctx.videoSubpath === "product_explode" ||
       ctx.videoSubpath === "bullet_product_elevate" ||
       state.videoCreativeMode === "motion-poster" ||
@@ -389,6 +393,7 @@ export function resolvePathId(
       state.videoCreativeMode === "vacuum-inflate" ||
       state.videoCreativeMode === "creative-motion" ||
       state.videoCreativeMode === "hand-throw-scene" ||
+      state.videoCreativeMode === "web-boundary-break" ||
       state.videoCreativeMode === "product-explode" ||
       state.videoCreativeMode === "bullet-product-elevate"
     ) {
@@ -822,6 +827,7 @@ function identitySubpath(sub: string | undefined): boolean {
     sub === "vacuum_inflate" ||
     sub === "creative_motion" ||
     sub === "hand_throw_scene" ||
+    sub === "web_boundary_break" ||
     sub === "product_explode" ||
     sub === "bullet_product_elevate"
   );
@@ -921,6 +927,7 @@ export function canProceedMicroStep(
       ctx.videoSubpath === "vacuum_inflate" ||
       ctx.videoSubpath === "creative_motion" ||
       ctx.videoSubpath === "hand_throw_scene" ||
+      ctx.videoSubpath === "web_boundary_break" ||
       ctx.videoSubpath === "product_explode" ||
       ctx.videoSubpath === "bullet_product_elevate";
     // Combined storyboard: scenes already generated — still require 九宫格 approve.
