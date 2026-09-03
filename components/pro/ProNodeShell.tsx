@@ -84,7 +84,7 @@ export function ProNodeShell({
           value={alias ?? ""}
           onChange={(e) => onAliasChange(e.target.value)}
           placeholder={aliasPlaceholder}
-          className="mb-1.5 w-full rounded-md border border-slate-700/80 bg-slate-950/80 px-2 py-0.5 text-[10px] text-slate-300 placeholder:text-slate-600 focus:border-violet-500/50 focus:outline-none"
+          className="nodrag nopan nowheel mb-1.5 w-full rounded-md border border-slate-700/80 bg-slate-950/80 px-2 py-0.5 text-[10px] text-slate-300 placeholder:text-slate-600 focus:border-violet-500/50 focus:outline-none"
         />
       ) : null}
       <div className="mb-2 flex items-center gap-2">
@@ -93,7 +93,8 @@ export function ProNodeShell({
           {label}
         </p>
       </div>
-      {children}
+      {/* React Flow steals clicks/drags unless controls opt out */}
+      <div className="nodrag nopan nowheel">{children}</div>
       {sourceHandle ? (
         <Handle type="source" position={Position.Right} className={theme.handle} />
       ) : null}

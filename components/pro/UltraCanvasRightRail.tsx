@@ -9,26 +9,27 @@ type Props = {
 };
 
 export function UltraCanvasRightRail({ labels, toolbar, queue }: Props) {
-  const [desktopOpen, setDesktopOpen] = useState(true);
+  /** Start collapsed so the board has room; open when saving / running. */
+  const [desktopOpen, setDesktopOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <>
-      <div className="absolute right-3 top-3 z-10 hidden flex-col items-end gap-2 md:flex">
+      <div className="absolute right-3 top-3 z-20 hidden flex-col items-end gap-2 md:flex">
         <button
           type="button"
           onClick={() => setDesktopOpen((v) => !v)}
-          className="rounded-lg border border-slate-600/80 bg-slate-900/90 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-300 backdrop-blur hover:bg-slate-800"
+          className="rounded-lg border border-violet-500/40 bg-slate-900/95 px-3 py-1.5 text-[11px] font-semibold text-violet-100 shadow-lg backdrop-blur hover:bg-slate-800"
         >
           {desktopOpen ? labels.close : labels.open}
         </button>
         {desktopOpen ? (
           <div
             data-coach-id="coach-ultra-panel"
-            className="flex w-[min(100%,32rem)] flex-col items-stretch gap-2"
+            className="flex max-h-[min(70vh,640px)] w-[min(100%,18rem)] flex-col items-stretch gap-2 overflow-visible"
           >
-            {toolbar}
-            {queue}
+            <div className="relative z-40 shrink-0">{toolbar}</div>
+            <div className="min-h-0 flex-1 overflow-y-auto overflow-x-visible">{queue}</div>
           </div>
         ) : null}
       </div>
@@ -65,9 +66,9 @@ export function UltraCanvasRightRail({ labels, toolbar, queue }: Props) {
                 {labels.close}
               </button>
             </div>
-            <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-              {toolbar}
-              {queue}
+            <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-visible">
+              <div className="relative z-40 shrink-0">{toolbar}</div>
+              <div className="min-h-0 flex-1 overflow-y-auto">{queue}</div>
             </div>
           </div>
         </div>

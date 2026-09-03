@@ -1,5 +1,66 @@
 import type { Edge, Node } from "@xyflow/react";
 import type { ProCanvasNodeData } from "@/lib/pro-canvas-types";
+import {
+  ULTRA_SCRIPT_SCENE_COUNT_DEFAULT,
+  type ScriptSceneBeat,
+} from "@/lib/pro-canvas-script-plan";
+
+const STORY_DIFFERENCE_BRIEF =
+  "20s Alchemy difference ad — No Prompt + AI Research. " +
+  "Hook: Give us the product. Not the prompt. " +
+  "Pain → colleague introduces Alchemy → upload reference → AI research → creative direction → beautiful output → logo CTA. " +
+  "Tone: grounded office UGC, 烟火气, same two cast throughout.";
+
+const STORY_DIFFERENCE_BEATS: ScriptSceneBeat[] = [
+  {
+    time: "0-2s",
+    emotion: "frustrated",
+    line: "Still writing prompts?",
+    framing: "medium close-up",
+    camera: "locked tripod",
+    blocking: "typing, slumped",
+  },
+  {
+    time: "2-4s",
+    emotion: "exhausted loop",
+    line: "Prompt → Generate → Wrong → Repeat",
+    framing: "OTS screen glow",
+    camera: "slow push-in",
+    blocking: "micro head shake",
+  },
+  {
+    time: "4-6s",
+    emotion: "defeated",
+    line: "Worked all day, still not right",
+    framing: "wide office",
+    camera: "static",
+    blocking: "leans back, sigh",
+  },
+  {
+    time: "6-8s",
+    emotion: "surprised",
+    line: "Haven't you heard of Alchemy?",
+    framing: "two-shot",
+    camera: "pan to colleague",
+    blocking: "colleague enters frame",
+  },
+  {
+    time: "8-12s",
+    emotion: "confident demo",
+    line: "Give us the product. Not the prompt.",
+    framing: "medium",
+    camera: "handheld subtle",
+    blocking: "shows UI / product",
+  },
+  {
+    time: "12-20s",
+    emotion: "payoff + CTA",
+    line: "Less prompting. More creating.",
+    framing: "product hero + logo",
+    camera: "slow push-out",
+    blocking: "hold product, smile",
+  },
+];
 import { buildExplosionUnboxVideoPrompt, EXPLOSION_UNBOX_DEFAULT_THEME } from "@/lib/explosion-unbox-prompt";
 import { DEFAULT_ULTRA_IMAGE_PRO, DEFAULT_ULTRA_VIDEO_PRO } from "@/lib/ultra-pro-controls";
 import {
@@ -13,6 +74,7 @@ export type UltraCanvasTemplateId =
   | "ugcReel"
   | "carouselStill"
   | "scriptToFilm"
+  | "storyDifferenceAd"
   | "explosionUnbox"
   | "conceptTextVideo"
   | "brandMotionReel";
@@ -198,6 +260,79 @@ export function createUltraCanvasTemplate(
         ],
       };
     }
+    case "storyDifferenceAd": {
+      const script = labels.script ?? "Script planning";
+      const character = labels.character ?? "Character";
+      const upload = labels.upload ?? "Upload";
+      const research = labels.research ?? "Research";
+      const brand = labels.brand ?? "Brand kit";
+      const lighting = labels.lighting ?? "Lighting";
+      const splice = labels.splice ?? "Video splice";
+      const audio = labels.audio ?? "Audio";
+      return {
+        nodeCounterSeed: 12,
+        nodes: [
+          node("tpl-char-a", "character", 40, 40, {
+            kind: "character",
+            label: `${character} A`,
+            alias: "PersonA",
+            biography:
+              "Exhausted office worker, late 20s, typing prompts all day, slouched posture, 烟火气 not glam.",
+          }),
+          node("tpl-char-b", "character", 40, 200, {
+            kind: "character",
+            label: `${character} B`,
+            alias: "PersonB",
+            biography:
+              "Confident colleague, introduces Alchemy, warm grounded tone, smart-casual office wear.",
+          }),
+          node("tpl-upload-product", "upload", 40, 360, {
+            kind: "upload",
+            label: `${upload} · product`,
+            alias: "Product",
+          }),
+          node("tpl-upload-ui", "upload", 40, 520, {
+            kind: "upload",
+            label: `${upload} · UI`,
+            alias: "UI",
+          }),
+          node("tpl-research", "research", 40, 680, {
+            kind: "research",
+            label: research,
+            summary: "",
+          }),
+          node("tpl-brand", "brand", 280, 40, {
+            kind: "brand",
+            label: brand,
+            alias: "brand",
+          }),
+          node("tpl-lighting", "lighting", 280, 140, {
+            kind: "lighting",
+            label: lighting,
+            preset: "natural_window",
+          }),
+          node("tpl-script", "script", 520, 120, {
+            kind: "script",
+            label: script,
+            brief: STORY_DIFFERENCE_BRIEF,
+            sceneCount: ULTRA_SCRIPT_SCENE_COUNT_DEFAULT,
+            sceneBeats: STORY_DIFFERENCE_BEATS,
+          }),
+          node("tpl-splice", "splice", 920, 200, { kind: "splice", label: splice }),
+          node("tpl-audio", "audio", 920, 360, { kind: "audio", label: audio }),
+        ],
+        edges: [
+          edge("e-res-script", "tpl-research", "tpl-script"),
+          edge("e-product-script", "tpl-upload-product", "tpl-script"),
+          edge("e-ui-script", "tpl-upload-ui", "tpl-script"),
+          edge("e-light-script", "tpl-lighting", "tpl-script"),
+          edge("e-brand-script", "tpl-brand", "tpl-script"),
+          edge("e-char-a-script", "tpl-char-a", "tpl-script"),
+          edge("e-char-b-script", "tpl-char-b", "tpl-script"),
+          edge("e-audio-splice", "tpl-audio", "tpl-splice"),
+        ],
+      };
+    }
     case "explosionUnbox": {
       const textVideo = labels.textVideo ?? "Text-to-video";
       const theme = EXPLOSION_UNBOX_DEFAULT_THEME;
@@ -273,6 +408,7 @@ export function createUltraCanvasTemplate(
 
 export const ULTRA_CANVAS_TEMPLATE_IDS: UltraCanvasTemplateId[] = [
   "productHero",
+  "storyDifferenceAd",
   "explosionUnbox",
   "conceptTextVideo",
   "brandMotionReel",

@@ -1,6 +1,7 @@
 import { BANANA2_EDIT_ENDPOINT, BANANA2_TEXT_ENDPOINT } from "@/lib/image-endpoints";
 import { buildImageRefinePrompt } from "@/lib/image-refine-prompt";
 import { buildCanvasComposePrompt } from "@/lib/pro-canvas-compose";
+import { buildScriptBriefWithBeats, clampUltraScriptSceneCount, type ScriptSceneBeat } from "@/lib/pro-canvas-script-plan";
 import type { CanvasImageSource } from "@/lib/pro-canvas-types";
 import { isHttpOrLibraryMediaUrl } from "@/lib/storage/library-asset-url";
 import {
@@ -210,26 +211,42 @@ export async function runCanvasTextVideoNode(opts: {
   });
 }
 
-export async function runCanvasScriptNode(opts: { brief: string }): Promise<{
+export async function runCanvasScriptNode(opts: {
+  brief: string;
+  sceneCount?: number;
+  sceneBeats?: ScriptSceneBeat[];
+}): Promise<{
   scriptText: string;
   scenePrompts: string[];
+  sceneImagePrompts: string[];
 }> {
-  const brief = opts.brief.trim();
-  if (!brief) throw new Error("Enter a creative brief for script planning.");
+  const brief = buildScriptBriefWithBeats(opts.brief, opts.sceneBeats);
+  if (!brief.trim()) throw new Error("Enter a creative brief for script planning.");
+
+  const sceneCount = clampUltraScriptSceneCount(opts.sceneCount);
 
   const res = await fetch("/api/plan-cinematic-reel", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ creativeBrief: brief, sceneCount: 3 }),
+    body: JSON.stringify({ creativeBrief: brief, sceneCount }),
   });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error((data as { error?: string }).error || "Script planning failed");
 
   const plan = (data as { plan?: { scenes?: { videoMotionPrompt?: string; sceneDescriptionZh?: string; imagePrompt?: string }[] } }).plan;
   const scenes = plan?.scenes ?? [];
-  const scenePrompts = scenes
-    .map((s) => s.videoMotionPrompt?.trim() || s.imagePrompt?.trim())
+  const sceneImagePrompts = scenes
+    .map((s) => s.imagePrompt?.trim() || s.sceneDescriptionZh?.trim())
     .filter((p): p is string => !!p);
+  const scenePrompts = scenes
+    .map((s) => s.videoMotionPrompt?.trim())
+    .filter((p): p is string => !!p);
+  // Fallback: if planner skipped image stills, derive a short still line (never prefer motion for images).
+  while (sceneImagePrompts.length < scenePrompts.length) {
+    const i = sceneImagePrompts.length;
+    const motion = scenePrompts[i] ?? "";
+    sceneImagePrompts.push(stillPromptFromMotion(motion) || `Scene ${i + 1} keyframe still`);
+  }
   const lines = scenes.map((s, i) => {
     const parts = [`Scene ${i + 1}:`];
     if (s.sceneDescriptionZh) parts.push(s.sceneDescriptionZh);
@@ -238,7 +255,20 @@ export async function runCanvasScriptNode(opts: { brief: string }): Promise<{
   });
   const scriptText = lines.join("\n\n");
   if (!scriptText) throw new Error("No script returned from planner.");
-  return { scriptText, scenePrompts };
+  return { scriptText, scenePrompts, sceneImagePrompts };
+}
+
+/** Collapse a Seedance motion paragraph into one still-friendly sentence. */
+function stillPromptFromMotion(motion: string): string {
+  const first = motion
+    .split(/[,.]/)
+    .map((s) => s.trim())
+    .find((s) => s.length > 12 && !/rings|rises and falls|intensifies|drift|track|push-in|handheld/i.test(s));
+  if (first) return `Single still: ${first}. No multi-panel, no comic grid, no on-image text.`;
+  const clipped = motion.trim().slice(0, 140);
+  return clipped
+    ? `Single still capturing: ${clipped}. One frame only — no comic strip or storyboard grid.`
+    : "";
 }
 
 export async function runCanvasSpliceNode(opts: {

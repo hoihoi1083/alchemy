@@ -2,21 +2,44 @@ import type { Edge, Node } from "@xyflow/react";
 import type { ProCanvasNodeData, TextVideoNodeData, VideoNodeData } from "@/lib/pro-canvas-types";
 import {
   audioUrlFromNode,
-  nodeHasRunnableOutput,
   runnableExecutionOrder,
   upstreamNodesSorted,
 } from "@/lib/pro-canvas-graph";
 import { isHttpOrLibraryMediaUrl } from "@/lib/storage/library-asset-url";
+import { nodeNeedsRun } from "@/lib/pro-canvas-stale";
 import {
   estimateCanvasImageTokens,
   estimateCanvasSpliceTokens,
   estimateCanvasVideoTokens,
 } from "@/lib/ultra-pro-controls";
 
+export type EstimateRunAllOpts = {
+  hasLocalAudio?: (nodeId: string) => boolean;
+};
+
+export function spliceUpstreamHasMusic(
+  spliceNodeId: string,
+  nodes: Node[],
+  edges: Edge[],
+  opts?: EstimateRunAllOpts,
+): boolean {
+  const upstream = upstreamNodesSorted(spliceNodeId, nodes, edges);
+  return upstream.some((u) => {
+    const k = (u.data as ProCanvasNodeData).kind;
+    if (k !== "audio") return false;
+    if (isHttpOrLibraryMediaUrl(audioUrlFromNode(u))) return true;
+    return opts?.hasLocalAudio?.(u.id) ?? false;
+  });
+}
+
 /** Sum token cost for pending runnable nodes in Run-all execution order. */
-export function estimateRunAllTokens(nodes: Node[], edges: Edge[]): number {
+export function estimateRunAllTokens(
+  nodes: Node[],
+  edges: Edge[],
+  opts?: EstimateRunAllOpts,
+): number {
   const { sorted } = runnableExecutionOrder(nodes, edges);
-  const pending = sorted.filter((n) => !nodeHasRunnableOutput(n));
+  const pending = sorted.filter((n) => nodeNeedsRun(n, nodes, edges));
   let total = 0;
   for (const n of pending) {
     const data = n.data as ProCanvasNodeData;
@@ -44,11 +67,7 @@ export function estimateRunAllTokens(nodes: Node[], edges: Edge[]): number {
         break;
       }
       case "splice": {
-        const upstream = upstreamNodesSorted(n.id, nodes, edges);
-        const hasMusic = upstream.some((u) => {
-          const k = (u.data as ProCanvasNodeData).kind;
-          return k === "audio" && isHttpOrLibraryMediaUrl(audioUrlFromNode(u));
-        });
+        const hasMusic = spliceUpstreamHasMusic(n.id, nodes, edges, opts);
         total += estimateCanvasSpliceTokens({ hasMusic });
         break;
       }

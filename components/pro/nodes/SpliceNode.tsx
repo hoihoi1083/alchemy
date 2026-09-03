@@ -4,12 +4,13 @@ import { useMemo } from "react";
 import type { NodeProps } from "@xyflow/react";
 import { ExportToLibraryButton } from "@/components/pro/ExportToLibraryButton";
 import { ProNodeShell } from "@/components/pro/ProNodeShell";
+import { StaleOutputBadge } from "@/components/pro/StaleOutputBadge";
 import { useProCanvasActions } from "@/components/pro/ProCanvasActions";
 import { useLocale } from "@/components/LocaleProvider";
 import type { SpliceNodeData } from "@/lib/pro-canvas-types";
 
 export function SpliceNode({ id, data }: NodeProps & { data: SpliceNodeData }) {
-  const { runSpliceNode, updateNodeData, boardBusy, estimateSpliceTokenCost } =
+  const { runSpliceNode, updateNodeData, boardBusy, estimateSpliceTokenCost, isNodeStale } =
     useProCanvasActions();
   const { m } = useLocale();
   const tokenCost = useMemo(() => estimateSpliceTokenCost(id), [estimateSpliceTokenCost, id]);
@@ -32,6 +33,7 @@ export function SpliceNode({ id, data }: NodeProps & { data: SpliceNodeData }) {
       </button>
       {data.videoUrl ? (
         <>
+          {isNodeStale(id) ? <StaleOutputBadge /> : null}
           <video src={data.videoUrl} controls className="mt-2 max-h-36 w-full rounded-lg ring-1 ring-slate-700/80" />
           <ExportToLibraryButton
             url={data.videoUrl}

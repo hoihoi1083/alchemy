@@ -2,6 +2,8 @@
 
 /* Force landing utilities that Next/Tailwind-dev sometimes drops from the CSS graph. */
 @source inline("max-w-[240px] max-w-[300px] max-w-[340px] max-w-[500px] max-w-[560px] max-w-[860px] max-w-[1120px] h-[170px] md:h-[190px] md:max-w-[340px] lg:max-w-[560px] lg:py-20 py-20 z-[90] z-[100] bg-[#050507]/96 w-[50vw] md:w-[50vw] w-[92vw]");
+/* Ultra canvas board — without these, ReactFlow parent collapses to 0 height (blank white page). */
+@source inline("min-h-[560px] min-h-[640px] h-[min(72vh,880px)] h-[calc(100dvh-9.5rem)] w-[min(100%,18rem)] max-h-[min(70vh,640px)]");
 
 /*
   Brand palette (Alchemy AI Lab)

@@ -2,9 +2,11 @@
 
 import { useMemo } from "react";
 import type { NodeProps } from "@xyflow/react";
+import { DirectorPromptChips } from "@/components/pro/DirectorPromptChips";
 import { ExportToLibraryButton } from "@/components/pro/ExportToLibraryButton";
 import { ProControlFields } from "@/components/pro/ProControlFields";
 import { ProNodeShell } from "@/components/pro/ProNodeShell";
+import { StaleOutputBadge } from "@/components/pro/StaleOutputBadge";
 import { useProCanvasActions } from "@/components/pro/ProCanvasActions";
 import { MentionInput } from "@/components/pro/MentionInput";
 import { useLocale } from "@/components/LocaleProvider";
@@ -28,7 +30,7 @@ function imageProFromData(data: ImageNodeData): UltraImageProControls {
 }
 
 export function ImageNode({ id, data }: NodeProps & { data: ImageNodeData }) {
-  const { runImageNode, updateNodeData, nodes, boardBusy } = useProCanvasActions();
+  const { runImageNode, updateNodeData, nodes, boardBusy, isNodeStale } = useProCanvasActions();
   const { m } = useLocale();
   const tokenCost = useMemo(() => estimateCanvasImageTokens(), []);
   const pro = imageProFromData(data);
@@ -50,6 +52,12 @@ export function ImageNode({ id, data }: NodeProps & { data: ImageNodeData }) {
         rows={4}
         className="h-20 w-full resize-none rounded-lg border border-slate-700/80 bg-slate-950/80 px-2 py-1.5 text-xs text-white placeholder:text-slate-600 focus:border-sky-500/40 focus:outline-none"
       />
+      <DirectorPromptChips
+        labels={m.ultraCanvas.directorChips}
+        prompt={data.prompt}
+        disabled={boardBusy}
+        onInsert={(prompt) => updateNodeData(id, { prompt })}
+      />
       <ProControlFields
         value={pro}
         onChange={(patch) => updateNodeData(id, patch)}
@@ -69,6 +77,7 @@ export function ImageNode({ id, data }: NodeProps & { data: ImageNodeData }) {
       </button>
       {data.imageUrl ? (
         <>
+          {isNodeStale(id) ? <StaleOutputBadge /> : null}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={data.imageUrl} alt="" className="mt-2 max-h-36 w-full rounded-lg object-contain ring-1 ring-slate-700/80" />
           <ExportToLibraryButton

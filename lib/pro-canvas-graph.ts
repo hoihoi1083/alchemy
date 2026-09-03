@@ -4,8 +4,10 @@ import type {
   BrandNodeData,
   CameraNodeData,
   CanvasImageSource,
+  CharacterNodeData,
   ImageNodeData,
   ProCanvasNodeData,
+  ResearchNodeData,
   ScriptNodeData,
   TextNodeData,
   TextVideoNodeData,
@@ -164,7 +166,13 @@ export function resolveMentions(text: string, nodes: Node[]): string {
 /** Nodes that can supply image refs when @mentioned. */
 function isMentionImageSource(node: Node): boolean {
   const kind = (node.data as ProCanvasNodeData).kind;
-  return kind === "upload" || kind === "image" || kind === "camera" || kind === "brand";
+  return (
+    kind === "upload" ||
+    kind === "image" ||
+    kind === "camera" ||
+    kind === "brand" ||
+    kind === "character"
+  );
 }
 
 function promptForMentionDeps(node: Node): string {
@@ -242,7 +250,7 @@ export function findMissingImageSources(
     const durable = isHttpOrLibraryMediaUrl(url);
     const isMentioned = mentioned.some((n) => n.id === src.id);
 
-    if (data.kind === "upload") {
+    if (data.kind === "upload" || data.kind === "character") {
       if (!file && !durable) {
         const alias = nodeAlias(src);
         return isMentioned
@@ -253,8 +261,8 @@ export function findMissingImageSources(
     }
 
     if (data.kind === "brand" && (isMentioned || connected.some((n) => n.id === src.id))) {
-      if (!durable) {
-        return `Brand node (${label}) needs a logo — open brand kit or upload.`;
+      if (!file && !durable) {
+        return `Brand node (${label}) needs a logo — upload, pick from library, or open brand kit.`;
       }
       continue;
     }
@@ -276,8 +284,8 @@ export function findMissingImageSources(
 
 export function uploadNodeNeedsAsset(node: Node, getFile?: (id: string) => File | undefined): boolean {
   const data = node.data as ProCanvasNodeData;
-  if (data.kind !== "upload") return false;
-  const url = (data as UploadNodeData).previewUrl;
+  if (data.kind !== "upload" && data.kind !== "character") return false;
+  const url = (data as UploadNodeData | CharacterNodeData).previewUrl;
   return !getFile?.(node.id) && !isHttpOrLibraryMediaUrl(url);
 }
 
@@ -351,8 +359,8 @@ export function collectOrderedImageSources(
 
 export function imageUrlFromNode(node: Node): string | undefined {
   const data = node.data as ProCanvasNodeData;
-  if (data.kind === "upload") {
-    const url = (data as UploadNodeData).previewUrl;
+  if (data.kind === "upload" || data.kind === "character") {
+    const url = (data as UploadNodeData | CharacterNodeData).previewUrl;
     if (isHttpOrLibraryMediaUrl(url)) return url;
     return url;
   }
@@ -377,7 +385,26 @@ export function textFromNode(node: Node): string | undefined {
   const data = node.data as ProCanvasNodeData;
   if (data.kind === "text") return (data as TextNodeData).text;
   if (data.kind === "script") return (data as ScriptNodeData).scriptText;
+  if (data.kind === "research") {
+    const summary = (data as ResearchNodeData).summary?.trim();
+    return summary ? `[Research]\n${summary}` : undefined;
+  }
+  if (data.kind === "character") {
+    const bio = (data as CharacterNodeData).biography?.trim();
+    return bio ? `[Character bio]\n${bio}` : undefined;
+  }
   return undefined;
+}
+
+/** Walk upstream graph to find the nearest script node (e.g. script → image → video). */
+export function findUpstreamScriptNode(
+  nodeId: string,
+  nodes: Node[],
+  edges: Edge[],
+): Node | undefined {
+  return allUpstreamNodes(nodeId, nodes, edges).find(
+    (n) => (n.data as ProCanvasNodeData).kind === "script",
+  );
 }
 
 /** Merge script scene prompts, upstream text, and @mentions for video nodes. */
@@ -389,8 +416,8 @@ export function resolveCanvasVideoPrompt(opts: {
   edges: Edge[];
 }): string {
   let prompt = opts.basePrompt.trim();
-  const upstream = upstreamNodes(opts.nodeId, opts.nodes, opts.edges);
-  const script = upstream.find((n) => (n.data as ProCanvasNodeData).kind === "script");
+  const allUpstream = allUpstreamNodes(opts.nodeId, opts.nodes, opts.edges);
+  const script = findUpstreamScriptNode(opts.nodeId, opts.nodes, opts.edges);
   if (script) {
     const scenes = (script.data as ScriptNodeData).scenePrompts ?? [];
     if (opts.sceneIndex != null && scenes[opts.sceneIndex]) {
@@ -400,9 +427,14 @@ export function resolveCanvasVideoPrompt(opts: {
       prompt = scenes.join("\n\n");
     }
   }
-  const texts = upstream
-    .map(textFromNode)
-    .filter((t): t is string => !!t?.trim() && t.trim() !== prompt);
+  const seenText = new Set<string>();
+  const texts: string[] = [];
+  for (const n of allUpstream) {
+    const t = textFromNode(n)?.trim();
+    if (!t || t === prompt || seenText.has(t)) continue;
+    seenText.add(t);
+    texts.push(t);
+  }
   const merged = [prompt, ...texts].filter(Boolean).join("\n\n");
   const withMentions = resolveMentions(merged, opts.nodes);
   const modifiers = collectUpstreamModifierSuffix(opts.nodeId, opts.nodes, opts.edges);
@@ -419,13 +451,19 @@ export function resolveCanvasImagePrompt(opts: {
 }): string {
   let prompt = opts.basePrompt.trim();
   const upstream = upstreamNodes(opts.nodeId, opts.nodes, opts.edges);
-  const script = upstream.find((n) => (n.data as ProCanvasNodeData).kind === "script");
-  if (script) {
-    const scenes = (script.data as ScriptNodeData).scenePrompts ?? [];
-    if (opts.sceneIndex != null && scenes[opts.sceneIndex]) {
-      const sceneLine = scenes[opts.sceneIndex]!.trim();
-      prompt = prompt ? `${sceneLine}\n\n${prompt}` : sceneLine;
+  const script = findUpstreamScriptNode(opts.nodeId, opts.nodes, opts.edges);
+  if (script && !prompt) {
+    // Prefer still prompts — never inject Seedance motion lists into empty image nodes.
+    const data = script.data as ScriptNodeData;
+    const stills = data.sceneImagePrompts ?? [];
+    const motions = data.scenePrompts ?? [];
+    if (opts.sceneIndex != null) {
+      const still = stills[opts.sceneIndex]?.trim();
+      const motion = motions[opts.sceneIndex]?.trim();
+      prompt = still || (motion ? softStillFromMotion(motion) : "");
     }
+  } else if (script && prompt && opts.sceneIndex != null) {
+    // If base already has continuity / cast text, do not prepend video motion again.
   }
   const texts = upstream
     .map(textFromNode)
@@ -436,10 +474,27 @@ export function resolveCanvasImagePrompt(opts: {
   return appendModifierSuffix(withMentions, modifiers);
 }
 
+function softStillFromMotion(motion: string): string {
+  const clipped = motion.trim().slice(0, 160);
+  return (
+    `ONE photographic still only (not a comic/storyboard grid): ${clipped}. ` +
+    `No multi-panel, no speech bubbles, no on-image captions.`
+  );
+}
+
 export function scriptScenePromptsFromNode(node: Node): string[] {
   const data = node.data as ProCanvasNodeData;
   if (data.kind !== "script") return [];
   return (data as ScriptNodeData).scenePrompts ?? [];
+}
+
+/** Still prompts for spawn / image nodes — falls back carefully if only motion exists. */
+export function scriptSceneImagePromptsFromNode(node: Node): string[] {
+  const data = node.data as ProCanvasNodeData;
+  if (data.kind !== "script") return [];
+  const script = data as ScriptNodeData;
+  if (script.sceneImagePrompts?.length) return script.sceneImagePrompts;
+  return (script.scenePrompts ?? []).map((m, i) => softStillFromMotion(m || `Scene ${i + 1}`));
 }
 
 export function audioUrlFromNode(node: Node): string | undefined {
@@ -452,6 +507,8 @@ export function isRunnableNode(node: Node): boolean {
   const kind = (node.data as ProCanvasNodeData).kind;
   return (
     kind !== "upload" &&
+    kind !== "character" &&
+    kind !== "research" &&
     kind !== "text" &&
     kind !== "lighting" &&
     kind !== "background" &&

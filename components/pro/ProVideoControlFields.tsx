@@ -31,7 +31,7 @@ export function ProVideoControlFields({ value, onChange, showCamera = true }: Pr
   const allowedResolutions = planReady
     ? videoResolutionsForPlan(plan)
     : videoResolutionsForPlan("master");
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
 
   const resolution =
     allowedResolutions.includes(value.resolution) ? value.resolution : maxVideoResolution;

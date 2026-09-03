@@ -260,7 +260,7 @@ export function buildWebBoundaryBreakStillPrompt(input: {
   const def = SCHEMES[input.scheme];
   const hero = subject(input);
   const ar = input.aspectRatio?.trim() || "3:4";
-  const isEndEdit = input.frame === "end" && input.editingStartPlate;
+  const isEndEdit = input.frame === "end" && Boolean(input.editingStartPlate);
   const beat = expandSchemeTokens(
     schemeStillBeat(def, input.frame, isEndEdit),
     { business: input.business, headline: input.headline },

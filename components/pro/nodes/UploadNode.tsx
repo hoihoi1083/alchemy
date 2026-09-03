@@ -24,7 +24,7 @@ export function UploadNode({ id, data }: NodeProps & { data: UploadNodeData }) {
         onAliasChange={(alias) => updateNodeData(id, { alias })}
         aliasPlaceholder={m.ultraCanvas.aliasPlaceholder}
       >
-        <label className="block cursor-pointer rounded-lg border border-dashed border-emerald-500/30 bg-emerald-950/10 px-3 py-4 text-center text-xs text-slate-300 transition hover:border-emerald-400/50 hover:bg-emerald-950/20">
+        <label className="nodrag nopan block cursor-pointer rounded-lg border border-dashed border-emerald-500/30 bg-emerald-950/10 px-3 py-4 text-center text-xs text-slate-300 transition hover:border-emerald-400/50 hover:bg-emerald-950/20">
           {data.fileName || m.ultraCanvas.uploadPlaceholder}
           <input
             type="file"
@@ -37,6 +37,9 @@ export function UploadNode({ id, data }: NodeProps & { data: UploadNodeData }) {
             }}
           />
         </label>
+        <p className="mt-1.5 text-[10px] leading-relaxed text-slate-500">
+          {m.ultraCanvas.uploadRefHint}
+        </p>
         <button
           type="button"
           onClick={() => setPickerOpen(true)}

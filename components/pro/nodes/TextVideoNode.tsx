@@ -2,9 +2,11 @@
 
 import { useMemo } from "react";
 import type { NodeProps } from "@xyflow/react";
+import { DirectorPromptChips } from "@/components/pro/DirectorPromptChips";
 import { ExportToLibraryButton } from "@/components/pro/ExportToLibraryButton";
 import { ProNodeShell } from "@/components/pro/ProNodeShell";
 import { ProVideoControlFields } from "@/components/pro/ProVideoControlFields";
+import { StaleOutputBadge } from "@/components/pro/StaleOutputBadge";
 import { useProCanvasActions } from "@/components/pro/ProCanvasActions";
 import { MentionInput } from "@/components/pro/MentionInput";
 import { useLocale } from "@/components/LocaleProvider";
@@ -15,7 +17,7 @@ import {
 } from "@/lib/ultra-pro-controls";
 
 export function TextVideoNode({ id, data }: NodeProps & { data: TextVideoNodeData }) {
-  const { runTextVideoNode, updateNodeData, nodes, boardBusy } = useProCanvasActions();
+  const { runTextVideoNode, updateNodeData, nodes, boardBusy, isNodeStale } = useProCanvasActions();
   const { m } = useLocale();
   const pro = videoProFromNodeData(data);
   const tokenCost = useMemo(
@@ -38,6 +40,12 @@ export function TextVideoNode({ id, data }: NodeProps & { data: TextVideoNodeDat
         placeholder={m.ultraCanvas.textVideoPromptPlaceholder}
         rows={4}
         className="h-20 w-full resize-none rounded-lg border border-slate-700/80 bg-slate-950/80 px-2 py-1.5 text-xs text-white placeholder:text-slate-600 focus:border-violet-500/40 focus:outline-none"
+      />
+      <DirectorPromptChips
+        labels={m.ultraCanvas.directorChips}
+        prompt={data.prompt}
+        disabled={boardBusy}
+        onInsert={(prompt) => updateNodeData(id, { prompt })}
       />
       {data.sceneIndex != null ? (
         <p className="mt-1 text-[10px] text-violet-300/80">
@@ -64,6 +72,7 @@ export function TextVideoNode({ id, data }: NodeProps & { data: TextVideoNodeDat
       </button>
       {data.videoUrl ? (
         <>
+          {isNodeStale(id) ? <StaleOutputBadge /> : null}
           <video src={data.videoUrl} controls className="mt-2 max-h-36 w-full rounded-lg ring-1 ring-slate-700/80" />
           <ExportToLibraryButton
             url={data.videoUrl}

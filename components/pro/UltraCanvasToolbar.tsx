@@ -88,7 +88,11 @@ export function UltraCanvasToolbar({
 
   return (
     <div className="flex w-full flex-col items-stretch gap-2">
-      <div className="flex w-full flex-wrap items-center justify-end gap-2 rounded-xl border border-violet-500/25 bg-slate-900/95 p-2 shadow-[0_0_32px_rgba(139,92,246,0.12)] backdrop-blur">
+      <div
+        className={`flex w-full flex-wrap items-center justify-end gap-2 rounded-xl border border-violet-500/25 bg-slate-900/95 p-2 shadow-[0_0_32px_rgba(139,92,246,0.12)] backdrop-blur ${
+          listOpen || tplOpen ? "relative z-50" : "relative z-10"
+        }`}
+      >
         <input
           value={boardName}
           onChange={(e) => onBoardNameChange(e.target.value)}
@@ -125,7 +129,7 @@ export function UltraCanvasToolbar({
             {tb.load}
           </button>
           {listOpen ? (
-            <div className="absolute right-0 top-full z-20 mt-1 w-56 rounded-xl border border-slate-700 bg-slate-950 p-1 shadow-xl">
+            <div className="absolute right-0 top-full z-50 mt-1 max-h-[min(50vh,20rem)] w-56 overflow-y-auto rounded-xl border border-slate-700 bg-slate-950 p-1 shadow-xl">
               {listError ? (
                 <p className="px-2 py-2 text-xs text-red-400">{listError}</p>
               ) : boards.length === 0 ? (
@@ -186,7 +190,7 @@ export function UltraCanvasToolbar({
             {tb.templates}
           </button>
           {tplOpen ? (
-            <div className="absolute right-0 top-full z-20 mt-1 w-56 rounded-xl border border-slate-700 bg-slate-950 p-1 shadow-xl">
+            <div className="absolute right-0 top-full z-50 mt-1 max-h-[min(50vh,20rem)] w-56 overflow-y-auto rounded-xl border border-slate-700 bg-slate-950 p-1 shadow-xl">
               {ULTRA_CANVAS_TEMPLATE_IDS.map((id) => (
                 <button
                   key={id}
@@ -210,7 +214,7 @@ export function UltraCanvasToolbar({
           title={tb.undo}
           className="rounded-lg border border-slate-600 px-2.5 py-1.5 text-xs font-medium text-slate-200 hover:bg-slate-800"
         >
-          ↶
+          ↶ {tb.undo}
         </button>
         <button
           type="button"
@@ -218,12 +222,15 @@ export function UltraCanvasToolbar({
           title={tb.redo}
           className="rounded-lg border border-slate-600 px-2.5 py-1.5 text-xs font-medium text-slate-200 hover:bg-slate-800"
         >
-          ↷
+          ↷ {tb.redo}
         </button>
       </div>
-      <p className="rounded-lg border border-slate-800/80 bg-slate-950/80 px-2.5 py-1 text-[10px] text-slate-500">
-        {tb.shortcuts}
-      </p>
+      <details className="rounded-lg border border-slate-800/80 bg-slate-950/80 px-2.5 py-1">
+        <summary className="cursor-pointer text-[10px] font-medium text-slate-400">
+          Shortcuts
+        </summary>
+        <p className="mt-1 text-[10px] leading-relaxed text-slate-500">{tb.shortcuts}</p>
+      </details>
       {showSaved ? (
         <p className="rounded-lg border border-emerald-500/30 bg-emerald-950/40 px-2.5 py-1 text-xs text-emerald-300">
           {tb.saved}

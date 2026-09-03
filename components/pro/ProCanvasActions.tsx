@@ -12,6 +12,7 @@ export type ProCanvasActions = {
   onPickLibraryImage: (nodeId: string, previewUrl: string, fileName: string) => void;
   onPickLibraryAudio: (nodeId: string, previewUrl: string, fileName: string) => void;
   runImageNode: (nodeId: string) => Promise<void>;
+  runCharacterNode: (nodeId: string) => Promise<void>;
   runVideoNode: (nodeId: string) => Promise<void>;
   runTextVideoNode: (nodeId: string) => Promise<void>;
   runCameraNode: (nodeId: string) => Promise<void>;
@@ -23,6 +24,8 @@ export type ProCanvasActions = {
   runNode: (nodeId: string) => Promise<void>;
   estimateSpliceTokenCost: (nodeId: string) => number;
   updateNodeData: (nodeId: string, patch: Record<string, unknown>) => void;
+  showBoardNotice: (message: string) => void;
+  isNodeStale: (nodeId: string) => boolean;
 };
 
 const Ctx = createContext<ProCanvasActions | null>(null);

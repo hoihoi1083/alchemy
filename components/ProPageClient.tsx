@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ProCanvas } from "@/components/pro/ProCanvas";
 import { StudioNav } from "@/components/studio/StudioNav";
@@ -16,12 +16,12 @@ function UltraCanvasBadge() {
   const { m } = useLocale();
   return (
     <div className="flex items-center gap-2">
-      <span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-semibold text-violet-800">
+      <span className="rounded-full bg-violet-500/20 px-3 py-1 text-xs font-semibold text-violet-200 ring-1 ring-violet-400/30">
         {m.ultraCanvas.title}
       </span>
       <Link
         href="/studio"
-        className="hidden text-xs font-medium text-slate-600 hover:text-violet-700 sm:inline"
+        className="hidden text-xs font-medium text-slate-400 hover:text-violet-200 sm:inline"
       >
         {m.ultraCanvas.backStudio}
       </Link>
@@ -31,39 +31,56 @@ function UltraCanvasBadge() {
 
 export function ProPageClient() {
   const { m } = useLocale();
+  const [tipsOpen, setTipsOpen] = useState(false);
 
   return (
-    <main className="min-h-screen bg-white text-slate-900">
-      <StudioNav trailing={<UltraCanvasBadge />} />
-      <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-6 md:pb-8">
-        <header className="mb-4 rounded-2xl border border-slate-200 bg-gradient-to-br from-violet-50/90 via-white to-white p-4 sm:p-5">
-          <h1 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
-            {m.ultraCanvas.title}
-          </h1>
-          <p className="mt-1 max-w-2xl text-sm text-slate-600">{m.ultraCanvas.subtitle}</p>
-          <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+    <main className="flex min-h-screen flex-col bg-slate-950 text-slate-100">
+      <StudioNav trailing={<UltraCanvasBadge />} variant="dark" />
+      <div className="mx-auto flex w-full max-w-[100vw] flex-1 flex-col px-3 py-3 sm:px-4 md:px-5 md:pb-4">
+        <header className="mb-3 shrink-0 rounded-xl border border-white/10 bg-slate-900/80 px-3 py-2.5 sm:px-4">
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-lg font-semibold tracking-tight text-white sm:text-xl">
+                {m.ultraCanvas.title}
+              </h1>
+              <p className="mt-0.5 max-w-3xl text-xs text-slate-400 sm:text-sm">
+                {m.ultraCanvas.subtitle}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setTipsOpen((v) => !v)}
+              className="shrink-0 rounded-lg border border-white/10 bg-slate-950/60 px-2.5 py-1 text-[11px] font-medium text-slate-300 hover:bg-slate-800"
+            >
+              {tipsOpen ? "−" : "+"} Tips
+            </button>
+          </div>
+          <p className="mt-2 rounded-lg border border-amber-500/25 bg-amber-950/40 px-2.5 py-1.5 text-[11px] text-amber-100/90">
             {m.ultraCanvas.costHint}
           </p>
+          {tipsOpen ? (
+            <ol className="mt-2 grid gap-1.5 text-[11px] text-slate-400 sm:grid-cols-3">
+              {m.ultraCanvas.steps.map((step) => (
+                <li
+                  key={step}
+                  className="rounded-lg border border-white/10 bg-slate-950/50 px-2.5 py-2"
+                >
+                  {step}
+                </li>
+              ))}
+            </ol>
+          ) : null}
         </header>
 
-        <p className="mb-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600 md:hidden">
+        <p className="mb-3 shrink-0 rounded-xl border border-white/10 bg-slate-900/60 px-3 py-2 text-xs text-slate-400 md:hidden">
           {m.ultraCanvas.mobileDesktopOnly}
         </p>
 
-        <ol className="mb-4 hidden gap-2 text-xs text-slate-600 sm:grid sm:grid-cols-3">
-          {m.ultraCanvas.steps.map((step) => (
-            <li
-              key={step}
-              className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5"
-            >
-              {step}
-            </li>
-          ))}
-        </ol>
-
-        <Suspense fallback={<ProCanvas />}>
-          <ProCanvasFromQuery />
-        </Suspense>
+        <div className="min-h-0 flex-1">
+          <Suspense fallback={<ProCanvas />}>
+            <ProCanvasFromQuery />
+          </Suspense>
+        </div>
       </div>
     </main>
   );

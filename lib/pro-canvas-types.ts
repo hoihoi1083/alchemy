@@ -20,7 +20,9 @@ export type ProCanvasNodeKind =
   | "lighting"
   | "background"
   | "grade"
-  | "brand";
+  | "brand"
+  | "character"
+  | "research";
 
 export type CanvasNodeBase = {
   label: string;
@@ -28,7 +30,11 @@ export type CanvasNodeBase = {
   alias?: string;
   busy?: boolean;
   error?: string;
+  /** Fingerprint of upstream inputs when output was last generated. */
+  outputInputFingerprint?: string;
 };
+
+import type { ScriptSceneBeat } from "@/lib/pro-canvas-script-plan";
 
 export type UploadNodeData = CanvasNodeBase & {
   kind: "upload";
@@ -113,7 +119,29 @@ export type ScriptNodeData = CanvasNodeBase & {
   kind: "script";
   brief: string;
   scriptText?: string;
+  /** Per-scene motion prompts for image-to-video (Seedance). */
   scenePrompts?: string[];
+  /** Per-scene still prompts for image nodes (single frame — not motion lists). */
+  sceneImagePrompts?: string[];
+  /** Planned scene count (4–6) for cinematic reel planner. */
+  sceneCount?: number;
+  /** Optional director beats — time, emotion, dialogue line. */
+  sceneBeats?: ScriptSceneBeat[];
+};
+
+export type CharacterNodeData = CanvasNodeBase & {
+  kind: "character";
+  fileName?: string;
+  previewUrl?: string;
+  /** 人物小传 — feeds identity lock in image/video prompts. */
+  biography?: string;
+  /** Optional prompt for AI character-sheet generation (falls back to biography). */
+  generatePrompt?: string;
+};
+
+export type ResearchNodeData = CanvasNodeBase & {
+  kind: "research";
+  summary: string;
 };
 
 export type SpliceNodeData = CanvasNodeBase & {
@@ -158,7 +186,9 @@ export type ProCanvasNodeData =
   | LightingModNodeData
   | BackgroundModNodeData
   | GradeModNodeData
-  | BrandNodeData;
+  | BrandNodeData
+  | CharacterNodeData
+  | ResearchNodeData;
 
 export type TaskQueueItem = {
   nodeId: string;
