@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 import { artStyleIdsForPicker, type ArtStyleId } from "@/lib/art-style";
 import { videoResolutionsForPlan } from "@/lib/billing/entitlements";
 import { useUserPlanEntitlements } from "@/hooks/useUserPlanEntitlements";
+import { promptAlreadySpecifiesCamera } from "@/lib/prompt-balance-contract";
 import {
+  isUltraVideoCameraAuto,
+  ULTRA_VIDEO_CAMERA_AUTO,
   ULTRA_VIDEO_ASPECT_RATIOS,
   ULTRA_VIDEO_CAMERAS,
   type UltraVideoProControls,
@@ -16,6 +19,10 @@ type Props = {
   onChange: (patch: Partial<UltraVideoProControls>) => void;
   /** Image-to-video shows camera + motion; text-to-video hides camera row. */
   showCamera?: boolean;
+  /** Motion prompt — used to detect “follow prompt” auto camera. */
+  prompt?: string;
+  /** 2+ still refs → reference-to-video ignores template camera. */
+  multiRef?: boolean;
 };
 
 function pill(active: boolean) {
@@ -24,7 +31,17 @@ function pill(active: boolean) {
     : "border-slate-700 bg-slate-950/60 text-slate-300 hover:border-slate-500";
 }
 
-export function ProVideoControlFields({ value, onChange, showCamera = true }: Props) {
+function cameraOptionLabel(camera: string, autoLabel: string): string {
+  return isUltraVideoCameraAuto(camera) ? autoLabel : camera;
+}
+
+export function ProVideoControlFields({
+  value,
+  onChange,
+  showCamera = true,
+  prompt = "",
+  multiRef = false,
+}: Props) {
   const { m } = useLocale();
   const pc = m.ultraCanvas.videoProControls;
   const { plan, maxVideoResolution, planReady } = useUserPlanEntitlements();
@@ -35,6 +52,17 @@ export function ProVideoControlFields({ value, onChange, showCamera = true }: Pr
 
   const resolution =
     allowedResolutions.includes(value.resolution) ? value.resolution : maxVideoResolution;
+
+  const promptOwnsCamera = useMemo(
+    () => Boolean(prompt.trim()) && promptAlreadySpecifiesCamera(prompt),
+    [prompt],
+  );
+  const cameraLocked = multiRef || promptOwnsCamera;
+  const selectValue = cameraLocked
+    ? ULTRA_VIDEO_CAMERA_AUTO
+    : isUltraVideoCameraAuto(value.camera)
+      ? ULTRA_VIDEO_CAMERA_AUTO
+      : value.camera;
 
   return (
     <div className="nodrag nopan nowheel mt-2 rounded-lg border border-violet-500/20 bg-slate-950/50">
@@ -70,16 +98,24 @@ export function ProVideoControlFields({ value, onChange, showCamera = true }: Pr
             <div>
               <p className="mb-1 text-[10px] font-medium text-slate-400">{pc.camera}</p>
               <select
-                value={value.camera}
+                value={selectValue}
+                disabled={cameraLocked}
                 onChange={(e) => onChange({ camera: e.target.value })}
-                className="w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-[10px] text-slate-200"
+                className="w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-[10px] text-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {ULTRA_VIDEO_CAMERAS.map((c) => (
                   <option key={c} value={c}>
-                    {c}
+                    {cameraOptionLabel(c, pc.cameraAuto)}
                   </option>
                 ))}
               </select>
+              {multiRef ? (
+                <p className="mt-0.5 text-[9px] leading-snug text-slate-500">{pc.cameraMultiRefHint}</p>
+              ) : promptOwnsCamera ? (
+                <p className="mt-0.5 text-[9px] leading-snug text-slate-500">{pc.cameraFromPromptHint}</p>
+              ) : isUltraVideoCameraAuto(value.camera) ? (
+                <p className="mt-0.5 text-[9px] leading-snug text-slate-500">{pc.cameraAutoHint}</p>
+              ) : null}
             </div>
           ) : null}
 

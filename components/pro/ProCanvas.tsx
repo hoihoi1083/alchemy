@@ -94,6 +94,7 @@ import {
   stillUrlsFromBoardStoryboard,
   storyboardStillPatchesForSceneImages,
 } from "@/lib/pro-canvas-spawn";
+import { ULTRA_VIDEO_MAX_REF_IMAGES } from "@/lib/pro-canvas-compose";
 import {
   edgePriorSceneKeyframe,
   filterSpawnResourcesForScene,
@@ -1196,9 +1197,40 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
 
       updateNodeData(nodeId, { busy: true, error: undefined }, session);
       try {
-        const imageUrl = await ensureUpstreamImageUrl(upstream, session);
+        // Collect @mentioned + connected stills (keep @Alias in prompt so slots resolve).
+        let sources = collectOrderedImageSources(
+          nodeId,
+          prompt,
+          allNodes,
+          allEdges,
+          (id) => uploadFiles.current.get(id),
+        );
+        if (sources.length === 0) {
+          const fallbackUrl = await ensureUpstreamImageUrl(upstream, session);
+          sources = [{ nodeId: upstream[0]?.id ?? nodeId, alias: "Start", url: fallbackUrl }];
+        }
+        const imageUrls: string[] = [];
+        const aliases: string[] = [];
+        for (const src of sources.slice(0, ULTRA_VIDEO_MAX_REF_IMAGES)) {
+          let url = src.url;
+          if (src.file) {
+            url = await uploadCanvasAsset(src.file);
+            uploadFiles.current.delete(src.nodeId);
+          } else if (url && !isHttpOrLibraryMediaUrl(url)) {
+            continue;
+          }
+          if (!isHttpOrLibraryMediaUrl(url)) continue;
+          imageUrls.push(url);
+          aliases.push(src.alias || `Ref${imageUrls.length}`);
+        }
+        if (imageUrls.length === 0) {
+          throw new Error(
+            "Connect image nodes (or @mention them) with output — video needs at least one still.",
+          );
+        }
         const videoUrl = await runCanvasVideoNode({
-          imageUrl,
+          imageUrls,
+          aliases,
           prompt,
           pro: videoProFromNodeData(data),
         });
@@ -2971,6 +3003,7 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
   const actions = useMemo(
     () => ({
       nodes,
+      edges,
       boardBusy,
       estimateSpliceTokenCost,
       onUploadFile,
@@ -3007,6 +3040,7 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
     }),
     [
       boardBusy,
+      edges,
       estimateSpliceTokenCost,
       nodes,
       onUploadFile,
@@ -3048,6 +3082,7 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
     addResource: m.ultraCanvas.addResource,
     addModifier: m.ultraCanvas.addModifier,
     railClose: m.ultraCanvas.railClose,
+    paletteTextVideoHint: m.ultraCanvas.paletteTextVideoHint,
     ...(m.ultraCanvas.nodeLabels as Record<string, string>),
   };
 
@@ -3186,6 +3221,9 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
           fitView
           snapToGrid
           snapGrid={[20, 20]}
+          /* Left-drag moves nodes; middle/right pan the pane. */
+          panOnDrag={[1, 2]}
+          selectionOnDrag
           colorMode="dark"
           proOptions={{ hideAttribution: true }}
         >

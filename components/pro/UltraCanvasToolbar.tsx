@@ -1,5 +1,7 @@
 "use client";
 
+import { CanvasInput } from "@/components/pro/CanvasTextField";
+
 import { useCallback, useEffect, useState } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 import {
@@ -93,9 +95,9 @@ export function UltraCanvasToolbar({
           listOpen || tplOpen ? "relative z-50" : "relative z-10"
         }`}
       >
-        <input
+        <CanvasInput
           value={boardName}
-          onChange={(e) => onBoardNameChange(e.target.value)}
+          onChange={onBoardNameChange}
           placeholder={tb.boardNamePlaceholder}
           className="min-w-[8rem] flex-1 rounded-lg border border-slate-700 bg-slate-950 px-2.5 py-1.5 text-xs text-slate-100 placeholder:text-slate-600 focus:border-violet-500/50 focus:outline-none"
         />

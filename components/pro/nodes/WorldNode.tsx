@@ -1,5 +1,6 @@
 "use client";
 
+import { CanvasTextarea } from "@/components/pro/CanvasTextField";
 import { useMemo, useState } from "react";
 import type { NodeProps } from "@xyflow/react";
 import { ProNodeShell } from "@/components/pro/ProNodeShell";
@@ -36,9 +37,9 @@ export function WorldNode({ id, data }: NodeProps & { data: WorldNodeData }) {
         widthClass="w-72"
       >
         <p className="mb-2 text-[10px] text-slate-400">{wn.hint}</p>
-        <textarea
+        <CanvasTextarea
           value={data.description}
-          onChange={(e) => updateNodeData(id, { description: e.target.value })}
+          onChange={(description) => updateNodeData(id, { description })}
           placeholder={wn.descriptionPlaceholder}
           className="h-24 w-full resize-none rounded-lg border border-slate-700/80 bg-slate-950/80 px-2 py-1.5 text-[10px] text-white placeholder:text-slate-600 focus:border-teal-500/40 focus:outline-none"
         />

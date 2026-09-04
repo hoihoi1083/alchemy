@@ -3,11 +3,15 @@ import { describe, it } from "node:test";
 import {
   appendUltraProToPrompt,
   DEFAULT_ULTRA_IMAGE_PRO,
+  DEFAULT_ULTRA_VIDEO_PRO,
   canvasScriptUsesPlanQuota,
   estimateCanvasImageTokens,
   estimateCanvasScriptTokens,
   estimateCanvasSpliceTokens,
   estimateCanvasVideoTokens,
+  isUltraVideoCameraAuto,
+  ultraVideoCameraForApi,
+  ULTRA_VIDEO_CAMERA_AUTO,
 } from "../lib/ultra-pro-controls";
 
 describe("ultra-pro-controls", () => {
@@ -54,5 +58,15 @@ describe("ultra-pro-controls", () => {
   it("script plan uses plan quota not tokens", () => {
     assert.equal(estimateCanvasScriptTokens(), 0);
     assert.equal(canvasScriptUsesPlanQuota(), true);
+  });
+
+  it("defaults video camera to Auto and strips Auto for API", () => {
+    assert.equal(DEFAULT_ULTRA_VIDEO_PRO.camera, ULTRA_VIDEO_CAMERA_AUTO);
+    assert.equal(isUltraVideoCameraAuto("Auto"), true);
+    assert.equal(isUltraVideoCameraAuto("auto follow"), true);
+    assert.equal(isUltraVideoCameraAuto(""), true);
+    assert.equal(isUltraVideoCameraAuto("Slow Push In"), false);
+    assert.equal(ultraVideoCameraForApi("Auto"), "");
+    assert.equal(ultraVideoCameraForApi("Slow Push In"), "Slow Push In");
   });
 });

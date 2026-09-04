@@ -1,5 +1,6 @@
 "use client";
 
+import { CanvasInput, CanvasTextarea } from "@/components/pro/CanvasTextField";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { useLocale } from "@/components/LocaleProvider";
 import { useProCanvasActions } from "@/components/pro/ProCanvasActions";
@@ -15,9 +16,9 @@ export function CameraNode({ id, data }: NodeProps & { data: CameraNodeData }) {
   return (
     <div className="w-80 rounded-xl border border-slate-600 bg-slate-900 p-3 shadow-lg">
       <Handle type="target" position={Position.Left} className="!bg-cyan-500" />
-      <input
+      <CanvasInput
         value={data.alias ?? ""}
-        onChange={(e) => updateNodeData(id, { alias: e.target.value })}
+        onChange={(alias) => updateNodeData(id, { alias })}
         placeholder={uc.aliasPlaceholder}
         className="mb-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-0.5 text-[10px] text-slate-300"
       />
@@ -69,9 +70,9 @@ export function CameraNode({ id, data }: NodeProps & { data: CameraNodeData }) {
           />
         </label>
       </div>
-      <textarea
+      <CanvasTextarea
         value={data.promptExtra}
-        onChange={(e) => updateNodeData(id, { promptExtra: e.target.value })}
+        onChange={(promptExtra) => updateNodeData(id, { promptExtra })}
         placeholder={cn.promptExtra}
         className="mt-2 h-12 w-full resize-none rounded-lg border border-slate-600 bg-slate-950 px-2 py-1.5 text-xs text-white"
       />

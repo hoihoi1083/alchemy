@@ -21,6 +21,7 @@ export function createProCanvasStarter(labels: NodeLabels): {
   const voice = labels.voice ?? "Voice";
   const splice = labels.splice ?? "Video splice";
   const audio = labels.audio ?? "Audio";
+  const textVideo = labels.textVideo ?? "Text-to-video";
 
   const nodes: Node[] = [
     {
@@ -76,6 +77,23 @@ export function createProCanvasStarter(labels: NodeLabels): {
       position: { x: 860, y: 440 },
       data: { kind: "audio", label: audio } satisfies ProCanvasNodeData,
     },
+    {
+      id: "starter-textVideo",
+      type: "textVideo",
+      position: { x: 40, y: 420 },
+      data: {
+        kind: "textVideo",
+        label: textVideo,
+        prompt: "",
+        duration: DEFAULT_ULTRA_VIDEO_PRO.duration,
+        resolution: DEFAULT_ULTRA_VIDEO_PRO.resolution,
+        fast: DEFAULT_ULTRA_VIDEO_PRO.fast,
+        aspectRatio: DEFAULT_ULTRA_VIDEO_PRO.aspectRatio,
+        artStyleId: DEFAULT_ULTRA_VIDEO_PRO.artStyleId,
+        generateAudio: DEFAULT_ULTRA_VIDEO_PRO.generateAudio,
+        motionStrength: DEFAULT_ULTRA_VIDEO_PRO.motionStrength ?? 35,
+      } satisfies ProCanvasNodeData,
+    },
   ];
 
   const edges: Edge[] = [
@@ -87,7 +105,7 @@ export function createProCanvasStarter(labels: NodeLabels): {
     { id: "e-audio-splice", source: "starter-audio", target: "starter-splice" },
   ];
 
-  return { nodes, edges, nodeCounterSeed: 6 };
+  return { nodes, edges, nodeCounterSeed: 7 };
 }
 
 /** Legacy single-clip chain (upload → image → video) if needed elsewhere. */

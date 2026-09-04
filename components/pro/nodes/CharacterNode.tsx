@@ -1,5 +1,6 @@
 "use client";
 
+import { CanvasTextarea } from "@/components/pro/CanvasTextField";
 import { useMemo, useState } from "react";
 import type { NodeProps } from "@xyflow/react";
 import { ProNodeShell } from "@/components/pro/ProNodeShell";
@@ -40,15 +41,15 @@ export function CharacterNode({ id, data }: NodeProps & { data: CharacterNodeDat
         widthClass="w-72"
       >
         <p className="mb-2 text-[10px] text-slate-400">{cn.hint}</p>
-        <textarea
+        <CanvasTextarea
           value={data.biography ?? ""}
-          onChange={(e) => updateNodeData(id, { biography: e.target.value })}
+          onChange={(biography) => updateNodeData(id, { biography })}
           placeholder={cn.biographyPlaceholder}
           className="h-14 w-full resize-none rounded-lg border border-slate-700/80 bg-slate-950/80 px-2 py-1.5 text-[10px] text-white placeholder:text-slate-600 focus:border-amber-500/40 focus:outline-none"
         />
-        <textarea
+        <CanvasTextarea
           value={data.generatePrompt ?? ""}
-          onChange={(e) => updateNodeData(id, { generatePrompt: e.target.value })}
+          onChange={(generatePrompt) => updateNodeData(id, { generatePrompt })}
           placeholder={cn.generatePromptPlaceholder}
           className="mt-1.5 h-12 w-full resize-none rounded-lg border border-slate-700/80 bg-slate-950/80 px-2 py-1.5 text-[10px] text-white placeholder:text-slate-600 focus:border-amber-500/40 focus:outline-none"
         />

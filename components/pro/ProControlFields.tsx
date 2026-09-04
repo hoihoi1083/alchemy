@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CanvasInput } from "@/components/pro/CanvasTextField";
 import { ImageResolutionPanel } from "@/components/ImageResolutionPanel";
 import { useLocale } from "@/components/LocaleProvider";
 import { artStyleIdsForPicker, type ArtStyleId } from "@/lib/art-style";
@@ -104,9 +105,9 @@ export function ProControlFields({ value, onChange }: Props) {
               ))}
             </select>
             {value.lightingPreset === "custom" ? (
-              <input
+              <CanvasInput
                 value={value.lightingCustom ?? ""}
-                onChange={(e) => onChange({ lightingCustom: e.target.value })}
+                onChange={(lightingCustom) => onChange({ lightingCustom })}
                 placeholder={pc.customPlaceholder}
                 className="mt-1 w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-[10px] text-slate-200 placeholder:text-slate-600"
               />
@@ -129,9 +130,9 @@ export function ProControlFields({ value, onChange }: Props) {
               ))}
             </select>
             {value.backgroundPreset === "custom" ? (
-              <input
+              <CanvasInput
                 value={value.backgroundCustom ?? ""}
-                onChange={(e) => onChange({ backgroundCustom: e.target.value })}
+                onChange={(backgroundCustom) => onChange({ backgroundCustom })}
                 placeholder={pc.customPlaceholder}
                 className="mt-1 w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-[10px] text-slate-200 placeholder:text-slate-600"
               />

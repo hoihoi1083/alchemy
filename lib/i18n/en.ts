@@ -7027,10 +7027,15 @@ export const en = {
     videoPromptLabel: "Video motion / story",
     videoPromptHint:
       "This box controls what happens in the clip (action, dialogue vibe, timing) — not the still look. Scene Image = look; this node = motion.",
+    videoVsTextVideoHint:
+      "Needs connected or @mentioned stills. No still yet? Add Text-to-video from the left palette (or use the starter Text-to-video node).",
     videoPromptPlaceholder: "e.g. Man leans in and says: Still on this? It's midnight. Where is the product ad?",
     videoPromptEmptyWarn:
       "Empty motion box — only camera move will drive the clip. Paste the story/action here, then Generate video again.",
+    textVideoPromptHint:
+      "From thought → clip: describe the whole scene here. No still required. Use Image-to-video when you already have approved refs.",
     textVideoPromptPlaceholder: "Cinematic text-to-video prompt…",
+    paletteTextVideoHint: "No still? Use Text-to-video — describe a scene and run.",
     runVideo: "Run video",
     runTextVideo: "Run text-to-video",
     runScript: "Plan script",
@@ -7118,6 +7123,10 @@ export const en = {
       title: "Video pro controls",
       aspectRatio: "Aspect ratio",
       camera: "Camera move",
+      cameraAuto: "Auto (follow prompt)",
+      cameraAutoHint: "No template camera — Seedance follows your motion prompt.",
+      cameraFromPromptHint: "Using motion already written in the prompt — template camera skipped.",
+      cameraMultiRefHint: "Multi-ref video uses prompt motion — template camera skipped.",
       duration: "Duration",
       resolution: "Resolution",
       motionStrength: "Motion intensity",
@@ -7194,6 +7203,14 @@ export const en = {
       storyDifferenceAd: {
         name: "Story difference ad",
         desc: "Creative B V2 hybrid — AI live open/close + your UI screen record · ~23s",
+      },
+      comicToPhotoreal: {
+        name: "Comic → photoreal tour",
+        desc: "Your comic OC → real person walking a location · upload comic + generate still → video",
+      },
+      comicRedCarpet: {
+        name: "Comic red carpet",
+        desc: "Original glam OC as webtoon star on a premiere carpet · no celebrity likeness",
       },
     },
   },

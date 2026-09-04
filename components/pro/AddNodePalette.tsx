@@ -10,14 +10,15 @@ type Props = {
   onClose?: () => void;
 };
 
+/** Nodes first — Text-to-video near the top so “from thought” is obvious. */
 const ADDABLE: AddableNodeType[] = [
   { kind: "text", label: "Text", group: "node" },
   { kind: "image", label: "Image", group: "node" },
+  { kind: "textVideo", label: "Text-to-video", group: "node" },
+  { kind: "video", label: "Video", group: "node" },
   { kind: "audio", label: "Audio", group: "node" },
   { kind: "voice", label: "Voice", group: "node" },
   { kind: "brainstorm", label: "Brainstorm", group: "node" },
-  { kind: "video", label: "Video", group: "node" },
-  { kind: "textVideo", label: "Text-to-video", group: "node" },
   { kind: "splice", label: "Video splice", group: "node" },
   { kind: "script", label: "Script planning", group: "node" },
   { kind: "storyboard", label: "Storyboard", group: "node" },
@@ -63,54 +64,66 @@ export function AddNodePalette({
         ) : null}
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto p-3">
-      <div className="space-y-1">
-        {nodes.map((item) => (
-          <button
-            key={item.kind}
-            type="button"
-            disabled={disabled}
-            onClick={() => onAdd(item.kind)}
-            className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs text-slate-200 transition hover:bg-cyan-950/40 hover:text-cyan-100"
-          >
-            <span className="text-cyan-500/80">+</span>
-            {labels[item.kind] ?? item.label}
-          </button>
-        ))}
-      </div>
-      <p className="mt-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-400/80">
-        {labels.addModifier}
-      </p>
-      <div className="mt-2 space-y-1">
-        {modifiers.map((item) => (
-          <button
-            key={item.kind}
-            type="button"
-            disabled={disabled}
-            onClick={() => onAdd(item.kind)}
-            className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs text-slate-200 transition hover:bg-amber-950/30 hover:text-amber-100"
-          >
-            <span className="text-amber-500/80">+</span>
-            {labels[item.kind] ?? item.label}
-          </button>
-        ))}
-      </div>
-      <p className="mt-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
-        {labels.addResource}
-      </p>
-      <div className="mt-2 space-y-1">
-        {resources.map((item) => (
-          <button
-            key={item.kind}
-            type="button"
-            disabled={disabled}
-            onClick={() => onAdd(item.kind)}
-            className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs text-slate-200 transition hover:bg-slate-800"
-          >
-            <span className="text-slate-500">+</span>
-            {labels[item.kind] ?? item.label}
-          </button>
-        ))}
-      </div>
+        {labels.paletteTextVideoHint ? (
+          <p className="mb-2 rounded-md border border-violet-500/25 bg-violet-950/30 px-2 py-1.5 text-[9px] leading-snug text-violet-100/90">
+            {labels.paletteTextVideoHint}
+          </p>
+        ) : null}
+        <div className="space-y-1">
+          {nodes.map((item) => {
+            const isTextVideo = item.kind === "textVideo";
+            return (
+              <button
+                key={item.kind}
+                type="button"
+                disabled={disabled}
+                onClick={() => onAdd(item.kind)}
+                className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs transition ${
+                  isTextVideo
+                    ? "border border-violet-500/35 bg-violet-950/40 text-violet-50 hover:bg-violet-950/60"
+                    : "text-slate-200 hover:bg-cyan-950/40 hover:text-cyan-100"
+                }`}
+              >
+                <span className={isTextVideo ? "text-violet-300" : "text-cyan-500/80"}>+</span>
+                {labels[item.kind] ?? item.label}
+              </button>
+            );
+          })}
+        </div>
+        <p className="mt-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-400/80">
+          {labels.addModifier}
+        </p>
+        <div className="mt-2 space-y-1">
+          {modifiers.map((item) => (
+            <button
+              key={item.kind}
+              type="button"
+              disabled={disabled}
+              onClick={() => onAdd(item.kind)}
+              className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs text-slate-200 transition hover:bg-amber-950/30 hover:text-amber-100"
+            >
+              <span className="text-amber-500/80">+</span>
+              {labels[item.kind] ?? item.label}
+            </button>
+          ))}
+        </div>
+        <p className="mt-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">
+          {labels.addResource}
+        </p>
+        <div className="mt-2 space-y-1">
+          {resources.map((item) => (
+            <button
+              key={item.kind}
+              type="button"
+              disabled={disabled}
+              onClick={() => onAdd(item.kind)}
+              className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs text-slate-200 transition hover:bg-slate-800"
+            >
+              <span className="text-slate-500">+</span>
+              {labels[item.kind] ?? item.label}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );

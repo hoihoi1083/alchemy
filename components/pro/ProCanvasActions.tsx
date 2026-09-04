@@ -1,10 +1,11 @@
 "use client";
 
 import { createContext, useContext } from "react";
-import type { Node } from "@xyflow/react";
+import type { Edge, Node } from "@xyflow/react";
 
 export type ProCanvasActions = {
   nodes: Node[];
+  edges: Edge[];
   boardBusy: boolean;
   onUploadFile: (nodeId: string, file: File) => void;
   onUploadAudio: (nodeId: string, file: File) => void;

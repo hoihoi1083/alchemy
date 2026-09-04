@@ -11,13 +11,15 @@ import { useProCanvasActions } from "@/components/pro/ProCanvasActions";
 import { MentionInput } from "@/components/pro/MentionInput";
 import { useLocale } from "@/components/LocaleProvider";
 import type { VideoNodeData } from "@/lib/pro-canvas-types";
+import { collectOrderedImageSources } from "@/lib/pro-canvas-graph";
 import {
   estimateCanvasVideoTokens,
   videoProFromNodeData,
 } from "@/lib/ultra-pro-controls";
 
 export function VideoNode({ id, data }: NodeProps & { data: VideoNodeData }) {
-  const { runVideoNode, updateNodeData, nodes, boardBusy, isNodeStale } = useProCanvasActions();
+  const { runVideoNode, updateNodeData, nodes, edges, boardBusy, isNodeStale } =
+    useProCanvasActions();
   const { m } = useLocale();
   const pro = videoProFromNodeData(data);
   const tokenCost = useMemo(
@@ -31,6 +33,10 @@ export function VideoNode({ id, data }: NodeProps & { data: VideoNodeData }) {
   );
 
   const motionEmpty = !data.prompt?.trim();
+  const multiRef = useMemo(
+    () => collectOrderedImageSources(id, data.prompt ?? "", nodes, edges).length >= 2,
+    [data.prompt, edges, id, nodes],
+  );
 
   return (
     <ProNodeShell accent="violet" label={data.label}>
@@ -39,6 +45,9 @@ export function VideoNode({ id, data }: NodeProps & { data: VideoNodeData }) {
       </p>
       <p className="mb-1 text-[9px] leading-snug text-slate-500">
         {m.ultraCanvas.videoPromptHint}
+      </p>
+      <p className="mb-1.5 rounded-md border border-slate-700/60 bg-slate-950/40 px-2 py-1 text-[9px] leading-snug text-slate-400">
+        {m.ultraCanvas.videoVsTextVideoHint}
       </p>
       <MentionInput
         nodeId={id}
@@ -73,12 +82,14 @@ export function VideoNode({ id, data }: NodeProps & { data: VideoNodeData }) {
         value={pro}
         onChange={(patch) => updateNodeData(id, patch)}
         showCamera
+        prompt={data.prompt}
+        multiRef={multiRef}
       />
       <button
         type="button"
         disabled={data.busy || boardBusy}
         onClick={() => runVideoNode(id)}
-        className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 py-1.5 text-xs font-semibold text-white shadow-[0_0_16px_rgba(139,92,246,0.25)] disabled:opacity-40"
+        className="nodrag nopan mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 py-1.5 text-xs font-semibold text-white shadow-[0_0_16px_rgba(139,92,246,0.25)] disabled:opacity-40"
       >
         {data.busy ? m.ultraCanvas.running : m.ultraCanvas.runVideo}
         {!data.busy ? (
@@ -90,7 +101,11 @@ export function VideoNode({ id, data }: NodeProps & { data: VideoNodeData }) {
       {data.videoUrl ? (
         <>
           {isNodeStale(id) ? <StaleOutputBadge /> : null}
-          <video src={data.videoUrl} controls className="mt-2 max-h-36 w-full rounded-lg ring-1 ring-slate-700/80" />
+          <video
+            src={data.videoUrl}
+            controls
+            className="nodrag nopan nowheel mt-2 max-h-36 w-full rounded-lg ring-1 ring-slate-700/80"
+          />
           <ExportToLibraryButton
             url={data.videoUrl}
             kind="video"
@@ -98,7 +113,7 @@ export function VideoNode({ id, data }: NodeProps & { data: VideoNodeData }) {
           />
           <a
             href={`/captions?video=${encodeURIComponent(data.videoUrl)}`}
-            className="mt-2 block w-full rounded-lg border border-cyan-500/30 bg-cyan-950/30 px-3 py-1.5 text-center text-xs font-medium text-cyan-200 hover:bg-cyan-950/50"
+            className="nodrag nopan mt-2 block w-full rounded-lg border border-cyan-500/30 bg-cyan-950/30 px-3 py-1.5 text-center text-xs font-medium text-cyan-200 hover:bg-cyan-950/50"
           >
             {m.ultraCanvas.openCaptions}
           </a>

@@ -1,5 +1,6 @@
 "use client";
 
+import { CanvasTextarea } from "@/components/pro/CanvasTextField";
 import type { NodeProps } from "@xyflow/react";
 import { ProNodeShell } from "@/components/pro/ProNodeShell";
 import { StaleOutputBadge } from "@/components/pro/StaleOutputBadge";
@@ -44,9 +45,9 @@ export function VoiceNode({ id, data }: NodeProps & { data: VoiceNodeData }) {
       <p className="mb-2 rounded-md border border-amber-500/25 bg-amber-950/30 px-2 py-1.5 text-[9px] leading-snug text-amber-100/90">
         {vn.sourceHint}
       </p>
-      <textarea
+      <CanvasTextarea
         value={data.script}
-        onChange={(e) => updateNodeData(id, { script: e.target.value, lines: undefined })}
+        onChange={(script) => updateNodeData(id, { script, lines: undefined })}
         placeholder={vn.scriptPlaceholder}
         className="h-16 w-full resize-none rounded-lg border border-slate-700/80 bg-slate-950/80 px-2 py-1.5 text-[10px] text-white placeholder:text-slate-600 focus:border-amber-500/40 focus:outline-none"
       />

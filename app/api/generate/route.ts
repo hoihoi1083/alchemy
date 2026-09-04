@@ -376,6 +376,7 @@ export async function POST(request: Request) {
   const negativePrompt =
     (formData.get("negative_prompt") as string | null)?.trim() || "";
   const camera = (formData.get("camera") as string | null)?.trim() || "";
+  const cameraIsAuto = !camera || /^auto\b/i.test(camera);
   const avoidOnScreenText = formData.get("avoid_on_screen_text") !== "false";
   const motionRaw = (formData.get("motion_strength") as string | null)?.trim() || "";
   const motionParsed = motionRaw ? Number(motionRaw) : Number.NaN;
@@ -489,11 +490,12 @@ export async function POST(request: Request) {
       negativePrompt
     : negativePrompt;
   const skipTemplateCamera =
+    cameraIsAuto ||
     referenceMatch ||
     promptHasVideo1(prompt) ||
     promptAlreadySpecifiesCamera(prompt);
   const guidedPrompt = applyAdvancedGuidance(prompt, {
-    camera: skipTemplateCamera ? undefined : camera,
+    camera: skipTemplateCamera || cameraIsAuto ? undefined : camera,
     motionStrength: referenceMatch || promptHasVideo1(prompt) ? undefined : motionStrength,
     negativePrompt: effectiveNegative,
     avoidOnScreenText,

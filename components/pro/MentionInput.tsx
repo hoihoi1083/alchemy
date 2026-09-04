@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import type { Node } from "@xyflow/react";
+import { CanvasTextarea } from "@/components/pro/CanvasTextField";
 import { mentionableNodes } from "@/lib/pro-canvas-graph";
 
 type Props = {
@@ -30,14 +31,15 @@ export function MentionInput({
   const insertMention = (alias: string) => {
     const el = textareaRef.current;
     const token = `@${alias} `;
+    const current = el?.value ?? value;
     if (!el) {
-      onChange(`${value}${value.endsWith(" ") || !value ? "" : " "}${token}`);
+      onChange(`${current}${current.endsWith(" ") || !current ? "" : " "}${token}`);
       setOpen(false);
       return;
     }
-    const start = el.selectionStart ?? value.length;
-    const end = el.selectionEnd ?? value.length;
-    const next = `${value.slice(0, start)}${token}${value.slice(end)}`;
+    const start = el.selectionStart ?? current.length;
+    const end = el.selectionEnd ?? current.length;
+    const next = `${current.slice(0, start)}${token}${current.slice(end)}`;
     onChange(next);
     setOpen(false);
     requestAnimationFrame(() => {
@@ -49,10 +51,10 @@ export function MentionInput({
 
   return (
     <div className="relative">
-      <textarea
+      <CanvasTextarea
         ref={textareaRef}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={onChange}
         placeholder={placeholder}
         rows={rows}
         className={className}

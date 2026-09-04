@@ -86,9 +86,33 @@ export type UltraCanvasTemplateId =
   | "carouselStill"
   | "scriptToFilm"
   | "storyDifferenceAd"
+  | "comicToPhotoreal"
+  | "comicRedCarpet"
   | "explosionUnbox"
   | "conceptTextVideo"
   | "brandMotionReel";
+
+/** Comic art → photoreal OC walking a real location (identity from your upload). */
+const COMIC_TO_PHOTOREAL_IMAGE =
+  "Photoreal live-action of @Hero — same face, hair, age, and outfit identity as the comic reference @ComicHero " +
+  "(treat comic art as character design bible, not a flat illustration to keep). " +
+  "Standing in @World, natural skin and fabrics, cinematic commercial photography, 9:16. " +
+  "No celebrity likeness. No on-screen text or logos.";
+
+const COMIC_TO_PHOTOREAL_VIDEO =
+  "Subtle handheld follow — @Hero walks and casually shows around @World, turns to camera, " +
+  "natural gesture, photoreal continuity, stable face, no morphing, no cut, 9:16.";
+
+/** Original glam OC as comic/webtoon star on a red carpet (never real celebrities). */
+const COMIC_RED_CARPET_IMAGE =
+  "Korean webtoon / comic illustration of original character @Star on a premiere red carpet at night. " +
+  "Match identity from @Face when provided (YOUR original talent / OC only — never a real Hollywood star). " +
+  "Bold clean outlines, flat cel shading, glamorous evening wear, velvet ropes, flash bulbs, 9:16. " +
+  "No photoreal faces. No celebrity lookalikes. No on-screen text.";
+
+const COMIC_RED_CARPET_VIDEO =
+  "Comic/webtoon style preserved — @Star walks the red carpet, pauses for cameras, soft smile, " +
+  "paparazzi flashes pulse, gentle push-in, keep bold outlines and flat shading, no morph to photoreal, no cut.";
 
 type NodeLabels = Record<string, string>;
 
@@ -383,6 +407,147 @@ export function createUltraCanvasTemplate(
         ],
       };
     }
+    case "comicToPhotoreal": {
+      const upload = labels.upload ?? "Upload";
+      const character = labels.character ?? "Character";
+      const world = labels.world ?? "World / scene";
+      const lighting = labels.lighting ?? "Lighting";
+      const image = labels.image ?? "Image";
+      const video = labels.video ?? "Image-to-video";
+      const splice = labels.splice ?? "Video splice";
+      return {
+        nodeCounterSeed: 7,
+        nodes: [
+          node("tpl-upload-comic", "upload", 40, 80, {
+            kind: "upload",
+            label: `${upload} · comic`,
+            alias: "ComicHero",
+          }),
+          node("tpl-char", "character", 40, 260, {
+            kind: "character",
+            label: character,
+            alias: "Hero",
+            biography:
+              "ORIGINAL character only (not a celebrity). Lock one face, hair, age, and outfit. " +
+              "Start from your comic design (@ComicHero), then play them as a real person in a real place.",
+          }),
+          node("tpl-world", "world", 40, 440, {
+            kind: "world",
+            label: world,
+            alias: "World",
+            description:
+              "Real-world location to show around — cafe street, boutique, studio loft, or city plaza. " +
+              "Keep one continuous place language for the whole clip.",
+          }),
+          node("tpl-lighting", "lighting", 280, 40, {
+            kind: "lighting",
+            label: lighting,
+            preset: "natural_window",
+          }),
+          node("tpl-image", "image", 280, 180, {
+            kind: "image",
+            label: image,
+            prompt: COMIC_TO_PHOTOREAL_IMAGE,
+            aspectRatio: "9:16",
+            resolution: DEFAULT_ULTRA_IMAGE_PRO.resolution,
+            artStyleId: "realistic",
+            lightingPreset: DEFAULT_ULTRA_IMAGE_PRO.lightingPreset,
+            backgroundPreset: DEFAULT_ULTRA_IMAGE_PRO.backgroundPreset,
+          }),
+          node("tpl-video", "video", 560, 180, {
+            kind: "video",
+            label: video,
+            prompt: COMIC_TO_PHOTOREAL_VIDEO,
+            camera: "Slow Push In",
+            duration: "8",
+            resolution: "720p",
+            fast: true,
+            aspectRatio: "9:16",
+            artStyleId: "realistic",
+          }),
+          node("tpl-splice", "splice", 840, 180, { kind: "splice", label: splice }),
+        ],
+        edges: [
+          edge("e-comic-img", "tpl-upload-comic", "tpl-image"),
+          edge("e-char-img", "tpl-char", "tpl-image"),
+          edge("e-world-img", "tpl-world", "tpl-image"),
+          edge("e-light-img", "tpl-lighting", "tpl-image"),
+          edge("e-img-vid", "tpl-image", "tpl-video"),
+          edge("e-vid-sp", "tpl-video", "tpl-splice"),
+        ],
+      };
+    }
+    case "comicRedCarpet": {
+      const upload = labels.upload ?? "Upload";
+      const character = labels.character ?? "Character";
+      const world = labels.world ?? "World / scene";
+      const lighting = labels.lighting ?? "Lighting";
+      const image = labels.image ?? "Image";
+      const video = labels.video ?? "Image-to-video";
+      const splice = labels.splice ?? "Video splice";
+      return {
+        nodeCounterSeed: 7,
+        nodes: [
+          node("tpl-upload-face", "upload", 40, 80, {
+            kind: "upload",
+            label: `${upload} · OC face`,
+            alias: "Face",
+          }),
+          node("tpl-char", "character", 40, 260, {
+            kind: "character",
+            label: character,
+            alias: "Star",
+            biography:
+              "ORIGINAL glamorous character (invented name + look). " +
+              "NOT a Hollywood star, NOT a real celebrity likeness. " +
+              "Evening gown/suit, confident red-carpet energy. Lock face/hair/outfit across still + video.",
+          }),
+          node("tpl-world", "world", 40, 440, {
+            kind: "world",
+            label: world,
+            alias: "Carpet",
+            description:
+              "Night premiere red carpet — velvet ropes, step-and-repeat wall (no real brand logos), " +
+              "paparazzi flashes, cinematic comic atmosphere.",
+          }),
+          node("tpl-lighting", "lighting", 280, 40, {
+            kind: "lighting",
+            label: lighting,
+            preset: "rim_dramatic",
+          }),
+          node("tpl-image", "image", 280, 180, {
+            kind: "image",
+            label: image,
+            prompt: COMIC_RED_CARPET_IMAGE,
+            aspectRatio: "9:16",
+            resolution: DEFAULT_ULTRA_IMAGE_PRO.resolution,
+            artStyleId: "comic-webtoon",
+            lightingPreset: "rim_dramatic",
+            backgroundPreset: DEFAULT_ULTRA_IMAGE_PRO.backgroundPreset,
+          }),
+          node("tpl-video", "video", 560, 180, {
+            kind: "video",
+            label: video,
+            prompt: COMIC_RED_CARPET_VIDEO,
+            camera: "Slow Push In",
+            duration: "8",
+            resolution: "720p",
+            fast: true,
+            aspectRatio: "9:16",
+            artStyleId: "cinematic",
+          }),
+          node("tpl-splice", "splice", 840, 180, { kind: "splice", label: splice }),
+        ],
+        edges: [
+          edge("e-face-img", "tpl-upload-face", "tpl-image"),
+          edge("e-char-img", "tpl-char", "tpl-image"),
+          edge("e-world-img", "tpl-world", "tpl-image"),
+          edge("e-light-img", "tpl-lighting", "tpl-image"),
+          edge("e-img-vid", "tpl-image", "tpl-video"),
+          edge("e-vid-sp", "tpl-video", "tpl-splice"),
+        ],
+      };
+    }
     case "explosionUnbox": {
       const textVideo = labels.textVideo ?? "Text-to-video";
       const theme = EXPLOSION_UNBOX_DEFAULT_THEME;
@@ -459,6 +624,8 @@ export function createUltraCanvasTemplate(
 export const ULTRA_CANVAS_TEMPLATE_IDS: UltraCanvasTemplateId[] = [
   "productHero",
   "storyDifferenceAd",
+  "comicToPhotoreal",
+  "comicRedCarpet",
   "explosionUnbox",
   "conceptTextVideo",
   "brandMotionReel",

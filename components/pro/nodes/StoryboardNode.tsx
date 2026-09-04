@@ -1,5 +1,6 @@
 "use client";
 
+import { CanvasTextarea } from "@/components/pro/CanvasTextField";
 import { useMemo, useState } from "react";
 import type { NodeProps } from "@xyflow/react";
 import { ProNodeShell } from "@/components/pro/ProNodeShell";
@@ -217,15 +218,15 @@ export function StoryboardNode({ id, data }: NodeProps & { data: StoryboardNodeD
                           {editing ? sb.hidePrompt : sb.editPrompt}
                         </button>
                         {editing ? (
-                          <textarea
+                          <CanvasTextarea
                             value={panel.stillPrompt}
-                            onChange={(e) => {
+                            onChange={(stillPrompt) => {
                               const nextActs = acts.map((a, ai) => {
                                 if (ai !== actIdx) return a;
                                 return {
                                   ...a,
                                   panels: a.panels.map((p, pi) =>
-                                    pi === i ? { ...p, stillPrompt: e.target.value } : p,
+                                    pi === i ? { ...p, stillPrompt } : p,
                                   ),
                                 };
                               });

@@ -1,6 +1,10 @@
 import { BANANA2_EDIT_ENDPOINT, BANANA2_TEXT_ENDPOINT } from "@/lib/image-endpoints";
 import { buildImageRefinePrompt } from "@/lib/image-refine-prompt";
-import { buildCanvasComposePrompt } from "@/lib/pro-canvas-compose";
+import {
+  buildCanvasComposePrompt,
+  buildCanvasVideoReferencePrompt,
+  ULTRA_VIDEO_MAX_REF_IMAGES,
+} from "@/lib/pro-canvas-compose";
 import { buildScriptBriefWithBeats, clampUltraScriptSceneCount, mergeSceneBeatsFromCinematicScenes, type ScriptSceneBeat } from "@/lib/pro-canvas-script-plan";
 import type { CanvasImageSource } from "@/lib/pro-canvas-types";
 import { isHttpOrLibraryMediaUrl } from "@/lib/storage/library-asset-url";
@@ -156,11 +160,17 @@ export async function runCanvasCameraNode(opts: {
 import {
   appendUltraVideoProToPrompt,
   type UltraVideoProControls,
+  ultraVideoCameraForApi,
   videoProFromPartial,
 } from "@/lib/ultra-pro-controls";
 
 export type CanvasVideoRunOpts = {
+  /** Single start frame (legacy). Prefer imageUrls when multiple refs. */
   imageUrl?: string;
+  /** Up to ULTRA_VIDEO_MAX_REF_IMAGES stills — 2+ uses Seedance/H3 reference-to-video. */
+  imageUrls?: string[];
+  /** Aliases in the same order as imageUrls (@Hero → @Image1). */
+  aliases?: string[];
   prompt: string;
   pro?: Partial<UltraVideoProControls>;
   /** Text-to-video uses static camera internally. */
@@ -169,22 +179,54 @@ export type CanvasVideoRunOpts = {
 
 export async function runCanvasVideoNode(opts: CanvasVideoRunOpts): Promise<string> {
   const pro = videoProFromPartial(opts.pro);
-  const prompt = appendUltraVideoProToPrompt(opts.prompt, pro.artStyleId);
-  if (!prompt.trim()) throw new Error("Enter a video prompt.");
+  if (!opts.prompt.trim()) throw new Error("Enter a video prompt.");
+
+  const urls = (
+    opts.imageUrls?.length
+      ? opts.imageUrls
+      : isHttpOrLibraryMediaUrl(opts.imageUrl)
+        ? [opts.imageUrl!]
+        : []
+  )
+    .filter((u) => isHttpOrLibraryMediaUrl(u))
+    .slice(0, ULTRA_VIDEO_MAX_REF_IMAGES);
+  const aliases = (opts.aliases ?? []).slice(0, urls.length);
+  while (aliases.length < urls.length) {
+    aliases.push(`Ref${aliases.length + 1}`);
+  }
 
   const fd = new FormData();
-  if (isHttpOrLibraryMediaUrl(opts.imageUrl)) {
+  let promptBody = opts.prompt;
+  if (urls.length >= 2) {
+    fd.set("mode", "reference");
+    fd.set("reference_image_urls", urls.join("\n"));
+    promptBody = buildCanvasVideoReferencePrompt(opts.prompt, aliases);
+  } else if (urls.length === 1) {
     fd.set("mode", "image");
-    fd.set("image_start_url", opts.imageUrl);
+    fd.set("image_start_url", urls[0]!);
+    // Keep @Alias names readable even on single-image I2V (avoid「图片」collapse).
+    promptBody = buildCanvasVideoReferencePrompt(opts.prompt, aliases).replace(
+      /@Image1\b/g,
+      aliases[0] ? `@${aliases[0]}` : "@Image1",
+    );
   } else {
     fd.set("mode", "text");
   }
+
+  const prompt = appendUltraVideoProToPrompt(promptBody, pro.artStyleId);
   fd.set("prompt", prompt);
   fd.set("fast", pro.fast ? "true" : "false");
   fd.set("resolution", pro.resolution);
   fd.set("duration", pro.duration);
   fd.set("aspect_ratio", pro.aspectRatio);
-  fd.set("camera", opts.textOnly ? "Static Locked Shot" : pro.camera);
+  const cameraForApi = opts.textOnly
+    ? "Static Locked Shot"
+    : ultraVideoCameraForApi(pro.camera);
+  if (cameraForApi) {
+    fd.set("camera", cameraForApi);
+  } else {
+    fd.set("camera", "Auto");
+  }
   fd.set("avoid_on_screen_text", "true");
   fd.set("generate_audio", pro.generateAudio ? "true" : "false");
   if (pro.motionStrength != null) {

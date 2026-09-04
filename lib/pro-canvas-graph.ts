@@ -161,13 +161,16 @@ export function mentionableNodes(nodes: Node[], excludeId?: string): { id: strin
     });
 }
 
+/**
+ * Normalize @mentions to the node's canonical `@alias`.
+ * Never expand to UI titles like「图片」— that destroyed multi-ref fal prompts.
+ */
 export function resolveMentions(text: string, nodes: Node[]): string {
   let out = text;
   for (const n of nodes) {
     const alias = nodeAlias(n);
     const re = aliasMentionRegex(alias);
-    const data = n.data as ProCanvasNodeData;
-    out = out.replace(re, data.label);
+    out = out.replace(re, `@${alias}`);
   }
   return out;
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { CanvasInput, CanvasTextarea } from "@/components/pro/CanvasTextField";
 import { ProNodeShell } from "@/components/pro/ProNodeShell";
 import { StaleOutputBadge } from "@/components/pro/StaleOutputBadge";
 import { useProCanvasActions } from "@/components/pro/ProCanvasActions";
@@ -54,9 +55,9 @@ export function ScriptNode({ id, data }: NodeProps & { data: ScriptNodeData }) {
 
   return (
     <ProNodeShell accent="rose" label={data.label} targetHandle sourceHandle widthClass="w-80">
-      <textarea
+      <CanvasTextarea
         value={data.brief}
-        onChange={(e) => updateNodeData(id, { brief: e.target.value })}
+        onChange={(brief) => updateNodeData(id, { brief })}
         placeholder={m.ultraCanvas.scriptBriefPlaceholder}
         className="h-20 w-full resize-none rounded-lg border border-slate-700/80 bg-slate-950/80 px-2 py-1.5 text-xs text-white placeholder:text-slate-600 focus:border-rose-500/40 focus:outline-none"
       />
@@ -89,54 +90,54 @@ export function ScriptNode({ id, data }: NodeProps & { data: ScriptNodeData }) {
                   ? beat.act.trim()
                   : m.ultraCanvas.scriptSceneLabel.replace("{n}", String(i + 1))}
               </p>
-              <input
+              <CanvasInput
                 value={beat.act ?? ""}
-                onChange={(e) => patchBeat(i, { act: e.target.value })}
+                onChange={(v) => patchBeat(i, { act: v })}
                 placeholder={sn.beatActPlaceholder}
                 className="w-full rounded border border-slate-700/80 bg-slate-950/80 px-1.5 py-1 text-[10px] text-white placeholder:text-slate-600"
-              />
-              <input
+                />
+              <CanvasInput
                 value={beat.time ?? ""}
-                onChange={(e) => patchBeat(i, { time: e.target.value })}
+                onChange={(v) => patchBeat(i, { time: v })}
                 placeholder={sn.beatTimePlaceholder}
                 className="w-full rounded border border-slate-700/80 bg-slate-950/80 px-1.5 py-1 text-[10px] text-white placeholder:text-slate-600"
-              />
-              <input
+                />
+              <CanvasInput
                 value={beat.emotion ?? ""}
-                onChange={(e) => patchBeat(i, { emotion: e.target.value })}
+                onChange={(v) => patchBeat(i, { emotion: v })}
                 placeholder={sn.beatEmotionPlaceholder}
                 className="w-full rounded border border-slate-700/80 bg-slate-950/80 px-1.5 py-1 text-[10px] text-white placeholder:text-slate-600"
-              />
-              <input
+                />
+              <CanvasInput
                 value={beat.framing ?? ""}
-                onChange={(e) => patchBeat(i, { framing: e.target.value })}
+                onChange={(v) => patchBeat(i, { framing: v })}
                 placeholder={sn.beatFramingPlaceholder}
                 className="w-full rounded border border-slate-700/80 bg-slate-950/80 px-1.5 py-1 text-[10px] text-white placeholder:text-slate-600"
-              />
-              <input
+                />
+              <CanvasInput
                 value={beat.camera ?? ""}
-                onChange={(e) => patchBeat(i, { camera: e.target.value })}
+                onChange={(v) => patchBeat(i, { camera: v })}
                 placeholder={sn.beatCameraPlaceholder}
                 className="w-full rounded border border-slate-700/80 bg-slate-950/80 px-1.5 py-1 text-[10px] text-white placeholder:text-slate-600"
-              />
-              <input
+                />
+              <CanvasInput
                 value={beat.blocking ?? ""}
-                onChange={(e) => patchBeat(i, { blocking: e.target.value })}
+                onChange={(v) => patchBeat(i, { blocking: v })}
                 placeholder={sn.beatBlockingPlaceholder}
                 className="w-full rounded border border-slate-700/80 bg-slate-950/80 px-1.5 py-1 text-[10px] text-white placeholder:text-slate-600"
-              />
-              <input
+                />
+              <CanvasInput
                 value={beat.speaker ?? ""}
-                onChange={(e) => patchBeat(i, { speaker: e.target.value })}
+                onChange={(v) => patchBeat(i, { speaker: v })}
                 placeholder={sn.beatSpeakerPlaceholder}
                 className="w-full rounded border border-slate-700/80 bg-slate-950/80 px-1.5 py-1 text-[10px] text-white placeholder:text-slate-600"
-              />
-              <input
+                />
+              <CanvasInput
                 value={beat.line ?? ""}
-                onChange={(e) => patchBeat(i, { line: e.target.value })}
+                onChange={(v) => patchBeat(i, { line: v })}
                 placeholder={sn.beatLinePlaceholder}
                 className="w-full rounded border border-slate-700/80 bg-slate-950/80 px-1.5 py-1 text-[10px] text-white placeholder:text-slate-600"
-              />
+                />
             </div>
           ))}
         </div>

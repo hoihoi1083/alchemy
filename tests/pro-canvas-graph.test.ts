@@ -15,7 +15,18 @@ function node(id: string, kind: string, data: Record<string, unknown>): Node {
 describe("pro-canvas-graph", () => {
   it("escapes regex-special aliases in resolveMentions", () => {
     const nodes = [node("u1", "upload", { label: "Product+", alias: "a+" })];
-    assert.equal(resolveMentions("Use @a+ in frame", nodes), "Use Product+ in frame");
+    assert.equal(resolveMentions("Use @a+ in frame", nodes), "Use @a+ in frame");
+  });
+
+  it("keeps @alias instead of collapsing to generic 图片 label", () => {
+    const nodes = [
+      node("h1", "image", { label: "图片", alias: "Hero1", imageUrl: "https://x/h.png" }),
+      node("m1", "image", { label: "图片", alias: "Mechine1", imageUrl: "https://x/m.png" }),
+    ];
+    assert.equal(
+      resolveMentions("@Hero1 walks to @Mechine1", nodes),
+      "@Hero1 walks to @Mechine1",
+    );
   });
 
   it("orders mentioned image sources before dependents", () => {

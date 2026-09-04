@@ -32,6 +32,9 @@ export function TextVideoNode({ id, data }: NodeProps & { data: TextVideoNodeDat
 
   return (
     <ProNodeShell accent="violet" label={data.label}>
+      <p className="mb-1.5 rounded-md border border-violet-500/25 bg-violet-950/30 px-2 py-1 text-[9px] leading-snug text-violet-100/90">
+        {m.ultraCanvas.textVideoPromptHint}
+      </p>
       <MentionInput
         nodeId={id}
         nodes={nodes}
@@ -61,7 +64,7 @@ export function TextVideoNode({ id, data }: NodeProps & { data: TextVideoNodeDat
         type="button"
         disabled={data.busy || boardBusy}
         onClick={() => runTextVideoNode(id)}
-        className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 py-1.5 text-xs font-semibold text-white shadow-[0_0_16px_rgba(139,92,246,0.25)] disabled:opacity-40"
+        className="nodrag nopan mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 px-3 py-1.5 text-xs font-semibold text-white shadow-[0_0_16px_rgba(139,92,246,0.25)] disabled:opacity-40"
       >
         {data.busy ? m.ultraCanvas.running : m.ultraCanvas.runTextVideo}
         {!data.busy ? (
@@ -73,7 +76,11 @@ export function TextVideoNode({ id, data }: NodeProps & { data: TextVideoNodeDat
       {data.videoUrl ? (
         <>
           {isNodeStale(id) ? <StaleOutputBadge /> : null}
-          <video src={data.videoUrl} controls className="mt-2 max-h-36 w-full rounded-lg ring-1 ring-slate-700/80" />
+          <video
+            src={data.videoUrl}
+            controls
+            className="nodrag nopan nowheel mt-2 max-h-36 w-full rounded-lg ring-1 ring-slate-700/80"
+          />
           <ExportToLibraryButton
             url={data.videoUrl}
             kind="video"
@@ -81,7 +88,7 @@ export function TextVideoNode({ id, data }: NodeProps & { data: TextVideoNodeDat
           />
           <a
             href={`/captions?video=${encodeURIComponent(data.videoUrl)}`}
-            className="mt-2 block w-full rounded-lg border border-cyan-500/30 bg-cyan-950/30 px-3 py-1.5 text-center text-xs font-medium text-cyan-200 hover:bg-cyan-950/50"
+            className="nodrag nopan mt-2 block w-full rounded-lg border border-cyan-500/30 bg-cyan-950/30 px-3 py-1.5 text-center text-xs font-medium text-cyan-200 hover:bg-cyan-950/50"
           >
             {m.ultraCanvas.openCaptions}
           </a>

@@ -12,7 +12,10 @@ export type UltraVideoAspectRatio = "9:16" | "16:9" | "1:1";
 
 export const ULTRA_VIDEO_ASPECT_RATIOS: UltraVideoAspectRatio[] = ["9:16", "16:9", "1:1"];
 
+export const ULTRA_VIDEO_CAMERA_AUTO = "Auto";
+
 export const ULTRA_VIDEO_CAMERAS = [
+  ULTRA_VIDEO_CAMERA_AUTO,
   "Static Locked Shot",
   "Slow Push In",
   "Slow Pull Out",
@@ -22,6 +25,18 @@ export const ULTRA_VIDEO_CAMERAS = [
   "Handheld Subtle Sway",
   "Dolly Zoom",
 ] as const;
+
+export type UltraVideoCamera = (typeof ULTRA_VIDEO_CAMERAS)[number];
+
+export function isUltraVideoCameraAuto(camera: string | undefined): boolean {
+  const c = (camera ?? "").trim();
+  return !c || /^auto\b/i.test(c);
+}
+
+/** Camera value to send to /api/generate — empty when Auto so server skips template append. */
+export function ultraVideoCameraForApi(camera: string | undefined): string {
+  return isUltraVideoCameraAuto(camera) ? "" : (camera ?? "").trim();
+}
 
 export type UltraVideoProControls = {
   aspectRatio: UltraVideoAspectRatio;
@@ -37,12 +52,13 @@ export type UltraVideoProControls = {
 
 export const DEFAULT_ULTRA_VIDEO_PRO: UltraVideoProControls = {
   aspectRatio: "9:16",
-  camera: "Slow Push In",
+  camera: ULTRA_VIDEO_CAMERA_AUTO,
   duration: "8",
   resolution: "480p",
   fast: true,
   generateAudio: false,
   artStyleId: DEFAULT_ART_STYLE,
+  motionStrength: 35,
 };
 
 export function videoProFromPartial(pro?: Partial<UltraVideoProControls>): UltraVideoProControls {

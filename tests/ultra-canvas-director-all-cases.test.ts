@@ -52,6 +52,7 @@ describe("ultra starter + Creative B wiring", () => {
     assert.ok(kinds.includes("storyboard"));
     assert.ok(kinds.includes("voice"));
     assert.ok(kinds.includes("splice"));
+    assert.ok(kinds.includes("textVideo"));
     assert.ok(starter.edges.some((e) => e.source === "starter-script" && e.target === "starter-voice"));
     assert.ok(
       starter.edges.some((e) => e.source === "starter-storyboard" && e.target === "starter-voice"),

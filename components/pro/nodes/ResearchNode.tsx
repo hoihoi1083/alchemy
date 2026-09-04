@@ -1,5 +1,6 @@
 "use client";
 
+import { CanvasTextarea } from "@/components/pro/CanvasTextField";
 import { useEffect, useRef } from "react";
 import type { NodeProps } from "@xyflow/react";
 import { ProNodeShell } from "@/components/pro/ProNodeShell";
@@ -47,9 +48,9 @@ export function ResearchNode({ id, data }: NodeProps & { data: ResearchNodeData 
       widthClass="w-72"
     >
       <p className="mb-2 text-[10px] text-slate-400">{rn.hint}</p>
-      <textarea
+      <CanvasTextarea
         value={data.summary}
-        onChange={(e) => updateNodeData(id, { summary: e.target.value })}
+        onChange={(summary) => updateNodeData(id, { summary })}
         placeholder={rn.summaryPlaceholder}
         className="h-24 w-full resize-none rounded-lg border border-slate-700/80 bg-slate-950/80 px-2 py-1.5 text-[10px] text-white placeholder:text-slate-600 focus:border-cyan-500/40 focus:outline-none"
       />

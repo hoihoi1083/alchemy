@@ -1,5 +1,6 @@
 "use client";
 
+import { CanvasInput } from "@/components/pro/CanvasTextField";
 import type { NodeProps } from "@xyflow/react";
 import { ProNodeShell } from "@/components/pro/ProNodeShell";
 import { useProCanvasActions } from "@/components/pro/ProCanvasActions";
@@ -29,9 +30,9 @@ export function LightingModNode({ id, data }: NodeProps & { data: LightingModNod
         ))}
       </select>
       {data.preset === "custom" ? (
-        <input
+        <CanvasInput
           value={data.custom ?? ""}
-          onChange={(e) => updateNodeData(id, { custom: e.target.value })}
+          onChange={(custom) => updateNodeData(id, { custom })}
           placeholder={m.ultraCanvas.proControls.customPlaceholder}
           className="mt-1 w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-[10px] text-slate-200"
         />

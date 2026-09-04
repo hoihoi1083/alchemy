@@ -20,7 +20,7 @@ export function DirectorPromptChips({
   disabled = false,
 }: Props) {
   return (
-    <div className="mt-2 flex flex-wrap gap-1">
+    <div className="nodrag nopan mt-2 flex flex-wrap gap-1">
       {DIRECTOR_PROMPT_CHIPS.map((chip) => (
         <button
           key={chip.id}

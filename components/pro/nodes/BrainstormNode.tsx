@@ -1,5 +1,6 @@
 "use client";
 
+import { CanvasTextarea } from "@/components/pro/CanvasTextField";
 import type { NodeProps } from "@xyflow/react";
 import { ProNodeShell } from "@/components/pro/ProNodeShell";
 import { useProCanvasActions } from "@/components/pro/ProCanvasActions";
@@ -24,9 +25,9 @@ export function BrainstormNode({ id, data }: NodeProps & { data: BrainstormNodeD
   return (
     <ProNodeShell accent="rose" label={data.label} sourceHandle targetHandle={false} widthClass="w-80">
       <p className="mb-2 text-[10px] text-slate-400">{bn.hint}</p>
-      <textarea
+      <CanvasTextarea
         value={data.idea}
-        onChange={(e) => updateNodeData(id, { idea: e.target.value })}
+        onChange={(idea) => updateNodeData(id, { idea })}
         placeholder={bn.ideaPlaceholder}
         className="h-20 w-full resize-none rounded-lg border border-slate-700/80 bg-slate-950/80 px-2 py-1.5 text-[10px] text-white placeholder:text-slate-600 focus:border-rose-500/40 focus:outline-none"
       />
