@@ -243,18 +243,23 @@ export async function POST(request: Request) {
 			| Awaited<ReturnType<typeof planVideoStoryboardFromImageReference>>
 			| undefined;
 		let storyboardPlanError: string | undefined;
+		let imageAnalysis:
+			| ReturnType<typeof researchImageAnalysisFromConceptVision>
+			| undefined;
 		if (wantStoryboardPlan && !canPlanStoryboard) {
 			storyboardPlanError = "Storyboard requires Pro plan or above.";
-		} else if (planStoryboard && promoteName && vision) {
+		} else if (vision) {
+			imageAnalysis =
+				carouselRefs.length > 0
+					? researchImageAnalysisFromCarouselVision(
+							vision as CarouselReferenceVision,
+						)
+					: researchImageAnalysisFromConceptVision(
+							vision as ConceptImageVision,
+						);
+		}
+		if (planStoryboard && promoteName && imageAnalysis) {
 			try {
-				const imageAnalysis =
-					carouselRefs.length > 0
-						? researchImageAnalysisFromCarouselVision(
-								vision as CarouselReferenceVision,
-							)
-						: researchImageAnalysisFromConceptVision(
-								vision as ConceptImageVision,
-							);
 				storyboardPlan = await planVideoStoryboardFromImageReference({
 					analysis: imageAnalysis,
 					product: promoteName,
@@ -285,6 +290,7 @@ export async function POST(request: Request) {
 			strategy,
 			vision,
 			carouselSlideCount: brief?.carouselSlideCount ?? 1,
+			...(imageAnalysis ? { imageAnalysis } : {}),
 			...(storyboardPlan ? { storyboardPlan } : {}),
 			...(storyboardPlanError ? { storyboardPlanError } : {}),
 			...(analyzeWarning ? { warning: analyzeWarning } : {}),

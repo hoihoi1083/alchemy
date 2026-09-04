@@ -46,6 +46,12 @@ import { parseImageTextMode } from "@/lib/image-text-mode";
 import { RESEARCH_REEL_ANALYSIS_MARKER } from "@/lib/reel-analysis-types";
 import type { ResearchReelAnalysis } from "@/lib/reel-analysis-types";
 import { pinStoryboardPlanToReelAnalysis } from "@/lib/reel-reference-brief";
+import {
+  refreshStoryboardPlanImageReferencePin,
+  researchImageAnalysisFromUserBrief,
+  type ResearchImageReferenceAnalysis,
+} from "@/lib/image-reference-storyboard";
+import { isContentResearchStyleExtra } from "@/lib/content-research-promote";
 import { mapPool } from "@/lib/async-pool";
 import { formatFalGenerationError } from "@/lib/fal-errors";
 import {
@@ -259,6 +265,10 @@ export async function POST(request: Request) {
 
   let plan;
   const planRaw = planRawEarly;
+  const researchAdapted =
+    String(formData.get("research_adapted") ?? "").trim() === "1" ||
+    isContentResearchStyleExtra(promptExtra) ||
+    isContentResearchStyleExtra(promptExtraRaw);
   if (planRaw) {
     try {
       const parsed = JSON.parse(planRaw) as Partial<VideoStoryboardPlan>;
@@ -287,6 +297,11 @@ export async function POST(request: Request) {
         conceptMode: conceptStoryboardNoProduct,
         useBrandLogo: brandKitWantsLogo(brandKit),
         imageTextMode,
+        researchAdapted:
+          researchAdapted ||
+          Boolean(brief && hasStyle) ||
+          strategy.kind === "layout-transfer" ||
+          strategy.kind === "style-only",
       });
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "Storyboard planning failed.";
@@ -313,6 +328,35 @@ export async function POST(request: Request) {
     }
   } else if (hasReelAnalysis && promptExtra.includes(RESEARCH_REEL_ANALYSIS_MARKER)) {
     /* marker-only path: plan should already be pinned client-side */
+  } else if (
+    brief &&
+    (researchAdapted ||
+      hasStyle ||
+      strategy.kind === "layout-transfer" ||
+      strategy.kind === "style-only")
+  ) {
+    // Image research / style-ref: always re-pin like reel (strip + pin = idempotent).
+    let imageAnalysis: ResearchImageReferenceAnalysis | null = null;
+    const imageAnalysisRaw = (
+      formData.get("research_image_analysis") as string | null
+    )?.trim();
+    if (imageAnalysisRaw) {
+      try {
+        imageAnalysis = JSON.parse(
+          imageAnalysisRaw,
+        ) as ResearchImageReferenceAnalysis;
+      } catch {
+        imageAnalysis = null;
+      }
+    }
+    if (!imageAnalysis?.beats?.length) {
+      imageAnalysis = researchImageAnalysisFromUserBrief(brief);
+    }
+    plan = refreshStoryboardPlanImageReferencePin(
+      plan,
+      imageAnalysis,
+      headline || conceptIdea || productName,
+    );
   }
 
   const sceneIndexRaw = (formData.get("scene_indexes") as string | null)?.trim() || "";

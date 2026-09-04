@@ -56,6 +56,7 @@ import {
 } from "@/lib/visual-styles";
 import { DEFAULT_ART_STYLE, type ArtStyleId } from "@/lib/art-style";
 import type { ResearchReelAnalysis } from "@/lib/reel-analysis-types";
+import type { ResearchImageReferenceAnalysis } from "@/lib/image-reference-storyboard";
 import type { ContentPlatform } from "@/lib/content-research-types";
 import type { WorkflowMode, WorkflowStepKey } from "@/lib/workflow-mode";
 import type {
@@ -247,6 +248,8 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn" | "zh-tw") {
   const [researchReelAnalysis, setResearchReelAnalysis] = useState<ResearchReelAnalysis | null>(
     null,
   );
+  const [researchImageAnalysis, setResearchImageAnalysis] =
+    useState<ResearchImageReferenceAnalysis | null>(null);
   const [researchReelAnalyzeBusy, setResearchReelAnalyzeBusy] = useState(false);
   const [researchReelAnalyzeNote, setResearchReelAnalyzeNote] = useState<string | null>(null);
 
@@ -518,6 +521,8 @@ export function useWizardState(locale: "en" | "zh" | "zh-cn" | "zh-tw") {
     setReferenceResearchPlatform,
     researchReelAnalysis,
     setResearchReelAnalysis,
+    researchImageAnalysis,
+    setResearchImageAnalysis,
     researchReelAnalyzeBusy,
     setResearchReelAnalyzeBusy,
     researchReelAnalyzeNote,

@@ -398,6 +398,7 @@ import {
 	pinStoryboardPlanToReelAnalysis,
 	sanitizeStoryboardSeedancePrompt,
 } from "@/lib/reel-reference-brief";
+import type { ResearchImageReferenceAnalysis } from "@/lib/image-reference-storyboard";
 import {
 	USER_REFERENCE_COMPOSITION_REMAP_MARKER,
 	USER_REFERENCE_LAYOUT_TRANSFER_MARKER,
@@ -720,6 +721,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		setReferenceResearchPlatform,
 		researchReelAnalysis,
 		setResearchReelAnalysis,
+		researchImageAnalysis,
+		setResearchImageAnalysis,
 		researchReelAnalyzeBusy,
 		setResearchReelAnalyzeBusy,
 		researchReelAnalyzeNote,
@@ -1790,6 +1793,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			lastCompletedReferenceAnalyzeKeyRef.current = null;
 			referenceAnalyzeInFlightKeyRef.current = null;
 			setUserReferenceBrief(null);
+			setResearchImageAnalysis(null);
 			setReferenceAnalyzeNote(null);
 			setReferenceAnalyzeBusy(false);
 			return;
@@ -1877,6 +1881,13 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				lastCompletedReferenceAnalyzeKeyRef.current = runKey;
 				const brief = data.brief as UserReferenceBrief;
 				setUserReferenceBrief(brief);
+				if (data.imageAnalysis) {
+					setResearchImageAnalysis(
+						data.imageAnalysis as ResearchImageReferenceAnalysis,
+					);
+				} else {
+					setResearchImageAnalysis(null);
+				}
 				setPromptExtra((prev) => stripContentResearchStyleExtra(prev));
 				if (data.storyboardPlan) {
 					const plan = data.storyboardPlan as VideoStoryboardPlan;
@@ -2899,6 +2910,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		// Locked posters ignore reference layout/style borrow.
 		setImageRefPhoto(null);
 		setUserReferenceBrief(null);
+		setResearchImageAnalysis(null);
 		setReferenceAnalyzeNote(null);
 	}
 
@@ -3030,6 +3042,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			setImageCreativeMode("promo-ai");
 			setImageRefPhoto(null);
 			setUserReferenceBrief(null);
+			setResearchImageAnalysis(null);
 			setReferenceAnalyzeNote(null);
 		} else if (path === "brand") selectVisualStyle("brand-fit");
     else if (path === "pricing") selectVisualStyle("pricing-offer");
@@ -3359,6 +3372,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		if (imageCreativeMode !== "promo-ai") setImageCreativeMode("promo-ai");
 		if (imageRefPhoto) setImageRefPhoto(null);
 		if (userReferenceBrief) setUserReferenceBrief(null);
+		setResearchImageAnalysis(null);
 		if (referenceAnalyzeNote) setReferenceAnalyzeNote(null);
 		// eslint-disable-next-line react-hooks/exhaustive-deps -- snap when locked poster style
 	}, [visualStyleId, imageOutputMode, imageCreativeMode, imageRefPhoto, userReferenceBrief, referenceAnalyzeNote]);
@@ -3869,6 +3883,15 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				fd.set(
 					"research_reel_analysis",
 					JSON.stringify(researchReelAnalysis),
+				);
+			}
+			if (
+				researchImageAnalysis &&
+				!storyboardRecipeForbidsReference(storyboardRecipeId)
+			) {
+				fd.set(
+					"research_image_analysis",
+					JSON.stringify(researchImageAnalysis),
 				);
 			}
 			attachReferenceToForm(fd);
@@ -5665,6 +5688,12 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 						fd.set(
 							"research_reel_analysis",
 							JSON.stringify(researchReelAnalysis),
+						);
+					}
+					if (researchImageAnalysis) {
+						fd.set(
+							"research_image_analysis",
+							JSON.stringify(researchImageAnalysis),
 						);
 					}
 					if (sceneIndexes?.length) {
@@ -10312,20 +10341,22 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				"scene_count",
 				effectiveStoryboardSceneCount(storyboardRecipeId, storyboardSceneCount),
 			);
-			if (contentResearchApplyRef) {
-				fd.set("research_adapted", "1");
-			} else {
-				if (contentResearchApplyRef) {
+			const researchAdaptedReplan =
+				Boolean(contentResearchApplyRef) ||
+				Boolean(userReferenceBrief && imageRefPhoto);
+			if (researchAdaptedReplan) {
 				fd.set("research_adapted", "1");
 			} else {
 				fd.set("storyboard_recipe", storyboardRecipeId);
-			}
 			}
 			fd.set("prompt_market", promptMarket);
 			fd.set("subject_framing", subjectFraming);
 			fd.set("prompt_extra", effectivePromptExtra());
 			fd.set("image_text_mode", imageTextMode);
-			if (!storyboardRecipeForbidsReference(storyboardRecipeId)) {
+			if (
+				researchAdaptedReplan ||
+				!storyboardRecipeForbidsReference(storyboardRecipeId)
+			) {
 				appendReferenceFormFields(fd);
 			}
 			const res = await fetch("/api/plan-storyboard", {

@@ -3,7 +3,9 @@ import { describe, it } from "node:test";
 import type { ConceptImageVision } from "../lib/concept-image-vision";
 import {
   researchImageAnalysisFromConceptVision,
+  researchImageAnalysisFromUserBrief,
   pinStoryboardPlanToImageReference,
+  refreshStoryboardPlanImageReferencePin,
 } from "../lib/image-reference-storyboard";
 import {
   buildImageReferenceStoryboardPlanPromptForTest,
@@ -76,6 +78,95 @@ describe("image-reference-storyboard", () => {
     assert.match(pinned.visualDirection, /neon green/i);
     assert.match(pinned.lookBible?.palette ?? "", /neon green/i);
     assert.match(pinned.lookBible?.lighting ?? "", /energetic/i);
+  });
+
+  it("rebuilds analysis from creative brief for re-plan pin", () => {
+    const analysis = researchImageAnalysisFromUserBrief({
+      topic: "Vitamin C serum",
+      contentSummary: "Woman holds serum with poster backdrop",
+      visibleText: "",
+      subjects: "woman, bottle",
+      contentType: "product-ad",
+      layoutStyle: "centered hero, shallow DOF",
+      colorPalette: "bright airy soft",
+      typographyStyle: "clean sans",
+      mood: "dreamy aspirational feminine",
+      motionHints: "slow drift",
+    });
+    assert.equal(analysis.source, "single");
+    assert.match(analysis.visualDirection, /bright airy soft/i);
+    assert.match(analysis.visualDirection, /dreamy aspirational/i);
+    assert.equal(analysis.beats.length, 1);
+    assert.match(analysis.beats[0]?.layoutStyle ?? "", /centered hero/i);
+
+    const pinned = pinStoryboardPlanToImageReference(
+      {
+        title: "t",
+        theme: "old",
+        visualDirection: "generic TVC",
+        lookBible: { palette: "teal", lighting: "", materials: "", negatives: "" },
+        totalDurationSec: 8,
+        scenes: [
+          {
+            imageIndex: 1,
+            role: "hook",
+            startSec: 0,
+            endSec: 2,
+            sceneDescriptionZh: "開場",
+            onImageCopyZh: "",
+            imagePrompt: "generic office still",
+          },
+        ],
+        seedancePrompt: "Scene 1",
+        productionNotes: "",
+      },
+      analysis,
+      "Vitamin C serum",
+    );
+    assert.match(pinned.scenes[0]?.imagePrompt ?? "", /REFERENCE BEAT 1/i);
+    assert.match(pinned.visualDirection, /dreamy aspirational/i);
+    assert.match(pinned.lookBible?.palette ?? "", /bright airy soft/i);
+  });
+
+  it("refresh pin is idempotent (no stacked REFERENCE BEAT shells)", () => {
+    const analysis = researchImageAnalysisFromUserBrief({
+      topic: "serum",
+      contentSummary: "hero still",
+      visibleText: "",
+      subjects: "",
+      contentType: "product-ad",
+      layoutStyle: "center hero",
+      colorPalette: "soft pastel",
+      typographyStyle: "sans",
+      mood: "dreamy",
+      motionHints: "drift",
+    });
+    const base = {
+      title: "t",
+      theme: "serum",
+      visualDirection: "generic",
+      lookBible: { palette: "", lighting: "", materials: "", negatives: "" },
+      totalDurationSec: 8,
+      scenes: [
+        {
+          imageIndex: 1,
+          role: "hook",
+          startSec: 0,
+          endSec: 2,
+          sceneDescriptionZh: "開場",
+          onImageCopyZh: "",
+          imagePrompt: "office still",
+        },
+      ],
+      seedancePrompt: "",
+      productionNotes: "",
+    };
+    const once = refreshStoryboardPlanImageReferencePin(base, analysis, "serum");
+    const twice = refreshStoryboardPlanImageReferencePin(once, analysis, "serum");
+    const beatCount = (twice.scenes[0]?.imagePrompt.match(/REFERENCE BEAT/gi) ?? [])
+      .length;
+    assert.equal(beatCount, 1);
+    assert.match(twice.visualDirection, /soft pastel/i);
   });
 
   it("builds product layout-transfer image reference planner prompt", () => {

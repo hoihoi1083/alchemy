@@ -4,7 +4,7 @@ import { planMeetsMinimum } from "@/lib/billing/plan-gates";
 import { requireAppUser } from "@/lib/require-app-user";
 import { assertFreeDeepSeekQuota } from "@/lib/rate-limit-deepseek";
 import type { PromptMarket, SubjectFraming } from "@/lib/prompt-variables";
-import { planVideoStoryboard } from "@/lib/video-storyboard-plan";
+import { planVideoStoryboard, planVideoStoryboardFromImageReference } from "@/lib/video-storyboard-plan";
 import type { BrandProfile } from "@/lib/brand-profile";
 import { parseBrandKit } from "@/lib/brand-kit";
 import { parseStoryboardSceneCount } from "@/lib/ad-pack-preferences";
@@ -17,6 +17,7 @@ import { wizardPromoteName } from "@/lib/wizard-promote-name";
 import { parseImageTextMode } from "@/lib/image-text-mode";
 import { resolveStoryboardRecipeId } from "@/lib/storyboard-recipes";
 import { isContentResearchStyleExtra } from "@/lib/content-research-promote";
+import { researchImageAnalysisFromUserBrief } from "@/lib/image-reference-storyboard";
 
 export const runtime = "nodejs";
 export const maxDuration = 90;
@@ -94,7 +95,7 @@ export async function POST(request: Request) {
     (formData.get("storyboard_recipe") as string | null)?.trim(),
   );
   const styleHint = mergePromptExtra(visualStyle, promptExtra);
-  const { strategy } = parseStrategyFromFormData(formData);
+  const { strategy, brief } = parseStrategyFromFormData(formData);
   const researchAdapted =
     String(formData.get("research_adapted") ?? "").trim() === "1" ||
     isContentResearchStyleExtra(promptExtra);
@@ -123,7 +124,34 @@ export async function POST(request: Request) {
     }
   }
 
+  const imageTextMode = parseImageTextMode(
+    formData.get("image_text_mode") as string | null,
+  );
+
   try {
+    // Research / style-ref re-plan: use image-reference planner + pin so REFERENCE
+    // BEAT shells survive (plain planVideoStoryboard only sets researchAdapted).
+    if (researchAdapted && brief) {
+      const plan = await planVideoStoryboardFromImageReference({
+        analysis: researchImageAnalysisFromUserBrief(brief),
+        product: productName,
+        business,
+        headline,
+        subline,
+        offer,
+        promptExtra: [promptExtra, storyboardBrief].filter(Boolean).join("\n"),
+        durationSec,
+        sceneCountTarget,
+        market: promptMarket,
+        artStyleId,
+        referenceStrategyKind: strategy.kind,
+        promotionMode,
+        useBrandLogo,
+        imageTextMode,
+      });
+      return NextResponse.json({ plan, seedancePrompt: plan.seedancePrompt });
+    }
+
     const plan = await planVideoStoryboard({
       product: productName,
       business,
@@ -142,7 +170,7 @@ export async function POST(request: Request) {
       referenceStrategyKind: strategy.kind,
       useBrandLogo,
       conceptMode: promotionMode === "concept",
-      imageTextMode: parseImageTextMode(formData.get("image_text_mode") as string | null),
+      imageTextMode,
       storyboardRecipeId: storyboardRecipeForPlan,
       researchAdapted,
     });

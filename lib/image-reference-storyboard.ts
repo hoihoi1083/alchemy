@@ -1,6 +1,7 @@
 import type { CarouselReferenceVision } from "@/lib/carousel-reference-vision";
 import type { ConceptImageVision } from "@/lib/concept-image-vision";
 import type { StoryboardLookBible } from "@/lib/shot-recipes";
+import type { UserReferenceBrief } from "@/lib/user-reference-brief";
 import type { VideoStoryboardPlan } from "@/lib/video-storyboard-types";
 
 /** Align grade bible with analyzed reference so LOOK BIBLE LOCK does not fight series look. */
@@ -23,6 +24,68 @@ function lookBibleFromImageAnalysis(
     negatives:
       existing?.negatives?.trim() ||
       "no generic stock TVC, no inventing a different render medium or layout family than the reference, no ignoring reference mood/palette",
+  };
+}
+
+/** Rebuild image-reference analysis from the stored creative brief (re-plan / generate fallback). */
+export function researchImageAnalysisFromUserBrief(
+  brief: UserReferenceBrief,
+): ResearchImageReferenceAnalysis {
+  const slides = brief.carouselSlides?.filter(Boolean) ?? [];
+  if (slides.length > 0) {
+    const visualDirection = [
+      brief.colorPalette,
+      brief.mood,
+      brief.typographyStyle,
+      brief.contentType || brief.topic,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+    return {
+      source: "carousel",
+      visualDirection:
+        visualDirection || brief.contentSummary || brief.topic || "reference carousel",
+      motionSummary:
+        brief.motionHints || "carousel slide pacing — one beat per reference slide",
+      layoutFamily: brief.layoutStyle || brief.contentType || "carousel ad",
+      beats: slides.map((slide) => ({
+        index: slide.index,
+        sceneSummary: slide.sceneSummary || brief.contentSummary || brief.topic,
+        layoutStyle: slide.layoutStyle || brief.layoutStyle || "carousel slide",
+        motionHint: slide.composition || brief.motionHints || "match slide layout",
+        subjects: slide.stagingPose || "",
+        colorPalette: slide.colorPalette || brief.colorPalette,
+        mood: slide.mood || brief.mood,
+      })),
+    };
+  }
+
+  const visualDirection = [
+    brief.colorPalette,
+    brief.mood,
+    brief.typographyStyle,
+    brief.contentType || brief.topic,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  return {
+    source: "single",
+    visualDirection:
+      visualDirection || brief.contentSummary || brief.topic || "reference cover",
+    motionSummary:
+      brief.motionHints || "subtle motion preserving reference layout",
+    layoutFamily: brief.layoutStyle || brief.contentType || "reference cover layout",
+    beats: [
+      {
+        index: 1,
+        sceneSummary: brief.contentSummary || brief.topic || "reference cover",
+        layoutStyle: brief.layoutStyle || "cover layout",
+        motionHint: brief.motionHints || "hold layout, subtle drift",
+        subjects: brief.subjects || "",
+        colorPalette: brief.colorPalette,
+        mood: brief.mood,
+      },
+    ],
   };
 }
 
@@ -104,6 +167,25 @@ export function researchImageAnalysisFromCarouselVision(
   };
 }
 
+/** Remove prior REFERENCE BEAT shells so re-pin is idempotent (no stacked prefixes). */
+export function stripReferenceBeatShells(
+  plan: VideoStoryboardPlan,
+): VideoStoryboardPlan {
+  return {
+    ...plan,
+    scenes: plan.scenes.map((scene) => {
+      const raw = scene.imagePrompt?.trim() ?? "";
+      if (!raw) return scene;
+      const cleaned = raw
+        .split(/\s*\|\s*/)
+        .map((part) => part.trim())
+        .filter((part) => part && !/^REFERENCE BEAT\b/i.test(part))
+        .join(" | ");
+      return { ...scene, imagePrompt: cleaned };
+    }),
+  };
+}
+
 /** Lock storyboard plan aesthetic to analyzed reference still(s) — user topic in copy only. */
 export function pinStoryboardPlanToImageReference(
   plan: VideoStoryboardPlan,
@@ -147,4 +229,17 @@ export function pinStoryboardPlanToImageReference(
       `Style locked to reference ${analysis.source}: ${lockedVisual.slice(0, 120)}`,
     scenes,
   };
+}
+
+/** Always re-pin like reel generate — strip old shells first so prompts stay clean. */
+export function refreshStoryboardPlanImageReferencePin(
+  plan: VideoStoryboardPlan,
+  analysis: ResearchImageReferenceAnalysis,
+  userTopic: string,
+): VideoStoryboardPlan {
+  return pinStoryboardPlanToImageReference(
+    stripReferenceBeatShells(plan),
+    analysis,
+    userTopic,
+  );
 }
