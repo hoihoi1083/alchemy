@@ -7036,6 +7036,8 @@ export const en = {
       "From thought → clip: describe the whole scene here. No still required. Use Image-to-video when you already have approved refs.",
     textVideoPromptPlaceholder: "Cinematic text-to-video prompt…",
     paletteTextVideoHint: "No still? Use Text-to-video — describe a scene and run.",
+    paletteScrollUp: "Up",
+    paletteScrollDown: "Down",
     runVideo: "Run video",
     runTextVideo: "Run text-to-video",
     runScript: "Plan script",

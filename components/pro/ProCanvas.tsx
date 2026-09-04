@@ -3083,11 +3083,16 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
     addModifier: m.ultraCanvas.addModifier,
     railClose: m.ultraCanvas.railClose,
     paletteTextVideoHint: m.ultraCanvas.paletteTextVideoHint,
+    paletteScrollUp: m.ultraCanvas.paletteScrollUp,
+    paletteScrollDown: m.ultraCanvas.paletteScrollDown,
     ...(m.ultraCanvas.nodeLabels as Record<string, string>),
   };
 
+  const paletteOpen = desktopPaletteOpen || mobilePaletteOpen;
+
   return (
     <ProCanvasActionsProvider value={actions}>
+      {/* Single board shell: palette lives INSIDE so it cannot spill outside the canvas. */}
       <div
         className="relative min-h-[640px] h-[calc(100dvh-9.5rem)] w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 shadow-lg shadow-slate-900/10 ring-1 ring-slate-900/5"
         style={{ minHeight: 640, height: "calc(100dvh - 9.5rem)" }}
@@ -3118,55 +3123,6 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
               "radial-gradient(circle at 20% 10%, rgba(139,92,246,0.15), transparent 40%), radial-gradient(circle at 80% 90%, rgba(56,189,248,0.1), transparent 35%)",
           }}
         />
-        <div className="absolute left-3 top-3 z-10 hidden flex-col items-start gap-2 md:flex">
-          <button
-            type="button"
-            onClick={() => setDesktopPaletteOpen((v) => !v)}
-            disabled={boardBusy}
-            className="rounded-lg border border-cyan-500/40 bg-slate-900/95 px-3 py-1.5 text-[11px] font-semibold text-cyan-100 shadow-lg backdrop-blur hover:bg-slate-800 disabled:opacity-40"
-          >
-            {desktopPaletteOpen ? m.ultraCanvas.railClose : m.ultraCanvas.addNode}
-          </button>
-          {desktopPaletteOpen ? (
-            <AddNodePalette
-              labels={paletteLabels}
-              onAdd={(kind) => {
-                addNode(kind);
-                setDesktopPaletteOpen(false);
-              }}
-              disabled={boardBusy}
-              onClose={() => setDesktopPaletteOpen(false)}
-            />
-          ) : null}
-        </div>
-        <button
-          type="button"
-          onClick={() => setMobilePaletteOpen(true)}
-          className="fixed bottom-4 left-4 z-20 rounded-full border border-cyan-500/40 bg-slate-900/95 px-4 py-2.5 text-xs font-semibold text-cyan-100 shadow-lg backdrop-blur md:hidden"
-        >
-          {m.ultraCanvas.mobileNodes}
-        </button>
-        {mobilePaletteOpen ? (
-          <div className="fixed inset-0 z-40 md:hidden">
-            <button
-              type="button"
-              className="absolute inset-0 bg-slate-950/55"
-              aria-label={m.ultraCanvas.railClose}
-              onClick={() => setMobilePaletteOpen(false)}
-            />
-            <div className="absolute left-0 top-0 flex h-full w-[min(100%,18rem)] flex-col p-3">
-              <AddNodePalette
-                labels={paletteLabels}
-                onAdd={(kind) => {
-                  addNode(kind);
-                  setMobilePaletteOpen(false);
-                }}
-                disabled={boardBusy}
-                onClose={() => setMobilePaletteOpen(false)}
-              />
-            </div>
-          </div>
-        ) : null}
         <UltraCanvasRightRail
           labels={{
             open: m.ultraCanvas.railOpen,
@@ -3221,20 +3177,81 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
           fitView
           snapToGrid
           snapGrid={[20, 20]}
-          /* Left-drag moves nodes; middle/right pan the pane. */
-          panOnDrag={[1, 2]}
-          selectionOnDrag
+          panOnDrag
+          selectionOnDrag={false}
+          selectionKeyCode="Shift"
+          panOnScroll={!paletteOpen}
+          zoomOnScroll={!paletteOpen}
           colorMode="dark"
           proOptions={{ hideAttribution: true }}
         >
           <Background gap={20} color="#334155" />
-          <Controls className="!border-slate-700 !bg-slate-900/90 !shadow-lg" />
+          <Controls
+            position="bottom-right"
+            className="!border-slate-700 !bg-slate-900/90 !shadow-lg"
+          />
           <MiniMap
-            className="!border-slate-700 !bg-slate-900/90"
+            position="bottom-right"
+            className="!mb-14 !border-slate-700 !bg-slate-900/90"
             nodeColor="#6366f1"
             maskColor="rgba(15,23,42,0.75)"
           />
         </ReactFlow>
+
+        {/* Block stack (not flex-col) so the card’s fixed half-height is not overridden by flex min-height. */}
+        <div className="absolute left-3 top-3 z-50 hidden md:block">
+          <button
+            type="button"
+            onClick={() => setDesktopPaletteOpen((v) => !v)}
+            disabled={boardBusy}
+            className="rounded-lg border border-cyan-500/40 bg-slate-900/95 px-3 py-1.5 text-[11px] font-semibold text-cyan-100 shadow-lg backdrop-blur hover:bg-slate-800 disabled:opacity-40"
+          >
+            {desktopPaletteOpen ? m.ultraCanvas.railClose : m.ultraCanvas.addNode}
+          </button>
+          {desktopPaletteOpen ? (
+            <div className="mt-2">
+              <AddNodePalette
+                labels={paletteLabels}
+                onAdd={(kind) => {
+                  addNode(kind);
+                  setDesktopPaletteOpen(false);
+                }}
+                disabled={boardBusy}
+                onClose={() => setDesktopPaletteOpen(false)}
+              />
+            </div>
+          ) : null}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setMobilePaletteOpen(true)}
+          className="fixed bottom-4 left-4 z-20 rounded-full border border-cyan-500/40 bg-slate-900/95 px-4 py-2.5 text-xs font-semibold text-cyan-100 shadow-lg backdrop-blur md:hidden"
+        >
+          {m.ultraCanvas.mobileNodes}
+        </button>
+        {mobilePaletteOpen ? (
+          <div className="fixed inset-0 z-40 md:hidden">
+            <button
+              type="button"
+              className="absolute inset-0 bg-slate-950/55"
+              aria-label={m.ultraCanvas.railClose}
+              onClick={() => setMobilePaletteOpen(false)}
+            />
+            <div className="absolute bottom-4 left-4 z-50">
+              <AddNodePalette
+                labels={paletteLabels}
+                onAdd={(kind) => {
+                  addNode(kind);
+                  setMobilePaletteOpen(false);
+                }}
+                disabled={boardBusy}
+                onClose={() => setMobilePaletteOpen(false)}
+              />
+            </div>
+          </div>
+        ) : null}
+
         <UltraCanvasConfirmDialog
           open={confirmState !== null}
           title={confirmState?.title ?? ""}
@@ -3253,6 +3270,7 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
     </ProCanvasActionsProvider>
   );
 }
+
 
 export function ProCanvas({ initialTemplate }: { initialTemplate?: string | null } = {}) {
   return (
