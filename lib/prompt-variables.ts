@@ -2635,14 +2635,15 @@ export function buildStoryboardSceneImagePrompt(
 			? lookBibleSummaryLine(plan.lookBible)
 			: "";
 		const lighting = scene.lightingEn?.trim();
-  return joinParts(
-			bibleLine
-				? `LOOK BIBLE LOCK (grade only — all scenes): ${bibleLine}.`
+		const seriesLook = plan.visualDirection?.trim();
+		// Grade bible and research series look must BOTH apply — never drop
+		// visualDirection when lookBible is filled (product+research layout-transfer).
+		return joinParts(
+			bibleLine ? `LOOK BIBLE LOCK (grade — all scenes): ${bibleLine}.` : "",
+			seriesLook
+				? `REFERENCE / SERIES LOOK LOCK (composition + medium + layout family — all scenes): ${seriesLook}.`
 				: "",
 			lighting ? `Scene lighting (this beat): ${lighting}.` : "",
-			plan.visualDirection && !bibleLine
-				? `Series look: ${plan.visualDirection}.`
-				: "",
 		);
 	})();
 	const textlessRule =
@@ -2666,11 +2667,15 @@ export function buildStoryboardSceneImagePrompt(
 				artStyleMandatoryLead(sceneVars.artStyle),
 				`Storyboard still ${scene.imageIndex}/${plan.scenes.length}.`,
 				lookLock,
+				plan.visualDirection
+					? `Locked series aesthetic: ${plan.visualDirection}.`
+					: "",
 				plan.theme ? `Story theme: ${plan.theme}.` : "",
 				`Scene role: ${scene.role}.`,
 				sceneImagePrompt ? `Scene action: ${sceneImagePrompt}.` : "",
 				"Keep the SAME ad layout shell as IMAGE 2 on every scene — only scene action and micro-angle change inside that design family.",
 				"IMAGE 1 = product hero (keep identity); IMAGE 2 = layout/style shell — never treat the product photo as the layout template.",
+				"Match IMAGE 2 mood, palette energy, and layout grammar — do NOT invent a different grade (e.g. dark moody) when the reference is bright/airy/dreamy.",
 				buildReferenceConceptImagePrompt(imageBriefVars, {
 					shopStyleHint: shopHint,
 					brandProfile: options?.brandProfile ?? undefined,

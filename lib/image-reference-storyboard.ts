@@ -1,6 +1,30 @@
 import type { CarouselReferenceVision } from "@/lib/carousel-reference-vision";
 import type { ConceptImageVision } from "@/lib/concept-image-vision";
+import type { StoryboardLookBible } from "@/lib/shot-recipes";
 import type { VideoStoryboardPlan } from "@/lib/video-storyboard-types";
+
+/** Align grade bible with analyzed reference so LOOK BIBLE LOCK does not fight series look. */
+function lookBibleFromImageAnalysis(
+  analysis: ResearchImageReferenceAnalysis,
+  existing?: StoryboardLookBible | null,
+): StoryboardLookBible {
+  const beat = analysis.beats[0];
+  return {
+    palette:
+      beat?.colorPalette?.trim() ||
+      existing?.palette?.trim() ||
+      "",
+    lighting: beat?.mood?.trim() || existing?.lighting?.trim() || "",
+    materials:
+      analysis.layoutFamily?.trim() ||
+      beat?.layoutStyle?.trim() ||
+      existing?.materials?.trim() ||
+      "",
+    negatives:
+      existing?.negatives?.trim() ||
+      "no generic stock TVC, no inventing a different render medium or layout family than the reference, no ignoring reference mood/palette",
+  };
+}
 
 /** One layout beat from a reference still (cover or carousel slide). */
 export type ImageReferenceBeat = {
@@ -117,6 +141,7 @@ export function pinStoryboardPlanToImageReference(
     ...plan,
     theme: userTopic.trim() || plan.theme,
     visualDirection: lockedVisual,
+    lookBible: lookBibleFromImageAnalysis(analysis, plan.lookBible),
     productionNotes:
       plan.productionNotes ||
       `Style locked to reference ${analysis.source}: ${lockedVisual.slice(0, 120)}`,

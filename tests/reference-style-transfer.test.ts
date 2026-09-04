@@ -142,4 +142,90 @@ describe("reference-style-transfer", () => {
     assert.match(prompt, /韓國精選/);
     assert.match(prompt, /ON-IMAGE COPY/);
   });
+
+  it("layout-transfer still keeps research visualDirection even when lookBible is set", () => {
+    const seriesLook =
+      "dreamy aspirational clean feminine · shallow depth of field · poster backdrop lifestyle";
+    const prompt = buildStoryboardSceneImagePrompt(
+      {
+        imageIndex: 1,
+        role: "hook",
+        startSec: 0,
+        endSec: 2,
+        sceneDescriptionZh: "開場",
+        onImageCopyZh: "",
+        imagePrompt: "hero holds serum, poster soft behind",
+      },
+      {
+        title: "t",
+        theme: "Vitamin C serum",
+        visualDirection: seriesLook,
+        lookBible: {
+          palette: "bright, airy, soft",
+          lighting: "window soft key",
+          materials: "glass serum bottle",
+          negatives: "no plastic CG",
+        },
+        totalDurationSec: 8,
+        scenes: [],
+        seedancePrompt: "",
+        productionNotes: "",
+      },
+      {
+        product: "Vitamin C serum",
+        headline: "You're using it wrong",
+        market: "en",
+        framing: "auto",
+        extra: "",
+      },
+      { referenceConcept: true, textless: true, hasProductImage: true },
+    );
+    assert.match(prompt, /LOOK BIBLE LOCK/);
+    assert.match(prompt, /REFERENCE \/ SERIES LOOK LOCK/);
+    assert.match(prompt, /Locked series aesthetic/);
+    assert.ok(prompt.includes(seriesLook));
+    assert.match(prompt, /do NOT invent a different grade/i);
+    // Must not silently drop series look when bible exists
+    assert.doesNotMatch(prompt, /LOOK BIBLE LOCK \(grade only/);
+  });
+
+  it("style-ref still keeps visualDirection when lookBible is set", () => {
+    const seriesLook = "3D cartoon meme ad energy";
+    const prompt = buildStoryboardSceneImagePrompt(
+      {
+        imageIndex: 1,
+        role: "hook",
+        startSec: 0,
+        endSec: 2,
+        sceneDescriptionZh: "開場",
+        onImageCopyZh: "",
+        imagePrompt: "center hero",
+      },
+      {
+        title: "t",
+        theme: "User topic",
+        visualDirection: seriesLook,
+        lookBible: {
+          palette: "neon",
+          lighting: "hard studio",
+          materials: "",
+          negatives: "",
+        },
+        totalDurationSec: 8,
+        scenes: [],
+        seedancePrompt: "",
+        productionNotes: "",
+      },
+      {
+        product: "Acme",
+        headline: "Go",
+        market: "hk",
+        framing: "auto",
+        extra: "",
+      },
+      { storyboardStyleRef: true, textless: true },
+    );
+    assert.ok(prompt.includes(seriesLook));
+    assert.match(prompt, /REFERENCE \/ SERIES LOOK LOCK|Locked series aesthetic/);
+  });
 });

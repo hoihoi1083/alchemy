@@ -73,6 +73,9 @@ describe("image-reference-storyboard", () => {
     );
     assert.equal(pinned.theme, "User gym promo");
     assert.match(pinned.scenes[0]?.imagePrompt ?? "", /REFERENCE BEAT 1/i);
+    assert.match(pinned.visualDirection, /neon green/i);
+    assert.match(pinned.lookBible?.palette ?? "", /neon green/i);
+    assert.match(pinned.lookBible?.lighting ?? "", /energetic/i);
   });
 
   it("builds product layout-transfer image reference planner prompt", () => {

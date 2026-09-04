@@ -1,5 +1,6 @@
 import type { ResearchReelAnalysis } from "@/lib/reel-analysis-types";
 import type { UserReferenceBrief } from "@/lib/user-reference-brief";
+import type { StoryboardLookBible } from "@/lib/shot-recipes";
 import type { VideoStoryboardPlan } from "@/lib/video-storyboard-types";
 
 /** Structured brief from analyzed reference MP4 — flows to Nano Banana + planners. */
@@ -76,6 +77,17 @@ export function pinStoryboardPlanToReelAnalysis(
     ...plan,
     theme: userTopic.trim() || plan.theme,
     visualDirection: lockedVisual,
+    lookBible: {
+      palette: plan.lookBible?.palette?.trim() || lockedVisual.slice(0, 160),
+      lighting: plan.lookBible?.lighting?.trim() || analysis.motionSummary.trim() || "",
+      materials:
+        plan.lookBible?.materials?.trim() ||
+        analysis.shots[0]?.layoutStyle?.trim() ||
+        "",
+      negatives:
+        plan.lookBible?.negatives?.trim() ||
+        "no generic stock TVC, no inventing a different render medium or layout family than the reference reel",
+    } satisfies StoryboardLookBible,
     productionNotes:
       plan.productionNotes ||
       analysis.productionNotesZh ||
