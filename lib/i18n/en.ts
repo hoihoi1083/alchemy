@@ -7124,7 +7124,7 @@ export const en = {
       aspectRatio: "Aspect ratio",
       camera: "Camera move",
       cameraAuto: "Auto (follow prompt)",
-      cameraAutoHint: "No template camera — Seedance follows your motion prompt.",
+      cameraAutoHint: "No template camera — motion follows your prompt.",
       cameraFromPromptHint: "Using motion already written in the prompt — template camera skipped.",
       cameraMultiRefHint: "Multi-ref video uses prompt motion — template camera skipped.",
       duration: "Duration",

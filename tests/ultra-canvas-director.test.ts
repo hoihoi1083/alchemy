@@ -23,8 +23,9 @@ import {
 import type { ContentResearchPlan } from "../lib/content-research-types";
 
 describe("ultra-canvas-director", () => {
-  it("clamps script scene count to 4–6", () => {
-    assert.equal(clampUltraScriptSceneCount(2), 4);
+  it("clamps script scene count to 3–6", () => {
+    assert.equal(clampUltraScriptSceneCount(2), 3);
+    assert.equal(clampUltraScriptSceneCount(3), 3);
     assert.equal(clampUltraScriptSceneCount(6), 6);
     assert.equal(clampUltraScriptSceneCount(12), 6);
     assert.equal(clampUltraScriptSceneCount("nope"), ULTRA_SCRIPT_SCENE_COUNT_DEFAULT);
