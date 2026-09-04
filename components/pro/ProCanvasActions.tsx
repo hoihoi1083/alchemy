@@ -5,7 +5,6 @@ import type { Node } from "@xyflow/react";
 
 export type ProCanvasActions = {
   nodes: Node[];
-  /** True while Run all or any node generation is in flight. */
   boardBusy: boolean;
   onUploadFile: (nodeId: string, file: File) => void;
   onUploadAudio: (nodeId: string, file: File) => void;
@@ -13,13 +12,26 @@ export type ProCanvasActions = {
   onPickLibraryAudio: (nodeId: string, previewUrl: string, fileName: string) => void;
   runImageNode: (nodeId: string) => Promise<void>;
   runCharacterNode: (nodeId: string) => Promise<void>;
+  runCharacterAnglesNode: (nodeId: string) => Promise<void>;
+  runWorldNode: (nodeId: string) => Promise<void>;
+  runBrainstormNode: (nodeId: string) => Promise<void>;
+  applyBrainstormOption: (brainstormNodeId: string, optionId: string) => void;
   runVideoNode: (nodeId: string) => Promise<void>;
   runTextVideoNode: (nodeId: string) => Promise<void>;
   runCameraNode: (nodeId: string) => Promise<void>;
   runScriptNode: (nodeId: string) => Promise<void>;
   spawnSceneNodes: (scriptNodeId: string) => void;
   spawnScenePipeline: (scriptNodeId: string) => void;
+  syncStoryboardFromScript: (storyboardNodeId: string) => void;
+  spawnScenePipelineFromStoryboard: (storyboardNodeId: string) => void;
+  applyStoryboardStillsToScenes: () => number;
+  runStoryboardPanelKeyframe: (storyboardNodeId: string, panelGlobalIndex: number) => Promise<void>;
+  runStoryboardActKeyframes: (storyboardNodeId: string, actIndex: number) => Promise<void>;
+  runStoryboardPanelVideo: (storyboardNodeId: string, panelGlobalIndex: number) => Promise<void>;
+  runStoryboardActVideos: (storyboardNodeId: string, actIndex: number) => Promise<void>;
+  pullVoiceDialogueFromScript: (voiceNodeId: string) => void;
   runAudioNode: (nodeId: string) => Promise<void>;
+  runVoiceNode: (nodeId: string) => Promise<void>;
   runSpliceNode: (nodeId: string) => Promise<void>;
   runNode: (nodeId: string) => Promise<void>;
   estimateSpliceTokenCost: (nodeId: string) => number;

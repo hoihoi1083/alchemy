@@ -42,13 +42,23 @@ describe("pro-canvas-scene-continuity", () => {
     assert.equal(cast.length, 2);
   });
 
-  it("demo beat needs UI + brand", () => {
-    const needs = inferSceneAssetNeeds(4, 6, "Shows phone UI", {
+  it("demo beat needs UI + product; last beat is brand CTA not invented SKU", () => {
+    const demo = inferSceneAssetNeeds(4, 6, "Shows phone UI", {
       blocking: "shows UI / product",
       line: "Give us the product",
     });
-    assert.equal(needs.ui, true);
-    assert.equal(needs.brand, true);
+    assert.equal(demo.ui, true);
+    assert.equal(demo.product, true);
+    assert.equal(demo.brand, true);
+
+    const cta = inferSceneAssetNeeds(5, 6, "Two-shot smile end card", {
+      blocking: "both smile; clean brand logo end card",
+      framing: "two-shot smile + brand end card",
+      line: "Try Alchemy AI Lab",
+    });
+    assert.equal(cta.brand, true);
+    assert.equal(cta.product, false);
+    assert.equal(cta.ui, false);
   });
 
   it("filters brand off early pain scenes", () => {
@@ -82,7 +92,8 @@ describe("pro-canvas-scene-continuity", () => {
     assert.match(plan.imagePrompt, /连续镜头|单帧/);
     assert.match(plan.imagePrompt, /@brand|ONE photographic|单帧/);
     assert.equal(plan.sceneAlias, "Scene5");
-    assert.doesNotMatch(plan.imagePrompt, /comic strip|storyboard grid/i); // forbidden listed, ok if present as FORBIDDEN
+    assert.match(plan.imagePrompt, /FORBIDDEN:[\s\S]*comic strip/i);
+    assert.match(plan.imagePrompt, /World bible|SAME office location/);
   });
 
   it("pain beat does not force UI from ambient screen wording alone", () => {

@@ -1,7 +1,7 @@
 import { BANANA2_EDIT_ENDPOINT, BANANA2_TEXT_ENDPOINT } from "@/lib/image-endpoints";
 import { buildImageRefinePrompt } from "@/lib/image-refine-prompt";
 import { buildCanvasComposePrompt } from "@/lib/pro-canvas-compose";
-import { buildScriptBriefWithBeats, clampUltraScriptSceneCount, type ScriptSceneBeat } from "@/lib/pro-canvas-script-plan";
+import { buildScriptBriefWithBeats, clampUltraScriptSceneCount, mergeSceneBeatsFromCinematicScenes, type ScriptSceneBeat } from "@/lib/pro-canvas-script-plan";
 import type { CanvasImageSource } from "@/lib/pro-canvas-types";
 import { isHttpOrLibraryMediaUrl } from "@/lib/storage/library-asset-url";
 import {
@@ -219,6 +219,7 @@ export async function runCanvasScriptNode(opts: {
   scriptText: string;
   scenePrompts: string[];
   sceneImagePrompts: string[];
+  sceneBeats: ScriptSceneBeat[];
 }> {
   const brief = buildScriptBriefWithBeats(opts.brief, opts.sceneBeats);
   if (!brief.trim()) throw new Error("Enter a creative brief for script planning.");
@@ -233,7 +234,22 @@ export async function runCanvasScriptNode(opts: {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error((data as { error?: string }).error || "Script planning failed");
 
-  const plan = (data as { plan?: { scenes?: { videoMotionPrompt?: string; sceneDescriptionZh?: string; imagePrompt?: string }[] } }).plan;
+  const plan = (
+    data as {
+      plan?: {
+        scenes?: {
+          videoMotionPrompt?: string;
+          sceneDescriptionZh?: string;
+          imagePrompt?: string;
+          spokenLine?: string;
+          speaker?: string;
+          role?: string;
+          startSec?: number;
+          endSec?: number;
+        }[];
+      };
+    }
+  ).plan;
   const scenes = plan?.scenes ?? [];
   const sceneImagePrompts = scenes
     .map((s) => s.imagePrompt?.trim() || s.sceneDescriptionZh?.trim())
@@ -247,15 +263,31 @@ export async function runCanvasScriptNode(opts: {
     const motion = scenePrompts[i] ?? "";
     sceneImagePrompts.push(stillPromptFromMotion(motion) || `Scene ${i + 1} keyframe still`);
   }
+  const sceneBeats = mergeSceneBeatsFromCinematicScenes(
+    scenes.map((s, i) => ({
+      spokenLine: s.spokenLine,
+      speaker: s.speaker,
+      role: s.role ?? `scene-${i + 1}`,
+      startSec: typeof s.startSec === "number" ? s.startSec : i * 8,
+      endSec: typeof s.endSec === "number" ? s.endSec : i * 8 + 8,
+      sceneDescriptionZh: s.sceneDescriptionZh ?? "",
+    })),
+    opts.sceneBeats,
+  );
   const lines = scenes.map((s, i) => {
     const parts = [`Scene ${i + 1}:`];
     if (s.sceneDescriptionZh) parts.push(s.sceneDescriptionZh);
+    if (s.spokenLine) {
+      parts.push(
+        s.speaker ? `(${s.speaker}: "${s.spokenLine}")` : `("${s.spokenLine}")`,
+      );
+    }
     if (s.videoMotionPrompt) parts.push(`[${s.videoMotionPrompt}]`);
     return parts.join(" ");
   });
   const scriptText = lines.join("\n\n");
   if (!scriptText) throw new Error("No script returned from planner.");
-  return { scriptText, scenePrompts, sceneImagePrompts };
+  return { scriptText, scenePrompts, sceneImagePrompts, sceneBeats };
 }
 
 /** Collapse a Seedance motion paragraph into one still-friendly sentence. */
@@ -307,4 +339,28 @@ export async function runCanvasSpliceNode(opts: {
   }
 
   return videoUrl;
+}
+
+export async function runCanvasVoiceNode(opts: {
+  script: string;
+  locale: "hk" | "en" | "cn";
+  voicePresetId: string;
+}): Promise<string> {
+  const script = opts.script.trim();
+  if (!script) throw new Error("Voice script is empty.");
+  const res = await fetch("/api/ultra-tts", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      script,
+      locale: opts.locale,
+      voice_preset: opts.voicePresetId,
+    }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error((data as { error?: string }).error || "Voice generation failed");
+  syncCreditsFromResponse(data);
+  const audioUrl = (data as { audioUrl?: string }).audioUrl ?? "";
+  if (!isHttpOrLibraryMediaUrl(audioUrl)) throw new Error("No audio URL from voice generation");
+  return audioUrl;
 }

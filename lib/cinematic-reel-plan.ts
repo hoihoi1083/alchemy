@@ -43,6 +43,8 @@ function normalizeScene(
 ): CinematicScenePlan {
   const startSec = Math.max(0, Number(raw.startSec) || i * CINEMATIC_CLIP_SEC);
   const endSec = Math.max(startSec + 2, Number(raw.endSec) || startSec + CINEMATIC_CLIP_SEC);
+  const spokenLine = String(raw.spokenLine ?? "").trim();
+  const speaker = String(raw.speaker ?? "").trim();
   return {
     sceneIndex: Number(raw.sceneIndex) || i + 1,
     role: String(raw.role ?? `scene-${i + 1}`).trim() || `scene-${i + 1}`,
@@ -53,6 +55,8 @@ function normalizeScene(
     videoMotionPrompt:
       String(raw.videoMotionPrompt ?? "").trim() ||
       defaultCinematicSceneMotionPrompt(Number(raw.sceneIndex) || i + 1),
+    ...(spokenLine ? { spokenLine } : {}),
+    ...(speaker ? { speaker } : {}),
   };
 }
 
@@ -128,14 +132,16 @@ export async function planCinematicReel(
             : `You plan a ${n}-scene cinematic social reel (${CINEMATIC_CLIP_SEC}s per scene, stitched to ~${n * CINEMATIC_CLIP_SEC}s).`,
           "Return JSON only.",
           localeHint(input.market),
-          "Each scene needs a still image prompt and a motion-only video prompt.",
+          "Each scene needs a still image prompt, a motion-only video prompt, and a short spokenLine for voiceover (plus speaker).",
           artHint,
           ...CINEMATIC_MOTION_PLANNER_RULES,
           input.referenceImageNote
             ? `User reference note (match topic + motion energy for videoMotionPrompt): ${input.referenceImageNote.slice(0, 800)}`
             : "",
           "imagePrompt must describe a cinematic scene still matching the art direction above — never a marketing poster, infographic, or slide with written copy.",
-          "Marketing headlines and offers are for captions/voiceover later — do NOT put ad copy inside imagePrompt.",
+          "Marketing headlines and offers are for captions/voiceover — put the spoken VO in spokenLine, NOT inside imagePrompt.",
+          "spokenLine: one short natural dialogue or VO sentence for that beat (match market language for Chinese markets; English for en).",
+          "speaker: who says it — PersonA, PersonB, Host, Narrator, or a short role name. Use Narrator for off-camera VO.",
           "sceneDescriptionZh should describe the story beat for that scene (used for script/voiceover planning).",
           "No on-screen text, logos, or watermarks in visuals.",
           "Avoid real celebrity likenesses — use original characters only.",
@@ -159,8 +165,9 @@ export async function planCinematicReel(
                 endSec: CINEMATIC_CLIP_SEC,
                 sceneDescriptionZh: "scene beat",
                 imagePrompt: "English still image prompt",
-                videoMotionPrompt:
-                  CINEMATIC_MOTION_FALLBACKS[0],
+                videoMotionPrompt: CINEMATIC_MOTION_FALLBACKS[0],
+                spokenLine: "Short spoken line for this beat",
+                speaker: "Narrator",
               },
             ],
             productionNotes: "editor note",

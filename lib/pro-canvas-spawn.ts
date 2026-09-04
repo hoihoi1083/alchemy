@@ -2,6 +2,7 @@ import type { Edge, Node } from "@xyflow/react";
 import type { ProCanvasNodeData, ScriptNodeData } from "@/lib/pro-canvas-types";
 import { allUpstreamNodes } from "@/lib/pro-canvas-graph";
 import { inferSceneCast, scriptBeatAt } from "@/lib/pro-canvas-scene-continuity";
+import { isHttpOrLibraryMediaUrl } from "@/lib/storage/library-asset-url";
 
 const SPAWN_SCENE_ID_PREFIXES = ["image-scene-", "video-scene-", "textVideo-scene-"] as const;
 
@@ -12,6 +13,7 @@ const SPAWN_WIRING_KINDS = new Set([
   "background",
   "grade",
   "brand",
+  "world",
 ]);
 
 export function isAutoSpawnedSceneNodeId(nodeId: string): boolean {
@@ -118,4 +120,80 @@ export function edgesForSceneCharacterCast(
     added.push({ id: edgeId, source: char.id, target: imageId });
   }
   return added;
+}
+
+/** Find auto-spawned image node for a scene index. */
+export function findSpawnedImageNodeBySceneIndex(
+  nodes: Node[],
+  sceneIndex: number,
+): Node | undefined {
+  return nodes.find((n) => {
+    if (!isAutoSpawnedSceneNodeId(n.id)) return false;
+    const d = n.data as ProCanvasNodeData;
+    return d.kind === "image" && (d as { sceneIndex?: number }).sceneIndex === sceneIndex;
+  });
+}
+
+/** Find auto-spawned video node for a scene index. */
+export function findSpawnedVideoNodeBySceneIndex(
+  nodes: Node[],
+  sceneIndex: number,
+): Node | undefined {
+  return nodes.find((n) => {
+    if (!isAutoSpawnedSceneNodeId(n.id)) return false;
+    const d = n.data as ProCanvasNodeData;
+    return (
+      (d.kind === "video" || d.kind === "textVideo") &&
+      (d as { sceneIndex?: number }).sceneIndex === sceneIndex
+    );
+  });
+}
+
+/** Still URLs from storyboard panels to seed Image nodes on spawn. */
+export function stillUrlsFromStoryboardPanels(
+  panels: Array<{ imageUrl?: string }>,
+): Array<string | undefined> {
+  return panels.map((p) =>
+    isHttpOrLibraryMediaUrl(p.imageUrl) ? p.imageUrl : undefined,
+  );
+}
+
+/** Collect outline stills from the board's storyboard hub (if any). */
+export function stillUrlsFromBoardStoryboard(nodes: Node[]): Array<string | undefined> {
+  const board = nodes.find((n) => (n.data as ProCanvasNodeData).kind === "storyboard");
+  if (!board) return [];
+  const data = board.data as {
+    acts?: Array<{ panels: Array<{ imageUrl?: string }> }>;
+    panels?: Array<{ imageUrl?: string }>;
+  };
+  const panels =
+    data.acts?.length ? data.acts.flatMap((a) => a.panels) : (data.panels ?? []);
+  return stillUrlsFromStoryboardPanels(panels);
+}
+
+/**
+ * Patches for spawned Image nodes: copy storyboard panel.imageUrl → image.imageUrl
+ * by sceneIndex. Returns list of { nodeId, imageUrl }.
+ */
+export function storyboardStillPatchesForSceneImages(
+  nodes: Node[],
+): Array<{ nodeId: string; imageUrl: string; sceneIndex: number }> {
+  const board = nodes.find((n) => (n.data as ProCanvasNodeData).kind === "storyboard");
+  if (!board) return [];
+  const data = board.data as {
+    acts?: Array<{ panels: Array<{ imageUrl?: string }> }>;
+    panels?: Array<{ imageUrl?: string }>;
+  };
+  const panels =
+    data.acts?.length ? data.acts.flatMap((a) => a.panels) : (data.panels ?? []);
+  const patches: Array<{ nodeId: string; imageUrl: string; sceneIndex: number }> = [];
+  panels.forEach((p, i) => {
+    if (!isHttpOrLibraryMediaUrl(p.imageUrl)) return;
+    const img = findSpawnedImageNodeBySceneIndex(nodes, i);
+    if (!img) return;
+    const existing = (img.data as { imageUrl?: string }).imageUrl;
+    if (existing === p.imageUrl) return;
+    patches.push({ nodeId: img.id, imageUrl: p.imageUrl, sceneIndex: i });
+  });
+  return patches;
 }

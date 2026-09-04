@@ -62,13 +62,26 @@ export function ImageNode({ id, data }: NodeProps & { data: ImageNodeData }) {
         value={pro}
         onChange={(patch) => updateNodeData(id, patch)}
       />
+      {data.imageUrl ? (
+        <p className="mt-2 rounded-md border border-emerald-500/30 bg-emerald-950/30 px-2 py-1 text-[9px] font-medium text-emerald-200/90">
+          {m.ultraCanvas.imageFromStoryboard}
+        </p>
+      ) : null}
       <button
         type="button"
         disabled={data.busy || boardBusy}
         onClick={() => runImageNode(id)}
-        className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-sky-600 to-cyan-600 px-3 py-1.5 text-xs font-semibold text-white shadow-[0_0_16px_rgba(56,189,248,0.25)] disabled:opacity-40"
+        className={`mt-2 flex w-full items-center justify-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40 ${
+          data.imageUrl
+            ? "border border-sky-500/40 bg-sky-950/50 shadow-none"
+            : "bg-gradient-to-r from-sky-600 to-cyan-600 shadow-[0_0_16px_rgba(56,189,248,0.25)]"
+        }`}
       >
-        {data.busy ? m.ultraCanvas.running : m.ultraCanvas.runImage}
+        {data.busy
+          ? m.ultraCanvas.running
+          : data.imageUrl
+            ? m.ultraCanvas.refineImage
+            : m.ultraCanvas.runImage}
         {!data.busy ? (
           <span className="rounded-full bg-black/25 px-1.5 py-0.5 text-[10px] font-medium">
             {m.ultraCanvas.tokenBadge.replace("{n}", String(tokenCost))}

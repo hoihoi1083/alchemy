@@ -26,6 +26,45 @@ export function buildCharacterSheetPrompt(opts: {
   );
 }
 
+/** Multi-angle turnaround from an existing face lock (compose / edit). */
+export function buildCharacterAnglesPrompt(opts: {
+  alias: string;
+  biography?: string;
+}): string {
+  const alias = opts.alias.trim() || "Person";
+  const bio = opts.biography?.trim();
+  return (
+    `Photoreal character turnaround sheet for identity lock of @${alias}. ` +
+    (bio ? `${bio}. ` : "") +
+    `IMAGE 1 is the locked face/outfit — keep EXACT same person, hair, clothes, age. ` +
+    `Layout: clean 2x2 contact sheet on neutral studio background — ` +
+    `(1) front head-and-shoulders, (2) three-quarter left, (3) three-quarter right, (4) side profile. ` +
+    `Even soft light, sharp skin, no text, no watermark, no logos, no extra people.`
+  );
+}
+
+/** Environment / set expansion sheet from world bible (+ optional ref image). */
+export function buildWorldSpacePrompt(opts: {
+  description: string;
+  alias?: string;
+  hasRefImage?: boolean;
+}): string {
+  const desc =
+    opts.description.trim() ||
+    "Contemporary interior space with consistent lighting and set dressing";
+  const alias = opts.alias?.trim() || "World";
+  const ref = opts.hasRefImage
+    ? `IMAGE 1 is a set reference — expand it into a full continuous space matching that room. `
+    : "";
+  return (
+    `Photoreal environment concept sheet for @${alias} continuity lock. ${ref}` +
+    `World bible: ${desc}. ` +
+    `Layout: one clean sheet with 2 large establishing views on top (wide + opposite angle of the SAME room) ` +
+    `and 4 smaller detail plates below (key props / corners / light sources). ` +
+    `Same location, same lighting language, cinematic but grounded. No people, no text, no logos, no comic panels of a story.`
+  );
+}
+
 function escapeRegexAlias(alias: string): string {
   return alias.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -83,7 +122,10 @@ export function collectScopedCharacterSources(
   for (const n of collectScopedCharacterNodes(nodeId, prompt, nodes, edges)) {
     const char = n.data as CharacterNodeData;
     const file = getFile?.(n.id);
-    const url = char.previewUrl;
+    const url =
+      (char.angleSheetUrl && isHttpOrLibraryMediaUrl(char.angleSheetUrl)
+        ? char.angleSheetUrl
+        : char.previewUrl) ?? undefined;
     if (file) {
       sources.push({ nodeId: n.id, alias: nodeAlias(n), file });
     } else if (url && isHttpOrLibraryMediaUrl(url)) {
@@ -123,7 +165,10 @@ export function appendCharacterLockToPrompt(
     const alias = nodeAlias(n);
     if (hasCharacterLockForAlias(prompt, alias)) continue;
     const file = opts?.getFile?.(n.id);
-    const url = char.previewUrl;
+    const url =
+      (char.angleSheetUrl && isHttpOrLibraryMediaUrl(char.angleSheetUrl)
+        ? char.angleSheetUrl
+        : char.previewUrl) ?? undefined;
     const hasRef = opts?.textOnly || Boolean(file) || Boolean(url && isHttpOrLibraryMediaUrl(url));
     if (!hasRef) continue;
     clauses.push(

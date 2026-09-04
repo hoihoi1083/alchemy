@@ -13,6 +13,8 @@ import type {
   TextVideoNodeData,
   UploadNodeData,
   VideoNodeData,
+  VoiceNodeData,
+  WorldNodeData,
 } from "@/lib/pro-canvas-types";
 import { appendModifierSuffix, backgroundModClause, gradeModClause, lightingModClause } from "@/lib/pro-canvas-modifiers";
 import { isHttpOrLibraryMediaUrl } from "@/lib/storage/library-asset-url";
@@ -92,8 +94,15 @@ export function nodeHasRunnableOutput(node: Node): boolean {
   if (data.kind === "script") {
     return Boolean((data as ScriptNodeData).scenePrompts?.length);
   }
-  if (data.kind === "audio") {
+  if (data.kind === "audio" || data.kind === "voice") {
     return isHttpOrLibraryMediaUrl(audioUrlFromNode(node));
+  }
+  if (data.kind === "storyboard") {
+    return Boolean(
+      (data as { panels?: unknown[] }).panels &&
+        Array.isArray((data as { panels?: unknown[] }).panels) &&
+        ((data as { panels: unknown[] }).panels.length > 0),
+    );
   }
   return false;
 }
@@ -359,8 +368,18 @@ export function collectOrderedImageSources(
 
 export function imageUrlFromNode(node: Node): string | undefined {
   const data = node.data as ProCanvasNodeData;
-  if (data.kind === "upload" || data.kind === "character") {
-    const url = (data as UploadNodeData | CharacterNodeData).previewUrl;
+  if (data.kind === "character") {
+    const c = data as CharacterNodeData;
+    if (isHttpOrLibraryMediaUrl(c.angleSheetUrl)) return c.angleSheetUrl;
+    return c.previewUrl;
+  }
+  if (data.kind === "world") {
+    const w = data as WorldNodeData;
+    if (isHttpOrLibraryMediaUrl(w.spaceSheetUrl)) return w.spaceSheetUrl;
+    return w.previewUrl;
+  }
+  if (data.kind === "upload") {
+    const url = (data as UploadNodeData).previewUrl;
     if (isHttpOrLibraryMediaUrl(url)) return url;
     return url;
   }
@@ -392,6 +411,10 @@ export function textFromNode(node: Node): string | undefined {
   if (data.kind === "character") {
     const bio = (data as CharacterNodeData).biography?.trim();
     return bio ? `[Character bio]\n${bio}` : undefined;
+  }
+  if (data.kind === "world") {
+    const desc = (data as WorldNodeData).description?.trim();
+    return desc ? `[World]\n${desc}` : undefined;
   }
   return undefined;
 }
@@ -500,6 +523,17 @@ export function scriptSceneImagePromptsFromNode(node: Node): string[] {
 export function audioUrlFromNode(node: Node): string | undefined {
   const data = node.data as ProCanvasNodeData;
   if (data.kind === "audio") return (data as AudioNodeData).audioUrl;
+  if (data.kind === "voice") return (data as VoiceNodeData).audioUrl;
+  return undefined;
+}
+
+export function worldDescriptionFromNodes(nodes: Node[]): string | undefined {
+  for (const n of nodes) {
+    const data = n.data as ProCanvasNodeData;
+    if (data.kind !== "world") continue;
+    const desc = (data as WorldNodeData).description?.trim();
+    if (desc) return desc;
+  }
   return undefined;
 }
 
@@ -513,7 +547,10 @@ export function isRunnableNode(node: Node): boolean {
     kind !== "lighting" &&
     kind !== "background" &&
     kind !== "grade" &&
-    kind !== "brand"
+    kind !== "brand" &&
+    kind !== "world" &&
+    kind !== "storyboard" &&
+    kind !== "brainstorm"
   );
 }
 

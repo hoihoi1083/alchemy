@@ -30,17 +30,34 @@ export function VideoNode({ id, data }: NodeProps & { data: VideoNodeData }) {
     [pro.duration, pro.fast, pro.resolution],
   );
 
+  const motionEmpty = !data.prompt?.trim();
+
   return (
     <ProNodeShell accent="violet" label={data.label}>
+      <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-violet-200/90">
+        {m.ultraCanvas.videoPromptLabel}
+      </p>
+      <p className="mb-1 text-[9px] leading-snug text-slate-500">
+        {m.ultraCanvas.videoPromptHint}
+      </p>
       <MentionInput
         nodeId={id}
         nodes={nodes}
         value={data.prompt}
         onChange={(prompt) => updateNodeData(id, { prompt })}
         placeholder={m.ultraCanvas.videoPromptPlaceholder}
-        rows={3}
-        className="h-16 w-full resize-none rounded-lg border border-slate-700/80 bg-slate-950/80 px-2 py-1.5 text-xs text-white placeholder:text-slate-600 focus:border-violet-500/40 focus:outline-none"
+        rows={4}
+        className={`h-20 w-full resize-none rounded-lg border bg-slate-950/80 px-2 py-1.5 text-xs text-white placeholder:text-slate-600 focus:border-violet-500/40 focus:outline-none ${
+          motionEmpty
+            ? "border-amber-500/50 ring-1 ring-amber-500/20"
+            : "border-slate-700/80"
+        }`}
       />
+      {motionEmpty ? (
+        <p className="mt-1 text-[9px] leading-snug text-amber-200/90">
+          {m.ultraCanvas.videoPromptEmptyWarn}
+        </p>
+      ) : null}
       <DirectorPromptChips
         labels={m.ultraCanvas.directorChips}
         prompt={data.prompt}

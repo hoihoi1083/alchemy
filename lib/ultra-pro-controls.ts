@@ -182,6 +182,10 @@ export function estimateCanvasSpliceTokens(opts: { hasMusic: boolean }): number 
   return opts.hasMusic ? TOKEN_COST.bgm : 0;
 }
 
+export function estimateCanvasVoiceTokens(): number {
+  return TOKEN_COST.voiceover;
+}
+
 export function estimateCanvasVideoTokens(opts: {
   resolution: string;
   duration: string;

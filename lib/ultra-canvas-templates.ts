@@ -1,66 +1,77 @@
 import type { Edge, Node } from "@xyflow/react";
 import type { ProCanvasNodeData } from "@/lib/pro-canvas-types";
 import {
-  ULTRA_SCRIPT_SCENE_COUNT_DEFAULT,
   type ScriptSceneBeat,
 } from "@/lib/pro-canvas-script-plan";
 
+/** Creative B V2 QA sheet — hybrid: AI live bookends + your real UI screen record. */
 const STORY_DIFFERENCE_BRIEF =
-  "20s Alchemy difference ad — No Prompt + AI Research. " +
-  "Hook: Give us the product. Not the prompt. " +
-  "Pain → colleague introduces Alchemy → upload reference → AI research → creative direction → beautiful output → logo CTA. " +
-  "Tone: grounded office UGC, 烟火气, same two cast throughout.";
+  "Alchemy Creative B V2 — ~23s vertical Reels (9:16). HYBRID cut: " +
+  "GENERATE Act 1 live office (0–10.5s) + Act 3 live close (18.5–23s). " +
+  "DO NOT AI-generate the middle UI — user supplies a real screen recording for 10.5–18.5s " +
+  "(Upload Product/Reference + NO PROMPT + AI RESEARCH + Creative Direction + Final Output). " +
+  "USP ONLY: No Prompt + AI Research. " +
+  "Hook: Give us the product. Not the prompt. End: Less prompting. More creating. + CTA + domain. " +
+  "NO glasses; lock face/hair/clothes; helper sits beside (no shoulder); no wall/cup logos.";
 
+const STORY_DIFFERENCE_WORLD =
+  "Contemporary open office, warm overhead LEDs, messy desk with laptop and plain coffee mug (NO logo on mug/wall/corner props), " +
+  "soft window daylight from the left. Same room language every shot — do not jump locations. " +
+  "Brand logo appears only on phone screen or end card — never as set dressing. " +
+  "Middle act is a real monitor screen recording match-cut from OTS — not an invented UI still.";
+
+/**
+ * Hybrid 3-act Creative B (matches QA timeline sheet):
+ * Act 1 GENERATE 0–10.5s · Act 2 USER screen record 10.5–18.5s · Act 3 GENERATE 18.5–23s
+ */
 const STORY_DIFFERENCE_BEATS: ScriptSceneBeat[] = [
   {
-    time: "0-2s",
-    emotion: "frustrated",
-    line: "Still writing prompts?",
-    framing: "medium close-up",
-    camera: "locked tripod",
-    blocking: "typing, slumped",
+    act: "Act 1 · Live open (GENERATE)",
+    time: "0-10s",
+    emotion: "pain → helper",
+    line: "Still writing prompts all day? Haven't you heard about Alchemy?",
+    speaker: "PersonB",
+    framing:
+      "0–2s zoom office + girl writing prompts (Hook) · 2–4s Generate→Wrong→Rewrite fast cuts (mute-readable) · " +
+      "4–5.5s strongest collapse/pain payoff · 5.5–7.5s friendly male helper · " +
+      "7.5–9s he sits beside, she hands mouse · 9–10.5s OTS push into monitor (match-cut ready for screen record)",
+    camera: "hook zoom → fast fail cuts → peer sit-down → OTS push into screen",
+    blocking:
+      "@PersonA NO glasses, typing slumped 烟火气. @PersonB sits BESIDE her — helpful 'I'll show you an easier way', " +
+      "NO hand on shoulder, NO standing over. End frame: OTS laptop screen filling frame so next cut is real UI record.",
   },
   {
-    time: "2-4s",
-    emotion: "exhausted loop",
-    line: "Prompt → Generate → Wrong → Repeat",
-    framing: "OTS screen glow",
-    camera: "slow push-in",
-    blocking: "micro head shake",
+    act: "Act 2 · Screen demo (YOUR RECORDING)",
+    time: "10-18s",
+    emotion: "USP demo",
+    line: "Give us the product. Not the prompt. Alchemy researches first. Understand first. Create next.",
+    speaker: "PersonB",
+    framing:
+      "USER SCREEN RECORD only — do not AI-fake Alchemy UI. " +
+      "10.5–12s Upload Product/Reference + big type NO PROMPT · 12–14.5s AI RESEARCH hero type · " +
+      "14.5–16.5s Creative Direction → Create · 16.5–18.5s Final Output beautiful campaign/video",
+    camera: "cropped one-feature UI moves; large on-screen USP type",
+    blocking:
+      "REPLACE THIS CLIP with trimmed real project screen recording (~8s). " +
+      "On Ultra: skip Generate for this act — upload/wire the MP4 into Splice as the middle clip. " +
+      "VO can still Pull these lines over the recording.",
   },
   {
-    time: "4-6s",
-    emotion: "defeated",
-    line: "Worked all day, still not right",
-    framing: "wide office",
-    camera: "static",
-    blocking: "leans back, sigh",
-  },
-  {
-    time: "6-8s",
-    emotion: "surprised",
-    line: "Haven't you heard of Alchemy?",
-    framing: "two-shot",
-    camera: "pan to colleague",
-    blocking: "colleague enters frame",
-  },
-  {
-    time: "8-12s",
-    emotion: "confident demo",
-    line: "Give us the product. Not the prompt.",
-    framing: "medium",
-    camera: "handheld subtle",
-    blocking: "shows UI / product",
-  },
-  {
-    time: "12-20s",
-    emotion: "payoff + CTA",
+    act: "Act 3 · Live close (GENERATE)",
+    time: "18-24s",
+    emotion: "hand-off + brand + CTA",
     line: "Less prompting. More creating.",
-    framing: "product hero + logo",
-    camera: "slow push-out",
-    blocking: "hold product, smile",
+    speaker: "PersonB",
+    framing:
+      "18.5–20s pull back — girl operates herself, helper nods and leaves · " +
+      "20–21.5s she shows phone (logo OR final creative only) · 21.5–23s clean end card",
+    camera: "pull-out from desk → phone settle → hard cut end card",
+    blocking:
+      "Same cast lock, NO glasses. Phone = Alchemy logo or final IG creative only (no wall/cup logos). " +
+      "End card 1.5–2s: @brand logo + Less prompting. More creating. + CTA + website domain.",
   },
 ];
+
 import { buildExplosionUnboxVideoPrompt, EXPLOSION_UNBOX_DEFAULT_THEME } from "@/lib/explosion-unbox-prompt";
 import { DEFAULT_ULTRA_IMAGE_PRO, DEFAULT_ULTRA_VIDEO_PRO } from "@/lib/ultra-pro-controls";
 import {
@@ -269,22 +280,29 @@ export function createUltraCanvasTemplate(
       const lighting = labels.lighting ?? "Lighting";
       const splice = labels.splice ?? "Video splice";
       const audio = labels.audio ?? "Audio";
+      const world = labels.world ?? "World / scene";
+      const storyboard = labels.storyboard ?? "Storyboard";
+      const voice = labels.voice ?? "Voice";
+      const brainstorm = labels.brainstorm ?? "Brainstorm";
       return {
-        nodeCounterSeed: 12,
+        nodeCounterSeed: 16,
         nodes: [
           node("tpl-char-a", "character", 40, 40, {
             kind: "character",
             label: `${character} A`,
             alias: "PersonA",
             biography:
-              "Exhausted office worker, late 20s, typing prompts all day, slouched posture, 烟火气 not glam.",
+              "Exhausted office worker, late 20s, typing prompts all day, slouched 烟火气 not glam. " +
+              "NO glasses ever. Lock one face, hair, and outfit across every shot.",
           }),
           node("tpl-char-b", "character", 40, 200, {
             kind: "character",
             label: `${character} B`,
             alias: "PersonB",
             biography:
-              "Confident colleague, introduces Alchemy, warm grounded tone, smart-casual office wear.",
+              "Helpful peer colleague (not a boss). Warm grounded tone, smart-casual office wear. " +
+              "Sits beside her and points at the screen — never hand on shoulder, never stands over her. " +
+              "NO glasses. Same face/hair/clothes lock as PersonA continuity.",
           }),
           node("tpl-upload-product", "upload", 40, 360, {
             kind: "upload",
@@ -301,12 +319,25 @@ export function createUltraCanvasTemplate(
             label: research,
             summary: "",
           }),
-          node("tpl-brand", "brand", 280, 40, {
+          node("tpl-brainstorm", "brainstorm", 280, 500, {
+            kind: "brainstorm",
+            label: brainstorm,
+            idea:
+              "Creative B V2 HYBRID — AI Act1+Act3 · your screen record 10.5–18.5s · 9:16 · ~23s",
+            durationSec: 23,
+          }),
+          node("tpl-world", "world", 280, 40, {
+            kind: "world",
+            label: world,
+            alias: "World",
+            description: STORY_DIFFERENCE_WORLD,
+          }),
+          node("tpl-brand", "brand", 280, 220, {
             kind: "brand",
             label: brand,
             alias: "brand",
           }),
-          node("tpl-lighting", "lighting", 280, 140, {
+          node("tpl-lighting", "lighting", 280, 340, {
             kind: "lighting",
             label: lighting,
             preset: "natural_window",
@@ -315,11 +346,24 @@ export function createUltraCanvasTemplate(
             kind: "script",
             label: script,
             brief: STORY_DIFFERENCE_BRIEF,
-            sceneCount: ULTRA_SCRIPT_SCENE_COUNT_DEFAULT,
+            sceneCount: STORY_DIFFERENCE_BEATS.length,
             sceneBeats: STORY_DIFFERENCE_BEATS,
           }),
-          node("tpl-splice", "splice", 920, 200, { kind: "splice", label: splice }),
-          node("tpl-audio", "audio", 920, 360, { kind: "audio", label: audio }),
+          node("tpl-storyboard", "storyboard", 780, 120, {
+            kind: "storyboard",
+            label: storyboard,
+            panels: [],
+            acts: [],
+          }),
+          node("tpl-voice", "voice", 1040, 360, {
+            kind: "voice",
+            label: voice,
+            script: "",
+            locale: "en",
+            voicePresetId: "en-male",
+          }),
+          node("tpl-splice", "splice", 1040, 200, { kind: "splice", label: splice }),
+          node("tpl-audio", "audio", 1040, 520, { kind: "audio", label: audio }),
         ],
         edges: [
           edge("e-res-script", "tpl-research", "tpl-script"),
@@ -327,8 +371,14 @@ export function createUltraCanvasTemplate(
           edge("e-ui-script", "tpl-upload-ui", "tpl-script"),
           edge("e-light-script", "tpl-lighting", "tpl-script"),
           edge("e-brand-script", "tpl-brand", "tpl-script"),
+          edge("e-world-script", "tpl-world", "tpl-script"),
+          edge("e-brain-script", "tpl-brainstorm", "tpl-script"),
           edge("e-char-a-script", "tpl-char-a", "tpl-script"),
           edge("e-char-b-script", "tpl-char-b", "tpl-script"),
+          edge("e-script-board", "tpl-script", "tpl-storyboard"),
+          edge("e-script-voice", "tpl-script", "tpl-voice"),
+          edge("e-board-voice", "tpl-storyboard", "tpl-voice"),
+          edge("e-voice-splice", "tpl-voice", "tpl-splice"),
           edge("e-audio-splice", "tpl-audio", "tpl-splice"),
         ],
       };

@@ -11,6 +11,7 @@ import {
   estimateCanvasImageTokens,
   estimateCanvasSpliceTokens,
   estimateCanvasVideoTokens,
+  estimateCanvasVoiceTokens,
 } from "@/lib/ultra-pro-controls";
 
 export type EstimateRunAllOpts = {
@@ -26,7 +27,7 @@ export function spliceUpstreamHasMusic(
   const upstream = upstreamNodesSorted(spliceNodeId, nodes, edges);
   return upstream.some((u) => {
     const k = (u.data as ProCanvasNodeData).kind;
-    if (k !== "audio") return false;
+    if (k !== "audio" && k !== "voice") return false;
     if (isHttpOrLibraryMediaUrl(audioUrlFromNode(u))) return true;
     return opts?.hasLocalAudio?.(u.id) ?? false;
   });
@@ -71,6 +72,9 @@ export function estimateRunAllTokens(
         total += estimateCanvasSpliceTokens({ hasMusic });
         break;
       }
+      case "voice":
+        total += estimateCanvasVoiceTokens();
+        break;
       default:
         break;
     }

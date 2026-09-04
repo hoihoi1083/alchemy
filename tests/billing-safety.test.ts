@@ -269,6 +269,7 @@ describe("billing safety — API route contract audit", () => {
       "app/api/generate-cinematic-scenes/route.ts",
       "app/api/generate-music/route.ts",
       "app/api/preview-script-voice/route.ts",
+      "app/api/ultra-tts/route.ts",
       "app/api/generate-digital-presenter/route.ts",
     ];
     for (const rel of mustHave) {

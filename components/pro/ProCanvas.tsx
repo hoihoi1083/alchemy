@@ -32,10 +32,18 @@ import { LightingModNode } from "@/components/pro/nodes/LightingModNode";
 import { ResearchNode } from "@/components/pro/nodes/ResearchNode";
 import { ScriptNode } from "@/components/pro/nodes/ScriptNode";
 import { SpliceNode } from "@/components/pro/nodes/SpliceNode";
+import { StoryboardNode } from "@/components/pro/nodes/StoryboardNode";
 import { TextNode } from "@/components/pro/nodes/TextNode";
 import { TextVideoNode } from "@/components/pro/nodes/TextVideoNode";
 import { UploadNode } from "@/components/pro/nodes/UploadNode";
 import { VideoNode } from "@/components/pro/nodes/VideoNode";
+import { VoiceNode } from "@/components/pro/nodes/VoiceNode";
+import { WorldNode } from "@/components/pro/nodes/WorldNode";
+import { BrainstormNode } from "@/components/pro/nodes/BrainstormNode";
+import {
+  UltraCanvasCreativeBBanner,
+  wasCreativeBHintDismissed,
+} from "@/components/pro/UltraCanvasCreativeBBanner";
 import { useLocale } from "@/components/LocaleProvider";
 import { useUserPlanEntitlements } from "@/hooks/useUserPlanEntitlements";
 import {
@@ -61,10 +69,14 @@ import {
   upstreamNodes,
   upstreamNodesSorted,
   videoUrlFromNode,
+  worldDescriptionFromNodes,
+  allUpstreamNodes,
 } from "@/lib/pro-canvas-graph";
 import {
   appendCharacterLockToPrompt,
+  buildCharacterAnglesPrompt,
   buildCharacterSheetPrompt,
+  buildWorldSpacePrompt,
   collectScopedCharacterNodes,
   collectScopedCharacterSources,
   mergeCharacterSourcesInto,
@@ -76,6 +88,11 @@ import {
   collectScriptUpstreamCharacters,
   charactersForSpawnedScene,
   edgesForSceneCharacterCast,
+  findSpawnedImageNodeBySceneIndex,
+  findSpawnedVideoNodeBySceneIndex,
+  stillUrlsFromStoryboardPanels,
+  stillUrlsFromBoardStoryboard,
+  storyboardStillPatchesForSceneImages,
 } from "@/lib/pro-canvas-spawn";
 import {
   edgePriorSceneKeyframe,
@@ -88,7 +105,18 @@ import {
   isNodeOutputStale,
   nodeNeedsRun,
 } from "@/lib/pro-canvas-stale";
-import { UltraCanvasCreativeBBanner, wasCreativeBHintDismissed } from "@/components/pro/UltraCanvasCreativeBBanner";
+import {
+  dialogueScriptFromNodes,
+  flattenStoryboardPanels,
+  groupPanelsIntoActs,
+  regroupStoryboardActs,
+  syncStoryboardPanelsFromScript,
+  voiceLinesFromNodes,
+  voiceLinesToCaptionPayload,
+} from "@/lib/pro-canvas-storyboard";
+import { motionPromptWithDialogue, scriptDialogueFingerprint } from "@/lib/pro-canvas-script-plan";
+import { sceneDurationsFromBeats } from "@/lib/pro-canvas-scene-duration";
+import { computeCreativeBStepStatuses } from "@/lib/pro-canvas-creative-b-checklist";
 import {
   createProCanvasStarter,
 } from "@/lib/pro-canvas-starter";
@@ -127,6 +155,7 @@ import {
   runCanvasSpliceNode,
   runCanvasTextVideoNode,
   runCanvasVideoNode,
+  runCanvasVoiceNode,
   uploadCanvasAsset,
 } from "@/lib/pro-canvas-runner";
 import type {
@@ -140,6 +169,10 @@ import type {
   TaskQueueItem,
   TextVideoNodeData,
   VideoNodeData,
+  VoiceNodeData,
+  WorldNodeData,
+  BrainstormNodeData,
+  StoryboardNodeData,
 } from "@/lib/pro-canvas-types";
 
 const nodeTypes = {
@@ -158,6 +191,10 @@ const nodeTypes = {
   brand: BrandNode,
   character: CharacterNode,
   research: ResearchNode,
+  world: WorldNode,
+  storyboard: StoryboardNode,
+  voice: VoiceNode,
+  brainstorm: BrainstormNode,
 };
 
 type CanvasSnapshot = { nodes: Node[]; edges: Edge[] };
@@ -240,6 +277,20 @@ function defaultNodeData(kind: ProCanvasNodeKind, label: string): ProCanvasNodeD
       return { kind, label, alias: "Person", biography: "" };
     case "research":
       return { kind, label, summary: "" };
+    case "world":
+      return { kind, label, alias: "World", description: "" };
+    case "storyboard":
+      return { kind, label, panels: [], acts: [] };
+    case "voice":
+      return {
+        kind,
+        label,
+        script: "",
+        locale: "en",
+        voicePresetId: "en-male",
+      };
+    case "brainstorm":
+      return { kind, label, idea: "", durationSec: 20 };
   }
 }
 
@@ -264,7 +315,9 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
   const [saveSuccessAt, setSaveSuccessAt] = useState<number | null>(null);
   const [loadingBoard, setLoadingBoard] = useState(false);
   const [boardError, setBoardError] = useState<string | null>(null);
-  const [showCreativeBHint, setShowCreativeBHint] = useState(false);
+  const [showCreativeBHint, setShowCreativeBHint] = useState(
+    () => !wasCreativeBHintDismissed(),
+  );
   const [confirmState, setConfirmState] = useState<{
     title: string;
     message: string;
@@ -552,9 +605,7 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
           setBoardError(m.ultraCanvas.researchHandoffImported);
           window.setTimeout(() => setBoardError(null), 4000);
         }
-        setShowCreativeBHint(
-          templateId === "storyDifferenceAd" && !wasCreativeBHintDismissed(),
-        );
+        setShowCreativeBHint(!wasCreativeBHintDismissed());
       });
     },
     [
@@ -808,6 +859,237 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
     ],
   );
 
+  const runCharacterAnglesNode = useCallback(
+    async (nodeId: string) => {
+      if (!runningAllRef.current && !guardSingleRunStart()) return;
+      const session = canvasSessionRef.current;
+      const node = getLiveNode(nodeId);
+      if (!node) return;
+      const data = node.data as CharacterNodeData;
+      const faceUrl = data.previewUrl;
+      if (!isHttpOrLibraryMediaUrl(faceUrl) && !uploadFiles.current.get(nodeId)) {
+        const msg = m.ultraCanvas.characterNode.anglesNeedFace;
+        updateNodeData(nodeId, { error: msg }, session);
+        throw new Error(msg);
+      }
+      const alias = data.alias?.trim() || nodeAlias(node);
+      const prompt = buildCharacterAnglesPrompt({
+        alias,
+        biography: data.biography,
+      });
+      updateNodeData(nodeId, { busy: true, error: undefined }, session);
+      try {
+        const local = uploadFiles.current.get(nodeId);
+        const imageUrl = await runCanvasImageNode({
+          sources: [
+            {
+              nodeId,
+              alias,
+              ...(local ? { file: local } : { url: faceUrl }),
+            },
+          ],
+          prompt,
+          pro: {
+            aspectRatio: "1:1",
+            resolution: DEFAULT_ULTRA_IMAGE_PRO.resolution,
+            artStyleId: DEFAULT_ULTRA_IMAGE_PRO.artStyleId,
+            lightingPreset: "studio_soft",
+            backgroundPreset: "clean_studio",
+          },
+        });
+        updateNodeData(
+          nodeId,
+          {
+            angleSheetUrl: imageUrl,
+            busy: false,
+            outputInputFingerprint: computeNodeInputFingerprint(
+              nodeId,
+              getLiveNodes(),
+              getLiveEdges(),
+            ),
+          },
+          session,
+        );
+      } catch (e: unknown) {
+        updateNodeData(
+          nodeId,
+          {
+            busy: false,
+            error: withNotChargedNote(
+              e instanceof Error ? e.message : "Angles generate failed",
+              m.errors.tokensNotCharged,
+            ),
+          },
+          session,
+        );
+        throw e;
+      }
+    },
+    [
+      getLiveEdges,
+      getLiveNode,
+      getLiveNodes,
+      guardSingleRunStart,
+      m.errors.tokensNotCharged,
+      m.ultraCanvas.characterNode.anglesNeedFace,
+      updateNodeData,
+    ],
+  );
+
+  const runWorldNode = useCallback(
+    async (nodeId: string) => {
+      if (!runningAllRef.current && !guardSingleRunStart()) return;
+      const session = canvasSessionRef.current;
+      const node = getLiveNode(nodeId);
+      if (!node) return;
+      const data = node.data as WorldNodeData;
+      const hasRef =
+        Boolean(uploadFiles.current.get(nodeId)) ||
+        isHttpOrLibraryMediaUrl(data.previewUrl);
+      if (!data.description?.trim() && !hasRef) {
+        const msg = m.ultraCanvas.worldNode.buildNeedDescription;
+        updateNodeData(nodeId, { error: msg }, session);
+        throw new Error(msg);
+      }
+      const alias = data.alias?.trim() || nodeAlias(node);
+      const prompt = buildWorldSpacePrompt({
+        description: data.description,
+        alias,
+        hasRefImage: hasRef,
+      });
+      updateNodeData(nodeId, { busy: true, error: undefined }, session);
+      try {
+        const local = uploadFiles.current.get(nodeId);
+        const sources = hasRef
+          ? [
+              {
+                nodeId,
+                alias,
+                ...(local ? { file: local } : { url: data.previewUrl }),
+              },
+            ]
+          : [];
+        const imageUrl = await runCanvasImageNode({
+          sources,
+          prompt,
+          pro: {
+            aspectRatio: "1:1",
+            resolution: DEFAULT_ULTRA_IMAGE_PRO.resolution,
+            artStyleId: DEFAULT_ULTRA_IMAGE_PRO.artStyleId,
+            lightingPreset: "natural_window",
+            backgroundPreset: DEFAULT_ULTRA_IMAGE_PRO.backgroundPreset,
+          },
+        });
+        updateNodeData(
+          nodeId,
+          {
+            spaceSheetUrl: imageUrl,
+            busy: false,
+            outputInputFingerprint: computeNodeInputFingerprint(
+              nodeId,
+              getLiveNodes(),
+              getLiveEdges(),
+            ),
+          },
+          session,
+        );
+      } catch (e: unknown) {
+        updateNodeData(
+          nodeId,
+          {
+            busy: false,
+            error: withNotChargedNote(
+              e instanceof Error ? e.message : "World space failed",
+              m.errors.tokensNotCharged,
+            ),
+          },
+          session,
+        );
+        throw e;
+      }
+    },
+    [
+      getLiveEdges,
+      getLiveNode,
+      getLiveNodes,
+      guardSingleRunStart,
+      m.errors.tokensNotCharged,
+      m.ultraCanvas.worldNode.buildNeedDescription,
+      updateNodeData,
+    ],
+  );
+
+  const runBrainstormNode = useCallback(
+    async (nodeId: string) => {
+      if (!runningAllRef.current && !guardSingleRunStart()) return;
+      const session = canvasSessionRef.current;
+      const node = getLiveNode(nodeId);
+      if (!node) return;
+      const data = node.data as BrainstormNodeData;
+      if (!data.idea?.trim()) {
+        const msg = m.ultraCanvas.brainstormNode.needIdea;
+        updateNodeData(nodeId, { error: msg }, session);
+        throw new Error(msg);
+      }
+      updateNodeData(nodeId, { busy: true, error: undefined }, session);
+      try {
+        const res = await fetch("/api/brainstorm-options", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            idea: data.idea,
+            durationSec: data.durationSec,
+          }),
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error((json as { error?: string }).error || "Brainstorm failed");
+        }
+        const options = (json as { options?: BrainstormNodeData["options"] }).options ?? [];
+        updateNodeData(nodeId, { options, selectedOptionId: undefined, busy: false }, session);
+      } catch (e: unknown) {
+        updateNodeData(
+          nodeId,
+          {
+            busy: false,
+            error: e instanceof Error ? e.message : "Brainstorm failed",
+          },
+          session,
+        );
+        throw e;
+      }
+    },
+    [getLiveNode, guardSingleRunStart, m.ultraCanvas.brainstormNode.needIdea, updateNodeData],
+  );
+
+  const applyBrainstormOption = useCallback(
+    (brainstormNodeId: string, optionId: string) => {
+      const allNodes = getLiveNodes();
+      const brain = getLiveNode(brainstormNodeId);
+      if (!brain) return;
+      const data = brain.data as BrainstormNodeData;
+      const opt = (data.options ?? []).find((o) => o.id === optionId);
+      if (!opt) return;
+      updateNodeData(brainstormNodeId, { selectedOptionId: optionId });
+      const script = allNodes.find((n) => (n.data as ProCanvasNodeData).kind === "script");
+      if (script) {
+        const brief = [
+          opt.hook,
+          opt.brief,
+          opt.actOutline,
+          opt.motionNote ? `Motion: ${opt.motionNote}` : "",
+          `Target ~${data.durationSec}s.`,
+        ]
+          .filter(Boolean)
+          .join("\n\n");
+        updateNodeData(script.id, { brief });
+      }
+      setBoardError(m.ultraCanvas.brainstormNode.applied);
+      window.setTimeout(() => setBoardError(null), 3500);
+    },
+    [getLiveNode, getLiveNodes, m.ultraCanvas.brainstormNode.applied, updateNodeData],
+  );
+
   const ensureUpstreamImageUrl = useCallback(
     async (upstream: Node[], session: number): Promise<string> => {
       for (const n of upstream) {
@@ -897,9 +1179,17 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
         nodes: allNodes,
         edges: allEdges,
       });
+      const scriptNode = allNodes.find(
+        (n) => (n.data as ProCanvasNodeData).kind === "script",
+      );
+      const beat =
+        scriptNode && data.sceneIndex != null
+          ? scriptBeatAt(scriptNode, data.sceneIndex)
+          : undefined;
+      const withVo = motionPromptWithDialogue(basePrompt, beat);
       const prompt = appendCharacterLockToPrompt(
-        basePrompt,
-        collectScopedCharacterNodes(nodeId, basePrompt, allNodes, allEdges),
+        withVo,
+        collectScopedCharacterNodes(nodeId, withVo, allNodes, allEdges),
         { getFile: (id) => uploadFiles.current.get(id) },
       );
       const upstream = upstreamNodes(nodeId, allNodes, allEdges);
@@ -1061,7 +1351,7 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
   );
 
   const spawnScenePipeline = useCallback(
-    (scriptNodeId: string) => {
+    (scriptNodeId: string, opts?: { stillUrls?: Array<string | undefined> }) => {
       const allNodes = getLiveNodes();
       const allEdges = getLiveEdges();
       if (scriptHasSpawnedSceneOutputs(scriptNodeId, allEdges, allNodes)) {
@@ -1075,14 +1365,40 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
       const stillScenes = scriptSceneImagePromptsFromNode(scriptNode);
       const scenes = stillScenes.length ? stillScenes : motionScenes;
       if (!scenes.length) return;
+      const sceneCount = scenes.length;
+      /** Motion/story lines for Image→Video — include spoken line so clip follows VO. */
+      const motionForScene = (i: number, stillFallback: string) => {
+        const base =
+          (motionScenes[i] ?? stillFallback).trim() ||
+          `Subtle natural motion for scene ${i + 1}, stable framing, cinematic lighting`;
+        return motionPromptWithDialogue(base, scriptBeatAt(scriptNode, i));
+      };
+
+      const brainstorm = allNodes.find(
+        (n) => (n.data as ProCanvasNodeData).kind === "brainstorm",
+      );
+      const totalDurationSec = brainstorm
+        ? Number((brainstorm.data as { durationSec?: number }).durationSec)
+        : undefined;
+      const scriptData = scriptNode.data as ScriptNodeData;
+      const sceneClipDurations = sceneDurationsFromBeats(scriptData.sceneBeats, sceneCount, {
+        totalDurationSec: Number.isFinite(totalDurationSec) ? totalDurationSec : undefined,
+        defaultSec: Number(DEFAULT_ULTRA_VIDEO_PRO.duration) || 8,
+      });
 
       const labels = m.ultraCanvas.nodeLabels as Record<string, string>;
       const imageLabel = labels.image ?? "Image";
       const videoLabel = labels.video ?? "Image-to-video";
       const resourceSources = collectSpawnPipelineSources(scriptNodeId, allNodes, allEdges);
       const castCharacters = collectScriptUpstreamCharacters(scriptNodeId, allNodes, allEdges);
+      const worldDescription = worldDescriptionFromNodes([
+        ...resourceSources,
+        ...upstreamNodes(scriptNodeId, allNodes, allEdges),
+      ]);
       const spliceNode = allNodes.find((n) => (n.data as ProCanvasNodeData).kind === "splice");
-      const sceneCount = scenes.length;
+      const stillUrls =
+        opts?.stillUrls ??
+        stillUrlsFromBoardStoryboard(allNodes);
       const newNodes: Node[] = [];
       const newEdges: Edge[] = [];
       const spawnedVideoIds: string[] = [];
@@ -1104,6 +1420,7 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
           characters: castCharacters,
           beat,
           includePriorKeyframe: i > 0,
+          worldDescription,
         });
         const cast =
           continuity.cast.length > 0
@@ -1113,6 +1430,8 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
                 sceneCount,
               });
         const sceneResources = filterSpawnResourcesForScene(resourceSources, continuity.assets);
+        const seededStill = stillUrls[i];
+        const seededUrl = isHttpOrLibraryMediaUrl(seededStill) ? seededStill : undefined;
 
         newNodes.push(
           {
@@ -1125,6 +1444,7 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
               alias: continuity.sceneAlias,
               prompt: continuity.imagePrompt,
               sceneIndex: i,
+              ...(seededUrl ? { imageUrl: seededUrl } : {}),
               aspectRatio: DEFAULT_ULTRA_IMAGE_PRO.aspectRatio,
               resolution: DEFAULT_ULTRA_IMAGE_PRO.resolution,
               artStyleId: DEFAULT_ULTRA_IMAGE_PRO.artStyleId,
@@ -1139,10 +1459,10 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
             data: {
               kind: "video",
               label: `${videoLabel} ${i + 1}`,
-              prompt: "",
+              prompt: motionForScene(i, scenePrompt),
               sceneIndex: i,
               camera: DEFAULT_ULTRA_VIDEO_PRO.camera,
-              duration: DEFAULT_ULTRA_VIDEO_PRO.duration,
+              duration: String(sceneClipDurations[i] ?? DEFAULT_ULTRA_VIDEO_PRO.duration),
               resolution: DEFAULT_ULTRA_VIDEO_PRO.resolution,
               fast: DEFAULT_ULTRA_VIDEO_PRO.fast,
               aspectRatio: DEFAULT_ULTRA_VIDEO_PRO.aspectRatio,
@@ -1209,17 +1529,19 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
 
       updateNodeData(nodeId, { busy: true, error: undefined }, session);
       try {
-        const { scriptText, scenePrompts, sceneImagePrompts } = await runCanvasScriptNode({
-          brief,
-          sceneCount: data.sceneCount,
-          sceneBeats: data.sceneBeats,
-        });
+        const { scriptText, scenePrompts, sceneImagePrompts, sceneBeats } =
+          await runCanvasScriptNode({
+            brief,
+            sceneCount: data.sceneCount,
+            sceneBeats: data.sceneBeats,
+          });
         updateNodeData(
           nodeId,
           {
             scriptText,
             scenePrompts,
             sceneImagePrompts,
+            sceneBeats,
             busy: false,
             outputInputFingerprint: computeNodeInputFingerprint(
               nodeId,
@@ -1229,6 +1551,35 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
           },
           session,
         );
+        // Keep storyboard dialogue in sync with planned VO lines (preserve stills/videos).
+        const live = getLiveNodes();
+        const board = live.find((n) => (n.data as ProCanvasNodeData).kind === "storyboard");
+        if (board) {
+          const scriptLive = getLiveNode(nodeId);
+          if (scriptLive) {
+            const prior = flattenStoryboardPanels(board.data as StoryboardNodeData);
+            const { panels, acts } = syncStoryboardPanelsFromScript(scriptLive);
+            if (panels.length) {
+              const merged = panels.map((p, i) => ({
+                ...p,
+                imageUrl: prior[i]?.imageUrl ?? p.imageUrl,
+                videoUrl: prior[i]?.videoUrl ?? p.videoUrl,
+                videoReady: prior[i]?.videoReady ?? p.videoReady,
+              }));
+              updateNodeData(
+                board.id,
+                {
+                  panels: merged,
+                  acts: regroupStoryboardActs(merged, {
+                    priorActs: acts,
+                    beats: (scriptLive.data as ScriptNodeData).sceneBeats,
+                  }),
+                },
+                session,
+              );
+            }
+          }
+        }
       } catch (e: unknown) {
         updateNodeData(
           nodeId,
@@ -1272,19 +1623,700 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
     [updateNodeData],
   );
 
+  const runVoiceNode = useCallback(
+    async (nodeId: string) => {
+      if (!runningAllRef.current && !guardSingleRunStart()) return;
+      const session = canvasSessionRef.current;
+      const node = getLiveNode(nodeId);
+      if (!node) return;
+      const data = node.data as VoiceNodeData;
+      updateNodeData(nodeId, { busy: true, error: undefined }, session);
+      try {
+        const audioUrl = await runCanvasVoiceNode({
+          script: data.script,
+          locale: data.locale,
+          voicePresetId: data.voicePresetId,
+        });
+        const ups = allUpstreamNodes(nodeId, getLiveNodes(), getLiveEdges());
+        const wiredScript = ups.find(
+          (n) => (n.data as ProCanvasNodeData).kind === "script",
+        );
+        const dialogueSourceFingerprint =
+          data.dialogueSourceFingerprint ||
+          (wiredScript
+            ? scriptDialogueFingerprint(
+                (wiredScript.data as ScriptNodeData).sceneBeats,
+              )
+            : scriptDialogueFingerprint(undefined));
+        updateNodeData(
+          nodeId,
+          {
+            audioUrl,
+            busy: false,
+            dialogueSourceFingerprint,
+            outputInputFingerprint: computeNodeInputFingerprint(
+              nodeId,
+              getLiveNodes(),
+              getLiveEdges(),
+            ),
+          },
+          session,
+        );
+      } catch (e: unknown) {
+        updateNodeData(
+          nodeId,
+          {
+            busy: false,
+            error: e instanceof Error ? e.message : "Voice failed",
+          },
+          session,
+        );
+        throw e;
+      }
+    },
+    [getLiveEdges, getLiveNode, getLiveNodes, updateNodeData],
+  );
+
+  const syncStoryboardFromScript = useCallback(
+    (storyboardNodeId: string) => {
+      const allNodes = getLiveNodes();
+      const allEdges = getLiveEdges();
+      const ups = upstreamNodes(storyboardNodeId, allNodes, allEdges);
+      const scriptNode =
+        ups.find((n) => (n.data as ProCanvasNodeData).kind === "script") ??
+        allNodes.find((n) => (n.data as ProCanvasNodeData).kind === "script");
+      if (!scriptNode) {
+        setBoardError(m.ultraCanvas.storyboardNode.needScript);
+        window.setTimeout(() => setBoardError(null), 4000);
+        return;
+      }
+      const { panels, acts } = syncStoryboardPanelsFromScript(scriptNode);
+      if (!panels.length) {
+        setBoardError(m.ultraCanvas.storyboardNode.needPlan);
+        window.setTimeout(() => setBoardError(null), 4000);
+        return;
+      }
+      updateNodeData(storyboardNodeId, { panels, acts, error: undefined });
+    },
+    [getLiveEdges, getLiveNodes, m.ultraCanvas.storyboardNode, updateNodeData],
+  );
+
+  const spawnScenePipelineFromStoryboard = useCallback(
+    (storyboardNodeId: string) => {
+      const allNodes = getLiveNodes();
+      const allEdges = getLiveEdges();
+      const ups = upstreamNodes(storyboardNodeId, allNodes, allEdges);
+      const scriptNode =
+        ups.find((n) => (n.data as ProCanvasNodeData).kind === "script") ??
+        allNodes.find((n) => (n.data as ProCanvasNodeData).kind === "script");
+      if (!scriptNode) {
+        setBoardError(m.ultraCanvas.storyboardNode.needScript);
+        window.setTimeout(() => setBoardError(null), 4000);
+        return;
+      }
+      const board = getLiveNode(storyboardNodeId);
+      const panels = board
+        ? flattenStoryboardPanels(board.data as StoryboardNodeData)
+        : [];
+      if (panels.length) {
+        updateNodeData(scriptNode.id, {
+          sceneImagePrompts: panels.map((p) => p.stillPrompt),
+          scenePrompts: panels.map((p) => p.motionPrompt || p.stillPrompt),
+        });
+      } else {
+        syncStoryboardFromScript(storyboardNodeId);
+      }
+      const liveBoard = getLiveNode(storyboardNodeId);
+      const livePanels = liveBoard
+        ? flattenStoryboardPanels(liveBoard.data as StoryboardNodeData)
+        : panels;
+      spawnScenePipeline(scriptNode.id, {
+        stillUrls: stillUrlsFromStoryboardPanels(livePanels),
+      });
+    },
+    [
+      getLiveEdges,
+      getLiveNode,
+      getLiveNodes,
+      m.ultraCanvas.storyboardNode,
+      spawnScenePipeline,
+      syncStoryboardFromScript,
+      updateNodeData,
+    ],
+  );
+
+  const generateStoryboardKeyframeStill = useCallback(
+    async (opts: {
+      storyboardNodeId: string;
+      panelGlobalIndex: number;
+      panels: ReturnType<typeof flattenStoryboardPanels>;
+    }) => {
+      const { storyboardNodeId, panelGlobalIndex, panels } = opts;
+      const panel = panels[panelGlobalIndex];
+      if (!panel?.stillPrompt?.trim()) {
+        throw new Error(m.ultraCanvas.storyboardNode.needPanelPrompt);
+      }
+      const allNodes = getLiveNodes();
+      const allEdges = getLiveEdges();
+      const scriptNode =
+        upstreamNodes(storyboardNodeId, allNodes, allEdges).find(
+          (n) => (n.data as ProCanvasNodeData).kind === "script",
+        ) ?? allNodes.find((n) => (n.data as ProCanvasNodeData).kind === "script");
+      const cast = scriptNode
+        ? collectScriptUpstreamCharacters(scriptNode.id, allNodes, allEdges)
+        : [];
+      const continuity = planSceneContinuity({
+        sceneIndex: panelGlobalIndex,
+        sceneCount: panels.length,
+        scenePrompt: panel.stillPrompt,
+        characters: cast,
+        beat: scriptNode ? scriptBeatAt(scriptNode, panelGlobalIndex) : undefined,
+        worldDescription: worldDescriptionFromNodes(allNodes),
+      });
+      const resourceSources = scriptNode
+        ? collectSpawnPipelineSources(scriptNode.id, allNodes, allEdges)
+        : [];
+      const sceneResources = filterSpawnResourcesForScene(
+        resourceSources,
+        continuity.assets,
+      );
+      const sources = [
+        ...cast.map((c) => {
+          const url = imageUrlFromNode(c);
+          if (!isHttpOrLibraryMediaUrl(url) && !uploadFiles.current.get(c.id)) return null;
+          const local = uploadFiles.current.get(c.id);
+          return {
+            nodeId: c.id,
+            alias: nodeAlias(c),
+            ...(local ? { file: local } : { url }),
+          };
+        }),
+        ...sceneResources.map((n) => {
+          const kind = (n.data as ProCanvasNodeData).kind;
+          if (kind === "lighting" || kind === "background" || kind === "grade" || kind === "research" || kind === "world") {
+            return null;
+          }
+          const url = imageUrlFromNode(n);
+          if (!isHttpOrLibraryMediaUrl(url) && !uploadFiles.current.get(n.id)) return null;
+          const local = uploadFiles.current.get(n.id);
+          return {
+            nodeId: n.id,
+            alias: nodeAlias(n),
+            ...(local ? { file: local } : { url }),
+          };
+        }),
+      ].filter(Boolean) as { nodeId: string; alias: string; file?: File; url?: string }[];
+      const imageUrl = await runCanvasImageNode({
+        sources,
+        prompt: continuity.imagePrompt,
+        pro: {
+          aspectRatio: DEFAULT_ULTRA_IMAGE_PRO.aspectRatio,
+          resolution: DEFAULT_ULTRA_IMAGE_PRO.resolution,
+          artStyleId: DEFAULT_ULTRA_IMAGE_PRO.artStyleId,
+          lightingPreset: DEFAULT_ULTRA_IMAGE_PRO.lightingPreset,
+          backgroundPreset: DEFAULT_ULTRA_IMAGE_PRO.backgroundPreset,
+        },
+      });
+      return { imageUrl, imagePrompt: continuity.imagePrompt };
+    },
+    [getLiveEdges, getLiveNodes, m.ultraCanvas.storyboardNode.needPanelPrompt],
+  );
+
+  const pushStoryboardStillsAfterUpdate = useCallback(
+    (
+      storyboardNodeId: string,
+      panels: ReturnType<typeof flattenStoryboardPanels>,
+      acts: ReturnType<typeof groupPanelsIntoActs>,
+      session: number,
+      focus?: { panelGlobalIndex: number; imageUrl: string; imagePrompt?: string },
+    ) => {
+      const afterBoard = getLiveNodes().map((n) =>
+        n.id === storyboardNodeId
+          ? { ...n, data: { ...n.data, panels, acts, busy: false } }
+          : n,
+      );
+      for (const patch of storyboardStillPatchesForSceneImages(afterBoard)) {
+        updateNodeData(patch.nodeId, { imageUrl: patch.imageUrl }, session);
+      }
+      if (focus) {
+        const spawnedImage = findSpawnedImageNodeBySceneIndex(
+          afterBoard,
+          focus.panelGlobalIndex,
+        );
+        if (spawnedImage) {
+          updateNodeData(
+            spawnedImage.id,
+            {
+              imageUrl: focus.imageUrl,
+              ...(focus.imagePrompt ? { prompt: focus.imagePrompt } : {}),
+            },
+            session,
+          );
+        }
+      }
+    },
+    [getLiveNodes, updateNodeData],
+  );
+
+  const runStoryboardPanelKeyframe = useCallback(
+    async (storyboardNodeId: string, panelGlobalIndex: number) => {
+      if (!runningAllRef.current && !guardSingleRunStart()) return;
+      const session = canvasSessionRef.current;
+      const board = getLiveNode(storyboardNodeId);
+      if (!board) return;
+      const data = board.data as StoryboardNodeData;
+      let panels = flattenStoryboardPanels(data);
+      const panel = panels[panelGlobalIndex];
+      if (!panel?.stillPrompt?.trim()) {
+        setBoardError(m.ultraCanvas.storyboardNode.needPanelPrompt);
+        window.setTimeout(() => setBoardError(null), 4000);
+        return;
+      }
+      updateNodeData(storyboardNodeId, { busy: true, error: undefined }, session);
+      try {
+        const { imageUrl, imagePrompt } = await generateStoryboardKeyframeStill({
+          storyboardNodeId,
+          panelGlobalIndex,
+          panels,
+        });
+        panels = panels.map((p, i) =>
+          i === panelGlobalIndex ? { ...p, imageUrl } : p,
+        );
+        const priorBoard = getLiveNode(storyboardNodeId)?.data as StoryboardNodeData | undefined;
+        const scriptNode = getLiveNodes().find(
+          (n) => (n.data as ProCanvasNodeData).kind === "script",
+        );
+        const acts = regroupStoryboardActs(panels, {
+          priorActs: priorBoard?.acts,
+          beats: scriptNode
+            ? (scriptNode.data as ScriptNodeData).sceneBeats
+            : undefined,
+        });
+        updateNodeData(storyboardNodeId, { panels, acts, busy: false }, session);
+        pushStoryboardStillsAfterUpdate(storyboardNodeId, panels, acts, session, {
+          panelGlobalIndex,
+          imageUrl,
+          imagePrompt,
+        });
+      } catch (e: unknown) {
+        updateNodeData(
+          storyboardNodeId,
+          {
+            busy: false,
+            error: withNotChargedNote(
+              e instanceof Error ? e.message : "Keyframe failed",
+              m.errors.tokensNotCharged,
+            ),
+          },
+          session,
+        );
+        throw e;
+      }
+    },
+    [
+      generateStoryboardKeyframeStill,
+      getLiveNode,
+      guardSingleRunStart,
+      m.errors.tokensNotCharged,
+      m.ultraCanvas.storyboardNode.needPanelPrompt,
+      pushStoryboardStillsAfterUpdate,
+      updateNodeData,
+    ],
+  );
+
+  const runStoryboardActKeyframes = useCallback(
+    async (storyboardNodeId: string, actIndex: number) => {
+      if (!runningAllRef.current && !guardSingleRunStart()) return;
+      const session = canvasSessionRef.current;
+      const board = getLiveNode(storyboardNodeId);
+      if (!board) return;
+      const data = board.data as StoryboardNodeData;
+      const acts =
+        data.acts?.length
+          ? data.acts
+          : groupPanelsIntoActs(flattenStoryboardPanels(data));
+      const act = acts[actIndex];
+      if (!act?.panels.length) return;
+
+      const baseOffset = acts
+        .slice(0, actIndex)
+        .reduce((n, a) => n + a.panels.length, 0);
+      updateNodeData(storyboardNodeId, { busy: true, error: undefined }, session);
+      try {
+        let panels = flattenStoryboardPanels(
+          (getLiveNode(storyboardNodeId)?.data as StoryboardNodeData) ?? data,
+        );
+        for (let i = 0; i < act.panels.length; i++) {
+          const panelGlobalIndex = baseOffset + i;
+          const current = panels[panelGlobalIndex];
+          if (!current?.stillPrompt?.trim()) continue;
+          const { imageUrl, imagePrompt } = await generateStoryboardKeyframeStill({
+            storyboardNodeId,
+            panelGlobalIndex,
+            panels,
+          });
+          panels = panels.map((p, idx) =>
+            idx === panelGlobalIndex ? { ...p, imageUrl } : p,
+          );
+          const nextActs = regroupStoryboardActs(panels, {
+            priorActs: acts,
+            beats: (
+              getLiveNodes().find((n) => (n.data as ProCanvasNodeData).kind === "script")
+                ?.data as ScriptNodeData | undefined
+            )?.sceneBeats,
+          });
+          updateNodeData(
+            storyboardNodeId,
+            { panels, acts: nextActs, busy: true },
+            session,
+          );
+          pushStoryboardStillsAfterUpdate(storyboardNodeId, panels, nextActs, session, {
+            panelGlobalIndex,
+            imageUrl,
+            imagePrompt,
+          });
+        }
+        updateNodeData(
+          storyboardNodeId,
+          {
+            busy: false,
+            panels,
+            acts: regroupStoryboardActs(panels, {
+              priorActs: acts,
+              beats: (
+                getLiveNodes().find((n) => (n.data as ProCanvasNodeData).kind === "script")
+                  ?.data as ScriptNodeData | undefined
+              )?.sceneBeats,
+            }),
+          },
+          session,
+        );
+      } catch (e: unknown) {
+        updateNodeData(
+          storyboardNodeId,
+          {
+            busy: false,
+            error: withNotChargedNote(
+              e instanceof Error ? e.message : "Act keyframes failed",
+              m.errors.tokensNotCharged,
+            ),
+          },
+          session,
+        );
+        throw e;
+      }
+    },
+    [
+      generateStoryboardKeyframeStill,
+      getLiveNode,
+      guardSingleRunStart,
+      m.errors.tokensNotCharged,
+      pushStoryboardStillsAfterUpdate,
+      updateNodeData,
+    ],
+  );
+
+  const runStoryboardPanelVideo = useCallback(
+    async (storyboardNodeId: string, panelGlobalIndex: number) => {
+      if (!runningAllRef.current && !guardSingleRunStart()) return;
+      const session = canvasSessionRef.current;
+      const board = getLiveNode(storyboardNodeId);
+      if (!board) return;
+      const data = board.data as StoryboardNodeData;
+      let panels = flattenStoryboardPanels(data);
+      const panel = panels[panelGlobalIndex];
+      if (!isHttpOrLibraryMediaUrl(panel?.imageUrl)) {
+        setBoardError(m.ultraCanvas.storyboardNode.needStillForVideo);
+        window.setTimeout(() => setBoardError(null), 4000);
+        return;
+      }
+      updateNodeData(storyboardNodeId, { busy: true, error: undefined }, session);
+      try {
+        const beat = (() => {
+          const script = getLiveNodes().find(
+            (n) => (n.data as ProCanvasNodeData).kind === "script",
+          );
+          return script ? scriptBeatAt(script, panelGlobalIndex) : undefined;
+        })();
+        const motion = motionPromptWithDialogue(
+          panel.motionPrompt?.trim() ||
+            panel.stillPrompt?.trim() ||
+            `Animate scene ${panelGlobalIndex + 1}`,
+          beat ?? { line: panel.dialogue, speaker: panel.speaker },
+        );
+        const videoUrl = await runCanvasVideoNode({
+          imageUrl: panel.imageUrl,
+          prompt: motion,
+          pro: DEFAULT_ULTRA_VIDEO_PRO,
+        });
+        panels = panels.map((p, i) =>
+          i === panelGlobalIndex
+            ? { ...p, videoUrl, videoReady: true }
+            : p,
+        );
+        const acts = regroupStoryboardActs(panels, {
+          priorActs: (getLiveNode(storyboardNodeId)?.data as StoryboardNodeData | undefined)
+            ?.acts,
+          beats: (
+            getLiveNodes().find((n) => (n.data as ProCanvasNodeData).kind === "script")
+              ?.data as ScriptNodeData | undefined
+          )?.sceneBeats,
+        });
+        updateNodeData(storyboardNodeId, { panels, acts, busy: false }, session);
+
+        const live = getLiveNodes();
+        const imgNode = findSpawnedImageNodeBySceneIndex(live, panelGlobalIndex);
+        if (imgNode && panel.imageUrl) {
+          updateNodeData(imgNode.id, { imageUrl: panel.imageUrl }, session);
+        }
+        const vidNode = findSpawnedVideoNodeBySceneIndex(live, panelGlobalIndex);
+        if (vidNode) {
+          updateNodeData(
+            vidNode.id,
+            {
+              videoUrl,
+              prompt: motion,
+              outputInputFingerprint: computeNodeInputFingerprint(
+                vidNode.id,
+                getLiveNodes(),
+                getLiveEdges(),
+              ),
+            },
+            session,
+          );
+        }
+      } catch (e: unknown) {
+        updateNodeData(
+          storyboardNodeId,
+          {
+            busy: false,
+            error: withNotChargedNote(
+              e instanceof Error ? e.message : "Storyboard video failed",
+              m.errors.tokensNotCharged,
+            ),
+          },
+          session,
+        );
+        throw e;
+      }
+    },
+    [
+      getLiveEdges,
+      getLiveNode,
+      getLiveNodes,
+      guardSingleRunStart,
+      m.errors.tokensNotCharged,
+      m.ultraCanvas.storyboardNode.needStillForVideo,
+      updateNodeData,
+    ],
+  );
+
+  const runStoryboardActVideos = useCallback(
+    async (storyboardNodeId: string, actIndex: number) => {
+      if (!runningAllRef.current && !guardSingleRunStart()) return;
+      const session = canvasSessionRef.current;
+      const board = getLiveNode(storyboardNodeId);
+      if (!board) return;
+      const data = board.data as StoryboardNodeData;
+      const acts =
+        data.acts?.length
+          ? data.acts
+          : groupPanelsIntoActs(flattenStoryboardPanels(data));
+      const act = acts[actIndex];
+      if (!act?.panels.length) return;
+      const baseOffset = acts
+        .slice(0, actIndex)
+        .reduce((n, a) => n + a.panels.length, 0);
+      const hasAnyStill = act.panels.some((p) => isHttpOrLibraryMediaUrl(p.imageUrl));
+      if (!hasAnyStill) {
+        setBoardError(m.ultraCanvas.storyboardNode.needStillForVideo);
+        window.setTimeout(() => setBoardError(null), 4000);
+        return;
+      }
+      updateNodeData(storyboardNodeId, { busy: true, error: undefined }, session);
+      try {
+        let panels = flattenStoryboardPanels(
+          (getLiveNode(storyboardNodeId)?.data as StoryboardNodeData) ?? data,
+        );
+        for (let i = 0; i < act.panels.length; i++) {
+          const panelGlobalIndex = baseOffset + i;
+          const panel = panels[panelGlobalIndex];
+          if (!isHttpOrLibraryMediaUrl(panel?.imageUrl)) continue;
+          const script = getLiveNodes().find(
+            (n) => (n.data as ProCanvasNodeData).kind === "script",
+          );
+          const beat = script ? scriptBeatAt(script, panelGlobalIndex) : undefined;
+          const motion = motionPromptWithDialogue(
+            panel.motionPrompt?.trim() ||
+              panel.stillPrompt?.trim() ||
+              `Animate scene ${panelGlobalIndex + 1}`,
+            beat ?? { line: panel.dialogue, speaker: panel.speaker },
+          );
+          const videoUrl = await runCanvasVideoNode({
+            imageUrl: panel.imageUrl,
+            prompt: motion,
+            pro: DEFAULT_ULTRA_VIDEO_PRO,
+          });
+          panels = panels.map((p, idx) =>
+            idx === panelGlobalIndex
+              ? { ...p, videoUrl, videoReady: true }
+              : p,
+          );
+          const nextActs = regroupStoryboardActs(panels, {
+            priorActs: acts,
+            beats: (
+              getLiveNodes().find((n) => (n.data as ProCanvasNodeData).kind === "script")
+                ?.data as ScriptNodeData | undefined
+            )?.sceneBeats,
+          });
+          updateNodeData(
+            storyboardNodeId,
+            { panels, acts: nextActs, busy: true },
+            session,
+          );
+          const live = getLiveNodes();
+          const imgNode = findSpawnedImageNodeBySceneIndex(live, panelGlobalIndex);
+          if (imgNode && panel.imageUrl) {
+            updateNodeData(imgNode.id, { imageUrl: panel.imageUrl }, session);
+          }
+          const vidNode = findSpawnedVideoNodeBySceneIndex(live, panelGlobalIndex);
+          if (vidNode) {
+            updateNodeData(
+              vidNode.id,
+              {
+                videoUrl,
+                prompt: motion,
+                outputInputFingerprint: computeNodeInputFingerprint(
+                  vidNode.id,
+                  getLiveNodes(),
+                  getLiveEdges(),
+                ),
+              },
+              session,
+            );
+          }
+        }
+        updateNodeData(
+          storyboardNodeId,
+          {
+            busy: false,
+            panels,
+            acts: regroupStoryboardActs(panels, {
+              priorActs: acts,
+              beats: (
+                getLiveNodes().find((n) => (n.data as ProCanvasNodeData).kind === "script")
+                  ?.data as ScriptNodeData | undefined
+              )?.sceneBeats,
+            }),
+          },
+          session,
+        );
+      } catch (e: unknown) {
+        updateNodeData(
+          storyboardNodeId,
+          {
+            busy: false,
+            error: withNotChargedNote(
+              e instanceof Error ? e.message : "Act videos failed",
+              m.errors.tokensNotCharged,
+            ),
+          },
+          session,
+        );
+        throw e;
+      }
+    },
+    [
+      getLiveEdges,
+      getLiveNode,
+      getLiveNodes,
+      guardSingleRunStart,
+      m.errors.tokensNotCharged,
+      m.ultraCanvas.storyboardNode.needStillForVideo,
+      updateNodeData,
+    ],
+  );
+
+  const pullVoiceDialogueFromScript = useCallback(
+    (voiceNodeId: string) => {
+      const allNodes = getLiveNodes();
+      const allEdges = getLiveEdges();
+      const upstream = allUpstreamNodes(voiceNodeId, allNodes, allEdges);
+      const wiredSources = upstream.filter((n) => {
+        const kind = (n.data as ProCanvasNodeData).kind;
+        return kind === "script" || kind === "storyboard";
+      });
+      /** Wired Script/Storyboard only — never steal dialogue from an unrelated board node. */
+      const scopeNodes = wiredSources.length ? wiredSources : undefined;
+      if (wiredSources.length === 0) {
+        setBoardError(m.ultraCanvas.voiceNode.needWireScript);
+        window.setTimeout(() => setBoardError(null), 4500);
+        return;
+      }
+      const lines = voiceLinesFromNodes(allNodes, { scopeNodes });
+      const text =
+        lines.map((l) => l.text).join("\n") ||
+        dialogueScriptFromNodes(allNodes, { scopeNodes });
+      if (!text.trim()) {
+        setBoardError(m.ultraCanvas.voiceNode.needDialogue);
+        window.setTimeout(() => setBoardError(null), 4000);
+        return;
+      }
+      updateNodeData(voiceNodeId, {
+        script: text,
+        lines: lines.length ? lines : undefined,
+        dialogueSourceFingerprint: (() => {
+          const script = wiredSources.find(
+            (n) => (n.data as ProCanvasNodeData).kind === "script",
+          );
+          if (script) {
+            return scriptDialogueFingerprint(
+              (script.data as ScriptNodeData).sceneBeats,
+            );
+          }
+          return text;
+        })(),
+      });
+    },
+    [getLiveEdges, getLiveNodes, m.ultraCanvas.voiceNode, updateNodeData],
+  );
+
   const runSpliceNode = useCallback(
     async (nodeId: string) => {
       if (!runningAllRef.current && !guardSingleRunStart()) return;
       const session = canvasSessionRef.current;
       const allNodes = getLiveNodes();
-      const upstream = upstreamNodesSorted(nodeId, allNodes, getLiveEdges());
+      const allEdges = getLiveEdges();
+      const upstream = upstreamNodesSorted(nodeId, allNodes, allEdges);
       const videoUrls = upstream
         .map(videoUrlFromNode)
         .filter((u): u is string => isHttpOrLibraryMediaUrl(u));
 
+      const voiceUpstream = upstream.find(
+        (n) => (n.data as ProCanvasNodeData).kind === "voice",
+      );
+      const voiceData = voiceUpstream
+        ? (voiceUpstream.data as VoiceNodeData)
+        : undefined;
+
+      if (voiceUpstream && !(voiceData?.lines && voiceData.lines.length > 0)) {
+        const msg = m.ultraCanvas.voiceNode.needPullBeforeSplice;
+        setBoardError(msg);
+        window.setTimeout(() => setBoardError(null), 4500);
+        updateNodeData(nodeId, { error: msg }, session);
+        return;
+      }
+
+      const timedCaptions =
+        voiceData?.lines && voiceData.lines.length > 0
+          ? voiceLinesToCaptionPayload(voiceData.lines)
+          : [];
+
+      /** BGM only from Audio nodes — never treat Voice dialogue as music. */
       let musicUrl: string | undefined;
       for (const n of upstream) {
-        if ((n.data as ProCanvasNodeData).kind !== "audio") continue;
+        const kind = (n.data as ProCanvasNodeData).kind;
+        if (kind !== "audio") continue;
         const existing = audioUrlFromNode(n);
         if (isHttpOrLibraryMediaUrl(existing)) {
           musicUrl = existing;
@@ -1313,16 +2345,42 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
         }
       }
 
-      const hasAudioUpstream = upstream.some((n) => (n.data as ProCanvasNodeData).kind === "audio");
-      if (hasAudioUpstream && !musicUrl) {
-        const msg = "Upload audio to cloud or pick from library before splicing.";
-        updateNodeData(nodeId, { error: msg }, session);
-        throw new Error(msg);
-      }
-
       updateNodeData(nodeId, { busy: true, error: undefined }, session);
       try {
-        const videoUrl = await runCanvasSpliceNode({ videoUrls, musicUrl });
+        let videoUrl = await runCanvasSpliceNode({
+          videoUrls,
+          musicUrl: undefined,
+        });
+        if (timedCaptions.length > 0 && voiceData) {
+          const speechUrl =
+            timedCaptions.length < 2 && isHttpOrLibraryMediaUrl(voiceData.audioUrl)
+              ? voiceData.audioUrl
+              : undefined;
+          const res = await fetch("/api/dub-script-voice", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              video_url: videoUrl,
+              caption_lines: timedCaptions,
+              locale: voiceData.locale,
+              voice_preset: voiceData.voicePresetId,
+              script: voiceData.script,
+              ...(speechUrl ? { speech_url: speechUrl } : {}),
+            }),
+          });
+          const json = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            throw new Error((json as { error?: string }).error || "Timed voice mix failed");
+          }
+          const dubbed = (json as { videoUrl?: string }).videoUrl;
+          if (isHttpOrLibraryMediaUrl(dubbed)) videoUrl = dubbed;
+        }
+        if (musicUrl) {
+          videoUrl = await runCanvasSpliceNode({
+            videoUrls: [videoUrl],
+            musicUrl,
+          });
+        }
         updateNodeData(
           nodeId,
           {
@@ -1348,7 +2406,7 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
         throw e;
       }
     },
-    [getLiveEdges, getLiveNodes, updateNodeData],
+    [getLiveEdges, getLiveNodes, m.ultraCanvas.voiceNode.needPullBeforeSplice, setBoardError, updateNodeData],
   );
 
   const runNode = useCallback(
@@ -1362,6 +2420,12 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
           break;
         case "character":
           await runCharacterNode(nodeId);
+          break;
+        case "world":
+          await runWorldNode(nodeId);
+          break;
+        case "brainstorm":
+          await runBrainstormNode(nodeId);
           break;
         case "camera":
           await runCameraNode(nodeId);
@@ -1378,6 +2442,9 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
         case "audio":
           await runAudioNode(nodeId);
           break;
+        case "voice":
+          await runVoiceNode(nodeId);
+          break;
         case "splice":
           await runSpliceNode(nodeId);
           break;
@@ -1388,6 +2455,7 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
     [
       getLiveNode,
       runAudioNode,
+      runBrainstormNode,
       runCameraNode,
       runCharacterNode,
       runImageNode,
@@ -1395,6 +2463,8 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
       runSpliceNode,
       runTextVideoNode,
       runVideoNode,
+      runVoiceNode,
+      runWorldNode,
     ],
   );
 
@@ -1864,6 +2934,26 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
     [getLiveEdges, getLiveNodes],
   );
 
+  const applyStoryboardStillsToScenes = useCallback(() => {
+    const patches = storyboardStillPatchesForSceneImages(getLiveNodes());
+    for (const p of patches) {
+      updateNodeData(p.nodeId, { imageUrl: p.imageUrl });
+    }
+    if (patches.length) {
+      setBoardError(
+        m.ultraCanvas.storyboardNode.stillsApplied.replace(
+          "{n}",
+          String(patches.length),
+        ),
+      );
+      window.setTimeout(() => setBoardError(null), 3500);
+    } else {
+      setBoardError(m.ultraCanvas.storyboardNode.stillsNoneToApply);
+      window.setTimeout(() => setBoardError(null), 3500);
+    }
+    return patches.length;
+  }, [getLiveNodes, m.ultraCanvas.storyboardNode, updateNodeData]);
+
   const isNodeStale = useCallback(
     (nodeId: string) => {
       const n = getLiveNode(nodeId);
@@ -1889,13 +2979,26 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
       onPickLibraryAudio,
       runImageNode,
       runCharacterNode,
+      runCharacterAnglesNode,
+      runWorldNode,
+      runBrainstormNode,
+      applyBrainstormOption,
       runVideoNode,
       runTextVideoNode,
       runCameraNode,
       runScriptNode,
       spawnSceneNodes,
       spawnScenePipeline,
+      syncStoryboardFromScript,
+      spawnScenePipelineFromStoryboard,
+      applyStoryboardStillsToScenes,
+      runStoryboardPanelKeyframe,
+      runStoryboardActKeyframes,
+      runStoryboardPanelVideo,
+      runStoryboardActVideos,
+      pullVoiceDialogueFromScript,
       runAudioNode,
+      runVoiceNode,
       runSpliceNode,
       runNode,
       updateNodeData,
@@ -1912,13 +3015,26 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
       onPickLibraryAudio,
       runImageNode,
       runCharacterNode,
+      runCharacterAnglesNode,
+      runWorldNode,
+      runBrainstormNode,
+      applyBrainstormOption,
       runVideoNode,
       runTextVideoNode,
       runCameraNode,
       runScriptNode,
       spawnSceneNodes,
       spawnScenePipeline,
+      syncStoryboardFromScript,
+      spawnScenePipelineFromStoryboard,
+      applyStoryboardStillsToScenes,
+      runStoryboardPanelKeyframe,
+      runStoryboardActKeyframes,
+      runStoryboardPanelVideo,
+      runStoryboardActVideos,
+      pullVoiceDialogueFromScript,
       runAudioNode,
+      runVoiceNode,
       runSpliceNode,
       runNode,
       updateNodeData,
@@ -1955,7 +3071,10 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
           </div>
         ) : null}
         {showCreativeBHint ? (
-          <UltraCanvasCreativeBBanner onDismiss={() => setShowCreativeBHint(false)} />
+          <UltraCanvasCreativeBBanner
+            steps={computeCreativeBStepStatuses(nodes)}
+            onDismiss={() => setShowCreativeBHint(false)}
+          />
         ) : null}
         <div
           className="pointer-events-none absolute inset-0 opacity-40"

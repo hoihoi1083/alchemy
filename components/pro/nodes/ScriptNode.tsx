@@ -85,8 +85,16 @@ export function ScriptNode({ id, data }: NodeProps & { data: ScriptNodeData }) {
           {beats.map((beat, i) => (
             <div key={i} className="space-y-1 rounded-md border border-slate-800/80 p-1.5">
               <p className="text-[10px] font-semibold text-rose-300/80">
-                {m.ultraCanvas.scriptSceneLabel.replace("{n}", String(i + 1))}
+                {beat.act?.trim()
+                  ? beat.act.trim()
+                  : m.ultraCanvas.scriptSceneLabel.replace("{n}", String(i + 1))}
               </p>
+              <input
+                value={beat.act ?? ""}
+                onChange={(e) => patchBeat(i, { act: e.target.value })}
+                placeholder={sn.beatActPlaceholder}
+                className="w-full rounded border border-slate-700/80 bg-slate-950/80 px-1.5 py-1 text-[10px] text-white placeholder:text-slate-600"
+              />
               <input
                 value={beat.time ?? ""}
                 onChange={(e) => patchBeat(i, { time: e.target.value })}
@@ -115,6 +123,12 @@ export function ScriptNode({ id, data }: NodeProps & { data: ScriptNodeData }) {
                 value={beat.blocking ?? ""}
                 onChange={(e) => patchBeat(i, { blocking: e.target.value })}
                 placeholder={sn.beatBlockingPlaceholder}
+                className="w-full rounded border border-slate-700/80 bg-slate-950/80 px-1.5 py-1 text-[10px] text-white placeholder:text-slate-600"
+              />
+              <input
+                value={beat.speaker ?? ""}
+                onChange={(e) => patchBeat(i, { speaker: e.target.value })}
+                placeholder={sn.beatSpeakerPlaceholder}
                 className="w-full rounded border border-slate-700/80 bg-slate-950/80 px-1.5 py-1 text-[10px] text-white placeholder:text-slate-600"
               />
               <input

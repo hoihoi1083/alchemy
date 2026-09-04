@@ -6,6 +6,10 @@ export type CinematicScenePlan = {
   sceneDescriptionZh: string;
   imagePrompt: string;
   videoMotionPrompt: string;
+  /** Spoken VO / dialogue for this beat (English preferred for EN ads). */
+  spokenLine?: string;
+  /** Who delivers the line, e.g. PersonA / Host / Narrator. */
+  speaker?: string;
 };
 
 export type CinematicReelPlan = {
@@ -25,4 +29,6 @@ export type CinematicSceneResult = {
   imagePrompt: string;
   videoMotionPrompt: string;
   imageUrl: string;
+  spokenLine?: string;
+  speaker?: string;
 };

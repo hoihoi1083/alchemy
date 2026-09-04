@@ -205,15 +205,25 @@ describe("ultra-canvas audit fixes", () => {
       lighting: "Lighting",
       splice: "Splice",
       audio: "Audio",
+      world: "World",
+      storyboard: "Storyboard",
+      voice: "Voice",
     });
     const research = tpl.nodes.find((n) => n.id === "tpl-research");
     assert.equal((research?.data as { summary?: string }).summary, "");
+
+    assert.ok(tpl.nodes.some((n) => n.id === "tpl-world"));
+    assert.ok(tpl.nodes.some((n) => n.id === "tpl-storyboard"));
+    assert.ok(tpl.nodes.some((n) => n.id === "tpl-voice"));
 
     const edgePairs = tpl.edges.map((e) => `${e.source}->${e.target}`);
     assert.ok(edgePairs.includes("tpl-upload-product->tpl-script"));
     assert.ok(edgePairs.includes("tpl-upload-ui->tpl-script"));
     assert.ok(edgePairs.includes("tpl-research->tpl-script"));
     assert.ok(edgePairs.includes("tpl-brand->tpl-script"));
+    assert.ok(edgePairs.includes("tpl-world->tpl-script"));
+    assert.ok(edgePairs.includes("tpl-script->tpl-storyboard"));
+    assert.ok(edgePairs.includes("tpl-voice->tpl-splice"));
     assert.ok(edgePairs.includes("tpl-audio->tpl-splice"));
   });
 });

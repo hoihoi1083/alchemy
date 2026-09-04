@@ -22,7 +22,11 @@ export type ProCanvasNodeKind =
   | "grade"
   | "brand"
   | "character"
-  | "research";
+  | "research"
+  | "world"
+  | "storyboard"
+  | "voice"
+  | "brainstorm";
 
 export type CanvasNodeBase = {
   label: string;
@@ -133,6 +137,8 @@ export type CharacterNodeData = CanvasNodeBase & {
   kind: "character";
   fileName?: string;
   previewUrl?: string;
+  /** Multi-angle turnaround sheet (optional). */
+  angleSheetUrl?: string;
   /** 人物小传 — feeds identity lock in image/video prompts. */
   biography?: string;
   /** Optional prompt for AI character-sheet generation (falls back to biography). */
@@ -142,6 +148,89 @@ export type CharacterNodeData = CanvasNodeBase & {
 export type ResearchNodeData = CanvasNodeBase & {
   kind: "research";
   summary: string;
+};
+
+export type WorldNodeData = CanvasNodeBase & {
+  kind: "world";
+  /** Scene bible — location, lighting language, set dressing. */
+  description: string;
+  fileName?: string;
+  previewUrl?: string;
+  /** Full-space concept sheet generated from bible / ref. */
+  spaceSheetUrl?: string;
+};
+
+export type StoryboardPanel = {
+  index: number;
+  title?: string;
+  dialogue?: string;
+  speaker?: string;
+  stillPrompt: string;
+  motionPrompt: string;
+  imageUrl?: string;
+  videoUrl?: string;
+  videoReady?: boolean;
+};
+
+/** One TapNow-style act board — contains multiple shot panels. */
+export type StoryboardAct = {
+  id: string;
+  title: string;
+  panels: StoryboardPanel[];
+};
+
+export type StoryboardLayoutMode = "grouped" | "separate";
+
+export type StoryboardNodeData = CanvasNodeBase & {
+  kind: "storyboard";
+  /** Preferred: acts with multi-panels (one board = one act). */
+  acts?: StoryboardAct[];
+  /** Legacy flat panels — still supported; prefer acts. */
+  panels: StoryboardPanel[];
+  /**
+   * grouped = act contact sheet on the hub.
+   * separate = one Image→Video node pair per scene on the canvas; stills auto-fill Images.
+   */
+  layoutMode?: StoryboardLayoutMode;
+};
+
+export type VoiceLine = {
+  text: string;
+  startSec: number;
+  endSec: number;
+  /** Optional scene index this line belongs to (0-based). */
+  sceneIndex?: number;
+  /** e.g. "Act 1 · Scene 2" for UI. */
+  sceneLabel?: string;
+};
+
+export type VoiceNodeData = CanvasNodeBase & {
+  kind: "voice";
+  script: string;
+  locale: "hk" | "en" | "cn";
+  voicePresetId: string;
+  audioUrl?: string;
+  /** Timed lines for mix-onto-splice (Caption-style windows). */
+  lines?: VoiceLine[];
+  /** Fingerprint of Script dialogue used when Pull/Generate ran — for stale checks. */
+  dialogueSourceFingerprint?: string;
+};
+
+export type BrainstormOptionData = {
+  id: string;
+  title: string;
+  hook: string;
+  brief: string;
+  actOutline: string;
+  motionNote: string;
+};
+
+export type BrainstormNodeData = CanvasNodeBase & {
+  kind: "brainstorm";
+  idea: string;
+  durationSec: number;
+  options?: BrainstormOptionData[];
+  selectedOptionId?: string;
 };
 
 export type SpliceNodeData = CanvasNodeBase & {
@@ -188,7 +277,11 @@ export type ProCanvasNodeData =
   | GradeModNodeData
   | BrandNodeData
   | CharacterNodeData
-  | ResearchNodeData;
+  | ResearchNodeData
+  | WorldNodeData
+  | StoryboardNodeData
+  | VoiceNodeData
+  | BrainstormNodeData;
 
 export type TaskQueueItem = {
   nodeId: string;

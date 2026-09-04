@@ -58,6 +58,14 @@ function stableNodeInputSlice(node: Node): string {
       return `${id}|text|${d.text}`;
     case "audio":
       return `${id}|audio|${d.audioUrl ?? ""}|${d.fileName ?? ""}`;
+    case "voice":
+      return `${id}|voice|${d.script}|${d.locale}|${d.voicePresetId}|out:${d.audioUrl ?? ""}`;
+    case "world":
+      return `${id}|world|${d.description}|${d.previewUrl ?? ""}|${d.fileName ?? ""}`;
+    case "storyboard":
+      return `${id}|storyboard|${JSON.stringify((d as { acts?: unknown; panels?: unknown }).acts ?? d.panels ?? [])}`;
+    case "brainstorm":
+      return `${id}|brainstorm|${d.idea}|${d.durationSec}|${d.selectedOptionId ?? ""}|${JSON.stringify(d.options ?? [])}`;
     case "lighting":
       return `${id}|lighting|${d.preset}|${d.custom ?? ""}`;
     case "background":

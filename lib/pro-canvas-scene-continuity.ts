@@ -38,11 +38,19 @@ const UI_RE =
   /\b(shows?\s+(?:the\s+)?(?:UI|app|phone|screen)|app\s+demo|phone\s+screen|@UI|interface|dashboard)\b|展示.*(?:界面|手机|App)|演示/i;
 
 const PRODUCT_RE =
-  /\b(product\s+hero|hold\s+product|packaging|@Product)\b|产品主图|手持产品|包装/i;
+  /\b(product\s+hero|hold\s+product|packaging|@Product|shows?\s+[^.\n]{0,48}\bproduct\b)\b|产品主图|手持产品|包装|@产品/i;
 
 function beatText(beat: ScriptSceneBeat | undefined): string {
   if (!beat) return "";
-  return [beat.time, beat.emotion, beat.framing, beat.camera, beat.blocking, beat.line]
+  return [
+    beat.time,
+    beat.emotion,
+    beat.framing,
+    beat.camera,
+    beat.blocking,
+    beat.speaker,
+    beat.line,
+  ]
     .filter(Boolean)
     .join(" ");
 }
@@ -51,6 +59,11 @@ export function sceneAliasForIndex(sceneIndex: number): string {
   return `Scene${sceneIndex + 1}`;
 }
 
+/**
+ * Asset roles for a short ad arc:
+ * - Second-to-last beat = product + UI demo (use uploaded refs)
+ * - Last beat = brand/CTA end card (logo) — do NOT invent a SKU bottle
+ */
 export function inferSceneAssetNeeds(
   sceneIndex: number,
   sceneCount: number,
@@ -59,11 +72,11 @@ export function inferSceneAssetNeeds(
 ): SceneAssetNeeds {
   const blob = `${scenePrompt}\n${beatText(beat)}`;
   const last = sceneIndex >= sceneCount - 1;
-  const dualStart = Math.floor(sceneCount / 2);
+  const demo = sceneCount >= 2 && sceneIndex === sceneCount - 2;
   return {
-    brand: BRAND_RE.test(blob) || last || sceneIndex >= dualStart,
-    ui: UI_RE.test(blob) || (sceneIndex >= dualStart && sceneIndex < sceneCount - 1),
-    product: PRODUCT_RE.test(blob) || last,
+    brand: BRAND_RE.test(blob) || last || demo,
+    ui: UI_RE.test(blob) || demo,
+    product: PRODUCT_RE.test(blob) || demo,
   };
 }
 
@@ -129,10 +142,13 @@ export function buildSingleStillClause(sceneIndex: number, sceneCount: number): 
   );
 }
 
-export function buildWorldLockClause(): string {
+export function buildWorldLockClause(worldDescription?: string): string {
+  const bible = worldDescription?.trim();
+  const setLock = bible
+    ? `World bible (lock this set): ${bible}`
+    : `Keep the SAME office location, wardrobe, hair, and lighting language across scenes.`;
   return (
-    `[连续镜头] Same continuous short film continuity. ` +
-    `Keep the SAME office location, wardrobe, hair, and lighting language across scenes. ` +
+    `[连续镜头] Same continuous short film continuity. ${setLock} ` +
     `Do NOT recast faces or invent a new set. Continuity ≠ multi-panel — still ONE frame.`
   );
 }
@@ -161,6 +177,7 @@ export function buildSceneContinuityPrompt(opts: {
   assets: SceneAssetNeeds;
   priorSceneAlias?: string;
   beat?: ScriptSceneBeat;
+  worldDescription?: string;
 }): string {
   const lines: string[] = [];
   const castMentions = opts.cast.map((c) => `@${nodeAlias(c)}`).join(" ");
@@ -183,7 +200,7 @@ export function buildSceneContinuityPrompt(opts: {
     ].filter(Boolean);
     if (bits.length) lines.push(`Director beat — ${bits.join("; ")}`);
   }
-  lines.push(buildWorldLockClause());
+  lines.push(buildWorldLockClause(opts.worldDescription));
   if (opts.priorSceneAlias) {
     lines.push(
       `Continue directly after @${opts.priorSceneAlias} — match that prior keyframe's room, wardrobe, and subject identity.`,
@@ -192,7 +209,16 @@ export function buildSceneContinuityPrompt(opts: {
   const brandClause = buildBrandScreenClause(opts.assets);
   if (brandClause) lines.push(brandClause);
   if (opts.assets.product) {
-    lines.push(`Feature @Product clearly when a physical/product hero is needed.`);
+    lines.push(
+      `Feature the connected @Product IMAGE ref clearly (exact product look). ` +
+        `FORBIDDEN: inventing a random bottle, vial, serum, or unrelated SKU.`,
+    );
+  }
+  if (opts.assets.brand && !opts.assets.product) {
+    lines.push(
+      `End-card / CTA beat: prioritize @brand logo artwork. ` +
+        `FORBIDDEN: inventing a physical product bottle or glowing vial — logo + people only unless @Product is connected.`,
+    );
   }
   return lines.filter(Boolean).join("\n\n");
 }
@@ -204,6 +230,7 @@ export function planSceneContinuity(opts: {
   characters: Node[];
   beat?: ScriptSceneBeat;
   includePriorKeyframe?: boolean;
+  worldDescription?: string;
 }): SceneContinuityPlan {
   const cast = inferSceneCast(
     opts.sceneIndex,
@@ -231,6 +258,7 @@ export function planSceneContinuity(opts: {
     assets,
     priorSceneAlias,
     beat: opts.beat,
+    worldDescription: opts.worldDescription,
   });
   return { cast, assets, imagePrompt, sceneAlias };
 }
@@ -245,7 +273,8 @@ export function filterSpawnResourcesForScene(
       kind === "lighting" ||
       kind === "background" ||
       kind === "grade" ||
-      kind === "research"
+      kind === "research" ||
+      kind === "world"
     ) {
       return true;
     }

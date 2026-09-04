@@ -15,6 +15,7 @@ export function CharacterNode({ id, data }: NodeProps & { data: CharacterNodeDat
     onPickLibraryImage,
     updateNodeData,
     runCharacterNode,
+    runCharacterAnglesNode,
     boardBusy,
   } = useProCanvasActions();
   const { m } = useLocale();
@@ -24,6 +25,7 @@ export function CharacterNode({ id, data }: NodeProps & { data: CharacterNodeDat
   const canGenerate = Boolean(
     (data.generatePrompt ?? "").trim() || (data.biography ?? "").trim(),
   );
+  const hasFace = Boolean(data.previewUrl);
 
   return (
     <>
@@ -63,6 +65,17 @@ export function CharacterNode({ id, data }: NodeProps & { data: CharacterNodeDat
             </span>
           ) : null}
         </button>
+        <button
+          type="button"
+          disabled={data.busy || boardBusy || !hasFace}
+          onClick={() => void runCharacterAnglesNode(id)}
+          className="mt-1.5 flex w-full items-center justify-center gap-2 rounded-lg border border-amber-500/40 bg-amber-950/30 px-3 py-1.5 text-[10px] font-semibold text-amber-100 disabled:opacity-40"
+        >
+          {cn.generateAngles}
+          <span className="rounded-full bg-black/25 px-1.5 py-0.5 text-[9px] font-medium">
+            {m.ultraCanvas.tokenBadge.replace("{n}", String(tokenCost))}
+          </span>
+        </button>
         <p className="mt-1.5 text-center text-[10px] text-slate-500">{cn.orUpload}</p>
         <label className="mt-1 block cursor-pointer rounded-lg border border-dashed border-amber-500/30 bg-amber-950/10 px-3 py-2.5 text-center text-xs text-slate-300 transition hover:border-amber-400/50 hover:bg-amber-950/20">
           {data.fileName || cn.uploadPlaceholder}
@@ -90,6 +103,14 @@ export function CharacterNode({ id, data }: NodeProps & { data: CharacterNodeDat
             src={data.previewUrl}
             alt=""
             className="mt-2 max-h-28 w-full rounded-lg object-contain ring-1 ring-amber-500/20"
+          />
+        ) : null}
+        {data.angleSheetUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={data.angleSheetUrl}
+            alt=""
+            className="mt-2 max-h-36 w-full rounded-lg object-contain ring-1 ring-amber-500/30"
           />
         ) : null}
         {data.error ? <p className="mt-2 text-xs text-red-400">{data.error}</p> : null}

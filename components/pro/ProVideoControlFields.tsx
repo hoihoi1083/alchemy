@@ -37,7 +37,7 @@ export function ProVideoControlFields({ value, onChange, showCamera = true }: Pr
     allowedResolutions.includes(value.resolution) ? value.resolution : maxVideoResolution;
 
   return (
-    <div className="mt-2 rounded-lg border border-violet-500/20 bg-slate-950/50">
+    <div className="nodrag nopan nowheel mt-2 rounded-lg border border-violet-500/20 bg-slate-950/50">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
