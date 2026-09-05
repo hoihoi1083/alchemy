@@ -1853,7 +1853,7 @@ export function PreGenerateSetupPanel({
                 </label>
               ) : null}
               </>
-            ) : showReferenceBrief && !isDesignedPoster && !isPartsPoster ? (
+            ) : showReferenceBrief && !isPosterTemplateStyle ? (
               <section className="pg-card">
                 <div className="pg-card-head">
                   <h3 className="pg-card-title">{pg.referenceTitle}</h3>
