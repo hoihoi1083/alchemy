@@ -4,6 +4,7 @@ type DialectOption = {
   id: string;
   title: string;
   description: string;
+  previewSrc?: string;
 };
 
 const CSS = `
@@ -16,13 +17,15 @@ const CSS = `
   .pdp-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 }
 .pdp-card {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  align-items: stretch;
+  gap: 0.25rem;
   border-radius: 0.65rem;
   border: 1.5px solid #e2e8f0;
   background: #fff;
-  padding: 0.45rem 0.5rem;
+  padding: 0.3rem 0.3rem 0.4rem;
   text-align: left;
   cursor: pointer;
   min-width: 0;
@@ -34,14 +37,28 @@ const CSS = `
   background: #faf5ff;
   box-shadow: 0 0 0 2px rgba(108, 59, 255, 0.14);
 }
+.pdp-preview {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 0.4rem;
+  overflow: hidden;
+  background: #f1f5f9;
+}
+.pdp-preview img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
 .pdp-title {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 700;
   line-height: 1.2;
   color: #0f172a;
 }
 .pdp-desc {
-  font-size: 0.6rem;
+  font-size: 0.58rem;
   line-height: 1.25;
   color: #64748b;
   display: -webkit-box;
@@ -83,12 +100,15 @@ export function PosterDialectPicker({
         <h4 className="text-xs font-semibold text-slate-800">{title}</h4>
       ) : null}
       <p className="pdp-hint">{hint}</p>
-      <div className="pdp-grid">
+      <div className="pdp-grid" role="listbox">
         <button
           type="button"
+          role="option"
+          aria-selected={autoSelected}
           className={`pdp-card${autoSelected ? " is-selected" : ""}`}
           onClick={onAuto}
         >
+          <span className="pdp-preview" aria-hidden />
           <span className="pdp-title">{autoLabel}</span>
           <span className="pdp-desc">Match product / copy</span>
         </button>
@@ -98,9 +118,18 @@ export function PosterDialectPicker({
             <button
               key={opt.id}
               type="button"
+              role="option"
+              aria-selected={selected}
+              title={opt.description}
               className={`pdp-card${selected ? " is-selected" : ""}`}
               onClick={() => onChange(opt.id)}
             >
+              <span className="pdp-preview">
+                {opt.previewSrc ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={opt.previewSrc} alt="" />
+                ) : null}
+              </span>
               <span className="pdp-title">{opt.title}</span>
               <span className="pdp-desc">{opt.description}</span>
             </button>

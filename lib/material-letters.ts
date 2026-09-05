@@ -11,6 +11,12 @@ export type MaterialLettersDialectId =
   (typeof MATERIAL_LETTERS_DIALECT_IDS)[number];
 export type MaterialLettersDialectPick = MaterialLettersDialectId | "auto";
 
+export function materialLettersDialectPreviewSrc(
+  id: MaterialLettersDialectId,
+): string {
+  return `/images/studio/schemes/material-letters/${id}.png?v=1`;
+}
+
 export function isMaterialLettersDialectId(
   v: string,
 ): v is MaterialLettersDialectId {

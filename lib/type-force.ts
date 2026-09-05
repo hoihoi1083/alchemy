@@ -10,6 +10,10 @@ export const TYPE_FORCE_DIALECT_IDS = [
 export type TypeForceDialectId = (typeof TYPE_FORCE_DIALECT_IDS)[number];
 export type TypeForceDialectPick = TypeForceDialectId | "auto";
 
+export function typeForceDialectPreviewSrc(id: TypeForceDialectId): string {
+  return `/images/studio/schemes/type-force/${id}.png?v=1`;
+}
+
 export function isTypeForceDialectId(v: string): v is TypeForceDialectId {
   return (TYPE_FORCE_DIALECT_IDS as readonly string[]).includes(v);
 }

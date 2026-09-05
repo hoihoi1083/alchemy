@@ -29,9 +29,18 @@ import {
   type ImagePosterUxStyleId,
 } from "@/lib/recipe-path-ux";
 import { PosterDialectPicker } from "@/components/studio/PosterDialectPicker";
-import { TYPE_FORCE_DIALECT_IDS } from "@/lib/type-force";
-import { MATERIAL_LETTERS_DIALECT_IDS } from "@/lib/material-letters";
-import { TYPE_INTERACTION_DIALECT_IDS } from "@/lib/type-interaction";
+import {
+  TYPE_FORCE_DIALECT_IDS,
+  typeForceDialectPreviewSrc,
+} from "@/lib/type-force";
+import {
+  MATERIAL_LETTERS_DIALECT_IDS,
+  materialLettersDialectPreviewSrc,
+} from "@/lib/material-letters";
+import {
+  TYPE_INTERACTION_DIALECT_IDS,
+  typeInteractionDialectPreviewSrc,
+} from "@/lib/type-interaction";
 import { setupContentPhaseIndex, studioPhasesForMode } from "@/lib/studio-phases";
 import { estimateImageJobTokens } from "@/lib/billing/estimate-job-tokens";
 import { STORYBOARD_SCENE_COUNTS } from "@/lib/ad-pack-preferences";
@@ -1763,6 +1772,7 @@ export function PreGenerateSetupPanel({
                       id,
                       title: pg.posterDialectTypeForce[id].title,
                       description: pg.posterDialectTypeForce[id].description,
+                      previewSrc: typeForceDialectPreviewSrc(id),
                     }))}
                   />
                 ) : null}
@@ -1783,6 +1793,7 @@ export function PreGenerateSetupPanel({
                       id,
                       title: pg.posterDialectMaterialLetters[id].title,
                       description: pg.posterDialectMaterialLetters[id].description,
+                      previewSrc: materialLettersDialectPreviewSrc(id),
                     }))}
                   />
                 ) : null}
@@ -1803,6 +1814,7 @@ export function PreGenerateSetupPanel({
                       id,
                       title: pg.posterDialectTypeInteraction[id].title,
                       description: pg.posterDialectTypeInteraction[id].description,
+                      previewSrc: typeInteractionDialectPreviewSrc(id),
                     }))}
                   />
                 ) : null}

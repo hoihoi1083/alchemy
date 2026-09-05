@@ -11,6 +11,12 @@ export type TypeInteractionDialectId =
   (typeof TYPE_INTERACTION_DIALECT_IDS)[number];
 export type TypeInteractionDialectPick = TypeInteractionDialectId | "auto";
 
+export function typeInteractionDialectPreviewSrc(
+  id: TypeInteractionDialectId,
+): string {
+  return `/images/studio/schemes/type-interaction/${id}.png?v=1`;
+}
+
 export function isTypeInteractionDialectId(
   v: string,
 ): v is TypeInteractionDialectId {
