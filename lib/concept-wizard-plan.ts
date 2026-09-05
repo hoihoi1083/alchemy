@@ -110,6 +110,26 @@ function styleSpecificRules(input: PlanConceptInput): string[] {
       "- JELLY 3D: visualMetaphor = single glossy translucent 3D object/number on clean ground, sparse brand type — no busy lifestyle scene.",
     ];
   }
+  if (input.visualStyleId === "type-force") {
+    return [
+      "- TYPE FORCE: visualMetaphor = giant in-scene word reacting to one force (sound / refraction / tension / shock); product and person stay intact.",
+    ];
+  }
+  if (input.visualStyleId === "material-letters") {
+    return [
+      "- MATERIAL LETTERS: visualMetaphor = giant letters built from down/denim/tent nylon/leather with real contact behavior.",
+    ];
+  }
+  if (input.visualStyleId === "type-interaction") {
+    return [
+      "- TYPE INTERACTION: visualMetaphor = type as fold / peel film / motion slices / mirror TRACE linked to the product.",
+    ];
+  }
+  if (input.visualStyleId === "product-lifestyle") {
+    return [
+      "- PRODUCT LIFESTYLE: visualMetaphor = product extreme foreground + model behind + rainbow refraction + oversized title and numeric selling points.",
+    ];
+  }
   if (input.visualStyleId === "service-promo" || input.visualStyleId === "pricing-offer") {
     return [
       "- SERVICE/OFFER graphic mode: visualMetaphor may suggest professional graphic mood — not required to be a literal photo scene.",

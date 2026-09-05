@@ -5,6 +5,7 @@ import { useLocale } from "@/components/LocaleProvider";
 import { BrandWebsitePanel } from "@/components/studio/BrandWebsitePanel";
 import { BrowseResumeActions } from "@/components/studio/BrowseResumeActions";
 import { ResearchReferencePostCard } from "@/components/studio/ResearchReferencePostCard";
+import { ResearchCoverThumb } from "@/components/content-research/ResearchCoverThumb";
 import { StoryboardShotMap } from "@/components/studio/StoryboardShotMap";
 import { useWizard } from "@/components/studio/WizardContext";
 import {
@@ -27,6 +28,10 @@ import {
   isImagePosterUxStyle,
   type ImagePosterUxStyleId,
 } from "@/lib/recipe-path-ux";
+import { PosterDialectPicker } from "@/components/studio/PosterDialectPicker";
+import { TYPE_FORCE_DIALECT_IDS } from "@/lib/type-force";
+import { MATERIAL_LETTERS_DIALECT_IDS } from "@/lib/material-letters";
+import { TYPE_INTERACTION_DIALECT_IDS } from "@/lib/type-interaction";
 import { setupContentPhaseIndex, studioPhasesForMode } from "@/lib/studio-phases";
 import { estimateImageJobTokens } from "@/lib/billing/estimate-job-tokens";
 import { STORYBOARD_SCENE_COUNTS } from "@/lib/ad-pack-preferences";
@@ -147,10 +152,14 @@ const PANEL_CSS = `
   overflow: hidden;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
 }
+.pg-intake-thumb > div,
 .pg-intake-thumb img {
   display: block;
   width: 100%;
   height: 100%;
+  object-fit: cover;
+}
+.pg-intake-thumb img {
   object-fit: cover;
 }
 .pg-intake-summary-body {
@@ -949,14 +958,23 @@ export function PreGenerateSetupPanel({
   const isGamingCover = wizard.visualStyleId === "gaming-cover";
   const isSportsBigWords = wizard.visualStyleId === "sports-big-words";
   const isJelly3d = wizard.visualStyleId === "jelly-3d";
+  const isTypeForce = wizard.visualStyleId === "type-force";
+  const isMaterialLetters = wizard.visualStyleId === "material-letters";
+  const isTypeInteraction = wizard.visualStyleId === "type-interaction";
+  const isProductLifestyle = wizard.visualStyleId === "product-lifestyle";
   const isLockedPosterStyle =
     isDesignedPoster ||
     isPartsPoster ||
     isGamingCover ||
     isSportsBigWords ||
-    isJelly3d;
+    isJelly3d ||
+    isTypeForce ||
+    isMaterialLetters ||
+    isTypeInteraction;
+  // product-lifestyle is not locked-single (carousel OK) but still skips reference borrow.
+  const isPosterTemplateStyle = isLockedPosterStyle || isProductLifestyle;
   const isQuickAd =
-    !isModelWear && !isLockedPosterStyle && !wizard.preferCompositionRemap;
+    !isModelWear && !isPosterTemplateStyle && !wizard.preferCompositionRemap;
   const isCompositionRemap = Boolean(wizard.preferCompositionRemap);
   const hasReference = Boolean(wizard.imageRefPhoto);
   /** Reference layout transfer overrides model-wear staging — lock to product path. */
@@ -974,7 +992,11 @@ export function PreGenerateSetupPanel({
     isPartsDirection ||
     isGamingCover ||
     isSportsBigWords ||
-    isJelly3d;
+    isJelly3d ||
+    isTypeForce ||
+    isMaterialLetters ||
+    isTypeInteraction ||
+    isProductLifestyle;
   const copyFocus = resolveConceptCopyFocus(
     wizard.visualStyleId,
     pg.conceptCopyFocus,
@@ -1184,6 +1206,10 @@ export function PreGenerateSetupPanel({
       | "gaming-cover"
       | "sports-big-words"
       | "jelly-3d"
+      | "type-force"
+      | "material-letters"
+      | "type-interaction"
+      | "product-lifestyle"
       | "remap",
   ) {
     if (path === "model" && hasReference) return;
@@ -1194,7 +1220,11 @@ export function PreGenerateSetupPanel({
       path === "parts" ||
       path === "gaming-cover" ||
       path === "sports-big-words" ||
-      path === "jelly-3d"
+      path === "jelly-3d" ||
+      path === "type-force" ||
+      path === "material-letters" ||
+      path === "type-interaction" ||
+      path === "product-lifestyle"
     ) {
       return;
     }
@@ -1206,13 +1236,14 @@ export function PreGenerateSetupPanel({
   function pickConceptDirection(
     path:
       | "info"
-      | "brand"
       | "pricing"
-      | "website"
       | "designed"
       | "gaming-cover"
       | "sports-big-words"
       | "jelly-3d"
+      | "type-force"
+      | "material-letters"
+      | "type-interaction"
       | "remap",
   ) {
     wizard.applyPrimaryPathConcept(path);
@@ -1220,7 +1251,10 @@ export function PreGenerateSetupPanel({
       path === "designed" ||
       path === "gaming-cover" ||
       path === "sports-big-words" ||
-      path === "jelly-3d"
+      path === "jelly-3d" ||
+      path === "type-force" ||
+      path === "material-letters" ||
+      path === "type-interaction"
     ) {
       return;
     }
@@ -1360,9 +1394,19 @@ export function PreGenerateSetupPanel({
 
         {intakePath ? (
           <div className="pg-intake-summary">
-            {intakePreviewSrc ? (
+            {intakePath === "research" && researchRef ? (
               <div className="pg-intake-thumb" aria-hidden>
-                {/* eslint-disable-next-line @next/next/no-img-element -- small summary thumb */}
+                <ResearchCoverThumb
+                  platform={researchRef.plan.platform}
+                  sourceCoverImageUrl={researchRef.angle.sourceCoverImageUrl}
+                  sourceImageUrls={researchRef.angle.sourceImageUrls}
+                  noCoverLabel=""
+                  className="h-full w-full rounded-[0.65rem]"
+                />
+              </div>
+            ) : intakePreviewSrc ? (
+              <div className="pg-intake-thumb" aria-hidden>
+                {/* eslint-disable-next-line @next/next/no-img-element -- scheme / template thumb */}
                 <img src={intakePreviewSrc} alt="" />
               </div>
             ) : null}
@@ -1456,18 +1500,29 @@ export function PreGenerateSetupPanel({
                           pg.stylePickerJellyDesc,
                           "jelly-3d",
                         ],
-                        ["brand", m.wizard.pathBrandTitle, m.wizard.pathBrandDesc, "brand-fit"],
+                        [
+                          "type-force",
+                          pg.stylePickerTypeForceLabel,
+                          pg.stylePickerTypeForceDesc,
+                          "type-force",
+                        ],
+                        [
+                          "material-letters",
+                          pg.stylePickerMaterialLettersLabel,
+                          pg.stylePickerMaterialLettersDesc,
+                          "material-letters",
+                        ],
+                        [
+                          "type-interaction",
+                          pg.stylePickerTypeInteractionLabel,
+                          pg.stylePickerTypeInteractionDesc,
+                          "type-interaction",
+                        ],
                         [
                           "pricing",
                           m.wizard.pathPricingTitle,
                           m.wizard.pathPricingDesc,
                           "pricing-offer",
-                        ],
-                        [
-                          "website",
-                          m.wizard.pathWebsiteTitle,
-                          m.wizard.pathWebsiteDesc,
-                          "website-launch",
                         ],
                       ] as const
                     ).map(([path, title, desc, styleId]) => {
@@ -1571,6 +1626,34 @@ export function PreGenerateSetupPanel({
                           isJelly3d,
                         ],
                         [
+                          "type-force",
+                          pg.stylePickerTypeForceLabel,
+                          pg.stylePickerTypeForceDesc,
+                          "type-force",
+                          isTypeForce,
+                        ],
+                        [
+                          "material-letters",
+                          pg.stylePickerMaterialLettersLabel,
+                          pg.stylePickerMaterialLettersDesc,
+                          "material-letters",
+                          isMaterialLetters,
+                        ],
+                        [
+                          "type-interaction",
+                          pg.stylePickerTypeInteractionLabel,
+                          pg.stylePickerTypeInteractionDesc,
+                          "type-interaction",
+                          isTypeInteraction,
+                        ],
+                        [
+                          "product-lifestyle",
+                          pg.stylePickerProductLifestyleLabel,
+                          pg.stylePickerProductLifestyleDesc,
+                          "product-lifestyle",
+                          isProductLifestyle,
+                        ],
+                        [
                           "model",
                           pg.stylePickerModelLabel,
                           modelWearLockedByReference
@@ -1638,6 +1721,66 @@ export function PreGenerateSetupPanel({
                   <p className="mt-2 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-xs leading-relaxed text-sky-950">
                     {m.wizard.partsPosterTechniqueIntro}
                   </p>
+                ) : null}
+                {isTypeForce ? (
+                  <PosterDialectPicker
+                    title={pg.posterDialectTypeForceTitle}
+                    hint={pg.posterDialectTypeForceHint}
+                    autoLabel={pg.posterDialectAuto}
+                    autoSelected={wizard.typeForceDialectPick === "auto"}
+                    onAuto={() => wizard.setTypeForceDialectPick("auto")}
+                    value={wizard.typeForceDialectPick}
+                    onChange={(id) =>
+                      wizard.setTypeForceDialectPick(
+                        id as typeof wizard.typeForceDialectPick,
+                      )
+                    }
+                    options={TYPE_FORCE_DIALECT_IDS.map((id) => ({
+                      id,
+                      title: pg.posterDialectTypeForce[id].title,
+                      description: pg.posterDialectTypeForce[id].description,
+                    }))}
+                  />
+                ) : null}
+                {isMaterialLetters ? (
+                  <PosterDialectPicker
+                    title={pg.posterDialectMaterialLettersTitle}
+                    hint={pg.posterDialectMaterialLettersHint}
+                    autoLabel={pg.posterDialectAuto}
+                    autoSelected={wizard.materialLettersDialectPick === "auto"}
+                    onAuto={() => wizard.setMaterialLettersDialectPick("auto")}
+                    value={wizard.materialLettersDialectPick}
+                    onChange={(id) =>
+                      wizard.setMaterialLettersDialectPick(
+                        id as typeof wizard.materialLettersDialectPick,
+                      )
+                    }
+                    options={MATERIAL_LETTERS_DIALECT_IDS.map((id) => ({
+                      id,
+                      title: pg.posterDialectMaterialLetters[id].title,
+                      description: pg.posterDialectMaterialLetters[id].description,
+                    }))}
+                  />
+                ) : null}
+                {isTypeInteraction ? (
+                  <PosterDialectPicker
+                    title={pg.posterDialectTypeInteractionTitle}
+                    hint={pg.posterDialectTypeInteractionHint}
+                    autoLabel={pg.posterDialectAuto}
+                    autoSelected={wizard.typeInteractionDialectPick === "auto"}
+                    onAuto={() => wizard.setTypeInteractionDialectPick("auto")}
+                    value={wizard.typeInteractionDialectPick}
+                    onChange={(id) =>
+                      wizard.setTypeInteractionDialectPick(
+                        id as typeof wizard.typeInteractionDialectPick,
+                      )
+                    }
+                    options={TYPE_INTERACTION_DIALECT_IDS.map((id) => ({
+                      id,
+                      title: pg.posterDialectTypeInteraction[id].title,
+                      description: pg.posterDialectTypeInteraction[id].description,
+                    }))}
+                  />
                 ) : null}
                 {modelWearLockedByReference ? (
                   <p className="mt-2 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-xs leading-relaxed text-violet-900">

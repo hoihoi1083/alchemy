@@ -15,6 +15,8 @@ export const PHYSICAL_ONLY_VISUAL_STYLE_IDS = new Set<VisualStyleId>([
   "ugc-presenter",
   // Exploded SKU diagram — logo-only does not work.
   "parts-poster",
+  // Lifestyle impact needs a real SKU in extreme foreground.
+  "product-lifestyle",
 ]);
 
 /** Service / website / plan styles — hidden in physical promotion mode. */
@@ -34,6 +36,9 @@ export const SHARED_VISUAL_STYLE_IDS = new Set<VisualStyleId>([
   "gaming-cover",
   "sports-big-words",
   "jelly-3d",
+  "type-force",
+  "material-letters",
+  "type-interaction",
   "brand-fit",
   "brand-campaign",
   "brand-video",
@@ -84,6 +89,9 @@ export function conceptStyleAllowsTextOnlyImage(id: VisualStyleId): boolean {
     id === "gaming-cover" ||
     id === "sports-big-words" ||
     id === "jelly-3d" ||
+    id === "type-force" ||
+    id === "material-letters" ||
+    id === "type-interaction" ||
     id === "warm-shop" ||
     id === "brand-fit" ||
     id === "brand-campaign"
@@ -98,6 +106,9 @@ export function conceptStyleRequiresHeadline(id: VisualStyleId): boolean {
     id === "gaming-cover" ||
     id === "sports-big-words" ||
     id === "jelly-3d" ||
+    id === "type-force" ||
+    id === "material-letters" ||
+    id === "type-interaction" ||
     id === "brand-fit" ||
     id === "brand-campaign"
   );

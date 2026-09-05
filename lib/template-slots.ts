@@ -138,6 +138,50 @@ export const TEMPLATE_CONFIG: Record<TemplateId, AdTemplateConfig> = {
       { id: "referenceVideo", onSetup: false, required: false },
     ],
   },
+  "type-force": {
+    defaultImageInputMode: "product-ad",
+    slots: [
+      { id: "product", onSetup: true, required: false },
+      { id: "headline", onSetup: true, required: true },
+      { id: "subline", onSetup: true, required: false },
+      { id: "business", onSetup: true, required: false },
+      { id: "productPhoto", onSetup: false, required: false },
+      { id: "referenceVideo", onSetup: false, required: false },
+    ],
+  },
+  "material-letters": {
+    defaultImageInputMode: "product-ad",
+    slots: [
+      { id: "product", onSetup: true, required: false },
+      { id: "headline", onSetup: true, required: true },
+      { id: "subline", onSetup: true, required: false },
+      { id: "business", onSetup: true, required: false },
+      { id: "productPhoto", onSetup: false, required: false },
+      { id: "referenceVideo", onSetup: false, required: false },
+    ],
+  },
+  "type-interaction": {
+    defaultImageInputMode: "product-ad",
+    slots: [
+      { id: "product", onSetup: true, required: false },
+      { id: "headline", onSetup: true, required: true },
+      { id: "subline", onSetup: true, required: false },
+      { id: "business", onSetup: true, required: false },
+      { id: "productPhoto", onSetup: false, required: false },
+      { id: "referenceVideo", onSetup: false, required: false },
+    ],
+  },
+  "product-lifestyle": {
+    defaultImageInputMode: "product-ad",
+    slots: [
+      { id: "product", onSetup: true, required: false },
+      { id: "headline", onSetup: true, required: true },
+      { id: "subline", onSetup: true, required: true },
+      { id: "business", onSetup: true, required: false },
+      { id: "productPhoto", onSetup: false, required: true },
+      { id: "referenceVideo", onSetup: false, required: false },
+    ],
+  },
   "brand-fit": {
     defaultImageInputMode: "product-ad",
     slots: [

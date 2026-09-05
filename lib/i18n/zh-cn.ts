@@ -1738,6 +1738,22 @@ export const zhCn = {
         description:
           "极简透亮 3D 数字或造型、干净地面、少量品牌字 — 锁定单张静图",
       },
+			"type-force": {
+				title: "字体受力",
+				description: "场景中大字受声波/折射/张力/冲击影响",
+			},
+			"material-letters": {
+				title: "材质大字",
+				description: "羽绒/牛仔/帐篷尼龙/皮革立体大字",
+			},
+			"type-interaction": {
+				title: "字体互动",
+				description: "折叠/揭膜/运动切片/镜面 TRACE",
+			},
+			"product-lifestyle": {
+				title: "生活方式产品",
+				description: "产品极前景 + 人物 + 彩虹光 + 数字卖点",
+			},
       "brand-fit": {
         title: "品牌风格分析",
         description: "贴网站 / IG → AI 分析品牌再出相符广告",
@@ -1799,6 +1815,11 @@ export const zhCn = {
       "gaming-cover": "",
       "sports-big-words": "",
       "jelly-3d": "",
+			"type-force": "",
+			"material-letters": "",
+			"type-interaction": "",
+			"product-lifestyle": "",
+
       "brand-fit": "",
       "brand-campaign": "",
       "brand-video": "",
@@ -1904,7 +1925,15 @@ export const zhCn = {
       "gaming-cover": "例如：低机位追击、场景内大字、HUD 点缀、保留产品身份…",
       "sports-big-words": "例如：巨大 SMASH、天空背景、HUD 数据、产品作英雄…",
       "jelly-3d": "例如：透亮果冻「1」、干净地面、少量品牌字、无杂乱场景…",
-      "brand-fit": "分析后会自动填；你可再微调产品或场景",
+      			"type-force":
+				"例如：耳机声波推开 LOUD、球拍冲击 SERVE…",
+			"material-letters":
+				"例如：羽绒 WARM 坐压、牛仔 BREAK 撕破、皮革 FOLD 掀角…",
+			"type-interaction":
+				"例如：折叠屏 FOLD、面膜 REVEAL 揭膜、跑鞋 MOVE 切片…",
+			"product-lifestyle":
+				"例如：耳机极前景、彩虹折射、30小时续航与1年保修…",
+"brand-fit": "分析后会自动填；你可再微调产品或场景",
       "brand-campaign": "可填 campaign 主题，例如：春季新品三张图讲清功效",
       "brand-video": "分析后会自动写动态 prompt；可补充运镜或氛围要求",
       "creative-video": "上面已填创意描述；呢度可补充运镜或氛围",
@@ -4334,6 +4363,23 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
       name: "果冻立体字",
       description: "极简透亮 3D — 干净地面与少量品牌字",
     },
+
+    "type-force": {
+      name: "字体受力海报",
+      description: "场景中大字受声波/折射/张力/冲击影响",
+    },
+    "material-letters": {
+      name: "材质大字海报",
+      description: "羽绒/牛仔/帐篷尼龙/皮革构成的立体大字",
+    },
+    "type-interaction": {
+      name: "字体互动海报",
+      description: "折叠/揭膜/运动切片/镜面 TRACE",
+    },
+    "product-lifestyle": {
+      name: "生活方式产品",
+      description: "产品极前景 + 人物 + 彩虹光 + 数字卖点",
+    },
     "brand-fit": {
       name: "品牌风格分析",
       description: "跟网站/社交品牌 DNA 出广告",
@@ -5284,7 +5330,47 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
 			stylePickerJellyLabel: "果冻 3D",
 			stylePickerJellyDesc:
 				"极简透亮果冻／玻璃 3D — 少量品牌字。",
-			stylePickerModelLabel: "模特佩戴／使用",
+						stylePickerTypeForceLabel: "字体受力",
+			stylePickerTypeForceDesc:
+				"大字存在场景中，受声波/折射/张力/冲击影响 — 人物与产品保持完整。",
+			stylePickerMaterialLettersLabel: "材质大字",
+			stylePickerMaterialLettersDesc:
+				"大字由羽绒/牛仔/帐篷尼龙/皮革构成，接触处有真实形变。",
+			stylePickerTypeInteractionLabel: "字体互动",
+			stylePickerTypeInteractionDesc:
+				"折叠/揭膜/运动切片/镜面 TRACE — 字体参与产品表达。",
+			stylePickerProductLifestyleLabel: "生活方式产品",
+			stylePickerProductLifestyleDesc:
+				"产品极前景 + 人物 + 彩虹折射光 + 大标题与数字卖点。",
+			posterDialectAuto: "自动 · 最合适",
+			posterDialectTypeForceTitle: "受力类型",
+			posterDialectTypeForceHint:
+				"力从哪产生、往哪传播、影响到哪结束 — 只扭曲笔画。",
+			posterDialectTypeForce: {
+				"sound-wave": { title: "声波", description: "耳机/音箱附近笔画被推开" },
+				refraction: { title: "折射", description: "玻璃局部错位与色散" },
+				tension: { title: "张力", description: "绳索拉扯字母接触点" },
+				"shock-wave": { title: "冲击波", description: "撞击点压缩/荡开笔画" },
+			},
+			posterDialectMaterialLettersTitle: "材质类型",
+			posterDialectMaterialLettersHint:
+				"字母由真实材质构成 — 接触行为比贴图更重要。",
+			posterDialectMaterialLetters: {
+				down: { title: "羽绒", description: "坐压处凹陷起皱" },
+				denim: { title: "牛仔", description: "破口毛边与拉力痕迹" },
+				"tent-nylon": { title: "帐篷尼龙", description: "风绳拉紧与金属气眼" },
+				leather: { title: "皮革", description: "掀角折痕与厚度高光" },
+			},
+			posterDialectTypeInteractionTitle: "互动类型",
+			posterDialectTypeInteractionHint:
+				"字体参与产品表达 — MOVE 时人物保持完整。",
+			posterDialectTypeInteraction: {
+				fold: { title: "折叠", description: "沿铰链多平面弯折" },
+				reveal: { title: "揭膜", description: "薄膜掀起带动文字" },
+				move: { title: "运动切片", description: "只切文字，人物完整" },
+				trace: { title: "镜面", description: "字母反射人物与瓶身" },
+			},
+stylePickerModelLabel: "模特佩戴／使用",
       stylePickerModelDesc: "画面有人佩戴或使用你的产品。",
       stylePickerModelLockedHint: "有参考图时不可用 — 会跟参考图版式。",
       stylePickerModelLockedNote:
@@ -5378,6 +5464,39 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
 					supportingLabel: "底部品牌行",
 					supportingPlaceholder: "短品牌句（可选）",
 				},
+				"type-force": {
+					title: "字体受力：填写受力大字",
+					body: "标题=受力大字。选择受力类型（或自动）。辅助=小字品牌/活动信息。",
+					hookLabel: "受力大字 / 标题",
+					hookPlaceholder: "例如 LOUD · SERVE · HOLD · VEIL",
+					supportingLabel: "辅助 / 活动信息",
+					supportingPlaceholder: "短品牌或活动行（可选）",
+				},
+				"material-letters": {
+					title: "材质大字：填写材质词",
+					body: "标题=材质大字。选择羽绒/牛仔/尼龙/皮革（或自动）。辅助=口号或规格。",
+					hookLabel: "材质大字 / 标题",
+					hookPlaceholder: "例如 WARM · BREAK · OPEN · FOLD",
+					supportingLabel: "口号 / 规格",
+					supportingPlaceholder: "例如 BUILT FOR THE COLD · 14 OZ",
+				},
+				"type-interaction": {
+					title: "字体互动：填写互动词",
+					body: "标题=折叠/揭膜/切片/镜面词。选择类型（或自动）。辅助=品牌/标语。",
+					hookLabel: "互动大字 / 标题",
+					hookPlaceholder: "例如 FOLD · REVEAL · MOVE · TRACE",
+					supportingLabel: "标语 / 规格",
+					supportingPlaceholder: "短辅助行（可选）",
+				},
+				"product-lifestyle": {
+					title: "生活方式产品：填写标题与数字卖点",
+					body: "必须上传产品。标题=超大标题。辅助=功能句 + 大数字卖点。",
+					hookLabel: "大标题",
+					hookPlaceholder: "例如 AIRPODS · 品牌名",
+					supportingLabel: "卖点（数字 + 短标签）",
+					supportingPlaceholder: "例如：\n30 小时续航\n1 年保修\n降噪",
+				},
+
 				brand: {
           title: "这个方向：重点是品牌风格",
           body: "有网站／社交请先做品牌分析。大字／标题和辅助句会跟品牌色调排版，不是价卡。",

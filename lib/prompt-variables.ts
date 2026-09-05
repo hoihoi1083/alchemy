@@ -792,9 +792,198 @@ export function buildJelly3dImagePrompt(vars: PromptVariables): string {
 	);
 }
 
+/**
+ * Type-force — giant in-scene word reacts to one physical force.
+ * Dialect: sound-wave | refraction | tension | shock-wave.
+ */
+export function buildTypeForceImagePrompt(
+	vars: PromptVariables,
+	dialectId: TypeForceDialectId,
+): string {
+	const product = vars.product?.trim() || "the product";
+	const headline = vars.headline?.trim() || "FORCE";
+	const subline = vars.subline?.trim() || "";
+	const offer = vars.offer?.trim() || "";
+	const bigWord =
+		headline.split(/\s+/).find((w) => /^[A-Za-z]{3,}$/.test(w))?.toUpperCase() ||
+		headline
+			.split(/[·|｜/\s]+/)
+			.map((w) => w.trim())
+			.find((w) => /^[A-Za-z]{3,}$/.test(w))
+			?.toUpperCase() ||
+		headline;
+	const titleRule =
+		vars.market === "en"
+			? `The giant force-word must read exactly "${bigWord}" (from hook "${headline}").`
+			: `Primary force-word exact from "${headline}" (prefer short energy word "${bigWord}" when Latin). Spell every character accurately.`;
+
+	return joinParts(
+		`Create a vertical TYPE-FORCE COMMERCIAL POSTER for ${product}.`,
+		`Look DNA: premium XHS/IG commercial still where TYPOGRAPHY EXISTS IN THE 3D SCENE and is affected by ONE concrete physical force — not a flat Canva overlay.`,
+		`IDENTITY LOCK: Keep exact product / person / logo from IMAGE 1 when attached. Subject and product stay structurally intact — only letter strokes deform under the force.`,
+		`POSTER GRAMMAR:`,
+		`1) Hero word as architecture: one enormous in-scene word spanning mid-frame. ${titleRule}`,
+		`2) Force source must be readable in-frame (headphones, glass/prism, ropes, impact point) matching the dialect.`,
+		typeForceDialectClause(dialectId),
+		subline
+			? `3) Small support lines only (exact): ${subline}.`
+			: "3) Small brand/event support lines only — never a second giant headline.",
+		offer ? `Optional tiny claim (exact): ${offer}.` : "",
+		vars.business ? `Brand cue small: ${vars.business}.` : "",
+		`4) Depth: letters layered with subject (some behind, some in front). Phone-readable hierarchy: force + giant word first.`,
+		`FORBIDDEN: flat sticker type; warping the whole background; melting the person; missing force origin; jelly/glass material letters; misspelled characters; social UI; watermark.`,
+		imageReferenceAnchorBlock(vars),
+		MARKET_HINTS[vars.market],
+		FRAMING_IMAGE[vars.framing],
+		vars.extra,
+		"Single 9:16 type-force poster still.",
+	);
+}
+
+/**
+ * Material letters — giant type built from real materials with contact behavior.
+ */
+export function buildMaterialLettersImagePrompt(
+	vars: PromptVariables,
+	dialectId: MaterialLettersDialectId,
+): string {
+	const product = vars.product?.trim() || "the brand";
+	const headline = vars.headline?.trim() || "FORM";
+	const subline = vars.subline?.trim() || "";
+	const offer = vars.offer?.trim() || "";
+	const bigWord =
+		headline.split(/\s+/).find((w) => /^[A-Za-z]{3,}$/.test(w))?.toUpperCase() ||
+		headline
+			.split(/[·|｜/\s]+/)
+			.map((w) => w.trim())
+			.find((w) => /^[A-Za-z]{3,}$/.test(w))
+			?.toUpperCase() ||
+		headline;
+	const titleRule =
+		vars.market === "en"
+			? `The giant material word must read exactly "${bigWord}" (from hook "${headline}").`
+			: `Primary material word exact from "${headline}" (prefer "${bigWord}" when Latin). Spell every character accurately.`;
+
+	return joinParts(
+		`Create a vertical MATERIAL-LETTERS COMMERCIAL POSTER for ${product}.`,
+		`Look DNA: giant letters MADE OF a real material with true physical behavior at contact — not a flat texture sticker, not jelly/glass type.`,
+		`IDENTITY LOCK: Keep exact product / model / logo from IMAGE 1 when attached. Product material cues should match the letter material when relevant.`,
+		`POSTER GRAMMAR:`,
+		`1) Giant material word as the hero object. ${titleRule}`,
+		materialLettersDialectClause(dialectId),
+		`2) One clear human or product interaction with the letters (sit, tear-through, rope tension, peel corner) matching the dialect.`,
+		subline
+			? `3) Small masthead / slogan / spec lines (exact): ${subline}.`
+			: "3) Small brand masthead + short slogan only — never a second giant word.",
+		offer ? `Optional tiny claim (exact): ${offer}.` : "",
+		vars.business ? `Brand cue: ${vars.business}.` : "",
+		`FORBIDDEN: plastic balloon type; jelly 3D glass letters; texture-only skin with no compression/fray/tension/fold behavior; warping the whole background; misspelled characters; social UI; watermark.`,
+		imageReferenceAnchorBlock(vars),
+		MARKET_HINTS[vars.market],
+		FRAMING_IMAGE[vars.framing],
+		vars.extra,
+		"Single 9:16 material-letters poster still.",
+	);
+}
+
+/**
+ * Type interaction — fold / reveal / move / trace product-linked type.
+ */
+export function buildTypeInteractionImagePrompt(
+	vars: PromptVariables,
+	dialectId: TypeInteractionDialectId,
+): string {
+	const product = vars.product?.trim() || "the product";
+	const headline = vars.headline?.trim() || "FOLD";
+	const subline = vars.subline?.trim() || "";
+	const offer = vars.offer?.trim() || "";
+	const bigWord =
+		headline.split(/\s+/).find((w) => /^[A-Za-z]{3,}$/.test(w))?.toUpperCase() ||
+		headline
+			.split(/[·|｜/\s]+/)
+			.map((w) => w.trim())
+			.find((w) => /^[A-Za-z]{3,}$/.test(w))
+			?.toUpperCase() ||
+		headline;
+	const titleRule =
+		vars.market === "en"
+			? `The interaction hero word must read exactly "${bigWord}" (from hook "${headline}").`
+			: `Primary interaction word exact from "${headline}" (prefer "${bigWord}" when Latin). Spell every character accurately.`;
+
+	return joinParts(
+		`Create a vertical TYPE-INTERACTION COMMERCIAL POSTER for ${product}.`,
+		`Look DNA: typography PARTICIPATES in product expression as a real material action (fold / peel / motion-slice / mirror) — not flat background type.`,
+		`IDENTITY LOCK: Keep exact product / person / logo from IMAGE 1 when attached.`,
+		`POSTER GRAMMAR:`,
+		`1) Hero word as the interaction material. ${titleRule}`,
+		typeInteractionDialectClause(dialectId),
+		subline
+			? `2) Small brand / tagline / specs (exact): ${subline}.`
+			: "2) Small brand + tagline only — never compete with the hero word.",
+		offer ? `Optional tiny claim (exact): ${offer}.` : "",
+		vars.business ? `Brand cue: ${vars.business}.` : "",
+		`FORBIDDEN: chopping the subject on MOVE; random melt without product logic; flat overlay type; missing product link; misspelled characters; social UI; watermark.`,
+		imageReferenceAnchorBlock(vars),
+		MARKET_HINTS[vars.market],
+		FRAMING_IMAGE[vars.framing],
+		vars.extra,
+		"Single 9:16 type-interaction poster still.",
+	);
+}
+
+/**
+ * Product lifestyle — SKU extreme front + model + rainbow light + big title/specs.
+ * Physical product stills; carousel-friendly (not locked-single).
+ */
+export function buildProductLifestyleImagePrompt(vars: PromptVariables): string {
+	const product = vars.product?.trim() || "the product";
+	const headline = vars.headline?.trim() || product;
+	const subline = vars.subline?.trim() || "";
+	const offer = vars.offer?.trim() || "";
+	const titleRule =
+		vars.market === "en"
+			? `Oversized title must use exact text: "${headline}".`
+			: `Oversized title must use exact characters from "${headline}". Spell every character accurately.`;
+
+	return joinParts(
+		`Create a vertical HIGH-IMPACT PRODUCT LIFESTYLE commercial still for ${product}.`,
+		`Look DNA: e-commerce hero / brand ad — Product extreme foreground + real person midground + scene + rainbow refraction light + copy placement. NOT a white info flyer, NOT a checklist poster.`,
+		`IDENTITY LOCK: Keep the EXACT product from IMAGE 1 (shape, color, logos, materials). Place it in EXTREME FOREGROUND — hand holding / presenting toward camera, sharp macro feel.`,
+		`POSTER GRAMMAR:`,
+		`1) Product: fills lower–front frame, closest to lens, sharp.`,
+		`2) Person: lifestyle model behind the product (softer focus OK), wearing or using the product when natural.`,
+		`3) Light: soft rainbow / prism refraction streaks or light leaks — modern tech-lifestyle energy.`,
+		`4) Type: ${titleRule} Huge brand/title layered with depth (may sit partly behind the head).`,
+		subline
+			? `5) Selling points IN FRAME (exact — prefer big numbers + short labels): ${subline}. Paint as integrated graphic callouts, not a bullet list card.`
+			: "5) Invent 2 numeric selling-point callouts only if the user gave no supporting copy — otherwise keep type sparse.",
+		offer ? `Optional tiny claim (exact): ${offer}.` : "",
+		vars.business ? `Brand cue small: ${vars.business}.` : "",
+		`6) Optional floating duplicate product accents in background bokeh. Phone-readable hierarchy: product → title → numbers.`,
+		`FORBIDDEN: flat Canva info checklist; missing foreground product; product only on a blank table with no person when lifestyle is requested; watermark; social UI; misspelled characters.`,
+		imageReferenceAnchorBlock(vars),
+		MARKET_HINTS[vars.market],
+		FRAMING_IMAGE[vars.framing],
+		vars.extra,
+		"Single 9:16 product-lifestyle still — carousel-ready DNA.",
+	);
+}
+
 import type { CampaignSlidePlan } from "@/lib/campaign-types";
 import { getVisualStyle, type VisualStyleId } from "@/lib/visual-styles";
 import type { SingleImagePlan } from "@/lib/single-image-plan";
+import {
+	typeForceDialectClause,
+	type TypeForceDialectId,
+} from "@/lib/type-force";
+import {
+	materialLettersDialectClause,
+	type MaterialLettersDialectId,
+} from "@/lib/material-letters";
+import {
+	typeInteractionDialectClause,
+	type TypeInteractionDialectId,
+} from "@/lib/type-interaction";
 
 export type ImagePromptMode =
   | "promo-ai"
@@ -806,6 +995,10 @@ export type ImagePromptMode =
 	| "gaming-cover"
 	| "sports-big-words"
 	| "jelly-3d"
+	| "type-force"
+	| "material-letters"
+	| "type-interaction"
+	| "product-lifestyle"
   | "brand-fit"
   | "model-wear"
 	| "ugc-presenter"
@@ -1460,6 +1653,10 @@ export function buildWizardImagePrompt(
 		compositionRemapDual?: boolean;
 		/** Keep hub / main character from the composition reference. */
 		compositionRemapKeepHero?: boolean;
+		/** Type-force / material-letters / type-interaction dialect (resolved, not auto). */
+		typeForceDialect?: TypeForceDialectId;
+		materialLettersDialect?: MaterialLettersDialectId;
+		typeInteractionDialect?: TypeInteractionDialectId;
 	},
 ): string {
 	const brandLogoImageIndex = promptOptions?.brandLogoImageIndex ?? null;
@@ -1577,6 +1774,57 @@ export function buildWizardImagePrompt(
 		return withLogo(
 			joinParts(
 				buildJelly3dImagePrompt(vars),
+				carouselSlideAvoidClause(
+					vars.framing,
+					vars.artStyle ?? DEFAULT_ART_STYLE,
+				),
+			),
+		);
+	}
+	if (mode === "type-force") {
+		const dialect = promptOptions?.typeForceDialect ?? "shock-wave";
+		return withLogo(
+			joinParts(
+				buildTypeForceImagePrompt(vars, dialect),
+				plan ? singlePlanBlock(plan) : "",
+				carouselSlideAvoidClause(
+					vars.framing,
+					vars.artStyle ?? DEFAULT_ART_STYLE,
+				),
+			),
+		);
+	}
+	if (mode === "material-letters") {
+		const dialect = promptOptions?.materialLettersDialect ?? "leather";
+		return withLogo(
+			joinParts(
+				buildMaterialLettersImagePrompt(vars, dialect),
+				plan ? singlePlanBlock(plan) : "",
+				carouselSlideAvoidClause(
+					vars.framing,
+					vars.artStyle ?? DEFAULT_ART_STYLE,
+				),
+			),
+		);
+	}
+	if (mode === "type-interaction") {
+		const dialect = promptOptions?.typeInteractionDialect ?? "fold";
+		return withLogo(
+			joinParts(
+				buildTypeInteractionImagePrompt(vars, dialect),
+				plan ? singlePlanBlock(plan) : "",
+				carouselSlideAvoidClause(
+					vars.framing,
+					vars.artStyle ?? DEFAULT_ART_STYLE,
+				),
+			),
+		);
+	}
+	if (mode === "product-lifestyle") {
+		return withLogo(
+			joinParts(
+				buildProductLifestyleImagePrompt(vars),
+				plan ? singlePlanBlock(plan) : "",
 				carouselSlideAvoidClause(
 					vars.framing,
 					vars.artStyle ?? DEFAULT_ART_STYLE,
@@ -1730,6 +1978,10 @@ function shouldUseConceptSocialPrompt(
 		visualStyleId === "gaming-cover" ||
 		visualStyleId === "sports-big-words" ||
 		visualStyleId === "jelly-3d" ||
+		visualStyleId === "type-force" ||
+		visualStyleId === "material-letters" ||
+		visualStyleId === "type-interaction" ||
+		visualStyleId === "product-lifestyle" ||
 		visualStyleId === "brand-fit" ||
 		visualStyleId === "brand-campaign" ||
 		visualStyleId === "pricing-offer" ||
@@ -1770,6 +2022,10 @@ export function resolveImagePromptMode(
 	if (visualStyleId === "gaming-cover") return "gaming-cover";
 	if (visualStyleId === "sports-big-words") return "sports-big-words";
 	if (visualStyleId === "jelly-3d") return "jelly-3d";
+	if (visualStyleId === "type-force") return "type-force";
+	if (visualStyleId === "material-letters") return "material-letters";
+	if (visualStyleId === "type-interaction") return "type-interaction";
+	if (visualStyleId === "product-lifestyle") return "product-lifestyle";
   if (creativeMode === "reference-concept") return "reference-concept";
 	if (shouldUseConceptCinematicPrompt(visualStyleId, context))
 		return "concept-cinematic";

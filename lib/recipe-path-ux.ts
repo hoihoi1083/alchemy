@@ -23,6 +23,10 @@ export const IMAGE_POSTER_UX_STYLE_IDS = [
   "gaming-cover",
   "sports-big-words",
   "jelly-3d",
+  "type-force",
+  "material-letters",
+  "type-interaction",
+  "product-lifestyle",
 ] as const;
 
 export type ImagePosterUxStyleId = (typeof IMAGE_POSTER_UX_STYLE_IDS)[number];
@@ -33,6 +37,9 @@ export const CONCEPT_IMAGE_POSTER_STYLE_IDS = [
   "gaming-cover",
   "sports-big-words",
   "jelly-3d",
+  "type-force",
+  "material-letters",
+  "type-interaction",
 ] as const;
 
 export type ConceptImagePosterStyleId =

@@ -4,8 +4,12 @@ import {
   buildDesignedPosterImagePrompt,
   buildGamingCoverImagePrompt,
   buildJelly3dImagePrompt,
+  buildMaterialLettersImagePrompt,
+  buildProductLifestyleImagePrompt,
   buildPromptVariables,
   buildSportsBigWordsImagePrompt,
+  buildTypeForceImagePrompt,
+  buildTypeInteractionImagePrompt,
   resolveImagePromptMode,
 } from "../lib/prompt-variables";
 import { shouldPlanSingleImageAd } from "../lib/single-image-plan";
@@ -23,13 +27,26 @@ describe("image poster prompt modes", () => {
     artStyle: "realistic",
   });
 
-  it("resolves gaming / sports / jelly modes from visualStyleId", () => {
+  it("resolves gaming / sports / jelly / type poster modes from visualStyleId", () => {
     assert.equal(resolveImagePromptMode("gaming-cover", "promo-ai"), "gaming-cover");
     assert.equal(
       resolveImagePromptMode("sports-big-words", "promo-ai"),
       "sports-big-words",
     );
     assert.equal(resolveImagePromptMode("jelly-3d", "promo-ai"), "jelly-3d");
+    assert.equal(resolveImagePromptMode("type-force", "promo-ai"), "type-force");
+    assert.equal(
+      resolveImagePromptMode("material-letters", "promo-ai"),
+      "material-letters",
+    );
+    assert.equal(
+      resolveImagePromptMode("type-interaction", "promo-ai"),
+      "type-interaction",
+    );
+    assert.equal(
+      resolveImagePromptMode("product-lifestyle", "promo-ai"),
+      "product-lifestyle",
+    );
   });
 
   it("builds prompts with style DNA keywords", () => {
@@ -46,15 +63,33 @@ describe("image poster prompt modes", () => {
     assert.match(jelly, /JELLY|translucent|glossy/i);
     assert.match(jelly, /IDENTITY LOCK|Do NOT rematerialize/i);
     assert.match(jelly, /JELLY WORDS|jelly\/glass 3D/i);
+
+    const force = buildTypeForceImagePrompt(vars, "shock-wave");
+    assert.match(force, /TYPE-FORCE|SHOCK WAVE/i);
+
+    const material = buildMaterialLettersImagePrompt(vars, "denim");
+    assert.match(material, /MATERIAL-LETTERS|DENIM/i);
+
+    const interaction = buildTypeInteractionImagePrompt(vars, "fold");
+    assert.match(interaction, /TYPE-INTERACTION|FOLD/i);
+
+    const lifestyle = buildProductLifestyleImagePrompt(vars);
+    assert.match(lifestyle, /PRODUCT LIFESTYLE|EXTREME FOREGROUND/i);
   });
 
   it("locks single still and planner policy", () => {
     assert.equal(isLockedSinglePosterStyle("gaming-cover"), true);
     assert.equal(isLockedSinglePosterStyle("sports-big-words"), true);
     assert.equal(isLockedSinglePosterStyle("jelly-3d"), true);
+    assert.equal(isLockedSinglePosterStyle("type-force"), true);
+    assert.equal(isLockedSinglePosterStyle("material-letters"), true);
+    assert.equal(isLockedSinglePosterStyle("type-interaction"), true);
+    assert.equal(isLockedSinglePosterStyle("product-lifestyle"), false);
     assert.equal(shouldPlanSingleImageAd("gaming-cover"), true);
     assert.equal(shouldPlanSingleImageAd("sports-big-words"), true);
     assert.equal(shouldPlanSingleImageAd("jelly-3d"), false);
+    assert.equal(shouldPlanSingleImageAd("type-force"), false);
+    assert.equal(shouldPlanSingleImageAd("product-lifestyle"), false);
   });
 
   it("paints designed-poster hook/tagline verbatim and does not invent slogans", () => {

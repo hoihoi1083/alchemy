@@ -16,6 +16,10 @@ export type VisualStyleId =
   | "gaming-cover"
   | "sports-big-words"
   | "jelly-3d"
+  | "type-force"
+  | "material-letters"
+  | "type-interaction"
+  | "product-lifestyle"
   | "brand-fit"
   | "brand-campaign"
   | "brand-video"
@@ -65,7 +69,10 @@ export function isLockedSinglePosterStyle(id: VisualStyleId): boolean {
     id === "parts-poster" ||
     id === "gaming-cover" ||
     id === "sports-big-words" ||
-    id === "jelly-3d"
+    id === "jelly-3d" ||
+    id === "type-force" ||
+    id === "material-letters" ||
+    id === "type-interaction"
   );
 }
 
@@ -96,6 +103,10 @@ const IMAGE_FIRST_VISUAL_STYLE_IDS = new Set<VisualStyleId>([
   "gaming-cover",
   "sports-big-words",
   "jelly-3d",
+  "type-force",
+  "material-letters",
+  "type-interaction",
+  "product-lifestyle",
   "brand-fit",
   "brand-campaign",
   "model-wear",
@@ -266,6 +277,42 @@ export const VISUAL_STYLES: VisualStyleDef[] = [
     usesCompositor: false,
     promptHint:
       "Minimal jelly/glass 3D hero: single glossy translucent object or number on a clean ground, soft colored shadow, sparse brand type — no busy lifestyle scene.",
+  },
+  {
+    id: "type-force",
+    icon: "🌊",
+    previewSrc: visualPreview("type-force"),
+    templateId: "type-force",
+    usesCompositor: false,
+    promptHint:
+      "Commercial poster where giant type exists in the scene and reacts to one real force: sound wave, glass refraction, rope tension, or impact shock — product/person stay intact.",
+  },
+  {
+    id: "material-letters",
+    icon: "🧵",
+    previewSrc: visualPreview("material-letters"),
+    templateId: "material-letters",
+    usesCompositor: false,
+    promptHint:
+      "Giant letters built from a real material (down, denim, tent nylon, or leather) with true material behavior at contact — not flat texture stickers.",
+  },
+  {
+    id: "type-interaction",
+    icon: "🪞",
+    previewSrc: visualPreview("type-interaction"),
+    templateId: "type-interaction",
+    usesCompositor: false,
+    promptHint:
+      "Type as product expression: fold across hinge planes, peel as film, slice for motion (subject whole), or mirror-chrome TRACE reflections.",
+  },
+  {
+    id: "product-lifestyle",
+    icon: "✨",
+    previewSrc: visualPreview("product-lifestyle"),
+    templateId: "product-lifestyle",
+    usesCompositor: false,
+    promptHint:
+      "High-impact lifestyle product still: SKU extreme foreground in hand, model behind, rainbow refraction light, oversized title + numeric selling points in frame — not a flat info flyer.",
   },
   {
     id: "brand-fit",

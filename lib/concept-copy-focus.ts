@@ -19,6 +19,10 @@ export type ConceptCopyFocusMap = {
   "gaming-cover": ConceptCopyFocusEntry;
   "sports-big-words": ConceptCopyFocusEntry;
   "jelly-3d": ConceptCopyFocusEntry;
+  "type-force": ConceptCopyFocusEntry;
+  "material-letters": ConceptCopyFocusEntry;
+  "type-interaction": ConceptCopyFocusEntry;
+  "product-lifestyle": ConceptCopyFocusEntry;
   brand: ConceptCopyFocusEntry;
   pricing: ConceptCopyFocusEntry;
   website: ConceptCopyFocusEntry;
@@ -43,6 +47,14 @@ export function conceptCopyFocusKeyForStyle(
       return "sports-big-words";
     case "jelly-3d":
       return "jelly-3d";
+    case "type-force":
+      return "type-force";
+    case "material-letters":
+      return "material-letters";
+    case "type-interaction":
+      return "type-interaction";
+    case "product-lifestyle":
+      return "product-lifestyle";
     case "brand-fit":
     case "brand-campaign":
       return "brand";
@@ -80,6 +92,11 @@ export function conceptCopyFieldEmphasis(
     case "gaming-cover":
     case "sports-big-words":
     case "jelly-3d":
+    case "type-force":
+    case "material-letters":
+    case "type-interaction":
+      return { hook: true, supporting: true, offer: false };
+    case "product-lifestyle":
       return { hook: true, supporting: true, offer: false };
     case "brand":
     case "website":

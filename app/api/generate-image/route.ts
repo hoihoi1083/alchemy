@@ -29,6 +29,18 @@ import {
 } from "@/lib/prompt-variables";
 import { parseMotionPosterDialectPick } from "@/lib/motion-poster-dialects";
 import {
+  parseTypeForceDialectPick,
+  resolveTypeForceDialect,
+} from "@/lib/type-force";
+import {
+  parseMaterialLettersDialectPick,
+  resolveMaterialLettersDialect,
+} from "@/lib/material-letters";
+import {
+  parseTypeInteractionDialectPick,
+  resolveTypeInteractionDialect,
+} from "@/lib/type-interaction";
+import {
   buildSocialDripStillPrompt,
   heuristicSocialDripPlan,
   normalizeSocialDripPlan,
@@ -1140,8 +1152,31 @@ export async function POST(request: Request) {
               referenceImageMode: strategy.referenceImageMode,
               compositionRemapDual: strategy.useDualImage,
               compositionRemapKeepHero: strategy.layers.subjects === "keep",
+              typeForceDialect: resolveTypeForceDialect(
+                parseTypeForceDialectPick(
+                  String(formData.get("type_force_dialect") ?? ""),
+                ),
+                [productName, headline, vars.extra].filter(Boolean).join(" "),
+              ),
+              materialLettersDialect: resolveMaterialLettersDialect(
+                parseMaterialLettersDialectPick(
+                  String(formData.get("material_letters_dialect") ?? ""),
+                ),
+                [productName, headline, vars.extra].filter(Boolean).join(" "),
+              ),
+              typeInteractionDialect: resolveTypeInteractionDialect(
+                parseTypeInteractionDialectPick(
+                  String(formData.get("type_interaction_dialect") ?? ""),
+                ),
+                [productName, headline, vars.extra].filter(Boolean).join(" "),
+              ),
             },
           );
+      const posterDialectStyle =
+        visualStyle === "type-force" ||
+        visualStyle === "material-letters" ||
+        visualStyle === "type-interaction" ||
+        visualStyle === "product-lifestyle";
       // Prefer server-built prompt when we ran the single-still planner (teaching-quality DNA).
       // Composition remap / layout-transfer: server has dual shell+SKU strategy — never trust a
       // stale client prompt that was rebuilt without compositionRemapDual / product lock.
@@ -1155,7 +1190,8 @@ export async function POST(request: Request) {
         handThrowScene ||
         webBoundaryBreak ||
         productExplode ||
-        bulletProductElevate
+        bulletProductElevate ||
+        posterDialectStyle
           ? builtPrompt
           : singleImagePlan
             ? builtPrompt

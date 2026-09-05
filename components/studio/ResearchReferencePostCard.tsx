@@ -5,6 +5,7 @@ import type { ContentResearchApplyRef } from "@/lib/content-research-apply";
 import { applyResearchPostReferences } from "@/lib/content-research-apply-refs";
 import { wantsResearchVideoReference } from "@/lib/content-research-infer";
 import type { StudioWizardValue } from "@/hooks/useStudioWizard";
+import { ResearchCoverThumb } from "@/components/content-research/ResearchCoverThumb";
 
 type ResearchRefStrings = {
   researchRefTitle: string;
@@ -108,10 +109,6 @@ export function ResearchReferencePostCard({
     wizard.referenceIsVideo && wizard.referencePreviewUrl
       ? wizard.referencePreviewUrl
       : null;
-  const previewImageUrl =
-    !loadVideo && wizard.imageRefPreviewUrl
-      ? wizard.imageRefPreviewUrl
-      : coverUrl || null;
 
   return (
     <section className={cardClassName}>
@@ -125,11 +122,23 @@ export function ResearchReferencePostCard({
         </p>
       ) : null}
       <div className="mt-3 flex flex-wrap gap-3">
-        {previewImageUrl ? (
+        {previewVideoUrl ? null : wizard.imageRefPreviewUrl && !loadVideo ? (
           <div className="h-24 w-20 shrink-0 overflow-hidden rounded-lg border border-violet-200 bg-slate-50">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={previewImageUrl} alt="" className="h-full w-full object-cover" />
+            <img
+              src={wizard.imageRefPreviewUrl}
+              alt=""
+              className="h-full w-full object-cover"
+            />
           </div>
+        ) : coverUrl ? (
+          <ResearchCoverThumb
+            platform={researchApply.plan.platform}
+            sourceCoverImageUrl={angle.sourceCoverImageUrl}
+            sourceImageUrls={angle.sourceImageUrls}
+            noCoverLabel=""
+            className="h-24 w-20"
+          />
         ) : null}
         {previewVideoUrl ? (
           <video

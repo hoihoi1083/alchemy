@@ -6,6 +6,7 @@ import { VideoSettingsPanel } from "@/components/VideoSettingsPanel";
 import { BrandWebsitePanel } from "@/components/studio/BrandWebsitePanel";
 import { BrowseResumeActions } from "@/components/studio/BrowseResumeActions";
 import { ResearchReferencePostCard } from "@/components/studio/ResearchReferencePostCard";
+import { ResearchCoverThumb } from "@/components/content-research/ResearchCoverThumb";
 import { useWizard } from "@/components/studio/WizardContext";
 import { estimateVideoPipelineTokens } from "@/lib/billing/estimate-job-tokens";
 import { bulletProductElevateDurationOptions } from "@/lib/bullet-product-elevate";
@@ -1194,21 +1195,15 @@ export function PreVideoSetupPanel({
 
         {intakePath === "research" && researchApply ? (
           <div className="mt-4 flex gap-3 rounded-2xl border border-violet-200 bg-violet-50/60 p-3">
-            {researchApply.angle.sourceCoverImageUrl ||
-            researchApply.angle.sourceImageUrls?.[0] ? (
-              <div className="h-16 w-12 shrink-0 overflow-hidden rounded-lg border border-violet-200 bg-white">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={
-                    researchApply.angle.sourceCoverImageUrl ||
-                    researchApply.angle.sourceImageUrls?.[0] ||
-                    ""
-                  }
-                  alt=""
-                  className="h-full w-full object-cover"
-                />
-              </div>
-            ) : null}
+            <div className="h-16 w-12 shrink-0 overflow-hidden rounded-lg border border-violet-200 bg-white">
+              <ResearchCoverThumb
+                platform={researchApply.plan.platform}
+                sourceCoverImageUrl={researchApply.angle.sourceCoverImageUrl}
+                sourceImageUrls={researchApply.angle.sourceImageUrls}
+                noCoverLabel=""
+                className="h-full w-full rounded-lg"
+              />
+            </div>
             <div className="min-w-0 text-sm">
               <p className="font-semibold text-violet-950">{pg.fromIntakeTitle}</p>
               <p className="text-violet-900">{pg.fromIntakePathResearch}</p>

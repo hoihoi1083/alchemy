@@ -34,12 +34,26 @@ export const INTAKE_TEMPLATE_EXCLUDED_VISUAL_STYLES = new Set<VisualStyleId>([
 ]);
 
 /**
- * Product (physical) image Template — hide brand paths that belong
- * elsewhere (brand-fit / brand-campaign = brand-analysis flows).
+ * Product (physical) image Template — hide brand-analysis flows and soft-mood
+ * looks that confuse the catalog (prefer clear poster layouts instead).
  */
 export const INTAKE_TEMPLATE_EXCLUDED_PHYSICAL_IMAGE = new Set<VisualStyleId>([
   "brand-fit",
   "brand-campaign",
+  "warm-shop",
+]);
+
+/**
+ * Concept image Template — keep a tight poster set:
+ * selling-points / designed / gaming / sports / jelly / pricing.
+ * Drop soft-mood + brand-analyze + website-launch (unclear vs poster layouts).
+ */
+export const INTAKE_TEMPLATE_EXCLUDED_CONCEPT_IMAGE = new Set<VisualStyleId>([
+  "warm-shop",
+  "service-promo",
+  "brand-fit",
+  "brand-campaign",
+  "website-launch",
 ]);
 
 export type IntakeTemplateCard = {
@@ -90,6 +104,11 @@ export function intakeImageVisualStyleIds(
       (id) =>
         promotionMode !== "physical" ||
         !INTAKE_TEMPLATE_EXCLUDED_PHYSICAL_IMAGE.has(id),
+    )
+    .filter(
+      (id) =>
+        promotionMode !== "concept" ||
+        !INTAKE_TEMPLATE_EXCLUDED_CONCEPT_IMAGE.has(id),
     );
 }
 

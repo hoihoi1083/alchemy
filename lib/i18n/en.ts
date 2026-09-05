@@ -2165,6 +2165,26 @@ export const en = {
 				description:
 					"Real product/mascot stays locked — headline becomes IG jelly/glass 3D type",
       },
+			"type-force": {
+				title: "Type force",
+				description:
+					"Giant in-scene type reacts to sound, refraction, tension, or shock",
+			},
+			"material-letters": {
+				title: "Material letters",
+				description:
+					"Giant letters built from down, denim, tent nylon, or leather",
+			},
+			"type-interaction": {
+				title: "Type interaction",
+				description:
+					"Type as fold, peel, motion slices, or mirror TRACE with the product",
+			},
+			"product-lifestyle": {
+				title: "Product lifestyle",
+				description:
+					"SKU extreme front + model + rainbow light + big title and numeric specs",
+			},
       "brand-fit": {
         title: "Brand style analysis",
 				description:
@@ -2239,6 +2259,11 @@ export const en = {
 			"gaming-cover": "",
 			"sports-big-words": "",
 			"jelly-3d": "",
+			"type-force": "",
+			"material-letters": "",
+			"type-interaction": "",
+			"product-lifestyle": "",
+
       "brand-fit": "",
       "brand-campaign": "",
       "brand-video": "",
@@ -2365,7 +2390,15 @@ export const en = {
 				"e.g. huge SMASH word, lime HUD, match-point scoreboard…",
 			"jelly-3d":
 				"e.g. glossy translucent 1, lime-to-blue gradient, ONE YEAR type…",
-			"brand-fit":
+						"type-force":
+				"e.g. LOUD sound ripples from headphones, SERVE shock at racket…",
+			"material-letters":
+				"e.g. puffer WARM sit-in, denim BREAK tear-through, leather FOLD peel…",
+			"type-interaction":
+				"e.g. fold phone FOLD planes, mask REVEAL peel, shoe MOVE slices…",
+			"product-lifestyle":
+				"e.g. earbuds extreme front, rainbow refraction, 30h + 1yr callouts…",
+"brand-fit":
 				"Filled after analysis; tweak product or scene if needed",
 			"brand-campaign":
 				"Optional campaign theme, e.g. spring launch — 3 posts on benefits",
@@ -4155,6 +4188,54 @@ export const en = {
 				],
 				output: ["One jelly-type poster: real subject + jelly words"],
 			},
+			"type-force": {
+				need: [
+					"Headline (giant force-word)",
+					"Product or subject photo recommended",
+				],
+				attention: [
+					"One force dialect — only letter strokes deform",
+					"Force origin must be visible in-frame",
+					"Single still — not carousel",
+				],
+				output: ["One type-force poster still"],
+			},
+			"material-letters": {
+				need: [
+					"Headline (material word)",
+					"Product / model photo recommended",
+				],
+				attention: [
+					"Material behavior at contact > flat texture",
+					"Single still — not carousel",
+				],
+				output: ["One material-letters poster still"],
+			},
+			"type-interaction": {
+				need: [
+					"Headline (interaction word)",
+					"Product photo recommended",
+				],
+				attention: [
+					"Fold / reveal / move / trace linked to the product",
+					"On MOVE, subject stays whole",
+					"Single still — not carousel",
+				],
+				output: ["One type-interaction poster still"],
+			},
+			"product-lifestyle": {
+				need: [
+					"Product photo (extreme foreground)",
+					"Headline (big title)",
+					"Selling points with numbers",
+				],
+				attention: [
+					"Product in hand front + model behind + rainbow light",
+					"Single or carousel — same DNA, different specs per slide",
+					"Product path only",
+				],
+				output: ["Lifestyle product still(s) — single or carousel"],
+			},
 			"vacuum-inflate": {
 				need: [
 					"Product photo — or logo / mascot still (concept)",
@@ -5250,6 +5331,27 @@ export const en = {
 			name: "Jelly 3D poster",
 			description:
 				"Minimal glossy translucent 3D hero — soft shadow, sparse brand type",
+    },
+
+    "type-force": {
+      name: "Type force poster",
+      description:
+        "Giant in-scene type reacts to sound, refraction, tension, or shock",
+    },
+    "material-letters": {
+      name: "Material letters poster",
+      description:
+        "Giant letters built from down, denim, tent nylon, or leather",
+    },
+    "type-interaction": {
+      name: "Type interaction poster",
+      description:
+        "Type as fold, peel, motion slices, or mirror TRACE with the product",
+    },
+    "product-lifestyle": {
+      name: "Product lifestyle",
+      description:
+        "Product extreme front + model + rainbow light + numeric selling points",
     },
     "brand-fit": {
       name: "Brand style analysis",
@@ -6355,6 +6457,82 @@ export const en = {
 			stylePickerJellyLabel: "Jelly 3D",
 			stylePickerJellyDesc:
 				"Real product/mascot stays locked — headline becomes IG-dramatic jelly/glass 3D type.",
+			stylePickerTypeForceLabel: "Type force",
+			stylePickerTypeForceDesc:
+				"Giant in-scene word reacts to sound, refraction, tension, or shock — product stays intact.",
+			stylePickerMaterialLettersLabel: "Material letters",
+			stylePickerMaterialLettersDesc:
+				"Giant letters made of down, denim, tent nylon, or leather with real contact behavior.",
+			stylePickerTypeInteractionLabel: "Type interaction",
+			stylePickerTypeInteractionDesc:
+				"Type as fold, peel film, motion slices, or mirror TRACE — linked to the product.",
+			stylePickerProductLifestyleLabel: "Product lifestyle",
+			stylePickerProductLifestyleDesc:
+				"Product extreme front + model + rainbow light + big title and numeric selling points.",
+			posterDialectAuto: "Auto · best fit",
+			posterDialectTypeForceTitle: "Force dialect",
+			posterDialectTypeForceHint:
+				"Where the force starts, how it spreads, and where it stops — only letter strokes deform.",
+			posterDialectTypeForce: {
+				"sound-wave": {
+					title: "Sound wave",
+					description: "Ripples from headphones / speaker push nearby strokes",
+				},
+				refraction: {
+					title: "Refraction",
+					description: "Glass / prism locally bends and fringes the word",
+				},
+				tension: {
+					title: "Tension",
+					description: "Ropes pull and stretch letters at contact points",
+				},
+				"shock-wave": {
+					title: "Shock wave",
+					description: "Impact compresses / ripples letters near the hit",
+				},
+			},
+			posterDialectMaterialLettersTitle: "Material dialect",
+			posterDialectMaterialLettersHint:
+				"Letters are built from the material — behavior at contact matters more than texture alone.",
+			posterDialectMaterialLetters: {
+				down: {
+					title: "Down / puffer",
+					description: "Quilted volume; compresses where someone sits",
+				},
+				denim: {
+					title: "Denim",
+					description: "Fray and tear marks where the model breaks through",
+				},
+				"tent-nylon": {
+					title: "Tent nylon",
+					description: "Ripstop + guy lines pull fabric taut",
+				},
+				leather: {
+					title: "Leather",
+					description: "Thick pebbled leather; peel / fold a corner",
+				},
+			},
+			posterDialectTypeInteractionTitle: "Interaction dialect",
+			posterDialectTypeInteractionHint:
+				"Type participates in product expression — keep the subject intact where required.",
+			posterDialectTypeInteraction: {
+				fold: {
+					title: "Fold",
+					description: "Letters bend across hinge planes",
+				},
+				reveal: {
+					title: "Reveal",
+					description: "Thin film peels; type rides the peel layer",
+				},
+				move: {
+					title: "Move",
+					description: "Type sliced into bands — subject stays whole",
+				},
+				trace: {
+					title: "Trace",
+					description: "Mirror letters reflect model, bottle, light",
+				},
+			},
 			stylePickerModelLabel: "Model wear / use",
 			stylePickerModelDesc:
 				"Person wearing or using your product in the shot.",
@@ -6451,6 +6629,39 @@ export const en = {
 					hookPlaceholder: "e.g. ONE YEAR · 一週年",
 					supportingLabel: "Second jelly line",
 					supportingPlaceholder: "Short jelly subline (optional)",
+				},
+				"type-force": {
+					title: "For type force: fill the giant force-word",
+					body: "Hook = the exact huge word the force acts on. Pick a force dialect (or Auto). Supporting = small brand/event lines only.",
+					hookLabel: "Force word / headline",
+					hookPlaceholder: "e.g. LOUD · SERVE · HOLD · VEIL",
+					supportingLabel: "Support / event lines",
+					supportingPlaceholder: "Short brand or event lines (optional)",
+				},
+				"material-letters": {
+					title: "For material letters: fill the material word",
+					body: "Hook = the giant word built from the material. Pick down / denim / nylon / leather (or Auto). Supporting = masthead, slogan, or specs.",
+					hookLabel: "Material word / headline",
+					hookPlaceholder: "e.g. WARM · BREAK · OPEN · FOLD",
+					supportingLabel: "Slogan / specs",
+					supportingPlaceholder: "e.g. BUILT FOR THE COLD · 14 OZ",
+				},
+				"type-interaction": {
+					title: "For type interaction: fill the interaction word",
+					body: "Hook = the word that folds, peels, slices, or mirrors. Pick a dialect (or Auto). Supporting = brand / tagline / specs.",
+					hookLabel: "Interaction word / headline",
+					hookPlaceholder: "e.g. FOLD · REVEAL · MOVE · TRACE",
+					supportingLabel: "Tagline / specs",
+					supportingPlaceholder: "Short support lines (optional)",
+				},
+				"product-lifestyle": {
+					title: "For product lifestyle: fill title + selling-point numbers",
+					body: "Upload the product (required). Hook = oversized title. Supporting = feature line + big numbers (battery, warranty…) painted in frame.",
+					hookLabel: "Big title",
+					hookPlaceholder: "e.g. AIRPODS · brand name",
+					supportingLabel: "Selling points (numbers + short labels)",
+					supportingPlaceholder:
+						"e.g.\n30 hours battery\n1 year warranty\nNoise cancellation",
 				},
 				brand: {
 					title: "For this direction: brand style comes first",

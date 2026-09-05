@@ -147,6 +147,31 @@ export function PrimaryPathsPanel({ variant, showCinematicExtras = false }: Prop
             onClick={() => applyPrimaryPathConcept("jelly-3d")}
           />
           <PathButton
+            active={visualStyleId === "type-force"}
+            title={m.microWizard.preGenerateSetup.stylePickerTypeForceLabel}
+            description={m.microWizard.preGenerateSetup.stylePickerTypeForceDesc}
+            previewSrc={getVisualStyle("type-force").previewSrc}
+            onClick={() => applyPrimaryPathConcept("type-force")}
+          />
+          <PathButton
+            active={visualStyleId === "material-letters"}
+            title={m.microWizard.preGenerateSetup.stylePickerMaterialLettersLabel}
+            description={
+              m.microWizard.preGenerateSetup.stylePickerMaterialLettersDesc
+            }
+            previewSrc={getVisualStyle("material-letters").previewSrc}
+            onClick={() => applyPrimaryPathConcept("material-letters")}
+          />
+          <PathButton
+            active={visualStyleId === "type-interaction"}
+            title={m.microWizard.preGenerateSetup.stylePickerTypeInteractionLabel}
+            description={
+              m.microWizard.preGenerateSetup.stylePickerTypeInteractionDesc
+            }
+            previewSrc={getVisualStyle("type-interaction").previewSrc}
+            onClick={() => applyPrimaryPathConcept("type-interaction")}
+          />
+          <PathButton
             active={visualStyleId === "brand-fit"}
             title={m.wizard.pathBrandTitle}
             description={m.wizard.pathBrandDesc}
@@ -268,6 +293,48 @@ export function PrimaryPathsPanel({ variant, showCinematicExtras = false }: Prop
                 description={m.microWizard.preGenerateSetup.stylePickerJellyDesc}
                 previewSrc={getVisualStyle("jelly-3d").previewSrc}
                 onClick={() => applyPrimaryPath("jelly-3d")}
+              />
+              <PathButton
+                active={visualStyleId === "type-force"}
+                title={m.microWizard.preGenerateSetup.stylePickerTypeForceLabel}
+                description={
+                  m.microWizard.preGenerateSetup.stylePickerTypeForceDesc
+                }
+                previewSrc={getVisualStyle("type-force").previewSrc}
+                onClick={() => applyPrimaryPath("type-force")}
+              />
+              <PathButton
+                active={visualStyleId === "material-letters"}
+                title={
+                  m.microWizard.preGenerateSetup.stylePickerMaterialLettersLabel
+                }
+                description={
+                  m.microWizard.preGenerateSetup.stylePickerMaterialLettersDesc
+                }
+                previewSrc={getVisualStyle("material-letters").previewSrc}
+                onClick={() => applyPrimaryPath("material-letters")}
+              />
+              <PathButton
+                active={visualStyleId === "type-interaction"}
+                title={
+                  m.microWizard.preGenerateSetup.stylePickerTypeInteractionLabel
+                }
+                description={
+                  m.microWizard.preGenerateSetup.stylePickerTypeInteractionDesc
+                }
+                previewSrc={getVisualStyle("type-interaction").previewSrc}
+                onClick={() => applyPrimaryPath("type-interaction")}
+              />
+              <PathButton
+                active={visualStyleId === "product-lifestyle"}
+                title={
+                  m.microWizard.preGenerateSetup.stylePickerProductLifestyleLabel
+                }
+                description={
+                  m.microWizard.preGenerateSetup.stylePickerProductLifestyleDesc
+                }
+                previewSrc={getVisualStyle("product-lifestyle").previewSrc}
+                onClick={() => applyPrimaryPath("product-lifestyle")}
               />
               <PathButton
                 active={visualStyleId === "model-wear"}

@@ -75,13 +75,14 @@ describe("intake-template-styles", () => {
     assert.equal(intakeShowsStoryboardRecipes("image-only"), false);
   });
 
-  it("excludes paper/storyboard/UGC and product-only brand from image Template", () => {
+  it("excludes paper/storyboard/UGC and soft/brand looks from product image Template", () => {
     const ids = intakeImageVisualStyleIds("image-only", "physical");
     assert.ok(!ids.includes("paper-layout"));
     assert.ok(!ids.includes("storyboard-video"));
     assert.ok(!ids.includes("ugc-presenter"));
     assert.ok(!ids.includes("brand-fit"));
     assert.ok(!ids.includes("brand-campaign"));
+    assert.ok(!ids.includes("warm-shop"));
     assert.ok(ids.includes("product"));
     assert.ok(ids.includes("info-poster"));
     assert.ok(ids.includes("designed-poster"));
@@ -90,9 +91,20 @@ describe("intake-template-styles", () => {
     assert.ok(INTAKE_TEMPLATE_EXCLUDED_VISUAL_STYLES.has("ugc-presenter"));
   });
 
-  it("hides UGC from concept image Template too", () => {
+  it("hides UGC and soft/brand looks from concept image Template", () => {
     const ids = intakeImageVisualStyleIds("image-only", "concept");
     assert.ok(!ids.includes("ugc-presenter"));
+    assert.ok(!ids.includes("warm-shop"));
+    assert.ok(!ids.includes("service-promo"));
+    assert.ok(!ids.includes("brand-fit"));
+    assert.ok(!ids.includes("brand-campaign"));
+    assert.ok(!ids.includes("website-launch"));
+    assert.ok(ids.includes("info-poster"));
+    assert.ok(ids.includes("designed-poster"));
+    assert.ok(ids.includes("gaming-cover"));
+    assert.ok(ids.includes("sports-big-words"));
+    assert.ok(ids.includes("jelly-3d"));
+    assert.ok(ids.includes("pricing-offer"));
   });
 
   it("builds concept video Template cards with explosion unbox", () => {
@@ -168,6 +180,7 @@ describe("intake-template-styles", () => {
     assert.ok(!cards.some((c) => c.id === "ugc-presenter"));
     assert.ok(!cards.some((c) => c.id === "brand-fit"));
     assert.ok(!cards.some((c) => c.id === "brand-campaign"));
+    assert.ok(!cards.some((c) => c.id === "warm-shop"));
   });
 });
 

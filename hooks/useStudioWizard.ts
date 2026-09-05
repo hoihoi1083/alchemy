@@ -214,6 +214,21 @@ import {
 	type ImpactPosterTonePick,
 } from "@/lib/impact-poster";
 import {
+	parseTypeForceDialectPick,
+	resolveTypeForceDialect,
+	type TypeForceDialectPick,
+} from "@/lib/type-force";
+import {
+	parseMaterialLettersDialectPick,
+	resolveMaterialLettersDialect,
+	type MaterialLettersDialectPick,
+} from "@/lib/material-letters";
+import {
+	parseTypeInteractionDialectPick,
+	resolveTypeInteractionDialect,
+	type TypeInteractionDialectPick,
+} from "@/lib/type-interaction";
+import {
 	consumeLandingRecipe,
 	isBlockbusterLandingRecipe,
 	isH3ShotLandingRecipe,
@@ -1007,6 +1022,12 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		useState<ImpactPosterTonePick>("auto");
 	const [impactPosterEffectPick, setImpactPosterEffectPickState] =
 		useState<ImpactPosterEffectPick>("auto");
+	const [typeForceDialectPick, setTypeForceDialectPickState] =
+		useState<TypeForceDialectPick>("auto");
+	const [materialLettersDialectPick, setMaterialLettersDialectPickState] =
+		useState<MaterialLettersDialectPick>("auto");
+	const [typeInteractionDialectPick, setTypeInteractionDialectPickState] =
+		useState<TypeInteractionDialectPick>("auto");
 	const [storyboardRecipeId, setStoryboardRecipeIdState] =
 		useState<StoryboardRecipeId>("classic-tvc");
 	const [compositionPresetId, setCompositionPresetId] =
@@ -1118,6 +1139,16 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			}
 			return next;
 		});
+	}
+
+	function setTypeForceDialectPick(next: TypeForceDialectPick) {
+		setTypeForceDialectPickState(parseTypeForceDialectPick(next));
+	}
+	function setMaterialLettersDialectPick(next: MaterialLettersDialectPick) {
+		setMaterialLettersDialectPickState(parseMaterialLettersDialectPick(next));
+	}
+	function setTypeInteractionDialectPick(next: TypeInteractionDialectPick) {
+		setTypeInteractionDialectPickState(parseTypeInteractionDialectPick(next));
 	}
 
 	const motionPosterAspectRef = useRef(imageAspectRatio);
@@ -1618,6 +1649,20 @@ export function useStudioWizard(promotionMode: PromotionMode) {
           brandProfile,
           visualStyleId,
 							brandKit,
+							{
+								typeForceDialect: resolveTypeForceDialect(
+									typeForceDialectPick,
+									[product, headline, conceptIdea].filter(Boolean).join(" "),
+								),
+								materialLettersDialect: resolveMaterialLettersDialect(
+									materialLettersDialectPick,
+									[product, headline, conceptIdea].filter(Boolean).join(" "),
+								),
+								typeInteractionDialect: resolveTypeInteractionDialect(
+									typeInteractionDialectPick,
+									[product, headline, conceptIdea].filter(Boolean).join(" "),
+								),
+							},
 						),
 			);
 			setNegativePrompt(
@@ -2901,13 +2946,18 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			| "parts-poster"
 			| "gaming-cover"
 			| "sports-big-words"
-			| "jelly-3d",
+			| "jelly-3d"
+			| "type-force"
+			| "material-letters"
+			| "type-interaction"
+			| "product-lifestyle",
 	) {
 		if (workflowMode === "video-only") setWorkflowMode("image-only");
 		selectVisualStyle(styleId);
 		setImageCreativeMode("promo-ai");
 		setImageOutputMode("single");
 		// Locked posters ignore reference layout/style borrow.
+		// product-lifestyle is not locked-single but still skips reference borrow on pick.
 		setImageRefPhoto(null);
 		setUserReferenceBrief(null);
 		setResearchImageAnalysis(null);
@@ -2923,6 +2973,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			| "gaming-cover"
 			| "sports-big-words"
 			| "jelly-3d"
+			| "type-force"
+			| "material-letters"
+			| "type-interaction"
+			| "product-lifestyle"
 			| "storyboard"
 			| "reference"
 			| "ugc-presenter"
@@ -2973,6 +3027,24 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			applyLockedImagePosterStyle("jelly-3d");
       return;
     }
+		if (path === "type-force") {
+			applyLockedImagePosterStyle("type-force");
+			return;
+		}
+		if (path === "material-letters") {
+			applyLockedImagePosterStyle("material-letters");
+			return;
+		}
+		if (path === "type-interaction") {
+			applyLockedImagePosterStyle("type-interaction");
+			return;
+		}
+		if (path === "product-lifestyle") {
+			applyLockedImagePosterStyle("product-lifestyle");
+			// Allow carousel later — unlock from forced single if user changes output.
+			setImageOutputMode("single");
+			return;
+		}
     if (path === "model") {
 			if (workflowMode === "video-only") setWorkflowMode("image-only");
       selectVisualStyle("model-wear");
@@ -3012,6 +3084,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			| "gaming-cover"
 			| "sports-big-words"
 			| "jelly-3d"
+			| "type-force"
+			| "material-letters"
+			| "type-interaction"
 			| "remap",
 	) {
     setError(null);
@@ -3034,7 +3109,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			path === "designed" ||
 			path === "gaming-cover" ||
 			path === "sports-big-words" ||
-			path === "jelly-3d"
+			path === "jelly-3d" ||
+			path === "type-force" ||
+			path === "material-letters" ||
+			path === "type-interaction"
 		) {
 			const styleId = path === "designed" ? "designed-poster" : path;
 			selectVisualStyle(styleId);
@@ -6254,6 +6332,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       fd.set("workflow_mode", workflowMode);
 			fd.set("promotion_mode", promotionMode);
 			fd.set("image_text_mode", imageTextMode);
+			fd.set("type_force_dialect", typeForceDialectPick);
+			fd.set("material_letters_dialect", materialLettersDialectPick);
+			fd.set("type_interaction_dialect", typeInteractionDialectPick);
       fd.set("aspect_ratio", effectiveImageAspectRatio);
 			fd.set(
 				"endpoint",
@@ -12277,6 +12358,12 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		setImpactPosterTonePick,
 		impactPosterEffectPick,
 		setImpactPosterEffectPick,
+		typeForceDialectPick,
+		setTypeForceDialectPick,
+		materialLettersDialectPick,
+		setMaterialLettersDialectPick,
+		typeInteractionDialectPick,
+		setTypeInteractionDialectPick,
 		impactPosterCanAutoStill,
 		storyboardRecipeId,
 		setStoryboardRecipeId,

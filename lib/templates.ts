@@ -12,6 +12,10 @@ export type TemplateId =
   | "gaming-cover"
   | "sports-big-words"
   | "jelly-3d"
+  | "type-force"
+  | "material-letters"
+  | "type-interaction"
+  | "product-lifestyle"
   | "brand-fit"
   | "brand-campaign"
   | "brand-video"
@@ -274,6 +278,98 @@ export const TEMPLATES: MarketingTemplate[] = [
       "Gentle push-in on jelly 3D hero, soft light shimmer, preserve type",
     negativePrompt:
       "busy lifestyle scene, cluttered flyer, neon cyberpunk city, watermark, social UI, blurry illegible text, low quality, speech, voiceover",
+  },
+  {
+    id: "type-force",
+    name: "Type force poster",
+    description:
+      "Giant in-scene type reacting to sound, refraction, tension, or shock.",
+    icon: "🌊",
+    aspectRatio: "9:16",
+    duration: "6",
+    fast: true,
+    resolution: "480p",
+    motionStrength: 28,
+    camera: "Slow Push In",
+    avoidOnScreenText: false,
+    generateAudio: true,
+    imagePromptTemplate:
+      "Vertical type-force poster for {{product}}. Huge in-scene word from {{headline}}. Support {{subline}}. Type reacts to one physical force; product and subject stay intact.",
+    imageEditPromptTemplate:
+      "Create a type-force poster. Keep exact {{product}} from IMAGE 1 when present. One huge in-scene word from {{headline}}. Support {{subline}}. Apply one clear force to typography only.",
+    videoPromptTemplate:
+      "Gentle push-in on type-force poster, preserve giant typography",
+    negativePrompt:
+      "flat overlay type, whole-frame liquify, warped subject, Canva flyer, watermark, social UI, misspelled characters, low quality, speech, voiceover",
+  },
+  {
+    id: "material-letters",
+    name: "Material letters poster",
+    description:
+      "Giant letters made of down, denim, tent nylon, or leather with real behavior.",
+    icon: "🧵",
+    aspectRatio: "9:16",
+    duration: "6",
+    fast: true,
+    resolution: "480p",
+    motionStrength: 26,
+    camera: "Slow Push In",
+    avoidOnScreenText: false,
+    generateAudio: true,
+    imagePromptTemplate:
+      "Vertical material-letters poster for {{product}}. Giant material word from {{headline}}. Support {{subline}}. Real material behavior at contact points.",
+    imageEditPromptTemplate:
+      "Create a material-letters poster. Keep exact {{product}} from IMAGE 1 when present. Giant letters from {{headline}} in a real material. Support {{subline}}.",
+    videoPromptTemplate:
+      "Gentle push-in on material letters poster, preserve fabric detail",
+    negativePrompt:
+      "flat texture sticker type, plastic balloon letters, jelly glass type, warped whole background, watermark, social UI, misspelled characters, low quality, speech, voiceover",
+  },
+  {
+    id: "type-interaction",
+    name: "Type interaction poster",
+    description:
+      "Type as fold, peel film, motion slices, or mirror TRACE — product-linked.",
+    icon: "🪞",
+    aspectRatio: "9:16",
+    duration: "6",
+    fast: true,
+    resolution: "480p",
+    motionStrength: 28,
+    camera: "Slow Push In",
+    avoidOnScreenText: false,
+    generateAudio: true,
+    imagePromptTemplate:
+      "Vertical type-interaction poster for {{product}}. Hero word from {{headline}}. Support {{subline}}. Type participates in product expression (fold/peel/slice/mirror).",
+    imageEditPromptTemplate:
+      "Create a type-interaction poster. Keep exact {{product}} from IMAGE 1 when present. Hero word from {{headline}}. Support {{subline}}. Keep subject intact where required.",
+    videoPromptTemplate:
+      "Gentle push-in on type-interaction poster, preserve type material",
+    negativePrompt:
+      "flat background type, chopped subject on MOVE, random melt, Canva flyer, watermark, social UI, misspelled characters, low quality, speech, voiceover",
+  },
+  {
+    id: "product-lifestyle",
+    name: "Product lifestyle",
+    description:
+      "Product extreme front + model + rainbow light + big title and numeric selling points.",
+    icon: "✨",
+    aspectRatio: "9:16",
+    duration: "6",
+    fast: true,
+    resolution: "480p",
+    motionStrength: 28,
+    camera: "Slow Push In",
+    avoidOnScreenText: false,
+    generateAudio: true,
+    imagePromptTemplate:
+      "Vertical high-impact lifestyle product ad for {{product}}. Title {{headline}}. Selling points {{subline}}. Product extreme foreground, model behind, rainbow refraction, oversized title + numeric specs.",
+    imageEditPromptTemplate:
+      "Create a lifestyle product impact still. Keep exact {{product}} from IMAGE 1 in extreme foreground (hand/hold). Title {{headline}}. Selling points {{subline}}. Model behind, rainbow light, big numbers in frame.",
+    videoPromptTemplate:
+      "Gentle push-in on lifestyle product still, preserve title and specs",
+    negativePrompt:
+      "flat white info flyer, bullet checklist poster, missing product foreground, watermark, social UI, misspelled characters, low quality, speech, voiceover",
   },
   {
     id: "brand-fit",
