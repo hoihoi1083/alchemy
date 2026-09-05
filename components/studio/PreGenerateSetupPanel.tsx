@@ -1722,9 +1722,33 @@ export function PreGenerateSetupPanel({
                     {m.wizard.partsPosterTechniqueIntro}
                   </p>
                 ) : null}
+                {modelWearLockedByReference ? (
+                  <p className="mt-2 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-xs leading-relaxed text-violet-900">
+                    {pg.stylePickerModelLockedNote}
+                  </p>
+                ) : null}
+              </section>
+            ) : null}
+
+            {isTypeForce || isMaterialLetters || isTypeInteraction ? (
+              <section className="pg-card">
+                <div className="pg-card-title-row">
+                  <span className="pg-card-icon">
+                    <SectionIcon kind="options" />
+                  </span>
+                  <div className="min-w-0">
+                    <h3 className="pg-card-title">
+                      {isTypeForce
+                        ? pg.posterDialectTypeForceTitle
+                        : isMaterialLetters
+                          ? pg.posterDialectMaterialLettersTitle
+                          : pg.posterDialectTypeInteractionTitle}
+                    </h3>
+                  </div>
+                </div>
                 {isTypeForce ? (
                   <PosterDialectPicker
-                    title={pg.posterDialectTypeForceTitle}
+                    title=""
                     hint={pg.posterDialectTypeForceHint}
                     autoLabel={pg.posterDialectAuto}
                     autoSelected={wizard.typeForceDialectPick === "auto"}
@@ -1744,7 +1768,7 @@ export function PreGenerateSetupPanel({
                 ) : null}
                 {isMaterialLetters ? (
                   <PosterDialectPicker
-                    title={pg.posterDialectMaterialLettersTitle}
+                    title=""
                     hint={pg.posterDialectMaterialLettersHint}
                     autoLabel={pg.posterDialectAuto}
                     autoSelected={wizard.materialLettersDialectPick === "auto"}
@@ -1764,7 +1788,7 @@ export function PreGenerateSetupPanel({
                 ) : null}
                 {isTypeInteraction ? (
                   <PosterDialectPicker
-                    title={pg.posterDialectTypeInteractionTitle}
+                    title=""
                     hint={pg.posterDialectTypeInteractionHint}
                     autoLabel={pg.posterDialectAuto}
                     autoSelected={wizard.typeInteractionDialectPick === "auto"}
@@ -1781,11 +1805,6 @@ export function PreGenerateSetupPanel({
                       description: pg.posterDialectTypeInteraction[id].description,
                     }))}
                   />
-                ) : null}
-                {modelWearLockedByReference ? (
-                  <p className="mt-2 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-xs leading-relaxed text-violet-900">
-                    {pg.stylePickerModelLockedNote}
-                  </p>
                 ) : null}
               </section>
             ) : null}

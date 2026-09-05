@@ -77,9 +77,11 @@ export function PosterDialectPicker({
   onChange: (id: string) => void;
 }) {
   return (
-    <div className="mt-3">
+    <div className={title ? "mt-3" : "mt-2"}>
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
-      <h4 className="text-xs font-semibold text-slate-800">{title}</h4>
+      {title ? (
+        <h4 className="text-xs font-semibold text-slate-800">{title}</h4>
+      ) : null}
       <p className="pdp-hint">{hint}</p>
       <div className="pdp-grid">
         <button
