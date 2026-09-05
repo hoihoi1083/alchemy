@@ -3147,35 +3147,42 @@ export function PreGenerateSetupPanel({
               <p className="mt-4 text-sm font-bold text-violet-800">{m.wizard.sidePanelTipsTitle}</p>
               <div className="mt-2.5 space-y-3.5">
                 {(isImagePosterUxStyle(wizard.visualStyleId)
-                  ? [
-                      {
-                        tip: {
-                          title: m.wizard.recipePathUxTitles.need,
-                          body: m.wizard.recipePathUx[
-                            wizard.visualStyleId as ImagePosterUxStyleId
-                          ].need.join(" · "),
+                  ? (() => {
+                      const ux =
+                        m.wizard.recipePathUx[
+                          wizard.visualStyleId as ImagePosterUxStyleId
+                        ];
+                      if (!ux?.need?.length) {
+                        return [
+                          { tip: pg.tip1, icon: "photo" as const },
+                          { tip: pg.tip2, icon: "hook" as const },
+                          { tip: pg.tip3, icon: "grid" as const },
+                        ];
+                      }
+                      return [
+                        {
+                          tip: {
+                            title: m.wizard.recipePathUxTitles.need,
+                            body: ux.need.join(" · "),
+                          },
+                          icon: "photo" as const,
                         },
-                        icon: "photo" as const,
-                      },
-                      {
-                        tip: {
-                          title: m.wizard.recipePathUxTitles.attention,
-                          body: m.wizard.recipePathUx[
-                            wizard.visualStyleId as ImagePosterUxStyleId
-                          ].attention.join(" · "),
+                        {
+                          tip: {
+                            title: m.wizard.recipePathUxTitles.attention,
+                            body: ux.attention.join(" · "),
+                          },
+                          icon: "hook" as const,
                         },
-                        icon: "hook" as const,
-                      },
-                      {
-                        tip: {
-                          title: m.wizard.recipePathUxTitles.output,
-                          body: m.wizard.recipePathUx[
-                            wizard.visualStyleId as ImagePosterUxStyleId
-                          ].output.join(" · "),
+                        {
+                          tip: {
+                            title: m.wizard.recipePathUxTitles.output,
+                            body: ux.output.join(" · "),
+                          },
+                          icon: "grid" as const,
                         },
-                        icon: "grid" as const,
-                      },
-                    ]
+                      ];
+                    })()
                   : isConcept
                   ? [
                       { tip: pg.conceptTip1, icon: "photo" as const },
