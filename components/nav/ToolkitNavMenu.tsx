@@ -80,6 +80,13 @@ export function ToolkitNavMenu({ variant = "light", triggerClassName }: ToolkitN
         icon: "edit",
       },
       {
+        id: "edit-image-2",
+        href: "/edit-image-2",
+        label: L.toolSmartLayersTitle,
+        description: L.toolSmartLayersDesc,
+        icon: "edit",
+      },
+      {
         id: "captions",
         href: "/captions",
         label: L.toolCaptionsTitle,
@@ -179,6 +186,9 @@ export function ToolkitNavMobileLinks({
       </Link>
       <Link href="/edit-image" className={subClass} onClick={onNavigate}>
         {L.toolEditTitle}
+      </Link>
+      <Link href="/edit-image-2" className={subClass} onClick={onNavigate}>
+        {L.toolSmartLayersTitle}
       </Link>
       <Link href="/captions" className={subClass} onClick={onNavigate}>
         {L.toolCaptionsTitle}

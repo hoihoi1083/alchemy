@@ -55,6 +55,7 @@ export function estimateRunAllTokens(
           resolution: v.resolution,
           duration: v.duration,
           fast: v.fast,
+          videoEngine: v.videoEngine,
         });
         break;
       }
@@ -64,6 +65,7 @@ export function estimateRunAllTokens(
           resolution: v.resolution,
           duration: v.duration,
           fast: v.fast,
+          videoEngine: v.videoEngine,
         });
         break;
       }

@@ -5,6 +5,7 @@ import type {
   UltraBackgroundPreset,
   UltraLightingPreset,
   UltraVideoAspectRatio,
+  UltraVideoEngine,
 } from "@/lib/ultra-pro-controls";
 
 export type ProCanvasNodeKind =
@@ -73,6 +74,8 @@ export type VideoNodeData = CanvasNodeBase & {
   generateAudio?: boolean;
   artStyleId?: ArtStyleId;
   motionStrength?: number;
+  /** Default MiniMax H3; optional Seedance. */
+  videoEngine?: UltraVideoEngine;
 };
 
 export type TextVideoNodeData = CanvasNodeBase & {
@@ -87,6 +90,7 @@ export type TextVideoNodeData = CanvasNodeBase & {
   generateAudio?: boolean;
   artStyleId?: ArtStyleId;
   motionStrength?: number;
+  videoEngine?: UltraVideoEngine;
 };
 
 export type TextNodeData = CanvasNodeBase & {
@@ -236,6 +240,8 @@ export type BrainstormNodeData = CanvasNodeBase & {
 export type SpliceNodeData = CanvasNodeBase & {
   kind: "splice";
   videoUrl?: string;
+  /** Explicit cut order of upstream video / textVideo node ids. */
+  clipOrder?: string[];
 };
 
 export type LightingModNodeData = CanvasNodeBase & {

@@ -4,13 +4,28 @@ import {
   DEFAULT_ART_STYLE,
   type ArtStyleId,
 } from "@/lib/art-style";
-import { TOKEN_COST, estimateVideoTokens } from "@/lib/billing/token-costs";
+import {
+  TOKEN_COST,
+  estimateH3Tokens,
+  estimateVideoTokens,
+} from "@/lib/billing/token-costs";
 import type { ImageResolutionCap } from "@/lib/billing/entitlements";
 import type { ImageAspectRatio } from "@/lib/image-aspect-ratio";
 
 export type UltraVideoAspectRatio = "9:16" | "16:9" | "1:1";
 
+/** Canvas video engine — H3 first (matches Studio default); Seedance optional. */
+export type UltraVideoEngine = "minimax-h3" | "seedance";
+
+export const ULTRA_VIDEO_ENGINES: UltraVideoEngine[] = ["minimax-h3", "seedance"];
+
 export const ULTRA_VIDEO_ASPECT_RATIOS: UltraVideoAspectRatio[] = ["9:16", "16:9", "1:1"];
+
+/** Seedance clip lengths offered in Ultra video pro controls. */
+export const ULTRA_SEEDANCE_DURATIONS = ["4", "6", "8", "10"] as const;
+
+/** MiniMax H3 floor is 5s (API clamps 5–15). */
+export const ULTRA_H3_DURATIONS = ["5", "6", "8", "10", "12"] as const;
 
 export const ULTRA_VIDEO_CAMERA_AUTO = "Auto";
 
@@ -38,6 +53,28 @@ export function ultraVideoCameraForApi(camera: string | undefined): string {
   return isUltraVideoCameraAuto(camera) ? "" : (camera ?? "").trim();
 }
 
+export function parseUltraVideoEngine(
+  raw: string | null | undefined,
+): UltraVideoEngine {
+  const v = (raw ?? "").trim().toLowerCase();
+  if (v === "seedance") return "seedance";
+  return "minimax-h3";
+}
+
+/** Clamp duration string for the selected engine. */
+export function clampUltraVideoDuration(
+  duration: string,
+  engine: UltraVideoEngine,
+): string {
+  const n = Math.round(Number(duration));
+  if (engine === "minimax-h3") {
+    const sec = Number.isFinite(n) ? Math.min(15, Math.max(5, n)) : 8;
+    return String(sec);
+  }
+  const sec = Number.isFinite(n) ? Math.min(12, Math.max(4, n)) : 8;
+  return String(sec);
+}
+
 export type UltraVideoProControls = {
   aspectRatio: UltraVideoAspectRatio;
   camera: string;
@@ -48,6 +85,8 @@ export type UltraVideoProControls = {
   artStyleId: ArtStyleId;
   /** 0–100 optional motion intensity hint for Seedance. */
   motionStrength?: number;
+  /** Default MiniMax H3 — switch to Seedance for reference-reel style. */
+  videoEngine: UltraVideoEngine;
 };
 
 export const DEFAULT_ULTRA_VIDEO_PRO: UltraVideoProControls = {
@@ -55,10 +94,11 @@ export const DEFAULT_ULTRA_VIDEO_PRO: UltraVideoProControls = {
   camera: ULTRA_VIDEO_CAMERA_AUTO,
   duration: "8",
   resolution: "480p",
-  fast: true,
+  fast: false,
   generateAudio: false,
   artStyleId: DEFAULT_ART_STYLE,
   motionStrength: 35,
+  videoEngine: "minimax-h3",
 };
 
 export function videoProFromPartial(pro?: Partial<UltraVideoProControls>): UltraVideoProControls {
@@ -206,8 +246,16 @@ export function estimateCanvasVideoTokens(opts: {
   resolution: string;
   duration: string;
   fast: boolean;
+  videoEngine?: UltraVideoEngine;
 }): number {
+  const engine = parseUltraVideoEngine(opts.videoEngine);
   const sec = Math.max(1, parseInt(opts.duration, 10) || 8);
+  if (engine === "minimax-h3") {
+    return estimateH3Tokens({
+      resolution: opts.resolution,
+      duration: Math.min(15, Math.max(5, sec)),
+    });
+  }
   return estimateVideoTokens({
     resolution: opts.resolution,
     fast: opts.fast,
@@ -225,6 +273,7 @@ export function videoProFromNodeData(data: {
   generateAudio?: boolean;
   artStyleId?: ArtStyleId;
   motionStrength?: number;
+  videoEngine?: UltraVideoEngine;
 }): UltraVideoProControls {
   return videoProFromPartial({
     aspectRatio: data.aspectRatio,
@@ -235,5 +284,6 @@ export function videoProFromNodeData(data: {
     generateAudio: data.generateAudio,
     artStyleId: data.artStyleId,
     motionStrength: data.motionStrength,
+    videoEngine: data.videoEngine,
   });
 }

@@ -39,12 +39,12 @@ function EditImagePageContent() {
             {t.subtitle}
           </p>
           <p className="mt-3 text-center text-xs text-slate-500">
-            Trying Canva-style AI layers?{" "}
+            Prefer AI-detected movable layers?{" "}
             <a
               href="/edit-image-2"
               className="font-medium text-violet-300 underline-offset-2 hover:text-violet-200 hover:underline"
             >
-              Open edit-image-2 (test)
+              Open AI smart layers
             </a>
           </p>
         </header>

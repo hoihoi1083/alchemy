@@ -7,10 +7,15 @@ import { videoResolutionsForPlan } from "@/lib/billing/entitlements";
 import { useUserPlanEntitlements } from "@/hooks/useUserPlanEntitlements";
 import { promptAlreadySpecifiesCamera } from "@/lib/prompt-balance-contract";
 import {
+  clampUltraVideoDuration,
   isUltraVideoCameraAuto,
+  ULTRA_H3_DURATIONS,
+  ULTRA_SEEDANCE_DURATIONS,
   ULTRA_VIDEO_CAMERA_AUTO,
   ULTRA_VIDEO_ASPECT_RATIOS,
   ULTRA_VIDEO_CAMERAS,
+  ULTRA_VIDEO_ENGINES,
+  type UltraVideoEngine,
   type UltraVideoProControls,
 } from "@/lib/ultra-pro-controls";
 
@@ -50,6 +55,11 @@ export function ProVideoControlFields({
     : videoResolutionsForPlan("master");
   const [open, setOpen] = useState(false);
 
+  const engine = value.videoEngine ?? "minimax-h3";
+  const isH3 = engine === "minimax-h3";
+  const durationOptions = isH3 ? ULTRA_H3_DURATIONS : ULTRA_SEEDANCE_DURATIONS;
+  const duration = clampUltraVideoDuration(value.duration, engine);
+
   const resolution =
     allowedResolutions.includes(value.resolution) ? value.resolution : maxVideoResolution;
 
@@ -63,6 +73,9 @@ export function ProVideoControlFields({
     : isUltraVideoCameraAuto(value.camera)
       ? ULTRA_VIDEO_CAMERA_AUTO
       : value.camera;
+
+  const engineLabel = (id: UltraVideoEngine) =>
+    id === "minimax-h3" ? pc.engineMinimaxH3 : pc.engineSeedance;
 
   return (
     <div className="nodrag nopan nowheel mt-2 rounded-lg border border-violet-500/20 bg-slate-950/50">
@@ -78,6 +91,29 @@ export function ProVideoControlFields({
       </button>
       {open ? (
         <div className="space-y-2.5 border-t border-violet-500/10 px-2.5 pb-2.5 pt-2">
+          <div>
+            <p className="mb-1 text-[10px] font-medium text-slate-400">{pc.engine}</p>
+            <div className="flex flex-wrap gap-1">
+              {ULTRA_VIDEO_ENGINES.map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() =>
+                    onChange({
+                      videoEngine: id,
+                      duration: clampUltraVideoDuration(value.duration, id),
+                      ...(id === "minimax-h3" ? { fast: false } : {}),
+                    })
+                  }
+                  className={`rounded-md border px-2 py-0.5 text-[10px] font-medium ${pill(engine === id)}`}
+                >
+                  {engineLabel(id)}
+                </button>
+              ))}
+            </div>
+            <p className="mt-0.5 text-[9px] leading-snug text-slate-500">{pc.engineHint}</p>
+          </div>
+
           <div>
             <p className="mb-1 text-[10px] font-medium text-slate-400">{pc.aspectRatio}</p>
             <div className="flex flex-wrap gap-1">
@@ -123,11 +159,11 @@ export function ProVideoControlFields({
             <div>
               <p className="mb-1 text-[10px] font-medium text-slate-400">{pc.duration}</p>
               <select
-                value={value.duration}
+                value={duration}
                 onChange={(e) => onChange({ duration: e.target.value })}
                 className="w-full rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-[10px] text-slate-200"
               >
-                {["4", "6", "8", "10"].map((d) => (
+                {durationOptions.map((d) => (
                   <option key={d} value={d}>
                     {d}s
                   </option>
@@ -154,20 +190,22 @@ export function ProVideoControlFields({
             </div>
           </div>
 
-          <div>
-            <p className="mb-1 text-[10px] font-medium text-slate-400">{pc.motionStrength}</p>
-            <input
-              type="range"
-              min={0}
-              max={100}
-              value={value.motionStrength ?? 35}
-              onChange={(e) => onChange({ motionStrength: Number(e.target.value) })}
-              className="w-full accent-violet-500"
-            />
-            <p className="mt-0.5 text-[10px] text-slate-500">
-              {value.motionStrength ?? 35}% — {pc.motionHint}
-            </p>
-          </div>
+          {!isH3 ? (
+            <div>
+              <p className="mb-1 text-[10px] font-medium text-slate-400">{pc.motionStrength}</p>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                value={value.motionStrength ?? 35}
+                onChange={(e) => onChange({ motionStrength: Number(e.target.value) })}
+                className="w-full accent-violet-500"
+              />
+              <p className="mt-0.5 text-[10px] text-slate-500">
+                {value.motionStrength ?? 35}% — {pc.motionHint}
+              </p>
+            </div>
+          ) : null}
 
           <div>
             <p className="mb-1 text-[10px] font-medium text-slate-400">{pc.artStyle}</p>
@@ -190,24 +228,28 @@ export function ProVideoControlFields({
             </div>
           </div>
 
-          <label className="flex items-center gap-2 text-[10px] text-slate-400">
-            <input
-              type="checkbox"
-              checked={value.fast}
-              onChange={(e) => onChange({ fast: e.target.checked })}
-              className="accent-violet-500"
-            />
-            {pc.fastTier}
-          </label>
-          <label className="flex items-center gap-2 text-[10px] text-slate-400">
-            <input
-              type="checkbox"
-              checked={value.generateAudio}
-              onChange={(e) => onChange({ generateAudio: e.target.checked })}
-              className="accent-violet-500"
-            />
-            {pc.generateAudio}
-          </label>
+          {!isH3 ? (
+            <>
+              <label className="flex items-center gap-2 text-[10px] text-slate-400">
+                <input
+                  type="checkbox"
+                  checked={value.fast}
+                  onChange={(e) => onChange({ fast: e.target.checked })}
+                  className="accent-violet-500"
+                />
+                {pc.fastTier}
+              </label>
+              <label className="flex items-center gap-2 text-[10px] text-slate-400">
+                <input
+                  type="checkbox"
+                  checked={value.generateAudio}
+                  onChange={(e) => onChange({ generateAudio: e.target.checked })}
+                  className="accent-violet-500"
+                />
+                {pc.generateAudio}
+              </label>
+            </>
+          ) : null}
         </div>
       ) : null}
     </div>

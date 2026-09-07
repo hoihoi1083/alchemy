@@ -51,13 +51,49 @@ export const TOKEN_COST = {
   inpaint: 41,
   /** ffmpeg caption burn + R2 persist — CPU/storage, not fal; flat processing fee. */
   caption_burn: 8,
-  /** edit-image-2 Florence OCR + object detect (no generative erase). */
+  /**
+   * edit-image-2 Florence OCR + object detect.
+   * SAM and FLUX erase (heal) are billed separately when enabled.
+   */
   smart_layers_detect: 8,
+  /**
+   * Optional SAM2 cutouts on top objects during detect (up to ~5 boxes).
+   * Charged in addition to smart_layers_detect when sam=true.
+   */
+  smart_layers_sam: 10,
   /** BiRefNet matte on a single layer crop. */
   smart_layers_matte: 5,
-  /** Local ring-fill heal (no FLUX). Generative erase uses estimateInpaintTokens. */
+  /** Local ring-fill heal fallback. Generative erase/fill uses estimateInpaintTokens. */
   smart_layers_heal: 3,
+  /**
+   * fal-ai/qwen-image-layered — $0.05 flat → 41 tok (tokensForFalUsd).
+   * Primary Magic Layers split (RGBA stack).
+   */
+  smart_layers_qwen: 41,
+  /**
+   * Magic Expand (fal outpaint). Base ~1MP; API may bill more by output size.
+   */
+  smart_layers_expand: 41,
 } as const;
+
+/** Tokens charged for one edit-image-2 detect run (OCR + optional SAM). Erase billed separately. */
+export function estimateSmartLayersDetectTokens(opts: { sam?: boolean } = {}): number {
+  return TOKEN_COST.smart_layers_detect + (opts.sam ? TOKEN_COST.smart_layers_sam : 0);
+}
+
+/** Tokens for Qwen Image Layered one-shot split. */
+export function estimateSmartLayersQwenTokens(): number {
+  return TOKEN_COST.smart_layers_qwen;
+}
+
+/** Hybrid: Florence OCR + BiRefNet subject + Qwen remainder (no billed heal). */
+export function estimateSmartLayersSandwichTokens(): number {
+  return (
+    estimateSmartLayersDetectTokens({ sam: false }) +
+    TOKEN_COST.smart_layers_matte +
+    TOKEN_COST.smart_layers_qwen
+  );
+}
 
 /** Tokens for FLUX Fill — bill by rounded megapixels when known. */
 export function estimateInpaintTokens(megapixels = 1): number {

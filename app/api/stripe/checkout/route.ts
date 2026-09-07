@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { PLAN_DEFINITIONS, normalizeUserPlan, PRO_TRIAL_DAYS } from "@/lib/billing/plans";
+import { getUserPlan } from "@/lib/billing/get-user-plan";
+import { resolveTokenPayer } from "@/lib/billing/team-payer";
 import { resolveStripeCustomerIdForUser } from "@/lib/db/email-identity";
 import type { DbUser } from "@/lib/db/types";
 import {
@@ -23,6 +25,7 @@ import {
   type PaidPlan,
 } from "@/lib/stripe/prices";
 import { switchExistingSubscription } from "@/lib/stripe/switch-subscription";
+import { getActiveTeamMembership } from "@/lib/team/service";
 
 export const runtime = "nodejs";
 
@@ -192,7 +195,8 @@ export async function POST(request: Request) {
     }
 
     if (kind === "topup") {
-      const plan = normalizeUserPlan(user?.plan);
+      // Match pricing UI: effective plan (incl. Enterprise team seat), not raw Mongo alone.
+      const plan = await getUserPlan(clerkId);
       if (!PLAN_DEFINITIONS[plan].canTopUp) {
         return NextResponse.json(
           { error: "Top-ups require an active paid plan. Subscribe first." },
@@ -203,10 +207,36 @@ export async function POST(request: Request) {
       if (!price) {
         return NextResponse.json({ error: "STRIPE_PRICE_TOPUP is not set" }, { status: 503 });
       }
-      // Must reuse the subscription customer so the invoice lands in the same portal history.
-      if (!stripeCustomerId) {
+
+      // Shared Enterprise pool: charge the owner's Stripe customer; grant tokens to owner.
+      const payer = await resolveTokenPayer(clerkId);
+      let topupCustomerId = stripeCustomerId;
+      let topupClerkId = clerkId;
+      if (payer.pooled && payer.payerClerkId !== clerkId) {
+        const owner = await db.collection<DbUser>("users").findOne({
+          clerkId: payer.payerClerkId,
+        });
+        topupCustomerId = await resolveStripeCustomerIdForUser({
+          clerkId: payer.payerClerkId,
+          email: owner?.email,
+          stripeCustomerId: owner?.stripeCustomerId,
+        });
+        topupClerkId = payer.payerClerkId;
+      }
+
+      if (!topupCustomerId) {
+        const membership = await getActiveTeamMembership(clerkId);
+        const onTeamSeat =
+          Boolean(membership) &&
+          membership!.role !== "owner" &&
+          membership!.ownerClerkId !== clerkId &&
+          plan === "custom";
         return NextResponse.json(
-          { error: "No Stripe customer on file. Subscribe once first, then top up." },
+          {
+            error: onTeamSeat
+              ? "Enterprise seat: ask your team owner to buy a top-up (tokens go to the shared pool)."
+              : "No Stripe customer on file. Subscribe once first, then top up.",
+          },
           { status: 400 },
         );
       }
@@ -216,9 +246,14 @@ export async function POST(request: Request) {
         line_items: [{ price, quantity: 1 }],
         success_url: `${base}/pricing?checkout=success&kind=topup&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${base}/pricing?checkout=cancel`,
-        client_reference_id: clerkId,
-        customer: stripeCustomerId,
-        metadata: { clerkId, kind: "topup" },
+        client_reference_id: topupClerkId,
+        customer: topupCustomerId,
+        metadata: {
+          clerkId: topupClerkId,
+          kind: "topup",
+          actorClerkId: clerkId,
+          teamPooled: payer.pooled ? "1" : "0",
+        },
         allow_promotion_codes: true,
         // One-time Checkout does not create invoices by default — without this,
         // top-ups won't appear in Customer Portal "Billing history".
@@ -226,7 +261,11 @@ export async function POST(request: Request) {
           enabled: true,
           invoice_data: {
             description: "Alchemy Token Top-up — 1,000 tokens",
-            metadata: { clerkId, kind: "topup" },
+            metadata: {
+              clerkId: topupClerkId,
+              kind: "topup",
+              actorClerkId: clerkId,
+            },
           },
         },
       });

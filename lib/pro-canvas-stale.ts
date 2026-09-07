@@ -75,7 +75,7 @@ function stableNodeInputSlice(node: Node): string {
     case "brand":
       return `${id}|brand|${d.logoUrl ?? ""}|${d.tagline ?? ""}|${d.primaryColor ?? ""}`;
     case "splice":
-      return `${id}|splice`;
+      return `${id}|splice|${JSON.stringify((d as { clipOrder?: string[] }).clipOrder ?? [])}`;
     default:
       return `${id}|unknown`;
   }

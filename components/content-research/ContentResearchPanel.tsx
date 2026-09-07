@@ -645,7 +645,7 @@ export function ContentResearchPanel({
               </Link>
             </p>
           ) : null}
-          {plan.posts && plan.posts.length > 0 && plan.searchProvider !== "justoneapi" && (
+          {plan.posts && plan.posts.length > 0 && (
             <ResearchPostCards
               posts={plan.posts}
               labels={{

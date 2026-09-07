@@ -4,7 +4,9 @@ import type { Edge, Node } from "@xyflow/react";
 import {
   findMissingImageSources,
   mentionDependencyEdges,
+  orderedSpliceVideoUrls,
   resolveMentions,
+  resolveSpliceClipOrder,
   runnableExecutionOrder,
 } from "../lib/pro-canvas-graph";
 
@@ -78,5 +80,34 @@ describe("pro-canvas-graph", () => {
     const edges: Edge[] = [{ id: "e1", source: "up", target: "img" }];
     const err = findMissingImageSources("img", "Hero shot", nodes, edges, () => undefined);
     assert.match(err ?? "", /connected source/);
+  });
+
+  it("resolves splice clipOrder preserving user order and appending new clips", () => {
+    const upstream = [
+      node("v2", "video", { label: "B", videoUrl: "https://x/b.mp4", prompt: "", camera: "Auto", duration: "8", resolution: "480p", fast: false }),
+      node("v1", "video", { label: "A", videoUrl: "https://x/a.mp4", prompt: "", camera: "Auto", duration: "8", resolution: "480p", fast: false }),
+      node("v3", "video", { label: "C", videoUrl: "https://x/c.mp4", prompt: "", camera: "Auto", duration: "8", resolution: "480p", fast: false }),
+    ];
+    upstream[0]!.position = { x: 0, y: 200 };
+    upstream[1]!.position = { x: 0, y: 0 };
+    upstream[2]!.position = { x: 0, y: 400 };
+
+    assert.deepEqual(resolveSpliceClipOrder(["v2", "v1"], upstream), ["v2", "v1", "v3"]);
+    assert.deepEqual(resolveSpliceClipOrder(undefined, upstream), ["v1", "v2", "v3"]);
+
+    const nodes = [
+      node("sp", "splice", { label: "Splice", clipOrder: ["v3", "v1", "v2"] }),
+      ...upstream,
+    ];
+    const edges: Edge[] = [
+      { id: "e1", source: "v1", target: "sp" },
+      { id: "e2", source: "v2", target: "sp" },
+      { id: "e3", source: "v3", target: "sp" },
+    ];
+    assert.deepEqual(orderedSpliceVideoUrls("sp", nodes, edges, ["v3", "v1", "v2"]), [
+      "https://x/c.mp4",
+      "https://x/a.mp4",
+      "https://x/b.mp4",
+    ]);
   });
 });

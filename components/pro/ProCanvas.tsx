@@ -68,6 +68,7 @@ import {
   textFromNode,
   upstreamNodes,
   upstreamNodesSorted,
+  orderedSpliceVideoUrls,
   videoUrlFromNode,
   worldDescriptionFromNodes,
   allUpstreamNodes,
@@ -167,6 +168,7 @@ import type {
   ProCanvasNodeData,
   ProCanvasNodeKind,
   ScriptNodeData,
+  SpliceNodeData,
   TaskQueueItem,
   TextVideoNodeData,
   VideoNodeData,
@@ -236,6 +238,7 @@ function defaultNodeData(kind: ProCanvasNodeKind, label: string): ProCanvasNodeD
         generateAudio: DEFAULT_ULTRA_VIDEO_PRO.generateAudio,
         artStyleId: DEFAULT_ULTRA_VIDEO_PRO.artStyleId,
         motionStrength: DEFAULT_ULTRA_VIDEO_PRO.motionStrength ?? 35,
+        videoEngine: DEFAULT_ULTRA_VIDEO_PRO.videoEngine,
       };
     case "text":
       return { kind, label, text: "" };
@@ -265,6 +268,7 @@ function defaultNodeData(kind: ProCanvasNodeKind, label: string): ProCanvasNodeD
         generateAudio: DEFAULT_ULTRA_VIDEO_PRO.generateAudio,
         artStyleId: DEFAULT_ULTRA_VIDEO_PRO.artStyleId,
         motionStrength: DEFAULT_ULTRA_VIDEO_PRO.motionStrength ?? 35,
+        videoEngine: DEFAULT_ULTRA_VIDEO_PRO.videoEngine,
       };
     case "lighting":
       return { kind, label, preset: DEFAULT_LIGHTING_MOD_PRESET };
@@ -1357,6 +1361,7 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
             generateAudio: DEFAULT_ULTRA_VIDEO_PRO.generateAudio,
             artStyleId: DEFAULT_ULTRA_VIDEO_PRO.artStyleId,
             motionStrength: DEFAULT_ULTRA_VIDEO_PRO.motionStrength ?? 35,
+            videoEngine: DEFAULT_ULTRA_VIDEO_PRO.videoEngine,
           } satisfies TextVideoNodeData,
         });
         newEdges.push({
@@ -1501,6 +1506,7 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
               artStyleId: DEFAULT_ULTRA_VIDEO_PRO.artStyleId,
               generateAudio: DEFAULT_ULTRA_VIDEO_PRO.generateAudio,
               motionStrength: DEFAULT_ULTRA_VIDEO_PRO.motionStrength ?? 35,
+              videoEngine: DEFAULT_ULTRA_VIDEO_PRO.videoEngine,
             } satisfies VideoNodeData,
           },
         );
@@ -2319,10 +2325,23 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
       const session = canvasSessionRef.current;
       const allNodes = getLiveNodes();
       const allEdges = getLiveEdges();
+      const spliceNode = getLiveNode(nodeId);
+      if (!spliceNode) return;
       const upstream = upstreamNodesSorted(nodeId, allNodes, allEdges);
-      const videoUrls = upstream
-        .map(videoUrlFromNode)
-        .filter((u): u is string => isHttpOrLibraryMediaUrl(u));
+      const spliceData = spliceNode.data as SpliceNodeData;
+      const videoUrls = orderedSpliceVideoUrls(
+        nodeId,
+        allNodes,
+        allEdges,
+        spliceData.clipOrder,
+      );
+      if (videoUrls.length < 1) {
+        const msg = m.ultraCanvas.spliceOrder.needClips;
+        setBoardError(msg);
+        window.setTimeout(() => setBoardError(null), 4500);
+        updateNodeData(nodeId, { error: msg }, session);
+        return;
+      }
 
       const voiceUpstream = upstream.find(
         (n) => (n.data as ProCanvasNodeData).kind === "voice",

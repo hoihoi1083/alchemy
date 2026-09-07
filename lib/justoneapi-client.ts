@@ -339,6 +339,8 @@ const JUSTONEAPI_RETRYABLE =
 const XHS_SEARCH_NOTE_PATH = "/api/xiaohongshu/search-note/v2";
 /** Min gap between separate user searches (not between retries of one search). */
 const XHS_SEARCH_MIN_GAP_MS = 3_000;
+/** Instagram/TikTok/FB share the same upstream throttle as XHS — space all search paths. */
+const PLATFORM_SEARCH_MIN_GAP_MS = 2_500;
 const JUSTONEAPI_SEARCH_CACHE_TTL_MS = 5 * 60 * 1000;
 
 const JUSTONEAPI_SEARCH_CACHE_PATHS = new Set([
@@ -355,6 +357,8 @@ const searchResponseCache = new Map<
 >();
 
 let lastXhsSearchSuccessAt = 0;
+/** Last successful billable call on any platform search path (IG burns quota fast). */
+let lastPlatformSearchSuccessAt = 0;
 
 function searchCacheKey(path: string, params: Record<string, string>): string {
   return `${path}?${new URLSearchParams(params).toString()}`;
@@ -384,6 +388,21 @@ async function waitForXhsSearchCooldown(): Promise<void> {
     console.warn(`[justoneapi] XHS search spacing ${Math.ceil(waitMs / 1000)}s before next request…`);
     await sleep(waitMs);
   }
+}
+
+async function waitForPlatformSearchCooldown(path: string): Promise<void> {
+  if (!JUSTONEAPI_SEARCH_CACHE_PATHS.has(path)) return;
+  const waitMs = lastPlatformSearchSuccessAt + PLATFORM_SEARCH_MIN_GAP_MS - Date.now();
+  if (waitMs > 0) {
+    console.warn(
+      `[justoneapi] platform search spacing ${Math.ceil(waitMs / 1000)}s before ${path}…`,
+    );
+    await sleep(waitMs);
+  }
+}
+
+function isJustOneRateLimitMessage(message: string): boolean {
+  return /collect failed|send request again|rate limit|429/i.test(message);
 }
 
 function isJustOneRetryableError(message: string): boolean {
@@ -466,11 +485,16 @@ export async function fetchJustOneApi(
   options?: FetchJustOneApiOptions,
 ): Promise<Record<string, unknown>> {
   const isXhsSearch = path === XHS_SEARCH_NOTE_PATH;
-  const maxAttempts = options?.maxAttempts ?? (isXhsSearch ? 4 : 3);
+  const isPlatformSearch = JUSTONEAPI_SEARCH_CACHE_PATHS.has(path);
+  // IG rate-limits harder than XHS — give collect-failed more attempts + longer gaps.
+  const maxAttempts =
+    options?.maxAttempts ?? (isXhsSearch ? 4 : isPlatformSearch ? 4 : 3);
   let lastError: Error | undefined;
 
   if (isXhsSearch) {
     await waitForXhsSearchCooldown();
+  } else if (isPlatformSearch) {
+    await waitForPlatformSearchCooldown(path);
   }
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
@@ -479,13 +503,19 @@ export async function fetchJustOneApi(
       if (isXhsSearch) {
         lastXhsSearchSuccessAt = Date.now();
       }
+      if (isPlatformSearch) {
+        lastPlatformSearchSuccessAt = Date.now();
+      }
       return result;
     } catch (e) {
       lastError = e instanceof Error ? e : new Error(String(e));
       const retryable =
         lastError.name === "AbortError" || isJustOneRetryableError(lastError.message);
       if (attempt < maxAttempts - 1 && retryable) {
-        const delayMs = 1500 * 2 ** attempt;
+        const rateLimited = isJustOneRateLimitMessage(lastError.message);
+        const delayMs = rateLimited
+          ? 4_000 * 2 ** attempt // 4s, 8s, 16s
+          : 1_500 * 2 ** attempt;
         console.warn(
           `[justoneapi] ${label} attempt ${attempt + 1}/${maxAttempts} failed, retrying in ${delayMs}ms: ${lastError.message}`,
         );
@@ -497,4 +527,10 @@ export async function fetchJustOneApi(
   }
 
   throw lastError ?? new Error(`${label} failed.`);
+}
+
+/** True when Just One asked us to retry (upstream throttle). */
+export function isJustOneRateLimitError(error: unknown): boolean {
+  const msg = error instanceof Error ? error.message : String(error);
+  return isJustOneRateLimitMessage(msg);
 }

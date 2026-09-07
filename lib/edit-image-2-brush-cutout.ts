@@ -58,6 +58,43 @@ export function buildBrushMaskCanvas(
   return canvas;
 }
 
+/** Bounding box of brush strokes in image pixels (for erase / heal). */
+export function brushStrokesImageBBox(
+  strokes: BrushStroke[],
+  brushSizeStage: number,
+  stageW: number,
+  stageH: number,
+  imgW: number,
+  imgH: number,
+): { left: number; top: number; width: number; height: number } | null {
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (const s of strokes) {
+    for (let i = 0; i + 1 < s.length; i += 2) {
+      const x = s[i]!;
+      const y = s[i + 1]!;
+      if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+      if (x < minX) minX = x;
+      if (y < minY) minY = y;
+      if (x > maxX) maxX = x;
+      if (y > maxY) maxY = y;
+    }
+  }
+  if (!Number.isFinite(minX)) return null;
+  const scaleX = imgW / Math.max(1, stageW);
+  const scaleY = imgH / Math.max(1, stageH);
+  const pad = Math.max(4, (brushSizeStage * scaleX) / 2 + 4);
+  const left = Math.max(0, Math.floor(minX * scaleX - pad));
+  const top = Math.max(0, Math.floor(minY * scaleY - pad));
+  const right = Math.min(imgW, Math.ceil(maxX * scaleX + pad));
+  const bottom = Math.min(imgH, Math.ceil(maxY * scaleY + pad));
+  const width = Math.max(1, right - left);
+  const height = Math.max(1, bottom - top);
+  return { left, top, width, height };
+}
+
 /** Scale/crop a mask canvas to match target width/height. */
 export function normalizeMaskToSize(
   mask: HTMLCanvasElement,
@@ -172,21 +209,43 @@ export async function blurPunchBackground(
   let g = 0;
   let b = 0;
   let n = 0;
+  // Prefer mid/bright ring samples so stadium night sky doesn't paint solid black.
+  const bright: Array<[number, number, number]> = [];
   const holeL = left - sx;
   const holeT = top - sy;
   for (let y = 0; y < sh; y++) {
     for (let x = 0; x < sw; x++) {
       if (x >= holeL && x < holeL + width && y >= holeT && y < holeT + height) continue;
       const i = (y * sw + x) * 4;
-      r += data[i]!;
-      g += data[i + 1]!;
-      b += data[i + 2]!;
+      const rr = data[i]!;
+      const gg = data[i + 1]!;
+      const bb = data[i + 2]!;
+      r += rr;
+      g += gg;
+      b += bb;
       n += 1;
+      if ((rr + gg + bb) / 3 >= 55) bright.push([rr, gg, bb]);
     }
   }
-  ctx.fillStyle = n
-    ? `rgb(${Math.round(r / n)},${Math.round(g / n)},${Math.round(b / n)})`
-    : "#f3f4f6";
+  let fr: number;
+  let fg: number;
+  let fb: number;
+  if (bright.length >= 12) {
+    bright.sort((a, b) => a[0] + a[1] + a[2] - (b[0] + b[1] + b[2]));
+    const mid = bright[Math.floor(bright.length / 2)]!;
+    fr = mid[0];
+    fg = mid[1];
+    fb = mid[2];
+  } else if (n) {
+    fr = Math.round(r / n);
+    fg = Math.round(g / n);
+    fb = Math.round(b / n);
+  } else {
+    fr = 243;
+    fg = 244;
+    fb = 246;
+  }
+  ctx.fillStyle = `rgb(${fr},${fg},${fb})`;
   ctx.fillRect(left, top, width, height);
 
   // Very light soft edge
@@ -234,14 +293,14 @@ export function canvasDisplayUrl(url: string | null | undefined): string | null 
   return url;
 }
 
-/** Sample dominant opaque colour + rough boldness from a crop for live text. */
+/** Sample ink colour from a text crop — contrast vs border (bg), not average of all pixels. */
 export async function sampleTextStyleFromCrop(
   cropUrl: string,
 ): Promise<{ fill: string; fontBold: boolean }> {
   try {
     const img = await loadImage(canvasDisplayUrl(cropUrl) ?? cropUrl);
-    const w = Math.min(64, img.naturalWidth);
-    const h = Math.min(64, img.naturalHeight);
+    const w = Math.min(96, img.naturalWidth);
+    const h = Math.min(96, img.naturalHeight);
     if (!w || !h) return { fill: "#111827", fontBold: true };
     const c = document.createElement("canvas");
     c.width = w;
@@ -249,36 +308,60 @@ export async function sampleTextStyleFromCrop(
     const ctx = c.getContext("2d")!;
     ctx.drawImage(img, 0, 0, w, h);
     const data = ctx.getImageData(0, 0, w, h).data;
+
+    // Border average ≈ background
+    let br = 0;
+    let bg = 0;
+    let bb = 0;
+    let bn = 0;
+    const border = Math.max(1, Math.round(Math.min(w, h) * 0.08));
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        if (x >= border && x < w - border && y >= border && y < h - border) continue;
+        const i = (y * w + x) * 4;
+        if (data[i + 3]! < 80) continue;
+        br += data[i]!;
+        bg += data[i + 1]!;
+        bb += data[i + 2]!;
+        bn += 1;
+      }
+    }
+    const bR = bn ? br / bn : 255;
+    const bG = bn ? bg / bn : 255;
+    const bB = bn ? bb / bn : 255;
+
+    // Ink = pixels far from background colour
     let r = 0;
     let g = 0;
     let b = 0;
     let n = 0;
     let dark = 0;
     let light = 0;
-    for (let i = 0; i < data.length; i += 4) {
-      const a = data[i + 3]!;
-      if (a < 80) continue;
-      const rr = data[i]!;
-      const gg = data[i + 1]!;
-      const bb = data[i + 2]!;
-      const lum = 0.2126 * rr + 0.7152 * gg + 0.0722 * bb;
-      // Skip near-white / near-bg
-      if (lum > 245 || lum < 12) continue;
-      r += rr;
-      g += gg;
-      b += bb;
-      n += 1;
-      if (lum < 128) dark += 1;
-      else light += 1;
+    for (let y = border; y < h - border; y++) {
+      for (let x = border; x < w - border; x++) {
+        const i = (y * w + x) * 4;
+        if (data[i + 3]! < 80) continue;
+        const rr = data[i]!;
+        const gg = data[i + 1]!;
+        const bb2 = data[i + 2]!;
+        const dist = Math.abs(rr - bR) + Math.abs(gg - bG) + Math.abs(bb2 - bB);
+        if (dist < 90) continue;
+        r += rr;
+        g += gg;
+        b += bb2;
+        n += 1;
+        const lum = 0.2126 * rr + 0.7152 * gg + 0.0722 * bb2;
+        if (lum < 128) dark += 1;
+        else light += 1;
+      }
     }
-    if (n < 8) return { fill: "#111827", fontBold: true };
+    if (n < 6) return { fill: "#111827", fontBold: true };
     const toHex = (v: number) =>
       Math.max(0, Math.min(255, Math.round(v)))
         .toString(16)
         .padStart(2, "0");
     const fill = `#${toHex(r / n)}${toHex(g / n)}${toHex(b / n)}`;
-    // Heuristic: more dark pixels → bold ink
-    const fontBold = dark >= light * 0.55;
+    const fontBold = dark >= light * 0.45;
     return { fill, fontBold };
   } catch {
     return { fill: "#111827", fontBold: true };

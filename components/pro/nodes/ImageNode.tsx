@@ -54,6 +54,7 @@ export function ImageNode({ id, data }: NodeProps & { data: ImageNodeData }) {
       />
       <DirectorPromptChips
         labels={m.ultraCanvas.directorChips}
+        hint={m.ultraCanvas.directorChipsHint}
         prompt={data.prompt}
         disabled={boardBusy}
         onInsert={(prompt) => updateNodeData(id, { prompt })}

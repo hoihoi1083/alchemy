@@ -37,6 +37,7 @@ export const VIDEO_SAFE_ART_STYLE_IDS: ArtStyleId[] = [
   "film",
   "ccd",
   "guofeng",
+  "cartoon-3d",
 ];
 
 export const DEFAULT_ART_STYLE: ArtStyleId = "realistic";
@@ -80,7 +81,7 @@ const ART_STYLES: Record<ArtStyleId, ArtStyleDef> = {
       "NO on-screen text, NO headlines, NO bullet points, NO logos, NO watermarks, NO typography overlays.",
     plannerHint:
       "Art direction: photorealistic live-action commercial / cinematic photography. Natural materials and lighting.",
-    seedanceHint: "Preserve photorealistic look; locked camera, minimal morphing.",
+    seedanceHint: "Preserve photorealistic look and materials; follow the motion prompt for camera and action.",
     stripNegativeTerms: [],
     negativeAdditions: "",
     videoSafe: true,
@@ -185,10 +186,10 @@ const ART_STYLES: Record<ArtStyleId, ArtStyleDef> = {
     plannerHint:
       "Art direction: 3D animated / Pixar-style CGI — soft global illumination, stylized proportions, NOT photorealistic.",
     seedanceHint:
-      "Keep 3D animated Pixar-style look; gentle motion; do not morph toward photorealistic.",
+      "Keep 3D animated Pixar-style look; allow energetic cartoon action and clear pose changes; do not morph toward photorealistic.",
     stripNegativeTerms: ["cartoon"],
     negativeAdditions: "photorealistic, live-action, DSLR, hyperrealistic skin, uncanny valley",
-    videoSafe: false,
+    videoSafe: true,
   },
   "comic-webtoon": {
     id: "comic-webtoon",

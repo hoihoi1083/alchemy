@@ -50,6 +50,7 @@ export function StoryboardNode({ id, data }: NodeProps & { data: StoryboardNodeD
     resolution: DEFAULT_ULTRA_VIDEO_PRO.resolution,
     duration: DEFAULT_ULTRA_VIDEO_PRO.duration,
     fast: DEFAULT_ULTRA_VIDEO_PRO.fast,
+    videoEngine: DEFAULT_ULTRA_VIDEO_PRO.videoEngine,
   });
 
   return (

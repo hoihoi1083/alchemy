@@ -17,16 +17,22 @@ export function StudioGlowShell({
   theme,
   children,
   className = "",
+  fillViewport = false,
 }: {
   theme: StudioGlowThemeId;
   children: ReactNode;
   className?: string;
+  /** Lock shell to the viewport (editor pages that need a full-height canvas). */
+  fillViewport?: boolean;
 }) {
   const t = STUDIO_GLOW_THEMES[theme];
 
   return (
     <main
-      className={`studio-glow-bg relative min-h-screen overflow-x-clip text-slate-100 ${className}`}
+      className={`studio-glow-bg relative text-slate-100 ${
+        fillViewport ? "overflow-hidden" : "min-h-screen overflow-x-clip"
+      } ${className}`}
+      style={fillViewport ? { height: "100dvh", maxHeight: "100dvh" } : undefined}
       data-studio-glow={theme}
     >
       <style>{`
@@ -60,7 +66,14 @@ export function StudioGlowShell({
           );
         }
       `}</style>
-      <div className="relative z-10 flex min-h-screen flex-col">{children}</div>
+      <div
+        className={`relative z-10 flex flex-col ${
+          fillViewport ? "min-h-0" : "min-h-screen"
+        }`}
+        style={fillViewport ? { height: "100%", minHeight: 0 } : undefined}
+      >
+        {children}
+      </div>
     </main>
   );
 }

@@ -26,8 +26,9 @@ export function TextVideoNode({ id, data }: NodeProps & { data: TextVideoNodeDat
         resolution: pro.resolution,
         duration: pro.duration,
         fast: pro.fast,
+        videoEngine: pro.videoEngine,
       }),
-    [pro.duration, pro.fast, pro.resolution],
+    [pro.duration, pro.fast, pro.resolution, pro.videoEngine],
   );
 
   return (
@@ -46,6 +47,7 @@ export function TextVideoNode({ id, data }: NodeProps & { data: TextVideoNodeDat
       />
       <DirectorPromptChips
         labels={m.ultraCanvas.directorChips}
+        hint={m.ultraCanvas.directorChipsHint}
         prompt={data.prompt}
         disabled={boardBusy}
         onInsert={(prompt) => updateNodeData(id, { prompt })}

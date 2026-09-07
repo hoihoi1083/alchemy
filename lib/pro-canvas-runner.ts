@@ -159,6 +159,8 @@ export async function runCanvasCameraNode(opts: {
 
 import {
   appendUltraVideoProToPrompt,
+  clampUltraVideoDuration,
+  parseUltraVideoEngine,
   type UltraVideoProControls,
   ultraVideoCameraForApi,
   videoProFromPartial,
@@ -180,6 +182,9 @@ export type CanvasVideoRunOpts = {
 export async function runCanvasVideoNode(opts: CanvasVideoRunOpts): Promise<string> {
   const pro = videoProFromPartial(opts.pro);
   if (!opts.prompt.trim()) throw new Error("Enter a video prompt.");
+
+  const engine = parseUltraVideoEngine(pro.videoEngine);
+  const duration = clampUltraVideoDuration(pro.duration, engine);
 
   const urls = (
     opts.imageUrls?.length
@@ -213,27 +218,38 @@ export async function runCanvasVideoNode(opts: CanvasVideoRunOpts): Promise<stri
     fd.set("mode", "text");
   }
 
-  const prompt = appendUltraVideoProToPrompt(promptBody, pro.artStyleId);
-  fd.set("prompt", prompt);
-  fd.set("fast", pro.fast ? "true" : "false");
-  fd.set("resolution", pro.resolution);
-  fd.set("duration", pro.duration);
-  fd.set("aspect_ratio", pro.aspectRatio);
+  let prompt = appendUltraVideoProToPrompt(promptBody, pro.artStyleId);
   const cameraForApi = opts.textOnly
     ? "Static Locked Shot"
     : ultraVideoCameraForApi(pro.camera);
-  if (cameraForApi) {
-    fd.set("camera", cameraForApi);
-  } else {
-    fd.set("camera", "Auto");
-  }
-  fd.set("avoid_on_screen_text", "true");
-  fd.set("generate_audio", pro.generateAudio ? "true" : "false");
-  if (pro.motionStrength != null) {
-    fd.set("motion_strength", String(pro.motionStrength));
+
+  // H3 has no separate camera field — bake non-Auto camera into the prompt.
+  if (engine === "minimax-h3" && cameraForApi) {
+    prompt = `${prompt.trim()} Camera: ${cameraForApi}.`;
   }
 
-  const res = await fetch("/api/generate", { method: "POST", body: fd });
+  fd.set("prompt", prompt);
+  fd.set("resolution", pro.resolution);
+  fd.set("duration", duration);
+  fd.set("aspect_ratio", pro.aspectRatio);
+  fd.set("avoid_on_screen_text", "true");
+
+  if (engine === "seedance") {
+    fd.set("fast", pro.fast ? "true" : "false");
+    fd.set("generate_audio", pro.generateAudio ? "true" : "false");
+    if (cameraForApi) {
+      fd.set("camera", cameraForApi);
+    } else {
+      fd.set("camera", "Auto");
+    }
+    if (pro.motionStrength != null) {
+      fd.set("motion_strength", String(pro.motionStrength));
+    }
+  }
+
+  const endpoint =
+    engine === "minimax-h3" ? "/api/generate-minimax-h3" : "/api/generate";
+  const res = await fetch(endpoint, { method: "POST", body: fd });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error((data as { error?: string }).error || "Video generation failed");
   syncCreditsFromResponse(data);

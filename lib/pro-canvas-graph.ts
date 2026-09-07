@@ -83,6 +83,59 @@ export function upstreamNodesSorted(nodeId: string, nodes: Node[], edges: Edge[]
   return sortNodesByCanvasPosition(upstreamNodes(nodeId, nodes, edges));
 }
 
+/** Upstream video / text-to-video nodes only (canvas-position sorted as default). */
+export function upstreamVideoNodesSorted(
+  spliceNodeId: string,
+  nodes: Node[],
+  edges: Edge[],
+): Node[] {
+  return upstreamNodesSorted(spliceNodeId, nodes, edges).filter((n) => {
+    const kind = (n.data as ProCanvasNodeData).kind;
+    return kind === "video" || kind === "textVideo";
+  });
+}
+
+/**
+ * Merge saved splice clipOrder with currently connected videos.
+ * Keeps user order for known ids; appends new clips in canvas position order.
+ */
+export function resolveSpliceClipOrder(
+  savedOrder: string[] | undefined,
+  upstreamVideoNodes: Node[],
+): string[] {
+  const sorted = sortNodesByCanvasPosition(upstreamVideoNodes);
+  const available = sorted.map((n) => n.id);
+  const availSet = new Set(available);
+  const ordered: string[] = [];
+  for (const id of savedOrder ?? []) {
+    if (availSet.has(id) && !ordered.includes(id)) ordered.push(id);
+  }
+  for (const id of available) {
+    if (!ordered.includes(id)) ordered.push(id);
+  }
+  return ordered;
+}
+
+/** Video URLs in splice cut order (skips clips that are not ready yet). */
+export function orderedSpliceVideoUrls(
+  spliceNodeId: string,
+  nodes: Node[],
+  edges: Edge[],
+  clipOrder?: string[],
+): string[] {
+  const upstream = upstreamVideoNodesSorted(spliceNodeId, nodes, edges);
+  const byId = new Map(upstream.map((n) => [n.id, n]));
+  const order = resolveSpliceClipOrder(clipOrder, upstream);
+  const urls: string[] = [];
+  for (const id of order) {
+    const n = byId.get(id);
+    if (!n) continue;
+    const url = videoUrlFromNode(n);
+    if (isHttpOrLibraryMediaUrl(url)) urls.push(url!);
+  }
+  return urls;
+}
+
 export function nodeHasRunnableOutput(node: Node): boolean {
   const data = node.data as ProCanvasNodeData;
   if (data.kind === "image" || data.kind === "camera") {

@@ -69,4 +69,16 @@ describe("ultra-pro-controls", () => {
     assert.equal(ultraVideoCameraForApi("Auto"), "");
     assert.equal(ultraVideoCameraForApi("Slow Push In"), "Slow Push In");
   });
+
+  it("defaults Ultra video engine to MiniMax H3", () => {
+    assert.equal(DEFAULT_ULTRA_VIDEO_PRO.videoEngine, "minimax-h3");
+    assert.ok(
+      estimateCanvasVideoTokens({
+        resolution: "480p",
+        duration: "8",
+        fast: false,
+        videoEngine: "minimax-h3",
+      }) > 0,
+    );
+  });
 });

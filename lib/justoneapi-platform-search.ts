@@ -11,6 +11,7 @@ import {
   asRecord,
   fetchJustOneApi,
   flattenSearchItems,
+  isJustOneRateLimitError,
   pickImageUrl,
   pickImageUrlsFromList,
   pickNumber,
@@ -243,25 +244,29 @@ function mapInstagramItem(raw: unknown, index: number): ContentResearchPost | nu
     carouselNodes && carouselNodes.length > 0
       ? pickImageUrlsFromList(carouselNodes)
       : pickImageUrlsFromList(
+          media.display_url,
+          media.displayUrl,
           Array.isArray(candidates) ? candidates[0] : undefined,
           media.thumbnail_url,
           media.thumbnail_src,
-          media.display_url,
           thumbnailResources,
           media.cover,
           item.cover,
           item.thumbnail,
         );
-  const coverImageUrl = imageUrls[0] ?? pickImageUrl(
-    Array.isArray(candidates) ? candidates[0] : undefined,
-    media.thumbnail_url,
-    media.thumbnail_src,
-    media.display_url,
-    thumbnailResources,
-    media.cover,
-    item.cover,
-    item.thumbnail,
-  );
+  const coverImageUrl =
+    imageUrls[0] ??
+    pickImageUrl(
+      media.display_url,
+      media.displayUrl,
+      Array.isArray(candidates) ? candidates[0] : undefined,
+      media.thumbnail_url,
+      media.thumbnail_src,
+      thumbnailResources,
+      media.cover,
+      item.cover,
+      item.thumbnail,
+    );
   const videoUrl = pickVideoUrl(
     media.video_url,
     media.videoUrl,
@@ -731,20 +736,37 @@ async function searchInstagramPosts(
   }
 
   const endpoint = "/api/instagram/search-hashtag-posts/v1";
-  let body: Record<string, unknown> | undefined;
-  for (const hashtag of instagramHashtagCandidates(keyword)) {
-    body = await fetchJustOneApi(endpoint, { hashtag }, "Instagram hashtag posts search");
-    const items = flattenSearchItems(body);
-    if (items.length < 1) continue;
-    const imagePosts = mapItems("instagram", items, limit, "image");
-    if (imagePosts.length > 0) return { body, endpoint };
-    const stills = mapItems("instagram", items, limit).filter(
-      (p) => p.mediaType === "image" && Boolean(p.coverImageUrl),
-    );
-    if (stills.length > 0) return { body, endpoint };
+  // One hashtag at a time. Bursting 3 tags was tripping Just One "collect failed" rate limits.
+  const tags = instagramHashtagCandidates(keyword).slice(0, 2);
+  let lastBody: Record<string, unknown> | undefined;
+  let lastError: Error | undefined;
+
+  for (let i = 0; i < tags.length; i++) {
+    const hashtag = tags[i]!;
+    try {
+      const body = await fetchJustOneApi(endpoint, { hashtag }, "Instagram hashtag posts search");
+      lastBody = body;
+      const items = flattenSearchItems(body);
+      if (items.length < 1) continue;
+      const imagePosts = mapItems("instagram", items, limit, "image");
+      if (imagePosts.length > 0) return { body, endpoint };
+      const stills = mapItems("instagram", items, limit).filter(
+        (p) => p.mediaType === "image" && Boolean(p.coverImageUrl),
+      );
+      if (stills.length > 0) return { body, endpoint };
+    } catch (e) {
+      lastError = e instanceof Error ? e : new Error(String(e));
+      // Don't burn more tags while throttled — that makes IG worse.
+      if (isJustOneRateLimitError(lastError)) throw lastError;
+      console.warn(
+        `[justoneapi] Instagram hashtag "${hashtag}" failed, trying next candidate:`,
+        lastError.message,
+      );
+    }
   }
-  if (!body) throw new Error("Instagram hashtag search failed.");
-  return { body, endpoint };
+
+  if (lastBody) return { body: lastBody, endpoint };
+  throw lastError ?? new Error("Instagram hashtag search failed.");
 }
 
 export async function searchPlatformPostsByKeyword(

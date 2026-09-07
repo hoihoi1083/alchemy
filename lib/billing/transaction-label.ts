@@ -30,8 +30,11 @@ export type ConsumeKindLabels = {
   postprocess: string;
   "finish-blockbuster": string;
   smart_layers_detect: string;
+  smart_layers_sam: string;
   smart_layers_matte: string;
   smart_layers_heal: string;
+  smart_layers_qwen: string;
+  smart_layers_expand: string;
 };
 
 function replaceCount(template: string, count: number): string {

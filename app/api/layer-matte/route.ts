@@ -3,7 +3,9 @@ import { NextResponse } from "next/server";
 import sharp from "sharp";
 import { chargeTokens, refundTokens } from "@/lib/billing/charge";
 import { TOKEN_COST } from "@/lib/billing/token-costs";
+import { falVisionImageUrl } from "@/lib/pipeline/fal-vision-image-url";
 import { requireAppUser } from "@/lib/require-app-user";
+import { isLibraryAssetUrl } from "@/lib/storage/library-asset-url";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -28,7 +30,7 @@ function asBBox(raw: unknown): BBox | null {
 }
 
 /**
- * BiRefNet matte on a single layer crop (Architecture A — lazy lift).
+ * BiRefNet matte on a single layer crop.
  * Body: { image_url, bbox } or { crop_url }
  */
 export async function POST(request: Request) {
@@ -60,14 +62,24 @@ export async function POST(request: Request) {
     let cropH = 0;
 
     const cropUrlIn = body.crop_url?.trim();
-    const imageUrl = body.image_url?.trim();
+    const imageUrlRaw = body.image_url?.trim();
     const bbox = asBBox(body.bbox);
 
-    if (cropUrlIn && /^https?:\/\//i.test(cropUrlIn)) {
-      const res = await fetch(cropUrlIn, { cache: "no-store" });
+    if (cropUrlIn && (/^https?:\/\//i.test(cropUrlIn) || isLibraryAssetUrl(cropUrlIn))) {
+      const cropUrl = await falVisionImageUrl(request, cropUrlIn, {
+        clerkId: auth.user.userId,
+      });
+      const res = await fetch(cropUrl, { cache: "no-store" });
       if (!res.ok) throw new Error(`Failed to download crop (${res.status}).`);
       cropBuf = Buffer.from(await res.arrayBuffer());
-    } else if (imageUrl && /^https?:\/\//i.test(imageUrl) && bbox) {
+    } else if (
+      imageUrlRaw &&
+      (/^https?:\/\//i.test(imageUrlRaw) || isLibraryAssetUrl(imageUrlRaw)) &&
+      bbox
+    ) {
+      const imageUrl = await falVisionImageUrl(request, imageUrlRaw, {
+        clerkId: auth.user.userId,
+      });
       const res = await fetch(imageUrl, { cache: "no-store" });
       if (!res.ok) throw new Error(`Failed to download image (${res.status}).`);
       const imgBuf = Buffer.from(await res.arrayBuffer());
@@ -117,7 +129,6 @@ export async function POST(request: Request) {
     if (!outRes.ok) throw new Error(`Matte download failed (${outRes.status}).`);
     let matted: Buffer = Buffer.from(await outRes.arrayBuffer());
 
-    // Ensure output matches crop size (BiRefNet may rescale)
     const outMeta = await sharp(matted).metadata();
     if ((outMeta.width ?? 0) !== cropW || (outMeta.height ?? 0) !== cropH) {
       matted = Buffer.from(
