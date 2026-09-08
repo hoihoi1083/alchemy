@@ -52,10 +52,13 @@ import {
   punchBrushInCrop,
 } from "@/lib/edit-image-2-layer-erase";
 import {
-  LIVE_TEXT_FONTS,
+  LIVE_TEXT_DEFAULT_FONT,
   liveTextDisplayString,
+  liveTextKonvaEffectProps,
   type LiveTextEffect,
 } from "@/lib/edit-image-2-live-text";
+import { LiveTextControls } from "@/components/edit-image-2/LiveTextControls";
+import { LiveTextFontLoader } from "@/components/edit-image-2/LiveTextFontLoader";
 import { MagicBoardChat } from "@/components/edit-image-2/MagicBoardChat";
 import {
   estimateInpaintTokens,
@@ -92,6 +95,10 @@ type DecLayer = {
   /** Stack characters top→bottom (poster vertical type). */
   textVertical?: boolean;
   textEffect?: LiveTextEffect;
+  /** Outline / neon stroke color (independent of fill). */
+  strokeColor?: string;
+  /** Shadow / glow color (independent of fill). */
+  effectColor?: string;
   matted?: boolean;
   /** Style already sampled from crop when switching to live text. */
   styleSampled?: boolean;
@@ -503,21 +510,15 @@ function LayerSprite({
           width={w}
           text={liveTextDisplayString(layer.editText ?? layer.text, layer.textVertical)}
           fontSize={fontSize}
-          fontFamily={layer.fontFamily || LIVE_TEXT_FONTS[1]!.id}
+          fontFamily={layer.fontFamily || LIVE_TEXT_DEFAULT_FONT}
           fontStyle={layer.fontBold === false ? "normal" : "bold"}
           fill={fill}
           align={layer.textVertical ? "center" : "left"}
           verticalAlign="middle"
-          stroke={layer.textEffect === "outline" ? "#ffffff" : undefined}
-          strokeWidth={layer.textEffect === "outline" ? Math.max(1, fontSize * 0.06) : 0}
-          shadowEnabled={layer.textEffect === "shadow"}
-          shadowColor="rgba(0,0,0,0.55)"
-          shadowBlur={layer.textEffect === "shadow" ? Math.max(4, fontSize * 0.12) : 0}
-          shadowOffset={
-            layer.textEffect === "shadow"
-              ? { x: Math.max(1, fontSize * 0.04), y: Math.max(1, fontSize * 0.04) }
-              : undefined
-          }
+          {...liveTextKonvaEffectProps(layer.textEffect, fontSize, {
+            strokeColor: layer.strokeColor,
+            effectColor: layer.effectColor,
+          })}
           {...common}
         />
       ) : img ? (
@@ -1026,9 +1027,11 @@ export function EditImage2Client() {
       const tall = layer.hPct > layer.wPct * 1.35;
       const earlyPatch: Partial<DecLayer> = {
         useLiveText: true,
-        fontFamily: layer.fontFamily || LIVE_TEXT_FONTS[1]!.id,
+        fontFamily: layer.fontFamily || LIVE_TEXT_DEFAULT_FONT,
         textVertical: layer.textVertical ?? tall,
         textEffect: layer.textEffect ?? "none",
+        strokeColor: layer.strokeColor || "#ffffff",
+        effectColor: layer.effectColor || "#000000",
         fontSize:
           layer.fontSize ??
           Math.max(14, Math.round((layer.hPct / 100) * boardH * 0.78)),
@@ -1955,9 +1958,11 @@ export function EditImage2Client() {
       visible: true,
       locked: false,
       fontBold: true,
-      fontFamily: LIVE_TEXT_FONTS[1]!.id,
+      fontFamily: LIVE_TEXT_DEFAULT_FONT,
       textVertical: false,
       textEffect: "none",
+      strokeColor: "#ffffff",
+      effectColor: "#000000",
       fontSize: 28,
       fill: "#111827",
     });
@@ -3447,6 +3452,7 @@ export function EditImage2Client() {
       className="flex min-h-0 w-full flex-1 flex-col bg-[#0b1020] text-slate-100"
       style={{ flex: "1 1 0%", minHeight: 0, height: "100%" }}
     >
+      <LiveTextFontLoader />
       {/* Top chrome — Canva-like */}
       <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-white/10 bg-[#0e1424]/95 px-3 py-2 backdrop-blur sm:px-4">
         <div className="mr-auto min-w-0">
@@ -3953,108 +3959,50 @@ export function EditImage2Client() {
                           void enableLiveText(selected.id);
                         }}
                       />
-                      <label className="flex items-center gap-1 text-[11px] text-slate-300">
-                        {t.size}
-                        <input
-                          type="number"
-                          min={8}
-                          max={200}
-                          className="w-12 rounded border border-white/15 bg-black/40 px-1 py-0.5"
-                          value={Math.round(
-                            selected.fontSize ??
-                              Math.max(12, (selected.hPct / 100) * imageLayout.h * 0.72),
-                          )}
-                          onChange={(e) => {
-                            const size = Number(e.target.value) || 16;
-                            patchLayer(selected.id, { fontSize: size });
-                            if (!selected.useLiveText) void enableLiveText(selected.id);
-                            else if (!selected.holeCleared) void clearHoleIfNeeded(selected.id);
-                          }}
-                        />
-                      </label>
-                      <ToolBtn
-                        label={t.bold}
-                        active={selected.fontBold !== false}
-                        onClick={() => {
-                          patchLayer(selected.id, {
-                            fontBold: selected.fontBold === false,
-                          });
-                          if (!selected.useLiveText) void enableLiveText(selected.id);
-                        }}
-                      />
-                      <label className="flex items-center gap-1 text-[11px] text-slate-300">
-                        {t.fontStyle}
-                        <select
-                          className="max-w-[7.5rem] rounded border border-white/15 bg-black/40 px-1 py-0.5 text-[11px]"
-                          value={selected.fontFamily || LIVE_TEXT_FONTS[1]!.id}
-                          onChange={(e) => {
-                            patchLayer(selected.id, {
-                              fontFamily: e.target.value,
-                              useLiveText: true,
-                            });
-                            if (!selected.useLiveText) void enableLiveText(selected.id);
-                          }}
-                        >
-                          {LIVE_TEXT_FONTS.map((f) => (
-                            <option key={f.id} value={f.id}>
-                              {t[f.labelKey as keyof typeof t] as string}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <ToolBtn
-                        label={
-                          selected.textVertical ? t.textHorizontal : t.textVertical
+                      <LiveTextControls
+                        t={t as unknown as Record<string, unknown>}
+                        fontSize={
+                          selected.fontSize ??
+                          Math.max(12, (selected.hPct / 100) * imageLayout.h * 0.72)
                         }
-                        active={!!selected.textVertical}
-                        onClick={() => {
-                          const nextVertical = !selected.textVertical;
-                          const patch: Partial<DecLayer> = {
-                            textVertical: nextVertical,
-                            useLiveText: true,
-                          };
-                          // Swap box so vertical columns stay readable.
-                          if (nextVertical !== !!selected.textVertical) {
-                            patch.wPct = selected.hPct;
-                            patch.hPct = selected.wPct;
-                          }
+                        fontBold={selected.fontBold !== false}
+                        fontFamily={selected.fontFamily || LIVE_TEXT_DEFAULT_FONT}
+                        textVertical={!!selected.textVertical}
+                        textEffect={selected.textEffect || "none"}
+                        fill={selected.fill || "#111827"}
+                        strokeColor={selected.strokeColor || "#ffffff"}
+                        effectColor={selected.effectColor || "#000000"}
+                        wPct={selected.wPct}
+                        hPct={selected.hPct}
+                        onPatch={(patch) => {
                           patchLayer(selected.id, patch);
+                          if (
+                            patch.fontSize != null &&
+                            selected.useLiveText &&
+                            !selected.holeCleared
+                          ) {
+                            void clearHoleIfNeeded(selected.id);
+                          }
+                        }}
+                        onEnsureLiveText={() => {
                           if (!selected.useLiveText) void enableLiveText(selected.id);
                         }}
                       />
-                      <label className="flex items-center gap-1 text-[11px] text-slate-300">
-                        {t.textEffect}
-                        <select
-                          className="rounded border border-white/15 bg-black/40 px-1 py-0.5 text-[11px]"
-                          value={selected.textEffect || "none"}
-                          onChange={(e) => {
-                            patchLayer(selected.id, {
-                              textEffect: e.target.value as LiveTextEffect,
-                              useLiveText: true,
-                            });
-                            if (!selected.useLiveText) void enableLiveText(selected.id);
-                          }}
-                        >
-                          <option value="none">{t.textEffectNone}</option>
-                          <option value="outline">{t.textEffectOutline}</option>
-                          <option value="shadow">{t.textEffectShadow}</option>
-                        </select>
-                      </label>
                     </>
-                  ) : null}
-                  <label className="flex items-center gap-1 text-[11px] text-slate-300">
-                    {t.color}
-                    <input
-                      type="color"
-                      value={selected.fill ?? (selected.kind === "shape" ? "#8b5cf6" : "#111827")}
-                      onChange={(e) =>
-                        patchLayer(selected.id, {
-                          fill: e.target.value,
-                          ...(selected.kind === "text" ? { useLiveText: true } : {}),
-                        })
-                      }
-                    />
-                  </label>
+                  ) : (
+                    <label className="flex items-center gap-1 text-[11px] text-slate-300">
+                      {t.color}
+                      <input
+                        type="color"
+                        value={selected.fill ?? "#8b5cf6"}
+                        onChange={(e) =>
+                          patchLayer(selected.id, {
+                            fill: e.target.value,
+                          })
+                        }
+                      />
+                    </label>
+                  )}
                 </>
               ) : null}
             </div>
@@ -4193,108 +4141,36 @@ export function EditImage2Client() {
                       }}
                     />
                     {selected.useLiveText || selected.kind === "text" ? (
-                      <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                        <label className="flex items-center gap-1 text-[11px] text-slate-300">
-                          {t.size}
-                          <input
-                            type="number"
-                            min={8}
-                            max={200}
-                            className="w-12 rounded border border-white/15 bg-black/40 px-1 py-0.5"
-                            value={Math.round(
-                              selected.fontSize ??
-                                Math.max(12, (selected.hPct / 100) * imageLayout.h * 0.72),
-                            )}
-                            onChange={(e) => {
-                              const size = Number(e.target.value) || 16;
-                              patchLayer(selected.id, { fontSize: size });
-                              if (!selected.useLiveText) void enableLiveText(selected.id);
-                              else if (!selected.holeCleared) void clearHoleIfNeeded(selected.id);
-                            }}
-                          />
-                        </label>
-                        <ToolBtn
-                          label={t.bold}
-                          active={selected.fontBold !== false}
-                          onClick={() => {
-                            patchLayer(selected.id, {
-                              fontBold: selected.fontBold === false,
-                            });
-                            if (!selected.useLiveText) void enableLiveText(selected.id);
-                          }}
-                        />
-                        <label className="flex items-center gap-1 text-[11px] text-slate-300">
-                          {t.fontStyle}
-                          <select
-                            className="max-w-[7.5rem] rounded border border-white/15 bg-black/40 px-1 py-0.5 text-[11px]"
-                            value={selected.fontFamily || LIVE_TEXT_FONTS[1]!.id}
-                            onChange={(e) => {
-                              patchLayer(selected.id, {
-                                fontFamily: e.target.value,
-                                useLiveText: true,
-                              });
-                              if (!selected.useLiveText) void enableLiveText(selected.id);
-                            }}
-                          >
-                            {LIVE_TEXT_FONTS.map((f) => (
-                              <option key={f.id} value={f.id}>
-                                {t[f.labelKey as keyof typeof t] as string}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                        <ToolBtn
-                          label={
-                            selected.textVertical ? t.textHorizontal : t.textVertical
+                      <div className="pt-0.5">
+                        <LiveTextControls
+                          t={t as unknown as Record<string, unknown>}
+                          fontSize={
+                            selected.fontSize ??
+                            Math.max(12, (selected.hPct / 100) * imageLayout.h * 0.72)
                           }
-                          active={!!selected.textVertical}
-                          onClick={() => {
-                            const nextVertical = !selected.textVertical;
-                            const patch: Partial<DecLayer> = {
-                              textVertical: nextVertical,
-                              useLiveText: true,
-                            };
-                            if (nextVertical !== !!selected.textVertical) {
-                              patch.wPct = selected.hPct;
-                              patch.hPct = selected.wPct;
-                            }
+                          fontBold={selected.fontBold !== false}
+                          fontFamily={selected.fontFamily || LIVE_TEXT_DEFAULT_FONT}
+                          textVertical={!!selected.textVertical}
+                          textEffect={selected.textEffect || "none"}
+                          fill={selected.fill || "#111827"}
+                          strokeColor={selected.strokeColor || "#ffffff"}
+                          effectColor={selected.effectColor || "#000000"}
+                          wPct={selected.wPct}
+                          hPct={selected.hPct}
+                          onPatch={(patch) => {
                             patchLayer(selected.id, patch);
+                            if (
+                              patch.fontSize != null &&
+                              selected.useLiveText &&
+                              !selected.holeCleared
+                            ) {
+                              void clearHoleIfNeeded(selected.id);
+                            }
+                          }}
+                          onEnsureLiveText={() => {
                             if (!selected.useLiveText) void enableLiveText(selected.id);
                           }}
                         />
-                        <label className="flex items-center gap-1 text-[11px] text-slate-300">
-                          {t.textEffect}
-                          <select
-                            className="rounded border border-white/15 bg-black/40 px-1 py-0.5 text-[11px]"
-                            value={selected.textEffect || "none"}
-                            onChange={(e) => {
-                              patchLayer(selected.id, {
-                                textEffect: e.target.value as LiveTextEffect,
-                                useLiveText: true,
-                              });
-                              if (!selected.useLiveText) void enableLiveText(selected.id);
-                            }}
-                          >
-                            <option value="none">{t.textEffectNone}</option>
-                            <option value="outline">{t.textEffectOutline}</option>
-                            <option value="shadow">{t.textEffectShadow}</option>
-                          </select>
-                        </label>
-                        <label className="flex items-center gap-1 text-[11px] text-slate-300">
-                          {t.color}
-                          <input
-                            type="color"
-                            className="h-6 w-8 cursor-pointer rounded border border-white/15 bg-transparent"
-                            value={selected.fill || "#111827"}
-                            onChange={(e) => {
-                              patchLayer(selected.id, {
-                                fill: e.target.value,
-                                useLiveText: true,
-                              });
-                              if (!selected.useLiveText) void enableLiveText(selected.id);
-                            }}
-                          />
-                        </label>
                       </div>
                     ) : null}
                   </div>

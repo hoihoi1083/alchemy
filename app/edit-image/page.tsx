@@ -9,9 +9,9 @@ type SearchParams = Record<string, string | string[] | undefined>;
 export default async function EditImageRedirectPage({
   searchParams,
 }: {
-  searchParams: Promise<SearchParams> | SearchParams;
+  searchParams: Promise<SearchParams>;
 }) {
-  const sp = await Promise.resolve(searchParams);
+  const sp = await searchParams;
   const q = new URLSearchParams();
   for (const [key, value] of Object.entries(sp)) {
     if (typeof value === "string") q.set(key, value);
