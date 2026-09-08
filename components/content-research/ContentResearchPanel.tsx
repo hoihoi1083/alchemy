@@ -1,9 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useLocale } from "@/components/LocaleProvider";
-import { useUserPlanEntitlements } from "@/hooks/useUserPlanEntitlements";
 import {
   applyContentAngleToWizard,
   buildContentAngleHandoff,
@@ -26,17 +24,11 @@ import {
   platformMediaMismatch,
 } from "@/lib/content-research-media-filter";
 import { contentResearchSearchHint } from "@/lib/content-research-search-hints";
-import { ResearchPostCards } from "@/components/content-research/ResearchPostCards";
 import {
   localizeResearchWarning,
   researchSourceNote,
 } from "@/lib/content-research-ui-messages";
 import { writeStudioAssistantHandoff } from "@/lib/studio-assistant-handoff";
-import {
-  buildUltraResearchHandoffFromPlan,
-  saveUltraResearchHandoff,
-} from "@/lib/ultra-research-handoff";
-import { canUseProCanvas } from "@/lib/billing/entitlements";
 import { markAssistantReopenAfterNavigate } from "@/lib/studio-assistant-chat-storage";
 import { studioHref } from "@/lib/promotion-mode";
 import type { PromptMarket } from "@/lib/prompt-variables";
@@ -101,8 +93,6 @@ export function ContentResearchPanel({
 }: ContentResearchPanelProps) {
   const { m } = useLocale();
   const cr = m.contentResearch;
-  const { plan: userPlan, planReady } = useUserPlanEntitlements();
-  const ultraCanvasAllowed = !planReady || canUseProCanvas(userPlan);
   const violet = tone === "violet";
   const [promotionMode, setPromotionMode] = useState<PromotionMode>(initialPromotionMode);
   const [platform, setPlatform] = useState<ContentPlatform>("xiaohongshu");
@@ -617,46 +607,6 @@ export function ContentResearchPanel({
           </p>
           {plan.summary && (
             <p className="text-xs leading-relaxed text-slate-700">{plan.summary}</p>
-          )}
-          <button
-            type="button"
-            onClick={() => {
-              saveUltraResearchHandoff(buildUltraResearchHandoffFromPlan(plan));
-              window.location.href = "/ultra?template=storyDifferenceAd";
-            }}
-            disabled={planReady && !ultraCanvasAllowed}
-            className={`w-full rounded-lg border px-3 py-2 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${
-              violet
-                ? "border-violet-400 bg-violet-50 text-violet-900 hover:bg-violet-100"
-                : "border-cyan-500/40 bg-cyan-50 text-cyan-950 hover:bg-cyan-100"
-            }`}
-          >
-            {cr.sendToUltraCanvas}
-          </button>
-          {planReady && !ultraCanvasAllowed ? (
-            <p className="text-[11px] leading-relaxed text-slate-600">
-              {cr.sendToUltraMasterHint}{" "}
-              <Link
-                href="/pricing?plan=master"
-                onClick={() => saveUltraResearchHandoff(buildUltraResearchHandoffFromPlan(plan))}
-                className="font-semibold text-violet-700 underline"
-              >
-                {cr.sendToUltraUpgrade}
-              </Link>
-            </p>
-          ) : null}
-          {plan.posts && plan.posts.length > 0 && (
-            <ResearchPostCards
-              posts={plan.posts}
-              labels={{
-                postsTitle: cr.postsTitle,
-                likes: cr.likes,
-                collects: cr.collects,
-                comments: cr.comments,
-                openNote: cr.openNote,
-                noCover: cr.noCover,
-              }}
-            />
           )}
           <p className={`text-xs font-semibold text-slate-800 ${violet ? "sr-only" : ""}`}>
             {cr.topPicksTitle}

@@ -88,9 +88,20 @@ describe("instagram hashtag search parsing", () => {
     assert.equal(items.length, 1);
   });
 
-  it("maps CJK product phrases to Instagram hashtags", () => {
+  it("uses the user's compacted phrase as the first IG hashtag", () => {
     const tags = instagramHashtagCandidates("維他命 C 精華");
-    assert.ok(tags.includes("vitamincserum") || tags.includes("vitaminc"));
-    assert.equal(tags[0] === "vitamincserum" || tags[0] === "vitaminc", true);
+    assert.equal(tags[0], "維他命C精華");
+    assert.equal(tags.some((t) => t === "vitaminc" || t === "serum"), false);
+  });
+
+  it("does not hardcode jewelry English tags from a dictionary", () => {
+    const tags = instagramHashtagCandidates("金砂石手链");
+    assert.deepEqual(tags, ["金砂石手链"]);
+  });
+
+  it("keeps latin keywords as-is", () => {
+    const tags = instagramHashtagCandidates("goldstone bracelet");
+    assert.equal(tags[0], "goldstonebracelet");
+    assert.ok(tags.includes("goldstone") || tags.includes("bracelet"));
   });
 });

@@ -26,6 +26,7 @@ import {
 } from "@/lib/edit-image-2-qwen-layers";
 import {
   isLogoLikeGraphicText,
+  isNearlyFlatColorLayer,
   softCoverHole,
 } from "@/lib/edit-image-2-soft-cover";
 import { falVisionImageUrl } from "@/lib/pipeline/fal-vision-image-url";
@@ -369,19 +370,14 @@ export async function POST(request: Request) {
             : role === "label"
               ? "标签"
               : "文字";
-      const text = live.text || (live.preferLive ? item.label : "");
-      if (live.preferLive) liveTextCount += 1;
-
-      const fontSize = Math.max(
-        12,
-        Math.round(placeH / Math.max(1, (live.preferLive ? text : item.label).split("\n").length) * 0.82),
-      );
-
+      // Hybrid: NEVER swap in Konva live type — Florence OCR often mangled CJK
+      // ("放送元自…"). Keep the pixel crop so words look like the original ad.
+      const ocrHint = (live.text || item.label || "").trim();
       textLayers.push({
         id: crypto.randomUUID(),
         kind: "text",
-        label: text ? text.slice(0, 80) : roleLabel,
-        text,
+        label: ocrHint ? ocrHint.slice(0, 80) : roleLabel,
+        text: "",
         xPct: (placeLeft / imgW) * 100,
         yPct: (placeTop / imgH) * 100,
         wPct: (placeW / imgW) * 100,
@@ -390,11 +386,10 @@ export async function POST(request: Request) {
         bbox: { left: placeLeft, top: placeTop, width: placeW, height: placeH },
         lifted: true,
         z: 1000 + textLayers.length,
-        useLiveText: live.preferLive,
+        useLiveText: false,
         role,
-        fontSize: live.preferLive ? fontSize : undefined,
-        fill: live.preferLive ? "#111827" : undefined,
       });
+      // liveTextCount stays 0 for hybrid pixel path
 
       const pad = Math.max(6, Math.round(Math.min(px.width, px.height) * 0.08));
       holeRects.push({
@@ -405,35 +400,14 @@ export async function POST(request: Request) {
       });
     }
 
-    // Soft-cover only (free) — do NOT localRingFill as the final plate.
-    // Qwen rebuilds a real background; this just hides glyphs/subject from the peel.
+    // Soft-cover only small text holes for Qwen input — never subject-sized
+    // (that painted stadium-green rectangles onto the plate).
     let plateBuf: Buffer = imgBuf;
     for (const r of holeRects) {
       try {
         plateBuf = Buffer.from(await softCoverHole(plateBuf, r, imgW, imgH));
       } catch (coverErr) {
         console.warn("[decompose-sandwich] soft cover text hole failed:", coverErr);
-      }
-    }
-    if (subjectBBox) {
-      const { left, top, width, height } = subjectBBox;
-      const pad = Math.max(4, Math.round(Math.min(width, height) * 0.04));
-      try {
-        plateBuf = Buffer.from(
-          await softCoverHole(
-            plateBuf,
-            {
-              left: Math.max(0, left - pad),
-              top: Math.max(0, top - pad),
-              width: Math.min(imgW - Math.max(0, left - pad), width + pad * 2),
-              height: Math.min(imgH - Math.max(0, top - pad), height + pad * 2),
-            },
-            imgW,
-            imgH,
-          ),
-        );
-      } catch (coverErr) {
-        console.warn("[decompose-sandwich] soft cover subject failed:", coverErr);
       }
     }
 
@@ -544,34 +518,19 @@ export async function POST(request: Request) {
       })),
     );
     const bgPrepared = prepared[bgIdx]!;
+    // Use Qwen bg as-is — do NOT soft-cover subject holes with grass green.
+    // Text-sized soft covers already ran pre-Qwen; large punches create green bars.
     let plateOut = Buffer.from(
       await sharp(bgPrepared.buf)
-        .flatten({ background: { r: 32, g: 32, b: 32 } })
+        .flatten({ background: { r: 24, g: 24, b: 28 } })
         .jpeg({ quality: 92 })
         .toBuffer(),
     );
-
-    // Critical: Qwen often keeps hero/text baked into its "background" layer
-    // (especially when qwenObjects === 0). Punch those holes again so drag
-    // does not leave a ghost twin on the plate.
-    const finalHoles: Array<{ left: number; top: number; width: number; height: number }> = [
-      ...holeRects,
-    ];
-    if (subjectBBox) {
-      const { left, top, width, height } = subjectBBox;
-      const pad = Math.max(6, Math.round(Math.min(width, height) * 0.06));
-      finalHoles.push({
-        left: Math.max(0, left - pad),
-        top: Math.max(0, top - pad),
-        width: Math.min(imgW - Math.max(0, left - pad), width + pad * 2),
-        height: Math.min(imgH - Math.max(0, top - pad), height + pad * 2),
-      });
-    }
-    for (const r of finalHoles) {
+    for (const r of holeRects) {
       try {
         plateOut = Buffer.from(await softCoverHole(plateOut, r, imgW, imgH));
       } catch (punchErr) {
-        console.warn("[decompose-sandwich] post-qwen plate punch failed:", punchErr);
+        console.warn("[decompose-sandwich] post-qwen text punch failed:", punchErr);
       }
     }
 
@@ -597,6 +556,15 @@ export async function POST(request: Request) {
         .extract({ left, top, width, height })
         .png()
         .toBuffer();
+      if (await isNearlyFlatColorLayer(crop)) {
+        console.info("[decompose-sandwich] skip flat Qwen patch", {
+          left,
+          top,
+          width,
+          height,
+        });
+        continue;
+      }
       const cropUrl = await uploadPng(crop, `hybrid-obj-${objectLayers.length}.png`);
       objectLayers.push({
         id: crypto.randomUUID(),
@@ -656,8 +624,8 @@ export async function POST(request: Request) {
         objectsDetected: objectLayers.length + subjectLayers.length,
         qwenObjectCount: objectLayers.length,
         subjectLifted: subjectLayers.length > 0,
-        backgroundMode: "hybrid-qwen-punched",
-        platePunchedHoles: finalHoles.length,
+        backgroundMode: "hybrid-qwen",
+        platePunchedHoles: holeRects.length,
         qwenLayerCount: prepared.length,
         numLayersRequested: numLayers,
         endpoint: QWEN_LAYERED_ENDPOINT,

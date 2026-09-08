@@ -676,23 +676,18 @@ export function mapRawPlatformPost(
   return mapper(raw, index);
 }
 
-const IG_HASHTAG_ALIASES: Array<{ re: RegExp; tag: string }> = [
-  { re: /維他命\s*c|维生素\s*c|維生素\s*c/i, tag: "vitaminc" },
-  { re: /精華液|精华液|精華|精华/, tag: "serum" },
-  { re: /美白/, tag: "brightening" },
-  { re: /防曬|防晒/, tag: "sunscreen" },
-  { re: /保濕|保湿/, tag: "moisturizer" },
-  { re: /抗老/, tag: "antiaging" },
-  { re: /護膚|护肤/, tag: "skincare" },
-  { re: /面霜|乳霜/, tag: "cream" },
-  { re: /面膜/, tag: "sheetmask" },
-];
-
 function compactHashtag(value: string): string {
   return value.replace(/^#/, "").replace(/[^\p{L}\p{N}]/gu, "").slice(0, 80);
 }
 
-/** Instagram hashtag search needs a real tag, not a spaced product phrase. */
+function isCjkHeavy(value: string): boolean {
+  return /[\u3040-\u30ff\u3400-\u9fff]/.test(value);
+}
+
+/**
+ * First-pass IG hashtags from the user's typed keyword only (no dictionary).
+ * CJK empty results fall back to DeepSeek translation in searchInstagramPosts.
+ */
 export function instagramHashtagCandidates(keyword: string): string[] {
   const out: string[] = [];
   const add = (value: string) => {
@@ -701,27 +696,62 @@ export function instagramHashtagCandidates(keyword: string): string[] {
   };
 
   const raw = keyword.trim();
-  const compactOriginal = compactHashtag(raw.replace(/\s+/g, ""));
+  if (!raw) return out;
+
+  add(raw.replace(/\s+/g, ""));
   const latin = (raw.match(/[A-Za-z0-9]+/g) ?? []).filter((part) => part.length >= 2);
-  const mapped = IG_HASHTAG_ALIASES.filter(({ re }) => re.test(raw)).map(({ tag }) => tag);
-  const cjkOnly = /[\u3040-\u30ff\u3400-\u9fff]/.test(compactOriginal) && latin.length === 0;
-
-  if (cjkOnly) {
-    if (mapped.includes("vitaminc") && mapped.includes("serum")) add("vitamincserum");
-    for (const tag of mapped) add(tag);
-    add(compactOriginal);
-    return out.slice(0, 3);
-  }
-
-  add(compactOriginal);
   if (latin.length) {
     add(latin.join(""));
     for (const part of [...latin].sort((a, b) => b.length - a.length)) add(part);
   }
-  if (mapped.includes("vitaminc") && mapped.includes("serum")) add("vitamincserum");
-  for (const tag of mapped) add(tag);
+  return out.slice(0, 2);
+}
 
-  return out.slice(0, 3);
+/**
+ * Translate the user's phrase into English Instagram hashtags (not a fixed dictionary).
+ * Soft-fail: returns [] if DeepSeek is unavailable.
+ */
+export async function translateKeywordToIgHashtags(keyword: string): Promise<string[]> {
+  const { callDeepSeekChat, deepSeekApiKey } = await import("@/lib/deepseek-client");
+  if (!deepSeekApiKey()) return [];
+  try {
+    const raw = await callDeepSeekChat(
+      [
+        {
+          role: "system",
+          content:
+            'Translate this product/search phrase into Instagram hashtags that match what the user meant. Reply JSON only: {"hashtags":["tag1","tag2"]}. Use lowercase English hashtags without #. Reflect the specific product (not a generic category). Max 2 tags.',
+        },
+        { role: "user", content: keyword.trim().slice(0, 80) },
+      ],
+      { temperature: 0.2, max_tokens: 80, jsonObject: true },
+    );
+    const parsed = JSON.parse(raw) as { hashtags?: unknown };
+    const list = Array.isArray(parsed.hashtags) ? parsed.hashtags : [];
+    const out: string[] = [];
+    for (const entry of list) {
+      if (typeof entry !== "string") continue;
+      const tag = compactHashtag(entry);
+      if (tag.length >= 2 && !isCjkHeavy(tag) && !out.includes(tag)) out.push(tag);
+      if (out.length >= 2) break;
+    }
+    return out;
+  } catch (err) {
+    console.warn("[justoneapi] IG hashtag translate failed:", err);
+    return [];
+  }
+}
+
+function hashtagBodyHasImagePosts(
+  body: Record<string, unknown>,
+  limit: number,
+): boolean {
+  const items = flattenSearchItems(body);
+  if (items.length < 1) return false;
+  if (mapItems("instagram", items, limit, "image").length > 0) return true;
+  return mapItems("instagram", items, limit).some(
+    (p) => p.mediaType === "image" && Boolean(p.coverImageUrl),
+  );
 }
 
 async function searchInstagramPosts(
@@ -736,32 +766,46 @@ async function searchInstagramPosts(
   }
 
   const endpoint = "/api/instagram/search-hashtag-posts/v1";
-  // One hashtag at a time. Bursting 3 tags was tripping Just One "collect failed" rate limits.
-  const tags = instagramHashtagCandidates(keyword).slice(0, 2);
+  const tried = new Set<string>();
   let lastBody: Record<string, unknown> | undefined;
   let lastError: Error | undefined;
 
-  for (let i = 0; i < tags.length; i++) {
-    const hashtag = tags[i]!;
-    try {
-      const body = await fetchJustOneApi(endpoint, { hashtag }, "Instagram hashtag posts search");
-      lastBody = body;
-      const items = flattenSearchItems(body);
-      if (items.length < 1) continue;
-      const imagePosts = mapItems("instagram", items, limit, "image");
-      if (imagePosts.length > 0) return { body, endpoint };
-      const stills = mapItems("instagram", items, limit).filter(
-        (p) => p.mediaType === "image" && Boolean(p.coverImageUrl),
+  const tryTags = async (list: string[]) => {
+    for (const hashtag of list) {
+      if (tried.has(hashtag)) continue;
+      tried.add(hashtag);
+      try {
+        const body = await fetchJustOneApi(endpoint, { hashtag }, "Instagram hashtag posts search");
+        lastBody = body;
+        if (hashtagBodyHasImagePosts(body, limit)) return body;
+        console.info(
+          `[justoneapi] Instagram hashtag "${hashtag}" returned no image posts, trying next`,
+        );
+      } catch (e) {
+        lastError = e instanceof Error ? e : new Error(String(e));
+        if (isJustOneRateLimitError(lastError)) throw lastError;
+        console.warn(
+          `[justoneapi] Instagram hashtag "${hashtag}" failed, trying next candidate:`,
+          lastError.message,
+        );
+      }
+    }
+    return null;
+  };
+
+  // Pass 1: exactly what the user typed (compacted).
+  const hit = await tryTags(instagramHashtagCandidates(keyword));
+  if (hit) return { body: hit, endpoint };
+
+  // Pass 2: translate that same user phrase → English hashtags, then search again.
+  if (isCjkHeavy(keyword)) {
+    const translated = await translateKeywordToIgHashtags(keyword);
+    if (translated.length) {
+      console.info(
+        `[justoneapi] Instagram user tag empty — translated "${keyword.trim()}" → ${translated.join(", ")}`,
       );
-      if (stills.length > 0) return { body, endpoint };
-    } catch (e) {
-      lastError = e instanceof Error ? e : new Error(String(e));
-      // Don't burn more tags while throttled — that makes IG worse.
-      if (isJustOneRateLimitError(lastError)) throw lastError;
-      console.warn(
-        `[justoneapi] Instagram hashtag "${hashtag}" failed, trying next candidate:`,
-        lastError.message,
-      );
+      const translatedHit = await tryTags(translated);
+      if (translatedHit) return { body: translatedHit, endpoint };
     }
   }
 
