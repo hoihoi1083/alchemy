@@ -34,6 +34,7 @@ export type ConsumeKindLabels = {
   smart_layers_matte: string;
   smart_layers_heal: string;
   smart_layers_qwen: string;
+  smart_layers_seedream: string;
   smart_layers_expand: string;
 };
 

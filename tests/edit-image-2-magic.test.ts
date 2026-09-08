@@ -28,10 +28,17 @@ describe("magic board chat intents", () => {
     });
   });
 
-  it("falls back freeform to ai_edit", () => {
+  it("falls back freeform to full_edit (whole image)", () => {
     assert.deepEqual(parseMagicChatIntent("把旗帜换成巴西国旗"), {
-      type: "ai_edit",
+      type: "full_edit",
       instruction: "把旗帜换成巴西国旗",
+    });
+  });
+
+  it("parses explicit layer-targeted edit", () => {
+    assert.deepEqual(parseMagicChatIntent("改这层：换成红色"), {
+      type: "ai_edit",
+      instruction: "换成红色",
     });
   });
 });

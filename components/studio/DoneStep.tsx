@@ -52,7 +52,7 @@ function openEditImageForSlide(opts: {
   // Same-tab only. Do NOT window.open with "noopener" — modern browsers return
   // null from open(..., "noopener"), which incorrectly also triggered router.push
   // and opened edit-image twice.
-  opts.routerPush("/edit-image");
+  opts.routerPush("/edit-image-2");
 }
 
 export function DoneStep() {

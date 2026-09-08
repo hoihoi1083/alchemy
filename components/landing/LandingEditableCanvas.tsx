@@ -158,7 +158,7 @@ export function LandingEditableCanvas() {
 						</ul>
 
 						<Link
-							href="/edit-image"
+							href="/edit-image-2"
 							className="landing-cta-shine mt-7 inline-flex rounded-full bg-violet-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-400"
 						>
 							{L.canvasCta}

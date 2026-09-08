@@ -1,85 +1,24 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { Suspense, useEffect, useState } from "react";
-import dynamic from "next/dynamic";
-import { LandingNav } from "@/components/landing/LandingNav";
-import { StudioGlowShell } from "@/components/studio/StudioGlowShell";
-import { useLocale } from "@/components/LocaleProvider";
-import { STUDIO_PAGE_GLOW } from "@/lib/studio-glow";
+type SearchParams = Record<string, string | string[] | undefined>;
 
-const ImageCanvasStudioClient = dynamic(
-  () =>
-    import("@/components/image-canvas/ImageCanvasStudioClient").then((m) => ({
-      default: m.ImageCanvasStudioClient,
-    })),
-  {
-    ssr: false,
-    loading: () => (
-      <p className="py-12 text-center text-sm text-slate-500">Loading image editor…</p>
-    ),
-  },
-);
-
-function EditImagePageContent() {
-  const { m } = useLocale();
-  const t = m.imageCanvas;
-
-  return (
-    <StudioGlowShell theme={STUDIO_PAGE_GLOW.editImage}>
-      <LandingNav />
-      <div className="mx-auto w-full max-w-[1800px] px-3 py-5 pb-28 sm:px-6 sm:py-6 sm:pb-24 lg:px-8 xl:pb-24">
-        <header className="mb-5 text-center sm:mb-6">
-          <p className="text-xs font-medium tracking-wide text-violet-300 sm:text-sm">
-            {t.badge}
-          </p>
-          <h1 className="mt-1.5 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-            {t.title}
-          </h1>
-          <p className="mx-auto mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
-            {t.subtitle}
-          </p>
-          <p className="mt-3 text-center text-xs text-slate-500">
-            Prefer AI-detected movable layers?{" "}
-            <a
-              href="/edit-image-2"
-              className="font-medium text-violet-300 underline-offset-2 hover:text-violet-200 hover:underline"
-            >
-              Open AI smart layers
-            </a>
-          </p>
-        </header>
-
-        <ImageCanvasStudioClient />
-      </div>
-    </StudioGlowShell>
-  );
-}
-
-export default function EditImagePage() {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
-  if (!mounted) {
-    return (
-      <StudioGlowShell theme={STUDIO_PAGE_GLOW.editImage}>
-        <div className="flex flex-1 items-center justify-center text-sm text-slate-500">
-          …
-        </div>
-      </StudioGlowShell>
-    );
+/**
+ * Legacy `/edit-image` → Magic Layers (`/edit-image-2`).
+ * Preserves `image`, `returnTo`, and any other query params.
+ */
+export default async function EditImageRedirectPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams> | SearchParams;
+}) {
+  const sp = await Promise.resolve(searchParams);
+  const q = new URLSearchParams();
+  for (const [key, value] of Object.entries(sp)) {
+    if (typeof value === "string") q.set(key, value);
+    else if (Array.isArray(value)) {
+      for (const item of value) q.append(key, item);
+    }
   }
-
-  return (
-    <Suspense
-      fallback={
-        <StudioGlowShell theme={STUDIO_PAGE_GLOW.editImage}>
-          <div className="flex flex-1 items-center justify-center text-sm text-slate-500">
-            …
-          </div>
-        </StudioGlowShell>
-      }
-    >
-      <EditImagePageContent />
-    </Suspense>
-  );
+  const qs = q.toString();
+  redirect(qs ? `/edit-image-2?${qs}` : "/edit-image-2");
 }

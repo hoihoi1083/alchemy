@@ -12,7 +12,7 @@ const TOOLS = [
 		src: "/images/landing/tool-icon-brand.png?v=2",
 	},
 	{
-		href: "/edit-image",
+		href: "/edit-image-2",
 		titleKey: "toolEditTitle" as const,
 		descKey: "toolEditDesc" as const,
 		src: "/images/landing/tool-icon-edit.png?v=2",

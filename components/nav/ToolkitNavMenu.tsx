@@ -74,13 +74,6 @@ export function ToolkitNavMenu({ variant = "light", triggerClassName }: ToolkitN
       },
       {
         id: "edit-image",
-        href: "/edit-image",
-        label: L.toolEditTitle,
-        description: L.toolEditDesc,
-        icon: "edit",
-      },
-      {
-        id: "edit-image-2",
         href: "/edit-image-2",
         label: L.toolSmartLayersTitle,
         description: L.toolSmartLayersDesc,
@@ -183,9 +176,6 @@ export function ToolkitNavMobileLinks({
       </Link>
       <Link href="/brand-kit" className={subClass} onClick={onNavigate}>
         {L.toolBrandTitle}
-      </Link>
-      <Link href="/edit-image" className={subClass} onClick={onNavigate}>
-        {L.toolEditTitle}
       </Link>
       <Link href="/edit-image-2" className={subClass} onClick={onNavigate}>
         {L.toolSmartLayersTitle}

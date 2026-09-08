@@ -33,4 +33,10 @@ describe("smart layers billing", () => {
     assert.equal(TOKEN_COST.smart_layers_matte, 5);
     assert.equal(TOKEN_COST.inpaint, 41);
   });
+
+  it("Seedream Layerize (BytePlus) costs more than Qwen but less than fal trial", () => {
+    assert.equal(TOKEN_COST.smart_layers_seedream, 183);
+    assert.ok(TOKEN_COST.smart_layers_seedream > TOKEN_COST.smart_layers_qwen * 3);
+    assert.ok(TOKEN_COST.smart_layers_seedream < 274);
+  });
 });

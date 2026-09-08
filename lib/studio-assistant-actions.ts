@@ -254,7 +254,7 @@ export function runStudioAssistantAction(
       return goPath("/captions", context);
 
     case "open-edit-image":
-      return goPath("/edit-image", context);
+      return goPath("/edit-image-2", context);
 
     case "open-ultra-canvas":
     case "open-pro":

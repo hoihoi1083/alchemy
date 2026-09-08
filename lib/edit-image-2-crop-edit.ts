@@ -44,14 +44,15 @@ export function buildLayerCropEditPrompt(opts: {
     buildImageRefinePrompt(note),
     "This attachment is ONLY the selected region crop — edit inside it.",
     "Do not invent a new full poster. Keep crop framing and aspect ratio.",
-    "Blend edges so the result can sit back on the original plate.",
+    "If empty areas are solid magenta (#FF00FF), keep them pure magenta (transparent). Do not paint a gray or white box behind the subject.",
+    "Blend edges so the result can sit back on the original plate as a cutout layer.",
   ].join(" ");
 
   return {
     prompt,
     systemPrompt: [
       IMAGE_REFINE_SYSTEM_PROMPT,
-      "You are editing a cropped region of a poster, not the full canvas.",
+      "You are editing a cropped region of a poster, not the full canvas. Prefer transparent cutouts over solid plates.",
     ].join(" "),
     billingMode: "refine-layer-crop",
   };

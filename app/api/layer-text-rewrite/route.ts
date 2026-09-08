@@ -7,6 +7,10 @@ import {
   buildLayerTextRewritePrompt,
   LAYER_TEXT_REWRITE_SYSTEM_PROMPT,
 } from "@/lib/edit-image-2-text-rewrite";
+import {
+  finishCropAfterModelEdit,
+  prepareCropForModelEdit,
+} from "@/lib/edit-image-2-transparent-edit";
 import { defaultEditEndpoint } from "@/lib/image-endpoints";
 import { falVisionImageUrl } from "@/lib/pipeline/fal-vision-image-url";
 import { requireAppUser } from "@/lib/require-app-user";
@@ -17,7 +21,7 @@ export const maxDuration = 180;
 
 /**
  * AI rewrite of a text-layer crop: keep style/color, change wording only.
- * Uses nano-banana-2/edit (TOKEN_COST.image).
+ * Transparent crops are chroma-flattened before Banana (models destroy alpha).
  */
 export async function POST(request: Request) {
   const auth = await requireAppUser();
@@ -68,9 +72,11 @@ export async function POST(request: Request) {
     const h = meta.height ?? 0;
     if (!w || !h) throw new Error("Could not read crop size.");
 
-    const png = await sharp(cropBuf).png().toBuffer();
+    const prepared = await prepareCropForModelEdit(cropBuf);
     const falCropUrl = await fal.storage.upload(
-      new File([new Uint8Array(png)], "text-crop.png", { type: "image/png" }),
+      new File([new Uint8Array(prepared.modelInput)], "text-crop.png", {
+        type: "image/png",
+      }),
     );
 
     const prompt = buildLayerTextRewritePrompt({
@@ -78,14 +84,12 @@ export async function POST(request: Request) {
       oldText: body.old_text,
     });
     const endpoint = defaultEditEndpoint();
-    // Banana only accepts a fixed enum — never pass raw "837:142" from crop pixels.
-    const aspectRatio = "auto";
 
     const result = await fal.subscribe(endpoint, {
       input: {
         prompt,
         image_urls: [falCropUrl],
-        aspect_ratio: aspectRatio,
+        aspect_ratio: "auto",
         num_images: 1,
         resolution: "1K",
         limit_generations: true,
@@ -100,16 +104,18 @@ export async function POST(request: Request) {
     const outRes = await fetch(outUrl, { cache: "no-store" });
     if (!outRes.ok) throw new Error(`Rewrite download ${outRes.status}`);
     const outBuf = Buffer.from(await outRes.arrayBuffer());
-    // Fit back to original crop size so layer placement stays stable.
-    const fitted = await sharp(outBuf)
-      .resize(w, h, { fit: "fill" })
-      .png()
-      .toBuffer();
+    const fitted = await finishCropAfterModelEdit(outBuf, {
+      restoreChroma: prepared.restoreChroma,
+      width: w,
+      height: h,
+    });
 
     let cropUrlOut: string;
     try {
       cropUrlOut = await fal.storage.upload(
-        new File([new Uint8Array(fitted)], "text-rewritten.png", { type: "image/png" }),
+        new File([new Uint8Array(fitted)], "text-rewritten.png", {
+          type: "image/png",
+        }),
       );
     } catch {
       cropUrlOut = `data:image/png;base64,${fitted.toString("base64")}`;
@@ -119,6 +125,7 @@ export async function POST(request: Request) {
       cropUrl: cropUrlOut,
       tokensCharged: tokenCost,
       creditBalance: charged.balanceAfter,
+      debug: { restoreChroma: prepared.restoreChroma },
     });
   } catch (e: unknown) {
     await refundTokens(auth.user.userId, tokenCost, {

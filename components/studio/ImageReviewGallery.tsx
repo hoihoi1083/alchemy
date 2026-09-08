@@ -414,7 +414,7 @@ export function ImageReviewGallery({
       returnTo: "/studio",
     });
     // Same-tab navigation — avoids duplicate windows (noopener makes window.open return null).
-    router.push("/edit-image");
+    router.push("/edit-image-2");
   }
 
   function handleRegenerateAll() {

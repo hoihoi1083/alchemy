@@ -7,6 +7,10 @@ import {
   buildLayerCropEditPrompt,
   resolveCropEditMode,
 } from "@/lib/edit-image-2-crop-edit";
+import {
+  finishCropAfterModelEdit,
+  prepareCropForModelEdit,
+} from "@/lib/edit-image-2-transparent-edit";
 import { defaultEditEndpoint } from "@/lib/image-endpoints";
 import { falVisionImageUrl } from "@/lib/pipeline/fal-vision-image-url";
 import { requireAppUser } from "@/lib/require-app-user";
@@ -19,7 +23,7 @@ export const maxDuration = 180;
  * AI edit of a selected layer crop.
  * - new_text → wording rewrite (style from crop)
  * - instruction → freeform change on that region only
- * Banana edit @ TOKEN_COST.image.
+ * Transparent crops are chroma-flattened before Banana (models destroy alpha).
  */
 export async function POST(request: Request) {
   const auth = await requireAppUser();
@@ -88,9 +92,11 @@ export async function POST(request: Request) {
     const h = meta.height ?? 0;
     if (!w || !h) throw new Error("Could not read crop size.");
 
-    const png = await sharp(cropBuf).png().toBuffer();
+    const prepared = await prepareCropForModelEdit(cropBuf);
     const falCropUrl = await fal.storage.upload(
-      new File([new Uint8Array(png)], "layer-crop.png", { type: "image/png" }),
+      new File([new Uint8Array(prepared.modelInput)], "layer-crop.png", {
+        type: "image/png",
+      }),
     );
 
     const result = await fal.subscribe(defaultEditEndpoint(), {
@@ -112,15 +118,18 @@ export async function POST(request: Request) {
     const outRes = await fetch(outUrl, { cache: "no-store" });
     if (!outRes.ok) throw new Error(`Crop edit download ${outRes.status}`);
     const outBuf = Buffer.from(await outRes.arrayBuffer());
-    const fitted = await sharp(outBuf)
-      .resize(w, h, { fit: "fill" })
-      .png()
-      .toBuffer();
+    const fitted = await finishCropAfterModelEdit(outBuf, {
+      restoreChroma: prepared.restoreChroma,
+      width: w,
+      height: h,
+    });
 
     let cropUrlOut: string;
     try {
       cropUrlOut = await fal.storage.upload(
-        new File([new Uint8Array(fitted)], "layer-crop-edited.png", { type: "image/png" }),
+        new File([new Uint8Array(fitted)], "layer-crop-edited.png", {
+          type: "image/png",
+        }),
       );
     } catch {
       cropUrlOut = `data:image/png;base64,${fitted.toString("base64")}`;
@@ -131,6 +140,7 @@ export async function POST(request: Request) {
       mode,
       tokensCharged: tokenCost,
       creditBalance: charged.balanceAfter,
+      debug: { restoreChroma: prepared.restoreChroma },
     });
   } catch (e: unknown) {
     await refundTokens(auth.user.userId, tokenCost, {

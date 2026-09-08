@@ -71,6 +71,11 @@ export const TOKEN_COST = {
    */
   smart_layers_qwen: 41,
   /**
+   * BytePlus ModelArk Seedream 5.0 Pro layer_decomposition (1K tier).
+   * COGS ~$0.0225/output × ~10 layers → tokensForFalUsd(0.225) = 183.
+   */
+  smart_layers_seedream: 183,
+  /**
    * Magic Expand (fal outpaint). Base ~1MP; API may bill more by output size.
    */
   smart_layers_expand: 41,
@@ -84,6 +89,19 @@ export function estimateSmartLayersDetectTokens(opts: { sam?: boolean } = {}): n
 /** Tokens for Qwen Image Layered one-shot split. */
 export function estimateSmartLayersQwenTokens(): number {
   return TOKEN_COST.smart_layers_qwen;
+}
+
+/**
+ * Seedream 5.0 Pro Layerize via BytePlus ModelArk.
+ * Default assumes ~10 outputs at the low 1K layer-separation rate ($0.0225 each).
+ */
+export function estimateSmartLayersSeedreamTokens(opts?: {
+  layers?: number;
+  hiRes?: boolean;
+}): number {
+  const layers = Math.max(2, Math.min(17, opts?.layers ?? 10));
+  const perLayer = opts?.hiRes ? 0.045 : 0.0225;
+  return tokensForFalUsd(perLayer * layers);
 }
 
 /** Hybrid: Florence OCR + BiRefNet subject + Qwen remainder (no billed heal). */

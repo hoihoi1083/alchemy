@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Stage,
@@ -23,6 +24,11 @@ import {
 } from "@/lib/brand-kit";
 import { LibraryAssetPicker } from "@/components/LibraryAssetPicker";
 import {
+  clearImageCanvasHandoff,
+  normalizeImageCanvasHandoffUrl,
+  readImageCanvasHandoff,
+} from "@/lib/image-canvas-handoff";
+import {
   blurPunchBackground,
   brushStrokesImageBBox,
   buildBrushMaskCanvas,
@@ -41,12 +47,19 @@ import {
   tryKeyTextCrop,
   type ImageBBox,
 } from "@/lib/edit-image-2-perfect-lift";
+import {
+  punchBoxInCrop,
+  punchBrushInCrop,
+} from "@/lib/edit-image-2-layer-erase";
+import {
+  LIVE_TEXT_FONTS,
+  liveTextDisplayString,
+  type LiveTextEffect,
+} from "@/lib/edit-image-2-live-text";
 import { MagicBoardChat } from "@/components/edit-image-2/MagicBoardChat";
 import {
   estimateInpaintTokens,
   estimateSmartLayersDetectTokens,
-  estimateSmartLayersQwenTokens,
-  estimateSmartLayersSandwichTokens,
   TOKEN_COST,
 } from "@/lib/billing/token-costs";
 import { isLibraryAssetUrl } from "@/lib/storage/library-asset-url";
@@ -75,6 +88,10 @@ type DecLayer = {
   fontSize?: number;
   fill?: string;
   fontBold?: boolean;
+  fontFamily?: string;
+  /** Stack characters top→bottom (poster vertical type). */
+  textVertical?: boolean;
+  textEffect?: LiveTextEffect;
   matted?: boolean;
   /** Style already sampled from crop when switching to live text. */
   styleSampled?: boolean;
@@ -103,16 +120,14 @@ type GuideLine = { orientation: "h" | "v"; pos: number };
 
 const HISTORY_MAX = 40;
 const SNAP_PX = 6;
-const DETECT_TOKENS = estimateSmartLayersDetectTokens({ sam: false });
-/** Aug-style full split: Florence + SAM + BiRefNet subject. */
+/** Aug-style full split: Florence + SAM + BiRefNet subject (kept for magic chat). */
 const DETECT_SAM_TOKENS =
   estimateSmartLayersDetectTokens({ sam: true }) + TOKEN_COST.smart_layers_matte;
-const QWEN_TOKENS = estimateSmartLayersQwenTokens();
-const SANDWICH_TOKENS = estimateSmartLayersSandwichTokens();
 const ERASE_PER_MP = estimateInpaintTokens(1);
 const HEAL_LOCAL_TOKENS = TOKEN_COST.smart_layers_heal;
 const MATTE_TOKENS = TOKEN_COST.smart_layers_matte;
 const EXPAND_TOKENS = TOKEN_COST.smart_layers_expand;
+const SPLIT_TOKENS = TOKEN_COST.smart_layers_seedream;
 const SESSION_KEY = "alchemy-edit-image-2-v1";
 
 type SessionSnap = {
@@ -486,10 +501,23 @@ function LayerSprite({
         <KonvaText
           ref={textRef}
           width={w}
-          text={layer.editText ?? layer.text}
+          text={liveTextDisplayString(layer.editText ?? layer.text, layer.textVertical)}
           fontSize={fontSize}
+          fontFamily={layer.fontFamily || LIVE_TEXT_FONTS[1]!.id}
           fontStyle={layer.fontBold === false ? "normal" : "bold"}
           fill={fill}
+          align={layer.textVertical ? "center" : "left"}
+          verticalAlign="middle"
+          stroke={layer.textEffect === "outline" ? "#ffffff" : undefined}
+          strokeWidth={layer.textEffect === "outline" ? Math.max(1, fontSize * 0.06) : 0}
+          shadowEnabled={layer.textEffect === "shadow"}
+          shadowColor="rgba(0,0,0,0.55)"
+          shadowBlur={layer.textEffect === "shadow" ? Math.max(4, fontSize * 0.12) : 0}
+          shadowOffset={
+            layer.textEffect === "shadow"
+              ? { x: Math.max(1, fontSize * 0.04), y: Math.max(1, fontSize * 0.04) }
+              : undefined
+          }
           {...common}
         />
       ) : img ? (
@@ -576,12 +604,15 @@ export function EditImage2Client() {
   const { m } = useLocale();
   const ic = m.imageCanvas;
   const t = m.editImage2;
+  const searchParams = useSearchParams();
   const fileRef = useRef<HTMLInputElement>(null);
   const stageRef = useRef<StageType>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const [bootSnap] = useState<SessionSnap | null>(() => loadSession());
+  const handoffBootKeyRef = useRef<string | null>(null);
 
   const [sourceUrl, setSourceUrl] = useState<string | null>(bootSnap?.sourceUrl ?? null);
+  const [returnTo, setReturnTo] = useState<string | null>(null);
   const [busy, setBusy] = useState<
     "upload" | "decompose" | "export" | "matte" | "rewrite" | null
   >(null);
@@ -616,12 +647,19 @@ export function EditImage2Client() {
   const [brushMode, setBrushMode] = useState(false);
   /** When brushMode: lift cutout vs erase painted area */
   const [brushIntent, setBrushIntent] = useState<"lift" | "erase">("lift");
+  /** Erase hits background plate or the selected layer crop. */
+  const [eraseTarget, setEraseTarget] = useState<"plate" | "layer">("plate");
   const [boxMode, setBoxMode] = useState(false);
+  /** Internal layer clipboard for Copy → Paste (not OS clipboard). */
+  const layerClipboardRef = useRef<DecLayer | null>(null);
+  const [hasLayerClipboard, setHasLayerClipboard] = useState(false);
   /** Click-to-grab: tap a piece on the photo */
   const [grabMode, setGrabMode] = useState(false);
   /** boxMode intent: lift | Qwen region | erase | AI edit region */
   const [boxIntent, setBoxIntent] = useState<"lift" | "qwen" | "erase" | "ai">("lift");
   /** Inspector: change words vs freeform AI on the selected crop */
+  const [aiAddOpen, setAiAddOpen] = useState(false);
+  const [aiAddPrompt, setAiAddPrompt] = useState("");
   const [cropEditMode, setCropEditMode] = useState<"text" | "ai">("ai");
   const [editInstruction, setEditInstruction] = useState("");
   const instructionRef = useRef<HTMLTextAreaElement | null>(null);
@@ -952,18 +990,45 @@ export function EditImage2Client() {
     [patchLayer, sourceUrl],
   );
 
-  /** Turn a crop text layer into editable Konva text (clears plate first, with timeout). */
+  /** Turn a crop / text layer into editable Konva text (clears plate first, with timeout). */
   const enableLiveText = useCallback(
     async (id: string) => {
       const cur = historyRef.current[historyIndexRef.current] ?? [];
-      const layer = cur.find((l) => l.id === id);
-      if (!layer || layer.kind !== "text") return;
+      let layer = cur.find((l) => l.id === id);
+      if (!layer) return;
+
+      // Seedream pieces arrive as object crops — promote to text first.
+      if (layer.kind === "object") {
+        const raw = (layer.editText || layer.text || "").trim();
+        const toolLabel = /cutout|框选|框選|笔刷|筆刷|抠图|摳圖|去背|box select/i.test(
+          layer.label || "",
+        );
+        const wording =
+          !raw || toolLabel ? t.newText : raw;
+        patchLayer(id, {
+          kind: "text",
+          useLiveText: false,
+          editText: wording,
+          text: wording,
+          label: wording.slice(0, 80),
+        });
+        await new Promise((r) => requestAnimationFrame(() => r(null)));
+        const after = historyRef.current[historyIndexRef.current] ?? [];
+        layer = after.find((l) => l.id === id);
+        if (!layer || layer.kind !== "text") return;
+      }
+
+      if (layer.kind !== "text") return;
       if (layer.useLiveText) return;
 
       // Switch to live text immediately so typing never freezes waiting on heal.
       const boardH = resultRef.current?.height ?? 1000;
+      const tall = layer.hPct > layer.wPct * 1.35;
       const earlyPatch: Partial<DecLayer> = {
         useLiveText: true,
+        fontFamily: layer.fontFamily || LIVE_TEXT_FONTS[1]!.id,
+        textVertical: layer.textVertical ?? tall,
+        textEffect: layer.textEffect ?? "none",
         fontSize:
           layer.fontSize ??
           Math.max(14, Math.round((layer.hPct / 100) * boardH * 0.78)),
@@ -1023,11 +1088,42 @@ export function EditImage2Client() {
     [patchLayer, enableLiveText],
   );
 
+  const copySelectedToClipboard = useCallback(() => {
+    if (!selectedId) return;
+    const cur = historyRef.current[historyIndexRef.current] ?? [];
+    const selected = cur.find((l) => l.id === selectedId);
+    if (!selected) return;
+    layerClipboardRef.current = { ...selected };
+    setHasLayerClipboard(true);
+    setNotice(t.layerCopied);
+  }, [selectedId, t.layerCopied]);
+
+  const pasteLayerFromClipboard = useCallback(() => {
+    const src = layerClipboardRef.current;
+    if (!src) {
+      setError(t.layerClipboardEmpty);
+      return;
+    }
+    const copy: DecLayer = {
+      ...src,
+      id: crypto.randomUUID(),
+      xPct: Math.min(92, src.xPct + 3),
+      yPct: Math.min(92, src.yPct + 3),
+      label: src.label.endsWith(" copy") ? src.label : `${src.label} copy`,
+      locked: false,
+    };
+    commitLayers((prev) => [...prev, copy]);
+    setSelectedId(copy.id);
+    setNotice(t.layerPasted);
+  }, [commitLayers, t.layerClipboardEmpty, t.layerPasted]);
+
   const duplicateSelected = useCallback(() => {
     if (!selectedId) return;
     const cur = historyRef.current[historyIndexRef.current] ?? [];
     const selected = cur.find((l) => l.id === selectedId);
     if (!selected) return;
+    layerClipboardRef.current = { ...selected };
+    setHasLayerClipboard(true);
     const copy: DecLayer = {
       ...selected,
       id: crypto.randomUUID(),
@@ -1062,6 +1158,16 @@ export function EditImage2Client() {
       if (meta && (e.key.toLowerCase() === "y" || (e.key.toLowerCase() === "z" && e.shiftKey))) {
         e.preventDefault();
         redo();
+        return;
+      }
+      if (meta && e.key.toLowerCase() === "c" && selectedId && !typing) {
+        e.preventDefault();
+        copySelectedToClipboard();
+        return;
+      }
+      if (meta && e.key.toLowerCase() === "v" && !typing) {
+        e.preventDefault();
+        pasteLayerFromClipboard();
         return;
       }
       if (meta && e.key.toLowerCase() === "d" && selectedId && !typing) {
@@ -1110,7 +1216,7 @@ export function EditImage2Client() {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
     };
-  }, [undo, redo, selectedId, commitLayers, duplicateSelected, patchLayer]);
+  }, [undo, redo, selectedId, commitLayers, duplicateSelected, copySelectedToClipboard, pasteLayerFromClipboard, patchLayer]);
 
   /**
    * Clear plate hole after lift.
@@ -1247,6 +1353,47 @@ export function EditImage2Client() {
     setBrushLines([]);
     setNotice(t.readyManualHint);
   }
+
+  // Wizard / library handoff + ?image= → load onto Magic Layers board.
+  useEffect(() => {
+    const handoff = readImageCanvasHandoff();
+    const imageParam = searchParams.get("image")?.trim();
+    const returnParam = searchParams.get("returnTo")?.trim();
+    const url = (handoff?.imageUrl ?? imageParam ?? "").trim();
+    const nextReturn = handoff?.returnTo?.trim() || returnParam || null;
+    if (nextReturn) setReturnTo(nextReturn);
+    if (!url) return;
+
+    const bootKey = normalizeImageCanvasHandoffUrl(url);
+    if (handoffBootKeyRef.current === bootKey) return;
+    handoffBootKeyRef.current = bootKey;
+    clearImageCanvasHandoff();
+
+    let cancelled = false;
+    void (async () => {
+      setError(null);
+      setNotice(null);
+      setBusy("upload");
+      try {
+        if (cancelled) return;
+        setSourceUrl(url);
+        originalBgRef.current = url;
+        await openSourceOnCanvas(url);
+      } catch (e: unknown) {
+        if (!cancelled) {
+          setError(e instanceof Error ? e.message : t.somethingFailed);
+        }
+      } finally {
+        if (!cancelled) setBusy(null);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // openSourceOnCanvas closes over t/setters — intentional one-shot per URL.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   function seedLayersFromApi(
     decJson: DecomposeResult & {
@@ -1677,6 +1824,80 @@ export function EditImage2Client() {
     }
   }
 
+  /** Primary: Seedream Layerize via BytePlus (product CTA hides model name). */
+  async function runSeedreamSplit(imageUrl: string) {
+    setBusy("decompose");
+    setError(null);
+    setNotice(t.seedreamSplitting);
+    setBoxMode(false);
+    setBrushMode(false);
+    const dec = await fetch("/api/decompose-seedream-layers", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ image_url: imageUrl }),
+    });
+    const decJson = (await dec.json()) as DecomposeResult & {
+      error?: string;
+      errorCode?: string;
+      warning?: string;
+      tokensCharged?: number;
+      originalBackgroundUrl?: string;
+    };
+    if (!dec.ok) {
+      if (decJson.errorCode === "copyright_restricted") {
+        throw new Error(t.seedreamCopyrightBlocked);
+      }
+      throw new Error(decJson.error || t.decomposeFailed);
+    }
+
+    if (typeof decJson.tokensCharged === "number") {
+      setLastTokens(decJson.tokensCharged);
+    }
+
+    const plate =
+      decJson.backgroundUrl ||
+      decJson.backgroundDataUrl ||
+      imageUrl;
+    const displayJson = {
+      ...decJson,
+      backgroundUrl: plate,
+      backgroundDataUrl: plate,
+      originalBackgroundUrl: decJson.originalBackgroundUrl || imageUrl,
+    };
+    if (plate.startsWith("http") || isLibraryAssetUrl(plate)) {
+      lastHttpBgRef.current = plate;
+    }
+
+    const { seeded, warning } = seedLayersFromApi(displayJson, imageUrl, {
+      holeCleared: true,
+    });
+    if (!seeded.length) {
+      setError(warning || t.noLayersDetected);
+      setBoxMode(true);
+      setBoxIntent("lift");
+      setNotice(t.emptyLiftHint);
+    } else {
+      setNotice(t.seedreamFullReady(seeded.length));
+      setBoxMode(false);
+      setCropEditMode("ai");
+    }
+  }
+
+  async function onSeedreamSplit() {
+    const url = sourceUrl || result?.originalBackgroundUrl || result?.backgroundUrl;
+    if (!url) return;
+    setBusy("decompose");
+    setError(null);
+    try {
+      await runSeedreamSplit(url);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : t.somethingFailed);
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function onSuggestText() {
     const url = sourceUrl || result?.originalBackgroundUrl || result?.backgroundUrl;
     if (!url) return;
@@ -1734,9 +1955,76 @@ export function EditImage2Client() {
       visible: true,
       locked: false,
       fontBold: true,
+      fontFamily: LIVE_TEXT_FONTS[1]!.id,
+      textVertical: false,
+      textEffect: "none",
       fontSize: 28,
       fill: "#111827",
     });
+  }
+
+  async function addAiComponent() {
+    if (!canEdit || !result) return;
+    const prompt = aiAddPrompt.trim();
+    if (!prompt) {
+      setError(t.aiAddNeedPrompt);
+      return;
+    }
+    setBusy("export");
+    setError(null);
+    setNotice(t.aiAddGenerating);
+    try {
+      const res = await fetch("/api/layer-add-ai-component", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ prompt }),
+      });
+      const json = (await res.json()) as {
+        cropUrl?: string;
+        width?: number;
+        height?: number;
+        tokensCharged?: number;
+        error?: string;
+      };
+      if (!res.ok || !json.cropUrl) throw new Error(json.error || t.aiAddFailed);
+
+      const boardW = result.width;
+      const boardH = result.height;
+      const cw = json.width || 512;
+      const ch = json.height || 512;
+      const targetW = Math.min(boardW * 0.36, cw);
+      const scale = targetW / Math.max(1, cw);
+      const dispW = targetW;
+      const dispH = ch * scale;
+      const wPct = (dispW / boardW) * 100;
+      const hPct = (dispH / boardH) * 100;
+      pushLayer({
+        id: crypto.randomUUID(),
+        kind: "object",
+        label: prompt.slice(0, 40) || t.aiAddComponent,
+        text: "",
+        cropDataUrl: json.cropUrl,
+        cropUrl: json.cropUrl,
+        xPct: Math.max(2, 50 - wPct / 2),
+        yPct: Math.max(2, 50 - hPct / 2),
+        wPct,
+        hPct,
+        visible: true,
+        locked: false,
+        holeCleared: true,
+      });
+      if (typeof json.tokensCharged === "number") {
+        setLastTokens(json.tokensCharged);
+      }
+      setAiAddPrompt("");
+      setAiAddOpen(false);
+      setNotice(t.aiAddReady);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : t.aiAddFailed);
+    } finally {
+      setBusy(null);
+    }
   }
 
   function addShapeLayer(shapeKind: ShapeKind) {
@@ -2064,6 +2352,59 @@ export function EditImage2Client() {
       setError(t.paintFirst);
       return;
     }
+
+    if (eraseTarget === "layer") {
+      const layer = selected;
+      if (!layer || (layer.kind !== "object" && layer.kind !== "text" && layer.kind !== "logo")) {
+        setError(t.eraseLayerNeedSelect);
+        return;
+      }
+      const cropSrc = layerBitmapUrl(layer);
+      if (!cropSrc) {
+        setError(t.eraseLayerNeedSelect);
+        return;
+      }
+      setBrushBusy(true);
+      setError(null);
+      try {
+        const layerBox = {
+          x: (layer.xPct / 100) * imageLayout.w,
+          y: (layer.yPct / 100) * imageLayout.h,
+          w: (layer.wPct / 100) * imageLayout.w,
+          h: (layer.hPct / 100) * imageLayout.h,
+        };
+        const punched = await punchBrushInCrop(
+          cropSrc,
+          strokes,
+          Math.max(brushSize, 24),
+          layerBox,
+        );
+        if (!punched) {
+          setError(t.brushEmpty);
+          return;
+        }
+        patchLayer(layer.id, {
+          cropDataUrl: punched,
+          cropUrl: punched,
+          useLiveText: false,
+        });
+        void ensureHttpCrop({
+          id: layer.id,
+          cropUrl: punched,
+          cropDataUrl: punched,
+        } as DecLayer);
+        setBrushLines([]);
+        brushLinesRef.current = [];
+        setBrushMode(false);
+        setNotice(t.eraseLayerDone);
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : t.somethingFailed);
+      } finally {
+        setBrushBusy(false);
+      }
+      return;
+    }
+
     setBrushBusy(true);
     setError(null);
     try {
@@ -2235,6 +2576,10 @@ export function EditImage2Client() {
       case "expand":
         await runMagicExpand(intent.preset);
         return;
+      case "full_edit": {
+        await runFullImageAiEdit(intent.instruction);
+        return;
+      }
       case "rewrite": {
         if (!selected || (selected.kind !== "text" && selected.kind !== "object")) {
           setError(t.magicChatNeedText);
@@ -2295,7 +2640,6 @@ export function EditImage2Client() {
         setCropEditMode("ai");
         setEditInstruction(intent.instruction);
         await new Promise((r) => requestAnimationFrame(() => r(null)));
-        // Run with explicit instruction (state may lag)
         setBusy("rewrite");
         setError(null);
         setNotice(t.aiEditingCrop);
@@ -2327,6 +2671,69 @@ export function EditImage2Client() {
     }
   }
 
+  /** Magic default: AI-edit the whole plate — no split required. */
+  async function runFullImageAiEdit(instruction: string) {
+    if (!canEdit || !result) return;
+    const prompt = instruction.trim();
+    if (!prompt) {
+      setError(t.magicFullEditNeedPrompt);
+      return;
+    }
+    let bgUrl =
+      result.backgroundUrl ||
+      result.backgroundDataUrl ||
+      sourceUrl ||
+      "";
+    if (!bgUrl) {
+      setError(t.magicFullEditNeedImage);
+      return;
+    }
+    setBusy("rewrite");
+    setError(null);
+    setNotice(t.magicFullEditing);
+    try {
+      if (bgUrl.startsWith("data:")) {
+        const blob = dataUrlToBlob(bgUrl);
+        const fd = new FormData();
+        fd.set("file", new File([blob], "magic-full.png", { type: "image/png" }));
+        const up = await fetch("/api/upload-edit-image", {
+          method: "POST",
+          credentials: "include",
+          body: fd,
+        });
+        const upJson = (await up.json()) as { url?: string; error?: string };
+        if (!up.ok || !upJson.url) throw new Error(upJson.error || t.uploadFailed);
+        bgUrl = upJson.url;
+      }
+      const json = await runCropAiEdit({
+        id: "full-image",
+        cropUrl: bgUrl,
+        instruction: prompt,
+      });
+      const hadLayers = (historyRef.current[historyIndexRef.current] ?? []).length > 0;
+      const nextResult = {
+        ...result,
+        backgroundUrl: json.cropUrl!,
+        backgroundDataUrl: json.cropUrl!,
+        layers: [],
+      };
+      resultRef.current = nextResult;
+      setResult(nextResult);
+      historyRef.current = [[]];
+      historyIndexRef.current = 0;
+      setHistory([[]]);
+      setHistoryIndex(0);
+      setSelectedId(null);
+      lastHttpBgRef.current = json.cropUrl!;
+      if (typeof json.tokensCharged === "number") setLastTokens(json.tokensCharged);
+      setNotice(hadLayers ? t.magicFullEditDoneClearedLayers : t.magicFullEditDone);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : t.magicFullEditFailed);
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function eraseBoxRegion(stageRect: {
     x: number;
     y: number;
@@ -2334,6 +2741,53 @@ export function EditImage2Client() {
     h: number;
   }) {
     if (!canEdit || !result) return;
+
+    if (eraseTarget === "layer") {
+      const layer = selected;
+      if (!layer || (layer.kind !== "object" && layer.kind !== "text" && layer.kind !== "logo")) {
+        setError(t.eraseLayerNeedSelect);
+        return;
+      }
+      const cropSrc = layerBitmapUrl(layer);
+      if (!cropSrc) {
+        setError(t.eraseLayerNeedSelect);
+        return;
+      }
+      setBrushBusy(true);
+      setError(null);
+      try {
+        const layerBox = {
+          x: (layer.xPct / 100) * imageLayout.w,
+          y: (layer.yPct / 100) * imageLayout.h,
+          w: (layer.wPct / 100) * imageLayout.w,
+          h: (layer.hPct / 100) * imageLayout.h,
+        };
+        const punched = await punchBoxInCrop(cropSrc, stageRect, layerBox);
+        if (!punched) {
+          setError(t.brushEmpty);
+          return;
+        }
+        patchLayer(layer.id, {
+          cropDataUrl: punched,
+          cropUrl: punched,
+          useLiveText: false,
+        });
+        void ensureHttpCrop({
+          id: layer.id,
+          cropUrl: punched,
+          cropDataUrl: punched,
+        } as DecLayer);
+        setBoxMode(false);
+        setBoxDrag(null);
+        setNotice(t.eraseLayerDone);
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : t.somethingFailed);
+      } finally {
+        setBrushBusy(false);
+      }
+      return;
+    }
+
     setBrushBusy(true);
     setError(null);
     try {
@@ -2367,7 +2821,7 @@ export function EditImage2Client() {
       applyHealedBackground(healed);
       setBoxMode(false);
       setBoxDrag(null);
-      setNotice(t.eraseDone);
+      setNotice(t.erasePlateDone);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : t.somethingFailed);
     } finally {
@@ -2860,6 +3314,41 @@ export function EditImage2Client() {
     }
   }
 
+  /** Download only the selected piece (crop PNG) — not the full board. */
+  async function downloadSelectedLayer() {
+    if (!selected) return;
+    const src = layerBitmapUrl(selected) || selected.cropUrl || selected.cropDataUrl;
+    if (!src) {
+      setError(t.downloadLayerNeedImage);
+      return;
+    }
+    setBusy("export");
+    setError(null);
+    try {
+      let blob: Blob;
+      if (src.startsWith("data:")) {
+        blob = dataUrlToBlob(src);
+      } else {
+        const res = await fetch(canvasDisplayUrl(src) || src, { credentials: "include" });
+        if (!res.ok) throw new Error(t.downloadLayerFailed);
+        blob = await res.blob();
+      }
+      const safe = (selected.label || selected.kind || "layer")
+        .replace(/[^\w\u4e00-\u9fff\-]+/g, "_")
+        .slice(0, 40);
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `alchemy-layer-${safe || "piece"}.png`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      setNotice(t.downloadedLayer);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : t.downloadLayerFailed);
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function saveToLibrary() {
     if (!result) return;
     setSelectedId(null);
@@ -2964,6 +3453,18 @@ export function EditImage2Client() {
           <p className="truncate text-sm font-semibold text-white">{t.title}</p>
           <p className="truncate text-[11px] text-slate-500">{t.subtitleShortcuts}</p>
         </div>
+        {returnTo ? (
+          <Link
+            href={returnTo}
+            className="rounded-lg border border-violet-400/40 bg-violet-600/80 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-violet-500"
+          >
+            {returnTo.includes("/studio")
+              ? ic.backToResults
+              : returnTo.includes("/library")
+                ? ic.backToLibrary
+                : ic.backToLibrary}
+          </Link>
+        ) : null}
         <ToolBtn
           label={t.upload}
           disabled={!!busy}
@@ -3384,14 +3885,25 @@ export function EditImage2Client() {
             <p className="mt-0.5 text-[10px] leading-snug text-slate-500">
               {t.itemsCount(layers.length)}
               {` · ${t.ocrObj(layerCounts.text, layerCounts.object)}`}
-              {lastTokens != null ? ` · ${t.lastTokens(lastTokens)}` : ""}
             </p>
           </div>
 
           {/* Canva-like selection toolbar */}
           {selected && (
             <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-violet-400/25 bg-violet-500/10 p-2">
+              <ToolBtn label={t.copyLayer} onClick={copySelectedToClipboard} />
+              <ToolBtn
+                label={t.pasteLayer}
+                disabled={!hasLayerClipboard}
+                onClick={pasteLayerFromClipboard}
+              />
               <ToolBtn label={t.duplicate} onClick={duplicateSelected} />
+              <ToolBtn
+                label={busy === "export" ? "…" : t.downloadLayer}
+                title={t.downloadLayerHint}
+                disabled={!!busy || brushBusy}
+                onClick={() => void downloadSelectedLayer()}
+              />
               <ToolBtn
                 label={selected.locked ? t.unlock : t.lock}
                 active={!!selected.locked}
@@ -3404,6 +3916,7 @@ export function EditImage2Client() {
               {(selected.kind === "object" || selected.kind === "text") && !selected.useLiveText && (
                 <ToolBtn
                   label={t.makeEditableText}
+                  title={t.makeEditableTextHint}
                   disabled={!!busy || brushBusy}
                   onClick={() => void makeSelectedEditableText()}
                 />
@@ -3469,6 +3982,64 @@ export function EditImage2Client() {
                           if (!selected.useLiveText) void enableLiveText(selected.id);
                         }}
                       />
+                      <label className="flex items-center gap-1 text-[11px] text-slate-300">
+                        {t.fontStyle}
+                        <select
+                          className="max-w-[7.5rem] rounded border border-white/15 bg-black/40 px-1 py-0.5 text-[11px]"
+                          value={selected.fontFamily || LIVE_TEXT_FONTS[1]!.id}
+                          onChange={(e) => {
+                            patchLayer(selected.id, {
+                              fontFamily: e.target.value,
+                              useLiveText: true,
+                            });
+                            if (!selected.useLiveText) void enableLiveText(selected.id);
+                          }}
+                        >
+                          {LIVE_TEXT_FONTS.map((f) => (
+                            <option key={f.id} value={f.id}>
+                              {t[f.labelKey as keyof typeof t] as string}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <ToolBtn
+                        label={
+                          selected.textVertical ? t.textHorizontal : t.textVertical
+                        }
+                        active={!!selected.textVertical}
+                        onClick={() => {
+                          const nextVertical = !selected.textVertical;
+                          const patch: Partial<DecLayer> = {
+                            textVertical: nextVertical,
+                            useLiveText: true,
+                          };
+                          // Swap box so vertical columns stay readable.
+                          if (nextVertical !== !!selected.textVertical) {
+                            patch.wPct = selected.hPct;
+                            patch.hPct = selected.wPct;
+                          }
+                          patchLayer(selected.id, patch);
+                          if (!selected.useLiveText) void enableLiveText(selected.id);
+                        }}
+                      />
+                      <label className="flex items-center gap-1 text-[11px] text-slate-300">
+                        {t.textEffect}
+                        <select
+                          className="rounded border border-white/15 bg-black/40 px-1 py-0.5 text-[11px]"
+                          value={selected.textEffect || "none"}
+                          onChange={(e) => {
+                            patchLayer(selected.id, {
+                              textEffect: e.target.value as LiveTextEffect,
+                              useLiveText: true,
+                            });
+                            if (!selected.useLiveText) void enableLiveText(selected.id);
+                          }}
+                        >
+                          <option value="none">{t.textEffectNone}</option>
+                          <option value="outline">{t.textEffectOutline}</option>
+                          <option value="shadow">{t.textEffectShadow}</option>
+                        </select>
+                      </label>
                     </>
                   ) : null}
                   <label className="flex items-center gap-1 text-[11px] text-slate-300">
@@ -3523,6 +4094,7 @@ export function EditImage2Client() {
                       : "text-slate-400 hover:text-white"
                   }`}
                   onClick={() => setCropEditMode("ai")}
+                  title={t.cropEditModeAiHint}
                 >
                   {t.cropEditModeAi}
                 </button>
@@ -3534,10 +4106,14 @@ export function EditImage2Client() {
                       : "text-slate-400 hover:text-white"
                   }`}
                   onClick={() => setCropEditMode("text")}
+                  title={t.cropEditModeTextHint}
                 >
                   {t.cropEditModeText}
                 </button>
               </div>
+              <p className="text-[10px] leading-snug text-slate-500">
+                {cropEditMode === "ai" ? t.cropEditModeAiHint : t.cropEditModeTextHint}
+              </p>
 
               {cropEditMode === "ai" ? (
                 <>
@@ -3593,19 +4169,134 @@ export function EditImage2Client() {
                     onClick={() => void aiRewriteSelectedText()}
                   />
                   <p className="text-[10px] leading-snug text-slate-500">{t.changeWordsHint}</p>
-                  <div className="flex flex-wrap gap-1.5">
+
+                  <div className="space-y-1.5 rounded-lg border border-white/10 bg-black/25 p-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                      {t.makeEditableText}
+                    </p>
+                    <p className="text-[10px] leading-snug text-slate-500">
+                      {t.makeEditableTextHint}
+                    </p>
                     <ToolBtn
-                      label={t.liveText}
+                      label={
+                        selected.useLiveText ? t.liveTextOn : t.makeEditableText
+                      }
                       active={!!selected.useLiveText}
                       disabled={!!busy || brushBusy}
+                      className="w-full"
                       onClick={() => {
                         if (selected.useLiveText) {
                           patchLayer(selected.id, { useLiveText: false });
                           return;
                         }
-                        void enableLiveText(selected.id);
+                        void makeSelectedEditableText();
                       }}
                     />
+                    {selected.useLiveText || selected.kind === "text" ? (
+                      <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                        <label className="flex items-center gap-1 text-[11px] text-slate-300">
+                          {t.size}
+                          <input
+                            type="number"
+                            min={8}
+                            max={200}
+                            className="w-12 rounded border border-white/15 bg-black/40 px-1 py-0.5"
+                            value={Math.round(
+                              selected.fontSize ??
+                                Math.max(12, (selected.hPct / 100) * imageLayout.h * 0.72),
+                            )}
+                            onChange={(e) => {
+                              const size = Number(e.target.value) || 16;
+                              patchLayer(selected.id, { fontSize: size });
+                              if (!selected.useLiveText) void enableLiveText(selected.id);
+                              else if (!selected.holeCleared) void clearHoleIfNeeded(selected.id);
+                            }}
+                          />
+                        </label>
+                        <ToolBtn
+                          label={t.bold}
+                          active={selected.fontBold !== false}
+                          onClick={() => {
+                            patchLayer(selected.id, {
+                              fontBold: selected.fontBold === false,
+                            });
+                            if (!selected.useLiveText) void enableLiveText(selected.id);
+                          }}
+                        />
+                        <label className="flex items-center gap-1 text-[11px] text-slate-300">
+                          {t.fontStyle}
+                          <select
+                            className="max-w-[7.5rem] rounded border border-white/15 bg-black/40 px-1 py-0.5 text-[11px]"
+                            value={selected.fontFamily || LIVE_TEXT_FONTS[1]!.id}
+                            onChange={(e) => {
+                              patchLayer(selected.id, {
+                                fontFamily: e.target.value,
+                                useLiveText: true,
+                              });
+                              if (!selected.useLiveText) void enableLiveText(selected.id);
+                            }}
+                          >
+                            {LIVE_TEXT_FONTS.map((f) => (
+                              <option key={f.id} value={f.id}>
+                                {t[f.labelKey as keyof typeof t] as string}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <ToolBtn
+                          label={
+                            selected.textVertical ? t.textHorizontal : t.textVertical
+                          }
+                          active={!!selected.textVertical}
+                          onClick={() => {
+                            const nextVertical = !selected.textVertical;
+                            const patch: Partial<DecLayer> = {
+                              textVertical: nextVertical,
+                              useLiveText: true,
+                            };
+                            if (nextVertical !== !!selected.textVertical) {
+                              patch.wPct = selected.hPct;
+                              patch.hPct = selected.wPct;
+                            }
+                            patchLayer(selected.id, patch);
+                            if (!selected.useLiveText) void enableLiveText(selected.id);
+                          }}
+                        />
+                        <label className="flex items-center gap-1 text-[11px] text-slate-300">
+                          {t.textEffect}
+                          <select
+                            className="rounded border border-white/15 bg-black/40 px-1 py-0.5 text-[11px]"
+                            value={selected.textEffect || "none"}
+                            onChange={(e) => {
+                              patchLayer(selected.id, {
+                                textEffect: e.target.value as LiveTextEffect,
+                                useLiveText: true,
+                              });
+                              if (!selected.useLiveText) void enableLiveText(selected.id);
+                            }}
+                          >
+                            <option value="none">{t.textEffectNone}</option>
+                            <option value="outline">{t.textEffectOutline}</option>
+                            <option value="shadow">{t.textEffectShadow}</option>
+                          </select>
+                        </label>
+                        <label className="flex items-center gap-1 text-[11px] text-slate-300">
+                          {t.color}
+                          <input
+                            type="color"
+                            className="h-6 w-8 cursor-pointer rounded border border-white/15 bg-transparent"
+                            value={selected.fill || "#111827"}
+                            onChange={(e) => {
+                              patchLayer(selected.id, {
+                                fill: e.target.value,
+                                useLiveText: true,
+                              });
+                              if (!selected.useLiveText) void enableLiveText(selected.id);
+                            }}
+                          />
+                        </label>
+                      </div>
+                    ) : null}
                   </div>
                 </>
               )}
@@ -3635,38 +4326,14 @@ export function EditImage2Client() {
           <div className="space-y-2 rounded-xl border border-white/10 bg-black/20 p-2.5">
             <ToolBtn
               label={
-                busy === "decompose"
-                  ? t.sandwichSplitting
-                  : t.hybridSplit(SANDWICH_TOKENS)
+                busy === "decompose" ? t.seedreamSplitting : t.seedreamFullSplit()
               }
               disabled={!canEdit || !!busy || brushBusy}
               active
               className="w-full !bg-violet-500 !text-white"
-              onClick={() => void onHybridSplit()}
+              onClick={() => void onSeedreamSplit()}
             />
-            <p className="text-[10px] leading-snug text-slate-500">{t.hybridSplitHow}</p>
-            <ToolBtn
-              label={
-                busy === "decompose"
-                  ? t.splittingLayers
-                  : t.detectAllFlorence(DETECT_SAM_TOKENS)
-              }
-              disabled={!canEdit || !!busy || brushBusy}
-              className="w-full"
-              onClick={() => void onDetectAll()}
-            />
-            <p className="text-[10px] leading-snug text-slate-500">{t.florenceSplitHow}</p>
-            <ToolBtn
-              label={
-                busy === "decompose"
-                  ? t.qwenSplitting
-                  : t.qwenFullSplit(QWEN_TOKENS)
-              }
-              disabled={!canEdit || !!busy || brushBusy}
-              className="w-full"
-              onClick={() => void onQwenSplit()}
-            />
-            <p className="text-[10px] leading-snug text-slate-500">{t.qwenSplitHow}</p>
+            <p className="text-[10px] leading-snug text-slate-500">{t.seedreamSplitHow}</p>
 
             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
               {t.liftTools}
@@ -3719,17 +4386,56 @@ export function EditImage2Client() {
                 }}
               />
               <ToolBtn
-                label={boxMode && boxIntent === "erase" ? t.eraseOn : t.erase}
-                active={boxMode && boxIntent === "erase"}
+                label={
+                  boxMode && boxIntent === "erase" && eraseTarget === "plate"
+                    ? t.erasePlateOn
+                    : t.erasePlate
+                }
+                active={boxMode && boxIntent === "erase" && eraseTarget === "plate"}
                 disabled={!canEdit || brushBusy || !!busy}
                 onClick={() => {
+                  setEraseTarget("plate");
                   setBoxIntent("erase");
                   setBoxMode(true);
                   setGrabMode(false);
                   setBrushMode(false);
                   setBrushLines([]);
                   setBoxDrag(null);
-                  setSelectedId(null);
+                }}
+              />
+              <ToolBtn
+                label={
+                  boxMode && boxIntent === "erase" && eraseTarget === "layer"
+                    ? t.eraseLayerOn
+                    : t.eraseLayer
+                }
+                active={boxMode && boxIntent === "erase" && eraseTarget === "layer"}
+                disabled={
+                  !canEdit ||
+                  brushBusy ||
+                  !!busy ||
+                  !selected ||
+                  (selected.kind !== "object" &&
+                    selected.kind !== "text" &&
+                    selected.kind !== "logo")
+                }
+                onClick={() => {
+                  if (
+                    !selected ||
+                    (selected.kind !== "object" &&
+                      selected.kind !== "text" &&
+                      selected.kind !== "logo")
+                  ) {
+                    setError(t.eraseLayerNeedSelect);
+                    return;
+                  }
+                  setEraseTarget("layer");
+                  setBoxIntent("erase");
+                  setBoxMode(true);
+                  setGrabMode(false);
+                  setBrushMode(false);
+                  setBrushLines([]);
+                  setBoxDrag(null);
                 }}
               />
             </div>
@@ -3737,8 +4443,10 @@ export function EditImage2Client() {
               <p className="text-[10px] text-slate-500">{t.grabClickHint}</p>
             ) : boxMode && boxIntent === "lift" ? (
               <p className="text-[10px] text-slate-500">{t.boxLiftHint}</p>
-            ) : boxMode && boxIntent === "erase" ? (
-              <p className="text-[10px] text-slate-500">{t.eraseHint}</p>
+            ) : boxMode && boxIntent === "erase" && eraseTarget === "plate" ? (
+              <p className="text-[10px] text-slate-500">{t.erasePlateHint}</p>
+            ) : boxMode && boxIntent === "erase" && eraseTarget === "layer" ? (
+              <p className="text-[10px] text-slate-500">{t.eraseLayerHint}</p>
             ) : brushMode && brushIntent === "lift" ? (
               <p className="text-[10px] text-slate-500">{t.makeLayerHint}</p>
             ) : null}
@@ -3782,6 +4490,7 @@ export function EditImage2Client() {
                 {t.expandTitle}
               </p>
               <p className="text-[10px] leading-snug text-slate-500">{t.expandHow}</p>
+              <p className="text-[10px] leading-snug text-amber-200/70">{t.expandCostHint(EXPAND_TOKENS)}</p>
               <div className="flex flex-wrap gap-1.5">
                 {EXPAND_PRESETS.map((p) => (
                   <ToolBtn
@@ -3801,7 +4510,10 @@ export function EditImage2Client() {
             <MagicBoardChat
               disabled={!canEdit || !!busy || brushBusy}
               title={t.magicChatTitle}
-              hint={t.magicChatHint}
+              hint={t.magicChatHintWithCosts({
+                edit: TOKEN_COST.image,
+                expand: EXPAND_TOKENS,
+              })}
               placeholder={t.magicChatPlaceholder}
               sendLabel={t.magicChatSend}
               onSend={handleMagicChat}
@@ -3810,8 +4522,15 @@ export function EditImage2Client() {
             <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
               {t.add}
             </p>
+            <p className="text-[10px] leading-snug text-slate-500">{t.addHow}</p>
             <div className="flex flex-wrap gap-1.5">
               <ToolBtn label={t.text} onClick={addTextLayer} disabled={!canEdit || brushMode || boxMode} />
+              <ToolBtn
+                label={t.aiAddComponent}
+                active={aiAddOpen}
+                disabled={!canEdit || !!busy || brushBusy}
+                onClick={() => setAiAddOpen((v) => !v)}
+              />
               <ToolBtn
                 label={logoBusy ? t.logoBusy : t.logo}
                 onClick={() => void addBrandLogoLayer()}
@@ -3830,6 +4549,29 @@ export function EditImage2Client() {
                 disabled={!canEdit || brushMode || boxMode}
               />
             </div>
+            {aiAddOpen ? (
+              <div className="space-y-1.5 rounded-lg border border-violet-400/25 bg-violet-500/10 p-2">
+                <p className="text-[10px] leading-snug text-slate-400">{t.aiAddHow}</p>
+                <textarea
+                  className="min-h-[56px] w-full rounded-lg border border-white/10 bg-black/40 px-2 py-1.5 text-sm text-white placeholder:text-slate-600"
+                  value={aiAddPrompt}
+                  onChange={(e) => setAiAddPrompt(e.target.value)}
+                  placeholder={t.aiAddPlaceholder}
+                  disabled={!!busy}
+                />
+                <ToolBtn
+                  label={
+                    busy === "export"
+                      ? t.aiAddGenerating
+                      : t.aiAddRun(TOKEN_COST.image)
+                  }
+                  disabled={!!busy || !aiAddPrompt.trim()}
+                  active
+                  className="w-full"
+                  onClick={() => void addAiComponent()}
+                />
+              </div>
+            ) : null}
             {!hasBrandLogo && (
               <p className="text-[10px] text-slate-500">
                 <Link href="/brand-kit" className="text-violet-300 hover:underline">
@@ -3876,34 +4618,55 @@ export function EditImage2Client() {
                 />
                 <ToolBtn
                   label={
-                    boxMode && boxIntent === "qwen"
-                      ? t.qwenBoxOn
-                      : t.qwenBox(QWEN_TOKENS)
+                    boxMode && boxIntent === "erase" && eraseTarget === "plate"
+                      ? t.erasePlateOn
+                      : t.erasePlate
                   }
-                  active={boxMode && boxIntent === "qwen"}
+                  active={boxMode && boxIntent === "erase" && eraseTarget === "plate"}
                   disabled={!canEdit || brushBusy || !!busy}
                   onClick={() => {
-                    setBoxIntent("qwen");
-                    setBoxMode(true);
-                    setGrabMode(false);
-                    setBrushMode(false);
-                    setBrushLines([]);
-                    setBoxDrag(null);
-                    setSelectedId(null);
-                  }}
-                />
-                <ToolBtn
-                  label={boxMode && boxIntent === "erase" ? t.eraseOn : t.erase}
-                  active={boxMode && boxIntent === "erase"}
-                  disabled={!canEdit || brushBusy || !!busy}
-                  onClick={() => {
+                    setEraseTarget("plate");
                     setBoxIntent("erase");
                     setBoxMode(true);
                     setGrabMode(false);
                     setBrushMode(false);
                     setBrushLines([]);
                     setBoxDrag(null);
-                    setSelectedId(null);
+                  }}
+                />
+                <ToolBtn
+                  label={
+                    boxMode && boxIntent === "erase" && eraseTarget === "layer"
+                      ? t.eraseLayerOn
+                      : t.eraseLayer
+                  }
+                  active={boxMode && boxIntent === "erase" && eraseTarget === "layer"}
+                  disabled={
+                    !canEdit ||
+                    brushBusy ||
+                    !!busy ||
+                    !selected ||
+                    (selected.kind !== "object" &&
+                      selected.kind !== "text" &&
+                      selected.kind !== "logo")
+                  }
+                  onClick={() => {
+                    if (
+                      !selected ||
+                      (selected.kind !== "object" &&
+                        selected.kind !== "text" &&
+                        selected.kind !== "logo")
+                    ) {
+                      setError(t.eraseLayerNeedSelect);
+                      return;
+                    }
+                    setEraseTarget("layer");
+                    setBoxIntent("erase");
+                    setBoxMode(true);
+                    setGrabMode(false);
+                    setBrushMode(false);
+                    setBrushLines([]);
+                    setBoxDrag(null);
                   }}
                 />
                 <ToolBtn
@@ -3938,19 +4701,69 @@ export function EditImage2Client() {
                 />
                 <ToolBtn
                   label={
-                    brushMode && brushIntent === "erase" ? t.brushEraseOn : t.brushErase
+                    brushMode && brushIntent === "erase" && eraseTarget === "plate"
+                      ? t.brushErasePlateOn
+                      : t.brushErasePlate
                   }
-                  active={brushMode && brushIntent === "erase"}
+                  active={
+                    brushMode && brushIntent === "erase" && eraseTarget === "plate"
+                  }
                   disabled={!canEdit || brushBusy || !!busy}
                   onClick={() => {
-                    const next = !(brushMode && brushIntent === "erase");
+                    const next = !(
+                      brushMode &&
+                      brushIntent === "erase" &&
+                      eraseTarget === "plate"
+                    );
+                    setEraseTarget("plate");
                     setBrushIntent("erase");
                     setBrushMode(next);
                     setGrabMode(false);
                     setBoxMode(false);
                     setBoxDrag(null);
                     if (!next) setBrushLines([]);
-                    setSelectedId(null);
+                  }}
+                />
+                <ToolBtn
+                  label={
+                    brushMode && brushIntent === "erase" && eraseTarget === "layer"
+                      ? t.brushEraseLayerOn
+                      : t.brushEraseLayer
+                  }
+                  active={
+                    brushMode && brushIntent === "erase" && eraseTarget === "layer"
+                  }
+                  disabled={
+                    !canEdit ||
+                    brushBusy ||
+                    !!busy ||
+                    !selected ||
+                    (selected.kind !== "object" &&
+                      selected.kind !== "text" &&
+                      selected.kind !== "logo")
+                  }
+                  onClick={() => {
+                    if (
+                      !selected ||
+                      (selected.kind !== "object" &&
+                        selected.kind !== "text" &&
+                        selected.kind !== "logo")
+                    ) {
+                      setError(t.eraseLayerNeedSelect);
+                      return;
+                    }
+                    const next = !(
+                      brushMode &&
+                      brushIntent === "erase" &&
+                      eraseTarget === "layer"
+                    );
+                    setEraseTarget("layer");
+                    setBrushIntent("erase");
+                    setBrushMode(next);
+                    setGrabMode(false);
+                    setBoxMode(false);
+                    setBoxDrag(null);
+                    if (!next) setBrushLines([]);
                   }}
                 />
               </div>
@@ -3963,11 +4776,11 @@ export function EditImage2Client() {
               {boxMode && boxIntent === "lift" ? (
                 <p className="text-[10px] text-slate-500">{t.boxLiftHint}</p>
               ) : null}
-              {boxMode && boxIntent === "qwen" ? (
-                <p className="text-[10px] text-slate-500">{t.qwenBoxHint}</p>
+              {boxMode && boxIntent === "erase" && eraseTarget === "plate" ? (
+                <p className="text-[10px] text-slate-500">{t.erasePlateHint}</p>
               ) : null}
-              {boxMode && boxIntent === "erase" ? (
-                <p className="text-[10px] text-slate-500">{t.eraseHint}</p>
+              {boxMode && boxIntent === "erase" && eraseTarget === "layer" ? (
+                <p className="text-[10px] text-slate-500">{t.eraseLayerHint}</p>
               ) : null}
               {brushMode ? (
                 <>
@@ -4000,7 +4813,9 @@ export function EditImage2Client() {
                             ? t.erasingHole
                             : t.lifting
                           : brushIntent === "erase"
-                            ? t.erasePainted
+                            ? eraseTarget === "layer"
+                              ? t.eraseLayerPainted
+                              : t.erasePainted
                             : t.makeLayer
                       }
                       disabled={brushBusy}
@@ -4009,7 +4824,11 @@ export function EditImage2Client() {
                     />
                   </div>
                   <p className="text-[10px] text-slate-500">
-                    {brushIntent === "erase" ? t.brushEraseHint : t.makeLayerHint}
+                    {brushIntent === "erase"
+                      ? eraseTarget === "layer"
+                        ? t.brushEraseLayerHint
+                        : t.brushErasePlateHint
+                      : t.makeLayerHint}
                   </p>
                   <p className="text-[10px] text-slate-500">{t.healTok(ERASE_PER_MP)}</p>
                 </>
@@ -4079,30 +4898,12 @@ export function EditImage2Client() {
                   <ToolBtn
                     label={
                       busy === "decompose"
-                        ? t.sandwichSplitting
-                        : t.hybridSplit(SANDWICH_TOKENS)
+                        ? t.seedreamSplitting
+                        : t.seedreamFullSplit()
                     }
                     disabled={!canEdit || !!busy || brushBusy}
                     active
-                    onClick={() => void onHybridSplit()}
-                  />
-                  <ToolBtn
-                    label={
-                      busy === "decompose"
-                        ? t.splittingLayers
-                        : t.detectAllFlorence(DETECT_SAM_TOKENS)
-                    }
-                    disabled={!canEdit || !!busy || brushBusy}
-                    onClick={() => void onDetectAll()}
-                  />
-                  <ToolBtn
-                    label={
-                      busy === "decompose"
-                        ? t.qwenSplitting
-                        : t.qwenFullSplit(QWEN_TOKENS)
-                    }
-                    disabled={!canEdit || !!busy || brushBusy}
-                    onClick={() => void onQwenSplit()}
+                    onClick={() => void onSeedreamSplit()}
                   />
                   <ToolBtn
                     label={t.boxLift}

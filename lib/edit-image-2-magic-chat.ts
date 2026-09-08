@@ -1,12 +1,14 @@
 /**
  * Lightweight board-chat intents for Magic Layers (no LLM required).
- * Freeform leftover → region AI instruction when a layer is selected.
+ * Default freeform → full-image AI edit (no split required).
+ * Layer rewrite / layer AI edit only when user explicitly targets a selection.
  */
 
 export type MagicChatIntent =
   | { type: "split" }
   | { type: "rewrite"; text?: string }
   | { type: "ai_edit"; instruction: string }
+  | { type: "full_edit"; instruction: string }
   | { type: "erase_mode" }
   | { type: "grab_mode" }
   | { type: "brush_erase_mode" }
@@ -26,6 +28,7 @@ export function parseMagicChatIntent(rawIn: string): MagicChatIntent {
     return { type: "help" };
   }
 
+  // Kept for power users who type it — not advertised in Magic UI.
   if (
     /(拆层|拆層|split\s*layers?|magic\s*layers?|重新拆|再拆)/i.test(raw) ||
     /^(split|decompose)$/i.test(raw)
@@ -57,11 +60,19 @@ export function parseMagicChatIntent(rawIn: string): MagicChatIntent {
   if (/(4\s*[:：]\s*5|小红书|小紅書|wider)/i.test(raw)) {
     return { type: "expand", preset: "wider" };
   }
-  if (/(扩展|擴展|expand|outpaint|加画布|加畫布)/i.test(raw)) {
+  if (/(扩展|擴展|expand|outpaint|加画布|加畫布|外扩|外擴|补边|補邊)/i.test(raw)) {
     return { type: "expand", preset: "square" };
   }
 
-  // 改成 XXX / change to XXX — must be at the start so “换成旗帜” stays AI-edit
+  // Explicitly target the selected layer (optional).
+  const layerEdit = raw.match(
+    /^(?:改这层|改這層|对选中|對選中|选中图层|選中圖層|this\s*layer|on\s*(?:the\s*)?layer)\s*[:：]?\s*(.+)$/i,
+  );
+  if (layerEdit?.[1]?.trim()) {
+    return { type: "ai_edit", instruction: layerEdit[1].trim() };
+  }
+
+  // 改成 XXX — selected-layer wording rewrite
   const rewriteMatch = raw.match(
     /^(?:改成|改為|改为|改字[为為]?|换成文字|換作文字|change\s*(?:to|text)?\s*[:=]?\s*|rewrite\s*[:=]?\s*)(.+)$/i,
   );
@@ -72,9 +83,9 @@ export function parseMagicChatIntent(rawIn: string): MagicChatIntent {
     return { type: "rewrite" };
   }
 
-  // Anything else with a selected-layer vibe → AI edit instruction
+  // Default: describe the whole-image change — no split required.
   if (raw.length >= 2) {
-    return { type: "ai_edit", instruction: raw };
+    return { type: "full_edit", instruction: raw };
   }
 
   return { type: "unknown", raw };
