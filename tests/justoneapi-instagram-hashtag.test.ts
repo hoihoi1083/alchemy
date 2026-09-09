@@ -90,7 +90,7 @@ describe("instagram hashtag search parsing", () => {
 
   it("uses the user's compacted phrase as the first IG hashtag", () => {
     const tags = instagramHashtagCandidates("維他命 C 精華");
-    assert.equal(tags[0], "維他命C精華");
+    assert.equal(tags[0], "維他命c精華");
     assert.equal(tags.some((t) => t === "vitaminc" || t === "serum"), false);
   });
 
@@ -103,5 +103,23 @@ describe("instagram hashtag search parsing", () => {
     const tags = instagramHashtagCandidates("goldstone bracelet");
     assert.equal(tags[0], "goldstonebracelet");
     assert.ok(tags.includes("goldstone") || tags.includes("bracelet"));
+  });
+
+  it("expands Vitamin C serum into real IG-style tags", () => {
+    const tags = instagramHashtagCandidates("Vitamin C serum");
+    assert.equal(tags[0], "vitamincserum");
+    assert.ok(tags.includes("vitaminc"), `expected vitaminc in ${tags.join(",")}`);
+    assert.ok(tags.includes("serum"), `expected serum in ${tags.join(",")}`);
+  });
+
+  it("lowercases Title Case product names like Portable Power Station", () => {
+    const tags = instagramHashtagCandidates("Portable Power Station");
+    assert.equal(tags[0], "portablepowerstation");
+    assert.ok(tags.includes("powerstation"));
+    assert.equal(
+      tags.every((t) => t === t.toLowerCase()),
+      true,
+      "all tags must be lowercase for Just One",
+    );
   });
 });

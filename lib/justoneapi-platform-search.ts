@@ -686,12 +686,16 @@ function isCjkHeavy(value: string): boolean {
 
 /**
  * First-pass IG hashtags from the user's typed keyword only (no dictionary).
- * CJK empty results fall back to DeepSeek translation in searchInstagramPosts.
+ * Empty results fall back to DeepSeek translation in searchInstagramPosts.
+ *
+ * Prefer real Instagram-style tags: compacted phrase, then words, then adjacent
+ * joins (so "Vitamin C serum" → vitamincserum, vitamin, serum, vitaminc…).
  */
 export function instagramHashtagCandidates(keyword: string): string[] {
   const out: string[] = [];
   const add = (value: string) => {
-    const tag = compactHashtag(value);
+    // Instagram hashtags are case-insensitive; Just One matches lowercase better.
+    const tag = compactHashtag(value).toLowerCase();
     if (tag.length >= 2 && !out.includes(tag)) out.push(tag);
   };
 
@@ -699,12 +703,25 @@ export function instagramHashtagCandidates(keyword: string): string[] {
   if (!raw) return out;
 
   add(raw.replace(/\s+/g, ""));
-  const latin = (raw.match(/[A-Za-z0-9]+/g) ?? []).filter((part) => part.length >= 2);
-  if (latin.length) {
-    add(latin.join(""));
-    for (const part of [...latin].sort((a, b) => b.length - a.length)) add(part);
+
+  const tokens = raw.match(/[A-Za-z0-9\u3040-\u30ff\u3400-\u9fff]+/g) ?? [];
+  const latinAll = tokens.filter((part) => /^[A-Za-z0-9]+$/.test(part));
+  const latinSignificant = latinAll.filter((part) => part.length >= 2);
+
+  if (latinAll.length) {
+    add(latinAll.join(""));
+    for (let i = 0; i < latinAll.length - 1; i++) {
+      add(latinAll[i]! + latinAll[i + 1]!);
+    }
   }
-  return out.slice(0, 2);
+  for (const part of [...latinSignificant].sort((a, b) => b.length - a.length)) {
+    add(part);
+  }
+  for (const part of tokens) {
+    if (!/^[A-Za-z0-9]+$/.test(part) && part.length >= 2) add(part);
+  }
+
+  return out.slice(0, 5);
 }
 
 /**
@@ -731,7 +748,7 @@ export async function translateKeywordToIgHashtags(keyword: string): Promise<str
     const out: string[] = [];
     for (const entry of list) {
       if (typeof entry !== "string") continue;
-      const tag = compactHashtag(entry);
+      const tag = compactHashtag(entry).toLowerCase();
       if (tag.length >= 2 && !isCjkHeavy(tag) && !out.includes(tag)) out.push(tag);
       if (out.length >= 2) break;
     }
@@ -793,20 +810,18 @@ async function searchInstagramPosts(
     return null;
   };
 
-  // Pass 1: exactly what the user typed (compacted).
+  // Pass 1: what the user typed (compacted + word/adjacent variants).
   const hit = await tryTags(instagramHashtagCandidates(keyword));
   if (hit) return { body: hit, endpoint };
 
-  // Pass 2: translate that same user phrase → English hashtags, then search again.
-  if (isCjkHeavy(keyword)) {
-    const translated = await translateKeywordToIgHashtags(keyword);
-    if (translated.length) {
-      console.info(
-        `[justoneapi] Instagram user tag empty — translated "${keyword.trim()}" → ${translated.join(", ")}`,
-      );
-      const translatedHit = await tryTags(translated);
-      if (translatedHit) return { body: translatedHit, endpoint };
-    }
+  // Pass 2: DeepSeek → English hashtags (CJK or multi-word English that didn't hit).
+  const translated = await translateKeywordToIgHashtags(keyword);
+  if (translated.length) {
+    console.info(
+      `[justoneapi] Instagram user tag empty — translated "${keyword.trim()}" → ${translated.join(", ")}`,
+    );
+    const translatedHit = await tryTags(translated);
+    if (translatedHit) return { body: translatedHit, endpoint };
   }
 
   if (lastBody) return { body: lastBody, endpoint };
