@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
 import { CaptionStudio2Client } from "@/components/captions/CaptionStudio2Client";
 import { LandingNav } from "@/components/landing/LandingNav";
@@ -13,30 +12,20 @@ function Captions2PageContent() {
   const t = m.captions2;
 
   return (
-    <StudioGlowShell theme={STUDIO_PAGE_GLOW.captions}>
+    <StudioGlowShell theme={STUDIO_PAGE_GLOW.captions} fillViewport>
       <LandingNav />
-      <div className="mx-auto w-full max-w-[1800px] px-3 py-5 pb-28 sm:px-6 sm:py-6 sm:pb-24 lg:px-8 xl:pb-24">
-        <header className="mb-5 text-center sm:mb-6">
-          <p className="text-xs font-medium tracking-wide text-cyan-300 sm:text-sm">
-            {t.badge}
-          </p>
-          <h1 className="mt-1.5 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+      <div className="mx-auto flex min-h-0 w-full max-w-[1920px] flex-1 flex-col px-2 pb-2 pt-1 sm:px-3">
+        <header className="mb-1 flex shrink-0 flex-wrap items-baseline justify-between gap-2 px-1">
+          <h1 className="text-base font-semibold tracking-tight text-white sm:text-lg">
             {t.title}
           </h1>
-          <p className="mx-auto mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
+          <p className="max-w-lg text-right text-[10px] leading-snug text-slate-500">
             {t.subtitle}
           </p>
-          <p className="mt-3 text-xs">
-            <Link
-              href="/captions"
-              className="text-cyan-300/90 underline hover:text-cyan-200"
-            >
-              {t.openClassic}
-            </Link>
-          </p>
         </header>
-
-        <CaptionStudio2Client />
+        <div className="min-h-0 flex-1">
+          <CaptionStudio2Client />
+        </div>
       </div>
     </StudioGlowShell>
   );
@@ -48,7 +37,7 @@ export default function Captions2Page() {
 
   if (!mounted) {
     return (
-      <StudioGlowShell theme={STUDIO_PAGE_GLOW.captions}>
+      <StudioGlowShell theme={STUDIO_PAGE_GLOW.captions} fillViewport>
         <div className="flex flex-1 items-center justify-center text-sm text-slate-500">
           …
         </div>
@@ -59,7 +48,7 @@ export default function Captions2Page() {
   return (
     <Suspense
       fallback={
-        <StudioGlowShell theme={STUDIO_PAGE_GLOW.captions}>
+        <StudioGlowShell theme={STUDIO_PAGE_GLOW.captions} fillViewport>
           <div className="flex flex-1 items-center justify-center text-sm text-slate-500">
             …
           </div>

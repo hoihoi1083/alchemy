@@ -4,6 +4,8 @@
 @source inline("max-w-[240px] max-w-[300px] max-w-[340px] max-w-[500px] max-w-[560px] max-w-[860px] max-w-[1120px] h-[170px] md:h-[190px] md:max-w-[340px] lg:max-w-[560px] lg:py-20 py-20 z-[90] z-[100] bg-[#050507]/96 w-[50vw] md:w-[50vw] w-[92vw]");
 /* Ultra canvas board — without these, ReactFlow parent collapses to 0 height (blank white page). */
 @source inline("min-h-[560px] min-h-[640px] h-[min(72vh,880px)] h-[calc(100dvh-9.5rem)] h-dvh min-h-dvh w-[min(100%,18rem)] max-h-[min(70vh,640px)]");
+/* Caption studio 2 — video left / editor right (Tailwind can drop unused flex utilities in dev). */
+@source inline("md:flex-row md:items-start md:w-[340px] md:max-w-[340px] md:sticky md:top-20 max-md:flex-col flex-row flex-col shrink-0 min-w-0");
 
 /*
   Brand palette (Alchemy AI Lab)
@@ -702,5 +704,74 @@ footer.site-footer a.site-footer-logo:focus {
 .auth-clerk-root .cl-signUp-root {
   width: 100% !important;
   max-width: none !important;
+}
+
+/* Caption studio 2 — CapCut 4-pane shell */
+.c2-capcut {
+  display: flex;
+  flex-direction: column;
+  min-height: min(78dvh, 820px);
+  height: calc(100dvh - 7.5rem);
+  max-height: calc(100dvh - 6.5rem);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  background: rgba(2, 6, 23, 0.85);
+}
+.c2-capcut-top {
+  display: flex;
+  flex: 1 1 0%;
+  min-height: 0;
+}
+.c2-capcut-media {
+  flex: 0 0 200px;
+  width: 200px;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: auto;
+}
+.c2-capcut-preview {
+  flex: 1 1 0%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #05070f;
+}
+.c2-capcut-props {
+  flex: 0 0 300px;
+  width: 300px;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: auto;
+}
+.c2-capcut-timeline {
+  flex: 0 0 auto;
+  height: min(38%, 280px);
+  min-height: 200px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+@media (max-width: 900px) {
+  .c2-capcut {
+    height: auto;
+    max-height: none;
+    min-height: 0;
+    overflow: visible;
+  }
+  .c2-capcut-top {
+    flex-direction: column;
+  }
+  .c2-capcut-media,
+  .c2-capcut-props {
+    flex: none;
+    width: 100%;
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    max-height: 220px;
+  }
+  .c2-capcut-timeline {
+    height: auto;
+    min-height: 220px;
+  }
 }
 

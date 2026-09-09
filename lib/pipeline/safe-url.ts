@@ -40,6 +40,11 @@ function isAllowedRemoteHost(hostname: string): boolean {
     "falcdn.net",
     "storage.googleapis.com",
     "googleusercontent.com",
+    // BytePlus / Volcengine ModelArk Seedance + Seedream outputs
+    "volces.com",
+    "bytepluses.com",
+    "volcengineapi.com",
+    "byteplusapi.com",
   ];
   return allowed.some((suffix) => host === suffix || host.endsWith(`.${suffix}`));
 }

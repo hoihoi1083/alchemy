@@ -81,3 +81,73 @@ export async function mirrorImageUrlToFalStorage(
   const file = new File([bytes], "source.png", { type: contentType });
   return fal.storage.upload(file);
 }
+
+function videoContentTypeForPath(filePath: string): string {
+  const ext = path.extname(filePath).toLowerCase();
+  if (ext === ".webm") return "video/webm";
+  if (ext === ".mov") return "video/quicktime";
+  return "video/mp4";
+}
+
+/**
+ * Same as mirrorImageUrlToFalStorage but for MP4/MOV — ModelArk/fal Seedance
+ * cannot fetch `/api/library/download/...` or localhost pipeline URLs.
+ */
+export async function mirrorVideoUrlToFalStorage(
+  url: string,
+  opts?: { clerkId?: string; refresh?: boolean },
+): Promise<string> {
+  const trimmed = url.trim();
+  if (!trimmed) throw new Error("Video URL is required.");
+  if (isFalCdnUrl(trimmed) && !opts?.refresh) return trimmed;
+
+  const localPath = resolvePipelineFileUrl(trimmed);
+  if (localPath) {
+    const clerkId = opts?.clerkId?.trim();
+    if (!clerkId) {
+      throw new Error("clerkId is required to mirror a pipeline asset.");
+    }
+    const jobId = pipelineJobIdFromUrl(trimmed);
+    if (!jobId) {
+      throw new Error("Invalid pipeline media URL.");
+    }
+    const { assertJobOwnedBy } = await import("@/lib/pipeline/job-owner");
+    if (!(await assertJobOwnedBy(jobId, clerkId))) {
+      throw new Error("Pipeline media not found or not owned by this user.");
+    }
+    const buf = await fs.readFile(localPath);
+    const type = videoContentTypeForPath(localPath);
+    const file = new File(
+      [new Uint8Array(buf)],
+      path.basename(localPath) || "source.mp4",
+      { type },
+    );
+    return fal.storage.upload(file);
+  }
+
+  if (isLibraryAssetUrl(trimmed)) {
+    const clerkId = opts?.clerkId?.trim();
+    if (!clerkId) {
+      throw new Error("clerkId is required to mirror a library asset.");
+    }
+    const media = await readLibraryAssetMedia(trimmed, clerkId);
+    if (!media) {
+      throw new Error("Library media not found or storage unavailable.");
+    }
+    const type = media.contentType.split(";")[0]?.trim() || "video/mp4";
+    const ext = type.includes("webm") ? "webm" : type.includes("quicktime") ? "mov" : "mp4";
+    const file = new File([new Uint8Array(media.bytes)], `source.${ext}`, { type });
+    return fal.storage.upload(file);
+  }
+
+  assertSafeRemoteMediaUrl(trimmed);
+  const res = await fetch(trimmed, { cache: "no-store" });
+  if (!res.ok) {
+    throw new Error(`Could not fetch source video (${res.status}).`);
+  }
+  const contentType =
+    res.headers.get("content-type")?.split(";")[0]?.trim() || "video/mp4";
+  const bytes = await res.arrayBuffer();
+  const file = new File([bytes], "source.mp4", { type: contentType });
+  return fal.storage.upload(file);
+}

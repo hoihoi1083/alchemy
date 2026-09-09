@@ -226,6 +226,16 @@ export function estimateVideoTokens(opts: {
   return videoTokenCost(res, sec);
 }
 
+/** Caption 2 Picture edit — bill like Seedance Fast @ 720p for clip length. */
+export function estimateCaptionVideoEditTokens(durationSec?: number): number {
+  const sec = Math.max(4, Math.min(15, Math.round(durationSec ?? 8)));
+  return estimateVideoTokens({
+    resolution: "720p",
+    fast: true,
+    duration: sec,
+  });
+}
+
 export function resolveH3BillingResolution(resolution: string): H3BillingResolution {
   const t = (resolution ?? "").trim();
   const lower = t.toLowerCase();

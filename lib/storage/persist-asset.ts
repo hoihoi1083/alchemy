@@ -196,7 +196,12 @@ export async function persistUserAsset(input: {
       prompt: input.prompt ?? null,
       timingManifest: timing,
     });
-  } catch {
+  } catch (err) {
+    console.error("[persistUserAsset] failed", {
+      kind: input.kind,
+      sourceUrl: input.sourceUrl.slice(0, 160),
+      message: err instanceof Error ? err.message : String(err),
+    });
     return null;
   }
 }

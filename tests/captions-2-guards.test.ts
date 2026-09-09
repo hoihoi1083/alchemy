@@ -37,10 +37,23 @@ describe("captions-2 ASR + preview guards", () => {
     assert.match(src, /originalSourceUrl/);
     assert.match(src, /downloadVideoBlob/);
     assert.match(src, /ToolPhaseStrip/);
+    assert.match(src, /phase === "picture"/);
+    assert.match(src, /CaptionPicturePhase/);
+    assert.match(src, /\/api\/caption-video-edit/);
     assert.equal(
       /<button[^>]*>\s*<CaptionLineEditor/.test(src),
       false,
       "CaptionLineEditor must not be nested inside a <button>",
     );
+  });
+
+  it("caption-video-edit mirrors library URLs before ModelArk/fal", () => {
+    const src = readFileSync(
+      path.join(process.cwd(), "lib/caption-video-edit.ts"),
+      "utf8",
+    );
+    assert.match(src, /scaleVideoToMinPixelCount/);
+    assert.match(src, /SEEDANCE_MIN_REF_PIXELS/);
+    assert.match(src, /publicVideoForSeedanceEdit/);
   });
 });

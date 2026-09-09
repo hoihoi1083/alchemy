@@ -199,6 +199,48 @@ export async function getVideoDimensions(
   return { width, height };
 }
 
+/** Seedance 2.x ModelArk rejects reference videos below ~640×640 pixels. */
+export const SEEDANCE_MIN_REF_PIXELS = 407_696;
+
+/**
+ * Upscale (even dimensions) until width*height >= minPixels. No-op copy if already large enough.
+ */
+export async function scaleVideoToMinPixelCount(
+  inputPath: string,
+  outputPath: string,
+  minPixels: number = SEEDANCE_MIN_REF_PIXELS,
+): Promise<{ width: number; height: number; scaled: boolean }> {
+  const { width, height } = await getVideoDimensions(inputPath);
+  const pixels = width * height;
+  if (pixels >= minPixels) {
+    await fs.copyFile(inputPath, outputPath);
+    return { width, height, scaled: false };
+  }
+  const factor = Math.sqrt(minPixels / pixels) * 1.02;
+  const nw = Math.max(2, Math.ceil((width * factor) / 2) * 2);
+  const nh = Math.max(2, Math.ceil((height * factor) / 2) * 2);
+  await runFfmpeg([
+    "-y",
+    "-i",
+    inputPath,
+    "-vf",
+    `scale=${nw}:${nh}:flags=lanczos`,
+    "-an",
+    "-c:v",
+    "libx264",
+    "-preset",
+    "veryfast",
+    "-crf",
+    "18",
+    "-movflags",
+    "+faststart",
+    "-pix_fmt",
+    "yuv420p",
+    outputPath,
+  ]);
+  return { width: nw, height: nh, scaled: true };
+}
+
 export async function videoHasAudioStream(filePath: string): Promise<boolean> {
   const out = await runCapture(getFfprobePath(), [
     "-v",
@@ -467,11 +509,19 @@ export async function addBackgroundMusic(
   volume = 0.28,
   /** When true, drop any Seedance/reference speech before adding BGM only. */
   replaceExistingAudio = false,
+  /** Silence before BGM starts (matches CapCut-style audio-lane offset). */
+  startSec = 0,
 ): Promise<void> {
   const duration = await getMediaDurationSeconds(inputVideo);
   const hasAudio =
     !replaceExistingAudio && (await videoHasAudioStream(inputVideo));
   const dur = duration.toFixed(3);
+  const delayMs = Math.max(0, Math.round(Math.min(duration - 0.05, startSec) * 1000));
+  const delayFilter = delayMs > 0 ? `adelay=${delayMs}|${delayMs},` : "";
+  const loudNorm = hasAudio
+    ? "loudnorm=I=-18:TP=-1.5:LRA=11"
+    : "loudnorm=I=-16:TP=-1.5:LRA=11";
+  const bgmChain = `[1:a]volume=${volume},${loudNorm},${delayFilter}apad=whole_dur=${dur},atrim=0:${dur},asetpts=PTS-STARTPTS`;
 
   if (hasAudio) {
     await runFfmpeg([
@@ -483,7 +533,7 @@ export async function addBackgroundMusic(
       "-i",
       musicPath,
       "-filter_complex",
-      `[1:a]volume=${volume},loudnorm=I=-18:TP=-1.5:LRA=11,atrim=0:${dur},asetpts=PTS-STARTPTS[bgm];[0:a]volume=0.9[vid];[vid][bgm]amix=inputs=2:duration=first:dropout_transition=2[aout]`,
+      `${bgmChain}[bgm];[0:a]volume=0.9[vid];[vid][bgm]amix=inputs=2:duration=first:dropout_transition=2[aout]`,
       "-map",
       "0:v:0",
       "-map",
@@ -510,7 +560,7 @@ export async function addBackgroundMusic(
     "-i",
     musicPath,
     "-filter_complex",
-    `[1:a]volume=${volume},loudnorm=I=-16:TP=-1.5:LRA=11,atrim=0:${dur},asetpts=PTS-STARTPTS[aout]`,
+    `${bgmChain}[aout]`,
     "-map",
     "0:v:0",
     "-map",

@@ -28,6 +28,8 @@ async function mixBgmJob(
     track: BgmTrackId;
     musicUrl?: string;
     replaceSourceAudio: boolean;
+    /** BGM lane start offset in seconds (silence before music). */
+    startSec?: number;
     persistUserId?: string;
   },
 ) {
@@ -75,6 +77,7 @@ async function mixBgmJob(
     outputPath,
     input.musicUrl ? 0.55 : bgmMixVolume(input.track),
     input.replaceSourceAudio,
+    Math.max(0, Number(input.startSec) || 0),
   );
   await assertVideoHasAudio(outputPath, "BGM mix");
 
@@ -115,6 +118,10 @@ export async function POST(request: Request) {
         DEFAULT_BGM_TRACK) as BgmTrackId;
       const musicUrl = (formData.get("music_url") as string | null)?.trim();
       const replaceSourceAudio = formData.get("replace_source_audio") === "true";
+      const startSec = Math.max(
+        0,
+        Number(formData.get("start_sec") ?? formData.get("bgm_start_sec")) || 0,
+      );
       const file = videoFile instanceof File && videoFile.size > 0 ? videoFile : undefined;
       if (!file && !videoUrl) {
         return NextResponse.json(
@@ -134,6 +141,7 @@ export async function POST(request: Request) {
           track,
           musicUrl,
           replaceSourceAudio,
+          startSec,
           persistUserId: auth.user.userId,
         });
         return NextResponse.json({
@@ -161,6 +169,8 @@ export async function POST(request: Request) {
       track?: string;
       music_url?: string;
       replace_source_audio?: boolean;
+      start_sec?: number;
+      bgm_start_sec?: number;
     } | null = null;
     try {
       body = await request.json();
@@ -183,6 +193,10 @@ export async function POST(request: Request) {
         track: (body?.track?.trim() || DEFAULT_BGM_TRACK) as BgmTrackId,
         musicUrl: body?.music_url?.trim(),
         replaceSourceAudio: body?.replace_source_audio === true,
+        startSec: Math.max(
+          0,
+          Number(body?.start_sec ?? body?.bgm_start_sec) || 0,
+        ),
         persistUserId: auth.user.userId,
       });
       return NextResponse.json({
