@@ -10,14 +10,35 @@ function openAiKey(): string {
   return key;
 }
 
-export async function transcribeAudio(audioFile: File): Promise<TranscriptResult> {
+/** Models that accept response_format=verbose_json (segment timestamps). */
+function supportsVerboseJson(model: string): boolean {
+  const m = model.trim().toLowerCase();
+  return m === "whisper-1" || m.includes("diarize");
+}
+
+/**
+ * Transcribe audio via OpenAI.
+ * Timed caption flows need segment timestamps → whisper-1 + verbose_json.
+ * gpt-4o-mini-transcribe only supports json/text (no segments) — we upgrade to
+ * whisper-1 when preferTimedSegments is true (default).
+ */
+export async function transcribeAudio(
+  audioFile: File,
+  opts?: { preferTimedSegments?: boolean },
+): Promise<TranscriptResult> {
   const key = openAiKey();
-  const model = process.env.OPENAI_TRANSCRIBE_MODEL?.trim() || "gpt-4o-mini-transcribe";
+  const preferTimed = opts?.preferTimedSegments !== false;
+  const envModel = process.env.OPENAI_TRANSCRIBE_MODEL?.trim();
+  let model = envModel || "whisper-1";
+  if (preferTimed && !supportsVerboseJson(model)) {
+    model = "whisper-1";
+  }
+  const responseFormat = supportsVerboseJson(model) ? "verbose_json" : "json";
 
   const fd = new FormData();
   fd.set("file", audioFile);
   fd.set("model", model);
-  fd.set("response_format", "verbose_json");
+  fd.set("response_format", responseFormat);
 
   const res = await fetch(`${OPENAI_BASE}/audio/transcriptions`, {
     method: "POST",

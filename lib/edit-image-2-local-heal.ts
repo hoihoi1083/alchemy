@@ -76,9 +76,13 @@ export async function localRingFill(
   const holeT = ht - top;
 
   // Prefer near-edge ring pixels; use median so a few red logos don't turn white→grey.
+  // Bias mid/bright samples so night/stadium photos don't paint solid black.
   const nearR: number[] = [];
   const nearG: number[] = [];
   const nearB: number[] = [];
+  const brightR: number[] = [];
+  const brightG: number[] = [];
+  const brightB: number[] = [];
   let rSum = 0;
   let gSum = 0;
   let bSum = 0;
@@ -107,6 +111,11 @@ export async function localRingFill(
         nearR.push(rr);
         nearG.push(gg);
         nearB.push(bb);
+        if ((rr + gg + bb) / 3 >= 55) {
+          brightR.push(rr);
+          brightG.push(gg);
+          brightB.push(bb);
+        }
       }
     }
   }
@@ -116,9 +125,16 @@ export async function localRingFill(
     const s = [...arr].sort((a, b) => a - b);
     return s[Math.floor(s.length / 2)]!;
   };
-  const fillR = Math.round(nearR.length ? median(nearR) : n ? rSum / n : 255);
-  const fillG = Math.round(nearG.length ? median(nearG) : n ? gSum / n : 255);
-  const fillB = Math.round(nearB.length ? median(nearB) : n ? bSum / n : 255);
+  const useBright = brightR.length >= 12;
+  const fillR = Math.round(
+    useBright ? median(brightR) : nearR.length ? median(nearR) : n ? rSum / n : 243,
+  );
+  const fillG = Math.round(
+    useBright ? median(brightG) : nearG.length ? median(nearG) : n ? gSum / n : 244,
+  );
+  const fillB = Math.round(
+    useBright ? median(brightB) : nearB.length ? median(nearB) : n ? bSum / n : 246,
+  );
 
   // Opaque patch — no original-content ghost.
   const solid = await sharp({

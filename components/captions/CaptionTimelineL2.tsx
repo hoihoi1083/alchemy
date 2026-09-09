@@ -20,6 +20,8 @@ type CaptionTimelineL2Props = {
   onVideoTrimChange: (trimIn: number, trimOut: number) => void;
   onSnapToggle: (enabled: boolean) => void;
   onAlignToBeats?: () => void;
+  /** Hide snap/align beat controls (e.g. Caption studio 2 has no beat detection). */
+  showBeatControls?: boolean;
   labels: {
     title: string;
     hint: string;
@@ -52,6 +54,7 @@ export function CaptionTimelineL2({
   onVideoTrimChange,
   onSnapToggle,
   onAlignToBeats,
+  showBeatControls = true,
   labels,
 }: CaptionTimelineL2Props) {
   const safeDuration = Math.max(1, durationSec);
@@ -143,28 +146,32 @@ export function CaptionTimelineL2({
           <p className="mt-1 text-xs text-slate-400">{labels.hint}</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <label className="flex items-center gap-2 text-xs text-slate-300">
-            <input
-              type="checkbox"
-              checked={snapToBeats}
-              onChange={(e) => onSnapToggle(e.target.checked)}
-            />
-            {labels.snapBeats}
-          </label>
-          {onAlignToBeats && labels.alignToBeats && (
-            <button
-              type="button"
-              disabled={!beatMarkers.length}
-              onClick={onAlignToBeats}
-              className="rounded-full border border-amber-500/50 px-2.5 py-1 text-[11px] font-medium text-amber-100 hover:bg-amber-950/40 disabled:opacity-40"
-            >
-              {labels.alignToBeats}
-            </button>
-          )}
+          {showBeatControls ? (
+            <>
+              <label className="flex items-center gap-2 text-xs text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={snapToBeats}
+                  onChange={(e) => onSnapToggle(e.target.checked)}
+                />
+                {labels.snapBeats}
+              </label>
+              {onAlignToBeats && labels.alignToBeats && (
+                <button
+                  type="button"
+                  disabled={!beatMarkers.length}
+                  onClick={onAlignToBeats}
+                  className="rounded-full border border-amber-500/50 px-2.5 py-1 text-[11px] font-medium text-amber-100 hover:bg-amber-950/40 disabled:opacity-40"
+                >
+                  {labels.alignToBeats}
+                </button>
+              )}
+            </>
+          ) : null}
         </div>
       </div>
 
-      {beatStatus ? (
+      {showBeatControls && beatStatus ? (
         <p className="mt-2 text-[11px] text-amber-200/80">{beatStatus}</p>
       ) : null}
 
@@ -206,28 +213,30 @@ export function CaptionTimelineL2({
           </div>
         </div>
 
-        <div>
-          <p className="mb-1 text-[10px] uppercase tracking-wide text-slate-500">
-            {labels.bgmTrack}
-          </p>
-          <div className="relative h-6 overflow-hidden rounded-lg bg-gradient-to-r from-violet-950 via-violet-800/40 to-violet-950">
-            <div
-              className="absolute inset-0 opacity-40"
-              style={{
-                backgroundImage:
-                  "repeating-linear-gradient(90deg, transparent, transparent 6px, rgba(255,255,255,0.08) 6px, rgba(255,255,255,0.08) 8px)",
-              }}
-            />
-            {beatMarkers.map((b) => (
+        {showBeatControls ? (
+          <div>
+            <p className="mb-1 text-[10px] uppercase tracking-wide text-slate-500">
+              {labels.bgmTrack}
+            </p>
+            <div className="relative h-6 overflow-hidden rounded-lg bg-gradient-to-r from-violet-950 via-violet-800/40 to-violet-950">
               <div
-                key={`beat-bgm-${b}`}
-                className="pointer-events-none absolute top-0 bottom-0 w-0.5 bg-amber-400/80"
-                style={{ left: pct(b) }}
-                title={`${b.toFixed(1)}s`}
+                className="absolute inset-0 opacity-40"
+                style={{
+                  backgroundImage:
+                    "repeating-linear-gradient(90deg, transparent, transparent 6px, rgba(255,255,255,0.08) 6px, rgba(255,255,255,0.08) 8px)",
+                }}
               />
-            ))}
+              {beatMarkers.map((b) => (
+                <div
+                  key={`beat-bgm-${b}`}
+                  className="pointer-events-none absolute top-0 bottom-0 w-0.5 bg-amber-400/80"
+                  style={{ left: pct(b) }}
+                  title={`${b.toFixed(1)}s`}
+                />
+              ))}
+            </div>
           </div>
-        </div>
+        ) : null}
 
         <div>
           <p className="mb-1 text-[10px] uppercase tracking-wide text-slate-500">

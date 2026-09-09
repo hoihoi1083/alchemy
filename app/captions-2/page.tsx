@@ -1,16 +1,16 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { CaptionStudioClient } from "@/components/captions/CaptionStudioClient";
+import { Suspense, useEffect, useState } from "react";
+import { CaptionStudio2Client } from "@/components/captions/CaptionStudio2Client";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { StudioGlowShell } from "@/components/studio/StudioGlowShell";
 import { useLocale } from "@/components/LocaleProvider";
 import { STUDIO_PAGE_GLOW } from "@/lib/studio-glow";
 
-function CaptionsPageContent() {
+function Captions2PageContent() {
   const { m } = useLocale();
-  const t = m.captions;
+  const t = m.captions2;
 
   return (
     <StudioGlowShell theme={STUDIO_PAGE_GLOW.captions}>
@@ -28,21 +28,21 @@ function CaptionsPageContent() {
           </p>
           <p className="mt-3 text-xs">
             <Link
-              href="/captions-2"
+              href="/captions"
               className="text-cyan-300/90 underline hover:text-cyan-200"
             >
-              {t.tryCaptions2}
+              {t.openClassic}
             </Link>
           </p>
         </header>
 
-        <CaptionStudioClient />
+        <CaptionStudio2Client />
       </div>
     </StudioGlowShell>
   );
 }
 
-export default function CaptionsPage() {
+export default function Captions2Page() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -66,7 +66,7 @@ export default function CaptionsPage() {
         </StudioGlowShell>
       }
     >
-      <CaptionsPageContent />
+      <Captions2PageContent />
     </Suspense>
   );
 }

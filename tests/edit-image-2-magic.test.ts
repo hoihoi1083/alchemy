@@ -17,11 +17,11 @@ describe("edit-image-2 expand", () => {
 });
 
 describe("magic board chat intents", () => {
-  it("parses split / grab / erase / expand / rewrite", () => {
+  it("parses split / grab / erase / rewrite", () => {
     assert.equal(parseMagicChatIntent("拆层").type, "split");
     assert.equal(parseMagicChatIntent("点选提起").type, "grab_mode");
     assert.equal(parseMagicChatIntent("笔刷擦除").type, "brush_erase_mode");
-    assert.equal(parseMagicChatIntent("扩展 9:16").type, "expand");
+    assert.equal(parseMagicChatIntent("扩展 9:16").type, "full_edit");
     assert.deepEqual(parseMagicChatIntent("改成 CR8"), {
       type: "rewrite",
       text: "CR8",

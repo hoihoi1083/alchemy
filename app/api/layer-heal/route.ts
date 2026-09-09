@@ -330,12 +330,13 @@ export async function POST(request: Request) {
           `[layer-heal] hole coverage ${(coverage * 100).toFixed(0)}% — skip generative, try local only if flat`,
         );
       }
-      // Dark photo plates: local ring-fill → solid black. Prefer leaving plate
-      // untouched only when generative was requested but coverage is huge.
+      // Dark photo plates: local ring-fill → solid black. Never force it.
       const flat = await plateLooksFlatBright(imgBuf);
-      if (!flat && requested !== "local") {
+      if (!flat) {
         throw new Error(
-          `Hole too large for generative heal (${(coverage * 100).toFixed(0)}%) on photo plate`,
+          requested === "local"
+            ? "Local ring-fill skipped on photo plate"
+            : `Hole too large for generative heal (${(coverage * 100).toFixed(0)}%) on photo plate`,
         );
       }
       outJpeg = Buffer.from(await localRingFill(imgBuf, clamped, imgW, imgH));

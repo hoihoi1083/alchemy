@@ -912,11 +912,12 @@ export const en = {
 			"Save your logo and brand colors once — reuse on every ad.",
 		toolLibraryTitle: "My library",
 		toolLibraryDesc: "Saved files, projects, and team folder — continue or download.",
-		toolEditTitle: "Edit image",
-		toolEditDesc: "AI smart layers — move text and objects, rewrite copy, export.",
-		toolSmartLayersTitle: "AI smart layers",
+		toolEditTitle: "AI layers & edit",
+		toolEditDesc:
+			"Smart layers plus image edit — move text & objects, rewrite copy, brush cutout, export.",
+		toolSmartLayersTitle: "AI layers & edit",
 		toolSmartLayersDesc:
-			"Detect text & objects, drag layers, brush cutouts — available on every plan.",
+			"Smart layers plus image edit — detect, drag, rewrite, brush cutout — every plan.",
 		toolCaptionsTitle: "Captions & audio",
 		toolCaptionsDesc: "Burn subtitles, background music, and voiceover onto any MP4.",
 		toolUltraCanvasTitle: "Ultra canvas",
@@ -5829,6 +5830,59 @@ export const en = {
 		trimFailed: "Video trim failed.",
 		trimIn: "Start (sec)",
 		trimOut: "End (sec)",
+		tryCaptions2: "Try Caption studio 2 (auto from speech)",
+	},
+	captions2: {
+		badge: "Caption studio 2 · speech-first",
+		title: "Caption studio 2",
+		subtitle:
+			"New path: auto-build timed captions from speech, then trim / BGM / burn with FFmpeg. Compare with classic Caption studio.",
+		diffTitle: "What’s different from classic Captions",
+		diffBody:
+			"Classic = you write or AI-plan lines from a topic, then full voice mix. Studio 2 = listen to the video’s audio (Whisper/OpenAI), fill the timeline, then burn. Silent Seedance clips won’t auto-fill — write lines or use classic.",
+		openClassic: "Open classic Caption studio →",
+		phaseImport: "1 · Import",
+		phaseCaptions: "2 · Auto captions",
+		phaseFinish: "3 · Finish",
+		phaseCaptionsName: "Captions",
+		phaseFinishName: "Finish",
+		phaseHowToCaptions:
+			"Run Auto captions from speech, then edit timing on the right. Continue when the lines look right.",
+		phaseHowToFinish:
+			"Optional BGM, then burn captions onto the video. Download when ready.",
+		dismissTip: "Dismiss",
+		showProcessed: "Show captioned",
+		tokenCostHint: (n: number) => `~${n} tokens · cloud speech-to-text`,
+		emptyLinesHint: "No lines yet — run Auto captions from speech, or Add line.",
+		stickyCaptionsHint: "Speech → timed lines, then continue to burn.",
+		stickyFinishHint: (n: number) =>
+			n > 0 ? `${n} lines ready to burn` : "Add caption text before burn",
+		backToCaptions: "Back to captions",
+		importHint:
+			"Same import as classic — library or upload. Next step is Auto captions from speech.",
+		fromLink: "From link",
+		uploadedVideo: "Uploaded video",
+		readyAuto: "Video ready — run Auto captions from speech.",
+		autoTitle: "Auto captions from speech",
+		autoHint:
+			"Extracts audio → transcribes → fills timed lines. Costs a small plan token when using cloud ASR.",
+		autoCta: "Auto captions from speech",
+		transcribing: "Listening & writing lines…",
+		transcribeDone: (n: number) => `Filled ${n} caption lines from speech`,
+		transcribeFailed: "Could not transcribe this video.",
+		noSpeech:
+			"No speech detected (silent AI video?). Add lines manually, or use classic studio to plan from a topic.",
+		silentHint: "Silent reel?",
+		openClassicPlan: "Plan lines in classic Captions →",
+		evenSplitNote: "timing estimated (no ASR segments)",
+		asrCloud: "cloud ASR",
+		asrLocal: "local Whisper",
+		chargedTok: (n: number) => `${n} tok`,
+		needVideo: "Load a video first.",
+		continueFinish: "Continue to finish (BGM + burn)",
+		finishHint: "Optional BGM, then burn captions onto the video (FFmpeg — same engine as classic).",
+		classicVoiceNote:
+			"Need AI voice mix / plan-from-topic? Use classic Caption studio — Studio 2 stays speech→burn focused.",
 	},
 	editImage2: {
 		title: "AI smart layers",
@@ -5937,13 +5991,13 @@ export const en = {
 		expandAlready: "Already close to that ratio — no tokens charged.",
 		magicChatTitle: "Magic chat",
 		magicChatHint:
-			"Describe a change to the whole image — no split needed. Or: 扩展 9:16 · 改成新文案 (selected layer)",
-		magicChatHintWithCosts: (c: { edit: number; expand: number }) =>
-			`Describe the whole-image edit (~${c.edit} tok). Also: AI outpaint ~${c.expand} tok. Split is a separate button — not required here. Free: box lift, paste, editable text.`,
+			"Describe a change to the whole image — no split needed. Or: 改成新文案 (selected text layer).",
+		magicChatHintWithCosts: (c: { edit: number }) =>
+			`Describe the whole-image edit (~${c.edit} tok). Split is a separate button — not required here. Free: box lift, paste, editable text.`,
 		magicChatPlaceholder: "e.g. Make the background night · Change headline to Summer Sale…",
 		magicChatSend: "Run",
 		magicChatHelp:
-			"Describe any full-image change. Optional: 扩展 1:1/9:16 · 改成 … on a selected text layer · 改这层：… for the selected piece only",
+			"Describe any full-image change. Optional: 改成 … on a selected text layer · 改这层：… for the selected piece only",
 		magicChatNeedLayer: "Select a layer first for that command (or describe a full-image edit).",
 		magicChatNeedText: "Select a text layer and type the new words (or 改成 …).",
 		magicChatOk: "Done.",
@@ -6098,11 +6152,16 @@ export const en = {
 		lastTokens: (n: number) => `last ${n} tok`,
 		ocrObj: (text: number, obj: number) => `Text ${text} · Objects ${obj}`,
 		brushMappedWrong:
-			"Brush cut looked wrong (too big or off the photo). Paint a tighter area and try Make layer again.",
+			"Brush cut didn’t match your paint (mapping glitch). Clear strokes, paint again on the subject, then Make layer.",
+		brushOffCanvas:
+			"Brush strokes missed the photo. Paint on the image itself (not the empty margins).",
+		brushTooLarge:
+			"Brush area is too large (covers most of the frame). Paint a tighter stroke on the subject only.",
 		brushLayerReady: "Brush layer created — drag it to check the cut.",
 		boxTooLarge: "Box is too large — drag a smaller area on the subject.",
 		boxLayerReady: "Box layer created — drag it to check the cut.",
-		makeLayerHint: "Paint on the subject, then click Make layer (or use Box select — lift on release).",
+		makeLayerHint:
+			"Paint on the subject, then Make layer. Clear only removes the purple paint overlay — it does not erase the photo.",
 		text: "Text",
 		logo: "Logo",
 		logoBusy: "Logo…",
@@ -6116,6 +6175,7 @@ export const en = {
 		size: "Size",
 		undoStroke: "Undo stroke",
 		clear: "Clear",
+		clearStrokes: "Clear paint",
 		makeLayer: "Make layer",
 		cutting: "Cutting…",
 		healTok: (n: number) => `Clean hole ~${n}+ tok (AI fill)`,

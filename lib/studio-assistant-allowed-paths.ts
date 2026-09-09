@@ -4,6 +4,7 @@ export const ASSISTANT_ALLOWED_PATHS = new Set([
   "/start",
   "/studio",
   "/captions",
+  "/captions-2",
   "/edit-image",
   "/edit-image-2",
   "/ultra",

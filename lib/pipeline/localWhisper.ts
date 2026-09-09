@@ -34,6 +34,17 @@ async function ensureWhisperCliAvailable(): Promise<void> {
   }
 }
 
+/** True when whisper-cli is on PATH (local/dev). False on Vercel/serverless. */
+export async function isLocalWhisperAvailable(): Promise<boolean> {
+  if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) return false;
+  try {
+    await run("whisper-cli", ["--help"]);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 async function ensureWhisperModel(modelPath: string): Promise<void> {
   try {
     await fs.access(modelPath);

@@ -35,11 +35,12 @@ import {
   canvasDisplayUrl,
   cutoutFromSourceAndMask,
   dataUrlToBlob,
+  isBrushCutMappingBug,
   loadImage,
+  rescaleBrushStrokes,
   sampleTextStyleFromCrop,
   type BrushStroke,
 } from "@/lib/edit-image-2-brush-cutout";
-import { EXPAND_PRESETS } from "@/lib/edit-image-2-expand";
 import { parseMagicChatIntent } from "@/lib/edit-image-2-magic-chat";
 import {
   contentBBoxFromCrop,
@@ -133,7 +134,6 @@ const DETECT_SAM_TOKENS =
 const ERASE_PER_MP = estimateInpaintTokens(1);
 const HEAL_LOCAL_TOKENS = TOKEN_COST.smart_layers_heal;
 const MATTE_TOKENS = TOKEN_COST.smart_layers_matte;
-const EXPAND_TOKENS = TOKEN_COST.smart_layers_expand;
 const SPLIT_TOKENS = TOKEN_COST.smart_layers_seedream;
 const SESSION_KEY = "alchemy-edit-image-2-v1";
 
@@ -674,6 +674,8 @@ export function EditImage2Client() {
   const [brushLines, setBrushLines] = useState<BrushStroke[]>([]);
   const brushLinesRef = useRef<BrushStroke[]>([]);
   brushLinesRef.current = brushLines;
+  /** Image-plane size strokes were last scaled to (keeps paint aligned on resize). */
+  const brushLayoutRef = useRef<{ w: number; h: number } | null>(null);
   const [brushBusy, setBrushBusy] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [lastTokens, setLastTokens] = useState<number | null>(bootSnap?.lastTokens ?? null);
@@ -724,6 +726,22 @@ export function EditImage2Client() {
       h,
     };
   }, [result?.width, result?.height, stageSize.w, stageSize.h]);
+
+  // Keep brush strokes in the current image-plane space when the board resizes.
+  useEffect(() => {
+    const prev = brushLayoutRef.current;
+    const next = { w: imageLayout.w, h: imageLayout.h };
+    if (!prev) {
+      brushLayoutRef.current = next;
+      return;
+    }
+    if (prev.w === next.w && prev.h === next.h) return;
+    setBrushLines((strokes) => {
+      if (strokes.length === 0) return strokes;
+      return rescaleBrushStrokes(strokes, prev.w, prev.h, next.w, next.h);
+    });
+    brushLayoutRef.current = next;
+  }, [imageLayout.w, imageLayout.h]);
 
   // Track the real workspace size.
   useEffect(() => {
@@ -1223,7 +1241,8 @@ export function EditImage2Client() {
 
   /**
    * Clear plate hole after lift.
-   * Prefer local ring-fill — Flux Fill invents junk (wood doors) on white posters and is slow.
+   * Photos → Flux erase (auto). Flat posters → local ring-fill.
+   * Always resolve an HTTP plate URL when possible (data: URLs skip the API).
    */
   async function healBackgroundHole(
     bgUrl: string,
@@ -1234,9 +1253,20 @@ export function EditImage2Client() {
     tokensCharged?: number;
     mode: "erase" | "fill" | "local" | "blur";
   }> {
-    const healMode = opts?.mode ?? "local";
-    const healUrl =
-      bgUrl.startsWith("http") || isLibraryAssetUrl(bgUrl) ? bgUrl : null;
+    const healMode = opts?.mode ?? "auto";
+    const board = resultRef.current;
+    const healUrlCandidate =
+      (bgUrl.startsWith("http") || isLibraryAssetUrl(bgUrl) ? bgUrl : null) ||
+      lastHttpBgRef.current ||
+      (board?.originalBackgroundUrl &&
+      (board.originalBackgroundUrl.startsWith("http") ||
+        isLibraryAssetUrl(board.originalBackgroundUrl))
+        ? board.originalBackgroundUrl
+        : null) ||
+      (sourceUrl && (sourceUrl.startsWith("http") || isLibraryAssetUrl(sourceUrl))
+        ? sourceUrl
+        : null);
+    const healUrl = healUrlCandidate;
     if (healUrl) {
       try {
         const healRes = await fetch("/api/layer-heal", {
@@ -1263,10 +1293,11 @@ export function EditImage2Client() {
           };
         }
       } catch {
-        // fall through
+        // fall through to blur punch
       }
     }
     const blurSource =
+      (healUrl ? canvasDisplayUrl(healUrl) : null) ??
       (sourceUrl && (sourceUrl.startsWith("http") || isLibraryAssetUrl(sourceUrl))
         ? canvasDisplayUrl(sourceUrl)
         : null) ??
@@ -2217,7 +2248,26 @@ export function EditImage2Client() {
     };
 
     try {
-      const healed = await healBackgroundHole(bgUrl, hole);
+      // Instant client punch so the hole never sits black while the API runs.
+      const display =
+        canvasDisplayUrl(bgUrl) ??
+        (sourceUrl ? canvasDisplayUrl(sourceUrl) : null) ??
+        bgUrl;
+      try {
+        const quick = await blurPunchBackground(display, hole);
+        applyHealedBackground({ backgroundUrl: quick, mode: "blur" });
+      } catch {
+        /* server heal still runs */
+      }
+
+      const httpPlate =
+        lastHttpBgRef.current ||
+        (bgUrl.startsWith("http") || isLibraryAssetUrl(bgUrl) ? bgUrl : null) ||
+        resultRef.current?.originalBackgroundUrl ||
+        sourceUrl ||
+        bgUrl;
+      const mode = await pickHealModeForHole(httpPlate, hole);
+      const healed = await healBackgroundHole(httpPlate, hole, { mode });
       applyHealedBackground(healed);
       patchLayer(layerId, { holeCleared: true });
       if (matteFailed) {
@@ -2268,16 +2318,25 @@ export function EditImage2Client() {
         if (y > maxY) maxY = y;
       }
     }
-    if (
-      points < 2 ||
-      maxX < 0 ||
-      maxY < 0 ||
-      minX > imageLayout.w ||
-      minY > imageLayout.h
-    ) {
-      setError(t.brushMappedWrong);
+    if (points < 2) {
+      setError(t.paintFirst);
       return;
     }
+    if (maxX < 0 || maxY < 0 || minX > imageLayout.w || minY > imageLayout.h) {
+      setError(t.brushOffCanvas);
+      return;
+    }
+
+    // Soft-clamp: keep stroke geometry (don't pin every point to edges — that
+    // turns a slightly-out stroke into a full-frame line after resize).
+    const clampedStrokes = strokes.map((s) => {
+      const next = s.slice();
+      for (let i = 0; i + 1 < next.length; i += 2) {
+        next[i] = Math.max(-2, Math.min(imageLayout.w + 2, next[i]!));
+        next[i + 1] = Math.max(-2, Math.min(imageLayout.h + 2, next[i + 1]!));
+      }
+      return next;
+    });
 
     setBrushBusy(true);
     setError(null);
@@ -2296,9 +2355,10 @@ export function EditImage2Client() {
       if (imgW !== result.width || imgH !== result.height) {
         setResult((prev) => (prev ? { ...prev, width: imgW, height: imgH } : prev));
       }
+      const brushPx = Math.max(brushSize, 24);
       const mask = buildBrushMaskCanvas(
-        strokes,
-        Math.max(brushSize, 24),
+        clampedStrokes,
+        brushPx,
         imageLayout.w,
         imageLayout.h,
         imgW,
@@ -2309,9 +2369,25 @@ export function EditImage2Client() {
         setError(t.brushEmpty);
         return;
       }
-      // Area fraction (0–1). Old check used wPct*hPct > 65 which rejected ~every real cut.
-      const areaFrac = (cut.wPct / 100) * (cut.hPct / 100);
-      if (areaFrac > 0.85) {
+      const strokeBBox = brushStrokesImageBBox(
+        clampedStrokes,
+        brushPx,
+        imageLayout.w,
+        imageLayout.h,
+        imgW,
+        imgH,
+      );
+      // Reject only real mapping bugs (cut covers whole frame while paint didn't).
+      // A tall/wide subject can have a large cut bbox and still be correct.
+      if (
+        strokeBBox &&
+        isBrushCutMappingBug({
+          strokeBBox,
+          cutBBox: cut.bbox,
+          imgW,
+          imgH,
+        })
+      ) {
         setError(t.brushMappedWrong);
         return;
       }
@@ -2463,89 +2539,6 @@ export function EditImage2Client() {
     setNotice(t.grabClickReady);
   }
 
-  async function runMagicExpand(presetId: "square" | "story" | "landscape" | "wider") {
-    if (!canEdit || !result) return;
-    const bgUrl =
-      resultRef.current?.backgroundUrl ||
-      resultRef.current?.backgroundDataUrl ||
-      result.backgroundUrl ||
-      result.backgroundDataUrl;
-    if (!bgUrl || (!bgUrl.startsWith("http") && !isLibraryAssetUrl(bgUrl))) {
-      setError(t.expandNeedHttpBg);
-      return;
-    }
-    setBusy("export");
-    setError(null);
-    setNotice(t.expanding);
-    try {
-      const res = await fetch("/api/layer-expand", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ image_url: bgUrl, preset: presetId }),
-      });
-      const json = (await res.json()) as {
-        imageUrl?: string;
-        width?: number;
-        height?: number;
-        tokensCharged?: number;
-        warning?: string;
-        error?: string;
-      };
-      if (!res.ok || !json.imageUrl) throw new Error(json.error || t.expandFailed);
-
-      const oldW = result.width;
-      const oldH = result.height;
-      const newW = json.width || oldW;
-      const newH = json.height || oldH;
-      const dxPct = ((newW - oldW) / 2 / Math.max(1, newW)) * 100;
-      const dyPct = ((newH - oldH) / 2 / Math.max(1, newH)) * 100;
-      const sx = oldW / Math.max(1, newW);
-      const sy = oldH / Math.max(1, newH);
-
-      const shifted = (historyRef.current[historyIndexRef.current] ?? []).map((l) => ({
-        ...l,
-        xPct: l.xPct * sx + dxPct,
-        yPct: l.yPct * sy + dyPct,
-        wPct: l.wPct * sx,
-        hPct: l.hPct * sy,
-        bbox: l.bbox
-          ? {
-              left: Math.round(l.bbox.left + (newW - oldW) / 2),
-              top: Math.round(l.bbox.top + (newH - oldH) / 2),
-              width: l.bbox.width,
-              height: l.bbox.height,
-            }
-          : l.bbox,
-      }));
-
-      const nextResult = {
-        ...result,
-        width: newW,
-        height: newH,
-        backgroundUrl: json.imageUrl,
-        backgroundDataUrl: json.imageUrl,
-        layers: shifted,
-      };
-      resultRef.current = nextResult;
-      setResult(nextResult);
-      historyRef.current = [shifted];
-      historyIndexRef.current = 0;
-      setHistory([shifted]);
-      setHistoryIndex(0);
-      if (typeof json.tokensCharged === "number" && json.tokensCharged > 0) {
-        setLastTokens(json.tokensCharged);
-      }
-      setNotice(json.warning === "already_aspect" ? t.expandAlready : t.expandDone);
-      setViewScale(1);
-      setViewPos({ x: 0, y: 0 });
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : t.expandFailed);
-    } finally {
-      setBusy(null);
-    }
-  }
-
   async function handleMagicChat(raw: string) {
     const intent = parseMagicChatIntent(raw);
     switch (intent.type) {
@@ -2577,9 +2570,6 @@ export function EditImage2Client() {
         setBrushMode(false);
         setSelectedId(null);
         setNotice(t.eraseHint);
-        return;
-      case "expand":
-        await runMagicExpand(intent.preset);
         return;
       case "full_edit": {
         await runFullImageAiEdit(intent.instruction);
@@ -3894,6 +3884,93 @@ export function EditImage2Client() {
             </p>
           </div>
 
+          {/* Layer stack — near top so split results are visible without scrolling past tools */}
+          <ul className="max-h-[min(42vh,320px)] shrink-0 space-y-0.5 overflow-y-auto rounded-xl border border-white/10 bg-black/25 p-1 text-sm">
+            {layerList.map((l) => {
+              const thumb = l.cropUrl || l.cropDataUrl;
+              return (
+              <li key={l.id}>
+                <div
+                  className={`flex items-center gap-1.5 rounded-lg px-1.5 py-1 ${
+                    l.id === selectedId ? "bg-violet-500/25" : "hover:bg-white/[0.04]"
+                  }`}
+                >
+                  <button
+                    type="button"
+                    className="flex min-w-0 flex-1 items-center gap-2 truncate text-left text-xs text-slate-200"
+                    onClick={() => setSelectedId(l.id)}
+                  >
+                    {thumb && (l.kind === "object" || l.kind === "logo" || l.kind === "text") ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={canvasDisplayUrl(thumb) ?? thumb}
+                        alt=""
+                        className="h-8 w-8 shrink-0 rounded border border-white/10 object-cover bg-black/40"
+                      />
+                    ) : (
+                      <span
+                        className={`inline-block h-8 w-8 shrink-0 rounded border border-white/10 ${kindDotClass(l.kind)} opacity-80`}
+                      />
+                    )}
+                    <span className="min-w-0 truncate">{l.title}</span>
+                  </button>
+                  <button
+                    type="button"
+                    title={l.visible === false ? t.titleShow : t.titleHide}
+                    className="rounded px-1 text-[10px] text-slate-400 hover:bg-white/10 hover:text-white"
+                    onClick={() => {
+                      const nextVisible = l.visible === false;
+                      patchLayer(l.id, { visible: nextVisible });
+                      // Hiding a piece should clear the plate so the original doesn't ghost.
+                      if (!nextVisible) void clearHoleIfNeeded(l.id);
+                    }}
+                  >
+                    {l.visible === false ? t.show : t.hide}
+                  </button>
+                  <button
+                    type="button"
+                    title={l.locked ? t.titleUnlock : t.titleLock}
+                    className="rounded px-1 text-[10px] text-slate-400 hover:bg-white/10 hover:text-white"
+                    onClick={() => patchLayer(l.id, { locked: !l.locked })}
+                  >
+                    {l.locked ? t.unlock : t.lock}
+                  </button>
+                </div>
+              </li>
+              );
+            })}
+            {!layerList.length && (
+              <li className="space-y-2 px-1 py-2 text-xs text-slate-400">
+                <p>{t.noLayersYet}</p>
+                <p className="text-[11px] leading-snug text-slate-500">{t.emptyLiftHint}</p>
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  <ToolBtn
+                    label={
+                      busy === "decompose"
+                        ? t.seedreamSplitting
+                        : t.seedreamFullSplit()
+                    }
+                    disabled={!canEdit || !!busy || brushBusy}
+                    active
+                    onClick={() => void onSeedreamSplit()}
+                  />
+                  <ToolBtn
+                    label={t.boxLift}
+                    active={boxMode && boxIntent === "lift"}
+                    disabled={!canEdit || brushBusy}
+                    onClick={() => {
+                      setBoxIntent("lift");
+                      setBoxMode(true);
+                      setBrushMode(false);
+                      setBrushLines([]);
+                      setSelectedId(null);
+                    }}
+                  />
+                </div>
+              </li>
+            )}
+          </ul>
+
           {/* Canva-like selection toolbar */}
           {selected && (
             <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-violet-400/25 bg-violet-500/10 p-2">
@@ -4346,7 +4423,7 @@ export function EditImage2Client() {
                     onClick={() => setBrushLines((prev) => prev.slice(0, -1))}
                   />
                   <ToolBtn
-                    label={t.clear}
+                    label={t.clearStrokes}
                     disabled={brushLines.length === 0 || brushBusy}
                     onClick={() => setBrushLines([])}
                   />
@@ -4361,34 +4438,11 @@ export function EditImage2Client() {
               </>
             ) : null}
 
-            <div className="space-y-1.5 border-t border-white/10 pt-2">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-                {t.expandTitle}
-              </p>
-              <p className="text-[10px] leading-snug text-slate-500">{t.expandHow}</p>
-              <p className="text-[10px] leading-snug text-amber-200/70">{t.expandCostHint(EXPAND_TOKENS)}</p>
-              <div className="flex flex-wrap gap-1.5">
-                {EXPAND_PRESETS.map((p) => (
-                  <ToolBtn
-                    key={p.id}
-                    label={
-                      busy === "export"
-                        ? t.expanding
-                        : t[p.labelKey](EXPAND_TOKENS)
-                    }
-                    disabled={!canEdit || !!busy || brushBusy}
-                    onClick={() => void runMagicExpand(p.id)}
-                  />
-                ))}
-              </div>
-            </div>
-
             <MagicBoardChat
               disabled={!canEdit || !!busy || brushBusy}
               title={t.magicChatTitle}
               hint={t.magicChatHintWithCosts({
                 edit: TOKEN_COST.image,
-                expand: EXPAND_TOKENS,
               })}
               placeholder={t.magicChatPlaceholder}
               sendLabel={t.magicChatSend}
@@ -4678,7 +4732,7 @@ export function EditImage2Client() {
                       onClick={() => setBrushLines((prev) => prev.slice(0, -1))}
                     />
                     <ToolBtn
-                      label={t.clear}
+                      label={t.clearStrokes}
                       disabled={brushLines.length === 0 || brushBusy}
                       onClick={() => setBrushLines([])}
                     />
@@ -4711,92 +4765,6 @@ export function EditImage2Client() {
               ) : null}
             </div>
           </div>
-
-          <ul className="min-h-0 flex-1 space-y-0.5 overflow-auto text-sm">
-            {layerList.map((l) => {
-              const thumb = l.cropUrl || l.cropDataUrl;
-              return (
-              <li key={l.id}>
-                <div
-                  className={`flex items-center gap-1.5 rounded-lg px-1.5 py-1 ${
-                    l.id === selectedId ? "bg-violet-500/25" : "hover:bg-white/[0.04]"
-                  }`}
-                >
-                  <button
-                    type="button"
-                    className="flex min-w-0 flex-1 items-center gap-2 truncate text-left text-xs text-slate-200"
-                    onClick={() => setSelectedId(l.id)}
-                  >
-                    {thumb && (l.kind === "object" || l.kind === "logo" || l.kind === "text") ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={canvasDisplayUrl(thumb) ?? thumb}
-                        alt=""
-                        className="h-8 w-8 shrink-0 rounded border border-white/10 object-cover bg-black/40"
-                      />
-                    ) : (
-                      <span
-                        className={`inline-block h-8 w-8 shrink-0 rounded border border-white/10 ${kindDotClass(l.kind)} opacity-80`}
-                      />
-                    )}
-                    <span className="min-w-0 truncate">{l.title}</span>
-                  </button>
-                  <button
-                    type="button"
-                    title={l.visible === false ? t.titleShow : t.titleHide}
-                    className="rounded px-1 text-[10px] text-slate-400 hover:bg-white/10 hover:text-white"
-                    onClick={() => {
-                      const nextVisible = l.visible === false;
-                      patchLayer(l.id, { visible: nextVisible });
-                      // Hiding a piece should clear the plate so the original doesn't ghost.
-                      if (!nextVisible) void clearHoleIfNeeded(l.id);
-                    }}
-                  >
-                    {l.visible === false ? t.show : t.hide}
-                  </button>
-                  <button
-                    type="button"
-                    title={l.locked ? t.titleUnlock : t.titleLock}
-                    className="rounded px-1 text-[10px] text-slate-400 hover:bg-white/10 hover:text-white"
-                    onClick={() => patchLayer(l.id, { locked: !l.locked })}
-                  >
-                    {l.locked ? t.unlock : t.lock}
-                  </button>
-                </div>
-              </li>
-              );
-            })}
-            {!layerList.length && (
-              <li className="space-y-2 px-1 py-2 text-xs text-slate-400">
-                <p>{t.noLayersYet}</p>
-                <p className="text-[11px] leading-snug text-slate-500">{t.emptyLiftHint}</p>
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  <ToolBtn
-                    label={
-                      busy === "decompose"
-                        ? t.seedreamSplitting
-                        : t.seedreamFullSplit()
-                    }
-                    disabled={!canEdit || !!busy || brushBusy}
-                    active
-                    onClick={() => void onSeedreamSplit()}
-                  />
-                  <ToolBtn
-                    label={t.boxLift}
-                    active={boxMode && boxIntent === "lift"}
-                    disabled={!canEdit || brushBusy}
-                    onClick={() => {
-                      setBoxIntent("lift");
-                      setBoxMode(true);
-                      setBrushMode(false);
-                      setBrushLines([]);
-                      setSelectedId(null);
-                    }}
-                  />
-                </div>
-              </li>
-            )}
-          </ul>
         </aside>
       </div>
     </div>

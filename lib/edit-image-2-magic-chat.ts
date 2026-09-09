@@ -12,7 +12,6 @@ export type MagicChatIntent =
   | { type: "erase_mode" }
   | { type: "grab_mode" }
   | { type: "brush_erase_mode" }
-  | { type: "expand"; preset: "square" | "story" | "landscape" | "wider" }
   | { type: "help" }
   | { type: "unknown"; raw: string };
 
@@ -46,22 +45,6 @@ export function parseMagicChatIntent(rawIn: string): MagicChatIntent {
 
   if (/(擦除|erase|去掉|移除|删掉|刪掉)/i.test(raw) && !/(文字|字)/i.test(raw)) {
     return { type: "erase_mode" };
-  }
-
-  if (/(9\s*[:：]\s*16|竖版|豎版|story|reels?)/i.test(raw)) {
-    return { type: "expand", preset: "story" };
-  }
-  if (/(16\s*[:：]\s*9|横版|橫版|landscape|youtube)/i.test(raw)) {
-    return { type: "expand", preset: "landscape" };
-  }
-  if (/(1\s*[:：]\s*1|方形|square)/i.test(raw)) {
-    return { type: "expand", preset: "square" };
-  }
-  if (/(4\s*[:：]\s*5|小红书|小紅書|wider)/i.test(raw)) {
-    return { type: "expand", preset: "wider" };
-  }
-  if (/(扩展|擴展|expand|outpaint|加画布|加畫布|外扩|外擴|补边|補邊)/i.test(raw)) {
-    return { type: "expand", preset: "square" };
   }
 
   // Explicitly target the selected layer (optional).

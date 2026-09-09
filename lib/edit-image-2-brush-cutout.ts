@@ -95,6 +95,49 @@ export function brushStrokesImageBBox(
   return { left, top, width, height };
 }
 
+/**
+ * True only when the cutout bbox is wildly larger than the painted strokes —
+ * classic symptom of stage↔image coord mismatch.
+ *
+ * Do NOT gate on cut bbox alone: a tall/wide subject stroke can cover most of
+ * the frame in bbox terms while the painted mask is still correct.
+ */
+export function isBrushCutMappingBug(opts: {
+  strokeBBox: { width: number; height: number };
+  cutBBox: { width: number; height: number };
+  imgW: number;
+  imgH: number;
+}): boolean {
+  const area = Math.max(1, opts.imgW * opts.imgH);
+  const strokeFrac =
+    (opts.strokeBBox.width * opts.strokeBBox.height) / area;
+  const cutFrac = (opts.cutBBox.width * opts.cutBBox.height) / area;
+  // Mapping bug: near-full-frame cut while strokes only covered a small region.
+  return cutFrac > 0.9 && strokeFrac > 0 && cutFrac > strokeFrac * 4;
+}
+
+/** Rescale stroke points when the image-plane size changes (window resize). */
+export function rescaleBrushStrokes(
+  strokes: BrushStroke[],
+  fromW: number,
+  fromH: number,
+  toW: number,
+  toH: number,
+): BrushStroke[] {
+  if (fromW <= 0 || fromH <= 0 || toW <= 0 || toH <= 0) return strokes;
+  if (fromW === toW && fromH === toH) return strokes;
+  const sx = toW / fromW;
+  const sy = toH / fromH;
+  return strokes.map((s) => {
+    const next = s.slice();
+    for (let i = 0; i + 1 < next.length; i += 2) {
+      next[i] = next[i]! * sx;
+      next[i + 1] = next[i + 1]! * sy;
+    }
+    return next;
+  });
+}
+
 /** Scale/crop a mask canvas to match target width/height. */
 export function normalizeMaskToSize(
   mask: HTMLCanvasElement,
