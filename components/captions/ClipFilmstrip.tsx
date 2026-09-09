@@ -50,14 +50,14 @@ export function ClipFilmstrip(props: {
   );
 }
 
-function resolveFilmstripPlayUrl(raw: string): { src: string; crossOrigin: boolean } {
+function resolveFilmstripPlayUrl(raw: string): string {
   const trimmed = raw.trim();
-  if (!trimmed) return { src: trimmed, crossOrigin: false };
-  if (trimmed.startsWith("blob:")) return { src: trimmed, crossOrigin: false };
+  if (!trimmed) return trimmed;
+  if (trimmed.startsWith("blob:")) return trimmed;
 
   const rel = toRelativePipelineUrl(trimmed);
   if (rel.startsWith("/")) {
-    // Same-origin pipeline / library — auth cookies; do not set anonymous CORS.
+    // Same-origin pipeline / library — auth cookies; never set anonymous CORS.
     // Library download without inline/stream 302s to R2 (CORS-breaks canvas thumbs).
     let src = rel;
     if (src.includes("/api/library/download/")) {
@@ -66,7 +66,7 @@ function resolveFilmstripPlayUrl(raw: string): { src: string; crossOrigin: boole
         src = `${src}${sep}inline=1`;
       }
     }
-    return { src, crossOrigin: false };
+    return src;
   }
 
   try {
@@ -81,10 +81,7 @@ function resolveFilmstripPlayUrl(raw: string): { src: string; crossOrigin: boole
   }
 
   // Remote media: same-origin download proxy so canvas capture is not CORS-tainted.
-  return {
-    src: `/api/download-media?url=${encodeURIComponent(rel)}`,
-    crossOrigin: false,
-  };
+  return `/api/download-media?url=${encodeURIComponent(rel)}`;
 }
 
 async function captureThumbs(
@@ -94,12 +91,11 @@ async function captureThumbs(
   count: number,
   isCancelled: () => boolean,
 ): Promise<string[]> {
-  const { src, crossOrigin } = resolveFilmstripPlayUrl(url);
+  const src = resolveFilmstripPlayUrl(url);
   const video = document.createElement("video");
   video.muted = true;
   video.playsInline = true;
   video.preload = "auto";
-  if (crossOrigin) video.crossOrigin = "anonymous";
 
   const loaded = new Promise<void>((resolve, reject) => {
     video.onloadeddata = () => resolve();

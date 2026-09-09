@@ -24,27 +24,39 @@ describe("captions-2 ASR + preview guards", () => {
     assert.match(src, /VERCEL/);
   });
 
-  it("CaptionStudio2Client falls back preview to sourceUrl", () => {
+  it("CaptionStudio2Client keeps CapCut board preview + edit wiring", () => {
     const src = readFileSync(
       path.join(process.cwd(), "components/captions/CaptionStudio2Client.tsx"),
       "utf8",
     );
     assert.match(
       src,
-      /playbackUrl \?\? localPreviewUrl \?\? sourceUrl/,
+      /originalSourceUrl \?\? localPreviewUrl \?\? sourceUrl/,
     );
-    assert.match(src, /showBeatControls=\{false\}/);
+    assert.match(src, /playbackUrl \?\? processedVideoUrl/);
+    assert.match(src, /CaptionProgramMonitor/);
+    assert.match(src, /CaptionNleTimeline/);
     assert.match(src, /originalSourceUrl/);
     assert.match(src, /downloadVideoBlob/);
-    assert.match(src, /ToolPhaseStrip/);
-    assert.match(src, /phase === "picture"/);
     assert.match(src, /CaptionPicturePhase/);
     assert.match(src, /\/api\/caption-video-edit/);
+    assert.match(src, /planOnCaptionsTab/);
+    assert.match(src, /onOpenCaptionsPlan/);
     assert.equal(
       /<button[^>]*>\s*<CaptionLineEditor/.test(src),
       false,
       "CaptionLineEditor must not be nested inside a <button>",
     );
+  });
+
+  it("ClipFilmstrip prefers same-origin inline library URLs", () => {
+    const src = readFileSync(
+      path.join(process.cwd(), "components/captions/ClipFilmstrip.tsx"),
+      "utf8",
+    );
+    assert.match(src, /inline=1/);
+    assert.match(src, /download-media/);
+    assert.doesNotMatch(src, /crossOrigin = "anonymous"/);
   });
 
   it("caption-video-edit mirrors library URLs before ModelArk/fal", () => {
