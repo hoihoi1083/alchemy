@@ -71,6 +71,83 @@ function readAttribution(): Attribution {
   };
 }
 
+const ATTR_CACHE_KEY = "ams_mp_attribution_v1";
+
+function compactStrings(obj: Record<string, string | undefined>): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (typeof v === "string" && v.trim()) out[k] = v.trim();
+  }
+  return out;
+}
+
+function cacheAttribution(props: Record<string, string>) {
+  try {
+    const prev = readCachedAttribution();
+    // Keep first-touch fields if already cached; refresh last-touch.
+    const next = {
+      ...prev,
+      ...props,
+      initial_utm_source: prev.initial_utm_source ?? props.utm_source ?? props.initial_utm_source,
+      initial_utm_medium: prev.initial_utm_medium ?? props.utm_medium ?? props.initial_utm_medium,
+      initial_utm_campaign:
+        prev.initial_utm_campaign ?? props.utm_campaign ?? props.initial_utm_campaign,
+      initial_traffic_source:
+        prev.initial_traffic_source ?? props.traffic_source ?? props.initial_traffic_source,
+      initial_landing_page:
+        prev.initial_landing_page ?? props.landing_page ?? props.initial_landing_page,
+    };
+    localStorage.setItem(ATTR_CACHE_KEY, JSON.stringify(next));
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
+
+function readCachedAttribution(): Record<string, string> {
+  try {
+    const raw = localStorage.getItem(ATTR_CACHE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    return compactStrings(
+      Object.fromEntries(
+        Object.entries(parsed).map(([k, v]) => [k, typeof v === "string" ? v : undefined]),
+      ),
+    );
+  } catch {
+    return {};
+  }
+}
+
+/** After Clerk identify — Mixpanel only keeps People profiles reliably for identified users. */
+function applyCachedAttributionToPeople() {
+  const cached = readCachedAttribution();
+  if (Object.keys(cached).length < 1) return;
+  mixpanel.people.set_once(
+    compactStrings({
+      initial_referrer: cached.initial_referrer ?? cached.referrer,
+      initial_referring_domain: cached.initial_referring_domain ?? cached.referring_domain,
+      initial_landing_page: cached.initial_landing_page ?? cached.landing_page,
+      initial_utm_source: cached.initial_utm_source ?? cached.utm_source,
+      initial_utm_medium: cached.initial_utm_medium ?? cached.utm_medium,
+      initial_utm_campaign: cached.initial_utm_campaign ?? cached.utm_campaign,
+      initial_traffic_source: cached.initial_traffic_source ?? cached.traffic_source,
+    }),
+  );
+  mixpanel.people.set(
+    compactStrings({
+      traffic_source: cached.traffic_source,
+      utm_source: cached.utm_source,
+      utm_medium: cached.utm_medium,
+      utm_campaign: cached.utm_campaign,
+      utm_term: cached.utm_term,
+      utm_content: cached.utm_content,
+      gclid: cached.gclid,
+      fbclid: cached.fbclid,
+      referring_domain: cached.referring_domain,
+    }),
+  );
+}
+
 /** Persist first-touch + last-touch acquisition. */
 function applyAttribution(opts?: { forceLastTouch?: boolean }) {
   if (typeof window === "undefined") return;
@@ -87,17 +164,9 @@ function applyAttribution(opts?: { forceLastTouch?: boolean }) {
       a.ttclid,
   );
 
-  const compact = (obj: Record<string, string | undefined>) => {
-    const out: Record<string, string> = {};
-    for (const [k, v] of Object.entries(obj)) {
-      if (typeof v === "string" && v.trim()) out[k] = v.trim();
-    }
-    return out;
-  };
-
-  // First touch — set once for this browser profile (events + People).
-  // Skip undefined values — Mixpanel People often drops the whole set_once otherwise.
-  const firstTouch = compact({
+  // First touch — event super-properties (always visible on Page Viewed).
+  // Mixpanel docs: avoid relying on People profiles for anonymous $device users.
+  const firstTouch = compactStrings({
     initial_referrer: a.referrer ?? "direct",
     initial_referring_domain: a.referring_domain ?? "direct",
     initial_landing_page: a.landing_page,
@@ -109,14 +178,14 @@ function applyAttribution(opts?: { forceLastTouch?: boolean }) {
     initial_traffic_source: a.traffic_source,
   });
   mixpanel.register_once(firstTouch);
-  mixpanel.people.set_once(firstTouch);
 
   // Last touch — only when this hit has UTM/ad ids or it's the first load.
   if (!attributionApplied || hasCampaignSignal) {
-    const lastTouch = compact({
+    const lastTouch = compactStrings({
       traffic_source: a.traffic_source,
       referrer: a.referrer,
       referring_domain: a.referring_domain,
+      landing_page: a.landing_page,
       utm_source: a.utm_source,
       utm_medium: a.utm_medium,
       utm_campaign: a.utm_campaign,
@@ -128,10 +197,13 @@ function applyAttribution(opts?: { forceLastTouch?: boolean }) {
       ttclid: a.ttclid,
     });
     mixpanel.register(lastTouch);
-    // Also write onto People so anonymous $device profiles show UTMs in Users UI
-    // (register alone only attaches to events — profile looked empty).
-    if (Object.keys(lastTouch).length > 0) {
-      mixpanel.people.set(lastTouch);
+    cacheAttribution({ ...firstTouch, ...lastTouch });
+
+    if (hasCampaignSignal) {
+      mixpanel.track("Acquisition Hit", {
+        ...lastTouch,
+        path: a.landing_page,
+      });
     }
   }
 
@@ -282,6 +354,8 @@ export function MixpanelProvider() {
         $name: user?.fullName ?? user?.username ?? undefined,
         clerkId: userId,
       });
+      // Anonymous $device profiles stay empty by Mixpanel design — stamp UTMs here after login.
+      applyCachedAttributionToPeople();
       identified.current = userId;
       return;
     }
