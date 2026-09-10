@@ -18,6 +18,7 @@ export function UploadNode({ id, data }: NodeProps & { data: UploadNodeData }) {
       <ProNodeShell
         accent="emerald"
         label={data.label}
+        nodeKind="upload"
         sourceHandle
         targetHandle={false}
         alias={data.alias}

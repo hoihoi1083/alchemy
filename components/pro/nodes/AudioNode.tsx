@@ -20,6 +20,7 @@ export function AudioNode({ id, data }: NodeProps & { data: AudioNodeData }) {
       <ProNodeShell
         accent="amber"
         label={data.label}
+        nodeKind="audio"
         sourceHandle
         targetHandle={false}
         alias={data.alias}

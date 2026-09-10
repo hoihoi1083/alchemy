@@ -39,7 +39,7 @@ export function VoiceNode({ id, data }: NodeProps & { data: VoiceNodeData }) {
   const lines = data.lines ?? [];
 
   return (
-    <ProNodeShell accent="amber" label={data.label} sourceHandle targetHandle widthClass="w-80">
+    <ProNodeShell accent="amber" label={data.label} nodeKind="voice" sourceHandle targetHandle widthClass="w-80">
       <p className="mb-2 text-[10px] text-slate-400">{vn.hint}</p>
       <p className="mb-2 text-[9px] leading-snug text-slate-500">{vn.stepsHint}</p>
       <p className="mb-2 rounded-md border border-amber-500/25 bg-amber-950/30 px-2 py-1.5 text-[9px] leading-snug text-amber-100/90">

@@ -1,6 +1,9 @@
 /** Public URL and pricing deep-link for the Ultra canvas (node workflow). */
 export const ULTRA_CANVAS_PATH = "/ultra";
 
+/** Legacy beta path — redirects to `/ultra`. */
+export const ULTRA_CANVAS_2_PATH = "/ultra-2";
+
 export const ULTRA_CANVAS_FEATURE = "ultra-canvas";
 
 export const PRICING_ULTRA_CANVAS_HREF = `/pricing?plan=master&feature=${ULTRA_CANVAS_FEATURE}`;

@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { ProPageClient } from "@/components/ProPageClient";
+import { Ultra2PageClient } from "@/components/Ultra2PageClient";
 import {
   assertProCanvasAllowed,
   PlanEntitlementError,
@@ -32,5 +32,5 @@ export default async function UltraCanvasPage() {
     throw err;
   }
 
-  return <ProPageClient />;
+  return <Ultra2PageClient />;
 }

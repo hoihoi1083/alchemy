@@ -10,6 +10,7 @@ import {
   addEdge,
   useEdgesState,
   useNodesState,
+  useReactFlow,
   type Connection,
   type Edge,
   type Node,
@@ -21,6 +22,8 @@ import { TaskQueuePanel } from "@/components/pro/TaskQueuePanel";
 import { UltraCanvasConfirmDialog } from "@/components/pro/UltraCanvasConfirmDialog";
 import { UltraCanvasRightRail } from "@/components/pro/UltraCanvasRightRail";
 import { UltraCanvasToolbar } from "@/components/pro/UltraCanvasToolbar";
+import { UltraCanvasWaveBg } from "@/components/pro/UltraCanvasWaveBg";
+import { Ultra2WorkflowSelector } from "@/components/pro/Ultra2WorkflowSelector";
 import { AudioNode } from "@/components/pro/nodes/AudioNode";
 import { BackgroundModNode } from "@/components/pro/nodes/BackgroundModNode";
 import { BrandNode } from "@/components/pro/nodes/BrandNode";
@@ -123,6 +126,13 @@ import {
   createProCanvasStarter,
 } from "@/lib/pro-canvas-starter";
 import {
+  buildUltra2Workflow,
+  isUltra2WorkflowId,
+  ULTRA2_DRAFT_KEY,
+  ULTRA2_WORKFLOW_SESSION_KEY,
+  type Ultra2WorkflowId,
+} from "@/lib/ultra2-workflows";
+import {
   DEFAULT_BACKGROUND_MOD_PRESET,
   DEFAULT_GRADE_ART_STYLE,
   DEFAULT_LIGHTING_MOD_PRESET,
@@ -199,6 +209,27 @@ const nodeTypes = {
   voice: VoiceNode,
   brainstorm: BrainstormNode,
 };
+
+/** Zoom out so starter nodes read as a small board, not a single giant card. */
+function FitViewWhenGraphChanges({ token }: { token: number }) {
+  const { fitView } = useReactFlow();
+  useEffect(() => {
+    if (token <= 0) return;
+    const opts = { padding: 0.35, maxZoom: 0.55, minZoom: 0.12, duration: 220 };
+    const id = window.requestAnimationFrame(() => {
+      void fitView(opts);
+    });
+    // Second pass after real node sizes measure — avoids looking stacked on enter.
+    const t2 = window.setTimeout(() => {
+      void fitView({ ...opts, duration: 180 });
+    }, 280);
+    return () => {
+      window.cancelAnimationFrame(id);
+      window.clearTimeout(t2);
+    };
+  }, [token, fitView]);
+  return null;
+}
 
 type CanvasSnapshot = { nodes: Node[]; edges: Edge[] };
 
@@ -299,15 +330,26 @@ function defaultNodeData(kind: ProCanvasNodeKind, label: string): ProCanvasNodeD
   }
 }
 
-function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }) {
+function ProCanvasBoard({
+  initialTemplate,
+  uxVariant = "v1",
+}: {
+  initialTemplate?: string | null;
+  uxVariant?: "v1" | "v2";
+}) {
   const { m } = useLocale();
   const { creditBalance, planReady } = useUserPlanEntitlements();
+  const isV2 = uxVariant === "v2";
+  const u2 = m.ultraCanvas2;
   const templateLoadedRef = useRef(false);
   const [dirtyTick, setDirtyTick] = useState(0);
-  const starter = useMemo(
-    () => createProCanvasStarter(m.ultraCanvas.nodeLabels),
-    [m.ultraCanvas.nodeLabels],
-  );
+  const [isDirty, setIsDirty] = useState(false);
+  const starter = useMemo(() => {
+    if (isV2) {
+      return { nodes: [] as Node[], edges: [] as Edge[], nodeCounterSeed: 1 };
+    }
+    return createProCanvasStarter(m.ultraCanvas.nodeLabels);
+  }, [isV2, m.ultraCanvas.nodeLabels]);
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>(starter.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(starter.edges);
   const uploadFiles = useRef<Map<string, File>>(new Map());
@@ -321,8 +363,17 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
   const [loadingBoard, setLoadingBoard] = useState(false);
   const [boardError, setBoardError] = useState<string | null>(null);
   const [showCreativeBHint, setShowCreativeBHint] = useState(
-    () => !wasCreativeBHintDismissed(),
+    () => !isV2 && !wasCreativeBHintDismissed(),
   );
+  const [workflowId, setWorkflowId] = useState<Ultra2WorkflowId | null>(null);
+  const [workflowPickerOpen, setWorkflowPickerOpen] = useState(isV2);
+  const [restoreBanner, setRestoreBanner] = useState(false);
+  const [railOpen, setRailOpen] = useState(false);
+  const [fitViewToken, setFitViewToken] = useState(0);
+  const [pickerBoards, setPickerBoards] = useState<
+    Array<{ id: string; name: string; updatedAt: string }>
+  >([]);
+  const [pickerBoardsLoading, setPickerBoardsLoading] = useState(false);
   const [confirmState, setConfirmState] = useState<{
     title: string;
     message: string;
@@ -405,6 +456,7 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
 
   const markDirty = useCallback(() => {
     dirtyRef.current = true;
+    setIsDirty(true);
     setDirtyTick((t) => t + 1);
   }, []);
 
@@ -581,6 +633,100 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
     [snapshotCanvas],
   );
 
+  const openV2Workbench = useCallback(() => {
+    setDesktopPaletteOpen(true);
+    setMobilePaletteOpen(true);
+    setRailOpen(true);
+    setFitViewToken((n) => n + 1);
+  }, []);
+
+  const refreshPickerBoards = useCallback(async () => {
+    if (!isV2) return;
+    setPickerBoardsLoading(true);
+    try {
+      const res = await fetch("/api/ultra-canvas", { credentials: "include" });
+      const data = (await res.json()) as {
+        boards?: Array<{ id: string; name: string; updatedAt: string }>;
+      };
+      if (res.ok && Array.isArray(data.boards)) {
+        setPickerBoards(
+          data.boards.map((b) => ({
+            id: b.id,
+            name: b.name,
+            updatedAt: b.updatedAt,
+          })),
+        );
+      }
+    } catch {
+      /* ignore */
+    } finally {
+      setPickerBoardsLoading(false);
+    }
+  }, [isV2]);
+
+  useEffect(() => {
+    if (isV2 && workflowPickerOpen) void refreshPickerBoards();
+  }, [isV2, workflowPickerOpen, refreshPickerBoards]);
+
+  const applyUltra2Workflow = useCallback(
+    (id: Ultra2WorkflowId) => {
+      const graph = buildUltra2Workflow(id, m.ultraCanvas.nodeLabels as Record<string, string>);
+      resetCanvasRuntime();
+      nodesRef.current = graph.nodes;
+      edgesRef.current = graph.edges;
+      setNodes(graph.nodes);
+      setEdges(graph.edges);
+      setBoardId(null);
+      const card = u2.cards[id];
+      setBoardName(card?.title ?? id);
+      setQueue([]);
+      nodeCounter = graph.nodeCounterSeed;
+      dirtyRef.current = false;
+      setIsDirty(false);
+      setWorkflowId(id);
+      setWorkflowPickerOpen(false);
+      try {
+        sessionStorage.setItem(ULTRA2_WORKFLOW_SESSION_KEY, id);
+      } catch {
+        /* ignore */
+      }
+      resetHistory({ nodes: graph.nodes, edges: graph.edges });
+      openV2Workbench();
+      if (graph.openPalette) {
+        setDesktopPaletteOpen(true);
+        setMobilePaletteOpen(true);
+      }
+    },
+    [
+      m.ultraCanvas.nodeLabels,
+      openV2Workbench,
+      resetCanvasRuntime,
+      resetHistory,
+      setEdges,
+      setNodes,
+      u2.cards,
+    ],
+  );
+
+  const openStartPicker = useCallback(() => {
+    if (!guardBusyNav()) return;
+    askConfirm(
+      u2.changeStartConfirmTitle,
+      u2.changeStartConfirm,
+      () => {
+        setWorkflowPickerOpen(true);
+        void refreshPickerBoards();
+      },
+      false,
+    );
+  }, [
+    askConfirm,
+    guardBusyNav,
+    refreshPickerBoards,
+    u2.changeStartConfirm,
+    u2.changeStartConfirmTitle,
+  ]);
+
   const loadTemplate = useCallback(
     (templateId: UltraCanvasTemplateId) => {
       tryDiscardThen(() => {
@@ -605,6 +751,7 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
         setBoardId(null);
         setBoardName(m.ultraCanvas.templates[templateId].name);
         dirtyRef.current = false;
+        setIsDirty(false);
         resetHistory({ nodes: nodesWithHandoff, edges: tpl.edges });
         if (handoffApplied) {
           setBoardError(m.ultraCanvas.researchHandoffImported);
@@ -2699,6 +2846,37 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
 
   const resetBoard = useCallback(() => {
     if (!guardBusyNav()) return;
+    if (isV2) {
+      askConfirm(
+        m.ultraCanvas.toolbar.clearBoardConfirmTitle,
+        m.ultraCanvas.toolbar.clearBoardConfirm,
+        () => {
+          resetCanvasRuntime();
+          nodesRef.current = [];
+          edgesRef.current = [];
+          setNodes([]);
+          setEdges([]);
+          setBoardId(null);
+          setBoardName("Untitled board");
+          setQueue([]);
+          setShowCreativeBHint(false);
+          nodeCounter = 1;
+          dirtyRef.current = false;
+          setIsDirty(false);
+          setWorkflowId(null);
+          setWorkflowPickerOpen(true);
+          resetHistory({ nodes: [], edges: [] });
+          try {
+            sessionStorage.removeItem(ULTRA2_WORKFLOW_SESSION_KEY);
+            localStorage.removeItem(ULTRA2_DRAFT_KEY);
+          } catch {
+            /* ignore */
+          }
+        },
+        true,
+      );
+      return;
+    }
     askConfirm(
       m.ultraCanvas.toolbar.clearBoardConfirmTitle,
       m.ultraCanvas.toolbar.clearBoardConfirm,
@@ -2715,6 +2893,7 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
         setShowCreativeBHint(false);
         nodeCounter = fresh.nodeCounterSeed;
         dirtyRef.current = false;
+        setIsDirty(false);
         resetHistory({ nodes: fresh.nodes, edges: fresh.edges });
       },
       true,
@@ -2722,6 +2901,7 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
   }, [
     askConfirm,
     guardBusyNav,
+    isV2,
     m.ultraCanvas.nodeLabels,
     m.ultraCanvas.toolbar.clearBoardConfirm,
     m.ultraCanvas.toolbar.clearBoardConfirmTitle,
@@ -2769,12 +2949,20 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
       }
       setSaveSuccessAt(Date.now());
       dirtyRef.current = false;
+      setIsDirty(false);
+      if (isV2) {
+        try {
+          localStorage.removeItem(ULTRA2_DRAFT_KEY);
+        } catch {
+          /* ignore */
+        }
+      }
     } catch (e: unknown) {
       setBoardError(e instanceof Error ? e.message : "Save failed.");
     } finally {
       setSaving(false);
     }
-  }, [boardBusy, boardId, boardName, getLiveEdges, getLiveNodes, m.ultraCanvas.busyNavBlocked, persistLocalAssetsBeforeSave]);
+  }, [boardBusy, boardId, boardName, getLiveEdges, getLiveNodes, isV2, m.ultraCanvas.busyNavBlocked, persistLocalAssetsBeforeSave]);
 
   const deleteBoard = useCallback(
     (id: string) => {
@@ -2883,7 +3071,15 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
             setBoardId(id);
             setBoardName((data as { name?: string }).name ?? "Untitled board");
             dirtyRef.current = false;
+            setIsDirty(false);
+            setWorkflowPickerOpen(false);
             resetHistory({ nodes: marked, edges: restored.edges });
+            if (isV2) {
+              setDesktopPaletteOpen(true);
+              setMobilePaletteOpen(true);
+              setRailOpen(true);
+              setFitViewToken((n) => n + 1);
+            }
           } catch (e: unknown) {
             setBoardError(e instanceof Error ? e.message : "Load failed.");
           } finally {
@@ -2899,6 +3095,7 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
       resetHistory,
       setEdges,
       setNodes,
+      isV2,
     ],
   );
 
@@ -2921,6 +3118,77 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
     }, 3000);
     return () => clearTimeout(timer);
   }, [boardBusy, dirtyTick, saving]);
+
+  /** Ultra 2: persist local draft for crash restore. */
+  useEffect(() => {
+    if (!isV2 || !isDirty) return;
+    const t = window.setTimeout(() => {
+      try {
+        const snapshot = serializeUltraCanvasSnapshot(
+          getLiveNodes(),
+          getLiveEdges(),
+          nodeCounter,
+        );
+        localStorage.setItem(
+          ULTRA2_DRAFT_KEY,
+          JSON.stringify({
+            at: Date.now(),
+            boardName,
+            boardId,
+            workflowId,
+            snapshot,
+          }),
+        );
+      } catch {
+        /* ignore quota */
+      }
+    }, 800);
+    return () => window.clearTimeout(t);
+  }, [boardId, boardName, getLiveEdges, getLiveNodes, isDirty, isV2, dirtyTick, workflowId]);
+
+  /** Ultra 2: offer restore of local draft once on mount. */
+  useEffect(() => {
+    if (!isV2) return;
+    try {
+      const raw = localStorage.getItem(ULTRA2_DRAFT_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as {
+        at?: number;
+        boardName?: string;
+        boardId?: string | null;
+        workflowId?: Ultra2WorkflowId | null;
+        snapshot?: Parameters<typeof deserializeUltraCanvasSnapshot>[0];
+      };
+      if (!parsed.snapshot || !parsed.at) return;
+      if (Date.now() - parsed.at > 7 * 24 * 60 * 60 * 1000) {
+        localStorage.removeItem(ULTRA2_DRAFT_KEY);
+        return;
+      }
+      const restored = deserializeUltraCanvasSnapshot(parsed.snapshot);
+      if (restored.nodes.length === 0) return;
+      nodesRef.current = restored.nodes;
+      edgesRef.current = restored.edges;
+      setNodes(restored.nodes);
+      setEdges(restored.edges);
+      nodeCounter = restored.nodeCounterSeed;
+      if (parsed.boardName) setBoardName(parsed.boardName);
+      if (parsed.boardId) setBoardId(parsed.boardId);
+      if (isUltra2WorkflowId(parsed.workflowId)) setWorkflowId(parsed.workflowId);
+      setWorkflowPickerOpen(false);
+      setRestoreBanner(true);
+      dirtyRef.current = true;
+      setIsDirty(true);
+      resetHistory({ nodes: restored.nodes, edges: restored.edges });
+      setDesktopPaletteOpen(true);
+      setMobilePaletteOpen(true);
+      setRailOpen(true);
+      setFitViewToken((n) => n + 1);
+    } catch {
+      /* ignore */
+    }
+    // Mount-only restore for Ultra 2.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isV2]);
 
   useEffect(() => {
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -3019,11 +3287,79 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
     window.setTimeout(() => setBoardError(null), 4000);
   }, []);
 
+  const focusNodeByKind = useCallback(
+    (kind: string) => {
+      const target = getLiveNodes().find(
+        (n) => (n.data as ProCanvasNodeData).kind === kind,
+      );
+      if (!target) {
+        showBoardNotice(`Add a ${kind} node first.`);
+        return;
+      }
+      setNodes((nds) => {
+        const next = nds.map((n) => ({ ...n, selected: n.id === target.id }));
+        nodesRef.current = next;
+        return next;
+      });
+    },
+    [getLiveNodes, setNodes, showBoardNotice],
+  );
+
+  const connectVideoToSplice = useCallback(
+    (videoNodeId: string) => {
+      let spliceId = getLiveNodes().find(
+        (n) => (n.data as ProCanvasNodeData).kind === "splice",
+      )?.id;
+      if (!spliceId) {
+        const id = `splice-${++nodeCounter}`;
+        const label = m.ultraCanvas.nodeLabels.splice ?? "Video splice";
+        const newNode: Node = {
+          id,
+          type: "splice",
+          position: { x: 900, y: 120 },
+          data: { kind: "splice", label } satisfies ProCanvasNodeData,
+        };
+        setNodes((nds) => {
+          const next = [...nds, newNode];
+          nodesRef.current = next;
+          return next;
+        });
+        spliceId = id;
+      }
+      setEdges((eds) => {
+        if (eds.some((e) => e.source === videoNodeId && e.target === spliceId)) {
+          return eds;
+        }
+        const next = addEdge(
+          { id: `e-${videoNodeId}-${spliceId}`, source: videoNodeId, target: spliceId! },
+          eds,
+        );
+        edgesRef.current = next;
+        return next;
+      });
+      markDirty();
+      showBoardNotice(u2.textVideo.addToFinal);
+      focusNodeByKind("splice");
+    },
+    [
+      focusNodeByKind,
+      getLiveNodes,
+      m.ultraCanvas.nodeLabels.splice,
+      markDirty,
+      setEdges,
+      setNodes,
+      showBoardNotice,
+      u2.textVideo.addToFinal,
+    ],
+  );
+
   const actions = useMemo(
     () => ({
       nodes,
       edges,
       boardBusy,
+      uxVariant,
+      workflowId,
       estimateSpliceTokenCost,
       onUploadFile,
       onUploadAudio,
@@ -3056,11 +3392,15 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
       updateNodeData,
       showBoardNotice,
       isNodeStale,
+      focusNodeByKind,
+      connectVideoToSplice,
     }),
     [
       boardBusy,
+      connectVideoToSplice,
       edges,
       estimateSpliceTokenCost,
+      focusNodeByKind,
       nodes,
       onUploadFile,
       onUploadAudio,
@@ -3093,6 +3433,8 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
       updateNodeData,
       showBoardNotice,
       isNodeStale,
+      uxVariant,
+      workflowId,
     ],
   );
 
@@ -3113,7 +3455,11 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
     <ProCanvasActionsProvider value={actions}>
       {/* Single board shell: palette lives INSIDE so it cannot spill outside the canvas. */}
       <div
-        className="relative min-h-[640px] h-[calc(100dvh-9.5rem)] w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 shadow-lg shadow-slate-900/10 ring-1 ring-slate-900/5"
+        className={`relative min-h-[640px] h-[calc(100dvh-9.5rem)] w-full overflow-hidden rounded-2xl border shadow-lg shadow-slate-900/10 ring-1 ring-slate-900/5 ${
+          isV2
+            ? "border-cyan-500/20 bg-[#070b14]"
+            : "border-slate-200 bg-slate-950"
+        }`}
         style={{ minHeight: 640, height: "calc(100dvh - 9.5rem)" }}
       >
         {boardBusy ? (
@@ -3135,18 +3481,38 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
             onDismiss={() => setShowCreativeBHint(false)}
           />
         ) : null}
-        <div
-          className="pointer-events-none absolute inset-0 opacity-40"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle at 20% 10%, rgba(139,92,246,0.15), transparent 40%), radial-gradient(circle at 80% 90%, rgba(56,189,248,0.1), transparent 35%)",
-          }}
-        />
+        {isV2 && restoreBanner ? (
+          <div className="absolute left-1/2 top-3 z-30 flex max-w-[min(calc(100%-2rem),28rem)] -translate-x-1/2 items-center gap-2 rounded-xl border border-cyan-400/40 bg-cyan-950/90 px-3 py-2 text-xs text-cyan-50 shadow-lg">
+            <span className="min-w-0 flex-1">{u2.restoredSession}</span>
+            <button
+              type="button"
+              className="shrink-0 underline"
+              onClick={() => setRestoreBanner(false)}
+            >
+              {u2.dismissRestore}
+            </button>
+          </div>
+        ) : null}
+        <div className="pointer-events-none absolute inset-0 z-0">
+          {isV2 ? (
+            <UltraCanvasWaveBg intensity="picker" />
+          ) : (
+            <div
+              className="absolute inset-0 opacity-40"
+              style={{
+                backgroundImage:
+                  "radial-gradient(circle at 20% 10%, rgba(139,92,246,0.15), transparent 40%), radial-gradient(circle at 80% 90%, rgba(56,189,248,0.1), transparent 35%)",
+              }}
+            />
+          )}
+        </div>
         <UltraCanvasRightRail
           labels={{
             open: m.ultraCanvas.railOpen,
             close: m.ultraCanvas.railClose,
           }}
+          desktopOpen={isV2 ? railOpen : undefined}
+          onDesktopOpenChange={isV2 ? setRailOpen : undefined}
           toolbar={
             <UltraCanvasToolbar
               boardName={boardName}
@@ -3156,9 +3522,12 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
               loading={loadingBoard}
               boardError={boardError}
               navDisabled={boardBusy}
+              uxVariant={uxVariant}
+              dirty={isDirty}
               onBoardNameChange={onBoardNameChange}
               onSave={() => void saveBoard()}
               onNew={resetBoard}
+              onChangeStart={isV2 ? openStartPicker : undefined}
               onLoad={(id) => loadBoard(id)}
               onDelete={(id) => deleteBoard(id)}
               onUndo={undo}
@@ -3184,8 +3553,20 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
           }
         />
         <ReactFlow
-          className="h-full w-full"
-          style={{ width: "100%", height: "100%" }}
+          className={`relative z-[1] h-full w-full ${isV2 ? "ultra2-flow !bg-transparent" : ""}`}
+          style={{
+            width: "100%",
+            height: "100%",
+            ...(isV2
+              ? {
+                  background: "transparent",
+                  // Override xyflow dark theme opaque pane (#141414) so the wave shows.
+                  ["--xy-background-color" as string]: "transparent",
+                  ["--xy-background-color-default" as string]: "transparent",
+                  ["--xy-background-color-props" as string]: "transparent",
+                }
+              : {}),
+          }}
           nodes={nodes}
           edges={edges}
           onNodesChange={onNodesChange}
@@ -3194,6 +3575,7 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
           onNodeDragStop={onNodeDragStop}
           nodeTypes={nodeTypes}
           fitView
+          fitViewOptions={{ padding: 0.35, maxZoom: 0.55, minZoom: 0.12 }}
           snapToGrid
           snapGrid={[20, 20]}
           panOnDrag
@@ -3204,7 +3586,12 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
           colorMode="dark"
           proOptions={{ hideAttribution: true }}
         >
-          <Background gap={20} color="#334155" />
+          <FitViewWhenGraphChanges token={fitViewToken} />
+          <Background
+            gap={20}
+            color={isV2 ? "rgba(34,211,238,0.14)" : "#334155"}
+            bgColor={isV2 ? "transparent" : undefined}
+          />
           <Controls
             position="bottom-right"
             className="!border-slate-700 !bg-slate-900/90 !shadow-lg"
@@ -3285,16 +3672,82 @@ function ProCanvasBoard({ initialTemplate }: { initialTemplate?: string | null }
             action?.();
           }}
         />
+        {isV2 ? (
+          <Ultra2WorkflowSelector
+            open={workflowPickerOpen}
+            title={u2.howTitle}
+            subtitle={u2.howSubtitle}
+            cards={[
+              {
+                id: "textToImage",
+                title: u2.cards.textToImage.title,
+                desc: u2.cards.textToImage.desc,
+                flow: u2.cards.textToImage.flow,
+              },
+              {
+                id: "refToImage",
+                title: u2.cards.refToImage.title,
+                desc: u2.cards.refToImage.desc,
+                flow: u2.cards.refToImage.flow,
+              },
+              {
+                id: "imagesToVideo",
+                title: u2.cards.imagesToVideo.title,
+                desc: u2.cards.imagesToVideo.desc,
+                flow: u2.cards.imagesToVideo.flow,
+              },
+              {
+                id: "storyboard",
+                title: u2.cards.storyboard.title,
+                desc: u2.cards.storyboard.desc,
+                flow: u2.cards.storyboard.flow,
+              },
+              {
+                id: "scratch",
+                title: u2.cards.scratch.title,
+                desc: u2.cards.scratch.desc,
+                flow: u2.cards.scratch.flow,
+              },
+            ]}
+            onPick={applyUltra2Workflow}
+            useWorkflowLabel={u2.useWorkflow}
+            recommendedLabel={u2.recommended}
+            loadTitle={u2.loadSavedTitle}
+            loadHint={u2.loadSavedHint}
+            loadEmpty={u2.loadSavedEmpty}
+            continueLabel={u2.continueBoard}
+            boards={pickerBoards}
+            boardsLoading={pickerBoardsLoading}
+            onLoadBoard={(id) => {
+              setWorkflowPickerOpen(false);
+              loadBoard(id);
+            }}
+            onContinue={
+              nodes.length > 0
+                ? () => {
+                    setWorkflowPickerOpen(false);
+                    openV2Workbench();
+                  }
+                : undefined
+            }
+          />
+        ) : null}
       </div>
     </ProCanvasActionsProvider>
   );
 }
 
 
-export function ProCanvas({ initialTemplate }: { initialTemplate?: string | null } = {}) {
+export function ProCanvas({
+  initialTemplate,
+  uxVariant = "v1",
+}: {
+  initialTemplate?: string | null;
+  uxVariant?: "v1" | "v2";
+} = {}) {
   return (
     <ReactFlowProvider>
-      <ProCanvasBoard initialTemplate={initialTemplate} />
+      <ProCanvasBoard initialTemplate={initialTemplate} uxVariant={uxVariant} />
     </ReactFlowProvider>
   );
 }

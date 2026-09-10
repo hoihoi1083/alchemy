@@ -39,6 +39,8 @@ export function ImageNode({ id, data }: NodeProps & { data: ImageNodeData }) {
     <ProNodeShell
       accent="sky"
       label={data.label}
+      nodeKind="image"
+      widthClass="w-72"
       alias={data.alias}
       onAliasChange={(alias) => updateNodeData(id, { alias })}
       aliasPlaceholder={m.ultraCanvas.aliasPlaceholder}

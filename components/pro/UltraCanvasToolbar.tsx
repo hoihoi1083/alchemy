@@ -2,7 +2,7 @@
 
 import { CanvasInput } from "@/components/pro/CanvasTextField";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 import {
   ULTRA_CANVAS_TEMPLATE_IDS,
@@ -24,9 +24,12 @@ type Props = {
   loading: boolean;
   boardError?: string | null;
   navDisabled?: boolean;
+  uxVariant?: "v1" | "v2";
+  dirty?: boolean;
   onBoardNameChange: (name: string) => void;
   onSave: () => void;
   onNew: () => void;
+  onChangeStart?: () => void;
   onLoad: (id: string) => void;
   onDelete: (id: string) => void;
   onUndo: () => void;
@@ -42,9 +45,12 @@ export function UltraCanvasToolbar({
   loading,
   boardError,
   navDisabled = false,
+  uxVariant = "v1",
+  dirty = false,
   onBoardNameChange,
   onSave,
   onNew,
+  onChangeStart,
   onLoad,
   onDelete,
   onUndo,
@@ -53,14 +59,39 @@ export function UltraCanvasToolbar({
 }: Props) {
   const { m } = useLocale();
   const tb = m.ultraCanvas.toolbar;
+  const u2 = m.ultraCanvas2;
   const tpl = m.ultraCanvas.templates;
+  const isV2 = uxVariant === "v2";
   const [boards, setBoards] = useState<BoardSummary[]>([]);
   const [listOpen, setListOpen] = useState(false);
   const [tplOpen, setTplOpen] = useState(false);
   const [listError, setListError] = useState<string | null>(null);
   const [savedTick, setSavedTick] = useState(0);
-  const showSaved =
+  const showSavedFlash =
     saveSuccessAt != null && Date.now() - saveSuccessAt < 2500 && !saving && !boardError;
+
+  const saveStatusLabel = useMemo(() => {
+    if (saving) return u2.saveStatusSaving;
+    if (boardError) return u2.saveStatusFailed;
+    if (dirty) return u2.dirtyUnsaved;
+    if (saveSuccessAt) {
+      const t = new Date(saveSuccessAt).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+      return `${u2.saveStatusSaved} · ${t}`;
+    }
+    return u2.saveStatusSaved;
+  }, [
+    boardError,
+    dirty,
+    saveSuccessAt,
+    saving,
+    u2.dirtyUnsaved,
+    u2.saveStatusFailed,
+    u2.saveStatusSaved,
+    u2.saveStatusSaving,
+  ]);
 
   useEffect(() => {
     if (saveSuccessAt == null) return;
@@ -90,6 +121,35 @@ export function UltraCanvasToolbar({
 
   return (
     <div className="flex w-full flex-col items-stretch gap-2">
+      {isV2 ? (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/10 bg-slate-950/70 px-2.5 py-1.5">
+          <p
+            className={`text-[11px] ${
+              boardError
+                ? "text-red-300"
+                : saving
+                  ? "text-amber-200"
+                  : dirty
+                    ? "text-slate-300"
+                    : "text-emerald-300"
+            }`}
+          >
+            {saveStatusLabel}
+          </p>
+          <button
+            type="button"
+            disabled={loading || navDisabled}
+            onClick={() => {
+              setListOpen(true);
+              setTplOpen(false);
+              void refreshBoards();
+            }}
+            className="rounded-md border border-slate-600 px-2.5 py-1 text-[10px] text-slate-200 hover:bg-slate-800 disabled:opacity-40"
+          >
+            {u2.versionHistory}
+          </button>
+        </div>
+      ) : null}
       <div
         className={`flex w-full flex-wrap items-center justify-end gap-2 rounded-xl border border-violet-500/25 bg-slate-900/95 p-2 shadow-[0_0_32px_rgba(139,92,246,0.12)] backdrop-blur ${
           listOpen || tplOpen ? "relative z-50" : "relative z-10"
@@ -117,6 +177,16 @@ export function UltraCanvasToolbar({
         >
           {tb.newBoard}
         </button>
+        {isV2 && onChangeStart ? (
+          <button
+            type="button"
+            disabled={loading || navDisabled}
+            onClick={onChangeStart}
+            className="rounded-lg border border-fuchsia-500/40 bg-fuchsia-950/30 px-3 py-1.5 text-xs font-medium text-fuchsia-100 hover:bg-fuchsia-900/40 disabled:opacity-40"
+          >
+            {u2.changeStart}
+          </button>
+        ) : null}
         <div className="relative">
           <button
             type="button"
@@ -233,7 +303,7 @@ export function UltraCanvasToolbar({
         </summary>
         <p className="mt-1 text-[10px] leading-relaxed text-slate-500">{tb.shortcuts}</p>
       </details>
-      {showSaved ? (
+      {!isV2 && showSavedFlash ? (
         <p className="rounded-lg border border-emerald-500/30 bg-emerald-950/40 px-2.5 py-1 text-xs text-emerald-300">
           {tb.saved}
         </p>

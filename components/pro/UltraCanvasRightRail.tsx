@@ -1,25 +1,46 @@
 "use client";
 
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 
 type Props = {
   labels: { open: string; close: string };
   toolbar: ReactNode;
   queue: ReactNode;
+  /** Controlled open (Ultra 2 opens Board tools after pick / restore). */
+  desktopOpen?: boolean;
+  onDesktopOpenChange?: (open: boolean) => void;
+  defaultDesktopOpen?: boolean;
 };
 
-export function UltraCanvasRightRail({ labels, toolbar, queue }: Props) {
-  /** Start collapsed so the board has room; open when saving / running. */
-  const [desktopOpen, setDesktopOpen] = useState(false);
+export function UltraCanvasRightRail({
+  labels,
+  toolbar,
+  queue,
+  desktopOpen: desktopOpenProp,
+  onDesktopOpenChange,
+  defaultDesktopOpen = false,
+}: Props) {
+  const [desktopOpenInternal, setDesktopOpenInternal] = useState(defaultDesktopOpen);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const controlled = typeof desktopOpenProp === "boolean";
+  const desktopOpen = controlled ? desktopOpenProp! : desktopOpenInternal;
+
+  useEffect(() => {
+    if (!controlled && defaultDesktopOpen) setDesktopOpenInternal(true);
+  }, [controlled, defaultDesktopOpen]);
+
+  function setDesktopOpen(next: boolean) {
+    if (controlled) onDesktopOpenChange?.(next);
+    else setDesktopOpenInternal(next);
+  }
 
   return (
     <>
       <div className="absolute right-3 top-3 z-20 hidden flex-col items-end gap-2 md:flex">
         <button
           type="button"
-          onClick={() => setDesktopOpen((v) => !v)}
-          className="rounded-lg border border-violet-500/40 bg-slate-900/95 px-3 py-1.5 text-[11px] font-semibold text-violet-100 shadow-lg backdrop-blur hover:bg-slate-800"
+          onClick={() => setDesktopOpen(!desktopOpen)}
+          className="rounded-lg border border-cyan-500/40 bg-slate-900/95 px-3 py-1.5 text-[11px] font-semibold text-cyan-100 shadow-lg backdrop-blur hover:bg-slate-800"
         >
           {desktopOpen ? labels.close : labels.open}
         </button>
@@ -37,7 +58,7 @@ export function UltraCanvasRightRail({ labels, toolbar, queue }: Props) {
       <button
         type="button"
         onClick={() => setMobileOpen(true)}
-        className="fixed bottom-4 right-4 z-20 rounded-full border border-violet-500/40 bg-slate-900/95 px-4 py-2.5 text-xs font-semibold text-violet-100 shadow-lg backdrop-blur md:hidden"
+        className="fixed bottom-4 right-4 z-20 rounded-full border border-cyan-500/40 bg-slate-900/95 px-4 py-2.5 text-xs font-semibold text-cyan-100 shadow-lg backdrop-blur md:hidden"
       >
         {labels.open}
       </button>

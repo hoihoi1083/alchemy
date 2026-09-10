@@ -2,11 +2,14 @@
 
 import { createContext, useContext } from "react";
 import type { Edge, Node } from "@xyflow/react";
+import type { Ultra2WorkflowId } from "@/lib/ultra2-workflows";
 
 export type ProCanvasActions = {
   nodes: Node[];
   edges: Edge[];
   boardBusy: boolean;
+  uxVariant?: "v1" | "v2";
+  workflowId?: Ultra2WorkflowId | null;
   onUploadFile: (nodeId: string, file: File) => void;
   onUploadAudio: (nodeId: string, file: File) => void;
   onPickLibraryImage: (nodeId: string, previewUrl: string, fileName: string) => void;
@@ -39,6 +42,8 @@ export type ProCanvasActions = {
   updateNodeData: (nodeId: string, patch: Record<string, unknown>) => void;
   showBoardNotice: (message: string) => void;
   isNodeStale: (nodeId: string) => boolean;
+  focusNodeByKind?: (kind: string) => void;
+  connectVideoToSplice?: (videoNodeId: string) => void;
 };
 
 const Ctx = createContext<ProCanvasActions | null>(null);
@@ -57,4 +62,8 @@ export function useProCanvasActions(): ProCanvasActions {
   const ctx = useContext(Ctx);
   if (!ctx) throw new Error("useProCanvasActions outside provider");
   return ctx;
+}
+
+export function useProCanvasActionsOptional(): ProCanvasActions | null {
+  return useContext(Ctx);
 }

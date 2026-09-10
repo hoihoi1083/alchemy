@@ -775,3 +775,13 @@ footer.site-footer a.site-footer-logo:focus {
   }
 }
 
+/* Ultra 2 — show cyan→magenta wave under the node board (xyflow dark theme defaults to #141414). */
+.react-flow.ultra2-flow,
+.react-flow.ultra2-flow .react-flow__viewport,
+.react-flow.ultra2-flow .react-flow__renderer,
+.react-flow.ultra2-flow .react-flow__pane,
+.react-flow.ultra2-flow .react-flow__background {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+

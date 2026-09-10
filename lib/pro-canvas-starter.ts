@@ -27,13 +27,14 @@ export function createProCanvasStarter(labels: NodeLabels): {
     {
       id: "starter-upload",
       type: "upload",
-      position: { x: 40, y: 200 },
+      // Column gaps leave ~80px between default w-80 / storyboard w-[22rem] cards.
+      position: { x: 40, y: 180 },
       data: { kind: "upload", label: upload, alias: "Product" } satisfies ProCanvasNodeData,
     },
     {
       id: "starter-script",
       type: "script",
-      position: { x: 300, y: 80 },
+      position: { x: 420, y: 40 },
       data: {
         kind: "script",
         label: script,
@@ -45,7 +46,7 @@ export function createProCanvasStarter(labels: NodeLabels): {
     {
       id: "starter-storyboard",
       type: "storyboard",
-      position: { x: 580, y: 80 },
+      position: { x: 840, y: 40 },
       data: {
         kind: "storyboard",
         label: storyboard,
@@ -56,7 +57,7 @@ export function createProCanvasStarter(labels: NodeLabels): {
     {
       id: "starter-voice",
       type: "voice",
-      position: { x: 860, y: 280 },
+      position: { x: 1300, y: 360 },
       data: {
         kind: "voice",
         label: voice,
@@ -68,19 +69,19 @@ export function createProCanvasStarter(labels: NodeLabels): {
     {
       id: "starter-splice",
       type: "splice",
-      position: { x: 860, y: 80 },
+      position: { x: 1300, y: 40 },
       data: { kind: "splice", label: splice } satisfies ProCanvasNodeData,
     },
     {
       id: "starter-audio",
       type: "audio",
-      position: { x: 860, y: 440 },
+      position: { x: 1300, y: 760 },
       data: { kind: "audio", label: audio } satisfies ProCanvasNodeData,
     },
     {
       id: "starter-textVideo",
       type: "textVideo",
-      position: { x: 40, y: 420 },
+      position: { x: 40, y: 560 },
       data: {
         kind: "textVideo",
         label: textVideo,
@@ -128,7 +129,7 @@ export function createProCanvasSingleClipStarter(labels: NodeLabels): {
     {
       id: "starter-image",
       type: "image",
-      position: { x: 320, y: 100 },
+      position: { x: 420, y: 100 },
       data: {
         kind: "image",
         label: imageLabel,
@@ -143,7 +144,7 @@ export function createProCanvasSingleClipStarter(labels: NodeLabels): {
     {
       id: "starter-video",
       type: "video",
-      position: { x: 620, y: 100 },
+      position: { x: 800, y: 100 },
       data: {
         kind: "video",
         label: videoLabel,

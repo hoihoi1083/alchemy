@@ -57,6 +57,7 @@ export function StoryboardNode({ id, data }: NodeProps & { data: StoryboardNodeD
     <ProNodeShell
       accent="violet"
       label={data.label}
+      nodeKind="storyboard"
       sourceHandle
       targetHandle
       widthClass="w-[22rem]"

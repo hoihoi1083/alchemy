@@ -54,7 +54,7 @@ export function ScriptNode({ id, data }: NodeProps & { data: ScriptNodeData }) {
   };
 
   return (
-    <ProNodeShell accent="rose" label={data.label} targetHandle sourceHandle widthClass="w-80">
+    <ProNodeShell accent="rose" label={data.label} nodeKind="script" targetHandle sourceHandle widthClass="w-80">
       <CanvasTextarea
         value={data.brief}
         onChange={(brief) => updateNodeData(id, { brief })}

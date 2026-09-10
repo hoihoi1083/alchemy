@@ -18,7 +18,7 @@
 |-------|-----|
 | `/` landing | Template gallery (scenario cards) |
 | `/studio` | Guided step-by-step wizard (SMB default) |
-| `/ultra` | Ultra canvas: upload → Nano Banana image → Seedance video (`@xyflow/react`) |
+| `/ultra` | Ultra canvas: start picker → node board (`@xyflow/react`); `/ultra-2` redirects here |
 
 ---
 

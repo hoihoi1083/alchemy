@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { Handle, Position } from "@xyflow/react";
 import { CanvasInput } from "@/components/pro/CanvasTextField";
+import { useLocale } from "@/components/LocaleProvider";
 
 type Accent = "sky" | "violet" | "amber" | "emerald" | "rose" | "cyan";
 
@@ -58,6 +59,10 @@ type Props = {
   alias?: string;
   onAliasChange?: (value: string) => void;
   aliasPlaceholder?: string;
+  /** When set on Ultra 2, shows Required/Optional from workflow rules. */
+  nodeKind?: string;
+  statusBadge?: "required" | "optional" | null;
+  statusBadgeLabels?: { required: string; optional: string };
 };
 
 export function ProNodeShell({
@@ -70,8 +75,18 @@ export function ProNodeShell({
   alias,
   onAliasChange,
   aliasPlaceholder,
+  nodeKind,
+  statusBadge,
+  statusBadgeLabels,
 }: Props) {
   const theme = ACCENT[accent];
+  const { m } = useLocale();
+  // Ultra-2 badges retired — keep prop override for any explicit statusBadge.
+  const autoBadge = statusBadge ?? null;
+  const badgeLabels = statusBadgeLabels ?? {
+    required: m.ultraCanvas2.badgeRequired,
+    optional: m.ultraCanvas2.badgeOptional,
+  };
 
   return (
     <div
@@ -80,7 +95,6 @@ export function ProNodeShell({
       {targetHandle ? (
         <Handle type="target" position={Position.Left} className={theme.handle} />
       ) : null}
-      {/* Drag chrome — grab header / handle to move (inputs stay nodrag). */}
       <div className="mb-2 flex cursor-grab items-center gap-2 active:cursor-grabbing">
         <span
           className="flex h-5 w-4 shrink-0 flex-col items-center justify-center gap-0.5 rounded text-slate-500"
@@ -95,6 +109,17 @@ export function ProNodeShell({
         <p className={`min-w-0 flex-1 truncate text-[10px] font-semibold uppercase tracking-[0.14em] ${theme.label}`}>
           {label}
         </p>
+        {autoBadge ? (
+          <span
+            className={`shrink-0 rounded-full px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wide ${
+              autoBadge === "required"
+                ? "bg-amber-500/20 text-amber-100"
+                : "bg-slate-700/80 text-slate-300"
+            }`}
+          >
+            {autoBadge === "required" ? badgeLabels.required : badgeLabels.optional}
+          </span>
+        ) : null}
       </div>
       {onAliasChange ? (
         <div className="nodrag nopan nowheel mb-1.5">
@@ -106,7 +131,6 @@ export function ProNodeShell({
           />
         </div>
       ) : null}
-      {/* Only interactive controls should set nodrag — leave padding/margins draggable. */}
       {children}
       {sourceHandle ? (
         <Handle type="source" position={Position.Right} className={theme.handle} />
