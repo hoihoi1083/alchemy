@@ -40,7 +40,7 @@ export function VideoNode({ id, data }: NodeProps & { data: VideoNodeData }) {
   );
 
   return (
-    <ProNodeShell accent="violet" label={data.label}>
+    <ProNodeShell accent="violet" label={data.label} nodeKind="video">
       <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-violet-200/90">
         {m.ultraCanvas.videoPromptLabel}
       </p>
@@ -114,7 +114,7 @@ export function VideoNode({ id, data }: NodeProps & { data: VideoNodeData }) {
             onExported={(libraryUrl) => updateNodeData(id, { videoUrl: libraryUrl })}
           />
           <a
-            href={`/captions?video=${encodeURIComponent(data.videoUrl)}`}
+            href={`/captions-2?video=${encodeURIComponent(data.videoUrl)}`}
             className="nodrag nopan mt-2 block w-full rounded-lg border border-cyan-500/30 bg-cyan-950/30 px-3 py-1.5 text-center text-xs font-medium text-cyan-200 hover:bg-cyan-950/50"
           >
             {m.ultraCanvas.openCaptions}

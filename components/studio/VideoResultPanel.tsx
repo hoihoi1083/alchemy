@@ -298,7 +298,7 @@ export function VideoResultPanel({
       label: wizard!.headline?.trim() || wizard!.product?.trim() || undefined,
       timingManifest: wizard!.videoTimingManifest ?? undefined,
     });
-    router.push("/captions");
+    router.push("/captions-2");
   }
 
   function handleRegenerate() {

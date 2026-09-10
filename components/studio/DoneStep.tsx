@@ -341,7 +341,7 @@ export function DoneStep() {
                 label: headline?.trim() || product?.trim() || undefined,
                 timingManifest: videoTimingManifest ?? undefined,
               });
-              router.push("/captions");
+              router.push("/captions-2");
             }}
             className="rounded-xl border border-violet-500/60 bg-violet-950/40 py-3 text-center text-sm font-medium text-violet-100"
           >

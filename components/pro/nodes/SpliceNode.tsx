@@ -16,10 +16,21 @@ import {
 import { isHttpOrLibraryMediaUrl } from "@/lib/storage/library-asset-url";
 
 export function SpliceNode({ id, data }: NodeProps & { data: SpliceNodeData }) {
-  const { runSpliceNode, updateNodeData, boardBusy, estimateSpliceTokenCost, isNodeStale, nodes, edges } =
-    useProCanvasActions();
+  const {
+    runSpliceNode,
+    updateNodeData,
+    boardBusy,
+    estimateSpliceTokenCost,
+    isNodeStale,
+    nodes,
+    edges,
+    uxVariant,
+    focusNodeByKind,
+  } = useProCanvasActions();
   const { m } = useLocale();
   const sp = m.ultraCanvas.spliceOrder;
+  const rev = m.ultraCanvas2.spliceReview;
+  const isV2 = uxVariant === "v2";
   const tokenCost = useMemo(() => estimateSpliceTokenCost(id), [estimateSpliceTokenCost, id]);
 
   const upstreamVideos = useMemo(
@@ -31,6 +42,25 @@ export function SpliceNode({ id, data }: NodeProps & { data: SpliceNodeData }) {
     () => resolveSpliceClipOrder(data.clipOrder, upstreamVideos),
     [data.clipOrder, upstreamVideos],
   );
+
+  const completeness = useMemo(() => {
+    const hasVideo = clipOrder.some((nid) => {
+      const n = upstreamVideos.find((x) => x.id === nid);
+      return n ? isHttpOrLibraryMediaUrl(videoUrlFromNode(n)) : false;
+    });
+    const ups = nodes.filter((n) =>
+      edges.some((e) => e.target === id && e.source === n.id),
+    );
+    const hasVoice = ups.some((n) => {
+      const d = n.data as ProCanvasNodeData;
+      return d.kind === "voice" && "audioUrl" in d && isHttpOrLibraryMediaUrl(d.audioUrl);
+    });
+    const hasBgm = ups.some((n) => {
+      const d = n.data as ProCanvasNodeData;
+      return d.kind === "audio" && "audioUrl" in d && isHttpOrLibraryMediaUrl(d.audioUrl);
+    });
+    return { hasVideo, hasVoice, hasBgm };
+  }, [clipOrder, edges, id, nodes, upstreamVideos]);
 
   const upstreamKey = upstreamVideos.map((n) => n.id).join("|");
 
@@ -53,7 +83,7 @@ export function SpliceNode({ id, data }: NodeProps & { data: SpliceNodeData }) {
   };
 
   return (
-    <ProNodeShell accent="cyan" label={data.label} sourceHandle targetHandle>
+    <ProNodeShell accent="cyan" label={data.label} nodeKind="splice" sourceHandle targetHandle>
       <p className="text-[10px] text-slate-400">{m.ultraCanvas.spliceHint}</p>
 
       <div
@@ -133,13 +163,54 @@ export function SpliceNode({ id, data }: NodeProps & { data: SpliceNodeData }) {
         <p className="mt-1.5 text-[8px] leading-snug text-slate-500">{sp.hint}</p>
       </div>
 
+      {isV2 ? (
+        <div className="mt-2 space-y-1.5 rounded-lg border border-amber-500/25 bg-amber-950/20 p-2">
+          <p className="text-[10px] font-semibold text-amber-100">{rev.almostReady}</p>
+          <StatusRow
+            ok={completeness.hasVideo}
+            label={rev.videoOk}
+            complete={rev.complete}
+            missing={rev.notAdded}
+          />
+          <StatusRow
+            ok={completeness.hasVoice}
+            label={rev.voiceOk}
+            complete={rev.complete}
+            missing={rev.notAdded}
+          />
+          <StatusRow
+            ok={completeness.hasBgm}
+            label={rev.bgmOk}
+            complete={rev.complete}
+            missing={rev.notAdded}
+          />
+          {!completeness.hasBgm ? (
+            <p className="text-[9px] leading-snug text-amber-100/80">{rev.addBgmHint}</p>
+          ) : null}
+          {!completeness.hasBgm ? (
+            <button
+              type="button"
+              disabled={boardBusy}
+              onClick={() => focusNodeByKind?.("audio")}
+              className="w-full rounded-lg bg-violet-600 py-1.5 text-[11px] font-semibold text-white disabled:opacity-40"
+            >
+              {rev.completeAd}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+
       <button
         type="button"
         disabled={data.busy || boardBusy || clipOrder.length < 1}
         onClick={() => runSpliceNode(id)}
         className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-cyan-600 to-teal-600 px-3 py-1.5 text-xs font-semibold text-white shadow-[0_0_16px_rgba(34,211,238,0.2)] disabled:opacity-40"
       >
-        {data.busy ? m.ultraCanvas.running : m.ultraCanvas.runSplice}
+        {data.busy
+          ? m.ultraCanvas.running
+          : isV2 && !completeness.hasBgm
+            ? rev.exportWithoutMusic
+            : m.ultraCanvas.runSplice}
         {!data.busy && tokenCost > 0 ? (
           <span className="rounded-full bg-black/25 px-1.5 py-0.5 text-[10px] font-medium">
             ~{m.ultraCanvas.tokenBadge.replace("{n}", String(tokenCost))}
@@ -160,7 +231,7 @@ export function SpliceNode({ id, data }: NodeProps & { data: SpliceNodeData }) {
             onExported={(libraryUrl) => updateNodeData(id, { videoUrl: libraryUrl })}
           />
           <a
-            href={`/captions?video=${encodeURIComponent(data.videoUrl)}`}
+            href={`/captions-2?video=${encodeURIComponent(data.videoUrl)}`}
             className="nodrag nopan mt-2 block w-full rounded-lg border border-cyan-500/30 bg-cyan-950/30 px-3 py-1.5 text-center text-xs font-medium text-cyan-200 hover:bg-cyan-950/50"
           >
             {m.ultraCanvas.openCaptions}
@@ -169,5 +240,21 @@ export function SpliceNode({ id, data }: NodeProps & { data: SpliceNodeData }) {
       ) : null}
       {data.error ? <p className="mt-2 text-xs text-red-400">{data.error}</p> : null}
     </ProNodeShell>
+  );
+}
+
+function StatusRow(props: {
+  ok: boolean;
+  label: string;
+  complete: string;
+  missing: string;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-2 text-[10px]">
+      <span className="text-slate-200">{props.label}</span>
+      <span className={props.ok ? "text-emerald-300" : "text-amber-200"}>
+        {props.ok ? props.complete : props.missing}
+      </span>
+    </div>
   );
 }

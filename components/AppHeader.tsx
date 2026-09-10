@@ -68,7 +68,7 @@ export function AppHeader(props: {
           {m.header.ultraCanvasLink}
         </Link>
         <span className="mx-2 text-slate-300">·</span>
-        <Link href="/captions" className="text-violet-600 underline hover:text-violet-500">
+        <Link href="/captions-2" className="text-violet-600 underline hover:text-violet-500">
           {m.header.captionsLink}
         </Link>
       </p>

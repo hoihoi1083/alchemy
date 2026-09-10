@@ -526,7 +526,7 @@ export function LibraryPageClient() {
                           <div className="mt-auto grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
                             {(a.kind === "video" || a.kind === "voiceover") && (
                               <Link
-                                href={`/captions?video=${encodeURIComponent(a.downloadUrl)}`}
+                                href={`/captions-2?video=${encodeURIComponent(a.downloadUrl)}`}
                                 className="rounded-full bg-violet-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-violet-500"
                               >
                                 {L.editCaptions}
@@ -774,7 +774,7 @@ export function LibraryPageClient() {
                       </button>
                       {hasVideo && downloadVideoUrl ? (
                         <Link
-                          href={`/captions?video=${encodeURIComponent(downloadVideoUrl)}`}
+                          href={`/captions-2?video=${encodeURIComponent(downloadVideoUrl)}`}
                           className="rounded-full bg-violet-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-violet-500"
                         >
                           {L.editCaptions}

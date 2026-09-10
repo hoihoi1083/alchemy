@@ -44,8 +44,8 @@ function askFormatRule(): string {
 function guideFormatRule(locale: Locale): string {
   const captions =
     locale === "en"
-      ? "[Caption studio](/captions)"
-      : "[字幕工具](/captions)";
+      ? "[Caption studio](/captions-2)"
+      : "[字幕工具](/captions-2)";
   return [
     "【Guide mode — one next step】",
     "1. User's LATEST message defines the campaign. Never substitute crystals or default products unless THEY asked.",

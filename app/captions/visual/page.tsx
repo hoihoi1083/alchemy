@@ -23,7 +23,7 @@ function VisualCaptionsPageContent() {
             {t.subtitle}
           </p>
           <p className="mt-4 text-xs text-slate-500">
-            <Link href="/captions" className="text-cyan-400 underline hover:text-cyan-300">
+            <Link href="/captions-2" className="text-cyan-400 underline hover:text-cyan-300">
               {m.landing.captionsLink}
             </Link>
           </p>
