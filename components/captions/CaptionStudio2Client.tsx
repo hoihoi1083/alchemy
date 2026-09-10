@@ -32,7 +32,13 @@ import {
   clearCaptionHandoff,
   readCaptionHandoff,
 } from "@/lib/caption-studio-draft";
+import {
+  parseCaptionStudioSnapshot,
+  serializeCaptionStudioSnapshot,
+  type CaptionStudioSnapshot,
+} from "@/lib/caption-studio-snapshot";
 import { toRelativePipelineUrl, withCacheBust } from "@/lib/caption-studio-url";
+import { isHttpOrLibraryMediaUrl } from "@/lib/storage/library-asset-url";
 import {
   captionVoiceStartSec,
   fitCaptionLinesToVoiceDuration,
@@ -151,6 +157,14 @@ type UndoSnapshot = {
   selectedVoId: string | null;
 };
 
+type PackListItem = {
+  id: string;
+  name: string;
+  updatedAt: string;
+  captionCount: number;
+  clipCount: number;
+};
+
 function probeVideoDuration(url: string): Promise<number> {
   return new Promise((resolve) => {
     const v = document.createElement("video");
@@ -254,11 +268,17 @@ export function CaptionStudio2Client() {
   const [captionMode, setCaptionMode] = useState<"pure" | "speech" | "ai">(
     "pure",
   );
+  const [packId, setPackId] = useState<string | null>(null);
+  const [packName, setPackName] = useState("");
+  const [packBusy, setPackBusy] = useState(false);
+  const [packMenuOpen, setPackMenuOpen] = useState(false);
+  const [packList, setPackList] = useState<PackListItem[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaAddInputRef = useRef<HTMLInputElement>(null);
   const previewVideoRef = useRef<HTMLVideoElement>(null);
   const editAbortRef = useRef<AbortController | null>(null);
   const handoffDone = useRef(false);
+  const packLoadDone = useRef(false);
   const blobPreviewRef = useRef<string | null>(null);
 
   const projectDur = useMemo(
@@ -282,7 +302,10 @@ export function CaptionStudio2Client() {
   }, [timelineClips, selectedClipId]);
 
   const hasWorkspace = Boolean(
-    sourceUrl || localPreviewUrl || timelineClips.length > 0,
+    sourceUrl ||
+      localPreviewUrl ||
+      timelineClips.length > 0 ||
+      captionLines.length > 0,
   );
   const asrSourceUrl =
     timelineClips[0]?.url ?? originalSourceUrl ?? sourceUrl;
@@ -395,6 +418,272 @@ export function CaptionStudio2Client() {
     [pushUndo, sourceLabel],
   );
 
+  const buildPackSnapshot = useCallback((): CaptionStudioSnapshot => {
+    return serializeCaptionStudioSnapshot({
+      sourceLabel,
+      sourceUrl,
+      originalSourceUrl,
+      processedVideoUrl,
+      refImageUrl,
+      timelineClips,
+      captionLines,
+      defaultStylePreset,
+      captionMode,
+      bgmTrack,
+      bgmStartSec,
+      bgmDurationSec,
+      replaceSourceAudio,
+      bgmVolume,
+      underVoiceBgmVolume,
+      voiceVolume,
+      voiceoverEnabled,
+      voiceoverScript,
+      voiceoverLocale,
+      voClips,
+      musicSource,
+      musicTopic,
+      musicMood,
+      matchMusicToVideo,
+      aiMusicTracks,
+      selectedAiMusicId,
+      voicePreviewTracks,
+      selectedVoicePreviewId,
+      playheadSec,
+    });
+  }, [
+    sourceLabel,
+    sourceUrl,
+    originalSourceUrl,
+    processedVideoUrl,
+    refImageUrl,
+    timelineClips,
+    captionLines,
+    defaultStylePreset,
+    captionMode,
+    bgmTrack,
+    bgmStartSec,
+    bgmDurationSec,
+    replaceSourceAudio,
+    bgmVolume,
+    underVoiceBgmVolume,
+    voiceVolume,
+    voiceoverEnabled,
+    voiceoverScript,
+    voiceoverLocale,
+    voClips,
+    musicSource,
+    musicTopic,
+    musicMood,
+    matchMusicToVideo,
+    aiMusicTracks,
+    selectedAiMusicId,
+    voicePreviewTracks,
+    selectedVoicePreviewId,
+    playheadSec,
+  ]);
+
+  const applyPackSnapshot = useCallback((snap: CaptionStudioSnapshot, name?: string) => {
+    if (blobPreviewRef.current) {
+      URL.revokeObjectURL(blobPreviewRef.current);
+      blobPreviewRef.current = null;
+    }
+    const clips = snap.timelineClips;
+    const firstUrl = clips[0]?.url ?? snap.sourceUrl ?? snap.originalSourceUrl ?? null;
+    setTimelineClips(clips);
+    setSelectedClipId(clips[0]?.id ?? null);
+    setSourceUrl(firstUrl);
+    setOriginalSourceUrl(snap.originalSourceUrl ?? firstUrl);
+    setSourceLabel(snap.sourceLabel || name || "");
+    setLocalPreviewUrl(null);
+    setProcessedVideoUrl(snap.processedVideoUrl ?? null);
+    setPlaybackUrl(
+      snap.processedVideoUrl
+        ? withCacheBust(snap.processedVideoUrl)
+        : null,
+    );
+    setShowOriginal(false);
+    setCaptionLines(snap.captionLines);
+    setSelectedCaptionIndex(0);
+    setDefaultStylePreset(snap.defaultStylePreset);
+    setCaptionMode(snap.captionMode);
+    setBgmTrack(snap.bgmTrack);
+    setBgmStartSec(snap.bgmStartSec);
+    setBgmDurationSec(snap.bgmDurationSec);
+    setReplaceSourceAudio(snap.replaceSourceAudio);
+    setBgmVolume(snap.bgmVolume);
+    setUnderVoiceBgmVolume(snap.underVoiceBgmVolume);
+    setVoiceVolume(snap.voiceVolume);
+    setVoiceoverEnabled(snap.voiceoverEnabled);
+    setVoiceoverScript(snap.voiceoverScript);
+    setVoiceoverLocale(snap.voiceoverLocale);
+    setVoClips(snap.voClips);
+    setSelectedVoId(snap.voClips[0]?.id ?? null);
+    setMusicSource(snap.musicSource);
+    setMusicTopic(snap.musicTopic);
+    setMusicMood(snap.musicMood);
+    setMatchMusicToVideo(snap.matchMusicToVideo);
+    setAiMusicTracks(snap.aiMusicTracks);
+    setSelectedAiMusicId(snap.selectedAiMusicId);
+    setVoicePreviewTracks(snap.voicePreviewTracks);
+    setSelectedVoicePreviewId(snap.selectedVoicePreviewId);
+    setPlayheadSec(snap.playheadSec);
+    setRefImageUrl(snap.refImageUrl ?? null);
+    setUndoStack([]);
+    setEditedVideoUrl(null);
+    setToolTab(snap.captionLines.length > 0 ? "captions" : "edit");
+    setError(null);
+    setWarn(null);
+    const droppedLocal =
+      (snap.timelineClips.length === 0 && Boolean(firstUrl === null && snap.captionLines.length > 0)) ||
+      snap.voClips.some((v) => !isHttpOrLibraryMediaUrl(v.audioUrl));
+    if (droppedLocal || (clips.length === 0 && snap.captionLines.length > 0)) {
+      setNote(t2.packMissingMedia);
+    }
+  }, [t2.packMissingMedia]);
+
+  const refreshPackList = useCallback(async () => {
+    const res = await fetch("/api/caption-studio", { credentials: "include" });
+    const data = await readApiJson(res);
+    if (!res.ok) {
+      if (res.status === 401) throw new Error(t2.packNeedSignIn);
+      throw new Error(
+        typeof data.error === "string" ? data.error : t2.packLoadFailed,
+      );
+    }
+    const packs = Array.isArray(data.packs) ? (data.packs as PackListItem[]) : [];
+    setPackList(
+      packs.map((p) => ({
+        id: String(p.id),
+        name: String(p.name ?? "Untitled"),
+        updatedAt: String(p.updatedAt ?? ""),
+        captionCount: Number(p.captionCount) || 0,
+        clipCount: Number(p.clipCount) || 0,
+      })),
+    );
+  }, [t2.packLoadFailed, t2.packNeedSignIn]);
+
+  const savePack = useCallback(async () => {
+    const snapshot = buildPackSnapshot();
+    if (snapshot.captionLines.length < 1 && snapshot.timelineClips.length < 1) {
+      setError(t2.packNeedContent);
+      return;
+    }
+    setPackBusy(true);
+    setError(null);
+    try {
+      const name =
+        packName.trim() ||
+        sourceLabel.trim() ||
+        (snapshot.captionLines[0]?.text.slice(0, 32) ?? t2.packSaveAs);
+      const body = JSON.stringify({ name, snapshot });
+      const res = packId
+        ? await fetch(`/api/caption-studio/${packId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body,
+          })
+        : await fetch("/api/caption-studio", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body,
+          });
+      const data = await readApiJson(res);
+      if (!res.ok) {
+        if (res.status === 401) throw new Error(t2.packNeedSignIn);
+        throw new Error(
+          typeof data.error === "string" ? data.error : t2.packSaveFailed,
+        );
+      }
+      if (typeof data.id === "string") setPackId(data.id);
+      if (typeof data.name === "string") setPackName(data.name);
+      else setPackName(name);
+      setNote(t2.packSaved);
+      void refreshPackList().catch(() => undefined);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : t2.packSaveFailed);
+    } finally {
+      setPackBusy(false);
+    }
+  }, [
+    buildPackSnapshot,
+    packId,
+    packName,
+    refreshPackList,
+    sourceLabel,
+    t2.packNeedContent,
+    t2.packNeedSignIn,
+    t2.packSaveAs,
+    t2.packSaveFailed,
+    t2.packSaved,
+  ]);
+
+  const loadPack = useCallback(
+    async (id: string) => {
+      setPackBusy(true);
+      setError(null);
+      setPackMenuOpen(false);
+      try {
+        const res = await fetch(`/api/caption-studio/${id}`, {
+          credentials: "include",
+        });
+        const data = await readApiJson(res);
+        if (!res.ok) {
+          if (res.status === 401) throw new Error(t2.packNeedSignIn);
+          throw new Error(
+            typeof data.error === "string" ? data.error : t2.packLoadFailed,
+          );
+        }
+        const snap = parseCaptionStudioSnapshot(data.snapshot);
+        if (!snap) throw new Error(t2.packLoadFailed);
+        setPackId(typeof data.id === "string" ? data.id : id);
+        setPackName(typeof data.name === "string" ? data.name : "");
+        applyPackSnapshot(snap, typeof data.name === "string" ? data.name : undefined);
+        setNote(t2.packOpened);
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : t2.packLoadFailed);
+      } finally {
+        setPackBusy(false);
+      }
+    },
+    [
+      applyPackSnapshot,
+      t2.packLoadFailed,
+      t2.packNeedSignIn,
+      t2.packOpened,
+    ],
+  );
+
+  const deletePack = useCallback(
+    async (id: string) => {
+      if (!window.confirm(t2.packDeleteConfirm)) return;
+      setPackBusy(true);
+      try {
+        const res = await fetch(`/api/caption-studio/${id}`, {
+          method: "DELETE",
+          credentials: "include",
+        });
+        if (!res.ok) {
+          const data = await readApiJson(res);
+          throw new Error(
+            typeof data.error === "string" ? data.error : t2.packLoadFailed,
+          );
+        }
+        if (packId === id) {
+          setPackId(null);
+          setPackName("");
+        }
+        await refreshPackList();
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : t2.packLoadFailed);
+      } finally {
+        setPackBusy(false);
+      }
+    },
+    [packId, refreshPackList, t2.packDeleteConfirm, t2.packLoadFailed],
+  );
+
   const effectiveBgmDuration = useMemo(() => {
     const remain = Math.max(0.4, projectDur - bgmStartSec);
     if (typeof bgmDurationSec === "number" && Number.isFinite(bgmDurationSec)) {
@@ -461,6 +750,8 @@ export function CaptionStudio2Client() {
       setBgmDurationSec(null);
       setVoClips([]);
       setSelectedVoId(null);
+      setPackId(null);
+      setPackName("");
       setNote(null);
       setWarn(null);
       setError(null);
@@ -479,6 +770,14 @@ export function CaptionStudio2Client() {
   }, []);
 
   useEffect(() => {
+    if (packLoadDone.current) return;
+    const packQ = searchParams.get("pack")?.trim();
+    if (packQ) {
+      packLoadDone.current = true;
+      handoffDone.current = true;
+      void loadPack(packQ);
+      return;
+    }
     if (handoffDone.current) return;
     const q = searchParams.get("video")?.trim();
     if (q) {
@@ -490,11 +789,30 @@ export function CaptionStudio2Client() {
     if (handoff?.videoUrl) {
       handoffDone.current = true;
       clearCaptionHandoff();
-      void probeVideoDuration(handoff.videoUrl).then((d) =>
-        applySource(handoff.videoUrl, t.sourceFromStudio, undefined, d),
-      );
+      const lines = Array.isArray(handoff.captionLines)
+        ? handoff.captionLines.filter((l) => l?.text?.trim())
+        : [];
+      void probeVideoDuration(handoff.videoUrl).then((d) => {
+        applySource(
+          handoff.videoUrl,
+          handoff.label || t.sourceFromStudio,
+          undefined,
+          d,
+        );
+        if (lines.length > 0) {
+          setCaptionLines(lines);
+          setSelectedCaptionIndex(0);
+          setToolTab("captions");
+        }
+      });
     }
-  }, [applySource, searchParams, t.sourceFromStudio, t2.fromLink]);
+  }, [
+    applySource,
+    loadPack,
+    searchParams,
+    t.sourceFromStudio,
+    t2.fromLink,
+  ]);
 
   // Transient toast while CapCut board is open (success notes were previously hidden).
   useEffect(() => {
@@ -526,11 +844,102 @@ export function CaptionStudio2Client() {
     setBgmDurationSec(null);
     setVoClips([]);
     setSelectedVoId(null);
+    setPackId(null);
+    setPackName("");
+    setVoiceoverScript("");
+    setAiMusicTracks([]);
+    setSelectedAiMusicId(null);
+    setVoicePreviewTracks([]);
+    setSelectedVoicePreviewId(null);
     if (blobPreviewRef.current) {
       URL.revokeObjectURL(blobPreviewRef.current);
       blobPreviewRef.current = null;
     }
   }
+
+  async function openPackMenu() {
+    setPackMenuOpen((v) => !v);
+    if (!packMenuOpen) {
+      try {
+        await refreshPackList();
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : t2.packLoadFailed);
+      }
+    }
+  }
+
+  const packToolbar = (
+    <div className="relative flex flex-wrap items-center gap-1.5">
+      <input
+        type="text"
+        value={packName}
+        onChange={(e) => setPackName(e.target.value)}
+        placeholder={t2.packNamePlaceholder}
+        className="min-w-[7rem] flex-1 rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-[11px] text-white placeholder:text-slate-500 sm:max-w-[12rem]"
+      />
+      <button
+        type="button"
+        disabled={packBusy || busy}
+        onClick={() => void savePack()}
+        className="rounded-lg bg-cyan-500/90 px-2.5 py-1.5 text-[11px] font-semibold text-slate-950 disabled:opacity-50"
+      >
+        {packBusy ? t2.packSaving : packId ? t2.packSave : t2.packSaveAs}
+      </button>
+      <button
+        type="button"
+        disabled={packBusy}
+        onClick={() => void openPackMenu()}
+        className="rounded-lg border border-white/15 bg-white/5 px-2.5 py-1.5 text-[11px] text-white disabled:opacity-50"
+      >
+        {t2.packOpen}
+      </button>
+      {hasWorkspace ? (
+        <button
+          type="button"
+          disabled={packBusy || busy}
+          onClick={() => clearWorkspace()}
+          className="rounded-lg border border-white/10 px-2.5 py-1.5 text-[11px] text-slate-300 disabled:opacity-50"
+        >
+          {t2.packNew}
+        </button>
+      ) : null}
+      {packMenuOpen ? (
+        <div className="absolute left-0 top-full z-40 mt-1 max-h-64 w-[min(100%,20rem)] overflow-auto rounded-xl border border-white/15 bg-slate-950 p-1.5 shadow-xl">
+          {packList.length === 0 ? (
+            <p className="px-2 py-3 text-[11px] text-slate-500">{t2.packEmpty}</p>
+          ) : (
+            packList.map((p) => (
+              <div
+                key={p.id}
+                className="flex items-start gap-1 rounded-lg px-1.5 py-1 hover:bg-white/5"
+              >
+                <button
+                  type="button"
+                  disabled={packBusy}
+                  onClick={() => void loadPack(p.id)}
+                  className="min-w-0 flex-1 text-left"
+                >
+                  <span className="block truncate text-[12px] text-white">{p.name}</span>
+                  <span className="block text-[10px] text-slate-500">
+                    {t2.packSummary(p.captionCount, p.clipCount)}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  title={t2.packDelete}
+                  disabled={packBusy}
+                  onClick={() => void deletePack(p.id)}
+                  className="shrink-0 rounded px-1.5 py-0.5 text-[11px] text-rose-300 hover:bg-rose-500/20"
+                >
+                  ×
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+      ) : null}
+    </div>
+  );
 
   async function onPickFile(file: File | null) {
     if (!file) return;
@@ -1700,11 +2109,20 @@ export function CaptionStudio2Client() {
               }}
             />
           </div>
+          <div className="mt-4 border-t border-white/10 pt-3">
+            <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+              {t2.packOpen}
+            </p>
+            {packToolbar}
+          </div>
         </section>
       ) : null}
 
       {hasWorkspace ? (
         <div className="c2-capcut">
+          <div className="flex shrink-0 items-center gap-2 border-b border-white/10 px-2 py-1.5">
+            {packToolbar}
+          </div>
           <div className="c2-capcut-top">
             {/* CapCut: media bin (left) */}
             <aside className="c2-capcut-media space-y-2 p-2">

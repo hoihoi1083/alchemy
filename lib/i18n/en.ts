@@ -6002,6 +6002,26 @@ export const en = {
 			"Preview/mix VO, add library or AI BGM. AI caption+script plan lives on the Captions tab. Then export / burn.",
 		classicVoiceNote:
 			"VO preview/mix and BGM are on the Audio tab; AI caption+script plan is on Captions.",
+		packNamePlaceholder: "Project name",
+		packSave: "Save",
+		packSaving: "Saving…",
+		packSaved: "Project saved",
+		packSaveAs: "Save project",
+		packOpen: "Open",
+		packOpening: "Opening…",
+		packEmpty: "No saved caption projects yet.",
+		packSummary: (captions: number, clips: number) =>
+			`${captions} caption${captions === 1 ? "" : "s"} · ${clips} clip${clips === 1 ? "" : "s"}`,
+		packDelete: "Delete project",
+		packDeleteConfirm: "Delete this saved caption project? This cannot be undone.",
+		packNew: "New",
+		packNeedSignIn: "Sign in to save caption projects.",
+		packSaveFailed: "Could not save project.",
+		packLoadFailed: "Could not open project.",
+		packNeedContent: "Add caption text or a video clip before saving.",
+		packOpened: "Project opened",
+		packMissingMedia:
+			"Some local media was not saved — re-upload clips or pick from library if playback fails.",
 	},
 	editImage2: {
 		title: "AI smart layers",
