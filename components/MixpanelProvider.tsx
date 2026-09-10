@@ -87,8 +87,17 @@ function applyAttribution(opts?: { forceLastTouch?: boolean }) {
       a.ttclid,
   );
 
-  // First touch — set once for this browser profile.
-  mixpanel.register_once({
+  const compact = (obj: Record<string, string | undefined>) => {
+    const out: Record<string, string> = {};
+    for (const [k, v] of Object.entries(obj)) {
+      if (typeof v === "string" && v.trim()) out[k] = v.trim();
+    }
+    return out;
+  };
+
+  // First touch — set once for this browser profile (events + People).
+  // Skip undefined values — Mixpanel People often drops the whole set_once otherwise.
+  const firstTouch = compact({
     initial_referrer: a.referrer ?? "direct",
     initial_referring_domain: a.referring_domain ?? "direct",
     initial_landing_page: a.landing_page,
@@ -99,34 +108,31 @@ function applyAttribution(opts?: { forceLastTouch?: boolean }) {
     initial_utm_content: a.utm_content,
     initial_traffic_source: a.traffic_source,
   });
-
-  mixpanel.people.set_once({
-    initial_referrer: a.referrer ?? "direct",
-    initial_referring_domain: a.referring_domain ?? "direct",
-    initial_landing_page: a.landing_page,
-    initial_utm_source: a.utm_source,
-    initial_utm_medium: a.utm_medium,
-    initial_utm_campaign: a.utm_campaign,
-    initial_traffic_source: a.traffic_source,
-  });
+  mixpanel.register_once(firstTouch);
+  mixpanel.people.set_once(firstTouch);
 
   // Last touch — only when this hit has UTM/ad ids or it's the first load.
   if (!attributionApplied || hasCampaignSignal) {
-    const lastTouch: Record<string, string> = {
+    const lastTouch = compact({
       traffic_source: a.traffic_source,
-    };
-    if (a.referrer) lastTouch.referrer = a.referrer;
-    if (a.referring_domain) lastTouch.referring_domain = a.referring_domain;
-    if (a.utm_source) lastTouch.utm_source = a.utm_source;
-    if (a.utm_medium) lastTouch.utm_medium = a.utm_medium;
-    if (a.utm_campaign) lastTouch.utm_campaign = a.utm_campaign;
-    if (a.utm_term) lastTouch.utm_term = a.utm_term;
-    if (a.utm_content) lastTouch.utm_content = a.utm_content;
-    if (a.gclid) lastTouch.gclid = a.gclid;
-    if (a.fbclid) lastTouch.fbclid = a.fbclid;
-    if (a.msclkid) lastTouch.msclkid = a.msclkid;
-    if (a.ttclid) lastTouch.ttclid = a.ttclid;
+      referrer: a.referrer,
+      referring_domain: a.referring_domain,
+      utm_source: a.utm_source,
+      utm_medium: a.utm_medium,
+      utm_campaign: a.utm_campaign,
+      utm_term: a.utm_term,
+      utm_content: a.utm_content,
+      gclid: a.gclid,
+      fbclid: a.fbclid,
+      msclkid: a.msclkid,
+      ttclid: a.ttclid,
+    });
     mixpanel.register(lastTouch);
+    // Also write onto People so anonymous $device profiles show UTMs in Users UI
+    // (register alone only attaches to events — profile looked empty).
+    if (Object.keys(lastTouch).length > 0) {
+      mixpanel.people.set(lastTouch);
+    }
   }
 
   attributionApplied = true;
