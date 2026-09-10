@@ -4,6 +4,11 @@ import { useAuth, useUser } from "@clerk/nextjs";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef } from "react";
 import mixpanel from "mixpanel-browser";
+import {
+  classifyTrafficSource,
+  referringDomain,
+  sanitizeReferrer,
+} from "@/lib/mixpanel-attribution";
 
 let initialized = false;
 let attributionApplied = false;
@@ -28,102 +33,9 @@ type Attribution = {
   traffic_source: string;
 };
 
-function referringDomain(referrer: string): string | undefined {
-  try {
-    return new URL(referrer).hostname.replace(/^www\./, "") || undefined;
-  } catch {
-    return undefined;
-  }
-}
-
-function classifyTrafficSource(opts: {
-  utmSource?: string;
-  utmMedium?: string;
-  referrer?: string;
-  gclid?: string;
-  fbclid?: string;
-  msclkid?: string;
-  ttclid?: string;
-}): string {
-  if (opts.gclid) return "google_ads";
-  if (opts.fbclid) return "meta_ads";
-  if (opts.msclkid) return "microsoft_ads";
-  if (opts.ttclid) return "tiktok_ads";
-
-  const source = (opts.utmSource ?? "").toLowerCase();
-  const medium = (opts.utmMedium ?? "").toLowerCase();
-
-  // Explicit campaign tags (best for IG / RedNote / TikTok / 抖音 in-app browsers).
-  // Still match Chinese 小红书 in referrers from the China app.
-  if (
-    source.includes("instagram") ||
-    source === "ig" ||
-    source.includes("小红书") ||
-    source.includes("xiaohongshu") ||
-    source === "xhs" ||
-    source === "rednote" ||
-    source.includes("rednote") ||
-    source.includes("tiktok") ||
-    source.includes("douyin") ||
-    source.includes("抖音")
-  ) {
-    if (medium.includes("cpc") || medium.includes("paid") || medium.includes("ppc") || medium.includes("ads")) {
-      return "paid_social";
-    }
-    return "social";
-  }
-
-  if (opts.utmSource || opts.utmMedium) {
-    if (medium.includes("cpc") || medium.includes("paid") || medium.includes("ppc")) {
-      return "paid";
-    }
-    if (medium.includes("email")) return "email";
-    if (medium.includes("social")) return "social";
-    if (medium.includes("affiliate")) return "affiliate";
-    return "campaign";
-  }
-
-  if (!opts.referrer) return "direct";
-  const host = referringDomain(opts.referrer)?.toLowerCase() ?? "";
-  if (!host) return "referral";
-
-  if (host.includes("google.") || host === "google.com") return "organic_search";
-  if (host.includes("bing.") || host === "bing.com") return "organic_search";
-  if (host.includes("yahoo.")) return "organic_search";
-
-  // Social / short-video apps (referrer often missing inside in-app browsers).
-  if (host.includes("instagram.") || host === "l.instagram.com") return "social_instagram";
-  if (
-    host.includes("xiaohongshu.") ||
-    host.includes("xhslink.") ||
-    host.includes("xhscdn.") ||
-    host === "xhslink.com"
-  ) {
-    return "social_xiaohongshu";
-  }
-  if (host.includes("tiktok.") || host.includes("tiktokv.")) return "social_tiktok";
-  if (host.includes("douyin.") || host.includes("iesdouyin.") || host.includes("amemv.")) {
-    return "social_douyin";
-  }
-  if (
-    host.includes("facebook.") ||
-    host.includes("fb.") ||
-    host.includes("linkedin.") ||
-    host.includes("twitter.") ||
-    host.includes("x.com") ||
-    host.includes("youtube.") ||
-    host.includes("weibo.") ||
-    host.includes("threads.")
-  ) {
-    return "social";
-  }
-
-  return "referral";
-}
-
 function readAttribution(): Attribution {
   const params = new URLSearchParams(window.location.search);
-  const referrer = document.referrer || undefined;
+  const referrer = sanitizeReferrer(document.referrer || undefined);
   const utm_source = params.get("utm_source")?.trim() || undefined;
   const utm_medium = params.get("utm_medium")?.trim() || undefined;
   const utm_campaign = params.get("utm_campaign")?.trim() || undefined;
