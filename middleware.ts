@@ -32,7 +32,7 @@ function betaSurfacesEnabled(): boolean {
 
 export default clerkMiddleware(async (auth, req) => {
   if (isHiddenBetaRoute(req) && !betaSurfacesEnabled()) {
-    const target = req.nextUrl.pathname.startsWith("/ugc") ? "/studio" : "/captions";
+    const target = req.nextUrl.pathname.startsWith("/ugc") ? "/studio" : "/captions-2";
     return NextResponse.redirect(new URL(target, req.url));
   }
 

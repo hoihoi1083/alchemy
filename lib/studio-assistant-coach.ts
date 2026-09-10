@@ -272,16 +272,16 @@ export function buildCoachReply(
     case "route-storyboard":
       return en
         ? [
-            "Step 1: Product storyboard — multi-scene stills → stitched fallback video (textless frames; captions via /captions).",
+            "Step 1: Product storyboard — multi-scene stills → stitched fallback video (textless frames; captions via /captions-2).",
             link ?? "",
             coachLandingAfterStudioAction(locale),
           ].join("\n")
         : [
             coachZh(
               locale,
-              "第一步：產品分鏡 — 多場景圖 → stitched fallback 影片（畫面無字；字幕用 /captions）。",
-              "第一步：产品分镜 — 多场景图 → stitched fallback 视频（画面无字；字幕用 /captions）。",
-              "第一步：產品分鏡 — 多場景圖 → stitched fallback 影片（畫面無字；字幕用 /captions）。",
+              "第一步：產品分鏡 — 多場景圖 → stitched fallback 影片（畫面無字；字幕用 /captions-2）。",
+              "第一步：产品分镜 — 多场景图 → stitched fallback 视频（画面无字；字幕用 /captions-2）。",
+              "第一步：產品分鏡 — 多場景圖 → stitched fallback 影片（畫面無字；字幕用 /captions-2）。",
             ),
             link ?? "",
             coachLandingAfterStudioAction(locale),
@@ -356,7 +356,7 @@ export function buildCoachReply(
       return en
         ? snapshot.hasCaptionSource
           ? "Video is loaded. Step 1 — edit timed caption lines, then Audio (BGM / voice) if you want, then Burn onto the video. Ask me about style, timing, or voice."
-          : "Step 1 — import an MP4 (library or upload). Then edit script/captions → optional BGM/voice → Burn. No need to regenerate the video."
+          : "Step 1 — import an MP4 (library or upload). Then edit script/captions-2 → optional BGM/voice → Burn. No need to regenerate the video."
         : snapshot.hasCaptionSource
           ? "片已載入。第一步 — 改時間軸字幕，然後可加 BGM／配音，最後燒錄。風格、時間、口播直接問我。"
           : "第一步 — 匯入 MP4（作品庫或上傳）。然後改字幕文案 → 可選 BGM／配音 → 燒錄。唔使重新出片。";
@@ -715,8 +715,8 @@ export function buildCoachReply(
     case "generate-storyboard-video":
       return step(
         en
-          ? "Step 1 — generate storyboard video (scene animation per scene still, then stitch). Captions later via /captions. Reply next."
-          : "第一步 — **生成分鏡影片**（逐場靜幀 scene animation，再拼接；字幕之後去 /captions）。回覆 下一步。",
+          ? "Step 1 — generate storyboard video (scene animation per scene still, then stitch). Captions later via /captions-2. Reply next."
+          : "第一步 — **生成分鏡影片**（逐場靜幀 scene animation，再拼接；字幕之後去 /captions-2）。回覆 下一步。",
       );
 
     case "generate-cinematic-video":
@@ -743,8 +743,8 @@ export function buildCoachReply(
     case "done-download":
       return step(
         en
-          ? "Done — download from Done step, or [Caption studio](/captions) for burn-in edits, or [/ultra](/ultra) for Ultra canvas workflows."
-          : "完成 — 喺完成步下載，或去 [字幕工具](/captions) 改燒錄字幕，進階用 [/ultra](/ultra) Ultra 畫布。",
+          ? "Done — download from Done step, or [Caption studio](/captions-2) for burn-in edits, or [/ultra](/ultra) for Ultra canvas workflows."
+          : "完成 — 喺完成步下載，或去 [字幕工具](/captions-2) 改燒錄字幕，進階用 [/ultra](/ultra) Ultra 畫布。",
       );
 
     default:
@@ -796,10 +796,10 @@ export function formatCoachChecklistForPrompt(
       : "- brand-fit/campaign: analyze brand before image generate",
     isZh
       ? snapshot.promotionMode === "concept" && isStoryboardVideoStyle(snapshot.visualStyleId)
-        ? "- concept storyboard：概念／headline + 參考 Reel → 場景圖 → stitched fallback 分鏡片（唔使產品相；字幕 /captions）"
+        ? "- concept storyboard：概念／headline + 參考 Reel → 場景圖 → stitched fallback 分鏡片（唔使產品相；字幕 /captions-2）"
         : "- storyboard：產品名 + 分鏡簡述 + 產品相 + 場景圖 → stitched fallback（畫面無字）"
       : snapshot.promotionMode === "concept" && isStoryboardVideoStyle(snapshot.visualStyleId)
-        ? "- concept storyboard: concept/headline + reference reel → scene stills → stitched fallback video (no product photo; captions via /captions)"
+        ? "- concept storyboard: concept/headline + reference reel → scene stills → stitched fallback video (no product photo; captions via /captions-2)"
         : "- storyboard: product name + brief + photo + scene stills → stitched fallback (textless frames)",
     isZh
       ? "- image-only 完成於出圖；video-only 跳過出圖步"

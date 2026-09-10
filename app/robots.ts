@@ -15,6 +15,7 @@ export default function robots(): MetadataRoute.Robots {
           "/library",
           "/account",
           "/captions",
+          "/captions-2",
           "/edit-image",
           "/edit-image-2",
           "/start",

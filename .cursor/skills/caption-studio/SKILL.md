@@ -11,7 +11,7 @@ description: >-
 
 ## Product rule
 
-**Caption 2 replaces `/captions` as the toolkit entry** (`/captions-2`). Classic stays for full VO plan-from-topic until that is ported.
+**Caption 2 is the toolkit entry** (`/captions-2`). Legacy `/captions` redirects there (query params preserved).
 
 Pipeline:
 

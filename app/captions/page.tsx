@@ -1,72 +1,24 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { Suspense, useEffect, useState } from "react";
-import Link from "next/link";
-import { CaptionStudioClient } from "@/components/captions/CaptionStudioClient";
-import { LandingNav } from "@/components/landing/LandingNav";
-import { StudioGlowShell } from "@/components/studio/StudioGlowShell";
-import { useLocale } from "@/components/LocaleProvider";
-import { STUDIO_PAGE_GLOW } from "@/lib/studio-glow";
+type SearchParams = Record<string, string | string[] | undefined>;
 
-function CaptionsPageContent() {
-  const { m } = useLocale();
-  const t = m.captions;
-
-  return (
-    <StudioGlowShell theme={STUDIO_PAGE_GLOW.captions}>
-      <LandingNav />
-      <div className="mx-auto w-full max-w-[1800px] px-3 py-5 pb-28 sm:px-6 sm:py-6 sm:pb-24 lg:px-8 xl:pb-24">
-        <header className="mb-5 text-center sm:mb-6">
-          <p className="text-xs font-medium tracking-wide text-cyan-300 sm:text-sm">
-            {t.badge}
-          </p>
-          <h1 className="mt-1.5 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-            {t.title}
-          </h1>
-          <p className="mx-auto mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
-            {t.subtitle}
-          </p>
-          <p className="mt-3 text-xs">
-            <Link
-              href="/captions-2"
-              className="text-cyan-300/90 underline hover:text-cyan-200"
-            >
-              {t.tryCaptions2}
-            </Link>
-          </p>
-        </header>
-
-        <CaptionStudioClient />
-      </div>
-    </StudioGlowShell>
-  );
-}
-
-export default function CaptionsPage() {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
-  if (!mounted) {
-    return (
-      <StudioGlowShell theme={STUDIO_PAGE_GLOW.captions}>
-        <div className="flex flex-1 items-center justify-center text-sm text-slate-500">
-          …
-        </div>
-      </StudioGlowShell>
-    );
+/**
+ * Legacy `/captions` → Captions 2 finish studio.
+ * Preserves `video` and any other query params.
+ */
+export default async function CaptionsRedirectPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
+  const sp = await searchParams;
+  const q = new URLSearchParams();
+  for (const [key, value] of Object.entries(sp)) {
+    if (typeof value === "string") q.set(key, value);
+    else if (Array.isArray(value)) {
+      for (const item of value) q.append(key, item);
+    }
   }
-
-  return (
-    <Suspense
-      fallback={
-        <StudioGlowShell theme={STUDIO_PAGE_GLOW.captions}>
-          <div className="flex flex-1 items-center justify-center text-sm text-slate-500">
-            …
-          </div>
-        </StudioGlowShell>
-      }
-    >
-      <CaptionsPageContent />
-    </Suspense>
-  );
+  const qs = q.toString();
+  redirect(qs ? `/captions-2?${qs}` : "/captions-2");
 }

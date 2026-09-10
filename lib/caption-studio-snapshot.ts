@@ -54,6 +54,8 @@ export type CaptionStudioSnapshot = {
   voicePreviewTracks: VoicePreviewTrack[];
   selectedVoicePreviewId: string | null;
   playheadSec: number;
+  /** True when caption text is already burned into the plate pixels. */
+  captionsBurnedInPlate?: boolean;
 };
 
 export type CaptionStudioSnapshotInput = {
@@ -86,6 +88,7 @@ export type CaptionStudioSnapshotInput = {
   voicePreviewTracks: VoicePreviewTrack[];
   selectedVoicePreviewId: string | null;
   playheadSec: number;
+  captionsBurnedInPlate?: boolean;
 };
 
 function isPersistableUrl(url: unknown): url is string {
@@ -307,6 +310,7 @@ export function serializeCaptionStudioSnapshot(
     voicePreviewTracks,
     selectedVoicePreviewId: selectedVoPreview,
     playheadSec: Math.max(0, asFiniteNumber(input.playheadSec, 0)),
+    captionsBurnedInPlate: Boolean(input.captionsBurnedInPlate),
   };
 }
 
@@ -424,6 +428,7 @@ export function parseCaptionStudioSnapshot(
     voicePreviewTracks,
     selectedVoicePreviewId,
     playheadSec: Math.max(0, asFiniteNumber(o.playheadSec, 0)),
+    captionsBurnedInPlate: Boolean(o.captionsBurnedInPlate),
   };
 }
 

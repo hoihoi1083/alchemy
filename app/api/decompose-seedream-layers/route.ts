@@ -334,6 +334,22 @@ export async function POST(request: Request) {
 
     layers.sort((a, b) => a.z - b.z);
 
+    // Background-only results are not a useful Split — refund the Seedream charge.
+    let tokensCharged = tokenCost;
+    let creditBalance = charged.balanceAfter;
+    let tokensRefunded: number | undefined;
+    if (layers.length === 0) {
+      const balanceAfter = await refundTokens(auth.user.userId, tokenCost, {
+        kind: "smart_layers_seedream",
+        reason: "seedream_no_liftable_layers",
+        endpoint: "byteplus/seedream/layer_decomposition",
+        model: modelId,
+      });
+      tokensCharged = 0;
+      tokensRefunded = tokenCost;
+      if (balanceAfter !== null) creditBalance = balanceAfter;
+    }
+
     console.info("[decompose-seedream-layers] done", {
       provider: "byteplus",
       model: modelId,
@@ -341,7 +357,8 @@ export async function POST(request: Request) {
       objects: layers.length,
       boardW,
       boardH,
-      tokens: tokenCost,
+      tokens: tokensCharged,
+      tokensRefunded,
     });
 
     return NextResponse.json({
@@ -352,8 +369,9 @@ export async function POST(request: Request) {
       originalBackgroundUrl,
       backgroundDataUrl: backgroundUrl,
       layers,
-      tokensCharged: tokenCost,
-      creditBalance: charged.balanceAfter,
+      tokensCharged,
+      tokensRefunded,
+      creditBalance,
       debug: {
         mode: "seedream-layerize-byteplus",
         endpoint: "byteplus/images/generations",
@@ -362,11 +380,11 @@ export async function POST(request: Request) {
         objectsDetected: layers.length,
         imageSize: "1K",
         byteplusEstimateUsd: 0.0225 * 10,
-        tokenCost,
+        tokenCost: tokensCharged,
       },
       warning:
         layers.length === 0
-          ? "Seedream returned only a background. Use Box lift or Clean plate on leftovers."
+          ? "Seedream returned only a background. Tokens were refunded. Use Box lift or Clean plate on leftovers."
           : undefined,
     });
   } catch (e: unknown) {

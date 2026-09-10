@@ -65,7 +65,7 @@ export const ASSISTANT_KNOWLEDGE: AssistantKnowledgeChunk[] = [
 - / landing — marketing site, template cards, pricing teaser. Finishable “video recipe” cards are hidden for now.
 - /start — pick physical product vs concept/service, then enter studio.
 - /studio — guided wizard (default simple mode). No chat assistant — follow the cards and Continue on screen.
-- /captions — burn subtitles / BGM / voice on any MP4. No assistant panel.
+- /captions-2 — burn subtitles / BGM / voice on any MP4. No assistant panel.
 - /edit-image-2 — clean, add text/logo, export. No assistant panel.
 - /ultra — Ultra canvas (Upload → image → video). Master plan. Pay-per-use tokens. No assistant panel.
 - /brand-kit — save logo & colors.
@@ -77,7 +77,7 @@ Ask-AI mascot is on the landing page only. Use action buttons here to open /stud
 - / 首頁 — 介紹、模板卡、收費預覽。首頁「可完成影片配方」卡而家隱藏。
 - /start — 揀實體產品 vs 概念／服務，再入工作室。
 - /studio — 引導式 wizard（預設簡單模式）。冇聊天助理 — 跟屏幕卡片同 Continue。
-- /captions — 任何 MP4 燒字幕／BGM／配音。冇助理面板。
+- /captions-2 — 任何 MP4 燒字幕／BGM／配音。冇助理面板。
 - /edit-image-2 — 清雜物、加字／Logo、匯出。冇助理面板。
 - /ultra — Ultra 畫布（上傳→圖→片）。Master 方案。按次 token。冇助理面板。
 - /brand-kit — 儲 Logo 同顏色。
@@ -89,7 +89,7 @@ Ask-AI mascot is on the landing page only. Use action buttons here to open /stud
 - / 首页 — 介绍、模板卡、收费预览。首页「可完成影片配方」卡已隐藏。
 - /start — 选实体产品 vs 概念／服务，再进工作室。
 - /studio — 引导式 wizard（默认简单模式）。无聊天助理 — 跟屏幕卡片和 Continue。
-- /captions — 任何 MP4 烧字幕／BGM／配音。无助理面板。
+- /captions-2 — 任何 MP4 烧字幕／BGM／配音。无助理面板。
 - /edit-image-2 — 清杂物、加字／Logo、导出。无助理面板。
 - /ultra — Ultra 画布（上传→图→片）。Master 方案。按次 token。无助理面板。
 - /brand-kit — 存 Logo 与颜色。
@@ -101,7 +101,7 @@ Ask-AI mascot is on the landing page only. Use action buttons here to open /stud
 - / 首頁 — 介紹、模板卡、收費預覽。首頁「可完成影片配方」卡已隱藏。
 - /start — 選實體產品 vs 概念／服務，再進工作室。
 - /studio — 引導式 wizard（預設簡單模式）。無聊天助理 — 跟螢幕卡片同 Continue。
-- /captions — 任何 MP4 燒字幕／BGM／配音。無助理面板。
+- /captions-2 — 任何 MP4 燒字幕／BGM／配音。無助理面板。
 - /edit-image-2 — 清雜物、加字／Logo、匯出。無助理面板。
 - /ultra — Ultra 畫布（上傳→圖→片）。Master 方案。按次 token。無助理面板。
 - /brand-kit — 儲 Logo 與顏色。
@@ -356,8 +356,8 @@ Plans (typical): Free 300 signup / 480p; Light 3000/mo 480p; Standard 8000/mo 72
       "修图",
       "去水印",
     ],
-    en: `/captions: import any MP4 → edit timed lines → optional BGM/voice → burn. Does not regenerate the video. /edit-image-2: upload or library → Clean (inpaint) → Design (text/logo layers) → Export. Ask-AI is hidden on both pages; open them from the nav or tell the landing assistant you want captions / retouch.`,
-    zh: `/captions：匯入任何 MP4 → 改時間軸字幕 → 可加 BGM／配音 → 燒錄。唔會重新生成條片。/edit-image-2：上傳或作品庫 → 清除（inpaint）→ 排版（字／Logo）→ 匯出。兩頁都冇問 AI；用導航打開，或喺首頁問 AI 話你要字幕／修圖。`,
+    en: `/captions-2: import any MP4 → edit timed lines → optional BGM/voice → burn. Does not regenerate the video. /edit-image-2: upload or library → Clean (inpaint) → Design (text/logo layers) → Export. Ask-AI is hidden on both pages; open them from the nav or tell the landing assistant you want captions / retouch.`,
+    zh: `/captions-2：匯入任何 MP4 → 改時間軸字幕 → 可加 BGM／配音 → 燒錄。唔會重新生成條片。/edit-image-2：上傳或作品庫 → 清除（inpaint）→ 排版（字／Logo）→ 匯出。兩頁都冇問 AI；用導航打開，或喺首頁問 AI 話你要字幕／修圖。`,
   },
   {
     id: "ultra-tools",
@@ -381,9 +381,9 @@ Plans (typical): Free 300 signup / 480p; Light 3000/mo 480p; Standard 8000/mo 72
       "作品库",
       "口播",
     ],
-    en: `/ultra is the Ultra canvas — a node workflow for power users: upload/library → AI image (pro controls: aspect, lighting, background) → video or text-to-video nodes, optional lighting/background/grade modifier nodes, brand kit @brand refs, script→scene pipelines, audio BGM, splice, save/load boards, templates, undo/redo. Pay-per-use tokens on Master plan — not Lumina subscription pricing. Export outputs to /library; open finished clips in /captions. /brand-kit saves logo/colors. /ugc is talking presenter, separate from storyboard TVC.`,
-    zh: `/ultra 係 Ultra 畫布 — 節點工作流俾進階用戶：上傳／作品庫→ AI 圖（專業控制：比例、燈光、背景）→ 片或文字生片節點，可加燈光／背景／風格修飾節點、品牌 @brand 引用、劇本→分鏡流水線、音訊 BGM、拼接、儲存／載入畫布、模板、撤銷／重做。Master 方案按次 token — 唔係 Lumina 訂閱價。成品可存 /library，再去 /captions。/brand-kit 存 Logo／色。/ugc 係口播，同分鏡 TVC 分開。`,
-    zhCn: `/ultra 是 Ultra 画布 — 节点工作流给进阶用户：上传／作品库→ AI 图（专业控制：比例、灯光、背景）→ 视频或文字生视频节点，可加灯光／背景／风格修饰节点、品牌 @brand 引用、剧本→分镜流水线、音频 BGM、拼接、保存／加载画布、模板、撤销／重做。Master 方案按次 token — 不是 Lumina 订阅价。成品可存 /library，再去 /captions。/brand-kit 存 Logo／色。/ugc 是口播，与分镜 TVC 分开。`,
+    en: `/ultra is the Ultra canvas — a node workflow for power users: upload/library → AI image (pro controls: aspect, lighting, background) → video or text-to-video nodes, optional lighting/background/grade modifier nodes, brand kit @brand refs, script→scene pipelines, audio BGM, splice, save/load boards, templates, undo/redo. Pay-per-use tokens on Master plan — not Lumina subscription pricing. Export outputs to /library; open finished clips in /captions-2. /brand-kit saves logo/colors. /ugc is talking presenter, separate from storyboard TVC.`,
+    zh: `/ultra 係 Ultra 畫布 — 節點工作流俾進階用戶：上傳／作品庫→ AI 圖（專業控制：比例、燈光、背景）→ 片或文字生片節點，可加燈光／背景／風格修飾節點、品牌 @brand 引用、劇本→分鏡流水線、音訊 BGM、拼接、儲存／載入畫布、模板、撤銷／重做。Master 方案按次 token — 唔係 Lumina 訂閱價。成品可存 /library，再去 /captions-2。/brand-kit 存 Logo／色。/ugc 係口播，同分鏡 TVC 分開。`,
+    zhCn: `/ultra 是 Ultra 画布 — 节点工作流给进阶用户：上传／作品库→ AI 图（专业控制：比例、灯光、背景）→ 视频或文字生视频节点，可加灯光／背景／风格修饰节点、品牌 @brand 引用、剧本→分镜流水线、音频 BGM、拼接、保存／加载画布、模板、撤销／重做。Master 方案按次 token — 不是 Lumina 订阅价。成品可存 /library，再去 /captions-2。/brand-kit 存 Logo／色。/ugc 是口播，与分镜 TVC 分开。`,
   },
   {
     id: "how-to-start",
@@ -402,9 +402,9 @@ Plans (typical): Free 300 signup / 480p; Light 3000/mo 480p; Standard 8000/mo 72
       "開始",
       "开始",
     ],
-    en: `Sign in → /start (physical vs concept) or a landing showcase card → /studio. Fill the micro-steps, generate stills, review, then video. For captions/retouch after export, use /captions or /edit-image-2. Homepage showcase cards link to /start (not direct /studio). Hidden finishable recipe cards are not on the homepage. Deep-links like /studio?recipe= still work if someone has the URL.`,
-    zh: `登入 → /start（實體 vs 概念）或首頁展示卡 → /studio。跟微步驟、出靜圖、檢視、再出片。之後字幕／修圖用 /captions 或 /edit-image-2。首頁展示卡去 /start（唔係直接 /studio）。隱藏嘅 finishable recipe 卡唔喺首頁。有人有 /studio?recipe= 深鏈仍然得。`,
-    zhCn: `登录 → /start（实体 vs 概念）或首页展示卡 → /studio。跟微步骤、出静图、检视、再出片。之后字幕／修图用 /captions 或 /edit-image-2。首页展示卡去 /start（不是直接 /studio）。隐藏的 finishable recipe 卡不在首页。有人有 /studio?recipe= 深链仍然可用。`,
+    en: `Sign in → /start (physical vs concept) or a landing showcase card → /studio. Fill the micro-steps, generate stills, review, then video. For captions/retouch after export, use /captions-2 or /edit-image-2. Homepage showcase cards link to /start (not direct /studio). Hidden finishable recipe cards are not on the homepage. Deep-links like /studio?recipe= still work if someone has the URL.`,
+    zh: `登入 → /start（實體 vs 概念）或首頁展示卡 → /studio。跟微步驟、出靜圖、檢視、再出片。之後字幕／修圖用 /captions-2 或 /edit-image-2。首頁展示卡去 /start（唔係直接 /studio）。隱藏嘅 finishable recipe 卡唔喺首頁。有人有 /studio?recipe= 深鏈仍然得。`,
+    zhCn: `登录 → /start（实体 vs 概念）或首页展示卡 → /studio。跟微步骤、出静图、检视、再出片。之后字幕／修图用 /captions-2 或 /edit-image-2。首页展示卡去 /start（不是直接 /studio）。隐藏的 finishable recipe 卡不在首页。有人有 /studio?recipe= 深链仍然可用。`,
   },
   {
     id: "safety-spa",

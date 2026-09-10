@@ -1349,7 +1349,7 @@ export function EditImage2Client() {
             : t.blurPunchFallback,
       );
     } else if (healed.mode === "blur") {
-      // Quiet — optimistic punch; server refine will speak if needed.
+      setNotice(t.blurPunchFallback);
     }
   }
   applyHealedBackgroundRef.current = applyHealedBackground;
@@ -1873,6 +1873,7 @@ export function EditImage2Client() {
       errorCode?: string;
       warning?: string;
       tokensCharged?: number;
+      tokensRefunded?: number;
       originalBackgroundUrl?: string;
     };
     if (!dec.ok) {
@@ -1904,10 +1905,14 @@ export function EditImage2Client() {
       holeCleared: true,
     });
     if (!seeded.length) {
+      const refunded =
+        typeof decJson.tokensRefunded === "number" && decJson.tokensRefunded > 0
+          ? t.seedreamNoLayersRefunded(decJson.tokensRefunded)
+          : null;
       setError(warning || t.noLayersDetected);
       setBoxMode(true);
       setBoxIntent("lift");
-      setNotice(t.emptyLiftHint);
+      setNotice(refunded ? `${t.emptyLiftHint} · ${refunded}` : t.emptyLiftHint);
     } else {
       setNotice(t.seedreamFullReady(seeded.length));
       setBoxMode(false);
@@ -2267,11 +2272,24 @@ export function EditImage2Client() {
       const healed = await healBackgroundHole(httpPlate, hole, { mode });
       applyHealedBackground(healed);
       patchLayer(layerId, { holeCleared: true });
-      if (matteFailed) {
-        setNotice(t.matteSkippedFallback);
-      } else if (matted || skipMatte) {
-        setNotice(t.cutReadyHealed);
-      }
+      const chargeBit =
+        typeof healed.tokensCharged === "number"
+          ? healed.mode === "erase" || healed.mode === "fill"
+            ? t.chargedErase(healed.tokensCharged)
+            : healed.mode === "local"
+              ? t.chargedHeal(healed.tokensCharged)
+              : t.blurPunchFallback
+          : healed.mode === "blur"
+            ? t.blurPunchFallback
+            : null;
+      const readyBit = matteFailed
+        ? t.matteSkippedFallback
+        : matted || skipMatte
+          ? t.cutReadyHealed
+          : null;
+      if (readyBit && chargeBit) setNotice(`${readyBit} · ${chargeBit}`);
+      else if (readyBit) setNotice(readyBit);
+      else if (chargeBit) setNotice(chargeBit);
     } catch {
       if (matteFailed) setNotice(t.matteSkippedFallback);
       /* hole clears on first move */
@@ -2513,7 +2531,15 @@ export function EditImage2Client() {
       setBrushLines([]);
       brushLinesRef.current = [];
       setBrushMode(false);
-      setNotice(t.erasePaintedDone);
+      const chargeBit =
+        typeof healed.tokensCharged === "number"
+          ? t.chargedHeal(healed.tokensCharged)
+          : healed.mode === "blur"
+            ? t.blurPunchFallback
+            : null;
+      setNotice(
+        chargeBit ? `${t.erasePaintedDone} · ${chargeBit}` : t.erasePaintedDone,
+      );
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : t.somethingFailed);
     } finally {
@@ -2813,7 +2839,19 @@ export function EditImage2Client() {
       applyHealedBackground(healed);
       setBoxMode(false);
       setBoxDrag(null);
-      setNotice(t.erasePlateDone);
+      const chargeBit =
+        typeof healed.tokensCharged === "number"
+          ? healed.mode === "erase" || healed.mode === "fill"
+            ? t.chargedErase(healed.tokensCharged)
+            : healed.mode === "local"
+              ? t.chargedHeal(healed.tokensCharged)
+              : t.blurPunchFallback
+          : healed.mode === "blur"
+            ? t.blurPunchFallback
+            : null;
+      setNotice(
+        chargeBit ? `${t.erasePlateDone} · ${chargeBit}` : t.erasePlateDone,
+      );
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : t.somethingFailed);
     } finally {
@@ -4394,9 +4432,15 @@ export function EditImage2Client() {
             ) : boxMode && boxIntent === "lift" ? (
               <p className="text-[10px] text-slate-500">{t.boxLiftHint}</p>
             ) : boxMode && boxIntent === "erase" && eraseTarget === "plate" ? (
-              <p className="text-[10px] text-slate-500">{t.erasePlateHint}</p>
+              <>
+                <p className="text-[10px] text-slate-500">{t.erasePlateHint}</p>
+                <p className="text-[10px] text-slate-500">{t.healTok(ERASE_PER_MP)}</p>
+              </>
             ) : boxMode && boxIntent === "erase" && eraseTarget === "layer" ? (
-              <p className="text-[10px] text-slate-500">{t.eraseLayerHint}</p>
+              <>
+                <p className="text-[10px] text-slate-500">{t.eraseLayerHint}</p>
+                <p className="text-[10px] text-slate-500">{t.healTok(ERASE_PER_MP)}</p>
+              </>
             ) : brushMode && brushIntent === "lift" ? (
               <p className="text-[10px] text-slate-500">{t.makeLayerHint}</p>
             ) : null}
@@ -4704,10 +4748,16 @@ export function EditImage2Client() {
                 <p className="text-[10px] text-slate-500">{t.boxLiftHint}</p>
               ) : null}
               {boxMode && boxIntent === "erase" && eraseTarget === "plate" ? (
-                <p className="text-[10px] text-slate-500">{t.erasePlateHint}</p>
+                <>
+                  <p className="text-[10px] text-slate-500">{t.erasePlateHint}</p>
+                  <p className="text-[10px] text-slate-500">{t.healTok(ERASE_PER_MP)}</p>
+                </>
               ) : null}
               {boxMode && boxIntent === "erase" && eraseTarget === "layer" ? (
-                <p className="text-[10px] text-slate-500">{t.eraseLayerHint}</p>
+                <>
+                  <p className="text-[10px] text-slate-500">{t.eraseLayerHint}</p>
+                  <p className="text-[10px] text-slate-500">{t.healTok(ERASE_PER_MP)}</p>
+                </>
               ) : null}
               {brushMode ? (
                 <>

@@ -309,8 +309,8 @@ export function CaptionStudio2Client() {
       timelineClips.length > 0 ||
       captionLines.length > 0,
   );
-  const asrSourceUrl =
-    timelineClips[0]?.url ?? originalSourceUrl ?? sourceUrl;
+  /** Any plate we can bake or fall back to for From-speech ASR. */
+  const canRunAsr = timelineClips.length > 0 || Boolean(originalSourceUrl || sourceUrl);
 
   const styleOptions = useMemo(
     () =>
@@ -451,6 +451,7 @@ export function CaptionStudio2Client() {
       voicePreviewTracks,
       selectedVoicePreviewId,
       playheadSec,
+      captionsBurnedInPlate,
     });
   }, [
     sourceLabel,
@@ -482,6 +483,7 @@ export function CaptionStudio2Client() {
     voicePreviewTracks,
     selectedVoicePreviewId,
     playheadSec,
+    captionsBurnedInPlate,
   ]);
 
   const applyPackSnapshot = useCallback((snap: CaptionStudioSnapshot, name?: string) => {
@@ -532,7 +534,7 @@ export function CaptionStudio2Client() {
     setRefImageUrl(snap.refImageUrl ?? null);
     setUndoStack([]);
     setEditedVideoUrl(null);
-    setCaptionsBurnedInPlate(false);
+    setCaptionsBurnedInPlate(Boolean(snap.captionsBurnedInPlate));
     setToolTab(snap.captionLines.length > 0 ? "captions" : "edit");
     setError(null);
     setWarn(null);
@@ -1159,7 +1161,7 @@ export function CaptionStudio2Client() {
   }
 
   async function runAutoTranscribe() {
-    if (!asrSourceUrl) {
+    if (!canRunAsr) {
       setError(t2.needVideo);
       return;
     }
@@ -1168,8 +1170,17 @@ export function CaptionStudio2Client() {
     setNote(null);
     setWarn(null);
     try {
+      // Bake magnetic timeline (trim + stitch) so ASR hears the full plate, not clip[0] only.
+      const videoUrl =
+        timelineClips.length > 0
+          ? await bakeTimelinePlate()
+          : (originalSourceUrl ?? sourceUrl);
+      if (!videoUrl) {
+        setError(t2.needVideo);
+        return;
+      }
       const fd = new FormData();
-      fd.set("video_url", asrSourceUrl);
+      fd.set("video_url", videoUrl);
       const res = await fetch("/api/transcribe-captions", {
         method: "POST",
         credentials: "include",
@@ -1189,7 +1200,7 @@ export function CaptionStudio2Client() {
       }
       pushUndo();
       setCaptionLines(lines);
-      setCaptionsBurnedInPlate(false);
+      beginCaptionEditAgainstCleanPlate();
       setSelectedCaptionIndex(0);
       const asr =
         data.asrProvider === "local" ? t2.asrLocal : t2.asrCloud;
@@ -1350,7 +1361,7 @@ export function CaptionStudio2Client() {
         : []) as CaptionLine[];
       if (!lines.length) throw new Error(t.planCaptionVoiceFailed);
       pushUndo();
-      setCaptionsBurnedInPlate(false);
+      beginCaptionEditAgainstCleanPlate();
       setCaptionLines(
         lines.map((line, i) => {
           const text = String(line.text ?? "").trim();
@@ -1476,6 +1487,7 @@ export function CaptionStudio2Client() {
           : mapped.map((l) => captionSpeakText(l)).filter(Boolean).join("");
       if (script) setVoiceoverScript(script);
       setVoiceoverEnabled(true);
+      beginCaptionEditAgainstCleanPlate();
       setCaptionLines((prev) => {
         const kept = prev.filter(
           (l) => l.endSec <= startSec + 0.05 || l.startSec >= endSec - 0.05,
@@ -1791,6 +1803,19 @@ export function CaptionStudio2Client() {
     }
   }
 
+  /**
+   * Shared base for Export / Burn / Re-burn.
+   * Always the caption-free plate — never bake an already-burned timeline
+   * (that would double text on the next burn).
+   */
+  async function resolveFinishBasePlateUrl(): Promise<string> {
+    if (captionsBurnedInPlate) {
+      if (originalSourceUrl) return toRelativePipelineUrl(originalSourceUrl);
+      throw new Error(t2.burnNeedCleanPlate);
+    }
+    return bakeTimelinePlate();
+  }
+
   async function burnCaptions() {
     const usable = captionLines.filter((l) => l.text.trim());
     if (usable.length === 0) {
@@ -1800,7 +1825,7 @@ export function CaptionStudio2Client() {
     setBusy(true);
     setError(null);
     try {
-      const burnUrl = await bakeTimelinePlate();
+      const burnUrl = await resolveFinishBasePlateUrl();
       const res = await fetch("/api/burn-script-captions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1819,11 +1844,11 @@ export function CaptionStudio2Client() {
           typeof data.error === "string" ? data.error : t.burnFailed,
         );
       }
-      // Keep pre-burn plate as "show original" reference.
+      // Clean plate stays the re-burn / export base; timeline becomes the finished plate.
       setOriginalSourceUrl(toRelativePipelineUrl(burnUrl));
       await commitPlateToTimeline(data.videoUrl, sourceLabel || "Burned");
-      // Burned pixels already include captions — hide CSS overlay to avoid doubles.
       setCaptionsBurnedInPlate(true);
+      setShowOriginal(false);
       setNote(t.appliedNote);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : t.burnFailed);
@@ -1836,9 +1861,14 @@ export function CaptionStudio2Client() {
     setBusy(true);
     setError(null);
     try {
-      const plate = await bakeTimelinePlate();
-      setOriginalSourceUrl(toRelativePipelineUrl(plate));
-      await commitPlateToTimeline(plate, sourceLabel || "Export");
+      // Same base as burn/re-burn: caption-free plate only.
+      const plate = await resolveFinishBasePlateUrl();
+      const clean = toRelativePipelineUrl(plate);
+      setOriginalSourceUrl(clean);
+      await commitPlateToTimeline(clean, sourceLabel || "Export");
+      // Structure-only plate — no captions in pixels.
+      setCaptionsBurnedInPlate(false);
+      setShowOriginal(false);
       setNote(t2.exportDone);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : t2.joinFailed);
@@ -1849,10 +1879,15 @@ export function CaptionStudio2Client() {
 
   function updateLine(index: number, patch: Partial<CaptionLine>) {
     // Keep burned flag; force original plate so live overlay does not double on burned pixels.
-    setShowOriginal(true);
+    beginCaptionEditAgainstCleanPlate();
     setCaptionLines((prev) =>
       prev.map((line, i) => (i === index ? { ...line, ...patch } : line)),
     );
+  }
+
+  /** After burn, edit against the clean plate — never clear the burn flag (that re-shows overlay on burned pixels). */
+  function beginCaptionEditAgainstCleanPlate() {
+    if (captionsBurnedInPlate) setShowOriginal(true);
   }
 
   function seekPreviewTo(sec: number) {
@@ -2269,7 +2304,7 @@ export function CaptionStudio2Client() {
                         }}
                         onUpdate={(index, patch) => {
                           pushUndo();
-                          setShowOriginal(true);
+                          beginCaptionEditAgainstCleanPlate();
                           setCaptionLines((prev) =>
                             prev.map((line, i) =>
                               i === index ? { ...line, ...patch } : line,
@@ -2403,7 +2438,7 @@ export function CaptionStudio2Client() {
                   {captionMode === "speech" ? (
                     <button
                       type="button"
-                      disabled={transcribeBusy || !asrSourceUrl}
+                      disabled={transcribeBusy || !canRunAsr}
                       onClick={() => void runAutoTranscribe()}
                       className="w-full rounded-lg bg-cyan-400 px-3 py-2 text-xs font-bold text-slate-950 disabled:opacity-50"
                     >
@@ -2532,6 +2567,7 @@ export function CaptionStudio2Client() {
                             onChange={(patch) => updateLine(index, patch)}
                             onRemove={() => {
                               pushUndo();
+                              beginCaptionEditAgainstCleanPlate();
                               setCaptionLines((prev) =>
                                 prev.filter((_, i) => i !== index),
                               );
@@ -2546,7 +2582,7 @@ export function CaptionStudio2Client() {
                     className="w-full rounded-lg border border-white/15 px-2 py-1.5 text-[11px] text-white"
                     onClick={() => {
                       pushUndo();
-                      setCaptionsBurnedInPlate(false);
+                      beginCaptionEditAgainstCleanPlate();
                       setCaptionLines((prev) => [
                         ...prev,
                         {
