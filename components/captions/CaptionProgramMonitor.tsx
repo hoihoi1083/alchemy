@@ -100,8 +100,8 @@ export const CaptionProgramMonitor = forwardRef<
       ref={videoRef}
       controls
       playsInline
-      className="max-h-full max-w-full rounded-lg bg-black object-contain"
-      style={{ aspectRatio: "9 / 16", width: "min(100%, 320px)" }}
+      className="h-full max-h-full w-auto max-w-full rounded-lg bg-black object-contain"
+      style={{ aspectRatio: "9 / 16", height: "100%", maxHeight: "100%", width: "auto" }}
       onPlay={() => {
         wantPlayingRef.current = true;
       }}

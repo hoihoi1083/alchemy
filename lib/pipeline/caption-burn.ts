@@ -50,7 +50,10 @@ function escapeDrawtextFontPath(fontPath: string): string {
   return fontPath.replace(/\\/g, "/").replace(/:/g, "\\:").replace(/'/g, "\\'");
 }
 
-function positionX(position: CaptionLine["position"]): string {
+function positionX(position: CaptionLine["position"], xPct?: number): string {
+  if (typeof xPct === "number" && Number.isFinite(xPct)) {
+    return `w*${(Math.min(95, Math.max(5, xPct)) / 100).toFixed(4)}-text_w/2`;
+  }
   switch (position ?? "bottom") {
     case "top-left":
     case "bottom-left":
@@ -76,6 +79,7 @@ function drawtextFilter(
   endSec: number,
   yPx: number,
   fontSize: number,
+  xPct?: number,
 ): string {
   const escaped = escapeDrawtextText(text);
   const enable = `between(t\\,${startSec.toFixed(2)}\\,${endSec.toFixed(2)})`;
@@ -87,7 +91,7 @@ function drawtextFilter(
     "fontcolor=white",
     "borderw=4",
     "bordercolor=black@0.85",
-    `x=${positionX(position)}`,
+    `x=${positionX(position, xPct)}`,
     `y=${yPx}-text_h/2`,
     `enable='${enable}'`,
   ].join(":");
@@ -110,7 +114,19 @@ export async function burnCaptionsDrawtext(
     const endSec = Math.min(duration, Math.max(startSec + 0.2, cap.endSec));
     const plan = planCaptionBurnText(cap.text, width, height, {
       position: cap.position,
+      fontSizeScale: cap.style?.fontSizeScale,
     });
+    let lineYs = plan.lineYs;
+    if (typeof cap.yPct === "number" && Number.isFinite(cap.yPct)) {
+      const centerY = Math.round(
+        (Math.min(95, Math.max(5, cap.yPct)) / 100) * height,
+      );
+      const blockH = plan.fontSize * Math.max(1, plan.lines.length) * 1.15;
+      const startY = centerY - blockH / 2 + plan.fontSize * 0.85;
+      lineYs = plan.lines.map((_, i) =>
+        Math.round(startY + i * plan.fontSize * 1.15),
+      );
+    }
     plan.lines.forEach((chunk, lineIndex) => {
       filters.push(
         drawtextFilter(
@@ -119,8 +135,9 @@ export async function burnCaptionsDrawtext(
           cap.position,
           startSec,
           endSec,
-          plan.lineYs[lineIndex] ?? plan.lineYs[0] ?? Math.round(height * 0.9),
+          lineYs[lineIndex] ?? lineYs[0] ?? Math.round(height * 0.9),
           plan.fontSize,
+          cap.xPct,
         ),
       );
     });

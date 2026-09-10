@@ -511,17 +511,26 @@ export async function addBackgroundMusic(
   replaceExistingAudio = false,
   /** Silence before BGM starts (matches CapCut-style audio-lane offset). */
   startSec = 0,
+  /** How long BGM plays after start (default: rest of video). */
+  playDurationSec?: number,
 ): Promise<void> {
   const duration = await getMediaDurationSeconds(inputVideo);
   const hasAudio =
     !replaceExistingAudio && (await videoHasAudioStream(inputVideo));
   const dur = duration.toFixed(3);
-  const delayMs = Math.max(0, Math.round(Math.min(duration - 0.05, startSec) * 1000));
+  const start = Math.max(0, Math.min(duration - 0.05, startSec));
+  const maxPlay = Math.max(0.2, duration - start);
+  const playDur =
+    typeof playDurationSec === "number" && Number.isFinite(playDurationSec)
+      ? Math.min(maxPlay, Math.max(0.2, playDurationSec))
+      : maxPlay;
+  const delayMs = Math.max(0, Math.round(start * 1000));
   const delayFilter = delayMs > 0 ? `adelay=${delayMs}|${delayMs},` : "";
   const loudNorm = hasAudio
     ? "loudnorm=I=-18:TP=-1.5:LRA=11"
     : "loudnorm=I=-16:TP=-1.5:LRA=11";
-  const bgmChain = `[1:a]volume=${volume},${loudNorm},${delayFilter}apad=whole_dur=${dur},atrim=0:${dur},asetpts=PTS-STARTPTS`;
+  // Loop source → take playDur of music → delay to start → pad/trim to video length.
+  const bgmChain = `[1:a]volume=${volume},${loudNorm},atrim=0:${playDur.toFixed(3)},asetpts=PTS-STARTPTS,${delayFilter}apad=whole_dur=${dur},atrim=0:${dur},asetpts=PTS-STARTPTS`;
 
   if (hasAudio) {
     await runFfmpeg([

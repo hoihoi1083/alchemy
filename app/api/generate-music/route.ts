@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { chargeTokens, refundTokens } from "@/lib/billing/charge";
 import { TOKEN_COST } from "@/lib/billing/token-costs";
-import { generateMusicOptions } from "@/lib/music-generation";
+import { generateMusicFromVideo, generateMusicOptions } from "@/lib/music-generation";
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import {
   isLibraryAssetUrl,
@@ -17,16 +17,28 @@ export async function POST(request: Request) {
   const auth = await requireAppUser();
   if (!auth.ok) return auth.response;
 
-  let body: { promptEn?: string; durationSec?: number };
+  let body: {
+    promptEn?: string;
+    durationSec?: number;
+    /** When set, prefer Sonilo video-to-music (analyzes pacing from the clip). */
+    videoUrl?: string;
+    matchVideo?: boolean;
+  };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: SERVER_ERRORS.invalidInput }, { status: 400 });
   }
 
-  const promptEn = body.promptEn?.trim();
-  if (!promptEn) {
-    return NextResponse.json({ error: "promptEn is required." }, { status: 400 });
+  const promptEn = body.promptEn?.trim() ?? "";
+  const videoUrl = body.videoUrl?.trim() ?? "";
+  const matchVideo = body.matchVideo === true && Boolean(videoUrl);
+
+  if (!matchVideo && !promptEn) {
+    return NextResponse.json(
+      { error: "promptEn is required (or matchVideo + videoUrl)." },
+      { status: 400 },
+    );
   }
 
   const tokenCost = TOKEN_COST.music;
@@ -35,7 +47,13 @@ export async function POST(request: Request) {
   const balanceAfter = charged.balanceAfter;
 
   try {
-    const tracks = await generateMusicOptions(promptEn, body.durationSec ?? 10);
+    const tracks = matchVideo
+      ? await generateMusicFromVideo({
+          videoUrl,
+          promptEn: promptEn || undefined,
+          numSamples: 2,
+        })
+      : await generateMusicOptions(promptEn, body.durationSec ?? 10);
     if (!tracks.length) {
       throw new Error("No music tracks were generated.");
     }
@@ -51,8 +69,8 @@ export async function POST(request: Request) {
           kind: "audio",
           sourceUrl: t.audioUrl,
           fallbackUrl: t.audioUrl,
-          name: `AI music ${t.label}`,
-          prompt: promptEn,
+          name: matchVideo ? `Video-matched music ${t.label}` : `AI music ${t.label}`,
+          prompt: promptEn || (matchVideo ? `video-to-music:${videoUrl}` : undefined),
         });
         if (!isLibraryAssetUrl(audioUrl)) {
           throw new Error(
@@ -70,6 +88,7 @@ export async function POST(request: Request) {
     await trackUsage(auth.user.userId, "music");
     return NextResponse.json({
       tracks: persisted,
+      matchedVideo: matchVideo,
       tokensCharged: tokenCost,
       creditBalance: balanceAfter,
     });

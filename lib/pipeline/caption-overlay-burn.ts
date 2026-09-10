@@ -39,7 +39,14 @@ function run(cmd: string, args: string[]): Promise<void> {
 function layoutX(
   position: CaptionLine["position"],
   width: number,
+  xPct?: number,
 ): { x: number; anchor: "start" | "middle" | "end" } {
+  if (typeof xPct === "number" && Number.isFinite(xPct)) {
+    return {
+      x: Math.round((Math.min(95, Math.max(5, xPct)) / 100) * width),
+      anchor: "middle",
+    };
+  }
   const marginX = Math.round(width * 0.06);
   switch (position ?? "bottom") {
     case "top-left":
@@ -60,28 +67,43 @@ async function renderCaptionOverlayPng(
   style: CaptionBurnStyle,
 ): Promise<Buffer> {
   const preset = resolveCaptionBurnStyle(style);
+  const fontSizeScale = caption.style?.fontSizeScale ?? preset.fontSizeScale ?? 1;
   const plan = planCaptionBurnText(caption.text, width, height, {
-    fontSizeScale: preset.fontSizeScale ?? 1,
+    fontSizeScale,
     position: caption.position,
   });
   const chunks = plan.lines.map((line) => sanitizeCompositorText(line));
   const fontSize = plan.fontSize;
   const stroke = Math.max(
     2,
-    Math.round(fontSize * 0.12 * (preset.strokeWidthScale ?? 1)),
+    Math.round(
+      fontSize *
+        0.12 *
+        (typeof caption.style?.strokeWidth === "number"
+          ? caption.style.strokeWidth / 2
+          : (preset.strokeWidthScale ?? 1)),
+    ),
   );
-  const fill = preset.fill ?? "white";
-  const strokeColor = preset.stroke ?? "black";
+  const fill = caption.style?.fill ?? preset.fill ?? "white";
+  const strokeColor = caption.style?.stroke ?? preset.stroke ?? "black";
   const fontWeight = preset.fontWeight ?? 700;
   const bold = fontWeight >= 600;
-  const { x, anchor } = layoutX(caption.position, width);
+  const { x, anchor } = layoutX(caption.position, width, caption.xPct);
   const preferred =
     preset.fontFamily === "NotoDisplay" ? ("headline" as const) : ("body" as const);
+
+  let lineYs = plan.lineYs;
+  if (typeof caption.yPct === "number" && Number.isFinite(caption.yPct)) {
+    const centerY = Math.round((Math.min(95, Math.max(5, caption.yPct)) / 100) * height);
+    const blockH = fontSize * Math.max(1, chunks.length) * 1.15;
+    const startY = centerY - blockH / 2 + fontSize * 0.85;
+    lineYs = chunks.map((_, i) => Math.round(startY + i * fontSize * 1.15));
+  }
 
   // Always outline glyphs — Sharp @font-face tofu on Vercel for EN and CJK.
   const body = burnTextSvgPaths({
     lines: chunks,
-    lineYs: plan.lineYs,
+    lineYs,
     x,
     anchor,
     fontSize,
@@ -92,8 +114,16 @@ async function renderCaptionOverlayPng(
     strokeWidth: stroke,
   });
 
+  const shadowBlur = caption.style?.shadowBlur ?? 0;
+  const shadowColor = caption.style?.shadowColor;
+  const shadowLayer =
+    shadowBlur > 0 && shadowColor
+      ? `<g opacity="0.7" filter="url(#capShadow)">${body}</g>
+         <defs><filter id="capShadow"><feDropShadow dx="0" dy="2" stdDeviation="${shadowBlur / 2}" flood-color="${shadowColor}"/></filter></defs>`
+      : "";
+
   const svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-    ${body}
+    ${shadowLayer}${body}
   </svg>`;
 
   return sharp(Buffer.from(svg)).png().toBuffer();
@@ -143,7 +173,7 @@ export async function burnCaptionsOverlay(
 
   for (let i = 0; i < captionLines.length; i++) {
     const cap = captionLines[i];
-    const lineStyle = resolveLineCaptionStyle(cap.stylePreset, style);
+    const lineStyle = resolveLineCaptionStyle(cap.stylePreset, style, cap.style);
     const pngPath = path.join(workDir, `caption_overlay_${i}.png`);
     const png = await renderCaptionOverlayPng(width, height, cap, lineStyle);
     // Always validate Latin; CJK tofu is rarer but cheap to catch too.

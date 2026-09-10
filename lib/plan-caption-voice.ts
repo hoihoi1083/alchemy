@@ -46,7 +46,7 @@ function buildEvenWindows(
   locale: VoiceoverLocale,
 ) {
   const dur = Math.max(2, videoDurationSec);
-  const n = Math.max(2, Math.min(8, lineCount));
+  const n = Math.max(1, Math.min(8, lineCount));
   const slice = dur / n;
   const screen = screenCharBudget(locale);
   return Array.from({ length: n }, (_, i) => {
@@ -72,6 +72,8 @@ export type PlanCaptionVoiceInput = {
   locale: VoiceoverLocale;
   videoDurationSec: number;
   lineCount?: number;
+  /** Absolute timeline offset — plan windows are relative then shifted. */
+  startSec?: number;
 };
 
 export type PlanCaptionVoiceResult = {
@@ -90,8 +92,9 @@ export async function planCaptionVoice(
   if (!topic) throw new Error("topic is required.");
 
   const videoDurationSec = Math.max(2, Number(input.videoDurationSec) || 8);
+  const offsetSec = Math.max(0, Number(input.startSec) || 0);
   const lineCount =
-    typeof input.lineCount === "number" && input.lineCount >= 2
+    typeof input.lineCount === "number" && input.lineCount >= 1
       ? Math.min(8, Math.round(input.lineCount))
       : defaultCaptionLineCount(videoDurationSec);
 
@@ -151,8 +154,8 @@ export async function planCaptionVoice(
     const spokenBudget = Math.max(w.spokenMaxChars, text.length);
     const spokenText = pickSpokenText(text, got?.spokenText, spokenBudget);
     return {
-      startSec: w.startSec,
-      endSec: w.endSec,
+      startSec: Number((w.startSec + offsetSec).toFixed(2)),
+      endSec: Number((w.endSec + offsetSec).toFixed(2)),
       text,
       spokenText,
       position: i % 2 === 0 ? "bottom" : "top",

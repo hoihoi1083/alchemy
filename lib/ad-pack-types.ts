@@ -7,6 +7,16 @@ export type CaptionPosition =
   | "bottom-left"
   | "bottom-right";
 
+/** Freeform per-line style overrides (preview + burn). */
+export type CaptionLineStyle = {
+  fill?: string;
+  stroke?: string;
+  strokeWidth?: number;
+  fontSizeScale?: number;
+  shadowColor?: string;
+  shadowBlur?: number;
+};
+
 export type CaptionLine = {
   startSec: number;
   endSec: number;
@@ -20,6 +30,21 @@ export type CaptionLine = {
   position?: CaptionPosition;
   /** Per-line burned subtitle style; falls back to studio default when unset. */
   stylePreset?: string;
+  /** Freeform horizontal position 0–100 (center of text). Overrides enum when set. */
+  xPct?: number;
+  /** Freeform vertical position 0–100 (center of text). Overrides enum when set. */
+  yPct?: number;
+  /** Freeform style overrides on top of preset. */
+  style?: CaptionLineStyle;
+};
+
+/** One continuous VO clip on the timeline VO lane. */
+export type VoClip = {
+  id: string;
+  audioUrl: string;
+  startSec: number;
+  durationSec: number;
+  label?: string;
 };
 
 /** Text used for TTS — prefers longer spokenText when present. */

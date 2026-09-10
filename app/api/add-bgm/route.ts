@@ -30,6 +30,10 @@ async function mixBgmJob(
     replaceSourceAudio: boolean;
     /** BGM lane start offset in seconds (silence before music). */
     startSec?: number;
+    /** How long BGM plays after start (seconds). */
+    durationSec?: number;
+    /** Absolute ffmpeg volume multiplier (typical 0.2–1.5). */
+    volume?: number;
     persistUserId?: string;
   },
 ) {
@@ -75,9 +79,16 @@ async function mixBgmJob(
     inputPath,
     musicPath,
     outputPath,
-    input.musicUrl ? 0.55 : bgmMixVolume(input.track),
+    typeof input.volume === "number" && Number.isFinite(input.volume)
+      ? Math.min(2, Math.max(0.05, input.volume))
+      : input.musicUrl
+        ? 0.55
+        : bgmMixVolume(input.track),
     input.replaceSourceAudio,
     Math.max(0, Number(input.startSec) || 0),
+    typeof input.durationSec === "number" && Number.isFinite(input.durationSec)
+      ? Math.max(0.2, input.durationSec)
+      : undefined,
   );
   await assertVideoHasAudio(outputPath, "BGM mix");
 
@@ -122,6 +133,14 @@ export async function POST(request: Request) {
         0,
         Number(formData.get("start_sec") ?? formData.get("bgm_start_sec")) || 0,
       );
+      const durationRaw = Number(
+        formData.get("duration_sec") ?? formData.get("bgm_duration_sec"),
+      );
+      const durationSec =
+        Number.isFinite(durationRaw) && durationRaw > 0 ? durationRaw : undefined;
+      const volumeRaw = Number(formData.get("volume") ?? formData.get("bgm_volume"));
+      const volume =
+        Number.isFinite(volumeRaw) && volumeRaw > 0 ? volumeRaw : undefined;
       const file = videoFile instanceof File && videoFile.size > 0 ? videoFile : undefined;
       if (!file && !videoUrl) {
         return NextResponse.json(
@@ -142,6 +161,8 @@ export async function POST(request: Request) {
           musicUrl,
           replaceSourceAudio,
           startSec,
+          durationSec,
+          volume,
           persistUserId: auth.user.userId,
         });
         return NextResponse.json({
@@ -171,6 +192,10 @@ export async function POST(request: Request) {
       replace_source_audio?: boolean;
       start_sec?: number;
       bgm_start_sec?: number;
+      duration_sec?: number;
+      bgm_duration_sec?: number;
+      volume?: number;
+      bgm_volume?: number;
     } | null = null;
     try {
       body = await request.json();
@@ -197,6 +222,14 @@ export async function POST(request: Request) {
           0,
           Number(body?.start_sec ?? body?.bgm_start_sec) || 0,
         ),
+        durationSec: (() => {
+          const v = Number(body?.duration_sec ?? body?.bgm_duration_sec);
+          return Number.isFinite(v) && v > 0 ? v : undefined;
+        })(),
+        volume: (() => {
+          const v = Number(body?.volume ?? body?.bgm_volume);
+          return Number.isFinite(v) && v > 0 ? v : undefined;
+        })(),
         persistUserId: auth.user.userId,
       });
       return NextResponse.json({

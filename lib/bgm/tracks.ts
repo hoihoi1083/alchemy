@@ -15,20 +15,20 @@ export const BGM_TRACKS: BgmTrackMeta[] = [
   {
     id: "calm",
     file: "calm.mp3",
-    mixVolume: 1.15,
-    character: "soft ambient pad, slow",
+    mixVolume: 0.95,
+    character: "soft ambient instrumental",
   },
   {
     id: "upbeat",
     file: "upbeat.mp3",
-    mixVolume: 1.2,
-    character: "energetic pulse, brighter",
+    mixVolume: 1.0,
+    character: "upbeat promo instrumental",
   },
   {
     id: "warm",
     file: "warm.mp3",
-    mixVolume: 1.15,
-    character: "warm mid-tone lifestyle",
+    mixVolume: 0.95,
+    character: "warm lifestyle instrumental",
   },
 ];
 
@@ -44,7 +44,8 @@ export function bgmFilePath(trackId: BgmTrackId): string {
 
 /** Public URL for in-browser preview (library tracks). */
 export function bgmPublicUrl(trackId: BgmTrackId): string {
-  return `/bgm/${bgmTrackMeta(trackId).file}`;
+  // Bust browser cache when demos are regenerated via setup:bgm.
+  return `/bgm/${bgmTrackMeta(trackId).file}?v=3`;
 }
 
 export function bgmMixVolume(trackId: BgmTrackId): number {

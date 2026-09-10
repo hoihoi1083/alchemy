@@ -85,6 +85,15 @@ async function dubVoiceJob(
     captionLines?: CaptionLine[];
     speechUrl?: string;
     voicePreset?: VoicePresetId;
+    /** VO gain into mixNarrationOverVideo (default ~2.1). */
+    voiceVolume?: number;
+    /** Existing video/BGM level under VO (default ~0.14). */
+    underVoiceBgmVolume?: number;
+    /**
+     * continuous = one TTS from script/preview (default when script present).
+     * per_caption = one TTS per caption line (legacy choppy mode).
+     */
+    mixMode?: "continuous" | "per_caption";
     trackUsageUserId?: string;
     persistUserId?: string;
   },
@@ -119,7 +128,12 @@ async function dubVoiceJob(
   let ttsProvider = resolveTtsProvider();
   let clipCount = 1;
 
-  if (timedLines.length >= 2) {
+  const hasScriptOrSpeech = Boolean(input.script?.trim() || input.speechUrl);
+  const mixMode =
+    input.mixMode ??
+    (hasScriptOrSpeech ? "continuous" : timedLines.length >= 2 ? "per_caption" : "continuous");
+
+  if (mixMode === "per_caption" && timedLines.length >= 2) {
     // One natural-speed clip per caption — speak spokenText when present.
     console.info(
       `[dub-script-voice] per-caption TTS: ${timedLines.length} lines @ ${timedLines
@@ -146,21 +160,25 @@ async function dubVoiceJob(
     clipCount = clips.length;
     await mixTimedNarrationClips(clips, narrationWav, videoDuration);
   } else {
+    console.info(
+      `[dub-script-voice] continuous TTS (mix_mode=${mixMode}, lines=${timedLines.length})`,
+    );
     const narrationSrc = path.join(dir, `narration.${ext}`);
     const speechStartSec =
-      timedLines.length === 1
-        ? timedLines[0].startSec
-        : typeof input.speechStartSec === "number" && input.speechStartSec > 0
-          ? input.speechStartSec
+      typeof input.speechStartSec === "number" && input.speechStartSec > 0
+        ? input.speechStartSec
+        : timedLines.length >= 1
+          ? timedLines[0].startSec
           : 0;
 
-    if (input.speechUrl && timedLines.length < 2) {
+    if (input.speechUrl) {
       await materializeMediaInput(input.speechUrl, narrationSrc, { clerkId: input.clerkId });
       ttsVoice = input.voicePreset ? `preview:${input.voicePreset}` : "preview:selected";
     } else {
       const text =
-        (timedLines[0] ? captionSpeakText(timedLines[0]) : "") ||
         input.script?.trim() ||
+        (timedLines.length === 1 ? captionSpeakText(timedLines[0]) : "") ||
+        timedLines.map((l) => captionSpeakText(l)).filter(Boolean).join(input.locale === "en" ? ". " : "，") ||
         "";
       if (!text) throw new Error("script, speech_url, or caption_lines required.");
       const tts = await synthesizeSpeechToFile({
@@ -183,7 +201,18 @@ async function dubVoiceJob(
     );
   }
 
-  await mixNarrationOverVideo(inputPath, narrationWav, outputPath);
+  await mixNarrationOverVideo(
+    inputPath,
+    narrationWav,
+    outputPath,
+    typeof input.underVoiceBgmVolume === "number" &&
+      Number.isFinite(input.underVoiceBgmVolume)
+      ? Math.min(1, Math.max(0.02, input.underVoiceBgmVolume))
+      : 0.14,
+    typeof input.voiceVolume === "number" && Number.isFinite(input.voiceVolume)
+      ? Math.min(4, Math.max(0.4, input.voiceVolume))
+      : 2.1,
+  );
   await assertVideoHasAudio(outputPath, "Voiceover mix");
 
   if (!input.speechUrl && input.trackUsageUserId) {
@@ -210,8 +239,9 @@ async function dubVoiceJob(
     provider: ttsProvider,
     videoDurationSec: videoDuration,
     clipCount,
-    usedPreviewSpeech: Boolean(input.speechUrl) && timedLines.length < 2,
-    perCaption: timedLines.length >= 2,
+    usedPreviewSpeech: Boolean(input.speechUrl) && mixMode === "continuous",
+    perCaption: mixMode === "per_caption" && timedLines.length >= 2,
+    mixMode,
   };
 }
 
@@ -278,6 +308,14 @@ export async function POST(request: Request) {
         captionLines,
         speechUrl,
         voicePreset,
+        voiceVolume: (() => {
+          const v = Number(formData.get("voice_volume"));
+          return Number.isFinite(v) && v > 0 ? v : undefined;
+        })(),
+        underVoiceBgmVolume: (() => {
+          const v = Number(formData.get("under_voice_bgm_volume"));
+          return Number.isFinite(v) && v > 0 ? v : undefined;
+        })(),
         trackUsageUserId:
           speechUrl && captionLines.length < 2 ? undefined : auth.user.userId,
         persistUserId: auth.user.userId,
@@ -306,6 +344,9 @@ export async function POST(request: Request) {
     speech_url?: string;
     voice_preset?: string;
     caption_lines?: unknown;
+    voice_volume?: number;
+    under_voice_bgm_volume?: number;
+    mix_mode?: "continuous" | "per_caption";
   } | null = null;
   try {
     body = await request.json();
@@ -322,6 +363,11 @@ export async function POST(request: Request) {
     ? rawPreset
     : undefined;
   const captionLines = parseCaptionLines(body?.caption_lines);
+  const mixModeRaw = body?.mix_mode;
+  const mixMode =
+    mixModeRaw === "per_caption" || mixModeRaw === "continuous"
+      ? mixModeRaw
+      : undefined;
 
   if (!videoUrl) {
     return NextResponse.json({ error: "video_url is required." }, { status: 400 });
@@ -336,8 +382,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid locale." }, { status: 400 });
   }
 
+  const effectiveContinuous =
+    mixMode === "continuous" ||
+    (mixMode !== "per_caption" && Boolean(script || speechUrl));
   const tokenCost =
-    TOKEN_COST.voiceover * Math.max(1, captionLines.length >= 2 ? captionLines.length : 1);
+    TOKEN_COST.voiceover *
+    Math.max(
+      1,
+      effectiveContinuous
+        ? 1
+        : captionLines.length >= 2
+          ? captionLines.length
+          : 1,
+    );
   const charged = await chargeTokens(auth.user.userId, tokenCost, {
     kind: "voiceover_dub",
     captionLines: captionLines.length,
@@ -355,8 +412,17 @@ export async function POST(request: Request) {
       captionLines,
       speechUrl,
       voicePreset,
+      mixMode,
+      voiceVolume: (() => {
+        const v = Number(body?.voice_volume);
+        return Number.isFinite(v) && v > 0 ? v : undefined;
+      })(),
+      underVoiceBgmVolume: (() => {
+        const v = Number(body?.under_voice_bgm_volume);
+        return Number.isFinite(v) && v > 0 ? v : undefined;
+      })(),
       trackUsageUserId:
-        speechUrl && captionLines.length < 2 ? undefined : auth.user.userId,
+        speechUrl && effectiveContinuous ? undefined : auth.user.userId,
       persistUserId: auth.user.userId,
     });
     return NextResponse.json({

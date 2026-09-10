@@ -5198,7 +5198,7 @@ export const en = {
         cinematic: "Cinematic",
       },
       aiStyleLabel: "AI style",
-      libraryMusic: "Music library",
+      libraryMusic: "Demo loops",
       aiMusic: "AI-generated",
       generateMusic: "Generate 3 AI tracks",
       generatingMusic: "Generating music…",
@@ -5650,6 +5650,7 @@ export const en = {
 		libraryPickerEmpty:
 			"No saved videos yet. Generate one in the studio first.",
 		libraryPickerLoadError: "Could not load library videos.",
+		libraryPickerMissingFile: "File missing",
 		libraryPickerCancel: "Cancel",
 		libraryPickerUse: "Use this",
 		libraryPickerClose: "Close",
@@ -5737,6 +5738,12 @@ export const en = {
 		audioBgmLabel: "Music track",
 		audioApplyBgm: "Add BGM",
 		audioApplyingBgm: "Adding BGM…",
+		bgmVolumeLabel: "BGM volume",
+		matchVideoMusic: "Match music to this video",
+		matchVideoMusicHint:
+			"Uses Sonilo on fal to score pacing from your clip. Topic/mood still steer style when set.",
+		voiceVolumeLabel: "Voice volume",
+		underVoiceBgmLabel: "BGM under voice",
 		audioReplaceOriginal: "Replace original audio",
 		audioReplaceOriginalHint:
 			"Off keeps the uploaded video’s existing sound and mixes BGM underneath. Turn on for music-only output.",
@@ -5789,18 +5796,20 @@ export const en = {
 			"Showing processed version — play to hear BGM / voice.",
 		previewAudioHint:
 			"Tip: unmute the player and turn up volume after adding BGM.",
-		libraryBgmPreviewLabel: "Preview library loop (loops in player)",
+		libraryBgmPreviewLabel: "Preview demo loop",
 		libraryBgmDisclaimer:
-			"Library tracks are short placeholder loops — similar tone. Use AI 生成 for unique music matched to your video length.",
+			"Demo instrumentals (Calm / Upbeat / Warm). Quick preview — use AI music for a unique track matched to your video.",
 		aiMusicNeedBrief:
 			"Enter a product/topic above (or plan with AI) before generating music.",
 		aiMusicGenerateHint:
-			"Pick a mood above, then generate — product/topic is optional.",
+			"Optional mood + topic, then generate music sized to your clip.",
 		aiMusicGenerateFirst:
 			"Generate and preview AI tracks first, then click Add BGM.",
 		aiMusicSelectTrack: "Select an AI music track to apply.",
 		aiMusicGeneratedNote:
 			"{count} AI tracks ready — preview below, then Add BGM.",
+		aiMusicMatchedVideoNote:
+			"Video-matched AI tracks ready — preview below, then Add BGM.",
 		defaultStyleLabel: "Default style for new lines",
 		defaultStyleHint:
 			"Each line can override this in its own style dropdown.",
@@ -5902,6 +5911,11 @@ export const en = {
 		editCancel: "Cancel edit",
 		skipPicture: "Skip — look is fine",
 		editCostHint: (n: number) => `~${n} tokens · AI picture edit`,
+		audioCostBgm: (n: number) => `~${n} tokens · add BGM`,
+		audioCostVoice: (n: number) => `~${n} tokens · mix voice`,
+		audioCostMusic: (n: number) => `~${n} tokens · AI music`,
+		audioCostVoicePreview: (n: number) => `~${n} tokens · voice preview`,
+		audioCostBurn: (n: number) => `~${n} tokens · burn captions`,
 		needRefOrNote: "Add a reference photo or a short note.",
 		editFailed: "Picture edit failed.",
 		editDone: "Picture updated — download it, or keep editing on the timeline.",
@@ -5924,22 +5938,28 @@ export const en = {
 		joinDone: "Clips joined — continue to captions.",
 		clipAdded: "Clip added to the timeline.",
 		nleTitle: "Timeline",
-		nleHint: "Trim edges · split at playhead · drag to reorder · arrange captions & BGM",
-		nleShortcuts: "Space play · S split · Del delete · ⌘Z undo",
+		nleHint: "Click the clip to place the red cut line · then Split · drag edges to trim",
+		nleShortcuts: "Space play · S split · Del delete · ⌘Z undo · ⌘/Ctrl+scroll zoom",
 		nleAudioTrack: "Audio",
 		nleSplit: "Split",
 		nleDelete: "Delete clip",
 		nleUndo: "Undo",
 		nleZoomIn: "+",
 		nleZoomOut: "−",
+		nleZoomFit: "Fit",
+		nleZoomLabel: "Zoom",
+		nleCutAt: "Cut @ {t}s",
+		libraryFileMissing: "That library item has no file in storage (upload never finished). Pick one with a working thumbnail, or re-upload the video.",
 		nleEmptyVideo: "No clips yet",
+		nleEmptyCaption: "Add caption lines — they appear on this track",
 		nleBgmLane: "BGM",
 		nleVoLane: "VO",
 		nleSelected: "Selected",
 		nleSplitDone: "Clip split at playhead.",
 		nleSplitNeedInterior: "Move the playhead inside a clip (not on an edge) to split.",
 		nleKeepOne: "Keep at least one video clip on the timeline.",
-		bgmDragHint: "Drag the BGM block on the audio track to set where music starts.",
+		bgmDragHint:
+			"Drag the BGM block to move it; use the green edge handles to trim length. Re-click Add BGM to bake the new placement.",
 		bgmStartNote: (s: number) => `BGM starts at ${s.toFixed(1)}s on the mix`,
 		exportPlate: "Export timeline",
 		exportingPlate: "Baking timeline…",
@@ -5951,6 +5971,12 @@ export const en = {
 		aiPlanHint:
 			"Type a product/topic — AI writes timed captions + VO script. Then open Audio to preview voice and mix.",
 		openAudioForVo: "Next: Audio · Finish for VO mix + BGM →",
+		sectionAiCaption: "AI caption this section",
+		sectionAiVo: "Generate VO for this section",
+		sectionAiHint:
+			"Select a clip or caption on the timeline first — one caption + one continuous VO for that range.",
+		sectionCaptionDone: "Section caption ready (~{sec}s) — edit on preview, then Generate VO for this section.",
+		sectionVoDone: "Section VO on the timeline — drag to place, then Mix voiceover to bake into video.",
 		planOnCaptionsTab: "AI plan captions + VO → Captions tab",
 		pureTitle: "Pure captions",
 		pureHint: "Best for silent Alchemy reels — write or edit timed lines on the right.",
@@ -7975,6 +8001,132 @@ export const en = {
         name: "Comic red carpet",
         desc: "Original glam OC as webtoon star on a premiere carpet · no celebrity likeness",
       },
+    },
+  },
+  ultraCanvas2: {
+    badge: "Ultra 2 · beta",
+    title: "Ultra canvas 2",
+    subtitle:
+      "Task-first Ultra: pick a workflow, then customise every node. Prompts and freeform wiring stay.",
+    backClassic: "Classic Ultra →",
+    tryBeta: "Ultra 2 (beta)",
+    costHint:
+      "Same pay-per-use tokens as Ultra. Each image or video run deducts from your Alchemy balance.",
+    howTitle: "How do you want to create?",
+    howSubtitle: "Choose a starting workflow. You can customise every step later.",
+    noImageHint: "No reference image? Choose Single Video Clip.",
+    laneA: "A · Complete Video Ad",
+    laneAHint: "Best for multi-scene campaigns",
+    laneB: "B · Quick Video Clip",
+    laneBHint: "Best when you already know the scene",
+    badgeRequired: "Required",
+    badgeOptional: "Optional",
+    restoredSession: "We restored your last editing session.",
+    dismissRestore: "Dismiss",
+    saveStatusSaving: "Saving…",
+    saveStatusSaved: "All changes saved",
+    saveStatusFailed: "Save failed",
+    saveNow: "Save now",
+    versionHistory: "Version history",
+    dirtyUnsaved: "Unsaved changes",
+    cards: {
+      completeAd: {
+        title: "Complete Video Ad",
+        desc: "Script, storyboard, clips, voice, music and export.",
+        flow: "Script → Storyboard → Voice & Music → Export",
+      },
+      singleClip: {
+        title: "Single Video Clip",
+        desc: "Generate one scene directly from text.",
+        flow: "Text prompt → Generate clip → Export",
+      },
+      animateImage: {
+        title: "Animate an Image",
+        desc: "Turn an approved image or keyframe into video.",
+        flow: "Upload image → Animate → Export video",
+      },
+      scratch: {
+        title: "Build from Scratch",
+        desc: "Add and connect nodes manually.",
+        flow: "Add nodes → Connect steps → Run workflow",
+      },
+    },
+    textVideo: {
+      useWhen:
+        "Use this when you already know the scene and do not need a reference image.",
+      purpose: "Generate one video clip from a written scene description.",
+      tip: "Describe what happens on screen. You do not need to write model commands.",
+      example:
+        "A vitamin C serum bottle on a reflective black surface. Golden light passes through the bottle as the camera slowly moves forward.",
+      useExample: "Use example",
+      subject: "Subject",
+      action: "Action",
+      setting: "Setting",
+      camera: "Camera movement",
+      outputOne: "Output: One video clip",
+      preview: "Preview",
+      addVoiceMusic: "Add voice & music",
+      addToFinal: "Add to final video",
+      generateClip: "Generate clip",
+      noImageNeeded: "No image needed",
+    },
+    spliceReview: {
+      almostReady: "Your ad is almost ready",
+      videoOk: "Video scenes",
+      voiceOk: "AI voiceover",
+      bgmOk: "Background music",
+      captionsOk: "Captions",
+      complete: "Complete",
+      notAdded: "Not added",
+      addBgmHint: "Add background music before export. Wire an Audio node or export without music.",
+      completeAd: "Complete your ad",
+      exportWithoutMusic: "Export without music",
+    },
+    askAlchemy: {
+      title: "Ask Alchemy",
+      askAnything: "Ask anything…",
+      howToUse:
+        "You don’t type here yet — tap one of the question chips. Alchemy answers from your current board (nodes on the canvas).",
+      checkWorkflow: "Check my workflow",
+      skipUpload: "Can I skip Upload?",
+      estimateCost: "Estimate total cost",
+      improvePrompt: "Improve my prompt",
+      tip: "Tap a chip above to get an answer.",
+      answers: {
+        missingScript: "Add or open Script planning (required for a full ad).",
+        missingStoryboard: "Add Storyboard after Script (required).",
+        missingSplice: "Add Video splice at the end to combine clips.",
+        uploadOptional:
+          "Upload is optional — you can start from Script without a product photo.",
+        laneBAlternate:
+          "Text-to-video is a shortcut path (Lane B), not a step after Script.",
+        singleClipPath:
+          "You’re on Single Clip: write a scene in Text-to-video, then Generate. No image needed.",
+        needUploadStill: "Add an Upload node with your approved still first.",
+        animateFlow: "Flow: Upload → Image → Image-to-video.",
+        scratchBoard:
+          "Scratch board — use Add node on the left, then connect and Run.",
+        pickWorkflow: "Pick a starting workflow first (the 4 cards).",
+        coreOk: "Core nodes look fine — run Script / generate clips next.",
+        skipYes:
+          "Yes. Skip Upload and use Text-to-video: describe subject, action, setting, and camera.",
+        skipNeedUpload:
+          "Animate an Image needs Upload (or a library still) first.",
+        skipCompleteAd:
+          "On Complete Video Ad, Upload is optional. You can start Script without a photo.",
+        costEstimate:
+          "About {n} tokens if you Run all now. Script planning uses plan quota (not tokens).",
+        promptEmpty:
+          "Open Text-to-video and describe Subject + Action + Setting + Camera. Example: a serum bottle on black glass, golden light, slow push-in.",
+        promptStrengthen:
+          "Make the prompt clearer: name the subject, one action, the place, and camera move. Describe what happens on screen — not model commands.",
+      },
+    },
+    library: {
+      search: "Search by name…",
+      useSelected: "Use selected asset",
+      selectedCount: "{n} asset selected",
+      filterAll: "All",
     },
   },
 } as const;

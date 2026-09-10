@@ -104,3 +104,50 @@ export async function generateMusicOptions(
 
   return tracks;
 }
+
+/**
+ * Score music from the video itself (pacing / mood) via Sonilo on fal.
+ * Optional prompt steers genre; duration follows the source clip.
+ */
+export async function generateMusicFromVideo(input: {
+  videoUrl: string;
+  promptEn?: string;
+  numSamples?: number;
+}): Promise<GeneratedMusicTrack[]> {
+  const key = process.env.FAL_KEY?.trim();
+  if (!key) throw new Error("FAL_KEY is not configured.");
+  fal.config({ credentials: key });
+
+  const videoUrl = input.videoUrl.trim();
+  if (!videoUrl) throw new Error("videoUrl is required.");
+
+  const result = await fal.subscribe("sonilo/v1.1/video-to-music", {
+    input: {
+      video_url: videoUrl,
+      ...(input.promptEn?.trim() ? { prompt: input.promptEn.trim() } : {}),
+      num_samples: Math.min(3, Math.max(1, input.numSamples ?? 2)),
+    },
+    logs: false,
+  });
+
+  const data = result.data as {
+    audio?: { url?: string };
+    audios?: Array<{ url?: string }>;
+  };
+  const urls: string[] = [];
+  if (Array.isArray(data.audios)) {
+    for (const a of data.audios) {
+      if (a?.url) urls.push(a.url);
+    }
+  }
+  if (urls.length === 0 && data.audio?.url) urls.push(data.audio.url);
+  if (urls.length === 0) {
+    throw new Error("Video-to-music returned no audio.");
+  }
+
+  return urls.map((audioUrl, i) => ({
+    id: `sonilo-v2m-${i + 1}`,
+    label: String.fromCharCode(65 + i),
+    audioUrl,
+  }));
+}

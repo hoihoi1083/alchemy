@@ -231,9 +231,26 @@ export function parseCaptionBurnStyleJson(raw: unknown): CaptionBurnStyle {
 export function resolveLineCaptionStyle(
   linePreset: string | undefined,
   fallback: CaptionBurnStyle,
+  lineStyle?: {
+    fill?: string;
+    stroke?: string;
+    strokeWidth?: number;
+    fontSizeScale?: number;
+  },
 ): CaptionBurnStyle {
-  if (linePreset && isCaptionStylePresetId(linePreset)) {
-    return resolveCaptionBurnStyle(linePreset);
-  }
-  return fallback;
+  const base =
+    linePreset && isCaptionStylePresetId(linePreset)
+      ? resolveCaptionBurnStyle(linePreset)
+      : fallback;
+  if (!lineStyle) return base;
+  return {
+    ...base,
+    fill: lineStyle.fill ?? base.fill,
+    stroke: lineStyle.stroke ?? base.stroke,
+    fontSizeScale: lineStyle.fontSizeScale ?? base.fontSizeScale,
+    strokeWidthScale:
+      typeof lineStyle.strokeWidth === "number"
+        ? Math.max(0.3, lineStyle.strokeWidth / 2)
+        : base.strokeWidthScale,
+  };
 }

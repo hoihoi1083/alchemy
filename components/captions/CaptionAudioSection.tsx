@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type { VoiceoverLocale } from "@/lib/ad-pack-preferences";
 import { MUSIC_MOODS, type MusicMood } from "@/lib/ad-pack-preferences";
 import type { AiMusicTrack, VoicePreviewTrack } from "@/lib/ad-pack-types";
-import { BGM_TRACKS, bgmPublicUrl, type BgmTrackId } from "@/lib/bgm/tracks";
+import { bgmPublicUrl, type BgmTrackId } from "@/lib/bgm/tracks";
 
 export type MusicSource = "library" | "ai";
 
@@ -14,6 +14,8 @@ type Props = {
   captionBusy: boolean;
   /** Tighter chrome + accordion for CapCut props column. */
   embedded?: boolean;
+  /** When true, keep / force the BGM accordion open (e.g. Audio tab or BGM lane selected). */
+  preferMusicOpen?: boolean;
   musicTopic: string;
   onMusicTopicChange: (v: string) => void;
   musicMood: MusicMood;
@@ -32,6 +34,12 @@ type Props = {
   replaceSourceAudio: boolean;
   onReplaceSourceAudioChange: (v: boolean) => void;
   onApplyBgm: () => void;
+  /** Mix gain for Apply BGM (ffmpeg volume). */
+  bgmVolume: number;
+  onBgmVolumeChange: (v: number) => void;
+  /** Prefer Sonilo video-to-music (analyzes clip) when generating AI BGM. */
+  matchMusicToVideo: boolean;
+  onMatchMusicToVideoChange: (v: boolean) => void;
   voiceoverEnabled: boolean;
   onVoiceoverEnabledChange: (v: boolean) => void;
   voiceoverScript: string;
@@ -44,6 +52,21 @@ type Props = {
   voicePreviewBusy: boolean;
   onGenerateVoicePreviews: () => void;
   onApplyVoiceover: () => void;
+  /** Timeline VO clips — mix button enabled when these exist even without script. */
+  voClipCount?: number;
+  /** Pre-charge hints shown under paid actions. */
+  costHints?: {
+    applyBgm?: string;
+    applyVoice?: string;
+    generateMusic?: string;
+    voicePreview?: string;
+  };
+  /** VO mix gain when dubbing. */
+  voiceVolume: number;
+  onVoiceVolumeChange: (v: number) => void;
+  /** How loud existing BGM/video stays under VO. */
+  underVoiceBgmVolume: number;
+  onUnderVoiceBgmVolumeChange: (v: number) => void;
   onFillVoiceFromCaptions?: () => void;
   onSyncCaptionsFromVoice?: () => void;
   onPlanCaptionVoice?: () => void;
@@ -82,6 +105,9 @@ type Props = {
     selected: string;
     applyBgm: string;
     applyingBgm: string;
+    bgmVolumeLabel?: string;
+    matchVideoMusic?: string;
+    matchVideoMusicHint?: string;
     audioReplaceOriginal: string;
     audioReplaceOriginalHint: string;
     libraryPreviewLabel: string;
@@ -95,6 +121,8 @@ type Props = {
     applyVoice: string;
     applyVoicePerCaption?: string;
     applyingVoice: string;
+    voiceVolumeLabel?: string;
+    underVoiceBgmLabel?: string;
     localeHk: string;
     localeCn: string;
     localeEn: string;
@@ -139,6 +167,7 @@ export function CaptionAudioSection({
   audioBusy,
   captionBusy,
   embedded = false,
+  preferMusicOpen = false,
   musicTopic,
   onMusicTopicChange,
   musicMood,
@@ -157,6 +186,10 @@ export function CaptionAudioSection({
   replaceSourceAudio,
   onReplaceSourceAudioChange,
   onApplyBgm,
+  bgmVolume,
+  onBgmVolumeChange,
+  matchMusicToVideo,
+  onMatchMusicToVideoChange,
   voiceoverEnabled,
   onVoiceoverEnabledChange,
   voiceoverScript,
@@ -169,6 +202,12 @@ export function CaptionAudioSection({
   voicePreviewBusy,
   onGenerateVoicePreviews,
   onApplyVoiceover,
+  voClipCount = 0,
+  costHints,
+  voiceVolume: voiceVolumeProp,
+  onVoiceVolumeChange,
+  underVoiceBgmVolume: underVoiceBgmVolumeProp,
+  onUnderVoiceBgmVolumeChange,
   onFillVoiceFromCaptions,
   onSyncCaptionsFromVoice,
   onPlanCaptionVoice,
@@ -183,16 +222,27 @@ export function CaptionAudioSection({
   labels: t,
 }: Props) {
   const busy = audioBusy || captionBusy || planCaptionVoiceBusy || expandSpokenBusy;
-  const selectedLibrary = bgmOptions.find((o) => o.id === bgmTrack);
-  const mixLabel =
-    !audioBusy && captionLineCount >= 2 && t.applyVoicePerCaption
-      ? t.applyVoicePerCaption.replace("{n}", String(captionLineCount))
-      : audioBusy
-        ? t.applyingVoice
-        : t.applyVoice;
+  const bgmVol =
+    typeof bgmVolume === "number" && Number.isFinite(bgmVolume) ? bgmVolume : 0.55;
+  const voiceVol =
+    typeof voiceVolumeProp === "number" && Number.isFinite(voiceVolumeProp)
+      ? voiceVolumeProp
+      : 2.1;
+  const underVoBgm =
+    typeof underVoiceBgmVolumeProp === "number" &&
+    Number.isFinite(underVoiceBgmVolumeProp)
+      ? underVoiceBgmVolumeProp
+      : 0.14;
+  const mixLabel = audioBusy
+    ? t.applyingVoice
+    : t.applyVoice;
 
   const [voiceOpen, setVoiceOpen] = useState(true);
-  const [musicOpen, setMusicOpen] = useState(!embedded);
+  const [musicOpen, setMusicOpen] = useState(true);
+
+  useEffect(() => {
+    if (preferMusicOpen) setMusicOpen(true);
+  }, [preferMusicOpen]);
 
   const planBlock =
     onPlanCaptionVoice && t.planCaptionVoice ? (
@@ -254,27 +304,6 @@ export function CaptionAudioSection({
   const musicBody = (
     <>
       <div>
-        <p className="text-[11px] font-medium text-emerald-200/90">{t.musicMoodLabel}</p>
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          {MUSIC_MOODS.map((mood) => (
-            <button
-              key={mood}
-              type="button"
-              disabled={disabled || busy}
-              onClick={() => onMusicMoodChange(mood)}
-              className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
-                musicMood === mood
-                  ? "bg-emerald-600 text-white"
-                  : "border border-slate-600 text-slate-400"
-              }`}
-            >
-              {t.musicMoods[mood]}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div>
         <label className="text-[11px] font-medium text-emerald-200/90">{t.musicTopicLabel}</label>
         <input
           type="text"
@@ -290,18 +319,6 @@ export function CaptionAudioSection({
         <button
           type="button"
           disabled={disabled || busy}
-          onClick={() => onMusicSourceChange("library")}
-          className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
-            musicSource === "library"
-              ? "bg-emerald-600 text-white"
-              : "border border-slate-600 text-slate-400"
-          }`}
-        >
-          {t.libraryMusic}
-        </button>
-        <button
-          type="button"
-          disabled={disabled || busy}
           onClick={() => onMusicSourceChange("ai")}
           className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
             musicSource === "ai"
@@ -311,47 +328,61 @@ export function CaptionAudioSection({
         >
           {t.aiMusic}
         </button>
+        <button
+          type="button"
+          disabled={disabled || busy}
+          onClick={() => onMusicSourceChange("library")}
+          className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
+            musicSource === "library"
+              ? "bg-emerald-600 text-white"
+              : "border border-slate-600 text-slate-400"
+          }`}
+        >
+          {t.libraryMusic}
+        </button>
       </div>
 
-      {musicSource === "library" ? (
+      {musicSource === "ai" ? (
         <div className="space-y-2">
-          <p className="text-[10px] text-amber-200/80">{t.libraryDisclaimer}</p>
-          <div className="flex flex-wrap gap-1.5">
-            {bgmOptions.map(({ id, label }) => (
-              <button
-                key={id}
-                type="button"
-                disabled={disabled || busy}
-                onClick={() => onBgmTrackChange(id)}
-                className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
-                  bgmTrack === id
-                    ? "bg-emerald-600 text-white"
-                    : "border border-slate-600 text-slate-400"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
+          <div>
+            <p className="text-[11px] font-medium text-emerald-200/90">{t.musicMoodLabel}</p>
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {MUSIC_MOODS.map((mood) => (
+                <button
+                  key={mood}
+                  type="button"
+                  disabled={disabled || busy}
+                  onClick={() => onMusicMoodChange(mood)}
+                  className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
+                    musicMood === mood
+                      ? "bg-emerald-600 text-white"
+                      : "border border-slate-600 text-slate-400"
+                  }`}
+                >
+                  {t.musicMoods[mood]}
+                </button>
+              ))}
+            </div>
           </div>
-          <p className="text-[10px] text-emerald-200/70">{t.libraryPreviewLabel}</p>
-          <audio
-            key={bgmTrack}
-            src={bgmPublicUrl(bgmTrack)}
-            controls
-            loop
-            preload="metadata"
-            className="h-9 w-full"
-          />
-          {selectedLibrary && (
-            <p className="text-[10px] text-slate-500">
-              {selectedLibrary.label} —{" "}
-              {BGM_TRACKS.find((x) => x.id === bgmTrack)?.character}
-            </p>
-          )}
-        </div>
-      ) : (
-        <div className="space-y-2">
           <p className="text-[11px] text-emerald-200/70">{t.generateMusicHint}</p>
+          <label className="flex items-start gap-2 rounded-lg border border-emerald-800/40 bg-slate-950/30 p-2 text-xs text-slate-200">
+            <input
+              type="checkbox"
+              checked={matchMusicToVideo}
+              disabled={disabled || busy || musicGenerateBusy}
+              onChange={(e) => onMatchMusicToVideoChange(e.target.checked)}
+              className="mt-0.5"
+            />
+            <span>
+              <span className="block font-medium text-emerald-100">
+                {t.matchVideoMusic ?? "Match music to video"}
+              </span>
+              <span className="mt-0.5 block text-[10px] text-emerald-200/70">
+                {t.matchVideoMusicHint ??
+                  "AI scores pacing from your timeline (Sonilo). Topic/mood still steer style."}
+              </span>
+            </span>
+          </label>
           <button
             type="button"
             disabled={disabled || busy || musicGenerateBusy}
@@ -360,6 +391,9 @@ export function CaptionAudioSection({
           >
             {musicGenerateBusy ? t.generatingMusic : t.generateMusic}
           </button>
+          {costHints?.generateMusic ? (
+            <p className="text-[10px] text-emerald-200/70">{costHints.generateMusic}</p>
+          ) : null}
           {aiMusicTracks.length === 0 && (
             <p className="text-[10px] text-slate-500">{aiMusicGenerateFirstHint}</p>
           )}
@@ -388,6 +422,36 @@ export function CaptionAudioSection({
             </div>
           ))}
         </div>
+      ) : (
+        <div className="space-y-2 rounded-lg border border-amber-900/40 bg-amber-950/20 p-2">
+          <p className="text-[10px] text-amber-100/90">{t.libraryDisclaimer}</p>
+          <div className="flex flex-wrap gap-1.5">
+            {bgmOptions.map(({ id, label }) => (
+              <button
+                key={id}
+                type="button"
+                disabled={disabled || busy}
+                onClick={() => onBgmTrackChange(id)}
+                className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
+                  bgmTrack === id
+                    ? "bg-emerald-600 text-white"
+                    : "border border-slate-600 text-slate-400"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <p className="text-[10px] text-emerald-200/70">{t.libraryPreviewLabel}</p>
+          <audio
+            key={bgmTrack}
+            src={bgmPublicUrl(bgmTrack)}
+            controls
+            loop
+            preload="metadata"
+            className="h-9 w-full"
+          />
+        </div>
       )}
 
       <label className="flex items-start gap-2 rounded-lg border border-emerald-800/40 bg-slate-950/30 p-2 text-xs text-slate-200">
@@ -406,6 +470,25 @@ export function CaptionAudioSection({
         </span>
       </label>
 
+      <label className="block space-y-1 rounded-lg border border-emerald-800/40 bg-slate-950/30 px-2.5 py-2">
+        <div className="flex items-center justify-between text-[11px] text-emerald-100">
+          <span>{t.bgmVolumeLabel ?? "BGM volume"}</span>
+          <span className="tabular-nums text-emerald-200/80">
+            {Math.round(bgmVol * 100)}%
+          </span>
+        </div>
+        <input
+          type="range"
+          min={15}
+          max={150}
+          step={5}
+          value={Math.round(bgmVol * 100)}
+          disabled={disabled || busy}
+          onChange={(e) => onBgmVolumeChange(Number(e.target.value) / 100)}
+          className="w-full accent-emerald-500"
+        />
+      </label>
+
       <button
         type="button"
         disabled={
@@ -418,6 +501,9 @@ export function CaptionAudioSection({
       >
         {audioBusy ? t.applyingBgm : t.applyBgm}
       </button>
+      {costHints?.applyBgm ? (
+        <p className="text-center text-[10px] text-emerald-200/70">{costHints.applyBgm}</p>
+      ) : null}
     </>
   );
 
@@ -518,6 +604,9 @@ export function CaptionAudioSection({
             >
               {voicePreviewBusy ? t.generatingVoice : t.generateVoice}
             </button>
+            {costHints?.voicePreview ? (
+              <p className="text-[10px] text-violet-200/70">{costHints.voicePreview}</p>
+            ) : null}
             {voicePreviewTracks.map((track) => {
               const presetLabel = t.voicePresets[track.presetId] ?? track.label;
               return (
@@ -550,12 +639,52 @@ export function CaptionAudioSection({
               );
             })}
           </div>
+          <label className="block space-y-1 rounded-lg border border-violet-800/50 bg-violet-950/30 px-2.5 py-2">
+            <div className="flex items-center justify-between text-[11px] text-violet-100">
+              <span>{t.voiceVolumeLabel ?? "Voice volume"}</span>
+              <span className="tabular-nums text-violet-200/80">
+                {Math.round((voiceVol / 3.5) * 100)}%
+              </span>
+            </div>
+            <input
+              type="range"
+              min={60}
+              max={350}
+              step={10}
+              value={Math.round(voiceVol * 100)}
+              disabled={disabled || busy}
+              onChange={(e) => onVoiceVolumeChange(Number(e.target.value) / 100)}
+              className="w-full accent-violet-500"
+            />
+          </label>
+          <label className="block space-y-1 rounded-lg border border-violet-800/50 bg-violet-950/30 px-2.5 py-2">
+            <div className="flex items-center justify-between text-[11px] text-violet-100">
+              <span>{t.underVoiceBgmLabel ?? "BGM under voice"}</span>
+              <span className="tabular-nums text-violet-200/80">
+                {Math.round(underVoBgm * 100)}%
+              </span>
+            </div>
+            <input
+              type="range"
+              min={5}
+              max={50}
+              step={1}
+              value={Math.round(underVoBgm * 100)}
+              disabled={disabled || busy}
+              onChange={(e) =>
+                onUnderVoiceBgmVolumeChange(Number(e.target.value) / 100)
+              }
+              className="w-full accent-violet-500"
+            />
+          </label>
           <button
             type="button"
             disabled={
               disabled ||
               audioBusy ||
-              (!voiceoverScript.trim() && !selectedVoicePreviewId)
+              (!voiceoverScript.trim() &&
+                !selectedVoicePreviewId &&
+                voClipCount < 1)
             }
             onClick={onApplyVoiceover}
             className={
@@ -566,6 +695,11 @@ export function CaptionAudioSection({
           >
             {mixLabel}
           </button>
+          {costHints?.applyVoice ? (
+            <p className="text-center text-[10px] text-violet-200/70">
+              {costHints.applyVoice}
+            </p>
+          ) : null}
         </>
       ) : null}
     </>
@@ -625,8 +759,14 @@ export function CaptionAudioSection({
           <Accordion
             title={t.musicSection}
             tone="emerald"
-            open={musicOpen}
-            onToggle={() => setMusicOpen((v) => !v)}
+            open={musicOpen || preferMusicOpen}
+            onToggle={() => {
+              if (preferMusicOpen) {
+                setMusicOpen(true);
+                return;
+              }
+              setMusicOpen((v) => !v);
+            }}
           >
             {musicBody}
           </Accordion>

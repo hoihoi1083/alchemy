@@ -1,20 +1,27 @@
 # Background music (BGM)
 
-The app mixes these MP3 files into every exported video.
+Library demo tracks mixed into caption / wizard exports.
 
 | File | Mood |
 |------|------|
-| `calm.mp3` | Soft, calm (default) |
-| `upbeat.mp3` | Energetic promo |
-| `warm.mp3` | Warm / lifestyle |
+| `calm.mp3` | Soft ambient instrumental |
+| `upbeat.mp3` | Upbeat promo instrumental |
+| `warm.mp3` | Warm lifestyle instrumental |
 
-## Setup (required once)
+## Setup
+
+**Preferred — AI demos (sounds like real music):**
 
 ```bash
-brew install ffmpeg   # if needed
+# needs FAL_KEY in .env.local
+npx tsx scripts/generate-library-bgm.ts
+```
+
+**Fallback — local synth placeholders (not for listening quality):**
+
+```bash
+brew install ffmpeg
 npm run setup:bgm
 ```
 
-This creates simple placeholder loops. For real ads, replace with **your own licensed** MP3s using the same filenames (`calm.mp3`, `upbeat.mp3`, `warm.mp3`).
-
-If files are missing, the app still tries AI ambience, but quality is best with these tracks + `ffmpeg` installed (`brew install ffmpeg`).
+For production ads, replace with your own licensed MP3s using the same filenames, or use in-app **AI music**.

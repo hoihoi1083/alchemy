@@ -18,6 +18,8 @@ export async function POST(request: Request) {
     locale?: string;
     video_duration_sec?: number;
     line_count?: number;
+    start_sec?: number;
+    end_sec?: number;
   };
   try {
     body = await request.json();
@@ -36,9 +38,18 @@ export async function POST(request: Request) {
   }
 
   const videoDurationSec = Number(body.video_duration_sec);
-  if (!Number.isFinite(videoDurationSec) || videoDurationSec < 2) {
+  const startSec = Number(body.start_sec);
+  const endSec = Number(body.end_sec);
+  const sectionMode =
+    Number.isFinite(startSec) &&
+    Number.isFinite(endSec) &&
+    endSec > startSec + 0.4;
+  const planDuration = sectionMode
+    ? Math.max(2, endSec - startSec)
+    : videoDurationSec;
+  if (!Number.isFinite(planDuration) || planDuration < 2) {
     return NextResponse.json(
-      { error: "video_duration_sec must be at least 2." },
+      { error: "video_duration_sec must be at least 2 (or provide start_sec/end_sec)." },
       { status: 400 },
     );
   }
@@ -53,8 +64,9 @@ export async function POST(request: Request) {
     const result = await planCaptionVoice({
       topic,
       locale,
-      videoDurationSec,
-      lineCount: body.line_count,
+      videoDurationSec: planDuration,
+      lineCount: sectionMode ? body.line_count ?? 1 : body.line_count,
+      startSec: sectionMode ? startSec : undefined,
     });
     return NextResponse.json({
       ...result,

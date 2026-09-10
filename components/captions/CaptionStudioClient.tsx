@@ -147,6 +147,17 @@ async function uploadVideoFileToLibrary(
   }
 
   let putFailedCorsOrNetwork = false;
+  const orphanId =
+    typeof (presign as { assetId?: string }).assetId === "string"
+      ? (presign as { assetId: string }).assetId
+      : null;
+  const purgeOrphan = () => {
+    if (!orphanId) return;
+    void fetch(`/api/library/download/${orphanId}`, {
+      method: "DELETE",
+      credentials: "include",
+    }).catch(() => undefined);
+  };
   try {
     const putRes = await fetch(presign.uploadUrl, {
       method: "PUT",
@@ -162,6 +173,7 @@ async function uploadVideoFileToLibrary(
       e instanceof Error ? e.message : e,
     );
   }
+  purgeOrphan();
 
   // Large files cannot go through Vercel — tell user to fix CORS or use Library.
   if (!isSafeForServerUpload(file.size)) {
@@ -221,9 +233,13 @@ export function CaptionStudioClient() {
   const [musicSource, setMusicSource] = useState<MusicSource>("ai");
   const [bgmTrack, setBgmTrack] = useState<BgmTrackId>(DEFAULT_BGM_TRACK);
   const [replaceSourceAudio, setReplaceSourceAudio] = useState(false);
+  const [bgmVolume, setBgmVolume] = useState(0.55);
+  const [matchMusicToVideo, setMatchMusicToVideo] = useState(true);
   const [aiMusicTracks, setAiMusicTracks] = useState<AiMusicTrack[]>([]);
   const [selectedAiMusicId, setSelectedAiMusicId] = useState<string | null>(null);
   const [musicGenerateBusy, setMusicGenerateBusy] = useState(false);
+  const [voiceVolume, setVoiceVolume] = useState(2.1);
+  const [underVoiceBgmVolume, setUnderVoiceBgmVolume] = useState(0.14);
   const [voiceoverEnabled, setVoiceoverEnabled] = useState(false);
   const [voiceoverScript, setVoiceoverScript] = useState("");
   const [voiceoverLocale, setVoiceoverLocale] = useState<VoiceoverLocale>("hk");
@@ -635,14 +651,19 @@ export function CaptionStudioClient() {
     setAudioNote(null);
     trackGenerateStarted("music", { source: "captions" });
     try {
+      const body: Record<string, unknown> = {
+        promptEn,
+        durationSec: Math.round(videoDuration),
+      };
+      if (matchMusicToVideo) {
+        body.matchVideo = true;
+        body.videoUrl = await resolveWorkingVideoUrl();
+      }
       const res = await fetch("/api/generate-music", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({
-          promptEn,
-          durationSec: Math.round(videoDuration),
-        }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? m.errors.musicGenerateFailed);
@@ -651,7 +672,11 @@ export function CaptionStudioClient() {
       setAiMusicTracks(tracks);
       setSelectedAiMusicId(tracks[0]?.id ?? null);
       setMusicSource("ai");
-      setAudioNote(t.aiMusicGeneratedNote.replace("{count}", String(tracks.length)));
+      setAudioNote(
+        data.matchedVideo === true
+          ? t.aiMusicMatchedVideoNote
+          : t.aiMusicGeneratedNote.replace("{count}", String(tracks.length)),
+      );
       trackGenerateSuccess("music", { source: "captions", track_count: tracks.length });
     } catch (e: unknown) {
       trackGenerateFailed("music", { source: "captions" });
@@ -787,7 +812,10 @@ export function CaptionStudioClient() {
       }
 
       const videoUrl = await resolveWorkingVideoUrl();
-      const body: Record<string, unknown> = { replace_source_audio: replaceSourceAudio };
+      const body: Record<string, unknown> = {
+        replace_source_audio: replaceSourceAudio,
+        volume: bgmVolume,
+      };
       if (musicSource === "ai" && selectedAi?.audioUrl) {
         body.music_url = selectedAi.audioUrl;
       } else {
@@ -882,22 +910,19 @@ export function CaptionStudioClient() {
       }
 
       const speechStartSec = captionVoiceStartSec(mixLines);
-      const captionPayload = mixLines.map((l) => ({
-        text: l.text.trim(),
-        startSec: l.startSec,
-        endSec: l.endSec,
-        ...(l.spokenText?.trim() ? { spokenText: l.spokenText.trim() } : {}),
-      }));
-      // Never send speech_url for multi-caption — preview is voice pick only.
+      // Continuous one-shot VO — captions stay as visual burn only.
       const voiceBody: Record<string, unknown> = {
         locale: voiceoverLocale,
         target_duration_sec: rebasedDuration ?? targetDurationSec,
         speech_start_sec: speechStartSec,
-        caption_lines: captionPayload,
+        voice_volume: voiceVolume,
+        under_voice_bgm_volume: underVoiceBgmVolume,
+        mix_mode: "continuous",
       };
-      // Always send typed script when present — preview only picks the voice;
-      // otherwise empty captions + preset-only drops the script.
-      if (selectedPreview) voiceBody.voice_preset = selectedPreview.presetId;
+      if (selectedPreview) {
+        voiceBody.voice_preset = selectedPreview.presetId;
+        if (selectedPreview.audioUrl) voiceBody.speech_url = selectedPreview.audioUrl;
+      }
       if (script) voiceBody.script = script;
 
       const res = await postVideoJson("/api/dub-script-voice", videoUrl, voiceBody);
@@ -920,30 +945,11 @@ export function CaptionStudioClient() {
           }),
         );
       }
-      const clipCount = Number(data.clipCount) || mixLines.length;
-      if (data.perCaption && clipCount >= 2) {
-        const doneNote = t.audioVoiceDonePerCaption.replace("{n}", String(clipCount));
-        setAudioNote(voiceFitNote ? `${voiceFitNote} ${doneNote}` : doneNote);
-      } else {
-        // Server fell back somehow — surface that clearly.
-        setError(
-          t.audioVoiceSingleClipFallback.replace(
-            "{n}",
-            String(mixLines.length),
-          ),
-        );
-        setAudioNote(
-          voiceFitNote
-            ? `${voiceFitNote} ${
-                speechStartSec > 0.05
-                  ? t.audioVoiceDoneAtCaption.replace("{sec}", speechStartSec.toFixed(1))
-                  : t.audioVoiceDone
-              }`
-            : speechStartSec > 0.05
-            ? t.audioVoiceDoneAtCaption.replace("{sec}", speechStartSec.toFixed(1))
-            : t.audioVoiceDone,
-        );
-      }
+      const doneNote =
+        speechStartSec > 0.05
+          ? t.audioVoiceDoneAtCaption.replace("{sec}", speechStartSec.toFixed(1))
+          : t.audioVoiceDone;
+      setAudioNote(voiceFitNote ? `${voiceFitNote} ${doneNote}` : doneNote);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : t.burnFailed);
     } finally {
@@ -1372,6 +1378,10 @@ export function CaptionStudioClient() {
             replaceSourceAudio={replaceSourceAudio}
             onReplaceSourceAudioChange={setReplaceSourceAudio}
             onApplyBgm={() => void applyBgm()}
+            bgmVolume={bgmVolume}
+            onBgmVolumeChange={setBgmVolume}
+            matchMusicToVideo={matchMusicToVideo}
+            onMatchMusicToVideoChange={setMatchMusicToVideo}
             voiceoverEnabled={voiceoverEnabled}
             onVoiceoverEnabledChange={setVoiceoverEnabled}
             voiceoverScript={voiceoverScript}
@@ -1384,6 +1394,10 @@ export function CaptionStudioClient() {
             voicePreviewBusy={voicePreviewBusy}
             onGenerateVoicePreviews={() => void generateVoicePreviews()}
             onApplyVoiceover={() => void applyVoiceover()}
+            voiceVolume={voiceVolume}
+            onVoiceVolumeChange={setVoiceVolume}
+            underVoiceBgmVolume={underVoiceBgmVolume}
+            onUnderVoiceBgmVolumeChange={setUnderVoiceBgmVolume}
             onFillVoiceFromCaptions={fillVoiceFromCaptions}
             onSyncCaptionsFromVoice={syncCaptionsFromVoiceScript}
             onPlanCaptionVoice={() => void planCaptionsAndVoiceFromTopic()}
@@ -1419,6 +1433,9 @@ export function CaptionStudioClient() {
               selected: ad.selected,
               applyBgm: t.audioApplyBgm,
               applyingBgm: t.audioApplyingBgm,
+              bgmVolumeLabel: t.bgmVolumeLabel,
+              matchVideoMusic: t.matchVideoMusic,
+              matchVideoMusicHint: t.matchVideoMusicHint,
               audioReplaceOriginal: t.audioReplaceOriginal,
               audioReplaceOriginalHint: t.audioReplaceOriginalHint,
               libraryPreviewLabel: t.libraryBgmPreviewLabel,
@@ -1432,6 +1449,8 @@ export function CaptionStudioClient() {
               applyVoice: t.audioApplyVoice,
               applyVoicePerCaption: t.audioApplyVoicePerCaption,
               applyingVoice: t.audioApplyingVoice,
+              voiceVolumeLabel: t.voiceVolumeLabel,
+              underVoiceBgmLabel: t.underVoiceBgmLabel,
               localeHk: t.audioLocaleHk,
               localeCn: t.audioLocaleCn,
               localeEn: t.audioLocaleEn,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useSearchParams } from "next/navigation";
 import { CaptionLineEditor } from "@/components/captions/CaptionLineEditor";
 import {
@@ -8,6 +8,7 @@ import {
   type MusicSource,
 } from "@/components/captions/CaptionAudioSection";
 import { CaptionNleTimeline } from "@/components/captions/CaptionNleTimeline";
+import { CaptionLiveOverlay } from "@/components/captions/CaptionLiveOverlay";
 import { CaptionPicturePhase } from "@/components/captions/CaptionPicturePhase";
 import { CaptionProgramMonitor } from "@/components/captions/CaptionProgramMonitor";
 import { LibraryAssetPicker } from "@/components/LibraryAssetPicker";
@@ -16,6 +17,7 @@ import type { MusicMood, VoiceoverLocale } from "@/lib/ad-pack-preferences";
 import type {
   AiMusicTrack,
   CaptionLine,
+  VoClip,
   VoicePreviewTrack,
 } from "@/lib/ad-pack-types";
 import { captionSpeakText } from "@/lib/ad-pack-types";
@@ -51,6 +53,7 @@ import {
   trimClipEdge,
   type TimelineClip,
 } from "@/lib/captions/timeline-project";
+import { TOKEN_COST } from "@/lib/billing/token-costs";
 import { isSafeForServerUpload } from "@/lib/upload-limits";
 
 async function readApiJson(res: Response): Promise<Record<string, unknown>> {
@@ -97,6 +100,15 @@ async function uploadVideoFileToLibrary(file: File, failMsg: string): Promise<st
       typeof presign.error === "string" ? presign.error : failMsg,
     );
   }
+  const orphanId =
+    typeof presign.assetId === "string" ? (presign.assetId as string) : null;
+  const purgeOrphan = () => {
+    if (!orphanId) return;
+    void fetch(`/api/library/download/${orphanId}`, {
+      method: "DELETE",
+      credentials: "include",
+    }).catch(() => undefined);
+  };
   try {
     const putRes = await fetch(presign.uploadUrl, {
       method: "PUT",
@@ -107,6 +119,7 @@ async function uploadVideoFileToLibrary(file: File, failMsg: string): Promise<st
   } catch {
     /* fall through */
   }
+  purgeOrphan();
   if (!isSafeForServerUpload(file.size)) {
     throw new Error(failMsg);
   }
@@ -125,7 +138,6 @@ async function uploadVideoFileToLibrary(file: File, failMsg: string): Promise<st
   return proxy.downloadUrl;
 }
 
-const TIP_DISMISS_KEY = "ams-captions2-tip-dismissed-v2";
 const UNDO_LIMIT = 30;
 
 type ToolTab = "edit" | "captions" | "audio";
@@ -134,6 +146,9 @@ type UndoSnapshot = {
   clips: TimelineClip[];
   captions: CaptionLine[];
   bgmStartSec: number;
+  bgmDurationSec: number;
+  voClips: VoClip[];
+  selectedVoId: string | null;
 };
 
 function probeVideoDuration(url: string): Promise<number> {
@@ -186,13 +201,19 @@ export function CaptionStudio2Client() {
   const [warn, setWarn] = useState<string | null>(null);
   const [bgmTrack, setBgmTrack] = useState<BgmTrackId>(DEFAULT_BGM_TRACK);
   const [bgmStartSec, setBgmStartSec] = useState(0);
+  /** BGM clip length on timeline; null until first set → use remaining project. */
+  const [bgmDurationSec, setBgmDurationSec] = useState<number | null>(null);
   const [replaceSourceAudio, setReplaceSourceAudio] = useState(false);
+  const [bgmVolume, setBgmVolume] = useState(0.55);
+  const [matchMusicToVideo, setMatchMusicToVideo] = useState(true);
   const [musicTopic, setMusicTopic] = useState("");
   const [musicMood, setMusicMood] = useState<MusicMood>("auto");
-  const [musicSource, setMusicSource] = useState<MusicSource>("library");
+  const [musicSource, setMusicSource] = useState<MusicSource>("ai");
   const [aiMusicTracks, setAiMusicTracks] = useState<AiMusicTrack[]>([]);
   const [selectedAiMusicId, setSelectedAiMusicId] = useState<string | null>(null);
   const [musicGenerateBusy, setMusicGenerateBusy] = useState(false);
+  const [voiceVolume, setVoiceVolume] = useState(2.1);
+  const [underVoiceBgmVolume, setUnderVoiceBgmVolume] = useState(0.14);
   const [voiceoverEnabled, setVoiceoverEnabled] = useState(true);
   const [voiceoverScript, setVoiceoverScript] = useState("");
   const [voiceoverLocale, setVoiceoverLocale] = useState<VoiceoverLocale>("hk");
@@ -205,10 +226,24 @@ export function CaptionStudio2Client() {
   const [voicePreviewBusy, setVoicePreviewBusy] = useState(false);
   const [planCaptionVoiceBusy, setPlanCaptionVoiceBusy] = useState(false);
   const [audioNote, setAudioNote] = useState<string | null>(null);
-  const [voUrl, setVoUrl] = useState<string | null>(null);
-  const [voStartSec] = useState(0);
+  const [voClips, setVoClips] = useState<VoClip[]>([]);
+  const [selectedVoId, setSelectedVoId] = useState<string | null>(null);
   const [audioBusy, setAudioBusy] = useState(false);
-  const [tipOpen, setTipOpen] = useState(false);
+  /** CapCut-like: preview gets the rest; timeline is compact + resizable. */
+  const [timelinePx, setTimelinePx] = useState(() => {
+    if (typeof window === "undefined") return 260;
+    try {
+      const saved = Number(localStorage.getItem("c2-timeline-h"));
+      if (Number.isFinite(saved) && saved >= 160 && saved <= 560) return saved;
+    } catch {
+      /* ignore */
+    }
+    const vh = Math.round(window.innerHeight * 0.28);
+    return Math.min(480, Math.max(220, vh));
+  });
+  const timelineDragRef = useRef<{ startY: number; startH: number } | null>(
+    null,
+  );
   const [editJob, setEditJob] = useState<CaptionEditJob>("product");
   const [editNote, setEditNote] = useState("");
   const [refImageUrl, setRefImageUrl] = useState<string | null>(null);
@@ -283,12 +318,34 @@ export function CaptionStudio2Client() {
   const ad = m.wizard.adPack;
 
   useEffect(() => {
-    try {
-      setTipOpen(sessionStorage.getItem(TIP_DISMISS_KEY) !== "1");
-    } catch {
-      setTipOpen(true);
-    }
+    const onMove = (e: PointerEvent) => {
+      const drag = timelineDragRef.current;
+      if (!drag) return;
+      const delta = drag.startY - e.clientY;
+      const maxH = Math.min(560, Math.round(window.innerHeight * 0.55));
+      const next = Math.min(maxH, Math.max(160, drag.startH + delta));
+      setTimelinePx(next);
+    };
+    const onUp = () => {
+      timelineDragRef.current = null;
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
   }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("c2-timeline-h", String(timelinePx));
+    } catch {
+      /* ignore */
+    }
+  }, [timelinePx]);
 
   const pushUndo = useCallback(() => {
     setUndoStack((prev) =>
@@ -298,10 +355,63 @@ export function CaptionStudio2Client() {
           clips: timelineClips,
           captions: captionLines,
           bgmStartSec,
+          bgmDurationSec: bgmDurationSec ?? Math.max(0.4, projectDur - bgmStartSec),
+          voClips,
+          selectedVoId,
         },
       ].slice(-UNDO_LIMIT),
     );
-  }, [timelineClips, captionLines, bgmStartSec]);
+  }, [
+    timelineClips,
+    captionLines,
+    bgmStartSec,
+    bgmDurationSec,
+    projectDur,
+    voClips,
+    selectedVoId,
+  ]);
+
+  /** After BGM / VO / burn / export: plate becomes the sole timeline source so next bake keeps the mix. */
+  const commitPlateToTimeline = useCallback(
+    async (plateUrl: string, label?: string) => {
+      const rel = toRelativePipelineUrl(plateUrl);
+      const dur = await probeVideoDuration(withCacheBust(rel));
+      pushUndo();
+      const clip = createTimelineClip({
+        url: rel,
+        label: label || sourceLabel || "Plate",
+        sourceDurationSec: dur,
+      });
+      setTimelineClips([clip]);
+      setSelectedClipId(clip.id);
+      setSourceUrl(rel);
+      setProcessedVideoUrl(rel);
+      setPlaybackUrl(withCacheBust(rel));
+      setShowOriginal(false);
+      setPlayheadSec(0);
+      setLocalPreviewUrl(null);
+      return rel;
+    },
+    [pushUndo, sourceLabel],
+  );
+
+  const effectiveBgmDuration = useMemo(() => {
+    const remain = Math.max(0.4, projectDur - bgmStartSec);
+    if (typeof bgmDurationSec === "number" && Number.isFinite(bgmDurationSec)) {
+      return Math.min(remain, Math.max(0.4, bgmDurationSec));
+    }
+    return remain;
+  }, [bgmDurationSec, bgmStartSec, projectDur]);
+
+  const setBgmRange = useCallback(
+    (startSec: number, durationSec: number) => {
+      const start = Math.max(0, Math.min(projectDur - 0.2, startSec));
+      const dur = Math.max(0.4, Math.min(projectDur - start, durationSec));
+      setBgmStartSec(start);
+      setBgmDurationSec(dur);
+    },
+    [projectDur],
+  );
 
   const setClipsWithUndo = useCallback(
     (next: TimelineClip[] | ((prev: TimelineClip[]) => TimelineClip[])) => {
@@ -340,10 +450,17 @@ export function CaptionStudio2Client() {
       setTimelineClips([clip]);
       setSelectedClipId(clip.id);
       setPlayheadSec(0);
+      // Short clips start zoomed in so trim edges are usable.
+      setPxPerSec(
+        Math.min(320, Math.max(64, Math.round(720 / Math.max(1, durationSec)))),
+      );
       setUndoStack([]);
       setCaptionLines([]);
       setSelectedCaptionIndex(0);
       setBgmStartSec(0);
+      setBgmDurationSec(null);
+      setVoClips([]);
+      setSelectedVoId(null);
       setNote(null);
       setWarn(null);
       setError(null);
@@ -406,6 +523,9 @@ export function CaptionStudio2Client() {
     setEditNote("");
     setEditedVideoUrl(null);
     setBgmStartSec(0);
+    setBgmDurationSec(null);
+    setVoClips([]);
+    setSelectedVoId(null);
     if (blobPreviewRef.current) {
       URL.revokeObjectURL(blobPreviewRef.current);
       blobPreviewRef.current = null;
@@ -678,19 +798,28 @@ export function CaptionStudio2Client() {
     setError(null);
     setAudioNote(null);
     try {
+      const durationSec = Math.max(8, Math.min(60, Math.round(projectDur)));
       const promptEn = resolveCaptionStudioMusicPrompt({
         productBrief: musicTopic,
         musicMood,
-        durationSec: Math.max(8, Math.min(60, Math.round(projectDur))),
+        durationSec,
       });
+      const body: Record<string, unknown> = {
+        promptEn,
+        durationSec,
+      };
+      if (matchMusicToVideo) {
+        if (timelineClips.length === 0) {
+          throw new Error(t2.needVideo);
+        }
+        body.matchVideo = true;
+        body.videoUrl = await bakeTimelinePlate();
+      }
       const res = await fetch("/api/generate-music", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({
-          promptEn,
-          durationSec: Math.max(8, Math.min(60, Math.round(projectDur))),
-        }),
+        body: JSON.stringify(body),
       });
       const data = await readApiJson(res);
       if (!res.ok) {
@@ -703,8 +832,11 @@ export function CaptionStudio2Client() {
       setAiMusicTracks(tracks);
       setSelectedAiMusicId(tracks[0]?.id ?? null);
       setMusicSource("ai");
+      const matched =
+        data.matchedVideo === true ? t.aiMusicMatchedVideoNote : null;
       setAudioNote(
-        t.aiMusicGeneratedNote.replace("{count}", String(tracks.length)),
+        matched ??
+          t.aiMusicGeneratedNote.replace("{count}", String(tracks.length)),
       );
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : m.errors.musicGenerateFailed);
@@ -871,16 +1003,192 @@ export function CaptionStudio2Client() {
     }
   }
 
+  /** Selected clip range, else selected caption window, else full project. */
+  function selectedSectionRange(): { startSec: number; endSec: number } {
+    const packed = packClipsMagnetically(timelineClips);
+    const clip = packed.find((c) => c.id === selectedClipId);
+    if (clip) {
+      return {
+        startSec: clip.timelineStartSec,
+        endSec: clip.timelineEndSec,
+      };
+    }
+    const line = captionLines[selectedCaptionIndex];
+    if (line && line.endSec > line.startSec) {
+      return { startSec: line.startSec, endSec: line.endSec };
+    }
+    return { startSec: 0, endSec: Math.max(2, projectDur) };
+  }
+
+  async function planCaptionForSelectedSection() {
+    const topic = musicTopic.trim();
+    if (!topic) {
+      setError(t.planCaptionVoiceNeedTopic);
+      return;
+    }
+    if (timelineClips.length === 0) {
+      setError(t2.needVideo);
+      return;
+    }
+    const { startSec, endSec } = selectedSectionRange();
+    setPlanCaptionVoiceBusy(true);
+    setError(null);
+    setAudioNote(null);
+    try {
+      const res = await fetch("/api/plan-caption-voice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          topic,
+          locale: voiceoverLocale,
+          start_sec: startSec,
+          end_sec: endSec,
+          line_count: 1,
+        }),
+      });
+      const data = await readApiJson(res);
+      if (!res.ok) {
+        throw new Error(
+          typeof data.error === "string" ? data.error : t.planCaptionVoiceFailed,
+        );
+      }
+      const lines = (Array.isArray(data.captionLines)
+        ? data.captionLines
+        : []) as CaptionLine[];
+      if (!lines.length) throw new Error(t.planCaptionVoiceFailed);
+      pushUndo();
+      const mapped = lines.map((line, i) => {
+        const text = String(line.text ?? "").trim();
+        const spoken = String(line.spokenText ?? "").trim();
+        return {
+          startSec: Math.max(0, Number(line.startSec) || startSec),
+          endSec: Math.max(
+            Number(line.startSec) || startSec,
+            Number(line.endSec) || endSec,
+          ),
+          text,
+          ...(spoken ? { spokenText: spoken } : {}),
+          position: line.position ?? (i % 2 === 0 ? "bottom" : "top"),
+          stylePreset: line.stylePreset ?? defaultStylePreset,
+        } satisfies CaptionLine;
+      });
+      const script =
+        typeof data.voiceoverScript === "string" && data.voiceoverScript.trim()
+          ? data.voiceoverScript.trim()
+          : mapped.map((l) => captionSpeakText(l)).filter(Boolean).join("");
+      if (script) setVoiceoverScript(script);
+      setVoiceoverEnabled(true);
+      setCaptionLines((prev) => {
+        const kept = prev.filter(
+          (l) => l.endSec <= startSec + 0.05 || l.startSec >= endSec - 0.05,
+        );
+        const next = [...kept, ...mapped].sort((a, b) => a.startSec - b.startSec);
+        const idx = next.findIndex(
+          (l) => Math.abs(l.startSec - mapped[0]!.startSec) < 0.05,
+        );
+        setSelectedCaptionIndex(idx >= 0 ? idx : 0);
+        return next;
+      });
+      const note = (t2.sectionCaptionDone ?? t.planCaptionVoiceDone)
+        .replaceAll("{n}", "1")
+        .replaceAll("{sec}", (endSec - startSec).toFixed(1));
+      setAudioNote(note);
+      setNote(note);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : t.planCaptionVoiceFailed);
+    } finally {
+      setPlanCaptionVoiceBusy(false);
+    }
+  }
+
+  async function generateVoForSelectedSection() {
+    const { startSec, endSec } = selectedSectionRange();
+    const sectionLine =
+      captionLines.find(
+        (l) =>
+          l.startSec >= startSec - 0.05 &&
+          l.endSec <= endSec + 0.05 &&
+          l.text.trim(),
+      ) ?? captionLines[selectedCaptionIndex];
+    const speak =
+      (sectionLine ? captionSpeakText(sectionLine) : "") ||
+      voiceoverScript.trim();
+    if (!speak) {
+      setError(t.audioVoiceNeedPreviewOrScript);
+      return;
+    }
+    setVoicePreviewBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/preview-script-voice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ script: speak, locale: voiceoverLocale }),
+      });
+      const data = await readApiJson(res);
+      if (!res.ok) {
+        throw new Error(
+          typeof data.error === "string" ? data.error : m.errors.voiceoverFailed,
+        );
+      }
+      const tracks = (Array.isArray(data.tracks) ? data.tracks : []) as VoicePreviewTrack[];
+      const first = tracks[0];
+      if (!first?.audioUrl) throw new Error(m.errors.voiceoverFailed);
+      let audioUrl = first.audioUrl;
+      if (audioUrl.startsWith("/api/library/") || audioUrl.includes("/api/library/download/")) {
+        const audioRes = await fetch(withCacheBust(audioUrl), {
+          credentials: "include",
+          cache: "no-store",
+        });
+        if (audioRes.ok) {
+          audioUrl = URL.createObjectURL(await audioRes.blob());
+        }
+      }
+      const durationSec =
+        first.durationSec ??
+        (await probeAudioDurationSec(audioUrl)) ??
+        Math.max(0.8, endSec - startSec);
+      const safeDur =
+        durationSec > 0 ? durationSec : Math.max(0.8, endSec - startSec);
+      const clip: VoClip = {
+        id: `vo-sec-${Date.now()}`,
+        audioUrl,
+        startSec,
+        durationSec: safeDur,
+        label: speak.slice(0, 12) || t2.nleVoLane,
+      };
+      pushUndo();
+      setVoClips((prev) => [...prev.filter((v) => !(v.startSec >= startSec && v.startSec < endSec)), clip]);
+      setSelectedVoId(clip.id);
+      setVoicePreviewTracks(tracks.map((tr, i) => (i === 0 ? { ...tr, audioUrl, durationSec: safeDur } : tr)));
+      setSelectedVoicePreviewId(first.id);
+      setVoiceoverScript(speak);
+      setAudioNote(t2.sectionVoDone ?? t.audioVoiceDone);
+      setNote(t2.sectionVoDone ?? t.audioVoiceDone);
+      setToolTab("audio");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : m.errors.voiceoverFailed);
+    } finally {
+      setVoicePreviewBusy(false);
+    }
+  }
+
   async function applyVoiceover() {
     const script = voiceoverScript.trim();
     const selectedPreview = voicePreviewTracks.find(
       (tr) => tr.id === selectedVoicePreviewId,
     );
+    const timelineVos = [...voClips]
+      .filter((v) => Boolean(v.audioUrl?.trim()))
+      .sort((a, b) => a.startSec - b.startSec);
     let captionLinesForMix = captionLines;
     if (
       captionLinesForMix.filter((l) => l.text.trim()).length < 1 &&
       !script &&
-      !selectedPreview
+      !selectedPreview &&
+      timelineVos.length === 0
     ) {
       setError(
         t.audioVoiceNeedCaptionLines.replace(
@@ -890,7 +1198,7 @@ export function CaptionStudio2Client() {
       );
       return;
     }
-    if (!script && !selectedPreview) {
+    if (!script && !selectedPreview && timelineVos.length === 0) {
       setError(t.audioVoiceNeedPreviewOrScript);
       return;
     }
@@ -905,7 +1213,7 @@ export function CaptionStudio2Client() {
     try {
       let voiceFitNote: string | null = null;
       const targetDurationSec = projectDur;
-      if (selectedPreview?.audioUrl) {
+      if (selectedPreview?.audioUrl && timelineVos.length === 0) {
         const voiceSec =
           selectedPreview.durationSec ??
           (await probeAudioDurationSec(selectedPreview.audioUrl));
@@ -925,54 +1233,95 @@ export function CaptionStudio2Client() {
         }
       }
 
-      const videoUrl = await bakeTimelinePlate();
+      let videoUrl = await bakeTimelinePlate();
       const mixLines = captionLinesForMix.filter((l) => l.text.trim());
-      const speechStartSec = captionVoiceStartSec(mixLines);
-      const voiceBody: Record<string, unknown> = {
-        video_url: videoUrl,
-        locale: voiceoverLocale,
-        target_duration_sec: targetDurationSec,
-        speech_start_sec: speechStartSec,
-        caption_lines: mixLines.map((l) => ({
-          text: l.text.trim(),
-          startSec: l.startSec,
-          endSec: l.endSec,
-          ...(l.spokenText?.trim() ? { spokenText: l.spokenText.trim() } : {}),
-        })),
-      };
-      if (selectedPreview) voiceBody.voice_preset = selectedPreview.presetId;
-      if (script) voiceBody.script = script;
 
-      const res = await fetch("/api/dub-script-voice", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(voiceBody),
-      });
-      const data = await readApiJson(res);
-      if (!res.ok || typeof data.videoUrl !== "string") {
-        throw new Error(
-          typeof data.error === "string" ? data.error : t.burnFailed,
-        );
+      const dubOnce = async (body: Record<string, unknown>) => {
+        const res = await fetch("/api/dub-script-voice", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(body),
+        });
+        const data = await readApiJson(res);
+        if (!res.ok || typeof data.videoUrl !== "string") {
+          throw new Error(
+            typeof data.error === "string" ? data.error : t.burnFailed,
+          );
+        }
+        return toRelativePipelineUrl(data.videoUrl);
+      };
+
+      let speechStartSec = 0;
+      if (timelineVos.length > 0) {
+        // Mix every VO clip onto the plate in start order (keeps multi-section VO).
+        for (const vo of timelineVos) {
+          speechStartSec = vo.startSec;
+          videoUrl = await dubOnce({
+            video_url: videoUrl,
+            locale: voiceoverLocale,
+            target_duration_sec: targetDurationSec,
+            speech_start_sec: vo.startSec,
+            speech_url: vo.audioUrl,
+            voice_volume: voiceVolume,
+            under_voice_bgm_volume: underVoiceBgmVolume,
+            mix_mode: "continuous",
+          });
+        }
+      } else {
+        const speechStart =
+          captionVoiceStartSec(mixLines);
+        speechStartSec = speechStart;
+        const voiceBody: Record<string, unknown> = {
+          video_url: videoUrl,
+          locale: voiceoverLocale,
+          target_duration_sec: targetDurationSec,
+          speech_start_sec: speechStart,
+          voice_volume: voiceVolume,
+          under_voice_bgm_volume: underVoiceBgmVolume,
+          mix_mode: "continuous",
+        };
+        if (selectedPreview) {
+          voiceBody.voice_preset = selectedPreview.presetId;
+          if (selectedPreview.audioUrl) {
+            voiceBody.speech_url = selectedPreview.audioUrl;
+          }
+        }
+        if (script) voiceBody.script = script;
+        videoUrl = await dubOnce(voiceBody);
+
+        const previewUrl = selectedPreview?.audioUrl ?? null;
+        let voDur = selectedPreview?.durationSec ?? 0;
+        if (previewUrl && !(voDur > 0)) {
+          voDur = await probeAudioDurationSec(previewUrl);
+        }
+        if (previewUrl && voDur > 0) {
+          const clip: VoClip = {
+            id: `vo-${Date.now()}`,
+            audioUrl: previewUrl,
+            startSec: speechStart,
+            durationSec: voDur,
+            label: t2.nleVoLane,
+          };
+          setVoClips([clip]);
+          setSelectedVoId(clip.id);
+        }
       }
-      const out = toRelativePipelineUrl(data.videoUrl);
-      setSourceUrl(videoUrl);
-      setOriginalSourceUrl(videoUrl);
-      setProcessedVideoUrl(out);
-      setPlaybackUrl(withCacheBust(out));
-      setShowOriginal(false);
-      setVoUrl(selectedPreview?.audioUrl ?? out);
-      const clipCount = Number(data.clipCount) || mixLines.length;
+
+      await commitPlateToTimeline(videoUrl, sourceLabel || "VO mix");
+
       const doneNote =
-        data.perCaption && clipCount >= 2
-          ? t.audioVoiceDonePerCaption.replace("{n}", String(clipCount))
-          : speechStartSec > 0.05
-            ? t.audioVoiceDoneAtCaption.replace(
-                "{sec}",
-                speechStartSec.toFixed(1),
-              )
-            : t.audioVoiceDone;
-      const msg = voiceFitNote ? `${voiceFitNote} ${doneNote}` : doneNote;
+        speechStartSec > 0.05
+          ? t.audioVoiceDoneAtCaption.replace(
+              "{sec}",
+              speechStartSec.toFixed(1),
+            )
+          : t.audioVoiceDone;
+      const multi =
+        timelineVos.length > 1
+          ? ` · ${timelineVos.length} VO`
+          : "";
+      const msg = `${voiceFitNote ? `${voiceFitNote} ` : ""}${doneNote}${multi}`;
       setAudioNote(msg);
       setNote(msg);
     } catch (e: unknown) {
@@ -1001,6 +1350,8 @@ export function CaptionStudio2Client() {
         video_url: plate,
         replace_source_audio: replaceSourceAudio,
         start_sec: bgmStartSec,
+        duration_sec: effectiveBgmDuration,
+        volume: bgmVolume,
       };
       if (musicSource === "ai" && selectedAi?.audioUrl) {
         body.music_url = selectedAi.audioUrl;
@@ -1019,14 +1370,15 @@ export function CaptionStudio2Client() {
           typeof data.error === "string" ? data.error : t.burnFailed,
         );
       }
-      const rel = toRelativePipelineUrl(data.videoUrl);
-      setSourceUrl(rel);
-      setPlaybackUrl(withCacheBust(rel));
-      setShowOriginal(false);
-      const msg =
-        bgmStartSec > 0.05
-          ? `${t.audioBgmDone} · ${t2.bgmStartNote(bgmStartSec)}`
-          : t.audioBgmDone;
+      await commitPlateToTimeline(data.videoUrl, sourceLabel || "BGM mix");
+      setBgmDurationSec(effectiveBgmDuration);
+      const placeNote =
+        bgmStartSec > 0.05 || effectiveBgmDuration < projectDur - 0.15
+          ? ` · ${bgmStartSec.toFixed(1)}s–${(bgmStartSec + effectiveBgmDuration).toFixed(1)}s`
+          : "";
+      const demoNote =
+        musicSource === "library" ? ` · ${t.libraryBgmDisclaimer}` : "";
+      const msg = `${t.audioBgmDone}${placeNote}${demoNote}`;
       setAudioNote(msg);
       setNote(msg);
     } catch (e: unknown) {
@@ -1064,12 +1416,9 @@ export function CaptionStudio2Client() {
           typeof data.error === "string" ? data.error : t.burnFailed,
         );
       }
-      const out = toRelativePipelineUrl(data.videoUrl);
-      setSourceUrl(burnUrl);
-      setOriginalSourceUrl(burnUrl);
-      setProcessedVideoUrl(out);
-      setPlaybackUrl(withCacheBust(out));
-      setShowOriginal(false);
+      // Keep pre-burn plate as "show original" reference.
+      setOriginalSourceUrl(toRelativePipelineUrl(burnUrl));
+      await commitPlateToTimeline(data.videoUrl, sourceLabel || "Burned");
       setNote(t.appliedNote);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : t.burnFailed);
@@ -1083,11 +1432,8 @@ export function CaptionStudio2Client() {
     setError(null);
     try {
       const plate = await bakeTimelinePlate();
-      setSourceUrl(plate);
-      setOriginalSourceUrl(plate);
-      setProcessedVideoUrl(plate);
-      setPlaybackUrl(withCacheBust(plate));
-      setShowOriginal(false);
+      setOriginalSourceUrl(toRelativePipelineUrl(plate));
+      await commitPlateToTimeline(plate, sourceLabel || "Export");
       setNote(t2.exportDone);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : t2.joinFailed);
@@ -1113,6 +1459,9 @@ export function CaptionStudio2Client() {
       setTimelineClips(snap.clips);
       setCaptionLines(snap.captions);
       setBgmStartSec(snap.bgmStartSec);
+      setBgmDurationSec(snap.bgmDurationSec);
+      setVoClips(snap.voClips ?? []);
+      setSelectedVoId(snap.selectedVoId ?? null);
       return prev.slice(0, -1);
     });
   }
@@ -1231,26 +1580,50 @@ export function CaptionStudio2Client() {
         .c2-capcut-preview {
           flex: 1 1 0% !important;
           min-width: 0 !important;
+          min-height: 0 !important;
           display: flex !important;
           flex-direction: column !important;
           align-items: center !important;
-          justify-content: center !important;
+          justify-content: stretch !important;
           background: #05070f !important;
           overflow: hidden !important;
+          padding: 0.5rem !important;
+        }
+        .c2-capcut-preview-stage {
+          position: relative !important;
+          flex: 1 1 0% !important;
+          min-height: 0 !important;
+          width: 100% !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
         }
         .c2-capcut-props {
-          flex: 0 0 340px !important;
-          width: 340px !important;
-          max-width: 340px !important;
+          flex: 0 0 300px !important;
+          width: 300px !important;
+          max-width: 300px !important;
           border-left: 1px solid rgba(255,255,255,0.1);
           overflow: auto !important;
         }
         .c2-capcut-timeline {
-          flex: 0 0 260px !important;
-          height: 260px !important;
-          min-height: 260px !important;
-          border-top: 1px solid rgba(255,255,255,0.12);
+          flex: 0 0 var(--c2-timeline-h, 200px) !important;
+          height: var(--c2-timeline-h, 200px) !important;
+          min-height: 140px !important;
+          max-height: min(55vh, 560px) !important;
+          border-top: none !important;
           overflow: hidden !important;
+        }
+        .c2-capcut-timeline-resize {
+          flex: 0 0 6px !important;
+          height: 6px !important;
+          cursor: row-resize !important;
+          background: rgba(148, 163, 184, 0.15) !important;
+          border-top: 1px solid rgba(255,255,255,0.12) !important;
+          border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+        }
+        .c2-capcut-timeline-resize:hover,
+        .c2-capcut-timeline-resize:active {
+          background: rgba(34, 211, 238, 0.35) !important;
         }
         @media (max-width: 700px) {
           .c2-capcut { height: auto !important; max-height: none !important; overflow: visible !important; }
@@ -1259,32 +1632,10 @@ export function CaptionStudio2Client() {
             flex: none !important; width: 100% !important; max-width: none !important;
             border: none !important; max-height: 200px !important;
           }
-          .c2-capcut-timeline { flex: none !important; height: auto !important; min-height: 220px !important; }
+          .c2-capcut-timeline { flex: none !important; height: auto !important; min-height: 180px !important; }
         }
       `}</style>
     <div className={hasWorkspace ? "flex h-full min-h-0 flex-col gap-2" : "space-y-3"}>
-      {tipOpen && !hasWorkspace ? (
-        <div className="rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-sm text-slate-300">
-          <div className="flex flex-wrap items-start justify-between gap-2">
-            <p className="text-xs leading-relaxed text-slate-400">{t2.diffBody}</p>
-            <button
-              type="button"
-              className="shrink-0 text-[11px] text-slate-500 underline hover:text-slate-300"
-              onClick={() => {
-                setTipOpen(false);
-                try {
-                  sessionStorage.setItem(TIP_DISMISS_KEY, "1");
-                } catch {
-                  /* ignore */
-                }
-              }}
-            >
-              {t2.dismissTip}
-            </button>
-          </div>
-        </div>
-      ) : null}
-
       {error ? (
         <div className="rounded-lg border border-rose-500/40 bg-rose-950/50 px-3 py-2 text-sm text-rose-100">
           {error}
@@ -1460,8 +1811,8 @@ export function CaptionStudio2Client() {
             </aside>
 
             {/* CapCut: preview (center) */}
-            <section className="c2-capcut-preview p-3">
-              <div className="mb-2 flex w-full max-w-md items-center justify-between gap-2">
+            <section className="c2-capcut-preview">
+              <div className="mb-1 flex w-full shrink-0 items-center justify-between gap-2 px-1">
                 <p className="truncate text-xs text-slate-400">
                   {playheadSec.toFixed(1)}s / {projectDur.toFixed(1)}s
                 </p>
@@ -1475,17 +1826,44 @@ export function CaptionStudio2Client() {
                   </button>
                 ) : null}
               </div>
-              {flatPreviewSrc || playheadSource || localPreviewUrl || sourceUrl ? (
-                <CaptionProgramMonitor
-                  ref={previewVideoRef}
-                  clips={timelineClips}
-                  playheadSec={playheadSec}
-                  projectDur={projectDur}
-                  flatSrc={flatPreviewSrc}
-                  showOriginal={showOriginal}
-                  onPlayhead={setPlayheadSec}
-                />
-              ) : null}
+              <div className="c2-capcut-preview-stage relative">
+                {flatPreviewSrc || playheadSource || localPreviewUrl || sourceUrl ? (
+                  <div
+                    className="relative h-full max-h-full w-auto"
+                    style={{ aspectRatio: "9 / 16" }}
+                  >
+                    <CaptionProgramMonitor
+                      ref={previewVideoRef}
+                      clips={timelineClips}
+                      playheadSec={playheadSec}
+                      projectDur={projectDur}
+                      flatSrc={flatPreviewSrc}
+                      showOriginal={showOriginal}
+                      onPlayhead={setPlayheadSec}
+                    />
+                    {!showOriginal ? (
+                      <CaptionLiveOverlay
+                        lines={captionLines}
+                        playheadSec={playheadSec}
+                        selectedIndex={selectedCaptionIndex}
+                        defaultStylePreset={defaultStylePreset}
+                        onSelect={(i) => {
+                          setSelectedCaptionIndex(i);
+                          setToolTab("captions");
+                        }}
+                        onUpdate={(index, patch) => {
+                          pushUndo();
+                          setCaptionLines((prev) =>
+                            prev.map((line, i) =>
+                              i === index ? { ...line, ...patch } : line,
+                            ),
+                          );
+                        }}
+                      />
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
             </section>
 
             {/* CapCut: properties (right) */}
@@ -1664,6 +2042,38 @@ export function CaptionStudio2Client() {
                       </button>
                       <button
                         type="button"
+                        disabled={
+                          planCaptionVoiceBusy ||
+                          !musicTopic.trim() ||
+                          timelineClips.length === 0
+                        }
+                        onClick={() => void planCaptionForSelectedSection()}
+                        className="w-full rounded-lg border border-cyan-400/50 bg-cyan-950/50 px-3 py-2 text-xs font-medium text-cyan-100 disabled:opacity-50"
+                      >
+                        {planCaptionVoiceBusy
+                          ? t.planningCaptionVoice
+                          : (t2.sectionAiCaption ?? "AI caption this section")}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={
+                          voicePreviewBusy ||
+                          audioBusy ||
+                          timelineClips.length === 0
+                        }
+                        onClick={() => void generateVoForSelectedSection()}
+                        className="w-full rounded-lg border border-violet-400/50 bg-violet-950/40 px-3 py-2 text-xs font-medium text-violet-100 disabled:opacity-50"
+                      >
+                        {voicePreviewBusy
+                          ? t.audioApplyingVoice
+                          : (t2.sectionAiVo ?? "Generate VO for this section")}
+                      </button>
+                      <p className="text-[10px] text-cyan-100/60">
+                        {t2.sectionAiHint ??
+                          "Select a clip or caption on the timeline first — one caption + one continuous VO for that range."}
+                      </p>
+                      <button
+                        type="button"
                         className="w-full text-center text-[10px] text-cyan-200/80 underline"
                         onClick={() => setToolTab("audio")}
                       >
@@ -1696,6 +2106,7 @@ export function CaptionStudio2Client() {
                             timingLabel={t.timingLabel}
                             positionLabel={t.positionLabel}
                             positionOptions={t.positionOptions}
+                            styleLabel={t.styleLabel}
                             multilineHint={t.multilineHint}
                             removeLabel={t.removeLine}
                             styleOptions={styleOptions}
@@ -1738,6 +2149,7 @@ export function CaptionStudio2Client() {
                 <div className="space-y-2">
                   <CaptionAudioSection
                     embedded
+                    preferMusicOpen={toolTab === "audio"}
                     disabled={timelineClips.length === 0}
                     audioBusy={audioBusy}
                     captionBusy={busy}
@@ -1759,6 +2171,10 @@ export function CaptionStudio2Client() {
                     replaceSourceAudio={replaceSourceAudio}
                     onReplaceSourceAudioChange={setReplaceSourceAudio}
                     onApplyBgm={() => void applyBgm()}
+                    bgmVolume={bgmVolume}
+                    onBgmVolumeChange={setBgmVolume}
+                    matchMusicToVideo={matchMusicToVideo}
+                    onMatchMusicToVideoChange={setMatchMusicToVideo}
                     voiceoverEnabled={voiceoverEnabled}
                     onVoiceoverEnabledChange={setVoiceoverEnabled}
                     voiceoverScript={voiceoverScript}
@@ -1771,6 +2187,23 @@ export function CaptionStudio2Client() {
                     voicePreviewBusy={voicePreviewBusy}
                     onGenerateVoicePreviews={() => void generateVoicePreviews()}
                     onApplyVoiceover={() => void applyVoiceover()}
+                    voClipCount={voClips.filter((v) => Boolean(v.audioUrl)).length}
+                    costHints={{
+                      applyBgm: t2.audioCostBgm(TOKEN_COST.bgm),
+                      applyVoice: t2.audioCostVoice(
+                        TOKEN_COST.voiceover *
+                          Math.max(
+                            1,
+                            voClips.filter((v) => Boolean(v.audioUrl)).length || 1,
+                          ),
+                      ),
+                      generateMusic: t2.audioCostMusic(TOKEN_COST.music),
+                      voicePreview: t2.audioCostVoicePreview(TOKEN_COST.voiceover),
+                    }}
+                    voiceVolume={voiceVolume}
+                    onVoiceVolumeChange={setVoiceVolume}
+                    underVoiceBgmVolume={underVoiceBgmVolume}
+                    onUnderVoiceBgmVolumeChange={setUnderVoiceBgmVolume}
                     onFillVoiceFromCaptions={fillVoiceFromCaptions}
                     captionLineCount={usableLineCount}
                     audioNote={audioNote}
@@ -1799,6 +2232,9 @@ export function CaptionStudio2Client() {
                       selected: ad.selected,
                       applyBgm: t.audioApplyBgm,
                       applyingBgm: t.audioApplyingBgm,
+                      bgmVolumeLabel: t.bgmVolumeLabel,
+                      matchVideoMusic: t.matchVideoMusic,
+                      matchVideoMusicHint: t.matchVideoMusicHint,
                       audioReplaceOriginal: t.audioReplaceOriginal,
                       audioReplaceOriginalHint: t.audioReplaceOriginalHint,
                       libraryPreviewLabel: t.libraryBgmPreviewLabel,
@@ -1812,6 +2248,8 @@ export function CaptionStudio2Client() {
                       applyVoice: t.audioApplyVoice,
                       applyVoicePerCaption: t.audioApplyVoicePerCaption,
                       applyingVoice: t.audioApplyingVoice,
+                      voiceVolumeLabel: t.voiceVolumeLabel,
+                      underVoiceBgmLabel: t.underVoiceBgmLabel,
                       localeHk: t.audioLocaleHk,
                       localeCn: t.audioLocaleCn,
                       localeEn: t.audioLocaleEn,
@@ -1843,6 +2281,11 @@ export function CaptionStudio2Client() {
                   >
                     {busy ? t.applying : t.applyBtn}
                   </button>
+                  {usableLineCount > 0 ? (
+                    <p className="text-center text-[10px] text-cyan-200/70">
+                      {t2.audioCostBurn(TOKEN_COST.caption_burn)}
+                    </p>
+                  ) : null}
                   {usableLineCount === 0 ? (
                     <p className="text-[10px] text-slate-500">{t2.burnNeedLines}</p>
                   ) : null}
@@ -1863,8 +2306,32 @@ export function CaptionStudio2Client() {
             </aside>
           </div>
 
+          {/* CapCut: drag to grow/shrink timeline vs preview */}
+          <div
+            className="c2-capcut-timeline-resize"
+            role="separator"
+            aria-orientation="horizontal"
+            aria-label="Resize timeline"
+            onPointerDown={(e) => {
+              e.preventDefault();
+              timelineDragRef.current = {
+                startY: e.clientY,
+                startH: timelinePx,
+              };
+              document.body.style.cursor = "row-resize";
+              document.body.style.userSelect = "none";
+            }}
+          />
           {/* CapCut: full-width timeline (bottom) */}
-          <div className="c2-capcut-timeline" id="c2-timeline">
+          <div
+            className="c2-capcut-timeline"
+            id="c2-timeline"
+            style={
+              {
+                ["--c2-timeline-h" as string]: `${timelinePx}px`,
+              } as CSSProperties
+            }
+          >
             <div className="flex h-full flex-col">
               <div className="flex shrink-0 items-center justify-between gap-2 border-b border-white/5 px-3 py-1">
                 <p className="text-[10px] text-slate-500">{t2.stickyBoardHint}</p>
@@ -1897,7 +2364,7 @@ export function CaptionStudio2Client() {
                   ) : null}
                 </div>
               </div>
-              <div className="min-h-0 flex-1 overflow-auto p-2">
+              <div className="min-h-0 flex-1 overflow-auto px-2 py-1">
                 <CaptionNleTimeline
                   clips={timelineClips}
                   captions={captionLines}
@@ -1905,9 +2372,9 @@ export function CaptionStudio2Client() {
                   selectedCaptionIndex={selectedCaptionIndex}
                   playheadSec={playheadSec}
                   bgmStartSec={bgmStartSec}
+                  bgmDurationSec={effectiveBgmDuration}
                   bgmLabel={bgmLabel}
-                  voUrl={voUrl}
-                  voStartSec={voStartSec}
+                  voClips={voClips}
                   pxPerSec={pxPerSec}
                   canUndo={undoStack.length > 0}
                   labels={{
@@ -1922,7 +2389,11 @@ export function CaptionStudio2Client() {
                     undo: t2.nleUndo,
                     zoomIn: t2.nleZoomIn,
                     zoomOut: t2.nleZoomOut,
+                    zoomFit: t2.nleZoomFit,
+                    zoomLabel: t2.nleZoomLabel,
+                    cutAt: t2.nleCutAt,
                     emptyVideo: t2.nleEmptyVideo,
+                    emptyCaption: t2.nleEmptyCaption,
                     bgmLane: t2.nleBgmLane,
                     voLane: t2.nleVoLane,
                     selected: t2.nleSelected,
@@ -1955,8 +2426,19 @@ export function CaptionStudio2Client() {
                   onUpdateCaption={(index, patch) => {
                     updateLine(index, patch);
                   }}
-                  onBgmStart={(sec) => {
-                    setBgmStartSec(sec);
+                  onBgmRange={(start, duration) => {
+                    setBgmRange(start, duration);
+                    setToolTab("audio");
+                  }}
+                  onVoStart={(id, sec) => {
+                    setVoClips((prev) =>
+                      prev.map((v) => (v.id === id ? { ...v, startSec: sec } : v)),
+                    );
+                    setSelectedVoId(id);
+                    setToolTab("audio");
+                  }}
+                  onSelectVo={(id) => {
+                    setSelectedVoId(id);
                     setToolTab("audio");
                   }}
                   onSelectAudio={() => setToolTab("audio")}
@@ -1975,22 +2457,43 @@ export function CaptionStudio2Client() {
         onPick={(asset) => {
           setLibraryOpen(false);
           if (!asset.downloadUrl) return;
-          if (libraryPickMode === "append") {
-            void addTimelineClip(
-              asset.downloadUrl,
-              asset.name || t2.clipN(timelineClips.length + 1),
-            );
-            return;
-          }
-          void probeVideoDuration(asset.downloadUrl).then((d) => {
+          void (async () => {
+            // redirect:manual — don't download the whole video; detect missing R2.
+            const check = await fetch(asset.downloadUrl, {
+              credentials: "include",
+              redirect: "manual",
+            }).catch(() => null);
+            const status = check?.status ?? 0;
+            const ok =
+              status === 200 ||
+              status === 302 ||
+              status === 301 ||
+              status === 307 ||
+              status === 308;
+            if (!ok) {
+              setError(
+                status === 404
+                  ? t2.libraryFileMissing
+                  : t.libraryPickerLoadError,
+              );
+              return;
+            }
+            if (libraryPickMode === "append") {
+              await addTimelineClip(
+                asset.downloadUrl,
+                asset.name || t2.clipN(timelineClips.length + 1),
+              );
+              return;
+            }
+            const d = await probeVideoDuration(asset.downloadUrl);
             applySource(
-              asset.downloadUrl!,
+              asset.downloadUrl,
               asset.name || t.sourceFromLibrary,
               undefined,
               d,
             );
             setNote(t2.readyPicture);
-          });
+          })();
         }}
         labels={{
           title: t.libraryPickerTitle,
@@ -2000,6 +2503,7 @@ export function CaptionStudio2Client() {
           cancel: t.libraryPickerCancel,
           useThis: t.libraryPickerUse,
           close: t.libraryPickerClose,
+          missingFile: t.libraryPickerMissingFile,
         }}
       />
     </div>

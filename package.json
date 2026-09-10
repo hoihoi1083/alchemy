@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "setup:bgm": "bash scripts/setup-bgm.sh",
+    "setup:bgm:ai": "tsx scripts/generate-library-bgm.ts",
     "setup:compositor": "bash scripts/setup-compositor-fonts.sh",
     "render:career-carousel": "npx tsx scripts/render-career-carousel.ts",
     "render:career-realistic": "npx tsx scripts/render-career-carousel-realistic.ts",
