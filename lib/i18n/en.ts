@@ -5741,7 +5741,7 @@ export const en = {
 		bgmVolumeLabel: "BGM volume",
 		matchVideoMusic: "Match music to this video",
 		matchVideoMusicHint:
-			"Uses Sonilo on fal to score pacing from your clip. Topic/mood still steer style when set.",
+			"AI scores pacing from your clip. Topic/mood still steer style when set.",
 		voiceVolumeLabel: "Voice volume",
 		underVoiceBgmLabel: "BGM under voice",
 		audioReplaceOriginal: "Replace original audio",

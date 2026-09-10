@@ -37,7 +37,7 @@ type Props = {
   /** Mix gain for Apply BGM (ffmpeg volume). */
   bgmVolume: number;
   onBgmVolumeChange: (v: number) => void;
-  /** Prefer Sonilo video-to-music (analyzes clip) when generating AI BGM. */
+  /** Prefer video-matched AI music (analyzes clip) when generating BGM. */
   matchMusicToVideo: boolean;
   onMatchMusicToVideoChange: (v: boolean) => void;
   voiceoverEnabled: boolean;
@@ -379,7 +379,7 @@ export function CaptionAudioSection({
               </span>
               <span className="mt-0.5 block text-[10px] text-emerald-200/70">
                 {t.matchVideoMusicHint ??
-                  "AI scores pacing from your timeline (Sonilo). Topic/mood still steer style."}
+                  "AI scores pacing from your timeline. Topic/mood still steer style."}
               </span>
             </span>
           </label>

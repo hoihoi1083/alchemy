@@ -4736,7 +4736,7 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
     bgmVolumeLabel: "BGM 音量",
     matchVideoMusic: "按片内容配乐",
     matchVideoMusicHint:
-      "用 fal 上的 Sonilo 分析片节奏再生成音乐。主题／氛围仍可引导风格。",
+      "AI 会分析片节奏再生成音乐。主题／氛围仍可引导风格。",
     voiceVolumeLabel: "口播音量",
     underVoiceBgmLabel: "口播下 BGM",
     audioReplaceOriginal: "替换原视频声音",

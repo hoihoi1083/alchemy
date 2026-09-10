@@ -5177,7 +5177,7 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 		bgmVolumeLabel: "BGM 音量",
 		matchVideoMusic: "按片內容配樂",
 		matchVideoMusicHint:
-			"用 fal 上嘅 Sonilo 睇片節奏再生成音樂。主題／氛圍仍然可以引導風格。",
+			"AI 會睇片節奏再生成音樂。主題／氛圍仍然可以引導風格。",
 		voiceVolumeLabel: "口播音量",
 		underVoiceBgmLabel: "口播下 BGM",
 		audioReplaceOriginal: "取代原片聲音",
