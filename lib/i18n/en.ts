@@ -6090,7 +6090,10 @@ export const en = {
 		seedreamSplitting: "Splitting into layers…",
 		seedreamSplitHow:
 			"Turn this poster into movable pieces — text, product, people. Then drag or AI-edit each one.",
-		seedreamFullSplit: (_n?: number) => `Split into editable layers`,
+		seedreamFullSplit: (n?: number) =>
+			typeof n === "number" && n > 0
+				? `Split into editable layers · ~${n} tok`
+				: `Split into editable layers`,
 		seedreamFullReady: (layers: number) =>
 			`Ready — ${layers} layers. Select one to move, hide, or AI-edit.`,
 		qwenFullReady: (layers: number) =>

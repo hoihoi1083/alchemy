@@ -5063,7 +5063,10 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
     seedreamSplitting: "正在拆成可编辑图层…",
     seedreamSplitHow:
       "把海报拆成可拖曳的文字／产品／人物图层，再逐块改或用 AI 改。",
-    seedreamFullSplit: (_n?: number) => `一键拆成可编辑图层`,
+    seedreamFullSplit: (n?: number) =>
+      typeof n === "number" && n > 0
+        ? `一键拆成可编辑图层 · 约 ${n} tok`
+        : `一键拆成可编辑图层`,
     seedreamFullReady: (layers: number) =>
       `完成 — ${layers} 层。选中后可拖曳、隐藏，或 AI 改这块。`,
     qwenFullReady: (layers: number) =>

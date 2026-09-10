@@ -63,7 +63,6 @@ import { LiveTextFontLoader } from "@/components/edit-image-2/LiveTextFontLoader
 import { MagicBoardChat } from "@/components/edit-image-2/MagicBoardChat";
 import {
   estimateInpaintTokens,
-  estimateSmartLayersDetectTokens,
   TOKEN_COST,
 } from "@/lib/billing/token-costs";
 import { isLibraryAssetUrl } from "@/lib/storage/library-asset-url";
@@ -128,12 +127,10 @@ type GuideLine = { orientation: "h" | "v"; pos: number };
 
 const HISTORY_MAX = 40;
 const SNAP_PX = 6;
-/** Aug-style full split: Florence + SAM + BiRefNet subject (kept for magic chat). */
-const DETECT_SAM_TOKENS =
-  estimateSmartLayersDetectTokens({ sam: true }) + TOKEN_COST.smart_layers_matte;
 const ERASE_PER_MP = estimateInpaintTokens(1);
 const HEAL_LOCAL_TOKENS = TOKEN_COST.smart_layers_heal;
 const MATTE_TOKENS = TOKEN_COST.smart_layers_matte;
+/** Primary Split cost — must match /api/decompose-seedream-layers charge. */
 const SPLIT_TOKENS = TOKEN_COST.smart_layers_seedream;
 const SESSION_KEY = "alchemy-edit-image-2-v1";
 
@@ -2546,7 +2543,7 @@ export function EditImage2Client() {
         setNotice(t.magicChatHelp);
         return;
       case "split":
-        await onDetectAll();
+        await onSeedreamSplit();
         return;
       case "grab_mode":
         setGrabMode(true);
@@ -3605,7 +3602,7 @@ export function EditImage2Client() {
                   <p className="max-w-md text-sm text-slate-400">{t.dropHint}</p>
                   <p className="max-w-lg text-[11px] text-slate-500">
                     {t.tokenHint(
-                      DETECT_SAM_TOKENS,
+                      SPLIT_TOKENS,
                       ERASE_PER_MP,
                       HEAL_LOCAL_TOKENS,
                       MATTE_TOKENS,
@@ -3858,7 +3855,7 @@ export function EditImage2Client() {
               <div className="rounded-xl border border-white/10 bg-slate-950/90 px-5 py-4 text-center shadow-xl">
                 <span className="mx-auto mb-2 block h-7 w-7 animate-spin rounded-full border-2 border-violet-400 border-t-transparent" />
                 <p className="text-sm text-slate-200">{t.splittingLayers}</p>
-                <p className="mt-1 text-[11px] text-slate-500">{t.detecting(DETECT_SAM_TOKENS)}</p>
+                <p className="mt-1 text-[11px] text-slate-500">{t.detecting(SPLIT_TOKENS)}</p>
               </div>
             </div>
           )}
@@ -3948,7 +3945,7 @@ export function EditImage2Client() {
                     label={
                       busy === "decompose"
                         ? t.seedreamSplitting
-                        : t.seedreamFullSplit()
+                        : t.seedreamFullSplit(SPLIT_TOKENS)
                     }
                     disabled={!canEdit || !!busy || brushBusy}
                     active
@@ -4279,7 +4276,7 @@ export function EditImage2Client() {
           <div className="space-y-2 rounded-xl border border-white/10 bg-black/20 p-2.5">
             <ToolBtn
               label={
-                busy === "decompose" ? t.seedreamSplitting : t.seedreamFullSplit()
+                busy === "decompose" ? t.seedreamSplitting : t.seedreamFullSplit(SPLIT_TOKENS)
               }
               disabled={!canEdit || !!busy || brushBusy}
               active

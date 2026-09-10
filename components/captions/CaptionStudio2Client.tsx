@@ -268,6 +268,8 @@ export function CaptionStudio2Client() {
   const [captionMode, setCaptionMode] = useState<"pure" | "speech" | "ai">(
     "pure",
   );
+  /** True after a successful burn — hide live overlay on the burned plate (avoid double captions). */
+  const [captionsBurnedInPlate, setCaptionsBurnedInPlate] = useState(false);
   const [packId, setPackId] = useState<string | null>(null);
   const [packName, setPackName] = useState("");
   const [packBusy, setPackBusy] = useState(false);
@@ -530,6 +532,7 @@ export function CaptionStudio2Client() {
     setRefImageUrl(snap.refImageUrl ?? null);
     setUndoStack([]);
     setEditedVideoUrl(null);
+    setCaptionsBurnedInPlate(false);
     setToolTab(snap.captionLines.length > 0 ? "captions" : "edit");
     setError(null);
     setWarn(null);
@@ -752,6 +755,7 @@ export function CaptionStudio2Client() {
       setSelectedVoId(null);
       setPackId(null);
       setPackName("");
+      setCaptionsBurnedInPlate(false);
       setNote(null);
       setWarn(null);
       setError(null);
@@ -851,6 +855,7 @@ export function CaptionStudio2Client() {
     setSelectedAiMusicId(null);
     setVoicePreviewTracks([]);
     setSelectedVoicePreviewId(null);
+    setCaptionsBurnedInPlate(false);
     if (blobPreviewRef.current) {
       URL.revokeObjectURL(blobPreviewRef.current);
       blobPreviewRef.current = null;
@@ -1184,6 +1189,7 @@ export function CaptionStudio2Client() {
       }
       pushUndo();
       setCaptionLines(lines);
+      setCaptionsBurnedInPlate(false);
       setSelectedCaptionIndex(0);
       const asr =
         data.asrProvider === "local" ? t2.asrLocal : t2.asrCloud;
@@ -1272,41 +1278,22 @@ export function CaptionStudio2Client() {
           typeof data.error === "string" ? data.error : m.errors.voiceoverFailed,
         );
       }
+      // Keep durable library/http URLs for later mix — never rewrite to blob:
+      // dub/burn APIs cannot fetch blob: from the browser.
       const tracks = (Array.isArray(data.tracks) ? data.tracks : []) as VoicePreviewTrack[];
-      const playable: VoicePreviewTrack[] = [];
-      for (const track of tracks) {
-        const url = track.audioUrl?.trim();
-        if (!url) continue;
-        if (url.startsWith("/api/library/") || url.includes("/api/library/download/")) {
-          try {
-            const audioRes = await fetch(withCacheBust(url), {
-              credentials: "include",
-              cache: "no-store",
-            });
-            if (!audioRes.ok) throw new Error(`audio ${audioRes.status}`);
-            const blob = await audioRes.blob();
-            playable.push({ ...track, audioUrl: URL.createObjectURL(blob) });
-            continue;
-          } catch {
-            /* fall through */
-          }
-        }
-        playable.push(track);
-      }
+      const durable = tracks.filter((tr) => {
+        const url = tr.audioUrl?.trim();
+        return Boolean(url) && isHttpOrLibraryMediaUrl(url);
+      });
       const playableWithDuration = await Promise.all(
-        playable.map(async (track) => {
+        durable.map(async (track) => {
           const durationSec =
             track.durationSec ??
-            (track.audioUrl ? await probeAudioDurationSec(track.audioUrl) : 0);
+            (track.audioUrl ? await probeAudioDurationSec(withCacheBust(track.audioUrl)) : 0);
           return durationSec > 0 ? { ...track, durationSec } : track;
         }),
       );
-      setVoicePreviewTracks((prev) => {
-        for (const tr of prev) {
-          if (tr.audioUrl?.startsWith("blob:")) URL.revokeObjectURL(tr.audioUrl);
-        }
-        return playableWithDuration;
-      });
+      setVoicePreviewTracks(playableWithDuration);
       setSelectedVoicePreviewId(playableWithDuration[0]?.id ?? null);
       setVoiceoverEnabled(true);
     } catch (e: unknown) {
@@ -1363,6 +1350,7 @@ export function CaptionStudio2Client() {
         : []) as CaptionLine[];
       if (!lines.length) throw new Error(t.planCaptionVoiceFailed);
       pushUndo();
+      setCaptionsBurnedInPlate(false);
       setCaptionLines(
         lines.map((line, i) => {
           const text = String(line.text ?? "").trim();
@@ -1544,20 +1532,13 @@ export function CaptionStudio2Client() {
       }
       const tracks = (Array.isArray(data.tracks) ? data.tracks : []) as VoicePreviewTrack[];
       const first = tracks[0];
-      if (!first?.audioUrl) throw new Error(m.errors.voiceoverFailed);
-      let audioUrl = first.audioUrl;
-      if (audioUrl.startsWith("/api/library/") || audioUrl.includes("/api/library/download/")) {
-        const audioRes = await fetch(withCacheBust(audioUrl), {
-          credentials: "include",
-          cache: "no-store",
-        });
-        if (audioRes.ok) {
-          audioUrl = URL.createObjectURL(await audioRes.blob());
-        }
+      if (!first?.audioUrl || !isHttpOrLibraryMediaUrl(first.audioUrl)) {
+        throw new Error(m.errors.voiceoverFailed);
       }
+      const audioUrl = first.audioUrl.trim();
       const durationSec =
         first.durationSec ??
-        (await probeAudioDurationSec(audioUrl)) ??
+        (await probeAudioDurationSec(withCacheBust(audioUrl))) ??
         Math.max(0.8, endSec - startSec);
       const safeDur =
         durationSec > 0 ? durationSec : Math.max(0.8, endSec - startSec);
@@ -1571,7 +1552,11 @@ export function CaptionStudio2Client() {
       pushUndo();
       setVoClips((prev) => [...prev.filter((v) => !(v.startSec >= startSec && v.startSec < endSec)), clip]);
       setSelectedVoId(clip.id);
-      setVoicePreviewTracks(tracks.map((tr, i) => (i === 0 ? { ...tr, audioUrl, durationSec: safeDur } : tr)));
+      setVoicePreviewTracks(
+        tracks
+          .filter((tr) => isHttpOrLibraryMediaUrl(tr.audioUrl))
+          .map((tr, i) => (i === 0 ? { ...tr, audioUrl, durationSec: safeDur } : tr)),
+      );
       setSelectedVoicePreviewId(first.id);
       setVoiceoverScript(speak);
       setAudioNote(t2.sectionVoDone ?? t.audioVoiceDone);
@@ -1665,6 +1650,9 @@ export function CaptionStudio2Client() {
       if (timelineVos.length > 0) {
         // Mix every VO clip onto the plate in start order (keeps multi-section VO).
         for (const vo of timelineVos) {
+          if (!isHttpOrLibraryMediaUrl(vo.audioUrl)) {
+            throw new Error(m.errors.voiceoverFailed);
+          }
           speechStartSec = vo.startSec;
           videoUrl = await dubOnce({
             video_url: videoUrl,
@@ -1693,6 +1681,9 @@ export function CaptionStudio2Client() {
         if (selectedPreview) {
           voiceBody.voice_preset = selectedPreview.presetId;
           if (selectedPreview.audioUrl) {
+            if (!isHttpOrLibraryMediaUrl(selectedPreview.audioUrl)) {
+              throw new Error(m.errors.voiceoverFailed);
+            }
             voiceBody.speech_url = selectedPreview.audioUrl;
           }
         }
@@ -1701,10 +1692,10 @@ export function CaptionStudio2Client() {
 
         const previewUrl = selectedPreview?.audioUrl ?? null;
         let voDur = selectedPreview?.durationSec ?? 0;
-        if (previewUrl && !(voDur > 0)) {
-          voDur = await probeAudioDurationSec(previewUrl);
+        if (previewUrl && isHttpOrLibraryMediaUrl(previewUrl) && !(voDur > 0)) {
+          voDur = await probeAudioDurationSec(withCacheBust(previewUrl));
         }
-        if (previewUrl && voDur > 0) {
+        if (previewUrl && isHttpOrLibraryMediaUrl(previewUrl) && voDur > 0) {
           const clip: VoClip = {
             id: `vo-${Date.now()}`,
             audioUrl: previewUrl,
@@ -1718,6 +1709,9 @@ export function CaptionStudio2Client() {
       }
 
       await commitPlateToTimeline(videoUrl, sourceLabel || "VO mix");
+      // VO is baked into the plate — clear lane so re-mix does not double-charge.
+      setVoClips([]);
+      setSelectedVoId(null);
 
       const doneNote =
         speechStartSec > 0.05
@@ -1828,6 +1822,8 @@ export function CaptionStudio2Client() {
       // Keep pre-burn plate as "show original" reference.
       setOriginalSourceUrl(toRelativePipelineUrl(burnUrl));
       await commitPlateToTimeline(data.videoUrl, sourceLabel || "Burned");
+      // Burned pixels already include captions — hide CSS overlay to avoid doubles.
+      setCaptionsBurnedInPlate(true);
       setNote(t.appliedNote);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : t.burnFailed);
@@ -1852,6 +1848,8 @@ export function CaptionStudio2Client() {
   }
 
   function updateLine(index: number, patch: Partial<CaptionLine>) {
+    // Keep burned flag; force original plate so live overlay does not double on burned pixels.
+    setShowOriginal(true);
     setCaptionLines((prev) =>
       prev.map((line, i) => (i === index ? { ...line, ...patch } : line)),
     );
@@ -2259,7 +2257,7 @@ export function CaptionStudio2Client() {
                       showOriginal={showOriginal}
                       onPlayhead={setPlayheadSec}
                     />
-                    {!showOriginal ? (
+                    {(!captionsBurnedInPlate || showOriginal) ? (
                       <CaptionLiveOverlay
                         lines={captionLines}
                         playheadSec={playheadSec}
@@ -2271,6 +2269,7 @@ export function CaptionStudio2Client() {
                         }}
                         onUpdate={(index, patch) => {
                           pushUndo();
+                          setShowOriginal(true);
                           setCaptionLines((prev) =>
                             prev.map((line, i) =>
                               i === index ? { ...line, ...patch } : line,
@@ -2547,6 +2546,7 @@ export function CaptionStudio2Client() {
                     className="w-full rounded-lg border border-white/15 px-2 py-1.5 text-[11px] text-white"
                     onClick={() => {
                       pushUndo();
+                      setCaptionsBurnedInPlate(false);
                       setCaptionLines((prev) => [
                         ...prev,
                         {
