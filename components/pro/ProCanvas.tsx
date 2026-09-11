@@ -3449,8 +3449,6 @@ function ProCanvasBoard({
     ...(m.ultraCanvas.nodeLabels as Record<string, string>),
   };
 
-  const paletteOpen = desktopPaletteOpen || mobilePaletteOpen;
-
   return (
     <ProCanvasActionsProvider value={actions}>
       {/* Single board shell: palette lives INSIDE so it cannot spill outside the canvas. */}
@@ -3579,10 +3577,12 @@ function ProCanvasBoard({
           snapToGrid
           snapGrid={[20, 20]}
           panOnDrag
+          panOnScroll
+          zoomOnScroll
+          zoomOnPinch
+          panActivationKeyCode="Space"
           selectionOnDrag={false}
           selectionKeyCode="Shift"
-          panOnScroll={!paletteOpen}
-          zoomOnScroll={!paletteOpen}
           colorMode="dark"
           proOptions={{ hideAttribution: true }}
         >
@@ -3592,15 +3592,18 @@ function ProCanvasBoard({
             color={isV2 ? "rgba(34,211,238,0.14)" : "#334155"}
             bgColor={isV2 ? "transparent" : undefined}
           />
+          {/* Bottom-left: zoom/fit stay clear of MiniMap + right Board tools. */}
           <Controls
-            position="bottom-right"
-            className="!border-slate-700 !bg-slate-900/90 !shadow-lg"
+            position="bottom-left"
+            className="!z-20 !m-3 !border-slate-700 !bg-slate-900/95 !shadow-lg"
           />
           <MiniMap
             position="bottom-right"
-            className="!mb-14 !border-slate-700 !bg-slate-900/90"
+            className="!m-3 !h-24 !w-36 !border-slate-700 !bg-slate-900/90"
             nodeColor="#6366f1"
             maskColor="rgba(15,23,42,0.75)"
+            pannable
+            zoomable
           />
         </ReactFlow>
 

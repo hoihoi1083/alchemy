@@ -101,11 +101,11 @@ export function AddNodePalette({
   return (
     <div
       data-add-node-palette
-      className={`nodrag nopan flex w-52 flex-col overflow-hidden rounded-xl border border-cyan-500/20 bg-slate-900/95 shadow-[0_0_32px_rgba(34,211,238,0.08)] backdrop-blur ${className}`}
-      style={{ height: "min(420px, 50vh)" }}
+      className={`nodrag nopan nowheel flex w-48 flex-col overflow-hidden rounded-xl border border-cyan-500/20 bg-slate-900/95 shadow-[0_0_32px_rgba(34,211,238,0.08)] backdrop-blur ${className}`}
+      style={{ height: "min(360px, 48vh)" }}
       onPointerDown={(e) => e.stopPropagation()}
     >
-      <div className="flex h-9 shrink-0 items-center justify-between gap-2 border-b border-slate-800/80 px-3">
+      <div className="flex h-8 shrink-0 items-center justify-between gap-2 border-b border-slate-800/80 px-2.5">
         <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-cyan-300/90">
           {labels.addNode}
         </p>
@@ -123,7 +123,7 @@ export function AddNodePalette({
 
       <div
         ref={listRef}
-        className="min-h-0 flex-1 p-3"
+        className="nowheel min-h-0 flex-1 p-2"
         style={{
           overflowY: "scroll",
           overscrollBehavior: "contain",
@@ -132,14 +132,14 @@ export function AddNodePalette({
           touchAction: "pan-y",
         }}
       >
-        <div className="space-y-1 pb-2">
+        <div className="space-y-0.5 pb-1">
           {ROWS.map((row) => {
             if (row.type === "hint") {
               if (!labels.paletteTextVideoHint) return null;
               return (
                 <p
                   key="hint"
-                  className="mb-2 rounded-md border border-violet-500/25 bg-violet-950/30 px-2 py-1.5 text-[9px] leading-snug text-violet-100/90"
+                  className="mb-1.5 rounded-md border border-violet-500/25 bg-violet-950/30 px-2 py-1 text-[9px] leading-snug text-violet-100/90"
                 >
                   {labels.paletteTextVideoHint}
                 </p>
@@ -149,7 +149,7 @@ export function AddNodePalette({
               return (
                 <p
                   key={`section-${row.key}`}
-                  className={`mt-3 text-[10px] font-semibold uppercase tracking-[0.14em] ${
+                  className={`mt-2 text-[9px] font-semibold uppercase tracking-[0.14em] ${
                     row.key === "modifier" ? "text-amber-400/80" : "text-slate-500"
                   }`}
                 >
@@ -164,7 +164,7 @@ export function AddNodePalette({
                 type="button"
                 disabled={disabled}
                 onClick={() => onAdd(row.kind)}
-                className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs transition ${tone.row}`}
+                className={`flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-[11px] transition ${tone.row}`}
               >
                 <span className={tone.plus}>+</span>
                 {labels[row.kind] ?? row.label}
