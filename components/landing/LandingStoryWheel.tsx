@@ -389,7 +389,7 @@ function MobileSlide({
   points: readonly { title: string; body: string }[] | null;
   pointIcons?: readonly string[];
   ctaHref: string;
-  ctaLabel: string;
+  ctaLabel: string | null;
   hint: string | null;
   poster: string;
   video: string;
@@ -444,15 +444,19 @@ function MobileSlide({
               ))}
             </ul>
           ) : null}
-          <div className="mt-5 flex flex-wrap items-center gap-3">
-            <Link
-              href={ctaHref}
-              className="inline-flex rounded-full bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500"
-            >
-              {ctaLabel}
-            </Link>
-            {hint ? <p className="text-xs text-slate-500">{hint}</p> : null}
-          </div>
+          {ctaLabel || hint ? (
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              {ctaLabel ? (
+                <Link
+                  href={ctaHref}
+                  className="inline-flex rounded-full bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500"
+                >
+                  {ctaLabel}
+                </Link>
+              ) : null}
+              {hint ? <p className="text-xs text-slate-500">{hint}</p> : null}
+            </div>
+          ) : null}
         </div>
         <div className="mx-auto w-full max-w-[280px] overflow-hidden rounded-[2.25rem] border border-slate-200 shadow-lg">
           {reduceMotion ? (
