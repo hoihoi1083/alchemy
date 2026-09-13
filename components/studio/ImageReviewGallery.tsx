@@ -31,6 +31,7 @@ type Props = {
   /** When true, render Back / Download all / Generate one more + data-secure (preview page). */
   showStandaloneFooter?: boolean;
   onBack?: () => void;
+  onSelectPhaseIndex?: (index: number) => void;
 };
 
 /** Image grid column counts — use custom CSS (Tailwind lg: utilities are missing in this build). */
@@ -310,6 +311,7 @@ function ReviewImageFrame({
 export function ImageReviewGallery({
   showStandaloneFooter = false,
   onBack,
+  onSelectPhaseIndex,
 }: Props) {
   const { m } = useLocale();
   const wizard = useWizard();
@@ -493,6 +495,7 @@ export function ImageReviewGallery({
       <ImageReviewStepper
         workflowMode={wizard.workflowMode}
         kind={isStoryboardReview ? "storyboard" : "image"}
+        onSelectPhaseIndex={onSelectPhaseIndex}
       />
 
       {/* Mobile: stack. Tablet: full-width cards under title. Laptop+: title | cards row. */}

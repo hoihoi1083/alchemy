@@ -317,13 +317,13 @@ export const en = {
 		physicalDesc:
 			"You have a real product to photograph — jewelry, food, skincare, gadgets, and more.",
 		physicalExamples:
-			"e.g. skincare set, snack pack, crystal bracelet, apparel, home goods",
+			"e.g. skincare, food and beverages, jewellery, clothing, furniture",
 		physicalTags: [
 			"Skincare",
-			"Food & drinks",
-			"Jewelry",
-			"Apparel",
-			"Home goods",
+			"Food and beverages",
+			"Jewellery",
+			"Clothing",
+			"Furniture",
 		],
 		conceptTitle: "Services / Website / Brand / Concept",
 		conceptDesc:
@@ -426,14 +426,14 @@ export const en = {
 		titleAfter: " writing prompts.",
 		title: "Create marketing content without writing prompts.",
     subtitle:
-			"Upload a product image or paste a reference link. Alchemy AI analyzes the style, creates editable prompts and storyboards, then generates ready-to-use ads, images and reels in 5 mins.",
+			"Upload a product image or paste a reference link. Alchemy AI analyzes the style, creates editable prompts and storyboards, then generates ready-to-use ads, images and reels in 5 minutes.",
     openStudio: "Open Studio",
     startCreating: "Start Creating",
 		tryFree: "Try Free",
 		floatingCta: "Start now",
 		ctaPrimary: "Try Free — Create Your First Ad",
 		ctaSecondary: "Watch Demo",
-    howItWorks: "How It Works",
+    howItWorks: "How idea becomes reality",
 		navHome: "Home",
 		navProduct: "Product",
 		navTemplates: "Templates",
@@ -479,30 +479,30 @@ export const en = {
 			{ label: "Layout", value: "88%", pct: 88 },
 			{ label: "Tone", value: "85%", pct: 85 },
 		],
-		transformBadge: "Product transform",
+		transformBadge: "Product transformation",
 		transformTitleBefore: "From a plain product shot to a ",
-		transformTitleHighlight: "studio-ready",
-		transformTitleAfter: " creative.",
+		transformTitleHighlight: "studio-like masterpiece.",
+		transformTitleAfter: "",
 		transformBody:
-			"Upload one product photo. Alchemy reads color, layout, and tone — then restyles it into lifestyle ads you can edit and export for every platform.",
+			"Upload your product photo. Alchemy reads color, layout, and tone — then restyles it into lifestyle ads you can edit and export for every platform.",
 		transformPoints: [
 			{
 				title: "Keep your real product",
-				body: "We restyle the scene and lighting — your bottle, label, and brand stay true.",
+				body: "We restyle the scene and lighting only — your bottle, label, and brand stay true.",
 			},
 			{
 				title: "Match the look you want",
-				body: "AI scores color, layout, and tone so every output feels intentional, not random.",
+				body: "AI sorts out color, layout, and tone so every output feels intentional, not random.",
 			},
 			{
-				title: "Ready for ads in minutes",
-				body: "Generate scroll-stopping stills for IG, Facebook, TikTok, and RedNote — then tweak on canvas.",
+				title: "An ad is ready in minutes",
+				body: "Generate scroll-stopping stills for Instagram, Facebook, TikTok, and RedNote.",
 			},
 		],
 		transformCta: "Transform my product",
 		transformHint: "No blank prompt. Start from your photo.",
-		howTitleBefore: "How it ",
-		howTitleHighlight: "Works",
+		howTitleBefore: "How idea becomes ",
+		howTitleHighlight: "reality",
 		howSubtitle: "From reference to final creative in 4 simple steps.",
 		howSteps: [
 			{
@@ -510,16 +510,16 @@ export const en = {
 				body: "Upload your product image or paste a reference post / link.",
 			},
 			{
-				title: "AI Analyzes the Style",
-				body: "AI analyzes colors, layout, composition, tone and copywriting style.",
+				title: "AI Analyzes Your Style",
+				body: "AI analyzes color palettes, layouts, compositions, tones and copywriting styles.",
 			},
 			{
 				title: "Edit Prompt & Storyboard",
-				body: "Review and edit AI-generated prompt, copy and storyboard before generating.",
+				body: "Review and edit the AI-generated prompt and storyboard before generating a full video.",
 			},
 			{
-				title: "Generate & Edit Creative",
-				body: "Generate images or videos, then refine with our editable canvas.",
+				title: "Generate & Edit Freely",
+				body: "One click to generate images and videos, then refine with our canvas tools.",
 			},
 		],
 		demoModal: {
@@ -626,26 +626,26 @@ export const en = {
 			imageLabel: "Image",
 			readyEdit: "Ready to edit on canvas",
 		},
-		refTitle: "Reference style. Brand + content.",
+		refTitle: "Reference different styles while focusing on brand & content.",
 		refBody:
-			"Choose a post or Reel you like. Alchemy identifies layout, color palette, lighting, and tone — then suggests how to apply it to your product or concept without copying the original content, so the result is your brand + content.",
+			"Choose a post or a Reel you like. Alchemy identifies layout, color palette, lighting, and tone — then suggests how to apply it to your product or concept without copying the original content, so the result is your brand + content.",
 		refCardLabel: "Reference style",
 		refFeatureItems: [
 			{
 				title: "Identify style DNA",
-				body: "We extract layout, color, lighting, and tone — not the reference’s copy or product.",
+				body: "We extract the vibe and style of the reference — not the reference’s copy or product.",
 			},
 			{
 				title: "Keep your real product",
-				body: "Your SKU, packaging, and brand details stay true while the scene restyles.",
+				body: "Your brand details stay true while the scene restyles.",
 			},
 			{
 				title: "Apply, don’t copy",
-				body: "The output matches the vibe you liked, with your offer and messaging.",
+				body: "The output matches your preference, with your product’s selling point and messages you want to promote.",
 			},
 			{
 				title: "Ready for every platform",
-				body: "Generate stills or video framed for IG, TikTok, Facebook, and more.",
+				body: "Generate stills or videos for Instagram, TikTok, Facebook, and more.",
 			},
 		],
 		resultCardLabel: "Your Brand Creative",
@@ -675,13 +675,13 @@ export const en = {
 			{ title: "Export Sizes", body: "IG, FB, RedNote, TikTok & more" },
 		],
 		storyboardBadge: "Storyboard mode",
-		storyboardTitle: "Storyboard mode — plan scenes, then ship video",
+		storyboardTitle: "Storyboard mode — plan scenes, then merge into a video",
 		storyboardBody:
 			"Three still scenes become one story reel — plan every shot first, then generate with consistent story, tone, and visuals.",
 		storyboardFeatureItems: [
 			{
 				title: "Plan every scene first",
-				body: "Lock shots and timing before you spend tokens on video.",
+				body: "Select the best shots and timing before you spend tokens on generating a video.",
 			},
 			{
 				title: "Consistent story & tone",
@@ -693,7 +693,7 @@ export const en = {
 			},
 			{
 				title: "Export in minutes",
-				body: "Generate high-quality clips ready for ads and social.",
+				body: "Generate high-quality clips ready for ads and social media.",
 			},
 		],
 		storyboardCta: "Start storyboard mode",
@@ -768,27 +768,27 @@ export const en = {
 		whyItems: [
 			{
 				title: "Prompt-free",
-				body: "Hassle-free guidance by MicroWizard. Deliver content with few simple steps.",
+				body: "Hassle-free guidance step by step. Deliver content with only a few clicks.",
 			},
 			{
 				title: "Intelligent market research",
-				body: "See what’s trending now. Reference updated styles instead of wild guessing.",
+				body: "Trending references with up to date styles instead of wild guessing.",
 			},
 			{
 				title: "Storyboard first",
-				body: "Lock every scene before full render. Zero wasted tokens.",
+				body: "Everything is in your hands. Choose your scenes first before full render — zero wasted tokens.",
 			},
 			{
 				title: "Editable output",
-				body: "Tweak any detail after generation. Instant fixes. No restart required.",
+				body: "Tweak any little detail after generation. Instant fixes, no restart required.",
 			},
 			{
 				title: "Products & Concepts",
-				body: "Physical products, services, concepts, or abstract ideas work just as well.",
+				body: "Physical products, services, concepts, or even abstract ideas work just as well.",
 			},
 			{
 				title: "Subscription + Token",
-				body: "Enjoy Free plan upon signup. Upgrade and top up only when needed.",
+				body: "A hybrid of subscription plans and extra tokens. Upgrade and top up only when needed. Enjoy a free plan upon signup!",
 			},
 		],
 		scenariosTitle: "Built for every marketing scenario",
@@ -1392,6 +1392,8 @@ export const en = {
     faqTitle: "FAQ",
 		faqShowMore: "Show more questions",
 		faqShowLess: "Show fewer questions",
+		faqPrev: "Previous questions",
+		faqNext: "Next questions",
     faq: [
 			{
 				q: "What is Alchemy AI Lab?",
@@ -1862,25 +1864,24 @@ export const en = {
     workflowModes: {
       "image-only": {
 				title: "Generate images only",
-				description: "High-quality promo stills — download PNG",
-				cardDescription:
-					"Generate high-quality promo images for social posts, product shots, and static ads.",
-				tags: ["Social posts", "Product display", "Static ads"],
+				description: "High-quality promotional stills — download PNG",
+				cardDescription: "Generate high-quality promotional images.",
+				tags: ["Social media posts", "Product shots", "Static ads"],
       },
       "video-only": {
-				title: "Generate video only",
+				title: "Generate a one-scene video only",
 				description: "One continuous scene — ready-to-publish short video",
 				cardDescription:
-					"One continuous scene from your product still — AI camera moves for a short clip you can publish right away.",
-				tags: ["One scene", "Short video", "Video ads"],
+					"Alchemy designs a short clip based on your product image and preferred style.",
+				tags: ["One scene", "Short clip", "Video ads"],
 				sceneBadge: "One scene only",
       },
       combined: {
-				title: "Generate images, then video",
+				title: "Generate images, then videos",
 				description:
 					"Multi-scene storyboard — approve stills, then stitch into video",
 				cardDescription:
-					"Generate multiple storyboard scene stills first, approve the look, then stitch them into one short video.",
+					"Alchemy generates multiple short clips of your product, then merges them together into a multi-scene video.",
 				tags: ["Multiple scenes", "Storyboard", "Motion ads"],
 				sceneBadge: "Multiple scenes",
 			},
@@ -1888,7 +1889,7 @@ export const en = {
 		creationPath: {
 			stepEyebrow: "STEP 2",
 			title: "Choose how to create",
-			hint: "Choose generate images only, generate video only, or generate images then video.",
+			hint: "Choose generate images only, a one-scene video only, or images then videos.",
 			bestForLabel: "Best for:",
 			tipTitle: "How should I choose?",
 			tipImage:
@@ -1986,6 +1987,14 @@ export const en = {
 			],
 		},
 		videoOutputLabel: "Your video output",
+		imageOutputLabel: "Your image output",
+		imageOutput: {
+			title: "Promo stills",
+			pipeline:
+				"Upload product / reference → AI plans style & copy → generate downloadable images",
+			confidence:
+				"Best for feed posts, carousels, product shots, and static ads — no video step",
+		},
 		videoOutputPathLockedHint:
 			"Set by visual style above — no extra video mode to pick.",
 		videoOutputTypes: {
@@ -6961,22 +6970,17 @@ export const en = {
 			"What are you selling? This anchors headlines and prompts.",
 		productNameStep: {
 			stepEyebrow: "STEP 3",
-			title: "What's your product name?",
-			hint: "This anchors headlines, prompts, and scene planning — keep it short and clear.",
-			label: "Product name",
-			labelHint: "Required before you continue",
-			placeholder: "e.g. goldstone bracelet",
+			title: "What is your product like?",
+			hint: "Used for research keywords, headlines, prompts, and scene planning when needed.",
+			label: "Product",
+			labelHint: "A short product name — e.g. “Goldstone bracelet”, not “jewelry” or a full sales pitch.",
+			placeholder: "e.g. Goldstone bracelet",
 			examplesLabel: "Try an example",
 			examples: [
 				"Goldstone bracelet",
 				"Portable power station",
 				"Vitamin C serum",
 			],
-			tipTitle: "Why we ask",
-			tipBody:
-				"Studio uses the product name in image prompts, video briefs, and on-screen copy so ads stay on-brand for what you sell.",
-			tipNote: "You can edit this later",
-			tipNoteBody: "Change it anytime in Setup or Advanced studio.",
 		},
 		preGenerateSetup: {
 			stepEyebrow: "STEP 3",
@@ -7513,25 +7517,17 @@ export const en = {
 		},
 		conceptNameStep: {
 			stepEyebrow: "STEP 3",
-			title: "What is your concept?",
-			hint: "Describe the service, brand, membership, or campaign idea you’re promoting — next you’ll choose research or Concept assistant.",
-			label: "Your concept",
-			labelHint: "Required before you continue",
+			title: "What is your concept like?",
+			hint: "Used for research keywords, headlines, prompts, and scene planning when needed.",
+			label: "Concept",
+			labelHint: "Keep it clear — not too broad (e.g. “business”), not a full campaign brief.",
 			placeholder: "e.g. Yoga membership drive",
 			examplesLabel: "Try an example",
 			examples: [
-				"Skincare brand relaunch",
 				"Yoga membership drive",
-				"Double-11 flash sale",
-				"Same-day whitening booking",
-				"Consultancy site launch",
+				"Skincare brand relaunch",
 				"Weekend brunch campaign",
 			],
-			tipTitle: "Why we ask",
-			tipBody:
-				"Studio uses this concept in prompts, briefs, and on-screen copy so ads stay clear about what you’re promoting — brand, membership, offer, or campaign.",
-			tipNote: "You can edit this later",
-			tipNoteBody: "Change it anytime in Setup or Advanced studio.",
 		},
 		conceptTitle: "Concept assistant",
 		conceptHint: "Describe your service or offer — not a physical SKU.",
@@ -7581,8 +7577,8 @@ export const en = {
 			pick_cinematic_mode: "Pick single scene or multi-scene stitch.",
 			pick_combined_style: "Pick the storyboard reel workflow.",
 			pick_video_subpath: "Pick how to create your video.",
-			need_product_name: "Enter a product name.",
-			need_concept: "Enter your concept idea.",
+			need_product_name: "Enter your product.",
+			need_concept: "Enter your concept.",
 			need_concept_topic: "Enter a research topic.",
 			need_product_photo: "Upload a product photo.",
 			need_creative_brief: "Add a creative video brief.",

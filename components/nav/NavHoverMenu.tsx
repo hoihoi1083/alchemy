@@ -303,8 +303,8 @@ export function NavHoverMenu({
     triggerClassName != null
       ? `${baseTrigger} ${triggerClassName}`
       : dark
-        ? `${baseTrigger} whitespace-nowrap rounded-lg px-2 py-1.5 text-[12px] font-medium text-slate-300 hover:bg-white/10 hover:text-white xl:text-[13px]`
-        : `${baseTrigger} whitespace-nowrap text-[12px] font-medium text-slate-600 hover:text-violet-700 xl:text-[13px]`;
+        ? `${baseTrigger} whitespace-nowrap rounded-lg px-2 py-1.5 text-[14px] font-semibold tracking-tight text-slate-300 hover:bg-white/10 hover:text-white xl:text-[15px]`
+        : `${baseTrigger} whitespace-nowrap text-[14px] font-semibold tracking-tight text-slate-600 hover:text-violet-700 xl:text-[15px]`;
 
   const flyout =
     open && mounted

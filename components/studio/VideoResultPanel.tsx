@@ -218,10 +218,12 @@ export type VideoResultPreviewModel = {
 export function VideoResultPanel({
   onRegenerate,
   preview,
+  onSelectPhaseIndex,
 }: {
   onRegenerate?: () => void;
   /** When set, renders without requiring live wizard generation state. */
   preview?: VideoResultPreviewModel;
+  onSelectPhaseIndex?: (index: number) => void;
 } = {}) {
   const { m } = useLocale();
   const router = useRouter();
@@ -320,6 +322,7 @@ export function VideoResultPanel({
       <ImageReviewStepper
         workflowMode={wizard?.workflowMode ?? null}
         kind="video"
+        onSelectPhaseIndex={onSelectPhaseIndex}
       />
 
       <div className="video-review-header">

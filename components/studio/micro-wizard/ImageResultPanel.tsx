@@ -9,9 +9,14 @@ type Props = {
   generatingLabel: string;
   /** Show a secondary regenerate control (hidden when gallery banner is present). */
   allowRegenerate?: boolean;
+  onSelectPhaseIndex?: (index: number) => void;
 };
 
-export function ImageResultPanel({ generatingLabel, allowRegenerate = false }: Props) {
+export function ImageResultPanel({
+  generatingLabel,
+  allowRegenerate = false,
+  onSelectPhaseIndex,
+}: Props) {
   const { m } = useLocale();
   const wizard = useWizard();
 
@@ -24,6 +29,7 @@ export function ImageResultPanel({ generatingLabel, allowRegenerate = false }: P
         previewUrl={wizard.imageRefPreviewUrl || wizard.uploadPreviewUrl || null}
         workflowMode={wizard.workflowMode}
         waitKind={wizard.isStoryboardOutput ? "storyboard" : "image"}
+        onSelectPhaseIndex={onSelectPhaseIndex}
       />
     );
   }
@@ -50,7 +56,7 @@ export function ImageResultPanel({ generatingLabel, allowRegenerate = false }: P
 
   return (
     <div className="space-y-4">
-      <ImageReviewGallery />
+      <ImageReviewGallery onSelectPhaseIndex={onSelectPhaseIndex} />
       {allowRegenerate ? (
         <button
           type="button"

@@ -26,43 +26,46 @@ export function LandingNav() {
 	const { isSignedIn } = useAuth();
 	const [open, setOpen] = useState(false);
 
+	const navLinkClass =
+		"whitespace-nowrap text-[14px] font-semibold tracking-tight text-slate-600 hover:text-violet-700 xl:text-[15px]";
+
 	return (
 		<div className="sticky top-0 z-40 w-full">
 			<header className="w-full bg-white">
-			<div className="mx-auto flex w-full max-w-[1440px] items-center gap-2 px-3 py-3 sm:gap-3 sm:px-6 sm:py-3.5 md:px-8">
+			<div className="mx-auto flex w-full max-w-[1440px] items-center gap-3 px-4 py-3.5 sm:gap-4 sm:px-6 sm:py-4 md:px-10 lg:px-12">
 				<AuthBrandLockup
 					href="/"
 					className="min-w-0 shrink-0 [&_.brand-mark]:h-10 [&_.brand-mark]:w-10 sm:[&_.brand-mark]:h-11 sm:[&_.brand-mark]:w-11 [&_.brand-wordmark]:h-8 sm:[&_.brand-wordmark]:h-9"
 					ariaLabel={PRODUCT_WORDMARK_ALT}
 				/>
 
-				<nav className="landing-nav-links ml-8 hidden min-w-0 items-center gap-2.5 xl:ml-12 xl:gap-3.5 lg:flex">
+				<nav className="landing-nav-links ml-8 hidden min-w-0 items-center gap-5 lg:ml-10 lg:flex xl:ml-12 xl:gap-7">
 					{NAV.slice(0, 4).map((item) => (
 						<Link
 							key={item.key}
 							href={item.href}
-							className="whitespace-nowrap text-[12px] font-medium text-slate-600 hover:text-violet-700 xl:text-[13px]"
+							className={navLinkClass}
 						>
 							{L[item.key]}
 						</Link>
 					))}
-					<ToolkitNavMenu />
+					<ToolkitNavMenu triggerClassName={navLinkClass} />
 				</nav>
 
-				<div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
+				<div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
 					<div className="hidden sm:block">
 						<LanguageToggle variant="light" />
 					</div>
 					<AuthNav compact />
 					<Link
 						href="/start"
-						className="landing-cta-shine landing-try-free hidden rounded-full bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500 sm:inline-flex"
+						className="landing-cta-shine landing-try-free hidden rounded-full bg-violet-600 px-5 py-2.5 text-[15px] font-semibold text-white hover:bg-violet-500 sm:inline-flex"
 					>
 						{isSignedIn ? L.startCreating : L.tryFree}
 					</Link>
 					<button
 						type="button"
-						className="landing-nav-menu-btn inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-700 lg:hidden"
+						className="landing-nav-menu-btn inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-700 lg:hidden"
 						aria-expanded={open}
 						aria-label="Menu"
 						onClick={() => setOpen((v) => !v)}
@@ -73,16 +76,16 @@ export function LandingNav() {
 			</div>
 
 			{open ? (
-				<div className="landing-nav-mobile border-t border-slate-100 bg-white px-4 py-3 lg:hidden">
+				<div className="landing-nav-mobile border-t border-slate-100 bg-white px-4 py-4 lg:hidden">
 					<div className="mb-3 flex justify-center sm:hidden">
 						<LanguageToggle variant="light" />
 					</div>
-					<nav className="flex flex-col gap-1">
+					<nav className="flex flex-col gap-1.5">
 						{NAV.slice(0, 4).map((item) => (
 							<Link
 								key={item.key}
 								href={item.href}
-								className="rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-violet-50 hover:text-violet-700"
+								className="rounded-lg px-3 py-3 text-[15px] font-semibold text-slate-700 hover:bg-violet-50 hover:text-violet-700"
 								onClick={() => setOpen(false)}
 							>
 								{L[item.key]}
@@ -91,7 +94,7 @@ export function LandingNav() {
 						<ToolkitNavMobileLinks onNavigate={() => setOpen(false)} />
 						<Link
 							href="/start"
-							className="mt-1 rounded-full bg-violet-600 px-4 py-2.5 text-center text-sm font-semibold text-white"
+							className="mt-1 rounded-full bg-violet-600 px-4 py-3 text-center text-[15px] font-semibold text-white"
 							onClick={() => setOpen(false)}
 						>
 							{isSignedIn ? L.startCreating : L.tryFree}

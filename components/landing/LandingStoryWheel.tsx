@@ -58,8 +58,8 @@ export function LandingStoryWheel() {
       body: L.transformBody,
       points: L.transformPoints,
       ctaHref: "/start",
-      ctaLabel: L.transformCta,
-      hint: L.transformHint,
+      ctaLabel: null as string | null,
+      hint: null as string | null,
       ...FAN_MEDIA[0],
       imageAlt: L.heroImageAlt,
     },
@@ -70,7 +70,7 @@ export function LandingStoryWheel() {
       body: L.refBody,
       points: L.refFeatureItems,
       ctaHref: "/start",
-      ctaLabel: L.transformCta,
+      ctaLabel: null as string | null,
       hint: null as string | null,
       ...FAN_MEDIA[1],
       imageAlt: L.resultCardAlt,
@@ -82,7 +82,7 @@ export function LandingStoryWheel() {
       body: L.storyboardBody,
       points: L.storyboardFeatureItems,
       ctaHref: "/start",
-      ctaLabel: L.storyboardCta,
+      ctaLabel: null as string | null,
       hint: null as string | null,
       ...FAN_MEDIA[2],
       imageAlt: L.storyboardImageAlt,
@@ -248,18 +248,20 @@ export function LandingStoryWheel() {
                               ))}
                             </ul>
                           ) : null}
-                          <div className="mt-4 flex flex-wrap items-center gap-3">
-                            <Link
-                              href={slide.ctaHref}
-                              className="inline-flex rounded-full bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              {slide.ctaLabel}
-                            </Link>
-                            {slide.hint ? (
-                              <p className="text-xs text-slate-500">{slide.hint}</p>
-                            ) : null}
-                          </div>
+                          {slide.ctaLabel ? (
+                            <div className="mt-4 flex flex-wrap items-center gap-3">
+                              <Link
+                                href={slide.ctaHref}
+                                className="inline-flex rounded-full bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {slide.ctaLabel}
+                              </Link>
+                              {slide.hint ? (
+                                <p className="text-xs text-slate-500">{slide.hint}</p>
+                              ) : null}
+                            </div>
+                          ) : null}
                         </div>
                       ) : (
                         <p className="mt-1 line-clamp-1 text-sm font-semibold text-slate-700">

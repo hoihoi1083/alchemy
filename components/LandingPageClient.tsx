@@ -564,7 +564,7 @@ const LANDING_LAYOUT_CSS = `
   .landing-try-free { display: inline-flex !important; }
   .landing-why-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
   .landing-scenarios-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
-  .landing-pricing-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .landing-pricing-grid { grid-template-columns: repeat(1, minmax(0, 1fr)) !important; }
   .landing-capacity-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
   .landing-how-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
   .landing-hero-video { object-position: 70% 45% !important; }
@@ -589,7 +589,7 @@ const LANDING_LAYOUT_CSS = `
   }
   .landing-why-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
   .landing-scenarios-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
-  .landing-pricing-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+  .landing-pricing-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
   .landing-hero-video { object-position: 62% 48% !important; }
   .landing-hero-scrim-x {
     background: linear-gradient(
@@ -628,9 +628,9 @@ const LANDING_LAYOUT_CSS = `
   .landing-hero-video { object-position: 58% 50% !important; }
 }
 
-/* Wide desktop — pricing 5-up + taller hero */
+/* Wide desktop — pricing stays 4-up (carousel); taller hero */
 @media (min-width: 1440px) {
-  .landing-pricing-grid { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; }
+  .landing-pricing-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
   .landing-hero-video { object-position: center 50% !important; }
 }
 

@@ -809,9 +809,11 @@ function FusedReferenceCard({
 function PhaseStepper({
   phases,
   activeIndex,
+  onSelectIndex,
 }: {
   phases: readonly string[];
   activeIndex: number;
+  onSelectIndex?: (index: number) => void;
 }) {
   return (
     <nav aria-label="Progress" className="border-b border-slate-100">
@@ -820,29 +822,50 @@ function PhaseStepper({
         {phases.map((label, i) => {
           const active = i === activeIndex;
           const done = i < activeIndex;
+          const clickable = Boolean(onSelectIndex) && done;
           return (
             <li
               key={label}
               className={`pg-phase-item${active ? " is-active" : ""}${done ? " is-done" : ""}`}
             >
-              <span
-                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[12px] font-bold ${
-                  active
-                    ? "pg-phase-dot--active"
-                    : done
-                      ? "pg-phase-dot--done"
-                      : "pg-phase-dot--idle"
-                }`}
-              >
-                {done ? "✓" : i + 1}
-              </span>
-              <span
-                className={`pg-phase-label ${
-                  active ? "font-semibold text-violet-700" : "text-slate-400"
-                }`}
-              >
-                {label}
-              </span>
+              {clickable ? (
+                <button
+                  type="button"
+                  className="flex w-full cursor-pointer flex-col items-center gap-[0.45rem] rounded-lg text-center outline-none transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-violet-400"
+                  onClick={() => onSelectIndex?.(i)}
+                  aria-label={`Go back to ${label}`}
+                >
+                  <span
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[12px] font-bold pg-phase-dot--done`}
+                  >
+                    ✓
+                  </span>
+                  <span className="pg-phase-label text-slate-500 hover:text-violet-700">
+                    {label}
+                  </span>
+                </button>
+              ) : (
+                <>
+                  <span
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[12px] font-bold ${
+                      active
+                        ? "pg-phase-dot--active"
+                        : done
+                          ? "pg-phase-dot--done"
+                          : "pg-phase-dot--idle"
+                    }`}
+                  >
+                    {done ? "✓" : i + 1}
+                  </span>
+                  <span
+                    className={`pg-phase-label ${
+                      active ? "font-semibold text-violet-700" : "text-slate-400"
+                    }`}
+                  >
+                    {label}
+                  </span>
+                </>
+              )}
             </li>
           );
         })}
@@ -904,6 +927,7 @@ export function PreGenerateSetupPanel({
   combinedStoryboard = false,
   intakePath = null,
   intakeTemplateMode = null,
+  onSelectPhaseIndex,
 }: {
   onGenerate?: () => void;
   generateDisabled?: boolean;
@@ -922,6 +946,8 @@ export function PreGenerateSetupPanel({
   /** From micro ctx — drives the “already set from Step 4” summary. */
   intakePath?: "research" | "direct" | null;
   intakeTemplateMode?: "template" | "direct" | null;
+  /** Click a completed top-bar phase to go back. */
+  onSelectPhaseIndex?: (index: number) => void;
 } = {}) {
   const { m } = useLocale();
   const wizard = useWizard();
@@ -1383,6 +1409,7 @@ export function PreGenerateSetupPanel({
       <PhaseStepper
         phases={studioPhasesForMode(m.start, wizard.workflowMode)}
         activeIndex={setupContentPhaseIndex()}
+        onSelectIndex={onSelectPhaseIndex}
       />
 
       <div className="mt-4">

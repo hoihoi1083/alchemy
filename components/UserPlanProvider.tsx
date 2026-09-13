@@ -83,45 +83,48 @@ export function UserPlanProvider({ children }: { children: ReactNode }) {
   const [planReady, setPlanReady] = useState(false);
   const genRef = useRef(0);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (opts?: { soft?: boolean }) => {
     const gen = ++genRef.current;
-    const data = await fetchSharedMe();
-    if (gen !== genRef.current) return;
-    applyMePayload(data, setPlan, setCreditBalance);
+    // Soft refresh (credits / SyncUserOnAuth) keeps the last known plan visible —
+    // flipping planReady false here left Storyboard stuck on "Checking plan…".
+    if (!opts?.soft) setPlanReady(false);
+    try {
+      const data = await fetchSharedMe();
+      if (gen !== genRef.current) return;
+      applyMePayload(data, setPlan, setCreditBalance);
+    } finally {
+      if (gen === genRef.current) setPlanReady(true);
+    }
   }, []);
 
   const refreshPlan = useCallback(() => {
-    void load();
+    void load({ soft: true });
   }, [load]);
 
   useEffect(() => {
     if (!isLoaded) {
-      setPlanReady(false);
+      // Clerk still hydrating — keep UI waiting, don't mark ready as Free yet.
       return;
     }
     if (!isSignedIn) {
+      genRef.current += 1;
       setPlan("free");
       setCreditBalance(null);
       setPlanReady(true);
       return;
     }
 
-    let cancelled = false;
-    setPlanReady(false);
-    void load().finally(() => {
-      if (!cancelled) setPlanReady(true);
-    });
+    void load();
 
     const onCredits = (ev: Event) => {
       const detail = (ev as CustomEvent<{ balance?: unknown }>).detail;
       if (typeof detail?.balance === "number" && Number.isFinite(detail.balance)) {
         setCreditBalance(Math.max(0, Math.round(detail.balance)));
       }
-      void load();
+      void load({ soft: true });
     };
     window.addEventListener(CREDITS_EVENT, onCredits);
     return () => {
-      cancelled = true;
       window.removeEventListener(CREDITS_EVENT, onCredits);
     };
   }, [isSignedIn, isLoaded, load]);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PlanGateDialog } from "@/components/billing/PlanGateDialog";
 import { useLocale } from "@/components/LocaleProvider";
 import { useUserPlanEntitlements } from "@/hooks/useUserPlanEntitlements";
@@ -13,13 +13,69 @@ type Props = {
   onChange: (mode: WorkflowMode) => void;
   /** Show the /start-style phase rail (Setup active). */
   showPhaseStepper?: boolean;
+  /** Click a completed phase to go back. */
+  onSelectPhaseIndex?: (index: number) => void;
 };
 
-const PATH_IMAGES: Record<WorkflowMode, string> = {
-  "image-only": "/images/landing/start-path-images-only.png?v=4",
-  "video-only": "/images/landing/start-path-videos-only.png?v=5",
-  combined: "/images/landing/start-path-combined.png?v=5",
+const PATH_MEDIA: Record<
+  WorkflowMode,
+  { kind: "image" | "video"; src: string; poster?: string }
+> = {
+  "image-only": {
+    kind: "image",
+    src: "/images/landing/start-path-images-only.png?v=9",
+  },
+  "video-only": {
+    kind: "video",
+    src: "/images/landing/start-path-videos-only.mp4?v=9",
+    poster: "/images/landing/start-path-videos-only-poster.png?v=9",
+  },
+  combined: {
+    kind: "video",
+    src: "/images/landing/start-path-combined.mp4?v=9",
+    poster: "/images/landing/start-path-combined-poster.png?v=9",
+  },
 };
+
+/** Soft purple badge icons under the preview image. */
+function PathPreviewVideo({
+  src,
+  poster,
+}: {
+  src: string;
+  poster?: string;
+}) {
+  const ref = useRef<HTMLVideoElement | null>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.muted = true;
+    const tryPlay = () => {
+      void el.play().catch(() => {
+        /* autoplay can be blocked until gesture — poster still shows storyboard */
+      });
+    };
+    tryPlay();
+    el.addEventListener("loadeddata", tryPlay);
+    return () => el.removeEventListener("loadeddata", tryPlay);
+  }, [src]);
+
+  return (
+    <video
+      ref={ref}
+      src={src}
+      poster={poster}
+      autoPlay
+      muted
+      loop
+      playsInline
+      preload="auto"
+      className="pointer-events-none"
+      aria-hidden
+    />
+  );
+}
 
 /** Soft purple badge icons under the preview image. */
 function PathHeroIcon({ mode }: { mode: WorkflowMode }) {
@@ -98,8 +154,8 @@ const PATH_CSS = `
   grid-template-columns: 1fr;
 }
 .path-type-card {
-  position: relative; display: flex; flex-direction: column; gap: 0.7rem;
-  width: 100%; min-width: 0; height: 100%; padding: 0.85rem;
+  position: relative; display: flex; flex-direction: column; gap: 0.55rem;
+  width: 100%; min-width: 0; height: auto; padding: 0.85rem;
   border-radius: 1.15rem; border: 2px solid #e2e8f0; background: #fff;
   text-align: left; transition: border-color 0.15s ease, box-shadow 0.15s ease;
   box-shadow: 0 1px 2px rgba(15,23,42,0.04);
@@ -124,12 +180,13 @@ const PATH_CSS = `
 .path-card-preview {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 10;
+  aspect-ratio: 16 / 9;
   overflow: hidden;
   border-radius: 0.85rem;
   background: #f8fafc;
 }
-.path-card-preview img {
+.path-card-preview img,
+.path-card-preview video {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -206,18 +263,12 @@ const PATH_CSS = `
 }
 .path-tip-star svg { width: 0.75rem; height: 0.75rem; display: block; }
 @media (min-width: 768px) {
-  .path-select-grid { gap: 1rem; }
+  .path-select-grid { gap: 1rem; grid-template-columns: 1fr 1fr 1fr; }
 }
-/* Wide tablet / small laptop: 3 equal path cards, tip full-width underneath. */
-@media (min-width: 900px) {
-  .path-select-grid { grid-template-columns: 1fr 1fr 1fr; }
-  .path-tip-card { grid-column: 1 / -1; }
-}
-/* Desktop: 3 cards + tip sidebar (needs room inside max-w-6xl). */
-@media (min-width: 1180px) {
+/* Desktop: three equal path cards fill the row. */
+@media (min-width: 1024px) {
   .path-panel-body { padding: 1.35rem 1.5rem 1.5rem; }
-  .path-select-grid { grid-template-columns: 1fr 1fr 1fr minmax(220px, 0.92fr); }
-  .path-tip-card { grid-column: auto; }
+  .path-select-grid { grid-template-columns: 1fr 1fr 1fr; gap: 1.1rem; }
 }
 `;
 
@@ -226,9 +277,11 @@ const MODES: WorkflowMode[] = ["image-only", "video-only", "combined"];
 function PhaseStepper({
   phases,
   activeIndex,
+  onSelectIndex,
 }: {
   phases: readonly string[];
   activeIndex: number;
+  onSelectIndex?: (index: number) => void;
 }) {
   return (
     <nav aria-label="Progress" className="border-b border-slate-100">
@@ -237,29 +290,52 @@ function PhaseStepper({
         {phases.map((label, i) => {
           const active = i === activeIndex;
           const done = i < activeIndex;
+          const clickable = Boolean(onSelectIndex) && done;
           return (
             <li
               key={label}
               className={`path-phase-item${active ? " is-active" : ""}${done ? " is-done" : ""}`}
             >
-              <span
-                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[12px] font-bold ${
-                  active
-                    ? "path-phase-dot--active"
-                    : done
-                      ? "path-phase-dot--done"
-                      : "path-phase-dot--idle"
-                }`}
-              >
-                {done ? "✓" : i + 1}
-              </span>
-              <span
-                className={`path-phase-label ${
-                  active ? "font-semibold text-violet-700" : "text-slate-400"
-                }`}
-              >
-                {label}
-              </span>
+              {clickable ? (
+                <button
+                  type="button"
+                  className="flex w-full cursor-pointer flex-col items-center gap-[0.45rem] rounded-lg text-center outline-none transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-violet-400"
+                  onClick={() => onSelectIndex?.(i)}
+                  aria-label={`Go back to ${label}`}
+                >
+                  <span
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[12px] font-bold ${
+                      done ? "path-phase-dot--done" : "path-phase-dot--idle"
+                    }`}
+                  >
+                    ✓
+                  </span>
+                  <span className="path-phase-label text-slate-500 hover:text-violet-700">
+                    {label}
+                  </span>
+                </button>
+              ) : (
+                <>
+                  <span
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[12px] font-bold ${
+                      active
+                        ? "path-phase-dot--active"
+                        : done
+                          ? "path-phase-dot--done"
+                          : "path-phase-dot--idle"
+                    }`}
+                  >
+                    {done ? "✓" : i + 1}
+                  </span>
+                  <span
+                    className={`path-phase-label ${
+                      active ? "font-semibold text-violet-700" : "text-slate-400"
+                    }`}
+                  >
+                    {label}
+                  </span>
+                </>
+              )}
             </li>
           );
         })}
@@ -272,6 +348,7 @@ export function CreationPathPicker({
   value,
   onChange,
   showPhaseStepper = true,
+  onSelectPhaseIndex,
 }: Props) {
   const { m } = useLocale();
   const cp = m.wizard.creationPath;
@@ -287,7 +364,11 @@ export function CreationPathPicker({
       <style dangerouslySetInnerHTML={{ __html: PATH_CSS }} />
 
       {showPhaseStepper ? (
-        <PhaseStepper phases={studioPhasesForMode(m.start, value)} activeIndex={1} />
+        <PhaseStepper
+          phases={studioPhasesForMode(m.start, value)}
+          activeIndex={1}
+          onSelectIndex={onSelectPhaseIndex}
+        />
       ) : null}
 
       <div className="path-panel mt-3">
@@ -334,8 +415,15 @@ export function CreationPathPicker({
                     <span className="path-type-check" aria-hidden>
                       ✓
                     </span>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={PATH_IMAGES[id]} alt="" />
+                    {PATH_MEDIA[id].kind === "video" ? (
+                      <PathPreviewVideo
+                        src={PATH_MEDIA[id].src}
+                        poster={PATH_MEDIA[id].poster}
+                      />
+                    ) : (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={PATH_MEDIA[id].src} alt="" />
+                    )}
                     {"sceneBadge" in copy && copy.sceneBadge ? (
                       <span className="path-scene-badge">{copy.sceneBadge}</span>
                     ) : null}
@@ -362,110 +450,34 @@ export function CreationPathPicker({
                         </span>
                       ) : null}
                     </h3>
-                    <p className="mt-1 text-[12px] leading-relaxed text-slate-500 sm:text-[13px]">
+                    <p
+                      className={`mt-1.5 text-[12px] leading-snug sm:text-[13px] ${
+                        selected ? "text-violet-600/90" : "text-slate-500"
+                      }`}
+                    >
                       {copy.cardDescription}
                     </p>
-                  </div>
-
-                  <div className="mt-auto flex flex-wrap items-center gap-1.5">
-                    <span className="text-[11px] font-semibold text-slate-400">
-                      {cp.bestForLabel}
-                    </span>
-                    {copy.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className={`inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-medium ${
-                          selected
-                            ? "bg-violet-50 text-violet-700"
-                            : "bg-slate-100 text-slate-600"
-                        }`}
-                      >
-                        {tag}
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      <span className="w-full text-[11px] font-semibold text-slate-400">
+                        {cp.bestForLabel}
                       </span>
-                    ))}
+                      {copy.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className={`inline-flex rounded-full px-2.5 py-0.5 text-[11px] font-medium ${
+                            selected
+                              ? "bg-violet-50 text-violet-700"
+                              : "bg-slate-100 text-slate-600"
+                          }`}
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </button>
               );
             })}
-
-            <aside className="path-tip-card">
-              <div className="path-tip-icon" aria-hidden>
-                <svg
-                  viewBox="0 0 24 24"
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.75"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M12 2v1.4" />
-                  <path d="M5.05 5.05l1 1" />
-                  <path d="M2 12h1.4" />
-                  <path d="M18.95 5.05l-1 1" />
-                  <path d="M20.6 12H22" />
-                  <path d="M9 18h6" />
-                  <path d="M10 21h4" />
-                  <path d="M12 4.8a5.4 5.4 0 0 0-3.2 9.7c.55.45.9 1.1 1 1.85V17h4.4v-.65c.1-.75.45-1.4 1-1.85A5.4 5.4 0 0 0 12 4.8Z" />
-                </svg>
-              </div>
-
-              <h3 className="mt-2.5 text-[15px] font-bold tracking-tight text-slate-900">
-                {cp.tipTitle}
-              </h3>
-
-              <div className="path-tip-list">
-                {(
-                  [
-                    { mode: "image-only" as const, body: cp.tipImage },
-                    { mode: "video-only" as const, body: cp.tipVideo },
-                    { mode: "combined" as const, body: cp.tipCombined },
-                  ] as const
-                ).map((row) => (
-                  <div key={row.mode} className="path-tip-row">
-                    <span className="path-tip-row-icon" aria-hidden>
-                      <PathHeroIcon mode={row.mode} />
-                    </span>
-                    <div className="min-w-0">
-                      <p className="text-[13px] font-bold leading-snug text-slate-900">
-                        {modes[row.mode].title}
-                        {(() => {
-                          const badge =
-                            "sceneBadge" in modes[row.mode]
-                              ? (modes[row.mode] as { sceneBadge?: string })
-                                  .sceneBadge
-                              : undefined;
-                          return badge ? (
-                            <span className="ml-1.5 inline-flex rounded-full bg-violet-100 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700">
-                              {badge}
-                            </span>
-                          ) : null;
-                        })()}
-                      </p>
-                      <p className="mt-0.5 text-[12px] leading-snug text-slate-500">
-                        {row.body}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-4 border-t border-slate-200 pt-3">
-                <div className="flex items-start gap-2.5">
-                  <span className="path-tip-star" aria-hidden>
-                    <svg viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 2.5l2.6 6.3 6.9.6-5.2 4.5 1.6 6.7L12 17.2l-5.9 3.4 1.6-6.7L2.5 9.4l6.9-.6L12 2.5z" />
-                    </svg>
-                  </span>
-                  <div>
-                    <p className="text-[13px] font-bold text-slate-900">{cp.tipNote}</p>
-                    <p className="mt-1 text-[12px] leading-snug text-slate-500">
-                      {cp.tipNoteBody}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </aside>
           </div>
         </div>
       </div>

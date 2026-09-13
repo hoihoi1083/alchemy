@@ -68,6 +68,7 @@ type Props = {
   workflowMode?: WorkflowMode | null;
   /** Which generate wait this is — drives path-aware phase highlight. */
   waitKind?: "image" | "video" | "storyboard";
+  onSelectPhaseIndex?: (index: number) => void;
 };
 
 /**
@@ -83,6 +84,7 @@ export function ImageGenerateWaitPanel({
   title,
   workflowMode = null,
   waitKind = "image",
+  onSelectPhaseIndex,
 }: Props) {
   const { m } = useLocale();
   const mw = m.microWizard;
@@ -96,6 +98,7 @@ export function ImageGenerateWaitPanel({
           workflowMode={workflowMode}
           kind={waitKind === "video" ? "video" : waitKind === "storyboard" ? "storyboard" : "image"}
           activeIndex={generateWaitPhaseIndex(workflowMode, waitKind)}
+          onSelectPhaseIndex={onSelectPhaseIndex}
         />
       ) : null}
 

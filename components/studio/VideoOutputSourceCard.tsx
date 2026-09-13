@@ -29,6 +29,32 @@ export function VideoOutputSourceCard({ variant, className = "" }: Props) {
   const { m } = useLocale();
   const w = useWizard();
 
+  if (w.workflowMode === "image-only") {
+    const img = m.wizard.imageOutput;
+    return (
+      <div
+        className={`rounded-2xl border px-4 py-3 border-slate-200 bg-violet-50/90 text-violet-950 ${className}`}
+        data-testid="image-output-source-card"
+      >
+        <div className="flex flex-wrap items-start gap-3">
+          <span className="text-2xl leading-none" aria-hidden>
+            🖼️
+          </span>
+          <div className="min-w-0 flex-1 space-y-1">
+            <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
+              {m.wizard.imageOutputLabel}
+            </p>
+            <p className="text-sm font-semibold">{img.title}</p>
+            <p className="text-xs leading-relaxed text-violet-800">{img.pipeline}</p>
+            <p className="text-[11px] leading-relaxed text-violet-700">
+              {img.confidence}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const presentationId = resolveVideoOutputPresentation({
     workflowMode: w.workflowMode,
     usesCompositor: w.usesCompositor,

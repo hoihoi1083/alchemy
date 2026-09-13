@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useLocale } from "@/components/LocaleProvider";
 import { Reveal } from "@/components/landing/Reveal";
 
@@ -74,18 +73,6 @@ export function LandingTransformSection() {
 							</li>
 						))}
 					</ul>
-
-					<div className="mt-6 flex flex-wrap items-center gap-3">
-						<Link
-							href="/start"
-							className="inline-flex rounded-full bg-violet-600 px-5 py-2.5 text-base font-semibold text-white shadow-md shadow-violet-600/20 hover:bg-violet-500"
-						>
-							{L.transformCta}
-						</Link>
-						<p className="text-sm text-slate-500">
-							{L.transformHint}
-						</p>
-					</div>
 				</Reveal>
 			</div>
 		</section>

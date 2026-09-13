@@ -7,6 +7,7 @@ type Props = {
   value: WorkflowMode | null;
   onChange: (mode: WorkflowMode) => void;
   showPhaseStepper?: boolean;
+  onSelectPhaseIndex?: (index: number) => void;
 };
 
 /** Creation-path cards (images / video / combined) — purple SaaS layout. */
@@ -14,12 +15,14 @@ export function WorkflowModePicker({
   value,
   onChange,
   showPhaseStepper = false,
+  onSelectPhaseIndex,
 }: Props) {
   return (
     <CreationPathPicker
       value={value}
       onChange={onChange}
       showPhaseStepper={showPhaseStepper}
+      onSelectPhaseIndex={onSelectPhaseIndex}
     />
   );
 }

@@ -303,9 +303,11 @@ const PANEL_CSS = `
 function PhaseStepper({
   phases,
   activeIndex,
+  onSelectIndex,
 }: {
   phases: readonly string[];
   activeIndex: number;
+  onSelectIndex?: (index: number) => void;
 }) {
   return (
     <nav aria-label="Progress" className="border-b border-slate-100">
@@ -314,29 +316,48 @@ function PhaseStepper({
         {phases.map((label, i) => {
           const active = i === activeIndex;
           const done = i < activeIndex;
+          const clickable = Boolean(onSelectIndex) && done;
           return (
             <li
               key={label}
               className={`pv-phase-item${active ? " is-active" : ""}${done ? " is-done" : ""}`}
             >
-              <span
-                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[12px] font-bold ${
-                  active
-                    ? "pv-phase-dot--active"
-                    : done
-                      ? "pv-phase-dot--done"
-                      : "pv-phase-dot--idle"
-                }`}
-              >
-                {done ? "✓" : i + 1}
-              </span>
-              <span
-                className={`pv-phase-label ${
-                  active ? "font-semibold text-violet-700" : "text-slate-400"
-                }`}
-              >
-                {label}
-              </span>
+              {clickable ? (
+                <button
+                  type="button"
+                  className="flex w-full cursor-pointer flex-col items-center gap-[0.45rem] rounded-lg text-center outline-none transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-violet-400"
+                  onClick={() => onSelectIndex?.(i)}
+                  aria-label={`Go back to ${label}`}
+                >
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[12px] font-bold pv-phase-dot--done">
+                    ✓
+                  </span>
+                  <span className="pv-phase-label text-slate-500 hover:text-violet-700">
+                    {label}
+                  </span>
+                </button>
+              ) : (
+                <>
+                  <span
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[12px] font-bold ${
+                      active
+                        ? "pv-phase-dot--active"
+                        : done
+                          ? "pv-phase-dot--done"
+                          : "pv-phase-dot--idle"
+                    }`}
+                  >
+                    {done ? "✓" : i + 1}
+                  </span>
+                  <span
+                    className={`pv-phase-label ${
+                      active ? "font-semibold text-violet-700" : "text-slate-400"
+                    }`}
+                  >
+                    {label}
+                  </span>
+                </>
+              )}
             </li>
           );
         })}
@@ -356,6 +377,7 @@ export function PreVideoSetupPanel({
   onPickVideoSubpath,
   scenesReady = false,
   intakePath = null,
+  onSelectPhaseIndex,
 }: {
   onGenerate?: () => void;
   generateDisabled?: boolean;
@@ -369,6 +391,7 @@ export function PreVideoSetupPanel({
   /** 圖+片 after storyboard review — keyframes ready; hide motion-path picker. */
   scenesReady?: boolean;
   intakePath?: IntakePath | null;
+  onSelectPhaseIndex?: (index: number) => void;
 } = {}) {
   const { m } = useLocale();
   const wizard = useWizard();
@@ -1178,6 +1201,7 @@ export function PreVideoSetupPanel({
       <PhaseStepper
         phases={studioPhasesForMode(m.start, wizard.workflowMode)}
         activeIndex={videoSetupPhaseIndex(wizard.workflowMode)}
+        onSelectIndex={onSelectPhaseIndex}
       />
 
       <div className="mt-4">

@@ -213,7 +213,7 @@ footer.site-footer a.site-footer-logo:focus {
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
   .landing-pricing-grid {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
   .landing-nav-links {
     display: flex !important;
@@ -636,6 +636,44 @@ footer.site-footer a.site-footer-logo:focus {
 
 .faq-expand-arrow-bounce {
   animation: faq-expand-bounce 1.35s ease-in-out infinite;
+}
+
+/* Landing FAQ — page slides with direction */
+@keyframes landing-faq-page-down {
+  from {
+    transform: translateY(-1.25rem);
+    opacity: 0.35;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes landing-faq-page-up {
+  from {
+    transform: translateY(1.25rem);
+    opacity: 0.35;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.landing-faq-page--down {
+  animation: landing-faq-page-down 0.38s ease-out;
+}
+
+.landing-faq-page--up {
+  animation: landing-faq-page-up 0.38s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-faq-page--down,
+  .landing-faq-page--up {
+    animation: none;
+  }
 }
 
 /* Ask AI mascot launcher — soft float (video provides face idle motion) */

@@ -121,12 +121,15 @@ type Props = {
   activeIndex?: number;
   workflowMode?: WorkflowMode | null;
   kind?: "image" | "storyboard" | "video";
+  /** Jump to an earlier phase (completed steps only). */
+  onSelectPhaseIndex?: (index: number) => void;
 };
 
 export function ImageReviewStepper({
   activeIndex,
   workflowMode = null,
   kind = "image",
+  onSelectPhaseIndex,
 }: Props) {
   const { m } = useLocale();
   const steps = studioPhasesForMode(m.start, workflowMode);
@@ -151,11 +154,9 @@ export function ImageReviewStepper({
         {steps.map((label, i) => {
           const done = i < safeIndex;
           const active = i === safeIndex;
-          return (
-            <li
-              key={`${label}-${i}`}
-              className={`image-review-phase-item${active ? " is-active" : ""}${done ? " is-done" : ""}`}
-            >
+          const clickable = Boolean(onSelectPhaseIndex) && done;
+          const body = (
+            <>
               <span
                 className={`image-review-phase-dot ${
                   active
@@ -168,6 +169,25 @@ export function ImageReviewStepper({
                 {done ? "✓" : i + 1}
               </span>
               <span className="image-review-phase-label">{label}</span>
+            </>
+          );
+          return (
+            <li
+              key={`${label}-${i}`}
+              className={`image-review-phase-item${active ? " is-active" : ""}${done ? " is-done" : ""}`}
+            >
+              {clickable ? (
+                <button
+                  type="button"
+                  className="flex w-full cursor-pointer flex-col items-center gap-[0.35rem] rounded-lg text-center outline-none transition hover:opacity-90 focus-visible:ring-2 focus-visible:ring-violet-400"
+                  onClick={() => onSelectPhaseIndex?.(i)}
+                  aria-label={`Go back to ${label}`}
+                >
+                  {body}
+                </button>
+              ) : (
+                body
+              )}
             </li>
           );
         })}

@@ -45,8 +45,10 @@ import { ReferenceAnalyzeWaitPanel, referenceAnalyzeReady } from "@/components/s
 import { ResearchReelSetupPanel } from "@/components/studio/ResearchReelSetupPanel";
 import { BrandWebsitePanel } from "@/components/studio/BrandWebsitePanel";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { isStoryboardVideoStyle, getVisualStyle, isExplosionUnboxStyle } from "@/lib/visual-styles";
 import { researchReelAnalyzeProgress } from "@/lib/generation-progress-estimates";
+import { studioPhaseNavTarget } from "@/lib/studio-phase-nav";
 import {
   h3ShotRecipeToSubpath,
   isH3ShotRecipeMode,
@@ -60,10 +62,49 @@ type Props = {
   stepId: MicroStepId;
 };
 
+function goToStudioPhaseIndex(
+  index: number,
+  opts: {
+    workflowMode: WorkflowMode | null;
+    steps: Array<{ id: string }>;
+    jumpToStepId: (id: string) => void;
+    pushHref: (href: string) => void;
+  },
+) {
+  const target = studioPhaseNavTarget(index, opts.workflowMode);
+  if (!target) return;
+  if (target.type === "href") {
+    opts.pushHref(target.href);
+    return;
+  }
+  if (opts.steps.some((s) => s.id === target.stepId)) {
+    opts.jumpToStepId(target.stepId);
+    return;
+  }
+  if (index === 2) {
+    for (const id of ["intake.fuse", "product.name", "concept.name", "setup.pre_generate"]) {
+      if (opts.steps.some((s) => s.id === id)) {
+        opts.jumpToStepId(id);
+        return;
+      }
+    }
+  }
+}
+
 export function MicroStepRenderer({ micro, stepId }: Props) {
   const wizard = useWizard();
   const { m } = useLocale();
   const mw = m.microWizard;
+  const router = useRouter();
+
+  const onSelectPhaseIndex = (index: number) => {
+    goToStudioPhaseIndex(index, {
+      workflowMode: wizard.workflowMode,
+      steps: micro.steps,
+      jumpToStepId: micro.jumpToStepId,
+      pushHref: (href) => router.push(href),
+    });
+  };
 
   switch (stepId) {
     case "route.output_goal":
@@ -76,8 +117,9 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
               wizard.onWorkflowModeChange(mode);
             }}
             showPhaseStepper
+            onSelectPhaseIndex={onSelectPhaseIndex}
           />
-          {micro.ctx.workflowMode && micro.ctx.workflowMode !== "image-only" ? (
+          {micro.ctx.workflowMode ? (
             <VideoOutputSourceCard variant="setup" />
           ) : null}
         </div>
@@ -309,6 +351,7 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
         <IntakeFuseStep
           isConcept
           workflowMode={micro.ctx.workflowMode ?? wizard.workflowMode}
+          onSelectPhaseIndex={onSelectPhaseIndex}
           activeTab={intakeTabFromPending({
             isConcept: true,
             pendingIntakePath: micro.pendingIntakePath,
@@ -363,6 +406,7 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
         <IntakeFuseStep
           isConcept={isConcept}
           workflowMode={micro.ctx.workflowMode ?? wizard.workflowMode}
+          onSelectPhaseIndex={onSelectPhaseIndex}
           activeTab={intakeTabFromPending({
             isConcept,
             pendingIntakePath: micro.pendingIntakePath,
@@ -428,6 +472,7 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
           value={wizard.product}
           onChange={(next) => wizard.setProduct(next)}
           showPhaseStepper
+          onSelectPhaseIndex={onSelectPhaseIndex}
         />
       );
 
@@ -445,6 +490,7 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
           value={wizard.conceptIdea}
           onChange={(next) => wizard.setConceptIdea(next)}
           showPhaseStepper
+          onSelectPhaseIndex={onSelectPhaseIndex}
         />
       );
 
@@ -536,6 +582,7 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
           }
           intakePath={micro.ctx.intakePath ?? null}
           intakeTemplateMode={micro.ctx.intakeTemplateMode ?? null}
+          onSelectPhaseIndex={onSelectPhaseIndex}
           combinedStoryboard={
             micro.ctx.workflowMode === "combined" &&
             isStoryboardVideoStyle(wizard.visualStyleId) &&
@@ -607,6 +654,7 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
         <PreVideoSetupPanel
           scenesReady={scenesReady}
           intakePath={micro.ctx.intakePath ?? null}
+          onSelectPhaseIndex={onSelectPhaseIndex}
           onGenerate={micro.goNext}
           onBrowseContinue={
             micro.hasExistingVideo ? micro.browseContinueExisting : undefined
@@ -1115,10 +1163,10 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
 
     case "image.review":
       // Wait + review both use violet chrome (ImageGenerateWaitPanel / ImageReviewGallery).
-      return <ImageResultPanel generatingLabel={mw.generatingImage} />;
+      return <ImageResultPanel generatingLabel={mw.generatingImage} onSelectPhaseIndex={onSelectPhaseIndex} />;
 
     case "image.storyboard_scenes":
-      return <ImageResultPanel generatingLabel={mw.generatingImage} />;
+      return <ImageResultPanel generatingLabel={mw.generatingImage} onSelectPhaseIndex={onSelectPhaseIndex} />;
 
     case "video.generate":
       return (
@@ -1171,6 +1219,7 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
           purpleChrome
           workflowMode={wizard.workflowMode}
           waitKind="storyboard"
+          onSelectPhaseIndex={onSelectPhaseIndex}
         />
       );
 
@@ -1185,13 +1234,14 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
             onRegenerate={() => {
               void wizard.generateVideo();
             }}
+            onSelectPhaseIndex={onSelectPhaseIndex}
           />
         );
       }
       return (
         <ScreenShell title={mw.doneTitle} hint={mw.doneHint}>
           {wizard.imageUrl && !wizard.useOriginalImage ? (
-            <ImageResultPanel generatingLabel={mw.generatingImage} />
+            <ImageResultPanel generatingLabel={mw.generatingImage} onSelectPhaseIndex={onSelectPhaseIndex} />
           ) : (
             <p className="text-sm text-slate-600">{mw.doneHint}</p>
           )}
@@ -1210,6 +1260,7 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
           purpleChrome
           workflowMode={wizard.workflowMode}
           waitKind="image"
+          onSelectPhaseIndex={onSelectPhaseIndex}
         />
       );
 
@@ -1241,6 +1292,7 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
           purpleChrome
           workflowMode={wizard.workflowMode}
           waitKind="video"
+          onSelectPhaseIndex={onSelectPhaseIndex}
         />
       );
     }
@@ -1581,6 +1633,7 @@ function WaitScreen({
   purpleChrome = false,
   workflowMode = null,
   waitKind = "image",
+  onSelectPhaseIndex,
 }: {
   busy: boolean;
   message: string;
@@ -1593,6 +1646,7 @@ function WaitScreen({
   purpleChrome?: boolean;
   workflowMode?: WorkflowMode | null;
   waitKind?: "image" | "video" | "storyboard";
+  onSelectPhaseIndex?: (index: number) => void;
 }) {
   const { m } = useLocale();
   const shellTitle = title ?? message;
@@ -1616,6 +1670,7 @@ function WaitScreen({
         previewUrl={previewUrl}
         workflowMode={workflowMode}
         waitKind={waitKind}
+        onSelectPhaseIndex={onSelectPhaseIndex}
       />
     );
   }

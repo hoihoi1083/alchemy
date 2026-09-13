@@ -104,11 +104,11 @@ const START_LAYOUT_CSS = `
   position: relative !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 0.85rem !important;
+  gap: 0 !important;
   width: 100% !important;
   min-width: 0 !important;
-  height: 100% !important;
-  padding: 0.9rem !important;
+  height: auto !important;
+  padding: 0.85rem !important;
   border-radius: 1.15rem !important;
   border: 2px solid #e2e8f0 !important;
   background: #fff !important;
@@ -155,7 +155,7 @@ const START_LAYOUT_CSS = `
 .start-card-media {
   position: relative !important;
   width: 100% !important;
-  aspect-ratio: 16 / 10 !important;
+  aspect-ratio: 4 / 3 !important;
   overflow: hidden !important;
   border-radius: 0.85rem !important;
   background: #ffffff !important;
@@ -180,13 +180,14 @@ const START_LAYOUT_CSS = `
   flex-wrap: wrap !important;
   align-items: center !important;
   gap: 0.35rem 0.4rem !important;
-  margin-top: 0 !important;
+  margin-top: 0.15rem !important;
 }
 .start-card-examples-label {
   font-size: 11px !important;
   font-weight: 600 !important;
   color: #94a3b8 !important;
   margin-right: 0.1rem !important;
+  width: 100% !important;
 }
 .start-tip-card {
   display: flex !important;
@@ -357,17 +358,14 @@ const START_LAYOUT_CSS = `
     gap: 1rem !important;
   }
   .start-card-inner {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr) !important;
     gap: 0.85rem !important;
     align-items: stretch !important;
   }
   .start-card-media {
     width: 100% !important;
     height: auto !important;
-    aspect-ratio: 1 / 1 !important;
-  }
-  .start-tip-card {
-    grid-column: 1 / -1 !important;
+    aspect-ratio: 4 / 3 !important;
   }
   .start-panel-body { padding: 1.35rem 1.5rem 1.5rem !important; }
   .start-panel-footer {
@@ -440,27 +438,23 @@ const START_LAYOUT_CSS = `
   .start-panel-body { padding: 1.5rem 1.75rem 1.65rem !important; }
   .start-panel-footer { padding: 0.95rem 1.75rem !important; }
   .start-select-grid {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(230px, 0.82fr) !important;
+    grid-template-columns: 1fr 1fr !important;
     gap: 1.15rem !important;
     margin-top: 1.25rem !important;
   }
-  .start-tip-card {
-    grid-column: auto !important;
-    padding: 1.2rem 1.15rem !important;
-  }
   .start-type-card {
-    padding: 1.05rem !important;
-    gap: 0.95rem !important;
+    padding: 0.95rem !important;
+    gap: 0 !important;
   }
   .start-card-inner {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr) !important;
     gap: 0.95rem !important;
     align-items: stretch !important;
   }
   .start-card-media {
     width: 100% !important;
     height: auto !important;
-    aspect-ratio: 1 / 1 !important;
+    aspect-ratio: 4 / 3 !important;
     border-radius: 0.95rem !important;
   }
   .start-phase-label { font-size: 12px !important; }
@@ -539,20 +533,17 @@ const START_LAYOUT_CSS = `
     gap: 0.85rem !important;
   }
   .start-type-card {
-    padding: 0.8rem !important;
-    gap: 0.7rem !important;
+    padding: 0.75rem !important;
+    gap: 0 !important;
   }
   .start-card-inner {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr) !important;
     gap: 0.75rem !important;
   }
   .start-card-media {
     width: 100% !important;
     height: auto !important;
-    aspect-ratio: 1 / 1 !important;
-  }
-  .start-tip-card {
-    padding: 0.9rem !important;
+    aspect-ratio: 4 / 3 !important;
   }
 }
 `;
@@ -623,15 +614,13 @@ function StartPageBody() {
       [
         {
           mode: "physical" as const,
-      title: m.start.physicalTitle,
-          short: m.start.physicalShort,
+          title: m.start.physicalTitle,
           tags: m.start.physicalTags,
           image: PHYSICAL_IMG,
-    },
-    {
+        },
+        {
           mode: "concept" as const,
-      title: m.start.conceptTitle,
-          short: m.start.conceptShort,
+          title: m.start.conceptTitle,
           tags: m.start.conceptTags,
           image: CONCEPT_IMG,
         },
@@ -753,91 +742,29 @@ function StartPageBody() {
                         >
                           {card.title}
                         </h3>
-                        <p className="text-[12px] leading-relaxed text-slate-500 sm:text-[13px]">
-                          {card.short}
-                        </p>
+                        <div className="start-card-examples">
+                          <span className="start-card-examples-label">
+                            {m.start.examplesLabel}:
+                          </span>
+                          {card.tags.map((tag) => (
+                            <span
+                              key={tag}
+                              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium ${
+                                isSelected
+                                  ? "bg-violet-50 text-violet-700"
+                                  : "bg-slate-100 text-slate-600"
+                              }`}
+                            >
+                              {isSelected ? <span aria-hidden>✓</span> : null}
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-
-                    <div className="start-card-examples mt-auto">
-                      <span className="start-card-examples-label">
-                        {m.start.examplesLabel}:
-                      </span>
-                      {card.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium ${
-                            isSelected
-                              ? "bg-violet-50 text-violet-700"
-                              : "bg-slate-100 text-slate-600"
-                          }`}
-                        >
-                          {isSelected ? <span aria-hidden>✓</span> : null}
-                          {tag}
-                        </span>
-                      ))}
                     </div>
                   </button>
                 );
               })}
-
-              <aside className="start-tip-card">
-                <div className="start-tip-icon" aria-hidden>
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="h-5 w-5"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.75"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    {/* Emitting light rays */}
-                    <path d="M12 2v1.4" />
-                    <path d="M5.05 5.05l1 1" />
-                    <path d="M2 12h1.4" />
-                    <path d="M18.95 5.05l-1 1" />
-                    <path d="M20.6 12H22" />
-                    {/* Bulb */}
-                    <path d="M9 18h6" />
-                    <path d="M10 21h4" />
-                    <path d="M12 4.8a5.4 5.4 0 0 0-3.2 9.7c.55.45.9 1.1 1 1.85V17h4.4v-.65c.1-.75.45-1.4 1-1.85A5.4 5.4 0 0 0 12 4.8Z" />
-                  </svg>
-                </div>
-
-                <h3 className="mt-2.5 text-[15px] font-bold tracking-tight text-slate-900">
-                  {m.start.tipTitle}
-                </h3>
-
-                <div className="start-tip-copy mt-3 flex flex-1 flex-col gap-2.5 text-[13px] leading-relaxed text-slate-600">
-                  <p>
-                    {m.start.tipChoose}{" "}
-                    <span className="font-bold text-slate-900">{m.start.physicalTitle}</span>{" "}
-                    {m.start.tipPhysical}
-                  </p>
-                  <p>
-                    {m.start.tipChoose}{" "}
-                    <span className="font-bold text-slate-900">{m.start.conceptTitle}</span>{" "}
-                    {m.start.tipConcept}
-                  </p>
-                </div>
-
-                <div className="start-tip-note mt-4 border-t border-slate-200 pt-3">
-                  <div className="flex items-start gap-2.5">
-                    <span className="start-tip-star" aria-hidden>
-                      <svg viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2.5l2.6 6.3 6.9.6-5.2 4.5 1.6 6.7L12 17.2l-5.9 3.4 1.6-6.7L2.5 9.4l6.9-.6L12 2.5z" />
-                      </svg>
-                    </span>
-                    <div>
-                      <p className="text-[13px] font-bold text-slate-900">{m.start.tipNote}</p>
-                      <p className="mt-1 text-[12px] leading-snug text-slate-500">
-                        {m.start.tipNoteBody}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </aside>
             </div>
           </div>
 

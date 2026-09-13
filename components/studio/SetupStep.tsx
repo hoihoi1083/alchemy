@@ -278,7 +278,7 @@ export function SetupStep() {
   />
   ) : null}
 
-  {workflowMode !== "image-only" && <VideoOutputSourceCard variant="setup" />}
+  {workflowMode ? <VideoOutputSourceCard variant="setup" /> : null}
 
   <details
     open={contentResearchOpen}

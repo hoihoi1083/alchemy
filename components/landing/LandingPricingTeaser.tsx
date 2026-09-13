@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useAuth } from "@clerk/nextjs";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 import { PLAN_DEFINITIONS } from "@/lib/billing/plans";
 import { pricingCardCapacityItems } from "@/lib/billing/pricing-card-capacity";
@@ -16,6 +16,10 @@ import { Reveal } from "@/components/landing/Reveal";
 
 type Interval = "monthly" | "yearly";
 type PaidPlan = "light" | "standard" | "pro" | "master" | "custom";
+
+/** How many pricing cards fill the landing row on desktop. */
+const DESKTOP_VISIBLE = 4;
+const MOBILE_VISIBLE = 1;
 
 function capacityFor(
 	plan: "free" | "light" | "standard" | "pro" | "master" | "custom",
@@ -41,6 +45,18 @@ export function LandingPricingTeaser() {
 	const [checkoutError, setCheckoutError] = useState<string | null>(null);
 	/** Which card gets the purple border + solid CTA; defaults to Pro when not hovering. */
 	const [hoveredId, setHoveredId] = useState<string | null>(null);
+	/** First visible card index — window fills the row. */
+	const [startIndex, setStartIndex] = useState(0);
+	const [visibleCount, setVisibleCount] = useState(DESKTOP_VISIBLE);
+	const touchStartX = useRef<number | null>(null);
+
+	useEffect(() => {
+		const mq = window.matchMedia("(min-width: 768px)");
+		const sync = () => setVisibleCount(mq.matches ? DESKTOP_VISIBLE : MOBILE_VISIBLE);
+		sync();
+		mq.addEventListener("change", sync);
+		return () => mq.removeEventListener("change", sync);
+	}, []);
 
 	async function startCheckout(plan: PaidPlan) {
 		setCheckoutError(null);
@@ -240,6 +256,22 @@ export function LandingPricingTeaser() {
 		},
 	];
 
+	const maxStart = Math.max(0, cards.length - visibleCount);
+	const visibleCards = cards.slice(startIndex, startIndex + visibleCount);
+	const canPrev = startIndex > 0;
+	const canNext = startIndex < maxStart;
+
+	const goPrev = useCallback(() => {
+		setStartIndex((i) => Math.max(0, i - 1));
+	}, []);
+	const goNext = useCallback(() => {
+		setStartIndex((i) => Math.min(maxStart, i + 1));
+	}, [maxStart]);
+
+	useEffect(() => {
+		setStartIndex((i) => Math.min(i, maxStart));
+	}, [maxStart]);
+
 	return (
 		<section id="pricing" className="w-full bg-transparent">
 			<div className="mx-auto w-full max-w-[1440px] px-4 py-12 sm:px-5 md:px-8 md:py-14">
@@ -290,11 +322,60 @@ export function LandingPricingTeaser() {
 					</div>
 				) : null}
 
-				<div
-					className="landing-pricing-grid mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:gap-4"
-					onMouseLeave={() => setHoveredId(null)}
-				>
-					{cards.map((card, i) => {
+				<div className="relative mt-8">
+					<button
+						type="button"
+						aria-label="Previous plans"
+						disabled={!canPrev}
+						onClick={goPrev}
+						className="landing-pricing-arrow absolute left-0 top-1/2 z-20 flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white/80 bg-violet-600 text-white shadow-lg shadow-black/40 transition hover:bg-violet-500 disabled:pointer-events-none disabled:border-white/30 disabled:bg-slate-500/70 disabled:opacity-40 sm:-translate-x-1/3 md:h-14 md:w-14"
+					>
+						<svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" aria-hidden>
+							<path
+								d="M14.5 6.5 9 12l5.5 5.5"
+								stroke="currentColor"
+								strokeWidth="2.5"
+								strokeLinecap="round"
+								strokeLinejoin="round"
+							/>
+						</svg>
+					</button>
+					<button
+						type="button"
+						aria-label="Next plans"
+						disabled={!canNext}
+						onClick={goNext}
+						className="landing-pricing-arrow absolute right-0 top-1/2 z-20 flex h-12 w-12 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white/80 bg-violet-600 text-white shadow-lg shadow-black/40 transition hover:bg-violet-500 disabled:pointer-events-none disabled:border-white/30 disabled:bg-slate-500/70 disabled:opacity-40 sm:translate-x-1/3 md:h-14 md:w-14"
+					>
+						<svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" aria-hidden>
+							<path
+								d="M9.5 6.5 15 12l-5.5 5.5"
+								stroke="currentColor"
+								strokeWidth="2.5"
+								strokeLinecap="round"
+								strokeLinejoin="round"
+							/>
+						</svg>
+					</button>
+
+					<div
+						className="landing-pricing-grid grid grid-cols-1 gap-3 px-2 sm:px-4 md:grid-cols-4 md:gap-4 md:px-6"
+						onMouseLeave={() => setHoveredId(null)}
+						onTouchStart={(e) => {
+							touchStartX.current = e.changedTouches[0]?.clientX ?? null;
+						}}
+						onTouchEnd={(e) => {
+							const start = touchStartX.current;
+							touchStartX.current = null;
+							if (start == null) return;
+							const end = e.changedTouches[0]?.clientX;
+							if (end == null) return;
+							const delta = end - start;
+							if (delta > 48) goPrev();
+							else if (delta < -48) goNext();
+						}}
+					>
+					{visibleCards.map((card, i) => {
 						const busyKey =
 							card.id === "light" ||
 							card.id === "standard" ||
@@ -314,10 +395,10 @@ export function LandingPricingTeaser() {
 						return (
 							<Reveal
 								key={card.id}
-								delayMs={i * 90}
-								distance={44}
-								scaleFrom={1.94}
-								className="h-full"
+								delayMs={i * 60}
+								distance={28}
+								scaleFrom={0.98}
+								className="h-full min-w-0"
 							>
 								<div
 									onMouseEnter={() => setHoveredId(card.id)}
@@ -489,6 +570,20 @@ export function LandingPricingTeaser() {
 							</Reveal>
 						);
 					})}
+					</div>
+
+					<div className="mt-5 flex items-center justify-center gap-2" aria-hidden>
+						{Array.from({ length: maxStart + 1 }, (_, i) => (
+							<span
+								key={i}
+								className={`h-2 rounded-full transition ${
+									i === startIndex
+										? "w-6 bg-white"
+										: "w-2 bg-white/40"
+								}`}
+							/>
+						))}
+					</div>
 				</div>
 			</div>
 		</section>
