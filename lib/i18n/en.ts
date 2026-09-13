@@ -950,7 +950,7 @@ export const en = {
 				"product-impact-poster-6s": {
 					title: "Impact poster ~6s",
 					description:
-						"大透视 product punch: stronger thrust + shatter/rays/debris/lightning. Pick tone + effect.",
+						"Forced-perspective product punch: stronger thrust + shatter/rays/debris/lightning. Pick tone + effect.",
 					costHint: "~2 stills + 6s video · product photo",
 				},
 				"product-tvc-12s": {
@@ -994,7 +994,7 @@ export const en = {
 				"concept-impact-poster-6s": {
 					title: "Impact poster (concept) ~6s",
 					description:
-						"Same 大透视 punch morph for brand / shop — logo or topic still preferred.",
+						"Same forced-perspective punch morph for brand / shop — logo or topic still preferred.",
 					costHint: "~2 stills + 6s video · logo or brand still",
 				},
 				"concept-tvc-12s": {
@@ -2293,7 +2293,7 @@ export const en = {
       "storyboard-video":
 				"Photorealistic multi-scene reel — AI adapts scenes to your product category, not a fixed template",
 			"ugc-presenter":
-				"UGC talking-head keyframe + digital presenter lip-sync — best for bracelet/jewelry demo reels like viral 數字人 ads",
+				"UGC talking-head keyframe + digital presenter lip-sync — best for bracelet/jewelry demo reels like viral digital-avatar ads",
       "paper-layout": "",
       "service-promo":
         "Service marketing — typography-led trust design, not a product hero shot",
@@ -3170,14 +3170,14 @@ export const en = {
 			"Brush over the area to change (tap for a small spot)",
 		quickFixInpaintClear: "Clear mask",
 		quickFixInpaintPrompt:
-			"Replace example: 改成「認識金砂石」 / marble surface",
+			"Replace example: Change to \"Meet Goldstone\" / marble surface",
 		quickFixInpaintApply: "Apply inpaint",
 		quickFixInpaintNeedMask: "Highlight at least one area first.",
 		quickFixInpaintEraseBtn: "Remove painted area",
 		quickFixInpaintFillBtn: "Replace with my description",
 		quickFixInpaintBrushSize: "Brush size",
 		quickFixInpaintAiSteps:
-			"Cover the whole unwanted box with purple.\nRemove = delete (no typing).\nReplace wrong words: type 改成「正確字」 then Replace.\nFor perfect fonts: Remove, then add text in the text step.",
+			"Cover the whole unwanted box with purple.\nRemove = delete (no typing).\nReplace wrong words: type Change to \"correct text\" then Replace.\nFor perfect fonts: Remove, then add text in the text step.",
 		quickFixRegionHint:
 			"Drag on the image to mark areas to fix. Describe each zone — all zones are sent in one AI edit.",
 		quickFixRegionDrawHint:
@@ -3396,7 +3396,7 @@ export const en = {
 			"impact-poster": {
 				title: "Impact poster",
 				description:
-					"大透视 punch poster — stronger product thrust + particle impact. Tone + effect options → ~6s morph.",
+					"Forced-perspective punch poster — stronger product thrust + particle impact. Tone + effect options → ~6s morph.",
 			},
 			"social-drip": {
 				title: "Social drip (three-panel)",
@@ -3426,7 +3426,7 @@ export const en = {
 			"web-boundary-break": {
 				title: "Web boundary break",
 				description:
-					"打破网页边界 — model reaches through fake site UI to grab your product. Shelf reach / Hold through.",
+					"Web boundary break — model reaches through fake site UI to grab your product. Shelf reach / Hold through.",
 			},
 			"product-explode": {
 				title: "Product explode (stylized)",
@@ -3501,17 +3501,17 @@ export const en = {
 			"h3-triangle-light-mg": {
 				title: "Triangle light MG",
 				description:
-					"三角光品牌片头 — frosted triangles + caustics + kinetic type → brand lock. Exhibit / Flow.",
+					"Triangle-light brand opener — frosted triangles + caustics + kinetic type → brand lock. Exhibit / Flow.",
 			},
 			"h3-glass-type-mg": {
 				title: "Transparent 3D type",
 				description:
-					"透明3D立体字 — bright glass letters + cursor click → brand lock. Click / Parade.",
+					"Transparent 3D type — bright glass letters + cursor click → brand lock. Click / Parade.",
 			},
 			"h3-design-studio-mg": {
 				title: "Design studio glass",
 				description:
-					"设计台玻璃片头 — drafting desk form study → glass wordmark showreel. Form study / Brand desk.",
+					"Design-studio glass opener — drafting desk form study → glass wordmark showreel. Form study / Brand desk.",
 			},
 			"h3-movie-title": {
 				title: "movie-title",
@@ -3548,7 +3548,7 @@ export const en = {
 			"Same start→end morph method, different beat (type reveal, 3D card, parallax, pour…). Auto picks a fit — generate again to try another.",
 		motionPosterDialectAuto: "Auto · best fit",
 		impactPosterHint:
-			"High-impact 大透视 poster video: product thrusts toward camera with punch VFX. Stronger motion than Motion poster.",
+			"High-impact forced-perspective poster video: product thrusts toward camera with punch VFX. Stronger motion than Motion poster.",
 		impactPosterToneTitle: "Tone (color world)",
 		impactPosterToneHint:
 			"Locks the whole plate’s palette: Fiery = orange/red heat; Premium = gold/black luxury; Cyber = purple/cyan neon. Different tones must look clearly different.",
@@ -3910,11 +3910,11 @@ export const en = {
 		h3TriangleLightMgSchemes: {
 			exhibit: {
 				title: "Exhibit",
-				desc: "三角光艺术展 — glass triangles → kinetic 3D/TVC titles → brand lock",
+				desc: "Triangle-light exhibit — glass triangles → kinetic 3D/TVC titles → brand lock",
 			},
 			flow: {
 				title: "Flow",
-				desc: "流动三角 — soft prism float → MAPPING/PRODUCT FILM energy → brand lock",
+				desc: "Flowing triangles — soft prism float → MAPPING/PRODUCT FILM energy → brand lock",
 			},
 		},
 		h3GlassTypeMgSchemeTitle: "Transparent type style",
@@ -4342,7 +4342,7 @@ export const en = {
 				],
 				attention: [
 					"Pick tone + impact effect (or Auto)",
-					"Stronger product thrust than Motion poster — 大透视 punch",
+					"Stronger product thrust than Motion poster — forced-perspective punch",
 				],
 				output: ["~2 stills + 6s high-impact morph"],
 			},
@@ -4478,7 +4478,7 @@ export const en = {
 		handThrowNeedKeyframe:
 			"Upload a product photo first (concept: logo/mascot still — text alone is not enough).",
 		webBoundaryHint:
-			"打破网页边界 — model reaches through a fake shopping UI to grab your product. ~8–10s · Shelf reach / Hold through. Fill Business for the nav brand name (e.g. SOCIAL DRIP).",
+			"Web boundary break — model reaches through a fake shopping UI to grab your product. ~8–10s · Shelf reach / Hold through. Fill Business for the nav brand name (e.g. SOCIAL DRIP).",
 		webBoundarySchemeTitle: "Boundary-break style",
 		webBoundarySchemeHint:
 			"Same web-UI gag — Shelf reach (grab from product row) or Hold through (product already through the bar).",
@@ -4579,7 +4579,7 @@ export const en = {
 			caution_concept_pour:
 				"Concept topics rarely need a mouth-pour — prefer confetti / petals / beam.",
 			caution_concept_abstract:
-				"This concept is abstract. Social drip needs falling creatives (素材/海报 raining). Or use Motion poster.",
+				"This concept is abstract. Social drip needs falling creatives (assets / posters raining). Or use Motion poster.",
 			caution_no_product_photo:
 				"Add a product photo so the fall has a clear origin.",
 			mismatch_no_falling:
@@ -5177,7 +5177,7 @@ export const en = {
         "en-female": "Female",
         "en-male": "Male",
       },
-      voiceLocales: { hk: "粵語", en: "English", cn: "普通话" },
+      voiceLocales: { hk: "Cantonese", en: "English", cn: "Mandarin" },
       timingLabel: "Timing",
 			positionLabel: "Position",
 			positionOptions: {
@@ -5279,7 +5279,7 @@ export const en = {
     brandLabel: "Brand / handle",
 		brandPlaceholder: "your brand",
     signoffLabel: "Sign-off (optional)",
-    signoffPlaceholder: "從略",
+    signoffPlaceholder: "Optional",
     compositorCallout:
       "This template uses a fixed IG layout — your headline, bullets, and brand are placed exactly. AI is not used for the layout.",
     compositorImageHint:
@@ -5573,11 +5573,11 @@ export const en = {
 			"Uses AI to draft a ~10s spoken intro from your product name. Edit freely after.",
 		scriptReady: "AI script ready — edit if needed, then preview voice.",
 		scriptFailed: "AI script planning failed. Check AI API key.",
-		localeHk: "粵語/繁中",
-		localeCn: "普通话",
+		localeHk: "Cantonese / Traditional Chinese",
+		localeCn: "Mandarin",
 		localeEn: "English",
 		voiceLabel: "Voice",
-		avatarVoiceLabel: "Presenter voice (locked to this 主播)",
+		avatarVoiceLabel: "Presenter voice (locked to this avatar)",
 		avatarVoiceHint:
 			"Each stock presenter has a paired AI voice for the language you selected.",
 		previewVoice: "Preview voice",
@@ -5761,8 +5761,8 @@ export const en = {
 		audioApplyVoice: "Mix voiceover",
 		audioApplyingVoice: "Mixing voice…",
 		audioSpeakVoiceover: "Add spoken voiceover (TTS)",
-		audioLocaleHk: "粵語/繁中",
-		audioLocaleCn: "普通话",
+		audioLocaleHk: "Cantonese / Traditional Chinese",
+		audioLocaleCn: "Mandarin",
 		audioLocaleEn: "English",
 		audioBgmDone: "BGM added — preview updated.",
 		audioVoiceDone: "Voiceover mixed — preview updated.",
@@ -6144,15 +6144,15 @@ export const en = {
 		expandAlready: "Already close to that ratio — no tokens charged.",
 		magicChatTitle: "Magic chat",
 		magicChatHint:
-			"Describe a change to the whole image — no split needed. Or: 改成新文案 (selected text layer).",
+			"Describe a change to the whole image — no split needed. Or: Change to new copy (selected text layer).",
 		magicChatHintWithCosts: (c: { edit: number }) =>
 			`Describe the whole-image edit (~${c.edit} tok). Split is a separate button — not required here. Free: box lift, paste, editable text.`,
 		magicChatPlaceholder: "e.g. Make the background night · Change headline to Summer Sale…",
 		magicChatSend: "Run",
 		magicChatHelp:
-			"Describe any full-image change. Optional: 改成 … on a selected text layer · 改这层：… for the selected piece only",
+			"Describe any full-image change. Optional: Change to … on a selected text layer · Edit this layer: … for the selected piece only",
 		magicChatNeedLayer: "Select a layer first for that command (or describe a full-image edit).",
-		magicChatNeedText: "Select a text layer and type the new words (or 改成 …).",
+		magicChatNeedText: "Select a text layer and type the new words (or Change to …).",
 		magicChatOk: "Done.",
 		magicFullEditing: "AI editing the whole image…",
 		magicFullEditDone: "Whole image updated.",
@@ -6280,7 +6280,7 @@ export const en = {
 		cropEditModeAiHint:
 			"Change look — color, flag, face, product (~image tokens). Not for exact new copy.",
 		editInstructionPlaceholder:
-			"e.g. Change text to「夏季大促」· England flag → China · replace face with a woman smiling",
+			"e.g. Change text to \"Summer Sale\" · England flag → China · replace face with a woman smiling",
 		aiEditCrop: (n: number) => `AI edit look ${n}`,
 		aiEditCropHint:
 			"Freeform change on the selected crop only. For exact new wording, use Change words.",
@@ -6504,12 +6504,12 @@ export const en = {
 		cleanModeBrush: "Brush",
 		cleanBrushSize: "Brush size",
 		cleanAiStepsHint:
-			"Cover the whole unwanted box with purple (edges too).\nTap Remove painted area — AI clones the nearby background into that spot (like phone heal).\nTo fix wrong words: paint over them, type e.g. 改成「正確標題」, then Replace.\nFor pixel-perfect copy, Remove first, then add your own text in step 3.",
+			"Cover the whole unwanted box with purple (edges too).\nTap Remove painted area — AI clones the nearby background into that spot (like phone heal).\nTo fix wrong words: paint over them, type e.g. Change to \"Correct headline\", then Replace.\nFor pixel-perfect copy, Remove first, then add your own text in step 3.",
 		cleanPresetRemoveText: "Remove text, seamless background",
 		cleanPresetRemoveLogo: "Remove Logo, keep product",
 		cleanPresetSeamless: "Clean background, no text",
 		cleanPromptPlaceholder:
-			"Replace example: 改成「認識金砂石」 / soft marble (Remove needs no text)",
+			"Replace example: Change to \"Meet Goldstone\" / soft marble (Remove needs no text)",
 		cleanEraseBtn: "Remove painted area",
 		cleanFillBtn: "Replace with my description",
 		cleanCostNote:
@@ -6617,7 +6617,7 @@ export const en = {
 		tiktokImageWarning:
 			"TikTok is video-only. Use RedNote or Instagram for image research, or switch workflow to Video.",
 		platformSearchHintXhs:
-			"Best for Chinese category keywords (e.g. 維他命C精華, 護膚流程) — searches notes with cover cards.",
+			"Best for Chinese category keywords (e.g. vitamin C serum, skincare routine) — searches notes with cover cards.",
 		platformSearchHintIgImage:
 			"Instagram image mode searches hashtags — English tags work best (vitaminc, skincare, serum).",
 		platformSearchHintIgHashtags: (tags: string) => `Will search: ${tags}`,
@@ -6680,7 +6680,7 @@ export const en = {
 		noResultsHintFb:
 			"Try a category keyword, or paste a public facebook.com/…/posts/… or /videos/… URL.",
 		noResultsHintXhs:
-			"Try a more specific Chinese category (e.g. 維他命C精華, 護膚).",
+			"Try a more specific Chinese category (e.g. vitamin C serum, skincare).",
 		noResultsHintTiktok:
 			"Use short English keyword phrases (skincare routine, unboxing).",
 		appliedContinue:
@@ -6899,7 +6899,7 @@ export const en = {
 			templateTipIntro:
 				"Pick a style preset, or Direct (no template). Then let the assistant fill your copy fields.",
 			templateIntro:
-				"Template = the style you want. Video-only: shot recipes (Quick Ad, Blockbuster…). Storyboard (圖+片): Classic TVC or Luxury birth. Image-only: pick a look. Or use Direct with no preset.",
+				"Template = the style you want. Video-only: shot recipes (Quick Ad, Blockbuster…). Storyboard (image + video): Classic TVC or Luxury birth. Image-only: pick a look. Or use Direct with no preset.",
 			templateDirectTitle: "Direct (no template)",
 			templateDirectBody: "Blank layout — fill big word / headline and support line with the assistant.",
 			templatePickHint: "Select a style template or Direct above, then fill your copy fields.",
@@ -7181,7 +7181,7 @@ export const en = {
 					title: "For this direction: fill on-poster type",
 					body: "Hook = the exact big title painted on the poster. Supporting = the exact tagline under it. We paint what you type — we won’t swap in the product name or invent extra slogans. Extra requirements = palette / set mood only.",
 					hookLabel: "Poster title",
-					hookPlaceholder: "e.g. 便攜續航 · All-day power",
+					hookPlaceholder: "e.g. All-day power",
 					supportingLabel: "Poster tagline",
 					supportingPlaceholder:
 						"Short line on the poster, e.g. Creamy & Juicy / Soft & Fresh",
@@ -7190,7 +7190,7 @@ export const en = {
 					title: "For this direction: fill title + part callouts",
 					body: "Hook = poster title. Supporting copy = one short part description per line — they become labeled callouts on the exploded diagram. Extra requirements = lighting, part count, background mood.",
 					hookLabel: "Poster title",
-					hookPlaceholder: "e.g. 內在結構 · Inside the build",
+					hookPlaceholder: "e.g. Inside the build",
 					supportingLabel: "Part callouts (one per line)",
 					supportingPlaceholder:
 						"e.g.\nBattery — all-day charge\nShell — matte grip\nChip — fast charge IC",
@@ -7199,7 +7199,7 @@ export const en = {
 					title: "For gaming cover: fill the cover title",
 					body: "Hook becomes the large in-world cover title. Upload is the hero / SKU identity lock. Supporting = HUD taglines. Extra = set / lighting only.",
 					hookLabel: "Cover title",
-					hookPlaceholder: "e.g. CHALLENGE · 決戰",
+					hookPlaceholder: "e.g. CHALLENGE",
 					supportingLabel: "HUD / support lines",
 					supportingPlaceholder: "Short gaming taglines (optional)",
 				},
@@ -7207,7 +7207,7 @@ export const en = {
 					title: "For sports big-words: fill the huge word",
 					body: "Hook drives one architectural impact word (SMASH / SPIKE…) taller than the hero. Upload = athlete or product-in-action. Supporting = tiny scoreboard HUD only — not gaming quest UI.",
 					hookLabel: "Big word / headline",
-					hookPlaceholder: "e.g. SMASH · 爆發",
+					hookPlaceholder: "e.g. SMASH",
 					supportingLabel: "Scoreboard / HUD lines",
 					supportingPlaceholder: "Short sports HUD (optional)",
 				},
@@ -7215,7 +7215,7 @@ export const en = {
 					title: "For jelly 3D: fill the jelly word",
 					body: "Upload keeps your product/mascot/logo as-is. Hook becomes the dramatic jelly/glass 3D word (IG still-life). Supporting = optional second jelly line. Same on product and concept.",
 					hookLabel: "Jelly word / headline",
-					hookPlaceholder: "e.g. ONE YEAR · 一週年",
+					hookPlaceholder: "e.g. ONE YEAR",
 					supportingLabel: "Second jelly line",
 					supportingPlaceholder: "Short jelly subline (optional)",
 				},
@@ -7404,7 +7404,7 @@ export const en = {
 				title: "For motion poster: fill the end-frame title",
 				body: "Start still is textless. End still paints your hook as a large masthead (plus optional supporting line). Product photo is required — it is the hero. Extra notes = lighting / set only, not the title.",
 				hookLabel: "End-frame title",
-				hookPlaceholder: "e.g. 便攜續航 · All-day power",
+				hookPlaceholder: "e.g. All-day power",
 				supportingLabel: "End-frame support line",
 				supportingPlaceholder: "Short line under the masthead (optional)",
 				extraLabel: "Extra still / motion notes",
@@ -7597,7 +7597,7 @@ export const en = {
 			image_busy: "Wait for image generation to finish.",
 			image_not_ready: "Wait for the generated image to appear.",
 			need_storyboard_approve:
-				"Approve the storyboard stills (九宫格) before continuing to video.",
+				"Approve the storyboard stills (grid) before continuing to video.",
 			need_visual_lock:
 				"Upload a product photo, logo, or mascot still — text/topic alone is not enough.",
 			video_busy: "Wait for video generation to finish.",
@@ -7607,8 +7607,8 @@ export const en = {
 		},
 		combinedStyleTitle: "Image + video workflow",
 		combinedStyleHint:
-			"Image + video uses 分鏡 storyboard only — multi-scene stills, then one Reel. No single-poster Ship-it.",
-		combinedAnimateTitle: "Storyboard (分鏡)",
+			"Image + video uses storyboard only — multi-scene stills, then one Reel. No single-poster Ship-it.",
+		combinedAnimateTitle: "Storyboard",
 		combinedAnimateDesc:
 			"Multi-scene keyframes → one stitched Reel. This is the only image+video path.",
 		videoSubpathTitle: "Video creation path",
@@ -7744,7 +7744,7 @@ export const en = {
     characterNode: {
       hint: "AI-generate a face sheet, upload one, or pick from library — then Generate angles for a turnaround. Wire to scenes / @mention.",
       uploadPlaceholder: "Upload face / character sheet",
-      biographyPlaceholder: "Character bio (人物小传) — age, outfit, personality…",
+      biographyPlaceholder: "Character bio — age, outfit, personality…",
       generatePromptPlaceholder: "Optional look prompt for AI generate (or leave blank to use bio)…",
       generate: "AI generate character",
       generateNeedPrompt: "Enter a bio or look prompt before generating.",
