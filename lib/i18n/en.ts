@@ -556,26 +556,26 @@ export const en = {
 					],
 				},
 				storyboard: {
-					title: "Luxury storyboard in 4 steps",
+					title: "Storyboard in 4 steps",
 					subtitle:
-						"A real studio walkthrough — AI research, scene stills, then a luxury product video.",
-					hint: "Real studio recording · gentle pace · soft music · click a step to jump",
+						"A real studio walkthrough — AI research, scene stills, then the finished product video.",
+					hint: "Studio recording sped up · finished clip at the end · click a step to jump",
 					steps: [
 						{
 							title: "Pick a product",
-							body: "Skip the long homepage. Choose Physical product, then Images then video.",
+							body: "Choose Physical product, then Images then video (storyboard).",
 						},
 						{
 							title: "AI research",
 							body: "Search live posts for layout inspiration — a core Alchemy selling point.",
 						},
 						{
-							title: "Luxury storyboard",
-							body: "Pick Luxury birth, generate the outline, then create the scene stills.",
+							title: "Storyboard stills",
+							body: "Generate the multi-scene stills, review the grid, then continue to video.",
 						},
 						{
 							title: "Generate the video",
-							body: "Approve the stills. The finished luxury clip holds as a still, then plays full-frame.",
+							body: "Approve the stills — the finished product clip holds, then plays full-frame.",
 						},
 					],
 				},

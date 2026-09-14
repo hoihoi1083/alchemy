@@ -19,9 +19,10 @@ export const LANDING_DEMOS: Record<LandingDemoId, LandingDemoAsset> = {
     stepMarks: [0, 13.8, 15.8, 18.5],
   },
   storyboard: {
-    video: "/videos/landing/luxury-storyboard-demo.mp4?v=1787093778086",
-    poster: "/images/landing/luxury-storyboard-demo-poster.jpg?v=1787093778086",
-    stepMarks: [0, 6.49, 33.7, 61.61],
+    video: "/videos/landing/luxury-storyboard-demo.mp4?v=11",
+    poster: "/images/landing/luxury-storyboard-demo-poster.jpg?v=11",
+    // New ~27s cut: product → research → storyboard stills → finished clip
+    stepMarks: [0, 3.5, 11.5, 18.7],
   },
   video: {
     video: "/videos/landing/social-drip-workflow-demo.mp4?v=1787093784379",

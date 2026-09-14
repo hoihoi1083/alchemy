@@ -32,8 +32,8 @@ const PATH_MEDIA: Record<
   },
   combined: {
     kind: "video",
-    src: "/images/landing/start-path-combined.mp4?v=9",
-    poster: "/images/landing/start-path-combined-poster.png?v=9",
+    src: "/images/landing/start-path-combined.mp4?v=10",
+    poster: "/images/landing/start-path-combined-poster.png?v=10",
   },
 };
 
