@@ -146,26 +146,34 @@ export function LandingTokensAndFaq() {
 								</div>
 							</div>
 							{canPageFaq ? (
-								<div className="mt-4 flex items-center justify-center gap-3">
+								<div className="landing-faq-pager mt-4 flex items-center justify-center gap-3">
 									<button
 										type="button"
 										aria-label={L.faqPrev}
 										disabled={!canPrev}
 										onClick={goPrev}
-										className="inline-flex size-10 items-center justify-center rounded-full border-2 border-violet-300/70 bg-violet-500/15 text-violet-100 shadow-[0_0_0_4px_rgba(139,92,246,0.12)] transition hover:border-violet-200 hover:bg-violet-500/25 disabled:pointer-events-none disabled:opacity-30"
+										className="inline-flex size-10 items-center justify-center rounded-full border-2 border-violet-300/70 bg-violet-500/15 text-violet-100 shadow-[0_0_0_4px_rgba(139,92,246,0.12)] transition-[border-color,background-color,opacity,box-shadow] hover:border-violet-200 hover:bg-violet-500/25 disabled:pointer-events-none disabled:opacity-30"
 									>
-										<svg
-											viewBox="0 0 24 24"
-											fill="none"
-											className="h-4 w-4"
-											stroke="currentColor"
-											strokeWidth="2.25"
-											strokeLinecap="round"
-											strokeLinejoin="round"
+										<span
+											className={
+												canPrev
+													? "landing-pager-nudge-up"
+													: "inline-flex"
+											}
 											aria-hidden
 										>
-											<path d="M6 15l6-6 6 6" />
-										</svg>
+											<svg
+												viewBox="0 0 24 24"
+												fill="none"
+												className="h-4 w-4"
+												stroke="currentColor"
+												strokeWidth="2.25"
+												strokeLinecap="round"
+												strokeLinejoin="round"
+											>
+												<path d="M6 15l6-6 6 6" />
+											</svg>
+										</span>
 									</button>
 									<div
 										className="flex items-center gap-1.5"
@@ -187,22 +195,28 @@ export function LandingTokensAndFaq() {
 										aria-label={L.faqNext}
 										disabled={!canNext}
 										onClick={goNext}
-										className={`inline-flex size-10 items-center justify-center rounded-full border-2 border-violet-300/70 bg-violet-500/15 text-violet-100 shadow-[0_0_0_4px_rgba(139,92,246,0.12)] transition hover:border-violet-200 hover:bg-violet-500/25 disabled:pointer-events-none disabled:opacity-30 ${
-											canNext ? "faq-expand-arrow-bounce" : ""
-										}`}
+										className="inline-flex size-10 items-center justify-center rounded-full border-2 border-violet-300/70 bg-violet-500/15 text-violet-100 shadow-[0_0_0_4px_rgba(139,92,246,0.12)] transition-[border-color,background-color,opacity,box-shadow] hover:border-violet-200 hover:bg-violet-500/25 disabled:pointer-events-none disabled:opacity-30"
 									>
-										<svg
-											viewBox="0 0 24 24"
-											fill="none"
-											className="h-4 w-4"
-											stroke="currentColor"
-											strokeWidth="2.25"
-											strokeLinecap="round"
-											strokeLinejoin="round"
+										<span
+											className={
+												canNext
+													? "landing-pager-nudge-down"
+													: "inline-flex"
+											}
 											aria-hidden
 										>
-											<path d="M6 9l6 6 6-6" />
-										</svg>
+											<svg
+												viewBox="0 0 24 24"
+												fill="none"
+												className="h-4 w-4"
+												stroke="currentColor"
+												strokeWidth="2.25"
+												strokeLinecap="round"
+												strokeLinejoin="round"
+											>
+												<path d="M6 9l6 6 6-6" />
+											</svg>
+										</span>
 									</button>
 								</div>
 							) : null}

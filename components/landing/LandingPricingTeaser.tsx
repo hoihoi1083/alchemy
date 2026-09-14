@@ -323,40 +323,49 @@ export function LandingPricingTeaser() {
 				) : null}
 
 				<div className="relative mt-8">
-					<button
-						type="button"
-						aria-label="Previous plans"
-						disabled={!canPrev}
-						onClick={goPrev}
-						className="landing-pricing-arrow absolute left-0 top-1/2 z-20 flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white/80 bg-violet-600 text-white shadow-lg shadow-black/40 transition hover:bg-violet-500 disabled:pointer-events-none disabled:border-white/30 disabled:bg-slate-500/70 disabled:opacity-40 sm:-translate-x-1/3 md:h-14 md:w-14"
-					>
-						<svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" aria-hidden>
-							<path
-								d="M14.5 6.5 9 12l5.5 5.5"
-								stroke="currentColor"
-								strokeWidth="2.5"
-								strokeLinecap="round"
-								strokeLinejoin="round"
-							/>
-						</svg>
-					</button>
-					<button
-						type="button"
-						aria-label="Next plans"
-						disabled={!canNext}
-						onClick={goNext}
-						className="landing-pricing-arrow absolute right-0 top-1/2 z-20 flex h-12 w-12 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-white/80 bg-violet-600 text-white shadow-lg shadow-black/40 transition hover:bg-violet-500 disabled:pointer-events-none disabled:border-white/30 disabled:bg-slate-500/70 disabled:opacity-40 sm:translate-x-1/3 md:h-14 md:w-14"
-					>
-						<svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" aria-hidden>
-							<path
-								d="M9.5 6.5 15 12l-5.5 5.5"
-								stroke="currentColor"
-								strokeWidth="2.5"
-								strokeLinecap="round"
-								strokeLinejoin="round"
-							/>
-						</svg>
-					</button>
+					{/* Position wrapper owns translate; bounce runs on the button so they don't fight */}
+					<div className="pointer-events-none absolute left-0 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 sm:-translate-x-1/3">
+						<button
+							type="button"
+							aria-label="Previous plans"
+							disabled={!canPrev}
+							onClick={goPrev}
+							className={`pointer-events-auto flex h-12 w-12 items-center justify-center rounded-full border-2 border-white/80 bg-violet-600 text-white shadow-lg shadow-black/40 transition-[background-color,border-color,opacity,box-shadow] hover:bg-violet-500 disabled:pointer-events-none disabled:border-white/30 disabled:bg-slate-500/70 disabled:opacity-40 md:h-14 md:w-14 ${
+								canPrev ? "landing-pager-nudge-left" : ""
+							}`}
+						>
+							<svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" aria-hidden>
+								<path
+									d="M14.5 6.5 9 12l5.5 5.5"
+									stroke="currentColor"
+									strokeWidth="2.5"
+									strokeLinecap="round"
+									strokeLinejoin="round"
+								/>
+							</svg>
+						</button>
+					</div>
+					<div className="pointer-events-none absolute right-0 top-1/2 z-20 translate-x-1/2 -translate-y-1/2 sm:translate-x-1/3">
+						<button
+							type="button"
+							aria-label="Next plans"
+							disabled={!canNext}
+							onClick={goNext}
+							className={`pointer-events-auto flex h-12 w-12 items-center justify-center rounded-full border-2 border-white/80 bg-violet-600 text-white shadow-lg shadow-black/40 transition-[background-color,border-color,opacity,box-shadow] hover:bg-violet-500 disabled:pointer-events-none disabled:border-white/30 disabled:bg-slate-500/70 disabled:opacity-40 md:h-14 md:w-14 ${
+								canNext ? "landing-pager-nudge-right" : ""
+							}`}
+						>
+							<svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" aria-hidden>
+								<path
+									d="M9.5 6.5 15 12l-5.5 5.5"
+									stroke="currentColor"
+									strokeWidth="2.5"
+									strokeLinecap="round"
+									strokeLinejoin="round"
+								/>
+							</svg>
+						</button>
+					</div>
 
 					<div
 						className="landing-pricing-grid grid grid-cols-1 gap-3 px-2 sm:px-4 md:grid-cols-4 md:gap-4 md:px-6"

@@ -615,27 +615,115 @@ footer.site-footer a.site-footer-logo:focus {
   .landing-how-live__timeline {
     opacity: 0.85 !important;
   }
-  .faq-expand-arrow-bounce {
+  .faq-expand-arrow-bounce,
+  .faq-expand-arrow-bounce-up,
+  .faq-expand-arrow-bounce-left,
+  .faq-expand-arrow-bounce-right {
     animation: none !important;
   }
 }
 
-/* FAQ expand — circled chevron with gentle downward nudge */
+/* FAQ expand / page chevrons — nudge the control (not the SVG root).
+   Animating transform on <svg> is flaky in WebKit; bounce a wrapping span instead. */
 @keyframes faq-expand-bounce {
   0%,
   100% {
-    transform: translateY(0);
+    transform: translate3d(0, 0, 0);
   }
-  45% {
-    transform: translateY(3px);
+  40% {
+    transform: translate3d(0, 5px, 0);
   }
-  70% {
-    transform: translateY(1px);
+  65% {
+    transform: translate3d(0, 2px, 0);
   }
 }
 
-.faq-expand-arrow-bounce {
-  animation: faq-expand-bounce 1.35s ease-in-out infinite;
+@keyframes faq-expand-bounce-up {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  40% {
+    transform: translate3d(0, -5px, 0);
+  }
+  65% {
+    transform: translate3d(0, -2px, 0);
+  }
+}
+
+@keyframes faq-expand-bounce-left {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  40% {
+    transform: translate3d(-5px, 0, 0);
+  }
+  65% {
+    transform: translate3d(-2px, 0, 0);
+  }
+}
+
+@keyframes faq-expand-bounce-right {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  40% {
+    transform: translate3d(5px, 0, 0);
+  }
+  65% {
+    transform: translate3d(2px, 0, 0);
+  }
+}
+
+.faq-expand-arrow-bounce,
+.faq-expand-arrow-bounce-up,
+.faq-expand-arrow-bounce-left,
+.faq-expand-arrow-bounce-right {
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .faq-expand-arrow-bounce {
+    animation: faq-expand-bounce 1.35s ease-in-out infinite;
+  }
+
+  .faq-expand-arrow-bounce-up {
+    animation: faq-expand-bounce-up 1.35s ease-in-out infinite;
+  }
+
+  .faq-expand-arrow-bounce-left {
+    animation: faq-expand-bounce-left 1.35s ease-in-out infinite;
+  }
+
+  .faq-expand-arrow-bounce-right {
+    animation: faq-expand-bounce-right 1.35s ease-in-out infinite;
+  }
+}
+
+/* Landing FAQ pager — keep bounce visible (no transform transition, no clip) */
+.landing-faq-pager {
+  overflow: visible;
+}
+
+.landing-faq-pager__btn {
+  overflow: visible;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    opacity 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.landing-faq-pager__btn:disabled {
+  animation: none !important;
+}
+
+.landing-faq-pager__btn .faq-expand-arrow-bounce,
+.landing-faq-pager__btn .faq-expand-arrow-bounce-up {
+  overflow: visible;
 }
 
 /* Landing FAQ — page slides with direction */

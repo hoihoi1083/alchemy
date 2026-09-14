@@ -651,6 +651,57 @@ const LANDING_LAYOUT_CSS = `
 .landing-arrow-pulse--0 { animation-delay: 0s; }
 .landing-arrow-pulse--1 { animation-delay: 0.45s; }
 .landing-arrow-pulse--2 { animation-delay: 0.9s; }
+
+/* FAQ + pricing pager chevrons (landing only — keep with this stylesheet) */
+@keyframes landing-pager-nudge-up {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  40% { transform: translate3d(0, -8px, 0); }
+  70% { transform: translate3d(0, -3px, 0); }
+}
+@keyframes landing-pager-nudge-down {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  40% { transform: translate3d(0, 8px, 0); }
+  70% { transform: translate3d(0, 3px, 0); }
+}
+@keyframes landing-pager-nudge-left {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  40% { transform: translate3d(-8px, 0, 0); }
+  70% { transform: translate3d(-3px, 0, 0); }
+}
+@keyframes landing-pager-nudge-right {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  40% { transform: translate3d(8px, 0, 0); }
+  70% { transform: translate3d(3px, 0, 0); }
+}
+.landing-pager-nudge-up,
+.landing-pager-nudge-down,
+.landing-pager-nudge-left,
+.landing-pager-nudge-right {
+  display: inline-flex !important;
+  will-change: transform;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .landing-pager-nudge-up {
+    animation: landing-pager-nudge-up 1.25s ease-in-out infinite !important;
+  }
+  .landing-pager-nudge-down {
+    animation: landing-pager-nudge-down 1.25s ease-in-out infinite !important;
+  }
+  .landing-pager-nudge-left {
+    animation: landing-pager-nudge-left 1.25s ease-in-out infinite !important;
+  }
+  .landing-pager-nudge-right {
+    animation: landing-pager-nudge-right 1.25s ease-in-out infinite !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-pager-nudge-up,
+  .landing-pager-nudge-down,
+  .landing-pager-nudge-left,
+  .landing-pager-nudge-right {
+    animation: none !important;
+  }
+}
 @keyframes landing-hero-in {
   from {
     opacity: 0;
