@@ -14,9 +14,10 @@ export type LandingDemoAsset = {
 
 export const LANDING_DEMOS: Record<LandingDemoId, LandingDemoAsset> = {
   image: {
-    video: "/videos/landing/image-workflow-demo.mp4?v=4",
-    poster: "/images/landing/image-workflow-demo-poster.jpg?v=4",
-    stepMarks: [0, 13.8, 15.8, 18.5],
+    video: "/videos/landing/image-workflow-demo.mp4?v=5",
+    poster: "/images/landing/image-workflow-demo-poster.jpg?v=5",
+    // ~35s cut: product → AI research → photo/hook → generate still
+    stepMarks: [0, 3.5, 13.5, 18.5],
   },
   storyboard: {
     video: "/videos/landing/luxury-storyboard-demo.mp4?v=11",

@@ -456,12 +456,12 @@ export const zhCn = {
       demos: {
         image: {
           title: "四步出图广告",
-          subtitle: "真实 Studio 操作 — 产品图入，静态广告出。",
+          subtitle: "真实 Studio 操作 — AI 研究、产品图，再到静态广告成品。",
           hint: "真实录影 · 点步骤可跳转",
-    steps: [
-            { title: "选产品", body: "选实体产品，然后进入 Studio。" },
-            { title: "只出图", body: "选「只生成图片」— 这次不用出片。" },
-            { title: "产品图 + 标题", body: "填产品名、上传真实产品图，再加一句 hook。" },
+          steps: [
+            { title: "选产品", body: "选实体产品、填产品名，然后进入 Studio。" },
+            { title: "AI 研究", body: "在 Instagram 搜热门帖做版式灵感，再选一个 style。" },
+            { title: "产品图 + 标题", body: "上传产品图、保留改写好的标题，再设图片选项。" },
             { title: "生成图片", body: "点生成图片。看成品，再下载或去画布改。" },
           ],
         },

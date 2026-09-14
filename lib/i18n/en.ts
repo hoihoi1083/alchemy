@@ -534,24 +534,25 @@ export const en = {
 			demos: {
 				image: {
 					title: "Image ads in 4 steps",
-					subtitle: "A real studio walkthrough — product photo in, still ad out.",
+					subtitle:
+						"A real studio walkthrough — AI research, product photo, then a finished still ad.",
 					hint: "Real studio recording · click a step to jump",
 					steps: [
 						{
 							title: "Pick a product",
-							body: "Choose Physical product, then continue into Studio.",
+							body: "Choose Physical product, name it, then continue into Studio.",
 						},
 						{
-							title: "Images only",
-							body: "Choose Generate images only — skip video for a simple still-ad path.",
+							title: "AI research",
+							body: "Search live Instagram posts for layout inspiration, then pick a style.",
 						},
 						{
 							title: "Photo + hook",
-							body: "Name the product, upload a real product shot, and add a short headline.",
+							body: "Upload a product shot, keep the rewritten headline, and set image options.",
 						},
 						{
 							title: "Generate the still",
-							body: "Tap Generate image. Review the result, then download or edit on canvas.",
+							body: "Tap Generate image. Review the finished still, then download or edit.",
 						},
 					],
 				},

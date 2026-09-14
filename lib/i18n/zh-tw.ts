@@ -456,12 +456,12 @@ export const zhTw = {
       demos: {
         image: {
           title: "四步出圖廣告",
-          subtitle: "真實 Studio 操作 — 產品圖入，靜態廣告出。",
+          subtitle: "真實 Studio 操作 — AI 研究、產品圖，再到靜態廣告成品。",
           hint: "真實錄影 · 點步驟可跳轉",
           steps: [
-            { title: "選產品", body: "選實體產品，然後進入 Studio。" },
-            { title: "只出圖", body: "選「只生成圖片」— 這次不用出片。" },
-            { title: "產品圖 + 標題", body: "填產品名、上傳真實產品圖，再加一句 hook。" },
+            { title: "選產品", body: "選實體產品、填產品名，然後進入 Studio。" },
+            { title: "AI 研究", body: "在 Instagram 搜熱門帖做版式靈感，再選一個 style。" },
+            { title: "產品圖 + 標題", body: "上傳產品圖、保留改寫好的標題，再設圖片選項。" },
             { title: "生成圖片", body: "點生成圖片。看成品，再下載或去畫布改。" },
           ],
         },
