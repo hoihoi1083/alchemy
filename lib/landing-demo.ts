@@ -26,8 +26,9 @@ export const LANDING_DEMOS: Record<LandingDemoId, LandingDemoAsset> = {
     stepMarks: [0, 3.5, 11.5, 18.7],
   },
   video: {
-    video: "/videos/landing/social-drip-workflow-demo.mp4?v=1787093784379",
-    poster: "/images/landing/social-drip-demo-poster.jpg?v=1787093784379",
-    stepMarks: [0, 7.38, 13.64, 26.42],
+    video: "/videos/landing/social-drip-workflow-demo.mp4?v=5",
+    poster: "/images/landing/social-drip-demo-poster.jpg?v=5",
+    // ~27s cut: product → AI research → photo/reference → finished reel
+    stepMarks: [0, 3.5, 10, 17],
   },
 };

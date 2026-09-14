@@ -581,26 +581,26 @@ export const en = {
 					],
 				},
 				video: {
-					title: "Social drip video in 4 steps",
+					title: "Product video in 4 steps",
 					subtitle:
-						"Video-only path — three-panel meme drip from a product still (burger example).",
-					hint: "Studio walkthrough + the generated 3-panel clip · click a step to jump",
+						"A real studio walkthrough — AI research, product photo, then a finished silent reel.",
+					hint: "Real studio recording · finished reel at the end · click a step to jump",
 					steps: [
 						{
-							title: "Video only",
-							body: "Choose Physical product, then Generate video only.",
+							title: "Pick a product",
+							body: "Choose Physical product, name it, then continue into Studio.",
 						},
 						{
-							title: "Social drip",
-							body: "Pick Social drip (three-panel) — product, social chrome, character reaction.",
+							title: "AI research",
+							body: "Search live Instagram Reels for pacing inspiration, then pick a style.",
 						},
 						{
-							title: "Product still",
-							body: "Upload a clear packshot (this burger) and a short hook.",
+							title: "Photo + reference",
+							body: "Upload a product shot and keep the reference reel for camera / edit feel.",
 						},
 						{
-							title: "The drip clip",
-							body: "Generate — the finished 3-panel holds as a still, then plays on its own.",
+							title: "Generate the reel",
+							body: "Approve & generate. Review the finished silent reel, then download or caption.",
 						},
 					],
 				},

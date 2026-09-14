@@ -23,8 +23,8 @@ const FAN_MEDIA = [
     video: "/videos/landing/story-fan-reference.mp4?v=8",
   },
   {
-    poster: "/images/landing/story-fan-storyboard.jpg?v=10",
-    video: "/videos/landing/story-fan-storyboard.mp4?v=10",
+    poster: "/images/landing/story-fan-storyboard.jpg?v=11",
+    video: "/videos/landing/story-fan-storyboard.mp4?v=11",
   },
 ] as const;
 
@@ -34,7 +34,7 @@ function clamp(n: number, min: number, max: number) {
 
 /**
  * Auto-looping story fan: left copy + right phone video cards cycle 1 → 2 → 3 → 1.
- * Dwell follows each card’s video length (transform/reference ~5s; storyboard stitch ~27s).
+ * Dwell follows each card’s video length (transform/reference ~5s; storyboard ~7s).
  */
 export function LandingStoryWheel() {
   const { m } = useLocale();
