@@ -226,8 +226,10 @@ const LANDING_LAYOUT_CSS = `
   margin-inline: auto;
 }
 .landing-story-phone {
+  /* Exact 9:16 so object-cover does not crop the split creatives */
   width: min(70%, 340px);
-  height: 100%;
+  height: auto;
+  aspect-ratio: 9 / 16;
   border: 0;
   padding: 0;
   background: transparent;
@@ -235,6 +237,7 @@ const LANDING_LAYOUT_CSS = `
 }
 .landing-story-phone-frame {
   border-radius: 2.25rem;
+  aspect-ratio: 9 / 16;
 }
 @media (min-width: 640px) {
   .landing-story-mobile-grid {

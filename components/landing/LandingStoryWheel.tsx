@@ -15,12 +15,12 @@ const FALLBACK_LOOP_MS = 5000;
 
 const FAN_MEDIA = [
   {
-    poster: "/images/landing/story-fan-transform.jpg?v=8",
-    video: "/videos/landing/story-fan-transform.mp4?v=8",
+    poster: "/images/landing/story-fan-transform.jpg?v=14",
+    video: "/videos/landing/story-fan-transform.mp4?v=14",
   },
   {
-    poster: "/images/landing/story-fan-reference.jpg?v=8",
-    video: "/videos/landing/story-fan-reference.mp4?v=8",
+    poster: "/images/landing/story-fan-reference.jpg?v=15",
+    video: "/videos/landing/story-fan-reference.mp4?v=15",
   },
   {
     poster: "/images/landing/story-fan-storyboard.jpg?v=11",
@@ -322,7 +322,7 @@ export function LandingStoryWheel() {
                       <img
                         src={slide.poster}
                         alt=""
-                        className="absolute inset-0 h-full w-full object-cover"
+                        className="absolute inset-0 h-full w-full object-contain bg-slate-950"
                         draggable={false}
                         aria-hidden
                       />
@@ -331,7 +331,7 @@ export function LandingStoryWheel() {
                           ref={(el) => {
                             videoRefs.current[i] = el;
                           }}
-                          className="absolute inset-0 h-full w-full object-cover"
+                          className="absolute inset-0 h-full w-full object-contain bg-slate-950"
                           src={slide.video}
                           poster={slide.poster}
                           muted
@@ -464,12 +464,12 @@ function MobileSlide({
             <img
               src={poster}
               alt={imageAlt}
-              className="aspect-[9/16] w-full object-cover"
+              className="aspect-[9/16] w-full object-contain bg-slate-950"
             />
           ) : (
             <video
               ref={ref}
-              className="aspect-[9/16] w-full object-cover"
+              className="aspect-[9/16] w-full object-contain bg-slate-950"
               src={video}
               poster={poster}
               muted

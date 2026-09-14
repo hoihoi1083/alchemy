@@ -488,7 +488,7 @@ export const en = {
 		transformPoints: [
 			{
 				title: "Keep your real product",
-				body: "We restyle the scene and lighting only — your bottle, label, and brand stay true.",
+				body: "We restyle the scene and lighting only — your real product and brand stay true.",
 			},
 			{
 				title: "Match the look you want",
