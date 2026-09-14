@@ -46,7 +46,7 @@ const STILL = path.join(
 const OUT = path.join(OUT_DIR, "final-cta-studio.mp4");
 
 const PROMPT =
-  "Premium SaaS marketing mock of two overlapping studio windows on a dark violet glow. Soft floating parallax: front product-asset window drifts gently forward, rear designed-poster window drifts slightly opposite. Subtle purple bloom pulse behind the windows. Tiny shimmer on the amber bottle. Keep all UI chrome, titles, and buttons sharp and readable. No morphing text. No people.";
+  "Premium SaaS marketing mock of two overlapping Alchemy AI Lab studio windows on a dark violet glow. Correct branding: faceted flask logo and Alchemy AI Lab name stay sharp and readable. Soft floating parallax: front product-reel window drifts gently forward, rear image-ad window drifts slightly opposite. Subtle purple bloom pulse behind the windows. Keep all UI chrome and titles sharp. No morphing text. No people. No wrong brand names.";
 
 function extractVideoUrl(data: unknown): string | undefined {
   if (!data || typeof data !== "object") return undefined;

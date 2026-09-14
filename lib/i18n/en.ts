@@ -891,7 +891,7 @@ export const en = {
 		topUpCustomMailSubject: "Custom tokens or plan",
 		finalTitle: "Ready to create agency-like content?",
 		finalBody: "Join marketers and businesses creating better ads, faster.",
-		finalImageAlt: "Alchemy studio creatives and product asset preview",
+		finalImageAlt: "Alchemy AI Lab creatives — image ad and asset kit suitcase",
     ultraCanvasNavLink: "Ultra canvas",
 		captionsLink: "Caption, BGM & voice for any video",
 		imageCanvasLink: "Add text & logo to any image",

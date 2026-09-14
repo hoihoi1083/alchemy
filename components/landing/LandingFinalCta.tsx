@@ -6,8 +6,8 @@ import { useLocale } from "@/components/LocaleProvider";
 import { LandingWatchDemoButton } from "@/components/landing/LandingDemoModal";
 import { Reveal } from "@/components/landing/Reveal";
 
-const FINAL_CTA_IMAGE = "/images/landing/final-cta-studio.jpg?v=3";
-const FINAL_CTA_VIDEO = "/videos/landing/final-cta-studio.mp4?v=3";
+const FINAL_CTA_IMAGE = "/images/landing/final-cta-studio.jpg?v=9";
+const FINAL_CTA_VIDEO = "/videos/landing/final-cta-studio.mp4?v=9";
 
 function FinalCtaMedia({ alt }: { alt: string }) {
 	const rootRef = useRef<HTMLDivElement>(null);
