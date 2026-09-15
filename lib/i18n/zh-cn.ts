@@ -537,7 +537,7 @@ export const zhCn = {
     resultCardAlt: "品牌饮品广告结果",
     canvasTitle: "完全可编辑画布",
     canvasBody: "生成结果不会锁死。可以清元素、加文字和 Logo，再导出你要的尺寸。",
-    canvasFeatures: ["清元素", "加文字", "加 Logo", "导出尺寸"],
+    canvasFeatures: ["清元素", "加文字", "加 Logo", "加图表", "导出尺寸"],
     canvasOverlayText: "亮白你的肌肤",
     canvasImageAlt: "可编辑护肤广告",
     canvasCta: "打开图片编辑",
@@ -3300,12 +3300,18 @@ export const zhCn = {
 		},
 		recipePathUx: {
 			"ecom-orbit": {
-				need: ["产品图（清楚包装／英雄位）"],
+				need: [
+					"产品图 — 或概念用 Logo／吉祥物静图",
+					"清楚的英雄主体方便环绕",
+				],
 				attention: ["SKU 外形、Logo、配色会锁定", "干净背景最好 — 避免拼贴杂图"],
 				output: ["约 6 秒单镜环绕／倾斜产品"],
 			},
 			"object-lock": {
-				need: ["产品图（尽量填满画面）"],
+				need: [
+					"产品图 — 或概念用 Logo／吉祥物静图",
+					"主体应尽量填满画面",
+				],
 				attention: ["产品保持清晰置中", "移动的是背景，不是商品"],
 				output: ["约 6 秒物体锁定（SnorriCam）短片"],
 			},
@@ -3466,12 +3472,20 @@ export const zhCn = {
 			},
 			"sports-big-words": {
 				need: ["产品或运动员图", "标题（驱动巨大动作词）"],
-				attention: ["巨大叠层字＋动作能量", "高饱和运动字 — 主体要清晰"],
+				attention: [
+					"极低角度冲击定格 — 大字高过主体",
+					"只限运动计分板 HUD — 不要用电竞任务／条码 UI",
+					"高饱和运动字 — 主体要清晰",
+				],
 				output: ["一张运动大字海报静图"],
 			},
 			"jelly-3d": {
 				need: ["产品、Logo 或名称（果冻造型）", "标题"],
-				attention: ["极简透亮 3D — 少量文字", "不要杂乱生活场景"],
+				attention: [
+					"上传身份锁定 — 同张照片的产品／吉祥物",
+					"文字才是果冻／玻璃主角 — IG 戏剧感，不是平面字幕",
+					"产品和概念同一套规则",
+				],
 				output: ["一张果冻／玻璃 3D 海报静图"],
 			},
 			"type-force": {
@@ -3913,6 +3927,11 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
         "确认产品 still 和 motion prompt。",
         "Generate video — 每次扣 token。",
         "可选：字幕、BGM。",
+      ],
+      videoCombinedSteps: [
+        "检查 Step 2 关键帧。",
+        "由图片 + prompt 出片。",
+        "满意就导出或加字幕。",
       ],
     },
     setupHints: {

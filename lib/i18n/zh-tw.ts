@@ -537,7 +537,7 @@ export const zhTw = {
     resultCardAlt: "品牌飲品廣告結果",
     canvasTitle: "完全可編輯畫布",
     canvasBody: "生成結果不會鎖死。可以清元素、加文字和 Logo，再導出你要的尺寸。",
-    canvasFeatures: ["清元素", "加文字", "加 Logo", "導出尺寸"],
+    canvasFeatures: ["清元素", "加文字", "加 Logo", "加圖表", "導出尺寸"],
     canvasOverlayText: "亮白你的肌膚",
     canvasImageAlt: "可編輯護膚廣告",
     canvasCta: "打開圖片編輯",
@@ -3290,12 +3290,18 @@ export const zhTw = {
 		},
 		recipePathUx: {
 			"ecom-orbit": {
-				need: ["產品圖（清楚包裝／英雄位）"],
+				need: [
+					"產品圖 — 或概念用 Logo／吉祥物靜圖",
+					"清楚的英雄主體方便環繞",
+				],
 				attention: ["SKU 外形、Logo、配色會鎖定", "乾淨背景最好 — 避免拼貼雜圖"],
 				output: ["約 6 秒單鏡環繞／傾斜產品"],
 			},
 			"object-lock": {
-				need: ["產品圖（盡量填滿畫面）"],
+				need: [
+					"產品圖 — 或概念用 Logo／吉祥物靜圖",
+					"主體應盡量填滿畫面",
+				],
 				attention: ["產品保持清晰置中", "移動的是背景，不是商品"],
 				output: ["約 6 秒物體鎖定（SnorriCam）短片"],
 			},
@@ -3456,12 +3462,20 @@ export const zhTw = {
 			},
 			"sports-big-words": {
 				need: ["產品或運動員圖", "標題（驅動巨大動作詞）"],
-				attention: ["巨大疊層字＋動作能量", "高飽和運動字 — 主體要清晰"],
+				attention: [
+					"極低角度衝擊定格 — 大字高過主體",
+					"只限運動計分板 HUD — 不要用電競任務／條碼 UI",
+					"高飽和運動字 — 主體要清晰",
+				],
 				output: ["一張運動大字海報靜圖"],
 			},
 			"jelly-3d": {
 				need: ["產品、Logo 或名稱（果凍造型）", "標題"],
-				attention: ["極簡透亮 3D — 少量文字", "不要雜亂生活場景"],
+				attention: [
+					"上傳身份鎖定 — 同張照片的產品／吉祥物",
+					"文字才是果凍／玻璃主角 — IG 戲劇感，不是平面字幕",
+					"產品和概念同一套規則",
+				],
 				output: ["一張果凍／玻璃 3D 海報靜圖"],
 			},
 			"type-force": {
