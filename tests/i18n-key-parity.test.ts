@@ -1,5 +1,5 @@
 /**
- * Guard: en / zh / zh-cn string-leaf key parity.
+ * Guard: en / zh / zh-cn / zh-tw string-leaf key parity.
  * Prevents shipping English-only copy for new wizard/billing strings.
  */
 import assert from "node:assert/strict";
@@ -7,6 +7,7 @@ import { describe, it } from "node:test";
 import { en } from "../lib/i18n/en";
 import { zh } from "../lib/i18n/zh";
 import { zhCn } from "../lib/i18n/zh-cn";
+import { zhTw } from "../lib/i18n/zh-tw";
 
 function flattenStrings(obj: unknown, prefix = ""): string[] {
   if (!obj || typeof obj !== "object") return [];
@@ -25,6 +26,7 @@ describe("i18n key parity", () => {
   const enKeys = new Set(flattenStrings(en));
   const zhKeys = new Set(flattenStrings(zh));
   const cnKeys = new Set(flattenStrings(zhCn));
+  const twKeys = new Set(flattenStrings(zhTw));
 
   it("zh has every en string leaf", () => {
     const missing = [...enKeys].filter((k) => !zhKeys.has(k)).sort();
@@ -36,8 +38,23 @@ describe("i18n key parity", () => {
     assert.deepEqual(missing, [], `missing in zh-cn:\n${missing.join("\n")}`);
   });
 
+  it("zh-tw has every en string leaf", () => {
+    const missing = [...enKeys].filter((k) => !twKeys.has(k)).sort();
+    assert.deepEqual(missing, [], `missing in zh-tw:\n${missing.join("\n")}`);
+  });
+
   it("zh has no extra string leaves vs en", () => {
     const extra = [...zhKeys].filter((k) => !enKeys.has(k)).sort();
     assert.deepEqual(extra, [], `extra in zh:\n${extra.join("\n")}`);
+  });
+
+  it("zh-cn has no extra string leaves vs en", () => {
+    const extra = [...cnKeys].filter((k) => !enKeys.has(k)).sort();
+    assert.deepEqual(extra, [], `extra in zh-cn:\n${extra.join("\n")}`);
+  });
+
+  it("zh-tw has no extra string leaves vs en", () => {
+    const extra = [...twKeys].filter((k) => !enKeys.has(k)).sort();
+    assert.deepEqual(extra, [], `extra in zh-tw:\n${extra.join("\n")}`);
   });
 });

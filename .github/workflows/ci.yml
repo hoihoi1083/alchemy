@@ -41,14 +41,13 @@ jobs:
         run: npx playwright install chromium --with-deps
 
       - name: E2E smoke
-        # Public funnel works with placeholders after the 127.0.0.1 webServer fix, but full
-        # Clerk auth E2E needs real keys + E2E_CLERK_USER_*. Skip when secrets are missing
-        # so CI stays green until those are configured in GitHub.
+        # Always run Playwright. Public funnel needs no Clerk secrets.
+        # Authenticated specs self-skip via hasClerkE2eAuth() when keys are
+        # placeholders — never exit 0 before running tests (that hid all e2e).
         run: |
-          if [[ "${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}" == *placeholder* ]] || [[ "${CLERK_SECRET_KEY}" == *placeholder* ]]; then
-            echo "Skipping E2E: Clerk keys are CI placeholders."
-            echo "Add NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY + CLERK_SECRET_KEY (and E2E_CLERK_USER_*) as GitHub Actions secrets to enable."
-            exit 0
+          if [[ "${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}" == *placeholder* ]] || [[ "${CLERK_SECRET_KEY}" == *placeholder* ]] || [[ -z "${E2E_CLERK_USER_ID}" ]]; then
+            echo "::warning::Clerk/E2E user secrets missing or placeholders — authenticated specs will skip; public funnel still runs."
+            echo "Add NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY, CLERK_SECRET_KEY, and E2E_CLERK_USER_* as GitHub Actions secrets for full coverage."
           fi
           npm run test:e2e
         env:

@@ -1869,6 +1869,8 @@ export const zhTw = {
         '{\n  "description": "Cinematic fixed wide-angle shot...",\n  "style": "cinematic, vivid, warm undertones",\n  ...\n}',
       briefHint: "進階：可改鏡頭、光線或元素。description 請配合你的主題。",
       planNote: "由主題 + brief 文字出片 — 不經出圖。此模板需 Pro 方案。",
+      videoStepIntro:
+        "爆炸開箱 prompt 已在 Setup 填好。直接 Generate ~10s 純文字出片 — 不需關鍵幀。",
     },
     creativeBriefLabel: "創意影片描述（必填）",
     creativeBriefPlaceholder:
@@ -3852,6 +3854,62 @@ socialDripFitTitle: "這個格式可以／不可以做什麼",
     },
     step1Title: "步驟 1 — 輸出類型同產品資料",
     step1Hint: "揀只生成圖片、只生成影片、定兩樣都要。填好產品資料，AI 跟住做。",
+    stepHelp: {
+      setupTitle: "這步怎麼做",
+      videoTitle: "出片步驟",
+      noChatCoachNote:
+        "跟著畫面卡片做 — 工作室內無 chat 導覽。開始前可在首頁問 AI 助手。",
+      setupExplosionUnboxSteps: [
+        "輸入主題（蜘蛛人、麥當勞、你的品牌）。",
+        "檢查 JSON brief — 進階再改。",
+        "繼續 — 跳過出圖 — 下一步 Generate video。",
+      ],
+      setupConceptVideoSteps: [
+        "選概念出片路徑或描述想法。",
+        "填概念／動態 brief。",
+        "繼續出片 — 多數概念路徑不需產品圖。",
+      ],
+      setupVideoOnlySteps: [
+        "上傳清晰產品圖（實物片必需）。",
+        "選填：參考廣告 MP4。",
+        "繼續到出片步驟。",
+      ],
+      setupImageOnlySteps: [
+        "描述產品或概念。",
+        "選視覺風格並填欄位。",
+        "繼續出圖。",
+      ],
+      setupCombinedSteps: [
+        "填產品和標題。",
+        "選風格，選填品牌分析。",
+        "繼續 — 先圖後片。",
+      ],
+      videoExplosionUnboxSteps: [
+        "Prompt 已由主題填好 — 可再改。",
+        "看 token 成本後 Generate video。",
+        "完成後下載或去字幕工作室。",
+      ],
+      videoConceptSteps: [
+        "空白就點 AI 寫 motion prompt。",
+        "檢查時長和引擎。",
+        "Generate video — 純文字路徑跳過出圖。",
+      ],
+      videoStoryboardSteps: [
+        "規劃分鏡 → 出場景圖 → 出片。",
+        "留意每場 token。",
+        "準備好就 Generate。",
+      ],
+      videoPhysicalSteps: [
+        "確認產品 still 和 motion prompt。",
+        "Generate video — 每次扣 token。",
+        "可選：字幕、BGM。",
+      ],
+      videoCombinedSteps: [
+        "檢查 Step 2 關鍵幀。",
+        "由圖 + prompt 出片。",
+        "滿意就匯出或加字幕。",
+      ],
+    },
     setupHints: {
       "image-only": "下一步：用文字描述、一張參考圖、或產品相+風格參考圖來整圖片。",
       "video-only": "下一步：上傳產品靜態圖（@Image1），可選參考廣告 MP4 跟運鏡（@Video1）。",
@@ -6400,6 +6458,9 @@ stylePickerModelLabel: "模特佩戴／使用",
     running: "運行中…",
     queueEmpty: "添加節點後點「全部運行」",
     runAllEmpty: "沒有可運行節點 — 請添加圖片、影片、劇本或音訊節點。",
+    runAllConfirmTitle: "全部運行？",
+    runAllConfirm:
+      "將按順序運行 {nodes} 個節點 — 預估 ~{tokens} tokens。劇本規劃用方案配額（不扣 token）。繼續？",
     queueSkipped: "已跳過（上游失敗）",
     discardConfirm: "捨棄此畫布上未儲存的變更？",
     discardConfirmTitle: "捨棄變更？",
@@ -6722,6 +6783,18 @@ stylePickerModelLabel: "模特佩戴／使用",
       productHero: {
         name: "產品主圖",
         desc: "上傳 → 燈光 → 圖片 → 影片 → 拼接",
+      },
+      explosionUnbox: {
+        name: "AI 爆炸開箱",
+        desc: "純文字出片 — 主題盒打開、房間組裝、道具飄浮",
+      },
+      conceptTextVideo: {
+        name: "概念文字出片",
+        desc: "單一 text-to-video 節點 — 改 prompt 再運行",
+      },
+      brandMotionReel: {
+        name: "品牌動態 Reel",
+        desc: "劇本規劃 → 文字生影片 → 拼接",
       },
       ugcReel: {
         name: "UGC 短影片",
