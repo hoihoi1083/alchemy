@@ -286,17 +286,19 @@ export function LandingStoryWheel() {
             rootMargin="0px 0px -8% 0px"
             className="min-h-0"
           >
-          <div className="relative flex min-h-0 flex-col items-center justify-center overflow-visible px-2">
-            <div className="landing-story-phone-fan relative w-full max-w-[560px]">
+          <div className="relative flex min-h-0 flex-col items-center justify-center overflow-hidden px-3 sm:px-4 lg:px-6">
+            <div className="landing-story-phone-fan relative w-full">
               {slides.map((slide, i) => {
                 let d = i - activeIndex;
                 while (d > n / 2) d -= n;
                 while (d < -n / 2) d += n;
                 const abs = Math.abs(d);
-                const xPct = d * 32;
-                const rotate = d * 11;
-                const scale = clamp(1 - abs * 0.06, 0.9, 1);
-                const yPx = abs * 12;
+                // Keep side cards inside the right column — 32% + 11° overflowed
+                // mid-desktop viewports and got clipped by body overflow-x: hidden.
+                const xPct = d * 20;
+                const rotate = d * 8;
+                const scale = clamp(1 - abs * 0.07, 0.88, 1);
+                const yPx = abs * 10;
                 const z = 20 - Math.round(abs * 8);
                 const opacity = abs > 1.15 ? 0 : 1;
                 const front = abs < 0.35;

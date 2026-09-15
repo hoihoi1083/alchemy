@@ -224,10 +224,11 @@ const LANDING_LAYOUT_CSS = `
 .landing-story-phone-fan {
   height: min(68vh, 600px);
   margin-inline: auto;
+  max-width: min(100%, 480px);
 }
 .landing-story-phone {
   /* Exact 9:16 so object-cover does not crop the split creatives */
-  width: min(70%, 340px);
+  width: min(62%, 300px);
   height: auto;
   aspect-ratio: 9 / 16;
   border: 0;
@@ -250,13 +251,13 @@ const LANDING_LAYOUT_CSS = `
     grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr) !important;
     gap: 2rem !important;
     padding-left: 1.5rem;
-    padding-right: 1.5rem;
+    padding-right: 1.75rem;
   }
   .landing-story-phone-fan {
     height: min(72vh, 620px);
   }
   .landing-story-phone {
-    width: min(72%, 380px);
+    width: min(64%, 340px);
   }
 }
 @media (min-width: 1280px) {
@@ -264,13 +265,14 @@ const LANDING_LAYOUT_CSS = `
     grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr) !important;
     gap: 2.5rem !important;
     padding-left: 2.5rem;
-    padding-right: 2.5rem;
+    padding-right: 2.75rem;
   }
   .landing-story-phone-fan {
     height: min(74vh, 660px);
+    max-width: min(100%, 520px);
   }
   .landing-story-phone {
-    width: min(70%, 420px);
+    width: min(62%, 360px);
   }
 }
 
