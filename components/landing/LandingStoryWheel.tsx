@@ -280,25 +280,25 @@ export function LandingStoryWheel() {
 
           <Reveal
             delayMs={160}
-            distance={56}
-            scaleFrom={1.44}
+            distance={36}
+            scaleFrom={0.96}
             threshold={0}
             rootMargin="0px 0px -8% 0px"
-            className="min-h-0"
+            className="min-h-0 min-w-0"
           >
-          <div className="relative flex min-h-0 flex-col items-center justify-center overflow-hidden px-3 sm:px-4 lg:px-6">
+          <div className="relative flex min-h-0 min-w-0 flex-col items-center justify-center overflow-visible px-4 sm:px-5 lg:px-8">
             <div className="landing-story-phone-fan relative w-full">
               {slides.map((slide, i) => {
                 let d = i - activeIndex;
                 while (d > n / 2) d -= n;
                 while (d < -n / 2) d += n;
                 const abs = Math.abs(d);
-                // Keep side cards inside the right column — 32% + 11° overflowed
-                // mid-desktop viewports and got clipped by body overflow-x: hidden.
-                const xPct = d * 20;
-                const rotate = d * 8;
-                const scale = clamp(1 - abs * 0.07, 0.88, 1);
-                const yPx = abs * 10;
+                // Side offsets must stay inside the right column. Phone size is
+                // height-driven (see .landing-story-phone); keep spread modest.
+                const xPct = d * 16;
+                const rotate = d * 6;
+                const scale = clamp(1 - abs * 0.08, 0.86, 1);
+                const yPx = abs * 8;
                 const z = 20 - Math.round(abs * 8);
                 const opacity = abs > 1.15 ? 0 : 1;
                 const front = abs < 0.35;
@@ -308,7 +308,7 @@ export function LandingStoryWheel() {
                     key={slide.id}
                     type="button"
                     aria-label={slide.eyebrow}
-                    className="landing-story-phone absolute left-1/2 top-0 origin-bottom will-change-transform"
+                    className="landing-story-phone absolute left-1/2 top-[4%] origin-bottom will-change-transform"
                     style={{
                       transform: `translate3d(calc(-50% + ${xPct}%), ${yPx}px, 0) rotate(${rotate}deg) scale(${scale})`,
                       opacity,

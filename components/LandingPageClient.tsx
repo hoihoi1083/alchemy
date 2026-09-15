@@ -222,14 +222,19 @@ const LANDING_LAYOUT_CSS = `
   align-items: center !important;
 }
 .landing-story-phone-fan {
-  height: min(68vh, 600px);
+  /* Height owns the layout — phones are 9:16 of THIS box, not of viewport width */
+  height: min(56vh, 480px);
+  width: 100%;
+  max-width: min(100%, 420px);
   margin-inline: auto;
-  max-width: min(100%, 480px);
+  /* Side cards rotate past the phone edges; keep gutter so they are not clipped */
+  overflow: visible;
 }
 .landing-story-phone {
-  /* Exact 9:16 so object-cover does not crop the split creatives */
-  width: min(62%, 300px);
-  height: auto;
+  /* Fit inside fan height so mid-laptop viewports do not crop top/bottom */
+  height: 92%;
+  width: auto;
+  max-width: 52%;
   aspect-ratio: 9 / 16;
   border: 0;
   padding: 0;
@@ -238,6 +243,8 @@ const LANDING_LAYOUT_CSS = `
 }
 .landing-story-phone-frame {
   border-radius: 2.25rem;
+  width: 100%;
+  height: 100%;
   aspect-ratio: 9 / 16;
 }
 @media (min-width: 640px) {
@@ -248,31 +255,34 @@ const LANDING_LAYOUT_CSS = `
 }
 @media (min-width: 768px) {
   .landing-story-wheel-grid {
-    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr) !important;
-    gap: 2rem !important;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr) !important;
+    gap: 1.75rem !important;
     padding-left: 1.5rem;
-    padding-right: 1.75rem;
+    padding-right: 2rem;
   }
   .landing-story-phone-fan {
-    height: min(72vh, 620px);
+    height: min(58vh, 520px);
+    max-width: min(100%, 460px);
   }
   .landing-story-phone {
-    width: min(64%, 340px);
+    height: 90%;
+    max-width: 50%;
   }
 }
 @media (min-width: 1280px) {
   .landing-story-wheel-grid {
-    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr) !important;
-    gap: 2.5rem !important;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr) !important;
+    gap: 2.25rem !important;
     padding-left: 2.5rem;
-    padding-right: 2.75rem;
+    padding-right: 3rem;
   }
   .landing-story-phone-fan {
-    height: min(74vh, 660px);
-    max-width: min(100%, 520px);
+    height: min(60vh, 560px);
+    max-width: min(100%, 500px);
   }
   .landing-story-phone {
-    width: min(62%, 360px);
+    height: 90%;
+    max-width: 48%;
   }
 }
 
