@@ -2067,14 +2067,35 @@ export function CaptionStudio2Client() {
         .c2-capcut-timeline-resize:active {
           background: rgba(34, 211, 238, 0.35) !important;
         }
-        @media (max-width: 700px) {
-          .c2-capcut { height: auto !important; max-height: none !important; overflow: visible !important; }
-          .c2-capcut-top { flex-direction: column !important; }
-          .c2-capcut-media, .c2-capcut-props {
-            flex: none !important; width: 100% !important; max-width: none !important;
-            border: none !important; max-height: 200px !important;
+        /* Same breakpoint as Tailwind md / globals.css CapCut shell */
+        @media (max-width: 767px) {
+          .c2-capcut {
+            height: auto !important;
+            max-height: none !important;
+            overflow: visible !important;
           }
-          .c2-capcut-timeline { flex: none !important; height: auto !important; min-height: 180px !important; }
+          .c2-capcut-top { flex-direction: column !important; }
+          .c2-capcut-preview {
+            order: 1 !important;
+            min-height: 220px !important;
+            flex: none !important;
+          }
+          .c2-capcut-media { order: 2 !important; max-height: 160px !important; }
+          .c2-capcut-props { order: 3 !important; max-height: 280px !important; }
+          .c2-capcut-media, .c2-capcut-props {
+            flex: none !important;
+            width: 100% !important;
+            max-width: none !important;
+            border: none !important;
+            border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+          }
+          .c2-capcut-timeline {
+            flex: none !important;
+            height: auto !important;
+            min-height: 200px !important;
+            max-height: none !important;
+          }
+          .c2-capcut-timeline-resize { display: none !important; }
         }
       `}</style>
     <div className={hasWorkspace ? "flex h-full min-h-0 flex-col gap-2" : "space-y-3"}>

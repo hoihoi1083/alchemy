@@ -200,7 +200,7 @@ function useHtmlImage(url: string | null, fallbackUrl?: string | null) {
     }
     let cancelled = false;
     const load = (src: string, allowFallback: boolean) => {
-      const el = new window.Image();
+    const el = new window.Image();
       if (/^https?:\/\//i.test(src)) el.crossOrigin = "anonymous";
       el.onload = () => {
         if (!cancelled) setImg(el);
@@ -806,20 +806,20 @@ export function EditImage2Client() {
     (next: DecLayer[] | ((prev: DecLayer[]) => DecLayer[])) => {
       const h = historyRef.current;
       const idx = Math.min(historyIndexRef.current, Math.max(0, h.length - 1));
-      const cur = h[idx] ?? [];
-      const resolved = typeof next === "function" ? next(cur) : next;
+        const cur = h[idx] ?? [];
+        const resolved = typeof next === "function" ? next(cur) : next;
       // Guard: never replace a full board with an accidental empty stack.
       if (cur.length > 1 && resolved.length === 0) {
         console.error("[edit-image-2] blocked empty layer commit");
         return;
       }
-      const trimmed = h.slice(0, idx + 1);
-      const stacked = [...trimmed, resolved].slice(-HISTORY_MAX);
-      const newIndex = stacked.length - 1;
+        const trimmed = h.slice(0, idx + 1);
+        const stacked = [...trimmed, resolved].slice(-HISTORY_MAX);
+        const newIndex = stacked.length - 1;
       historyRef.current = stacked;
-      historyIndexRef.current = newIndex;
+        historyIndexRef.current = newIndex;
       setHistory(stacked);
-      setHistoryIndex(newIndex);
+        setHistoryIndex(newIndex);
       // Keep result.layers in sync for session restore (selective-lift lives in history).
       setResult((prev) => (prev ? { ...prev, layers: resolved } : prev));
     },
@@ -828,12 +828,12 @@ export function EditImage2Client() {
 
   const undo = useCallback(() => {
     const next = Math.max(0, historyIndexRef.current - 1);
-    historyIndexRef.current = next;
+      historyIndexRef.current = next;
     setHistoryIndex(next);
   }, []);
   const redo = useCallback(() => {
     const next = Math.min(historyRef.current.length - 1, historyIndexRef.current + 1);
-    historyIndexRef.current = next;
+      historyIndexRef.current = next;
     setHistoryIndex(next);
   }, []);
 
@@ -1402,7 +1402,7 @@ export function EditImage2Client() {
 
     let cancelled = false;
     void (async () => {
-      setError(null);
+    setError(null);
       setNotice(null);
       setBusy("upload");
       try {
@@ -1828,7 +1828,7 @@ export function EditImage2Client() {
   async function onDetectAll() {
     const url = sourceUrl || result?.originalBackgroundUrl || result?.backgroundUrl;
     if (!url) return;
-    setBusy("decompose");
+      setBusy("decompose");
     setError(null);
     try {
       // Primary = Aug 25 Florence + SAM + heal (not Qwen).
@@ -1863,15 +1863,15 @@ export function EditImage2Client() {
     setBoxMode(false);
     setBrushMode(false);
     const dec = await fetch("/api/decompose-seedream-layers", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
       credentials: "include",
       body: JSON.stringify({ image_url: imageUrl }),
-    });
-    const decJson = (await dec.json()) as DecomposeResult & {
-      error?: string;
+      });
+      const decJson = (await dec.json()) as DecomposeResult & {
+        error?: string;
       errorCode?: string;
-      warning?: string;
+        warning?: string;
       tokensCharged?: number;
       tokensRefunded?: number;
       originalBackgroundUrl?: string;
@@ -1904,7 +1904,7 @@ export function EditImage2Client() {
     const { seeded, warning } = seedLayersFromApi(displayJson, imageUrl, {
       holeCleared: true,
     });
-    if (!seeded.length) {
+      if (!seeded.length) {
       const refunded =
         typeof decJson.tokensRefunded === "number" && decJson.tokensRefunded > 0
           ? t.seedreamNoLayersRefunded(decJson.tokensRefunded)
@@ -3096,16 +3096,16 @@ export function EditImage2Client() {
     instruction?: string;
   }) {
     const res = await fetch("/api/layer-crop-edit", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({
+            body: JSON.stringify({
         crop_url: opts.cropUrl,
         new_text: opts.newText,
         old_text: opts.oldText,
         instruction: opts.instruction,
-      }),
-    });
+            }),
+          });
     const json = (await res.json()) as {
       cropUrl?: string;
       tokensCharged?: number;
@@ -3157,7 +3157,7 @@ export function EditImage2Client() {
       if (typeof json.tokensCharged === "number") {
         setLastTokens(json.tokensCharged);
         setNotice(t.chargedAiRewrite(json.tokensCharged));
-      } else {
+        } else {
         setNotice(t.aiRewriteDone);
       }
     } catch (e: unknown) {
@@ -3524,7 +3524,7 @@ export function EditImage2Client() {
         <ToolBtn label="−" title={t.zoomOut} onClick={() => zoomBy(1 / 1.15)} disabled={!result} />
         <span className="min-w-[3rem] text-center text-[11px] tabular-nums text-slate-400">
           {Math.round(viewScale * 100)}%
-        </span>
+          </span>
         <ToolBtn label="+" title={t.zoomIn} onClick={() => zoomBy(1.15)} disabled={!result} />
         <ToolBtn label={t.fit} onClick={resetView} disabled={!result} />
         <ToolBtn
@@ -3553,10 +3553,10 @@ export function EditImage2Client() {
               {notice}
             </p>
           )}
-          {error && (
+      {error && (
             <p className="mt-1 rounded-lg border border-red-500/35 bg-red-950/40 px-3 py-1.5 text-center text-xs text-red-200">
-              {error}
-            </p>
+          {error}
+        </p>
           )}
         </div>
       )}
@@ -3577,12 +3577,14 @@ export function EditImage2Client() {
         }}
       />
 
-      <div className="flex min-h-0 flex-1" style={{ flex: "1 1 0%", minHeight: 0 }}>
-        {/* Canvas viewport */}
+      <div
+        className="flex min-h-0 flex-1 flex-col md:flex-row"
+        style={{ flex: "1 1 0%", minHeight: 0 }}
+      >
+        {/* Canvas viewport — full width on phone; inspector stacks below */}
         <div
           ref={viewportRef}
-          className={`relative min-w-0 flex-1 overflow-hidden ${cursorClass}`}
-          style={{ minHeight: 0 }}
+          className={`relative min-h-[min(52dvh,480px)] min-w-0 flex-1 overflow-hidden md:min-h-0 ${cursorClass}`}
           onWheel={(e) => {
             if (!result) return;
             e.preventDefault();
@@ -3653,14 +3655,14 @@ export function EditImage2Client() {
           ) : (
             <div className="absolute inset-0">
               <Stage
-                  ref={stageRef}
-                  width={stageSize.w}
-                  height={stageSize.h}
+                ref={stageRef}
+                width={stageSize.w}
+                height={stageSize.h}
                   scaleX={viewScale}
                   scaleY={viewScale}
                   x={viewPos.x}
                   y={viewPos.y}
-                  onMouseDown={(e: Konva.KonvaEventObject<MouseEvent>) => {
+                onMouseDown={(e: Konva.KonvaEventObject<MouseEvent>) => {
                     if (spaceDown || e.evt.button === 1) {
                       e.evt.preventDefault();
                       setPanning(true);
@@ -3677,12 +3679,12 @@ export function EditImage2Client() {
                       if (pos) setBoxDrag({ x0: pos.x, y0: pos.y, x1: pos.x, y1: pos.y });
                       return;
                     }
-                    if (brushMode) {
-                      drawingRef.current = true;
-                      const pos = brushPointerPos(e.target.getStage());
-                      if (pos) setBrushLines((prev) => [...prev, [pos.x, pos.y]]);
-                      return;
-                    }
+                  if (brushMode) {
+                    drawingRef.current = true;
+                    const pos = brushPointerPos(e.target.getStage());
+                    if (pos) setBrushLines((prev) => [...prev, [pos.x, pos.y]]);
+                    return;
+                  }
                     // Empty panel / photo → deselect + pan
                     if (e.target === e.target.getStage() || e.target.name() === "photo-bg") {
                       setSelectedId(null);
@@ -3690,8 +3692,8 @@ export function EditImage2Client() {
                       setPanning(true);
                       panLastRef.current = { x: e.evt.clientX, y: e.evt.clientY };
                     }
-                  }}
-                  onMousemove={(e: Konva.KonvaEventObject<MouseEvent>) => {
+                }}
+                onMousemove={(e: Konva.KonvaEventObject<MouseEvent>) => {
                     if (panning && panLastRef.current) {
                       const dx = e.evt.clientX - panLastRef.current.x;
                       const dy = e.evt.clientY - panLastRef.current.y;
@@ -3704,18 +3706,18 @@ export function EditImage2Client() {
                       if (pos) setBoxDrag((d) => (d ? { ...d, x1: pos.x, y1: pos.y } : d));
                       return;
                     }
-                    if (!brushMode || !drawingRef.current) return;
-                    const pos = brushPointerPos(e.target.getStage());
-                    if (!pos) return;
-                    setBrushLines((prev) => {
-                      const next = [...prev];
-                      const last = next[next.length - 1];
-                      if (!last) return prev;
-                      next[next.length - 1] = last.concat([pos.x, pos.y]);
-                      return next;
-                    });
-                  }}
-                  onMouseup={() => {
+                  if (!brushMode || !drawingRef.current) return;
+                  const pos = brushPointerPos(e.target.getStage());
+                  if (!pos) return;
+                  setBrushLines((prev) => {
+                    const next = [...prev];
+                    const last = next[next.length - 1];
+                    if (!last) return prev;
+                    next[next.length - 1] = last.concat([pos.x, pos.y]);
+                    return next;
+                  });
+                }}
+                onMouseup={() => {
                     if (boxMode && boxDrag) {
                       const x = Math.min(boxDrag.x0, boxDrag.x1);
                       const y = Math.min(boxDrag.y0, boxDrag.y1);
@@ -3725,12 +3727,12 @@ export function EditImage2Client() {
                       if (w >= 6 && h >= 6) void createLayerFromBox({ x, y, w, h });
                       return;
                     }
-                    drawingRef.current = false;
+                  drawingRef.current = false;
                     setPanning(false);
                     panLastRef.current = null;
                     setGuides([]);
-                  }}
-                  onMouseLeave={() => {
+                }}
+                onMouseLeave={() => {
                     // Finish an in-progress box instead of discarding it (felt like “nothing happened”).
                     if (boxMode && boxDrag) {
                       const x = Math.min(boxDrag.x0, boxDrag.x1);
@@ -3740,44 +3742,44 @@ export function EditImage2Client() {
                       setBoxDrag(null);
                       if (w >= 6 && h >= 6) void createLayerFromBox({ x, y, w, h });
                     }
-                    drawingRef.current = false;
+                  drawingRef.current = false;
                     setPanning(false);
                     panLastRef.current = null;
                     setGuides([]);
-                  }}
-                  onTouchStart={(e: Konva.KonvaEventObject<TouchEvent>) => {
+                }}
+                onTouchStart={(e: Konva.KonvaEventObject<TouchEvent>) => {
                     if (boxMode) {
                       e.evt.preventDefault();
                       const pos = brushPointerPos(e.target.getStage());
                       if (pos) setBoxDrag({ x0: pos.x, y0: pos.y, x1: pos.x, y1: pos.y });
                       return;
                     }
-                    if (!brushMode) return;
-                    e.evt.preventDefault();
-                    drawingRef.current = true;
-                    const pos = brushPointerPos(e.target.getStage());
-                    if (pos) setBrushLines((prev) => [...prev, [pos.x, pos.y]]);
-                  }}
-                  onTouchMove={(e: Konva.KonvaEventObject<TouchEvent>) => {
+                  if (!brushMode) return;
+                  e.evt.preventDefault();
+                  drawingRef.current = true;
+                  const pos = brushPointerPos(e.target.getStage());
+                  if (pos) setBrushLines((prev) => [...prev, [pos.x, pos.y]]);
+                }}
+                onTouchMove={(e: Konva.KonvaEventObject<TouchEvent>) => {
                     if (boxMode && boxDrag) {
                       e.evt.preventDefault();
                       const pos = brushPointerPos(e.target.getStage());
                       if (pos) setBoxDrag((d) => (d ? { ...d, x1: pos.x, y1: pos.y } : d));
                       return;
                     }
-                    if (!brushMode || !drawingRef.current) return;
-                    e.evt.preventDefault();
-                    const pos = brushPointerPos(e.target.getStage());
-                    if (!pos) return;
-                    setBrushLines((prev) => {
-                      const next = [...prev];
-                      const last = next[next.length - 1];
-                      if (!last) return prev;
-                      next[next.length - 1] = last.concat([pos.x, pos.y]);
-                      return next;
-                    });
-                  }}
-                  onTouchEnd={() => {
+                  if (!brushMode || !drawingRef.current) return;
+                  e.evt.preventDefault();
+                  const pos = brushPointerPos(e.target.getStage());
+                  if (!pos) return;
+                  setBrushLines((prev) => {
+                    const next = [...prev];
+                    const last = next[next.length - 1];
+                    if (!last) return prev;
+                    next[next.length - 1] = last.concat([pos.x, pos.y]);
+                    return next;
+                  });
+                }}
+                onTouchEnd={() => {
                     if (boxMode && boxDrag) {
                       const x = Math.min(boxDrag.x0, boxDrag.x1);
                       const y = Math.min(boxDrag.y0, boxDrag.y1);
@@ -3787,20 +3789,20 @@ export function EditImage2Client() {
                       if (w >= 6 && h >= 6) void createLayerFromBox({ x, y, w, h });
                       return;
                     }
-                    drawingRef.current = false;
-                  }}
-                >
-                  <Layer>
+                  drawingRef.current = false;
+                }}
+              >
+                <Layer>
                     <Group id="image-plane" x={imageLayout.x} y={imageLayout.y}>
-                      {bgImg && (
-                        <KonvaImage
+                  {bgImg && (
+                    <KonvaImage
                           name="photo-bg"
-                          image={bgImg}
+                      image={bgImg}
                           width={imageLayout.w}
                           height={imageLayout.h}
-                          listening={false}
-                        />
-                      )}
+                      listening={false}
+                    />
+                  )}
                       {(brushMode || boxMode) && (
                         <Rect
                           name="paint-hit"
@@ -3809,23 +3811,23 @@ export function EditImage2Client() {
                           fill="rgba(0,0,0,0.001)"
                         />
                       )}
-                      {layers.map((layer) => (
-                        <LayerSprite
-                          key={layer.id}
-                          layer={layer}
+                  {layers.map((layer) => (
+                    <LayerSprite
+                      key={layer.id}
+                      layer={layer}
                           stageW={imageLayout.w}
                           stageH={imageLayout.h}
                           selected={!brushMode && !boxMode && layer.id === selectedId}
                           interactive={!brushMode && !boxMode && !grabMode && !spaceDown}
-                          onSelect={() => setSelectedId(layer.id)}
-                          onChange={(patch) => patchLayer(layer.id, patch)}
+                      onSelect={() => setSelectedId(layer.id)}
+                      onChange={(patch) => patchLayer(layer.id, patch)}
                           onGuides={setGuides}
                           onMoveStart={() => void clearHoleIfNeeded(layer.id)}
                           onAfterMove={() => {
                             /* hole already cleared on drag start — avoid second Flux/local round-trip */
                           }}
-                        />
-                      ))}
+                    />
+                  ))}
                       {guides.map((g, i) =>
                         g.orientation === "v" ? (
                           <Line
@@ -3847,20 +3849,20 @@ export function EditImage2Client() {
                           />
                         ),
                       )}
-                      {brushMode &&
-                        brushLines.map((pts, i) => (
-                          <Line
-                            key={`brush-${i}`}
-                            points={pts}
-                            stroke="#c4b5fd"
-                            strokeWidth={brushSize}
-                            opacity={0.55}
-                            lineCap="round"
-                            lineJoin="round"
-                            tension={0.2}
-                            listening={false}
-                          />
-                        ))}
+                  {brushMode &&
+                    brushLines.map((pts, i) => (
+                      <Line
+                        key={`brush-${i}`}
+                        points={pts}
+                        stroke="#c4b5fd"
+                        strokeWidth={brushSize}
+                        opacity={0.55}
+                        lineCap="round"
+                        lineJoin="round"
+                        tension={0.2}
+                        listening={false}
+                      />
+                    ))}
                       {boxMode && boxDrag && (
                         <Rect
                           x={Math.min(boxDrag.x0, boxDrag.x1)}
@@ -3875,8 +3877,8 @@ export function EditImage2Client() {
                         />
                       )}
                     </Group>
-                  </Layer>
-                </Stage>
+                </Layer>
+              </Stage>
             </div>
           )}
 
@@ -3909,8 +3911,8 @@ export function EditImage2Client() {
           )}
         </div>
 
-        {/* Right inspector */}
-        <aside className="flex w-[300px] shrink-0 flex-col gap-3 overflow-y-auto border-l border-white/10 bg-[#0e1424] p-3">
+        {/* Inspector: stacked under canvas on phone; fixed rail from md up */}
+        <aside className="flex max-h-[min(46dvh,440px)] w-full shrink-0 flex-col gap-3 overflow-y-auto border-t border-white/10 bg-[#0e1424] p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:max-h-none md:w-[300px] md:border-l md:border-t-0 md:pb-3">
           <div>
             <h2 className="text-sm font-semibold text-white">{t.layers}</h2>
             <p className="mt-0.5 text-[10px] leading-snug text-slate-500">
@@ -3979,7 +3981,7 @@ export function EditImage2Client() {
                 <p>{t.noLayersYet}</p>
                 <p className="text-[11px] leading-snug text-slate-500">{t.emptyLiftHint}</p>
                 <div className="flex flex-wrap gap-1.5 pt-1">
-                  <ToolBtn
+              <ToolBtn
                     label={
                       busy === "decompose"
                         ? t.seedreamSplitting
@@ -3988,8 +3990,8 @@ export function EditImage2Client() {
                     disabled={!canEdit || !!busy || brushBusy}
                     active
                     onClick={() => void onSeedreamSplit()}
-                  />
-                  <ToolBtn
+              />
+              <ToolBtn
                     label={t.boxLift}
                     active={boxMode && boxIntent === "lift"}
                     disabled={!canEdit || brushBusy}
@@ -4312,7 +4314,7 @@ export function EditImage2Client() {
           ) : null}
 
           <div className="space-y-2 rounded-xl border border-white/10 bg-black/20 p-2.5">
-            <ToolBtn
+              <ToolBtn
               label={
                 busy === "decompose" ? t.seedreamSplitting : t.seedreamFullSplit(SPLIT_TOKENS)
               }
@@ -4445,39 +4447,39 @@ export function EditImage2Client() {
               <p className="text-[10px] text-slate-500">{t.makeLayerHint}</p>
             ) : null}
             {brushMode && brushIntent === "lift" ? (
-              <>
-                <label className="flex items-center gap-2 text-[11px] text-slate-300">
+                <>
+                  <label className="flex items-center gap-2 text-[11px] text-slate-300">
                   {t.size}
-                  <input
-                    type="range"
-                    min={10}
-                    max={64}
-                    value={brushSize}
-                    onChange={(e) => setBrushSize(Number(e.target.value))}
-                    className="flex-1"
-                  />
-                </label>
-                <div className="flex flex-wrap gap-1.5">
-                  <ToolBtn
+                    <input
+                      type="range"
+                      min={10}
+                      max={64}
+                      value={brushSize}
+                      onChange={(e) => setBrushSize(Number(e.target.value))}
+                      className="flex-1"
+                    />
+                  </label>
+                  <div className="flex flex-wrap gap-1.5">
+                    <ToolBtn
                     label={t.undoStroke}
-                    disabled={brushLines.length === 0 || brushBusy}
-                    onClick={() => setBrushLines((prev) => prev.slice(0, -1))}
-                  />
-                  <ToolBtn
+                      disabled={brushLines.length === 0 || brushBusy}
+                      onClick={() => setBrushLines((prev) => prev.slice(0, -1))}
+                    />
+                    <ToolBtn
                     label={t.clearStrokes}
-                    disabled={brushLines.length === 0 || brushBusy}
-                    onClick={() => setBrushLines([])}
-                  />
-                  <ToolBtn
+                      disabled={brushLines.length === 0 || brushBusy}
+                      onClick={() => setBrushLines([])}
+                    />
+                    <ToolBtn
                     label={brushBusy ? t.lifting : t.makeLayer}
                     disabled={brushBusy}
-                    active
-                    onClick={() => void createLayerFromBrush()}
-                  />
-                </div>
+                      active
+                      onClick={() => void createLayerFromBrush()}
+                    />
+                  </div>
                 <p className="text-[10px] text-slate-500">{t.healTok(ERASE_PER_MP)}</p>
-              </>
-            ) : null}
+                </>
+              ) : null}
 
             <MagicBoardChat
               disabled={!canEdit || !!busy || brushBusy}
@@ -4494,7 +4496,7 @@ export function EditImage2Client() {
               {t.add}
             </p>
             <p className="text-[10px] leading-snug text-slate-500">{t.addHow}</p>
-            <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-1.5">
               <ToolBtn label={t.text} onClick={addTextLayer} disabled={!canEdit || brushMode || boxMode} />
               <ToolBtn
                 label={t.aiAddComponent}
@@ -4562,14 +4564,14 @@ export function EditImage2Client() {
                   label={boxMode && boxIntent === "ai" ? t.aiEditRegionOn : t.aiEditRegion}
                   active={boxMode && boxIntent === "ai"}
                   disabled={!canEdit || brushBusy || !!busy}
-                  onClick={() => {
+                onClick={() => {
                     setBoxIntent("ai");
                     setBoxMode(true);
                     setGrabMode(false);
                     setBrushMode(false);
                     setBrushLines([]);
                     setBoxDrag(null);
-                    setSelectedId(null);
+                  setSelectedId(null);
                     setCropEditMode("ai");
                   }}
                 />
@@ -4737,7 +4739,7 @@ export function EditImage2Client() {
                     if (!next) setBrushLines([]);
                   }}
                 />
-              </div>
+            </div>
               {grabMode ? (
                 <p className="text-[10px] text-slate-500">{t.grabClickHint}</p>
               ) : null}

@@ -116,7 +116,7 @@ function StudioWizardContent({
   }
 
   return (
-    <div className="space-y-4 pb-4 md:space-y-6 md:pb-0">
+    <div className="space-y-4 pb-36 md:space-y-6 md:pb-0">
       <div className="flex flex-wrap items-center gap-2">
         <SaveStatusBadge theme={theme} />
         <div className="min-w-0 basis-full sm:basis-auto sm:ml-auto">

@@ -6,6 +6,8 @@
 @source inline("min-h-[560px] min-h-[640px] h-[min(72vh,880px)] h-[calc(100dvh-9.5rem)] h-dvh min-h-dvh w-[min(100%,18rem)] max-h-[min(70vh,640px)]");
 /* Caption studio 2 — video left / editor right (Tailwind can drop unused flex utilities in dev). */
 @source inline("md:flex-row md:items-start md:w-[340px] md:max-w-[340px] md:sticky md:top-20 max-md:flex-col flex-row flex-col shrink-0 min-w-0");
+/* Edit Image 2 — stacked inspector under md (keep arbitrary min/max heights). */
+@source inline("min-h-[min(52dvh,480px)] max-h-[min(46dvh,440px)] md:min-h-0 md:max-h-none md:w-[300px] md:border-l md:border-t-0 pb-[max(0.75rem,env(safe-area-inset-bottom))]");
 
 /*
   Brand palette (Alchemy AI Lab)
@@ -877,7 +879,8 @@ footer.site-footer a.site-footer-logo:focus {
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   overflow: hidden;
 }
-@media (max-width: 900px) {
+/* Align with Tailwind md (768) and CaptionStudio2Client injected shell. */
+@media (max-width: 767px) {
   .c2-capcut {
     height: auto;
     max-height: none;
@@ -887,17 +890,33 @@ footer.site-footer a.site-footer-logo:focus {
   .c2-capcut-top {
     flex-direction: column;
   }
+  .c2-capcut-preview {
+    order: 1;
+    min-height: 220px;
+  }
+  .c2-capcut-media {
+    order: 2;
+  }
+  .c2-capcut-props {
+    order: 3;
+  }
   .c2-capcut-media,
   .c2-capcut-props {
     flex: none;
     width: 100%;
     border: none;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    max-height: 220px;
+    max-height: 200px;
+  }
+  .c2-capcut-props {
+    max-height: 280px;
   }
   .c2-capcut-timeline {
     height: auto;
-    min-height: 220px;
+    min-height: 200px;
+  }
+  .c2-capcut-timeline-resize {
+    display: none;
   }
 }
 
