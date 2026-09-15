@@ -198,7 +198,7 @@ export function LandingStoryWheel() {
             scaleFrom={0.94}
             threshold={0}
             rootMargin="0px 0px -8% 0px"
-            className="min-h-0"
+            className="h-full min-h-0"
           >
           <div className="flex min-h-0 flex-col justify-center overflow-y-auto pr-1">
             <ol className="space-y-2.5">
@@ -284,17 +284,17 @@ export function LandingStoryWheel() {
             scaleFrom={0.96}
             threshold={0}
             rootMargin="0px 0px -8% 0px"
-            className="min-h-0 min-w-0"
+            className="h-full min-h-0 min-w-0"
           >
-          <div className="relative flex min-h-0 min-w-0 flex-col items-center justify-center overflow-visible px-2 sm:px-3 lg:px-5">
+          <div className="landing-story-visual px-2 sm:px-3 lg:px-4">
             <div className="landing-story-phone-fan relative w-full">
               {slides.map((slide, i) => {
                 let d = i - activeIndex;
                 while (d > n / 2) d -= n;
                 while (d < -n / 2) d += n;
                 const abs = Math.abs(d);
-                // Modest spread — phones are larger again; keep side cards on-canvas.
-                const xPct = d * 18;
+                // Modest spread so larger phones still stay on-canvas.
+                const xPct = d * 17;
                 const rotate = d * 7;
                 const scale = clamp(1 - abs * 0.07, 0.88, 1);
                 const yPx = abs * 10;
