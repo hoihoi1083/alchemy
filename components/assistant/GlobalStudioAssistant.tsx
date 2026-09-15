@@ -2,16 +2,20 @@
 
 import { usePathname } from "next/navigation";
 import { StudioAssistantWidget } from "@/components/assistant/StudioAssistantWidget";
-import { isStudioAssistantMounted } from "@/lib/studio-assistant-surface";
+import {
+  assistantSurfaceFromPathname,
+  isStudioAssistantMounted,
+} from "@/lib/studio-assistant-surface";
 
 /**
- * Landing-only AI assistant (mascot launcher).
- * In-studio step coach and CoachSpotlightOverlay are dormant — wizard cards coach on /studio.
+ * Ask-AI mascot — landing by default; tool surfaces when NEXT_PUBLIC_ASSISTANT_TOOL_SURFACES=1.
+ * In-studio step coach stays dormant — wizard cards coach on /studio.
  */
 export function GlobalStudioAssistant() {
   const pathname = usePathname() || "/";
 
   if (!isStudioAssistantMounted(pathname)) return null;
 
-  return <StudioAssistantWidget surface="landing" />;
+  const surface = assistantSurfaceFromPathname(pathname) ?? "landing";
+  return <StudioAssistantWidget surface={surface} />;
 }

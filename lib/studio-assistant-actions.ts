@@ -13,6 +13,7 @@ import {
 import { isReferenceAdRequest } from "@/lib/studio-assistant-reference-intent";
 import type { StudioAssistantHandoffRecipe } from "@/lib/studio-assistant-handoff";
 import { writeStudioAssistantHandoff } from "@/lib/studio-assistant-handoff";
+import { trackAssistantHandoff } from "@/lib/analytics-assistant";
 import { studioHref } from "@/lib/promotion-mode";
 import { requestMicroWizardRestart } from "@/lib/wizard-micro-steps.types";
 import type { WorkflowMode } from "@/lib/workflow-mode";
@@ -54,9 +55,20 @@ function goStudio(
   mode: "physical" | "concept",
   context: StudioAssistantActionContext,
   handoff: Parameters<typeof writeStudioAssistantHandoff>[0],
+  actionId?: string,
 ): boolean {
-  writeStudioAssistantHandoff(handoff);
-  seedMicroWizardContextFromHandoff(handoff);
+  const payload = {
+    ...handoff,
+    assistantActionId: actionId ?? handoff.assistantActionId,
+  };
+  writeStudioAssistantHandoff(payload);
+  seedMicroWizardContextFromHandoff(payload);
+  trackAssistantHandoff({
+    actionId: actionId ?? null,
+    recipe: payload.recipe ?? null,
+    promotionMode: payload.promotionMode,
+    surface: context.surface,
+  });
   markAssistantReopenAfterNavigate();
   const path = studioHref(mode);
   if (context.navigate) {
@@ -98,9 +110,14 @@ export function runStudioAssistantAction(
   const onStudio = context.surface === "studio" && wizard;
   const fields = campaignFields(context, url);
 
+  const handoffToStudio = (
+    mode: "physical" | "concept",
+    handoff: Parameters<typeof writeStudioAssistantHandoff>[0],
+  ) => goStudio(mode, context, handoff, actionId);
+
   switch (actionId) {
     case "open-concept-studio":
-      return goStudio("concept", context, {
+      return handoffToStudio("concept", {
         promotionMode: "concept",
         brandWebsiteUrl: url,
         workflowMode: conceptHandoffWorkflow(context),
@@ -111,7 +128,7 @@ export function runStudioAssistantAction(
     case "open-physical-studio": {
       const recipe = physicalHandoffRecipe(context);
       if (!onStudio) {
-        return goStudio("physical", context, {
+        return handoffToStudio("physical", {
           promotionMode: "physical",
           recipe,
           workflowMode: recipe === "physical-image-post" || recipe === "reference-ad-layout" ? "image-only" : undefined,
@@ -141,7 +158,7 @@ export function runStudioAssistantAction(
 
     case "open-reference-ad-studio":
       if (!onStudio) {
-        return goStudio("physical", context, {
+        return handoffToStudio("physical", {
           promotionMode: "physical",
           recipe: "reference-ad-layout",
           workflowMode: "image-only",
@@ -157,7 +174,7 @@ export function runStudioAssistantAction(
       return true;
 
     case "open-storyboard-studio":
-      return goStudio("physical", context, {
+      return handoffToStudio("physical", {
         promotionMode: "physical",
         recipe: "physical-storyboard",
         ...fields,
@@ -172,7 +189,7 @@ export function runStudioAssistantAction(
         analyzeBrand: false,
       };
       if (!onStudio) {
-        return goStudio("concept", context, handoff);
+        return handoffToStudio("concept", handoff);
       }
       wizard!.applyQuickTest8sRecipe();
       if (url) wizard!.setBrandWebsiteUrl(url);
@@ -184,7 +201,7 @@ export function runStudioAssistantAction(
 
     case "analyze-brand": {
       if (!onStudio) {
-        return goStudio("concept", context, {
+        return handoffToStudio("concept", {
           promotionMode: "concept",
           brandWebsiteUrl: url,
           ...fields,
@@ -199,7 +216,7 @@ export function runStudioAssistantAction(
 
     case "apply-8s-recipe":
       if (!onStudio) {
-        return goStudio("concept", context, {
+        return handoffToStudio("concept", {
           promotionMode: "concept",
           recipe: "8s-website-reel",
           brandWebsiteUrl: url,
@@ -213,7 +230,7 @@ export function runStudioAssistantAction(
     // Multi-scene cinematic stitch is out of scope (§0) — redirect to single 8s.
     case "apply-cinematic-stitch":
       if (!onStudio) {
-        return goStudio("concept", context, {
+        return handoffToStudio("concept", {
           promotionMode: "concept",
           recipe: "8s-website-reel",
           brandWebsiteUrl: url,
@@ -226,7 +243,7 @@ export function runStudioAssistantAction(
 
     case "concept-cinematic":
       if (!onStudio) {
-        return goStudio("concept", context, {
+        return handoffToStudio("concept", {
           promotionMode: "concept",
           recipe: "concept-cinematic",
           ...fields,
@@ -238,7 +255,7 @@ export function runStudioAssistantAction(
 
     case "website-launch-image":
       if (!onStudio) {
-        return goStudio("concept", context, {
+        return handoffToStudio("concept", {
           promotionMode: "concept",
           recipe: "website-launch-image",
           brandWebsiteUrl: url,

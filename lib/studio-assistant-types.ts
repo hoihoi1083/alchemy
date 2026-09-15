@@ -66,6 +66,10 @@ export type StudioAssistantSnapshot = {
   microStepId?: MicroStepId | null;
   /** Workflow mode the user confirmed on route.output_goal (micro ctx — not wizard default). */
   microCtxWorkflowMode?: WorkflowMode | null;
+  /** Signed-in billing context (filled by API when available). */
+  signedIn?: boolean;
+  userPlan?: import("@/lib/billing/plans").UserPlan | null;
+  tokenBalance?: number | null;
 };
 
 export type StudioAssistantRequest = {

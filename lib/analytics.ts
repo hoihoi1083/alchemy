@@ -3,6 +3,7 @@
  * Prefer these over raw trackEvent so funnel names stay consistent.
  */
 import { trackEvent } from "@/components/MixpanelProvider";
+import { assistantAttributionAnalyticsProps } from "@/lib/studio-assistant-attribution";
 
 export { trackEvent };
 
@@ -11,26 +12,30 @@ export type AnalyticsProps = Record<
   string | number | boolean | null | undefined
 >;
 
+function withAssistantFunnel(props?: AnalyticsProps): AnalyticsProps {
+  return { ...assistantAttributionAnalyticsProps(), ...props };
+}
+
 /** Image / video / music generation funnel. */
 export function trackGenerateStarted(
   kind: "image" | "video" | "music",
   props?: AnalyticsProps,
 ) {
-  trackEvent("Generate Started", { kind, ...props });
+  trackEvent("Generate Started", { kind, ...withAssistantFunnel(props) });
 }
 
 export function trackGenerateSuccess(
   kind: "image" | "video" | "music",
   props?: AnalyticsProps,
 ) {
-  trackEvent("Generate Success", { kind, ...props });
+  trackEvent("Generate Success", { kind, ...withAssistantFunnel(props) });
 }
 
 export function trackGenerateFailed(
   kind: "image" | "video" | "music",
   props?: AnalyticsProps,
 ) {
-  trackEvent("Generate Failed", { kind, ...props });
+  trackEvent("Generate Failed", { kind, ...withAssistantFunnel(props) });
 }
 
 /** Stripe checkout / subscribe / top-up. */

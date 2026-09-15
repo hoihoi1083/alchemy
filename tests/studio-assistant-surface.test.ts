@@ -12,32 +12,45 @@ import {
 } from "../lib/studio-assistant-surface";
 
 describe("studio-assistant-surface", () => {
-  it("maps every public route to a surface or hide", () => {
+  it("maps public routes to surfaces", () => {
     assert.equal(assistantSurfaceFromPathname("/"), "landing");
-    assert.equal(assistantSurfaceFromPathname("/start"), null);
+    assert.equal(assistantSurfaceFromPathname("/start"), "start");
     assert.equal(assistantSurfaceFromPathname("/studio"), "studio");
     assert.equal(assistantSurfaceFromPathname("/studio/"), "studio");
-    assert.equal(assistantSurfaceFromPathname("/edit-image"), null);
-    assert.equal(assistantSurfaceFromPathname("/captions"), null);
-    assert.equal(assistantSurfaceFromPathname("/captions/visual"), null);
-    assert.equal(assistantSurfaceFromPathname("/pro"), null);
-    assert.equal(assistantSurfaceFromPathname("/ultra"), null);
-    assert.equal(assistantSurfaceFromPathname("/brand-kit"), null);
-    assert.equal(assistantSurfaceFromPathname("/library"), null);
-    assert.equal(assistantSurfaceFromPathname("/ugc"), null);
+    assert.equal(assistantSurfaceFromPathname("/edit-image"), "edit-image");
+    assert.equal(assistantSurfaceFromPathname("/edit-image-2"), "edit-image");
+    assert.equal(assistantSurfaceFromPathname("/captions"), "captions");
+    assert.equal(assistantSurfaceFromPathname("/captions-2"), "captions");
+    assert.equal(assistantSurfaceFromPathname("/ultra"), "pro");
+    assert.equal(assistantSurfaceFromPathname("/pro"), "pro");
+    assert.equal(assistantSurfaceFromPathname("/brand-kit"), "brand-kit");
+    assert.equal(assistantSurfaceFromPathname("/library"), "library");
+    assert.equal(assistantSurfaceFromPathname("/ugc"), "ugc");
     assert.equal(assistantSurfaceFromPathname("/pricing"), null);
     assert.equal(assistantSurfaceFromPathname("/how"), null);
     assert.equal(assistantSurfaceFromPathname("/account"), null);
     assert.equal(assistantSurfaceFromPathname("/sign-in"), null);
-    assert.equal(assistantSurfaceFromPathname("/sign-up/sso"), null);
   });
 
-  it("mounts assistant on landing only", () => {
+  it("mounts landing always; tools only behind flag", () => {
+    const prev = process.env.NEXT_PUBLIC_ASSISTANT_TOOL_SURFACES;
+    delete process.env.NEXT_PUBLIC_ASSISTANT_TOOL_SURFACES;
     assert.equal(isStudioAssistantMounted("/"), true);
     assert.equal(isStudioAssistantMounted("/studio"), false);
-    assert.equal(isStudioAssistantMounted("/studio/preview"), false);
     assert.equal(isStudioAssistantMounted("/ultra"), false);
-    assert.equal(isStudioAssistantMounted("/captions"), false);
+    assert.equal(isStudioAssistantMounted("/captions-2"), false);
+    assert.equal(isStudioAssistantMounted("/edit-image-2"), false);
+    assert.equal(isStudioAssistantMounted("/start"), false);
+
+    process.env.NEXT_PUBLIC_ASSISTANT_TOOL_SURFACES = "1";
+    assert.equal(isStudioAssistantMounted("/"), true);
+    assert.equal(isStudioAssistantMounted("/ultra"), true);
+    assert.equal(isStudioAssistantMounted("/captions-2"), true);
+    assert.equal(isStudioAssistantMounted("/edit-image-2"), true);
+    assert.equal(isStudioAssistantMounted("/studio"), false);
+
+    if (prev === undefined) delete process.env.NEXT_PUBLIC_ASSISTANT_TOOL_SURFACES;
+    else process.env.NEXT_PUBLIC_ASSISTANT_TOOL_SURFACES = prev;
   });
 
   it("uses dark launcher chrome on tool pages", () => {

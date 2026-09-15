@@ -13,7 +13,16 @@ import {
   isToolAssistantSurface,
 } from "@/lib/studio-assistant-surface";
 import type { StudioAssistantSnapshot } from "@/lib/studio-assistant-types";
+import {
+  FREE_SIGNUP_GRANT_TOKENS,
+} from "@/lib/billing/plans";
+import { H3_TOKENS_PER_SEC, TOKEN_COST } from "@/lib/billing/token-costs";
+import {
+  STITCH_FALLBACK_TOKENS,
+  formatUserBillingForPrompt,
+} from "@/lib/studio-assistant-billing-facts";
 
+const VIDEO_12S_480 = H3_TOKENS_PER_SEC["480P"] * 12;
 function langLine(locale: Locale): string {
   if (locale === "en") {
     return "Reply in English only — match the website UI language, not the language of the user's typed message.";
@@ -33,10 +42,10 @@ function askFormatRule(): string {
     "Answer the user's question about Alchemy using 【Product knowledge】 + current context only.",
     "If knowledge does not cover it, say you don't know. Never invent features, buttons, prices, or engines.",
     "Do NOT force Step 1 or studio-action links unless they clearly ask to start making something now.",
-    "The assistant is LANDING ONLY — there is no in-studio step coach. After they open /studio, they follow on-screen wizard cards; do not say reply next or 下一步 for wizard steps.",
+    "There is no in-studio step coach. After they open /studio, they follow on-screen wizard cards; do not say reply next or 下一步 for wizard steps.",
     "Real paths you may mention as markdown: [/](/) [/start](/start) [/studio](/studio) [/captions-2](/captions-2) [/edit-image-2](/edit-image-2) [/ultra](/ultra) [/brand-kit](/brand-kit) [/library](/library) [/ugc](/ugc) [/pricing](/pricing).",
     "Homepage finishable video-recipe cards are HIDDEN — do not tell users to click them.",
-    "Ask-AI launcher is on the landing page only (small mascot logo). /studio has no assistant — use action buttons here to open the right studio path.",
+    "Ask-AI is primarily on the landing page (small mascot). Tool pages may also host Ask-AI when enabled. /studio has no assistant — use action buttons here to open the right path.",
     "Plain text; no **.",
   ].join("\n");
 }
@@ -67,40 +76,40 @@ export function getStudioAssistantFacts(locale: Locale): string {
   if (locale === "zh-cn") {
     return `
 【Alchemy 硬事实 — 勿与下面知识库矛盾】
-- 免写 Prompt；Tokens 按次。免费注册一次 300。
+- 免写 Prompt；Tokens 按次。免费注册一次 ${FREE_SIGNUP_GRANT_TOKENS}。
 - /start：实体 vs 概念。/studio 引导 wizard（无聊天助理，跟屏幕步骤）。/captions-2 烧字幕。/edit-image-2 修图（智能图层）。/ultra Ultra 画布（Master）。
 - 分镜 TVC 无参考片：先单镜出片（一镜）；额度不够再问拼接后备。有参考 MP4：参考片模式。
-- 12 秒 480p ≈ 492 tokens（免费 300 纯出片不够）；4 格静图 + 12 秒仍然要付费。拼接后备 4×5s ≈ 1136 都要付费。
-- 首页「可完成影片配方」卡已隐藏。问 AI 只在首页；用下方按钮开工作室。/studio 内无助理。
+- 12 秒 480p ≈ ${VIDEO_12S_480} tokens（免费 ${FREE_SIGNUP_GRANT_TOKENS} 纯出片不够）；4 格静图 ≈ ${TOKEN_COST.image * 4}。拼接后备 4×5s ≈ ${STITCH_FALLBACK_TOKENS} 都要付费。
+- 首页「可完成影片配方」卡已隐藏。问 AI 主要在首页；工具页可开 Ask-AI（若开启）。/studio 内无助理。
 `.trim();
   }
   if (locale === "zh-tw") {
     return `
 【Alchemy 硬事實 — 勿與下面知識庫矛盾】
-- 免寫 Prompt；Tokens 按次。免費註冊一次 300。
+- 免寫 Prompt；Tokens 按次。免費註冊一次 ${FREE_SIGNUP_GRANT_TOKENS}。
 - /start：實體 vs 概念。/studio 引導 wizard（無聊天助理，跟屏幕步驟）。/captions-2 燒字幕。/edit-image-2 修圖（智能圖層）。/ultra Ultra 畫布（Master）。
 - 分鏡 TVC 無參考片：先單鏡出片（一鏡）；額度不夠再問拼接後備。有參考 MP4：參考片模式。
-- 12 秒 480p ≈ 492 tokens（免費 300 純出片不夠）；4 格靜圖 + 12 秒仍然要付費。拼接後備 4×5s ≈ 1136 都要付費。
-- 首頁「可完成影片配方」卡已隱藏。問 AI 只喺首頁；用下面掣開工作室。/studio 內無助理。
+- 12 秒 480p ≈ ${VIDEO_12S_480} tokens（免費 ${FREE_SIGNUP_GRANT_TOKENS} 純出片不夠）；4 格靜圖 ≈ ${TOKEN_COST.image * 4}。拼接後備 4×5s ≈ ${STITCH_FALLBACK_TOKENS} 都要付費。
+- 首頁「可完成影片配方」卡已隱藏。問 AI 主要在首頁；工具頁可開 Ask-AI（若開啟）。/studio 內無助理。
 `.trim();
   }
   if (locale === "zh") {
     return `
 【Alchemy 硬事實 — 唔好同下面知識庫矛盾】
-- 免寫 Prompt；Tokens 按次。免費註冊一次 300。
-- /start：實體 vs 概念。/studio 引導 wizard（無聊天助理，跟屏幕步驟）。/captions-2 燒字幕。/edit-image-2 修圖（智能圖層）。/ultra Ultra 畫布（Master）。
-- 分鏡 TVC 無參考片：先單鏡出片（一鏡）；額度唔夠先問拼接後備。有參考 MP4：參考片模式。
-- 12 秒 480p ≈ 492 tokens（免費 300 純出片唔夠）；4 格靜圖 + 12 秒仍然要付費。拼接後備 4×5s ≈ 1136 都要付費。
-- 首頁「可完成影片配方」卡已隱藏。問 AI 只喺首頁；用下面掣開工作室。/studio 內無助理。
+- 免寫 Prompt；Tokens 按次。免費註冊一次 ${FREE_SIGNUP_GRANT_TOKENS}。
+- /start：實體 vs 概念。/studio 引導 wizard（冇聊天助理，跟屏幕步驟）。/captions-2 燒字幕。/edit-image-2 修圖（智能圖層）。/ultra Ultra 畫布（Master）。
+- 分鏡 TVC 冇參考片：先單鏡出片（一鏡）；額度唔夠先問拼接後備。有參考 MP4：參考片模式。
+- 12 秒 480p ≈ ${VIDEO_12S_480} tokens（免費 ${FREE_SIGNUP_GRANT_TOKENS} 純出片唔夠）；4 格靜圖 ≈ ${TOKEN_COST.image * 4}。拼接後備 4×5s ≈ ${STITCH_FALLBACK_TOKENS} 都要付費。
+- 首頁「可完成影片配方」卡已隱藏。問 AI 主要喺首頁；工具頁可開 Ask-AI（若開啟）。/studio 內無助理。
 `.trim();
   }
   return `
 【Alchemy hard facts — do not contradict knowledge below】
-- Prompt-free; tokens pay-per-use. Free signup grant 300 once.
+- Prompt-free; tokens pay-per-use. Free signup grant ${FREE_SIGNUP_GRANT_TOKENS} once.
 - /start: physical vs concept. /studio guided wizard (no chat assistant — follow on-screen steps). /captions-2 burn-in. /edit-image-2 retouch (smart layers). /ultra Ultra canvas (Master).
 - Stills TVC without reference MP4: single-clip video first (one take); offer stitched fallback if single-clip does not fit. Reference reel: reference-reel mode.
-- 12s at 480p ≈ 492 tokens (free 300 does not cover video-only); 4 stills + 12s TVC still needs paid. Stitched fallback 4×5s ≈ 1136 also needs paid.
-- Homepage finishable recipe cards are hidden. Ask-AI mascot on landing only; no assistant on /studio, /ultra, captions, edit-image, or other tool pages.
+- 12s at 480p ≈ ${VIDEO_12S_480} tokens (free ${FREE_SIGNUP_GRANT_TOKENS} does not cover video-only); 4 stills ≈ ${TOKEN_COST.image * 4}. Stitched fallback 4×5s ≈ ${STITCH_FALLBACK_TOKENS} also needs paid.
+- Homepage finishable recipe cards are hidden. Ask-AI is primarily on landing; tool pages may enable Ask-AI when flagged. No assistant on /studio.
 `.trim();
 }
 
@@ -156,6 +165,11 @@ export function formatSnapshotForPrompt(
     snapshot.hasCaptionSource !== undefined
       ? `hasCaptionSource: ${snapshot.hasCaptionSource}`
       : "",
+    snapshot.signedIn !== undefined ? `signedIn: ${snapshot.signedIn}` : "",
+    snapshot.userPlan ? `userPlan: ${snapshot.userPlan}` : "",
+    typeof snapshot.tokenBalance === "number"
+      ? `tokenBalance: ${snapshot.tokenBalance}`
+      : "",
     snapshot.error ? `lastError: ${snapshot.error.slice(0, 400)}` : "",
   ]
     .filter(Boolean)
@@ -178,6 +192,12 @@ export function buildStudioAssistantSystemPrompt(
     locale === "zh-cn" ? "小炼" : locale === "zh-tw" || locale === "zh" ? "小煉" : "Alchemy guide";
   const turnMode = extras?.turnMode ?? "ask";
   const facts = getStudioAssistantFacts(locale);
+  const billingBlock = formatUserBillingForPrompt({
+    locale: knowledgeLocaleFromApp(locale),
+    signedIn: Boolean(snapshot.signedIn),
+    plan: snapshot.userPlan,
+    tokenBalance: snapshot.tokenBalance,
+  });
   const stateBlock = formatSnapshotForPrompt(snapshot, locale);
   const siteBlock =
     extras?.detectedUrl && extras.sitePreview
@@ -211,6 +231,7 @@ export function buildStudioAssistantSystemPrompt(
     langLine(locale),
     turnMode === "ask" ? askFormatRule() : guideFormatRule(locale),
     facts,
+    billingBlock,
     knowledgeBlock,
     siteBlock,
     stateBlock,

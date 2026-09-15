@@ -50,11 +50,12 @@
 
 ---
 
-## Assistant (landing-only)
+## Assistant (landing + optional tools)
 
-- Mascot chat mounts on `/` only (`GlobalStudioAssistant` → `isStudioAssistantMounted`).
-- **Open to everyone** — no sign-in required on landing for fast-path routes/chips **or** open-ended Q&A (anon DeepSeek IP quota; signed-in users get a higher daily quota). Generation / research APIs still require sign-in.
-- Landing: Q&A (tokens, pages, engines) + action buttons into `/studio` or tool routes.
+- Mascot chat mounts on `/` by default (`GlobalStudioAssistant` → `isStudioAssistantMounted`).
+- Set `NEXT_PUBLIC_ASSISTANT_TOOL_SURFACES=1` to also mount Ask-AI on `/captions*`, `/edit-image*`, `/ultra`, `/brand-kit`, `/library`, `/ugc` (not `/studio`).
+- **Open to everyone** on landing — no sign-in required for fast-path routes/chips **or** open-ended Q&A (anon DeepSeek IP quota; signed-in users get a higher daily quota). Generation / research APIs still require sign-in.
+- Landing: Q&A (tokens, pages, engines) + action buttons into `/studio` or tool routes. Billing facts come from `lib/studio-assistant-billing-facts.ts` (SSOT with plan/token constants).
 - `/studio`: no chat coach — users follow wizard cards on screen.
 - In-studio step coach, spotlight overlay, and `initialCoachTaskAfterHandoff` are **dormant** (kept for re-enable).
 

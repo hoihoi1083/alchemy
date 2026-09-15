@@ -38,6 +38,11 @@ export function extractCampaignHint(messages: StudioAssistantMessage[]): string 
     const t = m.content.trim();
     if (t.length < 8) continue;
     if (/^(下一步|next|continue|繼續|继续|好|好了|ok|done|教我|how)/i.test(t)) continue;
+    // Prefer campaign statements over questions ("how many tokens…").
+    if (/[?？]\s*$/.test(t)) continue;
+    if (/^(how many|what is|what's|where|which|can i|do i|夠唔夠|几多|幾多|什么是|什麼是)/i.test(t)) {
+      continue;
+    }
     return t.slice(0, 500);
   }
   return "";

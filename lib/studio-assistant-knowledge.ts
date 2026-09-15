@@ -3,6 +3,11 @@
  * Not the Git repo — shipped product only. Retrieve-on-ask; never invent features.
  */
 
+import {
+  assistantPlanGateFacts,
+  assistantTokenCostFacts,
+} from "@/lib/studio-assistant-billing-facts";
+
 export type KnowledgeLocale = "en" | "zh" | "zh-cn" | "zh-tw";
 
 export type AssistantKnowledgeChunk = {
@@ -64,53 +69,53 @@ export const ASSISTANT_KNOWLEDGE: AssistantKnowledgeChunk[] = [
       "pricing",
     ],
     en: `Main places:
-- / landing — marketing site, template cards, pricing teaser, story fan demos (transform / reference / storyboard). Finishable “video recipe” cards are hidden for now.
+- / landing — marketing site, template cards, pricing teaser, story fan demos (transform / reference / storyboard). Finishable “video recipe” cards are hidden for now. Ask-AI mascot lives here by default.
 - /start — pick physical product vs concept/service, then enter studio.
-- /studio — guided wizard (default simple mode). No chat assistant — follow the cards and Continue on screen.
-- /captions-2 — burn subtitles / BGM / voice on any MP4. No assistant panel.
-- /edit-image-2 — clean, add text/logo, export. No assistant panel.
-- /ultra — Ultra canvas (Upload → image → video). Master plan. Pay-per-use tokens. No assistant panel.
-- /brand-kit — save logo & colors.
-- /library — past generations.
-- /ugc — talking presenter.
+- /studio — guided wizard (default simple mode). Never has a chat coach — follow the cards and Continue on screen.
+- /captions-2 — burn subtitles / BGM / voice on any MP4. Ask-AI may appear here when tool Ask-AI is enabled (env flag).
+- /edit-image-2 — clean, add text/logo, export. Ask-AI may appear when tool Ask-AI is enabled.
+- /ultra — Ultra canvas (Upload → image → video). Master plan. Pay-per-use tokens. Ask-AI may appear when tool Ask-AI is enabled.
+- /brand-kit — save logo & colors (Ask-AI optional when flag on).
+- /library — past generations (Ask-AI optional when flag on).
+- /ugc — talking presenter (Ask-AI optional when flag on).
 - /pricing /account — plans, tokens, Stripe.
-Ask-AI mascot is on the landing page only. Use action buttons here to open /studio with the right path. No step-by-step coach inside the wizard.`,
+Ask-AI is primarily on the landing page. Tool pages may also show Ask-AI when enabled. /studio never has chat coaching — use landing action buttons to open the right path.`,
     zh: `主要頁面：
-- / 首頁 — 介紹、模板卡、收費預覽、故事扇 demo（轉換／參考／分鏡）。首頁「可完成影片配方」卡而家隱藏。
+- / 首頁 — 介紹、模板卡、收費預覽、故事扇 demo（轉換／參考／分鏡）。首頁「可完成影片配方」卡而家隱藏。Ask-AI 吉祥物預設喺呢度。
 - /start — 揀實體產品 vs 概念／服務，再入工作室。
-- /studio — 引導式 wizard（預設簡單模式）。冇聊天助理 — 跟屏幕卡片同 Continue。
-- /captions-2 — 任何 MP4 燒字幕／BGM／配音。冇助理面板。
-- /edit-image-2 — 清雜物、加字／Logo、匯出。冇助理面板。
-- /ultra — Ultra 畫布（上傳→圖→片）。Master 方案。按次 token。冇助理面板。
-- /brand-kit — 儲 Logo 同顏色。
-- /library — 作品庫。
-- /ugc — 數字人口播。
+- /studio — 引導式 wizard（預設簡單模式）。永遠冇聊天助理 — 跟屏幕卡片同 Continue。
+- /captions-2 — 任何 MP4 燒字幕／BGM／配音。開咗工具 Ask-AI 旗標時可能有助理。
+- /edit-image-2 — 清雜物、加字／Logo、匯出。開咗工具 Ask-AI 旗標時可能有助理。
+- /ultra — Ultra 畫布（上傳→圖→片）。Master 方案。按次 token。開咗工具 Ask-AI 旗標時可能有助理。
+- /brand-kit — 儲 Logo 同顏色（旗標開時可有 Ask-AI）。
+- /library — 作品庫（旗標開時可有 Ask-AI）。
+- /ugc — 數字人口播（旗標開時可有 Ask-AI）。
 - /pricing /account — 方案、Tokens、Stripe。
-問 AI 只喺首頁；用下面掣開工作室。wizard 內無逐步教學。`,
+Ask-AI 主要喺首頁；工具頁可喺旗標開啟時顯示。/studio 永遠冇聊天教學 — 用首頁掣開正確路徑。`,
     zhCn: `主要页面：
-- / 首页 — 介绍、模板卡、收费预览、故事扇 demo（转换／参考／分镜）。首页「可完成影片配方」卡已隐藏。
+- / 首页 — 介绍、模板卡、收费预览、故事扇 demo（转换／参考／分镜）。首页「可完成影片配方」卡已隐藏。Ask-AI 吉祥物默认在这里。
 - /start — 选实体产品 vs 概念／服务，再进工作室。
-- /studio — 引导式 wizard（默认简单模式）。无聊天助理 — 跟屏幕卡片和 Continue。
-- /captions-2 — 任何 MP4 烧字幕／BGM／配音。无助理面板。
-- /edit-image-2 — 清杂物、加字／Logo、导出。无助理面板。
-- /ultra — Ultra 画布（上传→图→片）。Master 方案。按次 token。无助理面板。
-- /brand-kit — 存 Logo 与颜色。
-- /library — 作品库。
-- /ugc — 数字人口播。
+- /studio — 引导式 wizard（默认简单模式）。永远无聊天助理 — 跟屏幕卡片和 Continue。
+- /captions-2 — 任何 MP4 烧字幕／BGM／配音。开启工具 Ask-AI 旗标时可能有助理。
+- /edit-image-2 — 清杂物、加字／Logo、导出。开启工具 Ask-AI 旗标时可能有助理。
+- /ultra — Ultra 画布（上传→图→片）。Master 方案。按次 token。开启工具 Ask-AI 旗标时可能有助理。
+- /brand-kit — 存 Logo 与颜色（旗标开时可有 Ask-AI）。
+- /library — 作品库（旗标开时可有 Ask-AI）。
+- /ugc — 数字人口播（旗标开时可有 Ask-AI）。
 - /pricing /account — 方案、Tokens、Stripe。
-问 AI 只在首页；用下方按钮开工作室。wizard 内无逐步教学。`,
+Ask-AI 主要在首页；工具页可在旗标开启时显示。/studio 永远无聊天教学 — 用首页按钮开正确路径。`,
     zhTw: `主要頁面：
-- / 首頁 — 介紹、模板卡、收費預覽、故事扇 demo（轉換／參考／分鏡）。首頁「可完成影片配方」卡已隱藏。
+- / 首頁 — 介紹、模板卡、收費預覽、故事扇 demo（轉換／參考／分鏡）。首頁「可完成影片配方」卡已隱藏。Ask-AI 吉祥物預設在這裡。
 - /start — 選實體產品 vs 概念／服務，再進工作室。
-- /studio — 引導式 wizard（預設簡單模式）。無聊天助理 — 跟螢幕卡片同 Continue。
-- /captions-2 — 任何 MP4 燒字幕／BGM／配音。無助理面板。
-- /edit-image-2 — 清雜物、加字／Logo、匯出。無助理面板。
-- /ultra — Ultra 畫布（上傳→圖→片）。Master 方案。按次 token。無助理面板。
-- /brand-kit — 儲 Logo 與顏色。
-- /library — 作品庫。
-- /ugc — 數位人口播。
+- /studio — 引導式 wizard（預設簡單模式）。永遠無聊天助理 — 跟螢幕卡片同 Continue。
+- /captions-2 — 任何 MP4 燒字幕／BGM／配音。開啟工具 Ask-AI 旗標時可能有助理。
+- /edit-image-2 — 清雜物、加字／Logo、匯出。開啟工具 Ask-AI 旗標時可能有助理。
+- /ultra — Ultra 畫布（上傳→圖→片）。Master 方案。按次 token。開啟工具 Ask-AI 旗標時可能有助理。
+- /brand-kit — 儲 Logo 與顏色（旗標開時可有 Ask-AI）。
+- /library — 作品庫（旗標開時可有 Ask-AI）。
+- /ugc — 數位人口播（旗標開時可有 Ask-AI）。
 - /pricing /account — 方案、Tokens、Stripe。
-問 AI 只在首頁；用下方按鈕開工作室。wizard 內無逐步教學。`,
+Ask-AI 主要在首頁；工具頁可在旗標開啟時顯示。/studio 永遠無聊天教學 — 用首頁按鈕開正確路徑。`,
   },
   {
     id: "modes-workflows",
@@ -376,10 +381,10 @@ Plans (typical): Free 300 signup / 480p; Light 3000/mo 480p; Standard 8000/mo 72
       "修图",
       "去水印",
     ],
-    en: `/captions-2: import any MP4 → edit timed lines → optional BGM/voice → burn. Does not regenerate the video. /edit-image-2: upload or library → Clean (inpaint) → Design (text/logo layers) → Export. Ask-AI is hidden on both pages; open them from the nav or tell the landing assistant you want captions / retouch.`,
-    zh: `/captions-2：匯入任何 MP4 → 改時間軸字幕 → 可加 BGM／配音 → 燒錄。唔會重新生成條片。/edit-image-2：上傳或作品庫 → 清除（inpaint）→ 排版（字／Logo）→ 匯出。兩頁都冇問 AI；用導航打開，或喺首頁問 AI 話你要字幕／修圖。`,
-    zhCn: `/captions-2：导入任何 MP4 → 改时间轴字幕 → 可加 BGM／配音 → 烧录。不会重新生成视频。/edit-image-2：上传或作品库 → 清除（inpaint）→ 排版（字／Logo）→ 导出。两页都无问 AI；用导航打开，或在首页问 AI 说你要字幕／修图。`,
-    zhTw: `/captions-2：匯入任何 MP4 → 改時間軸字幕 → 可加 BGM／配音 → 燒錄。不會重新生成影片。/edit-image-2：上傳或作品庫 → 清除（inpaint）→ 排版（字／Logo）→ 匯出。兩頁都無問 AI；用導航打開，或在首頁問 AI 說你要字幕／修圖。`,
+    en: `/captions-2: import any MP4 → edit timed lines → optional BGM/voice → burn. Does not regenerate the video. /edit-image-2: upload or library → Clean (inpaint) → Design (text/logo layers) → Export. Ask-AI is primarily on the landing page; both tool pages may show Ask-AI when tool Ask-AI is enabled. Open from the nav or tell the landing assistant you want captions / retouch.`,
+    zh: `/captions-2：匯入任何 MP4 → 改時間軸字幕 → 可加 BGM／配音 → 燒錄。唔會重新生成條片。/edit-image-2：上傳或作品庫 → 清除（inpaint）→ 排版（字／Logo）→ 匯出。Ask-AI 主要喺首頁；兩頁喺工具 Ask-AI 旗標開啟時都可能有助理。用導航打開，或喺首頁問 AI 話你要字幕／修圖。`,
+    zhCn: `/captions-2：导入任何 MP4 → 改时间轴字幕 → 可加 BGM／配音 → 烧录。不会重新生成视频。/edit-image-2：上传或作品库 → 清除（inpaint）→ 排版（字／Logo）→ 导出。Ask-AI 主要在首页；两页在工具 Ask-AI 旗标开启时都可能有助理。用导航打开，或在首页问 AI 说你要字幕／修图。`,
+    zhTw: `/captions-2：匯入任何 MP4 → 改時間軸字幕 → 可加 BGM／配音 → 燒錄。不會重新生成影片。/edit-image-2：上傳或作品庫 → 清除（inpaint）→ 排版（字／Logo）→ 匯出。Ask-AI 主要在首頁；兩頁在工具 Ask-AI 旗標開啟時都可能有助理。用導航打開，或在首頁問 AI 說你要字幕／修圖。`,
   },
   {
     id: "ultra-tools",
@@ -499,6 +504,27 @@ Plans (typical): Free 300 signup / 480p; Light 3000/mo 480p; Standard 8000/mo 72
 
 const CORE_IDS = ["what-is", "pages", "how-to-start"] as const;
 
+/** Expand common phrasings so keyword retrieval hits the right chunks. */
+const QUERY_SYNONYMS: Array<{ match: RegExp; inject: string }> = [
+  { match: /token|credit|點數|点数|額度|额度|幾多錢|多少钱|cost|price/i, inject: "tokens pricing plan" },
+  { match: /ultra|畫布|画布|node|canvas|pro canvas/i, inject: "ultra canvas master" },
+  { match: /caption|字幕|燒錄|烧录|subtitle|bgm/i, inject: "captions burn" },
+  { match: /修圖|修图|edit.?image|inpaint|去水印|logo/i, inject: "edit-image inpaint" },
+  { match: /story.?fan|故事扇|transform|before.?after|參考風格|参考风格/i, inject: "story fan transform reference" },
+  { match: /explosion|unbox|開箱|开箱|爆炸/i, inject: "explosion unbox" },
+  { match: /stitch|拼接|一鏡|一镜|h3|minimax|seedance/i, inject: "stitch video engines" },
+  { match: /storyboard|分鏡|分镜|tvc|九宮|九宫/i, inject: "storyboard tvc" },
+  { match: /research|小紅書|小红书|instagram|tiktok|平台研究/i, inject: "research standard plan" },
+];
+
+function expandQuery(query: string): string {
+  const extras: string[] = [];
+  for (const row of QUERY_SYNONYMS) {
+    if (row.match.test(query)) extras.push(row.inject);
+  }
+  return extras.length ? `${query} ${extras.join(" ")}` : query;
+}
+
 function tokenize(text: string): string[] {
   const lower = text.toLowerCase();
   const latin = lower.match(/[a-z0-9]+/g) ?? [];
@@ -509,11 +535,12 @@ function tokenize(text: string): string[] {
 }
 
 export function scoreKnowledgeChunk(query: string, chunk: AssistantKnowledgeChunk): number {
-  const q = new Set(tokenize(`${query} ${query}`));
+  const expanded = expandQuery(query);
+  const q = new Set(tokenize(`${expanded} ${expanded}`));
   let score = 0;
   for (const kw of chunk.keywords) {
     const k = kw.toLowerCase();
-    if (q.has(k) || query.toLowerCase().includes(k)) score += 4;
+    if (q.has(k) || expanded.toLowerCase().includes(k)) score += 4;
     for (const t of tokenize(k)) {
       if (q.has(t)) score += 2;
     }
@@ -536,7 +563,10 @@ export function retrieveAssistantKnowledge(
   const picked: AssistantKnowledgeChunk[] = [];
   const seen = new Set<string>();
 
-  if (opts?.alwaysCore !== false) {
+  // Ask mode: prefer topical hits first; still pin what-is lightly via alwaysCore.
+  const preferTopical = opts?.alwaysCore === false;
+
+  if (opts?.alwaysCore !== false && !preferTopical) {
     for (const id of CORE_IDS) {
       const chunk = ASSISTANT_KNOWLEDGE.find((c) => c.id === id);
       if (chunk && !seen.has(chunk.id)) {
@@ -554,6 +584,17 @@ export function retrieveAssistantKnowledge(
     seen.add(row.chunk.id);
   }
 
+  if (preferTopical && picked.length < limit) {
+    for (const id of CORE_IDS) {
+      if (picked.length >= limit) break;
+      const chunk = ASSISTANT_KNOWLEDGE.find((c) => c.id === id);
+      if (chunk && !seen.has(chunk.id)) {
+        picked.push(chunk);
+        seen.add(chunk.id);
+      }
+    }
+  }
+
   return picked.slice(0, limit);
 }
 
@@ -564,7 +605,7 @@ export function formatKnowledgeForPrompt(
   if (chunks.length === 0) return "";
   const body = chunks
     .map((c) => {
-      const text =
+      let text =
         locale === "en"
           ? c.en
           : locale === "zh-cn"
@@ -572,6 +613,9 @@ export function formatKnowledgeForPrompt(
             : locale === "zh-tw"
               ? (c.zhTw ?? c.zhCn ?? c.zh)
               : c.zh;
+      // Live billing constants override hand-maintained token/gate prose.
+      if (c.id === "tokens") text = assistantTokenCostFacts(locale);
+      if (c.id === "plan-gates") text = assistantPlanGateFacts(locale);
       return `### ${c.title}\n${text}`;
     })
     .join("\n\n");

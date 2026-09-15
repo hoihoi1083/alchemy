@@ -9,7 +9,7 @@ import {
   clearConceptAssistantState,
   clearConceptResearchState,
 } from "@/lib/concept-source-state";
-import { readStudioAssistantHandoff } from "@/lib/studio-assistant-handoff";
+import { readStudioAssistantHandoff, hasPendingStudioAssistantHandoff, clearStudioAssistantHandoffPending } from "@/lib/studio-assistant-handoff";
 import {
   clearProjectResumeHint,
   consumeProjectResumeHint,
@@ -151,11 +151,14 @@ function bootstrapMicroFromResume(
   wizard: StudioWizardValue,
   freshEntry: boolean,
 ): ResumeBootstrap {
-  const pendingHandoff = freshEntry ? readStudioAssistantHandoff() : null;
+  const pendingHandoff =
+    freshEntry &&
+    (Boolean(readStudioAssistantHandoff()) || hasPendingStudioAssistantHandoff());
   if (freshEntry) {
     clearProjectResumeHint();
     // Assistant handoff seeds micro ctx before navigate — do not wipe it here.
     if (!pendingHandoff) clearStoredContext();
+    else clearStudioAssistantHandoffPending();
   }
 
   const stored = readStoredContext();

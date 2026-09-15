@@ -42,8 +42,25 @@ import { readCaptionHandoff } from "@/lib/caption-studio-draft";
 import { IMAGE_CANVAS_DRAFT_KEY } from "@/lib/image-canvas-studio-draft";
 import { isSafeAssistantPath } from "@/lib/studio-assistant-allowed-paths";
 import { isCoachContinueReply } from "@/lib/studio-assistant-continue";
+import {
+  trackAssistantActionClick,
+  trackAssistantError,
+  trackAssistantOpened,
+  trackAssistantQuotaExceeded,
+  trackAssistantReply,
+  trackAssistantSend,
+} from "@/lib/analytics-assistant";
+import { followUpAutoSends, followUpPromptForChip } from "@/lib/studio-assistant-follow-ups";
+import { useUserPlanEntitlements } from "@/hooks/useUserPlanEntitlements";
+import {
+  consumeAssistantSignInDraft,
+  writeAssistantSignInDraft,
+} from "@/lib/studio-assistant-attribution";
 import { extractCampaignHint } from "@/lib/studio-assistant-coach";
 
+const ASSISTANT_VISIT_KEY = "alchemy-assistant-visit-v1";
+
+type FollowUpChip = { id: string; label: string };
 type ChatMessage = StudioAssistantMessage & { _id?: string };
 
 function welcomeForSurface(
@@ -188,6 +205,7 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
   const { m, locale } = useLocale();
   const sa = m.studioAssistant;
   const { isSignedIn } = useAuth();
+  const { plan, creditBalance } = useUserPlanEntitlements();
   const wizard = useOptionalWizard();
 
   const [hydrated, setHydrated] = useState(false);
@@ -195,6 +213,8 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
+  const [followUps, setFollowUps] = useState<FollowUpChip[]>([]);
+  const [returningNudge, setReturningNudge] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const typingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const typingMsgIdRef = useRef<string | null>(null);
@@ -213,8 +233,15 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
         ? buildStudioAssistantSnapshot(wizard, "studio")
         : buildDefaultAssistantSnapshot(surface);
     const tools = readToolSourceFlags();
-    return { ...base, ...tools, coachAck: readCoachAck() };
-  }, [surface, wizard, coachAckTick]);
+    return {
+      ...base,
+      ...tools,
+      coachAck: readCoachAck(),
+      signedIn: Boolean(isSignedIn),
+      userPlan: isSignedIn ? plan : null,
+      tokenBalance: isSignedIn && typeof creditBalance === "number" ? creditBalance : null,
+    };
+  }, [surface, wizard, coachAckTick, isSignedIn, plan, creditBalance]);
 
   const appendAssistant = useCallback((content: string) => {
     setMessages((prev) => [...prev, { role: "assistant", content }]);
@@ -259,6 +286,24 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
     } else {
       setMessages([{ role: "assistant", content: welcomeForSurface(surface, sa) }]);
       if (reopen) setOpen(true);
+    }
+    try {
+      const prev = localStorage.getItem(ASSISTANT_VISIT_KEY);
+      const now = Date.now();
+      if (prev) {
+        const last = Number(prev);
+        if (Number.isFinite(last) && now - last > 1000 * 60 * 60 * 12) {
+          setReturningNudge(sa.returningNudge);
+        }
+      }
+      localStorage.setItem(ASSISTANT_VISIT_KEY, String(now));
+    } catch {
+      /* ignore */
+    }
+    const signInDraft = consumeAssistantSignInDraft();
+    if (signInDraft) {
+      setInput(signInDraft);
+      setOpen(true);
     }
     setHydrated(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- hydrate once on mount
@@ -312,6 +357,7 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
         appendAssistant(sa.unknownAction);
         return;
       }
+      trackAssistantActionClick({ actionId: parsed, surface });
       const url = resolvePendingUrl() ?? undefined;
       const wizardApi = surface === "studio" ? wizard : null;
       const campaignMessage =
@@ -386,6 +432,8 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
     setCoachAckTick((t) => t + 1);
     setInput("");
     setLoading(false);
+    setFollowUps([]);
+    setReturningNudge(null);
     const fresh: ChatMessage[] = [
       { role: "assistant", content: welcomeForSurface(surface, sa) },
     ];
@@ -411,11 +459,14 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
     pendingFullReplyRef.current = "";
   }, []);
 
-  const send = useCallback(async () => {
-    const trimmed = input.trim();
+  const sendMessage = useCallback(
+    async (textOverride?: string) => {
+    const trimmed = (textOverride ?? input).trim();
     if (!trimmed || loading) return;
 
     flushActiveTyping();
+    setFollowUps([]);
+    setReturningNudge(null);
 
     if (isCoachContinueReply(trimmed) && lastCoachTaskRef.current) {
       if (shouldAckCoachTaskOnNext(lastCoachTaskRef.current, snapshot)) {
@@ -430,6 +481,9 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
         : buildDefaultAssistantSnapshot(surface)),
       ...readToolSourceFlags(),
       coachAck: readCoachAck(),
+      signedIn: Boolean(isSignedIn),
+      userPlan: isSignedIn ? plan : null,
+      tokenBalance: isSignedIn && typeof creditBalance === "number" ? creditBalance : null,
     };
 
     const userMsg: ChatMessage = { role: "user", content: trimmed };
@@ -438,59 +492,253 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
     );
     setInput("");
     setMessages((prev) => [...prev, userMsg]);
-
     setLoading(true);
+    trackAssistantSend({ surface, signedIn: Boolean(isSignedIn) });
+
+    const streamMsgId = `stream-${Date.now()}`;
+    let streamedAny = false;
 
     try {
       const res = await fetch("/api/studio-assistant", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "text/event-stream",
+        },
         body: JSON.stringify({
           messages: historyForApi,
           locale,
           snapshot: snapshotForApi,
           previousCoachTask: lastCoachTaskRef.current,
+          stream: true,
         }),
       });
 
-      const data = await res.json().catch(() => null);
       if (res.status === 401) {
         throw new Error("unauthorized");
       }
       if (res.status === 429) {
         throw new Error("quota_exceeded");
       }
-      if (!data?.success) {
-        throw new Error(
-          typeof data?.error === "string" ? data.error : "request failed",
+
+      const ctype = res.headers.get("content-type") || "";
+      if (ctype.includes("text/event-stream") && res.body) {
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let finalReply = "";
+        let finalFollowUps: FollowUpChip[] = [];
+        let meta: Record<string, unknown> = {};
+
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", content: "", _id: streamMsgId },
+        ]);
+        typingMsgIdRef.current = streamMsgId;
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const parts = buffer.split("\n\n");
+          buffer = parts.pop() ?? "";
+          for (const part of parts) {
+            const line = part
+              .split("\n")
+              .map((l) => l.trim())
+              .find((l) => l.startsWith("data:"));
+            if (!line) continue;
+            const raw = line.slice(5).trim();
+            if (!raw) continue;
+            let evt: {
+              type?: string;
+              text?: string;
+              reply?: string;
+              followUps?: FollowUpChip[];
+              meta?: Record<string, unknown>;
+            };
+            try {
+              evt = JSON.parse(raw);
+            } catch {
+              continue;
+            }
+            if (evt.type === "meta" && evt.meta) {
+              meta = evt.meta;
+            } else if (evt.type === "delta" && typeof evt.text === "string") {
+              streamedAny = true;
+              setLoading(false);
+              setMessages((prev) =>
+                prev.map((msg) =>
+                  msg._id === streamMsgId
+                    ? { ...msg, content: `${msg.content}${evt.text}` }
+                    : msg,
+                ),
+              );
+            } else if (evt.type === "done") {
+              finalReply = String(evt.reply || "");
+              finalFollowUps = Array.isArray(evt.followUps) ? evt.followUps : [];
+              if (evt.meta) meta = { ...meta, ...evt.meta };
+            }
+          }
+        }
+
+        const detected = meta.detectedUrl;
+        if (typeof detected === "string" && detected.trim()) {
+          pendingUrlRef.current = detected.trim();
+        } else {
+          const fromUser = extractUrlFromText(trimmed);
+          if (fromUser) pendingUrlRef.current = fromUser;
+        }
+        const coachTask = meta.coachTask as CoachTaskKind | undefined;
+        lastCoachTaskRef.current = coachTask ?? null;
+
+        const full = finalReply || "";
+        pendingFullReplyRef.current = full;
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg._id === streamMsgId ? { ...msg, content: full || msg.content } : msg,
+          ),
         );
-      }
-
-      const detected = data.meta?.detectedUrl;
-      if (typeof detected === "string" && detected.trim()) {
-        pendingUrlRef.current = detected.trim();
+        typingMsgIdRef.current = null;
+        setFollowUps(finalFollowUps);
+        trackAssistantReply({
+          surface,
+          fastPath: Boolean(meta.fastPath),
+          degraded: Boolean(meta.degraded),
+          streamed: true,
+          intent: typeof meta.intent === "string" ? meta.intent : null,
+          turnMode: typeof meta.turnMode === "string" ? meta.turnMode : null,
+        });
       } else {
-        const fromUser = extractUrlFromText(trimmed);
-        if (fromUser) pendingUrlRef.current = fromUser;
+        const data = await res.json().catch(() => null);
+        if (!data?.success) {
+          throw new Error(
+            typeof data?.error === "string" ? data.error : "request failed",
+          );
+        }
+
+        const detected = data.meta?.detectedUrl;
+        if (typeof detected === "string" && detected.trim()) {
+          pendingUrlRef.current = detected.trim();
+        } else {
+          const fromUser = extractUrlFromText(trimmed);
+          if (fromUser) pendingUrlRef.current = fromUser;
+        }
+
+        const coachTask = data.meta?.coachTask as CoachTaskKind | undefined;
+        lastCoachTaskRef.current = coachTask ?? null;
+
+        const full = String(data.reply || "");
+        setMessages((prev) => [...prev, { role: "assistant", content: full }]);
+        if (Array.isArray(data.followUps)) setFollowUps(data.followUps);
+        trackAssistantReply({
+          surface,
+          fastPath: Boolean(data.meta?.fastPath),
+          degraded: Boolean(data.meta?.degraded),
+          streamed: false,
+          intent: data.meta?.intent ?? null,
+          turnMode: data.meta?.turnMode ?? null,
+        });
       }
-
-      const coachTask = data.meta?.coachTask as CoachTaskKind | undefined;
-      lastCoachTaskRef.current = coachTask ?? null;
-
-      const full = String(data.reply || "");
-      setMessages((prev) => [...prev, { role: "assistant", content: full }]);
     } catch (err) {
+      if (streamedAny) {
+        // Keep partial stream; still show error note.
+      }
       const content =
         err instanceof Error && err.message === "unauthorized"
           ? sa.signInToChat
           : err instanceof Error && err.message === "quota_exceeded"
             ? sa.quotaExceeded
             : sa.errorNetwork;
-      setMessages((prev) => [...prev, { role: "assistant", content }]);
+      if (err instanceof Error && err.message === "quota_exceeded") {
+        trackAssistantQuotaExceeded({ surface, signedIn: Boolean(isSignedIn) });
+        writeAssistantSignInDraft(trimmed);
+      } else if (err instanceof Error && err.message === "unauthorized") {
+        writeAssistantSignInDraft(trimmed);
+      } else {
+        trackAssistantError({
+          surface,
+          reason: err instanceof Error ? err.message.slice(0, 80) : "unknown",
+        });
+      }
+      setMessages((prev) => {
+        const withoutEmptyStream = prev.filter(
+          (msg) => !(msg._id === streamMsgId && !msg.content.trim()),
+        );
+        return [...withoutEmptyStream, { role: "assistant", content }];
+      });
+      if (
+        (err instanceof Error && err.message === "quota_exceeded" && !isSignedIn) ||
+        (err instanceof Error && err.message === "unauthorized")
+      ) {
+        setFollowUps([{ id: "go-signin", label: sa.signInLink }]);
+      }
     } finally {
       setLoading(false);
+      typingMsgIdRef.current = null;
     }
-  }, [flushActiveTyping, input, loading, messages, locale, snapshot, sa.errorNetwork, sa.quotaExceeded, sa.signInToChat, surface, wizard]);
+  }, [
+    flushActiveTyping,
+    input,
+    loading,
+    messages,
+    locale,
+    snapshot,
+    sa.errorNetwork,
+    sa.quotaExceeded,
+    sa.signInToChat,
+    sa.signInLink,
+    surface,
+    wizard,
+    isSignedIn,
+    plan,
+    creditBalance,
+  ]);
+
+  const send = useCallback(async () => {
+    await sendMessage();
+  }, [sendMessage]);
+
+  const applyFollowUpChip = useCallback(
+    (chip: FollowUpChip) => {
+      if (chip.id === "go-signin") {
+        const draft = input.trim() || lastUserMessage(messages) || "";
+        if (draft) writeAssistantSignInDraft(draft);
+        router.push(`/sign-in?redirect_url=${encodeURIComponent("/")}`);
+        return;
+      }
+      if (chip.id === "open-ultra") {
+        void handleAction("open-ultra-canvas");
+        return;
+      }
+      if (chip.id === "open-physical") {
+        void handleAction("open-physical-studio", {
+          campaignMessage:
+            lastUserMessage(messages) ||
+            "I want a post with images about my product",
+        });
+        return;
+      }
+      if (chip.id === "open-studio") {
+        void handleAction("setup-website-reel");
+        return;
+      }
+      if (chip.id === "open-concept") {
+        void handleAction("open-concept-studio", {
+          campaignMessage: lastUserMessage(messages),
+        });
+        return;
+      }
+      const prompt = followUpPromptForChip(chip.id, locale);
+      if (!prompt) return;
+      if (followUpAutoSends(chip.id)) {
+        void sendMessage(prompt);
+        return;
+      }
+      setInput(prompt);
+    },
+    [handleAction, locale, router, input, messages, sendMessage],
+  );
 
   const wizardStepKey = wizard?.stepKey;
   const studioMobileBarVisible =
@@ -572,6 +820,18 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
             ref={scrollRef}
             className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-3 py-3"
           >
+            {returningNudge ? (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">
+                {renderMessageContent(returningNudge, (id) => void handleAction(id))}
+                <button
+                  type="button"
+                  className="ml-2 text-[11px] font-medium text-amber-800/80 underline"
+                  onClick={() => setReturningNudge(null)}
+                >
+                  ×
+                </button>
+              </div>
+            ) : null}
             {messages.map((msg, i) => (
               <div
                 key={msg._id ?? i}
@@ -594,6 +854,23 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
                 </div>
               </div>
             ))}
+            {followUps.length > 0 && !loading ? (
+              <div className="flex flex-wrap gap-2 pl-1">
+                <span className="w-full text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                  {sa.followUpsLabel}
+                </span>
+                {followUps.map((chip) => (
+                  <button
+                    key={chip.id}
+                    type="button"
+                    onClick={() => applyFollowUpChip(chip)}
+                    className="rounded-full border border-violet-200 bg-white px-3 py-1.5 text-xs font-medium text-violet-800 transition hover:bg-violet-50"
+                  >
+                    {chip.label}
+                  </button>
+                ))}
+              </div>
+            ) : null}
             {loading && (
               <div className="flex justify-start">
                 <div className="flex items-center gap-2 rounded-2xl rounded-bl-md bg-slate-100 px-3.5 py-2.5 text-sm text-slate-600">
@@ -729,7 +1006,15 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
 
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          setOpen((v) => {
+            const next = !v;
+            if (next) {
+              trackAssistantOpened({ surface, signedIn: Boolean(isSignedIn) });
+            }
+            return next;
+          });
+        }}
         className={
           darkChrome
             ? "pointer-events-auto inline-flex items-center gap-2 rounded-2xl border border-white/20 bg-slate-950/85 p-1.5 pr-3 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.7)] backdrop-blur-md transition hover:scale-[1.02] hover:border-violet-300/50 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 motion-safe:animate-[assistant-mascot-float_3.2s_ease-in-out_infinite]"

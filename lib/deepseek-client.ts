@@ -142,3 +142,115 @@ export async function callDeepSeekChat(
 
   throw new Error(parseDeepSeekErrorMessage(lastRaw, lastStatus || 400));
 }
+
+/**
+ * Stream a DeepSeek chat completion (thinking disabled).
+ * Tries primary model, then deepseek-chat — mirrors callDeepSeekChat fallbacks.
+ * Yields text deltas; throws on total failure / empty.
+ */
+export async function* streamDeepSeekChat(
+  messages: Array<{ role: "system" | "user" | "assistant"; content: string }>,
+  options: {
+    model?: string;
+    temperature?: number;
+    max_tokens?: number;
+  } = {},
+): AsyncGenerator<string, void, unknown> {
+  const apiKey = deepSeekApiKey();
+  if (!apiKey) {
+    throw new Error(
+      "Missing DEEPSEEK_API_KEY. Copy it from HarmoniqFengShui into .env.local.",
+    );
+  }
+
+  const primary =
+    options.model || process.env.DEEPSEEK_MODEL?.trim() || "deepseek-v4-flash";
+  const models =
+    primary === "deepseek-chat" ? ["deepseek-chat"] : [primary, "deepseek-chat"];
+  const sanitizedMessages = messages.map((m) => ({
+    ...m,
+    content: sanitizeDeepSeekMessageText(m.content),
+  }));
+
+  let lastError: Error | null = null;
+  let yieldedAny = false;
+
+  for (const model of models) {
+    if (yieldedAny) break;
+    try {
+      const res = await fetch(DEEPSEEK_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json; charset=utf-8",
+          Authorization: `Bearer ${apiKey}`,
+          Accept: "text/event-stream",
+        },
+        body: JSON.stringify({
+          model,
+          messages: sanitizedMessages,
+          temperature: options.temperature ?? 0.4,
+          max_tokens: options.max_tokens ?? 1200,
+          stream: true,
+          thinking: { type: "disabled" },
+        }),
+      });
+
+      if (!res.ok) {
+        const raw = await res.text();
+        if (res.status === 402 || raw.includes("Insufficient Balance")) {
+          throw new Error(
+            "AI planning is temporarily unavailable. Please try again later.",
+          );
+        }
+        lastError = new Error(parseDeepSeekErrorMessage(raw, res.status));
+        continue;
+      }
+
+      if (!res.body) {
+        lastError = new Error("Planning returned an empty stream.");
+        continue;
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let yieldedThis = false;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const parts = buffer.split("\n");
+        buffer = parts.pop() ?? "";
+        for (const line of parts) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith("data:")) continue;
+          const data = trimmed.slice(5).trim();
+          if (!data || data === "[DONE]") continue;
+          try {
+            const parsed = JSON.parse(data) as {
+              choices?: Array<{ delta?: { content?: string } }>;
+            };
+            const delta = parsed.choices?.[0]?.delta?.content;
+            if (delta) {
+              yieldedThis = true;
+              yieldedAny = true;
+              yield delta;
+            }
+          } catch {
+            // ignore partial JSON
+          }
+        }
+      }
+
+      if (yieldedThis) return;
+      lastError = new Error("Planning returned an empty response.");
+    } catch (e: unknown) {
+      if (yieldedAny) throw e instanceof Error ? e : new Error(String(e));
+      lastError = e instanceof Error ? e : new Error(String(e));
+      if (lastError.message.includes("temporarily unavailable")) throw lastError;
+    }
+  }
+
+  throw lastError ?? new Error("Planning returned an empty response.");
+}

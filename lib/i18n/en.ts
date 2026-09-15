@@ -6763,7 +6763,7 @@ export const en = {
 		dialogLabel: "Studio assistant chat",
 		errorNetwork: "Connection hiccup — please try again in a moment.",
 		quotaExceeded:
-			"Daily AI planning limit reached — try again tomorrow, or [view pricing](/pricing) for higher limits.",
+			"Daily AI planning limit reached — try again tomorrow, or [view pricing](/pricing) for higher limits. [Sign in](/sign-in) if you have an account for a higher daily quota.",
 		actionApplied:
 			"Done — I applied that in the wizard. Check the setup fields and continue when ready.",
 		websiteReelApplied:
@@ -6782,6 +6782,10 @@ export const en = {
 		unknownAction:
 			"That button didn't work — use the button below instead.",
 		renewConversation: "New chat",
+		returningNudge:
+			"Welcome back — [Caption studio](/captions-2) for a recent video, or ask about tokens.",
+		followUpsLabel: "Suggested",
+		signInLink: "Sign in",
 	},
 	microWizard: {
 		progress: "Step {current} of {total}",

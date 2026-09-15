@@ -4,8 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 import { applyStudioAssistantHandoff } from "@/lib/studio-assistant-apply-handoff";
 import {
-	clearStudioAssistantHandoff,
-	readStudioAssistantHandoff,
+	consumeStudioAssistantHandoff,
 } from "@/lib/studio-assistant-handoff";
 import { readStudioDoneResume } from "@/lib/studio-done-resume";
 import {
@@ -11775,9 +11774,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		if (handoffStartedRef.current) return;
 		handoffStartedRef.current = true;
 
-		const handoff = readStudioAssistantHandoff();
+		const handoff = consumeStudioAssistantHandoff();
 		if (handoff) {
-			clearStudioAssistantHandoff();
 			void applyStudioAssistantHandoff(handoff, {
 				setBrandWebsiteUrl,
 				setProduct,

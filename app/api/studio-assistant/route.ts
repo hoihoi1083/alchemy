@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { callDeepSeekChat } from "@/lib/deepseek-client";
+import { callDeepSeekChat, streamDeepSeekChat } from "@/lib/deepseek-client";
 import { fetchWebsiteText } from "@/lib/brand-analyze";
 import { buildStudioAssistantSystemPrompt } from "@/lib/studio-assistant-facts";
 import {
@@ -24,7 +24,7 @@ import {
 import { detectStudioAssistantIntent } from "@/lib/studio-assistant-intent";
 import type { StudioAssistantIntent } from "@/lib/studio-assistant-intent";
 import { enforceLandingCoachAction } from "@/lib/studio-assistant-enforce-coach";
-import { extractUrlFromMessages } from "@/lib/studio-assistant-url";
+import { extractUrlFromMessages, shouldLoadSitePreviewForTurn } from "@/lib/studio-assistant-url";
 import { requireAppUser } from "@/lib/require-app-user";
 import { assertAnonymousDeepSeekQuota, assertFreeDeepSeekQuota } from "@/lib/rate-limit-deepseek";
 import { clientKeyFromRequest } from "@/lib/request-client-key";
@@ -38,6 +38,10 @@ import type { Locale } from "@/lib/i18n";
 import { SERVER_ERRORS } from "@/lib/api/server-errors";
 import type { PromotionMode } from "@/lib/promotion-mode";
 import type { VisualStyleId } from "@/lib/visual-styles";
+import { getUserPlan } from "@/lib/billing/get-user-plan";
+import { getUserBalance } from "@/lib/billing/ledger";
+import { buildAssistantFollowUps } from "@/lib/studio-assistant-follow-ups";
+import { buildDegradedKnowledgeReply } from "@/lib/studio-assistant-degraded-reply";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -211,6 +215,29 @@ function parseSnapshot(raw: unknown): StudioAssistantSnapshot | null {
   };
 }
 
+async function enrichSnapshotBilling(
+  snapshot: StudioAssistantSnapshot,
+  userId: string | null,
+): Promise<StudioAssistantSnapshot> {
+  if (!userId) {
+    return { ...snapshot, signedIn: false, userPlan: null, tokenBalance: null };
+  }
+  try {
+    const [plan, wallet] = await Promise.all([
+      getUserPlan(userId),
+      getUserBalance(userId),
+    ]);
+    return {
+      ...snapshot,
+      signedIn: true,
+      userPlan: plan,
+      tokenBalance: wallet?.balance ?? null,
+    };
+  } catch {
+    return { ...snapshot, signedIn: true, userPlan: null, tokenBalance: null };
+  }
+}
+
 async function loadSitePreview(url: string): Promise<string> {
   try {
     const { text } = await fetchWebsiteText(url);
@@ -218,6 +245,16 @@ async function loadSitePreview(url: string): Promise<string> {
   } catch {
     return "";
   }
+}
+
+function wantsStream(request: Request, body: { stream?: unknown }): boolean {
+  if (body.stream === true) return true;
+  const accept = request.headers.get("accept") || "";
+  return accept.includes("text/event-stream");
+}
+
+function sseEncode(obj: unknown): string {
+  return `data: ${JSON.stringify(obj)}\n\n`;
 }
 
 export async function POST(request: Request) {
@@ -228,6 +265,7 @@ export async function POST(request: Request) {
     locale?: unknown;
     snapshot?: unknown;
     previousCoachTask?: unknown;
+    stream?: unknown;
   };
   try {
     body = await request.json();
@@ -237,18 +275,19 @@ export async function POST(request: Request) {
 
   const locale = parseLocale(body.locale);
   const messages = parseMessages(body.messages);
-  const snapshot = parseSnapshot(body.snapshot);
+  const parsedSnapshot = parseSnapshot(body.snapshot);
+  const stream = wantsStream(request, body);
 
-  if (!snapshot) {
+  if (!parsedSnapshot) {
     return NextResponse.json(
       { success: false, error: "Invalid assistant snapshot." },
       { status: 400 },
     );
   }
 
-  if (snapshot.surface === "studio" && !userId) {
-    const auth = await requireAppUser();
-    if (!auth.ok) return auth.response;
+  if (parsedSnapshot.surface === "studio" && !userId) {
+    const authGate = await requireAppUser();
+    if (!authGate.ok) return authGate.response;
   }
 
   if (messages.length === 0) {
@@ -266,6 +305,8 @@ export async function POST(request: Request) {
     );
   }
 
+  const snapshot = await enrichSnapshotBilling(parsedSnapshot, userId ?? null);
+
   const detectedUrl =
     extractUrlFromMessages(messages) || snapshot.brandWebsiteUrl.trim() || undefined;
   const intent = detectStudioAssistantIntent(lastUser.content);
@@ -278,14 +319,29 @@ export async function POST(request: Request) {
       ? (body.previousCoachTask as CoachTaskKind)
       : null;
 
+  const campaignHint = extractCampaignHint(messages);
+
   const meta = {
     fastPath: false,
+    degraded: false,
+    streamed: false,
     detectedUrl: detectedUrl ?? null,
     intent,
     turnMode,
     surface: snapshot.surface,
+    signedIn: Boolean(snapshot.signedIn),
+    userPlan: snapshot.userPlan ?? null,
     knowledgeIds: [] as string[],
   };
+
+  const buildFollowUps = (coachTask: CoachTaskKind | null) =>
+    buildAssistantFollowUps({
+      locale,
+      turnMode,
+      intent,
+      coachTask,
+      signedIn: Boolean(snapshot.signedIn),
+    });
 
   const fast = tryStudioAssistantFastPath(
     lastUser.content,
@@ -302,13 +358,15 @@ export async function POST(request: Request) {
     reply = stripInvalidActionLinks(reply, snapshot);
     const finalized = finalizeAssistantReply(reply, snapshot, locale, intent, lastUser.content, {
       detectedUrl,
-      campaignHint: extractCampaignHint(messages),
+      campaignHint,
       hasWebsiteUrl: Boolean(detectedUrl),
       turnMode,
     });
+    const followUps = buildFollowUps(finalized.coachTask);
     return NextResponse.json({
       success: true,
       reply: finalized.reply,
+      followUps,
       meta: { ...meta, fastPath: true, coachTask: finalized.coachTask },
     });
   }
@@ -321,38 +379,115 @@ export async function POST(request: Request) {
     if (!quota.ok) return quota.response;
   }
 
-  const sitePreview = detectedUrl ? await loadSitePreview(detectedUrl) : "";
+  const sitePreview =
+    detectedUrl && shouldLoadSitePreviewForTurn(lastUser.content, detectedUrl)
+      ? await loadSitePreview(detectedUrl)
+      : "";
   const knowledgeChunks = retrieveAssistantKnowledge(lastUser.content, {
     locale: knowledgeLocaleFromApp(locale),
     limit: turnMode === "ask" ? 6 : 4,
+    alwaysCore: turnMode !== "ask",
   });
   meta.knowledgeIds = knowledgeChunks.map((c) => c.id);
 
-  try {
-    const systemContent = buildStudioAssistantSystemPrompt(locale, snapshot, {
-      detectedUrl,
-      sitePreview,
-      intent,
-      turnMode,
-      knowledgeChunks,
-      userText: lastUser.content,
-    });
-    const replyRaw = await callDeepSeekChat(
-      [{ role: "system", content: systemContent }, ...messages],
-      { temperature: 0.65, max_tokens: 900 },
-    );
-    let reply = sanitizeAssistantReply(replyRaw);
+  const finalizeOpts = {
+    detectedUrl,
+    campaignHint,
+    hasWebsiteUrl: Boolean(detectedUrl),
+    turnMode,
+  } as const;
+
+  const polish = (raw: string) => {
+    let reply = sanitizeAssistantReply(raw);
     reply = normalizeAssistantActionLinks(reply);
     reply = stripInvalidActionLinks(reply, snapshot);
-    const finalized = finalizeAssistantReply(reply, snapshot, locale, intent, lastUser.content, {
-      detectedUrl,
-      campaignHint: extractCampaignHint(messages),
-      hasWebsiteUrl: Boolean(detectedUrl),
-      turnMode,
+    return finalizeAssistantReply(reply, snapshot, locale, intent, lastUser.content, finalizeOpts);
+  };
+
+  const systemContent = buildStudioAssistantSystemPrompt(locale, snapshot, {
+    detectedUrl,
+    sitePreview,
+    intent,
+    turnMode,
+    knowledgeChunks,
+    userText: lastUser.content,
+  });
+  const chatMessages = [
+    { role: "system" as const, content: systemContent },
+    ...messages,
+  ];
+
+  // Guide turns inject action links in polish() — stream raw then rewrite flickers.
+  // Ask mode keeps SSE; guide uses polished JSON.
+  const useStream = stream && turnMode === "ask";
+
+  if (useStream) {
+    const encoder = new TextEncoder();
+    const readable = new ReadableStream({
+      async start(controller) {
+        const push = (obj: unknown) => controller.enqueue(encoder.encode(sseEncode(obj)));
+        try {
+          push({ type: "meta", meta: { ...meta, streamed: true } });
+          let acc = "";
+          for await (const delta of streamDeepSeekChat(chatMessages, {
+            temperature: 0.65,
+            max_tokens: 900,
+          })) {
+            acc += delta;
+            push({ type: "delta", text: delta });
+          }
+          const finalized = polish(acc);
+          const followUps = buildFollowUps(finalized.coachTask);
+          push({
+            type: "done",
+            reply: finalized.reply,
+            followUps,
+            meta: {
+              ...meta,
+              streamed: true,
+              coachTask: finalized.coachTask,
+            },
+          });
+        } catch {
+          const degradedRaw = buildDegradedKnowledgeReply(knowledgeChunks, locale);
+          const finalized = polish(degradedRaw);
+          const followUps = buildFollowUps(finalized.coachTask);
+          push({
+            type: "done",
+            reply: finalized.reply,
+            followUps,
+            meta: {
+              ...meta,
+              streamed: true,
+              degraded: true,
+              coachTask: finalized.coachTask,
+            },
+          });
+        } finally {
+          controller.close();
+        }
+      },
     });
+    return new Response(readable, {
+      headers: {
+        "Content-Type": "text/event-stream; charset=utf-8",
+        "Cache-Control": "no-cache, no-transform",
+        Connection: "keep-alive",
+      },
+    });
+  }
+
+  try {
+    const replyRaw = await callDeepSeekChat(chatMessages, {
+      temperature: 0.65,
+      max_tokens: 900,
+    });
+    const finalized = polish(replyRaw);
+    const followUps = buildFollowUps(finalized.coachTask);
     return NextResponse.json({
       success: true,
       reply: finalized.reply,
+      followUps,
       meta: {
         ...meta,
         coachTask: finalized.coachTask,
@@ -360,7 +495,23 @@ export async function POST(request: Request) {
     });
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : SERVER_ERRORS.generationFailed;
-    const status = message.includes("DEEPSEEK") ? 503 : 502;
-    return NextResponse.json({ success: false, error: message }, { status });
+    if (message.includes("DEEPSEEK") && !knowledgeChunks.length) {
+      return NextResponse.json({ success: false, error: message }, { status: 503 });
+    }
+    // Prefer grounded facts over a blank error when the model is down.
+    const degradedRaw = buildDegradedKnowledgeReply(knowledgeChunks, locale);
+    const finalized = polish(degradedRaw);
+    const followUps = buildFollowUps(finalized.coachTask);
+    return NextResponse.json({
+      success: true,
+      reply: finalized.reply,
+      followUps,
+      meta: {
+        ...meta,
+        degraded: true,
+        coachTask: finalized.coachTask,
+        modelError: message.slice(0, 200),
+      },
+    });
   }
 }

@@ -17,9 +17,19 @@ export function isAssistantSurface(raw: unknown): raw is AssistantSurface {
   return typeof raw === "string" && (ASSISTANT_SURFACES as readonly string[]).includes(raw);
 }
 
-/** True when the global mascot assistant widget should render (landing only). */
+/** True when the global mascot assistant widget should render. */
 export function isStudioAssistantMounted(pathname: string): boolean {
-  return assistantSurfaceFromPathname(pathname) === "landing";
+  const surface = assistantSurfaceFromPathname(pathname);
+  if (!surface) return false;
+  if (surface === "landing" || surface === "start" || surface === "site") {
+    return surface === "landing";
+  }
+  // In-studio step coach stays dormant — wizard cards own /studio teaching.
+  if (surface === "studio") return false;
+  if (isToolAssistantSurface(surface)) {
+    return process.env.NEXT_PUBLIC_ASSISTANT_TOOL_SURFACES === "1";
+  }
+  return false;
 }
 
 export function isToolAssistantSurface(surface: AssistantSurface): boolean {
@@ -45,7 +55,15 @@ export function usesDarkAssistantChrome(surface: AssistantSurface): boolean {
 export function assistantSurfaceFromPathname(pathname: string): AssistantSurface | null {
   const path = pathname.split("?")[0] || "/";
   if (path === "/" || path === "") return "landing";
+  if (path === "/start" || path.startsWith("/start/")) return "start";
   if (path === "/studio" || path.startsWith("/studio/")) return "studio";
-  if (path === "/ultra" || path.startsWith("/ultra/")) return null;
+  if (path === "/ultra" || path.startsWith("/ultra/") || path === "/pro" || path.startsWith("/pro/")) {
+    return "pro";
+  }
+  if (path.startsWith("/captions")) return "captions";
+  if (path.startsWith("/edit-image")) return "edit-image";
+  if (path.startsWith("/brand-kit")) return "brand-kit";
+  if (path.startsWith("/library")) return "library";
+  if (path.startsWith("/ugc")) return "ugc";
   return null;
 }
