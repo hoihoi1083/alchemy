@@ -209,11 +209,20 @@ export function buildCoachReply(
     case "route-cinematic-stitch":
       return en
         ? [
-            "Step 1: Multi-scene cinematic stitch (~24s) for feature tours.",
+            "Step 1: Single ~8s cinematic reel (one continuous take) — multi-scene stitch is not available yet.",
             link ?? "",
             coachLandingAfterStudioAction(locale),
           ].join("\n")
-        : ["第一步：多場景電影感拼接（約 24 秒）講多個賣點。", link ?? "", coachLandingAfterStudioAction(locale)].join("\n");
+        : [
+            coachZh(
+              locale,
+              "第一步：單一約 8 秒電影感短片（一鏡到底）— 多場景拼接暫時未開放。",
+              "第一步：单一约 8 秒电影感短片（一镜到底）— 多场景拼接暂时未开放。",
+              "第一步：單一約 8 秒電影感短片（一鏡到底）— 多場景拼接暫時未開放。",
+            ),
+            link ?? "",
+            coachLandingAfterStudioAction(locale),
+          ].join("\n");
 
     case "route-physical-image-post":
       return en

@@ -40,4 +40,18 @@ describe("studio-assistant landing coach copy", () => {
       assert.match(reply, /上面掣|畫面卡片|無逐步 chat|開啟工具/);
     });
   }
+
+  it("route-cinematic-stitch promises 8s single-take not 24s stitch", () => {
+    const snapshot = buildDefaultAssistantSnapshot("landing");
+    const en = buildCoachReply("route-cinematic-stitch", snapshot, "en", {
+      userText: "cinematic stitch",
+    });
+    assert.match(en, /8s|8\s*s/i);
+    assert.doesNotMatch(en, /24s|24\s*s|Multi-scene cinematic stitch/i);
+    const zh = buildCoachReply("route-cinematic-stitch", snapshot, "zh", {
+      userText: "電影感拼接",
+    });
+    assert.match(zh, /8\s*秒/);
+    assert.doesNotMatch(zh, /24\s*秒/);
+  });
 });

@@ -67,7 +67,30 @@ describe("assistant knowledge retrieve", () => {
     const block = formatKnowledgeForPrompt(chunks, "en");
     assert.match(block, /Product knowledge/i);
     assert.match(block, /328/);
+    assert.match(block, /1080/);
+    assert.doesNotMatch(block, /1136|pro_canvas/);
     assert.ok(scoreKnowledgeChunk("tokens 12s", chunks[0]!) > 0);
+  });
+
+  it("ranks story fan and explosion unbox questions", () => {
+    const fanIds = retrieveAssistantKnowledge("what is the story fan transform card", {
+      alwaysCore: false,
+      limit: 4,
+    }).map((c) => c.id);
+    assert.ok(fanIds.includes("landing-story-fan"));
+
+    const unboxIds = retrieveAssistantKnowledge("explosion unbox Spider-Man theme", {
+      alwaysCore: false,
+      limit: 4,
+    }).map((c) => c.id);
+    assert.ok(unboxIds.includes("explosion-unbox"));
+  });
+
+  it("plan-gates knowledge names /ultra not /pro_canvas", () => {
+    const chunk = ASSISTANT_KNOWLEDGE.find((c) => c.id === "plan-gates");
+    assert.ok(chunk);
+    assert.match(chunk!.en, /\/ultra/);
+    assert.doesNotMatch(chunk!.en, /pro_canvas/);
   });
 
   it("skips landing coach fast-path for ask queries", () => {

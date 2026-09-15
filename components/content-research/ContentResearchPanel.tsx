@@ -184,7 +184,10 @@ export function ContentResearchPanel({
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? cr.failed);
+      if (!res.ok) {
+        if (res.status === 401) throw new Error(cr.signInRequired);
+        throw new Error(data.error ?? cr.failed);
+      }
       setPlan(data.plan as ContentResearchPlan);
       setNote(
         researchSourceNote(data.plan as ContentResearchPlan, cr, "keyword"),
@@ -240,7 +243,10 @@ export function ContentResearchPanel({
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? cr.directPostFailed);
+      if (!res.ok) {
+        if (res.status === 401) throw new Error(cr.signInRequired);
+        throw new Error(data.error ?? cr.directPostFailed);
+      }
       setPlan(data.plan as ContentResearchPlan);
       setNote(
         researchSourceNote(data.plan as ContentResearchPlan, cr, "direct-post"),

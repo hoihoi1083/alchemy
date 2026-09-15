@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
 import { AssistantMascotLauncher } from "@/components/assistant/AssistantMascotLauncher";
 import { useLocale } from "@/components/LocaleProvider";
 import { useOptionalWizard } from "@/components/studio/WizardContext";
@@ -186,6 +187,7 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
   const router = useRouter();
   const { m, locale } = useLocale();
   const sa = m.studioAssistant;
+  const { isSignedIn } = useAuth();
   const wizard = useOptionalWizard();
 
   const [hydrated, setHydrated] = useState(false);
@@ -318,11 +320,9 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
           lastUserMessage(messages));
 
       if (actionNavigatesAway(parsed) && surface !== "studio") {
-        const note =
-          parsed === "setup-website-reel" ? sa.openingStudio : sa.openingStudio;
         const nextMessages: ChatMessage[] = [
           ...messages,
-          { role: "assistant", content: note },
+          { role: "assistant", content: sa.openingStudio },
         ];
         setMessages(nextMessages);
         persistChatNow(nextMessages, true);
@@ -608,7 +608,7 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
           </div>
 
           <div className="shrink-0 border-t border-violet-100 p-3">
-            {showContentResearch && (
+            {showContentResearch && isSignedIn && (
               <div className="mb-3 max-h-[min(40vh,320px)] overflow-y-auto rounded-xl border border-emerald-200 bg-emerald-50/40 p-2">
                 <ContentResearchPanel
                   compact
@@ -653,9 +653,16 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
             <div className="mb-2 flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={() => setShowContentResearch((v) => !v)}
+                onClick={() => {
+                  if (!isSignedIn) {
+                    setShowContentResearch(false);
+                    appendAssistant(sa.researchNeedsSignIn);
+                    return;
+                  }
+                  setShowContentResearch((v) => !v);
+                }}
                 className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-                  showContentResearch
+                  showContentResearch && isSignedIn
                     ? "border-emerald-500 bg-emerald-100 text-emerald-950"
                     : "border-emerald-300 bg-emerald-50 text-emerald-900 hover:bg-emerald-100"
                 }`}

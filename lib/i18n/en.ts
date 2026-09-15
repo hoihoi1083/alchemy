@@ -6592,6 +6592,8 @@ export const en = {
 		directPostFailed: "Could not load this post. Check the link is public.",
 		busy: "Searching the web + analyzing…",
 		failed: "Content research failed. Try again.",
+		signInRequired:
+			"Sign in required for platform research (Standard plan or higher).",
 		searchCooldown:
 			"XHS API needs a short cooldown — wait {seconds}s before searching again.",
 		topicRequired: "Enter a search keyword first.",
@@ -6775,6 +6777,8 @@ export const en = {
 		chipProductImagePost: "Product image post",
 		chipUltraCanvas: "Ultra canvas",
 		chipContentResearch: "Research platform topics",
+		researchNeedsSignIn:
+			"Platform research needs a signed-in account (Standard plan or higher). [Sign in](/sign-in) — then tap **Research platform topics** again. You can still ask me about tokens and paths without signing in.",
 		unknownAction:
 			"That button didn't work — use the button below instead.",
 		renewConversation: "New chat",

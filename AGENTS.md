@@ -53,7 +53,7 @@
 ## Assistant (landing-only)
 
 - Mascot chat mounts on `/` only (`GlobalStudioAssistant` → `isStudioAssistantMounted`).
-- **Open to everyone** — no sign-in required to chat on landing (fast-path routes + chips). Open-ended Q&A requires sign-in.
+- **Open to everyone** — no sign-in required on landing for fast-path routes/chips **or** open-ended Q&A (anon DeepSeek IP quota; signed-in users get a higher daily quota). Generation / research APIs still require sign-in.
 - Landing: Q&A (tokens, pages, engines) + action buttons into `/studio` or tool routes.
 - `/studio`: no chat coach — users follow wizard cards on screen.
 - In-studio step coach, spotlight overlay, and `initialCoachTaskAfterHandoff` are **dormant** (kept for re-enable).
