@@ -223,18 +223,17 @@ const LANDING_LAYOUT_CSS = `
 }
 .landing-story-phone-fan {
   /* Height owns the layout — phones are 9:16 of THIS box, not of viewport width */
-  height: min(56vh, 480px);
+  height: min(64vh, 560px);
   width: 100%;
-  max-width: min(100%, 420px);
+  max-width: min(100%, 520px);
   margin-inline: auto;
-  /* Side cards rotate past the phone edges; keep gutter so they are not clipped */
   overflow: visible;
 }
 .landing-story-phone {
-  /* Fit inside fan height so mid-laptop viewports do not crop top/bottom */
-  height: 92%;
+  /* Height-driven 9:16 — avoid a tight max-width % that shrinks phones too small */
+  height: 96%;
   width: auto;
-  max-width: 52%;
+  max-width: none;
   aspect-ratio: 9 / 16;
   border: 0;
   padding: 0;
@@ -255,34 +254,32 @@ const LANDING_LAYOUT_CSS = `
 }
 @media (min-width: 768px) {
   .landing-story-wheel-grid {
-    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr) !important;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr) !important;
     gap: 1.75rem !important;
     padding-left: 1.5rem;
-    padding-right: 2rem;
+    padding-right: 2.25rem;
   }
   .landing-story-phone-fan {
-    height: min(58vh, 520px);
-    max-width: min(100%, 460px);
+    height: min(68vh, 600px);
+    max-width: min(100%, 560px);
   }
   .landing-story-phone {
-    height: 90%;
-    max-width: 50%;
+    height: 95%;
   }
 }
 @media (min-width: 1280px) {
   .landing-story-wheel-grid {
-    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr) !important;
-    gap: 2.25rem !important;
+    grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr) !important;
+    gap: 2rem !important;
     padding-left: 2.5rem;
     padding-right: 3rem;
   }
   .landing-story-phone-fan {
-    height: min(60vh, 560px);
-    max-width: min(100%, 500px);
+    height: min(70vh, 640px);
+    max-width: min(100%, 580px);
   }
   .landing-story-phone {
-    height: 90%;
-    max-width: 48%;
+    height: 94%;
   }
 }
 

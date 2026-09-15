@@ -286,19 +286,18 @@ export function LandingStoryWheel() {
             rootMargin="0px 0px -8% 0px"
             className="min-h-0 min-w-0"
           >
-          <div className="relative flex min-h-0 min-w-0 flex-col items-center justify-center overflow-visible px-4 sm:px-5 lg:px-8">
+          <div className="relative flex min-h-0 min-w-0 flex-col items-center justify-center overflow-visible px-2 sm:px-3 lg:px-5">
             <div className="landing-story-phone-fan relative w-full">
               {slides.map((slide, i) => {
                 let d = i - activeIndex;
                 while (d > n / 2) d -= n;
                 while (d < -n / 2) d += n;
                 const abs = Math.abs(d);
-                // Side offsets must stay inside the right column. Phone size is
-                // height-driven (see .landing-story-phone); keep spread modest.
-                const xPct = d * 16;
-                const rotate = d * 6;
-                const scale = clamp(1 - abs * 0.08, 0.86, 1);
-                const yPx = abs * 8;
+                // Modest spread — phones are larger again; keep side cards on-canvas.
+                const xPct = d * 18;
+                const rotate = d * 7;
+                const scale = clamp(1 - abs * 0.07, 0.88, 1);
+                const yPx = abs * 10;
                 const z = 20 - Math.round(abs * 8);
                 const opacity = abs > 1.15 ? 0 : 1;
                 const front = abs < 0.35;
@@ -308,7 +307,7 @@ export function LandingStoryWheel() {
                     key={slide.id}
                     type="button"
                     aria-label={slide.eyebrow}
-                    className="landing-story-phone absolute left-1/2 top-[4%] origin-bottom will-change-transform"
+                    className="landing-story-phone absolute left-1/2 top-[2%] origin-bottom will-change-transform"
                     style={{
                       transform: `translate3d(calc(-50% + ${xPct}%), ${yPx}px, 0) rotate(${rotate}deg) scale(${scale})`,
                       opacity,
