@@ -37,7 +37,6 @@ import type {
   AssistantSurface,
   StudioAssistantMessage,
 } from "@/lib/studio-assistant-types";
-import { ContentResearchPanel } from "@/components/content-research/ContentResearchPanel";
 import { readCaptionHandoff } from "@/lib/caption-studio-draft";
 import { IMAGE_CANVAS_DRAFT_KEY } from "@/lib/image-canvas-studio-draft";
 import { isSafeAssistantPath } from "@/lib/studio-assistant-allowed-paths";
@@ -222,7 +221,6 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
   const pendingUrlRef = useRef<string | null>(null);
   const lastCoachTaskRef = useRef<CoachTaskKind | null>(null);
   const [coachAckTick, setCoachAckTick] = useState(0);
-  const [showContentResearch, setShowContentResearch] = useState(false);
 
   const showQuickChips = isLandingLikeSurface(surface);
   const darkChrome = usesDarkAssistantChrome(surface);
@@ -885,94 +883,28 @@ export function StudioAssistantWidget({ surface }: { surface: AssistantSurface }
           </div>
 
           <div className="shrink-0 border-t border-violet-100 p-3">
-            {showContentResearch && isSignedIn && (
-              <div className="mb-3 max-h-[min(40vh,320px)] overflow-y-auto rounded-xl border border-emerald-200 bg-emerald-50/40 p-2">
-                <ContentResearchPanel
-                  compact
-                  defaultTopic={
-                    wizard?.conceptIdea?.trim() ||
-                    wizard?.product?.trim() ||
-                    wizard?.headline?.trim() ||
-                    ""
-                  }
-                  promotionMode={wizard?.promotionMode ?? "concept"}
-                  market={wizard?.promptMarket ?? "hk"}
-                  workflowMode={wizard?.workflowMode ?? "image-only"}
-                  wizard={
-                    wizard
-                      ? {
-                          setHeadline: wizard.setHeadline,
-                          setSubline: wizard.setSubline,
-                          setOffer: wizard.setOffer,
-                          setConceptIdea: wizard.setConceptIdea,
-                          setProduct: wizard.setProduct,
-                          setPromptExtra: wizard.setPromptExtra,
-                          setImageOutputMode: wizard.setImageOutputMode,
-                          setImageAspectRatio: wizard.setImageAspectRatio,
-                          setCampaignTheme: wizard.setCampaignTheme,
-                          selectVisualStyle: wizard.selectVisualStyle,
-                          onWorkflowModeChange: wizard.onWorkflowModeChange,
-                          setContentResearchApplyRef: wizard.setContentResearchApplyRef,
-                        }
-                      : undefined
-                  }
-                  navigateOnApply={
-                    isLandingLikeSurface(surface) ? (path) => router.push(path) : undefined
-                  }
-                  onApplied={() => {
-                    appendAssistant(m.contentResearch.applied);
-                    setShowContentResearch(false);
-                  }}
-                />
-              </div>
-            )}
             {showQuickChips && (
-            <div className="mb-2 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  if (!isSignedIn) {
-                    setShowContentResearch(false);
-                    appendAssistant(sa.researchNeedsSignIn);
-                    return;
-                  }
-                  setShowContentResearch((v) => !v);
-                }}
-                className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-                  showContentResearch && isSignedIn
-                    ? "border-emerald-500 bg-emerald-100 text-emerald-950"
-                    : "border-emerald-300 bg-emerald-50 text-emerald-900 hover:bg-emerald-100"
-                }`}
-              >
-                {sa.chipContentResearch}
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  void handleAction("open-physical-studio", {
-                    campaignMessage:
-                      "I want a post with images about my product",
-                  })
-                }
-                className="rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-900 transition hover:bg-emerald-100"
-              >
-                {sa.chipProductImagePost}
-              </button>
-              <button
-                type="button"
-                onClick={() => void handleAction("open-ultra-canvas")}
-                className="rounded-full border border-fuchsia-300 bg-fuchsia-50 px-3 py-1.5 text-xs font-medium text-fuchsia-900 transition hover:bg-fuchsia-100"
-              >
-                {sa.chipUltraCanvas}
-              </button>
-              <button
-                type="button"
-                onClick={() => void handleAction("setup-website-reel")}
-                className="rounded-full border border-violet-300 bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-800 transition hover:bg-violet-100"
-              >
-                {sa.chipSetupWebsite}
-              </button>
-            </div>
+              <div className="mb-2.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    trackAssistantActionClick({
+                      actionId: "start-creating",
+                      surface,
+                    });
+                    router.push("/start");
+                  }}
+                  className="group flex w-full items-center justify-center gap-2 rounded-full bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-violet-600/25 transition hover:bg-violet-500 hover:shadow-md hover:shadow-violet-600/30 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 focus-visible:ring-offset-2"
+                >
+                  <span>{sa.chipStartCreating}</span>
+                  <span
+                    aria-hidden
+                    className="translate-x-0 text-base leading-none transition group-hover:translate-x-0.5"
+                  >
+                    →
+                  </span>
+                </button>
+              </div>
             )}
             <div className="flex gap-2">
               <input

@@ -6773,12 +6773,7 @@ export const en = {
 			"Brand analyzed — {name}. Suggested headline: {headline}. Check Setup, then Continue to image.",
 		brandAnalyzeFailed:
 			"Couldn't analyze the site right now. Paste your URL in Setup and click Analyze brand, or try again.",
-		chipSetupWebsite: "Set up & open studio",
-		chipProductImagePost: "Product image post",
-		chipUltraCanvas: "Ultra canvas",
-		chipContentResearch: "Research platform topics",
-		researchNeedsSignIn:
-			"Platform research needs a signed-in account (Standard plan or higher). [Sign in](/sign-in) — then tap **Research platform topics** again. You can still ask me about tokens and paths without signing in.",
+		chipStartCreating: "Start creating",
 		unknownAction:
 			"That button didn't work — use the button below instead.",
 		renewConversation: "New chat",

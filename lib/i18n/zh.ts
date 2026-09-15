@@ -6162,12 +6162,7 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 			"已分析品牌 — {name}。建議 headline：{headline}。請檢查設定步，然後繼續出圖。",
 		brandAnalyzeFailed:
 			"暫時無法分析網站。請在設定步貼網址再按「分析品牌」，或稍後再試。",
-		chipSetupWebsite: "一鍵設定並進入工作室",
-		chipProductImagePost: "產品圖文帖",
-		chipUltraCanvas: "Ultra 畫布",
-		chipContentResearch: "研究平台內容方向",
-		researchNeedsSignIn:
-			"平台內容研究要登入（Standard 或以上）。[登入](/sign-in) — 再撳一次「研究平台內容方向」。唔登入都可以繼續問 Tokens 同路徑。",
+		chipStartCreating: "開始製作",
 		unknownAction: "嗰個掣冇反應 — 請用下面呢個掣。",
 		renewConversation: "重新對話",
 		returningNudge: "歡迎返嚟 — [字幕工具](/captions-2) 幫最近影片加字幕，或者問我 tokens。",
