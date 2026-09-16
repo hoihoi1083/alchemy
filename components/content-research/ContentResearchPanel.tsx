@@ -28,6 +28,7 @@ import {
   localizeResearchWarning,
   researchSourceNote,
 } from "@/lib/content-research-ui-messages";
+import { detectPlatformFromPostUrl } from "@/lib/content-research-post-url";
 import { writeStudioAssistantHandoff } from "@/lib/studio-assistant-handoff";
 import { markAssistantReopenAfterNavigate } from "@/lib/studio-assistant-chat-storage";
 import { studioHref } from "@/lib/promotion-mode";
@@ -219,9 +220,9 @@ export function ContentResearchPanel({
       setError(cr.promoteProductRequired);
       return;
     }
-    if (platformMismatch) {
-      setError(cr.tiktokImageWarning);
-      return;
+    const linkPlatform = detectPlatformFromPostUrl(trimmedUrl);
+    if (linkPlatform && (researchPlatforms as readonly string[]).includes(linkPlatform)) {
+      setPlatform(linkPlatform);
     }
     setBusy(true);
     setError(null);
@@ -236,10 +237,8 @@ export function ContentResearchPanel({
           postUrl: trimmedUrl,
           topic: topic.trim() || promoteProduct.trim() || undefined,
           product: promoteProduct.trim() || undefined,
-          platform,
           market,
           promotionMode,
-          mediaFilter,
         }),
       });
       const data = await res.json();
@@ -247,16 +246,16 @@ export function ContentResearchPanel({
         if (res.status === 401) throw new Error(cr.signInRequired);
         throw new Error(data.error ?? cr.directPostFailed);
       }
-      setPlan(data.plan as ContentResearchPlan);
-      setNote(
-        researchSourceNote(data.plan as ContentResearchPlan, cr, "direct-post"),
-      );
+      const nextPlan = data.plan as ContentResearchPlan;
+      setPlan(nextPlan);
+      if (nextPlan.platform) setPlatform(nextPlan.platform);
+      setNote(researchSourceNote(nextPlan, cr, "direct-post"));
       setWarning(
         data.researchWarning
           ? localizeResearchWarning(
               String(data.researchWarning),
               cr,
-              platform,
+              nextPlan.platform ?? linkPlatform ?? platform,
             )
           : null,
       );
@@ -819,7 +818,15 @@ export function ContentResearchPanel({
         </label>
         <input
           value={postUrl}
-          onChange={(e) => setPostUrl(e.target.value)}
+          onChange={(e) => {
+            const next = e.target.value;
+            setPostUrl(next);
+            const linkPlatform = detectPlatformFromPostUrl(next);
+            if (linkPlatform && (researchPlatforms as readonly string[]).includes(linkPlatform)) {
+              setPlatform(linkPlatform);
+              setError(null);
+            }
+          }}
           placeholder={cr.directPostUrlPlaceholder}
           className={`mt-1.5 w-full rounded-xl border-2 bg-white px-3 py-3 text-sm text-slate-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/15 ${
             violet ? "border-violet-200" : "border-emerald-200"
@@ -830,7 +837,6 @@ export function ContentResearchPanel({
           onClick={() => void runDirectPost()}
           disabled={
             busy ||
-            Boolean(platformMismatch) ||
             !postUrl.trim() ||
             (promotionMode === "physical" && !promoteProduct.trim())
           }

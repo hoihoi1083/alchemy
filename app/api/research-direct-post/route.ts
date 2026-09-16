@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { assertPlatformResearchAllowed } from "@/lib/billing/assert-platform-research";
 import { planContentResearchFromDirectPost } from "@/lib/content-research-direct-post";
-import { detectPlatformFromPostUrl, normalizePostUrlInput } from "@/lib/content-research-post-url";
-import { isContentPlatform } from "@/lib/content-research-plan";
+import { normalizePostUrlInput } from "@/lib/content-research-post-url";
 import { requireAppUser } from "@/lib/require-app-user";
 import { asPromptMarket, type PromptMarket } from "@/lib/prompt-variables";
 
@@ -37,15 +36,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Paste a post link first." }, { status: 400 });
   }
 
-  const detected = detectPlatformFromPostUrl(postUrl);
-  const platformOverride = String(body.platform ?? "").trim();
-  if (platformOverride && isContentPlatform(platformOverride) && detected && platformOverride !== detected) {
-    return NextResponse.json(
-      { error: `Link looks like ${detected}, but ${platformOverride} is selected. Clear platform or match the link.` },
-      { status: 400 },
-    );
-  }
-
   try {
     const plan = await planContentResearchFromDirectPost({
       postUrl,
@@ -56,7 +46,8 @@ export async function POST(request: Request) {
         body.promotionMode === "physical" || body.promotionMode === "concept"
           ? body.promotionMode
           : "concept",
-      mediaFilter: body.mediaFilter === "image" || body.mediaFilter === "video" ? body.mediaFilter : undefined,
+      // Paste-link wins: ignore keyword-search platform chips and workflow media filter.
+      mediaFilter: undefined,
     });
 
     const filterNote =
