@@ -4,6 +4,7 @@ import {
   detectPlatformFromPostUrl,
   extractPostRefFromUrl,
   instagramShortcodeFromUrl,
+  instagramUsernameFromUrl,
   normalizePostUrlInput,
   xhsNoteIdFromUrl,
 } from "../lib/content-research-post-url";
@@ -35,6 +36,14 @@ describe("content-research-post-url", () => {
       instagramShortcodeFromUrl("https://www.instagram.com/reel/ABC123xyz/"),
       "ABC123xyz",
     );
+  });
+
+  it("extracts Instagram username from /user/p/ paths only", () => {
+    assert.equal(
+      instagramUsernameFromUrl("https://www.instagram.com/mightytechieofficial/p/DdMljyFjTXX/"),
+      "mightytechieofficial",
+    );
+    assert.equal(instagramUsernameFromUrl("https://www.instagram.com/p/DdMljyFjTXX/"), null);
   });
 
   it("normalizes URLs without scheme", () => {

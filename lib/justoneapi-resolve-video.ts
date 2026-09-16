@@ -37,14 +37,15 @@ export async function resolvePostVideoUrl(
       const code = igShortcode(postId, postUrl);
       if (!code) return undefined;
       const body = await fetchJustOneApi(
-        "/api/instagram/get-media/v1",
+        "/api/instagram/get-post-detail/v1",
         { code },
         "Instagram media detail for video",
       );
       const data = asRecord(body.data) ?? body;
+      const nested = asRecord(data.data);
       const items = data.items;
       const first = Array.isArray(items) ? asRecord(items[0]) : null;
-      const media = asRecord(data.media) ?? first ?? data;
+      const media = nested ?? asRecord(data.media) ?? first ?? data;
       return pickVideoUrl(
         media?.video_url,
         Array.isArray(media?.video_versions) ? media.video_versions[0] : undefined,

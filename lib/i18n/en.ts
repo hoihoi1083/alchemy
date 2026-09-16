@@ -6583,10 +6583,10 @@ export const en = {
 		directPostBadge: "Shortcut",
 		directPostTitle: "Or paste a post you want to match",
 		directPostHint:
-			"Already have a target post? Paste the link — skip keyword search. Supports xhslink, RedNote explore links, and Instagram /p/ or /reel/ URLs. In physical mode, fill product name above first. If xhslink fails, copy the full link from the app (Share → Copy link).",
+			"Already have a target post? Paste the link — skip keyword search. Supports xhslink, RedNote explore, Instagram /p/ or /reel/, and public Facebook posts/videos (prefer facebook.com/{pageId}/posts/… or /videos/…). In physical mode, fill product name above first. If xhslink fails, copy the full link from the app (Share → Copy link).",
 		directPostUrlLabel: "Reference post link",
 		directPostUrlPlaceholder:
-			"e.g. http://xhslink.com/o/… · instagram.com/reel/…",
+			"e.g. xhslink · instagram.com/reel/… · facebook.com/…/posts/…",
 		directPostBtn: "Use this post",
 		postUrlRequired: "Paste a post link first.",
 		directPostFailed: "Could not load this post. Check the link is public.",

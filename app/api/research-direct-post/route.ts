@@ -38,12 +38,6 @@ export async function POST(request: Request) {
   }
 
   const detected = detectPlatformFromPostUrl(postUrl);
-  if (detected === "facebook") {
-    return NextResponse.json(
-      { error: "Facebook post links are not supported for research." },
-      { status: 400 },
-    );
-  }
   const platformOverride = String(body.platform ?? "").trim();
   if (platformOverride && isContentPlatform(platformOverride) && detected && platformOverride !== detected) {
     return NextResponse.json(

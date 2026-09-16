@@ -93,6 +93,20 @@ export function instagramShortcodeFromUrl(url: string): string | null {
   return m?.[1] ?? null;
 }
 
+/** Username from `/username/p/…` or `/username/reel/…` (not bare `/p/…`). */
+export function instagramUsernameFromUrl(url: string): string | null {
+  try {
+    const path = new URL(normalizePostUrlInput(url)).pathname;
+    const m = path.match(/^\/([A-Za-z0-9._]+)\/(?:reel|p|tv)\//i);
+    if (!m) return null;
+    const user = m[1];
+    if (/^(reel|p|tv|stories|explore|accounts|direct)$/i.test(user)) return null;
+    return user;
+  } catch {
+    return null;
+  }
+}
+
 export function tiktokVideoIdFromUrl(url: string): string | null {
   const m = url.match(/\/video\/(\d+)/i);
   return m?.[1] ?? null;
@@ -201,5 +215,9 @@ export function extractPostRefFromUrl(
 }
 
 export function directPostUrlSupported(platform: ContentPlatform): boolean {
-  return platform === "xiaohongshu" || platform === "instagram";
+  return (
+    platform === "xiaohongshu" ||
+    platform === "instagram" ||
+    platform === "facebook"
+  );
 }
