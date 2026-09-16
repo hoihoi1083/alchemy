@@ -27,6 +27,15 @@ describe("mixpanel-attribution", () => {
       classifyTrafficSource({ fbclid: "abc" }),
       "meta_ads",
     );
+    // Organic FB posts also get fbclid — UTMs must win over the click id.
+    assert.equal(
+      classifyTrafficSource({
+        utmSource: "facebook",
+        utmMedium: "social",
+        fbclid: "IwY2xjaw...",
+      }),
+      "social_facebook",
+    );
     assert.equal(
       classifyTrafficSource({ referrer: "https://l.facebook.com/" }),
       "social_facebook",

@@ -149,7 +149,7 @@ export async function POST(request: Request) {
         );
       }
 
-      const charged = await chargeTokens(auth.user.userId, tokenCost, { kind: "bgm" });
+      const charged = await chargeTokens(auth.user.userId, tokenCost, { kind: "bgm" }, request);
       if ("error" in charged) return charged.error;
 
       try {
@@ -208,7 +208,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "video_url is required." }, { status: 400 });
     }
 
-    const charged = await chargeTokens(auth.user.userId, tokenCost, { kind: "bgm" });
+    const charged = await chargeTokens(auth.user.userId, tokenCost, { kind: "bgm" }, request);
     if ("error" in charged) return charged.error;
 
     try {

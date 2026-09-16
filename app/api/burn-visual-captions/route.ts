@@ -94,7 +94,7 @@ export async function POST(request: Request) {
       const bill = await chargeTokens(auth.user.userId, tokenCost, {
         kind: "caption_burn",
         method: "visual",
-      });
+      }, request);
       if ("error" in bill) return bill.error;
       charged = true;
       const result = await burnVisualJob(request, {
@@ -130,7 +130,7 @@ export async function POST(request: Request) {
     const bill = await chargeTokens(auth.user.userId, tokenCost, {
       kind: "caption_burn",
       method: "visual",
-    });
+    }, request);
     if ("error" in bill) return bill.error;
     charged = true;
     const result = await burnVisualJob(request, {

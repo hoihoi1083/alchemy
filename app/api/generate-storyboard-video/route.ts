@@ -243,7 +243,7 @@ export async function POST(request: Request) {
       kind: firstKind,
       via: runSeedanceFirst ? "storyboard_seedance_r2v" : "storyboard_primary",
       sceneCount: sourceCount,
-    });
+    }, request);
     if ("error" in charged) return charged.error;
     firstCharged = charged;
   }
@@ -380,7 +380,7 @@ export async function POST(request: Request) {
       sceneCount: imageUrls.length,
       clipDurations,
       via: "storyboard_wallet_kling",
-    });
+    }, request);
     if ("error" in klingCharged) return klingCharged.error;
     try {
       console.info(
@@ -470,7 +470,7 @@ export async function POST(request: Request) {
       kind: "minimax_h3",
       via: "storyboard_after_seedance",
       sceneCount: sourceCount,
-    });
+    }, request);
     if ("error" in h3Charged) return h3Charged.error;
     try {
       return await runH3AndReturn(h3Charged.balanceAfter, h3Cost);
@@ -527,7 +527,7 @@ export async function POST(request: Request) {
     sceneCount: imageUrls.length,
     clipDurations,
     via: "storyboard_after_h3",
-  });
+  }, request);
   if ("error" in klingCharged) return klingCharged.error;
 
   try {

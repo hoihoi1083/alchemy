@@ -150,7 +150,7 @@ export async function POST(req: Request) {
     endpoint,
     mode: useErase ? "erase" : "fill",
     megapixels: Math.ceil(Math.max(1, megapixels)),
-  });
+  }, req);
   if ("error" in charged) return charged.error;
 
   fal.config({ credentials: key });

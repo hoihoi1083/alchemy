@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale } from "@/components/LocaleProvider";
 import { applyStudioAssistantHandoff } from "@/lib/studio-assistant-apply-handoff";
+import { billingFetch } from "@/lib/billing-idempotency-client";
 import {
 	consumeStudioAssistantHandoff,
 } from "@/lib/studio-assistant-handoff";
@@ -4136,7 +4137,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				);
 			}
 
-			const res = await fetch("/api/generate-image", {
+			const res = await billingFetch("/api/generate-image", {
 				method: "POST",
 				body: fd,
 			});
@@ -5096,7 +5097,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		});
 		setImageBusy(true);
 		try {
-			const res = await fetch("/api/burn-image-canvas", {
+			const res = await billingFetch("/api/burn-image-canvas", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				credentials: "include",
@@ -5242,7 +5243,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			fd.set("subline", subline.trim());
 			fd.set("offer", offer.trim());
 			fd.set("art_style", artStyleId);
-			const res = await fetch("/api/inpaint-image", {
+			const res = await billingFetch("/api/inpaint-image", {
 				method: "POST",
 				body: fd,
 				credentials: "include",
@@ -5294,7 +5295,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			fd.set("subline", subline.trim());
 			fd.set("offer", offer.trim());
 			fd.set("art_style", artStyleId);
-			const res = await fetch("/api/inpaint-image", {
+			const res = await billingFetch("/api/inpaint-image", {
 				method: "POST",
 				body: fd,
 				credentials: "include",
@@ -5928,7 +5929,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					brandKitForGeneration(liveKit) ?? liveKit;
 				if (liveKit !== brandKit) setBrandKit(liveKit);
 
-        const genRes = await fetch("/api/generate-cinematic-scenes", {
+        const genRes = await billingFetch("/api/generate-cinematic-scenes", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -6023,7 +6024,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 						? EDIT_ENDPOINT
 						: TEXT_ENDPOINT,
 				);
-				const res = await fetch("/api/generate-campaign", {
+				const res = await billingFetch("/api/generate-campaign", {
 					method: "POST",
 					body: fd,
 				});
@@ -6091,7 +6092,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 						? EDIT_ENDPOINT
 						: TEXT_ENDPOINT,
 				);
-				const res = await fetch("/api/generate-teaching-carousel", {
+				const res = await billingFetch("/api/generate-teaching-carousel", {
 					method: "POST",
 					body: fd,
 				});
@@ -6131,7 +6132,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			}
       setImageBusy(true);
       try {
-        const res = await fetch("/api/generate-image", {
+        const res = await billingFetch("/api/generate-image", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -6226,7 +6227,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				fd.set("image_output_mode", effectiveImageOutputMode);
 				// No product/style pixels — logo is not auto-added; user adds it later.
 
-        const res = await fetch("/api/generate-image", {
+        const res = await billingFetch("/api/generate-image", {
           method: "POST",
 					body: fd,
 				});
@@ -6353,7 +6354,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				fd.set("reference_image", productPhotoForGen);
 			}
 
-			const res = await fetch("/api/generate-image", {
+			const res = await billingFetch("/api/generate-image", {
 				method: "POST",
 				body: fd,
 			});
@@ -6911,7 +6912,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		}
 		appendReferenceFormFields(fd);
 
-		const res = await fetch("/api/generate-image", {
+		const res = await billingFetch("/api/generate-image", {
 			method: "POST",
 			body: fd,
 		});
@@ -7042,7 +7043,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			}
 		}
 
-		const res = await fetch("/api/generate-storyboard-video", {
+		const res = await billingFetch("/api/generate-storyboard-video", {
 			method: "POST",
 			body: fd,
 		});
@@ -7192,7 +7193,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			fd.set("stock_avatar_id", presenterAvatarId);
 		}
 
-		const res = await fetch("/api/generate-digital-presenter", {
+		const res = await billingFetch("/api/generate-digital-presenter", {
 			method: "POST",
 			body: fd,
 		});
@@ -7272,7 +7273,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     fd.set("fast", vOpts.fast ? "true" : "false");
     fd.set("image_start_url", imageUrl);
 
-    const res = await fetch("/api/generate", { method: "POST", body: fd });
+    const res = await billingFetch("/api/generate", { method: "POST", body: fd });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? m.errors.videoFailed);
 		notifyCreditBalance(readCreditBalanceFromResponse(data));
@@ -7515,7 +7516,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				);
 				if (logoFile) fd.append("product_angle_images", logoFile);
 			}
-			const res = await fetch("/api/generate-image", {
+			const res = await billingFetch("/api/generate-image", {
 				method: "POST",
 				body: fd,
 			});
@@ -7640,7 +7641,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			finishFd.set("caption_text", blockbusterCaptionText.trim());
 			finishFd.set("end_logo", "0");
 			finishFd.set("hero_hold", blockbusterHeroHold ? "1" : "0");
-			const finishRes = await fetch("/api/finish-blockbuster", {
+			const finishRes = await billingFetch("/api/finish-blockbuster", {
 				method: "POST",
 				body: finishFd,
 			});
@@ -7785,7 +7786,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			fd.set("brand_kit", JSON.stringify(brandKit));
 			fd.set("endpoint", productPhoto ? EDIT_ENDPOINT : TEXT_ENDPOINT);
 			if (productPhoto) fd.set("reference_image", productPhoto);
-			const res = await fetch("/api/generate-image", {
+			const res = await billingFetch("/api/generate-image", {
 				method: "POST",
 				body: fd,
 			});
@@ -8138,7 +8139,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		);
 		fd.set("fast", "false");
 
-		const res = await fetch("/api/generate-minimax-h3", {
+		const res = await billingFetch("/api/generate-minimax-h3", {
 			method: "POST",
 			body: fd,
 		});
@@ -8214,7 +8215,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				fd.set("start_plate_url", startPlateUrl);
 			attachReferenceToForm(fd);
 
-			const res = await fetch("/api/generate-image", {
+			const res = await billingFetch("/api/generate-image", {
 				method: "POST",
 				body: fd,
 			});
@@ -8362,7 +8363,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		else if (endUrl) fd.set("image_end_url", endUrl);
 
 		// Motion poster is MiniMax H3 only — never attach leftover research MP4.
-		const res = await fetch("/api/generate-minimax-h3", {
+		const res = await billingFetch("/api/generate-minimax-h3", {
 			method: "POST",
 			body: fd,
 		});
@@ -8538,7 +8539,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				fd.set("start_plate_url", startPlateUrl);
 			attachReferenceToForm(fd);
 
-			const res = await fetch("/api/generate-image", {
+			const res = await billingFetch("/api/generate-image", {
 				method: "POST",
 				body: fd,
 			});
@@ -8653,7 +8654,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		fd.set("image_start_url", startUrl);
 		fd.set("image_end_url", endUrl);
 
-		const res = await fetch("/api/generate-minimax-h3", {
+		const res = await billingFetch("/api/generate-minimax-h3", {
 			method: "POST",
 			body: fd,
 		});
@@ -8728,7 +8729,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				m.wizard.vacuumInflateNeedKeyframe,
 			);
 
-			const res = await fetch("/api/generate-image", {
+			const res = await billingFetch("/api/generate-image", {
 				method: "POST",
 				body: fd,
 			});
@@ -8776,7 +8777,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			"duration",
 			String(Math.max(5, input.recipeDurationSec)),
 		);
-		const h3Res = await fetch("/api/generate-minimax-h3", {
+		const h3Res = await billingFetch("/api/generate-minimax-h3", {
 			method: "POST",
 			body: h3Fd,
 		});
@@ -8814,7 +8815,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		seedFd.set("duration", String(input.recipeDurationSec));
 		seedFd.set("generate_audio", "false");
 		seedFd.set("fast", "true");
-		const seedRes = await fetch("/api/generate", {
+		const seedRes = await billingFetch("/api/generate", {
 			method: "POST",
 			body: seedFd,
 		});
@@ -8987,7 +8988,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				fd.set("start_plate_url", startPlateUrl);
 			attachReferenceToForm(fd);
 
-			const res = await fetch("/api/generate-image", {
+			const res = await billingFetch("/api/generate-image", {
 				method: "POST",
 				body: fd,
 			});
@@ -9179,7 +9180,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				m.wizard.creativeMotionNeedKeyframe,
 			);
 
-			const res = await fetch("/api/generate-image", {
+			const res = await billingFetch("/api/generate-image", {
 				method: "POST",
 				body: fd,
 			});
@@ -9352,7 +9353,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				m.wizard.handThrowNeedKeyframe,
 			);
 
-			const res = await fetch("/api/generate-image", {
+			const res = await billingFetch("/api/generate-image", {
 				method: "POST",
 				body: fd,
 			});
@@ -9512,7 +9513,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				m.wizard.webBoundaryNeedKeyframe,
 			);
 
-			const res = await fetch("/api/generate-image", {
+			const res = await billingFetch("/api/generate-image", {
 				method: "POST",
 				body: fd,
 			});
@@ -9698,7 +9699,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				m.wizard.productExplodeNeedKeyframe,
 			);
 
-			const res = await fetch("/api/generate-image", {
+			const res = await billingFetch("/api/generate-image", {
 				method: "POST",
 				body: fd,
 			});
@@ -9857,7 +9858,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				m.wizard.bulletProductElevateNeedKeyframe,
 			);
 
-			const res = await fetch("/api/generate-image", {
+			const res = await billingFetch("/api/generate-image", {
 				method: "POST",
 				body: fd,
 			});
@@ -10173,7 +10174,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         aiMusicUrl = existing.audioUrl;
       } else if (plan.music.promptEn?.trim()) {
 				trackGenerateStarted("music", { source: "wizard_pack" });
-        const res = await fetch("/api/generate-music", {
+        const res = await billingFetch("/api/generate-music", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -10234,7 +10235,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     setVoicePreviewBusy(true);
     setError(null);
     try {
-      const res = await fetch("/api/preview-script-voice", {
+      const res = await billingFetch("/api/preview-script-voice", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -10279,7 +10280,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
     setError(null);
 		trackGenerateStarted("music", { source: "wizard" });
     try {
-      const res = await fetch("/api/generate-music", {
+      const res = await billingFetch("/api/generate-music", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -10493,7 +10494,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		const selectedPreview = voicePreviewTracks.find(
 			(t: VoicePreviewTrack) => t.id === selectedVoicePreviewId,
 		);
-    const res = await fetch("/api/dub-script-voice", {
+    const res = await billingFetch("/api/dub-script-voice", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -10533,7 +10534,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		}
 		if ((!captionBurnEnabled && !opts?.force) || caps.length === 0)
 			return videoUrlIn;
-    const res = await fetch("/api/burn-script-captions", {
+    const res = await billingFetch("/api/burn-script-captions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({
@@ -10580,7 +10581,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       body.track = bgmTrack;
     }
 
-    const res = await fetch("/api/add-bgm", {
+    const res = await billingFetch("/api/add-bgm", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),

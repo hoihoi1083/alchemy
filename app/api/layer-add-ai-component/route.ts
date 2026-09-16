@@ -42,7 +42,7 @@ export async function POST(request: Request) {
   const charged = await chargeTokens(auth.user.userId, tokenCost, {
     kind: "image",
     mode: "add-ai-component",
-  });
+  }, request);
   if ("error" in charged) return charged.error;
 
   try {

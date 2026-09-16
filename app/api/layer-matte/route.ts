@@ -53,7 +53,7 @@ export async function POST(request: Request) {
   const tokenCost = TOKEN_COST.smart_layers_matte;
   const charged = await chargeTokens(auth.user.userId, tokenCost, {
     kind: "smart_layers_matte",
-  });
+  }, request);
   if ("error" in charged) return charged.error;
 
   try {

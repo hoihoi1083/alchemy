@@ -42,7 +42,7 @@ export async function POST(request: Request) {
   }
 
   const tokenCost = TOKEN_COST.music;
-  const charged = await chargeTokens(auth.user.userId, tokenCost, { kind: "music" });
+  const charged = await chargeTokens(auth.user.userId, tokenCost, { kind: "music" }, request);
   if ("error" in charged) return charged.error;
   const balanceAfter = charged.balanceAfter;
 

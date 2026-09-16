@@ -126,7 +126,7 @@ export async function POST(request: Request) {
   const detectCharged = await chargeTokens(auth.user.userId, detectCost, {
     kind: "smart_layers_detect",
     mode: "sandwich-text",
-  });
+  }, request);
   if ("error" in detectCharged) return detectCharged.error;
 
   let qwenChargedBalance: number | null = null;
@@ -167,7 +167,7 @@ export async function POST(request: Request) {
       const matteCharged = await chargeTokens(auth.user.userId, matteCost, {
         kind: "smart_layers_matte",
         mode: "hybrid-subject",
-      });
+      }, request);
       if (!("error" in matteCharged)) {
         const origFalUrl = await fal.storage.upload(
           new File(
@@ -422,7 +422,7 @@ export async function POST(request: Request) {
       mode: "hybrid",
       numLayers,
       endpoint: QWEN_LAYERED_ENDPOINT,
-    });
+    }, request);
     if ("error" in qwenCharge) {
       console.warn("[decompose-sandwich] visual split skipped (token charge failed)", {
         textLayers: textLayers.length,

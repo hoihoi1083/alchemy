@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { PresenterAvatarPicker } from "@/components/studio/PresenterAvatarPicker";
 import { GenerationWaitPlaceholder } from "@/components/studio/GenerationWaitPlaceholder";
 import { useLocale } from "@/components/LocaleProvider";
+import { billingFetch } from "@/lib/billing-idempotency-client";
 import {
   defaultVoicePresetForLocale,
   VOICE_PRESET_IDS,
@@ -148,7 +149,7 @@ export function UgcStudioClient() {
     setBusy("voice");
     try {
       if (!script.trim()) throw new Error(t.needScript);
-      const res = await fetch("/api/preview-script-voice", {
+      const res = await billingFetch("/api/preview-script-voice", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -209,7 +210,7 @@ export function UgcStudioClient() {
       fd.set("image_output_mode", "single");
       fd.set("aspect_ratio", "9:16");
       fd.set("prompt_market", voiceLocale === "en" ? "en" : voiceLocale === "cn" ? "cn" : "hk");
-      const res = await fetch("/api/generate-image", { method: "POST", body: fd });
+      const res = await billingFetch("/api/generate-image", { method: "POST", body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? t.keyframeFailed);
       const url = (data.imageUrl ?? data.imageUrls?.[0]) as string | undefined;
@@ -261,7 +262,7 @@ export function UgcStudioClient() {
         fd.set("image_url", keyframeUrl);
       }
 
-      const res = await fetch("/api/generate-digital-presenter", { method: "POST", body: fd });
+      const res = await billingFetch("/api/generate-digital-presenter", { method: "POST", body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? t.videoFailed);
       const url = data.videoUrl as string | undefined;

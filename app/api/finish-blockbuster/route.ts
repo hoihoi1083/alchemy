@@ -273,7 +273,7 @@ export async function POST(request: Request) {
   try {
     const bill = await chargeTokens(auth.user.userId, tokenCost, {
       kind: "finish-blockbuster",
-    });
+    }, request);
     if ("error" in bill) return bill.error;
     charged = true;
 

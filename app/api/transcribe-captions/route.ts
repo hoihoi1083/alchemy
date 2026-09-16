@@ -105,7 +105,7 @@ export async function POST(request: Request) {
       ? await chargeTokens(auth.user.userId, tokenCost, {
           kind: "transcribe-captions",
           asr: asrProvider,
-        })
+        }, request)
       : null;
   if (charged && "error" in charged) return charged.error;
 

@@ -64,7 +64,7 @@ export async function POST(request: Request) {
   const tokenCost = TOKEN_COST.plan;
   const charged = await chargeTokens(auth.user.userId, tokenCost, {
     kind: "caption_expand_spoken",
-  });
+  }, request);
   if ("error" in charged) return charged.error;
 
   try {

@@ -5,8 +5,10 @@ import {
   getUserBalance,
   insufficientTokensResponse,
   InsufficientTokensError,
+  ChargeInProgressError,
 } from "@/lib/billing/ledger";
 import { buildRefundRef } from "@/lib/billing/refund-ref";
+import { billingMetaFromRequest } from "@/lib/billing/charge-ref";
 import { grantTokensOnce } from "@/lib/stripe/billing-sync";
 import {
   estimateH3Tokens,
@@ -26,6 +28,7 @@ import { resolveTokenPayer } from "@/lib/billing/team-payer";
 import { recordPendingRefund } from "@/lib/billing/pending-refunds";
 
 export { resolveVideoBillingResolution, estimateVideoTokens, estimateH3Tokens };
+export { billingMetaFromRequest } from "@/lib/billing/charge-ref";
 
 const REFUND_RETRY_ATTEMPTS = 3;
 const REFUND_RETRY_BASE_MS = 120;
@@ -57,6 +60,12 @@ export async function getAffordabilityBalance(
 export function billingErrorResponse(err: unknown): NextResponse | null {
   if (err instanceof InsufficientTokensError) {
     return NextResponse.json(insufficientTokensResponse(err), { status: 402 });
+  }
+  if (err instanceof ChargeInProgressError) {
+    return NextResponse.json(
+      { error: err.message, code: "CHARGE_IN_PROGRESS" },
+      { status: 409 },
+    );
   }
   return null;
 }
@@ -95,11 +104,15 @@ export async function requireTokens(clerkId: string, cost: number): Promise<Next
 /**
  * Deduct tokens BEFORE calling fal. Atomic — concurrent requests cannot both
  * pass. On fal failure, call `refundTokens` so the user is not charged.
+ *
+ * Pass `request` (or meta.idempotencyKey / meta.chargeRef) so a client retry
+ * with the same Idempotency-Key reuses the first debit instead of charging twice.
  */
 export async function chargeTokens(
   clerkId: string,
   cost: number,
   meta: Record<string, unknown>,
+  request?: Request | null,
 ): Promise<{ error: NextResponse } | { balanceAfter: number | null }> {
   if (cost <= 0) {
     return { balanceAfter: null };
@@ -119,15 +132,21 @@ export async function chargeTokens(
     if (await isInternalUnlimitedUser(payer.payerClerkId)) {
       return { balanceAfter: INTERNAL_UNLIMITED_DISPLAY_BALANCE };
     }
+    const billedMeta = billingMetaFromRequest(request, {
+      ...meta,
+      phase: "charge",
+      actorClerkId: clerkId,
+      billedClerkId: payer.payerClerkId,
+      teamId: payer.teamId,
+      teamPooled: payer.pooled,
+    });
+    const chargeRef =
+      typeof billedMeta.chargeRef === "string" && billedMeta.chargeRef.trim()
+        ? billedMeta.chargeRef.trim()
+        : undefined;
     const balanceAfter = await consumeTokens(payer.payerClerkId, cost, {
-      meta: {
-        ...meta,
-        phase: "charge",
-        actorClerkId: clerkId,
-        billedClerkId: payer.payerClerkId,
-        teamId: payer.teamId,
-        teamPooled: payer.pooled,
-      },
+      ...(chargeRef ? { ref: chargeRef } : {}),
+      meta: billedMeta,
     });
     return { balanceAfter };
   } catch (err) {

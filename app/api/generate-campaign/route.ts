@@ -303,7 +303,7 @@ export async function POST(request: Request) {
 
   const charged = await chargeTokens(auth.user.userId, tokenCost, {
     kind: isSingleSlideRegen ? "image" : "campaign",
-  });
+  }, request);
   if ("error" in charged) return charged.error;
   const balanceAfter = charged.balanceAfter;
 

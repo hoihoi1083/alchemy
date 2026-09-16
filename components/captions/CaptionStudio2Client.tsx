@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useSearchParams } from "next/navigation";
 import { CaptionLineEditor } from "@/components/captions/CaptionLineEditor";
+import { billingFetch } from "@/lib/billing-idempotency-client";
 import {
   CaptionAudioSection,
   type MusicSource,
@@ -1041,7 +1042,7 @@ export function CaptionStudio2Client() {
       }
 
       setEditStage("generate");
-      const res = await fetch("/api/caption-video-edit", {
+      const res = await billingFetch("/api/caption-video-edit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -1181,7 +1182,7 @@ export function CaptionStudio2Client() {
       }
       const fd = new FormData();
       fd.set("video_url", videoUrl);
-      const res = await fetch("/api/transcribe-captions", {
+      const res = await billingFetch("/api/transcribe-captions", {
         method: "POST",
         credentials: "include",
         body: fd,
@@ -1241,7 +1242,7 @@ export function CaptionStudio2Client() {
         body.matchVideo = true;
         body.videoUrl = await bakeTimelinePlate();
       }
-      const res = await fetch("/api/generate-music", {
+      const res = await billingFetch("/api/generate-music", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -1277,7 +1278,7 @@ export function CaptionStudio2Client() {
     setVoicePreviewBusy(true);
     setError(null);
     try {
-      const res = await fetch("/api/preview-script-voice", {
+      const res = await billingFetch("/api/preview-script-voice", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -1340,7 +1341,7 @@ export function CaptionStudio2Client() {
     setError(null);
     setAudioNote(null);
     try {
-      const res = await fetch("/api/plan-caption-voice", {
+      const res = await billingFetch("/api/plan-caption-voice", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -1443,7 +1444,7 @@ export function CaptionStudio2Client() {
     setError(null);
     setAudioNote(null);
     try {
-      const res = await fetch("/api/plan-caption-voice", {
+      const res = await billingFetch("/api/plan-caption-voice", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -1530,7 +1531,7 @@ export function CaptionStudio2Client() {
     setVoicePreviewBusy(true);
     setError(null);
     try {
-      const res = await fetch("/api/preview-script-voice", {
+      const res = await billingFetch("/api/preview-script-voice", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -1643,7 +1644,7 @@ export function CaptionStudio2Client() {
       const mixLines = captionLinesForMix.filter((l) => l.text.trim());
 
       const dubOnce = async (body: Record<string, unknown>) => {
-        const res = await fetch("/api/dub-script-voice", {
+        const res = await billingFetch("/api/dub-script-voice", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
@@ -1773,7 +1774,7 @@ export function CaptionStudio2Client() {
       } else {
         body.track = bgmTrack;
       }
-      const res = await fetch("/api/add-bgm", {
+      const res = await billingFetch("/api/add-bgm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -1826,7 +1827,7 @@ export function CaptionStudio2Client() {
     setError(null);
     try {
       const burnUrl = await resolveFinishBasePlateUrl();
-      const res = await fetch("/api/burn-script-captions", {
+      const res = await billingFetch("/api/burn-script-captions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

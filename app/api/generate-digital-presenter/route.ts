@@ -236,7 +236,7 @@ export async function POST(request: Request) {
       resolution,
       durationSec: Math.ceil(durationSec),
       synthesizedVoice: willSynthesizeVoice && !usedPreview,
-    });
+    }, request);
     if ("error" in charged) return charged.error;
     balanceAfter = charged.balanceAfter;
 

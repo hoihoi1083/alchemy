@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { billingFetch } from "@/lib/billing-idempotency-client";
 import {
   Stage,
   Layer,
@@ -1266,7 +1267,7 @@ export function EditImage2Client() {
     const healUrl = healUrlCandidate;
     if (healUrl) {
       try {
-        const healRes = await fetch("/api/layer-heal", {
+        const healRes = await billingFetch("/api/layer-heal", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
@@ -1531,7 +1532,7 @@ export function EditImage2Client() {
     setNotice(t.sandwichSplitting);
     setBoxMode(false);
     setBrushMode(false);
-    const dec = await fetch("/api/decompose-sandwich-layers", {
+    const dec = await billingFetch("/api/decompose-sandwich-layers", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -1613,7 +1614,7 @@ export function EditImage2Client() {
     setNotice(crop ? t.qwenRegionSplitting : t.qwenSplitting);
     setBoxMode(false);
     setBrushMode(false);
-    const dec = await fetch("/api/decompose-qwen-layers", {
+    const dec = await billingFetch("/api/decompose-qwen-layers", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -1682,7 +1683,7 @@ export function EditImage2Client() {
     setNotice(textOnly ? t.suggestingText : t.splittingLayers);
     setBoxMode(false);
     setBrushMode(false);
-    const dec = await fetch("/api/decompose-image-layers", {
+    const dec = await billingFetch("/api/decompose-image-layers", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -1862,7 +1863,7 @@ export function EditImage2Client() {
     setNotice(t.seedreamSplitting);
     setBoxMode(false);
     setBrushMode(false);
-    const dec = await fetch("/api/decompose-seedream-layers", {
+    const dec = await billingFetch("/api/decompose-seedream-layers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -2012,7 +2013,7 @@ export function EditImage2Client() {
     setError(null);
     setNotice(t.aiAddGenerating);
     try {
-      const res = await fetch("/api/layer-add-ai-component", {
+      const res = await billingFetch("/api/layer-add-ai-component", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -2180,7 +2181,7 @@ export function EditImage2Client() {
           } as DecLayer;
           const httpCrop = await ensureHttpCrop(layer);
           if (httpCrop) {
-            const res = await fetch("/api/layer-matte", {
+            const res = await billingFetch("/api/layer-matte", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               credentials: "include",
@@ -3095,7 +3096,7 @@ export function EditImage2Client() {
     oldText?: string;
     instruction?: string;
   }) {
-    const res = await fetch("/api/layer-crop-edit", {
+    const res = await billingFetch("/api/layer-crop-edit", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -3284,7 +3285,7 @@ export function EditImage2Client() {
         body = { image_url: sourceUrl, bbox: selected.bbox };
       }
       if (!body) throw new Error(t.noCropForMatte);
-      const res = await fetch("/api/layer-matte", {
+      const res = await billingFetch("/api/layer-matte", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

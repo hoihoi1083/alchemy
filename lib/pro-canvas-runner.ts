@@ -1,5 +1,6 @@
 import { BANANA2_EDIT_ENDPOINT, BANANA2_TEXT_ENDPOINT } from "@/lib/image-endpoints";
 import { buildImageRefinePrompt } from "@/lib/image-refine-prompt";
+import { billingFetch } from "@/lib/billing-idempotency-client";
 import {
   buildCanvasComposePrompt,
   buildCanvasVideoReferencePrompt,
@@ -83,7 +84,7 @@ export async function runCanvasImageNode(opts: CanvasImageRunOpts): Promise<stri
   };
 
   if (urls.length === 0) {
-    const res = await fetch("/api/generate-image", {
+    const res = await billingFetch("/api/generate-image", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -101,7 +102,7 @@ export async function runCanvasImageNode(opts: CanvasImageRunOpts): Promise<stri
   }
 
   if (opts.refine && urls.length === 1) {
-    const res = await fetch("/api/generate-image", {
+    const res = await billingFetch("/api/generate-image", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -122,7 +123,7 @@ export async function runCanvasImageNode(opts: CanvasImageRunOpts): Promise<stri
   }
 
   const composePrompt = buildCanvasComposePrompt(enhancedPrompt, aliases);
-  const res = await fetch("/api/generate-image", {
+  const res = await billingFetch("/api/generate-image", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -384,7 +385,7 @@ export async function runCanvasSpliceNode(opts: {
   }
 
   if (isHttpOrLibraryMediaUrl(opts.musicUrl)) {
-    const res = await fetch("/api/add-bgm", {
+    const res = await billingFetch("/api/add-bgm", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ video_url: videoUrl, music_url: opts.musicUrl }),
@@ -406,7 +407,7 @@ export async function runCanvasVoiceNode(opts: {
 }): Promise<string> {
   const script = opts.script.trim();
   if (!script) throw new Error("Voice script is empty.");
-  const res = await fetch("/api/ultra-tts", {
+  const res = await billingFetch("/api/ultra-tts", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({

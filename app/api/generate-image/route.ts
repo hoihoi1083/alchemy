@@ -240,7 +240,7 @@ async function runRefineEdit(
       multipartMode: "refine",
       numImages: opts.numImages,
     });
-  const charged = await chargeTokens(opts.userId, cost, { kind: "image", mode: "refine" });
+  const charged = await chargeTokens(opts.userId, cost, { kind: "image", mode: "refine" }, request);
   if ("error" in charged) return charged.error;
   const balanceAfter = charged.balanceAfter;
 
@@ -909,7 +909,7 @@ export async function POST(request: Request) {
       numImages,
       imageOutputMode,
       slideCount: Number.isFinite(slideCountRaw) ? slideCountRaw : undefined,
-    });
+    }, request);
     if ("error" in charged) return charged.error;
     const balanceAfter = charged.balanceAfter;
 
@@ -1339,7 +1339,7 @@ export async function POST(request: Request) {
   const charged = await chargeTokens(auth.user.userId, jsonCost, {
     kind: "image",
     mode: "text",
-  });
+  }, request);
   if ("error" in charged) return charged.error;
   const balanceAfter = charged.balanceAfter;
 

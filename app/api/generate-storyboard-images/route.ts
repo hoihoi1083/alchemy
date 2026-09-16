@@ -404,7 +404,7 @@ export async function POST(request: Request) {
     sceneCount: scenesToGenerate.length,
     logoMode: useLogoModeA ? "mode-a" : useBrandLogo ? "stamp-fallback" : "none",
     passesPerScene,
-  });
+  }, request);
   if ("error" in charged) return charged.error;
   const balanceAfter = charged.balanceAfter;
   const { resolution: imageResolution } = clampImageResolution(

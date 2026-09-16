@@ -254,7 +254,7 @@ export async function POST(request: Request) {
     kind: "smart_layers_heal",
     mode: wantGenerative ? requested : "local",
     coverage,
-  });
+  }, request);
   if ("error" in charged) return charged.error;
 
   try {
@@ -309,7 +309,7 @@ export async function POST(request: Request) {
           kind: "smart_layers_heal",
           mode: "local",
           coverage,
-        });
+        }, request);
         if ("error" in localCharged) {
           return localCharged.error;
         }

@@ -231,7 +231,7 @@ export async function POST(request: Request) {
     kind: "smart_layers_detect",
     sam: wantSam,
     samBundle: wantSam ? TOKEN_COST.smart_layers_sam : 0,
-  });
+  }, request);
   if ("error" in charged) return charged.error;
 
   try {
@@ -275,7 +275,7 @@ export async function POST(request: Request) {
       const matteCharged = await chargeTokens(auth.user.userId, matteCost, {
         kind: "smart_layers_matte",
         mode: "florence-subject",
-      });
+      }, request);
       if (!("error" in matteCharged)) {
         try {
           const srcFalUrl = await fal.storage.upload(
@@ -700,7 +700,7 @@ export async function POST(request: Request) {
           const matteCharged = await chargeTokens(auth.user.userId, matteCost, {
             kind: "smart_layers_matte",
             mode: "person-crop",
-          });
+          }, request);
           if (!("error" in matteCharged)) {
             matteTokensCharged += matteCost;
             creditBalance = matteCharged.balanceAfter ?? creditBalance;
@@ -825,7 +825,7 @@ export async function POST(request: Request) {
         mode: "local",
         holes: holeRects.length,
         coverage: holeUnionCoverage(holeRects, imgW, imgH),
-      });
+      }, request);
       const canBillLocal = !("error" in healCharged);
 
       try {
@@ -860,7 +860,7 @@ export async function POST(request: Request) {
           kind: "smart_layers_heal",
           mode: "erase",
           holes: holeRects.length,
-        });
+        }, request);
         try {
           if ("error" in eraseCharged) throw new Error("erase charge failed");
           const maskSvg = [

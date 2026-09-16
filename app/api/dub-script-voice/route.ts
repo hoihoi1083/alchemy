@@ -293,7 +293,7 @@ export async function POST(request: Request) {
     const charged = await chargeTokens(auth.user.userId, tokenCost, {
       kind: "voiceover_dub",
       captionLines: captionLines.length,
-    });
+    }, request);
     if ("error" in charged) return charged.error;
 
     try {
@@ -398,7 +398,7 @@ export async function POST(request: Request) {
   const charged = await chargeTokens(auth.user.userId, tokenCost, {
     kind: "voiceover_dub",
     captionLines: captionLines.length,
-  });
+  }, request);
   if ("error" in charged) return charged.error;
 
   try {

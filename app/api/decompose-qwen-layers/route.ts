@@ -101,7 +101,7 @@ export async function POST(request: Request) {
     numLayers,
     endpoint: QWEN_LAYERED_ENDPOINT,
     region: Boolean(body.crop),
-  });
+  }, request);
   if ("error" in charged) return charged.error;
 
   try {

@@ -42,49 +42,51 @@ export function classifyTrafficSource(opts: {
   msclkid?: string;
   ttclid?: string;
 }): string {
-  if (opts.gclid) return "google_ads";
-  if (opts.fbclid) return "meta_ads";
-  if (opts.msclkid) return "microsoft_ads";
-  if (opts.ttclid) return "tiktok_ads";
-
   const source = (opts.utmSource ?? "").toLowerCase();
   const medium = (opts.utmMedium ?? "").toLowerCase();
+  const hasUtm = Boolean(source || medium);
   const paidMedium =
     medium.includes("cpc") ||
     medium.includes("paid") ||
     medium.includes("ppc") ||
     medium.includes("ads");
 
-  // Explicit campaign tags (required for IG / RedNote / FB in-app — referrer is often blank).
-  if (source.includes("facebook") || source === "fb" || source === "meta") {
-    return paidMedium ? "meta_ads" : "social_facebook";
-  }
-  if (source.includes("instagram") || source === "ig") {
-    return paidMedium ? "meta_ads" : "social_instagram";
-  }
-  if (
-    source.includes("小红书") ||
-    source.includes("xiaohongshu") ||
-    source === "xhs" ||
-    source === "rednote" ||
-    source.includes("rednote")
-  ) {
-    return paidMedium ? "paid_social" : "social_xiaohongshu";
-  }
-  if (source.includes("tiktok") || source.includes("douyin") || source.includes("抖音")) {
-    return paidMedium ? "paid_social" : "social_tiktok";
-  }
-  if (source.includes("google")) {
-    return paidMedium ? "google_ads" : "organic_search";
-  }
+  // Prefer explicit UTMs first. Facebook/IG append fbclid/gclid on organic
+  // posts too — click ids alone would mis-label those as paid ads.
+  if (hasUtm) {
+    if (source.includes("facebook") || source === "fb" || source === "meta") {
+      return paidMedium ? "meta_ads" : "social_facebook";
+    }
+    if (source.includes("instagram") || source === "ig") {
+      return paidMedium ? "meta_ads" : "social_instagram";
+    }
+    if (
+      source.includes("小红书") ||
+      source.includes("xiaohongshu") ||
+      source === "xhs" ||
+      source === "rednote" ||
+      source.includes("rednote")
+    ) {
+      return paidMedium ? "paid_social" : "social_xiaohongshu";
+    }
+    if (source.includes("tiktok") || source.includes("douyin") || source.includes("抖音")) {
+      return paidMedium ? "paid_social" : "social_tiktok";
+    }
+    if (source.includes("google")) {
+      return paidMedium ? "google_ads" : "organic_search";
+    }
 
-  if (opts.utmSource || opts.utmMedium) {
     if (paidMedium) return "paid";
     if (medium.includes("email")) return "email";
     if (medium.includes("social")) return "social";
     if (medium.includes("affiliate")) return "affiliate";
     return "campaign";
   }
+
+  if (opts.gclid) return "google_ads";
+  if (opts.fbclid) return "meta_ads";
+  if (opts.msclkid) return "microsoft_ads";
+  if (opts.ttclid) return "tiktok_ads";
 
   if (!opts.referrer) return "direct";
   const host = referringDomain(opts.referrer)?.toLowerCase() ?? "";

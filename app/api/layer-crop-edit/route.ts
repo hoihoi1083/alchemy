@@ -77,7 +77,7 @@ export async function POST(request: Request) {
   const charged = await chargeTokens(auth.user.userId, tokenCost, {
     kind: "image",
     mode: built.billingMode,
-  });
+  }, request);
   if ("error" in charged) return charged.error;
 
   try {

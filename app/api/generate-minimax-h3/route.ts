@@ -137,7 +137,7 @@ export async function POST(request: Request) {
     kind: "minimax_h3",
     mode,
     duration,
-  });
+  }, request);
   if ("error" in charged) return charged.error;
   const balanceAfter = charged.balanceAfter;
 

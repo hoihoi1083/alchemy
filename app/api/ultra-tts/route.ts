@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     kind: "voiceover",
     locale,
     voice_preset: voicePresetId,
-  });
+  }, request);
   if ("error" in charged) return charged.error;
   const balanceAfter = charged.balanceAfter;
 

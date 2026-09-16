@@ -49,6 +49,15 @@ export class InsufficientTokensError extends Error {
   }
 }
 
+/** Same Idempotency-Key is still being charged by a concurrent request. */
+export class ChargeInProgressError extends Error {
+  readonly status = 409;
+  constructor() {
+    super("A charge with this Idempotency-Key is already in progress. Retry shortly.");
+    this.name = "ChargeInProgressError";
+  }
+}
+
 const WALLET_CAS_ATTEMPTS = 12;
 
 function sumRemaining(batches: TokenBatch[]): number {
@@ -245,6 +254,9 @@ export async function assertCanAfford(clerkId: string, cost: number): Promise<nu
 /**
  * Atomically deduct tokens (oldest batch first).
  * Retries on walletRevision CAS conflict so concurrent grants are not overwritten.
+ *
+ * When `ref` is set, claims the ledger row first (unique index) so a client
+ * retry with the same Idempotency-Key cannot double-debit.
  */
 export async function consumeTokens(
   clerkId: string,
@@ -254,11 +266,119 @@ export async function consumeTokens(
   if (!isMongoConfigured() || cost <= 0) return null;
   const db = await getDb();
   const now = new Date();
+  const txCol = db.collection<CreditTransaction>("credit_transactions");
+  const chargeRef = typeof opts?.ref === "string" && opts.ref.trim() ? opts.ref.trim() : undefined;
+
+  if (chargeRef) {
+    const existing = await txCol.findOne({ ref: chargeRef });
+    if (
+      existing &&
+      existing.reason === "consume" &&
+      typeof existing.balanceAfter === "number" &&
+      existing.balanceAfter >= 0 &&
+      existing.meta?.consumePending !== true
+    ) {
+      // Same idempotency key — return prior charge (no second debit).
+      return existing.balanceAfter;
+    }
+
+    if (!existing) {
+      try {
+        await txCol.insertOne({
+          clerkId,
+          delta: -cost,
+          reason: "consume",
+          ref: chargeRef,
+          balanceAfter: -1,
+          createdAt: now,
+          meta: {
+            ...(opts?.meta ?? {}),
+            consumePending: true,
+          },
+        });
+      } catch (err) {
+        const code =
+          err && typeof err === "object" && "code" in err
+            ? Number((err as { code?: unknown }).code)
+            : 0;
+        if (code !== 11000) throw err;
+        // Another request claimed this ref — wait briefly for finalize.
+        for (let i = 0; i < 8; i++) {
+          await new Promise((r) => setTimeout(r, 40 * (i + 1)));
+          const raced = await txCol.findOne({ ref: chargeRef });
+          if (
+            raced &&
+            raced.reason === "consume" &&
+            typeof raced.balanceAfter === "number" &&
+            raced.balanceAfter >= 0 &&
+            raced.meta?.consumePending !== true
+          ) {
+            return raced.balanceAfter;
+          }
+        }
+        throw new ChargeInProgressError();
+      }
+    } else if (existing.meta?.consumePending === true) {
+      // Stale pending from a crashed attempt — if old enough, clear and reclaim.
+      const ageMs = now.getTime() - new Date(existing.createdAt).getTime();
+      if (ageMs < 15_000) {
+        for (let i = 0; i < 8; i++) {
+          await new Promise((r) => setTimeout(r, 40 * (i + 1)));
+          const raced = await txCol.findOne({ ref: chargeRef });
+          if (
+            raced &&
+            typeof raced.balanceAfter === "number" &&
+            raced.balanceAfter >= 0 &&
+            raced.meta?.consumePending !== true
+          ) {
+            return raced.balanceAfter;
+          }
+        }
+        throw new ChargeInProgressError();
+      }
+      await txCol.deleteOne({ ref: chargeRef, "meta.consumePending": true }).catch(() => undefined);
+      try {
+        await txCol.insertOne({
+          clerkId,
+          delta: -cost,
+          reason: "consume",
+          ref: chargeRef,
+          balanceAfter: -1,
+          createdAt: now,
+          meta: {
+            ...(opts?.meta ?? {}),
+            consumePending: true,
+          },
+        });
+      } catch (err) {
+        const code =
+          err && typeof err === "object" && "code" in err
+            ? Number((err as { code?: unknown }).code)
+            : 0;
+        if (code === 11000) {
+          const raced = await txCol.findOne({ ref: chargeRef });
+          if (
+            raced &&
+            typeof raced.balanceAfter === "number" &&
+            raced.balanceAfter >= 0 &&
+            raced.meta?.consumePending !== true
+          ) {
+            return raced.balanceAfter;
+          }
+        } else {
+          throw err;
+        }
+      }
+    }
+  }
 
   for (let attempt = 0; attempt < WALLET_CAS_ATTEMPTS; attempt++) {
     await migrateAndPruneBatches(clerkId);
     const user = await db.collection<DbUser>("users").findOne({ clerkId });
     if (!user || (user.creditBalance ?? 0) < cost) {
+      if (chargeRef) {
+        await txCol.deleteOne({ ref: chargeRef, "meta.consumePending": true }).catch(() => undefined);
+      }
       throw new InsufficientTokensError(user?.creditBalance ?? 0, cost);
     }
 
@@ -269,6 +389,9 @@ export async function consumeTokens(
       now,
     );
     if (left > 0) {
+      if (chargeRef) {
+        await txCol.deleteOne({ ref: chargeRef, "meta.consumePending": true }).catch(() => undefined);
+      }
       throw new InsufficientTokensError(user.creditBalance ?? 0, cost);
     }
 
@@ -295,18 +418,39 @@ export async function consumeTokens(
       continue;
     }
 
-    await db.collection<CreditTransaction>("credit_transactions").insertOne({
-      clerkId,
-      delta: -cost,
-      reason: "consume",
-      ...(opts?.ref ? { ref: opts.ref } : {}),
-      ...(opts?.meta ? { meta: opts.meta } : {}),
-      balanceAfter: result.creditBalance ?? 0,
-      createdAt: now,
-    });
+    if (chargeRef) {
+      await txCol.updateOne(
+        { ref: chargeRef },
+        {
+          $set: {
+            clerkId,
+            delta: -cost,
+            reason: "consume",
+            balanceAfter: result.creditBalance ?? 0,
+            createdAt: now,
+            meta: {
+              ...(opts?.meta ?? {}),
+              consumePending: false,
+            },
+          },
+        },
+      );
+    } else {
+      await txCol.insertOne({
+        clerkId,
+        delta: -cost,
+        reason: "consume",
+        ...(opts?.meta ? { meta: opts.meta } : {}),
+        balanceAfter: result.creditBalance ?? 0,
+        createdAt: now,
+      });
+    }
     return result.creditBalance ?? 0;
   }
 
+  if (chargeRef) {
+    await txCol.deleteOne({ ref: chargeRef, "meta.consumePending": true }).catch(() => undefined);
+  }
   const bal = await getUserBalance(clerkId);
   throw new InsufficientTokensError(bal?.balance ?? 0, cost);
 }

@@ -59,7 +59,7 @@ export async function POST(request: Request) {
     captionEditJob: job,
     resolution,
     durationSec,
-  });
+  }, request);
   if ("error" in charged) return charged.error;
 
   try {

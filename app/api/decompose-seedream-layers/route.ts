@@ -222,7 +222,7 @@ export async function POST(request: Request) {
     endpoint: "byteplus/seedream/layer_decomposition",
     model: modelId,
     estimateLayers: 10,
-  });
+  }, request);
   if ("error" in charged) return charged.error;
 
   const abort = AbortSignal.timeout(280_000);

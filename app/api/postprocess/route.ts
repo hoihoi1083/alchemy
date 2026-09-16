@@ -86,7 +86,7 @@ export async function POST(request: Request) {
     asr: asrProvider,
     rewrite: rewriteProvider,
     dub: withDub ? dubProvider : "none",
-  });
+  }, request);
   if ("error" in charged) return charged.error;
 
   const { jobId, dir } = await createOwnedJobDir(auth.user.userId);

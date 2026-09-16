@@ -235,6 +235,7 @@ async function runReferenceVideoViaH3(input: {
   requestedResolution: string;
   aspectRatio: string;
   refDurationSec?: number;
+  request: Request;
 }): Promise<NextResponse> {
   const durationSec = clampMinimaxH3Duration(
     input.duration === "auto" ? 8 : input.duration,
@@ -274,7 +275,7 @@ async function runReferenceVideoViaH3(input: {
     mode: "reference",
     via: "generate_reference_h3_primary",
     duration: durationSec,
-  });
+  }, input.request);
   if ("error" in charged) return charged.error;
 
   try {
@@ -514,6 +515,7 @@ export async function POST(request: Request) {
       requestedResolution,
       aspectRatio,
       refDurationSec: Number.isFinite(refDurationSec) ? refDurationSec : undefined,
+      request,
     });
   }
 
@@ -530,7 +532,7 @@ export async function POST(request: Request) {
     resolution,
     endpoint: billedEndpoint,
     duration,
-  });
+  }, request);
   if ("error" in charged) return charged.error;
   const balanceAfter = charged.balanceAfter;
 
@@ -827,7 +829,7 @@ export async function POST(request: Request) {
           kind: "minimax_h3",
           via: "generate_auto_fallback",
           seedanceMode: mode,
-        });
+        }, request);
         if (!("error" in h3Charged)) {
           try {
             const h3Prompt = adaptScriptForMinimaxH3({
@@ -918,7 +920,7 @@ export async function POST(request: Request) {
           clipDurations,
           via: "generate_auto",
           seedanceMode: mode,
-        });
+        }, request);
         if (!("error" in klingCharged)) {
           try {
             console.info(

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { CaptionLineEditor } from "@/components/captions/CaptionLineEditor";
 import { CaptionTimelineL2 } from "@/components/captions/CaptionTimelineL2";
+import { billingFetch } from "@/lib/billing-idempotency-client";
 import {
   CaptionAudioSection,
   type MusicSource,
@@ -659,7 +660,7 @@ export function CaptionStudioClient() {
         body.matchVideo = true;
         body.videoUrl = await resolveWorkingVideoUrl();
       }
-      const res = await fetch("/api/generate-music", {
+      const res = await billingFetch("/api/generate-music", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -692,7 +693,7 @@ export function CaptionStudioClient() {
     setVoicePreviewBusy(true);
     setError(null);
     try {
-      const res = await fetch("/api/preview-script-voice", {
+      const res = await billingFetch("/api/preview-script-voice", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -976,7 +977,7 @@ export function CaptionStudioClient() {
     setError(null);
     setAudioNote(null);
     try {
-      const res = await fetch("/api/expand-spoken-captions", {
+      const res = await billingFetch("/api/expand-spoken-captions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -1051,7 +1052,7 @@ export function CaptionStudioClient() {
     setError(null);
     setAudioNote(null);
     try {
-      const res = await fetch("/api/plan-caption-voice", {
+      const res = await billingFetch("/api/plan-caption-voice", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
