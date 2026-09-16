@@ -5984,10 +5984,10 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 		directPostBadge: "快捷入口",
 		directPostTitle: "或貼上你想跟嘅參考帖",
 		directPostHint:
-			"已有目標帖就唔使搜關鍵字 — 支援 xhslink、小紅書 explore、Instagram /p/ 或 /reel/、同公開 Facebook 帖／影片（最好用 facebook.com/{pageId}/posts/… 或 /videos/…）。實體產品請先填上方產品名稱。xhslink 失效時，請喺 App 內「分享 → 複製連結」貼完整連結。",
+			"已有目標帖就唔使搜關鍵字 — 支援 xhslink、小紅書 explore、Instagram /p/ 或 /reel/、同 Facebook（專頁帖、/share/p/ 短連結；唔支援 photo/?fbid= 相片檢視連結）。實體產品請先填上方產品名稱。xhslink 失效時，請喺 App 內「分享 → 複製連結」貼完整連結。",
 		directPostUrlLabel: "參考帖連結",
 		directPostUrlPlaceholder:
-			"例如 xhslink / Instagram reel / Facebook posts",
+			"例如 xhslink / Instagram reel / facebook.com/share/p/…",
 		directPostBtn: "用這篇帖",
 		postUrlRequired: "請先貼上帖文連結。",
 		directPostFailed: "無法載入此帖，請確認連結公開有效。",

@@ -277,8 +277,14 @@ async function fetchFacebookPostByUrl(canonicalUrl: string): Promise<ContentRese
   });
 
   if (!profileId) {
+    const looksLikePhotoViewer =
+      /\/photo\/?\?/i.test(canonicalUrl) ||
+      /\/photo\.php\?/i.test(canonicalUrl) ||
+      /[?&]fbid=/i.test(canonicalUrl);
     throw new Error(
-      "Could not read this Facebook link. Paste a public post URL that includes the page id, e.g. facebook.com/{pageId}/posts/… or /videos/… (share/p short links often omit the page).",
+      looksLikePhotoViewer
+        ? "Facebook photo viewer links (photo/?fbid=…) omit the page id, so we can’t look them up. On the post, use Share → Copy link and paste a URL like facebook.com/{PageName}/posts/…, /videos/…, or /photos/…. Or switch to keyword search."
+        : "Could not read this Facebook link. Paste a public post URL that includes the page, e.g. facebook.com/{PageName}/posts/… or /videos/… (short share links and photo/?fbid= viewer links often omit the page).",
     );
   }
 

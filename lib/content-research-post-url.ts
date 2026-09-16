@@ -1,6 +1,7 @@
 import type { ContentPlatform } from "@/lib/content-research-types";
 import { exploreIdFromUrl } from "@/lib/content-research-enrich";
 import { assertPublicHttpUrl } from "@/lib/pipeline/safe-url";
+import { resolveFacebookShareUrl, isFacebookShareShortUrl } from "@/lib/resolve-facebook-share-url";
 import { resolveXhsShareUrl } from "@/lib/resolve-xhs-share-url";
 
 const BROWSER_UA =
@@ -42,6 +43,10 @@ export async function resolvePostUrl(url: string): Promise<string> {
     normalized.includes("xhs.cn")
   ) {
     return resolveXhsShareUrl(normalized);
+  }
+
+  if (platform === "facebook" && isFacebookShareShortUrl(normalized)) {
+    return resolveFacebookShareUrl(normalized);
   }
 
   // Only resolve known social post hosts; never open-fetch arbitrary URLs.
@@ -137,6 +142,15 @@ export function facebookPostRefFromUrl(url: string): {
       return {
         profilePath: `/${m[1]}`,
         postId: decodeURIComponent(m[2]),
+      };
+    }
+
+    // /PageName/posts/slug-title/123456 (share expand often uses a slug + numeric id)
+    m = path.match(/^\/([^/]+)\/(?:posts|videos|photos)\/[^/]+\/(\d+)$/i);
+    if (m && !/^(watch|reel|share|photo|permalink\.php)$/i.test(m[1])) {
+      return {
+        profilePath: `/${m[1]}`,
+        postId: m[2],
       };
     }
 

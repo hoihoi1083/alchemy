@@ -109,6 +109,12 @@ describe("facebook post URL refs", () => {
       ),
       { profileId: "123", postId: "99" },
     );
+    assert.deepEqual(
+      facebookPostRefFromUrl(
+        "https://www.facebook.com/SomePage/posts/a-slug-title/28420476120905068/",
+      ),
+      { profilePath: "/SomePage", postId: "28420476120905068" },
+    );
   });
 
   it("allows Facebook direct post URLs for research", () => {
