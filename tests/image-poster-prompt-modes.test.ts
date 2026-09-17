@@ -36,6 +36,22 @@ describe("image poster prompt modes", () => {
     assert.equal(resolveImagePromptMode("jelly-3d", "promo-ai"), "jelly-3d");
     assert.equal(resolveImagePromptMode("type-force", "promo-ai"), "type-force");
     assert.equal(
+      resolveImagePromptMode("spatial-layout", "promo-ai"),
+      "spatial-layout",
+    );
+    assert.equal(
+      resolveImagePromptMode("photo-doodle", "promo-ai"),
+      "photo-doodle",
+    );
+    assert.equal(
+      resolveImagePromptMode("light-trail", "promo-ai"),
+      "light-trail",
+    );
+    assert.equal(
+      resolveImagePromptMode("screen-break", "promo-ai"),
+      "screen-break",
+    );
+    assert.equal(
       resolveImagePromptMode("material-letters", "promo-ai"),
       "material-letters",
     );
@@ -82,6 +98,10 @@ describe("image poster prompt modes", () => {
     assert.equal(isLockedSinglePosterStyle("sports-big-words"), true);
     assert.equal(isLockedSinglePosterStyle("jelly-3d"), true);
     assert.equal(isLockedSinglePosterStyle("type-force"), true);
+    assert.equal(isLockedSinglePosterStyle("spatial-layout"), true);
+    assert.equal(isLockedSinglePosterStyle("photo-doodle"), true);
+    assert.equal(isLockedSinglePosterStyle("light-trail"), true);
+    assert.equal(isLockedSinglePosterStyle("screen-break"), true);
     assert.equal(isLockedSinglePosterStyle("material-letters"), true);
     assert.equal(isLockedSinglePosterStyle("type-interaction"), true);
     assert.equal(isLockedSinglePosterStyle("product-lifestyle"), false);
@@ -89,6 +109,10 @@ describe("image poster prompt modes", () => {
     assert.equal(shouldPlanSingleImageAd("sports-big-words"), true);
     assert.equal(shouldPlanSingleImageAd("jelly-3d"), false);
     assert.equal(shouldPlanSingleImageAd("type-force"), false);
+    assert.equal(shouldPlanSingleImageAd("spatial-layout"), false);
+    assert.equal(shouldPlanSingleImageAd("photo-doodle"), false);
+    assert.equal(shouldPlanSingleImageAd("light-trail"), false);
+    assert.equal(shouldPlanSingleImageAd("screen-break"), false);
     assert.equal(shouldPlanSingleImageAd("product-lifestyle"), false);
   });
 

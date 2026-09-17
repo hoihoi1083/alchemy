@@ -149,6 +149,50 @@ export const TEMPLATE_CONFIG: Record<TemplateId, AdTemplateConfig> = {
       { id: "referenceVideo", onSetup: false, required: false },
     ],
   },
+  "spatial-layout": {
+    defaultImageInputMode: "product-ad",
+    slots: [
+      { id: "product", onSetup: true, required: false },
+      { id: "headline", onSetup: true, required: true },
+      { id: "subline", onSetup: true, required: false },
+      { id: "business", onSetup: true, required: false },
+      { id: "productPhoto", onSetup: false, required: false },
+      { id: "referenceVideo", onSetup: false, required: false },
+    ],
+  },
+  "photo-doodle": {
+    defaultImageInputMode: "product-ad",
+    slots: [
+      { id: "product", onSetup: true, required: false },
+      { id: "headline", onSetup: true, required: false },
+      { id: "subline", onSetup: true, required: false },
+      { id: "business", onSetup: true, required: false },
+      { id: "productPhoto", onSetup: false, required: false },
+      { id: "referenceVideo", onSetup: false, required: false },
+    ],
+  },
+  "light-trail": {
+    defaultImageInputMode: "product-ad",
+    slots: [
+      { id: "product", onSetup: true, required: false },
+      { id: "headline", onSetup: true, required: false },
+      { id: "subline", onSetup: true, required: false },
+      { id: "business", onSetup: true, required: false },
+      { id: "productPhoto", onSetup: false, required: false },
+      { id: "referenceVideo", onSetup: false, required: false },
+    ],
+  },
+  "screen-break": {
+    defaultImageInputMode: "product-ad",
+    slots: [
+      { id: "product", onSetup: true, required: false },
+      { id: "headline", onSetup: true, required: false },
+      { id: "subline", onSetup: true, required: false },
+      { id: "business", onSetup: true, required: false },
+      { id: "productPhoto", onSetup: false, required: false },
+      { id: "referenceVideo", onSetup: false, required: false },
+    ],
+  },
   "material-letters": {
     defaultImageInputMode: "product-ad",
     slots: [

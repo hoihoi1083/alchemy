@@ -112,7 +112,27 @@ function styleSpecificRules(input: PlanConceptInput): string[] {
   }
   if (input.visualStyleId === "type-force") {
     return [
-      "- TYPE FORCE: visualMetaphor = giant in-scene word reacting to one force (sound / refraction / tension / shock); product and person stay intact.",
+      "- TYPE FORCE: visualMetaphor = giant in-scene word reacting to one force (sound / refraction / tension / shock / spatial install); product and person stay intact.",
+    ];
+  }
+  if (input.visualStyleId === "spatial-layout") {
+    return [
+      "- SPATIAL LAYOUT: visualMetaphor = architectural type on planes / carved void / extruded mass / corner wrap (concrete + sky + orange accents); product sits in space when present.",
+    ];
+  }
+  if (input.visualStyleId === "photo-doodle") {
+    return [
+      "- PHOTO DOODLE: visualMetaphor = real photographic scene + thick-outline 2D cartoon overlays (commute / city-pop / people-orbit / nature-frame); product/people stay photoreal; doodles share the ground plane.",
+    ];
+  }
+  if (input.visualStyleId === "light-trail") {
+    return [
+      "- LIGHT TRAIL: visualMetaphor = dark cinematic still with crimson–cyan neon long-exposure light trails (cast-streak / eye-slash / mask-beam / profile-shear); subject stays photoreal under motion light.",
+    ];
+  }
+  if (input.visualStyleId === "screen-break") {
+    return [
+      "- SCREEN BREAK: visualMetaphor = subject/product bursts through a social-profile tear or giant phone portal (tear-reach / tear-peek / phone-studio / phone-ground). PRODUCT = SKU is the break hero with identity lock; CONCEPT = person/brand is the break hero, no SKU required. Floating 3D UI chrome + forced perspective.",
     ];
   }
   if (input.visualStyleId === "material-letters") {

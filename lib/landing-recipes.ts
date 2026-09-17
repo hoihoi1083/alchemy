@@ -30,6 +30,9 @@ export const LANDING_RECIPE_IDS = [
   "product-creative-motion-4s",
   "product-hand-throw-scene-6s",
   "product-web-boundary-break-10s",
+  "product-type-behind-cutout-8s",
+  "product-wet-glass-reveal-6s",
+  "product-magazine-cover-morph-8s",
   "product-product-explode-4s",
   "product-bullet-elevate-10s",
   "product-ecom-orbit-6s",
@@ -63,6 +66,9 @@ export const LANDING_RECIPE_IDS = [
   "concept-creative-motion-4s",
   "concept-hand-throw-scene-6s",
   "concept-web-boundary-break-10s",
+  "concept-type-behind-cutout-8s",
+  "concept-wet-glass-reveal-6s",
+  "concept-magazine-cover-morph-8s",
   "concept-product-explode-4s",
   "concept-bullet-elevate-10s",
   "concept-beauty-mv-10s",
@@ -292,6 +298,33 @@ export const LANDING_RECIPES: Record<LandingRecipeId, LandingRecipeDef> = {
     videoCreativeMode: "web-boundary-break",
     duration: "10",
   },
+  "product-type-behind-cutout-8s": {
+    id: "product-type-behind-cutout-8s",
+    previewSrc: videoModeRecipePreview("type-behind-cutout"),
+    promotionMode: "physical",
+    workflowMode: "video-only",
+    visualStyleId: "product",
+    videoCreativeMode: "type-behind-cutout",
+    duration: "8",
+  },
+  "product-wet-glass-reveal-6s": {
+    id: "product-wet-glass-reveal-6s",
+    previewSrc: videoModeRecipePreview("wet-glass-reveal"),
+    promotionMode: "physical",
+    workflowMode: "video-only",
+    visualStyleId: "product",
+    videoCreativeMode: "wet-glass-reveal",
+    duration: "6",
+  },
+  "product-magazine-cover-morph-8s": {
+    id: "product-magazine-cover-morph-8s",
+    previewSrc: videoModeRecipePreview("magazine-cover-morph"),
+    promotionMode: "physical",
+    workflowMode: "video-only",
+    visualStyleId: "product",
+    videoCreativeMode: "magazine-cover-morph",
+    duration: "8",
+  },
   "product-product-explode-4s": {
     id: "product-product-explode-4s",
     previewSrc: videoModeRecipePreview("product-explode"),
@@ -484,6 +517,33 @@ export const LANDING_RECIPES: Record<LandingRecipeId, LandingRecipeDef> = {
     videoCreativeMode: "web-boundary-break",
     duration: "10",
   },
+  "concept-type-behind-cutout-8s": {
+    id: "concept-type-behind-cutout-8s",
+    previewSrc: videoModeRecipePreview("type-behind-cutout"),
+    promotionMode: "concept",
+    workflowMode: "video-only",
+    visualStyleId: "service-promo",
+    videoCreativeMode: "type-behind-cutout",
+    duration: "8",
+  },
+  "concept-wet-glass-reveal-6s": {
+    id: "concept-wet-glass-reveal-6s",
+    previewSrc: videoModeRecipePreview("wet-glass-reveal"),
+    promotionMode: "concept",
+    workflowMode: "video-only",
+    visualStyleId: "service-promo",
+    videoCreativeMode: "wet-glass-reveal",
+    duration: "6",
+  },
+  "concept-magazine-cover-morph-8s": {
+    id: "concept-magazine-cover-morph-8s",
+    previewSrc: videoModeRecipePreview("magazine-cover-morph"),
+    promotionMode: "concept",
+    workflowMode: "video-only",
+    visualStyleId: "service-promo",
+    videoCreativeMode: "magazine-cover-morph",
+    duration: "8",
+  },
   "concept-product-explode-4s": {
     id: "concept-product-explode-4s",
     previewSrc: videoModeRecipePreview("product-explode"),
@@ -670,6 +730,9 @@ export function microContextForLandingRecipe(
     LANDING_RECIPES[recipe].videoCreativeMode === "creative-motion" ||
     LANDING_RECIPES[recipe].videoCreativeMode === "hand-throw-scene" ||
     LANDING_RECIPES[recipe].videoCreativeMode === "web-boundary-break" ||
+    LANDING_RECIPES[recipe].videoCreativeMode === "type-behind-cutout" ||
+    LANDING_RECIPES[recipe].videoCreativeMode === "wet-glass-reveal" ||
+    LANDING_RECIPES[recipe].videoCreativeMode === "magazine-cover-morph" ||
     LANDING_RECIPES[recipe].videoCreativeMode === "product-explode" ||
     LANDING_RECIPES[recipe].videoCreativeMode === "bullet-product-elevate"
   ) {
@@ -683,6 +746,12 @@ export function microContextForLandingRecipe(
             ? "hand_throw_scene"
             : mode === "web-boundary-break"
               ? "web_boundary_break"
+            : mode === "type-behind-cutout"
+              ? "type_behind_cutout"
+            : mode === "wet-glass-reveal"
+              ? "wet_glass_reveal"
+            : mode === "magazine-cover-morph"
+              ? "magazine_cover_morph"
             : mode === "bullet-product-elevate"
               ? "bullet_product_elevate"
             : "product_explode";

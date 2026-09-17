@@ -30,9 +30,26 @@ import {
 } from "@/lib/recipe-path-ux";
 import { PosterDialectPicker } from "@/components/studio/PosterDialectPicker";
 import {
-  TYPE_FORCE_DIALECT_IDS,
+  TYPE_FORCE_PRODUCT_DIALECT_IDS,
+  TYPE_FORCE_SPATIAL_DIALECT_IDS,
   typeForceDialectPreviewSrc,
 } from "@/lib/type-force";
+import {
+  SPATIAL_LAYOUT_DIALECT_IDS,
+  spatialLayoutDialectPreviewSrc,
+} from "@/lib/spatial-layout";
+import {
+  PHOTO_DOODLE_DIALECT_IDS,
+  photoDoodleDialectPreviewSrc,
+} from "@/lib/photo-doodle";
+import {
+  LIGHT_TRAIL_DIALECT_IDS,
+  lightTrailDialectPreviewSrc,
+} from "@/lib/light-trail";
+import {
+  SCREEN_BREAK_DIALECT_IDS,
+  screenBreakDialectPreviewSrc,
+} from "@/lib/screen-break";
 import {
   MATERIAL_LETTERS_DIALECT_IDS,
   materialLettersDialectPreviewSrc,
@@ -994,6 +1011,10 @@ export function PreGenerateSetupPanel({
   const isSportsBigWords = wizard.visualStyleId === "sports-big-words";
   const isJelly3d = wizard.visualStyleId === "jelly-3d";
   const isTypeForce = wizard.visualStyleId === "type-force";
+  const isSpatialLayout = wizard.visualStyleId === "spatial-layout";
+  const isPhotoDoodle = wizard.visualStyleId === "photo-doodle";
+  const isLightTrail = wizard.visualStyleId === "light-trail";
+  const isScreenBreak = wizard.visualStyleId === "screen-break";
   const isMaterialLetters = wizard.visualStyleId === "material-letters";
   const isTypeInteraction = wizard.visualStyleId === "type-interaction";
   const isProductLifestyle = wizard.visualStyleId === "product-lifestyle";
@@ -1004,6 +1025,10 @@ export function PreGenerateSetupPanel({
     isSportsBigWords ||
     isJelly3d ||
     isTypeForce ||
+    isSpatialLayout ||
+    isPhotoDoodle ||
+    isLightTrail ||
+    isScreenBreak ||
     isMaterialLetters ||
     isTypeInteraction;
   // product-lifestyle is not locked-single (carousel OK) but still skips reference borrow.
@@ -1029,6 +1054,10 @@ export function PreGenerateSetupPanel({
     isSportsBigWords ||
     isJelly3d ||
     isTypeForce ||
+    isSpatialLayout ||
+    isPhotoDoodle ||
+    isLightTrail ||
+    isScreenBreak ||
     isMaterialLetters ||
     isTypeInteraction ||
     isProductLifestyle;
@@ -1242,6 +1271,10 @@ export function PreGenerateSetupPanel({
       | "sports-big-words"
       | "jelly-3d"
       | "type-force"
+      | "spatial-layout"
+      | "photo-doodle"
+      | "light-trail"
+      | "screen-break"
       | "material-letters"
       | "type-interaction"
       | "product-lifestyle"
@@ -1257,6 +1290,10 @@ export function PreGenerateSetupPanel({
       path === "sports-big-words" ||
       path === "jelly-3d" ||
       path === "type-force" ||
+      path === "spatial-layout" ||
+      path === "photo-doodle" ||
+      path === "light-trail" ||
+      path === "screen-break" ||
       path === "material-letters" ||
       path === "type-interaction" ||
       path === "product-lifestyle"
@@ -1277,6 +1314,10 @@ export function PreGenerateSetupPanel({
       | "sports-big-words"
       | "jelly-3d"
       | "type-force"
+      | "spatial-layout"
+      | "photo-doodle"
+      | "light-trail"
+      | "screen-break"
       | "material-letters"
       | "type-interaction"
       | "remap",
@@ -1288,6 +1329,10 @@ export function PreGenerateSetupPanel({
       path === "sports-big-words" ||
       path === "jelly-3d" ||
       path === "type-force" ||
+      path === "spatial-layout" ||
+      path === "photo-doodle" ||
+      path === "light-trail" ||
+      path === "screen-break" ||
       path === "material-letters" ||
       path === "type-interaction"
     ) {
@@ -1543,6 +1588,30 @@ export function PreGenerateSetupPanel({
                           "type-force",
                         ],
                         [
+                          "spatial-layout",
+                          pg.stylePickerSpatialLayoutLabel,
+                          pg.stylePickerSpatialLayoutDesc,
+                          "spatial-layout",
+                        ],
+                        [
+                          "photo-doodle",
+                          pg.stylePickerPhotoDoodleLabel,
+                          pg.stylePickerPhotoDoodleDesc,
+                          "photo-doodle",
+                        ],
+                        [
+                          "light-trail",
+                          pg.stylePickerLightTrailLabel,
+                          pg.stylePickerLightTrailDesc,
+                          "light-trail",
+                        ],
+                        [
+                          "screen-break",
+                          pg.stylePickerScreenBreakLabel,
+                          pg.stylePickerScreenBreakDesc,
+                          "screen-break",
+                        ],
+                        [
                           "material-letters",
                           pg.stylePickerMaterialLettersLabel,
                           pg.stylePickerMaterialLettersDesc,
@@ -1669,6 +1738,34 @@ export function PreGenerateSetupPanel({
                           isTypeForce,
                         ],
                         [
+                          "spatial-layout",
+                          pg.stylePickerSpatialLayoutLabel,
+                          pg.stylePickerSpatialLayoutDesc,
+                          "spatial-layout",
+                          isSpatialLayout,
+                        ],
+                        [
+                          "photo-doodle",
+                          pg.stylePickerPhotoDoodleLabel,
+                          pg.stylePickerPhotoDoodleDesc,
+                          "photo-doodle",
+                          isPhotoDoodle,
+                        ],
+                        [
+                          "light-trail",
+                          pg.stylePickerLightTrailLabel,
+                          pg.stylePickerLightTrailDesc,
+                          "light-trail",
+                          isLightTrail,
+                        ],
+                        [
+                          "screen-break",
+                          pg.stylePickerScreenBreakLabel,
+                          pg.stylePickerScreenBreakDesc,
+                          "screen-break",
+                          isScreenBreak,
+                        ],
+                        [
                           "material-letters",
                           pg.stylePickerMaterialLettersLabel,
                           pg.stylePickerMaterialLettersDesc,
@@ -1766,7 +1863,13 @@ export function PreGenerateSetupPanel({
               </section>
             ) : null}
 
-            {isTypeForce || isMaterialLetters || isTypeInteraction ? (
+            {isTypeForce ||
+            isSpatialLayout ||
+            isPhotoDoodle ||
+            isLightTrail ||
+            isScreenBreak ||
+            isMaterialLetters ||
+            isTypeInteraction ? (
               <section className="pg-card">
                 <div className="pg-card-title-row">
                   <span className="pg-card-icon">
@@ -1776,9 +1879,17 @@ export function PreGenerateSetupPanel({
                     <h3 className="pg-card-title">
                       {isTypeForce
                         ? pg.posterDialectTypeForceTitle
-                        : isMaterialLetters
-                          ? pg.posterDialectMaterialLettersTitle
-                          : pg.posterDialectTypeInteractionTitle}
+                        : isSpatialLayout
+                          ? pg.posterDialectSpatialLayoutTitle
+                          : isPhotoDoodle
+                            ? pg.posterDialectPhotoDoodleTitle
+                            : isLightTrail
+                              ? pg.posterDialectLightTrailTitle
+                              : isScreenBreak
+                                ? pg.posterDialectScreenBreakTitle
+                                : isMaterialLetters
+                                  ? pg.posterDialectMaterialLettersTitle
+                                  : pg.posterDialectTypeInteractionTitle}
                     </h3>
                   </div>
                 </div>
@@ -1795,11 +1906,113 @@ export function PreGenerateSetupPanel({
                         id as typeof wizard.typeForceDialectPick,
                       )
                     }
-                    options={TYPE_FORCE_DIALECT_IDS.map((id) => ({
+                    sections={[
+                      {
+                        label: pg.posterDialectTypeForceProductGroup,
+                        options: TYPE_FORCE_PRODUCT_DIALECT_IDS.map((id) => ({
+                          id,
+                          title: pg.posterDialectTypeForce[id].title,
+                          description: pg.posterDialectTypeForce[id].description,
+                          previewSrc: typeForceDialectPreviewSrc(id),
+                        })),
+                      },
+                      {
+                        label: pg.posterDialectTypeForceSpatialGroup,
+                        options: TYPE_FORCE_SPATIAL_DIALECT_IDS.map((id) => ({
+                          id,
+                          title: pg.posterDialectTypeForce[id].title,
+                          description: pg.posterDialectTypeForce[id].description,
+                          previewSrc: typeForceDialectPreviewSrc(id),
+                        })),
+                      },
+                    ]}
+                  />
+                ) : null}
+                {isSpatialLayout ? (
+                  <PosterDialectPicker
+                    title=""
+                    hint={pg.posterDialectSpatialLayoutHint}
+                    autoLabel={pg.posterDialectAuto}
+                    autoSelected={wizard.spatialLayoutDialectPick === "auto"}
+                    onAuto={() => wizard.setSpatialLayoutDialectPick("auto")}
+                    value={wizard.spatialLayoutDialectPick}
+                    onChange={(id) =>
+                      wizard.setSpatialLayoutDialectPick(
+                        id as typeof wizard.spatialLayoutDialectPick,
+                      )
+                    }
+                    options={SPATIAL_LAYOUT_DIALECT_IDS.map((id) => ({
                       id,
-                      title: pg.posterDialectTypeForce[id].title,
-                      description: pg.posterDialectTypeForce[id].description,
-                      previewSrc: typeForceDialectPreviewSrc(id),
+                      title: pg.posterDialectSpatialLayout[id].title,
+                      description: pg.posterDialectSpatialLayout[id].description,
+                      previewSrc: spatialLayoutDialectPreviewSrc(id),
+                    }))}
+                  />
+                ) : null}
+                {isPhotoDoodle ? (
+                  <PosterDialectPicker
+                    title=""
+                    hint={pg.posterDialectPhotoDoodleHint}
+                    autoLabel={pg.posterDialectAuto}
+                    autoSelected={wizard.photoDoodleDialectPick === "auto"}
+                    onAuto={() => wizard.setPhotoDoodleDialectPick("auto")}
+                    value={wizard.photoDoodleDialectPick}
+                    onChange={(id) =>
+                      wizard.setPhotoDoodleDialectPick(
+                        id as typeof wizard.photoDoodleDialectPick,
+                      )
+                    }
+                    options={PHOTO_DOODLE_DIALECT_IDS.map((id) => ({
+                      id,
+                      title: pg.posterDialectPhotoDoodle[id].title,
+                      description: pg.posterDialectPhotoDoodle[id].description,
+                      previewSrc: photoDoodleDialectPreviewSrc(id),
+                    }))}
+                  />
+                ) : null}
+                {isLightTrail ? (
+                  <PosterDialectPicker
+                    title=""
+                    hint={pg.posterDialectLightTrailHint}
+                    autoLabel={pg.posterDialectAuto}
+                    autoSelected={wizard.lightTrailDialectPick === "auto"}
+                    onAuto={() => wizard.setLightTrailDialectPick("auto")}
+                    value={wizard.lightTrailDialectPick}
+                    onChange={(id) =>
+                      wizard.setLightTrailDialectPick(
+                        id as typeof wizard.lightTrailDialectPick,
+                      )
+                    }
+                    options={LIGHT_TRAIL_DIALECT_IDS.map((id) => ({
+                      id,
+                      title: pg.posterDialectLightTrail[id].title,
+                      description: pg.posterDialectLightTrail[id].description,
+                      previewSrc: lightTrailDialectPreviewSrc(id),
+                    }))}
+                  />
+                ) : null}
+                {isScreenBreak ? (
+                  <PosterDialectPicker
+                    title=""
+                    hint={
+                      isConcept
+                        ? pg.posterDialectScreenBreakHintConcept
+                        : pg.posterDialectScreenBreakHintProduct
+                    }
+                    autoLabel={pg.posterDialectAuto}
+                    autoSelected={wizard.screenBreakDialectPick === "auto"}
+                    onAuto={() => wizard.setScreenBreakDialectPick("auto")}
+                    value={wizard.screenBreakDialectPick}
+                    onChange={(id) =>
+                      wizard.setScreenBreakDialectPick(
+                        id as typeof wizard.screenBreakDialectPick,
+                      )
+                    }
+                    options={SCREEN_BREAK_DIALECT_IDS.map((id) => ({
+                      id,
+                      title: pg.posterDialectScreenBreak[id].title,
+                      description: pg.posterDialectScreenBreak[id].description,
+                      previewSrc: screenBreakDialectPreviewSrc(id),
                     }))}
                   />
                 ) : null}

@@ -22,6 +22,9 @@ export type VideoCreativeMode =
   | "creative-motion"
   | "hand-throw-scene"
   | "web-boundary-break"
+  | "type-behind-cutout"
+  | "wet-glass-reveal"
+  | "magazine-cover-morph"
   | "product-explode"
   | "bullet-product-elevate"
   | "ecom-orbit"
@@ -60,6 +63,9 @@ export const VIDEO_CREATIVE_MODES: VideoCreativeMode[] = [
   "creative-motion",
   "hand-throw-scene",
   "web-boundary-break",
+  "type-behind-cutout",
+  "wet-glass-reveal",
+  "magazine-cover-morph",
   "product-explode",
   "bullet-product-elevate",
   "ecom-orbit",
@@ -100,6 +106,9 @@ export function isRecipeOwnedVideoMode(
     mode === "creative-motion" ||
     mode === "hand-throw-scene" ||
     mode === "web-boundary-break" ||
+    mode === "type-behind-cutout" ||
+    mode === "wet-glass-reveal" ||
+    mode === "magazine-cover-morph" ||
     mode === "product-explode" ||
     mode === "bullet-product-elevate" ||
     mode === "ecom-orbit" ||
@@ -211,6 +220,9 @@ export function videoModesForGoal(goal: OutputGoal): VideoCreativeMode[] {
       "creative-motion",
       "hand-throw-scene",
       "web-boundary-break",
+      "type-behind-cutout",
+      "wet-glass-reveal",
+      "magazine-cover-morph",
       "product-explode",
       "bullet-product-elevate",
       ...H3_SHOT_PICKER_MODES,
@@ -229,6 +241,9 @@ export function videoModesForGoal(goal: OutputGoal): VideoCreativeMode[] {
       "creative-motion",
       "hand-throw-scene",
       "web-boundary-break",
+      "type-behind-cutout",
+      "wet-glass-reveal",
+      "magazine-cover-morph",
       "product-explode",
       "bullet-product-elevate",
       ...H3_SHOT_PICKER_MODES,
@@ -258,6 +273,9 @@ export function videoModesForStudio(
       "creative-motion",
       "hand-throw-scene",
       "web-boundary-break",
+      "type-behind-cutout",
+      "wet-glass-reveal",
+      "magazine-cover-morph",
       "product-explode",
       "bullet-product-elevate",
       ...h3Modes,
@@ -275,6 +293,9 @@ export function videoModesForStudio(
       "creative-motion",
       "hand-throw-scene",
       "web-boundary-break",
+      "type-behind-cutout",
+      "wet-glass-reveal",
+      "magazine-cover-morph",
       "product-explode",
       "bullet-product-elevate",
       ...h3Modes,

@@ -7,6 +7,11 @@ type DialectOption = {
   previewSrc?: string;
 };
 
+type DialectSection = {
+  label: string;
+  options: DialectOption[];
+};
+
 const CSS = `
 .pdp-grid {
   display: grid;
@@ -15,6 +20,17 @@ const CSS = `
 }
 @media (min-width: 640px) {
   .pdp-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+.pdp-section {
+  margin-top: 0.65rem;
+}
+.pdp-section-label {
+  margin: 0 0 0.35rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #64748b;
 }
 .pdp-card {
   position: relative;
@@ -74,6 +90,46 @@ const CSS = `
 }
 `;
 
+function DialectCards({
+  options,
+  autoSelected,
+  value,
+  onChange,
+}: {
+  options: DialectOption[];
+  autoSelected: boolean;
+  value: string;
+  onChange: (id: string) => void;
+}) {
+  return (
+    <>
+      {options.map((opt) => {
+        const selected = !autoSelected && value === opt.id;
+        return (
+          <button
+            key={opt.id}
+            type="button"
+            role="option"
+            aria-selected={selected}
+            title={opt.description}
+            className={`pdp-card${selected ? " is-selected" : ""}`}
+            onClick={() => onChange(opt.id)}
+          >
+            <span className="pdp-preview">
+              {opt.previewSrc ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={opt.previewSrc} alt="" />
+              ) : null}
+            </span>
+            <span className="pdp-title">{opt.title}</span>
+            <span className="pdp-desc">{opt.description}</span>
+          </button>
+        );
+      })}
+    </>
+  );
+}
+
 export function PosterDialectPicker({
   title,
   hint,
@@ -81,6 +137,7 @@ export function PosterDialectPicker({
   autoSelected,
   onAuto,
   options,
+  sections,
   value,
   onChange,
 }: {
@@ -89,10 +146,15 @@ export function PosterDialectPicker({
   autoLabel: string;
   autoSelected: boolean;
   onAuto: () => void;
-  options: DialectOption[];
+  options?: DialectOption[];
+  /** When set, render labeled groups instead of a flat options list. */
+  sections?: DialectSection[];
   value: string;
   onChange: (id: string) => void;
 }) {
+  const flat = options ?? [];
+  const useSections = Boolean(sections?.length);
+
   return (
     <div className={title ? "mt-3" : "mt-2"}>
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
@@ -112,30 +174,30 @@ export function PosterDialectPicker({
           <span className="pdp-title">{autoLabel}</span>
           <span className="pdp-desc">Match product / copy</span>
         </button>
-        {options.map((opt) => {
-          const selected = !autoSelected && value === opt.id;
-          return (
-            <button
-              key={opt.id}
-              type="button"
-              role="option"
-              aria-selected={selected}
-              title={opt.description}
-              className={`pdp-card${selected ? " is-selected" : ""}`}
-              onClick={() => onChange(opt.id)}
-            >
-              <span className="pdp-preview">
-                {opt.previewSrc ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={opt.previewSrc} alt="" />
-                ) : null}
-              </span>
-              <span className="pdp-title">{opt.title}</span>
-              <span className="pdp-desc">{opt.description}</span>
-            </button>
-          );
-        })}
+        {!useSections ? (
+          <DialectCards
+            options={flat}
+            autoSelected={autoSelected}
+            value={value}
+            onChange={onChange}
+          />
+        ) : null}
       </div>
+      {useSections
+        ? sections!.map((section) => (
+            <div key={section.label} className="pdp-section">
+              <p className="pdp-section-label">{section.label}</p>
+              <div className="pdp-grid" role="listbox" aria-label={section.label}>
+                <DialectCards
+                  options={section.options}
+                  autoSelected={autoSelected}
+                  value={value}
+                  onChange={onChange}
+                />
+              </div>
+            </div>
+          ))
+        : null}
     </div>
   );
 }

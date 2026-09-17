@@ -819,11 +819,18 @@ export function buildTypeForceImagePrompt(
 
 	return joinParts(
 		`Create a vertical TYPE-FORCE COMMERCIAL POSTER for ${product}.`,
-		`Look DNA: premium XHS/IG commercial still where TYPOGRAPHY EXISTS IN THE 3D SCENE and is affected by ONE concrete physical force — not a flat Canva overlay.`,
+		isTypeForceSpatialDialect(dialectId)
+			? `Look DNA: premium XHS/IG spatial type-study still — giant typography as a 3D architectural installation under ONE structural physics (standing wave / bend / buckle / shear).`
+			: `Look DNA: premium XHS/IG commercial still where TYPOGRAPHY EXISTS IN THE 3D SCENE and is affected by ONE concrete physical force — not a flat Canva overlay.`,
 		`IDENTITY LOCK: Keep exact product / person / logo from IMAGE 1 when attached. Subject and product stay structurally intact — only letter strokes deform under the force.`,
+		isTypeForceSpatialDialect(dialectId)
+			? `CRITICAL PRODUCT LOCK: If IMAGE 1 is a serum / bottle / cosmetics / device, that EXACT SKU must appear in the gallery — never invent a car, EV, vehicle, or unrelated object as the hero prop.`
+			: "",
 		`POSTER GRAMMAR:`,
 		`1) Hero word as architecture: one enormous in-scene word spanning mid-frame. ${titleRule}`,
-		`2) Force source must be readable in-frame (headphones, glass/prism, ropes, impact point) matching the dialect.`,
+		isTypeForceSpatialDialect(dialectId)
+			? typeForceSpatialSceneClause()
+			: `2) Force source must be readable in-frame (headphones, glass/prism, ropes, impact point) matching the dialect.`,
 		typeForceDialectClause(dialectId),
 		subline
 			? `3) Small support lines only (exact): ${subline}.`
@@ -831,12 +838,200 @@ export function buildTypeForceImagePrompt(
 		offer ? `Optional tiny claim (exact): ${offer}.` : "",
 		vars.business ? `Brand cue small: ${vars.business}.` : "",
 		`4) Depth: letters layered with subject (some behind, some in front). Phone-readable hierarchy: force + giant word first.`,
-		`FORBIDDEN: flat sticker type; warping the whole background; melting the person; missing force origin; jelly/glass material letters; misspelled characters; social UI; watermark.`,
+		isTypeForceSpatialDialect(dialectId)
+			? `FORBIDDEN: flat sticker type; inventing a car/vehicle when IMAGE 1 is not a car; mixing multiple physics dialects in one frame; warping the whole background; melting the person; missing the dialect's force mechanism; props-only installs where letters stay perfectly straight / undeformed; jelly/glass material letters; misspelled characters; gibberish study labels; social UI; watermark.`
+			: `FORBIDDEN: flat sticker type; warping the whole background; melting the person; missing force origin; jelly/glass material letters; misspelled characters; social UI; watermark.`,
 		imageReferenceAnchorBlock(vars),
 		MARKET_HINTS[vars.market],
 		FRAMING_IMAGE[vars.framing],
 		vars.extra,
 		"Single 9:16 type-force poster still.",
+	);
+}
+
+/**
+ * Spatial layout — type as architecture (planes / void / extrude / corner).
+ * Not force deformation — perspective-mapped / carved / extruded / wrapped type.
+ */
+export function buildSpatialLayoutImagePrompt(
+	vars: PromptVariables,
+	dialectId: SpatialLayoutDialectId,
+): string {
+	const product = vars.product?.trim() || "the brand";
+	const headline = vars.headline?.trim() || "TYPE";
+	const subline = vars.subline?.trim() || "";
+	const offer = vars.offer?.trim() || "";
+	const bigWord =
+		headline.split(/\s+/).find((w) => /^[A-Za-z]{3,}$/.test(w))?.toUpperCase() ||
+		headline
+			.split(/[·|｜/\s]+/)
+			.map((w) => w.trim())
+			.find((w) => /^[A-Za-z]{3,}$/.test(w))
+			?.toUpperCase() ||
+		headline;
+	const titleRule =
+		vars.market === "en"
+			? `Hero architectural word(s) must read exactly from "${headline}" (prefer short Latin block "${bigWord}" when clear).`
+			: `Primary architectural word(s) exact from "${headline}" (prefer "${bigWord}" when Latin). Spell every character accurately.`;
+
+	return joinParts(
+		`Create a vertical SPATIAL-LAYOUT COMMERCIAL POSTER for ${product}.`,
+		`Look DNA: XHS/IG "空间感排版" — brutalist concrete + blue sky + giant type living IN architecture.`,
+		`IDENTITY LOCK: Keep exact product / person / logo from IMAGE 1 when attached. Product sits in the space; type stays architectural — do NOT melt the product into letters.`,
+		spatialLayoutSceneClause(),
+		`POSTER GRAMMAR:`,
+		`1) Hero type as architecture. ${titleRule}`,
+		spatialLayoutDialectClause(dialectId),
+		subline
+			? `2) Small support / study lines only (exact): ${subline}.`
+			: "2) Tiny technical labels + one short support line max — never a second giant headline competing with the hero word.",
+		offer ? `Optional tiny claim (exact): ${offer}.` : "",
+		vars.business ? `Brand cue small: ${vars.business}.` : "",
+		`3) Phone-readable hierarchy: architectural type + orange accent first; chrome labels last.`,
+		`FORBIDDEN: flat sticker type; Canva collage; force-deformed / melted letters (that is type-force); misspelled characters; social UI; watermark.`,
+		imageReferenceAnchorBlock(vars),
+		MARKET_HINTS[vars.market],
+		FRAMING_IMAGE[vars.framing],
+		vars.extra,
+		"Single 9:16 spatial-layout poster still.",
+	);
+}
+
+/**
+ * Photo doodle — real photo base + 2D cartoon overlays (实景插画风).
+ */
+export function buildPhotoDoodleImagePrompt(
+	vars: PromptVariables,
+	dialectId: PhotoDoodleDialectId,
+): string {
+	const product = vars.product?.trim() || "the brand";
+	const headline = vars.headline?.trim() || "";
+	const subline = vars.subline?.trim() || "";
+	const offer = vars.offer?.trim() || "";
+	const themeRule = headline
+		? vars.market === "en"
+			? `Theme / mood cue from "${headline}" — doodle cast should match this vibe. Optional small integrated labels only; never giant architectural type.`
+			: `主題／氛圍來自「${headline}」——插畫角色需呼應。可選小標籤，不要巨型建築字。`
+		: "No forced giant headline — mood comes from photo + doodle cast. Tiny brand labels optional.";
+
+	return joinParts(
+		`Create a vertical PHOTO-DOODLE / 实景插画风 COMMERCIAL POSTER for ${product}.`,
+		`Look DNA: XHS "实景插画风" — photoreal street/city/people + thick black-outline 2D cartoon overlays sharing 3D space.`,
+		`IDENTITY LOCK: Keep exact product / person / logo from IMAGE 1 when attached. Do NOT redraw the product as a cartoon. Doodles react TO the subject.`,
+		photoDoodleSceneClause(),
+		`POSTER GRAMMAR:`,
+		`1) Real photo stage + doodle cast. ${themeRule}`,
+		photoDoodleDialectClause(dialectId),
+		subline
+			? `2) Optional tiny support line (exact): ${subline}.`
+			: "2) Prefer doodle storytelling over text blocks — one short support line max if needed.",
+		offer ? `Optional tiny claim (exact): ${offer}.` : "",
+		vars.business ? `Brand cue small: ${vars.business}.` : "",
+		`3) Phone-readable: photo realism + cute doodles first; chrome labels last.`,
+		`FORBIDDEN: full-frame illustration; flat stickers with zero perspective; giant architectural type (spatial-layout); force-melted letters (type-force); covering faces; watermark; social UI.`,
+		imageReferenceAnchorBlock(vars),
+		MARKET_HINTS[vars.market],
+		FRAMING_IMAGE[vars.framing],
+		vars.extra,
+		"Single 9:16 photo-doodle poster still.",
+	);
+}
+
+/**
+ * Light trail — 动感光轨电影风 (crimson/cyan cinematic streaks).
+ */
+export function buildLightTrailImagePrompt(
+	vars: PromptVariables,
+	dialectId: LightTrailDialectId,
+): string {
+	const product = vars.product?.trim() || "the brand";
+	const headline = vars.headline?.trim() || "";
+	const subline = vars.subline?.trim() || "";
+	const offer = vars.offer?.trim() || "";
+	const themeRule = headline
+		? vars.market === "en"
+			? `Theme / mood cue from "${headline}" — trail energy should match this vibe. Optional small integrated labels only; never giant architectural type.`
+			: `主題／氛圍來自「${headline}」——光軌能量需呼應。可選小標籤，不要巨型建築字。`
+		: "No forced giant headline — mood comes from light trails + subject. Tiny brand labels optional.";
+
+	return joinParts(
+		`Create a vertical LIGHT-TRAIL / 动感光轨电影风 COMMERCIAL POSTER for ${product}.`,
+		`Look DNA: XHS "动感光轨电影风" — dark cinematic still, crimson + cyan neon long-exposure streaks, speed and glitch energy.`,
+		`IDENTITY LOCK: Keep exact product / person / logo from IMAGE 1 when attached. Do NOT rematerialize the subject. Trails wrap around and streak past identity-locked subjects.`,
+		lightTrailSceneClause(),
+		`POSTER GRAMMAR:`,
+		`1) Dark stage + light-trail cast. ${themeRule}`,
+		lightTrailDialectClause(dialectId),
+		subline
+			? `2) Optional tiny support line (exact): ${subline}.`
+			: "2) Prefer light + subject storytelling over text blocks — one short support line max if needed.",
+		offer ? `Optional tiny claim (exact): ${offer}.` : "",
+		vars.business ? `Brand cue small: ${vars.business}.` : "",
+		`3) Phone-readable: neon trails + subject silhouette first; chrome labels last.`,
+		`FORBIDDEN: flat Canva neon stickers; giant architectural type (spatial-layout); force-melted letters (type-force); 2D cartoon doodles (photo-doodle); gaming HUD; covering whole face unless eye-slash dialect; watermark; social UI.`,
+		imageReferenceAnchorBlock(vars),
+		MARKET_HINTS[vars.market],
+		FRAMING_IMAGE[vars.framing],
+		vars.extra,
+		"Single 9:16 light-trail poster still.",
+	);
+}
+
+/**
+ * Screen break — 破屏出界 (subject/product bursts through UI or phone portal).
+ * Product vs concept: SKU is break hero vs person/brand is break hero.
+ */
+export function buildScreenBreakImagePrompt(
+	vars: PromptVariables,
+	dialectId: ScreenBreakDialectId,
+	opts?: { conceptMode?: boolean },
+): string {
+	const conceptMode = Boolean(opts?.conceptMode);
+	const product = vars.product?.trim() || (conceptMode ? "the brand" : "the product");
+	const headline = vars.headline?.trim() || "";
+	const subline = vars.subline?.trim() || "";
+	const offer = vars.offer?.trim() || "";
+	const modeBlock = conceptMode
+		? [
+				"MODE — CONCEPT / SERVICE / INFLUENCER:",
+				"Hero of the break = person, face-ref, logo, or mascot (not a physical SKU).",
+				"Portal UI (profile or phone) sells personal brand, service, or campaign vibe.",
+				"No product photo required. If IMAGE 1 is a face/logo/brand still, lock that identity.",
+				"Floating chrome emphasizes reach, vibe, Prompt CTA, and offer — not SKU specs.",
+			].join(" ")
+		: [
+				"MODE — PRODUCT / PHYSICAL GOODS:",
+				"Hero of the break = the EXACT product from IMAGE 1 when attached (sneaker, device, bottle, etc.) — it steps, pops, or thrusts THROUGH the portal.",
+				"Keep product identity locked (shape, logo, materials, colors). Person is optional supporting model.",
+				"Floating chrome sells the product moment (likes, drop, Prompt) — not a service bio alone.",
+				"If no IMAGE 1, invent a clear hero product matching the brief and still make it the break hero.",
+			].join(" ");
+	const themeRule = headline
+		? vars.market === "en"
+			? `Campaign / theme cue from "${headline}" — editorial type secondary to the break action; spell exact if painted.`
+			: `主題來自「${headline}」——大字次於破屏動作；若畫上請精確拼寫。`
+		: "No forced giant headline — the break action + floating chrome carry the story. Tiny CTA / QR OK.";
+
+	return joinParts(
+		`Create a vertical SCREEN-BREAK / 破屏出界 COMMERCIAL POSTER for ${product}.`,
+		`Look DNA: XHS "3D创意宣传" — subject or product bursts through a torn social-profile plane or giant phone portal with forced perspective and floating 3D UI chrome.`,
+		modeBlock,
+		screenBreakSceneClause(),
+		`POSTER GRAMMAR:`,
+		`1) Portal + break action. ${themeRule}`,
+		screenBreakDialectClause(dialectId),
+		subline
+			? `2) Support / bio / selling line (exact): ${subline}.`
+			: "2) Short support line or floating UI copy max — never bury the break under walls of text.",
+		offer ? `Optional CTA / offer (exact): ${offer}.` : "",
+		vars.business ? `Brand cue: ${vars.business}.` : "",
+		`3) Phone-readable: break action first, floating chrome second, editorial type last.`,
+		`FORBIDDEN: flat Canva UI stickers; architectural concrete type (spatial-layout); force-melted letters (type-force); 2D doodles (photo-doodle); neon trails as the only graphic (light-trail); real XHS/IG watermarks; rematerializing the locked subject.`,
+		imageReferenceAnchorBlock(vars),
+		MARKET_HINTS[vars.market],
+		FRAMING_IMAGE[vars.framing],
+		vars.extra,
+		"Single 9:16 screen-break poster still.",
 	);
 }
 
@@ -973,9 +1168,31 @@ import type { CampaignSlidePlan } from "@/lib/campaign-types";
 import { getVisualStyle, type VisualStyleId } from "@/lib/visual-styles";
 import type { SingleImagePlan } from "@/lib/single-image-plan";
 import {
+	isTypeForceSpatialDialect,
 	typeForceDialectClause,
+	typeForceSpatialSceneClause,
 	type TypeForceDialectId,
 } from "@/lib/type-force";
+import {
+	spatialLayoutDialectClause,
+	spatialLayoutSceneClause,
+	type SpatialLayoutDialectId,
+} from "@/lib/spatial-layout";
+import {
+	photoDoodleDialectClause,
+	photoDoodleSceneClause,
+	type PhotoDoodleDialectId,
+} from "@/lib/photo-doodle";
+import {
+	lightTrailDialectClause,
+	lightTrailSceneClause,
+	type LightTrailDialectId,
+} from "@/lib/light-trail";
+import {
+	screenBreakDialectClause,
+	screenBreakSceneClause,
+	type ScreenBreakDialectId,
+} from "@/lib/screen-break";
 import {
 	materialLettersDialectClause,
 	type MaterialLettersDialectId,
@@ -996,6 +1213,10 @@ export type ImagePromptMode =
 	| "sports-big-words"
 	| "jelly-3d"
 	| "type-force"
+	| "spatial-layout"
+	| "photo-doodle"
+	| "light-trail"
+	| "screen-break"
 	| "material-letters"
 	| "type-interaction"
 	| "product-lifestyle"
@@ -1653,10 +1874,16 @@ export function buildWizardImagePrompt(
 		compositionRemapDual?: boolean;
 		/** Keep hub / main character from the composition reference. */
 		compositionRemapKeepHero?: boolean;
-		/** Type-force / material-letters / type-interaction dialect (resolved, not auto). */
+		/** Type-force / spatial-layout / photo-doodle / light-trail / screen-break / material-letters / type-interaction dialect (resolved, not auto). */
 		typeForceDialect?: TypeForceDialectId;
+		spatialLayoutDialect?: SpatialLayoutDialectId;
+		photoDoodleDialect?: PhotoDoodleDialectId;
+		lightTrailDialect?: LightTrailDialectId;
+		screenBreakDialect?: ScreenBreakDialectId;
 		materialLettersDialect?: MaterialLettersDialectId;
 		typeInteractionDialect?: TypeInteractionDialectId;
+		/** Concept promotion — changes screen-break (and similar) hero rules. */
+		conceptMode?: boolean;
 	},
 ): string {
 	const brandLogoImageIndex = promptOptions?.brandLogoImageIndex ?? null;
@@ -1786,6 +2013,60 @@ export function buildWizardImagePrompt(
 		return withLogo(
 			joinParts(
 				buildTypeForceImagePrompt(vars, dialect),
+				plan ? singlePlanBlock(plan) : "",
+				carouselSlideAvoidClause(
+					vars.framing,
+					vars.artStyle ?? DEFAULT_ART_STYLE,
+				),
+			),
+		);
+	}
+	if (mode === "spatial-layout") {
+		const dialect = promptOptions?.spatialLayoutDialect ?? "planes";
+		return withLogo(
+			joinParts(
+				buildSpatialLayoutImagePrompt(vars, dialect),
+				plan ? singlePlanBlock(plan) : "",
+				carouselSlideAvoidClause(
+					vars.framing,
+					vars.artStyle ?? DEFAULT_ART_STYLE,
+				),
+			),
+		);
+	}
+	if (mode === "photo-doodle") {
+		const dialect = promptOptions?.photoDoodleDialect ?? "commute";
+		return withLogo(
+			joinParts(
+				buildPhotoDoodleImagePrompt(vars, dialect),
+				plan ? singlePlanBlock(plan) : "",
+				carouselSlideAvoidClause(
+					vars.framing,
+					vars.artStyle ?? DEFAULT_ART_STYLE,
+				),
+			),
+		);
+	}
+	if (mode === "light-trail") {
+		const dialect = promptOptions?.lightTrailDialect ?? "cast-streak";
+		return withLogo(
+			joinParts(
+				buildLightTrailImagePrompt(vars, dialect),
+				plan ? singlePlanBlock(plan) : "",
+				carouselSlideAvoidClause(
+					vars.framing,
+					vars.artStyle ?? DEFAULT_ART_STYLE,
+				),
+			),
+		);
+	}
+	if (mode === "screen-break") {
+		const dialect = promptOptions?.screenBreakDialect ?? "phone-studio";
+		return withLogo(
+			joinParts(
+				buildScreenBreakImagePrompt(vars, dialect, {
+					conceptMode: promptOptions?.conceptMode,
+				}),
 				plan ? singlePlanBlock(plan) : "",
 				carouselSlideAvoidClause(
 					vars.framing,
@@ -1979,6 +2260,10 @@ function shouldUseConceptSocialPrompt(
 		visualStyleId === "sports-big-words" ||
 		visualStyleId === "jelly-3d" ||
 		visualStyleId === "type-force" ||
+		visualStyleId === "spatial-layout" ||
+		visualStyleId === "photo-doodle" ||
+		visualStyleId === "light-trail" ||
+		visualStyleId === "screen-break" ||
 		visualStyleId === "material-letters" ||
 		visualStyleId === "type-interaction" ||
 		visualStyleId === "product-lifestyle" ||
@@ -2023,6 +2308,10 @@ export function resolveImagePromptMode(
 	if (visualStyleId === "sports-big-words") return "sports-big-words";
 	if (visualStyleId === "jelly-3d") return "jelly-3d";
 	if (visualStyleId === "type-force") return "type-force";
+	if (visualStyleId === "spatial-layout") return "spatial-layout";
+	if (visualStyleId === "photo-doodle") return "photo-doodle";
+	if (visualStyleId === "light-trail") return "light-trail";
+	if (visualStyleId === "screen-break") return "screen-break";
 	if (visualStyleId === "material-letters") return "material-letters";
 	if (visualStyleId === "type-interaction") return "type-interaction";
 	if (visualStyleId === "product-lifestyle") return "product-lifestyle";

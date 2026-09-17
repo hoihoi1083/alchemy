@@ -69,6 +69,15 @@ export function applyIntakeVideoStyle(
     case "web_boundary_break":
       wizard.onVideoCreativeModeChange("web-boundary-break");
       return;
+    case "type_behind_cutout":
+      wizard.onVideoCreativeModeChange("type-behind-cutout");
+      return;
+    case "wet_glass_reveal":
+      wizard.onVideoCreativeModeChange("wet-glass-reveal");
+      return;
+    case "magazine_cover_morph":
+      wizard.onVideoCreativeModeChange("magazine-cover-morph");
+      return;
     case "product_explode":
       wizard.onVideoCreativeModeChange("product-explode");
       return;

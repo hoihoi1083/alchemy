@@ -13,6 +13,10 @@ export type TemplateId =
   | "sports-big-words"
   | "jelly-3d"
   | "type-force"
+  | "spatial-layout"
+  | "photo-doodle"
+  | "light-trail"
+  | "screen-break"
   | "material-letters"
   | "type-interaction"
   | "product-lifestyle"
@@ -294,13 +298,105 @@ export const TEMPLATES: MarketingTemplate[] = [
     avoidOnScreenText: false,
     generateAudio: true,
     imagePromptTemplate:
-      "Vertical type-force poster for {{product}}. Huge in-scene word from {{headline}}. Support {{subline}}. Type reacts to one physical force; product and subject stay intact.",
+      "Vertical type-force poster for {{product}}. Huge in-scene word from {{headline}}. Support {{subline}}. Type reacts to one physical force (product impact or spatial install); product and subject stay intact.",
     imageEditPromptTemplate:
-      "Create a type-force poster. Keep exact {{product}} from IMAGE 1 when present. One huge in-scene word from {{headline}}. Support {{subline}}. Apply one clear force to typography only.",
+      "Create a type-force poster. Keep exact {{product}} from IMAGE 1 when present. One huge in-scene word from {{headline}}. Support {{subline}}. Apply one clear force to typography only — product impact or spatial architecture install.",
     videoPromptTemplate:
       "Gentle push-in on type-force poster, preserve giant typography",
     negativePrompt:
       "flat overlay type, whole-frame liquify, warped subject, Canva flyer, watermark, social UI, misspelled characters, low quality, speech, voiceover",
+  },
+  {
+    id: "spatial-layout",
+    name: "Spatial layout poster",
+    description:
+      "Architectural type on planes, carved voids, extruded mass, or wrapped corners.",
+    icon: "🏙️",
+    aspectRatio: "9:16",
+    duration: "6",
+    fast: true,
+    resolution: "480p",
+    motionStrength: 26,
+    camera: "Slow Push In",
+    avoidOnScreenText: false,
+    generateAudio: true,
+    imagePromptTemplate:
+      "Vertical spatial-layout poster for {{product}}. Giant architectural type from {{headline}}. Support {{subline}}. Type is planes / void / extrude / corner — not flat overlay.",
+    imageEditPromptTemplate:
+      "Create a spatial-layout poster. Keep exact {{product}} from IMAGE 1 when present. Giant architectural words from {{headline}}. Support {{subline}}. Type lives on concrete planes or as 3D mass.",
+    videoPromptTemplate:
+      "Gentle push-in on spatial-layout poster, preserve architectural typography",
+    negativePrompt:
+      "flat Canva overlay type, warped subject, busy flyer collage, watermark, social UI, misspelled characters, low quality, speech, voiceover",
+  },
+  {
+    id: "photo-doodle",
+    name: "Photo doodle poster",
+    description:
+      "Real photo scene + cute 2D cartoon overlays (commute, city-pop, people, nature).",
+    icon: "✏️",
+    aspectRatio: "9:16",
+    duration: "6",
+    fast: true,
+    resolution: "480p",
+    motionStrength: 26,
+    camera: "Slow Push In",
+    avoidOnScreenText: false,
+    generateAudio: true,
+    imagePromptTemplate:
+      "Vertical photo-doodle poster for {{product}}. Real photographic scene with 2D cartoon doodles. Theme {{headline}}. Support {{subline}}. Photo stays real; doodles share the ground plane.",
+    imageEditPromptTemplate:
+      "Create a photo-doodle poster. Keep exact {{product}} / people from IMAGE 1 when present. Real photo base + thick-outline 2D doodle overlays. Theme {{headline}}. Support {{subline}}.",
+    videoPromptTemplate:
+      "Gentle push-in on photo-doodle poster, preserve photo + doodle layers",
+    negativePrompt:
+      "full-frame illustration, flat stickers with no perspective, giant architectural type, force-melted letters, watermark, social UI, low quality, speech, voiceover",
+  },
+  {
+    id: "light-trail",
+    name: "Light trail poster",
+    description:
+      "Dark cinematic still with crimson–cyan neon light trails and speed energy.",
+    icon: "💫",
+    aspectRatio: "9:16",
+    duration: "6",
+    fast: true,
+    resolution: "480p",
+    motionStrength: 28,
+    camera: "Slow Push In",
+    avoidOnScreenText: false,
+    generateAudio: true,
+    imagePromptTemplate:
+      "Vertical light-trail cinematic poster for {{product}}. Dark teal base with crimson and cyan neon long-exposure streaks. Theme {{headline}}. Support {{subline}}. Subject stays photoreal under motion light.",
+    imageEditPromptTemplate:
+      "Create a light-trail cinematic poster. Keep exact {{product}} / people from IMAGE 1 when present. Dark cinematic still + crimson/cyan light trails. Theme {{headline}}. Support {{subline}}.",
+    videoPromptTemplate:
+      "Gentle push-in on light-trail poster, preserve neon streaks and subject identity",
+    negativePrompt:
+      "flat Canva neon stickers, giant architectural type, force-melted letters, cartoon doodles, gaming HUD, watermark, social UI, low quality, speech, voiceover",
+  },
+  {
+    id: "screen-break",
+    name: "Screen break poster",
+    description:
+      "Subject or product bursts through a profile tear or giant phone portal.",
+    icon: "📱",
+    aspectRatio: "9:16",
+    duration: "6",
+    fast: true,
+    resolution: "480p",
+    motionStrength: 28,
+    camera: "Slow Push In",
+    avoidOnScreenText: false,
+    generateAudio: true,
+    imagePromptTemplate:
+      "Vertical screen-break poster for {{product}}. Subject or product bursts through a social-profile tear or giant phone portal. Theme {{headline}}. Support {{subline}}. Forced perspective + floating 3D UI chrome.",
+    imageEditPromptTemplate:
+      "Create a screen-break poster. Keep exact {{product}} / person from IMAGE 1 when present. Burst through torn profile UI or giant phone portal. Theme {{headline}}. Support {{subline}}.",
+    videoPromptTemplate:
+      "Gentle push-in on screen-break poster, preserve portal break and subject identity",
+    negativePrompt:
+      "flat Canva UI stickers, giant architectural concrete type, force-melted letters, cartoon doodles, neon light trails only, watermark, real XHS/IG chrome overlays, low quality, speech, voiceover",
   },
   {
     id: "material-letters",

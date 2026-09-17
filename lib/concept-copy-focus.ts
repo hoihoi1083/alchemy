@@ -20,6 +20,10 @@ export type ConceptCopyFocusMap = {
   "sports-big-words": ConceptCopyFocusEntry;
   "jelly-3d": ConceptCopyFocusEntry;
   "type-force": ConceptCopyFocusEntry;
+  "spatial-layout": ConceptCopyFocusEntry;
+  "photo-doodle": ConceptCopyFocusEntry;
+  "light-trail": ConceptCopyFocusEntry;
+  "screen-break": ConceptCopyFocusEntry;
   "material-letters": ConceptCopyFocusEntry;
   "type-interaction": ConceptCopyFocusEntry;
   "product-lifestyle": ConceptCopyFocusEntry;
@@ -49,6 +53,14 @@ export function conceptCopyFocusKeyForStyle(
       return "jelly-3d";
     case "type-force":
       return "type-force";
+    case "spatial-layout":
+      return "spatial-layout";
+    case "photo-doodle":
+      return "photo-doodle";
+    case "light-trail":
+      return "light-trail";
+    case "screen-break":
+      return "screen-break";
     case "material-letters":
       return "material-letters";
     case "type-interaction":
@@ -93,6 +105,10 @@ export function conceptCopyFieldEmphasis(
     case "sports-big-words":
     case "jelly-3d":
     case "type-force":
+    case "spatial-layout":
+    case "photo-doodle":
+    case "light-trail":
+    case "screen-break":
     case "material-letters":
     case "type-interaction":
       return { hook: true, supporting: true, offer: false };

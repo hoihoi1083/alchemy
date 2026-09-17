@@ -787,6 +787,24 @@ export const zhCn = {
 						"模特伸手穿过假想购物网页拿起产品。货架伸手／穿栏手持。",
 					costHint: "~2 张静图 + 8–10秒 · 模特 + 产品图",
 				},
+				"product-type-behind-cutout-8s": {
+					title: "字夹产品 ~8s",
+					description:
+						"产品抠图 · 巨型大字在身后 · 电影感底板 · 冲击收尾。城市奔跑／极简奔跑／冲击收尾。",
+					costHint: "~2 张静图 + 8–10秒 · 产品图 + 标题",
+				},
+				"product-wet-glass-reveal-6s": {
+					title: "湿玻璃揭示 ~6s",
+					description:
+						"起雾湿玻璃 → 水珠划痕／指抹清晰 → Logo 变锐。水珠／指抹／黑白微距。",
+					costHint: "~2 张静图 + 6–8秒 · 带清晰标签的产品图",
+				},
+				"product-magazine-cover-morph-8s": {
+					title: "杂志封面变装 ~8s",
+					description:
+						"时尚杂志封面 · 刊头在脑后 · 变装过渡。红刊头／粉梦／暗丝绒。",
+					costHint: "~2 张静图 + 6–8秒 · 人像+产品图 + 标题",
+				},
 				"product-product-explode-4s": {
 					title: "产品拆解 ~4s",
 					description:
@@ -931,6 +949,24 @@ export const zhCn = {
 					description:
 						"人物 + 产品静图 → 打破网页边界创意。货架伸手／穿栏手持。",
 					costHint: "~2 张静图 + 8–10秒 · 人物／产品静图",
+				},
+				"concept-type-behind-cutout-8s": {
+					title: "字夹人像（概念）~8s",
+					description:
+						"人像／品牌形象／吉祥物抠图 · 巨型大字在身后 · 城市奔跑／极简／冲击收尾。",
+					costHint: "~2 张静图 + 8–10秒 · 人像／品牌静图 + 标题",
+				},
+				"concept-wet-glass-reveal-6s": {
+					title: "湿玻璃揭示（概念）~6s",
+					description:
+						"人物／品牌静图在湿玻璃后 → 清晰路径揭示标志。水珠／指抹／黑白微距。",
+					costHint: "~2 张静图 + 6–8秒 · 带清晰标志的人像／品牌静图",
+				},
+				"concept-magazine-cover-morph-8s": {
+					title: "杂志封面变装（概念）~8s",
+					description:
+						"同一张脸的杂志封面 · 变装过渡。红刊头／粉梦／暗丝绒。",
+					costHint: "~2 张静图 + 6–8秒 · 人像静图 + 标题",
 				},
 				"concept-product-explode-4s": {
 					title: "产品拆解（概念）~4s",
@@ -1764,6 +1800,26 @@ export const zhCn = {
 				title: "字体受力",
 				description: "场景中大字受声波/折射/张力/冲击影响",
 			},
+			"spatial-layout": {
+				title: "空间排版",
+				description:
+					"建筑感大字：平面 / 镂空 / 挤出 / 转角",
+			},
+			"photo-doodle": {
+				title: "实景插画",
+				description:
+					"真实照片＋2D 卡通叠加（通勤 / 城市流行 / 人物环绕 / 自然框）",
+			},
+			"light-trail": {
+				title: "动感光轨",
+				description:
+					"暗调电影感＋猩红 / 青蓝霓虹光轨与速度感",
+			},
+			"screen-break": {
+				title: "破屏出界",
+				description:
+					"从档案页撕开或巨型手机冲出 — 产品＝SKU 英雄；概念＝人物／品牌英雄",
+			},
 			"material-letters": {
 				title: "材质大字",
 				description: "羽绒/牛仔/帐篷尼龙/皮革立体大字",
@@ -1838,6 +1894,10 @@ export const zhCn = {
       "sports-big-words": "",
       "jelly-3d": "",
 			"type-force": "",
+			"spatial-layout": "",
+			"photo-doodle": "",
+			"light-trail": "",
+			"screen-break": "",
 			"material-letters": "",
 			"type-interaction": "",
 			"product-lifestyle": "",
@@ -1949,6 +2009,14 @@ export const zhCn = {
       "jelly-3d": "例如：透亮果冻「1」、干净地面、少量品牌字、无杂乱场景…",
       			"type-force":
 				"例如：耳机声波推开 LOUD、球拍冲击 SERVE…",
+			"spatial-layout":
+				"例如 BETWEEN PLANES 倾斜板、VOID 橙色镂空…",
+			"photo-doodle":
+				"例如：十字路口咖啡公仔、时代广场卡带插画…",
+			"light-trail":
+				"例如：群像猩红青蓝光轨、眼神横切光束、暗调英雄交叉光…",
+			"screen-break":
+				"例如：球鞋踏出金色手机、手从档案页撕洞伸出…",
 			"material-letters":
 				"例如：羽绒 WARM 坐压、牛仔 BREAK 撕破、皮革 FOLD 掀角…",
 			"type-interaction":
@@ -2827,6 +2895,21 @@ export const zhCn = {
 				description:
 					"模特穿过假想购物网页拿起产品。货架伸手／穿栏手持。",
 			},
+			"type-behind-cutout": {
+				title: "字夹产品／字夹人像",
+				description:
+					"主体抠图 · 巨型大字在身后 · 电影感底板 · 冲击收尾。城市奔跑／极简奔跑／冲击收尾。约 8–10 秒。",
+			},
+			"wet-glass-reveal": {
+				title: "湿玻璃揭示",
+				description:
+					"起雾湿玻璃 → 水珠划痕／指抹清晰 → Logo 变锐。水珠划痕／指抹清晰／黑白微距。约 6–8 秒。",
+			},
+			"magazine-cover-morph": {
+				title: "杂志封面变装",
+				description:
+					"杂志封面 · 刊头在脑后 · 变装过渡。红刊头／粉梦／暗丝绒。约 6–8 秒。",
+			},
 			"product-explode": {
 				title: "产品拆解（风格化）",
 				description:
@@ -3497,7 +3580,80 @@ export const zhCn = {
 				],
 				output: ["一张字体受力海报静图"],
 			},
-			"material-letters": {
+			"spatial-layout": {
+				need: [
+					"标题（建筑大字）— 必填",
+					"产品图可选（产品模式建议上传）",
+					"方言：平面 / 镂空 / 挤出 / 转角（或自动）",
+				],
+				attention: [
+					"字即建筑 — 贴平面、镂空、挤出或包转角，不是平面贴图",
+					"有产品图时产品落在空间里；概念模式用标题当建筑",
+					"单张静帧 — 非轮播",
+					"产品与概念都可用",
+				],
+				output: [
+					"一张空间排版静帧（9:16）",
+					"画面：大字 + 混凝土/天空 + 橙色点缀 + 小标签",
+				],
+			},
+			"photo-doodle": {
+				need: [
+					"主题 / 氛围可选（标题驱动插画角色）",
+					"产品 / 人物图可选（产品模式建议上传）",
+					"方言：通勤 / 城市流行 / 人物环绕 / 自然框（或自动）",
+				],
+				attention: [
+					"照片保持写实 — 插画是共享地面的 2D 叠加",
+					"不要把产品画成卡通；插画围着 / 陪着产品",
+					"标题可选 — 气氛可以只靠物件",
+					"单张静帧 — 非轮播",
+					"产品与概念都可用",
+				],
+				output: [
+					"一张实景插画静帧（9:16）",
+					"画面：真实照片＋粗线插画＋可选小标签",
+				],
+			},
+			"light-trail": {
+				need: [
+					"主题 / 氛围可选（标题驱动光轨能量）",
+					"产品 / 人物图可选（产品模式建议上传）",
+					"方言：群像光轨 / 眼神横切 / 面具光束 / 侧脸剪切（或自动）",
+				],
+				attention: [
+					"暗调电影感 — 猩红＋青蓝霓虹长曝光光轨是主画面",
+					"主体保持写实；不要重画产品",
+					"标题可选 — 气氛可以只靠光",
+					"单张静帧 — 非轮播",
+					"产品与概念都可用",
+				],
+				output: [
+					"一张动感光轨静帧（9:16）",
+					"画面：暗青底＋霓虹光轨＋主体＋可选小标签",
+				],
+			},
+			"screen-break": {
+				need: [
+					"产品模式：建议上传产品图（SKU 是破屏英雄）",
+					"概念模式：人物 / Logo / 品牌图可选（人／品牌是破屏英雄）",
+					"主题 / 标题可选",
+					"方言：撕开伸手 / 撕开探头 / 手机棚拍 / 手机地面（或自动）",
+				],
+				attention: [
+					"一个门户平面（档案 UI 或巨型手机）被物理撕开／冲破",
+					"产品模式：精确 SKU 踏出或弹出门户 — 身份锁定",
+					"概念模式：人物／品牌冲出 — 不需要 SKU；浮动 UI 卖触达／气氛",
+					"强制透视＋立体 likes／数据 — 不是平面 Canva 贴纸",
+					"单张静帧 — 不是 web-boundary-break 短片配方",
+					"产品与概念都可用",
+				],
+				output: [
+					"一张破屏出界静帧（9:16）",
+					"画面：门户破口＋冲出英雄＋浮动 3D UI＋可选大字／QR",
+				],
+			},
+"material-letters": {
 				need: ["标题（材质大字）", "建议上传产品或模特图"],
 				attention: ["接触处的材质行为 > 平面贴图", "单张静图 — 不做轮播"],
 				output: ["一张材质大字海报静图"],
@@ -3548,6 +3704,50 @@ export const zhCn = {
 				output: [
 					"~8–10秒竖版创意广告",
 					"起止静图 morph：穿过网页 → 手持产品",
+				],
+			},
+			"type-behind-cutout": {
+				need: [
+					"产品图（清晰 SKU）— 或人像／品牌形象／吉祥物静图（概念）",
+					"标题文字（会变成巨型大字）",
+				],
+				attention: [
+					"上传锁定身份 — 禁止发明主体",
+					"大字必须夹在抠图身后",
+					"选 城市奔跑、极简奔跑 或 冲击收尾",
+				],
+				output: [
+					"~8–10秒竖版字夹广告",
+					"起止静图 morph：抠图主体 · 巨型大字在身后",
+				],
+			},
+			"wet-glass-reveal": {
+				need: [
+					"产品图 — 或人像／品牌静图（概念）+ 上传图上需有清晰标签／标志",
+				],
+				attention: [
+					"身份锁定 — 只动画化水汽／凝结",
+					"镜头锁定",
+					"选 水珠划痕、指抹清晰 或 黑白微距",
+				],
+				output: [
+					"~6–8秒竖版湿玻璃揭示",
+					"起止静图 morph：起雾玻璃 → 清晰路径露出 Logo／标志",
+				],
+			},
+			"magazine-cover-morph": {
+				need: [
+					"人像静图（脸清晰）— 产品路径最好是人+SKU",
+					"标题作为杂志刊头",
+				],
+				attention: [
+					"上传锁定五官 — 可以换装，不能换人",
+					"刊头始终在脑后",
+					"选 红刊头、粉梦 或 暗丝绒",
+				],
+				output: [
+					"~6–8秒竖版杂志封面变装",
+					"起止静图：同一封面骨架，新的造型",
 				],
 			},
 			"product-explode": {
@@ -3705,6 +3905,81 @@ socialDripHint:
 		webBoundaryAnimatingCard: "正在生成打破网页边界…",
 		webBoundaryNeedKeyframe:
 			"请先上传模特图（最好带产品）— 未上传前无法按生成。",
+		typeBehindHint:
+			"字夹产品／字夹人像 — 主体抠图在前、巨型大字在后、电影感底板。~8–10秒 · 城市奔跑／极简奔跑／冲击收尾。标题会变成巨型大字。",
+		typeBehindDialectTitle: "字夹风格",
+		typeBehindDialectHint:
+			"同一字夹构图 — 城市奔跑（夜街底板）、极简奔跑（奶油留白）、或冲击收尾（END CUT 重击）。",
+		typeBehindDialectAuto: "自动 · 最佳匹配",
+		typeBehindDialects: {
+			"city-run": {
+				title: "城市奔跑",
+				desc: "夜街底板 · 主体微前移 · 身后大字视差",
+			},
+			"minimal-run": {
+				title: "极简奔跑",
+				desc: "奶油留白 · 一个超大字 · 轻推近",
+			},
+			"impact-end": {
+				title: "冲击收尾",
+				desc: "平静字夹 → END CUT 硬冲击定格",
+			},
+		},
+		typeBehindBuildingStill: "第 1/2 步：字夹起始静图…",
+		typeBehindBuildingEnd: "第 2/2 步：字夹结束静图…",
+		typeBehindAnimatingCard: "正在生成字夹主体…",
+		typeBehindNeedKeyframe:
+			"请先上传产品图（概念用人像／品牌形象／吉祥物静图 — 单靠文字不够）。",
+		wetGlassHint:
+			"湿玻璃揭示 — 起雾湿玻璃 → 水珠划痕／指抹清晰 → Logo 变锐。~6–8秒 · 水珠划痕／指抹清晰／黑白微距。Logo 来自上传图透过玻璃显现。",
+		wetGlassDialectTitle: "湿玻璃风格",
+		wetGlassDialectHint:
+			"同一揭示 — 水珠划痕（一滴水珠划开雾气）、指抹清晰（清晰擦痕、无手）、或黑白微距（黑白特写湿玻璃）。",
+		wetGlassDialectAuto: "自动 · 最佳匹配",
+		wetGlassDialects: {
+			"droplet-trail": {
+				title: "水珠划痕",
+				desc: "一滴水珠滑过，擦开雾气露出 Logo",
+			},
+			"finger-wipe": {
+				title: "指抹清晰",
+				desc: "清晰擦痕（无手）揭示标志",
+			},
+			"mono-macro": {
+				title: "黑白微距",
+				desc: "黑白微距湿玻璃 — 同样揭示，不同观感",
+			},
+		},
+		wetGlassBuildingStill: "第 1/2 步：湿玻璃起始静图…",
+		wetGlassBuildingEnd: "第 2/2 步：湿玻璃结束静图…",
+		wetGlassAnimatingCard: "正在生成湿玻璃揭示…",
+		wetGlassNeedKeyframe:
+			"请先上传产品图（概念用人像／品牌静图，且需有清晰标签／标志 — 单靠文字不够）。",
+		magazineCoverHint:
+			"杂志封面变装 — 封面骨架锁定，刊头在脑后，换装过渡。~6–8秒 · 红刊头／粉梦／暗丝绒。标题变成刊头。",
+		magazineCoverDialectTitle: "封面风格",
+		magazineCoverDialectHint:
+			"同一变装配方 — 红刊头（街拍封面）、粉梦（粉色刊头）、或暗丝绒（皮革暗黑）。",
+		magazineCoverDialectAuto: "自动 · 最佳匹配",
+		magazineCoverDialects: {
+			"red-masthead": {
+				title: "红刊头",
+				desc: "白底 · 红色衬线刊头 · 街拍变装",
+			},
+			"pastel-dream": {
+				title: "粉梦",
+				desc: "粉色刊头 · 柔和换装",
+			},
+			"dark-velvet": {
+				title: "暗丝绒",
+				desc: "暗黑封面 · 皮革／束带换装",
+			},
+		},
+		magazineCoverBuildingStill: "第 1/2 步：杂志封面起始静图…",
+		magazineCoverBuildingEnd: "第 2/2 步：杂志封面结束静图…",
+		magazineCoverAnimatingCard: "正在生成杂志封面变装…",
+		magazineCoverNeedKeyframe:
+			"请先上传人像图（产品路径：人+SKU 静图 — 单靠文字或 Logo 不够）。",
 		productExplodeHint:
 			"完整组装棚拍（耳塞要坐在盒里）→ 零件沿组装轴分开 — 不是耳塞飞出充电盒。约 4 秒过渡。风格化零件，不是精准 CAD。",
 		productExplodeBuildingStill: "第 1/3 步：完整产品棚拍静图…",
@@ -4441,7 +4716,23 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
       name: "字体受力海报",
       description: "场景中大字受声波/折射/张力/冲击影响",
     },
-    "material-letters": {
+    "spatial-layout": {
+      name: "空间排版海报",
+      description: "建筑感大字：平面、镂空、挤出或转角",
+    },
+    "photo-doodle": {
+      name: "实景插画海报",
+      description: "真实照片＋2D 卡通叠加（通勤、城市流行、人物、自然）",
+    },
+    "light-trail": {
+      name: "动感光轨海报",
+      description: "暗调电影感＋猩红 / 青蓝霓虹光轨与速度感",
+    },
+    "screen-break": {
+      name: "破屏出界海报",
+      description: "从档案页撕开或巨型手机冲出 — 产品 SKU 或概念人物为英雄",
+    },
+"material-letters": {
       name: "材质大字海报",
       description: "羽绒/牛仔/帐篷尼龙/皮革构成的立体大字",
     },
@@ -5955,6 +6246,18 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
 						stylePickerTypeForceLabel: "字体受力",
 			stylePickerTypeForceDesc:
 				"大字存在场景中，受声波/折射/张力/冲击影响 — 人物与产品保持完整。",
+			stylePickerSpatialLayoutLabel: "空间排版",
+			stylePickerSpatialLayoutDesc:
+				"字即建筑：平面 / 镂空 / 挤出 / 转角。产品与概念都可用。单张静帧。",
+			stylePickerPhotoDoodleLabel: "实景插画",
+			stylePickerPhotoDoodleDesc:
+				"真实照片＋2D 卡通叠加（通勤 / 城市流行 / 人物 / 自然）。产品与概念都可用。单张静帧。",
+			stylePickerLightTrailLabel: "动感光轨",
+			stylePickerLightTrailDesc:
+				"暗调电影感猩红 / 青蓝霓虹光轨（群像 / 眼神 / 面具 / 侧脸）。产品与概念都可用。单张静帧。",
+			stylePickerScreenBreakLabel: "破屏出界",
+			stylePickerScreenBreakDesc:
+				"从档案撕开或手机门户冲出。产品＝SKU 英雄；概念＝人物／品牌英雄。单张静帧。",
 			stylePickerMaterialLettersLabel: "材质大字",
 			stylePickerMaterialLettersDesc:
 				"大字由羽绒/牛仔/帐篷尼龙/皮革构成，接触处有真实形变。",
@@ -5967,12 +6270,56 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
 			posterDialectAuto: "自动 · 最合适",
 			posterDialectTypeForceTitle: "受力类型",
 			posterDialectTypeForceHint:
-				"力从哪产生、往哪传播、影响到哪结束 — 只扭曲笔画。",
+				"力从哪产生、往哪传播、影响到哪结束 — 只扭曲笔画。产品受力或空间装置。",
+			posterDialectTypeForceProductGroup: "产品受力",
+			posterDialectTypeForceSpatialGroup: "空间装置",
 			posterDialectTypeForce: {
 				"sound-wave": { title: "声波", description: "耳机/音箱附近笔画被推开" },
 				refraction: { title: "折射", description: "玻璃局部错位与色散" },
 				tension: { title: "张力", description: "绳索拉扯字母接触点" },
 				"shock-wave": { title: "冲击波", description: "撞击点压缩/荡开笔画" },
+				"standing-wave": { title: "驻波", description: "展厅装置 — 丝带字呈驻波" },
+				bend: { title: "弯曲", description: "缆绳＋吊重让大字挠曲" },
+				buckle: { title: "压屈", description: "重梁压弯柱状字母" },
+				shear: { title: "剪切", description: "错位叠层让字面碎开" },
+			},
+			posterDialectSpatialLayoutTitle: "空间方言",
+			posterDialectSpatialLayoutHint:
+				"字如何活在建筑里 — 平面、镂空、挤出或转角。不是受力变形。",
+			posterDialectSpatialLayout: {
+				planes: { title: "平面", description: "倾斜板面之间的透视大字 + 橙色体块" },
+				void: { title: "镂空", description: "混凝土镂空字母，橙色内壁" },
+				extrude: { title: "挤出", description: "可站立的立体厚字，橙色侧面" },
+				corner: { title: "转角", description: "大字沿墙角两面透视包裹" },
+			},
+			posterDialectPhotoDoodleTitle: "插画方言",
+			posterDialectPhotoDoodleHint:
+				"照片保持写实 — 选插画气氛：通勤街景、城市流行、人物环绕或自然框。",
+			posterDialectPhotoDoodle: {
+				commute: { title: "通勤", description: "繁忙街道 — 咖啡 / 时钟 / 公文包公仔" },
+				"city-pop": { title: "城市流行", description: "霓虹夜景 — 卡带 / 麦克风 / 音符" },
+				"people-orbit": { title: "人物环绕", description: "街拍模特 — 音箱 / 球鞋 / 滑板环绕" },
+				"nature-frame": { title: "自然框", description: "天际线 — 山羊 / 花 / 太阳插画框" },
+			},
+			posterDialectLightTrailTitle: "光轨方言",
+			posterDialectLightTrailHint:
+				"暗调电影感 — 选光轨切法：群像横轨、眼神横切、面具光束或侧脸剪切。",
+			posterDialectLightTrail: {
+				"cast-streak": { title: "群像光轨", description: "团队站位 — 双色水平光轨" },
+				"eye-slash": { title: "眼神横切", description: "人像 — 猩红光束横切眼线" },
+				"mask-beam": { title: "面具光束", description: "暗调英雄 — 垂直 / 交叉光束" },
+				"profile-shear": { title: "侧脸剪切", description: "侧颜 — 斜向速度光轨" },
+			},
+			posterDialectScreenBreakTitle: "破屏方言",
+			posterDialectScreenBreakHintProduct:
+				"产品模式：你的 SKU 是破屏英雄 — 踏出或弹出门户。选撕开或手机方言。",
+			posterDialectScreenBreakHintConcept:
+				"概念模式：人物／品牌是破屏英雄 — 不需要 SKU。档案撕开或手机门户卖触达和气氛。",
+			posterDialectScreenBreak: {
+				"tear-reach": { title: "撕开伸手", description: "手从档案页撕洞伸向镜头" },
+				"tear-peek": { title: "撕开探头", description: "脸从锯齿撕口探出／抓住纸边" },
+				"phone-studio": { title: "手机棚拍", description: "巨型手机＋干净棚 — 球鞋／手冲出" },
+				"phone-ground": { title: "手机地面", description: "手机插在石地 — 从屏幕爬出" },
 			},
 			posterDialectMaterialLettersTitle: "材质类型",
 			posterDialectMaterialLettersHint:
@@ -6094,7 +6441,39 @@ stylePickerModelLabel: "模特佩戴／使用",
 					supportingLabel: "辅助 / 活动信息",
 					supportingPlaceholder: "短品牌或活动行（可选）",
 				},
-				"material-letters": {
+				"spatial-layout": {
+					title: "空间排版：先填建筑大字",
+					body: "必填：标题=建筑上的巨型字。可选：产品图（产品落在结构上/内）、辅助标签、方言平面/镂空/挤出/转角（或自动）。画面：混凝土+天空+橙色点缀+空间大字。单张静帧。产品与概念都可用。",
+					hookLabel: "建筑大字 / 标题",
+					hookPlaceholder: "例如 TYPE · VOID · BETWEEN PLANES · OPEN CORNER",
+					supportingLabel: "辅助 / 研究短句",
+					supportingPlaceholder: "例如 STEP THROUGH · WORDS HAVE WEIGHT（可选）",
+				},
+				"photo-doodle": {
+					title: "实景插画：气氛为主（标题可选）",
+					body: "可选：标题=驱动插画角色的主题。可选：产品/人物图（保持写实）。方言通勤/城市流行/人物环绕/自然框（或自动）。画面：真实照片＋粗线插画。单张静帧。产品与概念都可用。",
+					hookLabel: "主题 / 气氛（可选）",
+					hookPlaceholder: "例如 赶时间 · 城市流行 · 街拍 · 周末徒步",
+					supportingLabel: "辅助 / 品牌短句",
+					supportingPlaceholder: "短品牌或活动行（可选）",
+				},
+				"light-trail": {
+					title: "动感光轨：气氛为主（标题可选）",
+					body: "可选：标题=驱动光轨能量的主题。可选：产品/人物图（霓虹光轨下保持写实）。方言群像/眼神/面具/侧脸（或自动）。画面：暗青底＋猩红青蓝光轨。单张静帧。产品与概念都可用。",
+					hookLabel: "主题 / 气氛（可选）",
+					hookPlaceholder: "例如 夜行团队 · 扫描 · 英雄 · 速度",
+					supportingLabel: "辅助 / 品牌短句",
+					supportingPlaceholder: "短品牌或活动行（可选）",
+				},
+				"screen-break": {
+					title: "破屏出界：按模式选英雄",
+					body: "产品：建议上传 SKU — 它是破屏英雄。概念：人物/Logo/品牌图可选 — 他们是破屏英雄，不需要 SKU。标题可选。方言撕开伸手/探头/手机棚拍/手机地面（或自动）。画面：门户破口＋强制透视＋浮动 3D UI。单张静帧。",
+					hookLabel: "Campaign / 主题（可选）",
+					hookPlaceholder: "例如 BREAK THE SCREEN · OWN THE MOMENT · STEP OUT",
+					supportingLabel: "简介 / 辅助 / 优惠",
+					supportingPlaceholder: "短 bio、服务句或 CTA（可选）",
+				},
+"material-letters": {
 					title: "材质大字：填写材质词",
 					body: "标题=材质大字。选择羽绒/牛仔/尼龙/皮革（或自动）。辅助=口号或规格。",
 					hookLabel: "材质大字 / 标题",

@@ -154,6 +154,42 @@ export function PrimaryPathsPanel({ variant, showCinematicExtras = false }: Prop
             onClick={() => applyPrimaryPathConcept("type-force")}
           />
           <PathButton
+            active={visualStyleId === "spatial-layout"}
+            title={m.microWizard.preGenerateSetup.stylePickerSpatialLayoutLabel}
+            description={
+              m.microWizard.preGenerateSetup.stylePickerSpatialLayoutDesc
+            }
+            previewSrc={getVisualStyle("spatial-layout").previewSrc}
+            onClick={() => applyPrimaryPathConcept("spatial-layout")}
+          />
+          <PathButton
+            active={visualStyleId === "photo-doodle"}
+            title={m.microWizard.preGenerateSetup.stylePickerPhotoDoodleLabel}
+            description={
+              m.microWizard.preGenerateSetup.stylePickerPhotoDoodleDesc
+            }
+            previewSrc={getVisualStyle("photo-doodle").previewSrc}
+            onClick={() => applyPrimaryPathConcept("photo-doodle")}
+          />
+          <PathButton
+            active={visualStyleId === "light-trail"}
+            title={m.microWizard.preGenerateSetup.stylePickerLightTrailLabel}
+            description={
+              m.microWizard.preGenerateSetup.stylePickerLightTrailDesc
+            }
+            previewSrc={getVisualStyle("light-trail").previewSrc}
+            onClick={() => applyPrimaryPathConcept("light-trail")}
+          />
+          <PathButton
+            active={visualStyleId === "screen-break"}
+            title={m.microWizard.preGenerateSetup.stylePickerScreenBreakLabel}
+            description={
+              m.microWizard.preGenerateSetup.stylePickerScreenBreakDesc
+            }
+            previewSrc={getVisualStyle("screen-break").previewSrc}
+            onClick={() => applyPrimaryPathConcept("screen-break")}
+          />
+          <PathButton
             active={visualStyleId === "material-letters"}
             title={m.microWizard.preGenerateSetup.stylePickerMaterialLettersLabel}
             description={
@@ -302,6 +338,50 @@ export function PrimaryPathsPanel({ variant, showCinematicExtras = false }: Prop
                 }
                 previewSrc={getVisualStyle("type-force").previewSrc}
                 onClick={() => applyPrimaryPath("type-force")}
+              />
+              <PathButton
+                active={visualStyleId === "spatial-layout"}
+                title={
+                  m.microWizard.preGenerateSetup.stylePickerSpatialLayoutLabel
+                }
+                description={
+                  m.microWizard.preGenerateSetup.stylePickerSpatialLayoutDesc
+                }
+                previewSrc={getVisualStyle("spatial-layout").previewSrc}
+                onClick={() => applyPrimaryPath("spatial-layout")}
+              />
+              <PathButton
+                active={visualStyleId === "photo-doodle"}
+                title={
+                  m.microWizard.preGenerateSetup.stylePickerPhotoDoodleLabel
+                }
+                description={
+                  m.microWizard.preGenerateSetup.stylePickerPhotoDoodleDesc
+                }
+                previewSrc={getVisualStyle("photo-doodle").previewSrc}
+                onClick={() => applyPrimaryPath("photo-doodle")}
+              />
+              <PathButton
+                active={visualStyleId === "light-trail"}
+                title={
+                  m.microWizard.preGenerateSetup.stylePickerLightTrailLabel
+                }
+                description={
+                  m.microWizard.preGenerateSetup.stylePickerLightTrailDesc
+                }
+                previewSrc={getVisualStyle("light-trail").previewSrc}
+                onClick={() => applyPrimaryPath("light-trail")}
+              />
+              <PathButton
+                active={visualStyleId === "screen-break"}
+                title={
+                  m.microWizard.preGenerateSetup.stylePickerScreenBreakLabel
+                }
+                description={
+                  m.microWizard.preGenerateSetup.stylePickerScreenBreakDesc
+                }
+                previewSrc={getVisualStyle("screen-break").previewSrc}
+                onClick={() => applyPrimaryPath("screen-break")}
               />
               <PathButton
                 active={visualStyleId === "material-letters"}

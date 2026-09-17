@@ -37,6 +37,10 @@ export const SHARED_VISUAL_STYLE_IDS = new Set<VisualStyleId>([
   "sports-big-words",
   "jelly-3d",
   "type-force",
+  "spatial-layout",
+  "photo-doodle",
+  "light-trail",
+  "screen-break",
   "material-letters",
   "type-interaction",
   "brand-fit",
@@ -90,6 +94,10 @@ export function conceptStyleAllowsTextOnlyImage(id: VisualStyleId): boolean {
     id === "sports-big-words" ||
     id === "jelly-3d" ||
     id === "type-force" ||
+    id === "spatial-layout" ||
+    id === "photo-doodle" ||
+    id === "light-trail" ||
+    id === "screen-break" ||
     id === "material-letters" ||
     id === "type-interaction" ||
     id === "warm-shop" ||
@@ -107,6 +115,7 @@ export function conceptStyleRequiresHeadline(id: VisualStyleId): boolean {
     id === "sports-big-words" ||
     id === "jelly-3d" ||
     id === "type-force" ||
+    id === "spatial-layout" ||
     id === "material-letters" ||
     id === "type-interaction" ||
     id === "brand-fit" ||

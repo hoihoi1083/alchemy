@@ -687,6 +687,12 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
                 ? "hand_throw_scene"
                 : wizard.videoCreativeMode === "web-boundary-break"
                 ? "web_boundary_break"
+                : wizard.videoCreativeMode === "type-behind-cutout"
+                ? "type_behind_cutout"
+                : wizard.videoCreativeMode === "wet-glass-reveal"
+                ? "wet_glass_reveal"
+                : wizard.videoCreativeMode === "magazine-cover-morph"
+                ? "magazine_cover_morph"
                 : wizard.videoCreativeMode === "product-explode"
                 ? "product_explode"
                 : wizard.videoCreativeMode === "bullet-product-elevate"
@@ -712,6 +718,9 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
               subpath === "creative_motion" ||
               subpath === "hand_throw_scene" ||
               subpath === "web_boundary_break" ||
+              subpath === "type_behind_cutout" ||
+              subpath === "wet_glass_reveal" ||
+              subpath === "magazine_cover_morph" ||
               subpath === "product_explode" ||
               subpath === "bullet_product_elevate" ||
               subpath === "explosion_unbox" ||
@@ -736,6 +745,12 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
               wizard.onVideoCreativeModeChange("hand-throw-scene");
             } else if (subpath === "web_boundary_break") {
               wizard.onVideoCreativeModeChange("web-boundary-break");
+            } else if (subpath === "type_behind_cutout") {
+              wizard.onVideoCreativeModeChange("type-behind-cutout");
+            } else if (subpath === "wet_glass_reveal") {
+              wizard.onVideoCreativeModeChange("wet-glass-reveal");
+            } else if (subpath === "magazine_cover_morph") {
+              wizard.onVideoCreativeModeChange("magazine-cover-morph");
             } else if (subpath === "product_explode") {
               wizard.onVideoCreativeModeChange("product-explode");
             } else if (subpath === "bullet_product_elevate") {

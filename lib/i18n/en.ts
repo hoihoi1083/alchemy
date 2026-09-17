@@ -1053,6 +1053,24 @@ export const en = {
 						"Model reaches through a fake shopping-site UI to grab your product. Shelf reach / Hold through.",
 					costHint: "~2 images + 8–10s video · model + product photo",
 				},
+				"product-type-behind-cutout-8s": {
+					title: "Type behind cutout ~8s",
+					description:
+						"Cutout hero · giant type behind subject · cinematic plate · impact end. City run / Minimal / Impact.",
+					costHint: "~2 images + 8–10s video · product photo + headline",
+				},
+				"product-wet-glass-reveal-6s": {
+					title: "Wet glass reveal ~6s",
+					description:
+						"Fogged wet glass → droplet trail / wipe clears → logo sharp. Droplet / Wipe / Mono macro.",
+					costHint: "~2 images + 6–8s video · product photo with clear label",
+				},
+				"product-magazine-cover-morph-8s": {
+					title: "Magazine cover morph ~8s",
+					description:
+						"Fashion magazine cover · masthead behind the head · outfit-change morph. Red / Pastel / Velvet.",
+					costHint: "~2 images + 6–8s video · person+SKU still + headline",
+				},
 				"product-product-explode-4s": {
 					title: "Product explode ~4s",
 					description:
@@ -1100,6 +1118,24 @@ export const en = {
 					description:
 						"Person + product still → break the webpage boundary gag. Shelf reach / Hold through.",
 					costHint: "~2 images + 8–10s video · person/product still",
+				},
+				"concept-type-behind-cutout-8s": {
+					title: "Type behind cutout (concept) ~8s",
+					description:
+						"Person / brand figure / mascot cutout · giant type behind · City run / Minimal / Impact.",
+					costHint: "~2 images + 8–10s video · person/brand still + headline",
+				},
+				"concept-wet-glass-reveal-6s": {
+					title: "Wet glass reveal (concept) ~6s",
+					description:
+						"Person / brand still behind fogged wet glass → clear path reveals the mark. Droplet / Wipe / Mono.",
+					costHint: "~2 images + 6–8s video · person/brand still with clear mark",
+				},
+				"concept-magazine-cover-morph-8s": {
+					title: "Magazine cover morph (concept) ~8s",
+					description:
+						"Same face on a magazine cover · outfit-change morph. Red masthead / Pastel dream / Dark velvet.",
+					costHint: "~2 images + 6–8s video · person still + headline",
 				},
 				"concept-product-explode-4s": {
 					title: "Product explode (concept) ~4s",
@@ -2187,7 +2223,27 @@ export const en = {
 			"type-force": {
 				title: "Type force",
 				description:
-					"Giant in-scene type reacts to sound, refraction, tension, or shock",
+					"Giant in-scene type under product force or spatial install (wave / bend / buckle / shear)",
+			},
+			"spatial-layout": {
+				title: "Spatial layout",
+				description:
+					"Architectural type on planes, carved voids, extruded mass, or wrapped corners",
+			},
+			"photo-doodle": {
+				title: "Photo doodle",
+				description:
+					"Real photo scene + cute 2D cartoon overlays (commute / city-pop / people / nature)",
+			},
+			"light-trail": {
+				title: "Light trail",
+				description:
+					"Dark cinematic still with crimson–cyan neon light trails and speed energy",
+			},
+			"screen-break": {
+				title: "Screen break",
+				description:
+					"Burst through a profile tear or giant phone portal — product SKU or concept person as hero",
 			},
 			"material-letters": {
 				title: "Material letters",
@@ -2279,6 +2335,10 @@ export const en = {
 			"sports-big-words": "",
 			"jelly-3d": "",
 			"type-force": "",
+			"spatial-layout": "",
+			"photo-doodle": "",
+			"light-trail": "",
+			"screen-break": "",
 			"material-letters": "",
 			"type-interaction": "",
 			"product-lifestyle": "",
@@ -2411,6 +2471,14 @@ export const en = {
 				"e.g. glossy translucent 1, lime-to-blue gradient, ONE YEAR type…",
 						"type-force":
 				"e.g. LOUD sound ripples from headphones, SERVE shock at racket…",
+			"spatial-layout":
+				"e.g. BETWEEN PLANES on tilted slabs, VOID carve with orange insides…",
+			"photo-doodle":
+				"e.g. coffee-cup doodle on rush-hour crosswalk, cassette on Times Square…",
+			"light-trail":
+				"e.g. crimson–cyan cast streaks, eye-slash beams, dark hero mask beams…",
+			"screen-break":
+				"e.g. sneaker steps out of gold phone, hand tears through profile UI…",
 			"material-letters":
 				"e.g. puffer WARM sit-in, denim BREAK tear-through, leather FOLD peel…",
 			"type-interaction":
@@ -3429,6 +3497,21 @@ export const en = {
 				description:
 					"Web boundary break — model reaches through fake site UI to grab your product. Shelf reach / Hold through.",
 			},
+			"type-behind-cutout": {
+				title: "Type behind cutout",
+				description:
+					"Cutout hero · giant type behind subject · cinematic plate · impact end. City run / Minimal / Impact. ~8–10s.",
+			},
+			"wet-glass-reveal": {
+				title: "Wet glass reveal",
+				description:
+					"Fogged wet glass → droplet trail / wipe clears → logo sharp. Droplet / Wipe / Mono macro. ~6–8s.",
+			},
+			"magazine-cover-morph": {
+				title: "Magazine cover morph",
+				description:
+					"Magazine cover · masthead behind the head · outfit-change morph. Red / Pastel / Velvet. ~6–8s.",
+			},
 			"product-explode": {
 				title: "Product explode (stylized)",
 				description:
@@ -4209,15 +4292,90 @@ export const en = {
 			},
 			"type-force": {
 				need: [
-					"Headline (giant force-word)",
-					"Product or subject photo recommended",
+					"Headline (giant force-word) — required",
+					"Product / subject photo optional (recommended)",
+					"Dialect: product force or spatial install (or Auto)",
 				],
 				attention: [
-					"One force dialect — only letter strokes deform",
-					"Force origin must be visible in-frame",
+					"Only letter strokes deform — subject stays intact",
+					"Force origin must be readable in-frame",
 					"Single still — not carousel",
+					"OK for product and concept",
 				],
-				output: ["One type-force poster still"],
+				output: ["One type-force poster still (9:16)"],
+			},
+			"spatial-layout": {
+				need: [
+					"Headline (architectural word) — required",
+					"Product photo optional (recommended for product mode)",
+					"Dialect: planes / void / extrude / corner (or Auto)",
+				],
+				attention: [
+					"Type is architecture — on planes, carved, extruded, or wrapped — not flat overlay",
+					"Product sits IN the space when uploaded; concept uses headline as the structure",
+					"Single still — not carousel",
+					"OK for product and concept",
+				],
+				output: [
+					"One spatial-layout poster still (9:16)",
+					"On image: giant type + concrete/sky + orange accents + tiny labels",
+				],
+			},
+			"photo-doodle": {
+				need: [
+					"Theme / mood optional (headline drives doodle cast)",
+					"Product / people photo optional (recommended for product mode)",
+					"Dialect: commute / city-pop / people-orbit / nature-frame (or Auto)",
+				],
+				attention: [
+					"Photo stays photoreal — doodles are 2D overlays that share the ground plane",
+					"Do not redraw the product as a cartoon; doodles orbit / walk beside it",
+					"Headline is optional — mood can come from objects alone",
+					"Single still — not carousel",
+					"OK for product and concept",
+				],
+				output: [
+					"One photo-doodle poster still (9:16)",
+					"On image: real photo + thick-outline doodles + optional tiny labels",
+				],
+			},
+			"light-trail": {
+				need: [
+					"Theme / mood optional (headline drives trail energy)",
+					"Product / people photo optional (recommended for product mode)",
+					"Dialect: cast-streak / eye-slash / mask-beam / profile-shear (or Auto)",
+				],
+				attention: [
+					"Dark cinematic still — crimson + cyan neon long-exposure trails are the main graphic",
+					"Subject stays photoreal under streaks; do not rematerialize the product",
+					"Headline is optional — mood can come from light alone",
+					"Single still — not carousel",
+					"OK for product and concept",
+				],
+				output: [
+					"One light-trail poster still (9:16)",
+					"On image: dark teal base + neon trails + subject + optional tiny labels",
+				],
+			},
+			"screen-break": {
+				need: [
+					"PRODUCT: product photo recommended (SKU is the break hero)",
+					"CONCEPT: face / logo / brand still optional (person or brand is the break hero)",
+					"Theme / headline optional",
+					"Dialect: tear-reach / tear-peek / phone-studio / phone-ground (or Auto)",
+				],
+				attention: [
+					"One portal plane (profile UI or giant phone) is physically torn / broken",
+					"PRODUCT mode: exact SKU steps or pops through the portal — identity locked",
+					"CONCEPT mode: person/brand bursts out — no SKU required; chrome sells reach/vibe",
+					"Forced perspective + floating 3D likes/stats — not flat Canva stickers",
+					"Single still — not the web-boundary-break video recipe",
+					"OK for product and concept",
+				],
+				output: [
+					"One screen-break poster still (9:16)",
+					"On image: portal break + extruding hero + floating UI chrome + optional type/QR",
+				],
 			},
 			"material-letters": {
 				need: [
@@ -4301,6 +4459,50 @@ export const en = {
 				output: [
 					"~8–10s vertical creative ad",
 					"Start→end morph: reach through web UI → brand hold",
+				],
+			},
+			"type-behind-cutout": {
+				need: [
+					"Product photo (clear SKU) — or person / brand figure / mascot still (concept)",
+					"Headline for the giant word",
+				],
+				attention: [
+					"Upload locks identity — no invented hero",
+					"Type stays BEHIND the cutout",
+					"Pick City run, Minimal, or Impact end",
+				],
+				output: [
+					"~8–10s vertical type-behind-cutout ad",
+					"Start→end morph: cutout hero · giant type behind",
+				],
+			},
+			"wet-glass-reveal": {
+				need: [
+					"Product photo OR person/brand still (concept) + clear label/mark on upload",
+				],
+				attention: [
+					"Identity lock — only condensation animates",
+					"Locked camera",
+					"Pick Droplet trail, Finger wipe, or Mono macro",
+				],
+				output: [
+					"~6–8s vertical wet-glass reveal",
+					"Start→end morph: fogged glass → clear path over logo/mark",
+				],
+			},
+			"magazine-cover-morph": {
+				need: [
+					"Person still (face clear) — product: person+SKU preferred",
+					"Headline for the magazine masthead",
+				],
+				attention: [
+					"Upload locks the face — outfit may change, identity may not",
+					"Masthead stays behind the head",
+					"Pick Red masthead, Pastel dream, or Dark velvet",
+				],
+				output: [
+					"~6–8s vertical magazine-cover outfit morph",
+					"Start→end: same cover chrome, new editorial look",
 				],
 			},
 			"product-explode": {
@@ -4499,6 +4701,81 @@ export const en = {
 		webBoundaryAnimatingCard: "Animating web boundary break…",
 		webBoundaryNeedKeyframe:
 			"Upload a model photo (with product if possible) first — Generate stays off until then.",
+		typeBehindHint:
+			"Type behind cutout — cutout hero in front, giant word behind, cinematic plate. ~8–10s · City run / Minimal / Impact. Headline becomes the giant word.",
+		typeBehindDialectTitle: "Type-behind style",
+		typeBehindDialectHint:
+			"Same sandwich — City run (street plate), Minimal (cream void), or Impact end (punch lockup on END CUT).",
+		typeBehindDialectAuto: "Auto · best fit",
+		typeBehindDialects: {
+			"city-run": {
+				title: "City run",
+				desc: "Night street plate · subject drifts · type parallax behind",
+			},
+			"minimal-run": {
+				title: "Minimal run",
+				desc: "Cream void · one huge word · soft push-in",
+			},
+			"impact-end": {
+				title: "Impact end",
+				desc: "Calm sandwich → hard punch lockup on END CUT",
+			},
+		},
+		typeBehindBuildingStill: "Step 1/2: type-behind start still…",
+		typeBehindBuildingEnd: "Step 2/2: type-behind end still…",
+		typeBehindAnimatingCard: "Animating type behind cutout…",
+		typeBehindNeedKeyframe:
+			"Upload a product photo first (concept: person / brand figure / mascot still — text alone is not enough).",
+		wetGlassHint:
+			"Wet glass reveal — fogged wet glass → droplet trail / wipe clears → logo sharp. ~6–8s · Droplet / Wipe / Mono macro. Logo comes from your upload through the glass.",
+		wetGlassDialectTitle: "Wet-glass style",
+		wetGlassDialectHint:
+			"Same reveal — Droplet trail (one drop clears fog), Finger wipe (clear streak, no hand), or Mono macro (B&W close wet glass).",
+		wetGlassDialectAuto: "Auto · best fit",
+		wetGlassDialects: {
+			"droplet-trail": {
+				title: "Droplet trail",
+				desc: "One drop slides, clears fog over logo",
+			},
+			"finger-wipe": {
+				title: "Finger wipe",
+				desc: "Clear wipe streak (no hand) reveals mark",
+			},
+			"mono-macro": {
+				title: "Mono macro",
+				desc: "B&W macro wet glass — same reveal, different look",
+			},
+		},
+		wetGlassBuildingStill: "Step 1/2: wet-glass start still…",
+		wetGlassBuildingEnd: "Step 2/2: wet-glass end still…",
+		wetGlassAnimatingCard: "Animating wet glass reveal…",
+		wetGlassNeedKeyframe:
+			"Upload a product photo first (concept: person / brand still with a clear label/mark — text alone is not enough).",
+		magazineCoverHint:
+			"Magazine cover morph — locked cover chrome, masthead behind the head, outfit-change morph. ~6–8s · Red / Pastel / Velvet. Headline becomes the masthead.",
+		magazineCoverDialectTitle: "Cover style",
+		magazineCoverDialectHint:
+			"Same outfit-change recipe — Red masthead (street editorial), Pastel dream (pink cover), or Dark velvet (edgy leather).",
+		magazineCoverDialectAuto: "Auto · best fit",
+		magazineCoverDialects: {
+			"red-masthead": {
+				title: "Red masthead",
+				desc: "White void · red serif masthead · street editorial change",
+			},
+			"pastel-dream": {
+				title: "Pastel dream",
+				desc: "Pink masthead · airy wardrobe morph",
+			},
+			"dark-velvet": {
+				title: "Dark velvet",
+				desc: "Edgy cover · leather / harness look change",
+			},
+		},
+		magazineCoverBuildingStill: "Step 1/2: magazine-cover start still…",
+		magazineCoverBuildingEnd: "Step 2/2: magazine-cover end still…",
+		magazineCoverAnimatingCard: "Animating magazine cover morph…",
+		magazineCoverNeedKeyframe:
+			"Upload a person photo first (product: person+SKU still — text or logo alone is not enough).",
 		productExplodeHint:
 			"Intact assembled hero (earbuds stay seated in the case) → exploded parts along assembly axes — not buds flying out of the case. ~4s morph. Stylized parts, not CAD.",
 		productExplodeBuildingStill: "Step 1/3: intact product hero still…",
@@ -5355,7 +5632,27 @@ export const en = {
     "type-force": {
       name: "Type force poster",
       description:
-        "Giant in-scene type reacts to sound, refraction, tension, or shock",
+        "Giant in-scene type under product force or spatial install",
+    },
+    "spatial-layout": {
+      name: "Spatial layout poster",
+      description:
+        "Architectural type on planes, carved voids, extruded mass, or corners",
+    },
+    "photo-doodle": {
+      name: "Photo doodle poster",
+      description:
+        "Real photo + cute 2D cartoon overlays (commute, city-pop, people, nature)",
+    },
+    "light-trail": {
+      name: "Light trail poster",
+      description:
+        "Dark cinematic still with crimson–cyan neon light trails and speed energy",
+    },
+    "screen-break": {
+      name: "Screen break poster",
+      description:
+        "Burst through a profile tear or giant phone — product SKU or concept person as hero",
     },
     "material-letters": {
       name: "Material letters poster",
@@ -7052,7 +7349,19 @@ export const en = {
 				"Real product/mascot stays locked — headline becomes IG-dramatic jelly/glass 3D type.",
 			stylePickerTypeForceLabel: "Type force",
 			stylePickerTypeForceDesc:
-				"Giant in-scene word reacts to sound, refraction, tension, or shock — product stays intact.",
+				"Giant word under product force or spatial install — product stays intact. Single still.",
+			stylePickerSpatialLayoutLabel: "Spatial layout",
+			stylePickerSpatialLayoutDesc:
+				"Type as architecture: planes / void / extrude / corner. Works for product + concept. Single still.",
+			stylePickerPhotoDoodleLabel: "Photo doodle",
+			stylePickerPhotoDoodleDesc:
+				"Real photo + 2D cartoon overlays (commute / city-pop / people / nature). Product + concept. Single still.",
+			stylePickerLightTrailLabel: "Light trail",
+			stylePickerLightTrailDesc:
+				"Dark cinematic crimson–cyan neon trails (cast / eye-slash / mask / profile). Product + concept. Single still.",
+			stylePickerScreenBreakLabel: "Screen break",
+			stylePickerScreenBreakDesc:
+				"Burst through profile tear or phone portal. Product = SKU hero; concept = person/brand hero. Single still.",
 			stylePickerMaterialLettersLabel: "Material letters",
 			stylePickerMaterialLettersDesc:
 				"Giant letters made of down, denim, tent nylon, or leather with real contact behavior.",
@@ -7065,7 +7374,9 @@ export const en = {
 			posterDialectAuto: "Auto · best fit",
 			posterDialectTypeForceTitle: "Force dialect",
 			posterDialectTypeForceHint:
-				"Where the force starts, how it spreads, and where it stops — only letter strokes deform.",
+				"Where the force starts, how it spreads, and where it stops — only letter strokes deform. Product impact or spatial install.",
+			posterDialectTypeForceProductGroup: "Product force",
+			posterDialectTypeForceSpatialGroup: "Spatial install",
 			posterDialectTypeForce: {
 				"sound-wave": {
 					title: "Sound wave",
@@ -7082,6 +7393,108 @@ export const en = {
 				"shock-wave": {
 					title: "Shock wave",
 					description: "Impact compresses / ripples letters near the hit",
+				},
+				"standing-wave": {
+					title: "Wave",
+					description: "Gallery install — ribbon type as a standing wave",
+				},
+				bend: {
+					title: "Bend",
+					description: "Cables + hanging weights flex the giant letters",
+				},
+				buckle: {
+					title: "Buckle",
+					description: "Heavy beam compresses column-like letters",
+				},
+				shear: {
+					title: "Shear",
+					description: "Offset stacked slabs fragment the painted word",
+				},
+			},
+			posterDialectSpatialLayoutTitle: "Spatial dialect",
+			posterDialectSpatialLayoutHint:
+				"How type lives in architecture — planes, void carve, extruded mass, or corner wrap. Not force deformation.",
+			posterDialectSpatialLayout: {
+				planes: {
+					title: "Planes",
+					description: "Type on / between tilted slabs + orange volume",
+				},
+				void: {
+					title: "Void",
+					description: "Letters carved through concrete; orange inner faces",
+				},
+				extrude: {
+					title: "Extrude",
+					description: "Walkable 3D letter mass with orange sides",
+				},
+				corner: {
+					title: "Corner",
+					description: "Type wraps both faces of a building corner",
+				},
+			},
+			posterDialectPhotoDoodleTitle: "Doodle dialect",
+			posterDialectPhotoDoodleHint:
+				"Real photo stays photoreal — pick the doodle cast mood: commute street, city-pop spectacle, people orbit, or nature frame.",
+			posterDialectPhotoDoodle: {
+				commute: {
+					title: "Commute",
+					description: "Rush-hour street — coffee / clock / briefcase mascots",
+				},
+				"city-pop": {
+					title: "City pop",
+					description: "Neon spectacle — cassette / mic / music-note doodles",
+				},
+				"people-orbit": {
+					title: "People orbit",
+					description: "Lifestyle models — boombox / sneaker / skate orbit",
+				},
+				"nature-frame": {
+					title: "Nature frame",
+					description: "Skyline framed by goat / flowers / sun doodles",
+				},
+			},
+			posterDialectLightTrailTitle: "Trail dialect",
+			posterDialectLightTrailHint:
+				"Dark cinematic still — pick how neon trails cut the frame: cast streak, eye slash, mask beam, or profile shear.",
+			posterDialectLightTrail: {
+				"cast-streak": {
+					title: "Cast streak",
+					description: "Group lineup — dual-tone horizontal trails",
+				},
+				"eye-slash": {
+					title: "Eye slash",
+					description: "Portrait — hard crimson beam across eyes",
+				},
+				"mask-beam": {
+					title: "Mask beam",
+					description: "Dark hero — vertical / cross crimson beams",
+				},
+				"profile-shear": {
+					title: "Profile shear",
+					description: "Side portrait — diagonal speed trails",
+				},
+			},
+			posterDialectScreenBreakTitle: "Break dialect",
+			posterDialectScreenBreakHintProduct:
+				"Product mode: your SKU is the break hero — it steps or pops through the portal. Pick tear or phone dialect.",
+			posterDialectScreenBreakHintConcept:
+				"Concept mode: person / brand is the break hero — no SKU required. Profile tear or phone portal sells reach and vibe.",
+			posterDialectScreenBreak: {
+				"tear-reach": {
+					title: "Tear reach",
+					description: "Hand reaches through torn profile UI",
+				},
+				"tear-peek": {
+					title: "Tear peek",
+					description: "Face peeks / grips jagged profile tear",
+				},
+				"phone-studio": {
+					title: "Phone studio",
+					description: "Giant phone on clean set — sneaker/hand pops out",
+				},
+				"phone-ground": {
+					title: "Phone ground",
+					description: "Phone on rocky ground — climb out of the screen",
 				},
 			},
 			posterDialectMaterialLettersTitle: "Material dialect",
@@ -7225,11 +7638,43 @@ export const en = {
 				},
 				"type-force": {
 					title: "For type force: fill the giant force-word",
-					body: "Hook = the exact huge word the force acts on. Pick a force dialect (or Auto). Supporting = small brand/event lines only.",
+					body: "Required: Hook = the exact huge word. Optional: product photo (recommended), support lines, dialect (or Auto). On image: giant word + one force. Single still. Product + concept OK.",
 					hookLabel: "Force word / headline",
-					hookPlaceholder: "e.g. LOUD · SERVE · HOLD · VEIL",
+					hookPlaceholder: "e.g. LOUD · SERVE · WAVE · BEND",
 					supportingLabel: "Support / event lines",
 					supportingPlaceholder: "Short brand or event lines (optional)",
+				},
+				"spatial-layout": {
+					title: "For spatial layout: fill the architectural word",
+					body: "Required: Hook = the giant word(s) on the architecture. Optional: product photo (product sits on/in the structure), support labels, dialect planes/void/extrude/corner (or Auto). On image: concrete + sky + orange accents + type as space. Single still. Product + concept OK.",
+					hookLabel: "Architectural word / headline",
+					hookPlaceholder: "e.g. TYPE · VOID · BETWEEN PLANES · OPEN CORNER",
+					supportingLabel: "Support / study lines",
+					supportingPlaceholder: "e.g. STEP THROUGH · WORDS HAVE WEIGHT (optional)",
+				},
+				"photo-doodle": {
+					title: "For photo doodle: set the mood (headline optional)",
+					body: "Optional: Hook = theme that drives the doodle cast. Optional: product/people photo (stays photoreal). Dialect commute/city-pop/people-orbit/nature-frame (or Auto). On image: real photo + thick-outline doodles. Single still. Product + concept OK.",
+					hookLabel: "Theme / mood (optional)",
+					hookPlaceholder: "e.g. RUSH HOUR · CITY POP · STREETWEAR · WEEKEND HIKE",
+					supportingLabel: "Support / brand line",
+					supportingPlaceholder: "Short brand or event line (optional)",
+				},
+				"light-trail": {
+					title: "For light trail: set the mood (headline optional)",
+					body: "Optional: Hook = theme that drives trail energy. Optional: product/people photo (stays photoreal under neon streaks). Dialect cast-streak/eye-slash/mask-beam/profile-shear (or Auto). On image: dark teal + crimson/cyan trails. Single still. Product + concept OK.",
+					hookLabel: "Theme / mood (optional)",
+					hookPlaceholder: "e.g. NIGHT CREW · SCAN · HERO · SPEED",
+					supportingLabel: "Support / brand line",
+					supportingPlaceholder: "Short brand or event line (optional)",
+				},
+				"screen-break": {
+					title: "For screen break: pick hero by mode",
+					body: "PRODUCT: upload the SKU (recommended) — it is the break hero through the portal. CONCEPT: person/logo/brand still optional — they are the break hero; no SKU required. Optional headline. Dialect tear-reach/tear-peek/phone-studio/phone-ground (or Auto). On image: portal break + forced perspective + floating 3D UI chrome. Single still.",
+					hookLabel: "Campaign / theme (optional)",
+					hookPlaceholder: "e.g. BREAK THE SCREEN · OWN THE MOMENT · STEP OUT",
+					supportingLabel: "Bio / support / offer line",
+					supportingPlaceholder: "Short bio, service line, or CTA (optional)",
 				},
 				"material-letters": {
 					title: "For material letters: fill the material word",

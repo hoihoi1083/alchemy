@@ -41,6 +41,24 @@ import {
   type WebBoundaryBreakSchemePick,
 } from "@/lib/web-boundary-break";
 import {
+  TYPE_BEHIND_CUTOUT_DIALECT_IDS,
+  typeBehindCutoutDialectPreviewSrc,
+  typeBehindCutoutDurationOptions,
+  type TypeBehindCutoutDialectPick,
+} from "@/lib/type-behind-cutout";
+import {
+  WET_GLASS_REVEAL_DIALECT_IDS,
+  wetGlassRevealDialectPreviewSrc,
+  wetGlassRevealDurationOptions,
+  type WetGlassRevealDialectPick,
+} from "@/lib/wet-glass-reveal";
+import {
+  MAGAZINE_COVER_MORPH_DIALECT_IDS,
+  magazineCoverMorphDialectPreviewSrc,
+  magazineCoverMorphDurationOptions,
+  type MagazineCoverMorphDialectPick,
+} from "@/lib/magazine-cover-morph";
+import {
   h3ShotRecipeAcceptsReel,
   h3ShotRecipeNeedsHeroPhoto,
   h3ShotRecipeNeedsLifestyleStill,
@@ -444,6 +462,12 @@ export function PreVideoSetupPanel({
     !scenesReady && wizard.videoCreativeMode === "hand-throw-scene";
   const prefersWebBoundary =
     !scenesReady && wizard.videoCreativeMode === "web-boundary-break";
+  const prefersTypeBehind =
+    !scenesReady && wizard.videoCreativeMode === "type-behind-cutout";
+  const prefersWetGlass =
+    !scenesReady && wizard.videoCreativeMode === "wet-glass-reveal";
+  const prefersMagazineCover =
+    !scenesReady && wizard.videoCreativeMode === "magazine-cover-morph";
   const prefersProductExplode =
     !scenesReady && wizard.videoCreativeMode === "product-explode";
   const prefersBulletElevate =
@@ -471,6 +495,12 @@ export function PreVideoSetupPanel({
       ? "hand_throw_scene"
       : prefersWebBoundary
       ? "web_boundary_break"
+      : prefersTypeBehind
+      ? "type_behind_cutout"
+      : prefersWetGlass
+      ? "wet_glass_reveal"
+      : prefersMagazineCover
+      ? "magazine_cover_morph"
       : prefersProductExplode
       ? "product_explode"
       : prefersBulletElevate
@@ -496,6 +526,9 @@ export function PreVideoSetupPanel({
   const isCreativeMotion = !scenesReady && activeSubpath === "creative_motion";
   const isHandThrow = !scenesReady && activeSubpath === "hand_throw_scene";
   const isWebBoundary = !scenesReady && activeSubpath === "web_boundary_break";
+  const isTypeBehind = !scenesReady && activeSubpath === "type_behind_cutout";
+  const isWetGlass = !scenesReady && activeSubpath === "wet_glass_reveal";
+  const isMagazineCover = !scenesReady && activeSubpath === "magazine_cover_morph";
   const isProductExplode = !scenesReady && activeSubpath === "product_explode";
   const isBulletElevate =
     !scenesReady && activeSubpath === "bullet_product_elevate";
@@ -526,6 +559,9 @@ export function PreVideoSetupPanel({
     !isCreativeMotion &&
     !isHandThrow &&
     !isWebBoundary &&
+    !isTypeBehind &&
+    !isWetGlass &&
+    !isMagazineCover &&
     !isProductExplode &&
     !isBulletElevate &&
     !isExplosionUnbox &&
@@ -642,6 +678,15 @@ export function PreVideoSetupPanel({
     if (isWebBoundary && wizard.videoCreativeMode !== "web-boundary-break") {
       onPickVideoSubpath("web_boundary_break");
     }
+    if (isTypeBehind && wizard.videoCreativeMode !== "type-behind-cutout") {
+      onPickVideoSubpath("type_behind_cutout");
+    }
+    if (isWetGlass && wizard.videoCreativeMode !== "wet-glass-reveal") {
+      onPickVideoSubpath("wet_glass_reveal");
+    }
+    if (isMagazineCover && wizard.videoCreativeMode !== "magazine-cover-morph") {
+      onPickVideoSubpath("magazine_cover_morph");
+    }
     if (isHandThrow && wizard.videoCreativeMode !== "hand-throw-scene") {
       onPickVideoSubpath("hand_throw_scene");
       return;
@@ -676,6 +721,15 @@ export function PreVideoSetupPanel({
     }
     if (prefersWebBoundary) {
       onPickVideoSubpath("web_boundary_break");
+    }
+    if (prefersTypeBehind) {
+      onPickVideoSubpath("type_behind_cutout");
+    }
+    if (prefersWetGlass) {
+      onPickVideoSubpath("wet_glass_reveal");
+    }
+    if (prefersMagazineCover) {
+      onPickVideoSubpath("magazine_cover_morph");
     }
     if (prefersHandThrow) {
       onPickVideoSubpath("hand_throw_scene");
@@ -723,6 +777,9 @@ export function PreVideoSetupPanel({
     prefersCreativeMotion,
     prefersHandThrow,
     prefersWebBoundary,
+    prefersTypeBehind,
+    prefersWetGlass,
+    prefersMagazineCover,
     prefersProductExplode,
     prefersBulletElevate,
     prefersBlockbuster,
@@ -736,6 +793,9 @@ export function PreVideoSetupPanel({
     isCreativeMotion,
     isHandThrow,
     isWebBoundary,
+    isTypeBehind,
+    isWetGlass,
+    isMagazineCover,
     isProductExplode,
     isBulletElevate,
     activeSubpath,
@@ -983,6 +1043,24 @@ export function PreVideoSetupPanel({
       previewSrc: videoModePreviewSrc("web-boundary-break"),
     },
     {
+      id: "type_behind_cutout",
+      title: m.wizard.videoCreativeModes["type-behind-cutout"].title,
+      desc: m.wizard.videoCreativeModes["type-behind-cutout"].description,
+      previewSrc: videoModePreviewSrc("type-behind-cutout"),
+    },
+    {
+      id: "wet_glass_reveal",
+      title: m.wizard.videoCreativeModes["wet-glass-reveal"].title,
+      desc: m.wizard.videoCreativeModes["wet-glass-reveal"].description,
+      previewSrc: videoModePreviewSrc("wet-glass-reveal"),
+    },
+    {
+      id: "magazine_cover_morph",
+      title: m.wizard.videoCreativeModes["magazine-cover-morph"].title,
+      desc: m.wizard.videoCreativeModes["magazine-cover-morph"].description,
+      previewSrc: videoModePreviewSrc("magazine-cover-morph"),
+    },
+    {
       id: "product_explode",
       title: m.wizard.videoCreativeModes["product-explode"].title,
       desc: m.wizard.videoCreativeModes["product-explode"].description,
@@ -1070,6 +1148,24 @@ export function PreVideoSetupPanel({
       previewSrc: videoModePreviewSrc("web-boundary-break"),
     },
     {
+      id: "type_behind_cutout",
+      title: m.wizard.videoCreativeModes["type-behind-cutout"].title,
+      desc: m.wizard.videoCreativeModes["type-behind-cutout"].description,
+      previewSrc: videoModePreviewSrc("type-behind-cutout"),
+    },
+    {
+      id: "wet_glass_reveal",
+      title: m.wizard.videoCreativeModes["wet-glass-reveal"].title,
+      desc: m.wizard.videoCreativeModes["wet-glass-reveal"].description,
+      previewSrc: videoModePreviewSrc("wet-glass-reveal"),
+    },
+    {
+      id: "magazine_cover_morph",
+      title: m.wizard.videoCreativeModes["magazine-cover-morph"].title,
+      desc: m.wizard.videoCreativeModes["magazine-cover-morph"].description,
+      previewSrc: videoModePreviewSrc("magazine-cover-morph"),
+    },
+    {
       id: "product_explode",
       title: m.wizard.videoCreativeModes["product-explode"].title,
       desc: m.wizard.videoCreativeModes["product-explode"].description,
@@ -1104,6 +1200,9 @@ export function PreVideoSetupPanel({
         if (opt.id === "creative_motion") return isCreativeMotion;
         if (opt.id === "hand_throw_scene") return isHandThrow;
         if (opt.id === "web_boundary_break") return isWebBoundary;
+        if (opt.id === "type_behind_cutout") return isTypeBehind;
+        if (opt.id === "wet_glass_reveal") return isWetGlass;
+        if (opt.id === "magazine_cover_morph") return isMagazineCover;
         if (opt.id === "product_explode") return isProductExplode;
         if (opt.id === "bullet_product_elevate") return isBulletElevate;
         if (opt.id === "explosion_unbox") return isExplosionUnbox;
@@ -1128,6 +1227,12 @@ export function PreVideoSetupPanel({
         ? m.wizard.creativeMotionHint
         : isWebBoundary
         ? m.wizard.webBoundaryHint
+        : isTypeBehind
+        ? m.wizard.typeBehindHint
+        : isWetGlass
+        ? m.wizard.wetGlassHint
+        : isMagazineCover
+        ? m.wizard.magazineCoverHint
         : isHandThrow
         ? m.wizard.handThrowHint
         : isProductExplode
@@ -1366,6 +1471,12 @@ export function PreVideoSetupPanel({
                             ? isHandThrow
                             : opt.id === "web_boundary_break"
                               ? isWebBoundary
+                            : opt.id === "type_behind_cutout"
+                              ? isTypeBehind
+                            : opt.id === "wet_glass_reveal"
+                              ? isWetGlass
+                            : opt.id === "magazine_cover_morph"
+                              ? isMagazineCover
                             : opt.id === "product_explode"
                               ? isProductExplode
                             : opt.id === "bullet_product_elevate"
@@ -2647,6 +2758,189 @@ export function PreVideoSetupPanel({
               </section>
             ) : null}
 
+            {isTypeBehind ? (
+              <section className="pv-card">
+                <div className="pv-card-title-row mb-2">
+                  <h3 className="pv-card-title">{m.wizard.typeBehindDialectTitle}</h3>
+                </div>
+                <p className="mb-3 text-xs text-slate-500">{m.wizard.typeBehindDialectHint}</p>
+                <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+                  <button
+                    type="button"
+                    className={`flex items-center gap-2 rounded-xl border px-2 py-1.5 text-left transition ${
+                      wizard.typeBehindDialectPick === "auto"
+                        ? "border-violet-500 bg-violet-50"
+                        : "border-slate-200 bg-white hover:border-violet-300"
+                    }`}
+                    onClick={() => wizard.setTypeBehindDialectPick("auto")}
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-[10px] font-semibold leading-tight text-slate-700">
+                      Auto
+                    </span>
+                    <span className="min-w-0 text-[11px] font-semibold text-slate-800">
+                      {m.wizard.typeBehindDialectAuto}
+                    </span>
+                  </button>
+                  {TYPE_BEHIND_CUTOUT_DIALECT_IDS.map((id) => {
+                    const selected = wizard.typeBehindDialectPick === id;
+                    const title = m.wizard.typeBehindDialects[id]?.title ?? id;
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        title={m.wizard.typeBehindDialects[id]?.desc}
+                        className={`flex items-center gap-2 rounded-xl border px-2 py-1.5 text-left transition ${
+                          selected
+                            ? "border-violet-500 bg-violet-50"
+                            : "border-slate-200 bg-white hover:border-violet-300"
+                        }`}
+                        onClick={() =>
+                          wizard.setTypeBehindDialectPick(
+                            id as TypeBehindCutoutDialectPick,
+                          )
+                        }
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={typeBehindCutoutDialectPreviewSrc(id)}
+                          alt=""
+                          className="h-10 w-10 shrink-0 rounded-lg object-cover"
+                        />
+                        <span className="min-w-0 text-[11px] font-semibold leading-snug text-slate-800">
+                          {title}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="mt-3 text-xs leading-relaxed text-slate-500">
+                  {m.wizard.typeBehindHint}
+                </p>
+              </section>
+            ) : null}
+
+            {isWetGlass ? (
+              <section className="pv-card">
+                <div className="pv-card-title-row mb-2">
+                  <h3 className="pv-card-title">{m.wizard.wetGlassDialectTitle}</h3>
+                </div>
+                <p className="mb-3 text-xs text-slate-500">{m.wizard.wetGlassDialectHint}</p>
+                <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+                  <button
+                    type="button"
+                    className={`flex items-center gap-2 rounded-xl border px-2 py-1.5 text-left transition ${
+                      wizard.wetGlassDialectPick === "auto"
+                        ? "border-violet-500 bg-violet-50"
+                        : "border-slate-200 bg-white hover:border-violet-300"
+                    }`}
+                    onClick={() => wizard.setWetGlassDialectPick("auto")}
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-[10px] font-semibold leading-tight text-slate-700">
+                      Auto
+                    </span>
+                    <span className="min-w-0 text-[11px] font-semibold text-slate-800">
+                      {m.wizard.wetGlassDialectAuto}
+                    </span>
+                  </button>
+                  {WET_GLASS_REVEAL_DIALECT_IDS.map((id) => {
+                    const selected = wizard.wetGlassDialectPick === id;
+                    const title = m.wizard.wetGlassDialects[id]?.title ?? id;
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        title={m.wizard.wetGlassDialects[id]?.desc}
+                        className={`flex items-center gap-2 rounded-xl border px-2 py-1.5 text-left transition ${
+                          selected
+                            ? "border-violet-500 bg-violet-50"
+                            : "border-slate-200 bg-white hover:border-violet-300"
+                        }`}
+                        onClick={() =>
+                          wizard.setWetGlassDialectPick(
+                            id as WetGlassRevealDialectPick,
+                          )
+                        }
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={wetGlassRevealDialectPreviewSrc(id)}
+                          alt=""
+                          className="h-10 w-10 shrink-0 rounded-lg object-cover"
+                        />
+                        <span className="min-w-0 text-[11px] font-semibold leading-snug text-slate-800">
+                          {title}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="mt-3 text-xs leading-relaxed text-slate-500">
+                  {m.wizard.wetGlassHint}
+                </p>
+              </section>
+            ) : null}
+
+            {isMagazineCover ? (
+              <section className="pv-card">
+                <div className="pv-card-title-row mb-2">
+                  <h3 className="pv-card-title">{m.wizard.magazineCoverDialectTitle}</h3>
+                </div>
+                <p className="mb-3 text-xs text-slate-500">{m.wizard.magazineCoverDialectHint}</p>
+                <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+                  <button
+                    type="button"
+                    className={`flex items-center gap-2 rounded-xl border px-2 py-1.5 text-left transition ${
+                      wizard.magazineCoverDialectPick === "auto"
+                        ? "border-violet-500 bg-violet-50"
+                        : "border-slate-200 bg-white hover:border-violet-300"
+                    }`}
+                    onClick={() => wizard.setMagazineCoverDialectPick("auto")}
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-[10px] font-semibold leading-tight text-slate-700">
+                      Auto
+                    </span>
+                    <span className="min-w-0 text-[11px] font-semibold text-slate-800">
+                      {m.wizard.magazineCoverDialectAuto}
+                    </span>
+                  </button>
+                  {MAGAZINE_COVER_MORPH_DIALECT_IDS.map((id) => {
+                    const selected = wizard.magazineCoverDialectPick === id;
+                    const title = m.wizard.magazineCoverDialects[id]?.title ?? id;
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        title={m.wizard.magazineCoverDialects[id]?.desc}
+                        className={`flex items-center gap-2 rounded-xl border px-2 py-1.5 text-left transition ${
+                          selected
+                            ? "border-violet-500 bg-violet-50"
+                            : "border-slate-200 bg-white hover:border-violet-300"
+                        }`}
+                        onClick={() =>
+                          wizard.setMagazineCoverDialectPick(
+                            id as MagazineCoverMorphDialectPick,
+                          )
+                        }
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={magazineCoverMorphDialectPreviewSrc(id)}
+                          alt=""
+                          className="h-10 w-10 shrink-0 rounded-lg object-cover"
+                        />
+                        <span className="min-w-0 text-[11px] font-semibold leading-snug text-slate-800">
+                          {title}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="mt-3 text-xs leading-relaxed text-slate-500">
+                  {m.wizard.magazineCoverHint}
+                </p>
+              </section>
+            ) : null}
+
             {isProductExplode ? (
               <section className="pv-card">
                 <h3 className="pv-card-title">
@@ -3424,6 +3718,12 @@ export function PreVideoSetupPanel({
                           ? bulletProductElevateDurationOptions()
                           : isWebBoundary
                             ? webBoundaryBreakDurationOptions()
+                          : isTypeBehind
+                            ? typeBehindCutoutDurationOptions()
+                          : isWetGlass
+                            ? wetGlassRevealDurationOptions()
+                          : isMagazineCover
+                            ? magazineCoverMorphDurationOptions()
                           : h3ShotMode === "h3-triangle-light-mg"
                             ? triangleLightMgDurationOptions()
                             : h3ShotMode === "h3-glass-type-mg"

@@ -184,6 +184,39 @@ import {
 	type WebBoundaryBreakSchemePick,
 } from "@/lib/web-boundary-break";
 import {
+	TYPE_BEHIND_CUTOUT_DURATION_SEC,
+	TYPE_BEHIND_CUTOUT_MOTION_STRENGTH,
+	TYPE_BEHIND_CUTOUT_NEGATIVE,
+	buildTypeBehindCutoutVideoPrompt,
+	clampTypeBehindCutoutDurationSec,
+	parseTypeBehindCutoutDialectPick,
+	resolveTypeBehindCutoutDialect,
+	type TypeBehindCutoutDialectId,
+	type TypeBehindCutoutDialectPick,
+} from "@/lib/type-behind-cutout";
+import {
+	WET_GLASS_REVEAL_DURATION_SEC,
+	WET_GLASS_REVEAL_MOTION_STRENGTH,
+	WET_GLASS_REVEAL_NEGATIVE,
+	buildWetGlassRevealVideoPrompt,
+	clampWetGlassRevealDurationSec,
+	parseWetGlassRevealDialectPick,
+	resolveWetGlassRevealDialect,
+	type WetGlassRevealDialectId,
+	type WetGlassRevealDialectPick,
+} from "@/lib/wet-glass-reveal";
+import {
+	MAGAZINE_COVER_MORPH_DURATION_SEC,
+	MAGAZINE_COVER_MORPH_MOTION_STRENGTH,
+	MAGAZINE_COVER_MORPH_NEGATIVE,
+	buildMagazineCoverMorphVideoPrompt,
+	clampMagazineCoverMorphDurationSec,
+	parseMagazineCoverMorphDialectPick,
+	resolveMagazineCoverMorphDialect,
+	type MagazineCoverMorphDialectId,
+	type MagazineCoverMorphDialectPick,
+} from "@/lib/magazine-cover-morph";
+import {
 	PRODUCT_EXPLODE_DURATION_SEC,
 	buildProductExplodeVideoPrompt,
 } from "@/lib/product-explode";
@@ -218,6 +251,26 @@ import {
 	resolveTypeForceDialect,
 	type TypeForceDialectPick,
 } from "@/lib/type-force";
+import {
+	parseSpatialLayoutDialectPick,
+	resolveSpatialLayoutDialect,
+	type SpatialLayoutDialectPick,
+} from "@/lib/spatial-layout";
+import {
+	parsePhotoDoodleDialectPick,
+	resolvePhotoDoodleDialect,
+	type PhotoDoodleDialectPick,
+} from "@/lib/photo-doodle";
+import {
+	parseLightTrailDialectPick,
+	resolveLightTrailDialect,
+	type LightTrailDialectPick,
+} from "@/lib/light-trail";
+import {
+	parseScreenBreakDialectPick,
+	resolveScreenBreakDialect,
+	type ScreenBreakDialectPick,
+} from "@/lib/screen-break";
 import {
 	parseMaterialLettersDialectPick,
 	resolveMaterialLettersDialect,
@@ -1006,6 +1059,35 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 	function setWebBoundarySchemePick(next: WebBoundaryBreakSchemePick) {
 		setWebBoundarySchemePickState(parseWebBoundaryBreakSchemePick(next));
 	}
+	const typeBehindStillUrlRef = useRef<string | null>(null);
+	const typeBehindEndUrlRef = useRef<string | null>(null);
+	const lastTypeBehindDialectRef = useRef<TypeBehindCutoutDialectId | null>(
+		null,
+	);
+	const [typeBehindDialectPick, setTypeBehindDialectPickState] =
+		useState<TypeBehindCutoutDialectPick>("auto");
+	function setTypeBehindDialectPick(next: TypeBehindCutoutDialectPick) {
+		setTypeBehindDialectPickState(parseTypeBehindCutoutDialectPick(next));
+	}
+	const wetGlassStillUrlRef = useRef<string | null>(null);
+	const wetGlassEndUrlRef = useRef<string | null>(null);
+	const lastWetGlassDialectRef = useRef<WetGlassRevealDialectId | null>(null);
+	const [wetGlassDialectPick, setWetGlassDialectPickState] =
+		useState<WetGlassRevealDialectPick>("auto");
+	function setWetGlassDialectPick(next: WetGlassRevealDialectPick) {
+		setWetGlassDialectPickState(parseWetGlassRevealDialectPick(next));
+	}
+	const magazineCoverStillUrlRef = useRef<string | null>(null);
+	const magazineCoverEndUrlRef = useRef<string | null>(null);
+	const lastMagazineCoverDialectRef =
+		useRef<MagazineCoverMorphDialectId | null>(null);
+	const [magazineCoverDialectPick, setMagazineCoverDialectPickState] =
+		useState<MagazineCoverMorphDialectPick>("auto");
+	function setMagazineCoverDialectPick(next: MagazineCoverMorphDialectPick) {
+		setMagazineCoverDialectPickState(
+			parseMagazineCoverMorphDialectPick(next),
+		);
+	}
 	const productExplodeStillUrlRef = useRef<string | null>(null);
 	const productExplodeEndUrlRef = useRef<string | null>(null);
 	const bulletElevateStillUrlRef = useRef<string | null>(null);
@@ -1024,6 +1106,14 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		useState<ImpactPosterEffectPick>("auto");
 	const [typeForceDialectPick, setTypeForceDialectPickState] =
 		useState<TypeForceDialectPick>("auto");
+	const [spatialLayoutDialectPick, setSpatialLayoutDialectPickState] =
+		useState<SpatialLayoutDialectPick>("auto");
+	const [photoDoodleDialectPick, setPhotoDoodleDialectPickState] =
+		useState<PhotoDoodleDialectPick>("auto");
+	const [lightTrailDialectPick, setLightTrailDialectPickState] =
+		useState<LightTrailDialectPick>("auto");
+	const [screenBreakDialectPick, setScreenBreakDialectPickState] =
+		useState<ScreenBreakDialectPick>("auto");
 	const [materialLettersDialectPick, setMaterialLettersDialectPickState] =
 		useState<MaterialLettersDialectPick>("auto");
 	const [typeInteractionDialectPick, setTypeInteractionDialectPickState] =
@@ -1143,6 +1233,18 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 
 	function setTypeForceDialectPick(next: TypeForceDialectPick) {
 		setTypeForceDialectPickState(parseTypeForceDialectPick(next));
+	}
+	function setSpatialLayoutDialectPick(next: SpatialLayoutDialectPick) {
+		setSpatialLayoutDialectPickState(parseSpatialLayoutDialectPick(next));
+	}
+	function setPhotoDoodleDialectPick(next: PhotoDoodleDialectPick) {
+		setPhotoDoodleDialectPickState(parsePhotoDoodleDialectPick(next));
+	}
+	function setLightTrailDialectPick(next: LightTrailDialectPick) {
+		setLightTrailDialectPickState(parseLightTrailDialectPick(next));
+	}
+	function setScreenBreakDialectPick(next: ScreenBreakDialectPick) {
+		setScreenBreakDialectPickState(parseScreenBreakDialectPick(next));
 	}
 	function setMaterialLettersDialectPick(next: MaterialLettersDialectPick) {
 		setMaterialLettersDialectPickState(parseMaterialLettersDialectPick(next));
@@ -1654,6 +1756,22 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 									typeForceDialectPick,
 									[product, headline, conceptIdea].filter(Boolean).join(" "),
 								),
+								spatialLayoutDialect: resolveSpatialLayoutDialect(
+									spatialLayoutDialectPick,
+									[product, headline, conceptIdea].filter(Boolean).join(" "),
+								),
+								photoDoodleDialect: resolvePhotoDoodleDialect(
+									photoDoodleDialectPick,
+									[product, headline, conceptIdea].filter(Boolean).join(" "),
+								),
+								lightTrailDialect: resolveLightTrailDialect(
+									lightTrailDialectPick,
+									[product, headline, conceptIdea].filter(Boolean).join(" "),
+								),
+								screenBreakDialect: resolveScreenBreakDialect(
+									screenBreakDialectPick,
+									[product, headline, conceptIdea].filter(Boolean).join(" "),
+								),
 								materialLettersDialect: resolveMaterialLettersDialect(
 									materialLettersDialectPick,
 									[product, headline, conceptIdea].filter(Boolean).join(" "),
@@ -1662,6 +1780,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 									typeInteractionDialectPick,
 									[product, headline, conceptIdea].filter(Boolean).join(" "),
 								),
+								conceptMode: promotionMode === "concept",
 							},
 						),
 			);
@@ -2948,6 +3067,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			| "sports-big-words"
 			| "jelly-3d"
 			| "type-force"
+			| "spatial-layout"
+			| "photo-doodle"
+			| "light-trail"
+			| "screen-break"
 			| "material-letters"
 			| "type-interaction"
 			| "product-lifestyle",
@@ -2974,6 +3097,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			| "sports-big-words"
 			| "jelly-3d"
 			| "type-force"
+			| "spatial-layout"
+			| "photo-doodle"
+			| "light-trail"
+			| "screen-break"
 			| "material-letters"
 			| "type-interaction"
 			| "product-lifestyle"
@@ -3031,6 +3158,22 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			applyLockedImagePosterStyle("type-force");
 			return;
 		}
+		if (path === "spatial-layout") {
+			applyLockedImagePosterStyle("spatial-layout");
+			return;
+		}
+		if (path === "photo-doodle") {
+			applyLockedImagePosterStyle("photo-doodle");
+			return;
+		}
+		if (path === "light-trail") {
+			applyLockedImagePosterStyle("light-trail");
+			return;
+		}
+		if (path === "screen-break") {
+			applyLockedImagePosterStyle("screen-break");
+			return;
+		}
 		if (path === "material-letters") {
 			applyLockedImagePosterStyle("material-letters");
 			return;
@@ -3085,6 +3228,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			| "sports-big-words"
 			| "jelly-3d"
 			| "type-force"
+			| "spatial-layout"
+			| "photo-doodle"
+			| "light-trail"
+			| "screen-break"
 			| "material-letters"
 			| "type-interaction"
 			| "remap",
@@ -3111,6 +3258,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			path === "sports-big-words" ||
 			path === "jelly-3d" ||
 			path === "type-force" ||
+			path === "spatial-layout" ||
+			path === "photo-doodle" ||
+			path === "light-trail" ||
+			path === "screen-break" ||
 			path === "material-letters" ||
 			path === "type-interaction"
 		) {
@@ -4416,6 +4567,48 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					videoEngine: "minimax-h3",
 				};
 			});
+		} else if (mode === "type-behind-cutout") {
+			setVideoSettings((s: VideoSettings) => {
+				const allowed = new Set(["8", "10"]);
+				const nextDur = allowed.has(String(s.duration))
+					? (String(s.duration) as "8" | "10")
+					: String(TYPE_BEHIND_CUTOUT_DURATION_SEC);
+				return {
+					...s,
+					duration: nextDur as VideoSettings["duration"],
+					autoSecondFrame: false,
+					motionStyle: "slow-push",
+					videoEngine: "minimax-h3",
+				};
+			});
+		} else if (mode === "wet-glass-reveal") {
+			setVideoSettings((s: VideoSettings) => {
+				const allowed = new Set(["6", "8"]);
+				const nextDur = allowed.has(String(s.duration))
+					? (String(s.duration) as "6" | "8")
+					: String(WET_GLASS_REVEAL_DURATION_SEC);
+				return {
+					...s,
+					duration: nextDur as VideoSettings["duration"],
+					autoSecondFrame: false,
+					motionStyle: "slow-push",
+					videoEngine: "minimax-h3",
+				};
+			});
+		} else if (mode === "magazine-cover-morph") {
+			setVideoSettings((s: VideoSettings) => {
+				const allowed = new Set(["6", "8"]);
+				const nextDur = allowed.has(String(s.duration))
+					? (String(s.duration) as "6" | "8")
+					: String(MAGAZINE_COVER_MORPH_DURATION_SEC);
+				return {
+					...s,
+					duration: nextDur as VideoSettings["duration"],
+					autoSecondFrame: false,
+					motionStyle: "slow-push",
+					videoEngine: "minimax-h3",
+				};
+			});
 		} else if (
 			mode === "vacuum-inflate" ||
 			mode === "creative-motion" ||
@@ -4574,6 +4767,30 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			hasConceptHero: hasConceptHeroLock,
 		});
 
+	const typeBehindCutoutCanAutoStill =
+		videoCreativeMode === "type-behind-cutout" &&
+		identityRecipeHeroReady({
+			promotionMode,
+			hasProductPhoto: hasProductPhotoLock,
+			hasConceptHero: hasConceptHeroLock,
+		});
+
+	const wetGlassRevealCanAutoStill =
+		videoCreativeMode === "wet-glass-reveal" &&
+		identityRecipeHeroReady({
+			promotionMode,
+			hasProductPhoto: hasProductPhotoLock,
+			hasConceptHero: hasConceptHeroLock,
+		});
+
+	const magazineCoverMorphCanAutoStill =
+		videoCreativeMode === "magazine-cover-morph" &&
+		identityRecipeHeroReady({
+			promotionMode,
+			hasProductPhoto: hasProductPhotoLock,
+			hasConceptHero: hasConceptHeroLock,
+		});
+
 	const productExplodeCanAutoStill =
 		videoCreativeMode === "product-explode" &&
 		identityRecipeHeroReady({
@@ -4600,6 +4817,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		creativeMotionCanAutoStill ||
 		handThrowCanAutoStill ||
 		webBoundaryCanAutoStill ||
+		typeBehindCutoutCanAutoStill ||
+		wetGlassRevealCanAutoStill ||
+		magazineCoverMorphCanAutoStill ||
 		productExplodeCanAutoStill ||
 		bulletElevateCanAutoStill;
 
@@ -4613,6 +4833,15 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		}
 		if (videoCreativeMode === "web-boundary-break") {
 			return m.wizard.webBoundaryNeedKeyframe;
+		}
+		if (videoCreativeMode === "type-behind-cutout") {
+			return m.wizard.typeBehindNeedKeyframe;
+		}
+		if (videoCreativeMode === "wet-glass-reveal") {
+			return m.wizard.wetGlassNeedKeyframe;
+		}
+		if (videoCreativeMode === "magazine-cover-morph") {
+			return m.wizard.magazineCoverNeedKeyframe;
 		}
 		if (videoCreativeMode === "product-explode") {
 			return m.wizard.productExplodeNeedKeyframe;
@@ -6333,6 +6562,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			fd.set("promotion_mode", promotionMode);
 			fd.set("image_text_mode", imageTextMode);
 			fd.set("type_force_dialect", typeForceDialectPick);
+			fd.set("spatial_layout_dialect", spatialLayoutDialectPick);
+			fd.set("photo_doodle_dialect", photoDoodleDialectPick);
+			fd.set("light_trail_dialect", lightTrailDialectPick);
+			fd.set("screen_break_dialect", screenBreakDialectPick);
 			fd.set("material_letters_dialect", materialLettersDialectPick);
 			fd.set("type_interaction_dialect", typeInteractionDialectPick);
       fd.set("aspect_ratio", effectiveImageAspectRatio);
@@ -9457,6 +9690,579 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		return fx.videoUrl;
 	}
 
+	async function generateTypeBehindCutoutKeyframe(
+		dialect: TypeBehindCutoutDialectId,
+		frame: "start" | "end",
+		startPlateUrl?: string,
+	): Promise<string> {
+		setVideoNote(
+			frame === "end"
+				? m.wizard.typeBehindBuildingEnd
+				: m.wizard.typeBehindBuildingStill,
+		);
+		setImageJobMeta({
+			kind: "image",
+			startedAt: Date.now(),
+			sceneCount: 1,
+		});
+		try {
+			const fd = new FormData();
+			fd.set("visual_style", visualStyleId);
+			fd.set("art_style", artStyleId);
+			if (brandProfile)
+				fd.set("brand_profile", JSON.stringify(brandProfile));
+			fd.set("brand_kit", JSON.stringify(brandKit));
+			fd.set(
+				"product_name",
+				promotionMode === "concept"
+					? effectivePromoteName ||
+							product.trim() ||
+							conceptIdea.trim()
+					: product.trim(),
+			);
+			fd.set("business", business.trim());
+			fd.set(
+				"headline",
+				headline.trim() || product.trim() || conceptIdea.trim(),
+			);
+			fd.set("subline", subline.trim());
+			fd.set("offer", offer.trim());
+			fd.set("prompt_market", promptMarket);
+			fd.set("subject_framing", subjectFraming);
+			fd.set("prompt_extra", effectivePromptExtra());
+			fd.set("workflow_mode", workflowMode);
+			fd.set("promotion_mode", promotionMode);
+			fd.set("image_text_mode", "integrated");
+			fd.set("aspect_ratio", "3:4");
+			fd.set("num_images", "1");
+			fd.set("image_output_mode", "single");
+			fd.set("type_behind_cutout", "1");
+			fd.set("type_behind_cutout_frame", frame);
+			fd.set("type_behind_cutout_dialect", dialect);
+			if (frame === "end" && startPlateUrl)
+				fd.set("start_plate_url", startPlateUrl);
+			await bindIdentityHeroToKeyframeForm(
+				fd,
+				m.wizard.typeBehindNeedKeyframe,
+			);
+
+			const res = await billingFetch("/api/generate-image", {
+				method: "POST",
+				body: fd,
+			});
+			const data = await readGenerateJson(res);
+			if (!res.ok)
+				throw new Error(
+					(data.error as string) || m.errors.polishFailed,
+				);
+			notifyCreditBalance(readCreditBalanceFromResponse(data));
+			const urls = (data.imageUrls as string[] | undefined) ?? [
+				data.imageUrl as string,
+			];
+			const applied = applyGeneratedImages(
+				urls,
+				data.endpoint as string | undefined,
+			);
+			if (!applied) throw new Error(m.errors.imageGenNoUrl);
+			return applied;
+		} finally {
+			setImageJobMeta(null);
+		}
+	}
+
+	async function makeTypeBehindCutoutVideo(): Promise<string> {
+		const dialect = resolveTypeBehindCutoutDialect({
+			pick: parseTypeBehindCutoutDialectPick(typeBehindDialectPick),
+			product,
+			headline,
+			conceptIdea,
+		});
+		lastTypeBehindDialectRef.current = dialect;
+		typeBehindStillUrlRef.current = null;
+		typeBehindEndUrlRef.current = null;
+		if (
+			!identityRecipeHeroReady({
+				promotionMode,
+				hasProductPhoto: hasProductPhotoLock,
+				hasConceptHero: hasConceptHeroLock,
+			})
+		) {
+			throw new Error(m.wizard.typeBehindNeedKeyframe);
+		}
+		const startUrl = await generateTypeBehindCutoutKeyframe(
+			dialect,
+			"start",
+		);
+		typeBehindStillUrlRef.current = startUrl;
+		const endUrl = await generateTypeBehindCutoutKeyframe(
+			dialect,
+			"end",
+			startUrl,
+		);
+		typeBehindEndUrlRef.current = endUrl;
+		const pair = [startUrl, endUrl].filter(Boolean);
+		if (pair.length) {
+			setImageVariantUrls(pair);
+			setSelectedVariantIndex(0);
+			setImageUrl(startUrl);
+			imageUrlRef.current = startUrl;
+		}
+		const dialectLabel =
+			m.wizard.typeBehindDialects[dialect]?.title ?? dialect;
+		setVideoNote(
+			`${m.wizard.typeBehindAnimatingCard} · ${dialectLabel}`,
+		);
+		const subject =
+			promotionMode === "concept"
+				? effectivePromoteName ||
+					product.trim() ||
+					conceptIdea.trim() ||
+					business.trim()
+				: product.trim() || business.trim();
+		const durationSec = clampTypeBehindCutoutDurationSec(
+			videoSettings.duration,
+		);
+		const fxPrompt = buildTypeBehindCutoutVideoPrompt({
+			dialect,
+			product: subject || "the product",
+			business: business.trim(),
+			headline: headline.trim() || product.trim() || conceptIdea.trim(),
+			promptExtra: effectivePromptExtra(),
+			conceptMode: promotionMode === "concept",
+			durationSec,
+		});
+		if (videoPrompt.trim() !== fxPrompt) setVideoPrompt(fxPrompt);
+
+		const fd = new FormData();
+		fd.set("mode", "image");
+		fd.set("promotion_mode", promotionMode);
+		fd.set("prompt", seedancePromptForGenerate(fxPrompt));
+		fd.set("resolution", "480p");
+		fd.set("duration", String(durationSec));
+		fd.set("aspect_ratio", "9:16");
+		fd.set("motion_strength", String(TYPE_BEHIND_CUTOUT_MOTION_STRENGTH));
+		fd.set(
+			"negative_prompt",
+			`${negativePrompt}, ${TYPE_BEHIND_CUTOUT_NEGATIVE}`,
+		);
+		fd.set("avoid_on_screen_text", "true");
+		fd.set("type_behind_cutout", "1");
+		fd.set("type_behind_cutout_dialect", dialect);
+		fd.set("product_name", subject);
+		fd.set("business", business.trim());
+		fd.set("image_start_url", startUrl);
+		fd.set("image_end_url", endUrl);
+
+		const fx = await generateStartEndFxVideo({
+			fd,
+			recipeDurationSec: durationSec,
+		});
+		const pathNote = wizardVideoReadyExtraNote(fx.data);
+		const h3Reason =
+			typeof fx.data.h3FallbackReason === "string"
+				? fx.data.h3FallbackReason
+				: "";
+		setVideoNote(
+			[
+				m.wizard.typeBehindHint,
+				dialectLabel,
+				fx.usedSeedanceFallback
+					? [m.wizard.h3ToSeedanceFallbackNote, h3Reason]
+							.filter(Boolean)
+							.join(" — ")
+					: m.wizard.videoEngineMinimaxH3,
+				pathNote,
+				typeof fx.data.note === "string" ? fx.data.note : undefined,
+			]
+				.filter(Boolean)
+				.join(" · "),
+		);
+		return fx.videoUrl;
+	}
+
+	async function generateWetGlassRevealKeyframe(
+		dialect: WetGlassRevealDialectId,
+		frame: "start" | "end",
+		startPlateUrl?: string,
+	): Promise<string> {
+		setVideoNote(
+			frame === "end"
+				? m.wizard.wetGlassBuildingEnd
+				: m.wizard.wetGlassBuildingStill,
+		);
+		setImageJobMeta({
+			kind: "image",
+			startedAt: Date.now(),
+			sceneCount: 1,
+		});
+		try {
+			const fd = new FormData();
+			fd.set("visual_style", visualStyleId);
+			fd.set("art_style", artStyleId);
+			if (brandProfile)
+				fd.set("brand_profile", JSON.stringify(brandProfile));
+			fd.set("brand_kit", JSON.stringify(brandKit));
+			fd.set(
+				"product_name",
+				promotionMode === "concept"
+					? effectivePromoteName ||
+							product.trim() ||
+							conceptIdea.trim()
+					: product.trim(),
+			);
+			fd.set("business", business.trim());
+			fd.set(
+				"headline",
+				headline.trim() || product.trim() || conceptIdea.trim(),
+			);
+			fd.set("subline", subline.trim());
+			fd.set("offer", offer.trim());
+			fd.set("prompt_market", promptMarket);
+			fd.set("subject_framing", subjectFraming);
+			fd.set("prompt_extra", effectivePromptExtra());
+			fd.set("workflow_mode", workflowMode);
+			fd.set("promotion_mode", promotionMode);
+			fd.set("image_text_mode", "textless");
+			fd.set("aspect_ratio", "3:4");
+			fd.set("num_images", "1");
+			fd.set("image_output_mode", "single");
+			fd.set("wet_glass_reveal", "1");
+			fd.set("wet_glass_reveal_frame", frame);
+			fd.set("wet_glass_reveal_dialect", dialect);
+			if (frame === "end" && startPlateUrl)
+				fd.set("start_plate_url", startPlateUrl);
+			await bindIdentityHeroToKeyframeForm(
+				fd,
+				m.wizard.wetGlassNeedKeyframe,
+			);
+
+			const res = await billingFetch("/api/generate-image", {
+				method: "POST",
+				body: fd,
+			});
+			const data = await readGenerateJson(res);
+			if (!res.ok)
+				throw new Error(
+					(data.error as string) || m.errors.polishFailed,
+				);
+			notifyCreditBalance(readCreditBalanceFromResponse(data));
+			const urls = (data.imageUrls as string[] | undefined) ?? [
+				data.imageUrl as string,
+			];
+			const applied = applyGeneratedImages(
+				urls,
+				data.endpoint as string | undefined,
+			);
+			if (!applied) throw new Error(m.errors.imageGenNoUrl);
+			return applied;
+		} finally {
+			setImageJobMeta(null);
+		}
+	}
+
+	async function makeWetGlassRevealVideo(): Promise<string> {
+		const dialect = resolveWetGlassRevealDialect({
+			pick: parseWetGlassRevealDialectPick(wetGlassDialectPick),
+			product,
+			headline,
+			conceptIdea,
+		});
+		lastWetGlassDialectRef.current = dialect;
+		wetGlassStillUrlRef.current = null;
+		wetGlassEndUrlRef.current = null;
+		if (
+			!identityRecipeHeroReady({
+				promotionMode,
+				hasProductPhoto: hasProductPhotoLock,
+				hasConceptHero: hasConceptHeroLock,
+			})
+		) {
+			throw new Error(m.wizard.wetGlassNeedKeyframe);
+		}
+		const startUrl = await generateWetGlassRevealKeyframe(
+			dialect,
+			"start",
+		);
+		wetGlassStillUrlRef.current = startUrl;
+		const endUrl = await generateWetGlassRevealKeyframe(
+			dialect,
+			"end",
+			startUrl,
+		);
+		wetGlassEndUrlRef.current = endUrl;
+		const pair = [startUrl, endUrl].filter(Boolean);
+		if (pair.length) {
+			setImageVariantUrls(pair);
+			setSelectedVariantIndex(0);
+			setImageUrl(startUrl);
+			imageUrlRef.current = startUrl;
+		}
+		const dialectLabel =
+			m.wizard.wetGlassDialects[dialect]?.title ?? dialect;
+		setVideoNote(
+			`${m.wizard.wetGlassAnimatingCard} · ${dialectLabel}`,
+		);
+		const subject =
+			promotionMode === "concept"
+				? effectivePromoteName ||
+					product.trim() ||
+					conceptIdea.trim() ||
+					business.trim()
+				: product.trim() || business.trim();
+		const durationSec = clampWetGlassRevealDurationSec(
+			videoSettings.duration,
+		);
+		const fxPrompt = buildWetGlassRevealVideoPrompt({
+			dialect,
+			product: subject || "the product",
+			business: business.trim(),
+			headline: headline.trim() || product.trim() || conceptIdea.trim(),
+			promptExtra: effectivePromptExtra(),
+			conceptMode: promotionMode === "concept",
+			durationSec,
+		});
+		if (videoPrompt.trim() !== fxPrompt) setVideoPrompt(fxPrompt);
+
+		const fd = new FormData();
+		fd.set("mode", "image");
+		fd.set("promotion_mode", promotionMode);
+		fd.set("prompt", seedancePromptForGenerate(fxPrompt));
+		fd.set("resolution", "480p");
+		fd.set("duration", String(durationSec));
+		fd.set("aspect_ratio", "9:16");
+		fd.set("motion_strength", String(WET_GLASS_REVEAL_MOTION_STRENGTH));
+		fd.set(
+			"negative_prompt",
+			`${negativePrompt}, ${WET_GLASS_REVEAL_NEGATIVE}`,
+		);
+		fd.set("avoid_on_screen_text", "true");
+		fd.set("wet_glass_reveal", "1");
+		fd.set("wet_glass_reveal_dialect", dialect);
+		fd.set("product_name", subject);
+		fd.set("business", business.trim());
+		fd.set("image_start_url", startUrl);
+		fd.set("image_end_url", endUrl);
+
+		const fx = await generateStartEndFxVideo({
+			fd,
+			recipeDurationSec: durationSec,
+		});
+		const pathNote = wizardVideoReadyExtraNote(fx.data);
+		const h3Reason =
+			typeof fx.data.h3FallbackReason === "string"
+				? fx.data.h3FallbackReason
+				: "";
+		setVideoNote(
+			[
+				m.wizard.wetGlassHint,
+				dialectLabel,
+				fx.usedSeedanceFallback
+					? [m.wizard.h3ToSeedanceFallbackNote, h3Reason]
+							.filter(Boolean)
+							.join(" — ")
+					: m.wizard.videoEngineMinimaxH3,
+				pathNote,
+				typeof fx.data.note === "string" ? fx.data.note : undefined,
+			]
+				.filter(Boolean)
+				.join(" · "),
+		);
+		return fx.videoUrl;
+	}
+
+	async function generateMagazineCoverMorphKeyframe(
+		dialect: MagazineCoverMorphDialectId,
+		frame: "start" | "end",
+		startPlateUrl?: string,
+	): Promise<string> {
+		setVideoNote(
+			frame === "end"
+				? m.wizard.magazineCoverBuildingEnd
+				: m.wizard.magazineCoverBuildingStill,
+		);
+		setImageJobMeta({
+			kind: "image",
+			startedAt: Date.now(),
+			sceneCount: 1,
+		});
+		try {
+			const fd = new FormData();
+			fd.set("visual_style", visualStyleId);
+			fd.set("art_style", artStyleId);
+			if (brandProfile)
+				fd.set("brand_profile", JSON.stringify(brandProfile));
+			fd.set("brand_kit", JSON.stringify(brandKit));
+			fd.set(
+				"product_name",
+				promotionMode === "concept"
+					? effectivePromoteName ||
+							product.trim() ||
+							conceptIdea.trim()
+					: product.trim(),
+			);
+			fd.set("business", business.trim());
+			fd.set(
+				"headline",
+				headline.trim() || product.trim() || conceptIdea.trim(),
+			);
+			fd.set("subline", subline.trim());
+			fd.set("offer", offer.trim());
+			fd.set("prompt_market", promptMarket);
+			fd.set("subject_framing", subjectFraming);
+			fd.set("prompt_extra", effectivePromptExtra());
+			fd.set("workflow_mode", workflowMode);
+			fd.set("promotion_mode", promotionMode);
+			fd.set("image_text_mode", "integrated");
+			fd.set("aspect_ratio", "3:4");
+			fd.set("num_images", "1");
+			fd.set("image_output_mode", "single");
+			fd.set("magazine_cover_morph", "1");
+			fd.set("magazine_cover_morph_frame", frame);
+			fd.set("magazine_cover_morph_dialect", dialect);
+			if (frame === "end" && startPlateUrl)
+				fd.set("start_plate_url", startPlateUrl);
+			await bindIdentityHeroToKeyframeForm(
+				fd,
+				m.wizard.magazineCoverNeedKeyframe,
+			);
+
+			const res = await billingFetch("/api/generate-image", {
+				method: "POST",
+				body: fd,
+			});
+			const data = await readGenerateJson(res);
+			if (!res.ok)
+				throw new Error(
+					(data.error as string) || m.errors.polishFailed,
+				);
+			notifyCreditBalance(readCreditBalanceFromResponse(data));
+			const urls = (data.imageUrls as string[] | undefined) ?? [
+				data.imageUrl as string,
+			];
+			const applied = applyGeneratedImages(
+				urls,
+				data.endpoint as string | undefined,
+			);
+			if (!applied) throw new Error(m.errors.imageGenNoUrl);
+			return applied;
+		} finally {
+			setImageJobMeta(null);
+		}
+	}
+
+	async function makeMagazineCoverMorphVideo(): Promise<string> {
+		const dialect = resolveMagazineCoverMorphDialect({
+			pick: parseMagazineCoverMorphDialectPick(magazineCoverDialectPick),
+			product,
+			headline,
+			conceptIdea,
+		});
+		lastMagazineCoverDialectRef.current = dialect;
+		magazineCoverStillUrlRef.current = null;
+		magazineCoverEndUrlRef.current = null;
+		if (
+			!identityRecipeHeroReady({
+				promotionMode,
+				hasProductPhoto: hasProductPhotoLock,
+				hasConceptHero: hasConceptHeroLock,
+			})
+		) {
+			throw new Error(m.wizard.magazineCoverNeedKeyframe);
+		}
+		const startUrl = await generateMagazineCoverMorphKeyframe(
+			dialect,
+			"start",
+		);
+		magazineCoverStillUrlRef.current = startUrl;
+		const endUrl = await generateMagazineCoverMorphKeyframe(
+			dialect,
+			"end",
+			startUrl,
+		);
+		magazineCoverEndUrlRef.current = endUrl;
+		const pair = [startUrl, endUrl].filter(Boolean);
+		if (pair.length) {
+			setImageVariantUrls(pair);
+			setSelectedVariantIndex(0);
+			setImageUrl(startUrl);
+			imageUrlRef.current = startUrl;
+		}
+		const dialectLabel =
+			m.wizard.magazineCoverDialects[dialect]?.title ?? dialect;
+		setVideoNote(
+			`${m.wizard.magazineCoverAnimatingCard} · ${dialectLabel}`,
+		);
+		const subject =
+			promotionMode === "concept"
+				? effectivePromoteName ||
+					product.trim() ||
+					conceptIdea.trim() ||
+					business.trim()
+				: product.trim() || business.trim();
+		const durationSec = clampMagazineCoverMorphDurationSec(
+			videoSettings.duration,
+		);
+		const fxPrompt = buildMagazineCoverMorphVideoPrompt({
+			dialect,
+			product: subject || "the product",
+			business: business.trim(),
+			headline: headline.trim() || product.trim() || conceptIdea.trim(),
+			promptExtra: effectivePromptExtra(),
+			conceptMode: promotionMode === "concept",
+			durationSec,
+		});
+		if (videoPrompt.trim() !== fxPrompt) setVideoPrompt(fxPrompt);
+
+		const fd = new FormData();
+		fd.set("mode", "image");
+		fd.set("promotion_mode", promotionMode);
+		fd.set("prompt", seedancePromptForGenerate(fxPrompt));
+		fd.set("resolution", "480p");
+		fd.set("duration", String(durationSec));
+		fd.set("aspect_ratio", "9:16");
+		fd.set(
+			"motion_strength",
+			String(MAGAZINE_COVER_MORPH_MOTION_STRENGTH),
+		);
+		fd.set(
+			"negative_prompt",
+			`${negativePrompt}, ${MAGAZINE_COVER_MORPH_NEGATIVE}`,
+		);
+		fd.set("avoid_on_screen_text", "true");
+		fd.set("magazine_cover_morph", "1");
+		fd.set("magazine_cover_morph_dialect", dialect);
+		fd.set("product_name", subject);
+		fd.set("business", business.trim());
+		fd.set("image_start_url", startUrl);
+		fd.set("image_end_url", endUrl);
+
+		const fx = await generateStartEndFxVideo({
+			fd,
+			recipeDurationSec: durationSec,
+		});
+		const pathNote = wizardVideoReadyExtraNote(fx.data);
+		const h3Reason =
+			typeof fx.data.h3FallbackReason === "string"
+				? fx.data.h3FallbackReason
+				: "";
+		setVideoNote(
+			[
+				m.wizard.magazineCoverHint,
+				dialectLabel,
+				fx.usedSeedanceFallback
+					? [m.wizard.h3ToSeedanceFallbackNote, h3Reason]
+							.filter(Boolean)
+							.join(" — ")
+					: m.wizard.videoEngineMinimaxH3,
+				pathNote,
+				typeof fx.data.note === "string" ? fx.data.note : undefined,
+			]
+				.filter(Boolean)
+				.join(" · "),
+		);
+		return fx.videoUrl;
+	}
+
 	async function generateWebBoundaryBreakKeyframe(
 		scheme: WebBoundaryBreakSchemeId,
 		frame: "start" | "end",
@@ -10938,6 +11744,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					generationKind === "creative-motion" ||
 					generationKind === "hand-throw-scene" ||
 					generationKind === "web-boundary-break" ||
+					generationKind === "type-behind-cutout" ||
+					generationKind === "wet-glass-reveal" ||
+					generationKind === "magazine-cover-morph" ||
 					generationKind === "product-explode" ||
 					generationKind === "bullet-product-elevate";
 				const willGenerateStills = dualFrameRecipe
@@ -11048,6 +11857,15 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					break;
 				case "web-boundary-break":
 					url = await makeWebBoundaryBreakVideo();
+					break;
+				case "type-behind-cutout":
+					url = await makeTypeBehindCutoutVideo();
+					break;
+				case "wet-glass-reveal":
+					url = await makeWetGlassRevealVideo();
+					break;
+				case "magazine-cover-morph":
+					url = await makeMagazineCoverMorphVideo();
 					break;
 				case "product-explode":
 					url = await makeProductExplodeVideo();
@@ -11411,6 +12229,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			!creativeMotionCanAutoStill &&
 			!handThrowCanAutoStill &&
 			!webBoundaryCanAutoStill &&
+			!typeBehindCutoutCanAutoStill &&
+			!wetGlassRevealCanAutoStill &&
+			!magazineCoverMorphCanAutoStill &&
 			!productExplodeCanAutoStill &&
 			!blockbusterCanGenerate &&
 			!h3ShotRecipeCanGenerate) ||
@@ -11511,6 +12332,12 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					? m.wizard.handThrowNeedKeyframe
 					: videoCreativeMode === "web-boundary-break"
 						? m.wizard.webBoundaryNeedKeyframe
+					: videoCreativeMode === "type-behind-cutout"
+						? m.wizard.typeBehindNeedKeyframe
+					: videoCreativeMode === "wet-glass-reveal"
+						? m.wizard.wetGlassNeedKeyframe
+					: videoCreativeMode === "magazine-cover-morph"
+						? m.wizard.magazineCoverNeedKeyframe
 					: videoCreativeMode === "product-explode"
 						? m.wizard.productExplodeNeedKeyframe
 						: videoCreativeMode === "bullet-product-elevate"
@@ -12351,6 +13178,15 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		setBlockbusterHeroHold,
 		webBoundarySchemePick,
 		setWebBoundarySchemePick,
+		typeBehindDialectPick,
+		setTypeBehindDialectPick,
+		typeBehindCutoutCanAutoStill,
+		wetGlassDialectPick,
+		setWetGlassDialectPick,
+		wetGlassRevealCanAutoStill,
+		magazineCoverDialectPick,
+		setMagazineCoverDialectPick,
+		magazineCoverMorphCanAutoStill,
 		creativeMotionSchemePick,
 		setCreativeMotionSchemePick,
 		impactPosterTonePick,
@@ -12359,6 +13195,14 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		setImpactPosterEffectPick,
 		typeForceDialectPick,
 		setTypeForceDialectPick,
+		spatialLayoutDialectPick,
+		setSpatialLayoutDialectPick,
+		photoDoodleDialectPick,
+		setPhotoDoodleDialectPick,
+		lightTrailDialectPick,
+		setLightTrailDialectPick,
+		screenBreakDialectPick,
+		setScreenBreakDialectPick,
 		materialLettersDialectPick,
 		setMaterialLettersDialectPick,
 		typeInteractionDialectPick,

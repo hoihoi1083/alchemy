@@ -17,6 +17,10 @@ export type VisualStyleId =
   | "sports-big-words"
   | "jelly-3d"
   | "type-force"
+  | "spatial-layout"
+  | "photo-doodle"
+  | "light-trail"
+  | "screen-break"
   | "material-letters"
   | "type-interaction"
   | "product-lifestyle"
@@ -71,6 +75,10 @@ export function isLockedSinglePosterStyle(id: VisualStyleId): boolean {
     id === "sports-big-words" ||
     id === "jelly-3d" ||
     id === "type-force" ||
+    id === "spatial-layout" ||
+    id === "photo-doodle" ||
+    id === "light-trail" ||
+    id === "screen-break" ||
     id === "material-letters" ||
     id === "type-interaction"
   );
@@ -104,6 +112,10 @@ const IMAGE_FIRST_VISUAL_STYLE_IDS = new Set<VisualStyleId>([
   "sports-big-words",
   "jelly-3d",
   "type-force",
+  "spatial-layout",
+  "photo-doodle",
+  "light-trail",
+  "screen-break",
   "material-letters",
   "type-interaction",
   "product-lifestyle",
@@ -285,7 +297,43 @@ export const VISUAL_STYLES: VisualStyleDef[] = [
     templateId: "type-force",
     usesCompositor: false,
     promptHint:
-      "Commercial poster where giant type exists in the scene and reacts to one real force: sound wave, glass refraction, rope tension, or impact shock — product/person stay intact.",
+      "Commercial / spatial type poster: giant in-scene word under one force — product impact (sound, glass, rope, shock) OR architecture install (standing wave, bend, buckle, shear). Subject stays intact.",
+  },
+  {
+    id: "spatial-layout",
+    icon: "🏙️",
+    previewSrc: visualPreview("spatial-layout"),
+    templateId: "spatial-layout",
+    usesCompositor: false,
+    promptHint:
+      "Architectural spatial poster: giant type as planes / void carve / extruded mass / corner wrap on concrete under blue sky — orange accents. Product sits in the space; concept uses headline as architecture.",
+  },
+  {
+    id: "photo-doodle",
+    icon: "✏️",
+    previewSrc: visualPreview("photo-doodle"),
+    templateId: "photo-doodle",
+    usesCompositor: false,
+    promptHint:
+      "Photo doodle / 实景插画风: real photographic scene + thick-outline 2D cartoon overlays (commute / city-pop / people-orbit / nature-frame). Product stays photoreal; doodles orbit and share the ground plane.",
+  },
+  {
+    id: "light-trail",
+    icon: "💫",
+    previewSrc: visualPreview("light-trail"),
+    templateId: "light-trail",
+    usesCompositor: false,
+    promptHint:
+      "Light trail / 动感光轨电影风: dark cinematic still with crimson–cyan neon long-exposure streaks (cast-streak / eye-slash / mask-beam / profile-shear). Subject stays photoreal under motion light.",
+  },
+  {
+    id: "screen-break",
+    icon: "📱",
+    previewSrc: visualPreview("screen-break"),
+    templateId: "screen-break",
+    usesCompositor: false,
+    promptHint:
+      "Screen break / 破屏出界: subject or product bursts through a social-profile tear or giant phone portal — forced perspective, floating 3D UI chrome. Product = SKU breaks out; concept = person/brand breaks out.",
   },
   {
     id: "material-letters",

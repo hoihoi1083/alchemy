@@ -23,6 +23,9 @@ export type VideoGenerationKind =
   | "creative-motion"
   | "hand-throw-scene"
   | "web-boundary-break"
+  | "type-behind-cutout"
+  | "wet-glass-reveal"
+  | "magazine-cover-morph"
   | "product-explode"
   | "bullet-product-elevate"
   | "ecom-orbit"
@@ -88,6 +91,15 @@ export function resolveVideoGenerationKind(
   }
   if (input.videoCreativeMode === "web-boundary-break") {
     return "web-boundary-break";
+  }
+  if (input.videoCreativeMode === "type-behind-cutout") {
+    return "type-behind-cutout";
+  }
+  if (input.videoCreativeMode === "wet-glass-reveal") {
+    return "wet-glass-reveal";
+  }
+  if (input.videoCreativeMode === "magazine-cover-morph") {
+    return "magazine-cover-morph";
   }
   if (input.videoCreativeMode === "product-explode") {
     return "product-explode";

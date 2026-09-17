@@ -33,6 +33,22 @@ import {
   resolveTypeForceDialect,
 } from "@/lib/type-force";
 import {
+  parseSpatialLayoutDialectPick,
+  resolveSpatialLayoutDialect,
+} from "@/lib/spatial-layout";
+import {
+  parsePhotoDoodleDialectPick,
+  resolvePhotoDoodleDialect,
+} from "@/lib/photo-doodle";
+import {
+  parseLightTrailDialectPick,
+  resolveLightTrailDialect,
+} from "@/lib/light-trail";
+import {
+  parseScreenBreakDialectPick,
+  resolveScreenBreakDialect,
+} from "@/lib/screen-break";
+import {
   parseMaterialLettersDialectPick,
   resolveMaterialLettersDialect,
 } from "@/lib/material-letters";
@@ -59,6 +75,24 @@ import {
   resolveWebBoundaryBreakScheme,
   type WebBoundaryBreakSchemeId,
 } from "@/lib/web-boundary-break";
+import {
+  buildTypeBehindCutoutStillPrompt,
+  parseTypeBehindCutoutDialectPick,
+  resolveTypeBehindCutoutDialect,
+  type TypeBehindCutoutDialectId,
+} from "@/lib/type-behind-cutout";
+import {
+  buildWetGlassRevealStillPrompt,
+  parseWetGlassRevealDialectPick,
+  resolveWetGlassRevealDialect,
+  type WetGlassRevealDialectId,
+} from "@/lib/wet-glass-reveal";
+import {
+  buildMagazineCoverMorphStillPrompt,
+  parseMagazineCoverMorphDialectPick,
+  resolveMagazineCoverMorphDialect,
+  type MagazineCoverMorphDialectId,
+} from "@/lib/magazine-cover-morph";
 import {
   buildProductExplodeStillPrompt,
 } from "@/lib/product-explode";
@@ -549,6 +583,21 @@ export async function POST(request: Request) {
         .trim()
         .toLowerCase(),
     );
+    const typeBehindEarly = ["1", "true", "yes"].includes(
+      String(formData.get("type_behind_cutout") ?? "")
+        .trim()
+        .toLowerCase(),
+    );
+    const wetGlassEarly = ["1", "true", "yes"].includes(
+      String(formData.get("wet_glass_reveal") ?? "")
+        .trim()
+        .toLowerCase(),
+    );
+    const magazineCoverEarly = ["1", "true", "yes"].includes(
+      String(formData.get("magazine_cover_morph") ?? "")
+        .trim()
+        .toLowerCase(),
+    );
     const productExplodeEarly = ["1", "true", "yes"].includes(
       String(formData.get("product_explode") ?? "")
         .trim()
@@ -570,6 +619,9 @@ export async function POST(request: Request) {
       !impactPosterEarly &&
       !handThrowEarly &&
       !webBoundaryEarly &&
+      !typeBehindEarly &&
+      !wetGlassEarly &&
+      !magazineCoverEarly &&
       !productExplodeEarly &&
       !bulletElevateEarly
     ) {
@@ -750,6 +802,21 @@ export async function POST(request: Request) {
         .trim()
         .toLowerCase(),
     );
+    const typeBehindCutout = ["1", "true", "yes"].includes(
+      String(formData.get("type_behind_cutout") ?? "")
+        .trim()
+        .toLowerCase(),
+    );
+    const wetGlassReveal = ["1", "true", "yes"].includes(
+      String(formData.get("wet_glass_reveal") ?? "")
+        .trim()
+        .toLowerCase(),
+    );
+    const magazineCoverMorph = ["1", "true", "yes"].includes(
+      String(formData.get("magazine_cover_morph") ?? "")
+        .trim()
+        .toLowerCase(),
+    );
     const productExplode = ["1", "true", "yes"].includes(
       String(formData.get("product_explode") ?? "")
         .trim()
@@ -798,6 +865,49 @@ export async function POST(request: Request) {
         headline,
       });
     }
+    const typeBehindFrame =
+      String(formData.get("type_behind_cutout_frame") ?? "start").trim() === "end"
+        ? "end"
+        : "start";
+    let typeBehindDialect: TypeBehindCutoutDialectId = "city-run";
+    if (typeBehindCutout) {
+      typeBehindDialect = resolveTypeBehindCutoutDialect({
+        pick: parseTypeBehindCutoutDialectPick(
+          formData.get("type_behind_cutout_dialect"),
+        ),
+        product: productName,
+        headline,
+      });
+    }
+    const wetGlassFrame =
+      String(formData.get("wet_glass_reveal_frame") ?? "start").trim() === "end"
+        ? "end"
+        : "start";
+    let wetGlassDialect: WetGlassRevealDialectId = "droplet-trail";
+    if (wetGlassReveal) {
+      wetGlassDialect = resolveWetGlassRevealDialect({
+        pick: parseWetGlassRevealDialectPick(
+          formData.get("wet_glass_reveal_dialect"),
+        ),
+        product: productName,
+        headline,
+      });
+    }
+    const magazineCoverFrame =
+      String(formData.get("magazine_cover_morph_frame") ?? "start").trim() ===
+      "end"
+        ? "end"
+        : "start";
+    let magazineCoverDialect: MagazineCoverMorphDialectId = "red-masthead";
+    if (magazineCoverMorph) {
+      magazineCoverDialect = resolveMagazineCoverMorphDialect({
+        pick: parseMagazineCoverMorphDialectPick(
+          formData.get("magazine_cover_morph_dialect"),
+        ),
+        product: productName,
+        headline,
+      });
+    }
     const productExplodeFrame =
       String(formData.get("product_explode_frame") ?? "start").trim() === "end"
         ? "end"
@@ -837,6 +947,18 @@ export async function POST(request: Request) {
     if (impactPoster) {
       vars.imageTextMode = impactPosterFrame === "end" ? "integrated" : "textless";
     }
+    if (typeBehindCutout) {
+      // Giant type is burned into both start and end stills.
+      vars.imageTextMode = "integrated";
+    }
+    if (wetGlassReveal) {
+      // Logo/mark comes from product photo through glass — no burned marketing type.
+      vars.imageTextMode = "textless";
+    }
+    if (magazineCoverMorph) {
+      // Masthead + cover lines burned into both stills.
+      vars.imageTextMode = "integrated";
+    }
     let socialDripPlan: SocialDripPlan | null = null;
     if (socialDrip) {
       const planRaw = (formData.get("social_drip_plan") as string | null)?.trim() || "";
@@ -874,6 +996,9 @@ export async function POST(request: Request) {
       !creativeMotion &&
       !handThrowScene &&
       !webBoundaryBreak &&
+      !typeBehindCutout &&
+      !wetGlassReveal &&
+      !magazineCoverMorph &&
       !productExplode &&
       !bulletProductElevate &&
       !clientPrompt &&
@@ -979,6 +1104,9 @@ export async function POST(request: Request) {
           (creativeMotion && creativeMotionFrame === "end") ||
           (handThrowScene && handThrowFrame === "end") ||
           (webBoundaryBreak && webBoundaryFrame === "end") ||
+          (typeBehindCutout && typeBehindFrame === "end") ||
+          (wetGlassReveal && wetGlassFrame === "end") ||
+          (magazineCoverMorph && magazineCoverFrame === "end") ||
           (productExplode && productExplodeFrame === "end") ||
           (bulletProductElevate && bulletProductElevateFrame === "end")) &&
         startPlateUrl
@@ -1104,6 +1232,54 @@ export async function POST(request: Request) {
             editingStartPlate:
               webBoundaryFrame === "end" && Boolean(startPlateUrl),
           })
+        : typeBehindCutout
+        ? buildTypeBehindCutoutStillPrompt({
+            dialect: typeBehindDialect,
+            product:
+              productName ||
+              headline ||
+              (promotionMode === "concept" ? "brand figure" : "the product"),
+            business,
+            headline,
+            promptExtra,
+            conceptMode: promotionMode === "concept",
+            aspectRatio: aspectRatioRaw || "3:4",
+            frame: typeBehindFrame,
+            editingStartPlate:
+              typeBehindFrame === "end" && Boolean(startPlateUrl),
+          })
+        : wetGlassReveal
+        ? buildWetGlassRevealStillPrompt({
+            dialect: wetGlassDialect,
+            product:
+              productName ||
+              headline ||
+              (promotionMode === "concept" ? "brand figure" : "the product"),
+            business,
+            headline,
+            promptExtra,
+            conceptMode: promotionMode === "concept",
+            aspectRatio: aspectRatioRaw || "3:4",
+            frame: wetGlassFrame,
+            editingStartPlate:
+              wetGlassFrame === "end" && Boolean(startPlateUrl),
+          })
+        : magazineCoverMorph
+        ? buildMagazineCoverMorphStillPrompt({
+            dialect: magazineCoverDialect,
+            product:
+              productName ||
+              headline ||
+              (promotionMode === "concept" ? "the person" : "the product"),
+            business,
+            headline,
+            promptExtra,
+            conceptMode: promotionMode === "concept",
+            aspectRatio: aspectRatioRaw || "3:4",
+            frame: magazineCoverFrame,
+            editingStartPlate:
+              magazineCoverFrame === "end" && Boolean(startPlateUrl),
+          })
         : productExplode
         ? buildProductExplodeStillPrompt({
             product:
@@ -1158,6 +1334,30 @@ export async function POST(request: Request) {
                 ),
                 [productName, headline, vars.extra].filter(Boolean).join(" "),
               ),
+              spatialLayoutDialect: resolveSpatialLayoutDialect(
+                parseSpatialLayoutDialectPick(
+                  String(formData.get("spatial_layout_dialect") ?? ""),
+                ),
+                [productName, headline, vars.extra].filter(Boolean).join(" "),
+              ),
+              photoDoodleDialect: resolvePhotoDoodleDialect(
+                parsePhotoDoodleDialectPick(
+                  String(formData.get("photo_doodle_dialect") ?? ""),
+                ),
+                [productName, headline, vars.extra].filter(Boolean).join(" "),
+              ),
+              lightTrailDialect: resolveLightTrailDialect(
+                parseLightTrailDialectPick(
+                  String(formData.get("light_trail_dialect") ?? ""),
+                ),
+                [productName, headline, vars.extra].filter(Boolean).join(" "),
+              ),
+              screenBreakDialect: resolveScreenBreakDialect(
+                parseScreenBreakDialectPick(
+                  String(formData.get("screen_break_dialect") ?? ""),
+                ),
+                [productName, headline, vars.extra].filter(Boolean).join(" "),
+              ),
               materialLettersDialect: resolveMaterialLettersDialect(
                 parseMaterialLettersDialectPick(
                   String(formData.get("material_letters_dialect") ?? ""),
@@ -1170,10 +1370,15 @@ export async function POST(request: Request) {
                 ),
                 [productName, headline, vars.extra].filter(Boolean).join(" "),
               ),
+              conceptMode: promotionMode === "concept",
             },
           );
       const posterDialectStyle =
         visualStyle === "type-force" ||
+        visualStyle === "spatial-layout" ||
+        visualStyle === "photo-doodle" ||
+        visualStyle === "light-trail" ||
+        visualStyle === "screen-break" ||
         visualStyle === "material-letters" ||
         visualStyle === "type-interaction" ||
         visualStyle === "product-lifestyle";
@@ -1189,6 +1394,9 @@ export async function POST(request: Request) {
         creativeMotion ||
         handThrowScene ||
         webBoundaryBreak ||
+        typeBehindCutout ||
+        wetGlassReveal ||
+        magazineCoverMorph ||
         productExplode ||
         bulletProductElevate ||
         posterDialectStyle

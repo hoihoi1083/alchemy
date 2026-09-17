@@ -13,6 +13,9 @@ import {
   TOKEN_COST,
 } from "@/lib/billing/token-costs";
 import { clampWebBoundaryBreakDurationSec } from "@/lib/web-boundary-break";
+import { clampTypeBehindCutoutDurationSec } from "@/lib/type-behind-cutout";
+import { clampWetGlassRevealDurationSec } from "@/lib/wet-glass-reveal";
+import { clampMagazineCoverMorphDurationSec } from "@/lib/magazine-cover-morph";
 
 export function insufficientTokensMessage(need: number, have: number): string {
   return `Not enough tokens. Need ${need}, have ${have}.`;
@@ -92,6 +95,33 @@ export function estimateVideoPipelineTokens(
       const h3 = estimateH3Tokens({
         resolution: opts.resolution,
         duration: wbDur,
+      });
+      return (genStills ? still * 2 : 0) + h3;
+    }
+
+    case "type-behind-cutout": {
+      const tbDur = clampTypeBehindCutoutDurationSec(opts.durationSec);
+      const h3 = estimateH3Tokens({
+        resolution: opts.resolution,
+        duration: tbDur,
+      });
+      return (genStills ? still * 2 : 0) + h3;
+    }
+
+    case "wet-glass-reveal": {
+      const wgDur = clampWetGlassRevealDurationSec(opts.durationSec);
+      const h3 = estimateH3Tokens({
+        resolution: opts.resolution,
+        duration: wgDur,
+      });
+      return (genStills ? still * 2 : 0) + h3;
+    }
+
+    case "magazine-cover-morph": {
+      const mcDur = clampMagazineCoverMorphDurationSec(opts.durationSec);
+      const h3 = estimateH3Tokens({
+        resolution: opts.resolution,
+        duration: mcDur,
       });
       return (genStills ? still * 2 : 0) + h3;
     }
