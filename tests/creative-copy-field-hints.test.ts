@@ -28,6 +28,35 @@ describe("resolveCreativeCopyFieldHints", () => {
     assert.equal(hints.emphasize.hook, true);
   });
 
+  it("marks type-behind-cutout headline as on-video (not mood-only)", () => {
+    const hints = resolveCreativeCopyFieldHints({
+      workflowMode: "video-only",
+      videoCreativeMode: "type-behind-cutout",
+    });
+    assert.equal(hints.hintKind, "type-behind");
+    assert.equal(hints.badge.hook, "on-video");
+    assert.equal(hints.badge.supporting, "mood-only");
+    assert.equal(hints.emphasize.hook, true);
+  });
+
+  it("resolves type-behind from videoSubpath when mode lags", () => {
+    const staleMode = resolveCreativeCopyFieldHints({
+      workflowMode: "video-only",
+      videoCreativeMode: "product-promo",
+      videoSubpath: "type_behind_cutout",
+    });
+    assert.equal(staleMode.hintKind, "type-behind");
+    assert.equal(staleMode.badge.hook, "on-video");
+
+    const fromSubpath = resolveCreativeCopyFieldHints({
+      workflowMode: "image-only",
+      videoCreativeMode: null,
+      videoSubpath: "type_behind_cutout",
+    });
+    assert.equal(fromSubpath.hintKind, "type-behind");
+    assert.equal(fromSubpath.badge.hook, "on-video");
+  });
+
   it("marks social-drip hook as IG caption", () => {
     const hints = resolveCreativeCopyFieldHints({
       workflowMode: "video-only",

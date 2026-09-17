@@ -61,6 +61,8 @@ export const IDENTITY_VIDEO_UX_MODES = [
   "web-boundary-break",
   "type-behind-cutout",
   "wet-glass-reveal",
+  "torn-paper-reveal",
+  "swift-chroma-run",
   "magazine-cover-morph",
   "product-explode",
   "bullet-product-elevate",

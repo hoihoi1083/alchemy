@@ -15,6 +15,8 @@ import {
 import { clampWebBoundaryBreakDurationSec } from "@/lib/web-boundary-break";
 import { clampTypeBehindCutoutDurationSec } from "@/lib/type-behind-cutout";
 import { clampWetGlassRevealDurationSec } from "@/lib/wet-glass-reveal";
+import { clampTornPaperRevealDurationSec } from "@/lib/torn-paper-reveal";
+import { clampSwiftChromaRunDurationSec } from "@/lib/swift-chroma-run";
 import { clampMagazineCoverMorphDurationSec } from "@/lib/magazine-cover-morph";
 
 export function insufficientTokensMessage(need: number, have: number): string {
@@ -113,6 +115,24 @@ export function estimateVideoPipelineTokens(
       const h3 = estimateH3Tokens({
         resolution: opts.resolution,
         duration: wgDur,
+      });
+      return (genStills ? still * 2 : 0) + h3;
+    }
+
+    case "torn-paper-reveal": {
+      const tpDur = clampTornPaperRevealDurationSec(opts.durationSec);
+      const h3 = estimateH3Tokens({
+        resolution: opts.resolution,
+        duration: tpDur,
+      });
+      return (genStills ? still * 2 : 0) + h3;
+    }
+
+    case "swift-chroma-run": {
+      const scDur = clampSwiftChromaRunDurationSec(opts.durationSec);
+      const h3 = estimateH3Tokens({
+        resolution: opts.resolution,
+        duration: scDur,
       });
       return (genStills ? still * 2 : 0) + h3;
     }

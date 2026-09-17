@@ -252,7 +252,12 @@ describe("Seedance fx landing recipes", () => {
     assert.match(helper, /generate-minimax-h3/);
     assert.match(helper, /\/api\/generate"/);
     assert.match(helper, /addBgm/);
+    assert.match(helper, /keepNativeAudio/);
     assert.match(helper, /401|402|403/);
+    assert.match(
+      readFileSync(join(process.cwd(), "hooks/useStudioWizard.ts"), "utf8"),
+      /makeTornPaperRevealVideo[\s\S]*?keepNativeAudio:\s*true/,
+    );
     for (const [name, until] of [
       ["makeVacuumInflateVideo", "async function generateCreativeMotionKeyframe"],
       ["makeCreativeMotionVideo", "async function generateHandThrowSceneKeyframe"],

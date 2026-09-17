@@ -985,6 +985,12 @@ export const en = {
 						"Warp tunnel → neon type → glass icons → chrome logo endcard. Logo / shop / brand identity.",
 					costHint: "~4 stills + 12s storyboard · logo or brand name",
 				},
+				"product-swift-chroma-12s": {
+					title: "Swift chroma storyboard ~12s",
+					description:
+						"疾行幻彩 multi-cut: wet-city chase → SKU in natural carry → vault → graphic lockup. Product photo required.",
+					costHint: "~4 stills + 12s storyboard · product packshot",
+				},
 				"concept-motion-poster": {
 					title: "Concept motion poster",
 					description:
@@ -1022,6 +1028,12 @@ export const en = {
 					description:
 						"Warp → neon type → glass icons → chrome logo. Best for brand / logo / shop promos.",
 					costHint: "~4 stills + 12s storyboard · logo or brand name",
+				},
+				"concept-swift-chroma-12s": {
+					title: "Swift chroma storyboard (concept) ~12s",
+					description:
+						"疾行幻彩 multi-cut for brand/figure: wet-city chase → energy macro → vault → graphic lockup. No fake SKU.",
+					costHint: "~4 stills + 12s storyboard · idea or figure still",
 				},
 				"product-blockbuster-9s": {
 					title: "Blockbuster entrance ~9s",
@@ -1064,6 +1076,18 @@ export const en = {
 					description:
 						"Fogged wet glass → droplet trail / wipe clears → logo sharp. Droplet / Wipe / Mono macro.",
 					costHint: "~2 images + 6–8s video · product photo with clear label",
+				},
+				"product-torn-paper-reveal-6s": {
+					title: "Torn paper reveal ~6s",
+					description:
+						"Translucent pear paper covers product → thin fibrous tear reveals logo. Strip tear / Peel curl / Wide rip.",
+					costHint: "~2 images + 6–8s video · product photo with clear label",
+				},
+				"product-swift-chroma-run-8s": {
+					title: "Swift chroma run ~8s",
+					description:
+						"Runner in wet city + neon geometric collage (pink/orange/yellow). Product: holds SKU. Street chase / Vault punch / Graphic lockup.",
+					costHint: "~2 images + 8–10s video · product / person+SKU still",
 				},
 				"product-magazine-cover-morph-8s": {
 					title: "Magazine cover morph ~8s",
@@ -1130,6 +1154,18 @@ export const en = {
 					description:
 						"Person / brand still behind fogged wet glass → clear path reveals the mark. Droplet / Wipe / Mono.",
 					costHint: "~2 images + 6–8s video · person/brand still with clear mark",
+				},
+				"concept-torn-paper-reveal-6s": {
+					title: "Torn paper reveal (concept) ~6s",
+					description:
+						"Person / brand still behind pear paper → fibrous tear reveals the mark. Strip tear / Peel curl / Wide rip.",
+					costHint: "~2 images + 6–8s video · person/brand still with clear mark",
+				},
+				"concept-swift-chroma-run-8s": {
+					title: "Swift chroma run (concept) ~8s",
+					description:
+						"Figure run in wet city + neon geometric collage. Street chase / Vault punch / Graphic lockup.",
+					costHint: "~2 images + 8–10s video · person/brand figure still",
 				},
 				"concept-magazine-cover-morph-8s": {
 					title: "Magazine cover morph (concept) ~8s",
@@ -2732,6 +2768,10 @@ export const en = {
 				title: "Brand warp",
 				desc: "Warp → neon type → glass icons → chrome logo · brand / logo / shop · 4 or 6 scenes",
 			},
+			"swift-chroma": {
+				title: "Swift chroma",
+				desc: "疾行幻彩 · wet-city run + neon collage · chase → SKU carry → vault → lockup · 4 or 6 scenes",
+			},
 		},
 		compositionPresetLabel: "Composition",
 		compositionPresetHint:
@@ -3500,12 +3540,22 @@ export const en = {
 			"type-behind-cutout": {
 				title: "Type behind cutout",
 				description:
-					"Cutout hero · giant type behind subject · cinematic plate · impact end. City run / Minimal / Impact. ~8–10s.",
+					"Person cutout · giant type behind (readable) · street plate. Product: presenter holds SKU. City run / Minimal / Impact. ~8–10s.",
 			},
 			"wet-glass-reveal": {
 				title: "Wet glass reveal",
 				description:
 					"Fogged wet glass → droplet trail / wipe clears → logo sharp. Droplet / Wipe / Mono macro. ~6–8s.",
+			},
+			"torn-paper-reveal": {
+				title: "Torn paper reveal",
+				description:
+					"Translucent pear paper covers hero → thin fibrous horizontal tear reveals logo. Strip tear / Peel curl / Wide rip. ~6–8s.",
+			},
+			"swift-chroma-run": {
+				title: "Swift chroma run",
+				description:
+					"Person running in wet city + neon geometric collage. Product: runner holds SKU. Street chase / Vault punch / Graphic lockup. ~8–10s.",
 			},
 			"magazine-cover-morph": {
 				title: "Magazine cover morph",
@@ -4463,13 +4513,14 @@ export const en = {
 			},
 			"type-behind-cutout": {
 				need: [
-					"Product photo (clear SKU) — or person / brand figure / mascot still (concept)",
-					"Headline for the giant word",
+					"Product photo (SKU) — presenter holds it; or person / brand figure still (concept)",
+					"Short punch word(s) for giant type — e.g. POWER or KEEP MOVING (not a full slogan)",
 				],
 				attention: [
-					"Upload locks identity — no invented hero",
-					"Type stays BEHIND the cutout",
-					"Pick City run, Minimal, or Impact end",
+					"Product: person presents SKU — not a lone packshot covering the word",
+					"Only short punch words show on screen — long headlines become POWER → ANYWHERE",
+					"Type stays BEHIND with side peeks; street plate for City / Impact",
+					"Exact SKU / face identity locked",
 				],
 				output: [
 					"~8–10s vertical type-behind-cutout ad",
@@ -4488,6 +4539,34 @@ export const en = {
 				output: [
 					"~6–8s vertical wet-glass reveal",
 					"Start→end morph: fogged glass → clear path over logo/mark",
+				],
+			},
+			"torn-paper-reveal": {
+				need: [
+					"Product photo OR person/brand still (concept) + clear label/mark on upload",
+				],
+				attention: [
+					"Identity lock — only the paper tear animates",
+					"Locked camera",
+					"Pick Strip tear, Peel curl, or Wide rip",
+				],
+				output: [
+					"~6–8s vertical torn-paper reveal",
+					"Start→end morph: pear paper cover → fibrous tear over logo/mark",
+				],
+			},
+			"swift-chroma-run": {
+				need: [
+					"Product / person+SKU still (product) OR person/brand figure still (concept)",
+				],
+				attention: [
+					"Identity lock — run + chroma graphics only",
+					"NOT type-behind giant words",
+					"Pick Street chase, Vault punch, or Graphic lockup",
+				],
+				output: [
+					"~8–10s vertical swift-chroma run",
+					"Start→end morph: wet-city run + neon geometric collage",
 				],
 			},
 			"magazine-cover-morph": {
@@ -4702,23 +4781,23 @@ export const en = {
 		webBoundaryNeedKeyframe:
 			"Upload a model photo (with product if possible) first — Generate stays off until then.",
 		typeBehindHint:
-			"Type behind cutout — cutout hero in front, giant word behind, cinematic plate. ~8–10s · City run / Minimal / Impact. Headline becomes the giant word.",
+			"Type behind cutout — person cutout in front, giant punch word behind (readable), cinematic street plate. Product: presenter holds your SKU. Short words only (KEEP MOVING, not a full slogan). ~8–10s · City run / Minimal / Impact.",
 		typeBehindDialectTitle: "Type-behind style",
 		typeBehindDialectHint:
-			"Same sandwich — City run (street plate), Minimal (cream void), or Impact end (punch lockup on END CUT).",
+			"Same sandwich — City run (jog toward camera on street), Minimal (cream void), or Impact end (street → END CUT punch). Words must stay readable around the figure.",
 		typeBehindDialectAuto: "Auto · best fit",
 		typeBehindDialects: {
 			"city-run": {
 				title: "City run",
-				desc: "Night street plate · subject drifts · type parallax behind",
+				desc: "Night street jog · person + product · type peeks behind",
 			},
 			"minimal-run": {
 				title: "Minimal run",
-				desc: "Cream void · one huge word · soft push-in",
+				desc: "Cream void · one huge word · type peeks behind",
 			},
 			"impact-end": {
 				title: "Impact end",
-				desc: "Calm sandwich → hard punch lockup on END CUT",
+				desc: "Street sandwich → hard punch lockup on END CUT",
 			},
 		},
 		typeBehindBuildingStill: "Step 1/2: type-behind start still…",
@@ -4751,6 +4830,60 @@ export const en = {
 		wetGlassAnimatingCard: "Animating wet glass reveal…",
 		wetGlassNeedKeyframe:
 			"Upload a product photo first (concept: person / brand still with a clear label/mark — text alone is not enough).",
+		tornPaperHint:
+			"Torn paper reveal — DRY pear paper covers product → fibrous tear propagates (auto H/V/diagonal for your SKU) → logo sharp. ~6–8s · Strip / Peel / Wide. Not wet glass. Keeps H3 tear audio — add BGM later in Captions if you want.",
+		tornPaperKeepNativeAudioNote:
+			"Native MiniMax audio kept (tear foley). Add BGM afterward in Captions if needed.",
+		tornPaperDialectTitle: "Torn-paper style",
+		tornPaperDialectHint:
+			"Same reveal — Strip tear (fibrous tear, auto H/V for SKU), Peel curl (often diagonal peel), or Wide rip (wider jagged rip).",
+		tornPaperDialectAuto: "Auto · best fit",
+		tornPaperDialects: {
+			"strip-tear": {
+				title: "Strip tear",
+				desc: "Thin fibrous tear (auto H/V) reveals logo",
+			},
+			"peel-curl": {
+				title: "Peel curl",
+				desc: "Paper peels/curls open (often diagonal)",
+			},
+			"wide-rip": {
+				title: "Wide rip",
+				desc: "Wider fibrous rip — bolder poster reveal",
+			},
+		},
+		tornPaperBuildingStill: "Step 1/2: torn-paper start still…",
+		tornPaperBuildingEnd: "Step 2/2: torn-paper end still…",
+		tornPaperAnimatingCard: "Animating torn paper reveal…",
+		tornPaperNeedKeyframe:
+			"Upload a product photo first (concept: person / brand still with a clear label/mark — text alone is not enough).",
+		swiftChromaHint:
+			"Swift chroma run — person running in wet city + neon geometric collage (pink/orange/yellow). ~8–10s · Street chase / Vault punch / Graphic lockup. Product: runner holds your SKU large in frame. Keeps H3 audio — add BGM later in Captions if you want.",
+		swiftChromaKeepNativeAudioNote:
+			"Native MiniMax audio kept. Add BGM afterward in Captions if needed.",
+		swiftChromaDialectTitle: "Chroma-run style",
+		swiftChromaDialectHint:
+			"Same energy — Street chase (continuous run), Vault punch (leap impact), or Graphic lockup (poster collage end).",
+		swiftChromaDialectAuto: "Auto · best fit",
+		swiftChromaDialects: {
+			"street-chase": {
+				title: "Street chase",
+				desc: "Continuous wet-city run with neon shapes",
+			},
+			"vault-punch": {
+				title: "Vault punch",
+				desc: "Approach → vault/leap with graphic burst",
+			},
+			"graphic-lockup": {
+				title: "Graphic lockup",
+				desc: "Run builds into dense neon collage poster",
+			},
+		},
+		swiftChromaBuildingStill: "Step 1/2: swift-chroma start still…",
+		swiftChromaBuildingEnd: "Step 2/2: swift-chroma end still…",
+		swiftChromaAnimatingCard: "Animating swift chroma run…",
+		swiftChromaNeedKeyframe:
+			"Upload a product photo first (concept: person / brand figure still — text alone is not enough).",
 		magazineCoverHint:
 			"Magazine cover morph — locked cover chrome, masthead behind the head, outfit-change morph. ~6–8s · Red / Pastel / Velvet. Headline becomes the masthead.",
 		magazineCoverDialectTitle: "Cover style",
@@ -7237,10 +7370,15 @@ export const en = {
 				"AI fills headline and support line. They print on the end still (not during the motion).",
 			productAssistIgCaptionHint:
 				"AI fills the hook used as a short IG-style caption on the still. Supporting / CTA are mood only.",
+			productAssistTypeBehindHint:
+				"Giant type uses short punch words from Big word (≈10 letters each) — e.g. “Power Anywhere: The Portable…” → POWER → ANYWHERE. Type KEEP MOVING, not a full slogan. Support line is mood only.",
 			productAssistCta: "AI fill",
 			onEndStillBadge: "Shows on end still",
 			igCaptionBadge: "IG caption",
 			moodOnlyBadge: "Mood only",
+			typeBehindOnScreenPreview: "On-screen giant type: {words}",
+			typeBehindPunchHint:
+				"Only 1–2 short punch words paint behind the cutout — long headlines are shortened automatically.",
 			productAssistBusy: "Writing…",
 			productAssistDone: "Draft filled — edit before Continue.",
 			productAssistFailed: "Could not fill product brief.",
@@ -7859,6 +7997,12 @@ export const en = {
 				extraLabel: "Extra still / motion notes",
 				extraPlaceholder:
 					"e.g. soft upper-left light, desk set, no people…",
+			},
+			typeBehindCopyFocus: {
+				title: "Short punch words only",
+				body: "We paint 1–2 short words behind the cutout (readable). Long marketing sentences are auto-shortened — e.g. “Power Anywhere: The Portable…” → POWER → ANYWHERE.",
+				hookLabel: "Giant word(s)",
+				hookPlaceholder: "e.g. POWER  or  KEEP MOVING",
 			},
 			conceptTopicLabel: "Topic / service",
 			productPhotoTitle: "Product photo",

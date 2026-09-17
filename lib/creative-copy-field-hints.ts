@@ -1,5 +1,6 @@
 import { conceptCopyFieldEmphasis } from "@/lib/concept-copy-focus";
 import type { VideoCreativeMode } from "@/lib/creative-workflow";
+import { videoSubpathToCreativeMode } from "@/lib/apply-intake-video-style";
 import {
   h3ShotRecipeAllowsKineticType,
   h3ShotRecipeIsTextlessFrames,
@@ -14,6 +15,7 @@ import type { WorkflowMode } from "@/lib/workflow-mode";
 /** How a copy field relates to what the user sees in the output. */
 export type CopyFieldRole =
   | "on-image"
+  | "on-video"
   | "on-end-still"
   | "ig-caption"
   | "planner-on-image"
@@ -39,7 +41,13 @@ export type CreativeCopyFieldHints = {
     offer: CopyFieldBadgeKind;
   };
   /** Panel hint mode for Product assistant / setup copy. */
-  hintKind: "prints" | "textless-video" | "textless-image" | "end-still" | "ig-caption";
+  hintKind:
+    | "prints"
+    | "textless-video"
+    | "textless-image"
+    | "end-still"
+    | "ig-caption"
+    | "type-behind";
 };
 
 function roleBadge(role: CopyFieldRole): CopyFieldBadgeKind {
@@ -47,6 +55,8 @@ function roleBadge(role: CopyFieldRole): CopyFieldBadgeKind {
     case "on-image":
     case "planner-on-image":
       return "on-image";
+    case "on-video":
+      return "on-video";
     case "on-end-still":
       return "on-end-still";
     case "ig-caption":
@@ -93,14 +103,33 @@ export function resolveCreativeCopyFieldHints(input: {
   workflowMode: WorkflowMode;
   visualStyleId?: VisualStyleId | null;
   videoCreativeMode?: VideoCreativeMode | string | null;
+  /** Micro wizard subpath — used when videoCreativeMode has not caught up yet. */
+  videoSubpath?: string | null;
   imageTextMode?: ImageTextMode | null;
   imageOutputMode?: ImageOutputMode | null;
 }): CreativeCopyFieldHints {
-  const videoMode = input.videoCreativeMode ?? null;
+  const fromMode = input.videoCreativeMode ?? null;
+  const fromSubpath = videoSubpathToCreativeMode(input.videoSubpath);
+  const videoMode = fromMode ?? fromSubpath;
   const isVideoWorkflow =
     input.workflowMode === "video-only" || input.workflowMode === "combined";
   const isImageWorkflow =
     input.workflowMode === "image-only" || input.workflowMode === "combined";
+
+  // Type-behind paints giant words on stills+video — either mode or template pick wins.
+  if (
+    fromMode === "type-behind-cutout" ||
+    fromSubpath === "type-behind-cutout"
+  ) {
+    return fromRoles(
+      {
+        hook: "on-video",
+        supporting: "mood-only",
+        offer: "mood-only",
+      },
+      "type-behind",
+    );
+  }
 
   // --- Video / recipe modes first (combined stills+video still need accurate video truth) ---
   if (isVideoWorkflow && videoMode) {

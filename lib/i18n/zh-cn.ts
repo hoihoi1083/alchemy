@@ -720,6 +720,12 @@ export const zhCn = {
           description: "扭曲隧道 → 霓虹字 → 玻璃图标 → 铬字 Logo。品牌／Logo／店铺。",
           costHint: "约 4 张静帧 + 12 秒分镜 · Logo 或品牌名",
         },
+        "product-swift-chroma-12s": {
+          title: "疾行幻彩分镜约 12 秒",
+          description:
+            "多镜头：湿润城市街追 → 自然手持产品特写 → 腾跃冲击 → 霓虹定格。需要产品图。",
+          costHint: "约 4 张静帧 + 12 秒分镜 · 产品包装图",
+        },
         "concept-motion-poster": {
           title: "概念动态海报",
           description:
@@ -751,6 +757,12 @@ export const zhCn = {
           title: "品牌扭曲（概念）约 12 秒",
           description: "扭曲 → 霓虹字 → 玻璃图标 → 铬字 Logo。适合品牌／Logo／店铺。",
           costHint: "约 4 张静帧 + 12 秒 · Logo 或品牌名",
+        },
+        "concept-swift-chroma-12s": {
+          title: "疾行幻彩分镜（概念）约 12 秒",
+          description:
+            "多镜头品牌／人物：湿润城市街追 → 能量特写 → 腾跃 → 霓虹定格。不要假 SKU。",
+          costHint: "约 4 张静帧 + 12 秒分镜 · 想法或人物静图",
         },
         "product-blockbuster-9s": {
           title: "大片级出场 约 9 秒",
@@ -798,6 +810,18 @@ export const zhCn = {
 					description:
 						"起雾湿玻璃 → 水珠划痕／指抹清晰 → Logo 变锐。水珠／指抹／黑白微距。",
 					costHint: "~2 张静图 + 6–8秒 · 带清晰标签的产品图",
+				},
+				"product-torn-paper-reveal-6s": {
+					title: "撕纸揭示 ~6s",
+					description:
+						"半透明雪梨纸盖住产品 → 细纤维横撕露出 Logo。细条撕／掀卷／阔撕。",
+					costHint: "~2 张静图 + 6–8秒 · 带清晰标签的产品图",
+				},
+				"product-swift-chroma-run-8s": {
+					title: "疾行幻彩 ~8s",
+					description:
+						"湿润城市奔跑 + 霓虹几何拼贴（粉／橙／黄）。产品：跑者手持 SKU。街追／腾跃冲击／图形定格。",
+					costHint: "~2 张静图 + 8–10秒 · 产品／人+SKU 静图",
 				},
 				"product-magazine-cover-morph-8s": {
 					title: "杂志封面变装 ~8s",
@@ -961,6 +985,18 @@ export const zhCn = {
 					description:
 						"人物／品牌静图在湿玻璃后 → 清晰路径揭示标志。水珠／指抹／黑白微距。",
 					costHint: "~2 张静图 + 6–8秒 · 带清晰标志的人像／品牌静图",
+				},
+				"concept-torn-paper-reveal-6s": {
+					title: "撕纸揭示（概念）~6s",
+					description:
+						"人物／品牌静图在雪梨纸后 → 纤维撕口揭示标志。细条撕／掀卷／阔撕。",
+					costHint: "~2 张静图 + 6–8秒 · 带清晰标志的人像／品牌静图",
+				},
+				"concept-swift-chroma-run-8s": {
+					title: "疾行幻彩（概念）~8s",
+					description:
+						"人物疾行于湿润城市 + 霓虹几何拼贴。街追／腾跃冲击／图形定格。",
+					costHint: "~2 张静图 + 8–10秒 · 人像／品牌形象静图",
 				},
 				"concept-magazine-cover-morph-8s": {
 					title: "杂志封面变装（概念）~8s",
@@ -2241,6 +2277,10 @@ export const zhCn = {
         title: "品牌扭曲",
         desc: "扭曲 → 霓虹字 → 玻璃图标 → 铬字 Logo · 品牌／店铺 · 4 或 6 场",
       },
+      "swift-chroma": {
+        title: "疾行幻彩",
+        desc: "湿润城市奔跑 + 霓虹拼贴 · 街追 → 手持产品 → 腾跃 → 定格 · 4 或 6 场",
+      },
     },
     compositionPresetLabel: "构图",
     compositionPresetHint:
@@ -2898,12 +2938,22 @@ export const zhCn = {
 			"type-behind-cutout": {
 				title: "字夹产品／字夹人像",
 				description:
-					"主体抠图 · 巨型大字在身后 · 电影感底板 · 冲击收尾。城市奔跑／极简奔跑／冲击收尾。约 8–10 秒。",
+					"人像抠图 · 巨型大字在身后（两侧可读）· 夜街底板。产品：展示者手持 SKU。城市奔跑／极简奔跑／冲击收尾。约 8–10 秒。",
 			},
 			"wet-glass-reveal": {
 				title: "湿玻璃揭示",
 				description:
 					"起雾湿玻璃 → 水珠划痕／指抹清晰 → Logo 变锐。水珠划痕／指抹清晰／黑白微距。约 6–8 秒。",
+			},
+			"torn-paper-reveal": {
+				title: "撕纸揭示",
+				description:
+					"半透明雪梨纸盖住主体 → 细纤维横撕露出 Logo。细条撕／掀卷／阔撕。约 6–8 秒。",
+			},
+			"swift-chroma-run": {
+				title: "疾行幻彩",
+				description:
+					"人物在湿润城市奔跑 + 霓虹几何拼贴。产品：跑者手持 SKU。街追／腾跃冲击／图形定格。约 8–10 秒。",
 			},
 			"magazine-cover-morph": {
 				title: "杂志封面变装",
@@ -3713,13 +3763,14 @@ export const zhCn = {
 			},
 			"type-behind-cutout": {
 				need: [
-					"产品图（清晰 SKU）— 或人像／品牌形象／吉祥物静图（概念）",
-					"标题文字（会变成巨型大字）",
+					"产品图（SKU）— 会加展示者手持；或人像／品牌形象静图（概念）",
+					"短词巨型字 — 例如 POWER 或 KEEP MOVING（不要写完整广告句）",
 				],
 				attention: [
-					"上传锁定身份 — 禁止发明主体",
-					"大字必须夹在抠图身后",
-					"选 城市奔跑、极简奔跑 或 冲击收尾",
+					"产品：人展示 SKU — 不要用独占画面的产品图挡住大字",
+					"画面只显示短词 — 长标题会变成 POWER → ANYWHERE",
+					"大字在抠图身后并从两侧露出；城市／冲击用夜街底板",
+					"锁定精确 SKU／面孔身份",
 				],
 				output: [
 					"~8–10秒竖版字夹广告",
@@ -3738,6 +3789,34 @@ export const zhCn = {
 				output: [
 					"~6–8秒竖版湿玻璃揭示",
 					"起止静图 morph：起雾玻璃 → 清晰路径露出 Logo／标志",
+				],
+			},
+			"torn-paper-reveal": {
+				need: [
+					"产品图 — 或人像／品牌静图（概念）+ 上传图上需有清晰标签／标志",
+				],
+				attention: [
+					"身份锁定 — 只动画化纸张撕开",
+					"镜头锁定",
+					"选 细条撕、掀卷 或 阔撕",
+				],
+				output: [
+					"~6–8秒竖版撕纸揭示",
+					"起止静图 morph：雪梨纸覆盖 → 纤维撕口露出 Logo／标志",
+				],
+			},
+			"swift-chroma-run": {
+				need: [
+					"产品／人+SKU 静图（产品）— 或人像／品牌形象静图（概念）",
+				],
+				attention: [
+					"身份锁定 — 只动画奔跑与幻彩图形",
+					"不是字夹巨型大字",
+					"选 街追、腾跃冲击 或 图形定格",
+				],
+				output: [
+					"~8–10秒竖版疾行幻彩",
+					"起止静图 morph：湿润城市奔跑 + 霓虹几何拼贴",
 				],
 			},
 			"magazine-cover-morph": {
@@ -3911,23 +3990,23 @@ socialDripHint:
 		webBoundaryNeedKeyframe:
 			"请先上传模特图（最好带产品）— 未上传前无法按生成。",
 		typeBehindHint:
-			"字夹产品／字夹人像 — 主体抠图在前、巨型大字在后、电影感底板。~8–10秒 · 城市奔跑／极简奔跑／冲击收尾。标题会变成巨型大字。",
+			"字夹产品／字夹人像 — 人像抠图在前、身后短词巨型字（须可读）、电影感夜街底板。产品：展示者手持你的 SKU。请填短词（KEEP MOVING），不要写完整广告句。~8–10秒 · 城市奔跑／极简奔跑／冲击收尾。",
 		typeBehindDialectTitle: "字夹风格",
 		typeBehindDialectHint:
-			"同一字夹构图 — 城市奔跑（夜街底板）、极简奔跑（奶油留白）、或冲击收尾（END CUT 重击）。",
+			"同一字夹构图 — 城市奔跑（夜街向镜头慢跑）、极简奔跑（奶油留白）、或冲击收尾（夜街 → END CUT 重击）。大字须在身后仍可读。",
 		typeBehindDialectAuto: "自动 · 最佳匹配",
 		typeBehindDialects: {
 			"city-run": {
 				title: "城市奔跑",
-				desc: "夜街底板 · 主体微前移 · 身后大字视差",
+				desc: "夜街慢跑 · 人＋产品 · 大字从两侧露出",
 			},
 			"minimal-run": {
 				title: "极简奔跑",
-				desc: "奶油留白 · 一个超大字 · 轻推近",
+				desc: "奶油留白 · 一个超大字 · 两侧露出",
 			},
 			"impact-end": {
 				title: "冲击收尾",
-				desc: "平静字夹 → END CUT 硬冲击定格",
+				desc: "夜街字夹 → END CUT 硬冲击定格",
 			},
 		},
 		typeBehindBuildingStill: "第 1/2 步：字夹起始静图…",
@@ -3960,6 +4039,60 @@ socialDripHint:
 		wetGlassAnimatingCard: "正在生成湿玻璃揭示…",
 		wetGlassNeedKeyframe:
 			"请先上传产品图（概念用人像／品牌静图，且需有清晰标签／标志 — 单靠文字不够）。",
+		tornPaperHint:
+			"撕纸揭示 — 干燥雪梨纸盖住产品 → 纤维撕口沿产品方向展开（自动横／竖／斜）→ Logo 清晰。~6–8秒 · 细条撕／掀卷／阔撕。不是湿玻璃。保留 H3 撕纸音效 — 需要配乐可稍后在字幕页加。",
+		tornPaperKeepNativeAudioNote:
+			"已保留 MiniMax 原声音效（撕纸）。需要配乐请稍后在字幕页添加。",
+		tornPaperDialectTitle: "撕纸风格",
+		tornPaperDialectHint:
+			"同一揭示 — 细条撕（纤维撕口，方向按产品自动横／竖）、掀卷（常斜向掀开）、或阔撕（更宽锯齿撕口）。",
+		tornPaperDialectAuto: "自动 · 最佳匹配",
+		tornPaperDialects: {
+			"strip-tear": {
+				title: "细条撕",
+				desc: "细纤维撕口（自动横／竖）露出 Logo",
+			},
+			"peel-curl": {
+				title: "掀卷",
+				desc: "纸张掀卷开口（常斜向）",
+			},
+			"wide-rip": {
+				title: "阔撕",
+				desc: "更宽纤维撕口 — 更大胆海报感",
+			},
+		},
+		tornPaperBuildingStill: "第 1/2 步：撕纸起始静图…",
+		tornPaperBuildingEnd: "第 2/2 步：撕纸结束静图…",
+		tornPaperAnimatingCard: "正在生成撕纸揭示…",
+		tornPaperNeedKeyframe:
+			"请先上传产品图（概念用人像／品牌静图，且需有清晰标签／标志 — 单靠文字不够）。",
+		swiftChromaHint:
+			"疾行幻彩 — 人物在湿润城市奔跑 + 霓虹几何拼贴（粉／橙／黄）。~8–10秒 · 街追／腾跃冲击／图形定格。产品：跑者手持 SKU 且产品要大、清晰。保留 H3 原声 — 需要配乐可稍后在字幕页加。",
+		swiftChromaKeepNativeAudioNote:
+			"已保留 MiniMax 原声音效。需要配乐请稍后在字幕页添加。",
+		swiftChromaDialectTitle: "疾行风格",
+		swiftChromaDialectHint:
+			"同一能量 — 街追（连续奔跑）、腾跃冲击（跃起冲击）、或图形定格（海报拼贴收尾）。",
+		swiftChromaDialectAuto: "自动 · 最佳匹配",
+		swiftChromaDialects: {
+			"street-chase": {
+				title: "街追",
+				desc: "湿润城市连续奔跑 + 霓虹图形",
+			},
+			"vault-punch": {
+				title: "腾跃冲击",
+				desc: "接近 → 腾跃／落地冲击 + 图形爆发",
+			},
+			"graphic-lockup": {
+				title: "图形定格",
+				desc: "奔跑收束为密集霓虹拼贴海报",
+			},
+		},
+		swiftChromaBuildingStill: "第 1/2 步：疾行幻彩起始静图…",
+		swiftChromaBuildingEnd: "第 2/2 步：疾行幻彩结束静图…",
+		swiftChromaAnimatingCard: "正在生成疾行幻彩…",
+		swiftChromaNeedKeyframe:
+			"请先上传产品图（概念用人像／品牌形象静图 — 单靠文字不够）。",
 		magazineCoverHint:
 			"杂志封面变装 — 封面骨架锁定，刊头在脑后，换装过渡。~6–8秒 · 红刊头／粉梦／暗丝绒。标题变成刊头。",
 		magazineCoverDialectTitle: "封面风格",
@@ -6151,10 +6284,15 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
         "依产品名称自动填写标题与辅助句。文字会印在片尾静帧（动态过程无字）。",
       productAssistIgCaptionHint:
         "依产品名称自动填写标题（用作短 IG 文案）。辅助句／CTA 只作气氛指引。",
+      productAssistTypeBehindHint:
+        "巨型大字只用短词（约 10 个字母）— 例如 “Power Anywhere: The Portable…” → POWER → ANYWHERE。请填 KEEP MOVING，不要写完整广告句。辅助句只作气氛指引。",
       productAssistCta: "AI 帮我想",
       onEndStillBadge: "会出现在片尾静帧",
       igCaptionBadge: "IG 文案",
       moodOnlyBadge: "只作指引",
+      typeBehindOnScreenPreview: "画面上的巨型字：{words}",
+      typeBehindPunchHint:
+        "身后只画 1–2 个短词 — 长标题会自动缩短。",
       productAssistBusy: "撰写中…",
       productAssistDone: "草稿已填入 — 继续前可再编辑。",
       productAssistFailed: "无法填写产品簡报。",
@@ -6655,6 +6793,12 @@ stylePickerModelLabel: "模特佩戴／使用",
         supportingPlaceholder: "标题下短句（选填）",
         extraLabel: "额外画面／运镜备注",
         extraPlaceholder: "例如：左上柔光、桌面场景、不要出人…",
+      },
+      typeBehindCopyFocus: {
+        title: "只用短词",
+        body: "身后只画 1–2 个短词（须可读）。长广告句会自动缩短 — 例如 “Power Anywhere: The Portable…” → POWER → ANYWHERE。",
+        hookLabel: "巨型字",
+        hookPlaceholder: "例如：POWER  或  KEEP MOVING",
       },
       conceptTopicLabel: "主题／服务",
       productPhotoTitle: "产品照片",

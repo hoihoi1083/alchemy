@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { finalizeLiveResearchPlan } from "../lib/content-research-plan";
 import type { ContentResearchPost } from "../lib/content-research-types";
 
@@ -44,5 +46,17 @@ describe("finalizeLiveResearchPlan", () => {
     assert.equal(plan.topPicks.length, 3);
     assert.ok(plan.candidates.length >= 5);
     assert.ok(plan.topPicks.every((a) => a.sourceUrl || a.title));
+  });
+});
+
+describe("content research plan JSON repair wiring", () => {
+  it("runs a DeepSeek repair pass after invalid plan JSON", () => {
+    const src = readFileSync(
+      join(process.cwd(), "lib/content-research-plan.ts"),
+      "utf8",
+    );
+    assert.match(src, /repairResearchPlanJson/);
+    assert.match(src, /plan JSON invalid — running DeepSeek repair pass/);
+    assert.match(src, /Content research plan \(repaired\)/);
   });
 });

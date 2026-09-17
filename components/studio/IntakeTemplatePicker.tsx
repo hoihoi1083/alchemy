@@ -17,6 +17,10 @@ import {
   type CopyFieldBadgeKind,
 } from "@/lib/creative-copy-field-hints";
 import {
+  formatTypeBehindOnScreenPreview,
+  resolveTypeBehindCutoutDialect,
+} from "@/lib/type-behind-cutout";
+import {
   buildIntakeTemplateCards,
   intakeShowsStoryboardRecipes,
   intakeShowsVideoRecipes,
@@ -262,7 +266,11 @@ function OnCreativeBadge({
 }
 
 /** Product-side DeepSeek brief helper for Template / Direct path. */
-export function ProductBriefAssistantPanel() {
+export function ProductBriefAssistantPanel({
+  videoSubpath = null,
+}: {
+  videoSubpath?: VideoSubpath | null;
+} = {}) {
   const { m } = useLocale();
   const wizard = useWizard();
   const fuse = m.microWizard.intakeFuse;
@@ -275,6 +283,7 @@ export function ProductBriefAssistantPanel() {
     workflowMode: wizard.workflowMode,
     visualStyleId: wizard.visualStyleId,
     videoCreativeMode: wizard.videoCreativeMode,
+    videoSubpath,
     imageTextMode: wizard.imageTextMode,
     imageOutputMode: wizard.imageOutputMode,
   });
@@ -298,23 +307,46 @@ export function ProductBriefAssistantPanel() {
           ? fuse.productAssistEndStillHint
           : copyHints.hintKind === "ig-caption"
             ? fuse.productAssistIgCaptionHint
-            : fuse.productAssistHint;
+            : copyHints.hintKind === "type-behind"
+              ? fuse.productAssistTypeBehindHint
+              : fuse.productAssistHint;
+
+  const isTypeBehind = copyHints.hintKind === "type-behind";
+  const typeBehindDialect = isTypeBehind
+    ? resolveTypeBehindCutoutDialect({
+        pick: wizard.typeBehindDialectPick,
+        headline: wizard.headline,
+        product: wizard.product,
+        conceptIdea: wizard.conceptIdea,
+      })
+    : null;
+  const typeBehindOnScreenWords =
+    isTypeBehind && typeBehindDialect
+      ? formatTypeBehindOnScreenPreview({
+          headline: wizard.headline,
+          business: wizard.business,
+          product: wizard.product,
+          dialect: typeBehindDialect,
+        })
+      : "";
 
   const copyFocus = resolveConceptCopyFocus(
     wizard.visualStyleId,
     pg.conceptCopyFocus,
   );
   const emphasis = copyHints.emphasize;
-  const hookLabel =
-    (copyFocus && "hookLabel" in copyFocus && copyFocus.hookLabel) ||
-    pg.hookLabel;
+  const hookLabel = isTypeBehind
+    ? pv.typeBehindCopyFocus.hookLabel
+    : (copyFocus && "hookLabel" in copyFocus && copyFocus.hookLabel) ||
+      pg.hookLabel;
   const supportingLabel = copyFocus?.supportingLabel ?? pg.supportingLabel;
   const offerLabel =
     (copyFocus && "offerLabel" in copyFocus && copyFocus.offerLabel) ||
     pg.offerLabel;
-  const hookPlaceholder =
-    (copyFocus && "hookPlaceholder" in copyFocus && copyFocus.hookPlaceholder) ||
-    fuse.copyHookPlaceholder;
+  const hookPlaceholder = isTypeBehind
+    ? pv.typeBehindCopyFocus.hookPlaceholder
+    : (copyFocus && "hookPlaceholder" in copyFocus && copyFocus.hookPlaceholder) ||
+      fuse.copyHookPlaceholder;
   const supportingPlaceholder =
     copyFocus?.supportingPlaceholder ?? fuse.copySublinePlaceholder;
   const offerPlaceholder =
@@ -390,6 +422,15 @@ export function ProductBriefAssistantPanel() {
               {copyFocus.body}
             </p>
           ) : null}
+          {isTypeBehind ? (
+            <p className="mt-1 text-[11px] leading-snug text-violet-800">
+              <span className="font-semibold">
+                {pv.typeBehindCopyFocus.title}
+              </span>
+              {" — "}
+              {pv.typeBehindCopyFocus.body}
+            </p>
+          ) : null}
         </div>
         <button
           type="button"
@@ -418,6 +459,14 @@ export function ProductBriefAssistantPanel() {
           onChange={(e) => wizard.setHeadline(e.target.value)}
           placeholder={hookPlaceholder}
         />
+        {isTypeBehind && typeBehindOnScreenWords ? (
+          <p className="mt-1 text-[11px] font-semibold text-violet-800">
+            {fuse.typeBehindOnScreenPreview.replace(
+              "{words}",
+              typeBehindOnScreenWords,
+            )}
+          </p>
+        ) : null}
       </label>
       <label
         className={

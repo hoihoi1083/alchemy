@@ -24,6 +24,8 @@ export type VideoCreativeMode =
   | "web-boundary-break"
   | "type-behind-cutout"
   | "wet-glass-reveal"
+  | "torn-paper-reveal"
+  | "swift-chroma-run"
   | "magazine-cover-morph"
   | "product-explode"
   | "bullet-product-elevate"
@@ -65,6 +67,8 @@ export const VIDEO_CREATIVE_MODES: VideoCreativeMode[] = [
   "web-boundary-break",
   "type-behind-cutout",
   "wet-glass-reveal",
+  "torn-paper-reveal",
+  "swift-chroma-run",
   "magazine-cover-morph",
   "product-explode",
   "bullet-product-elevate",
@@ -90,7 +94,7 @@ export const VIDEO_CREATIVE_MODES: VideoCreativeMode[] = [
 ];
 
 export function videoModePreviewSrc(id: VideoCreativeMode): string {
-  return `/images/studio/video-modes/${id}.png?v=4`;
+  return `/images/studio/video-modes/${id}.png?v=5`;
 }
 
 /** Recipe owns the motion prompt — skip DeepSeek auto-plan. */
@@ -108,6 +112,8 @@ export function isRecipeOwnedVideoMode(
     mode === "web-boundary-break" ||
     mode === "type-behind-cutout" ||
     mode === "wet-glass-reveal" ||
+    mode === "torn-paper-reveal" ||
+    mode === "swift-chroma-run" ||
     mode === "magazine-cover-morph" ||
     mode === "product-explode" ||
     mode === "bullet-product-elevate" ||
@@ -143,10 +149,10 @@ export function videoModeHidesAutoDuration(
 }
 
 /**
- * Dual-frame FX run MiniMax H3 first, then mix library BGM (H3 start→end is often
- * near-silent because adaptScript enforces no speech). Seedance fallback is silent
- * too — generateStartEndFxVideo mixes BGM for both paths.
- * Always false here so generateVideo does not double-mix BGM.
+ * Dual-frame FX run MiniMax H3 first, then usually mix library BGM (H3 start→end is
+ * often near-silent because adaptScript enforces no speech). Torn-paper opts out via
+ * keepNativeAudio to preserve fal tear foley. Seedance fallback is silent — mixes BGM
+ * unless also opted out. Always false here so generateVideo does not double-mix BGM.
  */
 export function recipeUsesSilentSeedance(
   mode: string | null | undefined,
@@ -222,6 +228,8 @@ export function videoModesForGoal(goal: OutputGoal): VideoCreativeMode[] {
       "web-boundary-break",
       "type-behind-cutout",
       "wet-glass-reveal",
+      "torn-paper-reveal",
+      "swift-chroma-run",
       "magazine-cover-morph",
       "product-explode",
       "bullet-product-elevate",
@@ -243,6 +251,8 @@ export function videoModesForGoal(goal: OutputGoal): VideoCreativeMode[] {
       "web-boundary-break",
       "type-behind-cutout",
       "wet-glass-reveal",
+      "torn-paper-reveal",
+      "swift-chroma-run",
       "magazine-cover-morph",
       "product-explode",
       "bullet-product-elevate",
@@ -275,6 +285,8 @@ export function videoModesForStudio(
       "web-boundary-break",
       "type-behind-cutout",
       "wet-glass-reveal",
+      "torn-paper-reveal",
+      "swift-chroma-run",
       "magazine-cover-morph",
       "product-explode",
       "bullet-product-elevate",
@@ -295,6 +307,8 @@ export function videoModesForStudio(
       "web-boundary-break",
       "type-behind-cutout",
       "wet-glass-reveal",
+      "torn-paper-reveal",
+      "swift-chroma-run",
       "magazine-cover-morph",
       "product-explode",
       "bullet-product-elevate",

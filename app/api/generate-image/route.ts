@@ -88,6 +88,20 @@ import {
   type WetGlassRevealDialectId,
 } from "@/lib/wet-glass-reveal";
 import {
+  buildTornPaperRevealStillPrompt,
+  parseTornPaperRevealDialectPick,
+  resolveTornPaperRevealDialect,
+  resolveTornPaperTearAxis,
+  type TornPaperRevealDialectId,
+  type TornPaperTearAxis,
+} from "@/lib/torn-paper-reveal";
+import {
+  buildSwiftChromaRunStillPrompt,
+  parseSwiftChromaRunDialectPick,
+  resolveSwiftChromaRunDialect,
+  type SwiftChromaRunDialectId,
+} from "@/lib/swift-chroma-run";
+import {
   buildMagazineCoverMorphStillPrompt,
   parseMagazineCoverMorphDialectPick,
   resolveMagazineCoverMorphDialect,
@@ -593,6 +607,16 @@ export async function POST(request: Request) {
         .trim()
         .toLowerCase(),
     );
+    const tornPaperEarly = ["1", "true", "yes"].includes(
+      String(formData.get("torn_paper_reveal") ?? "")
+        .trim()
+        .toLowerCase(),
+    );
+    const swiftChromaEarly = ["1", "true", "yes"].includes(
+      String(formData.get("swift_chroma_run") ?? "")
+        .trim()
+        .toLowerCase(),
+    );
     const magazineCoverEarly = ["1", "true", "yes"].includes(
       String(formData.get("magazine_cover_morph") ?? "")
         .trim()
@@ -621,6 +645,8 @@ export async function POST(request: Request) {
       !webBoundaryEarly &&
       !typeBehindEarly &&
       !wetGlassEarly &&
+      !tornPaperEarly &&
+      !swiftChromaEarly &&
       !magazineCoverEarly &&
       !productExplodeEarly &&
       !bulletElevateEarly
@@ -812,6 +838,16 @@ export async function POST(request: Request) {
         .trim()
         .toLowerCase(),
     );
+    const tornPaperReveal = ["1", "true", "yes"].includes(
+      String(formData.get("torn_paper_reveal") ?? "")
+        .trim()
+        .toLowerCase(),
+    );
+    const swiftChromaRun = ["1", "true", "yes"].includes(
+      String(formData.get("swift_chroma_run") ?? "")
+        .trim()
+        .toLowerCase(),
+    );
     const magazineCoverMorph = ["1", "true", "yes"].includes(
       String(formData.get("magazine_cover_morph") ?? "")
         .trim()
@@ -893,6 +929,42 @@ export async function POST(request: Request) {
         headline,
       });
     }
+    const tornPaperFrame =
+      String(formData.get("torn_paper_reveal_frame") ?? "start").trim() ===
+      "end"
+        ? "end"
+        : "start";
+    let tornPaperDialect: TornPaperRevealDialectId = "strip-tear";
+    let tornPaperTearAxis: TornPaperTearAxis = "horizontal";
+    if (tornPaperReveal) {
+      tornPaperDialect = resolveTornPaperRevealDialect({
+        pick: parseTornPaperRevealDialectPick(
+          formData.get("torn_paper_reveal_dialect"),
+        ),
+        product: productName,
+        headline,
+      });
+      tornPaperTearAxis = resolveTornPaperTearAxis({
+        product: productName,
+        headline,
+        conceptIdea: promptExtra,
+        dialect: tornPaperDialect,
+      });
+    }
+    const swiftChromaFrame =
+      String(formData.get("swift_chroma_run_frame") ?? "start").trim() === "end"
+        ? "end"
+        : "start";
+    let swiftChromaDialect: SwiftChromaRunDialectId = "street-chase";
+    if (swiftChromaRun) {
+      swiftChromaDialect = resolveSwiftChromaRunDialect({
+        pick: parseSwiftChromaRunDialectPick(
+          formData.get("swift_chroma_run_dialect"),
+        ),
+        product: productName,
+        headline,
+      });
+    }
     const magazineCoverFrame =
       String(formData.get("magazine_cover_morph_frame") ?? "start").trim() ===
       "end"
@@ -955,6 +1027,14 @@ export async function POST(request: Request) {
       // Logo/mark comes from product photo through glass — no burned marketing type.
       vars.imageTextMode = "textless";
     }
+    if (tornPaperReveal) {
+      // Logo/mark comes from product photo through the tear — no burned marketing type.
+      vars.imageTextMode = "textless";
+    }
+    if (swiftChromaRun) {
+      // Chroma graphics are scene DNA — no burned marketing type on stills.
+      vars.imageTextMode = "textless";
+    }
     if (magazineCoverMorph) {
       // Masthead + cover lines burned into both stills.
       vars.imageTextMode = "integrated";
@@ -998,6 +1078,8 @@ export async function POST(request: Request) {
       !webBoundaryBreak &&
       !typeBehindCutout &&
       !wetGlassReveal &&
+      !tornPaperReveal &&
+      !swiftChromaRun &&
       !magazineCoverMorph &&
       !productExplode &&
       !bulletProductElevate &&
@@ -1106,6 +1188,8 @@ export async function POST(request: Request) {
           (webBoundaryBreak && webBoundaryFrame === "end") ||
           (typeBehindCutout && typeBehindFrame === "end") ||
           (wetGlassReveal && wetGlassFrame === "end") ||
+          (tornPaperReveal && tornPaperFrame === "end") ||
+          (swiftChromaRun && swiftChromaFrame === "end") ||
           (magazineCoverMorph && magazineCoverFrame === "end") ||
           (productExplode && productExplodeFrame === "end") ||
           (bulletProductElevate && bulletProductElevateFrame === "end")) &&
@@ -1264,6 +1348,39 @@ export async function POST(request: Request) {
             editingStartPlate:
               wetGlassFrame === "end" && Boolean(startPlateUrl),
           })
+        : tornPaperReveal
+        ? buildTornPaperRevealStillPrompt({
+            dialect: tornPaperDialect,
+            product:
+              productName ||
+              headline ||
+              (promotionMode === "concept" ? "brand figure" : "the product"),
+            business,
+            headline,
+            promptExtra,
+            conceptMode: promotionMode === "concept",
+            aspectRatio: aspectRatioRaw || "3:4",
+            frame: tornPaperFrame,
+            editingStartPlate:
+              tornPaperFrame === "end" && Boolean(startPlateUrl),
+            tearAxis: tornPaperTearAxis,
+          })
+        : swiftChromaRun
+        ? buildSwiftChromaRunStillPrompt({
+            dialect: swiftChromaDialect,
+            product:
+              productName ||
+              headline ||
+              (promotionMode === "concept" ? "brand figure" : "the product"),
+            business,
+            headline,
+            promptExtra,
+            conceptMode: promotionMode === "concept",
+            aspectRatio: aspectRatioRaw || "3:4",
+            frame: swiftChromaFrame,
+            editingStartPlate:
+              swiftChromaFrame === "end" && Boolean(startPlateUrl),
+          })
         : magazineCoverMorph
         ? buildMagazineCoverMorphStillPrompt({
             dialect: magazineCoverDialect,
@@ -1396,6 +1513,8 @@ export async function POST(request: Request) {
         webBoundaryBreak ||
         typeBehindCutout ||
         wetGlassReveal ||
+        tornPaperReveal ||
+        swiftChromaRun ||
         magazineCoverMorph ||
         productExplode ||
         bulletProductElevate ||

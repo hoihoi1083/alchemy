@@ -26,6 +26,8 @@ const copyStub = {
     "web-boundary-break": { title: "Web boundary", description: "WB" },
     "type-behind-cutout": { title: "Type behind", description: "TB" },
     "wet-glass-reveal": { title: "Wet glass", description: "WG" },
+    "torn-paper-reveal": { title: "Torn paper", description: "TP" },
+    "swift-chroma-run": { title: "Swift chroma", description: "SC" },
     "magazine-cover-morph": { title: "Magazine morph", description: "MM" },
     "product-explode": { title: "Explode", description: "PE" },
     "bullet-product-elevate": { title: "Bullet elevate", description: "BT" },
@@ -65,6 +67,7 @@ const copyStub = {
     "cinematic-assemble": { title: "Cinematic assemble", desc: "Action build" },
     "studio-type": { title: "Studio type", desc: "Monochrome type" },
     "brand-warp": { title: "Brand warp", desc: "Warp logo MG" },
+    "swift-chroma": { title: "Swift chroma", desc: "Wet city run" },
   },
 };
 
@@ -151,6 +154,7 @@ describe("intake-template-styles", () => {
     assert.ok(cards.some((c) => c.id === "cinematic-assemble"));
     assert.ok(cards.some((c) => c.id === "studio-type"));
     assert.ok(cards.some((c) => c.id === "brand-warp"));
+    assert.ok(cards.some((c) => c.id === "swift-chroma"));
     assert.ok(!cards.some((c) => c.id === "product"));
     assert.ok(!cards.some((c) => c.id === "product_promo"));
     assert.ok(!cards.some((c) => c.id === "blockbuster"));
@@ -169,6 +173,7 @@ describe("intake-template-styles", () => {
     assert.ok(!cards.some((c) => c.id === "cinematic-assemble"));
     assert.ok(cards.some((c) => c.id === "studio-type"));
     assert.ok(cards.some((c) => c.id === "brand-warp"));
+    assert.ok(cards.some((c) => c.id === "swift-chroma"));
   });
 
   it("builds image Template cards without paper/storyboard/UGC/brand", () => {

@@ -664,7 +664,9 @@ export function IntakeFuseStep({
                         <ConceptWizardPanel showHeadlineField />
                       </div>
                     ) : (
-                      <ProductBriefAssistantPanel />
+                      <ProductBriefAssistantPanel
+                        videoSubpath={selectedVideoSubpath}
+                      />
                     )
                   ) : (
                     <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-[13px] text-slate-600">

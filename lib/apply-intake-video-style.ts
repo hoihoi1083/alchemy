@@ -17,6 +17,55 @@ export type IntakeVideoStyleWizardApi = {
   onVideoCreativeModeChange: (mode: VideoCreativeMode) => void;
 };
 
+/** Map micro videoSubpath → wizard videoCreativeMode (for badges / copy hints). */
+export function videoSubpathToCreativeMode(
+  subpath: VideoSubpath | string | null | undefined,
+): VideoCreativeMode | null {
+  if (!subpath) return null;
+  const h3 = subpathToH3ShotRecipe(subpath as VideoSubpath);
+  if (h3) return h3;
+  switch (subpath) {
+    case "product_promo":
+      return "product-promo";
+    case "motion_poster":
+      return "motion-poster";
+    case "impact_poster":
+      return "impact-poster";
+    case "blockbuster":
+      return "blockbuster";
+    case "vacuum_inflate":
+      return "vacuum-inflate";
+    case "creative_motion":
+      return "creative-motion";
+    case "hand_throw_scene":
+      return "hand-throw-scene";
+    case "web_boundary_break":
+      return "web-boundary-break";
+    case "type_behind_cutout":
+      return "type-behind-cutout";
+    case "wet_glass_reveal":
+      return "wet-glass-reveal";
+    case "torn_paper_reveal":
+      return "torn-paper-reveal";
+    case "swift_chroma_run":
+      return "swift-chroma-run";
+    case "magazine_cover_morph":
+      return "magazine-cover-morph";
+    case "product_explode":
+      return "product-explode";
+    case "bullet_product_elevate":
+      return "bullet-product-elevate";
+    case "social_drip":
+      return "social-drip";
+    case "reference_reel":
+      return "reference-concept";
+    case "explosion_unbox":
+      return "image-to-video";
+    default:
+      return null;
+  }
+}
+
 export function applyIntakeVideoStyle(
   subpath: VideoSubpath,
   opts: {
@@ -74,6 +123,12 @@ export function applyIntakeVideoStyle(
       return;
     case "wet_glass_reveal":
       wizard.onVideoCreativeModeChange("wet-glass-reveal");
+      return;
+    case "torn_paper_reveal":
+      wizard.onVideoCreativeModeChange("torn-paper-reveal");
+      return;
+    case "swift_chroma_run":
+      wizard.onVideoCreativeModeChange("swift-chroma-run");
       return;
     case "magazine_cover_morph":
       wizard.onVideoCreativeModeChange("magazine-cover-morph");

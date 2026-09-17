@@ -422,6 +422,12 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     if (sub === "wet_glass_reveal" && wizard.videoCreativeMode !== "wet-glass-reveal") {
       wizard.onVideoCreativeModeChange("wet-glass-reveal");
     }
+    if (sub === "torn_paper_reveal" && wizard.videoCreativeMode !== "torn-paper-reveal") {
+      wizard.onVideoCreativeModeChange("torn-paper-reveal");
+    }
+    if (sub === "swift_chroma_run" && wizard.videoCreativeMode !== "swift-chroma-run") {
+      wizard.onVideoCreativeModeChange("swift-chroma-run");
+    }
     if (sub === "magazine_cover_morph" && wizard.videoCreativeMode !== "magazine-cover-morph") {
       wizard.onVideoCreativeModeChange("magazine-cover-morph");
     }

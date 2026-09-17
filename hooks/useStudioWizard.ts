@@ -185,8 +185,8 @@ import {
 } from "@/lib/web-boundary-break";
 import {
 	TYPE_BEHIND_CUTOUT_DURATION_SEC,
-	TYPE_BEHIND_CUTOUT_MOTION_STRENGTH,
 	TYPE_BEHIND_CUTOUT_NEGATIVE,
+	typeBehindCutoutMotionStrength,
 	buildTypeBehindCutoutVideoPrompt,
 	clampTypeBehindCutoutDurationSec,
 	parseTypeBehindCutoutDialectPick,
@@ -205,6 +205,29 @@ import {
 	type WetGlassRevealDialectId,
 	type WetGlassRevealDialectPick,
 } from "@/lib/wet-glass-reveal";
+import {
+	TORN_PAPER_REVEAL_DURATION_SEC,
+	TORN_PAPER_REVEAL_MOTION_STRENGTH,
+	TORN_PAPER_REVEAL_NEGATIVE,
+	buildTornPaperRevealVideoPrompt,
+	clampTornPaperRevealDurationSec,
+	parseTornPaperRevealDialectPick,
+	resolveTornPaperRevealDialect,
+	resolveTornPaperTearAxis,
+	type TornPaperRevealDialectId,
+	type TornPaperRevealDialectPick,
+} from "@/lib/torn-paper-reveal";
+import {
+	SWIFT_CHROMA_RUN_DURATION_SEC,
+	SWIFT_CHROMA_RUN_NEGATIVE,
+	buildSwiftChromaRunVideoPrompt,
+	clampSwiftChromaRunDurationSec,
+	parseSwiftChromaRunDialectPick,
+	resolveSwiftChromaRunDialect,
+	swiftChromaRunMotionStrength,
+	type SwiftChromaRunDialectId,
+	type SwiftChromaRunDialectPick,
+} from "@/lib/swift-chroma-run";
 import {
 	MAGAZINE_COVER_MORPH_DURATION_SEC,
 	MAGAZINE_COVER_MORPH_MOTION_STRENGTH,
@@ -371,6 +394,7 @@ import {
 	fourOrSixDurationForSceneCount,
 	isFourOrSixCoupledRecipe,
 	isBrandWarpRecipe,
+	isSwiftChromaRecipe,
 	isLuxuryBirthRecipe,
 	luxuryBirthDurationForSceneCount,
 	resolveStoryboardRecipeId,
@@ -1077,6 +1101,24 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 	function setWetGlassDialectPick(next: WetGlassRevealDialectPick) {
 		setWetGlassDialectPickState(parseWetGlassRevealDialectPick(next));
 	}
+	const tornPaperStillUrlRef = useRef<string | null>(null);
+	const tornPaperEndUrlRef = useRef<string | null>(null);
+	const lastTornPaperDialectRef = useRef<TornPaperRevealDialectId | null>(null);
+	const [tornPaperDialectPick, setTornPaperDialectPickState] =
+		useState<TornPaperRevealDialectPick>("auto");
+	function setTornPaperDialectPick(next: TornPaperRevealDialectPick) {
+		setTornPaperDialectPickState(parseTornPaperRevealDialectPick(next));
+	}
+	const swiftChromaStillUrlRef = useRef<string | null>(null);
+	const swiftChromaEndUrlRef = useRef<string | null>(null);
+	const lastSwiftChromaDialectRef = useRef<SwiftChromaRunDialectId | null>(
+		null,
+	);
+	const [swiftChromaDialectPick, setSwiftChromaDialectPickState] =
+		useState<SwiftChromaRunDialectPick>("auto");
+	function setSwiftChromaDialectPick(next: SwiftChromaRunDialectPick) {
+		setSwiftChromaDialectPickState(parseSwiftChromaRunDialectPick(next));
+	}
 	const magazineCoverStillUrlRef = useRef<string | null>(null);
 	const magazineCoverEndUrlRef = useRef<string | null>(null);
 	const lastMagazineCoverDialectRef =
@@ -1138,7 +1180,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			return;
 		}
 		if (isFourOrSixCoupledRecipe(id)) {
-			const currentCount = isBrandWarpRecipe(id)
+			const preferFour = isBrandWarpRecipe(id) || isSwiftChromaRecipe(id);
+			const currentCount = preferFour
 				? storyboardSceneCount === "6"
 					? "6"
 					: "4"
@@ -1168,7 +1211,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				String(luxuryBirthDurationForSceneCount(coerced)) as typeof storyboardTrimDuration,
 			);
 		} else if (isFourOrSixCoupledRecipe(storyboardRecipeId)) {
-			const coerced = isBrandWarpRecipe(storyboardRecipeId)
+			const preferFour =
+				isBrandWarpRecipe(storyboardRecipeId) ||
+				isSwiftChromaRecipe(storyboardRecipeId);
+			const coerced = preferFour
 				? next === "6"
 					? "6"
 					: "4"
@@ -4595,6 +4641,34 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					videoEngine: "minimax-h3",
 				};
 			});
+		} else if (mode === "torn-paper-reveal") {
+			setVideoSettings((s: VideoSettings) => {
+				const allowed = new Set(["6", "8"]);
+				const nextDur = allowed.has(String(s.duration))
+					? (String(s.duration) as "6" | "8")
+					: String(TORN_PAPER_REVEAL_DURATION_SEC);
+				return {
+					...s,
+					duration: nextDur as VideoSettings["duration"],
+					autoSecondFrame: false,
+					motionStyle: "slow-push",
+					videoEngine: "minimax-h3",
+				};
+			});
+		} else if (mode === "swift-chroma-run") {
+			setVideoSettings((s: VideoSettings) => {
+				const allowed = new Set(["8", "10"]);
+				const nextDur = allowed.has(String(s.duration))
+					? (String(s.duration) as "8" | "10")
+					: String(SWIFT_CHROMA_RUN_DURATION_SEC);
+				return {
+					...s,
+					duration: nextDur as VideoSettings["duration"],
+					autoSecondFrame: false,
+					motionStyle: "slow-push",
+					videoEngine: "minimax-h3",
+				};
+			});
 		} else if (mode === "magazine-cover-morph") {
 			setVideoSettings((s: VideoSettings) => {
 				const allowed = new Set(["6", "8"]);
@@ -4783,6 +4857,22 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			hasConceptHero: hasConceptHeroLock,
 		});
 
+	const tornPaperRevealCanAutoStill =
+		videoCreativeMode === "torn-paper-reveal" &&
+		identityRecipeHeroReady({
+			promotionMode,
+			hasProductPhoto: hasProductPhotoLock,
+			hasConceptHero: hasConceptHeroLock,
+		});
+
+	const swiftChromaRunCanAutoStill =
+		videoCreativeMode === "swift-chroma-run" &&
+		identityRecipeHeroReady({
+			promotionMode,
+			hasProductPhoto: hasProductPhotoLock,
+			hasConceptHero: hasConceptHeroLock,
+		});
+
 	const magazineCoverMorphCanAutoStill =
 		videoCreativeMode === "magazine-cover-morph" &&
 		identityRecipeHeroReady({
@@ -4819,6 +4909,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		webBoundaryCanAutoStill ||
 		typeBehindCutoutCanAutoStill ||
 		wetGlassRevealCanAutoStill ||
+		tornPaperRevealCanAutoStill ||
+		swiftChromaRunCanAutoStill ||
 		magazineCoverMorphCanAutoStill ||
 		productExplodeCanAutoStill ||
 		bulletElevateCanAutoStill;
@@ -4839,6 +4931,12 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		}
 		if (videoCreativeMode === "wet-glass-reveal") {
 			return m.wizard.wetGlassNeedKeyframe;
+		}
+		if (videoCreativeMode === "torn-paper-reveal") {
+			return m.wizard.tornPaperNeedKeyframe;
+		}
+		if (videoCreativeMode === "swift-chroma-run") {
+			return m.wizard.swiftChromaNeedKeyframe;
 		}
 		if (videoCreativeMode === "magazine-cover-morph") {
 			return m.wizard.magazineCoverNeedKeyframe;
@@ -8994,15 +9092,22 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		return out;
 	}
 
-	/** H3 start→end first; mix library BGM after (H3 often ships near-silent audio). Seedance fallback does the same. */
+	/** H3 start→end first. Default: mix library BGM (H3 often near-silent). Opt out to keep fal native audio (e.g. tear foley). Seedance fallback stays silent unless mixBgmOnFallback. */
 	async function generateStartEndFxVideo(input: {
 		fd: FormData;
 		recipeDurationSec: number;
+		/** Keep MiniMax H3 (or Seedance) native audio — do not replace with library BGM. */
+		keepNativeAudio?: boolean;
+		/** When keepNativeAudio and H3 fails → Seedance: still mix BGM (Seedance is silent). Default true. */
+		mixBgmOnSeedanceFallback?: boolean;
 	}): Promise<{
 		videoUrl: string;
 		usedSeedanceFallback: boolean;
 		data: Record<string, unknown>;
 	}> {
+		const keepNative = Boolean(input.keepNativeAudio);
+		const mixFallbackBgm =
+			input.mixBgmOnSeedanceFallback !== false;
 		const h3Fd = cloneWizardFormData(input.fd);
 		h3Fd.delete("generate_audio");
 		h3Fd.delete("fast");
@@ -9020,10 +9125,14 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		if (h3Res.ok && h3Url) {
 			notifyCreditBalance(readCreditBalanceFromResponse(h3Data));
 			let url = h3Url;
-			try {
-				url = await addBgm(url);
-			} catch {
-				setBgmNote(m.wizard.bgmFallbackNote);
+			if (!keepNative) {
+				try {
+					url = await addBgm(url);
+				} catch {
+					setBgmNote(m.wizard.bgmFallbackNote);
+				}
+			} else {
+				setBgmNote(m.wizard.tornPaperKeepNativeAudioNote);
 			}
 			return {
 				videoUrl: url,
@@ -9066,10 +9175,13 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		}
 		notifyCreditBalance(readCreditBalanceFromResponse(seedData));
 		let url = seedUrl;
-		try {
-			url = await addBgm(url);
-		} catch {
-			setBgmNote(m.wizard.bgmFallbackNote);
+		// Seedance is silent — mix BGM unless caller also opted out of fallback mix.
+		if (!keepNative || mixFallbackBgm) {
+			try {
+				url = await addBgm(url);
+			} catch {
+				setBgmNote(m.wizard.bgmFallbackNote);
+			}
 		}
 		return {
 			videoUrl: url,
@@ -9840,7 +9952,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		fd.set("resolution", "480p");
 		fd.set("duration", String(durationSec));
 		fd.set("aspect_ratio", "9:16");
-		fd.set("motion_strength", String(TYPE_BEHIND_CUTOUT_MOTION_STRENGTH));
+		fd.set("motion_strength", String(typeBehindCutoutMotionStrength(dialect)));
 		fd.set(
 			"negative_prompt",
 			`${negativePrompt}, ${TYPE_BEHIND_CUTOUT_NEGATIVE}`,
@@ -10061,6 +10173,404 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 							.filter(Boolean)
 							.join(" — ")
 					: m.wizard.videoEngineMinimaxH3,
+				pathNote,
+				typeof fx.data.note === "string" ? fx.data.note : undefined,
+			]
+				.filter(Boolean)
+				.join(" · "),
+		);
+		return fx.videoUrl;
+	}
+
+	async function generateTornPaperRevealKeyframe(
+		dialect: TornPaperRevealDialectId,
+		frame: "start" | "end",
+		startPlateUrl?: string,
+	): Promise<string> {
+		setVideoNote(
+			frame === "end"
+				? m.wizard.tornPaperBuildingEnd
+				: m.wizard.tornPaperBuildingStill,
+		);
+		setImageJobMeta({
+			kind: "image",
+			startedAt: Date.now(),
+			sceneCount: 1,
+		});
+		try {
+			const fd = new FormData();
+			fd.set("visual_style", visualStyleId);
+			fd.set("art_style", artStyleId);
+			if (brandProfile)
+				fd.set("brand_profile", JSON.stringify(brandProfile));
+			fd.set("brand_kit", JSON.stringify(brandKit));
+			fd.set(
+				"product_name",
+				promotionMode === "concept"
+					? effectivePromoteName ||
+							product.trim() ||
+							conceptIdea.trim()
+					: product.trim(),
+			);
+			fd.set("business", business.trim());
+			fd.set(
+				"headline",
+				headline.trim() || product.trim() || conceptIdea.trim(),
+			);
+			fd.set("subline", subline.trim());
+			fd.set("offer", offer.trim());
+			fd.set("prompt_market", promptMarket);
+			fd.set("subject_framing", subjectFraming);
+			fd.set("prompt_extra", effectivePromptExtra());
+			fd.set("workflow_mode", workflowMode);
+			fd.set("promotion_mode", promotionMode);
+			fd.set("image_text_mode", "textless");
+			fd.set("aspect_ratio", "3:4");
+			fd.set("num_images", "1");
+			fd.set("image_output_mode", "single");
+			fd.set("torn_paper_reveal", "1");
+			fd.set("torn_paper_reveal_frame", frame);
+			fd.set("torn_paper_reveal_dialect", dialect);
+			if (frame === "end" && startPlateUrl)
+				fd.set("start_plate_url", startPlateUrl);
+			await bindIdentityHeroToKeyframeForm(
+				fd,
+				m.wizard.tornPaperNeedKeyframe,
+			);
+
+			const res = await billingFetch("/api/generate-image", {
+				method: "POST",
+				body: fd,
+			});
+			const data = await readGenerateJson(res);
+			if (!res.ok)
+				throw new Error(
+					(data.error as string) || m.errors.polishFailed,
+				);
+			notifyCreditBalance(readCreditBalanceFromResponse(data));
+			const urls = (data.imageUrls as string[] | undefined) ?? [
+				data.imageUrl as string,
+			];
+			const applied = applyGeneratedImages(
+				urls,
+				data.endpoint as string | undefined,
+			);
+			if (!applied) throw new Error(m.errors.imageGenNoUrl);
+			return applied;
+		} finally {
+			setImageJobMeta(null);
+		}
+	}
+
+	async function makeTornPaperRevealVideo(): Promise<string> {
+		const dialect = resolveTornPaperRevealDialect({
+			pick: parseTornPaperRevealDialectPick(tornPaperDialectPick),
+			product,
+			headline,
+			conceptIdea,
+		});
+		lastTornPaperDialectRef.current = dialect;
+		tornPaperStillUrlRef.current = null;
+		tornPaperEndUrlRef.current = null;
+		if (
+			!identityRecipeHeroReady({
+				promotionMode,
+				hasProductPhoto: hasProductPhotoLock,
+				hasConceptHero: hasConceptHeroLock,
+			})
+		) {
+			throw new Error(m.wizard.tornPaperNeedKeyframe);
+		}
+		const startUrl = await generateTornPaperRevealKeyframe(
+			dialect,
+			"start",
+		);
+		tornPaperStillUrlRef.current = startUrl;
+		const endUrl = await generateTornPaperRevealKeyframe(
+			dialect,
+			"end",
+			startUrl,
+		);
+		tornPaperEndUrlRef.current = endUrl;
+		const pair = [startUrl, endUrl].filter(Boolean);
+		if (pair.length) {
+			setImageVariantUrls(pair);
+			setSelectedVariantIndex(0);
+			setImageUrl(startUrl);
+			imageUrlRef.current = startUrl;
+		}
+		const dialectLabel =
+			m.wizard.tornPaperDialects[dialect]?.title ?? dialect;
+		setVideoNote(
+			`${m.wizard.tornPaperAnimatingCard} · ${dialectLabel}`,
+		);
+		const subject =
+			promotionMode === "concept"
+				? effectivePromoteName ||
+					product.trim() ||
+					conceptIdea.trim() ||
+					business.trim()
+				: product.trim() || business.trim();
+		const durationSec = clampTornPaperRevealDurationSec(
+			videoSettings.duration,
+		);
+		const tearAxis = resolveTornPaperTearAxis({
+			product: subject || product.trim(),
+			headline: headline.trim() || conceptIdea.trim(),
+			conceptIdea,
+			dialect,
+		});
+		const fxPrompt = buildTornPaperRevealVideoPrompt({
+			dialect,
+			product: subject || "the product",
+			business: business.trim(),
+			headline: headline.trim() || product.trim() || conceptIdea.trim(),
+			promptExtra: effectivePromptExtra(),
+			conceptMode: promotionMode === "concept",
+			durationSec,
+			tearAxis,
+		});
+		if (videoPrompt.trim() !== fxPrompt) setVideoPrompt(fxPrompt);
+
+		const fd = new FormData();
+		fd.set("mode", "image");
+		fd.set("promotion_mode", promotionMode);
+		fd.set("prompt", seedancePromptForGenerate(fxPrompt));
+		fd.set("resolution", "480p");
+		fd.set("duration", String(durationSec));
+		fd.set("aspect_ratio", "9:16");
+		fd.set("motion_strength", String(TORN_PAPER_REVEAL_MOTION_STRENGTH));
+		fd.set(
+			"negative_prompt",
+			`${negativePrompt}, ${TORN_PAPER_REVEAL_NEGATIVE}`,
+		);
+		fd.set("avoid_on_screen_text", "true");
+		fd.set("torn_paper_reveal", "1");
+		fd.set("torn_paper_reveal_dialect", dialect);
+		fd.set("product_name", subject);
+		fd.set("business", business.trim());
+		fd.set("image_start_url", startUrl);
+		fd.set("image_end_url", endUrl);
+
+		const fx = await generateStartEndFxVideo({
+			fd,
+			recipeDurationSec: durationSec,
+			// Keep H3 tear / paper foley — library BGM was wiping fal native audio.
+			keepNativeAudio: true,
+		});
+		const pathNote = wizardVideoReadyExtraNote(fx.data);
+		const h3Reason =
+			typeof fx.data.h3FallbackReason === "string"
+				? fx.data.h3FallbackReason
+				: "";
+		setVideoNote(
+			[
+				m.wizard.tornPaperHint,
+				dialectLabel,
+				fx.usedSeedanceFallback
+					? [m.wizard.h3ToSeedanceFallbackNote, h3Reason]
+							.filter(Boolean)
+							.join(" — ")
+					: [m.wizard.videoEngineMinimaxH3, m.wizard.tornPaperKeepNativeAudioNote]
+							.filter(Boolean)
+							.join(" — "),
+				pathNote,
+				typeof fx.data.note === "string" ? fx.data.note : undefined,
+			]
+				.filter(Boolean)
+				.join(" · "),
+		);
+		return fx.videoUrl;
+	}
+
+	async function generateSwiftChromaRunKeyframe(
+		dialect: SwiftChromaRunDialectId,
+		frame: "start" | "end",
+		startPlateUrl?: string,
+	): Promise<string> {
+		setVideoNote(
+			frame === "end"
+				? m.wizard.swiftChromaBuildingEnd
+				: m.wizard.swiftChromaBuildingStill,
+		);
+		setImageJobMeta({
+			kind: "image",
+			startedAt: Date.now(),
+			sceneCount: 1,
+		});
+		try {
+			const fd = new FormData();
+			fd.set("visual_style", visualStyleId);
+			fd.set("art_style", artStyleId);
+			if (brandProfile)
+				fd.set("brand_profile", JSON.stringify(brandProfile));
+			fd.set("brand_kit", JSON.stringify(brandKit));
+			fd.set(
+				"product_name",
+				promotionMode === "concept"
+					? effectivePromoteName ||
+							product.trim() ||
+							conceptIdea.trim()
+					: product.trim(),
+			);
+			fd.set("business", business.trim());
+			fd.set(
+				"headline",
+				headline.trim() || product.trim() || conceptIdea.trim(),
+			);
+			fd.set("subline", subline.trim());
+			fd.set("offer", offer.trim());
+			fd.set("prompt_market", promptMarket);
+			fd.set("subject_framing", subjectFraming);
+			fd.set("prompt_extra", effectivePromptExtra());
+			fd.set("workflow_mode", workflowMode);
+			fd.set("promotion_mode", promotionMode);
+			fd.set("image_text_mode", "textless");
+			fd.set("aspect_ratio", "3:4");
+			fd.set("num_images", "1");
+			fd.set("image_output_mode", "single");
+			fd.set("swift_chroma_run", "1");
+			fd.set("swift_chroma_run_frame", frame);
+			fd.set("swift_chroma_run_dialect", dialect);
+			if (frame === "end" && startPlateUrl)
+				fd.set("start_plate_url", startPlateUrl);
+			await bindIdentityHeroToKeyframeForm(
+				fd,
+				m.wizard.swiftChromaNeedKeyframe,
+			);
+
+			const res = await billingFetch("/api/generate-image", {
+				method: "POST",
+				body: fd,
+			});
+			const data = await readGenerateJson(res);
+			if (!res.ok)
+				throw new Error(
+					(data.error as string) || m.errors.polishFailed,
+				);
+			notifyCreditBalance(readCreditBalanceFromResponse(data));
+			const urls = (data.imageUrls as string[] | undefined) ?? [
+				data.imageUrl as string,
+			];
+			const applied = applyGeneratedImages(
+				urls,
+				data.endpoint as string | undefined,
+			);
+			if (!applied) throw new Error(m.errors.imageGenNoUrl);
+			return applied;
+		} finally {
+			setImageJobMeta(null);
+		}
+	}
+
+	async function makeSwiftChromaRunVideo(): Promise<string> {
+		const dialect = resolveSwiftChromaRunDialect({
+			pick: parseSwiftChromaRunDialectPick(swiftChromaDialectPick),
+			product,
+			headline,
+			conceptIdea,
+		});
+		lastSwiftChromaDialectRef.current = dialect;
+		swiftChromaStillUrlRef.current = null;
+		swiftChromaEndUrlRef.current = null;
+		if (
+			!identityRecipeHeroReady({
+				promotionMode,
+				hasProductPhoto: hasProductPhotoLock,
+				hasConceptHero: hasConceptHeroLock,
+			})
+		) {
+			throw new Error(m.wizard.swiftChromaNeedKeyframe);
+		}
+		const startUrl = await generateSwiftChromaRunKeyframe(
+			dialect,
+			"start",
+		);
+		swiftChromaStillUrlRef.current = startUrl;
+		const endUrl = await generateSwiftChromaRunKeyframe(
+			dialect,
+			"end",
+			startUrl,
+		);
+		swiftChromaEndUrlRef.current = endUrl;
+		const pair = [startUrl, endUrl].filter(Boolean);
+		if (pair.length) {
+			setImageVariantUrls(pair);
+			setSelectedVariantIndex(0);
+			setImageUrl(startUrl);
+			imageUrlRef.current = startUrl;
+		}
+		const dialectLabel =
+			m.wizard.swiftChromaDialects[dialect]?.title ?? dialect;
+		setVideoNote(
+			`${m.wizard.swiftChromaAnimatingCard} · ${dialectLabel}`,
+		);
+		const subject =
+			promotionMode === "concept"
+				? effectivePromoteName ||
+					product.trim() ||
+					conceptIdea.trim() ||
+					business.trim()
+				: product.trim() || business.trim();
+		const durationSec = clampSwiftChromaRunDurationSec(
+			videoSettings.duration,
+		);
+		const fxPrompt = buildSwiftChromaRunVideoPrompt({
+			dialect,
+			product: subject || "the product",
+			business: business.trim(),
+			headline: headline.trim() || product.trim() || conceptIdea.trim(),
+			promptExtra: effectivePromptExtra(),
+			conceptMode: promotionMode === "concept",
+			durationSec,
+		});
+		if (videoPrompt.trim() !== fxPrompt) setVideoPrompt(fxPrompt);
+
+		const fd = new FormData();
+		fd.set("mode", "image");
+		fd.set("promotion_mode", promotionMode);
+		fd.set("prompt", seedancePromptForGenerate(fxPrompt));
+		fd.set("resolution", "480p");
+		fd.set("duration", String(durationSec));
+		fd.set("aspect_ratio", "9:16");
+		fd.set("motion_strength", String(swiftChromaRunMotionStrength(dialect)));
+		fd.set(
+			"negative_prompt",
+			`${negativePrompt}, ${SWIFT_CHROMA_RUN_NEGATIVE}`,
+		);
+		fd.set("avoid_on_screen_text", "true");
+		fd.set("swift_chroma_run", "1");
+		fd.set("swift_chroma_run_dialect", dialect);
+		fd.set("product_name", subject);
+		fd.set("business", business.trim());
+		fd.set("image_start_url", startUrl);
+		fd.set("image_end_url", endUrl);
+
+		const fx = await generateStartEndFxVideo({
+			fd,
+			recipeDurationSec: durationSec,
+			// Keep H3 run / city foley — library BGM was wiping fal native audio.
+			keepNativeAudio: true,
+		});
+		const pathNote = wizardVideoReadyExtraNote(fx.data);
+		const h3Reason =
+			typeof fx.data.h3FallbackReason === "string"
+				? fx.data.h3FallbackReason
+				: "";
+		setVideoNote(
+			[
+				m.wizard.swiftChromaHint,
+				dialectLabel,
+				fx.usedSeedanceFallback
+					? [m.wizard.h3ToSeedanceFallbackNote, h3Reason]
+							.filter(Boolean)
+							.join(" — ")
+					: [
+							m.wizard.videoEngineMinimaxH3,
+							m.wizard.swiftChromaKeepNativeAudioNote,
+						]
+							.filter(Boolean)
+							.join(" — "),
 				pathNote,
 				typeof fx.data.note === "string" ? fx.data.note : undefined,
 			]
@@ -11746,6 +12256,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					generationKind === "web-boundary-break" ||
 					generationKind === "type-behind-cutout" ||
 					generationKind === "wet-glass-reveal" ||
+					generationKind === "torn-paper-reveal" ||
+					generationKind === "swift-chroma-run" ||
 					generationKind === "magazine-cover-morph" ||
 					generationKind === "product-explode" ||
 					generationKind === "bullet-product-elevate";
@@ -11863,6 +12375,12 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					break;
 				case "wet-glass-reveal":
 					url = await makeWetGlassRevealVideo();
+					break;
+				case "torn-paper-reveal":
+					url = await makeTornPaperRevealVideo();
+					break;
+				case "swift-chroma-run":
+					url = await makeSwiftChromaRunVideo();
 					break;
 				case "magazine-cover-morph":
 					url = await makeMagazineCoverMorphVideo();
@@ -12231,6 +12749,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			!webBoundaryCanAutoStill &&
 			!typeBehindCutoutCanAutoStill &&
 			!wetGlassRevealCanAutoStill &&
+			!tornPaperRevealCanAutoStill &&
+			!swiftChromaRunCanAutoStill &&
 			!magazineCoverMorphCanAutoStill &&
 			!productExplodeCanAutoStill &&
 			!blockbusterCanGenerate &&
@@ -12336,6 +12856,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 						? m.wizard.typeBehindNeedKeyframe
 					: videoCreativeMode === "wet-glass-reveal"
 						? m.wizard.wetGlassNeedKeyframe
+					: videoCreativeMode === "torn-paper-reveal"
+						? m.wizard.tornPaperNeedKeyframe
+					: videoCreativeMode === "swift-chroma-run"
+						? m.wizard.swiftChromaNeedKeyframe
 					: videoCreativeMode === "magazine-cover-morph"
 						? m.wizard.magazineCoverNeedKeyframe
 					: videoCreativeMode === "product-explode"
@@ -13184,6 +13708,12 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		wetGlassDialectPick,
 		setWetGlassDialectPick,
 		wetGlassRevealCanAutoStill,
+		tornPaperDialectPick,
+		setTornPaperDialectPick,
+		tornPaperRevealCanAutoStill,
+		swiftChromaDialectPick,
+		setSwiftChromaDialectPick,
+		swiftChromaRunCanAutoStill,
 		magazineCoverDialectPick,
 		setMagazineCoverDialectPick,
 		magazineCoverMorphCanAutoStill,

@@ -250,6 +250,8 @@ function evalWhen(
       ctx.videoSubpath === "web_boundary_break" ||
       ctx.videoSubpath === "type_behind_cutout" ||
       ctx.videoSubpath === "wet_glass_reveal" ||
+      ctx.videoSubpath === "torn_paper_reveal" ||
+      ctx.videoSubpath === "swift_chroma_run" ||
       ctx.videoSubpath === "magazine_cover_morph" ||
       ctx.videoSubpath === "product_explode" ||
       ctx.videoSubpath === "bullet_product_elevate"
@@ -352,6 +354,8 @@ export function resolvePathId(
       ctx.videoSubpath === "web_boundary_break" ||
       ctx.videoSubpath === "type_behind_cutout" ||
       ctx.videoSubpath === "wet_glass_reveal" ||
+      ctx.videoSubpath === "torn_paper_reveal" ||
+      ctx.videoSubpath === "swift_chroma_run" ||
       ctx.videoSubpath === "magazine_cover_morph" ||
       ctx.videoSubpath === "product_explode" ||
       ctx.videoSubpath === "bullet_product_elevate" ||
@@ -396,6 +400,8 @@ export function resolvePathId(
       ctx.videoSubpath === "web_boundary_break" ||
       ctx.videoSubpath === "type_behind_cutout" ||
       ctx.videoSubpath === "wet_glass_reveal" ||
+      ctx.videoSubpath === "torn_paper_reveal" ||
+      ctx.videoSubpath === "swift_chroma_run" ||
       ctx.videoSubpath === "magazine_cover_morph" ||
       ctx.videoSubpath === "product_explode" ||
       ctx.videoSubpath === "bullet_product_elevate" ||
@@ -845,6 +851,8 @@ function identitySubpath(sub: string | undefined): boolean {
     sub === "web_boundary_break" ||
     sub === "type_behind_cutout" ||
     sub === "wet_glass_reveal" ||
+    sub === "torn_paper_reveal" ||
+    sub === "swift_chroma_run" ||
     sub === "magazine_cover_morph" ||
     sub === "product_explode" ||
     sub === "bullet_product_elevate"
@@ -948,6 +956,8 @@ export function canProceedMicroStep(
       ctx.videoSubpath === "web_boundary_break" ||
       ctx.videoSubpath === "type_behind_cutout" ||
       ctx.videoSubpath === "wet_glass_reveal" ||
+      ctx.videoSubpath === "torn_paper_reveal" ||
+      ctx.videoSubpath === "swift_chroma_run" ||
       ctx.videoSubpath === "magazine_cover_morph" ||
       ctx.videoSubpath === "product_explode" ||
       ctx.videoSubpath === "bullet_product_elevate";

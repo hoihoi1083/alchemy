@@ -5,6 +5,7 @@
  * Cinematic assemble = step-by-step product build (pizza / tech / auto).
  * Studio type = monochrome studio + integrated 3D type brand vibe.
  * Brand warp = neon warp → type → icon field → chrome logo endcard.
+ * Swift chroma = 疾行幻彩 wet-city run + neon geometric collage (4 or 6 scenes).
  */
 
 import type { StoryboardSceneCount } from "@/lib/ad-pack-preferences";
@@ -17,6 +18,7 @@ export const STORYBOARD_RECIPE_IDS = [
   "cinematic-assemble",
   "studio-type",
   "brand-warp",
+  "swift-chroma",
 ] as const;
 
 export type StoryboardRecipeId = (typeof STORYBOARD_RECIPE_IDS)[number];
@@ -106,6 +108,12 @@ export const STORYBOARD_RECIPES: Record<StoryboardRecipeId, StoryboardRecipeDef>
     defaultSceneCount: "4",
     roles: ["establish", "logo-trace", "orbit", "payoff"],
   },
+  "swift-chroma": {
+    id: "swift-chroma",
+    defaultDurationSec: 12,
+    defaultSceneCount: "4",
+    roles: ["establish", "macro", "orbit", "payoff"],
+  },
 };
 
 export function isStoryboardRecipeId(
@@ -140,13 +148,18 @@ export function isBrandWarpRecipe(recipe: StoryboardRecipeId): boolean {
   return recipe === "brand-warp";
 }
 
+export function isSwiftChromaRecipe(recipe: StoryboardRecipeId): boolean {
+  return recipe === "swift-chroma";
+}
+
 /** Recipes that share premium-punch 4/6 ↔ 12/15 scene–duration coupling. */
 export function isFourOrSixCoupledRecipe(recipe: StoryboardRecipeId): boolean {
   return (
     isPremiumPunchRecipe(recipe) ||
     isCinematicAssembleRecipe(recipe) ||
     isStudioTypeRecipe(recipe) ||
-    isBrandWarpRecipe(recipe)
+    isBrandWarpRecipe(recipe) ||
+    isSwiftChromaRecipe(recipe)
   );
 }
 
@@ -192,8 +205,14 @@ export function coerceFourOrSixSceneCount(
   return uiCount === "4" ? "4" : "6";
 }
 
-/** Brand warp prefers 4 scenes when UI is auto / odd counts. */
+/** Brand warp / swift-chroma prefer 4 scenes when UI is auto / odd counts. */
 export function coerceBrandWarpSceneCount(
+  uiCount: StoryboardSceneCount,
+): FourOrSixSceneCount {
+  return uiCount === "6" ? "6" : "4";
+}
+
+export function coerceSwiftChromaSceneCount(
   uiCount: StoryboardSceneCount,
 ): FourOrSixSceneCount {
   return uiCount === "6" ? "6" : "4";
@@ -208,6 +227,9 @@ export function effectiveStoryboardSceneCount(
   }
   if (isBrandWarpRecipe(recipe)) {
     return coerceBrandWarpSceneCount(uiCount);
+  }
+  if (isSwiftChromaRecipe(recipe)) {
+    return coerceSwiftChromaSceneCount(uiCount);
   }
   if (isFourOrSixCoupledRecipe(recipe)) {
     return coerceFourOrSixSceneCount(uiCount);
@@ -440,6 +462,77 @@ function brandWarpPlannerLines(sceneCount: number, conceptMode: boolean): string
   ];
 }
 
+/**
+ * Swift chroma / 疾行幻彩 — wet-city run + neon geometric collage multi-cut TVC.
+ * Parallel to video-only swift-chroma-run (dual-frame morph); this is the storyboard surface.
+ */
+function swiftChromaPlannerLinesProduct(sceneCount: number): string[] {
+  const shared = [
+    "NARRATIVE RECIPE: SWIFT CHROMA / 疾行幻彩 — multi-cut wet-city RUN commercial with neon geometric collage.",
+    "Look bible: photoreal wet urban night/dusk street (reflective asphalt); cool desaturated city vs hot pink / orange / yellow triangles & circles, black halftone dots, distressed grunge edges in Z-space.",
+    "PRIMARY subject every scene = FULL-BODY runner (head, torso, legs, both arms). SECONDARY = exact IMAGE 1 product carried NATURALLY while running.",
+    "IMAGE 1 pixels ARE the only product identity. Product name is a claim label only — never invent a different SKU.",
+    "Carry grammar: bulky box/power station → hug to chest/side with strap or handle, arm connected to torso; small SKU → one hand OK but wrist attached to visible body. Never disembodied hand or floating packshot.",
+    "Each scene MUST have a distinct camera angle and scale. Hard cuts between stills preferred (match multi-cut ref energy).",
+    "FORBIDDEN: product alone on asphalt; floating packshot; orphan hand/weird grip; campsite/tabletop demo; type-behind giant word sandwich; wet-glass condensation; torn pear paper; Social drip 三分屏; cream studio void.",
+    "Motion notes: chase energy; punchLineZh may be short caption beats burned later. Silent storyboard reel — BGM in Captions.",
+  ];
+
+  if (sceneCount >= 6) {
+    return [
+      ...shared,
+      "EXACTLY 6 scenes. Arc: city tease → SKU macro → chroma pulse → street chase → vault punch → graphic lockup.",
+      "Scene 1 (establish): wet-city dusk plate + chroma graphic seed; FULL-BODY runner distant / mid-jog tease; SKU partial or silhouette in natural carry.",
+      "Scene 2 (macro): closer hand + EXACT IMAGE 1 SKU large and sharp (~15–25% frame) while body still readable — chroma frames the product, never buries it.",
+      "Scene 3 (logo-trace): neon triangle / halftone pulse intensifies around the running subject — still full-body locomotion.",
+      "Scene 4 (orbit): full STREET CHASE — tracking / side run energy; legs mid-gait; SKU stays naturally carried.",
+      "Scene 5 (lifestyle as VAULT): low-angle vault / leap punch — foreshortened leg, graphic burst; same face/outfit/SKU carry.",
+      "Scene 6 (payoff): GRAPHIC LOCKUP — denser neon collage poster hold; full-body runner + readable IMAGE 1 SKU; optional short CTA from headline only.",
+    ];
+  }
+
+  return [
+    ...shared,
+    "EXACTLY 4 scenes. Arc: street chase → SKU macro in natural carry → vault punch → graphic lockup.",
+    "Scene 1 (establish): FULL-BODY runner MID-JOG on wet street + chroma seed; SKU naturally carried (not packshot).",
+    "Scene 2 (macro): closer beat — EXACT IMAGE 1 SKU large in natural hug/handle grip; torso + arms still visible; no orphan hand.",
+    "Scene 3 (orbit as VAULT): low-angle vault / leap climax with neon burst; same runner + same SKU carry.",
+    "Scene 4 (payoff): GRAPHIC LOCKUP end — dense pink/orange/yellow collage + full-body hero hold; SKU still readable.",
+  ];
+}
+
+function swiftChromaPlannerLinesConcept(sceneCount: number): string[] {
+  const shared = [
+    "NARRATIVE RECIPE: SWIFT CHROMA / 疾行幻彩 CONCEPT — same wet-city run + neon geometric collage; brand figure / service energy is the hero.",
+    "Look bible: wet urban night + hot pink / orange / yellow triangles & circles + halftone. FULL-BODY runner / brand figure every scene.",
+    "Do NOT invent a fake packaged SKU bottle. If user uploaded a face/figure still, lock that identity; otherwise invent a plausible runner matching the brief.",
+    "Hard cuts + distinct camera angles OK. FORBIDDEN: fake product packshot hero; type-behind giant words; wet-glass; torn paper; Social drip 三分屏.",
+    "Motion notes: chase → vault → graphic lockup energy. Silent reel — BGM in Captions.",
+  ];
+
+  if (sceneCount >= 6) {
+    return [
+      ...shared,
+      "EXACTLY 6 scenes. Arc: city tease → figure detail → chroma pulse → street chase → vault → graphic lockup payoff.",
+      "Scene 1 (establish): wet-city + chroma seed; figure mid-jog tease.",
+      "Scene 2 (macro): face / gesture / brand-mark detail — still in the chase world.",
+      "Scene 3 (logo-trace): neon geometric pulse around the figure.",
+      "Scene 4 (orbit): full street chase run.",
+      "Scene 5 (lifestyle): vault / leap punch climax.",
+      "Scene 6 (payoff): graphic lockup poster hold — service/brand energy, not a fake bottle.",
+    ];
+  }
+
+  return [
+    ...shared,
+    "EXACTLY 4 scenes. Arc: chase → figure/energy macro → vault → graphic lockup.",
+    "Scene 1 (establish): FULL-BODY brand figure MID-JOG on wet street + chroma seed.",
+    "Scene 2 (macro): closer face / gesture / brand energy — still wet-city, not a studio packshot.",
+    "Scene 3 (orbit as VAULT): low-angle vault / leap with neon burst.",
+    "Scene 4 (payoff): graphic lockup end — collage + figure / service payoff.",
+  ];
+}
+
 export function storyboardRecipePlannerLines(
   recipe: StoryboardRecipeId,
   conceptMode: boolean,
@@ -470,6 +563,12 @@ export function storyboardRecipePlannerLines(
   if (isBrandWarpRecipe(recipe)) {
     const n = Number(coerceBrandWarpSceneCount(sceneCountTarget ?? "4"));
     return brandWarpPlannerLines(n, conceptMode);
+  }
+  if (isSwiftChromaRecipe(recipe)) {
+    const n = Number(coerceSwiftChromaSceneCount(sceneCountTarget ?? "4"));
+    return conceptMode
+      ? swiftChromaPlannerLinesConcept(n)
+      : swiftChromaPlannerLinesProduct(n);
   }
   return [];
 }

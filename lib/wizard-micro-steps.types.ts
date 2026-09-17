@@ -26,6 +26,8 @@ export type VideoSubpath =
   | "web_boundary_break"
   | "type_behind_cutout"
   | "wet_glass_reveal"
+  | "torn_paper_reveal"
+  | "swift_chroma_run"
   | "magazine_cover_morph"
   | "product_explode"
   | "bullet_product_elevate"

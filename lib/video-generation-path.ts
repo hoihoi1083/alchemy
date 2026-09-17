@@ -25,6 +25,8 @@ export type VideoGenerationKind =
   | "web-boundary-break"
   | "type-behind-cutout"
   | "wet-glass-reveal"
+  | "torn-paper-reveal"
+  | "swift-chroma-run"
   | "magazine-cover-morph"
   | "product-explode"
   | "bullet-product-elevate"
@@ -97,6 +99,12 @@ export function resolveVideoGenerationKind(
   }
   if (input.videoCreativeMode === "wet-glass-reveal") {
     return "wet-glass-reveal";
+  }
+  if (input.videoCreativeMode === "torn-paper-reveal") {
+    return "torn-paper-reveal";
+  }
+  if (input.videoCreativeMode === "swift-chroma-run") {
+    return "swift-chroma-run";
   }
   if (input.videoCreativeMode === "magazine-cover-morph") {
     return "magazine-cover-morph";

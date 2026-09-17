@@ -42,6 +42,8 @@ import {
 } from "@/lib/web-boundary-break";
 import {
   TYPE_BEHIND_CUTOUT_DIALECT_IDS,
+  formatTypeBehindOnScreenPreview,
+  resolveTypeBehindCutoutDialect,
   typeBehindCutoutDialectPreviewSrc,
   typeBehindCutoutDurationOptions,
   type TypeBehindCutoutDialectPick,
@@ -52,6 +54,18 @@ import {
   wetGlassRevealDurationOptions,
   type WetGlassRevealDialectPick,
 } from "@/lib/wet-glass-reveal";
+import {
+  TORN_PAPER_REVEAL_DIALECT_IDS,
+  tornPaperRevealDialectPreviewSrc,
+  tornPaperRevealDurationOptions,
+  type TornPaperRevealDialectPick,
+} from "@/lib/torn-paper-reveal";
+import {
+  SWIFT_CHROMA_RUN_DIALECT_IDS,
+  swiftChromaRunDialectPreviewSrc,
+  swiftChromaRunDurationOptions,
+  type SwiftChromaRunDialectPick,
+} from "@/lib/swift-chroma-run";
 import {
   MAGAZINE_COVER_MORPH_DIALECT_IDS,
   magazineCoverMorphDialectPreviewSrc,
@@ -466,6 +480,10 @@ export function PreVideoSetupPanel({
     !scenesReady && wizard.videoCreativeMode === "type-behind-cutout";
   const prefersWetGlass =
     !scenesReady && wizard.videoCreativeMode === "wet-glass-reveal";
+  const prefersTornPaper =
+    !scenesReady && wizard.videoCreativeMode === "torn-paper-reveal";
+  const prefersSwiftChroma =
+    !scenesReady && wizard.videoCreativeMode === "swift-chroma-run";
   const prefersMagazineCover =
     !scenesReady && wizard.videoCreativeMode === "magazine-cover-morph";
   const prefersProductExplode =
@@ -499,6 +517,10 @@ export function PreVideoSetupPanel({
       ? "type_behind_cutout"
       : prefersWetGlass
       ? "wet_glass_reveal"
+      : prefersTornPaper
+      ? "torn_paper_reveal"
+      : prefersSwiftChroma
+      ? "swift_chroma_run"
       : prefersMagazineCover
       ? "magazine_cover_morph"
       : prefersProductExplode
@@ -528,6 +550,8 @@ export function PreVideoSetupPanel({
   const isWebBoundary = !scenesReady && activeSubpath === "web_boundary_break";
   const isTypeBehind = !scenesReady && activeSubpath === "type_behind_cutout";
   const isWetGlass = !scenesReady && activeSubpath === "wet_glass_reveal";
+  const isTornPaper = !scenesReady && activeSubpath === "torn_paper_reveal";
+  const isSwiftChroma = !scenesReady && activeSubpath === "swift_chroma_run";
   const isMagazineCover = !scenesReady && activeSubpath === "magazine_cover_morph";
   const isProductExplode = !scenesReady && activeSubpath === "product_explode";
   const isBulletElevate =
@@ -561,6 +585,8 @@ export function PreVideoSetupPanel({
     !isWebBoundary &&
     !isTypeBehind &&
     !isWetGlass &&
+    !isTornPaper &&
+    !isSwiftChroma &&
     !isMagazineCover &&
     !isProductExplode &&
     !isBulletElevate &&
@@ -573,6 +599,7 @@ export function PreVideoSetupPanel({
     workflowMode: wizard.workflowMode,
     visualStyleId: wizard.visualStyleId,
     videoCreativeMode: wizard.videoCreativeMode,
+    videoSubpath: activeSubpath,
     imageTextMode: wizard.imageTextMode,
     imageOutputMode: wizard.imageOutputMode,
   });
@@ -589,6 +616,23 @@ export function PreVideoSetupPanel({
   }
   const hookCopyBadge = videoCopyBadgeLabel(copyHints.badge.hook);
   const supportingCopyBadge = videoCopyBadgeLabel(copyHints.badge.supporting);
+  const typeBehindDialect = isTypeBehind
+    ? resolveTypeBehindCutoutDialect({
+        pick: wizard.typeBehindDialectPick,
+        headline: wizard.headline,
+        product: wizard.product,
+        conceptIdea: wizard.conceptIdea,
+      })
+    : null;
+  const typeBehindOnScreenWords =
+    isTypeBehind && typeBehindDialect
+      ? formatTypeBehindOnScreenPreview({
+          headline: wizard.headline,
+          business: wizard.business,
+          product: wizard.product,
+          dialect: typeBehindDialect,
+        })
+      : "";
   const copyPanelHint =
     copyHints.hintKind === "textless-video"
       ? fuse.productAssistTextlessHint
@@ -596,7 +640,9 @@ export function PreVideoSetupPanel({
         ? fuse.productAssistEndStillHint
         : copyHints.hintKind === "ig-caption"
           ? fuse.productAssistIgCaptionHint
-          : null;
+          : copyHints.hintKind === "type-behind"
+            ? fuse.productAssistTypeBehindHint
+            : null;
   const showCreativeBrief =
     isSceneReel ||
     (!scenesReady &&
@@ -684,6 +730,12 @@ export function PreVideoSetupPanel({
     if (isWetGlass && wizard.videoCreativeMode !== "wet-glass-reveal") {
       onPickVideoSubpath("wet_glass_reveal");
     }
+    if (isTornPaper && wizard.videoCreativeMode !== "torn-paper-reveal") {
+      onPickVideoSubpath("torn_paper_reveal");
+    }
+    if (isSwiftChroma && wizard.videoCreativeMode !== "swift-chroma-run") {
+      onPickVideoSubpath("swift_chroma_run");
+    }
     if (isMagazineCover && wizard.videoCreativeMode !== "magazine-cover-morph") {
       onPickVideoSubpath("magazine_cover_morph");
     }
@@ -727,6 +779,12 @@ export function PreVideoSetupPanel({
     }
     if (prefersWetGlass) {
       onPickVideoSubpath("wet_glass_reveal");
+    }
+    if (prefersTornPaper) {
+      onPickVideoSubpath("torn_paper_reveal");
+    }
+    if (prefersSwiftChroma) {
+      onPickVideoSubpath("swift_chroma_run");
     }
     if (prefersMagazineCover) {
       onPickVideoSubpath("magazine_cover_morph");
@@ -779,6 +837,8 @@ export function PreVideoSetupPanel({
     prefersWebBoundary,
     prefersTypeBehind,
     prefersWetGlass,
+    prefersTornPaper,
+    prefersSwiftChroma,
     prefersMagazineCover,
     prefersProductExplode,
     prefersBulletElevate,
@@ -795,6 +855,8 @@ export function PreVideoSetupPanel({
     isWebBoundary,
     isTypeBehind,
     isWetGlass,
+    isTornPaper,
+    isSwiftChroma,
     isMagazineCover,
     isProductExplode,
     isBulletElevate,
@@ -1055,6 +1117,18 @@ export function PreVideoSetupPanel({
       previewSrc: videoModePreviewSrc("wet-glass-reveal"),
     },
     {
+      id: "torn_paper_reveal",
+      title: m.wizard.videoCreativeModes["torn-paper-reveal"].title,
+      desc: m.wizard.videoCreativeModes["torn-paper-reveal"].description,
+      previewSrc: videoModePreviewSrc("torn-paper-reveal"),
+    },
+    {
+      id: "swift_chroma_run",
+      title: m.wizard.videoCreativeModes["swift-chroma-run"].title,
+      desc: m.wizard.videoCreativeModes["swift-chroma-run"].description,
+      previewSrc: videoModePreviewSrc("swift-chroma-run"),
+    },
+    {
       id: "magazine_cover_morph",
       title: m.wizard.videoCreativeModes["magazine-cover-morph"].title,
       desc: m.wizard.videoCreativeModes["magazine-cover-morph"].description,
@@ -1160,6 +1234,18 @@ export function PreVideoSetupPanel({
       previewSrc: videoModePreviewSrc("wet-glass-reveal"),
     },
     {
+      id: "torn_paper_reveal",
+      title: m.wizard.videoCreativeModes["torn-paper-reveal"].title,
+      desc: m.wizard.videoCreativeModes["torn-paper-reveal"].description,
+      previewSrc: videoModePreviewSrc("torn-paper-reveal"),
+    },
+    {
+      id: "swift_chroma_run",
+      title: m.wizard.videoCreativeModes["swift-chroma-run"].title,
+      desc: m.wizard.videoCreativeModes["swift-chroma-run"].description,
+      previewSrc: videoModePreviewSrc("swift-chroma-run"),
+    },
+    {
       id: "magazine_cover_morph",
       title: m.wizard.videoCreativeModes["magazine-cover-morph"].title,
       desc: m.wizard.videoCreativeModes["magazine-cover-morph"].description,
@@ -1202,6 +1288,8 @@ export function PreVideoSetupPanel({
         if (opt.id === "web_boundary_break") return isWebBoundary;
         if (opt.id === "type_behind_cutout") return isTypeBehind;
         if (opt.id === "wet_glass_reveal") return isWetGlass;
+        if (opt.id === "torn_paper_reveal") return isTornPaper;
+        if (opt.id === "swift_chroma_run") return isSwiftChroma;
         if (opt.id === "magazine_cover_morph") return isMagazineCover;
         if (opt.id === "product_explode") return isProductExplode;
         if (opt.id === "bullet_product_elevate") return isBulletElevate;
@@ -1231,6 +1319,10 @@ export function PreVideoSetupPanel({
         ? m.wizard.typeBehindHint
         : isWetGlass
         ? m.wizard.wetGlassHint
+        : isTornPaper
+        ? m.wizard.tornPaperHint
+        : isSwiftChroma
+        ? m.wizard.swiftChromaHint
         : isMagazineCover
         ? m.wizard.magazineCoverHint
         : isHandThrow
@@ -1475,6 +1567,10 @@ export function PreVideoSetupPanel({
                               ? isTypeBehind
                             : opt.id === "wet_glass_reveal"
                               ? isWetGlass
+                            : opt.id === "torn_paper_reveal"
+                              ? isTornPaper
+                            : opt.id === "swift_chroma_run"
+                              ? isSwiftChroma
                             : opt.id === "magazine_cover_morph"
                               ? isMagazineCover
                             : opt.id === "product_explode"
@@ -2147,7 +2243,9 @@ export function PreVideoSetupPanel({
                   <span className="pv-label">
                     {isMotionPoster
                       ? pv.motionPosterCopyFocus.hookLabel
-                      : pv.hookLabel}
+                      : isTypeBehind
+                        ? pv.typeBehindCopyFocus.hookLabel
+                        : pv.hookLabel}
                     {headlineOptional ? (
                       <span className="pv-label-opt">{pv.extraOptional}</span>
                     ) : (
@@ -2174,9 +2272,31 @@ export function PreVideoSetupPanel({
                     placeholder={
                       isMotionPoster
                         ? pv.motionPosterCopyFocus.hookPlaceholder
-                        : m.wizard.headlinePlaceholder
+                        : isTypeBehind
+                          ? pv.typeBehindCopyFocus.hookPlaceholder
+                          : m.wizard.headlinePlaceholder
                     }
                   />
+                  {isTypeBehind ? (
+                    <p className="mt-1.5 text-[11px] leading-snug text-violet-800">
+                      <span className="font-semibold">
+                        {pv.typeBehindCopyFocus.title}
+                      </span>
+                      {" — "}
+                      {pv.typeBehindCopyFocus.body}
+                      {typeBehindOnScreenWords ? (
+                        <>
+                          {" "}
+                          <span className="font-semibold">
+                            {fuse.typeBehindOnScreenPreview.replace(
+                              "{words}",
+                              typeBehindOnScreenWords,
+                            )}
+                          </span>
+                        </>
+                      ) : null}
+                    </p>
+                  ) : null}
                 </label>
                 <label
                   className={`sm:col-span-2 ${
@@ -2876,6 +2996,128 @@ export function PreVideoSetupPanel({
                 </div>
                 <p className="mt-3 text-xs leading-relaxed text-slate-500">
                   {m.wizard.wetGlassHint}
+                </p>
+              </section>
+            ) : null}
+
+            {isTornPaper ? (
+              <section className="pv-card">
+                <div className="pv-card-title-row mb-2">
+                  <h3 className="pv-card-title">{m.wizard.tornPaperDialectTitle}</h3>
+                </div>
+                <p className="mb-3 text-xs text-slate-500">{m.wizard.tornPaperDialectHint}</p>
+                <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+                  <button
+                    type="button"
+                    className={`flex items-center gap-2 rounded-xl border px-2 py-1.5 text-left transition ${
+                      wizard.tornPaperDialectPick === "auto"
+                        ? "border-violet-500 bg-violet-50"
+                        : "border-slate-200 bg-white hover:border-violet-300"
+                    }`}
+                    onClick={() => wizard.setTornPaperDialectPick("auto")}
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-[10px] font-semibold leading-tight text-slate-700">
+                      Auto
+                    </span>
+                    <span className="min-w-0 text-[11px] font-semibold text-slate-800">
+                      {m.wizard.tornPaperDialectAuto}
+                    </span>
+                  </button>
+                  {TORN_PAPER_REVEAL_DIALECT_IDS.map((id) => {
+                    const selected = wizard.tornPaperDialectPick === id;
+                    const title = m.wizard.tornPaperDialects[id]?.title ?? id;
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        title={m.wizard.tornPaperDialects[id]?.desc}
+                        className={`flex items-center gap-2 rounded-xl border px-2 py-1.5 text-left transition ${
+                          selected
+                            ? "border-violet-500 bg-violet-50"
+                            : "border-slate-200 bg-white hover:border-violet-300"
+                        }`}
+                        onClick={() =>
+                          wizard.setTornPaperDialectPick(
+                            id as TornPaperRevealDialectPick,
+                          )
+                        }
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={tornPaperRevealDialectPreviewSrc(id)}
+                          alt=""
+                          className="h-10 w-10 shrink-0 rounded-lg object-cover"
+                        />
+                        <span className="min-w-0 text-[11px] font-semibold leading-snug text-slate-800">
+                          {title}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="mt-3 text-xs leading-relaxed text-slate-500">
+                  {m.wizard.tornPaperHint}
+                </p>
+              </section>
+            ) : null}
+
+            {isSwiftChroma ? (
+              <section className="pv-card">
+                <div className="pv-card-title-row mb-2">
+                  <h3 className="pv-card-title">{m.wizard.swiftChromaDialectTitle}</h3>
+                </div>
+                <p className="mb-3 text-xs text-slate-500">{m.wizard.swiftChromaDialectHint}</p>
+                <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+                  <button
+                    type="button"
+                    className={`flex items-center gap-2 rounded-xl border px-2 py-1.5 text-left transition ${
+                      wizard.swiftChromaDialectPick === "auto"
+                        ? "border-violet-500 bg-violet-50"
+                        : "border-slate-200 bg-white hover:border-violet-300"
+                    }`}
+                    onClick={() => wizard.setSwiftChromaDialectPick("auto")}
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-[10px] font-semibold leading-tight text-slate-700">
+                      Auto
+                    </span>
+                    <span className="min-w-0 text-[11px] font-semibold text-slate-800">
+                      {m.wizard.swiftChromaDialectAuto}
+                    </span>
+                  </button>
+                  {SWIFT_CHROMA_RUN_DIALECT_IDS.map((id) => {
+                    const selected = wizard.swiftChromaDialectPick === id;
+                    const title = m.wizard.swiftChromaDialects[id]?.title ?? id;
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        title={m.wizard.swiftChromaDialects[id]?.desc}
+                        className={`flex items-center gap-2 rounded-xl border px-2 py-1.5 text-left transition ${
+                          selected
+                            ? "border-violet-500 bg-violet-50"
+                            : "border-slate-200 bg-white hover:border-violet-300"
+                        }`}
+                        onClick={() =>
+                          wizard.setSwiftChromaDialectPick(
+                            id as SwiftChromaRunDialectPick,
+                          )
+                        }
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={swiftChromaRunDialectPreviewSrc(id)}
+                          alt=""
+                          className="h-10 w-10 shrink-0 rounded-lg object-cover"
+                        />
+                        <span className="min-w-0 text-[11px] font-semibold leading-snug text-slate-800">
+                          {title}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="mt-3 text-xs leading-relaxed text-slate-500">
+                  {m.wizard.swiftChromaHint}
                 </p>
               </section>
             ) : null}
@@ -3722,6 +3964,10 @@ export function PreVideoSetupPanel({
                             ? typeBehindCutoutDurationOptions()
                           : isWetGlass
                             ? wetGlassRevealDurationOptions()
+                          : isTornPaper
+                            ? tornPaperRevealDurationOptions()
+                          : isSwiftChroma
+                            ? swiftChromaRunDurationOptions()
                           : isMagazineCover
                             ? magazineCoverMorphDurationOptions()
                           : h3ShotMode === "h3-triangle-light-mg"

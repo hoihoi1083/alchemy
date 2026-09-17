@@ -35,6 +35,9 @@ import {
   type ContentResearchSource,
 } from "@/lib/content-research-types";
 
+const RESEARCH_PLAN_SCHEMA_EXAMPLE =
+  '{"platform":"","platformLabel":"","topic":"","summary":"","candidates":[{"id":"1","title":"","hook":"","scriptOutline":"","format":"teaching-carousel","formatLabel":"","whyItWorks":"","bullets":"point1 | point2","cta":"","score":90,"sourceUrl":"","sourceTitle":""}],"topPickIds":["1","2","3"]}';
+
 const PLATFORM_LABELS: Record<ContentPlatform, string> = {
   xiaohongshu: "RedNote",
   instagram: "Instagram",
@@ -387,6 +390,7 @@ function buildLiveWebPrompt(input: {
     "- Prefer a DIFFERENT sourceUrl for each candidate when multiple posts are available — do not cite the same viral post for every angle",
     "- topPickIds: ids of best 3 candidates (for legacy; include all candidates anyway)",
     "- Keep every string under 120 chars; use simple punctuation — no raw double-quotes inside JSON strings",
+    "- Prefer apostrophes or Chinese quotes 「」 for quoted phrases — never put unescaped \" inside a JSON string value",
     "- bullets: one pipe-separated string, NOT a JSON array",
     "- Each candidate MUST include sourceUrl + sourceTitle copied from a snippet that inspired it",
     "- hook/scriptOutline: adapt real patterns to user's product — borrow FORMAT only, not reference subject matter",
@@ -416,12 +420,43 @@ function buildLiveWebPrompt(input: {
     .join("\n");
 }
 
+/** DeepSeek second-pass: fix broken planner JSON (unescaped quotes / truncated objects). */
+async function repairResearchPlanJson(
+  raw: string,
+): Promise<Partial<ContentResearchPlan>> {
+  const repaired = await callDeepSeekChat(
+    [
+      {
+        role: "system",
+        content:
+          "You convert broken or almost-JSON research notes into ONE strict JSON object. No markdown. No thinking. Escape every quote inside string values. Keep only schema fields; use empty string when unknown.",
+      },
+      {
+        role: "user",
+        content: [
+          "Target schema example:",
+          RESEARCH_PLAN_SCHEMA_EXAMPLE,
+          "",
+          "Broken model output — fix into valid JSON; preserve meaning and candidate count when possible:",
+          raw.slice(0, 10_000),
+        ].join("\n"),
+      },
+    ],
+    { temperature: 0.1, max_tokens: 3200, jsonObject: true },
+  );
+  return parseLlmJsonObject<Partial<ContentResearchPlan>>(
+    repaired,
+    "Content research plan (repaired)",
+  );
+}
+
 async function callResearchPlanner(
   system: string,
   user: string,
 ): Promise<Partial<ContentResearchPlan>> {
   let lastError: unknown;
-  const temps = [0.4, 0.3, 0.25];
+  let lastRaw = "";
+  const temps = [0.35, 0.25, 0.15];
   for (let attempt = 0; attempt < temps.length; attempt++) {
     try {
       const outputText = await callDeepSeekChat(
@@ -431,12 +466,13 @@ async function callResearchPlanner(
             role: "user",
             content:
               attempt > 0
-                ? `${user}\n\nIMPORTANT: Return STRICT valid JSON. No markdown. No unescaped " inside string values.`
+                ? `${user}\n\nIMPORTANT: Return STRICT valid JSON. No markdown. No unescaped " inside string values. Prefer 「」 for quotes.`
                 : user,
           },
         ],
         { temperature: temps[attempt], max_tokens: 2800, jsonObject: true },
       );
+      lastRaw = outputText;
       return parseLlmJsonObject<Partial<ContentResearchPlan>>(
         outputText,
         "Content research plan",
@@ -445,10 +481,25 @@ async function callResearchPlanner(
       lastError = e;
       const msg = String(e);
       if (attempt < temps.length - 1 && msg.includes("invalid JSON")) continue;
-      throw e;
+      // Fall through to dedicated repair when retries are exhausted or non-retryable.
+      break;
     }
   }
-  throw lastError instanceof Error ? lastError : new Error("Content research plan failed.");
+
+  if (lastRaw.trim()) {
+    try {
+      console.warn(
+        "[content-research] plan JSON invalid — running DeepSeek repair pass…",
+      );
+      return await repairResearchPlanJson(lastRaw);
+    } catch (repairErr) {
+      lastError = repairErr;
+    }
+  }
+
+  throw lastError instanceof Error
+    ? lastError
+    : new Error("Content research plan failed.");
 }
 
 export function isContentPlatform(value: string): value is ContentPlatform {

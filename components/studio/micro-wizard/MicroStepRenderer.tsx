@@ -691,6 +691,10 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
                 ? "type_behind_cutout"
                 : wizard.videoCreativeMode === "wet-glass-reveal"
                 ? "wet_glass_reveal"
+                : wizard.videoCreativeMode === "torn-paper-reveal"
+                ? "torn_paper_reveal"
+                : wizard.videoCreativeMode === "swift-chroma-run"
+                ? "swift_chroma_run"
                 : wizard.videoCreativeMode === "magazine-cover-morph"
                 ? "magazine_cover_morph"
                 : wizard.videoCreativeMode === "product-explode"
@@ -720,6 +724,8 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
               subpath === "web_boundary_break" ||
               subpath === "type_behind_cutout" ||
               subpath === "wet_glass_reveal" ||
+              subpath === "torn_paper_reveal" ||
+              subpath === "swift_chroma_run" ||
               subpath === "magazine_cover_morph" ||
               subpath === "product_explode" ||
               subpath === "bullet_product_elevate" ||
@@ -749,6 +755,10 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
               wizard.onVideoCreativeModeChange("type-behind-cutout");
             } else if (subpath === "wet_glass_reveal") {
               wizard.onVideoCreativeModeChange("wet-glass-reveal");
+            } else if (subpath === "torn_paper_reveal") {
+              wizard.onVideoCreativeModeChange("torn-paper-reveal");
+            } else if (subpath === "swift_chroma_run") {
+              wizard.onVideoCreativeModeChange("swift-chroma-run");
             } else if (subpath === "magazine_cover_morph") {
               wizard.onVideoCreativeModeChange("magazine-cover-morph");
             } else if (subpath === "product_explode") {

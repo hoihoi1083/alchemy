@@ -25,6 +25,7 @@ export const LANDING_RECIPE_IDS = [
   "product-cinematic-assemble-15s",
   "product-studio-type-15s",
   "product-brand-warp-12s",
+  "product-swift-chroma-12s",
   "product-blockbuster-9s",
   "product-vacuum-inflate-4s",
   "product-creative-motion-4s",
@@ -32,6 +33,8 @@ export const LANDING_RECIPE_IDS = [
   "product-web-boundary-break-10s",
   "product-type-behind-cutout-8s",
   "product-wet-glass-reveal-6s",
+  "product-torn-paper-reveal-6s",
+  "product-swift-chroma-run-8s",
   "product-magazine-cover-morph-8s",
   "product-product-explode-4s",
   "product-bullet-elevate-10s",
@@ -61,6 +64,7 @@ export const LANDING_RECIPE_IDS = [
   "concept-premium-punch-15s",
   "concept-studio-type-15s",
   "concept-brand-warp-12s",
+  "concept-swift-chroma-12s",
   "concept-blockbuster-9s",
   "concept-vacuum-inflate-4s",
   "concept-creative-motion-4s",
@@ -68,6 +72,8 @@ export const LANDING_RECIPE_IDS = [
   "concept-web-boundary-break-10s",
   "concept-type-behind-cutout-8s",
   "concept-wet-glass-reveal-6s",
+  "concept-torn-paper-reveal-6s",
+  "concept-swift-chroma-run-8s",
   "concept-magazine-cover-morph-8s",
   "concept-product-explode-4s",
   "concept-bullet-elevate-10s",
@@ -253,6 +259,16 @@ export const LANDING_RECIPES: Record<LandingRecipeId, LandingRecipeDef> = {
     storyboardRecipeId: "brand-warp",
     duration: "12",
   },
+  "product-swift-chroma-12s": {
+    id: "product-swift-chroma-12s",
+    previewSrc: "/images/studio/recipes/swift-chroma.png?v=1",
+    promotionMode: "physical",
+    workflowMode: "combined",
+    visualStyleId: "storyboard-video",
+    storyboardSceneCount: "4",
+    storyboardRecipeId: "swift-chroma",
+    duration: "12",
+  },
   "product-blockbuster-9s": {
     id: "product-blockbuster-9s",
     previewSrc: videoModeRecipePreview("blockbuster"),
@@ -315,6 +331,24 @@ export const LANDING_RECIPES: Record<LandingRecipeId, LandingRecipeDef> = {
     visualStyleId: "product",
     videoCreativeMode: "wet-glass-reveal",
     duration: "6",
+  },
+  "product-torn-paper-reveal-6s": {
+    id: "product-torn-paper-reveal-6s",
+    previewSrc: videoModeRecipePreview("torn-paper-reveal"),
+    promotionMode: "physical",
+    workflowMode: "video-only",
+    visualStyleId: "product",
+    videoCreativeMode: "torn-paper-reveal",
+    duration: "6",
+  },
+  "product-swift-chroma-run-8s": {
+    id: "product-swift-chroma-run-8s",
+    previewSrc: videoModeRecipePreview("swift-chroma-run"),
+    promotionMode: "physical",
+    workflowMode: "video-only",
+    visualStyleId: "product",
+    videoCreativeMode: "swift-chroma-run",
+    duration: "8",
   },
   "product-magazine-cover-morph-8s": {
     id: "product-magazine-cover-morph-8s",
@@ -472,6 +506,16 @@ export const LANDING_RECIPES: Record<LandingRecipeId, LandingRecipeDef> = {
     storyboardRecipeId: "brand-warp",
     duration: "12",
   },
+  "concept-swift-chroma-12s": {
+    id: "concept-swift-chroma-12s",
+    previewSrc: "/images/studio/recipes/swift-chroma.png?v=1",
+    promotionMode: "concept",
+    workflowMode: "combined",
+    visualStyleId: "storyboard-video",
+    storyboardSceneCount: "4",
+    storyboardRecipeId: "swift-chroma",
+    duration: "12",
+  },
   "concept-blockbuster-9s": {
     id: "concept-blockbuster-9s",
     previewSrc: videoModeRecipePreview("blockbuster"),
@@ -534,6 +578,24 @@ export const LANDING_RECIPES: Record<LandingRecipeId, LandingRecipeDef> = {
     visualStyleId: "service-promo",
     videoCreativeMode: "wet-glass-reveal",
     duration: "6",
+  },
+  "concept-torn-paper-reveal-6s": {
+    id: "concept-torn-paper-reveal-6s",
+    previewSrc: videoModeRecipePreview("torn-paper-reveal"),
+    promotionMode: "concept",
+    workflowMode: "video-only",
+    visualStyleId: "service-promo",
+    videoCreativeMode: "torn-paper-reveal",
+    duration: "6",
+  },
+  "concept-swift-chroma-run-8s": {
+    id: "concept-swift-chroma-run-8s",
+    previewSrc: videoModeRecipePreview("swift-chroma-run"),
+    promotionMode: "concept",
+    workflowMode: "video-only",
+    visualStyleId: "service-promo",
+    videoCreativeMode: "swift-chroma-run",
+    duration: "8",
   },
   "concept-magazine-cover-morph-8s": {
     id: "concept-magazine-cover-morph-8s",
@@ -732,6 +794,8 @@ export function microContextForLandingRecipe(
     LANDING_RECIPES[recipe].videoCreativeMode === "web-boundary-break" ||
     LANDING_RECIPES[recipe].videoCreativeMode === "type-behind-cutout" ||
     LANDING_RECIPES[recipe].videoCreativeMode === "wet-glass-reveal" ||
+    LANDING_RECIPES[recipe].videoCreativeMode === "torn-paper-reveal" ||
+    LANDING_RECIPES[recipe].videoCreativeMode === "swift-chroma-run" ||
     LANDING_RECIPES[recipe].videoCreativeMode === "magazine-cover-morph" ||
     LANDING_RECIPES[recipe].videoCreativeMode === "product-explode" ||
     LANDING_RECIPES[recipe].videoCreativeMode === "bullet-product-elevate"
@@ -750,6 +814,10 @@ export function microContextForLandingRecipe(
               ? "type_behind_cutout"
             : mode === "wet-glass-reveal"
               ? "wet_glass_reveal"
+            : mode === "torn-paper-reveal"
+              ? "torn_paper_reveal"
+            : mode === "swift-chroma-run"
+              ? "swift_chroma_run"
             : mode === "magazine-cover-morph"
               ? "magazine_cover_morph"
             : mode === "bullet-product-elevate"
