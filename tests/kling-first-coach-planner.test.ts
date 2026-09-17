@@ -15,8 +15,9 @@ describe("Stitched-fallback coach / facts / planner contract", () => {
 
   it("facts mention stitched multi-clip token ballpark", () => {
     const src = readFileSync(join(process.cwd(), "lib/studio-assistant-facts.ts"), "utf8");
-    assert.match(src, /1136/);
+    assert.match(src, /STITCH_FALLBACK_TOKENS|1080/);
     assert.match(src, /stitched fallback/i);
+    assert.doesNotMatch(src, /1136/);
     assert.doesNotMatch(src, /Pay-per-use fal pricing; 8s fast ~\$1\.5 ballpark\./);
   });
 
