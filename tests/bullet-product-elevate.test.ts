@@ -135,6 +135,9 @@ describe("bullet-product-elevate recipe", () => {
         "creative-motion": { title: "CM", description: "d" },
         "hand-throw-scene": { title: "HT", description: "d" },
         "web-boundary-break": { title: "WB", description: "d" },
+        "type-behind-cutout": { title: "TB", description: "d" },
+        "wet-glass-reveal": { title: "WG", description: "d" },
+        "magazine-cover-morph": { title: "MM", description: "d" },
         "product-explode": { title: "PE", description: "d" },
         "bullet-product-elevate": {
           title: "Bullet elevate",
