@@ -23,7 +23,7 @@ function sleep(ms: number) {
 async function probe(
   platform: "xiaohongshu" | "instagram",
   keyword: string,
-  mediaFilter: "image" | "video" | "any" = "image",
+  mediaFilter: "image" | "video" = "image",
 ) {
   const t0 = Date.now();
   try {
