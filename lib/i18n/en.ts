@@ -6825,6 +6825,8 @@ export const en = {
 		paintFirst: "Paint over the missed area first.",
 		brushEmpty: "Brush area is empty — paint a bit more.",
 		imageTooLarge: "Image too large (max 25 MB).",
+		largeFileHint:
+			"Large files need direct cloud upload (R2 CORS) or Choose from library — the server path caps ~4.5MB.",
 		chooseImageFile: "Please choose an image file.",
 		uploadFailed: "Upload failed",
 		decomposeFailed: "Decompose failed",

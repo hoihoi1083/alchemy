@@ -37,10 +37,12 @@ export default function EditImage2Page() {
       }
     >
       <StudioGlowShell theme={STUDIO_PAGE_GLOW.editImage} fillViewport>
-        <LandingNav />
+        <div className="shrink-0">
+          <LandingNav />
+        </div>
         <div
           className="flex min-h-0 w-full flex-1 flex-col overflow-hidden"
-          style={{ minHeight: 0, flex: "1 1 0%" }}
+          style={{ minHeight: 0, flex: "1 1 0%", height: "100%" }}
         >
           <EditImage2Client />
         </div>

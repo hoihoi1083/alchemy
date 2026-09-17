@@ -5805,6 +5805,8 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
     paintFirst: "请先在漏检区域涂抹。",
     brushEmpty: "笔刷区域为空 — 请再涂一点。",
     imageTooLarge: "图片过大（最大 25 MB）。",
+    largeFileHint:
+      "大文件需直传云端（R2 CORS）或「从作品库选择」— 服务器上传上限约 4.5MB。",
     chooseImageFile: "请选择图片文件。",
     uploadFailed: "上传失败",
     decomposeFailed: "图层分解失败",

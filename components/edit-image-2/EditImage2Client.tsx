@@ -67,6 +67,7 @@ import {
   TOKEN_COST,
 } from "@/lib/billing/token-costs";
 import { isLibraryAssetUrl } from "@/lib/storage/library-asset-url";
+import { uploadEditImageFile } from "@/lib/upload-edit-image-client";
 import { useLocale } from "@/components/LocaleProvider";
 
 type ShapeKind = "rect" | "capsule" | "circle";
@@ -1788,18 +1789,14 @@ export function EditImage2Client() {
     try {
       if (file.size > 25 * 1024 * 1024) throw new Error(t.imageTooLarge);
       if (file.type && !file.type.startsWith("image/")) throw new Error(t.chooseImageFile);
-      const fd = new FormData();
-      fd.set("file", file);
-      const up = await fetch("/api/upload-edit-image", {
-        method: "POST",
-        credentials: "include",
-        body: fd,
+      const url = await uploadEditImageFile(file, {
+        failMessage: t.uploadFailed,
+        largeFileMessage: t.largeFileHint,
+        name: file.name || "edit-image-2-upload",
       });
-      const upJson = (await up.json()) as { url?: string; error?: string };
-      if (!up.ok || !upJson.url) throw new Error(upJson.error || t.uploadFailed);
-      setSourceUrl(upJson.url);
-      originalBgRef.current = upJson.url;
-      await openSourceOnCanvas(upJson.url);
+      setSourceUrl(url);
+      originalBgRef.current = url;
+      await openSourceOnCanvas(url);
       // Keep original intact — selective lift + perfect cutout is the default path.
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : t.somethingFailed);
@@ -2713,16 +2710,14 @@ export function EditImage2Client() {
     try {
       if (bgUrl.startsWith("data:")) {
         const blob = dataUrlToBlob(bgUrl);
-        const fd = new FormData();
-        fd.set("file", new File([blob], "magic-full.png", { type: "image/png" }));
-        const up = await fetch("/api/upload-edit-image", {
-          method: "POST",
-          credentials: "include",
-          body: fd,
-        });
-        const upJson = (await up.json()) as { url?: string; error?: string };
-        if (!up.ok || !upJson.url) throw new Error(upJson.error || t.uploadFailed);
-        bgUrl = upJson.url;
+        bgUrl = await uploadEditImageFile(
+          new File([blob], "magic-full.png", { type: "image/png" }),
+          {
+            failMessage: t.uploadFailed,
+            largeFileMessage: t.largeFileHint,
+            name: "magic-full.png",
+          },
+        );
       }
       const json = await runCropAiEdit({
         id: "full-image",
@@ -3073,17 +3068,16 @@ export function EditImage2Client() {
     if (!crop.startsWith("data:")) return null;
     try {
       const blob = dataUrlToBlob(crop);
-      const fd = new FormData();
-      fd.set("file", new File([blob], `layer-${layer.id.slice(0, 8)}.png`, { type: "image/png" }));
-      const up = await fetch("/api/upload-edit-image", {
-        method: "POST",
-        credentials: "include",
-        body: fd,
-      });
-      const upJson = (await up.json()) as { url?: string; error?: string };
-      if (!up.ok || !upJson.url) return null;
-      patchLayer(layer.id, { cropUrl: upJson.url, cropDataUrl: upJson.url });
-      return upJson.url;
+      const url = await uploadEditImageFile(
+        new File([blob], `layer-${layer.id.slice(0, 8)}.png`, { type: "image/png" }),
+        {
+          failMessage: t.uploadFailed,
+          largeFileMessage: t.largeFileHint,
+          name: `layer-${layer.id.slice(0, 8)}.png`,
+        },
+      );
+      patchLayer(layer.id, { cropUrl: url, cropDataUrl: url });
+      return url;
     } catch {
       return null;
     }
@@ -3394,15 +3388,14 @@ export function EditImage2Client() {
       await new Promise((r) => requestAnimationFrame(() => r(null)));
       const uri = stageToPngDataUrl();
       const blob = dataUrlToBlob(uri);
-      const fd = new FormData();
-      fd.set("file", new File([blob], "alchemy-smart-layers.png", { type: "image/png" }));
-      const up = await fetch("/api/upload-edit-image", {
-        method: "POST",
-        credentials: "include",
-        body: fd,
-      });
-      const upJson = (await up.json()) as { url?: string; error?: string };
-      if (!up.ok || !upJson.url) throw new Error(upJson.error || t.saveFailed);
+      await uploadEditImageFile(
+        new File([blob], "alchemy-smart-layers.png", { type: "image/png" }),
+        {
+          failMessage: t.saveFailed,
+          largeFileMessage: t.largeFileHint,
+          name: "alchemy-smart-layers.png",
+        },
+      );
       setNotice(t.savedLibrary);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : t.saveFailed);
@@ -3579,13 +3572,14 @@ export function EditImage2Client() {
       />
 
       <div
-        className="flex min-h-0 flex-1 flex-col md:flex-row"
+        className="flex min-h-0 flex-1"
         style={{ flex: "1 1 0%", minHeight: 0 }}
       >
-        {/* Canvas viewport — full width on phone; inspector stacks below */}
+        {/* Canvas — always in a row with the inspector (pre-mobile layout that worked). */}
         <div
           ref={viewportRef}
-          className={`relative min-h-[min(52dvh,480px)] min-w-0 flex-1 overflow-hidden md:min-h-0 ${cursorClass}`}
+          className={`relative min-w-0 flex-1 overflow-hidden ${cursorClass}`}
+          style={{ flex: "1 1 0%", minHeight: 0, height: "100%" }}
           onWheel={(e) => {
             if (!result) return;
             e.preventDefault();
@@ -3616,11 +3610,18 @@ export function EditImage2Client() {
           />
 
           {!result ? (
-            <button
+            <>
+              {/* In-flow spacer: absolute drop UI alone does not size this pane. */}
+              <div
+                aria-hidden
+                className="pointer-events-none invisible w-full"
+                style={{ minHeight: 420, height: "100%" }}
+              />
+              <button
               type="button"
               disabled={!!busy}
               onClick={() => fileRef.current?.click()}
-              className={`absolute inset-3 flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed px-8 text-center transition sm:inset-4 ${
+              className={`absolute inset-3 z-10 flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed px-8 text-center transition sm:inset-4 ${
                 dragOver
                   ? "border-violet-400 bg-violet-500/10"
                   : "border-white/15 bg-black/25 hover:border-violet-400/50 hover:bg-violet-500/5"
@@ -3653,6 +3654,7 @@ export function EditImage2Client() {
                 </>
               )}
             </button>
+            </>
           ) : (
             <div className="absolute inset-0">
               <Stage
@@ -3912,8 +3914,11 @@ export function EditImage2Client() {
           )}
         </div>
 
-        {/* Inspector: stacked under canvas on phone; fixed rail from md up */}
-        <aside className="flex max-h-[min(46dvh,440px)] w-full shrink-0 flex-col gap-3 overflow-y-auto border-t border-white/10 bg-[#0e1424] p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:max-h-none md:w-[300px] md:border-l md:border-t-0 md:pb-3">
+        {/* Inspector rail — fixed 300px width (inline: Tailwind md: may not emit). */}
+        <aside
+          className="flex shrink-0 flex-col gap-3 overflow-y-auto border-l border-white/10 bg-[#0e1424] p-3"
+          style={{ width: 300, maxWidth: 300 }}
+        >
           <div>
             <h2 className="text-sm font-semibold text-white">{t.layers}</h2>
             <p className="mt-0.5 text-[10px] leading-snug text-slate-500">
