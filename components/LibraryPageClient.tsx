@@ -18,6 +18,7 @@ import {
   projectResumeSurfaceLabel,
 } from "@/lib/wizard-project-snapshot";
 import { markBrowseSession, resolveLibraryHighlightProjectId } from "@/lib/project-browse";
+import { libraryMediaUrlForBoard } from "@/lib/storage/library-asset-url";
 
 const ACTIVE_PROJECT_KEY = ACTIVE_PROJECT_STORAGE_KEY;
 const LIBRARY_TAB_KEY = "alchemy-library-tab";
@@ -526,7 +527,7 @@ export function LibraryPageClient() {
                           <div className="mt-auto grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
                             {(a.kind === "video" || a.kind === "voiceover") && (
                               <Link
-                                href={`/captions-2?video=${encodeURIComponent(a.downloadUrl)}`}
+                                href={`/captions-2?video=${encodeURIComponent(libraryMediaUrlForBoard(a))}`}
                                 className="rounded-full bg-violet-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-violet-500"
                               >
                                 {L.editCaptions}
@@ -534,7 +535,7 @@ export function LibraryPageClient() {
                             )}
                             {a.kind === "image" && (
                               <Link
-                                href={`/edit-image-2?image=${encodeURIComponent(a.downloadUrl)}&returnTo=${encodeURIComponent("/library")}`}
+                                href={`/edit-image-2?image=${encodeURIComponent(libraryMediaUrlForBoard(a))}&returnTo=${encodeURIComponent("/library")}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="rounded-full bg-cyan-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-cyan-500"
@@ -705,6 +706,18 @@ export function LibraryPageClient() {
               const downloadVideoUrl =
                 assets.find((a) => a.projectId === p.id && a.kind === "video")?.downloadUrl ??
                 media.videoUrl;
+              const boardImageAsset = assets.find(
+                (a) => a.projectId === p.id && a.kind === "image",
+              );
+              const boardVideoAsset = assets.find(
+                (a) => a.projectId === p.id && a.kind === "video",
+              );
+              const boardImageUrl = boardImageAsset
+                ? libraryMediaUrlForBoard(boardImageAsset)
+                : downloadImageUrl;
+              const boardVideoUrl = boardVideoAsset
+                ? libraryMediaUrlForBoard(boardVideoAsset)
+                : downloadVideoUrl;
 
               return (
                 <li
@@ -772,17 +785,17 @@ export function LibraryPageClient() {
                       >
                         {L.openStudio}
                       </button>
-                      {hasVideo && downloadVideoUrl ? (
+                      {hasVideo && boardVideoUrl ? (
                         <Link
-                          href={`/captions-2?video=${encodeURIComponent(downloadVideoUrl)}`}
+                          href={`/captions-2?video=${encodeURIComponent(boardVideoUrl)}`}
                           className="rounded-full bg-violet-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-violet-500"
                         >
                           {L.editCaptions}
                         </Link>
                       ) : null}
-                      {hasImage && downloadImageUrl ? (
+                      {hasImage && boardImageUrl ? (
                         <Link
-                          href={`/edit-image-2?image=${encodeURIComponent(downloadImageUrl)}&returnTo=${encodeURIComponent("/library?tab=projects")}`}
+                          href={`/edit-image-2?image=${encodeURIComponent(boardImageUrl)}&returnTo=${encodeURIComponent("/library?tab=projects")}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="rounded-full bg-cyan-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-cyan-500"

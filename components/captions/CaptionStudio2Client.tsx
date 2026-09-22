@@ -39,7 +39,10 @@ import {
   type CaptionStudioSnapshot,
 } from "@/lib/caption-studio-snapshot";
 import { toRelativePipelineUrl, withCacheBust } from "@/lib/caption-studio-url";
-import { isHttpOrLibraryMediaUrl } from "@/lib/storage/library-asset-url";
+import {
+  isHttpOrLibraryMediaUrl,
+  libraryMediaUrlForBoard,
+} from "@/lib/storage/library-asset-url";
 import {
   captionVoiceStartSec,
   fitCaptionLinesToVoiceDuration,
@@ -61,7 +64,7 @@ import {
   type TimelineClip,
 } from "@/lib/captions/timeline-project";
 import { TOKEN_COST } from "@/lib/billing/token-costs";
-import { isSafeForServerUpload } from "@/lib/upload-limits";
+import { uploadFileViaLibraryPresign } from "@/lib/library-presign-upload-client";
 
 async function readApiJson(res: Response): Promise<Record<string, unknown>> {
   const text = await res.text();
@@ -86,63 +89,12 @@ async function downloadVideoBlob(url: string, filename: string) {
 }
 
 async function uploadVideoFileToLibrary(file: File, failMsg: string): Promise<string> {
-  const presignRes = await fetch("/api/library/presign-upload", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-    body: JSON.stringify({
-      kind: "video",
-      contentType: file.type || "video/mp4",
-      name: file.name || "caption-studio-2-upload",
-      sizeBytes: file.size,
-    }),
+  return uploadFileViaLibraryPresign(file, {
+    kind: "video",
+    failMessage: failMsg,
+    largeFileMessage: failMsg,
+    name: file.name || "caption-studio-2-upload",
   });
-  const presign = await readApiJson(presignRes);
-  if (
-    !presignRes.ok ||
-    typeof presign.uploadUrl !== "string" ||
-    typeof presign.downloadUrl !== "string"
-  ) {
-    throw new Error(
-      typeof presign.error === "string" ? presign.error : failMsg,
-    );
-  }
-  const orphanId =
-    typeof presign.assetId === "string" ? (presign.assetId as string) : null;
-  const purgeOrphan = () => {
-    if (!orphanId) return;
-    void fetch(`/api/library/download/${orphanId}`, {
-      method: "DELETE",
-      credentials: "include",
-    }).catch(() => undefined);
-  };
-  try {
-    const putRes = await fetch(presign.uploadUrl, {
-      method: "PUT",
-      headers: { "Content-Type": file.type || "video/mp4" },
-      body: file,
-    });
-    if (putRes.ok) return presign.downloadUrl as string;
-  } catch {
-    /* fall through */
-  }
-  purgeOrphan();
-  if (!isSafeForServerUpload(file.size)) {
-    throw new Error(failMsg);
-  }
-  const fd = new FormData();
-  fd.set("file", file);
-  fd.set("kind", "video");
-  const proxyRes = await fetch("/api/library/upload", {
-    method: "POST",
-    credentials: "include",
-    body: fd,
-  });
-  const proxy = await readApiJson(proxyRes);
-  if (!proxyRes.ok || typeof proxy.downloadUrl !== "string") {
-    throw new Error(typeof proxy.error === "string" ? proxy.error : failMsg);
-  }
-  return proxy.downloadUrl;
 }
 
 const UNDO_LIMIT = 30;
@@ -967,21 +919,12 @@ export function CaptionStudio2Client() {
   }
 
   async function uploadImageFile(file: File): Promise<string> {
-    const fd = new FormData();
-    fd.set("file", file);
-    fd.set("kind", "image");
-    const proxyRes = await fetch("/api/library/upload", {
-      method: "POST",
-      credentials: "include",
-      body: fd,
+    return uploadFileViaLibraryPresign(file, {
+      kind: "image",
+      failMessage: t.uploadFailed,
+      largeFileMessage: t.uploadNeedCorsOrLibrary,
+      name: file.name || "caption-studio-2-ref",
     });
-    const proxy = await readApiJson(proxyRes);
-    if (!proxyRes.ok || typeof proxy.downloadUrl !== "string") {
-      throw new Error(
-        typeof proxy.error === "string" ? proxy.error : t.uploadFailed,
-      );
-    }
-    return proxy.downloadUrl;
   }
 
   async function addTimelineClip(url: string, label: string) {
@@ -2271,7 +2214,18 @@ export function CaptionStudio2Client() {
                   void uploadVideoFileToLibrary(
                     f,
                     t.uploadNeedCorsOrLibrary,
-                  ).then((url) => addTimelineClip(url, f.name || t2.clipN(timelineClips.length + 1)));
+                  )
+                    .then((url) =>
+                      addTimelineClip(
+                        url,
+                        f.name || t2.clipN(timelineClips.length + 1),
+                      ),
+                    )
+                    .catch((err: unknown) => {
+                      setError(
+                        err instanceof Error ? err.message : t.uploadFailed,
+                      );
+                    });
                 }}
               />
               <button
@@ -2932,10 +2886,11 @@ export function CaptionStudio2Client() {
         onClose={() => setLibraryOpen(false)}
         onPick={(asset) => {
           setLibraryOpen(false);
-          if (!asset.downloadUrl) return;
+          const mediaUrl = libraryMediaUrlForBoard(asset);
+          if (!mediaUrl) return;
           void (async () => {
             // redirect:manual — don't download the whole video; detect missing R2.
-            const check = await fetch(asset.downloadUrl, {
+            const check = await fetch(mediaUrl, {
               credentials: "include",
               redirect: "manual",
             }).catch(() => null);
@@ -2956,14 +2911,14 @@ export function CaptionStudio2Client() {
             }
             if (libraryPickMode === "append") {
               await addTimelineClip(
-                asset.downloadUrl,
+                mediaUrl,
                 asset.name || t2.clipN(timelineClips.length + 1),
               );
               return;
             }
-            const d = await probeVideoDuration(asset.downloadUrl);
+            const d = await probeVideoDuration(mediaUrl);
             applySource(
-              asset.downloadUrl,
+              mediaUrl,
               asset.name || t.sourceFromLibrary,
               undefined,
               d,

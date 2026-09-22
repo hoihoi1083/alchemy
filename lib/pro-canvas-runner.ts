@@ -8,6 +8,7 @@ import {
 } from "@/lib/pro-canvas-compose";
 import { buildScriptBriefWithBeats, clampUltraScriptSceneCount, mergeSceneBeatsFromCinematicScenes, type ScriptSceneBeat } from "@/lib/pro-canvas-script-plan";
 import type { CanvasImageSource } from "@/lib/pro-canvas-types";
+import { uploadFileViaLibraryPresign } from "@/lib/library-presign-upload-client";
 import { isHttpOrLibraryMediaUrl } from "@/lib/storage/library-asset-url";
 import {
   appendUltraProToPrompt,
@@ -25,12 +26,22 @@ function syncCreditsFromResponse(data: unknown): void {
 }
 
 export async function uploadCanvasAsset(file: File): Promise<string> {
-  const fd = new FormData();
-  fd.set("file", file);
-  const res = await fetch("/api/upload-canvas-asset", { method: "POST", body: fd });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error((data as { error?: string }).error || "Upload failed");
-  const url = (data as { url?: string }).url;
+  const mime = (file.type || "").toLowerCase();
+  const name = file.name?.toLowerCase() ?? "";
+  const isAudio =
+    mime.startsWith("audio/") || /\.(mp3|wav|aac|m4a|ogg)$/i.test(name);
+  const url = await uploadFileViaLibraryPresign(file, {
+    kind: isAudio ? "audio" : "image",
+    name: file.name || (isAudio ? "ultra-audio-upload" : "ultra-image-upload"),
+    largeFileMessage:
+      "File is too large for the server upload path (~4.5MB). Enable R2 CORS for direct upload, or compress the file.",
+    extraFallbacks: [
+      {
+        url: "/api/upload-canvas-asset",
+        urlKey: "url",
+      },
+    ],
+  });
   if (!isHttpOrLibraryMediaUrl(url)) throw new Error("No URL in upload response");
   return url;
 }

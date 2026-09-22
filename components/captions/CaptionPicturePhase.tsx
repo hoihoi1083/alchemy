@@ -69,6 +69,7 @@ export function CaptionPicturePhase(props: {
   } = props;
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const cost = estimateCaptionVideoEditTokens(durationSec);
   const jobs: { id: CaptionEditJob; label: string }[] = [
     { id: "product", label: L.jobProduct },
@@ -139,12 +140,21 @@ export function CaptionPicturePhase(props: {
             e.target.value = "";
             if (!f) return;
             setUploading(true);
+            setUploadError(null);
             void uploadImage(f)
               .then((url) => onRefImage(url, f.name))
+              .catch((e: unknown) => {
+                setUploadError(
+                  e instanceof Error ? e.message : "Upload failed",
+                );
+              })
               .finally(() => setUploading(false));
           }}
         />
       </div>
+      {uploadError ? (
+        <p className="text-[11px] text-rose-300">{uploadError}</p>
+      ) : null}
       <label className="block text-xs text-slate-300">
         {L.noteLabel}
         <input

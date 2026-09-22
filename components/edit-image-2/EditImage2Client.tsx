@@ -66,7 +66,7 @@ import {
   estimateInpaintTokens,
   TOKEN_COST,
 } from "@/lib/billing/token-costs";
-import { isLibraryAssetUrl } from "@/lib/storage/library-asset-url";
+import { isLibraryAssetUrl, libraryMediaUrlForBoard } from "@/lib/storage/library-asset-url";
 import { uploadEditImageFile } from "@/lib/upload-edit-image-client";
 import { useLocale } from "@/components/LocaleProvider";
 
@@ -1406,8 +1406,8 @@ export function EditImage2Client() {
     void (async () => {
     setError(null);
       setNotice(null);
-      setBusy("upload");
-      try {
+    setBusy("upload");
+    try {
         if (cancelled) return;
         setSourceUrl(url);
         originalBgRef.current = url;
@@ -1443,19 +1443,19 @@ export function EditImage2Client() {
     }
     const append = opts?.append ?? Boolean(decJson.append);
     const holeCleared = opts?.holeCleared ?? true;
-    const seeded = (decJson.layers ?? []).map((l) => {
-      const crop = l.cropUrl || l.cropDataUrl || "";
+      const seeded = (decJson.layers ?? []).map((l) => {
+        const crop = l.cropUrl || l.cropDataUrl || "";
       const preferLive = Boolean(l.useLiveText) && Boolean((l.text || "").trim());
       const boardH = decJson.height || 1000;
-      return {
-        ...l,
-        cropUrl: crop,
-        cropDataUrl: crop,
+        return {
+          ...l,
+          cropUrl: crop,
+          cropDataUrl: crop,
         editText: l.text || l.editText || "",
         text: l.text || "",
         useLiveText: preferLive,
-        visible: true,
-        locked: false,
+          visible: true,
+          locked: false,
         fontBold: l.fontBold !== false,
         fill: l.fill || "#111827",
         fontSize:
@@ -1467,8 +1467,8 @@ export function EditImage2Client() {
         styleSampled: preferLive ? false : Boolean(l.styleSampled),
         holeCleared,
         role: l.role,
-      };
-    });
+        };
+      });
 
     const nextLayers = append
       ? [...(historyRef.current[historyIndexRef.current] ?? []), ...seeded]
@@ -1578,7 +1578,7 @@ export function EditImage2Client() {
       append: false,
       holeCleared: true,
     });
-    if (!seeded.length) {
+      if (!seeded.length) {
       setError(warning || t.noLayersDetected);
       setBoxMode(true);
       setBoxIntent("lift");
@@ -3559,7 +3559,7 @@ export function EditImage2Client() {
         open={libraryOpen}
         kinds={["image"]}
         onClose={() => setLibraryOpen(false)}
-        onPick={(asset) => void onPickLibrary(asset.downloadUrl || asset.previewUrl)}
+        onPick={(asset) => void onPickLibrary(libraryMediaUrlForBoard(asset))}
         labels={{
           title: ic.libraryPickerTitle,
           loading: ic.libraryPickerLoading,
@@ -3812,8 +3812,8 @@ export function EditImage2Client() {
                           width={imageLayout.w}
                           height={imageLayout.h}
                           fill="rgba(0,0,0,0.001)"
-                        />
-                      )}
+                    />
+                  )}
                   {layers.map((layer) => (
                     <LayerSprite
                       key={layer.id}

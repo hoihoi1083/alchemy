@@ -841,6 +841,31 @@ function ProCanvasBoard({
     [getLiveEdges, getLiveNodes],
   );
 
+  /** After R2 upload, keep durable URL on the source node (avoid blob: + lost File on re-run). */
+  const persistSourceUploadUrl = useCallback(
+    (sourceNodeId: string, uploaded: string, session: number) => {
+      const n = getLiveNode(sourceNodeId);
+      if (!n) return;
+      const kind = (n.data as ProCanvasNodeData).kind;
+      if (kind === "brand") {
+        updateNodeData(
+          sourceNodeId,
+          { logoUrl: uploaded, previewUrl: uploaded, error: undefined },
+          session,
+        );
+        return;
+      }
+      if (kind === "upload" || kind === "character" || kind === "world") {
+        updateNodeData(
+          sourceNodeId,
+          { previewUrl: uploaded, error: undefined },
+          session,
+        );
+      }
+    },
+    [getLiveNode, updateNodeData],
+  );
+
   const mergeUpstreamText = useCallback(
     (nodeId: string, base: string) => {
       const allNodes = getLiveNodes();
@@ -899,8 +924,24 @@ function ProCanvasBoard({
 
       updateNodeData(nodeId, { busy: true, error: undefined }, session);
       try {
+        // Promote local Files → durable URLs on source nodes before generate (re-run safe).
+        const durableSources = [];
+        for (const src of sources) {
+          if (src.file) {
+            const uploaded = await uploadCanvasAsset(src.file);
+            uploadFiles.current.delete(src.nodeId);
+            persistSourceUploadUrl(src.nodeId, uploaded, session);
+            durableSources.push({
+              nodeId: src.nodeId,
+              alias: src.alias,
+              url: uploaded,
+            });
+          } else {
+            durableSources.push(src);
+          }
+        }
         const imageUrl = await runCanvasImageNode({
-          sources,
+          sources: durableSources,
           prompt: resolvedPrompt,
           pro: {
             aspectRatio: data.aspectRatio ?? DEFAULT_ULTRA_IMAGE_PRO.aspectRatio,
@@ -925,18 +966,18 @@ function ProCanvasBoard({
         updateNodeData(
           nodeId,
           {
-            busy: false,
-            error: withNotChargedNote(
-              e instanceof Error ? e.message : "Image failed",
-              m.errors.tokensNotCharged,
-            ),
+          busy: false,
+          error: withNotChargedNote(
+            e instanceof Error ? e.message : "Image failed",
+            m.errors.tokensNotCharged,
+          ),
           },
           session,
         );
         throw e;
       }
     },
-    [collectImageInputs, getLiveEdges, getLiveNode, getLiveNodes, guardSingleRunStart, m.errors.tokensNotCharged, updateNodeData],
+    [collectImageInputs, getLiveEdges, getLiveNode, getLiveNodes, guardSingleRunStart, m.errors.tokensNotCharged, persistSourceUploadUrl, updateNodeData],
   );
 
   const runCharacterNode = useCallback(
@@ -1301,11 +1342,11 @@ function ProCanvasBoard({
         updateNodeData(
           nodeId,
           {
-            busy: false,
-            error: withNotChargedNote(
-              e instanceof Error ? e.message : "Camera failed",
-              m.errors.tokensNotCharged,
-            ),
+          busy: false,
+          error: withNotChargedNote(
+            e instanceof Error ? e.message : "Camera failed",
+            m.errors.tokensNotCharged,
+          ),
           },
           session,
         );
@@ -1367,6 +1408,7 @@ function ProCanvasBoard({
           if (src.file) {
             url = await uploadCanvasAsset(src.file);
             uploadFiles.current.delete(src.nodeId);
+            persistSourceUploadUrl(src.nodeId, url, session);
           } else if (url && !isHttpOrLibraryMediaUrl(url)) {
             continue;
           }
@@ -1398,18 +1440,18 @@ function ProCanvasBoard({
         updateNodeData(
           nodeId,
           {
-            busy: false,
-            error: withNotChargedNote(
-              e instanceof Error ? e.message : "Video failed",
-              m.errors.tokensNotCharged,
-            ),
+          busy: false,
+          error: withNotChargedNote(
+            e instanceof Error ? e.message : "Video failed",
+            m.errors.tokensNotCharged,
+          ),
           },
           session,
         );
         throw e;
       }
     },
-    [ensureUpstreamImageUrl, getLiveEdges, getLiveNode, getLiveNodes, m.errors.tokensNotCharged, updateNodeData],
+    [ensureUpstreamImageUrl, getLiveEdges, getLiveNode, getLiveNodes, m.errors.tokensNotCharged, persistSourceUploadUrl, updateNodeData],
   );
 
   const runTextVideoNode = useCallback(
@@ -1453,11 +1495,11 @@ function ProCanvasBoard({
         updateNodeData(
           nodeId,
           {
-            busy: false,
-            error: withNotChargedNote(
-              e instanceof Error ? e.message : "Text-to-video failed",
-              m.errors.tokensNotCharged,
-            ),
+          busy: false,
+          error: withNotChargedNote(
+            e instanceof Error ? e.message : "Text-to-video failed",
+            m.errors.tokensNotCharged,
+          ),
           },
           session,
         );
@@ -1727,7 +1769,7 @@ function ProCanvasBoard({
             scenePrompts,
             sceneImagePrompts,
             sceneBeats,
-            busy: false,
+          busy: false,
             outputInputFingerprint: computeNodeInputFingerprint(
               nodeId,
               getLiveNodes(),
@@ -1797,8 +1839,8 @@ function ProCanvasBoard({
         updateNodeData(
           nodeId,
           {
-            busy: false,
-            error: e instanceof Error ? e.message : "Audio upload failed",
+          busy: false,
+          error: e instanceof Error ? e.message : "Audio upload failed",
           },
           session,
         );
@@ -2529,11 +2571,11 @@ function ProCanvasBoard({
             updateNodeData(n.id, { audioUrl: uploaded, busy: false }, session);
             musicUrl = uploaded;
             break;
-          } catch (e: unknown) {
+      } catch (e: unknown) {
             updateNodeData(
               n.id,
               {
-                busy: false,
+          busy: false,
                 error: e instanceof Error ? e.message : "Audio upload failed",
               },
               session,
@@ -2698,33 +2740,33 @@ function ProCanvasBoard({
   const executeRunAllLoop = useCallback(
     async (pending: Node[], abort: AbortController) => {
       const items: TaskQueueItem[] = pending.map((n) => ({
-        nodeId: n.id,
-        label: runnableLabel(n),
-        status: "pending",
-      }));
-      setQueue(items);
-      setRunningAll(true);
+      nodeId: n.id,
+      label: runnableLabel(n),
+      status: "pending",
+    }));
+    setQueue(items);
+    setRunningAll(true);
       setBoardError(null);
 
       for (let i = 0; i < pending.length; i++) {
         if (abort.signal.aborted) break;
         const n = pending[i]!;
-        setQueue((q) =>
-          q.map((item) => (item.nodeId === n.id ? { ...item, status: "running" } : item)),
-        );
-        try {
-          await runNode(n.id);
+      setQueue((q) =>
+        q.map((item) => (item.nodeId === n.id ? { ...item, status: "running" } : item)),
+      );
+      try {
+        await runNode(n.id);
           if (abort.signal.aborted) break;
-          setQueue((q) =>
+        setQueue((q) =>
             q.map((item) =>
               item.nodeId === n.id ? { ...item, status: "done", error: undefined } : item,
             ),
-          );
-        } catch (e: unknown) {
+        );
+      } catch (e: unknown) {
           if (abort.signal.aborted) break;
-          const message = e instanceof Error ? e.message : "Failed";
+        const message = e instanceof Error ? e.message : "Failed";
           const failedId = n.id;
-          setQueue((q) =>
+        setQueue((q) =>
             q.map((item) => {
               if (item.nodeId === failedId) {
                 return { ...item, status: "error", error: message };
@@ -2734,10 +2776,10 @@ function ProCanvasBoard({
               }
               return item;
             }),
-          );
-          break;
-        }
+        );
+        break;
       }
+    }
       if (abort.signal.aborted) {
         setQueue((q) =>
           q.map((item) =>
@@ -2746,8 +2788,8 @@ function ProCanvasBoard({
               : item,
           ),
         );
-      }
-      setRunningAll(false);
+    }
+    setRunningAll(false);
       runningAllRef.current = false;
       runAllAbortRef.current = null;
       markDirty();
@@ -3534,17 +3576,17 @@ function ProCanvasBoard({
             />
           }
           queue={
-            <TaskQueuePanel
-              items={queue}
-              running={runningAll}
-              labels={{
-                title: m.ultraCanvas.queueTitle,
-                runAll: m.ultraCanvas.runAll,
-                running: m.ultraCanvas.running,
+        <TaskQueuePanel
+          items={queue}
+          running={runningAll}
+          labels={{
+            title: m.ultraCanvas.queueTitle,
+            runAll: m.ultraCanvas.runAll,
+            running: m.ultraCanvas.running,
                 stopRun: m.ultraCanvas.stopRun,
-                empty: m.ultraCanvas.queueEmpty,
-              }}
-              onRunAll={runAll}
+            empty: m.ultraCanvas.queueEmpty,
+          }}
+          onRunAll={runAll}
               onStopRun={stopRunAll}
               runAllDisabled={boardBusy}
             />

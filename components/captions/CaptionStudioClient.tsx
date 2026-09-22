@@ -59,6 +59,7 @@ import { alignCaptionsToBeats } from "@/lib/beat-detect";
 import { resolveCaptionStudioMusicPrompt } from "@/lib/caption-music-prompt";
 import { isPipelineFileUrl } from "@/lib/pipeline/safe-url";
 import { isSafeForServerUpload } from "@/lib/upload-limits";
+import { libraryMediaUrlForBoard } from "@/lib/storage/library-asset-url";
 import { LibraryAssetPicker } from "@/components/LibraryAssetPicker";
 import { ToolPhaseStrip } from "@/components/studio/ToolPhaseStrip";
 
@@ -1824,7 +1825,7 @@ export function CaptionStudioClient() {
         onPick={(asset) => {
           setLibraryPickerOpen(false);
           loadSource("url", {
-            url: asset.downloadUrl,
+            url: libraryMediaUrlForBoard(asset),
             label: asset.name?.trim() || t.sourceFromLibrary,
             timingManifest: asset.timingManifest ?? null,
           });

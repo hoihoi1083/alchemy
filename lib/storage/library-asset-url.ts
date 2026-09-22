@@ -36,3 +36,27 @@ export function libraryAssetIdFromUrl(url: string): string | null {
     return null;
   }
 }
+
+/**
+ * Prefer streaming (`?inline=1`) for board / img / video / Konva.
+ * Non-inline library GETs often 302 to R2 and break media elements.
+ */
+export function withLibraryInline(url: string): string {
+  const trimmed = url.trim();
+  if (!trimmed) return trimmed;
+  if (!isLibraryAssetUrl(trimmed) && !trimmed.includes("/api/library/download/")) {
+    return trimmed;
+  }
+  if (/[?&]inline=1(?:&|$)/.test(trimmed)) return trimmed;
+  return `${trimmed}${trimmed.includes("?") ? "&" : "?"}inline=1`;
+}
+
+/** Prefer previewUrl (already inline) when picking from the library picker. */
+export function libraryMediaUrlForBoard(asset: {
+  previewUrl?: string | null;
+  downloadUrl?: string | null;
+}): string {
+  const preview = asset.previewUrl?.trim() || "";
+  const download = asset.downloadUrl?.trim() || "";
+  return withLibraryInline(preview || download);
+}

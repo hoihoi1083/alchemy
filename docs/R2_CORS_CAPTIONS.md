@@ -1,7 +1,10 @@
-# R2 CORS for caption studio direct uploads
+# R2 CORS for direct browser uploads
 
 Browser → R2 presigned PUT fails with **Failed to fetch** when the bucket
 has no CORS rule for this origin.
+
+Used by: `/edit-image-2`, `/captions`, `/captions-2`, and `/ultra` (via
+`uploadFileViaLibraryPresign`).
 
 In Cloudflare Dashboard → R2 → your bucket → Settings → CORS policy:
 
@@ -21,9 +24,8 @@ In Cloudflare Dashboard → R2 → your bucket → Settings → CORS policy:
 ]
 ```
 
-After saving, hard-refresh `/captions` and retry Burn / Mix voiceover.
+After saving, hard-refresh and retry upload.
 
 If CORS is still missing, the app falls back to same-origin
-`POST /api/library/upload` **only for files ≤ ~4MB** (Vercel body limit).
-Larger files must use direct R2 PUT or **Choose from library** on `/captions`
-and `/edit-image`.
+`POST /api/library/upload` (or tool-specific upload routes) **only for files ≤ ~4MB**
+(Vercel body limit). Larger files must use direct R2 PUT or **Choose from library**.
