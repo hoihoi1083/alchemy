@@ -287,6 +287,7 @@ function LayerSprite({
   onGuides,
   onAfterMove,
   onMoveStart,
+  onRequestTextEdit,
 }: {
   layer: DecLayer;
   stageW: number;
@@ -299,6 +300,8 @@ function LayerSprite({
   onAfterMove?: () => void;
   /** Fire as soon as the user starts dragging (clear plate hole early). */
   onMoveStart?: () => void;
+  /** Double-click live text → focus the wording field in the inspector. */
+  onRequestTextEdit?: () => void;
 }) {
   const img = useHtmlImage(
     layer.kind === "shape" || (layer.kind === "text" && layer.useLiveText)
@@ -443,6 +446,16 @@ function LayerSprite({
       if (stage) stage.container().style.cursor = "grabbing";
       onSelect();
       onMoveStart?.();
+    },
+    onDblClick: (e: Konva.KonvaEventObject<MouseEvent>) => {
+      e.cancelBubble = true;
+      onSelect();
+      if (layer.kind === "text" && layer.useLiveText) onRequestTextEdit?.();
+    },
+    onDblTap: (e: Konva.KonvaEventObject<Event>) => {
+      e.cancelBubble = true;
+      onSelect();
+      if (layer.kind === "text" && layer.useLiveText) onRequestTextEdit?.();
     },
   };
 
@@ -663,6 +676,10 @@ export function EditImage2Client() {
   const [cropEditMode, setCropEditMode] = useState<"text" | "ai">("ai");
   const [editInstruction, setEditInstruction] = useState("");
   const instructionRef = useRef<HTMLTextAreaElement | null>(null);
+  /** Wording field for Add-text / live-text layers (no crop inspector). */
+  const liveTextInputRef = useRef<HTMLTextAreaElement | null>(null);
+  /** After Add text, select-all so the next keystroke replaces "New text". */
+  const focusLiveTextSelectAllRef = useRef(false);
   const [boxDrag, setBoxDrag] = useState<{
     x0: number;
     y0: number;
@@ -1108,6 +1125,27 @@ export function EditImage2Client() {
     [patchLayer, enableLiveText],
   );
 
+  const focusLiveTextInput = useCallback((opts?: { selectAll?: boolean }) => {
+    window.setTimeout(() => {
+      const el = liveTextInputRef.current;
+      if (!el) return;
+      el.focus();
+      if (opts?.selectAll) el.select();
+    }, 40);
+  }, []);
+
+  useEffect(() => {
+    if (!selectedId) return;
+    const tip = historyRef.current[historyIndexRef.current] ?? [];
+    const layer = tip.find((l) => l.id === selectedId);
+    if (!layer || layer.kind !== "text" || !layer.useLiveText) return;
+    // Crop inspector already has its own wording field.
+    if (layer.cropUrl || layer.cropDataUrl) return;
+    const selectAll = focusLiveTextSelectAllRef.current;
+    focusLiveTextSelectAllRef.current = false;
+    focusLiveTextInput({ selectAll });
+  }, [selectedId, focusLiveTextInput]);
+
   const copySelectedToClipboard = useCallback(() => {
     if (!selectedId) return;
     const cur = historyRef.current[historyIndexRef.current] ?? [];
@@ -1209,6 +1247,30 @@ export function EditImage2Client() {
         setSelectedId(null);
         return;
       }
+      // Clicked live text on canvas then typed — route into the wording field.
+      if (
+        !typing &&
+        selectedId &&
+        !meta &&
+        !e.altKey &&
+        e.key.length === 1 &&
+        !e.isComposing
+      ) {
+        const tip = historyRef.current[historyIndexRef.current] ?? [];
+        const cur = tip.find((l) => l.id === selectedId);
+        if (
+          cur?.kind === "text" &&
+          cur.useLiveText &&
+          !(cur.cropUrl || cur.cropDataUrl)
+        ) {
+          e.preventDefault();
+          const current = cur.editText ?? cur.text ?? "";
+          const next = !current || current === t.newText ? e.key : `${current}${e.key}`;
+          replaceTextOnLayer(selectedId, next);
+          focusLiveTextInput();
+          return;
+        }
+      }
       if (!typing && selectedId && ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) {
         e.preventDefault();
         const step = e.shiftKey ? 2 : 0.4;
@@ -1236,7 +1298,19 @@ export function EditImage2Client() {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
     };
-  }, [undo, redo, selectedId, commitLayers, duplicateSelected, copySelectedToClipboard, pasteLayerFromClipboard, patchLayer]);
+  }, [
+    undo,
+    redo,
+    selectedId,
+    commitLayers,
+    duplicateSelected,
+    copySelectedToClipboard,
+    pasteLayerFromClipboard,
+    patchLayer,
+    replaceTextOnLayer,
+    focusLiveTextInput,
+    t.newText,
+  ]);
 
   /**
    * Clear plate hole after lift.
@@ -1381,9 +1455,13 @@ export function EditImage2Client() {
     setHistoryIndex(0);
     setSelectedId(null);
     setBrushMode(false);
-    setBoxMode(true);
+    setGrabMode(false);
+    // Stay in normal edit mode so Text / shapes / logo work immediately.
+    // User can still tap「框選提起」when they want to lift from the photo.
+    setBoxMode(false);
     setBoxDrag(null);
     setBrushLines([]);
+    setError(null);
     setNotice(t.readyManualHint);
   }
 
@@ -1971,9 +2049,22 @@ export function EditImage2Client() {
     setSelectedId(layer.id);
   }
 
+  /** Exit lift/brush tools so Add Text / shapes aren't blocked. */
+  function exitToolModes() {
+    setBoxMode(false);
+    setBrushMode(false);
+    setGrabMode(false);
+    setBoxDrag(null);
+    setBrushLines([]);
+    drawingRef.current = false;
+    setError(null);
+  }
+
   function addTextLayer() {
     if (!canEdit) return;
+    exitToolModes();
     const n = layers.length;
+    focusLiveTextSelectAllRef.current = true;
     pushLayer({
       id: crypto.randomUUID(),
       kind: "text",
@@ -2001,6 +2092,7 @@ export function EditImage2Client() {
 
   async function addAiComponent() {
     if (!canEdit || !result) return;
+    exitToolModes();
     const prompt = aiAddPrompt.trim();
     if (!prompt) {
       setError(t.aiAddNeedPrompt);
@@ -2065,6 +2157,7 @@ export function EditImage2Client() {
 
   function addShapeLayer(shapeKind: ShapeKind) {
     if (!canEdit) return;
+    exitToolModes();
     const n = layers.length;
     const square = shapeKind === "circle";
     pushLayer({
@@ -2086,6 +2179,7 @@ export function EditImage2Client() {
 
   async function addBrandLogoLayer() {
     if (!canEdit || !brandKit.logoUrl?.trim()) return;
+    exitToolModes();
     setLogoBusy(true);
     setError(null);
     let revoke: string | null = null;
@@ -3829,6 +3923,11 @@ export function EditImage2Client() {
                           onAfterMove={() => {
                             /* hole already cleared on drag start — avoid second Flux/local round-trip */
                           }}
+                          onRequestTextEdit={() => {
+                            setSelectedId(layer.id);
+                            focusLiveTextSelectAllRef.current = true;
+                            focusLiveTextInput({ selectAll: true });
+                          }}
                     />
                   ))}
                       {guides.map((g, i) =>
@@ -4128,8 +4227,27 @@ export function EditImage2Client() {
             </div>
           )}
 
-          {/* Primary edit surface — always near top so users don't scroll past the layer list */}
+          {/* Live text wording — Add-text layers have no crop, so they never hit the crop panel below. */}
           {selected &&
+          selected.kind === "text" &&
+          selected.useLiveText &&
+          !(selected.cropUrl || selected.cropDataUrl) ? (
+            <div className="space-y-2 rounded-xl border border-violet-400/30 bg-violet-500/10 p-2.5">
+              <div className="min-w-0">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-violet-200/90">
+                  {t.liveTextOn}
+                </p>
+                <p className="text-[10px] leading-snug text-slate-400">{t.textEditableNow}</p>
+              </div>
+              <textarea
+                ref={liveTextInputRef}
+                className="min-h-[64px] w-full rounded-lg border border-violet-500/40 bg-black/40 px-2 py-1.5 text-sm text-white placeholder:text-slate-600"
+                value={selected.editText ?? selected.text ?? ""}
+                onChange={(e) => replaceTextOnLayer(selected.id, e.target.value)}
+                placeholder={t.editTextPlaceholder}
+              />
+            </div>
+          ) : selected &&
           (selected.kind === "text" || selected.kind === "object") &&
           !!(selected.cropUrl || selected.cropDataUrl) ? (
             <div className="space-y-2 rounded-xl border border-violet-400/30 bg-violet-500/10 p-2.5">
@@ -4503,29 +4621,32 @@ export function EditImage2Client() {
             </p>
             <p className="text-[10px] leading-snug text-slate-500">{t.addHow}</p>
               <div className="flex flex-wrap gap-1.5">
-              <ToolBtn label={t.text} onClick={addTextLayer} disabled={!canEdit || brushMode || boxMode} />
+              <ToolBtn label={t.text} onClick={addTextLayer} disabled={!canEdit} />
               <ToolBtn
                 label={t.aiAddComponent}
                 active={aiAddOpen}
                 disabled={!canEdit || !!busy || brushBusy}
-                onClick={() => setAiAddOpen((v) => !v)}
+                onClick={() => {
+                  exitToolModes();
+                  setAiAddOpen((v) => !v);
+                }}
               />
               <ToolBtn
                 label={logoBusy ? t.logoBusy : t.logo}
                 onClick={() => void addBrandLogoLayer()}
-                disabled={!canEdit || !hasBrandLogo || logoBusy || brushMode || boxMode}
+                disabled={!canEdit || !hasBrandLogo || logoBusy}
                 title={hasBrandLogo ? t.titleBrandLogo : t.titleNeedBrandLogo}
               />
-              <ToolBtn label={t.rect} onClick={() => addShapeLayer("rect")} disabled={!canEdit || brushMode || boxMode} />
+              <ToolBtn label={t.rect} onClick={() => addShapeLayer("rect")} disabled={!canEdit} />
               <ToolBtn
                 label={t.capsule}
                 onClick={() => addShapeLayer("capsule")}
-                disabled={!canEdit || brushMode || boxMode}
+                disabled={!canEdit}
               />
               <ToolBtn
                 label={t.circle}
                 onClick={() => addShapeLayer("circle")}
-                disabled={!canEdit || brushMode || boxMode}
+                disabled={!canEdit}
               />
             </div>
             {aiAddOpen ? (

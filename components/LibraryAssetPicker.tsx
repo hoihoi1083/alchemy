@@ -115,17 +115,19 @@ export function LibraryAssetPicker({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-3 sm:items-center"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-black/70 p-3"
       role="dialog"
       aria-modal="true"
       aria-label={labels.title}
       onClick={onClose}
     >
+      {/* Inline height — Tailwind arbitrary min() is unreliable across builds. */}
       <div
-        className="flex max-h-[min(85vh,720px)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-950 shadow-2xl"
+        className="flex w-full max-w-2xl min-h-0 flex-col overflow-hidden rounded-2xl border border-slate-700 bg-slate-950 shadow-2xl"
+        style={{ height: "min(85vh, 720px)", maxHeight: "85vh" }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
+        <div className="flex shrink-0 items-center justify-between border-b border-slate-800 px-4 py-3">
           <h3 className="text-sm font-semibold text-white">{labels.title}</h3>
           <button
             type="button"
@@ -136,7 +138,7 @@ export function LibraryAssetPicker({
           </button>
         </div>
 
-        <div className="space-y-2 border-b border-slate-800 px-4 py-3">
+        <div className="shrink-0 space-y-2 border-b border-slate-800 px-4 py-3">
           <input
             type="search"
             value={query}
@@ -162,7 +164,7 @@ export function LibraryAssetPicker({
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto p-3">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3">
           {loading ? (
             <p className="py-10 text-center text-sm text-slate-400">{labels.loading}</p>
           ) : error ? (
@@ -183,6 +185,10 @@ export function LibraryAssetPicker({
                     <button
                       type="button"
                       onClick={() => setSelectedId(asset.id)}
+                      onDoubleClick={() => {
+                        if (brokenIds[asset.id]) return;
+                        onPick(asset);
+                      }}
                       className={`flex w-full items-center gap-3 rounded-xl border bg-slate-900/60 p-2 text-left ${selectedCls} ${
                         isBroken ? "opacity-70" : ""
                       }`}
@@ -233,7 +239,7 @@ export function LibraryAssetPicker({
           )}
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-800 px-4 py-3">
+        <div className="relative z-10 flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-slate-800 bg-slate-950 px-4 py-3 shadow-[0_-8px_24px_rgba(0,0,0,0.45)]">
           <p className="text-[11px] text-slate-500">
             {(labels.selectedCount ?? "{n} asset selected").replace(
               "{n}",
