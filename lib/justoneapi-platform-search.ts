@@ -18,6 +18,7 @@ import {
   pickString,
   pickVideoUrl,
 } from "@/lib/justoneapi-client";
+import { instagramSearchKeyword } from "@/lib/zh-simplified-to-traditional";
 
 /** XHS 图文/carousel vs video — avoid false video when API embeds stream metadata on image notes. */
 export function inferXhsMediaType(
@@ -699,7 +700,8 @@ export function instagramHashtagCandidates(keyword: string): string[] {
     if (tag.length >= 2 && !out.includes(tag)) out.push(tag);
   };
 
-  const raw = keyword.trim();
+  // IG indexes Traditional Chinese far more reliably than Simplified.
+  const raw = instagramSearchKeyword(keyword).trim();
   if (!raw) return out;
 
   add(raw.replace(/\s+/g, ""));
@@ -776,9 +778,16 @@ async function searchInstagramPosts(
   limit: number,
   mediaFilter?: ContentResearchMediaFilter,
 ): Promise<{ body: Record<string, unknown>; endpoint: string }> {
+  // All IG Just One searches: Simplified → Traditional (EN left as-is).
+  const igKeyword = instagramSearchKeyword(keyword).trim() || keyword.trim();
+
   if (mediaFilter !== "image") {
     const endpoint = "/api/instagram/search-reels/v1";
-    const body = await fetchJustOneApi(endpoint, { keyword }, "Instagram reels search");
+    const body = await fetchJustOneApi(
+      endpoint,
+      { keyword: igKeyword },
+      "Instagram reels search",
+    );
     return { body, endpoint };
   }
 
@@ -810,15 +819,15 @@ async function searchInstagramPosts(
     return null;
   };
 
-  // Pass 1: what the user typed (compacted + word/adjacent variants).
-  const hit = await tryTags(instagramHashtagCandidates(keyword));
+  // Pass 1: Traditional Chinese (from SC) / English compacted tags.
+  const hit = await tryTags(instagramHashtagCandidates(igKeyword));
   if (hit) return { body: hit, endpoint };
 
   // Pass 2: DeepSeek → English hashtags (CJK or multi-word English that didn't hit).
-  const translated = await translateKeywordToIgHashtags(keyword);
+  const translated = await translateKeywordToIgHashtags(igKeyword);
   if (translated.length) {
     console.info(
-      `[justoneapi] Instagram user tag empty — translated "${keyword.trim()}" → ${translated.join(", ")}`,
+      `[justoneapi] Instagram user tag empty — translated "${igKeyword}" → ${translated.join(", ")}`,
     );
     const translatedHit = await tryTags(translated);
     if (translatedHit) return { body: translatedHit, endpoint };

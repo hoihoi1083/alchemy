@@ -7057,9 +7057,9 @@ export const en = {
 			"Instagram image mode searches hashtags — English tags work best (vitaminc, skincare, serum).",
 		platformSearchHintIgHashtags: (tags: string) => `Will search: ${tags}`,
 		platformSearchHintIgCjk:
-			"Chinese phrases are mapped to English tags; if results are thin, try English keywords or switch to RedNote.",
+			"Simplified Chinese is converted to Traditional for Instagram search (IG indexes 繁體 better). If results are still thin, try English or switch to RedNote.",
 		platformSearchHintIgVideo:
-			"Instagram video mode searches Reels by keyword (English or Chinese, e.g. vitamin c serum).",
+			"Instagram video mode searches Reels by keyword (English or Traditional Chinese; Simplified is auto-converted).",
 		platformSearchHintFacebook:
 			"Backup option: paste a public /posts/ or /videos/ URL, or search by keyword. Prefer RedNote or Instagram first for still-ad layouts.",
 		platformSearchHintTiktok:

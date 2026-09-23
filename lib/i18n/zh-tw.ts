@@ -5995,9 +5995,9 @@ socialDripFitTitle: "這個格式可以／不可以做什麼",
       "Instagram 圖文模式用 hashtag 搜尋 — 英文標籤最穩（如 vitaminc、skincare、serum）。",
     platformSearchHintIgHashtags: (tags: string) => `將搜尋：${tags}`,
     platformSearchHintIgCjk:
-      "中文品類詞已轉成英文標籤；若結果仍少，可改打英文或換小紅書。",
+      "簡體關鍵詞會自動轉成繁體再搜 Instagram（IG 對繁體標籤更友善）；若結果仍少，可改打英文或換小紅書。",
     platformSearchHintIgVideo:
-      "Instagram 影片模式用關鍵詞搜 Reels（中英文皆可，如 vitamin c serum、護膚）。",
+      "Instagram 影片模式用關鍵詞搜 Reels（英文或繁體；簡體會自動轉繁體）。",
     platformSearchHintFacebook:
       "備選：可貼公開 /posts/ 或 /videos/ 連結，或用關鍵詞搜。靜圖廣告請優先試 小紅書 或 Instagram。",
     platformSearchHintTiktok:

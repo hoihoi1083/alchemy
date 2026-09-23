@@ -96,7 +96,18 @@ describe("instagram hashtag search parsing", () => {
 
   it("does not hardcode jewelry English tags from a dictionary", () => {
     const tags = instagramHashtagCandidates("金砂石手链");
-    assert.deepEqual(tags, ["金砂石手链"]);
+    // Simplified → Traditional before hashtag compact (OpenCC TW: 链 → 鍊).
+    assert.deepEqual(tags, ["金砂石手鍊"]);
+  });
+
+  it("converts Simplified Chinese mooncake keyword to Traditional for IG", () => {
+    const tags = instagramHashtagCandidates("上海鲜肉月饼");
+    assert.equal(tags[0], "上海鮮肉月餅");
+  });
+
+  it("leaves already-Traditional Chinese unchanged", () => {
+    const tags = instagramHashtagCandidates("上海鮮肉月餅");
+    assert.equal(tags[0], "上海鮮肉月餅");
   });
 
   it("keeps latin keywords as-is", () => {

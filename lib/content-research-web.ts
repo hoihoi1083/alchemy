@@ -5,6 +5,7 @@ import type { ContentPlatform, ContentResearchMediaFilter, ContentResearchPost }
 import { researchWarningCode } from "@/lib/content-research-ui-messages";
 import type { PromptMarket } from "@/lib/prompt-variables";
 import { webSearch, webSearchApiKey, type WebSearchResult } from "@/lib/web-search";
+import { instagramSearchKeyword } from "@/lib/zh-simplified-to-traditional";
 
 export type ContentResearchWebBundle = {
   queries: string[];
@@ -169,9 +170,13 @@ export async function fetchPlatformWebResearch(
   market?: PromptMarket,
   mediaFilter?: ContentResearchMediaFilter,
 ): Promise<ContentResearchWebBundle> {
+  // Instagram: always search Traditional Chinese (and English). Keep original for XHS/TikTok/FB.
+  const searchTopic =
+    platform === "instagram" ? instagramSearchKeyword(topic).trim() || topic : topic;
+
   if (hasJustOneApiConfigured()) {
     try {
-      return await fetchJustOneApiResearch(topic, platform, market, mediaFilter);
+      return await fetchJustOneApiResearch(searchTopic, platform, market, mediaFilter);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       if (mediaFilter === "video") {
@@ -181,7 +186,7 @@ export async function fetchPlatformWebResearch(
       }
       if (!webSearchApiKey()) throw e;
       console.warn(`[content-research] Just One API (${platform}) failed, falling back to Tavily:`, msg);
-      const tavily = await fetchTavilyResearch(topic, platform);
+      const tavily = await fetchTavilyResearch(searchTopic, platform);
       return {
         ...tavily,
         fallbackWarning: formatJustOneApiFallbackWarning(platform, msg),
@@ -193,7 +198,7 @@ export async function fetchPlatformWebResearch(
       "Video research needs JUSTONEAPI_TOKEN — web search cannot download reference MP4.",
     );
   }
-  return fetchTavilyResearch(topic, platform);
+  return fetchTavilyResearch(searchTopic, platform);
 }
 
 export function formatWebSnippetsForPrompt(results: WebSearchResult[]): string {
