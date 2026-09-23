@@ -91,14 +91,22 @@ export function CaptionLiveOverlay({
 }: Props) {
   const stageRef = useRef<HTMLDivElement>(null);
   const [draggingCaption, setDraggingCaption] = useState(false);
+  const [draggingPanel, setDraggingPanel] = useState(false);
   /** Panel position in px relative to stage (top-left of panel). */
   const [panelPos, setPanelPos] = useState<{ x: number; y: number } | null>(null);
+  const panelPosRef = useRef<{ x: number; y: number } | null>(null);
   const panelDragRef = useRef<{
+    pointerId: number;
     originX: number;
     originY: number;
     startLeft: number;
     startTop: number;
   } | null>(null);
+
+  const syncPanelPos = useCallback((next: { x: number; y: number }) => {
+    panelPosRef.current = next;
+    setPanelPos(next);
+  }, []);
 
   const active = lines
     .map((line, index) => ({ line, index }))
@@ -131,13 +139,20 @@ export function CaptionLiveOverlay({
         );
         onUpdate(index, { xPct, yPct });
       };
-      const up = () => {
+      const up = (ev: PointerEvent) => {
         setDraggingCaption(false);
+        try {
+          (e.target as HTMLElement).releasePointerCapture?.(ev.pointerId);
+        } catch {
+          /* already released */
+        }
         window.removeEventListener("pointermove", move);
         window.removeEventListener("pointerup", up);
+        window.removeEventListener("pointercancel", up);
       };
       window.addEventListener("pointermove", move);
       window.addEventListener("pointerup", up);
+      window.addEventListener("pointercancel", up);
     },
     [onSelect, onUpdate],
   );
@@ -151,30 +166,40 @@ export function CaptionLiveOverlay({
 
   // Default panel near top-center so it doesn't cover video controls.
   useEffect(() => {
-    if (!showInspector || panelPos) return;
+    if (!showInspector) return;
+    if (panelPosRef.current) return;
     const stage = stageRef.current;
     if (!stage) return;
     const w = stage.clientWidth;
     const x = Math.max(8, (w - Math.min(PANEL_W, w * 0.92)) / 2);
-    setPanelPos({ x, y: 8 });
-  }, [showInspector, panelPos]);
+    syncPanelPos({ x, y: 8 });
+  }, [showInspector, syncPanelPos]);
 
-  const onPanelHandleDown = (e: React.PointerEvent) => {
+  const onPanelHandleDown = (e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     const stage = stageRef.current;
-    if (!stage || !panelPos) return;
+    const current = panelPosRef.current ?? panelPos;
+    if (!stage || !current) return;
+
+    const handle = e.currentTarget;
     panelDragRef.current = {
+      pointerId: e.pointerId,
       originX: e.clientX,
       originY: e.clientY,
-      startLeft: panelPos.x,
-      startTop: panelPos.y,
+      startLeft: current.x,
+      startTop: current.y,
     };
-    (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+    setDraggingPanel(true);
+    try {
+      handle.setPointerCapture(e.pointerId);
+    } catch {
+      /* ignore */
+    }
 
     const move = (ev: PointerEvent) => {
       const drag = panelDragRef.current;
-      if (!drag || !stage) return;
+      if (!drag || ev.pointerId !== drag.pointerId) return;
       const rect = stage.getBoundingClientRect();
       const panelW = Math.min(PANEL_W, rect.width * 0.92);
       const dx = ev.clientX - drag.originX;
@@ -187,15 +212,25 @@ export function CaptionLiveOverlay({
         Math.max(4, drag.startTop + dy),
         Math.max(4, rect.height - PANEL_H - 4),
       );
-      setPanelPos({ x: nextX, y: nextY });
+      syncPanelPos({ x: nextX, y: nextY });
     };
-    const up = () => {
+    const up = (ev: PointerEvent) => {
+      if (panelDragRef.current?.pointerId !== ev.pointerId) return;
       panelDragRef.current = null;
-      window.removeEventListener("pointermove", move);
-      window.removeEventListener("pointerup", up);
+      setDraggingPanel(false);
+      try {
+        handle.releasePointerCapture(ev.pointerId);
+      } catch {
+        /* ignore */
+      }
+      handle.removeEventListener("pointermove", move);
+      handle.removeEventListener("pointerup", up);
+      handle.removeEventListener("pointercancel", up);
     };
-    window.addEventListener("pointermove", move);
-    window.addEventListener("pointerup", up);
+    // Listen on the handle (capture target) — window listeners miss captured moves in some browsers.
+    handle.addEventListener("pointermove", move);
+    handle.addEventListener("pointerup", up);
+    handle.addEventListener("pointercancel", up);
   };
 
   const patchStyle = (partial: CaptionLineStyle) => {
@@ -265,7 +300,9 @@ export function CaptionLiveOverlay({
           <div
             role="button"
             tabIndex={0}
-            className="flex cursor-grab touch-none items-center justify-between gap-2 border-b border-white/10 px-2 py-1.5 active:cursor-grabbing"
+            className={`flex touch-none select-none items-center justify-between gap-2 border-b border-white/10 px-2 py-1.5 ${
+              draggingPanel ? "cursor-grabbing" : "cursor-grab"
+            }`}
             onPointerDown={onPanelHandleDown}
             title={labels?.dragHint ?? "Drag to move"}
           >

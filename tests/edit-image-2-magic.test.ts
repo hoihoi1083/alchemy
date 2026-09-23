@@ -21,6 +21,8 @@ describe("magic board chat intents", () => {
     assert.equal(parseMagicChatIntent("拆层").type, "split");
     assert.equal(parseMagicChatIntent("点选提起").type, "grab_mode");
     assert.equal(parseMagicChatIntent("笔刷擦除").type, "brush_erase_mode");
+    assert.equal(parseMagicChatIntent("擦除").type, "erase_mode");
+    assert.equal(parseMagicChatIntent("去掉").type, "erase_mode");
     assert.equal(parseMagicChatIntent("扩展 9:16").type, "full_edit");
     assert.deepEqual(parseMagicChatIntent("改成 CR8"), {
       type: "rewrite",
@@ -33,6 +35,17 @@ describe("magic board chat intents", () => {
       type: "full_edit",
       instruction: "把旗帜换成巴西国旗",
     });
+  });
+
+  it("does not trap descriptive 去掉… prompts into erase_mode", () => {
+    assert.deepEqual(parseMagicChatIntent("帮我去掉背景的白色布"), {
+      type: "full_edit",
+      instruction: "帮我去掉背景的白色布",
+    });
+    assert.equal(
+      parseMagicChatIntent("去掉月亮上的字").type,
+      "full_edit",
+    );
   });
 
   it("parses explicit layer-targeted edit", () => {

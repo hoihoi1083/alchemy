@@ -7,6 +7,8 @@ import {
   byteplusApiKey,
   byteplusSeedreamModel,
   isSeedreamCopyrightError,
+  isSeedreamImageUnprocessableError,
+  prepareSeedreamLayerInputDataUrl,
   seedreamLayerDecomposition,
   type ByteplusImageDataItem,
 } from "@/lib/byteplus-ark";
@@ -240,8 +242,20 @@ export async function POST(request: Request) {
     const srcH = srcMeta.height ?? 0;
     if (!srcW || !srcH) throw new Error("Could not read image size.");
 
+    // BytePlus often cannot fetch fal/library URLs from their side, and rejects
+    // WebP / odd sizes. Send a normalized JPEG data URL instead.
+    const prepared = await prepareSeedreamLayerInputDataUrl(fullBuf);
+    console.info("[decompose-seedream-layers] prepared input", {
+      srcW,
+      srcH,
+      sendW: prepared.width,
+      sendH: prepared.height,
+      bytes: prepared.bytes,
+      format: srcMeta.format,
+    });
+
     const ark = await seedreamLayerDecomposition({
-      imageUrl,
+      imageUrl: prepared.dataUrl,
       prompt: body.prompt,
       size: "1K",
       signal: abort,
@@ -401,6 +415,17 @@ export async function POST(request: Request) {
           error:
             "BytePlus Seedream blocked this image (copyright / brand / likeness filter). Tokens were refunded. User uploads and our AI posters can both trip it when logos, characters, or famous likenesses are visible. Use Box lift / Clean plate, or try another image.",
           errorCode: "copyright_restricted",
+          tokensRefunded: tokenCost,
+        },
+        { status: 422 },
+      );
+    }
+    if (isSeedreamImageUnprocessableError(e)) {
+      return NextResponse.json(
+        {
+          error:
+            "Seedream could not read this image (format, size, or content). Tokens were refunded. Try a clear JPEG/PNG around 1K–4K, or use Box lift / Clean plate.",
+          errorCode: "image_unprocessable",
           tokensRefunded: tokenCost,
         },
         { status: 422 },

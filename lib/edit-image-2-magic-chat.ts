@@ -43,7 +43,13 @@ export function parseMagicChatIntent(rawIn: string): MagicChatIntent {
     return { type: "brush_erase_mode" };
   }
 
-  if (/(擦除|erase|去掉|移除|删掉|刪掉)/i.test(raw) && !/(文字|字)/i.test(raw)) {
+  // Short mode toggles only — freeform like「帮我去掉背景的白色布」must stay full_edit.
+  if (
+    /^(?:请|請|帮我|幫我)?(?:擦除|erase|去掉|移除|删掉|刪掉|清底)(?:模式|mode)?[.!。！…]*$/i.test(
+      raw,
+    ) ||
+    /^(?:enter\s*)?erase(?:\s*mode)?[.!]*$/i.test(lower)
+  ) {
     return { type: "erase_mode" };
   }
 
