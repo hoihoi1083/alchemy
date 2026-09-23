@@ -14,7 +14,7 @@ import {
 /**
  * Fixed bottom dock — compact pill.
  * Brand: flask mark + stacked Alchemy / AI Lab wordmark.
- * Footer reserves ~100px bottom padding (navy) so content isn't covered at scroll end.
+ * Footer reserves ~50px bottom padding (navy) so content isn't covered at scroll end.
  */
 export function LandingFloatingCta() {
 	const { m } = useLocale();

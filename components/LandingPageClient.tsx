@@ -216,6 +216,12 @@ const LANDING_LAYOUT_CSS = `
   padding-left: 1.25rem;
   padding-right: 1.25rem;
 }
+.landing-story-copy {
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
 .landing-story-mobile-grid {
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) !important;
@@ -227,24 +233,26 @@ const LANDING_LAYOUT_CSS = `
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  align-self: stretch;
+  width: 100%;
   height: 100%;
   min-height: 0;
   min-width: 0;
   overflow: visible;
 }
 .landing-story-phone-fan {
-  /* Fill the grid row (same height as left accordion), then cap for short viewports */
+  /* Fill the right grid cell — phones are 9:16 of this box */
   flex: 1 1 auto;
   width: 100%;
-  max-width: min(100%, 560px);
+  max-width: min(100%, 720px);
   height: 100%;
-  min-height: min(60vh, 520px);
-  max-height: min(82vh, 720px);
+  min-height: min(68vh, 580px);
+  max-height: min(88vh, 820px);
   margin-inline: auto;
   overflow: visible;
 }
 .landing-story-phone {
-  height: 94%;
+  height: 98%;
   width: auto;
   max-width: none;
   aspect-ratio: 9 / 16;
@@ -267,34 +275,43 @@ const LANDING_LAYOUT_CSS = `
 }
 @media (min-width: 768px) {
   .landing-story-wheel-grid {
-    grid-template-columns: minmax(0, 0.78fr) minmax(0, 1.22fr) !important;
-    gap: 1.75rem !important;
-    padding-left: 1.5rem;
-    padding-right: 2.25rem;
+    /* Tighter pair — copy sits next to fan, not stuck on outer left */
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr) !important;
+    gap: 1rem !important;
+    padding-left: 3.5rem;
+    padding-right: 1.75rem;
+  }
+  .landing-story-copy {
+    justify-self: end;
+    width: 100%;
+    max-width: 440px;
   }
   .landing-story-phone-fan {
-    max-width: min(100%, 600px);
-    min-height: min(62vh, 560px);
-    max-height: min(84vh, 740px);
+    max-width: min(100%, 760px);
+    min-height: min(72vh, 640px);
+    max-height: min(90vh, 860px);
   }
   .landing-story-phone {
-    height: 95%;
+    height: 98%;
   }
 }
 @media (min-width: 1280px) {
   .landing-story-wheel-grid {
-    grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr) !important;
-    gap: 2rem !important;
-    padding-left: 2.5rem;
-    padding-right: 3rem;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr) !important;
+    gap: 1.25rem !important;
+    padding-left: 5rem;
+    padding-right: 2rem;
+  }
+  .landing-story-copy {
+    max-width: 460px;
   }
   .landing-story-phone-fan {
-    max-width: min(100%, 640px);
-    min-height: min(64vh, 600px);
-    max-height: min(86vh, 780px);
+    max-width: min(100%, 820px);
+    min-height: min(76vh, 700px);
+    max-height: min(92vh, 920px);
   }
   .landing-story-phone {
-    height: 96%;
+    height: 99%;
   }
 }
 

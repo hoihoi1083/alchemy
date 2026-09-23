@@ -62,7 +62,7 @@ function LandingFooterInner() {
             radial-gradient(ellipse 40% 45% at 30% 15%, rgba(108, 59, 255, 0.14) 0%, transparent 55%);
           color: #ffffff;
           /* Clear fixed LandingFloatingCta — padding stays navy (not white page bg). */
-          padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px));
+          padding-bottom: calc(50px + env(safe-area-inset-bottom, 0px));
         }
         .landing-footer::before {
           content: "";

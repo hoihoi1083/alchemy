@@ -15,21 +15,53 @@ const FALLBACK_LOOP_MS = 5000;
 
 const FAN_MEDIA = [
   {
-    poster: "/images/landing/story-fan-transform.jpg?v=14",
-    video: "/videos/landing/story-fan-transform.mp4?v=14",
+    poster: "/images/landing/story-fan-transform.jpg?v=17",
+    video: "/videos/landing/story-fan-transform.mp4?v=17",
   },
   {
-    poster: "/images/landing/story-fan-reference.jpg?v=15",
-    video: "/videos/landing/story-fan-reference.mp4?v=15",
+    poster: "/images/landing/story-fan-reference.jpg?v=17",
+    video: "/videos/landing/story-fan-reference.mp4?v=17",
   },
   {
-    poster: "/images/landing/story-fan-storyboard.jpg?v=11",
-    video: "/videos/landing/story-fan-storyboard.mp4?v=11",
+    poster: "/images/landing/story-fan-storyboard.jpg?v=17",
+    video: "/videos/landing/story-fan-storyboard.mp4?v=17",
   },
 ] as const;
 
 function clamp(n: number, min: number, max: number) {
   return Math.min(max, Math.max(min, n));
+}
+
+function injectPreload(href: string, as: "image" | "video") {
+  if (typeof document === "undefined") return;
+  if (document.querySelector(`link[data-fan-preload="${href}"]`)) return;
+  const link = document.createElement("link");
+  link.rel = "preload";
+  link.as = as;
+  link.href = href;
+  if (as === "video") link.type = "video/mp4";
+  link.setAttribute("data-fan-preload", href);
+  document.head.appendChild(link);
+}
+
+function prefetchFanMedia() {
+  if (typeof document === "undefined") return;
+  // First card highest priority — warm poster + bytes ASAP.
+  injectPreload(FAN_MEDIA[0].poster, "image");
+  injectPreload(FAN_MEDIA[0].video, "video");
+  for (const m of FAN_MEDIA) {
+    const img = new Image();
+    img.decoding = "async";
+    img.src = m.poster;
+    injectPreload(m.poster, "image");
+    injectPreload(m.video, "video");
+    const v = document.createElement("video");
+    v.preload = "auto";
+    v.muted = true;
+    v.playsInline = true;
+    v.src = m.video;
+    void v.load();
+  }
 }
 
 /**
@@ -42,7 +74,9 @@ export function LandingStoryWheel() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [reduceMotion, setReduceMotion] = useState(false);
   const [paused, setPaused] = useState(false);
+  const sectionRef = useRef<HTMLElement | null>(null);
   const videoRefs = useRef<Array<HTMLVideoElement | null>>([]);
+  const prefetchedRef = useRef(false);
 
   const slides = [
     {
@@ -99,6 +133,68 @@ export function LandingStoryWheel() {
     return () => mq.removeEventListener("change", sync);
   }, []);
 
+  // Prefetch on mount — first card bytes ASAP; rest on idle. Don't wait for scroll-in.
+  useEffect(() => {
+    if (prefetchedRef.current) return;
+    // First card: start network fetch immediately (preload link + video element).
+    injectPreload(FAN_MEDIA[0].poster, "image");
+    injectPreload(FAN_MEDIA[0].video, "video");
+    const warm = document.createElement("video");
+    warm.preload = "auto";
+    warm.muted = true;
+    warm.playsInline = true;
+    warm.src = FAN_MEDIA[0].video;
+    void warm.load();
+
+    const run = () => {
+      if (prefetchedRef.current) return;
+      prefetchedRef.current = true;
+      prefetchFanMedia();
+    };
+    const ric = (
+      window as Window & {
+        requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      }
+    ).requestIdleCallback;
+    if (typeof ric === "function") {
+      const id = ric(run, { timeout: 400 });
+      return () => {
+        (
+          window as Window & { cancelIdleCallback?: (id: number) => void }
+        ).cancelIdleCallback?.(id);
+      };
+    }
+    const t = window.setTimeout(run, 0);
+    return () => window.clearTimeout(t);
+  }, []);
+
+  // Also kick prefetch when the section is near (backup if idle is very late).
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+    if (typeof IntersectionObserver === "undefined") {
+      if (!prefetchedRef.current) {
+        prefetchedRef.current = true;
+        prefetchFanMedia();
+      }
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          if (!prefetchedRef.current) {
+            prefetchedRef.current = true;
+            prefetchFanMedia();
+          }
+          io.disconnect();
+        }
+      },
+      { rootMargin: "600px 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
   // Advance once when the front card video finishes (timeout is a safety net).
   useEffect(() => {
     if (paused || reduceMotion) return;
@@ -147,8 +243,26 @@ export function LandingStoryWheel() {
         return;
       }
       if (i === activeIndex && !paused) {
-        v.currentTime = 0;
-        void v.play().catch(() => {});
+        const start = () => {
+          try {
+            if (v.currentTime > 0.05) v.currentTime = 0;
+          } catch {
+            /* ignore seek abort */
+          }
+          void v.play().catch(() => {});
+        };
+        if (v.readyState >= 2) start();
+        else {
+          const onReady = () => {
+            v.removeEventListener("canplay", onReady);
+            start();
+          };
+          v.addEventListener("canplay", onReady);
+          if (v.preload !== "auto") {
+            v.preload = "auto";
+            void v.load();
+          }
+        }
       } else {
         v.pause();
       }
@@ -156,7 +270,7 @@ export function LandingStoryWheel() {
   }, [activeIndex, paused, reduceMotion]);
 
   return (
-    <section className="w-full bg-white">
+    <section ref={sectionRef} className="w-full bg-white">
       <div className="md:hidden">
         {slides.map((slide, i) => (
           <Reveal
@@ -198,171 +312,175 @@ export function LandingStoryWheel() {
             scaleFrom={0.94}
             threshold={0}
             rootMargin="0px 0px -8% 0px"
-            className="h-full min-h-0"
+            className="landing-story-copy h-full min-h-0"
           >
-          <div className="flex min-h-0 flex-col justify-center overflow-y-auto pr-1">
-            <ol className="space-y-2.5">
-              {slides.map((slide, i) => {
-                const on = i === activeIndex;
-                return (
-                  <li key={slide.id}>
-                    <button
-                      type="button"
-                      className={`w-full rounded-2xl border px-4 py-3.5 text-left transition ${
-                        on
-                          ? "border-violet-200 bg-violet-50 shadow-sm"
-                          : "border-slate-100 bg-white opacity-55 hover:opacity-80"
-                      }`}
-                      onClick={() => setActiveIndex(i)}
-                    >
-                      <span className="text-sm font-bold tracking-[0.08em] text-violet-600">
-                        {String(i + 1).padStart(2, "0")} · {slide.eyebrow}
-                      </span>
-                      {on ? (
-                        <div className="mt-2">
-                          <h2 className="text-2xl font-bold leading-snug tracking-tight text-slate-900 lg:text-[1.75rem]">
-                            {slide.title}
-                          </h2>
-                          <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                            {slide.body}
-                          </p>
-                          {slide.points ? (
-                            <ul className="mt-3 space-y-2">
-                              {slide.points.map((point, pi) => (
-                                <li key={point.title} className="flex gap-2.5">
+            <div className="flex min-h-0 flex-col justify-center overflow-y-auto pr-1">
+              <ol className="space-y-2.5">
+                {slides.map((slide, i) => {
+                  const on = i === activeIndex;
+                  return (
+                    <li key={slide.id}>
+                      <button
+                        type="button"
+                        className={`w-full rounded-2xl border text-left transition ${
+                          on
+                            ? "border-violet-300 bg-violet-50 px-4 py-3.5 shadow-sm"
+                            : "border-transparent bg-slate-100 px-4 py-2.5 hover:bg-slate-200/80"
+                        }`}
+                        onClick={() => setActiveIndex(i)}
+                      >
+                        <span
+                          className={`text-sm font-bold tracking-[0.08em] ${
+                            on ? "text-indigo-700" : "text-slate-600"
+                          }`}
+                        >
+                          {String(i + 1).padStart(2, "0")} · {slide.eyebrow}
+                        </span>
+                        {on ? (
+                          <div className="mt-2">
+                            <h2 className="text-2xl font-bold leading-snug tracking-tight text-slate-900 lg:text-[1.75rem]">
+                              {slide.title}
+                            </h2>
+                            <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                              {slide.body}
+                            </p>
+                            {slide.points ? (
+                              <ul className="mt-3 space-y-2">
+                                {slide.points.map((point) => (
+                                  <li key={point.title} className="flex gap-2.5">
                                     <span
                                       className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-violet-600 text-[10px] font-bold text-white"
                                       aria-hidden
                                     >
                                       ✓
                                     </span>
-                                  <div>
-                                    <p className="text-sm font-semibold text-slate-900">
-                                      {point.title}
-                                    </p>
-                                    <p className="text-xs leading-snug text-slate-500">
-                                      {point.body}
-                                    </p>
-                                  </div>
-                                </li>
-                              ))}
-                            </ul>
-                          ) : null}
-                          {slide.ctaLabel ? (
-                            <div className="mt-4 flex flex-wrap items-center gap-3">
-                              <Link
-                                href={slide.ctaHref}
-                                className="inline-flex rounded-full bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                {slide.ctaLabel}
-                              </Link>
-                              {slide.hint ? (
-                                <p className="text-xs text-slate-500">{slide.hint}</p>
-                              ) : null}
-                            </div>
-                          ) : null}
-                        </div>
-                      ) : (
-                        <p className="mt-1 line-clamp-1 text-sm font-semibold text-slate-700">
-                          {typeof slide.title === "string"
-                            ? slide.title
-                            : slide.eyebrow}
-                        </p>
-                      )}
-                    </button>
-                  </li>
-                );
-              })}
-            </ol>
-          </div>
+                                    <div>
+                                      <p className="text-sm font-semibold text-slate-900">
+                                        {point.title}
+                                      </p>
+                                      <p className="text-xs leading-snug text-slate-500">
+                                        {point.body}
+                                      </p>
+                                    </div>
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : null}
+                            {slide.ctaLabel ? (
+                              <div className="mt-4 flex flex-wrap items-center gap-3">
+                                <Link
+                                  href={slide.ctaHref}
+                                  className="inline-flex rounded-full bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  {slide.ctaLabel}
+                                </Link>
+                                {slide.hint ? (
+                                  <p className="text-xs text-slate-500">
+                                    {slide.hint}
+                                  </p>
+                                ) : null}
+                              </div>
+                            ) : null}
+                          </div>
+                        ) : null}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ol>
+            </div>
           </Reveal>
 
           <Reveal
-            delayMs={160}
-            distance={36}
-            scaleFrom={0.96}
+            delayMs={0}
+            distance={28}
+            scaleFrom={0.98}
             threshold={0}
             rootMargin="0px 0px -8% 0px"
-            className="h-full min-h-0 min-w-0"
+            className="h-full min-h-0 min-w-0 w-full"
           >
-          <div className="landing-story-visual px-2 sm:px-3 lg:px-4">
-            <div className="landing-story-phone-fan relative w-full">
-              {slides.map((slide, i) => {
-                let d = i - activeIndex;
-                while (d > n / 2) d -= n;
-                while (d < -n / 2) d += n;
-                const abs = Math.abs(d);
-                // Modest spread so larger phones still stay on-canvas.
-                const xPct = d * 17;
-                const rotate = d * 7;
-                const scale = clamp(1 - abs * 0.07, 0.88, 1);
-                const yPx = abs * 10;
-                const z = 20 - Math.round(abs * 8);
-                const opacity = abs > 1.15 ? 0 : 1;
-                const front = abs < 0.35;
+            <div className="landing-story-visual px-0 sm:px-1">
+              <div className="landing-story-phone-fan relative w-full">
+                {slides.map((slide, i) => {
+                  let d = i - activeIndex;
+                  while (d > n / 2) d -= n;
+                  while (d < -n / 2) d += n;
+                  const abs = Math.abs(d);
+                  // Fan spread — enough peek for side cards without eating front size.
+                  const xPct = d * 14;
+                  const rotate = d * 5;
+                  const scale = clamp(1 - abs * 0.05, 0.9, 1);
+                  const yPx = abs * 8;
+                  const z = 20 - Math.round(abs * 8);
+                  const opacity = abs > 1.15 ? 0 : 1;
+                  const front = abs < 0.35;
+                  const near = abs <= 1.05;
 
-                return (
+                  return (
+                    <button
+                      key={slide.id}
+                      type="button"
+                      aria-label={slide.eyebrow}
+                      className="landing-story-phone absolute left-1/2 top-[2%] origin-bottom will-change-transform"
+                      style={{
+                        transform: `translate3d(calc(-50% + ${xPct}%), ${yPx}px, 0) rotate(${rotate}deg) scale(${scale})`,
+                        opacity,
+                        zIndex: z,
+                        pointerEvents: front ? "auto" : "none",
+                        transition: reduceMotion
+                          ? "opacity 0.2s ease, transform 0.2s ease"
+                          : "opacity 0.28s ease, transform 0.42s cubic-bezier(0.22, 1, 0.36, 1)",
+                      }}
+                      onClick={() => setActiveIndex(i)}
+                    >
+                      <div className="landing-story-phone-frame relative h-full w-full overflow-hidden rounded-[2.25rem] border border-white bg-slate-950 shadow-[0_32px_60px_-28px_rgba(15,23,42,0.55)] ring-1 ring-slate-200/80">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={slide.poster}
+                          alt=""
+                          className="absolute inset-0 h-full w-full object-contain bg-slate-950"
+                          draggable={false}
+                          aria-hidden
+                          decoding="async"
+                          fetchPriority={front ? "high" : near ? "low" : "auto"}
+                        />
+                        {!reduceMotion ? (
+                          <video
+                            ref={(el) => {
+                              videoRefs.current[i] = el;
+                            }}
+                            className="absolute inset-0 h-full w-full object-contain bg-slate-950"
+                            src={slide.video}
+                            poster={slide.poster}
+                            muted
+                            playsInline
+                            preload="auto"
+                            aria-label={slide.imageAlt}
+                          />
+                        ) : null}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="mt-6 flex items-center justify-center gap-1.5">
+                {slides.map((slide, i) => (
                   <button
                     key={slide.id}
                     type="button"
                     aria-label={slide.eyebrow}
-                    className="landing-story-phone absolute left-1/2 top-[2%] origin-bottom will-change-transform"
-                    style={{
-                      transform: `translate3d(calc(-50% + ${xPct}%), ${yPx}px, 0) rotate(${rotate}deg) scale(${scale})`,
-                      opacity,
-                      zIndex: z,
-                      pointerEvents: front ? "auto" : "none",
-                      transition:
-                        "opacity 0.55s ease, transform 0.7s cubic-bezier(0.22, 1, 0.36, 1)",
-                    }}
+                    className={`h-1.5 rounded-full transition-all duration-300 ${
+                      i === activeIndex
+                        ? "w-7 bg-violet-600"
+                        : "w-1.5 bg-slate-300 hover:bg-slate-400"
+                    }`}
                     onClick={() => setActiveIndex(i)}
-                  >
-                    <div className="landing-story-phone-frame relative h-full w-full overflow-hidden rounded-[2.25rem] border border-white bg-slate-950 shadow-[0_32px_60px_-28px_rgba(15,23,42,0.55)] ring-1 ring-slate-200/80">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={slide.poster}
-                        alt=""
-                        className="absolute inset-0 h-full w-full object-contain bg-slate-950"
-                        draggable={false}
-                        aria-hidden
-                      />
-                      {!reduceMotion ? (
-                        <video
-                          ref={(el) => {
-                            videoRefs.current[i] = el;
-                          }}
-                          className="absolute inset-0 h-full w-full object-contain bg-slate-950"
-                          src={slide.video}
-                          poster={slide.poster}
-                          muted
-                          playsInline
-                          preload={front ? "auto" : "metadata"}
-                          aria-label={slide.imageAlt}
-                        />
-                      ) : null}
-                    </div>
-                  </button>
-                );
-              })}
+                  />
+                ))}
+              </div>
             </div>
-
-            <div className="mt-6 flex items-center justify-center gap-1.5">
-              {slides.map((slide, i) => (
-                <button
-                  key={slide.id}
-                  type="button"
-                  aria-label={slide.eyebrow}
-                  className={`h-1.5 rounded-full transition-all ${
-                    i === activeIndex
-                      ? "w-7 bg-violet-600"
-                      : "w-1.5 bg-slate-300 hover:bg-slate-400"
-                  }`}
-                  onClick={() => setActiveIndex(i)}
-                />
-              ))}
-            </div>
-          </div>
           </Reveal>
         </div>
       </section>
