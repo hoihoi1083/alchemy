@@ -50,6 +50,16 @@ describe("content-research-post-url", () => {
     assert.equal(normalizePostUrlInput("xhslink.com/o/abc"), "https://xhslink.com/o/abc");
   });
 
+  it("extracts xhslink from a RedNote share caption paste", () => {
+    const paste = `感谢西区老大房|确实是上海鲜肉月饼顶流！ 中秋节倒计... https://xhslink.cn/o/EHX9MlBjut 
+複製後開啟小紅書查看筆記`;
+    assert.equal(
+      normalizePostUrlInput(paste),
+      "https://xhslink.cn/o/EHX9MlBjut",
+    );
+    assert.equal(detectPlatformFromPostUrl(paste), "xiaohongshu");
+  });
+
   it("extractPostRefFromUrl for xhs and ig", () => {
     assert.deepEqual(
       extractPostRefFromUrl(

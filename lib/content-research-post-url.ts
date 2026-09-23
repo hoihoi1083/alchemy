@@ -7,11 +7,43 @@ import { resolveXhsShareUrl } from "@/lib/resolve-xhs-share-url";
 const BROWSER_UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
+/** http(s) URLs, plus bare xhslink / xiaohongshu hosts from app share captions. */
+const EMBEDDED_POST_URL_RE =
+  /(?:https?:\/\/[^\s<>"'）】\]]+)|(?:(?:www\.)?(?:xhslink\.(?:com|cn)|xiaohongshu\.com|instagram\.com|instagr\.am|tiktok\.com|facebook\.com|fb\.watch)\/[^\s<>"'）】\]]+)/gi;
+
+const SOCIAL_HOST_HINT =
+  /xhslink|xiaohongshu|xhs\.cn|instagram|instagr\.am|tiktok|facebook|fb\.watch|fb\.com/i;
+
+function stripTrailingUrlJunk(url: string): string {
+  return url.replace(/[.,;:!?…]+$/u, "").replace(/[）】\]]+$/u, "");
+}
+
+/**
+ * Pull the first social post URL out of RedNote/IG share captions
+ * (title + short link + “複製後開啟…” boilerplate).
+ */
+export function extractPostUrlFromPaste(raw: string): string | null {
+  const text = raw.trim();
+  if (!text) return null;
+
+  const matches = text.match(EMBEDDED_POST_URL_RE) ?? [];
+  const cleaned = matches.map(stripTrailingUrlJunk).filter(Boolean);
+  if (!cleaned.length) return null;
+
+  const social = cleaned.find((u) => SOCIAL_HOST_HINT.test(u));
+  return social ?? cleaned[0] ?? null;
+}
+
 export function normalizePostUrlInput(raw: string): string {
   const trimmed = raw.trim();
   if (!trimmed) return "";
-  if (/^https?:\/\//i.test(trimmed)) return trimmed;
-  return `https://${trimmed}`;
+
+  // Whole field is a share caption — keep only the embedded link.
+  const extracted = extractPostUrlFromPaste(trimmed);
+  const candidate = extracted ?? trimmed;
+
+  if (/^https?:\/\//i.test(candidate)) return candidate;
+  return `https://${candidate}`;
 }
 
 export function detectPlatformFromPostUrl(url: string): ContentPlatform | null {
