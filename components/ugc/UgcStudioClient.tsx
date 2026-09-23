@@ -4,6 +4,11 @@ import { useMemo, useState } from "react";
 import { PresenterAvatarPicker } from "@/components/studio/PresenterAvatarPicker";
 import { GenerationWaitPlaceholder } from "@/components/studio/GenerationWaitPlaceholder";
 import { useLocale } from "@/components/LocaleProvider";
+import { InputLanguageHint } from "@/components/InputLanguageHint";
+import {
+  useUnsupportedLanguageSoftGate,
+  useVoiceoverLanguageGate,
+} from "@/hooks/useInputLanguageGate";
 import { billingFetch } from "@/lib/billing-idempotency-client";
 import {
   defaultVoicePresetForLocale,
@@ -50,6 +55,8 @@ export function UgcStudioClient() {
   const [note, setNote] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<"voice" | "keyframe" | "video" | "script" | null>(null);
+  const productLangGate = useUnsupportedLanguageSoftGate(product);
+  const voiceLangGate = useVoiceoverLanguageGate(script, voiceLocale);
 
   const presets = useMemo(() => voicePresetsForLocale(voiceLocale), [voiceLocale]);
   const avatarVoice = useMemo(
@@ -149,6 +156,7 @@ export function UgcStudioClient() {
     setBusy("voice");
     try {
       if (!script.trim()) throw new Error(t.needScript);
+      if (!voiceLangGate.canProceed) throw new Error(m.inputLanguage.generateBlocked);
       const res = await billingFetch("/api/preview-script-voice", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -230,6 +238,12 @@ export function UgcStudioClient() {
     setBusy("video");
     try {
       if (!script.trim() && !speechUrl) throw new Error(t.needScript);
+      if (!speechUrl && !voiceLangGate.canProceed) {
+        throw new Error(m.inputLanguage.generateBlocked);
+      }
+      if (!productLangGate.canProceed) {
+        throw new Error(m.inputLanguage.generateBlocked);
+      }
       if (presenterMode === "custom-keyframe" && !keyframeUrl) {
         throw new Error(t.needKeyframe);
       }
@@ -297,6 +311,12 @@ export function UgcStudioClient() {
             onChange={(e) => onProductNameChange(e.target.value)}
             placeholder={t.productPlaceholder}
             className="w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2.5 text-sm text-white placeholder:text-slate-500"
+          />
+          <InputLanguageHint
+            issue={productLangGate.issue}
+            severity="soft"
+            continued={productLangGate.continued}
+            onContinue={productLangGate.continueAnyway}
           />
         </label>
 
@@ -369,6 +389,7 @@ export function UgcStudioClient() {
             className="w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2.5 text-sm text-white placeholder:text-slate-500"
             placeholder={t.scriptPlaceholder}
           />
+          <InputLanguageHint issue={voiceLangGate.issue} severity="hard" />
           <p className="text-[11px] text-slate-500">{t.scriptHint}</p>
           <p className="text-[11px] text-violet-200/70">{t.planScriptHint}</p>
         </label>
@@ -449,7 +470,7 @@ export function UgcStudioClient() {
         <div className="flex flex-wrap gap-2 pt-1">
           <button
             type="button"
-            disabled={disabled}
+            disabled={disabled || !voiceLangGate.canProceed}
             onClick={() => void previewVoice()}
             className="rounded-xl border border-white/15 px-4 py-2.5 text-sm text-slate-100 disabled:opacity-40"
           >

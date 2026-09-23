@@ -5,6 +5,8 @@ import type { VoiceoverLocale } from "@/lib/ad-pack-preferences";
 import { MUSIC_MOODS, type MusicMood } from "@/lib/ad-pack-preferences";
 import type { AiMusicTrack, VoicePreviewTrack } from "@/lib/ad-pack-types";
 import { bgmPublicUrl, type BgmTrackId } from "@/lib/bgm/tracks";
+import { InputLanguageHint } from "@/components/InputLanguageHint";
+import { useVoiceoverLanguageGate } from "@/hooks/useInputLanguageGate";
 
 export type MusicSource = "library" | "ai";
 
@@ -239,6 +241,10 @@ export function CaptionAudioSection({
 
   const [voiceOpen, setVoiceOpen] = useState(true);
   const [musicOpen, setMusicOpen] = useState(true);
+  const voiceLangGate = useVoiceoverLanguageGate(
+    voiceoverEnabled ? voiceoverScript : "",
+    voiceoverLocale,
+  );
 
   useEffect(() => {
     if (preferMusicOpen) setMusicOpen(true);
@@ -551,6 +557,12 @@ export function CaptionAudioSection({
             rows={3}
             className="w-full rounded-lg border border-slate-700 bg-slate-900 px-2 py-1.5 text-xs text-white"
           />
+          {voiceoverScript.trim() ? (
+            <InputLanguageHint
+              issue={voiceLangGate.issue}
+              severity="hard"
+            />
+          ) : null}
           <div className="flex flex-wrap items-center gap-2">
             {onFillVoiceFromCaptions && (
               <button
@@ -598,7 +610,13 @@ export function CaptionAudioSection({
             <p className="text-[10px] text-violet-200/70">{t.voicePreviewHint}</p>
             <button
               type="button"
-              disabled={disabled || busy || voicePreviewBusy || !voiceoverScript.trim()}
+              disabled={
+                disabled ||
+                busy ||
+                voicePreviewBusy ||
+                !voiceoverScript.trim() ||
+                !voiceLangGate.canProceed
+              }
               onClick={onGenerateVoicePreviews}
               className="rounded-full bg-violet-700 px-3 py-1.5 text-[11px] font-medium text-white disabled:opacity-50"
             >
@@ -682,6 +700,7 @@ export function CaptionAudioSection({
             disabled={
               disabled ||
               audioBusy ||
+              !voiceLangGate.canProceed ||
               (!voiceoverScript.trim() &&
                 !selectedVoicePreviewId &&
                 voClipCount < 1)

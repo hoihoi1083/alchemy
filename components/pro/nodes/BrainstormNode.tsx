@@ -5,6 +5,8 @@ import type { NodeProps } from "@xyflow/react";
 import { ProNodeShell } from "@/components/pro/ProNodeShell";
 import { useProCanvasActions } from "@/components/pro/ProCanvasActions";
 import { useLocale } from "@/components/LocaleProvider";
+import { InputLanguageHint } from "@/components/InputLanguageHint";
+import { useUnsupportedLanguageSoftGate } from "@/hooks/useInputLanguageGate";
 import type { BrainstormNodeData } from "@/lib/pro-canvas-types";
 import { canvasScriptUsesPlanQuota } from "@/lib/ultra-pro-controls";
 
@@ -21,6 +23,7 @@ export function BrainstormNode({ id, data }: NodeProps & { data: BrainstormNodeD
   const bn = m.ultraCanvas.brainstormNode;
   const usesPlanQuota = canvasScriptUsesPlanQuota();
   const options = data.options ?? [];
+  const ideaLangGate = useUnsupportedLanguageSoftGate(data.idea);
 
   return (
     <ProNodeShell accent="rose" label={data.label} sourceHandle targetHandle={false} widthClass="w-80">
@@ -30,6 +33,12 @@ export function BrainstormNode({ id, data }: NodeProps & { data: BrainstormNodeD
         onChange={(idea) => updateNodeData(id, { idea })}
         placeholder={bn.ideaPlaceholder}
         className="h-20 w-full resize-none rounded-lg border border-slate-700/80 bg-slate-950/80 px-2 py-1.5 text-[10px] text-white placeholder:text-slate-600 focus:border-rose-500/40 focus:outline-none"
+      />
+      <InputLanguageHint
+        issue={ideaLangGate.issue}
+        severity="soft"
+        continued={ideaLangGate.continued}
+        onContinue={ideaLangGate.continueAnyway}
       />
       <div className="mt-2 flex items-center justify-between gap-2">
         <label className="text-[10px] text-slate-400">{bn.durationLabel}</label>
@@ -47,7 +56,9 @@ export function BrainstormNode({ id, data }: NodeProps & { data: BrainstormNodeD
       </div>
       <button
         type="button"
-        disabled={data.busy || boardBusy || !data.idea.trim()}
+        disabled={
+          data.busy || boardBusy || !data.idea.trim() || !ideaLangGate.canProceed
+        }
         onClick={() => void runBrainstormNode(id)}
         className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-rose-600 to-pink-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40"
       >

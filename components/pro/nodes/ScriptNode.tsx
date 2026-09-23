@@ -5,6 +5,8 @@ import { ProNodeShell } from "@/components/pro/ProNodeShell";
 import { StaleOutputBadge } from "@/components/pro/StaleOutputBadge";
 import { useProCanvasActions } from "@/components/pro/ProCanvasActions";
 import { useLocale } from "@/components/LocaleProvider";
+import { InputLanguageHint } from "@/components/InputLanguageHint";
+import { useUnsupportedLanguageSoftGate } from "@/hooks/useInputLanguageGate";
 import {
   ULTRA_SCRIPT_SCENE_COUNT_DEFAULT,
   ULTRA_SCRIPT_SCENE_COUNT_MAX,
@@ -30,6 +32,7 @@ export function ScriptNode({ id, data }: NodeProps & { data: ScriptNodeData }) {
   const { m } = useLocale();
   const sn = m.ultraCanvas.scriptNode;
   const usesPlanQuota = canvasScriptUsesPlanQuota();
+  const briefLangGate = useUnsupportedLanguageSoftGate(data.brief);
   const sceneCount =
     data.sceneCount ??
     ULTRA_SCRIPT_SCENE_COUNT_DEFAULT;
@@ -60,6 +63,12 @@ export function ScriptNode({ id, data }: NodeProps & { data: ScriptNodeData }) {
         onChange={(brief) => updateNodeData(id, { brief })}
         placeholder={m.ultraCanvas.scriptBriefPlaceholder}
         className="h-20 w-full resize-none rounded-lg border border-slate-700/80 bg-slate-950/80 px-2 py-1.5 text-xs text-white placeholder:text-slate-600 focus:border-rose-500/40 focus:outline-none"
+      />
+      <InputLanguageHint
+        issue={briefLangGate.issue}
+        severity="soft"
+        continued={briefLangGate.continued}
+        onContinue={briefLangGate.continueAnyway}
       />
       <div className="mt-2 flex items-center justify-between gap-2">
         <label className="text-[10px] text-slate-400">{sn.sceneCountLabel}</label>
@@ -144,7 +153,7 @@ export function ScriptNode({ id, data }: NodeProps & { data: ScriptNodeData }) {
       </details>
       <button
         type="button"
-        disabled={data.busy || boardBusy}
+        disabled={data.busy || boardBusy || !briefLangGate.canProceed}
         onClick={() => runScriptNode(id)}
         className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-rose-600 to-pink-600 px-3 py-1.5 text-xs font-semibold text-white shadow-[0_0_16px_rgba(244,63,94,0.2)] disabled:opacity-40"
       >

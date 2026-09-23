@@ -12,6 +12,23 @@ export const en = {
 		"zh-cn": "简体中文",
 		"zh-tw": "繁體中文（台灣）",
   },
+  /** Input-language gate — EN + 简/繁 always OK; warn/block only other scripts. */
+  inputLanguage: {
+    title: "Supported languages: English and Chinese",
+    unsupportedBody: (script: string) =>
+      `We detected ${script} in this field. Please rewrite in English or Chinese (Simplified or Traditional) so research and ads work reliably.`,
+    scriptJapanese: "Japanese",
+    scriptKorean: "Korean",
+    scriptOther: "a language we don’t support yet",
+    continueAnyway: "Continue anyway",
+    voiceNeedScript: "Add a voiceover script before preview.",
+    voiceNeedEnglish:
+      "This voice is English. Please write the script in English (Chinese-only script won’t match this voice).",
+    voiceNeedChinese:
+      "This voice is Chinese. Please write the script in Chinese, or switch the voice to English.",
+    generateBlocked:
+      "Fix the language in the highlighted fields before continuing.",
+  },
   auth: {
     signIn: "Sign in",
 		signInTab: "Sign In",

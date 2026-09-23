@@ -6,6 +6,8 @@ import { ProNodeShell } from "@/components/pro/ProNodeShell";
 import { StaleOutputBadge } from "@/components/pro/StaleOutputBadge";
 import { useProCanvasActions } from "@/components/pro/ProCanvasActions";
 import { useLocale } from "@/components/LocaleProvider";
+import { InputLanguageHint } from "@/components/InputLanguageHint";
+import { useVoiceoverLanguageGate } from "@/hooks/useInputLanguageGate";
 import {
   VOICE_PRESET_IDS,
   voicePresetsForLocale,
@@ -37,6 +39,7 @@ export function VoiceNode({ id, data }: NodeProps & { data: VoiceNodeData }) {
     ? data.voicePresetId
     : presets[0] ?? ("en-male" as VoicePresetId);
   const lines = data.lines ?? [];
+  const voiceLangGate = useVoiceoverLanguageGate(data.script, locale);
 
   return (
     <ProNodeShell accent="amber" label={data.label} nodeKind="voice" sourceHandle targetHandle widthClass="w-80">
@@ -51,6 +54,9 @@ export function VoiceNode({ id, data }: NodeProps & { data: VoiceNodeData }) {
         placeholder={vn.scriptPlaceholder}
         className="h-16 w-full resize-none rounded-lg border border-slate-700/80 bg-slate-950/80 px-2 py-1.5 text-[10px] text-white placeholder:text-slate-600 focus:border-amber-500/40 focus:outline-none"
       />
+      {data.script.trim() ? (
+        <InputLanguageHint issue={voiceLangGate.issue} severity="hard" />
+      ) : null}
       <div className="mt-2 flex gap-1.5">
         <select
           value={locale}
@@ -113,7 +119,9 @@ export function VoiceNode({ id, data }: NodeProps & { data: VoiceNodeData }) {
       ) : null}
       <button
         type="button"
-        disabled={boardBusy || data.busy || !data.script.trim()}
+        disabled={
+          boardBusy || data.busy || !data.script.trim() || !voiceLangGate.canProceed
+        }
         onClick={() => void runVoiceNode(id)}
         className="mt-1.5 flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-amber-600 to-orange-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40"
       >

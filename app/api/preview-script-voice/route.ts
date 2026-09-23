@@ -14,6 +14,10 @@ import { generateVoicePreviewTracks } from "@/lib/voice-preview";
 import { persistAndDurablize } from "@/lib/storage/durable-media";
 import type { VoicePreviewTrack } from "@/lib/ad-pack-types";
 import type { VoicePresetId } from "@/lib/ad-pack-preferences";
+import {
+  getVoiceoverInputIssue,
+  voiceoverLanguageRejectPayload,
+} from "@/lib/input-language";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -45,6 +49,13 @@ export async function POST(request: Request) {
   }
   if (!LOCALES.has(locale)) {
     return NextResponse.json({ error: "Invalid locale." }, { status: 400 });
+  }
+
+  const langReject = voiceoverLanguageRejectPayload(
+    getVoiceoverInputIssue(script, locale),
+  );
+  if (langReject) {
+    return NextResponse.json(langReject, { status: 400 });
   }
 
   const tokenCost = TOKEN_COST.voiceover;

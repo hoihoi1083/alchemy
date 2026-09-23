@@ -10,6 +10,8 @@ import { VisualStylePicker } from "@/components/VisualStylePicker";
 import { isSlotRequired, templateHasSlot } from "@/lib/template-slots";
 import { isBrandVisualStyle, isUgcPresenterStyle, visualStylePromptHint } from "@/lib/visual-styles";
 import { SetupReferenceSection } from "@/components/studio/SetupReferenceSection";
+import { InputLanguageHint } from "@/components/InputLanguageHint";
+import { useUnsupportedLanguageSoftGateFields } from "@/hooks/useInputLanguageGate";
 
 type Props = {
   /** Micro-wizard: show expert visual style override */
@@ -66,12 +68,29 @@ export function SetupCopyEditPanel({
   } = wizard;
 
   const [brandKitOpen, setBrandKitOpen] = useState(isBrandVisualStyle(visualStyleId));
+  const copyLangGate = useUnsupportedLanguageSoftGateFields(
+    product,
+    business,
+    headline,
+    subline,
+    offer,
+    promptExtra,
+    wizard.conceptIdea ?? "",
+  );
 
   const setupReferenceVideoOnStep1 =
     workflowMode === "video-only" || workflowMode === "combined";
 
   return (
     <div className="space-y-4">
+      {copyLangGate.issue.kind !== "none" ? (
+        <InputLanguageHint
+          issue={copyLangGate.issue}
+          severity="soft"
+          continued={copyLangGate.continued}
+          onContinue={copyLangGate.continueAnyway}
+        />
+      ) : null}
       {!usesCompositor && isUgcPresenterStyle(visualStyleId) ? (
         <div className="space-y-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3">
           <p className="text-sm font-semibold text-rose-900">

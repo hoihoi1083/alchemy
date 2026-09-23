@@ -5,10 +5,19 @@ import { useWizard } from "@/components/studio/WizardContext";
 import { MUSIC_MOODS, VOICEOVER_LOCALES, type MusicMood } from "@/lib/ad-pack-preferences";
 import type { AdPackPlan, AiMusicTrack, CaptionLine, VoicePreviewTrack } from "@/lib/ad-pack-types";
 import type { StoryboardSceneResult } from "@/lib/video-storyboard-types";
+import { InputLanguageHint } from "@/components/InputLanguageHint";
+import { useVoiceoverLanguageGate } from "@/hooks/useInputLanguageGate";
 
 export function AdPackReviewPanel() {
   const w = useWizard();
   const { m } = w;
+  const voiceScript =
+    w.adPackPlan?.voiceoverScript?.trim() ||
+    w.captionLines.map((l) => l.text).join("\n");
+  const voiceLangGate = useVoiceoverLanguageGate(
+    w.voiceoverEnabled ? voiceScript : "",
+    w.voiceoverLocale,
+  );
 
   if (!w.adPackReviewOpen && !w.adPackPlan) {
     return (
@@ -104,6 +113,9 @@ export function AdPackReviewPanel() {
           className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-slate-100"
           placeholder={m.wizard.adPack.voiceoverPlaceholder}
         />
+        {w.voiceoverEnabled && voiceScript.trim() ? (
+          <InputLanguageHint issue={voiceLangGate.issue} severity="hard" />
+        ) : null}
         {!w.adPackPlan?.voiceoverScript?.trim() && w.captionLines.length > 0 && (
           <p className="text-[11px] text-amber-300">{m.wizard.adPack.voiceoverEmptyHint}</p>
         )}
@@ -166,6 +178,7 @@ export function AdPackReviewPanel() {
                 type="button"
                 disabled={
                   w.voicePreviewBusy ||
+                  !voiceLangGate.canProceed ||
                   !(
                     w.adPackPlan?.voiceoverScript?.trim() ||
                     w.captionLines.some((l: CaptionLine) => l.text.trim())

@@ -27,11 +27,74 @@ import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import { chargeTokens, refundTokens } from "@/lib/billing/charge";
 import { TOKEN_COST } from "@/lib/billing/token-costs";
 import { persistAndDurablize } from "@/lib/storage/durable-media";
+import {
+  getVoiceoverInputIssue,
+  voiceoverLanguageRejectPayload,
+} from "@/lib/input-language";
 
 export const runtime = "nodejs";
 export const maxDuration = 180;
 
 const LOCALES = new Set<VoiceoverLocale>(["hk", "en", "cn"]);
+
+/** Reject before charge when TTS will speak unsupported / mismatched text.
+ * Display-only captions (burned on video while audio comes from speech_url) are NOT gated —
+ * users may caption uploaded JP/KR videos. Spoken/TTS text is always gated.
+ */
+function voiceTextLanguageError(
+  locale: VoiceoverLocale,
+  opts: {
+    script?: string | null;
+    speechUrl?: string | null;
+    captionLines: CaptionLine[];
+    mixMode?: "continuous" | "per_caption";
+  },
+): { error: string; code: string } | null {
+  const script = opts.script?.trim() || "";
+  const speechUrl = opts.speechUrl?.trim() || "";
+  const timedLines = opts.captionLines.filter((l) => l.text.trim());
+  const hasScriptOrSpeech = Boolean(script || speechUrl);
+  // Match dubVoiceJob mix-mode inference.
+  const mixMode =
+    opts.mixMode ??
+    (hasScriptOrSpeech
+      ? "continuous"
+      : timedLines.length >= 2
+        ? "per_caption"
+        : "continuous");
+
+  const chunks: string[] = [];
+
+  if (mixMode === "per_caption" && timedLines.length >= 2) {
+    // Each caption line is synthesized — gate spoken text (not display-only).
+    for (const line of timedLines) {
+      const speak = captionSpeakText(line).trim();
+      if (speak) chunks.push(speak);
+    }
+  } else if (speechUrl) {
+    // Continuous + preview speech: audio is pre-made.
+    // Caption lines are display/burn only — allow any language.
+  } else if (script) {
+    chunks.push(script);
+  } else if (timedLines.length === 1) {
+    const speak = captionSpeakText(timedLines[0]!).trim();
+    if (speak) chunks.push(speak);
+  } else {
+    for (const line of timedLines) {
+      const speak = captionSpeakText(line).trim();
+      if (speak) chunks.push(speak);
+    }
+  }
+
+  for (const chunk of chunks) {
+    if (!chunk) continue;
+    const reject = voiceoverLanguageRejectPayload(
+      getVoiceoverInputIssue(chunk, locale),
+    );
+    if (reject) return reject;
+  }
+  return null;
+}
 
 function parseCaptionLines(raw: unknown): CaptionLine[] {
   let parsed = raw;
@@ -270,6 +333,11 @@ export async function POST(request: Request) {
     const speechStartSec =
       typeof startRaw === "string" && startRaw.trim() ? Number(startRaw) : undefined;
     const captionLines = parseCaptionLines(formData.get("caption_lines"));
+    const mixModeRaw = (formData.get("mix_mode") as string | null)?.trim();
+    const mixMode =
+      mixModeRaw === "per_caption" || mixModeRaw === "continuous"
+        ? mixModeRaw
+        : undefined;
     const file = videoFile instanceof File && videoFile.size > 0 ? videoFile : undefined;
 
     if (!LOCALES.has(locale)) {
@@ -288,8 +356,29 @@ export async function POST(request: Request) {
       );
     }
 
+    const langReject = voiceTextLanguageError(locale, {
+      script,
+      speechUrl,
+      captionLines,
+      mixMode,
+    });
+    if (langReject) {
+      return NextResponse.json(langReject, { status: 400 });
+    }
+
+    const effectiveContinuous =
+      mixMode === "continuous" ||
+      (mixMode !== "per_caption" && Boolean(script || speechUrl));
     const tokenCost =
-      TOKEN_COST.voiceover * Math.max(1, captionLines.length >= 2 ? captionLines.length : 1);
+      TOKEN_COST.voiceover *
+      Math.max(
+        1,
+        effectiveContinuous
+          ? 1
+          : captionLines.length >= 2
+            ? captionLines.length
+            : 1,
+      );
     const charged = await chargeTokens(auth.user.userId, tokenCost, {
       kind: "voiceover_dub",
       captionLines: captionLines.length,
@@ -308,6 +397,7 @@ export async function POST(request: Request) {
         captionLines,
         speechUrl,
         voicePreset,
+        mixMode,
         voiceVolume: (() => {
           const v = Number(formData.get("voice_volume"));
           return Number.isFinite(v) && v > 0 ? v : undefined;
@@ -380,6 +470,16 @@ export async function POST(request: Request) {
   }
   if (!LOCALES.has(locale)) {
     return NextResponse.json({ error: "Invalid locale." }, { status: 400 });
+  }
+
+  const langReject = voiceTextLanguageError(locale, {
+    script,
+    speechUrl,
+    captionLines,
+    mixMode,
+  });
+  if (langReject) {
+    return NextResponse.json(langReject, { status: 400 });
   }
 
   const effectiveContinuous =

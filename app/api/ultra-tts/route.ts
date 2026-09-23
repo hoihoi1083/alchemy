@@ -13,6 +13,10 @@ import {
 import { createOwnedJobDir } from "@/lib/pipeline/job-owner";
 import { synthesizeSpeechToFile } from "@/lib/pipeline/tts";
 import { persistAndDurablize } from "@/lib/storage/durable-media";
+import {
+  getVoiceoverInputIssue,
+  voiceoverLanguageRejectPayload,
+} from "@/lib/input-language";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -48,6 +52,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid voice_preset." }, { status: 400 });
   }
   const voicePresetId = voicePresetRaw as VoicePresetId;
+
+  const langReject = voiceoverLanguageRejectPayload(
+    getVoiceoverInputIssue(script, locale),
+  );
+  if (langReject) {
+    return NextResponse.json(langReject, { status: 400 });
+  }
 
   const tokenCost = TOKEN_COST.voiceover;
   const charged = await chargeTokens(auth.user.userId, tokenCost, {

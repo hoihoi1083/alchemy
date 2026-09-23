@@ -5,6 +5,8 @@ import { useLocale } from "@/components/LocaleProvider";
 import { useWizard } from "@/components/studio/WizardContext";
 import { UploadZone } from "@/components/UploadZone";
 import type { UserReferenceBrief } from "@/lib/user-reference-brief";
+import { InputLanguageHint } from "@/components/InputLanguageHint";
+import { useUnsupportedLanguageSoftGateFields } from "@/hooks/useInputLanguageGate";
 
 type ConceptDraft = {
   audience?: string;
@@ -64,6 +66,16 @@ export function ConceptWizardPanel({
   const [conceptCta, setConceptCta] = useState("");
   const [conceptVisualMetaphor, setConceptVisualMetaphor] = useState("");
   const [conceptPlanNote, setConceptPlanNote] = useState<string | null>(null);
+  const conceptLangGate = useUnsupportedLanguageSoftGateFields(
+    conceptIdea,
+    headline,
+    conceptAudience,
+    conceptPain,
+    conceptPromise,
+    conceptProof,
+    conceptCta,
+    conceptVisualMetaphor,
+  );
 
   const isConceptVideoOnly = workflowMode === "video-only";
 
@@ -112,6 +124,10 @@ export function ConceptWizardPanel({
   }
 
   async function analyzeConceptWithAi() {
+    if (!conceptLangGate.canProceed) {
+      setError(m.inputLanguage.generateBlocked);
+      return;
+    }
     setConceptPlanBusy(true);
     setConceptPlanNote(null);
     setError(null);
@@ -283,6 +299,12 @@ export function ConceptWizardPanel({
           className={fieldClass}
         />
       </label>
+      <InputLanguageHint
+        issue={conceptLangGate.issue}
+        severity="soft"
+        continued={conceptLangGate.continued}
+        onContinue={conceptLangGate.continueAnyway}
+      />
 
       {showHeadlineField ? (
         <label className="block space-y-1.5">
@@ -316,7 +338,9 @@ export function ConceptWizardPanel({
         <button
           type="button"
           onClick={() => void analyzeConceptWithAi()}
-          disabled={conceptPlanBusy || !conceptIdea.trim()}
+          disabled={
+            conceptPlanBusy || !conceptIdea.trim() || !conceptLangGate.canProceed
+          }
           className="rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-50"
         >
           {conceptPlanBusy ? m.wizard.conceptAnalyzeBusy : m.wizard.conceptAnalyzeBtn}

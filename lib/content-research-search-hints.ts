@@ -1,5 +1,6 @@
 import type { ContentPlatform, ContentResearchMediaFilter } from "@/lib/content-research-types";
 import { instagramHashtagCandidates } from "@/lib/justoneapi-platform-search";
+import { topicLooksChineseHan } from "@/lib/input-language";
 import { instagramSearchKeyword } from "@/lib/zh-simplified-to-traditional";
 
 export type ContentResearchSearchHintLabels = {
@@ -11,10 +12,6 @@ export type ContentResearchSearchHintLabels = {
   facebookKeyword: string;
   tiktokVideo: string;
 };
-
-function topicLooksCjk(topic: string): boolean {
-  return /[\u3040-\u30ff\u3400-\u9fff]/.test(topic.trim());
-}
 
 /** Actionable hint under the search box so users pick workable keywords per platform. */
 export function contentResearchSearchHint(
@@ -31,11 +28,13 @@ export function contentResearchSearchHint(
       const trimmed = topic.trim();
       const tags = instagramHashtagCandidates(trimmed);
       const converted = instagramSearchKeyword(trimmed).trim();
+      // Chinese Han only — Japanese kana must not trigger SC→TC / CJK hints.
+      const looksChinese = topicLooksChineseHan(trimmed);
       const showCjkConvert =
-        topicLooksCjk(trimmed) && converted.length > 0 && converted !== trimmed;
+        looksChinese && converted.length > 0 && converted !== trimmed;
 
       if (mediaFilter === "video") {
-        if (showCjkConvert || (topicLooksCjk(trimmed) && converted)) {
+        if (showCjkConvert || (looksChinese && converted)) {
           const preview = labels.igImageHashtagPreview(
             tags.length ? tags.map((t) => `#${t}`).join(" · ") : converted,
           );
@@ -46,7 +45,7 @@ export function contentResearchSearchHint(
 
       if (tags.length > 0 && trimmed) {
         const preview = labels.igImageHashtagPreview(tags.map((t) => `#${t}`).join(" · "));
-        if (topicLooksCjk(trimmed)) {
+        if (looksChinese) {
           return `${labels.igImageCjkSuggest} ${preview}`;
         }
         return `${labels.igImageHashtag} ${preview}`;

@@ -11,6 +11,21 @@ export const zhTw = {
     "zh-cn": "简体中文",
     "zh-tw": "繁體中文（台灣）",
   },
+  inputLanguage: {
+    title: "目前支援：英文與中文",
+    unsupportedBody: (script: string) =>
+      `偵測到${script}。請改用英文或中文（簡體／繁體）再繼續，研究與廣告效果會更穩定。`,
+    scriptJapanese: "日文",
+    scriptKorean: "韓文",
+    scriptOther: "暫未支援的語言",
+    continueAnyway: "仍然繼續",
+    voiceNeedScript: "請先輸入旁白稿再試聽。",
+    voiceNeedEnglish:
+      "此音色為英文。請用英文寫旁白（純中文稿與此音色不相符）。",
+    voiceNeedChinese:
+      "此音色為中文。請用中文寫旁白，或切換到英文音色。",
+    generateBlocked: "請先修正標示欄位的語言，再繼續。",
+  },
   auth: {
     signIn: "登入",
     signInTab: "登入",

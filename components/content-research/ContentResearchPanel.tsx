@@ -35,6 +35,8 @@ import { studioHref } from "@/lib/promotion-mode";
 import type { PromptMarket } from "@/lib/prompt-variables";
 import type { PromotionMode } from "@/lib/promotion-mode";
 import type { WorkflowMode } from "@/lib/workflow-mode";
+import { InputLanguageHintInline } from "@/components/InputLanguageHint";
+import { useUnsupportedLanguageSoftGateFields } from "@/hooks/useInputLanguageGate";
 
 const LAST_RESEARCH_AT_KEY = "alchemy:last-research-at";
 const RESEARCH_CLIENT_COOLDOWN_MS = 3_000;
@@ -119,6 +121,7 @@ export function ContentResearchPanel({
     facebookKeyword: cr.platformSearchHintFacebook,
     tiktokVideo: cr.platformSearchHintTiktok,
   });
+  const langGate = useUnsupportedLanguageSoftGateFields(topic, promoteProduct);
 
   useEffect(() => {
     if (!(researchPlatforms as readonly string[]).includes(platform)) {
@@ -152,6 +155,10 @@ export function ContentResearchPanel({
     const trimmed = topic.trim();
     if (!trimmed) {
       setError(cr.topicRequired);
+      return;
+    }
+    if (!langGate.canProceed) {
+      setError(m.inputLanguage.generateBlocked);
       return;
     }
     if (platformMismatch) {
@@ -537,6 +544,11 @@ export function ContentResearchPanel({
           {searchHint}
         </p>
       ) : null}
+      <InputLanguageHintInline
+        issue={langGate.issue}
+        continued={langGate.continued}
+        onContinue={langGate.continueAnyway}
+      />
 
       {promotionMode === "physical" && !hidePromoteProduct ? (
         <div className="space-y-1.5">
@@ -568,7 +580,7 @@ export function ContentResearchPanel({
       <button
         type="button"
         onClick={() => void runResearch()}
-        disabled={busy || Boolean(platformMismatch)}
+        disabled={busy || Boolean(platformMismatch) || !langGate.canProceed}
         className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-white disabled:opacity-50 ${
           violet
             ? "w-full bg-violet-600 hover:bg-violet-700"

@@ -57,6 +57,7 @@ import {
 	promptMarketFromLocale,
 	voiceoverLocaleFromUiLocale,
 } from "@/lib/copy-locale";
+import { softGateAllowsProceed, studioCopyLanguageFields } from "@/lib/input-language";
 import {
   postAddBgm,
   postAnalyzeBrand,
@@ -6025,6 +6026,20 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 	async function generateImage(): Promise<string | null> {
     setError(null);
     setUseOriginalImage(false);
+
+    const copyFields = studioCopyLanguageFields({
+      product,
+      business,
+      headline,
+      subline,
+      offer,
+      promptExtra,
+      conceptIdea,
+    });
+    if (!softGateAllowsProceed(...copyFields)) {
+      setError(m.inputLanguage.generateBlocked);
+      return null;
+    }
 
 		const hasExistingImageOutput = Boolean(
 			imageUrlRef.current ||
@@ -12350,6 +12365,20 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		) {
       setVideoCreativeMode("product-promo");
       setError(m.errors.conceptVideoAssistantBlocked);
+      return;
+    }
+
+    const copyFields = studioCopyLanguageFields({
+      product,
+      business,
+      headline,
+      subline,
+      offer,
+      promptExtra,
+      conceptIdea,
+    });
+    if (!softGateAllowsProceed(...copyFields)) {
+      setError(m.inputLanguage.generateBlocked);
       return;
     }
 

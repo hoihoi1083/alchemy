@@ -24,6 +24,10 @@ import {
 import { requireAppUser, trackUsage } from "@/lib/require-app-user";
 import { persistAndDurablize } from "@/lib/storage/durable-media";
 import {
+  getVoiceoverInputIssue,
+  voiceoverLanguageRejectPayload,
+} from "@/lib/input-language";
+import {
   HEYGEN_AVATAR_IV_ENDPOINT,
   type UgcPresenterTalkingStyle,
   ugcPresenterMotionHint,
@@ -182,6 +186,16 @@ export async function POST(request: Request) {
       { error: "Ad pack voiceover script or a voice preview is required." },
       { status: 400 },
     );
+  }
+
+  // Gate TTS text before any charge / upstream synthesis.
+  if (!speechUrl && script) {
+    const langReject = voiceoverLanguageRejectPayload(
+      getVoiceoverInputIssue(script, locale),
+    );
+    if (langReject) {
+      return NextResponse.json(langReject, { status: 400 });
+    }
   }
 
   const plan = await getUserPlan(auth.user.userId);

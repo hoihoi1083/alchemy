@@ -11,6 +11,21 @@ export const zh = {
 		"zh-cn": "简体中文",
 		"zh-tw": "繁體中文（台灣）",
 	},
+	inputLanguage: {
+		title: "目前支援：英文同中文",
+		unsupportedBody: (script: string) =>
+			`偵測到${script}。請改用英文或中文（簡體／繁體）再繼續，研究同廣告效果會更穩定。`,
+		scriptJapanese: "日文",
+		scriptKorean: "韓文",
+		scriptOther: "暫未支援嘅語言",
+		continueAnyway: "仍然繼續",
+		voiceNeedScript: "請先輸入旁白稿再試聽。",
+		voiceNeedEnglish:
+			"呢個聲線係英文。請用英文寫旁白（淨係中文稿會唔啱呢個聲）。",
+		voiceNeedChinese:
+			"呢個聲線係中文。請用中文寫旁白，或者轉去英文聲線。",
+		generateBlocked: "請先修正標示欄位嘅語言，再繼續。",
+	},
 	auth: {
 		signIn: "登入",
 		signInTab: "登入",
