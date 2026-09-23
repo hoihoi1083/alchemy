@@ -4872,6 +4872,26 @@ socialDripFitTitle: "這個格式可以／不可以做什麼",
       name: "生活方式產品",
       description: "產品極前景 + 人物 + 彩虹光 + 數字賣點",
     },
+    "product-hold-poster": {
+      name: "手持產品海報",
+      description: "人物手持產品對鏡 — 白棚、痛點？態度 標題",
+    },
+    "mold-word-poster": {
+      name: "捏字趣味海報",
+      description: "黏土／公仔風趣味大字做主角 — 產品或概念字梗場景",
+    },
+    "deconstruct-archive-poster": {
+      name: "解構檔案海報",
+      description: "上半產品實拍 · 下半同款水彩技術拆解圖",
+    },
+    "orbit-type-poster": {
+      name: "環繞字海報",
+      description: "主體置中 — 動能字環繞／穿隧／穿後，白棚",
+    },
+    "cloche-reveal-poster": {
+      name: "餐罩揭曉海報",
+      description: "銀盤 + 餐罩 — 成分或隱喻，再揭產品或品牌",
+    },
     "brand-fit": {
       name: "品牌風格分析",
       description: "跟網站/社交品牌 DNA 出廣告",

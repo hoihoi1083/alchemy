@@ -268,11 +268,6 @@ import {
 	clampBulletProductElevateDurationSec,
 } from "@/lib/bullet-product-elevate";
 import {
-	BULLET_PRODUCT_ELEVATE_DURATION_SEC,
-	buildBulletProductElevateVideoPrompt,
-	clampBulletProductElevateDurationSec,
-} from "@/lib/bullet-product-elevate";
-import {
 	CREATIVE_MOTION_DURATION_SEC,
 	buildCreativeMotionVideoPrompt,
 	parseCreativeMotionSchemePick,
@@ -481,7 +476,6 @@ import {
 } from "@/lib/content-research-promote";
 import { buildResearchR2vPrompt } from "@/lib/research-r2v-prompt";
 import { buildH3ReferenceReelProductPrompt } from "@/lib/h3-product-swap-prompt";
-import { buildH3ReferenceReelProductPrompt } from "@/lib/h3-product-swap-prompt";
 import { wizardPromoteName } from "@/lib/wizard-promote-name";
 import {
 	evaluateProceedToImageGate,
@@ -570,10 +564,6 @@ import {
   DEFAULT_IMAGE_OUTPUT_MODE,
   type ImageOutputMode,
 } from "@/lib/image-output-mode";
-import {
-	legacyImageOutputModeToCarousel,
-	resolveEffectiveImageOutputMode,
-} from "@/lib/carousel-output";
 import {
 	legacyImageOutputModeToCarousel,
 	resolveEffectiveImageOutputMode,
@@ -1558,10 +1548,6 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 	const referenceImageAnalyzeIncludesStoryboard =
 		isStoryboardOutput &&
 		!(useReferenceVideo && referenceAd && referenceIsVideo && shouldAnalyzeReferenceVideo);
-	/** Image still plan when storyboard + research cover — reel path owns plan when MP4 present. */
-	const referenceImageAnalyzeIncludesStoryboard =
-		isStoryboardOutput &&
-		!(useReferenceVideo && referenceAd && referenceIsVideo && shouldAnalyzeReferenceVideo);
 	const isVideoWorkflow =
 		workflowMode === "video-only" || workflowMode === "combined";
 	const isImageWorkflow =
@@ -1771,7 +1757,6 @@ export function useStudioWizard(promotionMode: PromotionMode) {
         artStyle: artStyleId,
 				imageTextMode,
 				compositionPreset: compositionPresetId,
-				promotionMode,
       }),
     [
       product,
@@ -1787,7 +1772,6 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			compositionPresetId,
 			brandKit,
 			brandProfile,
-			promotionMode,
     ],
   );
 
@@ -2002,7 +1986,6 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		storyboardSceneCount,
 		videoSettings,
 		workflowMode,
-		workflowMode,
 		artStyleId,
 		subjectFraming,
 		offer,
@@ -2029,7 +2012,6 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		referenceImageAnalyzeIncludesStoryboard,
 		storyboardSceneCount,
 		videoSettings,
-		workflowMode,
 		workflowMode,
 		artStyleId,
 		subjectFraming,
@@ -3169,7 +3151,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			| "product-lifestyle"
 			| "product-hold-poster"
 			| "mold-word-poster"
-			| "deconstruct-archive-poster",
+			| "deconstruct-archive-poster"
+			| "orbit-type-poster"
+			| "cloche-reveal-poster",
 	) {
 		if (workflowMode === "video-only") setWorkflowMode("image-only");
 		selectVisualStyle(styleId);
@@ -3203,6 +3187,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			| "product-hold-poster"
 			| "mold-word-poster"
 			| "deconstruct-archive-poster"
+			| "orbit-type-poster"
+			| "cloche-reveal-poster"
 			| "storyboard"
 			| "reference"
 			| "ugc-presenter"
@@ -3289,9 +3275,6 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		}
 		if (path === "product-hold-poster") {
 			applyLockedImagePosterStyle("product-hold-poster");
-			setSubjectFraming((prev) =>
-				prev === "product-only" || prev === "no-people" ? "auto" : prev,
-			);
 			return;
 		}
 		if (path === "mold-word-poster") {
@@ -3300,6 +3283,14 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		}
 		if (path === "deconstruct-archive-poster") {
 			applyLockedImagePosterStyle("deconstruct-archive-poster");
+			return;
+		}
+		if (path === "orbit-type-poster") {
+			applyLockedImagePosterStyle("orbit-type-poster");
+			return;
+		}
+		if (path === "cloche-reveal-poster") {
+			applyLockedImagePosterStyle("cloche-reveal-poster");
 			return;
 		}
     if (path === "model") {
@@ -3349,6 +3340,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			| "material-letters"
 			| "type-interaction"
 			| "mold-word-poster"
+			| "orbit-type-poster"
+			| "cloche-reveal-poster"
 			| "remap",
 	) {
     setError(null);
@@ -3379,7 +3372,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			path === "screen-break" ||
 			path === "material-letters" ||
 			path === "type-interaction" ||
-			path === "mold-word-poster"
+			path === "mold-word-poster" ||
+			path === "orbit-type-poster" ||
+			path === "cloche-reveal-poster"
 		) {
 			const styleId = path === "designed" ? "designed-poster" : path;
 			selectVisualStyle(styleId);
@@ -3549,13 +3544,6 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			setStoryboardTrimDuration(
 				def.duration as typeof storyboardTrimDuration,
 			);
-		}
-		if (def.visualStyleId === "explosion-unbox") {
-			const pack = prefillExplosionUnboxFields();
-			setConceptIdea(pack.conceptIdea);
-			setCreativeVideoBrief(pack.creativeVideoBrief);
-			setVideoPrompt(pack.videoPrompt);
-			setVideoPromptPlanNote(m.wizard.explosionUnbox.planNote);
 		}
 		if (def.visualStyleId === "explosion-unbox") {
 			const pack = prefillExplosionUnboxFields();
@@ -4210,11 +4198,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			if (contentResearchApplyRef) {
 				fd.set("research_adapted", "1");
 			} else {
-				if (contentResearchApplyRef) {
-				fd.set("research_adapted", "1");
-			} else {
 				fd.set("storyboard_recipe", storyboardRecipeId);
-			}
 			}
       fd.set("prompt_market", promptMarket);
       fd.set("subject_framing", subjectFraming);
@@ -4728,20 +4712,6 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				const nextDur = allowed.has(String(s.duration))
 					? (String(s.duration) as "6" | "8")
 					: String(WET_GLASS_REVEAL_DURATION_SEC);
-				return {
-					...s,
-					duration: nextDur as VideoSettings["duration"],
-					autoSecondFrame: false,
-					motionStyle: "slow-push",
-					videoEngine: "minimax-h3",
-				};
-			});
-		} else if (mode === "magazine-cover-morph") {
-			setVideoSettings((s: VideoSettings) => {
-				const allowed = new Set(["6", "8"]);
-				const nextDur = allowed.has(String(s.duration))
-					? (String(s.duration) as "6" | "8")
-					: String(MAGAZINE_COVER_MORPH_DURATION_SEC);
 				return {
 					...s,
 					duration: nextDur as VideoSettings["duration"],
@@ -6093,35 +6063,6 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			if (blockIfCannotAfford(imageCost)) return null;
 		}
 
-		// Preflight image job cost before any fal call.
-		{
-			const isStoryboard =
-				workflowMode === "combined" || isStoryboardOutput;
-			const out = effectiveImageOutputMode;
-			const imageCost = estimateImageJobTokens({
-				mode: isStoryboard
-					? "storyboard"
-					: out === "teaching-carousel" || out === "carousel"
-						? "teaching_carousel"
-						: out === "ab"
-							? "ab"
-							: out === "campaign"
-								? "campaign"
-								: "single",
-				sceneCount: isStoryboard
-					? estimateStoryboardSceneCount()
-					: out === "teaching-carousel" || out === "carousel"
-						? referenceCarouselSlideCount
-						: undefined,
-				numImages:
-					out === "ab" ? 2 : out === "campaign" ? 3 : 1,
-				passesPerScene: isStoryboard
-					? storyboardImagePassesPerScene()
-					: 1,
-			});
-			if (blockIfCannotAfford(imageCost)) return null;
-		}
-
     if (usesCompositor) {
       if (!headline.trim()) {
         setError(m.errors.needHeadline);
@@ -6825,13 +6766,6 @@ export function useStudioWizard(promotionMode: PromotionMode) {
       fd.set("workflow_mode", workflowMode);
 			fd.set("promotion_mode", promotionMode);
 			fd.set("image_text_mode", imageTextMode);
-			fd.set("type_force_dialect", typeForceDialectPick);
-			fd.set("spatial_layout_dialect", spatialLayoutDialectPick);
-			fd.set("photo_doodle_dialect", photoDoodleDialectPick);
-			fd.set("light_trail_dialect", lightTrailDialectPick);
-			fd.set("screen_break_dialect", screenBreakDialectPick);
-			fd.set("material_letters_dialect", materialLettersDialectPick);
-			fd.set("type_interaction_dialect", typeInteractionDialectPick);
 			fd.set("type_force_dialect", typeForceDialectPick);
 			fd.set("spatial_layout_dialect", spatialLayoutDialectPick);
 			fd.set("photo_doodle_dialect", photoDoodleDialectPick);
@@ -9138,7 +9072,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		fd.set("duration", String(Math.min(8, Math.max(5, durationSec))));
 		fd.set("aspect_ratio", effectiveImageAspectRatio);
 		fd.set("generate_audio", "false");
-		fd.set("motion_strength", String(WEB_BOUNDARY_BREAK_MOTION_STRENGTH));
+		fd.set("motion_strength", "72");
 		fd.set("negative_prompt", negativePrompt);
 		fd.set("avoid_on_screen_text", "false");
 		fd.set("fast", "false");
@@ -10208,7 +10142,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			fd.set("workflow_mode", workflowMode);
 			fd.set("promotion_mode", promotionMode);
 			fd.set("image_text_mode", "integrated");
-			fd.set("aspect_ratio", "16:9");
+			fd.set("aspect_ratio", "3:4");
 			fd.set("num_images", "1");
 			fd.set("image_output_mode", "single");
 			fd.set("social_frame_break", "1");
@@ -10220,11 +10154,6 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 				fd,
 				m.wizard.socialFrameNeedKeyframe,
 			);
-			// Product SKU → Image 2 so stills lock held packshot (not Pikachu motion DNA).
-			if (promotionMode !== "concept" && packagingPhoto) {
-				fd.set("style_reference_image", packagingPhoto);
-				fd.set("social_frame_has_product_sku", "1");
-			}
 
 			const res = await billingFetch("/api/generate-image", {
 				method: "POST",
@@ -10276,6 +10205,8 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 					: m.wizard.socialFrameNeedProductSku,
 			);
 		}
+		const charFile = await resolveIdentityHeroFile();
+		if (!charFile) throw new Error(m.wizard.socialFrameNeedKeyframe);
 
 		const schemeLabel =
 			m.wizard.socialFrameSchemes[scheme]?.title ?? scheme;
@@ -10293,18 +10224,10 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			videoSettings.duration,
 		);
 		const hasProductSku = !conceptMode && Boolean(packagingPhoto);
-
-		// Hybrid (Naruto remake path):
-		// 1) Bake character(+SKU) into a full IG start plate
-		// 2) H3 R2V with that PLATE as Image 1 + motion-ref as Video 1
-		//    (raw headshot + Pikachu video = identity theft; plate lock fixes it)
-		const startUrl = await generateSocialFrameBreakKeyframe(scheme, "start");
-		socialFrameStillUrlRef.current = startUrl;
-		setImageUrl(startUrl);
-		imageUrlRef.current = startUrl;
-		setImageVariantUrls([startUrl]);
-		setSelectedVariantIndex(0);
-
+		let logoFile: File | null = null;
+		if (brandKit.logoUrl?.trim()) {
+			logoFile = await fileFromImageUrl(brandKit.logoUrl.trim());
+		}
 		const r2vPrompt = buildSocialFrameBreakReferenceVideoPrompt({
 			scheme,
 			product: subject || "the character",
@@ -10315,7 +10238,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			conceptMode,
 			durationSec,
 			hasProductSku,
-			hasLogo: Boolean(brandKit.logoUrl?.trim()),
+			hasLogo: Boolean(logoFile),
 			plateAsImage1: false,
 		});
 		if (videoPrompt.trim() !== r2vPrompt) setVideoPrompt(r2vPrompt);
@@ -10332,160 +10255,160 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		} catch {
 			motionFile = null;
 		}
-
-		if (motionFile) {
-			const plateFile = await fileFromImageUrl(startUrl);
-			if (plateFile) {
-				const fd = new FormData();
-				fd.set("mode", "reference");
-				fd.set("promotion_mode", promotionMode);
-				fd.set("prompt", seedancePromptForGenerate(r2vPrompt));
-				fd.set("resolution", "480p");
-				fd.set("duration", String(durationSec));
-				fd.set("aspect_ratio", "16:9");
-				fd.set(
-					"motion_strength",
-					String(socialFrameBreakMotionStrength(scheme)),
-				);
-				fd.set(
-					"negative_prompt",
-					`${negativePrompt}, ${SOCIAL_FRAME_BREAK_NEGATIVE}`,
-				);
-				fd.set("avoid_on_screen_text", "true");
-				fd.set("social_frame_break", "1");
-				fd.set("social_frame_break_scheme", scheme);
-				fd.set("product_name", subject);
-				fd.set("business", business.trim());
-				fd.set(
-					"ref_duration_sec",
-					String(SOCIAL_FRAME_BREAK_MOTION_REF_DURATION_SEC),
-				);
-				fd.append("reference_images", plateFile);
-				fd.append("reference_video", motionFile);
-
-				const h3Res = await billingFetch("/api/generate-minimax-h3", {
-					method: "POST",
-					body: fd,
-				});
-				const h3Data = await readGenerateJson(h3Res);
-				const h3Url =
-					typeof h3Data.videoUrl === "string"
-						? h3Data.videoUrl.trim()
-						: "";
-				if (
-					h3Res.status === 401 ||
-					h3Res.status === 402 ||
-					h3Res.status === 403
-				) {
-					throw new Error(
-						(typeof h3Data.error === "string" && h3Data.error) ||
-							m.errors.videoFailed,
-					);
-				}
-				if (h3Res.ok && h3Url) {
-					notifyCreditBalance(readCreditBalanceFromResponse(h3Data));
-					setBgmNote(m.wizard.socialFrameKeepNativeAudioNote);
-					const pathNote = wizardVideoReadyExtraNote(h3Data);
-					setVideoNote(
-						[
-							m.wizard.socialFrameHint,
-							schemeLabel,
-							m.wizard.videoEngineMinimaxH3,
-							m.wizard.socialFrameKeepNativeAudioNote,
-							pathNote,
-							typeof h3Data.note === "string"
-								? h3Data.note
-								: undefined,
-						]
-							.filter(Boolean)
-							.join(" · "),
-					);
-					return h3Url;
-				}
-			}
+		if (!motionFile) {
+			throw new Error(m.wizard.socialFrameNeedMotionRef);
 		}
 
-		// Fallback: start→end still morph if motion-ref / R2V unavailable.
-		const morphPrompt = buildSocialFrameBreakVideoPrompt({
-			scheme,
-			product: subject || "the character",
-			business: business.trim(),
-			headline: headline.trim() || product.trim() || conceptIdea.trim(),
-			subline: subline.trim(),
-			promptExtra: effectivePromptExtra(),
-			conceptMode,
-			durationSec,
-			hasProductSku,
-		});
-		if (videoPrompt.trim() !== morphPrompt) setVideoPrompt(morphPrompt);
-		const endUrl = await generateSocialFrameBreakKeyframe(
-			scheme,
-			"end",
-			startUrl,
-		);
-		socialFrameEndUrlRef.current = endUrl;
-		setImageVariantUrls([startUrl, endUrl].filter(Boolean));
-
-		const morphFd = new FormData();
-		morphFd.set("mode", "image");
-		morphFd.set("promotion_mode", promotionMode);
-		morphFd.set("prompt", seedancePromptForGenerate(morphPrompt));
-		morphFd.set("resolution", "480p");
-		morphFd.set("duration", String(durationSec));
-		morphFd.set("aspect_ratio", "16:9");
-		morphFd.set(
+		const fd = new FormData();
+		fd.set("mode", "reference");
+		fd.set("promotion_mode", promotionMode);
+		fd.set("prompt", seedancePromptForGenerate(r2vPrompt));
+		fd.set("resolution", "480p");
+		fd.set("duration", String(durationSec));
+		fd.set("aspect_ratio", "16:9");
+		fd.set(
 			"motion_strength",
 			String(socialFrameBreakMotionStrength(scheme)),
 		);
-		morphFd.set(
+		fd.set(
 			"negative_prompt",
 			`${negativePrompt}, ${SOCIAL_FRAME_BREAK_NEGATIVE}`,
 		);
-		morphFd.set("avoid_on_screen_text", "true");
-		morphFd.set("social_frame_break", "1");
-		morphFd.set("social_frame_break_scheme", scheme);
-		morphFd.set("product_name", subject);
-		morphFd.set("business", business.trim());
-		morphFd.set("image_start_url", startUrl);
-		morphFd.set("image_end_url", endUrl);
-
-		const fx = await generateStartEndFxVideo({
-			fd: morphFd,
-			recipeDurationSec: durationSec,
-			keepNativeAudio: true,
-			mixBgmOnSeedanceFallback: true,
-		});
-		const pathNote = wizardVideoReadyExtraNote(fx.data);
-		const h3Reason =
-			typeof fx.data.h3FallbackReason === "string"
-				? fx.data.h3FallbackReason
-				: "";
-		if (fx.usedSeedanceFallback) {
-			setBgmNote(m.wizard.bgmFallbackNote);
-		} else {
-			setBgmNote(m.wizard.socialFrameKeepNativeAudioNote);
+		fd.set("avoid_on_screen_text", "true");
+		fd.set("social_frame_break", "1");
+		fd.set("social_frame_break_scheme", scheme);
+		fd.set("product_name", subject);
+		fd.set("business", business.trim());
+		fd.set(
+			"ref_duration_sec",
+			String(SOCIAL_FRAME_BREAK_MOTION_REF_DURATION_SEC),
+		);
+		fd.append("reference_images", charFile);
+		if (hasProductSku && packagingPhoto) {
+			fd.append("reference_images", packagingPhoto);
 		}
+		if (logoFile) {
+			fd.append("reference_images", logoFile);
+		}
+		fd.append("reference_video", motionFile);
+
+		const h3Res = await billingFetch("/api/generate-minimax-h3", {
+			method: "POST",
+			body: fd,
+		});
+		const h3Data = await readGenerateJson(h3Res);
+		const h3Url =
+			typeof h3Data.videoUrl === "string" ? h3Data.videoUrl.trim() : "";
+		if (
+			h3Res.status === 401 ||
+			h3Res.status === 402 ||
+			h3Res.status === 403
+		) {
+			throw new Error(
+				(typeof h3Data.error === "string" && h3Data.error) ||
+					m.errors.videoFailed,
+			);
+		}
+		if (!h3Res.ok || !h3Url) {
+			// Fallback: stills + image morph only if R2V fails hard.
+			const morphPrompt = buildSocialFrameBreakVideoPrompt({
+				scheme,
+				product: subject || "the character",
+				business: business.trim(),
+				headline:
+					headline.trim() || product.trim() || conceptIdea.trim(),
+				subline: subline.trim(),
+				promptExtra: effectivePromptExtra(),
+				conceptMode,
+				durationSec,
+			});
+			const startUrl = await generateSocialFrameBreakKeyframe(
+				scheme,
+				"start",
+			);
+			socialFrameStillUrlRef.current = startUrl;
+			const endUrl = await generateSocialFrameBreakKeyframe(
+				scheme,
+				"end",
+				startUrl,
+			);
+			socialFrameEndUrlRef.current = endUrl;
+			setImageVariantUrls([startUrl, endUrl].filter(Boolean));
+			setSelectedVariantIndex(0);
+			setImageUrl(startUrl);
+			imageUrlRef.current = startUrl;
+			const morphFd = new FormData();
+			morphFd.set("mode", "image");
+			morphFd.set("promotion_mode", promotionMode);
+			morphFd.set("prompt", seedancePromptForGenerate(morphPrompt));
+			morphFd.set("resolution", "480p");
+			morphFd.set("duration", String(durationSec));
+			morphFd.set("aspect_ratio", "16:9");
+			morphFd.set(
+				"motion_strength",
+				String(socialFrameBreakMotionStrength(scheme)),
+			);
+			morphFd.set(
+				"negative_prompt",
+				`${negativePrompt}, ${SOCIAL_FRAME_BREAK_NEGATIVE}`,
+			);
+			morphFd.set("avoid_on_screen_text", "true");
+			morphFd.set("social_frame_break", "1");
+			morphFd.set("image_start_url", startUrl);
+			morphFd.set("image_end_url", endUrl);
+			const fx = await generateStartEndFxVideo({
+				fd: morphFd,
+				recipeDurationSec: durationSec,
+				keepNativeAudio: true,
+				mixBgmOnSeedanceFallback: true,
+			});
+			const pathNote = wizardVideoReadyExtraNote(fx.data);
+			const h3Reason =
+				typeof fx.data.h3FallbackReason === "string"
+					? fx.data.h3FallbackReason
+					: typeof h3Data.error === "string"
+						? h3Data.error
+						: "";
+			setVideoNote(
+				[
+					m.wizard.socialFrameHint,
+					schemeLabel,
+					fx.usedSeedanceFallback
+						? [m.wizard.h3ToSeedanceFallbackNote, h3Reason]
+								.filter(Boolean)
+								.join(" — ")
+						: [
+								m.wizard.videoEngineMinimaxH3,
+								m.wizard.socialFrameKeepNativeAudioNote,
+							]
+								.filter(Boolean)
+								.join(" — "),
+					pathNote,
+					typeof fx.data.note === "string" ? fx.data.note : undefined,
+				]
+					.filter(Boolean)
+					.join(" · "),
+			);
+			return fx.videoUrl;
+		}
+
+		notifyCreditBalance(readCreditBalanceFromResponse(h3Data));
+		// Keep H3 native stereo / score — do not overwrite with library BGM.
+		setBgmNote(m.wizard.socialFrameKeepNativeAudioNote);
+		const pathNote = wizardVideoReadyExtraNote(h3Data);
 		setVideoNote(
 			[
 				m.wizard.socialFrameHint,
 				schemeLabel,
-				fx.usedSeedanceFallback
-					? [m.wizard.h3ToSeedanceFallbackNote, h3Reason]
-							.filter(Boolean)
-							.join(" — ")
-					: [
-							m.wizard.videoEngineMinimaxH3,
-							m.wizard.socialFrameKeepNativeAudioNote,
-						]
-							.filter(Boolean)
-							.join(" — "),
+				m.wizard.videoEngineMinimaxH3,
+				m.wizard.socialFrameKeepNativeAudioNote,
 				pathNote,
-				typeof fx.data.note === "string" ? fx.data.note : undefined,
+				typeof h3Data.note === "string" ? h3Data.note : undefined,
 			]
 				.filter(Boolean)
 				.join(" · "),
 		);
-		return fx.videoUrl;
+		return h3Url;
 	}
 
 	async function generateWetGlassRevealKeyframe(
@@ -11269,199 +11192,6 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		return fx.videoUrl;
 	}
 
-	async function generateMagazineCoverMorphKeyframe(
-		dialect: MagazineCoverMorphDialectId,
-		frame: "start" | "end",
-		startPlateUrl?: string,
-	): Promise<string> {
-		setVideoNote(
-			frame === "end"
-				? m.wizard.magazineCoverBuildingEnd
-				: m.wizard.magazineCoverBuildingStill,
-		);
-		setImageJobMeta({
-			kind: "image",
-			startedAt: Date.now(),
-			sceneCount: 1,
-		});
-		try {
-			const fd = new FormData();
-			fd.set("visual_style", visualStyleId);
-			fd.set("art_style", artStyleId);
-			if (brandProfile)
-				fd.set("brand_profile", JSON.stringify(brandProfile));
-			fd.set("brand_kit", JSON.stringify(brandKit));
-			fd.set(
-				"product_name",
-				promotionMode === "concept"
-					? effectivePromoteName ||
-							product.trim() ||
-							conceptIdea.trim()
-					: product.trim(),
-			);
-			fd.set("business", business.trim());
-			fd.set(
-				"headline",
-				headline.trim() || product.trim() || conceptIdea.trim(),
-			);
-			fd.set("subline", subline.trim());
-			fd.set("offer", offer.trim());
-			fd.set("prompt_market", promptMarket);
-			fd.set("subject_framing", subjectFraming);
-			fd.set("prompt_extra", effectivePromptExtra());
-			fd.set("workflow_mode", workflowMode);
-			fd.set("promotion_mode", promotionMode);
-			fd.set("image_text_mode", "integrated");
-			fd.set("aspect_ratio", "3:4");
-			fd.set("num_images", "1");
-			fd.set("image_output_mode", "single");
-			fd.set("magazine_cover_morph", "1");
-			fd.set("magazine_cover_morph_frame", frame);
-			fd.set("magazine_cover_morph_dialect", dialect);
-			if (frame === "end" && startPlateUrl)
-				fd.set("start_plate_url", startPlateUrl);
-			await bindIdentityHeroToKeyframeForm(
-				fd,
-				m.wizard.magazineCoverNeedKeyframe,
-			);
-
-			const res = await billingFetch("/api/generate-image", {
-				method: "POST",
-				body: fd,
-			});
-			const data = await readGenerateJson(res);
-			if (!res.ok)
-				throw new Error(
-					(data.error as string) || m.errors.polishFailed,
-				);
-			notifyCreditBalance(readCreditBalanceFromResponse(data));
-			const urls = (data.imageUrls as string[] | undefined) ?? [
-				data.imageUrl as string,
-			];
-			const applied = applyGeneratedImages(
-				urls,
-				data.endpoint as string | undefined,
-			);
-			if (!applied) throw new Error(m.errors.imageGenNoUrl);
-			return applied;
-		} finally {
-			setImageJobMeta(null);
-		}
-	}
-
-	async function makeMagazineCoverMorphVideo(): Promise<string> {
-		const dialect = resolveMagazineCoverMorphDialect({
-			pick: parseMagazineCoverMorphDialectPick(magazineCoverDialectPick),
-			product,
-			headline,
-			conceptIdea,
-		});
-		lastMagazineCoverDialectRef.current = dialect;
-		magazineCoverStillUrlRef.current = null;
-		magazineCoverEndUrlRef.current = null;
-		if (
-			!identityRecipeHeroReady({
-				promotionMode,
-				hasProductPhoto: hasProductPhotoLock,
-				hasConceptHero: hasConceptHeroLock,
-			})
-		) {
-			throw new Error(m.wizard.magazineCoverNeedKeyframe);
-		}
-		const startUrl = await generateMagazineCoverMorphKeyframe(
-			dialect,
-			"start",
-		);
-		magazineCoverStillUrlRef.current = startUrl;
-		const endUrl = await generateMagazineCoverMorphKeyframe(
-			dialect,
-			"end",
-			startUrl,
-		);
-		magazineCoverEndUrlRef.current = endUrl;
-		const pair = [startUrl, endUrl].filter(Boolean);
-		if (pair.length) {
-			setImageVariantUrls(pair);
-			setSelectedVariantIndex(0);
-			setImageUrl(startUrl);
-			imageUrlRef.current = startUrl;
-		}
-		const dialectLabel =
-			m.wizard.magazineCoverDialects[dialect]?.title ?? dialect;
-		setVideoNote(
-			`${m.wizard.magazineCoverAnimatingCard} · ${dialectLabel}`,
-		);
-		const subject =
-			promotionMode === "concept"
-				? effectivePromoteName ||
-					product.trim() ||
-					conceptIdea.trim() ||
-					business.trim()
-				: product.trim() || business.trim();
-		const durationSec = clampMagazineCoverMorphDurationSec(
-			videoSettings.duration,
-		);
-		const fxPrompt = buildMagazineCoverMorphVideoPrompt({
-			dialect,
-			product: subject || "the product",
-			business: business.trim(),
-			headline: headline.trim() || product.trim() || conceptIdea.trim(),
-			promptExtra: effectivePromptExtra(),
-			conceptMode: promotionMode === "concept",
-			durationSec,
-		});
-		if (videoPrompt.trim() !== fxPrompt) setVideoPrompt(fxPrompt);
-
-		const fd = new FormData();
-		fd.set("mode", "image");
-		fd.set("promotion_mode", promotionMode);
-		fd.set("prompt", seedancePromptForGenerate(fxPrompt));
-		fd.set("resolution", "480p");
-		fd.set("duration", String(durationSec));
-		fd.set("aspect_ratio", "9:16");
-		fd.set(
-			"motion_strength",
-			String(MAGAZINE_COVER_MORPH_MOTION_STRENGTH),
-		);
-		fd.set(
-			"negative_prompt",
-			`${negativePrompt}, ${MAGAZINE_COVER_MORPH_NEGATIVE}`,
-		);
-		fd.set("avoid_on_screen_text", "true");
-		fd.set("magazine_cover_morph", "1");
-		fd.set("magazine_cover_morph_dialect", dialect);
-		fd.set("product_name", subject);
-		fd.set("business", business.trim());
-		fd.set("image_start_url", startUrl);
-		fd.set("image_end_url", endUrl);
-
-		const fx = await generateStartEndFxVideo({
-			fd,
-			recipeDurationSec: durationSec,
-		});
-		const pathNote = wizardVideoReadyExtraNote(fx.data);
-		const h3Reason =
-			typeof fx.data.h3FallbackReason === "string"
-				? fx.data.h3FallbackReason
-				: "";
-		setVideoNote(
-			[
-				m.wizard.magazineCoverHint,
-				dialectLabel,
-				fx.usedSeedanceFallback
-					? [m.wizard.h3ToSeedanceFallbackNote, h3Reason]
-							.filter(Boolean)
-							.join(" — ")
-					: m.wizard.videoEngineMinimaxH3,
-				pathNote,
-				typeof fx.data.note === "string" ? fx.data.note : undefined,
-			]
-				.filter(Boolean)
-				.join(" · "),
-		);
-		return fx.videoUrl;
-	}
-
 	async function generateWebBoundaryBreakKeyframe(
 		scheme: WebBoundaryBreakSchemeId,
 		frame: "start" | "end",
@@ -11973,170 +11703,6 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		return fx.videoUrl;
 	}
 
-	async function generateBulletProductElevateKeyframe(
-		frame: "start" | "end",
-		startPlateUrl?: string,
-	): Promise<string> {
-		setVideoNote(
-			frame === "end"
-				? m.wizard.bulletProductElevateBuildingEnd
-				: m.wizard.bulletProductElevateBuildingStill,
-		);
-		setImageJobMeta({
-			kind: "image",
-			startedAt: Date.now(),
-			sceneCount: 1,
-		});
-		try {
-			const fd = new FormData();
-			fd.set("visual_style", visualStyleId);
-			fd.set("art_style", artStyleId);
-			if (brandProfile)
-				fd.set("brand_profile", JSON.stringify(brandProfile));
-			fd.set("brand_kit", JSON.stringify(brandKit));
-			fd.set(
-				"product_name",
-				promotionMode === "concept"
-					? effectivePromoteName ||
-							product.trim() ||
-							conceptIdea.trim()
-					: product.trim(),
-			);
-			fd.set("business", business.trim());
-			fd.set(
-				"headline",
-				headline.trim() || product.trim() || conceptIdea.trim(),
-			);
-			fd.set("subline", subline.trim());
-			fd.set("offer", offer.trim());
-			fd.set("prompt_market", promptMarket);
-			fd.set("subject_framing", subjectFraming);
-			fd.set("prompt_extra", effectivePromptExtra());
-			fd.set("workflow_mode", workflowMode);
-			fd.set("promotion_mode", promotionMode);
-			fd.set("image_text_mode", "textless");
-			fd.set("aspect_ratio", "9:16");
-			fd.set("num_images", "1");
-			fd.set("image_output_mode", "single");
-			fd.set("bullet_product_elevate", "1");
-			fd.set("bullet_product_elevate_frame", frame);
-			if (frame === "end" && startPlateUrl)
-				fd.set("start_plate_url", startPlateUrl);
-			await bindIdentityHeroToKeyframeForm(
-				fd,
-				m.wizard.bulletProductElevateNeedKeyframe,
-			);
-
-			const res = await fetch("/api/generate-image", {
-				method: "POST",
-				body: fd,
-			});
-			const data = await readGenerateJson(res);
-			if (!res.ok)
-				throw new Error(
-					(data.error as string) || m.errors.polishFailed,
-				);
-			notifyCreditBalance(readCreditBalanceFromResponse(data));
-			const urls = (data.imageUrls as string[] | undefined) ?? [
-				data.imageUrl as string,
-			];
-			const applied = applyGeneratedImages(
-				urls,
-				data.endpoint as string | undefined,
-			);
-			if (!applied) throw new Error(m.errors.imageGenNoUrl);
-			return applied;
-		} finally {
-			setImageJobMeta(null);
-		}
-	}
-
-	async function makeBulletProductElevateVideo(): Promise<string> {
-		bulletElevateStillUrlRef.current = null;
-		bulletElevateEndUrlRef.current = null;
-		if (
-			!identityRecipeHeroReady({
-				promotionMode,
-				hasProductPhoto: hasProductPhotoLock,
-				hasConceptHero: hasConceptHeroLock,
-			})
-		) {
-			throw new Error(m.wizard.bulletProductElevateNeedKeyframe);
-		}
-		const startUrl = await generateBulletProductElevateKeyframe("start");
-		bulletElevateStillUrlRef.current = startUrl;
-		const endUrl = await generateBulletProductElevateKeyframe(
-			"end",
-			startUrl,
-		);
-		bulletElevateEndUrlRef.current = endUrl;
-		const pair = [startUrl, endUrl].filter(Boolean);
-		if (pair.length) {
-			setImageVariantUrls(pair);
-			setSelectedVariantIndex(0);
-			setImageUrl(startUrl);
-			imageUrlRef.current = startUrl;
-		}
-		setVideoNote(m.wizard.bulletProductElevateAnimatingCard);
-		const subject =
-			promotionMode === "concept"
-				? effectivePromoteName ||
-					product.trim() ||
-					conceptIdea.trim() ||
-					business.trim()
-				: product.trim() || business.trim();
-		const durationSec = clampBulletProductElevateDurationSec(
-			videoSettings.duration,
-		);
-		const fxPrompt = buildBulletProductElevateVideoPrompt({
-			product: subject || "the product",
-			conceptMode: promotionMode === "concept",
-			durationSec,
-		});
-		if (videoPrompt.trim() !== fxPrompt) setVideoPrompt(fxPrompt);
-
-		const fd = new FormData();
-		fd.set("mode", "image");
-		fd.set("promotion_mode", promotionMode);
-		fd.set("prompt", seedancePromptForGenerate(fxPrompt));
-		fd.set("resolution", "480p");
-		fd.set("duration", String(durationSec));
-		fd.set("aspect_ratio", "9:16");
-		fd.set("motion_strength", "74");
-		fd.set("negative_prompt", negativePrompt);
-		fd.set("avoid_on_screen_text", "true");
-		fd.set("bullet_product_elevate", "1");
-		fd.set("product_name", subject);
-		fd.set("business", business.trim());
-		fd.set("image_start_url", startUrl);
-		fd.set("image_end_url", endUrl);
-
-		const fx = await generateStartEndFxVideo({
-			fd,
-			recipeDurationSec: durationSec,
-		});
-		const pathNote = wizardVideoReadyExtraNote(fx.data);
-		const h3Reason =
-			typeof fx.data.h3FallbackReason === "string"
-				? fx.data.h3FallbackReason
-				: "";
-		setVideoNote(
-			[
-				m.wizard.bulletProductElevateHint,
-				fx.usedSeedanceFallback
-					? [m.wizard.h3ToSeedanceFallbackNote, h3Reason]
-							.filter(Boolean)
-							.join(" — ")
-					: m.wizard.videoEngineMinimaxH3,
-				pathNote,
-				typeof fx.data.note === "string" ? fx.data.note : undefined,
-			]
-				.filter(Boolean)
-				.join(" · "),
-		);
-		return fx.videoUrl;
-	}
-
 	async function makeImageToVideo(
 		imageStartUrlOverride?: string,
 		promptOverride?: string,
@@ -12160,7 +11726,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 
     const plannedOnly =
       promotionMode === "concept" && isAiPlannedVideoStyle(visualStyleId);
-    if (plannedOnly && !videoPrompt.trim()) {
+    if (plannedOnly && !videoPrompt.trim() && !promptOverride?.trim()) {
       throw new Error(m.errors.creativeVideoPromptRequired);
     }
 		const defaultPrompt = buildWizardVideoPrompt(
@@ -12172,6 +11738,9 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			promptOverride?.trim() ||
 			videoPrompt.trim() ||
 			(plannedOnly ? "" : defaultPrompt);
+		if (promptOverride?.trim() && videoPrompt.trim() !== promptOverride.trim()) {
+			setVideoPrompt(promptOverride.trim());
+		}
     const fd = new FormData();
     fd.set("mode", "image");
 		fd.set("prompt", seedancePromptForGenerate(rawPrompt));
@@ -12600,11 +12169,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			if (researchAdaptedReplan) {
 				fd.set("research_adapted", "1");
 			} else {
-				if (contentResearchApplyRef) {
-				fd.set("research_adapted", "1");
-			} else {
 				fd.set("storyboard_recipe", storyboardRecipeId);
-			}
 			}
 			fd.set("prompt_market", promptMarket);
 			fd.set("subject_framing", subjectFraming);
@@ -13493,17 +13058,7 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 			setCarouselIntent(legacyCarousel.intent);
 			setReferenceCarouselSlideCount(legacyCarousel.slideCount);
 		} else {
-			const legacyCarousel = legacyImageOutputModeToCarousel(settings.imageOutputMode);
-		if (legacyCarousel) {
-			setImageOutputMode(legacyCarousel.mode);
-			setCarouselIntent(legacyCarousel.intent);
-			setReferenceCarouselSlideCount(legacyCarousel.slideCount);
-		} else {
 			setImageOutputMode(settings.imageOutputMode);
-			if (settings.carouselIntent) {
-				setCarouselIntent(settings.carouselIntent);
-			}
-		}
 			if (settings.carouselIntent) {
 				setCarouselIntent(settings.carouselIntent);
 			}
@@ -14586,8 +14141,6 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		setH3LogoMgSchemePick,
 		h3TriangleLightMgSchemePick,
 		setH3TriangleLightMgSchemePick,
-		h3TriangleLightMgSchemePick,
-		setH3TriangleLightMgSchemePick,
 		h3GlassTypeMgSchemePick,
 		setH3GlassTypeMgSchemePick,
 		h3DesignStudioMgSchemePick,
@@ -14643,20 +14196,6 @@ export function useStudioWizard(promotionMode: PromotionMode) {
 		setImpactPosterTonePick,
 		impactPosterEffectPick,
 		setImpactPosterEffectPick,
-		typeForceDialectPick,
-		setTypeForceDialectPick,
-		spatialLayoutDialectPick,
-		setSpatialLayoutDialectPick,
-		photoDoodleDialectPick,
-		setPhotoDoodleDialectPick,
-		lightTrailDialectPick,
-		setLightTrailDialectPick,
-		screenBreakDialectPick,
-		setScreenBreakDialectPick,
-		materialLettersDialectPick,
-		setMaterialLettersDialectPick,
-		typeInteractionDialectPick,
-		setTypeInteractionDialectPick,
 		typeForceDialectPick,
 		setTypeForceDialectPick,
 		spatialLayoutDialectPick,

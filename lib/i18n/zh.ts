@@ -6921,6 +6921,7 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
       igCaptionBadge: "IG 文案",
       moodOnlyBadge: "只作指引",
       typeBehindOnScreenPreview: "畫面嘅巨型字：{words}",
+      socialFrameOnScreenPreview: "畫面品牌 · 文案：{words}",
       typeBehindPunchHint:
         "身後只畫 1–2 個短詞 — 長標題會自動縮短。",
       productAssistBusy: "撰寫中…",
@@ -7044,6 +7045,21 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 			stylePickerProductLifestyleLabel: "生活方式產品",
 			stylePickerProductLifestyleDesc:
 				"產品極前景 + 人物 + 彩虹折射光 + 大標題與數字賣點。",
+			stylePickerProductHoldPosterLabel: "手持產品海報",
+			stylePickerProductHoldPosterDesc:
+				"人物手持產品對鏡 — 白棚、痛點？態度 大標題。",
+			stylePickerMoldWordPosterLabel: "捏字趣味海報",
+			stylePickerMoldWordPosterDesc:
+				"黏土／公仔風趣味大字做主角 — 產品置中或概念場景配合字梗。",
+			stylePickerDeconstructArchivePosterLabel: "解構檔案海報",
+			stylePickerDeconstructArchivePosterDesc:
+				"上半產品實拍 · 下半同款水彩技術拆解圖。",
+			stylePickerOrbitTypePosterLabel: "環繞字海報",
+			stylePickerOrbitTypePosterDesc:
+				"主體置中 — 粗體動能字環繞／穿隧／穿後，白棚。",
+			stylePickerClocheRevealPosterLabel: "餐罩揭曉海報",
+			stylePickerClocheRevealPosterDesc:
+				"銀盤 + 白手套餐罩 — 成分或隱喻，再揭產品或品牌。",
 			posterDialectAuto: "自動 · 最合適",
 			posterDialectTypeForceTitle: "受力類型",
 			posterDialectTypeForceHint:
@@ -7274,6 +7290,47 @@ stylePickerModelLabel: "模特兒佩戴／使用",
 					supportingLabel: "賣點（数字 + 短标签）",
 					supportingPlaceholder: "例如：\n30 小时續航\n1 年保修\n降噪",
 				},
+				"product-hold-poster": {
+					title: "手持產品：填寫會說話大標題",
+					body: "必須上傳產品（人手持）。標題=痛點？態度 短句。輔助=底部手寫 slogan。",
+					hookLabel: "會說話標題",
+					hookPlaceholder: "例如：延迟？拜拜 · 便攜？搞定",
+					supportingLabel: "手寫 slogan",
+					supportingPlaceholder: "短手寫標語（可選）",
+				},
+				"mold-word-poster": {
+					title: "捏字趣味：填寫趣味大字",
+					body: "標題=黏土／公仔風趣味大字（主角）。可選產品圖與大字置中。輔助=短品牌句。",
+					hookLabel: "趣味字／暱稱",
+					hookPlaceholder: "例如：土豆大王",
+					supportingLabel: "輔助／品牌短句",
+					supportingPlaceholder: "短輔助句（可選）",
+				},
+				"deconstruct-archive-poster": {
+					title: "解構檔案：填寫研究標題＋零件標註",
+					body: "必須上傳產品。標題=STUDY／DECONSTRUCTED 風格。輔助=一行一個零件短說明。",
+					hookLabel: "研究標題",
+					hookPlaceholder: "例如：PRODUCT / DECONSTRUCTED",
+					supportingLabel: "零件標註（一行一點）",
+					supportingPlaceholder:
+						"例如：\n外殼 — 磨砂防滑\n電池 — 全日續航\n晶片 — 快充 IC",
+				},
+				"orbit-type-poster": {
+					title: "環繞字：填寫動能環繞字",
+					body: "標題=環繞／穿隧／穿後的粗體字。可選產品／模特／logo 置中。輔助=短品牌句。",
+					hookLabel: "環繞字／標題",
+					hookPlaceholder: "例如：RISE UP · MOVE · FLOW",
+					supportingLabel: "輔助／品牌短句",
+					supportingPlaceholder: "短輔助句（可選）",
+				},
+				"cloche-reveal-poster": {
+					title: "餐罩揭曉：填寫揭曉主題",
+					body: "標題=揭曉主題。產品：成分→SKU；概念：隱喻→品牌。輔助=短品牌句。",
+					hookLabel: "揭曉主題",
+					hookPlaceholder: "例如：天然配方 · 工藝之內",
+					supportingLabel: "輔助／品牌短句",
+					supportingPlaceholder: "短輔助句（可選）",
+				},
 
 				brand: {
 					title: "呢個方向：重點係品牌風格",
@@ -7434,11 +7491,23 @@ stylePickerModelLabel: "模特兒佩戴／使用",
 				hookLabel: "巨型字",
 				hookPlaceholder: "例如：POWER  或  KEEP MOVING",
 			},
+			socialFrameCopyFocus: {
+				title: "品牌 + 文案由你改",
+				body: "商家名變成氣球/徽章品牌。標題變成 Instagram 文案。生成前隨時可改。",
+				hookLabel: "文案短句",
+				hookPlaceholder: "例如：用 Alchemy AI Lab 創作",
+			},
 			conceptTopicLabel: "主題／服務",
 			productPhotoTitle: "產品相片",
 			productPhotoHint: "清晰產品相 — 必須。會做短片入面嘅主體。",
 			productPhotoWithRefHint:
 				"必須 — 你嘅產品做 @Image1。參考 MP4 只提供運鏡／剪輯感覺。",
+			socialFrameCharacterTitle: "角色相",
+			socialFrameCharacterHint:
+				"必填 — 人物、吉祥物或形象（唔好淨係產品包）。成段彈出影片會鎖呢張臉/衫。Logo 經品牌套件印喺氣球。",
+			socialFrameProductSkuTitle: "產品相（SKU）",
+			socialFrameProductSkuHint:
+				"產品模式必填 — 清晰產品相。角色手持呢個 SKU；角色先係破框主角。",
 			neonIdentityPhotoTitle: "Logo／吉祥物（霓虹身份）",
 			neonIdentityPhotoHint:
 				"選填 — 將 Logo 或吉祥物放呢度，鎖定霓虹外形。亦可用品牌包 Logo。唔上傳就用通用霓虹符號。",

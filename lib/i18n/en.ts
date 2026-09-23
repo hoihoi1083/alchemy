@@ -7587,6 +7587,7 @@ export const en = {
 			igCaptionBadge: "IG caption",
 			moodOnlyBadge: "Mood only",
 			typeBehindOnScreenPreview: "On-screen giant type: {words}",
+			socialFrameOnScreenPreview: "On-screen brand · caption: {words}",
 			typeBehindPunchHint:
 				"Only 1–2 short punch words paint behind the cutout — long headlines are shortened automatically.",
 			productAssistBusy: "Writing…",
@@ -7719,6 +7720,21 @@ export const en = {
 			stylePickerProductLifestyleLabel: "Product lifestyle",
 			stylePickerProductLifestyleDesc:
 				"Product extreme front + model + rainbow light + big title and numeric selling points.",
+			stylePickerProductHoldPosterLabel: "Product hold poster",
+			stylePickerProductHoldPosterDesc:
+				"Person holds the product toward camera — white studio, punchy pain→attitude headline.",
+			stylePickerMoldWordPosterLabel: "Mold funny-word poster",
+			stylePickerMoldWordPosterDesc:
+				"Clay / vinyl 3D funny words as the hero — product centered, or a concept scene around the pun.",
+			stylePickerDeconstructArchivePosterLabel: "Deconstruct archive poster",
+			stylePickerDeconstructArchivePosterDesc:
+				"Top photoreal product · bottom technical watercolor explode of the same SKU on warm paper.",
+			stylePickerOrbitTypePosterLabel: "Orbit type poster",
+			stylePickerOrbitTypePosterDesc:
+				"Subject locked center — bold kinetic words orbit / tunnel / pass behind on white studio.",
+			stylePickerClocheRevealPosterLabel: "Cloche reveal poster",
+			stylePickerClocheRevealPosterDesc:
+				"Silver tray + white-glove dome — ingredients or metaphors, then product or brand reveal.",
 			posterDialectAuto: "Auto · best fit",
 			posterDialectTypeForceTitle: "Force dialect",
 			posterDialectTypeForceHint:
@@ -8049,6 +8065,47 @@ export const en = {
 					supportingPlaceholder:
 						"e.g.\n30 hours battery\n1 year warranty\nNoise cancellation",
 				},
+				"product-hold-poster": {
+					title: "For product hold: fill the talking headline",
+					body: "Upload the product (required — person must hold it). Hook = punchy pain→attitude headline (e.g. Latency? Bye-bye). Supporting = brush slogan at the bottom.",
+					hookLabel: "Talking headline",
+					hookPlaceholder: "e.g. Latency? Bye-bye · Compact? Portable",
+					supportingLabel: "Brush slogan",
+					supportingPlaceholder: "Short handwritten slogan (optional)",
+				},
+				"mold-word-poster": {
+					title: "For mold funny-word: fill the pun / nickname",
+					body: "Hook = the clay/vinyl 3D funny words (the hero). Optional product photo sits with the words. Supporting = small brand/support line.",
+					hookLabel: "Funny words / nickname",
+					hookPlaceholder: "e.g. 土豆大王 · Potato King",
+					supportingLabel: "Support / brand line",
+					supportingPlaceholder: "Short support line (optional)",
+				},
+				"deconstruct-archive-poster": {
+					title: "For deconstruct archive: fill study title + part callouts",
+					body: "Upload the product (required). Hook = STUDY / DECONSTRUCTED-style title. Supporting = one short part description per line for the explode diagram.",
+					hookLabel: "Study title",
+					hookPlaceholder: "e.g. PRODUCT / DECONSTRUCTED",
+					supportingLabel: "Part callouts (one per line)",
+					supportingPlaceholder:
+						"e.g.\nShell — matte grip\nBattery — all-day\nChip — fast charge",
+				},
+				"orbit-type-poster": {
+					title: "For orbit type: fill the kinetic orbit words",
+					body: "Hook = bold words that orbit / tunnel / pass behind the subject. Optional product/model/logo as the center lock. Supporting = small support line.",
+					hookLabel: "Orbit words / headline",
+					hookPlaceholder: "e.g. RISE UP · MOVE · FLOW",
+					supportingLabel: "Support / brand line",
+					supportingPlaceholder: "Short support line (optional)",
+				},
+				"cloche-reveal-poster": {
+					title: "For cloche reveal: fill the reveal theme",
+					body: "Hook = reveal theme / title on the still. Product path: ingredients → SKU. Concept: metaphors → brand. Supporting = small support line.",
+					hookLabel: "Reveal theme",
+					hookPlaceholder: "e.g. natural formula · inside the craft",
+					supportingLabel: "Support / brand line",
+					supportingPlaceholder: "Short support line (optional)",
+				},
 				brand: {
 					title: "For this direction: brand style comes first",
 					body: "Analyze your website/social when you can. Hook + supporting copy follow brand palette — not a pricing card.",
@@ -8214,12 +8271,24 @@ export const en = {
 				hookLabel: "Giant word(s)",
 				hookPlaceholder: "e.g. POWER  or  KEEP MOVING",
 			},
+			socialFrameCopyFocus: {
+				title: "Brand + caption you control",
+				body: "Business becomes the balloon/badge brand. Headline becomes the Instagram caption punch. Change them anytime before generate.",
+				hookLabel: "Caption punch",
+				hookPlaceholder: "e.g. Create with Alchemy AI Lab",
+			},
 			conceptTopicLabel: "Topic / service",
 			productPhotoTitle: "Product photo",
 			productPhotoHint:
 				"Clear product shot — required. This becomes the subject in the reel.",
 			productPhotoWithRefHint:
 				"Required — your product as @Image1. The reference MP4 only supplies motion/edit feel.",
+			socialFrameCharacterTitle: "Character photo",
+			socialFrameCharacterHint:
+				"Required — person, mascot, or figure (not a lone product packshot). Face/outfit locks for the whole pop-out clip. Logo goes on the balloon via Brand kit.",
+			socialFrameProductSkuTitle: "Product photo (SKU)",
+			socialFrameProductSkuHint:
+				"Required for product mode — clear product shot. Character holds this SKU; character stays the frame-breaker.",
 			neonIdentityPhotoTitle: "Logo / mascot (neon identity)",
 			neonIdentityPhotoHint:
 				"Optional — upload logo or mascot here to shape the neon object. Brand kit logo also works. Skip for generic neon marks.",
