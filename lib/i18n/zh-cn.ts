@@ -2036,7 +2036,7 @@ export const zhCn = {
       product: "例如：食品摄影感、白底、护肤品清新感、街头穿搭…",
       "dark-premium": "例如：手表奢华感、香水暗调、茶具金色高光…",
       "warm-shop": "例如：开张优惠、木枱小店、社区街坊感…",
-      "model-wear": "例如：男士沉稳风、窗边自然光、唔要价钱字样…",
+      "model-wear": "例如：男士沉稳风、窗边自然光、不要价钱字样…",
       "info-poster": "例如：美妆清新感、食品天然感、珠宝极简 pedestal…",
       "designed-poster": "例如：左上柔光、食欲场景、你填的标题＋标语、细圆章…",
       "parts-poster": "例如：深色棚拍、细引线、6 个标注、石墨色调…",
@@ -2176,7 +2176,7 @@ export const zhCn = {
     teachingCarouselProgressRendering: "生成轮播第 {current}/{total} 张…（全程约 2–4 分钟）",
     storyboardBriefLabel: "故事／风格要求（选填）",
     storyboardBriefPlaceholder:
-      "例如：似真拍摄、柔和光线；洗鼻器示范用法；唔要价钱；可以露手唔露样…",
+      "例如：似真拍摄、柔和光线；洗鼻器示范用法；不要价钱；可以露手不露样…",
     storyboardIntro:
       "AI 会按产品类型规划分镜（几个场景、每张图拍咩），再自动写 视频生成 @Image 分镜 prompt — 唔系固定手链模板。",
     storyboardGenerating: "规划分镜并生成场景图中…（约 2–5 分钟，视场景数量）",
