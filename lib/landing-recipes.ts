@@ -32,6 +32,7 @@ export const LANDING_RECIPE_IDS = [
   "product-hand-throw-scene-6s",
   "product-web-boundary-break-10s",
   "product-type-behind-cutout-8s",
+  "product-social-frame-break-10s",
   "product-wet-glass-reveal-6s",
   "product-torn-paper-reveal-6s",
   "product-swift-chroma-run-8s",
@@ -71,6 +72,7 @@ export const LANDING_RECIPE_IDS = [
   "concept-hand-throw-scene-6s",
   "concept-web-boundary-break-10s",
   "concept-type-behind-cutout-8s",
+  "concept-social-frame-break-10s",
   "concept-wet-glass-reveal-6s",
   "concept-torn-paper-reveal-6s",
   "concept-swift-chroma-run-8s",
@@ -323,6 +325,15 @@ export const LANDING_RECIPES: Record<LandingRecipeId, LandingRecipeDef> = {
     videoCreativeMode: "type-behind-cutout",
     duration: "8",
   },
+  "product-social-frame-break-10s": {
+    id: "product-social-frame-break-10s",
+    previewSrc: videoModeRecipePreview("social-frame-break"),
+    promotionMode: "physical",
+    workflowMode: "video-only",
+    visualStyleId: "product",
+    videoCreativeMode: "social-frame-break",
+    duration: "10",
+  },
   "product-wet-glass-reveal-6s": {
     id: "product-wet-glass-reveal-6s",
     previewSrc: videoModeRecipePreview("wet-glass-reveal"),
@@ -570,6 +581,15 @@ export const LANDING_RECIPES: Record<LandingRecipeId, LandingRecipeDef> = {
     videoCreativeMode: "type-behind-cutout",
     duration: "8",
   },
+  "concept-social-frame-break-10s": {
+    id: "concept-social-frame-break-10s",
+    previewSrc: videoModeRecipePreview("social-frame-break"),
+    promotionMode: "concept",
+    workflowMode: "video-only",
+    visualStyleId: "service-promo",
+    videoCreativeMode: "social-frame-break",
+    duration: "10",
+  },
   "concept-wet-glass-reveal-6s": {
     id: "concept-wet-glass-reveal-6s",
     previewSrc: videoModeRecipePreview("wet-glass-reveal"),
@@ -793,6 +813,7 @@ export function microContextForLandingRecipe(
     LANDING_RECIPES[recipe].videoCreativeMode === "hand-throw-scene" ||
     LANDING_RECIPES[recipe].videoCreativeMode === "web-boundary-break" ||
     LANDING_RECIPES[recipe].videoCreativeMode === "type-behind-cutout" ||
+    LANDING_RECIPES[recipe].videoCreativeMode === "social-frame-break" ||
     LANDING_RECIPES[recipe].videoCreativeMode === "wet-glass-reveal" ||
     LANDING_RECIPES[recipe].videoCreativeMode === "torn-paper-reveal" ||
     LANDING_RECIPES[recipe].videoCreativeMode === "swift-chroma-run" ||
@@ -812,6 +833,8 @@ export function microContextForLandingRecipe(
               ? "web_boundary_break"
             : mode === "type-behind-cutout"
               ? "type_behind_cutout"
+            : mode === "social-frame-break"
+              ? "social_frame_break"
             : mode === "wet-glass-reveal"
               ? "wet_glass_reveal"
             : mode === "torn-paper-reveal"

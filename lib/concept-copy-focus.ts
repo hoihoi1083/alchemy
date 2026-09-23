@@ -27,6 +27,11 @@ export type ConceptCopyFocusMap = {
   "material-letters": ConceptCopyFocusEntry;
   "type-interaction": ConceptCopyFocusEntry;
   "product-lifestyle": ConceptCopyFocusEntry;
+  "product-hold-poster": ConceptCopyFocusEntry;
+  "mold-word-poster": ConceptCopyFocusEntry;
+  "deconstruct-archive-poster": ConceptCopyFocusEntry;
+  "orbit-type-poster": ConceptCopyFocusEntry;
+  "cloche-reveal-poster": ConceptCopyFocusEntry;
   brand: ConceptCopyFocusEntry;
   pricing: ConceptCopyFocusEntry;
   website: ConceptCopyFocusEntry;
@@ -67,6 +72,16 @@ export function conceptCopyFocusKeyForStyle(
       return "type-interaction";
     case "product-lifestyle":
       return "product-lifestyle";
+    case "product-hold-poster":
+      return "product-hold-poster";
+    case "mold-word-poster":
+      return "mold-word-poster";
+    case "deconstruct-archive-poster":
+      return "deconstruct-archive-poster";
+    case "orbit-type-poster":
+      return "orbit-type-poster";
+    case "cloche-reveal-poster":
+      return "cloche-reveal-poster";
     case "brand-fit":
     case "brand-campaign":
       return "brand";
@@ -113,6 +128,11 @@ export function conceptCopyFieldEmphasis(
     case "type-interaction":
       return { hook: true, supporting: true, offer: false };
     case "product-lifestyle":
+    case "product-hold-poster":
+    case "mold-word-poster":
+    case "deconstruct-archive-poster":
+    case "orbit-type-poster":
+    case "cloche-reveal-poster":
       return { hook: true, supporting: true, offer: false };
     case "brand":
     case "website":

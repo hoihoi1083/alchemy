@@ -5,6 +5,11 @@ import {
   buildGamingCoverImagePrompt,
   buildJelly3dImagePrompt,
   buildMaterialLettersImagePrompt,
+  buildProductHoldPosterImagePrompt,
+  buildMoldWordPosterImagePrompt,
+  buildDeconstructArchivePosterImagePrompt,
+  buildOrbitTypePosterImagePrompt,
+  buildClocheRevealPosterImagePrompt,
   buildProductLifestyleImagePrompt,
   buildPromptVariables,
   buildSportsBigWordsImagePrompt,
@@ -63,6 +68,26 @@ describe("image poster prompt modes", () => {
       resolveImagePromptMode("product-lifestyle", "promo-ai"),
       "product-lifestyle",
     );
+    assert.equal(
+      resolveImagePromptMode("product-hold-poster", "promo-ai"),
+      "product-hold-poster",
+    );
+    assert.equal(
+      resolveImagePromptMode("mold-word-poster", "promo-ai"),
+      "mold-word-poster",
+    );
+    assert.equal(
+      resolveImagePromptMode("deconstruct-archive-poster", "promo-ai"),
+      "deconstruct-archive-poster",
+    );
+    assert.equal(
+      resolveImagePromptMode("orbit-type-poster", "promo-ai"),
+      "orbit-type-poster",
+    );
+    assert.equal(
+      resolveImagePromptMode("cloche-reveal-poster", "promo-ai"),
+      "cloche-reveal-poster",
+    );
   });
 
   it("builds prompts with style DNA keywords", () => {
@@ -91,6 +116,93 @@ describe("image poster prompt modes", () => {
 
     const lifestyle = buildProductLifestyleImagePrompt(vars);
     assert.match(lifestyle, /PRODUCT LIFESTYLE|EXTREME FOREGROUND/i);
+
+    const hold = buildProductHoldPosterImagePrompt(vars);
+    assert.match(hold, /PRODUCT-HOLD|TALKING PRODUCT-HOLD/i);
+    assert.match(hold, /FORCED PERSPECTIVE|HOLD|PRESENT/i);
+    assert.match(hold, /MANDATORY PERSON/i);
+
+    const mold = buildMoldWordPosterImagePrompt(
+      buildPromptVariables({
+        product: "",
+        headline: "土豆大王",
+        subline: "",
+        offer: "",
+        market: "hk",
+        framing: "auto",
+        artStyle: "realistic",
+      }),
+    );
+    assert.match(mold, /MOLD|CLAY FUNNY-WORD/i);
+    assert.match(mold, /WORDS ARE THE STAR|HERO WORDS/i);
+    assert.match(mold, /CONCEPT PATH|wordplay/i);
+
+    const archive = buildDeconstructArchivePosterImagePrompt(vars);
+    assert.match(archive, /DECONSTRUCT ARCHIVE/i);
+    assert.match(archive, /TOP HALF|BOTTOM HALF|50%/i);
+    assert.match(archive, /IDENTITY LOCK|SAME product/i);
+
+    const orbit = buildOrbitTypePosterImagePrompt(
+      buildPromptVariables({
+        product: "energy drink can",
+        business: "RUSH",
+        headline: "RISE UP",
+        subline: "ACTIVE NOISE",
+        offer: "",
+        market: "en",
+        framing: "auto",
+        artStyle: "realistic",
+        promotionMode: "physical",
+      }),
+    );
+    assert.match(orbit, /ORBIT TYPE/i);
+    assert.match(orbit, /CENTER|orbit|BEHIND/i);
+    assert.match(orbit, /PRODUCT PATH/i);
+
+    const orbitConcept = buildOrbitTypePosterImagePrompt(
+      buildPromptVariables({
+        product: "Alchemy mascot",
+        headline: "LESS PROMPT MORE CREATING",
+        subline: "",
+        offer: "",
+        market: "en",
+        framing: "auto",
+        artStyle: "realistic",
+        promotionMode: "concept",
+      }),
+    );
+    assert.match(orbitConcept, /CONCEPT PATH/i);
+    assert.match(orbitConcept, /logo|mascot|idea/i);
+
+    const cloche = buildClocheRevealPosterImagePrompt(
+      buildPromptVariables({
+        product: "serum bottle",
+        headline: "Natural formula",
+        subline: "",
+        offer: "",
+        market: "en",
+        framing: "auto",
+        artStyle: "realistic",
+        promotionMode: "physical",
+      }),
+    );
+    assert.match(cloche, /CLOCHE REVEAL/i);
+    assert.match(cloche, /SILVER|dome|tray/i);
+    assert.match(cloche, /PRODUCT PATH/i);
+
+    const clocheConcept = buildClocheRevealPosterImagePrompt(
+      buildPromptVariables({
+        product: "",
+        headline: "Alchemy AI Lab",
+        subline: "",
+        offer: "",
+        market: "en",
+        framing: "auto",
+        artStyle: "realistic",
+        promotionMode: "concept",
+      }),
+    );
+    assert.match(clocheConcept, /CONCEPT PATH|BRAND LOGO/i);
   });
 
   it("locks single still and planner policy", () => {
@@ -105,6 +217,11 @@ describe("image poster prompt modes", () => {
     assert.equal(isLockedSinglePosterStyle("material-letters"), true);
     assert.equal(isLockedSinglePosterStyle("type-interaction"), true);
     assert.equal(isLockedSinglePosterStyle("product-lifestyle"), false);
+    assert.equal(isLockedSinglePosterStyle("product-hold-poster"), true);
+    assert.equal(isLockedSinglePosterStyle("mold-word-poster"), true);
+    assert.equal(isLockedSinglePosterStyle("deconstruct-archive-poster"), true);
+    assert.equal(isLockedSinglePosterStyle("orbit-type-poster"), true);
+    assert.equal(isLockedSinglePosterStyle("cloche-reveal-poster"), true);
     assert.equal(shouldPlanSingleImageAd("gaming-cover"), true);
     assert.equal(shouldPlanSingleImageAd("sports-big-words"), true);
     assert.equal(shouldPlanSingleImageAd("jelly-3d"), false);
@@ -114,6 +231,11 @@ describe("image poster prompt modes", () => {
     assert.equal(shouldPlanSingleImageAd("light-trail"), false);
     assert.equal(shouldPlanSingleImageAd("screen-break"), false);
     assert.equal(shouldPlanSingleImageAd("product-lifestyle"), false);
+    assert.equal(shouldPlanSingleImageAd("product-hold-poster"), true);
+    assert.equal(shouldPlanSingleImageAd("mold-word-poster"), true);
+    assert.equal(shouldPlanSingleImageAd("deconstruct-archive-poster"), true);
+    assert.equal(shouldPlanSingleImageAd("orbit-type-poster"), true);
+    assert.equal(shouldPlanSingleImageAd("cloche-reveal-poster"), true);
   });
 
   it("paints designed-poster hook/tagline verbatim and does not invent slogans", () => {

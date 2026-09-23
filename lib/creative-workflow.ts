@@ -23,8 +23,11 @@ export type VideoCreativeMode =
   | "hand-throw-scene"
   | "web-boundary-break"
   | "type-behind-cutout"
+  | "social-frame-break"
   | "wet-glass-reveal"
   | "torn-paper-reveal"
+  | "orbit-type"
+  | "cloche-reveal"
   | "swift-chroma-run"
   | "magazine-cover-morph"
   | "product-explode"
@@ -66,8 +69,11 @@ export const VIDEO_CREATIVE_MODES: VideoCreativeMode[] = [
   "hand-throw-scene",
   "web-boundary-break",
   "type-behind-cutout",
+  "social-frame-break",
   "wet-glass-reveal",
   "torn-paper-reveal",
+  "orbit-type",
+  "cloche-reveal",
   "swift-chroma-run",
   "magazine-cover-morph",
   "product-explode",
@@ -94,7 +100,7 @@ export const VIDEO_CREATIVE_MODES: VideoCreativeMode[] = [
 ];
 
 export function videoModePreviewSrc(id: VideoCreativeMode): string {
-  return `/images/studio/video-modes/${id}.png?v=5`;
+  return `/images/studio/video-modes/${id}.png?v=6`;
 }
 
 /** Recipe owns the motion prompt — skip DeepSeek auto-plan. */
@@ -111,8 +117,11 @@ export function isRecipeOwnedVideoMode(
     mode === "hand-throw-scene" ||
     mode === "web-boundary-break" ||
     mode === "type-behind-cutout" ||
+    mode === "social-frame-break" ||
     mode === "wet-glass-reveal" ||
     mode === "torn-paper-reveal" ||
+    mode === "orbit-type" ||
+    mode === "cloche-reveal" ||
     mode === "swift-chroma-run" ||
     mode === "magazine-cover-morph" ||
     mode === "product-explode" ||
@@ -227,6 +236,7 @@ export function videoModesForGoal(goal: OutputGoal): VideoCreativeMode[] {
       "hand-throw-scene",
       "web-boundary-break",
       "type-behind-cutout",
+      "social-frame-break",
       "wet-glass-reveal",
       "torn-paper-reveal",
       "swift-chroma-run",
@@ -250,6 +260,7 @@ export function videoModesForGoal(goal: OutputGoal): VideoCreativeMode[] {
       "hand-throw-scene",
       "web-boundary-break",
       "type-behind-cutout",
+      "social-frame-break",
       "wet-glass-reveal",
       "torn-paper-reveal",
       "swift-chroma-run",
@@ -284,6 +295,7 @@ export function videoModesForStudio(
       "hand-throw-scene",
       "web-boundary-break",
       "type-behind-cutout",
+      "social-frame-break",
       "wet-glass-reveal",
       "torn-paper-reveal",
       "swift-chroma-run",
@@ -306,6 +318,7 @@ export function videoModesForStudio(
       "hand-throw-scene",
       "web-boundary-break",
       "type-behind-cutout",
+      "social-frame-break",
       "wet-glass-reveal",
       "torn-paper-reveal",
       "swift-chroma-run",

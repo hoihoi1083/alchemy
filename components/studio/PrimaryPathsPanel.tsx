@@ -208,6 +208,35 @@ export function PrimaryPathsPanel({ variant, showCinematicExtras = false }: Prop
             onClick={() => applyPrimaryPathConcept("type-interaction")}
           />
           <PathButton
+            active={visualStyleId === "mold-word-poster"}
+            title={m.microWizard.preGenerateSetup.stylePickerMoldWordPosterLabel}
+            description={
+              m.microWizard.preGenerateSetup.stylePickerMoldWordPosterDesc
+            }
+            previewSrc={getVisualStyle("mold-word-poster").previewSrc}
+            onClick={() => applyPrimaryPathConcept("mold-word-poster")}
+          />
+          <PathButton
+            active={visualStyleId === "orbit-type-poster"}
+            title={m.microWizard.preGenerateSetup.stylePickerOrbitTypePosterLabel}
+            description={
+              m.microWizard.preGenerateSetup.stylePickerOrbitTypePosterDesc
+            }
+            previewSrc={getVisualStyle("orbit-type-poster").previewSrc}
+            onClick={() => applyPrimaryPathConcept("orbit-type-poster")}
+          />
+          <PathButton
+            active={visualStyleId === "cloche-reveal-poster"}
+            title={
+              m.microWizard.preGenerateSetup.stylePickerClocheRevealPosterLabel
+            }
+            description={
+              m.microWizard.preGenerateSetup.stylePickerClocheRevealPosterDesc
+            }
+            previewSrc={getVisualStyle("cloche-reveal-poster").previewSrc}
+            onClick={() => applyPrimaryPathConcept("cloche-reveal-poster")}
+          />
+          <PathButton
             active={visualStyleId === "brand-fit"}
             title={m.wizard.pathBrandTitle}
             description={m.wizard.pathBrandDesc}
@@ -415,6 +444,63 @@ export function PrimaryPathsPanel({ variant, showCinematicExtras = false }: Prop
                 }
                 previewSrc={getVisualStyle("product-lifestyle").previewSrc}
                 onClick={() => applyPrimaryPath("product-lifestyle")}
+              />
+              <PathButton
+                active={visualStyleId === "product-hold-poster"}
+                title={
+                  m.microWizard.preGenerateSetup.stylePickerProductHoldPosterLabel
+                }
+                description={
+                  m.microWizard.preGenerateSetup.stylePickerProductHoldPosterDesc
+                }
+                previewSrc={getVisualStyle("product-hold-poster").previewSrc}
+                onClick={() => applyPrimaryPath("product-hold-poster")}
+              />
+              <PathButton
+                active={visualStyleId === "mold-word-poster"}
+                title={
+                  m.microWizard.preGenerateSetup.stylePickerMoldWordPosterLabel
+                }
+                description={
+                  m.microWizard.preGenerateSetup.stylePickerMoldWordPosterDesc
+                }
+                previewSrc={getVisualStyle("mold-word-poster").previewSrc}
+                onClick={() => applyPrimaryPath("mold-word-poster")}
+              />
+              <PathButton
+                active={visualStyleId === "deconstruct-archive-poster"}
+                title={
+                  m.microWizard.preGenerateSetup
+                    .stylePickerDeconstructArchivePosterLabel
+                }
+                description={
+                  m.microWizard.preGenerateSetup
+                    .stylePickerDeconstructArchivePosterDesc
+                }
+                previewSrc={getVisualStyle("deconstruct-archive-poster").previewSrc}
+                onClick={() => applyPrimaryPath("deconstruct-archive-poster")}
+              />
+              <PathButton
+                active={visualStyleId === "orbit-type-poster"}
+                title={
+                  m.microWizard.preGenerateSetup.stylePickerOrbitTypePosterLabel
+                }
+                description={
+                  m.microWizard.preGenerateSetup.stylePickerOrbitTypePosterDesc
+                }
+                previewSrc={getVisualStyle("orbit-type-poster").previewSrc}
+                onClick={() => applyPrimaryPath("orbit-type-poster")}
+              />
+              <PathButton
+                active={visualStyleId === "cloche-reveal-poster"}
+                title={
+                  m.microWizard.preGenerateSetup.stylePickerClocheRevealPosterLabel
+                }
+                description={
+                  m.microWizard.preGenerateSetup.stylePickerClocheRevealPosterDesc
+                }
+                previewSrc={getVisualStyle("cloche-reveal-poster").previewSrc}
+                onClick={() => applyPrimaryPath("cloche-reveal-poster")}
               />
               <PathButton
                 active={visualStyleId === "model-wear"}

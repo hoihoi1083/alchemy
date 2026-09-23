@@ -419,11 +419,20 @@ export function useWizardMicroStep(wizard: StudioWizardValue, promotionMode: Pro
     if (sub === "type_behind_cutout" && wizard.videoCreativeMode !== "type-behind-cutout") {
       wizard.onVideoCreativeModeChange("type-behind-cutout");
     }
+    if (sub === "social_frame_break" && wizard.videoCreativeMode !== "social-frame-break") {
+      wizard.onVideoCreativeModeChange("social-frame-break");
+    }
     if (sub === "wet_glass_reveal" && wizard.videoCreativeMode !== "wet-glass-reveal") {
       wizard.onVideoCreativeModeChange("wet-glass-reveal");
     }
     if (sub === "torn_paper_reveal" && wizard.videoCreativeMode !== "torn-paper-reveal") {
       wizard.onVideoCreativeModeChange("torn-paper-reveal");
+    }
+    if (sub === "orbit_type" && wizard.videoCreativeMode !== "orbit-type") {
+      wizard.onVideoCreativeModeChange("orbit-type");
+    }
+    if (sub === "cloche_reveal" && wizard.videoCreativeMode !== "cloche-reveal") {
+      wizard.onVideoCreativeModeChange("cloche-reveal");
     }
     if (sub === "swift_chroma_run" && wizard.videoCreativeMode !== "swift-chroma-run") {
       wizard.onVideoCreativeModeChange("swift-chroma-run");

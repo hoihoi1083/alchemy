@@ -1071,6 +1071,12 @@ export const en = {
 						"Cutout hero · giant type behind subject · cinematic plate · impact end. City run / Minimal / Impact.",
 					costHint: "~2 images + 8–10s video · product photo + headline",
 				},
+				"product-social-frame-break-10s": {
+					title: "Social frame break ~10s",
+					description:
+						"Your character pops out of an Instagram-style post. Edit brand + caption. Optional logo on balloon.",
+					costHint: "~2 images + 8–10s video · character photo + brand words",
+				},
 				"product-wet-glass-reveal-6s": {
 					title: "Wet glass reveal ~6s",
 					description:
@@ -1148,6 +1154,12 @@ export const en = {
 					description:
 						"Person / brand figure / mascot cutout · giant type behind · City run / Minimal / Impact.",
 					costHint: "~2 images + 8–10s video · person/brand still + headline",
+				},
+				"concept-social-frame-break-10s": {
+					title: "Social frame break (concept) ~10s",
+					description:
+						"Your character pops out of an Instagram-style post for a service/idea promo. Edit brand + caption.",
+					costHint: "~2 images + 8–10s video · character photo + brand words",
 				},
 				"concept-wet-glass-reveal-6s": {
 					title: "Wet glass reveal (concept) ~6s",
@@ -2296,6 +2308,31 @@ export const en = {
 				description:
 					"SKU extreme front + model + rainbow light + big title and numeric specs",
 			},
+			"product-hold-poster": {
+				title: "Product hold poster",
+				description:
+					"Person holds the product toward camera — white studio, punchy talking headline",
+			},
+			"mold-word-poster": {
+				title: "Mold funny-word poster",
+				description:
+					"Clay / vinyl 3D funny words as the hero — product centered, or concept scene around the pun",
+			},
+			"deconstruct-archive-poster": {
+				title: "Deconstruct archive poster",
+				description:
+					"Top photoreal product · bottom technical watercolor explode of the same SKU",
+			},
+			"orbit-type-poster": {
+				title: "Orbit type poster",
+				description:
+					"Subject center — bold kinetic words orbit / tunnel / pass behind on white studio",
+			},
+			"cloche-reveal-poster": {
+				title: "Cloche reveal poster",
+				description:
+					"Silver tray + white-glove dome — ingredients or metaphors, then product or brand reveal",
+			},
       "brand-fit": {
         title: "Brand style analysis",
 				description:
@@ -2378,6 +2415,11 @@ export const en = {
 			"material-letters": "",
 			"type-interaction": "",
 			"product-lifestyle": "",
+			"product-hold-poster": "",
+			"mold-word-poster": "",
+			"deconstruct-archive-poster": "",
+			"orbit-type-poster": "",
+			"cloche-reveal-poster": "",
 
       "brand-fit": "",
       "brand-campaign": "",
@@ -2521,6 +2563,16 @@ export const en = {
 				"e.g. fold phone FOLD planes, mask REVEAL peel, shoe MOVE slices…",
 			"product-lifestyle":
 				"e.g. earbuds extreme front, rainbow refraction, 30h + 1yr callouts…",
+			"product-hold-poster":
+				"e.g. Latency? Bye-bye · person holds case toward camera, white studio…",
+			"mold-word-poster":
+				"e.g. 土豆大王 · clay 3D funny words, cream studio, pun scene…",
+			"deconstruct-archive-poster":
+				"e.g. PRODUCT / DECONSTRUCTED · top photo, bottom explode layers…",
+			"orbit-type-poster":
+				"e.g. RISE UP · model or product center, kinetic words orbit on white…",
+			"cloche-reveal-poster":
+				"e.g. natural formula · silver tray, dome lift, ingredients then SKU…",
 "brand-fit":
 				"Filled after analysis; tweak product or scene if needed",
 			"brand-campaign":
@@ -3542,6 +3594,11 @@ export const en = {
 				description:
 					"Person cutout · giant type behind (readable) · street plate. Product: presenter holds SKU. City run / Minimal / Impact. ~8–10s.",
 			},
+			"social-frame-break": {
+				title: "Social frame break",
+				description:
+					"Character pops out of a fake Instagram post — feet on white UI. Edit brand + caption words. Upload any character. ~8–10s.",
+			},
 			"wet-glass-reveal": {
 				title: "Wet glass reveal",
 				description:
@@ -3551,6 +3608,16 @@ export const en = {
 				title: "Torn paper reveal",
 				description:
 					"Translucent pear paper covers hero → thin fibrous horizontal tear reveals logo. Strip tear / Peel curl / Wide rip. ~6–8s.",
+			},
+			"orbit-type": {
+				title: "Orbit type",
+				description:
+					"Subject locked center — bold words orbit, tunnel, and pass behind them. Product or concept. ~6s.",
+			},
+			"cloche-reveal": {
+				title: "Cloche reveal",
+				description:
+					"Silver tray + white-glove dome lifts. Product: ingredients → SKU. Concept: metaphors → brand. ~6s.",
 			},
 			"swift-chroma-run": {
 				title: "Swift chroma run",
@@ -4463,6 +4530,66 @@ export const en = {
 				],
 				output: ["Lifestyle product still(s) — single or carousel"],
 			},
+			"product-hold-poster": {
+				need: [
+					"Product photo (held in hand)",
+					"Headline (pain？attitude punchline)",
+				],
+				attention: [
+					"Person must hold / present the product toward camera",
+					"Clean white studio + brush slogan + category pill",
+					"Product path only — single still",
+				],
+				output: ["One product-hold talking poster still"],
+			},
+			"mold-word-poster": {
+				need: [
+					"Funny words / nickname / pun (headline)",
+					"Optional product photo (centered with the words)",
+				],
+				attention: [
+					"Stylized 3D clay/vinyl words are the MAJOR focus",
+					"With product: SKU in the middle under/with the words",
+					"Concept: invent a whimsical scene that illustrates the wordplay",
+				],
+				output: ["One mold funny-word poster still"],
+			},
+			"deconstruct-archive-poster": {
+				need: [
+					"Product photo (required)",
+					"Headline (STUDY / DECONSTRUCTED style)",
+				],
+				attention: [
+					"Strict 50/50: top photoreal product, bottom explode of SAME SKU",
+					"Warm paper archive look + numbered callouts + palette",
+					"Product path only — single still",
+				],
+				output: ["One deconstruct archive poster still"],
+			},
+			"orbit-type-poster": {
+				need: [
+					"Orbit words / headline (required)",
+					"Optional product / model / logo photo (center subject)",
+				],
+				attention: [
+					"Subject locked center on white studio",
+					"Bold kinetic type orbits / tunnels / passes behind the subject",
+					"Works for product and concept",
+				],
+				output: ["One orbit-type poster still"],
+			},
+			"cloche-reveal-poster": {
+				need: [
+					"Headline / reveal theme",
+					"Optional product photo (product path) or logo (concept path)",
+				],
+				attention: [
+					"Silver tray + white-glove cloche mid-lift",
+					"Product: ingredients/structure → SKU; Concept: metaphors → brand lockup",
+					"Works for product and concept",
+				],
+				output: ["One cloche-reveal poster still"],
+			},
 			"vacuum-inflate": {
 				need: [
 					"Product photo — or logo / mascot still (concept)",
@@ -4527,6 +4654,24 @@ export const en = {
 					"Start→end morph: cutout hero · giant type behind",
 				],
 			},
+			"social-frame-break": {
+				need: [
+					"Character photo (person / mascot / figure) — required",
+					"Product mode: also upload Product SKU (character holds it)",
+					"Business + Headline for on-screen brand / caption",
+				],
+				attention: [
+					"Naruto-style path: motion DNA + character lock — not dual still morph",
+					"Feet jump onto white Instagram UI",
+					"Product SKU is held prop only — never the lone frame-breaker",
+					"Optional Brand kit logo stamps the balloon",
+					"H3 native audio / score kept (no library BGM overwrite)",
+				],
+				output: [
+					"~8–10s 16:9 social frame-break ad",
+					"H3 reference-to-video: jump-out pop + branded balloon",
+				],
+			},
 			"wet-glass-reveal": {
 				need: [
 					"Product photo OR person/brand still (concept) + clear label/mark on upload",
@@ -4554,6 +4699,22 @@ export const en = {
 					"~6–8s vertical torn-paper reveal",
 					"Start→end morph: pear paper cover → fibrous tear over logo/mark",
 				],
+			},
+			"orbit-type": {
+				need: ["Product / model photo, or a concept logo / mascot still", "Orbit words (headline)"],
+				attention: [
+					"Subject stays locked in the center",
+					"Words orbit and pass behind — not a caption bar",
+				],
+				output: ["~6s vertical orbit-type video"],
+			},
+			"cloche-reveal": {
+				need: ["Product photo, or a concept logo / brand still", "Short reveal theme"],
+				attention: [
+					"Silver tray + white-glove dome lift",
+					"Product: ingredients → SKU. Concept: metaphors → brand",
+				],
+				output: ["~6s vertical cloche-reveal video"],
 			},
 			"swift-chroma-run": {
 				need: [
@@ -4805,6 +4966,28 @@ export const en = {
 		typeBehindAnimatingCard: "Animating type behind cutout…",
 		typeBehindNeedKeyframe:
 			"Upload a product photo first (concept: person / brand figure / mascot still — text alone is not enough).",
+		socialFrameHint:
+			"Social frame break — upload a CHARACTER (person / mascot / figure). Product mode also needs a Product SKU (held prop). Concept: character + optional Brand kit logo. Jump-out from motion DNA · H3 native audio · ~8–10s · 16:9.",
+		socialFrameSchemeTitle: "Pop-out wave",
+		socialFrameSchemeHint:
+			"Desktop Instagram layout (Naruto proof DNA): square scenic plate, white caption below, comments sidebar. Character jumps out — feet on white UI.",
+		socialFrameSchemes: {
+			"popout-wave": {
+				title: "Pop-out wave",
+				desc: "Wave + branded balloon · feet on Instagram UI",
+			},
+		},
+		socialFrameBuildingStill: "Step 1/2: social frame-break start still…",
+		socialFrameBuildingEnd: "Step 2/2: social frame-break end still…",
+		socialFrameAnimatingCard: "Animating social frame break…",
+		socialFrameNeedKeyframe:
+			"Upload a character photo first (person, mascot, or figure — a lone product packshot is not enough).",
+		socialFrameNeedProductSku:
+			"Product mode also needs a product photo (SKU) — upload it in the Product slot. Character holds it; character stays the pop-out hero.",
+		socialFrameNeedMotionRef:
+			"Pop-out motion reference is missing. Refresh the app and try again.",
+		socialFrameKeepNativeAudioNote:
+			"Keeping MiniMax H3 native audio / score (no library BGM overwrite).",
 		wetGlassHint:
 			"Wet glass reveal — fogged wet glass → droplet trail / wipe clears → logo sharp. ~6–8s · Droplet / Wipe / Mono macro. Logo comes from your upload through the glass.",
 		wetGlassDialectTitle: "Wet-glass style",
@@ -5801,6 +5984,31 @@ export const en = {
       name: "Product lifestyle",
       description:
         "Product extreme front + model + rainbow light + numeric selling points",
+    },
+    "product-hold-poster": {
+      name: "Product hold poster",
+      description:
+        "Person holds the product toward camera — white studio, talking headline",
+    },
+    "mold-word-poster": {
+      name: "Mold funny-word poster",
+      description:
+        "Clay / vinyl 3D funny words as the hero — product or concept pun scene",
+    },
+    "deconstruct-archive-poster": {
+      name: "Deconstruct archive poster",
+      description:
+        "Top photoreal product · bottom technical watercolor explode of the same SKU",
+    },
+    "orbit-type-poster": {
+      name: "Orbit type poster",
+      description:
+        "Subject center — kinetic words orbit / tunnel / pass behind on white studio",
+    },
+    "cloche-reveal-poster": {
+      name: "Cloche reveal poster",
+      description:
+        "Silver tray + cloche — ingredients or metaphors, then product or brand reveal",
     },
     "brand-fit": {
       name: "Brand style analysis",

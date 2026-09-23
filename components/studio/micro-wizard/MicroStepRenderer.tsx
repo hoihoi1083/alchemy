@@ -232,6 +232,8 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
                     (micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) === "creative_video" ||
                     ((micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) !== "motion_poster" &&
                       (micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) !== "blockbuster" &&
+                      (micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) !== "orbit_type" &&
+                      (micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) !== "cloche_reveal" &&
                       !subpathToH3ShotRecipe(
                         (micro.pendingVideoSubpath ?? micro.ctx.videoSubpath) as never,
                       ))
@@ -689,10 +691,16 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
                 ? "web_boundary_break"
                 : wizard.videoCreativeMode === "type-behind-cutout"
                 ? "type_behind_cutout"
+                : wizard.videoCreativeMode === "social-frame-break"
+                ? "social_frame_break"
                 : wizard.videoCreativeMode === "wet-glass-reveal"
                 ? "wet_glass_reveal"
                 : wizard.videoCreativeMode === "torn-paper-reveal"
                 ? "torn_paper_reveal"
+                : wizard.videoCreativeMode === "orbit-type"
+                ? "orbit_type"
+                : wizard.videoCreativeMode === "cloche-reveal"
+                ? "cloche_reveal"
                 : wizard.videoCreativeMode === "swift-chroma-run"
                 ? "swift_chroma_run"
                 : wizard.videoCreativeMode === "magazine-cover-morph"
@@ -723,6 +731,7 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
               subpath === "hand_throw_scene" ||
               subpath === "web_boundary_break" ||
               subpath === "type_behind_cutout" ||
+              subpath === "social_frame_break" ||
               subpath === "wet_glass_reveal" ||
               subpath === "torn_paper_reveal" ||
               subpath === "swift_chroma_run" ||
@@ -753,6 +762,8 @@ export function MicroStepRenderer({ micro, stepId }: Props) {
               wizard.onVideoCreativeModeChange("web-boundary-break");
             } else if (subpath === "type_behind_cutout") {
               wizard.onVideoCreativeModeChange("type-behind-cutout");
+            } else if (subpath === "social_frame_break") {
+              wizard.onVideoCreativeModeChange("social-frame-break");
             } else if (subpath === "wet_glass_reveal") {
               wizard.onVideoCreativeModeChange("wet-glass-reveal");
             } else if (subpath === "torn_paper_reveal") {

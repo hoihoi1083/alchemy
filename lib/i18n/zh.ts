@@ -854,7 +854,13 @@ export const zh = {
 						"產品抠圖 · 巨型大字在身後 · 電影感底板 · 衝擊收尾。城市奔跑／極簡奔跑／衝擊收尾。",
 					costHint: "~2 張靜圖 + 8–10秒 · 產品圖 + 標題",
 				},
-				"product-wet-glass-reveal-6s": {
+								"product-social-frame-break-10s": {
+					title: "社交框突破 ~10s",
+					description:
+						"你嘅角色從假 Instagram 帖彈出。可改品牌同文案。氣球可選 Logo。",
+					costHint: "~2 張圖 + 8–10s 影片 · 角色相 + 品牌文案",
+				},
+"product-wet-glass-reveal-6s": {
 					title: "濕玻璃揭示 ~6s",
 					description:
 						"起霧濕玻璃 → 水珠劃痕／指抹清晰 → Logo 變銳。水珠／指抹／黑白微距。",
@@ -1047,7 +1053,13 @@ export const zh = {
 						"人像／品牌形象／吉祥物抠圖 · 巨型大字在身後 · 城市奔跑／極簡／衝擊收尾。",
 					costHint: "~2 張靜圖 + 8–10秒 · 人像／品牌靜圖 + 標題",
 				},
-				"concept-wet-glass-reveal-6s": {
+								"concept-social-frame-break-10s": {
+					title: "社交框突破（概念）~10s",
+					description:
+						"角色從假 Instagram 帖彈出，用嚟服務/概念宣傳。可改品牌同文案。",
+					costHint: "~2 張圖 + 8–10s 影片 · 角色相 + 品牌文案",
+				},
+"concept-wet-glass-reveal-6s": {
 					title: "濕玻璃揭示（概念）~6s",
 					description:
 						"人物／品牌靜圖喺濕玻璃後 → 清晰路徑揭示標誌。水珠／指抹／黑白微距。",
@@ -2143,6 +2155,26 @@ export const zh = {
 				title: "生活方式產品",
 				description: "產品極前景 + 人物 + 彩虹光 + 數字賣點",
 			},
+			"product-hold-poster": {
+				title: "手持產品海報",
+				description: "人物手持產品對鏡 — 白棚、痛點？態度 大標題",
+			},
+			"mold-word-poster": {
+				title: "捏字趣味海報",
+				description: "黏土／公仔風趣味大字做主角 — 產品置中或概念場景配合字梗",
+			},
+			"deconstruct-archive-poster": {
+				title: "解構檔案海報",
+				description: "上半產品實拍 · 下半同款水彩技術拆解圖",
+			},
+			"orbit-type-poster": {
+				title: "環繞字海報",
+				description: "主體置中 — 粗體動能字環繞／穿隧／穿後，白棚",
+			},
+			"cloche-reveal-poster": {
+				title: "餐罩揭曉海報",
+				description: "銀盤 + 白手套餐罩 — 成分或隱喻，再揭產品或品牌",
+			},
 			"brand-fit": {
 				title: "品牌風格分析",
 				description: "貼網站 / IG → AI 分析品牌再出相符廣告",
@@ -2218,6 +2250,11 @@ export const zh = {
 			"material-letters": "",
 			"type-interaction": "",
 			"product-lifestyle": "",
+			"product-hold-poster": "",
+			"mold-word-poster": "",
+			"deconstruct-archive-poster": "",
+			"orbit-type-poster": "",
+			"cloche-reveal-poster": "",
 
 			"brand-fit": "",
 			"brand-campaign": "",
@@ -2349,6 +2386,16 @@ export const zh = {
 				"例如：摺疊屏 FOLD、面膜 REVEAL 揭膜、跑鞋 MOVE 切片…",
 			"product-lifestyle":
 				"例如：耳機極前景、彩虹折射、30小時續航與1年保固…",
+			"product-hold-poster":
+				"例如：延迟？拜拜 · 人物手持充電盒對鏡、白棚…",
+			"mold-word-poster":
+				"例如：土豆大王 · 黏土立體趣味大字、奶油棚、字梗場景…",
+			"deconstruct-archive-poster":
+				"例如：PRODUCT / DECONSTRUCTED · 上半實拍、下半拆解層…",
+			"orbit-type-poster":
+				"例如：RISE UP · 模特或產品置中、動能字環繞白棚…",
+			"cloche-reveal-poster":
+				"例如：天然配方 · 銀盤餐罩揭起、成分再到產品…",
 "brand-fit": "分析後會自動填；你可再微調產品或場景",
 			"brand-campaign":
 				"可填 campaign 主題，例如：春季新品三張圖講清功效",
@@ -3276,7 +3323,12 @@ export const zh = {
 				description:
 					"人像抠圖 · 巨型大字在身後（兩側可讀）· 夜街底板。產品：展示者手持 SKU。城市奔跑／極簡奔跑／衝擊收尾。約 8–10 秒。",
 			},
-			"wet-glass-reveal": {
+						"social-frame-break": {
+				title: "社交框突破",
+				description:
+					"角色從假 Instagram 帖彈出到白色 UI。可改品牌同文案。上載任意角色。約 8–10 秒。",
+			},
+"wet-glass-reveal": {
 				title: "濕玻璃揭示",
 				description:
 					"起霧濕玻璃 → 水珠劃痕／指抹清晰 → Logo 變銳。水珠劃痕／指抹清晰／黑白微距。約 6–8 秒。",
@@ -3285,6 +3337,16 @@ export const zh = {
 				title: "撕紙揭示",
 				description:
 					"半透明雪梨紙蓋住主體 → 細纖維橫撕露出 Logo。細條撕／掀捲／闊撕。約 6–8 秒。",
+			},
+			"orbit-type": {
+				title: "環繞字",
+				description:
+					"主體鎖喺畫面中央，粗體字環繞、穿隧道、從身後掠過。產品或概念。約 6 秒。",
+			},
+			"cloche-reveal": {
+				title: "餐罩揭曉",
+				description:
+					"銀盤 + 白手套掀罩。產品：食材變 SKU。概念：隱喻變品牌。約 6 秒。",
 			},
 			"swift-chroma-run": {
 				title: "疾行幻彩",
@@ -4077,6 +4139,51 @@ export const zh = {
 				],
 				output: ["生活方式產品靜圖（單張或輪播）"],
 			},
+			"product-hold-poster": {
+				need: ["產品圖（手持）", "標題（痛點？態度）"],
+				attention: [
+					"必須有人用手持／遞出產品對鏡頭",
+					"白棚 + 手寫 slogan + 底部品類膠囊",
+					"只限實體產品路徑 — 單張靜圖",
+				],
+				output: ["一張手持產品會說話海報"],
+			},
+			"mold-word-poster": {
+				need: ["趣味字／暱稱／字梗（標題）", "可選產品圖（與大字置中）"],
+				attention: [
+					"立體黏土／公仔風大字係主角",
+					"有產品：產品放中間，大字壓上／圍繞",
+					"概念：虛構一個配合字梗嘅趣味場景",
+				],
+				output: ["一張捏字趣味海報"],
+			},
+			"deconstruct-archive-poster": {
+				need: ["產品圖（必須）", "標題（STUDY / DECONSTRUCTED）"],
+				attention: [
+					"嚴格上下各半：上半實拍，下半同一產品拆解",
+					"暖紙檔案風 + 編號標註 + 色票",
+					"只限實體產品路徑 — 單張靜圖",
+				],
+				output: ["一張解構檔案海報"],
+			},
+			"orbit-type-poster": {
+				need: ["環繞字／標題（必須）", "可選產品／模特／Logo 圖（置中主體）"],
+				attention: [
+					"主體鎖死畫面中央、白棚",
+					"粗體動能字環繞／穿隧／穿過主體後方",
+					"產品同概念都可用",
+				],
+				output: ["一張環繞字海報"],
+			},
+			"cloche-reveal-poster": {
+				need: ["標題／揭曉主題", "可選產品圖（產品路徑）或 Logo（概念路徑）"],
+				attention: [
+					"銀盤 + 白手套餐罩半揭",
+					"產品：成分／結構 → SKU；概念：隱喻道具 → 品牌鎖圖",
+					"產品同概念都可用",
+				],
+				output: ["一張餐罩揭曉海報"],
+			},
 			"vacuum-inflate": {
 				need: ["產品圖（概念可用 Logo／吉祥物靜圖）", "清晰主體 — 單靠文字／主題唔夠"],
 				attention: ["你嘅產品係主角 — 包膜充氣，唔會掉包", "手機就係手機，唔會變成虛構袋裝"],
@@ -4123,6 +4230,21 @@ export const zh = {
 					"起止靜圖 morph：抠圖主體 · 巨型大字在身後",
 				],
 			},
+			"social-frame-break": {
+				need: [
+					"角色相 — 人物、吉祥物或形象（必填）",
+					"商家名（品牌）+ 標題（文案短句）做畫面文字",
+				],
+				attention: [
+					"成段影片鎖角色臉／衫",
+					"腳要踏出到白色 Instagram UI — 唔係貼平貼紙",
+					"可選品牌套件 Logo 印喺氣球／徽章",
+				],
+				output: [
+					"~8–10秒豎版社交框突破廣告",
+					"起止靜圖 morph：風景帖框 → 彈出揮手 + 品牌氣球",
+				],
+			},
 			"wet-glass-reveal": {
 				need: [
 					"產品圖 — 或人像／品牌靜圖（概念）+ 上傳圖上需有清晰標籤／標誌",
@@ -4150,6 +4272,16 @@ export const zh = {
 					"~6–8秒豎版撕紙揭示",
 					"起止靜圖 morph：雪梨紙覆蓋 → 纖維撕口露出 Logo／標誌",
 				],
+			},
+			"orbit-type": {
+				need: ["產品／模特圖，或概念 Logo／吉祥物靜圖", "環繞字（標題）"],
+				attention: ["主體鎖喺畫面中央", "字環繞並從身後掠過，唔係字幕條"],
+				output: ["約 6 秒豎版環繞字影片"],
+			},
+			"cloche-reveal": {
+				need: ["產品圖，或概念 Logo／品牌靜圖", "短揭曉主題"],
+				attention: ["銀盤 + 白手套掀罩", "產品：食材變 SKU。概念：隱喻變品牌"],
+				output: ["約 6 秒豎版餐罩揭曉影片"],
 			},
 			"swift-chroma-run": {
 				need: [
@@ -4360,6 +4492,28 @@ export const zh = {
 		typeBehindAnimatingCard: "正在生成字夾主體…",
 		typeBehindNeedKeyframe:
 			"請先上傳產品圖（概念用人像／品牌形象／吉祥物靜圖 — 單靠文字唔夠）。",
+		socialFrameHint:
+			"社交框突破 — 上載角色（人物／吉祥物／形象），唔好淨係上載產品特寫。商家名＋標題做品牌＋文案。腳踏喺桌面版 Instagram 白色 UI。可選品牌套件 Logo 印氣球。約 8–10 秒 · 16:9。",
+		socialFrameSchemeTitle: "彈出揮手",
+		socialFrameSchemeHint:
+			"桌面版 Instagram 佈局（同 proof）：方形風景帖、下面白色文案、右邊留言欄。揮手＋心形氣球。腳喺白色 UI — 唔好頂邊插手。",
+		socialFrameSchemes: {
+			"popout-wave": {
+				title: "彈出揮手",
+				desc: "揮手 + 品牌氣球 · 腳喺 Instagram UI 上",
+			},
+		},
+		socialFrameBuildingStill: "步驟 1/2：社交框起始靜幀…",
+		socialFrameBuildingEnd: "步驟 2/2：社交框結束靜幀…",
+		socialFrameAnimatingCard: "正喺度生成社交框突破…",
+		socialFrameNeedKeyframe:
+			"請先上載角色相（人物／吉祥物／形象 — 淨係產品特寫唔夠）。",
+		socialFrameNeedProductSku:
+			"產品模式仲要上載產品相（SKU）— 角色手持；角色先係彈出主體。",
+		socialFrameNeedMotionRef:
+			"缺少彈出動作參考片。請重新整理再試。",
+		socialFrameKeepNativeAudioNote:
+			"保留 MiniMax H3 原生音訊／配樂（唔覆蓋圖書館 BGM）。",
 		wetGlassHint:
 			"濕玻璃揭示 — 起霧濕玻璃 → 水珠劃痕／指抹清晰 → Logo 變銳。~6–8秒 · 水珠劃痕／指抹清晰／黑白微距。Logo 來自上傳圖透過玻璃顯現。",
 		wetGlassDialectTitle: "濕玻璃風格",
@@ -5291,6 +5445,26 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
     "product-lifestyle": {
       name: "生活方式產品",
       description: "產品極前景 + 人物 + 彩虹光 + 數字賣點",
+    },
+    "product-hold-poster": {
+      name: "手持產品海報",
+      description: "人物手持產品對鏡 — 白棚、痛點？態度 標題",
+    },
+    "mold-word-poster": {
+      name: "捏字趣味海報",
+      description: "黏土／公仔風趣味大字做主角 — 產品或概念字梗場景",
+    },
+    "deconstruct-archive-poster": {
+      name: "解構檔案海報",
+      description: "上半產品實拍 · 下半同款水彩技術拆解圖",
+    },
+    "orbit-type-poster": {
+      name: "環繞字海報",
+      description: "主體置中 — 動能字環繞／穿隧／穿後，白棚",
+    },
+    "cloche-reveal-poster": {
+      name: "餐罩揭曉海報",
+      description: "銀盤 + 餐罩 — 成分或隱喻，再揭產品或品牌",
     },
 		"brand-fit": {
 			name: "品牌風格分析",

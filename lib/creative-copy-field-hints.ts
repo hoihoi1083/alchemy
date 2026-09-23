@@ -131,6 +131,21 @@ export function resolveCreativeCopyFieldHints(input: {
     );
   }
 
+  // Social frame-break paints brand + caption on stills+video.
+  if (
+    fromMode === "social-frame-break" ||
+    fromSubpath === "social-frame-break"
+  ) {
+    return fromRoles(
+      {
+        hook: "on-video",
+        supporting: "mood-only",
+        offer: "mood-only",
+      },
+      "type-behind",
+    );
+  }
+
   // --- Video / recipe modes first (combined stills+video still need accurate video truth) ---
   if (isVideoWorkflow && videoMode) {
     if (videoMode === "motion-poster" || videoMode === "impact-poster") {

@@ -226,6 +226,61 @@ export const TEMPLATE_CONFIG: Record<TemplateId, AdTemplateConfig> = {
       { id: "referenceVideo", onSetup: false, required: false },
     ],
   },
+  "product-hold-poster": {
+    defaultImageInputMode: "product-ad",
+    slots: [
+      { id: "product", onSetup: true, required: false },
+      { id: "headline", onSetup: true, required: true },
+      { id: "subline", onSetup: true, required: false },
+      { id: "business", onSetup: true, required: false },
+      { id: "productPhoto", onSetup: false, required: true },
+      { id: "referenceVideo", onSetup: false, required: false },
+    ],
+  },
+  "mold-word-poster": {
+    defaultImageInputMode: "product-ad",
+    slots: [
+      { id: "product", onSetup: true, required: false },
+      { id: "headline", onSetup: true, required: true },
+      { id: "subline", onSetup: true, required: false },
+      { id: "business", onSetup: true, required: false },
+      { id: "productPhoto", onSetup: false, required: false },
+      { id: "referenceVideo", onSetup: false, required: false },
+    ],
+  },
+  "deconstruct-archive-poster": {
+    defaultImageInputMode: "product-ad",
+    slots: [
+      { id: "product", onSetup: true, required: false },
+      { id: "headline", onSetup: true, required: true },
+      { id: "subline", onSetup: true, required: false },
+      { id: "business", onSetup: true, required: false },
+      { id: "productPhoto", onSetup: false, required: true },
+      { id: "referenceVideo", onSetup: false, required: false },
+    ],
+  },
+  "orbit-type-poster": {
+    defaultImageInputMode: "product-ad",
+    slots: [
+      { id: "product", onSetup: true, required: false },
+      { id: "headline", onSetup: true, required: true },
+      { id: "subline", onSetup: true, required: false },
+      { id: "business", onSetup: true, required: false },
+      { id: "productPhoto", onSetup: false, required: false },
+      { id: "referenceVideo", onSetup: false, required: false },
+    ],
+  },
+  "cloche-reveal-poster": {
+    defaultImageInputMode: "product-ad",
+    slots: [
+      { id: "product", onSetup: true, required: false },
+      { id: "headline", onSetup: true, required: true },
+      { id: "subline", onSetup: true, required: false },
+      { id: "business", onSetup: true, required: false },
+      { id: "productPhoto", onSetup: false, required: false },
+      { id: "referenceVideo", onSetup: false, required: false },
+    ],
+  },
   "brand-fit": {
     defaultImageInputMode: "product-ad",
     slots: [

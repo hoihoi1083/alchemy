@@ -150,6 +150,31 @@ function styleSpecificRules(input: PlanConceptInput): string[] {
       "- PRODUCT LIFESTYLE: visualMetaphor = product extreme foreground + model behind + rainbow refraction + oversized title and numeric selling points.",
     ];
   }
+  if (input.visualStyleId === "product-hold-poster") {
+    return [
+      "- PRODUCT HOLD POSTER: visualMetaphor = person holds SKU in forced perspective on white studio + punchy pain→attitude headline + brush slogan + category pill.",
+    ];
+  }
+  if (input.visualStyleId === "mold-word-poster") {
+    return [
+      "- MOLD WORD POSTER: visualMetaphor = chunky clay/vinyl 3D funny words as the MAJOR hero; product centered with words OR whimsical concept diorama illustrating the wordplay.",
+    ];
+  }
+  if (input.visualStyleId === "deconstruct-archive-poster") {
+    return [
+      "- DECONSTRUCT ARCHIVE: visualMetaphor = 50/50 split — top photoreal product, bottom technical watercolor isometric explode of the SAME SKU with archive chrome.",
+    ];
+  }
+  if (input.visualStyleId === "orbit-type-poster") {
+    return [
+      "- ORBIT TYPE: visualMetaphor = center subject locked; bold kinetic type orbits / tunnels / passes behind them on white studio.",
+    ];
+  }
+  if (input.visualStyleId === "cloche-reveal-poster") {
+    return [
+      "- CLOCHE REVEAL: visualMetaphor = silver tray + white-glove dome mid-lift; product path = ingredients→SKU; concept path = metaphor props→brand lockup.",
+    ];
+  }
   if (input.visualStyleId === "service-promo" || input.visualStyleId === "pricing-offer") {
     return [
       "- SERVICE/OFFER graphic mode: visualMetaphor may suggest professional graphic mood — not required to be a literal photo scene.",

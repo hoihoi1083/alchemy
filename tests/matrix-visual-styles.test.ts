@@ -39,12 +39,20 @@ describe("visual styles × promotion × workflow matrix", () => {
       "product",
       "model-wear",
       "parts-poster",
+      "product-hold-poster",
+      "deconstruct-archive-poster",
     ];
     for (const id of physicalOnly) {
       assert.equal(visualStyleAllowedForPromotion(id, "concept"), false);
       assert.equal(visualStyleAllowedForPromotion(id, "physical"), true);
     }
     assert.equal(visualStyleAllowedForPromotion("gaming-cover", "concept"), true);
+    assert.equal(visualStyleAllowedForPromotion("mold-word-poster", "concept"), true);
+    assert.equal(visualStyleAllowedForPromotion("mold-word-poster", "physical"), true);
+    assert.equal(visualStyleAllowedForPromotion("orbit-type-poster", "concept"), true);
+    assert.equal(visualStyleAllowedForPromotion("orbit-type-poster", "physical"), true);
+    assert.equal(visualStyleAllowedForPromotion("cloche-reveal-poster", "concept"), true);
+    assert.equal(visualStyleAllowedForPromotion("cloche-reveal-poster", "physical"), true);
     assert.equal(visualStyleAllowedForPromotion("sports-big-words", "concept"), true);
     assert.equal(visualStyleAllowedForPromotion("jelly-3d", "concept"), true);
     assert.equal(visualStyleAllowedForPromotion("storyboard-video", "concept"), true);
@@ -76,5 +84,8 @@ describe("visual styles × promotion × workflow matrix", () => {
     assert.equal(conceptStyleAllowsTextOnlyImage("service-promo"), true);
     assert.equal(conceptStyleAllowsTextOnlyImage("concept-cinematic"), false);
     assert.equal(conceptStyleAllowsTextOnlyImage("product"), false);
+    assert.equal(conceptStyleAllowsTextOnlyImage("orbit-type-poster"), true);
+    assert.equal(conceptStyleAllowsTextOnlyImage("cloche-reveal-poster"), true);
+    assert.equal(conceptStyleAllowsTextOnlyImage("mold-word-poster"), true);
   });
 });

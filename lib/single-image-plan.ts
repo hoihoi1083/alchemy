@@ -304,6 +304,11 @@ export function shouldPlanSingleImageAd(mode: string, imageTextMode?: string): b
     mode === "brand-fit" ||
     mode === "website-launch" ||
     mode === "reference-concept" ||
-    mode === "concept-cinematic"
+    mode === "concept-cinematic" ||
+    mode === "product-hold-poster" ||
+    mode === "mold-word-poster" ||
+    mode === "deconstruct-archive-poster" ||
+    mode === "orbit-type-poster" ||
+    mode === "cloche-reveal-poster"
   );
 }

@@ -43,10 +43,16 @@ export function videoSubpathToCreativeMode(
       return "web-boundary-break";
     case "type_behind_cutout":
       return "type-behind-cutout";
+    case "social_frame_break":
+      return "social-frame-break";
     case "wet_glass_reveal":
       return "wet-glass-reveal";
     case "torn_paper_reveal":
       return "torn-paper-reveal";
+    case "orbit_type":
+      return "orbit-type";
+    case "cloche_reveal":
+      return "cloche-reveal";
     case "swift_chroma_run":
       return "swift-chroma-run";
     case "magazine_cover_morph":
@@ -121,11 +127,20 @@ export function applyIntakeVideoStyle(
     case "type_behind_cutout":
       wizard.onVideoCreativeModeChange("type-behind-cutout");
       return;
+    case "social_frame_break":
+      wizard.onVideoCreativeModeChange("social-frame-break");
+      return;
     case "wet_glass_reveal":
       wizard.onVideoCreativeModeChange("wet-glass-reveal");
       return;
     case "torn_paper_reveal":
       wizard.onVideoCreativeModeChange("torn-paper-reveal");
+      return;
+    case "orbit_type":
+      wizard.onVideoCreativeModeChange("orbit-type");
+      return;
+    case "cloche_reveal":
+      wizard.onVideoCreativeModeChange("cloche-reveal");
       return;
     case "swift_chroma_run":
       wizard.onVideoCreativeModeChange("swift-chroma-run");

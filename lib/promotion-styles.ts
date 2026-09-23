@@ -17,6 +17,10 @@ export const PHYSICAL_ONLY_VISUAL_STYLE_IDS = new Set<VisualStyleId>([
   "parts-poster",
   // Lifestyle impact needs a real SKU in extreme foreground.
   "product-lifestyle",
+  // Person must hold the real SKU — logo-only is weak.
+  "product-hold-poster",
+  // Top photo + bottom explode needs a real SKU.
+  "deconstruct-archive-poster",
 ]);
 
 /** Service / website / plan styles — hidden in physical promotion mode. */
@@ -49,6 +53,9 @@ export const SHARED_VISUAL_STYLE_IDS = new Set<VisualStyleId>([
   "creative-video",
   "paper-layout",
   "storyboard-video",
+  "mold-word-poster",
+  "orbit-type-poster",
+  "cloche-reveal-poster",
 ]);
 
 export function isConceptOnlyVisualStyle(id: VisualStyleId): boolean {
@@ -100,6 +107,9 @@ export function conceptStyleAllowsTextOnlyImage(id: VisualStyleId): boolean {
     id === "screen-break" ||
     id === "material-letters" ||
     id === "type-interaction" ||
+    id === "mold-word-poster" ||
+    id === "orbit-type-poster" ||
+    id === "cloche-reveal-poster" ||
     id === "warm-shop" ||
     id === "brand-fit" ||
     id === "brand-campaign"
@@ -118,6 +128,9 @@ export function conceptStyleRequiresHeadline(id: VisualStyleId): boolean {
     id === "spatial-layout" ||
     id === "material-letters" ||
     id === "type-interaction" ||
+    id === "mold-word-poster" ||
+    id === "orbit-type-poster" ||
+    id === "cloche-reveal-poster" ||
     id === "brand-fit" ||
     id === "brand-campaign"
   );

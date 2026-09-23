@@ -20,6 +20,11 @@ export type TemplateId =
   | "material-letters"
   | "type-interaction"
   | "product-lifestyle"
+  | "product-hold-poster"
+  | "mold-word-poster"
+  | "deconstruct-archive-poster"
+  | "orbit-type-poster"
+  | "cloche-reveal-poster"
   | "brand-fit"
   | "brand-campaign"
   | "brand-video"
@@ -466,6 +471,121 @@ export const TEMPLATES: MarketingTemplate[] = [
       "Gentle push-in on lifestyle product still, preserve title and specs",
     negativePrompt:
       "flat white info flyer, bullet checklist poster, missing product foreground, watermark, social UI, misspelled characters, low quality, speech, voiceover",
+  },
+  {
+    id: "product-hold-poster",
+    name: "Product hold poster",
+    description:
+      "Person holds the product toward camera — white studio, punchy pain→attitude headline, brush slogan.",
+    icon: "🤲",
+    aspectRatio: "9:16",
+    duration: "6",
+    fast: true,
+    resolution: "480p",
+    motionStrength: 28,
+    camera: "Slow Push In",
+    avoidOnScreenText: false,
+    generateAudio: true,
+    imagePromptTemplate:
+      "Vertical product-hold poster for {{product}}. Title {{headline}}. Tagline {{subline}}. Real person holds SKU in forced perspective toward camera, clean white studio, punchy A？B headline, brush slogan, small category pill.",
+    imageEditPromptTemplate:
+      "Create a product-hold talking poster. Keep exact {{product}} from IMAGE 1 in the person's hand, extreme foreground / forced perspective. Title {{headline}}. Tagline {{subline}}. Clean white studio, dynamic pose, brush slogan + category pill.",
+    videoPromptTemplate:
+      "Gentle push-in on product-hold poster, preserve on-screen text and product identity",
+    negativePrompt:
+      "product-only catalog cutout, no person, missing hand hold, cluttered Canva flyer, neon cyberpunk, watermark, social UI, misspelled characters, low quality, speech, voiceover",
+  },
+  {
+    id: "mold-word-poster",
+    name: "Mold funny-word poster",
+    description:
+      "Clay / vinyl 3D funny words as the hero — product centered with type, or concept scene built around the wordplay.",
+    icon: "🧁",
+    aspectRatio: "9:16",
+    duration: "6",
+    fast: true,
+    resolution: "480p",
+    motionStrength: 28,
+    camera: "Slow Push In",
+    avoidOnScreenText: false,
+    generateAudio: true,
+    imagePromptTemplate:
+      "Vertical mold/clay funny-word poster. Hero words {{headline}}. Support {{subline}}. Soft cream studio, chunky 3D molded typography is the major focus. If product {{product}} present, center it with the words.",
+    imageEditPromptTemplate:
+      "Create a mold/clay funny-word poster. Paint exact hero words {{headline}}. Support {{subline}}. Soft cream claymation / vinyl-toy look. If IMAGE 1 is a product, keep exact {{product}} centered under/with the words; if concept, invent a whimsical scene that illustrates the wordplay.",
+    videoPromptTemplate:
+      "Gentle push-in on mold-word poster, preserve stylized 3D type and subject",
+    negativePrompt:
+      "flat Canva flyer, tiny unreadable type, product-only catalog with no hero words, neon cyberpunk, watermark, social UI, misspelled characters, low quality, speech, voiceover",
+  },
+  {
+    id: "deconstruct-archive-poster",
+    name: "Deconstruct archive poster",
+    description:
+      "50/50 split — top photoreal product, bottom technical watercolor explode of the same SKU on warm paper.",
+    icon: "📐",
+    aspectRatio: "3:4",
+    duration: "6",
+    fast: true,
+    resolution: "480p",
+    motionStrength: 28,
+    camera: "Slow Push In",
+    avoidOnScreenText: false,
+    generateAudio: true,
+    imagePromptTemplate:
+      "Vertical deconstruct archive poster for {{product}}. Title {{headline}}. Support {{subline}}. Top half photoreal product photo; bottom half technical watercolor isometric explode of the same product with numbered callouts, palette, archive marks on warm paper.",
+    imageEditPromptTemplate:
+      "Create a deconstruct archive poster. Keep exact {{product}} from IMAGE 1. Top 50%: photoreal hero of IMAGE 1. Bottom 50%: technical watercolor isometric explode of the SAME product. Title {{headline}}. Support {{subline}}. Warm paper archive aesthetic.",
+    videoPromptTemplate:
+      "Gentle push-in on deconstruct archive poster, preserve top photo and bottom diagram text",
+    negativePrompt:
+      "single full-bleed photo only, missing bottom explode, different product in bottom half, flat Canva flyer, neon cyberpunk, watermark, social UI, misspelled characters, low quality, speech, voiceover",
+  },
+  {
+    id: "orbit-type-poster",
+    name: "Orbit type poster",
+    description:
+      "Subject locked center — bold kinetic type orbits / tunnels / passes behind them on white studio.",
+    icon: "🌀",
+    aspectRatio: "9:16",
+    duration: "6",
+    fast: true,
+    resolution: "480p",
+    motionStrength: 32,
+    camera: "Orbit Right",
+    avoidOnScreenText: false,
+    generateAudio: true,
+    imagePromptTemplate:
+      "Vertical orbit-type fashion poster. Subject {{product}} locked center on clean white studio. Bold kinetic words {{headline}} orbit / tunnel / pass behind and around the subject. Support {{subline}}.",
+    imageEditPromptTemplate:
+      "Create an orbit-type poster. Keep exact subject from IMAGE 1 centered. Paint bold kinetic words {{headline}} orbiting / tunneling around them on white studio. Support {{subline}}. Type sits in 3D space — some behind subject, some in front.",
+    videoPromptTemplate:
+      "Orbit kinetic type around the locked center subject, preserve white studio and exact subject identity",
+    negativePrompt:
+      "flat caption stickers only, no depth layering, type never behind subject, cluttered Canva collage, neon cyberpunk, watermark, social UI, misspelled characters, low quality, speech, voiceover",
+  },
+  {
+    id: "cloche-reveal-poster",
+    name: "Cloche reveal poster",
+    description:
+      "Silver tray + white-glove cloche — ingredients or metaphor mess, then finished product or brand reveal.",
+    icon: "🛎️",
+    aspectRatio: "9:16",
+    duration: "6",
+    fast: true,
+    resolution: "480p",
+    motionStrength: 28,
+    camera: "Slow Push In",
+    avoidOnScreenText: false,
+    generateAudio: true,
+    imagePromptTemplate:
+      "Vertical cloche-reveal still-life for {{product}}. Title {{headline}}. Support {{subline}}. Silver tray, white gloves, dome mid-lift, warm cream studio. Product path: ingredients under dome becoming the SKU. Concept path: metaphor props becoming brand lockup.",
+    imageEditPromptTemplate:
+      "Create a cloche-reveal poster. Keep exact {{product}} from IMAGE 1 as the revealed hero on a silver tray under a mid-lift dome, white-glove service, warm cream studio. Title {{headline}}. Support {{subline}}.",
+    videoPromptTemplate:
+      "Gentle push-in as the silver cloche lifts to reveal the hero on the tray, preserve identity",
+    negativePrompt:
+      "messy kitchen chaos without service framing, plastic toy cloche, neon cyberpunk, watermark, social UI, misspelled characters, low quality, speech, voiceover",
   },
   {
     id: "brand-fit",

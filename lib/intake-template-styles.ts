@@ -212,6 +212,14 @@ export function buildProductVideoTemplateCards(
       previewSrc: videoModePreviewSrc("type-behind-cutout"),
     },
     {
+      id: "social_frame_break",
+      kind: "video",
+      videoSubpath: "social_frame_break",
+      title: modes["social-frame-break"].title,
+      description: modes["social-frame-break"].description,
+      previewSrc: videoModePreviewSrc("social-frame-break"),
+    },
+    {
       id: "wet_glass_reveal",
       kind: "video",
       videoSubpath: "wet_glass_reveal",
@@ -381,6 +389,14 @@ export function buildConceptVideoTemplateCards(
       title: modes["type-behind-cutout"].title,
       description: modes["type-behind-cutout"].description,
       previewSrc: videoModePreviewSrc("type-behind-cutout"),
+    },
+    {
+      id: "social_frame_break",
+      kind: "video",
+      videoSubpath: "social_frame_break",
+      title: modes["social-frame-break"].title,
+      description: modes["social-frame-break"].description,
+      previewSrc: videoModePreviewSrc("social-frame-break"),
     },
     {
       id: "wet_glass_reveal",

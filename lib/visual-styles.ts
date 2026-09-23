@@ -24,6 +24,11 @@ export type VisualStyleId =
   | "material-letters"
   | "type-interaction"
   | "product-lifestyle"
+  | "product-hold-poster"
+  | "mold-word-poster"
+  | "deconstruct-archive-poster"
+  | "orbit-type-poster"
+  | "cloche-reveal-poster"
   | "brand-fit"
   | "brand-campaign"
   | "brand-video"
@@ -80,7 +85,12 @@ export function isLockedSinglePosterStyle(id: VisualStyleId): boolean {
     id === "light-trail" ||
     id === "screen-break" ||
     id === "material-letters" ||
-    id === "type-interaction"
+    id === "type-interaction" ||
+    id === "product-hold-poster" ||
+    id === "mold-word-poster" ||
+    id === "deconstruct-archive-poster" ||
+    id === "orbit-type-poster" ||
+    id === "cloche-reveal-poster"
   );
 }
 
@@ -119,6 +129,11 @@ const IMAGE_FIRST_VISUAL_STYLE_IDS = new Set<VisualStyleId>([
   "material-letters",
   "type-interaction",
   "product-lifestyle",
+  "product-hold-poster",
+  "mold-word-poster",
+  "deconstruct-archive-poster",
+  "orbit-type-poster",
+  "cloche-reveal-poster",
   "brand-fit",
   "brand-campaign",
   "model-wear",
@@ -361,6 +376,51 @@ export const VISUAL_STYLES: VisualStyleDef[] = [
     usesCompositor: false,
     promptHint:
       "High-impact lifestyle product still: SKU extreme foreground in hand, model behind, rainbow refraction light, oversized title + numeric selling points in frame — not a flat info flyer.",
+  },
+  {
+    id: "product-hold-poster",
+    icon: "🤲",
+    previewSrc: visualPreview("product-hold-poster"),
+    templateId: "product-hold-poster",
+    usesCompositor: false,
+    promptHint:
+      "Talking product-hold poster: person presents the SKU in forced perspective (giant product in hand toward camera), clean white studio, punchy pain→attitude headline (A？B), brush slogan + small category pill — not a spec sheet, not product-only catalog.",
+  },
+  {
+    id: "mold-word-poster",
+    icon: "🧁",
+    previewSrc: visualPreview("mold-word-poster"),
+    templateId: "mold-word-poster",
+    usesCompositor: false,
+    promptHint:
+      "Mold / clay funny-word poster: stylized 3D molded typography is the hero (pun / nickname / playful phrase). Soft cream studio, vinyl-toy / claymation look. With a product: SKU centered under/with the words. Concept: invent a whimsical scene that illustrates the wordplay — words stay major.",
+  },
+  {
+    id: "deconstruct-archive-poster",
+    icon: "📐",
+    previewSrc: visualPreview("deconstruct-archive-poster"),
+    templateId: "deconstruct-archive-poster",
+    usesCompositor: false,
+    promptHint:
+      "Deconstruct archive poster: strict 50/50 split — top photoreal product hero, bottom technical watercolor isometric explode of the SAME product with numbered callouts, palette strip, scale/archive marks on warm paper — product path only.",
+  },
+  {
+    id: "orbit-type-poster",
+    icon: "🌀",
+    previewSrc: visualPreview("orbit-type-poster"),
+    templateId: "orbit-type-poster",
+    usesCompositor: false,
+    promptHint:
+      "Orbit type poster: subject (model wearing SKU, product hero, or concept logo/mascot) locked center; bold kinetic type orbits / tunnels / passes behind and around them on clean white studio — graphic design that feels in motion, not flat captions.",
+  },
+  {
+    id: "cloche-reveal-poster",
+    icon: "🛎️",
+    previewSrc: visualPreview("cloche-reveal-poster"),
+    templateId: "cloche-reveal-poster",
+    usesCompositor: false,
+    promptHint:
+      "Cloche reveal poster: fine-dining silver tray + white-glove service. Product path: natural ingredients / structure mess → dome cover → finished SKU reveal. Concept path: metaphor props mess → dome → brand logo / idea lockup. Warm cream studio, premium still-life.",
   },
   {
     id: "brand-fit",

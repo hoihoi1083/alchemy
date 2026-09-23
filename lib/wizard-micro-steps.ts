@@ -249,8 +249,11 @@ function evalWhen(
       ctx.videoSubpath === "hand_throw_scene" ||
       ctx.videoSubpath === "web_boundary_break" ||
       ctx.videoSubpath === "type_behind_cutout" ||
+      ctx.videoSubpath === "social_frame_break" ||
       ctx.videoSubpath === "wet_glass_reveal" ||
       ctx.videoSubpath === "torn_paper_reveal" ||
+      ctx.videoSubpath === "orbit_type" ||
+      ctx.videoSubpath === "cloche_reveal" ||
       ctx.videoSubpath === "swift_chroma_run" ||
       ctx.videoSubpath === "magazine_cover_morph" ||
       ctx.videoSubpath === "product_explode" ||
@@ -353,8 +356,11 @@ export function resolvePathId(
       ctx.videoSubpath === "hand_throw_scene" ||
       ctx.videoSubpath === "web_boundary_break" ||
       ctx.videoSubpath === "type_behind_cutout" ||
+      ctx.videoSubpath === "social_frame_break" ||
       ctx.videoSubpath === "wet_glass_reveal" ||
       ctx.videoSubpath === "torn_paper_reveal" ||
+      ctx.videoSubpath === "orbit_type" ||
+      ctx.videoSubpath === "cloche_reveal" ||
       ctx.videoSubpath === "swift_chroma_run" ||
       ctx.videoSubpath === "magazine_cover_morph" ||
       ctx.videoSubpath === "product_explode" ||
@@ -367,7 +373,10 @@ export function resolvePathId(
       state.videoCreativeMode === "hand-throw-scene" ||
       state.videoCreativeMode === "web-boundary-break" ||
       state.videoCreativeMode === "type-behind-cutout" ||
+      state.videoCreativeMode === "social-frame-break" ||
       state.videoCreativeMode === "wet-glass-reveal" ||
+      state.videoCreativeMode === "orbit-type" ||
+      state.videoCreativeMode === "cloche-reveal" ||
       state.videoCreativeMode === "magazine-cover-morph" ||
       state.videoCreativeMode === "product-explode" ||
       state.videoCreativeMode === "bullet-product-elevate"
@@ -399,8 +408,11 @@ export function resolvePathId(
       ctx.videoSubpath === "hand_throw_scene" ||
       ctx.videoSubpath === "web_boundary_break" ||
       ctx.videoSubpath === "type_behind_cutout" ||
+      ctx.videoSubpath === "social_frame_break" ||
       ctx.videoSubpath === "wet_glass_reveal" ||
       ctx.videoSubpath === "torn_paper_reveal" ||
+      ctx.videoSubpath === "orbit_type" ||
+      ctx.videoSubpath === "cloche_reveal" ||
       ctx.videoSubpath === "swift_chroma_run" ||
       ctx.videoSubpath === "magazine_cover_morph" ||
       ctx.videoSubpath === "product_explode" ||
@@ -413,7 +425,10 @@ export function resolvePathId(
       state.videoCreativeMode === "hand-throw-scene" ||
       state.videoCreativeMode === "web-boundary-break" ||
       state.videoCreativeMode === "type-behind-cutout" ||
+      state.videoCreativeMode === "social-frame-break" ||
       state.videoCreativeMode === "wet-glass-reveal" ||
+      state.videoCreativeMode === "orbit-type" ||
+      state.videoCreativeMode === "cloche-reveal" ||
       state.videoCreativeMode === "magazine-cover-morph" ||
       state.videoCreativeMode === "product-explode" ||
       state.videoCreativeMode === "bullet-product-elevate"
@@ -850,8 +865,11 @@ function identitySubpath(sub: string | undefined): boolean {
     sub === "hand_throw_scene" ||
     sub === "web_boundary_break" ||
     sub === "type_behind_cutout" ||
+    sub === "social_frame_break" ||
     sub === "wet_glass_reveal" ||
     sub === "torn_paper_reveal" ||
+    sub === "orbit_type" ||
+    sub === "cloche_reveal" ||
     sub === "swift_chroma_run" ||
     sub === "magazine_cover_morph" ||
     sub === "product_explode" ||
@@ -955,8 +973,11 @@ export function canProceedMicroStep(
       ctx.videoSubpath === "hand_throw_scene" ||
       ctx.videoSubpath === "web_boundary_break" ||
       ctx.videoSubpath === "type_behind_cutout" ||
+      ctx.videoSubpath === "social_frame_break" ||
       ctx.videoSubpath === "wet_glass_reveal" ||
       ctx.videoSubpath === "torn_paper_reveal" ||
+      ctx.videoSubpath === "orbit_type" ||
+      ctx.videoSubpath === "cloche_reveal" ||
       ctx.videoSubpath === "swift_chroma_run" ||
       ctx.videoSubpath === "magazine_cover_morph" ||
       ctx.videoSubpath === "product_explode" ||

@@ -202,6 +202,17 @@ export function estimateVideoPipelineTokens(
       return (genStills ? still : 0) + h3;
     }
 
+    case "torn-paper-reveal": {
+      const tpDur = clampTornPaperRevealDurationSec(opts.durationSec);
+      const h3 = estimateH3Tokens({
+        resolution: opts.resolution,
+        duration: tpDur,
+      });
+      return (genStills ? still * 2 : 0) + h3;
+    }
+
+    case "orbit-type":
+    case "cloche-reveal":
     case "image-to-video":
     case "product-assistant":
     case "text-to-video":

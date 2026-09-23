@@ -31,6 +31,11 @@ export const IMAGE_POSTER_UX_STYLE_IDS = [
   "material-letters",
   "type-interaction",
   "product-lifestyle",
+  "product-hold-poster",
+  "mold-word-poster",
+  "deconstruct-archive-poster",
+  "orbit-type-poster",
+  "cloche-reveal-poster",
 ] as const;
 
 export type ImagePosterUxStyleId = (typeof IMAGE_POSTER_UX_STYLE_IDS)[number];
@@ -48,6 +53,9 @@ export const CONCEPT_IMAGE_POSTER_STYLE_IDS = [
   "screen-break",
   "material-letters",
   "type-interaction",
+  "mold-word-poster",
+  "orbit-type-poster",
+  "cloche-reveal-poster",
 ] as const;
 
 export type ConceptImagePosterStyleId =
@@ -60,8 +68,11 @@ export const IDENTITY_VIDEO_UX_MODES = [
   "hand-throw-scene",
   "web-boundary-break",
   "type-behind-cutout",
+  "social-frame-break",
   "wet-glass-reveal",
   "torn-paper-reveal",
+  "orbit-type",
+  "cloche-reveal",
   "swift-chroma-run",
   "magazine-cover-morph",
   "product-explode",

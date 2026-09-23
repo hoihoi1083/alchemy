@@ -1018,6 +1018,12 @@ export function PreGenerateSetupPanel({
   const isMaterialLetters = wizard.visualStyleId === "material-letters";
   const isTypeInteraction = wizard.visualStyleId === "type-interaction";
   const isProductLifestyle = wizard.visualStyleId === "product-lifestyle";
+  const isProductHoldPoster = wizard.visualStyleId === "product-hold-poster";
+  const isMoldWordPoster = wizard.visualStyleId === "mold-word-poster";
+  const isDeconstructArchivePoster =
+    wizard.visualStyleId === "deconstruct-archive-poster";
+  const isOrbitTypePoster = wizard.visualStyleId === "orbit-type-poster";
+  const isClocheRevealPoster = wizard.visualStyleId === "cloche-reveal-poster";
   const isLockedPosterStyle =
     isDesignedPoster ||
     isPartsPoster ||
@@ -1030,7 +1036,12 @@ export function PreGenerateSetupPanel({
     isLightTrail ||
     isScreenBreak ||
     isMaterialLetters ||
-    isTypeInteraction;
+    isTypeInteraction ||
+    isProductHoldPoster ||
+    isMoldWordPoster ||
+    isDeconstructArchivePoster ||
+    isOrbitTypePoster ||
+    isClocheRevealPoster;
   // product-lifestyle is not locked-single (carousel OK) but still skips reference borrow.
   const isPosterTemplateStyle = isLockedPosterStyle || isProductLifestyle;
   const isQuickAd =
@@ -1060,7 +1071,12 @@ export function PreGenerateSetupPanel({
     isScreenBreak ||
     isMaterialLetters ||
     isTypeInteraction ||
-    isProductLifestyle;
+    isProductLifestyle ||
+    isProductHoldPoster ||
+    isMoldWordPoster ||
+    isDeconstructArchivePoster ||
+    isOrbitTypePoster ||
+    isClocheRevealPoster;
   const copyFocus = resolveConceptCopyFocus(
     wizard.visualStyleId,
     pg.conceptCopyFocus,
@@ -1278,6 +1294,11 @@ export function PreGenerateSetupPanel({
       | "material-letters"
       | "type-interaction"
       | "product-lifestyle"
+      | "product-hold-poster"
+      | "mold-word-poster"
+      | "deconstruct-archive-poster"
+      | "orbit-type-poster"
+      | "cloche-reveal-poster"
       | "remap",
   ) {
     if (path === "model" && hasReference) return;
@@ -1296,7 +1317,12 @@ export function PreGenerateSetupPanel({
       path === "screen-break" ||
       path === "material-letters" ||
       path === "type-interaction" ||
-      path === "product-lifestyle"
+      path === "product-lifestyle" ||
+      path === "product-hold-poster" ||
+      path === "mold-word-poster" ||
+      path === "deconstruct-archive-poster" ||
+      path === "orbit-type-poster" ||
+      path === "cloche-reveal-poster"
     ) {
       return;
     }
@@ -1320,6 +1346,9 @@ export function PreGenerateSetupPanel({
       | "screen-break"
       | "material-letters"
       | "type-interaction"
+      | "mold-word-poster"
+      | "orbit-type-poster"
+      | "cloche-reveal-poster"
       | "remap",
   ) {
     wizard.applyPrimaryPathConcept(path);
@@ -1334,7 +1363,10 @@ export function PreGenerateSetupPanel({
       path === "light-trail" ||
       path === "screen-break" ||
       path === "material-letters" ||
-      path === "type-interaction"
+      path === "type-interaction" ||
+      path === "mold-word-poster" ||
+      path === "orbit-type-poster" ||
+      path === "cloche-reveal-poster"
     ) {
       return;
     }
@@ -1624,6 +1656,24 @@ export function PreGenerateSetupPanel({
                           "type-interaction",
                         ],
                         [
+                          "mold-word-poster",
+                          pg.stylePickerMoldWordPosterLabel,
+                          pg.stylePickerMoldWordPosterDesc,
+                          "mold-word-poster",
+                        ],
+                        [
+                          "orbit-type-poster",
+                          pg.stylePickerOrbitTypePosterLabel,
+                          pg.stylePickerOrbitTypePosterDesc,
+                          "orbit-type-poster",
+                        ],
+                        [
+                          "cloche-reveal-poster",
+                          pg.stylePickerClocheRevealPosterLabel,
+                          pg.stylePickerClocheRevealPosterDesc,
+                          "cloche-reveal-poster",
+                        ],
+                        [
                           "pricing",
                           m.wizard.pathPricingTitle,
                           m.wizard.pathPricingDesc,
@@ -1785,6 +1835,41 @@ export function PreGenerateSetupPanel({
                           pg.stylePickerProductLifestyleDesc,
                           "product-lifestyle",
                           isProductLifestyle,
+                        ],
+                        [
+                          "product-hold-poster",
+                          pg.stylePickerProductHoldPosterLabel,
+                          pg.stylePickerProductHoldPosterDesc,
+                          "product-hold-poster",
+                          isProductHoldPoster,
+                        ],
+                        [
+                          "mold-word-poster",
+                          pg.stylePickerMoldWordPosterLabel,
+                          pg.stylePickerMoldWordPosterDesc,
+                          "mold-word-poster",
+                          isMoldWordPoster,
+                        ],
+                        [
+                          "deconstruct-archive-poster",
+                          pg.stylePickerDeconstructArchivePosterLabel,
+                          pg.stylePickerDeconstructArchivePosterDesc,
+                          "deconstruct-archive-poster",
+                          isDeconstructArchivePoster,
+                        ],
+                        [
+                          "orbit-type-poster",
+                          pg.stylePickerOrbitTypePosterLabel,
+                          pg.stylePickerOrbitTypePosterDesc,
+                          "orbit-type-poster",
+                          isOrbitTypePoster,
+                        ],
+                        [
+                          "cloche-reveal-poster",
+                          pg.stylePickerClocheRevealPosterLabel,
+                          pg.stylePickerClocheRevealPosterDesc,
+                          "cloche-reveal-poster",
+                          isClocheRevealPoster,
                         ],
                         [
                           "model",

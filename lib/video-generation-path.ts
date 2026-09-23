@@ -24,8 +24,11 @@ export type VideoGenerationKind =
   | "hand-throw-scene"
   | "web-boundary-break"
   | "type-behind-cutout"
+  | "social-frame-break"
   | "wet-glass-reveal"
   | "torn-paper-reveal"
+  | "orbit-type"
+  | "cloche-reveal"
   | "swift-chroma-run"
   | "magazine-cover-morph"
   | "product-explode"
@@ -97,11 +100,20 @@ export function resolveVideoGenerationKind(
   if (input.videoCreativeMode === "type-behind-cutout") {
     return "type-behind-cutout";
   }
+  if (input.videoCreativeMode === "social-frame-break") {
+    return "social-frame-break";
+  }
   if (input.videoCreativeMode === "wet-glass-reveal") {
     return "wet-glass-reveal";
   }
   if (input.videoCreativeMode === "torn-paper-reveal") {
     return "torn-paper-reveal";
+  }
+  if (input.videoCreativeMode === "orbit-type") {
+    return "orbit-type";
+  }
+  if (input.videoCreativeMode === "cloche-reveal") {
+    return "cloche-reveal";
   }
   if (input.videoCreativeMode === "swift-chroma-run") {
     return "swift-chroma-run";

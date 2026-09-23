@@ -49,6 +49,10 @@ import {
   type TypeBehindCutoutDialectPick,
 } from "@/lib/type-behind-cutout";
 import {
+  formatSocialFrameOnScreenPreview,
+  socialFrameBreakDurationOptions,
+} from "@/lib/social-frame-break";
+import {
   WET_GLASS_REVEAL_DIALECT_IDS,
   wetGlassRevealDialectPreviewSrc,
   wetGlassRevealDurationOptions,
@@ -478,6 +482,8 @@ export function PreVideoSetupPanel({
     !scenesReady && wizard.videoCreativeMode === "web-boundary-break";
   const prefersTypeBehind =
     !scenesReady && wizard.videoCreativeMode === "type-behind-cutout";
+  const prefersSocialFrame =
+    !scenesReady && wizard.videoCreativeMode === "social-frame-break";
   const prefersWetGlass =
     !scenesReady && wizard.videoCreativeMode === "wet-glass-reveal";
   const prefersTornPaper =
@@ -515,6 +521,8 @@ export function PreVideoSetupPanel({
       ? "web_boundary_break"
       : prefersTypeBehind
       ? "type_behind_cutout"
+      : prefersSocialFrame
+      ? "social_frame_break"
       : prefersWetGlass
       ? "wet_glass_reveal"
       : prefersTornPaper
@@ -549,6 +557,7 @@ export function PreVideoSetupPanel({
   const isHandThrow = !scenesReady && activeSubpath === "hand_throw_scene";
   const isWebBoundary = !scenesReady && activeSubpath === "web_boundary_break";
   const isTypeBehind = !scenesReady && activeSubpath === "type_behind_cutout";
+  const isSocialFrame = !scenesReady && activeSubpath === "social_frame_break";
   const isWetGlass = !scenesReady && activeSubpath === "wet_glass_reveal";
   const isTornPaper = !scenesReady && activeSubpath === "torn_paper_reveal";
   const isSwiftChroma = !scenesReady && activeSubpath === "swift_chroma_run";
@@ -633,6 +642,14 @@ export function PreVideoSetupPanel({
           dialect: typeBehindDialect,
         })
       : "";
+  const socialFrameOnScreenWords = isSocialFrame
+    ? formatSocialFrameOnScreenPreview({
+        headline: wizard.headline,
+        business: wizard.business,
+        product: wizard.product,
+        subline: wizard.subline,
+      })
+    : "";
   const copyPanelHint =
     copyHints.hintKind === "textless-video"
       ? fuse.productAssistTextlessHint
@@ -726,6 +743,9 @@ export function PreVideoSetupPanel({
     }
     if (isTypeBehind && wizard.videoCreativeMode !== "type-behind-cutout") {
       onPickVideoSubpath("type_behind_cutout");
+    }
+    if (isSocialFrame && wizard.videoCreativeMode !== "social-frame-break") {
+      onPickVideoSubpath("social_frame_break");
     }
     if (isWetGlass && wizard.videoCreativeMode !== "wet-glass-reveal") {
       onPickVideoSubpath("wet_glass_reveal");
@@ -1111,6 +1131,12 @@ export function PreVideoSetupPanel({
       previewSrc: videoModePreviewSrc("type-behind-cutout"),
     },
     {
+      id: "social_frame_break",
+      title: m.wizard.videoCreativeModes["social-frame-break"].title,
+      desc: m.wizard.videoCreativeModes["social-frame-break"].description,
+      previewSrc: videoModePreviewSrc("social-frame-break"),
+    },
+    {
       id: "wet_glass_reveal",
       title: m.wizard.videoCreativeModes["wet-glass-reveal"].title,
       desc: m.wizard.videoCreativeModes["wet-glass-reveal"].description,
@@ -1228,6 +1254,12 @@ export function PreVideoSetupPanel({
       previewSrc: videoModePreviewSrc("type-behind-cutout"),
     },
     {
+      id: "social_frame_break",
+      title: m.wizard.videoCreativeModes["social-frame-break"].title,
+      desc: m.wizard.videoCreativeModes["social-frame-break"].description,
+      previewSrc: videoModePreviewSrc("social-frame-break"),
+    },
+    {
       id: "wet_glass_reveal",
       title: m.wizard.videoCreativeModes["wet-glass-reveal"].title,
       desc: m.wizard.videoCreativeModes["wet-glass-reveal"].description,
@@ -1317,6 +1349,8 @@ export function PreVideoSetupPanel({
         ? m.wizard.webBoundaryHint
         : isTypeBehind
         ? m.wizard.typeBehindHint
+        : isSocialFrame
+        ? m.wizard.socialFrameHint
         : isWetGlass
         ? m.wizard.wetGlassHint
         : isTornPaper
@@ -1569,6 +1603,12 @@ export function PreVideoSetupPanel({
                               ? isWetGlass
                             : opt.id === "torn_paper_reveal"
                               ? isTornPaper
+                            : opt.id === "orbit_type"
+                              ? activeSubpath === "orbit_type" ||
+                                wizard.videoCreativeMode === "orbit-type"
+                            : opt.id === "cloche_reveal"
+                              ? activeSubpath === "cloche_reveal" ||
+                                wizard.videoCreativeMode === "cloche-reveal"
                             : opt.id === "swift_chroma_run"
                               ? isSwiftChroma
                             : opt.id === "magazine_cover_morph"
@@ -2245,6 +2285,8 @@ export function PreVideoSetupPanel({
                       ? pv.motionPosterCopyFocus.hookLabel
                       : isTypeBehind
                         ? pv.typeBehindCopyFocus.hookLabel
+                        : isSocialFrame
+                          ? pv.socialFrameCopyFocus.hookLabel
                         : pv.hookLabel}
                     {headlineOptional ? (
                       <span className="pv-label-opt">{pv.extraOptional}</span>
@@ -2274,6 +2316,8 @@ export function PreVideoSetupPanel({
                         ? pv.motionPosterCopyFocus.hookPlaceholder
                         : isTypeBehind
                           ? pv.typeBehindCopyFocus.hookPlaceholder
+                          : isSocialFrame
+                            ? pv.socialFrameCopyFocus.hookPlaceholder
                           : m.wizard.headlinePlaceholder
                     }
                   />
@@ -2291,6 +2335,25 @@ export function PreVideoSetupPanel({
                             {fuse.typeBehindOnScreenPreview.replace(
                               "{words}",
                               typeBehindOnScreenWords,
+                            )}
+                          </span>
+                        </>
+                      ) : null}
+                    </p>
+                  ) : isSocialFrame ? (
+                    <p className="mt-1.5 text-[11px] leading-snug text-violet-800">
+                      <span className="font-semibold">
+                        {pv.socialFrameCopyFocus.title}
+                      </span>
+                      {" — "}
+                      {pv.socialFrameCopyFocus.body}
+                      {socialFrameOnScreenWords ? (
+                        <>
+                          {" "}
+                          <span className="font-semibold">
+                            {fuse.socialFrameOnScreenPreview.replace(
+                              "{words}",
+                              socialFrameOnScreenWords,
                             )}
                           </span>
                         </>
@@ -2939,6 +3002,20 @@ export function PreVideoSetupPanel({
               </section>
             ) : null}
 
+            {isSocialFrame ? (
+              <section className="pv-card">
+                <div className="pv-card-title-row mb-2">
+                  <h3 className="pv-card-title">{m.wizard.socialFrameSchemeTitle}</h3>
+                </div>
+                <p className="mb-2 text-xs text-slate-500">
+                  {m.wizard.socialFrameSchemeHint}
+                </p>
+                <p className="text-xs leading-relaxed text-slate-500">
+                  {m.wizard.socialFrameHint}
+                </p>
+              </section>
+            ) : null}
+
             {isWetGlass ? (
               <section className="pv-card">
                 <div className="pv-card-title-row mb-2">
@@ -3390,8 +3467,10 @@ export function PreVideoSetupPanel({
                             ? m.wizard.h3ShotPhotoTitle["h3-lifestyle"]
                             : isH3Shot && isConcept
                               ? m.wizard.h3ShotConceptHeroTitle
-                              : isBlockbuster
+                                : isBlockbuster
                                 ? m.wizard.blockbusterHeroTitle
+                                : isSocialFrame
+                                  ? pv.socialFrameCharacterTitle
                                 : isConcept
                                   ? pv.conceptPhotoTitle
                                   : pv.productPhotoTitle}
@@ -3419,6 +3498,8 @@ export function PreVideoSetupPanel({
                         ? isConcept
                           ? m.wizard.blockbusterHeroHintConcept
                           : m.wizard.blockbusterHeroHint
+                        : isSocialFrame
+                          ? pv.socialFrameCharacterHint
                         : isConcept
                         ? pv.conceptPhotoHint
                         : isUgc
@@ -3489,15 +3570,26 @@ export function PreVideoSetupPanel({
               </section>
             ) : null}
 
-            {isBlockbuster ? (
+            {isBlockbuster || (isSocialFrame && !isConcept) ? (
               <section className="pv-card">
                 <div className="pv-card-title-row mb-3">
-                  <h3 className="pv-card-title">{m.wizard.blockbusterPackTitle}</h3>
+                  <h3 className="pv-card-title">
+                    {isSocialFrame
+                      ? pv.socialFrameProductSkuTitle
+                      : m.wizard.blockbusterPackTitle}
+                    {isSocialFrame ? (
+                      <span className="ml-1.5 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700">
+                        {pv.requiredBadge}
+                      </span>
+                    ) : null}
+                  </h3>
                 </div>
                 <p className="mb-3 text-xs text-slate-500">
-                  {isConcept
-                    ? m.wizard.blockbusterPackHintConcept
-                    : m.wizard.blockbusterPackHint}
+                  {isSocialFrame
+                    ? pv.socialFrameProductSkuHint
+                    : isConcept
+                      ? m.wizard.blockbusterPackHintConcept
+                      : m.wizard.blockbusterPackHint}
                 </p>
                 <input
                   id={packInputId}
@@ -3962,6 +4054,8 @@ export function PreVideoSetupPanel({
                             ? webBoundaryBreakDurationOptions()
                           : isTypeBehind
                             ? typeBehindCutoutDurationOptions()
+                          : isSocialFrame
+                            ? socialFrameBreakDurationOptions()
                           : isWetGlass
                             ? wetGlassRevealDurationOptions()
                           : isTornPaper

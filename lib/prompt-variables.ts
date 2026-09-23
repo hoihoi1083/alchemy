@@ -150,6 +150,8 @@ export type PromptVariables = {
   artStyle?: ArtStyleId;
 	imageTextMode?: ImageTextMode;
 	compositionPreset?: CompositionPresetId;
+	/** When set, poster prompts can branch product vs concept DNA. */
+	promotionMode?: PromotionMode;
 };
 
 const MARKET_HINTS: Record<PromptMarket, string> = {
@@ -215,6 +217,7 @@ export function buildPromptVariables(input: {
   artStyle?: ArtStyleId;
 	imageTextMode?: ImageTextMode;
 	compositionPreset?: CompositionPresetId;
+	promotionMode?: PromotionMode;
 }): PromptVariables {
 	const product = input.product.trim();
 	const sanitized = sanitizeOnImageCopy({
@@ -234,6 +237,7 @@ export function buildPromptVariables(input: {
     artStyle: input.artStyle ?? DEFAULT_ART_STYLE,
 		imageTextMode: input.imageTextMode,
 		compositionPreset: input.compositionPreset,
+		promotionMode: input.promotionMode,
 	};
 }
 
@@ -1164,6 +1168,213 @@ export function buildProductLifestyleImagePrompt(vars: PromptVariables): string 
 	);
 }
 
+/**
+ * Talking product-hold poster: person presents SKU in forced perspective on white studio,
+ * punchy pain→attitude headline (A？B), brush slogan + category pill — not a spec sheet.
+ */
+export function buildProductHoldPosterImagePrompt(vars: PromptVariables): string {
+	const product = vars.product?.trim() || "the product";
+	const headline = vars.headline?.trim() || "";
+	const subline = vars.subline?.trim() || "";
+	const offer = vars.offer?.trim() || "";
+	const framing: SubjectFraming =
+		vars.framing === "product-only" || vars.framing === "no-people"
+			? "auto"
+			: vars.framing;
+	const titleRule = headline
+		? vars.market === "en"
+			? `Paint the main headline EXACTLY once, verbatim: "${headline}". Prefer a short punchy pain→attitude pair (e.g. Latency? Bye-bye / Compact? Portable) if the user wrote that form.`
+			: `Paint the main headline EXACTLY once with exact characters: "${headline}". Prefer short punchy 痛点？态度 form (e.g. 延迟？拜拜) when the user wrote that — do NOT invent a different slogan.`
+		: `Invent one short punchy pain→attitude headline matched to "${product}" (Chinese markets: 痛点？态度; EN: Pain? Attitude) — keep under ~8 characters / 4 words per half.`;
+	const sloganRule = subline
+		? `Bottom brush / handwritten slogan EXACTLY once, verbatim: "${subline}".`
+		: `Bottom brush slogan: invent one short elegant line (~6–10 chars / words) matching the headline benefit — not a tech-spec list.`;
+
+	return joinParts(
+		`Create a vertical TALKING PRODUCT-HOLD commercial poster for ${product}.`,
+		`Look DNA (locked): clean high-key WHITE / off-white studio · real person in a DYNAMIC pose · SKU held toward camera in FORCED PERSPECTIVE (product huge in extreme foreground) · punchy talking headline · brush slogan · small black category pill. NOT a white info checklist. NOT product-only catalog. NOT rainbow-refraction lifestyle.`,
+		`MANDATORY PERSON + HOLD: A real person MUST appear and HOLD / PRESENT the product toward the lens (open palm, case in hand, or natural category hold). Never a product floating alone on a table.`,
+		`IDENTITY LOCK: Keep the EXACT product from IMAGE 1 (shape, color, logos, materials). Scale it LARGE in the foreground — roughly 25–40% of frame height — sharp macro feel.`,
+		`POSTER GRAMMAR:`,
+		`1) Product + hand: extreme foreground, closest to camera, sharp.`,
+		`2) Person: midground, energetic full-body or 3/4 pose (crouch / lean / step), casual modern wardrobe; softer focus OK behind the product.`,
+		`3) Background: minimalist white / light grey seamless studio — soft floor shadow only.`,
+		`4) Top micro line (optional, small): one short pain question matching the product category.`,
+		`5) Main title (large bold sans): ${titleRule}`,
+		`6) ${sloganRule}`,
+		`7) Small black pill / capsule at bottom with a short category label for "${product}" (e.g. TWS earbuds / skincare / power bank) — not a fake brand name.`,
+		offer ? `Optional tiny claim badge (exact): "${offer}".` : "No invent prices, HK$, or discount %.",
+		vars.business ? `Brand cue may appear tiny in footer: ${vars.business}.` : "",
+		`8) Accent: one gradient color on the main title only (purple/pink, blue, or warm) — rest of frame stays clean.`,
+		`FORBIDDEN: no person; product-only cutout; missing hand hold; cluttered Canva collage; long tech-spec paragraphs; neon cyberpunk; watermark; social UI chrome; misspelled characters; inventing a second headline.`,
+		imageReferenceAnchorBlock(vars),
+		MARKET_HINTS[vars.market],
+		marketChineseScriptBlock(vars.market),
+		FRAMING_IMAGE[framing],
+		vars.extra,
+		"Single 9:16 product-hold talking poster still.",
+	);
+}
+
+/**
+ * Mold / clay funny-word poster — stylized 3D molded typography is the MAJOR hero.
+ * Physical: center product with the funny words on/around it.
+ * Concept: invent a whimsical claymation scene that illustrates the wordplay — words still major.
+ */
+export function buildMoldWordPosterImagePrompt(vars: PromptVariables): string {
+	const product = vars.product?.trim() || "";
+	const headline = vars.headline?.trim() || product || "FUN";
+	const subline = vars.subline?.trim() || "";
+	const offer = vars.offer?.trim() || "";
+	const titleRule =
+		vars.market === "en"
+			? `HERO WORDS (MAJOR — paint EXACTLY once, huge, verbatim): "${headline}". These words dominate the frame.`
+			: `HERO WORDS (MAJOR — paint EXACTLY once, huge, exact characters): "${headline}". These words dominate the frame — spell every character accurately.`;
+
+	return joinParts(
+		`Create a vertical MOLD / CLAY FUNNY-WORD commercial poster.`,
+		`Look DNA (locked): soft cream / off-white high-key studio · vinyl-toy / claymation / handcrafted polymer-clay aesthetic · chunky tactile 3D typography is the MAJOR focus · whimsical, playful, slightly ridiculous wordplay energy (MOLD IT vibe). NOT a flat Canva flyer. NOT a white info checklist. NOT rainbow-refraction lifestyle. NOT jelly-glass minimal alone.`,
+		`WORDS ARE THE STAR: The funny / playful phrase MUST be the largest, most memorable element — thick rounded 3D molded letters with material personality that MATCHES the word meaning (e.g. potato-skin letters for a potato pun; dripping tofu texture for a tofu joke; bone/clay mix for a skeleton pun; liquid drips, clay fingerprints, soft matte volume).`,
+		titleRule,
+		subline
+			? `Optional smaller support line (exact, secondary): "${subline}".`
+			: "No support line required — do not invent a second competing headline.",
+		product
+			? `PRODUCT PATH: Keep the EXACT product from IMAGE 1 (shape, color, logos, materials) CENTERED in the middle of the frame under / with the hero words. The product is important but SECONDARY to the stylized words — words sit on, around, or just above the product so both read clearly.`
+			: `CONCEPT PATH: No product packshot required. INVENT a whimsical claymation character / diorama that ILLUSTRATES the wordplay of "${headline}" (mascot, toy figure, surreal object). Soft cream studio. The made-up scene supports the joke — the WORDS remain the major focus.`,
+		vars.business ? `Tiny brand cue OK: ${vars.business}.` : "",
+		offer ? `Optional tiny claim (exact): "${offer}".` : "Do not invent prices or fake CTAs.",
+		`LAYOUT: top/upper — oversized molded hero words; middle — product OR story character/scene; generous negative cream space; soft upper-left key light; gentle clay fingerprints / tactile imperfections.`,
+		`FORBIDDEN: tiny unreadable type; words as an afterthought under a huge product; flat 2D font stickers; crowded Canva collage; neon cyberpunk; watermark; social UI chrome; misspelled characters; inventing a different headline than "${headline}".`,
+		imageReferenceAnchorBlock(vars),
+		MARKET_HINTS[vars.market],
+		marketChineseScriptBlock(vars.market),
+		FRAMING_IMAGE[vars.framing],
+		vars.extra,
+		"Single 9:16 mold funny-word poster still.",
+	);
+}
+
+/**
+ * Deconstruct archive poster — strict 50/50 split:
+ * top photoreal product hero; bottom technical watercolor isometric explode of the SAME SKU.
+ * Product path only.
+ */
+export function buildDeconstructArchivePosterImagePrompt(
+	vars: PromptVariables,
+): string {
+	const product = vars.product?.trim() || "the product";
+	const headline = vars.headline?.trim() || product;
+	const subline = vars.subline?.trim() || "";
+	const offer = vars.offer?.trim() || "";
+	const titleRule =
+		vars.market === "en"
+			? `Masthead (exact, serif / research paper feel): "${headline}". Prefer a STUDY / DECONSTRUCTED naming style when the user wrote that form.`
+			: `Masthead (exact characters, serif / research paper feel): "${headline}". Prefer a STUDY / DECONSTRUCTED naming style when the user wrote that form — spell every character accurately.`;
+
+	return joinParts(
+		`Create a vertical DECONSTRUCT ARCHIVE commercial poster for ${product}.`,
+		`Look DNA (locked): ONE sheet, warm ivory / cream PAPER texture · archival / museum / art-magazine study · technical but warm · low-saturation earth watercolor tones. NOT neon. NOT flat Canva checklist. NOT a full-bleed product-only shot.`,
+		`STRICT LAYOUT (critical): 3:4 vertical. Split the frame into TWO equal bands — TOP 50% and BOTTOM 50% (1:1 height). Soft divider OK; keep both zones readable at phone size.`,
+		`TOP HALF (photoreal hero):`,
+		`Keep the EXACT product / subject from IMAGE 1 — same shape, color, logos, materials, lighting truth. High-end retouch / exhibition photo feel. Background may extend naturally; do NOT stretch or warp the product.`,
+		`BOTTOM HALF (technical deconstruct study on warm paper):`,
+		`Redraw the SAME product as a technical watercolor + fine ink isometric / exploded archive diagram — 3 to 6 floating layers (outer shell → inner parts) with thin leader lines and hollow numbered circles 01/02/03… plus short functional labels.`,
+		subline
+			? `Use these callout notes when they fit real components (exact when Chinese): ${subline}.`
+			: `Invent 3–6 short real-component callouts for "${product}" — materials / structure / function — no unrelated spare parts.`,
+		`Bottom chrome (subtle, light): 4–6 color swatches derived from the top photo (name them briefly, e.g. Palette: Earth / Warm / Soft); tiny scale bar; small compass or archive mark (e.g. No. R-01). Optional tiny intact isometric thumbnail of the assembled product in a corner.`,
+		titleRule,
+		vars.business ? `Tiny brand / archive cue OK: ${vars.business}.` : "",
+		offer ? `Optional tiny claim (exact): "${offer}".` : "Do not invent prices or fake CTAs.",
+		`IDENTITY LOCK: Bottom explode MUST be the same product as the top photo — never swap to a different object or scene.`,
+		`FORBIDDEN: missing top photo; missing bottom explode; bottom product different from top; violent smash debris; pure black heavy outlines; plastic CG; overcrowded unreadable text; watermark; social UI chrome; misspelled characters.`,
+		imageReferenceAnchorBlock(vars),
+		MARKET_HINTS[vars.market],
+		marketChineseScriptBlock(vars.market),
+		FRAMING_IMAGE[vars.framing],
+		vars.extra,
+		"Single 3:4 deconstruct archive poster still.",
+	);
+}
+
+/**
+ * Orbit type poster — subject locked center; bold kinetic words orbit / tunnel /
+ * pass behind and around them on clean white studio (fashion “moving graphic design”).
+ * Product: model+SKU or product hero. Concept: logo / mascot / idea subject.
+ */
+export function buildOrbitTypePosterImagePrompt(vars: PromptVariables): string {
+	const product = vars.product?.trim() || "";
+	const headline = vars.headline?.trim() || product || "RISE UP";
+	const subline = vars.subline?.trim() || "";
+	const isConcept = vars.promotionMode === "concept";
+	const titleRule =
+		vars.market === "en"
+			? `ORBIT WORDS (paint EXACTLY, bold sans, verbatim — repeat / fragment OK for kinetic rings): "${headline}".`
+			: `ORBIT WORDS (paint EXACTLY, bold sans, exact characters — repeat / fragment OK for kinetic rings): "${headline}". Spell every character accurately.`;
+
+	return joinParts(
+		`Create a vertical ORBIT TYPE commercial poster.`,
+		`Look DNA (locked): clean HIGH-KEY WHITE studio · fashion / motion-graphic energy · subject LOCKED in the CENTER · bold BLACK kinetic typography lives IN 3D SPACE around them (concentric rings, spiral tunnel, orbit arcs, oversized letters on the floor, some letters PASSING BEHIND the subject so the body occludes type). NOT flat caption stickers. NOT a Canva collage. NOT rainbow lifestyle. NOT mold-clay toys.`,
+		titleRule,
+		subline
+			? `Optional smaller support fragment (exact, secondary): "${subline}".`
+			: "No second competing headline — do not invent unrelated slogans.",
+		isConcept || !product
+			? `CONCEPT PATH: Center subject = logo mark / mascot / idea metaphor for "${headline}"${product ? ` (${product})` : ""}. Type orbits the idea — brand/idea stays readable in the middle.`
+			: `PRODUCT PATH: Keep the EXACT product / model+product from IMAGE 1 as the CENTER subject (shape, color, logos, materials). Fashion pose OK. Type orbits the subject — product identity stays locked.`,
+		vars.business ? `Tiny brand cue OK: ${vars.business}.` : "",
+		`LAYOUT: subject mid-frame; type rings / arcs around and behind; generous white negative space; high contrast black type; slight wide-angle / low-angle energy OK.`,
+		`FORBIDDEN: type only as bottom caption bar; no depth (nothing behind subject); neon cyberpunk; watermark; social UI chrome; misspelled characters; inventing a different headline than "${headline}".`,
+		imageReferenceAnchorBlock(vars),
+		MARKET_HINTS[vars.market],
+		marketChineseScriptBlock(vars.market),
+		FRAMING_IMAGE[vars.framing],
+		vars.extra,
+		"Single 9:16 orbit-type poster still.",
+	);
+}
+
+/**
+ * Cloche reveal poster — silver tray + white-glove service dome.
+ * Product: ingredient / structure “mess” under dome → finished SKU reveal.
+ * Concept: metaphor props mess → brand logo / idea lockup reveal.
+ */
+export function buildClocheRevealPosterImagePrompt(
+	vars: PromptVariables,
+): string {
+	const product = vars.product?.trim() || "";
+	const headline = vars.headline?.trim() || product || "REVEAL";
+	const subline = vars.subline?.trim() || "";
+	const isConcept = vars.promotionMode === "concept";
+	const titleRule =
+		vars.market === "en"
+			? `Optional small elegant title (exact if present): "${headline}". Keep type minimal — the tray reveal is the story.`
+			: `Optional small elegant title (exact characters if present): "${headline}". Keep type minimal — the tray reveal is the story. Spell accurately.`;
+
+	return joinParts(
+		`Create a vertical CLOCHE REVEAL commercial still-life poster.`,
+		`Look DNA (locked): fine-dining SERVICE metaphor · polished SILVER tray + matching dome (cloche) · white formal gloves + black sleeve cuffs · warm cream / beige plaster studio · soft museum light · premium beauty / still-life grade. NOT a messy kitchen dump. NOT neon. NOT flat Canva.`,
+		`KEY MOMENT (paint this beat): dome MID-LIFT — one gloved hand holds the tray, the other lifts the dome knob. The reveal object is centered on the tray in the gap under the rising dome.`,
+		isConcept || !product
+			? `CONCEPT PATH: On the tray under the rising dome, reveal a clean BRAND LOGO / idea lockup / mascot mark for "${headline}"${product ? ` (${product})` : ""}. Around / previously “under” the story: a curated metaphor “mess” of symbolic props that express the idea (not random trash) — then the dome makes the brand the punchline.`
+			: `PRODUCT PATH: Keep the EXACT product from IMAGE 1 as the REVEALED hero on the tray (shape, color, logos, materials). Around the product (or implied under the dome’s story): a curated “ingredient / structure mess” that expresses what the product is made of or stands for (botanicals, parts, textures) — elegant, designed, not garbage. The SKU is the punchline.`,
+		titleRule,
+		subline
+			? `Tiny support line OK (exact): "${subline}".`
+			: "Do not invent a long paragraph of copy.",
+		vars.business ? `Tiny brand cue OK: ${vars.business}.` : "",
+		`COMPOSITION: centered tray, mid-lift dome, cream background, soft shadows, phone-readable hero.`,
+		`FORBIDDEN: missing dome or tray; plastic toy props; product swapped for a different SKU; overcrowded text; watermark; social UI chrome; misspelled characters.`,
+		imageReferenceAnchorBlock(vars),
+		MARKET_HINTS[vars.market],
+		marketChineseScriptBlock(vars.market),
+		FRAMING_IMAGE[vars.framing],
+		vars.extra,
+		"Single 9:16 cloche-reveal poster still.",
+	);
+}
+
 import type { CampaignSlidePlan } from "@/lib/campaign-types";
 import { getVisualStyle, type VisualStyleId } from "@/lib/visual-styles";
 import type { SingleImagePlan } from "@/lib/single-image-plan";
@@ -1220,6 +1431,11 @@ export type ImagePromptMode =
 	| "material-letters"
 	| "type-interaction"
 	| "product-lifestyle"
+	| "product-hold-poster"
+	| "mold-word-poster"
+	| "deconstruct-archive-poster"
+	| "orbit-type-poster"
+	| "cloche-reveal-poster"
   | "brand-fit"
   | "model-wear"
 	| "ugc-presenter"
@@ -2113,6 +2329,51 @@ export function buildWizardImagePrompt(
 			),
 		);
 	}
+	if (mode === "product-hold-poster") {
+		return withLogo(
+			joinParts(
+				buildProductHoldPosterImagePrompt(vars),
+				plan ? singlePlanBlock(plan) : "",
+				"Avoid: product-only catalog cutout, empty table still life with no person, floating SKU with no hand, rainbow prism lifestyle clutter.",
+			),
+		);
+	}
+	if (mode === "mold-word-poster") {
+		return withLogo(
+			joinParts(
+				buildMoldWordPosterImagePrompt(vars),
+				plan ? singlePlanBlock(plan) : "",
+				"Avoid: tiny flat type, product catalog with no hero words, Canva collage, missing wordplay focus.",
+			),
+		);
+	}
+	if (mode === "deconstruct-archive-poster") {
+		return withLogo(
+			joinParts(
+				buildDeconstructArchivePosterImagePrompt(vars),
+				plan ? singlePlanBlock(plan) : "",
+				"Avoid: missing top photo, missing bottom explode, different product in bottom half, smash debris, neon cyberpunk.",
+			),
+		);
+	}
+	if (mode === "orbit-type-poster") {
+		return withLogo(
+			joinParts(
+				buildOrbitTypePosterImagePrompt(vars),
+				plan ? singlePlanBlock(plan) : "",
+				"Avoid: flat caption-only type, no behind-subject layering, Canva collage, neon cyberpunk.",
+			),
+		);
+	}
+	if (mode === "cloche-reveal-poster") {
+		return withLogo(
+			joinParts(
+				buildClocheRevealPosterImagePrompt(vars),
+				plan ? singlePlanBlock(plan) : "",
+				"Avoid: missing silver tray/dome, kitchen chaos dump, neon cyberpunk, swapped product identity.",
+			),
+		);
+	}
 	if (mode === "model-wear") {
 		return withLogo(
 			joinParts(
@@ -2267,6 +2528,11 @@ function shouldUseConceptSocialPrompt(
 		visualStyleId === "material-letters" ||
 		visualStyleId === "type-interaction" ||
 		visualStyleId === "product-lifestyle" ||
+		visualStyleId === "product-hold-poster" ||
+		visualStyleId === "mold-word-poster" ||
+		visualStyleId === "deconstruct-archive-poster" ||
+		visualStyleId === "orbit-type-poster" ||
+		visualStyleId === "cloche-reveal-poster" ||
 		visualStyleId === "brand-fit" ||
 		visualStyleId === "brand-campaign" ||
 		visualStyleId === "pricing-offer" ||
@@ -2315,6 +2581,12 @@ export function resolveImagePromptMode(
 	if (visualStyleId === "material-letters") return "material-letters";
 	if (visualStyleId === "type-interaction") return "type-interaction";
 	if (visualStyleId === "product-lifestyle") return "product-lifestyle";
+	if (visualStyleId === "product-hold-poster") return "product-hold-poster";
+	if (visualStyleId === "mold-word-poster") return "mold-word-poster";
+	if (visualStyleId === "deconstruct-archive-poster")
+		return "deconstruct-archive-poster";
+	if (visualStyleId === "orbit-type-poster") return "orbit-type-poster";
+	if (visualStyleId === "cloche-reveal-poster") return "cloche-reveal-poster";
   if (creativeMode === "reference-concept") return "reference-concept";
 	if (shouldUseConceptCinematicPrompt(visualStyleId, context))
 		return "concept-cinematic";

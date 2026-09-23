@@ -82,6 +82,12 @@ import {
   type TypeBehindCutoutDialectId,
 } from "@/lib/type-behind-cutout";
 import {
+  buildSocialFrameBreakStillPrompt,
+  parseSocialFrameBreakSchemePick,
+  resolveSocialFrameBreakScheme,
+  type SocialFrameBreakSchemeId,
+} from "@/lib/social-frame-break";
+import {
   buildWetGlassRevealStillPrompt,
   parseWetGlassRevealDialectPick,
   resolveWetGlassRevealDialect,
@@ -602,6 +608,11 @@ export async function POST(request: Request) {
         .trim()
         .toLowerCase(),
     );
+    const socialFrameEarly = ["1", "true", "yes"].includes(
+      String(formData.get("social_frame_break") ?? "")
+        .trim()
+        .toLowerCase(),
+    );
     const wetGlassEarly = ["1", "true", "yes"].includes(
       String(formData.get("wet_glass_reveal") ?? "")
         .trim()
@@ -644,6 +655,7 @@ export async function POST(request: Request) {
       !handThrowEarly &&
       !webBoundaryEarly &&
       !typeBehindEarly &&
+      !socialFrameEarly &&
       !wetGlassEarly &&
       !tornPaperEarly &&
       !swiftChromaEarly &&
@@ -741,6 +753,7 @@ export async function POST(request: Request) {
       artStyle: artStyleId,
       imageTextMode,
       compositionPreset: compositionPresetId,
+      promotionMode: isConceptMode ? "concept" : "physical",
     });
 
     const visualStyle = (formData.get("visual_style") as string | null)?.trim() || "product";
@@ -833,6 +846,11 @@ export async function POST(request: Request) {
         .trim()
         .toLowerCase(),
     );
+    const socialFrameBreak = ["1", "true", "yes"].includes(
+      String(formData.get("social_frame_break") ?? "")
+        .trim()
+        .toLowerCase(),
+    );
     const wetGlassReveal = ["1", "true", "yes"].includes(
       String(formData.get("wet_glass_reveal") ?? "")
         .trim()
@@ -913,6 +931,19 @@ export async function POST(request: Request) {
         ),
         product: productName,
         headline,
+      });
+    }
+    const socialFrameFrame =
+      String(formData.get("social_frame_break_frame") ?? "start").trim() ===
+      "end"
+        ? "end"
+        : "start";
+    let socialFrameScheme: SocialFrameBreakSchemeId = "popout-wave";
+    if (socialFrameBreak) {
+      socialFrameScheme = resolveSocialFrameBreakScheme({
+        pick: parseSocialFrameBreakSchemePick(
+          formData.get("social_frame_break_scheme"),
+        ),
       });
     }
     const wetGlassFrame =
@@ -1023,6 +1054,10 @@ export async function POST(request: Request) {
       // Giant type is burned into both start and end stills.
       vars.imageTextMode = "integrated";
     }
+    if (socialFrameBreak) {
+      // Brand + caption burned into both start and end stills.
+      vars.imageTextMode = "integrated";
+    }
     if (wetGlassReveal) {
       // Logo/mark comes from product photo through glass — no burned marketing type.
       vars.imageTextMode = "textless";
@@ -1077,6 +1112,7 @@ export async function POST(request: Request) {
       !handThrowScene &&
       !webBoundaryBreak &&
       !typeBehindCutout &&
+      !socialFrameBreak &&
       !wetGlassReveal &&
       !tornPaperReveal &&
       !swiftChromaRun &&
@@ -1187,6 +1223,7 @@ export async function POST(request: Request) {
           (handThrowScene && handThrowFrame === "end") ||
           (webBoundaryBreak && webBoundaryFrame === "end") ||
           (typeBehindCutout && typeBehindFrame === "end") ||
+          (socialFrameBreak && socialFrameFrame === "end") ||
           (wetGlassReveal && wetGlassFrame === "end") ||
           (tornPaperReveal && tornPaperFrame === "end") ||
           (swiftChromaRun && swiftChromaFrame === "end") ||
@@ -1221,6 +1258,25 @@ export async function POST(request: Request) {
             socialDripLogoImageIndex = imageUrls.length;
           } catch {
             socialDripLogoImageIndex = undefined;
+          }
+        }
+      }
+
+      // Social frame-break: packaging SKU may arrive as style_reference (in addition to angles).
+      if (socialFrameBreak && hasStyle) {
+        imageUrls.push(await fal.storage.upload(styleRef as File));
+      }
+      if (socialFrameBreak) {
+        const logoSrc = brandKit?.logoUrl?.trim() || "";
+        if (logoSrc) {
+          try {
+            const logoFal = await mirrorImageUrlToFalStorage(logoSrc, {
+              clerkId: auth.user.userId,
+              refresh: true,
+            });
+            imageUrls.push(logoFal);
+          } catch {
+            /* optional logo */
           }
         }
       }
@@ -1331,6 +1387,28 @@ export async function POST(request: Request) {
             frame: typeBehindFrame,
             editingStartPlate:
               typeBehindFrame === "end" && Boolean(startPlateUrl),
+          })
+        : socialFrameBreak
+        ? buildSocialFrameBreakStillPrompt({
+            scheme: socialFrameScheme,
+            product:
+              productName ||
+              headline ||
+              (promotionMode === "concept" ? "brand character" : "the character"),
+            business,
+            headline,
+            subline,
+            promptExtra,
+            conceptMode: promotionMode === "concept",
+            aspectRatio: aspectRatioRaw || "3:4",
+            frame: socialFrameFrame,
+            editingStartPlate:
+              socialFrameFrame === "end" && Boolean(startPlateUrl),
+            hasProductSku: ["1", "true", "yes"].includes(
+              String(formData.get("social_frame_has_product_sku") ?? "")
+                .trim()
+                .toLowerCase(),
+            ),
           })
         : wetGlassReveal
         ? buildWetGlassRevealStillPrompt({
@@ -1498,7 +1576,12 @@ export async function POST(request: Request) {
         visualStyle === "screen-break" ||
         visualStyle === "material-letters" ||
         visualStyle === "type-interaction" ||
-        visualStyle === "product-lifestyle";
+        visualStyle === "product-lifestyle" ||
+        visualStyle === "product-hold-poster" ||
+        visualStyle === "mold-word-poster" ||
+        visualStyle === "deconstruct-archive-poster" ||
+        visualStyle === "orbit-type-poster" ||
+        visualStyle === "cloche-reveal-poster";
       // Prefer server-built prompt when we ran the single-still planner (teaching-quality DNA).
       // Composition remap / layout-transfer: server has dual shell+SKU strategy — never trust a
       // stale client prompt that was rebuilt without compositionRemapDual / product lock.
@@ -1512,6 +1595,7 @@ export async function POST(request: Request) {
         handThrowScene ||
         webBoundaryBreak ||
         typeBehindCutout ||
+        socialFrameBreak ||
         wetGlassReveal ||
         tornPaperReveal ||
         swiftChromaRun ||

@@ -286,7 +286,6 @@ function LayerSprite({
   onChange,
   onGuides,
   onAfterMove,
-  onMoveStart,
   onRequestTextEdit,
 }: {
   layer: DecLayer;
@@ -298,8 +297,6 @@ function LayerSprite({
   onChange: (patch: Partial<DecLayer>) => void;
   onGuides: (guides: GuideLine[]) => void;
   onAfterMove?: () => void;
-  /** Fire as soon as the user starts dragging (clear plate hole early). */
-  onMoveStart?: () => void;
   /** Double-click live text → focus the wording field in the inspector. */
   onRequestTextEdit?: () => void;
 }) {
@@ -342,13 +339,29 @@ function LayerSprite({
     layer.fill,
   ]);
 
+  /** Transparent PNG crops must hit on alpha, not the full rect — otherwise a
+   *  big empty Seedream layer on top blocks dragging everything underneath. */
+  useEffect(() => {
+    const node = imageRef.current;
+    if (!node || !img) return;
+    try {
+      node.clearCache();
+      node.cache({ pixelRatio: Math.min(2, window.devicePixelRatio || 1) });
+      node.drawHitFromCache(12);
+      node.getLayer()?.batchDraw();
+    } catch {
+      /* cache can fail on tainted canvases — keep rectangular hit */
+    }
+  }, [img, stageW, stageH, layer.wPct, layer.hPct, layer.cropUrl, layer.cropDataUrl, layer.matted]);
+
   if (layer.visible === false) return null;
 
   const x = (layer.xPct / 100) * stageW;
   const y = (layer.yPct / 100) * stageH;
   const w = (layer.wPct / 100) * stageW;
   const h = (layer.hPct / 100) * stageH;
-  const draggable = interactive && !layer.locked;
+  // Select first, then drag — overlapping Seedream crops otherwise steal the gesture.
+  const draggable = interactive && !layer.locked && selected;
   const fontSize = layer.fontSize ?? Math.max(12, h * 0.72);
   const fill = layer.fill ?? (layer.kind === "shape" ? "#8b5cf6" : "#111827");
   const keepRatio = layer.kind === "object" || layer.kind === "logo";
@@ -373,9 +386,9 @@ function LayerSprite({
   };
 
   const onDragMoveBox = (node: Konva.Node, bw: number, bh: number) => {
-    const snapped = snapRect(node.x(), node.y(), bw, bh, stageW, stageH);
-    node.position({ x: snapped.x, y: snapped.y });
-    publishGuides(snapped.guides);
+    // Show guides near edges/center, but don't force-snap mid-drag (feels stuck).
+    const probe = snapRect(node.x(), node.y(), bw, bh, stageW, stageH);
+    publishGuides(probe.guides);
   };
 
   const onDragEndBox = (node: Konva.Node, bw: number, bh: number) => {
@@ -427,9 +440,6 @@ function LayerSprite({
     },
     onDragMove: (e: Konva.KonvaEventObject<DragEvent>) => onDragMoveBox(e.target, w, h),
     onDragEnd: (e: Konva.KonvaEventObject<DragEvent>) => onDragEndBox(e.target, w, h),
-    onTransformStart: () => {
-      onMoveStart?.();
-    },
     onTransformEnd: onTransformEndBox,
     onMouseEnter: (e: Konva.KonvaEventObject<MouseEvent>) => {
       const stage = e.target.getStage();
@@ -445,7 +455,7 @@ function LayerSprite({
       const stage = e.target.getStage();
       if (stage) stage.container().style.cursor = "grabbing";
       onSelect();
-      onMoveStart?.();
+      // Do NOT heal/punch on drag start — background reload mid-drag freezes the move.
     },
     onDblClick: (e: Konva.KonvaEventObject<MouseEvent>) => {
       e.cancelBubble = true;
@@ -482,9 +492,8 @@ function LayerSprite({
           onDragMove={(e) => {
             const n = e.target as Konva.Circle;
             const r = n.radius();
-            const snapped = snapRect(n.x() - r, n.y() - r, r * 2, r * 2, stageW, stageH);
-            n.position({ x: snapped.x + r, y: snapped.y + r });
-            publishGuides(snapped.guides);
+            const probe = snapRect(n.x() - r, n.y() - r, r * 2, r * 2, stageW, stageH);
+            publishGuides(probe.guides);
           }}
           onDragEnd={(e) => {
             const n = e.target as Konva.Circle;
@@ -3908,7 +3917,16 @@ export function EditImage2Client() {
                           fill="rgba(0,0,0,0.001)"
                     />
                   )}
-                  {layers.map((layer) => (
+                  {(() => {
+                    // Paint selected last so it sits above overlapping transparent crops for hit-testing.
+                    const ordered =
+                      selectedId == null
+                        ? layers
+                        : [
+                            ...layers.filter((l) => l.id !== selectedId),
+                            ...layers.filter((l) => l.id === selectedId),
+                          ];
+                    return ordered.map((layer) => (
                     <LayerSprite
                       key={layer.id}
                       layer={layer}
@@ -3919,9 +3937,8 @@ export function EditImage2Client() {
                       onSelect={() => setSelectedId(layer.id)}
                       onChange={(patch) => patchLayer(layer.id, patch)}
                           onGuides={setGuides}
-                          onMoveStart={() => void clearHoleIfNeeded(layer.id)}
                           onAfterMove={() => {
-                            /* hole already cleared on drag start — avoid second Flux/local round-trip */
+                            void clearHoleIfNeeded(layer.id);
                           }}
                           onRequestTextEdit={() => {
                             setSelectedId(layer.id);
@@ -3929,7 +3946,8 @@ export function EditImage2Client() {
                             focusLiveTextInput({ selectAll: true });
                           }}
                     />
-                  ))}
+                    ));
+                  })()}
                       {guides.map((g, i) =>
                         g.orientation === "v" ? (
                           <Line
