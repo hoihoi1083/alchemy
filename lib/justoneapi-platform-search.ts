@@ -1,6 +1,12 @@
 import type { ContentPlatform, ContentResearchMediaFilter, ContentResearchPost } from "@/lib/content-research-types";
+import {
+  extractCategoryKeywords,
+  mergeResearchPosts,
+  RESEARCH_THIN_POSTS_THRESHOLD,
+} from "@/lib/content-research-category";
 import { RESEARCH_POSTS_FETCH_LIMIT } from "@/lib/content-research-enrich";
 import { filterPostsByMedia, platformMediaMismatch } from "@/lib/content-research-media-filter";
+import { classifyInputLanguage } from "@/lib/input-language";
 import type { PromptMarket } from "@/lib/prompt-variables";
 import {
   finalizeXhsPost,
@@ -726,6 +732,32 @@ export function instagramHashtagCandidates(keyword: string): string[] {
   return out.slice(0, 5);
 }
 
+/** True when the typed keyword is English-only (RedNote Chinese safety-net trigger). */
+export function keywordLooksPrimarilyEnglish(keyword: string): boolean {
+  return classifyInputLanguage(keyword) === "en";
+}
+
+function normalizeSearchPhrase(value: string): string {
+  return value.trim().replace(/\s+/g, " ").slice(0, 80);
+}
+
+function dedupeSearchPhrases(raw: unknown, opts?: { englishOnly?: boolean }): string[] {
+  const list = Array.isArray(raw) ? raw : [];
+  const out: string[] = [];
+  for (const entry of list) {
+    if (typeof entry !== "string") continue;
+    const phrase = normalizeSearchPhrase(entry);
+    if (phrase.length < 2) continue;
+    if (opts?.englishOnly && isCjkHeavy(phrase)) continue;
+    if (!opts?.englishOnly && !isCjkHeavy(phrase)) continue;
+    const key = phrase.toLowerCase();
+    if (out.some((p) => p.toLowerCase() === key)) continue;
+    out.push(phrase);
+    if (out.length >= 2) break;
+  }
+  return out;
+}
+
 /**
  * Translate the user's phrase into English Instagram hashtags (not a fixed dictionary).
  * Soft-fail: returns [] if DeepSeek is unavailable.
@@ -761,6 +793,60 @@ export async function translateKeywordToIgHashtags(keyword: string): Promise<str
   }
 }
 
+/**
+ * English keyword phrases for Instagram Reels search (not hashtags).
+ * Soft-fail: returns [] if DeepSeek is unavailable.
+ */
+export async function translateKeywordToIgReelKeywords(keyword: string): Promise<string[]> {
+  const { callDeepSeekChat, deepSeekApiKey } = await import("@/lib/deepseek-client");
+  if (!deepSeekApiKey()) return [];
+  try {
+    const raw = await callDeepSeekChat(
+      [
+        {
+          role: "system",
+          content:
+            'Translate this product/search phrase into short English Instagram Reels search keywords. Reply JSON only: {"keywords":["phrase1","phrase2"]}. Keep each phrase 1–4 words, lowercase, no hashtags. Reflect the specific product (not a generic category). Max 2 keywords.',
+        },
+        { role: "user", content: keyword.trim().slice(0, 80) },
+      ],
+      { temperature: 0.2, max_tokens: 80, jsonObject: true },
+    );
+    const parsed = JSON.parse(raw) as { keywords?: unknown };
+    return dedupeSearchPhrases(parsed.keywords, { englishOnly: true });
+  } catch (err) {
+    console.warn("[justoneapi] IG reel keyword translate failed:", err);
+    return [];
+  }
+}
+
+/**
+ * English → Simplified Chinese phrases for RedNote / XHS keyword search.
+ * Soft-fail: returns [] if DeepSeek is unavailable.
+ */
+export async function translateKeywordToXhsChinese(keyword: string): Promise<string[]> {
+  const { callDeepSeekChat, deepSeekApiKey } = await import("@/lib/deepseek-client");
+  if (!deepSeekApiKey()) return [];
+  try {
+    const raw = await callDeepSeekChat(
+      [
+        {
+          role: "system",
+          content:
+            'Translate this product/search phrase into Simplified Chinese keywords for Xiaohongshu (小红书) search. Reply JSON only: {"keywords":["词1","词2"]}. Prefer short category+product phrases mainland users type. Max 2 keywords. Do not return English.',
+        },
+        { role: "user", content: keyword.trim().slice(0, 80) },
+      ],
+      { temperature: 0.2, max_tokens: 80, jsonObject: true },
+    );
+    const parsed = JSON.parse(raw) as { keywords?: unknown };
+    return dedupeSearchPhrases(parsed.keywords, { englishOnly: false });
+  } catch (err) {
+    console.warn("[justoneapi] XHS Chinese translate failed:", err);
+    return [];
+  }
+}
+
 function hashtagBodyHasImagePosts(
   body: Record<string, unknown>,
   limit: number,
@@ -773,6 +859,84 @@ function hashtagBodyHasImagePosts(
   );
 }
 
+function reelBodyHasPosts(
+  body: Record<string, unknown>,
+  limit: number,
+  mediaFilter?: ContentResearchMediaFilter,
+): boolean {
+  const items = flattenSearchItems(body);
+  if (items.length < 1) return false;
+  // When video/image filter is set, only matching media counts as a hit —
+  // otherwise wrong-type rows would skip language/category retries.
+  if (mediaFilter) {
+    return mapItems("instagram", items, limit, mediaFilter).length > 0;
+  }
+  return mapItems("instagram", items, limit).length > 0;
+}
+
+async function searchInstagramReels(
+  igKeyword: string,
+  limit: number,
+  mediaFilter?: ContentResearchMediaFilter,
+): Promise<{ body: Record<string, unknown>; endpoint: string }> {
+  const endpoint = "/api/instagram/search-reels/v1";
+  const tried = new Set<string>();
+  let lastBody: Record<string, unknown> | undefined;
+  let lastError: Error | undefined;
+
+  const tryKeywords = async (list: string[]) => {
+    for (const keyword of list) {
+      const k = normalizeSearchPhrase(keyword);
+      if (!k) continue;
+      const key = k.toLowerCase();
+      if (tried.has(key)) continue;
+      tried.add(key);
+      try {
+        const body = await fetchJustOneApi(
+          endpoint,
+          { keyword: k },
+          "Instagram reels search",
+        );
+        lastBody = body;
+        if (reelBodyHasPosts(body, limit, mediaFilter)) return body;
+        console.info(
+          `[justoneapi] Instagram reels "${k}" returned no posts, trying next`,
+        );
+      } catch (e) {
+        lastError = e instanceof Error ? e : new Error(String(e));
+        if (isJustOneRateLimitError(lastError)) throw lastError;
+        console.warn(
+          `[justoneapi] Instagram reels "${k}" failed, trying next candidate:`,
+          lastError.message,
+        );
+      }
+    }
+    return null;
+  };
+
+  // Pass 1: Traditional Chinese (from SC) / English as typed.
+  const hit = await tryKeywords([igKeyword]);
+  if (hit) return { body: hit, endpoint };
+
+  // Pass 2: DeepSeek → English keywords (skip when typed keyword is already English).
+  if (classifyInputLanguage(igKeyword) === "en") {
+    if (lastBody) return { body: lastBody, endpoint };
+    throw lastError ?? new Error("Instagram reels search failed.");
+  }
+  const translated = await translateKeywordToIgReelKeywords(igKeyword);
+  const fresh = translated.filter((t) => t.toLowerCase() !== igKeyword.toLowerCase());
+  if (fresh.length) {
+    console.info(
+      `[justoneapi] Instagram reels empty — translated "${igKeyword}" → ${fresh.join(", ")}`,
+    );
+    const translatedHit = await tryKeywords(fresh);
+    if (translatedHit) return { body: translatedHit, endpoint };
+  }
+
+  if (lastBody) return { body: lastBody, endpoint };
+  throw lastError ?? new Error("Instagram reels search failed.");
+}
+
 async function searchInstagramPosts(
   keyword: string,
   limit: number,
@@ -782,13 +946,7 @@ async function searchInstagramPosts(
   const igKeyword = instagramSearchKeyword(keyword).trim() || keyword.trim();
 
   if (mediaFilter !== "image") {
-    const endpoint = "/api/instagram/search-reels/v1";
-    const body = await fetchJustOneApi(
-      endpoint,
-      { keyword: igKeyword },
-      "Instagram reels search",
-    );
-    return { body, endpoint };
+    return searchInstagramReels(igKeyword, limit, mediaFilter);
   }
 
   const endpoint = "/api/instagram/search-hashtag-posts/v1";
@@ -837,38 +995,103 @@ async function searchInstagramPosts(
   throw lastError ?? new Error("Instagram hashtag search failed.");
 }
 
-export async function searchPlatformPostsByKeyword(
+async function searchXiaohongshuNotes(
+  keyword: string,
+  mediaFilter?: ContentResearchMediaFilter,
+): Promise<{ body: Record<string, unknown>; endpoint: string }> {
+  const endpoint = "/api/xiaohongshu/search-note/v2";
+  const noteType =
+    mediaFilter === "video" ? "_1" : mediaFilter === "image" ? "_2" : "_0";
+  const tried = new Set<string>();
+  let lastBody: Record<string, unknown> | undefined;
+  let lastError: Error | undefined;
+
+  const tryKeywords = async (list: string[]) => {
+    for (const raw of list) {
+      const k = normalizeSearchPhrase(raw);
+      if (!k) continue;
+      const key = k.toLowerCase();
+      if (tried.has(key)) continue;
+      tried.add(key);
+      try {
+        const body = await fetchJustOneApi(
+          endpoint,
+          {
+            keyword: k,
+            page: "1",
+            sort: "collect_descending",
+            noteType,
+          },
+          "XHS note search",
+        );
+        lastBody = body;
+        const items = flattenSearchItems(body);
+        if (mapItems("xiaohongshu", items, RESEARCH_POSTS_FETCH_LIMIT, mediaFilter).length > 0) {
+          return body;
+        }
+        console.info(`[justoneapi] XHS "${k}" returned no notes, trying next`);
+      } catch (e) {
+        lastError = e instanceof Error ? e : new Error(String(e));
+        if (isJustOneRateLimitError(lastError)) throw lastError;
+        console.warn(
+          `[justoneapi] XHS "${k}" failed, trying next candidate:`,
+          lastError.message,
+        );
+      }
+    }
+    return null;
+  };
+
+  // Pass 1: keyword as typed (Chinese or English brand names).
+  const hit = await tryKeywords([keyword]);
+  if (hit) return { body: hit, endpoint };
+
+  // Pass 2: English-only input → Simplified Chinese (mainland XHS index).
+  if (keywordLooksPrimarilyEnglish(keyword)) {
+    const translated = await translateKeywordToXhsChinese(keyword);
+    const fresh = translated.filter((t) => t.toLowerCase() !== keyword.toLowerCase());
+    if (fresh.length) {
+      console.info(
+        `[justoneapi] XHS English empty — translated "${keyword}" → ${fresh.join(", ")}`,
+      );
+      const translatedHit = await tryKeywords(fresh);
+      if (translatedHit) return { body: translatedHit, endpoint };
+    }
+  }
+
+  if (lastBody) return { body: lastBody, endpoint };
+  throw lastError ?? new Error("XHS note search failed.");
+}
+
+export type PlatformKeywordSearchResult = {
+  posts: ContentResearchPost[];
+  requestId?: string;
+  endpoint: string;
+  /** True when parent-category keywords were searched to fill empty/thin results. */
+  usedCategoryFallback?: boolean;
+  categoryKeywords?: string[];
+};
+
+async function searchPlatformPostsByKeywordOnce(
   platform: ContentPlatform,
   keyword: string,
   options?: { limit?: number; market?: PromptMarket; mediaFilter?: ContentResearchMediaFilter },
-): Promise<{ posts: ContentResearchPost[]; requestId?: string; endpoint: string }> {
+): Promise<PlatformKeywordSearchResult> {
   const limit = options?.limit ?? RESEARCH_POSTS_FETCH_LIMIT;
   const mediaFilter = options?.mediaFilter;
-  const mismatch = platformMediaMismatch(platform, mediaFilter);
-  if (mismatch === "tiktok-image") {
-    throw new Error(
-      "TikTok search returns videos only. Pick RedNote or Instagram for image research, or switch workflow to Video.",
-    );
-  }
-
-  const k = keyword.trim();
-  if (!k) throw new Error("Keyword is required.");
 
   let body: Record<string, unknown>;
   let endpoint: string;
 
   switch (platform) {
-    case "xiaohongshu":
-      endpoint = "/api/xiaohongshu/search-note/v2";
-      body = await fetchJustOneApi(endpoint, {
-        keyword: k,
-        page: "1",
-        sort: "collect_descending",
-        noteType: mediaFilter === "video" ? "_1" : mediaFilter === "image" ? "_2" : "_0",
-      }, "XHS note search");
+    case "xiaohongshu": {
+      const xhs = await searchXiaohongshuNotes(keyword, mediaFilter);
+      body = xhs.body;
+      endpoint = xhs.endpoint;
       break;
+    }
     case "instagram": {
-      const ig = await searchInstagramPosts(k, limit, mediaFilter);
+      const ig = await searchInstagramPosts(keyword, limit, mediaFilter);
       body = ig.body;
       endpoint = ig.endpoint;
       break;
@@ -878,7 +1101,7 @@ export async function searchPlatformPostsByKeyword(
       body = await fetchJustOneApi(
         endpoint,
         {
-          keyword: k,
+          keyword,
           offset: "0",
           sortType: "MOST_LIKED",
           publishTime: "ALL",
@@ -892,8 +1115,7 @@ export async function searchPlatformPostsByKeyword(
       body = await fetchJustOneApi(
         endpoint,
         {
-          keyword: k,
-          // Prefer engaged posts when the provider accepts these hints.
+          keyword,
           sort: "MOST_LIKED",
           ...(mediaFilter === "video"
             ? { mediaType: "video" }
@@ -919,6 +1141,111 @@ export async function searchPlatformPostsByKeyword(
     posts = mapItems(platform, items, limit).filter((p) => Boolean(p.coverImageUrl)).slice(0, limit);
   }
 
+  if (platform === "xiaohongshu" && posts.length > 0) {
+    posts = await hydrateXhsPostCovers(posts);
+  }
+
+  return {
+    posts,
+    requestId: pickString(body.requestId) || undefined,
+    endpoint,
+  };
+}
+
+export async function searchPlatformPostsByKeyword(
+  platform: ContentPlatform,
+  keyword: string,
+  options?: {
+    limit?: number;
+    market?: PromptMarket;
+    mediaFilter?: ContentResearchMediaFilter;
+    /** Internal: category pass already running — do not broaden again. */
+    skipCategoryFill?: boolean;
+  },
+): Promise<PlatformKeywordSearchResult> {
+  const limit = options?.limit ?? RESEARCH_POSTS_FETCH_LIMIT;
+  const mediaFilter = options?.mediaFilter;
+  const mismatch = platformMediaMismatch(platform, mediaFilter);
+  if (mismatch === "tiktok-image") {
+    throw new Error(
+      "TikTok search returns videos only. Pick RedNote or Instagram for image research, or switch workflow to Video.",
+    );
+  }
+
+  const k = keyword.trim();
+  if (!k) throw new Error("Keyword is required.");
+
+  let primary: PlatformKeywordSearchResult;
+  try {
+    primary = await searchPlatformPostsByKeywordOnce(platform, k, {
+      limit,
+      market: options?.market,
+      mediaFilter,
+    });
+  } catch (e) {
+    if (isJustOneRateLimitError(e)) throw e;
+    // Empty/hard fail — allow category broaden to recover for IG / XHS.
+    if (
+      !options?.skipCategoryFill &&
+      (platform === "xiaohongshu" || platform === "instagram")
+    ) {
+      console.warn(
+        `[justoneapi] ${platform} primary keyword failed, trying category:`,
+        e instanceof Error ? e.message : e,
+      );
+      primary = {
+        posts: [],
+        endpoint: "primary-empty",
+      };
+    } else {
+      throw e;
+    }
+  }
+  let posts = primary.posts;
+  let endpoint = primary.endpoint;
+  let requestId = primary.requestId;
+  let usedCategoryFallback = false;
+  const categoryKeywordsUsed: string[] = [];
+
+  const needsCategory =
+    !options?.skipCategoryFill &&
+    (platform === "xiaohongshu" || platform === "instagram") &&
+    posts.length < RESEARCH_THIN_POSTS_THRESHOLD;
+
+  if (needsCategory) {
+    const categories = await extractCategoryKeywords(k);
+    for (const category of categories) {
+      // Stop once we have enough unique posts for the live angle target.
+      if (posts.length >= RESEARCH_THIN_POSTS_THRESHOLD) break;
+      try {
+        const extra = await searchPlatformPostsByKeyword(platform, category, {
+          limit,
+          market: options?.market,
+          mediaFilter,
+          skipCategoryFill: true,
+        });
+        if (extra.posts.length < 1) continue;
+        const before = posts.length;
+        posts = mergeResearchPosts(posts, extra.posts, limit);
+        if (posts.length > before) {
+          usedCategoryFallback = true;
+          categoryKeywordsUsed.push(category);
+          endpoint = `${endpoint}+category:${extra.endpoint}`;
+          console.info(
+            `[justoneapi] ${platform} category fill "${k}" → "${category}" (+${posts.length - before} posts)`,
+          );
+        }
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        if (isJustOneRateLimitError(e)) throw e instanceof Error ? e : new Error(msg);
+        console.warn(
+          `[justoneapi] ${platform} category "${category}" failed:`,
+          msg,
+        );
+      }
+    }
+  }
+
   if (posts.length < 1) {
     const label =
       mediaFilter === "image"
@@ -933,13 +1260,11 @@ export async function searchPlatformPostsByKeyword(
     );
   }
 
-  if (platform === "xiaohongshu") {
-    posts = await hydrateXhsPostCovers(posts);
-  }
-
   return {
     posts,
-    requestId: pickString(body.requestId) || undefined,
+    requestId,
     endpoint,
+    usedCategoryFallback: usedCategoryFallback || undefined,
+    categoryKeywords: categoryKeywordsUsed.length ? categoryKeywordsUsed : undefined,
   };
 }

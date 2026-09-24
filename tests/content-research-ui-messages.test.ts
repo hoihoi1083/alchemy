@@ -41,6 +41,13 @@ describe("content-research-ui-messages", () => {
     );
   });
 
+  it("localizes category broaden warning", () => {
+    assert.match(
+      localizeResearchWarning(researchWarningCode("category_broadened"), cr, "xiaohongshu"),
+      /category/i,
+    );
+  });
+
   it("passes through legacy warning strings", () => {
     assert.equal(
       localizeResearchWarning("Legacy message", cr, "instagram"),

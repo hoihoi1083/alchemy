@@ -9,7 +9,8 @@ export type ResearchWarningCode =
   | "justone_balance"
   | "justone_budget"
   | "justone_rate_limit"
-  | "justone_generic";
+  | "justone_generic"
+  | "category_broadened";
 
 export function researchWarningCode(value: ResearchWarningCode): string {
   return `${RESEARCH_WARNING_CODE_PREFIX}${value}`;
@@ -38,6 +39,7 @@ export type ContentResearchUiCopy = {
   justOneFallbackBudget: string;
   justOneFallbackRateLimit: (detail: string) => string;
   justOneFallbackGeneric: (detail: string) => string;
+  categoryBroadened: string;
 };
 
 export function researchSourceNote(
@@ -87,6 +89,8 @@ export function localizeResearchWarning(
       return cr.justOneFallbackBudget;
     case "justone_rate_limit":
       return cr.justOneFallbackRateLimit("");
+    case "category_broadened":
+      return cr.categoryBroadened;
     case "justone_generic":
     default:
       return cr.justOneFallbackGeneric("");

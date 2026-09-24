@@ -6035,14 +6035,14 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
     researchMediaBoth: "搜索范围：全部帖子类型（配合「图片＋视频」模式）。",
     tiktokImageWarning: "TikTok 只有视频 — 图文研究请选小红书或 Instagram，或改选「视频」模式。",
     platformSearchHintXhs:
-      "小红书最适合中文品类词（如 维他命C精华、护肤流程）— 直接搜笔记，有封面可选风格。",
+      "小红书最适合中文品类词（如 维他命C精华、护肤流程）— 直接搜笔记，有封面可选风格。英文关键词若无结果会自动译成中文再搜；结果太少时会用更宽品类补齐。",
     platformSearchHintIgImage:
       "Instagram 图文模式用 hashtag 搜索 — 英文标签最稳（vitaminc、skincare、serum）。",
     platformSearchHintIgHashtags: (tags: string) => `将搜索：${tags}`,
     platformSearchHintIgCjk:
       "简体关键词会自动转成繁体再搜 Instagram（IG 对繁体标签更友好）；若结果仍少，可改打英文或换小红书。",
     platformSearchHintIgVideo:
-      "Instagram 视频模式用关键词搜 Reels（英文或繁体；简体会自动转繁体）。",
+      "Instagram 视频模式用关键词搜 Reels（先繁体；简体会自动转繁体；中文无结果时再试英文）。",
     platformSearchHintFacebook:
       "备选：可贴公开 /posts/ 或 /videos/ 链接，或用关键词搜。静图广告请优先试 小红书 或 Instagram。",
     platformSearchHintTiktok:
@@ -6117,6 +6117,8 @@ socialDripFitTitle: "这个格式可以／不可以做什么",
       "Instagram hashtag 搜索在 Just One 失败（COLLECT FAILED）— 多数是间歇。等约 30 秒再试、粘贴 /p/ 链接，或改用小红书。已改用公开网页搜索，无封面。",
     justOneFallbackGeneric: () =>
       "Just One API 失败 — 已改用公开网页搜索，无帖子封面。",
+    categoryBroadened:
+      "精确匹配较少 — 已补充同品类相关帖，方便你参考不同版式风格。",
     sourceLabel: "参考来源",
     sourcesTitle: "网页来源",
     postsTitle: "平台上搜到的热门贴文（封面预览）",

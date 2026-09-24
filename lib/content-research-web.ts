@@ -98,16 +98,23 @@ async function fetchJustOneApiResearch(
   market?: PromptMarket,
   mediaFilter?: ContentResearchMediaFilter,
 ): Promise<ContentResearchWebBundle> {
-  const { posts, endpoint } = await searchPlatformPostsByKeyword(platform, topic, {
-    limit: RESEARCH_POSTS_FETCH_LIMIT,
-    market,
-    mediaFilter,
-  });
+  const { posts, endpoint, usedCategoryFallback, categoryKeywords } =
+    await searchPlatformPostsByKeyword(platform, topic, {
+      limit: RESEARCH_POSTS_FETCH_LIMIT,
+      market,
+      mediaFilter,
+    });
   return {
-    queries: [`justoneapi:${endpoint} keyword=${topic}`],
+    queries: [
+      `justoneapi:${endpoint} keyword=${topic}`,
+      ...(categoryKeywords?.map((c) => `category=${c}`) ?? []),
+    ],
     results: postsToWebResults(posts),
     posts,
     provider: "justoneapi",
+    fallbackWarning: usedCategoryFallback
+      ? researchWarningCode("category_broadened")
+      : undefined,
   };
 }
 

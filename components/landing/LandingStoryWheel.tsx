@@ -65,18 +65,30 @@ function prefetchFanMedia() {
 }
 
 /**
- * Auto-looping story fan: left copy + right phone video cards cycle 1 → 2 → 3 → 1.
- * Dwell follows each card’s video length (transform/reference ~5s; storyboard ~7s).
+ * Story fan: left tabs 01/02/03 + right phone videos (one clip per card).
+ * Scroll into view or select a tab → that card’s video plays smoothly from the start.
+ * Ambient auto-cycle only until the first user click (then stay for reading).
  */
 export function LandingStoryWheel() {
   const { m } = useLocale();
   const L = m.landing;
   const [activeIndex, setActiveIndex] = useState(0);
   const [reduceMotion, setReduceMotion] = useState(false);
-  const [paused, setPaused] = useState(false);
+  /** After the user picks a tab/card, stop auto-cycling away while they read. */
+  const [userPinned, setUserPinned] = useState(false);
+  /** Only play while the section is on screen (scroll-in / scroll-out). */
+  const [inView, setInView] = useState(false);
   const sectionRef = useRef<HTMLElement | null>(null);
   const videoRefs = useRef<Array<HTMLVideoElement | null>>([]);
   const prefetchedRef = useRef(false);
+  /** Bumps on each select so play() restarts even if the same index is clicked again. */
+  const [playToken, setPlayToken] = useState(0);
+
+  const selectSlide = (index: number) => {
+    setUserPinned(true);
+    setActiveIndex(index);
+    setPlayToken((t) => t + 1);
+  };
 
   const slides = [
     {
@@ -136,7 +148,6 @@ export function LandingStoryWheel() {
   // Prefetch on mount — first card bytes ASAP; rest on idle. Don't wait for scroll-in.
   useEffect(() => {
     if (prefetchedRef.current) return;
-    // First card: start network fetch immediately (preload link + video element).
     injectPreload(FAN_MEDIA[0].poster, "image");
     injectPreload(FAN_MEDIA[0].video, "video");
     const warm = document.createElement("video");
@@ -168,11 +179,12 @@ export function LandingStoryWheel() {
     return () => window.clearTimeout(t);
   }, []);
 
-  // Also kick prefetch when the section is near (backup if idle is very late).
+  // Scroll: prefetch near; mark inView so the front card can play when visible.
   useEffect(() => {
     const el = sectionRef.current;
     if (!el) return;
     if (typeof IntersectionObserver === "undefined") {
+      setInView(true);
       if (!prefetchedRef.current) {
         prefetchedRef.current = true;
         prefetchFanMedia();
@@ -181,23 +193,34 @@ export function LandingStoryWheel() {
     }
     const io = new IntersectionObserver(
       (entries) => {
-        if (entries.some((e) => e.isIntersecting)) {
-          if (!prefetchedRef.current) {
-            prefetchedRef.current = true;
-            prefetchFanMedia();
-          }
-          io.disconnect();
+        const visible = entries.some((e) => e.isIntersecting);
+        setInView(visible);
+        if (visible && !prefetchedRef.current) {
+          prefetchedRef.current = true;
+          prefetchFanMedia();
         }
       },
-      { rootMargin: "600px 0px" },
+      { rootMargin: "120px 0px", threshold: 0.15 },
     );
     io.observe(el);
     return () => io.disconnect();
   }, []);
 
-  // Advance once when the front card video finishes (timeout is a safety net).
+  // Warm every mounted <video> so switching 01/02/03 starts without a stall.
   useEffect(() => {
-    if (paused || reduceMotion) return;
+    if (!inView || reduceMotion) return;
+    videoRefs.current.forEach((v) => {
+      if (!v) return;
+      v.muted = true;
+      v.playsInline = true;
+      if (v.preload !== "auto") v.preload = "auto";
+      if (v.readyState < 2) void v.load();
+    });
+  }, [inView, reduceMotion]);
+
+  // Ambient cycle only until the user picks a section (then stay so they can read).
+  useEffect(() => {
+    if (reduceMotion || userPinned || !inView) return;
     const v = videoRefs.current[activeIndex];
     let done = false;
     let timeoutId: number | undefined;
@@ -206,6 +229,7 @@ export function LandingStoryWheel() {
       done = true;
       if (timeoutId !== undefined) window.clearTimeout(timeoutId);
       setActiveIndex((i) => (i + 1) % n);
+      setPlayToken((t) => t + 1);
     };
     const armTimeout = () => {
       if (timeoutId !== undefined) window.clearTimeout(timeoutId);
@@ -231,43 +255,64 @@ export function LandingStoryWheel() {
       done = true;
       if (timeoutId !== undefined) window.clearTimeout(timeoutId);
     };
-  }, [activeIndex, paused, reduceMotion, n]);
+  }, [activeIndex, reduceMotion, userPinned, inView, n]);
 
-  // Play only the front card video; restart from the beginning each card switch.
+  // Play the front card from the start on scroll-in, tab click, or ambient advance.
   useEffect(() => {
+    const cleanups: Array<() => void> = [];
+
     videoRefs.current.forEach((v, i) => {
       if (!v) return;
       v.loop = false;
-      if (reduceMotion) {
+      v.muted = true;
+      v.playsInline = true;
+      if (reduceMotion || !inView || i !== activeIndex) {
         v.pause();
         return;
       }
-      if (i === activeIndex && !paused) {
-        const start = () => {
-          try {
-            if (v.currentTime > 0.05) v.currentTime = 0;
-          } catch {
-            /* ignore seek abort */
-          }
-          void v.play().catch(() => {});
-        };
-        if (v.readyState >= 2) start();
-        else {
-          const onReady = () => {
-            v.removeEventListener("canplay", onReady);
-            start();
-          };
-          v.addEventListener("canplay", onReady);
-          if (v.preload !== "auto") {
-            v.preload = "auto";
-            void v.load();
-          }
+
+      let cancelled = false;
+      const onReady = () => {
+        v.removeEventListener("canplay", onReady);
+        v.removeEventListener("loadeddata", onReady);
+        if (cancelled) return;
+        attemptPlay();
+      };
+      const attemptPlay = () => {
+        if (cancelled) return;
+        void v.play().catch(() => {
+          window.setTimeout(() => {
+            if (!cancelled) void v.play().catch(() => {});
+          }, 120);
+        });
+      };
+      const start = () => {
+        if (cancelled) return;
+        try {
+          v.currentTime = 0;
+        } catch {
+          /* ignore seek abort */
         }
-      } else {
-        v.pause();
-      }
+        if (v.readyState >= 2) attemptPlay();
+        else {
+          v.addEventListener("canplay", onReady);
+          v.addEventListener("loadeddata", onReady);
+          if (v.preload !== "auto") v.preload = "auto";
+          void v.load();
+        }
+      };
+      start();
+      cleanups.push(() => {
+        cancelled = true;
+        v.removeEventListener("canplay", onReady);
+        v.removeEventListener("loadeddata", onReady);
+      });
     });
-  }, [activeIndex, paused, reduceMotion]);
+
+    return () => {
+      for (const fn of cleanups) fn();
+    };
+  }, [activeIndex, reduceMotion, inView, playToken]);
 
   return (
     <section ref={sectionRef} className="w-full bg-white">
@@ -303,8 +348,6 @@ export function LandingStoryWheel() {
         id="story-wheel"
         className="relative hidden bg-white md:block"
         aria-label={L.transformBadge}
-        onMouseEnter={() => setPaused(true)}
-        onMouseLeave={() => setPaused(false)}
       >
         <div className="landing-story-wheel-grid py-12 lg:py-14">
           <Reveal
@@ -327,7 +370,7 @@ export function LandingStoryWheel() {
                             ? "border-violet-300 bg-violet-50 px-4 py-3.5 shadow-sm"
                             : "border-transparent bg-slate-100 px-4 py-2.5 hover:bg-slate-200/80"
                         }`}
-                        onClick={() => setActiveIndex(i)}
+                        onClick={() => selectSlide(i)}
                       >
                         <span
                           className={`text-sm font-bold tracking-[0.08em] ${
@@ -432,7 +475,7 @@ export function LandingStoryWheel() {
                           ? "opacity 0.2s ease, transform 0.2s ease"
                           : "opacity 0.28s ease, transform 0.42s cubic-bezier(0.22, 1, 0.36, 1)",
                       }}
-                      onClick={() => setActiveIndex(i)}
+                      onClick={() => selectSlide(i)}
                     >
                       <div className="landing-story-phone-frame relative h-full w-full overflow-hidden rounded-[2.25rem] border border-white bg-slate-950 shadow-[0_32px_60px_-28px_rgba(15,23,42,0.55)] ring-1 ring-slate-200/80">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -476,7 +519,7 @@ export function LandingStoryWheel() {
                         ? "w-7 bg-violet-600"
                         : "w-1.5 bg-slate-300 hover:bg-slate-400"
                     }`}
-                    onClick={() => setActiveIndex(i)}
+                    onClick={() => selectSlide(i)}
                   />
                 ))}
               </div>

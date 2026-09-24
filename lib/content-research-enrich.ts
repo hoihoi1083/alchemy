@@ -3,13 +3,14 @@ import type {
   ContentResearchPlan,
   ContentResearchPost,
 } from "@/lib/content-research-types";
+import { researchPostDedupeKey, RESEARCH_THIN_POSTS_THRESHOLD } from "@/lib/content-research-category";
 import { formatLabelForAngleFormat, inferFormatFromPost } from "@/lib/content-research-infer";
 import { angleCanSupplyReferenceMp4 } from "@/lib/content-research-video-ready";
 import { finalizeXhsAngle, finalizeXhsPost, angleHasReferenceCover } from "@/lib/research-cover-url";
 
 export const RESEARCH_ANGLES_PER_PAGE = 3;
 export const RESEARCH_POSTS_FETCH_LIMIT = 12;
-export const RESEARCH_LIVE_ANGLE_COUNT = 9;
+export const RESEARCH_LIVE_ANGLE_COUNT = RESEARCH_THIN_POSTS_THRESHOLD;
 
 export function exploreIdFromUrl(url: string): string | null {
   const m = url.match(/\/explore\/([a-f0-9]+)/i);
@@ -30,29 +31,26 @@ function findPostForAngle(
   posts: ContentResearchPost[],
   used: Set<string>,
 ): ContentResearchPost | undefined {
-  // Prefer an unused post that matches the cited source URL — so 3 rewritten
-  // angles that all cite the same Facebook/viral post don't all show one thumb.
+  const isFree = (p: ContentResearchPost) => !used.has(researchPostDedupeKey(p));
+
+  // Prefer an unused post that matches the cited source URL.
   if (angle.sourceUrl) {
     const matchedUnused = posts.find(
-      (p) => !used.has(p.id) && urlsMatch(p.url, angle.sourceUrl!),
+      (p) => isFree(p) && urlsMatch(p.url, angle.sourceUrl!),
     );
     if (matchedUnused) return matchedUnused;
+    // Cited post already claimed — drop this angle rather than mislabel another cover.
+    if (posts.some((p) => urlsMatch(p.url, angle.sourceUrl!))) return undefined;
   }
   if (angle.sourceTitle) {
     const title = angle.sourceTitle.toLowerCase();
     const matched = posts.find(
-      (p) => !used.has(p.id) && p.title.toLowerCase().includes(title.slice(0, 12)),
+      (p) => isFree(p) && p.title.toLowerCase().includes(title.slice(0, 12)),
     );
     if (matched) return matched;
   }
-  // Next unused post (different cover). Only fall back to a already-used match
-  // when every post is already claimed — better a shared thumb than none.
-  const unused = posts.find((p) => !used.has(p.id));
-  if (unused) return unused;
-  if (angle.sourceUrl) {
-    return posts.find((p) => urlsMatch(p.url, angle.sourceUrl!));
-  }
-  return undefined;
+  // Next unused post only — never reuse a thumb across angles.
+  return posts.find(isFree);
 }
 
 export function enrichAngleWithPost(
@@ -82,17 +80,22 @@ export function attachSourcePostsToPlan(plan: ContentResearchPlan): ContentResea
   if (!posts?.length) return plan;
 
   const used = new Set<string>();
+  const claim = (post: ContentResearchPost) => {
+    used.add(researchPostDedupeKey(post));
+  };
   const sorted = [...plan.candidates].sort((a, b) => b.score - a.score);
-  const enrichedCandidates = sorted.map((angle) => {
+  const enrichedCandidates: ContentAngleCandidate[] = [];
+  for (const angle of sorted) {
     const post = findPostForAngle(angle, posts, used);
-    if (!post) return angle;
-    used.add(post.id);
-    return enrichAngleWithPost(angle, post);
-  });
+    if (!post) continue; // drop extras that would only repeat a cover
+    claim(post);
+    enrichedCandidates.push(enrichAngleWithPost(angle, post));
+  }
 
   const liteAngles: ContentAngleCandidate[] = [];
   for (const post of posts) {
-    if (used.has(post.id)) continue;
+    if (used.has(researchPostDedupeKey(post))) continue;
+    claim(post);
     const inferredFormat = inferFormatFromPost(post);
     const imageCount = post.imageUrls?.length ?? (post.coverImageUrl ? 1 : 0);
     liteAngles.push(

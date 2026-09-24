@@ -19,7 +19,8 @@ import {
   RESEARCH_LIVE_ANGLE_COUNT,
   RESEARCH_POSTS_FETCH_LIMIT,
 } from "@/lib/content-research-enrich";
-import { angleMatchesMediaFilter } from "@/lib/content-research-media-filter";
+import { liveResearchAngleCount } from "@/lib/content-research-category";
+import { angleMatchesMediaFilter, postMatchesMediaFilter } from "@/lib/content-research-media-filter";
 import { researchProductPromptLines } from "@/lib/content-research-promote";
 import { parseLlmJsonObject } from "@/lib/parse-llm-json";
 import type { PromptMarket } from "@/lib/prompt-variables";
@@ -160,11 +161,15 @@ function normalizePlan(
         : [...candidates].sort((a, b) => b.score - a.score).slice(0, 3);
 
   // Live search can backfill from raw platform posts in attachSourcePostsToPlan — defer min check.
+  const postCount = input.posts?.length ?? 0;
+  const minAnglesWanted =
+    input.researchMode === "live-web" && postCount > 0
+      ? Math.min(RESEARCH_ANGLES_PER_PAGE, postCount)
+      : RESEARCH_ANGLES_PER_PAGE;
   const canBackfillFromPosts =
-    input.researchMode === "live-web" &&
-    (input.posts?.length ?? 0) >= RESEARCH_ANGLES_PER_PAGE;
+    input.researchMode === "live-web" && postCount >= minAnglesWanted;
 
-  if (topPicks.length < 3 && input.researchMode === "live-web" && !canBackfillFromPosts) {
+  if (topPicks.length < minAnglesWanted && input.researchMode === "live-web" && !canBackfillFromPosts) {
     throw new Error(
       "Could not extract enough content angles from web results. Try a different keyword.",
     );
@@ -203,29 +208,40 @@ export function applyMediaFilterToPlan(
 
   const candidates = plan.candidates.filter((c) => angleMatchesMediaFilter(c.format, filter));
   const topPicks = plan.topPicks.filter((c) => angleMatchesMediaFilter(c.format, filter));
+  const posts = plan.posts?.filter((p) => postMatchesMediaFilter(p, filter));
 
   return {
     ...plan,
     mediaFilter: filter,
+    posts,
     candidates,
     topPicks: topPicks.length >= 1 ? topPicks : candidates.slice(0, RESEARCH_ANGLES_PER_PAGE),
   };
 }
 
 function ensureMinLiveAngles(plan: ContentResearchPlan): ContentResearchPlan {
-  if (plan.topPicks.length >= RESEARCH_ANGLES_PER_PAGE) return plan;
+  const postCount = plan.posts?.length ?? 0;
+  const candidateCount = plan.candidates.length;
+  // Prefer filtered candidate count when posts were media-filtered down.
+  const scarcityBase =
+    postCount > 0 ? Math.min(postCount, candidateCount || postCount) : candidateCount;
+  const minWanted =
+    scarcityBase > 0
+      ? Math.min(RESEARCH_ANGLES_PER_PAGE, scarcityBase)
+      : RESEARCH_ANGLES_PER_PAGE;
+  if (plan.topPicks.length >= minWanted) return plan;
 
   const sorted = [...plan.candidates].sort((a, b) => b.score - a.score);
-  const topPicks = sorted.slice(0, RESEARCH_ANGLES_PER_PAGE);
-  if (topPicks.length < RESEARCH_ANGLES_PER_PAGE) {
+  const topPicks = sorted.slice(0, Math.max(minWanted, RESEARCH_ANGLES_PER_PAGE));
+  if (topPicks.length < minWanted) {
     throw new Error(
       plan.mediaFilter === "video"
-        ? "Found video posts but could not build 3 usable angles. Try a broader keyword, or paste a post link directly."
+        ? "Found video posts but could not build usable angles. Try a broader keyword, or paste a post link directly."
         : "Could not extract enough content angles from web results. Try a different keyword.",
     );
   }
 
-  return { ...plan, topPicks };
+  return { ...plan, topPicks: topPicks.slice(0, Math.min(topPicks.length, RESEARCH_ANGLES_PER_PAGE)) };
 }
 
 
@@ -567,7 +583,9 @@ async function planContentResearchLive(input: {
         ? formatPostsForPrompt(bundle.posts!.slice(0, postLimit))
         : undefined,
       angleCount:
-        bundle.posts && bundle.posts.length > 0 ? RESEARCH_LIVE_ANGLE_COUNT : 6,
+        bundle.posts && bundle.posts.length > 0
+          ? liveResearchAngleCount(bundle.posts.length)
+          : 6,
     }),
   );
   const plan = finalizeLiveResearchPlan(

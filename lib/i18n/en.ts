@@ -7277,14 +7277,14 @@ export const en = {
 		tiktokImageWarning:
 			"TikTok is video-only. Use RedNote or Instagram for image research, or switch workflow to Video.",
 		platformSearchHintXhs:
-			"Best for Chinese category keywords (e.g. vitamin C serum, skincare routine) — searches notes with cover cards.",
+			"Best for Chinese category keywords (e.g. vitamin C serum, skincare routine) — searches notes with cover cards. English keywords are auto-translated to Chinese if the first search is empty. Thin results are topped up with a broader category.",
 		platformSearchHintIgImage:
 			"Instagram image mode searches hashtags — English tags work best (vitaminc, skincare, serum).",
 		platformSearchHintIgHashtags: (tags: string) => `Will search: ${tags}`,
 		platformSearchHintIgCjk:
 			"Simplified Chinese is converted to Traditional for Instagram search (IG indexes 繁體 better). If results are still thin, try English or switch to RedNote.",
 		platformSearchHintIgVideo:
-			"Instagram video mode searches Reels by keyword (English or Traditional Chinese; Simplified is auto-converted).",
+			"Instagram video mode searches Reels by keyword (Traditional Chinese first; Simplified is auto-converted; English keywords are tried if Chinese returns nothing).",
 		platformSearchHintFacebook:
 			"Backup option: paste a public /posts/ or /videos/ URL, or search by keyword. Prefer RedNote or Instagram first for still-ad layouts.",
 		platformSearchHintTiktok:
@@ -7367,6 +7367,8 @@ export const en = {
 			"Instagram hashtag search failed at Just One (COLLECT FAILED) — often intermittent. Wait ~30s and retry, paste an Instagram /p/ URL, or use RedNote. Using public web search without cover cards.",
 		justOneFallbackGeneric: () =>
 			"Just One API failed — switched to public web search without post cover cards.",
+		categoryBroadened:
+			"Few exact matches — also showing related category posts so you still get distinct style references.",
 		sourceLabel: "Inspired by",
 		sourcesTitle: "Web sources",
 		postsTitle: "Trending posts on this platform",

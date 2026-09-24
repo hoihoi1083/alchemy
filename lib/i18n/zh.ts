@@ -6638,14 +6638,14 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 		tiktokImageWarning:
 			"TikTok 只有影片 — 圖文研究請選小紅書或 Instagram，或改選「影片」模式。",
 		platformSearchHintXhs:
-			"小紅書最適合中文品類詞（如 維他命C精華、護膚流程）— 直接搜筆記，有封面可揀風格。",
+			"小紅書最適合中文品類詞（如 維他命C精華、護膚流程）— 直接搜筆記，有封面可揀風格。英文關鍵詞若無結果會自動譯成中文再搜；結果太少時會用更寬品類補齊。",
 		platformSearchHintIgImage:
 			"Instagram 圖文模式用 hashtag 搜 — 英文標籤最穩（vitaminc、skincare、serum）。",
 		platformSearchHintIgHashtags: (tags: string) => `將搜尋：${tags}`,
 		platformSearchHintIgCjk:
 			"簡體關鍵詞會自動轉成繁體再搜 Instagram（IG 對繁體標籤更友好）；結果仍少就改打英文或換小紅書。",
 		platformSearchHintIgVideo:
-			"Instagram 影片模式用關鍵詞搜 Reels（英文或繁體；簡體會自動轉繁體）。",
+			"Instagram 影片模式用關鍵詞搜 Reels（先繁體；簡體會自動轉繁體；中文無結果時再試英文）。",
 		platformSearchHintFacebook:
 			"備選：可貼公開 /posts/ 或 /videos/ 連結，或用關鍵詞搜。靜圖廣告請優先試 小紅書 或 Instagram。",
 		platformSearchHintTiktok:
@@ -6721,6 +6721,8 @@ socialDripFitTitle: "呢個格式可以／唔可以做咩",
 			"Instagram hashtag 搜尋喺 Just One 失敗（COLLECT FAILED）— 多數係間歇。等約 30 秒再試、貼 /p/ 連結，或改用小紅書。已改用公開網頁搜尋，無封面。",
 		justOneFallbackGeneric: () =>
 			"Just One API 失敗 — 已改用公開網頁搜尋，無貼文封面。",
+		categoryBroadened:
+			"精確匹配較少 — 已補充同品類相關帖，方便你參考唔同版式風格。",
 		sourceLabel: "參考來源",
 		sourcesTitle: "網頁來源",
 		postsTitle: "平台上搜到嘅熱門貼文（封面預覽）",
